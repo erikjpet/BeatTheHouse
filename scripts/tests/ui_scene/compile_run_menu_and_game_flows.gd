@@ -99,7 +99,7 @@ class CoachLifecycleDeliveryRun:
 
 
 class CoachLifecycleProbeHost:
-	extends FoundationMain
+	extends EmbeddedCoachProbeHost
 
 	var observe_lifecycle_transaction := false
 	var lifecycle_guard_count := 0
@@ -126,7 +126,7 @@ class CoachLifecycleProbeHost:
 
 
 func _check_embedded_refresh_deferred_coach(_app: Control) -> bool:
-	var probe: Control = EmbeddedCoachProbeHost.new()
+	var probe: Control = CoachLifecycleProbeHost.new()
 	probe.set("continuous_environment_clock_enabled", false)
 	root.add_child(probe)
 	await process_frame
@@ -188,18 +188,16 @@ func _check_embedded_refresh_deferred_coach(_app: Control) -> bool:
 			and str(fallback_canvas_state.get("outcome_message", "")) == "Deferred coach fixture completed."
 	if not passed:
 		push_error("Completed embedded action did not execute its real deferred coach callback and conservative full-snapshot fallback: armed=%s schedules=%d frames=%d calls=%s incremental=%d fallback=%d canvas=%s." % [str(armed_after_action), action_schedule_count, action_frames, JSON.stringify(boundary_calls), int(probe.get("embedded_incremental_snapshot_count")), int(probe.get("embedded_full_snapshot_fallback_count")), JSON.stringify(fallback_canvas_state)])
-	probe.queue_free()
-	await process_frame
-	var lifecycle_passed := await _check_normal_coach_lifecycle_rollback()
+	var lifecycle_passed := await _check_normal_coach_lifecycle_rollback(probe)
 	return passed and lifecycle_passed
 
 
-func _check_normal_coach_lifecycle_rollback() -> bool:
+func _check_normal_coach_lifecycle_rollback(existing_probe: Control = null) -> bool:
 	const OLD_TIP_ID := "tip06_tonight_changes_rooms"
 	const OLD_TIP_COPY := "Tonight changes a room. Listen before you settle in; a rumor here can sharpen another stop on the map."
 	const NEXT_TIP_ID := "tip06_delivery_route"
 	const NEXT_TIP_COPY := "That package is contraband. Every action spends the deadline. The map marks real stops; choose your route."
-	var failure_probe := await _normal_coach_lifecycle_probe(true)
+	var failure_probe := await _normal_coach_lifecycle_probe(true, existing_probe)
 	if failure_probe == null:
 		return false
 	var failure_coach: CoachOverlay = failure_probe.get("coach_overlay")
@@ -239,10 +237,7 @@ func _check_normal_coach_lifecycle_rollback() -> bool:
 			and not failure_run.grand_casino_room_states.has("coach_lifecycle_delivery_poison")
 	if not failure_exact:
 		push_error("Failed real travel did not restore the old normal Coach model, rendered controls, ordering, focus, and owned Tween exactly after rendering the queued delivery tip: initial=%s ok=%s guard=%d refresh_ids=%s refresh_copies=%s before=%s after=%s." % [str(failure_initial_exact), str(failure_ok), int(failure_probe.get("lifecycle_guard_count")), JSON.stringify(failure_probe.get("lifecycle_refresh_active_ids")), JSON.stringify(failure_probe.get("lifecycle_refresh_copies")), failure_before, failure_after])
-	failure_probe.queue_free()
-	await process_frame
-
-	var success_probe := await _normal_coach_lifecycle_probe(false)
+	var success_probe := await _normal_coach_lifecycle_probe(false, failure_probe)
 	if success_probe == null:
 		return false
 	var success_coach: CoachOverlay = success_probe.get("coach_overlay")
@@ -273,19 +268,27 @@ func _check_normal_coach_lifecycle_rollback() -> bool:
 	return failure_exact and success_exact
 
 
-func _normal_coach_lifecycle_probe(reject_delivery: bool) -> Control:
-	var probe: Control = CoachLifecycleProbeHost.new()
-	probe.set("continuous_environment_clock_enabled", false)
-	probe.set_process(false)
-	root.add_child(probe)
-	probe.set_process(false)
-	await process_frame
-	await process_frame
+func _normal_coach_lifecycle_probe(reject_delivery: bool, existing_probe: Control = null) -> Control:
+	var probe: Control = existing_probe if existing_probe != null else CoachLifecycleProbeHost.new()
+	if existing_probe == null:
+		probe.set("continuous_environment_clock_enabled", false)
+		probe.set_process(false)
+		root.add_child(probe)
+		probe.set_process(false)
+		await process_frame
+		await process_frame
 	if not bool(probe.call("uses_foundation_runtime")):
 		push_error("Normal Coach lifecycle probe could not initialize the real Foundation UI tree.")
 		probe.queue_free()
 		await process_frame
 		return null
+	probe.set("observe_lifecycle_transaction", false)
+	probe.set("lifecycle_guard_count", 0)
+	probe.set("lifecycle_refresh_count", 0)
+	(probe.get("lifecycle_refresh_active_ids") as Array).clear()
+	(probe.get("lifecycle_refresh_copies") as Array).clear()
+	(probe.get("lifecycle_refresh_tweens") as Array).clear()
+	(probe.get("lifecycle_refresh_parent_indexes") as Array).clear()
 	var library: ContentLibrary = probe.get("library")
 	var run := CoachLifecycleDeliveryRun.new()
 	run.reject_delivery = reject_delivery
@@ -1569,7 +1572,7 @@ func _check_in_run_menu_flow(app: Control, save_service: SaveService, viewport_r
 		return false
 	app.set("autosave_slot_id", menu_slot)
 
-	app.call("start_foundation_run", "UI-RUN-MENU-SCREENS", RunStateScript.custom_challenge("ui_run_menu_home_fixture", "UI-RUN-MENU-SCREENS", {"home_archetype_id": "bar"}))
+	app.call("start_foundation_run", "UI-RUN-MENU-SCREENS", RunStateScript.custom_challenge("ui_run_menu_home_fixture", "UI-RUN-MENU-SCREENS", {"home_archetype_id": "bar"}), false)
 	await process_frame
 	var top_menu_button: Button = app.get("top_menu_button")
 	if top_menu_button == null:
@@ -1634,7 +1637,7 @@ func _check_in_run_menu_flow(app: Control, save_service: SaveService, viewport_r
 	if not await _check_run_menu_open_resume(app, "RESULT", "result screen"):
 		return false
 
-	app.call("start_foundation_run", "UI-RUN-MENU-FAILURE")
+	app.call("start_foundation_run", "UI-RUN-MENU-FAILURE", {}, false)
 	await process_frame
 	var failure_run: RunState = app.get("run_state")
 	failure_run.fail_run(RunState.FAILURE_POLICE_CAPTURE, RunState.POLICE_CAPTURE_FAILURE_MESSAGE)
@@ -1643,7 +1646,7 @@ func _check_in_run_menu_flow(app: Control, save_service: SaveService, viewport_r
 	if not await _check_run_menu_open_resume(app, "FAILURE", "failure screen"):
 		return false
 
-	app.call("start_foundation_run", "UI-RUN-MENU-VICTORY")
+	app.call("start_foundation_run", "UI-RUN-MENU-VICTORY", {}, false)
 	await process_frame
 	var victory_run: RunState = app.get("run_state")
 	victory_run.narrative_flags["demo_victory"] = true
@@ -1656,7 +1659,7 @@ func _check_in_run_menu_flow(app: Control, save_service: SaveService, viewport_r
 	if not await _check_run_menu_open_resume(app, "VICTORY", "victory screen"):
 		return false
 
-	app.call("start_foundation_run", "UI-RUN-MENU-SAVE-ENV")
+	app.call("start_foundation_run", "UI-RUN-MENU-SAVE-ENV", {}, false)
 	await process_frame
 	app.call("open_run_menu")
 	await process_frame
@@ -1677,7 +1680,7 @@ func _check_in_run_menu_flow(app: Control, save_service: SaveService, viewport_r
 		push_error("Environment-screen in-run load did not return to a playable run view.")
 		return false
 
-	app.call("start_foundation_run", "UI-RUN-MENU-SAVE-GAME", RunStateScript.custom_challenge("ui_run_menu_save_game_fixture", "UI-RUN-MENU-SAVE-GAME", {"home_archetype_id": "bar"}))
+	app.call("start_foundation_run", "UI-RUN-MENU-SAVE-GAME", RunStateScript.custom_challenge("ui_run_menu_save_game_fixture", "UI-RUN-MENU-SAVE-GAME", {"home_archetype_id": "bar"}), false)
 	await process_frame
 	if not await _travel_to_first_game_environment(app):
 		push_error("Run menu game-surface save test could not reach a gambling environment.")
@@ -1710,7 +1713,7 @@ func _check_in_run_menu_flow(app: Control, save_service: SaveService, viewport_r
 	if not await _check_showdown_phase_ui(app):
 		return false
 
-	app.call("start_foundation_run", "UI-RUN-MENU-ABANDON")
+	app.call("start_foundation_run", "UI-RUN-MENU-ABANDON", {}, false)
 	await process_frame
 	app.call("open_run_menu")
 	await process_frame
@@ -1822,7 +1825,7 @@ func _check_run_menu_main_menu_button_closes_overlay(app: Control, seed: String,
 		await process_frame
 		app.call("open_meta_home")
 	else:
-		app.call("start_foundation_run", seed)
+		app.call("start_foundation_run", seed, {}, false)
 	await process_frame
 	app.call("open_run_menu")
 	await process_frame
@@ -2364,7 +2367,7 @@ func _check_all_in_wager_confirmation_recovery(app: Control) -> bool:
 func _check_confirmed_all_in_wager_result_then_failure(app: Control) -> bool:
 	var original_run_state: Variant = app.get("run_state")
 	var original_dev_game_test_mode := bool(app.get("dev_game_test_mode"))
-	app.call("start_foundation_run", "UI-ALL-IN-RESULT")
+	app.call("start_foundation_run", "UI-ALL-IN-RESULT", {}, false)
 	await process_frame
 	var run_state: RunState = app.get("run_state")
 	if run_state == null:
@@ -2438,7 +2441,7 @@ func _check_confirmed_all_in_wager_result_then_failure(app: Control) -> bool:
 func _check_presented_bankroll_waits_for_result_reveal(app: Control) -> bool:
 	var original_run_state: Variant = app.get("run_state")
 	var original_dev_game_test_mode := bool(app.get("dev_game_test_mode"))
-	app.call("start_foundation_run", "UI-BANKROLL-PRESENTATION")
+	app.call("start_foundation_run", "UI-BANKROLL-PRESENTATION", {}, false)
 	await process_frame
 	var run_state: RunState = app.get("run_state")
 	if run_state == null:
@@ -3178,7 +3181,7 @@ func _check_run_journal_flow(app: Control, save_service: SaveService, viewport_r
 		push_error("Could not prepare the run-journal test save slot.")
 		return false
 	app.set("autosave_slot_id", journal_slot)
-	app.call("start_foundation_run", "UI-RUN-JOURNAL")
+	app.call("start_foundation_run", "UI-RUN-JOURNAL", {}, false)
 	await process_frame
 	var journal_run: RunState = app.get("run_state")
 	_add_run_journal_fixture_entries(journal_run)
@@ -3266,7 +3269,7 @@ func _check_run_journal_flow(app: Control, save_service: SaveService, viewport_r
 	app.call("close_run_journal")
 	await process_frame
 
-	app.call("start_foundation_run", "UI-RUN-JOURNAL-TERMINAL")
+	app.call("start_foundation_run", "UI-RUN-JOURNAL-TERMINAL", {}, false)
 	await process_frame
 	var terminal_run: RunState = app.get("run_state")
 	terminal_run.fail_run(RunState.FAILURE_POLICE_CAPTURE, RunState.POLICE_CAPTURE_FAILURE_MESSAGE)
@@ -3916,7 +3919,7 @@ func _grand_casino_environment_for_ui(app: Control) -> Dictionary:
 
 
 func _check_lender_acceptance_does_not_open_motel_popup(app: Control) -> bool:
-	app.call("start_foundation_run", "UI-CREW-LENDER-NO-MOTEL-POPUP")
+	app.call("start_foundation_run", "UI-CREW-LENDER-NO-MOTEL-POPUP", {}, false)
 	await process_frame
 	var library: ContentLibrary = app.get("library")
 	if library == null or library.lender("the_crew").is_empty() or library.event("motel_knock").is_empty():

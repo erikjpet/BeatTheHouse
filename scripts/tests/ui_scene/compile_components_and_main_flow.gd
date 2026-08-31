@@ -1656,7 +1656,7 @@ func _check_talk_dock_main_flow(app: Control) -> bool:
 
 
 func _check_post_action_interrupt_fast_paths(app: Control) -> bool:
-	app.call("start_foundation_run", "UI-POST-ACTION-INTERRUPT-FAST-PATH")
+	app.call("start_foundation_run", "UI-POST-ACTION-INTERRUPT-FAST-PATH", {}, false)
 	await process_frame
 	var run_state: RunState = app.get("run_state")
 	var production_library: ContentLibrary = app.get("library")
@@ -2058,7 +2058,7 @@ func _check_post_action_interrupt_fast_paths(app: Control) -> bool:
 
 	# Health-inspector forced travel owns the following boundary. Start from a
 	# fresh generated room so at least one production route is genuinely enabled.
-	app.call("start_foundation_run", "UI-POST-ACTION-FORCED-TRAVEL-ORDER")
+	app.call("start_foundation_run", "UI-POST-ACTION-FORCED-TRAVEL-ORDER", {}, false)
 	await process_frame
 	run_state = app.get("run_state")
 	production_library = app.get("library")
@@ -2096,7 +2096,7 @@ func _check_post_action_interrupt_fast_paths(app: Control) -> bool:
 
 	# Finally arm one deterministic unavoidable event and prove the outer path
 	# reaches only the ordered action-candidate cache after all earlier stages.
-	app.call("start_foundation_run", "UI-POST-ACTION-UNAVOIDABLE-ORDER")
+	app.call("start_foundation_run", "UI-POST-ACTION-UNAVOIDABLE-ORDER", {}, false)
 	await process_frame
 	run_state = app.get("run_state")
 	production_library = app.get("library")
@@ -2235,7 +2235,7 @@ func _timed_interrupt_fixture_event(event_id: String) -> Dictionary:
 
 
 func _check_family_loan_unknown_caller(app: Control) -> bool:
-	app.call("start_foundation_run", "UI-FAMILY-LOAN-TALK")
+	app.call("start_foundation_run", "UI-FAMILY-LOAN-TALK", {}, false)
 	await process_frame
 	var run_state: RunState = app.get("run_state")
 	var library: ContentLibrary = app.get("library")
@@ -2548,7 +2548,7 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 
 
 func _resolve_talk_event_fixture(app: Control, presentation: String) -> int:
-	app.call("start_foundation_run", "UI-TALK-%s" % presentation)
+	app.call("start_foundation_run", "UI-TALK-%s" % presentation, {}, false)
 	await process_frame
 	var run_state: RunState = app.get("run_state")
 	var library: ContentLibrary = app.get("library")
@@ -2652,7 +2652,7 @@ func _resolve_talk_event_fixture(app: Control, presentation: String) -> int:
 
 
 func _check_dialogue_dock_main_flow(app: Control) -> bool:
-	app.call("start_foundation_run", "UI-DIALOGUE-SEED")
+	app.call("start_foundation_run", "UI-DIALOGUE-SEED", {}, false)
 	await process_frame
 	var run_state: RunState = app.get("run_state")
 	if run_state == null:
@@ -2769,7 +2769,7 @@ func _check_dialogue_dock_main_flow(app: Control) -> bool:
 
 
 func _check_event_item_found_main_flow(app: Control) -> bool:
-	app.call("start_foundation_run", "UI-ITEM-FOUND-SEED")
+	app.call("start_foundation_run", "UI-ITEM-FOUND-SEED", {}, false)
 	await process_frame
 	var run_state: RunState = app.get("run_state")
 	var library: ContentLibrary = app.get("library")
@@ -2838,7 +2838,7 @@ func _check_event_item_found_main_flow(app: Control) -> bool:
 
 
 func _check_service_item_found_main_flow(app: Control) -> bool:
-	app.call("start_foundation_run", "UI-CUMQUAT-FOUND-SEED")
+	app.call("start_foundation_run", "UI-CUMQUAT-FOUND-SEED", {}, false)
 	await process_frame
 	var run_state: RunState = app.get("run_state")
 	var library: ContentLibrary = app.get("library")
@@ -2896,7 +2896,7 @@ func _check_service_item_found_main_flow(app: Control) -> bool:
 
 
 func _check_shared_selection_popup_text_flow(app: Control) -> bool:
-	app.call("start_foundation_run", "UI-ACTIVE-ITEM-POPUP")
+	app.call("start_foundation_run", "UI-ACTIVE-ITEM-POPUP", {}, false)
 	await process_frame
 	var run_state: RunState = app.get("run_state")
 	if run_state == null:
@@ -3000,7 +3000,7 @@ func _check_shared_selection_popup_text_flow(app: Control) -> bool:
 
 
 func _check_beach_return_travel_choice(app: Control) -> bool:
-	app.call("start_foundation_run", "UI-BEACH-RETURN")
+	app.call("start_foundation_run", "UI-BEACH-RETURN", {}, false)
 	await process_frame
 	var run_state: RunState = app.get("run_state")
 	if run_state == null or not run_state.has_world_map():
@@ -4168,7 +4168,7 @@ func _run() -> void:
 		push_error("Main menu did not generate a fresh random seed when it was accessed.")
 		quit(1)
 		return
-	app.call("start_foundation_run", "UI-MENU-SEED-ROUNDTRIP")
+	app.call("start_foundation_run", "UI-MENU-SEED-ROUNDTRIP", {}, false)
 	await process_frame
 	app.call("return_to_main_menu")
 	await process_frame
@@ -5052,7 +5052,7 @@ func _run() -> void:
 	if not await _check_run_journal_flow(app, save_service, viewport_rect):
 		quit(1)
 		return
-	app.call("start_foundation_run", "UI-COMPILE-SEED")
+	app.call("start_foundation_run", "UI-COMPILE-SEED", {}, false)
 	await process_frame
 	if not await _check_talk_dock_main_flow(app):
 		quit(1)
@@ -5072,7 +5072,7 @@ func _run() -> void:
 	if not await _check_beach_return_travel_choice(app):
 		quit(1)
 		return
-	app.call("start_foundation_run", "UI-COMPILE-SEED")
+	app.call("start_foundation_run", "UI-COMPILE-SEED", {}, false)
 	await process_frame
 	if not await _check_preview_focus_keeps_serialized_run_state(app):
 		quit(1)
@@ -5607,7 +5607,7 @@ func _run() -> void:
 		quit(1)
 		return
 
-	app.call("start_foundation_run", "UI-COMPILE-GAME-SEED", RunStateScript.custom_challenge("ui_compile_game_fixture", "UI-COMPILE-GAME-SEED", {"home_archetype_id": "bar"}))
+	app.call("start_foundation_run", "UI-COMPILE-GAME-SEED", RunStateScript.custom_challenge("ui_compile_game_fixture", "UI-COMPILE-GAME-SEED", {"home_archetype_id": "bar"}), false)
 	await process_frame
 	if not await _travel_to_first_game_environment(app):
 		push_error("Foundation screen router could not reach a gambling environment after the shop start.")
@@ -6119,7 +6119,7 @@ func _run() -> void:
 		push_error("Game surface did not expose in-scene result feedback from result-delta data.")
 		quit(1)
 		return
-	app.call("start_foundation_run", "UI-COMPILE-SEED")
+	app.call("start_foundation_run", "UI-COMPILE-SEED", {}, false)
 	await process_frame
 	if not _enter_action_fixture_game(app, "bar_dice"):
 		push_error("Higher-stake check could not enter the bar dice action fixture.")
@@ -7785,7 +7785,7 @@ func _run() -> void:
 		push_error("Same seed/state/travel choice did not generate deterministic travel.")
 		quit(1)
 		return
-	app.call("start_foundation_run", "UI-COMPILE-SEED", RunStateScript.custom_challenge("ui_failure_game_fixture", "UI-COMPILE-SEED", {"home_archetype_id": "bar"}))
+	app.call("start_foundation_run", "UI-COMPILE-SEED", RunStateScript.custom_challenge("ui_failure_game_fixture", "UI-COMPILE-SEED", {"home_archetype_id": "bar"}), false)
 	await process_frame
 	if not await _travel_to_first_game_environment(app):
 		push_error("Failure screen check could not reach a gambling environment after the shop start.")
@@ -7864,7 +7864,7 @@ func _run() -> void:
 		push_error("Failure run report did not present player-facing reason, money flow, and score.")
 		quit(1)
 		return
-	app.call("start_foundation_run", "UI-FAILURE-SUMMARY-CLEANUP")
+	app.call("start_foundation_run", "UI-FAILURE-SUMMARY-CLEANUP", {}, false)
 	await process_frame
 	await process_frame
 	if (app.get("run_report_screen") as Control).visible or not (app.get("run_report_model") as Dictionary).is_empty():
@@ -7885,7 +7885,7 @@ func _run() -> void:
 	]
 	for reason_case in failure_reason_cases:
 		var reason_data: Dictionary = reason_case
-		app.call("start_foundation_run", "UI-FAILURE-%s" % str(reason_data.get("reason", "")))
+		app.call("start_foundation_run", "UI-FAILURE-%s" % str(reason_data.get("reason", "")), {}, false)
 		await process_frame
 		var reason_fixture_run: RunState = app.get("run_state")
 		var reason := str(reason_data.get("reason", ""))
@@ -8085,7 +8085,7 @@ func _run() -> void:
 		push_error("Victory screen did not present terminal actions.")
 		quit(1)
 		return
-	app.call("start_foundation_run", "UI-VICTORY-SUMMARY-CLEANUP")
+	app.call("start_foundation_run", "UI-VICTORY-SUMMARY-CLEANUP", {}, false)
 	await process_frame
 	await process_frame
 	if (app.get("run_report_screen") as Control).visible or not (app.get("run_report_model") as Dictionary).is_empty():
