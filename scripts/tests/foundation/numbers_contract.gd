@@ -457,7 +457,17 @@ static func _check_swept_collection_consequences(failures: Array) -> void:
 	run_state.add_suspicion("fixture", 50, "test", false)
 	var heat_before := run_state.suspicion_level()
 	var job_id := str(started.get("job_id", ""))
-	var result := run_state.resolve_police_sweep_encounter_for_test({"node_id": "bar", "segment_index": 0, "encounter_seed": 27})
+	var sweep = run_state.town_state.police_sweep
+	sweep.configured = true
+	sweep.disabled = false
+	sweep.start_action = int(run_state.town_state.action_index)
+	sweep.action_index = sweep.start_action
+	sweep.end_action = sweep.start_action + 4
+	sweep.segments = [{"node_id": "bar", "start_action": sweep.start_action, "end_action": sweep.end_action, "dwell_actions": 4}]
+	sweep.segment_index = 0
+	sweep.last_encounter_segment = -1
+	sweep.last_encounter_node_id = ""
+	var result := run_state.resolve_current_police_sweep_encounter()
 	var queued_ids: Array = []
 	for pending_value in run_state.pending_triggered_events:
 		queued_ids.append(str(_dictionary(pending_value).get("event_id", "")))

@@ -308,7 +308,7 @@ static func contact_choices(run_state: RunState, _environment: Dictionary, membe
 		var sweep := run_state.sweep_status()
 		if run_state.crew_capability_active("sweep_intel") and choices.size() < 3:
 			var sweep_text := "Sweep is quiet for now."
-			if bool(sweep.get("active", false)):
+			if bool(sweep.get("available", false)):
 				var current_node := str(sweep.get("current_node_id", "")).replace("_", " ").capitalize()
 				var heading_node := str(sweep.get("heading_node_id", "")).replace("_", " ").capitalize()
 				var heading_suffix := ""

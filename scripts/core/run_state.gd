@@ -26,6 +26,7 @@ const ScenarioLayoutResolverScript := preload("res://scripts/core/scenario_layou
 const ArtContractsScript := preload("res://scripts/core/art_contracts.gd")
 const ScenarioHostTransactionScript := preload("res://scripts/core/scenario_host_transaction.gd")
 const TownStateScript := preload("res://scripts/core/town_state.gd")
+const PoliceSweepModelScript := preload("res://scripts/core/police_sweep_model.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 const CrewRecruitmentModelScript := preload("res://scripts/core/crew_recruitment_model.gd")
 const CrewPlayModelScript := preload("res://scripts/core/crew_play_model.gd")
@@ -348,6 +349,7 @@ var crew_grievance_sequence: int = 0
 var crew_job_sequence: int = 0
 var _crew_job_host_capability: RefCounted
 var _crew_recruitment_host_capability: RefCounted
+var _world1_host_capability: RefCounted
 var active_delivery_run: Dictionary = {}
 var crew_pattern_memory: Dictionary = {}
 var scenario_host_transaction_ledger: Dictionary = {}
@@ -490,6 +492,7 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	crew_job_sequence = 0
 	_crew_job_host_capability = RefCounted.new()
 	_crew_recruitment_host_capability = RefCounted.new()
+	_world1_host_capability = RefCounted.new()
 	active_delivery_run = {}
 	crew_pattern_memory = CrewPokerModelScript.default_observations()
 	scenario_host_transaction_ledger = {}
@@ -504,6 +507,7 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	heat_history = []
 	town_state = TownStateScript.new()
 	town_state.generate(seed_value)
+	town_state.bind_host_capability(_world1_host_capability)
 	simulation_msec = 0
 	game_clock_minutes = GAME_CLOCK_START_MINUTE
 	grand_casino_atm_interest_boundary_index = CageEconomyModelScript.boundary_index_at_or_before(game_clock_minutes)
@@ -8626,11 +8630,35 @@ func crew_action_index() -> int:
 
 
 func crew_play_actions(game_id: String, environment: Dictionary = current_environment) -> Array:
-	return CrewPlayModelScript.available_actions(self, environment, game_id)
+	if JSON.stringify(environment) != JSON.stringify(current_environment) or str(current_environment.get("active_game_id", "")) != game_id:
+		return []
+	return CrewPlayModelScript.available_actions(self, current_environment, game_id)
 
 
 func crew_play_activate(play_id: String, game_id: String, environment: Dictionary = current_environment) -> Dictionary:
-	return CrewPlayModelScript.activate(self, environment, game_id, play_id)
+	if not crew_play_host_authorizes(_world1_host_capability, environment, game_id):
+		return GameModule.build_action_result({"ok": false, "type": "game_action", "source_id": "crew_plays", "game_id": game_id, "action_id": "crew_play:%s" % play_id, "action_kind": "unknown", "message": "That crew play is not bound to the live table."})
+	var rollback := _capture_environment_turn_snapshot()
+	var before_state := CrewPlayModelScript.normalize_state(crew_play_state)
+	var before_bankroll := bankroll
+	var before_chips := grand_casino_chips
+	var result := CrewPlayModelScript.activate(self, current_environment, game_id, play_id, _world1_host_capability)
+	var after_state := CrewPlayModelScript.normalize_state(crew_play_state)
+	var valid := bool(result.get("ok", false)) \
+		and str(result.get("source_id", "")) == "crew_plays" and str(result.get("game_id", "")) == game_id \
+		and int(after_state.get("sequence", -1)) == int(before_state.get("sequence", 0)) + 1 \
+		and bankroll == before_bankroll + int(result.get("bankroll_delta", 0)) \
+		and grand_casino_chips == before_chips + int(result.get("chips_delta", 0))
+	if not valid:
+		_apply_environment_turn_snapshot(rollback, false)
+		return GameModule.build_action_result({"ok": false, "type": "game_action", "source_id": "crew_plays", "game_id": game_id, "action_id": "crew_play:%s" % play_id, "action_kind": "unknown", "message": "The table host rejected an incomplete play transaction."})
+	return result
+
+
+func crew_play_host_authorizes(host_capability: Variant, environment: Dictionary, game_id: String, require_active_game: bool = true) -> bool:
+	if host_capability == null or host_capability != _world1_host_capability or JSON.stringify(environment) != JSON.stringify(current_environment):
+		return false
+	return not require_active_game or not game_id.is_empty() and str(current_environment.get("active_game_id", "")) == game_id
 
 
 func crew_play_active(play_id: String, environment: Dictionary = current_environment) -> bool:
@@ -11755,19 +11783,19 @@ func crew_capability_active(capability_id: String) -> bool:
 func sweep_status() -> Dictionary:
 	if town_state == null:
 		return {}
-	return town_state.sweep_status({"sweep_intel": crew_capability_active("sweep_intel")})
+	return town_state.sweep_status(_world1_host_capability, crew_capability_active("sweep_intel"))
 
 
 func sweep_map_marker() -> Dictionary:
 	if town_state == null:
 		return {}
-	return town_state.sweep_map_marker({"sweep_intel": crew_capability_active("sweep_intel")})
+	return town_state.sweep_map_marker(_world1_host_capability, crew_capability_active("sweep_intel"))
 
 
 func report_sweep_intel_at_boundary() -> Dictionary:
 	if town_state == null:
 		return {}
-	return town_state.report_sweep_intel_at_boundary({"sweep_intel": crew_capability_active("sweep_intel")})
+	return town_state.report_sweep_intel_at_boundary(_world1_host_capability, crew_capability_active("sweep_intel"))
 
 
 func swept_window(node_id: String = "") -> Dictionary:
@@ -12993,7 +13021,8 @@ func _apply_environment_turn_snapshot(snapshot: Dictionary, preserve_live_aliase
 	if bool(town_record.get("present", false)):
 		if town_state == null or not preserve_live_aliases:
 			town_state = TownStateScript.new()
-		town_state.restore(_copy_dict(town_record.get("state", {})), seed_value, _copy_dict(town_record.get("conditions", {})))
+			town_state.bind_host_capability(_world1_host_capability)
+			town_state.restore(_copy_dict(town_record.get("state", {})), seed_value, _copy_dict(town_record.get("conditions", {})))
 	else:
 		town_state = null
 	var numbers_record := _copy_dict(snapshot.get("numbers_state_object", {}))
@@ -13073,7 +13102,7 @@ func _advance_global_boundary_finish(safe_amount: int) -> void:
 	_advance_debt_clocks(safe_amount)
 	_advance_crew_jobs()
 	if safe_amount > 0:
-		CrewPlayModelScript.advance_boundary(self, current_environment)
+		CrewPlayModelScript.advance_boundary(self, current_environment, _world1_host_capability)
 		_crew_heist_boundary_sync()
 	CharacterChainModelScript.advance(self, safe_amount)
 
@@ -13176,11 +13205,19 @@ func _check_police_sweep_boundary() -> Dictionary:
 	if node_id.is_empty() or node_id.begins_with("grand_casino"):
 		return {}
 	if town_state.sweep_is_at(node_id):
-		town_state.record_sweep_sighting("direct")
-		var claim := town_state.claim_sweep_encounter(node_id)
-		return _resolve_police_sweep_encounter(claim) if not claim.is_empty() else {}
+		var rollback := _capture_environment_turn_snapshot()
+		town_state.record_sweep_sighting("direct", _world1_host_capability)
+		if crew_capability_active("sweep_intel"):
+			report_sweep_intel_at_boundary()
+		var claim := town_state.claim_sweep_encounter(node_id, _world1_host_capability)
+		if claim.is_empty(): return {}
+		var proposal := town_state.police_sweep.encounter_proposal(claim, _sweep_cargo_context(), _sweep_exit_node_ids(node_id), _world1_host_capability, crew_capability_active("sweep_intel"))
+		var result := _resolve_police_sweep_encounter(claim, _world1_host_capability, proposal)
+		if result.is_empty():
+			_apply_environment_turn_snapshot(rollback, false)
+		return result
 	if town_state.sweep_adjacent_sighting_due(node_id):
-		var marker := town_state.record_sweep_sighting("adjacent")
+		var marker := town_state.record_sweep_sighting("adjacent", _world1_host_capability)
 		enqueue_triggered_event("police_sweep_adjacent_sighting", "police_sweep", {
 			"sweep_marker": marker,
 			"node_id": node_id,
@@ -13190,11 +13227,17 @@ func _check_police_sweep_boundary() -> Dictionary:
 
 
 func resolve_police_sweep_encounter_for_test(claim: Dictionary) -> Dictionary:
-	return _resolve_police_sweep_encounter(claim)
+	var _ignored_claim := claim
+	return {}
 
 
-func _resolve_police_sweep_encounter(claim: Dictionary) -> Dictionary:
-	if claim.is_empty() or town_state == null:
+func resolve_current_police_sweep_encounter() -> Dictionary:
+	return _check_police_sweep_boundary()
+
+
+func _resolve_police_sweep_encounter(claim: Dictionary, host_capability: Variant = null, proposal: Dictionary = {}) -> Dictionary:
+	if claim.is_empty() or town_state == null or host_capability == null or host_capability != _world1_host_capability \
+			or PoliceSweepModelScript.normalize_encounter_proposal(proposal).is_empty():
 		return {}
 	var tuning := town_state.sweep_encounter_config()
 	var heat := suspicion_level()
@@ -13230,6 +13273,7 @@ func _resolve_police_sweep_encounter(claim: Dictionary) -> Dictionary:
 		"segment_index": int(claim.get("segment_index", -1)),
 		"run_continues": true,
 		"punchline_layer": 2 if outcome == "punchline_l2_near_miss" else 1 if punchline else 0,
+		"encounter_public_state": PoliceSweepModelScript.encounter_public_state(proposal),
 	}
 	var encounter_rng := RngStream.new()
 	var encounter_seed := maxi(1, int(claim.get("encounter_seed", seed_value)))
@@ -13313,9 +13357,37 @@ func _resolve_police_sweep_encounter(claim: Dictionary) -> Dictionary:
 	if str(result.get("confiscated_item_id", "")) == "numbers_slips" and numbers_state != null:
 		result["numbers_slips_confiscated"] = numbers_state.confiscate_open_slips("police_sweep")
 	_sync_numbers_inventory_marker()
+	var tombstone := town_state.police_sweep.record_encounter_resolution(_world1_host_capability, claim, outcome, str(result.get("cost_kind", "")), int(result.get("cost_amount", -1)))
+	if tombstone.is_empty():
+		return {}
+	result["encounter_tombstone"] = tombstone
 	var event_id := "police_sweep_%s" % outcome
 	enqueue_triggered_event(event_id, "police_sweep", result, {"presentation": "talk"})
 	log_story(result)
+	return result
+
+
+func _sweep_cargo_context() -> Dictionary:
+	if delivery_has_active_run():
+		var snapshot := delivery_snapshot()
+		var physical := _copy_dict(snapshot.get("physical", {}))
+		if str(physical.get("cargo_state", "")) == "carried":
+			return {"cargo_id": "delivery:%s" % str(active_delivery_run.get("cargo_id", "cargo")), "cargo_label": str(active_delivery_run.get("cargo_label", "Delivery cargo")), "contraband": bool(snapshot.get("carrying_contraband", false))}
+	var contraband := _carried_contraband_ids()
+	if not contraband.is_empty():
+		contraband.sort()
+		return {"cargo_id": str(contraband[0]), "cargo_label": str(contraband[0]).replace("_", " ").capitalize(), "contraband": true}
+	return {}
+
+
+func _sweep_exit_node_ids(node_id: String) -> Array:
+	var result: Array = []
+	for edge_value in _copy_array(world_map.get("edges", [])):
+		var edge := _copy_dict(edge_value)
+		var a := str(edge.get("a", "")); var b := str(edge.get("b", ""))
+		var exit_id := b if a == node_id else a if b == node_id else ""
+		if not exit_id.is_empty() and not result.has(exit_id): result.append(exit_id)
+	result.sort()
 	return result
 
 
@@ -14663,7 +14735,9 @@ func from_dict(data: Dictionary) -> void:
 	rng_seed = int(data.get("rng_seed", seed_value))
 	rng_state = int(data.get("rng_state", rng_seed))
 	challenge_config = normalize_challenge(seed_text, _copy_dict(data.get("challenge_config", standard_challenge(seed_text))))
+	_world1_host_capability = RefCounted.new()
 	town_state = TownStateScript.new()
+	town_state.bind_host_capability(_world1_host_capability)
 	var saved_town_value: Variant = data.get("town_state", {})
 	if typeof(saved_town_value) != TYPE_DICTIONARY or (saved_town_value as Dictionary).is_empty():
 		town_state.generate(seed_value)
@@ -15287,8 +15361,9 @@ func _crew_state_for_save(deep_copy: bool, opaque_hidden: bool = false) -> Dicti
 		result["encounters"] = recruitment_encounters.duplicate(deep_copy)
 	var normalized_plays := CrewPlayModelScript.normalize_state(crew_play_state)
 	if not (normalized_plays.get("uses", {}) as Dictionary).is_empty() \
-		or not (normalized_plays.get("active", []) as Array).is_empty() \
-		or not (normalized_plays.get("member_cooldowns", {}) as Dictionary).is_empty():
+			or not (normalized_plays.get("active", []) as Array).is_empty() \
+			or not (normalized_plays.get("member_cooldowns", {}) as Dictionary).is_empty() \
+			or not (normalized_plays.get("tombstones", []) as Array).is_empty():
 		result["plays"] = normalized_plays.duplicate(deep_copy)
 	var normalized_heist := CrewHeistModelScript.normalize_state(crew_heist_state)
 	if not normalized_heist.is_empty():
@@ -15313,7 +15388,9 @@ func _restore_crew_state(saved: Dictionary, legacy: bool) -> void:
 		_crew_job_host_capability = RefCounted.new()
 	if _crew_recruitment_host_capability == null:
 		_crew_recruitment_host_capability = RefCounted.new()
-	crew_play_state = CrewPlayModelScript.normalize_state(saved.get("plays", {}))
+	if _world1_host_capability == null:
+		_world1_host_capability = RefCounted.new()
+	crew_play_state = CrewPlayModelScript.restore_state(saved.get("plays", {}))
 	crew_heist_state = CrewHeistModelScript.normalize_state(saved.get("crew_heist", {}))
 	var saved_marks: Dictionary = saved.get("m", {}) if typeof(saved.get("m", {})) == TYPE_DICTIONARY else {}
 	for member_id in CrewStateModelScript.MEMBER_IDS:

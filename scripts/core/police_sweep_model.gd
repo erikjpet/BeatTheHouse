@@ -1,7 +1,9 @@
 class_name PoliceSweepModel
 extends RefCounted
 
-const SCHEMA_VERSION := 1
+const SCHEMA_VERSION := 2
+const LEGACY_SCHEMA_VERSION := 1
+const ENCOUNTER_TOMBSTONE_LIMIT := 16
 const ENCOUNTER_PROPOSAL_SCHEMA_VERSION := 1
 const ENCOUNTER_AUTHORITY_GAP := "host_encounter_resolution_not_verifiable_in_model"
 const INTEL_AUTHORITY_GAP := "host_sweep_intel_capability_not_verifiable_in_model"
@@ -28,6 +30,9 @@ var last_encounter_node_id: String = ""
 var last_adjacent_sighting_segment: int = -1
 var config: Dictionary = {}
 var reroute_history: Array = []
+var encounter_tombstones: Array = []
+
+var _host_capability: RefCounted
 
 var _node_metadata: Dictionary = {}
 var _neighbors_by_node: Dictionary = {}
@@ -49,8 +54,16 @@ func reset(p_seed_value: int, source_config: Dictionary = {}) -> void:
 	last_adjacent_sighting_segment = -1
 	config = source_config.duplicate(true)
 	reroute_history = []
+	encounter_tombstones = []
 	_node_metadata = {}
 	_neighbors_by_node = {}
+
+
+func bind_host_capability(capability: RefCounted) -> bool:
+	if capability == null or _host_capability != null:
+		return false
+	_host_capability = capability
+	return true
 
 
 func disable(p_seed_value: int, source_config: Dictionary = {}) -> void:
@@ -132,21 +145,58 @@ func status() -> Dictionary:
 	}
 
 
-func intel_status(_capabilities: Variant) -> Dictionary:
-	return {"available": false, "authority_gap": INTEL_AUTHORITY_GAP}
+func intel_status(host_capability: Variant = null, intel_enabled: bool = false) -> Dictionary:
+	if host_capability == null or host_capability != _host_capability or not intel_enabled:
+		return {"available": false, "authority_gap": INTEL_AUTHORITY_GAP}
+	var current := status()
+	if not bool(current.get("active", false)):
+		return {"available": false, "observed": false, "live": false}
+	return {
+		"available": true,
+		"active": true,
+		"observed": true,
+		"live": true,
+		"current_node_id": str(current.get("current_node_id", "")),
+		"heading_node_id": str(current.get("heading_node_id", "")),
+		"moves_in_actions": maxi(0, int(current.get("next_move_action", action_index)) - action_index),
+	}
 
 
-func report_intel_at_boundary(capabilities: Variant, _source: String = "crew_intel") -> Dictionary:
-	return intel_status(capabilities)
+func report_intel_at_boundary(host_capability: Variant = null, intel_enabled: bool = false, source: String = "crew_intel") -> Dictionary:
+	var intel := intel_status(host_capability, intel_enabled)
+	if not bool(intel.get("available", false)):
+		return intel
+	personal_marker = {
+		"node_id": str(intel.get("current_node_id", "")),
+		"heading_node_id": str(intel.get("heading_node_id", "")),
+		"sighted_action": action_index,
+		"source": source if source in ["crew_intel", "direct", "adjacent"] else "crew_intel",
+		"segment_index": segment_index,
+	}
+	return map_marker(host_capability, intel_enabled)
 
 
-func map_marker(_capabilities: Variant = {}) -> Dictionary:
+func map_marker(host_capability: Variant = null, intel_enabled: bool = false) -> Dictionary:
 	if personal_marker.is_empty():
 		return {}
-	return {"observed": true, "live": false, "available": false, "authority_gap": INTEL_AUTHORITY_GAP}
+	if host_capability == null or host_capability != _host_capability or not intel_enabled:
+		return {"observed": true, "live": false, "available": false, "authority_gap": INTEL_AUTHORITY_GAP}
+	var live := int(personal_marker.get("segment_index", -1)) == segment_index and bool(status().get("active", false))
+	return {
+		"available": true,
+		"observed": true,
+		"live": live,
+		"node_id": str(personal_marker.get("node_id", "")),
+		"heading_node_id": str(personal_marker.get("heading_node_id", "")),
+		"sighted_action": maxi(0, int(personal_marker.get("sighted_action", action_index))),
+		"stale_actions": maxi(0, action_index - int(personal_marker.get("sighted_action", action_index))),
+		"source": str(personal_marker.get("source", "crew_intel")),
+	}
 
 
-func record_personal_sighting(source: String = "direct") -> Dictionary:
+func record_personal_sighting(source: String = "direct", host_capability: Variant = null) -> Dictionary:
+	if host_capability == null or host_capability != _host_capability:
+		return {}
 	var current := status()
 	if not bool(current.get("active", false)):
 		return {}
@@ -157,7 +207,7 @@ func record_personal_sighting(source: String = "direct") -> Dictionary:
 		"source": source,
 		"segment_index": int(current.get("segment_index", -1)),
 	}
-	return map_marker()
+	return map_marker(host_capability, true)
 
 
 func is_at(node_id: String) -> bool:
@@ -187,7 +237,9 @@ func adjacent_sighting_due(player_node_id: String) -> bool:
 	return true
 
 
-func claim_encounter(node_id: String) -> Dictionary:
+func claim_encounter(node_id: String, host_capability: Variant = null) -> Dictionary:
+	if host_capability == null or host_capability != _host_capability:
+		return {}
 	if not is_at(node_id):
 		return {}
 	var current := status()
@@ -219,7 +271,7 @@ func swept_window(node_id: String) -> Dictionary:
 
 # Presentation-only encounter seam. The model can bind this proposal to its
 # current track claim, but RunState remains the owner of every economic effect.
-func encounter_proposal(claim: Dictionary, cargo_value: Variant, exit_node_ids: Array, _capabilities: Variant = {}) -> Dictionary:
+func encounter_proposal(claim: Dictionary, cargo_value: Variant, exit_node_ids: Array, host_capability: Variant = null, intel_enabled: bool = false) -> Dictionary:
 	if not _encounter_claim_matches_current(claim):
 		return {}
 	var cargo := _cargo_public_context(cargo_value)
@@ -235,12 +287,14 @@ func encounter_proposal(claim: Dictionary, cargo_value: Variant, exit_node_ids: 
 		"positions": {"officers": "blocking_route", "player": "street_approach", "cargo": "carried" if bool(cargo.get("active", false)) else "none"},
 		"exit_node_ids": unique_exits,
 		"cargo_context": cargo,
-		"intel_projection": {"available": false, "authority_gap": INTEL_AUTHORITY_GAP},
+		"intel_projection": map_marker(host_capability, intel_enabled),
 		"costed_rungs": encounter_costed_rungs(_dictionary(config.get("encounter", {}))),
 		"authoritative": false,
 		"can_mutate": false,
 		"authority_gap": ENCOUNTER_AUTHORITY_GAP,
 	}
+	if (proposal["intel_projection"] as Dictionary).is_empty():
+		proposal["intel_projection"] = intel_status(host_capability, intel_enabled)
 	return proposal
 
 
@@ -261,7 +315,7 @@ static func normalize_encounter_proposal(value: Variant) -> Dictionary:
 		"positions": (proposal.get("positions", {}) as Dictionary).duplicate(true),
 		"exit_node_ids": exits,
 		"cargo_context": (proposal.get("cargo_context", {}) as Dictionary).duplicate(true),
-		"intel_projection": {"available": false, "authority_gap": INTEL_AUTHORITY_GAP},
+		"intel_projection": (proposal.get("intel_projection", {}) as Dictionary).duplicate(true),
 		"costed_rungs": _normalized_rungs(proposal.get("costed_rungs", [])),
 		"authoritative": false,
 		"can_mutate": false,
@@ -274,8 +328,9 @@ static func encounter_action_proposal(state_value: Variant, action: String) -> D
 	var state := normalize_encounter_proposal(state_value)
 	var clean_action := action.strip_edges().to_lower()
 	if state.is_empty() or clean_action not in ["observe_officers", "use_intel", "choose_exit", "comply"]: return {}
-	if clean_action == "use_intel": return {}
-	return {
+	var intel := _dictionary(state.get("intel_projection", {}))
+	if clean_action == "use_intel" and not bool(intel.get("available", false)): return {}
+	var result := {
 		"action": clean_action,
 		"current_phase": "arrival_proposal",
 		"next_phase_proposal": "route_choice_proposal" if clean_action in ["observe_officers", "use_intel"] else "host_resolution_required",
@@ -283,6 +338,14 @@ static func encounter_action_proposal(state_value: Variant, action: String) -> D
 		"can_mutate": false,
 		"authority_gap": ENCOUNTER_AUTHORITY_GAP,
 	}
+	if clean_action == "use_intel":
+		var exits := _string_array(state.get("exit_node_ids", []))
+		var heading := str(intel.get("heading_node_id", ""))
+		for exit_id in exits:
+			if exit_id != heading:
+				result["recommended_exit_id"] = exit_id
+				break
+	return result
 
 
 static func encounter_public_state(state_value: Variant) -> Dictionary:
@@ -320,6 +383,39 @@ func swept_window_aftermath(node_id: String) -> Dictionary:
 		"security_strictness_band_delta": int(window.get("security_strictness_band_delta", 0)), "cheat_window_open": bool(window.get("cheat_window_open", false)),
 		"pusher_alarm_tolerance_band_delta": int(window.get("pusher_alarm_tolerance_band_delta", 0)), "visible_cues": ["fresh_tire_tracks", "street_reopening"],
 	}
+
+
+func record_encounter_resolution(host_capability: Variant, claim: Dictionary, outcome: String, cost_kind: String, cost_amount: int) -> Dictionary:
+	var rungs := encounter_costed_rungs(_dictionary(config.get("encounter", {})))
+	var validation_kind := "cash" if cost_kind == "street_debt" else cost_kind
+	var cost_valid := _cost_matches_rung(rungs, outcome, validation_kind, cost_amount)
+	if not cost_valid and validation_kind == "cash" and cost_amount >= 0:
+		for rung_value in rungs:
+			var rung := _dictionary(rung_value)
+			if str(rung.get("outcome", "")) != outcome: continue
+			for option_value in _dictionary_array(rung.get("cost_options", [])):
+				var option := _dictionary(option_value)
+				var amount_range: Array = (option.get("amount_range", []) as Array).duplicate() if typeof(option.get("amount_range", [])) == TYPE_ARRAY else []
+				if str(option.get("cost_kind", "")) == "cash" and amount_range.size() == 2 and cost_amount <= int(amount_range[1]): cost_valid = true
+	if host_capability == null or host_capability != _host_capability or not _encounter_claim_matches_current(claim) \
+			or outcome not in ENCOUNTER_OUTCOMES or not cost_valid:
+		return {}
+	var tombstone := {
+		"segment_index": int(claim.get("segment_index", -1)),
+		"node_id": str(claim.get("node_id", "")),
+		"action_index": int(claim.get("action_index", action_index)),
+		"outcome": outcome,
+		"cost_kind": cost_kind,
+		"cost_amount": maxi(0, cost_amount),
+	}
+	for existing_value in encounter_tombstones:
+		var existing := _dictionary(existing_value)
+		if int(existing.get("segment_index", -2)) == int(tombstone.get("segment_index", -1)):
+			return existing.duplicate(true) if existing == tombstone else {}
+	encounter_tombstones.append(tombstone)
+	while encounter_tombstones.size() > ENCOUNTER_TOMBSTONE_LIMIT:
+		encounter_tombstones.pop_front()
+	return tombstone.duplicate(true)
 
 
 static func encounter_costed_rungs(encounter_config: Dictionary) -> Array:
@@ -416,12 +512,16 @@ func snapshot() -> Dictionary:
 		"last_adjacent_sighting_segment": last_adjacent_sighting_segment,
 		"config": config.duplicate(true),
 		"reroute_history": reroute_history.duplicate(true),
+		"encounter_tombstones": encounter_tombstones.duplicate(true),
 	}
 
 
 func restore(source: Dictionary, p_seed_value: int, source_config: Dictionary = {}) -> bool:
 	reset(p_seed_value, source_config)
-	if int(source.get("schema_version", 0)) != SCHEMA_VERSION:
+	var version := int(source.get("schema_version", 0))
+	var legacy_keys := ["schema_version", "seed_value", "action_index", "configured", "disabled", "start_action", "end_action", "segments", "segment_index", "swept_windows_by_node", "personal_marker", "last_encounter_segment", "last_encounter_node_id", "last_adjacent_sighting_segment", "config", "reroute_history"]
+	var current_keys := legacy_keys.duplicate(); current_keys.append("encounter_tombstones")
+	if version not in [LEGACY_SCHEMA_VERSION, SCHEMA_VERSION] or not _exact_keys(source, legacy_keys if version == LEGACY_SCHEMA_VERSION else current_keys):
 		disable(p_seed_value, source_config)
 		return false
 	seed_value = maxi(1, int(source.get("seed_value", p_seed_value)))
@@ -439,9 +539,25 @@ func restore(source: Dictionary, p_seed_value: int, source_config: Dictionary = 
 	last_adjacent_sighting_segment = int(source.get("last_adjacent_sighting_segment", -1))
 	config = _dictionary(source.get("config", source_config)).duplicate(true)
 	reroute_history = _dictionary_array(source.get("reroute_history", []))
+	encounter_tombstones = []
+	for tombstone_value in _dictionary_array(source.get("encounter_tombstones", [])):
+		var tombstone := _normalize_encounter_tombstone(tombstone_value)
+		if tombstone.is_empty() or encounter_tombstones.size() >= ENCOUNTER_TOMBSTONE_LIMIT:
+			disable(p_seed_value, source_config)
+			return false
+		encounter_tombstones.append(tombstone)
 	_sync_segment_index()
 	_prune_windows()
 	return true
+
+
+static func _normalize_encounter_tombstone(value: Dictionary) -> Dictionary:
+	if not _exact_keys(value, ["action_index", "cost_amount", "cost_kind", "node_id", "outcome", "segment_index"]): return {}
+	if str(value.get("node_id", "")).is_empty() or str(value.get("outcome", "")) not in ENCOUNTER_OUTCOMES \
+			or str(value.get("cost_kind", "")) not in ["cash", "contraband", "travel_delay", "street_debt"] \
+			or int(value.get("segment_index", -1)) < 0 or int(value.get("action_index", -1)) < 0 or int(value.get("cost_amount", -1)) < 0:
+		return {}
+	return value.duplicate(true)
 
 
 func align_restored_action_index(restored_action_index: int) -> void:
@@ -632,7 +748,15 @@ static func _cargo_context_valid(value: Variant) -> bool:
 static func _intel_projection_valid(value: Variant) -> bool:
 	if typeof(value) != TYPE_DICTIONARY: return false
 	var intel: Dictionary = value
-	return _exact_keys(intel, ["authority_gap", "available"]) and not bool(intel.get("available", true)) and str(intel.get("authority_gap", "")) == INTEL_AUTHORITY_GAP
+	if not bool(intel.get("available", false)):
+		return _exact_keys(intel, ["authority_gap", "available"]) and str(intel.get("authority_gap", "")) == INTEL_AUTHORITY_GAP \
+			or _exact_keys(intel, ["available", "live", "observed"]) and not bool(intel.get("live", true))
+	var live_status := _exact_keys(intel, ["active", "available", "current_node_id", "heading_node_id", "live", "moves_in_actions", "observed"]) \
+		and bool(intel.get("observed", false)) and not str(intel.get("current_node_id", "")).is_empty() and int(intel.get("moves_in_actions", -1)) >= 0
+	var reported_marker := _exact_keys(intel, ["available", "heading_node_id", "live", "node_id", "observed", "sighted_action", "source", "stale_actions"]) \
+		and bool(intel.get("observed", false)) and not str(intel.get("node_id", "")).is_empty() and int(intel.get("sighted_action", -1)) >= 0 \
+		and int(intel.get("stale_actions", -1)) >= 0 and str(intel.get("source", "")) in ["crew_intel", "direct", "adjacent"]
+	return live_status or reported_marker
 
 
 static func _positions_valid(value: Variant) -> bool:
