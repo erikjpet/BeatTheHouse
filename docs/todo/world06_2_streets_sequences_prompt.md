@@ -1,4 +1,4 @@
-Status: TODO
+Status: IN_PROGRESS — implementation landed on `main`; Family 2 release-gate closeout remains open
 Board row: `world06_2` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — 0.6 world06_2: Streets — Deliveries, Holds and Pursuit

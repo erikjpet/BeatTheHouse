@@ -1,4 +1,4 @@
-Status: TODO
+Status: BLOCKED — requires pusherv3_10 acceptance, fix06_8 owner disposition, and fix06_13 formal closeout
 Board row: `pusherv3_11` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — 0.6 pusherv3_11: Coin Pusher V3 Program Closure Audit

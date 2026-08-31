@@ -43,7 +43,7 @@ Read in full:
   `tools/coin_pusher_ev_shard.gd`;
 - `docs/plans/0.6_living_world_roadmap.md`,
   `docs/plans/0.6_remaining_work_program.md`, and
-  `docs/todo/cross06_0_cross_cutting_orchestration_prompt.md`;
+  `docs/todone/cross06_0_cross_cutting_orchestration_prompt.md`;
 - the accepted execution records, contracts, reports, and exact heads for all
   Family 1 and Family 2 rows;
 - `docs/todo/playtest06_2_playtest_gate_refresh_prompt.md`,

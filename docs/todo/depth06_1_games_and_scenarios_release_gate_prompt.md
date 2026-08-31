@@ -1,4 +1,4 @@
-Status: TODO
+Status: IN_PROGRESS — gate scaffolding and focused coverage landed; independent closure audit remains open
 Board row: `depth06_1` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — 0.6 depth06_1: Craps, Poker, and Scenario Depth Release Gate

@@ -1,4 +1,4 @@
-Status: TODO
+Status: IN_PROGRESS — accepted core implementation landed on `main`; full prompt closeout remains open
 Board row: `craps06_3` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — 0.6 craps06_3: Craps Table Depth and Living Sequence Rework

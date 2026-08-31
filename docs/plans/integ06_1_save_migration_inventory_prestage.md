@@ -40,7 +40,7 @@ The umbrella prompt explicitly requires cells for:
 - in-flight old-board delivery re-pointing to real travel nodes
   (`docs/todone/rework06_1_map_delivery_prompt.md:156-189`);
 - coin-pusher compact persistence, legacy migration, and all V3 successor formats
-  (`docs/todo/pusher06_1_solver_core_prompt.md:70,162` and the
+  (`docs/todone/pusher06_1_solver_core_prompt.md:70,162` and the
   `pusherv3_2` through `pusherv3_10` prompt family);
 - scenario snapshot schema migrations
   (`docs/todo/env06_6_dynamic_scenario_runtime_prompt.md:88,174`).

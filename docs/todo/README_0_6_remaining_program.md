@@ -1,5 +1,12 @@
 # 0.6 Remaining Work — PM operating page
 
+Status: **HISTORICAL OPERATING PAGE — DO NOT RELAUNCH THE THREE FAMILY
+INTEGRATORS.** Their recovered product payloads were reconciled through PR #21.
+Current execution state and the safe closeout order are recorded in
+`docs/plans/0.6_todo_state_audit_2026-08-31.md` and the active board. The text
+below is retained as program-design history; any instruction to launch a
+family integrator is superseded.
+
 Created: 2026-08-25. Program design:
 `docs/plans/0.6_remaining_work_program.md`. Execution state stays on
 `docs/todo/README_0_6_board.md`, which is still the single source of truth.
@@ -16,9 +23,9 @@ integration branch, and merges back when its release gate passes.
 
 | Family | Launcher | Rows | Gate |
 | --- | --- | --- | --- |
-| 1 — Game depth parity | `game06_0_game_depth_orchestration_prompt.md` | `game06_1`–`game06_8` | `game06_8` |
-| 2 — Crew and world depth | `world06_0_crew_world_depth_orchestration_prompt.md` | `world06_1`–`world06_7` | `world06_7` |
-| 3 — Cross-cutting | `cross06_0_cross_cutting_orchestration_prompt.md` | ten rows, mixed timing | per-row |
+| 1 — Game depth parity | `../todone/game06_0_game_depth_orchestration_prompt.md` | `game06_1`–`game06_8` | `game06_8` |
+| 2 — Crew and world depth | `../todone/world06_0_crew_world_depth_orchestration_prompt.md` | `world06_1`–`world06_7` | `world06_7` |
+| 3 — Cross-cutting | `../todone/cross06_0_cross_cutting_orchestration_prompt.md` | ten rows, mixed timing | per-row |
 
 Each launcher is self-contained: authority, preflight, worktree topology, waves,
 self-review protocol, independent review protocol, merge discipline, final merge,

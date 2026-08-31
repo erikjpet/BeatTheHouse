@@ -1,4 +1,4 @@
-Status: TODO
+Status: TODO — measurement prestage and broad smoke data landed; the full platform pass has not run
 Board row: `perf06_1` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — 0.6 perf06_1: Performance and Platform Pass

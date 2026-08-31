@@ -1,4 +1,4 @@
-Status: TODO
+Status: TODO — current-lesson audit prestage landed; the teaching pass has not run
 Board row: `teach06_2` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — 0.6 teach06_2: Teaching Pass Two

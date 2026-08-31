@@ -1,4 +1,4 @@
-Status: TODO
+Status: IN_PROGRESS — implementation landed on `main`; Family 1 release-gate closeout remains open
 Board row: `game06_6` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — 0.6 game06_6: Bar Dice Depth
