@@ -1,4 +1,4 @@
-Status: DONE — 2026-08-25
+Status: IN_PROGRESS — reopened 2026-08-25 after completion audit
 Board row: `pusherv3_10` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — pusherv3_10: Full-Width Resting Openings, Full Plinko, Drop Nozzles, and Stack Physics
