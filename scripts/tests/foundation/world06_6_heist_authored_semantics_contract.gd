@@ -1,7 +1,7 @@
 extends SceneTree
 
 const HEIST_PATH := "res://data/crew/heist.json"
-const EXPECTED_GOVERNING_SHA256 := "4732de182fcebe6241005f82e15d5aa8b34f19cd0c653bb93c67a69470a1147c"
+const EXPECTED_GOVERNING_SHA256 := "33b7036254db4f65abe90527cf0012877f98bfff5bd912f9d22a1a6a1c153198"
 const EXPECTED_PLANS := ["the_count", "the_whale_game"]
 const EXPECTED_EXITS := {
 	"the_count": ["corridor", "dock"],

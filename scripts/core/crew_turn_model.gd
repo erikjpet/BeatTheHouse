@@ -39,7 +39,7 @@ static func restore_state(value: Variant, member_ids: Array) -> Dictionary:
 	if not can_restore_state(value, member_ids):
 		return empty_state()
 	var source: Dictionary = value
-	return normalize_state(source)
+	return normalize_state(source, member_ids)
 
 
 static func can_restore_state(value: Variant, member_ids: Array) -> bool:

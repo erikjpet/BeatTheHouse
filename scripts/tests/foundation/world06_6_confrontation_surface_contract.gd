@@ -4,7 +4,7 @@ const RngStreamScript := preload("res://scripts/core/rng_stream.gd")
 const Model := preload("res://scripts/core/crew_turn_model.gd")
 const MODEL_PATH := "res://scripts/core/crew_turn_model.gd"
 const MARKER := "# WORLD06_6_PUBLIC_SURFACE_BEGIN"
-const EXPECTED_GOVERNING_PREFIX_SHA256 := "70214500f527c1d4f94a3e40d653b9561b70cf52e27bc3c8d36423016f820965"
+const EXPECTED_GOVERNING_PREFIX_SHA256 := "4d9edd594a595156d59a931b167d7db20d4165f6374ee04316a1a395d65dae63"
 
 
 func _initialize() -> void:
@@ -31,7 +31,7 @@ func _check_governing_prefix(failures: Array) -> void:
 		failures.append("The landed governing implementation changed.")
 	var state := Model.empty_state()
 	var keys := state.keys(); keys.sort()
-	if keys != ["c", "e", "f", "h", "m", "v", "w"] or int(state.get("v", 0)) != 1:
+	if keys != ["c", "e", "f", "h", "m", "t", "v", "w"] or int(state.get("v", 0)) != 2 or state.get("t", []) != []:
 		failures.append("The neutral storage shape changed.")
 
 
