@@ -8638,7 +8638,7 @@ func crew_play_actions(game_id: String, environment: Dictionary = current_enviro
 func crew_play_activate(play_id: String, game_id: String, environment: Dictionary = current_environment) -> Dictionary:
 	if not crew_play_host_authorizes(_world1_host_capability, environment, game_id):
 		return GameModule.build_action_result({"ok": false, "type": "game_action", "source_id": "crew_plays", "game_id": game_id, "action_id": "crew_play:%s" % play_id, "action_kind": "unknown", "message": "That crew play is not bound to the live table."})
-	var rollback := _capture_environment_turn_snapshot()
+	var rollback: Dictionary = _environment_turn_snapshot()
 	var before_state := CrewPlayModelScript.normalize_state(crew_play_state)
 	var before_bankroll := bankroll
 	var before_chips := grand_casino_chips
@@ -13205,7 +13205,7 @@ func _check_police_sweep_boundary() -> Dictionary:
 	if node_id.is_empty() or node_id.begins_with("grand_casino"):
 		return {}
 	if town_state.sweep_is_at(node_id):
-		var rollback := _capture_environment_turn_snapshot()
+		var rollback: Dictionary = _environment_turn_snapshot()
 		town_state.record_sweep_sighting("direct", _world1_host_capability)
 		if crew_capability_active("sweep_intel"):
 			report_sweep_intel_at_boundary()

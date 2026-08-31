@@ -112,13 +112,13 @@ func _check_chip_dump_and_detection(failures: Array) -> void:
 		if funding != {"model": "A_player_funded", "direction": "cash_to_chips", "cash_debit": 46, "chip_credit": 40, "fee_sink": 6}:
 			failures.append("Chip Dump proposal changed conservation model A.")
 		var before_total: int = first.bankroll + first.grand_casino_chips
-		var result := first.crew_play_activate("chip_dump", "baccarat", first.current_environment)
+		var result: Dictionary = first.crew_play_activate("chip_dump", "baccarat", first.current_environment)
 		if not bool(result.get("ok", false)) or first.bankroll + first.grand_casino_chips != before_total - 6 \
 				or int(result.get("bankroll_delta", 0)) != -46 or int(result.get("chips_delta", 0)) != 40:
 			failures.append("Chip Dump failed player-funded conservation for seed %s." % seed)
 		var second: Variant = _run(seed, "baccarat")
 		second.grand_casino_chips = 10
-		var replay := second.crew_play_activate("chip_dump", "baccarat", second.current_environment)
+		var replay: Dictionary = second.crew_play_activate("chip_dump", "baccarat", second.current_environment)
 		if bool(result.get("crew_play_detected", false)) != bool(replay.get("crew_play_detected", false)) or first.suspicion_level() != second.suspicion_level():
 			failures.append("Detection projection diverged for repeated seed %s." % seed)
 		observed.append(bool(result.get("crew_play_detected", false)))

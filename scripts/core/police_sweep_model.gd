@@ -66,6 +66,10 @@ func bind_host_capability(capability: RefCounted) -> bool:
 	return true
 
 
+func _host_authorized(candidate: Variant) -> bool:
+	return typeof(candidate) == TYPE_OBJECT and candidate != null and is_instance_valid(candidate) and candidate == _host_capability
+
+
 func disable(p_seed_value: int, source_config: Dictionary = {}) -> void:
 	reset(p_seed_value, source_config)
 	disabled = true
@@ -146,7 +150,7 @@ func status() -> Dictionary:
 
 
 func intel_status(host_capability: Variant = null, intel_enabled: bool = false) -> Dictionary:
-	if host_capability == null or host_capability != _host_capability or not intel_enabled:
+	if not _host_authorized(host_capability) or not intel_enabled:
 		return {"available": false, "authority_gap": INTEL_AUTHORITY_GAP}
 	var current := status()
 	if not bool(current.get("active", false)):
@@ -179,7 +183,7 @@ func report_intel_at_boundary(host_capability: Variant = null, intel_enabled: bo
 func map_marker(host_capability: Variant = null, intel_enabled: bool = false) -> Dictionary:
 	if personal_marker.is_empty():
 		return {}
-	if host_capability == null or host_capability != _host_capability or not intel_enabled:
+	if not _host_authorized(host_capability) or not intel_enabled:
 		return {"observed": true, "live": false, "available": false, "authority_gap": INTEL_AUTHORITY_GAP}
 	var live := int(personal_marker.get("segment_index", -1)) == segment_index and bool(status().get("active", false))
 	return {
@@ -195,7 +199,7 @@ func map_marker(host_capability: Variant = null, intel_enabled: bool = false) ->
 
 
 func record_personal_sighting(source: String = "direct", host_capability: Variant = null) -> Dictionary:
-	if host_capability == null or host_capability != _host_capability:
+	if not _host_authorized(host_capability):
 		return {}
 	var current := status()
 	if not bool(current.get("active", false)):
@@ -238,7 +242,7 @@ func adjacent_sighting_due(player_node_id: String) -> bool:
 
 
 func claim_encounter(node_id: String, host_capability: Variant = null) -> Dictionary:
-	if host_capability == null or host_capability != _host_capability:
+	if not _host_authorized(host_capability):
 		return {}
 	if not is_at(node_id):
 		return {}
@@ -315,7 +319,7 @@ static func normalize_encounter_proposal(value: Variant) -> Dictionary:
 		"positions": (proposal.get("positions", {}) as Dictionary).duplicate(true),
 		"exit_node_ids": exits,
 		"cargo_context": (proposal.get("cargo_context", {}) as Dictionary).duplicate(true),
-		"intel_projection": (proposal.get("intel_projection", {}) as Dictionary).duplicate(true),
+		"intel_projection": _normalized_intel_projection(proposal.get("intel_projection", {})),
 		"costed_rungs": _normalized_rungs(proposal.get("costed_rungs", [])),
 		"authoritative": false,
 		"can_mutate": false,
@@ -397,7 +401,7 @@ func record_encounter_resolution(host_capability: Variant, claim: Dictionary, ou
 				var option := _dictionary(option_value)
 				var amount_range: Array = (option.get("amount_range", []) as Array).duplicate() if typeof(option.get("amount_range", [])) == TYPE_ARRAY else []
 				if str(option.get("cost_kind", "")) == "cash" and amount_range.size() == 2 and cost_amount <= int(amount_range[1]): cost_valid = true
-	if host_capability == null or host_capability != _host_capability or not _encounter_claim_matches_current(claim) \
+	if not _host_authorized(host_capability) or not _encounter_claim_matches_current(claim) \
 			or outcome not in ENCOUNTER_OUTCOMES or not cost_valid:
 		return {}
 	var tombstone := {
@@ -757,6 +761,34 @@ static func _intel_projection_valid(value: Variant) -> bool:
 		and bool(intel.get("observed", false)) and not str(intel.get("node_id", "")).is_empty() and int(intel.get("sighted_action", -1)) >= 0 \
 		and int(intel.get("stale_actions", -1)) >= 0 and str(intel.get("source", "")) in ["crew_intel", "direct", "adjacent"]
 	return live_status or reported_marker
+
+
+static func _normalized_intel_projection(value: Variant) -> Dictionary:
+	var intel := _dictionary(value)
+	if not bool(intel.get("available", false)):
+		if intel.has("authority_gap"):
+			return {"available": false, "authority_gap": INTEL_AUTHORITY_GAP}
+		return {"available": false, "observed": bool(intel.get("observed", false)), "live": false}
+	if intel.has("current_node_id"):
+		return {
+			"available": true,
+			"active": bool(intel.get("active", false)),
+			"observed": bool(intel.get("observed", false)),
+			"live": bool(intel.get("live", false)),
+			"current_node_id": str(intel.get("current_node_id", "")),
+			"heading_node_id": str(intel.get("heading_node_id", "")),
+			"moves_in_actions": maxi(0, int(intel.get("moves_in_actions", 0))),
+		}
+	return {
+		"available": true,
+		"observed": bool(intel.get("observed", false)),
+		"live": bool(intel.get("live", false)),
+		"node_id": str(intel.get("node_id", "")),
+		"heading_node_id": str(intel.get("heading_node_id", "")),
+		"sighted_action": maxi(0, int(intel.get("sighted_action", 0))),
+		"stale_actions": maxi(0, int(intel.get("stale_actions", 0))),
+		"source": str(intel.get("source", "crew_intel")),
+	}
 
 
 static func _positions_valid(value: Variant) -> bool:
