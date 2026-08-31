@@ -129,6 +129,22 @@ func sealed_action_authority_script() -> Script:
 	return ActionAuthorityScript
 
 
+func sealed_action_authority_contract() -> Dictionary:
+	return {
+		"resolve_proposal_method": ActionAuthorityScript.RESOLVE_PROPOSAL_METHOD,
+		"wager_cost_proposal_method": ActionAuthorityScript.WAGER_COST_PROPOSAL_METHOD,
+		"host_auto_tick_method": ActionAuthorityScript.HOST_AUTO_TICK_METHOD,
+		"surface_intent_key": ActionAuthorityScript.SURFACE_INTENT_KEY,
+		"surface_intent_index_key": ActionAuthorityScript.SURFACE_INTENT_INDEX_KEY,
+		"retry_surface_actions": ActionAuthorityScript.RETRY_SURFACE_ACTIONS.duplicate(),
+		"cancel_surface_actions": [ActionAuthorityScript.CANCEL_SURFACE_ACTION],
+		"proposal_requires_apply_key": ActionAuthorityScript.PROPOSAL_REQUIRES_APPLY_KEY,
+		"authoritative_result_marker": "",
+		"place_bet_action": ActionAuthorityScript.PLACE_BET_ACTION,
+		"host_pointer_intent": false,
+	}
+
+
 func blackjack_ritual_contract() -> Dictionary:
 	# This is a Blackjack-owned consumer declaration. It deliberately contains no
 	# executable handler reference and does not import a shared ritual runtime.

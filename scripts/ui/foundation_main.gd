@@ -180,6 +180,12 @@ var ActionAuthorityScript: Script:
 			return null
 		return current_game.sealed_action_authority_script()
 
+var action_authority_contract: Dictionary:
+	get:
+		if current_game == null:
+			return {}
+		return current_game.sealed_action_authority_contract()
+
 var user_settings: UserSettings
 var profile_inventory: ProfileInventory
 var meta_collection_service: MetaCollectionService
@@ -1113,11 +1119,18 @@ func _on_game_surface_pointer_action(action: String, index: int, phase: String, 
 	ui_state["selected_action_id"] = selected_action_id
 	ui_state["selected_action_kind"] = selected_action_kind
 	ui_state["selected_stake"] = _current_selected_stake()
-	var command := current_game.surface_pointer_command(action, index, phase, board_position, ui_state, run_state, run_state.current_environment)
-	if _current_game_uses_action_authority() and command.has(ActionAuthorityScript.SURFACE_INTENT_KEY):
+	var provider_contract: Dictionary = action_authority_contract if _current_game_uses_action_authority() else {}
+	var command: Dictionary
+	if bool(provider_contract.get("host_pointer_intent", false)):
+		command = _sealed_action_host_pointer_intent(action, index, phase, board_position, ui_state)
+	else:
+		command = current_game.surface_pointer_command(action, index, phase, board_position, ui_state, run_state, run_state.current_environment)
+	var surface_intent_key := str(provider_contract.get("surface_intent_key", ""))
+	var surface_intent_index_key := str(provider_contract.get("surface_intent_index_key", ""))
+	if not surface_intent_key.is_empty() and command.has(surface_intent_key):
 		command = _sealed_action_host_surface_intent(
-			str(command.get(ActionAuthorityScript.SURFACE_INTENT_KEY, "")),
-			int(command.get(ActionAuthorityScript.SURFACE_INTENT_INDEX_KEY, index)),
+			str(command.get(surface_intent_key, "")),
+			int(command.get(surface_intent_index_key, index)),
 			false,
 			_environment_simulation_time_msec()
 		)
@@ -1158,16 +1171,21 @@ func _handle_module_surface_action(action: String, index: int, confirm_requested
 func _current_game_uses_action_authority() -> bool:
 	if current_game == null:
 		return false
-	var authority_script := ActionAuthorityScript
+	var authority_script: Script = ActionAuthorityScript
 	if authority_script == null:
+		return false
+	var contract: Dictionary = action_authority_contract
+	var resolve_method := StringName(contract.get("resolve_proposal_method", &""))
+	var wager_method := StringName(contract.get("wager_cost_proposal_method", &""))
+	if contract.is_empty() or resolve_method.is_empty() or wager_method.is_empty():
 		return false
 	var game_id := current_game.get_id()
 	var canonical: Variant = game_module_cache.get(game_id, null)
 	return not game_id.is_empty() \
 		and canonical is GameModule \
 		and current_game == canonical \
-		and current_game.has_method(authority_script.RESOLVE_PROPOSAL_METHOD) \
-		and current_game.has_method(authority_script.WAGER_COST_PROPOSAL_METHOD)
+		and current_game.has_method(resolve_method) \
+		and current_game.has_method(wager_method)
 
 
 func _sealed_action_host_table_binding(environment: Dictionary = {}) -> String:
@@ -1291,7 +1309,9 @@ func _sealed_action_host_surface_intent(surface_action: String, index: int, conf
 	ledger = _sealed_action_host_ledger(candidate, true)
 	var pending: Dictionary = ledger.get("pending_delivery", {})
 	if not pending.is_empty():
-		if surface_action in ActionAuthorityScript.RETRY_SURFACE_ACTIONS:
+		var retry_surface_actions: Array = action_authority_contract.get("retry_surface_actions", [])
+		var cancel_surface_actions: Array = action_authority_contract.get("cancel_surface_actions", [])
+		if surface_action in retry_surface_actions:
 			return GameModule.surface_command({
 				"handled": true,
 				"action_id": str(pending.get("action_id", "")),
@@ -1303,7 +1323,7 @@ func _sealed_action_host_surface_intent(surface_action: String, index: int, conf
 				"_sealed_action_host_delivery": pending.duplicate(true),
 				"message": "Retrying the sealed Blackjack action.",
 			})
-		if surface_action == ActionAuthorityScript.CANCEL_SURFACE_ACTION:
+		if surface_action in cancel_surface_actions:
 			var cancelled: Dictionary = ActionAuthorityScript.cancel_delivery(ledger, pending)
 			if not bool(cancelled.get("ok", false)):
 				return _sealed_action_host_rejection(str(cancelled.get("error_code", "receipt_content_conflict")), "Blackjack cancellation did not match the pending action.", str(pending.get("request_key", "")))
@@ -1321,7 +1341,7 @@ func _sealed_action_host_surface_intent(surface_action: String, index: int, conf
 	var recovery_session := session.duplicate(true)
 	if surface_time_msec >= 0:
 		session["surface_time_msec"] = surface_time_msec
-	if not current_game.call("_has_dealt_hand", session) and _current_selected_stake() > 0:
+	if current_game.has_method("_has_dealt_hand") and not current_game.call("_has_dealt_hand", session) and _current_selected_stake() > 0:
 		session["selected_stake"] = _current_selected_stake()
 	var command: Dictionary = current_game.surface_action_command(surface_action, index, confirm_requested, session, candidate, candidate.current_environment)
 	if bool(command.get("handled", false)):
@@ -1353,10 +1373,32 @@ func _sealed_action_host_surface_intent(surface_action: String, index: int, conf
 	return command
 
 
+func _sealed_action_host_pointer_intent(surface_action: String, index: int, phase: String, board_position: Vector2, ui_state: Dictionary) -> Dictionary:
+	var candidate := _sealed_action_host_detached()
+	if candidate == null:
+		return _sealed_action_host_rejection("invalid_intent", "Table pointer intent is unavailable.")
+	var ledger := _sealed_action_host_ledger(candidate, true)
+	if not (ledger.get("pending_delivery", {}) as Dictionary).is_empty():
+		return _sealed_action_host_rejection("pending_delivery", "Retry or cancel the pending table action before changing the ceremony.")
+	var session: Dictionary = (ledger.get("session", {}) as Dictionary).duplicate(true)
+	for transient_key in ["surface_time_msec", "drunk_scaled_surface_time_msec", "reduce_motion"]:
+		if ui_state.has(transient_key):
+			session[transient_key] = ui_state[transient_key]
+	var command: Dictionary = current_game.surface_pointer_command(surface_action, index, phase, board_position, session, candidate, candidate.current_environment)
+	if bool(command.get("handled", false)):
+		var next_session: Dictionary = command.get("ui_state", session) if typeof(command.get("ui_state", session)) == TYPE_DICTIONARY else session
+		ledger = ActionAuthorityScript.stage_session(ledger, next_session)
+	_sealed_action_host_store_ledger(candidate, ledger)
+	if not _sealed_action_host_publish(candidate):
+		return _sealed_action_host_rejection("internal_fail_closed", "Table pointer intent could not be persisted.")
+	return command
+
+
 func _sealed_action_host_needs_auto_tick(surface_time_msec: int) -> bool:
-	if run_state == null or current_game == null or not current_game.has_method(ActionAuthorityScript.HOST_AUTO_TICK_METHOD):
+	var predicate_method := StringName(action_authority_contract.get("host_auto_tick_method", &""))
+	if run_state == null or current_game == null or predicate_method.is_empty() or not current_game.has_method(predicate_method):
 		return false
-	return bool(current_game.call(ActionAuthorityScript.HOST_AUTO_TICK_METHOD, surface_time_msec, run_state, run_state.current_environment))
+	return bool(current_game.call(predicate_method, surface_time_msec, run_state, run_state.current_environment))
 
 
 func _sealed_action_host_auto_intent(surface_time_msec: int) -> Dictionary:
@@ -1401,7 +1443,10 @@ func _sealed_action_host_preview_wager_cost(action_id: String, stake: int) -> in
 	_sealed_action_host_store_ledger(candidate, ledger)
 	var snapshot := candidate.to_save_snapshot()
 	var session: Dictionary = (ledger.get("session", {}) as Dictionary).duplicate(true)
-	var proposal: Dictionary = current_game.call(ActionAuthorityScript.WAGER_COST_PROPOSAL_METHOD, action_id, stake, snapshot, session)
+	var wager_method := StringName(action_authority_contract.get("wager_cost_proposal_method", &""))
+	if wager_method.is_empty() or not current_game.has_method(wager_method):
+		return 0
+	var proposal: Dictionary = current_game.call(wager_method, action_id, stake, snapshot, session)
 	var expected_input := GameRitualRuntimeScript.canonical_fingerprint({
 		"action_id": action_id,
 		"stake": stake,
@@ -1520,8 +1565,11 @@ func _sealed_action_host_proposal_valid(proposal: Dictionary, proposal_input: Di
 	# The host replays the canonical module from the sealed serialized input and
 	# compares the entire output. A producer cannot bless a modified snapshot by
 	# merely recomputing its own hash.
+	var resolve_method := StringName(action_authority_contract.get("resolve_proposal_method", &""))
+	if resolve_method.is_empty() or not current_game.has_method(resolve_method):
+		return false
 	var canonical: Dictionary = current_game.call(
-		ActionAuthorityScript.RESOLVE_PROPOSAL_METHOD,
+		resolve_method,
 		str(proposal_input.get("action_id", "")),
 		int(proposal_input.get("stake", 0)),
 		(proposal_input.get("run_snapshot", {}) as Dictionary).duplicate(true),
@@ -1562,7 +1610,13 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 		return _sealed_action_host_rejection("stale_boundary", "Blackjack delivery was not present on the canonical candidate.", request_key)
 	var session: Dictionary = (ledger.get("session", {}) as Dictionary).duplicate(true)
 	var wager_snapshot := candidate.to_save_snapshot()
-	var wager_proposal: Dictionary = current_game.call(ActionAuthorityScript.WAGER_COST_PROPOSAL_METHOD, action_id, stake, wager_snapshot, session)
+	var provider_contract: Dictionary = action_authority_contract
+	var wager_method := StringName(provider_contract.get("wager_cost_proposal_method", &""))
+	var resolve_method := StringName(provider_contract.get("resolve_proposal_method", &""))
+	if wager_method.is_empty() or resolve_method.is_empty() \
+			or not current_game.has_method(wager_method) or not current_game.has_method(resolve_method):
+		return _sealed_action_host_rejection("invalid_intent", "Sealed action proposal methods are unavailable.", request_key)
+	var wager_proposal: Dictionary = current_game.call(wager_method, action_id, stake, wager_snapshot, session)
 	var wager_input_fingerprint := GameRitualRuntimeScript.canonical_fingerprint({
 		"action_id": action_id,
 		"stake": stake,
@@ -1577,7 +1631,8 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 		return _sealed_action_host_rejection("insufficient_funds", str(funding_preview.get("message", "You do not have enough cash or chips for that wager.")), request_key)
 	var funding_depletes_liquid_balance := candidate.bankroll - int(funding_preview.get("cash_used", 0)) <= 0 \
 		and candidate.grand_casino_chips - int(funding_preview.get("existing_chips_used", 0)) <= 0
-	if action_id == ActionAuthorityScript.PLACE_BET_ACTION and funding_depletes_liquid_balance:
+	var place_bet_action := str(provider_contract.get("place_bet_action", ""))
+	if not place_bet_action.is_empty() and action_id == place_bet_action and funding_depletes_liquid_balance:
 		candidate.begin_deferred_bankroll_zero_resolution()
 	var funding := candidate.fund_grand_casino_wager(current_game.get_id(), wager_cost, candidate.current_environment)
 	if not bool(funding.get("ok", false)):
@@ -1599,7 +1654,7 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 		"ui_state": session,
 	}
 	var proposal: Dictionary = current_game.call(
-		ActionAuthorityScript.RESOLVE_PROPOSAL_METHOD,
+		resolve_method,
 		action_id,
 		stake,
 		proposal_input.get("run_snapshot", {}),
@@ -1626,8 +1681,7 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 		return _sealed_action_host_rejection("invalid_proposal", "Blackjack proposal changed its delivery authority.", request_key)
 	var proposed_rng := RngStream.new()
 	proposed_rng.restore((proposal.get("rng_snapshot", {}) as Dictionary).duplicate(true))
-	var requires_apply := bool(result.get(ActionAuthorityScript.PROPOSAL_REQUIRES_APPLY_KEY, false))
-	result.erase(ActionAuthorityScript.PROPOSAL_REQUIRES_APPLY_KEY)
+	var requires_apply := _sealed_action_host_normalize_result_authority(result, provider_contract)
 	result[ActionAuthorityScript.HOST_COMMITTED_KEY] = true
 	result[ActionAuthorityScript.HOST_REQUEST_KEY] = request_key
 	result[ActionAuthorityScript.HOST_DELIVERY_KEY] = delivery.duplicate(true)
@@ -1713,6 +1767,21 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 	if not _sealed_action_host_publish(proposed_candidate):
 		return _sealed_action_host_rejection("internal_fail_closed", "Blackjack host could not publish the accepted transaction.", request_key)
 	return result
+
+
+func _sealed_action_host_normalize_result_authority(result: Dictionary, provider_contract: Dictionary) -> bool:
+	var proposal_requires_apply_key := str(provider_contract.get("proposal_requires_apply_key", ""))
+	var requires_apply := not proposal_requires_apply_key.is_empty() and bool(result.get(proposal_requires_apply_key, false))
+	if not proposal_requires_apply_key.is_empty():
+		result.erase(proposal_requires_apply_key)
+	var authoritative_result_marker := str(provider_contract.get("authoritative_result_marker", ""))
+	if not authoritative_result_marker.is_empty():
+		# The host owns capability minting even when a canonical provider authored
+		# the proposal. Strip every inbound claim before observing host policy.
+		result.erase(authoritative_result_marker)
+		if requires_apply:
+			result[authoritative_result_marker] = true
+	return requires_apply
 
 
 # `input_route_guarded` is trusted call-stack context only. It is never read
@@ -1871,22 +1940,29 @@ func _advance_game_surface_automation() -> void:
 		return
 	if _simulation_progression_paused():
 		return
-	var tick_state := _current_game_surface_auto_tick_state()
-	var ui_state := tick_state
-	var command: Dictionary
 	if _current_game_uses_action_authority():
-		var surface_time_msec := int(ui_state.get("surface_time_msec", _environment_simulation_time_msec()))
+		# The module-provided host predicate is the per-frame fast path. Build a
+		# surface snapshot only after it reports a due action boundary.
+		var surface_time_msec := _environment_simulation_time_msec()
 		if not _sealed_action_host_needs_auto_tick(surface_time_msec):
 			return
-		command = _sealed_action_host_auto_intent(surface_time_msec)
-	else:
-		if not current_game.surface_needs_auto_tick(tick_state, run_state, run_state.current_environment):
-			return
-		if not current_game.surface_auto_action_uses_lightweight_ui_state():
-			ui_state = _current_game_surface_ui_state()
-		if not is_same(ui_state, tick_state) and not current_game.surface_needs_auto_tick(ui_state, run_state, run_state.current_environment):
-			return
-		command = current_game.surface_auto_action_command(ui_state, run_state, run_state.current_environment, {})
+		var authority_ui_state := _current_game_surface_auto_tick_state()
+		var authority_command := _sealed_action_host_auto_intent(surface_time_msec)
+		_apply_game_surface_automation_command(authority_command, authority_ui_state)
+		return
+	var tick_state := _current_game_surface_auto_tick_state()
+	var ui_state := tick_state
+	if not current_game.surface_needs_auto_tick(tick_state, run_state, run_state.current_environment):
+		return
+	if not current_game.surface_auto_action_uses_lightweight_ui_state():
+		ui_state = _current_game_surface_ui_state()
+	if not is_same(ui_state, tick_state) and not current_game.surface_needs_auto_tick(ui_state, run_state, run_state.current_environment):
+		return
+	var command := current_game.surface_auto_action_command(ui_state, run_state, run_state.current_environment, {})
+	_apply_game_surface_automation_command(command, ui_state)
+
+
+func _apply_game_surface_automation_command(command: Dictionary, ui_state: Dictionary) -> void:
 	if command.is_empty() or not bool(command.get("handled", false)):
 		return
 	# Reuse the action-boundary snapshot already built above. Rebuilding it in

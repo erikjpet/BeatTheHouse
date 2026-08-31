@@ -4289,23 +4289,24 @@ func route_grand_casino_game_currency(result: Dictionary, deltas: Dictionary) ->
 
 
 func consume_blackjack_authority_result_receipt(result: Dictionary) -> bool:
-	if str(result.get("game_id", result.get("source_id", ""))) != "blackjack":
-		return true
+	var game_id := str(result.get("game_id", result.get("source_id", "")))
+	if game_id.is_empty():
+		return false
 	if typeof(result.get("blackjack_host_apply_receipt", null)) != TYPE_DICTIONARY:
 		return false
 	var receipt: Dictionary = result.get("blackjack_host_apply_receipt", {})
 	var game_states: Dictionary = current_environment.get("game_states", {}) if typeof(current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
-	if typeof(game_states.get("blackjack", null)) != TYPE_DICTIONARY:
+	if typeof(game_states.get(game_id, null)) != TYPE_DICTIONARY:
 		return false
-	var table: Dictionary = game_states.get("blackjack", {})
+	var table: Dictionary = game_states.get(game_id, {})
 	var pending: Variant = table.get("_blackjack_pending_apply_receipt", null)
-	var binding := "blackjack:%s:%s" % [str(current_environment.get("id", "unknown")), str(current_environment.get("archetype_id", "unknown"))]
+	var binding := "%s:%s:%s" % [game_id, str(current_environment.get("id", "unknown")), str(current_environment.get("archetype_id", "unknown"))]
 	if not BlackjackActionAuthorityScript.valid_receipt(receipt, pending, result, binding):
 		return false
 	# Consume before applying any deltas. Foundation applies only to a detached
 	# candidate, so a later failure discards both this consumption and all effects.
 	table.erase("_blackjack_pending_apply_receipt")
-	game_states["blackjack"] = table
+	game_states[game_id] = table
 	current_environment["game_states"] = game_states
 	return true
 
@@ -4328,22 +4329,24 @@ func action_authority_checkpoint_fingerprint() -> String:
 
 func _reconcile_blackjack_authority_restore() -> void:
 	var game_states: Dictionary = current_environment.get("game_states", {}) if typeof(current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
-	if typeof(game_states.get("blackjack", null)) != TYPE_DICTIONARY:
-		return
-	var table: Dictionary = (game_states.get("blackjack", {}) as Dictionary).duplicate(true)
-	if not table.has(BlackjackActionAuthorityScript.LEDGER_KEY):
-		return
-	var binding := "blackjack:%s:%s" % [str(current_environment.get("id", "unknown")), str(current_environment.get("archetype_id", "unknown"))]
-	var ledger := BlackjackActionAuthorityScript.validate_persisted_ledger(
-		table.get(BlackjackActionAuthorityScript.LEDGER_KEY),
-		binding,
-		blackjack_authority_checkpoint_fingerprint()
-	)
-	if ledger.is_empty():
-		table.erase(BlackjackActionAuthorityScript.LEDGER_KEY)
-	else:
-		table[BlackjackActionAuthorityScript.LEDGER_KEY] = ledger
-	game_states["blackjack"] = table
+	for game_id_value in game_states.keys():
+		var game_id := str(game_id_value)
+		if typeof(game_states.get(game_id, null)) != TYPE_DICTIONARY:
+			continue
+		var table: Dictionary = (game_states.get(game_id, {}) as Dictionary).duplicate(true)
+		if not table.has(BlackjackActionAuthorityScript.LEDGER_KEY):
+			continue
+		var binding := "%s:%s:%s" % [game_id, str(current_environment.get("id", "unknown")), str(current_environment.get("archetype_id", "unknown"))]
+		var ledger := BlackjackActionAuthorityScript.validate_persisted_ledger(
+			table.get(BlackjackActionAuthorityScript.LEDGER_KEY),
+			binding,
+			blackjack_authority_checkpoint_fingerprint()
+		)
+		if ledger.is_empty():
+			table.erase(BlackjackActionAuthorityScript.LEDGER_KEY)
+		else:
+			table[BlackjackActionAuthorityScript.LEDGER_KEY] = ledger
+		game_states[game_id] = table
 	current_environment["game_states"] = game_states
 
 
@@ -16298,19 +16301,22 @@ static func _normalize_environment(data: Dictionary) -> Dictionary:
 		environment["crew_switch_intel_visit_id"] = str(environment.get("crew_switch_intel_visit_id", ""))
 	environment["game_states"] = _normalize_game_states(_copy_dict(environment.get("game_states", {})))
 	var blackjack_states: Dictionary = environment.get("game_states", {})
-	if typeof(blackjack_states.get("blackjack", null)) == TYPE_DICTIONARY:
-		var blackjack_table: Dictionary = (blackjack_states.get("blackjack", {}) as Dictionary).duplicate(true)
+	for authority_game_id_value in blackjack_states.keys():
+		var authority_game_id := str(authority_game_id_value)
+		if typeof(blackjack_states.get(authority_game_id, null)) != TYPE_DICTIONARY:
+			continue
+		var blackjack_table: Dictionary = (blackjack_states.get(authority_game_id, {}) as Dictionary).duplicate(true)
 		# Apply receipts are transaction-local and can never survive a save boundary.
 		blackjack_table.erase("_blackjack_pending_apply_receipt")
 		if blackjack_table.has(BlackjackActionAuthorityScript.LEDGER_KEY):
-			var binding := "blackjack:%s:%s" % [str(environment.get("id", "unknown")), str(environment.get("archetype_id", "unknown"))]
+			var binding := "%s:%s:%s" % [authority_game_id, str(environment.get("id", "unknown")), str(environment.get("archetype_id", "unknown"))]
 			var ledger := BlackjackActionAuthorityScript.validate_persisted_ledger(blackjack_table.get(BlackjackActionAuthorityScript.LEDGER_KEY), binding)
 			if ledger.is_empty():
 				blackjack_table.erase(BlackjackActionAuthorityScript.LEDGER_KEY)
 			else:
 				blackjack_table[BlackjackActionAuthorityScript.LEDGER_KEY] = ledger
-		blackjack_states["blackjack"] = blackjack_table
-		environment["game_states"] = blackjack_states
+		blackjack_states[authority_game_id] = blackjack_table
+	environment["game_states"] = blackjack_states
 	environment["visual_context"] = _copy_dict(environment.get("visual_context", {}))
 	environment["layout"] = EnvironmentInstance.ensure_generated_layout(environment)
 	environment["security_profile"] = _copy_dict(environment.get("security_profile", {}))
