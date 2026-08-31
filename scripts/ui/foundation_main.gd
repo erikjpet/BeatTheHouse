@@ -11675,10 +11675,10 @@ func focus_interactable_object_from_view(object_data: Dictionary) -> bool:
 	var object_id := str(object_data.get("object_id", ""))
 	if object_id.is_empty():
 		return false
-	return _focus_interactable_object_with_data(object_id, object_data)
+	return _focus_interactable_object_with_data(object_id, object_data, false)
 
 
-func _focus_interactable_object_with_data(object_id: String, object_data: Dictionary) -> bool:
+func _focus_interactable_object_with_data(object_id: String, object_data: Dictionary, refresh_stale_canvas: bool = true) -> bool:
 	if object_data.is_empty() or str(object_data.get("object_id", "")) != object_id:
 		return false
 	selected_object_id = object_id
@@ -11691,7 +11691,7 @@ func _focus_interactable_object_with_data(object_id: String, object_data: Dictio
 		# stays on the cheap path. Programmatic selection can follow a context
 		# change (notably EVENT) before the canvas has consumed its new snapshot;
 		# refresh only that stale boundary before selecting the object.
-		if _environment_canvas_snapshot_is_stale():
+		if refresh_stale_canvas and _environment_canvas_snapshot_is_stale():
 			_render_environment_canvas_snapshot()
 		environment_canvas.set_selected_object(object_id)
 		if run_state != null:
