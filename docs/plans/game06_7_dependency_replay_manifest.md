@@ -1,7 +1,7 @@
 # game06_7 dependency replay manifest
 
-Status: **UNREVIEWED / docs-only / fail-closed / not a row claim**  
-Manifest base: `25f16c4efb723db2a0308eec5719b59b497413b7`  
+Status: **UNREVIEWED / docs-only / fail-closed / not a row claim**
+Manifest base: `25f16c4efb723db2a0308eec5719b59b497413b7`
 Prepared branch: `codex/game06_7-dependency-replay-manifest`
 
 This manifest describes intake and proof for replaying the preserved game06_7
