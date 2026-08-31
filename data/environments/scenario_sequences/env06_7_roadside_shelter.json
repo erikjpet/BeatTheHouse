@@ -8226,7 +8226,7 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "gas_station_graveyard_shift_machine_gate",
                   "object": {
-                    "label": "Machine-zone gate",
+                    "label": "Gate",
                     "role": "door",
                     "zone_id": "foreground",
                     "bounds": {
@@ -8249,6 +8249,7 @@
                     "label": "Marked safe exit",
                     "role": "exit",
                     "zone_id": "exit_lane",
+                    "anchor_id": "package_b_gas_low_left",
                     "bounds": {
                       "w": 56.0,
                       "h": 56.0
@@ -9460,7 +9461,7 @@
           "props_5",
           "actors_1"
         ],
-        "sequence_signature": "d3064d4e3952a19799dab907792f8b140d08554ede45d8c2dad34b6f9b37ef8e",
+        "sequence_signature": "b3328e5dad0c22433a68a9cb1e69cf4c31e74f4dc19e033b37ae8772a1027663",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -9471,6 +9472,7 @@
           "routes": [],
           "anchors": [
             "base::anchor:cashier_counter",
+            "base::anchor:package_b_gas_low_left",
             "base::anchor:package_b_gas_top_mid"
           ],
           "zones": [

@@ -267,7 +267,7 @@ func _check_normal_coach_lifecycle_rollback() -> bool:
 			and success_parent != null and success_coach.get_index() == success_parent.get_child_count() - 1 \
 			and success_coach.lifecycle_protected_attention_tweens.is_empty() and success_coach.lifecycle_attention_checkpoints.is_empty()
 	if not success_exact:
-		push_error("Successful real travel did not commit the queued delivery tip/new Tween while releasing the old normal-tip checkpoint: ok=%s guard=%d refresh_ids=%s active=%s copy=%s queued=%s protected=%s." % [str(success_ok), int(success_probe.get("lifecycle_guard_count")), JSON.stringify(success_probe.get("lifecycle_refresh_active_ids")), success_coach.active_lesson_id(), success_coach.copy_label.text, JSON.stringify(success_coach.queued_lessons), JSON.stringify(success_coach.lifecycle_protected_attention_tweens)])
+		push_error("Successful real travel did not commit the queued delivery tip/new Tween while releasing the old normal-tip checkpoint: ok=%s guard=%d refresh_ids=%s active=%s copy=%s queued=%s protected=%s message=%s node=%s selected=%s." % [str(success_ok), int(success_probe.get("lifecycle_guard_count")), JSON.stringify(success_probe.get("lifecycle_refresh_active_ids")), success_coach.active_lesson_id(), success_coach.copy_label.text, JSON.stringify(success_coach.queued_lessons), JSON.stringify(success_coach.lifecycle_protected_attention_tweens), str(success_probe.get("message_label").text), success_run.current_world_node_id(), str(success_probe.get("selected_travel_target_id"))])
 	success_probe.queue_free()
 	await process_frame
 	return failure_exact and success_exact
@@ -290,31 +290,36 @@ func _normal_coach_lifecycle_probe(reject_delivery: bool) -> Control:
 	var run := CoachLifecycleDeliveryRun.new()
 	run.reject_delivery = reject_delivery
 	run.start_new("UI-NORMAL-COACH-LIFECYCLE-%s" % ("REJECT" if reject_delivery else "SUCCESS"))
+	run.challenge_config["modifiers"] = {
+		"scenario_pins": {
+			"small_underground_casino": "punchline_open_mic_night",
+			"motel": "motel_conventioneers",
+		},
+		"scenario_pins_apply_mutations": false,
+	}
 	var rng := RngStream.new()
 	rng.configure(91827 if reject_delivery else 91828)
 	var environment := EnvironmentInstance.from_archetype(library.environment_archetype("small_underground_casino"), 1, rng, library).to_dict()
 	environment["id"] = "ui_normal_coach_lifecycle_room"
-	environment["world_node_id"] = "bar_node"
+	environment["world_node_id"] = "small_underground_casino"
 	environment["current_layer_id"] = "club"
-	environment["scenario_id"] = "ui_normal_coach_lifecycle_scenario"
-	environment["scenario_state"] = ScenarioEngineScript.initial_state({
-		"id": "ui_normal_coach_lifecycle_scenario",
-		"archetype_id": "small_underground_casino",
-		"display_name": "UI Normal Coach Lifecycle Scenario",
-	})
+	var scenario_definition := library.scenario("punchline_open_mic_night")
+	environment["scenario_id"] = str(scenario_definition.get("id", ""))
+	environment["scenario_state"] = ScenarioEngineScript.initial_state(scenario_definition)
 	run.set_environment(environment)
 	run.world_map = {
 		"version": 3,
 		"seed_text": "UI-NORMAL-COACH-LIFECYCLE",
-		"start_node_id": "bar_node",
-		"current_node_id": "bar_node",
+		"start_node_id": "small_underground_casino",
+		"current_node_id": "small_underground_casino",
 		"nodes": [
-			{"id": "bar_node", "archetype_id": "small_underground_casino", "kind": "casino", "tier": 1, "state": "revealed", "seen": true, "environment": environment.duplicate(true)},
+			{"id": "small_underground_casino", "archetype_id": "small_underground_casino", "kind": "casino", "tier": 1, "state": "revealed", "seen": true, "environment": environment.duplicate(true)},
 			{"id": "motel", "archetype_id": "motel", "kind": "home", "tier": 1, "state": "revealed", "seen": true, "environment": {}},
 		],
-		"edges": [{"a": "bar_node", "b": "motel"}],
-		"visited_path": ["bar_node"],
+		"edges": [{"a": "small_underground_casino", "b": "motel"}],
+		"visited_path": ["small_underground_casino"],
 	}
+	run.seed_scenario_for_node("small_underground_casino", scenario_definition)
 	probe.set("run_state", run)
 	probe.set("current_screen", FoundationMain.SCREEN_ENVIRONMENT)
 	probe.set("selected_action_category", FoundationMain.ACTION_CATEGORY_TRAVEL)
@@ -2318,6 +2323,10 @@ func _check_all_in_wager_confirmation_recovery(app: Control) -> bool:
 	run_state.add_item("coin_return_shim")
 	var refund_machine: Dictionary = SlotMachineStateScript.read_machine(run_state.current_environment, "slot")
 	refund_machine["format_id"] = "classic_3_reel"
+	# This fixture deliberately changes immutable cabinet content. Treat that
+	# setup as a fresh machine so the host seals the new canonical content rather
+	# than correctly rejecting it as a mutation of the previously bound cabinet.
+	refund_machine.erase("_blackjack_action_authority")
 	SlotMachineStateScript.write_machine(run_state.current_environment, "slot", refund_machine)
 	var slot_game: GameModule = app.get("current_game")
 	var wager_cost := slot_game.wager_cost_for_context("spin", 0, run_state, run_state.current_environment, {})
@@ -2337,7 +2346,7 @@ func _check_all_in_wager_confirmation_recovery(app: Control) -> bool:
 		return false
 	var refund_machine_after: Dictionary = SlotMachineStateScript.read_machine(run_state.current_environment, "slot")
 	if int(refund_machine_after.get("spin_count", 0)) != refunded_spin_count_before + 1:
-		push_error("The guaranteed-refund slot spin did not execute after skipping confirmation.")
+		push_error("The guaranteed-refund slot spin did not execute after skipping confirmation: result=%s message=%s machine=%s." % [JSON.stringify(app.get("last_game_result")), str(app.get("message_label").text), JSON.stringify(refund_machine_after)])
 		return false
 	if run_state.wager_capacity_for_game("slot", run_state.current_environment) <= 0:
 		push_error("Coin-Return Shim did not preserve spendable cash after the all-in slot spin.")
@@ -2438,10 +2447,23 @@ func _check_presented_bankroll_waits_for_result_reveal(app: Control) -> bool:
 	run_state.bankroll = 100
 	var fixture_game := BankrollPresentationFixtureGame.new()
 	var environment := run_state.current_environment.duplicate(true)
+	var scenario_state: Dictionary = environment.get("scenario_state", {}) if typeof(environment.get("scenario_state", {})) == TYPE_DICTIONARY else {}
+	var fixture_scenario_id := str(scenario_state.get("id", environment.get("scenario_id", ""))).strip_edges()
+	var fixture_archetype_id := str(environment.get("archetype_id", "")).strip_edges()
+	if not fixture_scenario_id.is_empty() and not fixture_archetype_id.is_empty():
+		var modifiers: Dictionary = run_state.challenge_config.get("modifiers", {}).duplicate(true) if typeof(run_state.challenge_config.get("modifiers", {})) == TYPE_DICTIONARY else {}
+		var scenario_pins: Dictionary = modifiers.get("scenario_pins", {}).duplicate(true) if typeof(modifiers.get("scenario_pins", {})) == TYPE_DICTIONARY else {}
+		scenario_pins[fixture_archetype_id] = fixture_scenario_id
+		modifiers["scenario_pins"] = scenario_pins
+		modifiers["scenario_pins_apply_mutations"] = false
+		run_state.challenge_config["modifiers"] = modifiers
 	environment["game_ids"] = [fixture_game.get_id()]
 	environment["game_states"] = {}
 	environment["economic_profile"] = {"stake_floor": 10, "stake_ceiling": 100}
-	run_state.set_environment(environment)
+	var fixture_install := run_state.set_environment(environment)
+	if not bool(fixture_install.get("ok", false)):
+		push_error("Bankroll presentation fixture could not install through the scenario host: %s." % JSON.stringify(fixture_install))
+		return false
 	app.call("_refresh_run_action_service")
 	app.set("current_game", fixture_game)
 	app.call("_reset_game_surface_runtime_state")
@@ -2462,12 +2484,14 @@ func _check_presented_bankroll_waits_for_result_reveal(app: Control) -> bool:
 	if settled_bankroll != 140:
 		var debug_game_value: Variant = app.get("current_game")
 		var debug_popup: Dictionary = app.call("current_event_choice_popup_snapshot")
-		push_error("Bankroll presentation fixture did not settle simulation immediately: %d game=%s stake=%d screen=%s popup=%s." % [
+		push_error("Bankroll presentation fixture did not settle simulation immediately: %d game=%s stake=%d screen=%s popup=%s result=%s message=%s." % [
 			settled_bankroll,
 			str(debug_game_value),
 			int(app.get("selected_stake")),
 			str((app.call("current_screen_snapshot") as Dictionary).get("screen", "")),
 			JSON.stringify(debug_popup),
+			JSON.stringify(app.get("last_game_result")),
+			str(app.get("message_label").text),
 		])
 		return false
 	var mid_hud: Dictionary = app.call("current_objective_hud_snapshot")
@@ -2507,7 +2531,13 @@ func _check_presented_bankroll_waits_for_result_reveal(app: Control) -> bool:
 		push_error("Bankroll presentation fixture did not expose an active reveal animation.")
 		return false
 	await create_timer(0.35).timeout
-	await process_frame
+	# The full UI suite can cross the deadline between FoundationMain's process
+	# callback and this timer callback. Allow the already-expired reveal a small
+	# number of frame boundaries to publish its final bankroll state.
+	for _release_frame in range(4):
+		await process_frame
+		if not bool(app.get("presented_bankroll_hold_active")):
+			break
 	var post_hud: Dictionary = app.call("current_objective_hud_snapshot")
 	var post_consequence: Dictionary = app.call("current_consequence_view_snapshot")
 	if int(post_hud.get("bankroll", -1)) != settled_bankroll:
@@ -2518,7 +2548,10 @@ func _check_presented_bankroll_waits_for_result_reveal(app: Control) -> bool:
 		return false
 	run_state.bankroll = 100
 	environment["game_states"] = {}
-	run_state.set_environment(environment)
+	fixture_install = run_state.set_environment(environment)
+	if not bool(fixture_install.get("ok", false)):
+		push_error("Bankroll presentation replay fixture could not install through the scenario host: %s." % JSON.stringify(fixture_install))
+		return false
 	app.set("current_game", fixture_game)
 	app.call("_reset_game_surface_runtime_state")
 	app.call("_set_current_screen", "GAME")

@@ -110,10 +110,13 @@ static func interactable_object_view_list(host: Variant) -> Array:
 			var finalization_failure := projection_failure_result(result, _array(finalized.get("errors", [])), _dict(finalized.get("layout_audit", {})))
 			var committed_finalization_failure := committed_projection_status_result(host.run_state, finalization_failure, trusted_base_result)
 			return _array(committed_finalization_failure.get("records", trusted_base_result))
-		result = host._copy_array(finalized.get("records", []))
+		var sealed_base_records: Array = host._copy_array(finalized.get("records", []))
+		result = sealed_base_records.duplicate(true)
 		var projection_result := project_finalized_sequence_interaction_result(result, finalized)
 		var committed_result := committed_projection_status_result(host.run_state, projection_result, trusted_base_result)
 		result = _array(committed_result.get("records", trusted_base_result))
+		if bool(committed_result.get("ok", false)):
+			result = append_unsealed_live_records(result, trusted_base_result, sealed_base_records)
 	elif bool(world_preparation.get("active", false)):
 		var world_finalized: Dictionary = _dict(host.run_state.world_sequence_finalize_base_semantics(result, host.library, layout_context))
 		if not bool(world_finalized.get("ok", false)):
@@ -128,6 +131,35 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		host.run_state.current_environment.erase("scenario_sequence_lifecycle_errors")
 		host.run_state.current_environment.erase("scenario_layout_audit")
 		host.run_state.current_environment.erase("scenario_layout_authority_digest")
+	return result
+
+
+# Static scenario authority owns every record it seals, including removals.
+# Runtime-only controls (delivery pickup/stash, Numbers, Crew presence, and
+# authored live game hooks) have separate RunState/ContentLibrary producers and
+# are not legal scenario targets until they are explicitly sealed. Preserve
+# those ordinary controls only when their presentation id was never admitted to
+# the scenario base inventory; a sealed tombstone can therefore never be
+# resurrected by the live presentation pass.
+static func append_unsealed_live_records(projected_records: Array, live_records: Array, sealed_base_records: Array) -> Array:
+	var result := projected_records.duplicate(true)
+	var sealed_ids: Dictionary = {}
+	var visible_ids: Dictionary = {}
+	for record_value in sealed_base_records:
+		var record := _dict(record_value)
+		var object_id := str(record.get("object_id", "")).strip_edges()
+		if not object_id.is_empty(): sealed_ids[object_id] = true
+	for record_value in result:
+		var record := _dict(record_value)
+		var object_id := str(record.get("object_id", "")).strip_edges()
+		if not object_id.is_empty(): visible_ids[object_id] = true
+	for record_value in live_records:
+		if typeof(record_value) != TYPE_DICTIONARY: continue
+		var record := (record_value as Dictionary).duplicate(true)
+		var object_id := str(record.get("object_id", "")).strip_edges()
+		if object_id.is_empty() or sealed_ids.has(object_id) or visible_ids.has(object_id): continue
+		result.append(record)
+		visible_ids[object_id] = true
 	return result
 
 

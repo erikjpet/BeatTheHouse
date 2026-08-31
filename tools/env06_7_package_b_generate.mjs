@@ -94,7 +94,7 @@ const specs = [
     id: "gas_station_graveyard_shift", archetype: "gas_station_casino", pressure: "alternating_lock_cycle",
     arrival: "A camera monitor, shutter panel, flashlight dock, and alternating locked zones define a solitary night-check route.",
     exit: "The illuminated emergency strip remains open outside every lock cycle.",
-    props: [["camera_monitor", "Camera monitor", "security", "background"], ["shutter_panel", "Shutter control panel", "workstation", "right"], ["flashlight_dock", "Flashlight dock", "utility", "center"], ["cooler_gate", "Cooler-zone gate", "door", "left"], ["machine_gate", "Machine-zone gate", "door", "foreground"]],
+    props: [["camera_monitor", "Camera monitor", "security", "background"], ["shutter_panel", "Shutter control panel", "workstation", "right"], ["flashlight_dock", "Flashlight dock", "utility", "center"], ["cooler_gate", "Cooler-zone gate", "door", "left"], ["machine_gate", "Gate", "door", "foreground"]],
     actors: [["night_clerk", "Night clerk", "gas_night_clerk", "guard", "service_lane"]],
     beats: [
       ["take_flashlight", "Take the docked flashlight", "Remove the flashlight and acknowledge the first camera blind spot.", "set_appearance", "flashlight_dock", "empty_dock", "set_pose", "night_clerk", "watching_monitor"],
@@ -191,7 +191,7 @@ const spatialBindings = {
   motel_wedding_overflow: {station: "package_b_motel_station", objects: {garment_rack: "package_b_motel_top_mid"}, actors: {wedding_runner: "package_b_motel_top_left", desk_clerk: "package_b_motel_service_top_right"}, phase_objects: {bouquet_case: "package_b_motel_top_left"}},
   gas_station_trucker_convoy: {objects: {tail_rig: "package_b_gas_top_left"}, actors: {machine_driver: "package_b_gas_top_mid", relay_driver: "package_b_gas_top_right"}},
   gas_station_tour_bus_stop: {objects: {tour_bus_door: "package_b_gas_top_left"}, actors: {bus_driver: "package_b_gas_top_mid", stranded_passenger: "package_b_gas_top_right"}},
-  gas_station_graveyard_shift: {actors: {night_clerk: "package_b_gas_top_mid"}},
+  gas_station_graveyard_shift: {exit: "package_b_gas_low_left", actors: {night_clerk: "package_b_gas_top_mid"}},
   gas_station_road_crew_payday: {station: "package_b_gas_low_left", objects: {barricade_stack: "package_b_gas_top_mid"}, actors: {machine_player: "package_b_gas_top_left", stake_keeper: "package_b_gas_top_right"}},
   gas_station_storm_shelter: {objects: {supply_shelves: "package_b_gas_top_left"}, actors: {family_group: "package_b_gas_top_mid"}},
   beach_bonfire_night: {exit: "package_b_beach_safe_exit_low_left", actors: {night_swimmers: "package_b_beach_top_left"}},
