@@ -6400,6 +6400,23 @@ func _restore_talk_dock_choice_lifecycle_snapshot(snapshot: Array, container_lay
 func _talk_dock_canvas_lifecycle_snapshot() -> Dictionary:
 	return {
 		"environment_ref": environment_canvas,
+		"environment_uses_foundation_snapshot": environment_canvas.uses_foundation_snapshot if environment_canvas != null else false,
+		"environment_foundation_snapshot": environment_canvas.foundation_snapshot.duplicate(true) if environment_canvas != null else {},
+		"environment_foundation_scene_objects": environment_canvas.foundation_scene_objects.duplicate(true) if environment_canvas != null else [],
+		"environment_scene_objects": environment_canvas.scene_objects.duplicate(true) if environment_canvas != null else [],
+		"environment_id": environment_canvas.environment_id if environment_canvas != null else "",
+		"environment_name": environment_canvas.environment_name if environment_canvas != null else "",
+		"environment_scenario_presentation": environment_canvas.scenario_presentation.duplicate(true) if environment_canvas != null else {},
+		"environment_scenario_palette_overlay": environment_canvas.scenario_palette_overlay if environment_canvas != null else Color.TRANSPARENT,
+		"environment_scenario_crowd_count": environment_canvas.scenario_crowd_count if environment_canvas != null else 0,
+		"environment_scenario_signage": environment_canvas.scenario_signage if environment_canvas != null else "",
+		"environment_suspicion_level": environment_canvas.suspicion_level if environment_canvas != null else 0,
+		"environment_drunk_level": environment_canvas.drunk_level if environment_canvas != null else 0,
+		"environment_drunk_time_scale": environment_canvas.drunk_time_scale if environment_canvas != null else 1.0,
+		"environment_drunk_effect_mode": environment_canvas.drunk_effect_mode if environment_canvas != null else "distortion",
+		"environment_reduce_motion": environment_canvas.reduce_motion if environment_canvas != null else false,
+		"environment_small_screen_mode": environment_canvas.small_screen_mode if environment_canvas != null else false,
+		"environment_overlay_repositioned_object_ids": environment_canvas.overlay_repositioned_object_ids.duplicate() if environment_canvas != null else [],
 		"environment_selected_object_id": environment_canvas.selected_object_id if environment_canvas != null else "",
 		"environment_hovered_object_id": environment_canvas.hovered_object_id if environment_canvas != null else "",
 		"environment_cursor_shape": environment_canvas.mouse_default_cursor_shape if environment_canvas != null else Control.CURSOR_ARROW,
@@ -6435,6 +6452,29 @@ func _talk_dock_canvas_lifecycle_snapshot() -> Dictionary:
 func _restore_talk_dock_canvas_lifecycle_snapshot(snapshot: Dictionary) -> void:
 	var restored_environment_canvas: Variant = snapshot.get("environment_ref", null)
 	if restored_environment_canvas != null and environment_canvas == restored_environment_canvas:
+		# A failed lifecycle boundary can refresh the room before the outer caller
+		# observes the rejection. Restore the exact canvas-local presentation model,
+		# not only its selection/camera scalars, so the rejected transition cannot
+		# expose a newly derived room layout or interaction set.
+		environment_canvas.uses_foundation_snapshot = bool(snapshot.get("environment_uses_foundation_snapshot", false))
+		environment_canvas.foundation_snapshot = _copy_dict(snapshot.get("environment_foundation_snapshot", {}))
+		environment_canvas.foundation_scene_objects = _copy_array(snapshot.get("environment_foundation_scene_objects", []))
+		environment_canvas.scene_objects = _copy_array(snapshot.get("environment_scene_objects", []))
+		environment_canvas.environment_id = str(snapshot.get("environment_id", environment_canvas.environment_id))
+		environment_canvas.environment_name = str(snapshot.get("environment_name", environment_canvas.environment_name))
+		environment_canvas.scenario_presentation = _copy_dict(snapshot.get("environment_scenario_presentation", {}))
+		environment_canvas.scenario_palette_overlay = snapshot.get("environment_scenario_palette_overlay", Color.TRANSPARENT) as Color
+		environment_canvas.scenario_crowd_count = int(snapshot.get("environment_scenario_crowd_count", 0))
+		environment_canvas.scenario_signage = str(snapshot.get("environment_scenario_signage", ""))
+		environment_canvas.suspicion_level = int(snapshot.get("environment_suspicion_level", 0))
+		environment_canvas.drunk_level = int(snapshot.get("environment_drunk_level", 0))
+		environment_canvas.drunk_time_scale = float(snapshot.get("environment_drunk_time_scale", 1.0))
+		environment_canvas.drunk_effect_mode = str(snapshot.get("environment_drunk_effect_mode", "distortion"))
+		environment_canvas.reduce_motion = bool(snapshot.get("environment_reduce_motion", false))
+		environment_canvas.small_screen_mode = bool(snapshot.get("environment_small_screen_mode", false))
+		environment_canvas.overlay_repositioned_object_ids.assign(_copy_array(snapshot.get("environment_overlay_repositioned_object_ids", [])))
+		environment_canvas.call("_cache_scenario_presentation")
+		environment_canvas.call("_rebuild_scene_object_cache")
 		# Every selection, hover, camera target, and redraw authority is captured.
 		# Restore it directly: set_selected_object() can clear a live hover and emit
 		# object_hovered while the failed presentation is still installed.
