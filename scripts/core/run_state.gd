@@ -4328,6 +4328,10 @@ func action_authority_checkpoint_fingerprint() -> String:
 
 
 func _reconcile_blackjack_authority_restore() -> void:
+	# A not-yet-started room is represented by an empty dictionary. Preserve that
+	# byte-exact save state instead of materializing a synthetic game_states key.
+	if current_environment.is_empty():
+		return
 	var game_states: Dictionary = current_environment.get("game_states", {}) if typeof(current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
 	for game_id_value in game_states.keys():
 		var game_id := str(game_id_value)

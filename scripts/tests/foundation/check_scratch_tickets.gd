@@ -251,10 +251,9 @@ func _check_scratch_purchase_and_input(game: GameModule, run_state: RunState, en
 	if result_ticket.has("latex_mask") or result_ticket.has("scratch_regions"):
 		failures.append("Scratch ticket purchase duplicated its live foil mask into the action result.")
 	var ticket: Dictionary = ((environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {}) as Dictionary).get("active_ticket", {})
-	var initial_scratch: Dictionary = ticket.get("scratch", {}) if typeof(ticket.get("scratch", {})) == TYPE_DICTIONARY else {}
 	var initial_mask: Array = ticket.get("latex_mask", []) if typeof(ticket.get("latex_mask", [])) == TYPE_ARRAY else []
-	if initial_mask.size() != int(initial_scratch.get("mask_columns", 0)) * int(initial_scratch.get("mask_rows", 0)) or _dict_array(ticket.get("scratch_regions", [])).is_empty():
-		failures.append("A newly purchased scratch ticket deferred its foil mask until the first drag.")
+	if not initial_mask.is_empty() or not _dict_array(ticket.get("scratch_regions", [])).is_empty():
+		failures.append("Scratch ticket purchase eagerly allocated its high-resolution foil before presentation.")
 	var original_mask := (ticket.get("latex_mask", []) as Array).duplicate()
 	var begin := game.surface_pointer_command("scratch_scrub", 0, "begin", Vector2(400, 160), {}, run_state, environment)
 	game.surface_pointer_command("scratch_scrub", 0, "end", Vector2(400, 160), begin.get("ui_state", {}), run_state, environment)

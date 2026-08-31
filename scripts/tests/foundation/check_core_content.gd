@@ -1241,6 +1241,10 @@ func _check_tier1_scenario_content(library: ContentLibrary, failures: Array) -> 
 	var tutorial_pin: Dictionary = tutorial_generator.call("_select_scenario", tutorial_run, "corner_store", tutorial_run.create_rng("tutorial_pin"))
 	if str(tutorial_pin.get("id", "")) != "corner_store_delivery_day" or not _copy_dict(tutorial_pin.get("mutations", {})).is_empty() or not _copy_array(tutorial_pin.get("phases", [])).is_empty() or not bool(tutorial_pin.get(ScenarioEngineScript.SEQUENCE_SUPPRESSION_KEY, false)) or tutorial_pin.has("sequence"):
 		failures.append("Tutorial neutral pin did not preserve identity while suppressing every scenario mutation and phase.")
+	for controlled_archetype_id in ["gas_station_casino", "small_underground_casino", "grand_casino"]:
+		var controlled_scenario: Dictionary = tutorial_generator.call("_select_scenario", tutorial_run, controlled_archetype_id, tutorial_run.create_rng("tutorial_controlled:%s" % controlled_archetype_id))
+		if not controlled_scenario.is_empty():
+			failures.append("Tutorial controlled environment %s unexpectedly selected scenario %s." % [controlled_archetype_id, str(controlled_scenario.get("id", ""))])
 	var ordinary_selector_config := RunStateScript.standard_challenge("TIER1-ORDINARY-SELECTOR")
 	var ordinary_selector_modifiers := _copy_dict(ordinary_selector_config.get("modifiers", {}))
 	ordinary_selector_modifiers["scenario_pins"] = {"corner_store": "corner_store_delivery_day"}

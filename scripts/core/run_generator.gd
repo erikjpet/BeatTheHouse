@@ -839,6 +839,14 @@ func _select_scenario(run_state: RunState, archetype_id: String, rng: RngStream)
 				run_state.remember_scenario_selection(archetype_id, pinned_id)
 				return _apply_scenario_pin_suppression(run_state, archetype_id, pinned)
 		return {}
+	# Tutorial environment overrides author the complete room contract. A normal
+	# scenario overlay can add games, events, and semantic actors after that
+	# contract is built, making the guided route nondeterministic or even
+	# impossible to seal. Explicit tutorial pins above remain available when the
+	# lesson needs a named, mutation-suppressed identity such as Delivery Day.
+	var tutorial_overrides := _copy_dict(modifiers.get("tutorial_environment_overrides", {}))
+	if tutorial_overrides.has(archetype_id):
+		return {}
 	var excludes := _copy_dict(modifiers.get("scenario_excludes", {}))
 	var excluded_ids := _string_array(excludes.get(archetype_id, []))
 	var candidates: Array = []
