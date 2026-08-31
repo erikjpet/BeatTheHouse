@@ -75,3 +75,54 @@ Do not initialize or commit the filesystem copy wholesale. Build the release
 history from the preserved exact branches in dependency order, adapt conflicts
 onto current `main`, retain caller-authority and exactly-once protections, run
 the row-focused gates, then run the complete post-land gate before publication.
+
+## Reconciliation result - 2026-08-31
+
+The recommendation above was executed on
+`codex/0.6-integrated-copy-reconciliation`. The plain filesystem copy was not
+committed. Preserved row payloads were recovered in dependency order, and
+entangled or obsolete branch histories were left intact rather than merged
+wholesale. The resulting candidate includes the game-depth, crew/world-depth,
+environment-depth, native pusher, audio/teaching, integration, performance,
+and gate work represented by the completion program. The final corrected
+`balance06_1-follow-on` prompt was recovered as a dependency-held, unreviewed
+future contract; it is not represented as completed implementation.
+
+The final pre-publication head before this report update was
+`8d30b4e9607565ecd836e5f7de8c65bccd263a8b` with tree
+`3e51dc97fc87521e45c25a8227e167ddacf1a372`. The GitHub landing vehicle is
+PR #21, `codex/0.6-integrated-copy-reconciliation` into `main`.
+
+### Merge-required corrections
+
+- Restored caller-authority and exact lifecycle rollback behavior exposed by
+  the combined UI and native contracts.
+- Recovered the accepted shipped-Web static rendering path and closed native
+  live-cache ownership gaps.
+- Removed a duplicate broad content pass from the focused coin-pusher suite so
+  its exhaustive contract executes inside the unchanged timeout.
+- Reused complete UI test fixtures and skipped meta-home generation only where
+  the fixture does not inspect meta modifiers, keeping the full UI contract
+  inside its unchanged baseline-derived budget.
+- Kept view-originated focus on the rendered-object path instead of
+  serializing the complete scenario snapshot. Programmatic focus still checks
+  and refreshes stale canvas state. Event-focus calls fell from 74-82 ms to
+  approximately 1.0-1.2 ms against the unchanged 10 ms cap.
+
+### Final verification evidence
+
+All commands used Godot 4.6 stable and ran sequentially.
+
+| Gate | Result |
+| --- | --- |
+| UI wrapper | PASS: validation 71.761 s, load check 30.101 s, complete UI 123.146 s (cap 124.851 s), and every surrounding UI integration stage green. Evidence: `.tmp/final_ui_post_focus_8d30b4e9/summary.json`. |
+| Coin-pusher wrapper, tracked desktop release profile | PASS: validation 71.496 s, load check 30.077 s, exhaustive coin contract 181.761 s. Evidence: `.tmp/final_coin_o2_007a1240/summary.json`. |
+| Full performance probe | PASS: 73 observations across eight seeds; all renderer, game-surface, resolve, liveness, new-surface, and coin-pusher budgets green. |
+| Static cache contract | PASS: 53 checks and all 24 cached/uncached pixel pairs visually equivalent. Evidence: `.tmp/final_static_cache_007a1240/manifest.json`. |
+| Shipped-Web native live-batch contract | PASS in Chrome 151.0.7922.174; payload SHA-256 `4e5a5ec32a6a00e9c73cb56631e977f5be918aaa040b2814fda6006e1e8c532f`, Web native SHA-256 `4D0BC7DEE87BB60DFE1510C278BA66AADAEB4F72693CBC2250408860F912DC45`. Evidence: `.tmp/final_native_live_batch_8d30b4e9/manifest.json`. |
+
+The performance probe retains its existing non-blocking coverage warnings for
+five normal seeds that generate no games and the boss-kind slot preview room;
+practice/synthetic coverage still exercises every required game and renderer.
+No budget, assertion, native load, browser parity, or visual-equivalence
+failure remains in the final evidence above.
