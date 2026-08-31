@@ -1482,6 +1482,19 @@ func _poker_max_observation_count(run_state: RunState, member_id: String) -> int
 		maximum = maxi(maximum, int(value))
 	return maximum
 
+
+# Surface contracts exercise the deterministic proposal core directly. Live
+# gameplay reaches the same core only through the sealed Foundation host; the
+# public compatibility resolver is intentionally read-only and is covered by
+# the authority depth contracts.
+func _resolve_table_game_surface_contract(game: GameModule, action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
+	var method := "_resolve_roulette_proposal_core" if game.get_id() == "roulette" else "_resolve_baccarat_proposal_core"
+	var result: Dictionary = game.call(method, action_id, stake, run_state, environment, rng, ui_state)
+	if bool(result.get("ok", false)):
+		result["host_apply_result"] = true
+	return result
+
+
 func _check_roulette_surface_contract(game: GameModule, failures: Array, library: ContentLibrary = null) -> void:
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("ROULETTE-SURFACE-CONTRACT")
@@ -1716,7 +1729,7 @@ func _check_roulette_surface_contract(game: GameModule, failures: Array, library
 	if str(confirm_spin.get("action_id", "")) != "spin_roulette" or not bool(confirm_spin.get("resolve", false)):
 		failures.append("Roulette second spin click did not resolve the confirmed spin.")
 	var before := _run_state_result_snapshot(run_state)
-	var result := game.resolve_with_context("spin_roulette", contract_chip, run_state, environment, run_state.create_rng("roulette_contract_spin"), confirm_spin.get("ui_state", {}))
+	var result := _resolve_table_game_surface_contract(game, "spin_roulette", contract_chip, run_state, environment, run_state.create_rng("roulette_contract_spin"), confirm_spin.get("ui_state", {}))
 	call("_check_action_result_shape", result, "legal", failures)
 	call("_check_action_result_application_contract", before, run_state, result, "roulette spin result", failures)
 	if not wheel_sequence.has(str(result.get("roulette_winning_number", ""))):
@@ -1863,7 +1876,7 @@ func _check_roulette_surface_contract(game: GameModule, failures: Array, library
 	if not bool(sit_confirm.get("resolve", false)):
 		failures.append("Roulette sit-out confirmation did not resolve on the second click.")
 	var sit_before := _run_state_result_snapshot(sit_run_state)
-	var sit_result := game.resolve_with_context("spin_roulette", contract_chip, sit_run_state, sit_environment, sit_run_state.create_rng("roulette_sitout_spin"), sit_confirm.get("ui_state", {}))
+	var sit_result := _resolve_table_game_surface_contract(game, "spin_roulette", contract_chip, sit_run_state, sit_environment, sit_run_state.create_rng("roulette_sitout_spin"), sit_confirm.get("ui_state", {}))
 	call("_check_action_result_application_contract", sit_before, sit_run_state, sit_result, "roulette sit-out result", failures)
 	if not bool(sit_result.get("roulette_sat_out", false)) or int(sit_result.get("roulette_total_wager", -1)) != 0 or int(sit_result.get("bankroll_delta", 999)) != 0:
 		failures.append("Roulette sit-out spin did not resolve with zero wager and zero bankroll movement.")
@@ -1910,7 +1923,7 @@ func _check_roulette_surface_contract(game: GameModule, failures: Array, library
 	var nudge_ui: Dictionary = nudge_bet_click.get("ui_state", {})
 	var nudge_click := game.surface_action_command("roulette_nudge", 0, false, nudge_ui, nudge_run_state, nudge_environment)
 	nudge_ui = nudge_click.get("ui_state", {})
-	var nudge_result := game.resolve_with_context("spin_roulette", contract_chip, nudge_run_state, nudge_environment, nudge_run_state.create_rng("roulette_nudge_spin"), nudge_ui)
+	var nudge_result := _resolve_table_game_surface_contract(game, "spin_roulette", contract_chip, nudge_run_state, nudge_environment, nudge_run_state.create_rng("roulette_nudge_spin"), nudge_ui)
 	if not bool(nudge_result.get("roulette_wheel_nudge", false)) or str(nudge_result.get("roulette_winning_number", "")) != "17" or int(nudge_result.get("suspicion_delta", 0)) < 10:
 		failures.append("Roulette nudge did not retarget a working bet and apply significant watched heat: nudge=%s number=%s suspicion=%d." % [
 			str(nudge_result.get("roulette_wheel_nudge", false)),
@@ -1934,7 +1947,7 @@ func _check_roulette_surface_contract(game: GameModule, failures: Array, library
 	if not bool(lock_read.get("resolve", false)):
 		failures.append("Roulette read-wheel second input did not resolve the timing challenge.")
 	var read_before := _run_state_result_snapshot(read_run_state)
-	var read_result := game.resolve_with_context("read_wheel_bias", 0, read_run_state, read_environment, read_run_state.create_rng("roulette_read_wheel_resolve"), lock_read.get("ui_state", read_ui))
+	var read_result := _resolve_table_game_surface_contract(game, "read_wheel_bias", 0, read_run_state, read_environment, read_run_state.create_rng("roulette_read_wheel_resolve"), lock_read.get("ui_state", read_ui))
 	call("_check_action_result_shape", read_result, "cheat", failures)
 	call("_check_action_result_application_contract", read_before, read_run_state, read_result, "roulette read wheel result", failures)
 	var revealed_read: Dictionary = read_result.get("roulette_bias_read", {}) if typeof(read_result.get("roulette_bias_read", {})) == TYPE_DICTIONARY else {}
@@ -1950,7 +1963,7 @@ func _check_roulette_surface_contract(game: GameModule, failures: Array, library
 	var direct_run := direct_fixture.get("run_state", null) as RunState
 	var direct_environment: Dictionary = direct_fixture.get("environment", {})
 	var direct_command: Dictionary = direct_fixture.get("command", {})
-	var direct_result := game.resolve_with_context("read_wheel_bias", 0, direct_run, direct_environment, direct_run.create_rng("roulette_read_direct"), direct_command.get("ui_state", {}))
+	var direct_result := _resolve_table_game_surface_contract(game, "read_wheel_bias", 0, direct_run, direct_environment, direct_run.create_rng("roulette_read_direct"), direct_command.get("ui_state", {}))
 	if str(direct_result.get("skill_grade", "")) != "miss" or bool(direct_result.get("roulette_wheel_read_applied", true)) or int(direct_result.get("suspicion_delta", 0)) != 20 or str(direct_result.get("message", "")).to_lower().find("nothing") < 0:
 		failures.append("Roulette failed read did not produce no information and exactly 20 Heat.")
 	var deterministic_a := _roulette_wheel_read_fixture(game, table, "ROULETTE-READ-DETERMINISTIC")
@@ -2129,7 +2142,7 @@ func _check_roulette_past_post_contract(game: GameModule, library: ContentLibrar
 		failures.append("Roulette blown past-post did not void the chip and raise extra heat.")
 	var blown_run := blown.get("run_state", null) as RunState
 	if blown_run != null:
-		var repeat_result := game.resolve_with_context("past_post", 5, blown_run, blown_run.current_environment, blown_run.create_rng("roulette_past_repeat"), blown.get("ui_state", {}))
+		var repeat_result := _resolve_table_game_surface_contract(game, "past_post", 5, blown_run, blown_run.current_environment, blown_run.create_rng("roulette_past_repeat"), blown.get("ui_state", {}))
 		if bool(repeat_result.get("ok", false)):
 			failures.append("Roulette past-post could be repeated against the same settled spin.")
 
@@ -2153,7 +2166,7 @@ func _check_roulette_past_post_contract(game: GameModule, library: ContentLibrar
 	clean_environment["game_states"] = {"roulette": game.generate_environment_state(clean_run, clean_environment, clean_run.create_rng("roulette_clean_state"))}
 	clean_run.set_environment(clean_environment)
 	clean_run.grand_casino_chips = 1000
-	var clean_result := game.resolve_with_context("spin_roulette", 10, clean_run, clean_run.current_environment, clean_run.create_rng("roulette_clean_spin"), {"roulette_bets": [game.call("_default_smoke_bet", 10)]})
+	var clean_result := _resolve_table_game_surface_contract(game, "spin_roulette", 10, clean_run, clean_run.current_environment, clean_run.create_rng("roulette_clean_spin"), {"roulette_bets": [game.call("_default_smoke_bet", 10)]})
 	if str(clean_result.get("action_kind", "")) != "legal" or bool(clean_result.get("skill_cheat_contract", false)) or bool(clean_run.narrative_flags.get("grand_casino_cheat_evidence", false)):
 		failures.append("Roulette clean spin left open-cheat evidence: action_kind=%s skill_contract=%s evidence=%s." % [
 			str(clean_result.get("action_kind", "")),
@@ -2198,7 +2211,10 @@ func _roulette_past_post_result(game: GameModule, seed_text: String, margin_msec
 	var confirm_command: Dictionary = game.surface_action_command("roulette_past_post", 0, false, arm_ui, run_state, run_state.current_environment)
 	var resolve_ui: Dictionary = confirm_command.get("ui_state", arm_ui)
 	var before := _run_state_result_snapshot(run_state)
-	var result := game.resolve_with_context("past_post", 5, run_state, run_state.current_environment, run_state.create_rng("%s_resolve" % seed_text.to_lower()), resolve_ui)
+	var resolve_rng := run_state.create_rng("%s_resolve" % seed_text.to_lower())
+	var result := _resolve_table_game_surface_contract(game, "past_post", 5, run_state, run_state.current_environment, resolve_rng, resolve_ui)
+	if grand_casino and bool(result.get("ok", false)):
+		GameModule.apply_result(run_state, result, resolve_rng)
 	return {
 		"run_state": run_state,
 		"ui_state": resolve_ui,
@@ -2429,7 +2445,7 @@ func _check_baccarat_surface_contract(game: GameModule, failures: Array, library
 	if str(deal_click.get("action_id", "")) != "deal_baccarat" or not bool(deal_click.get("resolve", false)):
 		failures.append("Baccarat deal command did not resolve through the legal baccarat action.")
 	var before := _run_state_result_snapshot(run_state)
-	var result := game.resolve_with_context("deal_baccarat", 20, run_state, environment, run_state.create_rng("baccarat_contract_deal"), deal_click.get("ui_state", {}))
+	var result := _resolve_table_game_surface_contract(game, "deal_baccarat", 20, run_state, environment, run_state.create_rng("baccarat_contract_deal"), deal_click.get("ui_state", {}))
 	call("_check_action_result_shape", result, "legal", failures)
 	call("_check_action_result_application_contract", before, run_state, result, "baccarat deal result", failures)
 	if not ["player", "banker", "tie"].has(str(result.get("baccarat_winner", ""))):
@@ -2479,7 +2495,7 @@ func _check_baccarat_surface_contract(game: GameModule, failures: Array, library
 	if str(sit_deal.get("action_id", "")) != "deal_baccarat" or not bool(sit_deal.get("resolve", false)) or not bool((sit_deal.get("ui_state", {}) as Dictionary).get("baccarat_sit_out", false)):
 		failures.append("Baccarat no-bet deal did not route as a sit-out hand.")
 	var sit_before := _run_state_result_snapshot(sit_run_state)
-	var sit_result := game.resolve_with_context("deal_baccarat", 20, sit_run_state, sit_environment, sit_run_state.create_rng("baccarat_sitout_deal"), sit_deal.get("ui_state", {}))
+	var sit_result := _resolve_table_game_surface_contract(game, "deal_baccarat", 20, sit_run_state, sit_environment, sit_run_state.create_rng("baccarat_sitout_deal"), sit_deal.get("ui_state", {}))
 	call("_check_action_result_application_contract", sit_before, sit_run_state, sit_result, "baccarat sit-out result", failures)
 	if not bool(sit_result.get("baccarat_sat_out", false)) or int(sit_result.get("baccarat_total_wager", -1)) != 0 or int(sit_result.get("bankroll_delta", 999)) != 0:
 		failures.append("Baccarat sit-out hand did not resolve with zero wager and zero bankroll movement.")
@@ -2518,7 +2534,7 @@ func _check_baccarat_surface_contract(game: GameModule, failures: Array, library
 	if not bool(answer_command.get("resolve", false)):
 		failures.append("Baccarat read-shoe answer did not resolve after the cue reveal.")
 	var read_before := _run_state_result_snapshot(read_run_state)
-	var read_result := game.resolve_with_context("read_baccarat_shoe", 0, read_run_state, read_environment, read_run_state.create_rng("baccarat_read_shoe_resolve"), answer_command.get("ui_state", read_ui))
+	var read_result := _resolve_table_game_surface_contract(game, "read_baccarat_shoe", 0, read_run_state, read_environment, read_run_state.create_rng("baccarat_read_shoe_resolve"), answer_command.get("ui_state", read_ui))
 	call("_check_action_result_shape", read_result, "cheat", failures)
 	call("_check_action_result_application_contract", read_before, read_run_state, read_result, "baccarat read shoe result", failures)
 	if int(read_result.get("suspicion_delta", 0)) <= 0 or str(read_result.get("skill_grade", "")) != "perfect" or not bool(read_result.get("baccarat_shoe_read_applied", false)) or (read_result.get("baccarat_shoe_read", {}) as Dictionary).is_empty():
@@ -2527,7 +2543,7 @@ func _check_baccarat_surface_contract(game: GameModule, failures: Array, library
 	var direct_run := direct_fixture.get("run_state", null) as RunState
 	var direct_environment: Dictionary = direct_fixture.get("environment", {})
 	var direct_command: Dictionary = direct_fixture.get("command", {})
-	var direct_result := game.resolve_with_context("read_baccarat_shoe", 0, direct_run, direct_environment, direct_run.create_rng("baccarat_read_shoe_direct"), direct_command.get("ui_state", {}))
+	var direct_result := _resolve_table_game_surface_contract(game, "read_baccarat_shoe", 0, direct_run, direct_environment, direct_run.create_rng("baccarat_read_shoe_direct"), direct_command.get("ui_state", {}))
 	if str(direct_result.get("skill_grade", "")) != "miss" or bool(direct_result.get("baccarat_shoe_read_applied", true)) or str(direct_result.get("message", "")).to_lower().find("fade") < 0:
 		failures.append("Baccarat unresolved shoe read did not produce a readable miss with no useful composition read.")
 	var wrong_fixture := _baccarat_shoe_read_fixture(game, table, "BACCARAT-READ-SHOE-WRONG")
@@ -2539,7 +2555,7 @@ func _check_baccarat_surface_contract(game: GameModule, failures: Array, library
 	wrong_ui["surface_time_msec"] = int(wrong_challenge.get("started_msec", 0)) + int(wrong_challenge.get("reveal_msec", 0))
 	var correct_index := read_cues.find(str(wrong_challenge.get("hidden_answer", "")))
 	var wrong_answer := game.surface_action_command("baccarat_shoe_read_answer", (correct_index + 1) % read_cues.size(), false, wrong_ui, wrong_run, wrong_environment)
-	var wrong_result := game.resolve_with_context("read_baccarat_shoe", 0, wrong_run, wrong_environment, wrong_run.create_rng("baccarat_read_shoe_wrong"), wrong_answer.get("ui_state", wrong_ui))
+	var wrong_result := _resolve_table_game_surface_contract(game, "read_baccarat_shoe", 0, wrong_run, wrong_environment, wrong_run.create_rng("baccarat_read_shoe_wrong"), wrong_answer.get("ui_state", wrong_ui))
 	var wrong_message := str(wrong_result.get("message", "")).to_lower()
 	if str(wrong_result.get("skill_grade", "")) != "blown" or bool(wrong_result.get("baccarat_shoe_read_applied", true)) or (wrong_message.find("dealer") < 0 and wrong_message.find("stare") < 0):
 		failures.append("Baccarat wrong shoe cue did not produce a blown, noticed failure with no useful read.")
@@ -2609,7 +2625,7 @@ func _check_baccarat_edge_sort_contract(game: GameModule, failures: Array, libra
 	if not bool(started_surface.get("edge_sort_active", false)):
 		failures.append("Baccarat edge-sort surface did not expose active challenge state.")
 
-	game.resolve_with_context("deal_baccarat", 20, run_state, environment, run_state.create_rng("baccarat_edge_observe_1"), {"baccarat_sit_out": true})
+	_resolve_table_game_surface_contract(game, "deal_baccarat", 20, run_state, environment, run_state.create_rng("baccarat_edge_observe_1"), {"baccarat_sit_out": true})
 	var after_one_table: Dictionary = ((environment.get("game_states", {}) as Dictionary).get("baccarat", {}) as Dictionary)
 	var after_one_challenge: Dictionary = after_one_table.get("edge_sort_challenge", {}) if typeof(after_one_table.get("edge_sort_challenge", {})) == TYPE_DICTIONARY else {}
 	if bool(after_one_challenge.get("ready", false)):
@@ -2623,7 +2639,7 @@ func _check_baccarat_edge_sort_contract(game: GameModule, failures: Array, libra
 	if (_baccarat_dictionary_array((restored_table.get("edge_sort_challenge", {}) as Dictionary).get("observed_cues", []))).is_empty():
 		failures.append("Baccarat edge-sort challenge did not survive save/load mid-challenge.")
 
-	game.resolve_with_context("deal_baccarat", 20, run_state, environment, run_state.create_rng("baccarat_edge_observe_2"), {"baccarat_sit_out": true})
+	_resolve_table_game_surface_contract(game, "deal_baccarat", 20, run_state, environment, run_state.create_rng("baccarat_edge_observe_2"), {"baccarat_sit_out": true})
 	var ready_table: Dictionary = ((environment.get("game_states", {}) as Dictionary).get("baccarat", {}) as Dictionary)
 	var ready_challenge: Dictionary = ready_table.get("edge_sort_challenge", {}) if typeof(ready_table.get("edge_sort_challenge", {})) == TYPE_DICTIONARY else {}
 	if not bool(ready_challenge.get("ready", false)):
@@ -2631,7 +2647,7 @@ func _check_baccarat_edge_sort_contract(game: GameModule, failures: Array, libra
 	if not (ready_table.get("edge_sort_edge", {}) as Dictionary).is_empty():
 		failures.append("Baccarat edge-sort granted an edge before the memory challenge was resolved.")
 	var before := _run_state_result_snapshot(run_state)
-	var edge_result := game.resolve_with_context("edge_sort", 0, run_state, environment, run_state.create_rng("baccarat_edge_resolve"), {"edge_sort_challenge": ready_challenge, "edge_sort_answer_mode": "perfect"})
+	var edge_result := _resolve_table_game_surface_contract(game, "edge_sort", 0, run_state, environment, run_state.create_rng("baccarat_edge_resolve"), {"edge_sort_challenge": ready_challenge, "edge_sort_answer_mode": "perfect"})
 	call("_check_action_result_shape", edge_result, "cheat", failures)
 	call("_check_action_result_application_contract", before, run_state, edge_result, "baccarat edge-sort result", failures)
 	if str(edge_result.get("skill_grade", "")) != "perfect" or not bool(edge_result.get("baccarat_edge_sort_applied", false)):
@@ -2644,7 +2660,7 @@ func _check_baccarat_edge_sort_contract(game: GameModule, failures: Array, libra
 		failures.append("Baccarat edge-sort did not persist a betting edge after a qualifying read.")
 	else:
 		var predicted := str(edge.get("predicted_bet", ""))
-		var edge_deal := game.resolve_with_context("deal_baccarat", 20, run_state, environment, run_state.create_rng("baccarat_edge_use"), {"baccarat_bets": {predicted: 20}})
+		var edge_deal := _resolve_table_game_surface_contract(game, "deal_baccarat", 20, run_state, environment, run_state.create_rng("baccarat_edge_use"), {"baccarat_bets": {predicted: 20}})
 		if not bool(edge_deal.get("baccarat_edge_sort_edge_used", false)):
 			failures.append("Baccarat edge-sort edge was not marked used when betting the predicted side.")
 		if str(edge_deal.get("baccarat_winner", "")) != predicted:
@@ -2699,11 +2715,11 @@ func _baccarat_edge_sort_signature(game: GameModule, seed_text: String) -> Dicti
 	environment["game_states"] = {"baccarat": table}
 	run_state.current_environment = environment.duplicate(true)
 	game.surface_action_command("baccarat_edge_sort", 0, false, {}, run_state, environment)
-	game.resolve_with_context("deal_baccarat", 20, run_state, environment, run_state.create_rng("baccarat_edge_signature_1"), {"baccarat_sit_out": true})
-	game.resolve_with_context("deal_baccarat", 20, run_state, environment, run_state.create_rng("baccarat_edge_signature_2"), {"baccarat_sit_out": true})
+	_resolve_table_game_surface_contract(game, "deal_baccarat", 20, run_state, environment, run_state.create_rng("baccarat_edge_signature_1"), {"baccarat_sit_out": true})
+	_resolve_table_game_surface_contract(game, "deal_baccarat", 20, run_state, environment, run_state.create_rng("baccarat_edge_signature_2"), {"baccarat_sit_out": true})
 	var ready_table: Dictionary = ((environment.get("game_states", {}) as Dictionary).get("baccarat", {}) as Dictionary)
 	var challenge: Dictionary = ready_table.get("edge_sort_challenge", {}) if typeof(ready_table.get("edge_sort_challenge", {})) == TYPE_DICTIONARY else {}
-	var result := game.resolve_with_context("edge_sort", 0, run_state, environment, run_state.create_rng("baccarat_edge_signature_resolve"), {"edge_sort_challenge": challenge, "edge_sort_answer_mode": "perfect"})
+	var result := _resolve_table_game_surface_contract(game, "edge_sort", 0, run_state, environment, run_state.create_rng("baccarat_edge_signature_resolve"), {"edge_sort_challenge": challenge, "edge_sort_answer_mode": "perfect"})
 	return {
 		"hidden_answer": _string_array_from_variant(challenge.get("hidden_answer", [])),
 		"observed_hands": _string_array_from_variant(challenge.get("observed_hand_indexes", [])),
@@ -2737,11 +2753,11 @@ func _check_baccarat_edge_sort_grand_casino_pressure(game: GameModule, library: 
 	run_state.add_suspicion("baccarat_edge_preheat", maxi(0, showdown_threshold - 1), "behavior")
 	environment = run_state.current_environment
 	game.surface_action_command("baccarat_edge_sort", 0, false, {}, run_state, environment)
-	game.resolve_with_context("deal_baccarat", 20, run_state, environment, run_state.create_rng("baccarat_edge_watch_1"), {"baccarat_sit_out": true})
-	game.resolve_with_context("deal_baccarat", 20, run_state, environment, run_state.create_rng("baccarat_edge_watch_2"), {"baccarat_sit_out": true})
+	_resolve_table_game_surface_contract(game, "deal_baccarat", 20, run_state, environment, run_state.create_rng("baccarat_edge_watch_1"), {"baccarat_sit_out": true})
+	_resolve_table_game_surface_contract(game, "deal_baccarat", 20, run_state, environment, run_state.create_rng("baccarat_edge_watch_2"), {"baccarat_sit_out": true})
 	var ready_table: Dictionary = ((environment.get("game_states", {}) as Dictionary).get("baccarat", {}) as Dictionary)
 	var ready_challenge: Dictionary = ready_table.get("edge_sort_challenge", {}) if typeof(ready_table.get("edge_sort_challenge", {})) == TYPE_DICTIONARY else {}
-	var result := game.resolve_with_context("edge_sort", 0, run_state, environment, run_state.create_rng("baccarat_edge_watch_resolve"), {"edge_sort_challenge": ready_challenge, "edge_sort_answer_mode": "blown"})
+	var result := _resolve_and_apply_table_game_surface_contract(game, "edge_sort", 0, run_state, environment, run_state.create_rng("baccarat_edge_watch_resolve"), {"edge_sort_challenge": ready_challenge, "edge_sort_answer_mode": "blown"})
 	if str(result.get("skill_grade", "")) != "blown" or not bool(result.get("pit_boss_watched", false)):
 		failures.append("Baccarat edge-sort watched failure did not produce a blown watched result.")
 	if not bool(run_state.narrative_flags.get("grand_casino_attention_watched_cheat", false)):

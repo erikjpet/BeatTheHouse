@@ -758,6 +758,20 @@ function Invoke-FoundationSuite {
     Invoke-GodotScript -Name ("foundation_{0}" -f $FoundationSuite) -ScriptPath (Get-FoundationSplitRunnerPath) -UserArgs @("--suite=$FoundationSuite", "--report=$report") -StageTimeoutSec $StageTimeoutSec
 }
 
+function Invoke-FoundationCheckPartition {
+    param(
+        [string]$Name,
+        [string[]]$CheckIds,
+        [int]$StageTimeoutSec = 0
+    )
+    if ($CheckIds.Count -eq 0) {
+        throw "Foundation check partition '$Name' requires at least one check id."
+    }
+    $report = Convert-ReportResourcePath ("{0}.json" -f $Name)
+    $requested = $CheckIds -join ","
+    Invoke-GodotScript -Name $Name -ScriptPath (Get-FoundationSplitRunnerPath) -UserArgs @("--suite=smoke", "--check-ids=$requested", "--report=$report") -StageTimeoutSec $StageTimeoutSec
+}
+
 function Enter-CheckGodotWorkspaceMutex {
     if ($AllowConcurrentGodot) {
         return $true
@@ -1196,7 +1210,19 @@ if (-not [string]::IsNullOrWhiteSpace($foundationSuiteKey)) {
 
 switch ($suiteKey) {
     "smoke" {
-        Invoke-FoundationSuite -FoundationSuite "smoke" -StageTimeoutSec 180
+        # Content validation now carries the complete 0.6 authored catalog and
+        # cannot share one process ceiling with the runtime contracts. Keep the
+        # exact Smoke check census while giving each partition its own bounded
+        # failure and timeout report.
+        Invoke-FoundationCheckPartition -Name "foundation_smoke_content" -CheckIds @("content") -StageTimeoutSec 240
+        Invoke-FoundationCheckPartition -Name "foundation_smoke_runtime" -CheckIds @(
+            "coach_engine_foundation",
+            "onboarding_tutorial_arc",
+            "profile_inventory_boundary",
+            "foundation_contract_smoke",
+            "fixture_rng",
+            "fixture_contracts"
+        ) -StageTimeoutSec 180
         Invoke-GodotScript -Name "ui_scene_compile" -ScriptPath (Get-UiSceneSplitRunnerPath) -StageTimeoutSec 240
         Invoke-GodotScript -Name "dave_bus_encounter" -ScriptPath "res://scripts/tests/ui_scene/check_dave_bus_encounter.gd" -StageTimeoutSec 120
         Invoke-GodotScript -Name "roulette_audio_audit" -ScriptPath "res://tools/roulette_audio_audit.gd" -StageTimeoutSec 120

@@ -2159,9 +2159,9 @@ func _skill_cheat_clean_result(game_id: String, game: GameModule, run_state: Run
 			_slot_store_machine(run_state, environment, machine)
 			return game.resolve_with_context("spin", 10, run_state, environment, run_state.create_rng("c5_slot_clean"), {})
 		"baccarat":
-			return game.resolve_with_context("deal_baccarat", 20, run_state, environment, run_state.create_rng("c5_baccarat_clean"), {"baccarat_bets": {"player": 20}})
+			return _resolve_and_apply_table_game_surface_contract(game, "deal_baccarat", 20, run_state, environment, run_state.create_rng("c5_baccarat_clean"), {"baccarat_bets": {"player": 20}})
 		"roulette":
-			return game.resolve_with_context("spin_roulette", 10, run_state, environment, run_state.create_rng("c5_roulette_clean"), {"roulette_bets": [game.call("_default_smoke_bet", 10)]})
+			return _resolve_and_apply_table_game_surface_contract(game, "spin_roulette", 10, run_state, environment, run_state.create_rng("c5_roulette_clean"), {"roulette_bets": [game.call("_default_smoke_bet", 10)]})
 		"craps":
 			return game.resolve_with_context("roll_craps", 10, run_state, environment, run_state.create_rng("c5_craps_clean"), {"craps_pending_bets": {"pass_line": 10}})
 	return {}
@@ -2346,17 +2346,17 @@ func _grand_casino_game_cheat_result_for_action(game_id: String, action_id: Stri
 
 func _baccarat_edge_sort_contract_result(game: GameModule, run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
 	game.surface_action_command("baccarat_edge_sort", 0, false, {}, run_state, environment)
-	game.resolve_with_context("deal_baccarat", 20, run_state, environment, run_state.create_rng("c5_baccarat_edge_1"), {"baccarat_sit_out": true})
-	game.resolve_with_context("deal_baccarat", 20, run_state, environment, run_state.create_rng("c5_baccarat_edge_2"), {"baccarat_sit_out": true})
+	_resolve_and_apply_table_game_surface_contract(game, "deal_baccarat", 20, run_state, environment, run_state.create_rng("c5_baccarat_edge_1"), {"baccarat_sit_out": true})
+	_resolve_and_apply_table_game_surface_contract(game, "deal_baccarat", 20, run_state, environment, run_state.create_rng("c5_baccarat_edge_2"), {"baccarat_sit_out": true})
 	var ready_table: Dictionary = ((environment.get("game_states", {}) as Dictionary).get("baccarat", {}) as Dictionary)
 	var ready_challenge: Dictionary = ready_table.get("edge_sort_challenge", {}) if typeof(ready_table.get("edge_sort_challenge", {})) == TYPE_DICTIONARY else {}
-	return game.resolve_with_context("edge_sort", 0, run_state, environment, rng, {"edge_sort_challenge": ready_challenge, "edge_sort_answer_mode": "blown"})
+	return _resolve_and_apply_table_game_surface_contract(game, "edge_sort", 0, run_state, environment, rng, {"edge_sort_challenge": ready_challenge, "edge_sort_answer_mode": "blown"})
 
 
 func _roulette_past_post_contract_result(game: GameModule, run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
 	var chip := 5
 	var spin_ui := {"roulette_bets": [game.call("_default_smoke_bet", chip)], "selected_chip": chip}
-	game.resolve_with_context("spin_roulette", chip, run_state, environment, run_state.create_rng("c5_roulette_past_post_spin"), spin_ui)
+	_resolve_and_apply_table_game_surface_contract(game, "spin_roulette", chip, run_state, environment, run_state.create_rng("c5_roulette_past_post_spin"), spin_ui)
 	var table: Dictionary = ((environment.get("game_states", {}) as Dictionary).get("roulette", {}) as Dictionary)
 	var last_result: Dictionary = table.get("last_result", {}) if typeof(table.get("last_result", {})) == TYPE_DICTIONARY else {}
 	var payout_ui := {
@@ -2372,7 +2372,7 @@ func _roulette_past_post_contract_result(game: GameModule, run_state: RunState, 
 	arm_ui["selected_action_id"] = "past_post"
 	arm_ui["selected_action_kind"] = "cheat"
 	var confirm_command: Dictionary = game.surface_action_command("roulette_past_post", 0, false, arm_ui, run_state, environment)
-	return game.resolve_with_context("past_post", chip, run_state, environment, rng, confirm_command.get("ui_state", arm_ui))
+	return _resolve_and_apply_table_game_surface_contract(game, "past_post", chip, run_state, environment, rng, confirm_command.get("ui_state", arm_ui))
 
 
 func _skill_contract_roulette_wheel_read_result(game: GameModule, run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
@@ -2381,7 +2381,7 @@ func _skill_contract_roulette_wheel_read_result(game: GameModule, run_state: Run
 	var challenge: Dictionary = read_ui.get("wheel_read_challenge", {}) if typeof(read_ui.get("wheel_read_challenge", {})) == TYPE_DICTIONARY else {}
 	read_ui["surface_time_msec"] = int(challenge.get("target_msec", 12000))
 	var lock_command: Dictionary = game.surface_action_command("roulette_read_wheel", 0, false, read_ui, run_state, environment)
-	return game.resolve_with_context("read_wheel_bias", 0, run_state, environment, rng, lock_command.get("ui_state", read_ui))
+	return _resolve_and_apply_table_game_surface_contract(game, "read_wheel_bias", 0, run_state, environment, rng, lock_command.get("ui_state", read_ui))
 
 
 func _skill_contract_baccarat_shoe_read_result(game: GameModule, run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
@@ -2391,7 +2391,14 @@ func _skill_contract_baccarat_shoe_read_result(game: GameModule, run_state: RunS
 	read_ui["surface_time_msec"] = int(challenge.get("started_msec", 16000)) + int(challenge.get("reveal_msec", 0))
 	var answer_index := ["low", "neutral", "zero"].find(str(challenge.get("hidden_answer", "")))
 	var answer_command: Dictionary = game.surface_action_command("baccarat_shoe_read_answer", answer_index, false, read_ui, run_state, environment)
-	return game.resolve_with_context("read_baccarat_shoe", 0, run_state, environment, rng, answer_command.get("ui_state", read_ui))
+	return _resolve_and_apply_table_game_surface_contract(game, "read_baccarat_shoe", 0, run_state, environment, rng, answer_command.get("ui_state", read_ui))
+
+
+func _resolve_and_apply_table_game_surface_contract(game: GameModule, action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
+	var result := _resolve_table_game_surface_contract(game, action_id, stake, run_state, environment, rng, ui_state)
+	if bool(result.get("ok", false)):
+		GameModule.apply_result(run_state, result, rng)
+	return result
 
 
 func _skill_contract_bar_dice_palm_ui(game: GameModule, run_state: RunState, environment: Dictionary, base_ui: Dictionary) -> Dictionary:
@@ -2465,11 +2472,11 @@ func _premium_grand_casino_legal_result(game_id: String, game: GameModule, run_s
 		"baccarat":
 			var baccarat_stake := maxi(1, GameModule.stake_floor_for_game(environment, "baccarat", 25))
 			var baccarat_ui := {"baccarat_bets": {"player": baccarat_stake}}
-			return game.resolve_with_context("deal_baccarat", baccarat_stake, run_state, environment, run_state.create_rng("c3_baccarat_legal"), baccarat_ui)
+			return _resolve_and_apply_table_game_surface_contract(game, "deal_baccarat", baccarat_stake, run_state, environment, run_state.create_rng("c3_baccarat_legal"), baccarat_ui)
 		"roulette":
 			var roulette_stake := maxi(1, GameModule.stake_floor_for_game(environment, "roulette", 25))
 			var roulette_ui := {"roulette_bets": [game.call("_default_smoke_bet", roulette_stake)]}
-			return game.resolve_with_context("spin_roulette", roulette_stake, run_state, environment, run_state.create_rng("c3_roulette_legal"), roulette_ui)
+			return _resolve_and_apply_table_game_surface_contract(game, "spin_roulette", roulette_stake, run_state, environment, run_state.create_rng("c3_roulette_legal"), roulette_ui)
 	return {}
 
 
@@ -2828,6 +2835,11 @@ func _check_generic_game_module_contract(game: GameModule, failures: Array) -> v
 				else:
 					call("_check_action_result_shape", authoritative, str(authoritative.get("action_kind", "legal")), failures)
 					call("_check_action_result_applied", authoritative_before, run_state, authoritative, "blackjack generic result", failures)
+			elif bool(result.get("table_game_compatibility_simulation", false)):
+				if JSON.stringify(run_state.to_save_snapshot()) != before_serialized \
+						or bool(result.get("table_game_authoritative", true)) \
+						or result.has("blackjack_host_apply_receipt"):
+					failures.append("%s read-only compatibility result crossed the sealed host boundary." % game_id.capitalize())
 			else:
 				call("_check_action_result_application_contract", before, run_state, result, "%s generic result" % game_id, failures)
 
@@ -4236,7 +4248,7 @@ func _roulette_past_post_fixture(game: GameModule, seed_text: String, chip: int,
 	environment["game_states"] = game_states
 	run_state.set_environment(environment)
 	var spin_ui := {"roulette_bets": [game.call("_default_smoke_bet", chip)], "selected_chip": chip}
-	var spin_result := game.resolve_with_context("spin_roulette", chip, run_state, run_state.current_environment, run_state.create_rng("%s_spin" % seed_text.to_lower()), spin_ui)
+	var spin_result := _resolve_and_apply_table_game_surface_contract(game, "spin_roulette", chip, run_state, run_state.current_environment, run_state.create_rng("%s_spin" % seed_text.to_lower()), spin_ui)
 	var spun_table: Dictionary = ((run_state.current_environment.get("game_states", {}) as Dictionary).get("roulette", {}) as Dictionary)
 	var last_result: Dictionary = spun_table.get("last_result", {}) if typeof(spun_table.get("last_result", {})) == TYPE_DICTIONARY else {}
 	var payout_ui := {
