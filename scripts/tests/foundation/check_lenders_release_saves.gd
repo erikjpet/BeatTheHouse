@@ -1678,7 +1678,7 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 		failures.append("Grand Casino boss archetype is missing.")
 		return
 	_check_grand_casino_spatial_split(library, boss_archetype, failures)
-	_check_cage_environment_rework(library, failures)
+	call("_check_cage_environment_rework", library, failures)
 	_check_grand_casino_chips_and_cage(library, boss_archetype, failures)
 	_check_grand_casino_living_floor(library, boss_archetype, failures)
 	_check_grand_casino_staff_rotation(library, boss_archetype, failures)
@@ -4184,15 +4184,6 @@ func _check_broke_idle_terminal_evaluator_not_per_frame(library: ContentLibrary,
 	_sb4_dispose_app(app)
 
 
-func _save_service_expected_snapshot(run_state: RunState) -> Dictionary:
-	var parsed: Variant = JSON.parse_string(JSON.stringify(run_state.to_dict()))
-	if typeof(parsed) != TYPE_DICTIONARY:
-		return run_state.to_dict()
-	var normalized: RunState = RunStateScript.new()
-	normalized.from_dict(parsed as Dictionary)
-	return normalized.to_dict()
-
-
 func _fixture_system_pressure_result(environment: Dictionary, bankroll_delta: int, message: String) -> Dictionary:
 	var deltas := GameModule.empty_result_deltas()
 	deltas["bankroll_delta"] = bankroll_delta
@@ -4217,27 +4208,6 @@ func _fixture_system_pressure_result(environment: Dictionary, bankroll_delta: in
 	})
 
 
-func _string_array_from_variant(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value as Array:
-		var id := str(entry)
-		if not id.is_empty():
-			result.append(id)
-	return result
-
-
-func _unique_strings(first: Array, second: Array) -> Array:
-	var result: Array = []
-	for source in [first, second]:
-		for id in _string_array_from_variant(source):
-			if not result.has(id):
-				result.append(id)
-	return result
-
-
-# Resolves one foundation game action before saving, if generated content allows it.
 func _resolve_first_save_test_action(library: ContentLibrary, run_state: RunState, environment: EnvironmentInstance, failures: Array) -> void:
 	if environment.game_ids.is_empty():
 		failures.append("SaveService round trip needs a generated game option.")
@@ -5064,15 +5034,6 @@ func _check_blackjack_item_content(library: ContentLibrary, failures: Array) -> 
 			failures.append("Broken Cufflinks repair did not cost exactly $50.")
 
 
-func _item_count_ceiling(value: Variant) -> int:
-	if typeof(value) == TYPE_ARRAY:
-		var values: Array = value
-		if values.is_empty():
-			return 0
-		return int(values[values.size() - 1])
-	return int(value)
-
-
 func _check_replaceable_asset(label: String, data: Dictionary, failures: Array) -> void:
 	var asset_path := str(data.get("asset_path", "")).strip_edges()
 	if asset_path.is_empty():
@@ -5101,121 +5062,6 @@ func _check_events(event_ids: Array, library: ContentLibrary, scopes: Array, fai
 
 
 # Creates in-memory content for contract checks.
-func _fixture_library(failures: Array) -> ContentLibrary:
-	var library := ContentLibraryScript.new()
-	library.environment_archetypes = [
-		{
-			"id": "fixture_environment",
-			"tier": 1,
-			"name_prefixes": ["Fixture"],
-			"name_nouns": ["Venue"],
-			"visual_context": {
-				"perspective": "first_person",
-				"scene_type": "fixture",
-			},
-			"security_profile": {
-				"strictness": "fixture",
-				"visible_cues": ["fixture cue"],
-			},
-			"economic_profile": {
-				"stake_floor": 1,
-				"stake_ceiling": 10,
-			},
-			"game_pool": ["fixture_game"],
-			"game_count": [1, 1],
-			"event_pool": ["fixture_event"],
-			"event_count": [1, 1],
-			"item_pool": ["fixture_item"],
-			"item_count": [1, 1],
-			"service_pool": ["fixture_service"],
-			"lender_hooks": ["fixture_lender"],
-			"suspicion_cues": ["fixture behavior cue"],
-			"travel_hooks": ["fixture_route"],
-			"next_archetypes": ["fixture_environment"],
-			"local_narrative_flags": {
-				"fixture_flag": true,
-			},
-			"moods": ["fixture_mood"],
-		},
-	]
-	library.games = [
-		{
-			"id": "fixture_game",
-			"module": "base",
-			"family": "fixture",
-			"display_name": "Fixture Game",
-			"intro": "Fixture game contract.",
-			"legal_actions": [{"id": "legal_fixture", "label": "Legal Fixture", "win_chance": 55, "payout_mult": 2}],
-			"cheat_actions": [{"id": "cheat_fixture", "label": "Cheat Fixture", "win_chance": 70, "payout_mult": 2, "suspicion_delta": 2}],
-		},
-	]
-	library.items = [
-		{
-			"id": "fixture_item",
-			"class": "permanent",
-			"domain": "global",
-			"effect": {"win_chance": 1},
-		},
-	]
-	library.events = [
-		{
-			"id": "fixture_event",
-			"type": "security",
-			"scopes": ["any"],
-			"tier_min": 1,
-			"min_suspicion": 0,
-			"consequences": {
-				"suspicion_delta": 1,
-			},
-			"payload": {
-				"summary": "Fixture event contract.",
-				"choices": [
-					{"id": "raise_heat", "label": "Raise Heat", "text": "Fixture heat rises.", "consequences": {"suspicion_delta": 2, "flags": {"fixture_event_flag": true}, "resolve_event": true}},
-				],
-			},
-		},
-	]
-	library.challenges = [
-		RunState.custom_challenge("fixture_challenge", "FIXTURE-SEED", {"fixture": true}),
-	]
-	library.lenders = [
-		{
-			"id": "fixture_lender",
-			"source": "fixture",
-			"display_name": "Fixture Lender",
-			"risk_profile": "fixture",
-			"consequences": ["fixture_consequence"],
-		},
-	]
-	library.services = [
-		{
-			"id": "fixture_service",
-			"type": "fixture",
-			"cost": 1,
-			"effect": {},
-		},
-	]
-	library.travel_routes = [
-		{
-			"id": "fixture_route",
-			"display_name": "Fixture Route",
-			"cost": 1,
-			"destination_tier_hint": 1,
-		},
-	]
-	# Match ContentLibrary.load(): prove an intentionally unhydrated fixture
-	# changes only its lazy index cache, then freeze the fully constructed state
-	# before any check receives it.
-	var before_hydration := _foundation_library_fingerprint(library)
-	var before_non_index_state := _foundation_library_fingerprint(library, false)
-	library._rebuild_indexes()
-	if _foundation_library_fingerprint(library) == before_hydration:
-		failures.append("Foundation fixture hydration regression did not exercise the unhydrated index state.")
-	if _foundation_library_fingerprint(library, false) != before_non_index_state:
-		failures.append("Foundation fixture hydration changed state outside the lazy index cache.")
-	return library
-
-
 func _check_card_shoe_core_primitives(failures: Array) -> void:
 	var shoe: Array = [
 		{"rank": 14, "suit": 0, "deck": 0},
@@ -6036,13 +5882,6 @@ func _check_save_load_world_event_lender_midstates(library: ContentLibrary, fail
 	_save_load_checkpoint(library, challenge_run, "target/challenge_mid_modifier", true, failures)
 
 
-func _save_load_first_event_id(library: ContentLibrary) -> String:
-	if not library.event("family_loan").is_empty():
-		return "family_loan"
-	var definition := _first_definition(library.events)
-	return str(definition.get("id", ""))
-
-
 func _save_load_canonical_run(run_state: RunState) -> RunState:
 	var restored: RunState = RunStateScript.new()
 	restored.from_dict(run_state.to_dict())
@@ -6314,18 +6153,6 @@ func _check_run_state_snapshot_keys(snapshot: Dictionary, failures: Array) -> vo
 
 
 # Compares scalar values in foundation checks.
-func _assert_equal(actual: Variant, expected: Variant, message: String, failures: Array) -> void:
-	if actual != expected:
-		failures.append(message)
-
-
-# Compares dictionaries and arrays in foundation checks.
-func _assert_json_equal(actual: Variant, expected: Variant, message: String, failures: Array) -> void:
-	if JSON.stringify(actual) != JSON.stringify(expected):
-		failures.append(message)
-
-
-# Checks core contracts with fixture content.
 func _check_contracts(library: ContentLibrary, failures: Array) -> void:
 	var custom_challenge := RunState.custom_challenge("foundation_contracts", "FOUNDATION-CONTRACT-SEED", {"fixture": true})
 	var run_state: RunState = RunStateScript.new()

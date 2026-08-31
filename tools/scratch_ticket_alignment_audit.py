@@ -274,12 +274,15 @@ def report():
             print(f"{type_id} {label},{values}")
 
 
-def verify(write_overlays=False):
+def verify(write_overlays=False, hold_crossword=False):
     data = json.loads(DATA.read_text(encoding="utf-8"))
     failures, worst_center, worst_size = [], 0.0, 0.0
     if write_overlays:
         OUT.mkdir(parents=True, exist_ok=True)
     for type_id, entries in data["regions"].items():
+        if hold_crossword and type_id == "crossword_corner":
+            print("HELD crossword_corner: art/mechanics preserved; excluded from active offering")
+            continue
         source = data["source_art"][type_id]
         path = LAYERS/source["file"]
         if hashlib.sha256(path.read_bytes()).hexdigest() != source["sha256"]:
@@ -312,7 +315,9 @@ def verify(write_overlays=False):
                 failures.append(f"{type_id}/{actual['id']}: center={center:.2f}px size={size_error:.2f}%")
         if write_overlays:
             draw_overlay(type_id, entries, source)
-    print(f"VERIFY worst_center={worst_center:.3f}px worst_size={worst_size:.3f}% checked=7 pending=none")
+    checked = 6 if hold_crossword else 7
+    pending = "crossword_corner:HELD" if hold_crossword else "none"
+    print(f"VERIFY worst_center={worst_center:.3f}px worst_size={worst_size:.3f}% checked={checked} pending={pending}")
     if failures:
         print("\n".join(failures))
         return 1
@@ -326,11 +331,12 @@ def main():
     parser.add_argument("--overlay", action="store_true")
     parser.add_argument("--report", action="store_true")
     parser.add_argument("--measure", action="store_true", help="Alias for --report used by the fix prompt")
+    parser.add_argument("--hold-crossword", action="store_true", help="Verify six active Option C tickets and report Crossword as HELD")
     args = parser.parse_args()
     if args.generate:
         generate()
     if args.verify or args.overlay or not args.generate:
-        result = verify(args.overlay)
+        result = verify(args.overlay, args.hold_crossword)
         if args.report or args.measure:
             report()
         raise SystemExit(result)

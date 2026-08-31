@@ -756,7 +756,7 @@ func _check_foundation_contract_smoke_for_suite(library: ContentLibrary, failure
 
 # Checks the first production content path.
 func _check_content(library: ContentLibrary, failures: Array) -> void:
-	_check_canonical_pack_paths(failures)
+	call("_check_canonical_pack_paths", failures)
 	for error in library.validation_errors:
 		failures.append("ContentLibrary validation failed: %s" % error)
 
@@ -769,11 +769,11 @@ func _check_content(library: ContentLibrary, failures: Array) -> void:
 	_check_player_facing_description_copy(library, failures)
 	_check_destination_decision_contract(library, failures)
 	_check_release_copy_style_blockers(library, failures)
-	_check_content_art_presentation(library, failures)
-	_check_blackjack_item_content(library, failures)
-	_check_m2_pack_availability(library, failures)
-	_check_tier_two_venue_progression(library, failures)
-	_check_baccarat_grand_casino_only(library, failures)
+	call("_check_content_art_presentation", library, failures)
+	call("_check_blackjack_item_content", library, failures)
+	call("_check_m2_pack_availability", library, failures)
+	call("_check_tier_two_venue_progression", library, failures)
+	call("_check_baccarat_grand_casino_only", library, failures)
 	_check_environment_game_pool_distribution(library, failures)
 	_check_grand_casino_game_fixture_capacity(library, failures)
 	_check_environment_encounter_freshness(library, failures)
@@ -802,18 +802,18 @@ func _check_content(library: ContentLibrary, failures: Array) -> void:
 	run_state.start_new("CONTENT-CHECK")
 	var generator: RunGenerator = RunGeneratorScript.new(library)
 	var first_environment: EnvironmentInstance = generator.next_environment(run_state)
-	_check_environment_instance_shape(first_environment, false, failures)
+	call("_check_environment_instance_shape", first_environment, false, failures)
 	_check_start_home_environment(run_state, first_environment, failures)
 	if first_environment.kind != "home":
-		_check_offer_prices(first_environment.item_offers, library, failures)
-		_check_events(first_environment.event_ids, library, [first_environment.kind], failures)
+		call("_check_offer_prices", first_environment.item_offers, library, failures)
+		call("_check_events", first_environment.event_ids, library, [first_environment.kind], failures)
 	for game_id in first_environment.game_ids:
 		if library.game(game_id).is_empty():
 			failures.append("Generated environment references unknown activity: %s." % game_id)
 
 	var target: String = str(first_environment.next_archetypes[0]) if not first_environment.next_archetypes.is_empty() else ""
 	var second_environment: EnvironmentInstance = generator.next_environment(run_state, target)
-	_check_environment_instance_shape(second_environment, false, failures)
+	call("_check_environment_instance_shape", second_environment, false, failures)
 	if second_environment.id == first_environment.id:
 		failures.append("Travel did not generate a distinct second environment.")
 
@@ -2658,7 +2658,7 @@ func _check_high_risk_table_limit_overrides(library: ContentLibrary, failures: A
 		if archetype.is_empty():
 			failures.append("High-risk table limit fixture is missing venue: %s." % str(venue_id))
 			continue
-		var effective_archetype := archetype
+		var effective_archetype: Dictionary = archetype
 		if str(venue_id) == "small_underground_casino":
 			var layers: Dictionary = archetype.get("layers", {}) if typeof(archetype.get("layers", {})) == TYPE_DICTIONARY else {}
 			if typeof(layers.get("casino", {})) == TYPE_DICTIONARY:
@@ -2826,7 +2826,7 @@ func _check_content_validation_boot_surfacing(library: ContentLibrary, failures:
 	var label: Label = app.get("start_status_label")
 	if OS.is_debug_build() and (label == null or label.text.find("Content validation:") == -1 or label.text.find("see console") == -1):
 		failures.append("Content validation surfacing did not paint the debug start-screen banner.")
-	_sb4_dispose_app(app)
+	call("_sb4_dispose_app", app)
 
 
 func _check_talk_content_pass_content(library: ContentLibrary, failures: Array) -> void:
@@ -3142,7 +3142,7 @@ func _check_t4_3_event_chains_and_checks(library: ContentLibrary, failures: Arra
 	var rival_event := EventModule.new()
 	rival_event.setup(library.event("rival_counter"))
 	var rival_result := rival_event.resolve(rival_run, rival_run.current_environment, "tip_off")
-	_check_event_result_delta_shape(rival_result, failures)
+	call("_check_event_result_delta_shape", rival_result, failures)
 	if not bool(rival_run.narrative_flags.get("rival_counter_owes_you", false)):
 		failures.append("Rival Counter tip-off did not plant its payoff flag.")
 	var loaded: RunState = RunStateScript.new()
@@ -3167,7 +3167,7 @@ func _check_t4_3_event_chains_and_checks(library: ContentLibrary, failures: Arra
 	collector_b.setup(library.event("the_collector"))
 	var result_a := collector_a.resolve(collector_run_a, collector_run_a.current_environment, "stand_ground")
 	var result_b := collector_b.resolve(collector_run_b, collector_run_b.current_environment, "stand_ground")
-	_check_event_result_delta_shape(result_a, failures)
+	call("_check_event_result_delta_shape", result_a, failures)
 	if JSON.stringify(result_a) != JSON.stringify(result_b):
 		failures.append("The Collector checked consequence was not deterministic.")
 	if not _story_log_has_type(collector_run_a.story_log, "event_check"):
@@ -3848,10 +3848,10 @@ func _check_foundation_contract_smoke(library: ContentLibrary, failures: Array, 
 
 	var generator: RunGenerator = RunGeneratorScript.new(library)
 	var first_environment: EnvironmentInstance = generator.next_environment(run_state)
-	_check_environment_instance_shape(first_environment, false, failures)
+	call("_check_environment_instance_shape", first_environment, false, failures)
 	_check_start_home_environment(run_state, first_environment, failures)
 	var second_environment: EnvironmentInstance = generator.next_environment(run_state, first_environment.next_archetypes[0] if not first_environment.next_archetypes.is_empty() else "")
-	_check_environment_instance_shape(second_environment, false, failures)
+	call("_check_environment_instance_shape", second_environment, false, failures)
 	if second_environment.kind == "home":
 		failures.append("Second foundation EnvironmentInstance should leave home into the world.")
 	if second_environment.game_ids.is_empty() and second_environment.item_offers.is_empty() and second_environment.service_ids.is_empty() and second_environment.lender_hooks.is_empty() and second_environment.event_ids.is_empty() and second_environment.next_archetypes.is_empty():
@@ -3859,38 +3859,38 @@ func _check_foundation_contract_smoke(library: ContentLibrary, failures: Array, 
 	if not second_environment.game_ids.is_empty():
 		_check_production_game_module_load(library, run_state, second_environment, failures)
 	_check_foundation_shell_no_game_specific_code(failures)
-	_check_selected_starter_game_port(library, failures)
+	call("_check_selected_starter_game_port", library, failures)
 	_check_game_surface_contracts(library, failures)
 	if suite == "smoke":
 		_check_slot_contract_smoke(library, failures)
-		_check_all_game_module_contracts(library, failures)
+		call("_check_all_game_module_contracts", library, failures)
 		return
-	_check_bar_dice_contract(library, failures)
-	_check_crew_poker_contract(library, failures)
-	_check_video_poker_contract(library, failures)
-	_check_coin_pusher_contract(library, failures)
+	call("_check_bar_dice_contract", library, failures)
+	call("_check_crew_poker_contract", library, failures)
+	call("_check_video_poker_contract", library, failures)
+	call("_check_coin_pusher_contract", library, failures)
 	if suite == "audit":
 		_check_slot_acceptance(library, failures)
 	else:
 		_check_slot_contract_smoke(library, failures)
-	_check_all_game_module_contracts(library, failures)
-	_check_cross_game_integration_matrix(library, failures)
-	_check_run_action_service_boundary(library, failures)
-	_check_item_effect_foundation(library, failures)
-	_check_item_build_interaction_foundation(library, failures)
-	_check_event_module_foundation(library, failures)
-	_check_event_system_state_foundation(library, failures)
-	_check_save_service_foundation_round_trip(library, failures)
-	_check_platform_services_foundation(failures)
-	_check_economy_pressure_foundation(library, failures)
-	_check_travel_route_foundation(library, failures)
-	_check_service_hook_foundation(library, failures)
-	_check_lender_debt_foundation(library, failures)
-	_check_suspicion_security_foundation(failures)
-	_check_run_report_foundation(failures)
-	_check_m2_system_interaction_scenario(library, failures)
-	_check_demo_boss_objective_foundation(library, failures)
-	_check_recovery_loss_pressure_foundation(library, failures)
+	call("_check_all_game_module_contracts", library, failures)
+	call("_check_cross_game_integration_matrix", library, failures)
+	call("_check_run_action_service_boundary", library, failures)
+	call("_check_item_effect_foundation", library, failures)
+	call("_check_item_build_interaction_foundation", library, failures)
+	call("_check_event_module_foundation", library, failures)
+	call("_check_event_system_state_foundation", library, failures)
+	call("_check_save_service_foundation_round_trip", library, failures)
+	call("_check_platform_services_foundation", failures)
+	call("_check_economy_pressure_foundation", library, failures)
+	call("_check_travel_route_foundation", library, failures)
+	call("_check_service_hook_foundation", library, failures)
+	call("_check_lender_debt_foundation", library, failures)
+	call("_check_suspicion_security_foundation", failures)
+	call("_check_run_report_foundation", failures)
+	call("_check_m2_system_interaction_scenario", library, failures)
+	call("_check_demo_boss_objective_foundation", library, failures)
+	call("_check_recovery_loss_pressure_foundation", library, failures)
 
 
 func _check_coach_engine_foundation(library: ContentLibrary, failures: Array) -> void:
@@ -5060,8 +5060,8 @@ func _check_production_game_module_load(library: ContentLibrary, run_state: RunS
 	if not legal_actions.is_empty():
 		var legal_before := _run_state_result_snapshot(run_state)
 		var legal_result := game.resolve(str(legal_actions[0].get("id", "")), 1, run_state, environment_data, run_state.create_rng())
-		_check_action_result_shape(legal_result, "legal", failures)
-		_check_action_result_application_contract(legal_before, run_state, legal_result, "legal smoke result", failures)
+		call("_check_action_result_shape", legal_result, "legal", failures)
+		call("_check_action_result_application_contract", legal_before, run_state, legal_result, "legal smoke result", failures)
 	if not cheat_actions.is_empty():
 		var cheat_run_state: RunState = RunStateScript.new()
 		cheat_run_state.from_dict(initial_run_snapshot)
@@ -5069,8 +5069,8 @@ func _check_production_game_module_load(library: ContentLibrary, run_state: RunS
 		var cheat_before := _run_state_result_snapshot(cheat_run_state)
 		var cheat_action_id := str(cheat_actions[0].get("id", ""))
 		var cheat_result := game.resolve(cheat_action_id, 1, cheat_run_state, cheat_environment, cheat_run_state.create_rng())
-		_check_action_result_shape(cheat_result, "cheat", failures, "smoke game %s action %s" % [game_id, cheat_action_id])
-		_check_action_result_application_contract(cheat_before, cheat_run_state, cheat_result, "cheat smoke result", failures)
+		call("_check_action_result_shape", cheat_result, "cheat", failures, "smoke game %s action %s" % [game_id, cheat_action_id])
+		call("_check_action_result_application_contract", cheat_before, cheat_run_state, cheat_result, "cheat smoke result", failures)
 
 
 # Checks that specific game surfaces can expose interactive UI-local state without
@@ -5078,29 +5078,29 @@ func _check_production_game_module_load(library: ContentLibrary, run_state: RunS
 func _check_game_surface_contracts(library: ContentLibrary, failures: Array) -> void:
 	var blackjack: GameModule = _load_surface_contract_game(library, "blackjack", failures)
 	if blackjack != null:
-		_check_blackjack_surface_contract(blackjack, failures)
+		call("_check_blackjack_surface_contract", blackjack, failures)
 	var video_poker: GameModule = _load_surface_contract_game(library, "video_poker", failures)
 	if video_poker != null:
-		_check_video_poker_surface_contract(video_poker, failures)
+		call("_check_video_poker_surface_contract", video_poker, failures)
 	var roulette: GameModule = _load_surface_contract_game(library, "roulette", failures)
 	if roulette != null:
-		_check_roulette_surface_contract(roulette, failures, library)
+		call("_check_roulette_surface_contract", roulette, failures, library)
 	var baccarat: GameModule = _load_surface_contract_game(library, "baccarat", failures)
 	if baccarat != null:
-		_check_baccarat_surface_contract(baccarat, failures, library)
+		call("_check_baccarat_surface_contract", baccarat, failures, library)
 	var craps: GameModule = _load_surface_contract_game(library, "craps", failures)
 	if craps != null:
-		_check_craps_surface_contract(craps, failures, library)
+		call("_check_craps_surface_contract", craps, failures, library)
 	var pull_tabs: GameModule = _load_surface_contract_game(library, "pull_tabs", failures)
 	if pull_tabs != null:
-		_check_pull_tabs_surface_contract(pull_tabs, failures)
+		call("_check_pull_tabs_surface_contract", pull_tabs, failures)
 	var scratch_tickets: GameModule = _load_surface_contract_game(library, "scratch_tickets", failures)
 	if scratch_tickets != null:
-		_check_scratch_tickets_surface_contract(scratch_tickets, failures)
+		call("_check_scratch_tickets_surface_contract", scratch_tickets, failures)
 	var bar_dice: GameModule = _load_surface_contract_game(library, "bar_dice", failures)
 	if bar_dice != null:
-		_check_bar_dice_surface_contract(bar_dice, failures)
-	_check_crew_poker_contract(library, failures)
+		call("_check_bar_dice_surface_contract", bar_dice, failures)
+	call("_check_crew_poker_contract", library, failures)
 	_check_process_fanout_guards(library, failures)
 
 
@@ -5120,7 +5120,7 @@ func _check_process_fanout_guards(library: ContentLibrary, failures: Array) -> v
 		app.call("_ready")
 	if not bool(app.call("uses_foundation_runtime")):
 		failures.append("Process fan-out guard fixture requires FoundationMain runtime nodes.")
-		_sb4_dispose_app(app)
+		call("_sb4_dispose_app", app)
 		return
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("PROCESS-FANOUT-GUARD")
@@ -5148,7 +5148,7 @@ func _check_process_fanout_guards(library: ContentLibrary, failures: Array) -> v
 	app.call("_process", 1.0 / 60.0)
 	if int(app.get("environment_game_runtime_scan_count")) != 0:
 		failures.append("Process fan-out scanned an environment with no runtime-capable game ids.")
-	_sb4_dispose_app(app)
+	call("_sb4_dispose_app", app)
 
 
 func _idle_animation_sample_from_canvas(canvas: Control) -> int:
@@ -5230,13 +5230,13 @@ func _check_table_environment_entry_contracts(library: ContentLibrary, failures:
 		app.call("_ready")
 	if not bool(app.call("uses_foundation_runtime")):
 		failures.append("Table environment entry contract requires FoundationMain runtime nodes.")
-		_sb4_dispose_app(app)
+		call("_sb4_dispose_app", app)
 		return
 
 	for game_id in ["roulette", "blackjack", "baccarat", "craps", "bar_dice"]:
 		_check_single_table_environment_entry_contract(library, app, str(game_id), failures)
 
-	_sb4_dispose_app(app)
+	call("_sb4_dispose_app", app)
 
 
 func _check_single_table_environment_entry_contract(library: ContentLibrary, app: Control, game_id: String, failures: Array) -> void:
@@ -5409,36 +5409,36 @@ func _check_target_game_suite(library: ContentLibrary, game_id: String, failures
 		"blackjack":
 			var blackjack: GameModule = _load_surface_contract_game(library, "blackjack", failures)
 			if blackjack != null:
-				_check_blackjack_surface_contract(blackjack, failures)
+				call("_check_blackjack_surface_contract", blackjack, failures)
 		"roulette":
 			var roulette: GameModule = _load_surface_contract_game(library, "roulette", failures)
 			if roulette != null:
-				_check_roulette_surface_contract(roulette, failures, library)
+				call("_check_roulette_surface_contract", roulette, failures, library)
 		"baccarat":
 			var baccarat: GameModule = _load_surface_contract_game(library, "baccarat", failures)
 			if baccarat != null:
-				_check_baccarat_surface_contract(baccarat, failures, library)
+				call("_check_baccarat_surface_contract", baccarat, failures, library)
 		"craps":
 			var craps: GameModule = _load_surface_contract_game(library, "craps", failures)
 			if craps != null:
-				_check_craps_surface_contract(craps, failures, library)
+				call("_check_craps_surface_contract", craps, failures, library)
 		"video_poker":
 			var video_poker: GameModule = _load_surface_contract_game(library, "video_poker", failures)
 			if video_poker != null:
-				_check_video_poker_surface_contract(video_poker, failures)
-			_check_video_poker_contract(library, failures)
+				call("_check_video_poker_surface_contract", video_poker, failures)
+			call("_check_video_poker_contract", library, failures)
 		"bar_dice":
-			_check_bar_dice_contract(library, failures)
+			call("_check_bar_dice_contract", library, failures)
 		"crew_poker":
-			_check_crew_poker_contract(library, failures)
+			call("_check_crew_poker_contract", library, failures)
 		"pull_tabs":
 			var pull_tabs: GameModule = _load_surface_contract_game(library, "pull_tabs", failures)
 			if pull_tabs != null:
-				_check_pull_tabs_surface_contract(pull_tabs, failures)
+				call("_check_pull_tabs_surface_contract", pull_tabs, failures)
 		"scratch_tickets":
 			var scratch_tickets: GameModule = _load_surface_contract_game(library, "scratch_tickets", failures)
 			if scratch_tickets != null:
-				_check_scratch_tickets_surface_contract(scratch_tickets, failures)
+				call("_check_scratch_tickets_surface_contract", scratch_tickets, failures)
 		_:
 			failures.append("Unknown target game suite: %s." % game_id)
 
@@ -5455,7 +5455,7 @@ func _check_slot_contract_smoke(library: ContentLibrary, failures: Array) -> voi
 	print("SLOT_CONTRACT_SMOKE schema")
 	_check_slot_outcome_schema(definition, failures)
 	print("SLOT_CONTRACT_SMOKE runtime_storage")
-	_check_slot_runtime_storage_contract(definition, failures)
+	call("_check_slot_runtime_storage_contract", definition, failures)
 	print("SLOT_CONTRACT_SMOKE skin_geometry")
 	_check_slot_skin_geometry(definition, failures)
 	print("SLOT_CONTRACT_SMOKE counts")
@@ -5487,17 +5487,17 @@ func _check_slot_contract_smoke(library: ContentLibrary, failures: Array) -> voi
 	print("SLOT_CONTRACT_SMOKE hold_fill_scaling")
 	_check_slot_hold_and_spin_fill_scaling(definition, failures)
 	print("SLOT_CONTRACT_SMOKE free_games_carryover")
-	_check_slot_free_games_carryover(definition, failures)
+	call("_check_slot_free_games_carryover", definition, failures)
 	print("SLOT_CONTRACT_SMOKE buffalo_feature_presentation")
-	_check_slot_buffalo_feature_presentation(definition, failures)
+	call("_check_slot_buffalo_feature_presentation", definition, failures)
 	print("SLOT_CONTRACT_SMOKE bonus_completion_recovery")
 	_check_slot_bonus_completion_recovery(library, definition, failures)
 	print("SLOT_CONTRACT_SMOKE pinball_sim_physics")
-	_check_slot_pinball_sim_physics(definition, failures)
+	call("_check_slot_pinball_sim_physics", definition, failures)
 	print("SLOT_CONTRACT_SMOKE pinball_realtime_lifecycle")
-	_check_slot_pinball_feature_visual_manifest(definition, failures)
+	call("_check_slot_pinball_feature_visual_manifest", definition, failures)
 	print("SLOT_CONTRACT_SMOKE economy_rng_discipline")
-	_check_slot_economy_rng_discipline(failures)
+	call("_check_slot_economy_rng_discipline", failures)
 
 
 func _check_slot_acceptance(library: ContentLibrary, failures: Array) -> void:
@@ -5554,25 +5554,25 @@ func _check_slot_acceptance(library: ContentLibrary, failures: Array) -> void:
 	print("SLOT_ACCEPTANCE hold_fill_scaling")
 	_check_slot_hold_and_spin_fill_scaling(definition, failures)
 	print("SLOT_ACCEPTANCE free_games_carryover")
-	_check_slot_free_games_carryover(definition, failures)
+	call("_check_slot_free_games_carryover", definition, failures)
 	print("SLOT_ACCEPTANCE buffalo_feature_presentation")
-	_check_slot_buffalo_feature_presentation(definition, failures)
+	call("_check_slot_buffalo_feature_presentation", definition, failures)
 	print("SLOT_ACCEPTANCE pinball_escalation")
-	_check_slot_pinball_escalation(definition, failures)
+	call("_check_slot_pinball_escalation", definition, failures)
 	print("SLOT_ACCEPTANCE pinball_feature_physics")
-	_check_slot_pinball_feature_physics(definition, failures)
+	call("_check_slot_pinball_feature_physics", definition, failures)
 	print("SLOT_ACCEPTANCE video_pinball_feature_event")
-	_check_slot_video_pinball_feature_event(definition, failures)
+	call("_check_slot_video_pinball_feature_event", definition, failures)
 	print("SLOT_ACCEPTANCE pinball_feature_visual_manifest")
-	_check_slot_pinball_feature_visual_manifest(definition, failures)
+	call("_check_slot_pinball_feature_visual_manifest", definition, failures)
 	print("SLOT_ACCEPTANCE pinball_launch_hit_regions")
-	_check_slot_pinball_launch_hit_regions(failures)
+	call("_check_slot_pinball_launch_hit_regions", failures)
 	print("SLOT_ACCEPTANCE pinball_sim_physics")
-	_check_slot_pinball_sim_physics(definition, failures)
+	call("_check_slot_pinball_sim_physics", definition, failures)
 	print("SLOT_ACCEPTANCE economy_rng_discipline")
-	_check_slot_economy_rng_discipline(failures)
+	call("_check_slot_economy_rng_discipline", failures)
 	print("SLOT_ACCEPTANCE feature_subsimulation")
-	_check_slot_feature_subsimulation(definition, failures)
+	call("_check_slot_feature_subsimulation", definition, failures)
 
 
 func _check_slot_single_apply_economy(library: ContentLibrary, definition: Dictionary, failures: Array) -> void:
@@ -5586,7 +5586,7 @@ func _check_slot_single_apply_economy(library: ContentLibrary, definition: Dicti
 	var before_bankroll := run_state.bankroll
 	var rng: RngStream = run_state.create_rng("slot_single_apply")
 	var result: Dictionary = game.resolve_with_context("spin", 10, run_state, environment, rng, {})
-	_check_action_result_shape(result, "legal", failures)
+	call("_check_action_result_shape", result, "legal", failures)
 	var expected_delta := int(result.get("slot_payout", 0)) - int(result.get("slot_stake_cost", 0))
 	if int(result.get("bankroll_delta", 0)) != expected_delta:
 		failures.append("Slot single-apply result delta did not equal payout minus stake cost.")
@@ -7668,3 +7668,793 @@ func _check_slot_hold_and_spin_fill_scaling(definition: Dictionary, failures: Ar
 	])
 
 
+
+
+# Shared test-chain helpers must live in the base so every foundation entrypoint compiles.
+
+func _archetype_by_id(library: ContentLibrary, archetype_id: String) -> Dictionary:
+	for value in library.environment_archetypes:
+		if typeof(value) == TYPE_DICTIONARY and str((value as Dictionary).get("id", "")) == archetype_id:
+			return (value as Dictionary).duplicate(true)
+	return {}
+
+func _assert_json_equal(actual: Variant, expected: Variant, message: String, failures: Array) -> void:
+	if JSON.stringify(actual) != JSON.stringify(expected):
+		failures.append(message)
+
+
+# Checks core contracts with fixture content.
+
+func _copy_array(value: Variant) -> Array:
+	if typeof(value) != TYPE_ARRAY:
+		return []
+	return (value as Array).duplicate(true)
+
+func _copy_dict(value: Variant) -> Dictionary:
+	if typeof(value) != TYPE_DICTIONARY:
+		return {}
+	return (value as Dictionary).duplicate(true)
+
+func _fixture_library(failures: Array) -> ContentLibrary:
+	var library := ContentLibraryScript.new()
+	library.environment_archetypes = [
+		{
+			"id": "fixture_environment",
+			"tier": 1,
+			"name_prefixes": ["Fixture"],
+			"name_nouns": ["Venue"],
+			"visual_context": {
+				"perspective": "first_person",
+				"scene_type": "fixture",
+			},
+			"security_profile": {
+				"strictness": "fixture",
+				"visible_cues": ["fixture cue"],
+			},
+			"economic_profile": {
+				"stake_floor": 1,
+				"stake_ceiling": 10,
+			},
+			"game_pool": ["fixture_game"],
+			"game_count": [1, 1],
+			"event_pool": ["fixture_event"],
+			"event_count": [1, 1],
+			"item_pool": ["fixture_item"],
+			"item_count": [1, 1],
+			"service_pool": ["fixture_service"],
+			"lender_hooks": ["fixture_lender"],
+			"suspicion_cues": ["fixture behavior cue"],
+			"travel_hooks": ["fixture_route"],
+			"next_archetypes": ["fixture_environment"],
+			"local_narrative_flags": {
+				"fixture_flag": true,
+			},
+			"moods": ["fixture_mood"],
+		},
+	]
+	library.games = [
+		{
+			"id": "fixture_game",
+			"module": "base",
+			"family": "fixture",
+			"display_name": "Fixture Game",
+			"intro": "Fixture game contract.",
+			"legal_actions": [{"id": "legal_fixture", "label": "Legal Fixture", "win_chance": 55, "payout_mult": 2}],
+			"cheat_actions": [{"id": "cheat_fixture", "label": "Cheat Fixture", "win_chance": 70, "payout_mult": 2, "suspicion_delta": 2}],
+		},
+	]
+	library.items = [
+		{
+			"id": "fixture_item",
+			"class": "permanent",
+			"domain": "global",
+			"effect": {"win_chance": 1},
+		},
+	]
+	library.events = [
+		{
+			"id": "fixture_event",
+			"type": "security",
+			"scopes": ["any"],
+			"tier_min": 1,
+			"min_suspicion": 0,
+			"consequences": {
+				"suspicion_delta": 1,
+			},
+			"payload": {
+				"summary": "Fixture event contract.",
+				"choices": [
+					{"id": "raise_heat", "label": "Raise Heat", "text": "Fixture heat rises.", "consequences": {"suspicion_delta": 2, "flags": {"fixture_event_flag": true}, "resolve_event": true}},
+				],
+			},
+		},
+	]
+	library.challenges = [
+		RunState.custom_challenge("fixture_challenge", "FIXTURE-SEED", {"fixture": true}),
+	]
+	library.lenders = [
+		{
+			"id": "fixture_lender",
+			"source": "fixture",
+			"display_name": "Fixture Lender",
+			"risk_profile": "fixture",
+			"consequences": ["fixture_consequence"],
+		},
+	]
+	library.services = [
+		{
+			"id": "fixture_service",
+			"type": "fixture",
+			"cost": 1,
+			"effect": {},
+		},
+	]
+	library.travel_routes = [
+		{
+			"id": "fixture_route",
+			"display_name": "Fixture Route",
+			"cost": 1,
+			"destination_tier_hint": 1,
+		},
+	]
+	# Match ContentLibrary.load(): prove an intentionally unhydrated fixture
+	# changes only its lazy index cache, then freeze the fully constructed state
+	# before any check receives it.
+	var before_hydration := _foundation_library_fingerprint(library)
+	var before_non_index_state := _foundation_library_fingerprint(library, false)
+	library._rebuild_indexes()
+	if _foundation_library_fingerprint(library) == before_hydration:
+		failures.append("Foundation fixture hydration regression did not exercise the unhydrated index state.")
+	if _foundation_library_fingerprint(library, false) != before_non_index_state:
+		failures.append("Foundation fixture hydration changed state outside the lazy index cache.")
+	return library
+
+func _item_count_ceiling(value: Variant) -> int:
+	if typeof(value) == TYPE_ARRAY:
+		var values: Array = value
+		if values.is_empty():
+			return 0
+		return int(values[values.size() - 1])
+	return int(value)
+
+func _layout_rect_center_board(rect: Rect2) -> Vector2:
+	return Vector2(
+		(rect.position.x + rect.size.x * 0.5) * float(ArtContractsScript.ENVIRONMENT_BOARD_SIZE.x),
+		(rect.position.y + rect.size.y * 0.5) * float(ArtContractsScript.ENVIRONMENT_BOARD_SIZE.y)
+	)
+
+func _layout_rect_from_dict(value: Variant) -> Rect2:
+	if typeof(value) != TYPE_DICTIONARY:
+		return Rect2()
+	var data: Dictionary = value
+	return Rect2(
+		Vector2(float(data.get("x", 0.0)), float(data.get("y", 0.0))),
+		Vector2(float(data.get("w", 0.0)), float(data.get("h", 0.0)))
+	)
+
+func _layout_rects_overlap_with_gap(first: Rect2, second: Rect2) -> bool:
+	var gap := Vector2(8.0 / float(ArtContractsScript.ENVIRONMENT_BOARD_SIZE.x), 8.0 / float(ArtContractsScript.ENVIRONMENT_BOARD_SIZE.y))
+	var padded_first := Rect2(first.position - gap, first.size + gap * 2.0)
+	var padded_second := Rect2(second.position - gap, second.size + gap * 2.0)
+	return padded_first.intersects(padded_second)
+
+
+# Checks lender borrowing, repayment, defaults, special debt kinds, and save/load.
+
+func _run_state_result_snapshot(run_state: RunState) -> Dictionary:
+	return {
+		"bankroll": run_state.bankroll,
+		"suspicion": run_state.suspicion_level(),
+		"suspicion_location_id": run_state.current_suspicion_location_id(),
+		"suspicion_levels": (run_state.suspicion.get("local_levels", {}) as Dictionary).duplicate(true),
+		"drunk_level": run_state.drunk_level,
+		"pending_drunk_absorption": run_state.pending_drunk_absorption_amount(),
+		"alcoholic_level": run_state.alcoholic_level,
+		"baseline_luck": run_state.baseline_luck,
+		"debt_count": run_state.debt.size(),
+		"story_count": run_state.story_log.size(),
+		"rng_state": run_state.rng_state,
+	}
+
+
+# Checks the shared ActionResult/result-delta shape.
+
+func _slot_array(value: Variant) -> Array:
+	if typeof(value) != TYPE_ARRAY:
+		return []
+	return (value as Array).duplicate(true)
+
+func _slot_assert_between(value: float, minimum: float, maximum: float, label: String, failures: Array) -> void:
+	if value < minimum or value > maximum:
+		failures.append("%s %.5f outside %.5f..%.5f." % [label, value, minimum, maximum])
+
+func _slot_assert_nudge_target_landed(machine: Dictionary, result: Dictionary, target: Dictionary, failures: Array, label: String) -> void:
+	var reel_index := int(target.get("reel", -1))
+	var row_index := int(target.get("row", -1))
+	var grid: Array = _slot_array(result.get("slot_grid", []))
+	var stops: Array = _slot_array(result.get("slot_reel_stops", []))
+	var strips: Array = _slot_array(machine.get("reel_strips", []))
+	if reel_index < 0 or row_index < 0 or reel_index >= stops.size() or reel_index >= strips.size():
+		failures.append("%s did not expose a valid target reel/row." % label)
+		return
+	var strip: Array = _slot_array(strips[reel_index])
+	if strip.is_empty():
+		failures.append("%s target reel strip was empty." % label)
+		return
+	var new_stop := posmod(int(stops[reel_index]), strip.size())
+	var landed_symbol := _slot_grid_symbol(grid, reel_index, row_index)
+	var strip_symbol := str(strip[posmod(new_stop + row_index, strip.size())])
+	var target_symbol := str(target.get("symbol", ""))
+	if landed_symbol != strip_symbol or (not target_symbol.is_empty() and landed_symbol != target_symbol):
+		failures.append("%s landed %s at reel %d row %d, expected strip symbol %s / target %s." % [label, landed_symbol, reel_index, row_index, strip_symbol, target_symbol])
+	var perfect: Dictionary = _slot_dict(target.get("perfect", {}))
+	if not perfect.is_empty() and int(perfect.get("new_stop", new_stop)) != new_stop:
+		failures.append("%s stopped at %d instead of the perfect target stop %d." % [label, new_stop, int(perfect.get("new_stop", new_stop))])
+
+func _slot_cell_lookup(cells: Array) -> Dictionary:
+	var result: Dictionary = {}
+	for cell_value in cells:
+		var cell: Dictionary = _slot_dict(cell_value)
+		result["%d:%d" % [int(cell.get("reel", -1)), int(cell.get("row", -1))]] = true
+	return result
+
+func _slot_coin_heavy_reel_strips(reel_count: int) -> Array:
+	var strips: Array = []
+	for _reel in range(maxi(1, reel_count)):
+		strips.append(["GOLD_TOKEN", "BUFFALO", "GOLD_TOKEN", "SUNSET", "GOLD_TOKEN", "WOLF"])
+	return strips
+
+func _slot_complete_active_bonus(game: GameModule, run_state: RunState, environment: Dictionary, rng: RngStream, desired_choice_id: String = "", observed_shots: Dictionary = {}) -> int:
+	var total := 0
+	var guard := 0
+	while guard < 120:
+		var machine: Dictionary = SlotMachineStateScript.read_machine(environment, "slot")
+		if not SlotMachineStateScript.active_bonus_incomplete(machine):
+			return total
+		var active: Dictionary = _slot_dict(machine.get("active_bonus", {}))
+		var action_id := _slot_bonus_action_for(active, desired_choice_id)
+		var result: Dictionary = game.resolve_with_context(action_id, 0, run_state, environment, rng, {})
+		var step: Dictionary = _slot_dict(result.get("slot_bonus_step", {}))
+		var step_active: Dictionary = _slot_dict(step.get("active_bonus", {}))
+		for history_value in _slot_array(step_active.get("history", [])):
+			var history: Dictionary = _slot_dict(history_value)
+			var shot_id := str(history.get("id", ""))
+			if not shot_id.is_empty():
+				observed_shots[shot_id] = true
+		if bool(result.get("ok", false)):
+			GameModule.apply_result(run_state, result, rng)
+		total += int(result.get("bankroll_delta", 0))
+		guard += 1
+	return total
+
+func _slot_complete_feature_total_for_seed(definition: Dictionary, family_id: String, format_id: String, seed: String, inputs: Array) -> int:
+	var pinball = SlotFamilyPinballScript.new()
+	var run_state: RunState = _slot_run_state(seed, 100000)
+	var machine: Dictionary = _slot_machine(definition, run_state, family_id, format_id, "standard", "plain")
+	var rng: RngStream = run_state.create_rng("slot_feature_direct_%s_%s" % [family_id, format_id])
+	return pinball.preview_feature_award(machine, 10, definition, rng, inputs) + _slot_input_policy_signature(inputs)
+
+func _slot_count_grid_symbols(grid: Array, counts: Dictionary) -> void:
+	for column_value in grid:
+		if typeof(column_value) != TYPE_ARRAY:
+			continue
+		for symbol in column_value as Array:
+			var key := str(symbol)
+			counts[key] = int(counts.get(key, 0)) + 1
+
+func _slot_dict(value: Variant) -> Dictionary:
+	if typeof(value) != TYPE_DICTIONARY:
+		return {}
+	return (value as Dictionary).duplicate(true)
+
+func _slot_environment() -> Dictionary:
+	return {
+		"id": "slot_acceptance_room",
+		"archetype_id": "bar",
+		"kind": "casino",
+		"display_name": "Slot Acceptance Room",
+		"game_ids": ["slot"],
+		"game_states": {},
+		"economic_profile": {"stake_floor": 2, "stake_ceiling": 60, "cashout_tone": "test"},
+		"security_profile": {"strictness": "loose"},
+		"event_ids": [],
+	}
+
+func _slot_event_type_count(events: Array) -> int:
+	var types: Dictionary = {}
+	for event_value in events:
+		var event: Dictionary = _slot_dict(event_value)
+		var event_type := str(event.get("element_type", ""))
+		if not event_type.is_empty():
+			types[event_type] = true
+	return types.size()
+
+func _slot_find_feature_active(game: GameModule, definition: Dictionary, family_id: String, format_id: String, mode_id: String, seed: String, failures: Array, bet_id: String = "bet_10") -> Dictionary:
+	var run_state: RunState = _slot_run_state(seed, 10000000)
+	var environment: Dictionary = _slot_environment()
+	var machine: Dictionary = _slot_machine(definition, run_state, family_id, format_id, "standard", "plain")
+	machine = SlotMachineStateScript.set_selected_bet(machine, bet_id)
+	_slot_store_machine(run_state, environment, machine)
+	var rng: RngStream = run_state.create_rng("slot_find_feature_%s" % mode_id)
+	for _guard in range(70000):
+		var result: Dictionary = game.resolve_with_context("spin", int(SlotMachineStateScript.selected_bet(machine).get("total_credits", 10)), run_state, environment, rng, {})
+		if bool(result.get("ok", false)):
+			GameModule.apply_result(run_state, result, rng)
+		var current_machine: Dictionary = SlotMachineStateScript.read_machine(environment, "slot")
+		var active: Dictionary = _slot_dict(current_machine.get("active_bonus", {}))
+		if bool(active.get("active", false)) and str(active.get("mode", "")) == mode_id:
+			return {"run_state": run_state, "environment": environment, "active_bonus": active}
+		_slot_complete_active_bonus(game, run_state, environment, rng)
+		machine = SlotMachineStateScript.read_machine(environment, "slot")
+	failures.append("Slot feature search exhausted before %s/%s/%s." % [family_id, format_id, mode_id])
+	return {}
+
+func _slot_game(library: ContentLibrary, failures: Array):
+	var definition := library.game("slot")
+	var module_script: Script = load(str(definition.get("module_path", "")))
+	if module_script == null:
+		failures.append("Slot module could not be loaded.")
+		return null
+	var module_instance = module_script.new()
+	if not module_instance is GameModule:
+		failures.append("Slot module does not extend GameModule.")
+		return null
+	var game: GameModule = module_instance
+	game.setup(definition, library)
+	return game
+
+func _slot_grid_symbol(grid: Array, reel_index: int, row_index: int) -> String:
+	if reel_index < 0 or reel_index >= grid.size() or typeof(grid[reel_index]) != TYPE_ARRAY:
+		return "BLANK"
+	var column: Array = grid[reel_index] as Array
+	if row_index < 0 or row_index >= column.size():
+		return "BLANK"
+	return str(column[row_index])
+
+func _slot_grid_symbol_lookup(grid: Array, symbol_id: String) -> Dictionary:
+	var result: Dictionary = {}
+	for reel_index in range(grid.size()):
+		if typeof(grid[reel_index]) != TYPE_ARRAY:
+			continue
+		var column: Array = grid[reel_index] as Array
+		for row_index in range(column.size()):
+			if str(column[row_index]) == symbol_id:
+				result["%d:%d" % [reel_index, row_index]] = true
+	return result
+
+func _slot_ids(rows: Array) -> Array:
+	var ids: Array = []
+	for row_value in rows:
+		var row: Dictionary = _slot_dict(row_value)
+		var id := str(row.get("id", ""))
+		if not id.is_empty():
+			ids.append(id)
+	return ids
+
+func _slot_is_low_buffalo_card(symbol: String) -> bool:
+	return ["A", "K", "Q", "J", "10"].has(symbol)
+
+func _slot_machine(definition: Dictionary, run_state: RunState, family_id: String, format_id: String, math_id: String = "standard", bonus_id: String = "plain", cabinet_id: String = "neon_magenta") -> Dictionary:
+	var generator = SlotMachineGeneratorScript.new()
+	var rng: RngStream = run_state.create_rng("slot_machine_%s_%s_%s_%s_%s" % [family_id, format_id, math_id, bonus_id, cabinet_id])
+	var machine: Dictionary = generator.build_machine_from_ids(definition, {
+		"format_id": format_id,
+		"type_id": family_id,
+		"math_variant_id": math_id,
+		"bonus_variant_id": bonus_id,
+		"cabinet_variant_id": cabinet_id,
+	}, rng)
+	return SlotMachineStateScript.set_selected_bet(machine, "bet_10")
+
+func _slot_pinball_feature_sample(definition: Dictionary, format_id: String, inputs: Array, seed: String) -> Dictionary:
+	var pinball = SlotFamilyPinballScript.new()
+	var run_state: RunState = _slot_run_state(seed, 100000)
+	var machine: Dictionary = _slot_machine(definition, run_state, "pinball", format_id, "standard", "plain")
+	var rng: RngStream = run_state.create_rng("slot_pinball_feature_sample")
+	var active: Dictionary = pinball.open_feature(machine, 10, rng, definition)
+	machine["active_bonus"] = active
+	var guard := 0
+	var input_index := 0
+	while bool(active.get("active", false)) and guard < 32:
+		var action_id := "slot_bonus_launch"
+		if input_index < inputs.size():
+			action_id = str(inputs[input_index])
+			input_index += 1
+		var step: Dictionary = pinball.step_bonus(machine, action_id, rng, definition)
+		active = _slot_dict(step.get("active_bonus", {}))
+		machine["active_bonus"] = active
+		guard += 1
+	return {
+		"active_bonus": active,
+		"guard": guard,
+	}
+
+func _slot_pinball_logged_award(events: Array) -> int:
+	var total := 0
+	for event_value in events:
+		var event: Dictionary = _slot_dict(event_value)
+		total += maxi(0, int(event.get("award", 0)))
+	return total
+
+func _slot_reel_manifest_progress(early: Dictionary, mid: Dictionary, settle: Dictionary) -> bool:
+	var early_phases: Array = _slot_string_array(early.get("reel_phase", []))
+	var mid_phases: Array = _slot_string_array(mid.get("reel_phase", []))
+	var settle_phases: Array = _slot_string_array(settle.get("reel_phase", []))
+	if early_phases.is_empty() or mid_phases.is_empty() or settle_phases.is_empty():
+		return false
+	if early_phases == mid_phases or mid_phases == settle_phases:
+		return false
+	for phase_value in settle_phases:
+		if str(phase_value) != "settled":
+			return false
+	return true
+
+func _slot_reveal_msec(timeline: Array) -> int:
+	var result := 0
+	for entry_value in timeline:
+		var entry: Dictionary = _slot_dict(entry_value)
+		result = maxi(result, int(ceil(float(entry.get("settle_end", entry.get("stop_time", 0.0))) * 1000.0)))
+	return maxi(180, result + 180)
+
+func _slot_run_state(seed: String, bankroll: int) -> RunState:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new(seed)
+	run_state.bankroll = bankroll
+	return run_state
+
+func _slot_settle_msec(timeline: Array) -> int:
+	var result := 0
+	for entry_value in timeline:
+		var entry: Dictionary = _slot_dict(entry_value)
+		result = maxi(result, int(round(float(entry.get("settle_end", 0.0)) * 1000.0)) + 24)
+	return maxi(100, result)
+
+func _slot_spin_mid_msec(timeline: Array) -> int:
+	for entry_value in timeline:
+		var entry: Dictionary = _slot_dict(entry_value)
+		var decel_start := float(entry.get("decel_start", 0.0))
+		var stop_time := float(entry.get("stop_time", decel_start + 0.2))
+		if stop_time > decel_start:
+			return maxi(180, int(round((decel_start + (stop_time - decel_start) * 0.50) * 1000.0)))
+	return 240
+
+func _slot_spin_until_classification(definition: Dictionary, family_id: String, format_id: String, classification: String, seed: String, failures: Array) -> Dictionary:
+	var resolver = SlotResolverScript.new()
+	var run_state: RunState = _slot_run_state(seed, 100000)
+	var machine: Dictionary = _slot_machine(definition, run_state, family_id, format_id, "standard", "plain")
+	var rng: RngStream = run_state.create_rng("slot_seek_%s" % classification)
+	for _index in range(1600):
+		var resolved: Dictionary = resolver.resolve_spin(machine, "spin", SlotMachineStateScript.selected_bet(machine), rng, definition, {})
+		machine = _slot_dict(resolved.get("machine", machine))
+		var result: Dictionary = _slot_dict(resolved.get("result", {}))
+		if str(result.get("slot_classification", "")) == classification:
+			return {"run_state": run_state, "machine": machine, "result": result}
+		if SlotMachineStateScript.active_bonus_incomplete(machine):
+			machine["active_bonus"] = {"active": false, "complete": true}
+	failures.append("Slot sample search could not find %s/%s %s." % [family_id, format_id, classification])
+	return {}
+
+func _slot_stops_are_staggered(stops: Array) -> bool:
+	if stops.size() < 2:
+		return true
+	for index in range(1, stops.size()):
+		if int(stops[index]) <= int(stops[index - 1]):
+			return false
+	return true
+
+func _slot_store_machine(run_state: RunState, environment: Dictionary, machine: Dictionary) -> void:
+	SlotMachineStateScript.write_machine(environment, "slot", machine)
+	run_state.current_environment = environment
+
+func _slot_string_array(value: Variant) -> Array:
+	var result: Array = []
+	if typeof(value) != TYPE_ARRAY:
+		return result
+	var source: Array = value as Array
+	for entry in source:
+		result.append(str(entry))
+	return result
+
+func _slot_surface_channel_duration(surface_state: Dictionary, channel_id: String) -> int:
+	for channel_value in _slot_array(surface_state.get("surface_animation_channels", [])):
+		var channel: Dictionary = _slot_dict(channel_value)
+		if str(channel.get("id", "")) == channel_id:
+			return maxi(0, int(channel.get("duration_msec", 0)))
+	return 0
+
+func _slot_surface_ui_at_spin_msec(spin_msec: int) -> Dictionary:
+	var elapsed_sec := float(maxi(0, spin_msec)) / 1000.0
+	return {
+		"surface_time_msec": maxi(0, spin_msec),
+		"drunk_scaled_surface_time_msec": maxi(0, spin_msec),
+		"surface_runtime_status": {
+			"surface_animations": {
+				"slot_spin": {
+					"id": "slot_spin",
+					"active": true,
+					"elapsed": elapsed_sec,
+				},
+			},
+		},
+	}
+
+func _slot_symbol_count(grid: Array, symbol_id: String) -> int:
+	var count := 0
+	for column_value in grid:
+		if typeof(column_value) != TYPE_ARRAY:
+			continue
+		var column: Array = column_value as Array
+		for symbol_value in column:
+			if str(symbol_value) == symbol_id:
+				count += 1
+	return count
+
+func _slot_symbol_is_wild(symbol: String, family_id: String) -> bool:
+	if family_id == "buffalo":
+		return symbol == "SUNSET" or symbol == "SUNSET_2X" or symbol == "SUNSET_3X"
+	return symbol == "WILD" or symbol == "DOUBLE" or symbol == "DOUBLE_7"
+
+func _slot_tease_msec(timeline: Array) -> int:
+	for entry_value in timeline:
+		var entry: Dictionary = _slot_dict(entry_value)
+		if bool(entry.get("tease", false)):
+			var decel := float(entry.get("decel_start", 0.0))
+			var stop := float(entry.get("stop_time", decel + 0.2))
+			return int(round((decel + (stop - decel) * 0.55) * 1000.0))
+	return _slot_settle_msec(timeline)
+
+func _slot_trigger_and_complete_feature(game: GameModule, definition: Dictionary, family_id: String, format_id: String, mode_id: String, seed: String, failures: Array, bet_id: String = "bet_10", desired_choice_id: String = "") -> bool:
+	var run_state: RunState = _slot_run_state(seed, 10000000)
+	var environment: Dictionary = _slot_environment()
+	var machine: Dictionary = _slot_machine(definition, run_state, family_id, format_id, "standard", "plain")
+	machine = SlotMachineStateScript.set_selected_bet(machine, bet_id)
+	_slot_store_machine(run_state, environment, machine)
+	var rng: RngStream = run_state.create_rng("slot_feature_%s" % mode_id)
+	var guard := 0
+	while guard < 50000:
+		var result: Dictionary = game.resolve_with_context("spin", int(SlotMachineStateScript.selected_bet(machine).get("total_credits", 10)), run_state, environment, rng, {})
+		guard += 1
+		if bool(result.get("ok", false)):
+			GameModule.apply_result(run_state, result, rng)
+		var current_machine: Dictionary = SlotMachineStateScript.read_machine(environment, "slot")
+		var active: Dictionary = _slot_dict(current_machine.get("active_bonus", {}))
+		if bool(active.get("active", false)) and str(active.get("mode", "")) == mode_id:
+			var before_count := int(_slot_dict(current_machine.get("bonus_state", {})).get("feature_completions", 0))
+			_slot_complete_active_bonus(game, run_state, environment, rng, desired_choice_id)
+			var after_machine: Dictionary = SlotMachineStateScript.read_machine(environment, "slot")
+			var after_count := int(_slot_dict(after_machine.get("bonus_state", {})).get("feature_completions", 0))
+			return after_count > before_count and not SlotMachineStateScript.active_bonus_incomplete(after_machine)
+		_slot_complete_active_bonus(game, run_state, environment, rng)
+		machine = SlotMachineStateScript.read_machine(environment, "slot")
+	failures.append("Slot feature search exhausted before %s/%s/%s." % [family_id, format_id, mode_id])
+	return false
+
+func _slot_with_test_celebration(machine: Dictionary, tier: String, payout: int, stake_cost: int) -> Dictionary:
+	var next: Dictionary = machine.duplicate(true)
+	var duration := _slot_test_celebration_duration_msec(tier)
+	var start_msec := 180
+	next["last_classification"] = "true_win" if payout > 0 else "near_miss" if tier == "tease" else "idle"
+	next["last_payout"] = maxi(0, payout)
+	next["last_stake_cost"] = maxi(0, stake_cost)
+	next["last_net"] = maxi(0, payout) - maxi(0, stake_cost)
+	next["slot_win_amount"] = maxi(0, payout)
+	next["slot_win_reason"] = "Test %s celebration" % tier
+	next["slot_celebration_tier"] = tier
+	next["slot_animation_id"] = "tier_sweep:%s" % tier
+	next["slot_animation_duration_msec"] = start_msec + duration + 300
+	next["slot_animation_plan"] = {
+		"id": "tier_sweep:%s" % tier,
+		"duration_msec": start_msec + duration + 300,
+		"reel_stop_times": [],
+		"reel_timeline": [],
+		"bonus_start_time": 0.0,
+		"feature_duration_msec": 0,
+		"tease_active": tier == "tease",
+		"tease_reel": -1,
+		"tease_text": "",
+		"celebration_tier": tier,
+		"celebration_start_msec": start_msec,
+		"celebration_duration_msec": duration,
+		"count_up_start_msec": start_msec,
+		"count_up_end_msec": start_msec + duration,
+	}
+	return next
+
+func _string_array(values: Variant) -> Array:
+	var result: Array = []
+	if typeof(values) != TYPE_ARRAY:
+		return result
+	for value in values:
+		var id := str(value)
+		if not id.is_empty():
+			result.append(id)
+	return result
+
+
+func _slot_bonus_action_for(active: Dictionary, desired_choice_id: String = "") -> String:
+	if str(active.get("mode", "")) == "wheel":
+		var choices: Array = _slot_array(active.get("choices", []))
+		for index in range(choices.size()):
+			var choice: Dictionary = _slot_dict(choices[index])
+			if str(choice.get("id", "")) == desired_choice_id:
+				if index == 0:
+					return "slot_bonus_left"
+				if index == 2:
+					return "slot_bonus_right"
+				return "slot_bonus_launch"
+		return "slot_bonus_launch"
+	return "slot_bonus_launch"
+
+func _slot_input_policy_signature(inputs: Array) -> int:
+	var total := 0
+	for index in range(inputs.size()):
+		var action_id := str(inputs[index])
+		if action_id == "slot_bonus_left":
+			total += index + 1
+		elif action_id == "slot_bonus_right":
+			total += (index + 1) * 3
+		elif action_id == "slot_bonus_launch":
+			total += (index + 1) * 2
+	return total
+
+func _slot_test_celebration_duration_msec(tier: String) -> int:
+	match tier:
+		"jackpot":
+			return 3000
+		"mega":
+			return 2200
+		"big":
+			return 1600
+		"feature":
+			return 1200
+		"line":
+			return 900
+		_:
+			return 0
+
+
+# Shared result/assertion helpers are base-owned for every concrete suite.
+
+func _check_action_result_shape(result: Dictionary, expected_kind: String, failures: Array, context: String = "") -> void:
+	var context_suffix := " (%s)" % context if not context.strip_edges().is_empty() else ""
+	if not bool(result.get("ok", false)):
+		failures.append("GameModule returned an unsuccessful result for %s action%s." % [expected_kind, context_suffix])
+	if str(result.get("type", "")) != "game_action":
+		failures.append("ActionResult should identify game_action results%s." % context_suffix)
+	if str(result.get("action_kind", "")) != expected_kind:
+		failures.append("ActionResult action kind mismatch%s: expected %s." % [context_suffix, expected_kind])
+	var deltas: Dictionary = result.get("deltas", {})
+	var required_delta_keys := [
+		"bankroll_delta",
+		"suspicion_delta",
+		"alcohol_intake",
+		"drunk_delta",
+		"alcoholic_delta",
+		"baseline_luck_delta",
+		"debt_changes",
+		"inventory_add",
+		"inventory_remove",
+		"flags_set",
+		"travel_hooks_add",
+		"travel_changes",
+		"story_log",
+		"messages",
+		"ended",
+		"item_hooks",
+		"event_hooks",
+		"demo_finale",
+	]
+	for key in required_delta_keys:
+		if not deltas.has(key):
+			failures.append("ActionResult deltas missing key: %s." % key)
+	if int(result.get("bankroll_delta", 0)) != int(deltas.get("bankroll_delta", 0)):
+		failures.append("ActionResult top-level bankroll_delta does not match deltas.")
+	if int(result.get("suspicion_delta", 0)) != int(deltas.get("suspicion_delta", 0)):
+		failures.append("ActionResult top-level suspicion_delta does not match deltas.")
+	if bool(result.get("ended", false)) != bool(deltas.get("ended", false)):
+		failures.append("ActionResult top-level ended does not match deltas.")
+	if str(result.get("state", "")) == "":
+		failures.append("ActionResult should include continue/ended state.")
+	if str(result.get("message", "")).is_empty():
+		failures.append("ActionResult should include a player-facing message.")
+	if result.get("messages", []).is_empty() or deltas.get("messages", []).is_empty():
+		failures.append("ActionResult should include messages in the shared delta shape.")
+	for ui_key in ["host", "button_metadata", "overlay_state", "focus", "hover", "ui_state"]:
+		if result.has(ui_key) or deltas.has(ui_key):
+			failures.append("ActionResult leaked UI state key: %s." % ui_key)
+
+
+# Checks both legacy self-applied results and pure host-applied module results.
+
+func _check_action_result_application_contract(before: Dictionary, run_state: RunState, result: Dictionary, label: String, failures: Array) -> void:
+	if not bool(result.get("ok", false)):
+		return
+	if not bool(result.get("host_apply_result", false)):
+		_check_action_result_applied(before, run_state, result, label, failures)
+		return
+	if run_state.bankroll != int(before.get("bankroll", 0)):
+		failures.append("RunState bankroll changed before host apply for %s." % label)
+	var result_environment_id := str(result.get("environment_id", ""))
+	if not result_environment_id.is_empty():
+		var location_id := run_state.suspicion_location_id_for_environment_id(result_environment_id)
+		var before_levels: Dictionary = before.get("suspicion_levels", {})
+		var expected_suspicion := int(before_levels.get(location_id, 0))
+		if run_state.suspicion_level_for_environment_id(result_environment_id) != expected_suspicion:
+			failures.append("RunState suspicion changed before host apply for %s." % label)
+	elif run_state.suspicion_level() != int(before.get("suspicion", 0)):
+		failures.append("RunState suspicion changed before host apply for %s." % label)
+	if run_state.story_log.size() != int(before.get("story_count", 0)):
+		failures.append("RunState story log changed before host apply for %s." % label)
+	var apply_rng := run_state.create_rng("%s_host_apply" % label.replace(" ", "_"))
+	apply_rng.randi_range(1, 2147483646)
+	GameModule.apply_result(run_state, result, apply_rng)
+	_check_action_result_applied(before, run_state, result, "%s host apply" % label, failures)
+
+
+# Checks that ActionResult changes were applied through RunState domains.
+
+func _check_action_result_applied(before: Dictionary, run_state: RunState, result: Dictionary, label: String, failures: Array) -> void:
+	if not bool(result.get("ok", false)):
+		return
+	var deltas: Dictionary = result.get("deltas", {})
+	var expected_bankroll := int(before.get("bankroll", 0)) + int(deltas.get("bankroll_delta", 0))
+	if run_state.bankroll != expected_bankroll:
+		failures.append("RunState bankroll did not match %s delta." % label)
+	var result_environment_id := str(result.get("environment_id", ""))
+	var before_suspicion := int(before.get("suspicion", 0))
+	var actual_suspicion := run_state.suspicion_level()
+	if not result_environment_id.is_empty():
+		var location_id := run_state.suspicion_location_id_for_environment_id(result_environment_id)
+		var before_levels: Dictionary = before.get("suspicion_levels", {})
+		before_suspicion = int(before_levels.get(location_id, before_suspicion if location_id == str(before.get("suspicion_location_id", "")) else 0))
+		actual_suspicion = run_state.suspicion_level_for_environment_id(result_environment_id)
+	var expected_suspicion := clampi(before_suspicion + int(deltas.get("suspicion_delta", 0)), 0, 100)
+	if actual_suspicion != expected_suspicion:
+		failures.append("RunState suspicion did not match %s delta." % label)
+	var intake := maxi(0, int(deltas.get("alcohol_intake", 0)))
+	var before_drunk := int(before.get("drunk_level", 0))
+	var before_pending := int(before.get("pending_drunk_absorption", 0))
+	var pending_capacity := maxi(0, RunState.ALCOHOL_MAX - before_drunk - before_pending)
+	var accepted_intake := mini(intake, pending_capacity)
+	var immediate_intake := mini(accepted_intake, RunState.DRUNK_ABSORPTION_INITIAL_POINTS)
+	var expected_pending := before_pending + accepted_intake - immediate_intake
+	var immediate_pending_delta := 0
+	var pending_delta := int(deltas.get("pending_drunk_absorption_delta", 0))
+	if pending_delta < 0:
+		expected_pending = maxi(0, expected_pending + pending_delta)
+	elif pending_delta > 0:
+		var pending_delta_capacity := maxi(0, RunState.ALCOHOL_MAX - before_drunk - immediate_intake - expected_pending)
+		var accepted_pending_delta := mini(pending_delta, pending_delta_capacity)
+		immediate_pending_delta = mini(accepted_pending_delta, RunState.DRUNK_ABSORPTION_INITIAL_POINTS)
+		expected_pending += maxi(0, accepted_pending_delta - immediate_pending_delta)
+	var drunk_delta := int(deltas.get("drunk_delta", 0))
+	var effective_drunk_delta := 0 if drunk_delta < 0 and expected_pending > 0 else drunk_delta
+	var expected_drunk := clampi(before_drunk + immediate_intake + immediate_pending_delta + effective_drunk_delta, 0, RunState.ALCOHOL_MAX)
+	if run_state.drunk_level != expected_drunk:
+		failures.append("RunState drunk level did not match %s delta." % label)
+	if run_state.pending_drunk_absorption_amount() != expected_pending:
+		failures.append("RunState pending drunk absorption did not match %s alcohol intake." % label)
+	var expected_alcoholic := clampi(int(before.get("alcoholic_level", 0)) + int(deltas.get("alcohol_intake", 0)) + int(deltas.get("alcoholic_delta", 0)), 0, RunState.ALCOHOL_MAX)
+	if run_state.alcoholic_level != expected_alcoholic:
+		failures.append("RunState alcoholic level did not match %s delta." % label)
+	var expected_baseline_luck := clampi(int(before.get("baseline_luck", 0)) + int(deltas.get("baseline_luck_delta", 0)), RunState.BASELINE_LUCK_MIN, RunState.BASELINE_LUCK_MAX)
+	if run_state.baseline_luck != expected_baseline_luck:
+		failures.append("RunState baseline luck did not match %s delta." % label)
+	var story_delta: Array = deltas.get("story_log", [])
+	if run_state.story_log.size() != int(before.get("story_count", 0)) + story_delta.size():
+		failures.append("RunState story log did not match %s delta." % label)
+	var debt_delta: Array = deltas.get("debt_changes", [])
+	if run_state.debt.size() != int(before.get("debt_count", 0)) + debt_delta.size():
+		failures.append("RunState debt did not match %s delta." % label)
+	if run_state.rng_state == int(before.get("rng_state", 0)):
+		failures.append("RunState RNG state did not advance after %s." % label)
+
+
+# Checks the one selected FT-06 starter game without touching demo UI modules.
+
+func _assert_equal(actual: Variant, expected: Variant, message: String, failures: Array) -> void:
+	if actual != expected:
+		failures.append(message)
+
+
+# Compares dictionaries and arrays in foundation checks.

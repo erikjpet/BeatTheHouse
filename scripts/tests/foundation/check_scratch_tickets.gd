@@ -4,6 +4,7 @@ const ScratchSfxPlayerScript := preload("res://scripts/ui/sfx_player.gd")
 const ScratchRngStreamScript := preload("res://scripts/core/rng_stream.gd")
 const ScratchRegionModelScript := preload("res://scripts/games/scratch_ticket_region_model.gd")
 const SCRATCH_IDS := ["two_fer", "lucky_7s", "tic_tac_gold", "crossword_corner", "bonus_bingo", "high_roller_holdem", "golden_vault"]
+const ACTIVE_SCRATCH_IDS := ["two_fer", "lucky_7s", "tic_tac_gold", "bonus_bingo", "high_roller_holdem", "golden_vault"]
 const SCRATCH_PRICES := [2, 5, 10, 15, 20, 50, 100]
 const SCRATCH_MECHANICS := ["match_two_of_three", "key_number_match", "tic_tac_toe", "crossword", "bingo", "beat_dealer_poker", "multi_game_vault"]
 const SCRATCH_SECTION_COUNTS := [1, 2, 2, 2, 5, 3, 4]
@@ -13,6 +14,7 @@ func _check_scratch_tickets_surface_contract(game: GameModule, failures: Array) 
 	_check_scratch_measured_region_data(failures)
 	_check_scratch_gas_station_generation(failures)
 	_check_scratch_roster(game, failures)
+	_check_crossword_option_c_hold(game, failures)
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("SCRATCH-TICKET-CONTRACT")
 	run_state.bankroll = 500000
@@ -28,6 +30,12 @@ func _check_scratch_tickets_surface_contract(game: GameModule, failures: Array) 
 	var surface := game.surface_state(run_state, environment, {})
 	if str(surface.get("surface_renderer", "")) != "scratch_tickets" or not bool(surface.get("surface_controls_native", false)):
 		failures.append("Scratch Tickets did not route to its native surface.")
+	var counter_ritual: Dictionary = surface.get("counter_ritual", {}) if typeof(surface.get("counter_ritual", {})) == TYPE_DICTIONARY else {}
+	var counter_attention: Dictionary = counter_ritual.get("attention", {}) if typeof(counter_ritual.get("attention", {})) == TYPE_DICTIONARY else {}
+	if str(surface.get("surface_cast", "")) != "clerk_and_machine" or (counter_ritual.get("actors", []) as Array).is_empty() or (counter_ritual.get("objects", []) as Array).size() < 3:
+		failures.append("Scratch Tickets did not project the clerk, rack, counter, and losing-ticket pile as material ritual state.")
+	if bool(counter_attention.get("reveals_hidden_outcomes", true)) or int(counter_attention.get("suspicion", -1)) != run_state.suspicion_level():
+		failures.append("Scratch clerk attention leaked ticket contents or diverged from existing suspicion authority.")
 	if not bool(surface.get("surface_animates_idle", false)) or bool(surface.get("surface_realtime_state_refresh", true)):
 		failures.append("Scratch Tickets idle liveness/zero-copy flags are incorrect.")
 	var cash_hooks := game.environment_interactable_objects(run_state, environment)
@@ -142,6 +150,84 @@ func _check_scratch_roster(game: GameModule, failures: Array) -> void:
 				failures.append("Retired scratch type %s remains in the active roster." % retired_id)
 
 
+func _check_crossword_option_c_hold(game: GameModule, failures: Array) -> void:
+	var active_discovered: Array = game.call("_active_discovered_ticket_types", ["crossword_corner", "golden_vault", "two_fer", "golden_vault", "future_ticket"])
+	if active_discovered != ["two_fer", "golden_vault"]:
+		failures.append("Option C active discovery helper did not return the exact canonical active subset.")
+	if not bool(game.call("_ticket_type_is_held", "crossword_corner")) or bool(game.call("_ticket_type_is_held", "two_fer")):
+		failures.append("Option C held-ticket helper did not distinguish Crossword from the six active families.")
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("SCRATCH-OPTION-C-HOLD")
+	run_state.bankroll = 500000
+	var environment := _scratch_environment("scratch_option_c_hold")
+	var machine: Dictionary = game.call("_generate_machine_state", run_state, environment, _scratch_rng("option-c-stock"))
+	var stock := _dict_array(machine.get("stock", []))
+	var crossword_index := -1
+	for index in range(stock.size()):
+		if str((stock[index] as Dictionary).get("type_id", "")) == "crossword_corner":
+			crossword_index = index
+			break
+	if crossword_index < 0:
+		failures.append("Option C deleted the preserved Crossword stock record.")
+		return
+	var held_slot: Dictionary = stock[crossword_index]
+	if int(held_slot.get("remaining", -1)) != 0 or str(held_slot.get("release_availability", "")) != "held":
+		failures.append("Option C generated new Crossword stock instead of an explicit held row.")
+	# Simulate a historical save containing unsold raw stock plus an issued ticket.
+	held_slot["remaining"] = 3
+	stock[crossword_index] = held_slot
+	var issued: Dictionary = game.call("_roll_ticket", game.call("_ticket_type", "crossword_corner"), _scratch_rng("option-c-issued"), 0, "option-c-issued")
+	machine["stock"] = stock
+	machine["active_ticket"] = issued
+	# A current-version historical save can still predate the availability field.
+	# Normalization must stamp the held row without changing its saved quantity or
+	# any already-issued lifecycle collection.
+	var legacy_machine := machine.duplicate(true)
+	var legacy_stock := _dict_array(legacy_machine.get("stock", []))
+	var legacy_held: Dictionary = legacy_stock[crossword_index]
+	legacy_held["remaining"] = 3
+	legacy_held.erase("release_availability")
+	legacy_stock[crossword_index] = legacy_held
+	legacy_machine["stock"] = legacy_stock
+	var lifecycle_before := JSON.stringify({"active_ticket":legacy_machine.get("active_ticket", {}),"pending_queue":legacy_machine.get("pending_queue", []),"winner_pile":legacy_machine.get("winner_pile", []),"loser_pile":legacy_machine.get("loser_pile", [])})
+	game.call("_normalize_machine_state", legacy_machine, run_state)
+	legacy_stock = _dict_array(legacy_machine.get("stock", []))
+	legacy_held = legacy_stock[crossword_index]
+	if int(legacy_held.get("remaining", -1)) != 3 or str(legacy_held.get("release_availability", "")) != "held":
+		failures.append("Option C historical normalization did not preserve and stamp held Crossword stock.")
+	if JSON.stringify({"active_ticket":legacy_machine.get("active_ticket", {}),"pending_queue":legacy_machine.get("pending_queue", []),"winner_pile":legacy_machine.get("winner_pile", []),"loser_pile":legacy_machine.get("loser_pile", [])}) != lifecycle_before:
+		failures.append("Option C historical normalization changed an issued Crossword lifecycle.")
+	var held_before_clear := JSON.stringify(legacy_held)
+	var active_before_clear := int(game.call("_stock_total", legacy_machine))
+	var cleared_active := int(game.call("_clear_machine_stock", legacy_machine))
+	legacy_stock = _dict_array(legacy_machine.get("stock", []))
+	if cleared_active != active_before_clear or JSON.stringify(legacy_stock[crossword_index]) != held_before_clear or int(game.call("_stock_total", legacy_machine)) != 0:
+		failures.append("Option C scalper clear changed held Crossword bytes/value or miscounted active supply.")
+	machine = legacy_machine
+	machine["scalper_present"] = false
+	machine["scalper_visit_token"] = game.call("_scratch_visit_token", run_state, environment)
+	environment["game_states"] = {"scratch_tickets": machine}
+	run_state.current_environment = environment
+	var surface: Dictionary = game.surface_state(run_state, environment, {})
+	var visible_stock := _dict_array(surface.get("scratch_stock", []))
+	var visible_ids: Array = []
+	for slot_value in visible_stock:
+		visible_ids.append(str((slot_value as Dictionary).get("type_id", "")))
+	if visible_ids != ACTIVE_SCRATCH_IDS or visible_ids.has("crossword_corner"):
+		failures.append("Option C active purchase surface did not expose exactly the six aligned ticket families.")
+	if str((surface.get("scratch_ticket", {}) as Dictionary).get("type_id", "")) != "crossword_corner":
+		failures.append("Option C hid an already-issued Crossword ticket from play.")
+	var before := JSON.stringify(run_state.to_save_snapshot())
+	var stale_command: Dictionary = game.surface_action_command("scratch_buy", crossword_index, false, {}, run_state, environment)
+	var direct_result: Dictionary = game.resolve_with_context("buy_scratch_ticket", 15, run_state, environment, _scratch_rng("option-c-hostile-buy"), {"scratch_stock_index": crossword_index, "scratch_buy_quantity": 1})
+	if not str(stale_command.get("action_id", "")).is_empty() or bool(direct_result.get("ok", true)):
+		failures.append("Option C stale/direct path created a new Crossword purchase.")
+	if int(game.wager_cost_for_context("buy_scratch_ticket", 15, run_state, environment, {"scratch_stock_index": crossword_index, "scratch_buy_quantity": 1})) != 0:
+		failures.append("Option C held Crossword purchase exposed a chargeable wager.")
+	if JSON.stringify(run_state.to_save_snapshot()) != before:
+		failures.append("Option C rejected Crossword purchase mutated money, RNG, stock, or issued-ticket state.")
+
+
 func _check_scratch_purchase_and_input(game: GameModule, run_state: RunState, environment: Dictionary, failures: Array) -> void:
 	var buy_index := _first_stocked_scratch_index((environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {}))
 	if buy_index < 0:
@@ -156,6 +242,11 @@ func _check_scratch_purchase_and_input(game: GameModule, run_state: RunState, en
 		failures.append("Scratch ticket purchase exposed its hidden outcome to the win/loss music system.")
 	if str(purchase.get("surface_audio_cue", "")) != "ticket_dispenser" or str((purchase.get("surface_audio_context", {}) as Dictionary).get("action", "")) != "scratch_buy":
 		failures.append("Scratch ticket purchase did not emit the successful dispense cue.")
+	var purchase_surface: Dictionary = game.surface_state(run_state, environment, buy_command.get("ui_state", {}))
+	var purchase_ritual: Dictionary = purchase_surface.get("counter_ritual", {}) if typeof(purchase_surface.get("counter_ritual", {})) == TYPE_DICTIONARY else {}
+	var purchase_transaction: Dictionary = purchase_ritual.get("transaction", {}) if typeof(purchase_ritual.get("transaction", {})) == TYPE_DICTIONARY else {}
+	if str(purchase_transaction.get("kind", "")) != "purchase" or int(purchase_transaction.get("price", 0)) != int(purchase.get("stake", 0)):
+		failures.append("Scratch purchase did not persist its exact counter handover transaction.")
 	var result_ticket: Dictionary = purchase.get("scratch_ticket", {}) if typeof(purchase.get("scratch_ticket", {})) == TYPE_DICTIONARY else {}
 	if result_ticket.has("latex_mask") or result_ticket.has("scratch_regions"):
 		failures.append("Scratch ticket purchase duplicated its live foil mask into the action result.")
@@ -918,10 +1009,11 @@ func _check_scratch_stock(game: GameModule, failures: Array) -> void:
 	}, _scratch_rng("practice-stock-root"))
 	var practice_stock := _dict_array(practice.get("stock", []))
 	if practice_stock.size() != SCRATCH_IDS.size():
-		failures.append("Scratch practice stock did not include every ticket type.")
+		failures.append("Scratch practice stock did not preserve every ticket definition row.")
 	for slot_value in practice_stock:
 		var practice_slot: Dictionary = slot_value
-		if int(practice_slot.get("remaining", 0)) != 100 or int(practice_slot.get("capacity", 0)) != 100:
+		var expected_remaining := 0 if str(practice_slot.get("type_id", "")) == "crossword_corner" else 100
+		if int(practice_slot.get("remaining", -1)) != expected_remaining or int(practice_slot.get("capacity", 0)) != 100:
 			failures.append("Scratch practice stock did not provide 100 copies of %s." % str(practice_slot.get("type_id", "")))
 	var out_of_stock_rows := 0
 	var total_rows := 0
@@ -1047,8 +1139,13 @@ func _check_scratch_scalper(game: GameModule, failures: Array) -> void:
 		(slot_value as Dictionary)["remaining"] = 1
 	machine["stock"] = stock
 	var cleared := int(game.call("_clear_machine_stock", machine))
-	if cleared != stock.size() or int(game.call("_stock_total", machine)) != 0:
-		failures.append("Scratch scalper did not leave every machine slot out of stock.")
+	var cleared_stock := _dict_array(machine.get("stock", []))
+	var held_after_clear := -1
+	for slot_value in cleared_stock:
+		if str((slot_value as Dictionary).get("type_id", "")) == "crossword_corner":
+			held_after_clear = int((slot_value as Dictionary).get("remaining", -1))
+	if cleared != ACTIVE_SCRATCH_IDS.size() or int(game.call("_stock_total", machine)) != 0 or held_after_clear != 1:
+		failures.append("Scratch scalper did not clear exactly the six active rows while preserving held Crossword quantity.")
 	machine["scalper_visit_token"] = game.call("_scratch_visit_token", run_state, environment)
 	machine["scalper_present"] = true
 	machine["scalper_knows_schedule"] = true
@@ -1111,12 +1208,13 @@ func _check_scratch_practice_inventory(game: GameModule, failures: Array) -> voi
 		var remaining := int(slot.get("remaining", -1))
 		var capacity := int(slot.get("capacity", -1))
 		stock_total += maxi(0, remaining)
-		exact_rows = exact_rows and remaining == 100 and capacity == 100
+		var expected_remaining := 0 if str(slot.get("type_id", "")) == "crossword_corner" else 100
+		exact_rows = exact_rows and remaining == expected_remaining and capacity == 100
 	for type_id in SCRATCH_IDS:
 		exact_rows = exact_rows and stocked_type_ids.has(type_id)
 	var expected_visit_token := str(game.call("_scratch_visit_token", practice_run, practice_environment))
-	if not exact_rows or stock_total != 700:
-		failures.append("Scratch non-tutorial practice refresh did not preserve all seven locked 100/100 stock rows (rows=%d total=%d)." % [stock.size(), stock_total])
+	if not exact_rows or stock_total != 600:
+		failures.append("Scratch non-tutorial practice refresh did not preserve six active 100/100 rows plus the held Crossword row (rows=%d total=%d)." % [stock.size(), stock_total])
 	if bool(machine.get("scalper_present", false)) or bool(machine.get("scalper_knows_schedule", false)):
 		failures.append("Scratch scalper survived the non-tutorial practice refresh and could clear locked inventory.")
 	if expected_visit_token.is_empty() or str(machine.get("scalper_visit_token", "")) != expected_visit_token:
@@ -1312,6 +1410,7 @@ func _check_scratch_portable_state(game: GameModule, failures: Array) -> void:
 	run_state.bankroll = 500
 	var environment := _scratch_environment("scratch_portable")
 	var machine: Dictionary = game.call("_generate_machine_state", run_state, environment, _scratch_rng("portable-stock"))
+	_ensure_stock_for_quantity(machine, 1)
 	environment["game_states"] = {"scratch_tickets": machine}
 	run_state.current_environment = environment
 	var buy_index := _first_stocked_scratch_index(machine)
