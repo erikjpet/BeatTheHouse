@@ -2530,7 +2530,12 @@ func _check_presented_bankroll_waits_for_result_reveal(app: Control) -> bool:
 	if not bool(reveal_animation.get("active", false)):
 		push_error("Bankroll presentation fixture did not expose an active reveal animation.")
 		return false
-	await create_timer(0.35).timeout
+	# The reveal contract uses Time.get_ticks_msec(). Wait against that exact
+	# unscaled clock as well: SceneTreeTimer can still inherit altered suite-wide
+	# timing state after earlier animation/accessibility coverage.
+	var release_not_before_msec := Time.get_ticks_msec() + 350
+	while Time.get_ticks_msec() < release_not_before_msec:
+		await process_frame
 	# The full UI suite can cross the deadline between FoundationMain's process
 	# callback and this timer callback. Allow the already-expired reveal a small
 	# number of frame boundaries to publish its final bankroll state.
@@ -2541,7 +2546,13 @@ func _check_presented_bankroll_waits_for_result_reveal(app: Control) -> bool:
 	var post_hud: Dictionary = app.call("current_objective_hud_snapshot")
 	var post_consequence: Dictionary = app.call("current_consequence_view_snapshot")
 	if int(post_hud.get("bankroll", -1)) != settled_bankroll:
-		push_error("Presented bankroll did not sync after the reveal animation completed.")
+		push_error("Presented bankroll did not sync after the reveal animation completed: hud=%d settled=%d hold=%s started=%d surface=%s." % [
+			int(post_hud.get("bankroll", -1)),
+			settled_bankroll,
+			str(app.get("presented_bankroll_hold_active")),
+			int(app.get("presented_bankroll_started_msec")),
+			JSON.stringify(game_surface_canvas.call("surface_runtime_status")),
+		])
 		return false
 	if int(post_consequence.get("recent_bankroll_delta", 0)) != 40:
 		push_error("Result delta did not become visible after the reveal animation completed.")

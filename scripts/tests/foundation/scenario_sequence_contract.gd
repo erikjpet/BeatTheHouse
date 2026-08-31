@@ -2542,6 +2542,7 @@ static func _check_created_owner_command_authority(failures: Array) -> void:
 		var interaction := _dict(operation.get("interaction", {}))
 		interaction["owner_namespace"] = "crew"
 		interaction["stable_object_id"] = "package_handoff"
+		interaction["presentation_object_id"] = "crew::package_handoff"
 		operation["interaction"] = interaction
 		interaction_operations[index] = operation
 	arrival["interaction_ops"] = interaction_operations

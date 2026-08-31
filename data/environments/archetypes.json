@@ -560,6 +560,8 @@
     },
     "semantic_anchors": {
       "alley_background_post": {"position": [450, 90], "zone_id": "background"},
+      "alley_background_left": {"position": [120, 70], "zone_id": "background"},
+      "alley_background_right": {"position": [820, 70], "zone_id": "background"},
       "alley_center_goods": {"position": [444, 184], "zone_id": "center"},
       "alley_exit": {"position": [820, 360], "zone_id": "exit_lane"},
       "alley_foreground_event": {"position": [508, 360], "zone_id": "foreground"},

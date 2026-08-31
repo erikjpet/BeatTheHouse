@@ -1215,11 +1215,32 @@ func _write_live_durable(run_state: RunState, environment: Dictionary, live_mach
 		live_machine["v2_migration_logged"] = true
 		if run_state != null:
 			run_state.log_story({"type": "coin_pusher_v2_migrated", "game_id": get_id(), "environment_id": str(environment.get("id", "")), "tray_value": int(live_machine.get("tray_value", 0)), "message": "The rebuilt pusher carries the old tray forward and reseeds its changed playfield."})
-	var durable := live_machine.duplicate(true)
+	# Active ticks retain a large live simulation while the environment owns the
+	# last settled checkpoint. Rebuilding the durable record by deep-copying the
+	# live machine copied both 300-body graphs only to discard the simulation.
+	# Patch the existing durable record instead, preserving its immutable settled
+	# checkpoint until an explicit settle boundary replaces it.
+	var game_states := _game_states(environment)
+	var existing_value: Variant = game_states.get(get_id(), {})
+	var durable: Dictionary = (existing_value as Dictionary).duplicate(false) if typeof(existing_value) == TYPE_DICTIONARY else {}
+	for durable_key in durable.keys():
+		if durable_key != "settled_state" and not live_machine.has(durable_key):
+			durable.erase(durable_key)
+	for live_key in live_machine.keys():
+		if live_key in ["simulation", "live_session", "settled_state"]:
+			continue
+		var live_value: Variant = live_machine[live_key]
+		durable[live_key] = live_value.duplicate(true) if typeof(live_value) in [TYPE_DICTIONARY, TYPE_ARRAY] else live_value
 	if update_snapshot and _has_v3_simulation(live_machine):
 		durable["settled_state"] = CoinPusherLiveSessionScript.make_snapshot(_simulation(live_machine), live_machine)
-	durable.erase("simulation")
-	durable.erase("live_session")
+	elif not live_machine.has("simulation") and typeof(live_machine.get("settled_state", {})) == TYPE_DICTIONARY:
+		# freeze_after_chunked_settle() has already replaced the active solver with
+		# its final checkpoint. This is the explicit persistence boundary, so the
+		# newly frozen state must replace the prior durable checkpoint.
+		durable["settled_state"] = (live_machine.get("settled_state", {}) as Dictionary).duplicate(true)
+	elif not durable.has("settled_state"):
+		var settled_value: Variant = live_machine.get("settled_state", {})
+		durable["settled_state"] = settled_value.duplicate(true) if typeof(settled_value) == TYPE_DICTIONARY else {}
 	_write_machine_state(environment, durable)
 
 

@@ -13106,9 +13106,25 @@ func _environment_turn_snapshot() -> Dictionary:
 	var snapshot: Dictionary = {}
 	for field_name in TURN_TRANSACTION_SCALAR_FIELDS:
 		snapshot[field_name] = get(field_name)
+	# Duplicate the mutable transaction roots as one graph. Grand Casino room
+	# storage can intentionally alias the live current environment; duplicating
+	# each field independently loses that relationship and lets a stale room copy
+	# overwrite the newly advanced environment while the candidate is published.
+	var collection_graph: Dictionary = {}
 	for field_name in TURN_TRANSACTION_COLLECTION_FIELDS:
-		var value: Variant = get(field_name)
-		snapshot[field_name] = value.duplicate(true) if typeof(value) in [TYPE_DICTIONARY, TYPE_ARRAY] else value
+		collection_graph[field_name] = get(field_name)
+	var active_room_alias_ids: Array = []
+	for room_id_value in grand_casino_room_states.keys():
+		var room_value: Variant = grand_casino_room_states.get(room_id_value)
+		if typeof(room_value) == TYPE_DICTIONARY and is_same(room_value, current_environment):
+			active_room_alias_ids.append(room_id_value)
+	var detached_collection_graph := collection_graph.duplicate(true)
+	var detached_rooms: Dictionary = detached_collection_graph.get("grand_casino_room_states", {})
+	var detached_environment: Dictionary = detached_collection_graph.get("current_environment", {})
+	for room_id_value in active_room_alias_ids:
+		detached_rooms[room_id_value] = detached_environment
+	for field_name in TURN_TRANSACTION_COLLECTION_FIELDS:
+		snapshot[field_name] = detached_collection_graph.get(field_name)
 	snapshot["town_state_object"] = {
 		"present": town_state != null,
 		"state": town_state.snapshot() if town_state != null else {},
@@ -13127,21 +13143,26 @@ func _apply_environment_turn_snapshot(snapshot: Dictionary, preserve_live_aliase
 		set(field_name, snapshot.get(field_name))
 	for field_name in TURN_TRANSACTION_COLLECTION_FIELDS:
 		var incoming: Variant = snapshot.get(field_name)
+		if not preserve_live_aliases:
+			# The snapshot already owns a detached graph. Installing its roots
+			# directly retains cross-field aliases inside the transaction candidate.
+			set(field_name, incoming)
+			continue
 		var current: Variant = get(field_name)
 		if preserve_live_aliases and _publish_mutable_variant_in_place(current, incoming):
 			continue
 		set(field_name, incoming.duplicate(true) if typeof(incoming) in [TYPE_DICTIONARY, TYPE_ARRAY] else incoming)
 	var town_record := _copy_dict(snapshot.get("town_state_object", {}))
 	if bool(town_record.get("present", false)):
-		if town_state == null or not preserve_live_aliases:
+		if town_state == null:
 			town_state = TownStateScript.new()
 			town_state.bind_host_capability(_world1_host_capability)
-			town_state.restore(_copy_dict(town_record.get("state", {})), seed_value, _copy_dict(town_record.get("conditions", {})))
+		town_state.restore(_copy_dict(town_record.get("state", {})), seed_value, _copy_dict(town_record.get("conditions", {})))
 	else:
 		town_state = null
 	var numbers_record := _copy_dict(snapshot.get("numbers_state_object", {}))
 	if bool(numbers_record.get("present", false)):
-		if numbers_state == null or not preserve_live_aliases:
+		if numbers_state == null:
 			numbers_state = _new_numbers_model()
 		numbers_state.restore(_copy_dict(numbers_record.get("state", {})), seed_value, _copy_dict(numbers_record.get("config", {})))
 	else:
@@ -15351,6 +15372,27 @@ static func scenario_restore_equivalence_snapshot(environment: Dictionary) -> Di
 
 static func scenario_restore_equivalent(before: Dictionary, after: Dictionary) -> bool:
 	return JSON.stringify(scenario_restore_equivalence_snapshot(before)) == JSON.stringify(scenario_restore_equivalence_snapshot(after))
+
+
+# Same-process host transactions may carry a trusted, already-verified
+# non-causal scenario projection across a save-shaped detached snapshot. The
+# causal equivalence check prevents the projection from being attached to a
+# different room, phase, visit, or authority state; persistent save/load still
+# performs the ordinary trusted rebuild.
+func restore_trusted_scenario_semantics(trusted_environment: Dictionary) -> bool:
+	if trusted_environment.is_empty() or not bool(trusted_environment.get("scenario_semantic_ready", false)):
+		return false
+	if not scenario_restore_equivalent(trusted_environment, current_environment):
+		return false
+	for field_value in SCENARIO_DERIVED_NONCAUSAL_ENVIRONMENT_FIELDS:
+		var field := str(field_value)
+		if trusted_environment.has(field):
+			var value: Variant = trusted_environment.get(field)
+			current_environment[field] = value.duplicate(true) if typeof(value) in [TYPE_DICTIONARY, TYPE_ARRAY] else value
+		else:
+			current_environment.erase(field)
+	current_environment.erase("scenario_restore_pending_trusted_rebuild")
+	return _scenario_semantic_ready()
 
 
 static func _world_map_for_save_snapshot(map_data: Dictionary) -> Dictionary:

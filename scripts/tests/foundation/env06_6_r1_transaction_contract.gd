@@ -13,6 +13,7 @@ func _initialize() -> void:
 	for stage in FAILURE_STAGES:
 		_check_rejected_stage(str(stage), failures)
 	_check_accepted_publish_rebind(failures)
+	_check_active_room_alias_publish(failures)
 	if failures.is_empty():
 		print("env06_6 R1 detached turn transaction contract passed")
 		quit(0)
@@ -74,9 +75,23 @@ func _check_accepted_publish_rebind(failures: Array) -> void:
 	if int((aliases["environment"] as Dictionary).get("turns", 0)) != 1 \
 			or run.town_state.action_index != town_before + 1 \
 			or run.numbers_state.action_index != numbers_before + 1:
-		failures.append("R1 accepted publish did not expose the complete environment/TownState/NumbersModel tuple.")
+		failures.append("R1 accepted publish did not expose the complete environment/TownState/NumbersModel tuple: turns=%d town=%d/%d numbers=%d/%d." % [int((aliases["environment"] as Dictionary).get("turns", 0)), int(run.town_state.action_index), town_before + 1, int(run.numbers_state.action_index), numbers_before + 1])
 	if not is_same(run.narrative_flags["shared_probe"], run.story_flags["shared_probe"]):
 		failures.append("R1 accepted publish broke shared alias topology.")
+
+
+func _check_active_room_alias_publish(failures: Array) -> void:
+	var run: Variant = _fixture()
+	run.grand_casino_room_states["active"] = run.current_environment
+	var active_environment: Dictionary = run.current_environment
+	var result: Dictionary = run.advance_environment_turns(1)
+	if not bool(result.get("ok", false)) or not bool(result.get("applied", false)):
+		failures.append("R1 active-room alias candidate did not publish: %s" % JSON.stringify(result))
+		return
+	if int(active_environment.get("turns", 0)) != 1:
+		failures.append("R1 active-room alias overwrote the accepted environment turn during publish.")
+	if not is_same(run.grand_casino_room_states.get("active", {}), active_environment):
+		failures.append("R1 active-room alias was not retained after accepted publish.")
 
 
 func _aliases(run: Variant) -> Dictionary:

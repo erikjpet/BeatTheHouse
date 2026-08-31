@@ -46,6 +46,9 @@ static var _music_wav_info_cache_order: Array[String] = []
 static var _music_web_adpcm_info_cache: Dictionary = {}
 static var _music_wav_info_cache_hits := 0
 static var _music_wav_info_cache_misses := 0
+static var _validated_load_cache: Dictionary = {}
+static var _validated_load_cache_order: Array[String] = []
+const VALIDATED_LOAD_CACHE_MAX_ENTRIES := 2
 
 var environment_archetypes: Array = []
 var environment_scenarios: Dictionary = {}
@@ -148,8 +151,15 @@ func load(run_validation: bool = true) -> Dictionary:
 	var parse_complete_usec := Time.get_ticks_usec()
 	rebuild_content_indexes()
 	var index_complete_usec := Time.get_ticks_usec()
+	var validation_cached := false
 	if run_validation:
-		validate()
+		var validation_signature := _validation_source_signature()
+		if _validated_load_cache.has(validation_signature):
+			_restore_validated_load_cache(_validated_load_cache.get(validation_signature, {}))
+			validation_cached = true
+		else:
+			validate()
+			_store_validated_load_cache(validation_signature)
 	else:
 		validation_errors = _load_errors.duplicate(true)
 		validation_warnings = []
@@ -160,6 +170,7 @@ func load(run_validation: bool = true) -> Dictionary:
 		"index_ms": _elapsed_ms(parse_complete_usec, index_complete_usec),
 		"validate_ms": _elapsed_ms(index_complete_usec, validate_complete_usec) if run_validation else 0.0,
 		"validation_deferred": not run_validation,
+		"validation_cached": validation_cached,
 		"packs": _load_pack_timings.duplicate(true),
 	}
 	return {
@@ -183,6 +194,88 @@ func load(run_validation: bool = true) -> Dictionary:
 		"town_conditions": town_conditions,
 		"character_chains": character_chains,
 	}
+
+
+func _validation_source_signature() -> String:
+	return JSON.stringify({
+		"environment_archetypes": environment_archetypes,
+		"environment_scenarios": environment_scenarios,
+		"scenario_sequence_catalog": scenario_sequence_catalog,
+		"games": games,
+		"scratch_ticket_types": scratch_ticket_types,
+		"items": items,
+		"content_groups": content_groups,
+		"events": events,
+		"dialogues": dialogues,
+		"characters": characters,
+		"character_pools": character_pools,
+		"challenges": challenges,
+		"lenders": lenders,
+		"services": services,
+		"travel_routes": travel_routes,
+		"music_tracks": music_tracks,
+		"tutorial_lessons": tutorial_lessons,
+		"town_conditions": town_conditions,
+		"character_chains": character_chains,
+	}).sha256_text()
+
+
+func _store_validated_load_cache(signature: String) -> void:
+	_validated_load_cache[signature] = {
+		"environment_archetypes": environment_archetypes.duplicate(true),
+		"environment_scenarios": environment_scenarios.duplicate(true),
+		"scenario_sequence_catalog": scenario_sequence_catalog.duplicate(true),
+		"games": games.duplicate(true),
+		"scratch_ticket_types": scratch_ticket_types.duplicate(true),
+		"items": items.duplicate(true),
+		"content_groups": content_groups.duplicate(true),
+		"events": events.duplicate(true),
+		"dialogues": dialogues.duplicate(true),
+		"characters": characters.duplicate(true),
+		"character_pools": character_pools.duplicate(true),
+		"challenges": challenges.duplicate(true),
+		"lenders": lenders.duplicate(true),
+		"services": services.duplicate(true),
+		"travel_routes": travel_routes.duplicate(true),
+		"music_tracks": music_tracks.duplicate(true),
+		"tutorial_lessons": tutorial_lessons.duplicate(true),
+		"town_conditions": town_conditions.duplicate(true),
+		"character_chains": character_chains.duplicate(true),
+		"validation_errors": validation_errors.duplicate(true),
+		"validation_warnings": validation_warnings.duplicate(true),
+	}
+	_validated_load_cache_order.erase(signature)
+	_validated_load_cache_order.append(signature)
+	while _validated_load_cache_order.size() > VALIDATED_LOAD_CACHE_MAX_ENTRIES:
+		_validated_load_cache.erase(_validated_load_cache_order.pop_front())
+
+
+func _restore_validated_load_cache(cache_value: Variant) -> void:
+	var cache: Dictionary = cache_value if typeof(cache_value) == TYPE_DICTIONARY else {}
+	environment_archetypes = (cache.get("environment_archetypes", []) as Array).duplicate(true)
+	environment_scenarios = (cache.get("environment_scenarios", {}) as Dictionary).duplicate(true)
+	scenario_sequence_catalog = (cache.get("scenario_sequence_catalog", {}) as Dictionary).duplicate(true)
+	games = (cache.get("games", []) as Array).duplicate(true)
+	scratch_ticket_types = (cache.get("scratch_ticket_types", []) as Array).duplicate(true)
+	items = (cache.get("items", []) as Array).duplicate(true)
+	content_groups = (cache.get("content_groups", []) as Array).duplicate(true)
+	events = (cache.get("events", []) as Array).duplicate(true)
+	dialogues = (cache.get("dialogues", []) as Array).duplicate(true)
+	characters = (cache.get("characters", []) as Array).duplicate(true)
+	character_pools = (cache.get("character_pools", []) as Array).duplicate(true)
+	challenges = (cache.get("challenges", []) as Array).duplicate(true)
+	lenders = (cache.get("lenders", []) as Array).duplicate(true)
+	services = (cache.get("services", []) as Array).duplicate(true)
+	travel_routes = (cache.get("travel_routes", []) as Array).duplicate(true)
+	music_tracks = (cache.get("music_tracks", []) as Array).duplicate(true)
+	tutorial_lessons = (cache.get("tutorial_lessons", []) as Array).duplicate(true)
+	town_conditions = (cache.get("town_conditions", {}) as Dictionary).duplicate(true)
+	character_chains = (cache.get("character_chains", {}) as Dictionary).duplicate(true)
+	validation_errors = (cache.get("validation_errors", []) as Array).duplicate(true)
+	validation_warnings = (cache.get("validation_warnings", []) as Array).duplicate(true)
+	validation_complete = true
+	_validated_scenario_definition_cache.clear()
+	rebuild_content_indexes()
 
 
 # Validates loaded packs without reading demo runtime data.
@@ -3508,8 +3601,6 @@ func _validate_scenario_definitions() -> void:
 	for rollout_error_value in _copy_array(validation_channels.get("errors", [])):
 		if not validation_errors.has(rollout_error_value):
 			validation_errors.append(rollout_error_value)
-
-
 static func scenario_uniqueness_validation_channels(report: Dictionary) -> Dictionary:
 	# The exact audit keeps every P1/P2 item in report.failures. Foundation boot
 	# rejects only product/P1 failures; receipt-bound P2 review work stays visible

@@ -24,18 +24,12 @@ static func authoritative_interactable_records(environment: Dictionary, library:
 		var domain := str(parts[0])
 		var source_id := str(parts[1])
 		var object_type := domain
-		if domain not in ["game", "event", "item", "shopkeeper", "service", "lender", "travel"]:
+		if domain not in ["game", "event", "service", "lender", "travel"]:
 			continue
 		var definition: Dictionary = {}
 		match domain:
 			"game": definition = _dict(library.call("game", source_id)) if library.has_method("game") else {}
 			"event": definition = _dict(library.call("event", source_id)) if library.has_method("event") else {}
-			"item":
-				if _offer_present(environment.get("item_offers", []), source_id, object_id):
-					definition = _dict(library.call("item", source_id)) if library.has_method("item") else {}
-			"shopkeeper":
-				if object_id == "shopkeeper:merchant" and source_id == "merchant" and not _array(environment.get("item_offers", [])).is_empty():
-					definition = {"display_name": "Merchant"}
 			"service": definition = _dict(library.call("service", source_id)) if library.has_method("service") else {}
 			"lender": definition = _dict(library.call("lender", source_id)) if library.has_method("lender") else {}
 			"travel":
@@ -58,8 +52,6 @@ static func authoritative_interactable_records(environment: Dictionary, library:
 		var action_id := str({
 			"game": "enter_game",
 			"event": "inspect_event_choices",
-			"item": "buy_item",
-			"shopkeeper": "talk_shopkeeper",
 			"service": "use_service_hook",
 			"lender": "use_lender_hook",
 			"travel": "open_map" if source_id == "leave" else "travel",
@@ -67,8 +59,6 @@ static func authoritative_interactable_records(environment: Dictionary, library:
 		var action_label := str({
 			"game": "Double-click to enter",
 			"event": "Review responses",
-			"item": "Buy",
-			"shopkeeper": "Talk",
 			"service": "Use",
 			"lender": "Use",
 			"travel": "Open Map" if source_id == "leave" else "Travel",
@@ -76,8 +66,6 @@ static func authoritative_interactable_records(environment: Dictionary, library:
 		var action_summary := str({
 			"game": "Double-click this machine to enter.",
 			"event": "Choose a response.",
-			"item": "Double-click to buy.",
-			"shopkeeper": "Double-click to sell gear.",
 			"service": "Double-click to use.",
 			"lender": "Double-click to use.",
 			"travel": "Open map." if source_id == "leave" else "Double-click to travel.",
@@ -100,10 +88,6 @@ static func authoritative_interactable_records(environment: Dictionary, library:
 				"y": float(rect.get("y", 0.0)) + float(rect.get("h", 0.0)) * 0.5,
 			},
 		}
-		if domain == "item":
-			var offer := _offer(environment.get("item_offers", []), source_id, object_id)
-			for offer_key in ["price", "currency", "pickup"]:
-				if offer.has(offer_key): record[offer_key] = _copy(offer.get(offer_key))
 		records.append(record)
 	return {"ok": errors.is_empty(), "records": records if errors.is_empty() else [], "errors": errors}
 

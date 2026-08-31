@@ -156,12 +156,16 @@ static func validate_definition(definition: Dictionary, operation_registry: Vari
 
 
 static func _successful_validation_memo_key(definition: Dictionary, target_inventory: Dictionary, operation_registry: Variant) -> String:
-	return JSON.stringify(_canonical_variant({
+	# Loaded JSON and generated overlays have deterministic insertion order. A raw
+	# content digest is deliberately conservative here: semantically equivalent
+	# key reordering produces a cache miss (and therefore another full validation)
+	# instead of spending the hot path recursively sorting the entire definition.
+	return JSON.stringify({
 		"memo_version": SUCCESSFUL_VALIDATION_MEMO_VERSION,
 		"definition": definition,
 		"target_inventory": target_inventory,
 		"operation_registry": _operation_registry_memo_identity(operation_registry),
-	})).sha256_text()
+	}).sha256_text()
 
 
 static func _operation_registry_memo_identity(operation_registry: Variant) -> Dictionary:
@@ -427,9 +431,10 @@ static func _catalog_uniqueness_report(definitions: Array, expected_count: int, 
 		var branch_count := 0
 		for phase_value in phases: branch_count += _array(_dict(phase_value).get("branches", [])).size()
 		var signature := normalized_signature(definition)
-		rows.append({"id": scenario_id, "signature": signature, "authored_signature": str(authored.get("sequence_signature", "")), "calculated_signature": calculated_signature_hash(definition), "nearest_id": "", "nearest_similarity": 0.0})
+		var canonical_signature_text := JSON.stringify(_canonical_variant(signature))
+		rows.append({"id": scenario_id, "signature": signature, "authored_signature": str(authored.get("sequence_signature", "")), "calculated_signature": canonical_signature_text.sha256_text(), "nearest_id": "", "nearest_similarity": 0.0})
 		signature_tokens.append(_signature_tokens(signature))
-		canonical_signature_texts.append(JSON.stringify(_canonical_variant(signature)))
+		canonical_signature_texts.append(canonical_signature_text)
 		dossiers.append({
 			"id": scenario_id,
 			"package_id": str(definition.get("sequence_package_id", "")),

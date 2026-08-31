@@ -6030,7 +6030,10 @@
         },
         "declared_targets": {
           "actors": [],
-          "anchors": [],
+          "anchors": [
+            "base::anchor:alley_background_left",
+            "base::anchor:alley_background_right"
+          ],
           "games": [],
           "interactions": [],
           "routes": [],
@@ -6150,6 +6153,7 @@
                 {
                   "actor": {
                     "actor_id": "street_shooter",
+                    "anchor_id": "alley_background_left",
                     "behavior": "work",
                     "label": "Street Shooter",
                     "pose": "observing",
@@ -6414,6 +6418,7 @@
             {
               "actor_ops": [
                 {
+                  "anchor_id": "alley_background_right",
                   "family": "actor_ops",
                   "op": "set_position",
                   "owner_namespace": "scenario",
@@ -6655,7 +6660,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "db4adda68f836cdc80b8e4ce6d65a9d91834b6abf29e11ebda730b4351839390"
+        "sequence_signature": "3d96e6b536640e7bbeff8c5ede2bd39cbbde60b9a226869d000baf6b76c6a72b"
       }
     },
     {

@@ -438,6 +438,19 @@ func current_view_snapshot() -> Dictionary:
 	}
 
 
+# Hot-path camera diagnostics used while measuring or polling a focus glide.
+# The full public snapshot intentionally includes deep object/layout evidence;
+# callers that need only target stability must not rebuild that O(n^2) audit on
+# every animation frame.
+func focus_runtime_status() -> Dictionary:
+	_update_camera_target_if_needed()
+	return {
+		"camera_target_refresh_count": camera_target_refresh_count,
+		"target_camera_offset": target_camera_offset,
+		"target_camera_zoom": target_camera_zoom,
+	}
+
+
 func local_position_for_selected_info_action_button() -> Vector2:
 	var button_rect := _selected_info_action_button_rect()
 	if button_rect.size.x <= 0.0 or button_rect.size.y <= 0.0:

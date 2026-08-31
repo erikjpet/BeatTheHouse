@@ -1213,11 +1213,13 @@ static func validate_sequence_catalog_and_audit(definitions: Array, validation_r
 		var definition_fingerprint_before := SequenceRuntimeScript.content_fingerprint(definition)
 		var target_inventory_fingerprint_before := SequenceRuntimeScript.content_fingerprint(target_inventory)
 		var definition_errors := validate_sequence_definition(definition, references, target_inventory)
+		var definition_fingerprint_after := SequenceRuntimeScript.content_fingerprint(definition)
+		var target_inventory_fingerprint_after := SequenceRuntimeScript.content_fingerprint(target_inventory)
 		validation_errors.append_array(definition_errors)
-		if definition_errors.is_empty() and definition_fingerprint_before == SequenceRuntimeScript.content_fingerprint(definition) and target_inventory_fingerprint_before == SequenceRuntimeScript.content_fingerprint(target_inventory):
+		if definition_errors.is_empty() and definition_fingerprint_before == definition_fingerprint_after and target_inventory_fingerprint_before == target_inventory_fingerprint_after:
 			# Receipt creation is deliberately adjacent to the successful full
 			# validation; no mutable or cross-instance state exists between them.
-			validation_receipts.append(_sequence_validation_receipt(definition, target_inventory, registry_context_fingerprint))
+			validation_receipts.append(_sequence_validation_receipt(definition, target_inventory, registry_context_fingerprint, definition_fingerprint_after, target_inventory_fingerprint_after))
 	var reuse_validations := _sequence_validation_receipts_match(definitions, expected_count, target_inventories, validation_receipts, registry_context_fingerprint)
 	validation_receipts.clear() # One-shot authority is consumed in this call.
 	var audit := SequenceSchemaScript._catalog_uniqueness_report_after_same_call_validation(definitions, expected_count, OperationRegistryScript, masked_visual_explanations, target_inventories) if reuse_validations else SequenceSchemaScript.catalog_uniqueness_report(definitions, expected_count, OperationRegistryScript, masked_visual_explanations, target_inventories)
@@ -1238,11 +1240,11 @@ static func _sequence_validation_registry_context_fingerprint() -> String:
 	})
 
 
-static func _sequence_validation_receipt(definition: Dictionary, target_inventory: Dictionary, registry_context_fingerprint: String) -> Dictionary:
+static func _sequence_validation_receipt(definition: Dictionary, target_inventory: Dictionary, registry_context_fingerprint: String, definition_fingerprint: String = "", target_inventory_fingerprint: String = "") -> Dictionary:
 	var authority := {
 		"scenario_id": str(definition.get("id", "")).strip_edges(),
-		"definition_fingerprint": SequenceRuntimeScript.content_fingerprint(definition),
-		"target_inventory_fingerprint": SequenceRuntimeScript.content_fingerprint(target_inventory),
+		"definition_fingerprint": definition_fingerprint if not definition_fingerprint.is_empty() else SequenceRuntimeScript.content_fingerprint(definition),
+		"target_inventory_fingerprint": target_inventory_fingerprint if not target_inventory_fingerprint.is_empty() else SequenceRuntimeScript.content_fingerprint(target_inventory),
 		"registry_context_fingerprint": registry_context_fingerprint,
 	}
 	var receipt := authority.duplicate(true)
@@ -1263,7 +1265,12 @@ static func _sequence_validation_receipts_match(definitions: Array, expected_cou
 		seen_ids[scenario_id] = true
 		actual_ids.append(scenario_id)
 		var expected_receipt := _sequence_validation_receipt(definition, _copy_dict(target_inventories.get(scenario_id, {})), registry_context_fingerprint)
-		if SequenceRuntimeScript.content_fingerprint(_copy_dict(receipts[definition_index])) != SequenceRuntimeScript.content_fingerprint(expected_receipt):
+		var actual_receipt := _copy_dict(receipts[definition_index])
+		if str(actual_receipt.get("scenario_id", "")) != str(expected_receipt.get("scenario_id", "")) \
+				or str(actual_receipt.get("definition_fingerprint", "")) != str(expected_receipt.get("definition_fingerprint", "")) \
+				or str(actual_receipt.get("target_inventory_fingerprint", "")) != str(expected_receipt.get("target_inventory_fingerprint", "")) \
+				or str(actual_receipt.get("registry_context_fingerprint", "")) != str(expected_receipt.get("registry_context_fingerprint", "")) \
+				or str(actual_receipt.get("receipt_fingerprint", "")) != str(expected_receipt.get("receipt_fingerprint", "")):
 			return false
 	actual_ids.sort()
 	return actual_ids == SequenceRolloutManifestScript.expected_ids()

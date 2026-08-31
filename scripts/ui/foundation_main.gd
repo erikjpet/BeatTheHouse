@@ -1121,7 +1121,7 @@ func _on_game_surface_pointer_action(action: String, index: int, phase: String, 
 	var ui_state := game_surface_ui_state.duplicate(false) if lightweight_state else _current_game_surface_ui_state()
 	ui_state["selected_action_id"] = selected_action_id
 	ui_state["selected_action_kind"] = selected_action_kind
-	ui_state["selected_stake"] = _current_selected_stake()
+	ui_state["selected_stake"] = int(game_surface_ui_state.get("selected_stake", selected_stake)) if lightweight_state else _current_selected_stake()
 	var provider_contract: Dictionary = action_authority_contract if _current_game_uses_action_authority() else {}
 	var command: Dictionary
 	if bool(provider_contract.get("host_pointer_intent", false)):
@@ -1246,13 +1246,16 @@ func _sealed_action_host_detached() -> RunState:
 		return null
 	return _sealed_action_host_restored_candidate(
 		run_state.to_save_snapshot(),
-		_copy_dict(run_state.current_environment.get("scenario_layout_context", {}))
+		_copy_dict(run_state.current_environment.get("scenario_layout_context", {})),
+		run_state.current_environment
 	)
 
 
-func _sealed_action_host_restored_candidate(snapshot: Dictionary, layout_context: Dictionary = {}) -> RunState:
+func _sealed_action_host_restored_candidate(snapshot: Dictionary, layout_context: Dictionary = {}, trusted_environment: Dictionary = {}) -> RunState:
 	var candidate := RunState.new()
 	candidate.from_dict(snapshot)
+	if candidate.restore_trusted_scenario_semantics(trusted_environment):
+		return candidate
 	# Save snapshots deliberately omit renderer-derived scenario semantics and
 	# mark dynamic rooms for a trusted rebuild. Sealed game transactions operate
 	# on detached save snapshots, so rebuild that non-causal authority before an
@@ -1268,7 +1271,8 @@ func _sealed_action_host_normalized_candidate(candidate: RunState) -> RunState:
 		return null
 	return _sealed_action_host_restored_candidate(
 		candidate.to_save_snapshot(),
-		_copy_dict(candidate.current_environment.get("scenario_layout_context", {}))
+		_copy_dict(candidate.current_environment.get("scenario_layout_context", {})),
+		candidate.current_environment
 	)
 
 
@@ -1287,11 +1291,14 @@ func _sealed_action_host_publish(candidate: RunState) -> bool:
 	var original_environment := run_state.current_environment
 	var original_environment_snapshot := original_environment.duplicate(true)
 	run_state.from_dict(snapshot)
-	var published_finalization := run_state.scenario_finalize_installed_environment(
-		library,
-		_copy_dict(normalized.current_environment.get("scenario_layout_context", {}))
-	)
-	if not bool(published_finalization.get("ok", false)):
+	var published_restored := run_state.restore_trusted_scenario_semantics(normalized.current_environment)
+	if not published_restored:
+		var published_finalization := run_state.scenario_finalize_installed_environment(
+			library,
+			_copy_dict(normalized.current_environment.get("scenario_layout_context", {}))
+		)
+		published_restored = bool(published_finalization.get("ok", false))
+	if not published_restored:
 		run_state.from_dict(original_snapshot)
 		original_environment.clear()
 		for key in original_environment_snapshot:
@@ -1713,7 +1720,8 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 		return _sealed_action_host_rejection("invalid_proposal", "Blackjack result identity did not match the sealed delivery.", request_key)
 	var proposed_candidate := _sealed_action_host_restored_candidate(
 		(proposal.get("run_snapshot", {}) as Dictionary).duplicate(true),
-		_copy_dict(candidate.current_environment.get("scenario_layout_context", {}))
+		_copy_dict(candidate.current_environment.get("scenario_layout_context", {})),
+		candidate.current_environment
 	)
 	if proposed_candidate == null:
 		return _sealed_action_host_rejection("invalid_proposal", "Blackjack proposal scenario semantics could not be rebuilt.", request_key)
@@ -3412,10 +3420,10 @@ func _enqueue_talk_events_for_action_boundary(source: String) -> bool:
 func _apply_forced_environment_travel(_source: String) -> Dictionary:
 	if run_state == null:
 		return {"ok": false, "applied": false, "errors": ["Forced travel requires an active run."]}
-	var rollback := _foundation_lifecycle_snapshot()
 	var closing_actions := int(run_state.narrative_flags.get("health_inspector_closing_actions", 0))
 	if closing_actions <= 0:
 		return {"ok": true, "applied": false, "errors": []}
+	var rollback := _foundation_lifecycle_snapshot()
 	closing_actions -= 1
 	run_state.narrative_flags["health_inspector_closing_actions"] = closing_actions
 	if closing_actions > 0:
@@ -5179,11 +5187,18 @@ func select_lender_hook(lender_id: String) -> bool:
 	if option.is_empty():
 		_show_message("That lender is not available.")
 		return false
+	# Resolve the already-rendered room object before changing screen/category.
+	# Otherwise the screen change invalidates the interaction cache and rebuilds
+	# the entire scenario layout merely to focus a known lender.
+	var focus_object := _interactable_object("lender:%s" % lender_id)
 	selected_lender_hook_id = lender_id
 	selected_lender_hook_label = str(option.get("display_name", lender_id))
 	selected_action_category = ACTION_CATEGORY_ITEMS
 	_set_current_screen(SCREEN_ITEMS)
-	focus_interactable_object("lender:%s" % selected_lender_hook_id)
+	if not focus_object.is_empty():
+		_focus_interactable_object_with_data("lender:%s" % selected_lender_hook_id, focus_object)
+	else:
+		focus_interactable_object("lender:%s" % selected_lender_hook_id)
 	_show_message("%s: %s" % [selected_lender_hook_label, str(option.get("status", ""))])
 	_refresh_after_environment_selection()
 	return true
@@ -5456,7 +5471,12 @@ func _write_foundation_run_save(status_text: String = "Autosaved.", synchronous:
 		save_status_message = status_text if synchronous else "Autosave writing."
 		if save_status_label != null:
 			save_status_label.text = _save_status_text()
-		_refresh_start_screen()
+		# The start menu is hidden during an active run. Re-reading both save
+		# generations here contends with the worker's file installation and can
+		# turn the first post-action frame into a visible hitch. The completion
+		# boundary owns availability; only refresh the menu while it is visible.
+		if current_screen == SCREEN_START:
+			_refresh_start_screen()
 		return true
 	if error == ERR_BUSY:
 		pending_autosave = true
@@ -11627,6 +11647,12 @@ func _focus_interactable_object_with_data(object_id: String, object_data: Dictio
 	camera_focus_rect = _rect_from_dict(object_data.get("focus_rect", {}))
 	camera_focus_point = _vector2_from_dict(object_data.get("focus_point", {}), Vector2(0.5, 0.5))
 	if environment_canvas != null:
+		# View-originated focus already carries the current rendered object and
+		# stays on the cheap path. Programmatic selection can follow a context
+		# change (notably EVENT) before the canvas has consumed its new snapshot;
+		# refresh only that stale boundary before selecting the object.
+		if _environment_canvas_snapshot_is_stale():
+			_render_environment_canvas_snapshot()
 		environment_canvas.set_selected_object(object_id)
 		if run_state != null:
 			_refresh_world_header(object_data)
@@ -12964,9 +12990,9 @@ func _interactable_object_view_list() -> Array:
 func _interactable_object_cache_key() -> String:
 	if run_state == null:
 		return "no-run"
-	return "%d|%d|%s|%s|%s|%s|%s|%s|%s|%s" % [
+	return "%d|%s|%s|%s|%s|%s|%s|%s|%s|%s" % [
 		run_state.get_instance_id(),
-		hash(run_state.current_environment),
+		_interactable_environment_cache_token(run_state.current_environment),
 		current_screen,
 		hover_target_id,
 		focus_target_id,
@@ -12976,6 +13002,35 @@ func _interactable_object_cache_key() -> String:
 		selected_item_offer_id,
 		selected_travel_target_id,
 	]
+
+
+func _interactable_environment_cache_token(environment: Dictionary) -> String:
+	# Interaction availability changes at authored room/visit/action revisions.
+	# Hashing the complete environment also traversed live game buffers, including
+	# 256x192 scratch masks, on every focus click. Those buffers are irrelevant to
+	# the room object catalog and made late-run lender selection take hundreds of
+	# milliseconds. Include the small authored interaction collections explicitly
+	# so in-place host/test updates cannot reuse a stale catalog.
+	return JSON.stringify([
+		str(environment.get("id", "")),
+		str(environment.get("world_node_id", "")),
+		str(environment.get("environment_visit_id", "")),
+		int(environment.get("turns", 0)),
+		int(environment.get("environment_runtime_revision", 0)),
+		str(environment.get("scenario_semantic_digest", "")),
+		str(environment.get("scenario_layout_authority_digest", "")),
+		str(environment.get("current_layer_id", "")),
+		str(environment.get("kind", "")),
+		environment.get("game_ids", []),
+		environment.get("event_ids", []),
+		environment.get("resolved_event_ids", []),
+		environment.get("item_offers", []),
+		environment.get("service_ids", []),
+		environment.get("lender_hooks", []),
+		environment.get("travel_hooks", []),
+		environment.get("next_archetypes", []),
+		environment.get("object_fixtures", []),
+	])
 
 
 func _filter_unique_interactable_objects(objects: Array) -> Array:

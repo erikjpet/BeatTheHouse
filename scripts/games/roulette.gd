@@ -688,8 +688,16 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 func _table_game_compatibility_simulation(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary) -> Dictionary:
 	if run_state == null or rng == null:
 		return _empty_roulette_result(action_id, stake, environment, "Roulette simulation requires serialized run and RNG inputs.")
-	var proposal := _table_game_resolve_proposal(action_id, stake, run_state.to_save_snapshot(), rng.snapshot(), ui_state.duplicate(true))
-	var result: Dictionary = (proposal.get("result", {}) as Dictionary).duplicate(true)
+	var simulation_environment := environment.duplicate(true)
+	var simulation_rng := RngStream.new()
+	simulation_rng.restore(rng.snapshot())
+	var run_rng_seed := run_state.rng_seed
+	var run_rng_state := run_state.rng_state
+	var staffing_before := run_state.grand_casino_staffing.duplicate(true)
+	var result := _resolve_roulette_proposal_core(action_id, stake, run_state, simulation_environment, simulation_rng, ui_state.duplicate(true))
+	run_state.rng_seed = run_rng_seed
+	run_state.rng_state = run_rng_state
+	run_state.grand_casino_staffing = staffing_before
 	result.erase("table_game_proposal_requires_apply")
 	result.erase("blackjack_host_apply_receipt")
 	result.erase("blackjack_host_content_fingerprint")

@@ -129,6 +129,11 @@ func generate_environment_state(run_state: RunState, environment: Dictionary, rn
 func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
 	var machine := _ensure_machine_state(run_state, environment, false)
 	var active_ticket := _dict_ref(machine.get("active_ticket", {}))
+	if not active_ticket.is_empty():
+		# Build the high-resolution foil at the presentation boundary. The purchase
+		# transaction fixes every outcome and durable field first, without making
+		# settlement latency depend on allocating a 49,152-sample render mask.
+		_ensure_ticket_regions(active_ticket)
 	var stock := _stock_view(machine)
 	var queue := _dictionary_array(machine.get("pending_queue", []))
 	var crumbs := _dictionary_array(ui_state.get("scratch_crumbs", []))
@@ -683,11 +688,9 @@ func _resolve_purchase(_stake: int, run_state: RunState, environment: Dictionary
 		_reserve_penalty_shields(ticket, shield_capacity)
 		purchased_tickets.append(ticket)
 		if not has_active_ticket:
-			# Queued tickets intentionally stay compact until they reach the table,
-			# but the visible ticket must have its authored mask before its first
-			# frame. Initializing it on the first drag makes the foil suddenly pop
-			# into existence over the background artwork.
-			_ensure_ticket_regions(ticket)
+			# Keep the transaction compact. surface_state initializes the visible
+			# ticket before its first rendered frame; queued tickets stay compact
+			# until they reach the table.
 			machine["active_ticket"] = ticket
 			machine["penalty_shields_remaining"] = shield_capacity
 			has_active_ticket = true

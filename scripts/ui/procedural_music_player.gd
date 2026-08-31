@@ -3138,22 +3138,124 @@ func _apply_generated_ambient_data(result: Dictionary) -> void:
 
 func _ambient_pcm_data(context: Dictionary, token: int = -1) -> PackedByteArray:
 	var frames := int(context.get("frames", 0))
+	var render_stride := maxi(1, AMBIENT_RENDER_STRIDE_FRAMES)
+	var processor_count := maxi(1, OS.get_processor_count())
+	if frames < SAMPLE_RATE or token > 0 or processor_count < 2:
+		return _ambient_pcm_data_range(context, 0, frames, token)
+	var worker_count := mini(8, processor_count)
+	var render_group_count := ceili(float(frames) / float(render_stride))
+	var groups_per_worker := ceili(float(render_group_count) / float(worker_count))
+	var threads: Array[Thread] = []
+	var start_failed := false
+	for worker_index in range(worker_count):
+		var start_group := worker_index * groups_per_worker
+		var end_group := mini(render_group_count, start_group + groups_per_worker)
+		if start_group >= end_group:
+			break
+		var start_frame := start_group * render_stride
+		var end_frame := mini(frames, end_group * render_stride)
+		var thread := Thread.new()
+		var error := thread.start(Callable(self, "_ambient_pcm_data_range").bind(context.duplicate(true), start_frame, end_frame - start_frame, token), Thread.PRIORITY_NORMAL)
+		if error != OK:
+			start_failed = true
+			break
+		threads.append(thread)
+	if start_failed:
+		for thread in threads:
+			thread.wait_to_finish()
+		return _ambient_pcm_data_range(context, 0, frames, token)
 	var data := PackedByteArray()
-	data.resize(maxi(0, frames * PCM_BYTES_PER_FRAME))
+	for thread in threads:
+		var chunk: PackedByteArray = thread.wait_to_finish()
+		if chunk.is_empty():
+			return PackedByteArray()
+		data.append_array(chunk)
+	return data
+
+
+func _ambient_pcm_data_range(context: Dictionary, start_frame: int, frame_count: int, token: int = -1) -> PackedByteArray:
+	var frames := maxi(0, frame_count)
+	var end_frame := start_frame + frames
+	var data := PackedByteArray()
+	data.resize(frames * PCM_BYTES_PER_FRAME)
 	# Match the full stem renderer's production sampling policy while retaining
 	# the preview stream's exact frame count, byte size, and loop duration.
 	var render_stride := maxi(1, AMBIENT_RENDER_STRIDE_FRAMES)
-	var i := 0
-	while i < frames:
+	# Pull immutable synthesis parameters out of the dictionary once. The preview
+	# renderer visits hundreds of thousands of frames, so repeating these typed
+	# dictionary conversions in _write_ambient_frame dominated headless startup.
+	var step_period := float(context.get("step_period", 0.36))
+	var beat_period := float(context.get("beat_period", 0.72))
+	var phrase_steps := int(context.get("phrase_steps", BASE_PHRASE_STEPS))
+	var phrase_count := int(context.get("phrase_count", DEFAULT_ARRANGEMENT_PHRASES))
+	var total_steps := int(context.get("total_steps", 32))
+	var duration := float(context.get("duration", step_period * float(total_steps)))
+	var root_midi := int(context.get("root_midi", 45))
+	var danger := float(context.get("danger", 0.5))
+	var volume := float(context.get("volume", 0.22))
+	var pad_gain := float(context.get("pad_gain", 0.38))
+	var bass_gain := float(context.get("bass_gain", 0.20))
+	var lead_gain := float(context.get("lead_gain", 0.08))
+	var drum_gain := float(context.get("drum_gain", 0.07))
+	var texture_gain := float(context.get("texture_gain", 0.45))
+	var heartbeat_gain := float(context.get("heartbeat_gain", 0.02))
+	var siren_gain := float(context.get("siren_gain", 0.0))
+	var scale: Array = context.get("scale", SCALE_MINOR)
+	var progression_degrees: Array = context.get("progression_degrees", DEFAULT_PROGRESSION)
+	var chord_roots: Array = context.get("chord_roots", [0])
+	var chord_voicings: Array = context.get("chord_voicings", [])
+	var motif: Array = context.get("motif", DEFAULT_MOTIF)
+	var palette: Dictionary = context.get("instrument_palette", {}) as Dictionary
+	var swing_amount := float(context.get("swing_amount", 0.0))
+	var answer_transform := str(context.get("answer_transform", "inversion"))
+	var bridge_phrase_index := int(context.get("bridge_phrase_index", 2))
+	var texture_kind := str(context.get("texture_kind", "fluorescent"))
+	var texture_rate := float(context.get("texture_rate", 0.33))
+	var texture_seed := int(context.get("texture_seed", 0))
+	var variation_seed := int(context.get("variation_seed", texture_seed))
+	var humanize_seed := int(context.get("humanize_seed", variation_seed))
+	var i := start_frame
+	while i < end_frame:
 		if token > 0 and i % GENERATION_CANCEL_CHECK_FRAMES == 0 and _generation_was_cancelled(token):
 			return PackedByteArray()
-		_write_ambient_frame(data, context, i)
-		var source_byte_index := i * PCM_BYTES_PER_FRAME
+		var t := float(i) / float(SAMPLE_RATE)
+		var step_index := int(t / step_period) % total_steps
+		var step_local := fposmod(t, step_period)
+		var phrase_index := int(step_index / phrase_steps) % maxi(1, phrase_count)
+		var phrase_step := step_index % phrase_steps
+		var bar_index := int(phrase_step / 8) % maxi(1, chord_roots.size())
+		var beat_step := phrase_step % 8
+		var chord_root := root_midi + int(chord_roots[bar_index])
+		var chord_voicing: Array = []
+		if not chord_voicings.is_empty():
+			chord_voicing = chord_voicings[bar_index % chord_voicings.size()] as Array
+		var phrase_energy := _phrase_energy(phrase_index, phrase_count, danger)
+		var fill_amount := _phrase_fill_amount(phrase_step, phrase_index, phrase_count, phrase_energy)
+		var pad := _music_pad_voiced(root_midi, chord_voicing, chord_root, t, palette) * pad_gain * lerpf(0.94, 1.06, phrase_energy)
+		var bass := 0.0
+		var bass_offset := _bass_offset_for_step(scale, progression_degrees, chord_roots, bar_index, beat_step, phrase_index, phrase_count, variation_seed)
+		if bass_offset > -900:
+			bass = _music_bass(_midi_freq(root_midi + bass_offset), step_local) * bass_gain * lerpf(0.92, 1.13, phrase_energy) * _palette_value(palette, "bass_weight", 1.0)
+		var lead := 0.0
+		var lead_offset := _lead_offset_for_step(scale, progression_degrees, motif, bar_index, phrase_step, phrase_index, phrase_count, variation_seed, answer_transform, bridge_phrase_index)
+		if lead_offset > -900:
+			var lead_local := _swing_step_local(beat_step, step_local, step_period, swing_amount)
+			lead = _music_lead(_midi_freq(root_midi + lead_offset), lead_local, palette) * lead_gain * lerpf(0.70, 1.28, phrase_energy) * _step_humanization(humanize_seed, phrase_step, phrase_index, 0.08)
+		var drum_local := _swing_step_local(beat_step, step_local, step_period, swing_amount)
+		var drums := _music_drums(beat_step, drum_local, step_period, i + texture_seed, phrase_index, phrase_count, variation_seed, fill_amount, palette) * drum_gain * _step_humanization(humanize_seed + 29, phrase_step, phrase_index, 0.10)
+		var heartbeat := _heartbeat_shape(fposmod(t, beat_period), beat_period) * heartbeat_gain
+		var texture := _ambient_texture_sample(texture_kind, texture_rate, t, i, texture_seed) * texture_gain
+		var siren := _music_siren(t) * siren_gain
+		var loop_edge := _loop_edge_envelope(t, duration)
+		var mixed := (pad + bass + lead + drums + heartbeat + texture + siren) * volume * loop_edge
+		var local_frame_index := i - start_frame
+		_write_i16(data, local_frame_index * PCM_BYTES_PER_FRAME, _soft_limit(mixed))
+		var source_byte_index := local_frame_index * PCM_BYTES_PER_FRAME
 		var low_byte := data[source_byte_index]
 		var high_byte := data[source_byte_index + 1]
-		var repeat_count := mini(render_stride, frames - i)
+		var repeat_count := mini(render_stride, end_frame - i)
 		for repeat_index in range(1, repeat_count):
-			var byte_index := (i + repeat_index) * PCM_BYTES_PER_FRAME
+			var byte_index := (local_frame_index + repeat_index) * PCM_BYTES_PER_FRAME
 			data[byte_index] = low_byte
 			data[byte_index + 1] = high_byte
 		i += render_stride
