@@ -722,6 +722,9 @@ func _measure_coin_pusher_action(surface_action: String, name: String, fixture: 
 	var call_start_usec := Time.get_ticks_usec()
 	var handled := bool(app.call("_handle_module_surface_action", surface_action, 0, true))
 	var resolve_call_ms := float(Time.get_ticks_usec() - call_start_usec) / 1000.0
+	var accepted_result: Dictionary = app.get("last_game_result") if typeof(app.get("last_game_result")) == TYPE_DICTIONARY else {}
+	var accepted_host_timing_variant: Variant = accepted_result.get("coin_pusher_debug_host_timing_usec", {})
+	var host_timing: Dictionary = accepted_host_timing_variant if typeof(accepted_host_timing_variant) == TYPE_DICTIONARY else {}
 	# Action acceptance and the maintained 60-frame physical observation are
 	# distinct boundaries. Retain both so later legitimate exits cannot overwrite
 	# proof of what the accepted action itself did.
@@ -735,6 +738,8 @@ func _measure_coin_pusher_action(surface_action: String, name: String, fixture: 
 	var metrics: Dictionary = result.get("coin_pusher_solver_metrics", {}) if typeof(result.get("coin_pusher_solver_metrics", {})) == TYPE_DICTIONARY else {}
 	current_tags["handled"] = handled
 	current_tags["resolve_call_ms"] = resolve_call_ms
+	if not host_timing.is_empty():
+		current_tags["host_timing_usec"] = host_timing.duplicate(true)
 	current_tags["canvas_before"] = before_counters
 	current_tags["canvas_after"] = after_counters
 	current_tags["redraw_delta"] = int(after_counters.get("surface_animation_redraw_count", 0)) - int(before_counters.get("surface_animation_redraw_count", 0))
