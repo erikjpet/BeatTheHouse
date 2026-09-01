@@ -11,12 +11,15 @@ const DEFAULT_ACCEPTED := 25000
 const POLICY_TICKS := 20
 const PHASE_BIN_COUNT := 12
 const RAIL_FRACTIONS := [0, 250, 500, 750, 1000]
+const PROGRESS_ATTEMPT_INTERVAL := 256
+const MAX_CONSECUTIVE_REFUSALS_WITHOUT_ACCEPT := 4096
 
 var machine_id := "quarter_falls"
 var shard_index := 0
 var accepted_target := DEFAULT_ACCEPTED
 var out_path := "res://.tmp/coin_pusher_ev_shard.json"
 var gutter_x_override := -1
+var runner_provenance := {}
 var failed := false
 
 
@@ -32,11 +35,21 @@ func _init() -> void:
 			out_path = argument.trim_prefix("--out=").strip_edges()
 		elif argument.begins_with("--gutter-x="):
 			gutter_x_override = int(argument.trim_prefix("--gutter-x="))
+		elif argument.begins_with("--runner-provenance-base64="):
+			var encoded := argument.trim_prefix("--runner-provenance-base64=").strip_edges()
+			var decoded := Marshalls.base64_to_raw(encoded).get_string_from_utf8()
+			var parsed: Variant = JSON.parse_string(decoded)
+			if typeof(parsed) == TYPE_DICTIONARY:
+				runner_provenance = parsed as Dictionary
 	call_deferred("_run")
 
 
 func _run() -> void:
 	var started_usec := Time.get_ticks_usec()
+	if runner_provenance.is_empty():
+		push_error("EV shard requires harness-bound runner provenance.")
+		quit(1)
+		return
 	var library = ContentLibraryScript.new()
 	library.load(false)
 	var game = CoinPusherGame.new()
@@ -89,6 +102,7 @@ func _run() -> void:
 	var apparatus_counts := {}
 	var player_accepted := 0
 	var player_refused := 0
+	var consecutive_refusals := 0
 	var progression_ticks := 0
 	var invariant_failures := 0
 	var base_tray_coin_count := 0
@@ -113,6 +127,8 @@ func _run() -> void:
 		var dropped: Dictionary = Solver.add_coin(simulation, drop_rng, int(simulation.get("carriage_x", _definition_width(definition) / 2)), 1, {"ev_shard": shard_index, "ev_insert": player_accepted})
 		if not bool(dropped.get("accepted", false)):
 			player_refused += 1
+			consecutive_refusals += 1
+			_print_progress_if_due(started_usec, simulation, player_accepted, player_refused)
 			var relief := _advance_and_consume(game, machine, event_rng, POLICY_TICKS)
 			progression_ticks += POLICY_TICKS
 			invariant_failures += 0 if bool(relief.get("invariants_ok", false)) else 1
@@ -126,12 +142,17 @@ func _run() -> void:
 			_append_unique_strings(physically_banked_fragment_ids, relief.get("fragment_ids", []))
 			feature_gutter_count += int(relief.get("feature_gutter_count", 0))
 			_accumulate_target_accounting(target_accounting, relief.get("target_accounting", {}))
+			if consecutive_refusals >= MAX_CONSECUTIVE_REFUSALS_WITHOUT_ACCEPT:
+				_finish_liveness_failure(started_usec, simulation, player_accepted, player_refused, consecutive_refusals, policy_hash, geometry_hash)
+				return
 			continue
 		var period_ticks := maxi(1, int((definition.get("stroke", {}) as Dictionary).get("period_ticks", 240)))
 		var phase_bin := clampi(int(int(simulation.get("phase_fp", 0)) * PHASE_BIN_COUNT / (period_ticks * Solver.FP)), 0, PHASE_BIN_COUNT - 1)
 		phase_bins[phase_bin] = int(phase_bins[phase_bin]) + 1
 		apparatus_counts[apparatus_label] = int(apparatus_counts.get(apparatus_label, 0)) + 1
 		player_accepted += 1
+		consecutive_refusals = 0
+		_print_progress_if_due(started_usec, simulation, player_accepted, player_refused)
 		machine["action_count"] = player_accepted
 		# The production live-session enqueue performs this action-boundary
 		# transition. The unattended EV harness inserts directly into the solver,
@@ -231,6 +252,7 @@ func _run() -> void:
 		"policy": policy,
 		"policy_sha256": policy_hash,
 		"geometry_sha256": geometry_hash,
+		"runner_provenance": runner_provenance.duplicate(true),
 		"coverage": {"phase_bins": phase_bins, "apparatus": apparatus_counts, "complete": coverage_ok},
 		"accounting": {
 			"opening_origin_count": opening_origin,
@@ -536,6 +558,57 @@ func _policy_descriptor(definition: Dictionary) -> Dictionary:
 		"tail_progression": "no favorable tail; unresolved active paid stock is reported as a conservative identified ROI interval",
 		"apparatus_type": str((definition.get("apparatus", {}) as Dictionary).get("type", "")),
 	}
+
+
+func _print_progress_if_due(started_usec: int, simulation: Dictionary, accepted: int, refused: int) -> void:
+	var attempts := accepted + refused
+	if attempts <= 0 or attempts % PROGRESS_ATTEMPT_INTERVAL != 0:
+		return
+	print("COIN_PUSHER_EV_SHARD_PROGRESS machine=%s shard=%d accepted=%d/%d refused=%d active=%d tray=%d gutter=%d elapsed_seconds=%.3f" % [
+		machine_id,
+		shard_index,
+		accepted,
+		accepted_target,
+		refused,
+		(simulation.get("bodies", []) as Array).size(),
+		(simulation.get("tray_ledger", []) as Array).size(),
+		(simulation.get("gutter_ledger", []) as Array).size(),
+		float(Time.get_ticks_usec() - started_usec) / 1000000.0,
+	])
+
+
+func _finish_liveness_failure(started_usec: int, simulation: Dictionary, accepted: int, refused: int, consecutive_refusals: int, policy_hash: String, geometry_hash: String) -> void:
+	var detail := "No accepted insert after %d consecutive ceiling refusals; stopped before further persistent-machine progression could exhaust host resources." % consecutive_refusals
+	_finish({
+		"schema": "coin_pusher_v3_physical_ev_shard_failure_v1",
+		"machine_id": machine_id,
+		"shard_index": shard_index,
+		"accepted_target": accepted_target,
+		"accepted_player_inserts": accepted,
+		"refused_attempts_returned": refused,
+		"consecutive_refusals_without_accept": consecutive_refusals,
+		"failure_kind": "no_accepted_progress",
+		"failure_detail": detail,
+		"guard": {
+			"schema": "coin_pusher_ev_no_progress_guard_v1",
+			"kind": "deterministic_consecutive_refusal_limit",
+			"limit": MAX_CONSECUTIVE_REFUSALS_WITHOUT_ACCEPT,
+			"ticks_after_each_refusal": POLICY_TICKS,
+		},
+		"state": {
+			"active": (simulation.get("bodies", []) as Array).size(),
+			"tray": (simulation.get("tray_ledger", []) as Array).size(),
+			"gutter": (simulation.get("gutter_ledger", []) as Array).size(),
+			"solver_accepted_inserts_including_features": int(simulation.get("accepted_inserts", 0)),
+			"solver_refused_inserts": int(simulation.get("refused_inserts", 0)),
+		},
+		"solver_backend": Solver.last_step_backend_for_test(),
+		"policy_sha256": policy_hash,
+		"geometry_sha256": geometry_hash,
+		"runner_provenance": runner_provenance.duplicate(true),
+		"elapsed_seconds": float(Time.get_ticks_usec() - started_usec) / 1000000.0,
+		"passed": false,
+	})
 
 
 func _body_kind_counts(values: Array) -> Dictionary:
