@@ -164,11 +164,20 @@ func actions(run_state: RunState, environment: Dictionary) -> Dictionary:
 	}
 
 
-func wager_cost_for_context(action_id: String, _stake: int, run_state: RunState, environment: Dictionary, _ui_state: Dictionary = {}) -> int:
+func wager_cost_for_context(action_id: String, _stake: int, run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> int:
 	# Pricing is a read-only query used while composing environment/action UI.
 	# It must never open a live simulation for a machine the player did not enter.
-	if action_id == DROP_ACTION and _drop_refused(_read_machine_state(run_state, environment)):
-		return 0
+	if action_id == DROP_ACTION:
+		# The host passes the exact rendered action context that nominated this DROP.
+		# Reuse its authoritative enabled bit instead of reconciling and potentially
+		# cloning the durable 300-piece checkpoint a second time before resolution.
+		var bindings_value: Variant = ui_state.get("surface_action_bindings", null)
+		if typeof(bindings_value) == TYPE_DICTIONARY:
+			var drop_binding_value: Variant = (bindings_value as Dictionary).get("coin_pusher_drop", null)
+			if typeof(drop_binding_value) == TYPE_DICTIONARY:
+				return _drop_cost() if bool((drop_binding_value as Dictionary).get("enabled", false)) else 0
+		if _drop_refused(_read_machine_state(run_state, environment)):
+			return 0
 	return _drop_cost() if action_id == DROP_ACTION else 0
 
 
