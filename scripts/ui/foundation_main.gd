@@ -10448,6 +10448,9 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 	# each UI-state snapshot contains nested machine/runtime data. Rebuilding it for
 	# confirmation, resolution, and result presentation caused visible Web hitches.
 	var action_surface_ui_state := resolved_surface_ui_state if not resolved_surface_ui_state.is_empty() else _current_game_surface_ui_state()
+	if not rendered_action_state.is_empty() and rendered_action_state.has("surface_action_bindings"):
+		action_surface_ui_state = action_surface_ui_state.duplicate(false)
+		action_surface_ui_state["surface_action_bindings"] = rendered_action_state.get("surface_action_bindings", {})
 	var wager_cost := _wager_cost_for_action(action_id, stake, action_surface_ui_state)
 	if not wager_confirmed and _wager_needs_final_bankroll_confirmation(current_game, action_id, stake, wager_cost, action_surface_ui_state):
 		_pause_repeating_surface_action_for_wager_confirmation()
