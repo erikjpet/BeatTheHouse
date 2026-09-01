@@ -13072,6 +13072,17 @@ func advance_environment_turns(amount: int = 1, profile_stages: bool = false) ->
 	if current_environment.is_empty() or is_terminal():
 		return {"ok": true, "applied": false, "errors": []}
 	var profile_started_usec := Time.get_ticks_usec() if profile_stages else 0
+	# A room without a scenario sequence has no rejecting operation after the
+	# read-only preflight: every fact ingress below returns the documented
+	# inactive result. Advance that common path in place, preserving every live
+	# alias and avoiding a full RunState transaction for ordinary game inputs.
+	# The forced-rejection seam deliberately keeps the detached path so the exact
+	# rollback contract remains exercised in debug qualification.
+	if _turn_transaction_test_failure_stage.is_empty() and not scenario_sequence_present():
+		var direct_result := _advance_environment_turns_candidate(amount)
+		if profile_stages:
+			direct_result["debug_turn_transaction_usec"] = {"candidate_create": 0, "candidate_advance": Time.get_ticks_usec() - profile_started_usec, "publish": 0, "total": Time.get_ticks_usec() - profile_started_usec}
+		return direct_result
 	var profile_stage_started_usec := profile_started_usec
 	var candidate := _detached_environment_turn_candidate()
 	var candidate_create_usec := Time.get_ticks_usec() - profile_stage_started_usec if profile_stages else 0
