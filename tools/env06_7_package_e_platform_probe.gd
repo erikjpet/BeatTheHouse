@@ -93,6 +93,7 @@ func _capture_evidence(package: Dictionary, output_dir: String, failures: Array)
 	await get_tree().process_frame
 	var rows: Array = []
 	var thumbnails: Array[Image] = []
+	var archetype_thumbnails := {"delta_queen": [], "grand_casino": []}
 	for entry_value in _array(package.get("scenarios", [])):
 		var entry := _dict(entry_value)
 		var sid := str(entry.get("scenario_id", ""))
@@ -116,18 +117,30 @@ func _capture_evidence(package: Dictionary, output_dir: String, failures: Array)
 			var thumb := image.duplicate()
 			thumb.resize(240,135,Image.INTERPOLATE_LANCZOS)
 			thumbnails.append(thumb)
-	var sheet := Image.create(960, int(ceil(float(thumbnails.size()) / 4.0)) * 135, false, Image.FORMAT_RGBA8)
-	sheet.fill(Color("101520"))
-	for index in range(thumbnails.size()): sheet.blit_rect(thumbnails[index],Rect2i(0,0,240,135),Vector2i((index % 4) * 240,(index / 4) * 135))
+			(archetype_thumbnails[_archetype_for(sid)] as Array).append(thumb)
 	var sheet_path := output_dir.path_join("env06_7_package_e_contact_sheet.png")
-	if sheet.save_png(sheet_path) != OK: failures.append("Package E contact sheet could not be written.")
-	var manifest := {"schema":"env06_7_package_e_raster_evidence_v1","capture_count":rows.size(),"captures":rows,"contact_sheet":{"path":sheet_path,"sha256":FileAccess.get_sha256(sheet_path),"width":sheet.get_width(),"height":sheet.get_height()}}
+	var contact_sheet := _write_contact_sheet(thumbnails, sheet_path, failures)
+	var archetype_contact_sheets: Dictionary = {}
+	for archetype_id in archetype_thumbnails:
+		var archetype_path := output_dir.path_join("%s_contact_sheet.png" % archetype_id)
+		archetype_contact_sheets[archetype_id] = _write_contact_sheet(archetype_thumbnails[archetype_id], archetype_path, failures)
+	var manifest := {"schema":"env06_7_package_e_raster_evidence_v1","capture_count":rows.size(),"captures":rows,"contact_sheet":contact_sheet,"archetype_contact_sheets":archetype_contact_sheets}
 	var manifest_path := output_dir.path_join("manifest.json")
 	var file := FileAccess.open(manifest_path,FileAccess.WRITE)
 	file.store_string(JSON.stringify(manifest,"  ",false)+"\n")
 	file.close()
 	manifest["manifest_path"] = manifest_path
 	return manifest
+
+func _write_contact_sheet(thumbnails: Array, path: String, failures: Array) -> Dictionary:
+	var sheet := Image.create(960, maxi(135, int(ceil(float(thumbnails.size()) / 4.0)) * 135), false, Image.FORMAT_RGBA8)
+	sheet.fill(Color("101520"))
+	for index in range(thumbnails.size()): sheet.blit_rect(thumbnails[index],Rect2i(0,0,240,135),Vector2i((index % 4) * 240,(index / 4) * 135))
+	if sheet.save_png(path) != OK: failures.append("Package E contact sheet could not be written: %s." % path)
+	return {"path":path,"sha256":FileAccess.get_sha256(path),"width":sheet.get_width(),"height":sheet.get_height(),"capture_count":thumbnails.size()}
+
+func _archetype_for(scenario_id: String) -> String:
+	return "delta_queen" if scenario_id.begins_with("delta_queen_") else "grand_casino"
 
 func _build_canvas() -> void:
 	get_viewport().size = Vector2i(960,540)

@@ -150,12 +150,93 @@ func _phase_work(c: Dictionary) -> Dictionary:
 	var actor_operation := {"family":"actor_ops","op":"set_position","receipt_id":sid+"_work_actor","owner_namespace":"scenario","stable_object_id":c.actor,"zone_id":"service_lane"}
 	var actor_work_anchor := str(c.get("actor_work_anchor", "")).strip_edges()
 	if not actor_work_anchor.is_empty(): actor_operation["anchor_id"] = actor_work_anchor
+	var identity_ops := _identity_work_operations(c)
+	var scene_ops := [{"family":"scene_ops","op":"move","receipt_id":sid+"_work_move","owner_namespace":"scenario","stable_object_id":c.object_a,"zone_id":"center"},{"family":"scene_ops","op":"set_appearance","receipt_id":sid+"_work_reveal","owner_namespace":"scenario","stable_object_id":c.object_b,"appearance":"active_station"}]
+	scene_ops.append_array(identity_ops.scene_ops)
+	var actor_ops := [actor_operation]
+	actor_ops.append_array(identity_ops.actor_ops)
+	var transition_ops := [_transition(sid+"_work_change","scene_change","The scene physically shifts into its decisive second step.")]
+	transition_ops.append_array(identity_ops.transition_ops)
 	return {"id":"work","label":str(c.task),"arrival_feedback":"The first physical step exposes the second station and changes the actor's route.","exit_prompt":"The marked exit remains clear during the second step.","entry_conditions":[],"objective_ids":["complete_%s" % c.object_a],"advance_after_actions":0,
-		"scene_ops":[{"family":"scene_ops","op":"move","receipt_id":sid+"_work_move","owner_namespace":"scenario","stable_object_id":c.object_a,"zone_id":"center"},{"family":"scene_ops","op":"set_appearance","receipt_id":sid+"_work_reveal","owner_namespace":"scenario","stable_object_id":c.object_b,"appearance":"active_station"}],
+		"scene_ops":scene_ops,
 		"interaction_ops":[_remove("interaction_ops",sid+"_work_remove_"+str(c.object_a),c.object_a),_interaction(sid+"_work_task",c.object_b,c.task,[_action(c.verb_b,_label(c.verb_b),"ui_accept","path","success"),_action(c.fail,_label(c.fail),"ui_right","path","failure")],false)],
-		"actor_ops":[actor_operation],
-		"transition_ops":[_transition(sid+"_work_change","scene_change","The scene physically shifts into its decisive second step.")],
+		"actor_ops":actor_ops,
+		"transition_ops":transition_ops,
 		"branches":[{"id":sid+"_success","condition":{"type":"command","command_id":c.verb_b},"next_phase":"resolution"},{"id":sid+"_failure","condition":{"type":"command","command_id":c.fail},"next_phase":"resolution"},{"id":sid+"_leave_safely_work","condition":{"type":"command","command_id":"leave_safely"},"next_phase":"resolution"},{"id":sid+"_work_depart","condition":{"type":"fact","fact_type":"travel_departed"},"next_phase":"resolution"},{"id":sid+"_public_work","condition":{"type":"local_equals","key":"path","value":"public"},"next_phase":"resolution"}]}
+
+func _identity_work_operations(c: Dictionary) -> Dictionary:
+	var sid := str(c.id)
+	var scene_ops: Array = []
+	var actor_ops: Array = []
+	var transition_ops: Array = []
+	match sid:
+		"corner_store_lotto_fever":
+			scene_ops = [_scene_change(sid, "queue_places", c.object_a, "set_state", "places_marked"), _scene_change(sid, "draw_digits", c.object_b, "set_appearance", "verified_digits"), _scene_move(sid, "queue_turn", c.object_a, "left")]
+			actor_ops = [_actor_change(sid, "draw_pose", c.actor, "set_pose", "watching_draw"), _actor_change(sid, "draw_behavior", c.actor, "set_behavior", "watch")]
+			transition_ops = [_cue(sid, "ticket_rattle", "sound"), _transition(sid+"_number_feedback", "feedback", "The called number and the held place are both visible."), _cue(sid, "lotto_counter", "music"), _transition(sid+"_draw_stage", "stage", "The queue turns toward the verified number board.")]
+		"corner_store_aftermath":
+			scene_ops = [_scene_move(sid, "evidence_lane", c.object_a, "foreground"), _scene_simple(sid, "evidence_reveal", c.object_b, "reveal"), _scene_change(sid, "evidence_state", c.object_b, "set_state", "bagged_for_trace")]
+			actor_ops = [_actor_move(sid, "officer_lane", c.actor, "left")]
+			transition_ops = [_transition(sid+"_evidence_stage", "stage", "The evidence route is isolated before the object is handled."), _cue(sid, "evidence_bag", "sound"), _transition(sid+"_custody_feedback", "feedback", "The officer holds a visible chain-of-custody lane.")]
+		"corner_store_dead_shift":
+			scene_ops = [_scene_change(sid, "breaker_open", c.object_a, "set_appearance", "open_breaker"), _scene_change(sid, "cooler_dark", c.object_b, "set_state", "circuit_isolated"), _scene_simple(sid, "cooler_reveal", c.object_b, "reveal")]
+			actor_ops = [_actor_change(sid, "clerk_pose", c.actor, "set_pose", "holding_flashlight")]
+			transition_ops = [_cue(sid, "breaker_snap", "sound"), _transition(sid+"_power_feedback", "feedback", "The private aisle stays dark while the cooler circuit is isolated.")]
+		"corner_store_inventory_night":
+			scene_ops = [_scene_move(sid, "cage_split", c.object_a, "right"), _scene_change(sid, "cage_counted", c.object_a, "set_state", "section_counted"), _scene_change(sid, "shelf_tags", c.object_b, "set_appearance", "discrepancy_tags"), _scene_simple(sid, "shelf_reveal", c.object_b, "reveal")]
+			actor_ops = [_actor_change(sid, "counter_pose", c.actor, "set_pose", "recounting_shelf"), _actor_change(sid, "counter_behavior", c.actor, "set_behavior", "work")]
+			transition_ops = [_cue(sid, "scanner_beep", "sound"), _transition(sid+"_count_stage", "stage", "The count cage closes one section while the discrepancy shelf remains accessible."), _transition(sid+"_count_feedback", "feedback", "The visible tag trail now identifies the mismatched section.")]
+		"back_alley_street_craps":
+			scene_ops = [_scene_change(sid, "ring_marked", c.object_a, "set_appearance", "chalk_point_ring"), _scene_move(sid, "lookout_turn", c.object_b, "foreground"), _scene_change(sid, "lookout_state", c.object_b, "set_state", "warning_active")]
+			actor_ops = [_actor_change(sid, "shooter_pose", c.actor, "set_pose", "setting_dice"), _actor_change(sid, "shooter_behavior", c.actor, "set_behavior", "watch"), _actor_move(sid, "shooter_lane", c.actor, "right")]
+			transition_ops = [_cue(sid, "dice_curb", "sound"), _cue(sid, "street_game", "music"), _transition(sid+"_point_feedback", "feedback", "The chalk point and lookout warning define the live street game.")]
+		"back_alley_cruiser_parked":
+			scene_ops = [_scene_simple(sid, "beam_hidden", c.object_a, "hide"), _scene_move(sid, "cover_shift", c.object_b, "right"), _scene_change(sid, "cover_state", c.object_b, "set_state", "diversion_ready")]
+			actor_ops = [_actor_change(sid, "patrol_behavior", c.actor, "set_behavior", "patrol"), _actor_change(sid, "patrol_pose", c.actor, "set_pose", "scanning_doorway"), _actor_move(sid, "patrol_lane", c.actor, "center")]
+			transition_ops = [_cue(sid, "police_radio", "sound"), _cue(sid, "sightline_tension", "music"), _transition(sid+"_sightline_feedback", "feedback", "The shifted cover breaks one patrol sightline but exposes another."), _transition(sid+"_diversion_stage", "stage", "The patrol turns while the cover crosses the beam.")]
+		"back_alley_fence_night":
+			scene_ops = [_scene_move(sid, "lot_rotation", c.object_a, "left"), _scene_change(sid, "lot_marks", c.object_a, "set_appearance", "marked_goods_lots"), _scene_change(sid, "auth_ready", c.object_b, "set_state", "authentication_open"), _scene_simple(sid, "station_enable", c.object_b, "enable")]
+			actor_ops = [_actor_change(sid, "buyer_pose", c.actor, "set_pose", "checking_marks"), _actor_move(sid, "buyer_rotation", c.actor, "foreground")]
+			transition_ops = [_cue(sid, "crate_latch", "sound"), _transition(sid+"_auction_stage", "stage", "The rotating buyer yields the authentication station to the contested crate."), _transition(sid+"_authentication_feedback", "feedback", "The marked lot and authentication result remain independently visible.")]
+		"back_alley_nothing_moving":
+			scene_ops = [_scene_change(sid, "trace_pattern", c.object_a, "set_state", "three_traces_compared"), _scene_move(sid, "shutter_gap", c.object_b, "background"), _scene_change(sid, "gap_appearance", c.object_b, "set_appearance", "opened_trace_gap")]
+			actor_ops = [_actor_change(sid, "regular_behavior", c.actor, "set_behavior", "flee"), _actor_change(sid, "regular_pose", c.actor, "set_pose", "pointing_to_exit")]
+			transition_ops = [_cue(sid, "shutter_scrape", "sound"), _cue(sid, "silent_alley", "music"), _transition(sid+"_trace_stage", "stage", "The wet print, crate drag, and snapped seal converge on the shutter gap."), _transition(sid+"_trail_feedback", "feedback", "The silent trail now exposes a route rather than a stall.")]
+		"pawn_shop_estate_lot_day":
+			scene_ops = [_scene_change(sid, "cart_display", c.object_a, "set_appearance", "segmented_appraisal_cart"), _scene_change(sid, "marks_matched", c.object_b, "set_state", "provenance_matched"), _scene_move(sid, "cart_lane", c.object_a, "service_lane"), _scene_simple(sid, "marks_enable", c.object_b, "enable")]
+			actor_ops = [_actor_change(sid, "appraiser_pose", c.actor, "set_pose", "comparing_marks"), _actor_change(sid, "appraiser_behavior", c.actor, "set_behavior", "guard"), _actor_move(sid, "appraiser_lane", c.actor, "foreground")]
+			transition_ops = [_transition(sid+"_appraisal_feedback", "feedback", "The cart now separates display, return, and police-hold provenance."), _cue(sid, "appraisal_stamp", "sound"), _transition(sid+"_provenance_stage", "stage", "Each provenance mark is matched before the cart changes lanes."), _cue(sid, "estate_floor", "music")]
+		"pawn_shop_serial_check_day":
+			scene_ops = [_scene_change(sid, "serial_lit", c.object_a, "set_appearance", "serial_lamp"), _scene_change(sid, "hold_sealed", c.object_b, "set_state", "record_hold_sealed"), _scene_move(sid, "hold_lane", c.object_b, "right"), _scene_simple(sid, "station_hidden", c.object_a, "hide")]
+			actor_ops = [_actor_change(sid, "records_pose", c.actor, "set_pose", "copying_serial"), _actor_change(sid, "records_behavior", c.actor, "set_behavior", "guard"), _actor_move(sid, "records_lane", c.actor, "left")]
+			transition_ops = [_cue(sid, "record_stamp", "sound"), _transition(sid+"_serial_feedback", "feedback", "The copied serial links the sealed object to the hold record."), _transition(sid+"_hold_stage", "stage", "The station closes while the records clerk seals the hold lane.")]
+		"pawn_shop_sals_mood":
+			scene_ops = [_scene_change(sid, "jobs_sorted", c.object_a, "set_state", "jobs_prioritized"), _scene_move(sid, "appraisal_privacy", c.object_b, "background"), _scene_change(sid, "appraisal_hidden", c.object_b, "set_appearance", "privacy_screen")]
+			actor_ops = [_actor_change(sid, "sal_behavior", c.actor, "set_behavior", "work"), _actor_change(sid, "sal_pose", c.actor, "set_pose", "checking_finished_job")]
+			transition_ops = [_cue(sid, "shop_bell", "sound"), _transition(sid+"_mood_stage", "stage", "Sal checks the finished job before choosing the counter or back room."), _transition(sid+"_mood_feedback", "feedback", "The finished job changes Sal's route and access to the private appraisal.")]
+	return {"scene_ops":scene_ops, "actor_ops":actor_ops, "transition_ops":transition_ops}
+
+func _scene_change(sid: String, receipt: String, stable_id: String, op: String, value: String) -> Dictionary:
+	var row := {"family":"scene_ops","op":op,"receipt_id":sid+"_"+receipt,"owner_namespace":"scenario","stable_object_id":stable_id}
+	row["state" if op == "set_state" else "appearance"] = value
+	return row
+
+func _scene_move(sid: String, receipt: String, stable_id: String, zone_id: String) -> Dictionary:
+	return {"family":"scene_ops","op":"move","receipt_id":sid+"_"+receipt,"owner_namespace":"scenario","stable_object_id":stable_id,"zone_id":zone_id}
+
+func _scene_simple(sid: String, receipt: String, stable_id: String, op: String) -> Dictionary:
+	return {"family":"scene_ops","op":op,"receipt_id":sid+"_"+receipt,"owner_namespace":"scenario","stable_object_id":stable_id}
+
+func _actor_change(sid: String, receipt: String, stable_id: String, op: String, value: String) -> Dictionary:
+	var row := {"family":"actor_ops","op":op,"receipt_id":sid+"_"+receipt,"owner_namespace":"scenario","stable_object_id":stable_id}
+	row["behavior" if op == "set_behavior" else "pose"] = value
+	return row
+
+func _actor_move(sid: String, receipt: String, stable_id: String, zone_id: String) -> Dictionary:
+	return {"family":"actor_ops","op":"set_position","receipt_id":sid+"_"+receipt,"owner_namespace":"scenario","stable_object_id":stable_id,"zone_id":zone_id}
+
+func _cue(sid: String, cue_id: String, op: String) -> Dictionary:
+	return {"family":"transition_ops","op":op,"receipt_id":sid+"_"+cue_id,"owner_namespace":"scenario","stable_object_id":sid+"_"+cue_id,"channel":"room","cue_id":cue_id}
 
 func _phase_resolution(c: Dictionary) -> Dictionary:
 	var sid := str(c.id)
@@ -244,18 +325,39 @@ func _repair_delivery_day(entry: Dictionary) -> Dictionary:
 	var phases := phase_graph.get("phases", []) as Array
 	for phase_index in range(phases.size()):
 		var phase := phases[phase_index] as Dictionary
+		if str(phase.get("id", "")) == "awaiting_stock":
+			var waiting_scene_ops := phase.get("scene_ops", []) as Array
+			for operation_index in range(waiting_scene_ops.size()):
+				var waiting_operation := waiting_scene_ops[operation_index] as Dictionary
+				if str(waiting_operation.get("stable_object_id", "")) != "delivery_cartons" or str(waiting_operation.get("op", "")) != "move":
+					continue
+				waiting_operation.erase("zone_id")
+				waiting_operation["anchor_id"] = "package_a_delivery_cartons_wait"
+				waiting_scene_ops[operation_index] = waiting_operation
+			phase["scene_ops"] = waiting_scene_ops
+			phases[phase_index] = phase
 		if str(phase.get("id", "")) != str(phase_graph.get("initial_phase", "")):
 			continue
 		var scene_ops := phase.get("scene_ops", []) as Array
 		for operation_index in range(scene_ops.size()):
 			var operation := scene_ops[operation_index] as Dictionary
-			if str(operation.get("stable_object_id", "")) != "mismarked_crate":
-				continue
-			var object := operation.get("object", {}) as Dictionary
-			object["anchor_id"] = "package_a_delivery_crate"
-			operation["object"] = object
-			scene_ops[operation_index] = operation
+			var stable_id := str(operation.get("stable_object_id", ""))
+			if stable_id in ["mismarked_crate", "delivery_event_gate"]:
+				var object := operation.get("object", {}) as Dictionary
+				object["anchor_id"] = "package_a_delivery_crate" if stable_id == "mismarked_crate" else "package_a_delivery_gate"
+				operation["object"] = object
+				scene_ops[operation_index] = operation
 		phase["scene_ops"] = scene_ops
+		var actor_ops := phase.get("actor_ops", []) as Array
+		for operation_index in range(actor_ops.size()):
+			var operation := actor_ops[operation_index] as Dictionary
+			if str(operation.get("stable_object_id", "")) != "delivery_runner":
+				continue
+			var actor := operation.get("actor", {}) as Dictionary
+			actor["anchor_id"] = "package_a_delivery_runner"
+			operation["actor"] = actor
+			actor_ops[operation_index] = operation
+		phase["actor_ops"] = actor_ops
 		phases[phase_index] = phase
 	phase_graph["phases"] = phases
 	sequence["phase_graph"] = phase_graph
@@ -263,12 +365,20 @@ func _repair_delivery_day(entry: Dictionary) -> Dictionary:
 	var targets := sequence.get("declared_targets", {}) as Dictionary
 	targets["routes"] = ["base::world:bar"]
 	var anchors := targets.get("anchors", []) as Array
-	if not anchors.has("base::anchor:package_a_delivery_crate"):
-		anchors.append("base::anchor:package_a_delivery_crate")
+	for anchor_id in ["base::anchor:package_a_delivery_cartons_wait", "base::anchor:package_a_delivery_crate", "base::anchor:package_a_delivery_gate", "base::anchor:package_a_delivery_runner"]:
+		if not anchors.has(anchor_id):
+			anchors.append(anchor_id)
 	anchors.sort()
 	targets["anchors"] = anchors
 	sequence["declared_targets"] = targets
 	repaired["sequence"] = sequence
+	var evidence_value: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://docs/plans/evidence/env06_7_masked_visual_evidence.json"))
+	if typeof(evidence_value) != TYPE_DICTIONARY or typeof((evidence_value as Dictionary).get("pairs")) != TYPE_DICTIONARY:
+		push_error("Package A masked visual evidence is unreadable.")
+		return {}
+	var authoring := repaired.get("authoring", {}) as Dictionary
+	authoring["masked_visual_explanations"] = ((evidence_value as Dictionary).get("pairs", {}) as Dictionary).duplicate(true)
+	repaired["authoring"] = authoring
 	return repaired
 
 func _spawn(receipt: String, stable_id: String, label: String, role: String, zone: String, state: String) -> Dictionary:

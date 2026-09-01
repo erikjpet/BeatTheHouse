@@ -266,6 +266,7 @@ var typewriter_active := false
 var rendered_entry_key := ""
 var last_occupied_rect := Rect2()
 var avoid_global_rect := Rect2()
+var protected_global_rects: Array[Rect2] = []
 var reserved_body_line_count := 1
 var locked_layout_side := "left"
 var locked_layout_vertical := "bottom"
@@ -540,22 +541,78 @@ func set_reduce_motion(enabled: bool) -> void:
 
 # Keep an authored instruction away from its live target without taking input
 # ownership from that target.
-func set_avoid_global_rect(next_rect: Rect2, boundary_key: String = "", focus_x_hint: float = -1.0) -> void:
+func set_avoid_global_rect(next_rect: Rect2, boundary_key: String = "", focus_x_hint: float = -1.0, next_protected_rects: Array = []) -> void:
 	var clean_boundary_key := boundary_key.strip_edges()
-	var boundary_changed := clean_boundary_key.is_empty() or clean_boundary_key != layout_boundary_key
+	var clean_protected: Array[Rect2] = []
+	for rect_value in next_protected_rects:
+		if rect_value is Rect2 and (rect_value as Rect2).has_area():
+			clean_protected.append(rect_value as Rect2)
+	var protected_changed := clean_protected != protected_global_rects
+	var boundary_changed := clean_boundary_key.is_empty() or clean_boundary_key != layout_boundary_key or protected_changed
 	avoid_global_rect = next_rect
+	protected_global_rects = clean_protected
 	if not boundary_changed:
 		return
 	if not clean_boundary_key.is_empty():
 		layout_boundary_key = clean_boundary_key
-	var next_side := _side_for_new_boundary(next_rect, focus_x_hint)
-	var next_vertical := "bottom"
+	var placement := _best_protected_layout(_side_for_new_boundary(next_rect, focus_x_hint))
+	var next_side := str(placement.get("side", locked_layout_side))
+	var next_vertical := str(placement.get("vertical", locked_layout_vertical))
 	if next_side != locked_layout_side or next_vertical != locked_layout_vertical:
 		if next_side != locked_layout_side:
 			layout_side_change_count += 1
 		locked_layout_side = next_side
 		locked_layout_vertical = next_vertical
 		_position_panel()
+
+
+func _best_protected_layout(preferred_side: String) -> Dictionary:
+	var other_side := "right" if preferred_side == "left" else "left"
+	var candidates := [
+		{"side": preferred_side, "vertical": "bottom"},
+		{"side": preferred_side, "vertical": "top"},
+		{"side": other_side, "vertical": "bottom"},
+		{"side": other_side, "vertical": "top"},
+	]
+	var best: Dictionary = candidates[0]
+	var best_score := INF
+	for candidate_value in candidates:
+		var candidate: Dictionary = candidate_value
+		var layout := _expanded_layout_rects_for(str(candidate.get("side", "left")), str(candidate.get("vertical", "bottom")), true)
+		var footprint := _local_rect_global_aabb((layout.get("portrait_rect", Rect2()) as Rect2).merge(layout.get("panel_rect", Rect2()) as Rect2))
+		var score := 0.0
+		if avoid_global_rect.has_area() and footprint.intersects(avoid_global_rect):
+			score += footprint.intersection(avoid_global_rect).get_area()
+		for protected_rect in protected_global_rects:
+			if footprint.intersects(protected_rect):
+				# A sealed scenario actor/action is authoritative room geometry;
+				# protecting it outranks the already-used focus card behind dialogue.
+				score += footprint.intersection(protected_rect).get_area() * 1000000.0
+		if score < best_score:
+			best_score = score
+			best = candidate
+			if is_zero_approx(score):
+				break
+	return best
+
+
+func _local_rect_global_aabb(local_rect: Rect2) -> Rect2:
+	var canvas_transform := get_global_transform()
+	var points := [
+		canvas_transform * local_rect.position,
+		canvas_transform * Vector2(local_rect.end.x, local_rect.position.y),
+		canvas_transform * Vector2(local_rect.position.x, local_rect.end.y),
+		canvas_transform * local_rect.end,
+	]
+	var minimum: Vector2 = points[0]
+	var maximum: Vector2 = points[0]
+	for point_value in points:
+		var point: Vector2 = point_value
+		minimum.x = minf(minimum.x, point.x)
+		minimum.y = minf(minimum.y, point.y)
+		maximum.x = maxf(maximum.x, point.x)
+		maximum.y = maxf(maximum.y, point.y)
+	return Rect2(minimum, maximum - minimum)
 
 
 func set_small_screen_mode(enabled: bool) -> void:
@@ -1148,14 +1205,12 @@ func _expanded_layout_rects_for(side: String, vertical: String, reserve_maximum_
 
 
 func _reconsider_current_placement() -> void:
-	locked_layout_vertical = "bottom"
-	if not avoid_global_rect.has_area():
-		return
-	var preferred_side := _side_for_new_boundary(avoid_global_rect)
-	var next_side := preferred_side
+	var placement := _best_protected_layout(_side_for_new_boundary(avoid_global_rect))
+	var next_side := str(placement.get("side", locked_layout_side))
 	if next_side != locked_layout_side:
 		layout_side_change_count += 1
 	locked_layout_side = next_side
+	locked_layout_vertical = str(placement.get("vertical", locked_layout_vertical))
 
 
 func _estimated_body_line_count(panel_width: float) -> int:

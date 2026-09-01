@@ -288,7 +288,11 @@ func _run() -> void:
 	if fixed_price_surface:
 		var serialized_before_legal_resolve := _serialized_run_text()
 		var fixed_legal_attempts := 0
-		while serialized_before_legal_resolve == _serialized_run_text() and fixed_legal_attempts < 4:
+		while fixed_legal_attempts < 12:
+			var progress_snapshot: Dictionary = app.call("current_game_view_snapshot")
+			var progress_consequence: Dictionary = app.call("current_consequence_view_snapshot")
+			if int(progress_snapshot.get("result_stake", 0)) > 0 and not (progress_consequence.get("cards", []) as Array).is_empty():
+				break
 			legal_binding = _game_surface_action_binding("legal")
 			_require(await _confirm_game_surface_action(str(legal_binding.get("action", "surface_legal")), int(legal_binding.get("index", 0))), "Could not resolve the fixed-price legal action from a visible game surface region.")
 			await _settle()
@@ -365,7 +369,11 @@ func _run() -> void:
 		var risky_unavailable_reason := ""
 		if fixed_price_surface:
 			var fixed_cheat_attempts := 0
-			while serialized_before_cheat_resolve == _serialized_run_text() and fixed_cheat_attempts < 4:
+			while fixed_cheat_attempts < 12:
+				var risky_progress: Dictionary = app.call("current_game_view_snapshot")
+				var risky_consequence_progress: Dictionary = app.call("current_consequence_view_snapshot")
+				if int(risky_progress.get("result_stake", 0)) > 0 and not (risky_consequence_progress.get("cards", []) as Array).is_empty():
+					break
 				if not await _resolve_visible_fixed_price_risky_action(serialized_before_cheat_resolve):
 					risky_unavailable_reason = "Could not resolve the cheat/advantage action from a visible game surface region."
 					break
@@ -695,8 +703,9 @@ func _try_travel_object_flow(context_label: String, objective: Dictionary = {}) 
 	_require(detail_lines.size() == 4 and str(detail_lines[1]).begins_with("Hours:") and str(detail_lines[3]).contains(" min * ") and str(detail_lines[3]).contains("$ * ") and str(detail_lines[3]).count(" * ") == 2, "World map info panel did not use the compact name, hours, description, and travel format.")
 	_cover("world_map_info_panel")
 	_require(serialized_before_map_select == _serialized_run_text(), "Selecting a world-map node mutated RunState before route confirmation.")
-	app.call("confirm_world_map_travel")
+	var map_travel_result: Dictionary = app.call("confirm_world_map_travel")
 	await _settle()
+	_require(bool(map_travel_result.get("ok", false)), "Confirming map travel was rejected: %s" % JSON.stringify(map_travel_result.get("errors", [])))
 	_require(serialized_before_travel_activation != _serialized_run_text(), "Confirming map travel did not update serialized RunState through the existing travel confirmation path.")
 	_set_optional_hook_status("travel", "passed", "Confirmed a visible world-map destination.", travel_object)
 	_record_state("travel_result_screen", "Confirmed visible travel choice and generated the next environment.")
@@ -740,7 +749,7 @@ func _try_event_card_flow(prepared_fixture: bool = false) -> void:
 	var choice_text := str(first_choice.get("text", ""))
 	var selected_info: Dictionary = canvas_snapshot.get("selected_info", {})
 	var inline_actions: Array = selected_info.get("actions", [])
-	if not inline_actions.is_empty():
+	if not inline_actions.is_empty() and bool((inline_actions[0] as Dictionary).get("inline", false)):
 		var first_action: Dictionary = inline_actions[0]
 		var first_action_detail := str(first_action.get("detail", ""))
 		var concealed_impact := str(first_choice.get("consequence_summary", ""))
@@ -2875,6 +2884,19 @@ func _verify_numbers_surfaces() -> void:
 	_require(not _click_visible_button_role("numbers_fix_button", ["Move the Fix Package"]).is_empty(), "Made-rank fix did not start through the visible desk control.")
 	await _settle()
 	_require(run_state.delivery_has_active_run() and str(run_state.numbers_desk_status().get("fix_stage", "")) == "bribe_running", "Visible fix entry did not enter real-map package delivery.")
+	await _resolve_blocking_surface_interrupts()
+	app.call("_refresh")
+	await _settle()
+	canvas = app.get("environment_canvas") as Control
+	var fix_pickup_object: Dictionary = {}
+	for physical_value in run_state.delivery_physical_interactions():
+		if typeof(physical_value) == TYPE_DICTIONARY and str((physical_value as Dictionary).get("verb", "")) == "pickup":
+			fix_pickup_object = _canvas_object_by_id(canvas, str((physical_value as Dictionary).get("object_id", "")))
+			break
+	_require(not fix_pickup_object.is_empty(), "Numbers fix did not expose its required physical package pickup.")
+	_require(not (await _double_click_canvas_object_data(canvas, fix_pickup_object, "delivery")).is_empty(), "Numbers fix package could not be taken through its physical pickup.")
+	await _settle()
+	_require(bool(run_state.delivery_snapshot().get("carrying_contraband", false)), "Numbers fix physical pickup did not put the package under player control.")
 	_cover("numbers_fix_surface")
 	var fix_targets: Array = run_state.delivery_snapshot().get("targets", [])
 	var fix_target_id := str((fix_targets[0] as Dictionary).get("node_id", ""))
@@ -2928,6 +2950,22 @@ func _verify_delivery_surface() -> void:
 	_require(run_state != null, "Delivery visual QA could not access the active run.")
 	var started := run_state.delivery_begin_package({"run_id": "visual_qa_package", "deadline_actions": 24, "cargo_id": "visual_qa_package", "cargo_label": "Wrapped case"})
 	_require(bool(started.get("ok", false)), "Delivery visual QA package fixture did not start on the generated map.")
+	await _resolve_blocking_surface_interrupts()
+	app.call("_refresh")
+	await _settle()
+	await _resolve_blocking_surface_interrupts()
+	app.call("_refresh")
+	await _settle()
+	var canvas := app.get("environment_canvas") as Control
+	var pickup_object: Dictionary = {}
+	for physical_value in run_state.delivery_physical_interactions():
+		if typeof(physical_value) == TYPE_DICTIONARY and str((physical_value as Dictionary).get("verb", "")) == "pickup":
+			pickup_object = _canvas_object_by_id(canvas, str((physical_value as Dictionary).get("object_id", "")))
+			break
+	_require(not pickup_object.is_empty(), "Delivery visual QA did not expose the required physical package pickup.")
+	_require(not (await _double_click_canvas_object_data(canvas, pickup_object, "delivery")).is_empty(), "Delivery visual QA could not take the package through its physical pickup.")
+	await _settle()
+	_require(bool(run_state.delivery_snapshot().get("carrying_contraband", false)), "Physical delivery pickup did not put the package under player control.")
 	_require(bool(app.call("open_world_map")), "Delivery visual QA could not open the existing world map.")
 	await _settle()
 	var map_snapshot: Dictionary = app.call("_world_map_snapshot")
@@ -2976,10 +3014,11 @@ func _verify_delivery_surface() -> void:
 	_require(run_state.current_world_node_id() == target_id and run_state.environment_travel_count() == travel_count_before + delivery_path.size() - 1, "Visual delivery did not complete through normal map travel.")
 	_require(str(generated_environment.get("world_node_id", "")) == target_id and str(generated_environment.get("archetype_id", "")) == str(target_node.get("archetype_id", "")), "Visual delivery did not enter its real target node.")
 	_require(not (generated_environment.get("layout", {}) as Dictionary).is_empty() and run_state.game_clock_minutes > clock_before, "Visual delivery bypassed normal time or RunGenerator room generation.")
-	var canvas := app.get("environment_canvas") as Control
-	var handoff_id := "delivery:handoff:%s" % target_id
+	var mounted_handoff_owner := run_state.world_sequence_mounted_owner_for_channel("delivery_handoff", target_id)
+	var handoff_id := "crew::package_handoff" if not mounted_handoff_owner.is_empty() else "delivery:handoff:%s" % target_id
 	var handoff_object := _canvas_object_by_id(canvas, handoff_id)
-	_require(not handoff_object.is_empty() and str(run_state.delivery_arrival_interaction().get("object_id", "")) == handoff_id, "Production travel did not expose the physical delivery handoff in the generated room.")
+	var arrival_interaction: Dictionary = run_state.delivery_arrival_interaction()
+	_require(not handoff_object.is_empty() and str(arrival_interaction.get("node_id", "")) == target_id, "Production travel did not expose the physical delivery handoff in the generated room.")
 	_cover("delivery_in_venue_handoff")
 	_record_state("delivery_in_venue_handoff", "Normal map travel pays its route cost, advances time and risk, generates the real target room and exposes the package handoff as a physical character interaction.")
 	_require(not (await _double_click_canvas_object_data(canvas, handoff_object, "delivery")).is_empty(), "Physical delivery handoff could not be completed in the generated room.")
@@ -3474,10 +3513,19 @@ func _drive_risky_surface_until_heat(min_heat: int, max_attempts: int, first_vis
 			_cover("high_heat_changes_risk")
 			highest_visible_risk_delta = visible_risk_delta
 		if fixed_price_surface:
-			if not await _resolve_visible_fixed_price_risky_action(serialized_before_resolve):
+			var fixed_result_ready := false
+			for _fixed_step in range(12):
+				var fixed_progress: Dictionary = app.call("current_game_view_snapshot")
+				var fixed_consequence: Dictionary = app.call("current_consequence_view_snapshot")
+				if int(fixed_progress.get("result_stake", 0)) > 0 and not (fixed_consequence.get("cards", []) as Array).is_empty():
+					fixed_result_ready = true
+					break
+				if not await _resolve_visible_fixed_price_risky_action(serialized_before_resolve):
+					break
+				await _settle()
+			if not fixed_result_ready:
 				_require(false, "Could not resolve a high-heat risky action from the visible game surface.")
 				return false
-			await _settle()
 		else:
 			if not (await _confirm_game_surface_action(str(cheat_binding.get("action", "surface_cheat")), int(cheat_binding.get("index", 0)))):
 				_require(false, "Could not resolve a high-heat risky action from the visible game surface.")
@@ -3660,7 +3708,7 @@ func _assert_no_scroll_critical_path(context: String) -> void:
 		for section_key in ["result", "score", "travel", "story", "items", "heat", "debt"]:
 			_require(section_rects.has(section_key), "%s unified run report is missing section: %s." % [context, section_key])
 			var section_rect: Rect2 = section_rects.get(section_key, Rect2())
-			_require(section_rect.position.x >= 0.0 and section_rect.position.y >= 0.0 and section_rect.end.x <= report_size.x + 0.5 and section_rect.end.y <= report_size.y + 0.5, "%s unified run report section is clipped: %s." % [context, section_key])
+			_require(section_rect.position.x >= 0.0 and section_rect.position.y >= 0.0 and section_rect.end.x <= report_size.x + 0.5 and section_rect.end.y <= report_size.y + 0.5, "%s unified run report section is clipped: %s rect=%s report_size=%s." % [context, section_key, str(section_rect), str(report_size)])
 		var button_rect: Rect2 = layout.get("button_rect", Rect2())
 		_require(button_rect.position.x >= 0.0 and button_rect.position.y >= 0.0 and button_rect.end.x <= report_size.x + 0.5 and button_rect.end.y <= report_size.y + 0.5, "%s unified run report actions are clipped." % context)
 		_require(serialized_before == _serialized_run_text(), "%s run-report layout verification mutated serialized RunState." % context)
@@ -3853,10 +3901,9 @@ func _environment_canvas_is_primary() -> bool:
 func _game_surface_action_binding(kind: String) -> Dictionary:
 	var fallback_action := "surface_legal" if kind == "legal" else "surface_cheat"
 	var fallback := {"action": fallback_action, "index": 0}
-	if kind == "cheat":
-		var native_cheat := _native_game_surface_action_binding(kind, {})
-		if not native_cheat.is_empty():
-			return native_cheat
+	var native_binding := _native_game_surface_action_binding(kind, {})
+	if not native_binding.is_empty():
+		return native_binding
 	var snapshot: Dictionary = app.call("current_game_view_snapshot")
 	var bindings: Dictionary = snapshot.get("surface_action_bindings", {})
 	var binding_value: Variant = bindings.get(kind, {})
@@ -3882,7 +3929,7 @@ func _native_game_surface_action_binding(kind: String, fallback: Dictionary) -> 
 	var hit_actions: Array = surface_snapshot.get("surface_hit_actions", [])
 	var preferred_actions := []
 	if kind == "legal":
-		preferred_actions = ["video_poker_draw", "video_poker_deal", "slot_spin", "bar_dice_roll"]
+		preferred_actions = ["bar_dice_ack_cover", "bar_dice_throw", "bar_dice_reveal", "bar_dice_ack_call", "bar_dice_resolve", "bar_dice_roll", "bar_dice_press", "bar_dice_stake", "video_poker_draw", "video_poker_deal", "slot_spin"]
 	elif kind == "cheat_setup":
 		preferred_actions = ["bar_dice_roll", "video_poker_deal", "pull_tab_buy"]
 	else:
@@ -3955,27 +4002,28 @@ func _resolve_visible_fixed_price_risky_action(serialized_before: String) -> boo
 			if not await _push_game_surface_action("bar_dice_roll", 0):
 				return false
 			await _settle()
+			return true
 		if _surface_action_available("bar_dice_load"):
 			if not await _confirm_game_surface_action("bar_dice_load", 0):
 				return false
 			await _settle()
-			if serialized_before != _serialized_run_text():
-				return true
+			return true
 		if _surface_action_available("bar_dice_release"):
 			if not await _confirm_game_surface_action("bar_dice_release", 0):
 				return false
 			await _settle()
-			return serialized_before != _serialized_run_text()
+			return true
 		if _surface_action_available("bar_dice_palm"):
 			if not await _confirm_game_surface_action("bar_dice_palm", 0):
 				return false
 			await _settle()
-			if serialized_before != _serialized_run_text():
+			return true
+		for ritual_action in ["bar_dice_ack_cover", "bar_dice_resolve", "bar_dice_throw", "bar_dice_reveal", "bar_dice_ack_call"]:
+			if _surface_action_available(ritual_action):
+				if not await _confirm_game_surface_action(ritual_action, 0):
+					return false
+				await _settle()
 				return true
-			if not await _confirm_game_surface_action("bar_dice_resolve", 0):
-				return false
-			await _settle()
-			return serialized_before != _serialized_run_text()
 		return false
 	for _step in range(4):
 		var cheat_binding := _game_surface_action_binding("cheat")

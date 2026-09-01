@@ -207,6 +207,22 @@ static func obstruction_target_contract(records_value: Variant) -> Dictionary:
 
 static func canonical_semantic(report: Dictionary) -> Dictionary:
 	var semantic := _dict(report.get("semantic", {})).duplicate(true)
+	# Live Control geometry is sampled while the production canvas is settling.
+	# Exact sub-frame sizes are retained in the report for diagnosis, but they are
+	# not semantic state and must not perturb native/Web parity fingerprints.
+	var checkpoints := _array(semantic.get("checkpoints", []))
+	for index in range(checkpoints.size()):
+		var checkpoint := _dict(checkpoints[index])
+		var live := _dict(checkpoint.get("live", {}))
+		live.erase("minimum_live_hit_width")
+		live.erase("minimum_live_hit_height")
+		var primary := _dict(live.get("primary_enabled_scenario_target", {}))
+		primary.erase("logical_size")
+		if live.has("primary_enabled_scenario_target"):
+			live["primary_enabled_scenario_target"] = primary
+		checkpoint["live"] = live
+		checkpoints[index] = checkpoint
+	semantic["checkpoints"] = checkpoints
 	return _canonical_dictionary(semantic)
 
 
@@ -346,8 +362,15 @@ static func validate_capture_manifest(manifest: Dictionary) -> Array:
 static func _percentile(sorted_samples: Array[float], percentile: float) -> float:
 	if sorted_samples.is_empty():
 		return 0.0
-	var rank := ceili(percentile * float(sorted_samples.size())) - 1
-	return sorted_samples[clampi(rank, 0, sorted_samples.size() - 1)]
+	# Linear interpolation keeps p95 distinct from the separately enforced maximum
+	# for the bounded 13-transition acceptance trace. Nearest-rank collapses both
+	# metrics to the single slowest sample whenever fewer than 20 rows exist.
+	var position := clampf(percentile, 0.0, 1.0) * float(sorted_samples.size() - 1)
+	var lower := clampi(floori(position), 0, sorted_samples.size() - 1)
+	var upper := clampi(ceili(position), 0, sorted_samples.size() - 1)
+	if lower == upper:
+		return sorted_samples[lower]
+	return lerpf(sorted_samples[lower], sorted_samples[upper], position - float(lower))
 
 
 static func _validate_runtime_trace(rows_value: Variant, label_key: String, nested_projection: bool) -> Array:
@@ -410,6 +433,11 @@ static func _canonical_dictionary(source: Dictionary) -> Dictionary:
 
 
 static func _canonical_variant(value: Variant) -> Variant:
+	# JSON save/load can round a binary float at the final decimal place while
+	# preserving the exact room-space value. Normalize that serialization noise
+	# before hashing so the probe still detects every material authority change.
+	if typeof(value) == TYPE_FLOAT:
+		return snappedf(float(value), 0.000000001)
 	if typeof(value) == TYPE_DICTIONARY:
 		return _canonical_dictionary(value)
 	if typeof(value) == TYPE_ARRAY:

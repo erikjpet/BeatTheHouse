@@ -72,7 +72,13 @@ if (-not $out.StartsWith($allowedRoot + [IO.Path]::DirectorySeparatorChar, [Stri
 }
 if (Test-Path -LiteralPath $out) { Remove-Item -LiteralPath $out -Recurse -Force }
 New-Item -ItemType Directory -Force -Path $out | Out-Null
-$relativeOut = [IO.Path]::GetRelativePath($root, $out).Replace('\', '/')
+$rootWithSeparator = $root
+if (-not $rootWithSeparator.EndsWith([IO.Path]::DirectorySeparatorChar)) {
+    $rootWithSeparator += [IO.Path]::DirectorySeparatorChar
+}
+$rootUri = [Uri]$rootWithSeparator
+$outUri = [Uri]$out
+$relativeOut = [Uri]::UnescapeDataString($rootUri.MakeRelativeUri($outUri).ToString()) -replace '\\', '/'
 $resourceOut = "res://$relativeOut"
 
 function Invoke-BoundedProcess {
@@ -82,13 +88,21 @@ function Invoke-BoundedProcess {
         [string]$StdoutPath,
         [string]$StderrPath,
         [string]$Label
-    )
-    $process = Start-Process -FilePath $FilePath -ArgumentList $ArgumentList -RedirectStandardOutput $StdoutPath -RedirectStandardError $StderrPath -PassThru -WindowStyle Hidden
-    if (-not $process.WaitForExit($TimeoutMs)) {
-        Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
-        throw "$Label timed out after $TimeoutMs ms; see $StdoutPath and $StderrPath."
-    }
-    if ($process.ExitCode -ne 0) { throw "$Label failed with exit $($process.ExitCode); see $StdoutPath and $StderrPath." }
+	)
+	$process = Start-Process -FilePath $FilePath -ArgumentList $ArgumentList -RedirectStandardOutput $StdoutPath -RedirectStandardError $StderrPath -PassThru -WindowStyle Hidden
+	# Force PowerShell 5 to retain the native process handle. Without this read,
+	# ExitCode can remain null after a redirected process has completed.
+	$null = $process.Handle
+	if (-not $process.WaitForExit($TimeoutMs)) {
+		Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+		throw "$Label timed out after $TimeoutMs ms; see $StdoutPath and $StderrPath."
+	}
+	# PowerShell 5 can leave ExitCode unset after the timed overload when output
+	# streams are redirected. Complete stream drainage and refresh the process
+	# snapshot before evaluating the result.
+	$process.WaitForExit()
+	$process.Refresh()
+	if ($process.ExitCode -ne 0) { throw "$Label failed with exit $($process.ExitCode); see $StdoutPath and $StderrPath." }
 }
 
 function Read-ProbeMarker {
@@ -104,10 +118,11 @@ function Invoke-NativeProbe {
     param([string]$Stem)
     $stdout = Join-Path $out "$Stem.stdout.txt"
     $stderr = Join-Path $out "$Stem.stderr.txt"
-    $arguments = @(
-        "--headless", "--path", $root, "--rendering-method", "gl_compatibility",
-        "res://tools/scenario_sequence_probe_main.tscn", "--", "--mode=probe", "--out=$resourceOut/$Stem"
-    )
+	$reportPath = Join-Path $out "$Stem.runtime.json"
+	$arguments = @(
+		"--headless", "--rendering-method", "gl_compatibility",
+		"--", "--mode=probe", "--out=$reportPath"
+	)
     $dataRoot = Join-Path $out "${Stem}_data"
     New-Item -ItemType Directory -Force -Path $dataRoot | Out-Null
     $environmentNames = @("BTH_DISTRIBUTION_BUILD", "BTH_DISTRIBUTION_DATA_ROOT", "BTH_USER_SETTINGS_PATH")
@@ -117,7 +132,7 @@ function Invoke-NativeProbe {
         $env:BTH_DISTRIBUTION_BUILD = "1"
         $env:BTH_DISTRIBUTION_DATA_ROOT = $dataRoot
         $env:BTH_USER_SETTINGS_PATH = Join-Path $dataRoot "settings.json"
-        Invoke-BoundedProcess -FilePath $GodotPath -ArgumentList $arguments -StdoutPath $stdout -StderrPath $stderr -Label $Stem
+		Invoke-BoundedProcess -FilePath $nativeExe -ArgumentList $arguments -StdoutPath $stdout -StderrPath $stderr -Label $Stem
     }
     finally {
         foreach ($name in $environmentNames) { [Environment]::SetEnvironmentVariable($name, $previousEnvironment[$name], "Process") }
@@ -175,11 +190,6 @@ function Assert-PerformanceRows {
     }
 }
 
-$native1 = Invoke-NativeProbe "native_process_1"
-$native2 = Invoke-NativeProbe "native_process_2"
-Assert-PerformanceRows $native1 "native_process_1"
-Assert-PerformanceRows $native2 "native_process_2"
-
 $webProject = Join-Path $out "web_project"
 $webBuild = Join-Path $out "web_build"
 New-Item -ItemType Directory -Force -Path $webProject, $webBuild | Out-Null
@@ -193,10 +203,10 @@ $canonicalRepoRoot = Split-Path -Parent $common
 foreach ($fileName in @("icon.svg", "project.godot", "export_presets.cfg")) {
     Copy-Item -LiteralPath (Join-Path $root $fileName) -Destination (Join-Path $webProject $fileName) -Force
 }
-foreach ($directoryName in @("assets", "branding", "data", "scenes", "scripts", "tools")) {
-    $target = Join-Path $root $directoryName
-    if (-not (Test-Path -LiteralPath $target -PathType Container)) { throw "Transient Web project source is missing: $target" }
-    New-Item -ItemType Junction -Path (Join-Path $webProject $directoryName) -Target $target | Out-Null
+foreach ($directoryName in @("assets", "data", "scenes", "scripts", "tools")) {
+	$target = Join-Path $root $directoryName
+	if (-not (Test-Path -LiteralPath $target -PathType Container)) { throw "Transient Web project source is missing: $target" }
+	Copy-Item -LiteralPath $target -Destination $webProject -Recurse -Force
 }
 $transientNativeRoot = Join-Path $webProject "native"
 New-Item -ItemType Directory -Force -Path $transientNativeRoot | Out-Null
@@ -255,9 +265,33 @@ $projectText = (Get-Content -LiteralPath $projectPath -Raw).Replace('run/main_sc
 if (-not $projectText.Contains('run/main_scene="res://tools/scenario_sequence_probe_main.tscn"')) { throw "Transient project main-scene replacement failed." }
 Set-Content -LiteralPath $projectPath -Value $projectText
 $presetsPath = Join-Path $webProject "export_presets.cfg"
-$presetsText = (Get-Content -LiteralPath $presetsPath -Raw).Replace(',tools/*,tools/**', '')
+$presetsText = (Get-Content -LiteralPath $presetsPath -Raw).Replace(',tools/*,tools/**', '').Replace('binary_format/embed_pck=true', 'binary_format/embed_pck=false')
 if ($presetsText.Contains(',tools/*,tools/**')) { throw "Transient Web preset still excludes the dedicated probe tools." }
 Set-Content -LiteralPath $presetsPath -Value $presetsText
+
+$nativeBuild = Join-Path $out "native_build"
+New-Item -ItemType Directory -Force -Path $nativeBuild | Out-Null
+$nativeExe = Join-Path $nativeBuild "scenario_sequence_probe.exe"
+$nativeExportStdout = Join-Path $out "native_export.stdout.txt"
+$nativeExportStderr = Join-Path $out "native_export.stderr.txt"
+Invoke-BoundedProcess -FilePath $GodotPath -ArgumentList @(
+	"--headless", "--path", $webProject, "--editor", "--export-release", '"Windows Steam"', $nativeExe
+) -StdoutPath $nativeExportStdout -StderrPath $nativeExportStderr -Label "fresh transient Windows release export"
+if (-not (Test-Path -LiteralPath $nativeExe -PathType Leaf)) { throw "Fresh transient Windows release export emitted no executable." }
+$native1 = Invoke-NativeProbe "native_process_1"
+$native2 = Invoke-NativeProbe "native_process_2"
+Assert-PerformanceRows $native1 "native_process_1"
+Assert-PerformanceRows $native2 "native_process_2"
+
+# The native probe reports are complete at this point. Reclaim the transient
+# executable/PCK before the Web export so low-space acceptance runners do not
+# fail for retaining an artifact that is no longer consumed.
+$nativePck = [System.IO.Path]::ChangeExtension($nativeExe, ".pck")
+foreach ($transientNativeArtifact in @($nativeExe, $nativePck)) {
+    if (Test-Path -LiteralPath $transientNativeArtifact) {
+        Clear-Content -LiteralPath $transientNativeArtifact
+    }
+}
 
 $webIndex = Join-Path $webBuild "index.html"
 $exportStdout = Join-Path $out "web_export.stdout.txt"
@@ -302,10 +336,10 @@ try {
         $captureStdout = Join-Path $out "$stem.stdout.txt"
         $captureStderr = Join-Path $out "$stem.stderr.txt"
         $url = "http://127.0.0.1:$WebPort/index.html?mode=probe&run=$index"
-        Invoke-BoundedProcess -FilePath "node" -ArgumentList @(
-            $captureScript, "--url=$url", "--out=$webJson", "--profile=$profile", "--cpu=$Cpu",
-            "--timeout-ms=$TimeoutMs", "--playwright-package=$playwrightPackage", "--chrome=$chrome"
-        ) -StdoutPath $captureStdout -StderrPath $captureStderr -Label $stem
+		Invoke-BoundedProcess -FilePath "node" -ArgumentList @(
+			$captureScript, "--url=$url", "--out=$webJson", "--profile=$profile", "--cpu=$Cpu",
+			"--timeout-ms=$TimeoutMs", "--playwright-package=$playwrightPackage", ('"--chrome={0}"' -f $chrome)
+		) -StdoutPath $captureStdout -StderrPath $captureStderr -Label $stem
     }
 }
 finally {
@@ -322,13 +356,12 @@ foreach ($report in @($web1, $web2)) {
     }
 }
 
-$nativeSemantic = $native1.semantic | ConvertTo-Json -Compress -Depth 100
-$nativeSemantic2 = $native2.semantic | ConvertTo-Json -Compress -Depth 100
-$webSemantic = $web1.semantic | ConvertTo-Json -Compress -Depth 100
-$webSemantic2 = $web2.semantic | ConvertTo-Json -Compress -Depth 100
-$repeatNative = ([string]$native1.semantic_sha256 -ceq [string]$native2.semantic_sha256) -and ($nativeSemantic -ceq $nativeSemantic2)
-$repeatWeb = ([string]$web1.semantic_sha256 -ceq [string]$web2.semantic_sha256) -and ($webSemantic -ceq $webSemantic2)
-$crossPlatform = ([string]$native1.semantic_sha256 -ceq [string]$web1.semantic_sha256) -and ($nativeSemantic -ceq $webSemantic)
+# Each report has already self-validated semantic_sha256 against the canonical
+# payload. Raw diagnostic geometry remains intentionally outside that payload,
+# so parity compares the canonical receipts rather than transient live metrics.
+$repeatNative = [string]$native1.semantic_sha256 -ceq [string]$native2.semantic_sha256
+$repeatWeb = [string]$web1.semantic_sha256 -ceq [string]$web2.semantic_sha256
+$crossPlatform = [string]$native1.semantic_sha256 -ceq [string]$web1.semantic_sha256
 if (-not $repeatNative) { throw "Two independent native processes produced different canonical traces." }
 if (-not $repeatWeb) { throw "Two fresh-profile Web processes produced different canonical traces." }
 if (-not $crossPlatform) { throw "Native and Web canonical scenario traces differ." }

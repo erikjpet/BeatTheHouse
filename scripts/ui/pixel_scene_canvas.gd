@@ -2249,6 +2249,7 @@ func _objects_from_foundation_snapshot(snapshot: Dictionary) -> Array:
 	var objects: Array = []
 	if not interactable_objects.is_empty():
 		objects = _objects_from_interactable_records(interactable_objects)
+		objects = _reflow_unsealed_objects_around_scenario_authority(objects)
 	else:
 		var games := _string_array(snapshot.get("game_ids", []))
 		for index in range(games.size()):
@@ -2324,6 +2325,127 @@ func _objects_from_foundation_snapshot(snapshot: Dictionary) -> Array:
 		ids[object_id] = true
 	objects.sort_custom(Callable(PixelSceneCanvas, "_sort_composed_scene_objects"))
 	return objects
+
+
+# Scenario records carry exact, digested geometry. Runtime-only controls such as
+# game hooks, dialogue actors, Numbers, and Crew presence are intentionally not
+# sealed into that authority because their producers can change independently.
+# Place those late controls around the immutable scenario footprint so the
+# production canvas and hit testing share one collision-free composition. A
+# delivery-only room uses the same bounded packing pass for its ordinary base
+# controls because the courier can add several physical verbs at once.
+func _reflow_unsealed_objects_around_scenario_authority(objects: Array) -> Array:
+	var has_scenario_authority := false
+	var has_live_delivery_control := false
+	var occupied: Array[Rect2] = []
+	for value in objects:
+		if typeof(value) != TYPE_DICTIONARY:
+			continue
+		var object_data := value as Dictionary
+		if str(object_data.get("id", "")).begins_with("delivery:"):
+			has_live_delivery_control = true
+		if not bool(object_data.get("scenario_layout_resolved", false)):
+			continue
+		has_scenario_authority = true
+		occupied.append(_object_layout_footprint(object_data, object_data.get("position", Vector2(0.5, 0.5))))
+	if not has_scenario_authority and not has_live_delivery_control:
+		return objects
+	var result := objects.duplicate(true)
+	var pending_indices: Array = []
+	for index in range(result.size()):
+		if typeof(result[index]) == TYPE_DICTIONARY and not bool((result[index] as Dictionary).get("scenario_layout_resolved", false)):
+			pending_indices.append(index)
+	pending_indices.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
+		var left := result[int(left_value)] as Dictionary
+		var right := result[int(right_value)] as Dictionary
+		var left_size: Vector2 = left.get("size", Vector2.ZERO)
+		var right_size: Vector2 = right.get("size", Vector2.ZERO)
+		var left_area := left_size.x * left_size.y
+		var right_area := right_size.x * right_size.y
+		return left_area > right_area if not is_equal_approx(left_area, right_area) else str(left.get("id", "")) < str(right.get("id", ""))
+	)
+	for index_value in pending_indices:
+		var index := int(index_value)
+		var object_data := result[index] as Dictionary
+		var original_rect := _board_rect_for_object_at_position(object_data, object_data.get("position", Vector2(0.5, 0.5)))
+		var placed_rect := _late_control_collision_safe_rect(original_rect, occupied)
+		object_data["position"] = placed_rect.get_center() / Vector2(BOARD_SIZE)
+		object_data["size"] = placed_rect.size
+		occupied.append(_clamp_board_rect(placed_rect.grow(OBJECT_LAYOUT_GAP)))
+		result[index] = object_data
+	return result
+
+
+func _late_control_collision_safe_rect(authored: Rect2, occupied: Array[Rect2]) -> Rect2:
+	var bounds := Rect2(
+		Vector2(OBJECT_LAYOUT_MARGIN, OBJECT_LAYOUT_MARGIN),
+		Vector2(BOARD_SIZE) - Vector2(OBJECT_LAYOUT_MARGIN * 2.0, OBJECT_LAYOUT_MARGIN * 2.0)
+	)
+	var authored_clamped := Rect2(
+		Vector2(
+			clampf(authored.position.x, bounds.position.x, bounds.end.x - authored.size.x),
+			clampf(authored.position.y, bounds.position.y, bounds.end.y - authored.size.y)
+		),
+		authored.size
+	)
+	if not _late_control_footprint_overlaps(authored_clamped, occupied):
+		return authored_clamped
+	var candidates: Array[Rect2] = []
+	for offset in [
+		Vector2(56.0, 0.0), Vector2(-56.0, 0.0), Vector2(0.0, 52.0), Vector2(0.0, -52.0),
+		Vector2(112.0, 0.0), Vector2(-112.0, 0.0), Vector2(0.0, 104.0), Vector2(0.0, -104.0),
+		Vector2(112.0, 52.0), Vector2(-112.0, 52.0), Vector2(112.0, -52.0), Vector2(-112.0, -52.0),
+	]:
+		var position := authored_clamped.position + (offset as Vector2)
+		candidates.append(Rect2(Vector2(
+			clampf(position.x, bounds.position.x, bounds.end.x - authored.size.x),
+			clampf(position.y, bounds.position.y, bounds.end.y - authored.size.y)
+		), authored.size))
+	var maximum_x := maxi(int(bounds.position.x), floori(bounds.end.x - authored.size.x))
+	var maximum_y := maxi(int(bounds.position.y), floori(bounds.end.y - authored.size.y))
+	for y in range(int(bounds.position.y), maximum_y + 1, 8):
+		for x in range(int(bounds.position.x), maximum_x + 1, 8):
+			candidates.append(Rect2(Vector2(x, y), authored.size))
+	candidates.sort_custom(func(left: Rect2, right: Rect2) -> bool:
+		var left_distance := left.position.distance_squared_to(authored_clamped.position)
+		var right_distance := right.position.distance_squared_to(authored_clamped.position)
+		if not is_equal_approx(left_distance, right_distance):
+			return left_distance < right_distance
+		return left.position.y < right.position.y if not is_equal_approx(left.position.y, right.position.y) else left.position.x < right.position.x
+	)
+	for candidate in candidates:
+		if not _late_control_footprint_overlaps(candidate, occupied):
+			return candidate
+	# A live producer can add several controls after immutable scenario geometry
+	# has already filled the room. Keep every action physically distinct, but use
+	# the shipped 44px accessibility target as the final compact visual size.
+	var compact_size := Vector2(44.0, 44.0)
+	var compact_authored := Rect2(authored_clamped.get_center() - compact_size * 0.5, compact_size)
+	var compact_maximum_x := maxi(int(bounds.position.x), floori(bounds.end.x - compact_size.x))
+	var compact_maximum_y := maxi(int(bounds.position.y), floori(bounds.end.y - compact_size.y))
+	var compact_candidates: Array[Rect2] = []
+	for y in range(int(bounds.position.y), compact_maximum_y + 1, 8):
+		for x in range(int(bounds.position.x), compact_maximum_x + 1, 8):
+			compact_candidates.append(Rect2(Vector2(x, y), compact_size))
+	compact_candidates.sort_custom(func(left: Rect2, right: Rect2) -> bool:
+		var left_distance := left.position.distance_squared_to(compact_authored.position)
+		var right_distance := right.position.distance_squared_to(compact_authored.position)
+		if not is_equal_approx(left_distance, right_distance):
+			return left_distance < right_distance
+		return left.position.y < right.position.y if not is_equal_approx(left.position.y, right.position.y) else left.position.x < right.position.x
+	)
+	for candidate in compact_candidates:
+		if not _late_control_footprint_overlaps(candidate, occupied):
+			return candidate
+	return authored_clamped
+
+
+func _late_control_footprint_overlaps(rect: Rect2, occupied: Array[Rect2]) -> bool:
+	var footprint := _clamp_board_rect(rect.grow(OBJECT_LAYOUT_GAP))
+	for other in occupied:
+		if footprint.intersects(other) and footprint.intersection(other).get_area() > OBJECT_LAYOUT_MAX_OVERLAP_AREA:
+			return true
+	return false
 
 
 func _objects_from_interactable_records(records: Array) -> Array:
@@ -3797,6 +3919,17 @@ func global_rect_for_object(object_id: String) -> Rect2:
 	if object_data.is_empty():
 		return Rect2()
 	return _local_rect_to_global_rect(_board_rect_to_local_rect(_interaction_rect_for_object(object_data)))
+
+
+# Converts sealed scenario authority geometry without depending on the current
+# presentation object cache. This lets TalkDock choose a safe corner before its
+# own reserve causes the room projection to be revalidated.
+func global_rect_for_normalized_board_rect(value: Variant) -> Rect2:
+	var normalized := _rect_from_dict(value)
+	if not normalized.has_area():
+		return Rect2()
+	var board_rect := Rect2(normalized.position * Vector2(BOARD_SIZE), normalized.size * Vector2(BOARD_SIZE))
+	return _local_rect_to_global_rect(_board_rect_to_local_rect(board_rect))
 
 
 func global_rect_for_selected_object_action(object_id: String) -> Rect2:

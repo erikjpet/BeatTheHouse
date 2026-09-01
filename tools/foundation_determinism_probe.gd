@@ -10,6 +10,7 @@ const EventModuleScript := preload("res://scripts/core/event_module.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
 const CoinPusherSolverScript := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
 const CoinPusherLiveSessionScript := preload("res://scripts/games/coin_pusher/coin_pusher_live_session.gd")
+const FoundationMainScript := preload("res://scripts/ui/foundation_main.gd")
 
 const DEFAULT_SEED_COUNT := 10
 const DEFAULT_SEED_PREFIX := "FOUNDATION-DETERMINISM"
@@ -241,6 +242,12 @@ func _apply_delivery_sequence(run_state: RunState, checkpoints: Array, seed: Str
 	var targets: Array = run_state.delivery_snapshot().get("targets", [])
 	var target_id := str((targets[0] as Dictionary).get("node_id", ""))
 	var target_node := WorldMapScript.node_metadata_by_id(run_state.world_map, target_id)
+	var physical: Dictionary = run_state.delivery_snapshot().get("physical", {})
+	if str(physical.get("cargo_state", "")) == "pickup_pending":
+		var pickup := run_state.delivery_apply_physical_action("pickup", "determinism:pickup:%s" % str(run_state.active_delivery_run.get("run_id", "delivery")))
+		if not bool(pickup.get("ok", false)):
+			failures.append("%s deterministic delivery fixture could not complete its physical pickup." % seed)
+			return
 	run_state.world_map = WorldMapScript.enter_node(run_state.world_map, target_id, {})
 	run_state.set_environment({"id": target_id, "archetype_id": str(target_node.get("archetype_id", target_id)), "world_node_id": target_id, "turns": 0, "security_profile": {}})
 	var arrival := run_state.delivery_resolve_travel_arrival({"target_node_id": target_id}, {})
@@ -249,7 +256,7 @@ func _apply_delivery_sequence(run_state: RunState, checkpoints: Array, seed: Str
 		return
 	_checkpoint(run_state, checkpoints, seed, "delivery_first_handoff")
 	var abandoned := run_state.delivery_abandon("scripted_probe")
-	if not bool(abandoned.get("resolved", false)) or str((run_state.delivery_snapshot().get("resolution", {}) as Dictionary).get("reason", "")) != "scripted_probe":
+	if not bool(abandoned.get("resolved", false)) or str((run_state.delivery_snapshot().get("resolution", {}) as Dictionary).get("reason", "")) != "abandoned":
 		failures.append("%s deterministic delivery fixture did not resolve its scripted outcome." % seed)
 	_checkpoint(run_state, checkpoints, seed, "delivery_scripted_outcome")
 
@@ -452,7 +459,12 @@ func _apply_all_game_resolves(run_state: RunState, checkpoints: Array, seed: Str
 	_resolve_game(run_state, checkpoints, seed, "roulette", "spin_roulette", 20, _timed_ui(run_state, "roulette_spin", {"roulette_bets": [_roulette_bet(20)]}))
 	_resolve_game(run_state, checkpoints, seed, "craps", "roll_craps", 20, _timed_ui(run_state, "craps_roll", {"craps_pending_bets": {"pass_line": 20}}))
 	_resolve_game(run_state, checkpoints, seed, "video_poker", "draw", 0, _timed_ui(run_state, "video_poker_draw", {"bet_level": 1, "denomination_index": 0}))
-	_resolve_game(run_state, checkpoints, seed, "bar_dice", "roll", 20, _timed_ui(run_state, "bar_dice_roll"))
+	var bar_dice_result := _resolve_bar_dice_host_round(run_state, "roll", 20)
+	if not bool(bar_dice_result.get("ok", false)):
+		failures.append("%s bar_dice/roll failed: %s" % [seed, str(bar_dice_result.get("message", "no message"))])
+	else:
+		run_state.advance_environment_turns(1)
+		_checkpoint(run_state, checkpoints, seed, "game_bar_dice_roll")
 
 
 func _apply_crew_poker_sequence(run_state: RunState, checkpoints: Array, seed: String) -> void:
@@ -697,16 +709,51 @@ func _resolve_bar_dice_controlled_roll(run_state: RunState, checkpoints: Array, 
 	var game: GameModule = game_modules.get("bar_dice", null)
 	if game == null:
 		return
-	var ui_state := _timed_ui(run_state, "bar_dice_controlled_roll")
-	var roll_command: Dictionary = game.surface_action_command("bar_dice_roll", 0, false, ui_state, run_state, run_state.current_environment)
-	ui_state = _copy_dict(roll_command.get("ui_state", ui_state))
-	var challenge: Dictionary = _copy_dict(ui_state.get("controlled_roll", {}))
-	ui_state["controlled_roll_input_msec"] = int(challenge.get("target_msec", ui_state.get("surface_time_msec", 0)))
-	ui_state["surface_time_msec"] = int(ui_state["controlled_roll_input_msec"])
-	var result := _resolve_game(run_state, checkpoints, seed, "bar_dice", "loaded_toss", 20, ui_state, false)
+	var result := _resolve_bar_dice_host_round(run_state, "loaded_toss", 20)
 	if bool(result.get("ok", false)):
 		run_state.advance_environment_turns(1)
 	_checkpoint(run_state, checkpoints, seed, "skill_bar_dice_controlled_roll")
+
+
+func _resolve_bar_dice_host_round(run_state: RunState, action_id: String, stake: int) -> Dictionary:
+	var game: GameModule = game_modules.get("bar_dice", null)
+	if game == null:
+		return {"ok": false, "message": "Bar Dice module is unavailable."}
+	var host: Control = FoundationMainScript.new()
+	host.set("current_game", game)
+	host.set("game_module_cache", {"bar_dice": game})
+	host.set("run_state", run_state)
+	var stake_index := _bar_dice_stake_index(run_state, stake)
+	var table := _game_state(run_state, "bar_dice")
+	var ladder: Array = table.get("stake_ladder", []) if typeof(table.get("stake_ladder", [])) == TYPE_ARRAY else []
+	var resolved_stake := int(ladder[stake_index]) if stake_index >= 0 and stake_index < ladder.size() else stake
+	host.set("selected_stake", resolved_stake)
+	host.call("_sealed_action_host_surface_intent", "bar_dice_stake", stake_index, false, 1000)
+	host.call("_sealed_action_host_surface_intent", "bar_dice_roll", 0, false, 1100)
+	var command: Dictionary = host.call("_sealed_action_host_surface_intent", "bar_dice_ack_cover", 0, false, 1200)
+	var post_release_msec := 1500
+	if action_id == "loaded_toss":
+		command = host.call("_sealed_action_host_surface_intent", "bar_dice_load", 0, false, 14000)
+		var challenge: Dictionary = _copy_dict(_copy_dict(command.get("ui_state", {})).get("controlled_roll", {}))
+		post_release_msec = int(challenge.get("target_msec", 14000))
+		command = host.call("_sealed_action_host_surface_intent", "bar_dice_release", 0, false, post_release_msec)
+	else:
+		command = host.call("_sealed_action_host_surface_intent", "bar_dice_resolve", 0, false, 1300)
+	command = host.call("_sealed_action_host_surface_intent", "bar_dice_throw", 0, false, post_release_msec + 100)
+	command = host.call("_sealed_action_host_surface_intent", "bar_dice_reveal", 0, false, post_release_msec + 200)
+	command = host.call("_sealed_action_host_surface_intent", "bar_dice_ack_call", 0, false, post_release_msec + 300)
+	var result: Dictionary = host.call("_sealed_action_host_resolve_intent", action_id, resolved_stake, command.get("_sealed_action_host_delivery", {}))
+	host.free()
+	return result
+
+
+func _bar_dice_stake_index(run_state: RunState, stake: int) -> int:
+	var table := _game_state(run_state, "bar_dice")
+	var ladder: Array = table.get("stake_ladder", []) if typeof(table.get("stake_ladder", [])) == TYPE_ARRAY else []
+	for index in range(ladder.size()):
+		if int(ladder[index]) == stake:
+			return index
+	return 0
 
 
 func _resolve_roulette_past_post(run_state: RunState, checkpoints: Array, seed: String) -> void:
@@ -714,9 +761,7 @@ func _resolve_roulette_past_post(run_state: RunState, checkpoints: Array, seed: 
 	if game == null:
 		return
 	var spin_ui := _timed_ui(run_state, "roulette_past_spin", {"roulette_bets": [_roulette_bet(20)]})
-	var spin_result := _resolve_game(run_state, checkpoints, seed, "roulette", "spin_roulette", 20, spin_ui, false)
-	if bool(spin_result.get("ok", false)):
-		run_state.advance_environment_turns(1)
+	var spin_result := _resolve_game(run_state, checkpoints, seed, "roulette", "spin_roulette", 20, spin_ui)
 	var table: Dictionary = _game_state(run_state, "roulette")
 	var last_result: Dictionary = _copy_dict(table.get("last_result", {}))
 	var payout_ui := _timed_ui(run_state, "roulette_past_post")
@@ -726,9 +771,7 @@ func _resolve_roulette_past_post(run_state: RunState, checkpoints: Array, seed: 
 	var challenge: Dictionary = _copy_dict(ui_state.get("past_post_challenge", {}))
 	ui_state["past_post_input_msec"] = int(challenge.get("window_start_msec", ui_state.get("surface_time_msec", 0)))
 	ui_state["surface_time_msec"] = int(ui_state["past_post_input_msec"])
-	var result := _resolve_game(run_state, checkpoints, seed, "roulette", "past_post", 20, ui_state, false)
-	if bool(result.get("ok", false)):
-		run_state.advance_environment_turns(1)
+	var result := _resolve_game(run_state, checkpoints, seed, "roulette", "past_post", 20, ui_state)
 	_checkpoint(run_state, checkpoints, seed, "skill_roulette_past_post")
 
 
@@ -748,9 +791,7 @@ func _resolve_baccarat_edge_sort(run_state: RunState, checkpoints: Array, seed: 
 	var ready_challenge: Dictionary = {}
 	for index in range(4):
 		observe_ui["surface_time_msec"] = int(observe_ui.get("surface_time_msec", 0)) + index * 400
-		var observe_result := _resolve_game(run_state, checkpoints, seed, "baccarat", "deal_baccarat", 20, observe_ui, false)
-		if bool(observe_result.get("ok", false)):
-			run_state.advance_environment_turns(1)
+		var observe_result := _resolve_game(run_state, checkpoints, seed, "baccarat", "deal_baccarat", 20, observe_ui)
 		var observed_table: Dictionary = _game_state(run_state, "baccarat")
 		var observed_challenge: Dictionary = _copy_dict(observed_table.get("edge_sort_challenge", {}))
 		if bool(observed_challenge.get("ready", false)):
@@ -763,9 +804,7 @@ func _resolve_baccarat_edge_sort(run_state: RunState, checkpoints: Array, seed: 
 		failures.append("%s baccarat edge-sort challenge did not become ready." % seed)
 		_checkpoint(run_state, checkpoints, seed, "skill_baccarat_edge_sort")
 		return
-	var result := _resolve_game(run_state, checkpoints, seed, "baccarat", "edge_sort", 0, {"edge_sort_challenge": ready_challenge, "edge_sort_answer_mode": "perfect"}, false)
-	if bool(result.get("ok", false)):
-		run_state.advance_environment_turns(1)
+	var result := _resolve_game(run_state, checkpoints, seed, "baccarat", "edge_sort", 0, {"edge_sort_challenge": ready_challenge, "edge_sort_answer_mode": "perfect"})
 	_checkpoint(run_state, checkpoints, seed, "skill_baccarat_edge_sort")
 
 
@@ -775,11 +814,19 @@ func _resolve_game(run_state: RunState, checkpoints: Array, seed: String, game_i
 		failures.append("%s missing game %s for %s." % [seed, game_id, action_id])
 		return {}
 	var rng := run_state.create_rng("determinism:%s:%s:%d" % [game_id, action_id, checkpoints.size()])
-	var result: Dictionary = game.resolve_with_context(action_id, stake, run_state, run_state.current_environment, rng, ui_state)
+	var result: Dictionary
+	if game_id == "roulette":
+		result = game.call("_resolve_roulette_proposal_core", action_id, stake, run_state, run_state.current_environment, rng, ui_state)
+	elif game_id == "baccarat":
+		result = game.call("_resolve_baccarat_proposal_core", action_id, stake, run_state, run_state.current_environment, rng, ui_state)
+	else:
+		result = game.resolve_with_context(action_id, stake, run_state, run_state.current_environment, rng, ui_state)
 	if not bool(result.get("ok", false)):
 		failures.append("%s %s/%s failed: %s" % [seed, game_id, action_id, str(result.get("message", "no message"))])
 		return result
 	if auto_apply:
+		if game_id in ["roulette", "baccarat"]:
+			result["host_apply_result"] = true
 		_apply_game_result(run_state, result, rng)
 		if not bool(result.get("slot_runtime_tick", false)):
 			run_state.advance_environment_turns(1)

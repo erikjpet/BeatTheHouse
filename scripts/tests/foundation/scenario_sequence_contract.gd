@@ -4197,7 +4197,7 @@ static func _check_delivery_day_production_package(library: ContentLibrary, fail
 	var declared_zones := _array(_dict(sequence.get("declared_targets", {})).get("zones", []))
 	if declared_zones != ["base::zone:background", "base::zone:center", "base::zone:exit_lane", "base::zone:foreground", "base::zone:left", "base::zone:right", "base::zone:service_lane"]:
 		failures.append("Committed delivery-day sequence does not declare every exact base zone used by its spatial operations.")
-	if _array(_dict(sequence.get("declared_targets", {})).get("anchors", [])) != ["base::anchor:delivery_clerk", "base::anchor:delivery_clerk_work", "base::anchor:delivery_manifest", "base::anchor:delivery_runner_route", "base::anchor:delivery_verification_shelf", "base::anchor:package_a_delivery_crate", "base::anchor:travel_1"]:
+	if _array(_dict(sequence.get("declared_targets", {})).get("anchors", [])) != ["base::anchor:delivery_clerk", "base::anchor:delivery_clerk_work", "base::anchor:delivery_manifest", "base::anchor:delivery_runner_route", "base::anchor:delivery_verification_shelf", "base::anchor:package_a_delivery_cartons_wait", "base::anchor:package_a_delivery_crate", "base::anchor:package_a_delivery_gate", "base::anchor:package_a_delivery_runner", "base::anchor:travel_1"]:
 		failures.append("Committed delivery-day sequence does not declare its exact base actor anchors.")
 	var authoring := _dict(definition.get("sequence_authoring", {}))
 	var references := _dict(authoring.get("references", {}))

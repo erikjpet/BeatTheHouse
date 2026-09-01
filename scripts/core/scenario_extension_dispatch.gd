@@ -75,7 +75,10 @@ static func _validate_extension(path: String, extension_id: String, method_name:
 static func _load_extension(path: String, extension_id: String, method_name: String, kind: String) -> Dictionary:
 	if not ALLOWED_EXTENSION_IDS.has(extension_id):
 		return {"ok": false, "errors": ["scenario %s extension %s is outside the fixed extension allowlist." % [kind, extension_id]]}
-	if extension_id.is_empty() or not FileAccess.file_exists(path):
+	# Exported GDScript resources are remapped to compiled .gdc payloads. A raw
+	# filesystem existence check therefore rejects valid release-package scripts;
+	# ResourceLoader is the authoritative path resolver in editor and export.
+	if extension_id.is_empty() or not ResourceLoader.exists(path, "Script"):
 		return {"ok": false, "errors": ["scenario %s extension %s is missing at %s." % [kind, extension_id, path]]}
 	var resource := ResourceLoader.load(path, "Script", ResourceLoader.CACHE_MODE_REUSE)
 	if not resource is Script or not (resource as Script).can_instantiate():

@@ -1,0 +1,2655 @@
+{
+  "schema": "env06_7_package_a_raster_evidence_v1",
+  "package_id": "env06_7_shops_streets",
+  "capture_count": 164,
+  "captures": [
+    {
+      "capture_id": "arrival_delivery_blocked",
+      "scenario_id": "corner_store_delivery_day",
+      "archetype_id": "corner_store",
+      "file": "arrival_delivery_blocked.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "7788382aff86fbe46e569708318ec1b93fa9d7c8900729a47da0421dfffe0902",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "sorting_aisle_rerouted",
+      "scenario_id": "corner_store_delivery_day",
+      "archetype_id": "corner_store",
+      "file": "sorting_aisle_rerouted.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "09629d3165edd2fca6c5453fdb90db11ced0254c7ba39a9d1da24b57f08d692e",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "verification_station_ready",
+      "scenario_id": "corner_store_delivery_day",
+      "archetype_id": "corner_store",
+      "file": "verification_station_ready.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "02ed266ae8caa0d9310ed8b3dcbbea3cb07b176072bdd1ae56e410907b259687",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "awaiting_stock_choice",
+      "scenario_id": "corner_store_delivery_day",
+      "archetype_id": "corner_store",
+      "file": "awaiting_stock_choice.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "dea9bfae6a565f8586232069a820f84d2b646e37feaaab46ff362308d1ceb35c",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "resolution_repaired",
+      "scenario_id": "corner_store_delivery_day",
+      "archetype_id": "corner_store",
+      "file": "resolution_repaired.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "2af8e242a3d135aa7833ec8a6959e7e4652b4c7bf310106af7f170f60e130399",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "resolution_broken",
+      "scenario_id": "corner_store_delivery_day",
+      "archetype_id": "corner_store",
+      "file": "resolution_broken.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "207670e3b152fd54a27a797199fc39e777e5d701c7a0c6b580e3821fd56334ed",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "resolution_refused",
+      "scenario_id": "corner_store_delivery_day",
+      "archetype_id": "corner_store",
+      "file": "resolution_refused.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "58619731881136b1e95f9b98f007a3dfe03e03b706525e1ea739114d2c987138",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "resolution_interrupted",
+      "scenario_id": "corner_store_delivery_day",
+      "archetype_id": "corner_store",
+      "file": "resolution_interrupted.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "9b4cb3b157a8ad4b0497035ac9bef918661c361b1981d025ad3eb2b743242473",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "partial_revisit_awaiting_stock",
+      "scenario_id": "corner_store_delivery_day",
+      "archetype_id": "corner_store",
+      "file": "partial_revisit_awaiting_stock.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "e964d6a458a48c415608b0142f3847045e130bb6d0c78f785859e13e0dd6d6b9",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "terminal_revisit_repaired",
+      "scenario_id": "corner_store_delivery_day",
+      "archetype_id": "corner_store",
+      "file": "terminal_revisit_repaired.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "523e9077ae59521b93f34ba483146fa9582053d475056c2c19111488339521fe",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "terminal_revisit_broken",
+      "scenario_id": "corner_store_delivery_day",
+      "archetype_id": "corner_store",
+      "file": "terminal_revisit_broken.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "8c5f57467baacff248e4b24e9f7baaa7cb812146a8dae17657d1df9cf5ad970a",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "terminal_revisit_refused",
+      "scenario_id": "corner_store_delivery_day",
+      "archetype_id": "corner_store",
+      "file": "terminal_revisit_refused.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "8e1fc1dfe2e520cd229792e3754b538029ec0ebc437c232fdfbc485b1616bbae",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "terminal_revisit_interrupted",
+      "scenario_id": "corner_store_delivery_day",
+      "archetype_id": "corner_store",
+      "file": "terminal_revisit_interrupted.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "45c72d259c131807005b72a218f9a97f8833e1225cb1c625238dd6f70ff6377f",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "expired_revisit_night_end",
+      "scenario_id": "corner_store_delivery_day",
+      "archetype_id": "corner_store",
+      "file": "expired_revisit_night_end.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "d9e15af53bb59526f30289c7a9697caacefe7ee1ed08164f6d7ec04c3f40663b",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "reduced_motion_arrival",
+      "scenario_id": "corner_store_delivery_day",
+      "archetype_id": "corner_store",
+      "file": "reduced_motion_arrival.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "deb060c311a43a239f1f1b6fa2e523bdc2589b0ee9feb19cf99640af91c83936",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "small_screen_104x76",
+      "scenario_id": "corner_store_delivery_day",
+      "archetype_id": "corner_store",
+      "file": "small_screen_104x76.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "d041dc601f21c4ed717b271b174167e3039478014e37223d8b7d78ed16a78a6b",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "obstruction_overlay_zero_overlap",
+      "scenario_id": "corner_store_delivery_day",
+      "archetype_id": "corner_store",
+      "file": "obstruction_overlay_zero_overlap.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "c18c650a7869da8da256114df3c6c5221df864f0f3593b0dee176df696d86e84",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": true
+    },
+    {
+      "capture_id": "hit_target_overlay_44_minimum",
+      "scenario_id": "corner_store_delivery_day",
+      "archetype_id": "corner_store",
+      "file": "hit_target_overlay_44_minimum.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "d3c3568b411a6f88271034b08314f8754106187d93ece4925e683932c4314793",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "base_event_pre_request_gated",
+      "scenario_id": "corner_store_delivery_day",
+      "archetype_id": "corner_store",
+      "file": "base_event_pre_request_gated.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "7bb64169834418ebc7d3ef98136d0dec317148662b746aba32fcacf779470698",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "base_event_request_delivered",
+      "scenario_id": "corner_store_delivery_day",
+      "archetype_id": "corner_store",
+      "file": "base_event_request_delivered.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "ea558898b464588e9df4f3969bb96aa7696b6b8a9115e7b94f0310d5b9b1cf7f",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "base_event_terminal_gated",
+      "scenario_id": "corner_store_delivery_day",
+      "archetype_id": "corner_store",
+      "file": "base_event_terminal_gated.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "dfbd9173769b5f2c5d3b755b4bb14b34bf4ffcd8ef8fd84d00d538e716751449",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_lotto_fever_arrival",
+      "scenario_id": "corner_store_lotto_fever",
+      "archetype_id": "corner_store",
+      "file": "corner_store_lotto_fever_arrival.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "89c79fc045f75843804a22b11d838f0a0805caf4d1c6003859631f55e5676d25",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_lotto_fever_work",
+      "scenario_id": "corner_store_lotto_fever",
+      "archetype_id": "corner_store",
+      "file": "corner_store_lotto_fever_work.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "25ea3f4b9b186e4c56637aaaad110f03b89b406cc4fa4503dabd7923cda8951d",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_lotto_fever_success",
+      "scenario_id": "corner_store_lotto_fever",
+      "archetype_id": "corner_store",
+      "file": "corner_store_lotto_fever_success.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "64ad54a24da86828e76843f9e5c98c95c6aeba38e8503a1322cfab646c8b7a3d",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_lotto_fever_failure",
+      "scenario_id": "corner_store_lotto_fever",
+      "archetype_id": "corner_store",
+      "file": "corner_store_lotto_fever_failure.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "8a78981df34205ff68cb3111ee8b9370439561857beeb61006fe922d3fcf2f4d",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_lotto_fever_ignored",
+      "scenario_id": "corner_store_lotto_fever",
+      "archetype_id": "corner_store",
+      "file": "corner_store_lotto_fever_ignored.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "b5ab9363121f0f47219fe983d37b0cf11b45385b4e518b161ae2ab01ed9e8a62",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_lotto_fever_refused",
+      "scenario_id": "corner_store_lotto_fever",
+      "archetype_id": "corner_store",
+      "file": "corner_store_lotto_fever_refused.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "be0e7c9df52feec57ec8a0c681e6d99223e7ba8606b0dd5bbea68a06607b3679",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_lotto_fever_interrupted",
+      "scenario_id": "corner_store_lotto_fever",
+      "archetype_id": "corner_store",
+      "file": "corner_store_lotto_fever_interrupted.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "952fcc8ce0614c9b533fc651779b954873f4805937985cb7ca2ed145bf0b7454",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_lotto_fever_partial_revisit",
+      "scenario_id": "corner_store_lotto_fever",
+      "archetype_id": "corner_store",
+      "file": "corner_store_lotto_fever_partial_revisit.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "ffaad75b72098a8802e052775f2918274017517a81e3457e0e12ffd782364afc",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_lotto_fever_terminal_revisit",
+      "scenario_id": "corner_store_lotto_fever",
+      "archetype_id": "corner_store",
+      "file": "corner_store_lotto_fever_terminal_revisit.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "4abd345642602d2378a2bc9a1b9098b477105e3199668d2b43f4ae4f8e81f91c",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_lotto_fever_reduced_motion",
+      "scenario_id": "corner_store_lotto_fever",
+      "archetype_id": "corner_store",
+      "file": "corner_store_lotto_fever_reduced_motion.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "69e40107b40680f1cc4aa6b7e884829d61df05945a44a6a905becd498081bfdc",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_lotto_fever_small_screen",
+      "scenario_id": "corner_store_lotto_fever",
+      "archetype_id": "corner_store",
+      "file": "corner_store_lotto_fever_small_screen.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "c9a62cda1e098650d88df134a3ac0c375c1b5eae4bffc436c040490d03537eab",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_lotto_fever_hit_overlay",
+      "scenario_id": "corner_store_lotto_fever",
+      "archetype_id": "corner_store",
+      "file": "corner_store_lotto_fever_hit_overlay.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "6f5601694ac3c7b6ca9ea3c4f10e4bd7ad6be600b27e76e8ab0d61e97ab579c6",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_lotto_fever_obstruction",
+      "scenario_id": "corner_store_lotto_fever",
+      "archetype_id": "corner_store",
+      "file": "corner_store_lotto_fever_obstruction.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "c8aadee7702a3026997dd0aab2312ca96bb3be2d88ffb8902ba6ac159f6b827a",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": true
+    },
+    {
+      "capture_id": "corner_store_aftermath_arrival",
+      "scenario_id": "corner_store_aftermath",
+      "archetype_id": "corner_store",
+      "file": "corner_store_aftermath_arrival.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "0d2fbadea25c55ae19b4f3b58ba1c6b23f73ebca91a45e1b8c8c799cf9a71799",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_aftermath_work",
+      "scenario_id": "corner_store_aftermath",
+      "archetype_id": "corner_store",
+      "file": "corner_store_aftermath_work.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "55a846874bffc0fedb8ff40f450f5ffcdc8c4016b4a3478eb7e3ca1109c786fc",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_aftermath_success",
+      "scenario_id": "corner_store_aftermath",
+      "archetype_id": "corner_store",
+      "file": "corner_store_aftermath_success.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "e431d0b9c2056512e0a4af20536d21583abbc30dfa02759b0318298977b39307",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_aftermath_failure",
+      "scenario_id": "corner_store_aftermath",
+      "archetype_id": "corner_store",
+      "file": "corner_store_aftermath_failure.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "0e1d99c0a6a633820fd1c5bbae9a74385e7876ac0bbc3b9a7e394f2e02d2c2f9",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_aftermath_ignored",
+      "scenario_id": "corner_store_aftermath",
+      "archetype_id": "corner_store",
+      "file": "corner_store_aftermath_ignored.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "90ab106ff5b8cbc0ecfde7c4e2d431cf2ab12786cd983d4bfec276579741f8e2",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_aftermath_refused",
+      "scenario_id": "corner_store_aftermath",
+      "archetype_id": "corner_store",
+      "file": "corner_store_aftermath_refused.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "5e58d111f71fb79c99cae58795c28c315a4796eec84b7e24e721dec10d05b53b",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_aftermath_interrupted",
+      "scenario_id": "corner_store_aftermath",
+      "archetype_id": "corner_store",
+      "file": "corner_store_aftermath_interrupted.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "be8634be56dfb2a490373ca0a6c463d8a3832cf911a34830bab1aa992e239040",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_aftermath_partial_revisit",
+      "scenario_id": "corner_store_aftermath",
+      "archetype_id": "corner_store",
+      "file": "corner_store_aftermath_partial_revisit.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "8fa5d098513e3c74a901a8aa338098bf897370a460dc502d95b77d969fb2d11e",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_aftermath_terminal_revisit",
+      "scenario_id": "corner_store_aftermath",
+      "archetype_id": "corner_store",
+      "file": "corner_store_aftermath_terminal_revisit.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "bc3814dd333f5e6e474c21a6eec97355a08f704468b336459acf7c59c50d28ae",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_aftermath_reduced_motion",
+      "scenario_id": "corner_store_aftermath",
+      "archetype_id": "corner_store",
+      "file": "corner_store_aftermath_reduced_motion.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "5fe4adf5e89c104927c13654724e115cad87f508b88559dea75da3d50ae0688d",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_aftermath_small_screen",
+      "scenario_id": "corner_store_aftermath",
+      "archetype_id": "corner_store",
+      "file": "corner_store_aftermath_small_screen.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "a3d30a97997584b1d9d09e6b8b3e12b13e2cb0d740d3f46eabb7722d35fa5f78",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_aftermath_hit_overlay",
+      "scenario_id": "corner_store_aftermath",
+      "archetype_id": "corner_store",
+      "file": "corner_store_aftermath_hit_overlay.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "831aa97ba7426dad7778eb86aad3b1145812dfcede37fc8a1e94e099490afa91",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_aftermath_obstruction",
+      "scenario_id": "corner_store_aftermath",
+      "archetype_id": "corner_store",
+      "file": "corner_store_aftermath_obstruction.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "6034d7b2396e707c77c8f4c7fcf26e721ab91a0c0f5cfba88489b8b0ad36e23c",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": true
+    },
+    {
+      "capture_id": "corner_store_dead_shift_arrival",
+      "scenario_id": "corner_store_dead_shift",
+      "archetype_id": "corner_store",
+      "file": "corner_store_dead_shift_arrival.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "06d0a3ff19b440dc76d50261a3842457d9b16091472d5454be7fbcc55d6531ed",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_dead_shift_work",
+      "scenario_id": "corner_store_dead_shift",
+      "archetype_id": "corner_store",
+      "file": "corner_store_dead_shift_work.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "485b266bf450e1f5b27909e4b84f86f1ad85accceb66ac3062d7c022378c5c8f",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_dead_shift_success",
+      "scenario_id": "corner_store_dead_shift",
+      "archetype_id": "corner_store",
+      "file": "corner_store_dead_shift_success.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "9fd567cfddcb275fedafb0ac5e7e9b6d7e1ad3de5a7ab5c4b61f1ea8107c3f40",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_dead_shift_failure",
+      "scenario_id": "corner_store_dead_shift",
+      "archetype_id": "corner_store",
+      "file": "corner_store_dead_shift_failure.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "b1ad0084a29a9faf4c5d1c319fcd299638a441060eb555b53fed0ff74d2837c0",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_dead_shift_ignored",
+      "scenario_id": "corner_store_dead_shift",
+      "archetype_id": "corner_store",
+      "file": "corner_store_dead_shift_ignored.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "21b346bcfe6b6fbf48d93994a3c851c4ae082ab1caaf49b2040186a206e6274d",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_dead_shift_refused",
+      "scenario_id": "corner_store_dead_shift",
+      "archetype_id": "corner_store",
+      "file": "corner_store_dead_shift_refused.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "d288553587bd530396d6aea26ac081bc30b4365346d22f26ab5a1355bb9231eb",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_dead_shift_interrupted",
+      "scenario_id": "corner_store_dead_shift",
+      "archetype_id": "corner_store",
+      "file": "corner_store_dead_shift_interrupted.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "c9ed596470ff641c74a13686a9f50ee6a3d5ef153173ded9f08339c0f10cf980",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_dead_shift_partial_revisit",
+      "scenario_id": "corner_store_dead_shift",
+      "archetype_id": "corner_store",
+      "file": "corner_store_dead_shift_partial_revisit.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "75e94505512de2921282d01b04c9d0a6c9cf64bc1cc5efdf2d17feaefdb9d849",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_dead_shift_terminal_revisit",
+      "scenario_id": "corner_store_dead_shift",
+      "archetype_id": "corner_store",
+      "file": "corner_store_dead_shift_terminal_revisit.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "841621a2fcd3e2d9c1d5734d9283f2619c9d39f4f86019e414ba123e1d92ad7c",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_dead_shift_reduced_motion",
+      "scenario_id": "corner_store_dead_shift",
+      "archetype_id": "corner_store",
+      "file": "corner_store_dead_shift_reduced_motion.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "8b6df6421c95e99e709f41a2b69019acb0a7d17d4db6d5bf6cfc2c6419176b3e",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_dead_shift_small_screen",
+      "scenario_id": "corner_store_dead_shift",
+      "archetype_id": "corner_store",
+      "file": "corner_store_dead_shift_small_screen.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "01c44de854b589ceb1d0d0cd6e2987ba4e54bc314cdd645c15a23d9d6255d148",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_dead_shift_hit_overlay",
+      "scenario_id": "corner_store_dead_shift",
+      "archetype_id": "corner_store",
+      "file": "corner_store_dead_shift_hit_overlay.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "a7b03b19d3d6ab0f9ba749b73d14d60db978ab7396eb45b6bec45e00ec5fbfe4",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_dead_shift_obstruction",
+      "scenario_id": "corner_store_dead_shift",
+      "archetype_id": "corner_store",
+      "file": "corner_store_dead_shift_obstruction.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "0734bfbdcc6b4b356189cf4b68bfa0308655fc01994f8913c320b946b9aac264",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": true
+    },
+    {
+      "capture_id": "corner_store_inventory_night_arrival",
+      "scenario_id": "corner_store_inventory_night",
+      "archetype_id": "corner_store",
+      "file": "corner_store_inventory_night_arrival.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "34e5acc0b6d036fcc6df3c88495a0befba115462cf86ce985c7098b274e26c9e",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_inventory_night_work",
+      "scenario_id": "corner_store_inventory_night",
+      "archetype_id": "corner_store",
+      "file": "corner_store_inventory_night_work.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "d313b2931b45a5c057f004e1de73f5404ee8a15ebd8bd4787c5e5fe2ef2d250e",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_inventory_night_success",
+      "scenario_id": "corner_store_inventory_night",
+      "archetype_id": "corner_store",
+      "file": "corner_store_inventory_night_success.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "4fd1df743e1ea48807685a4d419c3e2821eb7226f347250e38d562dc5d666023",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_inventory_night_failure",
+      "scenario_id": "corner_store_inventory_night",
+      "archetype_id": "corner_store",
+      "file": "corner_store_inventory_night_failure.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "87c5753efbecb3b1f6652695315b2e937881277771051db3d6514c408b985443",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_inventory_night_ignored",
+      "scenario_id": "corner_store_inventory_night",
+      "archetype_id": "corner_store",
+      "file": "corner_store_inventory_night_ignored.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "67e4bae87c598ae9127cb80a709d2afde895d0f02d06bc60b8e2dfeb566d5df7",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_inventory_night_refused",
+      "scenario_id": "corner_store_inventory_night",
+      "archetype_id": "corner_store",
+      "file": "corner_store_inventory_night_refused.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "58bc6fa343a535292a73978823ffbc610257fd9143770634b526c7bfe6951a9b",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_inventory_night_interrupted",
+      "scenario_id": "corner_store_inventory_night",
+      "archetype_id": "corner_store",
+      "file": "corner_store_inventory_night_interrupted.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "edd83a93f2a76e5735840def3633311ea6f0f517fbde1afefd284576d261aa6a",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_inventory_night_partial_revisit",
+      "scenario_id": "corner_store_inventory_night",
+      "archetype_id": "corner_store",
+      "file": "corner_store_inventory_night_partial_revisit.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "7a2adeeb05f757a8c6ae8a80fa0f2c441c2b7a05b3eaf17a2d25a8b2c6963b8d",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_inventory_night_terminal_revisit",
+      "scenario_id": "corner_store_inventory_night",
+      "archetype_id": "corner_store",
+      "file": "corner_store_inventory_night_terminal_revisit.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "a338e2621497911d46671a6d85318b6d7571c2e178ae630e78dd381fca91123f",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_inventory_night_reduced_motion",
+      "scenario_id": "corner_store_inventory_night",
+      "archetype_id": "corner_store",
+      "file": "corner_store_inventory_night_reduced_motion.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "1210694e740cff02a1027b6077bf36a59cd0c1ae2fd8469a086484a2b909d814",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_inventory_night_small_screen",
+      "scenario_id": "corner_store_inventory_night",
+      "archetype_id": "corner_store",
+      "file": "corner_store_inventory_night_small_screen.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "8cc672c33740183b6238a1227843b86db042caffde317ece1fadff627eaae486",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_inventory_night_hit_overlay",
+      "scenario_id": "corner_store_inventory_night",
+      "archetype_id": "corner_store",
+      "file": "corner_store_inventory_night_hit_overlay.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "cc745dc3a23f5d84b7147116559a7c48601868d1f87e1bbb9f6638dde1cdf44e",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "corner_store_inventory_night_obstruction",
+      "scenario_id": "corner_store_inventory_night",
+      "archetype_id": "corner_store",
+      "file": "corner_store_inventory_night_obstruction.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "d8f8a1832c37d26abd15149e2be6283d383e4c6b10d405e7ec5a2660822ea05f",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": true
+    },
+    {
+      "capture_id": "back_alley_street_craps_arrival",
+      "scenario_id": "back_alley_street_craps",
+      "archetype_id": "back_alley",
+      "file": "back_alley_street_craps_arrival.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "3c0ba66c6bb3759c25f8fb45195f93bfb090f7f5a2eca7580f6475eaedb36862",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "back_alley_street_craps_work",
+      "scenario_id": "back_alley_street_craps",
+      "archetype_id": "back_alley",
+      "file": "back_alley_street_craps_work.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "28d2ba51e66ebdc5e75bb06888abf3e8e8a22405e72ccd9bee55cf45c53ac8bd",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "back_alley_street_craps_success",
+      "scenario_id": "back_alley_street_craps",
+      "archetype_id": "back_alley",
+      "file": "back_alley_street_craps_success.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "6b70df3df579f9fe1afd192a7e84893d2903b347e1fd1f3aca1b87239fcd2327",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "back_alley_street_craps_failure",
+      "scenario_id": "back_alley_street_craps",
+      "archetype_id": "back_alley",
+      "file": "back_alley_street_craps_failure.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "1b250fda2f86266efc2d92d59e3921cbb16f1d974aba474f3a328763f32c0409",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "back_alley_street_craps_ignored",
+      "scenario_id": "back_alley_street_craps",
+      "archetype_id": "back_alley",
+      "file": "back_alley_street_craps_ignored.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "607f2a05540419266b18347d61bd1a9a14dd3b73b7d02d1fbeff08242b4817f7",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "back_alley_street_craps_refused",
+      "scenario_id": "back_alley_street_craps",
+      "archetype_id": "back_alley",
+      "file": "back_alley_street_craps_refused.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "8a573566ca9f4806beeede42a72eeaaa823a03ad1ff223f2ac31f249fcd4f1a1",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "back_alley_street_craps_interrupted",
+      "scenario_id": "back_alley_street_craps",
+      "archetype_id": "back_alley",
+      "file": "back_alley_street_craps_interrupted.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "52a253296fb8acb7df33881da171ab196edce7d344949f261239a915b27c842f",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "back_alley_street_craps_partial_revisit",
+      "scenario_id": "back_alley_street_craps",
+      "archetype_id": "back_alley",
+      "file": "back_alley_street_craps_partial_revisit.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "363307e8759ee73284a17039d11900d3e2a2f42b365feb815bb75d4ea52b1695",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "back_alley_street_craps_terminal_revisit",
+      "scenario_id": "back_alley_street_craps",
+      "archetype_id": "back_alley",
+      "file": "back_alley_street_craps_terminal_revisit.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "3ffed64dbacfe82cf8828932c5166ca614d3b7a14124c24678f5de80b227bfb9",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "back_alley_street_craps_reduced_motion",
+      "scenario_id": "back_alley_street_craps",
+      "archetype_id": "back_alley",
+      "file": "back_alley_street_craps_reduced_motion.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "245841fc5f6a799b2ad17abcf98429a93f389782cc2b115d9bea3b78d7bc223b",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "back_alley_street_craps_small_screen",
+      "scenario_id": "back_alley_street_craps",
+      "archetype_id": "back_alley",
+      "file": "back_alley_street_craps_small_screen.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "2abd44b4bc6d43d602e159758f741e979a1179887dfd4a86b551cd0cb875798c",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "back_alley_street_craps_hit_overlay",
+      "scenario_id": "back_alley_street_craps",
+      "archetype_id": "back_alley",
+      "file": "back_alley_street_craps_hit_overlay.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "0f686d2b53170dde3aec002336e84535ddf5f03997d42169fa757998a2acb9fa",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "back_alley_street_craps_obstruction",
+      "scenario_id": "back_alley_street_craps",
+      "archetype_id": "back_alley",
+      "file": "back_alley_street_craps_obstruction.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "1f9c002e53d0b4529b6278260780e70bfdefe22b1395070ab465c4752a93df8e",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": true
+    },
+    {
+      "capture_id": "back_alley_cruiser_parked_arrival",
+      "scenario_id": "back_alley_cruiser_parked",
+      "archetype_id": "back_alley",
+      "file": "back_alley_cruiser_parked_arrival.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "13d35b41b7d9d1f6cf05a94dd109f7722d9d057a8e478dbae2f4be4c13a2170b",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "back_alley_cruiser_parked_work",
+      "scenario_id": "back_alley_cruiser_parked",
+      "archetype_id": "back_alley",
+      "file": "back_alley_cruiser_parked_work.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "e79d18c29f9a9cb55891a00ec645e0962601c2c5cc2c03bdd36ab9480f11bf93",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "back_alley_cruiser_parked_success",
+      "scenario_id": "back_alley_cruiser_parked",
+      "archetype_id": "back_alley",
+      "file": "back_alley_cruiser_parked_success.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "c6a56562f565d34c4ffb7da96f5bf2a85a61f98663f353f42f15168cf4589cce",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "back_alley_cruiser_parked_failure",
+      "scenario_id": "back_alley_cruiser_parked",
+      "archetype_id": "back_alley",
+      "file": "back_alley_cruiser_parked_failure.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "162ebde48ed4d48e29babeef1c48a6692d32f1dab04f0d9f40b17694e0d7bbab",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "back_alley_cruiser_parked_ignored",
+      "scenario_id": "back_alley_cruiser_parked",
+      "archetype_id": "back_alley",
+      "file": "back_alley_cruiser_parked_ignored.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "d68ddd13ebd6d82d1982beee651e30c37488071d7936833649f637ab32621b4d",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "back_alley_cruiser_parked_refused",
+      "scenario_id": "back_alley_cruiser_parked",
+      "archetype_id": "back_alley",
+      "file": "back_alley_cruiser_parked_refused.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "d532abbfad2f696e39f29b3ba52c7b372e4e67cf9cdf15e128b8ec1921f63b6b",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "back_alley_cruiser_parked_interrupted",
+      "scenario_id": "back_alley_cruiser_parked",
+      "archetype_id": "back_alley",
+      "file": "back_alley_cruiser_parked_interrupted.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "c0170e3fed60f4fc4785c3c2d5f562622bbf80619a24e0db5318c759c22eabad",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "back_alley_cruiser_parked_partial_revisit",
+      "scenario_id": "back_alley_cruiser_parked",
+      "archetype_id": "back_alley",
+      "file": "back_alley_cruiser_parked_partial_revisit.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "446925ceb2018ccbecc0d70942840085320d72757221f057e72d83282f92f8f5",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "back_alley_cruiser_parked_terminal_revisit",
+      "scenario_id": "back_alley_cruiser_parked",
+      "archetype_id": "back_alley",
+      "file": "back_alley_cruiser_parked_terminal_revisit.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "b6f89d7e0b26f6ecce7922d7569ea5d4bfb4ceb58df69e7f63d89c59786d9515",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "back_alley_cruiser_parked_reduced_motion",
+      "scenario_id": "back_alley_cruiser_parked",
+      "archetype_id": "back_alley",
+      "file": "back_alley_cruiser_parked_reduced_motion.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "cdc4f97820b9a02dc51e101dd742b4a733808fcd324dbcd98fb37694f505cc1e",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "back_alley_cruiser_parked_small_screen",
+      "scenario_id": "back_alley_cruiser_parked",
+      "archetype_id": "back_alley",
+      "file": "back_alley_cruiser_parked_small_screen.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "1ac652461d7a99b1be66cd98f5261c9506155a1ecb768f2a226fcda6c6491f77",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "back_alley_cruiser_parked_hit_overlay",
+      "scenario_id": "back_alley_cruiser_parked",
+      "archetype_id": "back_alley",
+      "file": "back_alley_cruiser_parked_hit_overlay.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "a83ed4af0336d954973e3b2b2a7b281a19b33931e3fcf83286f98a012b6540dd",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "back_alley_cruiser_parked_obstruction",
+      "scenario_id": "back_alley_cruiser_parked",
+      "archetype_id": "back_alley",
+      "file": "back_alley_cruiser_parked_obstruction.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "1197f3f9fcb4683108bfe7dd8b3e473bcf54fdcf1ee02d6a2f2a529c62c8267e",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": true
+    },
+    {
+      "capture_id": "back_alley_fence_night_arrival",
+      "scenario_id": "back_alley_fence_night",
+      "archetype_id": "back_alley",
+      "file": "back_alley_fence_night_arrival.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "92edb790f6acccc15cb78856358f2d0cf57e815fd2ce3785032f9f001ccebdce",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "back_alley_fence_night_work",
+      "scenario_id": "back_alley_fence_night",
+      "archetype_id": "back_alley",
+      "file": "back_alley_fence_night_work.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "39442ac5f4ea6227f33dad1586166b471b08132ea5e0409be1f9dada8a254a72",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "back_alley_fence_night_success",
+      "scenario_id": "back_alley_fence_night",
+      "archetype_id": "back_alley",
+      "file": "back_alley_fence_night_success.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "5265701f377a5207882174e4e08c15b6aa44dd4473c56760b35179a5cf6f5ac8",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "back_alley_fence_night_failure",
+      "scenario_id": "back_alley_fence_night",
+      "archetype_id": "back_alley",
+      "file": "back_alley_fence_night_failure.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "c3b72c75aa74b09ec5b5de5ea9cf68efd5631159a61a9e00eaea21fcf2b99058",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "back_alley_fence_night_ignored",
+      "scenario_id": "back_alley_fence_night",
+      "archetype_id": "back_alley",
+      "file": "back_alley_fence_night_ignored.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "5628f3f483b820e02e78675adf0e465d3e53332b60042ef6c050270c1e01bffd",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "back_alley_fence_night_refused",
+      "scenario_id": "back_alley_fence_night",
+      "archetype_id": "back_alley",
+      "file": "back_alley_fence_night_refused.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "e3938ea78062e31a980156e7685351a7881374a24d9d6713495398df9e8b1604",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "back_alley_fence_night_interrupted",
+      "scenario_id": "back_alley_fence_night",
+      "archetype_id": "back_alley",
+      "file": "back_alley_fence_night_interrupted.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "842a0584b7477ed48435299afbbabcd1d333e5a239572014bd19fade26250e0d",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "back_alley_fence_night_partial_revisit",
+      "scenario_id": "back_alley_fence_night",
+      "archetype_id": "back_alley",
+      "file": "back_alley_fence_night_partial_revisit.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "cde4308e52e974396619f55ec819acfb7b1eaa35d28a1046a1ebd71cec5399b4",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "back_alley_fence_night_terminal_revisit",
+      "scenario_id": "back_alley_fence_night",
+      "archetype_id": "back_alley",
+      "file": "back_alley_fence_night_terminal_revisit.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "cbda5780b042bb7b6248475bae1bc89e4f88fe03c89b86d4f3a8416a52300a7e",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "back_alley_fence_night_reduced_motion",
+      "scenario_id": "back_alley_fence_night",
+      "archetype_id": "back_alley",
+      "file": "back_alley_fence_night_reduced_motion.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "a1853a8d668860fc0e3d47c8add7d9f65e963cef83b56063e5876c8cc43cab25",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "back_alley_fence_night_small_screen",
+      "scenario_id": "back_alley_fence_night",
+      "archetype_id": "back_alley",
+      "file": "back_alley_fence_night_small_screen.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "292f40ab51adfc1cb041372c8a5bb0e8c13e43c4e1663b1f535f5eaf39e657d8",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "back_alley_fence_night_hit_overlay",
+      "scenario_id": "back_alley_fence_night",
+      "archetype_id": "back_alley",
+      "file": "back_alley_fence_night_hit_overlay.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "4c7c600f2fcb4bb77c5004057cdb6cabea7850c63c620300b9518145902d77ef",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "back_alley_fence_night_obstruction",
+      "scenario_id": "back_alley_fence_night",
+      "archetype_id": "back_alley",
+      "file": "back_alley_fence_night_obstruction.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "dd02d9aaf1f4a23ff305f013b9130c8197b6e686c689feefb8889811a7ac7f8d",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": true
+    },
+    {
+      "capture_id": "back_alley_nothing_moving_arrival",
+      "scenario_id": "back_alley_nothing_moving",
+      "archetype_id": "back_alley",
+      "file": "back_alley_nothing_moving_arrival.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "d798880048ef7200c02d6177dd8fbeffb089599e06ff68a54fefde8bd9a83c6f",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "back_alley_nothing_moving_work",
+      "scenario_id": "back_alley_nothing_moving",
+      "archetype_id": "back_alley",
+      "file": "back_alley_nothing_moving_work.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "9f2fdb80104745eddbe785a52cd13d8018df99a78c646da5987287a50b586e5d",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "back_alley_nothing_moving_success",
+      "scenario_id": "back_alley_nothing_moving",
+      "archetype_id": "back_alley",
+      "file": "back_alley_nothing_moving_success.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "89782a90a76cf81ab0fd74af64091d7040416faf8bb4e455b5dbb31781f79827",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "back_alley_nothing_moving_failure",
+      "scenario_id": "back_alley_nothing_moving",
+      "archetype_id": "back_alley",
+      "file": "back_alley_nothing_moving_failure.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "379d52aecc8d29019c49af4b2731743ddce0a08adb4bae0f02d80f9bfb7347cb",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "back_alley_nothing_moving_ignored",
+      "scenario_id": "back_alley_nothing_moving",
+      "archetype_id": "back_alley",
+      "file": "back_alley_nothing_moving_ignored.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "735250cd02798dac377b2357f61666836c94fe3baf25b9a38d0471a60e5b932f",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "back_alley_nothing_moving_refused",
+      "scenario_id": "back_alley_nothing_moving",
+      "archetype_id": "back_alley",
+      "file": "back_alley_nothing_moving_refused.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "b992d37e50e793908223a06b153f1656f3f092a9c05221c29c83ca308fe9313a",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "back_alley_nothing_moving_interrupted",
+      "scenario_id": "back_alley_nothing_moving",
+      "archetype_id": "back_alley",
+      "file": "back_alley_nothing_moving_interrupted.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "eea492602d80a62832e6885c451eb28f07de4a38d101b787e19ae665223acfa4",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "back_alley_nothing_moving_partial_revisit",
+      "scenario_id": "back_alley_nothing_moving",
+      "archetype_id": "back_alley",
+      "file": "back_alley_nothing_moving_partial_revisit.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "a86bcc83f11a7b2db9434fa6517b5e53a986406d942ca816b0a88156163fdc98",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "back_alley_nothing_moving_terminal_revisit",
+      "scenario_id": "back_alley_nothing_moving",
+      "archetype_id": "back_alley",
+      "file": "back_alley_nothing_moving_terminal_revisit.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "4d76fa33f6beabbcbb05a008c3be5d330b35c354449fde9d1f83a087089aae67",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "back_alley_nothing_moving_reduced_motion",
+      "scenario_id": "back_alley_nothing_moving",
+      "archetype_id": "back_alley",
+      "file": "back_alley_nothing_moving_reduced_motion.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "88dc3088e055603987fddcf050c56625cea4cc21c9d8253247d6f172d83e69d5",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "back_alley_nothing_moving_small_screen",
+      "scenario_id": "back_alley_nothing_moving",
+      "archetype_id": "back_alley",
+      "file": "back_alley_nothing_moving_small_screen.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "080a5b6d2592923acdc9b3edcf2b155711f0b09d72088d214c2810946e5d9c33",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "back_alley_nothing_moving_hit_overlay",
+      "scenario_id": "back_alley_nothing_moving",
+      "archetype_id": "back_alley",
+      "file": "back_alley_nothing_moving_hit_overlay.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "43eabdeb295d8ff5f3c1499cbfabe542407c588bcb21f1148bd16fe863caeeb9",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "back_alley_nothing_moving_obstruction",
+      "scenario_id": "back_alley_nothing_moving",
+      "archetype_id": "back_alley",
+      "file": "back_alley_nothing_moving_obstruction.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "a5f6bb15afe7f258c4165eb3fd8695f66e5e0a29128ea753e80ebd1ad15e2b47",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": true
+    },
+    {
+      "capture_id": "pawn_shop_estate_lot_day_arrival",
+      "scenario_id": "pawn_shop_estate_lot_day",
+      "archetype_id": "pawn_shop",
+      "file": "pawn_shop_estate_lot_day_arrival.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "ff46747dde09eedafa33223447f2843d0345790a7ee0ff1889077d65adef7866",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "pawn_shop_estate_lot_day_work",
+      "scenario_id": "pawn_shop_estate_lot_day",
+      "archetype_id": "pawn_shop",
+      "file": "pawn_shop_estate_lot_day_work.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "ad1497e785236af8e6d6767aad3e368181374862ae7f7070c5be25afa8a836a7",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "pawn_shop_estate_lot_day_success",
+      "scenario_id": "pawn_shop_estate_lot_day",
+      "archetype_id": "pawn_shop",
+      "file": "pawn_shop_estate_lot_day_success.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "34e45219a09cc8c3729a96e6c93073179422ef55ded3033aa176936de49f256e",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "pawn_shop_estate_lot_day_failure",
+      "scenario_id": "pawn_shop_estate_lot_day",
+      "archetype_id": "pawn_shop",
+      "file": "pawn_shop_estate_lot_day_failure.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "5cd16116421d24d45b5cae548a43c7662360ef132ad080381e3cb03a26d22bf3",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "pawn_shop_estate_lot_day_ignored",
+      "scenario_id": "pawn_shop_estate_lot_day",
+      "archetype_id": "pawn_shop",
+      "file": "pawn_shop_estate_lot_day_ignored.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "b1fd0d43c90cdfbd6f2e9aaa65861aac78867b687449462fea560558d4d6eb11",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "pawn_shop_estate_lot_day_refused",
+      "scenario_id": "pawn_shop_estate_lot_day",
+      "archetype_id": "pawn_shop",
+      "file": "pawn_shop_estate_lot_day_refused.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "603a849a257965dcf9f1a56dc93a27bf1efc2205539d44e49a2be6f2adc1a801",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "pawn_shop_estate_lot_day_interrupted",
+      "scenario_id": "pawn_shop_estate_lot_day",
+      "archetype_id": "pawn_shop",
+      "file": "pawn_shop_estate_lot_day_interrupted.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "feaec09839113b7d5e3f3db95fd5efbb360613791ceda5a75170ec33020607a0",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "pawn_shop_estate_lot_day_partial_revisit",
+      "scenario_id": "pawn_shop_estate_lot_day",
+      "archetype_id": "pawn_shop",
+      "file": "pawn_shop_estate_lot_day_partial_revisit.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "4f5e848e15c316bd874013ebe1c752f028d10303be1233cb5fdbaf381893aeba",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "pawn_shop_estate_lot_day_terminal_revisit",
+      "scenario_id": "pawn_shop_estate_lot_day",
+      "archetype_id": "pawn_shop",
+      "file": "pawn_shop_estate_lot_day_terminal_revisit.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "9bd7887637618531f16c86c12e0892b6828e6280b88244489558a4488168a96f",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "pawn_shop_estate_lot_day_reduced_motion",
+      "scenario_id": "pawn_shop_estate_lot_day",
+      "archetype_id": "pawn_shop",
+      "file": "pawn_shop_estate_lot_day_reduced_motion.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "ef74955fa77ac8f99458f8e2eb8fb6ca619a839d10fd120a1ce157dedaab121c",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "pawn_shop_estate_lot_day_small_screen",
+      "scenario_id": "pawn_shop_estate_lot_day",
+      "archetype_id": "pawn_shop",
+      "file": "pawn_shop_estate_lot_day_small_screen.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "4aee047d89867f3f108857f202e0e9a87efc958041243c5f5b2da31cc6591239",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "pawn_shop_estate_lot_day_hit_overlay",
+      "scenario_id": "pawn_shop_estate_lot_day",
+      "archetype_id": "pawn_shop",
+      "file": "pawn_shop_estate_lot_day_hit_overlay.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "5fe05ab460bd284a4b1f2635b5437f476f703e0d267146b8ba833d2c59848f8b",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "pawn_shop_estate_lot_day_obstruction",
+      "scenario_id": "pawn_shop_estate_lot_day",
+      "archetype_id": "pawn_shop",
+      "file": "pawn_shop_estate_lot_day_obstruction.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "893a06a61879bee69f57ece1b21eee1563770189e58d60c0d7dbdefbb3045d99",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": true
+    },
+    {
+      "capture_id": "pawn_shop_serial_check_day_arrival",
+      "scenario_id": "pawn_shop_serial_check_day",
+      "archetype_id": "pawn_shop",
+      "file": "pawn_shop_serial_check_day_arrival.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "a395b5caae0a71a9a43a2c480500ae7b6f3770c30de2aeff8d133bc88dfc20fb",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "pawn_shop_serial_check_day_work",
+      "scenario_id": "pawn_shop_serial_check_day",
+      "archetype_id": "pawn_shop",
+      "file": "pawn_shop_serial_check_day_work.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "44e496a56eb9093706e068427e27f984c42b79a1b9cc26b1dcc47425d1bb6fb6",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "pawn_shop_serial_check_day_success",
+      "scenario_id": "pawn_shop_serial_check_day",
+      "archetype_id": "pawn_shop",
+      "file": "pawn_shop_serial_check_day_success.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "3e47ea2c08b0fdd8875026b0b0526a9c1bc2eb02679affa087faa04794666eb5",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "pawn_shop_serial_check_day_failure",
+      "scenario_id": "pawn_shop_serial_check_day",
+      "archetype_id": "pawn_shop",
+      "file": "pawn_shop_serial_check_day_failure.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "6639555299c1b94b03d52c63282fbaedf9cc6a9572c691e3d721c924fb8322aa",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "pawn_shop_serial_check_day_ignored",
+      "scenario_id": "pawn_shop_serial_check_day",
+      "archetype_id": "pawn_shop",
+      "file": "pawn_shop_serial_check_day_ignored.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "24a8efb5198dbe8eea0ee4f42e9157336f89f1f620f1174c91923bf252591b4c",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "pawn_shop_serial_check_day_refused",
+      "scenario_id": "pawn_shop_serial_check_day",
+      "archetype_id": "pawn_shop",
+      "file": "pawn_shop_serial_check_day_refused.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "5d2f953d0da6fb2e2a3842b53f8335de99de25b21655824e6969836a6bd5c7b8",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "pawn_shop_serial_check_day_interrupted",
+      "scenario_id": "pawn_shop_serial_check_day",
+      "archetype_id": "pawn_shop",
+      "file": "pawn_shop_serial_check_day_interrupted.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "322bea8f8ce16f58c2f85dde2f41549526d440939fce4233a9510bc0f5ca8915",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "pawn_shop_serial_check_day_partial_revisit",
+      "scenario_id": "pawn_shop_serial_check_day",
+      "archetype_id": "pawn_shop",
+      "file": "pawn_shop_serial_check_day_partial_revisit.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "021d5fb633fe4b9b182817adcf891ddbf86d563c5c8102ef57e2161de7adb9bf",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "pawn_shop_serial_check_day_terminal_revisit",
+      "scenario_id": "pawn_shop_serial_check_day",
+      "archetype_id": "pawn_shop",
+      "file": "pawn_shop_serial_check_day_terminal_revisit.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "1aee668f072e5bc0fc4620f8c5cc912db0e7f07c460f03a5b6394b255c03dd7a",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "pawn_shop_serial_check_day_reduced_motion",
+      "scenario_id": "pawn_shop_serial_check_day",
+      "archetype_id": "pawn_shop",
+      "file": "pawn_shop_serial_check_day_reduced_motion.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "bafa749c5334fa7af19ba2a7fa016d8ef9b499650d7801ab5efcf61bf80b348e",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "pawn_shop_serial_check_day_small_screen",
+      "scenario_id": "pawn_shop_serial_check_day",
+      "archetype_id": "pawn_shop",
+      "file": "pawn_shop_serial_check_day_small_screen.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "597b8d277c9092b9d74eef8ad0e90edffcee6d9ce1d69c8e91dcdf04fda305f1",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "pawn_shop_serial_check_day_hit_overlay",
+      "scenario_id": "pawn_shop_serial_check_day",
+      "archetype_id": "pawn_shop",
+      "file": "pawn_shop_serial_check_day_hit_overlay.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "2688c4e95fb6a7fa1bab25c5fdaa22582b66873e2ff470a91321c23826f82986",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "pawn_shop_serial_check_day_obstruction",
+      "scenario_id": "pawn_shop_serial_check_day",
+      "archetype_id": "pawn_shop",
+      "file": "pawn_shop_serial_check_day_obstruction.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "1ad03a5fccceadd4ba69b538f0e008c8a1f0d2a64f30809555a14c919ae4fe68",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": true
+    },
+    {
+      "capture_id": "pawn_shop_sals_mood_arrival",
+      "scenario_id": "pawn_shop_sals_mood",
+      "archetype_id": "pawn_shop",
+      "file": "pawn_shop_sals_mood_arrival.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "3f230e6a3783aaeb05a262de22d81af23d85bca97e258f3f30c6d06a965e2ce9",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "pawn_shop_sals_mood_work",
+      "scenario_id": "pawn_shop_sals_mood",
+      "archetype_id": "pawn_shop",
+      "file": "pawn_shop_sals_mood_work.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "98a1ecb2bf753c94d7fd1f511239df2f29d75acb477a3e510db0ef0ef6570639",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "pawn_shop_sals_mood_success",
+      "scenario_id": "pawn_shop_sals_mood",
+      "archetype_id": "pawn_shop",
+      "file": "pawn_shop_sals_mood_success.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "db8c61251cff46c96ef6a6052995c47ef3c0ca1d0df9198105cffe681c9ebacb",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "pawn_shop_sals_mood_failure",
+      "scenario_id": "pawn_shop_sals_mood",
+      "archetype_id": "pawn_shop",
+      "file": "pawn_shop_sals_mood_failure.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "b91b79657752ce25e110d1217c55850a733b26875f6017a9771d30e3053004eb",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "pawn_shop_sals_mood_ignored",
+      "scenario_id": "pawn_shop_sals_mood",
+      "archetype_id": "pawn_shop",
+      "file": "pawn_shop_sals_mood_ignored.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "ba532bf8b88058ebcd58d356ec631f78acd7ca0b9bc5593fd9b1784a43c3b401",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "pawn_shop_sals_mood_refused",
+      "scenario_id": "pawn_shop_sals_mood",
+      "archetype_id": "pawn_shop",
+      "file": "pawn_shop_sals_mood_refused.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "dcd4380b6484e422407cc038326d8f41a118f5763a3581c08be0293a3df57fc0",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "pawn_shop_sals_mood_interrupted",
+      "scenario_id": "pawn_shop_sals_mood",
+      "archetype_id": "pawn_shop",
+      "file": "pawn_shop_sals_mood_interrupted.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "137bd8c18c2042ef7e6402a7e9d87adfce95d3b56ddda34c40e89d2bd1aabd25",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "pawn_shop_sals_mood_partial_revisit",
+      "scenario_id": "pawn_shop_sals_mood",
+      "archetype_id": "pawn_shop",
+      "file": "pawn_shop_sals_mood_partial_revisit.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "958758e03531b2701e18116282cb26474b05e93c932d36c0e0c418b01406366b",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "pawn_shop_sals_mood_terminal_revisit",
+      "scenario_id": "pawn_shop_sals_mood",
+      "archetype_id": "pawn_shop",
+      "file": "pawn_shop_sals_mood_terminal_revisit.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "1d8cb8e872a081aec0dbe558684a5ecfcbb484a9f0a2d5a55605dd64b55af437",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "pawn_shop_sals_mood_reduced_motion",
+      "scenario_id": "pawn_shop_sals_mood",
+      "archetype_id": "pawn_shop",
+      "file": "pawn_shop_sals_mood_reduced_motion.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "4a6915965b8ce49669a9a24c10ae4914b4ca2d13a8ee35ee55883d0b0e158272",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "pawn_shop_sals_mood_small_screen",
+      "scenario_id": "pawn_shop_sals_mood",
+      "archetype_id": "pawn_shop",
+      "file": "pawn_shop_sals_mood_small_screen.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "e99ae0b7bc9ec0321fdaca9a9f53027812ca749ad35112f4378293f2c8abb5c8",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "pawn_shop_sals_mood_hit_overlay",
+      "scenario_id": "pawn_shop_sals_mood",
+      "archetype_id": "pawn_shop",
+      "file": "pawn_shop_sals_mood_hit_overlay.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "59b7a70bc668b766a7db584e3eca8f719963ae6642bdf899b632d84cc14368da",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "pawn_shop_sals_mood_obstruction",
+      "scenario_id": "pawn_shop_sals_mood",
+      "archetype_id": "pawn_shop",
+      "file": "pawn_shop_sals_mood_obstruction.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "f3b92194921fbbec37d78cc55d3cb29e13ad2bdba6c4c1c9b3d9ffb603abdadc",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": true
+    }
+  ],
+  "archetype_contact_sheets": {
+    "corner_store": {
+      "file": "corner_store_contact_sheet.png",
+      "sha256": "128aab66fd7f94a3cb1ba2e798b73378c87e08657b2ad9ce8cbf969c552c8f78",
+      "width": 960,
+      "height": 2565,
+      "capture_count": 73
+    },
+    "back_alley": {
+      "file": "back_alley_contact_sheet.png",
+      "sha256": "65b769442a594880426514a3d0764f59cc44912d2cf8fd66020310686ba7da47",
+      "width": 960,
+      "height": 1755,
+      "capture_count": 52
+    },
+    "pawn_shop": {
+      "file": "pawn_shop_contact_sheet.png",
+      "sha256": "2a34d0c6bdc55420ac30e9e4fc08d5e67a33da26984117f6678b47ffd09c26a8",
+      "width": 960,
+      "height": 1350,
+      "capture_count": 39
+    }
+  },
+  "failures": []
+}

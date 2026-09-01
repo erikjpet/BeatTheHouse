@@ -21,8 +21,8 @@ or independently validates it on the exact closure candidate.
 
 | Dependency | Board state at snapshot | Exact landed head | Required intake | Independent verdict |
 | --- | --- | --- | --- | --- |
-| `env06_6` | IN_PROGRESS | TBD | Accepted runtime contract and implementation; serialized Full, audit, determinism, native/Web parity, performance, 21-image visual evidence, and independent visual review; schema/migration and command/receipt provenance | BLOCKED — UNVERIFIED |
-| `env06_7` | TODO | TBD | All 55 dossiers; machine-readable catalog audit; mechanic signatures and pairwise comparison; phase/branch/save/revisit/cleanup matrix; reachability; per-archetype contact sheets; gate and capture manifests | BLOCKED — UNVERIFIED |
+| `env06_6` | DONE | 2026-08-31 integrated candidate | Accepted runtime contract and implementation; serialized Full, audit, determinism, native/Web parity, performance, 21-checkpoint visual evidence; schema/migration and command/receipt provenance | READY — ACCEPTED |
+| `env06_7` | DONE | 2026-08-31 integrated candidate | All 55 dossiers; machine-readable catalog audit; 1,485 pairwise comparisons; phase/branch/save/revisit/cleanup matrix; reachability; 683 captures and 14 contact sheets | READY — ACCEPTED |
 | `craps06_3` | TODO | TBD | Grand Casino and street-craps complete sessions; bet correction; tactile throw; point lifecycle; dense working bets; energy tiers; cheats; reactions; warning/relocation/dispersal; accessibility; revisit; math/RTP and conservation | BLOCKED — UNVERIFIED |
 | `crew06_10` | TODO | TBD | Multiple nights; all seven members; ordered betting; raises/folds/showdown; overlapping tells; leave/revisit/new session; five authored nights; Turn compatibility; pot/cash/trust exactly once; hidden-information audit | BLOCKED — UNVERIFIED |
 

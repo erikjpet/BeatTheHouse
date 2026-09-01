@@ -2296,9 +2296,10 @@ func _validate_art_asset(label: String, entry: Dictionary) -> void:
 	if not asset_path.begins_with("res://assets/art/"):
 		validation_errors.append("%s asset_path must stay under res://assets/art/." % label)
 		return
-	# Source-art validation must not depend on whether this checkout's editor
-	# import cache finished before a headless content/audit run.
-	if not FileAccess.file_exists(asset_path):
+	# Source checkouts expose the source file through FileAccess, while release
+	# exports expose imported resources through ResourceLoader remaps. Accept
+	# either representation so the same catalog validation runs in both builds.
+	if not FileAccess.file_exists(asset_path) and not ResourceLoader.exists(asset_path):
 		validation_errors.append("%s references missing asset_path: %s" % [label, asset_path])
 
 

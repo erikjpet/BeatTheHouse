@@ -110,7 +110,7 @@ static func stamp_interactable_records(records_value: Array, environment: Dictio
 		for geometry_key in geometry.keys(): record[geometry_key] = geometry.get(geometry_key)
 		var identity := _identity_for_record(record, environment, library, producer_context)
 		if identity.is_empty():
-			errors.append("base presentation record %d is not backed by an exact environment source." % index)
+			errors.append("base presentation record %d is not backed by an exact environment source (%s/%s/%s)." % [index, str(record.get("object_id", "")), str(record.get("object_type", "")), str(record.get("source_id", ""))])
 			continue
 		for field in ["owner_namespace", "stable_object_id", "source_kind", "source_field", "source_record_id"]:
 			if record.has(field) and str(record.get(field, "")) != str(identity.get(field, "")):

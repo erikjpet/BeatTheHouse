@@ -27,7 +27,7 @@ if (-not $out.StartsWith($allowedRoot + [IO.Path]::DirectorySeparatorChar, [Stri
 }
 if (Test-Path -LiteralPath $out) { Remove-Item -LiteralPath $out -Recurse -Force }
 New-Item -ItemType Directory -Force -Path $out | Out-Null
-$relativeOut = [IO.Path]::GetRelativePath($root, $out).Replace('\', '/')
+$relativeOut = $out.Substring($root.Length).TrimStart('\', '/').Replace('\', '/')
 $resourceOut = "res://$relativeOut"
 $stdout = Join-Path $out "capture.stdout.txt"
 $stderr = Join-Path $out "capture.stderr.txt"
@@ -54,8 +54,11 @@ try {
         Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
         throw "Scenario sequence visual capture timed out after $TimeoutSec seconds; see $stdout and $stderr."
     }
-    if ($process.ExitCode -ne 0) {
-        throw "Scenario sequence visual capture failed with exit $($process.ExitCode); see $stdout and $stderr."
+    [void]$process.WaitForExit()
+    $process.Refresh()
+    $captureExitCode = [int]$process.ExitCode
+    if ($captureExitCode -ne 0) {
+        throw "Scenario sequence visual capture failed with exit $captureExitCode; see $stdout and $stderr."
     }
 }
 finally {

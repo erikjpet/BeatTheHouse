@@ -2985,7 +2985,7 @@ func _active_tumble(ui_state: Dictionary, last_result: Dictionary, rolled: bool)
 
 
 func _set_tumble(ui_state: Dictionary, prefix: String, indices: Array = []) -> void:
-	var now := Time.get_ticks_msec()
+	var now := _surface_time_msec(ui_state)
 	ui_state["tumble_id"] = "%s_%d" % [prefix, now]
 	ui_state["tumble_started_msec"] = now
 	ui_state["tumble_indices"] = _index_array(indices)

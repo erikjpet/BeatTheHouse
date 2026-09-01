@@ -1,6 +1,6 @@
 # env06_7 A-E current-main integration
 
-Status: **WIP UNREVIEWED / WARDEN GATE PENDING**
+Status: **DONE / ACCEPTED ON CURRENT MAIN CANDIDATE — 2026-08-31**
 
 This candidate starts at exact current main
 `b091bc43330dd1df472c868b3246032c47570e9b` and semantically replays, in its
@@ -35,10 +35,13 @@ depend on the global-class cache resolving that external static member first.
 No product runtime, catalog authority, test assertion, golden, or budget is
 weakened.
 
-## Pending gate
+## Completed gate
 
-The combined candidate passed static project validation, catalog/order,
-55-identity and 55-signature uniqueness, committed evidence-hash, Game 2
-byte-preservation, frozen-payload parity, JSON, and diff checks. Godot
-author/contract and applicable integrated verification belong to the Warden's
-serialized slot.
+The recovered combined candidate passed static project validation,
+catalog/order, 55-identity and 55-signature uniqueness, committed evidence
+hashes, Game 2 byte-preservation, frozen-payload parity, JSON, and diff checks.
+All packages A through E were exercised on the integrated runtime. The final
+proof contains 55 accepted scenarios, 1,485 pairwise comparisons with zero
+failures and 27 approved similarity warnings, 683 PNG captures, 14 contact
+sheets, and a 55-row authoring audit. The exact native/Web ENV06_6 runtime below
+the rollout is also green, so this row no longer carries a deferred host gate.

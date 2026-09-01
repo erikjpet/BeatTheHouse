@@ -179,38 +179,59 @@
     "semantic_anchors": {
       "delivery_clerk": {
         "position": [
-          150,
-          100
+          560,
+          380
         ],
         "zone_id": "foreground"
       },
       "delivery_clerk_work": {
         "position": [
-          150,
-          350
+          570,
+          100
         ],
         "zone_id": "center"
       },
       "delivery_manifest": {
         "position": [
-          650,
+          700,
           100
         ],
         "zone_id": "service_lane"
       },
       "delivery_verification_shelf": {
         "position": [
-          650,
-          100
+          576,
+          28
         ],
-        "zone_id": "right"
+        "zone_id": "background"
       },
       "delivery_runner_route": {
         "position": [
-          300,
-          100
+          670,
+          385
         ],
         "zone_id": "foreground"
+      },
+      "package_a_delivery_gate": {
+        "position": [
+          460,
+          50
+        ],
+        "zone_id": "background"
+      },
+      "package_a_delivery_cartons_wait": {
+        "position": [
+          550,
+          385
+        ],
+        "zone_id": "foreground"
+      },
+      "package_a_delivery_runner": {
+        "position": [
+          860,
+          335
+        ],
+        "zone_id": "right"
       },
       "package_a_lotto_queue": {
         "position": [
@@ -263,8 +284,8 @@
       },
       "travel_1": {
         "position": [
-          300,
-          100
+          780,
+          258
         ],
         "zone_id": "exit_lane"
       }

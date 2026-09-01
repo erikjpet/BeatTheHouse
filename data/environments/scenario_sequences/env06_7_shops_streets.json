@@ -86,7 +86,7 @@
                   "object": {
                     "label": "Delivery manifest gate",
                     "role": "workstation",
-                    "anchor_id": "delivery_manifest",
+                    "anchor_id": "package_a_delivery_gate",
                     "zone_id": "service_lane",
                     "bounds": {
                       "w": 64.0,
@@ -240,7 +240,7 @@
                   "actor": {
                     "label": "Delivery runner",
                     "actor_id": "priya_travel_merchant",
-                    "anchor_id": "travel_1",
+                    "anchor_id": "package_a_delivery_runner",
                     "behavior": "work",
                     "pose": "unloading_dolly"
                   }
@@ -657,7 +657,7 @@
                   "receipt_id": "awaiting_stock_reposition_cartons",
                   "owner_namespace": "scenario",
                   "stable_object_id": "delivery_cartons",
-                  "anchor_id": "delivery_clerk"
+                  "anchor_id": "package_a_delivery_cartons_wait"
                 },
                 {
                   "family": "scene_ops",
@@ -1337,7 +1337,7 @@
           "sweep_coexistence",
           "host_event_authority_gate"
         ],
-        "sequence_signature": "36db74aed19e34ffde99c6859ced4ade09f124c6c0463edf9e17f0b22fa4b08f",
+        "sequence_signature": "c25694ce5a06a07aae020cca50a81f5c1b20c0c1e921cd88e6b3c5a4359be570",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -1353,7 +1353,10 @@
             "base::anchor:delivery_manifest",
             "base::anchor:delivery_runner_route",
             "base::anchor:delivery_verification_shelf",
+            "base::anchor:package_a_delivery_cartons_wait",
             "base::anchor:package_a_delivery_crate",
+            "base::anchor:package_a_delivery_gate",
+            "base::anchor:package_a_delivery_runner",
             "base::anchor:travel_1"
           ],
           "zones": [
@@ -1589,7 +1592,141 @@
           "expiry_idempotent": true
         },
         "masked_visual_explanations": {
-
+          "back_alley_street_craps::corner_store_lotto_fever": {
+            "explanation": "Ticket queue and number-board stations are visually distinct from the chalk ring, lookout marker, and shooter route.",
+            "capture_receipt_sha256": "f859de33e6212b91098bf71bb8c1822ddc06e4906790661d0e82ebc1bae6bd24",
+            "reviewer_receipt_sha256": "8fe11ed8de2a68c25098874d3cf7024b345e82605c75d1bb4f28a6ccc839fcc3"
+          },
+          "back_alley_cruiser_parked::corner_store_lotto_fever": {
+            "explanation": "Queue service and number verification are visually distinct from the patrol beam, movable cover, and scanning officer.",
+            "capture_receipt_sha256": "102eee626cc8eb059f0309e1d53de7dfa674fe0243dfd6cf4ed649eb87e8eca6",
+            "reviewer_receipt_sha256": "8fe11ed8de2a68c25098874d3cf7024b345e82605c75d1bb4f28a6ccc839fcc3"
+          },
+          "back_alley_nothing_moving::corner_store_lotto_fever": {
+            "explanation": "A live counter queue is visually distinct from the closed-shutter trace investigation and exposed route.",
+            "capture_receipt_sha256": "b687adced1224211f4e214032a22f1234ee148ab7f20f5b27b58a510f8e34886",
+            "reviewer_receipt_sha256": "8fe11ed8de2a68c25098874d3cf7024b345e82605c75d1bb4f28a6ccc839fcc3"
+          },
+          "corner_store_lotto_fever::pawn_shop_estate_lot_day": {
+            "explanation": "Number-board verification is visually distinct from the segmented appraisal cart and provenance lanes.",
+            "capture_receipt_sha256": "f6453c80fb1fb27fa3cb522f13c4b110eba9236c45972d117200da6ed587ede8",
+            "reviewer_receipt_sha256": "8fe11ed8de2a68c25098874d3cf7024b345e82605c75d1bb4f28a6ccc839fcc3"
+          },
+          "back_alley_street_craps::corner_store_inventory_night": {
+            "explanation": "Count cages and discrepancy shelving are visually distinct from the public dice ring and lookout state.",
+            "capture_receipt_sha256": "00cd3ca246569ee44ac3c0bd8ff3dc446a9bb7d8ff5f9ea1b1f74cb9d61d8764",
+            "reviewer_receipt_sha256": "8fe11ed8de2a68c25098874d3cf7024b345e82605c75d1bb4f28a6ccc839fcc3"
+          },
+          "back_alley_nothing_moving::corner_store_inventory_night": {
+            "explanation": "A lit inventory discrepancy path is visually distinct from the three-trace shutter route.",
+            "capture_receipt_sha256": "d164b209730c86771b9c636e34de1fea62ebdae4663e8544a28999b3fa153c99",
+            "reviewer_receipt_sha256": "8fe11ed8de2a68c25098874d3cf7024b345e82605c75d1bb4f28a6ccc839fcc3"
+          },
+          "back_alley_street_craps::pawn_shop_estate_lot_day": {
+            "explanation": "A curb dice layout and shooter are visually distinct from provenance carts and a guarded appraiser lane.",
+            "capture_receipt_sha256": "d50903782c99ad713e01c68ad7dd257cafc16b79676861cb8c6db902990b1b0f",
+            "reviewer_receipt_sha256": "8fe11ed8de2a68c25098874d3cf7024b345e82605c75d1bb4f28a6ccc839fcc3"
+          },
+          "back_alley_cruiser_parked::pawn_shop_estate_lot_day": {
+            "explanation": "Patrol sightline and cover movement are visually distinct from appraisal sorting and estate provenance.",
+            "capture_receipt_sha256": "5aeb7bcaaf770bd541c2863b35994866debde40fd0fb28f971c2fbd2c4bb990c",
+            "reviewer_receipt_sha256": "8fe11ed8de2a68c25098874d3cf7024b345e82605c75d1bb4f28a6ccc839fcc3"
+          },
+          "back_alley_cruiser_parked::pawn_shop_serial_check_day": {
+            "explanation": "A moving patrol beam is visually distinct from a sealed hold object, serial station, and records clerk.",
+            "capture_receipt_sha256": "356bd8cb06d07a583927791fdc47b433bdadd18be87e8df56c0b155d18bba282",
+            "reviewer_receipt_sha256": "8fe11ed8de2a68c25098874d3cf7024b345e82605c75d1bb4f28a6ccc839fcc3"
+          },
+          "back_alley_nothing_moving::pawn_shop_sals_mood": {
+            "explanation": "An empty-alley trail is visually distinct from unfinished shop jobs and Sal's counter/back-room route.",
+            "capture_receipt_sha256": "b8073771584628e56eb867544287e2d65a1b539c5091c8cf636a9d787a45555f",
+            "reviewer_receipt_sha256": "8fe11ed8de2a68c25098874d3cf7024b345e82605c75d1bb4f28a6ccc839fcc3"
+          },
+          "bar_payday_rush::jazz_club_recording_night": {
+            "explanation": "Crowd and token handling at the bar are visually distinct from recording booths, cue lamps, and a session route.",
+            "capture_receipt_sha256": "f6b34586d6f2b1ff18f5e837e27e5edde157b566be9b5744ed11017ac1c80830",
+            "reviewer_receipt_sha256": "8fe11ed8de2a68c25098874d3cf7024b345e82605c75d1bb4f28a6ccc839fcc3"
+          },
+          "bar_live_band::bar_lock_in": {
+            "explanation": "A sealed lock-in route is visually distinct from the band stage, equipment, and live-room actions.",
+            "capture_receipt_sha256": "82123d820191cad954015b0c21e72c124a8fe073ab99023ef54a314aea95f37c",
+            "reviewer_receipt_sha256": "8fe11ed8de2a68c25098874d3cf7024b345e82605c75d1bb4f28a6ccc839fcc3"
+          },
+          "bar_lock_in::punchline_new_muscle": {
+            "explanation": "Bar lock-in controls are visually distinct from guarded comedy-club access and muscle positioning.",
+            "capture_receipt_sha256": "614323c416ded98140c6f3d06f86dde1615434973d22267eee9ab49e1dc747bd",
+            "reviewer_receipt_sha256": "8fe11ed8de2a68c25098874d3cf7024b345e82605c75d1bb4f28a6ccc839fcc3"
+          },
+          "bar_lock_in::kitty_cat_lounge_amateur_night": {
+            "explanation": "A closed bar route is visually distinct from signup, dressing-room, and stage-light presentation.",
+            "capture_receipt_sha256": "b05f15c40256bb1a563f402df87049c30e9ea1761c2653a6032dce404784f65f",
+            "reviewer_receipt_sha256": "8fe11ed8de2a68c25098874d3cf7024b345e82605c75d1bb4f28a6ccc839fcc3"
+          },
+          "bar_live_band::punchline_new_muscle": {
+            "explanation": "A performance and equipment stage is visually distinct from guarded club lanes and enforcement choices.",
+            "capture_receipt_sha256": "9b36633cae73c9290c8fa77459ceb39b0413924847045c865d3d0206cf86364e",
+            "reviewer_receipt_sha256": "8fe11ed8de2a68c25098874d3cf7024b345e82605c75d1bb4f28a6ccc839fcc3"
+          },
+          "bar_live_band::kitty_cat_lounge_amateur_night": {
+            "explanation": "Band equipment and live-room movement are visually distinct from amateur signup and dressing-room staging.",
+            "capture_receipt_sha256": "f44ce026a985480ee10f923e8e23906cff5e4bd0b22621932994f6550d335ae5",
+            "reviewer_receipt_sha256": "8fe11ed8de2a68c25098874d3cf7024b345e82605c75d1bb4f28a6ccc839fcc3"
+          },
+          "punchline_greased_week::punchline_headliner_night": {
+            "explanation": "Headliner escort and green-room staging are visually distinct from grease-payment pressure and altered club access.",
+            "capture_receipt_sha256": "ad337a08e74b3d21b56a41cd46d3c8ce10d920696b2d0bd39ee36af30208157c",
+            "reviewer_receipt_sha256": "8fe11ed8de2a68c25098874d3cf7024b345e82605c75d1bb4f28a6ccc839fcc3"
+          },
+          "kitty_cat_lounge_buyout::punchline_headliner_night": {
+            "explanation": "Headliner movement is visually distinct from buyout signage, private floor zones, and guest routing.",
+            "capture_receipt_sha256": "937327fd354067a783dd83c95e39dc6395277bcf9b0d28a6e02dab2f9b4fbc9c",
+            "reviewer_receipt_sha256": "8fe11ed8de2a68c25098874d3cf7024b345e82605c75d1bb4f28a6ccc839fcc3"
+          },
+          "jazz_club_union_trouble::punchline_bringer_show": {
+            "explanation": "Bringer seating and pitch flow are visually distinct from union positions, contract pressure, and work stoppage.",
+            "capture_receipt_sha256": "91353022f2df40f3104afc44870d0f4f8c28a8e37e088d0fa2b206650fa097d3",
+            "reviewer_receipt_sha256": "8fe11ed8de2a68c25098874d3cf7024b345e82605c75d1bb4f28a6ccc839fcc3"
+          },
+          "punchline_debt_court::punchline_high_stakes_night": {
+            "explanation": "A wager-driven club arrangement is visually distinct from debt claims, testimony positions, and judgment state.",
+            "capture_receipt_sha256": "8b8d46e9aca3555489291a6d2c176f11ffae09022e4a385b5b3e6e3f26d40339",
+            "reviewer_receipt_sha256": "8fe11ed8de2a68c25098874d3cf7024b345e82605c75d1bb4f28a6ccc839fcc3"
+          },
+          "jazz_club_rent_party::punchline_high_stakes_night": {
+            "explanation": "High-stakes table pressure is visually distinct from rent collection, contribution stations, and party access.",
+            "capture_receipt_sha256": "94ff946767f7a1824ff4b56a90f895cfac50ee79156a77b7184fbc522dd6f934",
+            "reviewer_receipt_sha256": "8fe11ed8de2a68c25098874d3cf7024b345e82605c75d1bb4f28a6ccc839fcc3"
+          },
+          "kitty_cat_lounge_buyout::punchline_greased_week": {
+            "explanation": "Greased-week payment and backstage pressure are visually distinct from a whole-floor buyout and private routing.",
+            "capture_receipt_sha256": "ce3c165062c1d95077ad11c42b5d9504bbb4f2ff80edf3b621e6392868e7c192",
+            "reviewer_receipt_sha256": "8fe11ed8de2a68c25098874d3cf7024b345e82605c75d1bb4f28a6ccc839fcc3"
+          },
+          "jazz_club_rent_party::punchline_debt_court": {
+            "explanation": "Formal debt-court positions are visually distinct from communal rent collection and party-floor movement.",
+            "capture_receipt_sha256": "fb1f2a4ca9cfb6e4774b5145bf1ed5adef08759eda59fdd241df7f85b7ef3245",
+            "reviewer_receipt_sha256": "8fe11ed8de2a68c25098874d3cf7024b345e82605c75d1bb4f28a6ccc839fcc3"
+          },
+          "kitty_cat_lounge_amateur_night::punchline_new_muscle": {
+            "explanation": "Guarded muscle placement is visually distinct from amateur signup, performer preparation, and stage entry.",
+            "capture_receipt_sha256": "97a63b218c150563e1f3d412e9994a533ae7a26453153fde9fba91ca74582075",
+            "reviewer_receipt_sha256": "8fe11ed8de2a68c25098874d3cf7024b345e82605c75d1bb4f28a6ccc839fcc3"
+          },
+          "jazz_club_guest_legend::kitty_cat_lounge_bachelorette_storm": {
+            "explanation": "Guest-legend listening and performance space are visually distinct from a moving party group and disrupted lounge zones.",
+            "capture_receipt_sha256": "fc0cf513c6ebc589d75cb0f1d65051cb4bc89847d14c0542dc2397581b3254d3",
+            "reviewer_receipt_sha256": "8fe11ed8de2a68c25098874d3cf7024b345e82605c75d1bb4f28a6ccc839fcc3"
+          },
+          "delta_queen_fog_delay::delta_queen_wedding_charter": {
+            "explanation": "Ceremony ropes, rings, and guest routing are visually distinct from a closed gangway, chart board, and signal lamp.",
+            "capture_receipt_sha256": "08c4b0dde7c9720aeb8ebf26060cfae5d50ad8bbfa443b708f8f6c358e2453bc",
+            "reviewer_receipt_sha256": "8fe11ed8de2a68c25098874d3cf7024b345e82605c75d1bb4f28a6ccc839fcc3"
+          },
+          "pawn_shop_sals_mood::pawn_shop_serial_check_day": {
+            "explanation": "A sealed serial-hold workflow is visually distinct from visible unfinished jobs and Sal's mood-dependent route.",
+            "capture_receipt_sha256": "810a21fa1f6d8cb020996ed9bad31ce10c3b95949baa8b2b1619b1f57cebb689",
+            "reviewer_receipt_sha256": "8fe11ed8de2a68c25098874d3cf7024b345e82605c75d1bb4f28a6ccc839fcc3"
+          }
         }
       }
     },
@@ -2368,6 +2505,22 @@
                   "receipt_id": "corner_store_lotto_fever_work_actor",
                   "stable_object_id": "lotto_regular",
                   "zone_id": "service_lane"
+                },
+                {
+                  "family": "actor_ops",
+                  "op": "set_pose",
+                  "owner_namespace": "scenario",
+                  "pose": "watching_draw",
+                  "receipt_id": "corner_store_lotto_fever_draw_pose",
+                  "stable_object_id": "lotto_regular"
+                },
+                {
+                  "behavior": "watch",
+                  "family": "actor_ops",
+                  "op": "set_behavior",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "corner_store_lotto_fever_draw_behavior",
+                  "stable_object_id": "lotto_regular"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -2500,6 +2653,30 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_lotto_fever_work_reveal",
                   "stable_object_id": "number_board"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "set_state",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "corner_store_lotto_fever_queue_places",
+                  "stable_object_id": "queue_rail",
+                  "state": "places_marked"
+                },
+                {
+                  "appearance": "verified_digits",
+                  "family": "scene_ops",
+                  "op": "set_appearance",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "corner_store_lotto_fever_draw_digits",
+                  "stable_object_id": "number_board"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "move",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "corner_store_lotto_fever_queue_turn",
+                  "stable_object_id": "queue_rail",
+                  "zone_id": "left"
                 }
               ],
               "transition_ops": [
@@ -2512,6 +2689,45 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_lotto_fever_work_change",
                   "stable_object_id": "corner_store_lotto_fever_work_change"
+                },
+                {
+                  "channel": "room",
+                  "cue_id": "ticket_rattle",
+                  "family": "transition_ops",
+                  "op": "sound",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "corner_store_lotto_fever_ticket_rattle",
+                  "stable_object_id": "corner_store_lotto_fever_ticket_rattle"
+                },
+                {
+                  "channel": "room",
+                  "family": "transition_ops",
+                  "message": "The called number and the held place are both visible.",
+                  "op": "feedback",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "corner_store_lotto_fever_number_feedback",
+                  "stable_object_id": "corner_store_lotto_fever_number_feedback"
+                },
+                {
+                  "channel": "room",
+                  "cue_id": "lotto_counter",
+                  "family": "transition_ops",
+                  "op": "music",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "corner_store_lotto_fever_lotto_counter",
+                  "stable_object_id": "corner_store_lotto_fever_lotto_counter"
+                },
+                {
+                  "channel": "room",
+                  "duration_boundaries": 1.0,
+                  "family": "transition_ops",
+                  "message": "The queue turns toward the verified number board.",
+                  "op": "stage",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "corner_store_lotto_fever_draw_stage",
+                  "reduced_motion_message": "The physical state is now in place.",
+                  "stable_object_id": "corner_store_lotto_fever_draw_stage",
+                  "stage_id": "corner_store_lotto_fever_draw_stage"
                 }
               ]
             },
@@ -2603,7 +2819,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "fe7b52758c9f7e2dd2d296b8422c1b44e8a3a7078bab6f95156e9c3608b7dd33"
+        "sequence_signature": "702c0e25eb945670c651d443cb725b44a52679b646fa888680d7135d41f50d98"
       }
     },
     {
@@ -3376,6 +3592,14 @@
                   "receipt_id": "corner_store_aftermath_work_actor",
                   "stable_object_id": "plainclothes_officer",
                   "zone_id": "service_lane"
+                },
+                {
+                  "family": "actor_ops",
+                  "op": "set_position",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "corner_store_aftermath_officer_lane",
+                  "stable_object_id": "plainclothes_officer",
+                  "zone_id": "left"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -3508,6 +3732,29 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_aftermath_work_reveal",
                   "stable_object_id": "suspect_object"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "move",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "corner_store_aftermath_evidence_lane",
+                  "stable_object_id": "boarded_glass",
+                  "zone_id": "foreground"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "reveal",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "corner_store_aftermath_evidence_reveal",
+                  "stable_object_id": "suspect_object"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "set_state",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "corner_store_aftermath_evidence_state",
+                  "stable_object_id": "suspect_object",
+                  "state": "bagged_for_trace"
                 }
               ],
               "transition_ops": [
@@ -3520,6 +3767,36 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_aftermath_work_change",
                   "stable_object_id": "corner_store_aftermath_work_change"
+                },
+                {
+                  "channel": "room",
+                  "duration_boundaries": 1.0,
+                  "family": "transition_ops",
+                  "message": "The evidence route is isolated before the object is handled.",
+                  "op": "stage",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "corner_store_aftermath_evidence_stage",
+                  "reduced_motion_message": "The physical state is now in place.",
+                  "stable_object_id": "corner_store_aftermath_evidence_stage",
+                  "stage_id": "corner_store_aftermath_evidence_stage"
+                },
+                {
+                  "channel": "room",
+                  "cue_id": "evidence_bag",
+                  "family": "transition_ops",
+                  "op": "sound",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "corner_store_aftermath_evidence_bag",
+                  "stable_object_id": "corner_store_aftermath_evidence_bag"
+                },
+                {
+                  "channel": "room",
+                  "family": "transition_ops",
+                  "message": "The officer holds a visible chain-of-custody lane.",
+                  "op": "feedback",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "corner_store_aftermath_custody_feedback",
+                  "stable_object_id": "corner_store_aftermath_custody_feedback"
                 }
               ]
             },
@@ -3611,7 +3888,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "2e0ef69c6428a619fbfb30ac305af147df6423ba7f14b7ae12719ff78f658d7b"
+        "sequence_signature": "6ae3b4cd5fcf30feea742abbef1fb7ec299a2685afa087f6b2eb67b8786aff08"
       }
     },
     {
@@ -4391,6 +4668,14 @@
                   "receipt_id": "corner_store_dead_shift_work_actor",
                   "stable_object_id": "night_clerk",
                   "zone_id": "service_lane"
+                },
+                {
+                  "family": "actor_ops",
+                  "op": "set_pose",
+                  "owner_namespace": "scenario",
+                  "pose": "holding_flashlight",
+                  "receipt_id": "corner_store_dead_shift_clerk_pose",
+                  "stable_object_id": "night_clerk"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -4523,6 +4808,29 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_dead_shift_work_reveal",
                   "stable_object_id": "cooler_circuit"
+                },
+                {
+                  "appearance": "open_breaker",
+                  "family": "scene_ops",
+                  "op": "set_appearance",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "corner_store_dead_shift_breaker_open",
+                  "stable_object_id": "breaker_panel"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "set_state",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "corner_store_dead_shift_cooler_dark",
+                  "stable_object_id": "cooler_circuit",
+                  "state": "circuit_isolated"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "reveal",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "corner_store_dead_shift_cooler_reveal",
+                  "stable_object_id": "cooler_circuit"
                 }
               ],
               "transition_ops": [
@@ -4535,6 +4843,24 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_dead_shift_work_change",
                   "stable_object_id": "corner_store_dead_shift_work_change"
+                },
+                {
+                  "channel": "room",
+                  "cue_id": "breaker_snap",
+                  "family": "transition_ops",
+                  "op": "sound",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "corner_store_dead_shift_breaker_snap",
+                  "stable_object_id": "corner_store_dead_shift_breaker_snap"
+                },
+                {
+                  "channel": "room",
+                  "family": "transition_ops",
+                  "message": "The private aisle stays dark while the cooler circuit is isolated.",
+                  "op": "feedback",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "corner_store_dead_shift_power_feedback",
+                  "stable_object_id": "corner_store_dead_shift_power_feedback"
                 }
               ]
             },
@@ -4626,7 +4952,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "a8cb61b0cd436b360c7a4d007374b49c2fc91b5c480cb2a20b4acf2d3ff77676"
+        "sequence_signature": "9a6c56fc543fa68ae38303304012421216dbcc308f26343b67c5b216538db800"
       }
     },
     {
@@ -5408,6 +5734,22 @@
                   "receipt_id": "corner_store_inventory_night_work_actor",
                   "stable_object_id": "inventory_clerk",
                   "zone_id": "service_lane"
+                },
+                {
+                  "family": "actor_ops",
+                  "op": "set_pose",
+                  "owner_namespace": "scenario",
+                  "pose": "recounting_shelf",
+                  "receipt_id": "corner_store_inventory_night_counter_pose",
+                  "stable_object_id": "inventory_clerk"
+                },
+                {
+                  "behavior": "work",
+                  "family": "actor_ops",
+                  "op": "set_behavior",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "corner_store_inventory_night_counter_behavior",
+                  "stable_object_id": "inventory_clerk"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -5540,6 +5882,37 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_inventory_night_work_reveal",
                   "stable_object_id": "discrepancy_shelf"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "move",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "corner_store_inventory_night_cage_split",
+                  "stable_object_id": "count_cage",
+                  "zone_id": "right"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "set_state",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "corner_store_inventory_night_cage_counted",
+                  "stable_object_id": "count_cage",
+                  "state": "section_counted"
+                },
+                {
+                  "appearance": "discrepancy_tags",
+                  "family": "scene_ops",
+                  "op": "set_appearance",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "corner_store_inventory_night_shelf_tags",
+                  "stable_object_id": "discrepancy_shelf"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "reveal",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "corner_store_inventory_night_shelf_reveal",
+                  "stable_object_id": "discrepancy_shelf"
                 }
               ],
               "transition_ops": [
@@ -5552,6 +5925,36 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_inventory_night_work_change",
                   "stable_object_id": "corner_store_inventory_night_work_change"
+                },
+                {
+                  "channel": "room",
+                  "cue_id": "scanner_beep",
+                  "family": "transition_ops",
+                  "op": "sound",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "corner_store_inventory_night_scanner_beep",
+                  "stable_object_id": "corner_store_inventory_night_scanner_beep"
+                },
+                {
+                  "channel": "room",
+                  "duration_boundaries": 1.0,
+                  "family": "transition_ops",
+                  "message": "The count cage closes one section while the discrepancy shelf remains accessible.",
+                  "op": "stage",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "corner_store_inventory_night_count_stage",
+                  "reduced_motion_message": "The physical state is now in place.",
+                  "stable_object_id": "corner_store_inventory_night_count_stage",
+                  "stage_id": "corner_store_inventory_night_count_stage"
+                },
+                {
+                  "channel": "room",
+                  "family": "transition_ops",
+                  "message": "The visible tag trail now identifies the mismatched section.",
+                  "op": "feedback",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "corner_store_inventory_night_count_feedback",
+                  "stable_object_id": "corner_store_inventory_night_count_feedback"
                 }
               ]
             },
@@ -5643,7 +6046,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "4759bfbc494432213643481e8f34d13e72dfe3bc1b9bd263a42d45b9b1928acb"
+        "sequence_signature": "35c1e64ec7e435b5e73ddec76d0e4c0f818f145d06fd0537747f3762a1de10aa"
       }
     },
     {
@@ -6425,6 +6828,30 @@
                   "receipt_id": "back_alley_street_craps_work_actor",
                   "stable_object_id": "street_shooter",
                   "zone_id": "service_lane"
+                },
+                {
+                  "family": "actor_ops",
+                  "op": "set_pose",
+                  "owner_namespace": "scenario",
+                  "pose": "setting_dice",
+                  "receipt_id": "back_alley_street_craps_shooter_pose",
+                  "stable_object_id": "street_shooter"
+                },
+                {
+                  "behavior": "watch",
+                  "family": "actor_ops",
+                  "op": "set_behavior",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "back_alley_street_craps_shooter_behavior",
+                  "stable_object_id": "street_shooter"
+                },
+                {
+                  "family": "actor_ops",
+                  "op": "set_position",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "back_alley_street_craps_shooter_lane",
+                  "stable_object_id": "street_shooter",
+                  "zone_id": "right"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -6557,6 +6984,30 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_street_craps_work_reveal",
                   "stable_object_id": "lookout_marker"
+                },
+                {
+                  "appearance": "chalk_point_ring",
+                  "family": "scene_ops",
+                  "op": "set_appearance",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "back_alley_street_craps_ring_marked",
+                  "stable_object_id": "chalk_ring"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "move",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "back_alley_street_craps_lookout_turn",
+                  "stable_object_id": "lookout_marker",
+                  "zone_id": "foreground"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "set_state",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "back_alley_street_craps_lookout_state",
+                  "stable_object_id": "lookout_marker",
+                  "state": "warning_active"
                 }
               ],
               "transition_ops": [
@@ -6569,6 +7020,33 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_street_craps_work_change",
                   "stable_object_id": "back_alley_street_craps_work_change"
+                },
+                {
+                  "channel": "room",
+                  "cue_id": "dice_curb",
+                  "family": "transition_ops",
+                  "op": "sound",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "back_alley_street_craps_dice_curb",
+                  "stable_object_id": "back_alley_street_craps_dice_curb"
+                },
+                {
+                  "channel": "room",
+                  "cue_id": "street_game",
+                  "family": "transition_ops",
+                  "op": "music",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "back_alley_street_craps_street_game",
+                  "stable_object_id": "back_alley_street_craps_street_game"
+                },
+                {
+                  "channel": "room",
+                  "family": "transition_ops",
+                  "message": "The chalk point and lookout warning define the live street game.",
+                  "op": "feedback",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "back_alley_street_craps_point_feedback",
+                  "stable_object_id": "back_alley_street_craps_point_feedback"
                 }
               ]
             },
@@ -6660,7 +7138,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "3d96e6b536640e7bbeff8c5ede2bd39cbbde60b9a226869d000baf6b76c6a72b"
+        "sequence_signature": "3249380478959fe1c1f2c945aa6ac7e4de0db914c300f458a4458b7524305063"
       }
     },
     {
@@ -7433,6 +7911,30 @@
                   "receipt_id": "back_alley_cruiser_parked_work_actor",
                   "stable_object_id": "patrol_officer",
                   "zone_id": "service_lane"
+                },
+                {
+                  "behavior": "patrol",
+                  "family": "actor_ops",
+                  "op": "set_behavior",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "back_alley_cruiser_parked_patrol_behavior",
+                  "stable_object_id": "patrol_officer"
+                },
+                {
+                  "family": "actor_ops",
+                  "op": "set_pose",
+                  "owner_namespace": "scenario",
+                  "pose": "scanning_doorway",
+                  "receipt_id": "back_alley_cruiser_parked_patrol_pose",
+                  "stable_object_id": "patrol_officer"
+                },
+                {
+                  "family": "actor_ops",
+                  "op": "set_position",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "back_alley_cruiser_parked_patrol_lane",
+                  "stable_object_id": "patrol_officer",
+                  "zone_id": "center"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -7565,6 +8067,29 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_cruiser_parked_work_reveal",
                   "stable_object_id": "stacked_cover"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "hide",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "back_alley_cruiser_parked_beam_hidden",
+                  "stable_object_id": "cruiser_beam"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "move",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "back_alley_cruiser_parked_cover_shift",
+                  "stable_object_id": "stacked_cover",
+                  "zone_id": "right"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "set_state",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "back_alley_cruiser_parked_cover_state",
+                  "stable_object_id": "stacked_cover",
+                  "state": "diversion_ready"
                 }
               ],
               "transition_ops": [
@@ -7577,6 +8102,45 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_cruiser_parked_work_change",
                   "stable_object_id": "back_alley_cruiser_parked_work_change"
+                },
+                {
+                  "channel": "room",
+                  "cue_id": "police_radio",
+                  "family": "transition_ops",
+                  "op": "sound",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "back_alley_cruiser_parked_police_radio",
+                  "stable_object_id": "back_alley_cruiser_parked_police_radio"
+                },
+                {
+                  "channel": "room",
+                  "cue_id": "sightline_tension",
+                  "family": "transition_ops",
+                  "op": "music",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "back_alley_cruiser_parked_sightline_tension",
+                  "stable_object_id": "back_alley_cruiser_parked_sightline_tension"
+                },
+                {
+                  "channel": "room",
+                  "family": "transition_ops",
+                  "message": "The shifted cover breaks one patrol sightline but exposes another.",
+                  "op": "feedback",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "back_alley_cruiser_parked_sightline_feedback",
+                  "stable_object_id": "back_alley_cruiser_parked_sightline_feedback"
+                },
+                {
+                  "channel": "room",
+                  "duration_boundaries": 1.0,
+                  "family": "transition_ops",
+                  "message": "The patrol turns while the cover crosses the beam.",
+                  "op": "stage",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "back_alley_cruiser_parked_diversion_stage",
+                  "reduced_motion_message": "The physical state is now in place.",
+                  "stable_object_id": "back_alley_cruiser_parked_diversion_stage",
+                  "stage_id": "back_alley_cruiser_parked_diversion_stage"
                 }
               ]
             },
@@ -7668,7 +8232,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "caacdb4639ceb65a8ea6a38cb372941ff3bf6dc2bf067bc0dd637d53274e866b"
+        "sequence_signature": "3e2fc864dc446c67f5b6ae71b3d07b07b0d903f8a4f778f2b9b314b964b5c073"
       }
     },
     {
@@ -8443,6 +9007,22 @@
                   "receipt_id": "back_alley_fence_night_work_actor",
                   "stable_object_id": "rotating_buyer",
                   "zone_id": "service_lane"
+                },
+                {
+                  "family": "actor_ops",
+                  "op": "set_pose",
+                  "owner_namespace": "scenario",
+                  "pose": "checking_marks",
+                  "receipt_id": "back_alley_fence_night_buyer_pose",
+                  "stable_object_id": "rotating_buyer"
+                },
+                {
+                  "family": "actor_ops",
+                  "op": "set_position",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "back_alley_fence_night_buyer_rotation",
+                  "stable_object_id": "rotating_buyer",
+                  "zone_id": "foreground"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -8575,6 +9155,37 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_fence_night_work_reveal",
                   "stable_object_id": "auth_station"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "move",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "back_alley_fence_night_lot_rotation",
+                  "stable_object_id": "goods_lot",
+                  "zone_id": "left"
+                },
+                {
+                  "appearance": "marked_goods_lots",
+                  "family": "scene_ops",
+                  "op": "set_appearance",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "back_alley_fence_night_lot_marks",
+                  "stable_object_id": "goods_lot"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "set_state",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "back_alley_fence_night_auth_ready",
+                  "stable_object_id": "auth_station",
+                  "state": "authentication_open"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "enable",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "back_alley_fence_night_station_enable",
+                  "stable_object_id": "auth_station"
                 }
               ],
               "transition_ops": [
@@ -8587,6 +9198,36 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_fence_night_work_change",
                   "stable_object_id": "back_alley_fence_night_work_change"
+                },
+                {
+                  "channel": "room",
+                  "cue_id": "crate_latch",
+                  "family": "transition_ops",
+                  "op": "sound",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "back_alley_fence_night_crate_latch",
+                  "stable_object_id": "back_alley_fence_night_crate_latch"
+                },
+                {
+                  "channel": "room",
+                  "duration_boundaries": 1.0,
+                  "family": "transition_ops",
+                  "message": "The rotating buyer yields the authentication station to the contested crate.",
+                  "op": "stage",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "back_alley_fence_night_auction_stage",
+                  "reduced_motion_message": "The physical state is now in place.",
+                  "stable_object_id": "back_alley_fence_night_auction_stage",
+                  "stage_id": "back_alley_fence_night_auction_stage"
+                },
+                {
+                  "channel": "room",
+                  "family": "transition_ops",
+                  "message": "The marked lot and authentication result remain independently visible.",
+                  "op": "feedback",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "back_alley_fence_night_authentication_feedback",
+                  "stable_object_id": "back_alley_fence_night_authentication_feedback"
                 }
               ]
             },
@@ -8678,7 +9319,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "374a7da2cbfbc275396d78d32308649184024d878ef465df1b76fdb9bbc2525c"
+        "sequence_signature": "b3cc40ba38bce970ea786c1358f0887ee6e733874560fa450b0e8a08a6a2795c"
       }
     },
     {
@@ -9451,6 +10092,22 @@
                   "receipt_id": "back_alley_nothing_moving_work_actor",
                   "stable_object_id": "returning_regular",
                   "zone_id": "service_lane"
+                },
+                {
+                  "behavior": "flee",
+                  "family": "actor_ops",
+                  "op": "set_behavior",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "back_alley_nothing_moving_regular_behavior",
+                  "stable_object_id": "returning_regular"
+                },
+                {
+                  "family": "actor_ops",
+                  "op": "set_pose",
+                  "owner_namespace": "scenario",
+                  "pose": "pointing_to_exit",
+                  "receipt_id": "back_alley_nothing_moving_regular_pose",
+                  "stable_object_id": "returning_regular"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -9583,6 +10240,30 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_nothing_moving_work_reveal",
                   "stable_object_id": "shutter_gap"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "set_state",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "back_alley_nothing_moving_trace_pattern",
+                  "stable_object_id": "three_traces",
+                  "state": "three_traces_compared"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "move",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "back_alley_nothing_moving_shutter_gap",
+                  "stable_object_id": "shutter_gap",
+                  "zone_id": "background"
+                },
+                {
+                  "appearance": "opened_trace_gap",
+                  "family": "scene_ops",
+                  "op": "set_appearance",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "back_alley_nothing_moving_gap_appearance",
+                  "stable_object_id": "shutter_gap"
                 }
               ],
               "transition_ops": [
@@ -9595,6 +10276,45 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_nothing_moving_work_change",
                   "stable_object_id": "back_alley_nothing_moving_work_change"
+                },
+                {
+                  "channel": "room",
+                  "cue_id": "shutter_scrape",
+                  "family": "transition_ops",
+                  "op": "sound",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "back_alley_nothing_moving_shutter_scrape",
+                  "stable_object_id": "back_alley_nothing_moving_shutter_scrape"
+                },
+                {
+                  "channel": "room",
+                  "cue_id": "silent_alley",
+                  "family": "transition_ops",
+                  "op": "music",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "back_alley_nothing_moving_silent_alley",
+                  "stable_object_id": "back_alley_nothing_moving_silent_alley"
+                },
+                {
+                  "channel": "room",
+                  "duration_boundaries": 1.0,
+                  "family": "transition_ops",
+                  "message": "The wet print, crate drag, and snapped seal converge on the shutter gap.",
+                  "op": "stage",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "back_alley_nothing_moving_trace_stage",
+                  "reduced_motion_message": "The physical state is now in place.",
+                  "stable_object_id": "back_alley_nothing_moving_trace_stage",
+                  "stage_id": "back_alley_nothing_moving_trace_stage"
+                },
+                {
+                  "channel": "room",
+                  "family": "transition_ops",
+                  "message": "The silent trail now exposes a route rather than a stall.",
+                  "op": "feedback",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "back_alley_nothing_moving_trail_feedback",
+                  "stable_object_id": "back_alley_nothing_moving_trail_feedback"
                 }
               ]
             },
@@ -9686,7 +10406,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "2ac5b5189b381e24e45f98d42b7b28e8ec82ca430486a6e7b51a6b49c615c730"
+        "sequence_signature": "5ae318c2661592d827c1b0f88e9a37214ace4a3dcdf72bb9dae930931b020580"
       }
     },
     {
@@ -10464,6 +11184,30 @@
                   "receipt_id": "pawn_shop_estate_lot_day_work_actor",
                   "stable_object_id": "estate_appraiser",
                   "zone_id": "service_lane"
+                },
+                {
+                  "family": "actor_ops",
+                  "op": "set_pose",
+                  "owner_namespace": "scenario",
+                  "pose": "comparing_marks",
+                  "receipt_id": "pawn_shop_estate_lot_day_appraiser_pose",
+                  "stable_object_id": "estate_appraiser"
+                },
+                {
+                  "behavior": "guard",
+                  "family": "actor_ops",
+                  "op": "set_behavior",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "pawn_shop_estate_lot_day_appraiser_behavior",
+                  "stable_object_id": "estate_appraiser"
+                },
+                {
+                  "family": "actor_ops",
+                  "op": "set_position",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "pawn_shop_estate_lot_day_appraiser_lane",
+                  "stable_object_id": "estate_appraiser",
+                  "zone_id": "foreground"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -10596,6 +11340,37 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_estate_lot_day_work_reveal",
                   "stable_object_id": "provenance_marks"
+                },
+                {
+                  "appearance": "segmented_appraisal_cart",
+                  "family": "scene_ops",
+                  "op": "set_appearance",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "pawn_shop_estate_lot_day_cart_display",
+                  "stable_object_id": "estate_cart"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "set_state",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "pawn_shop_estate_lot_day_marks_matched",
+                  "stable_object_id": "provenance_marks",
+                  "state": "provenance_matched"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "move",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "pawn_shop_estate_lot_day_cart_lane",
+                  "stable_object_id": "estate_cart",
+                  "zone_id": "service_lane"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "enable",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "pawn_shop_estate_lot_day_marks_enable",
+                  "stable_object_id": "provenance_marks"
                 }
               ],
               "transition_ops": [
@@ -10608,6 +11383,45 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_estate_lot_day_work_change",
                   "stable_object_id": "pawn_shop_estate_lot_day_work_change"
+                },
+                {
+                  "channel": "room",
+                  "family": "transition_ops",
+                  "message": "The cart now separates display, return, and police-hold provenance.",
+                  "op": "feedback",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "pawn_shop_estate_lot_day_appraisal_feedback",
+                  "stable_object_id": "pawn_shop_estate_lot_day_appraisal_feedback"
+                },
+                {
+                  "channel": "room",
+                  "cue_id": "appraisal_stamp",
+                  "family": "transition_ops",
+                  "op": "sound",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "pawn_shop_estate_lot_day_appraisal_stamp",
+                  "stable_object_id": "pawn_shop_estate_lot_day_appraisal_stamp"
+                },
+                {
+                  "channel": "room",
+                  "duration_boundaries": 1.0,
+                  "family": "transition_ops",
+                  "message": "Each provenance mark is matched before the cart changes lanes.",
+                  "op": "stage",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "pawn_shop_estate_lot_day_provenance_stage",
+                  "reduced_motion_message": "The physical state is now in place.",
+                  "stable_object_id": "pawn_shop_estate_lot_day_provenance_stage",
+                  "stage_id": "pawn_shop_estate_lot_day_provenance_stage"
+                },
+                {
+                  "channel": "room",
+                  "cue_id": "estate_floor",
+                  "family": "transition_ops",
+                  "op": "music",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "pawn_shop_estate_lot_day_estate_floor",
+                  "stable_object_id": "pawn_shop_estate_lot_day_estate_floor"
                 }
               ]
             },
@@ -10699,7 +11513,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "922be97eabf428363b27134f883b946821f9667dc75fd52a7cf3210f08320984"
+        "sequence_signature": "635c93987c8913b811ad1d279f7679b15fd013873bf725cbf374d1990411865c"
       }
     },
     {
@@ -11475,6 +12289,30 @@
                   "receipt_id": "pawn_shop_serial_check_day_work_actor",
                   "stable_object_id": "records_clerk",
                   "zone_id": "service_lane"
+                },
+                {
+                  "family": "actor_ops",
+                  "op": "set_pose",
+                  "owner_namespace": "scenario",
+                  "pose": "copying_serial",
+                  "receipt_id": "pawn_shop_serial_check_day_records_pose",
+                  "stable_object_id": "records_clerk"
+                },
+                {
+                  "behavior": "guard",
+                  "family": "actor_ops",
+                  "op": "set_behavior",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "pawn_shop_serial_check_day_records_behavior",
+                  "stable_object_id": "records_clerk"
+                },
+                {
+                  "family": "actor_ops",
+                  "op": "set_position",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "pawn_shop_serial_check_day_records_lane",
+                  "stable_object_id": "records_clerk",
+                  "zone_id": "left"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -11607,6 +12445,37 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_serial_check_day_work_reveal",
                   "stable_object_id": "hold_object"
+                },
+                {
+                  "appearance": "serial_lamp",
+                  "family": "scene_ops",
+                  "op": "set_appearance",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "pawn_shop_serial_check_day_serial_lit",
+                  "stable_object_id": "serial_station"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "set_state",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "pawn_shop_serial_check_day_hold_sealed",
+                  "stable_object_id": "hold_object",
+                  "state": "record_hold_sealed"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "move",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "pawn_shop_serial_check_day_hold_lane",
+                  "stable_object_id": "hold_object",
+                  "zone_id": "right"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "hide",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "pawn_shop_serial_check_day_station_hidden",
+                  "stable_object_id": "serial_station"
                 }
               ],
               "transition_ops": [
@@ -11619,6 +12488,36 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_serial_check_day_work_change",
                   "stable_object_id": "pawn_shop_serial_check_day_work_change"
+                },
+                {
+                  "channel": "room",
+                  "cue_id": "record_stamp",
+                  "family": "transition_ops",
+                  "op": "sound",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "pawn_shop_serial_check_day_record_stamp",
+                  "stable_object_id": "pawn_shop_serial_check_day_record_stamp"
+                },
+                {
+                  "channel": "room",
+                  "family": "transition_ops",
+                  "message": "The copied serial links the sealed object to the hold record.",
+                  "op": "feedback",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "pawn_shop_serial_check_day_serial_feedback",
+                  "stable_object_id": "pawn_shop_serial_check_day_serial_feedback"
+                },
+                {
+                  "channel": "room",
+                  "duration_boundaries": 1.0,
+                  "family": "transition_ops",
+                  "message": "The station closes while the records clerk seals the hold lane.",
+                  "op": "stage",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "pawn_shop_serial_check_day_hold_stage",
+                  "reduced_motion_message": "The physical state is now in place.",
+                  "stable_object_id": "pawn_shop_serial_check_day_hold_stage",
+                  "stage_id": "pawn_shop_serial_check_day_hold_stage"
                 }
               ]
             },
@@ -11710,7 +12609,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "5ce4b041859d394a1a9150e61f33b48009812af4d49509aa4ff47cb701097ab7"
+        "sequence_signature": "e3c1b5c7d6871127af0129f4f0914454d0748e05df64b82fe4d1b73cb5effe8c"
       }
     },
     {
@@ -12488,6 +13387,22 @@
                   "receipt_id": "pawn_shop_sals_mood_work_actor",
                   "stable_object_id": "sal_shopkeeper",
                   "zone_id": "service_lane"
+                },
+                {
+                  "behavior": "work",
+                  "family": "actor_ops",
+                  "op": "set_behavior",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "pawn_shop_sals_mood_sal_behavior",
+                  "stable_object_id": "sal_shopkeeper"
+                },
+                {
+                  "family": "actor_ops",
+                  "op": "set_pose",
+                  "owner_namespace": "scenario",
+                  "pose": "checking_finished_job",
+                  "receipt_id": "pawn_shop_sals_mood_sal_pose",
+                  "stable_object_id": "sal_shopkeeper"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -12620,6 +13535,30 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_sals_mood_work_reveal",
                   "stable_object_id": "private_appraisal"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "set_state",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "pawn_shop_sals_mood_jobs_sorted",
+                  "stable_object_id": "unfinished_jobs",
+                  "state": "jobs_prioritized"
+                },
+                {
+                  "family": "scene_ops",
+                  "op": "move",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "pawn_shop_sals_mood_appraisal_privacy",
+                  "stable_object_id": "private_appraisal",
+                  "zone_id": "background"
+                },
+                {
+                  "appearance": "privacy_screen",
+                  "family": "scene_ops",
+                  "op": "set_appearance",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "pawn_shop_sals_mood_appraisal_hidden",
+                  "stable_object_id": "private_appraisal"
                 }
               ],
               "transition_ops": [
@@ -12632,6 +13571,36 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_sals_mood_work_change",
                   "stable_object_id": "pawn_shop_sals_mood_work_change"
+                },
+                {
+                  "channel": "room",
+                  "cue_id": "shop_bell",
+                  "family": "transition_ops",
+                  "op": "sound",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "pawn_shop_sals_mood_shop_bell",
+                  "stable_object_id": "pawn_shop_sals_mood_shop_bell"
+                },
+                {
+                  "channel": "room",
+                  "duration_boundaries": 1.0,
+                  "family": "transition_ops",
+                  "message": "Sal checks the finished job before choosing the counter or back room.",
+                  "op": "stage",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "pawn_shop_sals_mood_mood_stage",
+                  "reduced_motion_message": "The physical state is now in place.",
+                  "stable_object_id": "pawn_shop_sals_mood_mood_stage",
+                  "stage_id": "pawn_shop_sals_mood_mood_stage"
+                },
+                {
+                  "channel": "room",
+                  "family": "transition_ops",
+                  "message": "The finished job changes Sal's route and access to the private appraisal.",
+                  "op": "feedback",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "pawn_shop_sals_mood_mood_feedback",
+                  "stable_object_id": "pawn_shop_sals_mood_mood_feedback"
                 }
               ]
             },
@@ -12723,7 +13692,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "6067f9b660123b65d53cd0b0bb3f8f37c745ac169705c49f82d586a7cb181857"
+        "sequence_signature": "d146839e29753f3e3eecc7c2cd3dfd3bb0e6d88ffaa3f9bf651e1b0f5f1d14a4"
       }
     }
   ]

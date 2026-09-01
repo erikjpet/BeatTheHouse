@@ -1,37 +1,1784 @@
 {
-  "schema_version": 1,
+  "schema": "env06_7_masked_visual_evidence_v1",
   "package_id": "env06_7_bars_road",
-  "status": "pending_warden_slot",
-  "capture_directory": "docs/plans/evidence/env06_7_package_c",
-  "raster_file_pattern": "{scenario_id}_{state_suffix}.png",
-  "contact_sheet": "env06_7_package_c_contact_sheet.png",
-  "required_state_suffixes": [
-    "arrival",
-    "partial",
-    "success",
-    "failure",
-    "refused",
-    "interrupted",
-    "reduced_motion",
-    "small_screen",
-    "hit_overlay",
-    "obstruction"
+  "capture_count": 110,
+  "captures": [
+    {
+      "capture_id": "bar_wake_arrival",
+      "scenario_id": "bar_wake",
+      "archetype_id": "bar",
+      "file": "bar_wake_arrival.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "53dd29a05212db4fc39ea8918409398b92cef1df3413c34018a737256fad7afa",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_wake_partial",
+      "scenario_id": "bar_wake",
+      "archetype_id": "bar",
+      "file": "bar_wake_partial.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "144b1731f5e93515435cb9c8e2651c2525f2c61488c77f2fd9f7fe67fd21104d",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_wake_success",
+      "scenario_id": "bar_wake",
+      "archetype_id": "bar",
+      "file": "bar_wake_success.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "8ce26c6b9e5147ff9e38d3afc8e30527e46235d51896f217527ef342cac70634",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_wake_failure",
+      "scenario_id": "bar_wake",
+      "archetype_id": "bar",
+      "file": "bar_wake_failure.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "86b3e20cf1c4afb05e69217c5fccbeae0049621bfb41b64b2fc65d6c36b626b7",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_wake_refused",
+      "scenario_id": "bar_wake",
+      "archetype_id": "bar",
+      "file": "bar_wake_refused.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "3872a906e5a34675ed168d77133e569b9ad0475090043206929fa5d4ef8b0fed",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_wake_interrupted",
+      "scenario_id": "bar_wake",
+      "archetype_id": "bar",
+      "file": "bar_wake_interrupted.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "c18279a29e4f60c824cbea800afc78c83ff83e5096345e6cf6e6d715785fdc1c",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_wake_reduced_motion",
+      "scenario_id": "bar_wake",
+      "archetype_id": "bar",
+      "file": "bar_wake_reduced_motion.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "f831b33ca9f17a1dffaa0c630cc8c48b87c87d78687394019b3d1f6e7ddfe261",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_wake_small_screen",
+      "scenario_id": "bar_wake",
+      "archetype_id": "bar",
+      "file": "bar_wake_small_screen.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "3441aa6ccd1adf396983bdd18b03710025abea7d2a11ef15cd112cb253eb4d7f",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_wake_hit_overlay",
+      "scenario_id": "bar_wake",
+      "archetype_id": "bar",
+      "file": "bar_wake_hit_overlay.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "69be361116d7b571e5467fa8865b114822ba8a86fd5be85827c6ae3245b8f972",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_wake_obstruction",
+      "scenario_id": "bar_wake",
+      "archetype_id": "bar",
+      "file": "bar_wake_obstruction.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "e1177a5db9e9f8ab8136e14712a867d6b67f367ea28984505510e05384f6e386",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": true
+    },
+    {
+      "capture_id": "bar_fight_night_arrival",
+      "scenario_id": "bar_fight_night",
+      "archetype_id": "bar",
+      "file": "bar_fight_night_arrival.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "2efabef037d3152a2ee9a9509e81a758912a8d9d50b285661c6b39e7fee9896a",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_fight_night_partial",
+      "scenario_id": "bar_fight_night",
+      "archetype_id": "bar",
+      "file": "bar_fight_night_partial.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "24ba10ca0decb7a7b6dde36862e7552d4c35b5f5899d7b9f70886dc7f8679f12",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_fight_night_success",
+      "scenario_id": "bar_fight_night",
+      "archetype_id": "bar",
+      "file": "bar_fight_night_success.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "4b4ab8c36c68a500eb328547243ed1aab51ed6db31d067f252becf0b0a4ff1ea",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_fight_night_failure",
+      "scenario_id": "bar_fight_night",
+      "archetype_id": "bar",
+      "file": "bar_fight_night_failure.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "309553e08db3878b30052b5ca1603b10a48bae2136c67c6c3d67dac5333630ec",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_fight_night_refused",
+      "scenario_id": "bar_fight_night",
+      "archetype_id": "bar",
+      "file": "bar_fight_night_refused.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "acbaff18e27d767925e044b43e761cbe952ec0421f8550209f8ee21ac5c318af",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_fight_night_interrupted",
+      "scenario_id": "bar_fight_night",
+      "archetype_id": "bar",
+      "file": "bar_fight_night_interrupted.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "9837d6eb62c665dc7e32d9e5e9199f5e3650bd9b46558fecff39a289cf3d735b",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_fight_night_reduced_motion",
+      "scenario_id": "bar_fight_night",
+      "archetype_id": "bar",
+      "file": "bar_fight_night_reduced_motion.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "ac7983868d8eaa6b70cd39ce5959a6aa2716e12e2f2b967efffbf96dd9befa63",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_fight_night_small_screen",
+      "scenario_id": "bar_fight_night",
+      "archetype_id": "bar",
+      "file": "bar_fight_night_small_screen.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "7302371b56d4e7b8386ff0fe819db1e4796e7c0703ed56c4154ce0f131682046",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_fight_night_hit_overlay",
+      "scenario_id": "bar_fight_night",
+      "archetype_id": "bar",
+      "file": "bar_fight_night_hit_overlay.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "bc8793f8dec984addd1c2045936aa6a59d14ec00b10f25b362588215f55b9f0f",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_fight_night_obstruction",
+      "scenario_id": "bar_fight_night",
+      "archetype_id": "bar",
+      "file": "bar_fight_night_obstruction.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "9d1d0a2f489b0f20d8bd13e3208572e4ac3a7fe656ce19a25b01e32306914442",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": true
+    },
+    {
+      "capture_id": "bar_payday_rush_arrival",
+      "scenario_id": "bar_payday_rush",
+      "archetype_id": "bar",
+      "file": "bar_payday_rush_arrival.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "090c470fdf37f9aace391081e95eab23ef45950d8c822cd482116d8c8071708c",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_payday_rush_partial",
+      "scenario_id": "bar_payday_rush",
+      "archetype_id": "bar",
+      "file": "bar_payday_rush_partial.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "e34482cc9bf2e41c876919b226e3e48154cca33e306ae4e55a6c33ffcadaac41",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_payday_rush_success",
+      "scenario_id": "bar_payday_rush",
+      "archetype_id": "bar",
+      "file": "bar_payday_rush_success.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "9f6801bb0e6b66da6cdc77c883e21fa118aafe6e8f76bbf9389b7bd75d1457bc",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_payday_rush_failure",
+      "scenario_id": "bar_payday_rush",
+      "archetype_id": "bar",
+      "file": "bar_payday_rush_failure.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "191e08aad5b2edfb0585c85f2ba820c0bd01e30bdccb37c1d0f19d7a2f1c41c1",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_payday_rush_refused",
+      "scenario_id": "bar_payday_rush",
+      "archetype_id": "bar",
+      "file": "bar_payday_rush_refused.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "bf3716d37d925272a41b728c7e6c82c1e0eff81294c9b7c09b0660067674f6c8",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_payday_rush_interrupted",
+      "scenario_id": "bar_payday_rush",
+      "archetype_id": "bar",
+      "file": "bar_payday_rush_interrupted.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "c9faf29edaf42ebc5c8025a7c259fe388a03c0bd408c2f8fcb7a3d75b3898d7b",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_payday_rush_reduced_motion",
+      "scenario_id": "bar_payday_rush",
+      "archetype_id": "bar",
+      "file": "bar_payday_rush_reduced_motion.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "a59d73fe75e676cda7af703c0556558dd5b36ff9bf9a30291fbaced74935460e",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_payday_rush_small_screen",
+      "scenario_id": "bar_payday_rush",
+      "archetype_id": "bar",
+      "file": "bar_payday_rush_small_screen.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "de7db0f1cb993fb285b6946d22abcb74e7459865411a0542a4fc6f1f9b45d3a2",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_payday_rush_hit_overlay",
+      "scenario_id": "bar_payday_rush",
+      "archetype_id": "bar",
+      "file": "bar_payday_rush_hit_overlay.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "797bc68141572abf9075b7409be4e341ffa1bdbf6f5fddfde0eb5afec0053ebd",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_payday_rush_obstruction",
+      "scenario_id": "bar_payday_rush",
+      "archetype_id": "bar",
+      "file": "bar_payday_rush_obstruction.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "05c45028f2c7cfef141041a4760aa1afb62f4a95e5db4d65c33c83ab78309cca",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": true
+    },
+    {
+      "capture_id": "bar_lock_in_arrival",
+      "scenario_id": "bar_lock_in",
+      "archetype_id": "bar",
+      "file": "bar_lock_in_arrival.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "c30c89d9c62639f16b6349ef4fa4e912e623aaa72fba3908d278e7683f31ec7e",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_lock_in_partial",
+      "scenario_id": "bar_lock_in",
+      "archetype_id": "bar",
+      "file": "bar_lock_in_partial.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "440163675161895cfee161ded4b895a78bb0e85f7fc17fa9428a081ec35f009e",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_lock_in_success",
+      "scenario_id": "bar_lock_in",
+      "archetype_id": "bar",
+      "file": "bar_lock_in_success.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "3064582551fa35fa4a0efe358d921e1b9a8b1e79d28a3d8cc40b9e3bb80481d0",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_lock_in_failure",
+      "scenario_id": "bar_lock_in",
+      "archetype_id": "bar",
+      "file": "bar_lock_in_failure.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "d1ca68fa1b68878cd15aee282b0ed91d71b7e7ae88d06eb0d5a257bac3a4788b",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_lock_in_refused",
+      "scenario_id": "bar_lock_in",
+      "archetype_id": "bar",
+      "file": "bar_lock_in_refused.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "e4cb92e7405edd554d52d535111574d3ed2fd03043c5b5336ceb3c7352def6aa",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_lock_in_interrupted",
+      "scenario_id": "bar_lock_in",
+      "archetype_id": "bar",
+      "file": "bar_lock_in_interrupted.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "6e882276bfb13099a3e94b039561351c538415571c21a5d19b3926ab4dcccec7",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_lock_in_reduced_motion",
+      "scenario_id": "bar_lock_in",
+      "archetype_id": "bar",
+      "file": "bar_lock_in_reduced_motion.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "05992ba95a5cd06c3c1cc5fcba3290eb8ea5e57020d58f646c096c6603b7d688",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_lock_in_small_screen",
+      "scenario_id": "bar_lock_in",
+      "archetype_id": "bar",
+      "file": "bar_lock_in_small_screen.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "63942a07cd7a51628c7124987906011c6dc570d1db6ec2b3509869a4a478b923",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_lock_in_hit_overlay",
+      "scenario_id": "bar_lock_in",
+      "archetype_id": "bar",
+      "file": "bar_lock_in_hit_overlay.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "14a99a3c844620a0a0d63818cbffafd61ab0c87c5ebdd835d3a57c50bb55b155",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_lock_in_obstruction",
+      "scenario_id": "bar_lock_in",
+      "archetype_id": "bar",
+      "file": "bar_lock_in_obstruction.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "c0f97afbc758c35e16776b8728bddb1d38e9aeb5b5b42b90c46aca99426ecea9",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": true
+    },
+    {
+      "capture_id": "bar_darts_league_night_arrival",
+      "scenario_id": "bar_darts_league_night",
+      "archetype_id": "bar",
+      "file": "bar_darts_league_night_arrival.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "bb89dba53dbfc5c96af718c5f8ddb9167616fd4f12fd09824f707873562eb965",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_darts_league_night_partial",
+      "scenario_id": "bar_darts_league_night",
+      "archetype_id": "bar",
+      "file": "bar_darts_league_night_partial.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "98d5c806303630492a1929fdbfefd6fae986a7a44367af2af0bea271aa897a44",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_darts_league_night_success",
+      "scenario_id": "bar_darts_league_night",
+      "archetype_id": "bar",
+      "file": "bar_darts_league_night_success.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "b7c01a485e2cffe21ac80e6a27f64509fadd4a4ce3b4e41774824ee306b39628",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_darts_league_night_failure",
+      "scenario_id": "bar_darts_league_night",
+      "archetype_id": "bar",
+      "file": "bar_darts_league_night_failure.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "277ab91623c3e18d03b1b2fbce8232eb7988049095f9e9a044d4377256c1e0b5",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_darts_league_night_refused",
+      "scenario_id": "bar_darts_league_night",
+      "archetype_id": "bar",
+      "file": "bar_darts_league_night_refused.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "7a1d83a0d388f05213aea75c65bce10e6f092f91397b0d02e2e5934c4133b857",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_darts_league_night_interrupted",
+      "scenario_id": "bar_darts_league_night",
+      "archetype_id": "bar",
+      "file": "bar_darts_league_night_interrupted.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "fcb31c593f519089bcc1d29c0d0db9fb1125f64f4657a453ccffe55c8e861c16",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_darts_league_night_reduced_motion",
+      "scenario_id": "bar_darts_league_night",
+      "archetype_id": "bar",
+      "file": "bar_darts_league_night_reduced_motion.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "760347210670c3d8fd21a1de0b140f68f47f49f6e95ecb32e3126f37ce48fb21",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_darts_league_night_small_screen",
+      "scenario_id": "bar_darts_league_night",
+      "archetype_id": "bar",
+      "file": "bar_darts_league_night_small_screen.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "8e64af52dc95954b4b6de08ecda14dd6770d507fd7c1a16a6f8072cda099994f",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_darts_league_night_hit_overlay",
+      "scenario_id": "bar_darts_league_night",
+      "archetype_id": "bar",
+      "file": "bar_darts_league_night_hit_overlay.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "167a7eace5ff01e6817717436820f1e67c17f4564c5d04453efc208392d2b94e",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_darts_league_night_obstruction",
+      "scenario_id": "bar_darts_league_night",
+      "archetype_id": "bar",
+      "file": "bar_darts_league_night_obstruction.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "f44c49f106455487d4d3e53e8640d9693e36533fe2769d3ae33f15c13401868a",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": true
+    },
+    {
+      "capture_id": "bar_live_band_arrival",
+      "scenario_id": "bar_live_band",
+      "archetype_id": "bar",
+      "file": "bar_live_band_arrival.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "fe934685fbe1cf5dd3a32e3bdc6b33dcd7bac5db80b1f4814e748637cee660cb",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_live_band_partial",
+      "scenario_id": "bar_live_band",
+      "archetype_id": "bar",
+      "file": "bar_live_band_partial.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "f82a045f5b88e94f7817d2ca96ddf0ead024484d02b45a4db1205dab1488ed25",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_live_band_success",
+      "scenario_id": "bar_live_band",
+      "archetype_id": "bar",
+      "file": "bar_live_band_success.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "b381bdbb186f6bdf1af65aaee230598b888b42436a0601beacb56f14a1871c7f",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_live_band_failure",
+      "scenario_id": "bar_live_band",
+      "archetype_id": "bar",
+      "file": "bar_live_band_failure.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "068c81eb9457ba69398841031630b8cb13294e35b0f80593d0d39219d3cf7607",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_live_band_refused",
+      "scenario_id": "bar_live_band",
+      "archetype_id": "bar",
+      "file": "bar_live_band_refused.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "5058e5fa43532599c8bf453666ae6b93255ff157375e41f1a54e2130c391be06",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_live_band_interrupted",
+      "scenario_id": "bar_live_band",
+      "archetype_id": "bar",
+      "file": "bar_live_band_interrupted.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "7960eba9eec8f34a56b063dce179c43d228c8ffcacb9b555cb3c67d4b61f1025",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_live_band_reduced_motion",
+      "scenario_id": "bar_live_band",
+      "archetype_id": "bar",
+      "file": "bar_live_band_reduced_motion.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "8e0aeef44d3800000557ffac377dbf9eedb21cd663ddfdadf80f730a27919ab7",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_live_band_small_screen",
+      "scenario_id": "bar_live_band",
+      "archetype_id": "bar",
+      "file": "bar_live_band_small_screen.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "bf6eb50c99781aebcea56abaea83156db70aadb3373dfabb4022e9bdb2664a4a",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_live_band_hit_overlay",
+      "scenario_id": "bar_live_band",
+      "archetype_id": "bar",
+      "file": "bar_live_band_hit_overlay.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "c686aa79c34a5d30d62e07ebd17506e109b37fdd8bca512f0c6daec83a1c0bc9",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_live_band_obstruction",
+      "scenario_id": "bar_live_band",
+      "archetype_id": "bar",
+      "file": "bar_live_band_obstruction.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "23a57b65be229656359fd755d76720a3e4bfcda305ec7c32589dd940771878fb",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": true
+    },
+    {
+      "capture_id": "bar_dead_tuesday_arrival",
+      "scenario_id": "bar_dead_tuesday",
+      "archetype_id": "bar",
+      "file": "bar_dead_tuesday_arrival.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "4a64c4ea770afe030cfcb14fd4afbc3730e17b8365f1a95561053612447dad43",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_dead_tuesday_partial",
+      "scenario_id": "bar_dead_tuesday",
+      "archetype_id": "bar",
+      "file": "bar_dead_tuesday_partial.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "b2298c00b45ffc16a31ddf6c7f6936a06dbdb12df7782dd5a7cf5274e7cb2390",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_dead_tuesday_success",
+      "scenario_id": "bar_dead_tuesday",
+      "archetype_id": "bar",
+      "file": "bar_dead_tuesday_success.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "06c4faa14c34c3f4aafd5b33a6cf60422bd6c6ad4d524e00d93d5d2039ec0f46",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_dead_tuesday_failure",
+      "scenario_id": "bar_dead_tuesday",
+      "archetype_id": "bar",
+      "file": "bar_dead_tuesday_failure.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "f626953353cf18a8dd582a5e586a0d4edc3b244c8951b9d1d75b6f55592ce462",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_dead_tuesday_refused",
+      "scenario_id": "bar_dead_tuesday",
+      "archetype_id": "bar",
+      "file": "bar_dead_tuesday_refused.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "5a03fe380eb13a8aa5d9f0a6eefcbcf8e9c10fc20b33824d2199e6ff19336fb7",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_dead_tuesday_interrupted",
+      "scenario_id": "bar_dead_tuesday",
+      "archetype_id": "bar",
+      "file": "bar_dead_tuesday_interrupted.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "c31713068c8cc60c57aab15c806d383e5f14e53c0b4ae8f30f383118e4d4c740",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_dead_tuesday_reduced_motion",
+      "scenario_id": "bar_dead_tuesday",
+      "archetype_id": "bar",
+      "file": "bar_dead_tuesday_reduced_motion.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "59f8d0c4f1ce68a90e574243c2eb075b6a493501acaf75e1e4dce0a3d1b10625",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_dead_tuesday_small_screen",
+      "scenario_id": "bar_dead_tuesday",
+      "archetype_id": "bar",
+      "file": "bar_dead_tuesday_small_screen.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "a09a4a0d1f03dc461b35f82c6db41c889c7a3767572915d1504f4cb0e01daff1",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_dead_tuesday_hit_overlay",
+      "scenario_id": "bar_dead_tuesday",
+      "archetype_id": "bar",
+      "file": "bar_dead_tuesday_hit_overlay.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "fa5e535b832076b1c03b29d71c2a94249dfbc8428b1fc8bf94fe178fe3b7a8ee",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "bar_dead_tuesday_obstruction",
+      "scenario_id": "bar_dead_tuesday",
+      "archetype_id": "bar",
+      "file": "bar_dead_tuesday_obstruction.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "33f393dca988e6f9cc6400a36ddccead0dcd192bd7ab1e2d15cfbcb9cdb8a600",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": true
+    },
+    {
+      "capture_id": "jazz_club_guest_legend_arrival",
+      "scenario_id": "jazz_club_guest_legend",
+      "archetype_id": "jazz_club",
+      "file": "jazz_club_guest_legend_arrival.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "da9d3bea3642f6290d71cb49cf5308be94cfc545d49078450a1eeeaa9b8c7d09",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "jazz_club_guest_legend_partial",
+      "scenario_id": "jazz_club_guest_legend",
+      "archetype_id": "jazz_club",
+      "file": "jazz_club_guest_legend_partial.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "79343b2be5b260fe1c232fec0a06296ab2d31b2fffd8f45836201eb93ff140ac",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "jazz_club_guest_legend_success",
+      "scenario_id": "jazz_club_guest_legend",
+      "archetype_id": "jazz_club",
+      "file": "jazz_club_guest_legend_success.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "3106a9c98450bfc16189daea5986d1e471bc7f9ee82a2bb8e2e8ff92f0c06402",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "jazz_club_guest_legend_failure",
+      "scenario_id": "jazz_club_guest_legend",
+      "archetype_id": "jazz_club",
+      "file": "jazz_club_guest_legend_failure.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "3d09b3aa9e90191bdad9885fa3615bf83c63b987f8cf84e847ed7cc3e4a1d2a1",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "jazz_club_guest_legend_refused",
+      "scenario_id": "jazz_club_guest_legend",
+      "archetype_id": "jazz_club",
+      "file": "jazz_club_guest_legend_refused.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "a3d2d126685c9ed9611423b87185957eb21251037526c64ce3d7be0f1aa76281",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "jazz_club_guest_legend_interrupted",
+      "scenario_id": "jazz_club_guest_legend",
+      "archetype_id": "jazz_club",
+      "file": "jazz_club_guest_legend_interrupted.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "5567bd08def522d89fc2a3ae166ede290e7fb66b16771638aad0b76055a41745",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "jazz_club_guest_legend_reduced_motion",
+      "scenario_id": "jazz_club_guest_legend",
+      "archetype_id": "jazz_club",
+      "file": "jazz_club_guest_legend_reduced_motion.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "c8c88a4ccc93a6cbb374d42bd4dcb5dbca8efa84706f0099c2a3a08ef11595fb",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "jazz_club_guest_legend_small_screen",
+      "scenario_id": "jazz_club_guest_legend",
+      "archetype_id": "jazz_club",
+      "file": "jazz_club_guest_legend_small_screen.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "486b6fbb3484dc41fc1ac422c880365bc37db3ad2901ce82ae11c704309b6e9d",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "jazz_club_guest_legend_hit_overlay",
+      "scenario_id": "jazz_club_guest_legend",
+      "archetype_id": "jazz_club",
+      "file": "jazz_club_guest_legend_hit_overlay.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "a751697c2516f2b638fb0ff6530f4cb62da0c677cfd2a5a535acaeae5d7e4531",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "jazz_club_guest_legend_obstruction",
+      "scenario_id": "jazz_club_guest_legend",
+      "archetype_id": "jazz_club",
+      "file": "jazz_club_guest_legend_obstruction.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "b814ef8cdbc8dd6ef1c3f66f7e7e7e629f0c37d6f14e3d2f785eee2f319e78bf",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": true
+    },
+    {
+      "capture_id": "jazz_club_rent_party_arrival",
+      "scenario_id": "jazz_club_rent_party",
+      "archetype_id": "jazz_club",
+      "file": "jazz_club_rent_party_arrival.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "86c7944546e4488b67dedf7db53432f0f81e579645937cb8ea05ab306563d89e",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "jazz_club_rent_party_partial",
+      "scenario_id": "jazz_club_rent_party",
+      "archetype_id": "jazz_club",
+      "file": "jazz_club_rent_party_partial.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "302d206fa2f26499bd8989b655fab6663bc076539271da9d61e0576a33cde626",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "jazz_club_rent_party_success",
+      "scenario_id": "jazz_club_rent_party",
+      "archetype_id": "jazz_club",
+      "file": "jazz_club_rent_party_success.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "3282d723b834409d95fed47402ad80a61d8c9133727dbe7cf9f8c13a6c4246a3",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "jazz_club_rent_party_failure",
+      "scenario_id": "jazz_club_rent_party",
+      "archetype_id": "jazz_club",
+      "file": "jazz_club_rent_party_failure.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "81b13caa7a89650a405c9927fd180659605f540a1edab17c1191ceaaded6c9ba",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "jazz_club_rent_party_refused",
+      "scenario_id": "jazz_club_rent_party",
+      "archetype_id": "jazz_club",
+      "file": "jazz_club_rent_party_refused.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "16fde70d39c7ff2dbbf2d6b420092a1979a919cfdaa52af736a234512e534100",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "jazz_club_rent_party_interrupted",
+      "scenario_id": "jazz_club_rent_party",
+      "archetype_id": "jazz_club",
+      "file": "jazz_club_rent_party_interrupted.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "60bd14e5eda2038cce4a1a28b89df17e2b833719e511b3b8669b196cebadf38c",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "jazz_club_rent_party_reduced_motion",
+      "scenario_id": "jazz_club_rent_party",
+      "archetype_id": "jazz_club",
+      "file": "jazz_club_rent_party_reduced_motion.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "2ce9329bc198dc7baf6c99338ab1710e47d9a482a28ad25c4284f77dd201d10b",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "jazz_club_rent_party_small_screen",
+      "scenario_id": "jazz_club_rent_party",
+      "archetype_id": "jazz_club",
+      "file": "jazz_club_rent_party_small_screen.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "998314a5f35c116516edcb377806ea3e02512a40fe2a1f74693ae92a7049d978",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "jazz_club_rent_party_hit_overlay",
+      "scenario_id": "jazz_club_rent_party",
+      "archetype_id": "jazz_club",
+      "file": "jazz_club_rent_party_hit_overlay.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "9b43946b04c760e07f6fcce4d52da69fa2c71f42f09b6c2a7dedaa0026694d76",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "jazz_club_rent_party_obstruction",
+      "scenario_id": "jazz_club_rent_party",
+      "archetype_id": "jazz_club",
+      "file": "jazz_club_rent_party_obstruction.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "536b6031a95eb008e2f682e4de2f255182db8828880e935e238d46808d4542b1",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": true
+    },
+    {
+      "capture_id": "jazz_club_recording_night_arrival",
+      "scenario_id": "jazz_club_recording_night",
+      "archetype_id": "jazz_club",
+      "file": "jazz_club_recording_night_arrival.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "802c9973c6f5c4c9c03b226f77e5723b93f753b6ec0e3191771474bb4f004289",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "jazz_club_recording_night_partial",
+      "scenario_id": "jazz_club_recording_night",
+      "archetype_id": "jazz_club",
+      "file": "jazz_club_recording_night_partial.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "c237d6a62b8996df0eda98d5d89f2027f5670612e637b754a61e05bd9af1e54d",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "jazz_club_recording_night_success",
+      "scenario_id": "jazz_club_recording_night",
+      "archetype_id": "jazz_club",
+      "file": "jazz_club_recording_night_success.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "64be964fb0239d84c78648016680365725bbfd6eea8a3f0b389a94c116a2beba",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "jazz_club_recording_night_failure",
+      "scenario_id": "jazz_club_recording_night",
+      "archetype_id": "jazz_club",
+      "file": "jazz_club_recording_night_failure.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "b48379a5a6d117255feb7991c45daef409dbe7eff14848347cc0fee44ccc08b9",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "jazz_club_recording_night_refused",
+      "scenario_id": "jazz_club_recording_night",
+      "archetype_id": "jazz_club",
+      "file": "jazz_club_recording_night_refused.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "844ac33b100b07aeea5158094230565fff994ca2c7e53bb4894d9aa33658ec52",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "jazz_club_recording_night_interrupted",
+      "scenario_id": "jazz_club_recording_night",
+      "archetype_id": "jazz_club",
+      "file": "jazz_club_recording_night_interrupted.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "e2716de7e0e4e3ba529811b6cc60c64800b09a2f5458436c7909b604b3df4526",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "jazz_club_recording_night_reduced_motion",
+      "scenario_id": "jazz_club_recording_night",
+      "archetype_id": "jazz_club",
+      "file": "jazz_club_recording_night_reduced_motion.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "71141ab8dda49b3433eba6479238f936f360012d7252cc823f953b0f2af3ad9a",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "jazz_club_recording_night_small_screen",
+      "scenario_id": "jazz_club_recording_night",
+      "archetype_id": "jazz_club",
+      "file": "jazz_club_recording_night_small_screen.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "e8530e86f5251956be0387e1540ce85f4567fb84352873d0fa7441617a935aa9",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "jazz_club_recording_night_hit_overlay",
+      "scenario_id": "jazz_club_recording_night",
+      "archetype_id": "jazz_club",
+      "file": "jazz_club_recording_night_hit_overlay.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "3f8eba5b26f9c80228425c5bb23a2a95946e9ad33106c6180a3d85f1d18ce35d",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "jazz_club_recording_night_obstruction",
+      "scenario_id": "jazz_club_recording_night",
+      "archetype_id": "jazz_club",
+      "file": "jazz_club_recording_night_obstruction.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "400327a1fbc06bcd241b6696fdffef2ae389f6644055909c296b197341631036",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": true
+    },
+    {
+      "capture_id": "jazz_club_union_trouble_arrival",
+      "scenario_id": "jazz_club_union_trouble",
+      "archetype_id": "jazz_club",
+      "file": "jazz_club_union_trouble_arrival.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "54dbce236a4c50a58df5fcc297bcec06d9f7fbebe3c1c998d36a25edc2576b60",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "jazz_club_union_trouble_partial",
+      "scenario_id": "jazz_club_union_trouble",
+      "archetype_id": "jazz_club",
+      "file": "jazz_club_union_trouble_partial.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "86c9ba67aa08c634303581945a707f235116fb97f137dddfcb44127c105dad40",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "jazz_club_union_trouble_success",
+      "scenario_id": "jazz_club_union_trouble",
+      "archetype_id": "jazz_club",
+      "file": "jazz_club_union_trouble_success.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "98d90567b6cc43ef8a106bb6d776a27915ab6c1b36d577a024ca31a35e0a8589",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "jazz_club_union_trouble_failure",
+      "scenario_id": "jazz_club_union_trouble",
+      "archetype_id": "jazz_club",
+      "file": "jazz_club_union_trouble_failure.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "1354e37520ec53722571c83522847560fb28012d6dabfce88f2be1911a4bf91f",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "jazz_club_union_trouble_refused",
+      "scenario_id": "jazz_club_union_trouble",
+      "archetype_id": "jazz_club",
+      "file": "jazz_club_union_trouble_refused.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "8eb569884974aa862be78a5fbbdca0f63af9ff35397847724210353293742a78",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "jazz_club_union_trouble_interrupted",
+      "scenario_id": "jazz_club_union_trouble",
+      "archetype_id": "jazz_club",
+      "file": "jazz_club_union_trouble_interrupted.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "d94cc3d607a5da0f9b3317a09ac25a347f76a1fcf8a17a71284ddba3374b699a",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "jazz_club_union_trouble_reduced_motion",
+      "scenario_id": "jazz_club_union_trouble",
+      "archetype_id": "jazz_club",
+      "file": "jazz_club_union_trouble_reduced_motion.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "ae5782d995e4159ba829b91051b08d0b5300653bb23c9aefd7224e81d6c883d0",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "jazz_club_union_trouble_small_screen",
+      "scenario_id": "jazz_club_union_trouble",
+      "archetype_id": "jazz_club",
+      "file": "jazz_club_union_trouble_small_screen.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "c1a861fd342ca6f3370eca29c6d8ec89f26546b67bffcf57a6f26baccc94aa85",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "jazz_club_union_trouble_hit_overlay",
+      "scenario_id": "jazz_club_union_trouble",
+      "archetype_id": "jazz_club",
+      "file": "jazz_club_union_trouble_hit_overlay.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "5eb6796758f1551ec52f93e3715dcb7d2e08f99e5f02fbe4da8ae67aee27484b",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": false
+    },
+    {
+      "capture_id": "jazz_club_union_trouble_obstruction",
+      "scenario_id": "jazz_club_union_trouble",
+      "archetype_id": "jazz_club",
+      "file": "jazz_club_union_trouble_obstruction.png",
+      "width": 960,
+      "height": 540,
+      "sha256": "06fe8b73d5db84a96681907e2b94b02022d5305a20263b56896318a3a743db48",
+      "minimum_hit_size": [
+        128,
+        64
+      ],
+      "keyboard_controller_focus": true,
+      "safe_exit_visible": true,
+      "obstruction_checked": true
+    }
   ],
-  "scenario_ids": [
-    "bar_wake",
-    "bar_fight_night",
-    "bar_payday_rush",
-    "bar_lock_in",
-    "bar_darts_league_night",
-    "bar_live_band",
-    "bar_dead_tuesday",
-    "jazz_club_guest_legend",
-    "jazz_club_rent_party",
-    "jazz_club_recording_night",
-    "jazz_club_union_trouble"
-  ],
-  "expected_raster_count": 110,
-  "actual_raster_count": 0,
-  "contact_sheet_status": "pending",
-  "source_candidate": "ordered_a_b_plus_c_static_wip"
+  "archetype_contact_sheets": {
+    "bar": {
+      "file": "bar_contact_sheet.png",
+      "sha256": "809f1ecd241d0208a4cbbf9746a4b3e20677fb2ad3c22d4df1532a4c6c8e52a1",
+      "width": 960,
+      "height": 2430,
+      "capture_count": 70
+    },
+    "jazz_club": {
+      "file": "jazz_club_contact_sheet.png",
+      "sha256": "6ebb5ffe092853ba844ae5ab52b8dceadf7c20a632c5084c106735c6d3074f15",
+      "width": 960,
+      "height": 1350,
+      "capture_count": 40
+    }
+  },
+  "failures": []
 }

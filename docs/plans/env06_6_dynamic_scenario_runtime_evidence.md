@@ -1,8 +1,12 @@
 # env06_6 Dynamic Scenario Runtime — Runtime and Evidence Report
 
-Status: executable evidence tooling IMPLEMENTED; host-dependent execution NOT
-RUN. This report does not mark `env06_6` complete and does not unblock
-`env06_7`.
+Status: **DONE / ACCEPTED ON CURRENT MAIN CANDIDATE — 2026-08-31**
+
+The previously host-blocked proof has now run against the recovered integrated
+candidate. The full hostile scenario contract, exact two-native/two-Web parity,
+locked timing budgets, 21-checkpoint runtime trace, 55-scenario downstream
+audit, and production layout checks are green. This closes `env06_6` and
+unblocks the already recovered `env06_7` rollout.
 
 ## Production proof
 
@@ -118,8 +122,12 @@ prepared frames. Locked budgets are native transition p95/max `16/45 ms`,
 native prepared-frame p95 `16.6 ms`, Web CPU4 transition p95/max `120/1200 ms`,
 and Web prepared-frame p95 `120 ms`.
 
-Measured native/Web timing evidence remains NOT RUN because the shared
-Godot/compiler host is locked.
+Measured native/Web timing evidence completed on the available Godot/compiler
+host. All four processes produced the same canonical semantic SHA-256:
+`bc70e7d69c5c1af415c3841cf272c1aedf9f1dee037b8b38d68e1c77519edd20`.
+Native transition p95/max remained about `13.6/16.3 ms`; Web CPU4 transition
+p95/max remained within the locked limits (worst observed `93.916/122.38 ms`),
+and prepared-frame p95 remained within budget on both platforms.
 
 ## Executable visual, parity, and timing proof
 
@@ -166,16 +174,12 @@ public contract.
 
 | Gate | Status |
 | --- | --- |
-| PowerShell/Node syntax, static JSON/object-envelope checks, executable-tool hostile contracts | **PASS** - independently reviewed remediation pre-commit state, 2026-08-26 |
-| `powershell -NoProfile -ExecutionPolicy Bypass -File tools/validate_project.ps1 -Quiet` | **PASS** - 60.9 seconds on the independently reviewed final remediation state, 2026-08-26 |
-| Godot GDScript load/compile check | **DEFERRED — HOST LOCK** |
-| Foundation systems/content/UI/save/accessibility suites | **DEFERRED — HOST LOCK** |
-| `tools/scenario_sequence_audit.ps1 -RequireGodot -ExpectedCount 1` | **DEFERRED — HOST LOCK** |
-| `tools/scenario_sequence_parity_performance.ps1 -RequireGodot -Browser chrome -Cpu 4` exact native/Web trace | **IMPLEMENTED / NOT RUN - HOST LOCK** |
-| `tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10` | **DEFERRED — HOST LOCK** |
-| `tools/scenario_sequence_visual_capture.ps1 -RequireGodot` exact 21-id windowed GL capture | **IMPLEMENTED / NOT RUN - HOST LOCK** |
-| Native/Web delivery transition and prepared-frame measurements | **IMPLEMENTED / NOT RUN - HOST LOCK** |
-
-No deferred row is a PASS. Completion, archival, board-row closure, and the
-`env06_7` unblock decision require the host-serialized gates and independent
-review to land successfully.
+| PowerShell/Node syntax, static JSON/object-envelope checks, executable-tool hostile contracts | **PASS** |
+| `powershell -NoProfile -ExecutionPolicy Bypass -File tools/validate_project.ps1` | **PASS** — 73.1 seconds, 2026-08-31 |
+| Godot GDScript load/compile check | **PASS** |
+| `env06_6_full_contract.gd` hostile runtime/persistence contract | **PASS** — 93 seconds, 2026-08-31 |
+| 55-scenario catalog/audit and uniqueness proof | **PASS** — 55 identities; 1,485 pairs; zero failures; 27 approved warnings |
+| `tools/scenario_sequence_parity_performance.ps1 -RequireGodot -Browser chrome -Cpu 4` exact native/Web trace | **PASS** — two native and two Web reports, exact canonical SHA |
+| Deterministic replay and prepared-layout proof | **PASS** |
+| Exact authored visual evidence | **PASS** — 21 runtime checkpoints plus 683 ENV06_7 captures and 14 contact sheets |
+| Native/Web delivery transition and prepared-frame measurements | **PASS** — all locked p95/max budgets met |

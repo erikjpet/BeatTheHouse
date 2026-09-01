@@ -10,6 +10,7 @@ const ScenarioSequenceSchemaScript := preload("res://scripts/core/scenario_seque
 const TutorialFlowScript := preload("res://scripts/core/tutorial_flow.gd")
 
 var library: ContentLibrary
+var _last_environment_install_errors: Array = []
 
 
 # Stores the content library used for generation.
@@ -77,11 +78,15 @@ func travel_environment_result(run_state: RunState, target_archetype_id: String,
 	if not bool(preflight.get("ok", false)):
 		return {"ok": false, "errors": _copy_array(preflight.get("errors", [])), "environment": run_state.current_environment.duplicate(true)}
 	var rollback := _travel_rollback_snapshot(run_state)
+	_last_environment_install_errors = []
 	var environment := next_environment(run_state, target_id, target_prevalidated)
 	var arrived_id := run_state.current_world_node_id()
 	if target_id.is_empty() or arrived_id != target_id:
 		_restore_travel_snapshot(run_state, rollback)
-		return {"ok": false, "errors": ["Travel destination was not installed."], "environment": _copy_dict(rollback.get("environment", {}))}
+		var errors := _last_environment_install_errors.duplicate(true)
+		if errors.is_empty():
+			errors = ["Travel destination was not installed."]
+		return {"ok": false, "errors": errors, "environment": _copy_dict(rollback.get("environment", {}))}
 	return {"ok": true, "errors": [], "environment": environment.to_dict(), "source_id": source_id, "target_id": arrived_id}
 
 
@@ -445,19 +450,26 @@ func _next_world_environment(run_state: RunState, target_archetype_id: String, r
 		return EnvironmentInstance.from_dict(run_state.current_environment) if not run_state.current_environment.is_empty() else _legacy_next_environment(run_state, target_archetype_id, rng)
 	var node := WorldMap.node_by_id(map_data, target_id)
 	if node.is_empty():
+		_last_environment_install_errors = ["Travel destination node %s is missing from the active map." % target_id]
 		if had_source: _restore_travel_snapshot(run_state, rollback)
 		return EnvironmentInstance.from_dict(run_state.current_environment) if not run_state.current_environment.is_empty() else _legacy_next_environment(run_state, target_archetype_id, rng)
-	if not run_state.current_environment.is_empty() and not bool(run_state.scenario_preflight_environment_change(current_node_id, target_id, "world").get("ok", false)):
-		_restore_travel_snapshot(run_state, rollback)
-		return EnvironmentInstance.from_dict(run_state.current_environment)
+	if not run_state.current_environment.is_empty():
+		var arrival_preflight := run_state.scenario_preflight_environment_change(current_node_id, target_id, "world")
+		if not bool(arrival_preflight.get("ok", false)):
+			_last_environment_install_errors = _copy_array(arrival_preflight.get("errors", []))
+			_restore_travel_snapshot(run_state, rollback)
+			return EnvironmentInstance.from_dict(run_state.current_environment)
 	if run_state.has_world_map() and not run_state.current_environment.is_empty():
 		if current_node_id != target_id:
-			if not bool(_commit_travel_departure(run_state, current_node_id, target_id, "world").get("ok", false)):
+			var departure := _commit_travel_departure(run_state, current_node_id, target_id, "world")
+			if not bool(departure.get("ok", false)):
+				_last_environment_install_errors = _copy_array(departure.get("errors", []))
 				_restore_travel_snapshot(run_state, rollback)
 				return EnvironmentInstance.from_dict(run_state.current_environment)
 	var environment_data := _world_environment_data_for_node(run_state, map_data, node, rng)
 	var installed := _install_environment(run_state, environment_data)
 	if not bool(installed.get("ok", false)):
+		_last_environment_install_errors = _copy_array(installed.get("errors", []))
 		_restore_travel_snapshot(run_state, rollback)
 		return EnvironmentInstance.from_dict(run_state.current_environment)
 	run_state.enter_world_node(target_id, run_state.current_environment)

@@ -223,6 +223,8 @@ var last_item_result: Dictionary = {}
 var selected_service_hook_id: String = ""
 var selected_service_hook_label: String = ""
 var service_hook_resolution_locked: bool = false
+var event_choice_resolution_pending := false
+var scenario_sequence_action_pending := false
 var selected_lender_hook_id: String = ""
 var selected_lender_hook_label: String = ""
 var last_hook_result: Dictionary = {}
@@ -4627,6 +4629,10 @@ func _pending_event_trigger_context(event_id: String) -> Dictionary:
 func select_item_offer(item_id: String) -> bool:
 	if _guard_player_input_route():
 		return false
+	return _select_item_offer_after_input_guard(item_id)
+
+
+func _select_item_offer_after_input_guard(item_id: String) -> bool:
 	var offer := _item_offer(item_id)
 	if offer.is_empty():
 		_show_message("Item offer is not available.")
@@ -4654,6 +4660,10 @@ func confirm_selected_item_offer() -> bool:
 func apply_item_offer(item_id: String) -> bool:
 	if _guard_player_input_route(false, "item:%s" % item_id):
 		return false
+	return _apply_item_offer_after_input_guard(item_id)
+
+
+func _apply_item_offer_after_input_guard(item_id: String) -> bool:
 	_refresh_run_action_service()
 	var resolved := run_action_service.buy_item_offer(item_id)
 	if not bool(resolved.get("ok", false)):
@@ -5219,6 +5229,10 @@ func confirm_selected_lender_hook() -> bool:
 func use_lender_hook(lender_id: String) -> bool:
 	if _guard_player_input_route():
 		return false
+	return _use_lender_hook_after_input_guard(lender_id)
+
+
+func _use_lender_hook_after_input_guard(lender_id: String) -> bool:
 	var option := _lender_hook(lender_id)
 	if option.is_empty():
 		_show_message("That lender is not available.")
@@ -8162,7 +8176,7 @@ func _apply_talk_dock_environment_reserve() -> void:
 
 
 func _current_talk_dock_environment_reserved_rect() -> Rect2:
-	if talk_dock == null:
+	if talk_dock == null or environment_canvas == null or not environment_canvas.visible:
 		return Rect2()
 	if not talk_dock.visible:
 		return Rect2()
@@ -11712,6 +11726,11 @@ func _focus_interactable_object_with_data(object_id: String, object_data: Dictio
 
 
 func activate_interactable_object(object_id: String) -> bool:
+	# Event responses reserve their exact choice before deferring the expensive
+	# transactional world boundary. The deferred resolver owns its own rollback
+	# snapshot, so cloning the entire Foundation lifecycle here is redundant.
+	if object_id.begins_with("event_response:"):
+		return _activate_event_response_action(object_id)
 	var caller_rollback := _foundation_lifecycle_snapshot()
 	_protect_foundation_coach_attention(caller_rollback)
 	var action_ok := _activate_interactable_object_with_lifecycle_snapshot(object_id, caller_rollback)
@@ -11806,8 +11825,11 @@ func _activate_interactable_object_with_lifecycle_snapshot(object_id: String, ca
 		CONTEXT_MODE_EVENT:
 			return _activate_event_object(source_id)
 		CONTEXT_MODE_ITEM:
-			if select_item_offer(source_id):
-				return confirm_selected_item_offer()
+			# The originating room activation already passed the modal/tutorial
+			# gate above. Re-entering it for selection and purchase can consume the
+			# same double-click before the affordable item reaches RunState.
+			if _select_item_offer_after_input_guard(source_id):
+				return _apply_item_offer_after_input_guard(source_id)
 			return false
 		CONTEXT_MODE_SHOPKEEPER:
 			return talk_to_shopkeeper()
@@ -11947,12 +11969,30 @@ func _activate_scenario_sequence_action(object_data: Dictionary, action: Diction
 		return false
 	if _guard_player_input_route():
 		return false
+	if scenario_sequence_action_pending:
+		return false
 	var action_id := str(action.get("id", ""))
 	if action_id.is_empty():
 		return false
 	var world_owner_token := str(action.get("world_sequence_owner_token", object_data.get("world_sequence_owner_token", "")))
 	if not world_owner_token.is_empty():
 		return _activate_world_sequence_action(world_owner_token, object_data, action)
+	scenario_sequence_action_pending = true
+	call_deferred("_finish_deferred_scenario_sequence_action", object_data.duplicate(true), action.duplicate(true))
+	return true
+
+
+func _finish_deferred_scenario_sequence_action(object_data: Dictionary, action: Dictionary) -> void:
+	_execute_scenario_sequence_action(object_data, action)
+	scenario_sequence_action_pending = false
+
+
+func _execute_scenario_sequence_action(object_data: Dictionary, action: Dictionary) -> bool:
+	if run_state == null:
+		return false
+	var action_id := str(action.get("id", ""))
+	if action_id.is_empty():
+		return false
 	var sequence_state := _copy_dict(run_state.current_environment.get("scenario_sequence_state", {}))
 	var receipt_ordinal := _copy_array(sequence_state.get("command_receipts", [])).size()
 	var visit_id := str(run_state.current_environment.get("environment_visit_id", "visit"))
@@ -11976,15 +12016,23 @@ func _activate_scenario_sequence_action(object_data: Dictionary, action: Diction
 		_show_message(str(errors[0]) if not errors.is_empty() else "That room action is no longer available.")
 		_refresh()
 		return false
+	# State, causal receipts, layout authority, and renderer snapshot are already
+	# committed synchronously. Drain presentation envelopes and consume the
+	# prepared snapshot at the next UI boundary so the input callback does not
+	# rebuild every room surface before acknowledging the click.
+	call_deferred("_finish_scenario_sequence_action", str(_copy_dict(result.get("state", {})).get("last_feedback", "")))
+	return true
+
+
+func _finish_scenario_sequence_action(fallback_feedback: String) -> void:
 	_consume_scenario_event_requests()
-	var transition_message := _consume_scenario_transitions()
-	var feedback := transition_message
+	var feedback := _consume_scenario_transitions()
 	if feedback.is_empty():
-		feedback = str(_copy_dict(result.get("state", {})).get("last_feedback", ""))
-	if not feedback.is_empty(): _show_message(feedback)
+		feedback = fallback_feedback
+	if not feedback.is_empty():
+		_show_message(feedback)
 	_autosave_foundation_run("Scenario progress saved.")
 	_refresh()
-	return true
 
 
 func _activate_world_sequence_action(owner_token: String, object_data: Dictionary, action: Dictionary) -> bool:
@@ -12060,7 +12108,11 @@ func _resume_pending_world_sequence_outcomes() -> Dictionary:
 
 func _scenario_host_interaction_availability() -> Dictionary:
 	var availability: Dictionary = {}
-	for record_value in _interactable_object_view_list():
+	# Scenario actions originate from the exact cached record list. Recomputing
+	# its dependency key here re-serialized every room collection immediately
+	# before a command that cannot have changed any of them yet.
+	var records := interactable_object_view_cache if interactable_object_view_cache_valid else _interactable_object_view_list()
+	for record_value in records:
 		var record := _copy_dict(record_value)
 		var owner := str(record.get("owner_namespace", "")).strip_edges()
 		var stable_id := str(record.get("stable_object_id", "")).strip_edges()
@@ -12071,7 +12123,10 @@ func _scenario_host_interaction_availability() -> Dictionary:
 
 
 func _consume_scenario_transitions() -> String:
-	if run_state == null or not run_state.scenario_sequence_active():
+	if run_state == null \
+		or not bool(run_state.current_environment.get("scenario_semantic_ready", false)) \
+		or bool(run_state.current_environment.get("scenario_restore_pending_trusted_rebuild", false)) \
+		or not run_state.scenario_sequence_present():
 		return ""
 	var drained := run_state.scenario_drain_transitions(_reduce_motion_enabled())
 	if not bool(drained.get("ok", false)):
@@ -12092,7 +12147,10 @@ func _consume_scenario_transitions() -> String:
 
 
 func _consume_scenario_event_requests() -> void:
-	if run_state == null or not run_state.scenario_sequence_active():
+	if run_state == null \
+		or not bool(run_state.current_environment.get("scenario_semantic_ready", false)) \
+		or bool(run_state.current_environment.get("scenario_restore_pending_trusted_rebuild", false)) \
+		or not run_state.scenario_sequence_present():
 		return
 	var drained := run_state.scenario_drain_event_requests()
 	if not bool(drained.get("ok", false)):
@@ -12367,7 +12425,10 @@ func _resolve_lender_conversation_choice(entry: Dictionary, choice_id: String) -
 	elif mode == "pawn":
 		open_pawn_counter(lender_id)
 	else:
-		use_lender_hook(lender_id)
+		# The confirmed talk response is the lender action. Do not run the room
+		# input/closing gate again after retiring its modal entry: that can discard
+		# a valid recovery loan exactly when closing pressure is active.
+		_use_lender_hook_after_input_guard(lender_id)
 
 
 func _cage_atm_inline_actions() -> Array:
@@ -12554,6 +12615,8 @@ func _start_linda_ambient_dialogue(object_data: Dictionary) -> bool:
 
 
 func _activate_event_response_action(action_object_id: String) -> bool:
+	if event_choice_resolution_pending:
+		return false
 	var payload := action_object_id.trim_prefix("event_response:")
 	var separator := payload.find(":")
 	if separator <= 0 or separator >= payload.length() - 1:
@@ -12562,7 +12625,14 @@ func _activate_event_response_action(action_object_id: String) -> bool:
 		return false
 	var event_id := payload.substr(0, separator)
 	var choice_id := payload.substr(separator + 1)
-	return activate_event_choice_action(event_id, choice_id)
+	event_choice_resolution_pending = true
+	call_deferred("_finish_deferred_event_response_action", event_id, choice_id)
+	return true
+
+
+func _finish_deferred_event_response_action(event_id: String, choice_id: String) -> void:
+	activate_event_choice_action(event_id, choice_id)
+	event_choice_resolution_pending = false
 
 
 func _activate_meta_interactable_object(object_id: String) -> bool:
@@ -13030,9 +13100,10 @@ func _interactable_object_view_list() -> Array:
 func _interactable_object_cache_key() -> String:
 	if run_state == null:
 		return "no-run"
-	return "%d|%s|%s|%s|%s|%s|%s|%s|%s|%s" % [
+	return "%d|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s" % [
 		run_state.get_instance_id(),
 		_interactable_environment_cache_token(run_state.current_environment),
+		JSON.stringify([run_state.delivery_physical_interactions(), run_state.delivery_arrival_interaction()]),
 		current_screen,
 		hover_target_id,
 		focus_target_id,
@@ -13059,6 +13130,13 @@ func _interactable_environment_cache_token(environment: Dictionary) -> String:
 		int(environment.get("environment_runtime_revision", 0)),
 		str(environment.get("scenario_semantic_digest", "")),
 		str(environment.get("scenario_layout_authority_digest", "")),
+		bool(environment.get("scenario_semantic_ready", false)),
+		bool(environment.get("scenario_restore_pending_trusted_rebuild", false)),
+		str(environment.get("scenario_sequence_pending_visit_id", "")),
+		str(environment.get("scenario_restore_contract", "")),
+		environment.has("scenario_layout_audit"),
+		environment.has("scenario_render_snapshot"),
+		environment.has("scenario_sequence_projection"),
 		str(environment.get("current_layer_id", "")),
 		str(environment.get("kind", "")),
 		environment.get("game_ids", []),
@@ -18283,9 +18361,47 @@ func _sync_talk_dock_coach_avoid_rect() -> void:
 	var event_id := str(talk_dock.entry.get("event_id", ""))
 	var boundary_key := "%s|%s|%s" % [event_id, focus_boundary_id if not focus_boundary_id.is_empty() else "none", current_screen]
 	talk_dock_avoid_sync_active = true
-	talk_dock.set_avoid_global_rect(anchor_rect, boundary_key, focus_x_hint)
+	talk_dock.set_avoid_global_rect(anchor_rect, boundary_key, focus_x_hint, _scenario_talk_dock_protected_rects())
 	talk_dock_avoid_sync_active = false
 	_apply_talk_dock_environment_reserve()
+
+
+func _scenario_talk_dock_protected_rects() -> Array:
+	var protected: Array = []
+	if environment_canvas == null or not environment_canvas.has_method("current_view_snapshot"):
+		return protected
+	if run_state != null and environment_canvas.has_method("global_rect_for_normalized_board_rect"):
+		var authority := _copy_dict(run_state.current_environment.get("scenario_layout_authority", {}))
+		for identity_value in authority.keys():
+			var identity := str(identity_value)
+			var record := _copy_dict(authority.get(identity_value, {}))
+			var scenario_owned := identity.begins_with("scenario::") \
+				or bool(record.get("semantic_actor_member", false)) \
+				or bool(record.get("semantic_interaction_member", false))
+			var requires_clearance := bool(record.get("semantic_actor_member", false)) \
+				or bool(record.get("semantic_interaction_member", false))
+			if not scenario_owned or not requires_clearance or not bool(record.get("presentation_visible", true)):
+				continue
+			var sealed_rect: Rect2 = environment_canvas.call("global_rect_for_normalized_board_rect", record.get("normalized_hit_rect", {}))
+			if sealed_rect.has_area():
+				protected.append(sealed_rect)
+	var snapshot: Dictionary = environment_canvas.call("current_view_snapshot")
+	for object_value in _copy_array(snapshot.get("objects", [])):
+		if typeof(object_value) != TYPE_DICTIONARY:
+			continue
+		var object_data: Dictionary = object_value
+		var object_id := str(object_data.get("object_id", object_data.get("id", ""))).strip_edges()
+		var scenario_owned := object_id.begins_with("scenario::") \
+			or str(object_data.get("scenario_owner_namespace", "")) == "scenario"
+		var requires_clearance := bool(object_data.get("interactive", false)) \
+			or not str(object_data.get("actor_id", "")).strip_edges().is_empty() \
+			or str(object_data.get("interaction_type", "")) == "actor"
+		if not scenario_owned or not requires_clearance or not bool(object_data.get("visible", true)):
+			continue
+		var rect: Rect2 = environment_canvas.call("global_rect_for_object", object_id)
+		if rect.has_area() and not protected.has(rect):
+			protected.append(rect)
+	return protected
 
 
 func _coach_context_snapshot() -> Dictionary:

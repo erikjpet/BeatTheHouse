@@ -9,6 +9,8 @@ const OperationRegistryScript := preload("res://scripts/core/scenario_operation_
 const ScenarioExtensionDispatchScript := preload("res://scripts/core/scenario_extension_dispatch.gd")
 const ScenarioLayoutResolverScript := preload("res://scripts/core/scenario_layout_resolver.gd")
 const VALIDATED_SEQUENCE_MARKER := "__scenario_sequence_runtime_validated"
+const TRUSTED_STATE_REFERENCE_KEY := "_scenario_trusted_state_digest"
+const TRUSTED_LAYOUT_INPUT_DIGEST_KEY := "_scenario_trusted_layout_input_digest"
 const SEQUENCE_SUPPRESSION_KEY := "sequence_suppressed"
 const EnvironmentSemanticInventoryScript := preload("res://scripts/core/environment_semantic_inventory.gd")
 
@@ -198,6 +200,23 @@ static func ensure_sequence_state(environment: Dictionary, definition: Dictionar
 		return {}
 	if not bool(environment.get("scenario_semantic_ready", false)):
 		return {}
+	var stored_state_value: Variant = environment.get("scenario_sequence_state", {})
+	var trusted_state_value: Variant = environment.get(TRUSTED_STATE_REFERENCE_KEY, "")
+	if typeof(stored_state_value) == TYPE_DICTIONARY \
+		and typeof(trusted_state_value) == TYPE_STRING \
+		and typeof(environment.get("scenario_semantic_inventory_version")) == TYPE_INT \
+		and typeof(environment.get("scenario_semantic_digest")) == TYPE_STRING \
+		and typeof(environment.get("scenario_semantic_action_digest")) == TYPE_STRING:
+		var trusted_state := stored_state_value as Dictionary
+		var trusted_semantic := _copy_dict(trusted_state.get("semantic_state", {}))
+		if int(trusted_state.get("schema_version", 0)) == SequenceRuntimeScript.STATE_SCHEMA_VERSION \
+			and str(trusted_state.get("scenario_id", "")) == str(definition.get("id", definition.get("scenario_id", ""))) \
+			and str(trusted_state.get("node_id", "")) == str(environment.get("world_node_id", environment.get("archetype_id", environment.get("id", "")))) \
+			and _trusted_host_semantics_match(environment, trusted_semantic) \
+			and int(trusted_semantic.get("inventory_schema_version", 0)) == int(environment.get("scenario_semantic_inventory_version", 0)) \
+			and str(trusted_semantic.get("inventory_digest", "")) == str(environment.get("scenario_semantic_digest", "")) \
+			and str(trusted_state_value) == SequenceRuntimeScript.content_fingerprint(trusted_state):
+			return trusted_state
 	if not str(environment.get("scenario_sequence_migration_error", "")).is_empty():
 		environment["scenario_sequence_lifecycle_errors"] = [str(environment.get("scenario_sequence_migration_error", ""))]
 		environment.erase("scenario_semantic_ready")
@@ -256,6 +275,7 @@ static func ensure_sequence_state(environment: Dictionary, definition: Dictionar
 			else:
 				state = _copy_dict(rebuilt.get("state", state))
 	environment["scenario_sequence_state"] = state
+	environment[TRUSTED_STATE_REFERENCE_KEY] = SequenceRuntimeScript.content_fingerprint(state)
 	return state.duplicate(true)
 
 
@@ -820,24 +840,24 @@ static func _append_unique_text(values: Array, value: String) -> void:
 
 
 static func sequence_record_visit(environment: Dictionary, definition: Dictionary, visit_id: String) -> Dictionary:
-	var candidate := environment.duplicate(true)
+	var candidate := environment.duplicate(false)
 	var state := ensure_sequence_state(candidate, definition)
 	if state.is_empty(): return {"ok": false, "errors": ["No dynamic room sequence is active."]}
-	return _commit_sequence_candidate(environment, candidate, definition, SequenceRuntimeScript.record_visit(state, definition, visit_id))
+	return _commit_sequence_candidate(environment, candidate, definition, SequenceRuntimeScript.record_visit(state, definition, visit_id, true))
 
 
 static func sequence_apply_reentry(environment: Dictionary, definition: Dictionary, visit_id: String) -> Dictionary:
-	var candidate := environment.duplicate(true)
+	var candidate := environment.duplicate(false)
 	var state := ensure_sequence_state(candidate, definition)
 	if state.is_empty(): return {"ok": false, "errors": ["No dynamic room sequence is active."]}
-	return _commit_sequence_candidate(environment, candidate, definition, SequenceRuntimeScript.apply_reentry(state, definition, visit_id, sequence_host_semantics(candidate)))
+	return _commit_sequence_candidate(environment, candidate, definition, SequenceRuntimeScript.apply_reentry(state, definition, visit_id, sequence_host_semantics(candidate), true))
 
 
 static func sequence_apply_expiry_boundary(environment: Dictionary, definition: Dictionary, boundary: String, amount: int = 1) -> Dictionary:
-	var candidate := environment.duplicate(true)
+	var candidate := environment.duplicate(false)
 	var state := ensure_sequence_state(candidate, definition)
 	if state.is_empty(): return {"ok": false, "errors": ["No dynamic room sequence is active."]}
-	return _commit_sequence_candidate(environment, candidate, definition, SequenceRuntimeScript.apply_expiry_boundary(state, definition, boundary, amount))
+	return _commit_sequence_candidate(environment, candidate, definition, SequenceRuntimeScript.apply_expiry_boundary(state, definition, boundary, amount, true))
 
 
 static func sequence_host_semantics(environment: Dictionary) -> Dictionary:
@@ -858,9 +878,43 @@ static func sequence_host_semantics(environment: Dictionary) -> Dictionary:
 	return {"target_inventory": EnvironmentSemanticInventoryScript.exact_collections(sealed_inventory), "inventory_schema_version": int(sealed_inventory.get("schema_version", 0)), "inventory_digest": str(sealed_inventory.get("digest", "")), "inventory_errors": [], "base_interactions": base_interactions, "event_choices": _copy_dict(environment.get("scenario_event_choices", {}))}
 
 
+static func _trusted_host_semantics_match(environment: Dictionary, trusted_semantic: Dictionary) -> bool:
+	# The trusted hot path needs only to prove that the sealed host authority has
+	# not changed. Avoid materializing a second full target inventory merely to
+	# compare its already-sealed version and digest.
+	if not bool(environment.get("scenario_semantic_ready", false)):
+		return false
+	var sealed_inventory_value: Variant = environment.get("scenario_semantic_inventory", {})
+	var base_interactions_value: Variant = environment.get("scenario_base_interactions", [])
+	var event_choices_value: Variant = environment.get("scenario_event_choices", {})
+	if typeof(sealed_inventory_value) != TYPE_DICTIONARY or (sealed_inventory_value as Dictionary).is_empty() \
+		or typeof(base_interactions_value) != TYPE_ARRAY or typeof(event_choices_value) != TYPE_DICTIONARY:
+		return false
+	if typeof(environment.get("scenario_semantic_inventory_version")) != TYPE_INT \
+		or typeof(environment.get("scenario_semantic_digest")) != TYPE_STRING \
+		or typeof(environment.get("scenario_semantic_action_digest")) != TYPE_STRING:
+		return false
+	var sealed_inventory := sealed_inventory_value as Dictionary
+	var base_interactions := base_interactions_value as Array
+	var action_digest := str(environment.get("scenario_semantic_action_digest", ""))
+	# The action digest is the closed authority subset consumed by commands. The
+	# sealed inventory independently binds presentation identities and the trusted
+	# state fingerprint binds the state-carried copy.
+	return SequenceRuntimeScript._valid_sha256(action_digest) \
+		and action_digest == SequenceRuntimeScript.base_interaction_action_authority_digest(base_interactions) \
+		and int(environment.get("scenario_semantic_inventory_version", 0)) == int(sealed_inventory.get("schema_version", 0)) \
+		and str(environment.get("scenario_semantic_digest", "")) == str(sealed_inventory.get("digest", "")) \
+		and JSON.stringify(trusted_semantic.get("base_interactions", [])) == JSON.stringify(base_interactions) \
+		and JSON.stringify(trusted_semantic.get("event_choices", {})) == JSON.stringify(event_choices_value)
+
+
 static func sequence_command(environment: Dictionary, definition: Dictionary, command: Dictionary, context: Dictionary = {}) -> Dictionary:
 	definition = sequence_definition_for_environment(environment, definition)
-	var candidate := environment.duplicate(true)
+	# Sequence transactions replace top-level environment fields with freshly
+	# normalized state/projection/layout values. A shallow envelope is therefore
+	# the exact isolation boundary we need; cloning every immutable room asset and
+	# content record here made a single authored command scale with room size.
+	var candidate := environment.duplicate(false)
 	var state := ensure_sequence_state(candidate, definition)
 	if state.is_empty():
 		return {"ok": false, "errors": ["No dynamic room sequence is active."]}
@@ -870,20 +924,20 @@ static func sequence_command(environment: Dictionary, definition: Dictionary, co
 	var dispatched := ScenarioExtensionDispatchScript.prepare_command(definition, command, context)
 	if not bool(dispatched.get("ok", false)):
 		return {"ok": false, "errors": _copy_array(dispatched.get("errors", [])), "state": state}
-	var result := SequenceRuntimeScript.apply_command(state, definition, _copy_dict(dispatched.get("command", command)), _copy_dict(dispatched.get("context", context)))
+	var result := SequenceRuntimeScript.apply_command(state, definition, _copy_dict(dispatched.get("command", command)), _copy_dict(dispatched.get("context", context)), true)
 	return _commit_sequence_candidate(environment, candidate, definition, result)
 
 
 static func enqueue_sequence_fact(environment: Dictionary, definition: Dictionary, fact: Dictionary) -> Dictionary:
 	definition = sequence_definition_for_environment(environment, definition)
-	var candidate := environment.duplicate(true)
+	var candidate := environment.duplicate(false)
 	var state := ensure_sequence_state(candidate, definition)
 	if state.is_empty():
 		return {"ok": false, "errors": ["No dynamic room sequence is active."]}
 	var quarantine := _node_binding_quarantine_result(state)
 	if not quarantine.is_empty():
 		return _commit_sequence_candidate(environment, candidate, definition, quarantine)
-	var result := SequenceRuntimeScript.enqueue_fact(state, definition, fact)
+	var result := SequenceRuntimeScript.enqueue_fact(state, definition, fact, true)
 	return _commit_sequence_candidate(environment, candidate, definition, result)
 
 
@@ -896,11 +950,11 @@ static func _node_binding_quarantine_result(state: Dictionary) -> Dictionary:
 
 static func flush_sequence_facts(environment: Dictionary, definition: Dictionary, boundary_serial: int) -> Dictionary:
 	definition = sequence_definition_for_environment(environment, definition)
-	var candidate := environment.duplicate(true)
+	var candidate := environment.duplicate(false)
 	var state := ensure_sequence_state(candidate, definition)
 	if state.is_empty():
 		return {"ok": false, "errors": ["No dynamic room sequence is active."]}
-	var result := SequenceRuntimeScript.flush_facts(state, definition, boundary_serial)
+	var result := SequenceRuntimeScript.flush_facts(state, definition, boundary_serial, true)
 	return _commit_sequence_candidate(environment, candidate, definition, result)
 
 
@@ -918,42 +972,93 @@ static func sequence_projection(environment: Dictionary, definition: Dictionary 
 
 static func sequence_reentry(environment: Dictionary, definition: Dictionary, visit_id: String) -> Dictionary:
 	definition = sequence_definition_for_environment(environment, definition)
-	var candidate := environment.duplicate(true)
+	var candidate := environment.duplicate(false)
 	var state := ensure_sequence_state(candidate, definition)
 	if state.is_empty():
 		return {"ok": false, "inactive": true, "errors": []}
-	var result := SequenceRuntimeScript.apply_reentry(state, definition, visit_id, sequence_host_semantics(candidate))
+	# ensure_sequence_state already proved that the state-carried semantics match
+	# the live host. Re-entry can therefore use its exact sealed fallback without
+	# rebuilding a second full host inventory.
+	var result := SequenceRuntimeScript.apply_reentry(state, definition, visit_id, {}, true)
 	return _commit_sequence_candidate(environment, candidate, definition, result)
 
 
 static func sequence_expiry(environment: Dictionary, definition: Dictionary, boundary: String, boundary_serial: int) -> Dictionary:
 	definition = sequence_definition_for_environment(environment, definition)
-	var candidate := environment.duplicate(true)
+	var candidate := environment.duplicate(false)
 	var state := ensure_sequence_state(candidate, definition)
 	if state.is_empty():
 		return {"ok": false, "inactive": true, "errors": []}
-	var result := SequenceRuntimeScript.apply_expiry(state, definition, boundary, boundary_serial)
+	var result := SequenceRuntimeScript.apply_expiry(state, definition, boundary, boundary_serial, true)
 	return _commit_sequence_candidate(environment, candidate, definition, result)
 
 
 static func drain_sequence_transitions(environment: Dictionary, definition: Dictionary, reduced_motion: bool = false) -> Dictionary:
+	if _sequence_is_suppressed(environment, definition):
+		_clear_environment_sequence(environment)
+		return {"ok": false, "inactive": true, "transitions": [], "errors": []}
 	definition = sequence_definition_for_environment(environment, definition)
-	var candidate := environment.duplicate(true)
-	var state := ensure_sequence_state(candidate, definition)
+	var stored_state := _copy_dict(environment.get("scenario_sequence_state", {}))
+	var stored_semantic := _copy_dict(stored_state.get("semantic_state", {}))
+	if _copy_array(stored_semantic.get("transition_queue", [])).is_empty():
+		return {"ok": true, "state": stored_state, "transitions": [], "errors": []}
+	var state := SequenceRuntimeScript.normalize_state(stored_state, definition)
 	if state.is_empty():
 		return {"ok": false, "inactive": true, "transitions": [], "errors": []}
-	var result := SequenceRuntimeScript.drain_transitions(state, definition, reduced_motion)
-	return _commit_sequence_candidate(environment, candidate, definition, result)
+	var result := SequenceRuntimeScript.drain_transitions(state, definition, reduced_motion, true)
+	return _commit_sequence_drain(environment, definition, result)
 
 
 static func drain_sequence_event_requests(environment: Dictionary, definition: Dictionary) -> Dictionary:
+	if _sequence_is_suppressed(environment, definition):
+		_clear_environment_sequence(environment)
+		return {"ok": false, "inactive": true, "requests": [], "errors": []}
 	definition = sequence_definition_for_environment(environment, definition)
-	var candidate := environment.duplicate(true)
-	var state := ensure_sequence_state(candidate, definition)
+	var stored_state := _copy_dict(environment.get("scenario_sequence_state", {}))
+	if _copy_array(stored_state.get("event_request_queue", [])).is_empty():
+		return {"ok": true, "state": stored_state, "requests": [], "errors": []}
+	var state := SequenceRuntimeScript.normalize_state(stored_state, definition)
 	if state.is_empty():
 		return {"ok": false, "inactive": true, "requests": [], "errors": []}
-	var result := SequenceRuntimeScript.drain_event_requests(state, definition)
-	return _commit_sequence_candidate(environment, candidate, definition, result)
+	var result := SequenceRuntimeScript.drain_event_requests(state, definition, true)
+	return _commit_sequence_drain(environment, definition, result)
+
+
+# Draining a presentation transition or event-request envelope cannot mutate
+# scene objects, actors, interactions, services, games, routes, objectives, or
+# phase authority. Commit only the causal queues/receipts and refresh the three
+# public drain fields; rerunning the full layout resolver here made every room
+# action validate identical geometry two additional times on the main thread.
+static func _commit_sequence_drain(environment: Dictionary, definition: Dictionary, result_value: Dictionary) -> Dictionary:
+	var result := result_value.duplicate(true)
+	if not bool(result.get("ok", false)):
+		return result
+	var next := _copy_dict(result.get("state", {}))
+	var current_projection := _copy_dict(environment.get("scenario_sequence_projection", {}))
+	var render_snapshot := _copy_dict(environment.get("scenario_render_snapshot", {}))
+	if next.is_empty() or current_projection.is_empty() or render_snapshot.is_empty():
+		return _sequence_candidate_failure(environment, result, ["Scenario drain requires committed projection and renderer authority."])
+	var fresh_projection := SequenceRuntimeScript.public_projection(next, definition)
+	if fresh_projection.is_empty():
+		return _sequence_candidate_failure(environment, result, ["Scenario drain produced no public projection."])
+	for stable_key in ["scenario_id", "node_id", "phase_id", "status", "boundary_serial", "objectives", "local_state", "resolved_outcomes", "last_feedback"]:
+		if JSON.stringify(current_projection.get(stable_key)) != JSON.stringify(fresh_projection.get(stable_key)):
+			return _sequence_candidate_failure(environment, result, ["Scenario drain attempted to mutate non-drain projection authority: %s." % stable_key])
+	for drain_key in ["pending_transition_count", "active_stages", "pending_event_request_count"]:
+		current_projection[drain_key] = fresh_projection.get(drain_key)
+	render_snapshot["active_stages"] = _copy_array(fresh_projection.get("active_stages", []))
+	environment["scenario_sequence_state"] = next
+	environment[TRUSTED_STATE_REFERENCE_KEY] = SequenceRuntimeScript.content_fingerprint(next)
+	environment["scenario_sequence_projection"] = current_projection
+	environment["scenario_render_snapshot"] = render_snapshot
+	result["state"] = next.duplicate(true)
+	result["projection"] = current_projection.duplicate(true)
+	result["layout_authority"] = _copy_dict(environment.get("scenario_layout_authority", {}))
+	result["layout_authority_digest"] = str(environment.get("scenario_layout_authority_digest", ""))
+	result["layout_audit"] = _copy_dict(environment.get("scenario_layout_audit", {}))
+	result["renderer_snapshot"] = render_snapshot.duplicate(true)
+	result["warnings"] = []
+	return result
 
 
 static func refresh_sequence_snapshots(environment: Dictionary, definition: Dictionary = {}) -> Dictionary:
@@ -996,13 +1101,15 @@ static func _clear_environment_sequence(environment: Dictionary) -> void:
 		"scenario_layout_audit", "scenario_layout_authority_digest",
 	]:
 		environment.erase(key)
+	environment.erase(TRUSTED_STATE_REFERENCE_KEY)
+	environment.erase(TRUSTED_LAYOUT_INPUT_DIGEST_KEY)
 
 
 static func _refresh_sequence_snapshots(environment: Dictionary, definition: Dictionary) -> Dictionary:
 	var state := SequenceRuntimeScript.normalize_state(environment.get("scenario_sequence_state", {}), definition)
 	if state.is_empty():
 		return {"ok": false, "errors": ["Scenario snapshot refresh requires normalized state."]}
-	var candidate := environment.duplicate(true)
+	var candidate := environment.duplicate(false)
 	var committed := _commit_sequence_candidate(environment, candidate, definition, {"ok": true, "state": state, "errors": []})
 	if not bool(committed.get("ok", false)):
 		return {"ok": false, "errors": _copy_array(committed.get("errors", []))}
@@ -1010,22 +1117,30 @@ static func _refresh_sequence_snapshots(environment: Dictionary, definition: Dic
 
 
 static func _commit_sequence_candidate(environment: Dictionary, candidate_value: Dictionary, definition: Dictionary, result_value: Dictionary) -> Dictionary:
-	var result := result_value.duplicate(true)
+	var result := result_value.duplicate(false)
 	if not bool(result.get("ok", false)):
 		return result
-	var candidate := candidate_value.duplicate(true)
-	var next := _copy_dict(result.get("state", {}))
+	var candidate := candidate_value.duplicate(false)
+	var next := (result.get("state", {}) as Dictionary).duplicate(false) if typeof(result.get("state", {})) == TYPE_DICTIONARY else {}
 	if next.is_empty():
 		return _sequence_candidate_failure(environment, result, ["Scenario operation produced no authoritative next state."])
 	candidate["scenario_sequence_state"] = next
-	var projection := SequenceRuntimeScript.public_projection(next, definition)
+	candidate[TRUSTED_STATE_REFERENCE_KEY] = SequenceRuntimeScript.content_fingerprint(next)
+	var projection := SequenceRuntimeScript.public_projection(next, definition, true)
 	if projection.is_empty():
 		return _sequence_candidate_failure(environment, result, ["Scenario operation produced no public projection."])
 	if not bool(candidate.get("scenario_semantic_ready", false)):
 		return _sequence_candidate_failure(environment, result, ["Scenario post-operation layout requires finalized semantic records."])
 	if typeof(candidate.get("scenario_layout_base_records")) != TYPE_ARRAY or typeof(candidate.get("scenario_layout_context", {})) != TYPE_DICTIONARY:
 		return _sequence_candidate_failure(environment, result, ["Scenario post-operation layout authority inputs are missing."])
-	var layout_environment := candidate.duplicate(true)
+	var passive_commit := _commit_passive_sequence_candidate(environment, candidate, next, projection, result)
+	if not passive_commit.is_empty():
+		return passive_commit
+	var layout_input_digest := _sequence_layout_input_digest(candidate, projection)
+	var reused_commit := _commit_reused_sequence_layout(environment, candidate, next, projection, result, layout_input_digest)
+	if not reused_commit.is_empty():
+		return reused_commit
+	var layout_environment := candidate.duplicate(false)
 	var layout_context := _copy_dict(candidate.get("scenario_layout_context", {}))
 	if not layout_context.is_empty():
 		layout_environment["_scenario_layout_context"] = layout_context
@@ -1044,6 +1159,7 @@ static func _commit_sequence_candidate(environment: Dictionary, candidate_value:
 	candidate["scenario_layout_audit"] = _copy_dict(layout_result.get("layout_audit", {}))
 	candidate["scenario_layout_authority_digest"] = authority_digest
 	candidate["scenario_render_snapshot"] = renderer_snapshot
+	candidate[TRUSTED_LAYOUT_INPUT_DIGEST_KEY] = layout_input_digest
 	_materialize_sequence_services_games_routes(candidate, sealed_projection)
 	environment.clear()
 	environment.merge(candidate, true)
@@ -1054,6 +1170,102 @@ static func _commit_sequence_candidate(environment: Dictionary, candidate_value:
 	result["layout_audit"] = _copy_dict(layout_result.get("layout_audit", {}))
 	result["renderer_snapshot"] = renderer_snapshot.duplicate(true)
 	result["warnings"] = _copy_array(layout_result.get("warnings", []))
+	return result
+
+
+static func _sequence_layout_input_digest(candidate: Dictionary, projection: Dictionary) -> String:
+	# This receipt binds every input consumed by ScenarioLayoutResolver.resolve().
+	# It permits exact reuse only for presentation-neutral operations such as a
+	# visit receipt or aftermath re-entry; any semantic, room, or viewport change
+	# necessarily changes the digest and takes the full resolver path.
+	return SequenceRuntimeScript.content_fingerprint({
+		"scenario_id": str(projection.get("scenario_id", "")),
+		"phase_id": str(projection.get("phase_id", "")),
+		"status": str(projection.get("status", "")),
+		"semantic_state": projection.get("semantic_state", {}),
+		"active_stages": projection.get("active_stages", []),
+		"base_records": candidate.get("scenario_layout_base_records", []),
+		"layout_context": candidate.get("scenario_layout_context", {}),
+	})
+
+
+static func _commit_reused_sequence_layout(environment: Dictionary, candidate: Dictionary, next: Dictionary, projection: Dictionary, result_value: Dictionary, input_digest: String) -> Dictionary:
+	var stored_input_value: Variant = candidate.get(TRUSTED_LAYOUT_INPUT_DIGEST_KEY, "")
+	if typeof(stored_input_value) != TYPE_STRING \
+		or not SequenceRuntimeScript._valid_sha256(str(stored_input_value)) \
+		or str(stored_input_value) != input_digest:
+		return {}
+	var stored_projection := _copy_dict(candidate.get("scenario_sequence_projection", {}))
+	var authority := _copy_dict(candidate.get("scenario_layout_authority", {}))
+	var audit := _copy_dict(candidate.get("scenario_layout_audit", {}))
+	var authority_digest := str(candidate.get("scenario_layout_authority_digest", ""))
+	if stored_projection.is_empty() or not bool(audit.get("active", false)) or not bool(audit.get("valid", false)) \
+		or not SequenceRuntimeScript._valid_sha256(authority_digest) \
+		or str(audit.get("authority_digest", "")) != authority_digest:
+		return {}
+	var sealed_projection := projection.duplicate(true)
+	sealed_projection["semantic_state"] = _copy_dict(stored_projection.get("semantic_state", {}))
+	var renderer_snapshot := ScenarioLayoutResolverScript.sealed_renderer_snapshot({
+		"ok": true,
+		"projection": sealed_projection,
+		"layout_authority": authority,
+		"layout_authority_digest": authority_digest,
+		"layout_audit": audit,
+		"warnings": [],
+	})
+	if not bool(renderer_snapshot.get("ok", false)) or str(renderer_snapshot.get("layout_authority_digest", "")) != authority_digest:
+		return {}
+	candidate["scenario_sequence_projection"] = sealed_projection
+	candidate["scenario_render_snapshot"] = renderer_snapshot
+	candidate[TRUSTED_LAYOUT_INPUT_DIGEST_KEY] = input_digest
+	_materialize_sequence_services_games_routes(candidate, sealed_projection)
+	environment.clear()
+	environment.merge(candidate, true)
+	var result := result_value.duplicate(false)
+	result["state"] = next.duplicate(true)
+	result["projection"] = sealed_projection.duplicate(true)
+	result["layout_authority"] = authority.duplicate(true)
+	result["layout_authority_digest"] = authority_digest
+	result["layout_audit"] = audit.duplicate(true)
+	result["renderer_snapshot"] = renderer_snapshot.duplicate(true)
+	result["warnings"] = []
+	return result
+
+
+static func _commit_passive_sequence_candidate(environment: Dictionary, candidate: Dictionary, next: Dictionary, projection_value: Dictionary, result_value: Dictionary) -> Dictionary:
+	var audit := _copy_dict(candidate.get("scenario_layout_audit", {}))
+	if bool(audit.get("active", true)):
+		return {}
+	var renderer := _copy_dict(candidate.get("scenario_render_snapshot", {}))
+	var authority := _copy_dict(candidate.get("scenario_layout_authority", {}))
+	var authority_digest := str(candidate.get("scenario_layout_authority_digest", ""))
+	if not bool(audit.get("valid", false)) \
+		or not bool(audit.get("sealed_passive", false)) \
+		or not authority.is_empty() \
+		or not SequenceRuntimeScript._valid_sha256(authority_digest) \
+		or str(audit.get("authority_digest", "")) != authority_digest \
+		or not bool(renderer.get("ok", false)) \
+		or not bool(renderer.get("sealed_passive", false)) \
+		or str(renderer.get("presentation_mode", "")) != "passive" \
+		or str(renderer.get("layout_authority_digest", "")) != authority_digest:
+		return _sequence_candidate_failure(environment, result_value, ["Scenario passive post-operation commit requires an exact sealed passive layout authority."])
+	var projection := projection_value.duplicate(true)
+	var semantic := _copy_dict(projection.get("semantic_state", {}))
+	semantic["layout_authority_digest"] = authority_digest
+	projection["semantic_state"] = semantic
+	candidate["scenario_sequence_projection"] = projection
+	candidate[TRUSTED_LAYOUT_INPUT_DIGEST_KEY] = _sequence_layout_input_digest(candidate, projection_value)
+	_materialize_sequence_services_games_routes(candidate, projection)
+	environment.clear()
+	environment.merge(candidate, true)
+	var result := result_value.duplicate(true)
+	result["state"] = next.duplicate(true)
+	result["projection"] = projection.duplicate(true)
+	result["layout_authority"] = {}
+	result["layout_authority_digest"] = authority_digest
+	result["layout_audit"] = audit.duplicate(true)
+	result["renderer_snapshot"] = renderer.duplicate(true)
+	result["warnings"] = []
 	return result
 
 

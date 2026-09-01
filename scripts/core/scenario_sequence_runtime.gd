@@ -319,8 +319,8 @@ static func command(command_id: String, node_id: String, phase_id: String, idemp
 	}
 
 
-static func apply_command(state_value: Dictionary, definition: Dictionary, command_value: Dictionary, context: Dictionary = {}) -> Dictionary:
-	var original := normalize_state(state_value, definition)
+static func apply_command(state_value: Dictionary, definition: Dictionary, command_value: Dictionary, context: Dictionary = {}, prevalidated_state: bool = false) -> Dictionary:
+	var original := state_value if prevalidated_state else normalize_state(state_value, definition)
 	var state := original
 	var bounded_errors := OperationRegistryScript.validate_bounded_variant("scenario command", command_value)
 	if not bounded_errors.is_empty():
@@ -336,7 +336,13 @@ static func apply_command(state_value: Dictionary, definition: Dictionary, comma
 		cached["replayed"] = true
 		cached["state"] = state
 		return cached
-	var validation := _validate_command(state, definition, command_value, context)
+	var effective_context := context.duplicate(false)
+	var causal_descriptor := _dict(effective_context.get("causal_action_descriptor", {}))
+	if causal_descriptor.is_empty():
+		causal_descriptor = causal_action_descriptor(state, definition, command_value)
+		if not causal_descriptor.is_empty():
+			effective_context["causal_action_descriptor"] = causal_descriptor
+	var validation := _validate_command(state, definition, command_value, effective_context)
 	if _string_array(state.get("command_receipts", [])).size() >= MAX_RECEIPTS:
 		validation.append("scenario command lifetime receipt limit reached")
 	if _next_cause_ordinal(state) + _fact_array(state.get("fact_queue", [])).size() >= MAX_RECEIPTS:
@@ -345,14 +351,11 @@ static func apply_command(state_value: Dictionary, definition: Dictionary, comma
 		return {"ok": false, "errors": validation, "state": state, "replayed": false}
 	var command_id := str(command_value.get("command_id", "")).strip_edges()
 	var payload := _dict(command_value.get("payload", {}))
-	var descriptor := _command_descriptor(state, definition, str(command_value.get("owner_namespace", "")), str(command_value.get("stable_object_id", "")), command_id, context)
+	var descriptor := {"action": _dict(causal_descriptor.get("action", {}))} if not causal_descriptor.is_empty() else _command_descriptor(state, definition, str(command_value.get("owner_namespace", "")), str(command_value.get("stable_object_id", "")), command_id, effective_context)
 	var cost := maxi(0, int(_dict(descriptor.get("action", {})).get("cost", 0)))
-	var original_state := state.duplicate(true)
-	var causal_descriptor := _dict(context.get("causal_action_descriptor", {}))
-	if causal_descriptor.is_empty():
-		causal_descriptor = causal_action_descriptor(state, definition, command_value)
-	var state_before := JSON.stringify(_canonical_variant(state))
-	var handler_result := _apply_registered_handler(state, definition, command_value, context, causal_descriptor)
+	var original_state := state if prevalidated_state else state.duplicate(true)
+	var state_before := "" if prevalidated_state else JSON.stringify(_canonical_variant(state))
+	var handler_result := _apply_registered_handler(state, definition, command_value, effective_context, causal_descriptor)
 	state = _dict(handler_result.get("state", state))
 	if not bool(handler_result.get("ok", false)):
 		return {"ok": false, "errors": _array(handler_result.get("errors", [])), "state": original, "replayed": false}
@@ -385,7 +388,7 @@ static func apply_command(state_value: Dictionary, definition: Dictionary, comma
 		"boundary_serial": int(state.get("boundary_serial", 0)),
 		"cost": cost,
 		"outcomes": _string_array(state.get("resolved_outcomes", [])),
-		"changed": state_before != JSON.stringify(_canonical_variant(state)),
+		"changed": true if prevalidated_state else state_before != JSON.stringify(_canonical_variant(state)),
 		"state": {},
 	}
 	var results := _dict(state.get("command_results", {}))
@@ -409,8 +412,8 @@ static func fact(fact_type: String, producer: String, node_id: String, fact_id: 
 	}
 
 
-static func enqueue_fact(state_value: Dictionary, definition: Dictionary, fact_value: Dictionary) -> Dictionary:
-	var state := normalize_state(state_value, definition)
+static func enqueue_fact(state_value: Dictionary, definition: Dictionary, fact_value: Dictionary, prevalidated_state: bool = false) -> Dictionary:
+	var state := state_value.duplicate(true) if prevalidated_state else normalize_state(state_value, definition)
 	var bounded_errors := OperationRegistryScript.validate_bounded_variant("scenario fact", fact_value)
 	if not bounded_errors.is_empty():
 		return {"ok": false, "duplicate": false, "state": state, "errors": bounded_errors}
@@ -499,11 +502,11 @@ static func validate_fact(state: Dictionary, fact_value: Dictionary) -> Array:
 	return errors
 
 
-static func flush_facts(state_value: Dictionary, definition: Dictionary, boundary_serial: int) -> Dictionary:
-	var original := normalize_state(state_value, definition)
+static func flush_facts(state_value: Dictionary, definition: Dictionary, boundary_serial: int, prevalidated_state: bool = false) -> Dictionary:
+	var original := state_value if prevalidated_state else normalize_state(state_value, definition)
 	if original.is_empty():
 		return {"ok": false, "state": original, "processed": [], "errors": ["scenario causal journal and pending fact capacity is invalid"]}
-	var state := original.duplicate(true)
+	var state := original.duplicate(false)
 	if str(state.get("status", "")) == STATUS_CLEANED:
 		return {"ok": false, "state": state, "processed": [], "errors": ["scenario is cleaned"]}
 	var requested_boundary := maxi(0, boundary_serial)
@@ -582,8 +585,8 @@ static func flush_facts(state_value: Dictionary, definition: Dictionary, boundar
 	return {"ok": errors.is_empty(), "state": state, "processed": processed, "errors": errors}
 
 
-static func record_visit(state_value: Dictionary, definition: Dictionary, visit_id: String) -> Dictionary:
-	var state := normalize_state(state_value, definition)
+static func record_visit(state_value: Dictionary, definition: Dictionary, visit_id: String, prevalidated_state: bool = false) -> Dictionary:
+	var state := state_value if prevalidated_state else normalize_state(state_value, definition)
 	if state.is_empty(): return {"ok": false, "state": state, "errors": ["scenario causal journal and pending fact capacity is invalid"]}
 	var clean_visit_id := visit_id.strip_edges()
 	if not _valid_id(clean_visit_id) or not _valid_persisted_text(clean_visit_id):
@@ -594,7 +597,7 @@ static func record_visit(state_value: Dictionary, definition: Dictionary, visit_
 		return {"ok": true, "state": state, "errors": [], "replayed": true}
 	if receipts.size() >= MAX_RECEIPTS or _next_cause_ordinal(state) + _fact_array(state.get("fact_queue", [])).size() >= MAX_RECEIPTS:
 		return {"ok": false, "state": state, "errors": ["scenario causal journal lifetime limit reached"]}
-	var next := state.duplicate(true)
+	var next := state.duplicate(false)
 	receipts.append(receipt_key)
 	next["visit_receipts"] = receipts
 	var records := _array(next.get("visit_receipt_records", []))
@@ -603,9 +606,9 @@ static func record_visit(state_value: Dictionary, definition: Dictionary, visit_
 	return {"ok": true, "state": next, "errors": [], "replayed": false}
 
 
-static func apply_reentry(state_value: Dictionary, definition: Dictionary, visit_id: String, host_semantics: Dictionary = {}) -> Dictionary:
-	var original := normalize_state(state_value, definition)
-	var visit_result := record_visit(original, definition, visit_id)
+static func apply_reentry(state_value: Dictionary, definition: Dictionary, visit_id: String, host_semantics: Dictionary = {}, prevalidated_state: bool = false) -> Dictionary:
+	var original := state_value if prevalidated_state else normalize_state(state_value, definition)
+	var visit_result := record_visit(original, definition, visit_id, true)
 	if not bool(visit_result.get("ok", false)) or bool(visit_result.get("replayed", false)):
 		return visit_result
 	var state := _dict(visit_result.get("state", original))
@@ -614,7 +617,7 @@ static func apply_reentry(state_value: Dictionary, definition: Dictionary, visit
 	var status := str(state.get("status", STATUS_ACTIVE))
 	var policy_key := "partial" if status == STATUS_ACTIVE else "terminal" if status == STATUS_AFTERMATH else "expired"
 	var policy := str(policies.get(policy_key, "resume"))
-	var next := state.duplicate(true)
+	var next := state.duplicate(false)
 	match policy:
 		"restart":
 			var cleaned := _apply_cleanup(next, definition, "reentry:%s" % visit_id)
@@ -658,8 +661,8 @@ static func apply_reentry(state_value: Dictionary, definition: Dictionary, visit
 	return {"ok": true, "state": next, "replayed": false, "policy": policy}
 
 
-static func apply_expiry(state_value: Dictionary, definition: Dictionary, boundary: String, boundary_serial: int) -> Dictionary:
-	var state := normalize_state(state_value, definition)
+static func apply_expiry(state_value: Dictionary, definition: Dictionary, boundary: String, boundary_serial: int, prevalidated_state: bool = false) -> Dictionary:
+	var state := state_value if prevalidated_state else normalize_state(state_value, definition)
 	var expiry := _dict(SequenceSchemaScript.sequence(definition).get("expiry", {}))
 	var clean_boundary := boundary.strip_edges()
 	if state.is_empty() or clean_boundary.is_empty():
@@ -672,7 +675,7 @@ static func apply_expiry(state_value: Dictionary, definition: Dictionary, bounda
 	var receipts := _string_array(state.get("expiry_receipts", []))
 	if receipts.has(receipt_id):
 		return {"ok": true, "state": state, "applied": false, "expired": str(state.get("status", "")) != STATUS_ACTIVE, "replayed": true, "errors": []}
-	var next := state.duplicate(true)
+	var next := state.duplicate(false)
 	var counts := _normalize_expiry_counts(next.get("expiry_counts", {}))
 	counts[clean_boundary] = int(counts.get(clean_boundary, 0)) + 1
 	next["expiry_counts"] = counts
@@ -711,8 +714,8 @@ static func apply_expiry(state_value: Dictionary, definition: Dictionary, bounda
 	return {"ok": true, "state": next, "applied": true, "expired": true, "policy": policy, "errors": []}
 
 
-static func drain_transitions(state_value: Dictionary, definition: Dictionary, reduced_motion: bool = false) -> Dictionary:
-	var state := normalize_state(state_value, definition)
+static func drain_transitions(state_value: Dictionary, definition: Dictionary, reduced_motion: bool = false, prevalidated_state: bool = false) -> Dictionary:
+	var state := state_value.duplicate(true) if prevalidated_state else normalize_state(state_value, definition)
 	if state.is_empty():
 		return {"ok": false, "state": state, "transitions": [], "errors": ["scenario transition drain requires state"]}
 	var semantic := OperationRegistryScript.normalize_semantic_state(_dict(state.get("semantic_state", {})))
@@ -769,8 +772,8 @@ static func _public_active_stage_dtos(value: Variant) -> Array:
 	return result
 
 
-static func drain_event_requests(state_value: Dictionary, definition: Dictionary) -> Dictionary:
-	var state := normalize_state(state_value, definition)
+static func drain_event_requests(state_value: Dictionary, definition: Dictionary, prevalidated_state: bool = false) -> Dictionary:
+	var state := state_value.duplicate(true) if prevalidated_state else normalize_state(state_value, definition)
 	if state.is_empty():
 		return {"ok": false, "state": state, "requests": [], "errors": ["scenario event-request drain requires state"]}
 	var delivered := _string_array(state.get("event_request_delivery_receipts", []))
@@ -792,15 +795,15 @@ static func drain_event_requests(state_value: Dictionary, definition: Dictionary
 	return {"ok": true, "state": state, "requests": emitted, "errors": []}
 
 
-static func apply_expiry_boundary(state_value: Dictionary, definition: Dictionary, boundary: String, amount: int = 1) -> Dictionary:
-	var original := normalize_state(state_value, definition)
+static func apply_expiry_boundary(state_value: Dictionary, definition: Dictionary, boundary: String, amount: int = 1, prevalidated_state: bool = false) -> Dictionary:
+	var original := state_value if prevalidated_state else normalize_state(state_value, definition)
 	if original.is_empty(): return {"ok": false, "state": original, "errors": ["scenario causal journal and pending fact capacity is invalid"], "expired": false}
 	var expiry := _dict(SequenceSchemaScript.sequence(definition).get("expiry", {}))
 	if str(expiry.get("boundary", "none")) == "none" or str(expiry.get("boundary", "")) != boundary:
 		return {"ok": true, "state": original, "errors": [], "expired": bool(original.get("expired", false))}
 	if bool(original.get("expired", false)):
 		return {"ok": true, "state": original, "errors": [], "expired": true, "replayed": true}
-	var next := original.duplicate(true)
+	var next := original.duplicate(false)
 	var applied_amount := maxi(1, amount)
 	var expiry_records := _array(next.get("expiry_boundary_records", []))
 	if expiry_records.size() >= MAX_RECEIPTS or _next_cause_ordinal(next) + _fact_array(next.get("fact_queue", [])).size() >= MAX_RECEIPTS:
@@ -847,8 +850,12 @@ static func apply_owner_lifecycle_outcome(state_value: Dictionary, definition: D
 	return resolved
 
 
-static func public_projection(state_value: Dictionary, definition: Dictionary = {}) -> Dictionary:
-	var state := normalize_state(state_value, definition)
+static func public_projection(state_value: Dictionary, definition: Dictionary = {}, prevalidated_state: bool = false) -> Dictionary:
+	# Engine-owned transactions have already passed the strict normalization and
+	# host-authority checks in ensure_sequence_state(). Re-normalizing the same
+	# causal journal here doubled every synchronous re-entry/expiry transition.
+	# Public callers retain the closed default and must still normalize.
+	var state := state_value if prevalidated_state else normalize_state(state_value, definition)
 	if state.is_empty():
 		return {}
 	var public_semantics := OperationRegistryScript.public_semantic_state(_dict(state.get("semantic_state", {})))
@@ -932,8 +939,8 @@ static func _validate_command(state: Dictionary, definition: Dictionary, command
 		errors.append("scenario command is unavailable in the current phase")
 	if typeof(command_value.get("payload", {})) != TYPE_DICTIONARY:
 		errors.append("scenario command payload must be a dictionary")
-	var descriptor := _command_descriptor(state, definition, owner_namespace, stable_object_id, command_id, context)
 	var causal_descriptor := _dict(context.get("causal_action_descriptor", {}))
+	var descriptor: Dictionary = {}
 	if not causal_descriptor.is_empty():
 		errors.append_array(validate_causal_action_descriptor(state, definition, command_value, causal_descriptor))
 		descriptor = {
@@ -947,6 +954,8 @@ static func _validate_command(state: Dictionary, definition: Dictionary, command
 			"action_origin_boundary_id": str(_dict(causal_descriptor.get("action", {})).get("action_origin_boundary_id", "")),
 			"action_origin_fingerprint": str(_dict(causal_descriptor.get("action", {})).get("action_origin_fingerprint", "")),
 		}
+	else:
+		descriptor = _command_descriptor(state, definition, owner_namespace, stable_object_id, command_id, context)
 	var creation_owners := _array(_dict(state.get("semantic_state", {})).get("creation_owner_namespaces", ["scenario"]))
 	if not creation_owners.has(owner_namespace):
 		var external_action := _dict(descriptor.get("action", {}))
@@ -980,9 +989,9 @@ static func _validate_command(state: Dictionary, definition: Dictionary, command
 
 
 static func _apply_registered_handler(state: Dictionary, definition: Dictionary, command_value: Dictionary, context: Dictionary = {}, causal_descriptor: Dictionary = {}) -> Dictionary:
-	var next := state.duplicate(true)
+	var next := state.duplicate(false)
 	var command_id := str(command_value.get("command_id", "")).strip_edges()
-	var descriptor := _command_descriptor(
+	var descriptor := {"action": _dict(causal_descriptor.get("action", {}))} if not causal_descriptor.is_empty() else _command_descriptor(
 		state,
 		definition,
 		str(command_value.get("owner_namespace", "")),
@@ -990,7 +999,6 @@ static func _apply_registered_handler(state: Dictionary, definition: Dictionary,
 		command_id,
 		context
 	)
-	if not causal_descriptor.is_empty(): descriptor["action"] = _dict(causal_descriptor.get("action", {}))
 	var action := _dict(descriptor.get("action", {}))
 	var handler_id := str(action.get("handler", "")).strip_edges()
 	if handler_id.is_empty():
@@ -1087,7 +1095,7 @@ static func _run_handler(state: Dictionary, definition: Dictionary, handler_id: 
 		handler_event_choices[str(inputs.get("event_id", ""))] = authored_resolutions
 	var handler_errors := OperationRegistryScript.validate_handler_inputs(handler_id, inputs, _dict(SequenceSchemaScript.sequence(definition).get("local_state_schema", {})), SequenceSchemaScript.reachable_outcome_ids(definition), {"source": trigger_kind, "objective_steps": _objective_step_index(definition), "phase_objective_ids": _array(SequenceSchemaScript.phase(definition, str(state.get("phase_id", ""))).get("objective_ids", [])), "event_choices": handler_event_choices})
 	if not handler_errors.is_empty(): return {"ok": false, "state": state, "errors": handler_errors}
-	var next := state.duplicate(true)
+	var next := state.duplicate(false)
 	var local := _dict(next.get("local_state", {}))
 	var handler_replayed := false
 	match handler_id:
@@ -1165,8 +1173,8 @@ static func _run_handler(state: Dictionary, definition: Dictionary, handler_id: 
 
 
 static func _apply_fact(state: Dictionary, definition: Dictionary, fact_value: Dictionary, cause_fingerprint: String) -> Dictionary:
-	var next := state.duplicate(true)
-	var original := state.duplicate(true)
+	var next := state.duplicate(false)
+	var original := state
 	var fact_type := str(fact_value.get("fact_type", ""))
 	var payload := _dict(fact_value.get("payload", {}))
 	if fact_type == "event_result" and not _event_fact_is_authorized(next, definition, payload):
@@ -1232,7 +1240,7 @@ static func _apply_fact(state: Dictionary, definition: Dictionary, fact_value: D
 
 
 static func _evaluate_branches(state: Dictionary, definition: Dictionary, trigger: Dictionary) -> Dictionary:
-	var next := state.duplicate(true)
+	var next := state.duplicate(false)
 	for _hop in range(SequenceSchemaScript.MAX_PHASES + 1):
 		if str(next.get("status", "")) != STATUS_ACTIVE:
 			return {"ok": true, "state": next, "errors": []}
@@ -1328,7 +1336,7 @@ static func _enter_phase(state: Dictionary, definition: Dictionary, phase_id: St
 	for condition_value in _array(phase_data.get("entry_conditions", [])):
 		if not _condition_matches(_dict(condition_value), state, condition_trigger):
 			return {"ok": false, "state": state, "errors": ["scenario phase %s entry conditions are not satisfied" % phase_id]}
-	var next := state.duplicate(true)
+	var next := state.duplicate(false)
 	var semantic := _dict(next.get("semantic_state", {}))
 	var transition_receipts := _string_array(next.get("transition_receipts", []))
 	var boundary_id := "%s:%s:phase:%s:%s" % [str(next.get("scenario_id", "")), str(next.get("node_id", "")), phase_id, source_receipt]
@@ -1393,8 +1401,8 @@ static func _resolve_outcome(state: Dictionary, definition: Dictionary, outcome:
 
 
 static func _apply_cleanup(state: Dictionary, definition: Dictionary, reason: String) -> Dictionary:
-	var original := state.duplicate(true)
-	var next := state.duplicate(true)
+	var original := state
+	var next := state.duplicate(false)
 	var boundary_id := "%s:%s:cleanup:%s" % [str(next.get("scenario_id", "")), str(next.get("node_id", "")), reason]
 	if not _valid_persisted_text(boundary_id) or not _valid_persisted_text(reason):
 		return {"ok": false, "state": state, "errors": ["scenario cleanup boundary exceeds the persisted text boundary"]}
@@ -1499,7 +1507,7 @@ static func _complete_command_objective_steps(state: Dictionary, definition: Dic
 
 
 static func _complete_objective_step(state: Dictionary, definition: Dictionary, objective_id: String, step_id: String) -> Dictionary:
-	var next := state.duplicate(true)
+	var next := state.duplicate(false)
 	var active_ids := _string_array(SequenceSchemaScript.phase(definition, str(state.get("phase_id", ""))).get("objective_ids", []))
 	if not active_ids.has(objective_id):
 		return next
@@ -1526,7 +1534,7 @@ static func _complete_objective_step(state: Dictionary, definition: Dictionary, 
 
 
 static func _resolve_objective(state: Dictionary, definition: Dictionary, objective_id: String, outcome: String) -> Dictionary:
-	var next := state.duplicate(true)
+	var next := state.duplicate(false)
 	var objective_definition := _objective_definition(definition, objective_id)
 	if objective_definition.is_empty() or not _string_array(objective_definition.get("outcomes", [])).has(outcome):
 		return next
@@ -1551,7 +1559,7 @@ static func _objective_step_complete(state: Dictionary, objective_id: String, st
 
 
 static func _set_objective_outcomes(state: Dictionary, definition: Dictionary, forced_outcome: String) -> Dictionary:
-	var next := state.duplicate(true)
+	var next := state.duplicate(false)
 	var progress := _normalize_objective_progress(next.get("objective_progress", {}))
 	for objective_value in _array(SequenceSchemaScript.sequence(definition).get("objectives", [])):
 		var objective := _dict(objective_value)
@@ -1827,7 +1835,7 @@ static func _availability_proposal_allows(context: Dictionary, identity: String)
 
 
 static func _queue_feedback_transition(state: Dictionary, message: String, trigger: Dictionary) -> Dictionary:
-	var next := state.duplicate(true)
+	var next := state.duplicate(false)
 	var semantic := OperationRegistryScript.normalize_semantic_state(_dict(next.get("semantic_state", {})))
 	var queue := _array(semantic.get("transition_queue", []))
 	queue.append({"family": "transition_ops", "op": "feedback", "channel": "feedback", "message": message, "receipt_id": "feedback:%s" % _trigger_receipt(trigger)})

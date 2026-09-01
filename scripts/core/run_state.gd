@@ -2401,10 +2401,30 @@ func scenario_finalize_installed_environment(library: ContentLibrary, layout_con
 	var definition := _scenario_sequence_definition_readonly()
 	if not ScenarioSequenceSchemaScript.is_sequence(definition):
 		return {"ok": true, "inactive": true, "errors": []}
-	var authoritative := EnvironmentBaseSemanticRecordsScript.authoritative_interactable_records(current_environment, library)
+	var authoritative_environment := _scenario_terminal_authoritative_environment(definition)
+	var authoritative := EnvironmentBaseSemanticRecordsScript.authoritative_interactable_records(authoritative_environment, library)
 	if not bool(authoritative.get("ok", false)):
 		return _scenario_semantic_finalization_failure(_copy_array(authoritative.get("errors", [])), bool(current_environment.get("scenario_semantic_ready", false)))
 	return _scenario_finalize_trusted_base_semantics(_copy_array(authoritative.get("records", [])), library, layout_context)
+
+
+func _scenario_terminal_authoritative_environment(definition: Dictionary) -> Dictionary:
+	if not _scenario_terminal_semantic_refresh(definition):
+		return current_environment
+	var result := current_environment.duplicate(true)
+	var layout := _copy_dict(result.get("layout", {}))
+	var object_rects := _copy_dict(layout.get("object_rects", {}))
+	var semantic := _copy_dict(_copy_dict(result.get("scenario_sequence_state", {})).get("semantic_state", {}))
+	for service_value in _copy_dict(semantic.get("services", {})).values():
+		var service := _copy_dict(service_value)
+		if str(service.get("owner_namespace", "")) != "scenario" or bool(service.get("enabled", true)):
+			continue
+		var service_id := str(service.get("id", service.get("stable_object_id", ""))).strip_edges()
+		if not service_id.is_empty():
+			object_rects.erase("service:%s" % service_id)
+	layout["object_rects"] = object_rects
+	result["layout"] = layout
+	return result
 
 
 func scenario_finalize_base_semantics(interactable_records: Array, library: ContentLibrary, layout_context: Dictionary = {}) -> Dictionary:
@@ -2500,7 +2520,7 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 		var refresh_layout := _resolve_scenario_layout_candidate(refresh_candidate, stamped_records, definition, layout_context)
 		if not bool(refresh_layout.get("ok", false)):
 			return refresh_layout
-		for key in ["scenario_id", "scenario_base_interactions", "scenario_base_actors", "scenario_base_producer_context", "scenario_semantic_action_digest", "scenario_semantic_inventory", "scenario_semantic_inventory_version", "scenario_semantic_digest", "scenario_semantic_ready", "scenario_restore_contract", "scenario_event_choices", "scenario_sequence_state", "scenario_sequence_projection", "scenario_layout_base_records", "scenario_layout_context", "scenario_layout_authority", "scenario_layout_audit", "scenario_layout_authority_digest", "scenario_render_snapshot", "game_ids", "service_ids", "travel_hooks", "scenario_game_modifiers", "scenario_sequence_base_game_ids", "scenario_sequence_base_service_ids", "scenario_sequence_base_travel_hooks", "scenario_sequence_base_game_modifiers", "scenario_sequence_base_layout_object_rects"]:
+		for key in ["scenario_id", "scenario_base_interactions", "scenario_base_actors", "scenario_base_producer_context", "scenario_semantic_action_digest", "scenario_semantic_inventory", "scenario_semantic_inventory_version", "scenario_semantic_digest", "scenario_semantic_ready", "scenario_restore_contract", "scenario_event_choices", "scenario_sequence_state", ScenarioEngineScript.TRUSTED_STATE_REFERENCE_KEY, ScenarioEngineScript.TRUSTED_LAYOUT_INPUT_DIGEST_KEY, "scenario_sequence_projection", "scenario_layout_base_records", "scenario_layout_context", "scenario_layout_authority", "scenario_layout_audit", "scenario_layout_authority_digest", "scenario_render_snapshot", "game_ids", "service_ids", "travel_hooks", "scenario_game_modifiers", "scenario_sequence_base_game_ids", "scenario_sequence_base_service_ids", "scenario_sequence_base_travel_hooks", "scenario_sequence_base_game_modifiers", "scenario_sequence_base_layout_object_rects"]:
 			current_environment[key] = refresh_candidate.get(key).duplicate(true) if typeof(refresh_candidate.get(key)) in [TYPE_DICTIONARY, TYPE_ARRAY] else refresh_candidate.get(key)
 		current_environment.erase("scenario_sequence_lifecycle_errors")
 		current_environment.erase("scenario_restore_pending_trusted_rebuild")
@@ -2547,7 +2567,7 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 		"warnings": _copy_array(reentry.get("warnings", [])),
 		"errors": [],
 	}
-	for key in ["scenario_id", "scenario_base_interactions", "scenario_base_actors", "scenario_base_producer_context", "scenario_semantic_action_digest", "scenario_semantic_inventory", "scenario_semantic_inventory_version", "scenario_semantic_digest", "scenario_semantic_ready", "scenario_restore_contract", "scenario_event_choices", "scenario_sequence_migration", "scenario_sequence_state", "scenario_sequence_projection", "scenario_layout_base_records", "scenario_layout_context", "scenario_layout_authority", "scenario_layout_audit", "scenario_layout_authority_digest", "scenario_render_snapshot", "game_ids", "service_ids", "travel_hooks", "scenario_game_modifiers", "scenario_sequence_base_game_ids", "scenario_sequence_base_service_ids", "scenario_sequence_base_travel_hooks", "scenario_sequence_base_game_modifiers", "scenario_sequence_base_layout_object_rects"]:
+	for key in ["scenario_id", "scenario_base_interactions", "scenario_base_actors", "scenario_base_producer_context", "scenario_semantic_action_digest", "scenario_semantic_inventory", "scenario_semantic_inventory_version", "scenario_semantic_digest", "scenario_semantic_ready", "scenario_restore_contract", "scenario_event_choices", "scenario_sequence_migration", "scenario_sequence_state", ScenarioEngineScript.TRUSTED_STATE_REFERENCE_KEY, ScenarioEngineScript.TRUSTED_LAYOUT_INPUT_DIGEST_KEY, "scenario_sequence_projection", "scenario_layout_base_records", "scenario_layout_context", "scenario_layout_authority", "scenario_layout_audit", "scenario_layout_authority_digest", "scenario_render_snapshot", "game_ids", "service_ids", "travel_hooks", "scenario_game_modifiers", "scenario_sequence_base_game_ids", "scenario_sequence_base_service_ids", "scenario_sequence_base_travel_hooks", "scenario_sequence_base_game_modifiers", "scenario_sequence_base_layout_object_rects"]:
 		current_environment[key] = candidate.get(key).duplicate(true) if typeof(candidate.get(key)) in [TYPE_DICTIONARY, TYPE_ARRAY] else candidate.get(key)
 	current_environment.erase("scenario_sequence_pending_visit_id")
 	current_environment.erase("scenario_sequence_lifecycle_errors")
@@ -2659,11 +2679,28 @@ func _scenario_terminal_semantic_interactions(live_records: Array, definition: D
 	var state := _copy_dict(current_environment.get("scenario_sequence_state", {}))
 	if not _scenario_terminal_semantic_refresh(definition):
 		return live_records
+	var declared := _copy_dict(_copy_dict(ScenarioSequenceSchemaScript.sequence(definition)).get("declared_targets", {}))
+	var declared_interactions: Dictionary = {}
+	for identity_value in _copy_array(declared.get("interactions", [])):
+		declared_interactions[str(identity_value)] = true
 	var sealed_inventory := _copy_dict(current_environment.get("scenario_semantic_inventory", {}))
 	var sealed_inventory_valid := EnvironmentSemanticInventoryScript.validate(sealed_inventory).is_empty() \
 		and str(sealed_inventory.get("environment_id", "")) == str(current_environment.get("id", "")) \
 		and str(sealed_inventory.get("layer_id", "")) == str(current_environment.get("current_layer_id", ""))
 	var result := live_records.duplicate(true)
+	for record_index in range(result.size()):
+		var live_record := _copy_dict(result[record_index])
+		var live_identity := ScenarioOperationRegistryScript.identity(str(live_record.get("owner_namespace", "")), str(live_record.get("stable_object_id", "")))
+		if not declared_interactions.has(live_identity) or not live_identity.begins_with("event::event:"):
+			continue
+		live_record["enabled"] = false
+		live_record["interactive"] = false
+		live_record["disabled_reason"] = "The scenario has already resolved this event."
+		live_record["state_label"] = "Resolved"
+		live_record["available_actions"] = []
+		live_record["inline_actions"] = []
+		live_record["scenario_sequence_actions"] = []
+		result[record_index] = live_record
 	var present: Dictionary = {}
 	for record_value in result:
 		var record := _copy_dict(record_value)
@@ -2684,7 +2721,6 @@ func _scenario_terminal_semantic_interactions(live_records: Array, definition: D
 	# resolved base-event tombstone from its durable producer and exact final
 	# layout so terminal reentry recreates the same immutable identity seal
 	# without persisting hidden semantic inventory state.
-	var declared := _copy_dict(_copy_dict(ScenarioSequenceSchemaScript.sequence(definition)).get("declared_targets", {}))
 	var layout_rects := _copy_dict(current_environment.get("scenario_sequence_base_layout_object_rects", _copy_dict(current_environment.get("layout", {})).get("object_rects", {})))
 	var board := Vector2(ArtContractsScript.ENVIRONMENT_BOARD_SIZE)
 	for identity_value in _copy_array(declared.get("interactions", [])):
@@ -2730,9 +2766,29 @@ func _scenario_terminal_layout_base_records(live_records: Array, interactions: A
 	if not _scenario_terminal_semantic_refresh(definition):
 		return live_records
 	var result := live_records.duplicate(true)
+	var interactions_by_presentation: Dictionary = {}
+	for interaction_value in interactions:
+		var terminal_interaction := _copy_dict(interaction_value)
+		var terminal_presentation_id := str(terminal_interaction.get("presentation_object_id", ""))
+		if not terminal_presentation_id.is_empty():
+			interactions_by_presentation[terminal_presentation_id] = terminal_interaction
 	var presentation_ids: Dictionary = {}
-	for record_value in result:
-		presentation_ids[str(_copy_dict(record_value).get("object_id", ""))] = true
+	for record_index in range(result.size()):
+		var record := _copy_dict(result[record_index])
+		var record_presentation_id := str(record.get("object_id", ""))
+		presentation_ids[record_presentation_id] = true
+		var terminal_interaction := _copy_dict(interactions_by_presentation.get(record_presentation_id, {}))
+		if terminal_interaction.is_empty() or bool(terminal_interaction.get("enabled", true)):
+			continue
+		record["enabled"] = false
+		record["interactive"] = false
+		record["visible"] = true
+		record["disabled_reason"] = str(terminal_interaction.get("disabled_reason", "The scenario has already resolved this event."))
+		record["state_label"] = "Resolved"
+		record["action_summary"] = "No action is currently available."
+		record["available_actions"] = []
+		record["inline_actions"] = []
+		result[record_index] = record
 	for interaction_value in interactions:
 		var interaction := _copy_dict(interaction_value)
 		var presentation_id := str(interaction.get("presentation_object_id", ""))
@@ -2757,7 +2813,7 @@ func _scenario_terminal_layout_base_records(live_records: Array, interactions: A
 			"action_summary": "No action is currently available.",
 			"enabled": false,
 			"interactive": false,
-			"visible": false,
+			"visible": true,
 			"available_actions": [],
 			"inline_actions": [],
 		})
@@ -3099,7 +3155,11 @@ func scenario_sequence_command(command_id: String, idempotency_key: String, payl
 			replay_record = record
 		if replay_record.is_empty():
 			return {"ok": false, "errors": ["scenario command replay receipt is missing or malformed"]}
-	var expected_phase := str(scenario_sequence_projection().get("phase_id", ""))
+	# The ingress receipt above proves this prepared projection belongs to the
+	# finalized environment; ScenarioEngine authenticates the exact state digest
+	# before mutation. Re-projecting the complete semantic state merely to read
+	# its phase repeated the same normalization on every click.
+	var expected_phase := str(_copy_dict(current_environment.get("scenario_sequence_projection", {})).get("phase_id", ""))
 	if not replay_record.is_empty():
 		var stored_envelope := _copy_dict(replay_record.get("envelope", {}))
 		var stored_fingerprint := str(replay_record.get("fingerprint", ""))
@@ -3147,7 +3207,10 @@ func scenario_sequence_command(command_id: String, idempotency_key: String, payl
 			"replayed": true,
 		}
 		return cached_result
-	var candidate_environment := current_environment.duplicate(true)
+	# ScenarioEngine replaces only independently allocated top-level fields and
+	# commits atomically. Keep a shallow transaction envelope so command latency
+	# does not scale with every immutable room/content record.
+	var candidate_environment := current_environment.duplicate(false)
 	# This map is an internal presentation-to-state boundary: FoundationMain
 	# derives it synchronously from the current composed interaction model. The
 	# default is empty/fail-closed, and extension handlers cannot rewrite it.
@@ -3445,13 +3508,34 @@ func scenario_publish_event_result(result: Dictionary) -> void:
 	# action_id/choice_id.
 	if choice_id.is_empty() and not resolution_id.is_empty():
 		choice_id = resolution_id
-	scenario_enqueue_fact("event_result", "event", {
+	var payload := {
 		"event_id": event_id,
 		"choice_id": choice_id,
 		"resolution_id": resolution_id,
 		"resolved": resolved,
 		"ok": bool(result.get("ok", false)),
-	})
+	}
+	# Public event results are broadcast by EventModule. Only route a result into
+	# this room sequence when an authored event-result subscription observes that
+	# event id (or intentionally declares a broad legacy observer). Direct runtime
+	# ingress remains fail-closed for mismatched/correlation-forged facts.
+	if not _scenario_observes_event_result(event_id):
+		return
+	scenario_enqueue_fact("event_result", "event", payload)
+
+
+func _scenario_observes_event_result(event_id: String) -> bool:
+	var definition := _scenario_sequence_definition_readonly()
+	if not ScenarioSequenceSchemaScript.is_sequence(definition):
+		return false
+	for subscription_value in _copy_array(ScenarioSequenceSchemaScript.sequence(definition).get("fact_subscriptions", [])):
+		var subscription := _copy_dict(subscription_value)
+		if str(subscription.get("fact_type", "")) != "event_result":
+			continue
+		var predicate := _copy_dict(subscription.get("payload_equals", {}))
+		if not predicate.has("event_id") or str(predicate.get("event_id", "")) == event_id:
+			return true
+	return false
 
 
 func _scenario_pending_resolution_for_event(event_id: String) -> String:
@@ -15278,7 +15362,7 @@ static func _environment_for_persistent_storage(environment: Dictionary, deep_co
 	var stored: Dictionary = {}
 	for key_value in environment.keys():
 		var key := str(key_value)
-		if key == "game_states":
+		if key == "game_states" or key == ScenarioEngineScript.TRUSTED_STATE_REFERENCE_KEY or key == ScenarioEngineScript.TRUSTED_LAYOUT_INPUT_DIGEST_KEY:
 			continue
 		stored[key] = _persistent_copy_value(environment.get(key_value)) if deep_copy else environment.get(key_value)
 	var states_value: Variant = environment.get("game_states", {})
@@ -15312,6 +15396,8 @@ static func _strip_scenario_semantic_ephemera(environment: Dictionary) -> void:
 	# caches are rebuilt from those trusted bytes after restore.
 	for key in SCENARIO_DERIVED_NONCAUSAL_ENVIRONMENT_FIELDS:
 		environment.erase(key)
+	environment.erase(ScenarioEngineScript.TRUSTED_STATE_REFERENCE_KEY)
+	environment.erase(ScenarioEngineScript.TRUSTED_LAYOUT_INPUT_DIGEST_KEY)
 	var state := _copy_dict(environment.get("scenario_sequence_state", {}))
 	if not state.is_empty():
 		environment["scenario_sequence_state"] = state

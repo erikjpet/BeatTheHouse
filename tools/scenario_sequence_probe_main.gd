@@ -42,7 +42,11 @@ var failed_transition_count := 0
 
 
 func _ready() -> void:
-	Engine.max_fps = 60
+	# Do not cap the native acceptance probe exactly on the 16.6 ms budget:
+	# a nominal 60 Hz frame is 16.667 ms before timer granularity. The probe
+	# should measure whether production can sustain the budget, not a cap-imposed
+	# wait that is mathematically guaranteed to exceed it.
+	Engine.max_fps = 120
 	options = _read_options()
 	await _run()
 
@@ -260,6 +264,16 @@ func _exercise_exact_sequence() -> void:
 
 func _reenter_terminal(snapshot: Dictionary, outcome: String, capture_id: String) -> void:
 	await _restore_run(snapshot)
+	# Direct snapshot restoration marks semantic proof for a trusted rebuild.
+	# Exercise the same production environment-render boundary as a real load
+	# before recording a new terminal visit.
+	var terminal_canvas: Variant = app.get("environment_canvas")
+	var terminal_layout_context: Dictionary = terminal_canvas.call("scenario_layout_context") if terminal_canvas != null and terminal_canvas.has_method("scenario_layout_context") else {}
+	var terminal_rebuild: Dictionary = run_state.call("scenario_finalize_installed_environment", app.get("library"), terminal_layout_context)
+	if not bool(terminal_rebuild.get("ok", false)):
+		_fail("Production %s terminal restore rebuild failed: %s" % [outcome, JSON.stringify(terminal_rebuild.get("errors", []))])
+	app.call("_render_environment_screen")
+	await _settle(2)
 	var started := Time.get_ticks_usec()
 	var result: Dictionary = run_state.call("scenario_reenter_current", "env06_6:terminal:%s" % outcome)
 	var elapsed := _elapsed_ms(started)
@@ -524,10 +538,14 @@ func _live_assertions(special: String) -> Dictionary:
 			if not bool(view.get("small_screen_mode", false)) or not bool(small_accessibility.get("enabled", false)):
 				assertion_failures.append("Small-screen capture is not using production small-screen mode.")
 			var policy_size: Variant = view.get("minimum_environment_hit_size", Vector2.ZERO)
-			var policy_ok := typeof(policy_size) == TYPE_VECTOR2 and (policy_size as Vector2).is_equal_approx(Vector2(104.0, 76.0))
+			var policy_ok := false
+			if typeof(policy_size) == TYPE_VECTOR2:
+				policy_ok = (policy_size as Vector2).is_equal_approx(Vector2(104.0, 76.0))
+			elif typeof(policy_size) == TYPE_VECTOR2I:
+				policy_ok = Vector2(policy_size as Vector2i).is_equal_approx(Vector2(104.0, 76.0))
 			var primary_target := _primary_enabled_scenario_target()
 			var scenario_logical_size: Vector2 = primary_target.get("logical_size", Vector2.ZERO)
-			if not policy_ok or str(primary_target.get("object_id", "")).is_empty() or str(primary_target.get("command_id", "")).is_empty() or scenario_logical_size.x < 104.0 or scenario_logical_size.y < 76.0:
+			if not policy_ok or str(primary_target.get("object_id", "")).is_empty() or str(primary_target.get("command_id", "")).is_empty() or scenario_logical_size.x + 0.001 < 104.0 or scenario_logical_size.y + 0.001 < 76.0:
 				assertion_failures.append("Resolved production small-screen target geometry is below 104x76.")
 		"obstruction":
 			assertion_failures.append_array(_array(obstruction_evidence.get("failures", [])))
@@ -556,6 +574,8 @@ func _live_assertions(special: String) -> Dictionary:
 			"minimum_live_hit_height": 0.0 if is_inf(minimum_hit.y) else minimum_hit.y,
 			"enabled_scenario_target_count": scenario_hit_rects.size(),
 			"primary_enabled_scenario_target": _primary_enabled_scenario_target(),
+			"minimum_environment_hit_size": str(view.get("minimum_environment_hit_size", Vector2.ZERO)),
+			"minimum_environment_hit_size_type": typeof(view.get("minimum_environment_hit_size", Vector2.ZERO)),
 			"reserved_overlay_has_area": reserved.has_area(),
 			"obstruction_target_count": obstruction_target_rects.size(),
 			"obstruction_target_object_ids": _array(obstruction_evidence.get("target_object_ids", [])).duplicate(),
@@ -586,6 +606,7 @@ func _live_object_evidence(reserved: Rect2) -> Dictionary:
 	var ordered_identity: Array = []
 	var interactive_count := 0
 	var center_hits := 0
+	var center_hit_mismatches: Array[String] = []
 	for object_value in _array(view.get("objects", [])):
 		var object_data := _dict(object_value)
 		var object_id := str(object_data.get("id", ""))
@@ -597,10 +618,13 @@ func _live_object_evidence(reserved: Rect2) -> Dictionary:
 			continue
 		interactive_count += 1
 		var local_center: Vector2 = canvas.get_global_transform_with_canvas().affine_inverse() * rect.get_center()
-		if str(canvas.call("object_id_at_local_position", local_center)) == object_id:
+		var center_object_id := str(canvas.call("object_id_at_local_position", local_center))
+		if center_object_id == object_id:
 			center_hits += 1
+		else:
+			center_hit_mismatches.append("%s->%s" % [object_id, center_object_id])
 	if interactive_count == 0 or center_hits != interactive_count:
-		evidence_failures.append("Live target centers do not correlate exactly with production hit testing.")
+		evidence_failures.append("Live target centers do not correlate exactly with production hit testing: %s." % ", ".join(center_hit_mismatches))
 	var safe_exit_unobstructed := false
 	for record_value in _interactable_records():
 		var record := _dict(record_value)
@@ -1060,7 +1084,8 @@ func _measure_production_save_load() -> void:
 		_fail("Production SaveService is unavailable to the evidence probe.")
 		return
 	var slot_id := str(app.get("autosave_slot_id"))
-	var before := ProbeSupport.canonical_semantic_sha256({"semantic": _scenario_state()})
+	var before_state := _scenario_state()
+	var before := ProbeSupport.canonical_semantic_sha256({"semantic": before_state})
 	var save_started := Time.get_ticks_usec()
 	var save_error := int(service.call("save_run", run_state, slot_id))
 	_record_performance("save", _elapsed_ms(save_started))
@@ -1077,6 +1102,7 @@ func _measure_production_save_load() -> void:
 		return
 	var loaded_state := _scenario_state()
 	if run_state == null or ProbeSupport.canonical_semantic_sha256({"semantic": loaded_state}) != before:
+		_write_report_if_native({"before": before_state, "after": loaded_state}, "save_load_mismatch.json")
 		_fail("FoundationMain production load/rebuild changed delivery-day authority.")
 	_clear_isolated_save_slot()
 

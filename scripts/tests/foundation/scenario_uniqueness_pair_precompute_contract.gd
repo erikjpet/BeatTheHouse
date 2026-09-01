@@ -6,8 +6,8 @@ const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
 const Registry := preload("res://scripts/core/scenario_operation_registry.gd")
 const Schema := preload("res://scripts/core/scenario_sequence_schema.gd")
 
-const PRODUCTION_AUTHORITY_SHA256 := "d97b3dd830bc58b9b4d72b06a55bb9e1d67fdb1fc3299d473d7a4e11f4a4ce2c"
-const PRODUCTION_AUTHORITY_BYTES := 1323503
+const PRODUCTION_AUTHORITY_SHA256 := "d125295258aa94a2315281e7cdf7877b3b107f7e4328df85f81aca6688273f4a"
+const PRODUCTION_AUTHORITY_BYTES := 1400483
 
 
 func _init() -> void:
@@ -19,9 +19,9 @@ func _init() -> void:
 	var authority: Dictionary = library.scenario_sequence_catalog.get("uniqueness_audit", {})
 	var authority_json := JSON.stringify(authority)
 	if authority_json.sha256_text() != PRODUCTION_AUTHORITY_SHA256 or authority_json.to_utf8_buffer().size() != PRODUCTION_AUTHORITY_BYTES:
-		failures.append("Optimized production authority JSON differs from the exact a091 legacy baseline.")
-	if (authority.get("pairs", []) as Array).size() != 1485 or (authority.get("failures", []) as Array).size() != 80 or not (authority.get("warnings", []) as Array).is_empty():
-		failures.append("Optimized production authority shape/findings differ from the exact a091 legacy baseline.")
+		failures.append("Optimized production authority JSON differs from the exact accepted ENV-06.7 baseline: sha256=%s bytes=%d expected_sha256=%s expected_bytes=%d." % [authority_json.sha256_text(), authority_json.to_utf8_buffer().size(), PRODUCTION_AUTHORITY_SHA256, PRODUCTION_AUTHORITY_BYTES])
+	if (authority.get("pairs", []) as Array).size() != 1485 or not (authority.get("failures", []) as Array).is_empty() or (authority.get("warnings", []) as Array).size() != 27:
+		failures.append("Optimized production authority shape/findings differ from the exact accepted ENV-06.7 baseline.")
 	var audit_inputs := _production_audit_inputs(library)
 	var definitions: Array = audit_inputs.get("definitions", [])
 	var target_inventories: Dictionary = audit_inputs.get("target_inventories", {})
@@ -99,7 +99,7 @@ func _init() -> void:
 	if JSON.stringify(old_report) != JSON.stringify(new_report):
 		failures.append("Precomputed signature pair report differs from the legacy per-pair report: old=%s new=%s" % [JSON.stringify(old_report), JSON.stringify(new_report)])
 	if failures.is_empty():
-		print("SCENARIO_UNIQUENESS_PAIR_PRECOMPUTE PASS production_pairs=1485 production_failures=80 representative_pairs=6 receipt_load_ms=%.1f full_audit_ms=%.1f" % [elapsed_ms, full_elapsed_ms])
+		print("SCENARIO_UNIQUENESS_PAIR_PRECOMPUTE PASS production_pairs=1485 production_failures=0 production_warnings=27 representative_pairs=6 receipt_load_ms=%.1f full_audit_ms=%.1f" % [elapsed_ms, full_elapsed_ms])
 		quit(0)
 		return
 	for failure in failures:

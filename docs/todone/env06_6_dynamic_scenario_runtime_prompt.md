@@ -1,4 +1,4 @@
-Status: IN_PROGRESS — implementation landed on `main`; formal row acceptance remains open
+Status: DONE — accepted on the integrated current-main candidate, 2026-08-31
 Board row: `env06_6` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — 0.6 env06_6: Dynamic Scenario Runtime

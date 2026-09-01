@@ -12,6 +12,7 @@ const MIN_SCENE_SIZE := Vector2(16.0, 16.0)
 const DEFAULT_SCENE_SIZE := Vector2(48.0, 48.0)
 const DEFAULT_ACTOR_SIZE := Vector2(72.0, 80.0)
 const COLLISION_RATIO := 0.65
+const VISUAL_LAYOUT_GAP := 8.0
 const LABEL_MAX_LENGTH := 64
 const PROMPT_MAX_LENGTH := 240
 const LABEL_HEIGHT := 15.0
@@ -290,8 +291,19 @@ static func resolve(base_records: Array, projection: Dictionary, environment: Di
 	var errors: Array = []
 	var warnings: Array = []
 	var occupied := _base_occupied_records(base_records)
-	var context := _layout_context(environment)
 	var base_by_identity := _base_records_by_identity(base_records)
+	var context := _layout_context(environment)
+	var reserved_overlay := _context_overlay_rect(context)
+	if reserved_overlay.has_area():
+		# The TalkDock reservation is live production geometry, not merely a
+		# post-layout validator. Treat it as occupied during deterministic placement
+		# so interactive scenario controls can move to an authored fallback offset
+		# instead of invalidating the whole projection on Web-sized canvases.
+		occupied.append({
+			"identity": "system::reserved_overlay",
+			"rect": reserved_overlay,
+			"small_rect": reserved_overlay,
+		})
 	var authority := _base_layout_authority(base_records, errors)
 	var collision_adjustments := 0
 	var visual_count := 0
@@ -1060,7 +1072,8 @@ static func _collision_safe_rect(identity: String, authored: Rect2, occupied: Ar
 	# contact must retain authored placement so the later small-screen hit, label,
 	# lane, and reachability validators can reject the exact authored conflict
 	# instead of silently manufacturing different room geometry.
-	if not _normal_hit_overlaps(identity, authored, occupied):
+	var authored_raw_collision := _raw_hit_overlaps(identity, authored, occupied)
+	if not authored_raw_collision and not _normal_hit_overlaps(identity, authored, occupied):
 		return {"rect": _clamp_inside_board(authored), "adjusted": false, "colliding": false}
 	for offset_value in COLLISION_OFFSETS:
 		var offset := offset_value as Vector2
@@ -1068,7 +1081,50 @@ static func _collision_safe_rect(identity: String, authored: Rect2, occupied: Ar
 		var small_candidate := _expanded_rect(candidate, SMALL_SCREEN_TARGET)
 		if not _normal_hit_overlaps(identity, candidate, occupied) and not _expanded_overlaps(identity, small_candidate, occupied):
 			return {"rect": candidate, "adjusted": not offset.is_zero_approx(), "colliding": false}
+	var bounded_candidates := _bounded_collision_candidates(authored)
+	for candidate_value in bounded_candidates:
+		var candidate := candidate_value as Rect2
+		var small_candidate := _expanded_rect(candidate, SMALL_SCREEN_TARGET)
+		if not _normal_hit_overlaps(identity, candidate, occupied) and not _expanded_overlaps(identity, small_candidate, occupied):
+			return {"rect": candidate, "adjusted": not candidate.position.is_equal_approx(authored.position), "colliding": false}
+	# Preserve the original exact-hitbox fallback for authored raw collisions when
+	# a crowded room cannot also provide the preferred extra visual gap.
+	if authored_raw_collision:
+		for offset_value in COLLISION_OFFSETS:
+			var offset := offset_value as Vector2
+			var candidate := _clamp_inside_board(Rect2(authored.position + offset, authored.size))
+			var small_candidate := _expanded_rect(candidate, SMALL_SCREEN_TARGET)
+			if not _raw_hit_overlaps(identity, candidate, occupied) and not _expanded_overlaps(identity, small_candidate, occupied):
+				return {"rect": candidate, "adjusted": not offset.is_zero_approx(), "colliding": false}
+		for candidate_value in bounded_candidates:
+			var candidate := candidate_value as Rect2
+			var small_candidate := _expanded_rect(candidate, SMALL_SCREEN_TARGET)
+			if not _raw_hit_overlaps(identity, candidate, occupied) and not _expanded_overlaps(identity, small_candidate, occupied):
+				return {"rect": candidate, "adjusted": not candidate.position.is_equal_approx(authored.position), "colliding": false}
+	# A raw-safe authored placement remains valid when the room cannot provide the
+	# renderer's preferred extra breathing room. Raw ambiguity still fails closed;
+	# this compatibility path only avoids rejecting an otherwise valid crowded
+	# destination during travel.
+	if not authored_raw_collision:
+		return {"rect": _clamp_inside_board(authored), "adjusted": false, "colliding": false}
 	return {"rect": authored, "adjusted": false, "colliding": true}
+
+
+static func _bounded_collision_candidates(authored: Rect2) -> Array:
+	var candidates: Array = []
+	var maximum_x := maxi(0, floori(BOARD_SIZE.x - authored.size.x))
+	var maximum_y := maxi(0, floori(BOARD_SIZE.y - authored.size.y))
+	for y in range(0, maximum_y + 1, 16):
+		for x in range(0, maximum_x + 1, 16):
+			candidates.append(Rect2(Vector2(x, y), authored.size))
+	candidates.sort_custom(func(left: Rect2, right: Rect2) -> bool:
+		var left_distance := left.position.distance_squared_to(authored.position)
+		var right_distance := right.position.distance_squared_to(authored.position)
+		if not is_equal_approx(left_distance, right_distance):
+			return left_distance < right_distance
+		return left.position.y < right.position.y if not is_equal_approx(left.position.y, right.position.y) else left.position.x < right.position.x
+	)
+	return candidates
 
 
 static func _substantially_overlaps(identity: String, rect: Rect2, occupied: Array) -> bool:
@@ -1086,6 +1142,19 @@ static func _substantially_overlaps(identity: String, rect: Rect2, occupied: Arr
 
 
 static func _normal_hit_overlaps(identity: String, rect: Rect2, occupied: Array) -> bool:
+	var footprint := rect.grow(VISUAL_LAYOUT_GAP)
+	for occupied_value in occupied:
+		var occupied_record := _dict(occupied_value)
+		if str(occupied_record.get("identity", "")) == identity:
+			continue
+		var other: Rect2 = occupied_record.get("rect", Rect2())
+		var other_footprint := other.grow(VISUAL_LAYOUT_GAP)
+		if other.has_area() and footprint.intersects(other_footprint) and footprint.intersection(other_footprint).get_area() > 0.01:
+			return true
+	return false
+
+
+static func _raw_hit_overlaps(identity: String, rect: Rect2, occupied: Array) -> bool:
 	for occupied_value in occupied:
 		var occupied_record := _dict(occupied_value)
 		if str(occupied_record.get("identity", "")) == identity:

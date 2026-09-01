@@ -30,6 +30,8 @@ try {
   context = await chromium.launchPersistentContext(profilePath, {
     executablePath: chromePath,
     headless: true,
+    viewport: { width: 1152, height: 648 },
+    deviceScaleFactor: 1,
     args: ["--disable-background-timer-throttling", "--disable-renderer-backgrounding", "--disable-features=CalculateNativeWinOcclusion"],
   });
   const pages = context.pages();

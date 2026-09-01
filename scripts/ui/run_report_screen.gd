@@ -108,6 +108,10 @@ func set_report(model: Dictionary) -> void:
 	play_button.visible = not reduce_motion
 	replay_playing = false
 	set_process(false)
+	# Report content changes the minimum size of several sections. Re-apply the
+	# fixed one-screen layout immediately so terminal transitions are correct in
+	# the same frame, before the container's deferred sort notification arrives.
+	_layout_sections()
 	queue_redraw()
 
 
@@ -464,8 +468,14 @@ func _render_release_ledger(ledger: Dictionary) -> void:
 	for line_value in lines:
 		var line_text := str(line_value)
 		var line := _label(line_text, 9, VisualStyle.SOFT)
-		line.clip_text = false
-		line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		# The report is deliberately a fixed, no-scroll surface. Autowrap inside
+		# the RESULT row creates a circular minimum-height calculation before its
+		# horizontal allocation is known and can make the panel thousands of
+		# pixels tall for one frame. Keep each ledger summary to one visible line;
+		# the complete value remains available through its tooltip and snapshot.
+		line.clip_text = true
+		line.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		line.max_lines_visible = 1
 		line.tooltip_text = line_text
 		release_ledger_rows.add_child(line)
 	if lines.is_empty():
