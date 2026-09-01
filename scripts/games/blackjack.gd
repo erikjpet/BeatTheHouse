@@ -1406,6 +1406,10 @@ func _prepare_draw_deal_events_cache(surface_state: Dictionary) -> void:
 	draw_deal_events_cache = _deal_animation_event_array(surface_state.get("deal_animation_events", []))
 
 
+func surface_uses_auto_tick() -> bool:
+	return true
+
+
 func surface_needs_auto_tick(ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> bool:
 	# This is queried every frame. Keep the active-count path read-only and
 	# allocation-free; action boundaries already synchronize newly dealt cards.

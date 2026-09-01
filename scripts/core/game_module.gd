@@ -278,6 +278,10 @@ func surface_pointer_uses_lightweight_ui_state(_surface_action: String) -> bool:
 # Optional per-frame game-surface automation hook. The foundation UI provides
 # only UI-local state, the current environment, and a surface snapshot; modules
 # decide whether to request a resolved action.
+func surface_uses_auto_tick() -> bool:
+	return false
+
+
 func surface_needs_auto_tick(_ui_state: Dictionary, _run_state: RunState, _environment: Dictionary) -> bool:
 	return false
 
@@ -291,6 +295,16 @@ func surface_auto_tick_state_keys() -> Array:
 # lightweight tick keys can opt out of that deep copy.
 func surface_auto_action_uses_lightweight_ui_state() -> bool:
 	return false
+
+
+# Realtime simulations that consume only a few UI-local fields can opt out of
+# duplicating the complete retained surface session on every fixed tick.
+func surface_realtime_uses_lightweight_ui_state() -> bool:
+	return false
+
+
+func surface_realtime_ui_state_keys() -> Array:
+	return []
 
 
 func surface_auto_action_command(_ui_state: Dictionary, _run_state: RunState, _environment: Dictionary, _surface_status: Dictionary = {}) -> Dictionary:

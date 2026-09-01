@@ -689,6 +689,14 @@ func surface_realtime_entry_anchor_patch(run_state: RunState, environment: Dicti
 	}
 
 
+func surface_realtime_uses_lightweight_ui_state() -> bool:
+	return true
+
+
+func surface_realtime_ui_state_keys() -> Array:
+	return ["coin_pusher_drop_charge_started_tick"]
+
+
 func checkpoint_surface_ui_state(_ui_state: Dictionary, _run_state: RunState, environment: Dictionary) -> void:
 	var key := _live_key(_run_state, environment)
 	if not _live_machines.has(key):

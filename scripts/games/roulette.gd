@@ -550,6 +550,10 @@ func surface_motion_signature(surface, surface_state: Dictionary) -> Dictionary:
 	}
 
 
+func surface_uses_auto_tick() -> bool:
+	return true
+
+
 func surface_needs_auto_tick(ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> bool:
 	# Per-frame check: operate on the live stored table (zero-copy) instead of
 	# normalize -> deep copy -> write-back every frame. Stored state is already

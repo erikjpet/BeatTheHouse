@@ -760,6 +760,10 @@ func checkpoint_surface_ui_state(ui_state: Dictionary, run_state: RunState, envi
 		_write_machine_state(environment, machine, run_state)
 
 
+func surface_uses_auto_tick() -> bool:
+	return true
+
+
 func surface_needs_auto_tick(ui_state: Dictionary, _run_state: RunState, _environment: Dictionary) -> bool:
 	if not bool(ui_state.get("pull_tab_auto_open_active", false)):
 		return false

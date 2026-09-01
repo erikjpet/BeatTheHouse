@@ -2022,6 +2022,8 @@ func _advance_game_surface_automation() -> void:
 		var authority_command := _sealed_action_host_auto_intent(surface_time_msec)
 		_apply_game_surface_automation_command(authority_command, authority_ui_state)
 		return
+	if not current_game.surface_uses_auto_tick():
+		return
 	var tick_state := _current_game_surface_auto_tick_state()
 	var ui_state := tick_state
 	if not current_game.surface_needs_auto_tick(tick_state, run_state, run_state.current_environment):
@@ -2590,12 +2592,21 @@ func _current_game_surface_auto_tick_state() -> Dictionary:
 
 
 func _current_game_surface_realtime_ui_state(now_msec: int) -> Dictionary:
-	var ui_state := game_surface_ui_state.duplicate(false)
+	var lightweight := current_game != null and current_game.surface_realtime_uses_lightweight_ui_state()
+	var ui_state: Dictionary = {}
+	if lightweight:
+		for key_value in current_game.surface_realtime_ui_state_keys():
+			var key := str(key_value)
+			if not key.is_empty() and game_surface_ui_state.has(key):
+				ui_state[key] = game_surface_ui_state[key]
+	else:
+		ui_state = game_surface_ui_state.duplicate(false)
 	ui_state["selected_action_id"] = selected_action_id
 	ui_state["selected_action_kind"] = selected_action_kind
 	ui_state["selected_stake"] = _current_selected_stake()
-	ui_state["surface_runtime_status"] = game_surface_canvas.surface_realtime_ui_status() if game_surface_canvas != null else {}
-	ui_state["focused_talk_speaker"] = _focused_talk_speaker_snapshot()
+	if not lightweight:
+		ui_state["surface_runtime_status"] = game_surface_canvas.surface_realtime_ui_status() if game_surface_canvas != null else {}
+		ui_state["focused_talk_speaker"] = _focused_talk_speaker_snapshot()
 	return _apply_game_surface_time_fields(ui_state, now_msec)
 
 
