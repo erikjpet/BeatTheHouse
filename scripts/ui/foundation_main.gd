@@ -628,8 +628,12 @@ func _process(delta: float) -> void:
 	perf_telemetry_overlay.record_foundation_subsystem_usec("environment_runtime", Time.get_ticks_usec() - clock_started_usec)
 	if current_screen == SCREEN_GAME:
 		var snapshot_started_usec := Time.get_ticks_usec()
+		var automation_started_usec := snapshot_started_usec
 		_advance_game_surface_automation()
+		perf_telemetry_overlay.record_foundation_subsystem_usec("surface_automation", Time.get_ticks_usec() - automation_started_usec)
+		var realtime_started_usec := Time.get_ticks_usec()
 		_advance_game_surface_realtime_state()
+		perf_telemetry_overlay.record_foundation_subsystem_usec("surface_realtime", Time.get_ticks_usec() - realtime_started_usec)
 		perf_telemetry_overlay.record_foundation_subsystem_usec("snapshot_builds", Time.get_ticks_usec() - snapshot_started_usec)
 	if presented_bankroll_hold_active:
 		var presented_started_usec := Time.get_ticks_usec()
