@@ -3539,12 +3539,15 @@ func _enqueue_triggered_events_for_context(source: String, context: Dictionary, 
 		var event_id := str(event_definition.get("id", ""))
 		var trigger: Dictionary = event_definition.get("trigger", {}) if typeof(event_definition.get("trigger", {})) == TYPE_DICTIONARY else {}
 		var trigger_type := str(trigger.get("type", "manual"))
+		# Cadence and can_trigger are both read-only. Check the substantially
+		# cheaper room budget first so quiet visits, cooldowns, and full visit
+		# budgets do not walk every candidate's live run-state conditions.
+		if not run_state.event_cadence_allows_world_event(event_id, trigger_type, source, event_definition):
+			continue
 		var event_module := _cached_triggered_event_module(event_definition)
 		if event_module == null:
 			continue
 		if not event_module.can_trigger(run_state, environment, context):
-			continue
-		if not run_state.event_cadence_allows_world_event(event_id, trigger_type, source, event_definition):
 			continue
 		if trigger_type == "random":
 			candidates.append({"id": event_id, "trigger": trigger, "event": event_definition})
