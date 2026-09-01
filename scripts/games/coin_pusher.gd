@@ -76,7 +76,11 @@ func host_action_rollback_snapshot(action_id: String, run_state: RunState, envir
 		"presentation_last_publish_msec_present": session.has("presentation_last_publish_msec"),
 		"presentation_last_publish_msec": int(session.get("presentation_last_publish_msec", -1)),
 		"durable_present": typeof(durable_value) == TYPE_DICTIONARY,
-		"durable_machine": (durable_value as Dictionary).duplicate(true) if typeof(durable_value) == TYPE_DICTIONARY else {},
+		# _write_live_durable() patches a shallow replacement and never mutates the
+		# existing durable dictionary or its settled checkpoint. Retain that exact
+		# immutable boundary for the rare rollback instead of cloning 300 bodies on
+		# every accepted quarter.
+		"durable_machine": durable_value if typeof(durable_value) == TYPE_DICTIONARY else {},
 	}
 
 
@@ -108,7 +112,10 @@ func restore_host_action_rollback(snapshot: Dictionary, run_state: RunState, env
 			session.erase(field_name)
 	var durable_states := _game_states(environment)
 	if bool(snapshot.get("durable_present", false)):
-		durable_states[get_id()] = _copy_dict(snapshot.get("durable_machine", {}))
+		var durable_machine_value: Variant = snapshot.get("durable_machine", {})
+		if typeof(durable_machine_value) != TYPE_DICTIONARY:
+			return false
+		durable_states[get_id()] = durable_machine_value
 	else:
 		durable_states.erase(get_id())
 	return true
