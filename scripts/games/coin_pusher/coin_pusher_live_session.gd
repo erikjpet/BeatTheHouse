@@ -431,20 +431,22 @@ static func sync_native_body_state(machine: Dictionary) -> void:
 static func _step_traced_ticks(machine: Dictionary, tick_count: int, capture_presentation: bool = true) -> Dictionary:
 	var session: Dictionary = machine.get("live_session", {})
 	var simulation: Dictionary = machine.get("simulation", {})
-	var rng := _session_rng(session)
 	var all_events: Array = []
 	var safe_tick_count := maxi(0, tick_count)
 	var previous_views: Array = []
 	var previous_packed := PackedInt64Array()
 	var previous_face_y := int(session.get("presentation_current_face_y", simulation.get("face_y", 0)))
-	if safe_tick_count == 1:
-		var current_views: Variant = session.get("presentation_current_bodies", [])
-		previous_views = current_views if typeof(current_views) == TYPE_ARRAY and not (current_views as Array).is_empty() else _presentation_body_views(simulation)
-		var current_packed: Variant = session.get("presentation_current_packed", PackedInt64Array())
-		previous_packed = current_packed if typeof(current_packed) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array()
 	var native_batch := CoinPusherSolverScript.native_live_batch_supported()
 	var compact_native_authority := native_batch and OS.has_feature("web")
 	var compact_native_presentation := compact_native_authority and capture_presentation
+	if safe_tick_count == 1:
+		if not compact_native_authority:
+			var current_views: Variant = session.get("presentation_current_bodies", [])
+			previous_views = current_views if typeof(current_views) == TYPE_ARRAY and not (current_views as Array).is_empty() else _presentation_body_views(simulation)
+		if compact_native_presentation:
+			var current_packed: Variant = session.get("presentation_current_packed", PackedInt64Array())
+			previous_packed = current_packed if typeof(current_packed) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array()
+	var rng: RngStream = null
 	var remaining := safe_tick_count
 	var final_result: Dictionary = {}
 	while remaining > 0:
@@ -470,9 +472,8 @@ static func _step_traced_ticks(machine: Dictionary, tick_count: int, capture_pre
 			cursor += 1
 		session["input_cursor"] = cursor
 		var is_final_chunk := chunk_ticks == remaining
-		var result := CoinPusherSolverScript.step_ticks(simulation, {
+		var step_config := {
 			"input_trace": trace_slice,
-			"rng": rng,
 			"motor_enabled": bool(machine.get("motor_started", false)) and not bool(machine.get("locked_down", false)),
 			"live_cache_key": str(session.get("native_cache_key", "")) if native_batch else "",
 			"live_cache_reset": bool(session.get("native_cache_reset", false)),
@@ -481,7 +482,12 @@ static func _step_traced_ticks(machine: Dictionary, tick_count: int, capture_pre
 			"capture_previous_packed": compact_native_presentation and is_final_chunk,
 			"capture_current_views": capture_presentation and native_batch and not compact_native_authority and is_final_chunk,
 			"capture_current_packed": compact_native_presentation and is_final_chunk,
-		}, chunk_ticks)
+		}
+		if trace_slice.any(func(input_value: Variant) -> bool: return typeof(input_value) == TYPE_DICTIONARY and str((input_value as Dictionary).get("kind", "")) == "drop"):
+			if rng == null:
+				rng = _session_rng(session)
+			step_config["rng"] = rng
+		var result := CoinPusherSolverScript.step_ticks(simulation, step_config, chunk_ticks)
 		final_result = result
 		session["native_cache_reset"] = false
 		all_events.append_array(result.get("events", []))
@@ -513,7 +519,8 @@ static func _step_traced_ticks(machine: Dictionary, tick_count: int, capture_pre
 			session["presentation_previous_face_y"] = previous_face_y
 			session["presentation_current_face_y"] = int(final_result.get("presentation_current_face_y", simulation.get("face_y", 0))) if native_batch else int(simulation.get("face_y", 0))
 			session["presentation_view_serial"] = int(session.get("presentation_view_serial", 0)) + safe_tick_count
-	session["rng"] = rng.snapshot()
+	if rng != null:
+		session["rng"] = rng.snapshot()
 	session["liveness_ticks"] = int(session.get("liveness_ticks", 0)) + safe_tick_count
 	return {"events": all_events}
 
