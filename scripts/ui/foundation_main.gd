@@ -3241,6 +3241,15 @@ func _on_talk_dock_choice_requested(event_id: String, choice_id: String) -> void
 func _apply_post_action_environment_interrupt(source: String) -> bool:
 	if run_state == null or library == null or run_state.is_terminal():
 		return false
+	# The Web game-library launcher is an isolated practice room. It has no
+	# world-story, closing-time, talk, or forced-travel ownership, so avoid
+	# traversing those boundaries after every cabinet input.
+	var practice_flags_value: Variant = run_state.current_environment.get("local_narrative_flags", {})
+	var practice_flags: Dictionary = practice_flags_value if typeof(practice_flags_value) == TYPE_DICTIONARY else {}
+	if OS.has_feature("web") and dev_game_test_mode \
+			and str(run_state.current_environment.get("id", "")).begins_with("practice_") \
+			and bool(practice_flags.get("practice_session", false)):
+		return false
 	var debug_timing: Dictionary = last_game_result.get("coin_pusher_debug_host_timing_usec", {}) if typeof(last_game_result.get("coin_pusher_debug_host_timing_usec", {})) == TYPE_DICTIONARY else {}
 	var debug_enabled := not debug_timing.is_empty() and current_game != null
 	var debug_stage_started_usec := 0

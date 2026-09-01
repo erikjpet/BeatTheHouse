@@ -6,6 +6,7 @@ const SNAPSHOT_SCHEMA := "coin_pusher_settled_v3"
 const SNAPSHOT_VERSION := 3
 const FIXED_HZ := 60
 const MAX_CATCH_UP_TICKS := 4
+const WEB_MAX_CATCH_UP_TICKS := 2
 const MAX_SETTLE_TICKS := 1200
 const WEB_PRESENTATION_INTERVAL_MSEC := 900
 
@@ -162,7 +163,12 @@ static func advance(machine: Dictionary, now_msec: int, capture_presentation: bo
 	var elapsed := maxi(0, now_msec - previous)
 	session["last_clock_msec"] = now_msec
 	var units := int(session.get("accumulator_units", 0)) + elapsed * FIXED_HZ
-	var due := mini(MAX_CATCH_UP_TICKS, units / 1000)
+	# The throttled single-threaded Web runtime must not turn one missed frame
+	# into a self-sustaining four-tick hitch. Retain every elapsed unit in the
+	# accumulator, but drain it in two-tick chunks that leave enough frame time
+	# for the required presentation snapshot and canvas draw.
+	var catch_up_limit := WEB_MAX_CATCH_UP_TICKS if OS.has_feature("web") else MAX_CATCH_UP_TICKS
+	var due := mini(catch_up_limit, units / 1000)
 	if due <= 0:
 		session["accumulator_units"] = units
 		return {"ticks": 0, "events": []}
