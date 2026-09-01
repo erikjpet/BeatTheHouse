@@ -13198,17 +13198,37 @@ func _environment_turn_snapshot() -> Dictionary:
 	# storage can intentionally alias the live current environment; duplicating
 	# each field independently loses that relationship and lets a stale room copy
 	# overwrite the newly advanced environment while the candidate is published.
-	var collection_graph: Dictionary = {}
-	for field_name in TURN_TRANSACTION_COLLECTION_FIELDS:
-		collection_graph[field_name] = get(field_name)
 	var active_room_alias_ids: Array = []
 	for room_id_value in grand_casino_room_states.keys():
 		var room_value: Variant = grand_casino_room_states.get(room_id_value)
 		if typeof(room_value) == TYPE_DICTIONARY and is_same(room_value, current_environment):
 			active_room_alias_ids.append(room_id_value)
+	# Game modules own game_states; an environment turn neither reads nor mutates
+	# those opaque machine records. Detach the mutable environment shell while
+	# retaining that exact immutable subtree. This prevents a 300-piece pusher
+	# checkpoint from being copied into the candidate and then walked again during
+	# publication for every quarter, without relaxing transaction atomicity.
+	var transaction_environment: Dictionary = {}
+	for environment_key in current_environment.keys():
+		if str(environment_key) != "game_states":
+			transaction_environment[environment_key] = current_environment[environment_key]
+	var transaction_rooms := grand_casino_room_states.duplicate(false)
+	for room_id_value in active_room_alias_ids:
+		transaction_rooms[room_id_value] = transaction_environment
+	var collection_graph: Dictionary = {}
+	for field_name in TURN_TRANSACTION_COLLECTION_FIELDS:
+		if field_name == "current_environment":
+			collection_graph[field_name] = transaction_environment
+		elif field_name == "grand_casino_room_states":
+			collection_graph[field_name] = transaction_rooms
+		else:
+			collection_graph[field_name] = get(field_name)
 	var detached_collection_graph := collection_graph.duplicate(true)
 	var detached_rooms: Dictionary = detached_collection_graph.get("grand_casino_room_states", {})
 	var detached_environment: Dictionary = detached_collection_graph.get("current_environment", {})
+	var game_states_value: Variant = current_environment.get("game_states", null)
+	if typeof(game_states_value) == TYPE_DICTIONARY:
+		detached_environment["game_states"] = game_states_value
 	for room_id_value in active_room_alias_ids:
 		detached_rooms[room_id_value] = detached_environment
 	for field_name in TURN_TRANSACTION_COLLECTION_FIELDS:
@@ -13259,6 +13279,8 @@ func _apply_environment_turn_snapshot(snapshot: Dictionary, preserve_live_aliase
 
 static func _publish_mutable_variant_in_place(live_value: Variant, candidate_value: Variant) -> bool:
 	if typeof(live_value) == TYPE_DICTIONARY and typeof(candidate_value) == TYPE_DICTIONARY:
+		if is_same(live_value, candidate_value):
+			return true
 		var live_dictionary := live_value as Dictionary
 		var candidate_dictionary := candidate_value as Dictionary
 		for key in live_dictionary.keys():
@@ -13270,6 +13292,8 @@ static func _publish_mutable_variant_in_place(live_value: Variant, candidate_val
 			live_dictionary[key] = incoming.duplicate(true) if typeof(incoming) in [TYPE_DICTIONARY, TYPE_ARRAY] else incoming
 		return true
 	if typeof(live_value) == TYPE_ARRAY and typeof(candidate_value) == TYPE_ARRAY:
+		if is_same(live_value, candidate_value):
+			return true
 		var live_array := live_value as Array
 		var candidate_array := candidate_value as Array
 		while live_array.size() > candidate_array.size(): live_array.pop_back()
