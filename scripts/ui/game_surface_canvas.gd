@@ -98,12 +98,14 @@ var surface_presentation_clock_msec := 0.0
 var transient_surface_loop_deadline_msec := 0
 var transient_surface_loop_id := ""
 var environment_activity_paused := false
+var surface_render_state_dirty := false
 
 
 func set_game_module(game_module: GameModule) -> void:
 	if surface_game_module == game_module:
 		return
 	surface_game_module = game_module
+	surface_render_state_dirty = true
 	queue_redraw()
 
 
@@ -151,6 +153,7 @@ func clear_runtime_state() -> void:
 	surface_presentation_clock_msec = 0.0
 	transient_surface_loop_deadline_msec = 0
 	transient_surface_loop_id = ""
+	surface_render_state_dirty = false
 	_update_drunk_distortion_overlay()
 	queue_redraw()
 
@@ -172,6 +175,7 @@ func render_game_snapshot(snapshot: Dictionary) -> void:
 	drunk_effect_mode = _normalized_drunk_effect_mode(str(state.get("drunk_effect_mode", drunk_effect_mode)))
 	_update_drunk_distortion_overlay()
 	_update_surface_animation_channels()
+	surface_render_state_dirty = true
 	_prepare_surface_render_state()
 	queue_redraw()
 
@@ -199,15 +203,24 @@ func apply_surface_state_patch(patch: Dictionary) -> void:
 		_update_drunk_distortion_overlay()
 	if patch.has("surface_animation_channels"):
 		_update_surface_animation_channels()
-	_prepare_surface_render_state()
+	surface_render_state_dirty = true
+	# A deferred patch advances authoritative simulation state without making a
+	# frame visible. Preparing its dense render batch here rebuilt the complete
+	# Coin Pusher projection at authority cadence, then discarded most batches
+	# before the Web presentation scheduler could draw them.
+	if not defer_redraw:
+		_prepare_surface_render_state()
 	if not defer_redraw:
 		perf_patch_redraw_requests += 1
 		queue_redraw()
 
 
 func _prepare_surface_render_state() -> void:
+	if not surface_render_state_dirty:
+		return
 	if surface_game_module != null and surface_game_module.has_method("prepare_surface_render_state"):
 		surface_game_module.call("prepare_surface_render_state", state)
+	surface_render_state_dirty = false
 
 
 func set_selected_index(index: int) -> void:
@@ -1212,9 +1225,11 @@ func _schedule_surface_animation_redraws(delta: float) -> void:
 	if main_redraw:
 		perf_surface_animation_scheduler_elapsed_sec += maxf(0.0, delta)
 		if _surface_animation_redraw_due(delta):
+			_prepare_surface_render_state()
 			queue_redraw()
 	elif continuous_redraw_was_active:
 		surface_animation_redraw_accumulator = 0.0
+		_prepare_surface_render_state()
 		queue_redraw()
 	else:
 		surface_animation_redraw_accumulator = 0.0
@@ -1223,6 +1238,10 @@ func _schedule_surface_animation_redraws(delta: float) -> void:
 
 func _draw() -> void:
 	var draw_started_usec := Time.get_ticks_usec()
+	# Safety net for non-scheduler redraw sources (resize/theme/editor). Ordinary
+	# realtime presentation prepares before queueing the frame above, keeping this
+	# call a cheap dirty-bit check on the measured path.
+	_prepare_surface_render_state()
 	# Surface renderers may opt into one conditional batch material for a draw;
 	# always clear it before dispatch so materials cannot leak between games.
 	material = null
