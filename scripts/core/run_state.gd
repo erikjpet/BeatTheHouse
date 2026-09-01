@@ -13064,14 +13064,24 @@ func _scenario_preflight_environment_turn(amount: int) -> Dictionary:
 
 
 # Advances the current environment clock.
-func advance_environment_turns(amount: int = 1) -> Dictionary:
+func advance_environment_turns(amount: int = 1, profile_stages: bool = false) -> Dictionary:
 	if current_environment.is_empty() or is_terminal():
 		return {"ok": true, "applied": false, "errors": []}
+	var profile_started_usec := Time.get_ticks_usec() if profile_stages else 0
+	var profile_stage_started_usec := profile_started_usec
 	var candidate := _detached_environment_turn_candidate()
+	var candidate_create_usec := Time.get_ticks_usec() - profile_stage_started_usec if profile_stages else 0
+	profile_stage_started_usec = Time.get_ticks_usec() if profile_stages else 0
 	var result := candidate._advance_environment_turns_candidate(amount)
+	var candidate_advance_usec := Time.get_ticks_usec() - profile_stage_started_usec if profile_stages else 0
 	if not bool(result.get("ok", false)):
+		if profile_stages:
+			result["debug_turn_transaction_usec"] = {"candidate_create": candidate_create_usec, "candidate_advance": candidate_advance_usec, "publish": 0, "total": Time.get_ticks_usec() - profile_started_usec}
 		return result
+	profile_stage_started_usec = Time.get_ticks_usec() if profile_stages else 0
 	_publish_environment_turn_candidate(candidate)
+	if profile_stages:
+		result["debug_turn_transaction_usec"] = {"candidate_create": candidate_create_usec, "candidate_advance": candidate_advance_usec, "publish": Time.get_ticks_usec() - profile_stage_started_usec, "total": Time.get_ticks_usec() - profile_started_usec}
 	return result
 
 

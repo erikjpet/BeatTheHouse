@@ -670,8 +670,10 @@ func _advance_run_game_clock(delta: float) -> void:
 		_refresh()
 
 
-func _advance_environment_turns_checked(amount: int = 1) -> bool:
-	var result := run_state.advance_environment_turns(amount)
+func _advance_environment_turns_checked(amount: int = 1, debug_timing: Dictionary = {}) -> bool:
+	var result := run_state.advance_environment_turns(amount, not debug_timing.is_empty())
+	if not debug_timing.is_empty() and typeof(result.get("debug_turn_transaction_usec", {})) == TYPE_DICTIONARY:
+		debug_timing["host_turn_transaction_usec"] = (result.get("debug_turn_transaction_usec", {}) as Dictionary).duplicate(true)
 	if bool(result.get("ok", false)):
 		return true
 	_show_message(str(_copy_array(result.get("errors", []))[0]) if not _copy_array(result.get("errors", [])).is_empty() else "The world boundary could not advance safely.")
@@ -10442,11 +10444,11 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 		return
 	if bool(current_stake_range.get("has_valid", false)):
 		selected_stake = stake
-	var wager_cost := _wager_cost_for_action(action_id, stake)
 	# Build the action context once. Slot autoplay reaches this path repeatedly, and
 	# each UI-state snapshot contains nested machine/runtime data. Rebuilding it for
 	# confirmation, resolution, and result presentation caused visible Web hitches.
 	var action_surface_ui_state := resolved_surface_ui_state if not resolved_surface_ui_state.is_empty() else _current_game_surface_ui_state()
+	var wager_cost := _wager_cost_for_action(action_id, stake, action_surface_ui_state)
 	if not wager_confirmed and _wager_needs_final_bankroll_confirmation(current_game, action_id, stake, wager_cost, action_surface_ui_state):
 		_pause_repeating_surface_action_for_wager_confirmation()
 		_show_wager_confirmation_popup(action_id, stake, wager_cost, skip_stake_validation, preserve_surface_ui_state)
@@ -10516,7 +10518,7 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 	if bool(result.get("ok", false)) and (resolved_action_authority_script == null or not bool(result.get(resolved_action_authority_script.HOST_COMMITTED_KEY, false))):
 		if not runtime_tick_in_progress:
 			var debug_turn_started_usec := Time.get_ticks_usec() if debug_coin_pusher_host else 0
-			if not _advance_environment_turns_checked(1):
+			if not _advance_environment_turns_checked(1, debug_host_timing if debug_coin_pusher_host else {}):
 				if uses_compact_action_rollback:
 					if not current_game.restore_host_action_rollback(compact_action_rollback, run_state, run_state.current_environment):
 						push_error("Game module failed to restore its declared compact host-action rollback token.")
@@ -10787,12 +10789,13 @@ func cancel_pending_wager_confirmation() -> void:
 	_refresh()
 
 
-func _wager_cost_for_action(action_id: String, stake: int) -> int:
+func _wager_cost_for_action(action_id: String, stake: int, surface_ui_state: Dictionary = {}) -> int:
 	if current_game == null or run_state == null:
 		return 0
 	if _current_game_uses_action_authority():
 		return _sealed_action_host_preview_wager_cost(action_id, stake)
-	return maxi(0, current_game.wager_cost_for_context(action_id, stake, run_state, run_state.current_environment, _current_game_surface_ui_state()))
+	var resolved_ui_state := surface_ui_state if not surface_ui_state.is_empty() else _current_game_surface_ui_state()
+	return maxi(0, current_game.wager_cost_for_context(action_id, stake, run_state, run_state.current_environment, resolved_ui_state))
 
 
 func _wager_needs_final_bankroll_confirmation(game: GameModule, action_id: String, stake: int, wager_cost: int, ui_state: Dictionary = {}, environment_data: Dictionary = {}) -> bool:
