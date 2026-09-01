@@ -4930,7 +4930,10 @@ func _use_active_item(item_id: String) -> bool:
 	if current_game == null:
 		_show_message("That active item needs a game surface.")
 		return false
+	var debug_rollback_started_usec := Time.get_ticks_usec() if debug_coin_pusher_host else 0
 	var boundary_rollback_run := run_state.to_dict()
+	if debug_coin_pusher_host:
+		debug_host_timing["host_rollback_snapshot"] = Time.get_ticks_usec() - debug_rollback_started_usec
 	var boundary_rollback_environment := run_state.current_environment.duplicate(true)
 	var command: Dictionary = current_game.active_item_command(item_id, run_state, run_state.current_environment, run_state.create_rng("active_item:%s" % item_id))
 	if not bool(command.get("handled", false)):
@@ -10510,14 +10513,20 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 		debug_host_stage_started_usec = Time.get_ticks_usec()
 	if bool(result.get("ok", false)) and (resolved_action_authority_script == null or not bool(result.get(resolved_action_authority_script.HOST_COMMITTED_KEY, false))):
 		if not runtime_tick_in_progress:
+			var debug_turn_started_usec := Time.get_ticks_usec() if debug_coin_pusher_host else 0
 			if not _advance_environment_turns_checked(1):
 				run_state.from_dict(boundary_rollback_run)
 				run_state.current_environment = boundary_rollback_environment
 				run_state.defer_next_bankroll_zero_failure = boundary_rollback_deferred_failure
 				_refresh_runtime_environment_views()
 				return
+			if debug_coin_pusher_host:
+				debug_host_timing["host_advance_turn"] = Time.get_ticks_usec() - debug_turn_started_usec
 		if bool(result.get("host_apply_result", false)) and not runtime_tick_in_progress:
+			var debug_apply_started_usec := Time.get_ticks_usec() if debug_coin_pusher_host else 0
 			GameModule.apply_result(run_state, result, rng)
+			if debug_coin_pusher_host:
+				debug_host_timing["host_apply_result"] = Time.get_ticks_usec() - debug_apply_started_usec
 		elif runtime_tick_in_progress:
 			run_state.save_rng(rng)
 	elif confirmed_all_in_wager:
