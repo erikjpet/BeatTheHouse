@@ -559,23 +559,10 @@ struct Kernel {
   }
   std::vector<std::pair<int, int>> pairs(Grid &grid) {
     std::vector<std::pair<int, int>> p;
+    p.reserve(std::min<size_t>(b.size() * 8, HARD_CEILING * 32));
     std::vector<uint8_t> queued(b.size());
-    std::array<int, 65536> seen;
-    seen.fill(-1);
     std::vector<int> queue;
-    auto first_seen = [&](int key) {
-      int slot = key & (int(seen.size()) - 1);
-      for (size_t probe = 0; probe < seen.size(); ++probe) {
-        if (seen[slot] == key)
-          return false;
-        if (seen[slot] < 0) {
-          seen[slot] = key;
-          return true;
-        }
-        slot = (slot + 1) & (int(seen.size()) - 1);
-      }
-      return false;
-    };
+    queue.reserve(b.size());
     for (int i = 0; i < (int)b.size(); ++i)
       if (!b[i].sleeping && !terminal(b[i])) {
         queued[i] = 1;
@@ -597,9 +584,11 @@ struct Kernel {
             if (dx * dx + dy * dy >= mn * mn)
               continue;
             int lo = b[i].id <= b[j].id ? i : j,
-                hi = b[i].id <= b[j].id ? j : i,
-                key = std::min(i, j) * HARD_CEILING + std::max(i, j);
-            if (first_seen(key) && p.size() < HARD_CEILING * 32)
+                hi = b[i].id <= b[j].id ? j : i;
+            // Each body occupies exactly one grid cell and every neighbor cell
+            // is visited once. The only duplicate is the reverse i/j traversal,
+            // so canonical index order replaces the per-pass 65k-entry hash.
+            if (i < j && p.size() < HARD_CEILING * 32)
               p.emplace_back(lo, hi);
             if (!queued[j]) {
               queued[j] = 1;
@@ -1371,15 +1360,11 @@ struct Kernel {
         std::vector<uint8_t> active(b.size());
         for (size_t i = 0; i < b.size(); ++i)
           active[i] = !b[i].sleeping && !terminal(b[i]);
-        bool changed = true;
-        while (changed) {
-          changed = false;
-          for (auto p : ps)
-            if (active[p.first] != active[p.second]) {
-              active[p.first] = active[p.second] = 1;
-              changed = true;
-            }
-        }
+        // pairs() starts from every awake body and breadth-first expands through
+        // every overlapping neighbor. Its returned pairs therefore already are
+        // exactly the connected components reached by an active body.
+        for (auto p : ps)
+          active[p.first] = active[p.second] = 1;
         auto statics = static_candidates(active, newf);
         for (auto p : ps)
           if ((active[p.first] || active[p.second]) &&
