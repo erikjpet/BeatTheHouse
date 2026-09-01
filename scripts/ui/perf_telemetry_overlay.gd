@@ -704,7 +704,13 @@ func _coin_pusher_canvas_counters(canvas: Control) -> Dictionary:
 
 func _coin_pusher_surface_state(canvas: Control) -> Dictionary:
 	if canvas != null and canvas.has_method("realtime_surface_state"):
-		return (canvas.call("realtime_surface_state") as Dictionary).duplicate(true)
+		# Performance evidence only reads boundary scalars plus the existing action
+		# binding dictionary. Deep-copying the 300-body presentation arrays here
+		# made the observer allocate several complete machines inside an active
+		# action window, then charged the resulting browser GC pauses to gameplay.
+		# A shallow boundary copy keeps the scalar observations stable without
+		# cloning presentation data that the report never consumes.
+		return (canvas.call("realtime_surface_state") as Dictionary).duplicate(false)
 	return {}
 
 
