@@ -2089,8 +2089,18 @@ func _advance_presented_bankroll() -> void:
 		_refresh_runtime_environment_views()
 		return
 	if not _game_surface_presentation_active():
+		# Coin Pusher's accepted-action handoff already owns an identity-guarded
+		# staged HUD refresh. Releasing its one-quarter bankroll hold used to run a
+		# second complete environment/UI refresh in this same frame, even though the
+		# pending handoff would replace that output one frame later.
+		var deferred_coin_pusher_hud_owns_release := deferred_embedded_refresh_pending \
+			and current_game == deferred_embedded_refresh_game \
+			and current_game.get_id() == "coin_pusher" \
+			and run_state == deferred_embedded_refresh_run_state \
+			and is_same(run_state.current_environment, deferred_embedded_refresh_environment)
 		_sync_presented_bankroll_to_actual()
-		_refresh_runtime_environment_views()
+		if not deferred_coin_pusher_hud_owns_release:
+			_refresh_runtime_environment_views()
 
 
 func _presented_bankroll() -> int:
