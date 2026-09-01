@@ -183,8 +183,12 @@ compressed, or deleted to make this disposition.
 
 Planned persisted-machine physical EV command (**NOT RUN**):
 
+The shards run serially because each keeps a production machine alive for the
+entire sample; parallel shards can exhaust host memory before durable reports
+are written.
+
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File tools/coin_pusher_ev_harness.ps1 -AcceptedPerMachine 200000 -ShardsPerMachine 8 -Throttle 6 -OutDir .tmp/balance06_1_coin_pusher_ev
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/coin_pusher_ev_harness.ps1 -AcceptedPerMachine 200000 -ShardsPerMachine 8 -Throttle 1 -OutDir .tmp/balance06_1_coin_pusher_ev
 ```
 
 ## Measured distributions
