@@ -632,7 +632,7 @@ static func stake_range_from_action_view(host: Variant, action_view: Dictionary 
 	var max_stake = mini(ceiling, wager_balance)
 	var has_valid = max_stake >= min_stake
 	var economy_state_value: Variant = action_view.get("economy_state", null)
-	var economy_state: Dictionary = economy_state_value if typeof(economy_state_value) == TYPE_DICTIONARY else host.run_state.economy()
+	var economy_state: String = str(economy_state_value) if typeof(economy_state_value) == TYPE_STRING else str(host.run_state.economy())
 	return {
 		"min": min_stake,
 		"max": max_stake,
