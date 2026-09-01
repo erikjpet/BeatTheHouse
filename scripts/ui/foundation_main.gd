@@ -2618,18 +2618,27 @@ func _game_surface_realtime_state_patch(now_msec: int, current_surface_state_ove
 	# just-frozen transient machine during the one-frame visual handoff.
 	if game_exit_settle_active:
 		return {}
+	var realtime_ui_started_usec := Time.get_ticks_usec()
 	var ui_state := _current_game_surface_realtime_ui_state(now_msec)
+	if perf_telemetry_overlay != null:
+		perf_telemetry_overlay.record_foundation_subsystem_usec("surface_realtime_ui", Time.get_ticks_usec() - realtime_ui_started_usec)
 	var current_surface_state := current_surface_state_override \
 			if not current_surface_state_override.is_empty() \
 			else game_surface_canvas.realtime_surface_state()
 	if current_game.has_method("surface_realtime_state_patch"):
+		var realtime_module_started_usec := Time.get_ticks_usec()
 		var module_patch: Variant = current_game.surface_realtime_state_patch(run_state, run_state.current_environment, ui_state, current_surface_state)
+		if perf_telemetry_overlay != null:
+			perf_telemetry_overlay.record_foundation_subsystem_usec("surface_realtime_module", Time.get_ticks_usec() - realtime_module_started_usec)
 		if typeof(module_patch) == TYPE_DICTIONARY:
 			var typed_patch: Dictionary = module_patch
 			if bool(typed_patch.get("request_foundation_autosave", false)):
 				typed_patch.erase("request_foundation_autosave")
 				call_deferred("_autosave_foundation_run", "Autosaved.", false)
+			var realtime_augment_started_usec := Time.get_ticks_usec()
 			_augment_game_surface_realtime_patch(typed_patch, ui_state)
+			if perf_telemetry_overlay != null:
+				perf_telemetry_overlay.record_foundation_subsystem_usec("surface_realtime_augment", Time.get_ticks_usec() - realtime_augment_started_usec)
 			return typed_patch
 	var module_surface_state: Variant = current_game.surface_state(run_state, run_state.current_environment, ui_state)
 	if typeof(module_surface_state) != TYPE_DICTIONARY:

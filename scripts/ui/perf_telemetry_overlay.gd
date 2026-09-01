@@ -105,6 +105,9 @@ var foundation_layout_usec_samples: Array = []
 var foundation_coin_pusher_native_step_usec_samples: Array = []
 var foundation_surface_automation_usec_samples: Array = []
 var foundation_surface_realtime_usec_samples: Array = []
+var foundation_surface_realtime_ui_usec_samples: Array = []
+var foundation_surface_realtime_module_usec_samples: Array = []
+var foundation_surface_realtime_augment_usec_samples: Array = []
 var foundation_snapshot_last_usec := 0
 var foundation_environment_runtime_last_usec := 0
 var foundation_autosave_last_usec := 0
@@ -112,6 +115,9 @@ var foundation_layout_last_usec := 0
 var foundation_coin_pusher_native_step_last_usec := 0
 var foundation_surface_automation_last_usec := 0
 var foundation_surface_realtime_last_usec := 0
+var foundation_surface_realtime_ui_last_usec := 0
+var foundation_surface_realtime_module_last_usec := 0
+var foundation_surface_realtime_augment_last_usec := 0
 
 
 static func runtime_enabled() -> bool:
@@ -190,6 +196,9 @@ func begin_foundation_frame() -> void:
 	foundation_coin_pusher_native_step_last_usec = 0
 	foundation_surface_automation_last_usec = 0
 	foundation_surface_realtime_last_usec = 0
+	foundation_surface_realtime_ui_last_usec = 0
+	foundation_surface_realtime_module_last_usec = 0
+	foundation_surface_realtime_augment_last_usec = 0
 
 
 func record_foundation_subsystem_usec(subsystem: String, elapsed_usec: int) -> void:
@@ -209,6 +218,12 @@ func record_foundation_subsystem_usec(subsystem: String, elapsed_usec: int) -> v
 			foundation_surface_automation_last_usec += value
 		"surface_realtime":
 			foundation_surface_realtime_last_usec += value
+		"surface_realtime_ui":
+			foundation_surface_realtime_ui_last_usec += value
+		"surface_realtime_module":
+			foundation_surface_realtime_module_last_usec += value
+		"surface_realtime_augment":
+			foundation_surface_realtime_augment_last_usec += value
 
 
 func _process(delta: float) -> void:
@@ -226,6 +241,9 @@ func _process(delta: float) -> void:
 		foundation_coin_pusher_native_step_usec_samples.append(foundation_coin_pusher_native_step_last_usec)
 		foundation_surface_automation_usec_samples.append(foundation_surface_automation_last_usec)
 		foundation_surface_realtime_usec_samples.append(foundation_surface_realtime_last_usec)
+		foundation_surface_realtime_ui_usec_samples.append(foundation_surface_realtime_ui_last_usec)
+		foundation_surface_realtime_module_usec_samples.append(foundation_surface_realtime_module_last_usec)
+		foundation_surface_realtime_augment_usec_samples.append(foundation_surface_realtime_augment_last_usec)
 		if frame_index % sample_stride_frames == 0:
 			_sample_monitors()
 	if show_overlay and frame_index % OVERLAY_REFRESH_STRIDE_FRAMES == 0:
@@ -1240,6 +1258,9 @@ func _begin_scenario(name: String, tags: Dictionary = {}) -> void:
 	foundation_coin_pusher_native_step_usec_samples = []
 	foundation_surface_automation_usec_samples = []
 	foundation_surface_realtime_usec_samples = []
+	foundation_surface_realtime_ui_usec_samples = []
+	foundation_surface_realtime_module_usec_samples = []
+	foundation_surface_realtime_augment_usec_samples = []
 	monitor_sample_count = 0
 	last_sample_memory_bytes = current_start_memory_bytes
 	last_sample_object_count = int(Performance.get_monitor(Performance.OBJECT_COUNT))
@@ -1283,6 +1304,9 @@ func _end_scenario() -> void:
 			"coin_pusher_native_step": _int_stats(foundation_coin_pusher_native_step_usec_samples),
 			"surface_automation": _int_stats(foundation_surface_automation_usec_samples),
 			"surface_realtime": _int_stats(foundation_surface_realtime_usec_samples),
+			"surface_realtime_ui": _int_stats(foundation_surface_realtime_ui_usec_samples),
+			"surface_realtime_module": _int_stats(foundation_surface_realtime_module_usec_samples),
+			"surface_realtime_augment": _int_stats(foundation_surface_realtime_augment_usec_samples),
 		},
 		"liveness_counters": _liveness_counter_snapshot(),
 		"allocation_proxy": {
@@ -1483,6 +1507,9 @@ func foundation_attribution_snapshot() -> Dictionary:
 		"coin_pusher_native_step": _int_stats(foundation_coin_pusher_native_step_usec_samples),
 		"surface_automation": _int_stats(foundation_surface_automation_usec_samples),
 		"surface_realtime": _int_stats(foundation_surface_realtime_usec_samples),
+		"surface_realtime_ui": _int_stats(foundation_surface_realtime_ui_usec_samples),
+		"surface_realtime_module": _int_stats(foundation_surface_realtime_module_usec_samples),
+		"surface_realtime_augment": _int_stats(foundation_surface_realtime_augment_usec_samples),
 	}
 
 
