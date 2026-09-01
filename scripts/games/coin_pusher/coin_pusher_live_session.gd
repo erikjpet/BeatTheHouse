@@ -167,7 +167,10 @@ static func advance(machine: Dictionary, now_msec: int, capture_presentation: bo
 	# into a self-sustaining four-tick hitch. Retain every elapsed unit in the
 	# accumulator, but drain it in two-tick chunks that leave enough frame time
 	# for the required presentation snapshot and canvas draw.
-	var catch_up_limit := WEB_MAX_CATCH_UP_TICKS if OS.has_feature("web") else MAX_CATCH_UP_TICKS
+	# A due presentation also projects the authoritative body tuple and schedules
+	# a canvas draw. Give that visible frame one tick; subsequent non-presenting
+	# frames drain two at a time and recover the retained backlog.
+	var catch_up_limit := (1 if capture_presentation else WEB_MAX_CATCH_UP_TICKS) if OS.has_feature("web") else MAX_CATCH_UP_TICKS
 	var due := mini(catch_up_limit, units / 1000)
 	if due <= 0:
 		session["accumulator_units"] = units
