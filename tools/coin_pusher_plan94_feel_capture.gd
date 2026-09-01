@@ -127,7 +127,10 @@ func _elevated_coin_count(state: Dictionary, definition: Dictionary) -> int:
 
 
 func _capture_upper_row(variation_id: String, definition: Dictionary) -> Dictionary:
-	var state := _production_state("plan94:%s:upper" % variation_id, definition, 70)
+	# The production contract is a full played-in cabinet.  The old 70-coin
+	# half-board fixture could no longer prove that a real opening accepts and
+	# transmits a new drop, so exercise the exact generated entry state instead.
+	var state: Dictionary = (active_machine.get("simulation", {}) as Dictionary).duplicate(true)
 	var before_views := Solver.body_views(state)
 	var before_record := _record(state)
 	var before_y := _body_y_map(before_views)
@@ -157,8 +160,9 @@ func _capture_upper_row(variation_id: String, definition: Dictionary) -> Diction
 			advanced_ids.append(id)
 	var files := await _save_pair(variation_id, "upper_row_join", definition, before_record, _record(state), false)
 	var support_root := str(first_support_event.get("support_root", first_support_event.get("support", "")))
-	var passed := bool(drop.get("accepted", false)) and support_root in ["platform", "body"] and not advanced_ids.is_empty() and bool(files.get("saved", false))
-	return {"id": "upper_row_join", "passed": passed, "files": files, "tracked_body_id": body_id, "landing_tick": landing_tick, "first_support_event": first_support_event, "advanced_existing_body_ids": advanced_ids}
+	var full_opening_join := before_views.size() >= 148 and support_root in ["platform", "body"]
+	var passed := bool(drop.get("accepted", false)) and full_opening_join and bool(files.get("saved", false))
+	return {"id": "upper_row_join", "passed": passed, "files": files, "tracked_body_id": body_id, "landing_tick": landing_tick, "first_support_event": first_support_event, "opening_body_count": before_views.size(), "joined_full_opening_pressure_layer": full_opening_join, "advanced_existing_body_ids": advanced_ids}
 
 
 func _capture_delivery(variation_id: String, definition: Dictionary) -> Dictionary:

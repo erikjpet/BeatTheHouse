@@ -544,11 +544,23 @@ static func _presentation_feature_count(views: Array) -> int:
 
 
 static func _settled_body(body: Dictionary) -> Dictionary:
-	return {"id": str(body.get("id", "")), "kind": str(body.get("kind", "coin")), "x": _quantize_100(int(body.get("x", 0))), "y": _quantize_100(int(body.get("y", 0))), "z": _quantize_100(int(body.get("z", 0))), "support": str(body.get("support_kind", "deck")), "carried": bool(body.get("carried_sleep", false)), "meta": (body.get("meta", {}) as Dictionary).duplicate(true)}
+	var settled := {"id": str(body.get("id", "")), "kind": str(body.get("kind", "coin")), "x": _quantize_100(int(body.get("x", 0))), "y": _quantize_100(int(body.get("y", 0))), "z": _quantize_100(int(body.get("z", 0))), "support": str(body.get("support_kind", "deck")), "carried": bool(body.get("carried_sleep", false)), "meta": (body.get("meta", {}) as Dictionary).duplicate(true)}
+	if str(body.get("support_kind", "")) == "body":
+		settled["support_ids"] = (body.get("support_ids", []) as Array).duplicate() if typeof(body.get("support_ids", [])) == TYPE_ARRAY else []
+		if body.has("support_anchor_x") and body.has("support_anchor_y"):
+			settled["anchor_x"] = _quantize_100(int(body.get("support_anchor_x", 0)))
+			settled["anchor_y"] = _quantize_100(int(body.get("support_anchor_y", 0)))
+	return settled
 
 
 static func _restore_extra(body: Dictionary, definition: Dictionary) -> Dictionary:
-	return _restored_body(str(body.get("id", "")), str(body.get("kind", "coin")), int(body.get("x", 0)) * 100, int(body.get("y", 0)) * 100, int(body.get("z", 0)) * 100, body.get("meta", {}), definition, str(body.get("support", "deck")), bool(body.get("carried", false)))
+	var restored := _restored_body(str(body.get("id", "")), str(body.get("kind", "coin")), int(body.get("x", 0)) * 100, int(body.get("y", 0)) * 100, int(body.get("z", 0)) * 100, body.get("meta", {}), definition, str(body.get("support", "deck")), bool(body.get("carried", false)))
+	if str(restored.get("support_kind", "")) == "body":
+		restored["support_ids"] = (body.get("support_ids", []) as Array).duplicate() if typeof(body.get("support_ids", [])) == TYPE_ARRAY else []
+		if body.has("anchor_x") and body.has("anchor_y"):
+			restored["support_anchor_x"] = int(body.get("anchor_x", 0)) * 100
+			restored["support_anchor_y"] = int(body.get("anchor_y", 0)) * 100
+	return restored
 
 
 static func _restored_body(id: String, kind: String, x: int, y: int, z: int, meta: Dictionary, definition: Dictionary, support: String, carried: bool) -> Dictionary:

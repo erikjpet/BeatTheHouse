@@ -1,4 +1,4 @@
-Status: IN_PROGRESS — reopened 2026-08-25 after completion audit
+Status: DONE — completed and reverified 2026-09-01
 Board row: `pusherv3_10` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — pusherv3_10: Full-Width Resting Openings, Full Plinko, Drop Nozzles, and Stack Physics
@@ -238,27 +238,29 @@ joining the pusher bed or resolving a variant-specific physical target.
 
 ## Execution record
 
-- **Quiet full-width opening:** All three production machines now seed irregular
-  touching clusters in the left, center, and right thirds. Their opening reports
-  retain `150/150/154` bodies with at least `150/150/154` contacting bodies,
-  `14/14/13` edge bodies, and `20/21/23` upper bodies in the final seed matrix.
-  A five-period (`1,200` tick) no-input fixture proves an unchanged body/tray/
-  gutter/event digest and a parked zero-rate motor; the first queued committed
-  drop starts the motor. Motor, nozzle, and FIFO state survive snapshot restore.
-- **Full Plinko and authored cups:** Quarter/Ridge/Vault use `45/33/53` small
-  staggered pegs over `48,000/48,000/52,000`-unit delivery fields. The exhaustive
-  legal-nozzle/phase/jitter matrix resolves `7,680` drops with zero stuck bodies,
-  records meaningful one-shot peg contacts, and reports landing entropy/lateral
-  spread for five rail positions and all three fixed Ridge nozzles. Ridge's hard
-  `5X/$3` cups capture `0.83%/1.25%` only from their respective edge nozzles;
-  Vault's `5X/$4` cups capture `0.625%/3.33%` only from the extreme rail ends.
-  Every cup is reachable, no sampled position exceeds the `8%` multiplier or
-  `10%` cash exploit cap, and multiplier reproduction remains far subcritical.
-- **Visible same-nozzle chains:** Solver/reference/native target volumes consume
-  the trigger exactly once and emit `plinko_cup` with target, reward, provenance,
-  and tick. A `5X` event queues five visible bonus-origin children on the same
-  stable nozzle id with parent/depth metadata, a depth cap of `3`, and a hard
-  award cap of `60`; rail position is sampled at each six-tick emission.
+- **Quiet, generated opening:** All three production machines now seed shuffled,
+  irregular, settled contact clusters in the left, center, and right thirds of
+  both shelves. The final seed matrix retains `150/150/154` bodies with every
+  retained body in contact, useful edge and upper stock, and different cluster
+  outlines per seed. A five-period (`1,200` tick) no-input fixture proves an
+  unchanged body/tray/gutter/event digest and a parked motor. The first accepted
+  drop starts play; the actual motor, queue, bodies, support anchors, and feature
+  state survive compact save/restore instead of regenerating.
+- **Complete Plinko token cups:** Quarter/Ridge/Vault retain their full-height
+  `45/33/53`-peg boards and now all ship two visibly bucket-shaped, labeled token
+  cups. Quarter awards `+3/+5`, Ridge `+5/+3`, and Vault `+5/+4`; no Plinko cup
+  pays straight money. The exhaustive final matrix resolves `7,680` drops with
+  zero stuck bodies. Maximum sampled cup rates are `7.9167%/6.4583%` for Quarter,
+  `0.8333%/1.25%` for Ridge, and `0.625%/3.3333%` for Vault, all inside the
+  anti-parking caps. Captured tokens remain visible same-nozzle bonus drops.
+- **Heavy-object goals:** Quarter Falls makes the rider prizes the main objective:
+  push three into the tray for `+5` tokens, with at least three replenished at all
+  times. Jackpot Ridge cumulatively banks three multiplier pucks for `+5` and a
+  ridge run; its deterministic restocker maintains four pucks. Vault Drop makes
+  each banked key fragment unlock a cell and every three fragments award `+6`;
+  its restocker maintains three fragments, and the nine-cell vault resets into a
+  new deterministic cycle after completion. Opening features rest on lower-bed
+  supports with saved anchors and are never pinned to the moving upper shelf.
 - **Tap/hold/nozzle controls:** The physical drop slot uses the shared generic
   captured-hold seam across mouse, touch, keyboard, and controller: a tap
   reserves one coin, deterministic 180-tick/three-second hold reserves 30 at
@@ -272,21 +274,22 @@ joining the pusher bed or resolving a variant-specific physical target.
   The first support graph stores `bed_level_good` or `supported_bad` and produces
   exactly one positive ding or negative stack cue; persistent contact cannot
   replay either cue.
-- **Parity, performance, and visuals:** The focused production suite and the
-  permanent four-input/interruption guard pass at
-  `.tmp/test_reports/pusherv3_10_resume_input_perf_2/foundation_coin_pusher_retry5.json`;
-  the 300-body native solver is `4.007 ms` p95 against its `12 ms` ceiling.
-  Independent Windows native/Web reference parity passes again at
-  `.tmp/pusherv3_10_followup_parity/manifest.json` with payload
-  `17822461d5d650ef381678f414b19d4a143a3e48b68bab64cfb168b06f66a1bb`.
-  The actual-OpenGL normal/reduced-motion capture manifest passes at
-  `review_artifacts/coin_pusher_pusherv3_10_20260825/manifest.json`.
-- **Economy accounting:** The last complete persistent audit remains the
-  `pusherv3_9` 200,000-paid-drop-per-machine baseline (`0.890210/0.926025/
-  0.841235` physical ROI), with ample margin inside all authored bands. The
-  new exhaustive cup rates bound paid-coin capture below `0.8%` when averaged
-  across sampled nozzles, while all cash and child-drop value remains explicitly
-  outside physical ROI. The unattended EV shard/harness now reconciles
-  `cup_consumed_count` by paid/opening/feature origin and reports target capture,
-  instant payout, and awarded child drops separately for the `pusherv3_11`
-  program-closure rerun.
+- **Parity, performance, and visuals:** The final focused suite passes at
+  `.tmp/test_reports/coin_pusher_finalize_focus_8/summary.json`; its exhaustive
+  Coin Pusher contract completed in `196.722 s` with zero failures and a native
+  300-body tick p95 below the `12 ms` ceiling. Two-process Windows native/Web
+  reference parity passes at `.tmp/coin_pusher_final_parity/manifest.json` with
+  exact payload `37510db73787040b7d08e10e9943844e2c98011c11e1868d3602e610cefe0c30`.
+  Actual-OpenGL delivery and 27-scene normal/reduced feel captures pass at
+  `.tmp/coin_pusher_final_delivery_gl_2/manifest.json` and
+  `.tmp/coin_pusher_final_feel_4/manifest.json`.
+- **Economy accounting:** The final persistent audit at
+  `.tmp/coin_pusher_final_ev_8/manifest.json` passes eight deterministic shards
+  and exactly `200,000` accepted paid drops per machine (`600,000` total).
+  Quarter/Ridge/Vault physical ROI is `0.810025/0.903210/0.798925`, with stock-
+  adjusted intervals `0.810025-0.826445`, `0.903210-0.922730`, and
+  `0.798925-0.815900`; all intervals and 95% shard confidence intervals remain
+  inside their authored bands. Cup drops and heavy-goal drops are excluded and
+  reported separately. The run completed `3,272` Quarter prize goals, `2,705`
+  Ridge runs, and `3,514` Vault three-key goals with conservation green in every
+  shard.

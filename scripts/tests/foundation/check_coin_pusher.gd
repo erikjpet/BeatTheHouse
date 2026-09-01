@@ -225,6 +225,80 @@ func _check_pusher_v3_10_idle_queue_cups_and_stack(library: ContentLibrary, game
 	if chain_queue.size() != 1 or int((chain_queue[0] as Dictionary).get("remaining", 0)) != 5 or str((chain_queue[0] as Dictionary).get("nozzle_id", "")) != "ridge_left" or int((chain_queue[0] as Dictionary).get("chain_depth", 0)) != 1:
 		failures.append("pusherv3_10 5X cup did not enqueue five bounded children through the trigger nozzle.")
 
+	var prize_machine := {
+		"variation_id": "quarter_falls",
+		"simulation": CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-FINAL-PRIZE-GOAL"), machine, 0),
+		"variation_state": {},
+		"drop_queue": [],
+		"motor_started": false,
+		"selected_nozzle_id": "quarter_rail",
+		"riders": [
+			{"id": "goal_rider_a", "kind": "chip_stack", "label": "chip stack", "cash_value": 4},
+			{"id": "goal_rider_b", "kind": "ticket_roll", "label": "ticket roll", "cash_value": 7},
+			{"id": "goal_rider_c", "kind": "chip_stack", "label": "chip stack", "cash_value": 4},
+		],
+		"prize_goal_progress": 0,
+		"prize_goal_completions": 0,
+		"rider_serial": 3,
+	}
+	CoinPusherLiveSessionScript.begin(prize_machine, machine, 7713)
+	game.call("_consume_physics_events", null, prize_machine, [
+		{"kind": "tray", "body_kind": "rider", "outcome": "tray", "metadata": {"feature_id": "goal_rider_a"}},
+		{"kind": "tray", "body_kind": "rider", "outcome": "tray", "metadata": {"feature_id": "goal_rider_b"}},
+		{"kind": "tray", "body_kind": "rider", "outcome": "tray", "metadata": {"feature_id": "goal_rider_c"}},
+	], _pusher_v3_rng("PUSHER-FINAL-PRIZE-GOAL-CONSUME"))
+	var prize_goal: Dictionary = game.call("_machine_goal_state", prize_machine, prize_machine.get("simulation", {}))
+	var prize_queue: Array = prize_machine.get("drop_queue", [])
+	if int(prize_machine.get("prize_goal_completions", 0)) != 1 or int(prize_goal.get("progress", -1)) != 0 \
+			or prize_queue.is_empty() or int((prize_queue[0] as Dictionary).get("remaining", 0)) != 5 \
+			or (prize_machine.get("riders", []) as Array).size() < 3 or not str(prize_goal.get("instruction", "")).contains("HEAVY PRIZES"):
+		failures.append("Coin Pusher final Prize Rush goal did not turn three physical heavy-prize banks into a visible replenishing five-token bonus loop.")
+
+	var ridge_definition: Dictionary = (machine.get("machines", {}) as Dictionary).get("jackpot_ridge", {})
+	var ridge_machine := {
+		"variation_id": "jackpot_ridge",
+		"simulation": CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-FINAL-RIDGE-GOAL"), ridge_definition, 0),
+		"variation_state": {
+			"pucks": [
+				{"id": "goal_puck_a", "kind": "multiplier", "multiplier": 2, "charges": 2},
+				{"id": "goal_puck_b", "kind": "multiplier", "multiplier": 3, "charges": 2},
+				{"id": "goal_puck_c", "kind": "multiplier", "multiplier": 5, "charges": 2},
+			],
+			"armed_multipliers": [], "multiplier_banks_by_cycle": {}, "ridge_run_cycles_remaining": 0, "ridge_cycle_serial": 9,
+		},
+		"drop_queue": [], "motor_started": false, "selected_nozzle_id": "ridge_center",
+	}
+	CoinPusherLiveSessionScript.begin(ridge_machine, ridge_definition, 7714)
+	for puck_id in ["goal_puck_a", "goal_puck_b", "goal_puck_c"]:
+		game.call("_consume_physics_events", null, ridge_machine, [{"kind": "tray", "body_kind": "puck", "outcome": "tray", "stroke_cycle": 9, "phase_fp": 500, "metadata": {"feature_id": puck_id}}], _pusher_v3_rng("PUSHER-FINAL-RIDGE-%s" % puck_id))
+	var ridge_queue: Array = ridge_machine.get("drop_queue", [])
+	var ridge_goal: Dictionary = game.call("_machine_goal_state", ridge_machine, ridge_machine.get("simulation", {}))
+	if ridge_queue.size() != 1 or int((ridge_queue[0] as Dictionary).get("remaining", 0)) != 5 \
+			or int((ridge_machine.get("variation_state", {}) as Dictionary).get("ridge_run_count", 0)) != 1 \
+			or not str(ridge_goal.get("instruction", "")).contains("MULTIPLIER PUCKS"):
+		failures.append("Coin Pusher final Ridge Run goal did not turn three heavy multiplier pucks into one visible five-token bonus feed.")
+
+	var vault_definition: Dictionary = (machine.get("machines", {}) as Dictionary).get("vault_drop", {})
+	var vault_machine := {
+		"variation_id": "vault_drop",
+		"simulation": CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-FINAL-VAULT-GOAL"), vault_definition, 0),
+		"variation_state": {
+			"fragments": [{"id": "goal_key_a"}, {"id": "goal_key_b"}, {"id": "goal_key_c"}],
+			"banked_fragments": 0, "key_streak_progress": 0, "meter_value": 214, "vault_round_active": false,
+		},
+		"drop_queue": [], "motor_started": false, "selected_nozzle_id": "vault_rail",
+	}
+	CoinPusherLiveSessionScript.begin(vault_machine, vault_definition, 7715)
+	for key_id in ["goal_key_a", "goal_key_b", "goal_key_c"]:
+		game.call("_consume_physics_events", null, vault_machine, [{"kind": "tray", "body_kind": "fragment", "outcome": "tray", "metadata": {"feature_id": key_id}}], _pusher_v3_rng("PUSHER-FINAL-VAULT-%s" % key_id))
+	var vault_queue: Array = vault_machine.get("drop_queue", [])
+	var vault_goal: Dictionary = game.call("_machine_goal_state", vault_machine, vault_machine.get("simulation", {}))
+	if vault_queue.size() != 1 or int((vault_queue[0] as Dictionary).get("remaining", 0)) != 6 \
+			or int((vault_machine.get("variation_state", {}) as Dictionary).get("key_streak_progress", -1)) != 0 \
+			or int((vault_machine.get("variation_state", {}) as Dictionary).get("banked_fragments", 0)) != 3 \
+			or not str(vault_goal.get("instruction", "")).contains("KEY FRAGMENT"):
+		failures.append("Coin Pusher final Vault goal did not turn three physical heavy key banks into one visible six-token bonus feed.")
+
 	var stack_definition := machine.duplicate(true)
 	(stack_definition.get("apparatus", {}) as Dictionary)["pegs"] = []
 	var stack_state := CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-V3-10-STACK"), stack_definition, 0)
@@ -1029,14 +1103,18 @@ func _check_pusher_v3_played_in_opening_state(library: ContentLibrary, game_defi
 			var production_state := CoinPusherLiveSessionScript.restore_snapshot(snapshot, definition)
 			var production_bodies: Array = production_state.get("bodies", [])
 			var feature_count := 0
+			var pinned_opening_features := 0
 			for body_value in production_bodies:
 				if typeof(body_value) == TYPE_DICTIONARY and str((body_value as Dictionary).get("kind", "coin")) != "coin":
 					feature_count += 1
+					var feature_body: Dictionary = body_value
+					if bool(feature_body.get("carried_sleep", false)) or (str(feature_body.get("support_kind", "")) == "body" and (not feature_body.has("support_anchor_x") or not feature_body.has("support_anchor_y"))):
+						pinned_opening_features += 1
 			var minimum_features := 1 if variation_id == "quarter_falls" else 4 if variation_id == "jackpot_ridge" else 6
 			var production_deterministic := JSON.stringify(snapshot, "", true) == JSON.stringify(repeated.get("settled_state", {}), "", true)
 			var production_upper := _pusher_v3_elevated_opening_count(production_state, definition)
-			if not production_deterministic or production_bodies.size() < opening_count + minimum_features or feature_count < minimum_features or int(snapshot.get("tray_count", 0)) != 0 or production_upper < 8 or _pusher_v3_overlap_pair_count(production_bodies) != 0:
-				failures.append("Coin Pusher V3 %s production opening is not a deterministic collision-valid stock-plus-feature state: seed=%d deterministic=%s bodies=%d features=%d tray=%d upper=%d overlaps=%s." % [variation_id, production_seed_index, str(production_deterministic), production_bodies.size(), feature_count, int(snapshot.get("tray_count", 0)), production_upper, JSON.stringify(_pusher_v3_overlap_pair_details(production_bodies))])
+			if not production_deterministic or production_bodies.size() < opening_count + minimum_features or feature_count < minimum_features or pinned_opening_features > 0 or int(snapshot.get("tray_count", 0)) != 0 or production_upper < 8 or _pusher_v3_overlap_pair_count(production_bodies) != 0:
+				failures.append("Coin Pusher V3 %s production opening is not a deterministic collision-valid stock-plus-feature state: seed=%d deterministic=%s bodies=%d features=%d pinned_features=%d tray=%d upper=%d overlaps=%s." % [variation_id, production_seed_index, str(production_deterministic), production_bodies.size(), feature_count, pinned_opening_features, int(snapshot.get("tray_count", 0)), production_upper, JSON.stringify(_pusher_v3_overlap_pair_details(production_bodies))])
 				return
 		var variation_max_payout := 0
 		var variation_max_total := 0
@@ -1148,14 +1226,20 @@ func _pusher_v3_overlap_pair_details(bodies: Array) -> Array:
 
 func _check_pusher_v3_shipped_variant_definitions(machine: Dictionary, failures: Array) -> void:
 	var shipped: Dictionary = machine.get("machines", {}) if typeof(machine.get("machines", {})) == TYPE_DICTIONARY else {}
-	for variation_id in ["jackpot_ridge", "vault_drop"]:
-		var definition: Dictionary = shipped.get(variation_id, {}) if typeof(shipped.get(variation_id, {})) == TYPE_DICTIONARY else {}
+	var definitions := {"quarter_falls": machine, "jackpot_ridge": shipped.get("jackpot_ridge", {}), "vault_drop": shipped.get("vault_drop", {})}
+	for variation_id in definitions:
+		var definition: Dictionary = definitions[variation_id] if typeof(definitions[variation_id]) == TYPE_DICTIONARY else {}
 		var apparatus: Dictionary = definition.get("apparatus", {}) if typeof(definition.get("apparatus", {})) == TYPE_DICTIONARY else {}
 		var board: Dictionary = apparatus.get("drop_board", {}) if typeof(apparatus.get("drop_board", {})) == TYPE_DICTIONARY else {}
 		var nozzles: Array = apparatus.get("nozzles", []) if typeof(apparatus.get("nozzles", [])) == TYPE_ARRAY else []
 		var targets: Array = apparatus.get("targets", []) if typeof(apparatus.get("targets", [])) == TYPE_ARRAY else []
 		if definition.is_empty() or int(board.get("z_top", 0)) < 48000 or nozzles.is_empty() or targets.size() < 2 or int(apparatus.get("release_interval_ticks", 0)) != 6 or int(apparatus.get("chain_depth_cap", 0)) != 3:
 			failures.append("Coin Pusher V3 %s is missing its tall Plinko board, physical nozzles, rare cups, or bounded feed contract." % variation_id)
+		for target_value in targets:
+			var target: Dictionary = target_value if typeof(target_value) == TYPE_DICTIONARY else {}
+			var reward: Dictionary = target.get("reward", {}) if typeof(target.get("reward", {})) == TYPE_DICTIONARY else {}
+			if str(reward.get("kind", "")) != "drop_multiplier" or int(reward.get("count", 0)) <= 0 or int(target.get("cup_depth", 0)) <= 0 or not str(target.get("label", "")).begins_with("+"):
+				failures.append("Coin Pusher V3 %s target %s is not a visible bonus-token catch cup." % [variation_id, str(target.get("id", ""))])
 	return
 	var ridge_pegs: Array = []
 	var ridge_rows := [
@@ -1498,7 +1582,7 @@ func _check_pusher_v3_landing_skill(machine: Dictionary, failures: Array) -> voi
 			var reward: Dictionary = target.get("reward", {}) if typeof(target.get("reward", {})) == TYPE_DICTIONARY else {}
 			# A 5X cup becomes supercritical at a 20% capture rate. The stricter 8%
 			# per-nozzle ceiling leaves substantial margin for bounded rare chains;
-			# cash cups use a 10% ceiling so neither reward can become a parking exploit.
+			# Bonus-token cups use a 10% ceiling so neither reward can become a parking exploit.
 			var maximum_rate := 0.08 if str(reward.get("kind", "")) == "drop_multiplier" else 0.10
 			for nozzle_key in traversal_metrics:
 				var metrics: Dictionary = traversal_metrics[nozzle_key]
@@ -2891,6 +2975,14 @@ func _check_pusher_v3_ridge_physical_contract(library: ContentLibrary, failures:
 	var definition: Dictionary = game.call("_machine_definition", "jackpot_ridge")
 	var config: Dictionary = definition.get("sub_game", {}) if typeof(definition.get("sub_game", {})) == TYPE_DICTIONARY else {}
 	var variation := JackpotRidgeVariationScript.initial_state(config, _pusher_v3_rng("RIDGE-PHYSICAL-STATE"), 3, 5)
+	var restock_a := JackpotRidgeVariationScript.initial_state(config, _pusher_v3_rng("RIDGE-RESTOCK"), 3, 5)
+	var restock_b := JackpotRidgeVariationScript.initial_state(config, _pusher_v3_rng("RIDGE-RESTOCK"), 3, 5)
+	for restock_state in [restock_a, restock_b]:
+		restock_state["pucks"] = []
+		restock_state["puck_schedule"] = []
+		JackpotRidgeVariationScript.prepare_action(restock_state, 1000, config)
+	if (restock_a.get("pucks", []) as Array).size() < maxi(3, int(config.get("puck_floor", 4))) or JSON.stringify(restock_a, "", true) != JSON.stringify(restock_b, "", true):
+		failures.append("Jackpot Ridge did not deterministically replenish its persistent headline-puck floor.")
 	var simulation := _pusher_v3_state(definition, "RIDGE-PHYSICAL-SIM")
 	var holes: Array = (definition.get("apparatus", {}) as Dictionary).get("holes", [])
 	var board: Dictionary = (definition.get("apparatus", {}) as Dictionary).get("drop_board", {})
@@ -2957,7 +3049,7 @@ func _check_pusher_v3_ridge_physical_contract(library: ContentLibrary, failures:
 	var run_events: Dictionary = _pusher_v3_step_until_bodies_exit(run_sim, ["body_00001", "body_00002", "body_00003"], 60, true)
 	var run_outcome: Dictionary = JackpotRidgeVariationScript.apply_physical_events(run_state, run_events.get("events", []), config, 4)
 	if not bool(run_outcome.get("ridge_run_triggered", false)) or int(run_state.get("ridge_run_count", 0)) != 1 or JackpotRidgeVariationScript.motor_rate_multiplier(run_state, config) != 2:
-		failures.append("Jackpot Ridge Run did not arise once from three same-cycle physical banks at rate 2.")
+		failures.append("Jackpot Ridge Run did not arise once from three physical multiplier-puck banks at rate 2.")
 	# The trigger cycle is not one of the three promised full bonus cycles. The
 	# motor must remain doubled throughout cycles 5, 6, and 7, then return at 8.
 	var boundary_remaining: Array = []
@@ -2977,8 +3069,8 @@ func _check_pusher_v3_ridge_physical_contract(library: ContentLibrary, failures:
 		{"body_kind": "puck", "outcome": "tray", "stroke_cycle": 5, "metadata": {"feature_id": "split_c"}},
 	]
 	var split_outcome := JackpotRidgeVariationScript.apply_physical_events(split_state, split_events, config, 5)
-	if bool(split_outcome.get("ridge_run_triggered", false)) or int(split_state.get("ridge_run_count", 0)) != 0:
-		failures.append("Jackpot Ridge Run incorrectly combined multiplier banks split across physical cycles.")
+	if not bool(split_outcome.get("ridge_run_triggered", false)) or int(split_state.get("ridge_run_count", 0)) != 1 or int(split_state.get("ridge_goal_progress", -1)) != 0:
+		failures.append("Jackpot Ridge Run did not retain clear goal progress across physical cycles.")
 
 	# Production path: a real solver tray event snapshots the active multiplier
 	# onto that same coin, and money moves only through the cabinet COLLECT action.
@@ -3051,12 +3143,32 @@ func _check_pusher_v3_vault_physical_contract(library: ContentLibrary, failures:
 	var definition: Dictionary = game.call("_machine_definition", "vault_drop")
 	var config: Dictionary = definition.get("sub_game", {}) if typeof(definition.get("sub_game", {})) == TYPE_DICTIONARY else {}
 	var state := VaultDropVariationScript.initial_state(config, _pusher_v3_rng("VAULT-PHYSICAL-STATE"), 5, 5, "vault_contract")
+	var restock_a := VaultDropVariationScript.initial_state(config, _pusher_v3_rng("VAULT-RESTOCK"), 5, 5, "vault_restock")
+	var restock_b := VaultDropVariationScript.initial_state(config, _pusher_v3_rng("VAULT-RESTOCK"), 5, 5, "vault_restock")
+	for restock_state in [restock_a, restock_b]:
+		restock_state["fragments"] = []
+		restock_state["fragment_schedule"] = []
+		VaultDropVariationScript.prepare_action(restock_state, 1000, config)
+	if (restock_a.get("fragments", []) as Array).size() < maxi(3, int(config.get("fragment_floor", 3))) or JSON.stringify(restock_a, "", true) != JSON.stringify(restock_b, "", true):
+		failures.append("Vault Drop did not deterministically replenish its persistent headline-fragment floor.")
 	var reset_count := 0
 	for cell_value in state.get("vault_cells", []):
 		if typeof(cell_value) == TYPE_DICTIONARY and str((cell_value as Dictionary).get("kind", "")) == "reset":
 			reset_count += 1
 	if (state.get("vault_cells", []) as Array).size() != 9 or reset_count != 1 or not is_equal_approx(float(config.get("reset_odds_floor", 0.0)), 1.0 / 9.0):
 		failures.append("Vault Drop shipped cell schema is not exactly nine cells with one RESET (1/9).")
+	var cycle_state := VaultDropVariationScript.initial_state(config, _pusher_v3_rng("VAULT-CYCLE"), 5, 5, "vault_cycle")
+	cycle_state["banked_fragments"] = 10
+	VaultDropVariationScript.start_round(cycle_state)
+	for cell_index in range((cycle_state.get("vault_cells", []) as Array).size()):
+		VaultDropVariationScript.open_cell(cycle_state, cell_index)
+	var next_cycle := VaultDropVariationScript.start_round(cycle_state)
+	var reopened_cells := 0
+	for cell_value in cycle_state.get("vault_cells", []):
+		if typeof(cell_value) == TYPE_DICTIONARY and not bool((cell_value as Dictionary).get("opened", true)):
+			reopened_cells += 1
+	if not bool(next_cycle.get("ok", false)) or int(cycle_state.get("vault_cycle_count", 0)) != 1 or reopened_cells != 9:
+		failures.append("Vault Drop did not roll a completed nine-cell board into a fresh deterministic vault cycle.")
 	state["fragments"] = [{"id": "vault_fragment_contract"}]
 	var simulation := _pusher_v3_state(definition, "VAULT-PHYSICAL-SIM")
 	CoinPusherSolverScript.add_feature(simulation, "fragment", "vault_fragment_contract", 50000, 5000, {"z": 0, "radius": 5200, "height": 2800, "mass": 1800})

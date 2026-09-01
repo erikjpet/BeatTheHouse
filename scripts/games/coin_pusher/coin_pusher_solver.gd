@@ -1683,40 +1683,53 @@ static func _seed_opening_machine(state: Dictionary, rng: RngStream, count: int)
 	var base_positions: Array = []
 	var base_rows: Array = []
 	var row_specs: Array = []
-	var lower_cluster_counts := [
-		[4, 4, 4], [3, 4, 3], [4, 4, 4], [3, 4, 3], [4, 4, 4],
-		[3, 4, 3], [4, 4, 4], [3, 4, 3], [4, 4, 4],
-	]
-	var upper_cluster_counts := [[3, 4, 3], [4, 3, 4], [3, 4, 3]]
+	# Build a full but genuinely played-in bed from a seeded row recipe.  Earlier
+	# versions changed only a few pixels inside one fixed 12-row template, so two
+	# freshly generated cabinets still read as the same staged machine.  These
+	# row totals preserve the proven pressure and body-count envelope while their
+	# order, per-third silhouette, centers, and depth are independently seeded.
+	var lower_row_totals := [10, 10, 10, 11, 11, 11, 12, 12, 12]
+	var upper_row_totals := [10, 10, 11]
+	_shuffle_opening_recipe(lower_row_totals, rng)
+	_shuffle_opening_recipe(upper_row_totals, rng)
 	var x_step := radius * 2 - 80
 	var y_step := radius * 2 - 80
-	var cluster_centers := [_divi(width, 6), _divi(width, 2), _divi(width * 5, 6)]
 	# Three separated, internally touching clusters populate every horizontal
 	# third. The lower bed carries most stock; only three compact rows occupy the
 	# retracted upper platform, leaving a real rest gap ahead of the parked face.
-	for row in range(lower_cluster_counts.size()):
-		row_specs.append({"clusters": lower_cluster_counts[row], "y": tray_lip + 8000 + row * y_step + (600 if row > 0 else 0)})
-	for row in range(upper_cluster_counts.size()):
-		row_specs.append({"clusters": upper_cluster_counts[row], "y": face + radius + 1000 + row * y_step})
+	for row in range(lower_row_totals.size()):
+		row_specs.append({
+			"clusters": _opening_cluster_counts(int(lower_row_totals[row]), rng),
+			"centers": _opening_cluster_centers(width, rng),
+			"y": tray_lip + 8000 + row * y_step + (600 if row > 0 else 0) + rng.randi_range(-420, 420),
+		})
+	for row in range(upper_row_totals.size()):
+		row_specs.append({
+			"clusters": _opening_cluster_counts(int(upper_row_totals[row]), rng),
+			"centers": _opening_cluster_centers(width, rng),
+			"y": face + radius + 1000 + row * y_step + rng.randi_range(-360, 360),
+		})
 	var max_base_columns := 0
 	for spec_value in row_specs:
 		var spec: Dictionary = spec_value
 		var row_positions: Array = []
 		var clusters: Array = spec.get("clusters", []) if typeof(spec.get("clusters", [])) == TYPE_ARRAY else []
+		var cluster_centers: Array = spec.get("centers", []) if typeof(spec.get("centers", [])) == TYPE_ARRAY else []
 		var columns := 0
 		for cluster_count_value in clusters:
 			columns += int(cluster_count_value)
 		max_base_columns = maxi(max_base_columns, columns)
-		var stagger := 0 if base_rows.size() % 2 == 0 else _divi(x_step, 2)
-		var row_drift := rng.randi_range(-60, 60)
+		var stagger := rng.randi_range(-_divi(x_step, 3), _divi(x_step, 3))
+		var row_drift := rng.randi_range(-180, 180)
 		for cluster_index in range(clusters.size()):
 			var cluster_count := int(clusters[cluster_index])
-			var start_x := int(cluster_centers[cluster_index]) - _divi((cluster_count - 1) * x_step, 2) + stagger + row_drift
+			var center_x := int(cluster_centers[cluster_index]) if cluster_index < cluster_centers.size() else _divi(width * (cluster_index * 2 + 1), 6)
+			var start_x := center_x - _divi((cluster_count - 1) * x_step, 2) + stagger + row_drift
 			for column in range(cluster_count):
-				# Tiny scuffs break surveying-perfect rows without opening a visible or
-				# mechanical gap inside each third's pressure cluster.
-				var x := clampi(start_x + column * x_step + rng.randi_range(-20, 20), radius, width - radius)
-				var y := int(spec.get("y", 0)) + rng.randi_range(-20, 20)
+				# Scuffs retain real local contact while ensuring neither the pile edge
+				# nor the macro holes repeat from cabinet to cabinet.
+				var x := clampi(start_x + column * x_step + rng.randi_range(-70, 70), radius, width - radius)
+				var y := int(spec.get("y", 0)) + rng.randi_range(-70, 70)
 				var on_platform := y >= face
 				row_positions.append({
 					"x": x,
@@ -1827,6 +1840,28 @@ static func _seed_opening_machine(state: Dictionary, rng: RngStream, count: int)
 					support_ids.append(str((bodies[support_index] as Dictionary).get("id", "")))
 			body["support_ids"] = support_ids
 		bodies.append(body)
+
+
+static func _shuffle_opening_recipe(values: Array, rng: RngStream) -> void:
+	for index in range(values.size() - 1, 0, -1):
+		var swap_index := rng.randi_range(0, index)
+		var held: Variant = values[index]
+		values[index] = values[swap_index]
+		values[swap_index] = held
+
+
+static func _opening_cluster_counts(total: int, rng: RngStream) -> Array:
+	var counts := [3, 3, maxi(3, total - 6)]
+	_shuffle_opening_recipe(counts, rng)
+	return counts
+
+
+static func _opening_cluster_centers(width: int, rng: RngStream) -> Array:
+	return [
+		_divi(width, 6) + rng.randi_range(-1500, 1500),
+		_divi(width, 2) + rng.randi_range(-1800, 1800),
+		_divi(width * 5, 6) + rng.randi_range(-1500, 1500),
+	]
 
 
 static func _opening_generation_validation(state: Dictionary) -> Dictionary:

@@ -27,7 +27,7 @@ const VaultDropScript := preload("res://scripts/games/coin_pusher/vault_drop.gd"
 const CoinPusherSolverScript := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
 const CoinPusherLiveSessionScript := preload("res://scripts/games/coin_pusher/coin_pusher_live_session.gd")
 const CoinPusherRendererScript := preload("res://scripts/games/coin_pusher/coin_pusher_renderer.gd")
-const V3_HEADLESS_MESSAGE := "The pusher hums continuously. Time the rail, stop the motor, and collect only when you are ready."
+const V3_HEADLESS_MESSAGE := "Aim for bonus-token cups, use the stop to build pressure, and push the machine's heavy feature pieces into the win tray."
 
 var _live_machines: Dictionary = {}
 var _exit_settle_active := false
@@ -691,6 +691,9 @@ func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: 
 		"variation_state": variation_state,
 		"simulation": simulation,
 		"riders": _seed_prize_riders(environment, local_rng) if variation_id == "quarter_falls" else [],
+		"prize_goal_progress": 0,
+		"prize_goal_completions": 0,
+		"rider_serial": 0,
 		"action_count": 0,
 		"tray_value": 0,
 		"total_cost": 0,
@@ -715,6 +718,7 @@ func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: 
 		"last_message": _variation_intro(variation_id),
 	}
 	_sync_physical_features(machine)
+	machine["rider_serial"] = (machine.get("riders", []) as Array).size()
 	machine["settled_state"] = CoinPusherLiveSessionScript.make_snapshot(_simulation(machine), machine)
 	machine.erase("simulation")
 	return machine
@@ -984,6 +988,7 @@ func _v3_headless_surface_state(machine: Dictionary, run_state: RunState = null,
 	# shipped Web renderer never serializes these nested dictionaries per draw.
 	var static_content_key := JSON.stringify([cabinet, geometry, apparatus], "", true).sha256_text()
 	var tell_rung := clampi(int(machine.get("tell_rung", 0)), 0, _tell_labels().size() - 1)
+	var goal := _machine_goal_state(machine, simulation)
 	if not session.is_empty():
 		session["presentation_binding_signature"] = _realtime_binding_signature(machine, simulation, tray)
 	return GameModule.surface_spec({
@@ -1011,6 +1016,7 @@ func _v3_headless_surface_state(machine: Dictionary, run_state: RunState = null,
 		"coin_pusher_interpolation_alpha": clampf(float(int(session.get("accumulator_units", 0))) / 1000.0, 0.0, 1.0),
 		"coin_pusher_features": feature_views,
 		"coin_pusher_feature_count": feature_views.size(),
+		"coin_pusher_goal": goal,
 		"coin_pusher_riders": feature_views if variation_id == "quarter_falls" else [],
 		"coin_pusher_tell_rung": tell_rung,
 		"coin_pusher_tell_label": str(_tell_labels()[tell_rung]),
@@ -1051,7 +1057,7 @@ func _v3_headless_surface_state(machine: Dictionary, run_state: RunState = null,
 		"coin_pusher_feature_hardware": _feature_hardware_descriptor(machine, vault_views),
 		"coin_pusher_audio_events": [],
 		"coin_pusher_audio_serial": int(session.get("presentation_audio_serial", 0)),
-		"coin_pusher_last_message": V3_HEADLESS_MESSAGE,
+		"coin_pusher_last_message": str(machine.get("last_message", V3_HEADLESS_MESSAGE)),
 		"native_selected_surface_actions": _native_surface_actions(machine),
 		"surface_action_bindings": _coin_pusher_action_bindings(machine, simulation, tray, run_state, environment),
 		"surface_animation_channels": [],
@@ -1069,10 +1075,12 @@ func _v3_realtime_presentation_patch(machine: Dictionary, run_state: RunState = 
 	var previous_views: Array = session.get("presentation_previous_bodies", body_views) if typeof(session.get("presentation_previous_bodies", body_views)) == TYPE_ARRAY else body_views
 	var tell_rung := clampi(int(machine.get("tell_rung", 0)), 0, _tell_labels().size() - 1)
 	var variation_state := _variation_state(machine)
+	var goal := _machine_goal_state(machine, simulation)
 	var vault_views: Dictionary = VaultDropScript.views(variation_state) if str(machine.get("variation_id", "")) == "vault_drop" else {}
 	var patch := {
 		"coin_pusher_body_count": body_views.size(),
 		"coin_pusher_feature_count": int(session.get("presentation_feature_count", 0)),
+		"coin_pusher_goal": goal,
 		"coin_pusher_bodies": body_views,
 		"coin_pusher_previous_bodies": previous_views,
 		"coin_pusher_presentation_view_serial": int(session.get("presentation_view_serial", 0)),
@@ -1132,6 +1140,45 @@ func _queued_drop_count(machine: Dictionary) -> int:
 	return total
 
 
+func _machine_goal_state(machine: Dictionary, simulation: Dictionary) -> Dictionary:
+	var variation_id := str(machine.get("variation_id", "quarter_falls"))
+	var variation_state := _variation_state(machine)
+	match variation_id:
+		"jackpot_ridge":
+			var target := maxi(1, int(_variation_config(variation_id).get("ridge_run_goal", 3)))
+			return {
+				"id": "ridge_run",
+				"title": "RIDGE RUN  x%d" % JackpotRidgeScript.payout_multiplier(variation_state),
+				"instruction": "BANK %d MULTIPLIER PUCKS" % target,
+				"progress": clampi(int(variation_state.get("ridge_goal_progress", 0)), 0, target),
+				"target": target,
+				"bonus_tokens": maxi(0, int(_variation_config(variation_id).get("ridge_run_bonus_tokens", 5))),
+				"active": int(variation_state.get("ridge_run_cycles_remaining", 0)) > 0,
+			}
+		"vault_drop":
+			var target := maxi(1, int(_variation_config(variation_id).get("key_streak_goal", 3)))
+			return {
+				"id": "vault_keys",
+				"title": "VAULT KEYS  $%d" % int(variation_state.get("meter_value", 0)),
+				"instruction": "PUSH 3 KEY FRAGMENTS: EACH ONE UNLOCKS A VAULT CELL",
+				"progress": clampi(int(variation_state.get("key_streak_progress", 0)), 0, target),
+				"target": target,
+				"bonus_tokens": maxi(0, int(_variation_config(variation_id).get("key_streak_bonus_tokens", 6))),
+				"active": bool(variation_state.get("vault_round_active", false)),
+			}
+		_:
+			var target := maxi(1, _int_tuning("prize_goal_target", 3))
+			return {
+				"id": "prize_rush",
+				"title": "PRIZE RUSH",
+				"instruction": "PUSH %d HEAVY PRIZES INTO THE WIN TRAY" % target,
+				"progress": clampi(int(machine.get("prize_goal_progress", 0)), 0, target),
+				"target": target,
+				"bonus_tokens": maxi(0, _int_tuning("prize_goal_bonus_tokens", 5)),
+				"active": false,
+			}
+
+
 func _coin_pusher_action_bindings(machine: Dictionary, simulation: Dictionary, tray: Array, run_state: RunState = null, environment: Dictionary = {}) -> Dictionary:
 	var result := {
 		"coin_pusher_drop": {"label": "DROP", "enabled": not _drop_refused(machine)},
@@ -1168,6 +1215,7 @@ func _surface_action_view_patch(machine: Dictionary, run_state: RunState, enviro
 		"surface_action_stake_view": _surface_action_stake_view(run_state, environment),
 		"coin_pusher_action_count": int(machine.get("action_count", 0)),
 		"coin_pusher_last_message": str(machine.get("last_message", V3_HEADLESS_MESSAGE)),
+		"coin_pusher_goal": _machine_goal_state(machine, simulation),
 		"coin_pusher_tray_count": tray.size(),
 		"coin_pusher_tray_value": _ledger_value(tray),
 		"coin_pusher_input_trace_count": (machine.get("live_session", {}).get("input_trace", []) as Array).size() if typeof(machine.get("live_session", {}).get("input_trace", [])) == TYPE_ARRAY else 0,
@@ -1407,12 +1455,12 @@ func _consume_physics_events(run_state: RunState, machine: Dictionary, events: A
 	var riders: Array = machine.get("riders", []) if typeof(machine.get("riders", [])) == TYPE_ARRAY else []
 	var remaining_riders: Array = []
 	var rider_exits := {}
+	var variation_id := str(machine.get("variation_id", "quarter_falls"))
 	for event_value in events:
 		if typeof(event_value) != TYPE_DICTIONARY:
 			continue
 		var event: Dictionary = event_value
 		var event_kind := str(event.get("kind", ""))
-		var variation_id := str(machine.get("variation_id", "quarter_falls"))
 		if event_kind == "stroke_cycle":
 			if variation_id == "jackpot_ridge":
 				JackpotRidgeScript.advance_stroke_cycle(_variation_state(machine), int(event.get("stroke_cycle", 0)))
@@ -1477,10 +1525,26 @@ func _consume_physics_events(run_state: RunState, machine: Dictionary, events: A
 			var feature_id := str((event.get("metadata", {}) as Dictionary).get("feature_id", "")) if typeof(event.get("metadata", {})) == TYPE_DICTIONARY else ""
 			rider_exits[feature_id] = outcome
 		elif kind == "puck" and variation_id == "jackpot_ridge":
-			JackpotRidgeScript.apply_physical_events(_variation_state(machine), [event], _variation_config(variation_id), int(event.get("stroke_cycle", 0)))
+			var ridge_outcome := JackpotRidgeScript.apply_physical_events(_variation_state(machine), [event], _variation_config(variation_id), int(event.get("stroke_cycle", 0)))
+			if bool(ridge_outcome.get("ridge_run_triggered", false)):
+				var ridge_bonus := maxi(0, int(_variation_config(variation_id).get("ridge_run_bonus_tokens", 5)))
+				var ridge_runs := maxi(1, int(ridge_outcome.get("ridge_runs_triggered", 1)))
+				_enqueue_feature_bonus(machine, ridge_bonus * ridge_runs, "ridge_run")
+				machine["last_message"] = "RIDGE RUN! The heavy pucks start a fast cycle and feed %d bonus tokens." % (ridge_bonus * ridge_runs)
 			_sync_variation_motor(machine)
 		elif kind == "fragment" and variation_id == "vault_drop":
-			VaultDropScript.apply_physical_events(_variation_state(machine), [event])
+			var vault_outcome := VaultDropScript.apply_physical_events(_variation_state(machine), [event])
+			var fragments_banked := int(vault_outcome.get("fragments_banked", 0))
+			if fragments_banked > 0:
+				var vault_state := _variation_state(machine)
+				var streak_target := maxi(1, int(_variation_config(variation_id).get("key_streak_goal", 3)))
+				var streak := int(vault_state.get("key_streak_progress", 0)) + fragments_banked
+				if streak >= streak_target:
+					var vault_bonus := maxi(0, int(_variation_config(variation_id).get("key_streak_bonus_tokens", 6)))
+					_enqueue_feature_bonus(machine, vault_bonus, "vault_key_streak")
+					streak = posmod(streak, streak_target)
+					machine["last_message"] = "KEY STREAK! Three heavy fragments feed %d bonus tokens. Open the vault cells when ready." % vault_bonus
+				vault_state["key_streak_progress"] = streak
 	for rider_value in riders:
 		if typeof(rider_value) != TYPE_DICTIONARY:
 			continue
@@ -1491,7 +1555,33 @@ func _consume_physics_events(run_state: RunState, machine: Dictionary, events: A
 		elif str(rider_exits[rider_id]) == "tray":
 			prizes.append(rider)
 	machine["riders"] = remaining_riders
+	if variation_id == "quarter_falls" and not rider_exits.is_empty():
+		var prize_target := maxi(1, _int_tuning("prize_goal_target", 3))
+		var prize_progress := int(machine.get("prize_goal_progress", 0)) + prizes.size()
+		while prize_progress >= prize_target:
+			prize_progress -= prize_target
+			machine["prize_goal_completions"] = int(machine.get("prize_goal_completions", 0)) + 1
+			var prize_bonus := maxi(0, _int_tuning("prize_goal_bonus_tokens", 5))
+			_enqueue_feature_bonus(machine, prize_bonus, "prize_rush")
+			machine["last_message"] = "PRIZE RUSH! The heavy prizes trip the bonus feeder for %d extra tokens." % prize_bonus
+		machine["prize_goal_progress"] = prize_progress
+		_replenish_quarter_riders(machine, rng)
+		_sync_physical_features(machine)
 	return {"payout": payout, "prizes": prizes, "gutter_count": gutter_count, "shim_recovered": shim_recovered}
+
+
+func _enqueue_feature_bonus(machine: Dictionary, count: int, origin: String) -> int:
+	if count <= 0 or not _has_v3_simulation(machine):
+		return 0
+	var simulation := _simulation(machine)
+	var nozzle_id := _selected_nozzle_id(machine, simulation)
+	return CoinPusherLiveSessionScript.enqueue_drops(machine, {
+		"nozzle_id": nozzle_id,
+		"density": 1,
+		"provenance": {"feature_bonus": origin},
+		"chain_depth": 0,
+		"bonus_origin": true,
+	}, count)
 
 
 func _consume_live_physics_events(run_state: RunState, machine: Dictionary, events_value: Variant) -> Dictionary:
@@ -1513,6 +1603,8 @@ func _presentation_audio_events(machine: Dictionary, physics_events: Array) -> A
 	var good_drop_count := 0
 	var bad_drop_count := 0
 	var cup_count := 0
+	var feature_bank_count := 0
+	var feature_bank_kinds: Array = []
 	var tray_count := 0
 	var impact_count := 0
 	var strongest_impact := 0
@@ -1554,6 +1646,11 @@ func _presentation_audio_events(machine: Dictionary, physics_events: Array) -> A
 					strongest_impact_material = "coin_on_metal"
 			"tray":
 				tray_count += 1
+				var body_kind := str(event.get("body_kind", "coin"))
+				if body_kind in ["rider", "puck", "fragment"]:
+					feature_bank_count += 1
+					if not feature_bank_kinds.has(body_kind):
+						feature_bank_kinds.append(body_kind)
 			"gutter":
 				gutter_count += 1
 			"plinko_cup":
@@ -1564,6 +1661,8 @@ func _presentation_audio_events(machine: Dictionary, physics_events: Array) -> A
 		result.append({"kind": "bad_drop", "intensity_milli": clampi(390 + bad_drop_count * 35, 390, 720), "metadata": {"group_count": bad_drop_count}})
 	if cup_count > 0:
 		result.append({"kind": "plinko_cup", "intensity_milli": clampi(760 + cup_count * 50, 760, 1000), "metadata": {"group_count": cup_count}})
+	if feature_bank_count > 0:
+		result.append({"kind": "feature_bank", "intensity_milli": clampi(840 + feature_bank_count * 55, 840, 1000), "metadata": {"group_count": feature_bank_count, "feature_kinds": feature_bank_kinds}})
 	if impact_count > 0:
 		result.append({"kind": "impact", "intensity_milli": strongest_impact, "metadata": {"fall_height_milli": strongest_fall_height, "stack_depth": strongest_stack_depth, "material": strongest_impact_material, "group_count": impact_count, "hard_impact": strongest_impact >= 520}})
 	if tray_count > 0:
@@ -1701,6 +1800,12 @@ func _sync_physical_features(machine: Dictionary) -> void:
 			body["support_kind"] = "body" if not placement.is_empty() else "platform" if is_ridge_jam else "deck"
 			body["support_ids"] = [str(placement.get("support_id", ""))] if not placement.is_empty() else []
 			body["carried_sleep"] = bool(placement.get("carried", false)) if not placement.is_empty() else is_ridge_jam
+			if not placement.is_empty():
+				# Sleeping opening bodies still need the support centroid that the
+				# solver normally records on a live contact.  Without it the first
+				# support motion cannot advect or wake the feature, pinning it forever.
+				body["support_anchor_x"] = int(placement.get("x", feature_x))
+				body["support_anchor_y"] = int(placement.get("y", depth))
 			body["rest_state"] = "resting"
 			body["sleeping"] = true
 			body["sleep_ticks"] = 8
@@ -1719,7 +1824,14 @@ func _opening_feature_support(simulation: Dictionary, requested_x: int, requeste
 			continue
 		var support: Dictionary = body_value
 		var metadata: Dictionary = support.get("meta", {}) if typeof(support.get("meta", {})) == TYPE_DICTIONARY else {}
-		if str(support.get("kind", "")) != "coin" or not bool(metadata.get("opening", false)) or str(support.get("support_kind", "")) != "body":
+		# Headline pieces belong to the lower pressure bed.  An upper coin can be
+		# body-supported while still rooted on the moving platform; attaching a
+		# prize to one of those coins makes it shuttle forever instead of advancing
+		# toward the tray with the played-in pile.
+		if str(support.get("kind", "")) != "coin" \
+				or not bool(metadata.get("opening", false)) \
+				or str(support.get("support_kind", "")) != "body" \
+				or bool(support.get("carried_sleep", false)):
 			continue
 		var candidate := {
 			"x": int(support.get("x", 0)),
@@ -1865,9 +1977,10 @@ func _variation_state(machine: Dictionary) -> Dictionary:
 
 func _prepare_variation_action(machine: Dictionary) -> void:
 	var variation_state := _variation_state(machine)
-	match str(machine.get("variation_id", "quarter_falls")):
-		"jackpot_ridge": JackpotRidgeScript.prepare_action(variation_state, int(machine.get("action_count", 0)))
-		"vault_drop": VaultDropScript.prepare_action(variation_state, int(machine.get("action_count", 0)))
+	var variation_id := str(machine.get("variation_id", "quarter_falls"))
+	match variation_id:
+		"jackpot_ridge": JackpotRidgeScript.prepare_action(variation_state, int(machine.get("action_count", 0)), _variation_config(variation_id))
+		"vault_drop": VaultDropScript.prepare_action(variation_state, int(machine.get("action_count", 0)), _variation_config(variation_id))
 
 
 func _register_vault_progressive(run_state: RunState, environment: Dictionary, machine: Dictionary) -> void:
@@ -1983,9 +2096,9 @@ func _variation_display_name(variation_id: String) -> String:
 
 func _variation_intro(variation_id: String) -> String:
 	match variation_id:
-		"jackpot_ridge": return "Jackpot Ridge carries pucks through a pile built for sequencing, locks, and lane jams."
-		"vault_drop": return "The Vault Drop carries key fragments toward a town-fed progressive."
-	return "Quarter Falls moves one platform under a pile that remembers every coin."
+		"jackpot_ridge": return "Goal: bank three heavy multiplier pucks to start Ridge Run and feed five bonus tokens. The three nozzles trade cup angles against puck pressure."
+		"vault_drop": return "Goal: push heavy key fragments into the win tray to unlock vault cells. Every three banked keys feed six bonus tokens; the edge cups feed more."
+	return "Goal: push three heavy prize riders into the win tray to start Prize Rush and feed five bonus tokens. Edge cups can extend the run."
 
 
 func _register_pile_rumor(run_state: RunState, environment: Dictionary, machine: Dictionary) -> void:
@@ -2048,6 +2161,32 @@ func _seed_prize_riders(environment: Dictionary, rng: RngStream) -> Array:
 			"spawn_depth_slot": rng.randi_range(1, mini(_prize_initial_cell_max(), _cell_count() - 1)),
 		})
 	return riders
+
+
+func _replenish_quarter_riders(machine: Dictionary, rng: RngStream) -> void:
+	var riders: Array = machine.get("riders", []) if typeof(machine.get("riders", [])) == TYPE_ARRAY else []
+	var desired := maxi(1, _int_tuning("prize_rider_floor", 3))
+	var definitions: Array = _tuning().get("prize_riders", []) if typeof(_tuning().get("prize_riders", [])) == TYPE_ARRAY else []
+	var serial := maxi(riders.size(), int(machine.get("rider_serial", riders.size())))
+	while riders.size() < desired:
+		var picked := _weighted_prize(definitions, rng)
+		# Scenario-only prizes need an authored item id.  A replenishing cabinet
+		# cannot invent one after the scenario boundary, so fall back to a tangible
+		# chip stack instead of spawning a blank prize.
+		if picked.is_empty() or (str(picked.get("kind", "")) == "scenario_item" and str(picked.get("item_id", "")).is_empty()):
+			picked = {"kind": "chip_stack", "label": "chip stack", "cash_value": 4, "item_id": ""}
+		riders.append({
+			"id": "rider_%04d" % serial,
+			"kind": str(picked.get("kind", "chip_stack")),
+			"label": str(picked.get("label", "chip stack")),
+			"item_id": str(picked.get("item_id", "")),
+			"cash_value": maxi(0, int(picked.get("cash_value", 0))),
+			"spawn_x_milli": rng.randi_range(90, 910),
+			"spawn_depth_milli": rng.randi_range(120, 760),
+		})
+		serial += 1
+	machine["riders"] = riders
+	machine["rider_serial"] = serial
 
 
 func _weighted_prize(definitions: Array, rng: RngStream) -> Dictionary:

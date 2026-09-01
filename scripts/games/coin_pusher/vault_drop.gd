@@ -26,15 +26,19 @@ static func initial_state(config: Dictionary, rng: RngStream, lane_count: int, c
 		"fragments": fragments,
 		"fragment_schedule": schedule,
 		"schedule_cursor": 0,
+		"replenish_serial": 0,
+		"replenish_rng": rng.fork("vault_replenish").snapshot(),
 		"banked_fragments": 0,
+		"key_streak_progress": 0,
 		"vault_round_active": false,
+		"vault_cycle_count": 0,
 		"vault_cells": _seed_cells(config, rng),
 		"peeked_cell": -1,
 		"last_feature_message": "Fragments ride the ledge. Bank them for the vault.",
 	}
 
 
-static func prepare_action(state: Dictionary, action_count: int) -> void:
+static func prepare_action(state: Dictionary, action_count: int, config: Dictionary = {}) -> void:
 	var schedule: Array = state.get("fragment_schedule", []) if typeof(state.get("fragment_schedule", [])) == TYPE_ARRAY else []
 	var fragments: Array = state.get("fragments", []) if typeof(state.get("fragments", [])) == TYPE_ARRAY else []
 	var cursor := maxi(0, int(state.get("schedule_cursor", 0)))
@@ -43,6 +47,7 @@ static func prepare_action(state: Dictionary, action_count: int) -> void:
 		cursor += 1
 	state["schedule_cursor"] = cursor
 	state["fragments"] = fragments
+	_replenish_fragments(state, config)
 
 
 static func apply_physical_events(state: Dictionary, physics_events: Array) -> Dictionary:
@@ -83,10 +88,10 @@ static func start_round(state: Dictionary) -> Dictionary:
 	if int(state.get("banked_fragments", 0)) <= 0:
 		return {"ok": false, "message": "No key fragments banked."}
 	if _unopened_cell_indices(state).is_empty():
-		return {"ok": false, "message": "Every cell in this vault is already open."}
+		_reset_cells_for_next_cycle(state)
 	state["vault_round_active"] = true
-	state["last_feature_message"] = "Vault open. Spend a fragment or stop with the rest."
-	return {"ok": true, "message": str(state.get("last_feature_message", ""))}
+	state["last_feature_message"] = "Vault cycle %d open. Spend a fragment or stop with the rest." % (int(state.get("vault_cycle_count", 0)) + 1)
+	return {"ok": true, "cycle": int(state.get("vault_cycle_count", 0)), "message": str(state.get("last_feature_message", ""))}
 
 
 static func stop_round(state: Dictionary) -> Dictionary:
@@ -174,6 +179,30 @@ static func _seed_cells(config: Dictionary, rng: RngStream) -> Array:
 	return rng.pick_many(cells, cells.size())
 
 
+static func _replenish_fragments(state: Dictionary, config: Dictionary) -> void:
+	var fragments: Array = state.get("fragments", []) if typeof(state.get("fragments", [])) == TYPE_ARRAY else []
+	var floor_count := maxi(3, int(config.get("fragment_floor", 3)))
+	if fragments.size() >= floor_count:
+		return
+	var serial := maxi(0, int(state.get("replenish_serial", 0)))
+	var rng := RngStream.new()
+	var snapshot: Dictionary = state.get("replenish_rng", {}) if typeof(state.get("replenish_rng", {})) == TYPE_DICTIONARY else {}
+	if snapshot.is_empty():
+		rng.configure(RngStream.derive_seed(914327, serial + 1, "vault_replenish"))
+	else:
+		rng.restore(snapshot)
+	while fragments.size() < floor_count:
+		fragments.append({
+			"id": "vault_restock_%06d" % serial,
+			"spawn_x_milli": rng.randi_range(80, 920),
+			"spawn_depth_milli": rng.randi_range(200, 700),
+		})
+		serial += 1
+	state["fragments"] = fragments
+	state["replenish_serial"] = serial
+	state["replenish_rng"] = rng.snapshot()
+
+
 static func _unopened_cell_indices(state: Dictionary) -> Array:
 	var result: Array = []
 	var cells: Array = state.get("vault_cells", []) if typeof(state.get("vault_cells", [])) == TYPE_ARRAY else []
@@ -181,6 +210,19 @@ static func _unopened_cell_indices(state: Dictionary) -> Array:
 		if typeof(cells[index]) == TYPE_DICTIONARY and not bool((cells[index] as Dictionary).get("opened", false)):
 			result.append(index)
 	return result
+
+
+static func _reset_cells_for_next_cycle(state: Dictionary) -> void:
+	var cells: Array = state.get("vault_cells", []) if typeof(state.get("vault_cells", [])) == TYPE_ARRAY else []
+	for index in range(cells.size()):
+		if typeof(cells[index]) != TYPE_DICTIONARY:
+			continue
+		var cell := (cells[index] as Dictionary).duplicate(false)
+		cell["opened"] = false
+		cells[index] = cell
+	state["vault_cells"] = cells
+	state["peeked_cell"] = -1
+	state["vault_cycle_count"] = int(state.get("vault_cycle_count", 0)) + 1
 
 
 static func _cell_message(result: Dictionary) -> String:

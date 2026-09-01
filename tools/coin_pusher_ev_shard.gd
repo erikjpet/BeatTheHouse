@@ -3,6 +3,7 @@ extends SceneTree
 const CoinPusherGame := preload("res://scripts/games/coin_pusher.gd")
 const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
 const Solver := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
+const LiveSession := preload("res://scripts/games/coin_pusher/coin_pusher_live_session.gd")
 const Ridge := preload("res://scripts/games/coin_pusher/jackpot_ridge.gd")
 const Vault := preload("res://scripts/games/coin_pusher/vault_drop.gd")
 
@@ -62,10 +63,15 @@ func _run() -> void:
 		"variation_id": machine_id,
 		"variation_state": variation_state,
 		"simulation": simulation,
-		"riders": [],
+		"riders": game.call("_seed_prize_riders", {"scenario_game_modifiers": {"coin_pusher": {"prize_item_ids": ["coffee"]}}}, root_rng.fork("quarter_riders")) if machine_id == "quarter_falls" else [],
+		"prize_goal_progress": 0,
+		"prize_goal_completions": 0,
+		"rider_serial": 0,
 		"action_count": 0,
 	}
 	game.call("_sync_physical_features", machine)
+	machine["rider_serial"] = (machine.get("riders", []) as Array).size()
+	LiveSession.begin(machine, definition, 950000 + shard_index)
 	var opening_stock := _body_kind_counts(simulation.get("bodies", []))
 	var opening_origin := int(simulation.get("opening_body_count", 0))
 	var policy := _policy_descriptor(definition)
@@ -159,6 +165,14 @@ func _run() -> void:
 	var ending_origin := _body_origin_counts(simulation.get("bodies", []))
 	var gutter_origin := _ledger_origin_counts(simulation.get("gutter_ledger", []))
 	var feature_insert_count := int(simulation.get("accepted_inserts", 0)) - player_accepted
+	var feature_bonus_drop_award_count := 0
+	for queue_value in machine.get("drop_queue", []):
+		if typeof(queue_value) != TYPE_DICTIONARY:
+			continue
+		var queued_bonus: Dictionary = queue_value
+		var queued_provenance: Dictionary = queued_bonus.get("provenance", {}) if typeof(queued_bonus.get("provenance", {})) == TYPE_DICTIONARY else {}
+		if queued_provenance.has("feature_bonus"):
+			feature_bonus_drop_award_count += maxi(0, int(queued_bonus.get("remaining", 0)))
 	var origin_by_kind_reconciliation := {
 		"paid_coin": {"origin": player_accepted, "terminal": base_tray_coin_count + int(ending_origin.get("paid_coin", 0)) + int(gutter_origin.get("paid_coin", 0)) + int((target_accounting["consumed_by_origin"] as Dictionary).get("paid_coin", 0))},
 		"opening_coin": {"origin": opening_origin, "terminal": opening_tray_coin_count + int(ending_origin.get("opening_coin", 0)) + int(gutter_origin.get("opening_coin", 0)) + int((target_accounting["consumed_by_origin"] as Dictionary).get("opening_coin", 0))},
@@ -176,6 +190,22 @@ func _run() -> void:
 	var credited_roi := float(ridge_credited_coin_value) / float(maxi(1, wagered))
 	var ending_paid_coin_value := int(ending_origin.get("paid_coin", 0)) * int((definition.get("coins", {}) as Dictionary).get("value", 1))
 	var stock_adjusted_roi_upper := float(base_tray_coin_value + ending_paid_coin_value) / float(maxi(1, wagered))
+	var ending_feature_positions: Array = []
+	for body_value in simulation.get("bodies", []):
+		if typeof(body_value) != TYPE_DICTIONARY:
+			continue
+		var body: Dictionary = body_value
+		if str(body.get("kind", "coin")) == "coin":
+			continue
+		ending_feature_positions.append({
+			"id": str(body.get("id", "")),
+			"kind": str(body.get("kind", "")),
+			"x": int(body.get("x", 0)),
+			"y": int(body.get("y", 0)),
+			"z": int(body.get("z", 0)),
+			"support_kind": str(body.get("support_kind", "")),
+			"carried_sleep": bool(body.get("carried_sleep", false)),
+		})
 	var vault_banked_before_options := int(variation_state.get("banked_fragments", 0)) if machine_id == "vault_drop" else 0
 	var vault_fragment_reconciled := machine_id != "vault_drop" or vault_banked_before_options == physically_banked_fragment_ids.size()
 	if not vault_fragment_reconciled:
@@ -211,6 +241,7 @@ func _run() -> void:
 			"ending_active_by_kind": ending_stock,
 			"ending_active_by_origin": ending_origin,
 			"ending_active_count": (simulation.get("bodies", []) as Array).size(),
+			"ending_feature_positions": ending_feature_positions,
 			"tray_after_collection_count": (simulation.get("tray_ledger", []) as Array).size(),
 			"gutter_by_kind": gutter_stock,
 			"gutter_by_origin": gutter_origin,
@@ -240,6 +271,8 @@ func _run() -> void:
 			"ridge_credited_roi": credited_roi,
 			"feature_tray_count_excluded_from_base_roi": feature_tray_count,
 			"feature_gutter_count": feature_gutter_count,
+			"feature_bonus_drop_award_count_excluded_from_base_roi": feature_bonus_drop_award_count,
+			"quarter_prize_goal_completions": int(machine.get("prize_goal_completions", 0)),
 			"plinko_target_capture_counts": (target_accounting["captures"] as Dictionary).duplicate(true),
 			"plinko_target_instant_payout_value_excluded_from_base_roi": int(target_accounting["instant_payout_value"]),
 			"plinko_target_bonus_drop_award_count_excluded_from_base_roi": int(target_accounting["bonus_drop_award_count"]),
@@ -287,14 +320,16 @@ func _resolve_banked_vault_options(state: Dictionary, config: Dictionary, physic
 	var kind_counts := {}
 	var cursor := 0
 	while cursor < tokens.size():
+		if int(state.get("banked_fragments", 0)) <= 0:
+			break
+		if not bool(state.get("vault_round_active", false)) and not bool(Vault.start_round(state).get("ok", false)):
+			break
 		var cells: Array = state.get("vault_cells", []) if typeof(state.get("vault_cells", [])) == TYPE_ARRAY else []
 		var unopened: Array[int] = []
 		for cell_index in range(cells.size()):
 			if typeof(cells[cell_index]) == TYPE_DICTIONARY and not bool((cells[cell_index] as Dictionary).get("opened", false)):
 				unopened.append(cell_index)
-		if unopened.is_empty() or int(state.get("banked_fragments", 0)) <= 0:
-			break
-		if not bool(state.get("vault_round_active", false)) and not bool(Vault.start_round(state).get("ok", false)):
+		if unopened.is_empty():
 			break
 		var token_id := tokens[cursor]
 		var selected_cell := unopened[cursor % unopened.size()]
