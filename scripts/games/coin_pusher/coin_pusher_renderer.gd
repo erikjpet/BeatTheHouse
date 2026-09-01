@@ -653,6 +653,8 @@ func draw_hardware_cache_layer(surface, state: Dictionary) -> void:
 
 func _prepare_hardware_cache(surface, state: Dictionary) -> bool:
 	if not OS.has_feature("web") and not bool(state.get("coin_pusher_static_cache_test", false)):
+		if is_instance_valid(_hardware_cache_canvas):
+			_hardware_cache_canvas.visible = false
 		return false
 	if not is_instance_valid(_hardware_cache_host) or _hardware_cache_host != surface:
 		if is_instance_valid(_hardware_cache_canvas):
@@ -667,24 +669,8 @@ func _prepare_hardware_cache(surface, state: Dictionary) -> bool:
 			hover_action = action
 			break
 	var bindings: Dictionary = state.get("surface_action_bindings", {}) if typeof(state.get("surface_action_bindings", {})) == TYPE_DICTIONARY else {}
-	var enabled_signature := 0
-	var signature_bit := 0
-	for action_value in _hardware_catalog(state):
-		if signature_bit < 62 and _binding_enabled(bindings, str(action_value)):
-			enabled_signature |= 1 << signature_bit
-		signature_bit += 1
-	var key := "%s|%d|%d|%d|%d|%d|%d|%s|%d|%s" % [
-		str(state.get("coin_pusher_static_content_key", "")),
-		int(state.get("coin_pusher_presentation_view_serial", -1)),
-		int(state.get("coin_pusher_drop_charge_count", 0)),
-		int(state.get("coin_pusher_tray_count", 0)),
-		int(state.get("coin_pusher_tray_value", 0)),
-		1 if bool(state.get("coin_pusher_locked", false)) else 0,
-		enabled_signature,
-		hover_action,
-		int(state.get("coin_pusher_vault_selected_cell", 0)),
-		JSON.stringify(state.get("coin_pusher_feature_hardware", {}), "", true),
-	]
+	var enabled_signature := _hardware_enabled_signature(state, bindings)
+	var key := _hardware_cache_signature(state, hover_action, enabled_signature)
 	if not is_instance_valid(_hardware_cache_canvas):
 		var canvas_script: Script = load("res://scripts/games/coin_pusher/coin_pusher_hardware_cache_canvas.gd")
 		_hardware_cache_canvas = canvas_script.new() as Control
@@ -693,6 +679,7 @@ func _prepare_hardware_cache(surface, state: Dictionary) -> bool:
 		_hardware_cache_canvas.position = Vector2.ZERO
 		_hardware_cache_canvas.size = surface.size
 		surface.add_child(_hardware_cache_canvas)
+	_hardware_cache_canvas.visible = true
 	if key != _hardware_cache_key or _hardware_cache_canvas.size != surface.size:
 		_hardware_cache_key = key
 		var hardware_state := state.duplicate(false)
@@ -702,6 +689,43 @@ func _prepare_hardware_cache(surface, state: Dictionary) -> bool:
 		_hardware_cache_canvas.set("hardware_state", hardware_state)
 		_hardware_cache_canvas.queue_redraw()
 	return true
+
+
+func _hardware_enabled_signature(state: Dictionary, bindings: Dictionary) -> int:
+	var result := 0
+	var signature_bit := 0
+	for action_value in _hardware_catalog(state):
+		if signature_bit < 62 and _binding_enabled(bindings, str(action_value)):
+			result |= 1 << signature_bit
+		signature_bit += 1
+	return result
+
+
+func _hardware_cache_signature(state: Dictionary, hover_action: String, enabled_signature: int) -> String:
+	# Presentation serial is deliberately absent. It advances with the moving
+	# coin bed, while this retained layer contains only cabinet controls and
+	# readouts. Every state value consumed by _draw_hardware is represented here.
+	return "%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%s|%d|%s|%s" % [
+		str(state.get("coin_pusher_static_content_key", "")),
+		int(state.get("coin_pusher_carriage_x", 0)),
+		int(state.get("coin_pusher_selected_hole", 0)),
+		1 if bool(state.get("coin_pusher_skill_stop_engaged", false)) else 0,
+		int(state.get("coin_pusher_drop_queue_count", 0)),
+		int(state.get("coin_pusher_drop_charge_count", 0)),
+		int(state.get("coin_pusher_tray_count", 0)),
+		int(state.get("coin_pusher_tray_value", 0)),
+		1 if bool(state.get("coin_pusher_locked", false)) else 0,
+		enabled_signature,
+		hover_action,
+		int(state.get("coin_pusher_vault_selected_cell", 0)),
+		str(state.get("coin_pusher_tell_label", "steady")),
+		JSON.stringify(state.get("coin_pusher_feature_hardware", {}), "", true),
+	]
+
+
+func debug_hardware_cache_signature_for_test(state: Dictionary, hover_action: String = "") -> String:
+	var bindings: Dictionary = state.get("surface_action_bindings", {}) if typeof(state.get("surface_action_bindings", {})) == TYPE_DICTIONARY else {}
+	return _hardware_cache_signature(state, hover_action, _hardware_enabled_signature(state, bindings))
 
 
 func _prepare_static_cache(surface, state: Dictionary) -> bool:

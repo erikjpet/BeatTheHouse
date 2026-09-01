@@ -69,6 +69,39 @@ func _run() -> void:
 	_check(int(initial.get("viewport_parent_instance_id", 0)) == production_canvas.get_instance_id(), "production_cache_parent")
 
 	var snapshot: Dictionary = production_canvas.call("realtime_surface_state")
+	var hardware_signature := str(renderer.call("debug_hardware_cache_signature_for_test", snapshot))
+	var serial_only := snapshot.duplicate(true)
+	serial_only["coin_pusher_presentation_view_serial"] = int(snapshot.get("coin_pusher_presentation_view_serial", 0)) + 1
+	_check(str(renderer.call("debug_hardware_cache_signature_for_test", serial_only)) == hardware_signature, "hardware_cache_ignores_presentation_serial")
+	var hardware_mutations := {
+		"carriage": {"coin_pusher_carriage_x": int(snapshot.get("coin_pusher_carriage_x", 0)) + 1},
+		"selected_hole": {"coin_pusher_selected_hole": int(snapshot.get("coin_pusher_selected_hole", 0)) + 1},
+		"skill_stop": {"coin_pusher_skill_stop_engaged": not bool(snapshot.get("coin_pusher_skill_stop_engaged", false))},
+		"drop_queue": {"coin_pusher_drop_queue_count": int(snapshot.get("coin_pusher_drop_queue_count", 0)) + 1},
+		"drop_charge": {"coin_pusher_drop_charge_count": int(snapshot.get("coin_pusher_drop_charge_count", 0)) + 1},
+		"tray_count": {"coin_pusher_tray_count": int(snapshot.get("coin_pusher_tray_count", 0)) + 1},
+		"tray_value": {"coin_pusher_tray_value": int(snapshot.get("coin_pusher_tray_value", 0)) + 1},
+		"locked": {"coin_pusher_locked": not bool(snapshot.get("coin_pusher_locked", false))},
+		"vault_cell": {"coin_pusher_vault_selected_cell": int(snapshot.get("coin_pusher_vault_selected_cell", 0)) + 1},
+		"tell": {"coin_pusher_tell_label": str(snapshot.get("coin_pusher_tell_label", "steady")) + ":changed"},
+		"feature_hardware": {"coin_pusher_feature_hardware": {"contract_mutation": true}},
+	}
+	for mutation_id in hardware_mutations:
+		var mutated := snapshot.duplicate(true)
+		mutated.merge(hardware_mutations[mutation_id], true)
+		_check(str(renderer.call("debug_hardware_cache_signature_for_test", mutated)) != hardware_signature, "hardware_cache_invalidates_%s" % mutation_id)
+	_check(str(renderer.call("debug_hardware_cache_signature_for_test", snapshot, "coin_pusher_nudge")) != hardware_signature, "hardware_cache_invalidates_hover")
+	var bindings_mutated := snapshot.duplicate(true)
+	var bindings: Dictionary = (snapshot.get("surface_action_bindings", {}) as Dictionary).duplicate(true) if typeof(snapshot.get("surface_action_bindings", {})) == TYPE_DICTIONARY else {}
+	var drop_binding: Dictionary = (bindings.get("coin_pusher_drop", {}) as Dictionary).duplicate(true) if typeof(bindings.get("coin_pusher_drop", {})) == TYPE_DICTIONARY else {}
+	drop_binding["enabled"] = not bool(drop_binding.get("enabled", false))
+	bindings["coin_pusher_drop"] = drop_binding
+	bindings_mutated["surface_action_bindings"] = bindings
+	_check(str(renderer.call("debug_hardware_cache_signature_for_test", bindings_mutated)) != hardware_signature, "hardware_cache_invalidates_binding")
+	observations["hardware_signature_contract"] = {
+		"base": hardware_signature,
+		"mutation_count": hardware_mutations.size() + 2,
+	}
 	# Re-entry replaces the old surface; hide it before presenting the same game
 	# module on a new production canvas so two hosts cannot race one renderer.
 	app.visible = false
