@@ -13291,6 +13291,11 @@ static func _publish_mutable_variant_in_place(live_value: Variant, candidate_val
 	if typeof(live_value) == TYPE_DICTIONARY and typeof(candidate_value) == TYPE_DICTIONARY:
 		if is_same(live_value, candidate_value):
 			return true
+		# Variant equality is implemented natively and proves an unchanged detached
+		# subtree exactly. Avoid walking that subtree key-by-key in GDScript merely
+		# to reassign the same values during an accepted transaction publish.
+		if live_value == candidate_value:
+			return true
 		var live_dictionary := live_value as Dictionary
 		var candidate_dictionary := candidate_value as Dictionary
 		for key in live_dictionary.keys():
@@ -13303,6 +13308,8 @@ static func _publish_mutable_variant_in_place(live_value: Variant, candidate_val
 		return true
 	if typeof(live_value) == TYPE_ARRAY and typeof(candidate_value) == TYPE_ARRAY:
 		if is_same(live_value, candidate_value):
+			return true
+		if live_value == candidate_value:
 			return true
 		var live_array := live_value as Array
 		var candidate_array := candidate_value as Array
