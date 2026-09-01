@@ -61,6 +61,8 @@ func host_action_rollback_snapshot(action_id: String, run_state: RunState, envir
 			shell[key] = value.duplicate(true) if typeof(value) in [TYPE_DICTIONARY, TYPE_ARRAY] else value
 	var simulation := _simulation(machine)
 	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
+	var durable_states := _game_states(environment)
+	var durable_value: Variant = durable_states.get(get_id(), null)
 	return {
 		"supported": true,
 		"machine": machine,
@@ -73,6 +75,8 @@ func host_action_rollback_snapshot(action_id: String, run_state: RunState, envir
 		"durable_dirty": bool(session.get("durable_dirty", false)),
 		"presentation_last_publish_msec_present": session.has("presentation_last_publish_msec"),
 		"presentation_last_publish_msec": int(session.get("presentation_last_publish_msec", -1)),
+		"durable_present": typeof(durable_value) == TYPE_DICTIONARY,
+		"durable_machine": (durable_value as Dictionary).duplicate(true) if typeof(durable_value) == TYPE_DICTIONARY else {},
 	}
 
 
@@ -102,7 +106,11 @@ func restore_host_action_rollback(snapshot: Dictionary, run_state: RunState, env
 			session[field_name] = snapshot.get(field_name)
 		else:
 			session.erase(field_name)
-	_write_live_durable(run_state, environment, machine, false)
+	var durable_states := _game_states(environment)
+	if bool(snapshot.get("durable_present", false)):
+		durable_states[get_id()] = _copy_dict(snapshot.get("durable_machine", {}))
+	else:
+		durable_states.erase(get_id())
 	return true
 
 
