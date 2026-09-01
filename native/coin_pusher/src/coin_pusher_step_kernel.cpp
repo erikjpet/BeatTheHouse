@@ -173,17 +173,19 @@ struct Grid {
   static constexpr int CAP = 2048;
   std::array<int64_t, CAP> kx{}, ky{};
   std::array<int, CAP> head{};
-  std::array<uint8_t, CAP> used{};
+  std::array<uint32_t, CAP> generation{};
+  uint32_t current_generation = 0;
   std::vector<int> next;
   int slot(int64_t x, int64_t y, bool insert) {
     int s = (int)(((x * 73856093) ^ (y * 19349663)) & (CAP - 1));
     for (int p = 0; p < CAP; ++p) {
-      if (!used[s]) {
+      if (generation[s] != current_generation) {
         if (!insert)
           return -1;
-        used[s] = 1;
+        generation[s] = current_generation;
         kx[s] = x;
         ky[s] = y;
+        head[s] = 0;
         return s;
       }
       if (kx[s] == x && ky[s] == y)
@@ -193,9 +195,11 @@ struct Grid {
     return -1;
   }
   void rebuild(const std::vector<Body> &b) {
-    used.fill(0);
-    head.fill(0);
-    next.assign(b.size(), 0);
+    if (++current_generation == 0) {
+      generation.fill(0);
+      current_generation = 1;
+    }
+    next.resize(b.size());
     for (int i = (int)b.size() - 1; i >= 0; --i) {
       int s = slot(floor_div(b[i].x, 10000), floor_div(b[i].y, 10000), true);
       next[i] = head[s];
@@ -215,6 +219,9 @@ struct Kernel {
   Dictionary state, config;
   Geo g;
   std::vector<Body> b;
+  std::vector<std::pair<int, int>> pair_scratch;
+  std::vector<uint8_t> queued_scratch, active_scratch;
+  std::vector<int> queue_scratch, static_scratch;
   Array events;
   int64_t collisions = 0, candidate_peak = 0;
   bool energy_ok = true, conservation_ok = true;
@@ -225,7 +232,6 @@ struct Kernel {
   void resume(Dictionary s, Dictionary c) {
     state = s;
     config = c.duplicate(false);
-    g = geometry(s);
   }
   void release_call_context() {
     // A cached kernel owns only the numeric solver state between calls. The
@@ -557,11 +563,14 @@ struct Kernel {
     }
     return peg_work;
   }
-  std::vector<std::pair<int, int>> pairs(Grid &grid) {
-    std::vector<std::pair<int, int>> p;
+  const std::vector<std::pair<int, int>> &pairs(Grid &grid) {
+    auto &p = pair_scratch;
+    p.clear();
     p.reserve(std::min<size_t>(b.size() * 8, HARD_CEILING * 32));
-    std::vector<uint8_t> queued(b.size());
-    std::vector<int> queue;
+    auto &queued = queued_scratch;
+    queued.assign(b.size(), 0);
+    auto &queue = queue_scratch;
+    queue.clear();
     queue.reserve(b.size());
     for (int i = 0; i < (int)b.size(); ++i)
       if (!b[i].sleeping && !terminal(b[i])) {
@@ -675,9 +684,11 @@ struct Kernel {
     }
     return true;
   }
-  std::vector<int> static_candidates(const std::vector<uint8_t> &active,
-                                     int64_t f) {
-    std::vector<int> out;
+  const std::vector<int> &static_candidates(const std::vector<uint8_t> &active,
+                                            int64_t f) {
+    auto &out = static_scratch;
+    out.clear();
+    out.reserve(b.size());
     int64_t bottom = g.top + g.plate_gap;
     for (int i = 0; i < (int)b.size(); ++i)
       if (active[i]) {
@@ -1307,7 +1318,6 @@ struct Kernel {
     auto start = std::chrono::steady_clock::now();
     if (ticks < 0)
       return Dictionary();
-    Array state_bodies = state.get("bodies", Array());
     if (reload) {
       b.clear();
       if (!load())
@@ -1355,9 +1365,10 @@ struct Kernel {
       int64_t nestle_work = resolve_supports(newf, grid);
       for (int pass = 0; pass < PASSES; ++pass) {
         grid.rebuild(b);
-        auto ps = pairs(grid);
+        const auto &ps = pairs(grid);
         candidate_peak = std::max<int64_t>(candidate_peak, ps.size());
-        std::vector<uint8_t> active(b.size());
+        auto &active = active_scratch;
+        active.resize(b.size());
         for (size_t i = 0; i < b.size(); ++i)
           active[i] = !b[i].sleeping && !terminal(b[i]);
         // pairs() starts from every awake body and breadth-first expands through
