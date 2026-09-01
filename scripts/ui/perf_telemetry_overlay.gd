@@ -580,7 +580,9 @@ func _coin_pusher_conservation_snapshot(run_state: RunState, game: GameModule) -
 	if typeof(simulation_value) != TYPE_DICTIONARY:
 		return {}
 	var simulation: Dictionary = simulation_value
-	var active := (simulation.get("bodies", []) as Array).size() if typeof(simulation.get("bodies", [])) == TYPE_ARRAY else -1
+	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
+	var invariants: Dictionary = simulation.get("last_invariants", {}) if typeof(simulation.get("last_invariants", {})) == TYPE_DICTIONARY else {}
+	var active := int(invariants.get("active", -1)) if bool(session.get("native_body_state_dirty", false)) else ((simulation.get("bodies", []) as Array).size() if typeof(simulation.get("bodies", [])) == TYPE_ARRAY else -1)
 	var tray := (simulation.get("tray_ledger", []) as Array).size() if typeof(simulation.get("tray_ledger", [])) == TYPE_ARRAY else -1
 	var gutter := (simulation.get("gutter_ledger", []) as Array).size() if typeof(simulation.get("gutter_ledger", [])) == TYPE_ARRAY else -1
 	var collected := int(simulation.get("collected_count", -1))
@@ -589,7 +591,6 @@ func _coin_pusher_conservation_snapshot(run_state: RunState, game: GameModule) -
 		+ int(simulation.get("accepted_inserts", 0)) \
 		+ int(simulation.get("external_origin_count", 0))
 	var accounted := active + tray + gutter + collected + cup_consumed
-	var invariants: Dictionary = simulation.get("last_invariants", {}) if typeof(simulation.get("last_invariants", {})) == TYPE_DICTIONARY else {}
 	var solver_invariants_present := invariants.has("conservation_ok")
 	return {
 		"active": active,
@@ -609,6 +610,7 @@ func _seed_coin_pusher_collect_fixture(run_state: RunState, game: GameModule) ->
 	# Once the cabinet is entered, the transient live machine is authoritative;
 	# the durable row deliberately no longer carries a simulation dictionary.
 	var machine := game.call("_ensure_live_machine", run_state, run_state.current_environment) as Dictionary
+	CoinPusherLiveSessionScript.sync_native_body_state(machine)
 	var simulation_value: Variant = game.call("_simulation", machine)
 	if typeof(simulation_value) != TYPE_DICTIONARY:
 		return false
@@ -640,6 +642,9 @@ func _seed_coin_pusher_collect_fixture(run_state: RunState, game: GameModule) ->
 		"active_body_count": bodies.size(),
 		"conserved_body_count": bodies.size() + tray.size(),
 	})
+	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
+	session["native_cache_reset"] = true
+	session["native_body_state_dirty"] = false
 	return bodies.size() == COIN_PUSHER_FIXTURE_BODY_COUNT - 1 and tray.size() == 1
 
 
