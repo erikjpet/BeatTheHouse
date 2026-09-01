@@ -325,6 +325,10 @@ func surface_realtime_patch_preserves_host_state() -> bool:
 	return false
 
 
+func surface_realtime_refresh_interval_msec() -> int:
+	return 16
+
+
 func surface_auto_action_command(_ui_state: Dictionary, _run_state: RunState, _environment: Dictionary, _surface_status: Dictionary = {}) -> Dictionary:
 	return {"handled": false}
 
