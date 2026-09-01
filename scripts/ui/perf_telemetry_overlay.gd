@@ -514,6 +514,11 @@ func _reinstall_coin_pusher_fixture(run_state: RunState, game: GameModule) -> Di
 func _enable_coin_pusher_stage_diagnostic() -> void:
 	if not _option_bool(runtime_options, "bth_perf_coin_pusher_stage_diagnostic", false):
 		return
+	var ui_state_value: Variant = app.get("game_surface_ui_state")
+	if typeof(ui_state_value) == TYPE_DICTIONARY:
+		var ui_state: Dictionary = (ui_state_value as Dictionary).duplicate(true)
+		ui_state["coin_pusher_debug_profile_stages"] = true
+		app.set("game_surface_ui_state", ui_state)
 	var canvas := _coin_pusher_canvas()
 	if canvas != null and canvas.has_method("apply_surface_state_patch"):
 		canvas.call("apply_surface_state_patch", {"coin_pusher_perf_stage_capture": true})
