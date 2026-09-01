@@ -3576,8 +3576,8 @@
     "asset_path": "res://assets/art/games/slot.png",
     "scene_asset_path": "res://assets/art/game_scenes/slot.png",
     "environment_prop": "slot_machine",
-    "intro": "One platform shoves a pile somebody else started.",
-    "description": "Aim. Read the pile. Walk the alarm line.",
+    "intro": "A played-in machine: catch token cups and push heavy prizes.",
+    "description": "Hit token cups. Move heavy features. Complete the cabinet goal.",
     "legal_actions": [
       {
         "id": "drop_quarter",
@@ -3634,21 +3634,25 @@
           {"x": 10000, "z": 13000, "r": 800}, {"x": 22000, "z": 13000, "r": 800}, {"x": 34000, "z": 13000, "r": 800}, {"x": 46000, "z": 13000, "r": 800}, {"x": 58000, "z": 13000, "r": 800}, {"x": 70000, "z": 13000, "r": 800}, {"x": 82000, "z": 13000, "r": 800}, {"x": 94000, "z": 13000, "r": 800},
           {"x": 16000, "z": 6000, "r": 800}, {"x": 28000, "z": 6000, "r": 800}, {"x": 40000, "z": 6000, "r": 800}, {"x": 52000, "z": 6000, "r": 800}, {"x": 64000, "z": 6000, "r": 800}, {"x": 76000, "z": 6000, "r": 800}, {"x": 88000, "z": 6000, "r": 800}
         ],
-        "targets": [],
+        "targets": [
+          {"id": "quarter_tokens_left", "label": "+3", "x": 25000, "z": 24500, "mouth_radius": 1200, "cup_depth": 5200, "cooldown_ticks": 90, "render_style": "quarter_bonus_cup", "reward": {"kind": "drop_multiplier", "count": 3}},
+          {"id": "quarter_tokens_right", "label": "+5", "x": 85000, "z": 24500, "mouth_radius": 900, "cup_depth": 5600, "cooldown_ticks": 120, "render_style": "quarter_bonus_cup", "reward": {"kind": "drop_multiplier", "count": 5}}
+        ],
         "release_interval_ticks": 6,
         "chain_depth_cap": 3,
         "chain_coin_cap": 60,
         "release_jitter": 650,
         "release_velocity_jitter": 2400
       },
-      "coins": {
-        "radius": 2350,
-        "height": 950,
-        "mass": 1000,
-        "value": 1,
-        "drop_cost": 1
-      },
-      "ceiling": 600,
+	  "coins": {
+		"radius": 2350,
+		"height": 950,
+		"mass": 1000,
+		"value": 1,
+		"drop_cost": 1
+	  },
+	  "sub_game": {"feature_kind": "rider", "feature_mass": 1800, "feature_radius": 5200, "feature_height": 2800},
+	  "ceiling": 600,
       "cabinet": {
         "identity": "quarter_falls",
         "marquee": "QUARTER FALLS",
@@ -3744,7 +3748,7 @@
               {"x": 18500, "z": 16000, "r": 750}, {"x": 31500, "z": 16000, "r": 750}, {"x": 44500, "z": 16000, "r": 750}, {"x": 57500, "z": 16000, "r": 750}, {"x": 70500, "z": 16000, "r": 750}, {"x": 83500, "z": 16000, "r": 750},
               {"x": 12000, "z": 8000, "r": 750}, {"x": 25000, "z": 8000, "r": 750}, {"x": 38000, "z": 8000, "r": 750}, {"x": 51000, "z": 8000, "r": 750}, {"x": 64000, "z": 8000, "r": 750}, {"x": 77000, "z": 8000, "r": 750}, {"x": 90000, "z": 8000, "r": 750}
             ],
-            "targets": [{"id": "ridge_5x_left", "label": "5X", "x": 7500, "z": 11500, "mouth_radius": 1750, "cooldown_ticks": 90, "render_style": "ridge_cup", "reward": {"kind": "drop_multiplier", "count": 5}}, {"id": "ridge_cash_right", "label": "$3", "x": 88000, "z": 19500, "mouth_radius": 2200, "cooldown_ticks": 180, "render_style": "ridge_cash", "reward": {"kind": "instant_payout", "value": 3}}],
+            "targets": [{"id": "ridge_tokens_left", "label": "+5", "x": 7500, "z": 11500, "mouth_radius": 1750, "cup_depth": 5600, "cooldown_ticks": 90, "render_style": "ridge_bonus_cup", "reward": {"kind": "drop_multiplier", "count": 5}}, {"id": "ridge_tokens_right", "label": "+3", "x": 88000, "z": 19500, "mouth_radius": 2200, "cup_depth": 5200, "cooldown_ticks": 180, "render_style": "ridge_bonus_cup", "reward": {"kind": "drop_multiplier", "count": 3}}],
             "release_interval_ticks": 6,
             "chain_depth_cap": 3,
             "chain_coin_cap": 60,
@@ -3755,7 +3759,7 @@
           "coins": {"radius": 2350, "height": 950, "mass": 1000, "value": 1, "drop_cost": 1},
           "ceiling": 600,
           "economy": {"documented_ev_band": [0.70, 1.08]},
-          "sub_game": {"feature_kind": "puck", "feature_mass": 3000, "jam_radius": 5200, "ridge_run_rate": 2, "stroke_period_ticks": 240}
+          "sub_game": {"feature_kind": "puck", "feature_mass": 3000, "jam_radius": 5200, "puck_floor": 4, "ridge_run_rate": 2, "ridge_run_bonus_tokens": 5, "ridge_run_goal": 3, "stroke_period_ticks": 240}
         },
         "vault_drop": {
           "machine_id": "vault_drop",
@@ -3791,7 +3795,7 @@
               {"x": 16000, "z": 12500, "r": 800}, {"x": 28000, "z": 12500, "r": 800}, {"x": 40000, "z": 12500, "r": 800}, {"x": 52000, "z": 12500, "r": 800}, {"x": 64000, "z": 12500, "r": 800}, {"x": 76000, "z": 12500, "r": 800}, {"x": 88000, "z": 12500, "r": 800},
               {"x": 10000, "z": 6000, "r": 800}, {"x": 22000, "z": 6000, "r": 800}, {"x": 34000, "z": 6000, "r": 800}, {"x": 46000, "z": 6000, "r": 800}, {"x": 58000, "z": 6000, "r": 800}, {"x": 70000, "z": 6000, "r": 800}, {"x": 82000, "z": 6000, "r": 800}, {"x": 94000, "z": 6000, "r": 800}
             ],
-            "targets": [{"id": "vault_5x_left", "label": "5X", "x": 6800, "z": 15500, "mouth_radius": 900, "cooldown_ticks": 90, "render_style": "vault_cup", "reward": {"kind": "drop_multiplier", "count": 5}}, {"id": "vault_cash_right", "label": "$4", "x": 92000, "z": 28500, "mouth_radius": 1800, "cooldown_ticks": 180, "render_style": "vault_cash", "reward": {"kind": "instant_payout", "value": 4}}],
+            "targets": [{"id": "vault_tokens_left", "label": "+5", "x": 6800, "z": 15500, "mouth_radius": 900, "cup_depth": 5600, "cooldown_ticks": 90, "render_style": "vault_bonus_cup", "reward": {"kind": "drop_multiplier", "count": 5}}, {"id": "vault_tokens_right", "label": "+4", "x": 92000, "z": 28500, "mouth_radius": 1800, "cup_depth": 5400, "cooldown_ticks": 180, "render_style": "vault_bonus_cup", "reward": {"kind": "drop_multiplier", "count": 4}}],
             "release_interval_ticks": 6,
             "chain_depth_cap": 3,
             "chain_coin_cap": 60,
@@ -3802,7 +3806,7 @@
           "coins": {"radius": 2350, "height": 950, "mass": 1000, "value": 1, "drop_cost": 1},
           "ceiling": 600,
           "economy": {"documented_ev_band": [0.72, 0.94]},
-          "sub_game": {"feature_kind": "fragment", "feature_mass": 1800, "future_custom_apparatus": {}}
+          "sub_game": {"feature_kind": "fragment", "feature_mass": 1800, "fragment_floor": 3, "key_streak_goal": 3, "key_streak_bonus_tokens": 6, "future_custom_apparatus": {}}
         }
       },
       "economy": {"documented_ev_band": [0.72, 0.94]},
@@ -3824,6 +3828,9 @@
           "spawn_gap_max": 5,
           "multiplier_values": [2, 3, 5],
           "multiplier_drop_count": 2,
+          "ridge_run_bonus_tokens": 5,
+          "ridge_run_goal": 3,
+          "puck_floor": 4,
           "lock_cycles": 1,
           "ridge_run_cycles": 3,
           "alarm_tolerance_bonus": 3,
@@ -3837,6 +3844,9 @@
         "vault_drop": {
           "display_name": "The Vault Drop",
           "opening_fragment_count": 6,
+		  "fragment_floor": 3,
+		  "key_streak_goal": 3,
+          "key_streak_bonus_tokens": 6,
           "schedule_count": 16,
           "spawn_gap_min": 2,
           "spawn_gap_max": 5,
@@ -3912,9 +3922,12 @@
       "slam_bonus_push": 2,
       "cold_quarters_density": 3,
       "coin_return_shim_uses": 3,
-      "prize_count_min": 1,
-      "prize_count_max": 3,
-      "prize_initial_cell_max": 3,
+      "prize_count_min": 3,
+      "prize_count_max": 4,
+      "prize_goal_target": 3,
+      "prize_goal_bonus_tokens": 5,
+      "prize_rider_floor": 3,
+      "prize_initial_cell_max": 1,
       "documented_ev_band": [0.72, 0.94],
       "scenario_reset_contract": {
         "path": "scenario_game_modifiers.coin_pusher",

@@ -24,10 +24,13 @@ static func initial_state(config: Dictionary, rng: RngStream, lane_count: int, c
 	var state := {
 		"puck_schedule": schedule,
 		"schedule_cursor": 0,
+		"replenish_serial": 0,
+		"replenish_rng": rng.fork("ridge_replenish").snapshot(),
 		"pucks": [],
 		"armed_multipliers": [],
 		"shelf_cycle": 0,
 		"ridge_run_count": 0,
+		"ridge_goal_progress": 0,
 		"ridge_run_cycles_remaining": 0,
 		"ridge_cycle_serial": 0,
 		"multiplier_banks_by_cycle": {},
@@ -38,7 +41,7 @@ static func initial_state(config: Dictionary, rng: RngStream, lane_count: int, c
 	return state
 
 
-static func prepare_action(state: Dictionary, action_count: int) -> void:
+static func prepare_action(state: Dictionary, action_count: int, config: Dictionary = {}) -> void:
 	var schedule: Array = state.get("puck_schedule", []) if typeof(state.get("puck_schedule", [])) == TYPE_ARRAY else []
 	var pucks: Array = state.get("pucks", []) if typeof(state.get("pucks", [])) == TYPE_ARRAY else []
 	var cursor := maxi(0, int(state.get("schedule_cursor", 0)))
@@ -47,6 +50,7 @@ static func prepare_action(state: Dictionary, action_count: int) -> void:
 		cursor += 1
 	state["schedule_cursor"] = cursor
 	state["pucks"] = pucks
+	_replenish_pucks(state, config)
 
 
 static func payout_multiplier(state: Dictionary) -> int:
@@ -115,13 +119,19 @@ static func apply_physical_events(state: Dictionary, physics_events: Array, conf
 	var multiplier_drops := 0
 	var banks_by_cycle: Dictionary = state.get("multiplier_banks_by_cycle", {}) if typeof(state.get("multiplier_banks_by_cycle", {})) == TYPE_DICTIONARY else {}
 	var triggered_cycle := -1
+	var ridge_runs_triggered := 0
+	var ridge_goal := maxi(1, int(config.get("ridge_run_goal", 3)))
+	var ridge_progress := maxi(0, int(state.get("ridge_goal_progress", 0)))
 	for puck in banked:
 		match str((puck as Dictionary).get("kind", "")):
 			"multiplier":
 				multiplier_drops += 1
 				var bank_cycle := int(outcome_cycles.get(str((puck as Dictionary).get("id", "")), fallback_cycle))
 				banks_by_cycle[str(bank_cycle)] = int(banks_by_cycle.get(str(bank_cycle), 0)) + 1
-				if int(banks_by_cycle[str(bank_cycle)]) == 3:
+				ridge_progress += 1
+				if ridge_progress >= ridge_goal:
+					ridge_progress -= ridge_goal
+					ridge_runs_triggered += 1
 					triggered_cycle = bank_cycle
 				var charges: Array = state.get("armed_multipliers", []) if typeof(state.get("armed_multipliers", [])) == TYPE_ARRAY else []
 				charges.append({"multiplier": int((puck as Dictionary).get("multiplier", 2)), "remaining": int((puck as Dictionary).get("charges", 2))})
@@ -136,7 +146,8 @@ static func apply_physical_events(state: Dictionary, physics_events: Array, conf
 			"dud":
 				pass
 	state["multiplier_banks_by_cycle"] = banks_by_cycle
-	var ridge_triggered := triggered_cycle >= 0
+	state["ridge_goal_progress"] = ridge_progress
+	var ridge_triggered := ridge_runs_triggered > 0
 	if ridge_triggered:
 		# Anchor bonus lifetime to the physical cycle that completed the three
 		# banks. A stale consumer serial must not make the next boundary consume
@@ -146,13 +157,13 @@ static func apply_physical_events(state: Dictionary, physics_events: Array, conf
 		# boundary so cycles N+1, N+2, and N+3 all run at the bonus rate.
 		state["ridge_cycle_serial"] = maxi(int(state.get("ridge_cycle_serial", triggered_cycle + 1)), triggered_cycle + 1)
 		state["ridge_run_cycles_remaining"] = maxi(int(state.get("ridge_run_cycles_remaining", 0)), maxi(1, int(config.get("ridge_run_cycles", 3))))
-		state["ridge_run_count"] = int(state.get("ridge_run_count", 0)) + 1
+		state["ridge_run_count"] = int(state.get("ridge_run_count", 0)) + ridge_runs_triggered
 		state["last_feature_message"] = "RIDGE RUN. Motor doubles for %d cycles." % int(state.get("ridge_run_cycles_remaining", 0))
 	elif not banked.is_empty():
 		state["last_feature_message"] = "%d feature puck%s physically banked." % [banked.size(), "" if banked.size() == 1 else "s"]
 	elif not lost.is_empty():
 		state["last_feature_message"] = "%d puck%s vanished into the side gutter." % [lost.size(), "" if lost.size() == 1 else "s"]
-	return {"banked": banked, "lost": lost, "ridge_run_triggered": ridge_triggered, "multiplier_drops": multiplier_drops}
+	return {"banked": banked, "lost": lost, "ridge_run_triggered": ridge_triggered, "ridge_runs_triggered": ridge_runs_triggered, "multiplier_drops": multiplier_drops}
 
 
 static func advance_stroke_cycle(state: Dictionary, cycle_serial: int) -> int:
@@ -227,3 +238,35 @@ static func _seed_opening_pucks(state: Dictionary, config: Dictionary, rng: RngS
 			"jam_hole_index": rng.randi_range(0, maxi(0, lane_count - 1)) if kind == "dud" else -1,
 		})
 	state["pucks"] = pucks
+
+
+static func _replenish_pucks(state: Dictionary, config: Dictionary) -> void:
+	var pucks: Array = state.get("pucks", []) if typeof(state.get("pucks", [])) == TYPE_ARRAY else []
+	var floor_count := maxi(3, int(config.get("puck_floor", 4)))
+	if pucks.size() >= floor_count:
+		return
+	var serial := maxi(0, int(state.get("replenish_serial", 0)))
+	var rng := RngStream.new()
+	var snapshot: Dictionary = state.get("replenish_rng", {}) if typeof(state.get("replenish_rng", {})) == TYPE_DICTIONARY else {}
+	if snapshot.is_empty():
+		rng.configure(RngStream.derive_seed(731991, serial + 1, "ridge_replenish"))
+	else:
+		rng.restore(snapshot)
+	var multiplier_values: Array = config.get("multiplier_values", [2, 3, 5]) if typeof(config.get("multiplier_values", [])) == TYPE_ARRAY else [2, 3, 5]
+	while pucks.size() < floor_count:
+		var kind_roll := rng.randi_range(1, 100)
+		var kind := "multiplier" if kind_roll <= 62 else "lock" if kind_roll <= 84 else "dud"
+		pucks.append({
+			"id": "ridge_restock_%06d" % serial,
+			"spawn_action": -1,
+			"kind": kind,
+			"multiplier": int(multiplier_values[rng.randi_range(0, multiplier_values.size() - 1)]) if kind == "multiplier" else 1,
+			"charges": maxi(1, int(config.get("multiplier_drop_count", 2))),
+			"spawn_x_milli": rng.randi_range(80, 920),
+			"spawn_depth_milli": rng.randi_range(80, 520),
+			"jam_hole_index": rng.randi_range(0, 2) if kind == "dud" else -1,
+		})
+		serial += 1
+	state["pucks"] = pucks
+	state["replenish_serial"] = serial
+	state["replenish_rng"] = rng.snapshot()

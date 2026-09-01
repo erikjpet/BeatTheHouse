@@ -137,7 +137,7 @@ class SpatialHash2D:
 static var _scratch_grid: SpatialHash2D = SpatialHash2D.new()
 
 
-static func create_machine(seed_rng: RngStream, machine_definition: Dictionary, opening_bodies: int = 0) -> Dictionary:
+static func create_machine(seed_rng: RngStream, machine_definition: Dictionary, opening_bodies: int = 0, capture_opening_report: bool = false) -> Dictionary:
 	var definition := machine_definition.duplicate(true)
 	var geometry := _geometry(definition)
 	var stroke := _stroke(definition)
@@ -183,7 +183,31 @@ static func create_machine(seed_rng: RngStream, machine_definition: Dictionary, 
 	}
 	if opening_bodies > 0:
 		_seed_opening_machine(state, seed_rng, mini(opening_bodies, _ceiling(definition)))
-	state["opening_body_count"] = (state["bodies"] as Array).size()
+		state["opening_body_count"] = (state["bodies"] as Array).size()
+		if opening_bodies <= 180:
+			var opening_settle := settle(state, false, 1200)
+			var opening_validation := _opening_generation_validation(state)
+			assert(bool(opening_settle.get("settled", false)), "Coin Pusher V3 opening stock did not physically settle.")
+			assert(bool(opening_validation.get("valid", false)), "Coin Pusher V3 opening stock failed post-settle validation: %s" % JSON.stringify(opening_validation))
+			# The detailed report is opt-in audit data. Production state keeps the
+			# physical result but not diagnostic bytes that would bloat every save.
+			if capture_opening_report:
+				state["opening_settle_report"] = {
+					"physical_ticks": int(opening_settle.get("ticks", 0)),
+					"awake_count": int(opening_settle.get("awake_count", -1)),
+					"kinetic_energy": int(opening_validation.get("kinetic_energy", -1)),
+					"unsupported_count": int(opening_validation.get("unsupported_count", -1)),
+					"tray_count": int(opening_validation.get("tray_count", -1)),
+					"gutter_count": int(opening_validation.get("gutter_count", -1)),
+				}
+			# Settling is generation work, not elapsed cabinet play. Present the
+			# newly created machine at tick zero after validating the physical result.
+			state["tick"] = 0
+			state["last_events"] = []
+			state["last_step_metrics"] = {}
+			state["last_invariants"] = _invariant_report(state, true)
+	else:
+		state["opening_body_count"] = 0
 	return state
 
 
@@ -1659,40 +1683,53 @@ static func _seed_opening_machine(state: Dictionary, rng: RngStream, count: int)
 	var base_positions: Array = []
 	var base_rows: Array = []
 	var row_specs: Array = []
-	var lower_cluster_counts := [
-		[4, 4, 4], [3, 4, 3], [4, 4, 4], [3, 4, 3], [4, 4, 4],
-		[3, 4, 3], [4, 4, 4], [3, 4, 3], [4, 4, 4],
-	]
-	var upper_cluster_counts := [[3, 4, 3], [4, 3, 4], [3, 4, 3]]
+	# Build a full but genuinely played-in bed from a seeded row recipe.  Earlier
+	# versions changed only a few pixels inside one fixed 12-row template, so two
+	# freshly generated cabinets still read as the same staged machine.  These
+	# row totals preserve the proven pressure and body-count envelope while their
+	# order, per-third silhouette, centers, and depth are independently seeded.
+	var lower_row_totals := [10, 10, 10, 11, 11, 11, 12, 12, 12]
+	var upper_row_totals := [10, 10, 11]
+	_shuffle_opening_recipe(lower_row_totals, rng)
+	_shuffle_opening_recipe(upper_row_totals, rng)
 	var x_step := radius * 2 - 80
 	var y_step := radius * 2 - 80
-	var cluster_centers := [_divi(width, 6), _divi(width, 2), _divi(width * 5, 6)]
 	# Three separated, internally touching clusters populate every horizontal
 	# third. The lower bed carries most stock; only three compact rows occupy the
 	# retracted upper platform, leaving a real rest gap ahead of the parked face.
-	for row in range(lower_cluster_counts.size()):
-		row_specs.append({"clusters": lower_cluster_counts[row], "y": tray_lip + 8000 + row * y_step + (600 if row > 0 else 0)})
-	for row in range(upper_cluster_counts.size()):
-		row_specs.append({"clusters": upper_cluster_counts[row], "y": face + radius + 1000 + row * y_step})
+	for row in range(lower_row_totals.size()):
+		row_specs.append({
+			"clusters": _opening_cluster_counts(int(lower_row_totals[row]), rng),
+			"centers": _opening_cluster_centers(width, rng),
+			"y": tray_lip + 8000 + row * y_step + (600 if row > 0 else 0) + rng.randi_range(-420, 420),
+		})
+	for row in range(upper_row_totals.size()):
+		row_specs.append({
+			"clusters": _opening_cluster_counts(int(upper_row_totals[row]), rng),
+			"centers": _opening_cluster_centers(width, rng),
+			"y": face + radius + 1000 + row * y_step + rng.randi_range(-360, 360),
+		})
 	var max_base_columns := 0
 	for spec_value in row_specs:
 		var spec: Dictionary = spec_value
 		var row_positions: Array = []
 		var clusters: Array = spec.get("clusters", []) if typeof(spec.get("clusters", [])) == TYPE_ARRAY else []
+		var cluster_centers: Array = spec.get("centers", []) if typeof(spec.get("centers", [])) == TYPE_ARRAY else []
 		var columns := 0
 		for cluster_count_value in clusters:
 			columns += int(cluster_count_value)
 		max_base_columns = maxi(max_base_columns, columns)
-		var stagger := 0 if base_rows.size() % 2 == 0 else _divi(x_step, 2)
-		var row_drift := rng.randi_range(-60, 60)
+		var stagger := rng.randi_range(-_divi(x_step, 3), _divi(x_step, 3))
+		var row_drift := rng.randi_range(-180, 180)
 		for cluster_index in range(clusters.size()):
 			var cluster_count := int(clusters[cluster_index])
-			var start_x := int(cluster_centers[cluster_index]) - _divi((cluster_count - 1) * x_step, 2) + stagger + row_drift
+			var center_x := int(cluster_centers[cluster_index]) if cluster_index < cluster_centers.size() else _divi(width * (cluster_index * 2 + 1), 6)
+			var start_x := center_x - _divi((cluster_count - 1) * x_step, 2) + stagger + row_drift
 			for column in range(cluster_count):
-				# Tiny scuffs break surveying-perfect rows without opening a visible or
-				# mechanical gap inside each third's pressure cluster.
-				var x := clampi(start_x + column * x_step + rng.randi_range(-20, 20), radius, width - radius)
-				var y := int(spec.get("y", 0)) + rng.randi_range(-20, 20)
+				# Scuffs retain real local contact while ensuring neither the pile edge
+				# nor the macro holes repeat from cabinet to cabinet.
+				var x := clampi(start_x + column * x_step + rng.randi_range(-70, 70), radius, width - radius)
+				var y := int(spec.get("y", 0)) + rng.randi_range(-70, 70)
 				var on_platform := y >= face
 				row_positions.append({
 					"x": x,
@@ -1789,11 +1826,12 @@ static func _seed_opening_machine(state: Dictionary, rng: RngStream, count: int)
 			base["z"] = int(fallback.get("z", 0)) + layer * height
 			base["support"] = "body"
 		var body := _new_body(state, "coin", int(base.get("x", 0)), int(base.get("y", 0)), int(base.get("z", 0)), radius, height, mass, {"value": int(coins.get("value", 1)), "opening": true})
+		# These authored positions are collision-valid starting conditions, not a
+		# declared outcome. Leave every body awake so create_machine() must advance
+		# the real solver until gravity, contacts, support classification, friction,
+		# and the sleep threshold establish the persisted opening state.
 		body["support_kind"] = str(base.get("support", "deck"))
-		body["sleeping"] = true
-		body["sleep_ticks"] = SLEEP_TICKS
-		body["rest_state"] = "resting"
-		body["carried_sleep"] = bool(base.get("carried", false))
+		body["carried_sleep"] = false
 		if typeof(base.get("support_indices", [])) == TYPE_ARRAY:
 			var support_ids: Array = []
 			for support_index_value in base.get("support_indices", []):
@@ -1801,13 +1839,54 @@ static func _seed_opening_machine(state: Dictionary, rng: RngStream, count: int)
 				if support_index >= 0 and support_index < bodies.size():
 					support_ids.append(str((bodies[support_index] as Dictionary).get("id", "")))
 			body["support_ids"] = support_ids
-		# Opening stock is already asleep. Persist only outcome-bearing values;
-		# both solver backends reconstruct these zero transient fields exactly.
-		for transient_key in ["vx", "vy", "vz", "x_remainder", "y_remainder", "z_remainder", "fall_start_z"]:
-			body.erase(transient_key)
-		if not bool(body.get("carried_sleep", false)):
-			body.erase("carried_sleep")
 		bodies.append(body)
+
+
+static func _shuffle_opening_recipe(values: Array, rng: RngStream) -> void:
+	for index in range(values.size() - 1, 0, -1):
+		var swap_index := rng.randi_range(0, index)
+		var held: Variant = values[index]
+		values[index] = values[swap_index]
+		values[swap_index] = held
+
+
+static func _opening_cluster_counts(total: int, rng: RngStream) -> Array:
+	var counts := [3, 3, maxi(3, total - 6)]
+	_shuffle_opening_recipe(counts, rng)
+	return counts
+
+
+static func _opening_cluster_centers(width: int, rng: RngStream) -> Array:
+	return [
+		_divi(width, 6) + rng.randi_range(-1500, 1500),
+		_divi(width, 2) + rng.randi_range(-1800, 1800),
+		_divi(width * 5, 6) + rng.randi_range(-1500, 1500),
+	]
+
+
+static func _opening_generation_validation(state: Dictionary) -> Dictionary:
+	var unsupported_count := 0
+	for body_value in state.get("bodies", []):
+		if typeof(body_value) != TYPE_DICTIONARY:
+			unsupported_count += 1
+			continue
+		var body: Dictionary = body_value
+		if _is_terminal_body(body) or str(body.get("support_kind", "")).is_empty():
+			unsupported_count += 1
+	var tray_count := (state.get("tray_ledger", []) as Array).size()
+	var gutter_count := (state.get("gutter_ledger", []) as Array).size()
+	var kinetic_energy := _kinetic_energy(state.get("bodies", []))
+	return {
+		"valid": all_steady(state, false)
+			and unsupported_count == 0
+			and tray_count == 0
+			and gutter_count == 0
+			and kinetic_energy == 0,
+		"unsupported_count": unsupported_count,
+		"tray_count": tray_count,
+		"gutter_count": gutter_count,
+		"kinetic_energy": kinetic_energy,
+	}
 
 
 static func _seed_dense_benchmark_machine(state: Dictionary, rng: RngStream, count: int, geometry: Dictionary, coins: Dictionary) -> void:

@@ -15,6 +15,8 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 	_check_pusher_v3_machine_data(machine_definition, failures)
 	_check_pusher_v3_10_idle_queue_cups_and_stack(library, game_definition, machine_definition, failures)
 	_check_pusher_v3_10_hold_inputs(library, game_definition, failures)
+	_check_pusher_v3_10_opening_generation_guard(machine_definition, failures)
+	_check_pusher_v3_10_stack_support_matrix(machine_definition, failures)
 	_check_pusher_v3_coin_scale_lower_bed_and_edge_ramp(machine_definition, failures)
 	_check_pusher_v3_played_in_opening_state(library, game_definition, failures)
 	_check_pusher_v3_plinko_bounce_and_variance(machine_definition, failures)
@@ -176,6 +178,31 @@ func _check_pusher_v3_10_idle_queue_cups_and_stack(library: ContentLibrary, game
 	if queued != 30 or int((queue_machine.get("simulation", {}) as Dictionary).get("accepted_inserts", 0)) != 30 or not bool(queue_machine.get("motor_started", false)) or not (queue_machine.get("drop_queue", []) as Array).is_empty() or not saw_left or not saw_right:
 		failures.append("pusherv3_10 30-coin FIFO did not emit at cadence from a steerable bound rail nozzle.")
 
+	# Two paid reservations may be appended while an earlier batch is still
+	# active. Their durable FIFO must round-trip without merging, loss, or
+	# duplication, and reopening must resume the already-started motor rather
+	# than regenerate the cabinet.
+	var persist_machine := {"simulation": CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-V3-10-QUEUE-PERSIST"), machine, 0), "variation_state": {}, "drop_queue": [], "motor_started": false, "selected_nozzle_id": "quarter_rail"}
+	CoinPusherLiveSessionScript.begin(persist_machine, machine, 7712)
+	var first_reserved := CoinPusherLiveSessionScript.enqueue_drops(persist_machine, {"nozzle_id": "quarter_rail", "density": 1, "provenance": {"paid_batch": 1}}, 5)
+	var second_reserved := CoinPusherLiveSessionScript.enqueue_drops(persist_machine, {"nozzle_id": "quarter_rail", "density": 1, "provenance": {"paid_batch": 2}}, 7)
+	var persisted_queue: Array = (persist_machine.get("drop_queue", []) as Array).duplicate(true)
+	var persisted_snapshot := CoinPusherLiveSessionScript.make_snapshot(persist_machine.get("simulation", {}), persist_machine)
+	var reopened_machine := {"settled_state": persisted_snapshot}
+	CoinPusherLiveSessionScript.begin(reopened_machine, machine, 7712)
+	var reopened_queue: Array = (reopened_machine.get("drop_queue", []) as Array).duplicate(true)
+	var reopen_msec := 0
+	CoinPusherLiveSessionScript.advance(reopened_machine, reopen_msec)
+	for _frame in range(40):
+		reopen_msec += 50
+		CoinPusherLiveSessionScript.advance(reopened_machine, reopen_msec)
+	var reopened_simulation: Dictionary = reopened_machine.get("simulation", {})
+	if first_reserved != 5 or second_reserved != 7 or persisted_queue.size() != 2 or reopened_queue != persisted_queue \
+			or int(persisted_snapshot.get("coin_count", -1)) != 0 or not str(persisted_snapshot.get("coin_blob", "invalid")).is_empty() \
+			or not bool(reopened_machine.get("motor_started", false)) or int(reopened_simulation.get("accepted_inserts", -1)) != 12 \
+			or not (reopened_machine.get("drop_queue", []) as Array).is_empty() or not bool((reopened_simulation.get("last_invariants", {}) as Dictionary).get("conservation_ok", false)):
+		failures.append("pusherv3_10 concurrent paid queues did not persist and resume exactly once: before=%s after=%s accepted=%d." % [JSON.stringify(persisted_queue), JSON.stringify(reopened_machine.get("drop_queue", [])), int(reopened_simulation.get("accepted_inserts", -1))])
+
 	var ridge: Dictionary = (machine.get("machines", {}) as Dictionary).get("jackpot_ridge", {})
 	var target: Dictionary = ((ridge.get("apparatus", {}) as Dictionary).get("targets", []) as Array)[0]
 	var cup_state := CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-V3-10-CUP"), ridge, 0)
@@ -197,6 +224,80 @@ func _check_pusher_v3_10_idle_queue_cups_and_stack(library: ContentLibrary, game
 	var chain_queue: Array = chain_machine.get("drop_queue", [])
 	if chain_queue.size() != 1 or int((chain_queue[0] as Dictionary).get("remaining", 0)) != 5 or str((chain_queue[0] as Dictionary).get("nozzle_id", "")) != "ridge_left" or int((chain_queue[0] as Dictionary).get("chain_depth", 0)) != 1:
 		failures.append("pusherv3_10 5X cup did not enqueue five bounded children through the trigger nozzle.")
+
+	var prize_machine := {
+		"variation_id": "quarter_falls",
+		"simulation": CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-FINAL-PRIZE-GOAL"), machine, 0),
+		"variation_state": {},
+		"drop_queue": [],
+		"motor_started": false,
+		"selected_nozzle_id": "quarter_rail",
+		"riders": [
+			{"id": "goal_rider_a", "kind": "chip_stack", "label": "chip stack", "cash_value": 4},
+			{"id": "goal_rider_b", "kind": "ticket_roll", "label": "ticket roll", "cash_value": 7},
+			{"id": "goal_rider_c", "kind": "chip_stack", "label": "chip stack", "cash_value": 4},
+		],
+		"prize_goal_progress": 0,
+		"prize_goal_completions": 0,
+		"rider_serial": 3,
+	}
+	CoinPusherLiveSessionScript.begin(prize_machine, machine, 7713)
+	game.call("_consume_physics_events", null, prize_machine, [
+		{"kind": "tray", "body_kind": "rider", "outcome": "tray", "metadata": {"feature_id": "goal_rider_a"}},
+		{"kind": "tray", "body_kind": "rider", "outcome": "tray", "metadata": {"feature_id": "goal_rider_b"}},
+		{"kind": "tray", "body_kind": "rider", "outcome": "tray", "metadata": {"feature_id": "goal_rider_c"}},
+	], _pusher_v3_rng("PUSHER-FINAL-PRIZE-GOAL-CONSUME"))
+	var prize_goal: Dictionary = game.call("_machine_goal_state", prize_machine, prize_machine.get("simulation", {}))
+	var prize_queue: Array = prize_machine.get("drop_queue", [])
+	if int(prize_machine.get("prize_goal_completions", 0)) != 1 or int(prize_goal.get("progress", -1)) != 0 \
+			or prize_queue.is_empty() or int((prize_queue[0] as Dictionary).get("remaining", 0)) != 5 \
+			or (prize_machine.get("riders", []) as Array).size() < 3 or not str(prize_goal.get("instruction", "")).contains("HEAVY PRIZES"):
+		failures.append("Coin Pusher final Prize Rush goal did not turn three physical heavy-prize banks into a visible replenishing five-token bonus loop.")
+
+	var ridge_definition: Dictionary = (machine.get("machines", {}) as Dictionary).get("jackpot_ridge", {})
+	var ridge_machine := {
+		"variation_id": "jackpot_ridge",
+		"simulation": CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-FINAL-RIDGE-GOAL"), ridge_definition, 0),
+		"variation_state": {
+			"pucks": [
+				{"id": "goal_puck_a", "kind": "multiplier", "multiplier": 2, "charges": 2},
+				{"id": "goal_puck_b", "kind": "multiplier", "multiplier": 3, "charges": 2},
+				{"id": "goal_puck_c", "kind": "multiplier", "multiplier": 5, "charges": 2},
+			],
+			"armed_multipliers": [], "multiplier_banks_by_cycle": {}, "ridge_run_cycles_remaining": 0, "ridge_cycle_serial": 9,
+		},
+		"drop_queue": [], "motor_started": false, "selected_nozzle_id": "ridge_center",
+	}
+	CoinPusherLiveSessionScript.begin(ridge_machine, ridge_definition, 7714)
+	for puck_id in ["goal_puck_a", "goal_puck_b", "goal_puck_c"]:
+		game.call("_consume_physics_events", null, ridge_machine, [{"kind": "tray", "body_kind": "puck", "outcome": "tray", "stroke_cycle": 9, "phase_fp": 500, "metadata": {"feature_id": puck_id}}], _pusher_v3_rng("PUSHER-FINAL-RIDGE-%s" % puck_id))
+	var ridge_queue: Array = ridge_machine.get("drop_queue", [])
+	var ridge_goal: Dictionary = game.call("_machine_goal_state", ridge_machine, ridge_machine.get("simulation", {}))
+	if ridge_queue.size() != 1 or int((ridge_queue[0] as Dictionary).get("remaining", 0)) != 5 \
+			or int((ridge_machine.get("variation_state", {}) as Dictionary).get("ridge_run_count", 0)) != 1 \
+			or not str(ridge_goal.get("instruction", "")).contains("MULTIPLIER PUCKS"):
+		failures.append("Coin Pusher final Ridge Run goal did not turn three heavy multiplier pucks into one visible five-token bonus feed.")
+
+	var vault_definition: Dictionary = (machine.get("machines", {}) as Dictionary).get("vault_drop", {})
+	var vault_machine := {
+		"variation_id": "vault_drop",
+		"simulation": CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-FINAL-VAULT-GOAL"), vault_definition, 0),
+		"variation_state": {
+			"fragments": [{"id": "goal_key_a"}, {"id": "goal_key_b"}, {"id": "goal_key_c"}],
+			"banked_fragments": 0, "key_streak_progress": 0, "meter_value": 214, "vault_round_active": false,
+		},
+		"drop_queue": [], "motor_started": false, "selected_nozzle_id": "vault_rail",
+	}
+	CoinPusherLiveSessionScript.begin(vault_machine, vault_definition, 7715)
+	for key_id in ["goal_key_a", "goal_key_b", "goal_key_c"]:
+		game.call("_consume_physics_events", null, vault_machine, [{"kind": "tray", "body_kind": "fragment", "outcome": "tray", "metadata": {"feature_id": key_id}}], _pusher_v3_rng("PUSHER-FINAL-VAULT-%s" % key_id))
+	var vault_queue: Array = vault_machine.get("drop_queue", [])
+	var vault_goal: Dictionary = game.call("_machine_goal_state", vault_machine, vault_machine.get("simulation", {}))
+	if vault_queue.size() != 1 or int((vault_queue[0] as Dictionary).get("remaining", 0)) != 6 \
+			or int((vault_machine.get("variation_state", {}) as Dictionary).get("key_streak_progress", -1)) != 0 \
+			or int((vault_machine.get("variation_state", {}) as Dictionary).get("banked_fragments", 0)) != 3 \
+			or not str(vault_goal.get("instruction", "")).contains("KEY FRAGMENT"):
+		failures.append("Coin Pusher final Vault goal did not turn three physical heavy key banks into one visible six-token bonus feed.")
 
 	var stack_definition := machine.duplicate(true)
 	(stack_definition.get("apparatus", {}) as Dictionary)["pegs"] = []
@@ -280,7 +381,7 @@ func _check_pusher_v3_10_hold_inputs(library: ContentLibrary, game_definition: D
 	canvas.call("_gui_input", key_release)
 	if phases != ["begin", "end", "begin", "end", "begin", "end", "begin", "end", "begin", "cancel"]:
 		failures.append("pusherv3_10 shared hold input did not preserve mouse/touch/keyboard/controller equivalence and focus-loss cancellation: %s." % JSON.stringify(phases))
-	canvas.queue_free()
+	canvas.free()
 
 	var game: GameModule = load(str(game_definition.get("module_path", ""))).new()
 	game.setup(game_definition, library)
@@ -291,17 +392,20 @@ func _check_pusher_v3_10_hold_inputs(library: ContentLibrary, game_definition: D
 	var generated: Dictionary = game.generate_environment_state(run_state, environment, _pusher_v3_rng("PUSHER-V3-10-HOLD-GENERATE"))
 	environment["game_states"] = {"coin_pusher": generated}
 	game.enter(run_state, environment)
-	var frame_rates := [30, 60, 120]
-	for frame_rate in frame_rates:
-		var begin: Dictionary = game.surface_pointer_command("coin_pusher_drop_charge", 0, "begin", Vector2(576, 374), {}, run_state, environment)
-		var live_map: Dictionary = game.get("_live_machines")
-		var live: Dictionary = live_map.values()[0] if not live_map.is_empty() else {}
-		var simulation: Dictionary = live.get("simulation", {}) if typeof(live.get("simulation", {})) == TYPE_DICTIONARY else {}
-		simulation["tick"] = int(simulation.get("tick", 0)) + 180
-		var ending: Dictionary = game.surface_pointer_command("coin_pusher_drop_charge", 0, "end", Vector2(576, 374), begin.get("ui_state", {}), run_state, environment)
-		if not bool(ending.get("direct_resolve", false)) or str(ending.get("action_id", "")) != "drop_quarter" or int(ending.get("set_stake", 0)) != 30:
-			failures.append("pusherv3_10 three-second hold was not exactly 30 coins at the %d FPS presentation rate: %s." % [frame_rate, JSON.stringify(ending)])
-			break
+	# Gesture timing is a fixed-tick input contract, independent of pile
+	# topology. Keep this cross-product fixture lean; opening/pile behavior has
+	# its own production matrix above and must not multiply input-test cost.
+	var timing_live_map: Dictionary = game.get("_live_machines")
+	var timing_live: Dictionary = timing_live_map.values()[0] if not timing_live_map.is_empty() else {}
+	var timing_simulation: Dictionary = timing_live.get("simulation", {}) if typeof(timing_live.get("simulation", {})) == TYPE_DICTIONARY else {}
+	timing_simulation["bodies"] = []
+	timing_simulation["opening_body_count"] = 0
+	for reduce_motion in [false, true]:
+		for input_path in ["mouse", "keyboard", "controller"]:
+			for frame_rate in [30, 60, 120]:
+				var path_result := _pusher_v3_10_hold_path_result(game, run_state, environment, input_path, frame_rate, reduce_motion)
+				if int(path_result.get("elapsed_ticks", -1)) != 180 or not bool(path_result.get("direct_resolve", false)) or str(path_result.get("action_id", "")) != "drop_quarter" or int(path_result.get("set_stake", 0)) != 30:
+					failures.append("pusherv3_10 %s three-second hold was not exactly 30 coins at %d FPS with reduced_motion=%s: %s." % [input_path, frame_rate, str(reduce_motion), JSON.stringify(path_result)])
 	var tap_begin: Dictionary = game.surface_pointer_command("coin_pusher_drop_charge", 0, "begin", Vector2(576, 374), {}, run_state, environment)
 	var tap_end: Dictionary = game.surface_pointer_command("coin_pusher_drop_charge", 0, "end", Vector2(576, 374), tap_begin.get("ui_state", {}), run_state, environment)
 	if int(tap_end.get("set_stake", 0)) != 1:
@@ -310,8 +414,7 @@ func _check_pusher_v3_10_hold_inputs(library: ContentLibrary, game_definition: D
 	var limited_begin: Dictionary = game.surface_pointer_command("coin_pusher_drop_charge", 0, "begin", Vector2(576, 374), {}, run_state, environment)
 	var limited_live_map: Dictionary = game.get("_live_machines")
 	var limited_live: Dictionary = limited_live_map.values()[0] if not limited_live_map.is_empty() else {}
-	var limited_simulation: Dictionary = limited_live.get("simulation", {}) if typeof(limited_live.get("simulation", {})) == TYPE_DICTIONARY else {}
-	limited_simulation["tick"] = int(limited_simulation.get("tick", 0)) + 180
+	_pusher_v3_10_advance_live_seconds(limited_live, 60, 3)
 	var limited_end: Dictionary = game.surface_pointer_command("coin_pusher_drop_charge", 0, "end", Vector2(576, 374), limited_begin.get("ui_state", {}), run_state, environment)
 	if int(limited_end.get("set_stake", 0)) != 7:
 		failures.append("pusherv3_10 hold did not truncate atomically to seven affordable coins: %s." % JSON.stringify(limited_end))
@@ -321,6 +424,219 @@ func _check_pusher_v3_10_hold_inputs(library: ContentLibrary, game_definition: D
 	var cancelled_ui: Dictionary = cancelled.get("ui_state", {}) if typeof(cancelled.get("ui_state", {})) == TYPE_DICTIONARY else {}
 	if bool(cancelled.get("direct_resolve", false)) or cancelled_ui.has("coin_pusher_drop_charge_started_tick") or int(cancelled_ui.get("coin_pusher_drop_charge_count", -1)) != 0:
 		failures.append("pusherv3_10 interrupted hold committed a wager or retained stale charge state: %s." % JSON.stringify(cancelled))
+
+
+func _pusher_v3_10_advance_live_seconds(machine: Dictionary, frame_rate: int, seconds: int) -> void:
+	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
+	session["last_clock_msec"] = -1
+	session["accumulator_units"] = 0
+	CoinPusherLiveSessionScript.advance(machine, 0)
+	var frames := frame_rate * seconds
+	for frame in range(frames):
+		# Integer timestamps intentionally exercise the same fractional remainder
+		# accumulation used by production at 30/60/120 presentation rates.
+		var now_msec := int((frame + 1) * seconds * 1000 / frames)
+		CoinPusherLiveSessionScript.advance(machine, now_msec)
+
+
+func _pusher_v3_10_hold_path_result(game: GameModule, run_state: RunState, environment: Dictionary, input_path: String, frame_rate: int, reduce_motion: bool) -> Dictionary:
+	var canvas: Control = PusherGameSurfaceCanvasScript.new()
+	canvas.size = Vector2(768, 432)
+	canvas.set("reduce_motion", reduce_motion)
+	root.add_child(canvas)
+	canvas.call("surface_add_hold_hit", Rect2(40, 40, 80, 60), "coin_pusher_drop_charge")
+	var result_box := {"ui_state": {}, "ending": {}}
+	canvas.surface_pointer_action.connect(func(action: String, index: int, phase: String, position: Vector2) -> void:
+		var command: Dictionary = game.surface_pointer_command(action, index, phase, position, result_box.get("ui_state", {}), run_state, environment)
+		result_box["ui_state"] = command.get("ui_state", result_box.get("ui_state", {}))
+		if phase in ["end", "cancel"]:
+			result_box["ending"] = command
+	)
+	var position := Vector2(80, 70)
+	if input_path == "mouse":
+		var press := InputEventMouseButton.new()
+		press.button_index = MOUSE_BUTTON_LEFT
+		press.pressed = true
+		press.position = position
+		canvas.call("_gui_input", press)
+	elif input_path == "keyboard":
+		var press := InputEventKey.new()
+		press.keycode = KEY_ENTER
+		press.pressed = true
+		canvas.call("_gui_input", press)
+	else:
+		var press := InputEventJoypadButton.new()
+		press.button_index = JOY_BUTTON_A
+		press.pressed = true
+		canvas.call("_gui_input", press)
+	var live_map: Dictionary = game.get("_live_machines")
+	var live: Dictionary = live_map.values()[0] if not live_map.is_empty() else {}
+	var simulation: Dictionary = live.get("simulation", {}) if typeof(live.get("simulation", {})) == TYPE_DICTIONARY else {}
+	var start_tick := int(simulation.get("tick", 0))
+	_pusher_v3_10_advance_live_seconds(live, frame_rate, 3)
+	if input_path == "mouse":
+		var release := InputEventMouseButton.new()
+		release.button_index = MOUSE_BUTTON_LEFT
+		release.pressed = false
+		# Release outside the hit region is still the captured hold's release.
+		release.position = Vector2(700, 400)
+		canvas.call("_gui_input", release)
+	elif input_path == "keyboard":
+		var release := InputEventKey.new()
+		release.keycode = KEY_ENTER
+		release.pressed = false
+		canvas.call("_gui_input", release)
+	else:
+		var release := InputEventJoypadButton.new()
+		release.button_index = JOY_BUTTON_A
+		release.pressed = false
+		canvas.call("_gui_input", release)
+	var ending: Dictionary = result_box.get("ending", {})
+	ending["elapsed_ticks"] = int(simulation.get("tick", 0)) - start_tick
+	ending["input_path"] = input_path
+	ending["frame_rate"] = frame_rate
+	ending["reduce_motion"] = reduce_motion
+	canvas.free()
+	return ending
+
+
+func _check_pusher_v3_10_opening_generation_guard(machine_definition: Dictionary, failures: Array) -> void:
+	# This is deliberately a catalog/seed matrix rather than a single pretty
+	# snapshot. Every production opening must physically settle, cover both
+	# shelf regions in every third, and remain completely passive thereafter.
+	var machines: Dictionary = machine_definition.get("machines", {}) if typeof(machine_definition.get("machines", {})) == TYPE_DICTIONARY else {}
+	var definitions := {
+		"quarter_falls": machine_definition,
+		"jackpot_ridge": machines.get("jackpot_ridge", {}),
+		"vault_drop": machines.get("vault_drop", {}),
+	}
+	var production_opening := CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-V3-10-OPENING-PRODUCTION-BYTES"), machine_definition, 150)
+	if production_opening.has("opening_settle_report"):
+		failures.append("pusherv3_10 production opening leaked opt-in settle diagnostics into serialized machine state.")
+	for machine_id in definitions:
+		var definition: Dictionary = definitions[machine_id]
+		var width := int((definition.get("geometry", {}) as Dictionary).get("width", 100000))
+		var opening_count := 154 if machine_id == "vault_drop" else 150
+		for seed_index in range(4):
+			var state := CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-V3-10-OPENING-%s-%d" % [machine_id, seed_index]), definition, opening_count, true)
+			var settle_report: Dictionary = state.get("opening_settle_report", {}) if typeof(state.get("opening_settle_report", {})) == TYPE_DICTIONARY else {}
+			var occupancy := [[0, 0], [0, 0], [0, 0]]
+			var contacts := [[0, 0], [0, 0], [0, 0]]
+			var bodies: Array = state.get("bodies", [])
+			for body_value in bodies:
+				var body: Dictionary = body_value
+				var third := clampi(int(body.get("x", 0)) * 3 / maxi(1, width), 0, 2)
+				var region := 1 if int(body.get("y", 0)) >= int(state.get("face_y", (definition.get("geometry", {}) as Dictionary).get("face_extended_y", 43000))) else 0
+				occupancy[third][region] += 1
+				if _pusher_v3_body_has_genuine_contact(body, bodies):
+					contacts[third][region] += 1
+			var invalid_matrix := false
+			for third in range(3):
+				for region in range(2):
+					invalid_matrix = invalid_matrix or occupancy[third][region] < 2 or contacts[third][region] < 1
+			var center_dominates: bool = int(occupancy[1][0]) > maxi(int(occupancy[0][0]), int(occupancy[2][0])) * 2 or int(occupancy[1][1]) > maxi(int(occupancy[0][1]), int(occupancy[2][1])) * 2
+			if invalid_matrix or center_dominates:
+				failures.append("pusherv3_10 %s seed %d opening lost lower/upper useful stock or contact coverage: occupancy=%s contacts=%s." % [machine_id, seed_index, JSON.stringify(occupancy), JSON.stringify(contacts)])
+			if int(settle_report.get("physical_ticks", 0)) <= 0 or int(settle_report.get("awake_count", -1)) != 0 or int(settle_report.get("unsupported_count", -1)) != 0 or int(settle_report.get("tray_count", -1)) != 0 or int(settle_report.get("gutter_count", -1)) != 0:
+				failures.append("pusherv3_10 %s seed %d was not physically settled at generation: settle=%s." % [machine_id, seed_index, JSON.stringify(settle_report)])
+			# The occupancy/contact proof retains all twelve contexts. One opening
+			# per production machine then pays the full five-period passive cost;
+			# running the identical idle transition four times adds no class proof.
+			if seed_index == 0:
+				var before := CoinPusherSolverScript.canonical_digest(state)
+				var idle := CoinPusherSolverScript.step_ticks_reference_for_test(state, {"motor_enabled": false}, 1200)
+				var after := CoinPusherSolverScript.canonical_digest(state)
+				before.erase("tick")
+				after.erase("tick")
+				if before != after or not (idle.get("events", []) as Array).is_empty() or int(state.get("motor_rate_fp", -1)) != 0:
+					failures.append("pusherv3_10 %s was not byte-stable through five passive periods: events=%d motor=%d." % [machine_id, (idle.get("events", []) as Array).size(), int(state.get("motor_rate_fp", -1))])
+
+	# Hostile class guard: production opening generation may never manufacture a
+	# rest state by setting sleep or deleting motion. The dense benchmark fixture
+	# is intentionally outside this source slice.
+	var solver_source := FileAccess.get_file_as_string("res://scripts/games/coin_pusher/coin_pusher_solver.gd")
+	var seed_start := solver_source.find("static func _seed_opening_machine")
+	var seed_end := solver_source.find("static func _seed_dense_benchmark_machine", seed_start)
+	var opening_source := solver_source.substr(seed_start, seed_end - seed_start) if seed_start >= 0 and seed_end > seed_start else ""
+	if opening_source.is_empty() or opening_source.contains("body[\"sleeping\"] = true") or opening_source.contains("body.erase(\"vx\")") or opening_source.contains("body.erase(\"vz\")"):
+		failures.append("pusherv3_10 opening generation bypassed deterministic physical settlement by manufacturing sleeping bodies or erasing motion fields.")
+
+
+func _pusher_v3_body_has_genuine_contact(body: Dictionary, bodies: Array) -> bool:
+	if not (body.get("support_ids", []) as Array).is_empty():
+		return true
+	for other_value in bodies:
+		var other: Dictionary = other_value
+		if str(other.get("id", "")) == str(body.get("id", "")):
+			continue
+		var dx := int(other.get("x", 0)) - int(body.get("x", 0))
+		var dy := int(other.get("y", 0)) - int(body.get("y", 0))
+		var reach := int(other.get("radius", 0)) + int(body.get("radius", 0)) + 120
+		var body_bottom := int(body.get("z", 0))
+		var body_top := body_bottom + int(body.get("height", 0))
+		var other_bottom := int(other.get("z", 0))
+		var other_top := other_bottom + int(other.get("height", 0))
+		var vertical_gap := maxi(0, maxi(body_bottom - other_top, other_bottom - body_top))
+		if vertical_gap <= 120 and dx * dx + dy * dy <= reach * reach:
+			return true
+	return false
+
+
+func _check_pusher_v3_10_stack_support_matrix(machine: Dictionary, failures: Array) -> void:
+	var definition := machine.duplicate(true)
+	(definition.get("apparatus", {}) as Dictionary)["pegs"] = []
+	for support_count in [1, 2, 3]:
+		var state := CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-V3-10-SUPPORT-%d" % support_count), definition, 0)
+		var fixtures: Array = []
+		var offsets := [0] if support_count == 1 else ([-2200, 2200] if support_count == 2 else [-3600, 0, 3600])
+		for index in range(support_count):
+			var support := _pusher_v3_body_fixture("support_%d" % index, 50000 + int(offsets[index]), 30000, 0, true, "deck")
+			support["radius"] = 2350
+			support["height"] = 950
+			fixtures.append(support)
+		var upper := _pusher_v3_body_fixture("upper", 50000, 30000, 620, false, "")
+		upper["radius"] = 2350
+		upper["height"] = 950
+		upper["rest_state"] = "falling"
+		upper["vz"] = -1000
+		upper["meta"] = {"value": 1, "inserted": true}
+		fixtures.append(upper)
+		state["bodies"] = fixtures
+		state["opening_body_count"] = support_count
+		state["accepted_inserts"] = 1
+		var anchors: Array = fixtures.slice(0, support_count).map(func(body): return [int((body as Dictionary).get("x", 0)), int((body as Dictionary).get("z", 0))])
+		var events: Array = []
+		for _tick in range(30):
+			events.append_array((CoinPusherSolverScript.step_ticks_reference_for_test(state, {"motor_enabled": false}, 1)).get("events", []))
+		for index in range(support_count):
+			var resolved := _pusher_v3_body(state, "support_%d" % index)
+			if [int(resolved.get("x", 0)), int(resolved.get("z", 0))] != anchors[index]:
+				failures.append("pusherv3_10 %d-support landing separated or displaced a support anchor." % support_count)
+		var resolved_upper := _pusher_v3_body(state, "upper")
+		var first_support_events: Array = events.filter(func(event): return str((event as Dictionary).get("body_id", "")) == "upper" and bool((event as Dictionary).get("first_support", false)))
+		var upper_meta: Dictionary = resolved_upper.get("meta", {}) if typeof(resolved_upper.get("meta", {})) == TYPE_DICTIONARY else {}
+		if str(upper_meta.get("landing_quality", "")) != "supported_bad" or first_support_events.size() != 1:
+			failures.append("pusherv3_10 %d-support fixture did not classify one stable supported_bad landing: quality=%s events=%d." % [support_count, str(upper_meta.get("landing_quality", "")), first_support_events.size()])
+
+	# Side impact is unilateral too: an upper body may slide/fall, but it may
+	# never impart horizontal separation to its supporting bed.
+	var side_state := CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-V3-10-SIDE-IMPACT"), definition, 0)
+	var side_left := _pusher_v3_body_fixture("side_left", 47600, 30000, 0, true, "deck")
+	var side_right := _pusher_v3_body_fixture("side_right", 52400, 30000, 0, true, "deck")
+	var side_upper := _pusher_v3_body_fixture("side_upper", 50000, 30000, 1000, false, "")
+	for side_body in [side_left, side_right, side_upper]:
+		side_body["radius"] = 2350
+		side_body["height"] = 950
+	side_upper["vx"] = 9000
+	side_upper["rest_state"] = "falling"
+	side_upper["meta"] = {"value": 1, "inserted": true}
+	side_state["bodies"] = [side_left, side_right, side_upper]
+	side_state["opening_body_count"] = 2
+	side_state["accepted_inserts"] = 1
+	var side_anchors := [int(side_left.get("x", 0)), int(side_right.get("x", 0))]
+	CoinPusherSolverScript.step_ticks_reference_for_test(side_state, {"motor_enabled": false}, 30)
+	if [int(_pusher_v3_body(side_state, "side_left").get("x", 0)), int(_pusher_v3_body(side_state, "side_right").get("x", 0))] != side_anchors:
+		failures.append("pusherv3_10 side-impact upper body transferred prohibited horizontal separation into its supports.")
 
 
 func _check_pusher_v3_alive_cabinet(library: ContentLibrary, machine: Dictionary, failures: Array) -> void:
@@ -787,14 +1103,18 @@ func _check_pusher_v3_played_in_opening_state(library: ContentLibrary, game_defi
 			var production_state := CoinPusherLiveSessionScript.restore_snapshot(snapshot, definition)
 			var production_bodies: Array = production_state.get("bodies", [])
 			var feature_count := 0
+			var pinned_opening_features := 0
 			for body_value in production_bodies:
 				if typeof(body_value) == TYPE_DICTIONARY and str((body_value as Dictionary).get("kind", "coin")) != "coin":
 					feature_count += 1
+					var feature_body: Dictionary = body_value
+					if bool(feature_body.get("carried_sleep", false)) or (str(feature_body.get("support_kind", "")) == "body" and (not feature_body.has("support_anchor_x") or not feature_body.has("support_anchor_y"))):
+						pinned_opening_features += 1
 			var minimum_features := 1 if variation_id == "quarter_falls" else 4 if variation_id == "jackpot_ridge" else 6
 			var production_deterministic := JSON.stringify(snapshot, "", true) == JSON.stringify(repeated.get("settled_state", {}), "", true)
 			var production_upper := _pusher_v3_elevated_opening_count(production_state, definition)
-			if not production_deterministic or production_bodies.size() < opening_count + minimum_features or feature_count < minimum_features or int(snapshot.get("tray_count", 0)) != 0 or production_upper < 8 or _pusher_v3_overlap_pair_count(production_bodies) != 0:
-				failures.append("Coin Pusher V3 %s production opening is not a deterministic collision-valid stock-plus-feature state: seed=%d deterministic=%s bodies=%d features=%d tray=%d upper=%d overlaps=%s." % [variation_id, production_seed_index, str(production_deterministic), production_bodies.size(), feature_count, int(snapshot.get("tray_count", 0)), production_upper, JSON.stringify(_pusher_v3_overlap_pair_details(production_bodies))])
+			if not production_deterministic or production_bodies.size() < opening_count + minimum_features or feature_count < minimum_features or pinned_opening_features > 0 or int(snapshot.get("tray_count", 0)) != 0 or production_upper < 8 or _pusher_v3_overlap_pair_count(production_bodies) != 0:
+				failures.append("Coin Pusher V3 %s production opening is not a deterministic collision-valid stock-plus-feature state: seed=%d deterministic=%s bodies=%d features=%d pinned_features=%d tray=%d upper=%d overlaps=%s." % [variation_id, production_seed_index, str(production_deterministic), production_bodies.size(), feature_count, pinned_opening_features, int(snapshot.get("tray_count", 0)), production_upper, JSON.stringify(_pusher_v3_overlap_pair_details(production_bodies))])
 				return
 		var variation_max_payout := 0
 		var variation_max_total := 0
@@ -906,14 +1226,20 @@ func _pusher_v3_overlap_pair_details(bodies: Array) -> Array:
 
 func _check_pusher_v3_shipped_variant_definitions(machine: Dictionary, failures: Array) -> void:
 	var shipped: Dictionary = machine.get("machines", {}) if typeof(machine.get("machines", {})) == TYPE_DICTIONARY else {}
-	for variation_id in ["jackpot_ridge", "vault_drop"]:
-		var definition: Dictionary = shipped.get(variation_id, {}) if typeof(shipped.get(variation_id, {})) == TYPE_DICTIONARY else {}
+	var definitions := {"quarter_falls": machine, "jackpot_ridge": shipped.get("jackpot_ridge", {}), "vault_drop": shipped.get("vault_drop", {})}
+	for variation_id in definitions:
+		var definition: Dictionary = definitions[variation_id] if typeof(definitions[variation_id]) == TYPE_DICTIONARY else {}
 		var apparatus: Dictionary = definition.get("apparatus", {}) if typeof(definition.get("apparatus", {})) == TYPE_DICTIONARY else {}
 		var board: Dictionary = apparatus.get("drop_board", {}) if typeof(apparatus.get("drop_board", {})) == TYPE_DICTIONARY else {}
 		var nozzles: Array = apparatus.get("nozzles", []) if typeof(apparatus.get("nozzles", [])) == TYPE_ARRAY else []
 		var targets: Array = apparatus.get("targets", []) if typeof(apparatus.get("targets", [])) == TYPE_ARRAY else []
 		if definition.is_empty() or int(board.get("z_top", 0)) < 48000 or nozzles.is_empty() or targets.size() < 2 or int(apparatus.get("release_interval_ticks", 0)) != 6 or int(apparatus.get("chain_depth_cap", 0)) != 3:
 			failures.append("Coin Pusher V3 %s is missing its tall Plinko board, physical nozzles, rare cups, or bounded feed contract." % variation_id)
+		for target_value in targets:
+			var target: Dictionary = target_value if typeof(target_value) == TYPE_DICTIONARY else {}
+			var reward: Dictionary = target.get("reward", {}) if typeof(target.get("reward", {})) == TYPE_DICTIONARY else {}
+			if str(reward.get("kind", "")) != "drop_multiplier" or int(reward.get("count", 0)) <= 0 or int(target.get("cup_depth", 0)) <= 0 or not str(target.get("label", "")).begins_with("+"):
+				failures.append("Coin Pusher V3 %s target %s is not a visible bonus-token catch cup." % [variation_id, str(target.get("id", ""))])
 	return
 	var ridge_pegs: Array = []
 	var ridge_rows := [
@@ -1256,7 +1582,7 @@ func _check_pusher_v3_landing_skill(machine: Dictionary, failures: Array) -> voi
 			var reward: Dictionary = target.get("reward", {}) if typeof(target.get("reward", {})) == TYPE_DICTIONARY else {}
 			# A 5X cup becomes supercritical at a 20% capture rate. The stricter 8%
 			# per-nozzle ceiling leaves substantial margin for bounded rare chains;
-			# cash cups use a 10% ceiling so neither reward can become a parking exploit.
+			# Bonus-token cups use a 10% ceiling so neither reward can become a parking exploit.
 			var maximum_rate := 0.08 if str(reward.get("kind", "")) == "drop_multiplier" else 0.10
 			for nozzle_key in traversal_metrics:
 				var metrics: Dictionary = traversal_metrics[nozzle_key]
@@ -2649,6 +2975,14 @@ func _check_pusher_v3_ridge_physical_contract(library: ContentLibrary, failures:
 	var definition: Dictionary = game.call("_machine_definition", "jackpot_ridge")
 	var config: Dictionary = definition.get("sub_game", {}) if typeof(definition.get("sub_game", {})) == TYPE_DICTIONARY else {}
 	var variation := JackpotRidgeVariationScript.initial_state(config, _pusher_v3_rng("RIDGE-PHYSICAL-STATE"), 3, 5)
+	var restock_a := JackpotRidgeVariationScript.initial_state(config, _pusher_v3_rng("RIDGE-RESTOCK"), 3, 5)
+	var restock_b := JackpotRidgeVariationScript.initial_state(config, _pusher_v3_rng("RIDGE-RESTOCK"), 3, 5)
+	for restock_state in [restock_a, restock_b]:
+		restock_state["pucks"] = []
+		restock_state["puck_schedule"] = []
+		JackpotRidgeVariationScript.prepare_action(restock_state, 1000, config)
+	if (restock_a.get("pucks", []) as Array).size() < maxi(3, int(config.get("puck_floor", 4))) or JSON.stringify(restock_a, "", true) != JSON.stringify(restock_b, "", true):
+		failures.append("Jackpot Ridge did not deterministically replenish its persistent headline-puck floor.")
 	var simulation := _pusher_v3_state(definition, "RIDGE-PHYSICAL-SIM")
 	var holes: Array = (definition.get("apparatus", {}) as Dictionary).get("holes", [])
 	var board: Dictionary = (definition.get("apparatus", {}) as Dictionary).get("drop_board", {})
@@ -2715,7 +3049,7 @@ func _check_pusher_v3_ridge_physical_contract(library: ContentLibrary, failures:
 	var run_events: Dictionary = _pusher_v3_step_until_bodies_exit(run_sim, ["body_00001", "body_00002", "body_00003"], 60, true)
 	var run_outcome: Dictionary = JackpotRidgeVariationScript.apply_physical_events(run_state, run_events.get("events", []), config, 4)
 	if not bool(run_outcome.get("ridge_run_triggered", false)) or int(run_state.get("ridge_run_count", 0)) != 1 or JackpotRidgeVariationScript.motor_rate_multiplier(run_state, config) != 2:
-		failures.append("Jackpot Ridge Run did not arise once from three same-cycle physical banks at rate 2.")
+		failures.append("Jackpot Ridge Run did not arise once from three physical multiplier-puck banks at rate 2.")
 	# The trigger cycle is not one of the three promised full bonus cycles. The
 	# motor must remain doubled throughout cycles 5, 6, and 7, then return at 8.
 	var boundary_remaining: Array = []
@@ -2735,8 +3069,8 @@ func _check_pusher_v3_ridge_physical_contract(library: ContentLibrary, failures:
 		{"body_kind": "puck", "outcome": "tray", "stroke_cycle": 5, "metadata": {"feature_id": "split_c"}},
 	]
 	var split_outcome := JackpotRidgeVariationScript.apply_physical_events(split_state, split_events, config, 5)
-	if bool(split_outcome.get("ridge_run_triggered", false)) or int(split_state.get("ridge_run_count", 0)) != 0:
-		failures.append("Jackpot Ridge Run incorrectly combined multiplier banks split across physical cycles.")
+	if not bool(split_outcome.get("ridge_run_triggered", false)) or int(split_state.get("ridge_run_count", 0)) != 1 or int(split_state.get("ridge_goal_progress", -1)) != 0:
+		failures.append("Jackpot Ridge Run did not retain clear goal progress across physical cycles.")
 
 	# Production path: a real solver tray event snapshots the active multiplier
 	# onto that same coin, and money moves only through the cabinet COLLECT action.
@@ -2809,12 +3143,32 @@ func _check_pusher_v3_vault_physical_contract(library: ContentLibrary, failures:
 	var definition: Dictionary = game.call("_machine_definition", "vault_drop")
 	var config: Dictionary = definition.get("sub_game", {}) if typeof(definition.get("sub_game", {})) == TYPE_DICTIONARY else {}
 	var state := VaultDropVariationScript.initial_state(config, _pusher_v3_rng("VAULT-PHYSICAL-STATE"), 5, 5, "vault_contract")
+	var restock_a := VaultDropVariationScript.initial_state(config, _pusher_v3_rng("VAULT-RESTOCK"), 5, 5, "vault_restock")
+	var restock_b := VaultDropVariationScript.initial_state(config, _pusher_v3_rng("VAULT-RESTOCK"), 5, 5, "vault_restock")
+	for restock_state in [restock_a, restock_b]:
+		restock_state["fragments"] = []
+		restock_state["fragment_schedule"] = []
+		VaultDropVariationScript.prepare_action(restock_state, 1000, config)
+	if (restock_a.get("fragments", []) as Array).size() < maxi(3, int(config.get("fragment_floor", 3))) or JSON.stringify(restock_a, "", true) != JSON.stringify(restock_b, "", true):
+		failures.append("Vault Drop did not deterministically replenish its persistent headline-fragment floor.")
 	var reset_count := 0
 	for cell_value in state.get("vault_cells", []):
 		if typeof(cell_value) == TYPE_DICTIONARY and str((cell_value as Dictionary).get("kind", "")) == "reset":
 			reset_count += 1
 	if (state.get("vault_cells", []) as Array).size() != 9 or reset_count != 1 or not is_equal_approx(float(config.get("reset_odds_floor", 0.0)), 1.0 / 9.0):
 		failures.append("Vault Drop shipped cell schema is not exactly nine cells with one RESET (1/9).")
+	var cycle_state := VaultDropVariationScript.initial_state(config, _pusher_v3_rng("VAULT-CYCLE"), 5, 5, "vault_cycle")
+	cycle_state["banked_fragments"] = 10
+	VaultDropVariationScript.start_round(cycle_state)
+	for cell_index in range((cycle_state.get("vault_cells", []) as Array).size()):
+		VaultDropVariationScript.open_cell(cycle_state, cell_index)
+	var next_cycle := VaultDropVariationScript.start_round(cycle_state)
+	var reopened_cells := 0
+	for cell_value in cycle_state.get("vault_cells", []):
+		if typeof(cell_value) == TYPE_DICTIONARY and not bool((cell_value as Dictionary).get("opened", true)):
+			reopened_cells += 1
+	if not bool(next_cycle.get("ok", false)) or int(cycle_state.get("vault_cycle_count", 0)) != 1 or reopened_cells != 9:
+		failures.append("Vault Drop did not roll a completed nine-cell board into a fresh deterministic vault cycle.")
 	state["fragments"] = [{"id": "vault_fragment_contract"}]
 	var simulation := _pusher_v3_state(definition, "VAULT-PHYSICAL-SIM")
 	CoinPusherSolverScript.add_feature(simulation, "fragment", "vault_fragment_contract", 50000, 5000, {"z": 0, "radius": 5200, "height": 2800, "mass": 1800})

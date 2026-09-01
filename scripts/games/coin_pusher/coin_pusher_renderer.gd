@@ -236,6 +236,10 @@ func _draw_backglass(surface, state: Dictionary, cabinet: Dictionary, colors: Di
 	var rect := BACKGLASS_RECT
 	surface.draw_rect(rect, colors["backglass"])
 	surface.draw_rect(rect, colors["trim"], false, 2.0)
+	var goal: Dictionary = state.get("coin_pusher_goal", {}) if typeof(state.get("coin_pusher_goal", {})) == TYPE_DICTIONARY else {}
+	if not goal.is_empty():
+		_draw_goal_backglass(surface, rect, goal, colors)
+		return
 	var display: Dictionary = cabinet.get("backglass_display", {}) if typeof(cabinet.get("backglass_display", {})) == TYPE_DICTIONARY else {}
 	match str(display.get("style", "none")):
 		"value_lamps":
@@ -270,6 +274,27 @@ func _draw_backglass(surface, state: Dictionary, cabinet: Dictionary, colors: Di
 					surface.surface_label_centered(str(case_captions[case_index]), Rect2(case_rect.position + Vector2(2, 14), Vector2(case_rect.size.x - 4, 8)), 6, colors["light"] if live_case else Color(colors["light"], 0.44))
 			if case_symbols.is_empty():
 				surface.surface_label_centered(str(display.get("label_template", "%d")) % prize_count, rect, 11, colors["light"])
+
+
+func _draw_goal_backglass(surface, rect: Rect2, goal: Dictionary, colors: Dictionary) -> void:
+	var target := maxi(1, int(goal.get("target", 1)))
+	var progress := clampi(int(goal.get("progress", 0)), 0, target)
+	var active := bool(goal.get("active", false))
+	var title_color: Color = Color.WHITE if active else colors["light"]
+	surface.surface_label_centered(str(goal.get("title", "MACHINE GOAL")), Rect2(rect.position + Vector2(8, 2), Vector2(154, 14)), 9, title_color)
+	surface.surface_label_centered(str(goal.get("instruction", "PUSH THE FEATURE PIECES")), Rect2(rect.position + Vector2(164, 1), Vector2(430, 15)), 8, colors["light"])
+	var bonus := maxi(0, int(goal.get("bonus_tokens", 0)))
+	var progress_label := "%d/%d" % [progress, target]
+	if bonus > 0:
+		progress_label += "  +%d TOKENS" % bonus
+	surface.surface_label_centered(progress_label, Rect2(rect.position + Vector2(596, 1), Vector2(144, 15)), 8, title_color)
+	var gap := 3.0
+	var segment_width := minf(36.0, (rect.size.x - 20.0 - gap * float(target - 1)) / float(target))
+	var total_width := segment_width * float(target) + gap * float(target - 1)
+	var start_x := rect.get_center().x - total_width * 0.5
+	for index in range(target):
+		var segment := Rect2(start_x + float(index) * (segment_width + gap), rect.end.y - 6.0, segment_width, 3.0)
+		surface.draw_rect(segment, colors["light"] if index < progress or active else Color(colors["light"], 0.18))
 
 
 func _draw_playfield(surface, state: Dictionary, colors: Dictionary, cabinet: Dictionary, draw_static_pre: bool = true, draw_platform: bool = true, draw_static_post: bool = true, draw_bodies: bool = true) -> void:
@@ -386,14 +411,31 @@ func _draw_delivery_targets(surface, apparatus: Dictionary, geometry: Dictionary
 		if typeof(target_value) != TYPE_DICTIONARY:
 			continue
 		var target: Dictionary = target_value
-		var center := _project_delivery_board_point(board, float(target.get("x", 0)), float(target.get("z", board.get("z_bottom", 3600))))
+		var target_x := float(target.get("x", 0))
+		var target_z := float(target.get("z", board.get("z_bottom", 3600)))
+		var center := _project_delivery_board_point(board, target_x, target_z)
 		var mouth_radius := maxf(1.0, float(target.get("mouth_radius", 2200)))
-		var rx := center.distance_to(_project_delivery_board_point(board, float(target.get("x", 0)) + mouth_radius, float(target.get("z", 0))))
+		var rx := maxf(7.0, center.distance_to(_project_delivery_board_point(board, target_x + mouth_radius, target_z)))
+		var cup_depth := maxf(2400.0, float(target.get("cup_depth", 5200)))
+		var bottom := _project_delivery_board_point(board, target_x, target_z - cup_depth)
 		var reward: Dictionary = target.get("reward", {}) if typeof(target.get("reward", {})) == TYPE_DICTIONARY else {}
-		var label := "%dX" % int(reward.get("count", 0)) if str(reward.get("kind", "")) == "drop_multiplier" else str(target.get("label", "CUP"))
-		surface.draw_circle(center, maxf(5.0, rx + 4.0), colors["trim"])
-		surface.draw_circle(center, maxf(3.0, rx), Color("#06090c"))
-		surface.surface_label_centered(label, Rect2(center - Vector2(18, 7), Vector2(36, 14)), 9, colors["light"])
+		var label := str(target.get("label", "+%d" % int(reward.get("count", 0))))
+		# A readable catch cup has a wide illuminated mouth, side walls, and a
+		# visible bucket below the capture plane.  The prior concentric circles read
+		# as abstract score dots and hid which side of the target actually caught a
+		# descending token.
+		var depth_px := clampf(bottom.y - center.y, 13.0, 28.0)
+		var lip_left := center + Vector2(-rx - 4.0, 0.0)
+		var lip_right := center + Vector2(rx + 4.0, 0.0)
+		var bucket_left := center + Vector2(-rx * 0.62, depth_px)
+		var bucket_right := center + Vector2(rx * 0.62, depth_px)
+		surface.surface_filled_polygon(PackedVector2Array([lip_left, lip_right, bucket_right, bucket_left]), colors["side"].darkened(0.12))
+		surface.draw_line(lip_left, bucket_left, colors["trim"], 3.0)
+		surface.draw_line(lip_right, bucket_right, colors["trim"], 3.0)
+		surface.draw_line(bucket_left, bucket_right, colors["trim"], 3.0)
+		surface.draw_line(lip_left, lip_right, colors["light"], 5.0)
+		surface.draw_line(lip_left + Vector2(3, 1), lip_right - Vector2(3, -1), Color("#06090c"), 2.0)
+		surface.surface_label_centered(label, Rect2(center.x - 22.0, center.y + 5.0, 44.0, depth_px - 4.0), 9, colors["light"])
 
 
 func _draw_filled_peg_ellipse(surface, center: Vector2, rx: float, ry: float, color: Color) -> void:

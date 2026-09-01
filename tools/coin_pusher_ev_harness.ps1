@@ -167,6 +167,8 @@ foreach ($machine in $machines) {
     $fragments = [int64](($reports | ForEach-Object { $_.economy.physically_banked_fragments_excluded_from_base_roi } | Measure-Object -Sum).Sum)
     $targetInstantValue = [int64](($reports | ForEach-Object { $_.economy.plinko_target_instant_payout_value_excluded_from_base_roi } | Measure-Object -Sum).Sum)
     $targetBonusDrops = [int64](($reports | ForEach-Object { $_.economy.plinko_target_bonus_drop_award_count_excluded_from_base_roi } | Measure-Object -Sum).Sum)
+    $featureBonusDrops = [int64](($reports | ForEach-Object { $_.economy.feature_bonus_drop_award_count_excluded_from_base_roi } | Measure-Object -Sum).Sum)
+    $quarterPrizeGoalCompletions = [int64](($reports | ForEach-Object { $_.economy.quarter_prize_goal_completions } | Measure-Object -Sum).Sum)
     $targetCaptureCounts = @{}
     foreach ($report in $reports) {
         foreach ($property in $report.economy.plinko_target_capture_counts.PSObject.Properties) {
@@ -235,6 +237,8 @@ foreach ($machine in $machines) {
         plinko_target_capture_counts = $targetCaptureCounts
         plinko_target_instant_payout_value_excluded_from_base_roi = $targetInstantValue
         plinko_target_bonus_drop_award_count_excluded_from_base_roi = $targetBonusDrops
+        feature_bonus_drop_award_count_excluded_from_base_roi = $featureBonusDrops
+        quarter_prize_goal_completions = $quarterPrizeGoalCompletions
         plinko_target_value_merged_into_physical_roi = $false
         vault_option_value_sampling = if ($machine -eq "vault_drop") {
             [ordered]@{
@@ -286,6 +290,7 @@ $finalReport = [ordered]@{
         vault_option_value_uses_only_physically_banked_fragment_ids_and_real_subgame_actions = $true
         ridge_credited_roi_separate = $true
         plinko_target_capture_and_reward_value_separate = $true
+        weighted_feature_bonus_feeds_reported_separately = $true
     }
     elapsed_seconds = ((Get-Date) - $startedAt).TotalSeconds
     process_failures = $processFailures

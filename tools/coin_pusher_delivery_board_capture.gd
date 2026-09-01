@@ -17,6 +17,7 @@ var game: GameModule
 var out_dir := ""
 var failed := false
 var manifest_variations: Array = []
+var cup_sequences: Array = []
 
 
 func _init() -> void:
@@ -47,6 +48,7 @@ func _run() -> void:
 	app.set_process(false)
 	for variation_value in VARIATIONS:
 		await _capture_variation(variation_value)
+	await _capture_cup_sequences()
 	if manifest_variations.size() != VARIATIONS.size():
 		_fail("Delivery capture produced %d/%d required variation records." % [manifest_variations.size(), VARIATIONS.size()])
 	_write_manifest()
@@ -192,6 +194,65 @@ func _capture_variation(spec: Dictionary) -> void:
 	})
 
 
+func _capture_cup_sequences() -> void:
+	# Recover the closure branch's real target/near-miss evidence, expanded to
+	# Quarter Falls now that every cabinet owns bonus-token cups.  These fixtures
+	# exercise the same solver volumes the player hits; no reward is painted into
+	# a screenshot without a physical consume event behind it.
+	for variation_value in VARIATIONS:
+		var variation_id := str((variation_value as Dictionary).get("id", ""))
+		var definition: Dictionary = game.call("_machine_definition", variation_id)
+		var apparatus: Dictionary = definition.get("apparatus", {}) if typeof(definition.get("apparatus", {})) == TYPE_DICTIONARY else {}
+		var targets: Array = apparatus.get("targets", []) if typeof(apparatus.get("targets", [])) == TYPE_ARRAY else []
+		var drop_board: Dictionary = apparatus.get("drop_board", {}) if typeof(apparatus.get("drop_board", {})) == TYPE_DICTIONARY else {}
+		for target_value in targets:
+			if typeof(target_value) != TYPE_DICTIONARY:
+				continue
+			var target: Dictionary = target_value
+			var target_id := str(target.get("id", ""))
+			var state := Solver.create_machine(_rng("capture-cup:%s:%s" % [variation_id, target_id]), definition, 0)
+			var before_views := Solver.body_views(state)
+			var coin := Solver.add_coin(state, _rng("capture-cup-coin:%s:%s" % [variation_id, target_id]), int(target.get("x", 0)), 1, {"source_nozzle_id": "capture_fixture", "visible_acceptance": true})
+			coin["x"] = int(target.get("x", 0))
+			coin["y"] = int(drop_board.get("y", 73000))
+			coin["z"] = int(target.get("z", 0))
+			coin["rest_state"] = "falling"
+			coin["vz"] = -1000
+			var body_id := str(coin.get("id", ""))
+			var entry := _frame_record(state, before_views, body_id, [])
+			var stepped: Dictionary = Solver.step_ticks_reference_for_test(state, {"motor_enabled": false}, 1)
+			var events: Array = stepped.get("events", []) if typeof(stepped.get("events", [])) == TYPE_ARRAY else []
+			var resolved := _frame_record(state, entry.get("current_views", []), body_id, events)
+			var cup_events: Array = events.filter(func(event): return str((event as Dictionary).get("kind", "")) == "plinko_cup" and str((event as Dictionary).get("target_id", "")) == target_id)
+			var file_name := "%s_%s_bonus_cup.png" % [variation_id, target_id]
+			var saved := _save_sequence_strip([await _render_frame(definition, variation_id, entry, false), await _render_frame(definition, variation_id, resolved, false)], "%s/%s" % [out_dir, file_name])
+			var passed := saved and cup_events.size() == 1 and (state.get("bodies", []) as Array).is_empty() and int(state.get("cup_consumed_count", 0)) == 1
+			if not passed:
+				_fail("Bonus-token cup sequence failed for %s/%s." % [variation_id, target_id])
+			cup_sequences.append({"id": target_id, "kind": "bonus_token_cup", "variation_id": variation_id, "capture": file_name, "event": cup_events[0] if not cup_events.is_empty() else {}, "passed": passed})
+		if targets.is_empty():
+			_fail("%s has no authored bonus-token cups to capture." % variation_id)
+			continue
+		var near_target: Dictionary = targets[0]
+		var miss_state := Solver.create_machine(_rng("capture-cup-near-miss:%s" % variation_id), definition, 0)
+		var miss_coin := Solver.add_coin(miss_state, _rng("capture-cup-near-miss-coin:%s" % variation_id), int(near_target.get("x", 0)), 1)
+		miss_coin["x"] = int(near_target.get("x", 0)) + int(near_target.get("mouth_radius", 1000)) + 100
+		miss_coin["y"] = int(drop_board.get("y", 73000))
+		miss_coin["z"] = int(near_target.get("z", 0))
+		miss_coin["rest_state"] = "falling"
+		var miss_id := str(miss_coin.get("id", ""))
+		var miss_before := _frame_record(miss_state, [], miss_id, [])
+		var miss_step: Dictionary = Solver.step_ticks_reference_for_test(miss_state, {"motor_enabled": false}, 1)
+		var miss_events: Array = miss_step.get("events", []) if typeof(miss_step.get("events", [])) == TYPE_ARRAY else []
+		var miss_after := _frame_record(miss_state, miss_before.get("current_views", []), miss_id, miss_events)
+		var miss_file := "%s_bonus_cup_near_miss.png" % variation_id
+		var miss_saved := _save_sequence_strip([await _render_frame(definition, variation_id, miss_before, false), await _render_frame(definition, variation_id, miss_after, false)], "%s/%s" % [out_dir, miss_file])
+		var miss_passed := miss_saved and miss_events.filter(func(event): return str((event as Dictionary).get("kind", "")) == "plinko_cup").is_empty() and not (miss_state.get("bodies", []) as Array).is_empty()
+		if not miss_passed:
+			_fail("Bonus-token cup near-miss sequence failed for %s." % variation_id)
+		cup_sequences.append({"id": "%s_bonus_cup_near_miss" % variation_id, "kind": "bonus_token_cup_near_miss", "variation_id": variation_id, "capture": miss_file, "passed": miss_passed})
+
+
 func _frame_record(state: Dictionary, previous_views: Array, body_id: String, events: Array) -> Dictionary:
 	var current_views := Solver.body_views(state)
 	return {
@@ -214,6 +275,7 @@ func _render_frame(definition: Dictionary, variation_id: String, record: Diction
 		previous_views = previous_views.filter(func(body): return str((body as Dictionary).get("id", "")) != excluded_body_id)
 	var patch := {
 		"coin_pusher_variation_id": variation_id,
+		"coin_pusher_goal": _capture_goal(variation_id),
 		"coin_pusher_geometry": (definition.get("geometry", {}) as Dictionary).duplicate(true),
 		"coin_pusher_apparatus": (definition.get("apparatus", {}) as Dictionary).duplicate(true),
 		"coin_pusher_cabinet": (definition.get("cabinet", {}) as Dictionary).duplicate(true),
@@ -245,6 +307,16 @@ func _render_frame(definition: Dictionary, variation_id: String, record: Diction
 	if result.get_size() != CAPTURE_SIZE:
 		result.resize(CAPTURE_SIZE.x, CAPTURE_SIZE.y, Image.INTERPOLATE_LANCZOS)
 	return result
+
+
+func _capture_goal(variation_id: String) -> Dictionary:
+	match variation_id:
+		"jackpot_ridge":
+			return {"id": "ridge_run", "title": "RIDGE RUN  x1", "instruction": "BANK 3 MULTIPLIER PUCKS", "progress": 1, "target": 3, "bonus_tokens": 5, "active": false}
+		"vault_drop":
+			return {"id": "vault_keys", "title": "VAULT KEYS  $214", "instruction": "PUSH 3 KEY FRAGMENTS: EACH ONE UNLOCKS A VAULT CELL", "progress": 1, "target": 3, "bonus_tokens": 6, "active": false}
+		_:
+			return {"id": "prize_rush", "title": "PRIZE RUSH", "instruction": "PUSH 3 HEAVY PRIZES INTO THE WIN TRAY", "progress": 1, "target": 3, "bonus_tokens": 5, "active": false}
 
 
 func _airborne_shadow_pixel_evidence(definition: Dictionary, record: Dictionary, body_id: String, image: Image, control: Image) -> Dictionary:
@@ -474,6 +546,18 @@ func _save_strip(images: Array[Image], path: String) -> bool:
 	return strip.save_png(path) == OK
 
 
+func _save_sequence_strip(images: Array, path: String) -> bool:
+	if images.is_empty():
+		return false
+	var strip := Image.create(CAPTURE_SIZE.x * images.size(), CAPTURE_SIZE.y, false, Image.FORMAT_RGBA8)
+	for index in range(images.size()):
+		var frame: Image = images[index]
+		if frame == null or frame.is_empty():
+			return false
+		strip.blit_rect(frame, Rect2i(Vector2i.ZERO, CAPTURE_SIZE), Vector2i(index * CAPTURE_SIZE.x, 0))
+	return strip.save_png(path) == OK
+
+
 func _valid_stage_sequence(frames: Dictionary, body_id: String) -> bool:
 	for stage in STAGES:
 		if not frames.has(stage) or str((frames[stage] as Dictionary).get("body", {}).get("id", "")) != body_id:
@@ -606,8 +690,9 @@ func _write_manifest() -> void:
 		"production_surface": true,
 		"solver_backend": "gdscript_reference_v3",
 		"stage_order": STAGES,
-		"passed": not failed and manifest_variations.size() == VARIATIONS.size(),
+		"passed": not failed and manifest_variations.size() == VARIATIONS.size() and cup_sequences.size() == VARIATIONS.size() * 3 and cup_sequences.all(func(sequence): return bool((sequence as Dictionary).get("passed", false))),
 		"variations": manifest_variations,
+		"cup_sequences": cup_sequences,
 	}
 	var file := FileAccess.open("%s/manifest.json" % out_dir, FileAccess.WRITE)
 	if file == null:
