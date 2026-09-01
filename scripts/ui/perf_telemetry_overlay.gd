@@ -1275,6 +1275,22 @@ func _end_scenario() -> void:
 	_sample_monitors()
 	var end_msec := Time.get_ticks_msec()
 	var memory_stats := _int_stats(memory_samples)
+	var frame_attribution_samples := {}
+	if current_scenario.begins_with("coin_pusher_"):
+		# Keep the per-frame rows for Coin Pusher closure captures. Aggregate p95
+		# numbers identify a regression, but these aligned samples identify which
+		# production subsystem occupied each slow browser frame.
+		frame_attribution_samples = {
+			"frame_ms": frame_ms_samples.duplicate(),
+			"snapshot_builds_usec": foundation_snapshot_usec_samples.duplicate(),
+			"environment_runtime_usec": foundation_environment_runtime_usec_samples.duplicate(),
+			"coin_pusher_native_step_usec": foundation_coin_pusher_native_step_usec_samples.duplicate(),
+			"surface_automation_usec": foundation_surface_automation_usec_samples.duplicate(),
+			"surface_realtime_usec": foundation_surface_realtime_usec_samples.duplicate(),
+			"surface_realtime_ui_usec": foundation_surface_realtime_ui_usec_samples.duplicate(),
+			"surface_realtime_module_usec": foundation_surface_realtime_module_usec_samples.duplicate(),
+			"surface_realtime_augment_usec": foundation_surface_realtime_augment_usec_samples.duplicate(),
+		}
 	var record := {
 		"name": current_scenario,
 		"tags": current_tags.duplicate(false),
@@ -1308,6 +1324,7 @@ func _end_scenario() -> void:
 			"surface_realtime_module": _int_stats(foundation_surface_realtime_module_usec_samples),
 			"surface_realtime_augment": _int_stats(foundation_surface_realtime_augment_usec_samples),
 		},
+		"frame_attribution_samples": frame_attribution_samples,
 		"liveness_counters": _liveness_counter_snapshot(),
 		"allocation_proxy": {
 			"sample_count": monitor_sample_count,
