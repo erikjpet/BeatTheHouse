@@ -13210,13 +13210,11 @@ func _environment_turn_publish_snapshot() -> Dictionary:
 		snapshot[field_name] = get(field_name)
 	snapshot["town_state_object"] = {
 		"present": town_state != null,
-		"state": town_state.snapshot() if town_state != null else {},
-		"conditions": town_state._conditions.duplicate(true) if town_state != null else {},
+		"source": town_state,
 	}
 	snapshot["numbers_state_object"] = {
 		"present": numbers_state != null,
-		"state": numbers_state.snapshot() if numbers_state != null else {},
-		"config": numbers_state.config.duplicate(true) if numbers_state != null else {},
+		"source": numbers_state,
 	}
 	return snapshot
 
@@ -13299,16 +13297,42 @@ func _apply_environment_turn_snapshot(snapshot: Dictionary, preserve_live_aliase
 		if town_state == null:
 			town_state = TownStateScript.new()
 			town_state.bind_host_capability(_world1_host_capability)
-		town_state.restore(_copy_dict(town_record.get("state", {})), seed_value, _copy_dict(town_record.get("conditions", {})))
+		var town_source: Variant = town_record.get("source", null)
+		if preserve_live_aliases and typeof(town_source) == TYPE_OBJECT and is_instance_valid(town_source):
+			_publish_refcounted_script_state(town_state, town_source as Object)
+		else:
+			town_state.restore(_copy_dict(town_record.get("state", {})), seed_value, _copy_dict(town_record.get("conditions", {})))
 	else:
 		town_state = null
 	var numbers_record := _copy_dict(snapshot.get("numbers_state_object", {}))
 	if bool(numbers_record.get("present", false)):
 		if numbers_state == null:
 			numbers_state = _new_numbers_model()
-		numbers_state.restore(_copy_dict(numbers_record.get("state", {})), seed_value, _copy_dict(numbers_record.get("config", {})))
+		var numbers_source: Variant = numbers_record.get("source", null)
+		if preserve_live_aliases and typeof(numbers_source) == TYPE_OBJECT and is_instance_valid(numbers_source):
+			_publish_refcounted_script_state(numbers_state, numbers_source as Object)
+		else:
+			numbers_state.restore(_copy_dict(numbers_record.get("state", {})), seed_value, _copy_dict(numbers_record.get("config", {})))
 	else:
 		numbers_state = null
+
+
+static func _publish_refcounted_script_state(live_object: Object, candidate_object: Object) -> void:
+	# The accepted candidate is already detached and will not execute again. Move
+	# its complete stored model fields into the retained authoritative object rather
+	# than serializing and reconstructing both models during the synchronous input
+	# boundary. This retains the externally held TownState/NumbersModel identities.
+	for property_record in candidate_object.get_property_list():
+		if typeof(property_record) != TYPE_DICTIONARY:
+			continue
+		var property: Dictionary = property_record
+		var usage := int(property.get("usage", 0))
+		if (usage & PROPERTY_USAGE_STORAGE) == 0 and (usage & PROPERTY_USAGE_SCRIPT_VARIABLE) == 0:
+			continue
+		var property_name := str(property.get("name", ""))
+		if property_name.is_empty() or property_name == "script":
+			continue
+		live_object.set(property_name, candidate_object.get(property_name))
 
 
 static func _publish_environment_dictionary_in_place(live_environment: Dictionary, candidate_environment: Dictionary) -> void:

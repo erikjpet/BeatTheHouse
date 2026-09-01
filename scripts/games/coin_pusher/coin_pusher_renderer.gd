@@ -147,13 +147,11 @@ func prepare_render_state(state: Dictionary) -> void:
 
 
 func _native_batch_key(state: Dictionary) -> String:
-	return "%s|%s|%d|%.6f|%d|%d" % [
+	return "%s|%s|%d|%.6f" % [
 		str(state.get("coin_pusher_static_content_key", "")),
 		str(state.get("coin_pusher_presentation_session_key", "")),
 		int(state.get("coin_pusher_presentation_view_serial", -1)),
 		1.0 if bool(state.get("reduce_motion", false)) else clampf(float(state.get("coin_pusher_interpolation_alpha", 1.0)), 0.0, 1.0),
-		int(state.get("coin_pusher_body_count", 0)),
-		int(state.get("coin_pusher_feature_count", 0)),
 	]
 
 

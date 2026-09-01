@@ -597,7 +597,9 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 		# never open a live session or advance one tick behind the patron's back.
 		return _v3_headless_surface_state(_read_machine_state(run_state, environment), run_state, environment, ui_state)
 	var machine := _ensure_live_machine(run_state, environment)
-	var advanced := CoinPusherLiveSessionScript.advance(machine, int(ui_state.get("surface_time_msec", 0)))
+	var now_msec := int(ui_state.get("surface_time_msec", 0))
+	var publish_presentation := CoinPusherLiveSessionScript.presentation_publish_due(machine, now_msec)
+	var advanced := CoinPusherLiveSessionScript.advance(machine, now_msec, publish_presentation)
 	var physics_events: Array = advanced.get("events", []) if typeof(advanced.get("events", [])) == TYPE_ARRAY else []
 	_consume_live_physics_events(run_state, machine, physics_events)
 	if physics_events.any(func(event: Variant) -> bool: return typeof(event) == TYPE_DICTIONARY and str((event as Dictionary).get("kind", "")) in ["tray", "gutter"]):
@@ -618,17 +620,22 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 			_write_live_durable(run_state, environment, machine, true)
 			request_autosave = true
 	var presentation_session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
-	var now_msec := int(ui_state.get("surface_time_msec", 0))
-	var publish_presentation := CoinPusherLiveSessionScript.presentation_publish_due(machine, now_msec)
 	# The production Web canvas intentionally presents idle machine motion at a
 	# measured low-detail cadence. Keep the authority/solver at 60 Hz, but only
 	# project its 300-body presentation tuple when that tuple can become visible.
 	# Input boundaries mark themselves due so accepted controls still appear on
 	# the very next live tick.
+	var simulation := _simulation(machine)
+	var tray: Array = simulation.get("tray_ledger", []) if typeof(simulation.get("tray_ledger", [])) == TYPE_ARRAY else []
+	var invariants: Dictionary = simulation.get("last_invariants", {}) if typeof(simulation.get("last_invariants", {})) == TYPE_DICTIONARY else {}
 	var patch := _v3_realtime_presentation_patch(machine, run_state, environment) if publish_presentation else {
+		"coin_pusher_body_count": int(invariants.get("active", 0)),
+		"coin_pusher_tray_count": tray.size(),
+		"coin_pusher_tray_value": _ledger_value(tray),
 		"coin_pusher_liveness_ticks": int(presentation_session.get("liveness_ticks", 0)),
+		"coin_pusher_last_step_metrics": presentation_session.get("last_step_metrics", {}),
 	}
-	if publish_presentation:
+	if publish_presentation and int(advanced.get("ticks", 0)) > 0:
 		CoinPusherLiveSessionScript.mark_presentation_published(machine, now_msec)
 	if ui_state.has("coin_pusher_drop_charge_started_tick"):
 		var held_ticks := maxi(0, int(_simulation(machine).get("tick", 0)) - int(ui_state.get("coin_pusher_drop_charge_started_tick", 0)))
@@ -1194,7 +1201,7 @@ func _v3_realtime_presentation_patch(machine: Dictionary, run_state: RunState = 
 		"coin_pusher_tray_count": tray.size(),
 		"coin_pusher_tray_value": _ledger_value(tray),
 		"coin_pusher_input_trace_count": (machine.get("live_session", {}).get("input_trace", []) as Array).size() if typeof(machine.get("live_session", {}).get("input_trace", [])) == TYPE_ARRAY else 0,
-		"coin_pusher_last_step_metrics": simulation.get("last_step_metrics", {}),
+		"coin_pusher_last_step_metrics": session.get("last_step_metrics", simulation.get("last_step_metrics", {})),
 		"coin_pusher_liveness_ticks": int(session.get("liveness_ticks", 0)),
 		"coin_pusher_last_message": str(machine.get("last_message", V3_HEADLESS_MESSAGE)),
 		"coin_pusher_vault_cells": vault_views.get("cells", []),
