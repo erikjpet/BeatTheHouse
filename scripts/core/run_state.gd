@@ -422,6 +422,10 @@ const TURN_TRANSACTION_COLLECTION_FIELDS := [
 	"_item_definitions_by_id", "_item_effect_total_cache",
 	"_owned_item_lookup_cache", "_scenario_sequence_definition_cache",
 ]
+const TURN_TRANSACTION_SHALLOW_CACHE_FIELDS := [
+	"_item_effects_by_id", "_item_definitions_by_id", "_item_effect_total_cache",
+	"_owned_item_lookup_cache", "_scenario_sequence_definition_cache",
+]
 var world_sequence_registrations: Dictionary = {}
 var _world_sequence_definition_cache: Dictionary = {}
 
@@ -13245,8 +13249,12 @@ func _environment_turn_snapshot() -> Dictionary:
 	for room_id_value in active_room_alias_ids:
 		transaction_rooms[room_id_value] = transaction_environment
 	var collection_graph: Dictionary = {}
+	var detached_shallow_caches: Dictionary = {}
 	for field_name in TURN_TRANSACTION_COLLECTION_FIELDS:
-		if field_name == "current_environment":
+		if field_name in TURN_TRANSACTION_SHALLOW_CACHE_FIELDS:
+			var cache_value: Variant = get(field_name)
+			detached_shallow_caches[field_name] = cache_value.duplicate(false) if typeof(cache_value) in [TYPE_DICTIONARY, TYPE_ARRAY] else cache_value
+		elif field_name == "current_environment":
 			collection_graph[field_name] = transaction_environment
 		elif field_name == "grand_casino_room_states":
 			collection_graph[field_name] = transaction_rooms
@@ -13261,7 +13269,7 @@ func _environment_turn_snapshot() -> Dictionary:
 	for room_id_value in active_room_alias_ids:
 		detached_rooms[room_id_value] = detached_environment
 	for field_name in TURN_TRANSACTION_COLLECTION_FIELDS:
-		snapshot[field_name] = detached_collection_graph.get(field_name)
+		snapshot[field_name] = detached_shallow_caches.get(field_name) if field_name in TURN_TRANSACTION_SHALLOW_CACHE_FIELDS else detached_collection_graph.get(field_name)
 	snapshot["town_state_object"] = {
 		"present": town_state != null,
 		"state": town_state.snapshot() if town_state != null else {},
@@ -13283,6 +13291,12 @@ func _apply_environment_turn_snapshot(snapshot: Dictionary, preserve_live_aliase
 		if not preserve_live_aliases:
 			# The snapshot already owns a detached graph. Installing its roots
 			# directly retains cross-field aliases inside the transaction candidate.
+			set(field_name, incoming)
+			continue
+		if field_name in TURN_TRANSACTION_SHALLOW_CACHE_FIELDS:
+			# These private caches own detached outer containers but immutable
+			# definition/scalar values. An accepted candidate can transfer that
+			# outer cache directly; no external gameplay identity retains it.
 			set(field_name, incoming)
 			continue
 		var current: Variant = get(field_name)
