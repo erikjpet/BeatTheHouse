@@ -186,7 +186,7 @@ Dictionary CoinPusherNativeCore::build_live_render_batch(
 Dictionary CoinPusherNativeCore::build_live_render_batch_packed(
     const Dictionary &config, const PackedInt64Array &current,
     const PackedInt64Array &previous, double alpha) const {
-  constexpr int64_t STRIDE = 8;
+  constexpr int64_t STRIDE = 9;
   struct PackedBody {
     int64_t id = 0, id_hash = 0, x = 0, y = 0, z = 0, radius = 2350,
             flags = 0, kind = 0;

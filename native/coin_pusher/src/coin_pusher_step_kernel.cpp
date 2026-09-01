@@ -1319,7 +1319,7 @@ struct Kernel {
     if (ticks < 0)
       return Dictionary();
     Array state_bodies = state.get("bodies", Array());
-    if (reload || state_bodies.size() != int64_t(b.size())) {
+    if (reload) {
       b.clear();
       if (!load())
         return Dictionary();
@@ -1334,7 +1334,9 @@ struct Kernel {
     Grid grid;
     std::vector<Body> presentation_previous;
     int64_t presentation_previous_face_y = state.get("face_y", face_y(g, 0));
-    const bool capture_previous = bool(config.get("capture_previous_views", false));
+    const bool capture_previous_views = bool(config.get("capture_previous_views", false));
+    const bool capture_previous_packed = bool(config.get("capture_previous_packed", false));
+    const bool capture_previous = capture_previous_views || capture_previous_packed;
     for (int64_t t = 0; t < ticks; ++t) {
       if (capture_previous && t == ticks - 1) {
         presentation_previous = b;
@@ -1405,7 +1407,8 @@ struct Kernel {
       conservation_ok &=
           int64_t(b.size()) + tick_tray + tick_gutter + tick_collected + tick_cup_consumed == tick_origin;
     }
-    write();
+    if (bool(config.get("write_body_state", true)))
+      write();
     int64_t active = b.size(),
             tray = Array(state.get("tray_ledger", Array())).size(),
             gutter = Array(state.get("gutter_ledger", Array())).size(),
@@ -1426,8 +1429,16 @@ struct Kernel {
     inv["refused"] = state.get("refused_inserts", 0);
     state["last_invariants"] = inv;
     int64_t awake = 0;
-    for (const Body &q : b)
+    bool steady_without_motor = true, steady_with_motor = true;
+    for (const Body &q : b) {
       awake += !q.sleeping;
+      if (!q.sleeping) {
+        steady_without_motor = false;
+        steady_with_motor = false;
+      } else if (q.support == "platform" && !q.carried) {
+        steady_with_motor = false;
+      }
+    }
     int64_t usec = std::chrono::duration_cast<std::chrono::microseconds>(
                        std::chrono::steady_clock::now() - start)
                        .count();
@@ -1441,57 +1452,78 @@ struct Kernel {
     m["candidate_pool_capacity"] = HARD_CEILING * 32;
     m["elapsed_usec"] = usec;
     m["tick_average_usec"] = divi(usec, std::max<int64_t>(1, ticks));
+    m["steady_without_motor"] = steady_without_motor;
+    m["steady_with_motor"] = steady_with_motor;
     state["last_events"] = events;
     state["last_step_metrics"] = m;
     Dictionary out;
     out["events"] = events;
     out["metrics"] = m;
     out["invariants"] = inv;
-    auto presentation_capture = [](const std::vector<Body> &source) {
+    auto presentation_capture = [](const std::vector<Body> &source, bool include_views, bool include_packed) {
       Array views;
-      views.resize(source.size());
+      if (include_views)
+        views.resize(source.size());
       PackedInt64Array packed;
-      packed.resize(source.size() * 8);
+      if (include_packed)
+        packed.resize(source.size() * 9);
+      int64_t feature_count = 0;
       for (int64_t i = 0; i < int64_t(source.size()); ++i) {
         const Body &q = source[size_t(i)];
-        Dictionary view;
-        view["id"] = q.id;
-        view["kind"] = q.kind;
-        view["x"] = q.x;
-        view["y"] = q.y;
-        view["z"] = q.z;
-        view["rest_state"] = q.rest;
-        view["support_kind"] = q.support;
-        view["support_root"] = q.support == "platform" || (q.support == "body" && q.carried)
-                                   ? String("platform")
-                               : !q.support.is_empty() ? String("deck")
-                                                       : String();
-        views[i] = view;
-        const int64_t offset = i * 8;
-        packed[offset] = q.id.trim_prefix("body_").to_int();
-        packed[offset + 1] = q.id.hash();
-        packed[offset + 2] = q.x;
-        packed[offset + 3] = q.y;
-        packed[offset + 4] = q.z;
-        packed[offset + 5] = q.r;
-        packed[offset + 6] = q.rest == "falling" ? 1 : 0;
-        packed[offset + 7] = q.kind == "coin" ? 0 : q.kind == "rider" ? 1 : q.kind == "puck" ? 2 : q.kind == "fragment" ? 3 : 4;
+        feature_count += q.kind != "coin";
+        if (include_views) {
+          Dictionary view;
+          view["id"] = q.id;
+          view["kind"] = q.kind;
+          view["x"] = q.x;
+          view["y"] = q.y;
+          view["z"] = q.z;
+          view["rest_state"] = q.rest;
+          view["support_kind"] = q.support;
+          view["support_root"] = q.support == "platform" || (q.support == "body" && q.carried)
+                                     ? String("platform")
+                                 : !q.support.is_empty() ? String("deck")
+                                                         : String();
+          views[i] = view;
+        }
+        if (include_packed) {
+          const int64_t offset = i * 9;
+          packed[offset] = q.id.trim_prefix("body_").to_int();
+          packed[offset + 1] = q.id.hash();
+          packed[offset + 2] = q.x;
+          packed[offset + 3] = q.y;
+          packed[offset + 4] = q.z;
+          packed[offset + 5] = q.r;
+          packed[offset + 6] = q.rest == "falling" ? 1 : 0;
+          packed[offset + 7] = q.kind == "coin" ? 0 : q.kind == "rider" ? 1 : q.kind == "puck" ? 2 : q.kind == "fragment" ? 3 : 4;
+          packed[offset + 8] = q.support == "platform" ? 1 : q.support == "deck" ? 2 : q.support == "body" ? 3 : q.support.is_empty() ? 0 : 4;
+        }
       }
       Dictionary capture;
-      capture["views"] = views;
-      capture["packed"] = packed;
+      if (include_views)
+        capture["views"] = views;
+      if (include_packed)
+        capture["packed"] = packed;
+      capture["feature_count"] = feature_count;
       return capture;
     };
     if (capture_previous) {
-      Dictionary capture = presentation_capture(presentation_previous);
-      out["presentation_previous_bodies"] = capture["views"];
-      out["presentation_previous_packed"] = capture["packed"];
+      Dictionary capture = presentation_capture(presentation_previous, capture_previous_views, capture_previous_packed);
+      if (capture_previous_views)
+        out["presentation_previous_bodies"] = capture["views"];
+      if (capture_previous_packed)
+        out["presentation_previous_packed"] = capture["packed"];
       out["presentation_previous_face_y"] = presentation_previous_face_y;
     }
-    if (bool(config.get("capture_current_views", false))) {
-      Dictionary capture = presentation_capture(b);
-      out["presentation_current_bodies"] = capture["views"];
-      out["presentation_current_packed"] = capture["packed"];
+    const bool capture_current_views = bool(config.get("capture_current_views", false));
+    const bool capture_current_packed = bool(config.get("capture_current_packed", false));
+    if (capture_current_views || capture_current_packed) {
+      Dictionary capture = presentation_capture(b, capture_current_views, capture_current_packed);
+      if (capture_current_views)
+        out["presentation_current_bodies"] = capture["views"];
+      if (capture_current_packed)
+        out["presentation_current_packed"] = capture["packed"];
+      out["presentation_feature_count"] = capture["feature_count"];
       out["presentation_current_face_y"] = int64_t(state.get("face_y", face_y(g, 0)));
     }
     return out;

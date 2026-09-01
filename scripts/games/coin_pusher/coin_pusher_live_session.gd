@@ -81,6 +81,9 @@ static func begin(machine: Dictionary, machine_definition: Dictionary, seed: int
 		# re-entry deliberately reuses the same seed.
 		"native_cache_key": "live:%s:%s" % [seed, _native_cache_generation],
 		"native_cache_reset": true,
+		"native_body_state_dirty": false,
+		"native_steady_without_motor": false,
+		"native_steady_with_motor": false,
 	}
 	return machine["live_session"]
 
@@ -168,6 +171,7 @@ static func begin_chunked_settle(machine: Dictionary) -> Dictionary:
 		session["accumulator_units"] = maxi(0, accumulator_units - mini(1000, accumulator_units))
 		session["backlog_drain_ticks"] = 1
 	CoinPusherSolverScript.set_skill_stop(machine.get("simulation", {}), false)
+	sync_native_body_state(machine)
 	return {
 		"started": true,
 		"done": false,
@@ -206,6 +210,7 @@ static func advance_chunked_settle(machine: Dictionary, tick_budget: int = 8) ->
 
 
 static func freeze_after_chunked_settle(machine: Dictionary, settle_ticks: int) -> Dictionary:
+	sync_native_body_state(machine)
 	var simulation: Dictionary = machine.get("simulation", {}) if typeof(machine.get("simulation", {})) == TYPE_DICTIONARY else {}
 	if simulation.is_empty():
 		return machine.get("settled_state", {})
@@ -378,6 +383,28 @@ static func _session_rng(session: Dictionary) -> RngStream:
 	return rng
 
 
+static func all_steady(machine: Dictionary, motor_running: bool = true) -> bool:
+	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
+	if bool(session.get("native_body_state_dirty", false)):
+		return bool(session.get("native_steady_with_motor" if motor_running else "native_steady_without_motor", false))
+	var simulation: Dictionary = machine.get("simulation", {}) if typeof(machine.get("simulation", {})) == TYPE_DICTIONARY else {}
+	return CoinPusherSolverScript.all_steady(simulation, motor_running)
+
+
+static func sync_native_body_state(machine: Dictionary) -> void:
+	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
+	if session.is_empty() or not bool(session.get("native_body_state_dirty", false)):
+		return
+	var simulation: Dictionary = machine.get("simulation", {}) if typeof(machine.get("simulation", {})) == TYPE_DICTIONARY else {}
+	if simulation.is_empty():
+		return
+	CoinPusherSolverScript.step_ticks(simulation, {
+		"live_cache_key": str(session.get("native_cache_key", "")),
+		"write_body_state": true,
+	}, 0)
+	session["native_body_state_dirty"] = false
+
+
 static func _step_traced_ticks(machine: Dictionary, tick_count: int) -> Dictionary:
 	var session: Dictionary = machine.get("live_session", {})
 	var simulation: Dictionary = machine.get("simulation", {})
@@ -393,6 +420,7 @@ static func _step_traced_ticks(machine: Dictionary, tick_count: int) -> Dictiona
 		var current_packed: Variant = session.get("presentation_current_packed", PackedInt64Array())
 		previous_packed = current_packed if typeof(current_packed) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array()
 	var native_batch := CoinPusherSolverScript.native_live_batch_supported()
+	var compact_native_presentation := native_batch and OS.has_feature("web")
 	var remaining := safe_tick_count
 	var final_result: Dictionary = {}
 	while remaining > 0:
@@ -424,24 +452,36 @@ static func _step_traced_ticks(machine: Dictionary, tick_count: int) -> Dictiona
 			"motor_enabled": bool(machine.get("motor_started", false)) and not bool(machine.get("locked_down", false)),
 			"live_cache_key": str(session.get("native_cache_key", "")) if native_batch else "",
 			"live_cache_reset": bool(session.get("native_cache_reset", false)),
-			"capture_previous_views": native_batch and safe_tick_count > 1 and is_final_chunk,
-			"capture_current_views": native_batch and is_final_chunk,
+			"write_body_state": not compact_native_presentation,
+			"capture_previous_views": native_batch and not compact_native_presentation and safe_tick_count > 1 and is_final_chunk,
+			"capture_previous_packed": compact_native_presentation and safe_tick_count > 1 and is_final_chunk,
+			"capture_current_views": native_batch and not compact_native_presentation and is_final_chunk,
+			"capture_current_packed": compact_native_presentation and is_final_chunk,
 		}, chunk_ticks)
 		final_result = result
 		session["native_cache_reset"] = false
 		all_events.append_array(result.get("events", []))
-		if native_batch and safe_tick_count > 1 and is_final_chunk:
+		if native_batch and not compact_native_presentation and safe_tick_count > 1 and is_final_chunk:
 			previous_views = result.get("presentation_previous_bodies", []) if typeof(result.get("presentation_previous_bodies", [])) == TYPE_ARRAY else []
+		if compact_native_presentation and safe_tick_count > 1 and is_final_chunk:
 			previous_packed = result.get("presentation_previous_packed", PackedInt64Array()) if typeof(result.get("presentation_previous_packed", PackedInt64Array())) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array()
+		if native_batch and safe_tick_count > 1 and is_final_chunk:
 			previous_face_y = int(result.get("presentation_previous_face_y", simulation.get("previous_face_y", 0)))
 		remaining -= chunk_ticks
 	if safe_tick_count > 0:
-		var current_views: Array = final_result.get("presentation_current_bodies", []) if native_batch and typeof(final_result.get("presentation_current_bodies", [])) == TYPE_ARRAY else _presentation_body_views(simulation)
-		session["presentation_previous_bodies"] = previous_views
-		session["presentation_current_bodies"] = current_views
-		session["presentation_previous_packed"] = previous_packed
-		session["presentation_current_packed"] = final_result.get("presentation_current_packed", PackedInt64Array()) if native_batch and typeof(final_result.get("presentation_current_packed", PackedInt64Array())) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array()
-		session["presentation_feature_count"] = _presentation_feature_count(current_views)
+		if compact_native_presentation:
+			session["presentation_previous_packed"] = previous_packed
+			session["presentation_current_packed"] = final_result.get("presentation_current_packed", PackedInt64Array()) if typeof(final_result.get("presentation_current_packed", PackedInt64Array())) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array()
+			session["presentation_feature_count"] = int(final_result.get("presentation_feature_count", session.get("presentation_feature_count", 0)))
+			session["native_body_state_dirty"] = true
+		else:
+			var current_views: Array = final_result.get("presentation_current_bodies", []) if native_batch and typeof(final_result.get("presentation_current_bodies", [])) == TYPE_ARRAY else _presentation_body_views(simulation)
+			session["presentation_previous_bodies"] = previous_views
+			session["presentation_current_bodies"] = current_views
+			session["presentation_feature_count"] = _presentation_feature_count(current_views)
+		var metrics: Dictionary = final_result.get("metrics", {}) if typeof(final_result.get("metrics", {})) == TYPE_DICTIONARY else {}
+		session["native_steady_without_motor"] = bool(metrics.get("steady_without_motor", false))
+		session["native_steady_with_motor"] = bool(metrics.get("steady_with_motor", false))
 		session["presentation_previous_face_y"] = previous_face_y
 		session["presentation_current_face_y"] = int(final_result.get("presentation_current_face_y", simulation.get("face_y", 0))) if native_batch else int(simulation.get("face_y", 0))
 		session["presentation_view_serial"] = int(session.get("presentation_view_serial", 0)) + safe_tick_count
