@@ -172,6 +172,7 @@ func render_game_snapshot(snapshot: Dictionary) -> void:
 	drunk_effect_mode = _normalized_drunk_effect_mode(str(state.get("drunk_effect_mode", drunk_effect_mode)))
 	_update_drunk_distortion_overlay()
 	_update_surface_animation_channels()
+	_prepare_surface_render_state()
 	queue_redraw()
 
 
@@ -198,9 +199,15 @@ func apply_surface_state_patch(patch: Dictionary) -> void:
 		_update_drunk_distortion_overlay()
 	if patch.has("surface_animation_channels"):
 		_update_surface_animation_channels()
+	_prepare_surface_render_state()
 	if not defer_redraw:
 		perf_patch_redraw_requests += 1
 		queue_redraw()
+
+
+func _prepare_surface_render_state() -> void:
+	if surface_game_module != null and surface_game_module.has_method("prepare_surface_render_state"):
+		surface_game_module.call("prepare_surface_render_state", state)
 
 
 func set_selected_index(index: int) -> void:

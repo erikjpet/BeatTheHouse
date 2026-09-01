@@ -71,6 +71,8 @@ func host_action_rollback_snapshot(action_id: String, run_state: RunState, envir
 		"durable_ready": bool(session.get("durable_ready", false)),
 		"durable_dirty_present": session.has("durable_dirty"),
 		"durable_dirty": bool(session.get("durable_dirty", false)),
+		"presentation_last_publish_msec_present": session.has("presentation_last_publish_msec"),
+		"presentation_last_publish_msec": int(session.get("presentation_last_publish_msec", -1)),
 	}
 
 
@@ -95,7 +97,7 @@ func restore_host_action_rollback(snapshot: Dictionary, run_state: RunState, env
 	else:
 		simulation.erase("motor_target_rate_fp")
 	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
-	for field_name in ["durable_ready", "durable_dirty"]:
+	for field_name in ["durable_ready", "durable_dirty", "presentation_last_publish_msec"]:
 		if bool(snapshot.get("%s_present" % field_name, false)):
 			session[field_name] = snapshot.get(field_name)
 		else:
@@ -500,6 +502,10 @@ func renderer_performance_counters() -> Dictionary:
 	return _renderer.performance_stage_counters()
 
 
+func prepare_surface_render_state(state: Dictionary) -> void:
+	_renderer.prepare_render_state(state)
+
+
 func resolve(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
 	return resolve_with_context(action_id, stake, run_state, environment, rng, {})
 
@@ -612,10 +618,18 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 			_write_live_durable(run_state, environment, machine, true)
 			request_autosave = true
 	var presentation_session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
-	# Realtime owns only fields that can actually change while the player watches.
-	# Rebuilding the complete entry snapshot here duplicated catalog, economy,
-	# cabinet, geometry, and body projection work on every rendered frame.
-	var patch := _v3_realtime_presentation_patch(machine, run_state, environment)
+	var now_msec := int(ui_state.get("surface_time_msec", 0))
+	var publish_presentation := CoinPusherLiveSessionScript.presentation_publish_due(machine, now_msec)
+	# The production Web canvas intentionally presents idle machine motion at a
+	# measured low-detail cadence. Keep the authority/solver at 60 Hz, but only
+	# project its 300-body presentation tuple when that tuple can become visible.
+	# Input boundaries mark themselves due so accepted controls still appear on
+	# the very next live tick.
+	var patch := _v3_realtime_presentation_patch(machine, run_state, environment) if publish_presentation else {
+		"coin_pusher_liveness_ticks": int(presentation_session.get("liveness_ticks", 0)),
+	}
+	if publish_presentation:
+		CoinPusherLiveSessionScript.mark_presentation_published(machine, now_msec)
 	if ui_state.has("coin_pusher_drop_charge_started_tick"):
 		var held_ticks := maxi(0, int(_simulation(machine).get("tick", 0)) - int(ui_state.get("coin_pusher_drop_charge_started_tick", 0)))
 		patch["coin_pusher_drop_charge_count"] = clampi(maxi(1, held_ticks / 6), 1, 60)
@@ -1087,6 +1101,7 @@ func _v3_headless_surface_state(machine: Dictionary, run_state: RunState = null,
 		"coin_pusher_previous_bodies": session.get("presentation_previous_bodies", body_views),
 		"coin_pusher_previous_packed": session.get("presentation_previous_packed", PackedInt64Array()),
 		"coin_pusher_presentation_view_serial": int(session.get("presentation_view_serial", 0)),
+		"coin_pusher_presentation_session_key": str(session.get("native_cache_key", "")),
 		"coin_pusher_interpolation_alpha": clampf(float(int(session.get("accumulator_units", 0))) / 1000.0, 0.0, 1.0),
 		"coin_pusher_features": feature_views,
 		"coin_pusher_feature_count": feature_views.size(),
@@ -1161,6 +1176,7 @@ func _v3_realtime_presentation_patch(machine: Dictionary, run_state: RunState = 
 		"coin_pusher_previous_bodies": previous_views,
 		"coin_pusher_previous_packed": session.get("presentation_previous_packed", PackedInt64Array()),
 		"coin_pusher_presentation_view_serial": int(session.get("presentation_view_serial", 0)),
+		"coin_pusher_presentation_session_key": str(session.get("native_cache_key", "")),
 		"coin_pusher_interpolation_alpha": clampf(float(int(session.get("accumulator_units", 0))) / 1000.0, 0.0, 1.0),
 		"coin_pusher_tell_rung": tell_rung,
 		"coin_pusher_tell_label": str(_tell_labels()[tell_rung]),

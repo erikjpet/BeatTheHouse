@@ -13195,9 +13195,30 @@ func _detached_environment_turn_candidate() -> RunState:
 
 func _publish_environment_turn_candidate(candidate: RunState) -> void:
 	# Build the complete publish tuple before touching a live root. This method is
-	# synchronous and contains the only accepted-turn rebind boundary.
-	var publish_snapshot := candidate._environment_turn_snapshot()
+	# synchronous and contains the only accepted-turn rebind boundary. The
+	# candidate already owns a completely detached collection graph, so publishing
+	# its exact roots does not require deep-copying that graph a second time.
+	var publish_snapshot := candidate._environment_turn_publish_snapshot()
 	_apply_environment_turn_snapshot(publish_snapshot, true)
+
+
+func _environment_turn_publish_snapshot() -> Dictionary:
+	var snapshot: Dictionary = {}
+	for field_name in TURN_TRANSACTION_SCALAR_FIELDS:
+		snapshot[field_name] = get(field_name)
+	for field_name in TURN_TRANSACTION_COLLECTION_FIELDS:
+		snapshot[field_name] = get(field_name)
+	snapshot["town_state_object"] = {
+		"present": town_state != null,
+		"state": town_state.snapshot() if town_state != null else {},
+		"conditions": town_state._conditions.duplicate(true) if town_state != null else {},
+	}
+	snapshot["numbers_state_object"] = {
+		"present": numbers_state != null,
+		"state": numbers_state.snapshot() if numbers_state != null else {},
+		"config": numbers_state.config.duplicate(true) if numbers_state != null else {},
+	}
+	return snapshot
 
 
 func _environment_turn_snapshot() -> Dictionary:

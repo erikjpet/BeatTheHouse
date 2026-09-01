@@ -63,6 +63,8 @@ var _world_back_y := SCHEMA_DEFAULT_BACK_Y
 var _coin_height := SCHEMA_DEFAULT_COIN_HEIGHT
 var _coin_radius := SCHEMA_DEFAULT_COIN_RADIUS
 var _perf_stage_samples: Dictionary = {}
+var _prepared_batch_key := ""
+var _prepared_batch: Dictionary = {}
 
 
 func draw(surface, state: Dictionary) -> bool:
@@ -113,6 +115,46 @@ func reset_performance_stage_counters() -> void:
 
 func performance_stage_counters() -> Dictionary:
 	return _perf_stage_samples.duplicate(true)
+
+
+func prepare_render_state(state: Dictionary) -> void:
+	if str(state.get("surface_renderer", "")) != "coin_pusher":
+		return
+	var key := _native_batch_key(state)
+	if key == _prepared_batch_key:
+		return
+	_configure_projection(state)
+	var cabinet := _cabinet(state)
+	var geometry: Dictionary = state.get("coin_pusher_geometry", {}) if typeof(state.get("coin_pusher_geometry", {})) == TYPE_DICTIONARY else {}
+	var apparatus: Dictionary = state.get("coin_pusher_apparatus", {}) if typeof(state.get("coin_pusher_apparatus", {})) == TYPE_DICTIONARY else {}
+	var body_colors: Dictionary = cabinet.get("body_colors", {}) if typeof(cabinet.get("body_colors", {})) == TYPE_DICTIONARY else {}
+	var current_packed: PackedInt64Array = state.get("coin_pusher_current_packed", PackedInt64Array()) if typeof(state.get("coin_pusher_current_packed", PackedInt64Array())) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array()
+	var previous_packed: PackedInt64Array = state.get("coin_pusher_previous_packed", PackedInt64Array()) if typeof(state.get("coin_pusher_previous_packed", PackedInt64Array())) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array()
+	if current_packed.is_empty():
+		_prepared_batch_key = ""
+		_prepared_batch = {}
+		return
+	var alpha := 1.0 if bool(state.get("reduce_motion", false)) else clampf(float(state.get("coin_pusher_interpolation_alpha", 1.0)), 0.0, 1.0)
+	_prepared_batch = CoinPusherSolverAPI.native_live_render_batch_packed({
+		"world_width": _world_width,
+		"world_back_y": _world_back_y,
+		"coin_height": _coin_height,
+		"coin_radius": _coin_radius,
+		"board": _delivery_board(apparatus, geometry),
+		"body_colors": body_colors,
+	}, current_packed, previous_packed, alpha)
+	_prepared_batch_key = key if not _prepared_batch.is_empty() else ""
+
+
+func _native_batch_key(state: Dictionary) -> String:
+	return "%s|%s|%d|%.6f|%d|%d" % [
+		str(state.get("coin_pusher_static_content_key", "")),
+		str(state.get("coin_pusher_presentation_session_key", "")),
+		int(state.get("coin_pusher_presentation_view_serial", -1)),
+		1.0 if bool(state.get("reduce_motion", false)) else clampf(float(state.get("coin_pusher_interpolation_alpha", 1.0)), 0.0, 1.0),
+		int(state.get("coin_pusher_body_count", 0)),
+		int(state.get("coin_pusher_feature_count", 0)),
+	]
 
 
 func _capture_perf_stage(stage_id: String, started_usec: int, enabled: bool) -> int:
@@ -549,7 +591,9 @@ func _draw_native_interpolated_bodies(surface, state: Dictionary, cabinet: Dicti
 	}
 	var current_packed: PackedInt64Array = state.get("coin_pusher_current_packed", PackedInt64Array()) if typeof(state.get("coin_pusher_current_packed", PackedInt64Array())) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array()
 	var previous_packed: PackedInt64Array = state.get("coin_pusher_previous_packed", PackedInt64Array()) if typeof(state.get("coin_pusher_previous_packed", PackedInt64Array())) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array()
-	var batch := CoinPusherSolverAPI.native_live_render_batch_packed(batch_config, current_packed, previous_packed, alpha) if not current_packed.is_empty() else {}
+	var batch := _prepared_batch if _native_batch_key(state) == _prepared_batch_key else {}
+	if batch.is_empty():
+		batch = CoinPusherSolverAPI.native_live_render_batch_packed(batch_config, current_packed, previous_packed, alpha) if not current_packed.is_empty() else {}
 	if batch.is_empty():
 		batch = CoinPusherSolverAPI.native_live_render_batch(batch_config, current, previous, alpha)
 	if batch.is_empty() or typeof(batch.get("buffer", null)) != TYPE_PACKED_FLOAT32_ARRAY:
