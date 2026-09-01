@@ -13267,6 +13267,9 @@ func _apply_environment_turn_snapshot(snapshot: Dictionary, preserve_live_aliase
 			set(field_name, incoming)
 			continue
 		var current: Variant = get(field_name)
+		if field_name == "current_environment" and typeof(current) == TYPE_DICTIONARY and typeof(incoming) == TYPE_DICTIONARY:
+			_publish_environment_dictionary_in_place(current as Dictionary, incoming as Dictionary)
+			continue
 		if preserve_live_aliases and _publish_mutable_variant_in_place(current, incoming):
 			continue
 		set(field_name, incoming.duplicate(true) if typeof(incoming) in [TYPE_DICTIONARY, TYPE_ARRAY] else incoming)
@@ -13285,6 +13288,24 @@ func _apply_environment_turn_snapshot(snapshot: Dictionary, preserve_live_aliase
 		numbers_state.restore(_copy_dict(numbers_record.get("state", {})), seed_value, _copy_dict(numbers_record.get("config", {})))
 	else:
 		numbers_state = null
+
+
+static func _publish_environment_dictionary_in_place(live_environment: Dictionary, candidate_environment: Dictionary) -> void:
+	# External systems retain the environment root (and, when unchanged, its
+	# nested authored roots). Changed environment fields are already detached and
+	# complete in the accepted candidate, so publish them field-wise instead of
+	# recursively interpreting every generated layout/presentation dictionary in
+	# GDScript. Equality retains exact unchanged nested identities.
+	for key in live_environment.keys():
+		if not candidate_environment.has(key):
+			live_environment.erase(key)
+	for key in candidate_environment.keys():
+		var incoming: Variant = candidate_environment[key]
+		if live_environment.has(key):
+			var current: Variant = live_environment[key]
+			if (typeof(current) in [TYPE_DICTIONARY, TYPE_ARRAY] and is_same(current, incoming)) or current == incoming:
+				continue
+		live_environment[key] = incoming.duplicate(true) if typeof(incoming) in [TYPE_DICTIONARY, TYPE_ARRAY] else incoming
 
 
 static func _publish_mutable_variant_in_place(live_value: Variant, candidate_value: Variant) -> bool:
