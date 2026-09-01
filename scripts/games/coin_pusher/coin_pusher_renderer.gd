@@ -39,7 +39,7 @@ const NEUTRAL_CABINET := {
 
 var _coin_texture: Texture2D
 var _coin_multimesh: MultiMesh
-var _coin_mesh: QuadMesh
+var _coin_mesh: Mesh
 var _sorted_body_cache: Array = []
 var _sorted_body_cache_key := ""
 var _sorted_body_cache_source: Array = []
@@ -967,9 +967,33 @@ func _ensure_coin_batch() -> void:
 	if _coin_multimesh != null:
 		return
 	_coin_texture = _make_coin_texture()
-	_coin_mesh = QuadMesh.new()
-	_coin_mesh.size = Vector2(COIN_RX * 2.0 + 2.0, COIN_RY * 2.0 + 4.0)
+	_coin_mesh = _make_coin_quad_mesh(Vector2(COIN_RX * 2.0 + 2.0, COIN_RY * 2.0 + 4.0))
 	_coin_multimesh = _new_coin_multimesh()
+
+
+func _make_coin_quad_mesh(size: Vector2) -> ArrayMesh:
+	# ArrayMesh is available in Godot's 2D-only export profile while QuadMesh is
+	# registered with the unused 3D scene classes. Match QuadMesh's FACE_Z vertex
+	# and UV order exactly so the in-order canvas batch remains visually identical.
+	var half_size := size * 0.5
+	var arrays: Array = []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = PackedVector3Array([
+		Vector3(half_size.x, -half_size.y, 0.0),
+		Vector3(-half_size.x, -half_size.y, 0.0),
+		Vector3(half_size.x, half_size.y, 0.0),
+		Vector3(-half_size.x, half_size.y, 0.0),
+	])
+	arrays[Mesh.ARRAY_TEX_UV] = PackedVector2Array([
+		Vector2(1.0, 1.0),
+		Vector2(0.0, 1.0),
+		Vector2(1.0, 0.0),
+		Vector2(0.0, 0.0),
+	])
+	arrays[Mesh.ARRAY_INDEX] = PackedInt32Array([0, 1, 2, 1, 3, 2])
+	var mesh := ArrayMesh.new()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	return mesh
 
 
 func _new_coin_multimesh() -> MultiMesh:
