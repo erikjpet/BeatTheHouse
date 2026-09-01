@@ -3642,7 +3642,8 @@
         "chain_depth_cap": 3,
         "chain_coin_cap": 60,
         "release_jitter": 650,
-        "release_velocity_jitter": 2400
+        "release_velocity_jitter": 2400,
+        "upper_row_join_impulse": 3000
       },
 	  "coins": {
 		"radius": 2350,
@@ -3754,6 +3755,7 @@
             "chain_coin_cap": 60,
             "release_jitter": 850,
             "release_velocity_jitter": 3200,
+            "upper_row_join_impulse": 3000,
             "custom": {}
           },
           "coins": {"radius": 2350, "height": 950, "mass": 1000, "value": 1, "drop_cost": 1},
@@ -3801,6 +3803,7 @@
             "chain_coin_cap": 60,
             "release_jitter": 700,
             "release_velocity_jitter": 2800,
+            "upper_row_join_impulse": 3000,
             "custom": {}
           },
           "coins": {"radius": 2350, "height": 950, "mass": 1000, "value": 1, "drop_cost": 1},

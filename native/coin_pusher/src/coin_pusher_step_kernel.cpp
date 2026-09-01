@@ -77,6 +77,7 @@ struct Geo {
           drop_z = 24000, gutter = 3000, period = 240, ramp = 24, coin_r = 2350,
           coin_h = 950, coin_m = 1000, coin_value = 1, jitter = 300,
           velocity_jitter = 0,
+          join_impulse = 0,
           ceiling = 600;
   Array pegs, targets;
 };
@@ -109,6 +110,7 @@ Geo geometry(const Dictionary &s) {
   g.coin_value = c.get("value", g.coin_value);
   g.jitter = std::max<int64_t>(0, a.get("release_jitter", g.jitter));
   g.velocity_jitter = std::max<int64_t>(0, a.get("release_velocity_jitter", 0));
+  g.join_impulse = std::max<int64_t>(0, a.get("upper_row_join_impulse", 0));
   g.ceiling = clampi(d.get("ceiling", g.ceiling), 1, HARD_CEILING);
   g.pegs = a.get("pegs", Array());
   g.targets = a.get("targets", Array());
@@ -759,6 +761,49 @@ struct Kernel {
     q.meta["landing_contact_serial"] = serial + 1;
     return {sx, sy};
   }
+  int64_t upper_row_join_pressure(int incoming_index) {
+    if (g.join_impulse <= 0 || incoming_index < 0 || incoming_index >= (int)b.size())
+      return 0;
+    Body &incoming = b[incoming_index];
+    int best = -1;
+    int64_t best_distance_sq = 0;
+    String best_id;
+    for (int i = 0; i < (int)b.size(); ++i) {
+      if (i == incoming_index)
+        continue;
+      Body &candidate = b[i];
+      if (terminal(candidate) || candidate.kind != "coin" ||
+          !(candidate.support == "platform" || candidate.carried) ||
+          std::abs(candidate.z - incoming.z) > SUPPORT_TOL)
+        continue;
+      int64_t dx = candidate.x - incoming.x, dy = candidate.y - incoming.y;
+      int64_t reach = candidate.r + incoming.r + SLOP;
+      int64_t distance_sq = dx * dx + dy * dy;
+      if (distance_sq > reach * reach)
+        continue;
+      if (best < 0 || distance_sq < best_distance_sq ||
+          (distance_sq == best_distance_sq && candidate.id < best_id)) {
+        best = i;
+        best_distance_sq = distance_sq;
+        best_id = candidate.id;
+      }
+    }
+    if (best < 0)
+      return 0;
+    Body &neighbor = b[best];
+    int64_t energy_before = body_energy(neighbor);
+    neighbor.vy -= g.join_impulse;
+    wake(neighbor);
+    int64_t added_work = std::max<int64_t>(0, body_energy(neighbor) - energy_before);
+    Dictionary e;
+    e["kind"] = "upper_row_join_pressure";
+    e["body_id"] = incoming.id;
+    e["neighbor_body_id"] = best_id;
+    e["impulse"] = g.join_impulse;
+    e["added_work"] = added_work;
+    events.append(e);
+    return added_work;
+  }
   int64_t resolve_supports(int64_t f, Grid &grid) {
     int64_t nestle_work = 0;
     for (int i = 0; i < (int)b.size(); ++i) {
@@ -871,6 +916,8 @@ struct Kernel {
           events.append(e);
           if (first_support)
             q.meta["first_support_recorded"] = true;
+          if (first_support)
+            nestle_work += upper_row_join_pressure(i);
           q.has_fall_start = false;
         }
         friction(q, q.carried ? MU_PLATFORM : MU_DECK);

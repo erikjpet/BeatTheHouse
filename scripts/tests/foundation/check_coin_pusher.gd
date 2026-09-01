@@ -37,6 +37,7 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 	_check_pusher_v3_real_weight_gravity(machine_definition, failures)
 	_check_pusher_v3_irregular_supported_piles(machine_definition, failures)
 	_check_pusher_v3_contact_only_pressure(machine_definition, failures)
+	_check_pusher_v3_upper_row_join_pressure(machine_definition, failures)
 	_check_pusher_v3_visible_terminal_falls(machine_definition, failures)
 	_check_pusher_v3_input_trace_determinism(machine_definition, failures)
 	_check_pusher_v3_ridge_physical_contract(library, failures)
@@ -2859,6 +2860,30 @@ func _check_pusher_v3_contact_only_pressure(machine: Dictionary, failures: Array
 		failures.append("Coin Pusher V3 contact chain did not propagate locally through touching coins only: b=%s c=%s other=%s." % [JSON.stringify(moved_b), JSON.stringify(moved_c), JSON.stringify(still_other)])
 	if JSON.stringify(CoinPusherSolverScript.canonical_digest(chain_state), "", true) != JSON.stringify(CoinPusherSolverScript.canonical_digest(native_chain), "", true):
 		failures.append("Coin Pusher V3 native contact-only pressure diverged from the integer reference kernel.")
+
+
+func _check_pusher_v3_upper_row_join_pressure(machine: Dictionary, failures: Array) -> void:
+	var state := _pusher_v3_state(machine, "PUSHER-V3-UPPER-ROW-JOIN-PRESSURE")
+	_pusher_v3_hold_phase(state, machine, 120)
+	var neighbor := _pusher_v3_body_fixture("join_neighbor", 50000, 65300, CoinPusherSolverScript.PLATFORM_TOP_Z, true, "platform")
+	var incoming := _pusher_v3_body_fixture("join_incoming", 50000, 70000, CoinPusherSolverScript.PLATFORM_TOP_Z + 100, false, "")
+	incoming["rest_state"] = "falling"
+	incoming["vz"] = -15000
+	incoming["fall_start_z"] = 20000
+	incoming["meta"] = {"value": 1, "inserted": true}
+	(state.get("bodies", []) as Array).append_array([neighbor, incoming])
+	state["opening_body_count"] = 2
+	var native_state := state.duplicate(true)
+	var reference_result := CoinPusherSolverScript.step_ticks_reference_for_test(state, {"motor_enabled": false}, 1)
+	var native_result := CoinPusherSolverScript.step_ticks(native_state, {"motor_enabled": false}, 1)
+	var pressure_events: Array = (reference_result.get("events", []) as Array).filter(func(event): return str((event as Dictionary).get("kind", "")) == "upper_row_join_pressure")
+	var moved_neighbor := _pusher_v3_body(state, "join_neighbor")
+	if pressure_events.size() != 1 or str((pressure_events[0] as Dictionary).get("neighbor_body_id", "")) != "join_neighbor" \
+			or int(moved_neighbor.get("vy", 0)) >= -1000 or bool(moved_neighbor.get("sleeping", true)):
+		failures.append("Coin Pusher V3 targeted upper-row landing did not transfer bounded forward pressure to its touching same-tier neighbor: events=%s neighbor=%s." % [JSON.stringify(pressure_events), JSON.stringify(moved_neighbor)])
+	if JSON.stringify(reference_result.get("events", []), "", true) != JSON.stringify(native_result.get("events", []), "", true) \
+			or JSON.stringify(CoinPusherSolverScript.canonical_digest(state), "", true) != JSON.stringify(CoinPusherSolverScript.canonical_digest(native_state), "", true):
+		failures.append("Coin Pusher V3 upper-row join pressure diverged between the integer reference and native kernels.")
 
 
 func _check_pusher_v3_visible_terminal_falls(machine: Dictionary, failures: Array) -> void:
