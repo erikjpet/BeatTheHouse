@@ -1380,6 +1380,8 @@ func _sync_surface_audio() -> void:
 	if sync_spec.is_empty():
 		return
 	_ensure_surface_sfx_player()
+	if surface_sfx_player.has_method("prewarm_surface_profile"):
+		surface_sfx_player.call("prewarm_surface_profile", profile_id)
 	surface_sfx_player.sync_surface_state(state, sync_spec, _surface_audio_timing(sync_spec))
 
 

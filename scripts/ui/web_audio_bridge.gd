@@ -483,6 +483,20 @@ static func play_stream(stream: AudioStream, stream_id: String, volume_db: float
 	return true
 
 
+static func prewarm_stream(stream: AudioStream, stream_id: String) -> bool:
+	if not available() or not _bridge_ready():
+		return false
+	var payload := _stream_payload(stream, stream_id, 0.0, 1.0, "", false)
+	if payload.is_empty():
+		return false
+	var payload_json := JSON.stringify(payload)
+	_record_bridge_call("register_pcm", payload_json.length())
+	if not bool(_bridge_interface.registerPcm(payload_json)):
+		return false
+	_mark_pcm_registered(payload)
+	return true
+
+
 static func stop_loop(loop_id: String) -> void:
 	if not available():
 		return
