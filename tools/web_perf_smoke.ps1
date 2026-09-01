@@ -10,6 +10,7 @@ param(
     [string]$Out = ".tmp/web_perf_smoke/report.json",
     [ValidateSet("l02", "grand_casino", "coin_pusher")]
     [string]$Plan = "l02",
+    [switch]$CoinPusherStageDiagnostic,
     [switch]$SkipExport,
     [switch]$Headed
 )
@@ -161,6 +162,9 @@ try {
     Assert-OwnedWebServerListener -Launch $server
     $headless = if ($Headed) { "false" } else { "true" }
     $url = "http://127.0.0.1:$Port/?bth_perf=1&bth_perf_plan=$Plan&bth_perf_auto_quit=1&bth_perf_frames=$Frames&bth_perf_active_frames=$ActiveFrames&bth_perf_memory_seconds=$MemorySeconds&bth_perf_source_commit=$sourceCommit&bth_perf_export_sha256=$exportSha256"
+    if ($Plan -eq "coin_pusher" -and $CoinPusherStageDiagnostic) {
+        $url += "&bth_perf_coin_pusher_stage_diagnostic=1"
+    }
     $profile = Join-Path $root (".tmp/web_perf_smoke/{0}_profile" -f $Browser)
     $coldCache = if ($SkipExport) { "false" } else { "true" }
     $probeArgs = @(
@@ -316,7 +320,7 @@ if ($Plan -eq "coin_pusher") {
         Assert-Condition -Condition ([int]$idleDraw.draw_sample_count -gt 0) -Message "Coin Pusher normal idle produced no surface draw samples despite required liveness." -Failures $failures
         Assert-Condition -Condition ([double]$idleDraw.draw_p95_ms -le 5.0) -Message ("Coin Pusher idle draw p95 {0:N3}ms exceeded 5.000ms." -f [double]$idleDraw.draw_p95_ms) -Failures $failures
         Assert-Condition -Condition ([int]$idle.tags.solver_liveness_delta -gt 0) -Message "Coin Pusher normal idle solver liveness did not advance." -Failures $failures
-        Assert-Condition -Condition ([int]$idle.tags.body_count_before -eq 300) -Message "Coin Pusher normal idle did not begin with exactly 300 bodies." -Failures $failures
+        Assert-Condition -Condition (Test-CoinPusherSurfaceConservationBinding -BodyCount ([int]$idle.tags.body_count_before) -TrayCount ([int]$idle.tags.tray_count_before) -Snapshot $idle.tags.conservation_before -ExpectedOrigin 300) -Message "Coin Pusher normal idle did not begin from the exact conserved 300-origin fixture." -Failures $failures
         Assert-Condition -Condition (-not [string]::IsNullOrWhiteSpace([string]$idle.tags.solver_backend)) -Message "Coin Pusher normal idle did not identify its solver backend." -Failures $failures
     }
 
@@ -402,6 +406,7 @@ $summary = [ordered]@{
     frames = $Frames
     active_frames = $ActiveFrames
     memory_seconds = $MemorySeconds
+    coin_pusher_stage_diagnostic = [bool]$CoinPusherStageDiagnostic
     ready_wall_msec = $readyWall
     ready_browser_wall_msec = if ($null -ne $reportEnvelope.ready -and $null -ne $reportEnvelope.ready.wall_msec) { [int]$reportEnvelope.ready.wall_msec } else { 0 }
     ready_node_navigation_wall_msec = if ($null -ne $reportEnvelope.ready -and $null -ne $reportEnvelope.ready.node_navigation_wall_msec) { [int]$reportEnvelope.ready.node_navigation_wall_msec } else { 0 }
