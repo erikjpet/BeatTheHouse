@@ -459,7 +459,12 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 			return refused_result
 		var simulation := _simulation(machine)
 		_prepare_variation_action(machine)
-		_sync_physical_features(machine)
+		# Quarter Falls riders are installed at the live-session boundary and do
+		# not replenish per drop. Avoid rescanning the full 300-piece body graph
+		# on its synchronous coin-slot path; the other variations can author new
+		# feature pieces during prepare_action and still reconcile here.
+		if str(machine.get("variation_id", "quarter_falls")) != "quarter_falls":
+			_sync_physical_features(machine)
 		var density := maxi(_cold_density(), int(machine.get("cold_quarters_density_armed", 0))) if bool(machine.get("cold_quarters_armed", false)) else 1
 		machine["cold_quarters_armed"] = false
 		machine["cold_quarters_density_armed"] = 0
@@ -1713,7 +1718,11 @@ func _append_motion_audio_events(machine: Dictionary, result: Array) -> void:
 	var last_slide_tick := int(session.get("presentation_last_slide_tick", -12))
 	var classify_plate := retracting and simulation_tick - last_plate_tick >= 6
 	var classify_slide := pushing and int(simulation.get("motor_rate_fp", 0)) > 0 and simulation_tick - last_slide_tick >= 12
-	if use_packed:
+	var native_motion: Dictionary = session.get("presentation_motion", {}) if typeof(session.get("presentation_motion", {})) == TYPE_DICTIONARY else {}
+	if bool(native_motion.get("valid", false)):
+		plate_block_count = int(native_motion.get("plate_block_count", 0)) if classify_plate else 0
+		moving_under_face = int(native_motion.get("moving_under_face", 0)) if classify_slide else 0
+	elif use_packed:
 		for offset in range(0, current_packed.size(), 9):
 			if current_packed[offset] != previous_packed[offset]:
 				return

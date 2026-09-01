@@ -939,7 +939,7 @@ func _draw_hardware(surface, state: Dictionary, colors: Dictionary) -> void:
 			surface.draw_circle(hole_rect.get_center(), 15.0, Color("#020305"))
 			if hole_index == int(state.get("coin_pusher_selected_hole", 0)):
 				surface.draw_circle(hole_rect.get_center(), 22.0, colors["light"], false, 3.0)
-			surface.surface_label_centered(str(hole_index + 1), hole_rect, 14, colors["light"])
+			surface.surface_label_centered_plain(str(hole_index + 1), hole_rect, 14, colors["light"])
 			var hole_action := "coin_pusher_hole_%d" % hole_index
 			if _binding_enabled(bindings, hole_action):
 				surface.surface_add_exact_hit(hole_rect, hole_action, hole_index)
@@ -962,7 +962,7 @@ func _draw_hardware(surface, state: Dictionary, colors: Dictionary) -> void:
 	var stop_rect := Rect2(154, 352, 88, 48)
 	surface.draw_circle(stop_rect.get_center(), 27.0, colors["light"] if stop_engaged else Color("#b73538"))
 	surface.draw_circle(stop_rect.get_center(), 27.0, Color.WHITE if surface.surface_region_hovered("coin_pusher_skill_stop") else colors["trim"], false, 3.0)
-	surface.surface_label_centered("RELEASE" if stop_engaged else "STOP", stop_rect, 12, Color("#10141d"))
+	surface.surface_label_centered_plain("RELEASE" if stop_engaged else "STOP", stop_rect, 12, Color("#10141d"))
 	if _binding_enabled(bindings, "coin_pusher_skill_stop"):
 		surface.surface_add_hit(stop_rect, "coin_pusher_skill_stop")
 	var tray_rect := Rect2(250, 352, 280, 58)
@@ -971,7 +971,7 @@ func _draw_hardware(surface, state: Dictionary, colors: Dictionary) -> void:
 	_draw_tray_heap(surface, tray_rect, int(state.get("coin_pusher_tray_count", 0)), colors)
 	var collect_enabled := bool((bindings.get("coin_pusher_collect", {}) as Dictionary).get("enabled", false)) if typeof(bindings.get("coin_pusher_collect", {})) == TYPE_DICTIONARY else false
 	var tray_label_rect := Rect2(tray_rect.position + Vector2(5, 3), Vector2(tray_rect.size.x - 10, 18))
-	surface.surface_label_centered("COLLECT  %d  ($%d)" % [int(state.get("coin_pusher_tray_count", 0)), int(state.get("coin_pusher_tray_value", 0))], tray_label_rect, 11, colors["light"] if collect_enabled else Color(colors["light"], 0.44))
+	surface.surface_label_centered_plain("COLLECT  %d  ($%d)" % [int(state.get("coin_pusher_tray_count", 0)), int(state.get("coin_pusher_tray_value", 0))], tray_label_rect, 11, colors["light"] if collect_enabled else Color(colors["light"], 0.44))
 	if collect_enabled:
 		surface.surface_add_hit(tray_rect, "coin_pusher_collect")
 	var slot_rect := Rect2(540, 352, 72, 48)
@@ -982,7 +982,7 @@ func _draw_hardware(surface, state: Dictionary, colors: Dictionary) -> void:
 	var queued := maxi(0, int(state.get("coin_pusher_drop_queue_count", 0)))
 	var charging := maxi(0, int(state.get("coin_pusher_drop_charge_count", 0)))
 	var drop_label := "HOLD %d" % charging if charging > 0 else "QUEUE %d" % queued if queued > 0 else "DROP / HOLD"
-	surface.surface_label_centered(drop_label, Rect2(538, 391, 76, 9), 8, colors["light"])
+	surface.surface_label_centered_plain(drop_label, Rect2(538, 391, 76, 9), 8, colors["light"])
 	var drop_enabled := _binding_enabled(bindings, "coin_pusher_drop")
 	if drop_enabled:
 		surface.surface_add_hold_hit(slot_rect, "coin_pusher_drop_charge")
@@ -995,10 +995,10 @@ func _draw_hardware(surface, state: Dictionary, colors: Dictionary) -> void:
 	surface.draw_line(Vector2(642, 373), Vector2(686, 373), Color.WHITE if nudge_hovered else colors["trim"], 8.0)
 	surface.draw_line(Vector2(642, 373), Vector2(642, 385), colors["trim"], 4.0)
 	surface.draw_line(Vector2(686, 373), Vector2(686, 385), colors["trim"], 4.0)
-	surface.surface_label_centered("NUDGE", Rect2(628, 384, 72, 12), 8, colors["light"] if nudge_enabled else Color(colors["light"], 0.38))
+	surface.surface_label_centered_plain("NUDGE", Rect2(628, 384, 72, 12), 8, colors["light"] if nudge_enabled else Color(colors["light"], 0.38))
 	if nudge_enabled:
 		surface.surface_add_hit(nudge_rect, "coin_pusher_nudge")
-	surface.surface_label_centered(str(state.get("coin_pusher_tell_label", "steady")).to_upper(), Rect2(716, 380, 116, 16), 9, colors["light"])
+	surface.surface_label_centered_plain(str(state.get("coin_pusher_tell_label", "steady")).to_upper(), Rect2(716, 380, 116, 16), 9, colors["light"])
 	_draw_feature_hardware(surface, state, bindings, colors)
 
 
@@ -1028,7 +1028,7 @@ func _draw_selector_groups(surface, descriptor: Dictionary, bindings: Dictionary
 			var selected := option_id == str(group["selected"])
 			surface.draw_rect(rect, colors["light"] if selected else colors["side"])
 			surface.draw_rect(rect, colors["trim"] if enabled else Color(colors["trim"], 0.32), false, 1.0)
-			surface.surface_label_centered(str(option.get("label", option_id)).to_upper(), rect.grow(-1.0), 7, Color("#10141d") if selected else Color(colors["light"], 0.85 if enabled else 0.32))
+			surface.surface_label_centered_plain(str(option.get("label", option_id)).to_upper(), rect.grow(-1.0), 7, Color("#10141d") if selected else Color(colors["light"], 0.85 if enabled else 0.32))
 			if enabled and not action.is_empty():
 				surface.surface_add_exact_hit(rect, action, int(option.get("index", option_index)))
 
@@ -1053,7 +1053,7 @@ func _draw_feature_panels(surface, descriptor: Dictionary, bindings: Dictionary,
 			var fill: Color = colors["light"] if selected else colors["body"].lightened(0.10 if bool(control.get("lit", false)) else 0.0)
 			surface.draw_rect(rect, fill)
 			surface.draw_rect(rect, colors["light"] if selected else colors["trim"], false, 1.0)
-			surface.surface_label_centered(str(control.get("label", "")), rect.grow(-1.0), int(control.get("font_size", 8)), Color("#10141d") if selected else colors["light"])
+			surface.surface_label_centered_plain(str(control.get("label", "")), rect.grow(-1.0), int(control.get("font_size", 8)), Color("#10141d") if selected else colors["light"])
 			if enabled:
 				surface.surface_add_exact_hit(rect, action, int(control.get("index", 0)))
 
@@ -1151,7 +1151,7 @@ func _draw_small_hardware(surface, rect: Rect2, label: String, action: String, c
 	var body_color: Color = colors["body"]
 	surface.draw_rect(rect, body_color.lightened(0.08 if hovered else 0.0))
 	surface.draw_rect(rect, Color.WHITE if hovered else colors["trim"], false, 2.0)
-	surface.surface_label_centered(label, rect.grow(-3.0), 12, colors["light"])
+	surface.surface_label_centered_plain(label, rect.grow(-3.0), 12, colors["light"])
 	if enabled:
 		surface.surface_add_hit(rect, action)
 

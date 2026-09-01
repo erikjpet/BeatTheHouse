@@ -1514,6 +1514,32 @@ struct Kernel {
       if (capture_previous_packed)
         out["presentation_previous_packed"] = capture["packed"];
       out["presentation_previous_face_y"] = presentation_previous_face_y;
+      int64_t plate_block_count = 0, moving_under_face = 0;
+      const int64_t current_face_y = int64_t(state.get("face_y", face_y(g, 0)));
+      const int64_t face_delta = current_face_y - presentation_previous_face_y;
+      if (presentation_previous.size() == b.size()) {
+        for (size_t i = 0; i < b.size(); ++i) {
+          const Body &before = presentation_previous[i], &current = b[i];
+          if (before.id != current.id) {
+            plate_block_count = moving_under_face = -1;
+            break;
+          }
+          if (face_delta > 0 && before.support == "platform" && current.support == "platform" &&
+              std::abs(current.y - (g.plate - g.coin_r)) <= 100 &&
+              current.y - before.y < std::max<int64_t>(1, face_delta / 4))
+            ++plate_block_count;
+          if (face_delta < 0 && current.support == "deck" && current.y < before.y - 25 &&
+              std::abs(current.y - current_face_y) <= 12000)
+            ++moving_under_face;
+        }
+      } else {
+        plate_block_count = moving_under_face = -1;
+      }
+      Dictionary motion;
+      motion["valid"] = plate_block_count >= 0;
+      motion["plate_block_count"] = std::max<int64_t>(0, plate_block_count);
+      motion["moving_under_face"] = std::max<int64_t>(0, moving_under_face);
+      out["presentation_motion"] = motion;
     }
     const bool capture_current_views = bool(config.get("capture_current_views", false));
     const bool capture_current_packed = bool(config.get("capture_current_packed", false));

@@ -77,6 +77,7 @@ static func begin(machine: Dictionary, machine_definition: Dictionary, seed: int
 		"presentation_current_face_y": int(simulation.get("face_y", 0)),
 		"presentation_view_serial": 0,
 		"presentation_audio_serial": 0,
+		"presentation_motion": {},
 		# A fresh authority gets a new generation even when deterministic fixture
 		# re-entry deliberately reuses the same seed.
 		"native_cache_key": "live:%s:%s" % [seed, _native_cache_generation],
@@ -454,7 +455,7 @@ static func _step_traced_ticks(machine: Dictionary, tick_count: int) -> Dictiona
 			"live_cache_reset": bool(session.get("native_cache_reset", false)),
 			"write_body_state": not compact_native_presentation,
 			"capture_previous_views": native_batch and not compact_native_presentation and safe_tick_count > 1 and is_final_chunk,
-			"capture_previous_packed": compact_native_presentation and safe_tick_count > 1 and is_final_chunk,
+			"capture_previous_packed": compact_native_presentation and is_final_chunk,
 			"capture_current_views": native_batch and not compact_native_presentation and is_final_chunk,
 			"capture_current_packed": compact_native_presentation and is_final_chunk,
 		}, chunk_ticks)
@@ -463,7 +464,7 @@ static func _step_traced_ticks(machine: Dictionary, tick_count: int) -> Dictiona
 		all_events.append_array(result.get("events", []))
 		if native_batch and not compact_native_presentation and safe_tick_count > 1 and is_final_chunk:
 			previous_views = result.get("presentation_previous_bodies", []) if typeof(result.get("presentation_previous_bodies", [])) == TYPE_ARRAY else []
-		if compact_native_presentation and safe_tick_count > 1 and is_final_chunk:
+		if compact_native_presentation and is_final_chunk:
 			previous_packed = result.get("presentation_previous_packed", PackedInt64Array()) if typeof(result.get("presentation_previous_packed", PackedInt64Array())) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array()
 		if native_batch and safe_tick_count > 1 and is_final_chunk:
 			previous_face_y = int(result.get("presentation_previous_face_y", simulation.get("previous_face_y", 0)))
@@ -473,6 +474,7 @@ static func _step_traced_ticks(machine: Dictionary, tick_count: int) -> Dictiona
 			session["presentation_previous_packed"] = previous_packed
 			session["presentation_current_packed"] = final_result.get("presentation_current_packed", PackedInt64Array()) if typeof(final_result.get("presentation_current_packed", PackedInt64Array())) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array()
 			session["presentation_feature_count"] = int(final_result.get("presentation_feature_count", session.get("presentation_feature_count", 0)))
+			session["presentation_motion"] = final_result.get("presentation_motion", {}) if typeof(final_result.get("presentation_motion", {})) == TYPE_DICTIONARY else {}
 			session["native_body_state_dirty"] = true
 		else:
 			var current_views: Array = final_result.get("presentation_current_bodies", []) if native_batch and typeof(final_result.get("presentation_current_bodies", [])) == TYPE_ARRAY else _presentation_body_views(simulation)
