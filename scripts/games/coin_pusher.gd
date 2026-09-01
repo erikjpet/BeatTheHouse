@@ -158,6 +158,7 @@ func actions(run_state: RunState, environment: Dictionary) -> Dictionary:
 		"stake_floor": _drop_cost(),
 		"stake_ceiling": maxi(_drop_cost(), capacity),
 		"base_stake_ceiling": maxi(_drop_cost(), capacity),
+		"economy_stake_ceiling": maxi(_drop_cost(), capacity),
 		"economy_state": run_state.economy() if run_state != null else {},
 		"economy_pressure_applied": false,
 	}
