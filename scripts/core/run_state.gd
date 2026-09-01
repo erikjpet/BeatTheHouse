@@ -13117,8 +13117,8 @@ func _advance_environment_turns_candidate(amount: int) -> Dictionary:
 			return {"ok": false, "applied": false, "errors": _copy_array(expiry_result.get("errors", []))}
 	forced_failure = _environment_turn_test_failure("expiry")
 	if not forced_failure.is_empty(): return forced_failure
-	var town_before := JSON.stringify(town_state.public_snapshot()) if town_state != null else ""
-	var sweep_before := JSON.stringify(town_state.sweep_internal_status()) if town_state != null else ""
+	var town_before := town_state.public_snapshot() if town_state != null else {}
+	var sweep_before := town_state.sweep_internal_status() if town_state != null else {}
 	_advance_global_boundary_start(safe_amount)
 	forced_failure = _environment_turn_test_failure("global_start")
 	if not forced_failure.is_empty(): return forced_failure
@@ -13150,7 +13150,7 @@ func _advance_environment_turns_candidate(amount: int) -> Dictionary:
 	if not forced_failure.is_empty(): return forced_failure
 	if town_state != null:
 		var town_after := town_state.public_snapshot()
-		if JSON.stringify(town_after) != town_before:
+		if town_after != town_before:
 			var happening_ids: Array = []
 			for happening_value in _copy_array(town_after.get("active_happenings", [])):
 				if typeof(happening_value) != TYPE_DICTIONARY:
@@ -13165,7 +13165,7 @@ func _advance_environment_turns_candidate(amount: int) -> Dictionary:
 		forced_failure = _environment_turn_test_failure("town_fact")
 		if not forced_failure.is_empty(): return forced_failure
 		var sweep_after := town_state.sweep_internal_status()
-		if JSON.stringify(sweep_after) != sweep_before:
+		if sweep_after != sweep_before:
 			var sweep_fact := scenario_enqueue_fact("sweep_changed", "sweep", {"action_index": _crew_action_index(), "node_id": str(sweep_after.get("current_node_id", "")), "segment_index": int(sweep_after.get("segment_index", -1)), "active": bool(sweep_after.get("active", false))})
 			if not bool(sweep_fact.get("ok", false)) and not bool(sweep_fact.get("inactive", false)):
 				return {"ok": false, "applied": false, "errors": _copy_array(sweep_fact.get("errors", []))}

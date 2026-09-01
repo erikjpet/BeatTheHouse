@@ -3506,6 +3506,13 @@ func _source_allows_action_triggered_events(source: String) -> bool:
 func _enqueue_triggered_events_for_context(source: String, context: Dictionary, environment: Dictionary) -> bool:
 	if run_state == null or library == null:
 		return false
+	var local_flags_value: Variant = environment.get("local_narrative_flags", {})
+	var local_flags: Dictionary = local_flags_value if typeof(local_flags_value) == TYPE_DICTIONARY else {}
+	# The released game-library launcher is an isolated practice room: it has no
+	# world node, travel path, or story ownership. Do not let ordinary world
+	# cadence interrupt that practice session after a table input.
+	if dev_game_test_mode and str(environment.get("id", "")).begins_with("practice_") and bool(local_flags.get("practice_session", false)):
+		return false
 	var debug_timing: Dictionary = last_game_result.get("coin_pusher_debug_host_timing_usec", {}) if typeof(last_game_result.get("coin_pusher_debug_host_timing_usec", {})) == TYPE_DICTIONARY else {}
 	var debug_enabled := not debug_timing.is_empty()
 	var debug_stage_started_usec := Time.get_ticks_usec() if debug_enabled else 0
