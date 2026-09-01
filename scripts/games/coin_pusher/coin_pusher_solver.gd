@@ -489,6 +489,14 @@ static func native_live_render_batch(config: Dictionary, current: Array, previou
 	return result as Dictionary if typeof(result) == TYPE_DICTIONARY else {}
 
 
+static func native_live_render_batch_packed(config: Dictionary, current: PackedInt64Array, previous: PackedInt64Array, alpha: float) -> Dictionary:
+	var native := _native_solver_backend()
+	if native == null or not native.has_method("build_live_render_batch_packed"):
+		return {}
+	var result: Variant = native.call("build_live_render_batch_packed", config, current, previous, alpha)
+	return result as Dictionary if typeof(result) == TYPE_DICTIONARY else {}
+
+
 static func last_step_backend_for_test() -> String:
 	return _last_step_backend
 

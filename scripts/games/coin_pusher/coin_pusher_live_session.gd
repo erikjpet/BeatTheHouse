@@ -70,6 +70,8 @@ static func begin(machine: Dictionary, machine_definition: Dictionary, seed: int
 		# reconstructing a previous position from velocity.
 		"presentation_previous_bodies": opening_views.duplicate(true),
 		"presentation_current_bodies": opening_views,
+		"presentation_previous_packed": PackedInt64Array(),
+		"presentation_current_packed": PackedInt64Array(),
 		"presentation_feature_count": _presentation_feature_count(opening_views),
 		"presentation_previous_face_y": int(simulation.get("face_y", 0)),
 		"presentation_current_face_y": int(simulation.get("face_y", 0)),
@@ -383,10 +385,13 @@ static func _step_traced_ticks(machine: Dictionary, tick_count: int) -> Dictiona
 	var all_events: Array = []
 	var safe_tick_count := maxi(0, tick_count)
 	var previous_views: Array = []
+	var previous_packed := PackedInt64Array()
 	var previous_face_y := int(session.get("presentation_current_face_y", simulation.get("face_y", 0)))
 	if safe_tick_count == 1:
 		var current_views: Variant = session.get("presentation_current_bodies", [])
 		previous_views = current_views if typeof(current_views) == TYPE_ARRAY and not (current_views as Array).is_empty() else _presentation_body_views(simulation)
+		var current_packed: Variant = session.get("presentation_current_packed", PackedInt64Array())
+		previous_packed = current_packed if typeof(current_packed) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array()
 	var native_batch := CoinPusherSolverScript.native_live_batch_supported()
 	var remaining := safe_tick_count
 	var final_result: Dictionary = {}
@@ -427,12 +432,15 @@ static func _step_traced_ticks(machine: Dictionary, tick_count: int) -> Dictiona
 		all_events.append_array(result.get("events", []))
 		if native_batch and safe_tick_count > 1 and is_final_chunk:
 			previous_views = result.get("presentation_previous_bodies", []) if typeof(result.get("presentation_previous_bodies", [])) == TYPE_ARRAY else []
+			previous_packed = result.get("presentation_previous_packed", PackedInt64Array()) if typeof(result.get("presentation_previous_packed", PackedInt64Array())) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array()
 			previous_face_y = int(result.get("presentation_previous_face_y", simulation.get("previous_face_y", 0)))
 		remaining -= chunk_ticks
 	if safe_tick_count > 0:
 		var current_views: Array = final_result.get("presentation_current_bodies", []) if native_batch and typeof(final_result.get("presentation_current_bodies", [])) == TYPE_ARRAY else _presentation_body_views(simulation)
 		session["presentation_previous_bodies"] = previous_views
 		session["presentation_current_bodies"] = current_views
+		session["presentation_previous_packed"] = previous_packed
+		session["presentation_current_packed"] = final_result.get("presentation_current_packed", PackedInt64Array()) if native_batch and typeof(final_result.get("presentation_current_packed", PackedInt64Array())) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array()
 		session["presentation_feature_count"] = _presentation_feature_count(current_views)
 		session["presentation_previous_face_y"] = previous_face_y
 		session["presentation_current_face_y"] = int(final_result.get("presentation_current_face_y", simulation.get("face_y", 0))) if native_batch else int(simulation.get("face_y", 0))

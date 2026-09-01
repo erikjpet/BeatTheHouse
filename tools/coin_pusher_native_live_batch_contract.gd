@@ -75,6 +75,20 @@ static func _run_contract() -> Dictionary:
 	_assert_equal("pre-final presentation face", int(native_result.get("presentation_previous_face_y", -1)), int(previous_reference.get("face_y", -2)), failures)
 	_assert_equal("current presentation bodies", native_result.get("presentation_current_bodies", []), _presentation_views(reference_state), failures)
 	_assert_equal("current presentation face", int(native_result.get("presentation_current_face_y", -1)), int(reference_state.get("face_y", -2)), failures)
+	var render_config := {
+		"world_width": 100000,
+		"world_back_y": 78000,
+		"coin_height": 950,
+		"coin_radius": 2350,
+		"board": {"y": 78000, "z_bottom": 3600, "z_top": 24000},
+		"body_colors": {"default": "#c9c5b8", "coin": "#d9c167", "rider": "#62c8ef", "puck": "#ec6f66", "fragment": "#a8e078"},
+	}
+	var dictionary_render: Dictionary = native.call("build_live_render_batch", render_config, native_result.get("presentation_current_bodies", []), native_result.get("presentation_previous_bodies", []), 0.375)
+	var packed_render: Dictionary = native.call("build_live_render_batch_packed", render_config, native_result.get("presentation_current_packed", PackedInt64Array()), native_result.get("presentation_previous_packed", PackedInt64Array()), 0.375)
+	_assert_equal("packed renderer count", packed_render.get("count", -1), dictionary_render.get("count", -2), failures)
+	_assert_equal("packed renderer transform/color buffer", packed_render.get("buffer", PackedFloat32Array()), dictionary_render.get("buffer", PackedFloat32Array()), failures)
+	_assert_equal("packed renderer shadows", packed_render.get("shadows", []), dictionary_render.get("shadows", []), failures)
+	_assert_equal("packed renderer feature labels", packed_render.get("features", []), dictionary_render.get("features", []), failures)
 
 	# An ordinary production solver call has no live key. It must neither consume
 	# nor replace the retained live kernel used by the following continuation.

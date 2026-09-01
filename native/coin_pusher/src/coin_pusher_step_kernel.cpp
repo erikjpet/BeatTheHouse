@@ -2,6 +2,7 @@
 
 #include <godot_cpp/classes/object.hpp>
 #include <godot_cpp/variant/array.hpp>
+#include <godot_cpp/variant/packed_int64_array.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
 #include <algorithm>
@@ -1446,9 +1447,11 @@ struct Kernel {
     out["events"] = events;
     out["metrics"] = m;
     out["invariants"] = inv;
-    auto presentation_views = [](const std::vector<Body> &source) {
+    auto presentation_capture = [](const std::vector<Body> &source) {
       Array views;
       views.resize(source.size());
+      PackedInt64Array packed;
+      packed.resize(source.size() * 8);
       for (int64_t i = 0; i < int64_t(source.size()); ++i) {
         const Body &q = source[size_t(i)];
         Dictionary view;
@@ -1464,15 +1467,31 @@ struct Kernel {
                                : !q.support.is_empty() ? String("deck")
                                                        : String();
         views[i] = view;
+        const int64_t offset = i * 8;
+        packed[offset] = q.id.trim_prefix("body_").to_int();
+        packed[offset + 1] = q.id.hash();
+        packed[offset + 2] = q.x;
+        packed[offset + 3] = q.y;
+        packed[offset + 4] = q.z;
+        packed[offset + 5] = q.r;
+        packed[offset + 6] = q.rest == "falling" ? 1 : 0;
+        packed[offset + 7] = q.kind == "coin" ? 0 : q.kind == "rider" ? 1 : q.kind == "puck" ? 2 : q.kind == "fragment" ? 3 : 4;
       }
-      return views;
+      Dictionary capture;
+      capture["views"] = views;
+      capture["packed"] = packed;
+      return capture;
     };
     if (capture_previous) {
-      out["presentation_previous_bodies"] = presentation_views(presentation_previous);
+      Dictionary capture = presentation_capture(presentation_previous);
+      out["presentation_previous_bodies"] = capture["views"];
+      out["presentation_previous_packed"] = capture["packed"];
       out["presentation_previous_face_y"] = presentation_previous_face_y;
     }
     if (bool(config.get("capture_current_views", false))) {
-      out["presentation_current_bodies"] = presentation_views(b);
+      Dictionary capture = presentation_capture(b);
+      out["presentation_current_bodies"] = capture["views"];
+      out["presentation_current_packed"] = capture["packed"];
       out["presentation_current_face_y"] = int64_t(state.get("face_y", face_y(g, 0)));
     }
     return out;

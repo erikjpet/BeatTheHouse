@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <unordered_map>
 #include <vector>
 
 using namespace godot;
@@ -179,5 +180,142 @@ Dictionary CoinPusherNativeCore::build_live_render_batch(
   result["buffer"] = buffer;
   result["shadows"] = shadows;
   result["features"] = features;
+  return result;
+}
+
+Dictionary CoinPusherNativeCore::build_live_render_batch_packed(
+    const Dictionary &config, const PackedInt64Array &current,
+    const PackedInt64Array &previous, double alpha) const {
+  constexpr int64_t STRIDE = 8;
+  struct PackedBody {
+    int64_t id = 0, id_hash = 0, x = 0, y = 0, z = 0, radius = 2350,
+            flags = 0, kind = 0;
+  };
+  auto decode = [](const PackedInt64Array &source, int64_t index) {
+    const int64_t offset = index * STRIDE;
+    PackedBody body;
+    body.id = source[offset];
+    body.id_hash = source[offset + 1];
+    body.x = source[offset + 2];
+    body.y = source[offset + 3];
+    body.z = source[offset + 4];
+    body.radius = source[offset + 5];
+    body.flags = source[offset + 6];
+    body.kind = source[offset + 7];
+    return body;
+  };
+  const int64_t source_count = current.size() / STRIDE;
+  const int64_t count = std::min<int64_t>(BATCH_CAPACITY, source_count);
+  if (count <= 0 || current.size() % STRIDE != 0)
+    return Dictionary();
+  const double safe_alpha = clampd(alpha, 0.0, 1.0);
+  const double world_width = std::max(1.0, double(config.get("world_width", 100000.0)));
+  const double world_back_y = std::max(1.0, double(config.get("world_back_y", 78000.0)));
+  const double coin_height = std::max(1.0, double(config.get("coin_height", 950.0)));
+  const double coin_radius = std::max(1.0, double(config.get("coin_radius", 2350.0)));
+  const Dictionary board = config.get("board", Dictionary());
+  const int64_t board_y = board.get("y", 0);
+  const double board_bottom = board.get("z_bottom", 0.0);
+  const Dictionary body_colors = config.get("body_colors", Dictionary());
+  const String kind_names[] = {"coin", "rider", "puck", "fragment", "other"};
+  Color kind_colors[5];
+  const Color default_color = Color::from_string(String(body_colors.get("default", "#c9c5b8")), Color(0.788, 0.773, 0.722));
+  for (int i = 0; i < 4; ++i)
+    kind_colors[i] = Color::from_string(String(body_colors.get(kind_names[i], body_colors.get("default", "#c9c5b8"))), default_color);
+  kind_colors[4] = default_color;
+
+  std::vector<PackedBody> bodies(static_cast<size_t>(source_count), PackedBody{});
+  for (int64_t i = 0; i < source_count; ++i)
+    bodies[size_t(i)] = decode(current, i);
+  bool aligned = safe_alpha < 0.999 && previous.size() == current.size();
+  if (aligned) {
+    for (int64_t i = 0; i < source_count; ++i) {
+      if (previous[i * STRIDE] != bodies[size_t(i)].id) {
+        aligned = false;
+        break;
+      }
+    }
+  }
+  std::unordered_map<int64_t, PackedBody> previous_by_id;
+  if (safe_alpha < 0.999 && !aligned && previous.size() % STRIDE == 0) {
+    const int64_t previous_count = previous.size() / STRIDE;
+    previous_by_id.reserve(size_t(previous_count));
+    for (int64_t i = 0; i < previous_count; ++i) {
+      PackedBody body = decode(previous, i);
+      previous_by_id[body.id] = body;
+    }
+  }
+  std::vector<int64_t> order(static_cast<size_t>(source_count), int64_t(0));
+  for (int64_t i = 0; i < source_count; ++i)
+    order[size_t(i)] = i;
+  std::sort(order.begin(), order.end(), [&bodies](int64_t ai, int64_t bi) {
+    const PackedBody &a = bodies[size_t(ai)], &b = bodies[size_t(bi)];
+    const int64_t ak = a.y * 100000 - a.z, bk = b.y * 100000 - b.z;
+    return ak != bk ? ak > bk : a.id < b.id;
+  });
+
+  PackedFloat32Array buffer;
+  buffer.resize(count * 12);
+  Array shadows, features;
+  for (int64_t instance = 0; instance < count; ++instance) {
+    const int64_t body_index = order[size_t(instance)];
+    const PackedBody &body = bodies[size_t(body_index)];
+    double x = body.x, y = body.y, z = body.z;
+    if (safe_alpha < 0.999) {
+      PackedBody prior = body;
+      if (aligned)
+        prior = decode(previous, body_index);
+      else {
+        auto found = previous_by_id.find(body.id);
+        if (found != previous_by_id.end())
+          prior = found->second;
+      }
+      x = lerpd(prior.x, x, safe_alpha);
+      y = lerpd(prior.y, y, safe_alpha);
+      z = lerpd(prior.z, z, safe_alpha);
+    }
+    const bool falling = (body.flags & 1) != 0;
+    const bool on_board = falling && std::abs(int64_t(std::round(y)) - board_y) <= body.radius && z >= board_bottom;
+    const Vector2 point = on_board ? project_board(board, x, z, world_width, world_back_y, coin_height) : project(x, y, z, world_width, world_back_y, coin_height);
+    const int kind_index = int(std::min<int64_t>(4, std::max<int64_t>(0, body.kind)));
+    const Color color = kind_colors[kind_index];
+    const int64_t frame = ((body.id_hash % 4) + 4) % 4;
+    const double rotation = ROTATIONS[frame];
+    const double depth_scale = lerpd(1.0, REAR_WIDTH_FACTOR, clampd(y / world_back_y, 0.0, 1.0));
+    const double visual_scale = depth_scale * double(body.radius) / coin_radius;
+    const double c = std::cos(rotation) * visual_scale, s = std::sin(rotation) * visual_scale;
+    const int64_t offset = instance * 12;
+    buffer[offset] = c;
+    buffer[offset + 1] = -s;
+    buffer[offset + 2] = 0.0f;
+    buffer[offset + 3] = point.x;
+    buffer[offset + 4] = s;
+    buffer[offset + 5] = c;
+    buffer[offset + 6] = 0.0f;
+    buffer[offset + 7] = point.y;
+    buffer[offset + 8] = color.r;
+    buffer[offset + 9] = color.g;
+    buffer[offset + 10] = color.b;
+    buffer[offset + 11] = color.a;
+    if (falling) {
+      const Vector2 shadow_point = on_board && z > board_bottom + coin_height ? project_board(board, x, z, world_width, world_back_y, coin_height) : project(x, y, board_bottom, world_width, world_back_y, coin_height);
+      Dictionary shadow;
+      shadow["point"] = shadow_point;
+      shadow["scale"] = visual_scale;
+      shadows.append(shadow);
+    }
+    if (kind_index > 0) {
+      Dictionary feature;
+      feature["kind"] = kind_names[kind_index];
+      feature["point"] = point;
+      features.append(feature);
+    }
+  }
+  Dictionary result;
+  result["count"] = count;
+  result["buffer"] = buffer;
+  result["shadows"] = shadows;
+  result["features"] = features;
+  result["packed"] = true;
   return result;
 }
