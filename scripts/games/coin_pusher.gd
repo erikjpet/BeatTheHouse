@@ -317,6 +317,21 @@ func surface_action_command(surface_action: String, _index: int, _confirm_reques
 	return GameModule.surface_command({"handled": true, "environment_changed": true, "preserve_surface_ui_state": true, "surface_state_patch": immediate_patch}, true)
 
 
+func surface_action_uses_lightweight_ui_state(_surface_action: String) -> bool:
+	return true
+
+
+func surface_action_ui_state_keys() -> Array:
+	# The diagnostic key is retained when explicitly requested; charge state is
+	# included so a keyboard/click drop can share the same direct-resolve context
+	# as the hold gesture without copying the rest of the retained surface state.
+	return [
+		"coin_pusher_debug_profile_stages",
+		"coin_pusher_drop_charge_started_tick",
+		"coin_pusher_drop_charge_count",
+	]
+
+
 func surface_pointer_uses_lightweight_ui_state(surface_action: String) -> bool:
 	return surface_action in [CARRIAGE_DRAG_ACTION, DROP_CHARGE_ACTION]
 

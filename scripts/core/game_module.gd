@@ -229,6 +229,17 @@ func surface_action_command(_surface_action: String, _index: int, _confirm_reque
 	return {"handled": false}
 
 
+# Button-native surfaces can opt out of cloning the complete retained UI
+# session before every click. Their action and direct-resolve paths must consume
+# only the declared keys plus the host-owned selected action/stake scalars.
+func surface_action_uses_lightweight_ui_state(_surface_action: String) -> bool:
+	return false
+
+
+func surface_action_ui_state_keys() -> Array:
+	return []
+
+
 # Commits UI-local interaction state only when a surface is being dismissed.
 # This preserves the non-mutating click contract while allowing physical
 # partially opened objects to survive travel, closure, inventory, and save UI.

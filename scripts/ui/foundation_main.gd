@@ -1155,7 +1155,14 @@ func _handle_module_surface_action(action: String, index: int, confirm_requested
 	var debug_coin_pusher_outer := bool(game_surface_ui_state.get("coin_pusher_debug_profile_stages", false))
 	var debug_outer_started_usec := Time.get_ticks_usec() if debug_coin_pusher_outer else 0
 	var debug_outer_stage_started_usec := debug_outer_started_usec
-	var ui_state := _current_game_surface_ui_state()
+	var ui_state: Dictionary = {}
+	if current_game.surface_action_uses_lightweight_ui_state(action):
+		for key_value in current_game.surface_action_ui_state_keys():
+			var key := str(key_value)
+			if not key.is_empty() and game_surface_ui_state.has(key):
+				ui_state[key] = game_surface_ui_state[key]
+	else:
+		ui_state = _current_game_surface_ui_state()
 	var debug_outer_ui_state_usec := Time.get_ticks_usec() - debug_outer_stage_started_usec if debug_coin_pusher_outer else 0
 	ui_state["selected_action_id"] = selected_action_id
 	ui_state["selected_action_kind"] = selected_action_kind
