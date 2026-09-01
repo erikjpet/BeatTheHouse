@@ -48,6 +48,62 @@ func defers_embedded_action_presentation_refresh(run_state: RunState, _environme
 	return run_state != null and not run_state.is_tutorial_run()
 
 
+func host_action_rollback_snapshot(action_id: String, run_state: RunState, environment: Dictionary) -> Dictionary:
+	if action_id != DROP_ACTION or run_state == null or run_state.grand_casino_game_uses_chips(get_id(), environment):
+		return {}
+	var machine := _ensure_live_machine(run_state, environment)
+	if str(machine.get("variation_id", "quarter_falls")) != "quarter_falls":
+		return {}
+	var shell: Dictionary = {}
+	for key in machine.keys():
+		if str(key) not in ["simulation", "live_session", "settled_state"]:
+			var value: Variant = machine[key]
+			shell[key] = value.duplicate(true) if typeof(value) in [TYPE_DICTIONARY, TYPE_ARRAY] else value
+	var simulation := _simulation(machine)
+	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
+	return {
+		"supported": true,
+		"machine": machine,
+		"shell": shell,
+		"motor_target_rate_present": simulation.has("motor_target_rate_fp"),
+		"motor_target_rate_fp": int(simulation.get("motor_target_rate_fp", 0)),
+		"durable_ready_present": session.has("durable_ready"),
+		"durable_ready": bool(session.get("durable_ready", false)),
+		"durable_dirty_present": session.has("durable_dirty"),
+		"durable_dirty": bool(session.get("durable_dirty", false)),
+	}
+
+
+func restore_host_action_rollback(snapshot: Dictionary, run_state: RunState, environment: Dictionary) -> bool:
+	var machine_value: Variant = snapshot.get("machine", null)
+	var shell_value: Variant = snapshot.get("shell", null)
+	if typeof(machine_value) != TYPE_DICTIONARY or typeof(shell_value) != TYPE_DICTIONARY:
+		return false
+	var machine := machine_value as Dictionary
+	var shell := shell_value as Dictionary
+	if not is_same(machine, _ensure_live_machine(run_state, environment)):
+		return false
+	for key in machine.keys():
+		if str(key) not in ["simulation", "live_session", "settled_state"] and not shell.has(key):
+			machine.erase(key)
+	for key in shell.keys():
+		var value: Variant = shell[key]
+		machine[key] = value.duplicate(true) if typeof(value) in [TYPE_DICTIONARY, TYPE_ARRAY] else value
+	var simulation := _simulation(machine)
+	if bool(snapshot.get("motor_target_rate_present", false)):
+		simulation["motor_target_rate_fp"] = int(snapshot.get("motor_target_rate_fp", 0))
+	else:
+		simulation.erase("motor_target_rate_fp")
+	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
+	for field_name in ["durable_ready", "durable_dirty"]:
+		if bool(snapshot.get("%s_present" % field_name, false)):
+			session[field_name] = snapshot.get(field_name)
+		else:
+			session.erase(field_name)
+	_write_live_durable(run_state, environment, machine, false)
+	return true
+
+
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
 	# Surface entry is presentation-only. Machine normalization, rumor updates,
 	# and staff-watch consequences belong to generation/action boundaries.

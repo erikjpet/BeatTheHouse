@@ -178,6 +178,17 @@ func defers_embedded_action_presentation_refresh(_run_state: RunState, _environm
 	return false
 
 
+# Solver-heavy modules may provide a small exact rollback token for mutations
+# they make before the host's atomic environment-turn boundary. An empty token
+# keeps the conservative whole-run snapshot used by every other game.
+func host_action_rollback_snapshot(_action_id: String, _run_state: RunState, _environment: Dictionary) -> Dictionary:
+	return {}
+
+
+func restore_host_action_rollback(_snapshot: Dictionary, _run_state: RunState, _environment: Dictionary) -> bool:
+	return false
+
+
 # Exposes sparse, action-boundary tutorial facts without teaching the UI any
 # game-specific state schema.
 func coach_state(_run_state: RunState, _environment: Dictionary, _ui_state: Dictionary = {}) -> Dictionary:

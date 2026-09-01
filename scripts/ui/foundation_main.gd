@@ -4930,10 +4930,7 @@ func _use_active_item(item_id: String) -> bool:
 	if current_game == null:
 		_show_message("That active item needs a game surface.")
 		return false
-	var debug_rollback_started_usec := Time.get_ticks_usec() if debug_coin_pusher_host else 0
 	var boundary_rollback_run := run_state.to_dict()
-	if debug_coin_pusher_host:
-		debug_host_timing["host_rollback_snapshot"] = Time.get_ticks_usec() - debug_rollback_started_usec
 	var boundary_rollback_environment := run_state.current_environment.duplicate(true)
 	var command: Dictionary = current_game.active_item_command(item_id, run_state, run_state.current_environment, run_state.create_rng("active_item:%s" % item_id))
 	if not bool(command.get("handled", false)):
@@ -10454,8 +10451,13 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 		_pause_repeating_surface_action_for_wager_confirmation()
 		_show_wager_confirmation_popup(action_id, stake, wager_cost, skip_stake_validation, preserve_surface_ui_state)
 		return
-	var boundary_rollback_run := run_state.to_dict()
-	var boundary_rollback_environment := run_state.current_environment.duplicate(true)
+	var debug_rollback_started_usec := Time.get_ticks_usec() if debug_coin_pusher_host else 0
+	var compact_action_rollback := current_game.host_action_rollback_snapshot(action_id, run_state, run_state.current_environment)
+	var uses_compact_action_rollback := bool(compact_action_rollback.get("supported", false))
+	var boundary_rollback_run := {} if uses_compact_action_rollback else run_state.to_dict()
+	if debug_coin_pusher_host:
+		debug_host_timing["host_rollback_snapshot"] = Time.get_ticks_usec() - debug_rollback_started_usec
+	var boundary_rollback_environment := {} if uses_compact_action_rollback else run_state.current_environment.duplicate(true)
 	var boundary_rollback_deferred_failure := run_state.defer_next_bankroll_zero_failure
 	var confirmed_all_in_wager := wager_confirmed and _wager_needs_final_bankroll_confirmation(current_game, action_id, stake, wager_cost, action_surface_ui_state)
 	if confirmed_all_in_wager:
@@ -10515,8 +10517,12 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 		if not runtime_tick_in_progress:
 			var debug_turn_started_usec := Time.get_ticks_usec() if debug_coin_pusher_host else 0
 			if not _advance_environment_turns_checked(1):
-				run_state.from_dict(boundary_rollback_run)
-				run_state.current_environment = boundary_rollback_environment
+				if uses_compact_action_rollback:
+					if not current_game.restore_host_action_rollback(compact_action_rollback, run_state, run_state.current_environment):
+						push_error("Game module failed to restore its declared compact host-action rollback token.")
+				else:
+					run_state.from_dict(boundary_rollback_run)
+					run_state.current_environment = boundary_rollback_environment
 				run_state.defer_next_bankroll_zero_failure = boundary_rollback_deferred_failure
 				_refresh_runtime_environment_views()
 				return
