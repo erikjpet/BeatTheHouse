@@ -2058,6 +2058,10 @@ func _advance_game_surface_realtime_state() -> void:
 	var patch := _game_surface_realtime_state_patch(now_msec)
 	if patch.is_empty():
 		return
+	if perf_telemetry_overlay != null and typeof(patch.get("coin_pusher_last_step_metrics", {})) == TYPE_DICTIONARY:
+		var native_metrics: Dictionary = patch.get("coin_pusher_last_step_metrics", {})
+		if int(native_metrics.get("fixed_ticks", 0)) > 0:
+			perf_telemetry_overlay.record_foundation_subsystem_usec("coin_pusher_native_step", maxi(0, int(native_metrics.get("elapsed_usec", 0))))
 	game_surface_canvas.apply_surface_state_patch(patch)
 
 
