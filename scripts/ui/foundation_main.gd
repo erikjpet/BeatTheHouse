@@ -2152,16 +2152,7 @@ func _clear_presented_bankroll_hold() -> void:
 func _game_surface_presentation_active() -> bool:
 	if game_surface_canvas == null:
 		return false
-	var status := game_surface_canvas.surface_runtime_status()
-	var animations: Dictionary = status.get("surface_animations", {}) if typeof(status.get("surface_animations", {})) == TYPE_DICTIONARY else {}
-	for animation_id in animations.keys():
-		var animation_value: Variant = animations.get(animation_id)
-		if typeof(animation_value) != TYPE_DICTIONARY:
-			continue
-		var animation: Dictionary = animation_value
-		if bool(animation.get("active", false)):
-			return true
-	return bool(status.get("surface_animation_handoff_active", false))
+	return game_surface_canvas.surface_bankroll_presentation_active()
 
 
 func _advance_environment_game_runtime() -> void:

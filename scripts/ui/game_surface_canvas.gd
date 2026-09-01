@@ -339,6 +339,13 @@ func surface_transition_animation_active() -> bool:
 	return false
 
 
+func surface_bankroll_presentation_active() -> bool:
+	# Bankroll reveal ownership needs only the transition/handoff booleans. The
+	# former caller rebuilt the complete diagnostic runtime status every frame,
+	# including geometry, effects and all animation snapshots, after each wager.
+	return surface_transition_animation_active() or _surface_animation_handoff_active()
+
+
 func reset_performance_counters() -> void:
 	perf_full_snapshot_calls = 0
 	perf_runtime_status_calls = 0
