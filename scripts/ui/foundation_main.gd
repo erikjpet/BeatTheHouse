@@ -2599,6 +2599,8 @@ func _current_game_surface_realtime_ui_state(now_msec: int) -> Dictionary:
 			var key := str(key_value)
 			if not key.is_empty() and game_surface_ui_state.has(key):
 				ui_state[key] = game_surface_ui_state[key]
+		ui_state["surface_time_msec"] = now_msec
+		return ui_state
 	else:
 		ui_state = game_surface_ui_state.duplicate(false)
 	ui_state["selected_action_id"] = selected_action_id
@@ -2666,7 +2668,9 @@ func _augment_game_surface_realtime_patch(patch: Dictionary, ui_state: Dictionar
 	# The host clock is part of every realtime boundary even when a module emits
 	# only its changed machine fields. Without this stamp the canvas can repeatedly
 	# present an old/absent time while the live session has already advanced.
-	patch["surface_time_msec"] = int(ui_state.get("surface_time_msec", _environment_simulation_time_msec()))
+	patch["surface_time_msec"] = int(ui_state["surface_time_msec"]) if ui_state.has("surface_time_msec") else _environment_simulation_time_msec()
+	if current_game != null and current_game.surface_realtime_patch_preserves_host_state():
+		return
 	if patch.has("surface_renderer"):
 		var surface_renderer := str(patch.get("surface_renderer", ""))
 		patch["surface_life"] = str(patch.get("surface_life", _surface_life_for_renderer(surface_renderer)))

@@ -697,6 +697,10 @@ func surface_realtime_ui_state_keys() -> Array:
 	return ["coin_pusher_drop_charge_started_tick"]
 
 
+func surface_realtime_patch_preserves_host_state() -> bool:
+	return true
+
+
 func checkpoint_surface_ui_state(_ui_state: Dictionary, _run_state: RunState, environment: Dictionary) -> void:
 	var key := _live_key(_run_state, environment)
 	if not _live_machines.has(key):

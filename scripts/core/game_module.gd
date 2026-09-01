@@ -307,6 +307,13 @@ func surface_realtime_ui_state_keys() -> Array:
 	return []
 
 
+# Modules whose realtime patch cannot change bankroll, pressure, intoxication,
+# selection, or accessibility host state may retain those existing surface
+# fields until the next normal action/refresh boundary.
+func surface_realtime_patch_preserves_host_state() -> bool:
+	return false
+
+
 func surface_auto_action_command(_ui_state: Dictionary, _run_state: RunState, _environment: Dictionary, _surface_status: Dictionary = {}) -> Dictionary:
 	return {"handled": false}
 
