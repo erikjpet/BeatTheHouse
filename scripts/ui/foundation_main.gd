@@ -9045,23 +9045,11 @@ func _refresh_after_embedded_game_action(embeds_result_feedback: bool = false, a
 		return
 	if world_header_context_key != _embedded_world_header_context_key():
 		_refresh_world_header()
-	var hud_model := _run_status_hud_model()
-	if status_label != null:
-		status_label.text = str(hud_model.get("status_text", ""))
-	if objective_label != null:
-		objective_label.text = str(hud_model.get("objective_text", ""))
-	if structured_hud != null:
-		structured_hud.set_reduce_motion(_reduce_motion_enabled())
-		structured_hud.set_compact_mode(_compact_run_hud_enabled())
-		structured_hud.render(hud_model)
-	_style_hud_for_recent_consequence()
-	if save_status_label != null:
-		save_status_label.text = str(hud_model.get("save_text", ""))
-	_apply_hud_mode_visibility()
+	if not action_boundary_preflight_complete:
+		_refresh_embedded_action_hud()
 	if debug_enabled:
 		debug_timing["refresh_hud"] = Time.get_ticks_usec() - debug_stage_started_usec
 		debug_stage_started_usec = Time.get_ticks_usec()
-	_refresh_active_item_slot()
 	# This hot path is entered with the embedding contract captured before action
 	# resolution. An embedding surface owns the visible result and this panel must
 	# remain hidden; direct/debug callers retain the conservative refresh default.
@@ -9083,15 +9071,82 @@ func _refresh_after_embedded_game_action(embeds_result_feedback: bool = false, a
 		debug_timing["refresh_snapshot_patch"] = snapshot_refresh_usec if incremental_snapshot_used else 0
 		debug_timing["refresh_snapshot_full_fallback"] = 0 if incremental_snapshot_used else snapshot_refresh_usec
 		debug_stage_started_usec = Time.get_ticks_usec()
-	var previous_acknowledgement_suppression := suppress_completed_tutorial_acknowledgement_clear
 	if action_boundary_preflight_complete:
+		_schedule_deferred_embedded_secondary_refresh()
+	else:
+		_refresh_embedded_action_talk_music_coach(false)
+	if debug_enabled:
+		debug_timing["refresh_talk_music_coach"] = Time.get_ticks_usec() - debug_stage_started_usec
+
+
+func _refresh_embedded_action_hud() -> void:
+	var hud_model := _run_status_hud_model()
+	if status_label != null:
+		status_label.text = str(hud_model.get("status_text", ""))
+	if objective_label != null:
+		objective_label.text = str(hud_model.get("objective_text", ""))
+	if structured_hud != null:
+		structured_hud.set_reduce_motion(_reduce_motion_enabled())
+		structured_hud.set_compact_mode(_compact_run_hud_enabled())
+		structured_hud.render(hud_model)
+	_style_hud_for_recent_consequence()
+	if save_status_label != null:
+		save_status_label.text = str(hud_model.get("save_text", ""))
+	_apply_hud_mode_visibility()
+	_refresh_active_item_slot()
+
+
+func _refresh_embedded_action_talk_music_coach(suppress_acknowledgement_clear: bool) -> void:
+	var previous_acknowledgement_suppression := suppress_completed_tutorial_acknowledgement_clear
+	if suppress_acknowledgement_clear:
 		suppress_completed_tutorial_acknowledgement_clear = true
 	_refresh_talk_dock()
 	suppress_completed_tutorial_acknowledgement_clear = previous_acknowledgement_suppression
 	_update_procedural_music()
 	_schedule_game_coach_refresh_after_draw()
-	if debug_enabled:
-		debug_timing["refresh_talk_music_coach"] = Time.get_ticks_usec() - debug_stage_started_usec
+
+
+func _schedule_deferred_embedded_secondary_refresh() -> void:
+	var generation := deferred_embedded_refresh_generation
+	call_deferred("_refresh_deferred_embedded_hud_after_frame", generation, run_state, current_game, run_state.current_environment, last_game_result, game_surface_canvas, game_surface_session_generation)
+
+
+func _refresh_deferred_embedded_hud_after_frame(generation: int, expected_run: RunState, expected_game: GameModule, expected_environment: Dictionary, expected_result: Dictionary, expected_canvas: Control, expected_session_generation: int) -> void:
+	var tree := get_tree()
+	if tree != null:
+		await tree.process_frame
+	if not _deferred_embedded_secondary_identity_is_current(generation, expected_run, expected_game, expected_environment, expected_result, expected_canvas, expected_session_generation):
+		return
+	var started_usec := Time.get_ticks_usec()
+	_refresh_embedded_action_hud()
+	var debug_timing: Dictionary = last_game_result.get("coin_pusher_debug_host_timing_usec", {}) if typeof(last_game_result.get("coin_pusher_debug_host_timing_usec", {})) == TYPE_DICTIONARY else {}
+	if not debug_timing.is_empty():
+		debug_timing["refresh_deferred_hud"] = Time.get_ticks_usec() - started_usec
+	call_deferred("_refresh_deferred_embedded_talk_after_frame", generation, expected_run, expected_game, expected_environment, expected_result, expected_canvas, expected_session_generation)
+
+
+func _refresh_deferred_embedded_talk_after_frame(generation: int, expected_run: RunState, expected_game: GameModule, expected_environment: Dictionary, expected_result: Dictionary, expected_canvas: Control, expected_session_generation: int) -> void:
+	var tree := get_tree()
+	if tree != null:
+		await tree.process_frame
+	if not _deferred_embedded_secondary_identity_is_current(generation, expected_run, expected_game, expected_environment, expected_result, expected_canvas, expected_session_generation):
+		return
+	var started_usec := Time.get_ticks_usec()
+	_refresh_embedded_action_talk_music_coach(true)
+	var debug_timing: Dictionary = last_game_result.get("coin_pusher_debug_host_timing_usec", {}) if typeof(last_game_result.get("coin_pusher_debug_host_timing_usec", {})) == TYPE_DICTIONARY else {}
+	if not debug_timing.is_empty():
+		debug_timing["refresh_deferred_talk_music_coach"] = Time.get_ticks_usec() - started_usec
+
+
+func _deferred_embedded_secondary_identity_is_current(generation: int, expected_run: RunState, expected_game: GameModule, expected_environment: Dictionary, expected_result: Dictionary, expected_canvas: Control, expected_session_generation: int) -> bool:
+	return generation == deferred_embedded_refresh_generation \
+		and run_state == expected_run \
+		and current_game == expected_game \
+		and current_screen == SCREEN_GAME \
+		and is_same(run_state.current_environment, expected_environment) \
+		and is_same(last_game_result, expected_result) \
+		and game_surface_canvas == expected_canvas \
+		and game_surface_session_generation == expected_session_generation
 
 
 func _embedded_world_header_context_key() -> String:
