@@ -10425,8 +10425,9 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 	# rendered catalog. Reuse that read-only authority instead of re-entering the
 	# complete game actions()/machine reconciliation path before every resolve.
 	var rendered_stake_view: Dictionary = {}
+	var rendered_action_state: Dictionary = {}
 	if game_surface_canvas != null:
-		var rendered_action_state := game_surface_canvas.realtime_surface_state()
+		rendered_action_state = game_surface_canvas.realtime_surface_state()
 		var rendered_stake_value: Variant = rendered_action_state.get("surface_action_stake_view", {})
 		if str(rendered_action_state.get("game_id", "")) == current_game.get_id() \
 				and typeof(rendered_stake_value) == TYPE_DICTIONARY:
