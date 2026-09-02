@@ -57,6 +57,17 @@ serialized intro leaf changes only on the `737a8fe9` side. Thus the first red
 tree is the `040f9fe2` landing, before `meta06_1`. Commit `63e926c4` is excluded
 as a cause.
 
+The first-bad boundary was then executed directly with the same focused UI
+compile entry point and native build:
+
+- Parent `9c31907dff15a7f03598e149bec9f9b8fa9b4110`: PASS in 89 seconds; both
+  committed expected hashes matched.
+- Exact change `737a8fe94bac9e193d5918fe7f6d722fa0a074a0`: FAIL in 73 seconds with the
+  same two hashes reported on current main.
+
+Recursive comparison of those exact parent/change captures again yields only
+the two paths above, each containing the same single authorized copy change.
+
 ## Classification and constrained correction
 
 This is stale test evidence, not a new product-behavior defect. The only changed
