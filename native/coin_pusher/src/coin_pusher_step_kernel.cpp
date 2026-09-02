@@ -135,6 +135,28 @@ struct Body {
        pending_deposit = false, has_fall_start = false, peg_contact = false,
        has_support_anchor = false;
 };
+struct PresentationMotionBody {
+  String id, support;
+  int64_t y = 0;
+};
+PackedInt64Array pack_presentation_bodies(const std::vector<Body> &source) {
+  PackedInt64Array packed;
+  packed.resize(source.size() * 9);
+  for (int64_t i = 0; i < int64_t(source.size()); ++i) {
+    const Body &q = source[size_t(i)];
+    const int64_t offset = i * 9;
+    packed[offset] = q.id.trim_prefix("body_").to_int();
+    packed[offset + 1] = q.id.hash();
+    packed[offset + 2] = q.x;
+    packed[offset + 3] = q.y;
+    packed[offset + 4] = q.z;
+    packed[offset + 5] = q.r;
+    packed[offset + 6] = q.rest == "falling" ? 1 : 0;
+    packed[offset + 7] = q.kind == "coin" ? 0 : q.kind == "rider" ? 1 : q.kind == "puck" ? 2 : q.kind == "fragment" ? 3 : 4;
+    packed[offset + 8] = q.support == "platform" ? 1 : q.support == "deck" ? 2 : q.support == "body" ? 3 : q.support.is_empty() ? 0 : 4;
+  }
+  return packed;
+}
 bool z_overlap(const Body &l, const Body &r) {
   return l.z < r.z + r.h && r.z < l.z + l.h;
 }
@@ -1368,13 +1390,22 @@ struct Kernel {
     int64_t cursor = 0;
     Grid &grid = grid_scratch;
     std::vector<Body> presentation_previous;
+    std::vector<PresentationMotionBody> presentation_previous_motion;
+    PackedInt64Array presentation_previous_packed;
     int64_t presentation_previous_face_y = state.get("face_y", face_y(g, 0));
     const bool capture_previous_views = bool(config.get("capture_previous_views", false));
     const bool capture_previous_packed = bool(config.get("capture_previous_packed", false));
     const bool capture_previous = capture_previous_views || capture_previous_packed;
     for (int64_t t = 0; t < ticks; ++t) {
       if (capture_previous && t == ticks - 1) {
-        presentation_previous = b;
+        presentation_previous_motion.clear();
+        presentation_previous_motion.reserve(b.size());
+        for (const Body &q : b)
+          presentation_previous_motion.push_back({q.id, q.support, q.y});
+        if (capture_previous_views)
+          presentation_previous = b;
+        if (capture_previous_packed)
+          presentation_previous_packed = pack_presentation_bodies(b);
         presentation_previous_face_y = state.get("face_y", face_y(g, 0));
       }
       inputs(trace, cursor);
@@ -1498,7 +1529,7 @@ struct Kernel {
         views.resize(source.size());
       PackedInt64Array packed;
       if (include_packed)
-        packed.resize(source.size() * 9);
+        packed = pack_presentation_bodies(source);
       int64_t feature_count = 0;
       for (int64_t i = 0; i < int64_t(source.size()); ++i) {
         const Body &q = source[size_t(i)];
@@ -1518,18 +1549,6 @@ struct Kernel {
                                                          : String();
           views[i] = view;
         }
-        if (include_packed) {
-          const int64_t offset = i * 9;
-          packed[offset] = q.id.trim_prefix("body_").to_int();
-          packed[offset + 1] = q.id.hash();
-          packed[offset + 2] = q.x;
-          packed[offset + 3] = q.y;
-          packed[offset + 4] = q.z;
-          packed[offset + 5] = q.r;
-          packed[offset + 6] = q.rest == "falling" ? 1 : 0;
-          packed[offset + 7] = q.kind == "coin" ? 0 : q.kind == "rider" ? 1 : q.kind == "puck" ? 2 : q.kind == "fragment" ? 3 : 4;
-          packed[offset + 8] = q.support == "platform" ? 1 : q.support == "deck" ? 2 : q.support == "body" ? 3 : q.support.is_empty() ? 0 : 4;
-        }
       }
       Dictionary capture;
       if (include_views)
@@ -1540,18 +1559,20 @@ struct Kernel {
       return capture;
     };
     if (capture_previous) {
-      Dictionary capture = presentation_capture(presentation_previous, capture_previous_views, capture_previous_packed);
-      if (capture_previous_views)
+      if (capture_previous_views) {
+        Dictionary capture = presentation_capture(presentation_previous, true, false);
         out["presentation_previous_bodies"] = capture["views"];
+      }
       if (capture_previous_packed)
-        out["presentation_previous_packed"] = capture["packed"];
+        out["presentation_previous_packed"] = presentation_previous_packed;
       out["presentation_previous_face_y"] = presentation_previous_face_y;
       int64_t plate_block_count = 0, moving_under_face = 0;
       const int64_t current_face_y = int64_t(state.get("face_y", face_y(g, 0)));
       const int64_t face_delta = current_face_y - presentation_previous_face_y;
-      if (presentation_previous.size() == b.size()) {
+      if (presentation_previous_motion.size() == b.size()) {
         for (size_t i = 0; i < b.size(); ++i) {
-          const Body &before = presentation_previous[i], &current = b[i];
+          const PresentationMotionBody &before = presentation_previous_motion[i];
+          const Body &current = b[i];
           if (before.id != current.id) {
             plate_block_count = moving_under_face = -1;
             break;
