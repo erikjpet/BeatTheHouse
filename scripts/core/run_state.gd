@@ -13105,6 +13105,7 @@ func advance_environment_turns(amount: int = 1, profile_stages: bool = false) ->
 # single graph-consistent tuple through _publish_environment_turn_candidate().
 func _advance_environment_turns_candidate(amount: int) -> Dictionary:
 	var safe_amount := maxi(0, amount)
+	var scenario_facts_active := scenario_sequence_present()
 	var uses_v2_expiry := safe_amount > 0 and _scenario_sequence_uses_expiry_boundary("town_action")
 	var turn_preflight := _scenario_preflight_environment_turn(safe_amount)
 	if not bool(turn_preflight.get("ok", false)):
@@ -13117,8 +13118,11 @@ func _advance_environment_turns_candidate(amount: int) -> Dictionary:
 			return {"ok": false, "applied": false, "errors": _copy_array(expiry_result.get("errors", []))}
 	forced_failure = _environment_turn_test_failure("expiry")
 	if not forced_failure.is_empty(): return forced_failure
-	var town_before := town_state.public_snapshot() if town_state != null else {}
-	var sweep_before := town_state.sweep_internal_status() if town_state != null else {}
+	# Town/sweep snapshots exist only to author scenario facts. Ordinary rooms have
+	# no sequence consumer, so avoid constructing and comparing both nested public
+	# views on every game action while retaining every transaction failure seam.
+	var town_before := town_state.public_snapshot() if town_state != null and scenario_facts_active else {}
+	var sweep_before := town_state.sweep_internal_status() if town_state != null and scenario_facts_active else {}
 	_advance_global_boundary_start(safe_amount)
 	forced_failure = _environment_turn_test_failure("global_start")
 	if not forced_failure.is_empty(): return forced_failure
@@ -13149,35 +13153,39 @@ func _advance_environment_turns_candidate(amount: int) -> Dictionary:
 	forced_failure = _environment_turn_test_failure("crew_and_world_models")
 	if not forced_failure.is_empty(): return forced_failure
 	if town_state != null:
-		var town_after := town_state.public_snapshot()
-		if town_after != town_before:
-			var happening_ids: Array = []
-			for happening_value in _copy_array(town_after.get("active_happenings", [])):
-				if typeof(happening_value) != TYPE_DICTIONARY:
-					continue
-				var happening_id := str((happening_value as Dictionary).get("id", "")).strip_edges()
-				if not happening_id.is_empty() and not happening_ids.has(happening_id):
-					happening_ids.append(happening_id)
-			happening_ids.sort()
-			var town_fact := scenario_enqueue_fact("town_transition", "town", {"action_index": _crew_action_index(), "weather": str(town_after.get("weather", "")), "day_type": str(town_after.get("day_type", "")), "happening_ids": happening_ids})
-			if not bool(town_fact.get("ok", false)) and not bool(town_fact.get("inactive", false)):
-				return {"ok": false, "applied": false, "errors": _copy_array(town_fact.get("errors", []))}
+		if scenario_facts_active:
+			var town_after := town_state.public_snapshot()
+			if town_after != town_before:
+				var happening_ids: Array = []
+				for happening_value in _copy_array(town_after.get("active_happenings", [])):
+					if typeof(happening_value) != TYPE_DICTIONARY:
+						continue
+					var happening_id := str((happening_value as Dictionary).get("id", "")).strip_edges()
+					if not happening_id.is_empty() and not happening_ids.has(happening_id):
+						happening_ids.append(happening_id)
+				happening_ids.sort()
+				var town_fact := scenario_enqueue_fact("town_transition", "town", {"action_index": _crew_action_index(), "weather": str(town_after.get("weather", "")), "day_type": str(town_after.get("day_type", "")), "happening_ids": happening_ids})
+				if not bool(town_fact.get("ok", false)) and not bool(town_fact.get("inactive", false)):
+					return {"ok": false, "applied": false, "errors": _copy_array(town_fact.get("errors", []))}
 		forced_failure = _environment_turn_test_failure("town_fact")
 		if not forced_failure.is_empty(): return forced_failure
-		var sweep_after := town_state.sweep_internal_status()
-		if sweep_after != sweep_before:
-			var sweep_fact := scenario_enqueue_fact("sweep_changed", "sweep", {"action_index": _crew_action_index(), "node_id": str(sweep_after.get("current_node_id", "")), "segment_index": int(sweep_after.get("segment_index", -1)), "active": bool(sweep_after.get("active", false))})
-			if not bool(sweep_fact.get("ok", false)) and not bool(sweep_fact.get("inactive", false)):
-				return {"ok": false, "applied": false, "errors": _copy_array(sweep_fact.get("errors", []))}
+		if scenario_facts_active:
+			var sweep_after := town_state.sweep_internal_status()
+			if sweep_after != sweep_before:
+				var sweep_fact := scenario_enqueue_fact("sweep_changed", "sweep", {"action_index": _crew_action_index(), "node_id": str(sweep_after.get("current_node_id", "")), "segment_index": int(sweep_after.get("segment_index", -1)), "active": bool(sweep_after.get("active", false))})
+				if not bool(sweep_fact.get("ok", false)) and not bool(sweep_fact.get("inactive", false)):
+					return {"ok": false, "applied": false, "errors": _copy_array(sweep_fact.get("errors", []))}
 		forced_failure = _environment_turn_test_failure("sweep_fact")
 		if not forced_failure.is_empty(): return forced_failure
 	if safe_amount > 0:
-		var world_fact := scenario_enqueue_fact("world_boundary", "scenario", {"amount": safe_amount, "action_index": _crew_action_index()})
-		if not bool(world_fact.get("ok", false)) and not bool(world_fact.get("inactive", false)):
-			return {"ok": false, "applied": false, "errors": _copy_array(world_fact.get("errors", []))}
+		var world_fact := {}
+		if scenario_facts_active:
+			world_fact = scenario_enqueue_fact("world_boundary", "scenario", {"amount": safe_amount, "action_index": _crew_action_index()})
+			if not bool(world_fact.get("ok", false)) and not bool(world_fact.get("inactive", false)):
+				return {"ok": false, "applied": false, "errors": _copy_array(world_fact.get("errors", []))}
 		forced_failure = _environment_turn_test_failure("world_fact")
 		if not forced_failure.is_empty(): return forced_failure
-		if not bool(world_fact.get("inactive", false)):
+		if scenario_facts_active and not bool(world_fact.get("inactive", false)):
 			var flushed := scenario_flush_facts(_crew_action_index())
 			if not bool(flushed.get("ok", false)):
 				return {"ok": false, "applied": false, "errors": _copy_array(flushed.get("errors", []))}
