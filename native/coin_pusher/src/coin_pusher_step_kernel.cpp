@@ -228,7 +228,8 @@ struct Kernel {
   std::vector<Body> b;
   std::vector<std::pair<int, int>> pair_scratch;
   std::vector<uint8_t> queued_scratch, active_scratch;
-  std::vector<int> queue_scratch, static_scratch;
+  std::vector<int> queue_scratch, static_scratch, support_indices_scratch;
+  Grid grid_scratch;
   std::unordered_map<String, int, GodotStringHash> body_index_scratch;
   Array events;
   int64_t collisions = 0, candidate_peak = 0;
@@ -823,8 +824,9 @@ struct Kernel {
     // for the final supported-body state. Constructing and sorting a Variant
     // array for every awake body dominated the Web side-module boundary even
     // though most candidates are discarded before publication.
-    std::vector<int> support_indices;
-    support_indices.reserve(16);
+    auto &support_indices = support_indices_scratch;
+    if (support_indices.capacity() < 16)
+      support_indices.reserve(16);
     for (int i = 0; i < (int)b.size(); ++i) {
       Body &q = b[i];
       if (q.sleeping || terminal(q))
@@ -1364,7 +1366,7 @@ struct Kernel {
     conservation_ok = true;
     Array trace = config.get("input_trace", Array());
     int64_t cursor = 0;
-    Grid grid;
+    Grid &grid = grid_scratch;
     std::vector<Body> presentation_previous;
     int64_t presentation_previous_face_y = state.get("face_y", face_y(g, 0));
     const bool capture_previous_views = bool(config.get("capture_previous_views", false));
