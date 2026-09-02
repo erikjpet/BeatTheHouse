@@ -71,6 +71,7 @@ var _prepared_batch_static_key := ""
 var _prepared_batch_session_key := ""
 var _prepared_batch_view_serial := -1
 var _prepared_batch_alpha := -1.0
+var _prepared_batch_uploaded := false
 
 
 func draw(surface, state: Dictionary) -> bool:
@@ -141,6 +142,7 @@ func prepare_render_state(state: Dictionary) -> void:
 	if current_packed.is_empty():
 		_clear_prepared_batch()
 		return
+	_ensure_coin_batch()
 	var alpha := 1.0 if bool(state.get("reduce_motion", false)) else clampf(float(state.get("coin_pusher_interpolation_alpha", 1.0)), 0.0, 1.0)
 	_prepared_batch = CoinPusherSolverAPI.native_live_render_batch_packed({
 		"world_width": _world_width,
@@ -157,6 +159,7 @@ func prepare_render_state(state: Dictionary) -> void:
 	_prepared_batch_session_key = str(state.get("coin_pusher_presentation_session_key", ""))
 	_prepared_batch_view_serial = int(state.get("coin_pusher_presentation_view_serial", -1))
 	_prepared_batch_alpha = alpha
+	_upload_prepared_batch()
 
 
 func _prepared_batch_matches(state: Dictionary) -> bool:
@@ -175,6 +178,19 @@ func _clear_prepared_batch() -> void:
 	_prepared_batch_session_key = ""
 	_prepared_batch_view_serial = -1
 	_prepared_batch_alpha = -1.0
+	_prepared_batch_uploaded = false
+
+
+func _upload_prepared_batch() -> void:
+	if _prepared_batch.is_empty() or typeof(_prepared_batch.get("buffer", null)) != TYPE_PACKED_FLOAT32_ARRAY:
+		_prepared_batch_uploaded = false
+		return
+	var count := int(_prepared_batch.get("count", 0))
+	if _coin_multimesh.instance_count != count:
+		_coin_multimesh.instance_count = count
+	_coin_multimesh.visible_instance_count = count
+	_coin_multimesh.buffer = _prepared_batch["buffer"] as PackedFloat32Array
+	_prepared_batch_uploaded = true
 
 
 func _capture_perf_stage(stage_id: String, started_usec: int, enabled: bool) -> int:
@@ -598,7 +614,8 @@ func _draw_interpolated_bodies(surface, state: Dictionary, colors: Dictionary, c
 
 
 func _draw_native_interpolated_bodies(surface, state: Dictionary, cabinet: Dictionary, current: Array, previous: Array, alpha: float) -> bool:
-	var batch := _prepared_batch if _prepared_batch_matches(state) else {}
+	var batch_is_prepared := _prepared_batch_matches(state)
+	var batch := _prepared_batch if batch_is_prepared else {}
 	if batch.is_empty():
 		var geometry: Dictionary = state.get("coin_pusher_geometry", {}) if typeof(state.get("coin_pusher_geometry", {})) == TYPE_DICTIONARY else {}
 		var apparatus: Dictionary = state.get("coin_pusher_apparatus", {}) if typeof(state.get("coin_pusher_apparatus", {})) == TYPE_DICTIONARY else {}
@@ -626,7 +643,8 @@ func _draw_native_interpolated_bodies(surface, state: Dictionary, cabinet: Dicti
 		var shadow: Dictionary = shadow_value
 		var shadow_scale := float(shadow.get("scale", 1.0))
 		_draw_ellipse(surface, (shadow.get("point", Vector2.ZERO) as Vector2) + AIRBORNE_SHADOW_OFFSET, COIN_RX * 0.94 * shadow_scale, COIN_RY * 0.76 * shadow_scale, Color(0, 0, 0, 0.80), 0)
-	_coin_multimesh.buffer = batch["buffer"] as PackedFloat32Array
+	if not batch_is_prepared or not _prepared_batch_uploaded:
+		_coin_multimesh.buffer = batch["buffer"] as PackedFloat32Array
 	surface.surface_present_multimesh_batch(_coin_multimesh, _coin_texture, null, DESIGN_SIZE)
 	var labels: Dictionary = cabinet.get("body_labels", {}) if typeof(cabinet.get("body_labels", {})) == TYPE_DICTIONARY else {}
 	for feature_value in batch.get("features", []):
