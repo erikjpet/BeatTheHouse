@@ -8,6 +8,7 @@ const FIXED_HZ := 60
 const MAX_CATCH_UP_TICKS := 4
 const MAX_SETTLE_TICKS := 1200
 const WEB_PRESENTATION_INTERVAL_MSEC := 900
+const WEB_INPUT_PRESENTATION_DELAY_MSEC := 96
 
 static var _native_cache_generation := 0
 
@@ -99,10 +100,13 @@ static func queue_input(machine: Dictionary, input: Dictionary) -> Dictionary:
 	var event := input.duplicate(true)
 	event["tick"] = int(simulation.get("tick", 0))
 	(session["input_trace"] as Array).append(event)
-	# The next authoritative clock tick must publish the accepted input's visible
-	# result immediately. Later solver ticks can again share the canvas's existing
-	# low-detail Web cadence without delaying input acknowledgement.
-	session["presentation_last_publish_msec"] = -1
+	# The action patch acknowledges the accepted control immediately. On Web, let
+	# the solver advance for a few frames before rebuilding the complete 300-body
+	# projection; this keeps the coin-slot/HUD boundary separate from dense body
+	# publication without changing any authoritative tick or input ordering.
+	var clock_msec := int(session.get("last_clock_msec", -1))
+	session["presentation_last_publish_msec"] = clock_msec - WEB_PRESENTATION_INTERVAL_MSEC + WEB_INPUT_PRESENTATION_DELAY_MSEC \
+		if OS.has_feature("web") and clock_msec >= 0 else -1
 	session["durable_ready"] = false
 	session["durable_dirty"] = true
 	return event
