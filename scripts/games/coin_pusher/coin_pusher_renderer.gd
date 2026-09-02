@@ -65,6 +65,8 @@ var _hardware_cache_prepared_for_next_draw := false
 var _entry_hardware_layout_static_key := ""
 var _entry_hardware_layout_carriage := -1
 var _entry_hardware_layout_cache: Dictionary = {}
+var _hardware_catalog_cache_key := ""
+var _hardware_catalog_cache: Array = []
 var _world_width := SCHEMA_DEFAULT_WIDTH
 var _world_back_y := SCHEMA_DEFAULT_BACK_Y
 var _coin_height := SCHEMA_DEFAULT_COIN_HEIGHT
@@ -709,14 +711,15 @@ func _prepare_hardware_cache(surface, state: Dictionary, consume_prepared: bool 
 		_hardware_cache_canvas = null
 		_hardware_cache_host = surface
 		_hardware_cache_key = ""
+	var hardware_catalog := _hardware_catalog(state)
 	var hover_action := ""
-	for action_value in _hardware_catalog(state):
+	for action_value in hardware_catalog:
 		var action := str(action_value)
 		if surface.surface_region_hovered(action):
 			hover_action = action
 			break
 	var bindings: Dictionary = state.get("surface_action_bindings", {}) if typeof(state.get("surface_action_bindings", {})) == TYPE_DICTIONARY else {}
-	var enabled_signature := _hardware_enabled_signature(state, bindings)
+	var enabled_signature := _hardware_enabled_signature(bindings, hardware_catalog)
 	var key := _hardware_cache_signature(state, hover_action, enabled_signature)
 	if not is_instance_valid(_hardware_cache_canvas):
 		var canvas_script: Script = load("res://scripts/games/coin_pusher/coin_pusher_hardware_cache_canvas.gd")
@@ -738,10 +741,10 @@ func _prepare_hardware_cache(surface, state: Dictionary, consume_prepared: bool 
 	return true
 
 
-func _hardware_enabled_signature(state: Dictionary, bindings: Dictionary) -> int:
+func _hardware_enabled_signature(bindings: Dictionary, hardware_catalog: Array) -> int:
 	var result := 0
 	var signature_bit := 0
-	for action_value in _hardware_catalog(state):
+	for action_value in hardware_catalog:
 		if signature_bit < 62 and _binding_enabled(bindings, str(action_value)):
 			result |= 1 << signature_bit
 		signature_bit += 1
@@ -766,13 +769,22 @@ func _hardware_cache_signature(state: Dictionary, hover_action: String, enabled_
 		hover_action,
 		int(state.get("coin_pusher_vault_selected_cell", 0)),
 		str(state.get("coin_pusher_tell_label", "steady")),
-		JSON.stringify(state.get("coin_pusher_feature_hardware", {}), "", true),
+		_feature_hardware_cache_key(state),
 	]
+
+
+func _feature_hardware_cache_key(state: Dictionary) -> String:
+	var descriptor: Dictionary = state.get("coin_pusher_feature_hardware", {}) if typeof(state.get("coin_pusher_feature_hardware", {})) == TYPE_DICTIONARY else {}
+	var authored_key := str(descriptor.get("cache_key", ""))
+	# Compatibility fixtures may provide a descriptor without production cache
+	# metadata. Keep those exact and reserve nested serialization for that cold
+	# test/fallback path rather than every shipped Web draw.
+	return authored_key if not authored_key.is_empty() else JSON.stringify(descriptor, "", true)
 
 
 func debug_hardware_cache_signature_for_test(state: Dictionary, hover_action: String = "") -> String:
 	var bindings: Dictionary = state.get("surface_action_bindings", {}) if typeof(state.get("surface_action_bindings", {})) == TYPE_DICTIONARY else {}
-	return _hardware_cache_signature(state, hover_action, _hardware_enabled_signature(state, bindings))
+	return _hardware_cache_signature(state, hover_action, _hardware_enabled_signature(bindings, _hardware_catalog(state)))
 
 
 func _prepare_static_cache(surface, state: Dictionary) -> bool:
@@ -1376,6 +1388,13 @@ func _hardware_actions(state: Dictionary) -> Array:
 
 func _hardware_catalog(state: Dictionary) -> Array:
 	var apparatus: Dictionary = state.get("coin_pusher_apparatus", {}) if typeof(state.get("coin_pusher_apparatus", {})) == TYPE_DICTIONARY else {}
+	var cache_key := "%s|%s|%s" % [
+		str(state.get("coin_pusher_static_content_key", "")),
+		str(apparatus.get("type", "rail_slot")),
+		_feature_hardware_cache_key(state),
+	]
+	if cache_key == _hardware_catalog_cache_key:
+		return _hardware_catalog_cache
 	var result: Array = ["coin_pusher_drop", "coin_pusher_drop_charge", "coin_pusher_skill_stop", "coin_pusher_collect", "coin_pusher_nudge"]
 	if str(apparatus.get("type", "rail_slot")) == "hole_set":
 		for hole_index in range((apparatus.get("holes", []) as Array).size() if typeof(apparatus.get("holes", [])) == TYPE_ARRAY else 0):
@@ -1383,6 +1402,8 @@ func _hardware_catalog(state: Dictionary) -> Array:
 	else:
 		result.append_array(["coin_pusher_carriage_drag", "coin_pusher_carriage_left", "coin_pusher_carriage_right"])
 	result.append_array(_feature_hardware_action_ids(state))
+	_hardware_catalog_cache_key = cache_key
+	_hardware_catalog_cache = result
 	return result
 
 

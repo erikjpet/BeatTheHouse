@@ -1108,6 +1108,41 @@ func _feature_hardware_descriptor(machine: Dictionary, vault_views: Dictionary) 
 	return result
 
 
+func _feature_hardware_cache_key(machine: Dictionary, vault_views: Dictionary) -> String:
+	var parts: PackedStringArray = [
+		str(machine.get("variation_id", _variation_id())),
+		str(machine.get("nudge_force", "tap")),
+		str(machine.get("nudge_direction", "front")),
+		str(int(machine.get("vault_selected_cell", 0))),
+		str(1 if bool(_variation_state(machine).get("vault_round_active", false)) else 0),
+	]
+	var cells: Array = vault_views.get("cells", []) if typeof(vault_views.get("cells", [])) == TYPE_ARRAY else []
+	for cell_value in cells:
+		var cell: Dictionary = cell_value if typeof(cell_value) == TYPE_DICTIONARY else {}
+		parts.append("%s:%s:%d:%d" % [
+			str(cell.get("label", "?")),
+			str(cell.get("selection_action", "")),
+			1 if bool(cell.get("opened", false)) else 0,
+			1 if bool(cell.get("peeked", false)) else 0,
+		])
+	return "|".join(parts)
+
+
+func _feature_hardware_descriptor_for_session(machine: Dictionary, vault_views: Dictionary, session: Dictionary) -> Dictionary:
+	var cache_key := _feature_hardware_cache_key(machine, vault_views)
+	var cached_value: Variant = session.get("presentation_feature_hardware", {})
+	if str(session.get("presentation_feature_hardware_key", "")) == cache_key and typeof(cached_value) == TYPE_DICTIONARY:
+		return cached_value as Dictionary
+	var descriptor := _feature_hardware_descriptor(machine, vault_views)
+	# This scalar replaces per-draw serialization of the complete nested control
+	# descriptor. It is renderer metadata only and does not alter visible state.
+	descriptor["cache_key"] = cache_key
+	if not session.is_empty():
+		session["presentation_feature_hardware_key"] = cache_key
+		session["presentation_feature_hardware"] = descriptor
+	return descriptor
+
+
 func _v3_headless_surface_state(machine: Dictionary, run_state: RunState = null, environment: Dictionary = {}, ui_state: Dictionary = {}) -> Dictionary:
 	var definition := _machine_definition(str(machine.get("variation_id", _variation_id())))
 	var simulation := _simulation(machine) if _has_v3_simulation(machine) else CoinPusherLiveSessionScript.restore_snapshot(machine.get("settled_state", {}), definition)
@@ -1124,6 +1159,7 @@ func _v3_headless_surface_state(machine: Dictionary, run_state: RunState = null,
 	var feature_views := _feature_views(machine, feature_kind)
 	var variation_state := _variation_state(machine)
 	var vault_views: Dictionary = VaultDropScript.views(variation_state) if variation_id == "vault_drop" else {}
+	var feature_hardware := _feature_hardware_descriptor_for_session(machine, vault_views, session)
 	var cabinet := _resolved_cabinet(variation_id)
 	var geometry: Dictionary = (definition.get("geometry", {}) as Dictionary).duplicate(true) if typeof(definition.get("geometry", {})) == TYPE_DICTIONARY else {}
 	var apparatus: Dictionary = (definition.get("apparatus", {}) as Dictionary).duplicate(true) if typeof(definition.get("apparatus", {})) == TYPE_DICTIONARY else {}
@@ -1203,7 +1239,7 @@ func _v3_headless_surface_state(machine: Dictionary, run_state: RunState = null,
 		"coin_pusher_nudge_force": str(machine.get("nudge_force", "tap")),
 		"coin_pusher_nudge_direction": str(machine.get("nudge_direction", "front")),
 		"coin_pusher_nudge_forces": (_tuning().get("nudge_forces", {}) as Dictionary).duplicate(true) if typeof(_tuning().get("nudge_forces", {})) == TYPE_DICTIONARY else {},
-		"coin_pusher_feature_hardware": _feature_hardware_descriptor(machine, vault_views),
+		"coin_pusher_feature_hardware": feature_hardware,
 		"coin_pusher_audio_events": [],
 		"coin_pusher_audio_serial": int(session.get("presentation_audio_serial", 0)),
 		"coin_pusher_last_message": str(machine.get("last_message", V3_HEADLESS_MESSAGE)),
@@ -1227,6 +1263,7 @@ func _v3_realtime_presentation_patch(machine: Dictionary, run_state: RunState = 
 	var variation_state := _variation_state(machine)
 	var goal := _machine_goal_state(machine, simulation)
 	var vault_views: Dictionary = VaultDropScript.views(variation_state) if str(machine.get("variation_id", "")) == "vault_drop" else {}
+	var feature_hardware := _feature_hardware_descriptor_for_session(machine, vault_views, session)
 	var patch := {
 		"coin_pusher_body_count": current_packed.size() / 9 if not current_packed.is_empty() else body_views.size(),
 		"coin_pusher_feature_count": int(session.get("presentation_feature_count", 0)),
@@ -1263,7 +1300,7 @@ func _v3_realtime_presentation_patch(machine: Dictionary, run_state: RunState = 
 		"coin_pusher_vault_selected_cell": int(machine.get("vault_selected_cell", 0)),
 		"coin_pusher_nudge_force": str(machine.get("nudge_force", "tap")),
 		"coin_pusher_nudge_direction": str(machine.get("nudge_direction", "front")),
-		"coin_pusher_feature_hardware": _feature_hardware_descriptor(machine, vault_views),
+		"coin_pusher_feature_hardware": feature_hardware,
 	}
 	# The entry snapshot owns the full control catalog. Ordinary live ticks only
 	# republish bindings when a control-visible state actually changes.
