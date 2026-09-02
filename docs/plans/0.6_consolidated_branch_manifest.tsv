@@ -1,0 +1,360 @@
+ref	head	reachable_from_origin_main	subject
+refs/heads/codex/0.5-release	15d37054a5c9365b6812e80fc68456f949881174	true	Finalize 0.5 release records
+refs/heads/codex/0.6-integrated-copy-reconciliation	954a311c4bedfa37a9cbd3ad52c34067efa228c1	true	docs(landing): record final reconciliation evidence
+refs/heads/codex/0.6-todo-state-audit	cb7a17d55bdc07077a779a7246ec4e1cb530c1b9	true	docs(0.6): reconcile todo state after branch landing
+refs/heads/codex/archive-env06_6-atomic-consumer-handoff	8c2bb9a3780b273619afb694a1a67fbdd7133a09	false	On codex/depth-env-runtime: wip env06_6 atomic consumer handoff
+refs/heads/codex/art06_1	6c946484fcaf62e3d4d25e4a72f4133c0cbf6a7a	true	docs(board): complete art06_1
+refs/heads/codex/art06_1-runtime-repair	e1e941fa5f91d5ce407e5f9a28bac7a4c0d6204e	false	wip(art): preserve Punchline runtime raster repair
+refs/heads/codex/audio06_1-prestage	091d64fdd431aad24ad582f6f236ae3b57ac86eb	true	docs(audio06_1): UNREVIEWED pre-stage surface SFX coverage
+refs/heads/codex/backup-land06-docs-amended-20ee5d29	20ee5d29346ee0ebbe6773438d950924fd12d652	false	land06_0: commit the 0.6 remaining work program contracts
+refs/heads/codex/balance06_1-follow-on-prompt	b047e1a02f366711b86dab0d4f611caf414ab037	false	docs(balance06_1): UNREVIEWED bind audit performance cadence
+refs/heads/codex/balance06_1-follow-on-prompt-corrected	fcd5fe81ca7de1a415310aced0c3099b444a2176	false	docs(balance06_1): UNREVIEWED correct follow-on authority contract
+refs/heads/codex/balance06-1-closeout	98e32d607632156fcfae6a3c44b8be994217870f	true	balance06_1: record partial audit closeout
+refs/heads/codex/blackjack-heat-backoff	43767b4293d7dd83341a3219d268212df9622650	true	feat(blackjack): add heat backoffs and hover counting
+refs/heads/codex/chain06_1	31d309ef58ba188b18f86e9508176048ae21e360	false	feat(story): add character storyline chains
+refs/heads/codex/coin-pusher-release-closeout	4ed9b0f0f538d6ce578a91780da7d5323e33edaa	true	docs(coin-pusher): record remaining web performance blocker
+refs/heads/codex/coin-pusher-web-performance	0ce00c0ba941adac29e0a4c8a5d9f1cf842a866e	true	perf(startup): skip default accessibility restyle
+refs/heads/codex/consolidation-dirty-baseline_f4a66f67-20260902	5b93fce89c1e315386b10bbf0828dc673ff88c7e	false	wip(consolidation): preserve unfinished local state from D:/Projects/Beat-The-House/.tmp/baseline_f4a66f67
+refs/heads/codex/consolidation-dirty-Beat-The-House-20260902	1e422acc0b8e3cb9c7a4a986ac7c2e2e0e714b38	false	wip(consolidation): preserve unfinished local state from D:/Projects/Beat-The-House
+refs/heads/codex/consolidation-dirty-bth-geometry-probe-20260902	bfa0c3ca0656755597f05bfcf5f236eaed54a9c9	false	wip(consolidation): preserve unfinished local state from C:/bth-geometry-probe
+refs/heads/codex/consolidation-dirty-compat652_digest-20260902	4cba09ab46b1ee3bffedd7129a150646b70c0899	false	wip(consolidation): preserve unfinished local state from D:/Projects/Beat-The-House/.tmp/compat652_digest
+refs/heads/codex/consolidation-dirty-fix06_7-copy-parent-proof-20260902	b5984028f124d871e0d4910d2b8fb96b17b9ef2a	false	wip(consolidation): preserve unfinished local state from D:/Projects/Beat-The-House-worktrees/fix06_7-copy-parent-proof
+refs/heads/codex/content06_1	a819ecebbba4b6ba77dcc3f4741f6b58286b405d	false	Strengthen content depth acceptance proof
+refs/heads/codex/craps06_3-env-integration	872d09a97f70579a82576d07e583a1d0ec3a0609	true	WIP UNREVIEWED craps06_3: seal environment response authority
+refs/heads/codex/craps06_3-impl	8ad3dd118248bafe632d51c6d69c0f3d1e1740da	true	docs(craps06_3): record remediation evidence
+refs/heads/codex/craps06_3-prestage	917ac03028650e6d76921aed893f4a575a0f17a8	true	program06_0: record pusherv3_11 acceptance blocker
+refs/heads/codex/craps06_3-second-rejection-decision	4f778efbae1f295c11b66141c1b0b63803da9f46	false	WIP UNREVIEWED craps06_3: stage second-rejection decision
+refs/heads/codex/crew06_10-first-remediation	339997729bcb1c5496fd1d9909da867f7ab09b83	true	fix(crew06_10): UNREVIEWED avoid folded-card evaluation
+refs/heads/codex/crew06_10-impl	678c3e2742fb0f1f93252b1ebd935a4248e85334	true	wip(crew06_10): UNREVIEWED preserve timing and interrupt safety
+refs/heads/codex/crew06_10-integration-replay-manifest	67584a4e80a465285653954c97eb70ffe42946d7	true	docs(crew06_10): UNREVIEWED correct contract custody
+refs/heads/codex/crew06_10-product-handoff	4eef51f9230ce2705e36bafd88b9f93722b1200f	false	docs(crew06_10): UNREVIEWED correct evidence provenance
+refs/heads/codex/crew06_5-review2	c9be5541d45ac5c1d0987e1a1da2f98b515fab81	false	wip(crew): preserve recruitment acceptance repair
+refs/heads/codex/crew06_6	d07f38de8a6dece76898593bdd2fa817c11fa39a	false	feat(crew): furnish layer three jobs
+refs/heads/codex/crew06_7	f68c94208d8532144e52a860f4fad9ee46c41a02	false	feat(crew): add coordinated casino plays
+refs/heads/codex/crew06_8	612c04c669aa4a67e5d31aec60e48944fa84a0f7	false	fix: enforce heist setup boundaries
+refs/heads/codex/crew06_9	268365041d44226918152172a5746f9582df2f27	false	Add crew turn behavior contracts
+refs/heads/codex/cross-balance	1c0dec3b1e091939cccc8295b9a218be2aa42b96	false	balance06_1: archive partial audit evidence and handoff
+refs/heads/codex/cross-board	114271b0ad952e72b6545d49e63aff0e67edd78a	false	board06_1: synchronize depth program rows
+refs/heads/codex/cross-completion-integration	9de77b03a1fc463d2bac80a38ef019ac6def9822	false	cross06_0: require pusher9 golden structure proof
+refs/heads/codex/cross-meta	d7052142ac8feda664589f3b5dab7a49b4c39703	false	meta06_1: add reporting acceptance coverage
+refs/heads/codex/cross-polish	be14c1ce471d4bb4cb8b633a2fc76a34c397de47	false	polish06_0: park release artifact templates
+refs/heads/codex/cross-pusher-audit	554773c6493d6740fb29034e19abda4b23198a94	false	Merge pusherv3_10 dependency into cross completion
+refs/heads/codex/cross-remediation	3e5c0378e6d2ba966143b064768a4eda8da064bc	false	fix(test): keep surface harness aligned
+refs/heads/codex/depth06_1-prestage	5d44725b7346b64226d1a01c06a4153b5c875d62	true	WIP UNREVIEWED depth06_1: correct archetype cardinality
+refs/heads/codex/depth-env-runtime	a6bf9519dbe34065ae0b054b0bd927f17812dc49	false	Merge commit '6f6e98c64d1a20ecbf29ec14f281dcccf269f972' into codex/depth-env-runtime
+refs/heads/codex/depth-env-runtime-2	a5ae1d8f2cf843ea7be7a562aea04c38638ec6b0	false	env06_6: harden exact evidence validation
+refs/heads/codex/depth-env-runtime-3	6f6e98c64d1a20ecbf29ec14f281dcccf269f972	false	env06_6: fail closed without event definitions
+refs/heads/codex/depth-env-runtime-4	078dcd1f10fb99edf2c0ef26d7ea7f3e79ee30f9	false	wip(consolidation): preserve unfinished local state from D:/Projects/Beat-The-House-worktrees/depth-env-lifecycle-remediation
+refs/heads/codex/depth-env-runtime-5	fc0b80857c83bbf45bf7f6390d06f82b94f01706	false	env06_6: bind sealed semantic collection membership
+refs/heads/codex/depth-program-integration	7dd770ad926184196daee6be2aba40a8bb7b9bd0	false	board06_1: split and archive the active board
+refs/heads/codex/env06_5	6654768f10acf639141a969e194dbdf8f99a9cf8	false	docs(board): block env06_5 on craps normalization
+refs/heads/codex/env06_5_validation	934716310b7029eaa81570c9d0bb0291b4e7b4ee	false	fix(craps): keep street preview observational
+refs/heads/codex/env06_6-07probe	e4aab0cf604aefbb4d4120dab6272fb8e11dad80	false	wip(consolidation): preserve unfinished local state from D:/Projects/Beat-The-House-worktrees/land06-env06_6-07probe
+refs/heads/codex/env06_6b-save-byte-owner-decision	3861e8efbaf63ec7f4d096a1a740c5f88a3ab57b	false	docs(env06_6b): UNREVIEWED save authority owner decision
+refs/heads/codex/env06_6b-second-rejection-owner-decision	cde170b8f61d3c9961965bcb9f64352ed7f59cf5	false	docs(env06_6b): UNREVIEWED second-rejection owner decision
+refs/heads/codex/env06_6b-smoke-remediation	7940b7df3fd254d535fd33eae492ff1a967b348a	false	QUIESCE-IDLE: env/world lane idle for fifth-landing measurement
+refs/heads/codex/env06_7-assembly	8ed9554df25f5c5201930af0a3d6fa2b75bff26b	false	feat(env06_7): complete package A physical sequences
+refs/heads/codex/env06_7-assembly-ordered	d78b90041691a206b48d5659b7e17e9c94b573cc	false	WIP UNREVIEWED env06_7: bind B E production spatial seam
+refs/heads/codex/env06_7-c-second-rejection-decision	6d0730d72e66e31b73db7d26aa14c9e6df58fa68	false	WIP UNREVIEWED env06_7-c: stage rejection decision
+refs/heads/codex/env06_7-pkg-a	6f5b11b5770225756ff0f63a1b8fe92bd211f64b	true	docs(env06_7-a): hand off first-rejection remediation
+refs/heads/codex/env06_7-pkg-b	0550d97400ab3b5801a91dc4380bddf0764246e5	true	WIP UNREVIEWED env06_7-b: record assembly authority hold
+refs/heads/codex/env06_7-pkg-c	4aee8b9cbd33e525406b845c2bfb3087ecd9737d	true	docs(env06_7-c): bind immutable remediation handoff
+refs/heads/codex/env06_7-pkg-d	20a445f4a3fdc794966566c95d42adaa16fd38d9	true	docs(env06_7-d): hand off first-rejection remediation
+refs/heads/codex/env06_7-pkg-e	08ff8e8a0c4591fc38005c802d47b266d749cf43	true	WIP UNREVIEWED env06_7-e: record assembly composition blocker
+refs/heads/codex/env06-6-7-acceptance	323a88328859f42f104e56cfa3b932990660a556	true	feat(env06): complete dynamic runtime and 55-scenario rollout
+refs/heads/codex/finish06-2c-validation-receipts	aa550dd4407ff4a58694a74114481e095bac658d	true	Fix receipt contract script naming
+refs/heads/codex/finish06-2d84-punchline-event-scopes	262579e349bbce32b071bb571317853ea372744d	true	Align Punchline exclusive event scopes
+refs/heads/codex/finish06-351-schema-memo	b770bb2a7ebf113512b0e0d814feb37e9d2a7016	true	Memoize successful scenario schema validation
+refs/heads/codex/finish06-975-focused-workload	8d75b633faa74ec91801d0cad42bafdaddd379b1	false	test(env06_7): bound internal audit reuse proof
+refs/heads/codex/finish06-a091-internal-audit-reuse	ee8c5c7b0602f8e3aad60baa9f05451ff86ed118	false	perf(env06_7): reuse internal rollout uniqueness audit
+refs/heads/codex/finish06-a091-pair-precompute	feda4057c104ccd9a0e6080926e4f4fc2ac05b8d	true	perf(env06_7): precompute uniqueness pair inputs
+refs/heads/codex/finish06-baccarat-draw-determinism	0497dec5e3caa82438ee76c082c098707aa95122	true	fix(baccarat): stabilize repeated draw structure
+refs/heads/codex/finish06-craps-core-replay	e483ac659277da8fcf4ebc04f9f4f32e4a8da521	false	feat(craps06_3): replay accepted core depth slice
+refs/heads/codex/finish06-craps-core-replay-0497	1905a115dd706632c2862f00a4bd4d02233f8ded	true	feat(craps06_3): replay accepted core depth slice
+refs/heads/codex/finish06-crew10	402daaa8ac6b9fca0905dcf7d1317c477e8ea280	true	feat(crew06_10): land ordered poker nights and scenario bindings
+refs/heads/codex/finish06-crew-core-replay-7d23	d45fccd2fa07255bf964e72e3961b2f68d086f52	true	feat(crew06_10): replay accepted core poker depth slice
+refs/heads/codex/finish06-crew-legacy-learning-fix	040c06039c29547dc9424b550a6f96d74e755c0b	true	fix(crew06_10): preserve legacy tell learning
+refs/heads/codex/finish06-depth06_1-c284-audit	112443bac2b2bac8cdebe3dd1a74c5d323fc35f1	true	fix(depth06_1): recover crew night registrations
+refs/heads/codex/finish06-depth2	693c92d2a5086fb44e1319f9ba04bc06299218fa	true	feat(craps06_3): land tactile ritual depth and env authority
+refs/heads/codex/finish06-depth-env6	f65324cfb8bacb37f166accb32fd7d585a9ef9e2	false	WIP UNREVIEWED env06_6: align full contract with recovered authority
+refs/heads/codex/finish06-ee8-test-type	9750bb2ef306daa6bfaafea6e4d7c06e8fa844f4	false	test(env06_7): type exact audit target catalog
+refs/heads/codex/finish06-env07-2f6-production-context2	b50dd61878d9e9e14c7b6d0d483c6aedeb09555a	true	Regenerate corrected package A routes
+refs/heads/codex/finish06-env07-70f-production-context	2f6b29e1716a89bbb8e2eeb2f1334ed4c58d5b30	true	Regenerate corrected package D artifacts
+refs/heads/codex/finish06-env07-993-authority-channel	d1523e113df80c21ab0bc73fe38f368ef3b475c1	true	fix(env06_7): expose authority audit review warnings
+refs/heads/codex/finish06-env07-a8d-test-api	9931fa67352efc4c03634e6dbc6950333aa31ee8	true	test(env06_7): use ContentLibrary load API
+refs/heads/codex/finish06-env07-abcde-b091	dd75cdf3fa529403552e2a00767f62aa808e1fb6	true	WIP UNREVIEWED env06_7: freeze b091 replay evidence
+refs/heads/codex/finish06-env07-abcde-main-d47f	6d6bfd6d003b4699fff59934e26e1f6fe5f55ceb	false	WIP UNREVIEWED env06_7: replay ordered packages on current main
+refs/heads/codex/finish06-env07-a-production-040c	6147fe359dd407a53861f5562132396f31c5169e	false	WIP UNREVIEWED env06_7-a: bind production semantic authority
+refs/heads/codex/finish06-env07-b50-hostile-route-proof	5d362a2a87163dbde9d4a66a730e9a441f826705	true	Exercise hostile Env07 route authority
+refs/heads/codex/finish06-env07-b-ordered-6147	59e478dd1f9d23e58947b3a0803e1b588680c898	false	WIP UNREVIEWED env06_7-b: recover ordered production package
+refs/heads/codex/finish06-env07-c284-review-diagnostics	a8d6739f20072a71d5343360cb72ed70dc45b08f	true	fix(env06_7): keep review findings out of boot errors
+refs/heads/codex/finish06-env07-c-ordered-59e4	f842c6208475307a3c0fb5f9b44251d0e4c3096f	false	wip(consolidation): preserve unfinished local state from C:/bth-finish06-env07-c-ordered-59e4
+refs/heads/codex/finish06-env07-dd75-bcd-fix	c496dd06fc35e6b379084cc74a252a0105f4119a	false	wip(consolidation): preserve unfinished local state from C:/bth-finish06-env07-dd75-bcd-fix
+refs/heads/codex/finish06-env07-dd75-bcd-fix2	70f971a7c9152923ebde8c0743273df6023b8153	true	fix(env06_7): refresh canonical package D derivations
+refs/heads/codex/finish06-env07-dd75-typed-fix	51b79caa2d783cc1440ab5ef3fe3db0f35e274ca	false	wip(consolidation): preserve unfinished local state from C:/bth-finish06-env07-abcde-b091
+refs/heads/codex/finish06-env07-d-ordered-a4c5	db2b14b07fb81a865dff3e5ab7151fb1300116e4	false	WIP UNREVIEWED env06_7-d: recover ordered layered authority
+refs/heads/codex/finish06-env07-e-ordered-db2b	241ac555bebe2ae7ee928d5f84a382d7056d1599	false	WIP UNREVIEWED env06_7-e: recover ordered premium evidence
+refs/heads/codex/finish06-env07-production-validation	577a1383dc813a25a5371123ca0d53085bd5542e	false	WIP UNREVIEWED env06_7: refresh repaired route signatures
+refs/heads/codex/finish06-env6-integration	a79b0200cc781337041f10843ba6f05d663c2db0	true	fix(ui): restore stretched lifecycle controls without warnings
+refs/heads/codex/finish06-env6-postland-lifecycle2	d22d7e41c883f8ee488502ea541214941998e84c	false	fix(env06_6): restore container-owned talk dock layout
+refs/heads/codex/finish06-env6-postland-lifecycle2-current	7eaf35184ca4c76d9dd9fa7ca58e15e1c301f897	true	fix(env06_6): restore container-owned talk dock layout
+refs/heads/codex/finish06-env6-postland-parse	0b487cc459f83865b45a44cf61a8d9e91a29ba62	true	fix(env06_6): close post-land UI verification
+refs/heads/codex/finish06-env6-r1	520c609ccaf4177614a70a757df27a69386202a5	false	fix(env06_6b): detach turn transaction graph (UNREVIEWED)
+refs/heads/codex/finish06-ffb-vivienne-greeting	365ce5354a6f5b1e5077fc2f8579e10139ec5dbc	true	fix(env06_7): seal sequence rollout and smoke budget
+refs/heads/codex/finish06-game3-forward	679b1d8a8abefdb4b77c488ef229cddb1f683f95	true	WIP UNREVIEWED game06_3: close host marker and visual overlap
+refs/heads/codex/finish06-game4-forward	e67915ff51c71f8f51f85ab6c080a89da347db45	true	WIP UNREVIEWED game06_4: close machine authority boundaries
+refs/heads/codex/finish06-game4-verify2-forward	5ca8494ae24cdecd8d5234669cf9cba2d9c685bc	true	WIP UNREVIEWED game06_4: normalize security classifier EOL
+refs/heads/codex/finish06-game4-verify-forward	1b141b8905ba15204560a2b947e354f0e6a656a9	true	WIP UNREVIEWED game06_4: classify host security allowlist validation
+refs/heads/codex/finish06-game5-forward	f9952e6b4ddbe468736a54167ef9048956263176	true	WIP UNREVIEWED game06_5: recover held stock and counter depth
+refs/heads/codex/finish06-game5-verify-forward	4e68cd79fda98d1d66b2611cc7399be27b46d6c2	true	WIP UNREVIEWED game06_5: repair split test ownership
+refs/heads/codex/finish06-game6-forward	e4872af3a5c757fe2f803a417c1d201c779d651f	false	WIP UNREVIEWED game06_6: recover bar dice depth
+refs/heads/codex/finish06-game6-product-fix	bca7a0712e3ff56c0620d139b2cec8c3ffb4e121	true	Close Bar Dice observer and RNG boundaries
+refs/heads/codex/finish06-game6-verify2-forward	5c9e09af6060ebbd2ff6ea5a58890bdc8b9a43b1	true	WIP UNREVIEWED game06_6: carry Game5 ownership repairs
+refs/heads/codex/finish06-game6-verify-forward	dff5e1e2ea238e75c88f407d26c1b9ea533fae44	false	WIP UNREVIEWED game06_6: bind sealed wager identity
+refs/heads/codex/finish06-game7-bca-forward	81d565897e16d47c7e66a77f59905b52bac77368	true	WIP UNREVIEWED test(game06_7): type dependency constant map
+refs/heads/codex/finish06-game7-forward	ed49078360463b9936a7fa4ee945daddbb4fe4d3	false	WIP UNREVIEWED game06_7: recover showdown duel depth
+refs/heads/codex/finish06-game7-verify2-forward	5b3bf21d01c68f8ab8170e69e149ac70c46d703b	false	WIP UNREVIEWED game06_7: admit Showdown object contracts
+refs/heads/codex/finish06-games-game1	a09bbaade780d1e987aff47be02f162d3968e240	true	WIP UNREVIEWED game06_1: invert ritual authority ownership
+refs/heads/codex/finish06-games-game2	1daeba39ef5e42c9bd05c56c59b17cf6ae517ee0	false	WIP UNREVIEWED game06_2: seal blackjack host transaction
+refs/heads/codex/finish06-main-red-recovery	2aee743d7691c342afd18ac4e4f840fd7ac3bc19	true	Revert "Merge branch 'codex/finish06-root-integration'"
+refs/heads/codex/finish06-root-integration	9f594a752792b6858b6f375677e64190e0a4591a	true	style(env06_7): close package capture script cleanly
+refs/heads/codex/finish06-world1-a1-recovery-0d45	0868279e4282666466f83140c952b9a13a9cd049	true	fix(world06_1): resume sealed delivery checkpoints
+refs/heads/codex/finish06-world2-a1-recovery-0868	740918256dd8895d1a880b13afc02dca10c3433c	true	WIP UNREVIEWED world06_2: prove staged pickup surface
+refs/heads/codex/finish06-world3-recovery-7409	adbc0b6804e295bf38e84f3fa6a1dc057135c650	true	WIP UNREVIEWED world06_3: seal host-rooted depth restore
+refs/heads/codex/finish06-world4-recovery-adbc	b11efafa885672431425a31b4792cd51fa488514	true	docs(world06_4): record host-rooted recovery evidence
+refs/heads/codex/finish06-world5-recovery-b11e	b1f10f645ebf243717af18599945cfeba85b209b	true	docs(world06_5): record host-rooted recovery evidence
+refs/heads/codex/finish06-world6-recovery-b1f1	8feca1606669e4ee44b26f6aeee6f743625e84aa	true	WIP UNREVIEWED world06_6: stage host-derived heist scenes
+refs/heads/codex/fix06_13-current-main-integration	62d45c2e390be815cc94b732b9930b37ff9a543c	false	WIP UNREVIEWED fix06_13: integrate accepted Web payload
+refs/heads/codex/fix06_13-inline-leak-remediation	0414cefcb6b2409b7b18711c210fd9c95073cd4c	false	WIP UNREVIEWED fix06_13: preserve caller cache config
+refs/heads/codex/fix06_13-parked-closeout	df9de57e4e1bc0f3e873cf5667908628ab6047f2	true	docs(fix06_13): correct closeout timestamp
+refs/heads/codex/fix06_13-second-rejection-owner-decision	d79b7e1144c105cb2dc8db547de49475409814bf	false	docs(fix06_13): UNREVIEWED stage second-rejection decision
+refs/heads/codex/fix06_15-route	d769ec7ead5f3b2c6d00db5bd64081eda1f24119	false	docs: route fix06_15 foundation split parser defect
+refs/heads/codex/fix06_18-route	fc31b9db6c1da9473e923ffe75dfc6b526f6204e	false	docs(fix06_18): route caller transaction rollback
+refs/heads/codex/fix06_21-copy-proof	b466aa7a9d191197480ac8c47b2ed725f24b8431	false	fix(coin-pusher): describe the V3 platform accurately
+refs/heads/codex/fix06_21-main-smoke-health	b967311751e0a273927a27dd4caf7e132f7690a0	false	WIP UNREVIEWED fix06_21: bind post-land runtime identity
+refs/heads/codex/fix06_22-post-land-verification	557af45b5cfb3c066423382ac2bce827c71e26b3	true	fix06_22: close post-land narrowing and plugin identity gaps
+refs/heads/codex/fix06_24-owner-decision	a761f2c5dc0cebc2f572064eb14e243e87762223	false	docs(fix06_24): UNREVIEWED correct prompt provenance
+refs/heads/codex/fix06_2-slot-checkpoint	124ced1535a772662e1000c6b2416b38c3786956	true	test(slot): guard cold checkpoint activation
+refs/heads/codex/fix06_5-closeout	9c284243a948a2534bc744a0d62474d815678947	true	docs(fix06_5): record completed landing
+refs/heads/codex/fix06_5-timing-predeclaration	c4e364f79fe8862dc2d7a44635d2572c1a1b2eed	false	docs(fix06_5): correct companion log counts
+refs/heads/codex/fix06_6-final-closeout	e74432a3fef1b901dd9126d3bd28aaab7db50d45	true	docs(fix06_6): preserve closeout log history
+refs/heads/codex/fix06_7-closeout	b22560c867f544c92830e6ddd251e019778d24a1	true	docs(fix06_7): close landed pusher copy repair
+refs/heads/codex/fix06_7-stale-pusher-copy	62dba2e3b2b036d0885d209da308bf6e8655a773	false	test(crew): bind refreshed golden provenance
+refs/heads/codex/fix06_9-closure-replay-intake	e8ce45588652cd5e7a4cc5cfd7623af83d0944e8	false	WIP UNREVIEWED fix06_9: prestage closure replay intake
+refs/heads/codex/fix06_9-parked-closeout	c7047169b127dc17b44837e918ae80b9ceaa2813	true	docs(fix06_9): record parked landing
+refs/heads/codex/fix13-pusher11-closeout	38bbfc4546420644cd354265b9afc96a34e17017	true	docs(coin-pusher): record post-land broad gates
+refs/heads/codex/game06_1-contract-remediation	a2760d816c781e711ff0923c296f97b786662453	true	docs(game06_1): close receipt and action bindings
+refs/heads/codex/game06_1-impl	932287ba0e049f1110cb748f02cb09047d3b42f5	true	fix(game06_1): close authenticated ritual boundaries
+refs/heads/codex/game06_1-ritual-contract	6a47d19b3c60ea78e74259d11473ace8e4fba573	true	test(game06_1): close ritual contract review gaps
+refs/heads/codex/game06_1-second-rejection-decision	0f64e85bb3c30484973fee3f0328b3c3c7f9a6e0	false	WIP UNREVIEWED game06_1: stage product rejection decision
+refs/heads/codex/game06_1-validator-closure	85fe52381212a6c2a0740dea355d963c1420b05d	false	wip(consolidation): preserve unfinished local state from C:/bth-game06_1-contract
+refs/heads/codex/game06_2-contract-only	e699d0bcfb566a022f4c4115920690874d0991ab	false	docs(game06_2): record Windows gate blocker
+refs/heads/codex/game06_2-impl	2def171d4adf90c5f4f5f6b1f4c35e4c6390b82a	false	wip(game06_2): UNREVIEWED-BLOCKED stage ritual projection
+refs/heads/codex/game06_2-owner-decision-evidence	958fd02d76978fe19bdbe85d405a8666d51c5193	false	docs(game06_2): UNREVIEWED second-rejection owner decision
+refs/heads/codex/game06_2-remediation	4dbb83bfe6e235640352a39ec90aa80f7d221b02	false	fix(game06_2): remediate ritual authority rejection
+refs/heads/codex/game06_3-impl	4c10e3b888711a52ff9331e7db3f7adee08c2a72	false	fix(game06_3): conceal squeeze card until reveal
+refs/heads/codex/game06_3-second-rejection-decision	647736bcdaf819bdd0566ebf60b541bb210df7b5	false	WIP UNREVIEWED game06_3: stage second-rejection decision
+refs/heads/codex/game06_4-authority-axes	abf9e2bc23c43059dc8a2e40c2ad32559b7a7a3e	false	WIP UNREVIEWED game06_4: separate authority decision axes
+refs/heads/codex/game06_4-authority-decision	a691d994463cc6ac1708660e5abd1ac2fffa0e72	false	WIP UNREVIEWED game06_4: frame machine authority decision
+refs/heads/codex/game06_4-first-review-remediation	a1643b525f426d45501a2b479ec918d17bb04178	false	WIP UNREVIEWED game06_4: remediate machine ritual P1s
+refs/heads/codex/game06_4-impl	259d63523bbc5ef9cacc4340c3fa3eae1855b7ed	false	WIP UNREVIEWED game06_4: project live machine rituals
+refs/heads/codex/game06_5-crossword-decision-evidence	19bdc9f00dcb9796343f4f1dc9a87921eec1754b	false	WIP UNREVIEWED game06_5: stage Crossword owner evidence
+refs/heads/codex/game06_5-impl	8efd58bc0053e3fdf587e8ca005f9236c289bb4f	false	WIP UNREVIEWED-BLOCKED game06_5 counter ritual
+refs/heads/codex/game06_6-contract-only	348ecd55886fb6c167b9ca2fa8a51e272a9939fb	false	WIP UNREVIEWED game06_6: park contract-only staging
+refs/heads/codex/game06_6-dependency-replay-manifest	a9952ded1a7b0407bf89fdf07b91918485b85250	false	WIP UNREVIEWED game06_6: prestage dependency replay manifest
+refs/heads/codex/game06_6-dependency-replay-manifest-r2	308d810fc03f6a8f7840bbbfab86953b96d3268f	false	WIP UNREVIEWED game06_6: close manifest review
+refs/heads/codex/game06_7-contract-only	25f16c4efb723db2a0308eec5719b59b497413b7	false	WIP UNREVIEWED game06_7: park contract-only staging
+refs/heads/codex/game06_7-dependency-replay-manifest	8c5e483932db96ad6f0a7d804ea6a1da408e3f17	false	docs(game06_7): UNREVIEWED pre-stage dependency replay
+refs/heads/codex/game06_8-release-intake-prestage	bc42ade6def0543069117ddf064ea447d1298840	true	WIP UNREVIEWED game06_8: prestage release intake
+refs/heads/codex/game06-2-main-integration	8af2398c2e53b1e1b65ddc34de5aa58bff7cf5c6	false	test(game06_2): seed missing blackjack tables observationally
+refs/heads/codex/game06-2-main-integration-2	cd9cb694868208254cc4b216412041df469d3ae2	false	test(game06_2): seed missing blackjack tables observationally
+refs/heads/codex/game06-2-main-integration-3	5852a41d37327c7d6d2059756a88ec4c495e2ef3	false	test(game06_2): seed missing blackjack tables observationally
+refs/heads/codex/game06-2-main-integration-4	21a54249f30074dd959b3041ca86c126dedcfbc1	false	test(game06_2): seed missing blackjack tables observationally
+refs/heads/codex/game06-2-main-integration-5	2ead76781ce94fe5deac323e75c601ccd79f363a	true	test: bind Linda observer to live run
+refs/heads/codex/game06-2-postland-recovery	6f6c010ed92cbee839377a7dad99a24ce5dcce80	true	perf(game06_2): keep compatibility core read-only
+refs/heads/codex/game06-3-main-integration-1	efd250a502030fac6569d632608863af2d20befc	false	WIP UNREVIEWED game06_3: route table games through sealed host
+refs/heads/codex/game06-3-main-integration-2	e089e5fc440af8d0cbae2c06b48b8dbbb01e9476	false	fix(game06_3): close sealed table settlement P0s
+refs/heads/codex/game06-3-main-integration-3	7172b0079a9091e32a9796b885dd04a52ccef3fa	true	merge(game06_3): integrate sealed table-game depth onto recovered main
+refs/heads/codex/game06-4-main-recovery	b75d479462ebff22cb2f75983a383bf9616686d4	true	fix(game06_4): seal Slot acknowledgement mutation
+refs/heads/codex/game06-5-held-preservation-remediation	01465fdec806478d0edf63e994bdb52b7e7e79bf	true	fix(game06_5): preserve held crossword stock
+refs/heads/codex/game06-5-main-recovery	03f216bdee6718f738a8190d509cebd022acead9	true	fix(game06_5): keep counter projection bounded
+refs/heads/codex/game06-6-main-recovery	7ceb4efd3adca2bb54bd24ad7e5a89fd919d4268	true	WIP UNREVIEWED game06_6: bind bar dice product depth
+refs/heads/codex/game06-7-main-recovery	3e7de84af5e471038be8318cfa579ecd26f12dcc	true	fix(game06_7): bind duel surface table argument
+refs/heads/codex/game06-owner-pattern-checklist	7e42c0b467e9f1034b2f8cdde63bad513775bd5a	true	docs(game06): require hostile authority acceptance case
+refs/heads/codex/integ06_1-prestage	e3b915bd1102c877540e547af69a33c30d0d0ad3	true	WIP UNREVIEWED integ06_1: inventory historical save fixtures
+refs/heads/codex/integrator-family1	00ee744fa6269e8a7eb34f67b2659f32d55febaa	true	QUIESCE-DONE: GREEN fifth-landing performance 46.663s
+refs/heads/codex/land06-balance06_1	7967a1e1fbe563dbf8008d0e64048c46f4dcecaf	true	docs(balance06_1): correct archived evidence counts
+refs/heads/codex/land06-board06_1	bf4fbc4673b1237e60942e104b8205944ef84032	true	board06_1: remove duplicate history links
+refs/heads/codex/land06-board06_1-closeout	62d3ed2a45800ee503d165fb69e5698362334fd4	true	board06_1: record landed hygiene closeout
+refs/heads/codex/land06-env06_6-855-current	9ea61fb8fe6c7e70a6c5db60829c28680ce2e92c	false	merge: stage rejected env06_6b payload b7da64ae
+refs/heads/codex/land06-env06_6-final	b7da64ae802ac0d35af95ad85d8d7f08788b59ab	false	test command receipts with nontransitioning fixture
+refs/heads/codex/land06-env06_6-orderprobe	cc0bd64e422e2632ea0b93bd3613e0816242bee6	false	env06_6: add exact inventory and hostile lifecycle gates
+refs/heads/codex/land06-env06_6-reconcile	53d40389d99a65288f41cddee62e466334830af0	false	env06_6: seal passive scenario candidates
+refs/heads/codex/land06-fix06_10	8f888e2660370a5082b6167b117ece2fd79d4141	false	docs: claim fix06_10 EV runner remediation
+refs/heads/codex/land06-fix06_10-final-integration	ba4e5fde9f00f6ff8c000d23f8f552de9b3cb792	false	docs: constrain pusher liveness evidence wording
+refs/heads/codex/land06-fix06_10-integration	74a1b5320861cb8e18b9512f41119c52f45d4c34	false	docs: claim fix06_10 EV runner remediation
+refs/heads/codex/land06-fix06_11	745051323f90ffcd7839b5dbfab0074f5553b290	false	fix: bind pusher EV runner provenance
+refs/heads/codex/land06-fix06_13	718af3da7176abfaec9f9dbc10884454298a9872	false	docs(landing): record fix06_13 iteration 8 evidence
+refs/heads/codex/land06-fix06_13-current-main	fadf8a44bcf943edd1b1c2ecbaafa6ac87be025b	false	docs(fix06_13): hand off current-main integration
+refs/heads/codex/land06-fix06_14	d0306126bbe8110bb6d4ef79b335c6dcdd3dcc31	false	docs(fix06_14): record reduced schema remediation
+refs/heads/codex/land06-fix06_14-integration	4cf7a43850567f00e017416dbf29b09dd67fe198	true	docs: complete fix06_14 canonical landing row
+refs/heads/codex/land06-fix06_16	7fe696f266bd8d3c0b0920b8de3faa2f45c04ace	true	docs: close fix06_16 post-land verification
+refs/heads/codex/land06-fix06_17-scratch-timing-route	2b07f701124efaf7559d6100f95047af2224e0df	false	fix06_17: correct timing route record
+refs/heads/codex/land06-fix06_4	91e050bf14c2c87ef995300143fe16431d0bc497	true	docs(land06): correct capture evidence paths
+refs/heads/codex/land06-fix06_4-closeout	b763b85b93fdaada815ae3db9e278b5bbad00f79	true	docs(land06): correct fix06_4 smoke metrics
+refs/heads/codex/land06-fix06_5-integration	87fa674e0e2f1f12532b1784296796402c13994b	true	docs(fix06_5): correct companion log counts
+refs/heads/codex/land06-fix06_6	b323f841ca0023493a54e1118abc32fe51208c63	true	docs(fix06_6): keep closeout in progress
+refs/heads/codex/land06-fix06_7-integration	bb3be7fdc329fbcd0e81696656f47a908d31ff74	true	test(crew): bind refreshed golden provenance
+refs/heads/codex/land06-fix06_8	1f0595af567494f1c7d69f319a1ee8e4bead26dc	false	WIP UNREVIEWED fix06_8: preserve Option A one-shot red
+refs/heads/codex/land06-fix06_9	e3e523bef613cb1d196dde22d06d143b196c4ff5	false	fix(perf): seed authoritative pusher session
+refs/heads/codex/land06-fix06_9-integration	f6a06d5feeb8c132fa69cc7e19a3732b7c85be3c	true	docs(fix06_9): route shipped Web performance red
+refs/heads/codex/land06-integration	7e2c19ebe65cf3dd0af6282bc9f5253f45a45eab	false	merge: stage meta06_1 reporting surfaces
+refs/heads/codex/land06-meta06_1	27dc4be05b70e0ef213222aad9422de0f6cb2c5f	true	fix(career): keep ledger values legible
+refs/heads/codex/land06-polish06_0	202b3f629cfce48d539e4e36c064508ca8bcd354	true	polish06_0: park release artifact templates
+refs/heads/codex/land06-polish06_0-closeout	990bddf9271af6603993464fa2be7d7a29d804cb	true	polish06_0: record parked program closeout
+refs/heads/codex/land06-pusherv3_11	9e1149e6997f1985b42008eafb8641e12f17dd60	false	wip(consolidation): preserve unfinished local state from D:/Projects/Beat-The-House-worktrees/land06-pusherv3_11
+refs/heads/codex/land06-world-hostile-checklist	232ec7d6be3947ef3a5195f3c380ae0b624430e5	true	Merge accepted world hostile acceptance checklists
+refs/heads/codex/main-health-first-bad-exact	737a8fe94bac9e193d5918fe7f6d722fa0a074a0	true	fix(coin-pusher): describe the V3 platform accurately
+refs/heads/codex/main-health-first-bad-parent	9c31907dff15a7f03598e149bec9f9b8fa9b4110	true	docs(fix06_7): claim stale pusher copy repair
+refs/heads/codex/main-health-fix06_7-hashes	e3f6e94ab0c43927b7cbe2e18bd5477bfe7baff3	true	test(main-health): refresh fix06_7 copy hashes
+refs/heads/codex/main-health-inactive-delivery-triage	8feb8f17817423179408eff9b573574860bca75f	false	wip(consolidation): preserve unfinished local state from C:/bth-main-health-triage
+refs/heads/codex/main-health-pre-meta-evidence	70eaaf80eff2f7a65cec7046b3900ee861cb2b4f	true	merge: land board06_1 hygiene split
+refs/heads/codex/owner-decision-index	23add3811713980ca84aa1c451fcf20d6b16b04a	false	WIP UNREVIEWED program06: index fix06_13 owner decision
+refs/heads/codex/parked-env06_6-ce496c1a	ce496c1a799e4cc6ecd4afa59da32fd7dbf50a4e	true	merge: land env06_6 accepted payload with alias remediation
+refs/heads/codex/perf06_1-prestage	567222db63d021f15d30a1179c0c875406956b1a	true	WIP UNREVIEWED perf06_1: prestage measurement contract
+refs/heads/codex/playtest06_2-prestage	bd79083079e1fcacf8ed7734dba1612dfc772d9d	true	WIP UNREVIEWED playtest06_2: prestage intake contract
+refs/heads/codex/postland-main-qualification	9bcb641cf93128006a7b61dc93c7b92efd035ab4	true	Merge pull request #22 from erikjpet/codex/postland-main-qualification
+refs/heads/codex/program06-board	e3258922621dee105cb43ae3b97540452e777602	false	program06_0: accept crew replay custody
+refs/heads/codex/program06-meta06_1-integration	b680d28564ac05845e7ae45a02dbdb0d68f06138	true	docs(meta06_1): close accepted landing record
+refs/heads/codex/pusher06_2	b9fe35d7eacd7ed45f10f9668522e31f47001afb	true	docs(board): complete coin pusher presentation
+refs/heads/codex/pusher06_2-host-interrupt	ac601b1ec5f4bf4cf6b7c2fdb72ce03a2f6d9656	false	test(foundation): prove zero-work interrupt fast path
+refs/heads/codex/pusher06_2-host-refresh	6535e0965aab8055ba7bbc820a569b82eed76152	false	test(coin-pusher): render host path on viewport frame
+refs/heads/codex/pusher06_2-merge	09187572a45e4d7116178627fd66b95bd4b96579	true	merge: integrate coin pusher presentation
+refs/heads/codex/pusher06_2-presentation-gaps	fa7c0f9b2dfec1017ef3644af6868dd24562a0a8	true	fix(pusher): sync reduced-motion terminal audio
+refs/heads/codex/pusherv3_10-closure	30ee954dac4f345ddd2a1e77dc1d1409eb2c0812	false	perf(test): launch critical systems shards first
+refs/heads/codex/pusherv3_11-replay-prestage	f05d14de4b93b3a4dccb4266224ee784897b616d	false	WIP UNREVIEWED pusherv3_11: prestage immutable replay manifest
+refs/heads/codex/pusherv3_2	83bc917cafa1c3ecf6aca1f56ac3987ddbff0e1c	false	fix(pusher): release exit stop and add rail drag
+refs/heads/codex/pusherv3_3	692c321edf5c9665961cf24ba438395b7e574ad4	false	fix(pusher): satisfy cabinet acceptance contracts
+refs/heads/codex/review-craps06_3-checklist	24dcebabebb93b954f62219ed3bfa120aa7fc0da	false	docs(craps06_3): fix preimplementation acceptance checklist
+refs/heads/codex/review-crew06_10-checklist	dc6894a100b188b17e6a1ed51321113463eaa40e	false	docs(crew06_10): fix preimplementation acceptance checklist
+refs/heads/codex/review-cross-row-ownership-matrix	ffc6bbd1253f6565695636a9e1c2b448255c830d	false	docs(program06_0): bind depth-row ownership assignments
+refs/heads/codex/review-env06_7-package-checklists	849aa8c2487398622dc5785dc43a6458bc02c438	false	docs(env06_7): fix package acceptance checklists
+refs/heads/codex/rework06_2-integration	8c167bc129486d495381e96b6d4efc89313ecd1b	true	docs(board): claim pusher depth and crew recruitment
+refs/heads/codex/rework06-1	2c653473c9ac7430fd9375d2dc3d215c3521e5c8	true	Prove delivery runs on the production map
+refs/heads/codex/rework06-2	e516facb4dccd532ea2f214803e3a53dee573856	true	Remove Baccarat draw snapshot allocation churn
+refs/heads/codex/rework-integration	352898952602f00ddf70a884766349b88737e13e	true	docs(board): close real-map delivery rework
+refs/heads/codex/systems-budget	c376445c3c9e07d3699ee3db2282b65d6bfa4cee	true	test(systems): hydrate fixture before mutation sentinel
+refs/heads/codex/teach06_1	b9ba2e95853e96dfb1e71a8b749469920c30ae35	true	docs(board): complete teach06_1
+refs/heads/codex/teach06_2-prestage	19e249743660f5ed658480be8fe202a6e8c8905b	true	WIP UNREVIEWED teach06_2: audit current lesson catalog
+refs/heads/codex/wave-a-coexistence-probe	8c73f211dad75123524065932508c81a948a3089	false	Add Wave A coexistence probe
+refs/heads/codex/wave-a-crew06-1	d3d090cfbb0a7ea505e0b8d3182cc5aebfd105c0	false	Correct UI art contract classification
+refs/heads/codex/wave-a-env06-1	b72a461505d1b49d0bd297c9f4cf4f152712f09d	false	Refresh visual QA menu controls
+refs/heads/codex/wave-a-town06-1	83baf38cd2a2ecf0ba0cef65e824009dc744d75e	false	Preserve watched context for detector scans
+refs/heads/codex/wave-b-env06-2	336222e2b3fa57ae5a6b46e835b3fa51472f9977	false	Make scenario screenshot overlap gate authoritative
+refs/heads/codex/wave-b-env06-3	246fe09369d389455fe48c973c2cf666608288b6	true	fix: satisfy scenario runtime contracts
+refs/heads/codex/wave-b-env06-4	16b322c1903b9a4b48748e3b4ae999c970006087	true	Merge main into codex/wave-b-env06-4
+refs/heads/codex/wave-b-town06-2	d496b69b5d0d0aa8f599e92160842f69458e5e55	true	Merge branch 'main' into codex/wave-b-town06-2
+refs/heads/codex/wave-b-town06-3	84f6b82fd1f188d8942533a1d4507330625bc4ef	true	test(town): add Wave B composition probe
+refs/heads/codex/wave-c-acceptance-repair	3e1e699edcb8848ec6fedab3d151bd302a78cf29	false	Fix Punchline L3 Numbers visual contract
+refs/heads/codex/wave-c-craps06-1	c3c728c52288124826e60c1d78a2876e64d1bfb3	true	fix(craps): preserve grand casino layout capacity
+refs/heads/codex/wave-c-craps06-2	7ccb1a253355f8b2e934c409b3bd7ebf000b7536	false	test(ui): require travel in victory replay fixture
+refs/heads/codex/wave-c-crew06-2	0b174013b575c6fdb1be6b4d73dc2c08999f8378	false	fix(crew): use immutable poker draw actions
+refs/heads/codex/wave-c-crew06-3	b7d18f685e78723d8ef951e85019ad343088f3b5	false	Align zero-trust Numbers visual clock
+refs/heads/codex/wave-c-integration	6ea9f4a984790ff901ca02af4c4cd6deefeb7154	true	Fix Punchline L3 Numbers visual contract
+refs/heads/codex/wave-c-push06-1	362815d4240e9af93943c31e7d3a0ab142a8fdb9	false	Fix canonical Coin Pusher reduced-motion proof
+refs/heads/codex/wave-c-push06-2	abad110a0b547160cfdc220ea47fa0789fc48e35	false	fix(pusher): require variation visual captures
+refs/heads/codex/wave-c-streets06-1	b35e2783ab8abaf345701a81ac88ff8805a27111	false	Cover Streets modes in visual QA
+refs/heads/codex/wip-0.6-consolidated	4e06f27f69aece21781fe4637b54b273bd37c064	false	wip(consolidation): establish sole unfinished-work branch
+refs/heads/codex/world06_1	9d6ff952ab256bb74ec4d26e655cfb9cec3517e5	true	test(world06_1): stage sealed owner checkpoint negatives (UNREVIEWED-BLOCKED)
+refs/heads/codex/world06_1-adapter-contract	ec699f728c91b452294e2b070867abdf97cb79df	true	docs: bind world adapter contract vocabulary
+refs/heads/codex/world06_1-receipt-timing-owner-decision	d789a921a6cef5f17aeb035016f19433294c4beb	false	docs(world06_1): UNREVIEWED receipt timing owner decision
+refs/heads/codex/world06_2	e4f4194f593bb401220eb56a1697b5fe58e60753	false	fix(world06_2): seal physical delivery authority (WIP UNREVIEWED)
+refs/heads/codex/world06_2-second-rejection-decision	6ff384f41cb502667ba63c1e40dadc6d77f243c5	false	WIP UNREVIEWED world06_2: stage authority decision
+refs/heads/codex/world06_3	8cde9f9be16d445ab85ed6f9cbab1548183f68ac	false	feat(world06_3): add Numbers depth model package (WIP UNREVIEWED)
+refs/heads/codex/world06_3-remediation	e7aca3478bade4568c8c29ea109f799fd4f0a249	false	fix(world06_3): fail closed without host authority (WIP UNREVIEWED)
+refs/heads/codex/world06_3-second-rejection-decision	94dc1731032ccfbb26d16ab6d980625731bdbf67	false	WIP UNREVIEWED world06_3: stage restore decision
+refs/heads/codex/world06_4	4863b1cc8621ecbb2e5c22125fa5d208c7d67460	true	data(world06_4): author crew work semantics
+refs/heads/codex/world06_4-remediation	4a5be2b154bf579257feb1475b910b79be01f9af	true	WIP UNREVIEWED: fail close world06_4 job authority
+refs/heads/codex/world06_5	07e98f16a182f95e25aaa8ec34121b1c54c3554b	true	WIP UNREVIEWED: stage world06_5 sweep encounters
+refs/heads/codex/world06_5-remediation	7f496a5ab47fb786cb8154a5abfd1664ddbd945b	true	WIP UNREVIEWED: fail close sweep intel authority
+refs/heads/codex/world06_6	0814cec1bda9f1574357b77e5f14a1dab03f7994	false	QUIESCE-IDLE: world lane idle for perf measurement
+refs/heads/codex/world06_7-intake-prestage	5f79be20b36e6d550d8c446a31eaf667c2ef7607	true	docs(world06_7): UNREVIEWED release gate intake
+refs/heads/codex/world06-hostile-checklists	2c76a9ea504356420350ea649fd0846338d6cfe0	true	docs(world06): complete hostile acceptance checklists (UNREVIEWED)
+refs/heads/main	38bbfc4546420644cd354265b9afc96a34e17017	true	docs(coin-pusher): record post-land broad gates
+refs/heads/salvage/crew06_5_baseline_probe_unreviewed_wip	6f68ca207dbd06ea3aec25f8b80c4225cb92e843	false	salvage06_1: preserve crew06_5 baseline probe (UNREVIEWED WIP)
+refs/heads/salvage/env06_6_atomic_consumer_handoff_stash	a1256241bf034123618fa78d73a03f115ff8f537	false	salvage06_1: preserve env06_6 atomic consumer handoff stash (UNREVIEWED WIP)
+refs/heads/salvage/env06_6_lifecycle_unreviewed_wip	9fc5d07c08a727eff1f45b5f6208a07c931e5be6	false	salvage06_1: preserve env06_6 lifecycle work (UNREVIEWED WIP)
+refs/heads/salvage/game_test_heat_cap_unreviewed_wip	53da5fb89d1e2df19c174e9a467aef67db8f9899	false	salvage06_1: preserve game-test heat cap changes (UNREVIEWED WIP)
+refs/heads/salvage/golden_ref_low_confidence_unreviewed_wip	9525411565162e09a3733e72c0fae11cc0f5b1df	false	salvage06_1: preserve golden_ref edit (UNREVIEWED LOW-CONFIDENCE WIP)
+refs/heads/salvage/pusherv3_4_agent_2b59309e	2b59309e7053af5941a0b8d8af833a152495508b	false	Capture Pusher v3 feel through production sessions
+refs/heads/salvage/recovered_dangling_00038949	0003894907b3c7a48a3f62f533e4bd088cf67d00	false	R6 T7.2 T6.3: close foundation UI map QA
+refs/heads/salvage/recovered_dangling_2c047332	2c0473323f950932511284a18cb74d346952fd9c	false	LC.1 remove ghost game scene art
+refs/heads/salvage/recovered_dangling_3ce2de92	3ce2de92682c0a93c63a9eb35b96828094fb1058	false	Execute v05 dead code cleanup
+refs/heads/salvage/recovered_dangling_416cfbad	416cfbad6d2a563431c0642e42bb154eca19805e	false	On main: migration:main-agents/art-improvements-bar-scene
+refs/heads/salvage/recovered_dangling_525b23f6	525b23f63cda8ddb94aa05220c10d7cc2984726c	false	initial Ride the Bus file addition
+refs/heads/salvage/recovered_dangling_5a1dc433	5a1dc433c22eef6b7aa71fe2f12051ed026eea15	false	Merge Dave bus encounter
+refs/heads/salvage/recovered_dangling_6758695d	6758695d3aa184d1fce2529db08f4e44fc3696c6	false	Lock penalty shields to purchase outcomes
+refs/heads/salvage/recovered_dangling_7c9e46ed	7c9e46edf02c984cde71575ffe729189f6eb8067	false	Archive profile persistence prompt
+refs/heads/salvage/recovered_dangling_8069ed7e	8069ed7e93a4c3b981af482cbada86dc44086e8e	false	Track remaining v0.4 queue prompts
+refs/heads/salvage/recovered_dangling_9ced103d	9ced103d7ca02c498237f3d290e6d327c9ef6a61	false	Add scratch ticket contracts and RTP audit
+refs/heads/salvage/recovered_dangling_9f99bce3	9f99bce31bc3a70e664550e16d862f43c7737dae	false	Complete foundation main decomposition
+refs/heads/salvage/recovered_dangling_acee8af5	acee8af5cdaed16d0fade1bfcaea6f9604fbf5d3	false	﻿v0.3.0
+refs/heads/salvage/recovered_dangling_b0911fde	b0911fdee43b6dc5b4c2a1017a963ed47207c6a7	false	WIP on main: 4a4201b7 fix(craps): keep street preview observational
+refs/heads/salvage/recovered_dangling_bbcd36db	bbcd36db385525b88c805237a0d610ef3fa70c09	false	Keep roulette idle on full wheel motion layer
+refs/heads/salvage/recovered_dangling_bce2e0ea	bce2e0ea784d4fda5c8c58938723b0992a8aee30	false	On main: migration:main-agents/bar-environment-theme-rework
+refs/heads/salvage/recovered_dangling_be445d2e	be445d2ed99bf9a51c3496ef8bca88c1175cffb9	false	Close Stage 2 audio and Dave prompts
+refs/heads/salvage/recovered_dangling_c98180d6	c98180d6ccdf274d70f253f5a28dc9773e279727	false	initial Roulette implementation. Only number bets.
+refs/heads/salvage/recovered_dangling_ca9e93e9	ca9e93e997c7ecc588a834f31f8ff6927b08baf0	false	On (no branch): pusherv3_4-pre-amendment-6.2-drafts
+refs/heads/salvage/recovered_dangling_cd36e584	cd36e58417e240d43d187a789391173f8f815d77	false	WIP on main: 98fd5ec2 Record Crew recruitment scope correction
+refs/heads/salvage/recovered_dangling_d89ce2b3	d89ce2b3f5c40d861115cab4094d16144fdb2905	false	Remove idle audio allocation hot paths
+refs/heads/salvage/recovered_dangling_db0e52ab	db0e52ab62473363f797cc2a5ce5d468680d1ca1	false	Revert "scratch: inject SC.2 draw delay trip"
+refs/heads/salvage/recovered_dangling_de26fca3	de26fca3b252d697e96643168a642a2a9c7ef2fc	false	Execute v05 dead code cleanup
+refs/heads/salvage/recovered_dangling_e9793609	e979360905ec6c0a6372fb18c728d2406162e583	false	Archive Act 2 seam task
+refs/heads/salvage/recovered_dangling_f1b74846	f1b74846005cb5821cb97e25f52a2f81c1ee7184	false	Execute v05 dead code cleanup
+refs/heads/salvage/recovered_dangling_f6bfc2df	f6bfc2df64758472c0c69a67aeb21c120f0936a7	false	On main: pm-preserve-check-core-content-eol-20260818
+refs/heads/salvage/recovered_finalmerge_3407f9ca	3407f9ca5969e83614a8a5f78270052e794d7fd9	false	WIP on main: cabf2fea merge: land polish06_0 planning program
+refs/heads/salvage/recovered_finalmerge_7d82c203	7d82c2036ad677472bf52915ae885950b6e81f90	false	WIP on main: e1a1b128 merge: land salvage06_1 branch and work inventory
+refs/heads/salvage/recovered_postmerge_1189769b	1189769b364ee56bb354e12f8069d3a31acf6d62	false	WIP on main: 70eaaf80 merge: land board06_1 hygiene split
+refs/heads/salvage/recovered_postmerge_304824a6	304824a6905bc88e542f1a4a01b1301d58c871cd	false	WIP on main: d7724bb7 merge: close board06_1 landing record
+refs/heads/salvage/recovered_postmerge_31a6bbbc	31a6bbbcb75176c1c561bbb8dc94e054656b42ad	false	salvage06_1: inventory all branches and preserve at-risk work
+refs/heads/salvage/recovered_reflog_0d43c335	0d43c335a254bfab58f31e23ca3eaa231040d37f	false	verify guided tutorial end to end
+refs/heads/salvage/recovered_reflog_12911adf	12911adf849e44febcceacd0ff81c6f0bc43be82	false	fix(scenarios): preserve full catalog reach
+refs/heads/salvage/recovered_reflog_27500cc4	27500cc466d464c8aed6918ecb84a9bfe61e841e	false	Record pusherv3_4 completion evidence
+refs/heads/salvage/recovered_reflog_462b3a99	462b3a99bcff333571dc03ce9dab86e4c8ba850a	false	test(systems): run stable shards in parallel
+refs/heads/salvage/recovered_reflog_4c5d5813	4c5d5813f10f842666a517b7bc3b90cb9ba2cfb1	false	docs(todo): plan next coin pusher physics pass
+refs/heads/salvage/recovered_reflog_5446ed95	5446ed95436cbb8b2882d2952812e2220f1ddc5e	false	docs(todo): claim pusherv3_10 implementation
+refs/heads/salvage/recovered_reflog_56ee9443	56ee9443e30225ab1e4fe1c2be2ad65f4ef8a0ae	false	board06_1: split and archive the active board
+refs/heads/salvage/recovered_reflog_5a8f2728	5a8f272847c53f82a7a111ceb037ad4b681a05fb	false	Complete content depth presentation contracts
+refs/heads/salvage/recovered_reflog_61a76afe	61a76afe60a0ea23ff856eabec07851895df2c33	false	Rework first run as guided dialogue
+refs/heads/salvage/recovered_reflog_73d67c7b	73d67c7b234029ed64665acb7493ef3e72efe15a	false	fix(scenario): preserve unrelated room interactions
+refs/heads/salvage/recovered_reflog_7c91b266	7c91b2660b9622d9b3c4dca60a666c9d0723adff	false	fix(coach): keep ambient tips out of the input path
+refs/heads/salvage/recovered_reflog_8563338b	8563338b6df6ecca7bc4c6156d21c22761ba70af	false	fix: enforce venue scenario scope contracts
+refs/heads/salvage/recovered_reflog_9131d7e6	9131d7e67cbc5c9a7046f4d5e6b0e8d0262e9b0e	false	polish06_0: define the post-playtest completion program
+refs/heads/salvage/recovered_reflog_92935651	92935651e20cf2b01ad75c35d2e63d44e13572f3	false	docs(tutorial): archive playtest fix pass
+refs/heads/salvage/recovered_reflog_9f8ad92c	9f8ad92c83eb90f23bbe450a85abdd3ad3cd5ad1	false	test(scenarios): guard expanded catalog
+refs/heads/salvage/recovered_reflog_a205673e	a205673e8fdda9d3fda53fe694e583e748000b00	false	fix(staffing): seed table assignments during generation
+refs/heads/salvage/recovered_reflog_aa5443f3	aa5443f3f17454d92ecd80823da502348ec47271	false	land06_0: commit the 0.6 remaining work program contracts
+refs/heads/salvage/recovered_reflog_ada239da	ada239da8a9460e85caaa4e25604fb6f2f2fadbe	false	land06_0: commit the 0.6 remaining work program contracts
+refs/heads/salvage/recovered_reflog_ae55e64b	ae55e64b671604fc668f97642f5f909a8bd27658	false	land06_0: commit the 0.6 remaining work program contracts
+refs/heads/salvage/recovered_reflog_b42dc296	b42dc296442ccd365ee21c615ef517d6986aa1b3	false	docs(board): complete art06_1
+refs/heads/salvage/recovered_reflog_c5671d25	c5671d25014db1bfb4f7467caead30e8692f9719	false	Bootstrap native coin pusher extension
+refs/heads/salvage/recovered_reflog_e6c1d88b	e6c1d88b4ca1f5b00be8504e677a003793916c50	false	Keep active item control visible in casino HUD
+refs/heads/salvage/recovered_reflog_eb8351c9	eb8351c9aed87e5f57b15e4f49941df7521d8182	false	docs(todo): claim pusherv3_10 implementation
+refs/heads/salvage/recovered_reflog_f9ef28ea	f9ef28ea91e8e36f5c19d195a7c25cb29fc3d414	false	Archive completed Cage environment rework prompt
+refs/heads/salvage/recovered_reflog_fee3913f	fee3913f1fc732dbaabd7ec5e60b92bfbe4960e1	false	board06_1: split and archive the active board
+refs/heads/salvage/salvage06_1_prompt_unreviewed_copy	773419574d06c084db413caaf92fbb14004a3206	false	salvage06_1: preserve untracked preservation prompt (UNREVIEWED COPY)
+refs/heads/salvage/salvage06_1-inventory	af52438efe8e2fb3c2a07e84bf4dccb4e5695a9b	true	salvage06_1: reconcile post-merge preservation tips
+refs/remotes/origin/codex/0.5-release	15d37054a5c9365b6812e80fc68456f949881174	true	Finalize 0.5 release records
+refs/remotes/origin/codex/0.6-integrated-copy-reconciliation	954a311c4bedfa37a9cbd3ad52c34067efa228c1	true	docs(landing): record final reconciliation evidence
+refs/remotes/origin/codex/0.6-todo-state-audit	cb7a17d55bdc07077a779a7246ec4e1cb530c1b9	true	docs(0.6): reconcile todo state after branch landing
+refs/remotes/origin/codex/art06_1	6c946484fcaf62e3d4d25e4a72f4133c0cbf6a7a	true	docs(board): complete art06_1
+refs/remotes/origin/codex/art06_1-runtime-repair	e1e941fa5f91d5ce407e5f9a28bac7a4c0d6204e	false	wip(art): preserve Punchline runtime raster repair
+refs/remotes/origin/codex/coin-pusher-web-performance	0ce00c0ba941adac29e0a4c8a5d9f1cf842a866e	true	perf(startup): skip default accessibility restyle
+refs/remotes/origin/codex/crew06_5-review2	c9be5541d45ac5c1d0987e1a1da2f98b515fab81	false	wip(crew): preserve recruitment acceptance repair
+refs/remotes/origin/codex/env06_5	6654768f10acf639141a969e194dbdf8f99a9cf8	false	docs(board): block env06_5 on craps normalization
+refs/remotes/origin/codex/env06-6-7-acceptance	323a88328859f42f104e56cfa3b932990660a556	true	feat(env06): complete dynamic runtime and 55-scenario rollout
+refs/remotes/origin/codex/postland-main-qualification	997936b64626f96944b923ccad682b3b71d69185	true	fix(release): close post-land qualification gaps
+refs/remotes/origin/codex/pusher06_2	b9fe35d7eacd7ed45f10f9668522e31f47001afb	true	docs(board): complete coin pusher presentation
+refs/remotes/origin/codex/rework06_2-integration	8c167bc129486d495381e96b6d4efc89313ecd1b	true	docs(board): claim pusher depth and crew recruitment
+refs/remotes/origin/codex/teach06_1	b9ba2e95853e96dfb1e71a8b749469920c30ae35	true	docs(board): complete teach06_1
+refs/remotes/origin/main	38bbfc4546420644cd354265b9afc96a34e17017	true	docs(coin-pusher): record post-land broad gates
