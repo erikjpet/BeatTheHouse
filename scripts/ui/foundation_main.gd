@@ -9155,10 +9155,66 @@ func _apply_deferred_embedded_hud_after_frame(generation: int, expected_run: Run
 	if not _deferred_embedded_secondary_identity_is_current(generation, expected_run, expected_game, expected_environment, expected_result, expected_canvas, expected_session_generation):
 		return
 	var started_usec := Time.get_ticks_usec()
-	_render_embedded_action_hud_model(hud_model)
+	if status_label != null:
+		var next_status_text := str(hud_model.get("status_text", ""))
+		if status_label.text != next_status_text:
+			status_label.text = next_status_text
 	var debug_timing: Dictionary = last_game_result.get("coin_pusher_debug_host_timing_usec", {}) if typeof(last_game_result.get("coin_pusher_debug_host_timing_usec", {})) == TYPE_DICTIONARY else {}
 	if not debug_timing.is_empty():
-		debug_timing["refresh_deferred_hud_apply"] = Time.get_ticks_usec() - started_usec
+		debug_timing["refresh_deferred_hud_status"] = Time.get_ticks_usec() - started_usec
+	call_deferred("_apply_deferred_embedded_objective_after_frame", generation, expected_run, expected_game, expected_environment, expected_result, expected_canvas, expected_session_generation, hud_model)
+
+
+func _apply_deferred_embedded_objective_after_frame(generation: int, expected_run: RunState, expected_game: GameModule, expected_environment: Dictionary, expected_result: Dictionary, expected_canvas: Control, expected_session_generation: int, hud_model: Dictionary) -> void:
+	var tree := get_tree()
+	if tree != null:
+		await tree.process_frame
+	if not _deferred_embedded_secondary_identity_is_current(generation, expected_run, expected_game, expected_environment, expected_result, expected_canvas, expected_session_generation):
+		return
+	var started_usec := Time.get_ticks_usec()
+	if objective_label != null:
+		var next_objective_text := str(hud_model.get("objective_text", ""))
+		if objective_label.text != next_objective_text:
+			objective_label.text = next_objective_text
+	var debug_timing: Dictionary = last_game_result.get("coin_pusher_debug_host_timing_usec", {}) if typeof(last_game_result.get("coin_pusher_debug_host_timing_usec", {})) == TYPE_DICTIONARY else {}
+	if not debug_timing.is_empty():
+		debug_timing["refresh_deferred_hud_objective"] = Time.get_ticks_usec() - started_usec
+	call_deferred("_apply_deferred_embedded_structured_hud_after_frame", generation, expected_run, expected_game, expected_environment, expected_result, expected_canvas, expected_session_generation, hud_model)
+
+
+func _apply_deferred_embedded_structured_hud_after_frame(generation: int, expected_run: RunState, expected_game: GameModule, expected_environment: Dictionary, expected_result: Dictionary, expected_canvas: Control, expected_session_generation: int, hud_model: Dictionary) -> void:
+	var tree := get_tree()
+	if tree != null:
+		await tree.process_frame
+	if not _deferred_embedded_secondary_identity_is_current(generation, expected_run, expected_game, expected_environment, expected_result, expected_canvas, expected_session_generation):
+		return
+	var started_usec := Time.get_ticks_usec()
+	if structured_hud != null:
+		structured_hud.set_reduce_motion(_reduce_motion_enabled())
+		structured_hud.set_compact_mode(_compact_run_hud_enabled())
+		structured_hud.render(hud_model)
+	var debug_timing: Dictionary = last_game_result.get("coin_pusher_debug_host_timing_usec", {}) if typeof(last_game_result.get("coin_pusher_debug_host_timing_usec", {})) == TYPE_DICTIONARY else {}
+	if not debug_timing.is_empty():
+		debug_timing["refresh_deferred_hud_structured"] = Time.get_ticks_usec() - started_usec
+	call_deferred("_finish_deferred_embedded_hud_after_frame", generation, expected_run, expected_game, expected_environment, expected_result, expected_canvas, expected_session_generation, hud_model)
+
+
+func _finish_deferred_embedded_hud_after_frame(generation: int, expected_run: RunState, expected_game: GameModule, expected_environment: Dictionary, expected_result: Dictionary, expected_canvas: Control, expected_session_generation: int, hud_model: Dictionary) -> void:
+	var tree := get_tree()
+	if tree != null:
+		await tree.process_frame
+	if not _deferred_embedded_secondary_identity_is_current(generation, expected_run, expected_game, expected_environment, expected_result, expected_canvas, expected_session_generation):
+		return
+	var started_usec := Time.get_ticks_usec()
+	_style_hud_for_recent_consequence()
+	if save_status_label != null:
+		var next_save_text := str(hud_model.get("save_text", ""))
+		if save_status_label.text != next_save_text:
+			save_status_label.text = next_save_text
+	_apply_hud_mode_visibility()
+	var debug_timing: Dictionary = last_game_result.get("coin_pusher_debug_host_timing_usec", {}) if typeof(last_game_result.get("coin_pusher_debug_host_timing_usec", {})) == TYPE_DICTIONARY else {}
+	if not debug_timing.is_empty():
+		debug_timing["refresh_deferred_hud_finish"] = Time.get_ticks_usec() - started_usec
 	call_deferred("_refresh_deferred_embedded_talk_after_frame", generation, expected_run, expected_game, expected_environment, expected_result, expected_canvas, expected_session_generation)
 
 
