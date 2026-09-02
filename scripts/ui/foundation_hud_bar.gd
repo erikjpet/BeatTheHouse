@@ -100,18 +100,11 @@ func render(model: Dictionary) -> void:
 		return
 	_set_meta_mode(false)
 	var bankroll := int(model.get("bankroll", 0))
-	var wallet_text := "$%d" % bankroll
-	if wallet_value.text != wallet_text:
-		wallet_value.text = wallet_text
 	var observed_delta := bankroll - _last_bankroll if _has_rendered else 0
 	var bankroll_delta := int(model.get("bankroll_delta", observed_delta))
 	if bankroll_delta == 0:
 		bankroll_delta = observed_delta
-	if bankroll_delta != 0:
-		_last_bankroll_delta = bankroll_delta
-	_render_delta(_last_bankroll_delta)
-	_last_bankroll = bankroll
-	_has_rendered = true
+	render_bankroll(bankroll, bankroll_delta)
 
 	var show_chips := bool(model.get("show_chips", false))
 	if chips_chip.visible != show_chips:
@@ -134,6 +127,19 @@ func render(model: Dictionary) -> void:
 
 	render_clock(model)
 	_render_status_icons(model.get("status_icons", []))
+
+
+func render_bankroll(bankroll: int, bankroll_delta: int = 0) -> void:
+	if wallet_value == null:
+		return
+	var wallet_text := "$%d" % bankroll
+	if wallet_value.text != wallet_text:
+		wallet_value.text = wallet_text
+	if bankroll_delta != 0:
+		_last_bankroll_delta = bankroll_delta
+	_render_delta(_last_bankroll_delta)
+	_last_bankroll = bankroll
+	_has_rendered = true
 
 
 func render_clock(model: Dictionary) -> void:
@@ -437,12 +443,16 @@ func _cancel_heat_feedback() -> void:
 
 
 func _render_delta(delta: int) -> void:
-	wallet_delta.text = "%+d" % delta if delta != 0 else ""
+	var next_text := "%+d" % delta if delta != 0 else ""
+	var next_tone := "success" if delta > 0 else "danger" if delta < 0 else ""
+	if wallet_delta.text == next_text and _wallet_delta_tone == next_tone:
+		return
+	wallet_delta.text = next_text
 	if delta == 0:
 		_wallet_delta_tone = ""
 		wallet_delta.modulate = Color.WHITE
 		return
-	_wallet_delta_tone = "success" if delta > 0 else "danger"
+	_wallet_delta_tone = next_tone
 	FoundationWidgets.set_control_font_color(wallet_delta, VisualStyle.role(_wallet_delta_tone))
 	wallet_delta.modulate = Color(Color.WHITE, VisualStyle.HUD_LAST_DELTA_ALPHA)
 

@@ -9219,10 +9219,23 @@ func _apply_deferred_embedded_structured_hud_after_frame(generation: int, expect
 	if structured_hud != null:
 		structured_hud.set_reduce_motion(_reduce_motion_enabled())
 		structured_hud.set_compact_mode(_compact_run_hud_enabled())
+		structured_hud.render_bankroll(int(hud_model.get("bankroll", 0)), int(hud_model.get("bankroll_delta", 0)))
+	var debug_timing: Dictionary = last_game_result.get("coin_pusher_debug_host_timing_usec", {}) if typeof(last_game_result.get("coin_pusher_debug_host_timing_usec", {})) == TYPE_DICTIONARY else {}
+	if not debug_timing.is_empty():
+		debug_timing["refresh_deferred_hud_bankroll"] = Time.get_ticks_usec() - started_usec
+	call_deferred("_apply_deferred_embedded_structured_hud_rest_after_frame", generation, expected_run, expected_game, expected_environment, expected_result, expected_canvas, expected_session_generation, hud_model)
+
+
+func _apply_deferred_embedded_structured_hud_rest_after_frame(generation: int, expected_run: RunState, expected_game: GameModule, expected_environment: Dictionary, expected_result: Dictionary, expected_canvas: Control, expected_session_generation: int, hud_model: Dictionary) -> void:
+	await _await_deferred_embedded_quiet_frame()
+	if not _deferred_embedded_secondary_identity_is_current(generation, expected_run, expected_game, expected_environment, expected_result, expected_canvas, expected_session_generation):
+		return
+	var started_usec := Time.get_ticks_usec()
+	if structured_hud != null:
 		structured_hud.render(hud_model)
 	var debug_timing: Dictionary = last_game_result.get("coin_pusher_debug_host_timing_usec", {}) if typeof(last_game_result.get("coin_pusher_debug_host_timing_usec", {})) == TYPE_DICTIONARY else {}
 	if not debug_timing.is_empty():
-		debug_timing["refresh_deferred_hud_structured"] = Time.get_ticks_usec() - started_usec
+		debug_timing["refresh_deferred_hud_structured_rest"] = Time.get_ticks_usec() - started_usec
 	call_deferred("_finish_deferred_embedded_hud_after_frame", generation, expected_run, expected_game, expected_environment, expected_result, expected_canvas, expected_session_generation, hud_model)
 
 
