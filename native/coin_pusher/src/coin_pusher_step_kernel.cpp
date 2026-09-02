@@ -807,10 +807,18 @@ struct Kernel {
   }
   int64_t resolve_supports(int64_t f, Grid &grid) {
     int64_t nestle_work = 0;
+    // Support discovery runs twice per tick across the full machine. Keep the
+    // hot candidate list in native storage and only materialize a Godot Array
+    // for the final supported-body state. Constructing and sorting a Variant
+    // array for every awake body dominated the Web side-module boundary even
+    // though most candidates are discarded before publication.
+    std::vector<int> support_indices;
+    support_indices.reserve(16);
     for (int i = 0; i < (int)b.size(); ++i) {
       Body &q = b[i];
       if (q.sleeping || terminal(q))
         continue;
+      support_indices.clear();
       String prev = q.pending_deposit ? String("platform") : q.support;
       bool previous_platform_root =
           prev == "platform" || (prev == "body" && q.carried);
@@ -821,7 +829,6 @@ struct Kernel {
               support_position_x = 0, support_position_y = 0;
       bool centered = false, xlo = false, xhi = false, ylo = false, yhi = false,
            top_carried = false;
-      Array support_ids;
       int64_t cellx = floor_div(q.x, 10000), celly = floor_div(q.y, 10000);
       for (int oy = -1; oy <= 1; ++oy)
         for (int ox = -1; ox <= 1; ++ox)
@@ -847,10 +854,10 @@ struct Kernel {
               centered = xlo = xhi = ylo = yhi = false;
               cx = cy = support_position_x = support_position_y = 0;
               top_carried = false;
-              support_ids = Array();
+              support_indices.clear();
             }
             ++count;
-            support_ids.append(s.id);
+            support_indices.push_back(j);
             centered |= isqrt(dx * dx + dy * dy) < q.r / 2;
             xlo |= dx <= SUPPORT_MARGIN;
             xhi |= dx >= -SUPPORT_MARGIN;
@@ -864,7 +871,9 @@ struct Kernel {
             top_carried |= carried;
           }
       if (count) {
-        support_ids.sort();
+        std::sort(support_indices.begin(), support_indices.end(), [&](int left, int right) {
+          return b[left].id < b[right].id;
+        });
         stable |= centered || (xlo && xhi && ylo && yhi);
         if (!stable) {
           cx = divi(cx, count);
@@ -887,7 +896,15 @@ struct Kernel {
         q.support = support_top == surface_z ? surface : "body";
         q.carried =
             q.support == "platform" || (q.support == "body" && top_carried);
-        q.support_ids = q.support == "body" ? support_ids : Array();
+        if (q.support == "body") {
+          Array support_ids;
+          support_ids.resize(support_indices.size());
+          for (int support_index = 0; support_index < int(support_indices.size()); ++support_index)
+            support_ids[support_index] = b[support_indices[support_index]].id;
+          q.support_ids = support_ids;
+        } else {
+          q.support_ids = Array();
+        }
         q.has_support_anchor = q.support == "body";
         if (q.has_support_anchor) {
           q.support_anchor_x = divi(support_position_x, count);

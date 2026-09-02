@@ -2098,7 +2098,7 @@ func _advance_presented_bankroll() -> void:
 		# pending handoff would replace that output one frame later.
 		var deferred_coin_pusher_hud_owns_release := deferred_embedded_refresh_pending \
 			and current_game == deferred_embedded_refresh_game \
-			and current_game.get_id() == "coin_pusher" \
+			and current_game.surface_realtime_patch_preserves_host_state() \
 			and run_state == deferred_embedded_refresh_run_state \
 			and is_same(run_state.current_environment, deferred_embedded_refresh_environment)
 		_sync_presented_bankroll_to_actual()
