@@ -551,6 +551,7 @@ var environment_canvas: PixelSceneCanvas
 var game_surface_canvas: GameSurfaceCanvas
 var run_layout_dirty := true
 var run_layout_last_screen_size := Vector2(-1.0, -1.0)
+var accessibility_tree_transform_active := false
 var web_audio_unlock_refresh_scheduled := false
 var web_audio_unlock_refresh_count := 0
 
@@ -18863,6 +18864,8 @@ func _apply_accessibility_settings() -> void:
 	if user_settings != null:
 		VisualStyle.set_high_contrast_enabled(user_settings.high_contrast)
 	var small_screen_enabled := _small_screen_enabled()
+	var font_scale := _accessibility_font_scale()
+	var control_scale := _accessibility_control_scale()
 	if settings_margin != null:
 		var side_margin := SmallScreenPolicyScript.SETTINGS_SIDE_MARGIN if small_screen_enabled else 220
 		settings_margin.add_theme_constant_override("margin_left", side_margin)
@@ -18896,7 +18899,16 @@ func _apply_accessibility_settings() -> void:
 		career_stats_screen.set_small_screen_mode(small_screen_enabled)
 	_ensure_world_map_overlay_controller()
 	world_map_overlay_controller.set_small_screen_mode(small_screen_enabled)
-	_apply_accessibility_to_node(self, _accessibility_font_scale(), _accessibility_control_scale())
+	var transform_active := (user_settings != null and user_settings.high_contrast) \
+			or not is_equal_approx(font_scale, 1.0) \
+			or not is_equal_approx(control_scale, 1.0)
+	# Widgets are authored at the default scale and palette. A fresh default Web
+	# profile therefore needs no recursive stylebox duplication during cold boot.
+	# If a transform was previously active, run once more to restore authored
+	# values when the player returns to defaults.
+	if transform_active or accessibility_tree_transform_active:
+		_apply_accessibility_to_node(self, font_scale, control_scale)
+	accessibility_tree_transform_active = transform_active
 	_invalidate_run_screen_layout()
 
 
