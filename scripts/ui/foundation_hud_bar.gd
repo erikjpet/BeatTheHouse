@@ -324,9 +324,9 @@ func _render_meta(model: Dictionary) -> void:
 
 
 func _set_meta_mode(enabled: bool) -> void:
-	if run_bar != null:
+	if run_bar != null and run_bar.visible == enabled:
 		run_bar.visible = not enabled
-	if meta_bar != null:
+	if meta_bar != null and meta_bar.visible != enabled:
 		meta_bar.visible = enabled
 
 
