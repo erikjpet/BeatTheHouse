@@ -1580,13 +1580,14 @@ func _collect_surface_command(run_state: RunState, environment: Dictionary, mach
 	var collected := CoinPusherSolverScript.collect_tray(simulation)
 	var cash := _ledger_value(tray)
 	var items: Array = collected.get("items", []) if typeof(collected.get("items", [])) == TYPE_ARRAY else []
-	var deltas := GameModule.empty_result_deltas()
-	deltas["bankroll_delta"] = cash
-	deltas["inventory_add"] = items
-	deltas["story_log"] = [_story_entry(COLLECT_ACTION, "free", environment, cash, 0, {"tray_count": tray.size()})]
 	var message := "The tray is empty." if tray.is_empty() else "You collect $%d from %d tray pieces." % [cash, tray.size()]
-	deltas["messages"] = [message]
-	var result := GameModule.build_owned_action_result({"source_id": get_id(), "game_id": get_id(), "action_id": COLLECT_ACTION, "action_kind": "free", "environment_id": str(environment.get("id", "")), "deltas": deltas, "message": message})
+	var deltas := {
+		"bankroll_delta": cash,
+		"inventory_add": items,
+		"story_log": [_story_entry(COLLECT_ACTION, "free", environment, cash, 0, {"tray_count": tray.size()})],
+		"messages": [message],
+	}
+	var result := GameModule.build_canonical_owned_action_result({"source_id": get_id(), "game_id": get_id(), "action_id": COLLECT_ACTION, "action_kind": "free", "environment_id": str(environment.get("id", "")), "deltas": deltas, "message": message})
 	GameModule.apply_result(run_state, result)
 	_write_live_durable(run_state, environment, machine, false)
 	_register_pile_rumor(run_state, environment, machine)
