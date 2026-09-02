@@ -145,11 +145,16 @@ func prepare_render_state(state: Dictionary) -> void:
 		return
 	_configure_projection(state)
 	var cabinet := _cabinet(state)
-	var geometry: Dictionary = state.get("coin_pusher_geometry", {}) if typeof(state.get("coin_pusher_geometry", {})) == TYPE_DICTIONARY else {}
-	var apparatus: Dictionary = state.get("coin_pusher_apparatus", {}) if typeof(state.get("coin_pusher_apparatus", {})) == TYPE_DICTIONARY else {}
-	var body_colors: Dictionary = cabinet.get("body_colors", {}) if typeof(cabinet.get("body_colors", {})) == TYPE_DICTIONARY else {}
-	var current_packed: PackedInt64Array = state.get("coin_pusher_current_packed", PackedInt64Array()) if typeof(state.get("coin_pusher_current_packed", PackedInt64Array())) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array()
-	var previous_packed: PackedInt64Array = state.get("coin_pusher_previous_packed", PackedInt64Array()) if typeof(state.get("coin_pusher_previous_packed", PackedInt64Array())) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array()
+	var geometry_value: Variant = state.get("coin_pusher_geometry")
+	var apparatus_value: Variant = state.get("coin_pusher_apparatus")
+	var body_colors_value: Variant = cabinet.get("body_colors")
+	var current_packed_value: Variant = state.get("coin_pusher_current_packed")
+	var previous_packed_value: Variant = state.get("coin_pusher_previous_packed")
+	var geometry: Dictionary = geometry_value if typeof(geometry_value) == TYPE_DICTIONARY else {}
+	var apparatus: Dictionary = apparatus_value if typeof(apparatus_value) == TYPE_DICTIONARY else {}
+	var body_colors: Dictionary = body_colors_value if typeof(body_colors_value) == TYPE_DICTIONARY else {}
+	var current_packed: PackedInt64Array = current_packed_value if typeof(current_packed_value) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array()
+	var previous_packed: PackedInt64Array = previous_packed_value if typeof(previous_packed_value) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array()
 	if current_packed.is_empty():
 		_clear_prepared_batch()
 		return
@@ -334,11 +339,13 @@ func _draw_backglass(surface, state: Dictionary, cabinet: Dictionary, colors: Di
 	var rect := BACKGLASS_RECT
 	surface.draw_rect(rect, colors["backglass"])
 	surface.draw_rect(rect, colors["trim"], false, 2.0)
-	var goal: Dictionary = state.get("coin_pusher_goal", {}) if typeof(state.get("coin_pusher_goal", {})) == TYPE_DICTIONARY else {}
+	var goal_value: Variant = state.get("coin_pusher_goal")
+	var goal: Dictionary = goal_value if typeof(goal_value) == TYPE_DICTIONARY else {}
 	if not goal.is_empty():
 		_draw_goal_backglass(surface, rect, goal, colors)
 		return
-	var display: Dictionary = cabinet.get("backglass_display", {}) if typeof(cabinet.get("backglass_display", {})) == TYPE_DICTIONARY else {}
+	var display_value: Variant = cabinet.get("backglass_display")
+	var display: Dictionary = display_value if typeof(display_value) == TYPE_DICTIONARY else {}
 	match str(display.get("style", "none")):
 		"value_lamps":
 			var value := maxi(0, int(state.get(str(display.get("value_state_key", "")), 0)))
@@ -396,8 +403,10 @@ func _draw_goal_backglass(surface, rect: Rect2, goal: Dictionary, colors: Dictio
 
 
 func _draw_playfield(surface, state: Dictionary, colors: Dictionary, cabinet: Dictionary, draw_static_pre: bool = true, draw_platform: bool = true, draw_static_post: bool = true, draw_bodies: bool = true) -> void:
-	var geometry: Dictionary = state.get("coin_pusher_geometry", {}) if typeof(state.get("coin_pusher_geometry", {})) == TYPE_DICTIONARY else {}
-	var apparatus: Dictionary = state.get("coin_pusher_apparatus", {}) if typeof(state.get("coin_pusher_apparatus", {})) == TYPE_DICTIONARY else {}
+	var geometry_value: Variant = state.get("coin_pusher_geometry")
+	var apparatus_value: Variant = state.get("coin_pusher_apparatus")
+	var geometry: Dictionary = geometry_value if typeof(geometry_value) == TYPE_DICTIONARY else {}
+	var apparatus: Dictionary = apparatus_value if typeof(apparatus_value) == TYPE_DICTIONARY else {}
 	var current_face_y := float(state.get("coin_pusher_face_position_y", 43000))
 	var previous_face_y := float(state.get("coin_pusher_previous_face_position_y", current_face_y))
 	var interpolation_alpha := 1.0 if bool(state.get("reduce_motion", false)) else clampf(float(state.get("coin_pusher_interpolation_alpha", 1.0)), 0.0, 1.0)
@@ -728,7 +737,8 @@ func _prepare_hardware_cache(surface, state: Dictionary, consume_prepared: bool 
 		if surface.surface_region_hovered(action):
 			hover_action = action
 			break
-	var bindings: Dictionary = state.get("surface_action_bindings", {}) if typeof(state.get("surface_action_bindings", {})) == TYPE_DICTIONARY else {}
+	var bindings_value: Variant = state.get("surface_action_bindings")
+	var bindings: Dictionary = bindings_value if typeof(bindings_value) == TYPE_DICTIONARY else {}
 	var enabled_signature := _hardware_enabled_signature(bindings, hardware_catalog)
 	var key := _hardware_cache_signature(state, hover_action, enabled_signature)
 	if not is_instance_valid(_hardware_cache_canvas):
@@ -784,7 +794,8 @@ func _hardware_cache_signature(state: Dictionary, hover_action: String, enabled_
 
 
 func _feature_hardware_cache_key(state: Dictionary) -> String:
-	var descriptor: Dictionary = state.get("coin_pusher_feature_hardware", {}) if typeof(state.get("coin_pusher_feature_hardware", {})) == TYPE_DICTIONARY else {}
+	var descriptor_value: Variant = state.get("coin_pusher_feature_hardware")
+	var descriptor: Dictionary = descriptor_value if typeof(descriptor_value) == TYPE_DICTIONARY else {}
 	var authored_key := str(descriptor.get("cache_key", ""))
 	# Compatibility fixtures may provide a descriptor without production cache
 	# metadata. Keep those exact and reserve nested serialization for that cold
@@ -1397,7 +1408,8 @@ func _hardware_actions(state: Dictionary) -> Array:
 
 
 func _hardware_catalog(state: Dictionary) -> Array:
-	var apparatus: Dictionary = state.get("coin_pusher_apparatus", {}) if typeof(state.get("coin_pusher_apparatus", {})) == TYPE_DICTIONARY else {}
+	var apparatus_value: Variant = state.get("coin_pusher_apparatus")
+	var apparatus: Dictionary = apparatus_value if typeof(apparatus_value) == TYPE_DICTIONARY else {}
 	var cache_key := "%s|%s|%s" % [
 		str(state.get("coin_pusher_static_content_key", "")),
 		str(apparatus.get("type", "rail_slot")),
@@ -1428,8 +1440,10 @@ func _entry_hardware_layout(state: Dictionary) -> Dictionary:
 	var carriage_state := int(state.get("coin_pusher_carriage_x", 50000))
 	if not static_key.is_empty() and static_key == _entry_hardware_layout_static_key and carriage_state == _entry_hardware_layout_carriage:
 		return _entry_hardware_layout_cache
-	var apparatus: Dictionary = state.get("coin_pusher_apparatus", {}) if typeof(state.get("coin_pusher_apparatus", {})) == TYPE_DICTIONARY else {}
-	var geometry: Dictionary = state.get("coin_pusher_geometry", {}) if typeof(state.get("coin_pusher_geometry", {})) == TYPE_DICTIONARY else {}
+	var apparatus_value: Variant = state.get("coin_pusher_apparatus")
+	var geometry_value: Variant = state.get("coin_pusher_geometry")
+	var apparatus: Dictionary = apparatus_value if typeof(apparatus_value) == TYPE_DICTIONARY else {}
+	var geometry: Dictionary = geometry_value if typeof(geometry_value) == TYPE_DICTIONARY else {}
 	var board := _delivery_board(apparatus, geometry)
 	var z_top := float(board.get("z_top", 24000))
 	if str(apparatus.get("type", "rail_slot")) == "hole_set":
@@ -1504,14 +1518,16 @@ func _project_f(x: float, y: float, z: float) -> Vector2:
 
 
 func _cabinet(state: Dictionary) -> Dictionary:
-	var authored: Dictionary = state.get("coin_pusher_cabinet", {}) if typeof(state.get("coin_pusher_cabinet", {})) == TYPE_DICTIONARY else {}
+	var authored_value: Variant = state.get("coin_pusher_cabinet")
+	var authored: Dictionary = authored_value if typeof(authored_value) == TYPE_DICTIONARY else {}
 	if not authored.is_empty():
 		return authored
 	return NEUTRAL_CABINET
 
 
 func _colors(cabinet: Dictionary) -> Dictionary:
-	var source: Dictionary = cabinet.get("colors", {}) if typeof(cabinet.get("colors", {})) == TYPE_DICTIONARY else {}
+	var source_value: Variant = cabinet.get("colors")
+	var source: Dictionary = source_value if typeof(source_value) == TYPE_DICTIONARY else {}
 	var palette_key := "%s:%s" % [str(cabinet.get("identity", "generic")), str(cabinet.get("palette", ""))]
 	if palette_key == _palette_cache_key:
 		return _palette_cache
@@ -1525,7 +1541,8 @@ func _colors(cabinet: Dictionary) -> Dictionary:
 
 
 func _configure_projection(state: Dictionary) -> void:
-	var geometry: Dictionary = state.get("coin_pusher_geometry", {}) if typeof(state.get("coin_pusher_geometry", {})) == TYPE_DICTIONARY else {}
+	var geometry_value: Variant = state.get("coin_pusher_geometry")
+	var geometry: Dictionary = geometry_value if typeof(geometry_value) == TYPE_DICTIONARY else {}
 	_world_width = maxf(1.0, float(geometry.get("width", SCHEMA_DEFAULT_WIDTH)))
 	_world_back_y = maxf(1.0, float(geometry.get("back_plate_y", SCHEMA_DEFAULT_BACK_Y)))
 	_coin_height = maxf(1.0, float(state.get("coin_pusher_coin_height", SCHEMA_DEFAULT_COIN_HEIGHT)))
@@ -1619,7 +1636,8 @@ func debug_delivery_board_for_test(state: Dictionary) -> Dictionary:
 
 
 func _delivery_board(apparatus: Dictionary, geometry: Dictionary) -> Dictionary:
-	var authored: Dictionary = apparatus.get("drop_board", {}) if typeof(apparatus.get("drop_board", {})) == TYPE_DICTIONARY else {}
+	var authored_value: Variant = apparatus.get("drop_board")
+	var authored: Dictionary = authored_value if typeof(authored_value) == TYPE_DICTIONARY else {}
 	var width := int(geometry.get("width", SCHEMA_DEFAULT_WIDTH))
 	var platform_top := int(geometry.get("platform_top_z", 3600))
 	return {

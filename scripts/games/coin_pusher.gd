@@ -33,11 +33,13 @@ var _live_machines: Dictionary = {}
 var _exit_settle_active := false
 var _renderer := CoinPusherRendererScript.new()
 var _machine_definition_cache: Dictionary = {}
+var _tell_labels_cache: Array = []
 
 
 func setup(p_definition: Dictionary, p_library: ContentLibrary = null) -> void:
 	super.setup(p_definition, p_library)
 	_machine_definition_cache.clear()
+	_tell_labels_cache.clear()
 
 
 func gameplay_model() -> String:
@@ -1264,13 +1266,24 @@ func _v3_headless_surface_state(machine: Dictionary, run_state: RunState = null,
 
 func _v3_realtime_presentation_patch(machine: Dictionary, current_surface_state: Dictionary = {}, run_state: RunState = null, environment: Dictionary = {}) -> Dictionary:
 	var simulation := _simulation(machine)
-	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
-	var tray: Array = simulation.get("tray_ledger", []) if typeof(simulation.get("tray_ledger", [])) == TYPE_ARRAY else []
-	var body_views: Array = session.get("presentation_current_bodies", []) if typeof(session.get("presentation_current_bodies", [])) == TYPE_ARRAY else []
-	if body_views.is_empty() and not (simulation.get("bodies", []) as Array).is_empty():
+	var session_value: Variant = machine.get("live_session")
+	var session: Dictionary = session_value if typeof(session_value) == TYPE_DICTIONARY else {}
+	var tray_value: Variant = simulation.get("tray_ledger")
+	var tray: Array = tray_value if typeof(tray_value) == TYPE_ARRAY else []
+	var body_views_value: Variant = session.get("presentation_current_bodies")
+	var body_views: Array = body_views_value if typeof(body_views_value) == TYPE_ARRAY else []
+	var simulation_bodies_value: Variant = simulation.get("bodies")
+	var simulation_bodies: Array = simulation_bodies_value if typeof(simulation_bodies_value) == TYPE_ARRAY else []
+	if body_views.is_empty() and not simulation_bodies.is_empty():
 		body_views = CoinPusherSolverScript.body_views(simulation)
-	var previous_views: Array = session.get("presentation_previous_bodies", body_views) if typeof(session.get("presentation_previous_bodies", body_views)) == TYPE_ARRAY else body_views
-	var current_packed: PackedInt64Array = session.get("presentation_current_packed", PackedInt64Array()) if typeof(session.get("presentation_current_packed", PackedInt64Array())) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array()
+	var previous_views_value: Variant = session.get("presentation_previous_bodies")
+	var previous_views: Array = previous_views_value if typeof(previous_views_value) == TYPE_ARRAY else body_views
+	var current_packed_value: Variant = session.get("presentation_current_packed")
+	var current_packed: PackedInt64Array = current_packed_value if typeof(current_packed_value) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array()
+	var previous_packed_value: Variant = session.get("presentation_previous_packed")
+	var previous_packed: PackedInt64Array = previous_packed_value if typeof(previous_packed_value) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array()
+	var metrics_value: Variant = session.get("last_step_metrics")
+	var last_step_metrics: Dictionary = metrics_value if typeof(metrics_value) == TYPE_DICTIONARY else simulation.get("last_step_metrics", {})
 	var tell_labels := _tell_labels()
 	var tell_rung := clampi(int(machine.get("tell_rung", 0)), 0, tell_labels.size() - 1)
 	var variation_state := _variation_state(machine)
@@ -1282,14 +1295,14 @@ func _v3_realtime_presentation_patch(machine: Dictionary, current_surface_state:
 		"coin_pusher_bodies": body_views,
 		"coin_pusher_current_packed": current_packed,
 		"coin_pusher_previous_bodies": previous_views,
-		"coin_pusher_previous_packed": session.get("presentation_previous_packed", PackedInt64Array()),
+		"coin_pusher_previous_packed": previous_packed,
 		"coin_pusher_presentation_view_serial": int(session.get("presentation_view_serial", 0)),
 		"coin_pusher_presentation_session_key": str(session.get("native_cache_key", "")),
 		"coin_pusher_interpolation_alpha": clampf(float(int(session.get("accumulator_units", 0))) / 1000.0, 0.0, 1.0),
 		"coin_pusher_face_position_y": int(simulation.get("face_y", CoinPusherSolverScript.FACE_EXTENDED_Y)),
 		"coin_pusher_previous_face_position_y": int(session.get("presentation_previous_face_y", simulation.get("face_y", CoinPusherSolverScript.FACE_EXTENDED_Y))),
 		"coin_pusher_phase_fp": int(simulation.get("phase_fp", 0)),
-		"coin_pusher_last_step_metrics": session.get("last_step_metrics", simulation.get("last_step_metrics", {})),
+		"coin_pusher_last_step_metrics": last_step_metrics,
 		"coin_pusher_liveness_ticks": int(session.get("liveness_ticks", 0)),
 	}
 	_append_realtime_change(patch, current_surface_state, "coin_pusher_feature_count", int(session.get("presentation_feature_count", 0)))
@@ -1360,7 +1373,7 @@ func _machine_goal_state_for_session(machine: Dictionary, simulation: Dictionary
 			cache_c = 1 if bool(variation_state.get("vault_round_active", false)) else 0
 		_:
 			cache_a = int(machine.get("prize_goal_progress", 0))
-	var cached_value: Variant = session.get("presentation_goal_state", {})
+	var cached_value: Variant = session.get("presentation_goal_state")
 	if str(session.get("presentation_goal_state_variation", "")) == variation_id \
 			and int(session.get("presentation_goal_state_a", -1)) == cache_a \
 			and int(session.get("presentation_goal_state_b", -1)) == cache_b \
@@ -1678,7 +1691,8 @@ func _ledger_value(ledger: Array) -> int:
 	for entry_value in ledger:
 		if typeof(entry_value) == TYPE_DICTIONARY:
 			var entry: Dictionary = entry_value
-			var provenance: Dictionary = entry.get("provenance", {}) if typeof(entry.get("provenance", {})) == TYPE_DICTIONARY else {}
+			var provenance_value: Variant = entry.get("provenance")
+			var provenance: Dictionary = provenance_value if typeof(provenance_value) == TYPE_DICTIONARY else {}
 			total += maxi(0, int(entry.get("value", 0))) * maxi(1, int(provenance.get("ridge_multiplier", 1)))
 	return total
 
@@ -2698,7 +2712,9 @@ func _variation_id() -> String:
 
 
 func _tell_labels() -> Array:
-	return _string_array_tuning("tell_labels", ["steady", "cabinet rocks", "alarm chirps", "attendant looks over"])
+	if _tell_labels_cache.is_empty():
+		_tell_labels_cache = _string_array_tuning("tell_labels", ["steady", "cabinet rocks", "alarm chirps", "attendant looks over"])
+	return _tell_labels_cache
 
 
 func _security_band_delta(band: String) -> int:

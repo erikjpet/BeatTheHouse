@@ -269,21 +269,19 @@ struct Kernel {
   Array events;
   int64_t collisions = 0, candidate_peak = 0;
   bool energy_ok = true, conservation_ok = true;
-  Kernel(Dictionary s, Dictionary c, bool own_call_config = false)
-      : state(s),
-        config(own_call_config ? c.duplicate(false) : c),
-        g(geometry(s)) {}
+  Kernel(Dictionary s, Dictionary c, bool = false)
+      : state(s), config(c), g(geometry(s)) {}
   void resume(Dictionary s, Dictionary c) {
     state = s;
-    config = c.duplicate(false);
+    config = c;
   }
   void release_call_context() {
     // A cached kernel owns only the numeric solver state between calls. The
     // call config can contain RefCounted helpers such as RngStream; retaining
     // it in the process-lifetime live cache leaks that object at shutdown.
-    // Kernel config is a shallow container copy, so clearing releases any
-    // per-call RefCounted values without mutating caller-owned storage.
-    config.clear();
+    // Drop our reference without mutating the caller-owned scratch dictionary.
+    // The kernel never writes config, so a per-tick shallow duplicate is not
+    // required and only adds allocation pressure on the Web main thread.
     config = Dictionary();
   }
   bool load() {

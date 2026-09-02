@@ -91,8 +91,8 @@ static func begin(machine: Dictionary, machine_definition: Dictionary, seed: int
 		# re-entry deliberately reuses the same seed.
 		"native_cache_key": "live:%s:%s" % [seed, _native_cache_generation],
 		"native_cache_reset": true,
-		# Reused only across synchronous native calls. The native cache releases
-		# its shallow call-context copy before returning, so these containers can
+		# Reused only across synchronous native calls. The native cache drops its
+		# read-only call-context reference before returning, so these containers can
 		# be cleared and refilled without retaining input or RNG objects.
 		"native_step_config_scratch": {},
 		"native_trace_slice_scratch": [],
