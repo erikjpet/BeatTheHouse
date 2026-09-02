@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Generate and verify scratch-ticket geometry against the shipped _pro art.
 
-The JSON emitted by --generate is the runtime source of truth.  Geometry is
-measured as individual connected components; no repeated pitch is inferred.
-Crossword uses its 27 measured printed grid cells as the stable layout template;
-each ticket generates unique words and letters inside that measured template.
+The JSON emitted by --generate is the runtime source of truth. Geometry is
+measured as individual connected components except for Crossword's deliberately
+repainted 11-by-10 inset. Its 22 active cells form one dense interlocking grid;
+each ticket generates unique compatible words and letters inside that template.
 """
 from __future__ import annotations
 
@@ -32,6 +32,27 @@ REPORT_SAMPLES = {
     "tic_tac_gold": ((0, "GRID 1"), (4, "GRID 5"), (8, "GRID 9")),
     "golden_vault": ((1, "RUNG 1"), (3, "RUNG 3"), (5, "RUNG 5")),
 }
+CROSSWORD_GRID_RECT = (.06, .32, .50, .48)
+CROSSWORD_GRID_SIZE = (11, 10)
+CROSSWORD_CELLS = (
+    (1,4),
+    (2,2),(2,3),(2,4),(2,5),(2,6),
+    (3,3),(3,4),
+    (4,3),(4,4),(4,5),(4,6),
+    (5,3),(5,5),
+    (6,3),(6,4),(6,5),(6,6),
+    (7,5),(7,6),
+    (8,6),(9,6),
+)
+
+
+def crossword_cell_rect(col, row):
+    left, top, width, height = CROSSWORD_GRID_RECT
+    cell_width, cell_height = width / CROSSWORD_GRID_SIZE[0], height / CROSSWORD_GRID_SIZE[1]
+    # Match the authored grid's inset so dark gutters remain visible around each well.
+    inset_x, inset_y = .004, .004
+    return (left + col * cell_width + inset_x, top + row * cell_height + inset_y,
+            cell_width - inset_x * 2, cell_height - inset_y * 2)
 
 
 def image_data(type_id: str):
@@ -116,26 +137,24 @@ def measured_regions(type_id: str):
         labels += [("gold_bar_06", "gold_bar", "GOLD BAR"), ("final_vault_07", "final_vault", "FINAL VAULT")]
         return [entry(*labels[i], wells[i]) for i in range(8)]
     if type_id == "crossword_corner":
-        # Detector finds the 27 printed grid cells and 18 printed letter wells.
+        # Preserve the 18 authored letter wells. The printed puzzle inset is
+        # intentionally repainted at runtime, so its exact 22-cell geometry is
+        # generated rather than inferred from the retired artwork underneath.
         found = components(type_id, True, 180, (40, 30), (110, 160), (.30, .82), .70)
         grid, bank = [r for r in found if r[0] < .56], [r for r in found if r[0] >= .56]
-        if len(grid) != 27 or len(bank) != 18:
-            raise RuntimeError(f"crossword detector expected 27 grid/18 bank wells; found {len(grid)}/{len(bank)}")
+        if len(bank) != 18:
+            raise RuntimeError(f"crossword detector expected 18 bank wells; found {len(bank)}")
         measured = [entry(f"letter_bank_{i:02d}", "letter_bank", f"LETTER {i+1}", r)
                     for i, r in enumerate(bank)]
-        cells = [(1,1),(1,9),(2,1),(2,7),(2,9),(3,1),(3,7),(3,9),(4,1),(4,2),(4,3),(4,4),(4,5),(4,7),(4,9),(5,4),(5,7),(6,3),(6,4),(6,5),(6,6),(7,4),(9,2),(9,3),(9,4),(9,5),(9,6)]
-        unused = list(grid)
-        for i, (col, row) in enumerate(cells, 18):
-            target = (.06+(col+.5)*.50/11, .32+(row+.5)*.48/10)
-            closest = min(unused, key=lambda r: (r[0]+r[2]/2-target[0])**2 + (r[1]+r[3]/2-target[1])**2)
-            unused.remove(closest)
-            measured.append(entry(f"crossword_{i:02d}", "crossword", f"GRID {col+1},{row+1}", closest))
+        for i, (col, row) in enumerate(CROSSWORD_CELLS, 18):
+            measured.append(entry(f"crossword_{i:02d}", "crossword", f"GRID {col+1},{row+1}",
+                                  crossword_cell_rect(col, row)))
         return measured, {"printed_grid_wells": [list(r) for r in grid], "printed_letter_wells": [list(r) for r in bank]}
     raise KeyError(type_id)
 
 
 def generate():
-    payload = {"layout_version": 10, "source_art": {}, "regions": {}, "alignment_status": {}}
+    payload = {"layout_version": 11, "source_art": {}, "regions": {}, "alignment_status": {}}
     for type_id in SIZES:
         path, image, _ = image_data(type_id)
         payload["source_art"][type_id] = {"file": path.name, "w": image.width, "h": image.height,
@@ -143,7 +162,7 @@ def generate():
         result = measured_regions(type_id)
         if type_id == "crossword_corner":
             payload["regions"][type_id], payload["crossword_detected_reference"] = result
-            payload["alignment_status"][type_id] = "measured_procedural"
+            payload["alignment_status"][type_id] = "procedural_interlocking"
         else:
             payload["regions"][type_id] = result
             payload["alignment_status"][type_id] = "measured"
@@ -190,6 +209,20 @@ def draw_overlay(type_id, entries, source):
     art = art.resize(art_size, Image.Resampling.LANCZOS)
     canvas.alpha_composite(art, (round(fitted[0]), round(fitted[1])))
     draw = ImageDraw.Draw(canvas)
+    if type_id == "crossword_corner":
+        grid_box = screen_rect(CROSSWORD_GRID_RECT, fitted)
+        gx, gy, gw, gh = grid_box
+        cw, ch = gw / CROSSWORD_GRID_SIZE[0], gh / CROSSWORD_GRID_SIZE[1]
+        for row in range(CROSSWORD_GRID_SIZE[1]):
+            for col in range(CROSSWORD_GRID_SIZE[0]):
+                fill = "#1b292c" if (row + col) % 2 == 0 else "#172328"
+                draw.rectangle((round(gx + col*cw), round(gy + row*ch),
+                                round(gx + (col+1)*cw), round(gy + (row+1)*ch)),
+                               fill=fill, outline="#4a5657", width=1)
+        for col, row in CROSSWORD_CELLS:
+            x, y, width, height = screen_rect(crossword_cell_rect(col, row), fitted)
+            draw.rectangle((round(x), round(y), round(x+width), round(y+height)),
+                           fill="#f2eed5", outline="#d9d2ad", width=1)
     for value in entries:
         art_box = screen_rect(value["art_rect"], fitted)
         icon_box = centered_inset(art_box)
@@ -217,8 +250,7 @@ def old_regions(type_id):
             col, row = i % 6, i // 6
             cw, ch = (0.378 - .006 * 5) / 6, (0.37 - .012 * 2) / 3
             out.append((.585 + col*(cw+.006), .42 + row*(ch+.012), cw, ch))
-        cells = [(1,1),(1,9),(2,1),(2,7),(2,9),(3,1),(3,7),(3,9),(4,1),(4,2),(4,3),(4,4),(4,5),(4,7),(4,9),(5,4),(5,7),(6,3),(6,4),(6,5),(6,6),(7,4),(9,2),(9,3),(9,4),(9,5),(9,6)]
-        out += [(.06+col*.50/11, .32+row*.48/10, .50/11, .48/10) for col, row in cells]
+        out += [crossword_cell_rect(col, row) for col, row in CROSSWORD_CELLS]
     elif type_id == "bonus_bingo":
         out = [(.175+(i%12)*.058, .295+(i//12)*.065, .038, .05) for i in range(24)]
         for card in range(4):
@@ -250,7 +282,7 @@ def report():
     data = json.loads(DATA.read_text(encoding="utf-8"))
     print("ticket,before_center_px,before_size_pct,after_center_px,after_size_pct")
     for type_id in SIZES:
-        if data["alignment_status"].get(type_id) not in ("measured", "measured_procedural"):
+        if data["alignment_status"].get(type_id) not in ("measured", "procedural_interlocking"):
             print(f"{type_id},PENDING_PHASE_5,PENDING_PHASE_5,PENDING_PHASE_5,PENDING_PHASE_5")
             continue
         expected_result = measured_regions(type_id)
@@ -274,15 +306,12 @@ def report():
             print(f"{type_id} {label},{values}")
 
 
-def verify(write_overlays=False, hold_crossword=False):
+def verify(write_overlays=False):
     data = json.loads(DATA.read_text(encoding="utf-8"))
     failures, worst_center, worst_size = [], 0.0, 0.0
     if write_overlays:
         OUT.mkdir(parents=True, exist_ok=True)
     for type_id, entries in data["regions"].items():
-        if hold_crossword and type_id == "crossword_corner":
-            print("HELD crossword_corner: art/mechanics preserved; excluded from active offering")
-            continue
         source = data["source_art"][type_id]
         path = LAYERS/source["file"]
         if hashlib.sha256(path.read_bytes()).hexdigest() != source["sha256"]:
@@ -292,7 +321,7 @@ def verify(write_overlays=False, hold_crossword=False):
             if image.size != (source["w"], source["h"]):
                 failures.append(f"{type_id}: source dimensions changed from the measured table")
                 continue
-        if data["alignment_status"].get(type_id) not in ("measured", "measured_procedural"):
+        if data["alignment_status"].get(type_id) not in ("measured", "procedural_interlocking"):
             print(f"SKIP {type_id}: alignment status is not verifiable")
             if write_overlays:
                 draw_overlay(type_id, entries, source)
@@ -315,9 +344,7 @@ def verify(write_overlays=False, hold_crossword=False):
                 failures.append(f"{type_id}/{actual['id']}: center={center:.2f}px size={size_error:.2f}%")
         if write_overlays:
             draw_overlay(type_id, entries, source)
-    checked = 6 if hold_crossword else 7
-    pending = "crossword_corner:HELD" if hold_crossword else "none"
-    print(f"VERIFY worst_center={worst_center:.3f}px worst_size={worst_size:.3f}% checked={checked} pending={pending}")
+    print(f"VERIFY worst_center={worst_center:.3f}px worst_size={worst_size:.3f}% checked=7 pending=none")
     if failures:
         print("\n".join(failures))
         return 1
@@ -331,12 +358,11 @@ def main():
     parser.add_argument("--overlay", action="store_true")
     parser.add_argument("--report", action="store_true")
     parser.add_argument("--measure", action="store_true", help="Alias for --report used by the fix prompt")
-    parser.add_argument("--hold-crossword", action="store_true", help="Verify six active Option C tickets and report Crossword as HELD")
     args = parser.parse_args()
     if args.generate:
         generate()
     if args.verify or args.overlay or not args.generate:
-        result = verify(args.overlay, args.hold_crossword)
+        result = verify(args.overlay)
         if args.report or args.measure:
             report()
         raise SystemExit(result)

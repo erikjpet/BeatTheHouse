@@ -1,5 +1,5 @@
 {
-  "layout_version": 10,
+  "layout_version": 11,
   "source_art": {
     "two_fer": {
       "file": "two_fer_background_pro.png",
@@ -571,325 +571,265 @@
       {
         "id": "crossword_18",
         "section_id": "crossword",
-        "label": "GRID 2,2",
+        "label": "GRID 2,5",
         "shape": "rect",
         "art_rect": [
-          0.1137532,
-          0.3728981,
-          0.0379177,
-          0.0395648
+          0.1094545,
+          0.516,
+          0.0374545,
+          0.04
         ]
       },
       {
         "id": "crossword_19",
         "section_id": "crossword",
-        "label": "GRID 2,10",
+        "label": "GRID 3,3",
         "shape": "rect",
         "art_rect": [
-          0.1137532,
-          0.743818,
-          0.0379177,
-          0.0395648
+          0.1549091,
+          0.42,
+          0.0374545,
+          0.04
         ]
       },
       {
         "id": "crossword_20",
         "section_id": "crossword",
-        "label": "GRID 3,2",
+        "label": "GRID 3,4",
         "shape": "rect",
         "art_rect": [
-          0.1568123,
-          0.3728981,
-          0.0385604,
-          0.0395648
+          0.1549091,
+          0.468,
+          0.0374545,
+          0.04
         ]
       },
       {
         "id": "crossword_21",
         "section_id": "crossword",
-        "label": "GRID 3,8",
+        "label": "GRID 3,5",
         "shape": "rect",
         "art_rect": [
-          0.157455,
-          0.6508408,
-          0.0379177,
-          0.0385757
+          0.1549091,
+          0.516,
+          0.0374545,
+          0.04
         ]
       },
       {
         "id": "crossword_22",
         "section_id": "crossword",
-        "label": "GRID 3,10",
+        "label": "GRID 3,6",
         "shape": "rect",
         "art_rect": [
-          0.1568123,
-          0.743818,
-          0.0385604,
-          0.0395648
+          0.1549091,
+          0.564,
+          0.0374545,
+          0.04
         ]
       },
       {
         "id": "crossword_23",
         "section_id": "crossword",
-        "label": "GRID 4,2",
+        "label": "GRID 3,7",
         "shape": "rect",
         "art_rect": [
-          0.2005141,
-          0.3728981,
-          0.0379177,
-          0.0395648
+          0.1549091,
+          0.612,
+          0.0374545,
+          0.04
         ]
       },
       {
         "id": "crossword_24",
         "section_id": "crossword",
-        "label": "GRID 4,8",
+        "label": "GRID 4,4",
         "shape": "rect",
         "art_rect": [
-          0.2005141,
-          0.6508408,
-          0.0379177,
-          0.0385757
+          0.2003636,
+          0.468,
+          0.0374545,
+          0.04
         ]
       },
       {
         "id": "crossword_25",
         "section_id": "crossword",
-        "label": "GRID 4,10",
+        "label": "GRID 4,5",
         "shape": "rect",
         "art_rect": [
-          0.2005141,
-          0.743818,
-          0.0379177,
-          0.0395648
+          0.2003636,
+          0.516,
+          0.0374545,
+          0.04
         ]
       },
       {
         "id": "crossword_26",
         "section_id": "crossword",
-        "label": "GRID 5,2",
+        "label": "GRID 5,4",
         "shape": "rect",
         "art_rect": [
-          0.2435733,
-          0.3728981,
-          0.0379177,
-          0.0385757
+          0.2458182,
+          0.468,
+          0.0374545,
+          0.04
         ]
       },
       {
         "id": "crossword_27",
         "section_id": "crossword",
-        "label": "GRID 5,3",
+        "label": "GRID 5,5",
         "shape": "rect",
         "art_rect": [
-          0.2435733,
-          0.4193867,
-          0.0379177,
-          0.0385757
+          0.2458182,
+          0.516,
+          0.0374545,
+          0.04
         ]
       },
       {
         "id": "crossword_28",
         "section_id": "crossword",
-        "label": "GRID 5,4",
+        "label": "GRID 5,6",
         "shape": "rect",
         "art_rect": [
-          0.2435733,
-          0.4658754,
-          0.0379177,
-          0.0385757
+          0.2458182,
+          0.564,
+          0.0374545,
+          0.04
         ]
       },
       {
         "id": "crossword_29",
         "section_id": "crossword",
-        "label": "GRID 5,5",
+        "label": "GRID 5,7",
         "shape": "rect",
         "art_rect": [
-          0.2435733,
-          0.512364,
-          0.0379177,
-          0.0385757
+          0.2458182,
+          0.612,
+          0.0374545,
+          0.04
         ]
       },
       {
         "id": "crossword_30",
         "section_id": "crossword",
-        "label": "GRID 5,6",
+        "label": "GRID 6,4",
         "shape": "rect",
         "art_rect": [
-          0.2435733,
-          0.5588526,
-          0.0379177,
-          0.0375865
+          0.2912727,
+          0.468,
+          0.0374545,
+          0.04
         ]
       },
       {
         "id": "crossword_31",
         "section_id": "crossword",
-        "label": "GRID 5,8",
+        "label": "GRID 6,6",
         "shape": "rect",
         "art_rect": [
-          0.2435733,
-          0.6508408,
-          0.0379177,
-          0.0385757
+          0.2912727,
+          0.564,
+          0.0374545,
+          0.04
         ]
       },
       {
         "id": "crossword_32",
         "section_id": "crossword",
-        "label": "GRID 5,10",
+        "label": "GRID 7,4",
         "shape": "rect",
         "art_rect": [
-          0.2442159,
-          0.743818,
-          0.0372751,
-          0.0395648
+          0.3367273,
+          0.468,
+          0.0374545,
+          0.04
         ]
       },
       {
         "id": "crossword_33",
         "section_id": "crossword",
-        "label": "GRID 6,5",
+        "label": "GRID 7,5",
         "shape": "rect",
         "art_rect": [
-          0.2866324,
-          0.512364,
-          0.0385604,
-          0.0385757
+          0.3367273,
+          0.516,
+          0.0374545,
+          0.04
         ]
       },
       {
         "id": "crossword_34",
         "section_id": "crossword",
-        "label": "GRID 6,8",
+        "label": "GRID 7,6",
         "shape": "rect",
         "art_rect": [
-          0.2866324,
-          0.6498516,
-          0.0385604,
-          0.0395648
+          0.3367273,
+          0.564,
+          0.0374545,
+          0.04
         ]
       },
       {
         "id": "crossword_35",
         "section_id": "crossword",
-        "label": "GRID 7,4",
+        "label": "GRID 7,7",
         "shape": "rect",
         "art_rect": [
-          0.3296915,
-          0.4658754,
-          0.0385604,
-          0.0385757
+          0.3367273,
+          0.612,
+          0.0374545,
+          0.04
         ]
       },
       {
         "id": "crossword_36",
         "section_id": "crossword",
-        "label": "GRID 7,5",
+        "label": "GRID 8,6",
         "shape": "rect",
         "art_rect": [
-          0.3296915,
-          0.512364,
-          0.0385604,
-          0.0385757
+          0.3821818,
+          0.564,
+          0.0374545,
+          0.04
         ]
       },
       {
         "id": "crossword_37",
         "section_id": "crossword",
-        "label": "GRID 7,6",
+        "label": "GRID 8,7",
         "shape": "rect",
         "art_rect": [
-          0.3296915,
-          0.5588526,
-          0.0385604,
-          0.0375865
+          0.3821818,
+          0.612,
+          0.0374545,
+          0.04
         ]
       },
       {
         "id": "crossword_38",
         "section_id": "crossword",
-        "label": "GRID 7,7",
+        "label": "GRID 9,7",
         "shape": "rect",
         "art_rect": [
-          0.3296915,
-          0.6043521,
-          0.0385604,
-          0.0385757
+          0.4276364,
+          0.612,
+          0.0374545,
+          0.04
         ]
       },
       {
         "id": "crossword_39",
         "section_id": "crossword",
-        "label": "GRID 8,5",
-        "shape": "rect",
-        "art_rect": [
-          0.3733933,
-          0.512364,
-          0.0385604,
-          0.0385757
-        ]
-      },
-      {
-        "id": "crossword_40",
-        "section_id": "crossword",
-        "label": "GRID 10,3",
-        "shape": "rect",
-        "art_rect": [
-          0.4607969,
-          0.4193867,
-          0.0385604,
-          0.0385757
-        ]
-      },
-      {
-        "id": "crossword_41",
-        "section_id": "crossword",
-        "label": "GRID 10,4",
-        "shape": "rect",
-        "art_rect": [
-          0.4601542,
-          0.4658754,
-          0.0392031,
-          0.0385757
-        ]
-      },
-      {
-        "id": "crossword_42",
-        "section_id": "crossword",
-        "label": "GRID 10,5",
-        "shape": "rect",
-        "art_rect": [
-          0.4601542,
-          0.512364,
-          0.0392031,
-          0.0385757
-        ]
-      },
-      {
-        "id": "crossword_43",
-        "section_id": "crossword",
-        "label": "GRID 10,6",
-        "shape": "rect",
-        "art_rect": [
-          0.4601542,
-          0.5588526,
-          0.0392031,
-          0.0375865
-        ]
-      },
-      {
-        "id": "crossword_44",
-        "section_id": "crossword",
         "label": "GRID 10,7",
         "shape": "rect",
         "art_rect": [
-          0.4607969,
-          0.6043521,
-          0.0385604,
-          0.0385757
+          0.4730909,
+          0.612,
+          0.0374545,
+          0.04
         ]
       }
     ],
@@ -2620,7 +2560,7 @@
     "two_fer": "measured",
     "lucky_7s": "measured",
     "tic_tac_gold": "measured",
-    "crossword_corner": "measured_procedural",
+    "crossword_corner": "procedural_interlocking",
     "bonus_bingo": "measured",
     "high_roller_holdem": "measured",
     "golden_vault": "measured"

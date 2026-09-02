@@ -1,14 +1,11 @@
 # Scratch Ticket Art Alignment — Root Cause Analysis + Fix Prompt
 
-**Status:** PARTIALLY IMPLEMENTED / BLOCKED. Six-ticket alignment, v8→v9
-partial-progress migration, regenerated overlays, and GPU visual capture are
-on `main`. Phase 5 remains blocked on the owner's Crossword Corner
-art/mechanics choice; do not archive this prompt until that choice is applied
-and verified.
+**Status:** COMPLETE (2026-09-02). All seven ticket families are aligned and
+active. The owner selected a denser Crossword redesign: seven connected words,
+22 active cells, and eight intersections, with compatible curated word families
+and the original 18-letter reveal, payouts, and visual direction preserved.
 
-**Release target:** 0.6. This is not a 0.5.1 blocker. Phase 5 still requires the
-owner to choose how Crossword Corner reconciles printed art and mechanics; do
-not treat the 0.5 closeout decision as that art-direction choice.
+**Release target:** 0.6. Completed for the 0.6 release branch.
 
 **Symptom (owner report):** the reveal icons/numbers are not inside the circles
 and boxes printed on the ticket. Confirmed on Bonus Bingo in-game; reproduced
@@ -479,6 +476,32 @@ The python diagnostic needs `pillow`, `numpy`, `scipy`:
 ```bash
 python tools/scratch_ticket_alignment_audit.py --overlay --measure
 ```
+
+## Execution record — 2026-09-02
+
+- Replaced the held Crossword configuration with active seven-ticket stock and
+  a v4→v5 machine migration that activates historical held rows without
+  changing saved quantities or issued-ticket lifecycle data.
+- Rebuilt Crossword as one connected seven-word puzzle: 22 active cells and
+  eight intersections. The curated 140-puzzle cycle keeps every word connected,
+  maintains exactly 18 revealed letters, and preserves the authored word-count
+  prize table and payout evaluation.
+- Bumped scratch region layout v10→v11. The code-rendered vintage grid is driven
+  by the same region table as letters, foil, masks, and hit testing; the original
+  newspaper, city, books, gold frame, legend, and typography remain intact.
+- Regenerated region data and overlays. The Python audit verified all seven
+  tickets at `worst_center=0.000px`, `worst_size=0.000%`, with no pending family.
+- Regenerated and visually inspected
+  `docs/screenshots/scratch_ticket_three_state_review/04_crossword_corner_three_states.png`
+  in coated, partly scratched, and fully revealed states.
+- Focused Godot Scratch contracts passed with zero failures, including all 140
+  unique puzzles, eight intersections, no isolated word, exact
+  payouts, save migration, active stock, and region reconciliation.
+- The required Full gate ran to completion. All exhaustive parse stages and all
+  Scratch coverage passed. The repository-wide result remained red only in
+  unrelated existing areas: `foundation_all` timeout, Blackjack tutorial Peek
+  persistence, tutorial authored-delivery/highlight anchors, a UI process exit,
+  and Coin Pusher performance/sequence coverage.
 
 Known-red baseline you did **not** cause and must not chase: the
 `foundation_performance_probe` slot-autoplay failures are long-standing. If a

@@ -7,7 +7,9 @@ const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
 const GameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.gd")
 const TYPE_IDS := ["two_fer", "lucky_7s", "tic_tac_gold", "crossword_corner", "bonus_bingo", "high_roller_holdem", "golden_vault"]
 const OUTPUT_DIR := "res://.tmp/scratch_redesign_proof"
+const REVIEW_DIR := "res://docs/screenshots/scratch_ticket_three_state_review"
 const CAPTURE_SIZE := Vector2i(1280, 720)
+const REVIEW_CROP := Rect2i(426, 64, 854, 656)
 
 var viewport: Viewport
 var canvas: GameSurfaceCanvas
@@ -35,6 +37,7 @@ func _run() -> void:
 	get_root().add_child(canvas)
 	for frame_index in range(3):
 		await process_frame
+	await _capture_crossword_three_state_review()
 	await _capture_layer_isolation()
 	await _capture_uniqueness()
 	await _capture_smooth_scratch()
@@ -44,6 +47,32 @@ func _run() -> void:
 	_write_manifest()
 	print("SCRATCH_REDESIGN_CAPTURE_PASS files=%d dir=%s" % [saved_files.size(), absolute_output])
 	quit(0)
+
+
+func _capture_crossword_three_state_review() -> void:
+	var ticket := _ticket_for_prize("crossword_corner", 3, "crossword-three-state")
+	var context := _surface_context(ticket, [])
+	var coated := (await _render(context.get("surface", {}))).get_region(REVIEW_CROP)
+	var machine: Dictionary = context.get("machine", {})
+	var scratch_rect: Rect2 = game.call("_ticket_scratch_rect", ticket)
+	for y_ratio in [0.22, 0.43, 0.64, 0.82]:
+		game.call("_scratch_segment", machine,
+			scratch_rect.position + scratch_rect.size * Vector2(0.04, y_ratio),
+			scratch_rect.position + scratch_rect.size * Vector2(0.96, y_ratio))
+	var partial_surface := game.surface_state(context.get("run_state"), context.get("environment"), {})
+	var partial := (await _render(partial_surface)).get_region(REVIEW_CROP)
+	game.surface_action_command("scratch_all", 0, false, {}, context.get("run_state"), context.get("environment"))
+	var revealed_surface := game.surface_state(context.get("run_state"), context.get("environment"), {})
+	var revealed := (await _render(revealed_surface)).get_region(REVIEW_CROP)
+	var sheet := Image.create(REVIEW_CROP.size.x * 3, REVIEW_CROP.size.y, false, Image.FORMAT_RGBA8)
+	sheet.blit_rect(coated, Rect2i(Vector2i.ZERO, REVIEW_CROP.size), Vector2i.ZERO)
+	sheet.blit_rect(partial, Rect2i(Vector2i.ZERO, REVIEW_CROP.size), Vector2i(REVIEW_CROP.size.x, 0))
+	sheet.blit_rect(revealed, Rect2i(Vector2i.ZERO, REVIEW_CROP.size), Vector2i(REVIEW_CROP.size.x * 2, 0))
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(REVIEW_DIR))
+	var error := sheet.save_png("%s/04_crossword_corner_three_states.png" % REVIEW_DIR)
+	if error != OK:
+		push_error("Could not save Crossword three-state review: %s" % error_string(error))
+		quit(1)
 
 
 func _capture_layer_isolation() -> void:

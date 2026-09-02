@@ -4,7 +4,7 @@ const ScratchSfxPlayerScript := preload("res://scripts/ui/sfx_player.gd")
 const ScratchRngStreamScript := preload("res://scripts/core/rng_stream.gd")
 const ScratchRegionModelScript := preload("res://scripts/games/scratch_ticket_region_model.gd")
 const SCRATCH_IDS := ["two_fer", "lucky_7s", "tic_tac_gold", "crossword_corner", "bonus_bingo", "high_roller_holdem", "golden_vault"]
-const ACTIVE_SCRATCH_IDS := ["two_fer", "lucky_7s", "tic_tac_gold", "bonus_bingo", "high_roller_holdem", "golden_vault"]
+const ACTIVE_SCRATCH_IDS := ["two_fer", "lucky_7s", "tic_tac_gold", "crossword_corner", "bonus_bingo", "high_roller_holdem", "golden_vault"]
 const SCRATCH_PRICES := [2, 5, 10, 15, 20, 50, 100]
 const SCRATCH_MECHANICS := ["match_two_of_three", "key_number_match", "tic_tac_toe", "crossword", "bingo", "beat_dealer_poker", "multi_game_vault"]
 const SCRATCH_SECTION_COUNTS := [1, 2, 2, 2, 5, 3, 4]
@@ -14,7 +14,7 @@ func _check_scratch_tickets_surface_contract(game: GameModule, failures: Array) 
 	_check_scratch_measured_region_data(failures)
 	_check_scratch_gas_station_generation(failures)
 	_check_scratch_roster(game, failures)
-	_check_crossword_option_c_hold(game, failures)
+	_check_crossword_active_release(game, failures)
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("SCRATCH-TICKET-CONTRACT")
 	run_state.bankroll = 500000
@@ -117,8 +117,8 @@ func _check_scratch_measured_region_data(failures: Array) -> void:
 	var source_art: Dictionary = data.get("source_art", {}) if typeof(data.get("source_art", {})) == TYPE_DICTIONARY else {}
 	var region_tables: Dictionary = data.get("regions", {}) if typeof(data.get("regions", {})) == TYPE_DICTIONARY else {}
 	var alignment_status: Dictionary = data.get("alignment_status", {}) if typeof(data.get("alignment_status", {})) == TYPE_DICTIONARY else {}
-	if str(alignment_status.get("crossword_corner", "")) != "measured_procedural" or _dict_array(region_tables.get("crossword_corner", [])).size() != 45:
-		failures.append("Crossword Corner does not use its measured 18-letter/27-cell procedural layout table.")
+	if str(alignment_status.get("crossword_corner", "")) != "procedural_interlocking" or _dict_array(region_tables.get("crossword_corner", [])).size() != 40:
+		failures.append("Crossword Corner does not use its aligned 18-letter/22-cell interlocking layout table.")
 	for type_id in SCRATCH_IDS:
 		var source: Dictionary = source_art.get(type_id, {}) if typeof(source_art.get(type_id, {})) == TYPE_DICTIONARY else {}
 		var art_path := "res://assets/art/scratch_tickets/layers/%s" % str(source.get("file", ""))
@@ -150,17 +150,18 @@ func _check_scratch_roster(game: GameModule, failures: Array) -> void:
 				failures.append("Retired scratch type %s remains in the active roster." % retired_id)
 
 
-func _check_crossword_option_c_hold(game: GameModule, failures: Array) -> void:
+func _check_crossword_active_release(game: GameModule, failures: Array) -> void:
 	var active_discovered: Array = game.call("_active_discovered_ticket_types", ["crossword_corner", "golden_vault", "two_fer", "golden_vault", "future_ticket"])
-	if active_discovered != ["two_fer", "golden_vault"]:
-		failures.append("Option C active discovery helper did not return the exact canonical active subset.")
-	if not bool(game.call("_ticket_type_is_held", "crossword_corner")) or bool(game.call("_ticket_type_is_held", "two_fer")):
-		failures.append("Option C held-ticket helper did not distinguish Crossword from the six active families.")
+	if active_discovered != ["two_fer", "crossword_corner", "golden_vault"]:
+		failures.append("Crossword active discovery did not return the exact canonical released subset.")
+	if bool(game.call("_ticket_type_is_held", "crossword_corner")):
+		failures.append("Crossword remains held after its completed art/mechanics reconciliation.")
 	var run_state: RunState = RunStateScript.new()
-	run_state.start_new("SCRATCH-OPTION-C-HOLD")
+	run_state.start_new("SCRATCH-CROSSWORD-ACTIVE")
 	run_state.bankroll = 500000
-	var environment := _scratch_environment("scratch_option_c_hold")
-	var machine: Dictionary = game.call("_generate_machine_state", run_state, environment, _scratch_rng("option-c-stock"))
+	var environment := _scratch_environment("scratch_crossword_active")
+	environment["local_narrative_flags"] = {"practice_session": true}
+	var machine: Dictionary = game.call("_generate_machine_state", run_state, environment, _scratch_rng("crossword-active-stock"))
 	var stock := _dict_array(machine.get("stock", []))
 	var crossword_index := -1
 	for index in range(stock.size()):
@@ -168,64 +169,32 @@ func _check_crossword_option_c_hold(game: GameModule, failures: Array) -> void:
 			crossword_index = index
 			break
 	if crossword_index < 0:
-		failures.append("Option C deleted the preserved Crossword stock record.")
+		failures.append("Released Crossword has no machine stock row.")
 		return
-	var held_slot: Dictionary = stock[crossword_index]
-	if int(held_slot.get("remaining", -1)) != 0 or str(held_slot.get("release_availability", "")) != "held":
-		failures.append("Option C generated new Crossword stock instead of an explicit held row.")
-	# Simulate a historical save containing unsold raw stock plus an issued ticket.
-	held_slot["remaining"] = 3
-	stock[crossword_index] = held_slot
-	var issued: Dictionary = game.call("_roll_ticket", game.call("_ticket_type", "crossword_corner"), _scratch_rng("option-c-issued"), 0, "option-c-issued")
+	var crossword_slot: Dictionary = stock[crossword_index]
+	if int(crossword_slot.get("remaining", -1)) != 100 or str(crossword_slot.get("release_availability", "")) != "active":
+		failures.append("Released Crossword did not generate as active practice stock.")
+	var issued: Dictionary = game.call("_roll_ticket", game.call("_ticket_type", "crossword_corner"), _scratch_rng("crossword-issued"), 0, "crossword-issued")
 	machine["stock"] = stock
 	machine["active_ticket"] = issued
-	# A current-version historical save can still predate the availability field.
-	# Normalization must stamp the held row without changing its saved quantity or
-	# any already-issued lifecycle collection.
+	# A v4 save may contain the former explicit hold marker. Migration activates
+	# the row while preserving its saved quantity and all issued-ticket bytes.
 	var legacy_machine := machine.duplicate(true)
 	var legacy_stock := _dict_array(legacy_machine.get("stock", []))
-	var legacy_held: Dictionary = legacy_stock[crossword_index]
-	legacy_held["remaining"] = 3
-	legacy_held.erase("release_availability")
-	legacy_stock[crossword_index] = legacy_held
+	var legacy_crossword: Dictionary = legacy_stock[crossword_index]
+	legacy_crossword["remaining"] = 3
+	legacy_crossword["release_availability"] = "held"
+	legacy_stock[crossword_index] = legacy_crossword
 	legacy_machine["stock"] = legacy_stock
+	legacy_machine["version"] = 4
 	var lifecycle_before := JSON.stringify({"active_ticket":legacy_machine.get("active_ticket", {}),"pending_queue":legacy_machine.get("pending_queue", []),"winner_pile":legacy_machine.get("winner_pile", []),"loser_pile":legacy_machine.get("loser_pile", [])})
 	game.call("_normalize_machine_state", legacy_machine, run_state)
 	legacy_stock = _dict_array(legacy_machine.get("stock", []))
-	legacy_held = legacy_stock[crossword_index]
-	if int(legacy_held.get("remaining", -1)) != 3 or str(legacy_held.get("release_availability", "")) != "held":
-		failures.append("Option C historical normalization did not preserve and stamp held Crossword stock.")
+	legacy_crossword = legacy_stock[crossword_index]
+	if int(legacy_crossword.get("remaining", -1)) != 3 or str(legacy_crossword.get("release_availability", "")) != "active":
+		failures.append("Crossword release migration did not preserve quantity and activate its row.")
 	if JSON.stringify({"active_ticket":legacy_machine.get("active_ticket", {}),"pending_queue":legacy_machine.get("pending_queue", []),"winner_pile":legacy_machine.get("winner_pile", []),"loser_pile":legacy_machine.get("loser_pile", [])}) != lifecycle_before:
-		failures.append("Option C historical normalization changed an issued Crossword lifecycle.")
-	var held_before_clear := JSON.stringify(legacy_held)
-	var active_before_clear := int(game.call("_stock_total", legacy_machine))
-	var cleared_active := int(game.call("_clear_machine_stock", legacy_machine))
-	legacy_stock = _dict_array(legacy_machine.get("stock", []))
-	if cleared_active != active_before_clear or JSON.stringify(legacy_stock[crossword_index]) != held_before_clear or int(game.call("_stock_total", legacy_machine)) != 0:
-		failures.append("Option C scalper clear changed held Crossword bytes/value or miscounted active supply.")
-	machine = legacy_machine
-	machine["scalper_present"] = false
-	machine["scalper_visit_token"] = game.call("_scratch_visit_token", run_state, environment)
-	environment["game_states"] = {"scratch_tickets": machine}
-	run_state.current_environment = environment
-	var surface: Dictionary = game.surface_state(run_state, environment, {})
-	var visible_stock := _dict_array(surface.get("scratch_stock", []))
-	var visible_ids: Array = []
-	for slot_value in visible_stock:
-		visible_ids.append(str((slot_value as Dictionary).get("type_id", "")))
-	if visible_ids != ACTIVE_SCRATCH_IDS or visible_ids.has("crossword_corner"):
-		failures.append("Option C active purchase surface did not expose exactly the six aligned ticket families.")
-	if str((surface.get("scratch_ticket", {}) as Dictionary).get("type_id", "")) != "crossword_corner":
-		failures.append("Option C hid an already-issued Crossword ticket from play.")
-	var before := JSON.stringify(run_state.to_save_snapshot())
-	var stale_command: Dictionary = game.surface_action_command("scratch_buy", crossword_index, false, {}, run_state, environment)
-	var direct_result: Dictionary = game.resolve_with_context("buy_scratch_ticket", 15, run_state, environment, _scratch_rng("option-c-hostile-buy"), {"scratch_stock_index": crossword_index, "scratch_buy_quantity": 1})
-	if not str(stale_command.get("action_id", "")).is_empty() or bool(direct_result.get("ok", true)):
-		failures.append("Option C stale/direct path created a new Crossword purchase.")
-	if int(game.wager_cost_for_context("buy_scratch_ticket", 15, run_state, environment, {"scratch_stock_index": crossword_index, "scratch_buy_quantity": 1})) != 0:
-		failures.append("Option C held Crossword purchase exposed a chargeable wager.")
-	if JSON.stringify(run_state.to_save_snapshot()) != before:
-		failures.append("Option C rejected Crossword purchase mutated money, RNG, stock, or issued-ticket state.")
+		failures.append("Crossword release migration changed an issued ticket lifecycle.")
 
 
 func _check_scratch_purchase_and_input(game: GameModule, run_state: RunState, environment: Dictionary, failures: Array) -> void:
@@ -345,13 +314,14 @@ func _check_scratch_instance_uniqueness(game: GameModule, failures: Array) -> vo
 func _check_crossword_procedural_generation(game: GameModule, failures: Array) -> void:
 	var definition: Dictionary = game.call("_ticket_type", "crossword_corner")
 	var mechanic: Dictionary = definition.get("mechanic", {}) if typeof(definition.get("mechanic", {})) == TYPE_DICTIONARY else {}
-	if str(mechanic.get("puzzle_generation", "")) != "procedural_unique_v1" or int(mechanic.get("unique_puzzle_cycle", 0)) < 100:
-		failures.append("Crossword Corner does not declare its procedural per-ticket puzzle contract.")
+	if str(mechanic.get("puzzle_generation", "")) != "procedural_interlocking_v2" or int(mechanic.get("unique_puzzle_cycle", 0)) < 100:
+		failures.append("Crossword Corner does not declare its interlocking per-ticket puzzle contract.")
 		return
+	var puzzle_cycle := int(mechanic.get("unique_puzzle_cycle", 0))
 	var prize_table := _dict_array(definition.get("prize_table", []))
 	var puzzle_ids := {}
 	var word_signatures := {}
-	for ticket_index in range(100):
+	for ticket_index in range(puzzle_cycle):
 		var prize: Dictionary = prize_table[ticket_index % prize_table.size()]
 		var content: Dictionary = game.call("_build_mechanic_content", "crossword", mechanic, prize, _scratch_rng("crossword-unique:%d" % ticket_index), "practice_crossword:%d" % (ticket_index + 1))
 		var puzzle_id := str(content.get("puzzle_id", ""))
@@ -359,7 +329,7 @@ func _check_crossword_procedural_generation(game: GameModule, failures: Array) -
 		var bank: Array = content.get("letter_bank", []) if typeof(content.get("letter_bank", [])) == TYPE_ARRAY else []
 		var layout := _dict_array(content.get("crossword_layout", []))
 		var spots := _dict_array(content.get("spots", []))
-		if puzzle_id.is_empty() or words.size() != 7 or bank.size() != 18 or layout.size() != 7 or spots.size() != 45:
+		if puzzle_id.is_empty() or words.size() != 7 or bank.size() != 18 or layout.size() != 7 or spots.size() != 40:
 			failures.append("Crossword procedural ticket %d did not print one complete 7-word/18-letter puzzle." % ticket_index)
 			return
 		puzzle_ids[puzzle_id] = true
@@ -378,6 +348,7 @@ func _check_crossword_procedural_generation(game: GameModule, failures: Array) -
 			failures.append("Crossword procedural ticket %d letter bank completed %d words instead of exactly %d." % [ticket_index, actual_completed.size(), int(prize.get("word_count", -1))])
 			return
 		var cell_letters := {}
+		var cell_uses := {}
 		for spot in spots:
 			if str(spot.get("section_id", "")) == "crossword":
 				cell_letters["%d,%d" % [int(spot.get("column", -1)), int(spot.get("row", -1))]] = str(spot.get("letter", ""))
@@ -387,15 +358,37 @@ func _check_crossword_procedural_generation(game: GameModule, failures: Array) -
 			for letter_index in range(word.length()):
 				var column := int(entry.get("x", 0)) + (letter_index if across else 0)
 				var row := int(entry.get("y", 0)) + (0 if across else letter_index)
-				if str(cell_letters.get("%d,%d" % [column, row], "")) != word.substr(letter_index, 1):
+				var cell_key := "%d,%d" % [column, row]
+				cell_uses[cell_key] = int(cell_uses.get(cell_key, 0)) + 1
+				if str(cell_letters.get(cell_key, "")) != word.substr(letter_index, 1):
 					failures.append("Crossword procedural ticket %d printed grid disagrees with word %s." % [ticket_index, word])
 					return
+		var crossing_count := 0
+		for use_count in cell_uses.values():
+			if int(use_count) > 1:
+				crossing_count += 1
+		if crossing_count != 8:
+			failures.append("Crossword procedural ticket %d has %d intersections instead of eight." % [ticket_index, crossing_count])
+			return
+		for entry in layout:
+			var participates := false
+			var word := str(entry.get("word", ""))
+			var across := str(entry.get("dir", "")) == "across"
+			for letter_index in range(word.length()):
+				var column := int(entry.get("x", 0)) + (letter_index if across else 0)
+				var row := int(entry.get("y", 0)) + (0 if across else letter_index)
+				if int(cell_uses.get("%d,%d" % [column, row], 0)) > 1:
+					participates = true
+					break
+			if not participates:
+				failures.append("Crossword procedural ticket %d contains an isolated word." % ticket_index)
+				return
 		var fixture := {"mechanic": mechanic, "mechanic_result": content}
 		if int(game.call("_evaluate_mechanic", fixture)) != int(prize.get("payout", -1)):
 			failures.append("Crossword procedural ticket %d changed its authored payout." % ticket_index)
 			return
-	if puzzle_ids.size() != 100 or word_signatures.size() != 100:
-		failures.append("Crossword Corner repeated a puzzle within 100 sequential ticket generations: ids=%d words=%d." % [puzzle_ids.size(), word_signatures.size()])
+	if puzzle_ids.size() != puzzle_cycle or word_signatures.size() != puzzle_cycle:
+		failures.append("Crossword Corner repeated a puzzle within its %d-ticket cycle: ids=%d words=%d." % [puzzle_cycle, puzzle_ids.size(), word_signatures.size()])
 		return
 	var rendered_ticket: Dictionary = game.call("_roll_ticket", definition, _scratch_rng("crossword-region-reconcile"), 0, "practice_crossword:101")
 	var rendered_spots := _dict_array(rendered_ticket.get("spots", []))
@@ -929,13 +922,13 @@ func _check_scratch_stale_region_upgrade(game: GameModule, failures: Array) -> v
 	var crossword_progress := 0.37
 	var stale_crossword_region: Dictionary = crossword_regions[0]
 	stale_crossword_region["art_rect"] = [0.0, 0.0, 1.0, 1.0]
-	stale_crossword_region["layout_version"] = 9
+	stale_crossword_region["layout_version"] = 10
 	stale_crossword_region["coverage"] = crossword_progress
 	stale_crossword_region["revealed"] = false
 	stale_crossword_region["mask_remaining_units"] = roundi(float(stale_crossword_region.get("sample_total", 0)) * 255.0 * (1.0 - crossword_progress))
 	crossword_regions[0] = stale_crossword_region
 	crossword_ticket["scratch_regions"] = crossword_regions
-	crossword_ticket["region_layout_version"] = 9
+	crossword_ticket["region_layout_version"] = 10
 	var crossword_machine: Dictionary = game.generate_environment_state(run_state, crossword_environment, run_state.create_rng("scratch_crossword_v9_stock"))
 	crossword_machine["active_ticket"] = crossword_ticket
 	crossword_environment["game_states"] = {"scratch_tickets": crossword_machine}
@@ -944,11 +937,11 @@ func _check_scratch_stale_region_upgrade(game: GameModule, failures: Array) -> v
 	var upgraded_crossword: Dictionary = upgraded_crossword_machine.get("active_ticket", {}) if typeof(upgraded_crossword_machine.get("active_ticket", {})) == TYPE_DICTIONARY else {}
 	var upgraded_crossword_regions := _dict_array(upgraded_crossword.get("scratch_regions", []))
 	if int(upgraded_crossword.get("region_layout_version", 0)) != ScratchRegionModelScript.LAYOUT_VERSION:
-		failures.append("Scratch Crossword v9-to-v10 region upgrade did not stamp layout v10.")
+		failures.append("Scratch Crossword v10-to-v11 region upgrade did not stamp layout v11.")
 	elif JSON.stringify(upgraded_crossword.get("mechanic_result", {})) != crossword_outcome_json or int(upgraded_crossword.get("payout", -1)) != crossword_payout:
-		failures.append("Scratch Crossword v9-to-v10 region upgrade changed its generated puzzle or payout.")
+		failures.append("Scratch Crossword v10-to-v11 region upgrade changed its generated puzzle or payout.")
 	elif upgraded_crossword_regions.is_empty() or absf(float((upgraded_crossword_regions[0] as Dictionary).get("coverage", 0.0)) - crossword_progress) > 0.01:
-		failures.append("Scratch Crossword v9-to-v10 region upgrade did not preserve partial scratch progress.")
+		failures.append("Scratch Crossword v10-to-v11 region upgrade did not preserve partial scratch progress.")
 
 
 func _scratch_rect_values_equal(left_value: Variant, right_value: Variant) -> bool:
@@ -1011,8 +1004,7 @@ func _check_scratch_stock(game: GameModule, failures: Array) -> void:
 		failures.append("Scratch practice stock did not preserve every ticket definition row.")
 	for slot_value in practice_stock:
 		var practice_slot: Dictionary = slot_value
-		var expected_remaining := 0 if str(practice_slot.get("type_id", "")) == "crossword_corner" else 100
-		if int(practice_slot.get("remaining", -1)) != expected_remaining or int(practice_slot.get("capacity", 0)) != 100:
+		if int(practice_slot.get("remaining", -1)) != 100 or int(practice_slot.get("capacity", 0)) != 100:
 			failures.append("Scratch practice stock did not provide 100 copies of %s." % str(practice_slot.get("type_id", "")))
 	var out_of_stock_rows := 0
 	var total_rows := 0
@@ -1139,12 +1131,8 @@ func _check_scratch_scalper(game: GameModule, failures: Array) -> void:
 	machine["stock"] = stock
 	var cleared := int(game.call("_clear_machine_stock", machine))
 	var cleared_stock := _dict_array(machine.get("stock", []))
-	var held_after_clear := -1
-	for slot_value in cleared_stock:
-		if str((slot_value as Dictionary).get("type_id", "")) == "crossword_corner":
-			held_after_clear = int((slot_value as Dictionary).get("remaining", -1))
-	if cleared != ACTIVE_SCRATCH_IDS.size() or int(game.call("_stock_total", machine)) != 0 or held_after_clear != 1:
-		failures.append("Scratch scalper did not clear exactly the six active rows while preserving held Crossword quantity.")
+	if cleared != ACTIVE_SCRATCH_IDS.size() or int(game.call("_stock_total", machine)) != 0:
+		failures.append("Scratch scalper did not clear all seven active ticket rows.")
 	machine["scalper_visit_token"] = game.call("_scratch_visit_token", run_state, environment)
 	machine["scalper_present"] = true
 	machine["scalper_knows_schedule"] = true
@@ -1207,13 +1195,12 @@ func _check_scratch_practice_inventory(game: GameModule, failures: Array) -> voi
 		var remaining := int(slot.get("remaining", -1))
 		var capacity := int(slot.get("capacity", -1))
 		stock_total += maxi(0, remaining)
-		var expected_remaining := 0 if str(slot.get("type_id", "")) == "crossword_corner" else 100
-		exact_rows = exact_rows and remaining == expected_remaining and capacity == 100
+		exact_rows = exact_rows and remaining == 100 and capacity == 100
 	for type_id in SCRATCH_IDS:
 		exact_rows = exact_rows and stocked_type_ids.has(type_id)
 	var expected_visit_token := str(game.call("_scratch_visit_token", practice_run, practice_environment))
-	if not exact_rows or stock_total != 600:
-		failures.append("Scratch non-tutorial practice refresh did not preserve six active 100/100 rows plus the held Crossword row (rows=%d total=%d)." % [stock.size(), stock_total])
+	if not exact_rows or stock_total != 700:
+		failures.append("Scratch non-tutorial practice refresh did not preserve all seven active 100/100 rows (rows=%d total=%d)." % [stock.size(), stock_total])
 	if bool(machine.get("scalper_present", false)) or bool(machine.get("scalper_knows_schedule", false)):
 		failures.append("Scratch scalper survived the non-tutorial practice refresh and could clear locked inventory.")
 	if expected_visit_token.is_empty() or str(machine.get("scalper_visit_token", "")) != expected_visit_token:

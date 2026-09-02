@@ -56,33 +56,52 @@ const DEFAULT_PASS_REMOVAL := 0.66
 const DEFAULT_SWEEP_THRESHOLD := 0.80
 const DEFAULT_MASK_COLUMNS := MaskScript.MASK_COLUMNS
 const DEFAULT_MASK_ROWS := MaskScript.MASK_ROWS
-const HELD_TICKET_TYPE_ID := "crossword_corner"
-const ACTIVE_TICKET_TYPE_IDS := ["two_fer", "lucky_7s", "tic_tac_gold", "bonus_bingo", "high_roller_holdem", "golden_vault"]
+const HELD_TICKET_TYPE_ID := ""
+const ACTIVE_TICKET_TYPE_IDS := ["two_fer", "lucky_7s", "tic_tac_gold", "crossword_corner", "bonus_bingo", "high_roller_holdem", "golden_vault"]
 const DISCARD_ARM_DISTANCE := 120.0
 const DISCARD_DROP_DISTANCE := 190.0
-const MACHINE_STATE_VERSION := 4
+const MACHINE_STATE_VERSION := 5
 const REGION_LAYOUT_VERSION := RegionModelScript.LAYOUT_VERSION
 const CROSSWORD_LAYOUT_SLOTS := [
-	{"dir": "across", "x": 1, "y": 1, "length": 4},
-	{"dir": "down", "x": 4, "y": 1, "length": 5},
-	{"dir": "across", "x": 4, "y": 4, "length": 4},
+	{"dir": "across", "x": 2, "y": 3, "length": 5},
+	{"dir": "down", "x": 2, "y": 2, "length": 5},
+	{"dir": "down", "x": 4, "y": 3, "length": 4},
 	{"dir": "down", "x": 6, "y": 3, "length": 4},
-	{"dir": "across", "x": 2, "y": 7, "length": 4},
-	{"dir": "across", "x": 1, "y": 9, "length": 4},
-	{"dir": "down", "x": 9, "y": 2, "length": 5},
+	{"dir": "across", "x": 1, "y": 4, "length": 4},
+	{"dir": "across", "x": 4, "y": 5, "length": 4},
+	{"dir": "across", "x": 6, "y": 6, "length": 4},
 ]
-const CROSSWORD_CHAINS := [
-	["CASH", "HOUSE", "SLOT", "GOLD"],
-	["DEAL", "LIGHT", "HAND", "ANTE"],
-	["CARD", "DAILY", "LUCK", "ACES"],
-	["INKS", "SUITS", "TYPE", "SPIN"],
-	["REEL", "LUCKY", "KING", "ANTE"],
-	["CALL", "LIGHT", "HAND", "ANTE"],
-	["DICE", "ENTRY", "REEL", "DEAL"],
+const CROSSWORD_PUZZLE_FAMILIES := [
+	{"base": ["CHIPS", "SCORE", "INTO", "SLOT", "COIN", "TOOK"], "finals": ["TELL", "TILE", "THAT", "THIS", "TIME"]},
+	{"base": ["HOUSE", "CHIPS", "USED", "EVEN", "WINS", "EVER"], "finals": ["NEWS", "NAME", "NEXT", "NEED", "NOTE"]},
+	{"base": ["LUCKY", "BLACK", "CASH", "YEAR", "DATA", "STAR"], "finals": ["REEL", "ROLL", "RACE", "READ", "ROAD"]},
+	{"base": ["CARDS", "SCORE", "REEL", "SPIN", "MORE", "EDIT"], "finals": ["NEWS", "NAME", "NEXT", "NEED", "NOTE"]},
+	{"base": ["POKER", "SPINS", "KNOW", "REEL", "SIGN", "OVER"], "finals": ["LOSS", "LUCK", "LIKE", "LIST", "LAST"]},
+	{"base": ["MONEY", "EMAIL", "NEWS", "YEAR", "GAME", "WHAT"], "finals": ["REEL", "ROLL", "RACE", "READ", "ROAD"]},
+	{"base": ["STAKE", "USING", "ANTE", "EACH", "SIGN", "TECH"], "finals": ["HAND", "HAVE", "HOME", "HERE", "HELP"]},
+	{"base": ["COINS", "SCORE", "INTO", "SLOT", "COIN", "TOOK"], "finals": ["TELL", "TILE", "THAT", "THIS", "TIME"]},
+	{"base": ["ROYAL", "PRICE", "YEAR", "LOSS", "DICE", "ALSO"], "finals": ["SLOT", "SPIN", "SUIT", "STAR", "SITE"]},
+	{"base": ["VAULT", "EVERY", "USED", "THIS", "BETS", "EDIT"], "finals": ["SLOT", "SPIN", "SUIT", "STAR", "SITE"]},
+	{"base": ["GAMES", "AGAIN", "MAKE", "SLOT", "DATA", "KNOW"], "finals": ["TELL", "TILE", "THAT", "THIS", "TIME"]},
+	{"base": ["TABLE", "STAKE", "BETS", "EACH", "GAME", "TECH"], "finals": ["HAND", "HAVE", "HOME", "HERE", "HELP"]},
+	{"base": ["HANDS", "CHIPS", "NEWS", "SLOT", "DICE", "WOOD"], "finals": ["TELL", "TILE", "THAT", "THIS", "TIME"]},
+	{"base": ["REELS", "PRICE", "ELSE", "SLOT", "WILL", "SHOW"], "finals": ["TELL", "TILE", "THAT", "THIS", "TIME"]},
+	{"base": ["SPINS", "USING", "INTO", "SLOT", "SIGN", "TOOK"], "finals": ["TELL", "TILE", "THAT", "THIS", "TIME"]},
+	{"base": ["RAISE", "PRICE", "INTO", "EACH", "SIGN", "TECH"], "finals": ["HAND", "HAVE", "HOME", "HERE", "HELP"]},
+	{"base": ["TOKEN", "STAKE", "KNOW", "NEED", "MAIN", "OVER"], "finals": ["DICE", "DEAL", "DATE", "DATA", "DOES"]},
+	{"base": ["ABOUT", "CARDS", "ODDS", "THAT", "GRID", "DEAL"], "finals": ["TELL", "TILE", "THIS", "TIME", "THEY"]},
+	{"base": ["THERE", "STAKE", "EACH", "EAST", "DATA", "CASH"], "finals": ["TELL", "TILE", "THAT", "THIS", "TIME"]},
+	{"base": ["CLICK", "SCORE", "INTO", "KNOW", "COIN", "TOOK"], "finals": ["WINS", "WILD", "WITH", "WILL", "WHAT"]},
+	{"base": ["PRICE", "SPINS", "INTO", "EACH", "SIGN", "TECH"], "finals": ["HAND", "HAVE", "HOME", "HERE", "HELP"]},
+	{"base": ["EMAIL", "DEALS", "ANTE", "LOSS", "MAIN", "TEST"], "finals": ["SLOT", "SPIN", "SUIT", "STAR", "SITE"]},
+	{"base": ["WORLD", "AWARD", "REEL", "DICE", "GAME", "EACH"], "finals": ["EVEN", "EAST", "EASY", "EVER", "ELSE"]},
+	{"base": ["AFTER", "CARDS", "TELL", "RACE", "FREE", "LUCK"], "finals": ["EACH", "EVEN", "EAST", "EASY", "EVER"]},
+	{"base": ["BOOKS", "ABOUT", "ODDS", "SLOT", "GOLD", "DOOR"], "finals": ["TELL", "TILE", "THAT", "THIS", "TIME"]},
+	{"base": ["LINKS", "BLACK", "NEWS", "SLOT", "GAME", "WOOD"], "finals": ["TELL", "TILE", "THAT", "THIS", "TIME"]},
+	{"base": ["ORDER", "HOUSE", "DEAL", "REEL", "JUNE", "ACES"], "finals": ["LOSS", "LUCK", "LIKE", "LIST", "LAST"]},
+	{"base": ["ITEMS", "FIRST", "EACH", "SLOT", "AREA", "COOL"], "finals": ["TELL", "TILE", "THAT", "THIS", "TIME"]},
 ]
-const CROSSWORD_FREE_FOUR_WORDS := ["PAIR", "CITY", "RACE", "GRID", "CLUE", "PAGE", "READ", "PLAY", "ROAD", "ROLL", "TELL", "TILE"]
-const CROSSWORD_FREE_FIVE_WORDS := ["VAULT", "RAISE", "ROYAL", "TOKEN", "CHIPS", "CARDS", "DEALS", "SPINS", "REELS", "COINS", "HANDS", "PAIRS", "CALLS", "LOANS", "CLUES"]
-const CROSSWORD_PUZZLE_CYCLE := 13860
+const CROSSWORD_PUZZLE_CYCLE := 140
 const CROSSWORD_LETTERS := "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 var active_ticket_rect := DEFAULT_TICKET_RECT
@@ -1005,8 +1024,8 @@ func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: 
 		var count_range := _int_array(ticket_type.get("stock_count", [0, 5]))
 		var maximum := PRACTICE_STOCK_COUNT if practice_session else clampi(int(count_range[1]) if count_range.size() > 1 else 5, 1, 5)
 		var stock_roll := machine_rng.randi_range(0, 19)
-		# Consume the same per-family roll as the seven-ticket intake so holding
-		# Crossword cannot perturb deterministic stock for the six active families.
+		# Consume one stable roll per family so stock remains deterministic when
+		# ticket families are added or migrated.
 		var held := _ticket_type_is_held(str(ticket_type.get("id", "")))
 		var remaining := 0 if held else (PRACTICE_STOCK_COUNT if practice_session else (0 if stock_roll < 15 else mini(maximum, stock_roll - 14)))
 		stock.append({
@@ -1295,7 +1314,7 @@ func _build_crossword_content(mechanic: Dictionary, prize: Dictionary, rng: RngS
 		"legend": _copy_dict(mechanic.get("legend", {})),
 		"crossword_layout": layout,
 		"puzzle_id": "crossword-%05d" % puzzle_index,
-		"puzzle_generation": "procedural_unique_v1",
+		"puzzle_generation": "procedural_interlocking_v2",
 	}
 
 
@@ -1314,19 +1333,11 @@ func _crossword_puzzle_index(generation_key: String, rng: RngStream) -> int:
 
 func _crossword_layout_words(puzzle_index: int) -> Array:
 	var cursor := posmod(puzzle_index, CROSSWORD_PUZZLE_CYCLE)
-	var chain_index := cursor % CROSSWORD_CHAINS.size()
-	cursor = floori(float(cursor) / float(CROSSWORD_CHAINS.size()))
-	var first_free_index := cursor % CROSSWORD_FREE_FOUR_WORDS.size()
-	cursor = floori(float(cursor) / float(CROSSWORD_FREE_FOUR_WORDS.size()))
-	var second_free_index := cursor % (CROSSWORD_FREE_FOUR_WORDS.size() - 1)
-	if second_free_index >= first_free_index:
-		second_free_index += 1
-	cursor = floori(float(cursor) / float(CROSSWORD_FREE_FOUR_WORDS.size() - 1))
-	var five_letter_index := cursor % CROSSWORD_FREE_FIVE_WORDS.size()
-	var words: Array = (CROSSWORD_CHAINS[chain_index] as Array).duplicate(false)
-	words.append(CROSSWORD_FREE_FOUR_WORDS[first_free_index])
-	words.append(CROSSWORD_FREE_FOUR_WORDS[second_free_index])
-	words.append(CROSSWORD_FREE_FIVE_WORDS[five_letter_index])
+	var family_index := floori(float(cursor) / 5.0)
+	var final_index := cursor % 5
+	var family: Dictionary = CROSSWORD_PUZZLE_FAMILIES[family_index]
+	var words: Array = (family.get("base", []) as Array).duplicate(false)
+	words.append(str((family.get("finals", []) as Array)[final_index]))
 	return words
 
 
@@ -2287,6 +2298,8 @@ func _normalize_machine_state(machine: Dictionary, run_state: RunState = null) -
 		slot["remaining"] = clampi(int(slot.get("remaining", 0)), 0, int(slot.get("capacity", default_capacity)))
 		if _ticket_type_is_held(str(slot.get("type_id", ""))):
 			slot["release_availability"] = "held"
+		else:
+			slot["release_availability"] = "active"
 		stock[index] = slot
 	machine["stock"] = stock
 	var phase_fallback := posmod(RunState.text_to_seed(str(machine.get("stock_stream_key", "scratch-restock"))), RESTOCK_INTERVAL_MINUTES)
@@ -2323,6 +2336,8 @@ func _machine_state_is_current(machine: Dictionary) -> bool:
 			return false
 		var slot := slot_value as Dictionary
 		if _ticket_type_is_held(str(slot.get("type_id", ""))) and str(slot.get("release_availability", "")) != "held":
+			return false
+		if not _ticket_type_is_held(str(slot.get("type_id", ""))) and str(slot.get("release_availability", "")) != "active":
 			return false
 	if typeof(machine.get("active_ticket", null)) != TYPE_DICTIONARY:
 		return false
@@ -2513,7 +2528,7 @@ func _ticket_types() -> Array:
 
 
 func _ticket_type_is_held(type_id: String) -> bool:
-	return type_id == HELD_TICKET_TYPE_ID
+	return not HELD_TICKET_TYPE_ID.is_empty() and type_id == HELD_TICKET_TYPE_ID
 
 
 func _active_discovered_ticket_types(discovered_type_ids: Array) -> Array:

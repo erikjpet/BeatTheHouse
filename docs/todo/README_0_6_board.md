@@ -249,7 +249,7 @@ the owner's playtest is expected to change.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | fix06_7 | `../todone/fix06_7_coin_pusher_v3_intro_copy_prompt.md` | DONE | V3 machine contract landed | accurate Coin Pusher player-facing copy | `/root/program_row_inventory` | 2026-08-26 | 2026-08-26 | Independently accepted by `/root/fix07_final_review` at source `62dba2e3` and integration `bb3be7fd`, then landed at main `040f9fe2`. Recursive proof found exactly 36 authorized persisted-copy leaves and zero unauthorized changes; visual matrix passed 8/8 and focused Coin Pusher passed. Post-land Contract was functionally green but timing-only red at 258.562s, retained and routed to `fix06_5` with the cap unchanged. |
 | fix06_1 | `../todone/fix06_1_dead_event_interactions_prompt.md` | DONE | env06_2, env06_3 (landed) | crew06_5+ inherit the class guard | Codex | 2026-08-14 | 2026-08-14 | Generic synthesized-speaker fix; 99-event audit shifted only 3 beach events; permanent generated-environment guard, systems/UI/all, determinism, and visual QA PASS. |
-| fix06_3 | `scratch_ticket_art_alignment_rca_and_fix_prompt.md` | BLOCKED | — (analysed 2026-08-11, deferred from 0.5 to 0.6) | game06_5 inherits a clean surface | Codex | 2026-08-25 | — | Six-ticket alignment, exact v8→v9 partial-progress migration, regenerated overlays, and GPU visual capture are complete; Phase 5 is blocked on the owner's Crossword Corner art/mechanics choice. |
+| fix06_3 | `scratch_ticket_art_alignment_rca_and_fix_prompt.md` | DONE | — (analysed 2026-08-11, deferred from 0.5 to 0.6) | game06_5 inherits a clean surface | Codex | 2026-09-02 | branch `codex/fix06-3-crossword-finish` | Owner chose a denser Crossword redesign. Seven-ticket alignment is complete; Crossword now has one connected seven-word/22-cell grid with eight intersections, active stock, v10→v11 migration, regenerated overlays, GPU three-state review, and green focused contracts. |
 | fix06_5 | `../todone/fix06_5_contract_timing_measurement_prompt.md` | DONE | — | reliable Contract timing guard | PM:Codex/sub:fix05_measurement | 2026-08-26 | 2026-08-26 | INCONCLUSIVE result accepted at `c4e364f7`, staged at `87fa674e`, landed at main `4ade3ac3`, and post-land PASS by `/root/fix05_rereview`. Attempt 01 is noneligible and explicitly operator-observed/raw-unverifiable; attempts 02–05 were eligible timing-only reds at 252.197/247.542/240.187/245.767s with 16/16 checks green on `native_v3`. No five-eligible-run median, stale-baseline candidate, baseline/cap change or product/test/tool change exists. Raw evidence worktrees are retained. |
 | fix06_6 | `../todone/fix06_6_delivery_full_state_golden_closure_prompt.md` | DONE | `fix06_4` landed | — | PM:Codex/sub:preflight_inventory | 2026-08-26 | 2026-08-26 | Documentation-only closure accepted by Feynman (`/root/fix06_collect_impl`) at `b323f841`, landed at `fe0c76d9`, and post-land accepted on the identical tree after static validation passed in 77.967s. Historical proof classified the two-hash red as authored Coin Pusher persisted-state fixture drift already remediated in accepted `fix06_4`; no code, test, golden, product, capture or runtime gate changed, and owner work remained untouched. |
 | fix06_8 | `../todone/fix06_8_coin_pusher_upper_row_join_evidence_prompt.md` | DONE | owner option 1 fixed production trace | pusherv3_11 | Codex | 2026-09-01 | 2026-09-01 | Fixed production nozzle/control trace passes idle, paid-drop, platform-root, adjacency, named-neighbor advance, exact-tick and actual-GL proof for all three cabinets. |
@@ -290,7 +290,7 @@ rows can run in parallel without colliding in both files.
 | game06_2 | `game06_2_blackjack_depth_prompt.md` | IN_PROGRESS | game06_1 | game06_7 | recovery landing | 2026-08-28 | — | Blackjack depth and post-land recovery landed at `d47feee3`/`b091bc43`. Close through `game06_8` after focused acceptance reconciliation. |
 | game06_3 | `game06_3_baccarat_roulette_depth_prompt.md` | IN_PROGRESS | game06_1 | depth parity | recovery landing | 2026-08-29 | — | Sealed Roulette/Baccarat depth landed at `21247535`; current authority and foundation contracts are green. Formal row closeout remains. |
 | game06_4 | `game06_4_machine_games_depth_prompt.md` | IN_PROGRESS | game06_1 | depth parity | recovery landing | 2026-08-29 | — | Machine-game ritual depth landed at `e874d6bc`; formal row closeout remains. |
-| game06_5 | `game06_5_counter_games_depth_prompt.md` | IN_PROGRESS | game06_1 | depth parity | recovery landing | 2026-08-29 | — | Counter ritual depth landed at `ed47a1bd`, with Crossword stock deliberately held. `fix06_3` still needs the owner's Crossword art/mechanics decision before full closure. |
+| game06_5 | `game06_5_counter_games_depth_prompt.md` | IN_PROGRESS | game06_1 | depth parity | recovery landing | 2026-09-02 | — | Counter ritual depth landed at `ed47a1bd`. The `fix06_3` owner decision is resolved: Crossword stock is active with the finished interlocking layout and verified art/mechanics alignment. |
 | game06_6 | `game06_6_bar_dice_depth_prompt.md` | IN_PROGRESS | game06_1, craps06_3 | depth parity | recovery landing | 2026-08-29 | — | Sealed Bar Dice ritual depth landed at `d98de544`; formal row closeout remains. |
 | game06_7 | `game06_7_showdown_duel_depth_prompt.md` | IN_PROGRESS | game06_1, game06_2 | depth parity | recovery landing | 2026-08-29 | — | Host-projected Showdown depth landed at `a6e7be91`; formal row closeout remains. |
 | game06_8 | `game06_8_games_depth_release_gate_prompt.md` | TODO | game06_2..7, depth06_1 | Family 1 closure | — | — | — | Independent exact-tree audit. Cannot pass with a control-panel game or a pointer-only verb. |
@@ -358,14 +358,13 @@ What happens then is the owner's, not an agent's:
 
 ## Owner Questions (current verdicts; do not guess)
 
-- **fix06_3 — Crossword Corner art/mechanics reconciliation: OPEN
-  (2026-08-25).** Choose whether to (a) keep the shipped printed art and rebuild
-  the mechanical puzzle/word list to match it, with an RTP re-check; (b) keep
-  the shipped mechanics and repaint only the Crossword Corner background at the
-  quality of the other six tickets; or (c) ship the other six aligned and hold
-  Crossword Corner. Codex recommends **(b)** because it preserves the authored
-  odds, payouts, and puzzle behavior and confines the remaining work to the one
-  asset whose printed geometry/content is inconsistent.
+- **fix06_3 — Crossword Corner art/mechanics reconciliation: ANSWERED
+  (2026-09-02).** Preserve the polished newspaper/city/book art direction, but
+  replace the sparse disconnected puzzle with a denser genuinely interlocking
+  layout, updating the word pool as needed. The shipped result uses seven
+  connected words, 22 active cells, eight shared-letter intersections, the
+  existing 18-letter reveal and unchanged prize table, with procedural grid
+  paint sourced from the same geometry as foil, lettering, and hit testing.
 
 - **pusherv3_10 — stacked support sentence and Plinko cup lifecycle: ANSWERED
   (2026-08-25).** Only the pushing ledge supplies horizontal push force; a coin
