@@ -21,6 +21,10 @@ const VAULT_CELL_PREFIX := "coin_pusher_vault_cell_"
 const COLD_QUARTERS_ITEM_ID := "cold_quarters"
 const SHIM_ITEM_ID := "coin_return_shim"
 const RUMOR_CLASS := "pusher_pile"
+const DROP_DURABLE_KEYS := [
+	"motor_started", "cold_quarters_armed", "cold_quarters_density_armed",
+	"drop_queue", "action_count", "total_cost", "last_message",
+]
 const V3_RAIL_DRAG_RECT := Rect2(176, 142, 548, 112)
 const JackpotRidgeScript := preload("res://scripts/games/coin_pusher/jackpot_ridge.gd")
 const VaultDropScript := preload("res://scripts/games/coin_pusher/vault_drop.gd")
@@ -247,10 +251,7 @@ func surface_action_command(surface_action: String, _index: int, _confirm_reques
 			return {"handled": false}
 		machine["nudge_force"] = force
 		if str(machine.get("variation_id", "quarter_falls")) == "quarter_falls":
-			_write_live_durable(run_state, environment, machine, false, [
-				"motor_started", "cold_quarters_armed", "cold_quarters_density_armed",
-				"drop_queue", "action_count", "total_cost", "last_message",
-			])
+			_write_live_durable(run_state, environment, machine, false, DROP_DURABLE_KEYS)
 		else:
 			_write_live_durable(run_state, environment, machine, false)
 		return GameModule.surface_command({"handled": true, "environment_changed": true, "preserve_surface_ui_state": true, "surface_state_patch": _v3_headless_surface_state(machine, run_state, environment)}, true)
@@ -587,7 +588,7 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 		machine["action_count"] = int(machine.get("action_count", 0)) + queued_count
 		machine["total_cost"] = int(machine.get("total_cost", 0)) + total_cost
 		machine["last_message"] = "%d quarter%s queued through %s. The nozzle can move while they feed." % [queued_count, "" if queued_count == 1 else "s", nozzle_id]
-		_write_live_durable(run_state, environment, machine, false)
+		_write_live_durable(run_state, environment, machine, false, DROP_DURABLE_KEYS)
 		var deltas := {
 			"bankroll_delta": -total_cost,
 			"story_log": [_story_entry(DROP_ACTION, "legal", environment, -total_cost, 0, {"tick": int(simulation.get("tick", 0)), "carriage_x": int(simulation.get("carriage_x", 50000)), "nozzle_id": nozzle_id, "queued_count": queued_count})],
