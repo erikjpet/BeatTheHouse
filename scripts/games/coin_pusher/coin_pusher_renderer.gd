@@ -61,6 +61,7 @@ var _static_cache_pixel_size := Vector2i.ZERO
 var _hardware_cache_canvas: Control
 var _hardware_cache_host: Control
 var _hardware_cache_key := ""
+var _hardware_cache_prepared_for_next_draw := false
 var _world_width := SCHEMA_DEFAULT_WIDTH
 var _world_back_y := SCHEMA_DEFAULT_BACK_Y
 var _coin_height := SCHEMA_DEFAULT_COIN_HEIGHT
@@ -160,6 +161,9 @@ func prepare_render_state(state: Dictionary) -> void:
 	_prepared_batch_view_serial = int(state.get("coin_pusher_presentation_view_serial", -1))
 	_prepared_batch_alpha = alpha
 	_upload_prepared_batch()
+	if is_instance_valid(_hardware_cache_host):
+		_prepare_hardware_cache(_hardware_cache_host, state, false)
+		_hardware_cache_prepared_for_next_draw = true
 
 
 func _prepared_batch_matches(state: Dictionary) -> bool:
@@ -685,11 +689,16 @@ func draw_hardware_cache_layer(surface, state: Dictionary) -> void:
 	surface.surface_end_design_space()
 
 
-func _prepare_hardware_cache(surface, state: Dictionary) -> bool:
+func _prepare_hardware_cache(surface, state: Dictionary, consume_prepared: bool = true) -> bool:
 	if not OS.has_feature("web") and not bool(state.get("coin_pusher_static_cache_test", false)):
 		if is_instance_valid(_hardware_cache_canvas):
 			_hardware_cache_canvas.visible = false
 		return false
+	if consume_prepared and _hardware_cache_prepared_for_next_draw and is_instance_valid(_hardware_cache_canvas) and _hardware_cache_host == surface:
+		_hardware_cache_prepared_for_next_draw = false
+		_hardware_cache_canvas.visible = true
+		return true
+	_hardware_cache_prepared_for_next_draw = false
 	if not is_instance_valid(_hardware_cache_host) or _hardware_cache_host != surface:
 		if is_instance_valid(_hardware_cache_canvas):
 			_hardware_cache_canvas.queue_free()
