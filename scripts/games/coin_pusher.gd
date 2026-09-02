@@ -550,7 +550,11 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 	if _machine_busy(environment):
 		return _empty_pusher_result(action_id, environment, "The machine is occupied; no control responds.")
 	var machine := _ensure_live_machine(run_state, environment)
-	_reconcile_tolerance_modifiers(run_state, environment, machine)
+	# A legal drop neither reads nor spends cabinet tolerance. Reconcile at the
+	# next tolerance-bearing control instead of rebuilding security modifiers on
+	# the measured coin-slot boundary.
+	if action_id != DROP_ACTION:
+		_reconcile_tolerance_modifiers(run_state, environment, machine)
 	if bool((machine.get("live_session", {}) as Dictionary).get("input_locked", false)):
 		return _empty_pusher_result(action_id, environment, "The controls lock while the last cascade settles.")
 	if _machine_busy(environment):
@@ -1328,10 +1332,12 @@ func _machine_goal_state(machine: Dictionary, simulation: Dictionary) -> Diction
 			}
 
 
-func _coin_pusher_action_bindings(machine: Dictionary, simulation: Dictionary, tray: Array, run_state: RunState = null, environment: Dictionary = {}) -> Dictionary:
+
+func _coin_pusher_action_bindings(machine: Dictionary, simulation: Dictionary, tray: Array, run_state: RunState = null, environment: Dictionary = {}, drop_refused_override: Variant = null) -> Dictionary:
+	var drop_refused := bool(drop_refused_override) if typeof(drop_refused_override) == TYPE_BOOL else _drop_refused(machine)
 	var result := {
-		"coin_pusher_drop": {"label": "DROP", "enabled": not _drop_refused(machine)},
-		DROP_CHARGE_ACTION: {"label": "HOLD TO DROP", "enabled": not _drop_refused(machine)},
+		"coin_pusher_drop": {"label": "DROP", "enabled": not drop_refused},
+		DROP_CHARGE_ACTION: {"label": "HOLD TO DROP", "enabled": not drop_refused},
 		SKILL_STOP_ACTION: {"label": "RELEASE" if bool(simulation.get("skill_stop_engaged", false)) else "SKILL STOP", "enabled": true, "lit": bool(simulation.get("skill_stop_engaged", false))},
 		COLLECT_ACTION: {"label": "COLLECT", "enabled": not tray.is_empty()},
 		"coin_pusher_nudge": {"action": "surface_cheat", "index": 0, "label": "NUDGE", "enabled": true},
@@ -1390,7 +1396,7 @@ func _drop_surface_action_view_patch(machine: Dictionary, run_state: RunState, e
 		"coin_pusher_tray_value": _ledger_value(tray),
 		"coin_pusher_input_trace_count": (machine.get("live_session", {}).get("input_trace", []) as Array).size() if typeof(machine.get("live_session", {}).get("input_trace", [])) == TYPE_ARRAY else 0,
 		"native_selected_surface_actions": ui_state["native_selected_surface_actions"] if ui_state.has("native_selected_surface_actions") else _native_surface_actions(machine),
-		"surface_action_bindings": _coin_pusher_action_bindings(machine, simulation, tray, run_state, environment),
+		"surface_action_bindings": _coin_pusher_action_bindings(machine, simulation, tray, run_state, environment, false),
 	}
 
 
