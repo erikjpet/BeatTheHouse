@@ -59,6 +59,9 @@ origin reconciliation, target reachability, and persistent-machine assertions.
 
 ## Release-board disposition
 
-`pusherv3_10` is DONE and moved to `docs/todone`. `pusherv3_11` remains a
-separate independent program-closure audit; its implementation dependency is
-now satisfied, but its other recorded program blockers are not silently waived.
+`pusherv3_10` is DONE and moved to `docs/todone`. Every technical pillar of
+`pusherv3_11`, including the later locked shipped-Web performance gate, now
+passes. The row remains in `docs/todo/` only because the exact green
+`fix06_13` head still needs its required recorded independent acceptance before
+the two closeout prompts are archived. No further Coin Pusher implementation is
+identified before playtest.

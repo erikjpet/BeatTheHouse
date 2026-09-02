@@ -67,9 +67,11 @@ and reviewed; build only on its accepted head. You own
 renderers and their tests exclusively. You may not edit the shared runtime or
 visual layer; file a runtime request instead.
 
-`scratch_ticket_art_alignment_rca_and_fix_prompt.md` is an open defect prompt on
-this surface. Read it. If its finding is still live, fix it as part of this row
-and say so explicitly in the handoff.
+The scratch-ticket alignment defect is closed and archived at
+`../todone/scratch_ticket_art_alignment_rca_and_fix_prompt.md`. Its completed
+seven-ticket alignment, interlocking Crossword layout, active stock, migration,
+and focused contracts landed on main at `996a98b6`. Treat that result as the
+inherited surface; do not rebuild it inside this row.
 
 ## 1. The counter is a place
 

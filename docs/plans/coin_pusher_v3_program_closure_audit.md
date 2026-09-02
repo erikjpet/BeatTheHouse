@@ -1,8 +1,9 @@
 # Coin Pusher V3 program closure audit
 
-Status: IN PROGRESS — gameplay accepted; locked shipped-Web performance remains open
+Status: IN PROGRESS — all technical gates pass; exact-head independent acceptance remains
 Audit row: `pusherv3_11`
 Audit date: 2026-09-01
+Technical evidence updated: 2026-09-02
 
 ## Verdict
 
@@ -12,10 +13,18 @@ retained and extended rather than rebuilt. The later opening, Plinko,
 objective, and lifecycle fixes compose without changing authored payout bands,
 RNG, money rules, save semantics, or accessibility behavior.
 
-The program is not formally closed. The exact-tree locked shipped-Web
-performance gate is still red, so `fix06_13` and its dependent closure audit
-`pusherv3_11` remain active. This is a performance acceptance blocker, not a
-missing gameplay, economy, persistence, parity, or visual implementation.
+The former exact-tree locked shipped-Web blocker is resolved on landed head
+`0ce00c0ba941adac29e0a4c8a5d9f1cf842a866e`. The fresh-export Chrome run at
+CPU throttle 4 passed every unchanged startup, frame, draw, resolve, liveness,
+fixture, and conservation requirement. GitHub `main` at `31103f7f` contains
+that head; its descendant changes are scoped to Crossword Corner and Counter
+Games closeout.
+
+The program is technically complete. Formal board closure remains open only
+because `fix06_13` requires a recorded independent implementation/evidence
+acceptance of the exact green head before that prompt and this dependent audit
+can be archived. This is process closeout, not missing gameplay, performance,
+economy, persistence, parity, or visual implementation.
 
 The owner-selected `fix06_8` disposition is implemented: a fixed production
 nozzle/control trace (not seed searching) places the tracked drop beside real
@@ -94,19 +103,21 @@ and exact input parity plus byte-identical determinism pass on the final tree.
 | Actual-GL visual QA | PASS; 3 cabinets × 9 production scenes, normal/reduced captures inspected at 1280×720. Same manifest and PNG set as the fixed upper-row proof. |
 | Persistent EV | PASS; 600,000 paid drops. `.tmp/coin_pusher_final_ev_8/manifest.json`. |
 | 10-seed determinism | PASS; two independent 10-seed/560-checkpoint processes are byte-identical at combined hash `4129524558` and file SHA-256 `3972A3C5E2D3A501E10D618E4910128DCE61989E134D66C5A691A8311587F689`. `.tmp/foundation_determinism_probe/run_a.json` and `run_b.json`. |
-| Shipped-Web performance | **RED** on exact head `2d00206b`. Ready `20.193 s > 20.000 s`; skill-release frame p95 `25.000 ms > 22.000 ms`; DROP frame p95 `25.485 ms > 22.000 ms`; idle frame p95 `16.667 ms > 16.000 ms`; skill-stop draw p95 `8.610 ms > 7.000 ms`. `.tmp/final_coin_pusher_webperf_2d00206b_quiesced/report.summary.json`. |
+| Retained shipped-Web red | Historical RED on exact head `2d00206b`. Ready `20.193 s > 20.000 s`; skill-release frame p95 `25.000 ms > 22.000 ms`; DROP frame p95 `25.485 ms > 22.000 ms`; idle frame p95 `16.667 ms > 16.000 ms`; skill-stop draw p95 `8.610 ms > 7.000 ms`. Preserved at `.tmp/final_coin_pusher_webperf_2d00206b_quiesced/report.summary.json`; not waived or deleted. |
+| Current shipped-Web performance | **PASS** on landed head `0ce00c0b`, Chrome 152, CPU throttle 4, cold cache, fresh export, exact 300-origin fixture. Ready `19.548 s <= 20.000 s`; idle frame/draw `8.333/2.815 ms`; DROP frame/draw/resolve `21.300/3.815/11.410 ms`; carriage `13.660/3.615/5.410 ms`; skill stop `10.606/3.415/5.815 ms`; skill release `9.091/3.210/4.820 ms`; COLLECT `19.965/2.965/7.800 ms`; reduced motion `11.111/3.415 ms`. Zero failures. `.tmp/coin_pusher_webperf_0ce00c0b_locked_1/report.summary.json`. |
+| Final native/Web live-batch parity | **PASS** on `0ce00c0b`; payload remains `c03588babf0a5fb40b36349020dd90e43bba4a1c8644c6a15c7bc1f54e31953f`. `.tmp/coin_pusher_native_live_batch_0ce00c0b_final/manifest.json`. |
+| Final focused foundation | **PASS** with zero failures. `.tmp/coin_pusher_drop_durable_patch_direct_2.json`. |
 
 ## Performance remediation summary
 
 The first honest exported-Web cabinet measured roughly 142–145 ms frame p95
-and 52–55 ms draw p95. The current path keeps the exact 300-origin fixture and
+and 52–55 ms draw p95. The final path keeps the exact 300-origin fixture and
 real cabinet while using the native solver, packed publication, cached static
-and hardware layers, prepared multimesh batches, staged HUD refresh, and a
-pinned lean Godot Web template. This is a major improvement, but no retained
-exact-tree run has passed every locked cap. The final `2d00206b` run above is
-the authoritative current result; earlier red results remain preserved. No
-visible state, simulation result, economy result, or evidence assertion was
-bypassed, and no budget was changed.
+and hardware layers, prepared multimesh batches, staged HUD refresh, reduced
+transient allocation, and a pinned lean Godot Web template. The retained
+`2d00206b` red remains immutable history; the later `0ce00c0b` locked run is the
+authoritative green product result. No visible state, simulation result,
+economy result, or evidence assertion was bypassed, and no budget was changed.
 
 ## Code health and reconciliation
 
@@ -129,7 +140,9 @@ are superseded by V3. The board correctly retires `pusher06_0/1/3/4`.
 ## Final disposition
 
 `pusherv3_10`, `fix06_8`, and the `fix06_9` evidence harness are complete.
-`fix06_13` remains IN_PROGRESS on the locked shipped-Web performance result,
-and `pusherv3_11` remains IN_PROGRESS behind it. No Coin Pusher gameplay,
-economy, persistence, determinism, parity, or design blocker remains; the sole
-known Coin Pusher closure blocker is the fixed-budget Web performance gate.
+`fix06_13` is technically green and landed, and every `pusherv3_11` audit pillar
+passes. Both rows remain IN_PROGRESS only until the required exact-head
+independent acceptance is recorded; after that, their prompts can move to
+`docs/todone/` without further implementation. No Coin Pusher gameplay,
+performance, economy, persistence, determinism, parity, design, or automated
+verification blocker remains before playtest.

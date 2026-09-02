@@ -1,4 +1,4 @@
-Status: IN_PROGRESS — all audit pillars pass except locked shipped-Web performance
+Status: IN_PROGRESS — all technical pillars pass; dependent exact-head acceptance remains
 Board row: `pusherv3_11` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — 0.6 pusherv3_11: Coin Pusher V3 Program Closure Audit
@@ -111,7 +111,7 @@ and exact commit on the board.
 
 ## Execution record
 
-- **Completed:** 2026-09-01
+- **Technical audit completed:** 2026-09-01; Web performance cleared 2026-09-02
 - **Closure report:** `docs/plans/coin_pusher_v3_program_closure_audit.md`
 - **Verification:** exact 300-body foundation, static/hardware pixel-equivalence,
   native Web live batch, Windows/Web input parity, 10-seed determinism,
@@ -119,4 +119,6 @@ and exact commit on the board.
   shipped-Web performance evidence.
 - **Disposition:** all V3 contract, Pillar 4, machine-goal, owner-ruling,
   conservation, persistence, lifecycle, parity, and performance requirements
-  pass. No Coin Pusher blocker remains for playtest.
+  pass. No product blocker remains for playtest. The row remains IN_PROGRESS
+  only until `fix06_13` receives recorded exact-head independent acceptance;
+  then both prompts can be archived without further implementation.

@@ -1,4 +1,4 @@
-Status: IN_PROGRESS — product remediation landed; locked shipped-Web gate remains red
+Status: IN_PROGRESS — all technical gates green; exact-head independent acceptance not yet recorded
 Board row: `fix06_13` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — fix06_13: Coin Pusher shipped-Web performance defect
@@ -115,7 +115,7 @@ is consumed. It owns deterministic cleanup of the exact launched Web server
 process tree exposed by the completed `fix06_14` qualification; it does not
 reopen or replace any retained performance result.
 
-## Current exact-tree record — 2026-09-02 — NOT CLOSED
+## Retained exact-tree red record — 2026-09-02 — SUPERSEDED BY GREEN RUN
 
 The current product path is the accumulated exact-tree remediation ending at
 head `2d00206b43d54b56f099d6b5c3d4ce443cb406dc`. It retains the real 300-origin cabinet,
@@ -153,5 +153,39 @@ green.
 
 The first red remains the baseline history; it was not replaced, waived, or
 hidden. `fix06_14` and `fix06_16` were already landed before this evidence was
-consumed. `fix06_13` remains IN_PROGRESS without a waiver or budget change, and
-`pusherv3_11` remains open behind it.
+consumed. At `2d00206b`, `fix06_13` correctly remained IN_PROGRESS without a
+waiver or budget change.
+
+## Current exact-tree record — 2026-09-02 — TECHNICAL GREEN
+
+The accumulated performance work landed through
+`0ce00c0ba941adac29e0a4c8a5d9f1cf842a866e`. GitHub `main` is now
+`31103f7f1f132e051113c184c5a8eafd7ad081a9`; `0ce00c0b` is its ancestor, and
+the intervening Crossword/Counter Games commits do not touch Coin Pusher,
+runtime, startup, native, performance-harness, or export files.
+
+The locked Chrome 152 fresh-export run at CPU throttle 4 passed with zero
+failures. Ready was `19.548 s <= 20.000 s`. Scenario frame/draw/resolve p95
+milliseconds were: idle `8.333/2.815/-`; DROP `21.300/3.815/11.410`;
+carriage `13.660/3.615/5.410`; skill stop `10.606/3.415/5.815`; skill release
+`9.091/3.210/4.820`; COLLECT `19.965/2.965/7.800`; reduced motion
+`11.111/3.415/-`. Every unchanged 16/5 idle, 22/7 active, 16 ms resolve, and
+20 s ready cap passed with the exact 300-origin fixture, cold cache, fresh
+export, normal/reduced liveness, and conservation checks intact.
+
+Retained final evidence:
+
+- `.tmp/coin_pusher_webperf_0ce00c0b_locked_1/report.summary.json`, SHA-256
+  `9524314D4A182AA766074DAD88BB30BF6B126D917830C17D91693F6F4C0B9933`;
+- `.tmp/coin_pusher_native_live_batch_0ce00c0b_final/manifest.json`, PASS with
+  canonical parity payload
+  `c03588babf0a5fb40b36349020dd90e43bba4a1c8644c6a15c7bc1f54e31953f`;
+- `.tmp/coin_pusher_drop_durable_patch_direct_2.json`, focused foundation PASS
+  with zero failures;
+- `tools/validate_project.ps1`, PASS on the final product tree.
+
+No budget, fixture, gameplay, economy, RNG, schema, migration, accessibility,
+or evidence requirement changed. Technical remediation is complete and green.
+The row remains IN_PROGRESS only because the prompt requires a recorded
+independent implementation/evidence review of the exact accepted head before
+`DONE` and archival. Do not rebuild or re-optimize the product for this row.
