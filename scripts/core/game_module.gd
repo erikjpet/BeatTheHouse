@@ -636,6 +636,12 @@ static func build_owned_action_result(payload: Dictionary = {}) -> Dictionary:
 	return _build_action_result(payload, true)
 
 
+static func build_canonical_owned_action_result(payload: Dictionary = {}) -> Dictionary:
+	# Hot paths that construct only canonical delta keys can transfer ownership
+	# directly. The normal public builder remains fail-safe for untrusted shapes.
+	return _build_action_result(payload, true)
+
+
 static func _build_action_result(payload: Dictionary, take_delta_ownership: bool) -> Dictionary:
 	var source_deltas := _owned_dict(payload.get("deltas", {})) if take_delta_ownership else _copy_dict(payload.get("deltas", {}))
 	for key in ["bankroll_delta", "suspicion_delta", "alcohol_intake", "drunk_delta", "pending_drunk_absorption_delta", "drunk_distortion_suppression_turns", "heat_cooldown_actions", "heat_cooldown_per_action", "alcoholic_delta", "baseline_luck_delta", "ended"]:

@@ -589,11 +589,12 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 		machine["total_cost"] = int(machine.get("total_cost", 0)) + total_cost
 		machine["last_message"] = "%d quarter%s queued through %s. The nozzle can move while they feed." % [queued_count, "" if queued_count == 1 else "s", nozzle_id]
 		_write_live_durable(run_state, environment, machine, false)
-		var deltas := GameModule.empty_result_deltas()
-		deltas["bankroll_delta"] = -total_cost
-		deltas["story_log"] = [_story_entry(DROP_ACTION, "legal", environment, -total_cost, 0, {"tick": int(simulation.get("tick", 0)), "carriage_x": int(simulation.get("carriage_x", 50000)), "nozzle_id": nozzle_id, "queued_count": queued_count})]
-		deltas["messages"] = [str(machine["last_message"])]
-		var result := GameModule.build_owned_action_result({"source_id": get_id(), "game_id": get_id(), "action_id": DROP_ACTION, "action_kind": "legal", "stake": total_cost, "environment_id": str(environment.get("id", "")), "deltas": deltas, "message": str(machine["last_message"])})
+		var deltas := {
+			"bankroll_delta": -total_cost,
+			"story_log": [_story_entry(DROP_ACTION, "legal", environment, -total_cost, 0, {"tick": int(simulation.get("tick", 0)), "carriage_x": int(simulation.get("carriage_x", 50000)), "nozzle_id": nozzle_id, "queued_count": queued_count})],
+			"messages": [str(machine["last_message"])],
+		}
+		var result := GameModule.build_canonical_owned_action_result({"source_id": get_id(), "game_id": get_id(), "action_id": DROP_ACTION, "action_kind": "legal", "stake": total_cost, "environment_id": str(environment.get("id", "")), "deltas": deltas, "message": str(machine["last_message"])})
 		result["host_apply_result"] = true
 		result["surface_action_view_patch"] = _drop_surface_action_view_patch(machine, run_state, environment, _ui_state)
 		result["preserve_surface_ui_state"] = true
