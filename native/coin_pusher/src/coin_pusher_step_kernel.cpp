@@ -130,7 +130,8 @@ struct Body {
   String id, kind, rest, support, peg_key, exit_state;
   int64_t x = 0, y = 0, z = 0, vx = 0, vy = 0, vz = 0, xr = 0, yr = 0, zr = 0,
           r = 2350, h = 950, m = 1000, sleep_ticks = 0, fall_start_z = 0,
-          exit_start_tick = -1, support_anchor_x = 0, support_anchor_y = 0;
+          exit_start_tick = -1, support_anchor_x = 0, support_anchor_y = 0,
+          id_number = 0, id_hash = 0;
   bool sleeping = false, carried = false, plate_blocked = false,
        pending_deposit = false, has_fall_start = false, peg_contact = false,
        has_support_anchor = false;
@@ -145,8 +146,8 @@ PackedInt64Array pack_presentation_bodies(const std::vector<Body> &source) {
   for (int64_t i = 0; i < int64_t(source.size()); ++i) {
     const Body &q = source[size_t(i)];
     const int64_t offset = i * 9;
-    packed[offset] = q.id.trim_prefix("body_").to_int();
-    packed[offset + 1] = q.id.hash();
+    packed[offset] = q.id_number;
+    packed[offset + 1] = q.id_hash;
     packed[offset + 2] = q.x;
     packed[offset + 3] = q.y;
     packed[offset + 4] = q.z;
@@ -286,6 +287,8 @@ struct Kernel {
       Body q;
       q.ref = r;
       q.id = r.get("id", "");
+      q.id_number = q.id.trim_prefix("body_").to_int();
+      q.id_hash = q.id.hash();
       q.kind = r.get("kind", "coin");
       q.x = r.get("x", 0);
       q.y = r.get("y", 0);
@@ -1184,6 +1187,8 @@ struct Kernel {
     Body q;
     int64_t next_id = state.get("next_body_id", 1);
     q.id = String("body_") + String::num_int64(next_id).pad_zeros(5);
+    q.id_number = next_id;
+    q.id_hash = q.id.hash();
     state["next_body_id"] = next_id + 1;
     q.kind = "coin";
     q.x = clampi(x + jitter, g.coin_r, g.width - g.coin_r);
@@ -1277,6 +1282,8 @@ struct Kernel {
           Body q;
           q.ref = Dictionary();
           q.id = body_id;
+          q.id_number = q.id.trim_prefix("body_").to_int();
+          q.id_hash = q.id.hash();
           q.kind = in.get("body_kind", entry.get("kind", "coin"));
           q.r = in.get("radius", g.coin_r);
           q.h = in.get("height", g.coin_h);
