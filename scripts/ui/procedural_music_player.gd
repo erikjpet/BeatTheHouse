@@ -483,8 +483,9 @@ func play_for_environment_state(environment: Dictionary, heat_level: int, music_
 func refresh_after_web_audio_unlock(environment: Dictionary, heat_level: int, music_state: Dictionary) -> void:
 	if not audio_enabled or environment.is_empty() or _running_headless():
 		return
-	if WebAudioBridgeScript.available():
-		WebAudioBridgeScript.unlock()
+	# The synchronous user-gesture handler owns the only browser-legal resume()
+	# attempt. This deferred/retried refresh rebuilds streams after that attempt;
+	# it must not issue another resume outside the activation boundary.
 	var snapshot := _music_fx_state_from_environment(environment, heat_level, music_state)
 	update_music_state(snapshot)
 	_ensure_stem_players()
