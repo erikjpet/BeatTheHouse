@@ -4123,9 +4123,10 @@ func _bar_dice_play_round(game: GameModule, run_state: RunState, _rng: RngStream
 	host.free()
 	return result
 
-# Statistical fixtures consume the pure deterministic proposal boundary without
-# minting authority or applying account deltas. They carry forward only the
-# proposal's table/RNG snapshots and inspect the proposed result distribution.
+# Statistical fixtures consume the pure deterministic resolution core without
+# minting authority. Applying its result to the isolated simulation state keeps
+# the same table/RNG progression without serializing the complete run twice for
+# every Monte Carlo sample.
 func _bar_dice_simulate_round(game: GameModule, run_state: RunState, rng: RngStream, action_id: String, stake: int = 10, skill_margin_msec: int = 0) -> Dictionary:
 	var environment: Dictionary = run_state.current_environment
 	var ui := _bar_dice_stake_ui(run_state, stake)
@@ -4155,11 +4156,9 @@ func _bar_dice_simulate_round(game: GameModule, run_state: RunState, rng: RngStr
 	var reveal_command: Dictionary = game.surface_action_command("bar_dice_reveal", 0, false, throw_command.get("ui_state", ui), run_state, environment)
 	var call_command: Dictionary = game.surface_action_command("bar_dice_ack_call", 0, false, reveal_command.get("ui_state", ui), run_state, environment)
 	ui = call_command.get("ui_state", ui)
-	var proposal: Dictionary = game.call("_bar_dice_resolve_proposal", action_id, stake, run_state.to_save_snapshot(), rng.snapshot(), ui)
-	var result: Dictionary = (proposal.get("result", {}) as Dictionary).duplicate(true)
-	if bool(proposal.get("ok", false)):
-		run_state.from_dict((proposal.get("run_snapshot", {}) as Dictionary).duplicate(true))
-		rng.restore((proposal.get("rng_snapshot", {}) as Dictionary).duplicate(true))
+	var result: Dictionary = game.call("_resolve_bar_dice_proposal_core", action_id, stake, run_state, environment, rng, ui)
+	if bool(result.get("ok", false)):
+		GameModule.apply_result(run_state, result, rng)
 		run_state.save_rng(rng)
 	return result
 
