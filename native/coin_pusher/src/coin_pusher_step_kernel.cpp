@@ -167,6 +167,11 @@ bool body_id_less(const Body &left, const Body &right) {
     return left.id_number < right.id_number;
   return left.id < right.id;
 }
+bool body_id_equal(const Body &left, const Body &right) {
+  if (left.id_numbered && right.id_numbered)
+    return left.id_number == right.id_number;
+  return left.id == right.id;
+}
 void wake(Body &b) {
   if (b.sleeping)
     b.sleep_ticks = 0;
@@ -256,7 +261,7 @@ struct Kernel {
   Geo g;
   std::vector<Body> b;
   std::vector<std::pair<int, int>> pair_scratch;
-  std::vector<uint8_t> queued_scratch, active_scratch;
+  std::vector<uint8_t> queued_scratch;
   std::vector<int> queue_scratch, static_scratch, support_indices_scratch;
   Grid grid_scratch;
   std::unordered_map<String, int, GodotStringHash> body_index_scratch;
@@ -652,7 +657,7 @@ struct Kernel {
     }
     std::sort(p.begin(), p.end(), [&](auto l, auto r) {
       return body_id_less(b[l.first], b[r.first]) ||
-             (b[l.first].id == b[r.first].id &&
+             (body_id_equal(b[l.first], b[r.first]) &&
               body_id_less(b[l.second], b[r.second]));
     });
     return p;
@@ -662,7 +667,7 @@ struct Kernel {
       return false;
     int64_t dx = r.x - l.x, dy = r.y - l.y;
     if (dx == 0 && dy == 0)
-      dx = l.id < r.id ? 1 : -1;
+      dx = body_id_less(l, r) ? 1 : -1;
     int64_t mn = l.r + r.r, ds = dx * dx + dy * dy;
     if (ds >= mn * mn)
       return false;
@@ -1453,19 +1458,13 @@ struct Kernel {
         grid.rebuild(b);
         const auto &ps = pairs(grid);
         candidate_peak = std::max<int64_t>(candidate_peak, ps.size());
-        auto &active = active_scratch;
-        active.resize(b.size());
-        for (size_t i = 0; i < b.size(); ++i)
-          active[i] = !b[i].sleeping && !terminal(b[i]);
         // pairs() starts from every awake body and breadth-first expands through
-        // every overlapping neighbor. Its returned pairs therefore already are
-        // exactly the connected components reached by an active body.
-        for (auto p : ps)
-          active[p.first] = active[p.second] = 1;
+        // every overlapping neighbor. Its retained queued mask is therefore
+        // exactly the active mask previously rebuilt from the same pairs here.
+        const auto &active = queued_scratch;
         const auto &statics = static_candidates(active, newf);
         for (auto p : ps)
-          if ((active[p.first] || active[p.second]) &&
-              contact(b[p.first], b[p.second]))
+          if (contact(b[p.first], b[p.second]))
             ++collisions;
         platform_work += static_contacts(statics, newf, delta);
       }
