@@ -134,7 +134,8 @@ struct Body {
           id_number = 0, id_hash = 0;
   bool sleeping = false, carried = false, plate_blocked = false,
        pending_deposit = false, has_fall_start = false, peg_contact = false,
-       has_support_anchor = false, id_numbered = false, falling = false;
+       has_support_anchor = false, id_numbered = false, falling = false,
+       terminal_state = false;
 };
 struct PresentationMotionBody {
   String id, support;
@@ -179,7 +180,7 @@ void wake(Body &b) {
   if (!b.falling)
     b.rest = "settling";
 }
-bool terminal(const Body &b) { return !b.exit_state.is_empty(); }
+bool terminal(const Body &b) { return b.terminal_state; }
 void update_sleep(Body &b) {
   int64_t speed = std::abs(b.vx) + std::abs(b.vy) + std::abs(b.vz);
   if (speed < SLEEP_SPEED) {
@@ -328,6 +329,7 @@ struct Kernel {
       q.support_anchor_x = r.get("support_anchor_x", 0);
       q.support_anchor_y = r.get("support_anchor_y", 0);
       q.exit_state = r.get("exit_state", "");
+      q.terminal_state = !q.exit_state.is_empty();
       q.exit_start_tick = r.get("exit_start_tick", -1);
       q.carried = r.get("carried_sleep", false);
       q.plate_blocked = r.get("plate_blocked", false);
@@ -1112,7 +1114,7 @@ struct Kernel {
   void exits() {
     for (int i = (int)b.size() - 1; i >= 0; --i) {
       Body &q = b[i];
-      if (!q.exit_state.is_empty()) {
+      if (terminal(q)) {
         if (q.z > TERMINAL_FALL_FLOOR_Z)
           continue;
         String landed_outcome = q.exit_state == "tray_fall" ? String("tray") : String("gutter");
@@ -1155,6 +1157,7 @@ struct Kernel {
       if (outcome.is_empty())
         continue;
       q.exit_state = outcome + "_fall";
+      q.terminal_state = true;
       q.exit_start_tick = state.get("tick", 0);
       q.rest = "terminal_fall";
       q.falling = false;
@@ -1391,7 +1394,7 @@ struct Kernel {
         r["fall_start_z"] = q.fall_start_z;
       else
         r.erase("fall_start_z");
-      if (!q.exit_state.is_empty()) {
+      if (terminal(q)) {
         r["exit_state"] = q.exit_state;
         r["exit_start_tick"] = q.exit_start_tick;
       } else {
