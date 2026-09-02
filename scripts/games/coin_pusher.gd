@@ -244,7 +244,13 @@ func surface_action_command(surface_action: String, _index: int, _confirm_reques
 		if not forces.has(force):
 			return {"handled": false}
 		machine["nudge_force"] = force
-		_write_live_durable(run_state, environment, machine, false)
+		if str(machine.get("variation_id", "quarter_falls")) == "quarter_falls":
+			_write_live_durable(run_state, environment, machine, false, [
+				"motor_started", "cold_quarters_armed", "cold_quarters_density_armed",
+				"drop_queue", "action_count", "total_cost", "last_message",
+			])
+		else:
+			_write_live_durable(run_state, environment, machine, false)
 		return GameModule.surface_command({"handled": true, "environment_changed": true, "preserve_surface_ui_state": true, "surface_state_patch": _v3_headless_surface_state(machine, run_state, environment)}, true)
 	if surface_action.begins_with(NUDGE_DIRECTION_PREFIX):
 		var direction := surface_action.trim_prefix(NUDGE_DIRECTION_PREFIX)
@@ -585,7 +591,7 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 		deltas["messages"] = [str(machine["last_message"])]
 		var result := GameModule.build_owned_action_result({"source_id": get_id(), "game_id": get_id(), "action_id": DROP_ACTION, "action_kind": "legal", "stake": total_cost, "environment_id": str(environment.get("id", "")), "deltas": deltas, "message": str(machine["last_message"])})
 		result["host_apply_result"] = true
-		result["surface_action_view_patch"] = _surface_action_view_patch(machine, run_state, environment, _ui_state)
+		result["surface_action_view_patch"] = _drop_surface_action_view_patch(machine, run_state, environment, _ui_state)
 		result["preserve_surface_ui_state"] = true
 		return result
 	if action_id == NUDGE_ACTION:
@@ -1366,6 +1372,27 @@ func _surface_action_view_patch(machine: Dictionary, run_state: RunState, enviro
 	}
 
 
+func _drop_surface_action_view_patch(machine: Dictionary, run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
+	# A legal drop cannot alter these catalog/presentation values before the host
+	# applies its bankroll delta. Reuse the already-rendered values when present;
+	# the fallback preserves headless and direct-module callers exactly.
+	var simulation := _simulation(machine)
+	var tray: Array = simulation.get("tray_ledger", []) if typeof(simulation.get("tray_ledger", [])) == TYPE_ARRAY else []
+	return {
+		"surface_action_realtime_refresh_required": false,
+		"surface_action_catalog_key": ui_state["surface_action_catalog_key"] if ui_state.has("surface_action_catalog_key") else _surface_action_catalog_key(machine, run_state, environment, ui_state),
+		"surface_action_stake_view": ui_state["surface_action_stake_view"] if ui_state.has("surface_action_stake_view") else _surface_action_stake_view(run_state, environment),
+		"coin_pusher_action_count": int(machine.get("action_count", 0)),
+		"coin_pusher_last_message": str(machine.get("last_message", V3_HEADLESS_MESSAGE)),
+		"coin_pusher_goal": ui_state["coin_pusher_goal"] if ui_state.has("coin_pusher_goal") else _machine_goal_state(machine, simulation),
+		"coin_pusher_tray_count": tray.size(),
+		"coin_pusher_tray_value": _ledger_value(tray),
+		"coin_pusher_input_trace_count": (machine.get("live_session", {}).get("input_trace", []) as Array).size() if typeof(machine.get("live_session", {}).get("input_trace", [])) == TYPE_ARRAY else 0,
+		"native_selected_surface_actions": ui_state["native_selected_surface_actions"] if ui_state.has("native_selected_surface_actions") else _native_surface_actions(machine),
+		"surface_action_bindings": _coin_pusher_action_bindings(machine, simulation, tray, run_state, environment),
+	}
+
+
 func _surface_action_catalog_key(machine: Dictionary, run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> String:
 	# These are the exact dependencies of legal_actions()/cheat_actions().
 	# Body motion, carriage position, bankroll, and animation time do not alter
@@ -1430,7 +1457,7 @@ func _live_key(run_state: RunState, environment: Dictionary) -> String:
 	return "%s:%s" % [_environment_node_id(run_state, environment), transient_state_key_context()]
 
 
-func _write_live_durable(run_state: RunState, environment: Dictionary, live_machine: Dictionary, update_snapshot: bool) -> void:
+func _write_live_durable(run_state: RunState, environment: Dictionary, live_machine: Dictionary, update_snapshot: bool, changed_keys: Array = []) -> void:
 	if bool(live_machine.get("v2_migration_pending", false)):
 		live_machine.erase("v2_migration_pending")
 		live_machine["v2_migration_logged"] = true
@@ -1444,6 +1471,18 @@ func _write_live_durable(run_state: RunState, environment: Dictionary, live_mach
 	var game_states := _game_states(environment)
 	var existing_value: Variant = game_states.get(get_id(), {})
 	var durable: Dictionary = (existing_value as Dictionary).duplicate(false) if typeof(existing_value) == TYPE_DICTIONARY else {}
+	if not update_snapshot and not changed_keys.is_empty() and durable.has("settled_state"):
+		for changed_key_value in changed_keys:
+			var changed_key := str(changed_key_value)
+			if changed_key in ["simulation", "live_session", "settled_state"]:
+				continue
+			if not live_machine.has(changed_key):
+				durable.erase(changed_key)
+				continue
+			var changed_value: Variant = live_machine[changed_key]
+			durable[changed_key] = changed_value.duplicate(true) if typeof(changed_value) in [TYPE_DICTIONARY, TYPE_ARRAY] else changed_value
+		_write_machine_state(environment, durable)
+		return
 	for durable_key in durable.keys():
 		if durable_key != "settled_state" and not live_machine.has(durable_key):
 			durable.erase(durable_key)
