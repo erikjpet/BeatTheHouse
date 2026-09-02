@@ -7247,13 +7247,6 @@ func _refresh_run_action_service() -> void:
 	run_action_service.setup(library, run_state)
 
 
-func _main_menu_background_environment_id() -> String:
-	if not main_menu_background_environment.is_empty():
-		return str(main_menu_background_environment.get("id", ""))
-	main_menu_background_environment = _select_main_menu_background_environment()
-	return str(main_menu_background_environment.get("id", ""))
-
-
 func _select_main_menu_background_environment() -> Dictionary:
 	if library == null:
 		return {}
@@ -7273,7 +7266,10 @@ func _select_main_menu_background_environment() -> Dictionary:
 		if included_asset_paths.has(asset_path):
 			continue
 		included_asset_paths[asset_path] = true
-		candidates.append(data.duplicate(true))
+		# Content-library records are immutable. Retain candidate references and
+		# duplicate only the one selected room instead of cloning every authored
+		# environment during the cold start-menu build.
+		candidates.append(data)
 	if candidates.is_empty():
 		return {}
 	var rng := RandomNumberGenerator.new()
@@ -7285,7 +7281,10 @@ func _reroll_main_menu_background() -> void:
 	main_menu_background_environment = _select_main_menu_background_environment()
 	if main_menu_background == null or main_menu_background_environment.is_empty():
 		return
-	var background_snapshot := main_menu_background_environment.duplicate(true)
+	# render_environment_snapshot() takes its own deep canvas-local copy. This
+	# shell only adds top-level presentation fields, so a shallow working copy is
+	# sufficient and avoids cloning the selected room twice during startup.
+	var background_snapshot := main_menu_background_environment.duplicate(false)
 	background_snapshot["archetype_id"] = str(background_snapshot.get("id", ""))
 	background_snapshot["display_name"] = str(background_snapshot.get("display_name", background_snapshot.get("name", background_snapshot.get("id", ""))))
 	background_snapshot["reduce_motion"] = _reduce_motion_enabled()
@@ -7499,9 +7498,8 @@ func _ensure_main_menu_background_built() -> void:
 		return
 	main_menu_background = PixelSceneCanvasScript.new()
 	main_menu_background.set_anchors_preset(Control.PRESET_FULL_RECT)
-	var menu_environment_id := _main_menu_background_environment_id()
-	if not menu_environment_id.is_empty():
-		main_menu_background.set("environment_id", menu_environment_id)
+	# _reroll_main_menu_background() both selects and publishes the environment.
+	# Avoid the former select-then-discard pass that cloned every candidate twice.
 	_reroll_main_menu_background()
 	start_screen.add_child(main_menu_background)
 	# PixelSceneCanvas initializes itself as an interactive room. The decorative
