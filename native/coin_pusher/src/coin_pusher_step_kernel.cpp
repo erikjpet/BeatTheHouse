@@ -134,7 +134,7 @@ struct Body {
           id_number = 0, id_hash = 0;
   bool sleeping = false, carried = false, plate_blocked = false,
        pending_deposit = false, has_fall_start = false, peg_contact = false,
-       has_support_anchor = false;
+       has_support_anchor = false, id_numbered = false;
 };
 struct PresentationMotionBody {
   String id, support;
@@ -160,6 +160,12 @@ PackedInt64Array pack_presentation_bodies(const std::vector<Body> &source) {
 }
 bool z_overlap(const Body &l, const Body &r) {
   return l.z < r.z + r.h && r.z < l.z + l.h;
+}
+bool body_id_less(const Body &left, const Body &right) {
+  if (left.id_numbered && right.id_numbered &&
+      left.id_number != right.id_number)
+    return left.id_number < right.id_number;
+  return left.id < right.id;
 }
 void wake(Body &b) {
   if (b.sleeping)
@@ -287,6 +293,8 @@ struct Kernel {
       Body q;
       q.ref = r;
       q.id = r.get("id", "");
+      q.id_numbered = q.id.length() == 10 && q.id.begins_with("body_") &&
+                        q.id.substr(5).is_valid_int();
       q.id_number = q.id.trim_prefix("body_").to_int();
       q.id_hash = q.id.hash();
       q.kind = r.get("kind", "coin");
@@ -629,8 +637,8 @@ struct Kernel {
                     mn = b[i].r + b[j].r;
             if (dx * dx + dy * dy >= mn * mn)
               continue;
-            int lo = b[i].id <= b[j].id ? i : j,
-                hi = b[i].id <= b[j].id ? j : i;
+            int lo = body_id_less(b[j], b[i]) ? j : i,
+                hi = lo == i ? j : i;
             // Each body occupies exactly one grid cell and every neighbor cell
             // is visited once. The only duplicate is the reverse i/j traversal,
             // so canonical index order replaces the per-pass 65k-entry hash.
@@ -643,8 +651,9 @@ struct Kernel {
           }
     }
     std::sort(p.begin(), p.end(), [&](auto l, auto r) {
-      return b[l.first].id < b[r.first].id || (b[l.first].id == b[r.first].id &&
-                                               b[l.second].id < b[r.second].id);
+      return body_id_less(b[l.first], b[r.first]) ||
+             (b[l.first].id == b[r.first].id &&
+              body_id_less(b[l.second], b[r.second]));
     });
     return p;
   }
@@ -910,7 +919,7 @@ struct Kernel {
           }
       if (count) {
         std::sort(support_indices.begin(), support_indices.end(), [&](int left, int right) {
-          return b[left].id < b[right].id;
+          return body_id_less(b[left], b[right]);
         });
         stable |= centered || (xlo && xhi && ylo && yhi);
         if (!stable) {
@@ -1187,6 +1196,7 @@ struct Kernel {
     Body q;
     int64_t next_id = state.get("next_body_id", 1);
     q.id = String("body_") + String::num_int64(next_id).pad_zeros(5);
+    q.id_numbered = next_id >= 0 && next_id <= 99999;
     q.id_number = next_id;
     q.id_hash = q.id.hash();
     state["next_body_id"] = next_id + 1;
@@ -1282,6 +1292,8 @@ struct Kernel {
           Body q;
           q.ref = Dictionary();
           q.id = body_id;
+          q.id_numbered = q.id.length() == 10 && q.id.begins_with("body_") &&
+                            q.id.substr(5).is_valid_int();
           q.id_number = q.id.trim_prefix("body_").to_int();
           q.id_hash = q.id.hash();
           q.kind = in.get("body_kind", entry.get("kind", "coin"));
@@ -1429,8 +1441,8 @@ struct Kernel {
       int64_t newf = state.get("face_y", oldf), delta = newf - oldf;
       carry(oldf, newf, delta);
       face_push(oldf, newf, delta);
-      int64_t platform_work = std::max<int64_t>(0, energy() - before),
-              gravity_before = energy();
+      int64_t gravity_before = energy();
+      int64_t platform_work = std::max<int64_t>(0, gravity_before - before);
       integrate();
       int64_t gravity_work = std::max<int64_t>(0, energy() - gravity_before);
       int64_t peg_work = pegs();
