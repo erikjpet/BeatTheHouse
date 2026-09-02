@@ -1592,3 +1592,23 @@ below to jump to a row's history.
   `scripts/core/streets_run_model.gd.uid` is absent from the clean branch and
   exists only as pre-existing user state outside it, so this row will not delete
   or stage that user-owned file.
+
+- 2026-08-26 [pusherv3_11] P2: the shipped Coin Pusher definition and Quarter
+  Falls entry copy still say “two shelves,” contradicting the binding V3
+  one-platform model. Behavior is one-platform; route copy plus a content
+  regression to `fix06_7`, with no gameplay/tuning/economy scope.
+
+- 2026-08-26 [pusherv3_11] P2: retained Plan 9.4 `upper_row_join` evidence has
+  valid platform-rooted production drops and PNGs for all three machines but
+  empty `advanced_existing_body_ids`. Pre-pusherv3_10 evidence advanced 68
+  bodies per machine; pusherv3_10 made opening stock settled/full-width while
+  the capture preparation stayed unchanged. Route the stale fixture to
+  `fix06_8`; preserve its physical assertion and idle control, and classify a
+  corrected legal-path failure as product physics.
+
+- 2026-08-26 [pusherv3_11] P2: no maintained gate verifies shipped-cap Coin
+  Pusher Web frame/draw performance and idle liveness. Native performance covers
+  300 bodies; exact Web parity runs 40 opening bodies and proves logic equality,
+  not timing. `web_perf_smoke` has only `l02` and `grand_casino` plans. Route a
+  narrow fail-closed Web evidence plan to `fix06_9`; do not claim parity as
+  performance or use unrelated scenarios as a waiver.

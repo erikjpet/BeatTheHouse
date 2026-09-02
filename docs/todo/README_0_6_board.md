@@ -230,6 +230,9 @@ the owner's playtest is expected to change.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | fix06_1 | `../todone/fix06_1_dead_event_interactions_prompt.md` | DONE | env06_2, env06_3 (landed) | crew06_5+ inherit the class guard | Codex | 2026-08-14 | 2026-08-14 | Generic synthesized-speaker fix; 99-event audit shifted only 3 beach events; permanent generated-environment guard, systems/UI/all, determinism, and visual QA PASS. |
 | fix06_3 | `scratch_ticket_art_alignment_rca_and_fix_prompt.md` | BLOCKED | — (analysed 2026-08-11, deferred from 0.5 to 0.6) | game06_5 inherits a clean surface | Codex | 2026-08-25 | — | Six-ticket alignment, exact v8→v9 partial-progress migration, regenerated overlays, and GPU visual capture are complete; Phase 5 is blocked on the owner's Crossword Corner art/mechanics choice. |
+| fix06_7 | `fix06_7_coin_pusher_two_shelves_copy_prompt.md` | TODO | pusherv3_11 finding | pusherv3_11 closure | — | — | — | Replace only reachable rejected-V2 “two shelves” Coin Pusher copy with one-platform V3 wording and add a fail-closed content regression. No gameplay, tuning or economy change. |
+| fix06_8 | `fix06_8_coin_pusher_upper_row_join_fixture_prompt.md` | TODO | pusherv3_11 finding | pusherv3_11 closure | — | — | — | Repair the stale Plan 9.4 production capture fixture after pusherv3_10 settled/full-width opening stock. Preserve the neighbor-advancement assertion and no-drop control; reclassify as physics if a legal deterministic production path cannot prove it. |
+| fix06_9 | `fix06_9_coin_pusher_web_performance_evidence_prompt.md` | TODO | pusherv3_11 finding | pusherv3_11 closure | — | — | — | Add a maintained shipped-cap Web Coin Pusher frame/draw/idle-liveness evidence path. Exact native/Web parity is logic evidence, not a substitute for Web performance. |
 
 ### Archived rows — superseded or false premise
 

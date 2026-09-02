@@ -840,3 +840,16 @@ below to jump to a row's history.
   exact landed V3/fix base `59db0882`. Entangled source `554773c6` contains
   only a static HELD row, is 14 commits ahead and 62 behind this base, and is
   retained untouched as provenance; no source payload will be transplanted.
+
+- 2026-08-26 [pusherv3_11] Static audit routed two independent P2 rows instead
+  of rewriting the audited product: `fix06_7` owns reachable rejected-V2 “two
+  shelves” copy, and `fix06_8` owns the stale Plan 9.4 `upper_row_join`
+  production capture fixture. The latter preserves named existing-neighbor
+  advancement and the no-drop idle control; failure of a corrected legal path
+  must be reported as product physics, never hidden by a golden refresh.
+
+- 2026-08-26 [pusherv3_11] Routed `fix06_9` after confirming the maintained
+  native performance probe covers shipped-cap Coin Pusher, while Web performance
+  smoke exposes only `l02` and `grand_casino` plans and the parity export uses a
+  40-body logic trace. Parity is not frame/draw/liveness evidence; pusherv3_11
+  cannot close until a fresh shipped-cap Web gate exists and passes.
