@@ -66,8 +66,11 @@ var _world_back_y := SCHEMA_DEFAULT_BACK_Y
 var _coin_height := SCHEMA_DEFAULT_COIN_HEIGHT
 var _coin_radius := SCHEMA_DEFAULT_COIN_RADIUS
 var _perf_stage_samples: Dictionary = {}
-var _prepared_batch_key := ""
 var _prepared_batch: Dictionary = {}
+var _prepared_batch_static_key := ""
+var _prepared_batch_session_key := ""
+var _prepared_batch_view_serial := -1
+var _prepared_batch_alpha := -1.0
 
 
 func draw(surface, state: Dictionary) -> bool:
@@ -126,8 +129,7 @@ func performance_stage_counters() -> Dictionary:
 func prepare_render_state(state: Dictionary) -> void:
 	if str(state.get("surface_renderer", "")) != "coin_pusher":
 		return
-	var key := _native_batch_key(state)
-	if key == _prepared_batch_key:
+	if _prepared_batch_matches(state):
 		return
 	_configure_projection(state)
 	var cabinet := _cabinet(state)
@@ -137,8 +139,7 @@ func prepare_render_state(state: Dictionary) -> void:
 	var current_packed: PackedInt64Array = state.get("coin_pusher_current_packed", PackedInt64Array()) if typeof(state.get("coin_pusher_current_packed", PackedInt64Array())) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array()
 	var previous_packed: PackedInt64Array = state.get("coin_pusher_previous_packed", PackedInt64Array()) if typeof(state.get("coin_pusher_previous_packed", PackedInt64Array())) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array()
 	if current_packed.is_empty():
-		_prepared_batch_key = ""
-		_prepared_batch = {}
+		_clear_prepared_batch()
 		return
 	var alpha := 1.0 if bool(state.get("reduce_motion", false)) else clampf(float(state.get("coin_pusher_interpolation_alpha", 1.0)), 0.0, 1.0)
 	_prepared_batch = CoinPusherSolverAPI.native_live_render_batch_packed({
@@ -149,16 +150,31 @@ func prepare_render_state(state: Dictionary) -> void:
 		"board": _delivery_board(apparatus, geometry),
 		"body_colors": body_colors,
 	}, current_packed, previous_packed, alpha)
-	_prepared_batch_key = key if not _prepared_batch.is_empty() else ""
+	if _prepared_batch.is_empty():
+		_clear_prepared_batch()
+		return
+	_prepared_batch_static_key = str(state.get("coin_pusher_static_content_key", ""))
+	_prepared_batch_session_key = str(state.get("coin_pusher_presentation_session_key", ""))
+	_prepared_batch_view_serial = int(state.get("coin_pusher_presentation_view_serial", -1))
+	_prepared_batch_alpha = alpha
 
 
-func _native_batch_key(state: Dictionary) -> String:
-	return "%s|%s|%d|%.6f" % [
-		str(state.get("coin_pusher_static_content_key", "")),
-		str(state.get("coin_pusher_presentation_session_key", "")),
-		int(state.get("coin_pusher_presentation_view_serial", -1)),
-		1.0 if bool(state.get("reduce_motion", false)) else clampf(float(state.get("coin_pusher_interpolation_alpha", 1.0)), 0.0, 1.0),
-	]
+func _prepared_batch_matches(state: Dictionary) -> bool:
+	if _prepared_batch.is_empty():
+		return false
+	var alpha := 1.0 if bool(state.get("reduce_motion", false)) else clampf(float(state.get("coin_pusher_interpolation_alpha", 1.0)), 0.0, 1.0)
+	return _prepared_batch_static_key == str(state.get("coin_pusher_static_content_key", "")) \
+		and _prepared_batch_session_key == str(state.get("coin_pusher_presentation_session_key", "")) \
+		and _prepared_batch_view_serial == int(state.get("coin_pusher_presentation_view_serial", -1)) \
+		and _prepared_batch_alpha == alpha
+
+
+func _clear_prepared_batch() -> void:
+	_prepared_batch = {}
+	_prepared_batch_static_key = ""
+	_prepared_batch_session_key = ""
+	_prepared_batch_view_serial = -1
+	_prepared_batch_alpha = -1.0
 
 
 func _capture_perf_stage(stage_id: String, started_usec: int, enabled: bool) -> int:
@@ -582,7 +598,7 @@ func _draw_interpolated_bodies(surface, state: Dictionary, colors: Dictionary, c
 
 
 func _draw_native_interpolated_bodies(surface, state: Dictionary, cabinet: Dictionary, current: Array, previous: Array, alpha: float) -> bool:
-	var batch := _prepared_batch if _native_batch_key(state) == _prepared_batch_key else {}
+	var batch := _prepared_batch if _prepared_batch_matches(state) else {}
 	if batch.is_empty():
 		var geometry: Dictionary = state.get("coin_pusher_geometry", {}) if typeof(state.get("coin_pusher_geometry", {})) == TYPE_DICTIONARY else {}
 		var apparatus: Dictionary = state.get("coin_pusher_apparatus", {}) if typeof(state.get("coin_pusher_apparatus", {})) == TYPE_DICTIONARY else {}
