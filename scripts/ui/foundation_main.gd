@@ -311,6 +311,7 @@ var environment_runtime_active_keys_scratch: Dictionary = {}
 var environment_runtime_scheduler = EnvironmentRuntimeSchedulerScript.new()
 var environment_runtime_last_timing_usec: Dictionary = {}
 var last_game_surface_realtime_refresh_msec := 0
+var last_game_surface_realtime_work_frame := -1
 var surface_feature_music_active := false
 var surface_feature_music_ducking := false
 var drunk_time_anchor_real_msec := 0
@@ -2069,6 +2070,7 @@ func _advance_game_surface_realtime_state() -> void:
 	if last_game_surface_realtime_refresh_msec > 0 and now_msec - last_game_surface_realtime_refresh_msec < GAME_SURFACE_REALTIME_REFRESH_INTERVAL_MSEC:
 		return
 	last_game_surface_realtime_refresh_msec = now_msec
+	last_game_surface_realtime_work_frame = Engine.get_process_frames()
 	var patch := _game_surface_realtime_state_patch(now_msec)
 	if patch.is_empty():
 		return
@@ -2721,6 +2723,7 @@ func _reset_game_surface_runtime_state(checkpoint_source: bool = true) -> void:
 	game_surface_ui_state = {}
 	game_surface_auto_resolving = false
 	last_game_surface_realtime_refresh_msec = 0
+	last_game_surface_realtime_work_frame = -1
 	_reset_drunk_time_surface_clock()
 
 
@@ -9150,10 +9153,21 @@ func _schedule_deferred_embedded_secondary_refresh() -> void:
 	call_deferred("_refresh_deferred_embedded_hud_after_frame", generation, run_state, current_game, run_state.current_environment, last_game_result, game_surface_canvas, game_surface_session_generation)
 
 
-func _refresh_deferred_embedded_hud_after_frame(generation: int, expected_run: RunState, expected_game: GameModule, expected_environment: Dictionary, expected_result: Dictionary, expected_canvas: Control, expected_session_generation: int) -> void:
+func _await_deferred_embedded_quiet_frame(max_wait_frames: int = 3) -> void:
 	var tree := get_tree()
-	if tree != null:
+	if tree == null:
+		return
+	# A realtime physical surface has intermittent frames where its authoritative
+	# interval is not due. Prefer those frames for secondary labels/layout, while
+	# retaining a hard bound so a continuously due surface cannot delay feedback.
+	for _frame_index in range(maxi(1, max_wait_frames)):
 		await tree.process_frame
+		if last_game_surface_realtime_work_frame != Engine.get_process_frames():
+			return
+
+
+func _refresh_deferred_embedded_hud_after_frame(generation: int, expected_run: RunState, expected_game: GameModule, expected_environment: Dictionary, expected_result: Dictionary, expected_canvas: Control, expected_session_generation: int) -> void:
+	await _await_deferred_embedded_quiet_frame()
 	if not _deferred_embedded_secondary_identity_is_current(generation, expected_run, expected_game, expected_environment, expected_result, expected_canvas, expected_session_generation):
 		return
 	var started_usec := Time.get_ticks_usec()
@@ -9168,9 +9182,7 @@ func _refresh_deferred_embedded_hud_after_frame(generation: int, expected_run: R
 
 
 func _apply_deferred_embedded_hud_after_frame(generation: int, expected_run: RunState, expected_game: GameModule, expected_environment: Dictionary, expected_result: Dictionary, expected_canvas: Control, expected_session_generation: int, hud_model: Dictionary) -> void:
-	var tree := get_tree()
-	if tree != null:
-		await tree.process_frame
+	await _await_deferred_embedded_quiet_frame()
 	if not _deferred_embedded_secondary_identity_is_current(generation, expected_run, expected_game, expected_environment, expected_result, expected_canvas, expected_session_generation):
 		return
 	var started_usec := Time.get_ticks_usec()
@@ -9185,9 +9197,7 @@ func _apply_deferred_embedded_hud_after_frame(generation: int, expected_run: Run
 
 
 func _apply_deferred_embedded_objective_after_frame(generation: int, expected_run: RunState, expected_game: GameModule, expected_environment: Dictionary, expected_result: Dictionary, expected_canvas: Control, expected_session_generation: int, hud_model: Dictionary) -> void:
-	var tree := get_tree()
-	if tree != null:
-		await tree.process_frame
+	await _await_deferred_embedded_quiet_frame()
 	if not _deferred_embedded_secondary_identity_is_current(generation, expected_run, expected_game, expected_environment, expected_result, expected_canvas, expected_session_generation):
 		return
 	var started_usec := Time.get_ticks_usec()
@@ -9202,9 +9212,7 @@ func _apply_deferred_embedded_objective_after_frame(generation: int, expected_ru
 
 
 func _apply_deferred_embedded_structured_hud_after_frame(generation: int, expected_run: RunState, expected_game: GameModule, expected_environment: Dictionary, expected_result: Dictionary, expected_canvas: Control, expected_session_generation: int, hud_model: Dictionary) -> void:
-	var tree := get_tree()
-	if tree != null:
-		await tree.process_frame
+	await _await_deferred_embedded_quiet_frame()
 	if not _deferred_embedded_secondary_identity_is_current(generation, expected_run, expected_game, expected_environment, expected_result, expected_canvas, expected_session_generation):
 		return
 	var started_usec := Time.get_ticks_usec()
@@ -9219,9 +9227,7 @@ func _apply_deferred_embedded_structured_hud_after_frame(generation: int, expect
 
 
 func _finish_deferred_embedded_hud_after_frame(generation: int, expected_run: RunState, expected_game: GameModule, expected_environment: Dictionary, expected_result: Dictionary, expected_canvas: Control, expected_session_generation: int, hud_model: Dictionary) -> void:
-	var tree := get_tree()
-	if tree != null:
-		await tree.process_frame
+	await _await_deferred_embedded_quiet_frame()
 	if not _deferred_embedded_secondary_identity_is_current(generation, expected_run, expected_game, expected_environment, expected_result, expected_canvas, expected_session_generation):
 		return
 	var started_usec := Time.get_ticks_usec()
@@ -9238,9 +9244,7 @@ func _finish_deferred_embedded_hud_after_frame(generation: int, expected_run: Ru
 
 
 func _refresh_deferred_embedded_talk_after_frame(generation: int, expected_run: RunState, expected_game: GameModule, expected_environment: Dictionary, expected_result: Dictionary, expected_canvas: Control, expected_session_generation: int) -> void:
-	var tree := get_tree()
-	if tree != null:
-		await tree.process_frame
+	await _await_deferred_embedded_quiet_frame()
 	if not _deferred_embedded_secondary_identity_is_current(generation, expected_run, expected_game, expected_environment, expected_result, expected_canvas, expected_session_generation):
 		return
 	var started_usec := Time.get_ticks_usec()
@@ -10886,7 +10890,7 @@ func _refresh_after_deferred_embedded_action_frame(generation: int, embeds_resul
 		return
 	# call_deferred alone can run in the current idle cycle. This barrier ensures
 	# the solver result frame has returned before its complete presentation begins.
-	await tree.process_frame
+	await _await_deferred_embedded_quiet_frame()
 	if generation != deferred_embedded_refresh_generation or not deferred_embedded_refresh_pending:
 		deferred_embedded_refresh_stale_count += 1
 		return
