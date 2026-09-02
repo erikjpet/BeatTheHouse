@@ -1261,12 +1261,14 @@ func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, size), C_DARK)
 	_scale_canvas()
 	var board_size := _active_board_size()
-	draw_rect(Rect2(Vector2.ZERO, board_size), C_DARK)
-	if use_external_background and background_texture != null:
-		draw_texture_rect(background_texture, Rect2(Vector2.ZERO, board_size), false)
-	else:
-		for y in range(0, int(ceil(board_size.y)), 16):
-			draw_rect(Rect2(0, y, board_size.x, 16), C_DARK_2 if (y / 16) % 2 == 0 else C_PANEL)
+	var renderer_owns_board_background := uses_foundation_snapshot and bool(state.get("surface_renderer_opaque", false))
+	if not renderer_owns_board_background:
+		draw_rect(Rect2(Vector2.ZERO, board_size), C_DARK)
+		if use_external_background and background_texture != null:
+			draw_texture_rect(background_texture, Rect2(Vector2.ZERO, board_size), false)
+		else:
+			for y in range(0, int(ceil(board_size.y)), 16):
+				draw_rect(Rect2(0, y, board_size.x, 16), C_DARK_2 if (y / 16) % 2 == 0 else C_PANEL)
 	var rendered := false
 	if surface_game_module != null and uses_foundation_snapshot:
 		rendered = bool(surface_game_module.draw_surface(self, state, {

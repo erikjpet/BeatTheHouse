@@ -1134,6 +1134,7 @@ func _v3_headless_surface_state(machine: Dictionary, run_state: RunState = null,
 		session["presentation_binding_signature"] = _realtime_binding_signature(machine, simulation, tray)
 	return GameModule.surface_spec({
 		"surface_renderer": "coin_pusher",
+		"surface_renderer_opaque": true,
 		"surface_life": "coin_pusher_v3_alive_cabinet",
 		"surface_cast": "machine",
 		"surface_controls_native": true,
