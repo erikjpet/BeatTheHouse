@@ -3837,6 +3837,13 @@
               "stable_object_id": "cooler_circuit"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "corner_store_dead_shift_cleanup_exit_visual",
+              "stable_object_id": "corner_store_dead_shift_exit"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
@@ -4183,7 +4190,7 @@
                     "role": "primary_task",
                     "state": "arrival",
                     "visible": true,
-                    "zone_id": "left"
+                    "zone_id": "foreground"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -4209,6 +4216,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_dead_shift_arrival_b",
                   "stable_object_id": "cooler_circuit"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 72.0
+                    },
+                    "enabled": true,
+                    "label": "Marked Clear Exit",
+                    "role": "exit",
+                    "state": "clear",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "corner_store_dead_shift_exit_visual",
+                  "stable_object_id": "corner_store_dead_shift_exit"
                 }
               ],
               "transition_ops": [
@@ -4455,7 +4482,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "54df9422c239d8577b7eb5f8b55d721d4ff30325095dded6bbec68e27671bfa0"
+        "sequence_signature": "e34d9bc2dbde9aa9ed330cd42ab7889106f5307bdf3959fa69361f68ed5ffb65"
       }
     },
     {
@@ -4792,6 +4819,13 @@
               "stable_object_id": "discrepancy_shelf"
             },
             {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "corner_store_inventory_night_cleanup_exit_visual",
+              "stable_object_id": "corner_store_inventory_night_exit"
+            },
+            {
               "family": "interaction_ops",
               "op": "remove",
               "owner_namespace": "scenario",
@@ -4835,7 +4869,9 @@
         },
         "declared_targets": {
           "actors": [],
-          "anchors": [],
+          "anchors": [
+            "base::anchor:delivery_manifest"
+          ],
           "games": [],
           "interactions": [],
           "routes": [],
@@ -5128,6 +5164,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
+                    "anchor_id": "delivery_manifest",
                     "appearance": "count_cage",
                     "bounds": {
                       "h": 56.0,
@@ -5137,8 +5174,7 @@
                     "label": "Count Cage",
                     "role": "primary_task",
                     "state": "arrival",
-                    "visible": true,
-                    "zone_id": "left"
+                    "visible": true
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -5164,6 +5200,26 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_inventory_night_arrival_b",
                   "stable_object_id": "discrepancy_shelf"
+                },
+                {
+                  "family": "scene_ops",
+                  "object": {
+                    "appearance": "marked_lane",
+                    "bounds": {
+                      "h": 56.0,
+                      "w": 72.0
+                    },
+                    "enabled": true,
+                    "label": "Marked Clear Exit",
+                    "role": "exit",
+                    "state": "clear",
+                    "visible": true,
+                    "zone_id": "exit_lane"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "corner_store_inventory_night_exit_visual",
+                  "stable_object_id": "corner_store_inventory_night_exit"
                 }
               ],
               "transition_ops": [
@@ -5410,7 +5466,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "d6100f9379c242e203bf3234450c152c58c00c5cc08ae31de356941b622b1f7d"
+        "sequence_signature": "0bc6002f33d102a803510ef597547a2175df461f197afd030626d2f514ee1363"
       }
     },
     {
