@@ -1170,7 +1170,7 @@ func _v3_headless_surface_state(machine: Dictionary, run_state: RunState = null,
 		body_views = CoinPusherSolverScript.body_views(simulation)
 	var variation_id := str(machine.get("variation_id", _variation_id()))
 	var feature_kind := "rider" if variation_id == "quarter_falls" else "puck" if variation_id == "jackpot_ridge" else "fragment"
-	var feature_views := _feature_views(machine, feature_kind)
+	var feature_views := _feature_views(simulation, feature_kind)
 	var variation_state := _variation_state(machine)
 	var vault_views: Dictionary = VaultDropScript.views(variation_state) if variation_id == "vault_drop" else {}
 	var feature_hardware := _feature_hardware_descriptor_for_session(machine, vault_views, session)
@@ -2227,9 +2227,9 @@ func _opening_feature_support(simulation: Dictionary, requested_x: int, requeste
 	return {}
 
 
-func _feature_views(machine: Dictionary, kind: String) -> Array:
+func _feature_views(simulation: Dictionary, kind: String) -> Array:
 	var result: Array = []
-	for body_value in CoinPusherSolverScript.body_views(_simulation(machine)):
+	for body_value in CoinPusherSolverScript.body_views(simulation):
 		if typeof(body_value) != TYPE_DICTIONARY or str((body_value as Dictionary).get("kind", "")) != kind:
 			continue
 		var body: Dictionary = body_value
