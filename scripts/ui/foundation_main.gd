@@ -2065,11 +2065,7 @@ func _advance_game_surface_realtime_state() -> void:
 	if not game_surface_canvas.surface_realtime_state_refresh_enabled():
 		return
 	var now_msec := _environment_simulation_time_msec()
-	var refresh_interval_msec := maxi(
-		GAME_SURFACE_REALTIME_REFRESH_INTERVAL_MSEC,
-		current_game.surface_realtime_refresh_interval_msec()
-	)
-	if last_game_surface_realtime_refresh_msec > 0 and now_msec - last_game_surface_realtime_refresh_msec < refresh_interval_msec:
+	if last_game_surface_realtime_refresh_msec > 0 and now_msec - last_game_surface_realtime_refresh_msec < GAME_SURFACE_REALTIME_REFRESH_INTERVAL_MSEC:
 		return
 	last_game_surface_realtime_refresh_msec = now_msec
 	var patch := _game_surface_realtime_state_patch(now_msec)

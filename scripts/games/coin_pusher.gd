@@ -723,13 +723,6 @@ func surface_realtime_patch_preserves_host_state() -> bool:
 	return true
 
 
-func surface_realtime_refresh_interval_msec() -> int:
-	# The solver still advances every fixed 60 Hz tick. On Web, batching two ticks
-	# per host projection leaves more of the frame for input and drawing while the
-	# live session catches up deterministically from its authoritative clock.
-	return 32
-
-
 func checkpoint_surface_ui_state(_ui_state: Dictionary, _run_state: RunState, environment: Dictionary) -> void:
 	var key := _live_key(_run_state, environment)
 	if not _live_machines.has(key):
