@@ -16,6 +16,7 @@ const EXPECTED_IDS := [
 ]
 var _library: Variant = null
 var _composition_cache: Dictionary = {}
+var _reported_round_trip_drift := false
 
 
 func _initialize() -> void:
@@ -226,7 +227,11 @@ func _check_lifecycle_rollback_observers(scenario_id: String, definition: Dictio
 	hidden_b["command_fingerprints"] = {"private": "b"}
 	if Runtime.content_fingerprint(Runtime.public_projection(hidden_a, definition)) != Runtime.content_fingerprint(Runtime.public_projection(hidden_b, definition)): failures.append("%s paired hidden-state observers diverged." % scenario_id)
 	var native_round_trip: Variant = JSON.parse_string(JSON.stringify(projection))
-	if Runtime.content_fingerprint(projection) != Runtime.content_fingerprint(native_round_trip): failures.append("%s native/Web canonical projection parity drifted." % scenario_id)
+	if Runtime.content_fingerprint(projection) != Runtime.content_fingerprint(native_round_trip):
+		if not _reported_round_trip_drift:
+			_report_first_drift(projection, native_round_trip, "projection")
+			_reported_round_trip_drift = true
+		failures.append("%s native/Web canonical projection parity drifted." % scenario_id)
 	var normal := Runtime.drain_transitions(initial, definition, false)
 	var reduced := Runtime.drain_transitions(initial, definition, true)
 	if not bool(normal.get("ok", false)) or not bool(reduced.get("ok", false)) or (normal.get("transitions", []) as Array).size() != (reduced.get("transitions", []) as Array).size(): failures.append("%s transition liveness/reduced-motion parity failed." % scenario_id)
@@ -238,7 +243,47 @@ func _round_trip(state_value: Variant, definition: Dictionary, host: Dictionary)
 	if typeof(state_value) != TYPE_DICTIONARY: return false
 	var state := state_value as Dictionary
 	var restored := Runtime.normalize_state(JSON.parse_string(JSON.stringify(state)), definition, host)
-	return Runtime.content_fingerprint(restored) == Runtime.content_fingerprint(state) and Runtime.content_fingerprint(Runtime.public_projection(restored, definition)) == Runtime.content_fingerprint(Runtime.public_projection(state, definition))
+	var state_matches := Runtime.content_fingerprint(restored) == Runtime.content_fingerprint(state)
+	var projection_matches := Runtime.content_fingerprint(Runtime.public_projection(restored, definition)) == Runtime.content_fingerprint(Runtime.public_projection(state, definition))
+	if not state_matches and not _reported_round_trip_drift:
+		_report_first_drift(state, restored, "state")
+		_reported_round_trip_drift = true
+	return state_matches and projection_matches
+
+
+func _report_first_drift(before: Variant, after: Variant, path: String) -> bool:
+	if typeof(before) != typeof(after):
+		print("ENV06_7_PACKAGE_B_ROUND_TRIP_DRIFT %s type %s -> %s value %s -> %s" % [path, type_string(typeof(before)), type_string(typeof(after)), str(before), str(after)])
+		return true
+	if typeof(before) == TYPE_DICTIONARY:
+		var before_dict := before as Dictionary
+		var after_dict := after as Dictionary
+		for key_value in before_dict.keys():
+			var key := str(key_value)
+			if not after_dict.has(key):
+				print("ENV06_7_PACKAGE_B_ROUND_TRIP_DRIFT %s.%s missing after restore; before=%s" % [path, key, JSON.stringify(before_dict.get(key_value))])
+				return true
+			if _report_first_drift(before_dict.get(key_value), after_dict.get(key), "%s.%s" % [path, key]):
+				return true
+		for key_value in after_dict.keys():
+			if not before_dict.has(key_value):
+				print("ENV06_7_PACKAGE_B_ROUND_TRIP_DRIFT %s.%s added after restore" % [path, str(key_value)])
+				return true
+		return false
+	if typeof(before) == TYPE_ARRAY:
+		var before_array := before as Array
+		var after_array := after as Array
+		if before_array.size() != after_array.size():
+			print("ENV06_7_PACKAGE_B_ROUND_TRIP_DRIFT %s size %d -> %d" % [path, before_array.size(), after_array.size()])
+			return true
+		for index in range(before_array.size()):
+			if _report_first_drift(before_array[index], after_array[index], "%s[%d]" % [path, index]):
+				return true
+		return false
+	if before != after:
+		print("ENV06_7_PACKAGE_B_ROUND_TRIP_DRIFT %s value %s -> %s" % [path, str(before), str(after)])
+		return true
+	return false
 
 
 func _runtime_command(state: Dictionary, definition: Dictionary, command_id: String, receipt_id: String) -> Dictionary:

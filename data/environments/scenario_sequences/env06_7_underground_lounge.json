@@ -39,17 +39,17 @@
           ]
         },
         "seed_evidence": {
-          "identity_decision_phase": "arrival",
-          "identity_decision_verbs": [
-            "manage_open_mic_bill",
-            "support_waiting_comic",
-            "sabotage_open_mic"
-          ],
           "expected_outcomes": [
             "late_show_running",
             "bill_reordered",
             "show_refused",
             "show_interrupted"
+          ],
+          "identity_decision_phase": "arrival",
+          "identity_decision_verbs": [
+            "manage_open_mic_bill",
+            "support_waiting_comic",
+            "sabotage_open_mic"
           ],
           "minimum_target_size": 44.0,
           "proof_seed": "punchline_open_mic_night_seed",
@@ -853,12 +853,12 @@
               ],
               "scene_ops": [
                 {
+                  "anchor_id": "punchline_open_mic_signup",
                   "family": "scene_ops",
                   "op": "move",
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_open_mic_night_signup_reorder_move",
-                  "stable_object_id": "punchline_open_mic_night_signup_lectern",
-                  "anchor_id": "punchline_open_mic_signup"
+                  "stable_object_id": "punchline_open_mic_night_signup_lectern"
                 }
               ],
               "transition_ops": [
@@ -876,12 +876,12 @@
             {
               "actor_ops": [
                 {
+                  "anchor_id": "punchline_open_mic_waiting_comic",
                   "family": "actor_ops",
                   "op": "set_position",
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_open_mic_night_steps_move_position",
-                  "stable_object_id": "punchline_open_mic_night_waiting_comic",
-                  "anchor_id": "punchline_open_mic_waiting_comic"
+                  "stable_object_id": "punchline_open_mic_night_waiting_comic"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -1355,7 +1355,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "b81ed64aa6fa85ae83b0befed4a377d926b34dc7b95f1b5580b26e1ba323ece0"
+        "sequence_signature": "0a7c24d326645f4a9cf003068a94e56f27a7d92e16eb55b026e08e24dd37babd"
       }
     },
     {
@@ -1394,17 +1394,17 @@
           ]
         },
         "seed_evidence": {
-          "identity_decision_phase": "work_1",
-          "identity_decision_verbs": [
-            "honor_headliner_route",
-            "escort_headliner_direct",
-            "divert_headliner_runner"
-          ],
           "expected_outcomes": [
             "headliner_reached",
             "runner_diverted",
             "credential_refused",
             "arrival_interrupted"
+          ],
+          "identity_decision_phase": "work_1",
+          "identity_decision_verbs": [
+            "honor_headliner_route",
+            "escort_headliner_direct",
+            "divert_headliner_runner"
           ],
           "minimum_target_size": 44.0,
           "proof_seed": "punchline_headliner_night_seed",
@@ -2228,12 +2228,12 @@
               ],
               "scene_ops": [
                 {
+                  "anchor_id": "punchline_headliner_credential_rope",
                   "family": "scene_ops",
                   "op": "move",
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_headliner_night_credential_turn_move",
-                  "stable_object_id": "punchline_headliner_night_credential_rope",
-                  "anchor_id": "punchline_headliner_credential_rope"
+                  "stable_object_id": "punchline_headliner_night_credential_rope"
                 }
               ],
               "transition_ops": [
@@ -2251,12 +2251,12 @@
             {
               "actor_ops": [
                 {
+                  "anchor_id": "punchline_headliner_door_guard",
                   "family": "actor_ops",
                   "op": "set_position",
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_headliner_night_case_transfer_position",
-                  "stable_object_id": "punchline_headliner_night_door_guard",
-                  "anchor_id": "punchline_headliner_door_guard"
+                  "stable_object_id": "punchline_headliner_night_door_guard"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -2898,7 +2898,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "1f7577916a11ccc80591f43045b2678f5e5fe86b115ca06dd3f4815888b7b485"
+        "sequence_signature": "e71d9af24ce087ab9a210a4fbe4a4fb79d6584fcc9145de337fff85827f43ef2"
       }
     },
     {
@@ -2936,17 +2936,17 @@
           ]
         },
         "seed_evidence": {
-          "identity_decision_phase": "work_1",
-          "identity_decision_verbs": [
-            "seat_bringer_supporters",
-            "defend_bringer_minimum",
-            "accept_hostile_pitch"
-          ],
           "expected_outcomes": [
             "show_seated",
             "hostile_pitch",
             "ushering_refused",
             "crowd_interrupted"
+          ],
+          "identity_decision_phase": "work_1",
+          "identity_decision_verbs": [
+            "seat_bringer_supporters",
+            "defend_bringer_minimum",
+            "accept_hostile_pitch"
           ],
           "minimum_target_size": 44.0,
           "proof_seed": "punchline_bringer_show_seed",
@@ -3750,12 +3750,12 @@
               ],
               "scene_ops": [
                 {
+                  "anchor_id": "punchline_bringer_crowd_ropes",
                   "family": "scene_ops",
                   "op": "move",
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_bringer_show_rope_open_move",
-                  "stable_object_id": "punchline_bringer_show_crowd_ropes",
-                  "anchor_id": "punchline_bringer_crowd_ropes"
+                  "stable_object_id": "punchline_bringer_show_crowd_ropes"
                 }
               ],
               "transition_ops": [
@@ -3773,12 +3773,12 @@
             {
               "actor_ops": [
                 {
+                  "anchor_id": "punchline_bringer_crowd_captain",
                   "family": "actor_ops",
                   "op": "set_position",
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_bringer_show_crowd_move_position",
-                  "stable_object_id": "punchline_bringer_show_crowd_captain",
-                  "anchor_id": "punchline_bringer_crowd_captain"
+                  "stable_object_id": "punchline_bringer_show_crowd_captain"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -4252,7 +4252,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "5c4c43d8c274f489064b7a48e514b71034d1197efbbc7b7ded5d047430033842"
+        "sequence_signature": "fd7ff6092d6cb914e393ba06b85ef4bb7cdc8b200902743626c9768bdaf11db8"
       }
     },
     {
@@ -4290,17 +4290,17 @@
           ]
         },
         "seed_evidence": {
-          "identity_decision_phase": "work_2",
-          "identity_decision_verbs": [
-            "serve_protected_table",
-            "open_public_observer_rail",
-            "seal_public_game_lane"
-          ],
           "expected_outcomes": [
             "public_lane_restored",
             "floor_remains_protected",
             "service_refused",
             "session_interrupted"
+          ],
+          "identity_decision_phase": "work_2",
+          "identity_decision_verbs": [
+            "serve_protected_table",
+            "open_public_observer_rail",
+            "seal_public_game_lane"
           ],
           "minimum_target_size": 44.0,
           "proof_seed": "punchline_high_stakes_night_seed",
@@ -5061,12 +5061,12 @@
               ],
               "scene_ops": [
                 {
+                  "anchor_id": "punchline_high_stakes_protected_table",
                   "family": "scene_ops",
                   "op": "move",
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_high_stakes_night_chair_stack_move",
-                  "stable_object_id": "punchline_high_stakes_night_protected_table",
-                  "anchor_id": "punchline_high_stakes_protected_table"
+                  "stable_object_id": "punchline_high_stakes_night_protected_table"
                 }
               ],
               "transition_ops": [
@@ -5084,12 +5084,12 @@
             {
               "actor_ops": [
                 {
+                  "anchor_id": "punchline_high_stakes_floor_runner",
                   "family": "actor_ops",
                   "op": "set_position",
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_high_stakes_night_guard_turn_position",
-                  "stable_object_id": "punchline_high_stakes_night_floor_service_runner",
-                  "anchor_id": "punchline_high_stakes_floor_runner"
+                  "stable_object_id": "punchline_high_stakes_night_floor_service_runner"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -5624,7 +5624,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "cc7c31329595794270208271a28482a66fe6c9e92211052471f3d89290a69f2e"
+        "sequence_signature": "cf959fe1413e0b3efb06f625f1b561e23fd8195e5815cc05dd1cb6c8c49b5824"
       }
     },
     {
@@ -5663,17 +5663,17 @@
           ]
         },
         "seed_evidence": {
-          "identity_decision_phase": "work_1",
-          "identity_decision_verbs": [
-            "expose_payoff_chain",
-            "maintain_payoff_route",
-            "redirect_inspector_route"
-          ],
           "expected_outcomes": [
             "chain_exposed",
             "payoff_maintained",
             "route_refused",
             "inspection_interrupted"
+          ],
+          "identity_decision_phase": "work_1",
+          "identity_decision_verbs": [
+            "expose_payoff_chain",
+            "maintain_payoff_route",
+            "redirect_inspector_route"
           ],
           "minimum_target_size": 44.0,
           "proof_seed": "punchline_greased_week_seed",
@@ -6497,12 +6497,12 @@
               ],
               "scene_ops": [
                 {
+                  "anchor_id": "punchline_greased_inspection_seals",
                   "family": "scene_ops",
                   "op": "move",
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_greased_week_seal_read_move",
-                  "stable_object_id": "punchline_greased_week_inspection_seals",
-                  "anchor_id": "punchline_greased_inspection_seals"
+                  "stable_object_id": "punchline_greased_week_inspection_seals"
                 }
               ],
               "transition_ops": [
@@ -6520,12 +6520,12 @@
             {
               "actor_ops": [
                 {
+                  "anchor_id": "punchline_greased_payoff_runner",
                   "family": "actor_ops",
                   "op": "set_position",
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_greased_week_ledger_move_position",
-                  "stable_object_id": "punchline_greased_week_payoff_runner",
-                  "anchor_id": "punchline_greased_payoff_runner"
+                  "stable_object_id": "punchline_greased_week_payoff_runner"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -7167,7 +7167,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "b29d16acf24e2174cd6e7dd1db73c4cf108bc51fdc2233147854074212100ea7"
+        "sequence_signature": "df7c893e775943281f513d036290aea37eb107ef3bc89f7b39b740d4ad8dfc57"
       }
     },
     {
@@ -7205,17 +7205,17 @@
           ]
         },
         "seed_evidence": {
-          "identity_decision_phase": "work_2",
-          "identity_decision_verbs": [
-            "uphold_debt_ruling",
-            "contest_debt_ruling",
-            "adjourn_debt_court"
-          ],
           "expected_outcomes": [
             "room_returns_ordered",
             "ruling_contested",
             "hearing_refused",
             "poker_boundary_interrupted"
+          ],
+          "identity_decision_phase": "work_2",
+          "identity_decision_verbs": [
+            "uphold_debt_ruling",
+            "contest_debt_ruling",
+            "adjourn_debt_court"
           ],
           "minimum_target_size": 44.0,
           "proof_seed": "punchline_debt_court_seed",
@@ -7976,12 +7976,12 @@
               ],
               "scene_ops": [
                 {
+                  "anchor_id": "punchline_debt_hearing_chairs",
                   "family": "scene_ops",
                   "op": "move",
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_debt_court_aisle_form_move",
-                  "stable_object_id": "punchline_debt_court_hearing_chairs",
-                  "anchor_id": "punchline_debt_hearing_chairs"
+                  "stable_object_id": "punchline_debt_court_hearing_chairs"
                 }
               ],
               "transition_ops": [
@@ -7999,12 +7999,12 @@
             {
               "actor_ops": [
                 {
+                  "anchor_id": "punchline_debt_room_witness",
                   "family": "actor_ops",
                   "op": "set_position",
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_debt_court_evidence_place_position",
-                  "stable_object_id": "punchline_debt_court_room_witness",
-                  "anchor_id": "punchline_debt_room_witness"
+                  "stable_object_id": "punchline_debt_court_room_witness"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -8539,7 +8539,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "628d1bb7e9d8837aad6bd4aa9fbfcb3793792356eca46aed7117ffae46e2dae9"
+        "sequence_signature": "63f88e92663f18978802aacc6909051ba7a3c7cdd5bfdb14908877d9218a1bc2"
       }
     },
     {
@@ -8578,17 +8578,17 @@
           ]
         },
         "seed_evidence": {
-          "identity_decision_phase": "arrival",
-          "identity_decision_verbs": [
-            "train_new_guard_posts",
-            "test_guard_loyalty",
-            "entrench_checkpoint_posts"
-          ],
           "expected_outcomes": [
             "posts_reassigned",
             "checkpoint_entrenched",
             "test_refused",
             "checkpoint_interrupted"
+          ],
+          "identity_decision_phase": "arrival",
+          "identity_decision_verbs": [
+            "train_new_guard_posts",
+            "test_guard_loyalty",
+            "entrench_checkpoint_posts"
           ],
           "minimum_target_size": 44.0,
           "proof_seed": "punchline_new_muscle_seed",
@@ -9412,12 +9412,12 @@
               ],
               "scene_ops": [
                 {
+                  "anchor_id": "punchline_new_muscle_inspection_tray",
                   "family": "scene_ops",
                   "op": "move",
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_new_muscle_tray_check_move",
-                  "stable_object_id": "punchline_new_muscle_inspection_tray",
-                  "anchor_id": "punchline_new_muscle_inspection_tray"
+                  "stable_object_id": "punchline_new_muscle_inspection_tray"
                 }
               ],
               "transition_ops": [
@@ -9435,12 +9435,12 @@
             {
               "actor_ops": [
                 {
+                  "anchor_id": "punchline_new_muscle_checkpoint_rover",
                   "family": "actor_ops",
                   "op": "set_position",
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_new_muscle_guard_gap_position",
-                  "stable_object_id": "punchline_new_muscle_checkpoint_rover",
-                  "anchor_id": "punchline_new_muscle_checkpoint_rover"
+                  "stable_object_id": "punchline_new_muscle_checkpoint_rover"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -10082,7 +10082,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "ceab70468c740e9fd202c104f3b4bb98013a1627032440d7c18c22069bda2f6d"
+        "sequence_signature": "d6ba2e67de57d842a2d21a49c7b13be8f521fe3c80874d2aee8958d2135d127f"
       }
     },
     {
@@ -10121,17 +10121,17 @@
           ]
         },
         "seed_evidence": {
-          "identity_decision_phase": "work_3",
-          "identity_decision_verbs": [
-            "hide_raid_evidence",
-            "abort_raid_night",
-            "reopen_after_false_alarm"
-          ],
           "expected_outcomes": [
             "altered_floor_reopened",
             "night_aborted",
             "hide_task_refused",
             "raid_interrupted"
+          ],
+          "identity_decision_phase": "work_3",
+          "identity_decision_verbs": [
+            "hide_raid_evidence",
+            "abort_raid_night",
+            "reopen_after_false_alarm"
           ],
           "minimum_target_size": 44.0,
           "proof_seed": "punchline_raid_jitters_seed",
@@ -10902,12 +10902,12 @@
               ],
               "scene_ops": [
                 {
+                  "anchor_id": "punchline_raid_hide_cart",
                   "family": "scene_ops",
                   "op": "move",
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_raid_jitters_cart_move_move",
-                  "stable_object_id": "punchline_raid_jitters_hide_cart",
-                  "anchor_id": "punchline_raid_hide_cart"
+                  "stable_object_id": "punchline_raid_jitters_hide_cart"
                 }
               ],
               "transition_ops": [
@@ -10925,12 +10925,12 @@
             {
               "actor_ops": [
                 {
+                  "anchor_id": "punchline_raid_reopen_steward",
                   "family": "actor_ops",
                   "op": "set_position",
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_raid_jitters_lane_clear_position",
-                  "stable_object_id": "punchline_raid_jitters_reopen_steward",
-                  "anchor_id": "punchline_raid_reopen_steward"
+                  "stable_object_id": "punchline_raid_jitters_reopen_steward"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -11625,7 +11625,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "d18858b3a4909f8619476124200bef25485e51bae89d45323f9ddf9ceba83f6c"
+        "sequence_signature": "f2dfdbd780dd3904fa0916adfd3209d1d24b3edc1387085533d33591ff2c41cb"
       }
     },
     {
@@ -11664,17 +11664,17 @@
           ]
         },
         "seed_evidence": {
-          "identity_decision_phase": "work_2",
-          "identity_decision_verbs": [
-            "judge_amateur_bracket",
-            "reseed_amateur_lineup",
-            "stall_amateur_bracket"
-          ],
           "expected_outcomes": [
             "final_lineup_rotated",
             "bracket_stalled",
             "act_refused",
             "show_interrupted"
+          ],
+          "identity_decision_phase": "work_2",
+          "identity_decision_verbs": [
+            "judge_amateur_bracket",
+            "reseed_amateur_lineup",
+            "stall_amateur_bracket"
           ],
           "minimum_target_size": 44.0,
           "proof_seed": "kitty_cat_lounge_amateur_night_seed",
@@ -12445,12 +12445,12 @@
               ],
               "scene_ops": [
                 {
+                  "anchor_id": "kitty_amateur_signup",
                   "family": "scene_ops",
                   "op": "move",
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_amateur_night_signup_cycle_move",
-                  "stable_object_id": "kitty_cat_lounge_amateur_night_amateur_signup",
-                  "anchor_id": "kitty_amateur_signup"
+                  "stable_object_id": "kitty_cat_lounge_amateur_night_amateur_signup"
                 }
               ],
               "transition_ops": [
@@ -12468,12 +12468,12 @@
             {
               "actor_ops": [
                 {
+                  "anchor_id": "kitty_amateur_judge",
                   "family": "actor_ops",
                   "op": "set_position",
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_amateur_night_costume_move_position",
-                  "stable_object_id": "kitty_cat_lounge_amateur_night_amateur_judge",
-                  "anchor_id": "kitty_amateur_judge"
+                  "stable_object_id": "kitty_cat_lounge_amateur_night_amateur_judge"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -13168,7 +13168,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "964386a3c570ce6f635a41b9f0ce4856492b78fb899fb08954a21b2cb81e7546"
+        "sequence_signature": "a15b6e7649748eb2ae5f518878617a7b10b97fc4f3137bad1c784f63961a5e18"
       }
     },
     {
@@ -13207,17 +13207,17 @@
           ]
         },
         "seed_evidence": {
-          "identity_decision_phase": "work_1",
-          "identity_decision_verbs": [
-            "split_buyout_floor",
-            "claim_full_buyout",
-            "preserve_public_half"
-          ],
           "expected_outcomes": [
             "split_floor_running",
             "full_buyout_claimed",
             "service_refused",
             "buyout_interrupted"
+          ],
+          "identity_decision_phase": "work_1",
+          "identity_decision_verbs": [
+            "split_buyout_floor",
+            "claim_full_buyout",
+            "preserve_public_half"
           ],
           "minimum_target_size": 44.0,
           "proof_seed": "kitty_cat_lounge_buyout_seed",
@@ -14041,12 +14041,12 @@
               ],
               "scene_ops": [
                 {
+                  "anchor_id": "kitty_buyout_ropes",
                   "family": "scene_ops",
                   "op": "move",
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_buyout_guest_verify_move",
-                  "stable_object_id": "kitty_cat_lounge_buyout_buyout_ropes",
-                  "anchor_id": "kitty_buyout_ropes"
+                  "stable_object_id": "kitty_cat_lounge_buyout_buyout_ropes"
                 }
               ],
               "transition_ops": [
@@ -14064,12 +14064,12 @@
             {
               "actor_ops": [
                 {
+                  "anchor_id": "kitty_buyout_steward",
                   "family": "actor_ops",
                   "op": "set_position",
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_buyout_rope_advance_position",
-                  "stable_object_id": "kitty_cat_lounge_buyout_public_floor_steward",
-                  "anchor_id": "kitty_buyout_steward"
+                  "stable_object_id": "kitty_cat_lounge_buyout_public_floor_steward"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -14711,7 +14711,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "ea3c1bfea01ea3a6cd35791457a143ec123e9e8f61e391ac4a3bbe9ed4e330a0"
+        "sequence_signature": "810dc995d9edf3dcecab2e95d4e9f7c6ddebb0a4e850ef3678d2810dc45c2a16"
       }
     },
     {
@@ -14749,17 +14749,17 @@
           ]
         },
         "seed_evidence": {
-          "identity_decision_phase": "arrival",
-          "identity_decision_verbs": [
-            "reactivate_mini_stage",
-            "maintain_conversation_booth",
-            "close_wrong_lounge_zone"
-          ],
           "expected_outcomes": [
             "selected_zone_active",
             "wrong_zone_closed",
             "task_refused",
             "night_interrupted"
+          ],
+          "identity_decision_phase": "arrival",
+          "identity_decision_verbs": [
+            "reactivate_mini_stage",
+            "maintain_conversation_booth",
+            "close_wrong_lounge_zone"
           ],
           "minimum_target_size": 44.0,
           "proof_seed": "kitty_cat_lounge_slow_night_seed",
@@ -15563,12 +15563,12 @@
               ],
               "scene_ops": [
                 {
+                  "anchor_id": "kitty_slow_closed_section",
                   "family": "scene_ops",
                   "op": "move",
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_slow_night_zone_choice_move",
-                  "stable_object_id": "kitty_cat_lounge_slow_night_closed_section_ropes",
-                  "anchor_id": "kitty_slow_closed_section"
+                  "stable_object_id": "kitty_cat_lounge_slow_night_closed_section_ropes"
                 }
               ],
               "transition_ops": [
@@ -15586,12 +15586,12 @@
             {
               "actor_ops": [
                 {
+                  "anchor_id": "kitty_slow_booth_regular",
                   "family": "actor_ops",
                   "op": "set_position",
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_slow_night_rope_coil_position",
-                  "stable_object_id": "kitty_cat_lounge_slow_night_booth_regular",
-                  "anchor_id": "kitty_slow_booth_regular"
+                  "stable_object_id": "kitty_cat_lounge_slow_night_booth_regular"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -16065,7 +16065,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "eade54e5f0f9db053a001d282e1db728471f2a00cf7206c362fe601460c3e6d8"
+        "sequence_signature": "9b4c00a3d49a6085dbbd297b26f9f9bbc88f569df9b88768c7538e61e747fde9"
       }
     },
     {
@@ -16105,17 +16105,17 @@
           ]
         },
         "seed_evidence": {
-          "identity_decision_phase": "work_3",
-          "identity_decision_verbs": [
-            "rescue_missing_guest",
-            "commandeer_lounge_stage",
-            "evacuate_party_groups"
-          ],
           "expected_outcomes": [
             "orderly_finale",
             "stage_commandeered",
             "recovery_refused",
             "storm_interrupted"
+          ],
+          "identity_decision_phase": "work_3",
+          "identity_decision_verbs": [
+            "rescue_missing_guest",
+            "commandeer_lounge_stage",
+            "evacuate_party_groups"
           ],
           "minimum_target_size": 44.0,
           "proof_seed": "kitty_cat_lounge_bachelorette_storm_seed",
@@ -16906,12 +16906,12 @@
               ],
               "scene_ops": [
                 {
+                  "anchor_id": "kitty_storm_prop_trunk",
                   "family": "scene_ops",
                   "op": "move",
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_bachelorette_storm_groups_split_move",
-                  "stable_object_id": "kitty_cat_lounge_bachelorette_storm_party_prop_trunk",
-                  "anchor_id": "kitty_storm_prop_trunk"
+                  "stable_object_id": "kitty_cat_lounge_bachelorette_storm_party_prop_trunk"
                 }
               ],
               "transition_ops": [
@@ -16929,12 +16929,12 @@
             {
               "actor_ops": [
                 {
+                  "anchor_id": "kitty_storm_floor_host",
                   "family": "actor_ops",
                   "op": "set_position",
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_bachelorette_storm_trunk_move_position",
-                  "stable_object_id": "kitty_cat_lounge_bachelorette_storm_floor_recovery_host",
-                  "anchor_id": "kitty_storm_floor_host"
+                  "stable_object_id": "kitty_cat_lounge_bachelorette_storm_floor_recovery_host"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -17801,7 +17801,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "a24f237b9641c27647e9d8cc4f6fddf219f6331686ae1868a0aee6ec1b7e882a"
+        "sequence_signature": "895015e2027457af8016c5f9366bf4e8ddae4cb7262f28f9afd777b433bd2a85"
       }
     }
   ]
