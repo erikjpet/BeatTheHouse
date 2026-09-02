@@ -13,6 +13,11 @@ if "output_path" in ARGUMENTS:
 env = SConscript(os.path.join(godot_cpp_dir, "SConstruct"))
 env.Append(CPPPATH=["src"])
 env.Append(CXXFLAGS=["-std=c++17"])
+if env["platform"] == "web":
+    # The pinned release engine is built with wasm_simd=yes. Match that feature
+    # set for the numeric side-module so Clang can vectorize the fixed-width
+    # integer scans without changing solver order or the public ABI.
+    env.Append(CCFLAGS=["-msimd128"])
 
 sources = Glob("src/*.cpp")
 library = env.SharedLibrary(
