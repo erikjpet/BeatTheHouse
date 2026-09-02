@@ -1,6 +1,11 @@
 # game06_5 Crossword Corner owner-decision evidence
 
-Status: **UNREVIEWED / OPTION-NEUTRAL / READ-ONLY**
+Status: **RESOLVED / HISTORICAL EVIDENCE**
+
+The owner resolved this packet on 2026-09-02 by selecting a polished, denser
+interlocking layout with compatible word changes. The accepted implementation
+is on remote `main` at `996a98b6`; this packet remains only as provenance for
+the earlier decision boundary.
 
 Decision required: choose how Crossword Corner reconciles the shipped printed
 background with the shipped mechanical puzzle. The printed word cells and the

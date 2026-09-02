@@ -1,6 +1,11 @@
 # game06_5 Option C owner decision
 
-Status: **DECIDED / EXECUTING**
+Status: **SUPERSEDED 2026-09-02 / HISTORICAL RECORD**
+
+The owner's later instruction selected a denser interlocking Crossword and
+authorized compatible word changes. That implementation is active on remote
+`main` at `996a98b6`. The Option C rules below document the former safe hold;
+they are not current product or release authority.
 
 Decision ID: `game06_5-option-c-no-new-supply-existing-issued-valid`
 

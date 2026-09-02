@@ -112,7 +112,9 @@ Gate economics are strict: use one exact commit and one declared tool/native ide
 - `fix27`: #75–76 expanded layout.
 - `fix28`: #77–78 membership.
 - `fix06_13` and `fix06_15`: preserved external dependencies/defects, but their exact heads, worktrees, and remaining scope are unresolved in the inherited record and must be inventoried rather than guessed.
-- Separate routed items remain: marginal Contract timing, stale delivery full-state UI golden, and owner design decision for fix06_3 Phase 5 Crossword Corner art direction.
+- Separate routed items remain: marginal Contract timing and the stale delivery
+  full-state UI golden. The former `fix06_3` Crossword owner decision is resolved
+  and landed on remote main at `996a98b6`; it is no longer a routed blocker.
 
 Preserve all source heads and worktrees until their net payloads are landed and recorded. Entangled/behind branches must be landed by exact net payload rather than merged wholesale.
 

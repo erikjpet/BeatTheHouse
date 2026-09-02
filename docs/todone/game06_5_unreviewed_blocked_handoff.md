@@ -1,6 +1,8 @@
 # game06_5 UNREVIEWED-BLOCKED handoff
 
-Status: resumed on the current ordered recovery chain; still UNREVIEWED.
+Status: **SUPERSEDED / HISTORICAL.** The resumed product was later accepted,
+the owner replaced Option C with the interlocking Crossword direction, and the
+final Counter Games result landed on remote main at `996a98b6`.
 
 Historical source base: `a2760d81`. Current recovery base:
 `b75d479462ebff22cb2f75983a383bf9616686d4`.

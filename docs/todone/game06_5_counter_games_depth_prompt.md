@@ -1,7 +1,22 @@
-Status: IN_PROGRESS — implementation landed with Crossword stock held; owner art/mechanics decision and Family 1 closeout remain open
+Status: COMPLETE — product and focused acceptance landed on remote `main`
 Board row: `game06_5` in `docs/todo/README_0_6_board.md`
 
-## Executing amendment: Crossword Option C
+## Superseding owner decision and trunk landing — 2026-09-02
+
+The owner superseded the historical Option C hold and directed a polished,
+denser interlocking Crossword. The final seven-ticket implementation landed on
+remote `main` at `996a98b6`: Crossword is active, uses seven connected words,
+22 active cells and eight intersections, and preserves the 18-letter reveal and
+authored payout table. Region layout v11, save migration, generated overlays,
+and the three-state GPU review are included on trunk.
+
+Exact-trunk focused acceptance passed for both owned games. Scratch Tickets
+passed content plus the complete 140-puzzle cycle with zero failures. Pull Tabs
+passed content/focused contracts with zero failures and its 24-machine seeded
+deal audit; resolve avg/p95/max was 1.120/2.063/4.508ms and `surface_state`
+avg/p95/max was 1.1372/1.1900/1.5780ms over 1,000 calls.
+
+## Historical amendment: Crossword Option C (superseded)
 
 The program root selected Option C with the historical-save policy
 `game06_5-option-c-no-new-supply-existing-issued-valid`:
@@ -15,8 +30,8 @@ The program root selected Option C with the historical-save policy
 - every already-issued/owned Crossword ticket remains visible and retains exact
   scratch, file, save/revisit and winner-redemption behavior.
 
-This amendment resolves Phase 5. It does not authorize art, probability,
-prize, stock-weight, topology or refund work.
+This amendment was the prior bounded policy. It was superseded by the owner's
+2026-09-02 instruction and must not be used as current release behavior.
 
 # Agent Prompt — 0.6 game06_5: Counter Games Depth (Scratch Tickets, Pull Tabs)
 
