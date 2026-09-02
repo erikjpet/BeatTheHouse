@@ -1,4 +1,4 @@
-Status: BLOCKED — evidence implementation is landed; archive after `fix06_13` formal closeout
+Status: DONE — evidence path accepted; red product result remains in fix06_13
 Board row: `fix06_9` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — fix06_9: shipped-cap Coin Pusher Web performance evidence
@@ -49,3 +49,17 @@ configuration, and exact native/Web parity. Supply and hash the ignored native
 addon before native timing. Commit logically, obtain independent implementation
 and evidence review, and land only the accepted net payload before pusherv3_11
 continues its closure decision.
+
+## Execution record
+
+The maintained `coin_pusher` Web plan now exercises the real exported cabinet
+at the exact 300-origin fixture. It records cold startup identity, every action
+window, synchronous resolve, draw p95, normal/reduced liveness, conservation,
+backend, body counts, source commit, and fresh-export hashes. Evidence defects
+found during the first run were corrected without weakening any limit.
+
+The first honest red and all remediation runs remain preserved. Exact
+native/Web parity and current Web live-batch contracts pass. This evidence-tool
+row is complete and archived because it correctly measures and routes the
+product defect; it does not claim that the still-active `fix06_13` product
+performance row is green or closed.

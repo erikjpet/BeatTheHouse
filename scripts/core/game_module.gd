@@ -178,6 +178,17 @@ func defers_embedded_action_presentation_refresh(_run_state: RunState, _environm
 	return false
 
 
+# Solver-heavy modules may provide a small exact rollback token for mutations
+# they make before the host's atomic environment-turn boundary. An empty token
+# keeps the conservative whole-run snapshot used by every other game.
+func host_action_rollback_snapshot(_action_id: String, _run_state: RunState, _environment: Dictionary) -> Dictionary:
+	return {}
+
+
+func restore_host_action_rollback(_snapshot: Dictionary, _run_state: RunState, _environment: Dictionary) -> bool:
+	return false
+
+
 # Exposes sparse, action-boundary tutorial facts without teaching the UI any
 # game-specific state schema.
 func coach_state(_run_state: RunState, _environment: Dictionary, _ui_state: Dictionary = {}) -> Dictionary:
@@ -216,6 +227,17 @@ func environment_state_generated(_run_state: RunState, _environment: Dictionary,
 # update UI-local state or nominate an existing legal/cheat action to resolve.
 func surface_action_command(_surface_action: String, _index: int, _confirm_requested: bool, _ui_state: Dictionary, _run_state: RunState, _environment: Dictionary) -> Dictionary:
 	return {"handled": false}
+
+
+# Button-native surfaces can opt out of cloning the complete retained UI
+# session before every click. Their action and direct-resolve paths must consume
+# only the declared keys plus the host-owned selected action/stake scalars.
+func surface_action_uses_lightweight_ui_state(_surface_action: String) -> bool:
+	return false
+
+
+func surface_action_ui_state_keys() -> Array:
+	return []
 
 
 # Commits UI-local interaction state only when a surface is being dismissed.
@@ -267,6 +289,10 @@ func surface_pointer_uses_lightweight_ui_state(_surface_action: String) -> bool:
 # Optional per-frame game-surface automation hook. The foundation UI provides
 # only UI-local state, the current environment, and a surface snapshot; modules
 # decide whether to request a resolved action.
+func surface_uses_auto_tick() -> bool:
+	return false
+
+
 func surface_needs_auto_tick(_ui_state: Dictionary, _run_state: RunState, _environment: Dictionary) -> bool:
 	return false
 
@@ -279,6 +305,23 @@ func surface_auto_tick_state_keys() -> Array:
 # boundary. Modules whose command and resolution paths consume only the
 # lightweight tick keys can opt out of that deep copy.
 func surface_auto_action_uses_lightweight_ui_state() -> bool:
+	return false
+
+
+# Realtime simulations that consume only a few UI-local fields can opt out of
+# duplicating the complete retained surface session on every fixed tick.
+func surface_realtime_uses_lightweight_ui_state() -> bool:
+	return false
+
+
+func surface_realtime_ui_state_keys() -> Array:
+	return []
+
+
+# Modules whose realtime patch cannot change bankroll, pressure, intoxication,
+# selection, or accessibility host state may retain those existing surface
+# fields until the next normal action/refresh boundary.
+func surface_realtime_patch_preserves_host_state() -> bool:
 	return false
 
 
@@ -590,6 +633,12 @@ static func build_owned_action_result(payload: Dictionary = {}) -> Dictionary:
 	var deltas_value: Variant = payload.get("deltas", {})
 	if typeof(deltas_value) != TYPE_DICTIONARY or not _has_only_canonical_result_delta_keys(deltas_value as Dictionary):
 		return _build_action_result(payload, false)
+	return _build_action_result(payload, true)
+
+
+static func build_canonical_owned_action_result(payload: Dictionary = {}) -> Dictionary:
+	# Hot paths that construct only canonical delta keys can transfer ownership
+	# directly. The normal public builder remains fail-safe for untrusted shapes.
 	return _build_action_result(payload, true)
 
 

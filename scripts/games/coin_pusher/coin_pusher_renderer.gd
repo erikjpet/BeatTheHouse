@@ -39,7 +39,7 @@ const NEUTRAL_CABINET := {
 
 var _coin_texture: Texture2D
 var _coin_multimesh: MultiMesh
-var _coin_mesh: QuadMesh
+var _coin_mesh: Mesh
 var _sorted_body_cache: Array = []
 var _sorted_body_cache_key := ""
 var _sorted_body_cache_source: Array = []
@@ -58,11 +58,24 @@ var _static_cache_render_serial := 0
 var _static_cache_rebuild_serial := 0
 var _static_cache_fallback_reason := "cold"
 var _static_cache_pixel_size := Vector2i.ZERO
+var _hardware_cache_canvas: Control
+var _hardware_cache_host: Control
+var _hardware_cache_key := ""
+var _hardware_cache_prepared_for_next_draw := false
+var _entry_hardware_layout_static_key := ""
+var _entry_hardware_layout_carriage := -1
+var _entry_hardware_layout_cache: Dictionary = {}
 var _world_width := SCHEMA_DEFAULT_WIDTH
 var _world_back_y := SCHEMA_DEFAULT_BACK_Y
 var _coin_height := SCHEMA_DEFAULT_COIN_HEIGHT
 var _coin_radius := SCHEMA_DEFAULT_COIN_RADIUS
 var _perf_stage_samples: Dictionary = {}
+var _prepared_batch: Dictionary = {}
+var _prepared_batch_static_key := ""
+var _prepared_batch_session_key := ""
+var _prepared_batch_view_serial := -1
+var _prepared_batch_alpha := -1.0
+var _prepared_batch_uploaded := false
 
 
 func draw(surface, state: Dictionary) -> bool:
@@ -100,7 +113,10 @@ func draw(surface, state: Dictionary) -> bool:
 		stage_started_usec = _capture_perf_stage("bodies", stage_started_usec, capture_stages)
 	_draw_glass(surface, colors)
 	stage_started_usec = _capture_perf_stage("glass", stage_started_usec, capture_stages)
-	_draw_hardware(surface, state, colors)
+	if _prepare_hardware_cache(surface, state):
+		_register_hardware_hits(surface, state)
+	else:
+		_draw_hardware(surface, state, colors)
 	stage_started_usec = _capture_perf_stage("hardware", stage_started_usec, capture_stages)
 	surface.surface_end_design_space()
 	_capture_perf_stage("end_design_space", stage_started_usec, capture_stages)
@@ -113,6 +129,76 @@ func reset_performance_stage_counters() -> void:
 
 func performance_stage_counters() -> Dictionary:
 	return _perf_stage_samples.duplicate(true)
+
+
+func prepare_render_state(state: Dictionary) -> void:
+	if str(state.get("surface_renderer", "")) != "coin_pusher":
+		return
+	if _prepared_batch_matches(state):
+		return
+	_configure_projection(state)
+	var cabinet := _cabinet(state)
+	var geometry: Dictionary = state.get("coin_pusher_geometry", {}) if typeof(state.get("coin_pusher_geometry", {})) == TYPE_DICTIONARY else {}
+	var apparatus: Dictionary = state.get("coin_pusher_apparatus", {}) if typeof(state.get("coin_pusher_apparatus", {})) == TYPE_DICTIONARY else {}
+	var body_colors: Dictionary = cabinet.get("body_colors", {}) if typeof(cabinet.get("body_colors", {})) == TYPE_DICTIONARY else {}
+	var current_packed: PackedInt64Array = state.get("coin_pusher_current_packed", PackedInt64Array()) if typeof(state.get("coin_pusher_current_packed", PackedInt64Array())) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array()
+	var previous_packed: PackedInt64Array = state.get("coin_pusher_previous_packed", PackedInt64Array()) if typeof(state.get("coin_pusher_previous_packed", PackedInt64Array())) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array()
+	if current_packed.is_empty():
+		_clear_prepared_batch()
+		return
+	_ensure_coin_batch()
+	var alpha := 1.0 if bool(state.get("reduce_motion", false)) else clampf(float(state.get("coin_pusher_interpolation_alpha", 1.0)), 0.0, 1.0)
+	_prepared_batch = CoinPusherSolverAPI.native_live_render_batch_packed({
+		"world_width": _world_width,
+		"world_back_y": _world_back_y,
+		"coin_height": _coin_height,
+		"coin_radius": _coin_radius,
+		"board": _delivery_board(apparatus, geometry),
+		"body_colors": body_colors,
+	}, current_packed, previous_packed, alpha)
+	if _prepared_batch.is_empty():
+		_clear_prepared_batch()
+		return
+	_prepared_batch_static_key = str(state.get("coin_pusher_static_content_key", ""))
+	_prepared_batch_session_key = str(state.get("coin_pusher_presentation_session_key", ""))
+	_prepared_batch_view_serial = int(state.get("coin_pusher_presentation_view_serial", -1))
+	_prepared_batch_alpha = alpha
+	_upload_prepared_batch()
+	if is_instance_valid(_hardware_cache_host):
+		_prepare_hardware_cache(_hardware_cache_host, state, false)
+		_hardware_cache_prepared_for_next_draw = true
+	_entry_hardware_layout(state)
+
+
+func _prepared_batch_matches(state: Dictionary) -> bool:
+	if _prepared_batch.is_empty():
+		return false
+	var alpha := 1.0 if bool(state.get("reduce_motion", false)) else clampf(float(state.get("coin_pusher_interpolation_alpha", 1.0)), 0.0, 1.0)
+	return _prepared_batch_static_key == str(state.get("coin_pusher_static_content_key", "")) \
+		and _prepared_batch_session_key == str(state.get("coin_pusher_presentation_session_key", "")) \
+		and _prepared_batch_view_serial == int(state.get("coin_pusher_presentation_view_serial", -1)) \
+		and _prepared_batch_alpha == alpha
+
+
+func _clear_prepared_batch() -> void:
+	_prepared_batch = {}
+	_prepared_batch_static_key = ""
+	_prepared_batch_session_key = ""
+	_prepared_batch_view_serial = -1
+	_prepared_batch_alpha = -1.0
+	_prepared_batch_uploaded = false
+
+
+func _upload_prepared_batch() -> void:
+	if _prepared_batch.is_empty() or typeof(_prepared_batch.get("buffer", null)) != TYPE_PACKED_FLOAT32_ARRAY:
+		_prepared_batch_uploaded = false
+		return
+	var count := int(_prepared_batch.get("count", 0))
+	if _coin_multimesh.instance_count != count:
+		_coin_multimesh.instance_count = count
+	_coin_multimesh.visible_instance_count = count
+	_coin_multimesh.buffer = _prepared_batch["buffer"] as PackedFloat32Array
+	_prepared_batch_uploaded = true
 
 
 func _capture_perf_stage(stage_id: String, started_usec: int, enabled: bool) -> int:
@@ -536,17 +622,25 @@ func _draw_interpolated_bodies(surface, state: Dictionary, colors: Dictionary, c
 
 
 func _draw_native_interpolated_bodies(surface, state: Dictionary, cabinet: Dictionary, current: Array, previous: Array, alpha: float) -> bool:
-	var geometry: Dictionary = state.get("coin_pusher_geometry", {}) if typeof(state.get("coin_pusher_geometry", {})) == TYPE_DICTIONARY else {}
-	var apparatus: Dictionary = state.get("coin_pusher_apparatus", {}) if typeof(state.get("coin_pusher_apparatus", {})) == TYPE_DICTIONARY else {}
-	var body_colors: Dictionary = cabinet.get("body_colors", {}) if typeof(cabinet.get("body_colors", {})) == TYPE_DICTIONARY else {}
-	var batch := CoinPusherSolverAPI.native_live_render_batch({
-		"world_width": _world_width,
-		"world_back_y": _world_back_y,
-		"coin_height": _coin_height,
-		"coin_radius": _coin_radius,
-		"board": _delivery_board(apparatus, geometry),
-		"body_colors": body_colors,
-	}, current, previous, alpha)
+	var batch_is_prepared := _prepared_batch_matches(state)
+	var batch := _prepared_batch if batch_is_prepared else {}
+	if batch.is_empty():
+		var geometry: Dictionary = state.get("coin_pusher_geometry", {}) if typeof(state.get("coin_pusher_geometry", {})) == TYPE_DICTIONARY else {}
+		var apparatus: Dictionary = state.get("coin_pusher_apparatus", {}) if typeof(state.get("coin_pusher_apparatus", {})) == TYPE_DICTIONARY else {}
+		var body_colors: Dictionary = cabinet.get("body_colors", {}) if typeof(cabinet.get("body_colors", {})) == TYPE_DICTIONARY else {}
+		var batch_config := {
+			"world_width": _world_width,
+			"world_back_y": _world_back_y,
+			"coin_height": _coin_height,
+			"coin_radius": _coin_radius,
+			"board": _delivery_board(apparatus, geometry),
+			"body_colors": body_colors,
+		}
+		var current_packed: PackedInt64Array = state.get("coin_pusher_current_packed", PackedInt64Array()) if typeof(state.get("coin_pusher_current_packed", PackedInt64Array())) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array()
+		var previous_packed: PackedInt64Array = state.get("coin_pusher_previous_packed", PackedInt64Array()) if typeof(state.get("coin_pusher_previous_packed", PackedInt64Array())) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array()
+		batch = CoinPusherSolverAPI.native_live_render_batch_packed(batch_config, current_packed, previous_packed, alpha) if not current_packed.is_empty() else {}
+		if batch.is_empty():
+			batch = CoinPusherSolverAPI.native_live_render_batch(batch_config, current, previous, alpha)
 	if batch.is_empty() or typeof(batch.get("buffer", null)) != TYPE_PACKED_FLOAT32_ARRAY:
 		return false
 	var count := int(batch.get("count", 0))
@@ -557,7 +651,8 @@ func _draw_native_interpolated_bodies(surface, state: Dictionary, cabinet: Dicti
 		var shadow: Dictionary = shadow_value
 		var shadow_scale := float(shadow.get("scale", 1.0))
 		_draw_ellipse(surface, (shadow.get("point", Vector2.ZERO) as Vector2) + AIRBORNE_SHADOW_OFFSET, COIN_RX * 0.94 * shadow_scale, COIN_RY * 0.76 * shadow_scale, Color(0, 0, 0, 0.80), 0)
-	_coin_multimesh.buffer = batch["buffer"] as PackedFloat32Array
+	if not batch_is_prepared or not _prepared_batch_uploaded:
+		_coin_multimesh.buffer = batch["buffer"] as PackedFloat32Array
 	surface.surface_present_multimesh_batch(_coin_multimesh, _coin_texture, null, DESIGN_SIZE)
 	var labels: Dictionary = cabinet.get("body_labels", {}) if typeof(cabinet.get("body_labels", {})) == TYPE_DICTIONARY else {}
 	for feature_value in batch.get("features", []):
@@ -585,6 +680,99 @@ func draw_static_cache_layer(surface, state: Dictionary, layer_index: int) -> vo
 		2:
 			_draw_playfield(surface, state, colors, cabinet, false, false, true, false)
 	surface.surface_end_design_space()
+
+
+func draw_hardware_cache_layer(surface, state: Dictionary) -> void:
+	_configure_projection(state)
+	var cabinet := _cabinet(state)
+	var colors := _colors(cabinet)
+	if bool(state.get("coin_pusher_locked", false)):
+		colors = _locked_colors(colors)
+	surface.surface_begin_design_space(DESIGN_SIZE)
+	_draw_hardware(surface, state, colors)
+	surface.surface_end_design_space()
+
+
+func _prepare_hardware_cache(surface, state: Dictionary, consume_prepared: bool = true) -> bool:
+	if not OS.has_feature("web") and not bool(state.get("coin_pusher_static_cache_test", false)):
+		if is_instance_valid(_hardware_cache_canvas):
+			_hardware_cache_canvas.visible = false
+		return false
+	if consume_prepared and _hardware_cache_prepared_for_next_draw and is_instance_valid(_hardware_cache_canvas) and _hardware_cache_host == surface:
+		_hardware_cache_prepared_for_next_draw = false
+		_hardware_cache_canvas.visible = true
+		return true
+	_hardware_cache_prepared_for_next_draw = false
+	if not is_instance_valid(_hardware_cache_host) or _hardware_cache_host != surface:
+		if is_instance_valid(_hardware_cache_canvas):
+			_hardware_cache_canvas.queue_free()
+		_hardware_cache_canvas = null
+		_hardware_cache_host = surface
+		_hardware_cache_key = ""
+	var hover_action := ""
+	for action_value in _hardware_catalog(state):
+		var action := str(action_value)
+		if surface.surface_region_hovered(action):
+			hover_action = action
+			break
+	var bindings: Dictionary = state.get("surface_action_bindings", {}) if typeof(state.get("surface_action_bindings", {})) == TYPE_DICTIONARY else {}
+	var enabled_signature := _hardware_enabled_signature(state, bindings)
+	var key := _hardware_cache_signature(state, hover_action, enabled_signature)
+	if not is_instance_valid(_hardware_cache_canvas):
+		var canvas_script: Script = load("res://scripts/games/coin_pusher/coin_pusher_hardware_cache_canvas.gd")
+		_hardware_cache_canvas = canvas_script.new() as Control
+		_hardware_cache_canvas.name = "CoinPusherHardwareCache"
+		_hardware_cache_canvas.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_hardware_cache_canvas.position = Vector2.ZERO
+		_hardware_cache_canvas.size = surface.size
+		surface.add_child(_hardware_cache_canvas)
+	_hardware_cache_canvas.visible = true
+	if key != _hardware_cache_key or _hardware_cache_canvas.size != surface.size:
+		_hardware_cache_key = key
+		var hardware_state := state.duplicate(false)
+		hardware_state["coin_pusher_hardware_hover_action"] = hover_action
+		_hardware_cache_canvas.size = surface.size
+		_hardware_cache_canvas.set("hardware_renderer", self)
+		_hardware_cache_canvas.set("hardware_state", hardware_state)
+		_hardware_cache_canvas.queue_redraw()
+	return true
+
+
+func _hardware_enabled_signature(state: Dictionary, bindings: Dictionary) -> int:
+	var result := 0
+	var signature_bit := 0
+	for action_value in _hardware_catalog(state):
+		if signature_bit < 62 and _binding_enabled(bindings, str(action_value)):
+			result |= 1 << signature_bit
+		signature_bit += 1
+	return result
+
+
+func _hardware_cache_signature(state: Dictionary, hover_action: String, enabled_signature: int) -> String:
+	# Presentation serial is deliberately absent. It advances with the moving
+	# coin bed, while this retained layer contains only cabinet controls and
+	# readouts. Every state value consumed by _draw_hardware is represented here.
+	return "%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%s|%d|%s|%s" % [
+		str(state.get("coin_pusher_static_content_key", "")),
+		int(state.get("coin_pusher_carriage_x", 0)),
+		int(state.get("coin_pusher_selected_hole", 0)),
+		1 if bool(state.get("coin_pusher_skill_stop_engaged", false)) else 0,
+		int(state.get("coin_pusher_drop_queue_count", 0)),
+		int(state.get("coin_pusher_drop_charge_count", 0)),
+		int(state.get("coin_pusher_tray_count", 0)),
+		int(state.get("coin_pusher_tray_value", 0)),
+		1 if bool(state.get("coin_pusher_locked", false)) else 0,
+		enabled_signature,
+		hover_action,
+		int(state.get("coin_pusher_vault_selected_cell", 0)),
+		str(state.get("coin_pusher_tell_label", "steady")),
+		JSON.stringify(state.get("coin_pusher_feature_hardware", {}), "", true),
+	]
+
+
+func debug_hardware_cache_signature_for_test(state: Dictionary, hover_action: String = "") -> String:
+	var bindings: Dictionary = state.get("surface_action_bindings", {}) if typeof(state.get("surface_action_bindings", {})) == TYPE_DICTIONARY else {}
+	return _hardware_cache_signature(state, hover_action, _hardware_enabled_signature(state, bindings))
 
 
 func _prepare_static_cache(surface, state: Dictionary) -> bool:
@@ -850,9 +1038,33 @@ func _ensure_coin_batch() -> void:
 	if _coin_multimesh != null:
 		return
 	_coin_texture = _make_coin_texture()
-	_coin_mesh = QuadMesh.new()
-	_coin_mesh.size = Vector2(COIN_RX * 2.0 + 2.0, COIN_RY * 2.0 + 4.0)
+	_coin_mesh = _make_coin_quad_mesh(Vector2(COIN_RX * 2.0 + 2.0, COIN_RY * 2.0 + 4.0))
 	_coin_multimesh = _new_coin_multimesh()
+
+
+func _make_coin_quad_mesh(size: Vector2) -> ArrayMesh:
+	# ArrayMesh is available in Godot's 2D-only export profile while QuadMesh is
+	# registered with the unused 3D scene classes. Match QuadMesh's FACE_Z vertex
+	# and UV order exactly so the in-order canvas batch remains visually identical.
+	var half_size := size * 0.5
+	var arrays: Array = []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = PackedVector3Array([
+		Vector3(half_size.x, -half_size.y, 0.0),
+		Vector3(-half_size.x, -half_size.y, 0.0),
+		Vector3(half_size.x, half_size.y, 0.0),
+		Vector3(-half_size.x, half_size.y, 0.0),
+	])
+	arrays[Mesh.ARRAY_TEX_UV] = PackedVector2Array([
+		Vector2(1.0, 1.0),
+		Vector2(0.0, 1.0),
+		Vector2(1.0, 0.0),
+		Vector2(0.0, 0.0),
+	])
+	arrays[Mesh.ARRAY_INDEX] = PackedInt32Array([0, 1, 2, 1, 3, 2])
+	var mesh := ArrayMesh.new()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	return mesh
 
 
 func _new_coin_multimesh() -> MultiMesh:
@@ -934,7 +1146,7 @@ func _draw_hardware(surface, state: Dictionary, colors: Dictionary) -> void:
 			surface.draw_circle(hole_rect.get_center(), 15.0, Color("#020305"))
 			if hole_index == int(state.get("coin_pusher_selected_hole", 0)):
 				surface.draw_circle(hole_rect.get_center(), 22.0, colors["light"], false, 3.0)
-			surface.surface_label_centered(str(hole_index + 1), hole_rect, 14, colors["light"])
+			surface.surface_label_centered_plain(str(hole_index + 1), hole_rect, 14, colors["light"])
 			var hole_action := "coin_pusher_hole_%d" % hole_index
 			if _binding_enabled(bindings, hole_action):
 				surface.surface_add_exact_hit(hole_rect, hole_action, hole_index)
@@ -951,13 +1163,13 @@ func _draw_hardware(surface, state: Dictionary, colors: Dictionary) -> void:
 		surface.draw_rect(Rect2(carriage_point - Vector2(11, 21), Vector2(22, 42)), colors["side"])
 		surface.draw_rect(Rect2(carriage_point - Vector2(11, 21), Vector2(22, 42)), colors["light"], false, 2.0)
 		surface.draw_line(carriage_point + Vector2(0, 9), carriage_point + Vector2(0, 29), colors["light"], 3.0)
-		_draw_small_hardware(surface, Rect2(54, 356, 42, 34), "<", "coin_pusher_carriage_left", colors, _binding_enabled(bindings, "coin_pusher_carriage_left"))
-		_draw_small_hardware(surface, Rect2(102, 356, 42, 34), ">", "coin_pusher_carriage_right", colors, _binding_enabled(bindings, "coin_pusher_carriage_right"))
+		_draw_small_hardware(surface, Rect2(54, 356, 42, 34), "<", "coin_pusher_carriage_left", colors, _binding_enabled(bindings, "coin_pusher_carriage_left"), _hardware_hovered(surface, state, "coin_pusher_carriage_left"))
+		_draw_small_hardware(surface, Rect2(102, 356, 42, 34), ">", "coin_pusher_carriage_right", colors, _binding_enabled(bindings, "coin_pusher_carriage_right"), _hardware_hovered(surface, state, "coin_pusher_carriage_right"))
 	var stop_engaged := bool(state.get("coin_pusher_skill_stop_engaged", false))
 	var stop_rect := Rect2(154, 352, 88, 48)
 	surface.draw_circle(stop_rect.get_center(), 27.0, colors["light"] if stop_engaged else Color("#b73538"))
-	surface.draw_circle(stop_rect.get_center(), 27.0, Color.WHITE if surface.surface_region_hovered("coin_pusher_skill_stop") else colors["trim"], false, 3.0)
-	surface.surface_label_centered("RELEASE" if stop_engaged else "STOP", stop_rect, 12, Color("#10141d"))
+	surface.draw_circle(stop_rect.get_center(), 27.0, Color.WHITE if _hardware_hovered(surface, state, "coin_pusher_skill_stop") else colors["trim"], false, 3.0)
+	surface.surface_label_centered_plain("RELEASE" if stop_engaged else "STOP", stop_rect, 12, Color("#10141d"))
 	if _binding_enabled(bindings, "coin_pusher_skill_stop"):
 		surface.surface_add_hit(stop_rect, "coin_pusher_skill_stop")
 	var tray_rect := Rect2(250, 352, 280, 58)
@@ -966,7 +1178,7 @@ func _draw_hardware(surface, state: Dictionary, colors: Dictionary) -> void:
 	_draw_tray_heap(surface, tray_rect, int(state.get("coin_pusher_tray_count", 0)), colors)
 	var collect_enabled := bool((bindings.get("coin_pusher_collect", {}) as Dictionary).get("enabled", false)) if typeof(bindings.get("coin_pusher_collect", {})) == TYPE_DICTIONARY else false
 	var tray_label_rect := Rect2(tray_rect.position + Vector2(5, 3), Vector2(tray_rect.size.x - 10, 18))
-	surface.surface_label_centered("COLLECT  %d  ($%d)" % [int(state.get("coin_pusher_tray_count", 0)), int(state.get("coin_pusher_tray_value", 0))], tray_label_rect, 11, colors["light"] if collect_enabled else Color(colors["light"], 0.44))
+	surface.surface_label_centered_plain("COLLECT  %d  ($%d)" % [int(state.get("coin_pusher_tray_count", 0)), int(state.get("coin_pusher_tray_value", 0))], tray_label_rect, 11, colors["light"] if collect_enabled else Color(colors["light"], 0.44))
 	if collect_enabled:
 		surface.surface_add_hit(tray_rect, "coin_pusher_collect")
 	var slot_rect := Rect2(540, 352, 72, 48)
@@ -977,23 +1189,23 @@ func _draw_hardware(surface, state: Dictionary, colors: Dictionary) -> void:
 	var queued := maxi(0, int(state.get("coin_pusher_drop_queue_count", 0)))
 	var charging := maxi(0, int(state.get("coin_pusher_drop_charge_count", 0)))
 	var drop_label := "HOLD %d" % charging if charging > 0 else "QUEUE %d" % queued if queued > 0 else "DROP / HOLD"
-	surface.surface_label_centered(drop_label, Rect2(538, 391, 76, 9), 8, colors["light"])
+	surface.surface_label_centered_plain(drop_label, Rect2(538, 391, 76, 9), 8, colors["light"])
 	var drop_enabled := _binding_enabled(bindings, "coin_pusher_drop")
 	if drop_enabled:
 		surface.surface_add_hold_hit(slot_rect, "coin_pusher_drop_charge")
 	var nudge_rect := Rect2(620, 352, 88, 48)
 	var nudge_enabled := _binding_enabled(bindings, "coin_pusher_nudge")
-	var nudge_hovered: bool = nudge_enabled and bool(surface.surface_region_hovered("coin_pusher_nudge"))
+	var nudge_hovered: bool = nudge_enabled and _hardware_hovered(surface, state, "coin_pusher_nudge")
 	surface.draw_rect(nudge_rect, colors["side"].lightened(0.08 if nudge_hovered else 0.0))
 	surface.draw_circle(Vector2(635, 363), 3.0, colors["trim"])
 	surface.draw_circle(Vector2(693, 363), 3.0, colors["trim"])
 	surface.draw_line(Vector2(642, 373), Vector2(686, 373), Color.WHITE if nudge_hovered else colors["trim"], 8.0)
 	surface.draw_line(Vector2(642, 373), Vector2(642, 385), colors["trim"], 4.0)
 	surface.draw_line(Vector2(686, 373), Vector2(686, 385), colors["trim"], 4.0)
-	surface.surface_label_centered("NUDGE", Rect2(628, 384, 72, 12), 8, colors["light"] if nudge_enabled else Color(colors["light"], 0.38))
+	surface.surface_label_centered_plain("NUDGE", Rect2(628, 384, 72, 12), 8, colors["light"] if nudge_enabled else Color(colors["light"], 0.38))
 	if nudge_enabled:
 		surface.surface_add_hit(nudge_rect, "coin_pusher_nudge")
-	surface.surface_label_centered(str(state.get("coin_pusher_tell_label", "steady")).to_upper(), Rect2(716, 380, 116, 16), 9, colors["light"])
+	surface.surface_label_centered_plain(str(state.get("coin_pusher_tell_label", "steady")).to_upper(), Rect2(716, 380, 116, 16), 9, colors["light"])
 	_draw_feature_hardware(surface, state, bindings, colors)
 
 
@@ -1001,6 +1213,72 @@ func _draw_feature_hardware(surface, state: Dictionary, bindings: Dictionary, co
 	var descriptor: Dictionary = state.get("coin_pusher_feature_hardware", {}) if typeof(state.get("coin_pusher_feature_hardware", {})) == TYPE_DICTIONARY else {}
 	_draw_selector_groups(surface, descriptor, bindings, colors)
 	_draw_feature_panels(surface, descriptor, bindings, colors)
+
+
+func _register_hardware_hits(surface, state: Dictionary) -> void:
+	var bindings: Dictionary = state.get("surface_action_bindings", {}) if typeof(state.get("surface_action_bindings", {})) == TYPE_DICTIONARY else {}
+	var apparatus: Dictionary = state.get("coin_pusher_apparatus", {}) if typeof(state.get("coin_pusher_apparatus", {})) == TYPE_DICTIONARY else {}
+	var layout := _entry_hardware_layout(state)
+	if str(apparatus.get("type", "rail_slot")) == "hole_set":
+		var targets: Array = layout.get("targets", []) if typeof(layout.get("targets", [])) == TYPE_ARRAY else []
+		for target_value in targets:
+			if typeof(target_value) != TYPE_DICTIONARY:
+				continue
+			var target: Dictionary = target_value
+			var hole_index := int(target.get("index", 0))
+			var hole_action := "coin_pusher_hole_%d" % hole_index
+			if _binding_enabled(bindings, hole_action):
+				surface.surface_add_exact_hit(target.get("rect", Rect2()), hole_action, hole_index)
+	else:
+		var drag_enabled := _binding_enabled(bindings, "coin_pusher_carriage_left") and _binding_enabled(bindings, "coin_pusher_carriage_right")
+		if drag_enabled:
+			surface.surface_add_drag_hit(layout.get("drag_rect", Rect2()), "coin_pusher_carriage_drag")
+		if _binding_enabled(bindings, "coin_pusher_carriage_left"):
+			surface.surface_add_hit(Rect2(54, 356, 42, 34), "coin_pusher_carriage_left")
+		if _binding_enabled(bindings, "coin_pusher_carriage_right"):
+			surface.surface_add_hit(Rect2(102, 356, 42, 34), "coin_pusher_carriage_right")
+	if _binding_enabled(bindings, "coin_pusher_skill_stop"):
+		surface.surface_add_hit(Rect2(154, 352, 88, 48), "coin_pusher_skill_stop")
+	if _binding_enabled(bindings, "coin_pusher_collect"):
+		surface.surface_add_hit(Rect2(250, 352, 280, 58), "coin_pusher_collect")
+	if _binding_enabled(bindings, "coin_pusher_drop"):
+		surface.surface_add_hold_hit(Rect2(540, 352, 72, 48), "coin_pusher_drop_charge")
+	if _binding_enabled(bindings, "coin_pusher_nudge"):
+		surface.surface_add_hit(Rect2(620, 352, 88, 48), "coin_pusher_nudge")
+	_register_feature_hardware_hits(surface, state, bindings)
+
+
+func _register_feature_hardware_hits(surface, state: Dictionary, bindings: Dictionary) -> void:
+	var descriptor: Dictionary = state.get("coin_pusher_feature_hardware", {}) if typeof(state.get("coin_pusher_feature_hardware", {})) == TYPE_DICTIONARY else {}
+	var groups: Array = descriptor.get("selector_groups", []) if typeof(descriptor.get("selector_groups", [])) == TYPE_ARRAY else []
+	for group_value in groups:
+		if typeof(group_value) != TYPE_DICTIONARY:
+			continue
+		var group: Dictionary = group_value
+		var options: Array = group.get("options", []) if typeof(group.get("options", [])) == TYPE_ARRAY else []
+		if options.is_empty():
+			continue
+		var group_rect: Rect2 = group.get("rect", Rect2())
+		var width := group_rect.size.x / float(options.size())
+		for option_index in range(options.size()):
+			if typeof(options[option_index]) != TYPE_DICTIONARY:
+				continue
+			var option: Dictionary = options[option_index]
+			var action := str(option.get("action", ""))
+			if _binding_enabled(bindings, action) and not action.is_empty():
+				var rect := Rect2(group_rect.position + Vector2(width * option_index, 0.0), Vector2(width - 2.0, group_rect.size.y))
+				surface.surface_add_exact_hit(rect, action, int(option.get("index", option_index)))
+	var panels: Array = descriptor.get("panels", []) if typeof(descriptor.get("panels", [])) == TYPE_ARRAY else []
+	for panel_value in panels:
+		if typeof(panel_value) != TYPE_DICTIONARY:
+			continue
+		for control_value in (panel_value as Dictionary).get("controls", []):
+			if typeof(control_value) != TYPE_DICTIONARY:
+				continue
+			var control: Dictionary = control_value
+			var action := str(control.get("action", ""))
+			if not action.is_empty() and _binding_enabled(bindings, action):
+				surface.surface_add_exact_hit(control.get("rect", Rect2()), action, int(control.get("index", 0)))
 
 
 func _draw_selector_groups(surface, descriptor: Dictionary, bindings: Dictionary, colors: Dictionary) -> void:
@@ -1023,7 +1301,7 @@ func _draw_selector_groups(surface, descriptor: Dictionary, bindings: Dictionary
 			var selected := option_id == str(group["selected"])
 			surface.draw_rect(rect, colors["light"] if selected else colors["side"])
 			surface.draw_rect(rect, colors["trim"] if enabled else Color(colors["trim"], 0.32), false, 1.0)
-			surface.surface_label_centered(str(option.get("label", option_id)).to_upper(), rect.grow(-1.0), 7, Color("#10141d") if selected else Color(colors["light"], 0.85 if enabled else 0.32))
+			surface.surface_label_centered_plain(str(option.get("label", option_id)).to_upper(), rect.grow(-1.0), 7, Color("#10141d") if selected else Color(colors["light"], 0.85 if enabled else 0.32))
 			if enabled and not action.is_empty():
 				surface.surface_add_exact_hit(rect, action, int(option.get("index", option_index)))
 
@@ -1048,7 +1326,7 @@ func _draw_feature_panels(surface, descriptor: Dictionary, bindings: Dictionary,
 			var fill: Color = colors["light"] if selected else colors["body"].lightened(0.10 if bool(control.get("lit", false)) else 0.0)
 			surface.draw_rect(rect, fill)
 			surface.draw_rect(rect, colors["light"] if selected else colors["trim"], false, 1.0)
-			surface.surface_label_centered(str(control.get("label", "")), rect.grow(-1.0), int(control.get("font_size", 8)), Color("#10141d") if selected else colors["light"])
+			surface.surface_label_centered_plain(str(control.get("label", "")), rect.grow(-1.0), int(control.get("font_size", 8)), Color("#10141d") if selected else colors["light"])
 			if enabled:
 				surface.surface_add_exact_hit(rect, action, int(control.get("index", 0)))
 
@@ -1115,6 +1393,10 @@ func _binding_enabled(bindings: Dictionary, action: String) -> bool:
 
 
 func _entry_hardware_layout(state: Dictionary) -> Dictionary:
+	var static_key := str(state.get("coin_pusher_static_content_key", ""))
+	var carriage_state := int(state.get("coin_pusher_carriage_x", 50000))
+	if not static_key.is_empty() and static_key == _entry_hardware_layout_static_key and carriage_state == _entry_hardware_layout_carriage:
+		return _entry_hardware_layout_cache
 	var apparatus: Dictionary = state.get("coin_pusher_apparatus", {}) if typeof(state.get("coin_pusher_apparatus", {})) == TYPE_DICTIONARY else {}
 	var geometry: Dictionary = state.get("coin_pusher_geometry", {}) if typeof(state.get("coin_pusher_geometry", {})) == TYPE_DICTIONARY else {}
 	var board := _delivery_board(apparatus, geometry)
@@ -1125,7 +1407,12 @@ func _entry_hardware_layout(state: Dictionary) -> Dictionary:
 		for hole_index in range(holes.size()):
 			var center := _project_delivery_board_point(board, float(holes[hole_index]), z_top)
 			targets.append({"index": hole_index, "action": "coin_pusher_hole_%d" % hole_index, "center": center, "rect": Rect2(center - Vector2(22, 22), Vector2(44, 44))})
-		return {"type": "hole_set", "targets": targets}
+		var hole_result := {"type": "hole_set", "targets": targets}
+		if not static_key.is_empty():
+			_entry_hardware_layout_static_key = static_key
+			_entry_hardware_layout_carriage = carriage_state
+			_entry_hardware_layout_cache = hole_result
+		return hole_result
 	var rail: Dictionary = apparatus.get("rail", {}) if typeof(apparatus.get("rail", {})) == TYPE_DICTIONARY else {}
 	var rail_min := int(rail.get("x_min", 8000))
 	var rail_max := maxi(rail_min + 1, int(rail.get("x_max", 92000)))
@@ -1133,7 +1420,12 @@ func _entry_hardware_layout(state: Dictionary) -> Dictionary:
 	var rail_start := _project_delivery_board_point(board, float(rail_min), z_top)
 	var rail_end := _project_delivery_board_point(board, float(rail_max), z_top)
 	var carriage_point := _project_delivery_board_point(board, float(carriage), z_top)
-	return {"type": "rail_slot", "rail_start": rail_start, "rail_end": rail_end, "carriage": carriage_point, "drag_rect": Rect2(Vector2(minf(rail_start.x, rail_end.x), rail_start.y - 22.0), Vector2(absf(rail_end.x - rail_start.x), 44.0))}
+	var rail_result := {"type": "rail_slot", "rail_start": rail_start, "rail_end": rail_end, "carriage": carriage_point, "drag_rect": Rect2(Vector2(minf(rail_start.x, rail_end.x), rail_start.y - 22.0), Vector2(absf(rail_end.x - rail_start.x), 44.0))}
+	if not static_key.is_empty():
+		_entry_hardware_layout_static_key = static_key
+		_entry_hardware_layout_carriage = carriage_state
+		_entry_hardware_layout_cache = rail_result
+	return rail_result
 
 
 func debug_entry_hardware_layout_for_test(state: Dictionary) -> Dictionary:
@@ -1141,14 +1433,19 @@ func debug_entry_hardware_layout_for_test(state: Dictionary) -> Dictionary:
 	return _entry_hardware_layout(state)
 
 
-func _draw_small_hardware(surface, rect: Rect2, label: String, action: String, colors: Dictionary, enabled: bool) -> void:
-	var hovered: bool = bool(surface.surface_region_hovered(action))
+func _draw_small_hardware(surface, rect: Rect2, label: String, action: String, colors: Dictionary, enabled: bool, hovered: bool) -> void:
 	var body_color: Color = colors["body"]
 	surface.draw_rect(rect, body_color.lightened(0.08 if hovered else 0.0))
 	surface.draw_rect(rect, Color.WHITE if hovered else colors["trim"], false, 2.0)
-	surface.surface_label_centered(label, rect.grow(-3.0), 12, colors["light"])
+	surface.surface_label_centered_plain(label, rect.grow(-3.0), 12, colors["light"])
 	if enabled:
 		surface.surface_add_hit(rect, action)
+
+
+func _hardware_hovered(surface, state: Dictionary, action: String) -> bool:
+	if state.has("coin_pusher_hardware_hover_action"):
+		return str(state.get("coin_pusher_hardware_hover_action", "")) == action
+	return bool(surface.surface_region_hovered(action))
 
 
 func _draw_tray_heap(surface, rect: Rect2, count: int, colors: Dictionary) -> void:

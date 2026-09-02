@@ -805,6 +805,10 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 	return {"handled": false}
 
 
+func surface_uses_auto_tick() -> bool:
+	return true
+
+
 func surface_needs_auto_tick(ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> bool:
 	# Per-frame check: peek (zero-copy, read-only) instead of deep-copying the machine.
 	var machine: Dictionary = _peek_machine(environment)

@@ -44,7 +44,7 @@
     "repository": "https://github.com/emscripten-core/emsdk.git",
     "commit": "e4fe26ef59168ff44f4c23c466e497bf60b3411e",
     "template": "web_dlink_nothreads_release.zip",
-    "template_sha256": "94d21e07411bec3ca6e8769b18125e9ecfb8edff050ce50c5fb41278d151619d",
-    "template_reason": "Godot 4.6 official builds use Emscripten 4.0.20; the shipped game remains single-threaded while the dlink template supplies GDExtension support."
+    "template_sha256": "d0aaaed2f2e81b62e58d1a5de511a4b7687303e2574bec02be86276b7d2da60c",
+    "template_reason": "The pinned Godot 4.6-stable source uses Emscripten 4.0.20, the reviewed thin release profile, deterministic packaging, no release assertions, and the single-threaded dlink ABI required by the shipped GDExtension."
   }
 }

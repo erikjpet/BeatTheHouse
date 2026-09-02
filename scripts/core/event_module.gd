@@ -137,13 +137,13 @@ func can_trigger(run_state: RunState, environment: Dictionary, context: Dictiona
 		return false
 	if int(environment.get("tier", 1)) < tier_min:
 		return false
-	var event_ids := _copy_array(environment.get("event_ids", []))
+	var event_ids := _readonly_array(environment.get("event_ids", []))
 	if get_interaction_mode() != "triggered" and not event_ids.is_empty() and not event_ids.has(get_id()):
 		return false
-	var resolved := _copy_array(environment.get("resolved_event_ids", []))
+	var resolved := _readonly_array(environment.get("resolved_event_ids", []))
 	if resolved.has(get_id()):
 		return false
-	var scopes := _copy_array(definition.get("scopes", []))
+	var scopes := _readonly_array(definition.get("scopes", []))
 	if not scopes.is_empty() and not scopes.has("any") and not scopes.has(str(environment.get("kind", ""))):
 		return false
 	if _event_requires_room_actor(context) and not _environment_allows_room_actor(environment):
@@ -613,7 +613,7 @@ static func _apply_trigger_hook_story(run_state: RunState, entries: Array) -> vo
 
 # Checks the event trigger payload.
 func _trigger_allows(environment: Dictionary, context: Dictionary = {}) -> bool:
-	var trigger := _copy_dict(definition.get("trigger", {"type": "manual"}))
+	var trigger := _readonly_dict(definition.get("trigger", {"type": "manual"}))
 	var trigger_type := str(trigger.get("type", "manual"))
 	match trigger_type:
 		"manual":
@@ -647,7 +647,7 @@ func _trigger_allows(environment: Dictionary, context: Dictionary = {}) -> bool:
 func _event_requires_room_actor(context: Dictionary = {}) -> bool:
 	if str(context.get("trigger", context.get("type", ""))) == "travel":
 		return false
-	var speaker := _copy_dict(definition.get("speaker", {}))
+	var speaker := _readonly_dict(definition.get("speaker", {}))
 	if speaker.is_empty():
 		return false
 	if speaker.has("environment_actor") and not bool(speaker.get("environment_actor", true)):
@@ -667,7 +667,7 @@ func _environment_allows_room_actor(environment: Dictionary) -> bool:
 
 # Checks optional run-state/system conditions without mutating the run.
 func _conditions_allow(run_state: RunState, environment: Dictionary, context: Dictionary = {}) -> bool:
-	var conditions := _copy_dict(context.get("conditions_override", definition.get("conditions", {})))
+	var conditions := _readonly_dict(context.get("conditions_override", definition.get("conditions", {})))
 	if conditions.is_empty():
 		return true
 	if run_state == null:
@@ -699,15 +699,15 @@ func _conditions_allow(run_state: RunState, environment: Dictionary, context: Di
 	var economy_states := _string_array(conditions.get("economy_states", []))
 	if not economy_states.is_empty() and not economy_states.has(run_state.economy()):
 		return false
-	var requires_flags := _copy_dict(conditions.get("requires_flags", {}))
+	var requires_flags := _readonly_dict(conditions.get("requires_flags", {}))
 	for key in requires_flags.keys():
 		if run_state.narrative_flags.get(str(key), null) != requires_flags[key]:
 			return false
-	var completed_tutorial_lessons := _copy_dict(run_state.narrative_flags.get("tutorial_lessons_completed", {}))
+	var completed_tutorial_lessons := _readonly_dict(run_state.narrative_flags.get("tutorial_lessons_completed", {}))
 	for lesson_id in _string_array(conditions.get("requires_tutorial_lessons", [])):
 		if not bool(completed_tutorial_lessons.get(lesson_id, false)):
 			return false
-	var requires_story_flags := _copy_dict(conditions.get("requires_story_flags", {}))
+	var requires_story_flags := _readonly_dict(conditions.get("requires_story_flags", {}))
 	for key in requires_story_flags.keys():
 		if _story_flag_value(run_state, str(key)) != requires_story_flags[key]:
 			return false
@@ -747,7 +747,7 @@ func _conditions_allow(run_state: RunState, environment: Dictionary, context: Di
 		if str(environment.get("archetype_id", "")) == archetype_id:
 			return false
 	var scenario_ids := _string_array(conditions.get("scenario_ids", []))
-	var environment_scenario_id := str(environment.get("scenario_id", _copy_dict(environment.get("scenario_state", {})).get("id", "")))
+	var environment_scenario_id := str(environment.get("scenario_id", _readonly_dict(environment.get("scenario_state", {})).get("id", "")))
 	if not scenario_ids.is_empty() and not scenario_ids.has(environment_scenario_id):
 		return false
 	var environment_node_id := str(environment.get("world_node_id", environment.get("archetype_id", ""))).strip_edges()
@@ -757,7 +757,7 @@ func _conditions_allow(run_state: RunState, environment: Dictionary, context: Di
 	for character_id in _string_array(conditions.get("requires_traveler_here", [])):
 		if run_state.traveler_node(character_id) != environment_node_id:
 			return false
-	var pressure_band := _copy_dict(conditions.get("pressure_band", {}))
+	var pressure_band := _readonly_dict(conditions.get("pressure_band", {}))
 	if not pressure_band.is_empty():
 		var heat_met := pressure_band.has("min_suspicion") and run_state.suspicion_level() >= int(pressure_band.get("min_suspicion", 0))
 		var winnings_met := pressure_band.has("min_bankroll") and run_state.bankroll >= int(pressure_band.get("min_bankroll", 0))
@@ -779,14 +779,14 @@ func _conditions_allow(run_state: RunState, environment: Dictionary, context: Di
 		var ranks := CrewStateModel.RANK_IDS
 		if not ranks.has(minimum_crew_rank) or ranks.find(str(run_state.crew_standing().get("rank", "stranger"))) < ranks.find(minimum_crew_rank):
 			return false
-	var member_rank_maximum := _copy_dict(conditions.get("crew_member_rank_at_most", {}))
+	var member_rank_maximum := _readonly_dict(conditions.get("crew_member_rank_at_most", {}))
 	for member_id_value in member_rank_maximum.keys():
 		var member_id := str(member_id_value)
 		var maximum := str(member_rank_maximum.get(member_id_value, "stranger"))
 		var ranks := CrewStateModel.RANK_IDS
 		if not CrewStateModel.MEMBER_IDS.has(member_id) or not ranks.has(maximum) or ranks.find(run_state.crew_rank(member_id)) > ranks.find(maximum):
 			return false
-	var member_rank_minimum := _copy_dict(conditions.get("crew_member_rank_at_least", {}))
+	var member_rank_minimum := _readonly_dict(conditions.get("crew_member_rank_at_least", {}))
 	for member_id_value in member_rank_minimum.keys():
 		var member_id := str(member_id_value)
 		var minimum := str(member_rank_minimum.get(member_id_value, "stranger"))
@@ -818,7 +818,7 @@ func _conditions_allow(run_state: RunState, environment: Dictionary, context: Di
 		for travel_id in travel_ids:
 			if not available_travel.has(travel_id):
 				return false
-	var context_flags := _copy_dict(conditions.get("requires_context", {}))
+	var context_flags := _readonly_dict(conditions.get("requires_context", {}))
 	for key in context_flags.keys():
 		if context.get(str(key), null) != context_flags[key]:
 			return false
@@ -1229,11 +1229,19 @@ static func _copy_array(value: Variant) -> Array:
 # Normalizes a variant array into string ids.
 static func _string_array(value: Variant) -> Array:
 	var result: Array = []
-	for entry in _copy_array(value):
+	for entry in _readonly_array(value):
 		var id := str(entry)
 		if not id.is_empty():
 			result.append(id)
 	return result
+
+
+static func _readonly_array(value: Variant) -> Array:
+	return value if typeof(value) == TYPE_ARRAY else []
+
+
+static func _readonly_dict(value: Variant) -> Dictionary:
+	return value if typeof(value) == TYPE_DICTIONARY else {}
 
 
 static func _single_or_array_strings(value: Variant) -> Array:

@@ -422,6 +422,10 @@ const TURN_TRANSACTION_COLLECTION_FIELDS := [
 	"_item_definitions_by_id", "_item_effect_total_cache",
 	"_owned_item_lookup_cache", "_scenario_sequence_definition_cache",
 ]
+const TURN_TRANSACTION_SHALLOW_CACHE_FIELDS := [
+	"_item_effects_by_id", "_item_definitions_by_id", "_item_effect_total_cache",
+	"_owned_item_lookup_cache", "_scenario_sequence_definition_cache",
+]
 var world_sequence_registrations: Dictionary = {}
 var _world_sequence_definition_cache: Dictionary = {}
 
@@ -13064,14 +13068,35 @@ func _scenario_preflight_environment_turn(amount: int) -> Dictionary:
 
 
 # Advances the current environment clock.
-func advance_environment_turns(amount: int = 1) -> Dictionary:
+func advance_environment_turns(amount: int = 1, profile_stages: bool = false) -> Dictionary:
 	if current_environment.is_empty() or is_terminal():
 		return {"ok": true, "applied": false, "errors": []}
+	var profile_started_usec := Time.get_ticks_usec() if profile_stages else 0
+	# A room without a scenario sequence has no rejecting operation after the
+	# read-only preflight: every fact ingress below returns the documented
+	# inactive result. Advance that common path in place, preserving every live
+	# alias and avoiding a full RunState transaction for ordinary game inputs.
+	# The forced-rejection seam deliberately keeps the detached path so the exact
+	# rollback contract remains exercised in debug qualification.
+	if _turn_transaction_test_failure_stage.is_empty() and not scenario_sequence_present():
+		var direct_result := _advance_environment_turns_candidate(amount)
+		if profile_stages:
+			direct_result["debug_turn_transaction_usec"] = {"candidate_create": 0, "candidate_advance": Time.get_ticks_usec() - profile_started_usec, "publish": 0, "total": Time.get_ticks_usec() - profile_started_usec}
+		return direct_result
+	var profile_stage_started_usec := profile_started_usec
 	var candidate := _detached_environment_turn_candidate()
+	var candidate_create_usec := Time.get_ticks_usec() - profile_stage_started_usec if profile_stages else 0
+	profile_stage_started_usec = Time.get_ticks_usec() if profile_stages else 0
 	var result := candidate._advance_environment_turns_candidate(amount)
+	var candidate_advance_usec := Time.get_ticks_usec() - profile_stage_started_usec if profile_stages else 0
 	if not bool(result.get("ok", false)):
+		if profile_stages:
+			result["debug_turn_transaction_usec"] = {"candidate_create": candidate_create_usec, "candidate_advance": candidate_advance_usec, "publish": 0, "total": Time.get_ticks_usec() - profile_started_usec}
 		return result
+	profile_stage_started_usec = Time.get_ticks_usec() if profile_stages else 0
 	_publish_environment_turn_candidate(candidate)
+	if profile_stages:
+		result["debug_turn_transaction_usec"] = {"candidate_create": candidate_create_usec, "candidate_advance": candidate_advance_usec, "publish": Time.get_ticks_usec() - profile_stage_started_usec, "total": Time.get_ticks_usec() - profile_started_usec}
 	return result
 
 
@@ -13092,8 +13117,8 @@ func _advance_environment_turns_candidate(amount: int) -> Dictionary:
 			return {"ok": false, "applied": false, "errors": _copy_array(expiry_result.get("errors", []))}
 	forced_failure = _environment_turn_test_failure("expiry")
 	if not forced_failure.is_empty(): return forced_failure
-	var town_before := JSON.stringify(town_state.public_snapshot()) if town_state != null else ""
-	var sweep_before := JSON.stringify(town_state.sweep_internal_status()) if town_state != null else ""
+	var town_before := town_state.public_snapshot() if town_state != null else {}
+	var sweep_before := town_state.sweep_internal_status() if town_state != null else {}
 	_advance_global_boundary_start(safe_amount)
 	forced_failure = _environment_turn_test_failure("global_start")
 	if not forced_failure.is_empty(): return forced_failure
@@ -13125,7 +13150,7 @@ func _advance_environment_turns_candidate(amount: int) -> Dictionary:
 	if not forced_failure.is_empty(): return forced_failure
 	if town_state != null:
 		var town_after := town_state.public_snapshot()
-		if JSON.stringify(town_after) != town_before:
+		if town_after != town_before:
 			var happening_ids: Array = []
 			for happening_value in _copy_array(town_after.get("active_happenings", [])):
 				if typeof(happening_value) != TYPE_DICTIONARY:
@@ -13140,7 +13165,7 @@ func _advance_environment_turns_candidate(amount: int) -> Dictionary:
 		forced_failure = _environment_turn_test_failure("town_fact")
 		if not forced_failure.is_empty(): return forced_failure
 		var sweep_after := town_state.sweep_internal_status()
-		if JSON.stringify(sweep_after) != sweep_before:
+		if sweep_after != sweep_before:
 			var sweep_fact := scenario_enqueue_fact("sweep_changed", "sweep", {"action_index": _crew_action_index(), "node_id": str(sweep_after.get("current_node_id", "")), "segment_index": int(sweep_after.get("segment_index", -1)), "active": bool(sweep_after.get("active", false))})
 			if not bool(sweep_fact.get("ok", false)) and not bool(sweep_fact.get("inactive", false)):
 				return {"ok": false, "applied": false, "errors": _copy_array(sweep_fact.get("errors", []))}
@@ -13185,9 +13210,28 @@ func _detached_environment_turn_candidate() -> RunState:
 
 func _publish_environment_turn_candidate(candidate: RunState) -> void:
 	# Build the complete publish tuple before touching a live root. This method is
-	# synchronous and contains the only accepted-turn rebind boundary.
-	var publish_snapshot := candidate._environment_turn_snapshot()
+	# synchronous and contains the only accepted-turn rebind boundary. The
+	# candidate already owns a completely detached collection graph, so publishing
+	# its exact roots does not require deep-copying that graph a second time.
+	var publish_snapshot := candidate._environment_turn_publish_snapshot()
 	_apply_environment_turn_snapshot(publish_snapshot, true)
+
+
+func _environment_turn_publish_snapshot() -> Dictionary:
+	var snapshot: Dictionary = {}
+	for field_name in TURN_TRANSACTION_SCALAR_FIELDS:
+		snapshot[field_name] = get(field_name)
+	for field_name in TURN_TRANSACTION_COLLECTION_FIELDS:
+		snapshot[field_name] = get(field_name)
+	snapshot["town_state_object"] = {
+		"present": town_state != null,
+		"source": town_state,
+	}
+	snapshot["numbers_state_object"] = {
+		"present": numbers_state != null,
+		"source": numbers_state,
+	}
+	return snapshot
 
 
 func _environment_turn_snapshot() -> Dictionary:
@@ -13198,21 +13242,45 @@ func _environment_turn_snapshot() -> Dictionary:
 	# storage can intentionally alias the live current environment; duplicating
 	# each field independently loses that relationship and lets a stale room copy
 	# overwrite the newly advanced environment while the candidate is published.
-	var collection_graph: Dictionary = {}
-	for field_name in TURN_TRANSACTION_COLLECTION_FIELDS:
-		collection_graph[field_name] = get(field_name)
 	var active_room_alias_ids: Array = []
 	for room_id_value in grand_casino_room_states.keys():
 		var room_value: Variant = grand_casino_room_states.get(room_id_value)
 		if typeof(room_value) == TYPE_DICTIONARY and is_same(room_value, current_environment):
 			active_room_alias_ids.append(room_id_value)
+	# Game modules own game_states; an environment turn neither reads nor mutates
+	# those opaque machine records. Detach the mutable environment shell while
+	# retaining that exact immutable subtree. This prevents a 300-piece pusher
+	# checkpoint from being copied into the candidate and then walked again during
+	# publication for every quarter, without relaxing transaction atomicity.
+	var transaction_environment: Dictionary = {}
+	for environment_key in current_environment.keys():
+		if str(environment_key) != "game_states":
+			transaction_environment[environment_key] = current_environment[environment_key]
+	var transaction_rooms := grand_casino_room_states.duplicate(false)
+	for room_id_value in active_room_alias_ids:
+		transaction_rooms[room_id_value] = transaction_environment
+	var collection_graph: Dictionary = {}
+	var detached_shallow_caches: Dictionary = {}
+	for field_name in TURN_TRANSACTION_COLLECTION_FIELDS:
+		if field_name in TURN_TRANSACTION_SHALLOW_CACHE_FIELDS:
+			var cache_value: Variant = get(field_name)
+			detached_shallow_caches[field_name] = cache_value.duplicate(false) if typeof(cache_value) in [TYPE_DICTIONARY, TYPE_ARRAY] else cache_value
+		elif field_name == "current_environment":
+			collection_graph[field_name] = transaction_environment
+		elif field_name == "grand_casino_room_states":
+			collection_graph[field_name] = transaction_rooms
+		else:
+			collection_graph[field_name] = get(field_name)
 	var detached_collection_graph := collection_graph.duplicate(true)
 	var detached_rooms: Dictionary = detached_collection_graph.get("grand_casino_room_states", {})
 	var detached_environment: Dictionary = detached_collection_graph.get("current_environment", {})
+	var game_states_value: Variant = current_environment.get("game_states", null)
+	if typeof(game_states_value) == TYPE_DICTIONARY:
+		detached_environment["game_states"] = game_states_value
 	for room_id_value in active_room_alias_ids:
 		detached_rooms[room_id_value] = detached_environment
 	for field_name in TURN_TRANSACTION_COLLECTION_FIELDS:
-		snapshot[field_name] = detached_collection_graph.get(field_name)
+		snapshot[field_name] = detached_shallow_caches.get(field_name) if field_name in TURN_TRANSACTION_SHALLOW_CACHE_FIELDS else detached_collection_graph.get(field_name)
 	snapshot["town_state_object"] = {
 		"present": town_state != null,
 		"state": town_state.snapshot() if town_state != null else {},
@@ -13236,7 +13304,16 @@ func _apply_environment_turn_snapshot(snapshot: Dictionary, preserve_live_aliase
 			# directly retains cross-field aliases inside the transaction candidate.
 			set(field_name, incoming)
 			continue
+		if field_name in TURN_TRANSACTION_SHALLOW_CACHE_FIELDS:
+			# These private caches own detached outer containers but immutable
+			# definition/scalar values. An accepted candidate can transfer that
+			# outer cache directly; no external gameplay identity retains it.
+			set(field_name, incoming)
+			continue
 		var current: Variant = get(field_name)
+		if field_name == "current_environment" and typeof(current) == TYPE_DICTIONARY and typeof(incoming) == TYPE_DICTIONARY:
+			_publish_environment_dictionary_in_place(current as Dictionary, incoming as Dictionary)
+			continue
 		if preserve_live_aliases and _publish_mutable_variant_in_place(current, incoming):
 			continue
 		set(field_name, incoming.duplicate(true) if typeof(incoming) in [TYPE_DICTIONARY, TYPE_ARRAY] else incoming)
@@ -13245,20 +13322,71 @@ func _apply_environment_turn_snapshot(snapshot: Dictionary, preserve_live_aliase
 		if town_state == null:
 			town_state = TownStateScript.new()
 			town_state.bind_host_capability(_world1_host_capability)
-		town_state.restore(_copy_dict(town_record.get("state", {})), seed_value, _copy_dict(town_record.get("conditions", {})))
+		var town_source: Variant = town_record.get("source", null)
+		if preserve_live_aliases and typeof(town_source) == TYPE_OBJECT and is_instance_valid(town_source):
+			_publish_refcounted_script_state(town_state, town_source as Object)
+		else:
+			town_state.restore(_copy_dict(town_record.get("state", {})), seed_value, _copy_dict(town_record.get("conditions", {})))
 	else:
 		town_state = null
 	var numbers_record := _copy_dict(snapshot.get("numbers_state_object", {}))
 	if bool(numbers_record.get("present", false)):
 		if numbers_state == null:
 			numbers_state = _new_numbers_model()
-		numbers_state.restore(_copy_dict(numbers_record.get("state", {})), seed_value, _copy_dict(numbers_record.get("config", {})))
+		var numbers_source: Variant = numbers_record.get("source", null)
+		if preserve_live_aliases and typeof(numbers_source) == TYPE_OBJECT and is_instance_valid(numbers_source):
+			_publish_refcounted_script_state(numbers_state, numbers_source as Object)
+		else:
+			numbers_state.restore(_copy_dict(numbers_record.get("state", {})), seed_value, _copy_dict(numbers_record.get("config", {})))
 	else:
 		numbers_state = null
 
 
+static func _publish_refcounted_script_state(live_object: Object, candidate_object: Object) -> void:
+	# The accepted candidate is already detached and will not execute again. Move
+	# its complete stored model fields into the retained authoritative object rather
+	# than serializing and reconstructing both models during the synchronous input
+	# boundary. This retains the externally held TownState/NumbersModel identities.
+	for property_record in candidate_object.get_property_list():
+		if typeof(property_record) != TYPE_DICTIONARY:
+			continue
+		var property: Dictionary = property_record
+		var usage := int(property.get("usage", 0))
+		if (usage & PROPERTY_USAGE_STORAGE) == 0 and (usage & PROPERTY_USAGE_SCRIPT_VARIABLE) == 0:
+			continue
+		var property_name := str(property.get("name", ""))
+		if property_name.is_empty() or property_name == "script":
+			continue
+		live_object.set(property_name, candidate_object.get(property_name))
+
+
+static func _publish_environment_dictionary_in_place(live_environment: Dictionary, candidate_environment: Dictionary) -> void:
+	# External systems retain the environment root (and, when unchanged, its
+	# nested authored roots). Changed environment fields are already detached and
+	# complete in the accepted candidate, so publish them field-wise instead of
+	# recursively interpreting every generated layout/presentation dictionary in
+	# GDScript. Equality retains exact unchanged nested identities.
+	for key in live_environment.keys():
+		if not candidate_environment.has(key):
+			live_environment.erase(key)
+	for key in candidate_environment.keys():
+		var incoming: Variant = candidate_environment[key]
+		if live_environment.has(key):
+			var current: Variant = live_environment[key]
+			if (typeof(current) in [TYPE_DICTIONARY, TYPE_ARRAY] and is_same(current, incoming)) or current == incoming:
+				continue
+		live_environment[key] = incoming.duplicate(true) if typeof(incoming) in [TYPE_DICTIONARY, TYPE_ARRAY] else incoming
+
+
 static func _publish_mutable_variant_in_place(live_value: Variant, candidate_value: Variant) -> bool:
 	if typeof(live_value) == TYPE_DICTIONARY and typeof(candidate_value) == TYPE_DICTIONARY:
+		if is_same(live_value, candidate_value):
+			return true
+		# Variant equality is implemented natively and proves an unchanged detached
+		# subtree exactly. Avoid walking that subtree key-by-key in GDScript merely
+		# to reassign the same values during an accepted transaction publish.
+		if live_value == candidate_value:
+			return true
 		var live_dictionary := live_value as Dictionary
 		var candidate_dictionary := candidate_value as Dictionary
 		for key in live_dictionary.keys():
@@ -13270,6 +13398,10 @@ static func _publish_mutable_variant_in_place(live_value: Variant, candidate_val
 			live_dictionary[key] = incoming.duplicate(true) if typeof(incoming) in [TYPE_DICTIONARY, TYPE_ARRAY] else incoming
 		return true
 	if typeof(live_value) == TYPE_ARRAY and typeof(candidate_value) == TYPE_ARRAY:
+		if is_same(live_value, candidate_value):
+			return true
+		if live_value == candidate_value:
+			return true
 		var live_array := live_value as Array
 		var candidate_array := candidate_value as Array
 		while live_array.size() > candidate_array.size(): live_array.pop_back()

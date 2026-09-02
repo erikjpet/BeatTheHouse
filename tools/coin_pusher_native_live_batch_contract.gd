@@ -55,7 +55,9 @@ static func _run_contract() -> Dictionary:
 		"live_cache_key": "contract:a",
 		"live_cache_reset": true,
 		"capture_previous_views": true,
+		"capture_previous_packed": true,
 		"capture_current_views": true,
+		"capture_current_packed": true,
 	}, 5)
 	var reference_result := Solver.step_ticks_reference_for_test(reference_state, {
 		"input_trace": first_trace,
@@ -75,6 +77,43 @@ static func _run_contract() -> Dictionary:
 	_assert_equal("pre-final presentation face", int(native_result.get("presentation_previous_face_y", -1)), int(previous_reference.get("face_y", -2)), failures)
 	_assert_equal("current presentation bodies", native_result.get("presentation_current_bodies", []), _presentation_views(reference_state), failures)
 	_assert_equal("current presentation face", int(native_result.get("presentation_current_face_y", -1)), int(reference_state.get("face_y", -2)), failures)
+	var render_config := {
+		"world_width": 100000,
+		"world_back_y": 78000,
+		"coin_height": 950,
+		"coin_radius": 2350,
+		"board": {"y": 78000, "z_bottom": 3600, "z_top": 24000},
+		"body_colors": {"default": "#c9c5b8", "coin": "#d9c167", "rider": "#62c8ef", "puck": "#ec6f66", "fragment": "#a8e078"},
+	}
+	var dictionary_render: Dictionary = native.call("build_live_render_batch", render_config, native_result.get("presentation_current_bodies", []), native_result.get("presentation_previous_bodies", []), 0.375)
+	var packed_render: Dictionary = native.call("build_live_render_batch_packed", render_config, native_result.get("presentation_current_packed", PackedInt64Array()), native_result.get("presentation_previous_packed", PackedInt64Array()), 0.375)
+	_assert_equal("packed renderer count", packed_render.get("count", -1), dictionary_render.get("count", -2), failures)
+	_assert_equal("packed renderer transform/color buffer", packed_render.get("buffer", PackedFloat32Array()), dictionary_render.get("buffer", PackedFloat32Array()), failures)
+	_assert_equal("packed renderer shadows", packed_render.get("shadows", []), dictionary_render.get("shadows", []), failures)
+	_assert_equal("packed renderer feature labels", packed_render.get("features", []), dictionary_render.get("features", []), failures)
+
+	# Shipped Web ticks retain the authoritative body vector in the live native
+	# cache and publish only packed presentation data. A zero-tick durable sync
+	# must later restore the exact canonical Dictionary state for saves/exits.
+	var compact_state: Dictionary = opening.duplicate(true)
+	var compact_reference: Dictionary = opening.duplicate(true)
+	var compact_rng := _rng("LIVE-BATCH-COMPACT-RNG")
+	var compact_reference_rng := _rng("LIVE-BATCH-COMPACT-RNG")
+	var compact_result: Dictionary = native.call("step_ticks", compact_state, {
+		"input_trace": first_trace,
+		"rng": compact_rng,
+		"motor_enabled": true,
+		"live_cache_key": "contract:compact",
+		"live_cache_reset": true,
+		"write_body_state": false,
+		"capture_current_packed": true,
+	}, 5)
+	Solver.step_ticks_reference_for_test(compact_reference, {"input_trace": first_trace, "rng": compact_reference_rng, "motor_enabled": true}, 5)
+	if (compact_result.get("presentation_current_packed", PackedInt64Array()) as PackedInt64Array).is_empty():
+		failures.append("Compact live tick did not publish its packed presentation state.")
+	native.call("step_ticks", compact_state, {"live_cache_key": "contract:compact", "write_body_state": true}, 0)
+	_assert_equal("zero-tick durable sync after compact live ticks", Solver.canonical_digest(compact_state), Solver.canonical_digest(compact_reference), failures)
+	_assert_equal("compact live RNG boundary", compact_rng.snapshot(), compact_reference_rng.snapshot(), failures)
 
 	# An ordinary production solver call has no live key. It must neither consume
 	# nor replace the retained live kernel used by the following continuation.

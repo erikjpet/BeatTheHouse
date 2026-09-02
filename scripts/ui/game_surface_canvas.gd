@@ -98,12 +98,14 @@ var surface_presentation_clock_msec := 0.0
 var transient_surface_loop_deadline_msec := 0
 var transient_surface_loop_id := ""
 var environment_activity_paused := false
+var surface_render_state_dirty := false
 
 
 func set_game_module(game_module: GameModule) -> void:
 	if surface_game_module == game_module:
 		return
 	surface_game_module = game_module
+	surface_render_state_dirty = true
 	queue_redraw()
 
 
@@ -151,6 +153,7 @@ func clear_runtime_state() -> void:
 	surface_presentation_clock_msec = 0.0
 	transient_surface_loop_deadline_msec = 0
 	transient_surface_loop_id = ""
+	surface_render_state_dirty = false
 	_update_drunk_distortion_overlay()
 	queue_redraw()
 
@@ -172,6 +175,8 @@ func render_game_snapshot(snapshot: Dictionary) -> void:
 	drunk_effect_mode = _normalized_drunk_effect_mode(str(state.get("drunk_effect_mode", drunk_effect_mode)))
 	_update_drunk_distortion_overlay()
 	_update_surface_animation_channels()
+	surface_render_state_dirty = true
+	_prepare_surface_render_state()
 	queue_redraw()
 
 
@@ -198,9 +203,24 @@ func apply_surface_state_patch(patch: Dictionary) -> void:
 		_update_drunk_distortion_overlay()
 	if patch.has("surface_animation_channels"):
 		_update_surface_animation_channels()
+	surface_render_state_dirty = true
+	# A deferred patch advances authoritative simulation state without making a
+	# frame visible. Preparing its dense render batch here rebuilt the complete
+	# Coin Pusher projection at authority cadence, then discarded most batches
+	# before the Web presentation scheduler could draw them.
+	if not defer_redraw:
+		_prepare_surface_render_state()
 	if not defer_redraw:
 		perf_patch_redraw_requests += 1
 		queue_redraw()
+
+
+func _prepare_surface_render_state() -> void:
+	if not surface_render_state_dirty:
+		return
+	if surface_game_module != null and surface_game_module.has_method("prepare_surface_render_state"):
+		surface_game_module.call("prepare_surface_render_state", state)
+	surface_render_state_dirty = false
 
 
 func set_selected_index(index: int) -> void:
@@ -317,6 +337,13 @@ func surface_transition_animation_active() -> bool:
 		if surface_animation_active(str(channel_id_value)):
 			return true
 	return false
+
+
+func surface_bankroll_presentation_active() -> bool:
+	# Bankroll reveal ownership needs only the transition/handoff booleans. The
+	# former caller rebuilt the complete diagnostic runtime status every frame,
+	# including geometry, effects and all animation snapshots, after each wager.
+	return surface_transition_animation_active() or _surface_animation_handoff_active()
 
 
 func reset_performance_counters() -> void:
@@ -1205,9 +1232,11 @@ func _schedule_surface_animation_redraws(delta: float) -> void:
 	if main_redraw:
 		perf_surface_animation_scheduler_elapsed_sec += maxf(0.0, delta)
 		if _surface_animation_redraw_due(delta):
+			_prepare_surface_render_state()
 			queue_redraw()
 	elif continuous_redraw_was_active:
 		surface_animation_redraw_accumulator = 0.0
+		_prepare_surface_render_state()
 		queue_redraw()
 	else:
 		surface_animation_redraw_accumulator = 0.0
@@ -1216,6 +1245,10 @@ func _schedule_surface_animation_redraws(delta: float) -> void:
 
 func _draw() -> void:
 	var draw_started_usec := Time.get_ticks_usec()
+	# Safety net for non-scheduler redraw sources (resize/theme/editor). Ordinary
+	# realtime presentation prepares before queueing the frame above, keeping this
+	# call a cheap dirty-bit check on the measured path.
+	_prepare_surface_render_state()
 	# Surface renderers may opt into one conditional batch material for a draw;
 	# always clear it before dispatch so materials cannot leak between games.
 	material = null
@@ -1228,12 +1261,14 @@ func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, size), C_DARK)
 	_scale_canvas()
 	var board_size := _active_board_size()
-	draw_rect(Rect2(Vector2.ZERO, board_size), C_DARK)
-	if use_external_background and background_texture != null:
-		draw_texture_rect(background_texture, Rect2(Vector2.ZERO, board_size), false)
-	else:
-		for y in range(0, int(ceil(board_size.y)), 16):
-			draw_rect(Rect2(0, y, board_size.x, 16), C_DARK_2 if (y / 16) % 2 == 0 else C_PANEL)
+	var renderer_owns_board_background := uses_foundation_snapshot and bool(state.get("surface_renderer_opaque", false))
+	if not renderer_owns_board_background:
+		draw_rect(Rect2(Vector2.ZERO, board_size), C_DARK)
+		if use_external_background and background_texture != null:
+			draw_texture_rect(background_texture, Rect2(Vector2.ZERO, board_size), false)
+		else:
+			for y in range(0, int(ceil(board_size.y)), 16):
+				draw_rect(Rect2(0, y, board_size.x, 16), C_DARK_2 if (y / 16) % 2 == 0 else C_PANEL)
 	var rendered := false
 	if surface_game_module != null and uses_foundation_snapshot:
 		rendered = bool(surface_game_module.draw_surface(self, state, {
@@ -1373,6 +1408,8 @@ func _sync_surface_audio() -> void:
 	if sync_spec.is_empty():
 		return
 	_ensure_surface_sfx_player()
+	if surface_sfx_player.has_method("prewarm_surface_profile"):
+		surface_sfx_player.call("prewarm_surface_profile", profile_id)
 	surface_sfx_player.sync_surface_state(state, sync_spec, _surface_audio_timing(sync_spec))
 
 

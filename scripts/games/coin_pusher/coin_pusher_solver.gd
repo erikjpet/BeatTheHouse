@@ -489,6 +489,14 @@ static func native_live_render_batch(config: Dictionary, current: Array, previou
 	return result as Dictionary if typeof(result) == TYPE_DICTIONARY else {}
 
 
+static func native_live_render_batch_packed(config: Dictionary, current: PackedInt64Array, previous: PackedInt64Array, alpha: float) -> Dictionary:
+	var native := _native_solver_backend()
+	if native == null or not native.has_method("build_live_render_batch_packed"):
+		return {}
+	var result: Variant = native.call("build_live_render_batch_packed", config, current, previous, alpha)
+	return result as Dictionary if typeof(result) == TYPE_DICTIONARY else {}
+
+
 static func last_step_backend_for_test() -> String:
 	return _last_step_backend
 
@@ -1370,6 +1378,7 @@ static func _resolve_supports(bodies: Array, definition: Dictionary, face_y: int
 				events.append({"kind": "impact", "body_id": str(body.get("id", "")), "support": surface_kind, "support_root": surface_kind, "first_support": first_support, "landing_quality": landing_quality, "fall_height": maxi(0, fall_start_z - surface_z), "impact_speed": impact_speed, "impact_class": "hard" if impact_speed >= HARD_IMPACT_SPEED else "soft", "stack_depth": 0, "landing_scatter_x": scatter.x, "landing_scatter_y": scatter.y})
 				if first_support:
 					(body.get("meta", {}) as Dictionary)["first_support_recorded"] = true
+					nestle_work += _apply_upper_row_join_pressure(bodies, body_index, definition, events)
 				body.erase("fall_start_z")
 			_apply_surface_friction(body, MU_PLATFORM if surface_kind == "platform" else MU_DECK)
 			if surface_kind == "deck":
@@ -1490,6 +1499,7 @@ static func _resolve_supports(bodies: Array, definition: Dictionary, face_y: int
 				events.append({"kind": "impact", "body_id": str(body.get("id", "")), "support": str(body.get("support_kind", "")), "support_root": support_root, "first_support": first_support, "landing_quality": landing_quality, "fall_height": maxi(0, fall_start_z - support_top), "impact_speed": impact_speed, "impact_class": "hard" if impact_speed >= HARD_IMPACT_SPEED else "soft", "stack_depth": stack_depth, "landing_scatter_x": scatter.x, "landing_scatter_y": scatter.y})
 				if first_support:
 					(body.get("meta", {}) as Dictionary)["first_support_recorded"] = true
+					nestle_work += _apply_upper_row_join_pressure(bodies, body_index, definition, events)
 				body.erase("fall_start_z")
 			_apply_surface_friction(body, MU_PLATFORM if bool(body.get("carried_sleep", false)) else MU_DECK)
 			if not bool(body.get("carried_sleep", false)):
@@ -1511,6 +1521,46 @@ static func _resolve_supports(bodies: Array, definition: Dictionary, face_y: int
 			events.append({"kind": "platform_deposit", "body_id": str(body.get("id", ""))})
 			body.erase("pending_platform_deposit")
 	return nestle_work
+
+
+static func _apply_upper_row_join_pressure(bodies: Array, body_index: int, definition: Dictionary, events: Array) -> int:
+	var impulse := maxi(0, int((_apparatus(definition)).get("upper_row_join_impulse", 0)))
+	if impulse <= 0 or body_index < 0 or body_index >= bodies.size():
+		return 0
+	var incoming: Dictionary = bodies[body_index]
+	var best_index := -1
+	var best_distance_sq := 0
+	var best_id := ""
+	for candidate_index in range(bodies.size()):
+		if candidate_index == body_index:
+			continue
+		var candidate: Dictionary = bodies[candidate_index]
+		if _is_terminal_body(candidate) or str(candidate.get("kind", "")) != "coin":
+			continue
+		if not (str(candidate.get("support_kind", "")) == "platform" or bool(candidate.get("carried_sleep", false))):
+			continue
+		if absi(int(candidate.get("z", 0)) - int(incoming.get("z", 0))) > SUPPORT_VERTICAL_TOLERANCE:
+			continue
+		var dy := int(candidate.get("y", 0)) - int(incoming.get("y", 0))
+		var dx := int(candidate.get("x", 0)) - int(incoming.get("x", 0))
+		var reach := int(candidate.get("radius", COIN_RADIUS)) + int(incoming.get("radius", COIN_RADIUS)) + SLOP
+		var distance_sq := dx * dx + dy * dy
+		if distance_sq > reach * reach:
+			continue
+		var candidate_id := str(candidate.get("id", ""))
+		if best_index < 0 or distance_sq < best_distance_sq or (distance_sq == best_distance_sq and candidate_id < best_id):
+			best_index = candidate_index
+			best_distance_sq = distance_sq
+			best_id = candidate_id
+	if best_index < 0:
+		return 0
+	var neighbor: Dictionary = bodies[best_index]
+	var energy_before := _body_kinetic_energy(neighbor)
+	neighbor["vy"] = int(neighbor.get("vy", 0)) - impulse
+	_wake(neighbor)
+	var added_work := maxi(0, _body_kinetic_energy(neighbor) - energy_before)
+	events.append({"kind": "upper_row_join_pressure", "body_id": str(incoming.get("id", "")), "neighbor_body_id": best_id, "impulse": impulse, "added_work": added_work})
+	return added_work
 
 
 static func _advect_supported_bodies(bodies: Array) -> void:

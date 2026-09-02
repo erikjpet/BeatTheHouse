@@ -311,6 +311,7 @@ var environment_runtime_active_keys_scratch: Dictionary = {}
 var environment_runtime_scheduler = EnvironmentRuntimeSchedulerScript.new()
 var environment_runtime_last_timing_usec: Dictionary = {}
 var last_game_surface_realtime_refresh_msec := 0
+var last_game_surface_realtime_work_frame := -1
 var surface_feature_music_active := false
 var surface_feature_music_ducking := false
 var drunk_time_anchor_real_msec := 0
@@ -628,8 +629,12 @@ func _process(delta: float) -> void:
 	perf_telemetry_overlay.record_foundation_subsystem_usec("environment_runtime", Time.get_ticks_usec() - clock_started_usec)
 	if current_screen == SCREEN_GAME:
 		var snapshot_started_usec := Time.get_ticks_usec()
+		var automation_started_usec := snapshot_started_usec
 		_advance_game_surface_automation()
+		perf_telemetry_overlay.record_foundation_subsystem_usec("surface_automation", Time.get_ticks_usec() - automation_started_usec)
+		var realtime_started_usec := Time.get_ticks_usec()
 		_advance_game_surface_realtime_state()
+		perf_telemetry_overlay.record_foundation_subsystem_usec("surface_realtime", Time.get_ticks_usec() - realtime_started_usec)
 		perf_telemetry_overlay.record_foundation_subsystem_usec("snapshot_builds", Time.get_ticks_usec() - snapshot_started_usec)
 	if presented_bankroll_hold_active:
 		var presented_started_usec := Time.get_ticks_usec()
@@ -670,8 +675,10 @@ func _advance_run_game_clock(delta: float) -> void:
 		_refresh()
 
 
-func _advance_environment_turns_checked(amount: int = 1) -> bool:
-	var result := run_state.advance_environment_turns(amount)
+func _advance_environment_turns_checked(amount: int = 1, debug_timing: Dictionary = {}) -> bool:
+	var result := run_state.advance_environment_turns(amount, not debug_timing.is_empty())
+	if not debug_timing.is_empty() and typeof(result.get("debug_turn_transaction_usec", {})) == TYPE_DICTIONARY:
+		debug_timing["host_turn_transaction_usec"] = (result.get("debug_turn_transaction_usec", {}) as Dictionary).duplicate(true)
 	if bool(result.get("ok", false)):
 		return true
 	_show_message(str(_copy_array(result.get("errors", []))[0]) if not _copy_array(result.get("errors", [])).is_empty() else "The world boundary could not advance safely.")
@@ -718,6 +725,7 @@ func uses_foundation_runtime() -> bool:
 func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Dictionary = {}, include_meta_home_modifiers: bool = true) -> void:
 	if library == null:
 		_initialize_foundation()
+	_ensure_full_content_library_loaded()
 	_ensure_run_ui_built()
 	_finish_conclusion_animation()
 	if structured_hud != null:
@@ -1149,7 +1157,14 @@ func _handle_module_surface_action(action: String, index: int, confirm_requested
 	var debug_coin_pusher_outer := bool(game_surface_ui_state.get("coin_pusher_debug_profile_stages", false))
 	var debug_outer_started_usec := Time.get_ticks_usec() if debug_coin_pusher_outer else 0
 	var debug_outer_stage_started_usec := debug_outer_started_usec
-	var ui_state := _current_game_surface_ui_state()
+	var ui_state: Dictionary = {}
+	if current_game.surface_action_uses_lightweight_ui_state(action):
+		for key_value in current_game.surface_action_ui_state_keys():
+			var key := str(key_value)
+			if not key.is_empty() and game_surface_ui_state.has(key):
+				ui_state[key] = game_surface_ui_state[key]
+	else:
+		ui_state = _current_game_surface_ui_state()
 	var debug_outer_ui_state_usec := Time.get_ticks_usec() - debug_outer_stage_started_usec if debug_coin_pusher_outer else 0
 	ui_state["selected_action_id"] = selected_action_id
 	ui_state["selected_action_kind"] = selected_action_kind
@@ -2016,6 +2031,8 @@ func _advance_game_surface_automation() -> void:
 		var authority_command := _sealed_action_host_auto_intent(surface_time_msec)
 		_apply_game_surface_automation_command(authority_command, authority_ui_state)
 		return
+	if not current_game.surface_uses_auto_tick():
+		return
 	var tick_state := _current_game_surface_auto_tick_state()
 	var ui_state := tick_state
 	if not current_game.surface_needs_auto_tick(tick_state, run_state, run_state.current_environment):
@@ -2053,9 +2070,14 @@ func _advance_game_surface_realtime_state() -> void:
 	if last_game_surface_realtime_refresh_msec > 0 and now_msec - last_game_surface_realtime_refresh_msec < GAME_SURFACE_REALTIME_REFRESH_INTERVAL_MSEC:
 		return
 	last_game_surface_realtime_refresh_msec = now_msec
+	last_game_surface_realtime_work_frame = Engine.get_process_frames()
 	var patch := _game_surface_realtime_state_patch(now_msec)
 	if patch.is_empty():
 		return
+	if perf_telemetry_overlay != null and typeof(patch.get("coin_pusher_last_step_metrics", {})) == TYPE_DICTIONARY:
+		var native_metrics: Dictionary = patch.get("coin_pusher_last_step_metrics", {})
+		if int(native_metrics.get("fixed_ticks", 0)) > 0:
+			perf_telemetry_overlay.record_foundation_subsystem_usec("coin_pusher_native_step", maxi(0, int(native_metrics.get("elapsed_usec", 0))))
 	game_surface_canvas.apply_surface_state_patch(patch)
 
 
@@ -2070,8 +2092,18 @@ func _advance_presented_bankroll() -> void:
 		_refresh_runtime_environment_views()
 		return
 	if not _game_surface_presentation_active():
+		# Coin Pusher's accepted-action handoff already owns an identity-guarded
+		# staged HUD refresh. Releasing its one-quarter bankroll hold used to run a
+		# second complete environment/UI refresh in this same frame, even though the
+		# pending handoff would replace that output one frame later.
+		var deferred_coin_pusher_hud_owns_release := deferred_embedded_refresh_pending \
+			and current_game == deferred_embedded_refresh_game \
+			and current_game.surface_realtime_patch_preserves_host_state() \
+			and run_state == deferred_embedded_refresh_run_state \
+			and is_same(run_state.current_environment, deferred_embedded_refresh_environment)
 		_sync_presented_bankroll_to_actual()
-		_refresh_runtime_environment_views()
+		if not deferred_coin_pusher_hud_owns_release:
+			_refresh_runtime_environment_views()
 
 
 func _presented_bankroll() -> int:
@@ -2133,16 +2165,7 @@ func _clear_presented_bankroll_hold() -> void:
 func _game_surface_presentation_active() -> bool:
 	if game_surface_canvas == null:
 		return false
-	var status := game_surface_canvas.surface_runtime_status()
-	var animations: Dictionary = status.get("surface_animations", {}) if typeof(status.get("surface_animations", {})) == TYPE_DICTIONARY else {}
-	for animation_id in animations.keys():
-		var animation_value: Variant = animations.get(animation_id)
-		if typeof(animation_value) != TYPE_DICTIONARY:
-			continue
-		var animation: Dictionary = animation_value
-		if bool(animation.get("active", false)):
-			return true
-	return bool(status.get("surface_animation_handoff_active", false))
+	return game_surface_canvas.surface_bankroll_presentation_active()
 
 
 func _advance_environment_game_runtime() -> void:
@@ -2580,12 +2603,23 @@ func _current_game_surface_auto_tick_state() -> Dictionary:
 
 
 func _current_game_surface_realtime_ui_state(now_msec: int) -> Dictionary:
-	var ui_state := game_surface_ui_state.duplicate(false)
+	var lightweight := current_game != null and current_game.surface_realtime_uses_lightweight_ui_state()
+	var ui_state: Dictionary = {}
+	if lightweight:
+		for key_value in current_game.surface_realtime_ui_state_keys():
+			var key := str(key_value)
+			if not key.is_empty() and game_surface_ui_state.has(key):
+				ui_state[key] = game_surface_ui_state[key]
+		ui_state["surface_time_msec"] = now_msec
+		return ui_state
+	else:
+		ui_state = game_surface_ui_state.duplicate(false)
 	ui_state["selected_action_id"] = selected_action_id
 	ui_state["selected_action_kind"] = selected_action_kind
 	ui_state["selected_stake"] = _current_selected_stake()
-	ui_state["surface_runtime_status"] = game_surface_canvas.surface_realtime_ui_status() if game_surface_canvas != null else {}
-	ui_state["focused_talk_speaker"] = _focused_talk_speaker_snapshot()
+	if not lightweight:
+		ui_state["surface_runtime_status"] = game_surface_canvas.surface_realtime_ui_status() if game_surface_canvas != null else {}
+		ui_state["focused_talk_speaker"] = _focused_talk_speaker_snapshot()
 	return _apply_game_surface_time_fields(ui_state, now_msec)
 
 
@@ -2597,18 +2631,27 @@ func _game_surface_realtime_state_patch(now_msec: int, current_surface_state_ove
 	# just-frozen transient machine during the one-frame visual handoff.
 	if game_exit_settle_active:
 		return {}
+	var realtime_ui_started_usec := Time.get_ticks_usec()
 	var ui_state := _current_game_surface_realtime_ui_state(now_msec)
+	if perf_telemetry_overlay != null:
+		perf_telemetry_overlay.record_foundation_subsystem_usec("surface_realtime_ui", Time.get_ticks_usec() - realtime_ui_started_usec)
 	var current_surface_state := current_surface_state_override \
 			if not current_surface_state_override.is_empty() \
 			else game_surface_canvas.realtime_surface_state()
 	if current_game.has_method("surface_realtime_state_patch"):
+		var realtime_module_started_usec := Time.get_ticks_usec()
 		var module_patch: Variant = current_game.surface_realtime_state_patch(run_state, run_state.current_environment, ui_state, current_surface_state)
+		if perf_telemetry_overlay != null:
+			perf_telemetry_overlay.record_foundation_subsystem_usec("surface_realtime_module", Time.get_ticks_usec() - realtime_module_started_usec)
 		if typeof(module_patch) == TYPE_DICTIONARY:
 			var typed_patch: Dictionary = module_patch
 			if bool(typed_patch.get("request_foundation_autosave", false)):
 				typed_patch.erase("request_foundation_autosave")
 				call_deferred("_autosave_foundation_run", "Autosaved.", false)
+			var realtime_augment_started_usec := Time.get_ticks_usec()
 			_augment_game_surface_realtime_patch(typed_patch, ui_state)
+			if perf_telemetry_overlay != null:
+				perf_telemetry_overlay.record_foundation_subsystem_usec("surface_realtime_augment", Time.get_ticks_usec() - realtime_augment_started_usec)
 			return typed_patch
 	var module_surface_state: Variant = current_game.surface_state(run_state, run_state.current_environment, ui_state)
 	if typeof(module_surface_state) != TYPE_DICTIONARY:
@@ -2636,7 +2679,9 @@ func _augment_game_surface_realtime_patch(patch: Dictionary, ui_state: Dictionar
 	# The host clock is part of every realtime boundary even when a module emits
 	# only its changed machine fields. Without this stamp the canvas can repeatedly
 	# present an old/absent time while the live session has already advanced.
-	patch["surface_time_msec"] = int(ui_state.get("surface_time_msec", _environment_simulation_time_msec()))
+	patch["surface_time_msec"] = int(ui_state["surface_time_msec"]) if ui_state.has("surface_time_msec") else _environment_simulation_time_msec()
+	if current_game != null and current_game.surface_realtime_patch_preserves_host_state():
+		return
 	if patch.has("surface_renderer"):
 		var surface_renderer := str(patch.get("surface_renderer", ""))
 		patch["surface_life"] = str(patch.get("surface_life", _surface_life_for_renderer(surface_renderer)))
@@ -2678,6 +2723,7 @@ func _reset_game_surface_runtime_state(checkpoint_source: bool = true) -> void:
 	game_surface_ui_state = {}
 	game_surface_auto_resolving = false
 	last_game_surface_realtime_refresh_msec = 0
+	last_game_surface_realtime_work_frame = -1
 	_reset_drunk_time_surface_clock()
 
 
@@ -3207,6 +3253,15 @@ func _on_talk_dock_choice_requested(event_id: String, choice_id: String) -> void
 func _apply_post_action_environment_interrupt(source: String) -> bool:
 	if run_state == null or library == null or run_state.is_terminal():
 		return false
+	# The Web game-library launcher is an isolated practice room. It has no
+	# world-story, closing-time, talk, or forced-travel ownership, so avoid
+	# traversing those boundaries after every cabinet input.
+	var practice_flags_value: Variant = run_state.current_environment.get("local_narrative_flags", {})
+	var practice_flags: Dictionary = practice_flags_value if typeof(practice_flags_value) == TYPE_DICTIONARY else {}
+	if OS.has_feature("web") and dev_game_test_mode \
+			and str(run_state.current_environment.get("id", "")).begins_with("practice_") \
+			and bool(practice_flags.get("practice_session", false)):
+		return false
 	var debug_timing: Dictionary = last_game_result.get("coin_pusher_debug_host_timing_usec", {}) if typeof(last_game_result.get("coin_pusher_debug_host_timing_usec", {})) == TYPE_DICTIONARY else {}
 	var debug_enabled := not debug_timing.is_empty() and current_game != null
 	var debug_stage_started_usec := 0
@@ -3472,6 +3527,13 @@ func _source_allows_action_triggered_events(source: String) -> bool:
 func _enqueue_triggered_events_for_context(source: String, context: Dictionary, environment: Dictionary) -> bool:
 	if run_state == null or library == null:
 		return false
+	var local_flags_value: Variant = environment.get("local_narrative_flags", {})
+	var local_flags: Dictionary = local_flags_value if typeof(local_flags_value) == TYPE_DICTIONARY else {}
+	# The released game-library launcher is an isolated practice room: it has no
+	# world node, travel path, or story ownership. Do not let ordinary world
+	# cadence interrupt that practice session after a table input.
+	if dev_game_test_mode and str(environment.get("id", "")).begins_with("practice_") and bool(local_flags.get("practice_session", false)):
+		return false
 	var debug_timing: Dictionary = last_game_result.get("coin_pusher_debug_host_timing_usec", {}) if typeof(last_game_result.get("coin_pusher_debug_host_timing_usec", {})) == TYPE_DICTIONARY else {}
 	var debug_enabled := not debug_timing.is_empty()
 	var debug_stage_started_usec := Time.get_ticks_usec() if debug_enabled else 0
@@ -3505,12 +3567,15 @@ func _enqueue_triggered_events_for_context(source: String, context: Dictionary, 
 		var event_id := str(event_definition.get("id", ""))
 		var trigger: Dictionary = event_definition.get("trigger", {}) if typeof(event_definition.get("trigger", {})) == TYPE_DICTIONARY else {}
 		var trigger_type := str(trigger.get("type", "manual"))
+		# Cadence and can_trigger are both read-only. Check the substantially
+		# cheaper room budget first so quiet visits, cooldowns, and full visit
+		# budgets do not walk every candidate's live run-state conditions.
+		if not run_state.event_cadence_allows_world_event(event_id, trigger_type, source, event_definition):
+			continue
 		var event_module := _cached_triggered_event_module(event_definition)
 		if event_module == null:
 			continue
 		if not event_module.can_trigger(run_state, environment, context):
-			continue
-		if not run_state.event_cadence_allows_world_event(event_id, trigger_type, source, event_definition):
 			continue
 		if trigger_type == "random":
 			candidates.append({"id": event_id, "trigger": trigger, "event": event_definition})
@@ -5593,6 +5658,7 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 		_show_message("Save service unavailable.")
 		_refresh_run_menu()
 		return false
+	_ensure_full_content_library_loaded()
 	var loaded: Variant = save_service.load_run(autosave_slot_id)
 	var load_result := save_service.last_load_result()
 	if loaded == null:
@@ -7072,10 +7138,14 @@ func _initialize_foundation() -> void:
 	library = ContentLibrary.new()
 	_mark_boot_event("content_library_load_start")
 	var defer_content_validation := _defer_start_menu_secondary_panels()
-	library.load(not defer_content_validation)
+	var defer_run_content_load := defer_content_validation or OS.has_feature("web")
+	if defer_run_content_load:
+		library.load_start_menu()
+	else:
+		library.load(true)
 	_rebuild_triggered_event_module_cache()
 	_surface_content_validation_errors(library, true)
-	if defer_content_validation:
+	if defer_run_content_load:
 		_mark_boot_event("content_validation_deferred")
 	if defer_content_validation:
 		_mark_boot_event("attribute_glyph_warm_deferred")
@@ -7094,6 +7164,19 @@ func _initialize_foundation() -> void:
 	run_action_service = RunActionServiceScript.new()
 	_refresh_run_action_service()
 	_mark_boot_event("foundation_init_complete")
+
+
+func _ensure_full_content_library_loaded() -> void:
+	if library == null:
+		return
+	if library.is_fully_loaded():
+		return
+	library.load(false)
+	_rebuild_triggered_event_module_cache()
+	_surface_content_validation_errors(library, true)
+	game_module_cache = {}
+	generator = RunGenerator.new(library)
+	_refresh_run_action_service()
 
 
 func boot_telemetry_snapshot() -> Dictionary:
@@ -8994,23 +9077,11 @@ func _refresh_after_embedded_game_action(embeds_result_feedback: bool = false, a
 		return
 	if world_header_context_key != _embedded_world_header_context_key():
 		_refresh_world_header()
-	var hud_model := _run_status_hud_model()
-	if status_label != null:
-		status_label.text = str(hud_model.get("status_text", ""))
-	if objective_label != null:
-		objective_label.text = str(hud_model.get("objective_text", ""))
-	if structured_hud != null:
-		structured_hud.set_reduce_motion(_reduce_motion_enabled())
-		structured_hud.set_compact_mode(_compact_run_hud_enabled())
-		structured_hud.render(hud_model)
-	_style_hud_for_recent_consequence()
-	if save_status_label != null:
-		save_status_label.text = str(hud_model.get("save_text", ""))
-	_apply_hud_mode_visibility()
+	if not action_boundary_preflight_complete:
+		_refresh_embedded_action_hud()
 	if debug_enabled:
 		debug_timing["refresh_hud"] = Time.get_ticks_usec() - debug_stage_started_usec
 		debug_stage_started_usec = Time.get_ticks_usec()
-	_refresh_active_item_slot()
 	# This hot path is entered with the embedding contract captured before action
 	# resolution. An embedding surface owns the visible result and this panel must
 	# remain hidden; direct/debug callers retain the conservative refresh default.
@@ -9032,15 +9103,179 @@ func _refresh_after_embedded_game_action(embeds_result_feedback: bool = false, a
 		debug_timing["refresh_snapshot_patch"] = snapshot_refresh_usec if incremental_snapshot_used else 0
 		debug_timing["refresh_snapshot_full_fallback"] = 0 if incremental_snapshot_used else snapshot_refresh_usec
 		debug_stage_started_usec = Time.get_ticks_usec()
-	var previous_acknowledgement_suppression := suppress_completed_tutorial_acknowledgement_clear
 	if action_boundary_preflight_complete:
+		_schedule_deferred_embedded_secondary_refresh()
+	else:
+		_refresh_embedded_action_talk_music_coach(false)
+	if debug_enabled:
+		debug_timing["refresh_talk_music_coach"] = Time.get_ticks_usec() - debug_stage_started_usec
+
+
+func _refresh_embedded_action_hud() -> void:
+	var hud_model := _run_status_hud_model()
+	_render_embedded_action_hud_model(hud_model)
+	_refresh_active_item_slot()
+
+
+func _render_embedded_action_hud_model(hud_model: Dictionary) -> void:
+	if status_label != null:
+		var next_status_text := str(hud_model.get("status_text", ""))
+		if status_label.text != next_status_text:
+			status_label.text = next_status_text
+	if objective_label != null:
+		var next_objective_text := str(hud_model.get("objective_text", ""))
+		if objective_label.text != next_objective_text:
+			objective_label.text = next_objective_text
+	if structured_hud != null:
+		structured_hud.set_reduce_motion(_reduce_motion_enabled())
+		structured_hud.set_compact_mode(_compact_run_hud_enabled())
+		structured_hud.render(hud_model)
+	_style_hud_for_recent_consequence()
+	if save_status_label != null:
+		var next_save_text := str(hud_model.get("save_text", ""))
+		if save_status_label.text != next_save_text:
+			save_status_label.text = next_save_text
+	_apply_hud_mode_visibility()
+
+
+func _refresh_embedded_action_talk_music_coach(suppress_acknowledgement_clear: bool) -> void:
+	var previous_acknowledgement_suppression := suppress_completed_tutorial_acknowledgement_clear
+	if suppress_acknowledgement_clear:
 		suppress_completed_tutorial_acknowledgement_clear = true
 	_refresh_talk_dock()
 	suppress_completed_tutorial_acknowledgement_clear = previous_acknowledgement_suppression
 	_update_procedural_music()
 	_schedule_game_coach_refresh_after_draw()
-	if debug_enabled:
-		debug_timing["refresh_talk_music_coach"] = Time.get_ticks_usec() - debug_stage_started_usec
+
+
+func _schedule_deferred_embedded_secondary_refresh() -> void:
+	var generation := deferred_embedded_refresh_generation
+	call_deferred("_refresh_deferred_embedded_hud_after_frame", generation, run_state, current_game, run_state.current_environment, last_game_result, game_surface_canvas, game_surface_session_generation)
+
+
+func _await_deferred_embedded_quiet_frame(max_wait_frames: int = 3) -> void:
+	var tree := get_tree()
+	if tree == null:
+		return
+	# A realtime physical surface has intermittent frames where its authoritative
+	# interval is not due. Prefer those frames for secondary labels/layout, while
+	# retaining a hard bound so a continuously due surface cannot delay feedback.
+	for _frame_index in range(maxi(1, max_wait_frames)):
+		await tree.process_frame
+		if last_game_surface_realtime_work_frame != Engine.get_process_frames():
+			return
+
+
+func _refresh_deferred_embedded_hud_after_frame(generation: int, expected_run: RunState, expected_game: GameModule, expected_environment: Dictionary, expected_result: Dictionary, expected_canvas: Control, expected_session_generation: int) -> void:
+	await _await_deferred_embedded_quiet_frame()
+	if not _deferred_embedded_secondary_identity_is_current(generation, expected_run, expected_game, expected_environment, expected_result, expected_canvas, expected_session_generation):
+		return
+	var started_usec := Time.get_ticks_usec()
+	# Model preparation walks objectives, pressure, debt, and inventory. Applying
+	# the resulting labels/meters can also invalidate layout. Keep those two
+	# bounded pieces on separate frames so neither joins a live solver projection.
+	var hud_model := _run_status_hud_model()
+	var debug_timing: Dictionary = last_game_result.get("coin_pusher_debug_host_timing_usec", {}) if typeof(last_game_result.get("coin_pusher_debug_host_timing_usec", {})) == TYPE_DICTIONARY else {}
+	if not debug_timing.is_empty():
+		debug_timing["refresh_deferred_hud_model"] = Time.get_ticks_usec() - started_usec
+	call_deferred("_apply_deferred_embedded_hud_after_frame", generation, expected_run, expected_game, expected_environment, expected_result, expected_canvas, expected_session_generation, hud_model)
+
+
+func _apply_deferred_embedded_hud_after_frame(generation: int, expected_run: RunState, expected_game: GameModule, expected_environment: Dictionary, expected_result: Dictionary, expected_canvas: Control, expected_session_generation: int, hud_model: Dictionary) -> void:
+	await _await_deferred_embedded_quiet_frame()
+	if not _deferred_embedded_secondary_identity_is_current(generation, expected_run, expected_game, expected_environment, expected_result, expected_canvas, expected_session_generation):
+		return
+	var started_usec := Time.get_ticks_usec()
+	if status_label != null:
+		var next_status_text := str(hud_model.get("status_text", ""))
+		if status_label.text != next_status_text:
+			status_label.text = next_status_text
+	var debug_timing: Dictionary = last_game_result.get("coin_pusher_debug_host_timing_usec", {}) if typeof(last_game_result.get("coin_pusher_debug_host_timing_usec", {})) == TYPE_DICTIONARY else {}
+	if not debug_timing.is_empty():
+		debug_timing["refresh_deferred_hud_status"] = Time.get_ticks_usec() - started_usec
+	call_deferred("_apply_deferred_embedded_objective_after_frame", generation, expected_run, expected_game, expected_environment, expected_result, expected_canvas, expected_session_generation, hud_model)
+
+
+func _apply_deferred_embedded_objective_after_frame(generation: int, expected_run: RunState, expected_game: GameModule, expected_environment: Dictionary, expected_result: Dictionary, expected_canvas: Control, expected_session_generation: int, hud_model: Dictionary) -> void:
+	await _await_deferred_embedded_quiet_frame()
+	if not _deferred_embedded_secondary_identity_is_current(generation, expected_run, expected_game, expected_environment, expected_result, expected_canvas, expected_session_generation):
+		return
+	var started_usec := Time.get_ticks_usec()
+	if objective_label != null:
+		var next_objective_text := str(hud_model.get("objective_text", ""))
+		if objective_label.text != next_objective_text:
+			objective_label.text = next_objective_text
+	var debug_timing: Dictionary = last_game_result.get("coin_pusher_debug_host_timing_usec", {}) if typeof(last_game_result.get("coin_pusher_debug_host_timing_usec", {})) == TYPE_DICTIONARY else {}
+	if not debug_timing.is_empty():
+		debug_timing["refresh_deferred_hud_objective"] = Time.get_ticks_usec() - started_usec
+	call_deferred("_apply_deferred_embedded_structured_hud_after_frame", generation, expected_run, expected_game, expected_environment, expected_result, expected_canvas, expected_session_generation, hud_model)
+
+
+func _apply_deferred_embedded_structured_hud_after_frame(generation: int, expected_run: RunState, expected_game: GameModule, expected_environment: Dictionary, expected_result: Dictionary, expected_canvas: Control, expected_session_generation: int, hud_model: Dictionary) -> void:
+	await _await_deferred_embedded_quiet_frame()
+	if not _deferred_embedded_secondary_identity_is_current(generation, expected_run, expected_game, expected_environment, expected_result, expected_canvas, expected_session_generation):
+		return
+	var started_usec := Time.get_ticks_usec()
+	if structured_hud != null:
+		structured_hud.set_reduce_motion(_reduce_motion_enabled())
+		structured_hud.set_compact_mode(_compact_run_hud_enabled())
+		structured_hud.render_bankroll(int(hud_model.get("bankroll", 0)), int(hud_model.get("bankroll_delta", 0)))
+	var debug_timing: Dictionary = last_game_result.get("coin_pusher_debug_host_timing_usec", {}) if typeof(last_game_result.get("coin_pusher_debug_host_timing_usec", {})) == TYPE_DICTIONARY else {}
+	if not debug_timing.is_empty():
+		debug_timing["refresh_deferred_hud_bankroll"] = Time.get_ticks_usec() - started_usec
+	call_deferred("_apply_deferred_embedded_structured_hud_rest_after_frame", generation, expected_run, expected_game, expected_environment, expected_result, expected_canvas, expected_session_generation, hud_model)
+
+
+func _apply_deferred_embedded_structured_hud_rest_after_frame(generation: int, expected_run: RunState, expected_game: GameModule, expected_environment: Dictionary, expected_result: Dictionary, expected_canvas: Control, expected_session_generation: int, hud_model: Dictionary) -> void:
+	await _await_deferred_embedded_quiet_frame()
+	if not _deferred_embedded_secondary_identity_is_current(generation, expected_run, expected_game, expected_environment, expected_result, expected_canvas, expected_session_generation):
+		return
+	var started_usec := Time.get_ticks_usec()
+	if structured_hud != null:
+		structured_hud.render(hud_model)
+	var debug_timing: Dictionary = last_game_result.get("coin_pusher_debug_host_timing_usec", {}) if typeof(last_game_result.get("coin_pusher_debug_host_timing_usec", {})) == TYPE_DICTIONARY else {}
+	if not debug_timing.is_empty():
+		debug_timing["refresh_deferred_hud_structured_rest"] = Time.get_ticks_usec() - started_usec
+	call_deferred("_finish_deferred_embedded_hud_after_frame", generation, expected_run, expected_game, expected_environment, expected_result, expected_canvas, expected_session_generation, hud_model)
+
+
+func _finish_deferred_embedded_hud_after_frame(generation: int, expected_run: RunState, expected_game: GameModule, expected_environment: Dictionary, expected_result: Dictionary, expected_canvas: Control, expected_session_generation: int, hud_model: Dictionary) -> void:
+	await _await_deferred_embedded_quiet_frame()
+	if not _deferred_embedded_secondary_identity_is_current(generation, expected_run, expected_game, expected_environment, expected_result, expected_canvas, expected_session_generation):
+		return
+	var started_usec := Time.get_ticks_usec()
+	_style_hud_for_recent_consequence()
+	if save_status_label != null:
+		var next_save_text := str(hud_model.get("save_text", ""))
+		if save_status_label.text != next_save_text:
+			save_status_label.text = next_save_text
+	_apply_hud_mode_visibility()
+	var debug_timing: Dictionary = last_game_result.get("coin_pusher_debug_host_timing_usec", {}) if typeof(last_game_result.get("coin_pusher_debug_host_timing_usec", {})) == TYPE_DICTIONARY else {}
+	if not debug_timing.is_empty():
+		debug_timing["refresh_deferred_hud_finish"] = Time.get_ticks_usec() - started_usec
+	call_deferred("_refresh_deferred_embedded_talk_after_frame", generation, expected_run, expected_game, expected_environment, expected_result, expected_canvas, expected_session_generation)
+
+
+func _refresh_deferred_embedded_talk_after_frame(generation: int, expected_run: RunState, expected_game: GameModule, expected_environment: Dictionary, expected_result: Dictionary, expected_canvas: Control, expected_session_generation: int) -> void:
+	await _await_deferred_embedded_quiet_frame()
+	if not _deferred_embedded_secondary_identity_is_current(generation, expected_run, expected_game, expected_environment, expected_result, expected_canvas, expected_session_generation):
+		return
+	var started_usec := Time.get_ticks_usec()
+	_refresh_embedded_action_talk_music_coach(true)
+	var debug_timing: Dictionary = last_game_result.get("coin_pusher_debug_host_timing_usec", {}) if typeof(last_game_result.get("coin_pusher_debug_host_timing_usec", {})) == TYPE_DICTIONARY else {}
+	if not debug_timing.is_empty():
+		debug_timing["refresh_deferred_talk_music_coach"] = Time.get_ticks_usec() - started_usec
+
+
+func _deferred_embedded_secondary_identity_is_current(generation: int, expected_run: RunState, expected_game: GameModule, expected_environment: Dictionary, expected_result: Dictionary, expected_canvas: Control, expected_session_generation: int) -> bool:
+	return generation == deferred_embedded_refresh_generation \
+		and run_state == expected_run \
+		and current_game == expected_game \
+		and current_screen == SCREEN_GAME \
+		and is_same(run_state.current_environment, expected_environment) \
+		and is_same(last_game_result, expected_result) \
+		and game_surface_canvas == expected_canvas \
+		and game_surface_session_generation == expected_session_generation
 
 
 func _embedded_world_header_context_key() -> String:
@@ -10423,8 +10658,9 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 	# rendered catalog. Reuse that read-only authority instead of re-entering the
 	# complete game actions()/machine reconciliation path before every resolve.
 	var rendered_stake_view: Dictionary = {}
+	var rendered_action_state: Dictionary = {}
 	if game_surface_canvas != null:
-		var rendered_action_state := game_surface_canvas.realtime_surface_state()
+		rendered_action_state = game_surface_canvas.realtime_surface_state()
 		var rendered_stake_value: Variant = rendered_action_state.get("surface_action_stake_view", {})
 		if str(rendered_action_state.get("game_id", "")) == current_game.get_id() \
 				and typeof(rendered_stake_value) == TYPE_DICTIONARY:
@@ -10442,17 +10678,25 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 		return
 	if bool(current_stake_range.get("has_valid", false)):
 		selected_stake = stake
-	var wager_cost := _wager_cost_for_action(action_id, stake)
 	# Build the action context once. Slot autoplay reaches this path repeatedly, and
 	# each UI-state snapshot contains nested machine/runtime data. Rebuilding it for
 	# confirmation, resolution, and result presentation caused visible Web hitches.
 	var action_surface_ui_state := resolved_surface_ui_state if not resolved_surface_ui_state.is_empty() else _current_game_surface_ui_state()
+	if not rendered_action_state.is_empty() and rendered_action_state.has("surface_action_bindings"):
+		action_surface_ui_state = action_surface_ui_state.duplicate(false)
+		action_surface_ui_state["surface_action_bindings"] = rendered_action_state.get("surface_action_bindings", {})
+	var wager_cost := _wager_cost_for_action(action_id, stake, action_surface_ui_state)
 	if not wager_confirmed and _wager_needs_final_bankroll_confirmation(current_game, action_id, stake, wager_cost, action_surface_ui_state):
 		_pause_repeating_surface_action_for_wager_confirmation()
 		_show_wager_confirmation_popup(action_id, stake, wager_cost, skip_stake_validation, preserve_surface_ui_state)
 		return
-	var boundary_rollback_run := run_state.to_dict()
-	var boundary_rollback_environment := run_state.current_environment.duplicate(true)
+	var debug_rollback_started_usec := Time.get_ticks_usec() if debug_coin_pusher_host else 0
+	var compact_action_rollback := current_game.host_action_rollback_snapshot(action_id, run_state, run_state.current_environment)
+	var uses_compact_action_rollback := bool(compact_action_rollback.get("supported", false))
+	var boundary_rollback_run := {} if uses_compact_action_rollback else run_state.to_dict()
+	if debug_coin_pusher_host:
+		debug_host_timing["host_rollback_snapshot"] = Time.get_ticks_usec() - debug_rollback_started_usec
+	var boundary_rollback_environment := {} if uses_compact_action_rollback else run_state.current_environment.duplicate(true)
 	var boundary_rollback_deferred_failure := run_state.defer_next_bankroll_zero_failure
 	var confirmed_all_in_wager := wager_confirmed and _wager_needs_final_bankroll_confirmation(current_game, action_id, stake, wager_cost, action_surface_ui_state)
 	if confirmed_all_in_wager:
@@ -10510,14 +10754,24 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 		debug_host_stage_started_usec = Time.get_ticks_usec()
 	if bool(result.get("ok", false)) and (resolved_action_authority_script == null or not bool(result.get(resolved_action_authority_script.HOST_COMMITTED_KEY, false))):
 		if not runtime_tick_in_progress:
-			if not _advance_environment_turns_checked(1):
-				run_state.from_dict(boundary_rollback_run)
-				run_state.current_environment = boundary_rollback_environment
+			var debug_turn_started_usec := Time.get_ticks_usec() if debug_coin_pusher_host else 0
+			if not _advance_environment_turns_checked(1, debug_host_timing if debug_coin_pusher_host else {}):
+				if uses_compact_action_rollback:
+					if not current_game.restore_host_action_rollback(compact_action_rollback, run_state, run_state.current_environment):
+						push_error("Game module failed to restore its declared compact host-action rollback token.")
+				else:
+					run_state.from_dict(boundary_rollback_run)
+					run_state.current_environment = boundary_rollback_environment
 				run_state.defer_next_bankroll_zero_failure = boundary_rollback_deferred_failure
 				_refresh_runtime_environment_views()
 				return
+			if debug_coin_pusher_host:
+				debug_host_timing["host_advance_turn"] = Time.get_ticks_usec() - debug_turn_started_usec
 		if bool(result.get("host_apply_result", false)) and not runtime_tick_in_progress:
+			var debug_apply_started_usec := Time.get_ticks_usec() if debug_coin_pusher_host else 0
 			GameModule.apply_result(run_state, result, rng)
+			if debug_coin_pusher_host:
+				debug_host_timing["host_apply_result"] = Time.get_ticks_usec() - debug_apply_started_usec
 		elif runtime_tick_in_progress:
 			run_state.save_rng(rng)
 	elif confirmed_all_in_wager:
@@ -10649,7 +10903,7 @@ func _refresh_after_deferred_embedded_action_frame(generation: int, embeds_resul
 		return
 	# call_deferred alone can run in the current idle cycle. This barrier ensures
 	# the solver result frame has returned before its complete presentation begins.
-	await tree.process_frame
+	await _await_deferred_embedded_quiet_frame()
 	if generation != deferred_embedded_refresh_generation or not deferred_embedded_refresh_pending:
 		deferred_embedded_refresh_stale_count += 1
 		return
@@ -10772,12 +11026,13 @@ func cancel_pending_wager_confirmation() -> void:
 	_refresh()
 
 
-func _wager_cost_for_action(action_id: String, stake: int) -> int:
+func _wager_cost_for_action(action_id: String, stake: int, surface_ui_state: Dictionary = {}) -> int:
 	if current_game == null or run_state == null:
 		return 0
 	if _current_game_uses_action_authority():
 		return _sealed_action_host_preview_wager_cost(action_id, stake)
-	return maxi(0, current_game.wager_cost_for_context(action_id, stake, run_state, run_state.current_environment, _current_game_surface_ui_state()))
+	var resolved_ui_state := surface_ui_state if not surface_ui_state.is_empty() else _current_game_surface_ui_state()
+	return maxi(0, current_game.wager_cost_for_context(action_id, stake, run_state, run_state.current_environment, resolved_ui_state))
 
 
 func _wager_needs_final_bankroll_confirmation(game: GameModule, action_id: String, stake: int, wager_cost: int, ui_state: Dictionary = {}, environment_data: Dictionary = {}) -> bool:
@@ -14074,6 +14329,7 @@ func confirm_delete_saved_run() -> void:
 
 
 func start_tutorial_run() -> void:
+	_ensure_full_content_library_loaded()
 	var config := TutorialFlowScript.challenge_config(library)
 	if config.is_empty():
 		_show_message("The First Night lesson is unavailable.")
@@ -15300,6 +15556,7 @@ func start_game_test_session(game_id: String) -> Dictionary:
 		return {"ok": false, "errors": ["The game test launcher is disabled."]}
 	if library == null:
 		_initialize_foundation()
+	_ensure_full_content_library_loaded()
 	var game := _game_module_for_id(game_id)
 	if game == null:
 		if game_test_status_label != null:

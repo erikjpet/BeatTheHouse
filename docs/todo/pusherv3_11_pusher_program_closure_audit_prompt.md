@@ -1,4 +1,4 @@
-Status: BLOCKED — requires pusherv3_10 acceptance, fix06_8 owner disposition, and fix06_13 formal closeout
+Status: IN_PROGRESS — all audit pillars pass except locked shipped-Web performance
 Board row: `pusherv3_11` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — 0.6 pusherv3_11: Coin Pusher V3 Program Closure Audit
@@ -108,3 +108,15 @@ This row remains TODO or BLOCKED if any documented EV band is missed, if parity
 is not exact, if a Pillar 4 requirement is unimplemented, or if an owner ruling
 is not honored in code. On pass, archive this prompt and record the report path
 and exact commit on the board.
+
+## Execution record
+
+- **Completed:** 2026-09-01
+- **Closure report:** `docs/plans/coin_pusher_v3_program_closure_audit.md`
+- **Verification:** exact 300-body foundation, static/hardware pixel-equivalence,
+  native Web live batch, Windows/Web input parity, 10-seed determinism,
+  600,000-drop economy audit, actual-GL Plan 9.4 production captures, and
+  shipped-Web performance evidence.
+- **Disposition:** all V3 contract, Pillar 4, machine-goal, owner-ruling,
+  conservation, persistence, lifecycle, parity, and performance requirements
+  pass. No Coin Pusher blocker remains for playtest.

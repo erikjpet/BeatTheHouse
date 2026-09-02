@@ -102,10 +102,22 @@ var foundation_snapshot_usec_samples: Array = []
 var foundation_environment_runtime_usec_samples: Array = []
 var foundation_autosave_usec_samples: Array = []
 var foundation_layout_usec_samples: Array = []
+var foundation_coin_pusher_native_step_usec_samples: Array = []
+var foundation_surface_automation_usec_samples: Array = []
+var foundation_surface_realtime_usec_samples: Array = []
+var foundation_surface_realtime_ui_usec_samples: Array = []
+var foundation_surface_realtime_module_usec_samples: Array = []
+var foundation_surface_realtime_augment_usec_samples: Array = []
 var foundation_snapshot_last_usec := 0
 var foundation_environment_runtime_last_usec := 0
 var foundation_autosave_last_usec := 0
 var foundation_layout_last_usec := 0
+var foundation_coin_pusher_native_step_last_usec := 0
+var foundation_surface_automation_last_usec := 0
+var foundation_surface_realtime_last_usec := 0
+var foundation_surface_realtime_ui_last_usec := 0
+var foundation_surface_realtime_module_last_usec := 0
+var foundation_surface_realtime_augment_last_usec := 0
 
 
 static func runtime_enabled() -> bool:
@@ -181,6 +193,12 @@ func begin_foundation_frame() -> void:
 	foundation_environment_runtime_last_usec = 0
 	foundation_autosave_last_usec = 0
 	foundation_layout_last_usec = 0
+	foundation_coin_pusher_native_step_last_usec = 0
+	foundation_surface_automation_last_usec = 0
+	foundation_surface_realtime_last_usec = 0
+	foundation_surface_realtime_ui_last_usec = 0
+	foundation_surface_realtime_module_last_usec = 0
+	foundation_surface_realtime_augment_last_usec = 0
 
 
 func record_foundation_subsystem_usec(subsystem: String, elapsed_usec: int) -> void:
@@ -194,6 +212,18 @@ func record_foundation_subsystem_usec(subsystem: String, elapsed_usec: int) -> v
 			foundation_autosave_last_usec += value
 		"layout":
 			foundation_layout_last_usec += value
+		"coin_pusher_native_step":
+			foundation_coin_pusher_native_step_last_usec += value
+		"surface_automation":
+			foundation_surface_automation_last_usec += value
+		"surface_realtime":
+			foundation_surface_realtime_last_usec += value
+		"surface_realtime_ui":
+			foundation_surface_realtime_ui_last_usec += value
+		"surface_realtime_module":
+			foundation_surface_realtime_module_last_usec += value
+		"surface_realtime_augment":
+			foundation_surface_realtime_augment_last_usec += value
 
 
 func _process(delta: float) -> void:
@@ -208,6 +238,12 @@ func _process(delta: float) -> void:
 		foundation_environment_runtime_usec_samples.append(foundation_environment_runtime_last_usec)
 		foundation_autosave_usec_samples.append(foundation_autosave_last_usec)
 		foundation_layout_usec_samples.append(foundation_layout_last_usec)
+		foundation_coin_pusher_native_step_usec_samples.append(foundation_coin_pusher_native_step_last_usec)
+		foundation_surface_automation_usec_samples.append(foundation_surface_automation_last_usec)
+		foundation_surface_realtime_usec_samples.append(foundation_surface_realtime_last_usec)
+		foundation_surface_realtime_ui_usec_samples.append(foundation_surface_realtime_ui_last_usec)
+		foundation_surface_realtime_module_usec_samples.append(foundation_surface_realtime_module_last_usec)
+		foundation_surface_realtime_augment_usec_samples.append(foundation_surface_realtime_augment_last_usec)
 		if frame_index % sample_stride_frames == 0:
 			_sample_monitors()
 	if show_overlay and frame_index % OVERLAY_REFRESH_STRIDE_FRAMES == 0:
@@ -514,6 +550,11 @@ func _reinstall_coin_pusher_fixture(run_state: RunState, game: GameModule) -> Di
 func _enable_coin_pusher_stage_diagnostic() -> void:
 	if not _option_bool(runtime_options, "bth_perf_coin_pusher_stage_diagnostic", false):
 		return
+	var ui_state_value: Variant = app.get("game_surface_ui_state")
+	if typeof(ui_state_value) == TYPE_DICTIONARY:
+		var ui_state: Dictionary = (ui_state_value as Dictionary).duplicate(true)
+		ui_state["coin_pusher_debug_profile_stages"] = true
+		app.set("game_surface_ui_state", ui_state)
 	var canvas := _coin_pusher_canvas()
 	if canvas != null and canvas.has_method("apply_surface_state_patch"):
 		canvas.call("apply_surface_state_patch", {"coin_pusher_perf_stage_capture": true})
@@ -580,7 +621,9 @@ func _coin_pusher_conservation_snapshot(run_state: RunState, game: GameModule) -
 	if typeof(simulation_value) != TYPE_DICTIONARY:
 		return {}
 	var simulation: Dictionary = simulation_value
-	var active := (simulation.get("bodies", []) as Array).size() if typeof(simulation.get("bodies", [])) == TYPE_ARRAY else -1
+	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
+	var invariants: Dictionary = simulation.get("last_invariants", {}) if typeof(simulation.get("last_invariants", {})) == TYPE_DICTIONARY else {}
+	var active := int(invariants.get("active", -1)) if bool(session.get("native_body_state_dirty", false)) else ((simulation.get("bodies", []) as Array).size() if typeof(simulation.get("bodies", [])) == TYPE_ARRAY else -1)
 	var tray := (simulation.get("tray_ledger", []) as Array).size() if typeof(simulation.get("tray_ledger", [])) == TYPE_ARRAY else -1
 	var gutter := (simulation.get("gutter_ledger", []) as Array).size() if typeof(simulation.get("gutter_ledger", [])) == TYPE_ARRAY else -1
 	var collected := int(simulation.get("collected_count", -1))
@@ -589,7 +632,6 @@ func _coin_pusher_conservation_snapshot(run_state: RunState, game: GameModule) -
 		+ int(simulation.get("accepted_inserts", 0)) \
 		+ int(simulation.get("external_origin_count", 0))
 	var accounted := active + tray + gutter + collected + cup_consumed
-	var invariants: Dictionary = simulation.get("last_invariants", {}) if typeof(simulation.get("last_invariants", {})) == TYPE_DICTIONARY else {}
 	var solver_invariants_present := invariants.has("conservation_ok")
 	return {
 		"active": active,
@@ -609,6 +651,7 @@ func _seed_coin_pusher_collect_fixture(run_state: RunState, game: GameModule) ->
 	# Once the cabinet is entered, the transient live machine is authoritative;
 	# the durable row deliberately no longer carries a simulation dictionary.
 	var machine := game.call("_ensure_live_machine", run_state, run_state.current_environment) as Dictionary
+	CoinPusherLiveSessionScript.sync_native_body_state(machine)
 	var simulation_value: Variant = game.call("_simulation", machine)
 	if typeof(simulation_value) != TYPE_DICTIONARY:
 		return false
@@ -640,6 +683,9 @@ func _seed_coin_pusher_collect_fixture(run_state: RunState, game: GameModule) ->
 		"active_body_count": bodies.size(),
 		"conserved_body_count": bodies.size() + tray.size(),
 	})
+	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
+	session["native_cache_reset"] = true
+	session["native_body_state_dirty"] = false
 	return bodies.size() == COIN_PUSHER_FIXTURE_BODY_COUNT - 1 and tray.size() == 1
 
 
@@ -658,7 +704,13 @@ func _coin_pusher_canvas_counters(canvas: Control) -> Dictionary:
 
 func _coin_pusher_surface_state(canvas: Control) -> Dictionary:
 	if canvas != null and canvas.has_method("realtime_surface_state"):
-		return (canvas.call("realtime_surface_state") as Dictionary).duplicate(true)
+		# Performance evidence only reads boundary scalars plus the existing action
+		# binding dictionary. Deep-copying the 300-body presentation arrays here
+		# made the observer allocate several complete machines inside an active
+		# action window, then charged the resulting browser GC pauses to gameplay.
+		# A shallow boundary copy keeps the scalar observations stable without
+		# cloning presentation data that the report never consumes.
+		return (canvas.call("realtime_surface_state") as Dictionary).duplicate(false)
 	return {}
 
 
@@ -717,6 +769,9 @@ func _measure_coin_pusher_action(surface_action: String, name: String, fixture: 
 	var call_start_usec := Time.get_ticks_usec()
 	var handled := bool(app.call("_handle_module_surface_action", surface_action, 0, true))
 	var resolve_call_ms := float(Time.get_ticks_usec() - call_start_usec) / 1000.0
+	var accepted_result: Dictionary = app.get("last_game_result") if typeof(app.get("last_game_result")) == TYPE_DICTIONARY else {}
+	var accepted_host_timing_variant: Variant = accepted_result.get("coin_pusher_debug_host_timing_usec", {})
+	var host_timing: Dictionary = accepted_host_timing_variant if typeof(accepted_host_timing_variant) == TYPE_DICTIONARY else {}
 	# Action acceptance and the maintained 60-frame physical observation are
 	# distinct boundaries. Retain both so later legitimate exits cannot overwrite
 	# proof of what the accepted action itself did.
@@ -730,6 +785,8 @@ func _measure_coin_pusher_action(surface_action: String, name: String, fixture: 
 	var metrics: Dictionary = result.get("coin_pusher_solver_metrics", {}) if typeof(result.get("coin_pusher_solver_metrics", {})) == TYPE_DICTIONARY else {}
 	current_tags["handled"] = handled
 	current_tags["resolve_call_ms"] = resolve_call_ms
+	if not host_timing.is_empty():
+		current_tags["host_timing_usec"] = host_timing.duplicate(true)
 	current_tags["canvas_before"] = before_counters
 	current_tags["canvas_after"] = after_counters
 	current_tags["redraw_delta"] = int(after_counters.get("surface_animation_redraw_count", 0)) - int(before_counters.get("surface_animation_redraw_count", 0))
@@ -1204,6 +1261,12 @@ func _begin_scenario(name: String, tags: Dictionary = {}) -> void:
 	foundation_environment_runtime_usec_samples = []
 	foundation_autosave_usec_samples = []
 	foundation_layout_usec_samples = []
+	foundation_coin_pusher_native_step_usec_samples = []
+	foundation_surface_automation_usec_samples = []
+	foundation_surface_realtime_usec_samples = []
+	foundation_surface_realtime_ui_usec_samples = []
+	foundation_surface_realtime_module_usec_samples = []
+	foundation_surface_realtime_augment_usec_samples = []
 	monitor_sample_count = 0
 	last_sample_memory_bytes = current_start_memory_bytes
 	last_sample_object_count = int(Performance.get_monitor(Performance.OBJECT_COUNT))
@@ -1218,6 +1281,22 @@ func _end_scenario() -> void:
 	_sample_monitors()
 	var end_msec := Time.get_ticks_msec()
 	var memory_stats := _int_stats(memory_samples)
+	var frame_attribution_samples := {}
+	if current_scenario.begins_with("coin_pusher_"):
+		# Keep the per-frame rows for Coin Pusher closure captures. Aggregate p95
+		# numbers identify a regression, but these aligned samples identify which
+		# production subsystem occupied each slow browser frame.
+		frame_attribution_samples = {
+			"frame_ms": frame_ms_samples.duplicate(),
+			"snapshot_builds_usec": foundation_snapshot_usec_samples.duplicate(),
+			"environment_runtime_usec": foundation_environment_runtime_usec_samples.duplicate(),
+			"coin_pusher_native_step_usec": foundation_coin_pusher_native_step_usec_samples.duplicate(),
+			"surface_automation_usec": foundation_surface_automation_usec_samples.duplicate(),
+			"surface_realtime_usec": foundation_surface_realtime_usec_samples.duplicate(),
+			"surface_realtime_ui_usec": foundation_surface_realtime_ui_usec_samples.duplicate(),
+			"surface_realtime_module_usec": foundation_surface_realtime_module_usec_samples.duplicate(),
+			"surface_realtime_augment_usec": foundation_surface_realtime_augment_usec_samples.duplicate(),
+		}
 	var record := {
 		"name": current_scenario,
 		"tags": current_tags.duplicate(false),
@@ -1244,7 +1323,14 @@ func _end_scenario() -> void:
 			"environment_runtime": _int_stats(foundation_environment_runtime_usec_samples),
 			"autosave_flush": _int_stats(foundation_autosave_usec_samples),
 			"layout": _int_stats(foundation_layout_usec_samples),
+			"coin_pusher_native_step": _int_stats(foundation_coin_pusher_native_step_usec_samples),
+			"surface_automation": _int_stats(foundation_surface_automation_usec_samples),
+			"surface_realtime": _int_stats(foundation_surface_realtime_usec_samples),
+			"surface_realtime_ui": _int_stats(foundation_surface_realtime_ui_usec_samples),
+			"surface_realtime_module": _int_stats(foundation_surface_realtime_module_usec_samples),
+			"surface_realtime_augment": _int_stats(foundation_surface_realtime_augment_usec_samples),
 		},
+		"frame_attribution_samples": frame_attribution_samples,
 		"liveness_counters": _liveness_counter_snapshot(),
 		"allocation_proxy": {
 			"sample_count": monitor_sample_count,
@@ -1441,6 +1527,12 @@ func foundation_attribution_snapshot() -> Dictionary:
 		"environment_runtime": _int_stats(foundation_environment_runtime_usec_samples),
 		"autosave_flush": _int_stats(foundation_autosave_usec_samples),
 		"layout": _int_stats(foundation_layout_usec_samples),
+		"coin_pusher_native_step": _int_stats(foundation_coin_pusher_native_step_usec_samples),
+		"surface_automation": _int_stats(foundation_surface_automation_usec_samples),
+		"surface_realtime": _int_stats(foundation_surface_realtime_usec_samples),
+		"surface_realtime_ui": _int_stats(foundation_surface_realtime_ui_usec_samples),
+		"surface_realtime_module": _int_stats(foundation_surface_realtime_module_usec_samples),
+		"surface_realtime_augment": _int_stats(foundation_surface_realtime_augment_usec_samples),
 	}
 
 

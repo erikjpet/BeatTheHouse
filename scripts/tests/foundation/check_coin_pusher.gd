@@ -37,6 +37,7 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 	_check_pusher_v3_real_weight_gravity(machine_definition, failures)
 	_check_pusher_v3_irregular_supported_piles(machine_definition, failures)
 	_check_pusher_v3_contact_only_pressure(machine_definition, failures)
+	_check_pusher_v3_upper_row_join_pressure(machine_definition, failures)
 	_check_pusher_v3_visible_terminal_falls(machine_definition, failures)
 	_check_pusher_v3_input_trace_determinism(machine_definition, failures)
 	_check_pusher_v3_ridge_physical_contract(library, failures)
@@ -2373,6 +2374,43 @@ func _check_pusher_v3_production_integration_boundaries(library: ContentLibrary,
 	if int(sweep_machine.get("applied_security_tolerance_modifier", 0)) != -2:
 		failures.append("Coin Pusher V3 Police Sweep channel did not tighten alarm tolerance at generation.")
 
+	# Quarter Falls supplies an exact compact token so a rejected host turn can
+	# undo its pre-turn DROP mutation without copying the immutable 300-body
+	# checkpoint. The restored durable and live roots must be byte-identical.
+	var rollback_environment := {"id": "pusher_rollback", "world_node_id": "pusher_rollback", "scenario_game_modifiers": {"coin_pusher": {"variation_id": "quarter_falls"}}, "game_states": {}}
+	var rollback_game: GameModule = module_script.new()
+	rollback_game.setup(definition, library)
+	rollback_environment["game_states"] = {"coin_pusher": rollback_game.generate_environment_state(run_state, rollback_environment, _pusher_v3_rng("PUSHER-V3-ROLLBACK-GENERATE"))}
+	rollback_game.enter(run_state, rollback_environment)
+	var rollback_live: Dictionary = (rollback_game.get("_live_machines") as Dictionary).values()[0]
+	var rollback_simulation: Dictionary = rollback_live.get("simulation", {})
+	var rollback_session: Dictionary = rollback_live.get("live_session", {})
+	var durable_rollback_before := var_to_bytes(rollback_environment.get("game_states", {}))
+	var live_rollback_before := {
+		"action_count": int(rollback_live.get("action_count", 0)),
+		"drop_queue": (rollback_live.get("drop_queue", []) as Array).duplicate(true),
+		"motor_started": bool(rollback_live.get("motor_started", false)),
+		"motor_target_rate_fp": int(rollback_simulation.get("motor_target_rate_fp", 0)),
+		"durable_ready": bool(rollback_session.get("durable_ready", false)),
+		"durable_dirty": bool(rollback_session.get("durable_dirty", false)),
+	}
+	var rollback_token := rollback_game.host_action_rollback_snapshot("drop_quarter", run_state, rollback_environment)
+	var rollback_result := rollback_game.resolve_with_context("drop_quarter", 1, run_state, rollback_environment, _pusher_v3_rng("PUSHER-V3-ROLLBACK-DROP"), {})
+	var rollback_applied := bool(rollback_result.get("ok", false)) and (rollback_live.get("drop_queue", []) as Array).size() == 1
+	var rollback_restored := rollback_game.restore_host_action_rollback(rollback_token, run_state, rollback_environment)
+	var live_rollback_after := {
+		"action_count": int(rollback_live.get("action_count", 0)),
+		"drop_queue": (rollback_live.get("drop_queue", []) as Array).duplicate(true),
+		"motor_started": bool(rollback_live.get("motor_started", false)),
+		"motor_target_rate_fp": int(rollback_simulation.get("motor_target_rate_fp", 0)),
+		"durable_ready": bool(rollback_session.get("durable_ready", false)),
+		"durable_dirty": bool(rollback_session.get("durable_dirty", false)),
+	}
+	if not bool(rollback_token.get("supported", false)) or not rollback_applied or not rollback_restored \
+			or var_to_bytes(rollback_environment.get("game_states", {})) != durable_rollback_before \
+			or live_rollback_after != live_rollback_before:
+		failures.append("Coin Pusher compact host rollback did not restore the exact durable/live DROP boundary: supported=%s applied=%s restored=%s durable=%s live=%s." % [bool(rollback_token.get("supported", false)), rollback_applied, rollback_restored, var_to_bytes(rollback_environment.get("game_states", {})) == durable_rollback_before, JSON.stringify(live_rollback_after)])
+
 
 func _check_pusher_v3_items_alarm_and_rumor(library: ContentLibrary, failures: Array) -> void:
 	var definition := library.game("coin_pusher")
@@ -2859,6 +2897,30 @@ func _check_pusher_v3_contact_only_pressure(machine: Dictionary, failures: Array
 		failures.append("Coin Pusher V3 contact chain did not propagate locally through touching coins only: b=%s c=%s other=%s." % [JSON.stringify(moved_b), JSON.stringify(moved_c), JSON.stringify(still_other)])
 	if JSON.stringify(CoinPusherSolverScript.canonical_digest(chain_state), "", true) != JSON.stringify(CoinPusherSolverScript.canonical_digest(native_chain), "", true):
 		failures.append("Coin Pusher V3 native contact-only pressure diverged from the integer reference kernel.")
+
+
+func _check_pusher_v3_upper_row_join_pressure(machine: Dictionary, failures: Array) -> void:
+	var state := _pusher_v3_state(machine, "PUSHER-V3-UPPER-ROW-JOIN-PRESSURE")
+	_pusher_v3_hold_phase(state, machine, 120)
+	var neighbor := _pusher_v3_body_fixture("join_neighbor", 50000, 65300, CoinPusherSolverScript.PLATFORM_TOP_Z, true, "platform")
+	var incoming := _pusher_v3_body_fixture("join_incoming", 50000, 70000, CoinPusherSolverScript.PLATFORM_TOP_Z + 100, false, "")
+	incoming["rest_state"] = "falling"
+	incoming["vz"] = -15000
+	incoming["fall_start_z"] = 20000
+	incoming["meta"] = {"value": 1, "inserted": true}
+	(state.get("bodies", []) as Array).append_array([neighbor, incoming])
+	state["opening_body_count"] = 2
+	var native_state := state.duplicate(true)
+	var reference_result := CoinPusherSolverScript.step_ticks_reference_for_test(state, {"motor_enabled": false}, 1)
+	var native_result := CoinPusherSolverScript.step_ticks(native_state, {"motor_enabled": false}, 1)
+	var pressure_events: Array = (reference_result.get("events", []) as Array).filter(func(event): return str((event as Dictionary).get("kind", "")) == "upper_row_join_pressure")
+	var moved_neighbor := _pusher_v3_body(state, "join_neighbor")
+	if pressure_events.size() != 1 or str((pressure_events[0] as Dictionary).get("neighbor_body_id", "")) != "join_neighbor" \
+			or int(moved_neighbor.get("vy", 0)) >= -1000 or bool(moved_neighbor.get("sleeping", true)):
+		failures.append("Coin Pusher V3 targeted upper-row landing did not transfer bounded forward pressure to its touching same-tier neighbor: events=%s neighbor=%s." % [JSON.stringify(pressure_events), JSON.stringify(moved_neighbor)])
+	if JSON.stringify(reference_result.get("events", []), "", true) != JSON.stringify(native_result.get("events", []), "", true) \
+			or JSON.stringify(CoinPusherSolverScript.canonical_digest(state), "", true) != JSON.stringify(CoinPusherSolverScript.canonical_digest(native_state), "", true):
+		failures.append("Coin Pusher V3 upper-row join pressure diverged between the integer reference and native kernels.")
 
 
 func _check_pusher_v3_visible_terminal_falls(machine: Dictionary, failures: Array) -> void:

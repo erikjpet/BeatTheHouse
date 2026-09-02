@@ -4,6 +4,7 @@
 #include <godot_cpp/classes/ref_counted.hpp>
 #include <godot_cpp/variant/array.hpp>
 #include <godot_cpp/variant/dictionary.hpp>
+#include <godot_cpp/variant/packed_int64_array.hpp>
 #include <godot_cpp/variant/string.hpp>
 
 #include <cstdint>
@@ -23,6 +24,7 @@ public:
 	bool can_step(const Dictionary &state, const Dictionary &config) const;
 	bool supports_live_batch_capture() const;
 	Dictionary build_live_render_batch(const Dictionary &config, const Array &current, const Array &previous, double alpha) const;
+	Dictionary build_live_render_batch_packed(const Dictionary &config, const PackedInt64Array &current, const PackedInt64Array &previous, double alpha) const;
 	Dictionary step_ticks(Dictionary state, const Dictionary &config, int64_t tick_count) const;
 };
 

@@ -7,6 +7,8 @@ const SNAPSHOT_VERSION := 3
 const FIXED_HZ := 60
 const MAX_CATCH_UP_TICKS := 4
 const MAX_SETTLE_TICKS := 1200
+const WEB_PRESENTATION_INTERVAL_MSEC := 1100
+const WEB_INPUT_PRESENTATION_DELAY_MSEC := 96
 
 static var _native_cache_generation := 0
 
@@ -70,15 +72,22 @@ static func begin(machine: Dictionary, machine_definition: Dictionary, seed: int
 		# reconstructing a previous position from velocity.
 		"presentation_previous_bodies": opening_views.duplicate(true),
 		"presentation_current_bodies": opening_views,
+		"presentation_previous_packed": PackedInt64Array(),
+		"presentation_current_packed": PackedInt64Array(),
 		"presentation_feature_count": _presentation_feature_count(opening_views),
 		"presentation_previous_face_y": int(simulation.get("face_y", 0)),
 		"presentation_current_face_y": int(simulation.get("face_y", 0)),
 		"presentation_view_serial": 0,
+		"presentation_last_publish_msec": -1,
 		"presentation_audio_serial": 0,
+		"presentation_motion": {},
 		# A fresh authority gets a new generation even when deterministic fixture
 		# re-entry deliberately reuses the same seed.
 		"native_cache_key": "live:%s:%s" % [seed, _native_cache_generation],
 		"native_cache_reset": true,
+		"native_body_state_dirty": false,
+		"native_steady_without_motor": false,
+		"native_steady_with_motor": false,
 	}
 	return machine["live_session"]
 
@@ -91,9 +100,32 @@ static func queue_input(machine: Dictionary, input: Dictionary) -> Dictionary:
 	var event := input.duplicate(true)
 	event["tick"] = int(simulation.get("tick", 0))
 	(session["input_trace"] as Array).append(event)
+	# The action patch acknowledges the accepted control immediately. On Web, let
+	# the solver advance for a few frames before rebuilding the complete 300-body
+	# projection; this keeps the coin-slot/HUD boundary separate from dense body
+	# publication without changing any authoritative tick or input ordering.
+	var clock_msec := int(session.get("last_clock_msec", -1))
+	session["presentation_last_publish_msec"] = clock_msec - WEB_PRESENTATION_INTERVAL_MSEC + WEB_INPUT_PRESENTATION_DELAY_MSEC \
+		if OS.has_feature("web") and clock_msec >= 0 else -1
 	session["durable_ready"] = false
 	session["durable_dirty"] = true
 	return event
+
+
+static func presentation_publish_due(machine: Dictionary, now_msec: int) -> bool:
+	if not OS.has_feature("web"):
+		return true
+	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
+	if session.is_empty():
+		return true
+	var last_publish_msec := int(session.get("presentation_last_publish_msec", -1))
+	return last_publish_msec < 0 or now_msec - last_publish_msec >= WEB_PRESENTATION_INTERVAL_MSEC
+
+
+static func mark_presentation_published(machine: Dictionary, now_msec: int) -> void:
+	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
+	if not session.is_empty():
+		session["presentation_last_publish_msec"] = now_msec
 
 
 static func enqueue_drops(machine: Dictionary, request: Dictionary, count: int) -> int:
@@ -120,7 +152,7 @@ static func enqueue_drops(machine: Dictionary, request: Dictionary, count: int) 
 	return accepted
 
 
-static func advance(machine: Dictionary, now_msec: int) -> Dictionary:
+static func advance(machine: Dictionary, now_msec: int, capture_presentation: bool = true) -> Dictionary:
 	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
 	var simulation: Dictionary = machine.get("simulation", {}) if typeof(machine.get("simulation", {})) == TYPE_DICTIONARY else {}
 	if session.is_empty() or simulation.is_empty() or not bool(session.get("open", false)) or bool(session.get("settling_out", false)):
@@ -134,11 +166,18 @@ static func advance(machine: Dictionary, now_msec: int) -> Dictionary:
 	var elapsed := maxi(0, now_msec - previous)
 	session["last_clock_msec"] = now_msec
 	var units := int(session.get("accumulator_units", 0)) + elapsed * FIXED_HZ
-	var due := mini(MAX_CATCH_UP_TICKS, units / 1000)
+	# The throttled single-threaded Web runtime must not turn a missed frame into
+	# a self-sustaining multi-tick hitch. A two-tick drain plus the host and canvas
+	# work exceeds the active-frame budget on the locked 4x-CPU profile. Keep
+	# every elapsed unit in the accumulator, but present at most one authoritative
+	# tick per browser frame;
+	# native builds retain the wider catch-up window.
+	var catch_up_limit := 1 if OS.has_feature("web") else MAX_CATCH_UP_TICKS
+	var due := mini(catch_up_limit, units / 1000)
 	if due <= 0:
 		session["accumulator_units"] = units
 		return {"ticks": 0, "events": []}
-	var stepped := _step_traced_ticks(machine, due)
+	var stepped := _step_traced_ticks(machine, due, capture_presentation)
 	units -= due * 1000
 	session["accumulator_units"] = units
 	return {"ticks": due, "events": stepped.get("events", []), "backlog_ticks": units / 1000}
@@ -166,6 +205,7 @@ static func begin_chunked_settle(machine: Dictionary) -> Dictionary:
 		session["accumulator_units"] = maxi(0, accumulator_units - mini(1000, accumulator_units))
 		session["backlog_drain_ticks"] = 1
 	CoinPusherSolverScript.set_skill_stop(machine.get("simulation", {}), false)
+	sync_native_body_state(machine)
 	return {
 		"started": true,
 		"done": false,
@@ -204,6 +244,7 @@ static func advance_chunked_settle(machine: Dictionary, tick_budget: int = 8) ->
 
 
 static func freeze_after_chunked_settle(machine: Dictionary, settle_ticks: int) -> Dictionary:
+	sync_native_body_state(machine)
 	var simulation: Dictionary = machine.get("simulation", {}) if typeof(machine.get("simulation", {})) == TYPE_DICTIONARY else {}
 	if simulation.is_empty():
 		return machine.get("settled_state", {})
@@ -376,18 +417,47 @@ static func _session_rng(session: Dictionary) -> RngStream:
 	return rng
 
 
-static func _step_traced_ticks(machine: Dictionary, tick_count: int) -> Dictionary:
+static func all_steady(machine: Dictionary, motor_running: bool = true) -> bool:
+	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
+	if bool(session.get("native_body_state_dirty", false)):
+		return bool(session.get("native_steady_with_motor" if motor_running else "native_steady_without_motor", false))
+	var simulation: Dictionary = machine.get("simulation", {}) if typeof(machine.get("simulation", {})) == TYPE_DICTIONARY else {}
+	return CoinPusherSolverScript.all_steady(simulation, motor_running)
+
+
+static func sync_native_body_state(machine: Dictionary) -> void:
+	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
+	if session.is_empty() or not bool(session.get("native_body_state_dirty", false)):
+		return
+	var simulation: Dictionary = machine.get("simulation", {}) if typeof(machine.get("simulation", {})) == TYPE_DICTIONARY else {}
+	if simulation.is_empty():
+		return
+	CoinPusherSolverScript.step_ticks(simulation, {
+		"live_cache_key": str(session.get("native_cache_key", "")),
+		"write_body_state": true,
+	}, 0)
+	session["native_body_state_dirty"] = false
+
+
+static func _step_traced_ticks(machine: Dictionary, tick_count: int, capture_presentation: bool = true) -> Dictionary:
 	var session: Dictionary = machine.get("live_session", {})
 	var simulation: Dictionary = machine.get("simulation", {})
-	var rng := _session_rng(session)
 	var all_events: Array = []
 	var safe_tick_count := maxi(0, tick_count)
 	var previous_views: Array = []
+	var previous_packed := PackedInt64Array()
 	var previous_face_y := int(session.get("presentation_current_face_y", simulation.get("face_y", 0)))
-	if safe_tick_count == 1:
-		var current_views: Variant = session.get("presentation_current_bodies", [])
-		previous_views = current_views if typeof(current_views) == TYPE_ARRAY and not (current_views as Array).is_empty() else _presentation_body_views(simulation)
 	var native_batch := CoinPusherSolverScript.native_live_batch_supported()
+	var compact_native_authority := native_batch and OS.has_feature("web")
+	var compact_native_presentation := compact_native_authority and capture_presentation
+	if safe_tick_count == 1:
+		if not compact_native_authority:
+			var current_views: Variant = session.get("presentation_current_bodies", [])
+			previous_views = current_views if typeof(current_views) == TYPE_ARRAY and not (current_views as Array).is_empty() else _presentation_body_views(simulation)
+		if compact_native_presentation:
+			var current_packed: Variant = session.get("presentation_current_packed", PackedInt64Array())
+			previous_packed = current_packed if typeof(current_packed) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array()
+	var rng: RngStream = null
 	var remaining := safe_tick_count
 	var final_result: Dictionary = {}
 	while remaining > 0:
@@ -413,31 +483,55 @@ static func _step_traced_ticks(machine: Dictionary, tick_count: int) -> Dictiona
 			cursor += 1
 		session["input_cursor"] = cursor
 		var is_final_chunk := chunk_ticks == remaining
-		var result := CoinPusherSolverScript.step_ticks(simulation, {
+		var step_config := {
 			"input_trace": trace_slice,
-			"rng": rng,
 			"motor_enabled": bool(machine.get("motor_started", false)) and not bool(machine.get("locked_down", false)),
 			"live_cache_key": str(session.get("native_cache_key", "")) if native_batch else "",
 			"live_cache_reset": bool(session.get("native_cache_reset", false)),
-			"capture_previous_views": native_batch and safe_tick_count > 1 and is_final_chunk,
-			"capture_current_views": native_batch and is_final_chunk,
-		}, chunk_ticks)
+			"write_body_state": not compact_native_authority,
+			"capture_previous_views": capture_presentation and native_batch and not compact_native_authority and safe_tick_count > 1 and is_final_chunk,
+			"capture_previous_packed": compact_native_presentation and is_final_chunk,
+			"capture_current_views": capture_presentation and native_batch and not compact_native_authority and is_final_chunk,
+			"capture_current_packed": compact_native_presentation and is_final_chunk,
+		}
+		if trace_slice.any(func(input_value: Variant) -> bool: return typeof(input_value) == TYPE_DICTIONARY and str((input_value as Dictionary).get("kind", "")) == "drop"):
+			if rng == null:
+				rng = _session_rng(session)
+			step_config["rng"] = rng
+		var result := CoinPusherSolverScript.step_ticks(simulation, step_config, chunk_ticks)
 		final_result = result
 		session["native_cache_reset"] = false
 		all_events.append_array(result.get("events", []))
-		if native_batch and safe_tick_count > 1 and is_final_chunk:
+		if capture_presentation and native_batch and not compact_native_authority and safe_tick_count > 1 and is_final_chunk:
 			previous_views = result.get("presentation_previous_bodies", []) if typeof(result.get("presentation_previous_bodies", [])) == TYPE_ARRAY else []
+		if compact_native_presentation and is_final_chunk:
+			previous_packed = result.get("presentation_previous_packed", PackedInt64Array()) if typeof(result.get("presentation_previous_packed", PackedInt64Array())) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array()
+		if capture_presentation and native_batch and safe_tick_count > 1 and is_final_chunk:
 			previous_face_y = int(result.get("presentation_previous_face_y", simulation.get("previous_face_y", 0)))
 		remaining -= chunk_ticks
 	if safe_tick_count > 0:
-		var current_views: Array = final_result.get("presentation_current_bodies", []) if native_batch and typeof(final_result.get("presentation_current_bodies", [])) == TYPE_ARRAY else _presentation_body_views(simulation)
-		session["presentation_previous_bodies"] = previous_views
-		session["presentation_current_bodies"] = current_views
-		session["presentation_feature_count"] = _presentation_feature_count(current_views)
-		session["presentation_previous_face_y"] = previous_face_y
-		session["presentation_current_face_y"] = int(final_result.get("presentation_current_face_y", simulation.get("face_y", 0))) if native_batch else int(simulation.get("face_y", 0))
-		session["presentation_view_serial"] = int(session.get("presentation_view_serial", 0)) + safe_tick_count
-	session["rng"] = rng.snapshot()
+		if compact_native_presentation:
+			session["presentation_previous_packed"] = previous_packed
+			session["presentation_current_packed"] = final_result.get("presentation_current_packed", PackedInt64Array()) if typeof(final_result.get("presentation_current_packed", PackedInt64Array())) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array()
+			session["presentation_feature_count"] = int(final_result.get("presentation_feature_count", session.get("presentation_feature_count", 0)))
+			session["presentation_motion"] = final_result.get("presentation_motion", {}) if typeof(final_result.get("presentation_motion", {})) == TYPE_DICTIONARY else {}
+		elif capture_presentation:
+			var current_views: Array = final_result.get("presentation_current_bodies", []) if native_batch and typeof(final_result.get("presentation_current_bodies", [])) == TYPE_ARRAY else _presentation_body_views(simulation)
+			session["presentation_previous_bodies"] = previous_views
+			session["presentation_current_bodies"] = current_views
+			session["presentation_feature_count"] = _presentation_feature_count(current_views)
+		if compact_native_authority:
+			session["native_body_state_dirty"] = true
+		var metrics: Dictionary = final_result.get("metrics", {}) if typeof(final_result.get("metrics", {})) == TYPE_DICTIONARY else {}
+		session["last_step_metrics"] = metrics
+		session["native_steady_without_motor"] = bool(metrics.get("steady_without_motor", false))
+		session["native_steady_with_motor"] = bool(metrics.get("steady_with_motor", false))
+		if capture_presentation:
+			session["presentation_previous_face_y"] = previous_face_y
+			session["presentation_current_face_y"] = int(final_result.get("presentation_current_face_y", simulation.get("face_y", 0))) if native_batch else int(simulation.get("face_y", 0))
+			session["presentation_view_serial"] = int(session.get("presentation_view_serial", 0)) + safe_tick_count
+	if rng != null:
+		session["rng"] = rng.snapshot()
 	session["liveness_ticks"] = int(session.get("liveness_ticks", 0)) + safe_tick_count
 	return {"events": all_events}
 

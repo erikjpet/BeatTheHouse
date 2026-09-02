@@ -127,42 +127,332 @@ func _elevated_coin_count(state: Dictionary, definition: Dictionary) -> int:
 
 
 func _capture_upper_row(variation_id: String, definition: Dictionary) -> Dictionary:
-	# The production contract is a full played-in cabinet.  The old 70-coin
-	# half-board fixture could no longer prove that a real opening accepts and
-	# transmits a new drop, so exercise the exact generated entry state instead.
-	var state: Dictionary = (active_machine.get("simulation", {}) as Dictionary).duplicate(true)
+	var period := maxi(1, int((definition.get("stroke", {}) as Dictionary).get("period_ticks", 240)))
+	var opening_snapshot := _production_opening_snapshot()
+	LiveSession.advance(active_machine, production_clock_msec)
+	var production_entry_machine := active_machine.duplicate(true)
+	var state := _restore_production_entry(production_entry_machine)
+	if state.is_empty() or opening_snapshot.is_empty():
+		return {"id": "upper_row_join", "passed": false, "files": [], "reason": "production_opening_restore_failed"}
 	var before_views := Solver.body_views(state)
 	var before_record := _record(state)
-	var before_y := _body_y_map(before_views)
-	var drop := Solver.add_coin(state, _rng("plan94:%s:upper:drop" % variation_id), _policy_x(definition, 0), 1)
-	var body_id := str(drop.get("id", ""))
+	var branch_session_identity := _upper_row_session_identity()
+	var idle_before := _upper_row_control_digest(state)
+	var bankroll_before_idle := active_run_state.bankroll
+	var story_before_idle := active_run_state.story_log_entry_count()
+	var idle_events: Array = []
+	var idle_exact_ticks := true
+	for _tick in range(period):
+		var idle_step := _advance_production_exact_tick()
+		idle_exact_ticks = idle_exact_ticks and bool(idle_step.get("exact_one_tick", false))
+		idle_events.append_array(idle_step.get("events", []))
+	var idle_after := _upper_row_control_digest(state)
+	var idle_record := _record(state)
+	var idle_unchanged := idle_before == idle_after \
+		and idle_events.is_empty() \
+		and int(state.get("motor_rate_fp", -1)) == 0 \
+		and active_run_state.bankroll == bankroll_before_idle \
+		and active_run_state.story_log_entry_count() == story_before_idle
+	var idle_file := "%s_upper_row_idle_control.png" % variation_id
+	var idle_saved := await _save_record_strip(idle_file, variation_id, definition, [before_record, idle_record], false)
+
+	state = _restore_production_entry(production_entry_machine)
+	if state.is_empty():
+		return {"id": "upper_row_join", "passed": false, "files": [idle_file], "reason": "production_drop_restore_failed", "idle_control_passed": idle_unchanged and idle_exact_ticks and idle_saved}
+	var restored_views := Solver.body_views(state)
+	var restored_session_identity := _upper_row_session_identity()
+	var baseline_reproduced := restored_views == before_views \
+		and restored_session_identity == branch_session_identity \
+		and _sha256(_production_opening_snapshot()) == _sha256(opening_snapshot)
+	var control_trace := _run_upper_row_control_trace(variation_id, state)
+	var preexisting_ids := _body_id_set(Solver.body_views(state))
+	var stimulus_before := _record(state)
+	var queue_before := (active_machine.get("drop_queue", []) as Array).size()
+	var accepted_before := int(state.get("accepted_inserts", 0))
+	var bankroll_before_drop := active_run_state.bankroll
+	var story_before_drop := active_run_state.story_log_entry_count()
+	var drop_command := game.surface_action_command("coin_pusher_drop", 0, false, {}, active_run_state, active_environment)
+	var paid_drop_cost := int(drop_command.get("set_stake", 0))
+	var drop_result := game.resolve_with_context(str(drop_command.get("action_id", "")), paid_drop_cost, active_run_state, active_environment, _rng("plan94:%s:upper:paid" % variation_id), {})
+	GameModule.apply_result(active_run_state, drop_result)
+	# Variation features synchronize before enqueue. Read the next solver ID only
+	# after the production resolve so the tracked ID is the committed quarter.
+	var body_id := "body_%05d" % int(state.get("next_body_id", 1))
+	var selected_nozzle_id := str(active_machine.get("selected_nozzle_id", ""))
+	var queue_after := (active_machine.get("drop_queue", []) as Array).size()
+	var drop_committed := bool(drop_command.get("handled", false)) \
+		and bool(drop_command.get("direct_resolve", false)) \
+		and paid_drop_cost > 0 \
+		and active_run_state.bankroll == bankroll_before_drop - paid_drop_cost \
+		and active_run_state.story_log_entry_count() == story_before_drop + 1 \
+		and queue_after == queue_before + 1 \
+		and bool(active_machine.get("motor_started", false))
 	var first_support_event := {}
 	var landing_tick := -1
+	var landing_record := {}
+	var landing_neighbor_views: Array = []
+	var landing_neighbor_diagnostics: Array = []
+	var landing_phase_fp := -1
+	var landing_phase_tick := -1
+	var landing_face_y := -1
+	var landing_cycle_serial := -1
+	var terminal_before_support := false
+	var emitted := false
+	var exact_live_ticks := true
+	var pre_landing_events: Array = []
 	for _tick in range(1200):
-		var result := Solver.step_ticks(state, {"motor_enabled": true}, 1)
+		var result := _advance_production_exact_tick()
+		exact_live_ticks = exact_live_ticks and bool(result.get("exact_one_tick", false))
+		emitted = emitted or not _body(state, body_id).is_empty()
 		for event_value in result.get("events", []):
 			if typeof(event_value) != TYPE_DICTIONARY:
 				continue
 			var event: Dictionary = event_value
+			if str(event.get("body_id", "")) == body_id:
+				pre_landing_events.append(event.duplicate(true))
+				if str(event.get("kind", "")) in ["tray", "gutter", "plinko_cup"] and first_support_event.is_empty():
+					terminal_before_support = true
 			if str(event.get("body_id", "")) == body_id and bool(event.get("first_support", false)):
 				first_support_event = event.duplicate(true)
 				landing_tick = int(state.get("tick", -1))
-		if not first_support_event.is_empty() and int(state.get("tick", 0)) >= landing_tick + 240:
+				landing_phase_fp = int(state.get("phase_fp", -1))
+				landing_phase_tick = landing_phase_fp / Solver.FP
+				landing_face_y = int(state.get("face_y", -1))
+				landing_cycle_serial = int(state.get("stroke_cycle_serial", -1))
+				landing_record = _record(state, [], result.get("events", []))
+				landing_neighbor_views = _upper_row_local_neighbors(Solver.body_views(state), body_id, preexisting_ids)
+				landing_neighbor_diagnostics = _upper_row_neighbor_diagnostics(Solver.body_views(state), body_id, preexisting_ids)
+		if not first_support_event.is_empty() or terminal_before_support:
 			break
-	var after_views := Solver.body_views(state)
+	var landing_y := _body_y_for_ids(Solver.body_views(state), _body_ids(landing_neighbor_views))
+	var post_landing_events: Array = []
+	var release_control := {"required": bool(state.get("skill_stop_engaged", false)), "handled": true}
+	if not first_support_event.is_empty():
+		if bool(state.get("skill_stop_engaged", false)):
+			var release_command := game.surface_action_command("coin_pusher_skill_stop", 0, false, {}, active_run_state, active_environment)
+			release_control = {
+				"required": true,
+				"handled": bool(release_command.get("handled", false)),
+				"released": not bool(state.get("skill_stop_engaged", true)),
+			}
+		for _tick in range(period * 4):
+			var result := _advance_production_exact_tick()
+			exact_live_ticks = exact_live_ticks and bool(result.get("exact_one_tick", false))
+			post_landing_events.append_array(result.get("events", []))
+			if int(state.get("stroke_cycle_serial", -1)) > landing_cycle_serial \
+					and int(state.get("phase_fp", -2)) / Solver.FP == landing_phase_tick \
+					and int(state.get("face_y", -2)) == landing_face_y:
+				break
+	var final_views := Solver.body_views(state)
+	var final_phase_fp := int(state.get("phase_fp", -2))
+	var final_phase_tick := final_phase_fp / Solver.FP
+	var final_face_y := int(state.get("face_y", -2))
+	# The production motor ramps through fractional fixed-point rates after the
+	# skill stop. Solver geometry is evaluated at whole phase ticks, so match the
+	# exact authored phase tick, face position, and a later cycle rather than an
+	# unreachable pre-ramp fractional remainder.
+	var phase_matched := landing_phase_tick >= 0 and final_phase_tick == landing_phase_tick \
+		and final_face_y == landing_face_y \
+		and int(state.get("stroke_cycle_serial", -1)) > landing_cycle_serial
+	var final_y := _body_y_for_ids(final_views, _body_ids(landing_neighbor_views))
 	var advanced_ids: Array = []
-	for body_value in after_views:
-		if typeof(body_value) != TYPE_DICTIONARY:
-			continue
-		var body: Dictionary = body_value
-		var id := str(body.get("id", ""))
-		if before_y.has(id) and int(body.get("y", 0)) < int(before_y[id]) - 100:
+	var neighbor_forward_deltas := {}
+	var deposit_ids := {}
+	for event_value in post_landing_events:
+		if typeof(event_value) == TYPE_DICTIONARY and str((event_value as Dictionary).get("kind", "")) == "platform_deposit":
+			deposit_ids[str((event_value as Dictionary).get("body_id", ""))] = true
+	for neighbor_id in landing_y:
+		var id := str(neighbor_id)
+		var delta := int(landing_y[id]) - int(final_y.get(id, landing_y[id]))
+		neighbor_forward_deltas[id] = delta
+		if delta > 100 or deposit_ids.has(id):
 			advanced_ids.append(id)
-	var files := await _save_pair(variation_id, "upper_row_join", definition, before_record, _record(state), false)
-	var support_root := str(first_support_event.get("support_root", first_support_event.get("support", "")))
-	var full_opening_join := before_views.size() >= 148 and support_root in ["platform", "body"]
-	var passed := bool(drop.get("accepted", false)) and full_opening_join and bool(files.get("saved", false))
-	return {"id": "upper_row_join", "passed": passed, "files": files, "tracked_body_id": body_id, "landing_tick": landing_tick, "first_support_event": first_support_event, "opening_body_count": before_views.size(), "joined_full_opening_pressure_layer": full_opening_join, "advanced_existing_body_ids": advanced_ids}
+	var final_tracked := _body_from_views(final_views, body_id)
+	var event_support_root := str(first_support_event.get("support_root", ""))
+	var landing_tracked := _body_from_views((landing_record.get("current_views", []) as Array) if not landing_record.is_empty() else [], body_id)
+	var independent_support_root := str(landing_tracked.get("support_root", ""))
+	var joined_platform_row := not terminal_before_support \
+		and str(first_support_event.get("kind", "")) == "impact" \
+		and bool(first_support_event.get("first_support", false)) \
+		and event_support_root == "platform" \
+		and independent_support_root == "platform" \
+		and not landing_neighbor_views.is_empty()
+	var join_file := "%s_upper_row_join.png" % variation_id
+	var join_saved := false
+	if not landing_record.is_empty():
+		join_saved = await _save_record_strip(join_file, variation_id, definition, [stimulus_before, landing_record, _record(state)], false)
+	var passed := idle_unchanged and idle_exact_ticks and idle_saved \
+		and baseline_reproduced and bool(control_trace.get("passed", false)) and drop_committed and emitted \
+		and int(state.get("accepted_inserts", 0)) == accepted_before + 1 \
+		and exact_live_ticks and joined_platform_row and phase_matched and bool(release_control.get("handled", false)) and bool(release_control.get("released", true)) \
+		and not advanced_ids.is_empty() \
+		and not final_tracked.is_empty() and str(final_tracked.get("support_root", "")) == "platform" \
+		and join_saved
+	return {
+		"id": "upper_row_join",
+		"passed": passed,
+		"files": [join_file, idle_file],
+		"opening_snapshot_sha256": _sha256(opening_snapshot),
+		"opening_body_count": before_views.size(),
+		"stroke_period_ticks": period,
+		"idle_control_passed": idle_unchanged and idle_exact_ticks and idle_saved,
+		"idle_control": {"start": idle_before, "end": idle_after, "events": idle_events, "exact_ticks": idle_exact_ticks, "file_saved": idle_saved},
+		"baseline_reproduced": baseline_reproduced,
+		"baseline_session_identity": branch_session_identity,
+		"restored_session_identity": restored_session_identity,
+		"fixed_control_trace": control_trace,
+		"selected_nozzle_id": selected_nozzle_id,
+		"paid_drop_cost": paid_drop_cost,
+		"drop_committed": drop_committed,
+		"queue_before": queue_before,
+		"queue_after": queue_after,
+		"tracked_body_id": body_id,
+		"drop_emitted": emitted,
+		"landing_tick": landing_tick,
+		"landing_phase_fp": landing_phase_fp,
+		"landing_phase_tick": landing_phase_tick,
+		"landing_face_y": landing_face_y,
+		"landing_cycle_serial": landing_cycle_serial,
+		"final_phase_fp": final_phase_fp,
+		"final_phase_tick": final_phase_tick,
+		"final_face_y": final_face_y,
+		"phase_matched": phase_matched,
+		"release_control": release_control,
+		"terminal_before_support": terminal_before_support,
+		"tracked_pre_landing_events": pre_landing_events,
+		"first_support_event": first_support_event,
+		"event_support_root": event_support_root,
+		"independent_support_root": independent_support_root,
+		"qualified_neighbor_views": landing_neighbor_views,
+		"nearest_preexisting_platform_coins": landing_neighbor_diagnostics,
+		"neighbor_y_at_first_support": landing_y,
+		"neighbor_y_after_phase_matched_cycle": final_y,
+		"neighbor_forward_deltas": neighbor_forward_deltas,
+		"advanced_local_neighbor_ids": advanced_ids,
+		"post_landing_events": post_landing_events,
+		"tracked_final_body": final_tracked,
+		"exact_live_ticks": exact_live_ticks,
+		"production_input_trace_count": ((active_machine.get("live_session", {}) as Dictionary).get("input_trace", []) as Array).size(),
+		"production_liveness_ticks": int((active_machine.get("live_session", {}) as Dictionary).get("liveness_ticks", 0)),
+		"join_file_saved": join_saved,
+	}
+
+
+func _run_upper_row_control_trace(variation_id: String, state: Dictionary) -> Dictionary:
+	const PRIMING_DROP_COUNT := 1
+	var control := {"actions": [], "handled": true, "selected_nozzle_id": str(active_machine.get("selected_nozzle_id", ""))}
+	if variation_id == "jackpot_ridge":
+		var command := game.surface_action_command("coin_pusher_hole_2", 0, false, {}, active_run_state, active_environment)
+		control = {
+			"actions": ["coin_pusher_hole_2"],
+			"handled": bool(command.get("handled", false)),
+			"environment_changed": bool(command.get("environment_changed", false)),
+			"selected_nozzle_id": str(active_machine.get("selected_nozzle_id", "")),
+		}
+	elif variation_id == "quarter_falls":
+		var commands: Array = []
+		for _step in range(2):
+			commands.append(game.surface_action_command("coin_pusher_carriage_right", 0, false, {}, active_run_state, active_environment))
+		control = {
+			"actions": ["coin_pusher_carriage_right", "coin_pusher_carriage_right"],
+			"handled": commands.all(func(value: Variant) -> bool: return typeof(value) == TYPE_DICTIONARY and bool((value as Dictionary).get("handled", false))),
+			"carriage_x": int(state.get("carriage_x", -1)),
+			"selected_nozzle_id": str(active_machine.get("selected_nozzle_id", "")),
+		}
+	else:
+		control["carriage_x"] = int(state.get("carriage_x", -1))
+		control["reason"] = "unchanged_production_entry_rail"
+	var control_passed := bool(control.get("handled", false)) \
+		and ((variation_id == "jackpot_ridge" and str(control.get("selected_nozzle_id", "")) == "ridge_right") \
+			or (variation_id != "jackpot_ridge" and not str(control.get("selected_nozzle_id", "")).is_empty()))
+	var priming_records: Array = []
+	var trace_passed := control_passed
+	for prime_index in range(PRIMING_DROP_COUNT):
+		var queue_before := (active_machine.get("drop_queue", []) as Array).size()
+		var bankroll_before := active_run_state.bankroll
+		var story_before := active_run_state.story_log_entry_count()
+		var command := game.surface_action_command("coin_pusher_drop", 0, false, {}, active_run_state, active_environment)
+		var cost := int(command.get("set_stake", 0))
+		var result := game.resolve_with_context(str(command.get("action_id", "")), cost, active_run_state, active_environment, _rng("plan94:%s:upper:prime:%d" % [variation_id, prime_index]), {})
+		GameModule.apply_result(active_run_state, result)
+		var body_id := "body_%05d" % int(state.get("next_body_id", 1))
+		var committed := bool(command.get("handled", false)) \
+			and bool(command.get("direct_resolve", false)) \
+			and cost > 0 \
+			and queue_before == 0 \
+			and (active_machine.get("drop_queue", []) as Array).size() == 1 \
+			and active_run_state.bankroll == bankroll_before - cost \
+			and active_run_state.story_log_entry_count() == story_before + 1
+		var emitted := false
+		var exact_ticks := true
+		var first_support := {}
+		var terminal_before_support := false
+		for _tick in range(1200):
+			var step := _advance_production_exact_tick()
+			exact_ticks = exact_ticks and bool(step.get("exact_one_tick", false))
+			emitted = emitted or not _body(state, body_id).is_empty()
+			for event_value in step.get("events", []):
+				if typeof(event_value) != TYPE_DICTIONARY or str((event_value as Dictionary).get("body_id", "")) != body_id:
+					continue
+				var event: Dictionary = event_value
+				if str(event.get("kind", "")) in ["tray", "gutter", "plinko_cup"] and first_support.is_empty():
+					terminal_before_support = true
+				if bool(event.get("first_support", false)):
+					first_support = event.duplicate(true)
+			if not first_support.is_empty() or terminal_before_support:
+				break
+		var platform_rooted := not terminal_before_support \
+			and str(first_support.get("support_root", "")) == "platform" \
+			and str(_body_from_views(Solver.body_views(state), body_id).get("support_root", "")) == "platform"
+		trace_passed = trace_passed and committed and emitted and exact_ticks and platform_rooted
+		priming_records.append({
+			"ordinal": prime_index + 1,
+			"body_id": body_id,
+			"committed": committed,
+			"emitted": emitted,
+			"exact_live_ticks": exact_ticks,
+			"terminal_before_support": terminal_before_support,
+			"first_support_event": first_support,
+			"platform_rooted_view": str(_body_from_views(Solver.body_views(state), body_id).get("support_root", "")) == "platform",
+		})
+	var geometry: Dictionary = (state.get("machine_definition", {}) as Dictionary).get("geometry", {}) if typeof((state.get("machine_definition", {}) as Dictionary).get("geometry", {})) == TYPE_DICTIONARY else {}
+	var rear_target_y := int(geometry.get("face_retracted_y", 61000)) - 250
+	var alignment_ticks := 0
+	while int(state.get("face_y", 0)) < rear_target_y and alignment_ticks < 1200:
+		var alignment_step := _advance_production_exact_tick()
+		trace_passed = trace_passed and bool(alignment_step.get("exact_one_tick", false))
+		alignment_ticks += 1
+	var stop_command := game.surface_action_command("coin_pusher_skill_stop", 0, false, {}, active_run_state, active_environment)
+	var stop_ticks := 0
+	while int(state.get("motor_rate_fp", 0)) > 0 and stop_ticks < 120:
+		var stop_step := _advance_production_exact_tick()
+		trace_passed = trace_passed and bool(stop_step.get("exact_one_tick", false))
+		stop_ticks += 1
+	var aligned_stop := bool(stop_command.get("handled", false)) \
+		and bool(state.get("skill_stop_engaged", false)) \
+		and int(state.get("motor_rate_fp", -1)) == 0 \
+		and int(state.get("face_y", 0)) >= rear_target_y
+	trace_passed = trace_passed and aligned_stop
+	return {
+		"schema": "coin_pusher_upper_row_fixed_trace_v1",
+		"trace_id": "production_entry_fixed_nozzle_rear_row_skill_stop_then_tracked_drop",
+		"seed_search_count": 0,
+		"control_search_count": 0,
+		"control": control,
+		"priming_drop_count": PRIMING_DROP_COUNT,
+		"priming_drops": priming_records,
+		"rear_alignment": {
+			"target_face_y": rear_target_y,
+			"alignment_ticks": alignment_ticks,
+			"stop_ticks": stop_ticks,
+			"stop_handled": bool(stop_command.get("handled", false)),
+			"skill_stop_engaged": bool(state.get("skill_stop_engaged", false)),
+			"motor_rate_fp": int(state.get("motor_rate_fp", -1)),
+			"face_y": int(state.get("face_y", -1)),
+			"passed": aligned_stop,
+		},
+		"passed": trace_passed,
+	}
 
 
 func _capture_delivery(variation_id: String, definition: Dictionary) -> Dictionary:
@@ -569,6 +859,151 @@ func _enter_production_variation(variation_id: String) -> bool:
 	return not active_machine.is_empty() and str(active_machine.get("variation_id", "")) == variation_id
 
 
+func _production_opening_snapshot() -> Dictionary:
+	var game_states: Dictionary = active_environment.get("game_states", {}) if typeof(active_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	var durable: Dictionary = game_states.get("coin_pusher", {}) if typeof(game_states.get("coin_pusher", {})) == TYPE_DICTIONARY else {}
+	var snapshot: Dictionary = durable.get("settled_state", {}) if typeof(durable.get("settled_state", {})) == TYPE_DICTIONARY else {}
+	return snapshot.duplicate(true)
+
+
+func _restore_production_entry(production_entry_machine: Dictionary) -> Dictionary:
+	if production_entry_machine.is_empty() \
+		or typeof(production_entry_machine.get("simulation", {})) != TYPE_DICTIONARY \
+		or typeof(production_entry_machine.get("live_session", {})) != TYPE_DICTIONARY:
+		return {}
+	# Preserve the dictionary already installed in the production module's live
+	# map and replay the exact production entry RNG/session byte-for-byte.
+	active_machine.clear()
+	active_machine.merge(production_entry_machine.duplicate(true), true)
+	production_clock_msec = 0
+	return active_machine.get("simulation", {}) if typeof(active_machine.get("simulation", {})) == TYPE_DICTIONARY else {}
+
+
+func _advance_production_exact_tick() -> Dictionary:
+	var session: Dictionary = active_machine.get("live_session", {}) if typeof(active_machine.get("live_session", {})) == TYPE_DICTIONARY else {}
+	var accumulator_units := int(session.get("accumulator_units", 0))
+	var units_needed := maxi(1, 1000 - accumulator_units)
+	var elapsed_msec := maxi(1, ceili(float(units_needed) / float(LiveSession.FIXED_HZ)))
+	production_clock_msec += elapsed_msec
+	var advanced := LiveSession.advance(active_machine, production_clock_msec)
+	game.call("_consume_live_physics_events", active_run_state, active_machine, advanced.get("events", []))
+	advanced["exact_one_tick"] = int(advanced.get("ticks", 0)) == 1
+	return advanced
+
+
+func _upper_row_control_digest(state: Dictionary) -> Dictionary:
+	return {
+		"body_views_sha256": _sha256(Solver.body_views(state)),
+		"tray_sha256": _sha256(state.get("tray_ledger", [])),
+		"gutter_sha256": _sha256(state.get("gutter_ledger", [])),
+		"variation_state_sha256": _sha256(active_machine.get("variation_state", {})),
+		"target_state_sha256": _sha256(state.get("target_last_capture", {})),
+		"phase_fp": int(state.get("phase_fp", -1)),
+		"face_y": int(state.get("face_y", -1)),
+		"previous_face_y": int(state.get("previous_face_y", -1)),
+		"stroke_cycle_serial": int(state.get("stroke_cycle_serial", -1)),
+		"motor_started": bool(active_machine.get("motor_started", false)),
+		"motor_rate_fp": int(state.get("motor_rate_fp", -1)),
+		"accepted_inserts": int(state.get("accepted_inserts", 0)),
+		"collected_count": int(state.get("collected_count", 0)),
+		"collected_value": int(state.get("collected_value", 0)),
+	}
+
+
+func _upper_row_session_identity() -> Dictionary:
+	var session: Dictionary = active_machine.get("live_session", {}) if typeof(active_machine.get("live_session", {})) == TYPE_DICTIONARY else {}
+	return {
+		"start_snapshot_sha256": _sha256(session.get("start_snapshot", {})),
+		"rng_sha256": _sha256(session.get("rng", {})),
+		"input_trace_sha256": _sha256(session.get("input_trace", [])),
+		"input_cursor": int(session.get("input_cursor", -1)),
+		"accumulator_units": int(session.get("accumulator_units", -1)),
+		"last_clock_msec": int(session.get("last_clock_msec", -1)),
+	}
+
+
+func _body_id_set(views: Array) -> Dictionary:
+	var result := {}
+	for body_value in views:
+		if typeof(body_value) == TYPE_DICTIONARY:
+			result[str((body_value as Dictionary).get("id", ""))] = true
+	return result
+
+
+func _body_ids(views: Array) -> Array:
+	var result: Array = []
+	for body_value in views:
+		if typeof(body_value) == TYPE_DICTIONARY:
+			result.append(str((body_value as Dictionary).get("id", "")))
+	return result
+
+
+func _upper_row_local_neighbors(views: Array, tracked_body_id: String, opening_ids: Dictionary) -> Array:
+	var tracked := _body_from_views(views, tracked_body_id)
+	if tracked.is_empty():
+		return []
+	var support_ids := {}
+	for support_id in tracked.get("support_ids", []):
+		support_ids[str(support_id)] = true
+	var result: Array = []
+	for body_value in views:
+		if typeof(body_value) != TYPE_DICTIONARY:
+			continue
+		var body: Dictionary = body_value
+		var body_id := str(body.get("id", ""))
+		if body_id == tracked_body_id or support_ids.has(body_id) or not opening_ids.has(body_id) \
+				or str(body.get("kind", "")) != "coin" \
+				or str(body.get("support_root", "")) != "platform":
+			continue
+		var dx := int(body.get("x", 0)) - int(tracked.get("x", 0))
+		var dy := int(body.get("y", 0)) - int(tracked.get("y", 0))
+		var contact_distance := int(body.get("radius", 2350)) + int(tracked.get("radius", 2350)) + 120
+		# A body directly underneath the drop proves support, not "beside the row."
+		# Require a neighboring coin on the same local tier; modest z tolerance
+		# allows an irregular physical bed without admitting a full stacked layer.
+		var tier_tolerance := maxi(100, int(mini(int(body.get("height", 950)), int(tracked.get("height", 950))) / 2))
+		var same_upper_tier := absi(int(body.get("z", 0)) - int(tracked.get("z", 0))) <= tier_tolerance
+		if same_upper_tier and dx * dx + dy * dy <= contact_distance * contact_distance:
+			result.append(body.duplicate(true))
+	result.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return str(a.get("id", "")) < str(b.get("id", "")))
+	return result
+
+
+func _upper_row_neighbor_diagnostics(views: Array, tracked_body_id: String, opening_ids: Dictionary) -> Array:
+	var tracked := _body_from_views(views, tracked_body_id)
+	if tracked.is_empty():
+		return []
+	var support_ids := {}
+	for support_id in tracked.get("support_ids", []):
+		support_ids[str(support_id)] = true
+	var result: Array = []
+	for body_value in views:
+		if typeof(body_value) != TYPE_DICTIONARY:
+			continue
+		var body: Dictionary = body_value
+		var body_id := str(body.get("id", ""))
+		if body_id == tracked_body_id or support_ids.has(body_id) or not opening_ids.has(body_id) \
+				or str(body.get("kind", "")) != "coin" \
+				or str(body.get("support_root", "")) != "platform":
+			continue
+		var dx := int(body.get("x", 0)) - int(tracked.get("x", 0))
+		var dy := int(body.get("y", 0)) - int(tracked.get("y", 0))
+		var dz := int(body.get("z", 0)) - int(tracked.get("z", 0))
+		result.append({
+			"id": body_id,
+			"dx": dx,
+			"dy": dy,
+			"dz": dz,
+			"distance_squared": dx * dx + dy * dy,
+			"radius_sum": int(body.get("radius", 2350)) + int(tracked.get("radius", 2350)),
+			"height_min": mini(int(body.get("height", 950)), int(tracked.get("height", 950))),
+		})
+	result.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return int(a.get("distance_squared", 0)) < int(b.get("distance_squared", 0)))
+	if result.size() > 12:
+		result.resize(12)
+	return result
+
+
 func _production_state(seed: String, definition: Dictionary, opening_bodies: int) -> Dictionary:
 	var state := Solver.create_machine(_rng(seed), definition, opening_bodies)
 	active_machine["simulation"] = state
@@ -704,7 +1139,7 @@ func _write_manifest() -> void:
 	var passed := not failed and minimum_viewport_verified and machine_records.size() == VARIATIONS.size()
 	for machine_record in machine_records:
 		passed = passed and bool((machine_record as Dictionary).get("passed", false))
-	var manifest := {"schema": "coin_pusher_v3_plan_9_4_feel_capture_v1", "production_surface": true, "production_environment_entry": true, "production_surface_projection": true, "minimum_viewport": {"width": CAPTURE_SIZE.x, "height": CAPTURE_SIZE.y, "verified": minimum_viewport_verified}, "required_machines": VARIATIONS, "required_scenes_per_machine": REQUIRED_SCENES, "machine_count": machine_records.size(), "passed": passed, "machines": machine_records}
+	var manifest := {"schema": "coin_pusher_v3_plan_9_4_feel_capture_v2", "production_surface": true, "production_environment_entry": true, "production_surface_projection": true, "upper_row_evidence": "production_entry_idle_control_local_neighbors_phase_matched_cycle", "minimum_viewport": {"width": CAPTURE_SIZE.x, "height": CAPTURE_SIZE.y, "verified": minimum_viewport_verified}, "required_machines": VARIATIONS, "required_scenes_per_machine": REQUIRED_SCENES, "machine_count": machine_records.size(), "passed": passed, "machines": machine_records}
 	var file := FileAccess.open("%s/manifest.json" % out_dir, FileAccess.WRITE)
 	if file == null:
 		_fail("Could not write plan 9.4 manifest.")

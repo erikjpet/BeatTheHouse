@@ -2475,11 +2475,12 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 	# The 0.6 sequence-authority integration also persists the complete sealed
 	# base interaction geometry/action records, so the two full-state hashes below
 	# intentionally include that now-authoritative schema while all scalar, route,
-	# RNG, and story results remain byte-identical.
+	# RNG, and story results remain byte-identical. The final env06 rollout adds
+	# its canonical generated environment and world-map records to those hashes.
 	const EXPECTED := {
 		"bankroll_delta": -4,
 		"clock_delta": 42,
-		"current_environment_sha256": "7868a517c3f77fd82eeca74003b047bf32716e94ebb9b2afedc48b462426ac27",
+		"current_environment_sha256": "1c6d579b8da9328bb0cf1cc6fbdf7c30c964dcd111cee98b1707f999cd221907",
 		"current_world_node_id": "bar",
 		"heat_delta": 0,
 		"provenance_commit": "9cff9b2309d70c6c93ab34cc60cc18f79f56201b",
@@ -2490,7 +2491,7 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 		"town_action_index": 0,
 		"travel_count_delta": 1,
 		"travel_story_sha256": "0801d8c617e0ab15f304eae949a7c70fae01fc4031f24580d34f74e2dedd72ce",
-		"world_map_sha256": "e9259640d051d4df54532d7ea3a257a8894e0900a3ccdb3f7ebea8acedc00df8",
+		"world_map_sha256": "fad264b0d615c347d139f31594fe0b2d8a05bf0a39282b9b7182f2f2bc7265a9",
 	}
 	app.call("start_foundation_run", "DELIVERY-ORDINARY-BASELINE", {}, false)
 	for _start_frame in range(3):

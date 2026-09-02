@@ -48,6 +48,79 @@ func defers_embedded_action_presentation_refresh(run_state: RunState, _environme
 	return run_state != null and not run_state.is_tutorial_run()
 
 
+func host_action_rollback_snapshot(action_id: String, run_state: RunState, environment: Dictionary) -> Dictionary:
+	if action_id != DROP_ACTION or run_state == null or run_state.grand_casino_game_uses_chips(get_id(), environment):
+		return {}
+	var machine := _ensure_live_machine(run_state, environment)
+	if str(machine.get("variation_id", "quarter_falls")) != "quarter_falls":
+		return {}
+	var shell: Dictionary = {}
+	for key in machine.keys():
+		if str(key) not in ["simulation", "live_session", "settled_state"]:
+			var value: Variant = machine[key]
+			shell[key] = value.duplicate(true) if typeof(value) in [TYPE_DICTIONARY, TYPE_ARRAY] else value
+	var simulation := _simulation(machine)
+	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
+	var durable_states := _game_states(environment)
+	var durable_value: Variant = durable_states.get(get_id(), null)
+	return {
+		"supported": true,
+		"machine": machine,
+		"shell": shell,
+		"motor_target_rate_present": simulation.has("motor_target_rate_fp"),
+		"motor_target_rate_fp": int(simulation.get("motor_target_rate_fp", 0)),
+		"durable_ready_present": session.has("durable_ready"),
+		"durable_ready": bool(session.get("durable_ready", false)),
+		"durable_dirty_present": session.has("durable_dirty"),
+		"durable_dirty": bool(session.get("durable_dirty", false)),
+		"presentation_last_publish_msec_present": session.has("presentation_last_publish_msec"),
+		"presentation_last_publish_msec": int(session.get("presentation_last_publish_msec", -1)),
+		"durable_present": typeof(durable_value) == TYPE_DICTIONARY,
+		# _write_live_durable() patches a shallow replacement and never mutates the
+		# existing durable dictionary or its settled checkpoint. Retain that exact
+		# immutable boundary for the rare rollback instead of cloning 300 bodies on
+		# every accepted quarter.
+		"durable_machine": durable_value if typeof(durable_value) == TYPE_DICTIONARY else {},
+	}
+
+
+func restore_host_action_rollback(snapshot: Dictionary, run_state: RunState, environment: Dictionary) -> bool:
+	var machine_value: Variant = snapshot.get("machine", null)
+	var shell_value: Variant = snapshot.get("shell", null)
+	if typeof(machine_value) != TYPE_DICTIONARY or typeof(shell_value) != TYPE_DICTIONARY:
+		return false
+	var machine := machine_value as Dictionary
+	var shell := shell_value as Dictionary
+	if not is_same(machine, _ensure_live_machine(run_state, environment)):
+		return false
+	for key in machine.keys():
+		if str(key) not in ["simulation", "live_session", "settled_state"] and not shell.has(key):
+			machine.erase(key)
+	for key in shell.keys():
+		var value: Variant = shell[key]
+		machine[key] = value.duplicate(true) if typeof(value) in [TYPE_DICTIONARY, TYPE_ARRAY] else value
+	var simulation := _simulation(machine)
+	if bool(snapshot.get("motor_target_rate_present", false)):
+		simulation["motor_target_rate_fp"] = int(snapshot.get("motor_target_rate_fp", 0))
+	else:
+		simulation.erase("motor_target_rate_fp")
+	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
+	for field_name in ["durable_ready", "durable_dirty", "presentation_last_publish_msec"]:
+		if bool(snapshot.get("%s_present" % field_name, false)):
+			session[field_name] = snapshot.get(field_name)
+		else:
+			session.erase(field_name)
+	var durable_states := _game_states(environment)
+	if bool(snapshot.get("durable_present", false)):
+		var durable_machine_value: Variant = snapshot.get("durable_machine", {})
+		if typeof(durable_machine_value) != TYPE_DICTIONARY:
+			return false
+		durable_states[get_id()] = durable_machine_value
+	else:
+		durable_states.erase(get_id())
+	return true
+
+
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
 	# Surface entry is presentation-only. Machine normalization, rumor updates,
 	# and staff-watch consequences belong to generation/action boundaries.
@@ -102,16 +175,26 @@ func actions(run_state: RunState, environment: Dictionary) -> Dictionary:
 		"stake_floor": _drop_cost(),
 		"stake_ceiling": maxi(_drop_cost(), capacity),
 		"base_stake_ceiling": maxi(_drop_cost(), capacity),
+		"economy_stake_ceiling": maxi(_drop_cost(), capacity),
 		"economy_state": run_state.economy() if run_state != null else {},
 		"economy_pressure_applied": false,
 	}
 
 
-func wager_cost_for_context(action_id: String, _stake: int, run_state: RunState, environment: Dictionary, _ui_state: Dictionary = {}) -> int:
+func wager_cost_for_context(action_id: String, _stake: int, run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> int:
 	# Pricing is a read-only query used while composing environment/action UI.
 	# It must never open a live simulation for a machine the player did not enter.
-	if action_id == DROP_ACTION and _drop_refused(_read_machine_state(run_state, environment)):
-		return 0
+	if action_id == DROP_ACTION:
+		# The host passes the exact rendered action context that nominated this DROP.
+		# Reuse its authoritative enabled bit instead of reconciling and potentially
+		# cloning the durable 300-piece checkpoint a second time before resolution.
+		var bindings_value: Variant = ui_state.get("surface_action_bindings", null)
+		if typeof(bindings_value) == TYPE_DICTIONARY:
+			var drop_binding_value: Variant = (bindings_value as Dictionary).get("coin_pusher_drop", null)
+			if typeof(drop_binding_value) == TYPE_DICTIONARY:
+				return _drop_cost() if bool((drop_binding_value as Dictionary).get("enabled", false)) else 0
+		if _drop_refused(_read_machine_state(run_state, environment)):
+			return 0
 	return _drop_cost() if action_id == DROP_ACTION else 0
 
 
@@ -161,7 +244,13 @@ func surface_action_command(surface_action: String, _index: int, _confirm_reques
 		if not forces.has(force):
 			return {"handled": false}
 		machine["nudge_force"] = force
-		_write_live_durable(run_state, environment, machine, false)
+		if str(machine.get("variation_id", "quarter_falls")) == "quarter_falls":
+			_write_live_durable(run_state, environment, machine, false, [
+				"motor_started", "cold_quarters_armed", "cold_quarters_density_armed",
+				"drop_queue", "action_count", "total_cost", "last_message",
+			])
+		else:
+			_write_live_durable(run_state, environment, machine, false)
 		return GameModule.surface_command({"handled": true, "environment_changed": true, "preserve_surface_ui_state": true, "surface_state_patch": _v3_headless_surface_state(machine, run_state, environment)}, true)
 	if surface_action.begins_with(NUDGE_DIRECTION_PREFIX):
 		var direction := surface_action.trim_prefix(NUDGE_DIRECTION_PREFIX)
@@ -239,6 +328,21 @@ func surface_action_command(surface_action: String, _index: int, _confirm_reques
 	_write_live_durable(run_state, environment, machine, false)
 	immediate_patch.merge(_surface_action_view_patch(machine, run_state, environment, _ui_state), false)
 	return GameModule.surface_command({"handled": true, "environment_changed": true, "preserve_surface_ui_state": true, "surface_state_patch": immediate_patch}, true)
+
+
+func surface_action_uses_lightweight_ui_state(_surface_action: String) -> bool:
+	return true
+
+
+func surface_action_ui_state_keys() -> Array:
+	# The diagnostic key is retained when explicitly requested; charge state is
+	# included so a keyboard/click drop can share the same direct-resolve context
+	# as the hold gesture without copying the rest of the retained surface state.
+	return [
+		"coin_pusher_debug_profile_stages",
+		"coin_pusher_drop_charge_started_tick",
+		"coin_pusher_drop_charge_count",
+	]
 
 
 func surface_pointer_uses_lightweight_ui_state(surface_action: String) -> bool:
@@ -434,6 +538,10 @@ func renderer_performance_counters() -> Dictionary:
 	return _renderer.performance_stage_counters()
 
 
+func prepare_surface_render_state(state: Dictionary) -> void:
+	_renderer.prepare_render_state(state)
+
+
 func resolve(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
 	return resolve_with_context(action_id, stake, run_state, environment, rng, {})
 
@@ -442,15 +550,15 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 	if _machine_busy(environment):
 		return _empty_pusher_result(action_id, environment, "The machine is occupied; no control responds.")
 	var machine := _ensure_live_machine(run_state, environment)
-	_reconcile_tolerance_modifiers(run_state, environment, machine)
+	# A legal drop neither reads nor spends cabinet tolerance. Reconcile at the
+	# next tolerance-bearing control instead of rebuilding security modifiers on
+	# the measured coin-slot boundary.
+	if action_id != DROP_ACTION:
+		_reconcile_tolerance_modifiers(run_state, environment, machine)
 	if bool((machine.get("live_session", {}) as Dictionary).get("input_locked", false)):
 		return _empty_pusher_result(action_id, environment, "The controls lock while the last cascade settles.")
-	if _machine_busy(environment):
-		return _empty_pusher_result(action_id, environment, "The good machine is occupied. Nothing moves until the convoy does.")
 	if bool(machine.get("locked_down", false)):
 		return _empty_pusher_result(action_id, environment, "Red light. This cabinet stays dead tonight; the rest of the room is open.")
-	if action_id in [VAULT_START_ACTION, VAULT_OPEN_ACTION, VAULT_STOP_ACTION, VAULT_PEEK_ACTION]:
-		return _resolve_vault_action(action_id, run_state, environment, machine, _ui_state)
 	if action_id == DROP_ACTION:
 		if _drop_refused(machine):
 			var refused_result := _empty_pusher_result(action_id, environment, "The coin slot refuses the quarter; nothing was charged.")
@@ -458,8 +566,14 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 			refused_result["preserve_surface_ui_state"] = true
 			return refused_result
 		var simulation := _simulation(machine)
-		_prepare_variation_action(machine)
-		_sync_physical_features(machine)
+		var variation_id := str(machine.get("variation_id", "quarter_falls"))
+		# Quarter Falls riders are installed at the live-session boundary and do
+		# not replenish per drop. Avoid rescanning the full 300-piece body graph
+		# on its synchronous coin-slot path; the other variations can author new
+		# feature pieces during prepare_action and still reconcile here.
+		if variation_id != "quarter_falls":
+			_prepare_variation_action(machine)
+			_sync_physical_features(machine)
 		var density := maxi(_cold_density(), int(machine.get("cold_quarters_density_armed", 0))) if bool(machine.get("cold_quarters_armed", false)) else 1
 		machine["cold_quarters_armed"] = false
 		machine["cold_quarters_density_armed"] = 0
@@ -472,15 +586,18 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 		machine["total_cost"] = int(machine.get("total_cost", 0)) + total_cost
 		machine["last_message"] = "%d quarter%s queued through %s. The nozzle can move while they feed." % [queued_count, "" if queued_count == 1 else "s", nozzle_id]
 		_write_live_durable(run_state, environment, machine, false)
-		var deltas := GameModule.empty_result_deltas()
-		deltas["bankroll_delta"] = -total_cost
-		deltas["story_log"] = [_story_entry(DROP_ACTION, "legal", environment, -total_cost, 0, {"tick": int(simulation.get("tick", 0)), "carriage_x": int(simulation.get("carriage_x", 50000)), "nozzle_id": nozzle_id, "queued_count": queued_count})]
-		deltas["messages"] = [str(machine["last_message"])]
-		var result := GameModule.build_owned_action_result({"source_id": get_id(), "game_id": get_id(), "action_id": DROP_ACTION, "action_kind": "legal", "stake": total_cost, "environment_id": str(environment.get("id", "")), "deltas": deltas, "message": str(machine["last_message"])})
+		var deltas := {
+			"bankroll_delta": -total_cost,
+			"story_log": [_story_entry(DROP_ACTION, "legal", environment, -total_cost, 0, {"tick": int(simulation.get("tick", 0)), "carriage_x": int(simulation.get("carriage_x", 50000)), "nozzle_id": nozzle_id, "queued_count": queued_count})],
+			"messages": [str(machine["last_message"])],
+		}
+		var result := GameModule.build_canonical_owned_action_result({"source_id": get_id(), "game_id": get_id(), "action_id": DROP_ACTION, "action_kind": "legal", "stake": total_cost, "environment_id": str(environment.get("id", "")), "deltas": deltas, "message": str(machine["last_message"])})
 		result["host_apply_result"] = true
-		result["surface_action_view_patch"] = _surface_action_view_patch(machine, run_state, environment, _ui_state)
+		result["surface_action_view_patch"] = _drop_surface_action_view_patch(machine, run_state, environment, _ui_state)
 		result["preserve_surface_ui_state"] = true
 		return result
+	if action_id in [VAULT_START_ACTION, VAULT_OPEN_ACTION, VAULT_STOP_ACTION, VAULT_PEEK_ACTION]:
+		return _resolve_vault_action(action_id, run_state, environment, machine, _ui_state)
 	if action_id == NUDGE_ACTION:
 		return _resolve_live_nudge(run_state, environment, machine, _ui_state)
 	return _empty_pusher_result(action_id, environment, "That control is not connected.")
@@ -520,7 +637,9 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 		# never open a live session or advance one tick behind the patron's back.
 		return _v3_headless_surface_state(_read_machine_state(run_state, environment), run_state, environment, ui_state)
 	var machine := _ensure_live_machine(run_state, environment)
-	var advanced := CoinPusherLiveSessionScript.advance(machine, int(ui_state.get("surface_time_msec", 0)))
+	var now_msec := int(ui_state.get("surface_time_msec", 0))
+	var publish_presentation := CoinPusherLiveSessionScript.presentation_publish_due(machine, now_msec)
+	var advanced := CoinPusherLiveSessionScript.advance(machine, now_msec, publish_presentation)
 	var physics_events: Array = advanced.get("events", []) if typeof(advanced.get("events", [])) == TYPE_ARRAY else []
 	_consume_live_physics_events(run_state, machine, physics_events)
 	if physics_events.any(func(event: Variant) -> bool: return typeof(event) == TYPE_DICTIONARY and str((event as Dictionary).get("kind", "")) in ["tray", "gutter"]):
@@ -533,17 +652,31 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 		if bool(session.get("durable_dirty", false)) and not bool(session.get("durable_ready", false)) \
 				and int(session.get("input_cursor", 0)) >= (session.get("input_trace", []) as Array).size() \
 				and _queued_drop_count(machine) == 0 \
-				and CoinPusherSolverScript.all_steady(simulation, bool(machine.get("motor_started", false)) and not bool(machine.get("locked_down", false))):
+				and CoinPusherLiveSessionScript.all_steady(machine, bool(machine.get("motor_started", false)) and not bool(machine.get("locked_down", false))):
+			CoinPusherLiveSessionScript.sync_native_body_state(machine)
 			session["durable_ready"] = true
 			session["durable_dirty"] = false
 			session["last_persisted_tick"] = int(simulation.get("tick", 0))
 			_write_live_durable(run_state, environment, machine, true)
 			request_autosave = true
 	var presentation_session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
-	# Realtime owns only fields that can actually change while the player watches.
-	# Rebuilding the complete entry snapshot here duplicated catalog, economy,
-	# cabinet, geometry, and body projection work on every rendered frame.
-	var patch := _v3_realtime_presentation_patch(machine, run_state, environment)
+	# The production Web canvas intentionally presents idle machine motion at a
+	# measured low-detail cadence. Keep the authority/solver at 60 Hz, but only
+	# project its 300-body presentation tuple when that tuple can become visible.
+	# Input boundaries mark themselves due so accepted controls still appear on
+	# the very next live tick.
+	var simulation := _simulation(machine)
+	var tray: Array = simulation.get("tray_ledger", []) if typeof(simulation.get("tray_ledger", [])) == TYPE_ARRAY else []
+	var invariants: Dictionary = simulation.get("last_invariants", {}) if typeof(simulation.get("last_invariants", {})) == TYPE_DICTIONARY else {}
+	var patch := _v3_realtime_presentation_patch(machine, run_state, environment) if publish_presentation else {
+		"coin_pusher_body_count": int(invariants.get("active", 0)),
+		"coin_pusher_tray_count": tray.size(),
+		"coin_pusher_tray_value": _ledger_value(tray),
+		"coin_pusher_liveness_ticks": int(presentation_session.get("liveness_ticks", 0)),
+		"coin_pusher_last_step_metrics": presentation_session.get("last_step_metrics", {}),
+	}
+	if publish_presentation and int(advanced.get("ticks", 0)) > 0:
+		CoinPusherLiveSessionScript.mark_presentation_published(machine, now_msec)
 	if ui_state.has("coin_pusher_drop_charge_started_tick"):
 		var held_ticks := maxi(0, int(_simulation(machine).get("tick", 0)) - int(ui_state.get("coin_pusher_drop_charge_started_tick", 0)))
 		patch["coin_pusher_drop_charge_count"] = clampi(maxi(1, held_ticks / 6), 1, 60)
@@ -586,6 +719,18 @@ func surface_realtime_entry_anchor_patch(run_state: RunState, environment: Dicti
 		"surface_realtime_state_refresh": true,
 		"coin_pusher_ticks_advanced": 0,
 	}
+
+
+func surface_realtime_uses_lightweight_ui_state() -> bool:
+	return true
+
+
+func surface_realtime_ui_state_keys() -> Array:
+	return ["coin_pusher_drop_charge_started_tick"]
+
+
+func surface_realtime_patch_preserves_host_state() -> bool:
+	return true
 
 
 func checkpoint_surface_ui_state(_ui_state: Dictionary, _run_state: RunState, environment: Dictionary) -> void:
@@ -993,6 +1138,7 @@ func _v3_headless_surface_state(machine: Dictionary, run_state: RunState = null,
 		session["presentation_binding_signature"] = _realtime_binding_signature(machine, simulation, tray)
 	return GameModule.surface_spec({
 		"surface_renderer": "coin_pusher",
+		"surface_renderer_opaque": true,
 		"surface_life": "coin_pusher_v3_alive_cabinet",
 		"surface_cast": "machine",
 		"surface_controls_native": true,
@@ -1010,9 +1156,12 @@ func _v3_headless_surface_state(machine: Dictionary, run_state: RunState = null,
 		"coin_pusher_solver_version": int(simulation.get("version", 0)),
 		"coin_pusher_body_count": (simulation.get("bodies", []) as Array).size(),
 		"coin_pusher_bodies": body_views,
+		"coin_pusher_current_packed": session.get("presentation_current_packed", PackedInt64Array()),
 		"coin_pusher_entry_body_projection_reused": body_projection_reused,
 		"coin_pusher_previous_bodies": session.get("presentation_previous_bodies", body_views),
+		"coin_pusher_previous_packed": session.get("presentation_previous_packed", PackedInt64Array()),
 		"coin_pusher_presentation_view_serial": int(session.get("presentation_view_serial", 0)),
+		"coin_pusher_presentation_session_key": str(session.get("native_cache_key", "")),
 		"coin_pusher_interpolation_alpha": clampf(float(int(session.get("accumulator_units", 0))) / 1000.0, 0.0, 1.0),
 		"coin_pusher_features": feature_views,
 		"coin_pusher_feature_count": feature_views.size(),
@@ -1073,17 +1222,21 @@ func _v3_realtime_presentation_patch(machine: Dictionary, run_state: RunState = 
 	if body_views.is_empty() and not (simulation.get("bodies", []) as Array).is_empty():
 		body_views = CoinPusherSolverScript.body_views(simulation)
 	var previous_views: Array = session.get("presentation_previous_bodies", body_views) if typeof(session.get("presentation_previous_bodies", body_views)) == TYPE_ARRAY else body_views
+	var current_packed: PackedInt64Array = session.get("presentation_current_packed", PackedInt64Array()) if typeof(session.get("presentation_current_packed", PackedInt64Array())) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array()
 	var tell_rung := clampi(int(machine.get("tell_rung", 0)), 0, _tell_labels().size() - 1)
 	var variation_state := _variation_state(machine)
 	var goal := _machine_goal_state(machine, simulation)
 	var vault_views: Dictionary = VaultDropScript.views(variation_state) if str(machine.get("variation_id", "")) == "vault_drop" else {}
 	var patch := {
-		"coin_pusher_body_count": body_views.size(),
+		"coin_pusher_body_count": current_packed.size() / 9 if not current_packed.is_empty() else body_views.size(),
 		"coin_pusher_feature_count": int(session.get("presentation_feature_count", 0)),
 		"coin_pusher_goal": goal,
 		"coin_pusher_bodies": body_views,
+		"coin_pusher_current_packed": current_packed,
 		"coin_pusher_previous_bodies": previous_views,
+		"coin_pusher_previous_packed": session.get("presentation_previous_packed", PackedInt64Array()),
 		"coin_pusher_presentation_view_serial": int(session.get("presentation_view_serial", 0)),
+		"coin_pusher_presentation_session_key": str(session.get("native_cache_key", "")),
 		"coin_pusher_interpolation_alpha": clampf(float(int(session.get("accumulator_units", 0))) / 1000.0, 0.0, 1.0),
 		"coin_pusher_tell_rung": tell_rung,
 		"coin_pusher_tell_label": str(_tell_labels()[tell_rung]),
@@ -1101,7 +1254,7 @@ func _v3_realtime_presentation_patch(machine: Dictionary, run_state: RunState = 
 		"coin_pusher_tray_count": tray.size(),
 		"coin_pusher_tray_value": _ledger_value(tray),
 		"coin_pusher_input_trace_count": (machine.get("live_session", {}).get("input_trace", []) as Array).size() if typeof(machine.get("live_session", {}).get("input_trace", [])) == TYPE_ARRAY else 0,
-		"coin_pusher_last_step_metrics": simulation.get("last_step_metrics", {}),
+		"coin_pusher_last_step_metrics": session.get("last_step_metrics", simulation.get("last_step_metrics", {})),
 		"coin_pusher_liveness_ticks": int(session.get("liveness_ticks", 0)),
 		"coin_pusher_last_message": str(machine.get("last_message", V3_HEADLESS_MESSAGE)),
 		"coin_pusher_vault_cells": vault_views.get("cells", []),
@@ -1179,10 +1332,12 @@ func _machine_goal_state(machine: Dictionary, simulation: Dictionary) -> Diction
 			}
 
 
+
 func _coin_pusher_action_bindings(machine: Dictionary, simulation: Dictionary, tray: Array, run_state: RunState = null, environment: Dictionary = {}) -> Dictionary:
+	var drop_refused := _drop_refused(machine)
 	var result := {
-		"coin_pusher_drop": {"label": "DROP", "enabled": not _drop_refused(machine)},
-		DROP_CHARGE_ACTION: {"label": "HOLD TO DROP", "enabled": not _drop_refused(machine)},
+		"coin_pusher_drop": {"label": "DROP", "enabled": not drop_refused},
+		DROP_CHARGE_ACTION: {"label": "HOLD TO DROP", "enabled": not drop_refused},
 		SKILL_STOP_ACTION: {"label": "RELEASE" if bool(simulation.get("skill_stop_engaged", false)) else "SKILL STOP", "enabled": true, "lit": bool(simulation.get("skill_stop_engaged", false))},
 		COLLECT_ACTION: {"label": "COLLECT", "enabled": not tray.is_empty()},
 		"coin_pusher_nudge": {"action": "surface_cheat", "index": 0, "label": "NUDGE", "enabled": true},
@@ -1221,6 +1376,19 @@ func _surface_action_view_patch(machine: Dictionary, run_state: RunState, enviro
 		"coin_pusher_input_trace_count": (machine.get("live_session", {}).get("input_trace", []) as Array).size() if typeof(machine.get("live_session", {}).get("input_trace", [])) == TYPE_ARRAY else 0,
 		"native_selected_surface_actions": _native_surface_actions(machine),
 		"surface_action_bindings": _coin_pusher_action_bindings(machine, simulation, tray, run_state, environment),
+	}
+
+
+func _drop_surface_action_view_patch(machine: Dictionary, _run_state: RunState, _environment: Dictionary, _ui_state: Dictionary = {}) -> Dictionary:
+	# Patches merge into the current surface. A legal enqueue changes only these
+	# action-boundary scalars; catalog, stake, goal, tray, selected controls and
+	# bindings remain valid until the normal realtime publication owns any later
+	# physical insertion. Re-sending them here rebuilt the cold action UI twice.
+	return {
+		"surface_action_realtime_refresh_required": false,
+		"coin_pusher_action_count": int(machine.get("action_count", 0)),
+		"coin_pusher_last_message": str(machine.get("last_message", V3_HEADLESS_MESSAGE)),
+		"coin_pusher_input_trace_count": (machine.get("live_session", {}).get("input_trace", []) as Array).size() if typeof(machine.get("live_session", {}).get("input_trace", [])) == TYPE_ARRAY else 0,
 	}
 
 
@@ -1288,7 +1456,7 @@ func _live_key(run_state: RunState, environment: Dictionary) -> String:
 	return "%s:%s" % [_environment_node_id(run_state, environment), transient_state_key_context()]
 
 
-func _write_live_durable(run_state: RunState, environment: Dictionary, live_machine: Dictionary, update_snapshot: bool) -> void:
+func _write_live_durable(run_state: RunState, environment: Dictionary, live_machine: Dictionary, update_snapshot: bool, changed_keys: Array = []) -> void:
 	if bool(live_machine.get("v2_migration_pending", false)):
 		live_machine.erase("v2_migration_pending")
 		live_machine["v2_migration_logged"] = true
@@ -1302,6 +1470,18 @@ func _write_live_durable(run_state: RunState, environment: Dictionary, live_mach
 	var game_states := _game_states(environment)
 	var existing_value: Variant = game_states.get(get_id(), {})
 	var durable: Dictionary = (existing_value as Dictionary).duplicate(false) if typeof(existing_value) == TYPE_DICTIONARY else {}
+	if not update_snapshot and not changed_keys.is_empty() and durable.has("settled_state"):
+		for changed_key_value in changed_keys:
+			var changed_key := str(changed_key_value)
+			if changed_key in ["simulation", "live_session", "settled_state"]:
+				continue
+			if not live_machine.has(changed_key):
+				durable.erase(changed_key)
+				continue
+			var changed_value: Variant = live_machine[changed_key]
+			durable[changed_key] = changed_value.duplicate(true) if typeof(changed_value) in [TYPE_DICTIONARY, TYPE_ARRAY] else changed_value
+		_write_machine_state(environment, durable)
+		return
 	for durable_key in durable.keys():
 		if durable_key != "settled_state" and not live_machine.has(durable_key):
 			durable.erase(durable_key)
@@ -1324,9 +1504,14 @@ func _write_live_durable(run_state: RunState, environment: Dictionary, live_mach
 
 
 func _drop_refused(machine: Dictionary) -> bool:
+	if str(machine.get("variation_id", "")) == "jackpot_ridge":
+		CoinPusherLiveSessionScript.sync_native_body_state(machine)
 	var definition := _machine_definition(str(machine.get("variation_id", _variation_id())))
 	var simulation := _simulation(machine) if _has_v3_simulation(machine) else CoinPusherLiveSessionScript.restore_snapshot(machine.get("settled_state", {}), definition)
-	if simulation.is_empty() or (simulation.get("bodies", []) as Array).size() >= int(definition.get("ceiling", 600)):
+	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
+	var packed: PackedInt64Array = session.get("presentation_current_packed", PackedInt64Array()) if typeof(session.get("presentation_current_packed", PackedInt64Array())) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array()
+	var live_body_count := packed.size() / 9 if not packed.is_empty() else (simulation.get("bodies", []) as Array).size()
+	if simulation.is_empty() or live_body_count >= int(definition.get("ceiling", 600)):
 		return true
 	if str(machine.get("variation_id", "")) == "jackpot_ridge":
 		return _jammed_holes(machine, simulation).has(int(simulation.get("selected_hole", 0)))
@@ -1394,13 +1579,14 @@ func _collect_surface_command(run_state: RunState, environment: Dictionary, mach
 	var collected := CoinPusherSolverScript.collect_tray(simulation)
 	var cash := _ledger_value(tray)
 	var items: Array = collected.get("items", []) if typeof(collected.get("items", [])) == TYPE_ARRAY else []
-	var deltas := GameModule.empty_result_deltas()
-	deltas["bankroll_delta"] = cash
-	deltas["inventory_add"] = items
-	deltas["story_log"] = [_story_entry(COLLECT_ACTION, "free", environment, cash, 0, {"tray_count": tray.size()})]
 	var message := "The tray is empty." if tray.is_empty() else "You collect $%d from %d tray pieces." % [cash, tray.size()]
-	deltas["messages"] = [message]
-	var result := GameModule.build_owned_action_result({"source_id": get_id(), "game_id": get_id(), "action_id": COLLECT_ACTION, "action_kind": "free", "environment_id": str(environment.get("id", "")), "deltas": deltas, "message": message})
+	var deltas := {
+		"bankroll_delta": cash,
+		"inventory_add": items,
+		"story_log": [_story_entry(COLLECT_ACTION, "free", environment, cash, 0, {"tray_count": tray.size()})],
+		"messages": [message],
+	}
+	var result := GameModule.build_canonical_owned_action_result({"source_id": get_id(), "game_id": get_id(), "action_id": COLLECT_ACTION, "action_kind": "free", "environment_id": str(environment.get("id", "")), "deltas": deltas, "message": message})
 	GameModule.apply_result(run_state, result)
 	_write_live_durable(run_state, environment, machine, false)
 	_register_pile_rumor(run_state, environment, machine)
@@ -1681,7 +1867,10 @@ func _append_motion_audio_events(machine: Dictionary, result: Array) -> void:
 	var simulation := _simulation(machine)
 	var previous: Array = session.get("presentation_previous_bodies", []) if typeof(session.get("presentation_previous_bodies", [])) == TYPE_ARRAY else []
 	var current: Array = session.get("presentation_current_bodies", []) if typeof(session.get("presentation_current_bodies", [])) == TYPE_ARRAY else []
-	if previous.size() != current.size() or current.is_empty():
+	var previous_packed: PackedInt64Array = session.get("presentation_previous_packed", PackedInt64Array()) if typeof(session.get("presentation_previous_packed", PackedInt64Array())) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array()
+	var current_packed: PackedInt64Array = session.get("presentation_current_packed", PackedInt64Array()) if typeof(session.get("presentation_current_packed", PackedInt64Array())) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array()
+	var use_packed := not current_packed.is_empty() and current_packed.size() == previous_packed.size() and current_packed.size() % 9 == 0
+	if not use_packed and (previous.size() != current.size() or current.is_empty()):
 		return
 	var previous_face := int(session.get("presentation_previous_face_y", simulation.get("face_y", 0)))
 	var current_face := int(session.get("presentation_current_face_y", simulation.get("face_y", 0)))
@@ -1699,23 +1888,40 @@ func _append_motion_audio_events(machine: Dictionary, result: Array) -> void:
 	var last_slide_tick := int(session.get("presentation_last_slide_tick", -12))
 	var classify_plate := retracting and simulation_tick - last_plate_tick >= 6
 	var classify_slide := pushing and int(simulation.get("motor_rate_fp", 0)) > 0 and simulation_tick - last_slide_tick >= 12
-	for body_index in range(current.size()):
-		var current_body: Dictionary = current[body_index]
-		var previous_body: Dictionary = previous[body_index]
-		if str(current_body.get("id", "")) != str(previous_body.get("id", "")):
-			return
-		# A plate clink is the actual blocked carry contact: the retracting
-		# platform advances while a platform-supported body remains pinned at the
-		# authored rear contact limit. A platform->deck deposit is intentionally
-		# not classified as a plate sound.
-		if classify_plate and str(previous_body.get("support_kind", "")) == "platform" and str(current_body.get("support_kind", "")) == "platform" \
-				and absi(int(current_body.get("y", 0)) - plate_limit) <= 100 \
-				and int(current_body.get("y", 0)) - int(previous_body.get("y", 0)) < maxi(1, face_delta / 4):
-			plate_block_count += 1
-		if classify_slide and str(current_body.get("support_kind", "")) == "deck" \
-				and int(current_body.get("y", 0)) < int(previous_body.get("y", 0)) - 25 \
-				and abs(int(current_body.get("y", 0)) - current_face) <= 12000:
-			moving_under_face += 1
+	var native_motion: Dictionary = session.get("presentation_motion", {}) if typeof(session.get("presentation_motion", {})) == TYPE_DICTIONARY else {}
+	if bool(native_motion.get("valid", false)):
+		plate_block_count = int(native_motion.get("plate_block_count", 0)) if classify_plate else 0
+		moving_under_face = int(native_motion.get("moving_under_face", 0)) if classify_slide else 0
+	elif use_packed:
+		for offset in range(0, current_packed.size(), 9):
+			if current_packed[offset] != previous_packed[offset]:
+				return
+			if classify_plate and previous_packed[offset + 8] == 1 and current_packed[offset + 8] == 1 \
+					and absi(current_packed[offset + 3] - plate_limit) <= 100 \
+					and current_packed[offset + 3] - previous_packed[offset + 3] < maxi(1, face_delta / 4):
+				plate_block_count += 1
+			if classify_slide and current_packed[offset + 8] == 2 \
+					and current_packed[offset + 3] < previous_packed[offset + 3] - 25 \
+					and absi(current_packed[offset + 3] - current_face) <= 12000:
+				moving_under_face += 1
+	else:
+		for body_index in range(current.size()):
+			var current_body: Dictionary = current[body_index]
+			var previous_body: Dictionary = previous[body_index]
+			if str(current_body.get("id", "")) != str(previous_body.get("id", "")):
+				return
+			# A plate clink is the actual blocked carry contact: the retracting
+			# platform advances while a platform-supported body remains pinned at the
+			# authored rear contact limit. A platform->deck deposit is intentionally
+			# not classified as a plate sound.
+			if classify_plate and str(previous_body.get("support_kind", "")) == "platform" and str(current_body.get("support_kind", "")) == "platform" \
+					and absi(int(current_body.get("y", 0)) - plate_limit) <= 100 \
+					and int(current_body.get("y", 0)) - int(previous_body.get("y", 0)) < maxi(1, face_delta / 4):
+				plate_block_count += 1
+			if classify_slide and str(current_body.get("support_kind", "")) == "deck" \
+					and int(current_body.get("y", 0)) < int(previous_body.get("y", 0)) - 25 \
+					and abs(int(current_body.get("y", 0)) - current_face) <= 12000:
+				moving_under_face += 1
 	if plate_block_count > 0:
 		result.append({"kind": "plate_clink", "intensity_milli": clampi(420 + (plate_block_count - 1) * 35, 420, 760), "metadata": {"group_count": plate_block_count, "classification": "rear_plate_blocked_carry"}})
 		session["presentation_last_plate_tick"] = simulation_tick

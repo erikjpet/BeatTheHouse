@@ -219,6 +219,7 @@ var _prewarm_active_frame_count := 0
 var _prewarm_active_frame_cursor := 0
 var _prewarm_active_data := PackedByteArray()
 var _surface_sfx_manifest: Dictionary = {}
+var _prewarmed_surface_profiles: Dictionary = {}
 
 
 func set_prewarm_events(event_ids: Array) -> void:
@@ -279,6 +280,21 @@ func play_surface_cue(cue_id: String, context: Dictionary = {}, surface_state: D
 				play_roulette_event(action)
 			else:
 				_play(normalized_cue, float(context.get("volume_db", -3.0)), float(context.get("pitch", 1.0)))
+
+
+func prewarm_surface_profile(profile_id: String) -> void:
+	var normalized_profile := profile_id.strip_edges()
+	if not WebAudioBridgeScript.available() or normalized_profile != "coin_pusher" \
+			or bool(_prewarmed_surface_profiles.get(normalized_profile, false)):
+		return
+	# Decode the cabinet's finite event palette when its surface opens. Doing
+	# this before the first accepted DROP avoids deferring multiple AudioBuffer
+	# allocations into the first physical impact and fall frames.
+	for event_id in COIN_PUSHER_PREWARM_EVENTS:
+		var normalized_event := _normalized_event_id(str(event_id))
+		var stream := _event_stream(normalized_event)
+		WebAudioBridgeScript.prewarm_stream(stream, "sfx:%s" % normalized_event)
+	_prewarmed_surface_profiles[normalized_profile] = true
 
 
 func start_surface_loop(cue_id: String, volume_db: float = -10.0, pitch: float = 1.0) -> void:

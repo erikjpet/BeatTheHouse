@@ -32,6 +32,19 @@ func _fixture() -> Variant:
 		"turns": 0,
 		"suspicion": 0,
 		"layout": {},
+		"game_states": {
+			"coin_pusher": {
+				"settled_state": {
+					"simulation": {
+						"bodies": [
+							{"id": 1, "x": 100, "nested": {"weight": 1}},
+							{"id": 2, "x": 200, "nested": {"weight": 2}},
+							{"id": 3, "x": 300, "nested": {"weight": 3}},
+						],
+					},
+				},
+			},
+		},
 	}
 	run.world_map = {"nodes": [{"id": "r1_fixture_node", "environment": {"turns": 0}}]}
 	run.grand_casino_room_states = {"lobby": {"turns": 0}}
@@ -99,6 +112,7 @@ func _aliases(run: Variant) -> Dictionary:
 		"town": run.town_state,
 		"numbers": run.numbers_state,
 		"environment": run.current_environment,
+		"game_states": run.current_environment["game_states"],
 		"world_map": run.world_map,
 		"world_environment": run.world_map["nodes"][0]["environment"],
 		"rooms": run.grand_casino_room_states,
@@ -114,6 +128,7 @@ func _alias_values(aliases: Dictionary) -> Dictionary:
 		"town": aliases["town"].snapshot(),
 		"numbers": aliases["numbers"].snapshot(),
 		"environment": (aliases["environment"] as Dictionary).duplicate(true),
+		"game_states": (aliases["game_states"] as Dictionary).duplicate(true),
 		"world_map": (aliases["world_map"] as Dictionary).duplicate(true),
 		"rooms": (aliases["rooms"] as Dictionary).duplicate(true),
 		"crew_jobs": (aliases["crew_jobs"] as Dictionary).duplicate(true),
@@ -125,6 +140,7 @@ func _same_alias_identities(run: Variant, aliases: Dictionary) -> bool:
 	return is_same(run.town_state, aliases["town"]) \
 		and is_same(run.numbers_state, aliases["numbers"]) \
 		and is_same(run.current_environment, aliases["environment"]) \
+		and is_same(run.current_environment.get("game_states", {}), aliases["game_states"]) \
 		and is_same(run.world_map, aliases["world_map"]) \
 		and is_same(run.world_map["nodes"][0]["environment"], aliases["world_environment"]) \
 		and is_same(run.grand_casino_room_states, aliases["rooms"]) \
