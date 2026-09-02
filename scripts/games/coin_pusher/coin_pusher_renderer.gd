@@ -137,6 +137,11 @@ func prepare_render_state(state: Dictionary) -> void:
 	if str(state.get("surface_renderer", "")) != "coin_pusher":
 		return
 	if _prepared_batch_matches(state):
+		# Control-only patches (skill stop, carriage, tray/bindings) can retain the
+		# exact moving-body batch. They still must prewarm the retained hardware
+		# layer here; returning early used to push that cache miss back into _draw.
+		_prepare_hardware_for_next_draw(state)
+		_entry_hardware_layout(state)
 		return
 	_configure_projection(state)
 	var cabinet := _cabinet(state)
@@ -166,10 +171,15 @@ func prepare_render_state(state: Dictionary) -> void:
 	_prepared_batch_view_serial = int(state.get("coin_pusher_presentation_view_serial", -1))
 	_prepared_batch_alpha = alpha
 	_upload_prepared_batch()
-	if is_instance_valid(_hardware_cache_host):
-		_prepare_hardware_cache(_hardware_cache_host, state, false)
-		_hardware_cache_prepared_for_next_draw = true
+	_prepare_hardware_for_next_draw(state)
 	_entry_hardware_layout(state)
+
+
+func _prepare_hardware_for_next_draw(state: Dictionary) -> void:
+	if not is_instance_valid(_hardware_cache_host):
+		return
+	_prepare_hardware_cache(_hardware_cache_host, state, false)
+	_hardware_cache_prepared_for_next_draw = true
 
 
 func _prepared_batch_matches(state: Dictionary) -> bool:
