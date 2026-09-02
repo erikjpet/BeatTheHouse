@@ -62,6 +62,9 @@ var _hardware_cache_canvas: Control
 var _hardware_cache_host: Control
 var _hardware_cache_key := ""
 var _hardware_cache_prepared_for_next_draw := false
+var _entry_hardware_layout_static_key := ""
+var _entry_hardware_layout_carriage := -1
+var _entry_hardware_layout_cache: Dictionary = {}
 var _world_width := SCHEMA_DEFAULT_WIDTH
 var _world_back_y := SCHEMA_DEFAULT_BACK_Y
 var _coin_height := SCHEMA_DEFAULT_COIN_HEIGHT
@@ -164,6 +167,7 @@ func prepare_render_state(state: Dictionary) -> void:
 	if is_instance_valid(_hardware_cache_host):
 		_prepare_hardware_cache(_hardware_cache_host, state, false)
 		_hardware_cache_prepared_for_next_draw = true
+	_entry_hardware_layout(state)
 
 
 func _prepared_batch_matches(state: Dictionary) -> bool:
@@ -1389,6 +1393,10 @@ func _binding_enabled(bindings: Dictionary, action: String) -> bool:
 
 
 func _entry_hardware_layout(state: Dictionary) -> Dictionary:
+	var static_key := str(state.get("coin_pusher_static_content_key", ""))
+	var carriage_state := int(state.get("coin_pusher_carriage_x", 50000))
+	if not static_key.is_empty() and static_key == _entry_hardware_layout_static_key and carriage_state == _entry_hardware_layout_carriage:
+		return _entry_hardware_layout_cache
 	var apparatus: Dictionary = state.get("coin_pusher_apparatus", {}) if typeof(state.get("coin_pusher_apparatus", {})) == TYPE_DICTIONARY else {}
 	var geometry: Dictionary = state.get("coin_pusher_geometry", {}) if typeof(state.get("coin_pusher_geometry", {})) == TYPE_DICTIONARY else {}
 	var board := _delivery_board(apparatus, geometry)
@@ -1399,7 +1407,12 @@ func _entry_hardware_layout(state: Dictionary) -> Dictionary:
 		for hole_index in range(holes.size()):
 			var center := _project_delivery_board_point(board, float(holes[hole_index]), z_top)
 			targets.append({"index": hole_index, "action": "coin_pusher_hole_%d" % hole_index, "center": center, "rect": Rect2(center - Vector2(22, 22), Vector2(44, 44))})
-		return {"type": "hole_set", "targets": targets}
+		var hole_result := {"type": "hole_set", "targets": targets}
+		if not static_key.is_empty():
+			_entry_hardware_layout_static_key = static_key
+			_entry_hardware_layout_carriage = carriage_state
+			_entry_hardware_layout_cache = hole_result
+		return hole_result
 	var rail: Dictionary = apparatus.get("rail", {}) if typeof(apparatus.get("rail", {})) == TYPE_DICTIONARY else {}
 	var rail_min := int(rail.get("x_min", 8000))
 	var rail_max := maxi(rail_min + 1, int(rail.get("x_max", 92000)))
@@ -1407,7 +1420,12 @@ func _entry_hardware_layout(state: Dictionary) -> Dictionary:
 	var rail_start := _project_delivery_board_point(board, float(rail_min), z_top)
 	var rail_end := _project_delivery_board_point(board, float(rail_max), z_top)
 	var carriage_point := _project_delivery_board_point(board, float(carriage), z_top)
-	return {"type": "rail_slot", "rail_start": rail_start, "rail_end": rail_end, "carriage": carriage_point, "drag_rect": Rect2(Vector2(minf(rail_start.x, rail_end.x), rail_start.y - 22.0), Vector2(absf(rail_end.x - rail_start.x), 44.0))}
+	var rail_result := {"type": "rail_slot", "rail_start": rail_start, "rail_end": rail_end, "carriage": carriage_point, "drag_rect": Rect2(Vector2(minf(rail_start.x, rail_end.x), rail_start.y - 22.0), Vector2(absf(rail_end.x - rail_start.x), 44.0))}
+	if not static_key.is_empty():
+		_entry_hardware_layout_static_key = static_key
+		_entry_hardware_layout_carriage = carriage_state
+		_entry_hardware_layout_cache = rail_result
+	return rail_result
 
 
 func debug_entry_hardware_layout_for_test(state: Dictionary) -> Dictionary:
