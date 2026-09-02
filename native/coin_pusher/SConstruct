@@ -10,6 +10,11 @@ output_path = ARGUMENTS.get("output_path", "../../addons/coin_pusher_native/bin/
 if "output_path" in ARGUMENTS:
     del ARGUMENTS["output_path"]
 
+# This extension only derives from RefCounted. Keep the generated Godot binding
+# surface to that ancestry (plus godot-cpp's mandatory runtime classes) so Web
+# does not have to compile and link wrappers for unrelated engine features.
+ARGUMENTS["build_profile"] = os.path.join(Dir("#").abspath, "build_profile.json")
+
 env = SConscript(os.path.join(godot_cpp_dir, "SConstruct"))
 env.Append(CPPPATH=["src"])
 env.Append(CXXFLAGS=["-std=c++17"])
