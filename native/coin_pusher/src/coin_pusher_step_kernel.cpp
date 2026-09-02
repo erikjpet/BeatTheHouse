@@ -134,7 +134,7 @@ struct Body {
           id_number = 0, id_hash = 0;
   bool sleeping = false, carried = false, plate_blocked = false,
        pending_deposit = false, has_fall_start = false, peg_contact = false,
-       has_support_anchor = false, id_numbered = false;
+       has_support_anchor = false, id_numbered = false, falling = false;
 };
 struct PresentationMotionBody {
   String id, support;
@@ -152,7 +152,7 @@ PackedInt64Array pack_presentation_bodies(const std::vector<Body> &source) {
     packed[offset + 3] = q.y;
     packed[offset + 4] = q.z;
     packed[offset + 5] = q.r;
-    packed[offset + 6] = q.rest == "falling" ? 1 : 0;
+    packed[offset + 6] = q.falling ? 1 : 0;
     packed[offset + 7] = q.kind == "coin" ? 0 : q.kind == "rider" ? 1 : q.kind == "puck" ? 2 : q.kind == "fragment" ? 3 : 4;
     packed[offset + 8] = q.support == "platform" ? 1 : q.support == "deck" ? 2 : q.support == "body" ? 3 : q.support.is_empty() ? 0 : 4;
   }
@@ -176,7 +176,7 @@ void wake(Body &b) {
   if (b.sleeping)
     b.sleep_ticks = 0;
   b.sleeping = false;
-  if (b.rest != "falling")
+  if (!b.falling)
     b.rest = "settling";
 }
 bool terminal(const Body &b) { return !b.exit_state.is_empty(); }
@@ -318,6 +318,7 @@ struct Kernel {
       q.sleep_ticks = r.get("sleep_ticks", 0);
       q.sleeping = r.get("sleeping", false);
       q.rest = r.get("rest_state", "falling");
+      q.falling = q.rest == "falling";
       q.support = r.get("support_kind", "");
       Array source_support_ids = r.get("support_ids", Array());
       q.support_ids.reserve(source_support_ids.size());
@@ -461,7 +462,7 @@ struct Kernel {
     for (Body &q : b) {
       if (q.sleeping || std::abs(q.y - g.drop_y) > q.r)
         continue;
-      if (q.rest != "falling") {
+      if (!q.falling) {
         q.peg_key = "";
         continue;
       }
@@ -674,8 +675,8 @@ struct Kernel {
     bool lawake = !l.sleeping, rawake = !r.sleeping;
     bool lmoving = std::abs(l.vx) + std::abs(l.vy) + std::abs(l.vz) >= SLEEP_SPEED;
     bool rmoving = std::abs(r.vx) + std::abs(r.vy) + std::abs(r.vz) >= SLEEP_SPEED;
-    bool lincoming = l.rest == "falling";
-    bool rincoming = r.rest == "falling";
+    bool lincoming = l.falling;
+    bool rincoming = r.falling;
     bool unilateral_l = lincoming && !rincoming, unilateral_r = rincoming && !lincoming;
     // A merely not-yet-asleep resting body must not perpetually wake an
     // overlapping sleeper. Only meaningful motion propagates an awake island.
@@ -939,7 +940,7 @@ struct Kernel {
         }
       }
       if (stable && q.vz <= 0) {
-        bool falling = q.rest == "falling";
+        bool falling = q.falling;
         int64_t fall_start = q.has_fall_start ? q.fall_start_z : q.z;
         int64_t impact_speed = std::abs(q.vz);
         q.z = support_top;
@@ -962,6 +963,7 @@ struct Kernel {
           q.support_anchor_y = divi(support_position_y, count);
         }
         q.rest = "resting";
+        q.falling = false;
         if (falling) {
           Dictionary e;
           e["kind"] = "impact";
@@ -993,7 +995,7 @@ struct Kernel {
         if (!q.carried)
           nestle_work += apply_payout_ramp_gravity(q);
       } else {
-        if (q.rest != "falling") {
+        if (!q.falling) {
           q.fall_start_z = q.z;
           q.has_fall_start = true;
         }
@@ -1004,6 +1006,7 @@ struct Kernel {
         q.has_support_anchor = false;
         q.carried = false;
         q.rest = "falling";
+        q.falling = true;
         q.sleep_ticks = 0;
         q.sleeping = false;
       }
@@ -1022,7 +1025,7 @@ struct Kernel {
       return;
     for (int i = int(b.size()) - 1; i >= 0; --i) {
       Body &q = b[i];
-      if (terminal(q) || q.kind != "coin" || q.rest != "falling" ||
+      if (terminal(q) || q.kind != "coin" || !q.falling ||
           std::abs(q.y - g.drop_y) > q.r)
         continue;
       for (int target_index = 0; target_index < g.targets.size(); ++target_index) {
@@ -1154,6 +1157,7 @@ struct Kernel {
       q.exit_state = outcome + "_fall";
       q.exit_start_tick = state.get("tick", 0);
       q.rest = "terminal_fall";
+      q.falling = false;
       q.support = "";
       q.support_ids.clear();
       q.carried = false;
@@ -1217,6 +1221,7 @@ struct Kernel {
     q.h = g.coin_h;
     q.m = g.coin_m * std::max<int64_t>(1, density);
     q.rest = "falling";
+    q.falling = true;
     q.meta["value"] = g.coin_value;
     q.meta["provenance"] = provenance.duplicate(true);
     q.meta["inserted"] = true;
@@ -1313,6 +1318,7 @@ struct Kernel {
           q.vy = 300;
           q.vz = 0;
           q.rest = "falling";
+          q.falling = true;
           q.support = "";
           q.fall_start_z = q.z;
           q.has_fall_start = true;
