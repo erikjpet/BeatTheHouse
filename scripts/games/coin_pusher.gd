@@ -557,12 +557,8 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 		_reconcile_tolerance_modifiers(run_state, environment, machine)
 	if bool((machine.get("live_session", {}) as Dictionary).get("input_locked", false)):
 		return _empty_pusher_result(action_id, environment, "The controls lock while the last cascade settles.")
-	if _machine_busy(environment):
-		return _empty_pusher_result(action_id, environment, "The good machine is occupied. Nothing moves until the convoy does.")
 	if bool(machine.get("locked_down", false)):
 		return _empty_pusher_result(action_id, environment, "Red light. This cabinet stays dead tonight; the rest of the room is open.")
-	if action_id in [VAULT_START_ACTION, VAULT_OPEN_ACTION, VAULT_STOP_ACTION, VAULT_PEEK_ACTION]:
-		return _resolve_vault_action(action_id, run_state, environment, machine, _ui_state)
 	if action_id == DROP_ACTION:
 		if _drop_refused(machine):
 			var refused_result := _empty_pusher_result(action_id, environment, "The coin slot refuses the quarter; nothing was charged.")
@@ -570,12 +566,13 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 			refused_result["preserve_surface_ui_state"] = true
 			return refused_result
 		var simulation := _simulation(machine)
-		_prepare_variation_action(machine)
+		var variation_id := str(machine.get("variation_id", "quarter_falls"))
 		# Quarter Falls riders are installed at the live-session boundary and do
 		# not replenish per drop. Avoid rescanning the full 300-piece body graph
 		# on its synchronous coin-slot path; the other variations can author new
 		# feature pieces during prepare_action and still reconcile here.
-		if str(machine.get("variation_id", "quarter_falls")) != "quarter_falls":
+		if variation_id != "quarter_falls":
+			_prepare_variation_action(machine)
 			_sync_physical_features(machine)
 		var density := maxi(_cold_density(), int(machine.get("cold_quarters_density_armed", 0))) if bool(machine.get("cold_quarters_armed", false)) else 1
 		machine["cold_quarters_armed"] = false
@@ -599,6 +596,8 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 		result["surface_action_view_patch"] = _drop_surface_action_view_patch(machine, run_state, environment, _ui_state)
 		result["preserve_surface_ui_state"] = true
 		return result
+	if action_id in [VAULT_START_ACTION, VAULT_OPEN_ACTION, VAULT_STOP_ACTION, VAULT_PEEK_ACTION]:
+		return _resolve_vault_action(action_id, run_state, environment, machine, _ui_state)
 	if action_id == NUDGE_ACTION:
 		return _resolve_live_nudge(run_state, environment, machine, _ui_state)
 	return _empty_pusher_result(action_id, environment, "That control is not connected.")
