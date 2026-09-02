@@ -14,6 +14,8 @@ if "output_path" in ARGUMENTS:
 # surface to that ancestry (plus godot-cpp's mandatory runtime classes) so Web
 # does not have to compile and link wrappers for unrelated engine features.
 ARGUMENTS["build_profile"] = os.path.join(Dir("#").abspath, "build_profile.json")
+if ARGUMENTS.get("platform", "") == "web" and ARGUMENTS.get("target", "") == "template_release":
+    ARGUMENTS["optimize"] = "size"
 
 env = SConscript(os.path.join(godot_cpp_dir, "SConstruct"))
 env.Append(CPPPATH=["src"])
