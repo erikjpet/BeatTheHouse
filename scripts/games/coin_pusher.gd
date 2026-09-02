@@ -668,7 +668,7 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 	var simulation := _simulation(machine)
 	var tray: Array = simulation.get("tray_ledger", []) if typeof(simulation.get("tray_ledger", [])) == TYPE_ARRAY else []
 	var invariants: Dictionary = simulation.get("last_invariants", {}) if typeof(simulation.get("last_invariants", {})) == TYPE_DICTIONARY else {}
-	var patch := _v3_realtime_presentation_patch(machine, run_state, environment) if publish_presentation else {
+	var patch := _v3_realtime_presentation_patch(machine, _current_surface_state, run_state, environment) if publish_presentation else {
 		"coin_pusher_body_count": int(invariants.get("active", 0)),
 		"coin_pusher_tray_count": tray.size(),
 		"coin_pusher_tray_value": _ledger_value(tray),
@@ -1250,7 +1250,7 @@ func _v3_headless_surface_state(machine: Dictionary, run_state: RunState = null,
 	})
 
 
-func _v3_realtime_presentation_patch(machine: Dictionary, run_state: RunState = null, environment: Dictionary = {}) -> Dictionary:
+func _v3_realtime_presentation_patch(machine: Dictionary, current_surface_state: Dictionary = {}, run_state: RunState = null, environment: Dictionary = {}) -> Dictionary:
 	var simulation := _simulation(machine)
 	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
 	var tray: Array = simulation.get("tray_ledger", []) if typeof(simulation.get("tray_ledger", [])) == TYPE_ARRAY else []
@@ -1259,15 +1259,14 @@ func _v3_realtime_presentation_patch(machine: Dictionary, run_state: RunState = 
 		body_views = CoinPusherSolverScript.body_views(simulation)
 	var previous_views: Array = session.get("presentation_previous_bodies", body_views) if typeof(session.get("presentation_previous_bodies", body_views)) == TYPE_ARRAY else body_views
 	var current_packed: PackedInt64Array = session.get("presentation_current_packed", PackedInt64Array()) if typeof(session.get("presentation_current_packed", PackedInt64Array())) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array()
-	var tell_rung := clampi(int(machine.get("tell_rung", 0)), 0, _tell_labels().size() - 1)
+	var tell_labels := _tell_labels()
+	var tell_rung := clampi(int(machine.get("tell_rung", 0)), 0, tell_labels.size() - 1)
 	var variation_state := _variation_state(machine)
-	var goal := _machine_goal_state(machine, simulation)
-	var vault_views: Dictionary = VaultDropScript.views(variation_state) if str(machine.get("variation_id", "")) == "vault_drop" else {}
-	var feature_hardware := _feature_hardware_descriptor_for_session(machine, vault_views, session)
+	var variation_id := str(machine.get("variation_id", ""))
+	var goal := _machine_goal_state_for_session(machine, simulation, session)
+	var vault_views: Dictionary = VaultDropScript.views(variation_state) if variation_id == "vault_drop" else {}
 	var patch := {
 		"coin_pusher_body_count": current_packed.size() / 9 if not current_packed.is_empty() else body_views.size(),
-		"coin_pusher_feature_count": int(session.get("presentation_feature_count", 0)),
-		"coin_pusher_goal": goal,
 		"coin_pusher_bodies": body_views,
 		"coin_pusher_current_packed": current_packed,
 		"coin_pusher_previous_bodies": previous_views,
@@ -1275,33 +1274,49 @@ func _v3_realtime_presentation_patch(machine: Dictionary, run_state: RunState = 
 		"coin_pusher_presentation_view_serial": int(session.get("presentation_view_serial", 0)),
 		"coin_pusher_presentation_session_key": str(session.get("native_cache_key", "")),
 		"coin_pusher_interpolation_alpha": clampf(float(int(session.get("accumulator_units", 0))) / 1000.0, 0.0, 1.0),
-		"coin_pusher_tell_rung": tell_rung,
-		"coin_pusher_tell_label": str(_tell_labels()[tell_rung]),
-		"coin_pusher_locked": bool(machine.get("locked_down", false)),
-		"coin_pusher_carriage_x": int(simulation.get("carriage_x", 50000)),
-		"coin_pusher_selected_hole": int(simulation.get("selected_hole", 0)),
 		"coin_pusher_face_position_y": int(simulation.get("face_y", CoinPusherSolverScript.FACE_EXTENDED_Y)),
 		"coin_pusher_previous_face_position_y": int(session.get("presentation_previous_face_y", simulation.get("face_y", CoinPusherSolverScript.FACE_EXTENDED_Y))),
 		"coin_pusher_phase_fp": int(simulation.get("phase_fp", 0)),
-		"coin_pusher_skill_stop_engaged": bool(simulation.get("skill_stop_engaged", false)),
-		"coin_pusher_motor_rate_fp": int(simulation.get("motor_rate_fp", CoinPusherSolverScript.FP)),
-		"coin_pusher_motor_started": bool(machine.get("motor_started", false)),
-		"coin_pusher_selected_nozzle_id": str(machine.get("selected_nozzle_id", _selected_nozzle_id(machine, simulation))),
-		"coin_pusher_drop_queue_count": _queued_drop_count(machine),
-		"coin_pusher_tray_count": tray.size(),
-		"coin_pusher_tray_value": _ledger_value(tray),
-		"coin_pusher_input_trace_count": (machine.get("live_session", {}).get("input_trace", []) as Array).size() if typeof(machine.get("live_session", {}).get("input_trace", [])) == TYPE_ARRAY else 0,
 		"coin_pusher_last_step_metrics": session.get("last_step_metrics", simulation.get("last_step_metrics", {})),
 		"coin_pusher_liveness_ticks": int(session.get("liveness_ticks", 0)),
-		"coin_pusher_last_message": str(machine.get("last_message", V3_HEADLESS_MESSAGE)),
-		"coin_pusher_vault_cells": vault_views.get("cells", []),
-		"coin_pusher_vault_round_active": bool(variation_state.get("vault_round_active", false)),
-		"coin_pusher_vault_peeked_cell": int(variation_state.get("peeked_cell", -1)),
-		"coin_pusher_vault_selected_cell": int(machine.get("vault_selected_cell", 0)),
-		"coin_pusher_nudge_force": str(machine.get("nudge_force", "tap")),
-		"coin_pusher_nudge_direction": str(machine.get("nudge_direction", "front")),
-		"coin_pusher_feature_hardware": feature_hardware,
 	}
+	_append_realtime_change(patch, current_surface_state, "coin_pusher_feature_count", int(session.get("presentation_feature_count", 0)))
+	_append_realtime_change(patch, current_surface_state, "coin_pusher_goal", goal)
+	_append_realtime_change(patch, current_surface_state, "coin_pusher_tell_rung", tell_rung)
+	_append_realtime_change(patch, current_surface_state, "coin_pusher_tell_label", str(tell_labels[tell_rung]))
+	_append_realtime_change(patch, current_surface_state, "coin_pusher_locked", bool(machine.get("locked_down", false)))
+	_append_realtime_change(patch, current_surface_state, "coin_pusher_carriage_x", int(simulation.get("carriage_x", 50000)))
+	_append_realtime_change(patch, current_surface_state, "coin_pusher_selected_hole", int(simulation.get("selected_hole", 0)))
+	_append_realtime_change(patch, current_surface_state, "coin_pusher_skill_stop_engaged", bool(simulation.get("skill_stop_engaged", false)))
+	_append_realtime_change(patch, current_surface_state, "coin_pusher_motor_rate_fp", int(simulation.get("motor_rate_fp", CoinPusherSolverScript.FP)))
+	_append_realtime_change(patch, current_surface_state, "coin_pusher_motor_started", bool(machine.get("motor_started", false)))
+	var selected_nozzle_id := str(machine.get("selected_nozzle_id", ""))
+	if selected_nozzle_id.is_empty():
+		selected_nozzle_id = _selected_nozzle_id(machine, simulation)
+	_append_realtime_change(patch, current_surface_state, "coin_pusher_selected_nozzle_id", selected_nozzle_id)
+	_append_realtime_change(patch, current_surface_state, "coin_pusher_drop_queue_count", _queued_drop_count(machine))
+	_append_realtime_change(patch, current_surface_state, "coin_pusher_tray_count", tray.size())
+	_append_realtime_change(patch, current_surface_state, "coin_pusher_tray_value", _ledger_value(tray))
+	var input_trace: Array = session.get("input_trace", []) if typeof(session.get("input_trace", [])) == TYPE_ARRAY else []
+	_append_realtime_change(patch, current_surface_state, "coin_pusher_input_trace_count", input_trace.size())
+	_append_realtime_change(patch, current_surface_state, "coin_pusher_last_message", str(machine.get("last_message", V3_HEADLESS_MESSAGE)))
+	_append_realtime_change(patch, current_surface_state, "coin_pusher_vault_cells", vault_views.get("cells", []))
+	_append_realtime_change(patch, current_surface_state, "coin_pusher_vault_round_active", bool(variation_state.get("vault_round_active", false)))
+	_append_realtime_change(patch, current_surface_state, "coin_pusher_vault_peeked_cell", int(variation_state.get("peeked_cell", -1)))
+	_append_realtime_change(patch, current_surface_state, "coin_pusher_vault_selected_cell", int(machine.get("vault_selected_cell", 0)))
+	var nudge_force := str(machine.get("nudge_force", "tap"))
+	var nudge_direction := str(machine.get("nudge_direction", "front"))
+	var feature_hardware_changed: bool = not current_surface_state.has("coin_pusher_feature_hardware") \
+		or str(current_surface_state.get("coin_pusher_nudge_force", "")) != nudge_force \
+		or str(current_surface_state.get("coin_pusher_nudge_direction", "")) != nudge_direction \
+		or (variation_id == "vault_drop" and (
+			current_surface_state.get("coin_pusher_vault_cells", []) != vault_views.get("cells", []) \
+			or bool(current_surface_state.get("coin_pusher_vault_round_active", false)) != bool(variation_state.get("vault_round_active", false)) \
+			or int(current_surface_state.get("coin_pusher_vault_selected_cell", -1)) != int(machine.get("vault_selected_cell", 0))))
+	_append_realtime_change(patch, current_surface_state, "coin_pusher_nudge_force", nudge_force)
+	_append_realtime_change(patch, current_surface_state, "coin_pusher_nudge_direction", nudge_direction)
+	if feature_hardware_changed:
+		patch["coin_pusher_feature_hardware"] = _feature_hardware_descriptor_for_session(machine, vault_views, session)
 	# The entry snapshot owns the full control catalog. Ordinary live ticks only
 	# republish bindings when a control-visible state actually changes.
 	var binding_signature := _realtime_binding_signature(machine, simulation, tray)
@@ -1309,6 +1324,40 @@ func _v3_realtime_presentation_patch(machine: Dictionary, run_state: RunState = 
 		patch["surface_action_bindings"] = _coin_pusher_action_bindings(machine, simulation, tray, run_state, environment)
 		session["presentation_binding_signature"] = binding_signature
 	return patch
+
+
+func _append_realtime_change(patch: Dictionary, current_surface_state: Dictionary, key: String, value: Variant) -> void:
+	if not current_surface_state.has(key) or current_surface_state.get(key) != value:
+		patch[key] = value
+
+
+func _machine_goal_state_for_session(machine: Dictionary, simulation: Dictionary, session: Dictionary) -> Dictionary:
+	var variation_id := str(machine.get("variation_id", "quarter_falls"))
+	var variation_state := _variation_state(machine)
+	var cache_key := variation_id
+	match variation_id:
+		"jackpot_ridge":
+			cache_key += "|%d|%d|%d" % [
+				int(variation_state.get("ridge_goal_progress", 0)),
+				int(variation_state.get("ridge_run_cycles_remaining", 0)),
+				JackpotRidgeScript.payout_multiplier(variation_state),
+			]
+		"vault_drop":
+			cache_key += "|%d|%d|%d" % [
+				int(variation_state.get("meter_value", 0)),
+				int(variation_state.get("key_streak_progress", 0)),
+				1 if bool(variation_state.get("vault_round_active", false)) else 0,
+			]
+		_:
+			cache_key += "|%d" % int(machine.get("prize_goal_progress", 0))
+	var cached_value: Variant = session.get("presentation_goal_state", {})
+	if str(session.get("presentation_goal_state_key", "")) == cache_key and typeof(cached_value) == TYPE_DICTIONARY:
+		return cached_value as Dictionary
+	var goal := _machine_goal_state(machine, simulation)
+	if not session.is_empty():
+		session["presentation_goal_state_key"] = cache_key
+		session["presentation_goal_state"] = goal
+	return goal
 
 
 func _realtime_binding_signature(machine: Dictionary, simulation: Dictionary, tray: Array) -> int:
