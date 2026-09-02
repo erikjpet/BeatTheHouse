@@ -1956,22 +1956,11 @@ func _append_motion_audio_events(machine: Dictionary, result: Array) -> void:
 	# not get relabeled as a cabinet sound merely because a body is awake.
 	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
 	var simulation := _simulation(machine)
-	var previous: Array = session.get("presentation_previous_bodies", []) if typeof(session.get("presentation_previous_bodies", [])) == TYPE_ARRAY else []
-	var current: Array = session.get("presentation_current_bodies", []) if typeof(session.get("presentation_current_bodies", [])) == TYPE_ARRAY else []
-	var previous_packed: PackedInt64Array = session.get("presentation_previous_packed", PackedInt64Array()) if typeof(session.get("presentation_previous_packed", PackedInt64Array())) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array()
-	var current_packed: PackedInt64Array = session.get("presentation_current_packed", PackedInt64Array()) if typeof(session.get("presentation_current_packed", PackedInt64Array())) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array()
-	var use_packed := not current_packed.is_empty() and current_packed.size() == previous_packed.size() and current_packed.size() % 9 == 0
-	if not use_packed and (previous.size() != current.size() or current.is_empty()):
-		return
 	var previous_face := int(session.get("presentation_previous_face_y", simulation.get("face_y", 0)))
 	var current_face := int(session.get("presentation_current_face_y", simulation.get("face_y", 0)))
 	var retracting := current_face > previous_face
 	var pushing := current_face < previous_face
 	var face_delta := current_face - previous_face
-	var definition := _machine_definition(str(machine.get("variation_id", _variation_id())))
-	var geometry: Dictionary = definition.get("geometry", {}) if typeof(definition.get("geometry", {})) == TYPE_DICTIONARY else {}
-	var coins: Dictionary = definition.get("coins", {}) if typeof(definition.get("coins", {})) == TYPE_DICTIONARY else {}
-	var plate_limit := int(geometry.get("back_plate_y", CoinPusherSolverScript.BACK_PLATE_Y)) - int(coins.get("radius", CoinPusherSolverScript.COIN_RADIUS))
 	var simulation_tick := int(simulation.get("tick", 0))
 	var plate_block_count := 0
 	var moving_under_face := 0
@@ -1981,38 +1970,53 @@ func _append_motion_audio_events(machine: Dictionary, result: Array) -> void:
 	var classify_slide := pushing and int(simulation.get("motor_rate_fp", 0)) > 0 and simulation_tick - last_slide_tick >= 12
 	var native_motion: Dictionary = session.get("presentation_motion", {}) if typeof(session.get("presentation_motion", {})) == TYPE_DICTIONARY else {}
 	if bool(native_motion.get("valid", false)):
+		# The Web native step already classified the exact consecutive packed
+		# states. Avoid touching both 300-body projections and static geometry on
+		# every intervening authority tick; cooldown semantics remain unchanged.
 		plate_block_count = int(native_motion.get("plate_block_count", 0)) if classify_plate else 0
 		moving_under_face = int(native_motion.get("moving_under_face", 0)) if classify_slide else 0
-	elif use_packed:
-		for offset in range(0, current_packed.size(), 9):
-			if current_packed[offset] != previous_packed[offset]:
-				return
-			if classify_plate and previous_packed[offset + 8] == 1 and current_packed[offset + 8] == 1 \
-					and absi(current_packed[offset + 3] - plate_limit) <= 100 \
-					and current_packed[offset + 3] - previous_packed[offset + 3] < maxi(1, face_delta / 4):
-				plate_block_count += 1
-			if classify_slide and current_packed[offset + 8] == 2 \
-					and current_packed[offset + 3] < previous_packed[offset + 3] - 25 \
-					and absi(current_packed[offset + 3] - current_face) <= 12000:
-				moving_under_face += 1
 	else:
-		for body_index in range(current.size()):
-			var current_body: Dictionary = current[body_index]
-			var previous_body: Dictionary = previous[body_index]
-			if str(current_body.get("id", "")) != str(previous_body.get("id", "")):
-				return
-			# A plate clink is the actual blocked carry contact: the retracting
-			# platform advances while a platform-supported body remains pinned at the
-			# authored rear contact limit. A platform->deck deposit is intentionally
-			# not classified as a plate sound.
-			if classify_plate and str(previous_body.get("support_kind", "")) == "platform" and str(current_body.get("support_kind", "")) == "platform" \
-					and absi(int(current_body.get("y", 0)) - plate_limit) <= 100 \
-					and int(current_body.get("y", 0)) - int(previous_body.get("y", 0)) < maxi(1, face_delta / 4):
-				plate_block_count += 1
-			if classify_slide and str(current_body.get("support_kind", "")) == "deck" \
-					and int(current_body.get("y", 0)) < int(previous_body.get("y", 0)) - 25 \
-					and abs(int(current_body.get("y", 0)) - current_face) <= 12000:
-				moving_under_face += 1
+		var previous: Array = session.get("presentation_previous_bodies", []) if typeof(session.get("presentation_previous_bodies", [])) == TYPE_ARRAY else []
+		var current: Array = session.get("presentation_current_bodies", []) if typeof(session.get("presentation_current_bodies", [])) == TYPE_ARRAY else []
+		var previous_packed: PackedInt64Array = session.get("presentation_previous_packed", PackedInt64Array()) if typeof(session.get("presentation_previous_packed", PackedInt64Array())) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array()
+		var current_packed: PackedInt64Array = session.get("presentation_current_packed", PackedInt64Array()) if typeof(session.get("presentation_current_packed", PackedInt64Array())) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array()
+		var use_packed := not current_packed.is_empty() and current_packed.size() == previous_packed.size() and current_packed.size() % 9 == 0
+		if not use_packed and (previous.size() != current.size() or current.is_empty()):
+			return
+		var definition := _machine_definition(str(machine.get("variation_id", _variation_id())))
+		var geometry: Dictionary = definition.get("geometry", {}) if typeof(definition.get("geometry", {})) == TYPE_DICTIONARY else {}
+		var coins: Dictionary = definition.get("coins", {}) if typeof(definition.get("coins", {})) == TYPE_DICTIONARY else {}
+		var plate_limit := int(geometry.get("back_plate_y", CoinPusherSolverScript.BACK_PLATE_Y)) - int(coins.get("radius", CoinPusherSolverScript.COIN_RADIUS))
+		if use_packed:
+			for offset in range(0, current_packed.size(), 9):
+				if current_packed[offset] != previous_packed[offset]:
+					return
+				if classify_plate and previous_packed[offset + 8] == 1 and current_packed[offset + 8] == 1 \
+						and absi(current_packed[offset + 3] - plate_limit) <= 100 \
+						and current_packed[offset + 3] - previous_packed[offset + 3] < maxi(1, face_delta / 4):
+					plate_block_count += 1
+				if classify_slide and current_packed[offset + 8] == 2 \
+						and current_packed[offset + 3] < previous_packed[offset + 3] - 25 \
+						and absi(current_packed[offset + 3] - current_face) <= 12000:
+					moving_under_face += 1
+		else:
+			for body_index in range(current.size()):
+				var current_body: Dictionary = current[body_index]
+				var previous_body: Dictionary = previous[body_index]
+				if str(current_body.get("id", "")) != str(previous_body.get("id", "")):
+					return
+				# A plate clink is the actual blocked carry contact: the retracting
+				# platform advances while a platform-supported body remains pinned at the
+				# authored rear contact limit. A platform->deck deposit is intentionally
+				# not classified as a plate sound.
+				if classify_plate and str(previous_body.get("support_kind", "")) == "platform" and str(current_body.get("support_kind", "")) == "platform" \
+						and absi(int(current_body.get("y", 0)) - plate_limit) <= 100 \
+						and int(current_body.get("y", 0)) - int(previous_body.get("y", 0)) < maxi(1, face_delta / 4):
+					plate_block_count += 1
+				if classify_slide and str(current_body.get("support_kind", "")) == "deck" \
+						and int(current_body.get("y", 0)) < int(previous_body.get("y", 0)) - 25 \
+						and abs(int(current_body.get("y", 0)) - current_face) <= 12000:
+					moving_under_face += 1
 	if plate_block_count > 0:
 		result.append({"kind": "plate_clink", "intensity_milli": clampi(420 + (plate_block_count - 1) * 35, 420, 760), "metadata": {"group_count": plate_block_count, "classification": "rear_plate_blocked_carry"}})
 		session["presentation_last_plate_tick"] = simulation_tick
