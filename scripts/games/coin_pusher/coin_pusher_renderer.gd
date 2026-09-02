@@ -582,24 +582,24 @@ func _draw_interpolated_bodies(surface, state: Dictionary, colors: Dictionary, c
 
 
 func _draw_native_interpolated_bodies(surface, state: Dictionary, cabinet: Dictionary, current: Array, previous: Array, alpha: float) -> bool:
-	var geometry: Dictionary = state.get("coin_pusher_geometry", {}) if typeof(state.get("coin_pusher_geometry", {})) == TYPE_DICTIONARY else {}
-	var apparatus: Dictionary = state.get("coin_pusher_apparatus", {}) if typeof(state.get("coin_pusher_apparatus", {})) == TYPE_DICTIONARY else {}
-	var body_colors: Dictionary = cabinet.get("body_colors", {}) if typeof(cabinet.get("body_colors", {})) == TYPE_DICTIONARY else {}
-	var batch_config := {
-		"world_width": _world_width,
-		"world_back_y": _world_back_y,
-		"coin_height": _coin_height,
-		"coin_radius": _coin_radius,
-		"board": _delivery_board(apparatus, geometry),
-		"body_colors": body_colors,
-	}
-	var current_packed: PackedInt64Array = state.get("coin_pusher_current_packed", PackedInt64Array()) if typeof(state.get("coin_pusher_current_packed", PackedInt64Array())) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array()
-	var previous_packed: PackedInt64Array = state.get("coin_pusher_previous_packed", PackedInt64Array()) if typeof(state.get("coin_pusher_previous_packed", PackedInt64Array())) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array()
 	var batch := _prepared_batch if _native_batch_key(state) == _prepared_batch_key else {}
 	if batch.is_empty():
+		var geometry: Dictionary = state.get("coin_pusher_geometry", {}) if typeof(state.get("coin_pusher_geometry", {})) == TYPE_DICTIONARY else {}
+		var apparatus: Dictionary = state.get("coin_pusher_apparatus", {}) if typeof(state.get("coin_pusher_apparatus", {})) == TYPE_DICTIONARY else {}
+		var body_colors: Dictionary = cabinet.get("body_colors", {}) if typeof(cabinet.get("body_colors", {})) == TYPE_DICTIONARY else {}
+		var batch_config := {
+			"world_width": _world_width,
+			"world_back_y": _world_back_y,
+			"coin_height": _coin_height,
+			"coin_radius": _coin_radius,
+			"board": _delivery_board(apparatus, geometry),
+			"body_colors": body_colors,
+		}
+		var current_packed: PackedInt64Array = state.get("coin_pusher_current_packed", PackedInt64Array()) if typeof(state.get("coin_pusher_current_packed", PackedInt64Array())) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array()
+		var previous_packed: PackedInt64Array = state.get("coin_pusher_previous_packed", PackedInt64Array()) if typeof(state.get("coin_pusher_previous_packed", PackedInt64Array())) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array()
 		batch = CoinPusherSolverAPI.native_live_render_batch_packed(batch_config, current_packed, previous_packed, alpha) if not current_packed.is_empty() else {}
-	if batch.is_empty():
-		batch = CoinPusherSolverAPI.native_live_render_batch(batch_config, current, previous, alpha)
+		if batch.is_empty():
+			batch = CoinPusherSolverAPI.native_live_render_batch(batch_config, current, previous, alpha)
 	if batch.is_empty() or typeof(batch.get("buffer", null)) != TYPE_PACKED_FLOAT32_ARRAY:
 		return false
 	var count := int(batch.get("count", 0))
