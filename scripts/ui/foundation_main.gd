@@ -15539,6 +15539,7 @@ func start_game_test_session(game_id: String) -> Dictionary:
 		return {"ok": false, "errors": ["The game test launcher is disabled."]}
 	if library == null:
 		_initialize_foundation()
+	_ensure_full_content_library_loaded()
 	var game := _game_module_for_id(game_id)
 	if game == null:
 		if game_test_status_label != null:
