@@ -85,6 +85,11 @@ static func begin(machine: Dictionary, machine_definition: Dictionary, seed: int
 		# re-entry deliberately reuses the same seed.
 		"native_cache_key": "live:%s:%s" % [seed, _native_cache_generation],
 		"native_cache_reset": true,
+		# Reused only across synchronous native calls. The native cache releases
+		# its shallow call-context copy before returning, so these containers can
+		# be cleared and refilled without retaining input or RNG objects.
+		"native_step_config_scratch": {},
+		"native_trace_slice_scratch": [],
 		"native_body_state_dirty": false,
 		"native_steady_without_motor": false,
 		"native_steady_with_motor": false,
@@ -475,33 +480,47 @@ static func _step_traced_ticks(machine: Dictionary, tick_count: int, capture_pre
 		if not queue.is_empty() and typeof(queue[0]) == TYPE_DICTIONARY:
 			var next_emit_tick := int((queue[0] as Dictionary).get("next_emit_tick", tick_value))
 			chunk_ticks = mini(chunk_ticks, 1 if next_emit_tick <= tick_value else next_emit_tick - tick_value)
-		var trace_slice: Array = []
+		var trace_slice_value: Variant = session.get("native_trace_slice_scratch", [])
+		var trace_slice: Array = trace_slice_value if typeof(trace_slice_value) == TYPE_ARRAY else []
+		trace_slice.clear()
+		session["native_trace_slice_scratch"] = trace_slice
+		var trace_contains_drop := false
 		var cursor := int(session.get("input_cursor", 0))
 		var trace: Array = session.get("input_trace", [])
 		while cursor < trace.size() and int((trace[cursor] as Dictionary).get("tick", -1)) < tick_value + chunk_ticks:
-			trace_slice.append(trace[cursor])
+			var traced_input: Variant = trace[cursor]
+			trace_slice.append(traced_input)
+			trace_contains_drop = trace_contains_drop or (typeof(traced_input) == TYPE_DICTIONARY and str((traced_input as Dictionary).get("kind", "")) == "drop")
 			cursor += 1
 		session["input_cursor"] = cursor
 		var is_final_chunk := chunk_ticks == remaining
-		var step_config := {
-			"input_trace": trace_slice,
-			"motor_enabled": bool(machine.get("motor_started", false)) and not bool(machine.get("locked_down", false)),
-			"live_cache_key": str(session.get("native_cache_key", "")) if native_batch else "",
-			"live_cache_reset": bool(session.get("native_cache_reset", false)),
-			"write_body_state": not compact_native_authority,
-			"capture_previous_views": capture_presentation and native_batch and not compact_native_authority and safe_tick_count > 1 and is_final_chunk,
-			"capture_previous_packed": compact_native_presentation and is_final_chunk,
-			"capture_current_views": capture_presentation and native_batch and not compact_native_authority and is_final_chunk,
-			"capture_current_packed": compact_native_presentation and is_final_chunk,
-		}
-		if trace_slice.any(func(input_value: Variant) -> bool: return typeof(input_value) == TYPE_DICTIONARY and str((input_value as Dictionary).get("kind", "")) == "drop"):
+		var step_config_value: Variant = session.get("native_step_config_scratch", {})
+		var step_config: Dictionary = step_config_value if typeof(step_config_value) == TYPE_DICTIONARY else {}
+		session["native_step_config_scratch"] = step_config
+		step_config["input_trace"] = trace_slice
+		step_config["motor_enabled"] = bool(machine.get("motor_started", false)) and not bool(machine.get("locked_down", false))
+		step_config["live_cache_key"] = str(session.get("native_cache_key", "")) if native_batch else ""
+		step_config["live_cache_reset"] = bool(session.get("native_cache_reset", false))
+		step_config["write_body_state"] = not compact_native_authority
+		step_config["capture_previous_views"] = capture_presentation and native_batch and not compact_native_authority and safe_tick_count > 1 and is_final_chunk
+		step_config["capture_previous_packed"] = compact_native_presentation and is_final_chunk
+		step_config["capture_current_views"] = capture_presentation and native_batch and not compact_native_authority and is_final_chunk
+		step_config["capture_current_packed"] = compact_native_presentation and is_final_chunk
+		if trace_contains_drop:
 			if rng == null:
 				rng = _session_rng(session)
 			step_config["rng"] = rng
+		else:
+			step_config.erase("rng")
 		var result := CoinPusherSolverScript.step_ticks(simulation, step_config, chunk_ticks)
+		step_config.erase("rng")
 		final_result = result
 		session["native_cache_reset"] = false
-		all_events.append_array(result.get("events", []))
+		var result_events: Array = result.get("events", []) if typeof(result.get("events", [])) == TYPE_ARRAY else []
+		if all_events.is_empty() and chunk_ticks == safe_tick_count:
+			all_events = result_events
+		else:
+			all_events.append_array(result_events)
 		if capture_presentation and native_batch and not compact_native_authority and safe_tick_count > 1 and is_final_chunk:
 			previous_views = result.get("presentation_previous_bodies", []) if typeof(result.get("presentation_previous_bodies", [])) == TYPE_ARRAY else []
 		if compact_native_presentation and is_final_chunk:
