@@ -9095,6 +9095,11 @@ func _refresh_after_embedded_game_action(embeds_result_feedback: bool = false, a
 
 func _refresh_embedded_action_hud() -> void:
 	var hud_model := _run_status_hud_model()
+	_render_embedded_action_hud_model(hud_model)
+	_refresh_active_item_slot()
+
+
+func _render_embedded_action_hud_model(hud_model: Dictionary) -> void:
 	if status_label != null:
 		status_label.text = str(hud_model.get("status_text", ""))
 	if objective_label != null:
@@ -9107,7 +9112,6 @@ func _refresh_embedded_action_hud() -> void:
 	if save_status_label != null:
 		save_status_label.text = str(hud_model.get("save_text", ""))
 	_apply_hud_mode_visibility()
-	_refresh_active_item_slot()
 
 
 func _refresh_embedded_action_talk_music_coach(suppress_acknowledgement_clear: bool) -> void:
@@ -9132,10 +9136,27 @@ func _refresh_deferred_embedded_hud_after_frame(generation: int, expected_run: R
 	if not _deferred_embedded_secondary_identity_is_current(generation, expected_run, expected_game, expected_environment, expected_result, expected_canvas, expected_session_generation):
 		return
 	var started_usec := Time.get_ticks_usec()
-	_refresh_embedded_action_hud()
+	# Model preparation walks objectives, pressure, debt, and inventory. Applying
+	# the resulting labels/meters can also invalidate layout. Keep those two
+	# bounded pieces on separate frames so neither joins a live solver projection.
+	var hud_model := _run_status_hud_model()
 	var debug_timing: Dictionary = last_game_result.get("coin_pusher_debug_host_timing_usec", {}) if typeof(last_game_result.get("coin_pusher_debug_host_timing_usec", {})) == TYPE_DICTIONARY else {}
 	if not debug_timing.is_empty():
-		debug_timing["refresh_deferred_hud"] = Time.get_ticks_usec() - started_usec
+		debug_timing["refresh_deferred_hud_model"] = Time.get_ticks_usec() - started_usec
+	call_deferred("_apply_deferred_embedded_hud_after_frame", generation, expected_run, expected_game, expected_environment, expected_result, expected_canvas, expected_session_generation, hud_model)
+
+
+func _apply_deferred_embedded_hud_after_frame(generation: int, expected_run: RunState, expected_game: GameModule, expected_environment: Dictionary, expected_result: Dictionary, expected_canvas: Control, expected_session_generation: int, hud_model: Dictionary) -> void:
+	var tree := get_tree()
+	if tree != null:
+		await tree.process_frame
+	if not _deferred_embedded_secondary_identity_is_current(generation, expected_run, expected_game, expected_environment, expected_result, expected_canvas, expected_session_generation):
+		return
+	var started_usec := Time.get_ticks_usec()
+	_render_embedded_action_hud_model(hud_model)
+	var debug_timing: Dictionary = last_game_result.get("coin_pusher_debug_host_timing_usec", {}) if typeof(last_game_result.get("coin_pusher_debug_host_timing_usec", {})) == TYPE_DICTIONARY else {}
+	if not debug_timing.is_empty():
+		debug_timing["refresh_deferred_hud_apply"] = Time.get_ticks_usec() - started_usec
 	call_deferred("_refresh_deferred_embedded_talk_after_frame", generation, expected_run, expected_game, expected_environment, expected_result, expected_canvas, expected_session_generation)
 
 
