@@ -782,6 +782,8 @@ func _check_music_fx_foundation(library: ContentLibrary, failures: Array) -> voi
 		failures.append("Web audio bridge JavaScript methods must parse JSON string payloads from direct interface calls.")
 	if not bool(web_contract.get("script_has_loop_stop", false)):
 		failures.append("Web audio bridge must expose explicit loop stopping for reel/roulette browser loops.")
+	if not bool(web_contract.get("script_requires_explicit_one_shot_unlock", false)):
+		failures.append("Web audio one-shots must wait for the explicit user-gesture unlock instead of retrying a rejected browser resume on simulation ticks.")
 	if int(web_contract.get("music_mix_min_interval_msec", 0)) < 100:
 		failures.append("Web audio bridge must throttle browser mix calls so music fades do not stall the web main thread.")
 	if not bool(web_contract.get("bridge_uses_direct_interface", false)) or not bool(web_contract.get("telemetry_uses_call_payload_names", false)):

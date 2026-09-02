@@ -14,7 +14,7 @@ static var _payload_bytes := 0
 static var _preencoded_payload_hits := 0
 static var _synchronous_payload_encodes := 0
 
-const WEB_AUDIO_VERSION := 7
+const WEB_AUDIO_VERSION := 8
 const WEB_AUDIO_MIN_BUFFER_SAMPLE_RATE := 3000
 const PCM_BASE64_META: StringName = &"_bth_web_pcm_base64"
 const WEB_MASTER_GAIN := 0.72
@@ -29,7 +29,7 @@ const WEB_MUSIC_STEM_ROLES := ["pad", "bass", "bass_dark", "lead", "drums_low", 
 
 const WEB_AUDIO_SCRIPT := """
 (function () {
-	var BRIDGE_VERSION = 7;
+	var BRIDGE_VERSION = 8;
 	if (window.BTHWebAudio && window.BTHWebAudio.version === BRIDGE_VERSION) {
 		return true;
 	}
@@ -247,7 +247,13 @@ const WEB_AUDIO_SCRIPT := """
 		},
 		playPcm: function (payload) {
 			payload = parsePayload(payload, {});
-			if (!this.unlock() || !this.registerPcm(payload)) {
+			// Browser policy only permits resume() from an actual user gesture.
+			// FoundationMain provides that explicit unlock boundary. Do not retry
+			// resume for every simulation-authored one-shot while the context is
+			// suspended: Chromium logs and schedules each rejected attempt on the
+			// main thread. A cabinet loop may be queued silently before unlock so it
+			// begins at the correct phase when the user's first gesture resumes audio.
+			if (!this.ensure() || (!this.unlocked && !payload.loop) || !this.registerPcm(payload)) {
 				return false;
 			}
 			var ctx = this.ctx;
@@ -302,7 +308,9 @@ const WEB_AUDIO_SCRIPT := """
 		},
 		playMusicStems: function (payload) {
 			payload = parsePayload(payload, {});
-			if (!this.unlock()) {
+			// Music sources are intentionally allowed to queue on a suspended graph;
+			// only the explicit user-gesture path may request context resume.
+			if (!this.ensure()) {
 				return false;
 			}
 			var groupId = String(payload.group_id || "music");
@@ -696,6 +704,8 @@ static func mix_contract_snapshot() -> Dictionary:
 		"script_has_music_stems": WEB_AUDIO_SCRIPT.find("playMusicStems") >= 0 and WEB_AUDIO_SCRIPT.find("setMusicMix") >= 0,
 		"script_syncs_user_bus_levels": WEB_AUDIO_SCRIPT.find("setBusLevels") >= 0 and WEB_AUDIO_SCRIPT.find("this.musicBus.gain.setTargetAtTime") >= 0 and WEB_AUDIO_SCRIPT.find("this.sfxBus.gain.setTargetAtTime") >= 0,
 		"script_has_loop_stop": WEB_AUDIO_SCRIPT.find("stopLoop") >= 0,
+		"script_requires_explicit_one_shot_unlock": WEB_AUDIO_SCRIPT.find("(!this.unlocked && !payload.loop)") >= 0 \
+			and WEB_AUDIO_SCRIPT.find("if (!this.ensure() || (!this.unlocked && !payload.loop)") >= 0,
 		"script_has_oscillator_fallback": WEB_AUDIO_SCRIPT.find("createOscillator") >= 0,
 		"bridge_uses_direct_interface": true,
 		"telemetry_uses_call_payload_names": true,
