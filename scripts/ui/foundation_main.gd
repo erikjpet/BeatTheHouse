@@ -724,6 +724,7 @@ func uses_foundation_runtime() -> bool:
 func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Dictionary = {}, include_meta_home_modifiers: bool = true) -> void:
 	if library == null:
 		_initialize_foundation()
+	_ensure_full_content_library_loaded()
 	_ensure_run_ui_built()
 	_finish_conclusion_animation()
 	if structured_hud != null:
@@ -5654,6 +5655,7 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 		_show_message("Save service unavailable.")
 		_refresh_run_menu()
 		return false
+	_ensure_full_content_library_loaded()
 	var loaded: Variant = save_service.load_run(autosave_slot_id)
 	var load_result := save_service.last_load_result()
 	if loaded == null:
@@ -7133,10 +7135,14 @@ func _initialize_foundation() -> void:
 	library = ContentLibrary.new()
 	_mark_boot_event("content_library_load_start")
 	var defer_content_validation := _defer_start_menu_secondary_panels()
-	library.load(not defer_content_validation)
+	var defer_run_content_load := defer_content_validation or OS.has_feature("web")
+	if defer_run_content_load:
+		library.load_start_menu()
+	else:
+		library.load(true)
 	_rebuild_triggered_event_module_cache()
 	_surface_content_validation_errors(library, true)
-	if defer_content_validation:
+	if defer_run_content_load:
 		_mark_boot_event("content_validation_deferred")
 	if defer_content_validation:
 		_mark_boot_event("attribute_glyph_warm_deferred")
@@ -7155,6 +7161,19 @@ func _initialize_foundation() -> void:
 	run_action_service = RunActionServiceScript.new()
 	_refresh_run_action_service()
 	_mark_boot_event("foundation_init_complete")
+
+
+func _ensure_full_content_library_loaded() -> void:
+	if library == null:
+		return
+	if library.is_fully_loaded():
+		return
+	library.load(false)
+	_rebuild_triggered_event_module_cache()
+	_surface_content_validation_errors(library, true)
+	game_module_cache = {}
+	generator = RunGenerator.new(library)
+	_refresh_run_action_service()
 
 
 func boot_telemetry_snapshot() -> Dictionary:
@@ -14293,6 +14312,7 @@ func confirm_delete_saved_run() -> void:
 
 
 func start_tutorial_run() -> void:
+	_ensure_full_content_library_loaded()
 	var config := TutorialFlowScript.challenge_config(library)
 	if config.is_empty():
 		_show_message("The First Night lesson is unavailable.")

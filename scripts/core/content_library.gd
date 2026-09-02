@@ -86,6 +86,7 @@ var _content_index_generation := 0
 var _load_timing: Dictionary = {}
 var _load_pack_timings: Array = []
 var _validated_scenario_definition_cache: Dictionary = {}
+var _fully_loaded := false
 
 
 # Returns the active README pack paths required by the foundation path.
@@ -173,6 +174,7 @@ func load(run_validation: bool = true) -> Dictionary:
 		"validation_cached": validation_cached,
 		"packs": _load_pack_timings.duplicate(true),
 	}
+	_fully_loaded = true
 	return {
 		"environment_archetypes": environment_archetypes,
 		"environment_scenarios": environment_scenarios,
@@ -194,6 +196,39 @@ func load(run_validation: bool = true) -> Dictionary:
 		"town_conditions": town_conditions,
 		"character_chains": character_chains,
 	}
+
+
+# The start screen consumes only room art and challenge metadata. Keeping the
+# run-only packs out of the cold boot makes the first interactive screen honest
+# and fast; the complete library is loaded at the first run/load boundary.
+func load_start_menu() -> Dictionary:
+	if _fully_loaded:
+		return {"environment_archetypes": environment_archetypes, "challenges": challenges}
+	var load_started_usec := Time.get_ticks_usec()
+	_load_errors = []
+	_load_pack_timings = []
+	validation_complete = false
+	environment_archetypes = _load_array(ENVIRONMENT_ARCHETYPES_PATH, true)
+	challenges = _load_array(CHALLENGES_PATH, false)
+	var parse_complete_usec := Time.get_ticks_usec()
+	rebuild_content_indexes()
+	var complete_usec := Time.get_ticks_usec()
+	validation_errors = _load_errors.duplicate(true)
+	validation_warnings = []
+	_load_timing = {
+		"total_ms": _elapsed_ms(load_started_usec, complete_usec),
+		"parse_ms": _elapsed_ms(load_started_usec, parse_complete_usec),
+		"index_ms": _elapsed_ms(parse_complete_usec, complete_usec),
+		"validate_ms": 0.0,
+		"validation_deferred": true,
+		"start_menu_only": true,
+		"packs": _load_pack_timings.duplicate(true),
+	}
+	return {"environment_archetypes": environment_archetypes, "challenges": challenges}
+
+
+func is_fully_loaded() -> bool:
+	return _fully_loaded
 
 
 func _validation_source_signature() -> String:
