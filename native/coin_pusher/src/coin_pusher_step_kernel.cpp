@@ -1410,7 +1410,7 @@ struct Kernel {
         // exactly the connected components reached by an active body.
         for (auto p : ps)
           active[p.first] = active[p.second] = 1;
-        auto statics = static_candidates(active, newf);
+        const auto &statics = static_candidates(active, newf);
         for (auto p : ps)
           if ((active[p.first] || active[p.second]) &&
               contact(b[p.first], b[p.second]))
