@@ -14,7 +14,7 @@ static var _payload_bytes := 0
 static var _preencoded_payload_hits := 0
 static var _synchronous_payload_encodes := 0
 
-const WEB_AUDIO_VERSION := 9
+const WEB_AUDIO_VERSION := 8
 const WEB_AUDIO_MIN_BUFFER_SAMPLE_RATE := 3000
 const PCM_BASE64_META: StringName = &"_bth_web_pcm_base64"
 const WEB_MASTER_GAIN := 0.72
@@ -29,7 +29,7 @@ const WEB_MUSIC_STEM_ROLES := ["pad", "bass", "bass_dark", "lead", "drums_low", 
 
 const WEB_AUDIO_SCRIPT := """
 (function () {
-	var BRIDGE_VERSION = 9;
+	var BRIDGE_VERSION = 8;
 	if (window.BTHWebAudio && window.BTHWebAudio.version === BRIDGE_VERSION) {
 		return true;
 	}
@@ -214,12 +214,6 @@ const WEB_AUDIO_SCRIPT := """
 		},
 		unlock: function () {
 			if (!this.ensure()) {
-				return false;
-			}
-			// Godot can synthesize InputEvents for automation and accessibility, but
-			// those are not browser activation. Asking resume() from that path is
-			// guaranteed to be rejected and can stall the single Web main thread.
-			if (typeof navigator !== "undefined" && navigator.userActivation && !navigator.userActivation.isActive) {
 				return false;
 			}
 			this.unlocked = true;
@@ -712,8 +706,6 @@ static func mix_contract_snapshot() -> Dictionary:
 		"script_has_loop_stop": WEB_AUDIO_SCRIPT.find("stopLoop") >= 0,
 		"script_requires_explicit_one_shot_unlock": WEB_AUDIO_SCRIPT.find("(!this.unlocked && !payload.loop)") >= 0 \
 			and WEB_AUDIO_SCRIPT.find("if (!this.ensure() || (!this.unlocked && !payload.loop)") >= 0,
-		"script_requires_browser_user_activation": WEB_AUDIO_SCRIPT.find("navigator.userActivation") >= 0 \
-			and WEB_AUDIO_SCRIPT.find("!navigator.userActivation.isActive") >= 0,
 		"script_has_oscillator_fallback": WEB_AUDIO_SCRIPT.find("createOscillator") >= 0,
 		"bridge_uses_direct_interface": true,
 		"telemetry_uses_call_payload_names": true,
