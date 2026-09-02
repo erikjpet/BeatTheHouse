@@ -312,6 +312,7 @@ var environment_runtime_scheduler = EnvironmentRuntimeSchedulerScript.new()
 var environment_runtime_last_timing_usec: Dictionary = {}
 var last_game_surface_realtime_refresh_msec := 0
 var last_game_surface_realtime_work_frame := -1
+var game_surface_realtime_ui_state_scratch: Dictionary = {}
 var surface_feature_music_active := false
 var surface_feature_music_ducking := false
 var drunk_time_anchor_real_msec := 0
@@ -2604,16 +2605,16 @@ func _current_game_surface_auto_tick_state() -> Dictionary:
 
 func _current_game_surface_realtime_ui_state(now_msec: int) -> Dictionary:
 	var lightweight := current_game != null and current_game.surface_realtime_uses_lightweight_ui_state()
-	var ui_state: Dictionary = {}
 	if lightweight:
+		game_surface_realtime_ui_state_scratch.clear()
+		var ui_state := game_surface_realtime_ui_state_scratch
 		for key_value in current_game.surface_realtime_ui_state_keys():
 			var key := str(key_value)
 			if not key.is_empty() and game_surface_ui_state.has(key):
 				ui_state[key] = game_surface_ui_state[key]
 		ui_state["surface_time_msec"] = now_msec
 		return ui_state
-	else:
-		ui_state = game_surface_ui_state.duplicate(false)
+	var ui_state := game_surface_ui_state.duplicate(false)
 	ui_state["selected_action_id"] = selected_action_id
 	ui_state["selected_action_kind"] = selected_action_kind
 	ui_state["selected_stake"] = _current_selected_stake()

@@ -1252,8 +1252,8 @@ func _draw() -> void:
 	# Surface renderers may opt into one conditional batch material for a draw;
 	# always clear it before dispatch so materials cannot leak between games.
 	material = null
-	hit_regions = []
-	surface_text_protected_rects = []
+	hit_regions.clear()
+	surface_text_protected_rects.clear()
 	active_design_scale = Vector2.ONE
 	active_design_offset = Vector2.ZERO
 	design_space_active = false
