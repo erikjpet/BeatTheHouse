@@ -258,7 +258,7 @@ struct GodotStringHash {
 };
 
 struct Kernel {
-  Dictionary state, config;
+  Dictionary state;
   Geo g;
   std::vector<Body> b;
   std::vector<std::pair<int, int>> pair_scratch;
@@ -267,23 +267,40 @@ struct Kernel {
   Grid grid_scratch;
   std::unordered_map<String, int, GodotStringHash> body_index_scratch;
   Array events;
+  Array call_input_trace;
+  Variant call_rng;
   int64_t collisions = 0, candidate_peak = 0;
   bool energy_ok = true, conservation_ok = true;
-  Kernel(Dictionary s, Dictionary c, bool own_call_config = false)
-      : state(s),
-        config(own_call_config ? c.duplicate(false) : c),
-        g(geometry(s)) {}
-  void resume(Dictionary s, Dictionary c) {
+  bool call_motor_enabled = true;
+  bool call_write_body_state = true;
+  bool call_capture_previous_views = false;
+  bool call_capture_previous_packed = false;
+  bool call_capture_current_views = false;
+  bool call_capture_current_packed = false;
+  Kernel(Dictionary s, const Dictionary &c) : state(s), g(geometry(s)) {
+    bind_call_context(c);
+  }
+  void bind_call_context(const Dictionary &c) {
+    call_input_trace = c.get("input_trace", Array());
+    call_rng = c.get("rng", Variant());
+    call_motor_enabled = bool(c.get("motor_enabled", true));
+    call_write_body_state = bool(c.get("write_body_state", true));
+    call_capture_previous_views = bool(c.get("capture_previous_views", false));
+    call_capture_previous_packed = bool(c.get("capture_previous_packed", false));
+    call_capture_current_views = bool(c.get("capture_current_views", false));
+    call_capture_current_packed = bool(c.get("capture_current_packed", false));
+  }
+  void resume(Dictionary s, const Dictionary &c) {
     state = s;
-    config = c.duplicate(false);
+    bind_call_context(c);
   }
   void release_call_context() {
     // A cached kernel owns only the numeric solver state between calls. The
-    // call config can contain RefCounted helpers such as RngStream; retaining
-    // it in the process-lifetime live cache leaks that object at shutdown.
-    // Kernel config is a shallow container copy, so clearing releases any
-    // per-call RefCounted values without mutating caller-owned storage.
-    config.clear();
+    // call context can contain a RefCounted RngStream. Rebinding these local
+    // handles releases it without duplicating or mutating the caller's scratch
+    // Dictionary/Array on every 60 Hz Web tick.
+    call_input_trace = Array();
+    call_rng = Variant();
   }
   bool load() {
     if (String(state.get("schema", "")) != "coin_pusher_machine_v3" ||
@@ -373,7 +390,7 @@ struct Kernel {
     return e;
   }
   bool update_motor() {
-    int64_t target = config.get("motor_enabled", true)
+    int64_t target = call_motor_enabled
                          ? int64_t(state.get("motor_target_rate_fp", FP))
                          : 0;
     int64_t rate = state.get("motor_rate_fp", FP),
@@ -1265,7 +1282,7 @@ struct Kernel {
         if (!bool(state.get("skill_stop_engaged", false)))
           state["motor_target_rate_fp"] = rate;
       } else if (k == "drop") {
-        Variant rv = config.get("rng", Variant());
+        Variant rv = call_rng;
         Object *rng = rv.get_type() == Variant::OBJECT ? (Object *)rv : nullptr;
         add_drop(rng, in.get("x", state.get("carriage_x", g.width / 2)),
                  in.get("density", 1), in.get("provenance", Dictionary()),
@@ -1418,15 +1435,15 @@ struct Kernel {
     candidate_peak = 0;
     energy_ok = true;
     conservation_ok = true;
-    Array trace = config.get("input_trace", Array());
+    Array trace = call_input_trace;
     int64_t cursor = 0;
     Grid &grid = grid_scratch;
     std::vector<Body> presentation_previous;
     std::vector<PresentationMotionBody> presentation_previous_motion;
     PackedInt64Array presentation_previous_packed;
     int64_t presentation_previous_face_y = state.get("face_y", face_y(g, 0));
-    const bool capture_previous_views = bool(config.get("capture_previous_views", false));
-    const bool capture_previous_packed = bool(config.get("capture_previous_packed", false));
+    const bool capture_previous_views = call_capture_previous_views;
+    const bool capture_previous_packed = call_capture_previous_packed;
     const bool capture_previous = capture_previous_views || capture_previous_packed;
     for (int64_t t = 0; t < ticks; ++t) {
       if (capture_previous && t == ticks - 1) {
@@ -1496,7 +1513,7 @@ struct Kernel {
       conservation_ok &=
           int64_t(b.size()) + tick_tray + tick_gutter + tick_collected + tick_cup_consumed == tick_origin;
     }
-    if (bool(config.get("write_body_state", true)))
+    if (call_write_body_state)
       write();
     int64_t active = b.size(),
             tray = Array(state.get("tray_ledger", Array())).size(),
@@ -1620,8 +1637,8 @@ struct Kernel {
       motion["moving_under_face"] = std::max<int64_t>(0, moving_under_face);
       out["presentation_motion"] = motion;
     }
-    const bool capture_current_views = bool(config.get("capture_current_views", false));
-    const bool capture_current_packed = bool(config.get("capture_current_packed", false));
+    const bool capture_current_views = call_capture_current_views;
+    const bool capture_current_packed = call_capture_current_packed;
     if (capture_current_views || capture_current_packed) {
       Dictionary capture = presentation_capture(b, capture_current_views, capture_current_packed);
       if (capture_current_views)
@@ -1658,7 +1675,7 @@ Dictionary CoinPusherNativeCore::step_ticks(Dictionary state,
       live_cache = new LiveKernelCache;
     if (reset || !live_cache->kernel || live_cache->key != cache_key) {
       live_cache->key = cache_key;
-      live_cache->kernel = std::make_unique<Kernel>(state, config, true);
+      live_cache->kernel = std::make_unique<Kernel>(state, config);
       Dictionary result = live_cache->kernel->run(tick_count);
       live_cache->kernel->release_call_context();
       return result;
