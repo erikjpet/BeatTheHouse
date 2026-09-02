@@ -229,3 +229,27 @@ Ready was `18.554 s`. Frame/draw/resolve p95 milliseconds were idle
 `9.091/4.015/5.030`; skill stop `9.091/3.810/5.575`; skill release
 `13.645/3.220/4.795`; COLLECT `16.857/6.275/7.810`; reduced motion
 `8.333/3.245/-`. Every unchanged locked limit passed. The row is DONE.
+
+## Required broad-gate receipt — post-land 2026-09-02
+
+The remaining named gates were run after the closeout reached remote `main` at
+`128a271c8fbc9d6ea0a11ec75f10bf4a54dd8e80`:
+
+- the 10-seed determinism probe passed two independent 560-checkpoint runs with
+  byte-identical combined hash `435529461`; both report files have SHA-256
+  `B6D68ECFE56C4AED633F8C56B44742CEA5A2B338C752D1B8C2E837AB90085D9B`;
+- complete post-land Smoke passed every stage, including start/end exact-main
+  identity, validation, import/load, native Coin Pusher smoke, content/runtime,
+  UI, encounter, audio, and performance smoke. Summary:
+  `.tmp/test_reports/fix06_13_closeout_128a271c_postland_smoke/summary.json`,
+  SHA-256 `F2047517B4CB442CDDFE522DD69EF7533E2D38FF9E8E524CD5844750B2987B00`;
+- the first full Contract census was preserved RED at
+  `.tmp/test_reports/fix06_13_closeout_128a271c_contract_final/summary.json`,
+  SHA-256 `AB1086345CFEE55E8D2A693066C00536C375FF5832C17F1F89B0B37CDA1793D5`.
+  It timed out in the broad Crew contracts after recording existing Crew
+  fixture failures, then reported tutorial Blackjack persistence and authored
+  lesson/highlight failures. Those surfaces are outside the only product delta
+  (`native/coin_pusher/src/coin_pusher_step_kernel.cpp`); focused Coin Pusher,
+  native parity, determinism, locked Web, and complete Smoke all pass. The red
+  is retained and routed to its owning Crew/tutorial work rather than hidden,
+  waived, or misattributed to these two rows.

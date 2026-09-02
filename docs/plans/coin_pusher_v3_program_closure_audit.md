@@ -94,19 +94,19 @@ and exact input parity plus byte-identical determinism pass on the final tree.
 
 | Gate | Result |
 | --- | --- |
-| Project validation and script loading | PASS on `2d00206b`; `tools/validate_project.ps1 -Quiet` exited 0. |
-| Focused Coin Pusher foundation | PASS on `2d00206b`; exact 300-body/native-backed contract, zero failures, native solver p95 `3.596 ms`. `.tmp/drop_branch_reorder_dirty/foundation_coin_pusher.json`. |
-| Static/hardware cache contract | PASS on `2d00206b`; all invalidation, command-order, reentry, resize, and all 24 cached/uncached pixel-equivalence checks. `.tmp/coin_pusher_static_cache_2d00206b/manifest.json`. |
-| Web native live batch | PASS on `2d00206b`; payload `c03588babf0a5fb40b36349020dd90e43bba4a1c8644c6a15c7bc1f54e31953f`. `.tmp/coin_pusher_native_live_batch_2d00206b/manifest.json`. |
-| Windows/Web input parity | PASS on `2d00206b`; payload `964648c90c94e36ef343939248e05ffd33c3a30c78cfecc48349425db88717b2`. `.tmp/coin_pusher_input_parity_2d00206b/manifest.json`. |
+| Project validation and script loading | PASS on exact remote-main closeout head `128a271c` in complete post-land Smoke. |
+| Focused Coin Pusher foundation | PASS on final implementation `6af645b5`; exact 300-body/native-backed contract and zero failures. `.tmp/test_reports/fix06_13_closeout_6af645b5_focus_native/summary.json`. |
+| Static/hardware cache contract | PASS on `6af645b5`; all invalidation, command-order, reentry, resize, and all 24 cached/uncached pixel-equivalence checks. `.tmp/coin_pusher_static_cache_6af645b5_closeout/manifest.json`. |
+| Web native live batch | PASS on `6af645b5`; payload `c03588babf0a5fb40b36349020dd90e43bba4a1c8644c6a15c7bc1f54e31953f`. `.tmp/coin_pusher_native_live_batch_6af645b5_context/manifest.json`. |
+| Windows/Web input parity | PASS on `6af645b5`; payload `964648c90c94e36ef343939248e05ffd33c3a30c78cfecc48349425db88717b2`. `.tmp/coin_pusher_input_parity_6af645b5_closeout/manifest.json`. |
 | Fixed upper-row production proof | PASS for all three cabinets, including idle control, paid production drop, independent platform root, exact ticks, and named neighbor advance. `.tmp/fix06_8_option1_final/captures/manifest.json` (SHA-256 `0239F827C712D3F337A7DD821C2532E53AA1197CED7D72C0EF7AC475B`). |
 | Actual-GL visual QA | PASS; 3 cabinets × 9 production scenes, normal/reduced captures inspected at 1280×720. Same manifest and PNG set as the fixed upper-row proof. |
 | Persistent EV | PASS; 600,000 paid drops. `.tmp/coin_pusher_final_ev_8/manifest.json`. |
-| 10-seed determinism | PASS; two independent 10-seed/560-checkpoint processes are byte-identical at combined hash `4129524558` and file SHA-256 `3972A3C5E2D3A501E10D618E4910128DCE61989E134D66C5A691A8311587F689`. `.tmp/foundation_determinism_probe/run_a.json` and `run_b.json`. |
+| 10-seed determinism | PASS on `128a271c`; two independent 10-seed/560-checkpoint processes are byte-identical at combined hash `435529461` and file SHA-256 `B6D68ECFE56C4AED633F8C56B44742CEA5A2B338C752D1B8C2E837AB90085D9B`. `.tmp/foundation_determinism_probe/run_a.json` and `run_b.json`. |
 | Retained shipped-Web red | Historical RED on exact head `2d00206b`. Ready `20.193 s > 20.000 s`; skill-release frame p95 `25.000 ms > 22.000 ms`; DROP frame p95 `25.485 ms > 22.000 ms`; idle frame p95 `16.667 ms > 16.000 ms`; skill-stop draw p95 `8.610 ms > 7.000 ms`. Preserved at `.tmp/final_coin_pusher_webperf_2d00206b_quiesced/report.summary.json`; not waived or deleted. |
-| Current shipped-Web performance | **PASS** on landed head `0ce00c0b`, Chrome 152, CPU throttle 4, cold cache, fresh export, exact 300-origin fixture. Ready `19.548 s <= 20.000 s`; idle frame/draw `8.333/2.815 ms`; DROP frame/draw/resolve `21.300/3.815/11.410 ms`; carriage `13.660/3.615/5.410 ms`; skill stop `10.606/3.415/5.815 ms`; skill release `9.091/3.210/4.820 ms`; COLLECT `19.965/2.965/7.800 ms`; reduced motion `11.111/3.415 ms`. Zero failures. `.tmp/coin_pusher_webperf_0ce00c0b_locked_1/report.summary.json`. |
-| Final native/Web live-batch parity | **PASS** on `0ce00c0b`; payload remains `c03588babf0a5fb40b36349020dd90e43bba4a1c8644c6a15c7bc1f54e31953f`. `.tmp/coin_pusher_native_live_batch_0ce00c0b_final/manifest.json`. |
-| Final focused foundation | **PASS** with zero failures. `.tmp/coin_pusher_drop_durable_patch_direct_2.json`. |
+| Current shipped-Web performance | **PASS** on final implementation `6af645b5`, Chrome 152, CPU throttle 4, cold cache, fresh export, exact 300-origin fixture. Ready `18.554 s`; idle frame/draw `13.889/2.815 ms`; DROP frame/draw/resolve `21.202/4.410/11.230 ms`; carriage `9.091/4.015/5.030 ms`; skill stop `9.091/3.810/5.575 ms`; skill release `13.645/3.220/4.795 ms`; COLLECT `16.857/6.275/7.810 ms`; reduced motion `8.333/3.245 ms`. Zero failures. `.tmp/coin_pusher_webperf_6af645b5_context_locked/report.summary.json`. |
+| Complete post-land Smoke | **PASS** on exact remote-main closeout head `128a271c`; all stages and start/end source/native identity checks pass. `.tmp/test_reports/fix06_13_closeout_128a271c_postland_smoke/summary.json`, SHA-256 `F2047517B4CB442CDDFE522DD69EF7533E2D38FF9E8E524CD5844750B2987B00`. |
+| Full Contract census | Preserved RED on `128a271c`: broad Crew contract timeout/failures and tutorial Blackjack/authored-lesson failures, all outside the one-file Coin Pusher product delta. Focused Coin Pusher and complete Smoke pass. `.tmp/test_reports/fix06_13_closeout_128a271c_contract_final/summary.json`, SHA-256 `AB1086345CFEE55E8D2A693066C00536C375FF5832C17F1F89B0B37CDA1793D5`. |
 
 ## Performance remediation summary
 
