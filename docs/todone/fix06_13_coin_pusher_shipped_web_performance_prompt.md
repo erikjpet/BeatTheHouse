@@ -1,4 +1,4 @@
-Status: IN_PROGRESS — product remediation is on `main` and current Web/performance gates are green; formal row closeout remains open
+Status: DONE — product and exact-tree evidence formally closed 2026-09-01
 Board row: `fix06_13` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — fix06_13: Coin Pusher shipped-Web performance defect
@@ -114,3 +114,34 @@ Lifecycle addendum: `fix06_16` must land before that new locked shipped-Web run
 is consumed. It owns deterministic cleanup of the exact launched Web server
 process tree exposed by the completed `fix06_14` qualification; it does not
 reopen or replace any retained performance result.
+
+## Final closeout — 2026-09-01
+
+The accepted product path is the accumulated exact-tree remediation ending at
+the Coin Pusher release-closeout head. It retains the real 300-origin cabinet,
+all action windows, CPU throttle 4, cold browser profile, fresh export, normal
+and reduced-motion liveness, exact conservation, and the locked 16/5 idle,
+22/7 active, 16 ms resolve, and 20 s ready limits.
+
+Remediation moved live stepping and render projection across the native packed
+boundary, cached support lookups and static/hardware layers, staged publication
+and HUD invalidation, prepared the multimesh batch outside `_draw`, removed
+per-draw batch-key allocations, and pinned a reproducible lean Godot 4.6 Web
+release template. SIMD is enabled only for the Web native solver. No simulation
+outcome, visible cabinet state, fixture, action coverage, economy, RNG, schema,
+migration, accessibility behavior, or gate changed.
+
+Retained exact-tree evidence includes:
+
+- focused native-backed Coin Pusher foundation PASS at
+  `.tmp/prepared_batch_fields_focus/foundation_coin_pusher.json`;
+- static/hardware cache and pixel-equivalence PASS at
+  `.tmp/coin_pusher_static_cache_8e407061/manifest.json`;
+- Web native live-batch exact payload `c03588babf0a5fb40b36349020dd90e43bba4a1c8644c6a15c7bc1f54e31953f`;
+- Windows/Web input-parity payload `964648c90c94e36ef343939248e05ffd33c3a30c78cfecc48349425db88717b2`;
+- the quiesced shipped-Web report and every noisy/red repetition under `.tmp/`.
+
+The first red remains the baseline history; it was not replaced, waived, or
+hidden. `fix06_14` and `fix06_16` were already landed before the final evidence
+was consumed. This closes `fix06_13` and unblocks archival of `fix06_9` plus the
+`pusherv3_11` program audit.
