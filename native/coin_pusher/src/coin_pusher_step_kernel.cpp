@@ -11,6 +11,7 @@
 #include <cstdint>
 #include <limits>
 #include <memory>
+#include <unordered_map>
 #include <vector>
 
 using namespace godot;
@@ -215,6 +216,12 @@ struct Grid {
   }
 };
 
+struct GodotStringHash {
+  size_t operator()(const String &value) const noexcept {
+    return static_cast<size_t>(value.hash());
+  }
+};
+
 struct Kernel {
   Dictionary state, config;
   Geo g;
@@ -222,6 +229,7 @@ struct Kernel {
   std::vector<std::pair<int, int>> pair_scratch;
   std::vector<uint8_t> queued_scratch, active_scratch;
   std::vector<int> queue_scratch, static_scratch;
+  std::unordered_map<String, int, GodotStringHash> body_index_scratch;
   Array events;
   int64_t collisions = 0, candidate_peak = 0;
   bool energy_ok = true, conservation_ok = true;
@@ -1023,18 +1031,21 @@ struct Kernel {
     // rescanning the full body list turns carried stacks into O(n^2) work.
     // Build one immutable lookup for this tick; body erasure has already
     // finished and advect_supported does not change vector membership.
-    Dictionary body_index;
+    auto &body_index = body_index_scratch;
+    body_index.clear();
+    body_index.reserve(b.size());
     for (int index = 0; index < static_cast<int>(b.size()); ++index)
-      body_index[b[index].id] = index;
+      body_index.emplace(b[index].id, index);
     for (Body &q : b) {
       if (terminal(q) || q.support != "body" || q.carried || !q.has_support_anchor || q.support_ids.empty())
         continue;
       int64_t cx = 0, cy = 0, count = 0;
       for (int id_index = 0; id_index < q.support_ids.size(); ++id_index) {
         String wanted = q.support_ids[id_index];
-        if (!body_index.has(wanted))
+        auto found = body_index.find(wanted);
+        if (found == body_index.end())
           continue;
-        const Body &support = b[int64_t(body_index[wanted])];
+        const Body &support = b[found->second];
         if (terminal(support))
           continue;
         cx += support.x;
