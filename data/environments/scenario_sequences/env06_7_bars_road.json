@@ -806,11 +806,11 @@
               ],
               "scene_ops": [
                 {
+                  "anchor_id": "wake_memorial_tables",
                   "family": "scene_ops",
                   "op": "move",
                   "owner_namespace": "scenario",
                   "receipt_id": "bar_wake_tray_move_move",
-                  "anchor_id": "wake_memorial_tables",
                   "stable_object_id": "bar_wake_memorial_tables"
                 }
               ],
@@ -829,11 +829,11 @@
             {
               "actor_ops": [
                 {
+                  "anchor_id": "wake_host",
                   "family": "actor_ops",
                   "op": "set_position",
                   "owner_namespace": "scenario",
                   "receipt_id": "bar_wake_patron_pose_position",
-                  "anchor_id": "wake_host",
                   "stable_object_id": "bar_wake_wake_host"
                 }
               ],
@@ -1138,7 +1138,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "519df0ce826b555aff90307ef2755850bbb942440502a3b6fc48d8aa1aafdd82"
+        "sequence_signature": "efd3fde80f5c72667d59aca5fb1c9f38d0c05a29170b4b305659b42dd0cca27e"
       }
     },
     {
@@ -1980,11 +1980,11 @@
               ],
               "scene_ops": [
                 {
+                  "anchor_id": "fight_toppled_chair",
                   "family": "scene_ops",
                   "op": "move",
                   "owner_namespace": "scenario",
                   "receipt_id": "bar_fight_night_chair_move_move",
-                  "anchor_id": "fight_toppled_chair",
                   "stable_object_id": "bar_fight_night_toppled_chair"
                 }
               ],
@@ -2003,11 +2003,11 @@
             {
               "actor_ops": [
                 {
+                  "anchor_id": "fight_right_brawler",
                   "family": "actor_ops",
                   "op": "set_position",
                   "owner_namespace": "scenario",
                   "receipt_id": "bar_fight_night_actor_behavior_position",
-                  "anchor_id": "fight_right_brawler",
                   "stable_object_id": "bar_fight_night_right_brawler"
                 }
               ],
@@ -2875,7 +2875,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "679207cfc37fbe1178122cf0c28157555ab8a296753373400848fccc0ed92a8f"
+        "sequence_signature": "1781feb9de6edfd5c396609a5c929b18948f20a29080fcecd6889ebb1e8d2fd7"
       }
     },
     {
@@ -3707,11 +3707,11 @@
               ],
               "scene_ops": [
                 {
+                  "anchor_id": "payday_order_rail",
                   "family": "scene_ops",
                   "op": "move",
                   "owner_namespace": "scenario",
                   "receipt_id": "bar_payday_rush_tray_move_move",
-                  "anchor_id": "payday_order_rail",
                   "stable_object_id": "bar_payday_rush_order_rail"
                 }
               ],
@@ -3730,11 +3730,11 @@
             {
               "actor_ops": [
                 {
+                  "anchor_id": "payday_runner",
                   "family": "actor_ops",
                   "op": "set_position",
                   "owner_namespace": "scenario",
                   "receipt_id": "bar_payday_rush_counter_state_position",
-                  "anchor_id": "payday_runner",
                   "stable_object_id": "bar_payday_rush_payday_runner"
                 }
               ],
@@ -4039,7 +4039,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "dfe1696210f460fe400ada3daa36d5a6db2ed1599332512aa6df83d770a051ea"
+        "sequence_signature": "5edaedf7baf6874d3d75485acc263900a8fe6c7051045300047ad3dd5e37296c"
       }
     },
     {
@@ -4860,11 +4860,11 @@
               ],
               "scene_ops": [
                 {
+                  "anchor_id": "lockin_shutters",
                   "family": "scene_ops",
                   "op": "move",
                   "owner_namespace": "scenario",
                   "receipt_id": "bar_lock_in_shutter_state_move",
-                  "anchor_id": "lockin_shutters",
                   "stable_object_id": "bar_lock_in_locked_shutters"
                 }
               ],
@@ -4883,11 +4883,11 @@
             {
               "actor_ops": [
                 {
+                  "anchor_id": "lockin_regular",
                   "family": "actor_ops",
                   "op": "set_position",
                   "owner_namespace": "scenario",
                   "receipt_id": "bar_lock_in_hatch_move_position",
-                  "anchor_id": "lockin_regular",
                   "stable_object_id": "bar_lock_in_afterhours_regular"
                 }
               ],
@@ -5583,7 +5583,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "a8b3393fd894093f80821c0b3db80328e9ef0a93c64521539902ddb8b02b0ecf"
+        "sequence_signature": "e37402a2bb236b1799a2c645bb07dc553a960144bb36572d3d2cfc1e3a91cf52"
       }
     },
     {
@@ -6425,11 +6425,11 @@
               ],
               "scene_ops": [
                 {
+                  "anchor_id": "darts_oche",
                   "family": "scene_ops",
                   "op": "move",
                   "owner_namespace": "scenario",
                   "receipt_id": "bar_darts_league_night_oche_move_move",
-                  "anchor_id": "darts_oche",
                   "stable_object_id": "bar_darts_league_night_darts_oche"
                 }
               ],
@@ -6448,11 +6448,11 @@
             {
               "actor_ops": [
                 {
+                  "anchor_id": "darts_scorer",
                   "family": "actor_ops",
                   "op": "set_position",
                   "owner_namespace": "scenario",
                   "receipt_id": "bar_darts_league_night_score_state_position",
-                  "anchor_id": "darts_scorer",
                   "stable_object_id": "bar_darts_league_night_darts_scorer"
                 }
               ],
@@ -7320,7 +7320,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "46e9fdc3f2cab72a869a62e43a48f096be3733170457f13b287de63c4eeff5de"
+        "sequence_signature": "12fe03480b943014089d7c8a67d6faf1b8cbd4ddc06b25a849d1219802355bb4"
       }
     },
     {
@@ -8141,11 +8141,11 @@
               ],
               "scene_ops": [
                 {
+                  "anchor_id": "live_band_speakers",
                   "family": "scene_ops",
                   "op": "move",
                   "owner_namespace": "scenario",
                   "receipt_id": "bar_live_band_cable_appearance_move",
-                  "anchor_id": "live_band_speakers",
                   "stable_object_id": "bar_live_band_speaker_stack"
                 }
               ],
@@ -8164,11 +8164,11 @@
             {
               "actor_ops": [
                 {
+                  "anchor_id": "live_band_runner",
                   "family": "actor_ops",
                   "op": "set_position",
                   "owner_namespace": "scenario",
                   "receipt_id": "bar_live_band_speaker_move_position",
-                  "anchor_id": "live_band_runner",
                   "stable_object_id": "bar_live_band_floor_runner"
                 }
               ],
@@ -8864,7 +8864,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "bf043931de7a3db9e17452927d702cb1ca6f59af30788c1cf2c8357f6e1d7056"
+        "sequence_signature": "ded8bf97d43afdd8cb966ce3a59b475cb3acf43b9edc34c8af32c65aa1580ded"
       }
     },
     {
@@ -9674,11 +9674,11 @@
               ],
               "scene_ops": [
                 {
+                  "anchor_id": "dead_tuesday_bartender",
                   "family": "scene_ops",
                   "op": "move",
                   "owner_namespace": "scenario",
                   "receipt_id": "bar_dead_tuesday_zone_state_move",
-                  "anchor_id": "dead_tuesday_bartender",
                   "stable_object_id": "bar_dead_tuesday_bartender_zone"
                 }
               ],
@@ -9834,7 +9834,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "1f93940124dd280179cb09ca8e70d547077160794561b74d4a304e37543cbcf3"
+        "sequence_signature": "5ffd86654645e77d09a5135fb17475cb1986553262655f992aa3a91d71be38e1"
       }
     },
     {
@@ -10676,11 +10676,11 @@
               ],
               "scene_ops": [
                 {
+                  "anchor_id": "guest_legend_table",
                   "family": "scene_ops",
                   "op": "move",
                   "owner_namespace": "scenario",
                   "receipt_id": "jazz_club_guest_legend_case_move_move",
-                  "anchor_id": "guest_legend_table",
                   "stable_object_id": "jazz_club_guest_legend_guest_table"
                 }
               ],
@@ -10699,11 +10699,11 @@
             {
               "actor_ops": [
                 {
+                  "anchor_id": "guest_legend_stage_manager",
                   "family": "actor_ops",
                   "op": "set_position",
                   "owner_namespace": "scenario",
                   "receipt_id": "jazz_club_guest_legend_stage_state_position",
-                  "anchor_id": "guest_legend_stage_manager",
                   "stable_object_id": "jazz_club_guest_legend_stage_manager"
                 }
               ],
@@ -11571,7 +11571,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "1aebca1447f82b3aba307e176564afb260423c22c95623b33c448d5df5ee35ec"
+        "sequence_signature": "c25582c4c11b8338518c2552e9d28bd1143b4fdee6aaee423c48e97a460bd2b5"
       }
     },
     {
@@ -12371,11 +12371,11 @@
               ],
               "scene_ops": [
                 {
+                  "anchor_id": "rent_party_donation",
                   "family": "scene_ops",
                   "op": "move",
                   "owner_namespace": "scenario",
                   "receipt_id": "jazz_club_rent_party_station_move_move",
-                  "anchor_id": "rent_party_donation",
                   "stable_object_id": "jazz_club_rent_party_donation_station"
                 }
               ],
@@ -12394,11 +12394,11 @@
             {
               "actor_ops": [
                 {
+                  "anchor_id": "rent_party_creditor",
                   "family": "actor_ops",
                   "op": "set_position",
                   "owner_namespace": "scenario",
                   "receipt_id": "jazz_club_rent_party_furniture_state_position",
-                  "anchor_id": "rent_party_creditor",
                   "stable_object_id": "jazz_club_rent_party_club_creditor"
                 }
               ],
@@ -12926,7 +12926,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "4050655c28b7d585e0fd5803de8a234f85ed5fcc42762c3d78949c86f99f8d7f"
+        "sequence_signature": "44116c71aa99260efb08605ecaf1caced33a2bf93841057926ff2e5493856098"
       }
     },
     {
@@ -13758,11 +13758,11 @@
               ],
               "scene_ops": [
                 {
+                  "anchor_id": "recording_microphone",
                   "family": "scene_ops",
                   "op": "move",
                   "owner_namespace": "scenario",
                   "receipt_id": "jazz_club_recording_night_microphone_move_move",
-                  "anchor_id": "recording_microphone",
                   "stable_object_id": "jazz_club_recording_night_microphone_tree"
                 }
               ],
@@ -13781,11 +13781,11 @@
             {
               "actor_ops": [
                 {
+                  "anchor_id": "recording_audience",
                   "family": "actor_ops",
                   "op": "set_position",
                   "owner_namespace": "scenario",
                   "receipt_id": "jazz_club_recording_night_take_state_position",
-                  "anchor_id": "recording_audience",
                   "stable_object_id": "jazz_club_recording_night_waiting_audience"
                 }
               ],
@@ -14090,7 +14090,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "f801192e5237a6f162d43e8d0bfeffbab4000fbef193c53c639081267d0bc1ed"
+        "sequence_signature": "8494f605926de99104cceec781ce8241a8710f6ccf2db8a8f385c8c70d149105"
       }
     },
     {
@@ -14943,11 +14943,11 @@
               ],
               "scene_ops": [
                 {
+                  "anchor_id": "union_picket",
                   "family": "scene_ops",
                   "op": "move",
                   "owner_namespace": "scenario",
                   "receipt_id": "jazz_club_union_trouble_stand_move_move",
-                  "anchor_id": "union_picket",
                   "stable_object_id": "jazz_club_union_trouble_picket_line"
                 }
               ],
@@ -14966,11 +14966,11 @@
             {
               "actor_ops": [
                 {
+                  "anchor_id": "union_manager",
                   "family": "actor_ops",
                   "op": "set_position",
                   "owner_namespace": "scenario",
                   "receipt_id": "jazz_club_union_trouble_stage_appearance_position",
-                  "anchor_id": "union_manager",
                   "stable_object_id": "jazz_club_union_trouble_club_manager"
                 }
               ],
@@ -15445,7 +15445,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "b98db8805cc785f04ae281d6778125f9de2a762746a031697edd1d98573620d7"
+        "sequence_signature": "20f4b11216f571ed1312fd9df2467caeac0e4c6ec300280c4c87d7349ad526ca"
       }
     }
   ]

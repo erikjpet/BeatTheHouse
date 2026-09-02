@@ -1,8 +1,7 @@
 {
   "schema_version": 1,
   "package_id": "env06_7_bars_road",
-  "status": "historical_rejected_output_superseded_pending_regeneration",
-  "base_head": "855a296126e8b4747b78fbe89cb5a2d02daf61f5",
+  "base_head": "59e478dd1f9d23e58947b3a0803e1b588680c898",
   "scenario_count": 11,
   "dossiers": [
     {
@@ -41,12 +40,19 @@
         "crew_changed",
         "travel_departed"
       ],
+      "spatial_anchors": [
+        "base::anchor:wake_memorial_tables",
+        "base::anchor:wake_host"
+      ],
+      "sealed_routes": [
+        "base::world:motel"
+      ],
       "reentry_policy": {
         "expired": "expired",
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "519df0ce826b555aff90307ef2755850bbb942440502a3b6fc48d8aa1aafdd82",
+      "sequence_signature": "efd3fde80f5c72667d59aca5fb1c9f38d0c05a29170b4b305659b42dd0cca27e",
       "capture_ids": [
         "bar_wake_arrival",
         "bar_wake_partial",
@@ -104,12 +110,19 @@
         "heat_changed",
         "travel_departed"
       ],
+      "spatial_anchors": [
+        "base::anchor:fight_toppled_chair",
+        "base::anchor:fight_right_brawler"
+      ],
+      "sealed_routes": [
+        "base::world:kitty_cat_lounge"
+      ],
       "reentry_policy": {
         "expired": "expired",
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "679207cfc37fbe1178122cf0c28157555ab8a296753373400848fccc0ed92a8f",
+      "sequence_signature": "1781feb9de6edfd5c396609a5c929b18948f20a29080fcecd6889ebb1e8d2fd7",
       "capture_ids": [
         "bar_fight_night_arrival",
         "bar_fight_night_partial",
@@ -161,12 +174,19 @@
         "service_result",
         "travel_departed"
       ],
+      "spatial_anchors": [
+        "base::anchor:payday_order_rail",
+        "base::anchor:payday_runner"
+      ],
+      "sealed_routes": [
+        "base::world:corner_store"
+      ],
       "reentry_policy": {
         "expired": "expired",
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "dfe1696210f460fe400ada3daa36d5a6db2ed1599332512aa6df83d770a051ea",
+      "sequence_signature": "5edaedf7baf6874d3d75485acc263900a8fe6c7051045300047ad3dd5e37296c",
       "capture_ids": [
         "bar_payday_rush_arrival",
         "bar_payday_rush_partial",
@@ -222,12 +242,19 @@
         "sweep_changed",
         "travel_departed"
       ],
+      "spatial_anchors": [
+        "base::anchor:lockin_shutters",
+        "base::anchor:lockin_regular"
+      ],
+      "sealed_routes": [
+        "base::world:delta_queen"
+      ],
       "reentry_policy": {
         "expired": "expired",
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "a8b3393fd894093f80821c0b3db80328e9ef0a93c64521539902ddb8b02b0ecf",
+      "sequence_signature": "e37402a2bb236b1799a2c645bb07dc553a960144bb36572d3d2cfc1e3a91cf52",
       "capture_ids": [
         "bar_lock_in_arrival",
         "bar_lock_in_partial",
@@ -285,12 +312,19 @@
         "game_result",
         "travel_departed"
       ],
+      "spatial_anchors": [
+        "base::anchor:darts_oche",
+        "base::anchor:darts_scorer"
+      ],
+      "sealed_routes": [
+        "base::world:corner_store"
+      ],
       "reentry_policy": {
         "expired": "expired",
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "46e9fdc3f2cab72a869a62e43a48f096be3733170457f13b287de63c4eeff5de",
+      "sequence_signature": "12fe03480b943014089d7c8a67d6faf1b8cbd4ddc06b25a849d1219802355bb4",
       "capture_ids": [
         "bar_darts_league_night_arrival",
         "bar_darts_league_night_partial",
@@ -346,12 +380,19 @@
         "town_transition",
         "travel_departed"
       ],
+      "spatial_anchors": [
+        "base::anchor:live_band_speakers",
+        "base::anchor:live_band_runner"
+      ],
+      "sealed_routes": [
+        "base::world:kitty_cat_lounge"
+      ],
       "reentry_policy": {
         "expired": "expired",
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "bf043931de7a3db9e17452927d702cb1ca6f59af30788c1cf2c8357f6e1d7056",
+      "sequence_signature": "ded8bf97d43afdd8cb966ce3a59b475cb3acf43b9edc34c8af32c65aa1580ded",
       "capture_ids": [
         "bar_live_band_arrival",
         "bar_live_band_partial",
@@ -401,12 +442,18 @@
         "world_boundary",
         "travel_departed"
       ],
+      "spatial_anchors": [
+        "base::anchor:dead_tuesday_bartender"
+      ],
+      "sealed_routes": [
+        "base::world:motel"
+      ],
       "reentry_policy": {
         "expired": "expired",
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "1f93940124dd280179cb09ca8e70d547077160794561b74d4a304e37543cbcf3",
+      "sequence_signature": "5ffd86654645e77d09a5135fb17475cb1986553262655f992aa3a91d71be38e1",
       "capture_ids": [
         "bar_dead_tuesday_arrival",
         "bar_dead_tuesday_partial",
@@ -464,12 +511,19 @@
         "travel_arrived",
         "travel_departed"
       ],
+      "spatial_anchors": [
+        "base::anchor:guest_legend_table",
+        "base::anchor:guest_legend_stage_manager"
+      ],
+      "sealed_routes": [
+        "base::world:bar"
+      ],
       "reentry_policy": {
         "expired": "expired",
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "1aebca1447f82b3aba307e176564afb260423c22c95623b33c448d5df5ee35ec",
+      "sequence_signature": "c25582c4c11b8338518c2552e9d28bd1143b4fdee6aaee423c48e97a460bd2b5",
       "capture_ids": [
         "jazz_club_guest_legend_arrival",
         "jazz_club_guest_legend_partial",
@@ -523,12 +577,19 @@
         "crew_job_changed",
         "travel_departed"
       ],
+      "spatial_anchors": [
+        "base::anchor:rent_party_donation",
+        "base::anchor:rent_party_creditor"
+      ],
+      "sealed_routes": [
+        "base::world:motel"
+      ],
       "reentry_policy": {
         "expired": "expired",
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "4050655c28b7d585e0fd5803de8a234f85ed5fcc42762c3d78949c86f99f8d7f",
+      "sequence_signature": "44116c71aa99260efb08605ecaf1caced33a2bf93841057926ff2e5493856098",
       "capture_ids": [
         "jazz_club_rent_party_arrival",
         "jazz_club_rent_party_partial",
@@ -580,12 +641,19 @@
         "scenario_command",
         "travel_departed"
       ],
+      "spatial_anchors": [
+        "base::anchor:recording_microphone",
+        "base::anchor:recording_audience"
+      ],
+      "sealed_routes": [
+        "base::world:corner_store"
+      ],
       "reentry_policy": {
         "expired": "expired",
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "f801192e5237a6f162d43e8d0bfeffbab4000fbef193c53c639081267d0bc1ed",
+      "sequence_signature": "8494f605926de99104cceec781ce8241a8710f6ccf2db8a8f385c8c70d149105",
       "capture_ids": [
         "jazz_club_recording_night_arrival",
         "jazz_club_recording_night_partial",
@@ -639,12 +707,19 @@
         "heat_band_changed",
         "travel_departed"
       ],
+      "spatial_anchors": [
+        "base::anchor:union_picket",
+        "base::anchor:union_manager"
+      ],
+      "sealed_routes": [
+        "base::world:bar"
+      ],
       "reentry_policy": {
         "expired": "expired",
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "b98db8805cc785f04ae281d6778125f9de2a762746a031697edd1d98573620d7",
+      "sequence_signature": "20f4b11216f571ed1312fd9df2467caeac0e4c6ec300280c4c87d7349ad526ca",
       "capture_ids": [
         "jazz_club_union_trouble_arrival",
         "jazz_club_union_trouble_partial",
@@ -865,6 +940,160 @@
               {
                 "family": "scene_ops",
                 "effect": {
+                  "anchor_id": "darts_oche",
+                  "op": "move",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "transition_ops",
+                "effect": {
+                  "channel": "room",
+                  "message": "The oche move beat moves props and actors for score opening round.",
+                  "op": "feedback",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "disabled_reason": "Bar Darts League Night has advanced beyond bar darts league night task 0 to its next physical station.",
+                  "enabled": false,
+                  "mode": "gate",
+                  "op": "gate",
+                  "owner_namespace": "scenario",
+                  "target_owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "interaction": {
+                    "alternate_exit": false,
+                    "available_actions": [
+                      {
+                        "handler": "complete_objective_step",
+                        "id": "score_opening_round",
+                        "input_action": "ui_accept",
+                        "inputs": {
+                          "objective_id": "main_task",
+                          "step_id": "score_opening_round"
+                        },
+                        "label": "Score Opening Round",
+                        "non_color_state": "work"
+                      },
+                      {
+                        "id": "fail_bar_darts_league_night",
+                        "input_action": "ui_right",
+                        "label": "Let the pressure win",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_bar_darts_league_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
+                      }
+                    ],
+                    "disabled_reason": "",
+                    "enabled": true,
+                    "focus_order": 1.0,
+                    "hit_bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "input_actions": [
+                      "ui_accept",
+                      "ui_right",
+                      "ui_cancel"
+                    ],
+                    "label": "Score Opening Round",
+                    "min_target_size": 44.0,
+                    "non_color_state": "work_1_ready",
+                    "owner_namespace": "scenario",
+                    "prompt": "Bar Darts League Night: Complete this operation or choose its identity-specific route.",
+                    "safe_exit": false,
+                    "state_label": "Work 1 station"
+                  },
+                  "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "actor_ops",
+                "effect": {
+                  "op": "set_pose",
+                  "owner_namespace": "scenario",
+                  "pose": "oche_move"
+                }
+              }
+            ],
+            "branches": [
+              {
+                "condition": {
+                  "type": "fact",
+                  "fact_type": "game_result"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "failure"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "fact",
+                  "fact_type": "travel_departed"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "cancel"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "failure"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "ignore"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "success"
+                ]
+              }
+            ],
+            "objective_count": 1,
+            "terminal": false,
+            "advance_after_actions": 0
+          },
+          {
+            "ops": [
+              {
+                "family": "actor_ops",
+                "effect": {
+                  "anchor_id": "darts_scorer",
+                  "op": "set_position",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "scene_ops",
+                "effect": {
                   "appearance": "score_state_changed",
                   "op": "set_appearance",
                   "owner_namespace": "scenario"
@@ -945,14 +1174,6 @@
                   },
                   "op": "add",
                   "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "actor_ops",
-                "effect": {
-                  "op": "set_position",
-                  "owner_namespace": "scenario",
-                  "zone_id": "work_1"
                 }
               }
             ],
@@ -1247,152 +1468,6 @@
                   "op": "set_pose",
                   "owner_namespace": "scenario",
                   "pose": "finished"
-                }
-              }
-            ],
-            "branches": [
-              {
-                "condition": {
-                  "type": "fact",
-                  "fact_type": "game_result"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "fact",
-                  "fact_type": "travel_departed"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "cancel"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "ignore"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "success"
-                ]
-              }
-            ],
-            "objective_count": 1,
-            "terminal": false,
-            "advance_after_actions": 0
-          },
-          {
-            "ops": [
-              {
-                "family": "transition_ops",
-                "effect": {
-                  "channel": "room",
-                  "message": "The oche move beat moves props and actors for score opening round.",
-                  "op": "feedback",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "disabled_reason": "Bar Darts League Night has advanced beyond bar darts league night task 0 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "interaction": {
-                    "alternate_exit": false,
-                    "available_actions": [
-                      {
-                        "handler": "complete_objective_step",
-                        "id": "score_opening_round",
-                        "input_action": "ui_accept",
-                        "inputs": {
-                          "objective_id": "main_task",
-                          "step_id": "score_opening_round"
-                        },
-                        "label": "Score Opening Round",
-                        "non_color_state": "work"
-                      },
-                      {
-                        "id": "fail_bar_darts_league_night",
-                        "input_action": "ui_right",
-                        "label": "Let the pressure win",
-                        "non_color_state": "ready"
-                      },
-                      {
-                        "id": "refuse_bar_darts_league_night",
-                        "input_action": "ui_cancel",
-                        "label": "Refuse and leave",
-                        "non_color_state": "ready"
-                      }
-                    ],
-                    "disabled_reason": "",
-                    "enabled": true,
-                    "focus_order": 1.0,
-                    "hit_bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "input_actions": [
-                      "ui_accept",
-                      "ui_right",
-                      "ui_cancel"
-                    ],
-                    "label": "Score Opening Round",
-                    "min_target_size": 44.0,
-                    "non_color_state": "work_1_ready",
-                    "owner_namespace": "scenario",
-                    "prompt": "Bar Darts League Night: Complete this operation or choose its identity-specific route.",
-                    "safe_exit": false,
-                    "state_label": "Work 1 station"
-                  },
-                  "op": "add",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "op": "move",
-                  "owner_namespace": "scenario",
-                  "zone_id": "work_0"
-                }
-              },
-              {
-                "family": "actor_ops",
-                "effect": {
-                  "op": "set_pose",
-                  "owner_namespace": "scenario",
-                  "pose": "oche_move"
                 }
               }
             ],
@@ -2132,9 +2207,9 @@
           "actors": 0,
           "services": 0,
           "games": 0,
-          "routes": 0,
-          "anchors": 0,
-          "zones": 13
+          "routes": 1,
+          "anchors": 2,
+          "zones": 7
         },
         "reentry": {
           "expired": "expired",
@@ -2147,10 +2222,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "46e9fdc3f2cab72a869a62e43a48f096be3733170457f13b287de63c4eeff5de",
-      "calculated_signature": "46e9fdc3f2cab72a869a62e43a48f096be3733170457f13b287de63c4eeff5de",
-      "nearest_id": "jazz_club_guest_legend",
-      "nearest_similarity": 0.664816870144284
+      "authored_signature": "12fe03480b943014089d7c8a67d6faf1b8cbd4ddc06b25a849d1219802355bb4",
+      "calculated_signature": "12fe03480b943014089d7c8a67d6faf1b8cbd4ddc06b25a849d1219802355bb4",
+      "nearest_id": "bar_fight_night",
+      "nearest_similarity": 0.547987616099071
     },
     {
       "id": "bar_dead_tuesday",
@@ -2159,6 +2234,14 @@
         "phases": [
           {
             "ops": [
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "anchor_id": "dead_tuesday_bartender",
+                  "op": "move",
+                  "owner_namespace": "scenario"
+                }
+              },
               {
                 "family": "transition_ops",
                 "effect": {
@@ -2231,14 +2314,6 @@
                   },
                   "op": "add",
                   "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "op": "move",
-                  "owner_namespace": "scenario",
-                  "zone_id": "work_0"
                 }
               },
               {
@@ -2937,9 +3012,9 @@
           "actors": 0,
           "services": 0,
           "games": 0,
-          "routes": 0,
-          "anchors": 0,
-          "zones": 13
+          "routes": 1,
+          "anchors": 1,
+          "zones": 7
         },
         "reentry": {
           "expired": "expired",
@@ -2952,10 +3027,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "1f93940124dd280179cb09ca8e70d547077160794561b74d4a304e37543cbcf3",
-      "calculated_signature": "1f93940124dd280179cb09ca8e70d547077160794561b74d4a304e37543cbcf3",
+      "authored_signature": "5ffd86654645e77d09a5135fb17475cb1986553262655f992aa3a91d71be38e1",
+      "calculated_signature": "5ffd86654645e77d09a5135fb17475cb1986553262655f992aa3a91d71be38e1",
       "nearest_id": "bar_wake",
-      "nearest_similarity": 0.336391437308869
+      "nearest_similarity": 0.324242424242424
     },
     {
       "id": "bar_fight_night",
@@ -2964,6 +3039,14 @@
         "phases": [
           {
             "ops": [
+              {
+                "family": "actor_ops",
+                "effect": {
+                  "anchor_id": "fight_right_brawler",
+                  "op": "set_position",
+                  "owner_namespace": "scenario"
+                }
+              },
               {
                 "family": "scene_ops",
                 "effect": {
@@ -3068,14 +3151,6 @@
                   "op": "add",
                   "owner_namespace": "scenario"
                 }
-              },
-              {
-                "family": "actor_ops",
-                "effect": {
-                  "op": "set_position",
-                  "owner_namespace": "scenario",
-                  "zone_id": "work_1"
-                }
               }
             ],
             "branches": [
@@ -3142,6 +3217,152 @@
                 "edge": "phase",
                 "objective_outcomes": [
                   "success"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "success"
+                ]
+              }
+            ],
+            "objective_count": 1,
+            "terminal": false,
+            "advance_after_actions": 0
+          },
+          {
+            "ops": [
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "anchor_id": "fight_toppled_chair",
+                  "op": "move",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "transition_ops",
+                "effect": {
+                  "channel": "room",
+                  "message": "The chair move beat moves props and actors for warn brawlers.",
+                  "op": "feedback",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "disabled_reason": "Bar Fight Night has advanced beyond bar fight night task 0 to its next physical station.",
+                  "enabled": false,
+                  "mode": "gate",
+                  "op": "gate",
+                  "owner_namespace": "scenario",
+                  "target_owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "interaction": {
+                    "alternate_exit": false,
+                    "available_actions": [
+                      {
+                        "handler": "complete_objective_step",
+                        "id": "warn_brawlers",
+                        "input_action": "ui_accept",
+                        "inputs": {
+                          "objective_id": "main_task",
+                          "step_id": "warn_brawlers"
+                        },
+                        "label": "Warn Brawlers",
+                        "non_color_state": "work"
+                      },
+                      {
+                        "id": "fail_bar_fight_night",
+                        "input_action": "ui_right",
+                        "label": "Let the pressure win",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_bar_fight_night",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
+                      }
+                    ],
+                    "disabled_reason": "",
+                    "enabled": true,
+                    "focus_order": 1.0,
+                    "hit_bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "input_actions": [
+                      "ui_accept",
+                      "ui_right",
+                      "ui_cancel"
+                    ],
+                    "label": "Warn Brawlers",
+                    "min_target_size": 44.0,
+                    "non_color_state": "work_1_ready",
+                    "owner_namespace": "scenario",
+                    "prompt": "Bar Fight Night: Complete this operation or choose its identity-specific route.",
+                    "safe_exit": false,
+                    "state_label": "Work 1 station"
+                  },
+                  "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "actor_ops",
+                "effect": {
+                  "op": "set_pose",
+                  "owner_namespace": "scenario",
+                  "pose": "chair_move"
+                }
+              }
+            ],
+            "branches": [
+              {
+                "condition": {
+                  "type": "fact",
+                  "fact_type": "heat_changed"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "failure"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "fact",
+                  "fact_type": "travel_departed"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "cancel"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "failure"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "ignore"
                 ]
               },
               {
@@ -3543,152 +3764,6 @@
                   "op": "set_pose",
                   "owner_namespace": "scenario",
                   "pose": "finished"
-                }
-              }
-            ],
-            "branches": [
-              {
-                "condition": {
-                  "type": "fact",
-                  "fact_type": "heat_changed"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "fact",
-                  "fact_type": "travel_departed"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "cancel"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "ignore"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "success"
-                ]
-              }
-            ],
-            "objective_count": 1,
-            "terminal": false,
-            "advance_after_actions": 0
-          },
-          {
-            "ops": [
-              {
-                "family": "transition_ops",
-                "effect": {
-                  "channel": "room",
-                  "message": "The chair move beat moves props and actors for warn brawlers.",
-                  "op": "feedback",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "disabled_reason": "Bar Fight Night has advanced beyond bar fight night task 0 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "interaction": {
-                    "alternate_exit": false,
-                    "available_actions": [
-                      {
-                        "handler": "complete_objective_step",
-                        "id": "warn_brawlers",
-                        "input_action": "ui_accept",
-                        "inputs": {
-                          "objective_id": "main_task",
-                          "step_id": "warn_brawlers"
-                        },
-                        "label": "Warn Brawlers",
-                        "non_color_state": "work"
-                      },
-                      {
-                        "id": "fail_bar_fight_night",
-                        "input_action": "ui_right",
-                        "label": "Let the pressure win",
-                        "non_color_state": "ready"
-                      },
-                      {
-                        "id": "refuse_bar_fight_night",
-                        "input_action": "ui_cancel",
-                        "label": "Refuse and leave",
-                        "non_color_state": "ready"
-                      }
-                    ],
-                    "disabled_reason": "",
-                    "enabled": true,
-                    "focus_order": 1.0,
-                    "hit_bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "input_actions": [
-                      "ui_accept",
-                      "ui_right",
-                      "ui_cancel"
-                    ],
-                    "label": "Warn Brawlers",
-                    "min_target_size": 44.0,
-                    "non_color_state": "work_1_ready",
-                    "owner_namespace": "scenario",
-                    "prompt": "Bar Fight Night: Complete this operation or choose its identity-specific route.",
-                    "safe_exit": false,
-                    "state_label": "Work 1 station"
-                  },
-                  "op": "add",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "op": "move",
-                  "owner_namespace": "scenario",
-                  "zone_id": "work_0"
-                }
-              },
-              {
-                "family": "actor_ops",
-                "effect": {
-                  "op": "set_pose",
-                  "owner_namespace": "scenario",
-                  "pose": "chair_move"
                 }
               }
             ],
@@ -4428,9 +4503,9 @@
           "actors": 0,
           "services": 0,
           "games": 0,
-          "routes": 0,
-          "anchors": 0,
-          "zones": 13
+          "routes": 1,
+          "anchors": 2,
+          "zones": 7
         },
         "reentry": {
           "expired": "expired",
@@ -4443,10 +4518,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "679207cfc37fbe1178122cf0c28157555ab8a296753373400848fccc0ed92a8f",
-      "calculated_signature": "679207cfc37fbe1178122cf0c28157555ab8a296753373400848fccc0ed92a8f",
+      "authored_signature": "1781feb9de6edfd5c396609a5c929b18948f20a29080fcecd6889ebb1e8d2fd7",
+      "calculated_signature": "1781feb9de6edfd5c396609a5c929b18948f20a29080fcecd6889ebb1e8d2fd7",
       "nearest_id": "bar_darts_league_night",
-      "nearest_similarity": 0.662971175166297
+      "nearest_similarity": 0.547987616099071
     },
     {
       "id": "bar_live_band",
@@ -4455,6 +4530,14 @@
         "phases": [
           {
             "ops": [
+              {
+                "family": "actor_ops",
+                "effect": {
+                  "anchor_id": "live_band_runner",
+                  "op": "set_position",
+                  "owner_namespace": "scenario"
+                }
+              },
               {
                 "family": "scene_ops",
                 "effect": {
@@ -4559,14 +4642,6 @@
                   "op": "add",
                   "owner_namespace": "scenario"
                 }
-              },
-              {
-                "family": "actor_ops",
-                "effect": {
-                  "op": "set_position",
-                  "owner_namespace": "scenario",
-                  "zone_id": "work_1"
-                }
               }
             ],
             "branches": [
@@ -4633,6 +4708,152 @@
                 "edge": "phase",
                 "objective_outcomes": [
                   "success"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "success"
+                ]
+              }
+            ],
+            "objective_count": 1,
+            "terminal": false,
+            "advance_after_actions": 0
+          },
+          {
+            "ops": [
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "anchor_id": "live_band_speakers",
+                  "op": "move",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "transition_ops",
+                "effect": {
+                  "channel": "room",
+                  "message": "The cable appearance beat moves props and actors for patch soundcheck.",
+                  "op": "feedback",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "disabled_reason": "Bar Live Band has advanced beyond bar live band task 0 to its next physical station.",
+                  "enabled": false,
+                  "mode": "gate",
+                  "op": "gate",
+                  "owner_namespace": "scenario",
+                  "target_owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "interaction": {
+                    "alternate_exit": false,
+                    "available_actions": [
+                      {
+                        "handler": "complete_objective_step",
+                        "id": "patch_soundcheck",
+                        "input_action": "ui_accept",
+                        "inputs": {
+                          "objective_id": "main_task",
+                          "step_id": "patch_soundcheck"
+                        },
+                        "label": "Patch Soundcheck",
+                        "non_color_state": "work"
+                      },
+                      {
+                        "id": "fail_bar_live_band",
+                        "input_action": "ui_right",
+                        "label": "Let the pressure win",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_bar_live_band",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
+                      }
+                    ],
+                    "disabled_reason": "",
+                    "enabled": true,
+                    "focus_order": 1.0,
+                    "hit_bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "input_actions": [
+                      "ui_accept",
+                      "ui_right",
+                      "ui_cancel"
+                    ],
+                    "label": "Patch Soundcheck",
+                    "min_target_size": 44.0,
+                    "non_color_state": "work_1_ready",
+                    "owner_namespace": "scenario",
+                    "prompt": "Bar Live Band: Complete this operation or choose its identity-specific route.",
+                    "safe_exit": false,
+                    "state_label": "Work 1 station"
+                  },
+                  "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "actor_ops",
+                "effect": {
+                  "op": "set_pose",
+                  "owner_namespace": "scenario",
+                  "pose": "cable_appearance"
+                }
+              }
+            ],
+            "branches": [
+              {
+                "condition": {
+                  "type": "fact",
+                  "fact_type": "town_transition"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "failure"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "fact",
+                  "fact_type": "travel_departed"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "cancel"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "failure"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "ignore"
                 ]
               },
               {
@@ -4885,152 +5106,6 @@
                   "op": "set_state",
                   "owner_namespace": "scenario",
                   "state": "crowd_behavior_resolved"
-                }
-              }
-            ],
-            "branches": [
-              {
-                "condition": {
-                  "type": "fact",
-                  "fact_type": "town_transition"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "fact",
-                  "fact_type": "travel_departed"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "cancel"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "ignore"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "success"
-                ]
-              }
-            ],
-            "objective_count": 1,
-            "terminal": false,
-            "advance_after_actions": 0
-          },
-          {
-            "ops": [
-              {
-                "family": "transition_ops",
-                "effect": {
-                  "channel": "room",
-                  "message": "The cable appearance beat moves props and actors for patch soundcheck.",
-                  "op": "feedback",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "disabled_reason": "Bar Live Band has advanced beyond bar live band task 0 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "interaction": {
-                    "alternate_exit": false,
-                    "available_actions": [
-                      {
-                        "handler": "complete_objective_step",
-                        "id": "patch_soundcheck",
-                        "input_action": "ui_accept",
-                        "inputs": {
-                          "objective_id": "main_task",
-                          "step_id": "patch_soundcheck"
-                        },
-                        "label": "Patch Soundcheck",
-                        "non_color_state": "work"
-                      },
-                      {
-                        "id": "fail_bar_live_band",
-                        "input_action": "ui_right",
-                        "label": "Let the pressure win",
-                        "non_color_state": "ready"
-                      },
-                      {
-                        "id": "refuse_bar_live_band",
-                        "input_action": "ui_cancel",
-                        "label": "Refuse and leave",
-                        "non_color_state": "ready"
-                      }
-                    ],
-                    "disabled_reason": "",
-                    "enabled": true,
-                    "focus_order": 1.0,
-                    "hit_bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "input_actions": [
-                      "ui_accept",
-                      "ui_right",
-                      "ui_cancel"
-                    ],
-                    "label": "Patch Soundcheck",
-                    "min_target_size": 44.0,
-                    "non_color_state": "work_1_ready",
-                    "owner_namespace": "scenario",
-                    "prompt": "Bar Live Band: Complete this operation or choose its identity-specific route.",
-                    "safe_exit": false,
-                    "state_label": "Work 1 station"
-                  },
-                  "op": "add",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "op": "move",
-                  "owner_namespace": "scenario",
-                  "zone_id": "work_0"
-                }
-              },
-              {
-                "family": "actor_ops",
-                "effect": {
-                  "op": "set_pose",
-                  "owner_namespace": "scenario",
-                  "pose": "cable_appearance"
                 }
               }
             ],
@@ -5746,9 +5821,9 @@
           "actors": 0,
           "services": 0,
           "games": 0,
-          "routes": 0,
-          "anchors": 0,
-          "zones": 13
+          "routes": 1,
+          "anchors": 2,
+          "zones": 7
         },
         "reentry": {
           "expired": "expired",
@@ -5761,10 +5836,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "bf043931de7a3db9e17452927d702cb1ca6f59af30788c1cf2c8357f6e1d7056",
-      "calculated_signature": "bf043931de7a3db9e17452927d702cb1ca6f59af30788c1cf2c8357f6e1d7056",
+      "authored_signature": "ded8bf97d43afdd8cb966ce3a59b475cb3acf43b9edc34c8af32c65aa1580ded",
+      "calculated_signature": "ded8bf97d43afdd8cb966ce3a59b475cb3acf43b9edc34c8af32c65aa1580ded",
       "nearest_id": "bar_lock_in",
-      "nearest_similarity": 0.673417721518987
+      "nearest_similarity": 0.669191919191919
     },
     {
       "id": "bar_lock_in",
@@ -5773,6 +5848,14 @@
         "phases": [
           {
             "ops": [
+              {
+                "family": "actor_ops",
+                "effect": {
+                  "anchor_id": "lockin_regular",
+                  "op": "set_position",
+                  "owner_namespace": "scenario"
+                }
+              },
               {
                 "family": "scene_ops",
                 "effect": {
@@ -5877,14 +5960,6 @@
                   "op": "add",
                   "owner_namespace": "scenario"
                 }
-              },
-              {
-                "family": "actor_ops",
-                "effect": {
-                  "op": "set_position",
-                  "owner_namespace": "scenario",
-                  "zone_id": "work_1"
-                }
               }
             ],
             "branches": [
@@ -5951,6 +6026,152 @@
                 "edge": "phase",
                 "objective_outcomes": [
                   "success"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "success"
+                ]
+              }
+            ],
+            "objective_count": 1,
+            "terminal": false,
+            "advance_after_actions": 0
+          },
+          {
+            "ops": [
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "anchor_id": "lockin_shutters",
+                  "op": "move",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "transition_ops",
+                "effect": {
+                  "channel": "room",
+                  "message": "The shutter state beat moves props and actors for inspect cellar hatch.",
+                  "op": "feedback",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "disabled_reason": "Bar Lock In has advanced beyond bar lock in task 0 to its next physical station.",
+                  "enabled": false,
+                  "mode": "gate",
+                  "op": "gate",
+                  "owner_namespace": "scenario",
+                  "target_owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "interaction": {
+                    "alternate_exit": false,
+                    "available_actions": [
+                      {
+                        "handler": "complete_objective_step",
+                        "id": "inspect_cellar_hatch",
+                        "input_action": "ui_accept",
+                        "inputs": {
+                          "objective_id": "main_task",
+                          "step_id": "inspect_cellar_hatch"
+                        },
+                        "label": "Inspect Cellar Hatch",
+                        "non_color_state": "work"
+                      },
+                      {
+                        "id": "fail_bar_lock_in",
+                        "input_action": "ui_right",
+                        "label": "Let the pressure win",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_bar_lock_in",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
+                      }
+                    ],
+                    "disabled_reason": "",
+                    "enabled": true,
+                    "focus_order": 1.0,
+                    "hit_bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "input_actions": [
+                      "ui_accept",
+                      "ui_right",
+                      "ui_cancel"
+                    ],
+                    "label": "Inspect Cellar Hatch",
+                    "min_target_size": 44.0,
+                    "non_color_state": "work_1_ready",
+                    "owner_namespace": "scenario",
+                    "prompt": "Bar Lock In: Complete this operation or choose its identity-specific route.",
+                    "safe_exit": false,
+                    "state_label": "Work 1 station"
+                  },
+                  "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "actor_ops",
+                "effect": {
+                  "op": "set_pose",
+                  "owner_namespace": "scenario",
+                  "pose": "shutter_state"
+                }
+              }
+            ],
+            "branches": [
+              {
+                "condition": {
+                  "type": "fact",
+                  "fact_type": "sweep_changed"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "failure"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "fact",
+                  "fact_type": "travel_departed"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "cancel"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "failure"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "ignore"
                 ]
               },
               {
@@ -6203,152 +6424,6 @@
                   "op": "set_state",
                   "owner_namespace": "scenario",
                   "state": "shutter_state_resolved"
-                }
-              }
-            ],
-            "branches": [
-              {
-                "condition": {
-                  "type": "fact",
-                  "fact_type": "sweep_changed"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "fact",
-                  "fact_type": "travel_departed"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "cancel"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "ignore"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "success"
-                ]
-              }
-            ],
-            "objective_count": 1,
-            "terminal": false,
-            "advance_after_actions": 0
-          },
-          {
-            "ops": [
-              {
-                "family": "transition_ops",
-                "effect": {
-                  "channel": "room",
-                  "message": "The shutter state beat moves props and actors for inspect cellar hatch.",
-                  "op": "feedback",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "disabled_reason": "Bar Lock In has advanced beyond bar lock in task 0 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "interaction": {
-                    "alternate_exit": false,
-                    "available_actions": [
-                      {
-                        "handler": "complete_objective_step",
-                        "id": "inspect_cellar_hatch",
-                        "input_action": "ui_accept",
-                        "inputs": {
-                          "objective_id": "main_task",
-                          "step_id": "inspect_cellar_hatch"
-                        },
-                        "label": "Inspect Cellar Hatch",
-                        "non_color_state": "work"
-                      },
-                      {
-                        "id": "fail_bar_lock_in",
-                        "input_action": "ui_right",
-                        "label": "Let the pressure win",
-                        "non_color_state": "ready"
-                      },
-                      {
-                        "id": "refuse_bar_lock_in",
-                        "input_action": "ui_cancel",
-                        "label": "Refuse and leave",
-                        "non_color_state": "ready"
-                      }
-                    ],
-                    "disabled_reason": "",
-                    "enabled": true,
-                    "focus_order": 1.0,
-                    "hit_bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "input_actions": [
-                      "ui_accept",
-                      "ui_right",
-                      "ui_cancel"
-                    ],
-                    "label": "Inspect Cellar Hatch",
-                    "min_target_size": 44.0,
-                    "non_color_state": "work_1_ready",
-                    "owner_namespace": "scenario",
-                    "prompt": "Bar Lock In: Complete this operation or choose its identity-specific route.",
-                    "safe_exit": false,
-                    "state_label": "Work 1 station"
-                  },
-                  "op": "add",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "op": "move",
-                  "owner_namespace": "scenario",
-                  "zone_id": "work_0"
-                }
-              },
-              {
-                "family": "actor_ops",
-                "effect": {
-                  "op": "set_pose",
-                  "owner_namespace": "scenario",
-                  "pose": "shutter_state"
                 }
               }
             ],
@@ -7064,9 +7139,9 @@
           "actors": 0,
           "services": 0,
           "games": 0,
-          "routes": 0,
-          "anchors": 0,
-          "zones": 13
+          "routes": 1,
+          "anchors": 2,
+          "zones": 7
         },
         "reentry": {
           "expired": "expired",
@@ -7079,10 +7154,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "a8b3393fd894093f80821c0b3db80328e9ef0a93c64521539902ddb8b02b0ecf",
-      "calculated_signature": "a8b3393fd894093f80821c0b3db80328e9ef0a93c64521539902ddb8b02b0ecf",
+      "authored_signature": "e37402a2bb236b1799a2c645bb07dc553a960144bb36572d3d2cfc1e3a91cf52",
+      "calculated_signature": "e37402a2bb236b1799a2c645bb07dc553a960144bb36572d3d2cfc1e3a91cf52",
       "nearest_id": "bar_live_band",
-      "nearest_similarity": 0.673417721518987
+      "nearest_similarity": 0.669191919191919
     },
     {
       "id": "bar_payday_rush",
@@ -7091,6 +7166,14 @@
         "phases": [
           {
             "ops": [
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "anchor_id": "payday_order_rail",
+                  "op": "move",
+                  "owner_namespace": "scenario"
+                }
+              },
               {
                 "family": "transition_ops",
                 "effect": {
@@ -7186,14 +7269,6 @@
                 }
               },
               {
-                "family": "scene_ops",
-                "effect": {
-                  "op": "move",
-                  "owner_namespace": "scenario",
-                  "zone_id": "work_0"
-                }
-              },
-              {
                 "family": "actor_ops",
                 "effect": {
                   "op": "set_pose",
@@ -7285,6 +7360,14 @@
           {
             "ops": [
               {
+                "family": "actor_ops",
+                "effect": {
+                  "anchor_id": "payday_runner",
+                  "op": "set_position",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
                 "family": "scene_ops",
                 "effect": {
                   "appearance": "counter_state_changed",
@@ -7367,14 +7450,6 @@
                   },
                   "op": "add",
                   "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "actor_ops",
-                "effect": {
-                  "op": "set_position",
-                  "owner_namespace": "scenario",
-                  "zone_id": "work_1"
                 }
               }
             ],
@@ -8042,9 +8117,9 @@
           "actors": 0,
           "services": 0,
           "games": 0,
-          "routes": 0,
-          "anchors": 0,
-          "zones": 13
+          "routes": 1,
+          "anchors": 2,
+          "zones": 7
         },
         "reentry": {
           "expired": "expired",
@@ -8057,10 +8132,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "dfe1696210f460fe400ada3daa36d5a6db2ed1599332512aa6df83d770a051ea",
-      "calculated_signature": "dfe1696210f460fe400ada3daa36d5a6db2ed1599332512aa6df83d770a051ea",
+      "authored_signature": "5edaedf7baf6874d3d75485acc263900a8fe6c7051045300047ad3dd5e37296c",
+      "calculated_signature": "5edaedf7baf6874d3d75485acc263900a8fe6c7051045300047ad3dd5e37296c",
       "nearest_id": "jazz_club_recording_night",
-      "nearest_similarity": 0.627287853577371
+      "nearest_similarity": 0.621890547263682
     },
     {
       "id": "bar_wake",
@@ -8069,6 +8144,14 @@
         "phases": [
           {
             "ops": [
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "anchor_id": "wake_memorial_tables",
+                  "op": "move",
+                  "owner_namespace": "scenario"
+                }
+              },
               {
                 "family": "transition_ops",
                 "effect": {
@@ -8164,14 +8247,6 @@
                 }
               },
               {
-                "family": "scene_ops",
-                "effect": {
-                  "op": "move",
-                  "owner_namespace": "scenario",
-                  "zone_id": "work_0"
-                }
-              },
-              {
                 "family": "actor_ops",
                 "effect": {
                   "op": "set_pose",
@@ -8263,6 +8338,14 @@
           {
             "ops": [
               {
+                "family": "actor_ops",
+                "effect": {
+                  "anchor_id": "wake_host",
+                  "op": "set_position",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
                 "family": "scene_ops",
                 "effect": {
                   "appearance": "patron_pose_changed",
@@ -8345,14 +8428,6 @@
                   },
                   "op": "add",
                   "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "actor_ops",
-                "effect": {
-                  "op": "set_position",
-                  "owner_namespace": "scenario",
-                  "zone_id": "work_1"
                 }
               }
             ],
@@ -8993,9 +9068,9 @@
           "actors": 0,
           "services": 0,
           "games": 0,
-          "routes": 0,
-          "anchors": 0,
-          "zones": 13
+          "routes": 1,
+          "anchors": 2,
+          "zones": 7
         },
         "reentry": {
           "expired": "expired",
@@ -9008,10 +9083,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "519df0ce826b555aff90307ef2755850bbb942440502a3b6fc48d8aa1aafdd82",
-      "calculated_signature": "519df0ce826b555aff90307ef2755850bbb942440502a3b6fc48d8aa1aafdd82",
+      "authored_signature": "efd3fde80f5c72667d59aca5fb1c9f38d0c05a29170b4b305659b42dd0cca27e",
+      "calculated_signature": "efd3fde80f5c72667d59aca5fb1c9f38d0c05a29170b4b305659b42dd0cca27e",
       "nearest_id": "jazz_club_recording_night",
-      "nearest_similarity": 0.683566433566434
+      "nearest_similarity": 0.677700348432056
     },
     {
       "id": "jazz_club_guest_legend",
@@ -9215,6 +9290,14 @@
           {
             "ops": [
               {
+                "family": "actor_ops",
+                "effect": {
+                  "anchor_id": "guest_legend_stage_manager",
+                  "op": "set_position",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
                 "family": "scene_ops",
                 "effect": {
                   "appearance": "stage_state_changed",
@@ -9298,13 +9381,151 @@
                   "op": "add",
                   "owner_namespace": "scenario"
                 }
+              }
+            ],
+            "branches": [
+              {
+                "condition": {
+                  "type": "fact",
+                  "fact_type": "travel_arrived"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "failure"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "fact",
+                  "fact_type": "travel_departed"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "cancel"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "failure"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "ignore"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "success"
+                ]
+              }
+            ],
+            "objective_count": 1,
+            "terminal": false,
+            "advance_after_actions": 0
+          },
+          {
+            "ops": [
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "anchor_id": "guest_legend_table",
+                  "op": "move",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "transition_ops",
+                "effect": {
+                  "channel": "room",
+                  "message": "The case move beat moves props and actors for open backstage lane.",
+                  "op": "feedback",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "disabled_reason": "Jazz Club Guest Legend has advanced beyond jazz club guest legend task 0 to its next physical station.",
+                  "enabled": false,
+                  "mode": "gate",
+                  "op": "gate",
+                  "owner_namespace": "scenario",
+                  "target_owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "interaction": {
+                    "alternate_exit": false,
+                    "available_actions": [
+                      {
+                        "handler": "complete_objective_step",
+                        "id": "open_backstage_lane",
+                        "input_action": "ui_accept",
+                        "inputs": {
+                          "objective_id": "main_task",
+                          "step_id": "open_backstage_lane"
+                        },
+                        "label": "Open Backstage Lane",
+                        "non_color_state": "work"
+                      },
+                      {
+                        "id": "fail_jazz_club_guest_legend",
+                        "input_action": "ui_right",
+                        "label": "Let the pressure win",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_jazz_club_guest_legend",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
+                      }
+                    ],
+                    "disabled_reason": "",
+                    "enabled": true,
+                    "focus_order": 1.0,
+                    "hit_bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "input_actions": [
+                      "ui_accept",
+                      "ui_right",
+                      "ui_cancel"
+                    ],
+                    "label": "Open Backstage Lane",
+                    "min_target_size": 44.0,
+                    "non_color_state": "work_1_ready",
+                    "owner_namespace": "scenario",
+                    "prompt": "Jazz Club Guest Legend: Complete this operation or choose its identity-specific route.",
+                    "safe_exit": false,
+                    "state_label": "Work 1 station"
+                  },
+                  "op": "add",
+                  "owner_namespace": "scenario"
+                }
               },
               {
                 "family": "actor_ops",
                 "effect": {
-                  "op": "set_position",
+                  "op": "set_pose",
                   "owner_namespace": "scenario",
-                  "zone_id": "work_1"
+                  "pose": "case_move"
                 }
               }
             ],
@@ -9599,152 +9820,6 @@
                   "op": "set_pose",
                   "owner_namespace": "scenario",
                   "pose": "finished"
-                }
-              }
-            ],
-            "branches": [
-              {
-                "condition": {
-                  "type": "fact",
-                  "fact_type": "travel_arrived"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "fact",
-                  "fact_type": "travel_departed"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "cancel"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "ignore"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "success"
-                ]
-              }
-            ],
-            "objective_count": 1,
-            "terminal": false,
-            "advance_after_actions": 0
-          },
-          {
-            "ops": [
-              {
-                "family": "transition_ops",
-                "effect": {
-                  "channel": "room",
-                  "message": "The case move beat moves props and actors for open backstage lane.",
-                  "op": "feedback",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "disabled_reason": "Jazz Club Guest Legend has advanced beyond jazz club guest legend task 0 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "interaction": {
-                    "alternate_exit": false,
-                    "available_actions": [
-                      {
-                        "handler": "complete_objective_step",
-                        "id": "open_backstage_lane",
-                        "input_action": "ui_accept",
-                        "inputs": {
-                          "objective_id": "main_task",
-                          "step_id": "open_backstage_lane"
-                        },
-                        "label": "Open Backstage Lane",
-                        "non_color_state": "work"
-                      },
-                      {
-                        "id": "fail_jazz_club_guest_legend",
-                        "input_action": "ui_right",
-                        "label": "Let the pressure win",
-                        "non_color_state": "ready"
-                      },
-                      {
-                        "id": "refuse_jazz_club_guest_legend",
-                        "input_action": "ui_cancel",
-                        "label": "Refuse and leave",
-                        "non_color_state": "ready"
-                      }
-                    ],
-                    "disabled_reason": "",
-                    "enabled": true,
-                    "focus_order": 1.0,
-                    "hit_bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "input_actions": [
-                      "ui_accept",
-                      "ui_right",
-                      "ui_cancel"
-                    ],
-                    "label": "Open Backstage Lane",
-                    "min_target_size": 44.0,
-                    "non_color_state": "work_1_ready",
-                    "owner_namespace": "scenario",
-                    "prompt": "Jazz Club Guest Legend: Complete this operation or choose its identity-specific route.",
-                    "safe_exit": false,
-                    "state_label": "Work 1 station"
-                  },
-                  "op": "add",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "op": "move",
-                  "owner_namespace": "scenario",
-                  "zone_id": "work_0"
-                }
-              },
-              {
-                "family": "actor_ops",
-                "effect": {
-                  "op": "set_pose",
-                  "owner_namespace": "scenario",
-                  "pose": "case_move"
                 }
               }
             ],
@@ -10484,9 +10559,9 @@
           "actors": 0,
           "services": 0,
           "games": 0,
-          "routes": 0,
-          "anchors": 0,
-          "zones": 13
+          "routes": 1,
+          "anchors": 2,
+          "zones": 7
         },
         "reentry": {
           "expired": "expired",
@@ -10499,10 +10574,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "1aebca1447f82b3aba307e176564afb260423c22c95623b33c448d5df5ee35ec",
-      "calculated_signature": "1aebca1447f82b3aba307e176564afb260423c22c95623b33c448d5df5ee35ec",
+      "authored_signature": "c25582c4c11b8338518c2552e9d28bd1143b4fdee6aaee423c48e97a460bd2b5",
+      "calculated_signature": "c25582c4c11b8338518c2552e9d28bd1143b4fdee6aaee423c48e97a460bd2b5",
       "nearest_id": "bar_darts_league_night",
-      "nearest_similarity": 0.664816870144284
+      "nearest_similarity": 0.533742331288344
     },
     {
       "id": "jazz_club_recording_night",
@@ -10511,6 +10586,14 @@
         "phases": [
           {
             "ops": [
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "anchor_id": "recording_microphone",
+                  "op": "move",
+                  "owner_namespace": "scenario"
+                }
+              },
               {
                 "family": "transition_ops",
                 "effect": {
@@ -10606,14 +10689,6 @@
                 }
               },
               {
-                "family": "scene_ops",
-                "effect": {
-                  "op": "move",
-                  "owner_namespace": "scenario",
-                  "zone_id": "work_0"
-                }
-              },
-              {
                 "family": "actor_ops",
                 "effect": {
                   "op": "set_pose",
@@ -10705,6 +10780,14 @@
           {
             "ops": [
               {
+                "family": "actor_ops",
+                "effect": {
+                  "anchor_id": "recording_audience",
+                  "op": "set_position",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
                 "family": "scene_ops",
                 "effect": {
                   "appearance": "take_state_changed",
@@ -10787,14 +10870,6 @@
                   },
                   "op": "add",
                   "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "actor_ops",
-                "effect": {
-                  "op": "set_position",
-                  "owner_namespace": "scenario",
-                  "zone_id": "work_1"
                 }
               }
             ],
@@ -11462,9 +11537,9 @@
           "actors": 0,
           "services": 0,
           "games": 0,
-          "routes": 0,
-          "anchors": 0,
-          "zones": 13
+          "routes": 1,
+          "anchors": 2,
+          "zones": 7
         },
         "reentry": {
           "expired": "expired",
@@ -11477,10 +11552,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "f801192e5237a6f162d43e8d0bfeffbab4000fbef193c53c639081267d0bc1ed",
-      "calculated_signature": "f801192e5237a6f162d43e8d0bfeffbab4000fbef193c53c639081267d0bc1ed",
+      "authored_signature": "8494f605926de99104cceec781ce8241a8710f6ccf2db8a8f385c8c70d149105",
+      "calculated_signature": "8494f605926de99104cceec781ce8241a8710f6ccf2db8a8f385c8c70d149105",
       "nearest_id": "bar_wake",
-      "nearest_similarity": 0.683566433566434
+      "nearest_similarity": 0.677700348432056
     },
     {
       "id": "jazz_club_rent_party",
@@ -11489,6 +11564,14 @@
         "phases": [
           {
             "ops": [
+              {
+                "family": "actor_ops",
+                "effect": {
+                  "anchor_id": "rent_party_creditor",
+                  "op": "set_position",
+                  "owner_namespace": "scenario"
+                }
+              },
               {
                 "family": "scene_ops",
                 "effect": {
@@ -11593,14 +11676,6 @@
                   "op": "add",
                   "owner_namespace": "scenario"
                 }
-              },
-              {
-                "family": "actor_ops",
-                "effect": {
-                  "op": "set_position",
-                  "owner_namespace": "scenario",
-                  "zone_id": "work_1"
-                }
               }
             ],
             "branches": [
@@ -11667,6 +11742,152 @@
                 "edge": "phase",
                 "objective_outcomes": [
                   "success"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "success"
+                ]
+              }
+            ],
+            "objective_count": 1,
+            "terminal": false,
+            "advance_after_actions": 0
+          },
+          {
+            "ops": [
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "anchor_id": "rent_party_donation",
+                  "op": "move",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "transition_ops",
+                "effect": {
+                  "channel": "room",
+                  "message": "The station move beat moves props and actors for run record sale.",
+                  "op": "feedback",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "disabled_reason": "Jazz Club Rent Party has advanced beyond jazz club rent party task 0 to its next physical station.",
+                  "enabled": false,
+                  "mode": "gate",
+                  "op": "gate",
+                  "owner_namespace": "scenario",
+                  "target_owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "interaction_ops",
+                "effect": {
+                  "interaction": {
+                    "alternate_exit": false,
+                    "available_actions": [
+                      {
+                        "handler": "complete_objective_step",
+                        "id": "run_record_sale",
+                        "input_action": "ui_accept",
+                        "inputs": {
+                          "objective_id": "main_task",
+                          "step_id": "run_record_sale"
+                        },
+                        "label": "Run Record Sale",
+                        "non_color_state": "work"
+                      },
+                      {
+                        "id": "fail_jazz_club_rent_party",
+                        "input_action": "ui_right",
+                        "label": "Let the pressure win",
+                        "non_color_state": "ready"
+                      },
+                      {
+                        "id": "refuse_jazz_club_rent_party",
+                        "input_action": "ui_cancel",
+                        "label": "Refuse and leave",
+                        "non_color_state": "ready"
+                      }
+                    ],
+                    "disabled_reason": "",
+                    "enabled": true,
+                    "focus_order": 1.0,
+                    "hit_bounds": {
+                      "h": 56.0,
+                      "w": 64.0
+                    },
+                    "input_actions": [
+                      "ui_accept",
+                      "ui_right",
+                      "ui_cancel"
+                    ],
+                    "label": "Run Record Sale",
+                    "min_target_size": 44.0,
+                    "non_color_state": "work_1_ready",
+                    "owner_namespace": "scenario",
+                    "prompt": "Jazz Club Rent Party: Complete this operation or choose its identity-specific route.",
+                    "safe_exit": false,
+                    "state_label": "Work 1 station"
+                  },
+                  "op": "add",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
+                "family": "actor_ops",
+                "effect": {
+                  "op": "set_pose",
+                  "owner_namespace": "scenario",
+                  "pose": "station_move"
+                }
+              }
+            ],
+            "branches": [
+              {
+                "condition": {
+                  "type": "fact",
+                  "fact_type": "crew_job_changed"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "failure"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "fact",
+                  "fact_type": "travel_departed"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "cancel"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "failure"
+                ]
+              },
+              {
+                "condition": {
+                  "type": "command"
+                },
+                "edge": "phase",
+                "objective_outcomes": [
+                  "ignore"
                 ]
               },
               {
@@ -11774,152 +11995,6 @@
                   "op": "set_state",
                   "owner_namespace": "scenario",
                   "state": "creditor_behavior_resolved"
-                }
-              }
-            ],
-            "branches": [
-              {
-                "condition": {
-                  "type": "fact",
-                  "fact_type": "crew_job_changed"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "fact",
-                  "fact_type": "travel_departed"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "cancel"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "failure"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "ignore"
-                ]
-              },
-              {
-                "condition": {
-                  "type": "command"
-                },
-                "edge": "phase",
-                "objective_outcomes": [
-                  "success"
-                ]
-              }
-            ],
-            "objective_count": 1,
-            "terminal": false,
-            "advance_after_actions": 0
-          },
-          {
-            "ops": [
-              {
-                "family": "transition_ops",
-                "effect": {
-                  "channel": "room",
-                  "message": "The station move beat moves props and actors for run record sale.",
-                  "op": "feedback",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "disabled_reason": "Jazz Club Rent Party has advanced beyond jazz club rent party task 0 to its next physical station.",
-                  "enabled": false,
-                  "mode": "gate",
-                  "op": "gate",
-                  "owner_namespace": "scenario",
-                  "target_owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "interaction_ops",
-                "effect": {
-                  "interaction": {
-                    "alternate_exit": false,
-                    "available_actions": [
-                      {
-                        "handler": "complete_objective_step",
-                        "id": "run_record_sale",
-                        "input_action": "ui_accept",
-                        "inputs": {
-                          "objective_id": "main_task",
-                          "step_id": "run_record_sale"
-                        },
-                        "label": "Run Record Sale",
-                        "non_color_state": "work"
-                      },
-                      {
-                        "id": "fail_jazz_club_rent_party",
-                        "input_action": "ui_right",
-                        "label": "Let the pressure win",
-                        "non_color_state": "ready"
-                      },
-                      {
-                        "id": "refuse_jazz_club_rent_party",
-                        "input_action": "ui_cancel",
-                        "label": "Refuse and leave",
-                        "non_color_state": "ready"
-                      }
-                    ],
-                    "disabled_reason": "",
-                    "enabled": true,
-                    "focus_order": 1.0,
-                    "hit_bounds": {
-                      "h": 56.0,
-                      "w": 64.0
-                    },
-                    "input_actions": [
-                      "ui_accept",
-                      "ui_right",
-                      "ui_cancel"
-                    ],
-                    "label": "Run Record Sale",
-                    "min_target_size": 44.0,
-                    "non_color_state": "work_1_ready",
-                    "owner_namespace": "scenario",
-                    "prompt": "Jazz Club Rent Party: Complete this operation or choose its identity-specific route.",
-                    "safe_exit": false,
-                    "state_label": "Work 1 station"
-                  },
-                  "op": "add",
-                  "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "scene_ops",
-                "effect": {
-                  "op": "move",
-                  "owner_namespace": "scenario",
-                  "zone_id": "work_0"
-                }
-              },
-              {
-                "family": "actor_ops",
-                "effect": {
-                  "op": "set_pose",
-                  "owner_namespace": "scenario",
-                  "pose": "station_move"
                 }
               }
             ],
@@ -12611,9 +12686,9 @@
           "actors": 0,
           "services": 0,
           "games": 0,
-          "routes": 0,
-          "anchors": 0,
-          "zones": 13
+          "routes": 1,
+          "anchors": 2,
+          "zones": 7
         },
         "reentry": {
           "expired": "expired",
@@ -12626,10 +12701,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "4050655c28b7d585e0fd5803de8a234f85ed5fcc42762c3d78949c86f99f8d7f",
-      "calculated_signature": "4050655c28b7d585e0fd5803de8a234f85ed5fcc42762c3d78949c86f99f8d7f",
-      "nearest_id": "jazz_club_union_trouble",
-      "nearest_similarity": 0.431055900621118
+      "authored_signature": "44116c71aa99260efb08605ecaf1caced33a2bf93841057926ff2e5493856098",
+      "calculated_signature": "44116c71aa99260efb08605ecaf1caced33a2bf93841057926ff2e5493856098",
+      "nearest_id": "bar_lock_in",
+      "nearest_similarity": 0.479665071770335
     },
     {
       "id": "jazz_club_union_trouble",
@@ -12638,6 +12713,14 @@
         "phases": [
           {
             "ops": [
+              {
+                "family": "scene_ops",
+                "effect": {
+                  "anchor_id": "union_picket",
+                  "op": "move",
+                  "owner_namespace": "scenario"
+                }
+              },
               {
                 "family": "transition_ops",
                 "effect": {
@@ -12733,14 +12816,6 @@
                 }
               },
               {
-                "family": "scene_ops",
-                "effect": {
-                  "op": "move",
-                  "owner_namespace": "scenario",
-                  "zone_id": "work_0"
-                }
-              },
-              {
                 "family": "actor_ops",
                 "effect": {
                   "op": "set_pose",
@@ -12832,6 +12907,14 @@
           {
             "ops": [
               {
+                "family": "actor_ops",
+                "effect": {
+                  "anchor_id": "union_manager",
+                  "op": "set_position",
+                  "owner_namespace": "scenario"
+                }
+              },
+              {
                 "family": "scene_ops",
                 "effect": {
                   "appearance": "stage_appearance_changed",
@@ -12914,14 +12997,6 @@
                   },
                   "op": "add",
                   "owner_namespace": "scenario"
-                }
-              },
-              {
-                "family": "actor_ops",
-                "effect": {
-                  "op": "set_position",
-                  "owner_namespace": "scenario",
-                  "zone_id": "work_1"
                 }
               }
             ],
@@ -13760,9 +13835,9 @@
           "actors": 0,
           "services": 0,
           "games": 0,
-          "routes": 0,
-          "anchors": 0,
-          "zones": 13
+          "routes": 1,
+          "anchors": 2,
+          "zones": 7
         },
         "reentry": {
           "expired": "expired",
@@ -13775,17 +13850,17 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "b98db8805cc785f04ae281d6778125f9de2a762746a031697edd1d98573620d7",
-      "calculated_signature": "b98db8805cc785f04ae281d6778125f9de2a762746a031697edd1d98573620d7",
+      "authored_signature": "20f4b11216f571ed1312fd9df2467caeac0e4c6ec300280c4c87d7349ad526ca",
+      "calculated_signature": "20f4b11216f571ed1312fd9df2467caeac0e4c6ec300280c4c87d7349ad526ca",
       "nearest_id": "bar_wake",
-      "nearest_similarity": 0.460361613351878
+      "nearest_similarity": 0.456310679611651
     }
   ],
   "pairwise_similarity": [
     {
       "left_id": "bar_darts_league_night",
       "right_id": "bar_dead_tuesday",
-      "similarity": 0.16869918699187,
+      "similarity": 0.200417536534447,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13797,7 +13872,7 @@
     {
       "left_id": "bar_darts_league_night",
       "right_id": "bar_live_band",
-      "similarity": 0.386051080550098,
+      "similarity": 0.363285024154589,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13809,9 +13884,9 @@
     {
       "left_id": "bar_darts_league_night",
       "right_id": "jazz_club_guest_legend",
-      "similarity": 0.664816870144284,
+      "similarity": 0.533742331288344,
       "equal_normalized_hash": false,
-      "status": "warning",
+      "status": "pass",
       "blocking": false,
       "masked_visual_evidence": {
 
@@ -13821,7 +13896,7 @@
     {
       "left_id": "bar_darts_league_night",
       "right_id": "jazz_club_recording_night",
-      "similarity": 0.250252270433905,
+      "similarity": 0.24024024024024,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13833,7 +13908,7 @@
     {
       "left_id": "bar_darts_league_night",
       "right_id": "jazz_club_rent_party",
-      "similarity": 0.348931841302136,
+      "similarity": 0.310276679841897,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13845,7 +13920,7 @@
     {
       "left_id": "bar_darts_league_night",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.318091451292247,
+      "similarity": 0.276227141482194,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13857,7 +13932,7 @@
     {
       "left_id": "bar_dead_tuesday",
       "right_id": "jazz_club_guest_legend",
-      "similarity": 0.16869918699187,
+      "similarity": 0.195426195426195,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13869,7 +13944,7 @@
     {
       "left_id": "bar_dead_tuesday",
       "right_id": "jazz_club_recording_night",
-      "similarity": 0.328849028400598,
+      "similarity": 0.317037037037037,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13881,7 +13956,7 @@
     {
       "left_id": "bar_dead_tuesday",
       "right_id": "jazz_club_rent_party",
-      "similarity": 0.226130653266332,
+      "similarity": 0.216957605985037,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13893,7 +13968,7 @@
     {
       "left_id": "bar_dead_tuesday",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.277486910994764,
+      "similarity": 0.267532467532468,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13905,9 +13980,9 @@
     {
       "left_id": "bar_fight_night",
       "right_id": "bar_darts_league_night",
-      "similarity": 0.662971175166297,
+      "similarity": 0.547987616099071,
       "equal_normalized_hash": false,
-      "status": "warning",
+      "status": "pass",
       "blocking": false,
       "masked_visual_evidence": {
 
@@ -13917,7 +13992,7 @@
     {
       "left_id": "bar_fight_night",
       "right_id": "bar_dead_tuesday",
-      "similarity": 0.169888097660224,
+      "similarity": 0.162790697674419,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13929,7 +14004,7 @@
     {
       "left_id": "bar_fight_night",
       "right_id": "bar_live_band",
-      "similarity": 0.416666666666667,
+      "similarity": 0.488396624472574,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13941,7 +14016,7 @@
     {
       "left_id": "bar_fight_night",
       "right_id": "bar_lock_in",
-      "similarity": 0.43248730964467,
+      "similarity": 0.505869797225187,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13953,7 +14028,7 @@
     {
       "left_id": "bar_fight_night",
       "right_id": "bar_payday_rush",
-      "similarity": 0.266871165644172,
+      "similarity": 0.224308300395257,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13965,9 +14040,9 @@
     {
       "left_id": "bar_fight_night",
       "right_id": "jazz_club_guest_legend",
-      "similarity": 0.616379310344828,
+      "similarity": 0.497005988023952,
       "equal_normalized_hash": false,
-      "status": "warning",
+      "status": "pass",
       "blocking": false,
       "masked_visual_evidence": {
 
@@ -13977,7 +14052,7 @@
     {
       "left_id": "bar_fight_night",
       "right_id": "jazz_club_recording_night",
-      "similarity": 0.236526946107784,
+      "similarity": 0.195945945945946,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -13989,7 +14064,7 @@
     {
       "left_id": "bar_fight_night",
       "right_id": "jazz_club_rent_party",
-      "similarity": 0.365602471678682,
+      "similarity": 0.418181818181818,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14001,7 +14076,7 @@
     {
       "left_id": "bar_fight_night",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.310276679841897,
+      "similarity": 0.265267175572519,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14013,7 +14088,7 @@
     {
       "left_id": "bar_live_band",
       "right_id": "bar_dead_tuesday",
-      "similarity": 0.177580466148724,
+      "similarity": 0.169790518191841,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14025,7 +14100,7 @@
     {
       "left_id": "bar_live_band",
       "right_id": "jazz_club_guest_legend",
-      "similarity": 0.386051080550098,
+      "similarity": 0.354126679462572,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14037,7 +14112,7 @@
     {
       "left_id": "bar_live_band",
       "right_id": "jazz_club_recording_night",
-      "similarity": 0.287793952967525,
+      "similarity": 0.240560949298813,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14049,7 +14124,7 @@
     {
       "left_id": "bar_live_band",
       "right_id": "jazz_club_rent_party",
-      "similarity": 0.362334801762115,
+      "similarity": 0.45358401880141,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14060,90 +14135,6 @@
     },
     {
       "left_id": "bar_live_band",
-      "right_id": "jazz_club_union_trouble",
-      "similarity": 0.340195016251354,
-      "equal_normalized_hash": false,
-      "status": "pass",
-      "blocking": false,
-      "masked_visual_evidence": {
-
-      },
-      "masked_visual_evidence_valid": false
-    },
-    {
-      "left_id": "bar_lock_in",
-      "right_id": "bar_darts_league_night",
-      "similarity": 0.401191658391261,
-      "equal_normalized_hash": false,
-      "status": "pass",
-      "blocking": false,
-      "masked_visual_evidence": {
-
-      },
-      "masked_visual_evidence_valid": false
-    },
-    {
-      "left_id": "bar_lock_in",
-      "right_id": "bar_dead_tuesday",
-      "similarity": 0.19481981981982,
-      "equal_normalized_hash": false,
-      "status": "pass",
-      "blocking": false,
-      "masked_visual_evidence": {
-
-      },
-      "masked_visual_evidence_valid": false
-    },
-    {
-      "left_id": "bar_lock_in",
-      "right_id": "bar_live_band",
-      "similarity": 0.673417721518987,
-      "equal_normalized_hash": false,
-      "status": "warning",
-      "blocking": false,
-      "masked_visual_evidence": {
-
-      },
-      "masked_visual_evidence_valid": false
-    },
-    {
-      "left_id": "bar_lock_in",
-      "right_id": "jazz_club_guest_legend",
-      "similarity": 0.365924491771539,
-      "equal_normalized_hash": false,
-      "status": "pass",
-      "blocking": false,
-      "masked_visual_evidence": {
-
-      },
-      "masked_visual_evidence_valid": false
-    },
-    {
-      "left_id": "bar_lock_in",
-      "right_id": "jazz_club_recording_night",
-      "similarity": 0.269315673289183,
-      "equal_normalized_hash": false,
-      "status": "pass",
-      "blocking": false,
-      "masked_visual_evidence": {
-
-      },
-      "masked_visual_evidence_valid": false
-    },
-    {
-      "left_id": "bar_lock_in",
-      "right_id": "jazz_club_rent_party",
-      "similarity": 0.38521836506159,
-      "equal_normalized_hash": false,
-      "status": "pass",
-      "blocking": false,
-      "masked_visual_evidence": {
-
-      },
-      "masked_visual_evidence_valid": false
-    },
-    {
-      "left_id": "bar_lock_in",
       "right_id": "jazz_club_union_trouble",
       "similarity": 0.318763326226013,
       "equal_normalized_hash": false,
@@ -14155,9 +14146,93 @@
       "masked_visual_evidence_valid": false
     },
     {
+      "left_id": "bar_lock_in",
+      "right_id": "bar_darts_league_night",
+      "similarity": 0.3779296875,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_lock_in",
+      "right_id": "bar_dead_tuesday",
+      "similarity": 0.186800894854586,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_lock_in",
+      "right_id": "bar_live_band",
+      "similarity": 0.669191919191919,
+      "equal_normalized_hash": false,
+      "status": "warning",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_lock_in",
+      "right_id": "jazz_club_guest_legend",
+      "similarity": 0.334910122989593,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_lock_in",
+      "right_id": "jazz_club_recording_night",
+      "similarity": 0.223404255319149,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_lock_in",
+      "right_id": "jazz_club_rent_party",
+      "similarity": 0.479665071770335,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
+      "left_id": "bar_lock_in",
+      "right_id": "jazz_club_union_trouble",
+      "similarity": 0.29800629590766,
+      "equal_normalized_hash": false,
+      "status": "pass",
+      "blocking": false,
+      "masked_visual_evidence": {
+
+      },
+      "masked_visual_evidence_valid": false
+    },
+    {
       "left_id": "bar_payday_rush",
       "right_id": "bar_darts_league_night",
-      "similarity": 0.281282316442606,
+      "similarity": 0.270769230769231,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14169,7 +14244,7 @@
     {
       "left_id": "bar_payday_rush",
       "right_id": "bar_dead_tuesday",
-      "similarity": 0.328849028400598,
+      "similarity": 0.317037037037037,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14181,7 +14256,7 @@
     {
       "left_id": "bar_payday_rush",
       "right_id": "bar_live_band",
-      "similarity": 0.284916201117318,
+      "similarity": 0.23789020452099,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14193,7 +14268,7 @@
     {
       "left_id": "bar_payday_rush",
       "right_id": "bar_lock_in",
-      "similarity": 0.303854875283447,
+      "similarity": 0.255458515283843,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14205,7 +14280,7 @@
     {
       "left_id": "bar_payday_rush",
       "right_id": "jazz_club_guest_legend",
-      "similarity": 0.24773413897281,
+      "similarity": 0.290625,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14217,7 +14292,7 @@
     {
       "left_id": "bar_payday_rush",
       "right_id": "jazz_club_recording_night",
-      "similarity": 0.627287853577371,
+      "similarity": 0.621890547263682,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -14229,7 +14304,7 @@
     {
       "left_id": "bar_payday_rush",
       "right_id": "jazz_club_rent_party",
-      "similarity": 0.309963099630996,
+      "similarity": 0.29404617253949,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14241,7 +14316,7 @@
     {
       "left_id": "bar_payday_rush",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.405013192612137,
+      "similarity": 0.401315789473684,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14253,7 +14328,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "bar_darts_league_night",
-      "similarity": 0.250255362614913,
+      "similarity": 0.240121580547112,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14265,7 +14340,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "bar_dead_tuesday",
-      "similarity": 0.336391437308869,
+      "similarity": 0.324242424242424,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14277,7 +14352,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "bar_fight_night",
-      "similarity": 0.236363636363636,
+      "similarity": 0.1953125,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14289,7 +14364,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "bar_live_band",
-      "similarity": 0.288308740068104,
+      "similarity": 0.240437158469945,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14301,7 +14376,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "bar_lock_in",
-      "similarity": 0.269574944071588,
+      "similarity": 0.223060344827586,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14313,7 +14388,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "bar_payday_rush",
-      "similarity": 0.607679465776294,
+      "similarity": 0.602329450915141,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -14325,7 +14400,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "jazz_club_guest_legend",
-      "similarity": 0.284365162644281,
+      "similarity": 0.330434782608696,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14337,7 +14412,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "jazz_club_recording_night",
-      "similarity": 0.683566433566434,
+      "similarity": 0.677700348432056,
       "equal_normalized_hash": false,
       "status": "warning",
       "blocking": false,
@@ -14349,7 +14424,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "jazz_club_rent_party",
-      "similarity": 0.271186440677966,
+      "similarity": 0.255980861244019,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14361,7 +14436,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.460361613351878,
+      "similarity": 0.456310679611651,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14373,7 +14448,7 @@
     {
       "left_id": "jazz_club_guest_legend",
       "right_id": "jazz_club_recording_night",
-      "similarity": 0.283937823834197,
+      "similarity": 0.329399141630901,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14385,7 +14460,7 @@
     {
       "left_id": "jazz_club_guest_legend",
       "right_id": "jazz_club_rent_party",
-      "similarity": 0.314172447968285,
+      "similarity": 0.267686424474187,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14397,7 +14472,7 @@
     {
       "left_id": "jazz_club_guest_legend",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.353061224489796,
+      "similarity": 0.40169133192389,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14409,7 +14484,7 @@
     {
       "left_id": "jazz_club_recording_night",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.454918032786885,
+      "similarity": 0.450953678474114,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14421,7 +14496,7 @@
     {
       "left_id": "jazz_club_rent_party",
       "right_id": "jazz_club_recording_night",
-      "similarity": 0.272401433691756,
+      "similarity": 0.257378984651712,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14433,7 +14508,7 @@
     {
       "left_id": "jazz_club_rent_party",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.431055900621118,
+      "similarity": 0.443609022556391,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -14444,24 +14519,21 @@
     }
   ],
   "assembly_evidence_needed": [
-    "scenario bar_wake is invalid: [\"scenario bar_wake sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario bar_wake sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario bar_wake sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario bar_wake sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario bar_wake sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario bar_wake sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario bar_wake sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\",\"scenario bar_wake sequence declared_targets.zones identity base::zone:work_0 has no independent target catalog proof.\",\"scenario bar_wake sequence declared_targets.zones identity base::zone:work_1 has no independent target catalog proof.\",\"scenario bar_wake sequence declared_targets.zones identity base::zone:work_2 has no independent target catalog proof.\",\"scenario bar_wake sequence declared_targets.zones identity base::zone:work_3 has no independent target catalog proof.\",\"scenario bar_wake sequence declared_targets.zones identity base::zone:work_4 has no independent target catalog proof.\",\"scenario bar_wake sequence declared_targets.zones identity base::zone:work_5 has no independent target catalog proof.\"]",
-    "scenario bar_fight_night is invalid: [\"scenario bar_fight_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.zones identity base::zone:work_0 has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.zones identity base::zone:work_1 has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.zones identity base::zone:work_2 has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.zones identity base::zone:work_3 has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.zones identity base::zone:work_4 has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.zones identity base::zone:work_5 has no independent target catalog proof.\"]",
-    "scenario bar_payday_rush is invalid: [\"scenario bar_payday_rush sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario bar_payday_rush sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario bar_payday_rush sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario bar_payday_rush sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario bar_payday_rush sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario bar_payday_rush sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario bar_payday_rush sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\",\"scenario bar_payday_rush sequence declared_targets.zones identity base::zone:work_0 has no independent target catalog proof.\",\"scenario bar_payday_rush sequence declared_targets.zones identity base::zone:work_1 has no independent target catalog proof.\",\"scenario bar_payday_rush sequence declared_targets.zones identity base::zone:work_2 has no independent target catalog proof.\",\"scenario bar_payday_rush sequence declared_targets.zones identity base::zone:work_3 has no independent target catalog proof.\",\"scenario bar_payday_rush sequence declared_targets.zones identity base::zone:work_4 has no independent target catalog proof.\",\"scenario bar_payday_rush sequence declared_targets.zones identity base::zone:work_5 has no independent target catalog proof.\"]",
-    "scenario bar_lock_in is invalid: [\"scenario bar_lock_in sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario bar_lock_in sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario bar_lock_in sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario bar_lock_in sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario bar_lock_in sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario bar_lock_in sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario bar_lock_in sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\",\"scenario bar_lock_in sequence declared_targets.zones identity base::zone:work_0 has no independent target catalog proof.\",\"scenario bar_lock_in sequence declared_targets.zones identity base::zone:work_1 has no independent target catalog proof.\",\"scenario bar_lock_in sequence declared_targets.zones identity base::zone:work_2 has no independent target catalog proof.\",\"scenario bar_lock_in sequence declared_targets.zones identity base::zone:work_3 has no independent target catalog proof.\",\"scenario bar_lock_in sequence declared_targets.zones identity base::zone:work_4 has no independent target catalog proof.\",\"scenario bar_lock_in sequence declared_targets.zones identity base::zone:work_5 has no independent target catalog proof.\"]",
-    "scenario bar_darts_league_night is invalid: [\"scenario bar_darts_league_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.zones identity base::zone:work_0 has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.zones identity base::zone:work_1 has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.zones identity base::zone:work_2 has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.zones identity base::zone:work_3 has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.zones identity base::zone:work_4 has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.zones identity base::zone:work_5 has no independent target catalog proof.\"]",
-    "scenario bar_live_band is invalid: [\"scenario bar_live_band sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario bar_live_band sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario bar_live_band sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario bar_live_band sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario bar_live_band sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario bar_live_band sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario bar_live_band sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\",\"scenario bar_live_band sequence declared_targets.zones identity base::zone:work_0 has no independent target catalog proof.\",\"scenario bar_live_band sequence declared_targets.zones identity base::zone:work_1 has no independent target catalog proof.\",\"scenario bar_live_band sequence declared_targets.zones identity base::zone:work_2 has no independent target catalog proof.\",\"scenario bar_live_band sequence declared_targets.zones identity base::zone:work_3 has no independent target catalog proof.\",\"scenario bar_live_band sequence declared_targets.zones identity base::zone:work_4 has no independent target catalog proof.\",\"scenario bar_live_band sequence declared_targets.zones identity base::zone:work_5 has no independent target catalog proof.\"]",
-    "scenario bar_dead_tuesday is invalid: [\"scenario bar_dead_tuesday sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario bar_dead_tuesday sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario bar_dead_tuesday sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario bar_dead_tuesday sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario bar_dead_tuesday sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario bar_dead_tuesday sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario bar_dead_tuesday sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\",\"scenario bar_dead_tuesday sequence declared_targets.zones identity base::zone:work_0 has no independent target catalog proof.\",\"scenario bar_dead_tuesday sequence declared_targets.zones identity base::zone:work_1 has no independent target catalog proof.\",\"scenario bar_dead_tuesday sequence declared_targets.zones identity base::zone:work_2 has no independent target catalog proof.\",\"scenario bar_dead_tuesday sequence declared_targets.zones identity base::zone:work_3 has no independent target catalog proof.\",\"scenario bar_dead_tuesday sequence declared_targets.zones identity base::zone:work_4 has no independent target catalog proof.\",\"scenario bar_dead_tuesday sequence declared_targets.zones identity base::zone:work_5 has no independent target catalog proof.\"]",
-    "scenario jazz_club_guest_legend is invalid: [\"scenario jazz_club_guest_legend sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario jazz_club_guest_legend sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario jazz_club_guest_legend sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario jazz_club_guest_legend sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario jazz_club_guest_legend sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario jazz_club_guest_legend sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario jazz_club_guest_legend sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\",\"scenario jazz_club_guest_legend sequence declared_targets.zones identity base::zone:work_0 has no independent target catalog proof.\",\"scenario jazz_club_guest_legend sequence declared_targets.zones identity base::zone:work_1 has no independent target catalog proof.\",\"scenario jazz_club_guest_legend sequence declared_targets.zones identity base::zone:work_2 has no independent target catalog proof.\",\"scenario jazz_club_guest_legend sequence declared_targets.zones identity base::zone:work_3 has no independent target catalog proof.\",\"scenario jazz_club_guest_legend sequence declared_targets.zones identity base::zone:work_4 has no independent target catalog proof.\",\"scenario jazz_club_guest_legend sequence declared_targets.zones identity base::zone:work_5 has no independent target catalog proof.\"]",
-    "scenario jazz_club_rent_party is invalid: [\"scenario jazz_club_rent_party sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.zones identity base::zone:work_0 has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.zones identity base::zone:work_1 has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.zones identity base::zone:work_2 has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.zones identity base::zone:work_3 has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.zones identity base::zone:work_4 has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.zones identity base::zone:work_5 has no independent target catalog proof.\"]",
-    "scenario jazz_club_recording_night is invalid: [\"scenario jazz_club_recording_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.zones identity base::zone:work_0 has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.zones identity base::zone:work_1 has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.zones identity base::zone:work_2 has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.zones identity base::zone:work_3 has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.zones identity base::zone:work_4 has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.zones identity base::zone:work_5 has no independent target catalog proof.\"]",
-    "scenario jazz_club_union_trouble is invalid: [\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:work_0 has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:work_1 has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:work_2 has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:work_3 has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:work_4 has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:work_5 has no independent target catalog proof.\"]",
-    "scenario bar_wake vs bar_payday_rush: 0.608 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario bar_wake vs jazz_club_recording_night: 0.684 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario bar_fight_night vs bar_darts_league_night: 0.663 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario bar_fight_night vs jazz_club_guest_legend: 0.616 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario bar_payday_rush vs jazz_club_recording_night: 0.627 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario bar_lock_in vs bar_live_band: 0.673 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario bar_darts_league_night vs jazz_club_guest_legend: 0.665 (warning). Missing receipt-bound masked visual evidence."
+    "scenario bar_wake is invalid: [\"scenario bar_wake sequence declared_targets.routes identity base::world:motel has no independent target catalog proof.\",\"scenario bar_wake sequence declared_targets.anchors identity base::anchor:wake_memorial_tables has no independent target catalog proof.\",\"scenario bar_wake sequence declared_targets.anchors identity base::anchor:wake_host has no independent target catalog proof.\",\"scenario bar_wake sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario bar_wake sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario bar_wake sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario bar_wake sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario bar_wake sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario bar_wake sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario bar_wake sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
+    "scenario bar_fight_night is invalid: [\"scenario bar_fight_night sequence declared_targets.routes identity base::world:kitty_cat_lounge has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.anchors identity base::anchor:fight_toppled_chair has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.anchors identity base::anchor:fight_right_brawler has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
+    "scenario bar_payday_rush is invalid: [\"scenario bar_payday_rush sequence declared_targets.routes identity base::world:corner_store has no independent target catalog proof.\",\"scenario bar_payday_rush sequence declared_targets.anchors identity base::anchor:payday_order_rail has no independent target catalog proof.\",\"scenario bar_payday_rush sequence declared_targets.anchors identity base::anchor:payday_runner has no independent target catalog proof.\",\"scenario bar_payday_rush sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario bar_payday_rush sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario bar_payday_rush sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario bar_payday_rush sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario bar_payday_rush sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario bar_payday_rush sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario bar_payday_rush sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
+    "scenario bar_lock_in is invalid: [\"scenario bar_lock_in sequence declared_targets.routes identity base::world:delta_queen has no independent target catalog proof.\",\"scenario bar_lock_in sequence declared_targets.anchors identity base::anchor:lockin_shutters has no independent target catalog proof.\",\"scenario bar_lock_in sequence declared_targets.anchors identity base::anchor:lockin_regular has no independent target catalog proof.\",\"scenario bar_lock_in sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario bar_lock_in sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario bar_lock_in sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario bar_lock_in sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario bar_lock_in sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario bar_lock_in sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario bar_lock_in sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
+    "scenario bar_darts_league_night is invalid: [\"scenario bar_darts_league_night sequence declared_targets.routes identity base::world:corner_store has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.anchors identity base::anchor:darts_oche has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.anchors identity base::anchor:darts_scorer has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
+    "scenario bar_live_band is invalid: [\"scenario bar_live_band sequence declared_targets.routes identity base::world:kitty_cat_lounge has no independent target catalog proof.\",\"scenario bar_live_band sequence declared_targets.anchors identity base::anchor:live_band_speakers has no independent target catalog proof.\",\"scenario bar_live_band sequence declared_targets.anchors identity base::anchor:live_band_runner has no independent target catalog proof.\",\"scenario bar_live_band sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario bar_live_band sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario bar_live_band sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario bar_live_band sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario bar_live_band sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario bar_live_band sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario bar_live_band sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
+    "scenario bar_dead_tuesday is invalid: [\"scenario bar_dead_tuesday sequence declared_targets.routes identity base::world:motel has no independent target catalog proof.\",\"scenario bar_dead_tuesday sequence declared_targets.anchors identity base::anchor:dead_tuesday_bartender has no independent target catalog proof.\",\"scenario bar_dead_tuesday sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario bar_dead_tuesday sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario bar_dead_tuesday sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario bar_dead_tuesday sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario bar_dead_tuesday sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario bar_dead_tuesday sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario bar_dead_tuesday sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
+    "scenario jazz_club_guest_legend is invalid: [\"scenario jazz_club_guest_legend sequence declared_targets.routes identity base::world:bar has no independent target catalog proof.\",\"scenario jazz_club_guest_legend sequence declared_targets.anchors identity base::anchor:guest_legend_table has no independent target catalog proof.\",\"scenario jazz_club_guest_legend sequence declared_targets.anchors identity base::anchor:guest_legend_stage_manager has no independent target catalog proof.\",\"scenario jazz_club_guest_legend sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario jazz_club_guest_legend sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario jazz_club_guest_legend sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario jazz_club_guest_legend sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario jazz_club_guest_legend sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario jazz_club_guest_legend sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario jazz_club_guest_legend sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
+    "scenario jazz_club_rent_party is invalid: [\"scenario jazz_club_rent_party sequence declared_targets.routes identity base::world:motel has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.anchors identity base::anchor:rent_party_donation has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.anchors identity base::anchor:rent_party_creditor has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario jazz_club_rent_party sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
+    "scenario jazz_club_recording_night is invalid: [\"scenario jazz_club_recording_night sequence declared_targets.routes identity base::world:corner_store has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.anchors identity base::anchor:recording_microphone has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.anchors identity base::anchor:recording_audience has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario jazz_club_recording_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
+    "scenario jazz_club_union_trouble is invalid: [\"scenario jazz_club_union_trouble sequence declared_targets.routes identity base::world:bar has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.anchors identity base::anchor:union_picket has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.anchors identity base::anchor:union_manager has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario jazz_club_union_trouble sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
+    "scenario bar_wake vs bar_payday_rush: 0.602 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario bar_wake vs jazz_club_recording_night: 0.678 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario bar_payday_rush vs jazz_club_recording_night: 0.622 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario bar_lock_in vs bar_live_band: 0.669 (warning). Missing receipt-bound masked visual evidence."
   ],
   "pair_count": 55
 }
