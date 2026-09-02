@@ -640,9 +640,16 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 	var now_msec := int(ui_state.get("surface_time_msec", 0))
 	var publish_presentation := CoinPusherLiveSessionScript.presentation_publish_due(machine, now_msec)
 	var advanced := CoinPusherLiveSessionScript.advance(machine, now_msec, publish_presentation)
-	var physics_events: Array = advanced.get("events", []) if typeof(advanced.get("events", [])) == TYPE_ARRAY else []
-	_consume_live_physics_events(run_state, machine, physics_events)
-	if physics_events.any(func(event: Variant) -> bool: return typeof(event) == TYPE_DICTIONARY and str((event as Dictionary).get("kind", "")) in ["tray", "gutter"]):
+	var advanced_events: Variant = advanced.get("events")
+	var physics_events: Array = advanced_events if typeof(advanced_events) == TYPE_ARRAY else []
+	if not physics_events.is_empty():
+		_consume_live_physics_events(run_state, machine, physics_events)
+	var terminal_event_seen := false
+	for event_value in physics_events:
+		if typeof(event_value) == TYPE_DICTIONARY and str((event_value as Dictionary).get("kind", "")) in ["tray", "gutter"]:
+			terminal_event_seen = true
+			break
+	if terminal_event_seen:
 		_register_pile_rumor(run_state, environment, machine)
 	_advance_tell_decay(machine, int(advanced.get("ticks", 0)))
 	var request_autosave := false
@@ -659,15 +666,18 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 			session["last_persisted_tick"] = int(simulation.get("tick", 0))
 			_write_live_durable(run_state, environment, machine, true)
 			request_autosave = true
-	var presentation_session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
+	var presentation_session_value: Variant = machine.get("live_session")
+	var presentation_session: Dictionary = presentation_session_value if typeof(presentation_session_value) == TYPE_DICTIONARY else {}
 	# The production Web canvas intentionally presents idle machine motion at a
 	# measured low-detail cadence. Keep the authority/solver at 60 Hz, but only
 	# project its 300-body presentation tuple when that tuple can become visible.
 	# Input boundaries mark themselves due so accepted controls still appear on
 	# the very next live tick.
 	var simulation := _simulation(machine)
-	var tray: Array = simulation.get("tray_ledger", []) if typeof(simulation.get("tray_ledger", [])) == TYPE_ARRAY else []
-	var invariants: Dictionary = simulation.get("last_invariants", {}) if typeof(simulation.get("last_invariants", {})) == TYPE_DICTIONARY else {}
+	var tray_value: Variant = simulation.get("tray_ledger")
+	var invariants_value: Variant = simulation.get("last_invariants")
+	var tray: Array = tray_value if typeof(tray_value) == TYPE_ARRAY else []
+	var invariants: Dictionary = invariants_value if typeof(invariants_value) == TYPE_DICTIONARY else {}
 	var patch := _v3_realtime_presentation_patch(machine, _current_surface_state, run_state, environment) if publish_presentation else {
 		"coin_pusher_body_count": int(invariants.get("active", 0)),
 		"coin_pusher_tray_count": tray.size(),
@@ -1060,14 +1070,16 @@ func _normalize_machine_state(source: Dictionary, run_state: RunState = null, en
 
 
 func _simulation(machine: Dictionary) -> Dictionary:
-	var value: Variant = machine.get("simulation", {})
-	if typeof(value) != TYPE_DICTIONARY:
-		machine["simulation"] = {}
-	return machine.get("simulation", {}) as Dictionary
+	var value: Variant = machine.get("simulation")
+	if typeof(value) == TYPE_DICTIONARY:
+		return value as Dictionary
+	var replacement: Dictionary = {}
+	machine["simulation"] = replacement
+	return replacement
 
 
 func _has_v3_simulation(machine: Dictionary) -> bool:
-	var simulation_value: Variant = machine.get("simulation", {})
+	var simulation_value: Variant = machine.get("simulation")
 	return typeof(simulation_value) == TYPE_DICTIONARY \
 		and str((simulation_value as Dictionary).get("schema", "")) == CoinPusherSolverScript.SCHEMA
 
@@ -1334,28 +1346,33 @@ func _append_realtime_change(patch: Dictionary, current_surface_state: Dictionar
 func _machine_goal_state_for_session(machine: Dictionary, simulation: Dictionary, session: Dictionary) -> Dictionary:
 	var variation_id := str(machine.get("variation_id", "quarter_falls"))
 	var variation_state := _variation_state(machine)
-	var cache_key := variation_id
+	var cache_a := 0
+	var cache_b := 0
+	var cache_c := 0
 	match variation_id:
 		"jackpot_ridge":
-			cache_key += "|%d|%d|%d" % [
-				int(variation_state.get("ridge_goal_progress", 0)),
-				int(variation_state.get("ridge_run_cycles_remaining", 0)),
-				JackpotRidgeScript.payout_multiplier(variation_state),
-			]
+			cache_a = int(variation_state.get("ridge_goal_progress", 0))
+			cache_b = int(variation_state.get("ridge_run_cycles_remaining", 0))
+			cache_c = JackpotRidgeScript.payout_multiplier(variation_state)
 		"vault_drop":
-			cache_key += "|%d|%d|%d" % [
-				int(variation_state.get("meter_value", 0)),
-				int(variation_state.get("key_streak_progress", 0)),
-				1 if bool(variation_state.get("vault_round_active", false)) else 0,
-			]
+			cache_a = int(variation_state.get("meter_value", 0))
+			cache_b = int(variation_state.get("key_streak_progress", 0))
+			cache_c = 1 if bool(variation_state.get("vault_round_active", false)) else 0
 		_:
-			cache_key += "|%d" % int(machine.get("prize_goal_progress", 0))
+			cache_a = int(machine.get("prize_goal_progress", 0))
 	var cached_value: Variant = session.get("presentation_goal_state", {})
-	if str(session.get("presentation_goal_state_key", "")) == cache_key and typeof(cached_value) == TYPE_DICTIONARY:
+	if str(session.get("presentation_goal_state_variation", "")) == variation_id \
+			and int(session.get("presentation_goal_state_a", -1)) == cache_a \
+			and int(session.get("presentation_goal_state_b", -1)) == cache_b \
+			and int(session.get("presentation_goal_state_c", -1)) == cache_c \
+			and typeof(cached_value) == TYPE_DICTIONARY:
 		return cached_value as Dictionary
 	var goal := _machine_goal_state(machine, simulation)
 	if not session.is_empty():
-		session["presentation_goal_state_key"] = cache_key
+		session["presentation_goal_state_variation"] = variation_id
+		session["presentation_goal_state_a"] = cache_a
+		session["presentation_goal_state_b"] = cache_b
+		session["presentation_goal_state_c"] = cache_c
 		session["presentation_goal_state"] = goal
 	return goal
 
@@ -1373,7 +1390,10 @@ func _realtime_binding_signature(machine: Dictionary, simulation: Dictionary, tr
 
 func _queued_drop_count(machine: Dictionary) -> int:
 	var total := 0
-	for item_value in machine.get("drop_queue", []):
+	var queue_value: Variant = machine.get("drop_queue")
+	if typeof(queue_value) != TYPE_ARRAY:
+		return total
+	for item_value in queue_value as Array:
 		if typeof(item_value) == TYPE_DICTIONARY:
 			total += maxi(0, int((item_value as Dictionary).get("remaining", 0)))
 	return total
@@ -1876,12 +1896,22 @@ func _consume_live_physics_events(run_state: RunState, machine: Dictionary, even
 
 
 func _presentation_audio_events(machine: Dictionary, physics_events: Array) -> Array:
-	var result: Array = []
+	var session_value: Variant = machine.get("live_session")
+	var session: Dictionary = session_value if typeof(session_value) == TYPE_DICTIONARY else {}
+	var result_value: Variant = session.get("presentation_audio_scratch")
+	var result: Array = result_value if typeof(result_value) == TYPE_ARRAY else []
+	result.clear()
+	if not session.is_empty():
+		session["presentation_audio_scratch"] = result
 	var good_drop_count := 0
 	var bad_drop_count := 0
 	var cup_count := 0
 	var feature_bank_count := 0
-	var feature_bank_kinds: Array = []
+	var feature_kind_value: Variant = session.get("presentation_audio_kind_scratch")
+	var feature_bank_kinds: Array = feature_kind_value if typeof(feature_kind_value) == TYPE_ARRAY else []
+	feature_bank_kinds.clear()
+	if not session.is_empty():
+		session["presentation_audio_kind_scratch"] = feature_bank_kinds
 	var tray_count := 0
 	var impact_count := 0
 	var strongest_impact := 0
@@ -1947,14 +1977,17 @@ func _presentation_audio_events(machine: Dictionary, physics_events: Array) -> A
 	if gutter_count > 0:
 		result.append({"kind": "gutter_loss", "intensity_milli": clampi(520 + (gutter_count - 1) * 45, 520, 880), "metadata": {"group_count": gutter_count}})
 	_append_motion_audio_events(machine, result)
-	return result
+	# The canvas retains published values. Only the private empty scratch may be
+	# shared; preserve every emitted event until a newer serial is published.
+	return result.duplicate(true) if not result.is_empty() else result
 
 
 func _append_motion_audio_events(machine: Dictionary, result: Array) -> void:
 	# Classify ratchet/slide sound from the same consecutive public views the
 	# renderer consumes. Solver contact events remain mechanics evidence; they do
 	# not get relabeled as a cabinet sound merely because a body is awake.
-	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
+	var session_value: Variant = machine.get("live_session")
+	var session: Dictionary = session_value if typeof(session_value) == TYPE_DICTIONARY else {}
 	var simulation := _simulation(machine)
 	var previous_face := int(session.get("presentation_previous_face_y", simulation.get("face_y", 0)))
 	var current_face := int(session.get("presentation_current_face_y", simulation.get("face_y", 0)))
@@ -1968,6 +2001,8 @@ func _append_motion_audio_events(machine: Dictionary, result: Array) -> void:
 	var last_slide_tick := int(session.get("presentation_last_slide_tick", -12))
 	var classify_plate := retracting and simulation_tick - last_plate_tick >= 6
 	var classify_slide := pushing and int(simulation.get("motor_rate_fp", 0)) > 0 and simulation_tick - last_slide_tick >= 12
+	if not classify_plate and not classify_slide:
+		return
 	var native_motion: Dictionary = session.get("presentation_motion", {}) if typeof(session.get("presentation_motion", {})) == TYPE_DICTIONARY else {}
 	if bool(native_motion.get("valid", false)):
 		# The Web native step already classified the exact consecutive packed
@@ -2270,10 +2305,12 @@ func _night_id(run_state: RunState) -> String:
 
 
 func _variation_state(machine: Dictionary) -> Dictionary:
-	var value: Variant = machine.get("variation_state", {})
-	if typeof(value) != TYPE_DICTIONARY:
-		machine["variation_state"] = {}
-	return machine.get("variation_state", {}) as Dictionary
+	var value: Variant = machine.get("variation_state")
+	if typeof(value) == TYPE_DICTIONARY:
+		return value as Dictionary
+	var replacement: Dictionary = {}
+	machine["variation_state"] = replacement
+	return replacement
 
 
 func _prepare_variation_action(machine: Dictionary) -> void:
@@ -2563,7 +2600,7 @@ func _digest_state(machine: Dictionary) -> Dictionary:
 
 
 func _tuning() -> Dictionary:
-	var value: Variant = definition.get("coin_pusher_tuning", {})
+	var value: Variant = definition.get("coin_pusher_tuning")
 	return value if typeof(value) == TYPE_DICTIONARY else {}
 
 

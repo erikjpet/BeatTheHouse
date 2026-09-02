@@ -80,6 +80,12 @@ static func begin(machine: Dictionary, machine_definition: Dictionary, seed: int
 		"presentation_view_serial": 0,
 		"presentation_last_publish_msec": -1,
 		"presentation_audio_serial": 0,
+		# Empty authority ticks dominate a live cabinet. Reuse these private
+		# presentation-only arrays so the Web main thread does not create two
+		# short-lived containers on every 60 Hz tick. Non-empty audio results are
+		# copied before publication, so a later clear can never mutate canvas state.
+		"presentation_audio_scratch": [],
+		"presentation_audio_kind_scratch": [],
 		"presentation_motion": {},
 		# A fresh authority gets a new generation even when deterministic fixture
 		# re-entry deliberately reuses the same seed.
@@ -120,7 +126,8 @@ static func queue_input(machine: Dictionary, input: Dictionary) -> Dictionary:
 static func presentation_publish_due(machine: Dictionary, now_msec: int) -> bool:
 	if not OS.has_feature("web"):
 		return true
-	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
+	var session_value: Variant = machine.get("live_session")
+	var session: Dictionary = session_value if typeof(session_value) == TYPE_DICTIONARY else {}
 	if session.is_empty():
 		return true
 	var last_publish_msec := int(session.get("presentation_last_publish_msec", -1))
@@ -128,7 +135,8 @@ static func presentation_publish_due(machine: Dictionary, now_msec: int) -> bool
 
 
 static func mark_presentation_published(machine: Dictionary, now_msec: int) -> void:
-	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
+	var session_value: Variant = machine.get("live_session")
+	var session: Dictionary = session_value if typeof(session_value) == TYPE_DICTIONARY else {}
 	if not session.is_empty():
 		session["presentation_last_publish_msec"] = now_msec
 
@@ -158,8 +166,10 @@ static func enqueue_drops(machine: Dictionary, request: Dictionary, count: int) 
 
 
 static func advance(machine: Dictionary, now_msec: int, capture_presentation: bool = true) -> Dictionary:
-	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
-	var simulation: Dictionary = machine.get("simulation", {}) if typeof(machine.get("simulation", {})) == TYPE_DICTIONARY else {}
+	var session_value: Variant = machine.get("live_session")
+	var simulation_value: Variant = machine.get("simulation")
+	var session: Dictionary = session_value if typeof(session_value) == TYPE_DICTIONARY else {}
+	var simulation: Dictionary = simulation_value if typeof(simulation_value) == TYPE_DICTIONARY else {}
 	if session.is_empty() or simulation.is_empty() or not bool(session.get("open", false)) or bool(session.get("settling_out", false)):
 		return {"ticks": 0, "events": []}
 	var previous := int(session.get("last_clock_msec", -1))
@@ -423,10 +433,12 @@ static func _session_rng(session: Dictionary) -> RngStream:
 
 
 static func all_steady(machine: Dictionary, motor_running: bool = true) -> bool:
-	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
+	var session_value: Variant = machine.get("live_session")
+	var session: Dictionary = session_value if typeof(session_value) == TYPE_DICTIONARY else {}
 	if bool(session.get("native_body_state_dirty", false)):
 		return bool(session.get("native_steady_with_motor" if motor_running else "native_steady_without_motor", false))
-	var simulation: Dictionary = machine.get("simulation", {}) if typeof(machine.get("simulation", {})) == TYPE_DICTIONARY else {}
+	var simulation_value: Variant = machine.get("simulation")
+	var simulation: Dictionary = simulation_value if typeof(simulation_value) == TYPE_DICTIONARY else {}
 	return CoinPusherSolverScript.all_steady(simulation, motor_running)
 
 
@@ -445,8 +457,8 @@ static func sync_native_body_state(machine: Dictionary) -> void:
 
 
 static func _step_traced_ticks(machine: Dictionary, tick_count: int, capture_presentation: bool = true) -> Dictionary:
-	var session: Dictionary = machine.get("live_session", {})
-	var simulation: Dictionary = machine.get("simulation", {})
+	var session: Dictionary = machine.get("live_session")
+	var simulation: Dictionary = machine.get("simulation")
 	var all_events: Array = []
 	var safe_tick_count := maxi(0, tick_count)
 	var previous_views: Array = []
@@ -476,11 +488,12 @@ static func _step_traced_ticks(machine: Dictionary, tick_count: int, capture_pre
 		var chunk_ticks := remaining
 		if remaining > 1 and not native_batch:
 			chunk_ticks = remaining - 1
-		var queue: Array = machine.get("drop_queue", []) if typeof(machine.get("drop_queue", [])) == TYPE_ARRAY else []
+		var queue_value: Variant = machine.get("drop_queue")
+		var queue: Array = queue_value if typeof(queue_value) == TYPE_ARRAY else []
 		if not queue.is_empty() and typeof(queue[0]) == TYPE_DICTIONARY:
 			var next_emit_tick := int((queue[0] as Dictionary).get("next_emit_tick", tick_value))
 			chunk_ticks = mini(chunk_ticks, 1 if next_emit_tick <= tick_value else next_emit_tick - tick_value)
-		var trace_slice_value: Variant = session.get("native_trace_slice_scratch", [])
+		var trace_slice_value: Variant = session.get("native_trace_slice_scratch")
 		var trace_slice: Array = trace_slice_value if typeof(trace_slice_value) == TYPE_ARRAY else []
 		trace_slice.clear()
 		session["native_trace_slice_scratch"] = trace_slice
@@ -494,7 +507,7 @@ static func _step_traced_ticks(machine: Dictionary, tick_count: int, capture_pre
 			cursor += 1
 		session["input_cursor"] = cursor
 		var is_final_chunk := chunk_ticks == remaining
-		var step_config_value: Variant = session.get("native_step_config_scratch", {})
+		var step_config_value: Variant = session.get("native_step_config_scratch")
 		var step_config: Dictionary = step_config_value if typeof(step_config_value) == TYPE_DICTIONARY else {}
 		session["native_step_config_scratch"] = step_config
 		step_config["input_trace"] = trace_slice
@@ -516,7 +529,8 @@ static func _step_traced_ticks(machine: Dictionary, tick_count: int, capture_pre
 		step_config.erase("rng")
 		final_result = result
 		session["native_cache_reset"] = false
-		var result_events: Array = result.get("events", []) if typeof(result.get("events", [])) == TYPE_ARRAY else []
+		var result_events_value: Variant = result.get("events")
+		var result_events: Array = result_events_value if typeof(result_events_value) == TYPE_ARRAY else []
 		if all_events.is_empty() and chunk_ticks == safe_tick_count:
 			all_events = result_events
 		else:
@@ -541,7 +555,8 @@ static func _step_traced_ticks(machine: Dictionary, tick_count: int, capture_pre
 			session["presentation_feature_count"] = _presentation_feature_count(current_views)
 		if compact_native_authority:
 			session["native_body_state_dirty"] = true
-		var metrics: Dictionary = final_result.get("metrics", {}) if typeof(final_result.get("metrics", {})) == TYPE_DICTIONARY else {}
+		var metrics_value: Variant = final_result.get("metrics")
+		var metrics: Dictionary = metrics_value if typeof(metrics_value) == TYPE_DICTIONARY else {}
 		session["last_step_metrics"] = metrics
 		session["native_steady_without_motor"] = bool(metrics.get("steady_without_motor", false))
 		session["native_steady_with_motor"] = bool(metrics.get("steady_with_motor", false))
@@ -556,7 +571,8 @@ static func _step_traced_ticks(machine: Dictionary, tick_count: int, capture_pre
 
 
 static func _release_due_drop(machine: Dictionary, simulation: Dictionary, tick_value: int) -> void:
-	var queue: Array = machine.get("drop_queue", []) if typeof(machine.get("drop_queue", [])) == TYPE_ARRAY else []
+	var queue_value: Variant = machine.get("drop_queue")
+	var queue: Array = queue_value if typeof(queue_value) == TYPE_ARRAY else []
 	if queue.is_empty():
 		return
 	var item: Dictionary = queue[0] if typeof(queue[0]) == TYPE_DICTIONARY else {}
