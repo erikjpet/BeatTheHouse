@@ -125,7 +125,7 @@ int64_t face_y(const Geo &g, int64_t phase) {
 
 struct Body {
   Dictionary ref, meta;
-  Array support_ids;
+  std::vector<String> support_ids;
   String id, kind, rest, support, peg_key, exit_state;
   int64_t x = 0, y = 0, z = 0, vx = 0, vy = 0, vz = 0, xr = 0, yr = 0, zr = 0,
           r = 2350, h = 950, m = 1000, sleep_ticks = 0, fall_start_z = 0,
@@ -272,7 +272,10 @@ struct Kernel {
       q.sleeping = r.get("sleeping", false);
       q.rest = r.get("rest_state", "falling");
       q.support = r.get("support_kind", "");
-      q.support_ids = r.get("support_ids", Array());
+      Array source_support_ids = r.get("support_ids", Array());
+      q.support_ids.reserve(source_support_ids.size());
+      for (int support_index = 0; support_index < source_support_ids.size(); ++support_index)
+        q.support_ids.push_back(source_support_ids[support_index]);
       q.has_support_anchor = r.has("support_anchor_x") && r.has("support_anchor_y");
       q.support_anchor_x = r.get("support_anchor_x", 0);
       q.support_anchor_y = r.get("support_anchor_y", 0);
@@ -897,13 +900,12 @@ struct Kernel {
         q.carried =
             q.support == "platform" || (q.support == "body" && top_carried);
         if (q.support == "body") {
-          Array support_ids;
-          support_ids.resize(support_indices.size());
+          q.support_ids.clear();
+          q.support_ids.reserve(support_indices.size());
           for (int support_index = 0; support_index < int(support_indices.size()); ++support_index)
-            support_ids[support_index] = b[support_indices[support_index]].id;
-          q.support_ids = support_ids;
+            q.support_ids.push_back(b[support_indices[support_index]].id);
         } else {
-          q.support_ids = Array();
+          q.support_ids.clear();
         }
         q.has_support_anchor = q.support == "body";
         if (q.has_support_anchor) {
@@ -949,7 +951,7 @@ struct Kernel {
         if (previous_platform_root)
           q.pending_deposit = true;
         q.support = "";
-        q.support_ids = Array();
+        q.support_ids.clear();
         q.has_support_anchor = false;
         q.carried = false;
         q.rest = "falling";
@@ -1010,7 +1012,7 @@ struct Kernel {
     bool has_supported_body = false;
     for (const Body &q : b) {
       if (!terminal(q) && q.support == "body" && !q.carried &&
-          q.has_support_anchor && !q.support_ids.is_empty()) {
+          q.has_support_anchor && !q.support_ids.empty()) {
         has_supported_body = true;
         break;
       }
@@ -1025,7 +1027,7 @@ struct Kernel {
     for (int index = 0; index < static_cast<int>(b.size()); ++index)
       body_index[b[index].id] = index;
     for (Body &q : b) {
-      if (terminal(q) || q.support != "body" || q.carried || !q.has_support_anchor || q.support_ids.is_empty())
+      if (terminal(q) || q.support != "body" || q.carried || !q.has_support_anchor || q.support_ids.empty())
         continue;
       int64_t cx = 0, cy = 0, count = 0;
       for (int id_index = 0; id_index < q.support_ids.size(); ++id_index) {
@@ -1101,7 +1103,7 @@ struct Kernel {
       q.exit_start_tick = state.get("tick", 0);
       q.rest = "terminal_fall";
       q.support = "";
-      q.support_ids = Array();
+      q.support_ids.clear();
       q.carried = false;
       q.sleeping = false;
       q.sleep_ticks = 0;
@@ -1297,7 +1299,11 @@ struct Kernel {
       r["sleeping"] = q.sleeping;
       r["rest_state"] = q.rest;
       r["support_kind"] = q.support;
-      r["support_ids"] = q.support_ids;
+      Array support_ids;
+      support_ids.resize(q.support_ids.size());
+      for (int support_index = 0; support_index < int(q.support_ids.size()); ++support_index)
+        support_ids[support_index] = q.support_ids[support_index];
+      r["support_ids"] = support_ids;
       if (q.has_support_anchor) {
         r["support_anchor_x"] = q.support_anchor_x;
         r["support_anchor_y"] = q.support_anchor_y;
