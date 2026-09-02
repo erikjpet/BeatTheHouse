@@ -103,7 +103,11 @@ static func from_archetype(archetype: Dictionary, p_depth: int, rng: RngStream, 
 		return _from_layered_archetype(archetype, p_depth, rng, library, challenge_config, selected_scenario)
 	if library != null:
 		archetype = library.environment_archetype_for_challenge(archetype, challenge_config)
-	var selected_state := ScenarioEngineScript.initial_state(selected_scenario) if not selected_scenario.is_empty() and not selected_scenario.has("schema_version") else ScenarioEngineScript.normalize_state(selected_scenario)
+	# Sequence definitions also publish their own schema_version. Runtime scenario
+	# state is identified by its progress fields; treating every versioned
+	# definition as state discards its legacy mutations before room generation.
+	var selected_is_state := selected_scenario.has("phase_index") or selected_scenario.has("phase_action_counter")
+	var selected_state := ScenarioEngineScript.normalize_state(selected_scenario) if selected_is_state else ScenarioEngineScript.initial_state(selected_scenario)
 	if not selected_state.is_empty():
 		archetype = ScenarioEngineScript.apply_to_archetype(archetype, selected_state)
 	var environment := EnvironmentInstance.new()

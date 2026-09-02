@@ -1959,7 +1959,11 @@ func _coin_pusher_stage_profile_msec(profile_value: Variant) -> Dictionary:
 	var stages: Array = profile.keys()
 	stages.sort()
 	for stage_value in stages:
-		result[str(stage_value)] = float(profile.get(stage_value, 0)) / 1000.0
+		var measurement: Variant = profile.get(stage_value, 0)
+		if typeof(measurement) == TYPE_DICTIONARY:
+			result[str(stage_value)] = _coin_pusher_stage_profile_msec(measurement)
+		elif typeof(measurement) in [TYPE_INT, TYPE_FLOAT]:
+			result[str(stage_value)] = float(measurement) / 1000.0
 	return result
 
 

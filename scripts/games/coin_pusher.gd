@@ -1379,13 +1379,18 @@ func _surface_action_view_patch(machine: Dictionary, run_state: RunState, enviro
 	}
 
 
-func _drop_surface_action_view_patch(machine: Dictionary, _run_state: RunState, _environment: Dictionary, _ui_state: Dictionary = {}) -> Dictionary:
+func _drop_surface_action_view_patch(machine: Dictionary, run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
 	# Patches merge into the current surface. A legal enqueue changes only these
 	# action-boundary scalars; catalog, stake, goal, tray, selected controls and
 	# bindings remain valid until the normal realtime publication owns any later
 	# physical insertion. Re-sending them here rebuilt the cold action UI twice.
 	return {
 		"surface_action_realtime_refresh_required": false,
+		# The host uses these two small authority records to retain the exact legal
+		# and cheat action arrays. Omitting them forces a catalog rebuild and leaves
+		# the owned canvas without a published catalog identity.
+		"surface_action_catalog_key": _surface_action_catalog_key(machine, run_state, environment, ui_state),
+		"surface_action_stake_view": _surface_action_stake_view(run_state, environment),
 		"coin_pusher_action_count": int(machine.get("action_count", 0)),
 		"coin_pusher_last_message": str(machine.get("last_message", V3_HEADLESS_MESSAGE)),
 		"coin_pusher_input_trace_count": (machine.get("live_session", {}).get("input_trace", []) as Array).size() if typeof(machine.get("live_session", {}).get("input_trace", [])) == TYPE_ARRAY else 0,

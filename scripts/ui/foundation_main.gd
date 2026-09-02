@@ -9104,6 +9104,11 @@ func _refresh_after_embedded_game_action(embeds_result_feedback: bool = false, a
 		debug_timing["refresh_snapshot_full_fallback"] = 0 if incremental_snapshot_used else snapshot_refresh_usec
 		debug_stage_started_usec = Time.get_ticks_usec()
 	if action_boundary_preflight_complete:
+		# The compact action patch is complete on this deferred frame. Publish the
+		# primary status line before clearing the input guard; lower-priority HUD
+		# sections remain staggered across quiet frames below.
+		if status_label != null:
+			status_label.text = _hud_status_text()
 		_schedule_deferred_embedded_secondary_refresh()
 	else:
 		_refresh_embedded_action_talk_music_coach(false)

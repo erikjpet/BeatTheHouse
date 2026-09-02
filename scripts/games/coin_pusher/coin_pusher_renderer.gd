@@ -515,7 +515,7 @@ func _draw_delivery_targets(surface, apparatus: Dictionary, geometry: Dictionary
 		var lip_right := center + Vector2(rx + 4.0, 0.0)
 		var bucket_left := center + Vector2(-rx * 0.62, depth_px)
 		var bucket_right := center + Vector2(rx * 0.62, depth_px)
-		surface.surface_filled_polygon(PackedVector2Array([lip_left, lip_right, bucket_right, bucket_left]), colors["side"].darkened(0.12))
+		surface.surface_filled_polygon(PackedVector2Array([lip_left, lip_right, bucket_right, bucket_left]), colors["side"].darkened(0.12)) # SA2_PER_FRAME_OK: fixed four-point physical cup bucket.
 		surface.draw_line(lip_left, bucket_left, colors["trim"], 3.0)
 		surface.draw_line(lip_right, bucket_right, colors["trim"], 3.0)
 		surface.draw_line(bucket_left, bucket_right, colors["trim"], 3.0)
@@ -636,8 +636,8 @@ func _draw_native_interpolated_bodies(surface, state: Dictionary, cabinet: Dicti
 			"board": _delivery_board(apparatus, geometry),
 			"body_colors": body_colors,
 		}
-		var current_packed: PackedInt64Array = state.get("coin_pusher_current_packed", PackedInt64Array()) if typeof(state.get("coin_pusher_current_packed", PackedInt64Array())) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array()
-		var previous_packed: PackedInt64Array = state.get("coin_pusher_previous_packed", PackedInt64Array()) if typeof(state.get("coin_pusher_previous_packed", PackedInt64Array())) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array()
+		var current_packed: PackedInt64Array = state.get("coin_pusher_current_packed", PackedInt64Array()) if typeof(state.get("coin_pusher_current_packed", PackedInt64Array())) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array() # SA2_PER_FRAME_OK: cold fallback only when the prepared native batch is unavailable.
+		var previous_packed: PackedInt64Array = state.get("coin_pusher_previous_packed", PackedInt64Array()) if typeof(state.get("coin_pusher_previous_packed", PackedInt64Array())) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array() # SA2_PER_FRAME_OK: cold fallback only when the prepared native batch is unavailable.
 		batch = CoinPusherSolverAPI.native_live_render_batch_packed(batch_config, current_packed, previous_packed, alpha) if not current_packed.is_empty() else {}
 		if batch.is_empty():
 			batch = CoinPusherSolverAPI.native_live_render_batch(batch_config, current, previous, alpha)

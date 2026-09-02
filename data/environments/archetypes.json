@@ -228,7 +228,7 @@
       },
       "package_a_delivery_runner": {
         "position": [
-          860,
+          650,
           335
         ],
         "zone_id": "right"
@@ -3551,14 +3551,16 @@
       "grand_scenario_safe_exit": {"position": [268, 70], "zone_id": "background"},
       "grand_scenario_top_400": {"position": [400, 70], "zone_id": "background"},
       "grand_scenario_top_520": {"position": [520, 70], "zone_id": "background"},
-      "grand_convention_machine_banks": {"position": [520, 73], "zone_id": "background"},
+      "grand_convention_machine_banks": {"position": [250, 10], "zone_id": "background"},
       "grand_scenario_top_650": {"position": [650, 70], "zone_id": "background"},
-      "grand_scenario_top_650_low": {"position": [650, 75], "zone_id": "background"},
+      "grand_scenario_top_650_low": {"position": [600, 10], "zone_id": "background"},
       "grand_scenario_top_800": {"position": [800, 70], "zone_id": "background"},
-      "grand_scenario_top_800_low": {"position": [800, 75], "zone_id": "background"},
-      "grand_scenario_top_50_actor": {"position": [50, 70], "zone_id": "background"},
-      "grand_convention_badge_delegations": {"position": [65, 70], "zone_id": "background"},
-      "grand_convention_table_block": {"position": [650, 73], "zone_id": "background"},
+      "grand_scenario_top_800_low": {"position": [170, 10], "zone_id": "background"},
+      "grand_scenario_top_50_actor": {"position": [100, 350], "zone_id": "left"},
+      "grand_convention_badge_delegations": {"position": [100, 230], "zone_id": "left"},
+      "grand_convention_coordinator": {"position": [400, 350], "zone_id": "foreground"},
+      "grand_convention_task": {"position": [400, 70], "zone_id": "background"},
+      "grand_convention_table_block": {"position": [750, 10], "zone_id": "background"},
       "grand_scenario_bottom_830": {"position": [830, 390], "zone_id": "foreground"}
     },
     "security_profile": {

@@ -3577,7 +3577,7 @@
     "scene_asset_path": "res://assets/art/game_scenes/slot.png",
     "environment_prop": "slot_machine",
     "intro": "A played-in machine: catch token cups and push heavy prizes.",
-    "description": "Hit token cups. Move heavy features. Complete the cabinet goal.",
+    "description": "Hit cups. Move heavy prizes. Complete cabinet goals.",
     "legal_actions": [
       {
         "id": "drop_quarter",

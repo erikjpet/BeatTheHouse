@@ -10607,15 +10607,15 @@
             "base::anchor:grand_aftermath_actor",
             "base::anchor:grand_aftermath_scene",
             "base::anchor:grand_convention_badge_delegations",
+            "base::anchor:grand_convention_coordinator",
             "base::anchor:grand_convention_machine_banks",
+            "base::anchor:grand_convention_task",
             "base::anchor:grand_convention_table_block",
             "base::anchor:grand_decision_left",
             "base::anchor:grand_decision_middle",
             "base::anchor:grand_decision_middle_right",
             "base::anchor:grand_scenario_bottom_830",
             "base::anchor:grand_scenario_safe_exit",
-            "base::anchor:grand_scenario_top_400",
-            "base::anchor:grand_scenario_top_800",
             "base::anchor:grand_work_actor_right",
             "base::anchor:grand_work_object_left",
             "base::anchor:grand_work_object_middle"
@@ -10712,7 +10712,7 @@
                 {
                   "actor": {
                     "actor_id": "actor_convention_coordinator",
-                    "anchor_id": "grand_scenario_top_400",
+                    "anchor_id": "grand_convention_coordinator",
                     "behavior": "work",
                     "label": "Convention coordinator",
                     "pose": "arrival"
@@ -10969,7 +10969,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "grand_scenario_top_800",
+                    "anchor_id": "grand_convention_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -11163,7 +11163,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "grand_scenario_top_800",
+                    "anchor_id": "grand_convention_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -11732,7 +11732,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "grand_scenario_top_800",
+                    "anchor_id": "grand_convention_task",
                     "appearance": "task_ready",
                     "bounds": {
                       "h": 56.0,
@@ -11903,7 +11903,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "94b21620c36ab37b0ddbe88040d893cbb4e6a38dc9080aef722b6e0943501dcb"
+        "sequence_signature": "3de3d852fc8faab6b4ed8f7de2c8fc40178ec29f04ba00eef94248ce25386947"
       }
     },
     {
