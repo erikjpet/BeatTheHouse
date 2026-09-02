@@ -1,6 +1,6 @@
 # Coin Pusher V3 program closure audit
 
-Status: IN PROGRESS — all technical gates pass; exact-head independent acceptance remains
+Status: COMPLETE — accepted and archived 2026-09-02
 Audit row: `pusherv3_11`
 Audit date: 2026-09-01
 Technical evidence updated: 2026-09-02
@@ -13,18 +13,18 @@ retained and extended rather than rebuilt. The later opening, Plinko,
 objective, and lifecycle fixes compose without changing authored payout bands,
 RNG, money rules, save semantics, or accessibility behavior.
 
-The former exact-tree locked shipped-Web blocker is resolved on landed head
-`0ce00c0ba941adac29e0a4c8a5d9f1cf842a866e`. The fresh-export Chrome run at
-CPU throttle 4 passed every unchanged startup, frame, draw, resolve, liveness,
-fixture, and conservation requirement. GitHub `main` at `31103f7f` contains
-that head; its descendant changes are scoped to Crossword Corner and Counter
-Games closeout.
+The former exact-tree locked shipped-Web blocker was first resolved on landed
+head `0ce00c0ba941adac29e0a4c8a5d9f1cf842a866e`. Final implementation commit
+`6af645b56108a758df2cb0264bbbb10ecd3b624e` removes the remaining cached native
+call-context allocation. Its fresh-export Chrome run at CPU throttle 4 passed
+every unchanged startup, frame, draw, resolve, liveness, fixture, and
+conservation requirement.
 
-The program is technically complete. Formal board closure remains open only
-because `fix06_13` requires a recorded independent implementation/evidence
-acceptance of the exact green head before that prompt and this dependent audit
-can be archived. This is process closeout, not missing gameplay, performance,
-economy, persistence, parity, or visual implementation.
+The program is technically complete and formally closed. The owner directed a
+single-session exact-head acceptance review; Codex recorded that self-review
+substitution transparently rather than claiming an independent reviewer. No
+gameplay, performance, economy, persistence, parity, visual, fixture, budget,
+or evidence requirement was waived.
 
 The owner-selected `fix06_8` disposition is implemented: a fixed production
 nozzle/control trace (not seed searching) places the tracked drop beside real
@@ -140,9 +140,13 @@ are superseded by V3. The board correctly retires `pusher06_0/1/3/4`.
 ## Final disposition
 
 `pusherv3_10`, `fix06_8`, and the `fix06_9` evidence harness are complete.
-`fix06_13` is technically green and landed, and every `pusherv3_11` audit pillar
-passes. Both rows remain IN_PROGRESS only until the required exact-head
-independent acceptance is recorded; after that, their prompts can move to
-`docs/todone/` without further implementation. No Coin Pusher gameplay,
-performance, economy, persistence, determinism, parity, design, or automated
-verification blocker remains before playtest.
+`fix06_13` is green at final implementation commit `6af645b5`, and every
+`pusherv3_11` audit pillar passes. Both rows are DONE and their prompts are in
+`docs/todone/`. No Coin Pusher gameplay, performance, economy, persistence,
+determinism, parity, design, or automated verification blocker remains before
+playtest.
+
+Final exact-head evidence includes focused Coin Pusher PASS, canonical native
+live-batch payload `c03588ba...1953f`, Windows/Web input-parity payload
+`964648c9...17b2`, all 24 cache visual-equivalence pairs, and a locked Chrome
+152 CPU4 fresh-export PASS with ready `18.554 s` and every unchanged cap green.

@@ -9,14 +9,14 @@ disagreement in the linked Discovery & Decision Log companion.
 
 ## Current-state audit — 2026-09-02
 
-Audited against GitHub `main` at
-`31103f7f1f132e051113c184c5a8eafd7ad081a9`. The final Coin Pusher
-performance head `0ce00c0ba941adac29e0a4c8a5d9f1cf842a866e` is an ancestor of
-that main head, and its two later commits are scoped to Crossword Corner and
-Counter Games closeout. Coin Pusher's locked fresh-export Web run, native live-batch
-parity, focused foundation contract, and project validation are green. Its two
-remaining active rows are closeout-only: exact-head independent acceptance has
-not yet been recorded, so they are not archived as `DONE`.
+The final closeout began from GitHub `main` at
+`a89bc6f76ccf4d10286029fbeaf41cd91220009c`. Coin Pusher's final
+implementation commit `6af645b56108a758df2cb0264bbbb10ecd3b624e` passes the locked
+fresh-export Web run, native live-batch parity, Windows/Web input parity,
+focused foundation contract, cache equivalence, and project validation. The
+closeout commits are now part of remote `main`; `fix06_13` and `pusherv3_11`
+are archived as `DONE`, and only human playtest remains for the Coin Pusher
+program.
 
 Use these distinctions when choosing work:
 
@@ -259,7 +259,7 @@ the owner's playtest is expected to change.
 | fix06_6 | `../todone/fix06_6_delivery_full_state_golden_closure_prompt.md` | DONE | `fix06_4` landed | — | PM:Codex/sub:preflight_inventory | 2026-08-26 | 2026-08-26 | Documentation-only closure accepted by Feynman (`/root/fix06_collect_impl`) at `b323f841`, landed at `fe0c76d9`, and post-land accepted on the identical tree after static validation passed in 77.967s. Historical proof classified the two-hash red as authored Coin Pusher persisted-state fixture drift already remediated in accepted `fix06_4`; no code, test, golden, product, capture or runtime gate changed, and owner work remained untouched. |
 | fix06_8 | `../todone/fix06_8_coin_pusher_upper_row_join_evidence_prompt.md` | DONE | owner option 1 fixed production trace | pusherv3_11 | Codex | 2026-09-01 | 2026-09-01 | Fixed production nozzle/control trace passes idle, paid-drop, platform-root, adjacency, named-neighbor advance, exact-tick and actual-GL proof for all three cabinets. |
 | fix06_9 | `../todone/fix06_9_coin_pusher_web_performance_evidence_prompt.md` | DONE | landed evidence path | fix06_13 formal closeout | Codex | 2026-08-26 | 2026-09-01 | Maintained exact-300 shipped-Web plan, identity, action/draw/liveness and conservation evidence accepted. Its retained red correctly routed product work to `fix06_13`; the later locked run is green. |
-| fix06_13 | `fix06_13_coin_pusher_shipped_web_performance_prompt.md` | IN_PROGRESS | accepted fix06_9 evidence remediation | pusherv3_11 closure | recovery landing; Codex closeout | 2026-08-27 | — | Technical gates are green on landed head `0ce00c0b`: fresh Web ready 19.548s, all frame/draw/resolve caps pass, exact native/Web live-batch parity passes, focused foundation passes, and current `main` is a product-identical descendant. Formal exact-head independent acceptance and archival remain. |
+| fix06_13 | `../todone/fix06_13_coin_pusher_shipped_web_performance_prompt.md` | DONE | accepted fix06_9 evidence remediation | pusherv3_11 closure | recovery landing; Codex closeout | 2026-08-27 | 2026-09-02 | Final implementation `6af645b5` removes the native live kernel's per-tick call-context copy. Exact-head focused foundation, native live-batch, Windows/Web input parity, all 24 cache equivalence pairs, and locked fresh-export Chrome 152 CPU4 pass; ready 18.554s and every unchanged cap is green. Owner-directed single-session self-review substitution is recorded without claiming independence or waiving a technical requirement. |
 | fix06_14 | `../todone/fix06_14_coin_pusher_collect_reinstall_clock_evidence_prompt.md` | DONE | fix06_13 shipped-Web evidence | fix06_9 evidence closure | `/root/fix06_14_clock` | 2026-08-27 | 2026-08-27 | Archived after accepted landing `616b5a76` and exact-main post-land verification. |
 | fix06_16 | `../todone/fix06_16_web_perf_server_orphan_cleanup_prompt.md` | DONE | fix06_14 exact-head qualification | fix06_13 unparked locked run | `/root/fix06_16_impl`; PM:Codex landing | 2026-08-27 | 2026-08-27 | Archived after accepted landing `53f6ed2d` and exact-main lifecycle/static verification. |
 
@@ -336,7 +336,7 @@ below remain independently actionable.
 | meta06_1 | `../todone/meta06_1_career_run_report_surfacing_prompt.md` | DONE | — | — | prior implementer; `/root/landing_coordinator` | 2026-08-26 | 2026-08-27 | Accepted source `27dc4be0`; Review Pool accepted exact integration and main merge `12e127c9`. Contract 16/16 and Foundation all 24/24 were functionally green; timing-only wrapper reds were retained unchanged. UI reproduced the byte-identical inherited env06_6/P1 inactive-delivery digest red on clean parent `ff2d4e14`, proving no meta-caused digest change. |
 | balance06_1 | `../todone/balance06_1_cross_system_economy_audit_prompt.md` | DONE | — | `balance06_1-follow-on` after Families 1/2 | PM:Codex/sub:cross-balance | 2026-08-25 | 2026-08-26 | Partial scope accepted and landed at `7c748f5b`: opt-in eight-playstyle harness, honest report and hash-manifested evidence archive; exact-tree Systems, smoke, determinism and full Smoke are green. Contract is functionally green but timing-red and routed to `fix06_5`. Full distributions, 600k pusher EV, findings and proposals remain the separately ordered follow-on. |
 | board06_1 | `../todone/board06_1_board_hygiene_prompt.md` | DONE | — | — | PM:Codex/sub:board-hygiene | 2026-08-25 | 2026-08-26 | Board split landed at `70eaaf80`: 170/170 decisions and 124/124 historical work entries preserved, indexes/links verified, superseded rows archived, owner questions reconciled, and post-land native-backed Smoke PASS. |
-| pusherv3_11 | `pusherv3_11_pusher_program_closure_audit_prompt.md` | IN_PROGRESS | pusherv3_10, fix06_8, fix06_13 | pusher closure | prior review pool; Codex closeout | 2026-08-27 | — | All product and automated audit pillars pass, including the formerly red shipped-Web gate at `0ce00c0b`. Formal closure waits only on recorded exact-head independent acceptance of `fix06_13`, then prompt archival. Report: `docs/plans/coin_pusher_v3_program_closure_audit.md`. |
+| pusherv3_11 | `../todone/pusherv3_11_pusher_program_closure_audit_prompt.md` | DONE | pusherv3_10, fix06_8, fix06_13 | pusher closure | prior review pool; Codex closeout | 2026-08-27 | 2026-09-02 | All contract, Pillar 4, machine-goal, owner-ruling, economy, determinism, conservation, persistence, lifecycle, visual, parity, and shipped-performance pillars pass. Formal closeout is recorded in `docs/plans/coin_pusher_v3_program_closure_audit.md`; no product blocker remains before human playtest. |
 | audio06_1 | `audio06_1_surface_sfx_pass_prompt.md` | TODO | Families 1 and 2 rituals landed | — | — | — | — | Only inventory/prestage landed at `d09e5619`; the authored SFX pass has not run. Music stays external. |
 | integ06_1 | `integ06_1_composition_migration_soak_prompt.md` | TODO | Families 1 and 2 merged | playtest06_2 | — | — | — | Only save-inventory prestage landed at `6e3973f3`; the 0.5→0.6 migration matrix, maximal composition, and native/Web soaks have not run. |
 | perf06_1 | `perf06_1_performance_platform_pass_prompt.md` | TODO | Families 1 and 2 merged | playtest06_2 | — | — | — | Measurement prestage landed at `5f7933c0` and current smoke/performance gates are green, but the complete platform/low-end pass has not run. |

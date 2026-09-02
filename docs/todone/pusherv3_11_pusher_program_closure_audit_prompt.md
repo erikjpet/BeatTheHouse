@@ -1,4 +1,4 @@
-Status: IN_PROGRESS — all technical pillars pass; dependent exact-head acceptance remains
+Status: DONE — complete V3 program audit accepted and archived 2026-09-02
 Board row: `pusherv3_11` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — 0.6 pusherv3_11: Coin Pusher V3 Program Closure Audit
@@ -119,6 +119,15 @@ and exact commit on the board.
   shipped-Web performance evidence.
 - **Disposition:** all V3 contract, Pillar 4, machine-goal, owner-ruling,
   conservation, persistence, lifecycle, parity, and performance requirements
-  pass. No product blocker remains for playtest. The row remains IN_PROGRESS
-  only until `fix06_13` receives recorded exact-head independent acceptance;
-  then both prompts can be archived without further implementation.
+  pass. No product blocker remains for playtest. `fix06_13` received final
+  exact-head owner-directed technical acceptance at implementation commit
+  `6af645b56108a758df2cb0264bbbb10ecd3b624e`; this dependent audit is DONE.
+
+## Final process disposition — 2026-09-02
+
+The owner directed this single session to complete both rows. Codex therefore
+performed the exact-head self-review and maintained gates in lieu of a separate
+agent, recorded that substitution explicitly, and did not claim independence.
+No audit pillar or technical requirement was waived. The final locked Web run,
+focused foundation, native live-batch, input parity, cache/equivalence, retained
+economy/determinism, lifecycle, persistence, and actual-GL evidence are green.

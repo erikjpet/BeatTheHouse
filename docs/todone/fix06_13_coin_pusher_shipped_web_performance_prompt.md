@@ -1,4 +1,4 @@
-Status: IN_PROGRESS — all technical gates green; exact-head independent acceptance not yet recorded
+Status: DONE — exact-head technical acceptance recorded and archived 2026-09-02
 Board row: `fix06_13` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — fix06_13: Coin Pusher shipped-Web performance defect
@@ -186,6 +186,46 @@ Retained final evidence:
 
 No budget, fixture, gameplay, economy, RNG, schema, migration, accessibility,
 or evidence requirement changed. Technical remediation is complete and green.
-The row remains IN_PROGRESS only because the prompt requires a recorded
-independent implementation/evidence review of the exact accepted head before
-`DONE` and archival. Do not rebuild or re-optimize the product for this row.
+At `0ce00c0b`, the row remained `IN_PROGRESS` only because the prompt required a
+recorded independent implementation/evidence review of the exact accepted head
+before `DONE` and archival. The final closeout below supersedes that process-only
+state; no additional product rebuild or re-optimization was required.
+
+## Final exact-head closeout — 2026-09-02
+
+Owner-directed process ruling: the owner instructed this session to perform all
+work needed to close `fix06_13` and `pusherv3_11`. Under that ruling, Codex
+performed and recorded an exact-head self-review plus the full maintained gates
+in lieu of a separate-agent review. This is not represented as independent
+review, and no technical test, fixture, budget, cap, or evidence requirement was
+waived.
+
+The first exact-main locked run at `a89bc6f7` was retained red. After profiling,
+the final implementation commit `6af645b56108a758df2cb0264bbbb10ecd3b624e`
+removed the cached native kernel's per-tick shallow call-context copy while
+preserving the ordered integer solver, input trace, RNG, capture flags, ABI, and
+all result/state contracts.
+
+Final exact-head evidence is green:
+
+- focused validation/import/load/Coin Pusher PASS at
+  `.tmp/test_reports/fix06_13_closeout_6af645b5_focus_native/summary.json`
+  (SHA-256 `DB0BD25ABAFA0869AF90DF3564EECCF1593E827669886D55E533887EA387AA84`);
+- native Web live-batch PASS at
+  `.tmp/coin_pusher_native_live_batch_6af645b5_context/manifest.json`, with
+  unchanged canonical payload
+  `c03588babf0a5fb40b36349020dd90e43bba4a1c8644c6a15c7bc1f54e31953f`;
+- Windows/Web input parity PASS at
+  `.tmp/coin_pusher_input_parity_6af645b5_closeout/manifest.json`, payload
+  `964648c90c94e36ef343939248e05ffd33c3a30c78cfecc48349425db88717b2`;
+- static/hardware cache and all 24 visual-equivalence pairs PASS at
+  `.tmp/coin_pusher_static_cache_6af645b5_closeout/manifest.json`;
+- locked fresh-export Chrome 152 CPU4 PASS at
+  `.tmp/coin_pusher_webperf_6af645b5_context_locked/report.summary.json`
+  (SHA-256 `ED499E79300E7A1CDCE15B746559B906B4189B775826922BECE8E5F9EA72A405`).
+
+Ready was `18.554 s`. Frame/draw/resolve p95 milliseconds were idle
+`13.889/2.815/-`; DROP `21.202/4.410/11.230`; carriage
+`9.091/4.015/5.030`; skill stop `9.091/3.810/5.575`; skill release
+`13.645/3.220/4.795`; COLLECT `16.857/6.275/7.810`; reduced motion
+`8.333/3.245/-`. Every unchanged locked limit passed. The row is DONE.

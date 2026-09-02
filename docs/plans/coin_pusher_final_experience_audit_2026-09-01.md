@@ -59,9 +59,10 @@ origin reconciliation, target reachability, and persistent-machine assertions.
 
 ## Release-board disposition
 
-`pusherv3_10` is DONE and moved to `docs/todone`. Every technical pillar of
-`pusherv3_11`, including the later locked shipped-Web performance gate, now
-passes. The row remains in `docs/todo/` only because the exact green
-`fix06_13` head still needs its required recorded independent acceptance before
-the two closeout prompts are archived. No further Coin Pusher implementation is
-identified before playtest.
+`pusherv3_10`, `fix06_13`, and `pusherv3_11` are DONE and moved to
+`docs/todone`. Final implementation `6af645b5` passes focused foundation,
+native live-batch, Windows/Web input parity, cache equivalence, and the locked
+fresh-export shipped-Web performance gate. The owner-directed exact-head
+self-review substitution is recorded without claiming independence or waiving
+technical evidence. No further Coin Pusher implementation is identified before
+playtest.
