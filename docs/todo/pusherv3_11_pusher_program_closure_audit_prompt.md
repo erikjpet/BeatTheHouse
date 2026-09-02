@@ -1,4 +1,4 @@
-Status: DONE — complete-program audit accepted 2026-09-01
+Status: IN_PROGRESS — all audit pillars pass except locked shipped-Web performance
 Board row: `pusherv3_11` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — 0.6 pusherv3_11: Coin Pusher V3 Program Closure Audit

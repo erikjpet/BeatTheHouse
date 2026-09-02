@@ -1,4 +1,4 @@
-Status: DONE — evidence path and product remediation formally closed 2026-09-01
+Status: DONE — evidence path accepted; red product result remains in fix06_13
 Board row: `fix06_9` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — fix06_9: shipped-cap Coin Pusher Web performance evidence
@@ -58,7 +58,8 @@ window, synchronous resolve, draw p95, normal/reduced liveness, conservation,
 backend, body counts, source commit, and fresh-export hashes. Evidence defects
 found during the first run were corrected without weakening any limit.
 
-The first honest red and all remediation runs remain preserved. Product closure
-is recorded in `fix06_13`; exact native/Web parity and current Web live-batch
-contracts pass. This evidence row is therefore complete and archived rather
-than remaining blocked on the now-closed product row.
+The first honest red and all remediation runs remain preserved. Exact
+native/Web parity and current Web live-batch contracts pass. This evidence-tool
+row is complete and archived because it correctly measures and routes the
+product defect; it does not claim that the still-active `fix06_13` product
+performance row is green or closed.

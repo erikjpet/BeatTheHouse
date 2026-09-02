@@ -1,16 +1,21 @@
 # Coin Pusher V3 program closure audit
 
-Status: COMPLETE — accepted on the final integrated Coin Pusher tree
+Status: IN PROGRESS — gameplay accepted; locked shipped-Web performance remains open
 Audit row: `pusherv3_11`
 Audit date: 2026-09-01
 
 ## Verdict
 
-The V3 program closes as three complete, distinct, persistent Coin Pusher
-machines. The recovered V3 physics/live-session/cabinet work was retained and
-extended rather than rebuilt. The later opening, Plinko, objective, lifecycle,
-and shipped-Web fixes compose without changing authored payout bands, RNG,
-money rules, save semantics, or accessibility behavior.
+The V3 product is functionally complete as three distinct, persistent Coin
+Pusher machines. The recovered V3 physics/live-session/cabinet work was
+retained and extended rather than rebuilt. The later opening, Plinko,
+objective, and lifecycle fixes compose without changing authored payout bands,
+RNG, money rules, save semantics, or accessibility behavior.
+
+The program is not formally closed. The exact-tree locked shipped-Web
+performance gate is still red, so `fix06_13` and its dependent closure audit
+`pusherv3_11` remain active. This is a performance acceptance blocker, not a
+missing gameplay, economy, persistence, parity, or visual implementation.
 
 The owner-selected `fix06_8` disposition is implemented: a fixed production
 nozzle/control trace (not seed searching) places the tracked drop beside real
@@ -80,27 +85,28 @@ and exact input parity plus byte-identical determinism pass on the final tree.
 
 | Gate | Result |
 | --- | --- |
-| Project validation and script loading | PASS; 302 scripts load with zero failures. |
-| Focused Coin Pusher foundation | PASS; exact 300-body/native-backed contract, zero failures. `.tmp/prepared_batch_fields_focus/foundation_coin_pusher.json`. |
-| Static/hardware cache contract | PASS; all invalidation, command-order, reentry, resize, and cached/uncached pixel-equivalence checks. `.tmp/coin_pusher_static_cache_8e407061/manifest.json`. |
-| Web native live batch | PASS; payload `c03588babf0a5fb40b36349020dd90e43bba4a1c8644c6a15c7bc1f54e31953f`. `.tmp/coin_pusher_live_batch_8e407061/manifest.json`. |
-| Windows/Web input parity | PASS; payload `964648c90c94e36ef343939248e05ffd33c3a30c78cfecc48349425db88717b2`. `.tmp/coin_pusher_input_parity_8e407061/manifest.json`. |
+| Project validation and script loading | PASS on `2d00206b`; `tools/validate_project.ps1 -Quiet` exited 0. |
+| Focused Coin Pusher foundation | PASS on `2d00206b`; exact 300-body/native-backed contract, zero failures, native solver p95 `3.596 ms`. `.tmp/drop_branch_reorder_dirty/foundation_coin_pusher.json`. |
+| Static/hardware cache contract | PASS on `2d00206b`; all invalidation, command-order, reentry, resize, and all 24 cached/uncached pixel-equivalence checks. `.tmp/coin_pusher_static_cache_2d00206b/manifest.json`. |
+| Web native live batch | PASS on `2d00206b`; payload `c03588babf0a5fb40b36349020dd90e43bba4a1c8644c6a15c7bc1f54e31953f`. `.tmp/coin_pusher_native_live_batch_2d00206b/manifest.json`. |
+| Windows/Web input parity | PASS on `2d00206b`; payload `964648c90c94e36ef343939248e05ffd33c3a30c78cfecc48349425db88717b2`. `.tmp/coin_pusher_input_parity_2d00206b/manifest.json`. |
 | Fixed upper-row production proof | PASS for all three cabinets, including idle control, paid production drop, independent platform root, exact ticks, and named neighbor advance. `.tmp/fix06_8_option1_final/captures/manifest.json` (SHA-256 `0239F827C712D3F337A7DD821C2532E53AA1197CED7D72C0EF7AC475B`). |
 | Actual-GL visual QA | PASS; 3 cabinets × 9 production scenes, normal/reduced captures inspected at 1280×720. Same manifest and PNG set as the fixed upper-row proof. |
 | Persistent EV | PASS; 600,000 paid drops. `.tmp/coin_pusher_final_ev_8/manifest.json`. |
 | 10-seed determinism | PASS; two independent 10-seed/560-checkpoint processes are byte-identical at combined hash `4129524558` and file SHA-256 `3972A3C5E2D3A501E10D618E4910128DCE61989E134D66C5A691A8311587F689`. `.tmp/foundation_determinism_probe/run_a.json` and `run_b.json`. |
-| Shipped-Web performance | PASS/retained evidence is recorded in the `fix06_13` closeout. The first red and every later iteration remain preserved; no budget, fixture, sample, or liveness floor changed. |
+| Shipped-Web performance | **RED** on exact head `2d00206b`. Ready `20.193 s > 20.000 s`; skill-release frame p95 `25.000 ms > 22.000 ms`; DROP frame p95 `25.485 ms > 22.000 ms`; idle frame p95 `16.667 ms > 16.000 ms`; skill-stop draw p95 `8.610 ms > 7.000 ms`. `.tmp/final_coin_pusher_webperf_2d00206b_quiesced/report.summary.json`. |
 
 ## Performance remediation summary
 
 The first honest exported-Web cabinet measured roughly 142–145 ms frame p95
-and 52–55 ms draw p95. The final path keeps the exact 300-origin fixture and
+and 52–55 ms draw p95. The current path keeps the exact 300-origin fixture and
 real cabinet while using the native solver, packed publication, cached static
 and hardware layers, prepared multimesh batches, staged HUD refresh, and a
-pinned lean Godot Web template. The best quiesced exact-tree measurement is
-inside every frame/action/startup cap; retained noisier repetitions are listed
-in the `fix06_13` record rather than discarded. No visible state, simulation
-result, economy result, or evidence assertion was bypassed.
+pinned lean Godot Web template. This is a major improvement, but no retained
+exact-tree run has passed every locked cap. The final `2d00206b` run above is
+the authoritative current result; earlier red results remain preserved. No
+visible state, simulation result, economy result, or evidence assertion was
+bypassed, and no budget was changed.
 
 ## Code health and reconciliation
 
@@ -122,7 +128,8 @@ are superseded by V3. The board correctly retires `pusher06_0/1/3/4`.
 
 ## Final disposition
 
-`pusherv3_10`, `fix06_8`, `fix06_9`, `fix06_13`, and `pusherv3_11` are complete.
-No Coin Pusher gameplay, evidence, economy, or design blocker remains for the
-0.6 playtest handoff. Future changes are post-playtest polish, not unfinished
-V3 implementation.
+`pusherv3_10`, `fix06_8`, and the `fix06_9` evidence harness are complete.
+`fix06_13` remains IN_PROGRESS on the locked shipped-Web performance result,
+and `pusherv3_11` remains IN_PROGRESS behind it. No Coin Pusher gameplay,
+economy, persistence, determinism, parity, or design blocker remains; the sole
+known Coin Pusher closure blocker is the fixed-budget Web performance gate.

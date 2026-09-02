@@ -1,4 +1,4 @@
-Status: DONE — product and exact-tree evidence formally closed 2026-09-01
+Status: IN_PROGRESS — product remediation landed; locked shipped-Web gate remains red
 Board row: `fix06_13` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — fix06_13: Coin Pusher shipped-Web performance defect
@@ -115,10 +115,10 @@ is consumed. It owns deterministic cleanup of the exact launched Web server
 process tree exposed by the completed `fix06_14` qualification; it does not
 reopen or replace any retained performance result.
 
-## Final closeout — 2026-09-01
+## Current exact-tree record — 2026-09-02 — NOT CLOSED
 
-The accepted product path is the accumulated exact-tree remediation ending at
-the Coin Pusher release-closeout head. It retains the real 300-origin cabinet,
+The current product path is the accumulated exact-tree remediation ending at
+head `2d00206b43d54b56f099d6b5c3d4ce443cb406dc`. It retains the real 300-origin cabinet,
 all action windows, CPU throttle 4, cold browser profile, fresh export, normal
 and reduced-motion liveness, exact conservation, and the locked 16/5 idle,
 22/7 active, 16 ms resolve, and 20 s ready limits.
@@ -134,14 +134,24 @@ migration, accessibility behavior, or gate changed.
 Retained exact-tree evidence includes:
 
 - focused native-backed Coin Pusher foundation PASS at
-  `.tmp/prepared_batch_fields_focus/foundation_coin_pusher.json`;
-- static/hardware cache and pixel-equivalence PASS at
-  `.tmp/coin_pusher_static_cache_8e407061/manifest.json`;
+  `.tmp/drop_branch_reorder_dirty/foundation_coin_pusher.json` (zero failures,
+  300-body native solver p95 `3.596 ms`);
+- static/hardware cache and all 24 pixel-equivalence pairs PASS at
+  `.tmp/coin_pusher_static_cache_2d00206b/manifest.json`;
 - Web native live-batch exact payload `c03588babf0a5fb40b36349020dd90e43bba4a1c8644c6a15c7bc1f54e31953f`;
 - Windows/Web input-parity payload `964648c90c94e36ef343939248e05ffd33c3a30c78cfecc48349425db88717b2`;
-- the quiesced shipped-Web report and every noisy/red repetition under `.tmp/`.
+- project validation PASS with exit 0;
+- the final quiesced shipped-Web report at
+  `.tmp/final_coin_pusher_webperf_2d00206b_quiesced/report.summary.json`.
+
+The locked run is RED: ready `20.193 s > 20.000 s`; skill-release frame p95
+`25.000 ms > 22.000 ms`; DROP frame p95 `25.485 ms > 22.000 ms`; idle frame
+p95 `16.667 ms > 16.000 ms`; and skill-stop draw p95
+`8.610 ms > 7.000 ms`. All other exact-tree functional, cache, native,
+input-parity, economy, determinism, visual, and lifecycle evidence remains
+green.
 
 The first red remains the baseline history; it was not replaced, waived, or
-hidden. `fix06_14` and `fix06_16` were already landed before the final evidence
-was consumed. This closes `fix06_13` and unblocks archival of `fix06_9` plus the
-`pusherv3_11` program audit.
+hidden. `fix06_14` and `fix06_16` were already landed before this evidence was
+consumed. `fix06_13` remains IN_PROGRESS without a waiver or budget change, and
+`pusherv3_11` remains open behind it.
