@@ -249,6 +249,23 @@ function Add-DeclaredMapErrors {
     }
 }
 
+function Add-ExactTypeErrors {
+    param([System.Collections.Generic.List[string]]$Errors, [string]$Label, $Value, [hashtable]$Types)
+    foreach ($fieldName in $Types.Keys) {
+        if ($null -eq $Value -or $fieldName -notin (Property-Names $Value)) { continue }
+        $fieldValue = $Value.$fieldName
+        $valid = switch ($Types[$fieldName]) {
+            "string" { $fieldValue -is [string] }
+            "bool" { $fieldValue -is [bool] }
+            "int" { Test-IntegerScalar $fieldValue }
+            "array" { $fieldValue -is [System.Array] }
+            "record" { $fieldValue -is [pscustomobject] }
+            default { $false }
+        }
+        if (-not $valid) { Add-Error $Errors "$Label field $fieldName must be exact $($Types[$fieldName])" }
+    }
+}
+
 function Test-RitualDefinition {
     param([Parameter(Mandatory)]$Definition)
 
