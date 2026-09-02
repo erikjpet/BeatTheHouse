@@ -47,6 +47,8 @@ func _ready() -> void:
 
 
 func set_reduce_motion(enabled: bool) -> void:
+	if reduce_motion == enabled:
+		return
 	reduce_motion = enabled
 	_update_heat_feedback_presentation()
 
@@ -98,7 +100,9 @@ func render(model: Dictionary) -> void:
 		return
 	_set_meta_mode(false)
 	var bankroll := int(model.get("bankroll", 0))
-	wallet_value.text = "$%d" % bankroll
+	var wallet_text := "$%d" % bankroll
+	if wallet_value.text != wallet_text:
+		wallet_value.text = wallet_text
 	var observed_delta := bankroll - _last_bankroll if _has_rendered else 0
 	var bankroll_delta := int(model.get("bankroll_delta", observed_delta))
 	if bankroll_delta == 0:
@@ -109,16 +113,24 @@ func render(model: Dictionary) -> void:
 	_last_bankroll = bankroll
 	_has_rendered = true
 
-	chips_chip.visible = bool(model.get("show_chips", false))
-	chips_value.text = "%d" % int(model.get("chips", 0))
+	var show_chips := bool(model.get("show_chips", false))
+	if chips_chip.visible != show_chips:
+		chips_chip.visible = show_chips
+	var chips_text := "%d" % int(model.get("chips", 0))
+	if chips_value.text != chips_text:
+		chips_value.text = chips_text
 
 	var heat := float(model.get("heat_level", 0.0))
 	heat_meter.configure("heat", heat)
-	heat_value.text = "%d" % roundi(heat)
+	var heat_text := "%d" % roundi(heat)
+	if heat_value.text != heat_text:
+		heat_value.text = heat_text
 	var drunk := float(model.get("drunk_level", 0.0))
 	var pending := float(model.get("pending_drunk_absorption", 0.0))
 	drunk_meter.configure("drunk", drunk, pending)
-	drunk_value.text = "%d%s" % [roundi(drunk), " +%d" % roundi(pending) if pending > 0.0 else ""]
+	var drunk_text := "%d%s" % [roundi(drunk), " +%d" % roundi(pending) if pending > 0.0 else ""]
+	if drunk_value.text != drunk_text:
+		drunk_value.text = drunk_text
 
 	render_clock(model)
 	_render_status_icons(model.get("status_icons", []))
@@ -131,11 +143,17 @@ func render_clock(model: Dictionary) -> void:
 	var clock_day := int(clock_parts.get("day", 1))
 	var minute_of_day := int(clock_parts.get("minute_of_day", 0))
 	var exact_display := str(clock_parts.get("exact_display", "12:00 AM"))
-	time_day_label.text = "DAY %d" % clock_day
-	time_exact_label.text = exact_display
+	var day_text := "DAY %d" % clock_day
+	if time_day_label.text != day_text:
+		time_day_label.text = day_text
+	if time_exact_label.text != exact_display:
+		time_exact_label.text = exact_display
 	time_watch.set_minute_of_day(minute_of_day)
-	time_button.tooltip_text = str(model.get("clock_tooltip", "Open the day/night schedule."))
-	time_detail.text = time_button.tooltip_text
+	var clock_tooltip := str(model.get("clock_tooltip", "Open the day/night schedule."))
+	if time_button.tooltip_text != clock_tooltip:
+		time_button.tooltip_text = clock_tooltip
+	if time_detail.text != clock_tooltip:
+		time_detail.text = clock_tooltip
 
 
 func current_snapshot() -> Dictionary:

@@ -9097,16 +9097,22 @@ func _refresh_embedded_action_hud() -> void:
 
 func _render_embedded_action_hud_model(hud_model: Dictionary) -> void:
 	if status_label != null:
-		status_label.text = str(hud_model.get("status_text", ""))
+		var next_status_text := str(hud_model.get("status_text", ""))
+		if status_label.text != next_status_text:
+			status_label.text = next_status_text
 	if objective_label != null:
-		objective_label.text = str(hud_model.get("objective_text", ""))
+		var next_objective_text := str(hud_model.get("objective_text", ""))
+		if objective_label.text != next_objective_text:
+			objective_label.text = next_objective_text
 	if structured_hud != null:
 		structured_hud.set_reduce_motion(_reduce_motion_enabled())
 		structured_hud.set_compact_mode(_compact_run_hud_enabled())
 		structured_hud.render(hud_model)
 	_style_hud_for_recent_consequence()
 	if save_status_label != null:
-		save_status_label.text = str(hud_model.get("save_text", ""))
+		var next_save_text := str(hud_model.get("save_text", ""))
+		if save_status_label.text != next_save_text:
+			save_status_label.text = next_save_text
 	_apply_hud_mode_visibility()
 
 
