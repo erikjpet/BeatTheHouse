@@ -2574,6 +2574,52 @@ static func _check_depth_remediation_contracts(failures: Array) -> void:
 	overbound_operation_fingerprint_state["semantic_state"]["operation_fingerprints"] = overbound_operation_fingerprints
 	if not SequenceRuntimeScript.normalize_state(overbound_operation_fingerprint_state, definition).is_empty():
 		failures.append("Persisted semantic operation_fingerprints accepted 513 entries before its runtime limit check.")
+	var persisted_string_arrays := [
+		"resolved_branches", "resolved_outcomes", "fact_receipts", "command_receipts",
+		"transition_receipts", "cleanup_receipts", "visit_receipts",
+	]
+	for field_value in persisted_string_arrays:
+		for hostile_value in [{"wrong": "container"}, [17]]:
+			var hostile_string_state := initial.duplicate(true)
+			hostile_string_state[str(field_value)] = hostile_value
+			_assert_hostile_persisted_collection_rejected(hostile_string_state, definition, host_semantics, str(field_value), failures)
+	var persisted_record_arrays := [
+		"fact_receipt_records", "fact_flush_batch_records", "command_receipt_records",
+		"branch_resolution_records", "transition_receipt_records", "cleanup_receipt_records",
+		"event_correlations", "visit_receipt_records", "expiry_boundary_records", "fact_queue",
+	]
+	for field_value in persisted_record_arrays:
+		for hostile_value in [{"wrong": "container"}, ["not-a-record"]]:
+			var hostile_record_state := initial.duplicate(true)
+			hostile_record_state[str(field_value)] = hostile_value
+			_assert_hostile_persisted_collection_rejected(hostile_record_state, definition, host_semantics, str(field_value), failures)
+	var hostile_command_results_container := initial.duplicate(true)
+	hostile_command_results_container["command_results"] = []
+	_assert_hostile_persisted_collection_rejected(hostile_command_results_container, definition, host_semantics, "command_results container", failures)
+	var hostile_command_results_element := initial.duplicate(true)
+	hostile_command_results_element["command_results"] = {"hostile": "not-a-result-record"}
+	_assert_hostile_persisted_collection_rejected(hostile_command_results_element, definition, host_semantics, "command_results element", failures)
+	for field_value in ["command_fingerprints", "cleanup_fingerprints", "fact_fingerprints"]:
+		for hostile_value in [[], {"hostile": 17}, {17: "0".repeat(64)}]:
+			var hostile_dictionary_state := initial.duplicate(true)
+			hostile_dictionary_state[str(field_value)] = hostile_value
+			_assert_hostile_persisted_collection_rejected(hostile_dictionary_state, definition, host_semantics, str(field_value), failures)
+	var hostile_semantic_container := initial.duplicate(true)
+	hostile_semantic_container["semantic_state"] = []
+	_assert_hostile_persisted_collection_rejected(hostile_semantic_container, definition, host_semantics, "semantic_state container", failures)
+	for field_value in ["transition_queue", "operation_receipt_records"]:
+		for hostile_value in [{"wrong": "container"}, ["not-a-record"]]:
+			var hostile_semantic_record_state := initial.duplicate(true)
+			hostile_semantic_record_state["semantic_state"][str(field_value)] = hostile_value
+			_assert_hostile_persisted_collection_rejected(hostile_semantic_record_state, definition, host_semantics, "semantic %s" % str(field_value), failures)
+	for hostile_value in [{"wrong": "container"}, [17]]:
+		var hostile_operation_receipts := initial.duplicate(true)
+		hostile_operation_receipts["semantic_state"]["operation_receipts"] = hostile_value
+		_assert_hostile_persisted_collection_rejected(hostile_operation_receipts, definition, host_semantics, "semantic operation_receipts", failures)
+	for hostile_value in [[], {"hostile": 17}, {17: "0".repeat(64)}]:
+		var hostile_operation_fingerprints := initial.duplicate(true)
+		hostile_operation_fingerprints["semantic_state"]["operation_fingerprints"] = hostile_value
+		_assert_hostile_persisted_collection_rejected(hostile_operation_fingerprints, definition, host_semantics, "semantic operation_fingerprints", failures)
 
 	var fact_state := SequenceRuntimeScript.initial_state(definition, "bar_node", "fact_batch_seed", host_semantics)
 	var first_payload := _fact_payload("heat_changed")
@@ -3640,6 +3686,13 @@ static func _contains_text(values: Array, needle: String) -> bool:
 		if str(value).contains(needle):
 			return true
 	return false
+
+
+static func _assert_hostile_persisted_collection_rejected(state: Dictionary, definition: Dictionary, host_semantics: Dictionary, label: String, failures: Array) -> void:
+	var normalized := SequenceRuntimeScript.normalize_state(state, definition)
+	var replay := ScenarioEngineScript._rebuild_receipted_semantic_mutations(state, definition, host_semantics)
+	if not normalized.is_empty() or bool(replay.get("ok", true)) or not _contains_text(_array(replay.get("errors", [])), "explicit migration"):
+		failures.append("Malformed persisted %s collection normalized or reached causal replay instead of requiring explicit migration." % label)
 
 
 static func _without_transition_queue(state_value: Dictionary) -> Dictionary:

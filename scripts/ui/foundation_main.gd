@@ -236,8 +236,11 @@ var heat_talk_candidate_visit_count := 0
 var table_talk_candidate_visit_count := 0
 var input_route_guard_visit_count := 0
 var input_route_coach_notification_visit_count := 0
+var coach_boundary_rollback_suppression_depth := 0
 var deferred_coach_refresh_generation_counter := 0
 var deferred_coach_refresh_active_generation := 0
+var game_coach_refresh_generation_counter := 0
+var game_coach_refresh_active_generation := 0
 var tutorial_action_resume_generation_counter := 0
 var tutorial_action_resume_active_generation := 0
 var embedded_incremental_snapshot_count := 0
@@ -881,7 +884,7 @@ func _enter_grand_casino_duel_surface() -> bool:
 			_restore_foundation_lifecycle_snapshot(rollback)
 			var room_errors := _copy_array(room_result.get("errors", []))
 			_show_message(str(room_errors[0]) if not room_errors.is_empty() else "The back room could not be entered safely.")
-			_refresh()
+			_refresh_after_foundation_lifecycle_rollback(rollback)
 			return false
 	_reset_game_surface_runtime_state()
 	var duel_game_ids := _string_array(run_state.current_environment.get("game_ids", []))
@@ -2362,7 +2365,7 @@ func resolve_event_choice(event_id: String, choice_id: String) -> Dictionary:
 		if not bool(layer_entry.get("ok", false)):
 			_restore_foundation_lifecycle_snapshot(event_rollback)
 			_show_message(str(layer_entry.get("message", "The event could not enter its destination room safely.")))
-			_refresh()
+			_refresh_after_foundation_lifecycle_rollback(event_rollback)
 			return {"ok": false, "errors": [str(layer_entry.get("message", "The event could not enter its destination room safely."))]}
 	if bool(result.get("ok", false)) and bool(result.get("duel_ready", false)):
 		var room_result := generator.enter_grand_casino_room_result(run_state, RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID)
@@ -2371,7 +2374,7 @@ func resolve_event_choice(event_id: String, choice_id: String) -> Dictionary:
 			var room_errors := _copy_array(room_result.get("errors", []))
 			var room_error := str(room_errors[0]) if not room_errors.is_empty() else "The back room could not be entered safely."
 			_show_message(room_error)
-			_refresh()
+			_refresh_after_foundation_lifecycle_rollback(event_rollback)
 			return {"ok": false, "errors": [room_error]}
 	var showdown_continues := (
 		event_id == RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID
@@ -4974,7 +4977,7 @@ func _foundation_lifecycle_snapshot() -> Dictionary:
 		"pending_wager_confirm_action_id", "pending_wager_confirm_skip_stake_validation", "pending_wager_confirm_preserve_surface_ui_state", "pending_wager_confirm_stake", "pending_wager_confirm_source_game_id", "pending_wager_confirm_source_game_state_key",
 		"run_inventory_popup_mode", "run_inventory_context_container_id", "selected_run_inventory_item_id", "selected_run_inventory_item_source",
 		"travel_transition_active", "travel_transition_target_id", "travel_transition_target_label",
-		"game_surface_session_generation", "deferred_coach_refresh_active_generation", "tutorial_action_resume_active_generation", "deferred_embedded_refresh_generation", "deferred_embedded_refresh_pending", "deferred_embedded_refresh_run_state", "deferred_embedded_refresh_game", "deferred_embedded_refresh_environment", "deferred_embedded_refresh_result", "deferred_embedded_refresh_canvas", "deferred_embedded_refresh_game_state_key", "deferred_embedded_refresh_surface_session_generation",
+		"game_surface_session_generation", "deferred_coach_refresh_active_generation", "game_coach_refresh_scheduled", "game_coach_refresh_active_generation", "tutorial_action_resume_active_generation", "deferred_embedded_refresh_generation", "deferred_embedded_refresh_pending", "deferred_embedded_refresh_run_state", "deferred_embedded_refresh_game", "deferred_embedded_refresh_environment", "deferred_embedded_refresh_result", "deferred_embedded_refresh_canvas", "deferred_embedded_refresh_game_state_key", "deferred_embedded_refresh_surface_session_generation",
 		"game_surface_auto_resolving", "last_game_surface_realtime_refresh_msec", "surface_feature_music_active", "surface_feature_music_ducking", "drunk_time_anchor_real_msec", "drunk_time_anchor_scaled_msec", "drunk_time_last_scale",
 		"pending_autosave", "pending_autosave_status_text", "pending_autosave_after_frame", "pending_autosave_not_before_msec", "pending_autosave_first_queued_msec",
 		"autosave_dirty_generation", "autosave_inflight_generation", "autosave_completed_generation", "save_status_message",
@@ -5193,13 +5196,29 @@ func _commit_foundation_coach_attention(snapshot: Dictionary) -> void:
 
 
 func _refresh_after_foundation_lifecycle_rollback(snapshot: Dictionary) -> void:
-	# A production refresh may immediately admit the next eligible Coach tip. Keep
-	# the restored attention animation protected through that refresh, then restore
-	# the exact Coach model and controls one final time without rerender side effects.
+	# A rollback refresh must rebuild ordinary UI without crossing a new Coach
+	# boundary. Admission emits lesson_seen and persists profile state, which a UI
+	# snapshot cannot undo. Restored callback generations invalidate work created by
+	# the failed transaction, while this nested scope prevents the rollback refresh
+	# itself from scheduling work that could escape after presentation restoration.
 	_protect_foundation_coach_attention(snapshot)
+	_begin_coach_boundary_rollback_suppression()
 	_refresh()
 	_restore_coach_lifecycle_snapshot(_copy_dict(snapshot.get("coach", {})))
+	_end_coach_boundary_rollback_suppression()
 	snapshot["_coach_attention_rolled_back"] = true
+
+
+func _begin_coach_boundary_rollback_suppression() -> void:
+	coach_boundary_rollback_suppression_depth += 1
+
+
+func _end_coach_boundary_rollback_suppression() -> void:
+	coach_boundary_rollback_suppression_depth = maxi(0, coach_boundary_rollback_suppression_depth - 1)
+
+
+func _coach_boundary_rollback_suppressed() -> bool:
+	return coach_boundary_rollback_suppression_depth > 0
 
 
 func _talk_dock_lifecycle_snapshot() -> Dictionary:
@@ -8044,13 +8063,19 @@ func _embedded_world_header_context_key() -> String:
 
 
 func _schedule_game_coach_refresh_after_draw() -> void:
+	if _coach_boundary_rollback_suppressed():
+		return
 	if game_coach_refresh_scheduled:
 		return
+	game_coach_refresh_generation_counter += 1
+	game_coach_refresh_active_generation = game_coach_refresh_generation_counter
 	game_coach_refresh_scheduled = true
-	call_deferred("_refresh_game_coach_after_draw")
+	call_deferred("_refresh_game_coach_after_draw", game_coach_refresh_active_generation)
 
 
-func _refresh_game_coach_after_draw() -> void:
+func _refresh_game_coach_after_draw(expected_generation: int) -> void:
+	if expected_generation != game_coach_refresh_active_generation or _coach_boundary_rollback_suppressed():
+		return
 	var tree := get_tree()
 	if tree != null:
 		# A deferred callback that awaits one process_frame resumes before that
@@ -8059,6 +8084,8 @@ func _refresh_game_coach_after_draw() -> void:
 		# regions before the coach reads them.
 		await tree.process_frame
 		await tree.process_frame
+	if expected_generation != game_coach_refresh_active_generation or _coach_boundary_rollback_suppressed():
+		return
 	if current_screen != SCREEN_GAME or current_game == null:
 		game_coach_refresh_scheduled = false
 		return
@@ -8077,10 +8104,14 @@ func _refresh_game_coach_after_draw() -> void:
 		var transition_wait_frames := 0
 		while game_surface_canvas != null \
 				and game_surface_canvas.surface_transition_animation_active() \
+				and expected_generation == game_coach_refresh_active_generation \
+				and not _coach_boundary_rollback_suppressed() \
 				and transition_wait_frames < 180:
 			transition_wait_frames += 1
 			await tree.process_frame
 		await tree.process_frame
+	if expected_generation != game_coach_refresh_active_generation or _coach_boundary_rollback_suppressed():
+		return
 	game_coach_refresh_scheduled = false
 	if current_screen != SCREEN_GAME or current_game == null:
 		return
@@ -16661,18 +16692,22 @@ func _compact_run_hud_enabled() -> bool:
 
 
 func _defer_coach_boundary_refresh() -> void:
+	if _coach_boundary_rollback_suppressed():
+		return
 	deferred_coach_refresh_generation_counter += 1
 	deferred_coach_refresh_active_generation = deferred_coach_refresh_generation_counter
 	call_deferred("_refresh_coach_at_boundary_if_current", deferred_coach_refresh_active_generation)
 
 
 func _refresh_coach_at_boundary_if_current(expected_generation: int) -> void:
-	if expected_generation != deferred_coach_refresh_active_generation:
+	if expected_generation != deferred_coach_refresh_active_generation or _coach_boundary_rollback_suppressed():
 		return
 	_refresh_coach_at_boundary()
 
 
 func _refresh_coach_at_boundary(surface_transition_wait_satisfied: bool = false) -> void:
+	if _coach_boundary_rollback_suppressed():
+		return
 	if coach_overlay == null or run_state == null or current_screen == SCREEN_START:
 		return
 	if TutorialFlowScript.repair_legacy_frontier(run_state):

@@ -220,39 +220,66 @@ static func normalize_state(value: Variant, definition: Dictionary = {}, trusted
 
 
 static func _persisted_collections_within_limits(source: Dictionary) -> bool:
-	var receipt_arrays := [
+	var string_receipt_arrays := [
 		"resolved_branches", "resolved_outcomes",
-		"fact_receipts", "fact_receipt_records", "fact_flush_batch_records",
-		"command_receipts", "command_receipt_records", "branch_resolution_records",
-		"transition_receipts", "transition_receipt_records",
-		"cleanup_receipts", "cleanup_receipt_records", "event_correlations",
-		"visit_receipts", "visit_receipt_records", "expiry_boundary_records",
+		"fact_receipts", "command_receipts", "transition_receipts",
+		"cleanup_receipts", "visit_receipts",
 	]
-	for key_value in receipt_arrays:
+	for key_value in string_receipt_arrays:
 		var receipt_key := str(key_value)
 		var receipt_value: Variant = source.get(receipt_key, [])
-		if typeof(receipt_value) == TYPE_ARRAY and (receipt_value as Array).size() > MAX_RECEIPTS:
+		if not _persisted_array_has_element_type(receipt_value, TYPE_STRING, MAX_RECEIPTS):
+			return false
+	var record_receipt_arrays := [
+		"fact_receipt_records", "fact_flush_batch_records",
+		"command_receipt_records", "branch_resolution_records",
+		"transition_receipt_records", "cleanup_receipt_records", "event_correlations",
+		"visit_receipt_records", "expiry_boundary_records",
+	]
+	for key_value in record_receipt_arrays:
+		var record_key := str(key_value)
+		if not _persisted_array_has_element_type(source.get(record_key, []), TYPE_DICTIONARY, MAX_RECEIPTS):
 			return false
 	var queue_value: Variant = source.get("fact_queue", [])
-	if typeof(queue_value) == TYPE_ARRAY and (queue_value as Array).size() > MAX_FACT_QUEUE:
+	if not _persisted_array_has_element_type(queue_value, TYPE_DICTIONARY, MAX_FACT_QUEUE):
 		return false
-	for key_value in ["command_results", "command_fingerprints", "cleanup_fingerprints", "fact_fingerprints"]:
+	if not _persisted_dictionary_has_value_type(source.get("command_results", {}), TYPE_DICTIONARY, MAX_RECEIPTS):
+		return false
+	for key_value in ["command_fingerprints", "cleanup_fingerprints", "fact_fingerprints"]:
 		var dictionary_key := str(key_value)
-		var dictionary_value: Variant = source.get(dictionary_key, {})
-		if typeof(dictionary_value) == TYPE_DICTIONARY and (dictionary_value as Dictionary).size() > MAX_RECEIPTS:
+		if not _persisted_dictionary_has_value_type(source.get(dictionary_key, {}), TYPE_STRING, MAX_RECEIPTS):
 			return false
-	var semantic := _dict(source.get("semantic_state", {}))
+	var semantic_value: Variant = source.get("semantic_state", {})
+	if typeof(semantic_value) != TYPE_DICTIONARY:
+		return false
+	var semantic := semantic_value as Dictionary
 	var transition_queue_value: Variant = semantic.get("transition_queue", [])
-	if typeof(transition_queue_value) == TYPE_ARRAY and (transition_queue_value as Array).size() > OperationRegistryScript.MAX_TRANSITION_QUEUE:
+	if not _persisted_array_has_element_type(transition_queue_value, TYPE_DICTIONARY, OperationRegistryScript.MAX_TRANSITION_QUEUE):
 		return false
-	for key_value in ["operation_receipts", "operation_receipt_records"]:
-		var operation_key := str(key_value)
-		var operation_value: Variant = semantic.get(operation_key, [])
-		if typeof(operation_value) == TYPE_ARRAY and (operation_value as Array).size() > OperationRegistryScript.MAX_OPERATION_RECEIPTS:
+	if not _persisted_array_has_element_type(semantic.get("operation_receipts", []), TYPE_STRING, OperationRegistryScript.MAX_OPERATION_RECEIPTS):
+		return false
+	if not _persisted_array_has_element_type(semantic.get("operation_receipt_records", []), TYPE_DICTIONARY, OperationRegistryScript.MAX_OPERATION_RECEIPTS):
+		return false
+	if not _persisted_dictionary_has_value_type(semantic.get("operation_fingerprints", {}), TYPE_STRING, OperationRegistryScript.MAX_OPERATION_RECEIPTS):
+		return false
+	return true
+
+
+static func _persisted_array_has_element_type(value: Variant, expected_type: int, limit: int) -> bool:
+	if typeof(value) != TYPE_ARRAY or (value as Array).size() > limit:
+		return false
+	for element_value in value as Array:
+		if typeof(element_value) != expected_type:
 			return false
-	var operation_fingerprints_value: Variant = semantic.get("operation_fingerprints", {})
-	if typeof(operation_fingerprints_value) == TYPE_DICTIONARY and (operation_fingerprints_value as Dictionary).size() > OperationRegistryScript.MAX_OPERATION_RECEIPTS:
+	return true
+
+
+static func _persisted_dictionary_has_value_type(value: Variant, expected_type: int, limit: int) -> bool:
+	if typeof(value) != TYPE_DICTIONARY or (value as Dictionary).size() > limit:
 		return false
+	for key_value in (value as Dictionary).keys():
+		if typeof(key_value) != TYPE_STRING or typeof((value as Dictionary).get(key_value)) != expected_type:
+			return false
 	return true
 
 

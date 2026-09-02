@@ -74,6 +74,18 @@ class CoinManualDeferredProbeHost:
 		super._play_result_surface_audio_cue(result)
 
 
+class CoachLifecycleProfileInventory:
+	extends ProfileInventory
+
+	var save_count := 0
+	var persisted_state: Dictionary = {}
+
+	func save() -> Error:
+		save_count += 1
+		persisted_state = to_dict().duplicate(true)
+		return OK
+
+
 class CoachLifecycleDeliveryRun:
 	extends RunState
 
@@ -107,6 +119,8 @@ class CoachLifecycleProbeHost:
 	var lifecycle_refresh_copies: Array[String] = []
 	var lifecycle_refresh_tweens: Array = []
 	var lifecycle_refresh_parent_indexes: Array[int] = []
+	var lifecycle_seen_ids: Array[String] = []
+	var lifecycle_boundary_execution_count := 0
 
 	func _guard_player_input_route(force_closing_allowed: bool = false, coach_action_id: String = "ui:any", notify_coach: bool = true) -> bool:
 		if observe_lifecycle_transaction:
@@ -122,6 +136,16 @@ class CoachLifecycleProbeHost:
 		lifecycle_refresh_copies.append(coach_overlay.copy_label.text if coach_overlay != null and coach_overlay.copy_label != null else "")
 		lifecycle_refresh_tweens.append(coach_overlay.attention_tween if coach_overlay != null else null)
 		lifecycle_refresh_parent_indexes.append(coach_overlay.get_index() if coach_overlay != null else -1)
+
+	func _on_coach_lesson_seen(lesson_id: String) -> void:
+		if observe_lifecycle_transaction:
+			lifecycle_seen_ids.append(lesson_id)
+		super._on_coach_lesson_seen(lesson_id)
+
+	func _refresh_coach_at_boundary(surface_transition_wait_satisfied: bool = false) -> void:
+		if observe_lifecycle_transaction and not _coach_boundary_rollback_suppressed():
+			lifecycle_boundary_execution_count += 1
+		super._refresh_coach_at_boundary(surface_transition_wait_satisfied)
 
 
 func _check_embedded_refresh_deferred_coach(_app: Control) -> bool:
@@ -203,9 +227,13 @@ func _check_normal_coach_lifecycle_rollback() -> bool:
 		return false
 	var failure_coach: CoachOverlay = failure_probe.get("coach_overlay")
 	var failure_run: CoachLifecycleDeliveryRun = failure_probe.get("run_state")
+	var failure_profile: CoachLifecycleProfileInventory = failure_probe.get("profile_inventory")
 	var failure_old_tween: Variant = failure_coach.attention_tween_lifecycle_snapshot().get("tween", null)
 	var failure_old_parent_index := failure_coach.get_index()
 	var failure_before := _normal_coach_lifecycle_signature(failure_probe)
+	var failure_profile_before := JSON.stringify(failure_profile.to_dict())
+	var failure_persisted_before := JSON.stringify(failure_profile.persisted_state)
+	var failure_profile_saves_before := failure_profile.save_count
 	var failure_initial_exact := failure_coach.active_lesson_id() == OLD_TIP_ID \
 			and failure_coach.copy_label.text == OLD_TIP_COPY \
 			and failure_old_tween is Tween and (failure_old_tween as Tween).is_valid() \
@@ -214,7 +242,6 @@ func _check_normal_coach_lifecycle_rollback() -> bool:
 	var failure_ok := bool(failure_probe.call("confirm_selected_travel", true))
 	var failure_after := _normal_coach_lifecycle_signature(failure_probe)
 	var observed_next_index := (failure_probe.get("lifecycle_refresh_active_ids") as Array).find(NEXT_TIP_ID)
-	var failure_new_tween: Variant = (failure_probe.get("lifecycle_refresh_tweens") as Array)[observed_next_index] if observed_next_index >= 0 else null
 	var failure_old_alpha := failure_coach.panel.modulate.a
 	var failure_old_tween_advanced := false
 	if failure_old_tween is Tween:
@@ -224,10 +251,12 @@ func _check_normal_coach_lifecycle_rollback() -> bool:
 			and not failure_ok \
 			and failure_before == failure_after \
 			and int(failure_probe.get("lifecycle_guard_count")) == 1 \
-			and observed_next_index >= 0 \
-			and str((failure_probe.get("lifecycle_refresh_copies") as Array)[observed_next_index]) == NEXT_TIP_COPY \
-			and int((failure_probe.get("lifecycle_refresh_parent_indexes") as Array)[observed_next_index]) != failure_old_parent_index \
-			and failure_new_tween is Tween and failure_new_tween != failure_old_tween and not (failure_new_tween as Tween).is_valid() \
+			and observed_next_index < 0 \
+			and not (failure_probe.get("lifecycle_seen_ids") as Array).has(NEXT_TIP_ID) \
+			and not failure_profile.tips_seen.has(NEXT_TIP_ID) \
+			and JSON.stringify(failure_profile.to_dict()) == failure_profile_before \
+			and JSON.stringify(failure_profile.persisted_state) == failure_persisted_before \
+			and failure_profile.save_count == failure_profile_saves_before \
 			and failure_coach.attention_tween == failure_old_tween and (failure_old_tween as Tween).is_valid() \
 			and failure_coach.lifecycle_protected_attention_tweens.is_empty() and failure_coach.lifecycle_attention_checkpoints.is_empty() \
 			and failure_coach.get_index() == failure_old_parent_index \
@@ -237,7 +266,7 @@ func _check_normal_coach_lifecycle_rollback() -> bool:
 			and not failure_run.world_map.has("coach_lifecycle_delivery_poison") \
 			and not failure_run.grand_casino_room_states.has("coach_lifecycle_delivery_poison")
 	if not failure_exact:
-		push_error("Failed real travel did not restore the old normal Coach model, rendered controls, ordering, focus, and owned Tween exactly after rendering the queued delivery tip: initial=%s ok=%s guard=%d refresh_ids=%s refresh_copies=%s before=%s after=%s." % [str(failure_initial_exact), str(failure_ok), int(failure_probe.get("lifecycle_guard_count")), JSON.stringify(failure_probe.get("lifecycle_refresh_active_ids")), JSON.stringify(failure_probe.get("lifecycle_refresh_copies")), failure_before, failure_after])
+		push_error("Failed real travel crossed a suppressed Coach/profile boundary or did not restore the old normal Coach model, controls, ordering, focus, and Tween exactly: initial=%s ok=%s guard=%d refresh_ids=%s seen=%s profile=%s before=%s after=%s." % [str(failure_initial_exact), str(failure_ok), int(failure_probe.get("lifecycle_guard_count")), JSON.stringify(failure_probe.get("lifecycle_refresh_active_ids")), JSON.stringify(failure_probe.get("lifecycle_seen_ids")), JSON.stringify(failure_profile.tips_seen), failure_before, failure_after])
 	failure_probe.queue_free()
 	await process_frame
 
@@ -246,7 +275,9 @@ func _check_normal_coach_lifecycle_rollback() -> bool:
 		return false
 	var success_coach: CoachOverlay = success_probe.get("coach_overlay")
 	var success_run: CoachLifecycleDeliveryRun = success_probe.get("run_state")
+	var success_profile: CoachLifecycleProfileInventory = success_probe.get("profile_inventory")
 	var success_old_tween: Variant = success_coach.attention_tween_lifecycle_snapshot().get("tween", null)
+	var success_profile_saves_before := success_profile.save_count
 	success_probe.set("observe_lifecycle_transaction", true)
 	var success_ok := bool(success_probe.call("confirm_selected_travel", true))
 	var success_observed_next := (success_probe.get("lifecycle_refresh_active_ids") as Array).find(NEXT_TIP_ID)
@@ -259,6 +290,10 @@ func _check_normal_coach_lifecycle_rollback() -> bool:
 			and success_coach.active_lesson_id() == NEXT_TIP_ID \
 			and success_coach.copy_label.text == NEXT_TIP_COPY \
 			and bool(success_coach.seen.get(NEXT_TIP_ID, false)) \
+			and (success_probe.get("lifecycle_seen_ids") as Array).count(NEXT_TIP_ID) == 1 \
+			and bool(success_profile.tips_seen.get(NEXT_TIP_ID, false)) \
+			and bool(success_profile.persisted_state.get("tips_seen", {}).get(NEXT_TIP_ID, false)) \
+			and success_profile.save_count == success_profile_saves_before + 1 \
 			and not success_coach.queued_ids.has(NEXT_TIP_ID) \
 			and success_coach.queued_lessons.is_empty() \
 			and success_new_tween is Tween and (success_new_tween as Tween).is_valid() and success_new_tween != success_old_tween \
@@ -267,9 +302,35 @@ func _check_normal_coach_lifecycle_rollback() -> bool:
 			and success_coach.lifecycle_protected_attention_tweens.is_empty() and success_coach.lifecycle_attention_checkpoints.is_empty()
 	if not success_exact:
 		push_error("Successful real travel did not commit the queued delivery tip/new Tween while releasing the old normal-tip checkpoint: ok=%s guard=%d refresh_ids=%s active=%s copy=%s queued=%s protected=%s." % [str(success_ok), int(success_probe.get("lifecycle_guard_count")), JSON.stringify(success_probe.get("lifecycle_refresh_active_ids")), success_coach.active_lesson_id(), success_coach.copy_label.text, JSON.stringify(success_coach.queued_lessons), JSON.stringify(success_coach.lifecycle_protected_attention_tweens)])
+	# Recreate the generation topology of a failed GAME-screen transaction. One
+	# callback existed before its snapshot; later general/game callbacks belong to
+	# the failed work. Restoring the snapshot must preserve the first exactly and
+	# invalidate both later generations, while rollback refresh schedules nothing.
+	success_probe.set("current_screen", FoundationMain.SCREEN_GAME)
+	success_probe.set("current_game", EmbeddedCoachFixtureGame.new())
+	var callback_boundary_before := int(success_probe.get("lifecycle_boundary_execution_count"))
+	var callback_seen_before := JSON.stringify(success_probe.get("lifecycle_seen_ids"))
+	var callback_profile_before := JSON.stringify(success_profile.to_dict())
+	success_probe.call("_defer_coach_boundary_refresh")
+	var callback_rollback: Dictionary = success_probe.call("_foundation_lifecycle_snapshot")
+	var preexisting_deferred_generation := int(success_probe.get("deferred_coach_refresh_active_generation"))
+	success_probe.call("_defer_coach_boundary_refresh")
+	success_probe.call("_schedule_game_coach_refresh_after_draw")
+	success_probe.call("_restore_foundation_lifecycle_snapshot", callback_rollback)
+	success_probe.call("_refresh_after_foundation_lifecycle_rollback", callback_rollback)
+	await process_frame
+	await process_frame
+	await process_frame
+	var callback_generations_exact := int(success_probe.get("lifecycle_boundary_execution_count")) == callback_boundary_before + 1 \
+			and int(success_probe.get("deferred_coach_refresh_active_generation")) == preexisting_deferred_generation \
+			and not bool(success_probe.get("game_coach_refresh_scheduled")) \
+			and JSON.stringify(success_probe.get("lifecycle_seen_ids")) == callback_seen_before \
+			and JSON.stringify(success_profile.to_dict()) == callback_profile_before
+	if not callback_generations_exact:
+		push_error("Rollback Coach generations did not preserve one preexisting callback while rejecting failed general/game callbacks: before=%d after=%d active=%d expected=%d scheduled=%s seen=%s." % [callback_boundary_before, int(success_probe.get("lifecycle_boundary_execution_count")), int(success_probe.get("deferred_coach_refresh_active_generation")), preexisting_deferred_generation, str(success_probe.get("game_coach_refresh_scheduled")), JSON.stringify(success_probe.get("lifecycle_seen_ids"))])
 	success_probe.queue_free()
 	await process_frame
-	return failure_exact and success_exact
+	return failure_exact and success_exact and callback_generations_exact
 
 
 func _normal_coach_lifecycle_probe(reject_delivery: bool) -> Control:
@@ -286,6 +347,8 @@ func _normal_coach_lifecycle_probe(reject_delivery: bool) -> Control:
 		await process_frame
 		return null
 	var library: ContentLibrary = probe.get("library")
+	var profile := CoachLifecycleProfileInventory.new()
+	probe.set("profile_inventory", profile)
 	var run := CoachLifecycleDeliveryRun.new()
 	run.reject_delivery = reject_delivery
 	run.start_new("UI-NORMAL-COACH-LIFECYCLE-%s" % ("REJECT" if reject_delivery else "SUCCESS"))
