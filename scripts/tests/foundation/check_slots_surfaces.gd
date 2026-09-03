@@ -3029,6 +3029,9 @@ func _sb4_check_blackjack_stale_stake_all_in(library: ContentLibrary, app: Contr
 	app.set("library", library)
 	app.set("run_state", run_state)
 	app.set("current_game", blackjack)
+	var game_cache: Dictionary = app.get("game_module_cache")
+	game_cache["blackjack"] = blackjack
+	app.set("game_module_cache", game_cache)
 	app.set("game_surface_ui_state", {})
 	# Reproduce a previous $60 selection after the bankroll has fallen to $20.
 	app.set("selected_stake", 60)
@@ -3140,6 +3143,10 @@ func _sb4_open_triggered_event_popup(library: ContentLibrary, app: Control, seed
 	var event_modal_environment := {
 		"id": "sb4_event_modal_casino",
 		"archetype_id": "delta_queen",
+		"world_node_id": "delta_queen",
+		"environment_visit_id": "visit_sb4_event_modal_casino_2",
+		"night_instance_id": "night_2",
+		"context_instance_id": "context_visit_sb4_event_modal_casino_2",
 		"display_name": "SB4 Event Modal Casino",
 		"kind": "casino",
 		"tier": 2,
