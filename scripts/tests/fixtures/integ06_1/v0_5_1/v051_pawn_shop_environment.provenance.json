@@ -1,7 +1,7 @@
 ﻿{
     "schema":  "beat_the_house.integ06_1_historical_fixture_provenance",
     "version":  1,
-    "fixture_id":  "v051_motel_environment",
+    "fixture_id":  "v051_pawn_shop_environment",
     "historical_release":  "v0.5.1",
     "historical_commit":  "f1ce7ec814b5034c229f53dcc0db6e799aaaee0b",
     "historical_tree":  "19c5ed82c0d2d2390dab2b9b6662c70d8aed5d0d",
@@ -12,34 +12,40 @@
     "driver_sha256":  "3FB75E687780BDDF9BD85EACB3FD60BF0B1F17260C982E7024C95EF0DA65F0AA",
     "capture":  {
                     "action_index":  0,
-                    "archetype_id":  "motel",
+                    "archetype_id":  "pawn_shop",
                     "challenge_id":  "",
                     "challenge_modifiers":  {
 
                                             },
-                    "environment_id":  "motel_002",
-                    "fixture_id":  "v051_motel_environment",
-                    "game_clock_minutes":  762,
+                    "environment_id":  "pawn_shop_004",
+                    "fixture_id":  "v051_pawn_shop_environment",
+                    "game_clock_minutes":  846,
                     "game_id":  "",
                     "game_state_key":  "",
                     "methods":  [
                                     "FoundationMain.start_foundation_run",
-                                    "FoundationMain.select_travel_option:motel",
+                                    "FoundationMain.select_travel_option:gas_station_casino",
+                                    "FoundationMain.confirm_selected_travel",
+                                    "FoundationMain.select_travel_option:corner_store",
+                                    "FoundationMain.confirm_selected_travel",
+                                    "FoundationMain.select_travel_option:pawn_shop",
                                     "FoundationMain.confirm_selected_travel",
                                     "FoundationMain.save_foundation_run",
                                     "SaveService.wait_for_async_save"
                                 ],
                     "project_version":  "0.5.1",
-                    "save_path":  "isolated_distribution_root/saves/v051_motel_environment.json",
+                    "save_path":  "isolated_distribution_root/saves/v051_pawn_shop_environment.json",
                     "save_schema":  "beat_the_house.foundation_run",
                     "save_version":  2,
                     "screen":  "RESULT",
                     "seed":  "INTEG06-1-V051-SMOKE-001",
                     "travel_path":  [
-                                        "motel"
+                                        "gas_station_casino",
+                                        "corner_store",
+                                        "pawn_shop"
                                     ]
                 },
-    "save_file":  "v051_motel_environment.json",
-    "save_size_bytes":  23635,
-    "save_sha256":  "04E4F2655F57545B23A6AEB616BF918CC9C63FC51BB80D3CDAD95388DB8D5714"
+    "save_file":  "v051_pawn_shop_environment.json",
+    "save_size_bytes":  50723,
+    "save_sha256":  "0897C1892312C2AA4E71E55191CF51DC31FE8EA5D73AD2209E831DC4E04638A0"
 }

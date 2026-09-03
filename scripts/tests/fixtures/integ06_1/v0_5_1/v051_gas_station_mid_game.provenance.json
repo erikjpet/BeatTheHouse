@@ -9,10 +9,14 @@
     "historical_foundation_main_blob":  "3bc98efec993b8bfdd9252687a0ba041ebba7f23",
     "historical_save_service_blob":  "57a6526016123feb9bcf1ebeb50cc8f937f0b265",
     "driver_path":  "scripts/tests/foundation/integ06_1_v051_fixture_driver.gd",
-    "driver_sha256":  "9A7E85A237A280A0C52365A8BDE2AFFC0CC2F358BB712CA9E67E6C0754D800C8",
+    "driver_sha256":  "3FB75E687780BDDF9BD85EACB3FD60BF0B1F17260C982E7024C95EF0DA65F0AA",
     "capture":  {
                     "action_index":  0,
                     "archetype_id":  "gas_station_casino",
+                    "challenge_id":  "",
+                    "challenge_modifiers":  {
+
+                                            },
                     "environment_id":  "gas_station_casino_002",
                     "fixture_id":  "v051_gas_station_mid_game",
                     "game_clock_minutes":  774,

@@ -132,12 +132,17 @@ try {
     $archiveHarness = Join-Path $historicalRoot $HarnessRelativePath
     New-Item -ItemType Directory -Force -Path (Split-Path -Parent $archiveHarness) | Out-Null
     Copy-Item -LiteralPath $sourceHarness -Destination $archiveHarness -Force
-	$captureArguments = @("--", "--fixture-id", $FixtureId, "--seed", $Seed)
+	$captureCases = @($null)
+	$expectedResultCount = 1
 	if (-not [string]::IsNullOrWhiteSpace($PlanPath)) {
 		$resolvedPlan = (Resolve-Path -LiteralPath $PlanPath).Path
+		$parsedPlan = Get-Content -LiteralPath $resolvedPlan -Raw | ConvertFrom-Json
+		$captureCases = @($parsedPlan.cases)
+		$expectedResultCount = $captureCases.Count
+		if ($expectedResultCount -lt 1) {
+			throw "Capture plan must contain at least one case."
+		}
 		$archivePlan = Join-Path $historicalRoot "integ06_1_fixture_plan.json"
-		Copy-Item -LiteralPath $resolvedPlan -Destination $archivePlan -Force
-		$captureArguments = @("--", "--plan", "res://integ06_1_fixture_plan.json")
 	}
 
     $oldDistributionBuild = $env:BTH_DISTRIBUTION_BUILD
@@ -158,15 +163,46 @@ try {
         $importResult = Invoke-BoundedNative $godot @("--headless", "--import", "--path", $historicalRoot) 300 (Join-Path $temporaryRoot "import.stdout.log") (Join-Path $temporaryRoot "import.stderr.log")
         if ([int]$importResult.ExitCode -ne 0) {
             throw "Historical Godot archive import exited $($importResult.ExitCode)`n$($importResult.Output -join [Environment]::NewLine)"
-        }
-        Write-Host "Imported isolated historical archive at $resolvedCommit."
-        Write-Host "Starting bounded historical FoundationMain capture for $FixtureId."
-        $captureLog = Join-Path $temporaryRoot "historical_capture.log"
-		$godotArguments = @("--headless", "--audio-driver", "Dummy", "--log-file", $captureLog, "--path", $historicalRoot, "--script", "res://$HarnessRelativePath") + $captureArguments
-        $captureResult = Invoke-BoundedNative $godot $godotArguments $CaptureTimeoutSeconds (Join-Path $temporaryRoot "capture.stdout.log") (Join-Path $temporaryRoot "capture.stderr.log")
-        $godotOutput = @($captureResult.Output)
-        $godotExit = [int]$captureResult.ExitCode
-    }
+	        }
+	        Write-Host "Imported isolated historical archive at $resolvedCommit."
+			$godotOutput = @()
+			for ($caseIndex = 0; $caseIndex -lt $captureCases.Count; $caseIndex++) {
+				$captureCase = $captureCases[$caseIndex]
+				$captureArguments = @("--", "--fixture-id", $FixtureId, "--seed", $Seed)
+				$captureLabel = $FixtureId
+				if ($null -ne $captureCase) {
+					$captureLabel = [string]$captureCase.fixture_id
+					$singleCasePlan = [ordered]@{
+						schema = [string]$parsedPlan.schema
+						version = [int]$parsedPlan.version
+						historical_commit = [string]$parsedPlan.historical_commit
+						cases = @($captureCase)
+					}
+					$singleCasePlan | ConvertTo-Json -Depth 30 | Set-Content -LiteralPath $archivePlan -Encoding utf8
+					$captureArguments = @("--", "--plan", "res://integ06_1_fixture_plan.json")
+				}
+				Write-Host "Starting bounded historical FoundationMain capture for $captureLabel."
+				$captureLog = Join-Path $temporaryRoot "historical_capture_$caseIndex.log"
+				$godotArguments = @("--headless", "--audio-driver", "Dummy", "--log-file", $captureLog, "--path", $historicalRoot, "--script", "res://$HarnessRelativePath") + $captureArguments
+				$captureResult = Invoke-BoundedNative $godot $godotArguments $CaptureTimeoutSeconds (Join-Path $temporaryRoot "capture_$caseIndex.stdout.log") (Join-Path $temporaryRoot "capture_$caseIndex.stderr.log")
+				$caseOutput = @($captureResult.Output)
+				$caseOutput | ForEach-Object { Write-Host $_ }
+				$godotExit = [int]$captureResult.ExitCode
+				if ($godotExit -ne 0) {
+					$logTail = if (Test-Path -LiteralPath $captureLog) { (Get-Content -LiteralPath $captureLog -Tail 40) -join [Environment]::NewLine } else { "capture log unavailable" }
+					throw "Historical Godot capture for $captureLabel exited $godotExit.`n$logTail"
+				}
+				$errorLines = @($caseOutput | Where-Object { "$_" -match '(^|\s)(SCRIPT ERROR|ERROR):' })
+				if ($errorLines.Count -gt 0) {
+					throw "Historical Godot capture for $captureLabel emitted an error despite exit code ${godotExit}:`n$($errorLines -join [Environment]::NewLine)"
+				}
+				$caseResultLines = @($caseOutput | Where-Object { "$_" -like "INTEG06_1_FIXTURE_RESULT=*" })
+				if ($caseResultLines.Count -ne 1) {
+					throw "Historical capture for $captureLabel emitted $($caseResultLines.Count) provenance results; expected 1."
+				}
+				$godotOutput += $caseOutput
+			}
+	    }
     finally {
         $env:BTH_DISTRIBUTION_BUILD = $oldDistributionBuild
         $env:BTH_DISTRIBUTION_DATA_ROOT = $oldDistributionRoot
@@ -174,14 +210,9 @@ try {
         $env:BTH_PROFILE_INVENTORY_PATH = $oldProfilePath
         $env:BTH_META_COLLECTION_PATH = $oldCollectionPath
     }
-    $godotOutput | ForEach-Object { Write-Host $_ }
-    if ($godotExit -ne 0) {
-        $logTail = if (Test-Path -LiteralPath $captureLog) { (Get-Content -LiteralPath $captureLog -Tail 40) -join [Environment]::NewLine } else { "capture log unavailable" }
-        throw "Historical Godot capture exited $godotExit.`n$logTail"
-    }
-    $resultLines = @($godotOutput | Where-Object { "$_" -like "INTEG06_1_FIXTURE_RESULT=*" })
-    if ($resultLines.Count -eq 0) {
-        throw "Historical capture did not emit its provenance result."
+	    $resultLines = @($godotOutput | Where-Object { "$_" -like "INTEG06_1_FIXTURE_RESULT=*" })
+	if ($resultLines.Count -ne $expectedResultCount) {
+		throw "Historical capture emitted $($resultLines.Count) provenance results; expected $expectedResultCount."
     }
     $harnessHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $sourceHarness).Hash
 	foreach ($resultLine in $resultLines) {

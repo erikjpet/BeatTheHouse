@@ -29,25 +29,28 @@ func _capture() -> void:
 		_fail("historical capture requires project version 0.5.1, got %s" % version)
 		return
 
-	var app: Control = MainScene.instantiate()
-	app.set("continuous_environment_clock_enabled", false)
-	root.add_child(app)
-	await process_frame
-	await process_frame
-	print("INTEG06_1_PHASE=historical_main_ready")
-	if not app.has_method("uses_foundation_runtime") or not bool(app.call("uses_foundation_runtime")):
-		_fail("historical main scene did not initialize FoundationMain")
-		return
 	for case_value in cases:
 		if typeof(case_value) != TYPE_DICTIONARY:
 			_fail("capture plan contained a non-dictionary case")
+			return
+		# Each fixture is an independent historical run. A fresh main scene prevents
+		# modal/input guards and deferred UI state from one case reaching the next.
+		var app: Control = MainScene.instantiate()
+		app.set("continuous_environment_clock_enabled", false)
+		root.add_child(app)
+		await process_frame
+		await process_frame
+		print("INTEG06_1_PHASE=%s:historical_main_ready" % str((case_value as Dictionary).get("fixture_id", "unknown")))
+		if not app.has_method("uses_foundation_runtime") or not bool(app.call("uses_foundation_runtime")):
+			_fail("historical main scene did not initialize FoundationMain")
 			return
 		var result := await _capture_case(app, case_value as Dictionary, version)
 		if result.is_empty():
 			return
 		print("INTEG06_1_FIXTURE_RESULT=%s" % JSON.stringify(result))
-	app.queue_free()
-	await process_frame
+		app.queue_free()
+		await process_frame
+		await process_frame
 	quit(0)
 
 
@@ -59,7 +62,15 @@ func _capture_case(app: Control, capture_case: Dictionary, version: String) -> D
 		return {}
 	app.set("autosave_slot_id", fixture_id)
 
-	app.call("start_foundation_run", seed_text, {}, false)
+	var methods: Array[String] = []
+	var challenge_modifiers: Dictionary = capture_case.get("challenge_modifiers", {}).duplicate(true) if typeof(capture_case.get("challenge_modifiers", {})) == TYPE_DICTIONARY else {}
+	var challenge_id := str(capture_case.get("challenge_id", "integ06_1_historical_fixture")).strip_edges()
+	var challenge_config: Dictionary = {}
+	if not challenge_modifiers.is_empty():
+		challenge_config = RunState.custom_challenge(challenge_id, seed_text, challenge_modifiers)
+		methods.append("RunState.custom_challenge")
+	app.call("start_foundation_run", seed_text, challenge_config, false)
+	methods.append("FoundationMain.start_foundation_run")
 	await process_frame
 	await process_frame
 	print("INTEG06_1_PHASE=%s:foundation_run_started" % fixture_id)
@@ -67,9 +78,49 @@ func _capture_case(app: Control, capture_case: Dictionary, version: String) -> D
 	if run_state == null:
 		_fail("FoundationMain did not create a run")
 		return {}
-	var methods := ["FoundationMain.start_foundation_run"]
-	var travel_path := _string_array(capture_case.get("travel_path", []))
-	for target_id in travel_path:
+	var travel_path: Array[String] = []
+	var steps: Array = capture_case.get("steps", []) if typeof(capture_case.get("steps", [])) == TYPE_ARRAY else []
+	if steps.is_empty():
+		for target_id in _string_array(capture_case.get("travel_path", [])):
+			steps.append({"type": "travel", "target": target_id})
+	for step_value in steps:
+		if typeof(step_value) != TYPE_DICTIONARY:
+			_fail("%s capture step was not a dictionary" % fixture_id)
+			return {}
+		var step: Dictionary = step_value
+		var step_type := str(step.get("type", "")).strip_edges()
+		if step_type == "lender":
+			var lender_id := str(step.get("lender_id", "")).strip_edges()
+			var lender_environment: Dictionary = run_state.get("current_environment")
+			print("INTEG06_1_PHASE=%s:lender_attempt:%s:hooks=%s:block=%s" % [fixture_id, lender_id, str(lender_environment.get("lender_hooks", [])), str(app.call("_blocking_modal_message"))])
+			if not bool(app.call("use_lender_hook", lender_id)):
+				_fail("%s could not use public lender hook %s" % [fixture_id, lender_id])
+				return {}
+			methods.append("FoundationMain.use_lender_hook:%s" % lender_id)
+			await process_frame
+			await process_frame
+			run_state = app.get("run_state")
+			print("INTEG06_1_PHASE=%s:lender:%s:bankroll=%s:debts=%s" % [fixture_id, lender_id, str(run_state.get("bankroll")), str(run_state.get("debt"))])
+			continue
+		if step_type == "event":
+			var event_id := str(step.get("event_id", "")).strip_edges()
+			var choice_id := str(step.get("choice_id", "")).strip_edges()
+			if not bool(app.call("select_event_choice", event_id, choice_id)):
+				_fail("%s could not select public event choice %s:%s" % [fixture_id, event_id, choice_id])
+				return {}
+			app.call("confirm_selected_event_choice")
+			methods.append("FoundationMain.select_event_choice:%s:%s" % [event_id, choice_id])
+			methods.append("FoundationMain.confirm_selected_event_choice")
+			await process_frame
+			await process_frame
+			run_state = app.get("run_state")
+			var event_environment: Dictionary = run_state.get("current_environment")
+			print("INTEG06_1_PHASE=%s:event:%s:%s:next=%s:block=%s:popup=%s" % [fixture_id, event_id, choice_id, str(event_environment.get("next_archetypes", [])), str(app.call("_blocking_modal_message")), str(app.call("current_event_choice_popup_snapshot"))])
+			continue
+		if step_type != "travel":
+			_fail("%s capture step had unsupported type %s" % [fixture_id, step_type])
+			return {}
+		var target_id := str(step.get("target", "")).strip_edges()
 		if not bool(app.call("select_travel_option", target_id)):
 			_fail("%s could not select public travel target %s" % [fixture_id, target_id])
 			return {}
@@ -83,6 +134,8 @@ func _capture_case(app: Control, capture_case: Dictionary, version: String) -> D
 			return {}
 		methods.append("FoundationMain.select_travel_option:%s" % target_id)
 		methods.append("FoundationMain.confirm_selected_travel")
+		travel_path.append(target_id)
+		print("INTEG06_1_PHASE=%s:travel:%s:next=%s" % [fixture_id, target_id, str(arrived_environment.get("next_archetypes", []))])
 
 	var environment: Dictionary = run_state.get("current_environment")
 	var expected_archetype := str(capture_case.get("expected_archetype", "")).strip_edges()
@@ -157,6 +210,8 @@ func _capture_case(app: Control, capture_case: Dictionary, version: String) -> D
 		"game_state_key": str(app.get("current_game_state_key")) if not game_id.is_empty() else "",
 		"action_index": int(event_cadence.get("action_index", 0)),
 		"game_clock_minutes": run_state.get("game_clock_minutes"),
+		"challenge_id": challenge_id if not challenge_modifiers.is_empty() else "",
+		"challenge_modifiers": challenge_modifiers,
 		"travel_path": travel_path,
 		"methods": methods,
 	}

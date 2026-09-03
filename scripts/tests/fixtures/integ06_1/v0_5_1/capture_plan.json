@@ -40,6 +40,45 @@
       "seed": "INTEG06-1-V051-SMOKE-001",
       "travel_path": ["gas_station_casino", "corner_store"],
       "expected_archetype": "corner_store"
+    },
+    {
+      "fixture_id": "v051_bar_environment",
+      "seed": "INTEG06-1-V051-SMOKE-001",
+      "travel_path": ["motel", "bar"],
+      "expected_archetype": "bar"
+    },
+    {
+      "fixture_id": "v051_pawn_shop_environment",
+      "seed": "INTEG06-1-V051-SMOKE-001",
+      "travel_path": ["gas_station_casino", "corner_store", "pawn_shop"],
+      "expected_archetype": "pawn_shop"
+    },
+    {
+      "fixture_id": "v051_bar_dice_mid_game",
+      "seed": "INTEG06-1-V051-SMOKE-001",
+      "travel_path": ["motel", "bar"],
+      "expected_archetype": "bar",
+      "enter_game": "bar_dice"
+    },
+    {
+      "fixture_id": "v051_back_alley_environment",
+      "seed": "INTEG06-1-V051-SMOKE-001",
+      "travel_path": ["motel", "bar", "back_alley"],
+      "expected_archetype": "back_alley"
+    },
+    {
+      "fixture_id": "v051_small_underground_environment",
+      "seed": "INTEG06-1-V051-SMOKE-001",
+      "steps": [
+        {"type": "travel", "target": "gas_station_casino"},
+        {"type": "event", "event_id": "parking_lot_tip", "choice_id": "follow_tip"},
+        {"type": "travel", "target": "corner_store"},
+        {"type": "lender", "lender_id": "the_crew"},
+        {"type": "travel", "target": "gas_station_casino"},
+        {"type": "travel", "target": "motel"},
+        {"type": "travel", "target": "small_underground_casino"}
+      ],
+      "expected_archetype": "small_underground_casino"
     }
   ]
 }

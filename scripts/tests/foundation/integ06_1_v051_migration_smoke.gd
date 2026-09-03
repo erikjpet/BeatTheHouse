@@ -115,10 +115,32 @@ func _verify_fixture(app: Control, save_service: Variant, capture_case: Dictiona
 
 func _valid_provenance(provenance: Dictionary, capture_case: Dictionary, fixture_id: String, expected_seed: String, expected_archetype: String, expected_game: String, fixture_bytes: PackedByteArray, envelope: Dictionary) -> bool:
 	var capture: Dictionary = provenance.get("capture", {}) if typeof(provenance.get("capture", {})) == TYPE_DICTIONARY else {}
-	var expected_methods: Array[String] = ["FoundationMain.start_foundation_run"]
-	for target_id in _string_array(capture_case.get("travel_path", [])):
-		expected_methods.append("FoundationMain.select_travel_option:%s" % target_id)
-		expected_methods.append("FoundationMain.confirm_selected_travel")
+	var expected_modifiers: Dictionary = capture_case.get("challenge_modifiers", {}).duplicate(true) if typeof(capture_case.get("challenge_modifiers", {})) == TYPE_DICTIONARY else {}
+	var expected_challenge_id := str(capture_case.get("challenge_id", "integ06_1_historical_fixture")).strip_edges() if not expected_modifiers.is_empty() else ""
+	var expected_methods: Array[String] = []
+	if not expected_modifiers.is_empty():
+		expected_methods.append("RunState.custom_challenge")
+	expected_methods.append("FoundationMain.start_foundation_run")
+	var expected_travel_path: Array[String] = []
+	var steps: Array = capture_case.get("steps", []) if typeof(capture_case.get("steps", [])) == TYPE_ARRAY else []
+	if steps.is_empty():
+		for target_id in _string_array(capture_case.get("travel_path", [])):
+			steps.append({"type": "travel", "target": target_id})
+	for step_value in steps:
+		if typeof(step_value) != TYPE_DICTIONARY:
+			continue
+		var step: Dictionary = step_value
+		var step_type := str(step.get("type", ""))
+		if step_type == "travel":
+			var target_id := str(step.get("target", ""))
+			expected_travel_path.append(target_id)
+			expected_methods.append("FoundationMain.select_travel_option:%s" % target_id)
+			expected_methods.append("FoundationMain.confirm_selected_travel")
+		elif step_type == "event":
+			expected_methods.append("FoundationMain.select_event_choice:%s:%s" % [str(step.get("event_id", "")), str(step.get("choice_id", ""))])
+			expected_methods.append("FoundationMain.confirm_selected_event_choice")
+		elif step_type == "lender":
+			expected_methods.append("FoundationMain.use_lender_hook:%s" % str(step.get("lender_id", "")))
 	if not expected_game.is_empty():
 		expected_methods.append("FoundationMain.enter_game")
 	expected_methods.append("FoundationMain.save_foundation_run")
@@ -146,10 +168,16 @@ func _valid_provenance(provenance: Dictionary, capture_case: Dictionary, fixture
 		failures.append("historical save envelope mismatch")
 	if str(capture.get("fixture_id", "")) != fixture_id or str(capture.get("seed", "")) != expected_seed or str(capture.get("archetype_id", "")) != expected_archetype:
 		failures.append("capture identity mismatch")
+	if JSON.stringify(capture.get("challenge_modifiers", {})) != JSON.stringify(expected_modifiers):
+		failures.append("capture challenge modifiers mismatch")
+	if str(capture.get("challenge_id", "")) != expected_challenge_id:
+		failures.append("capture challenge identity mismatch")
 	if str(capture.get("project_version", "")) != "0.5.1" or str(capture.get("save_schema", "")) != "beat_the_house.foundation_run" or int(capture.get("save_version", 0)) != 2:
 		failures.append("capture release/save mismatch")
 	if str(capture.get("game_id", "")) != expected_game or str(capture.get("game_state_key", "")) != expected_game:
 		failures.append("capture game identity mismatch")
+	if _string_array(capture.get("travel_path", [])) != expected_travel_path:
+		failures.append("capture travel path mismatch")
 	if actual_methods != expected_methods:
 		failures.append("public-call transcript mismatch")
 	if not failures.is_empty():
