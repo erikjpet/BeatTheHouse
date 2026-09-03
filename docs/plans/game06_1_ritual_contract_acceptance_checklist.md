@@ -1,6 +1,6 @@
 # game06_1 Ritual Vocabulary Contract — Pre-implementation Acceptance Checklist
 
-Status: pre-implementation checklist; contract-authoring package only  
+Status: CLOSED — historical pre-implementation checklist; final product acceptance is recorded in `game06_1_final_closeout.md`
 Owner: `/root/contract_author_game`  
 Independent reviewer: pending Review Pool assignment  
 Product implementation: not started and not owned by this package

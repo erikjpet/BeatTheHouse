@@ -1,5 +1,21 @@
-Status: IN_PROGRESS — implementation landed on `main`; Family 1 release-gate closeout remains open
+Status: COMPLETE — landed shared runtime accepted and archived 2026-09-03
 Board row: `game06_1` in `docs/todo/README_0_6_board.md`
+
+## Execution Record
+
+- The existing shared `game_ritual/1` implementation at
+  `5a2b1e1a6782a13308585e1a974adeeb86be0647` was recovered from landed main;
+  no rejected historical branch was replayed and no game authority was moved
+  into the vocabulary runtime.
+- The exact-tree vocabulary contract passes 132 negative fixtures and seven
+  neutrality targets. The runtime proof passes closed-phase legality,
+  commitment correction, tactile equivalents, hostile restore/replay,
+  exactly-once receipts and ten deterministic traces.
+- All six later game-depth contracts pass against the same landed runtime.
+  Project validation and the complete 304-script load census are green.
+- Full requirement mapping, exact commands, retained invalid setup attempt and
+  the only remaining human experience check are recorded in
+  `docs/plans/game06_1_final_closeout.md`.
 
 # Agent Prompt — 0.6 game06_1: Table and Machine Ritual Runtime
 

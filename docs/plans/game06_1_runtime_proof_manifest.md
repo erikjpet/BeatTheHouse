@@ -1,6 +1,6 @@
 # game06_1 runtime proof manifest
 
-Implementation branch: `codex/game06_1-impl`
+Implementation integration: `5a2b1e1a6782a13308585e1a974adeeb86be0647`
 
 Frozen contract base: `a2760d81`
 
@@ -101,3 +101,10 @@ one allowlisted authoritative handler. Game-specific rules, RTP, outcome RNG,
 and content remain consumer responsibilities; this row adds no game-specific
 branch. Downstream Family 1 rows can adopt the shared runtime without editing its
 neutral files.
+
+## Final closeout — 2026-09-03
+
+Current-main acceptance reconciliation is recorded in
+`docs/plans/game06_1_final_closeout.md`. The landed runtime and its seven Family
+1 consumers pass their focused exact-tree contracts; the prompt is archived and
+the earlier rejected heads remain historical provenance only.
