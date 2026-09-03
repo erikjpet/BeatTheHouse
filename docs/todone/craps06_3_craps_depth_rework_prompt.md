@@ -1,5 +1,22 @@
-Status: IN_PROGRESS — accepted core implementation landed on `main`; full prompt closeout remains open
+Status: COMPLETE — landed Craps depth accepted and archived
 Board row: `craps06_3` in `docs/todo/README_0_6_board.md`
+
+## Execution Record
+
+- Completed: 2026-09-03.
+- Recovered implementation: `7d230a63`; no product rebuild or remediation was
+  required during closeout.
+- Five casino/street ritual profiles, tactile throw phases, bet correction,
+  staffed energy states, committed environment responses, street warning and
+  dispersal, save/revisit, and exactly-once returned stakes are present on the
+  audited current tree.
+- Project validation, focused Foundation Craps, row and environment contracts,
+  million-decision RTP/fairness, 55-scenario uniqueness, actual-GL visual QA,
+  liveness, reduced motion, and authority-hostile checks pass. Exact commands,
+  timings, hashes, and retained setup red are in
+  `docs/plans/craps06_3_final_closeout.md`.
+- Only the program-level cold-player comprehension check remains for
+  `playtest06_1`; it is not automated implementation work.
 
 # Agent Prompt — 0.6 craps06_3: Craps Table Depth and Living Sequence Rework
 
