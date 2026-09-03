@@ -344,6 +344,12 @@ func enter_environment_layer(run_state: RunState, target_layer_id: String, advan
 	if not run_state.install_environment_layer_state(target_id, layer_state):
 		_restore_travel_snapshot(run_state, rollback)
 		return {"ok": false, "message": "The room could not be entered."}
+	# Crew presence is an authoritative dynamic actor input to scenario semantic
+	# sealing. Apply it before the first seal so a save made in this layer can
+	# rebuild the identical inventory in a fresh process. The post-reconciliation
+	# application below remains necessary because scenario projection can replace
+	# the flat event arrays.
+	CrewRecruitmentModelScript.apply_to_environment(run_state, run_state.current_environment)
 	var layer_finalized := run_state.scenario_finalize_installed_environment(library)
 	if not bool(layer_finalized.get("ok", false)):
 		_restore_travel_snapshot(run_state, rollback)

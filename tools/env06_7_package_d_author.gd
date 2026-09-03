@@ -24,7 +24,7 @@ const SPATIAL_BINDINGS := {
 	"punchline_open_mic_night":{"layer":"club","task_anchor":"punchline_open_mic_signup","anchors":["punchline_open_mic_signup","punchline_open_mic_waiting_comic"],"phase_object_anchors":{"work_1":{"signup_lectern":"punchline_open_mic_lectern_work_1"}},"route":"base::layer:casino"},
 	"punchline_headliner_night":{"layer":"back_room","task_anchor":"punchline_headliner_task","anchors":["punchline_headliner_credential_rope","punchline_headliner_door_guard"],"phase_object_anchors":{"work_1":{"credential_rope":"punchline_headliner_rope_work_1"}},"actor_anchors":{"credential_runner":"punchline_headliner_runner_arrival"},"route":"base::layer:casino"},
 	"punchline_bringer_show":{"layer":"club","task_anchor":"punchline_bringer_crowd_ropes","anchors":["punchline_bringer_crowd_ropes","punchline_bringer_crowd_captain"],"object_anchors":{"unlit_stage":"punchline_bringer_unlit_stage"},"actor_anchors":{"bringer_performer":"punchline_bringer_performer_arrival"},"phase_object_anchors":{"work_1":{"crowd_ropes":"punchline_bringer_ropes_work_1"}},"route":"base::layer:casino"},
-	"punchline_high_stakes_night":{"layer":"casino","task_anchor":"punchline_high_stakes_task","anchors":["punchline_high_stakes_protected_table","punchline_high_stakes_floor_runner"],"phase_actor_anchors":{"work_2":{"floor_service_runner":"punchline_high_stakes_runner_work_2"}},"route":"base::layer:casino"},
+	"punchline_high_stakes_night":{"layer":"casino","task_anchor":"punchline_high_stakes_task","exit_anchor":"punchline_high_stakes_safe_exit","anchors":["punchline_high_stakes_protected_table","punchline_high_stakes_floor_runner","punchline_high_stakes_chair_stack","punchline_high_stakes_guard","punchline_high_stakes_safe_exit"],"object_anchors":{"protected_table":"punchline_high_stakes_protected_table","chair_stack":"punchline_high_stakes_chair_stack"},"actor_anchors":{"high_stakes_guard":"punchline_high_stakes_guard","floor_service_runner":"punchline_high_stakes_floor_runner"},"phase_actor_anchors":{"work_2":{"floor_service_runner":"punchline_high_stakes_runner_work_2"}},"route":"base::layer:casino"},
 	"punchline_greased_week":{"layer":"casino","task_anchor":"punchline_greased_inspection_seals","anchors":["punchline_greased_inspection_seals","punchline_greased_payoff_runner"],"phase_object_anchors":{"work_1":{"inspection_seals":"punchline_greased_seals_work_1"}},"route":"base::layer:casino"},
 	"punchline_debt_court":{"layer":"club","task_anchor":"punchline_debt_task","anchors":["punchline_debt_hearing_chairs","punchline_debt_room_witness"],"object_anchors":{"hearing_chairs":"punchline_debt_chairs_work_1"},"phase_object_anchors":{"work_1":{"hearing_chairs":"punchline_debt_chairs_work_1"}},"phase_actor_anchors":{"work_2":{"room_witness":"punchline_debt_witness_work_2"}},"route":"base::layer:casino"},
 	"punchline_new_muscle":{"layer":"casino","task_anchor":"punchline_new_muscle_task","anchors":["punchline_new_muscle_inspection_tray","punchline_new_muscle_checkpoint_rover"],"actor_anchors":{"checkpoint_rover":"punchline_new_muscle_rover_arrival"},"phase_object_anchors":{"work_1":{"inspection_tray":"punchline_new_muscle_tray_work_1"}},"route":"base::layer:casino"},
@@ -33,6 +33,14 @@ const SPATIAL_BINDINGS := {
 	"kitty_cat_lounge_buyout":{"layer":"flat","anchors":["kitty_buyout_ropes","kitty_buyout_steward"],"object_anchors":{"request_cart":"kitty_buyout_request_cart"},"actor_anchors":{"public_floor_steward":"kitty_buyout_steward_arrival"},"route":"base::world:bar"},
 	"kitty_cat_lounge_slow_night":{"layer":"flat","task_anchor":"kitty_slow_task","anchors":["kitty_slow_closed_section","kitty_slow_booth_regular"],"object_anchors":{"closed_section_ropes":"kitty_slow_closed_section","mini_stage":"kitty_slow_mini_stage","maintenance_panel":"kitty_slow_maintenance"},"actor_anchors":{"slow_night_host":"kitty_slow_host_arrival","booth_regular":"kitty_slow_regular_arrival"},"route":"base::world:gas_station_casino"},
 	"kitty_cat_lounge_bachelorette_storm":{"layer":"flat","task_anchor":"kitty_storm_task","exit_anchor":"kitty_storm_safe_exit","anchors":["kitty_storm_prop_trunk","kitty_storm_floor_host"],"object_anchors":{"party_prop_trunk":"kitty_storm_prop_trunk","bar_route_rope":"kitty_storm_bar_rope"},"actor_anchors":{"party_leader":"kitty_storm_party_leader","floor_recovery_host":"kitty_storm_host_arrival"},"route":"base::world:gas_station_casino"},
+}
+
+const CREW_POKER_NIGHTS := {
+	"punchline_open_mic_night": "friendly_teaching",
+	"punchline_high_stakes_night": "hustle_test",
+	"punchline_greased_week": "after_job",
+	"punchline_debt_court": "debt_court",
+	"punchline_raid_jitters": "raid_jitters",
 }
 
 
@@ -158,7 +166,11 @@ func _entry(c: Dictionary) -> Dictionary:
 	var decision_verbs: Array = []
 	for option_value in _array(decision.get("options", [])):
 		decision_verbs.append(str((option_value as Array)[0]))
-	return {"scenario_id":c.id,"sequence":sequence,"authoring":{"arrival_summary":c.arrival,"player_verbs":c.verbs + decision_verbs + ["refuse_%s" % prefix],"world_connections":[str(c.fact),"travel_departed"],"references":{"objects":["base::travel:leave"]},"capture_ids":["%s_arrival" % prefix,"%s_partial" % prefix,"%s_success" % prefix,"%s_failure" % prefix,"%s_refused" % prefix,"%s_interrupted" % prefix,"%s_reduced_motion" % prefix,"%s_small_screen" % prefix,"%s_hit_overlay" % prefix,"%s_obstruction" % prefix],"seed_evidence":{"proof_seed":"%s_seed" % prefix,"save_boundaries":["arrival","partial","success","failure","refused","interrupted"],"minimum_target_size":44,"expected_outcomes":c.outcomes,"identity_decision_phase":str(decision.get("at", "")),"identity_decision_verbs":decision_verbs},"masked_visual_explanations":{}}}
+	var authoring := {"arrival_summary":c.arrival,"player_verbs":c.verbs + decision_verbs + ["refuse_%s" % prefix],"world_connections":[str(c.fact),"travel_departed"],"references":{"objects":["base::travel:leave"]},"capture_ids":["%s_arrival" % prefix,"%s_partial" % prefix,"%s_success" % prefix,"%s_failure" % prefix,"%s_refused" % prefix,"%s_interrupted" % prefix,"%s_reduced_motion" % prefix,"%s_small_screen" % prefix,"%s_hit_overlay" % prefix,"%s_obstruction" % prefix],"seed_evidence":{"proof_seed":"%s_seed" % prefix,"save_boundaries":["arrival","partial","success","failure","refused","interrupted"],"minimum_target_size":44,"expected_outcomes":c.outcomes,"identity_decision_phase":str(decision.get("at", "")),"identity_decision_verbs":decision_verbs},"masked_visual_explanations":{}}
+	if CREW_POKER_NIGHTS.has(prefix):
+		authoring["crew_poker_turn_engine"] = "ordered_v1"
+		authoring["crew_poker_night_id"] = str(CREW_POKER_NIGHTS.get(prefix, ""))
+	return {"scenario_id":c.id,"sequence":sequence,"authoring":authoring}
 
 
 func _phase(id:String,label:String,feedback:String,exit_prompt:String,objectives:Array,scene:Array,interactions:Array,actors:Array,transitions:Array,branches:Array,terminal:bool=false)->Dictionary:

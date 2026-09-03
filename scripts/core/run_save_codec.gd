@@ -10,6 +10,7 @@ const ENVIRONMENT_REF_KEY := "__bth_environment_ref"
 const REGISTRY_KEY := "environment_registry"
 const CODEC_KEY := "run_save_codec_version"
 const EXACT_INT_KEY := "__bth_exact_int64"
+const EXACT_INTEGER_ROOT_KEYS := ["active_delivery_run", "world_sequence_registrations"]
 const SLOT_DEFINITION_KEYS := ["reel_strips", "bonus_reel_strips"]
 const SLOT_DUPLICATE_PRESENTATION_KEYS := ["slot_reel_timeline", "slot_reel_stop_times"]
 
@@ -45,7 +46,7 @@ static func _encode_value(value: Variant, registry: Dictionary, fingerprints: Di
 		for key_value in source.keys():
 			var key := str(key_value)
 			var child: Variant = source.get(key_value)
-			encoded_dict[key_value] = _encode_exact_integers(child) if key.begins_with("scenario_") else _encode_value(child, registry, fingerprints, inside_environment)
+			encoded_dict[key_value] = _encode_exact_integers(child) if key.begins_with("scenario_") or key in EXACT_INTEGER_ROOT_KEYS else _encode_value(child, registry, fingerprints, inside_environment)
 		return encoded_dict
 	if typeof(value) == TYPE_ARRAY:
 		var source_array: Array = value
@@ -125,8 +126,9 @@ static func _decode_value(value: Variant, registry: Dictionary) -> Variant:
 
 
 # JSON has one numeric type and otherwise changes every persisted integer into a
-# float. Dynamic scenario authority hashes exact typed envelopes, so preserve
-# integer identity recursively for every scenario-owned save field.
+# float. Dynamic scenario, mounted world-sequence, and delivery depth authority
+# validate exact typed envelopes, so preserve integer identity recursively for
+# those root-owned save fields.
 static func _encode_exact_integers(value: Variant) -> Variant:
 	if typeof(value) == TYPE_INT:
 		return {EXACT_INT_KEY: str(value)}

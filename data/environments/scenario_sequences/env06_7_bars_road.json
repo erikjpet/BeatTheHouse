@@ -11140,7 +11140,7 @@
                     "actor_id": "actor_stage_manager",
                     "anchor_id": "guest_legend_manager_arrival",
                     "behavior": "work",
-                    "label": "Jazz stage manager",
+                    "label": "Stage manager",
                     "pose": "arrival",
                     "zone_id": "background"
                   },
@@ -11324,7 +11324,7 @@
                       "w": 60.0
                     },
                     "enabled": true,
-                    "label": "Missing instrument case",
+                    "label": "Instrument case",
                     "role": "instrument",
                     "state": "latched",
                     "visible": true,
@@ -12564,7 +12564,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "8431f3ba51f4a6b84c5885bd1dfbced396d6a11c0618df2e851441f3d01e5c56"
+        "sequence_signature": "bc5092f7b0d453fcdfdb471b25f2558de60cd7e88eab3fcc885e7a527a2dab5d"
       }
     },
     {
