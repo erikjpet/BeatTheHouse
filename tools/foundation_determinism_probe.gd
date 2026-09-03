@@ -850,7 +850,7 @@ func _apply_game_result(run_state: RunState, result: Dictionary, rng: RngStream)
 
 
 func _checkpoint(run_state: RunState, checkpoints: Array, seed: String, label: String) -> void:
-	var canonical := _canonical_text(run_state.to_dict())
+	var canonical := _canonical_text(_deterministic_run_projection(run_state))
 	checkpoints.append({
 		"seed": seed,
 		"index": checkpoints.size(),
@@ -861,7 +861,7 @@ func _checkpoint(run_state: RunState, checkpoints: Array, seed: String, label: S
 
 
 func _checkpoint_with_evidence(run_state: RunState, checkpoints: Array, seed: String, label: String, evidence: Dictionary) -> void:
-	var canonical := _canonical_text({"run": run_state.to_dict(), "evidence": evidence})
+	var canonical := _canonical_text({"run": _deterministic_run_projection(run_state), "evidence": evidence})
 	checkpoints.append({
 		"seed": seed,
 		"index": checkpoints.size(),
@@ -870,6 +870,28 @@ func _checkpoint_with_evidence(run_state: RunState, checkpoints: Array, seed: St
 		"bytes": canonical.length(),
 		"evidence_hash": _stable_hash_text(_canonical_text(evidence)),
 	})
+
+
+# Every run now carries a freshly generated, authenticated Crew private-save
+# envelope. Its authority id/ciphertext must differ across processes, so the
+# cross-process hash cannot compare those bytes. Preserve coverage of the
+# gameplay semantics inside that envelope by hashing a harness-only projection
+# of the live Turn/grievance payload. The values never enter the report.
+func _deterministic_run_projection(run_state: RunState) -> Dictionary:
+	var result := run_state.to_dict()
+	var crew: Dictionary = result.get("crew_state", {}) if typeof(result.get("crew_state", {})) == TYPE_DICTIONARY else {}
+	crew = crew.duplicate(true)
+	crew.erase("a")
+	crew.erase("z")
+	result["crew_state"] = crew
+	var heist: Dictionary = run_state.crew_heist_state.duplicate(true)
+	var private_heist: Dictionary = heist.get("x", {}) if typeof(heist.get("x", {})) == TYPE_DICTIONARY else {}
+	result["_determinism_private_semantics"] = {
+		"x": private_heist.duplicate(true),
+		"g": run_state.crew_grievance_ledger.duplicate(true),
+		"q": run_state.crew_grievance_sequence,
+	}
+	return result
 
 
 func _timed_ui(run_state: RunState, key: String, extras: Dictionary = {}) -> Dictionary:
