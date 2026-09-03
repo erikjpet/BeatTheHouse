@@ -1,4 +1,4 @@
-Status: IN_PROGRESS — accepted core implementation landed on `main`; full prompt closeout remains open
+Status: COMPLETE — landed safe-scope implementation accepted and archived 2026-09-03
 Board row: `crew06_10` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — 0.6 crew06_10: Back-Room Poker Depth Rework
@@ -145,3 +145,14 @@ Run project validation, all relevant foundation suites, 10-seed determinism,
 native/Web parity, accessibility, performance, and visual QA. Report policy
 profiles, betting state machine, tell timeline, session reentry, five sequences,
 Turn compatibility, and exact gate evidence.
+
+## Execution record — 2026-09-03
+
+Recovered the landed `0d4529ac` implementation, `040c0603` compatibility fix,
+and `f1ebe9a7` production scenario registration; no rebuild or product change
+was required. Ordered betting, seven policies, five nights, hostile authority,
+focused Foundation, actual-renderer visual, and 55-scenario audits pass. The
+three absent authentic host authority roots remain explicitly fail-closed and
+are not misreported as positive controls. Exact evidence and the safe-scope
+disposition are recorded in `docs/plans/crew06_10_final_closeout.md`. Human tell
+readability and cold-player table comprehension pass to `playtest06_1`.
