@@ -374,3 +374,34 @@ Accordingly, `game06_4` is **VERIFIED/DONE** for board and Family 1 dependency
 purposes. game06_8 must consume the final closeout for this slice and must not
 revive D4/D5's obsolete unselected-authority blockers unless a new regression
 is demonstrated on current `main`.
+
+## Superseding game06_1/game06_2/depth06_1 reconciliation — 2026-09-03
+
+This section supersedes the historical D1, D2, D10, D11 and D12 blockers. It
+does not erase the rejected or prestage heads above.
+
+- The accepted shared `game_ritual/1` runtime is landed through
+  `5a2b1e1a6782a13308585e1a974adeeb86be0647`. Its exact-tree 132-negative
+  vocabulary suite, hostile runtime proof, ten deterministic traces and every
+  adopting row contract pass. Final mapping:
+  `docs/plans/game06_1_final_closeout.md`.
+- Blackjack depth is landed through `d47feee3` plus recovery `b091bc43`. The
+  exact row contract, sealed-host suite, authority/replay, accounting,
+  persistence, input equivalence, actors/energy, focused probes and retained
+  visual evidence pass. Final mapping:
+  `docs/plans/game06_2_final_closeout.md`.
+- `depth06_1` is DONE/ACCEPTED at
+  `b33a05843fb161cd1c2970b4af2a475473beac40`. Its 55-id/1,485-pair exact audit,
+  reproducible 24-scenario sample, child authority/RTP/visual checks and two
+  byte-identical 10-seed/560-checkpoint runs pass. Final mapping:
+  `docs/plans/depth06_1_final_closeout.md`.
+
+The assembled landed product base audited by game06_8 is
+`914e5ac822d8ee3127f210203dc688b182a19c65` / tree
+`82ea2d051fdef2926f02a390410369bc7bc31ae8`. The depth closeout commit adds
+acceptance records, not a different Family 1 product. Every product integration
+listed in the final game06_8 report is an ancestor of that frozen base.
+
+Accordingly, all Family 1 intake dependencies are **VERIFIED/DONE**. The final
+game06_8 verdict is governed by
+`docs/plans/game06_8_final_closeout.md`, not this historical prestage section.
