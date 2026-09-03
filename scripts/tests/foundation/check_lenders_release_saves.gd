@@ -5182,7 +5182,7 @@ func _check_same_seed_game_result(library: ContentLibrary, challenge: Dictionary
 	var result_b := game_b.resolve("legal_fixture", 1, run_b, environment_b.to_dict(), run_b.create_rng())
 	if JSON.stringify(result_a) != JSON.stringify(result_b):
 		failures.append("Same seed and challenge did not produce the same foundation game result.")
-	if JSON.stringify(run_a.to_dict()) != JSON.stringify(run_b.to_dict()):
+	if JSON.stringify(_deterministic_run_projection(run_a)) != JSON.stringify(_deterministic_run_projection(run_b)):
 		failures.append("Same foundation game result did not leave matching RunState snapshots.")
 
 
@@ -5193,7 +5193,7 @@ func _check_run_state_source_of_truth(library: ContentLibrary, failures: Array) 
 	run_a.start_new("IGNORED-SEED", challenge)
 	var run_b: RunState = RunStateScript.new()
 	run_b.start_new("IGNORED-SEED", challenge)
-	if JSON.stringify(run_a.to_dict()) != JSON.stringify(run_b.to_dict()):
+	if JSON.stringify(_deterministic_run_projection(run_a)) != JSON.stringify(_deterministic_run_projection(run_b)):
 		failures.append("RunState.start_new is not deterministic for the same seed and challenge.")
 
 	var rng_a := run_a.create_rng()

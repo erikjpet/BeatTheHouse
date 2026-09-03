@@ -66,7 +66,7 @@ func _check_selected_starter_game_port(library: ContentLibrary, failures: Array)
 	_check_pull_tab_result_details(legal_result_a, failures)
 	if JSON.stringify(legal_result_a) != JSON.stringify(legal_result_b):
 		failures.append("Selected starter legal action was not deterministic.")
-	if JSON.stringify(run_a.to_dict()) != JSON.stringify(run_b.to_dict()):
+	if JSON.stringify(_deterministic_run_projection(run_a)) != JSON.stringify(_deterministic_run_projection(run_b)):
 		failures.append("Selected starter legal action did not leave deterministic RunState snapshots.")
 
 
@@ -232,7 +232,7 @@ func _check_item_effect_foundation(library: ContentLibrary, failures: Array) -> 
 		failures.append("Production item effect did not contribute an item hook.")
 	if JSON.stringify(result_a) != JSON.stringify(result_b):
 		failures.append("Production item effect result was not deterministic.")
-	if JSON.stringify(run_a.to_dict()) != JSON.stringify(run_b.to_dict()):
+	if JSON.stringify(_deterministic_run_projection(run_a)) != JSON.stringify(_deterministic_run_projection(run_b)):
 		failures.append("Production item effect did not leave deterministic RunState snapshots.")
 	if JSON.parse_string(JSON.stringify(result_a)) == null:
 		failures.append("Production item effect result was not serializable.")
@@ -554,7 +554,7 @@ func _check_event_module_foundation(library: ContentLibrary, failures: Array) ->
 	_check_event_result_applied(before, run_a, result_a, "production event result", failures)
 	if JSON.stringify(result_a) != JSON.stringify(result_b):
 		failures.append("Production event resolution was not deterministic.")
-	if JSON.stringify(run_a.to_dict()) != JSON.stringify(run_b.to_dict()):
+	if JSON.stringify(_deterministic_run_projection(run_a)) != JSON.stringify(_deterministic_run_projection(run_b)):
 		failures.append("Production event resolution did not leave deterministic RunState snapshots.")
 	if JSON.parse_string(JSON.stringify(run_a.to_dict())) == null:
 		failures.append("Production event RunState result was not serializable.")
@@ -1671,7 +1671,7 @@ func _check_platform_services_foundation(failures: Array) -> void:
 	daily_run_a.start_new("IGNORED", daily_challenge)
 	daily_run_b.start_new("OTHER-IGNORED", daily_b.get("challenge_config", {}))
 	daily_run_c.start_new("IGNORED", daily_c.get("challenge_config", {}))
-	if JSON.stringify(daily_run_a.to_dict()) != JSON.stringify(daily_run_b.to_dict()):
+	if JSON.stringify(_deterministic_run_projection(daily_run_a)) != JSON.stringify(_deterministic_run_projection(daily_run_b)):
 		failures.append("Daily challenge config did not seed RunState deterministically.")
 	if daily_run_a.seed_value == daily_run_c.seed_value:
 		failures.append("Different daily challenge payloads did not produce distinct RunState seeds.")
@@ -1681,7 +1681,7 @@ func _check_platform_services_foundation(failures: Array) -> void:
 	var custom_run_b: RunState = RunStateScript.new()
 	custom_run_a.start_new("IGNORED", custom_challenge)
 	custom_run_b.start_new("OTHER-IGNORED", RunState.custom_challenge("local_custom", "CUSTOM-SEED", {"pressure": "low"}))
-	if JSON.stringify(custom_run_a.to_dict()) != JSON.stringify(custom_run_b.to_dict()):
+	if JSON.stringify(_deterministic_run_projection(custom_run_a)) != JSON.stringify(_deterministic_run_projection(custom_run_b)):
 		failures.append("Custom challenge config did not seed RunState deterministically.")
 	var custom_run_c: RunState = RunStateScript.new()
 	custom_run_c.start_new("IGNORED", RunState.custom_challenge("local_custom", "CUSTOM-SEED", {"pressure": "high"}))

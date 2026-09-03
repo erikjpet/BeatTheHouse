@@ -4291,7 +4291,7 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 	run_b.begin_act(1)
 	var generator_b := RunGeneratorScript.new(library)
 	generator_b.next_environment(run_b)
-	if JSON.stringify(run_a.to_dict()) != JSON.stringify(run_b.to_dict()):
+	if JSON.stringify(_deterministic_run_projection(run_a)) != JSON.stringify(_deterministic_run_projection(run_b)):
 		failures.append("Tutorial fixed seed generated divergent initial runs.")
 	if not run_a.is_tutorial_run() or not run_a.excludes_profile_stats():
 		failures.append("Tutorial run did not exclude profile and challenge statistics.")
@@ -7694,6 +7694,18 @@ func _archetype_by_id(library: ContentLibrary, archetype_id: String) -> Dictiona
 func _assert_json_equal(actual: Variant, expected: Variant, message: String, failures: Array) -> void:
 	if JSON.stringify(actual) != JSON.stringify(expected):
 		failures.append(message)
+
+
+# Independent runs intentionally carry distinct random Crew save authority and
+# ciphertext. Determinism checks compare gameplay state while preserving exact
+# byte comparisons for save/restore and same-run transaction tests.
+func _deterministic_run_projection(run_state: RunState) -> Dictionary:
+	var result := run_state.to_dict()
+	var crew := _copy_dict(result.get("crew_state", {}))
+	crew.erase("a")
+	crew.erase("z")
+	result["crew_state"] = crew
+	return result
 
 
 # Checks core contracts with fixture content.

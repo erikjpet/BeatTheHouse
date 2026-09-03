@@ -3709,7 +3709,7 @@ func _check_challenge_pack_foundation(library: ContentLibrary, failures: Array) 
 		run_a.start_new("IGNORED-A", config)
 		var run_b: RunState = RunStateScript.new()
 		run_b.start_new("IGNORED-B", library.challenge_config_for(challenge_id, "CHALLENGE-PACK-SEED"))
-		if run_a.seed_value != run_b.seed_value or JSON.stringify(run_a.to_dict()) != JSON.stringify(run_b.to_dict()):
+		if run_a.seed_value != run_b.seed_value or JSON.stringify(_deterministic_run_projection(run_a)) != JSON.stringify(_deterministic_run_projection(run_b)):
 			failures.append("Challenge %s did not start deterministically from the same packed config." % challenge_id)
 		var restored: RunState = RunStateScript.new()
 		restored.from_dict(run_a.to_dict())
