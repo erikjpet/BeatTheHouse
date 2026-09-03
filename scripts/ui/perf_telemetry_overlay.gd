@@ -8,7 +8,6 @@ const SlotStateScript := preload("res://scripts/games/slots/slot_machine_state.g
 const SlotPinballScript := preload("res://scripts/games/slots/slot_family_pinball.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 const CrewTurnModelScript := preload("res://scripts/core/crew_turn_model.gd")
-const SecureEntropyScript := preload("res://scripts/core/secure_entropy.gd")
 const PerformanceFixtureSetupScript := preload("res://scripts/ui/performance_fixture_setup.gd")
 const WebAudioBridgeScript := preload("res://scripts/ui/web_audio_bridge.gd")
 const CoinPusherSolverScript := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
@@ -364,10 +363,11 @@ func _secure_entropy_contract() -> Dictionary:
 	var requested_sizes := [16, 32, CrewTurnModelScript.PRIVATE_SAVE_PLAIN_BYTES]
 	var exact_lengths := true
 	var nonrepeating := true
+	var crypto := Crypto.new()
 	for byte_count_value in requested_sizes:
 		var byte_count := int(byte_count_value)
-		var first := SecureEntropyScript.random_bytes(byte_count)
-		var second := SecureEntropyScript.random_bytes(byte_count)
+		var first := crypto.generate_random_bytes(byte_count)
+		var second := crypto.generate_random_bytes(byte_count)
 		exact_lengths = exact_lengths and first.size() == byte_count and second.size() == byte_count
 		nonrepeating = nonrepeating and first != second
 	var authority_id := CrewTurnModelScript.new_authority_id()
@@ -403,7 +403,7 @@ func _secure_entropy_contract() -> Dictionary:
 		and fixed_width and distinct_capsules and round_trip and tamper_rejected and privacy_preserved
 	return {
 		"passed": passed,
-		"entropy_provider": "browser_crypto_get_random_values" if OS.has_feature("web") else "godot_crypto",
+		"entropy_provider": "godot_crypto_mbedtls",
 		"requested_sizes": requested_sizes,
 		"exact_lengths": exact_lengths,
 		"nonrepeating": nonrepeating,

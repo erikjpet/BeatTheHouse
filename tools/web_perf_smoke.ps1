@@ -458,7 +458,7 @@ if ($Plan -eq "secure_entropy") {
     if ($contractEvents.Count -eq 1) {
         $contract = $contractEvents[0].data
         Assert-Condition -Condition ([bool]$contract.passed) -Message "Secure entropy Web contract did not pass." -Failures $failures
-        Assert-Condition -Condition ([string]$contract.entropy_provider -eq "browser_crypto_get_random_values") -Message "Web contract did not use browser crypto.getRandomValues." -Failures $failures
+        Assert-Condition -Condition ([string]$contract.entropy_provider -eq "godot_crypto_mbedtls") -Message "Web contract did not use the pinned Godot mbedTLS crypto provider." -Failures $failures
         Assert-Condition -Condition ([bool]$contract.exact_lengths -and [bool]$contract.nonrepeating) -Message "Web entropy requests were short or repeated." -Failures $failures
         Assert-Condition -Condition ([bool]$contract.authority_id_valid) -Message "Web entropy did not mint a valid authority id." -Failures $failures
         Assert-Condition -Condition ([int]$contract.capsule_bytes -eq 65584 -and [bool]$contract.fixed_width -and [bool]$contract.distinct_capsules) -Message "Web capsules were not fixed-width and independently randomized." -Failures $failures
