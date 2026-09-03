@@ -1,5 +1,28 @@
-Status: TODO — inventory/prestage landed; the authored SFX pass has not run
+Status: COMPLETE — the surface SFX pass is landed, verified, and archived
 Board row: `audio06_1` in `docs/todo/README_0_6_board.md`
+
+## Execution Record
+
+- Completed: 2026-09-03.
+- Recovered implementation: `baac9f3b433e93c829b8e9b17182f10c64776a63`.
+  Independent authority/voice-budget hardening: `d8346b9c8ff194f0ccc3388fd7b9553a0555629b`.
+  Full-delivery audit expansion: `3e7a79616789bd3e2da4476ca0e0638e71956c07`.
+- Exact integrated base: `0937922c277b52a7973c09db1841e78b87edfe9f`.
+  The final audit guard fails closed when a dependent phase aborts; a fresh
+  unimported checkout exits 1 and cannot emit a false PASS.
+- The imported exact-tree audit passes 13 bounded profiles, all 80
+  signal-bearing event streams, ten deterministic native/Web seed traces,
+  paired hidden-state observers, hostile capability/rebind cases, mixer
+  routing, visual/text counterparts, and idle-frame budgets.
+- Focused Foundation checks `music_fx_foundation` and
+  `music_stem_director_foundation` pass with zero failures. Project validation,
+  Godot import, and the non-test GDScript load sweep pass.
+- The pre-remediation broad Systems diagnostic and clean-main comparison remain
+  preserved as program evidence. Root's integrated RunState remediation removed
+  the new Crew-authority deltas; its remaining targeted save-fuzz failures are
+  the six already present on clean main, not audio regressions.
+- Production music and music-system behavior were not changed. The external
+  music delta remains in `docs/plans/audio_engineer_handoff.md`.
 
 # Agent Prompt — 0.6 audio06_1: Surface SFX Pass
 
