@@ -196,10 +196,25 @@ L0.2 scenarios with zero page, request, or HTTP failures. Every one of the ten
 active game rows was accepted and showed canonical progress, including Craps
 and Crew Draw Poker. It correctly failed 29 release assertions: READY was
 23,390 ms against 20,000 ms; Corner Store open was 10,848.010 ms against
-1,200 ms; nine frame-time rows exceeded their current budgets; and same-window
-idle liveness failed closed for Baccarat, Bar Dice, Craps, Crew Draw Poker,
-Roulette, Scratch Tickets, and Video Poker. The retained report/summary is under
-`.tmp/perf06_l02_development_f7b4eaf2/`.
+1,200 ms; 17 frame-time rows exceeded their current budgets; and ten
+same-window liveness assertions failed across Baccarat, Bar Dice, Craps, Crew
+Draw Poker, Roulette, Scratch Tickets, and Video Poker. The retained
+report/summary is under `.tmp/perf06_l02_development_f7b4eaf2/`.
+
+The diagnostic also exposed a harness defect rather than seven proven frozen
+surfaces. Most shipped Web idle surfaces deliberately declare a 1 Hz low-detail
+cadence, while the first prepared gate demanded a frame-count-derived 4 Hz
+floor. The corrected gate now exports each surface's effective production idle
+FPS and scheduler elapsed time, extends every measured idle window through at
+least two declared intervals, and derives its redraw floor from that elapsed
+time. A row passes only when the same window has a stable positive declaration,
+enough scheduler time, the due scheduled redraws, and a real canvas draw. This
+does not raise a budget, reduce the 1 Hz production cadence, or let zero-draw
+idle appear cheap. Focused fail-closed coverage lives in
+`tools/web_perf_idle_liveness_contract_test.ps1`; the paired runtime contract in
+`tools/perf06_idle_liveness_runtime_contract.gd` also proves scheduler/reset
+semantics and keeps a monotonic draw total separate from the bounded 512-sample
+timing buffer, so a long L0.2 run cannot conceal drawing through saturation.
 
 These development runs prove the repaired fixtures dispatch real actions and
 that stalled animation cannot pass as a cheap frame. They are not a waiver,

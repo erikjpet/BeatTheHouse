@@ -20,6 +20,7 @@ param(
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 . (Join-Path $PSScriptRoot "web_perf_coin_pusher_clock_contract.ps1")
+. (Join-Path $PSScriptRoot "web_perf_idle_liveness_contract.ps1")
 . (Join-Path $PSScriptRoot "web_server_lifecycle.ps1")
 $trackedStatus = @(& git -C $root status --short --untracked-files=no)
 if ($Plan -eq "coin_pusher" -and $trackedStatus.Count -gt 0) {
@@ -246,7 +247,6 @@ $l02AnimatedIdleGameIds = @(
     "baccarat", "roulette", "craps", "crew_draw_poker", "video_poker"
 )
 $l02ActiveGameIds = $l02AnimatedIdleGameIds
-$minimumIdleRedraws = [Math]::Max(1, [int][Math]::Ceiling(([double]$Frames * 8.0) / 120.0))
 foreach ($scenarioName in $frameP95BudgetsMs.Keys) {
     Assert-Condition -Condition ($scenariosByName.ContainsKey($scenarioName)) -Message "Missing web perf scenario '$scenarioName'." -Failures $failures
     if (-not $scenariosByName.ContainsKey($scenarioName)) {
@@ -264,11 +264,12 @@ foreach ($scenarioName in $frameP95BudgetsMs.Keys) {
     if ($Plan -eq "l02" -and $scenarioName.EndsWith("_idle")) {
         $gameId = $scenarioName.Substring(0, $scenarioName.Length - 5)
         if ($l02AnimatedIdleGameIds -notcontains $gameId) { continue }
-        $surfaceDelta = $scenario.liveness_counter_delta.game_surface
-        $redrawDelta = [int]$surfaceDelta.surface_animation_redraw_count
-        $drawSampleDelta = [int]$surfaceDelta.draw_sample_count
-        Assert-Condition -Condition ($redrawDelta -ge $minimumIdleRedraws) -Message ("Scenario {0} met its frame budget without the paired animation liveness floor: redraw delta {1}, required {2}." -f $scenarioName, $redrawDelta, $minimumIdleRedraws) -Failures $failures
-        Assert-Condition -Condition ($drawSampleDelta -gt 0) -Message ("Scenario {0} reported no draw samples in its paired idle liveness window." -f $scenarioName) -Failures $failures
+        $idleEvidence = Get-WebPerfIdleLivenessEvaluation -Scenario $scenario
+        Assert-Condition -Condition ([bool]$idleEvidence.schema_present) -Message ("Scenario {0} omitted declared idle FPS, scheduler elapsed, redraw, or draw evidence." -f $scenarioName) -Failures $failures
+        Assert-Condition -Condition ([bool]$idleEvidence.cadence_stable) -Message ("Scenario {0} did not retain one positive production-declared idle cadence across the sample (declared {1:N3} FPS)." -f $scenarioName, [double]$idleEvidence.declared_fps) -Failures $failures
+        Assert-Condition -Condition ([bool]$idleEvidence.window_complete) -Message ("Scenario {0} sampled only {1}ms of its production scheduler; at {2:N3} FPS at least two intervals ({3}ms) are required." -f $scenarioName, [int]$idleEvidence.scheduler_elapsed_msec, [double]$idleEvidence.declared_fps, [int]$idleEvidence.minimum_window_msec) -Failures $failures
+        Assert-Condition -Condition ([bool]$idleEvidence.redraw_cadence_passed) -Message ("Scenario {0} scheduled {1} redraw(s), below the elapsed-time floor {2} for {3}ms at {4:N3} FPS." -f $scenarioName, [int]$idleEvidence.redraw_delta, [int]$idleEvidence.required_redraws, [int]$idleEvidence.scheduler_elapsed_msec, [double]$idleEvidence.declared_fps) -Failures $failures
+        Assert-Condition -Condition ([bool]$idleEvidence.paired_draw_passed) -Message ("Scenario {0} had no production canvas draw paired with its same-window scheduler evidence." -f $scenarioName) -Failures $failures
     }
     if ($Plan -eq "l02" -and $scenarioName.EndsWith("_active")) {
         $gameId = $scenarioName.Substring(0, $scenarioName.Length - 7)

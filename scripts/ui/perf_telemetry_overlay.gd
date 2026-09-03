@@ -61,6 +61,8 @@ const COIN_PUSHER_FIXTURE_SEED := "practice:coin_pusher_full_cap"
 const COIN_PUSHER_FIXTURE_BODY_COUNT := 300
 const COIN_PUSHER_IDLE_SAMPLE_FRAMES := 120
 const COIN_PUSHER_ACTION_SAMPLE_FRAMES := 60
+const IDLE_LIVENESS_MINIMUM_INTERVALS := 2
+const IDLE_LIVENESS_WAIT_GRACE_MSEC := 5000
 # CPU-throttled shipped Web frames can leave a substantial live-session
 # accumulator for the production chunked-exit path to drain. This bound affects
 # setup synchronization only; locked measurement windows remain unchanged.
@@ -807,7 +809,7 @@ func _coin_pusher_canvas_counters(canvas: Control) -> Dictionary:
 	if canvas != null and canvas.has_method("performance_counters"):
 		var counters := (canvas.call("performance_counters") as Dictionary).duplicate(true)
 		var samples: Array = counters.get("draw_frame_usec_samples", []) if typeof(counters.get("draw_frame_usec_samples", [])) == TYPE_ARRAY else []
-		counters["draw_sample_count"] = samples.size()
+		counters["draw_sample_count"] = int(counters.get("draw_sample_count", samples.size()))
 		return counters
 	return {}
 
@@ -1284,7 +1286,7 @@ func _measure_game(game_id: String) -> void:
 	if entered_game == null or entered_game.get_id() != game_id:
 		mark_event("game_fixture_entry_failed", {"game_id": game_id, "reason": "current_game_mismatch", "actual_game_id": entered_game.get_id() if entered_game != null else ""})
 		return
-	await _measure_scenario("%s_idle" % game_id, {"surface": game_id, "mode": "idle"}, scenario_frames)
+	await _measure_game_idle(game_id)
 	_begin_scenario("%s_active" % game_id, {"surface": game_id, "mode": "active"})
 	current_tags["action_evidence"] = _trigger_active_game_action(game_id)
 	await _wait_frames(active_frames)
@@ -1293,6 +1295,35 @@ func _measure_game(game_id: String) -> void:
 	if not await _wait_for_game_exit():
 		mark_event("game_fixture_exit_failed", {"game_id": game_id, "reason": "exit_timeout"})
 	await _wait_frames(2)
+
+
+func _measure_game_idle(game_id: String) -> void:
+	_begin_scenario("%s_idle" % game_id, {"surface": game_id, "mode": "idle"})
+	var start_game: Dictionary = current_start_liveness.get("game_surface", {}) if typeof(current_start_liveness.get("game_surface", {})) == TYPE_DICTIONARY else {}
+	var declared_fps := maxf(0.0, float(start_game.get("surface_idle_animation_fps", 0.0)))
+	var required_window_msec := ceili(float(IDLE_LIVENESS_MINIMUM_INTERVALS) * 1000.0 / declared_fps) if declared_fps > 0.0 else 0
+	current_tags["idle_liveness_declared_fps"] = declared_fps
+	current_tags["idle_liveness_required_intervals"] = IDLE_LIVENESS_MINIMUM_INTERVALS
+	current_tags["idle_liveness_required_window_msec"] = required_window_msec
+	await _wait_frames(scenario_frames)
+	if required_window_msec > 0:
+		var start_elapsed_msec := int(start_game.get("surface_animation_scheduler_elapsed_msec", 0))
+		var deadline_msec := Time.get_ticks_msec() + required_window_msec + IDLE_LIVENESS_WAIT_GRACE_MSEC
+		while Time.get_ticks_msec() < deadline_msec:
+			var live := _game_surface_live_status()
+			if int(live.get("surface_animation_scheduler_elapsed_msec", 0)) - start_elapsed_msec >= required_window_msec:
+				break
+			await get_tree().process_frame
+	_end_scenario()
+
+
+func _game_surface_live_status() -> Dictionary:
+	if app == null:
+		return {}
+	var canvas := app.get("game_surface_canvas") as Control
+	if canvas == null or not canvas.has_method("performance_live_status"):
+		return {}
+	return canvas.call("performance_live_status") as Dictionary
 
 
 func _measure_slot_autoplay() -> void:
@@ -1715,7 +1746,7 @@ func _liveness_counter_snapshot() -> Dictionary:
 	if game_canvas != null and game_canvas.has_method("performance_counters"):
 		game_status = game_canvas.call("performance_counters")
 		var draw_samples: Array = game_status.get("draw_frame_usec_samples", []) if typeof(game_status.get("draw_frame_usec_samples", [])) == TYPE_ARRAY else []
-		game_status["draw_sample_count"] = draw_samples.size()
+		game_status["draw_sample_count"] = int(game_status.get("draw_sample_count", draw_samples.size()))
 	elif game_canvas != null and game_canvas.has_method("performance_live_status"):
 		game_status = game_canvas.call("performance_live_status")
 	var environment_status: Dictionary = {}
@@ -1736,6 +1767,8 @@ func _liveness_counter_delta(before: Dictionary, after: Dictionary) -> Dictionar
 	return {
 		"game_surface": {
 			"surface_animation_redraw_count": int(after_game.get("surface_animation_redraw_count", 0)) - int(before_game.get("surface_animation_redraw_count", 0)),
+			"surface_animation_scheduler_elapsed_msec": int(after_game.get("surface_animation_scheduler_elapsed_msec", 0)) - int(before_game.get("surface_animation_scheduler_elapsed_msec", 0)),
+			"surface_idle_animation_fps": float(after_game.get("surface_idle_animation_fps", 0.0)),
 			"draw_sample_count": int(after_game.get("draw_sample_count", 0)) - int(before_game.get("draw_sample_count", 0)),
 		},
 		"environment_scene": {
