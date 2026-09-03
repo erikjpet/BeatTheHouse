@@ -113,6 +113,12 @@ aggregate run above is the Family 1 binding result.
   hands and advances terminal presentation through sealed auto intents. Its
   predecessor's detached repeated-hand path is retained as a failed audit
   attempt, not a product defect or pass.
+- Harness commit `47a3a241` repairs two escaped gate defects without changing
+  product code. The Blackjack audit now commits sealed placement, drives each
+  decision through sealed surface delivery, accepts only settled-hand results,
+  carries the current environment, and clears terminal presentation. The shared
+  Roulette/Baccarat proposal resolver now lives in the intermediate parent that
+  calls it, so the generated table-game leaf compiles with unchanged semantics.
 - `73b7a952` removes the sealed-host repeat-play growth blocker without changing
   outcomes. Historical 128-entry v3 saves remain valid and converge on their
   next commit to eight retained boundaries; retained replay, evicted rejection,

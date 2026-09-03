@@ -78,9 +78,10 @@ materially.
   table states. The checked-in terminal audit has zero failures and covers eight
   generated tables, every rule fixture, count/peek/patron/side-bet paths, and a
   1,000-hand payout sample at edge `-0.0505069`.
-- The final exact-root `blackjack_seed_audit.gd` run is in progress against
-  commit `73b7a952`; its immutable result path is
-  `.tmp/game06_closeout/blackjack_seed_final_73b7a952.json`. This report becomes
+- The final exact-root `blackjack_seed_audit.gd` run is in progress from harness
+  commit `47a3a241c8edd782cf1621938689990b5adcbf3d` against unchanged game product
+  commit/tree `73b7a952` / `8964fc29`. Its immutable result path is
+  `.tmp/game06_closeout/blackjack_seed_final_47a3a241.json`. This report becomes
   archive-ready when that row is replaced by the final PASS metrics and hash.
 
 ## Retained non-green evidence
@@ -92,18 +93,26 @@ materially.
 - A pre-remediation 25-hand baseline passed exact outcomes/checkpoints but took
   142.213 seconds and grew the ledger to 351,301 bytes. Retention-only and
   combined results above are retained as comparisons; no budget was raised.
+- The first exact-root post-remediation audit retained all 120 generated-table
+  checks but stopped after one payout hand. Its stale harness kept a
+  pre-commit environment dictionary, did not advance terminal presentation,
+  and failed to update handled decision UI. It is retained as RED, not a
+  product verdict. Harness commit `47a3a241` now uses sealed placement and
+  surface deliveries, carries the authoritative environment, accepts only a
+  real settled-hand result, advances terminal presentation, and emits exact
+  failure detail. A 25-hand qualification passed before restoring the binding
+  count to 1,000.
 - The first repeated-reprieve rerun failed because the fixture pinned an old
   whole `games.json` hash; after refreshing content provenance it exposed a
   nondeterministic whole-save fingerprint caused solely by the intentionally
   randomized valid Crew capsule. The repaired fixture preserves real restore
   bytes and normalizes only valid fixed-width private envelope values, then
   passes two independent fresh constructions and the gameplay contract.
-- `check_table_games.gd` currently cannot parse because its inherited
-  `check_slots_surfaces.gd` calls absent helper
-  `_resolve_table_game_surface_contract()`. The same parser red exists before
-  this remediation and on the integrated root; it is an aggregate harness owner
-  item, not a Blackjack product failure. `game06_8` must not call the aggregate
-  green until that harness is repaired and rerun.
+- The initial `check_table_games.gd` load found that its intermediate parent
+  called a resolver declared only in the child. Harness commit `47a3a241` moves
+  the unchanged resolver implementation into the parent; both parent and child
+  parse/load checks pass. The intermediate is not a standalone suite entrypoint;
+  the generated leaf aggregate still must pass before `game06_8` closes.
 
 ## Remaining human check
 
