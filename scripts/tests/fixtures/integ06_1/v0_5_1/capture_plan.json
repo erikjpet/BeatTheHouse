@@ -407,6 +407,34 @@
       "tutorial_checkpoint": "family_debt",
       "expected_archetype": "corner_store",
       "expected_lender_debt": "brother_in_law"
+    },
+    {
+      "fixture_id": "v051_tutorial_gas_station_arrival",
+      "seed": "FIRST-NIGHT-ACE-17",
+      "tutorial_start": true,
+      "tutorial_checkpoint": "gas_station_arrival",
+      "steps": [
+        {"type": "talk", "event_id": "tutorial_guide:tutorial_family_debt", "choice_id": "continue"},
+        {"type": "event_action", "event_id": "parking_lot_tip", "choice_id": "follow_tip"},
+        {"type": "map_travel", "target": "gas_station_casino"}
+      ],
+      "expected_archetype": "gas_station_casino",
+      "expected_lender_debt": "brother_in_law"
+    },
+    {
+      "fixture_id": "v051_tutorial_gas_machine_open",
+      "seed": "FIRST-NIGHT-ACE-17",
+      "tutorial_start": true,
+      "tutorial_checkpoint": "gas_machine_open",
+      "steps": [
+        {"type": "talk", "event_id": "tutorial_guide:tutorial_family_debt", "choice_id": "continue"},
+        {"type": "event_action", "event_id": "parking_lot_tip", "choice_id": "follow_tip"},
+        {"type": "map_travel", "target": "gas_station_casino"},
+        {"type": "enter_game", "game_id": "pull_tabs"}
+      ],
+      "expected_archetype": "gas_station_casino",
+      "expected_lender_debt": "brother_in_law",
+      "expected_surface_state": "tutorial_gas_machine_open"
     }
   ]
 }

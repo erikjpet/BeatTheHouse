@@ -15,6 +15,19 @@ const HISTORICAL_MAIN_SCENE_BLOB := "4b0643365098308dadfaee909d35e51784905811"
 const HISTORICAL_FOUNDATION_MAIN_BLOB := "3bc98efec993b8bfdd9252687a0ba041ebba7f23"
 const HISTORICAL_SAVE_SERVICE_BLOB := "57a6526016123feb9bcf1ebeb50cc8f937f0b265"
 const DRIVER_PATH := "res://scripts/tests/foundation/integ06_1_v051_fixture_driver.gd"
+# The first 35 sidecars are immutable evidence captured by the driver shipped
+# with commit 11f3aeed. New checkpoints bind to the current driver's bytes.
+const LEGACY_DRIVER_SHA256 := "25e29653f4284c9ab6261432b3bca98006c8cb37f1d1c87ddf859e25f741faaf"
+const CURRENT_DRIVER_FIXTURES := [
+	"v051_tutorial_gas_station_arrival",
+	"v051_tutorial_gas_machine_open",
+]
+const TUTORIAL_CORNER_CHECKPOINTS := [
+	"corner_store_arrival",
+	"family_debt",
+	"gas_station_arrival",
+	"gas_machine_open",
+]
 
 
 func _init() -> void:
@@ -54,7 +67,7 @@ func _verify_fixture(app: Control, save_service: Variant, capture_case: Dictiona
 	var fixture_id := str(capture_case.get("fixture_id", "")).strip_edges()
 	var expected_seed := str(capture_case.get("seed", "")).strip_edges()
 	var expected_archetype := str(capture_case.get("expected_archetype", "")).strip_edges()
-	var expected_game := str(capture_case.get("enter_game", "")).strip_edges()
+	var expected_game := _expected_foreground_game(capture_case)
 	if fixture_id.is_empty() or expected_seed.is_empty() or expected_archetype.is_empty():
 		_fail("capture plan case omitted fixture_id, seed, or expected_archetype")
 		return false
@@ -119,6 +132,25 @@ func _verify_fixture(app: Control, save_service: Variant, capture_case: Dictiona
 	return true
 
 
+func _expected_foreground_game(capture_case: Dictionary) -> String:
+	var expected_game := str(capture_case.get("enter_game", "")).strip_edges()
+	if not expected_game.is_empty():
+		return expected_game
+	var steps: Variant = capture_case.get("steps", [])
+	if typeof(steps) != TYPE_ARRAY:
+		return ""
+	for step_value in steps as Array:
+		if typeof(step_value) != TYPE_DICTIONARY:
+			continue
+		var step: Dictionary = step_value
+		match str(step.get("type", "")).strip_edges():
+			"enter_game":
+				expected_game = str(step.get("game_id", "")).strip_edges()
+			"back_to_environment", "map_travel", "travel":
+				expected_game = ""
+	return expected_game
+
+
 func _valid_provenance(provenance: Dictionary, capture_case: Dictionary, fixture_id: String, expected_seed: String, expected_archetype: String, expected_game: String, fixture_bytes: PackedByteArray, envelope: Dictionary) -> bool:
 	var capture: Dictionary = provenance.get("capture", {}) if typeof(provenance.get("capture", {})) == TYPE_DICTIONARY else {}
 	var tutorial_start := bool(capture_case.get("tutorial_start", false))
@@ -134,7 +166,7 @@ func _valid_provenance(provenance: Dictionary, capture_case: Dictionary, fixture
 		expected_methods.append("FoundationMain.start_foundation_run")
 	var expected_travel_path: Array[String] = []
 	var tutorial_checkpoint := str(capture_case.get("tutorial_checkpoint", "")).strip_edges()
-	if tutorial_checkpoint in ["corner_store_arrival", "family_debt"]:
+	if tutorial_checkpoint in TUTORIAL_CORNER_CHECKPOINTS:
 		expected_methods.append("FoundationMain.apply_item_offer:xray_glasses")
 		expected_methods.append("FoundationMain.open_run_inventory")
 		expected_methods.append("FoundationMain.close_run_inventory")
@@ -142,7 +174,7 @@ func _valid_provenance(provenance: Dictionary, capture_case: Dictionary, fixture
 		expected_methods.append("FoundationMain.select_world_map_node:corner_store")
 		expected_methods.append("FoundationMain.confirm_world_map_travel")
 		expected_travel_path.append("corner_store")
-		if tutorial_checkpoint == "family_debt":
+		if tutorial_checkpoint != "corner_store_arrival":
 			expected_methods.append("FoundationMain.focus_interactable_object:item:ledger_pencil")
 			expected_methods.append("FoundationMain.activate_interactable_object:item:ledger_pencil")
 			expected_methods.append("FoundationMain.focus_interactable_object:item:instant_coffee")
@@ -160,7 +192,18 @@ func _valid_provenance(provenance: Dictionary, capture_case: Dictionary, fixture
 			continue
 		var step: Dictionary = step_value
 		var step_type := str(step.get("type", ""))
-		if step_type == "travel":
+		if step_type == "event_action":
+			var action_event_id := str(step.get("event_id", ""))
+			var action_choice_id := str(step.get("choice_id", ""))
+			expected_methods.append("FoundationMain.focus_interactable_object:event:%s" % action_event_id)
+			expected_methods.append("FoundationMain.activate_interactable_object:event_response:%s:%s" % [action_event_id, action_choice_id])
+		elif step_type == "map_travel":
+			var map_target_id := str(step.get("target", ""))
+			expected_travel_path.append(map_target_id)
+			expected_methods.append("FoundationMain.open_world_map")
+			expected_methods.append("FoundationMain.select_world_map_node:%s" % map_target_id)
+			expected_methods.append("FoundationMain.confirm_world_map_travel")
+		elif step_type == "travel":
 			var target_id := str(step.get("target", ""))
 			expected_travel_path.append(target_id)
 			expected_methods.append("FoundationMain.select_travel_option:%s" % target_id)
@@ -179,7 +222,24 @@ func _valid_provenance(provenance: Dictionary, capture_case: Dictionary, fixture
 			expected_methods.append("RunInventoryScreen.pawn_requested:%s:%s" % [str(step.get("lender_id", "")), str(step.get("item_id", ""))])
 		elif step_type == "lender":
 			expected_methods.append("FoundationMain.use_lender_hook:%s" % str(step.get("lender_id", "")))
-	if not expected_game.is_empty():
+		elif step_type == "interact":
+			var object_id := str(step.get("object_id", ""))
+			expected_methods.append("FoundationMain.focus_interactable_object:%s" % object_id)
+			expected_methods.append("FoundationMain.activate_interactable_object:%s" % object_id)
+		elif step_type == "talk":
+			expected_methods.append("TalkDock.choice_requested:%s:%s" % [str(step.get("event_id", "")), str(step.get("choice_id", ""))])
+		elif step_type == "enter_game":
+			expected_methods.append("FoundationMain.enter_game:%s" % str(step.get("game_id", "")))
+		elif step_type == "surface":
+			var generic_surface_action := str(step.get("action", ""))
+			var generic_surface_index := int(step.get("index", -1))
+			if str(step.get("input_type", "click")) == "drag":
+				expected_methods.append("GameSurfaceCanvas.surface_pointer_drag:%s:%d" % [generic_surface_action, generic_surface_index])
+			else:
+				expected_methods.append("GameSurfaceCanvas.surface_action:%s:%s" % [generic_surface_action, "first_stocked" if generic_surface_index < 0 else str(generic_surface_index)])
+		elif step_type == "back_to_environment":
+			expected_methods.append("FoundationMain.back_to_environment")
+	if not str(capture_case.get("enter_game", "")).strip_edges().is_empty():
 		expected_methods.append("FoundationMain.enter_game")
 	var surface_steps: Variant = capture_case.get("surface_steps", [])
 	if typeof(surface_steps) == TYPE_ARRAY:
@@ -209,7 +269,8 @@ func _valid_provenance(provenance: Dictionary, capture_case: Dictionary, fixture
 		failures.append("wrong historical source identity")
 	if str(provenance.get("historical_main_scene_blob", "")) != HISTORICAL_MAIN_SCENE_BLOB or str(provenance.get("historical_foundation_main_blob", "")) != HISTORICAL_FOUNDATION_MAIN_BLOB or str(provenance.get("historical_save_service_blob", "")) != HISTORICAL_SAVE_SERVICE_BLOB:
 		failures.append("wrong historical runtime blob identity")
-	if str(provenance.get("driver_path", "")) != DRIVER_PATH.trim_prefix("res://") or str(provenance.get("driver_sha256", "")).to_lower() != _file_sha256(DRIVER_PATH):
+	var expected_driver_sha256 := _file_sha256(DRIVER_PATH) if fixture_id in CURRENT_DRIVER_FIXTURES else LEGACY_DRIVER_SHA256
+	if str(provenance.get("driver_path", "")) != DRIVER_PATH.trim_prefix("res://") or str(provenance.get("driver_sha256", "")).to_lower() != expected_driver_sha256:
 		failures.append("fixture driver identity mismatch")
 	if str(provenance.get("fixture_id", "")) != fixture_id or str(provenance.get("save_file", "")) != "%s.json" % fixture_id:
 		failures.append("fixture identity mismatch")
@@ -261,17 +322,23 @@ func _expected_fixture_state(run_state: Variant, capture_case: Dictionary) -> bo
 	if not expected_lender_debt.is_empty() and not _has_active_lender_debt(run_state.get("debt"), expected_lender_debt):
 		return false
 	var tutorial_checkpoint := str(capture_case.get("tutorial_checkpoint", "")).strip_edges()
-	if tutorial_checkpoint in ["corner_store_arrival", "family_debt"]:
+	if tutorial_checkpoint in TUTORIAL_CORNER_CHECKPOINTS:
 		var completed: Dictionary = run_state.get("narrative_flags").get("tutorial_lessons_completed", {}) if typeof(run_state.get("narrative_flags").get("tutorial_lessons_completed", {})) == TYPE_DICTIONARY else {}
 		for lesson_id in ["tutorial_apartment_xray", "tutorial_inventory_xray", "tutorial_open_map_corner", "tutorial_travel_corner"]:
 			if not bool(completed.get(lesson_id, false)):
 				return false
 		if not run_state.get("inventory").has("xray_glasses"):
 			return false
-		if tutorial_checkpoint == "family_debt":
+		if tutorial_checkpoint != "corner_store_arrival":
 			if not run_state.get("inventory").has("ledger_pencil") or not run_state.get("inventory").has("instant_coffee"):
 				return false
 			if not _has_active_lender_debt(run_state.get("debt"), "brother_in_law"):
+				return false
+		if tutorial_checkpoint in ["gas_station_arrival", "gas_machine_open"]:
+			for deeper_lesson_id in ["tutorial_family_debt", "tutorial_parking_tip", "tutorial_route_map", "tutorial_route_choice"]:
+				if not bool(completed.get(deeper_lesson_id, false)):
+					return false
+			if not bool(run_state.get("narrative_flags").get("underground_tip", false)):
 				return false
 	var expectation := str(capture_case.get("expected_surface_state", "")).strip_edges()
 	if expectation.is_empty():
@@ -282,6 +349,16 @@ func _expected_fixture_state(run_state: Variant, capture_case: Dictionary) -> bo
 		return str(flags.get("grand_casino_showdown_step", "")) == "duel" \
 			and bool(flags.get("grand_casino_showdown_active", false)) \
 			and str(duel.get("status", "")) == "active"
+	if expectation == "tutorial_gas_machine_open":
+		var tutorial_environment: Dictionary = run_state.get("current_environment")
+		var tutorial_game_states: Dictionary = tutorial_environment.get("game_states", {}) if typeof(tutorial_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+		var tutorial_machine: Dictionary = tutorial_game_states.get("pull_tabs", {}) if typeof(tutorial_game_states.get("pull_tabs", {})) == TYPE_DICTIONARY else {}
+		var tutorial_item_state: Dictionary = tutorial_machine.get("item_state", {}) if typeof(tutorial_machine.get("item_state", {})) == TYPE_DICTIONARY else {}
+		var tutorial_completed: Dictionary = run_state.get("narrative_flags").get("tutorial_lessons_completed", {}) if typeof(run_state.get("narrative_flags").get("tutorial_lessons_completed", {})) == TYPE_DICTIONARY else {}
+		return not tutorial_machine.is_empty() \
+			and int(tutorial_item_state.get("tab_detector_peek_count", 0)) == 0 \
+			and bool(tutorial_completed.get("tutorial_gas_machine", false)) \
+			and not bool(tutorial_completed.get("tutorial_gas_peek", false))
 	if expectation != "partial_scratch":
 		return false
 	var environment: Dictionary = run_state.get("current_environment")
@@ -325,6 +402,17 @@ func _migration_contract(run_state: Variant) -> Dictionary:
 		"tutorial_beat": narrative_flags.get("tutorial_beat", 0),
 		"tutorial_lessons_completed": narrative_flags.get("tutorial_lessons_completed", {}).duplicate(true),
 		"tutorial_actions_performed": narrative_flags.get("tutorial_actions_performed", {}).duplicate(true),
+		"active_triggered_event": run_state.get("active_triggered_event").duplicate(true),
+		"demo_victory": narrative_flags.get("demo_victory", false),
+		"demo_victory_route": narrative_flags.get("demo_victory_route", ""),
+		"demo_finale_pending": narrative_flags.get("demo_finale_pending", false),
+		"demo_finale_event_id": narrative_flags.get("demo_finale_event_id", ""),
+		"grand_casino_players_card_tier": narrative_flags.get("grand_casino_players_card_tier", ""),
+		"grand_casino_players_card_highest_tier": narrative_flags.get("grand_casino_players_card_highest_tier", ""),
+		"grand_casino_players_card_ready_to_claim": narrative_flags.get("grand_casino_players_card_ready_to_claim", false),
+		"grand_casino_players_card_segment_games": narrative_flags.get("grand_casino_players_card_segment_games", 0),
+		"grand_casino_players_card_segment_net_winnings": narrative_flags.get("grand_casino_players_card_segment_net_winnings", 0),
+		"grand_casino_showdown_pending": narrative_flags.get("grand_casino_showdown_pending", false),
 		"grand_casino_showdown_active": narrative_flags.get("grand_casino_showdown_active", false),
 		"grand_casino_showdown_step": narrative_flags.get("grand_casino_showdown_step", ""),
 		"grand_casino_showdown_pat_down": narrative_flags.get("grand_casino_showdown_pat_down", {}).duplicate(true),
