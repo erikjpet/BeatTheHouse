@@ -3982,7 +3982,7 @@ func _table_state(run_state: RunState, environment: Dictionary, observational: b
 func _table_state_preview(run_state: RunState, environment: Dictionary) -> Dictionary:
 	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
 	var stored: Variant = game_states.get(get_id(), {})
-	var table: Dictionary = (stored as Dictionary).duplicate(true) if typeof(stored) == TYPE_DICTIONARY and not (stored as Dictionary).is_empty() else _fallback_table_state(run_state, environment)
+	var table: Dictionary = _duplicate_table_with_immutable_authority(stored as Dictionary) if typeof(stored) == TYPE_DICTIONARY and not (stored as Dictionary).is_empty() else _fallback_table_state(run_state, environment)
 	_apply_grand_casino_dealer_assignment(table, run_state, environment, true)
 	var normalized := _normalize_table_state(table)
 	# Tutorial repair is also a projection here. Action boundaries persist it via
@@ -4230,7 +4230,7 @@ func _chip_denominations(table: Dictionary) -> Array:
 
 
 func _normalize_table_state(table: Dictionary) -> Dictionary:
-	var normalized := table.duplicate(true)
+	var normalized := _duplicate_table_with_immutable_authority(table)
 	normalized["schema"] = str(normalized.get("schema", "blackjack_table_state"))
 	normalized["version"] = maxi(2, int(normalized.get("version", 2)))
 	normalized["deck_count"] = clampi(int(normalized.get("deck_count", 6)), 1, 8)
@@ -5641,8 +5641,22 @@ func _update_table_after_hand(table: Dictionary, session: Dictionary, dealer_car
 
 func _update_environment_table(environment: Dictionary, table: Dictionary) -> void:
 	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
-	game_states[get_id()] = table.duplicate(true)
+	game_states[get_id()] = _duplicate_table_with_immutable_authority(table)
 	environment["game_states"] = game_states
+
+
+# Authority operations use copy-on-write containers and never mutate cached
+# response or journal values in place. Preserve those immutable values across
+# the table's otherwise defensive deep copy so repeated play does not clone the
+# complete replay window every time the table is normalized or stored.
+func _duplicate_table_with_immutable_authority(table: Dictionary) -> Dictionary:
+	var source := table.duplicate(false)
+	var authority_value: Variant = source.get(BLACKJACK_HOST_LEDGER_KEY, null)
+	source.erase(BLACKJACK_HOST_LEDGER_KEY)
+	var copy := source.duplicate(true)
+	if typeof(authority_value) == TYPE_DICTIONARY:
+		copy[BLACKJACK_HOST_LEDGER_KEY] = (authority_value as Dictionary).duplicate(false)
+	return copy
 
 
 func _action_command(action_id: String, action_kind: String, confirm_requested: bool, ui_state: Dictionary, index: int, message: String, resolve_when_selected: bool, preserve_surface_ui_state: bool = false, force_resolve: bool = false) -> Dictionary:

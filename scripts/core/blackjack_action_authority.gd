@@ -11,6 +11,10 @@ const LEDGER_KEY := "_blackjack_action_authority"
 const LEDGER_VERSION := 3
 const CACHE_LIMIT := 128
 const JOURNAL_LIMIT := 128
+# Existing v3 saves may carry the historical 128-entry window and remain fully
+# validated. New commits converge to the smaller live retry window: four full
+# two-boundary hands, while the current pending delivery remains separate.
+const ACTIVE_REPLAY_LIMIT := 8
 const RECEIPT_CAUSE := "foundation_main:blackjack_action"
 const REPLAY_CAUSE := "foundation_main:blackjack_cache_hit"
 
@@ -84,9 +88,20 @@ static func default_ledger(table_binding: String, checkpoint_fingerprint: String
 
 
 static func validate_persisted_ledger(value: Variant, table_binding: String, expected_checkpoint_fingerprint: String = "") -> Dictionary:
+	return _validate_persisted_ledger(value, table_binding, expected_checkpoint_fingerprint, true)
+
+
+# FoundationMain uses this only inside one synchronous sealed transaction. It
+# performs the same complete hostile-content validation as the public method,
+# but shares already-verified nested values for the COW authority operations.
+static func validate_persisted_ledger_cow(value: Variant, table_binding: String, expected_checkpoint_fingerprint: String = "") -> Dictionary:
+	return _validate_persisted_ledger(value, table_binding, expected_checkpoint_fingerprint, false)
+
+
+static func _validate_persisted_ledger(value: Variant, table_binding: String, expected_checkpoint_fingerprint: String, isolate_nested_values: bool) -> Dictionary:
 	if typeof(value) != TYPE_DICTIONARY:
 		return {}
-	var ledger: Dictionary = (value as Dictionary).duplicate(true)
+	var ledger: Dictionary = (value as Dictionary).duplicate(isolate_nested_values)
 	if not _closed_shape(ledger, LEDGER_KEYS) \
 			or int(ledger.get("version", 0)) != LEDGER_VERSION \
 			or not bool(ledger.get("initialized", false)) \
@@ -146,13 +161,29 @@ static func validate_persisted_ledger(value: Variant, table_binding: String, exp
 
 
 static func stage_session(ledger: Dictionary, session: Dictionary) -> Dictionary:
-	var next := ledger.duplicate(true)
+	return _stage_session(ledger, session, true)
+
+
+static func stage_session_cow(ledger: Dictionary, session: Dictionary) -> Dictionary:
+	return _stage_session(ledger, session, false)
+
+
+static func _stage_session(ledger: Dictionary, session: Dictionary, isolate_nested_values: bool) -> Dictionary:
+	var next := ledger.duplicate(isolate_nested_values)
 	next["session"] = session.duplicate(true)
 	return next
 
 
 static func issue_delivery(ledger: Dictionary, action_id: String, trusted_context: Dictionary, stake: int, recovery_session: Dictionary) -> Dictionary:
-	var next := ledger.duplicate(true)
+	return _issue_delivery(ledger, action_id, trusted_context, stake, recovery_session, true)
+
+
+static func issue_delivery_cow(ledger: Dictionary, action_id: String, trusted_context: Dictionary, stake: int, recovery_session: Dictionary) -> Dictionary:
+	return _issue_delivery(ledger, action_id, trusted_context, stake, recovery_session, false)
+
+
+static func _issue_delivery(ledger: Dictionary, action_id: String, trusted_context: Dictionary, stake: int, recovery_session: Dictionary, isolate_nested_values: bool) -> Dictionary:
+	var next := ledger.duplicate(isolate_nested_values)
 	var intent_fingerprint := RuntimeScript.canonical_fingerprint({
 		"action_id": action_id,
 		"session": next.get("session", {}),
@@ -198,11 +229,19 @@ static func delivery_matches(ledger: Dictionary, request_key: String, action_id:
 
 
 static func cancel_delivery(ledger: Dictionary, delivery: Dictionary) -> Dictionary:
+	return _cancel_delivery(ledger, delivery, true)
+
+
+static func cancel_delivery_cow(ledger: Dictionary, delivery: Dictionary) -> Dictionary:
+	return _cancel_delivery(ledger, delivery, false)
+
+
+static func _cancel_delivery(ledger: Dictionary, delivery: Dictionary, isolate_nested_values: bool) -> Dictionary:
 	var pending: Dictionary = ledger.get("pending_delivery", {})
 	if not _closed_shape(delivery, DELIVERY_KEYS) \
 			or RuntimeScript.canonical_json(delivery) != RuntimeScript.canonical_json(pending):
 		return {"ok": false, "error_code": "receipt_content_conflict", "ledger": ledger.duplicate(true)}
-	var next := ledger.duplicate(true)
+	var next := ledger.duplicate(isolate_nested_values)
 	next["session"] = (next.get("pending_recovery_session", {}) as Dictionary).duplicate(true)
 	next["pending_delivery"] = {}
 	next["pending_recovery_session"] = {}
@@ -264,7 +303,8 @@ static func valid_cached_replay(ledger: Dictionary, replay: Dictionary) -> bool:
 
 
 static func result_fingerprint(result: Dictionary) -> String:
-	var content := result.duplicate(true)
+	# Only top-level host metadata is removed; canonical_fingerprint is read-only.
+	var content := result.duplicate(false)
 	content.erase("blackjack_host_apply_receipt")
 	content.erase("blackjack_host_content_fingerprint")
 	return RuntimeScript.canonical_fingerprint(content)
@@ -307,11 +347,21 @@ static func valid_receipt(receipt: Variant, pending: Variant, result: Dictionary
 
 
 static func commit_response(ledger: Dictionary, delivery: Dictionary, response: Dictionary, proposal_fingerprint: String, run_fingerprint: String, rng_fingerprint: String, checkpoint_fingerprint: String) -> Dictionary:
-	var next := ledger.duplicate(true)
+	return _commit_response(ledger, delivery, response, proposal_fingerprint, run_fingerprint, rng_fingerprint, checkpoint_fingerprint, true)
+
+
+static func commit_response_cow(ledger: Dictionary, delivery: Dictionary, response: Dictionary, proposal_fingerprint: String, run_fingerprint: String, rng_fingerprint: String, checkpoint_fingerprint: String) -> Dictionary:
+	return _commit_response(ledger, delivery, response, proposal_fingerprint, run_fingerprint, rng_fingerprint, checkpoint_fingerprint, false)
+
+
+static func _commit_response(ledger: Dictionary, delivery: Dictionary, response: Dictionary, proposal_fingerprint: String, run_fingerprint: String, rng_fingerprint: String, checkpoint_fingerprint: String, isolate_nested_values: bool) -> Dictionary:
+	# Copy on write: prior cache entries and journal records are immutable. Clone
+	# only the containers changed by this commit and the new response payload.
+	var next := ledger.duplicate(isolate_nested_values)
 	var request_key := str(delivery.get("request_key", ""))
 	var result_hash := result_fingerprint(response)
-	var cache: Dictionary = next.get("request_cache", {})
-	var order: Array = next.get("request_order", [])
+	var cache: Dictionary = next.get("request_cache", {}) if isolate_nested_values else (ledger.get("request_cache", {}) as Dictionary).duplicate(false)
+	var order: Array = next.get("request_order", []) if isolate_nested_values else (ledger.get("request_order", []) as Array).duplicate()
 	cache[request_key] = {
 		"request_key": request_key,
 		"action_id": str(delivery.get("action_id", "")),
@@ -328,7 +378,7 @@ static func commit_response(ledger: Dictionary, delivery: Dictionary, response: 
 	}
 	if not order.has(request_key):
 		order.append(request_key)
-	while order.size() > CACHE_LIMIT:
+	while order.size() > ACTIVE_REPLAY_LIMIT:
 		cache.erase(str(order.pop_front()))
 	next["request_cache"] = cache
 	next["request_order"] = order
@@ -347,13 +397,17 @@ static func commit_response(ledger: Dictionary, delivery: Dictionary, response: 
 		"previous_fingerprint": previous,
 	}
 	journal_entry["entry_fingerprint"] = RuntimeScript.canonical_fingerprint(journal_entry)
-	var journal: Array = next.get("journal", [])
+	var journal: Array = next.get("journal", []) if isolate_nested_values else (ledger.get("journal", []) as Array).duplicate()
 	journal.append(journal_entry)
-	while journal.size() > JOURNAL_LIMIT:
+	var journal_trimmed := false
+	while journal.size() > ACTIVE_REPLAY_LIMIT:
 		journal.pop_front()
-		if not journal.is_empty():
-			(journal[0] as Dictionary)["previous_fingerprint"] = ""
-			_rehash_journal(journal)
+		journal_trimmed = true
+	if journal_trimmed and not journal.is_empty():
+		var first_retained: Dictionary = (journal[0] as Dictionary).duplicate(true)
+		first_retained["previous_fingerprint"] = ""
+		journal[0] = first_retained
+		_rehash_journal(journal)
 	next["journal"] = journal
 	next["journal_head"] = str((journal[-1] as Dictionary).get("entry_fingerprint", "")) if not journal.is_empty() else ""
 	next["pending_delivery"] = {}
@@ -424,7 +478,7 @@ static func _binding_matches_response(table_binding: String, response: Dictionar
 static func _valid_journal_entry(entry: Dictionary, previous: String) -> bool:
 	if not _closed_shape(entry, JOURNAL_ENTRY_KEYS) or str(entry.get("previous_fingerprint", "")) != previous:
 		return false
-	var content := entry.duplicate(true)
+	var content := entry.duplicate(false)
 	var fingerprint := str(content.get("entry_fingerprint", ""))
 	content.erase("entry_fingerprint")
 	return _fingerprint(fingerprint) and fingerprint == RuntimeScript.canonical_fingerprint(content)
