@@ -1878,7 +1878,11 @@ func _bar_dice_controlled_roll_item_fixture(game: GameModule, item_id: String) -
 	environment["game_states"] = {"bar_dice": state}
 	run_state.set_environment(environment)
 	var ui := {"surface_time_msec": 14000}
-	var load_command: Dictionary = game.surface_action_command("bar_dice_load", 0, false, ui, run_state, run_state.current_environment)
+	var roll_command: Dictionary = game.surface_action_command("bar_dice_roll", 0, false, ui, run_state, run_state.current_environment)
+	var roll_ui: Dictionary = roll_command.get("ui_state", ui)
+	var cover_command: Dictionary = game.surface_action_command("bar_dice_ack_cover", 0, false, roll_ui, run_state, run_state.current_environment)
+	var cover_ui: Dictionary = cover_command.get("ui_state", roll_ui)
+	var load_command: Dictionary = game.surface_action_command("bar_dice_load", 0, false, cover_ui, run_state, run_state.current_environment)
 	var load_ui: Dictionary = load_command.get("ui_state", ui)
 	var challenge: Dictionary = load_ui.get("controlled_roll", {}) if typeof(load_ui.get("controlled_roll", {})) == TYPE_DICTIONARY else {}
 	return {
