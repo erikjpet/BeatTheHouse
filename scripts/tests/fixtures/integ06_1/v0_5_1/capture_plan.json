@@ -154,7 +154,8 @@
       "fixture_id": "v051_small_underground_environment",
       "seed": "INTEG06-1-V051-SMOKE-001",
       "step_sequence": "underground",
-      "expected_archetype": "small_underground_casino"
+      "expected_archetype": "small_underground_casino",
+      "expected_lender_debt": "the_crew"
     },
     {
       "fixture_id": "v051_underground_blackjack_mid_game",
@@ -230,7 +231,8 @@
       "challenge_id": "integ06_1_grand_route",
       "challenge_modifiers": {"starting_bankroll": 3000},
       "step_sequence": "grand",
-      "expected_archetype": "grand_casino"
+      "expected_archetype": "grand_casino",
+      "expected_lender_debt": "street_lender"
     },
     {
       "fixture_id": "v051_grand_casino_cage_environment",
@@ -287,7 +289,34 @@
         {"type": "travel", "target": "motel"},
         {"type": "lender", "lender_id": "motel_friend"}
       ],
-      "expected_archetype": "motel"
+      "expected_archetype": "motel",
+      "expected_lender_debt": "motel_friend"
+    },
+    {
+      "fixture_id": "v051_brother_in_law_mid_debt",
+      "seed": "INTEG06-1-V051-SMOKE-001",
+      "steps": [
+        {"type": "travel", "target": "motel"},
+        {"type": "event", "event_id": "call_brother_in_law", "choice_id": "make_call"},
+        {"type": "event", "event_id": "family_loan", "choice_id": "accept"}
+      ],
+      "expected_archetype": "motel",
+      "expected_lender_debt": "brother_in_law"
+    },
+    {
+      "fixture_id": "v051_sals_pawn_ticket_mid_debt",
+      "seed": "INTEG06-1-V051-SMOKE-001",
+      "challenge_id": "integ06_1_grand_route",
+      "challenge_modifiers": {"starting_bankroll": 3000},
+      "steps": [
+        {"type": "travel", "target": "gas_station_casino"},
+        {"type": "travel", "target": "corner_store"},
+        {"type": "item", "item_id": "return_spring"},
+        {"type": "travel", "target": "pawn_shop"},
+        {"type": "pawn", "lender_id": "sals_pawn_counter", "item_id": "return_spring"}
+      ],
+      "expected_archetype": "pawn_shop",
+      "expected_lender_debt": "sals_pawn_counter"
     },
     {
       "fixture_id": "v051_scratch_ticket_partial",

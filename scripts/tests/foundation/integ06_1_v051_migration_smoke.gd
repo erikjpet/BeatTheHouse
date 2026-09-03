@@ -150,6 +150,12 @@ func _valid_provenance(provenance: Dictionary, capture_case: Dictionary, fixture
 		elif step_type == "event":
 			expected_methods.append("FoundationMain.select_event_choice:%s:%s" % [str(step.get("event_id", "")), str(step.get("choice_id", ""))])
 			expected_methods.append("FoundationMain.confirm_selected_event_choice")
+		elif step_type == "item":
+			expected_methods.append("FoundationMain.select_item_offer:%s" % str(step.get("item_id", "")))
+			expected_methods.append("FoundationMain.confirm_selected_item_offer")
+		elif step_type == "pawn":
+			expected_methods.append("FoundationMain.open_pawn_counter:%s" % str(step.get("lender_id", "")))
+			expected_methods.append("RunInventoryScreen.pawn_requested:%s:%s" % [str(step.get("lender_id", "")), str(step.get("item_id", ""))])
 		elif step_type == "lender":
 			expected_methods.append("FoundationMain.use_lender_hook:%s" % str(step.get("lender_id", "")))
 	if not expected_game.is_empty():
@@ -228,10 +234,15 @@ func _expected_playable_state(run_state: Variant, expected_seed: String, expecte
 
 
 func _expected_fixture_state(run_state: Variant, capture_case: Dictionary) -> bool:
+	if run_state == null:
+		return false
+	var expected_lender_debt := str(capture_case.get("expected_lender_debt", "")).strip_edges()
+	if not expected_lender_debt.is_empty() and not _has_active_lender_debt(run_state.get("debt"), expected_lender_debt):
+		return false
 	var expectation := str(capture_case.get("expected_surface_state", "")).strip_edges()
 	if expectation.is_empty():
 		return true
-	if expectation != "partial_scratch" or run_state == null:
+	if expectation != "partial_scratch":
 		return false
 	var environment: Dictionary = run_state.get("current_environment")
 	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
@@ -241,6 +252,17 @@ func _expected_fixture_state(run_state: Variant, capture_case: Dictionary) -> bo
 		and int(machine.get("purchased_count", 0)) >= 1 \
 		and int(ticket.get("mask_revision", 0)) >= 1 \
 		and not bool(ticket.get("result_ready", false))
+
+
+func _has_active_lender_debt(debt_value: Variant, lender_id: String) -> bool:
+	var debts: Array = debt_value if typeof(debt_value) == TYPE_ARRAY else [debt_value]
+	for debt_value_entry in debts:
+		if typeof(debt_value_entry) != TYPE_DICTIONARY:
+			continue
+		var debt: Dictionary = debt_value_entry
+		if str(debt.get("lender_id", "")) == lender_id and str(debt.get("status", "")) in ["active", "favor_due"]:
+			return true
+	return false
 
 
 func _migration_contract(run_state: Variant) -> Dictionary:

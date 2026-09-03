@@ -96,6 +96,38 @@ func _capture_case(app: Control, capture_case: Dictionary, version: String) -> D
 			return {}
 		var step: Dictionary = step_value
 		var step_type := str(step.get("type", "")).strip_edges()
+		if step_type == "item":
+			var item_id := str(step.get("item_id", "")).strip_edges()
+			if not bool(app.call("select_item_offer", item_id)):
+				_fail("%s could not select public item offer %s" % [fixture_id, item_id])
+				return {}
+			if not bool(app.call("confirm_selected_item_offer")):
+				_fail("%s could not confirm public item offer %s" % [fixture_id, item_id])
+				return {}
+			methods.append("FoundationMain.select_item_offer:%s" % item_id)
+			methods.append("FoundationMain.confirm_selected_item_offer")
+			await process_frame
+			await process_frame
+			run_state = app.get("run_state")
+			continue
+		if step_type == "pawn":
+			var pawn_lender_id := str(step.get("lender_id", "")).strip_edges()
+			var pawn_item_id := str(step.get("item_id", "")).strip_edges()
+			if not bool(app.call("open_pawn_counter", pawn_lender_id)):
+				_fail("%s could not open public pawn counter %s" % [fixture_id, pawn_lender_id])
+				return {}
+			methods.append("FoundationMain.open_pawn_counter:%s" % pawn_lender_id)
+			await process_frame
+			var inventory_screen: Variant = app.get("run_inventory_screen")
+			if inventory_screen == null or not inventory_screen.has_signal("pawn_requested"):
+				_fail("%s pawn inventory surface was unavailable" % fixture_id)
+				return {}
+			inventory_screen.emit_signal("pawn_requested", pawn_lender_id, pawn_item_id)
+			methods.append("RunInventoryScreen.pawn_requested:%s:%s" % [pawn_lender_id, pawn_item_id])
+			await process_frame
+			await process_frame
+			run_state = app.get("run_state")
+			continue
 		if step_type == "lender":
 			var lender_id := str(step.get("lender_id", "")).strip_edges()
 			var lender_environment: Dictionary = run_state.get("current_environment")
@@ -148,6 +180,10 @@ func _capture_case(app: Control, capture_case: Dictionary, version: String) -> D
 	var expected_archetype := str(capture_case.get("expected_archetype", "")).strip_edges()
 	if not expected_archetype.is_empty() and str(environment.get("archetype_id", "")) != expected_archetype:
 		_fail("%s expected archetype %s, got %s" % [fixture_id, expected_archetype, str(environment.get("archetype_id", ""))])
+		return {}
+	var expected_lender_debt := str(capture_case.get("expected_lender_debt", "")).strip_edges()
+	if not expected_lender_debt.is_empty() and not _has_active_lender_debt(run_state.get("debt"), expected_lender_debt):
+		_fail("%s did not reach active debt for %s through the declared player path" % [fixture_id, expected_lender_debt])
 		return {}
 	var game_ids := _string_array(environment.get("game_ids", []))
 	var game_id := ""
@@ -284,6 +320,17 @@ func _first_stocked_scratch_index(run_state: Variant) -> int:
 		if typeof(row) == TYPE_DICTIONARY and int((row as Dictionary).get("remaining", 0)) > 0:
 			return index
 	return -1
+
+
+func _has_active_lender_debt(debt_value: Variant, lender_id: String) -> bool:
+	var debts: Array = debt_value if typeof(debt_value) == TYPE_ARRAY else [debt_value]
+	for debt_value_entry in debts:
+		if typeof(debt_value_entry) != TYPE_DICTIONARY:
+			continue
+		var debt: Dictionary = debt_value_entry
+		if str(debt.get("lender_id", "")) == lender_id and str(debt.get("status", "")) in ["active", "favor_due"]:
+			return true
+	return false
 
 
 func _expected_surface_state(run_state: Variant, capture_case: Dictionary, fixture_id: String) -> bool:

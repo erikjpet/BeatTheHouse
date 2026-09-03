@@ -1,7 +1,7 @@
 ﻿{
     "schema":  "beat_the_house.integ06_1_historical_fixture_provenance",
     "version":  1,
-    "fixture_id":  "v051_small_underground_environment",
+    "fixture_id":  "v051_sals_pawn_ticket_mid_debt",
     "historical_release":  "v0.5.1",
     "historical_commit":  "f1ce7ec814b5034c229f53dcc0db6e799aaaee0b",
     "historical_tree":  "19c5ed82c0d2d2390dab2b9b6662c70d8aed5d0d",
@@ -12,36 +12,34 @@
     "driver_sha256":  "95ECDE512B49F2005F3D52ADB324A838CBD1B3137025BE69D42D33EDC6B685E5",
     "capture":  {
                     "action_index":  2,
-                    "archetype_id":  "small_underground_casino",
-                    "challenge_id":  "",
+                    "archetype_id":  "pawn_shop",
+                    "challenge_id":  "integ06_1_grand_route",
                     "challenge_modifiers":  {
-
+                                                "starting_bankroll":  3000.0
                                             },
-                    "environment_id":  "small_underground_casino_006",
-                    "fixture_id":  "v051_small_underground_environment",
-                    "game_clock_minutes":  954,
+                    "environment_id":  "pawn_shop_004",
+                    "fixture_id":  "v051_sals_pawn_ticket_mid_debt",
+                    "game_clock_minutes":  822,
                     "game_id":  "",
                     "game_state_key":  "",
                     "methods":  [
+                                    "RunState.custom_challenge",
                                     "FoundationMain.start_foundation_run",
                                     "FoundationMain.select_travel_option:gas_station_casino",
                                     "FoundationMain.confirm_selected_travel",
-                                    "FoundationMain.select_event_choice:parking_lot_tip:follow_tip",
-                                    "FoundationMain.confirm_selected_event_choice",
                                     "FoundationMain.select_travel_option:corner_store",
                                     "FoundationMain.confirm_selected_travel",
-                                    "FoundationMain.use_lender_hook:the_crew",
-                                    "FoundationMain.select_travel_option:gas_station_casino",
+                                    "FoundationMain.select_item_offer:return_spring",
+                                    "FoundationMain.confirm_selected_item_offer",
+                                    "FoundationMain.select_travel_option:pawn_shop",
                                     "FoundationMain.confirm_selected_travel",
-                                    "FoundationMain.select_travel_option:motel",
-                                    "FoundationMain.confirm_selected_travel",
-                                    "FoundationMain.select_travel_option:small_underground_casino",
-                                    "FoundationMain.confirm_selected_travel",
+                                    "FoundationMain.open_pawn_counter:sals_pawn_counter",
+                                    "RunInventoryScreen.pawn_requested:sals_pawn_counter:return_spring",
                                     "FoundationMain.save_foundation_run",
                                     "SaveService.wait_for_async_save"
                                 ],
                     "project_version":  "0.5.1",
-                    "save_path":  "isolated_distribution_root/saves/v051_small_underground_environment.json",
+                    "save_path":  "isolated_distribution_root/saves/v051_sals_pawn_ticket_mid_debt.json",
                     "save_schema":  "beat_the_house.foundation_run",
                     "save_version":  2,
                     "screen":  "RESULT",
@@ -49,12 +47,10 @@
                     "travel_path":  [
                                         "gas_station_casino",
                                         "corner_store",
-                                        "gas_station_casino",
-                                        "motel",
-                                        "small_underground_casino"
+                                        "pawn_shop"
                                     ]
                 },
-    "save_file":  "v051_small_underground_environment.json",
-    "save_size_bytes":  66534,
-    "save_sha256":  "5C6F9F4FB13BD15928C1D0047CF944ADE6D116FBC4338F2D9B48A8E437A0AABF"
+    "save_file":  "v051_sals_pawn_ticket_mid_debt.json",
+    "save_size_bytes":  56261,
+    "save_sha256":  "0363CC6DA1809F04E2A562EA6D960EAB9CCA80943CE706402316F1FBE87499A6"
 }

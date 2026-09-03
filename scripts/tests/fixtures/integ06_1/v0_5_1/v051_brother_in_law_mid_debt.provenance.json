@@ -1,7 +1,7 @@
 ﻿{
     "schema":  "beat_the_house.integ06_1_historical_fixture_provenance",
     "version":  1,
-    "fixture_id":  "v051_scratch_ticket_partial",
+    "fixture_id":  "v051_brother_in_law_mid_debt",
     "historical_release":  "v0.5.1",
     "historical_commit":  "f1ce7ec814b5034c229f53dcc0db6e799aaaee0b",
     "historical_tree":  "19c5ed82c0d2d2390dab2b9b6662c70d8aed5d0d",
@@ -11,38 +11,39 @@
     "driver_path":  "scripts/tests/foundation/integ06_1_v051_fixture_driver.gd",
     "driver_sha256":  "95ECDE512B49F2005F3D52ADB324A838CBD1B3137025BE69D42D33EDC6B685E5",
     "capture":  {
-                    "action_index":  1,
-                    "archetype_id":  "gas_station_casino",
+                    "action_index":  2,
+                    "archetype_id":  "motel",
                     "challenge_id":  "",
                     "challenge_modifiers":  {
 
                                             },
-                    "environment_id":  "gas_station_casino_002",
-                    "fixture_id":  "v051_scratch_ticket_partial",
+                    "environment_id":  "motel_002",
+                    "fixture_id":  "v051_brother_in_law_mid_debt",
                     "game_clock_minutes":  762,
-                    "game_id":  "scratch_tickets",
-                    "game_state_key":  "scratch_tickets",
+                    "game_id":  "",
+                    "game_state_key":  "",
                     "methods":  [
                                     "FoundationMain.start_foundation_run",
-                                    "FoundationMain.select_travel_option:gas_station_casino",
+                                    "FoundationMain.select_travel_option:motel",
                                     "FoundationMain.confirm_selected_travel",
-                                    "FoundationMain.enter_game",
-                                    "GameSurfaceCanvas.surface_action:scratch_buy:first_stocked",
-                                    "GameSurfaceCanvas.surface_pointer_drag:scratch_scrub:0",
+                                    "FoundationMain.select_event_choice:call_brother_in_law:make_call",
+                                    "FoundationMain.confirm_selected_event_choice",
+                                    "FoundationMain.select_event_choice:family_loan:accept",
+                                    "FoundationMain.confirm_selected_event_choice",
                                     "FoundationMain.save_foundation_run",
                                     "SaveService.wait_for_async_save"
                                 ],
                     "project_version":  "0.5.1",
-                    "save_path":  "isolated_distribution_root/saves/v051_scratch_ticket_partial.json",
+                    "save_path":  "isolated_distribution_root/saves/v051_brother_in_law_mid_debt.json",
                     "save_schema":  "beat_the_house.foundation_run",
                     "save_version":  2,
-                    "screen":  "GAME",
-                    "seed":  "INTEG06-1-V051-SCRATCH-001",
+                    "screen":  "EVENT",
+                    "seed":  "INTEG06-1-V051-SMOKE-001",
                     "travel_path":  [
-                                        "gas_station_casino"
+                                        "motel"
                                     ]
                 },
-    "save_file":  "v051_scratch_ticket_partial.json",
-    "save_size_bytes":  172192,
-    "save_sha256":  "2B47524738A9043F199F36DDBAC843D25D87746F2BDC706265A666F57F4D8D05"
+    "save_file":  "v051_brother_in_law_mid_debt.json",
+    "save_size_bytes":  29047,
+    "save_sha256":  "CDF166B40DDF7555CD142EF6A08A1CD7DDEC0EC83BE08FF3272819C0DCEB1AFB"
 }

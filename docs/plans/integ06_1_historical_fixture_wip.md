@@ -176,11 +176,37 @@ The current-build matrix passes all 30 fixtures, including the specialized
 partial-scratch assertions before and after its public save/reload round trip.
 This remains fixture preparation only and does not claim `integ06_1`.
 
+## Fifth verified batch
+
+Two more fixtures complete the five-lender historical surface. The driver now
+supports public item purchases and the pawn-counter inventory surface in
+addition to ordinary lender hooks:
+
+- `v051_brother_in_law_mid_debt` follows the generated Motel phone event,
+  resolves the triggered Family Loan event, and accepts it through
+  FoundationMain's event-choice boundary. Its historical fixture SHA-256 is
+  `CDF166B40DDF7555CD142EF6A08A1CD7DDEC0EC83BE08FF3272819C0DCEB1AFB`.
+- `v051_sals_pawn_ticket_mid_debt` buys the generated Return Spring through
+  the public item-offer flow, opens Sal's Pawn Counter, and emits the real
+  `RunInventoryScreen.pawn_requested` action. Its historical fixture SHA-256
+  is `0363CC6DA1809F04E2A562EA6D960EAB9CCA80943CE706402316F1FBE87499A6`.
+
+Admission now explicitly requires an active debt record naming the intended
+lender. The same assertion runs after current FoundationMain migration and
+again after current SaveService round trip. Existing Crew, Street Lender, and
+Motel Friend cases carry the same explicit requirement, so all five historical
+lender types are now proven rather than inferred from route transcripts.
+
+The exact historical batch passes 32 of 32 captures. The current-build matrix
+passes all 32 with verified provenance, preserved mid-state contracts, and
+stable public save/reload. This remains fixture preparation only and does not
+claim `integ06_1`.
+
 ## Coverage still required
 
 This checkpoint is historical migration evidence, but not the complete row. It
-does not claim the Grand Casino Back Room, the Brother-in-Law and Sal lender
-states, later tutorial checkpoints, victory thresholds, maximal composition,
-or soak. It also does not yet cover the promised mid-0.6 Punchline, delivery,
-coin-pusher, or scenario-snapshot schemas. The 30 checked-in fixtures do pass
-the current-build migration and public save/reload contract.
+does not claim the Grand Casino Back Room, later tutorial checkpoints, victory
+thresholds, maximal composition, or soak. It also does not yet cover the
+promised mid-0.6 Punchline, delivery, coin-pusher, or scenario-snapshot schemas.
+The 32 checked-in fixtures do pass the current-build migration and public
+save/reload contract.
