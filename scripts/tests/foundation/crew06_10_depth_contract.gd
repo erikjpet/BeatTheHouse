@@ -308,7 +308,10 @@ func _check_interrupt_authority(library: ContentLibrary) -> void:
 			var before := JSON.stringify(left_run.to_dict())
 			var result: Dictionary = left_game.interrupt_for_room_scenario(left_run, left_run.current_environment, str(disposition), str(hostile_reason))
 			var after := JSON.stringify(left_run.to_dict())
-			if before != after or after != JSON.stringify(right_run.to_dict()):
+			# Independent runs intentionally carry distinct opaque Crew save
+			# authority/ciphertext.  Keep the same-run byte assertion strict, but
+			# compare paired observers after removing only that non-gameplay capsule.
+			if before != after or JSON.stringify(_observable_run_projection(left_run)) != JSON.stringify(_observable_run_projection(right_run)):
 				failures.append("Caller-authored %s interruption claim changed state or distinguished paired observers (%s)." % [disposition, hostile_reason])
 			if bool(result.get("authoritative", true)) or bool(result.get("host_apply_result", false)) or int(result.get("bankroll_delta", 0)) != 0 or not _has_authority_gap(result, "host_room_interrupt_authority_unavailable"):
 				failures.append("Raw %s interruption claim escaped the non-authoritative proposal boundary." % disposition)
@@ -607,3 +610,13 @@ func _has_authority_gap(result: Dictionary, reason: String) -> bool:
 func _table(run: RunState) -> Dictionary:
 	var states: Dictionary = run.current_environment.get("game_states", {})
 	return (states.get("crew_draw_poker", {}) as Dictionary).duplicate(true)
+
+
+func _observable_run_projection(run: RunState) -> Dictionary:
+	var result := run.to_dict()
+	var crew: Dictionary = result.get("crew_state", {}) if typeof(result.get("crew_state", {})) == TYPE_DICTIONARY else {}
+	crew = crew.duplicate(true)
+	crew.erase("a")
+	crew.erase("z")
+	result["crew_state"] = crew
+	return result
