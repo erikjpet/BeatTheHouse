@@ -180,6 +180,32 @@ The focused report and native-extension manifest are retained under
 the release-input repair and harness. They do not replace the final exact-head
 scenario matrix after all integration work lands.
 
+## Development matrix qualification (nonbinding)
+
+A short native development run at branch head `f7b4eaf2` exercised 46
+observations with zero failures. All ten game resolve rows returned eight
+accepted samples and eight observable progress samples. The full-cap Coin
+Pusher sequence ran on `native_v3`; DROP frame p95 was 9.049 ms and draw p95
+was 5.104 ms. One pre-existing coverage warning remained because the generated
+slot preview room was boss-kind rather than casino-like. The retained report is
+`.tmp/perf06_native_development_f7b4eaf2/report.json`, SHA-256
+`E57B0ADDDFE552DA99249BD09F04E40CCEF0FD6FD8EAF400FAB4FCE82146C56E`.
+
+The corresponding warm-profile Chrome/4x Web development run completed all 27
+L0.2 scenarios with zero page, request, or HTTP failures. Every one of the ten
+active game rows was accepted and showed canonical progress, including Craps
+and Crew Draw Poker. It correctly failed 29 release assertions: READY was
+23,390 ms against 20,000 ms; Corner Store open was 10,848.010 ms against
+1,200 ms; nine frame-time rows exceeded their current budgets; and same-window
+idle liveness failed closed for Baccarat, Bar Dice, Craps, Crew Draw Poker,
+Roulette, Scratch Tickets, and Video Poker. The retained report/summary is under
+`.tmp/perf06_l02_development_f7b4eaf2/`.
+
+These development runs prove the repaired fixtures dispatch real actions and
+that stalled animation cannot pass as a cheap frame. They are not a waiver,
+optimization baseline, or final performance verdict. The misses remain for the
+exact integrated, quiesced-host pass to reproduce and attribute.
+
 ## Final execution order
 
 1. Receive the exact integrated candidate and composition manifest; rebase this
