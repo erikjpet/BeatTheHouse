@@ -108,6 +108,6 @@ $smokeSource = Get-Content -LiteralPath (Join-Path $PSScriptRoot "web_perf_smoke
 Assert-PrestageContract -Condition ($smokeSource -match "Get-WebPerfActivePhaseEvaluation" -and $smokeSource -match "Get-WebPerfCornerStoreTimingEvaluation") -Message "The Web smoke does not consume the prestage contract."
 $overlaySource = Get-Content -LiteralPath (Join-Path $PSScriptRoot "../scripts/ui/perf_telemetry_overlay.gd") -Raw
 Assert-PrestageContract -Condition ($overlaySource -match '"baccarat": "baccarat_deal"' -and $overlaySource -match '"roulette": "roulette_spin"') -Message "The runtime probe no longer names the production Baccarat/Roulette phases."
-Assert-PrestageContract -Condition ($overlaySource -match '(?ms)if active:.*?active_elapsed_msec \+=.*?else:\s+consecutive_active_frames = 0\s+prior_usec = now_usec') -Message "The runtime probe no longer advances its elapsed-time baseline on every sampled frame."
+Assert-PrestageContract -Condition ($overlaySource -match '(?ms)if active:.*?active_elapsed_msec \+=.*?else:\s+consecutive_active_frames = 0.*?^\t\tprior_usec = now_usec') -Message "The runtime probe no longer advances its elapsed-time baseline on every sampled frame."
 
 Write-Host "Web performance prestage contract: PASS"
