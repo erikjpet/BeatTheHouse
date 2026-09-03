@@ -1136,26 +1136,11 @@ func preview_event_stream(event_id: String) -> AudioStreamWAV:
 
 func debug_event_delivery_has_signal(event_id: String) -> bool:
 	var normalized := _normalized_event_id(event_id)
-	if normalized.is_empty() or normalized != event_id.strip_edges():
+	if normalized.is_empty():
 		return false
-	var native_stream := _native_delivery_event_stream(normalized)
-	if native_stream != null:
-		return _pcm_stream_has_signal(native_stream)
-	var web_stream := _web_delivery_event_stream(normalized)
-	if web_stream != null and not web_stream.data.is_empty():
-		return true
-	# Probe the actual deterministic synthesizer without allocating an entire
-	# waveform. Unknown IDs take the zero-valued default branch.
-	var seconds := _event_seconds(normalized)
-	var sample_rate := _event_sample_rate(normalized)
-	var frame_count := maxi(1, int(seconds * float(sample_rate)))
-	var probes := mini(128, frame_count)
-	for probe_index in range(probes):
-		var frame := mini(frame_count - 1, int(float(probe_index) * float(frame_count - 1) / float(maxi(1, probes - 1))))
-		var t := float(frame) / float(sample_rate)
-		if absf(_event_sample(normalized, t, frame, seconds)) > 0.000001:
-			return true
-	return false
+	# Exercise the exact delivery path and inspect the complete waveform. Sparse
+	# diegetic impulses must not be mistaken for missing assets by subsampling.
+	return _pcm_stream_has_signal(_event_stream(normalized))
 
 
 func _pcm_stream_has_signal(stream: AudioStreamWAV) -> bool:
