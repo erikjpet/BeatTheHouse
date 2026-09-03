@@ -8,7 +8,9 @@ param(
     [int]$MemorySeconds = 20,
     [int]$TimeoutMs = 600000,
     [string]$Out = ".tmp/web_perf_smoke/report.json",
-    [ValidateSet("l02", "grand_casino", "coin_pusher")]
+    [ValidateSet("cold", "warm")]
+    [string]$CacheMode = "cold",
+    [ValidateSet("l02", "grand_casino", "coin_pusher", "secure_entropy")]
     [string]$Plan = "l02",
     [switch]$CoinPusherStageDiagnostic,
     [switch]$SkipExport,
@@ -89,6 +91,11 @@ if ($Plan -eq "coin_pusher") {
         "coin_pusher_reduced_motion" = 16.0
     }
 }
+if ($Plan -eq "secure_entropy") {
+    $frameP95BudgetsMs = @{
+        "menu_idle" = 180.0
+    }
+}
 $readyBudgetMs = 20000
 $cornerStoreOpenBudgetMs = 1200
 $telemetryOverheadAvgBudgetMs = 0.1
@@ -161,6 +168,10 @@ $exportSha256 = [string]$webExportIdentity.aggregate_sha256
 $serverStdout = Join-Path $outDir "serve_web.stdout.txt"
 $serverStderr = Join-Path $outDir "serve_web.stderr.txt"
 $serverOwnership = Join-Path $outDir ("serve_web.ownership.{0}.json" -f [guid]::NewGuid().ToString("N"))
+$profile = Join-Path $root (".tmp/web_perf_smoke/{0}_profile" -f $Browser)
+if ($CacheMode -eq "warm" -and -not (Test-Path -LiteralPath $profile)) {
+    throw "Warm-cache Web performance evidence requires an existing profile from a preceding cold-cache run: $profile"
+}
 $server = $null
 try {
     $server = Start-OwnedWebServer -ServeScript (Join-Path $PSScriptRoot "serve_web.ps1") -ServerScript (Join-Path $PSScriptRoot "serve_web_server.py") -ServeRoot (Join-Path $root "builds/web") -Port $Port -OwnershipFile $serverOwnership -StandardOutput $serverStdout -StandardError $serverStderr
@@ -171,8 +182,7 @@ try {
     if ($Plan -eq "coin_pusher" -and $CoinPusherStageDiagnostic) {
         $url += "&bth_perf_coin_pusher_stage_diagnostic=1"
     }
-    $profile = Join-Path $root (".tmp/web_perf_smoke/{0}_profile" -f $Browser)
-    $coldCache = if ($SkipExport) { "false" } else { "true" }
+    $coldCache = if ($CacheMode -eq "cold") { "true" } else { "false" }
     $probeArgs = @(
         (Join-Path $PSScriptRoot "l02_web_perf_probe.mjs"),
         "--browser=$Browser",
@@ -235,6 +245,7 @@ $l02AnimatedIdleGameIds = @(
     "pull_tabs", "scratch_tickets", "slot", "bar_dice", "blackjack",
     "baccarat", "roulette", "craps", "crew_draw_poker", "video_poker"
 )
+$l02ActiveGameIds = $l02AnimatedIdleGameIds
 $minimumIdleRedraws = [Math]::Max(1, [int][Math]::Ceiling(([double]$Frames * 8.0) / 120.0))
 foreach ($scenarioName in $frameP95BudgetsMs.Keys) {
     Assert-Condition -Condition ($scenariosByName.ContainsKey($scenarioName)) -Message "Missing web perf scenario '$scenarioName'." -Failures $failures
@@ -258,6 +269,17 @@ foreach ($scenarioName in $frameP95BudgetsMs.Keys) {
         $drawSampleDelta = [int]$surfaceDelta.draw_sample_count
         Assert-Condition -Condition ($redrawDelta -ge $minimumIdleRedraws) -Message ("Scenario {0} met its frame budget without the paired animation liveness floor: redraw delta {1}, required {2}." -f $scenarioName, $redrawDelta, $minimumIdleRedraws) -Failures $failures
         Assert-Condition -Condition ($drawSampleDelta -gt 0) -Message ("Scenario {0} reported no draw samples in its paired idle liveness window." -f $scenarioName) -Failures $failures
+    }
+    if ($Plan -eq "l02" -and $scenarioName.EndsWith("_active")) {
+        $gameId = $scenarioName.Substring(0, $scenarioName.Length - 7)
+        if ($l02ActiveGameIds -notcontains $gameId) { continue }
+        $actionEvidence = $scenario.tags.action_evidence
+        Assert-Condition -Condition ([bool]$actionEvidence.accepted) -Message ("Scenario {0} measured a rejected/no-op action instead of an accepted action." -f $scenarioName) -Failures $failures
+        Assert-Condition -Condition ([bool]$actionEvidence.progressed) -Message ("Scenario {0} accepted no observable game progress." -f $scenarioName) -Failures $failures
+        if ($scenarioName -in @("craps_active", "crew_draw_poker_active")) {
+            $expectedAction = if ($scenarioName -eq "craps_active") { "roll_craps" } else { "deal" }
+            Assert-Condition -Condition ([string]$actionEvidence.action_id -eq $expectedAction) -Message ("Scenario {0} did not dispatch required legal action {1}." -f $scenarioName, $expectedAction) -Failures $failures
+        }
     }
 }
 
@@ -420,6 +442,32 @@ if ($Plan -eq "coin_pusher") {
     }
 }
 
+if ($Plan -eq "secure_entropy") {
+    Assert-Condition -Condition (-not $SkipExport) -Message "Secure entropy closure evidence requires a fresh Web export; -SkipExport is not accepted." -Failures $failures
+    Assert-Condition -Condition (@($reportEnvelope.page_errors).Count -eq 0) -Message "Secure entropy browser probe captured a page error." -Failures $failures
+    Assert-Condition -Condition (@($reportEnvelope.request_failures).Count -eq 0) -Message "Secure entropy browser probe captured a failed request." -Failures $failures
+    Assert-Condition -Condition (@($reportEnvelope.failed_responses).Count -eq 0) -Message "Secure entropy browser probe captured an HTTP failure response." -Failures $failures
+    $startupErrors = @($reportEnvelope.startup_console | Where-Object { [string]$_.type -eq "error" -or [string]$_.classification -eq "error" })
+    $unexpectedStartupConsole = @($reportEnvelope.startup_console | Where-Object { [string]$_.classification -ne "expected_audio_autoplay_warning" })
+    Assert-Condition -Condition ($startupErrors.Count -eq 0) -Message "Secure entropy browser probe captured a startup console error." -Failures $failures
+    Assert-Condition -Condition ($unexpectedStartupConsole.Count -eq 0) -Message "Secure entropy browser probe captured an unexpected or unclassified startup warning/error." -Failures $failures
+    Assert-Condition -Condition ([string]$report.build_identity.source_commit -eq $sourceCommit) -Message "Secure entropy runtime source commit identity did not match the exported source commit." -Failures $failures
+    Assert-Condition -Condition ([string]$report.build_identity.export_sha256 -eq $exportSha256) -Message "Secure entropy runtime Web export identity did not match the served export." -Failures $failures
+    $contractEvents = @($report.events | Where-Object { [string]$_.id -eq "secure_entropy_contract" })
+    Assert-Condition -Condition ($contractEvents.Count -eq 1) -Message "Secure entropy report did not contain exactly one contract event." -Failures $failures
+    if ($contractEvents.Count -eq 1) {
+        $contract = $contractEvents[0].data
+        Assert-Condition -Condition ([bool]$contract.passed) -Message "Secure entropy Web contract did not pass." -Failures $failures
+        Assert-Condition -Condition ([string]$contract.entropy_provider -eq "browser_crypto_get_random_values") -Message "Web contract did not use browser crypto.getRandomValues." -Failures $failures
+        Assert-Condition -Condition ([bool]$contract.exact_lengths -and [bool]$contract.nonrepeating) -Message "Web entropy requests were short or repeated." -Failures $failures
+        Assert-Condition -Condition ([bool]$contract.authority_id_valid) -Message "Web entropy did not mint a valid authority id." -Failures $failures
+        Assert-Condition -Condition ([int]$contract.capsule_bytes -eq 65584 -and [bool]$contract.fixed_width -and [bool]$contract.distinct_capsules) -Message "Web capsules were not fixed-width and independently randomized." -Failures $failures
+        Assert-Condition -Condition ([bool]$contract.aes_round_trip) -Message "AESContext failed the exported Web capsule round-trip." -Failures $failures
+        Assert-Condition -Condition ([bool]$contract.hmac_tamper_rejected) -Message "HMACContext did not reject the exported Web tamper probe." -Failures $failures
+        Assert-Condition -Condition ([bool]$contract.privacy_preserved) -Message "Exported Web capsule exposed its canonical private payload." -Failures $failures
+    }
+}
+
 $summary = [ordered]@{
     tool = "web_perf_smoke"
     passed = ($failures.Count -eq 0)
@@ -446,6 +494,7 @@ $summary = [ordered]@{
     browser_version = [string]$reportEnvelope.browser_version
     user_agent = [string]$reportEnvelope.user_agent
     cold_cache = [bool]$reportEnvelope.cold_cache
+    cache_mode = $CacheMode
     host_name = [string]$env:COMPUTERNAME
     viewport = $reportEnvelope.viewport
     page_errors = @($reportEnvelope.page_errors)

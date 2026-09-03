@@ -7,11 +7,12 @@ is still changing, so this review deliberately records no performance verdict.
 It converts the existing prestage contract into an executable coverage map and
 names every missing measurement before a quiesced run begins.
 
-This preparation update adds native idle/resolve coverage for Craps and
-Crew Draw Poker, Web idle/active coverage for Scratch Tickets and Crew Draw
-Poker, the previously ungated Craps Web rows, and same-window Web idle liveness
-deltas. These rows are prepared but deliberately unmeasured; their status stays
-`EXTEND` until the exact final candidate runs them successfully.
+This preparation update adds native idle/resolve coverage for Craps and Crew
+Draw Poker, Web idle/active coverage for Scratch Tickets and Crew Draw Poker,
+the previously ungated Craps Web rows, same-window Web idle liveness deltas, and
+an explicit fail-closed cold/warm cache selector. These rows are prepared but
+deliberately unmeasured; their status stays `EXTEND` until the exact final
+candidate runs them successfully.
 
 ## Measurement method frozen before execution
 
@@ -46,7 +47,7 @@ final manifests; these preliminary values are not binding evidence.
 | --- | --- | --- | --- |
 | `foundation_performance_probe` | Native idle/draw/resolve rows, liveness guard, full-snapshot counters, 300-body Coin Pusher actions and solver | Yes | Prepared Craps and Crew Draw Poker additions await execution; full phase matrix, complete runtime allocation counters and immutable host/build manifest remain |
 | `perf_telemetry_overlay` + desktop driver | Frame/process/physics/draw/memory/object/node/orphan samples and allocation proxy | Yes | Scratch Tickets/Crew Draw Poker and same-window liveness deltas are prepared but unmeasured; no maximal 0.6 composition plan or complete per-phase pairing |
-| `web_perf_smoke` | Fresh export, cold Chrome profile, 4x CPU L0.2/Grand Casino/Coin Pusher plans, startup and telemetry overhead | Yes | Prepared L0.2 budgets and fail-closed liveness pairs await execution; ValidateSet still has no maximal-composition plan and no warm-profile row |
+| `web_perf_smoke` | Fresh export, explicit cold/warm Chrome profile, 4x CPU L0.2/Grand Casino/Coin Pusher plans, startup and telemetry overhead | Yes | Prepared L0.2 budgets, fail-closed liveness pairs and cold/warm selector await execution; ValidateSet still has no maximal-composition plan |
 | `scenario_sequence_parity_performance` | Native/Web sequence timings and exact semantic parity for Corner Store Delivery Day | Yes | One scenario is not the maximal composition or all-archetype coverage |
 | Family platform probes | Current native/Web parity for environment packages and game families | Yes, as functional side evidence | They are not one same-method performance matrix |
 | `foundation_soak_probe` | Native 180-minute/504-action retained-state trajectory | Yes | No Web terminal soak and no proof that every 0.6 subsystem is live together |

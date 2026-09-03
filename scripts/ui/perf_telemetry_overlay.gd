@@ -6,6 +6,10 @@ extends Control
 
 const SlotStateScript := preload("res://scripts/games/slots/slot_machine_state.gd")
 const SlotPinballScript := preload("res://scripts/games/slots/slot_family_pinball.gd")
+const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
+const CrewTurnModelScript := preload("res://scripts/core/crew_turn_model.gd")
+const SecureEntropyScript := preload("res://scripts/core/secure_entropy.gd")
+const PerformanceFixtureSetupScript := preload("res://scripts/ui/performance_fixture_setup.gd")
 const WebAudioBridgeScript := preload("res://scripts/ui/web_audio_bridge.gd")
 const CoinPusherSolverScript := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
 const CoinPusherLiveSessionScript := preload("res://scripts/games/coin_pusher/coin_pusher_live_session.gd")
@@ -33,6 +37,18 @@ const ACTIVE_ACTIONS := {
 	"craps": "roll_craps",
 	"crew_draw_poker": "deal",
 	"video_poker": "draw",
+}
+const ACTIVE_STAKES := {
+	"pull_tabs": 1,
+	"scratch_tickets": 2,
+	"slot": 10,
+	"bar_dice": 10,
+	"blackjack": 10,
+	"baccarat": 20,
+	"roulette": 10,
+	"craps": 10,
+	"crew_draw_poker": 5,
+	"video_poker": 5,
 }
 const DEFAULT_SAMPLE_STRIDE_FRAMES := 30
 const DEFAULT_SCENARIO_FRAMES := 180
@@ -162,6 +178,8 @@ func configure(owner: FoundationMain) -> void:
 	})
 	if plan_id == "l02":
 		call_deferred("_run_l02_plan")
+	elif plan_id == "secure_entropy":
+		call_deferred("_run_secure_entropy_plan")
 	elif plan_id == "corner_store":
 		call_deferred("_run_corner_store_plan")
 	elif plan_id == "lb3":
@@ -328,6 +346,89 @@ func _run_l02_plan() -> void:
 	l02_driver_complete = true
 	dump_report()
 	await _quit_after_report_flush()
+
+
+func _run_secure_entropy_plan() -> void:
+	if l02_driver_started:
+		return
+	l02_driver_started = true
+	await _wait_frames(8)
+	_end_scenario()
+	mark_event("secure_entropy_contract", _secure_entropy_contract())
+	l02_driver_complete = true
+	dump_report()
+	await _quit_after_report_flush()
+
+
+func _secure_entropy_contract() -> Dictionary:
+	var requested_sizes := [16, 32, CrewTurnModelScript.PRIVATE_SAVE_PLAIN_BYTES]
+	var exact_lengths := true
+	var nonrepeating := true
+	for byte_count_value in requested_sizes:
+		var byte_count := int(byte_count_value)
+		var first := SecureEntropyScript.random_bytes(byte_count)
+		var second := SecureEntropyScript.random_bytes(byte_count)
+		exact_lengths = exact_lengths and first.size() == byte_count and second.size() == byte_count
+		nonrepeating = nonrepeating and first != second
+	var authority_id := CrewTurnModelScript.new_authority_id()
+	var binding := CrewTurnModelScript.private_save_binding(authority_id, "WEB-ENTROPY-CONTRACT", {"surface": "exported_web"})
+	var private_state := {
+		"v": CrewTurnModelScript.STATE_VERSION,
+		"m": "crew_switch",
+		"w": [CrewTurnModelScript.SIGNAL_PATTERN],
+		"e": [CrewTurnModelScript.SIGNAL_PATTERN],
+		"h": false,
+		"c": false,
+		"f": 1,
+		"t": [{"b": 9, "q": 2}],
+	}
+	var payload := {"x": private_state, "g": [[2, 0, 8, 4, "6730303031", "666978747572655f6a6f62"]], "q": 1}
+	var normalized := CrewTurnModelScript.normalize_private_payload(payload, CrewStateModelScript.MEMBER_IDS, CrewStateModelScript.GRIEVANCE_KINDS)
+	var first_encoded := CrewTurnModelScript.pack_private_save(payload, CrewStateModelScript.MEMBER_IDS, CrewStateModelScript.GRIEVANCE_KINDS, binding)
+	var second_encoded := CrewTurnModelScript.pack_private_save(payload, CrewStateModelScript.MEMBER_IDS, CrewStateModelScript.GRIEVANCE_KINDS, binding)
+	var first_capsule := Marshalls.base64_to_raw(first_encoded)
+	var second_capsule := Marshalls.base64_to_raw(second_encoded)
+	var restored := CrewTurnModelScript.unpack_private_save(first_encoded, CrewStateModelScript.MEMBER_IDS, CrewStateModelScript.GRIEVANCE_KINDS, binding)
+	var tamper_rejected := false
+	if first_capsule.size() == CrewTurnModelScript.PRIVATE_SAVE_BYTES:
+		var tampered := first_capsule.duplicate()
+		tampered[tampered.size() - 1] = int(tampered[tampered.size() - 1]) ^ 1
+		tamper_rejected = CrewTurnModelScript.unpack_private_save(Marshalls.raw_to_base64(tampered), CrewStateModelScript.MEMBER_IDS, CrewStateModelScript.GRIEVANCE_KINDS, binding).is_empty()
+	var plain_payload := CrewTurnModelScript.canonical_json(normalized).to_utf8_buffer()
+	var fixed_width := first_capsule.size() == CrewTurnModelScript.PRIVATE_SAVE_BYTES and second_capsule.size() == CrewTurnModelScript.PRIVATE_SAVE_BYTES
+	var distinct_capsules := fixed_width and first_capsule.slice(0, 16) != second_capsule.slice(0, 16) and first_capsule != second_capsule
+	var round_trip := not normalized.is_empty() and CrewTurnModelScript.canonical_json(restored) == CrewTurnModelScript.canonical_json(normalized)
+	var privacy_preserved := fixed_width and not _packed_contains(first_capsule, plain_payload) and not _packed_contains(second_capsule, plain_payload)
+	var passed := exact_lengths and nonrepeating and CrewTurnModelScript.valid_authority_id(authority_id) \
+		and fixed_width and distinct_capsules and round_trip and tamper_rejected and privacy_preserved
+	return {
+		"passed": passed,
+		"entropy_provider": "browser_crypto_get_random_values" if OS.has_feature("web") else "godot_crypto",
+		"requested_sizes": requested_sizes,
+		"exact_lengths": exact_lengths,
+		"nonrepeating": nonrepeating,
+		"authority_id_valid": CrewTurnModelScript.valid_authority_id(authority_id),
+		"capsule_bytes": first_capsule.size(),
+		"fixed_width": fixed_width,
+		"distinct_capsules": distinct_capsules,
+		"aes_round_trip": round_trip,
+		"hmac_tamper_rejected": tamper_rejected,
+		"privacy_preserved": privacy_preserved,
+	}
+
+
+func _packed_contains(haystack: PackedByteArray, needle: PackedByteArray) -> bool:
+	if needle.is_empty() or needle.size() > haystack.size():
+		return false
+	for start in range(haystack.size() - needle.size() + 1):
+		var matches := true
+		for offset in range(needle.size()):
+			if haystack[start + offset] != needle[offset]:
+				matches = false
+				break
+		if matches:
+			return true
+	return false
 
 
 func _run_corner_store_plan() -> void:
@@ -513,6 +614,10 @@ func _run_coin_pusher_plan() -> void:
 
 
 func _wait_for_coin_pusher_exit() -> bool:
+	return await _wait_for_game_exit()
+
+
+func _wait_for_game_exit() -> bool:
 	for _frame_index in range(COIN_PUSHER_EXIT_WAIT_FRAMES):
 		if not bool(app.get("game_exit_settle_active")):
 			return true
@@ -1157,15 +1262,37 @@ func _force_drunk_distortion_level(level: int) -> void:
 func _measure_game(game_id: String) -> void:
 	if app == null:
 		return
-	app.start_game_test_session(game_id)
+	if not await _wait_for_game_exit():
+		mark_event("game_fixture_entry_failed", {"game_id": game_id, "reason": "prior_exit_timeout"})
+		return
+	var session_result := app.start_game_test_session(game_id)
 	await _wait_frames(12)
+	if not bool(session_result.get("ok", false)):
+		mark_event("game_fixture_entry_failed", {"game_id": game_id, "errors": session_result.get("errors", [])})
+		return
+	if game_id == "crew_draw_poker" and not bool(PerformanceFixtureSetupScript.install_actor_present_crew_draw_poker(app).get("ok", false)):
+		mark_event("crew_draw_poker_fixture_failed")
+		return
+	if game_id == "craps":
+		var craps_run: RunState = app.get("run_state") as RunState
+		if craps_run != null and craps_run.grand_casino_table_uses_chips("craps", craps_run.current_environment):
+			# Retain cash so the host's normal zero-bankroll terminal guard does not
+			# close the table while preparing this disposable active fixture.
+			craps_run.buy_grand_casino_chips(mini(1000, maxi(100, int(craps_run.bankroll / 2))), craps_run.grand_casino_chip_exchange_rate())
+			app.call("_refresh")
+	var entered_game: GameModule = app.get("current_game") as GameModule
+	if entered_game == null or entered_game.get_id() != game_id:
+		mark_event("game_fixture_entry_failed", {"game_id": game_id, "reason": "current_game_mismatch", "actual_game_id": entered_game.get_id() if entered_game != null else ""})
+		return
 	await _measure_scenario("%s_idle" % game_id, {"surface": game_id, "mode": "idle"}, scenario_frames)
 	_begin_scenario("%s_active" % game_id, {"surface": game_id, "mode": "active"})
-	_trigger_active_game_action(game_id)
+	current_tags["action_evidence"] = _trigger_active_game_action(game_id)
 	await _wait_frames(active_frames)
 	_end_scenario()
 	app.back_to_environment()
-	await _wait_frames(8)
+	if not await _wait_for_game_exit():
+		mark_event("game_fixture_exit_failed", {"game_id": game_id, "reason": "exit_timeout"})
+	await _wait_frames(2)
 
 
 func _measure_slot_autoplay() -> void:
@@ -1241,6 +1368,7 @@ func _begin_scenario(name: String, tags: Dictionary = {}) -> void:
 	if scenario_active:
 		_end_scenario()
 	current_scenario = name
+	_emit_console("BTH_PERF_SCENARIO ", {"phase": "begin", "name": name, "ticks_msec": Time.get_ticks_msec()})
 	current_tags = tags.duplicate(false)
 	current_start_msec = Time.get_ticks_msec()
 	current_start_memory_bytes = _current_memory_bytes()
@@ -1358,6 +1486,7 @@ func _end_scenario() -> void:
 		},
 	}
 	scenario_records.append(record)
+	_emit_console("BTH_PERF_SCENARIO ", {"phase": "end", "name": current_scenario, "ticks_msec": end_msec, "frame_count": frame_ms_samples.size()})
 	scenario_active = false
 	current_scenario = ""
 
@@ -1386,16 +1515,49 @@ func _sample_monitors() -> void:
 	orphan_node_count_samples.append(int(Performance.get_monitor(Performance.OBJECT_ORPHAN_NODE_COUNT)))
 
 
-func _trigger_active_game_action(game_id: String) -> void:
+func _trigger_active_game_action(game_id: String) -> Dictionary:
 	if app == null:
-		return
+		return {"accepted": false, "progressed": false, "reason": "missing_app"}
 	var action_id := _preferred_action_id(game_id)
 	if action_id.is_empty():
 		mark_event("missing_action", {"game_id": game_id})
-		return
+		return {"accepted": false, "progressed": false, "reason": "missing_action"}
+	var run_state: RunState = app.get("run_state") as RunState
+	var turns_before := int(run_state.current_environment.get("turns", 0)) if run_state != null else -1
+	var story_before := run_state.story_log_entry_count() if run_state != null else -1
+	var before := app.current_game_view_snapshot()
 	app.select_game_action(action_id, "legal")
-	app.set_selected_stake(_safe_stake())
+	app.set_selected_stake(_safe_stake(game_id))
 	app.resolve_selected_game_action()
+	var result: Dictionary = app.get("last_game_result") if typeof(app.get("last_game_result")) == TYPE_DICTIONARY else {}
+	var after := app.current_game_view_snapshot()
+	var turns_after := int(run_state.current_environment.get("turns", 0)) if run_state != null else -1
+	var story_after := run_state.story_log_entry_count() if run_state != null else -1
+	# Accepted alone is not progress: a host bug could acknowledge a no-op. Every
+	# ordinary game action must advance a canonical turn or append its story fact.
+	var progressed := bool(result.get("ok", false)) and (turns_after > turns_before or story_after > story_before)
+	if game_id == "crew_draw_poker":
+		progressed = bool(result.get("ok", false)) and str(after.get("phase", "idle")) != "idle" \
+			and (int(after.get("hand_number", 0)) > int(before.get("hand_number", 0)) \
+				or int(after.get("action_ordinal", 0)) > int(before.get("action_ordinal", 0))) \
+			and (turns_after > turns_before or story_after > story_before)
+	return {
+		"game_id": game_id,
+		"action_id": action_id,
+		"accepted": bool(result.get("ok", false)),
+		"progressed": progressed,
+		"message": str(result.get("message", "")),
+		"environment_turns_before": turns_before,
+		"environment_turns_after": turns_after,
+		"story_entries_before": story_before,
+		"story_entries_after": story_after,
+		"phase_before": str(before.get("phase", "")),
+		"phase_after": str(after.get("phase", "")),
+		"hand_number_before": int(before.get("hand_number", 0)),
+		"hand_number_after": int(after.get("hand_number", 0)),
+		"action_ordinal_before": int(before.get("action_ordinal", 0)),
+		"action_ordinal_after": int(after.get("action_ordinal", 0)),
+	}
 
 
 func _preferred_action_id(game_id: String) -> String:
@@ -1420,13 +1582,13 @@ func _preferred_action_id(game_id: String) -> String:
 	return fallback
 
 
-func _safe_stake() -> int:
+func _safe_stake(game_id: String = "") -> int:
 	var run_state: RunState = app.get("run_state") as RunState
 	if run_state == null:
 		return 1
 	var environment: Dictionary = run_state.current_environment
 	var economic_profile: Dictionary = environment.get("economic_profile", {})
-	return maxi(1, int(economic_profile.get("stake_floor", 1)))
+	return maxi(int(ACTIVE_STAKES.get(game_id, 1)), int(economic_profile.get("stake_floor", 1)))
 
 
 func _emit_surface_action(action_id: String, index: int, confirm: bool) -> void:
