@@ -1,5 +1,24 @@
-Status: IN_PROGRESS — implementation landed on `main`; Family 1 release-gate closeout remains open
+Status: COMPLETE — recovered Showdown depth is landed, verified, and archived
 Board row: `game06_7` in `docs/todo/README_0_6_board.md`
+
+## Execution Record
+
+- Completed: 2026-09-02.
+- Recovered implementation: `a6e7be912e8ca9e979d5eb35edefbb4883b49889`.
+  Save/revisit remediation: `45e87257584ff30fd4086f89d49cf1d5ee23bfbe`.
+- The nine-phase duel, every ladder rung, distinct Showdown/Players Card/crew
+  ending, Rourke and room state, cheats/heat, privacy, and accessibility matrix
+  are retained from the recovered product and verified on the exact fixed tree.
+- A real product save/revisit regression now proves dealt Rourke cards persist
+  through serialization and reopen on the boss surface without changing duel
+  math, RNG, stakes, routes, or settlement.
+- Project validation, row and Blackjack contracts, native/Web parity, fresh Web
+  export, 10-seed determinism, performance, visual QA, and the 19-state capture
+  matrix pass. Exact evidence and the unchanged ladder table are recorded in
+  `docs/plans/game06_7_final_closeout.md`.
+- Broader environment and stale receipt-free audit-fixture findings remain
+  recorded against their owning rows; none is hidden or relabeled as a row
+  pass. Only the program-level human playtest remains.
 
 # Agent Prompt — 0.6 game06_7: Rourke Duel and Grand Casino Showdown Depth
 

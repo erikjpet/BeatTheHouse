@@ -320,3 +320,29 @@ Accordingly, `game06_6` is **VERIFIED/DONE** for board and Family 1 dependency
 purposes. game06_8 must consume the final closeout for this slice and must not
 revive the earlier contract-only/product-missing blocker unless a new
 regression is demonstrated on current `main`.
+
+## Superseding game06_7 reconciliation — 2026-09-02
+
+This section supersedes only the historical game06_7/D9 entries above; it does
+not change the manifest's overall game06_8 verdict or any other row.
+
+- The complete recovered Showdown product is on `main` through
+  `a6e7be912e8ca9e979d5eb35edefbb4883b49889`; Game 1 runtime `5a2b1e1a` and
+  accepted Blackjack recovery `b091bc43` are ancestors.
+- Closeout remediation `45e87257584ff30fd4086f89d49cf1d5ee23bfbe`
+  persists dealt Rourke hands in the existing authoritative duel session so a
+  save/exit/revisit reopens the exact cards. It changes no rule, threshold,
+  stake, RNG, route, heat, or settlement contract.
+- The exact-tree nine-phase row proof, focused shipped Blackjack suite, ladder
+  boundaries and stack terminals, product save/revisit, privacy, route-specific
+  endings, two byte-identical ten-seed/560-point determinism passes, fresh
+  native/Web semantic parity, unchanged performance budgets, canonical visual
+  QA, and all 19 retained accessibility/presentation states passed.
+- The complete ladder table, evidence hashes, and retained non-green broad
+  findings are recorded in `docs/plans/game06_7_final_closeout.md`. The older
+  contract-only and replay-manifest verdicts remain historical evidence only.
+
+Accordingly, `game06_7` is **VERIFIED/DONE** for board and Family 1 dependency
+purposes. game06_8 must consume the final closeout for this slice and must not
+revive D9's obsolete product-missing blocker unless a new regression is
+demonstrated on current `main`.

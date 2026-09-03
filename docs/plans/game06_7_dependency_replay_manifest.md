@@ -1,6 +1,6 @@
 # game06_7 dependency replay manifest
 
-Status: **UNREVIEWED / docs-only / fail-closed / not a row claim**
+Status: **SUPERSEDED HISTORICAL PRESTAGE — see final closeout**
 Manifest base: `25f16c4efb723db2a0308eec5719b59b497413b7`
 Prepared branch: `codex/game06_7-dependency-replay-manifest`
 
@@ -8,6 +8,11 @@ This manifest describes intake and proof for replaying the preserved game06_7
 contract-only payload. It does not accept that payload, authorize a product
 replay, or modify product/tests. The Integrator owns dependency acceptance,
 three-way integration, gates, and landing.
+
+Current disposition: the later recovered product and exact-tree acceptance are
+recorded in `docs/plans/game06_7_final_closeout.md`. The requirements below are
+retained as the historical fail-closed intake record; they no longer describe
+the row's current implementation or verdict.
 
 ## Fail-closed intake
 
