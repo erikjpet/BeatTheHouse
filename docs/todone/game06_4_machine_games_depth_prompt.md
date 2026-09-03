@@ -1,5 +1,26 @@
-Status: IN_PROGRESS — implementation landed on `main`; Family 1 release-gate closeout remains open
+Status: COMPLETE — recovered machine depth is landed, verified, and archived
 Board row: `game06_4` in `docs/todo/README_0_6_board.md`
+
+## Execution Record
+
+- Completed: 2026-09-02.
+- Recovered implementation: `e874d6bc1636ab8094bd88c0c304a5db29902535`.
+  Final gate and fairness remediation: `bd77ac54da2c9a911587802968d66cd589a7a1c9`.
+- Slot and Video Poker retain the owner-selected W0 + H0 direct-bankroll
+  authority: no machine credits or conversion path, no Video Poker hand-pay,
+  and a sealed, receipted, replay-safe, settlement-neutral Slot attendant
+  acknowledgement.
+- Closeout restored mandatory bounded Slot idle life and corrected Holdout
+  timing so sealed inputs are graded against the cabinet frame the player sees,
+  without changing RNG, rules, paytables, odds, detection, or settlement.
+- Project validation, row/dependency contracts, full Slot and Video Poker
+  suites, RTP matrices, native/Web ten-seed outcome and bonus parity,
+  two-process ten-seed determinism, performance/liveness, accessibility, and
+  real-renderer visual QA all pass. Exact evidence and retained non-green
+  attempts are recorded in `docs/plans/game06_4_final_closeout.md`.
+- No automated implementation work remains. The later program-level human
+  playtest must still confirm that new players understand wagers, holds,
+  payline readout, feature progression, and Slot attendant acknowledgement.
 
 # Agent Prompt — 0.6 game06_4: Machine Games Depth (Slot, Video Poker)
 

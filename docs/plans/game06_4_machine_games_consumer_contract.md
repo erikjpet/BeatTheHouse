@@ -1,6 +1,6 @@
 # game06_4 machine-games consumer contract
 
-Status: WIP — owner-selected W0 + H0 recovery candidate
+Status: ACCEPTED / COMPLETE — W0 + H0 product and gates are green
 
 Authority decision: Slot and Video Poker use the existing sealed host
 direct-bankroll boundary. No machine-credit ledger, buy-in, cash-out, or
@@ -238,7 +238,9 @@ equivalence, material energy tiers, sealed-host handler authority, persistence,
 and byte-equal otherwise-identical observers without authentic capability.
 
 Native, Web, full RTP, performance, accessibility, save/restore, and visual
-evidence remain Integrator-owned gates. This WIP is not an acceptance verdict.
+evidence were completed by the final integrator closeout. Exact results and
+retained failed attempts are recorded in
+`docs/plans/game06_4_final_closeout.md`.
 
 ## 7. Row-local live adoption
 
@@ -278,3 +280,15 @@ and cannot release or duplicate payout. Caller strings, nested dictionaries,
 signed-looking claims, substituted objects, and recomputed values do not
 establish authority. No machine-credit schema, conversion path, Video Poker
 hand-pay policy, odds, paytable, or RTP change is introduced.
+
+## 9. Final closeout reconciliation
+
+The recovered product at `e874d6bc1636ab8094bd88c0c304a5db29902535`
+and final gate/fairness remediation at
+`bd77ac54da2c9a911587802968d66cd589a7a1c9` satisfy this contract. Slot and
+Video Poker remain separate logical consumers of one sealed host boundary.
+Slot acknowledgement is durable and settlement-neutral; Video Poker exposes no
+hand-pay state. Both cabinets preserve direct-bankroll conservation, exact
+authoritative outcome projection, save/revisit behavior, accessibility input
+equivalence, and bounded nonzero idle life. No open contract or implementation
+item remains in this row; only the later program-level human playtest remains.

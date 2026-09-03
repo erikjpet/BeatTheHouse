@@ -346,3 +346,31 @@ Accordingly, `game06_7` is **VERIFIED/DONE** for board and Family 1 dependency
 purposes. game06_8 must consume the final closeout for this slice and must not
 revive D9's obsolete product-missing blocker unless a new regression is
 demonstrated on current `main`.
+
+## Superseding game06_4 reconciliation — 2026-09-02
+
+This section supersedes only the historical game06_4/D4/D5 entries above; it
+does not change the manifest's overall game06_8 verdict or any other row.
+
+- The owner selected W0 + H0. Slot and Video Poker use sealed direct-bankroll
+  wager/settlement authority, expose no machine-credit or conversion ledger,
+  and Video Poker has no hand-pay flow. Slot's attendant acknowledgement is
+  sealed, receipted, replay-safe, and settlement-neutral.
+- The complete recovered machine product is on the accepted ancestry through
+  `e874d6bc1636ab8094bd88c0c304a5db29902535`; final gate and fairness
+  remediation is `bd77ac54da2c9a911587802968d66cd589a7a1c9`.
+- The exact-tree row contract and Blackjack dependency, full Slot and Video
+  Poker functional suites, all-family RTP/paytable coverage, rejected-input and
+  conservation cases, save/revisit/acknowledgement lifecycle, two byte-identical
+  ten-seed/560-checkpoint determinism passes, fresh native/Web machine outcome
+  and complete Pinball feature parity, unchanged performance budgets, mandatory
+  idle liveness, canonical accessibility QA, and real-renderer cabinet proofs
+  passed.
+- The complete evidence ledger, performance numbers, hashes, and retained
+  non-green attempts are recorded in
+  `docs/plans/game06_4_final_closeout.md`.
+
+Accordingly, `game06_4` is **VERIFIED/DONE** for board and Family 1 dependency
+purposes. game06_8 must consume the final closeout for this slice and must not
+revive D4/D5's obsolete unselected-authority blockers unless a new regression
+is demonstrated on current `main`.
