@@ -66,6 +66,24 @@
       {"type": "travel", "target": "small_underground_casino"},
       {"type": "travel", "target": "motel"},
       {"type": "travel", "target": "jazz_club"}
+    ],
+    "grand": [
+      {"type": "travel", "target": "gas_station_casino"},
+      {"type": "event", "event_id": "parking_lot_tip", "choice_id": "follow_tip"},
+      {"type": "travel", "target": "corner_store"},
+      {"type": "lender", "lender_id": "the_crew"},
+      {"type": "travel", "target": "gas_station_casino"},
+      {"type": "travel", "target": "motel"},
+      {"type": "travel", "target": "small_underground_casino"},
+      {"type": "lender", "lender_id": "street_lender"},
+      {"type": "travel", "target": "motel"},
+      {"type": "travel", "target": "corner_store"},
+      {"type": "travel", "target": "bar"},
+      {"type": "travel", "target": "back_alley"},
+      {"type": "travel", "target": "pawn_shop"},
+      {"type": "travel", "target": "kitty_cat_lounge"},
+      {"type": "event", "event_id": "grand_casino_invite", "choice_id": "accept_invite"},
+      {"type": "travel", "target": "grand_casino"}
     ]
   },
   "cases": [
@@ -205,6 +223,89 @@
       "seed": "INTEG06-1-V051-SMOKE-001",
       "step_sequence": "jazz",
       "expected_archetype": "jazz_club"
+    },
+    {
+      "fixture_id": "v051_grand_casino_environment",
+      "seed": "INTEG06-1-V051-SMOKE-001",
+      "challenge_id": "integ06_1_grand_route",
+      "challenge_modifiers": {"starting_bankroll": 3000},
+      "step_sequence": "grand",
+      "expected_archetype": "grand_casino"
+    },
+    {
+      "fixture_id": "v051_grand_casino_cage_environment",
+      "seed": "INTEG06-1-V051-SMOKE-001",
+      "challenge_id": "integ06_1_grand_route",
+      "challenge_modifiers": {"starting_bankroll": 3000},
+      "step_sequence": "grand",
+      "append_steps": [
+        {"type": "travel", "target": "grand_casino_cage"}
+      ],
+      "expected_archetype": "grand_casino_cage"
+    },
+    {
+      "fixture_id": "v051_grand_casino_high_limit_environment",
+      "seed": "INTEG06-1-V051-SMOKE-001",
+      "challenge_id": "integ06_1_grand_route",
+      "challenge_modifiers": {"starting_bankroll": 3000},
+      "step_sequence": "grand",
+      "append_steps": [
+        {"type": "travel", "target": "grand_casino_high_limit"}
+      ],
+      "expected_archetype": "grand_casino_high_limit"
+    },
+    {
+      "fixture_id": "v051_grand_casino_baccarat_mid_game",
+      "seed": "INTEG06-1-V051-SMOKE-001",
+      "challenge_id": "integ06_1_grand_route",
+      "challenge_modifiers": {"starting_bankroll": 3000},
+      "step_sequence": "grand",
+      "append_steps": [
+        {"type": "travel", "target": "grand_casino_high_limit"}
+      ],
+      "expected_archetype": "grand_casino_high_limit",
+      "enter_game": "baccarat"
+    },
+    {
+      "fixture_id": "v051_apartment_environment",
+      "seed": "INTEG06-1-V051-APARTMENT-001",
+      "challenge_id": "integ06_1_apartment_home",
+      "challenge_modifiers": {"home_archetype_id": "apartment"},
+      "expected_archetype": "apartment"
+    },
+    {
+      "fixture_id": "v051_motel_room_environment",
+      "seed": "INTEG06-1-V051-MOTEL-ROOM-001",
+      "challenge_id": "integ06_1_motel_room_home",
+      "challenge_modifiers": {"home_archetype_id": "motel_room"},
+      "expected_archetype": "motel_room"
+    },
+    {
+      "fixture_id": "v051_motel_friend_mid_debt",
+      "seed": "INTEG06-1-V051-SMOKE-001",
+      "steps": [
+        {"type": "travel", "target": "motel"},
+        {"type": "lender", "lender_id": "motel_friend"}
+      ],
+      "expected_archetype": "motel"
+    },
+    {
+      "fixture_id": "v051_scratch_ticket_partial",
+      "seed": "INTEG06-1-V051-SCRATCH-001",
+      "travel_path": ["gas_station_casino"],
+      "expected_archetype": "gas_station_casino",
+      "enter_game": "scratch_tickets",
+      "expected_surface_state": "partial_scratch",
+      "surface_steps": [
+        {"type": "click", "action": "scratch_buy", "index": -1},
+        {"type": "drag", "action": "scratch_scrub", "index": 0}
+      ]
+    },
+    {
+      "fixture_id": "v051_tutorial_start",
+      "seed": "FIRST-NIGHT-ACE-17",
+      "tutorial_start": true,
+      "expected_archetype": "apartment"
     }
   ]
 }

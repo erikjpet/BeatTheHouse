@@ -1,7 +1,7 @@
 ﻿{
     "schema":  "beat_the_house.integ06_1_historical_fixture_provenance",
     "version":  1,
-    "fixture_id":  "v051_back_alley_environment",
+    "fixture_id":  "v051_motel_friend_mid_debt",
     "historical_release":  "v0.5.1",
     "historical_commit":  "f1ce7ec814b5034c229f53dcc0db6e799aaaee0b",
     "historical_tree":  "19c5ed82c0d2d2390dab2b9b6662c70d8aed5d0d",
@@ -11,41 +11,36 @@
     "driver_path":  "scripts/tests/foundation/integ06_1_v051_fixture_driver.gd",
     "driver_sha256":  "BA8058066B3F371316B540CDA0891D6553C0ED80087BC6F55BB4C2AEF69E6B53",
     "capture":  {
-                    "action_index":  0,
-                    "archetype_id":  "back_alley",
+                    "action_index":  1,
+                    "archetype_id":  "motel",
                     "challenge_id":  "",
                     "challenge_modifiers":  {
 
                                             },
-                    "environment_id":  "back_alley_004",
-                    "fixture_id":  "v051_back_alley_environment",
-                    "game_clock_minutes":  870,
+                    "environment_id":  "motel_002",
+                    "fixture_id":  "v051_motel_friend_mid_debt",
+                    "game_clock_minutes":  762,
                     "game_id":  "",
                     "game_state_key":  "",
                     "methods":  [
                                     "FoundationMain.start_foundation_run",
                                     "FoundationMain.select_travel_option:motel",
                                     "FoundationMain.confirm_selected_travel",
-                                    "FoundationMain.select_travel_option:bar",
-                                    "FoundationMain.confirm_selected_travel",
-                                    "FoundationMain.select_travel_option:back_alley",
-                                    "FoundationMain.confirm_selected_travel",
+                                    "FoundationMain.use_lender_hook:motel_friend",
                                     "FoundationMain.save_foundation_run",
                                     "SaveService.wait_for_async_save"
                                 ],
                     "project_version":  "0.5.1",
-                    "save_path":  "isolated_distribution_root/saves/v051_back_alley_environment.json",
+                    "save_path":  "isolated_distribution_root/saves/v051_motel_friend_mid_debt.json",
                     "save_schema":  "beat_the_house.foundation_run",
                     "save_version":  2,
                     "screen":  "RESULT",
                     "seed":  "INTEG06-1-V051-SMOKE-001",
                     "travel_path":  [
-                                        "motel",
-                                        "bar",
-                                        "back_alley"
+                                        "motel"
                                     ]
                 },
-    "save_file":  "v051_back_alley_environment.json",
-    "save_size_bytes":  49927,
-    "save_sha256":  "ED8BEA36367AD0A9FA20AE2785929CC0C18F9F223C2E29263F9870FF81F1D2F4"
+    "save_file":  "v051_motel_friend_mid_debt.json",
+    "save_size_bytes":  27916,
+    "save_sha256":  "AE47894341C4934C868D9217175754C8D334080746D5F182948AB132C83F608F"
 }

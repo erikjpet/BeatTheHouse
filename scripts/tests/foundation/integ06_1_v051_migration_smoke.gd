@@ -91,6 +91,9 @@ func _verify_fixture(app: Control, save_service: Variant, capture_case: Dictiona
 	if not _expected_playable_state(run_state, expected_seed, expected_archetype):
 		_fail("%s current FoundationMain did not migrate the historical state intact" % fixture_id)
 		return false
+	if not _expected_fixture_state(run_state, capture_case):
+		_fail("%s current FoundationMain lost its expected historical mid-state" % fixture_id)
+		return false
 	app.call("save_foundation_run")
 	if int(save_service.call("wait_for_async_save")) != OK:
 		_fail("%s current FoundationMain could not round-trip the migrated save" % fixture_id)
@@ -102,6 +105,9 @@ func _verify_fixture(app: Control, save_service: Variant, capture_case: Dictiona
 	var reloaded: Variant = save_service.call("load_run", SLOT_ID)
 	if not _expected_playable_state(reloaded, expected_seed, expected_archetype):
 		_fail("%s round-tripped migration did not reload to the same playable state" % fixture_id)
+		return false
+	if not _expected_fixture_state(reloaded, capture_case):
+		_fail("%s round-tripped migration lost its expected historical mid-state" % fixture_id)
 		return false
 	if JSON.stringify(_migration_contract(reloaded)) != migrated_snapshot:
 		_fail("%s migrated gameplay contract changed across the current save/load boundary" % fixture_id)
@@ -115,12 +121,17 @@ func _verify_fixture(app: Control, save_service: Variant, capture_case: Dictiona
 
 func _valid_provenance(provenance: Dictionary, capture_case: Dictionary, fixture_id: String, expected_seed: String, expected_archetype: String, expected_game: String, fixture_bytes: PackedByteArray, envelope: Dictionary) -> bool:
 	var capture: Dictionary = provenance.get("capture", {}) if typeof(provenance.get("capture", {})) == TYPE_DICTIONARY else {}
+	var tutorial_start := bool(capture_case.get("tutorial_start", false))
 	var expected_modifiers: Dictionary = capture_case.get("challenge_modifiers", {}).duplicate(true) if typeof(capture_case.get("challenge_modifiers", {})) == TYPE_DICTIONARY else {}
-	var expected_challenge_id := str(capture_case.get("challenge_id", "integ06_1_historical_fixture")).strip_edges() if not expected_modifiers.is_empty() else ""
+	var expected_challenge_id := "tutorial_first_card" if tutorial_start else str(capture_case.get("challenge_id", "integ06_1_historical_fixture")).strip_edges() if not expected_modifiers.is_empty() else ""
 	var expected_methods: Array[String] = []
-	if not expected_modifiers.is_empty():
+	if tutorial_start:
+		expected_methods.append("FoundationMain.start_tutorial_run")
+	elif not expected_modifiers.is_empty():
 		expected_methods.append("RunState.custom_challenge")
-	expected_methods.append("FoundationMain.start_foundation_run")
+		expected_methods.append("FoundationMain.start_foundation_run")
+	else:
+		expected_methods.append("FoundationMain.start_foundation_run")
 	var expected_travel_path: Array[String] = []
 	var steps: Array = capture_case.get("steps", []) if typeof(capture_case.get("steps", [])) == TYPE_ARRAY else []
 	if steps.is_empty():
@@ -143,6 +154,19 @@ func _valid_provenance(provenance: Dictionary, capture_case: Dictionary, fixture
 			expected_methods.append("FoundationMain.use_lender_hook:%s" % str(step.get("lender_id", "")))
 	if not expected_game.is_empty():
 		expected_methods.append("FoundationMain.enter_game")
+	var surface_steps: Variant = capture_case.get("surface_steps", [])
+	if typeof(surface_steps) == TYPE_ARRAY:
+		for step_value in surface_steps as Array:
+			if typeof(step_value) != TYPE_DICTIONARY:
+				continue
+			var surface_step: Dictionary = step_value
+			var surface_type := str(surface_step.get("type", "click"))
+			var surface_action := str(surface_step.get("action", ""))
+			var surface_index := int(surface_step.get("index", -1))
+			if surface_type == "drag":
+				expected_methods.append("GameSurfaceCanvas.surface_pointer_drag:%s:%d" % [surface_action, surface_index])
+			else:
+				expected_methods.append("GameSurfaceCanvas.surface_action:%s:%s" % [surface_action, "first_stocked" if surface_index < 0 else str(surface_index)])
 	expected_methods.append("FoundationMain.save_foundation_run")
 	expected_methods.append("SaveService.wait_for_async_save")
 	var actual_methods := _string_array(capture.get("methods", []))
@@ -168,10 +192,16 @@ func _valid_provenance(provenance: Dictionary, capture_case: Dictionary, fixture
 		failures.append("historical save envelope mismatch")
 	if str(capture.get("fixture_id", "")) != fixture_id or str(capture.get("seed", "")) != expected_seed or str(capture.get("archetype_id", "")) != expected_archetype:
 		failures.append("capture identity mismatch")
+	var envelope_run_state: Dictionary = envelope.get("run_state", {}) if typeof(envelope.get("run_state", {})) == TYPE_DICTIONARY else {}
+	var envelope_challenge: Dictionary = envelope_run_state.get("challenge_config", {}) if typeof(envelope_run_state.get("challenge_config", {})) == TYPE_DICTIONARY else {}
+	if tutorial_start:
+		expected_modifiers = envelope_challenge.get("modifiers", {}).duplicate(true) if typeof(envelope_challenge.get("modifiers", {})) == TYPE_DICTIONARY else {}
 	if JSON.stringify(capture.get("challenge_modifiers", {})) != JSON.stringify(expected_modifiers):
 		failures.append("capture challenge modifiers mismatch")
 	if str(capture.get("challenge_id", "")) != expected_challenge_id:
 		failures.append("capture challenge identity mismatch")
+	if tutorial_start and (str(envelope_challenge.get("id", "")) != expected_challenge_id or not bool(envelope_challenge.get("tutorial", false))):
+		failures.append("historical tutorial challenge envelope mismatch")
 	if str(capture.get("project_version", "")) != "0.5.1" or str(capture.get("save_schema", "")) != "beat_the_house.foundation_run" or int(capture.get("save_version", 0)) != 2:
 		failures.append("capture release/save mismatch")
 	if str(capture.get("game_id", "")) != expected_game or str(capture.get("game_state_key", "")) != expected_game:
@@ -195,6 +225,22 @@ func _expected_playable_state(run_state: Variant, expected_seed: String, expecte
 		and str(run_state.get("run_status")) == "active" \
 		and str(environment.get("archetype_id", "")) == expected_archetype \
 		and not world_map.is_empty()
+
+
+func _expected_fixture_state(run_state: Variant, capture_case: Dictionary) -> bool:
+	var expectation := str(capture_case.get("expected_surface_state", "")).strip_edges()
+	if expectation.is_empty():
+		return true
+	if expectation != "partial_scratch" or run_state == null:
+		return false
+	var environment: Dictionary = run_state.get("current_environment")
+	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	var machine: Dictionary = game_states.get("scratch_tickets", {}) if typeof(game_states.get("scratch_tickets", {})) == TYPE_DICTIONARY else {}
+	var ticket: Dictionary = machine.get("active_ticket", {}) if typeof(machine.get("active_ticket", {})) == TYPE_DICTIONARY else {}
+	return not ticket.is_empty() \
+		and int(machine.get("purchased_count", 0)) >= 1 \
+		and int(ticket.get("mask_revision", 0)) >= 1 \
+		and not bool(ticket.get("result_ready", false))
 
 
 func _migration_contract(run_state: Variant) -> Dictionary:

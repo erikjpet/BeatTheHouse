@@ -1,0 +1,224 @@
+﻿{
+    "schema":  "beat_the_house.integ06_1_historical_fixture_provenance",
+    "version":  1,
+    "fixture_id":  "v051_tutorial_start",
+    "historical_release":  "v0.5.1",
+    "historical_commit":  "f1ce7ec814b5034c229f53dcc0db6e799aaaee0b",
+    "historical_tree":  "19c5ed82c0d2d2390dab2b9b6662c70d8aed5d0d",
+    "historical_main_scene_blob":  "4b0643365098308dadfaee909d35e51784905811",
+    "historical_foundation_main_blob":  "3bc98efec993b8bfdd9252687a0ba041ebba7f23",
+    "historical_save_service_blob":  "57a6526016123feb9bcf1ebeb50cc8f937f0b265",
+    "driver_path":  "scripts/tests/foundation/integ06_1_v051_fixture_driver.gd",
+    "driver_sha256":  "BA8058066B3F371316B540CDA0891D6553C0ED80087BC6F55BB4C2AEF69E6B53",
+    "capture":  {
+                    "action_index":  0,
+                    "archetype_id":  "apartment",
+                    "challenge_id":  "tutorial_first_card",
+                    "challenge_modifiers":  {
+                                                "home_archetype_id":  "apartment",
+                                                "starting_bankroll":  80.0,
+                                                "tutorial_environment_overrides":  {
+                                                                                       "apartment":  {
+                                                                                                         "home_profile":  {
+                                                                                                                              "starting_cash":  [
+                                                                                                                                                    80.0,
+                                                                                                                                                    80.0
+                                                                                                                                                ],
+                                                                                                                              "starting_containers":  [
+
+                                                                                                                                                      ],
+                                                                                                                              "starting_item_pool":  [
+                                                                                                                                                         "xray_glasses"
+                                                                                                                                                     ],
+                                                                                                                              "starting_items":  1.0
+                                                                                                                          },
+                                                                                                         "next_archetypes":  [
+                                                                                                                                 "corner_store"
+                                                                                                                             ],
+                                                                                                         "travel_hooks":  [
+                                                                                                                              "corner_store"
+                                                                                                                          ]
+                                                                                                     },
+                                                                                       "corner_store":  {
+                                                                                                            "event_count":  [
+                                                                                                                                2.0,
+                                                                                                                                2.0
+                                                                                                                            ],
+                                                                                                            "event_pool":  [
+                                                                                                                               "call_brother_in_law",
+                                                                                                                               "parking_lot_tip"
+                                                                                                                           ],
+                                                                                                            "item_count":  [
+                                                                                                                               2.0,
+                                                                                                                               2.0
+                                                                                                                           ],
+                                                                                                            "item_pool":  [
+                                                                                                                              "instant_coffee",
+                                                                                                                              "ledger_pencil"
+                                                                                                                          ],
+                                                                                                            "lender_count":  [
+                                                                                                                                 1.0,
+                                                                                                                                 1.0
+                                                                                                                             ],
+                                                                                                            "lender_hooks":  [
+                                                                                                                                 "the_crew"
+                                                                                                                             ],
+                                                                                                            "next_archetypes":  [
+                                                                                                                                    "gas_station_casino"
+                                                                                                                                ],
+                                                                                                            "required_event_ids":  [
+                                                                                                                                       "call_brother_in_law",
+                                                                                                                                       "parking_lot_tip"
+                                                                                                                                   ],
+                                                                                                            "travel_hooks":  [
+                                                                                                                                 "gas_station_casino"
+                                                                                                                             ]
+                                                                                                        },
+                                                                                       "gas_station_casino":  {
+                                                                                                                  "event_count":  [
+                                                                                                                                      0.0,
+                                                                                                                                      0.0
+                                                                                                                                  ],
+                                                                                                                  "event_pool":  [
+
+                                                                                                                                 ],
+                                                                                                                  "game_count":  [
+                                                                                                                                     1.0,
+                                                                                                                                     1.0
+                                                                                                                                 ],
+                                                                                                                  "game_pool":  [
+                                                                                                                                    "pull_tabs"
+                                                                                                                                ],
+                                                                                                                  "next_archetypes":  [
+                                                                                                                                          "small_underground_casino"
+                                                                                                                                      ],
+                                                                                                                  "required_event_ids":  [
+
+                                                                                                                                         ],
+                                                                                                                  "required_game_ids":  [
+                                                                                                                                            "pull_tabs"
+                                                                                                                                        ],
+                                                                                                                  "travel_hooks":  [
+                                                                                                                                       "small_underground_casino"
+                                                                                                                                   ]
+                                                                                                              },
+                                                                                       "grand_casino":  {
+                                                                                                            "demo_objective":  {
+                                                                                                                                   "high_roller_max_heat":  90.0,
+                                                                                                                                   "high_roller_min_grand_casino_games":  99.0,
+                                                                                                                                   "high_roller_net_winnings":  9999.0,
+                                                                                                                                   "players_card_bronze_max_heat":  100.0,
+                                                                                                                                   "players_card_bronze_min_games":  2.0,
+                                                                                                                                   "players_card_bronze_net_winnings":  -999.0,
+                                                                                                                                   "players_card_gold_max_heat":  90.0,
+                                                                                                                                   "players_card_gold_min_games":  99.0,
+                                                                                                                                   "players_card_gold_net_winnings":  9999.0,
+                                                                                                                                   "players_card_silver_max_heat":  90.0,
+                                                                                                                                   "players_card_silver_min_games":  99.0,
+                                                                                                                                   "players_card_silver_net_winnings":  9999.0,
+                                                                                                                                   "summary":  "Finish two Main Floor blackjack hands, claim Bronze from Linda, and learn the road to Gold.",
+                                                                                                                                   "title":  "Earn Your First Players Card",
+                                                                                                                                   "victory_message":  "Linda issued Bronze and named the Golden Players Card as your next goal."
+                                                                                                                               },
+                                                                                                            "event_count":  [
+                                                                                                                                1.0,
+                                                                                                                                1.0
+                                                                                                                            ],
+                                                                                                            "event_pool":  [
+                                                                                                                               "comped_suite_offer"
+                                                                                                                           ],
+                                                                                                            "game_count":  [
+                                                                                                                               1.0,
+                                                                                                                               1.0
+                                                                                                                           ],
+                                                                                                            "game_pool":  [
+                                                                                                                              "blackjack"
+                                                                                                                          ],
+                                                                                                            "required_event_ids":  [
+                                                                                                                                       "comped_suite_offer"
+                                                                                                                                   ],
+                                                                                                            "required_game_ids":  [
+                                                                                                                                      "blackjack"
+                                                                                                                                  ]
+                                                                                                        },
+                                                                                       "small_underground_casino":  {
+                                                                                                                        "event_count":  [
+                                                                                                                                            1.0,
+                                                                                                                                            1.0
+                                                                                                                                        ],
+                                                                                                                        "event_pool":  [
+                                                                                                                                           "tutorial_grand_casino_invitation"
+                                                                                                                                       ],
+                                                                                                                        "game_count":  [
+                                                                                                                                           1.0,
+                                                                                                                                           1.0
+                                                                                                                                       ],
+                                                                                                                        "game_pool":  [
+                                                                                                                                          "blackjack"
+                                                                                                                                      ],
+                                                                                                                        "next_archetypes":  [
+
+                                                                                                                                            ],
+                                                                                                                        "required_event_ids":  [
+                                                                                                                                                   "tutorial_grand_casino_invitation"
+                                                                                                                                               ],
+                                                                                                                        "required_game_ids":  [
+                                                                                                                                                  "blackjack"
+                                                                                                                                              ],
+                                                                                                                        "travel_hooks":  [
+
+                                                                                                                                         ]
+                                                                                                                    }
+                                                                                   },
+                                                "tutorial_event_chain_chances":  {
+                                                                                     "family_loan":  1.0
+                                                                                 },
+                                                "tutorial_forced_event_choices":  {
+                                                                                      "call_brother_in_law":  "make_call",
+                                                                                      "comped_suite_offer":  "take_comp",
+                                                                                      "family_loan":  "accept",
+                                                                                      "parking_lot_tip":  "follow_tip",
+                                                                                      "tutorial_grand_casino_invitation":  "accept_first_invitation"
+                                                                                  },
+                                                "tutorial_initial_map_targets":  [
+                                                                                     "corner_store"
+                                                                                 ],
+                                                "tutorial_main_floor_only":  true,
+                                                "tutorial_pull_tab_peek_results":  [
+                                                                                       true,
+                                                                                       false,
+                                                                                       true,
+                                                                                       false
+                                                                                   ],
+                                                "tutorial_pull_tab_xray_offset":  2.0,
+                                                "tutorial_run":  true,
+                                                "tutorial_shop_item_pool_strict":  true,
+                                                "tutorial_travel_cost_overrides":  {
+                                                                                       "corner_store":  0.0,
+                                                                                       "grand_casino":  5.0
+                                                                                   }
+                                            },
+                    "environment_id":  "apartment_001",
+                    "fixture_id":  "v051_tutorial_start",
+                    "game_clock_minutes":  720,
+                    "game_id":  "",
+                    "game_state_key":  "",
+                    "methods":  [
+                                    "FoundationMain.start_tutorial_run",
+                                    "FoundationMain.save_foundation_run",
+                                    "SaveService.wait_for_async_save"
+                                ],
+                    "project_version":  "0.5.1",
+                    "save_path":  "isolated_distribution_root/saves/v051_tutorial_start.json",
+                    "save_schema":  "beat_the_house.foundation_run",
+                    "save_version":  2,
+                    "screen":  "ENVIRONMENT",
+                    "seed":  "FIRST-NIGHT-ACE-17",
+                    "travel_path":  [
+
+                                    ]
+                },
+    "save_file":  "v051_tutorial_start.json",
+    "save_size_bytes":  25197,
+    "save_sha256":  "AB18510F66243F9EA4EC01D361422ACBCE2876F8CD14A1E0212213CFBB40DD35"
+}

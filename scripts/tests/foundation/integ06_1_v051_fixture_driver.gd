@@ -63,14 +63,21 @@ func _capture_case(app: Control, capture_case: Dictionary, version: String) -> D
 	app.set("autosave_slot_id", fixture_id)
 
 	var methods: Array[String] = []
+	var tutorial_start := bool(capture_case.get("tutorial_start", false))
 	var challenge_modifiers: Dictionary = capture_case.get("challenge_modifiers", {}).duplicate(true) if typeof(capture_case.get("challenge_modifiers", {})) == TYPE_DICTIONARY else {}
 	var challenge_id := str(capture_case.get("challenge_id", "integ06_1_historical_fixture")).strip_edges()
 	var challenge_config: Dictionary = {}
-	if not challenge_modifiers.is_empty():
+	if tutorial_start:
+		app.call("start_tutorial_run")
+		methods.append("FoundationMain.start_tutorial_run")
+	elif not challenge_modifiers.is_empty():
 		challenge_config = RunState.custom_challenge(challenge_id, seed_text, challenge_modifiers)
 		methods.append("RunState.custom_challenge")
-	app.call("start_foundation_run", seed_text, challenge_config, false)
-	methods.append("FoundationMain.start_foundation_run")
+		app.call("start_foundation_run", seed_text, challenge_config, false)
+		methods.append("FoundationMain.start_foundation_run")
+	else:
+		app.call("start_foundation_run", seed_text, challenge_config, false)
+		methods.append("FoundationMain.start_foundation_run")
 	await process_frame
 	await process_frame
 	print("INTEG06_1_PHASE=%s:foundation_run_started" % fixture_id)
@@ -122,7 +129,7 @@ func _capture_case(app: Control, capture_case: Dictionary, version: String) -> D
 			return {}
 		var target_id := str(step.get("target", "")).strip_edges()
 		if not bool(app.call("select_travel_option", target_id)):
-			_fail("%s could not select public travel target %s choice=%s block=%s" % [fixture_id, target_id, str(app.call("_travel_choice", target_id)), str(app.call("_blocking_modal_message"))])
+			_fail("%s could not select public travel target %s choice=%s block=%s world=%s" % [fixture_id, target_id, str(app.call("_travel_choice", target_id)), str(app.call("_blocking_modal_message")), str(_world_node_summary(run_state.get("world_map")))])
 			return {}
 		app.call("confirm_selected_travel")
 		await process_frame
@@ -162,6 +169,10 @@ func _capture_case(app: Control, capture_case: Dictionary, version: String) -> D
 		methods.append("FoundationMain.enter_game")
 		await process_frame
 		await process_frame
+		if not await _apply_surface_steps(app, capture_case, fixture_id, methods):
+			return {}
+		if not _expected_surface_state(run_state, capture_case, fixture_id):
+			return {}
 
 	# This is the public, synchronous player save boundary. It checkpoints the
 	# live game surface before SaveService writes the historical envelope.
@@ -210,11 +221,86 @@ func _capture_case(app: Control, capture_case: Dictionary, version: String) -> D
 		"game_state_key": str(app.get("current_game_state_key")) if not game_id.is_empty() else "",
 		"action_index": int(event_cadence.get("action_index", 0)),
 		"game_clock_minutes": run_state.get("game_clock_minutes"),
-		"challenge_id": challenge_id if not challenge_modifiers.is_empty() else "",
-		"challenge_modifiers": challenge_modifiers,
+		"challenge_id": str((run_state.get("challenge_config") as Dictionary).get("id", "")) if tutorial_start else challenge_id if not challenge_modifiers.is_empty() else "",
+		"challenge_modifiers": (run_state.get("challenge_config") as Dictionary).get("modifiers", {}).duplicate(true) if tutorial_start else challenge_modifiers,
 		"travel_path": travel_path,
 		"methods": methods,
 	}
+
+
+func _apply_surface_steps(app: Control, capture_case: Dictionary, fixture_id: String, methods: Array[String]) -> bool:
+	var steps: Variant = capture_case.get("surface_steps", [])
+	if typeof(steps) != TYPE_ARRAY:
+		return true
+	var canvas: Variant = app.get("game_surface_canvas")
+	if canvas == null:
+		_fail("%s game surface canvas was unavailable" % fixture_id)
+		return false
+	for step_value in steps as Array:
+		if typeof(step_value) != TYPE_DICTIONARY:
+			_fail("%s surface step was not a dictionary" % fixture_id)
+			return false
+		var step: Dictionary = step_value
+		var action_id := str(step.get("action", "")).strip_edges()
+		var requested_index := int(step.get("index", -1))
+		var index := requested_index
+		var input_type := str(step.get("type", "click")).strip_edges()
+		if input_type == "click":
+			if index < 0 and action_id == "scratch_buy":
+				index = _first_stocked_scratch_index(app.get("run_state"))
+			if index < 0:
+				_fail("%s could not resolve surface action index for %s" % [fixture_id, action_id])
+				return false
+			canvas.emit_signal("surface_action", action_id, index, false)
+			methods.append("GameSurfaceCanvas.surface_action:%s:%s" % [action_id, "first_stocked" if requested_index < 0 else str(index)])
+		elif input_type == "drag":
+			var from_value: Variant = step.get("from", [400.0, 160.0])
+			var to_value: Variant = step.get("to", [520.0, 160.0])
+			var from := Vector2(float((from_value as Array)[0]), float((from_value as Array)[1])) if typeof(from_value) == TYPE_ARRAY and (from_value as Array).size() >= 2 else Vector2(400.0, 160.0)
+			var to := Vector2(float((to_value as Array)[0]), float((to_value as Array)[1])) if typeof(to_value) == TYPE_ARRAY and (to_value as Array).size() >= 2 else Vector2(520.0, 160.0)
+			canvas.emit_signal("surface_pointer_action", action_id, index, "begin", from)
+			canvas.emit_signal("surface_pointer_action", action_id, index, "move", to)
+			canvas.emit_signal("surface_pointer_action", action_id, index, "end", to)
+			methods.append("GameSurfaceCanvas.surface_pointer_drag:%s:%d" % [action_id, index])
+		else:
+			_fail("%s surface step had unsupported type %s" % [fixture_id, input_type])
+			return false
+		await process_frame
+		await process_frame
+	return true
+
+
+func _first_stocked_scratch_index(run_state: Variant) -> int:
+	if run_state == null:
+		return -1
+	var environment: Dictionary = run_state.get("current_environment")
+	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	var machine: Dictionary = game_states.get("scratch_tickets", {}) if typeof(game_states.get("scratch_tickets", {})) == TYPE_DICTIONARY else {}
+	var stock: Variant = machine.get("stock", [])
+	if typeof(stock) != TYPE_ARRAY:
+		return -1
+	for index in range((stock as Array).size()):
+		var row: Variant = (stock as Array)[index]
+		if typeof(row) == TYPE_DICTIONARY and int((row as Dictionary).get("remaining", 0)) > 0:
+			return index
+	return -1
+
+
+func _expected_surface_state(run_state: Variant, capture_case: Dictionary, fixture_id: String) -> bool:
+	var expectation := str(capture_case.get("expected_surface_state", "")).strip_edges()
+	if expectation.is_empty():
+		return true
+	if expectation != "partial_scratch" or run_state == null:
+		_fail("%s has unsupported surface-state expectation %s" % [fixture_id, expectation])
+		return false
+	var environment: Dictionary = run_state.get("current_environment")
+	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	var machine: Dictionary = game_states.get("scratch_tickets", {}) if typeof(game_states.get("scratch_tickets", {})) == TYPE_DICTIONARY else {}
+	var ticket: Dictionary = machine.get("active_ticket", {}) if typeof(machine.get("active_ticket", {})) == TYPE_DICTIONARY else {}
+	if ticket.is_empty() or int(machine.get("purchased_count", 0)) < 1 or int(ticket.get("mask_revision", 0)) < 1 or bool(ticket.get("result_ready", false)):
+		_fail("%s did not produce a genuinely partial scratch ticket" % fixture_id)
+		return false
+	return true
 
 
 func _capture_cases(options: Dictionary) -> Array:
@@ -272,6 +358,33 @@ func _string_array(value: Variant) -> Array[String]:
 		var text := str(entry).strip_edges()
 		if not text.is_empty():
 			result.append(text)
+	return result
+
+
+func _world_node_summary(world_map_value: Variant) -> Dictionary:
+	var result := {"nodes": [], "edges": []}
+	if typeof(world_map_value) != TYPE_DICTIONARY:
+		return result
+	var world_map: Dictionary = world_map_value
+	var nodes: Variant = world_map.get("nodes", [])
+	if typeof(nodes) != TYPE_ARRAY:
+		return result
+	for node_value in nodes as Array:
+		if typeof(node_value) != TYPE_DICTIONARY:
+			continue
+		var node: Dictionary = node_value
+		(result["nodes"] as Array).append({
+			"id": str(node.get("id", "")),
+			"state": str(node.get("state", "")),
+			"unlocked": bool(node.get("unlocked", false)),
+		})
+	var edges: Variant = world_map.get("edges", [])
+	if typeof(edges) == TYPE_ARRAY:
+		for edge_value in edges as Array:
+			if typeof(edge_value) != TYPE_DICTIONARY:
+				continue
+			var edge: Dictionary = edge_value
+			(result["edges"] as Array).append({"a": str(edge.get("a", edge.get("from", ""))), "b": str(edge.get("b", edge.get("to", "")))})
 	return result
 
 

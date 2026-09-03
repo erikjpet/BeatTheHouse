@@ -145,10 +145,42 @@ verified provenance and stable public save/reload contracts. Coverage is now
 12 of 18 environment archetypes and seven of eight game surfaces. This remains
 fixture preparation only and does not claim `integ06_1` acceptance.
 
+## Fourth verified batch
+
+Nine more fixtures extend the matrix to 30. A reproducible custom challenge is
+used only as a legitimate historical run configuration for the long Grand
+Casino route; its exact challenge id and modifiers are recorded in each
+sidecar. The route still earns its invitation, reveals its nodes, borrows from
+the historical lender hooks, travels, and saves exclusively through runtime
+boundaries.
+
+This batch adds:
+
+- Grand Casino Main Floor, Cage, and High-Limit Room states reached by public
+  travel after accepting the real invitation.
+- Baccarat entered on the generated High-Limit surface, completing all eight
+  historical game families.
+- Apartment and Motel Room starts produced through their real custom-home run
+  configuration, raising environment coverage to 17 of 18 archetypes.
+- A Motel Friend cash debt created through its live lender hook, bringing the
+  represented lender types to Crew, Street Lender, and Motel Friend.
+- A tutorial checkpoint started through
+  `FoundationMain.start_tutorial_run`; its provenance is checked against the
+  tutorial challenge embedded in the historical save.
+- A genuinely interrupted Scratch Tickets state. The driver enters the game,
+  selects the first stocked row, emits the same canvas action as a player
+  click, then emits a pointer drag. Admission requires a purchased active
+  ticket with a positive foil-mask revision that is not result-ready.
+
+The current-build matrix passes all 30 fixtures, including the specialized
+partial-scratch assertions before and after its public save/reload round trip.
+This remains fixture preparation only and does not claim `integ06_1`.
+
 ## Coverage still required
 
 This checkpoint is historical migration evidence, but not the complete row. It
-does not claim the remaining six environment archetypes, Baccarat, five lender
-rungs, tutorial checkpoints, partial scratch state, Grand Casino entry/interior
-states, victory thresholds, maximal composition, or soak. The 21 checked-in
-fixtures do pass the current-build migration and public save/reload contract.
+does not claim the Grand Casino Back Room, the Brother-in-Law and Sal lender
+states, later tutorial checkpoints, victory thresholds, maximal composition,
+or soak. It also does not yet cover the promised mid-0.6 Punchline, delivery,
+coin-pusher, or scenario-snapshot schemas. The 30 checked-in fixtures do pass
+the current-build migration and public save/reload contract.

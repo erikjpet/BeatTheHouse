@@ -1,7 +1,7 @@
 ﻿{
     "schema":  "beat_the_house.integ06_1_historical_fixture_provenance",
     "version":  1,
-    "fixture_id":  "v051_delta_queen_environment",
+    "fixture_id":  "v051_grand_casino_environment",
     "historical_release":  "v0.5.1",
     "historical_commit":  "f1ce7ec814b5034c229f53dcc0db6e799aaaee0b",
     "historical_tree":  "19c5ed82c0d2d2390dab2b9b6662c70d8aed5d0d",
@@ -11,18 +11,19 @@
     "driver_path":  "scripts/tests/foundation/integ06_1_v051_fixture_driver.gd",
     "driver_sha256":  "BA8058066B3F371316B540CDA0891D6553C0ED80087BC6F55BB4C2AEF69E6B53",
     "capture":  {
-                    "action_index":  3,
-                    "archetype_id":  "delta_queen",
-                    "challenge_id":  "",
+                    "action_index":  4,
+                    "archetype_id":  "grand_casino",
+                    "challenge_id":  "integ06_1_grand_route",
                     "challenge_modifiers":  {
-
+                                                "starting_bankroll":  3000.0
                                             },
-                    "environment_id":  "delta_queen_010",
-                    "fixture_id":  "v051_delta_queen_environment",
-                    "game_clock_minutes":  1158,
+                    "environment_id":  "grand_casino_013",
+                    "fixture_id":  "v051_grand_casino_environment",
+                    "game_clock_minutes":  1278,
                     "game_id":  "",
                     "game_state_key":  "",
                     "methods":  [
+                                    "RunState.custom_challenge",
                                     "FoundationMain.start_foundation_run",
                                     "FoundationMain.select_travel_option:gas_station_casino",
                                     "FoundationMain.confirm_selected_travel",
@@ -40,17 +41,25 @@
                                     "FoundationMain.use_lender_hook:street_lender",
                                     "FoundationMain.select_travel_option:motel",
                                     "FoundationMain.confirm_selected_travel",
+                                    "FoundationMain.select_travel_option:corner_store",
+                                    "FoundationMain.confirm_selected_travel",
                                     "FoundationMain.select_travel_option:bar",
+                                    "FoundationMain.confirm_selected_travel",
+                                    "FoundationMain.select_travel_option:back_alley",
+                                    "FoundationMain.confirm_selected_travel",
+                                    "FoundationMain.select_travel_option:pawn_shop",
                                     "FoundationMain.confirm_selected_travel",
                                     "FoundationMain.select_travel_option:kitty_cat_lounge",
                                     "FoundationMain.confirm_selected_travel",
-                                    "FoundationMain.select_travel_option:delta_queen",
+                                    "FoundationMain.select_event_choice:grand_casino_invite:accept_invite",
+                                    "FoundationMain.confirm_selected_event_choice",
+                                    "FoundationMain.select_travel_option:grand_casino",
                                     "FoundationMain.confirm_selected_travel",
                                     "FoundationMain.save_foundation_run",
                                     "SaveService.wait_for_async_save"
                                 ],
                     "project_version":  "0.5.1",
-                    "save_path":  "isolated_distribution_root/saves/v051_delta_queen_environment.json",
+                    "save_path":  "isolated_distribution_root/saves/v051_grand_casino_environment.json",
                     "save_schema":  "beat_the_house.foundation_run",
                     "save_version":  2,
                     "screen":  "RESULT",
@@ -62,12 +71,15 @@
                                         "motel",
                                         "small_underground_casino",
                                         "motel",
+                                        "corner_store",
                                         "bar",
+                                        "back_alley",
+                                        "pawn_shop",
                                         "kitty_cat_lounge",
-                                        "delta_queen"
+                                        "grand_casino"
                                     ]
                 },
-    "save_file":  "v051_delta_queen_environment.json",
-    "save_size_bytes":  124057,
-    "save_sha256":  "6D4463EFB2FC47A5E8423B73902A54FCB5D1F5276127556644E32251278DC8C4"
+    "save_file":  "v051_grand_casino_environment.json",
+    "save_size_bytes":  196950,
+    "save_sha256":  "3A6E2FF062A0F9C09F5B56ED76E43FBB9A3A8D87958B0B557B0309C74CB9C294"
 }
