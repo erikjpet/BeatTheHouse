@@ -220,7 +220,23 @@ func _migration_contract(run_state: Variant) -> Dictionary:
 func _load_capture_cases() -> Array:
 	var plan := _load_json_dictionary(PLAN_PATH)
 	var cases: Variant = plan.get("cases", [])
-	return (cases as Array).duplicate(true) if typeof(cases) == TYPE_ARRAY else []
+	if typeof(cases) != TYPE_ARRAY:
+		return []
+	var sequences: Dictionary = plan.get("step_sequences", {}) if typeof(plan.get("step_sequences", {})) == TYPE_DICTIONARY else {}
+	var expanded: Array = []
+	for case_value in cases as Array:
+		if typeof(case_value) != TYPE_DICTIONARY:
+			expanded.append(case_value)
+			continue
+		var capture_case: Dictionary = (case_value as Dictionary).duplicate(true)
+		var sequence_id := str(capture_case.get("step_sequence", "")).strip_edges()
+		if not sequence_id.is_empty() and typeof(sequences.get(sequence_id, [])) == TYPE_ARRAY:
+			var resolved_steps: Array = (sequences.get(sequence_id, []) as Array).duplicate(true)
+			if typeof(capture_case.get("append_steps", [])) == TYPE_ARRAY:
+				resolved_steps.append_array((capture_case.get("append_steps", []) as Array).duplicate(true))
+			capture_case["steps"] = resolved_steps
+		expanded.append(capture_case)
+	return expanded
 
 
 func _load_json_dictionary(path: String) -> Dictionary:

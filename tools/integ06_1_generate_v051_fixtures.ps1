@@ -176,6 +176,7 @@ try {
 						schema = [string]$parsedPlan.schema
 						version = [int]$parsedPlan.version
 						historical_commit = [string]$parsedPlan.historical_commit
+						step_sequences = $parsedPlan.step_sequences
 						cases = @($captureCase)
 					}
 					$singleCasePlan | ConvertTo-Json -Depth 30 | Set-Content -LiteralPath $archivePlan -Encoding utf8

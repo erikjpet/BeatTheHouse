@@ -1,7 +1,7 @@
 ﻿{
     "schema":  "beat_the_house.integ06_1_historical_fixture_provenance",
     "version":  1,
-    "fixture_id":  "v051_pawn_shop_environment",
+    "fixture_id":  "v051_jazz_club_environment",
     "historical_release":  "v0.5.1",
     "historical_commit":  "f1ce7ec814b5034c229f53dcc0db6e799aaaee0b",
     "historical_tree":  "19c5ed82c0d2d2390dab2b9b6662c70d8aed5d0d",
@@ -11,30 +11,41 @@
     "driver_path":  "scripts/tests/foundation/integ06_1_v051_fixture_driver.gd",
     "driver_sha256":  "28B51EC2FA732EA60E0E3C986DA091971490D30CA3FF05A031E600A80F5CD0C7",
     "capture":  {
-                    "action_index":  0,
-                    "archetype_id":  "pawn_shop",
+                    "action_index":  2,
+                    "archetype_id":  "jazz_club",
                     "challenge_id":  "",
                     "challenge_modifiers":  {
 
                                             },
-                    "environment_id":  "pawn_shop_004",
-                    "fixture_id":  "v051_pawn_shop_environment",
-                    "game_clock_minutes":  846,
+                    "environment_id":  "jazz_club_008",
+                    "fixture_id":  "v051_jazz_club_environment",
+                    "game_clock_minutes":  1050,
                     "game_id":  "",
                     "game_state_key":  "",
                     "methods":  [
                                     "FoundationMain.start_foundation_run",
                                     "FoundationMain.select_travel_option:gas_station_casino",
                                     "FoundationMain.confirm_selected_travel",
+                                    "FoundationMain.select_event_choice:parking_lot_tip:follow_tip",
+                                    "FoundationMain.confirm_selected_event_choice",
                                     "FoundationMain.select_travel_option:corner_store",
                                     "FoundationMain.confirm_selected_travel",
-                                    "FoundationMain.select_travel_option:pawn_shop",
+                                    "FoundationMain.use_lender_hook:the_crew",
+                                    "FoundationMain.select_travel_option:gas_station_casino",
+                                    "FoundationMain.confirm_selected_travel",
+                                    "FoundationMain.select_travel_option:motel",
+                                    "FoundationMain.confirm_selected_travel",
+                                    "FoundationMain.select_travel_option:small_underground_casino",
+                                    "FoundationMain.confirm_selected_travel",
+                                    "FoundationMain.select_travel_option:motel",
+                                    "FoundationMain.confirm_selected_travel",
+                                    "FoundationMain.select_travel_option:jazz_club",
                                     "FoundationMain.confirm_selected_travel",
                                     "FoundationMain.save_foundation_run",
                                     "SaveService.wait_for_async_save"
                                 ],
                     "project_version":  "0.5.1",
-                    "save_path":  "isolated_distribution_root/saves/v051_pawn_shop_environment.json",
+                    "save_path":  "isolated_distribution_root/saves/v051_jazz_club_environment.json",
                     "save_schema":  "beat_the_house.foundation_run",
                     "save_version":  2,
                     "screen":  "RESULT",
@@ -42,10 +53,14 @@
                     "travel_path":  [
                                         "gas_station_casino",
                                         "corner_store",
-                                        "pawn_shop"
+                                        "gas_station_casino",
+                                        "motel",
+                                        "small_underground_casino",
+                                        "motel",
+                                        "jazz_club"
                                     ]
                 },
-    "save_file":  "v051_pawn_shop_environment.json",
-    "save_size_bytes":  50723,
-    "save_sha256":  "0897C1892312C2AA4E71E55191CF51DC31FE8EA5D73AD2209E831DC4E04638A0"
+    "save_file":  "v051_jazz_club_environment.json",
+    "save_size_bytes":  82549,
+    "save_sha256":  "F7822C406D27985D9A61A2792E996D2CBB55DC825DC71D6A0421238473D995D9"
 }

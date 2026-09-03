@@ -2,6 +2,72 @@
   "schema": "beat_the_house.integ06_1_historical_capture_plan",
   "version": 1,
   "historical_commit": "f1ce7ec814b5034c229f53dcc0db6e799aaaee0b",
+  "step_sequences": {
+    "underground": [
+      {"type": "travel", "target": "gas_station_casino"},
+      {"type": "event", "event_id": "parking_lot_tip", "choice_id": "follow_tip"},
+      {"type": "travel", "target": "corner_store"},
+      {"type": "lender", "lender_id": "the_crew"},
+      {"type": "travel", "target": "gas_station_casino"},
+      {"type": "travel", "target": "motel"},
+      {"type": "travel", "target": "small_underground_casino"}
+    ],
+    "kitty": [
+      {"type": "travel", "target": "gas_station_casino"},
+      {"type": "event", "event_id": "parking_lot_tip", "choice_id": "follow_tip"},
+      {"type": "travel", "target": "corner_store"},
+      {"type": "lender", "lender_id": "the_crew"},
+      {"type": "travel", "target": "gas_station_casino"},
+      {"type": "travel", "target": "motel"},
+      {"type": "travel", "target": "small_underground_casino"},
+      {"type": "lender", "lender_id": "street_lender"},
+      {"type": "travel", "target": "motel"},
+      {"type": "travel", "target": "bar"},
+      {"type": "travel", "target": "kitty_cat_lounge"}
+    ],
+    "delta": [
+      {"type": "travel", "target": "gas_station_casino"},
+      {"type": "event", "event_id": "parking_lot_tip", "choice_id": "follow_tip"},
+      {"type": "travel", "target": "corner_store"},
+      {"type": "lender", "lender_id": "the_crew"},
+      {"type": "travel", "target": "gas_station_casino"},
+      {"type": "travel", "target": "motel"},
+      {"type": "travel", "target": "small_underground_casino"},
+      {"type": "lender", "lender_id": "street_lender"},
+      {"type": "travel", "target": "motel"},
+      {"type": "travel", "target": "bar"},
+      {"type": "travel", "target": "kitty_cat_lounge"},
+      {"type": "travel", "target": "delta_queen"}
+    ],
+    "beach": [
+      {"type": "travel", "target": "gas_station_casino"},
+      {"type": "event", "event_id": "parking_lot_tip", "choice_id": "follow_tip"},
+      {"type": "travel", "target": "corner_store"},
+      {"type": "lender", "lender_id": "the_crew"},
+      {"type": "travel", "target": "gas_station_casino"},
+      {"type": "travel", "target": "motel"},
+      {"type": "travel", "target": "small_underground_casino"},
+      {"type": "lender", "lender_id": "street_lender"},
+      {"type": "travel", "target": "motel"},
+      {"type": "travel", "target": "bar"},
+      {"type": "travel", "target": "kitty_cat_lounge"},
+      {"type": "travel", "target": "delta_queen"},
+      {"type": "event", "event_id": "rowdy_regular", "choice_id": "blend_in"},
+      {"type": "event", "event_id": "grand_casino_invite", "choice_id": "not_yet"},
+      {"type": "travel", "target": "beach"}
+    ],
+    "jazz": [
+      {"type": "travel", "target": "gas_station_casino"},
+      {"type": "event", "event_id": "parking_lot_tip", "choice_id": "follow_tip"},
+      {"type": "travel", "target": "corner_store"},
+      {"type": "lender", "lender_id": "the_crew"},
+      {"type": "travel", "target": "gas_station_casino"},
+      {"type": "travel", "target": "motel"},
+      {"type": "travel", "target": "small_underground_casino"},
+      {"type": "travel", "target": "motel"},
+      {"type": "travel", "target": "jazz_club"}
+    ]
+  },
   "cases": [
     {
       "fixture_id": "v051_smoke_foundation_run",
@@ -69,16 +135,76 @@
     {
       "fixture_id": "v051_small_underground_environment",
       "seed": "INTEG06-1-V051-SMOKE-001",
-      "steps": [
-        {"type": "travel", "target": "gas_station_casino"},
-        {"type": "event", "event_id": "parking_lot_tip", "choice_id": "follow_tip"},
-        {"type": "travel", "target": "corner_store"},
-        {"type": "lender", "lender_id": "the_crew"},
-        {"type": "travel", "target": "gas_station_casino"},
-        {"type": "travel", "target": "motel"},
-        {"type": "travel", "target": "small_underground_casino"}
-      ],
+      "step_sequence": "underground",
       "expected_archetype": "small_underground_casino"
+    },
+    {
+      "fixture_id": "v051_underground_blackjack_mid_game",
+      "seed": "INTEG06-1-V051-SMOKE-001",
+      "step_sequence": "underground",
+      "expected_archetype": "small_underground_casino",
+      "enter_game": "blackjack"
+    },
+    {
+      "fixture_id": "v051_underground_video_poker_mid_game",
+      "seed": "INTEG06-1-V051-SMOKE-001",
+      "step_sequence": "underground",
+      "expected_archetype": "small_underground_casino",
+      "enter_game": "video_poker"
+    },
+    {
+      "fixture_id": "v051_kitty_cat_lounge_environment",
+      "seed": "INTEG06-1-V051-SMOKE-001",
+      "step_sequence": "kitty",
+      "expected_archetype": "kitty_cat_lounge"
+    },
+    {
+      "fixture_id": "v051_kitty_cat_roulette_mid_game",
+      "seed": "INTEG06-1-V051-SMOKE-001",
+      "step_sequence": "kitty",
+      "expected_archetype": "kitty_cat_lounge",
+      "enter_game": "roulette"
+    },
+    {
+      "fixture_id": "v051_kitty_cat_invited",
+      "seed": "INTEG06-1-V051-SMOKE-001",
+      "step_sequence": "kitty",
+      "append_steps": [
+        {"type": "event", "event_id": "grand_casino_invite", "choice_id": "accept_invite"}
+      ],
+      "expected_archetype": "kitty_cat_lounge"
+    },
+    {
+      "fixture_id": "v051_delta_queen_environment",
+      "seed": "INTEG06-1-V051-SMOKE-001",
+      "step_sequence": "delta",
+      "expected_archetype": "delta_queen"
+    },
+    {
+      "fixture_id": "v051_delta_queen_blackjack_mid_game",
+      "seed": "INTEG06-1-V051-SMOKE-001",
+      "step_sequence": "delta",
+      "expected_archetype": "delta_queen",
+      "enter_game": "blackjack"
+    },
+    {
+      "fixture_id": "v051_delta_queen_video_poker_mid_game",
+      "seed": "INTEG06-1-V051-SMOKE-001",
+      "step_sequence": "delta",
+      "expected_archetype": "delta_queen",
+      "enter_game": "video_poker"
+    },
+    {
+      "fixture_id": "v051_beach_environment",
+      "seed": "INTEG06-1-V051-SMOKE-001",
+      "step_sequence": "beach",
+      "expected_archetype": "beach"
+    },
+    {
+      "fixture_id": "v051_jazz_club_environment",
+      "seed": "INTEG06-1-V051-SMOKE-001",
+      "step_sequence": "jazz",
+      "expected_archetype": "jazz_club"
     }
   ]
 }

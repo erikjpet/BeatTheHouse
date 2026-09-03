@@ -119,9 +119,36 @@ The strict current-build matrix passes all 11 fixtures. Coverage is now eight
 of 18 environment archetypes and four of eight game surfaces. The lender path
 has one real rung, but the required lender matrix is not complete.
 
+## Third verified batch
+
+The capture plan now defines reusable ordered public-gameplay sequences for the
+Underground, Kitty Cat Lounge, Delta Queen, Beach and Jazz Club routes. The
+historical driver resolves those routes with FoundationMain travel, event and
+lender methods; cases can append further public steps without copying or
+editing RunState data. The current-build verifier independently expands the
+same plan before checking each sidecar's exact public-call transcript.
+
+Ten additional fixtures are admitted:
+
+- Blackjack and Video Poker surfaces at the Small Underground Casino.
+- Kitty Cat Lounge environment and Roulette surface saves, plus a second Kitty
+  save after accepting the Grand Casino invitation through the real event.
+- Delta Queen environment, Blackjack and Video Poker surface saves.
+- Beach and Jazz Club environments reached through their historical public
+  routes. The Beach route clears the genuine river travel lock with two real
+  Delta Queen event choices before traveling.
+
+These routes also exercise the historical Street Lender cash debt in addition
+to the Crew favor debt. All captures were regenerated from the exact v0.5.1
+Git archive, and the strict current-build matrix passes all 21 fixtures with
+verified provenance and stable public save/reload contracts. Coverage is now
+12 of 18 environment archetypes and seven of eight game surfaces. This remains
+fixture preparation only and does not claim `integ06_1` acceptance.
+
 ## Coverage still required
 
-This checkpoint is infrastructure, not migration evidence. It does not claim
-the required 18 archetypes, eight game surfaces, five lender rungs, tutorial
-checkpoints, partial scratch state, Grand Casino invite states, victory
-thresholds, current-build migration/round-trip, maximal composition, or soak.
+This checkpoint is historical migration evidence, but not the complete row. It
+does not claim the remaining six environment archetypes, Baccarat, five lender
+rungs, tutorial checkpoints, partial scratch state, Grand Casino entry/interior
+states, victory thresholds, maximal composition, or soak. The 21 checked-in
+fixtures do pass the current-build migration and public save/reload contract.

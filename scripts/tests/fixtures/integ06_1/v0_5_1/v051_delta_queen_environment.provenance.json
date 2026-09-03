@@ -1,7 +1,7 @@
 ﻿{
     "schema":  "beat_the_house.integ06_1_historical_fixture_provenance",
     "version":  1,
-    "fixture_id":  "v051_small_underground_environment",
+    "fixture_id":  "v051_delta_queen_environment",
     "historical_release":  "v0.5.1",
     "historical_commit":  "f1ce7ec814b5034c229f53dcc0db6e799aaaee0b",
     "historical_tree":  "19c5ed82c0d2d2390dab2b9b6662c70d8aed5d0d",
@@ -11,15 +11,15 @@
     "driver_path":  "scripts/tests/foundation/integ06_1_v051_fixture_driver.gd",
     "driver_sha256":  "28B51EC2FA732EA60E0E3C986DA091971490D30CA3FF05A031E600A80F5CD0C7",
     "capture":  {
-                    "action_index":  2,
-                    "archetype_id":  "small_underground_casino",
+                    "action_index":  3,
+                    "archetype_id":  "delta_queen",
                     "challenge_id":  "",
                     "challenge_modifiers":  {
 
                                             },
-                    "environment_id":  "small_underground_casino_006",
-                    "fixture_id":  "v051_small_underground_environment",
-                    "game_clock_minutes":  954,
+                    "environment_id":  "delta_queen_010",
+                    "fixture_id":  "v051_delta_queen_environment",
+                    "game_clock_minutes":  1158,
                     "game_id":  "",
                     "game_state_key":  "",
                     "methods":  [
@@ -37,11 +37,20 @@
                                     "FoundationMain.confirm_selected_travel",
                                     "FoundationMain.select_travel_option:small_underground_casino",
                                     "FoundationMain.confirm_selected_travel",
+                                    "FoundationMain.use_lender_hook:street_lender",
+                                    "FoundationMain.select_travel_option:motel",
+                                    "FoundationMain.confirm_selected_travel",
+                                    "FoundationMain.select_travel_option:bar",
+                                    "FoundationMain.confirm_selected_travel",
+                                    "FoundationMain.select_travel_option:kitty_cat_lounge",
+                                    "FoundationMain.confirm_selected_travel",
+                                    "FoundationMain.select_travel_option:delta_queen",
+                                    "FoundationMain.confirm_selected_travel",
                                     "FoundationMain.save_foundation_run",
                                     "SaveService.wait_for_async_save"
                                 ],
                     "project_version":  "0.5.1",
-                    "save_path":  "isolated_distribution_root/saves/v051_small_underground_environment.json",
+                    "save_path":  "isolated_distribution_root/saves/v051_delta_queen_environment.json",
                     "save_schema":  "beat_the_house.foundation_run",
                     "save_version":  2,
                     "screen":  "RESULT",
@@ -51,10 +60,14 @@
                                         "corner_store",
                                         "gas_station_casino",
                                         "motel",
-                                        "small_underground_casino"
+                                        "small_underground_casino",
+                                        "motel",
+                                        "bar",
+                                        "kitty_cat_lounge",
+                                        "delta_queen"
                                     ]
                 },
-    "save_file":  "v051_small_underground_environment.json",
-    "save_size_bytes":  66534,
-    "save_sha256":  "5C6F9F4FB13BD15928C1D0047CF944ADE6D116FBC4338F2D9B48A8E437A0AABF"
+    "save_file":  "v051_delta_queen_environment.json",
+    "save_size_bytes":  124057,
+    "save_sha256":  "6D4463EFB2FC47A5E8423B73902A54FCB5D1F5276127556644E32251278DC8C4"
 }

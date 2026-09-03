@@ -122,7 +122,7 @@ func _capture_case(app: Control, capture_case: Dictionary, version: String) -> D
 			return {}
 		var target_id := str(step.get("target", "")).strip_edges()
 		if not bool(app.call("select_travel_option", target_id)):
-			_fail("%s could not select public travel target %s" % [fixture_id, target_id])
+			_fail("%s could not select public travel target %s choice=%s block=%s" % [fixture_id, target_id, str(app.call("_travel_choice", target_id)), str(app.call("_blocking_modal_message"))])
 			return {}
 		app.call("confirm_selected_travel")
 		await process_frame
@@ -230,8 +230,25 @@ func _capture_cases(options: Dictionary) -> Array:
 	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(plan_path))
 	if typeof(parsed) != TYPE_DICTIONARY:
 		return []
-	var cases: Variant = (parsed as Dictionary).get("cases", [])
-	return (cases as Array).duplicate(true) if typeof(cases) == TYPE_ARRAY else []
+	var plan: Dictionary = parsed
+	var cases: Variant = plan.get("cases", [])
+	if typeof(cases) != TYPE_ARRAY:
+		return []
+	var sequences: Dictionary = plan.get("step_sequences", {}) if typeof(plan.get("step_sequences", {})) == TYPE_DICTIONARY else {}
+	var expanded: Array = []
+	for case_value in cases as Array:
+		if typeof(case_value) != TYPE_DICTIONARY:
+			expanded.append(case_value)
+			continue
+		var capture_case: Dictionary = (case_value as Dictionary).duplicate(true)
+		var sequence_id := str(capture_case.get("step_sequence", "")).strip_edges()
+		if not sequence_id.is_empty() and typeof(sequences.get(sequence_id, [])) == TYPE_ARRAY:
+			var resolved_steps: Array = (sequences.get(sequence_id, []) as Array).duplicate(true)
+			if typeof(capture_case.get("append_steps", [])) == TYPE_ARRAY:
+				resolved_steps.append_array((capture_case.get("append_steps", []) as Array).duplicate(true))
+			capture_case["steps"] = resolved_steps
+		expanded.append(capture_case)
+	return expanded
 
 
 func _options(arguments: PackedStringArray) -> Dictionary:
