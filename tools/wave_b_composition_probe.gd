@@ -41,7 +41,8 @@ func _run() -> void:
 
 	# Visit a real scenario-backed venue. The selector must persist the canonical
 	# scenario chosen when the node is generated.
-	generator.next_environment(run_state, RUMOR_VENUE_ID, true)
+	var rumor_venue_travel := generator.travel_environment_result(run_state, RUMOR_VENUE_ID, true)
+	_require(bool(rumor_venue_travel.get("ok", false)), "Production travel could not install the rumor venue: %s." % JSON.stringify(rumor_venue_travel.get("errors", [])))
 	var source_scenario := run_state.scenario_for_node(RUMOR_VENUE_ID)
 	_require(run_state.current_world_node_id() == RUMOR_VENUE_ID, "Production travel did not enter the rumor venue.")
 	_require(not source_scenario.is_empty(), "The visited rumor venue did not retain its selected scenario.")
@@ -98,7 +99,8 @@ func _run() -> void:
 	# Enter the rumored node after hearing it. Its generated scenario identity must
 	# be the exact truth named by the rumor, proving scenario selection composes
 	# across multiple visited nodes in this run.
-	generator.next_environment(run_state, RUMOR_TARGET_ID, true)
+	var rumor_target_travel := generator.travel_environment_result(run_state, RUMOR_TARGET_ID, true)
+	_require(bool(rumor_target_travel.get("ok", false)), "Production travel could not install the heard scenario node: %s." % JSON.stringify(rumor_target_travel.get("errors", [])))
 	var target_scenario := run_state.scenario_for_node(RUMOR_TARGET_ID)
 	_require(run_state.current_world_node_id() == RUMOR_TARGET_ID, "Production travel did not enter the heard scenario node.")
 	_require(str(target_scenario.get("id", "")) == str(heard.get("source_id", "")), "The entered node did not consume the exact scenario named by its truth-sourced rumor.")
@@ -107,7 +109,8 @@ func _run() -> void:
 
 	# Finally visit The Punchline through the same generator. The shipped Side Door
 	# event discovers L2 from L1, and the production layer transition enters it.
-	generator.next_environment(run_state, PUNCHLINE_ID, true)
+	var punchline_travel := generator.travel_environment_result(run_state, PUNCHLINE_ID, true)
+	_require(bool(punchline_travel.get("ok", false)), "Production travel could not install The Punchline: %s." % JSON.stringify(punchline_travel.get("errors", [])))
 	var punchline_scenario := run_state.scenario_for_node(PUNCHLINE_ID)
 	_require(str(run_state.current_environment.get("current_layer_id", "")) == "club", "The Punchline did not begin on its public L1 club layer.")
 	_require(not punchline_scenario.is_empty() and str(run_state.current_environment.get("scenario_id", "")) == str(punchline_scenario.get("id", "")), "The Punchline lost its Tier-2 scenario while entering L1.")
@@ -116,7 +119,7 @@ func _run() -> void:
 	var discovery_result := side_door.resolve(run_state, run_state.current_environment, "punchline_password")
 	_require(bool(discovery_result.get("ok", false)) and bool(_dict(run_state.current_environment.get("layer_discovery", {})).get("casino", false)), "The shipped L1 Side Door choice did not discover Punchline L2.")
 	var layer_result := generator.enter_environment_layer(run_state, "casino", false)
-	_require(bool(layer_result.get("ok", false)) and str(run_state.current_environment.get("current_layer_id", "")) == "casino", "The production layer transition did not enter discovered Punchline L2.")
+	_require(bool(layer_result.get("ok", false)) and str(run_state.current_environment.get("current_layer_id", "")) == "casino", "The production layer transition did not enter discovered Punchline L2: %s." % JSON.stringify(layer_result))
 	_require(str(run_state.current_environment.get("scenario_id", "")) == str(punchline_scenario.get("id", "")), "Punchline L2 entry lost the selected Tier-2 scenario.")
 
 	_finish({

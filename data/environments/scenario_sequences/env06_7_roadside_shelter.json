@@ -2713,7 +2713,7 @@
                   "object": {
                     "label": "Inspect the room faults",
                     "role": "task_station",
-                    "anchor_id": "room_walkway",
+                    "anchor_id": "package_b_motel_top_right",
                     "bounds": {
                       "w": 64.0,
                       "h": 56.0
@@ -3877,7 +3877,7 @@
           "props_4",
           "actors_1"
         ],
-        "sequence_signature": "bffd7704fdccf5f649189429d4b704881a89dd8ce15df18f5c30ee7a27d83825",
+        "sequence_signature": "0129618362e3109ab9bda1c7e87ac512078e0da5796584d25d016f0e0e614aec",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -3888,6 +3888,7 @@
           "routes": [],
           "anchors": [
             "base::anchor:room_walkway",
+            "base::anchor:package_b_motel_top_right",
             "base::anchor:package_b_motel_safe_exit"
           ],
           "zones": [
@@ -11005,7 +11006,7 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "gas_station_storm_shelter_supply_shelves",
                   "object": {
-                    "label": "Storm supply shelves",
+                    "label": "Supplies",
                     "role": "stock",
                     "zone_id": "right",
                     "bounds": {
@@ -11088,7 +11089,7 @@
                   "object": {
                     "label": "Close rain shutters",
                     "role": "task_station",
-                    "anchor_id": "cashier_counter",
+                    "anchor_id": "package_b_gas_top_right",
                     "bounds": {
                       "w": 64.0,
                       "h": 56.0
@@ -11192,12 +11193,12 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "gas_station_storm_shelter_family_group",
                   "actor": {
-                    "label": "Sheltering family",
+                    "label": "Family",
                     "actor_id": "gas_shelter_family",
                     "zone_id": "right",
                     "behavior": "idle",
                     "pose": "working",
-                    "anchor_id": "package_b_gas_top_mid"
+                    "anchor_id": "package_b_gas_low_left"
                   }
                 },
                 {
@@ -12281,7 +12282,7 @@
           "props_5",
           "actors_2"
         ],
-        "sequence_signature": "33184b01da8d2437c0033d3452cf214d14635a2efbf0e3ed7a14d69f101eb16b",
+        "sequence_signature": "2f8fd112d7a8e209e12c92459e30373c092f93569d1ce5360d039d36a1a39131",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -12292,8 +12293,10 @@
           "routes": [],
           "anchors": [
             "base::anchor:cashier_counter",
+            "base::anchor:package_b_gas_low_left",
             "base::anchor:package_b_gas_top_left",
-            "base::anchor:package_b_gas_top_mid"
+            "base::anchor:package_b_gas_top_mid",
+            "base::anchor:package_b_gas_top_right"
           ],
           "zones": [
             "base::zone:background",

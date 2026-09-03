@@ -4593,11 +4593,16 @@ func _fixture_lender_result(run_state: RunState, lender: Dictionary, lender_id: 
 
 
 func _save_service_expected_snapshot(run_state: RunState) -> Dictionary:
-	var parsed: Variant = JSON.parse_string(JSON.stringify(run_state.to_dict()))
+	var save_service: SaveService = SaveServiceScript.new()
+	var payload: Variant = save_service.call("_save_payload", run_state, "expected_snapshot")
+	var parsed: Variant = JSON.parse_string(JSON.stringify(payload))
 	if typeof(parsed) != TYPE_DICTIONARY:
 		return run_state.to_dict()
+	var decoded: Variant = save_service.call("_run_data_from_payload", parsed as Dictionary)
+	if typeof(decoded) != TYPE_DICTIONARY:
+		return run_state.to_dict()
 	var normalized: RunState = RunStateScript.new()
-	normalized.from_dict(parsed as Dictionary)
+	normalized.from_dict(decoded as Dictionary)
 	return normalized.to_dict()
 
 func _unique_strings(first: Array, second: Array) -> Array:

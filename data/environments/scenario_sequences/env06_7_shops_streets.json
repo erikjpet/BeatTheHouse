@@ -238,7 +238,7 @@
                   "owner_namespace": "scenario",
                   "stable_object_id": "delivery_runner",
                   "actor": {
-                    "label": "Delivery runner",
+                    "label": "Runner",
                     "actor_id": "priya_travel_merchant",
                     "anchor_id": "package_a_delivery_runner",
                     "behavior": "work",
@@ -1337,7 +1337,7 @@
           "sweep_coexistence",
           "host_event_authority_gate"
         ],
-        "sequence_signature": "c25694ce5a06a07aae020cca50a81f5c1b20c0c1e921cd88e6b3c5a4359be570",
+        "sequence_signature": "edd0a1ee531be9c3c428b57db020b9c86f0f833c5cb82e3ea2a6597ea2d25e2a",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -3206,7 +3206,9 @@
         },
         "declared_targets": {
           "actors": [],
-          "anchors": [],
+          "anchors": [
+            "base::anchor:delivery_verification_shelf"
+          ],
           "games": [],
           "interactions": [],
           "routes": [],
@@ -3321,6 +3323,7 @@
               "actor_ops": [
                 {
                   "actor": {
+                    "anchor_id": "delivery_verification_shelf",
                     "actor_id": "plainclothes_officer",
                     "behavior": "work",
                     "label": "Plainclothes Officer",
@@ -3888,7 +3891,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "6ae3b4cd5fcf30feea742abbef1fb7ec299a2685afa087f6b2eb67b8786aff08"
+        "sequence_signature": "778d31aef513e20289c5313ce43124bdb8a9b2e0393fb177a59a80bbff4f5c1a"
       }
     },
     {

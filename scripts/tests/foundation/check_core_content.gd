@@ -1564,11 +1564,19 @@ func _check_connected_town_foundation(library: ContentLibrary, failures: Array) 
 	if scenario_rumor.is_empty() or not run_state.town_state.rumor_trace_is_live(scenario_rumor):
 		failures.append("Scenario rumor did not carry a truth_trace resolving to live seeded state.")
 		return
-	run_state.current_environment["town_rumors"] = [scenario_rumor.duplicate(true)]
-	var event_ids := _string_array(run_state.current_environment.get("event_ids", []))
-	if not event_ids.has("town_rumor_staff"):
-		event_ids.append("town_rumor_staff")
-	run_state.current_environment["event_ids"] = event_ids
+	# Exercise the events in a dedicated base-room host. Adding fixture events to
+	# the generated active scenario would correctly invalidate its sealed semantic
+	# inventory and turn this town-network check into an authority failure.
+	var rumor_host_node := run_state.current_world_node_id()
+	run_state.current_environment = {
+		"id": "connected_town_rumor_host",
+		"archetype_id": rumor_host_node,
+		"world_node_id": rumor_host_node,
+		"turns": 0,
+		"event_ids": ["town_rumor_staff", "staff_shift_tip", "dave_bus_warning"],
+		"resolved_event_ids": [],
+		"town_rumors": [scenario_rumor.duplicate(true)],
+	}
 	var rumor_event := EventModuleScript.new()
 	rumor_event.setup(library.event("town_rumor_staff"), library)
 	var rumor_choices := rumor_event.choices(run_state, run_state.current_environment)
@@ -1581,6 +1589,7 @@ func _check_connected_town_foundation(library: ContentLibrary, failures: Array) 
 		failures.append("An existing natural staff event did not weave in the available rumor line.")
 	var woven_run := RunStateScript.new()
 	woven_run.from_dict(run_state.to_dict())
+	woven_run.enqueue_triggered_event("staff_shift_tip", "connected_town_fixture", {})
 	var woven_delivery := EventModuleScript.new()
 	woven_delivery.setup(library.event("staff_shift_tip"), library)
 	var woven_result := woven_delivery.resolve(woven_run, woven_run.current_environment, "tip_dealer")
@@ -1787,7 +1796,7 @@ func _check_connected_town_foundation(library: ContentLibrary, failures: Array) 
 	var writer_node := writer_run.current_world_node_id()
 	GameModule.apply_result(writer_run, {
 		"ok": true,
-		"source_id": "blackjack",
+		"source_id": "big_public_win_fixture",
 		"action_id": "stand",
 		"stake": 10,
 		"deltas": {"bankroll_delta": 50},
