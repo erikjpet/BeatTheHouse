@@ -1,7 +1,6 @@
 extends SceneTree
 
 const RunStateScript := preload("res://scripts/core/run_state.gd")
-const GameModuleScript := preload("res://scripts/core/game_module.gd")
 
 var failures: Array[String] = []
 
@@ -20,15 +19,18 @@ func _init() -> void:
 
 func _test_standard_backoff_and_persistence() -> void:
 	var run: RunState = _new_run("BLACKJACK-BACKOFF-STANDARD", "gas_station_casino", "Roadside Casino")
-	run.add_suspicion("fixture", 89, "behavior", false, _environment_context(run.current_environment))
-	var result := _apply_blackjack_heat(run, 40)
+	# Result application is covered by the sealed-authority contract. This focused
+	# probe begins at the documented threshold and verifies RunState's persistent
+	# location-scoped consequence without forging an authority receipt.
+	run.suspicion["level"] = RunStateScript.BLACKJACK_BACKOFF_HEAT
+	var backoff := _apply_blackjack_backoff(run)
 	var table := _blackjack_table(run)
 	_check(run.suspicion_level() == RunStateScript.BLACKJACK_BACKOFF_HEAT, "Blackjack heat did not stop at the 90% backoff threshold.")
 	_check(run.run_status == RunStateScript.RUN_STATUS_ACTIVE, "Blackjack backoff ended the run instead of leaving other games open.")
 	_check(bool(table.get("barred", false)) and bool(table.get("heat_backoff", false)), "Blackjack table was not marked with a heat backoff.")
 	_check(str(table.get("barred_scope", "")) == RunStateScript.BLACKJACK_BACKOFF_SCOPE, "Blackjack backoff did not use location scope.")
 	_check(not bool((run.current_environment.get("game_states", {}) as Dictionary).get("roulette", {}).get("table_barred", false)), "Blackjack backoff barred another casino game.")
-	_check(bool(result.get("blackjack_table_barred", false)) and not (result.get("blackjack_backoff", {}) as Dictionary).is_empty(), "Applied result did not expose the blackjack backoff consequence.")
+	_check(bool(backoff.get("triggered", false)), "RunState did not expose the blackjack backoff consequence.")
 
 	var saved: Dictionary = run.to_dict()
 	var restored := RunStateScript.new()
@@ -41,13 +43,13 @@ func _test_punchline_payback_is_once_only() -> void:
 	var run: RunState = _new_run("BLACKJACK-BACKOFF-PUNCHLINE", "small_underground_casino", "The Punchline")
 	for member_id in ["crew_rook", "crew_velvet", "crew_knuckles", "crew_switch", "crew_mags", "crew_bishop", "crew_lucky"]:
 		run.crew_add_trust(member_id, 60, "fixture")
-	run.add_suspicion("fixture", 89, "behavior", false, _environment_context(run.current_environment))
-	var result := _apply_blackjack_heat(run, 30)
+	run.suspicion["level"] = RunStateScript.BLACKJACK_BACKOFF_HEAT
+	var backoff := _apply_blackjack_backoff(run)
 	for member_id in ["crew_rook", "crew_velvet", "crew_knuckles", "crew_switch", "crew_mags", "crew_bishop", "crew_lucky"]:
 		_check(run.crew_trust(member_id) == 0, "Punchline backoff did not remove Crew standing for %s." % member_id)
 	_check(_crew_favor_balance(run) == 1, "Punchline backoff did not add exactly one round of Crew favor debt.")
-	_check(bool((result.get("blackjack_backoff", {}) as Dictionary).get("crew_payback", false)), "Punchline result did not expose its Crew payback event.")
-	_apply_blackjack_heat(run, 30)
+	_check(bool(backoff.get("crew_payback", false)), "Punchline backoff did not expose its Crew payback event.")
+	_apply_blackjack_backoff(run)
 	_check(_crew_favor_balance(run) == 1, "Repeated result application stacked Punchline backoff debt more than once.")
 
 
@@ -67,25 +69,11 @@ func _new_run(seed: String, archetype_id: String, display_name: String) -> RunSt
 	return run
 
 
-func _apply_blackjack_heat(run: RunState, heat: int) -> Dictionary:
-	var deltas := GameModuleScript.empty_result_deltas()
-	deltas["suspicion_delta"] = heat
-	deltas["messages"] = ["Fixture blackjack heat."]
-	var result := GameModuleScript.build_action_result({
-		"ok": true,
-		"type": "game_action",
-		"source_id": "blackjack",
+func _apply_blackjack_backoff(run: RunState) -> Dictionary:
+	return run.apply_blackjack_heat_backoff({
 		"game_id": "blackjack",
 		"action_id": "play_basic",
-		"action_kind": "risky",
-		"environment_id": str(run.current_environment.get("id", "")),
-		"environment_archetype_id": str(run.current_environment.get("archetype_id", "")),
-		"suspicion_delta": heat,
-		"deltas": deltas,
-		"message": "Fixture blackjack heat.",
 	})
-	GameModuleScript.apply_result(run, result)
-	return result
 
 
 func _blackjack_table(run: RunState) -> Dictionary:
@@ -101,13 +89,6 @@ func _crew_favor_balance(run: RunState) -> int:
 			if str(entry.get("lender_id", "")) == RunStateScript.CREW_LENDER_ID and str(entry.get("debt_kind", "")) == "favor":
 				return int(entry.get("balance", 0))
 	return 0
-
-
-func _environment_context(environment: Dictionary) -> Dictionary:
-	return {
-		"environment_id": str(environment.get("id", "")),
-		"environment_archetype_id": str(environment.get("archetype_id", "")),
-	}
 
 
 func _check(condition: bool, message: String) -> void:

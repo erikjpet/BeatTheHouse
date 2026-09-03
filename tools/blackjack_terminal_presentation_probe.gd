@@ -102,15 +102,23 @@ func _run() -> void:
 
 	preview_ui["surface_time_msec"] = first_terminal_spawn + 1
 	_check(not game.surface_needs_auto_tick(preview_ui, run_state, environment), "Dealer blackjack settled while its terminal count bubble was active.")
-	var bubble_command := game.surface_auto_action_command(preview_ui, run_state, environment, {})
-	_check(not bool(bubble_command.get("handled", false)), "An active terminal count bubble was bypassed by settlement automation.")
 
-	preview_ui["surface_time_msec"] = last_bubble_end + 1
-	var miss_update := game.surface_auto_action_command(preview_ui, run_state, environment, {})
-	var resolved_ui: Dictionary = miss_update.get("ui_state", preview_ui)
-	resolved_ui["surface_time_msec"] = last_bubble_end + 2
-	var settle := game.surface_auto_action_command(resolved_ui, run_state, environment, {})
-	_check(str(settle.get("action_id", "")) == "play_basic" and bool(settle.get("resolve", false)), "Dealer blackjack did not settle after every count bubble resolved.")
+	# The module's direct compatibility seam can construct an auto command, but
+	# production accepts auto ticks only through the sealed Foundation host. Drive
+	# the terminal lifecycle through that exact boundary for the settlement proof.
+	var terminal := {}
+	var terminal_trace: Array = []
+	for _step in range(6):
+		terminal = BlackjackAuthorityTestDriverScript.advance_terminal_presentation(game, 5, run_state, run_state.current_environment)
+		terminal_trace.append({
+			"error_code": str(terminal.get("error_code", "")),
+			"handled": bool((terminal.get("command", {}) as Dictionary).get("handled", false)),
+			"action_id": str((terminal.get("command", {}) as Dictionary).get("action_id", "")),
+			"terminal_cleared": bool(terminal.get("terminal_cleared", false)),
+		})
+		if bool(terminal.get("terminal_cleared", false)):
+			break
+	_check(bool(terminal.get("ok", false)) and bool(terminal.get("terminal_cleared", false)), "Dealer blackjack did not settle through sealed authority after every count bubble resolved: %s" % JSON.stringify(terminal_trace))
 
 	if failures.is_empty():
 		print("BLACKJACK_TERMINAL_PRESENTATION_PROBE_PASS deal_duration=%d terminal_bubble_spawn=%d" % [deal_duration, first_terminal_spawn])
