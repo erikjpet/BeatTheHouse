@@ -46,6 +46,7 @@ const GAME_IDLE_LIVENESS := {
 	"slot": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
 	"bar_dice": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
 	"craps": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
+	"crew_draw_poker": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
 	"blackjack": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
 	"baccarat": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
 	"roulette": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
@@ -91,9 +92,11 @@ const REQUIRED_GAME_IDS := [
 	"scratch_tickets",
 	"slot",
 	"bar_dice",
+	"craps",
 	"blackjack",
 	"baccarat",
 	"roulette",
+	"crew_draw_poker",
 	"video_poker",
 	"coin_pusher",
 ]
@@ -102,9 +105,11 @@ const REQUIRED_RESOLVE_GAME_IDS := [
 	"scratch_tickets",
 	"slot",
 	"bar_dice",
+	"craps",
 	"blackjack",
 	"baccarat",
 	"roulette",
+	"crew_draw_poker",
 	"video_poker",
 ]
 const RESOLVE_PROBE_CONFIGS := {
@@ -112,9 +117,11 @@ const RESOLVE_PROBE_CONFIGS := {
 	"scratch_tickets": {"action_id": "buy_scratch_ticket", "stake": 2},
 	"slot": {"action_id": "spin", "stake": 10},
 	"bar_dice": {"action_id": "roll", "stake": 10},
+	"craps": {"action_id": "roll_craps", "stake": 10},
 	"blackjack": {"action_id": "play_basic", "stake": 10},
 	"baccarat": {"action_id": "deal_baccarat", "stake": 20},
 	"roulette": {"action_id": "spin_roulette", "stake": 10},
+	"crew_draw_poker": {"action_id": "deal", "stake": 5},
 	"video_poker": {"action_id": "draw", "stake": 5},
 }
 const RESOLVE_BUDGETS := {
@@ -122,9 +129,14 @@ const RESOLVE_BUDGETS := {
 	"scratch_tickets": {"avg_ms": 3.0, "p95_ms": 5.0, "max_ms": 6.0},
 	"slot": {"avg_ms": 6.0, "p95_ms": 8.0, "max_ms": 10.0},
 	"bar_dice": {"avg_ms": 1.5, "p95_ms": 3.0, "max_ms": 4.0},
+	# Pre-measurement guardrails deliberately match the nearest existing dice and
+	# card-family envelopes. The retained final-candidate samples, not these
+	# initial caps, determine whether a tighter maintained baseline is justified.
+	"craps": {"avg_ms": 4.5, "p95_ms": 5.5, "max_ms": 7.0},
 	"blackjack": {"avg_ms": 4.5, "p95_ms": 5.5, "max_ms": 7.0},
 	"baccarat": {"avg_ms": 1.25, "p95_ms": 1.75, "max_ms": 3.0},
 	"roulette": {"avg_ms": 2.0, "p95_ms": 3.0, "max_ms": 4.0},
+	"crew_draw_poker": {"avg_ms": 4.5, "p95_ms": 5.5, "max_ms": 7.0},
 	"video_poker": {"avg_ms": 2.5, "p95_ms": 4.5, "max_ms": 5.0},
 }
 const LOW_END_HEADROOM_WAIVERS := {
