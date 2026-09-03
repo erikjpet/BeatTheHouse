@@ -1950,6 +1950,13 @@ func _rourke_duel_surface_action_command(surface_action: String, index: int, con
 				command = _message_command(next_state, "You steal a look. Rourke watches your hands.")
 		_:
 			command = _blackjack_surface_action_command(surface_action, index, confirm_requested, next_state, run_state, environment)
+	# The Rourke hand is owned by the serialized duel rather than the ordinary
+	# table host ledger. Keep every dealt intermediate state durable at the same
+	# surface-action boundary that produced it so save/exit/revisit can reopen the
+	# exact cards, pending animation, edge call, and settlement state.
+	var command_ui: Dictionary = _local_copy_dict(command.get("ui_state", {}))
+	if bool(command.get("handled", false)) and _has_dealt_hand(command_ui):
+		run_state.persist_grand_casino_duel_session(command_ui)
 	return command
 
 
