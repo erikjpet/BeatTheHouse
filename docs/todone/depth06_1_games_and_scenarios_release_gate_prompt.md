@@ -1,4 +1,4 @@
-Status: IN_PROGRESS — gate scaffolding and focused coverage landed; independent closure audit remains open
+Status: COMPLETE — independent current-tree depth closure accepted 2026-09-03
 Board row: `depth06_1` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — 0.6 depth06_1: Craps, Poker, and Scenario Depth Release Gate
@@ -46,3 +46,16 @@ BLOCKED if even one of the 55 variations lacks a unique playable sequence, if
 craps/poker still resolve as static control panels, or if a consequence can
 double-fire across save/revisit. On pass, archive this prompt and note the exact
 commit and report paths on the board.
+
+## Execution record — 2026-09-03
+
+Audited the landed product tree without rebuilding it. All four child rows are
+accepted together; the current audit reports 55 stable ids, 1,485 pair
+comparisons, zero failures, complete hard-definition/lifecycle dossiers, and
+reviewed warning-band visuals. A reproducible two-per-archetype sample passed,
+as did the focused Craps/Poker, RTP, hostile authority, scenario registration,
+actual-renderer visual, and byte-identical two-pass 10-seed determinism gates.
+Depth-owned native/Web and performance evidence remains green. An overlapping
+broad performance run's Coin-Pusher-only red is retained and routed rather
+than misreported as a depth pass. Exact evidence and human-playtest handoff are
+in `docs/plans/depth06_1_final_closeout.md`.
