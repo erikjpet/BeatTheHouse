@@ -56,7 +56,7 @@ The checked-in sidecar records the exact historical Git identities, driver
 hash, public-call transcript, save size and save hash. Temporary capture paths
 are normalized out of the sidecar.
 
-The generating command is:
+The single-fixture generating command is:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/integ06_1_generate_v051_fixtures.ps1 -OutputDirectory scripts/tests/fixtures/integ06_1/v0_5_1
@@ -65,8 +65,37 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/integ06_1_generate_v05
 The smoke fixture covers a genuine active run at the `house` archetype, before
 any player action. `scripts/tests/foundation/integ06_1_v051_migration_smoke.gd`
 loads it through current FoundationMain, saves it again through the current
-public save boundary, reloads it, and checks its playable invariants. This is
-one matrix seed only and is not row acceptance.
+public save boundary, reloads it, and checks its playable invariants.
+
+## First verified batch
+
+The driver and wrapper accept the checked-in `capture_plan.json`, allowing one
+isolated historical process to produce several independent runs. Every case
+still starts a fresh run and uses only the public gameplay/save calls recorded
+in its sidecar. The batch command is:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/integ06_1_generate_v051_fixtures.ps1 -PlanPath scripts/tests/fixtures/integ06_1/v0_5_1/capture_plan.json -OutputDirectory scripts/tests/fixtures/integ06_1/v0_5_1
+```
+
+The first admitted batch contains six fixtures:
+
+| Fixture | Historical state | SHA-256 |
+|---|---|---|
+| `v051_smoke_foundation_run` | House, active run start | `81B4C5EAB4571E8BCB836647E9D25CA0F2EB31608C24D5C89933ADBEFAB2F17B` |
+| `v051_gas_station_mid_game` | Gas Station Casino, Slot surface entered | `9A1AEC5AE9B548C451DA0F4F534F0926A4DD372893CFCCA19E47B56368FE890A` |
+| `v051_gas_station_pull_tabs_mid_game` | Gas Station Casino, Pull Tabs surface entered | `CB5071718271F6410963AF5BBAE7A4C35787175DF95963A3321F662B566FB47B` |
+| `v051_gas_station_scratch_mid_game` | Gas Station Casino, Scratch Tickets surface entered (not yet partially scratched) | `D011F019105AA9D5913338E65772B028254DED713B37ABED6915D0B66E1149D5` |
+| `v051_motel_environment` | Motel after public travel | `04E4F2655F57545B23A6AEB616BF918CC9C63FC51BB80D3CDAD95388DB8D5714` |
+| `v051_corner_store_environment` | Corner Store after House -> Gas Station -> Corner Store | `114095087B770E2772091F0D132C88265E7B1F409AE832EF211D406F5ACA1810` |
+
+The current-build migration check is now plan-driven. Before admitting each
+fixture it recomputes its byte hash and size and verifies its historical source
+identity, envelope, expected route/game identity, and exact public-call
+transcript against the sidecar. It then loads through current FoundationMain,
+saves through the current public boundary, reloads through SaveService, and
+compares the preserved gameplay contract. All six pass. This remains fixture
+preparation only and does not claim `integ06_1` acceptance.
 
 ## Coverage still required
 

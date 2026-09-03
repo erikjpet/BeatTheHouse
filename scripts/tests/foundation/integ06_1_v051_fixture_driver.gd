@@ -20,11 +20,9 @@ func _begin_capture() -> void:
 func _capture() -> void:
 	print("INTEG06_1_PHASE=driver_started")
 	var options := _options(OS.get_cmdline_user_args())
-	var fixture_id := str(options.get("fixture-id", "v051_smoke_foundation_run")).strip_edges()
-	var seed_text := str(options.get("seed", "INTEG06-1-V051-SMOKE-001")).strip_edges()
-	var require_game := str(options.get("require-game", "false")).to_lower() in ["1", "true", "yes", "on"]
-	if fixture_id.is_empty() or seed_text.is_empty():
-		_fail("fixture id and seed must be non-empty")
+	var cases := _capture_cases(options)
+	if cases.is_empty():
+		_fail("capture plan did not contain a case")
 		return
 	var version := str(ProjectSettings.get_setting("application/config/version", "")).strip_edges()
 	if version != "0.5.1":
@@ -33,7 +31,6 @@ func _capture() -> void:
 
 	var app: Control = MainScene.instantiate()
 	app.set("continuous_environment_clock_enabled", false)
-	app.set("autosave_slot_id", fixture_id)
 	root.add_child(app)
 	await process_frame
 	await process_frame
@@ -41,62 +38,109 @@ func _capture() -> void:
 	if not app.has_method("uses_foundation_runtime") or not bool(app.call("uses_foundation_runtime")):
 		_fail("historical main scene did not initialize FoundationMain")
 		return
+	for case_value in cases:
+		if typeof(case_value) != TYPE_DICTIONARY:
+			_fail("capture plan contained a non-dictionary case")
+			return
+		var result := await _capture_case(app, case_value as Dictionary, version)
+		if result.is_empty():
+			return
+		print("INTEG06_1_FIXTURE_RESULT=%s" % JSON.stringify(result))
+	app.queue_free()
+	await process_frame
+	quit(0)
+
+
+func _capture_case(app: Control, capture_case: Dictionary, version: String) -> Dictionary:
+	var fixture_id := str(capture_case.get("fixture_id", "")).strip_edges()
+	var seed_text := str(capture_case.get("seed", "")).strip_edges()
+	if fixture_id.is_empty() or seed_text.is_empty():
+		_fail("fixture id and seed must be non-empty")
+		return {}
+	app.set("autosave_slot_id", fixture_id)
 
 	app.call("start_foundation_run", seed_text, {}, false)
 	await process_frame
 	await process_frame
-	print("INTEG06_1_PHASE=foundation_run_started")
+	print("INTEG06_1_PHASE=%s:foundation_run_started" % fixture_id)
 	var run_state: Variant = app.get("run_state")
 	if run_state == null:
 		_fail("FoundationMain did not create a run")
-		return
+		return {}
+	var methods := ["FoundationMain.start_foundation_run"]
+	var travel_path := _string_array(capture_case.get("travel_path", []))
+	for target_id in travel_path:
+		if not bool(app.call("select_travel_option", target_id)):
+			_fail("%s could not select public travel target %s" % [fixture_id, target_id])
+			return {}
+		app.call("confirm_selected_travel")
+		await process_frame
+		await process_frame
+		run_state = app.get("run_state")
+		var arrived_environment: Dictionary = run_state.get("current_environment")
+		if str(arrived_environment.get("archetype_id", "")) != target_id:
+			_fail("%s travel reached %s instead of %s" % [fixture_id, str(arrived_environment.get("archetype_id", "")), target_id])
+			return {}
+		methods.append("FoundationMain.select_travel_option:%s" % target_id)
+		methods.append("FoundationMain.confirm_selected_travel")
+
 	var environment: Dictionary = run_state.get("current_environment")
+	var expected_archetype := str(capture_case.get("expected_archetype", "")).strip_edges()
+	if not expected_archetype.is_empty() and str(environment.get("archetype_id", "")) != expected_archetype:
+		_fail("%s expected archetype %s, got %s" % [fixture_id, expected_archetype, str(environment.get("archetype_id", ""))])
+		return {}
 	var game_ids := _string_array(environment.get("game_ids", []))
 	var game_id := ""
-	var methods := ["FoundationMain.start_foundation_run"]
-	if not game_ids.is_empty():
+	var requested_game := str(capture_case.get("enter_game", "")).strip_edges()
+	if requested_game == "first":
+		if game_ids.is_empty():
+			_fail("%s reached an environment with no playable game" % fixture_id)
+			return {}
 		game_id = str(game_ids[0])
+	elif not requested_game.is_empty():
+		if not game_ids.has(requested_game):
+			_fail("%s requested unavailable generated game %s from %s" % [fixture_id, requested_game, str(game_ids)])
+			return {}
+		game_id = requested_game
+	if not game_id.is_empty():
 		if not bool(app.call("enter_game", game_id)):
 			_fail("FoundationMain could not enter generated game %s" % game_id)
-			return
+			return {}
 		methods.append("FoundationMain.enter_game")
 		await process_frame
 		await process_frame
-	elif require_game:
-		_fail("generated environment had no playable game")
-		return
 
 	# This is the public, synchronous player save boundary. It checkpoints the
 	# live game surface before SaveService writes the historical envelope.
 	app.call("save_foundation_run")
 	methods.append("FoundationMain.save_foundation_run")
-	print("INTEG06_1_PHASE=public_save_returned")
+	print("INTEG06_1_PHASE=%s:public_save_returned" % fixture_id)
 	var save_service: Variant = app.get("save_service")
 	if save_service == null:
 		_fail("FoundationMain did not expose its SaveService")
-		return
+		return {}
 	var save_error := int(save_service.call("wait_for_async_save"))
 	methods.append("SaveService.wait_for_async_save")
 	if save_error != OK:
 		_fail("historical save did not finish: %d" % save_error)
-		return
+		return {}
 	var save_path := str(save_service.call("run_save_path", fixture_id))
 	if not FileAccess.file_exists(save_path):
 		_fail("historical SaveService did not write %s" % save_path)
-		return
+		return {}
 	var saved_text := FileAccess.get_file_as_string(save_path)
 	var parsed: Variant = JSON.parse_string(saved_text)
 	if typeof(parsed) != TYPE_DICTIONARY:
 		_fail("historical SaveService output was not a JSON dictionary")
-		return
+		return {}
 	var envelope: Dictionary = parsed
 	if str(envelope.get("schema", "")) != "beat_the_house.foundation_run":
 		_fail("historical SaveService output had the wrong schema")
-		return
+		return {}
 
 	var screen_snapshot: Dictionary = app.call("current_screen_snapshot")
 	var event_cadence: Dictionary = run_state.get("event_cadence")
-	var result := {
+	return {
 		"fixture_id": fixture_id,
 		"seed": seed_text,
 		"project_version": version,
@@ -107,15 +151,32 @@ func _capture() -> void:
 		"archetype_id": str(environment.get("archetype_id", "")),
 		"game_id": game_id,
 		"screen": str(screen_snapshot.get("screen", "")),
-		"game_state_key": str(app.get("current_game_state_key")),
+		# FoundationMain retains the previous surface key after a later run starts.
+		# An environment-only capture has no foreground game, so do not let that
+		# diagnostic-only residue misdescribe the fixture provenance.
+		"game_state_key": str(app.get("current_game_state_key")) if not game_id.is_empty() else "",
 		"action_index": int(event_cadence.get("action_index", 0)),
 		"game_clock_minutes": run_state.get("game_clock_minutes"),
+		"travel_path": travel_path,
 		"methods": methods,
 	}
-	print("INTEG06_1_FIXTURE_RESULT=%s" % JSON.stringify(result))
-	app.queue_free()
-	await process_frame
-	quit(0)
+
+
+func _capture_cases(options: Dictionary) -> Array:
+	var plan_path := str(options.get("plan", "")).strip_edges()
+	if plan_path.is_empty():
+		return [{
+			"fixture_id": str(options.get("fixture-id", "v051_smoke_foundation_run")),
+			"seed": str(options.get("seed", "INTEG06-1-V051-SMOKE-001")),
+			"enter_game": "first" if str(options.get("require-game", "false")).to_lower() in ["1", "true", "yes", "on"] else "",
+		}]
+	if not FileAccess.file_exists(plan_path):
+		return []
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(plan_path))
+	if typeof(parsed) != TYPE_DICTIONARY:
+		return []
+	var cases: Variant = (parsed as Dictionary).get("cases", [])
+	return (cases as Array).duplicate(true) if typeof(cases) == TYPE_ARRAY else []
 
 
 func _options(arguments: PackedStringArray) -> Dictionary:

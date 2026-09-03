@@ -4,6 +4,7 @@ param(
     [string]$HistoricalCommit = "f1ce7ec814b5034c229f53dcc0db6e799aaaee0b",
     [string]$FixtureId = "v051_smoke_foundation_run",
     [string]$Seed = "INTEG06-1-V051-SMOKE-001",
+    [string]$PlanPath = "",
     [string]$OutputDirectory = "",
     [ValidateRange(30, 600)]
     [int]$CaptureTimeoutSeconds = 120,
@@ -79,10 +80,10 @@ function Invoke-BoundedNative(
 
 $resolvedProjectRoot = (Resolve-Path -LiteralPath $ProjectRoot).Path
 $ProjectRoot = $resolvedProjectRoot
-if ($FixtureId -notmatch '^[A-Za-z0-9_-]+$') {
+if ([string]::IsNullOrWhiteSpace($PlanPath) -and $FixtureId -notmatch '^[A-Za-z0-9_-]+$') {
     throw "FixtureId may contain only letters, numbers, underscores, and hyphens."
 }
-if ($Seed -notmatch '^[A-Za-z0-9_.:-]+$') {
+if ([string]::IsNullOrWhiteSpace($PlanPath) -and $Seed -notmatch '^[A-Za-z0-9_.:-]+$') {
     throw "Seed may contain only letters, numbers, underscores, periods, colons, and hyphens."
 }
 $resolvedCommit = Get-GitObject "$HistoricalCommit^{commit}"
@@ -131,6 +132,13 @@ try {
     $archiveHarness = Join-Path $historicalRoot $HarnessRelativePath
     New-Item -ItemType Directory -Force -Path (Split-Path -Parent $archiveHarness) | Out-Null
     Copy-Item -LiteralPath $sourceHarness -Destination $archiveHarness -Force
+	$captureArguments = @("--", "--fixture-id", $FixtureId, "--seed", $Seed)
+	if (-not [string]::IsNullOrWhiteSpace($PlanPath)) {
+		$resolvedPlan = (Resolve-Path -LiteralPath $PlanPath).Path
+		$archivePlan = Join-Path $historicalRoot "integ06_1_fixture_plan.json"
+		Copy-Item -LiteralPath $resolvedPlan -Destination $archivePlan -Force
+		$captureArguments = @("--", "--plan", "res://integ06_1_fixture_plan.json")
+	}
 
     $oldDistributionBuild = $env:BTH_DISTRIBUTION_BUILD
     $oldDistributionRoot = $env:BTH_DISTRIBUTION_DATA_ROOT
@@ -154,7 +162,8 @@ try {
         Write-Host "Imported isolated historical archive at $resolvedCommit."
         Write-Host "Starting bounded historical FoundationMain capture for $FixtureId."
         $captureLog = Join-Path $temporaryRoot "historical_capture.log"
-        $captureResult = Invoke-BoundedNative $godot @("--headless", "--audio-driver", "Dummy", "--log-file", $captureLog, "--path", $historicalRoot, "--script", "res://$HarnessRelativePath", "--", "--fixture-id", $FixtureId, "--seed", $Seed) $CaptureTimeoutSeconds (Join-Path $temporaryRoot "capture.stdout.log") (Join-Path $temporaryRoot "capture.stderr.log")
+		$godotArguments = @("--headless", "--audio-driver", "Dummy", "--log-file", $captureLog, "--path", $historicalRoot, "--script", "res://$HarnessRelativePath") + $captureArguments
+        $captureResult = Invoke-BoundedNative $godot $godotArguments $CaptureTimeoutSeconds (Join-Path $temporaryRoot "capture.stdout.log") (Join-Path $temporaryRoot "capture.stderr.log")
         $godotOutput = @($captureResult.Output)
         $godotExit = [int]$captureResult.ExitCode
     }
@@ -170,47 +179,52 @@ try {
         $logTail = if (Test-Path -LiteralPath $captureLog) { (Get-Content -LiteralPath $captureLog -Tail 40) -join [Environment]::NewLine } else { "capture log unavailable" }
         throw "Historical Godot capture exited $godotExit.`n$logTail"
     }
-    $resultLine = $godotOutput | Where-Object { "$_" -like "INTEG06_1_FIXTURE_RESULT=*" } | Select-Object -Last 1
-    if ($null -eq $resultLine) {
+    $resultLines = @($godotOutput | Where-Object { "$_" -like "INTEG06_1_FIXTURE_RESULT=*" })
+    if ($resultLines.Count -eq 0) {
         throw "Historical capture did not emit its provenance result."
     }
-    $capture = ("$resultLine" -replace '^INTEG06_1_FIXTURE_RESULT=', '') | ConvertFrom-Json
-    $sourceSave = [IO.Path]::GetFullPath([string]$capture.save_path)
-    $expectedSaveRoot = [IO.Path]::GetFullPath($userDataRoot)
-    if (-not $sourceSave.StartsWith($expectedSaveRoot, [StringComparison]::OrdinalIgnoreCase)) {
-        throw "Historical SaveService wrote outside the isolated data root: $sourceSave"
-    }
-    if (-not (Test-Path -LiteralPath $sourceSave)) {
-        throw "Historical SaveService output is missing: $sourceSave"
-    }
-	$capture.save_path = "isolated_distribution_root/saves/$FixtureId.json"
-
-    $destinationSave = Join-Path $OutputDirectory "$FixtureId.json"
-    Copy-Item -LiteralPath $sourceSave -Destination $destinationSave -Force
-    $saveHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $destinationSave).Hash
     $harnessHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $sourceHarness).Hash
-    $manifest = [ordered]@{
-        schema = "beat_the_house.integ06_1_historical_fixture_provenance"
-        version = 1
-        fixture_id = $FixtureId
-        historical_release = $tag
-        historical_commit = $resolvedCommit
-        historical_tree = Get-GitObject "$resolvedCommit^{tree}"
-        historical_main_scene_blob = Get-GitObject "$resolvedCommit`:scenes/main.tscn"
-        historical_foundation_main_blob = Get-GitObject "$resolvedCommit`:scripts/ui/foundation_main.gd"
-        historical_save_service_blob = Get-GitObject "$resolvedCommit`:scripts/core/save_service.gd"
-        driver_path = $HarnessRelativePath
-        driver_sha256 = $harnessHash
-        capture = $capture
-        save_file = [IO.Path]::GetFileName($destinationSave)
-        save_size_bytes = (Get-Item -LiteralPath $destinationSave).Length
-        save_sha256 = $saveHash
-    }
-    $manifestPath = Join-Path $OutputDirectory "$FixtureId.provenance.json"
-    $manifest | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $manifestPath -Encoding utf8
-    Write-Host "Generated genuine $tag fixture: $destinationSave"
-    Write-Host "SHA-256: $saveHash"
-    Write-Host "Provenance: $manifestPath"
+	foreach ($resultLine in $resultLines) {
+		$capture = ("$resultLine" -replace '^INTEG06_1_FIXTURE_RESULT=', '') | ConvertFrom-Json
+		$capturedFixtureId = [string]$capture.fixture_id
+		if ($capturedFixtureId -notmatch '^[A-Za-z0-9_-]+$') {
+			throw "Historical capture emitted unsafe fixture id: $capturedFixtureId"
+		}
+		$sourceSave = [IO.Path]::GetFullPath([string]$capture.save_path)
+		$expectedSaveRoot = [IO.Path]::GetFullPath($userDataRoot)
+		if (-not $sourceSave.StartsWith($expectedSaveRoot, [StringComparison]::OrdinalIgnoreCase)) {
+			throw "Historical SaveService wrote outside the isolated data root: $sourceSave"
+		}
+		if (-not (Test-Path -LiteralPath $sourceSave)) {
+			throw "Historical SaveService output is missing: $sourceSave"
+		}
+		$capture.save_path = "isolated_distribution_root/saves/$capturedFixtureId.json"
+		$destinationSave = Join-Path $OutputDirectory "$capturedFixtureId.json"
+		Copy-Item -LiteralPath $sourceSave -Destination $destinationSave -Force
+		$saveHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $destinationSave).Hash
+		$manifest = [ordered]@{
+			schema = "beat_the_house.integ06_1_historical_fixture_provenance"
+			version = 1
+			fixture_id = $capturedFixtureId
+			historical_release = $tag
+			historical_commit = $resolvedCommit
+			historical_tree = Get-GitObject "$resolvedCommit^{tree}"
+			historical_main_scene_blob = Get-GitObject "$resolvedCommit`:scenes/main.tscn"
+			historical_foundation_main_blob = Get-GitObject "$resolvedCommit`:scripts/ui/foundation_main.gd"
+			historical_save_service_blob = Get-GitObject "$resolvedCommit`:scripts/core/save_service.gd"
+			driver_path = $HarnessRelativePath
+			driver_sha256 = $harnessHash
+			capture = $capture
+			save_file = [IO.Path]::GetFileName($destinationSave)
+			save_size_bytes = (Get-Item -LiteralPath $destinationSave).Length
+			save_sha256 = $saveHash
+		}
+		$manifestPath = Join-Path $OutputDirectory "$capturedFixtureId.provenance.json"
+		$manifest | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $manifestPath -Encoding utf8
+		Write-Host "Generated genuine $tag fixture: $destinationSave"
+		Write-Host "SHA-256: $saveHash"
+		Write-Host "Provenance: $manifestPath"
+	}
 }
 finally {
     if ($KeepHistoricalArchive) {

@@ -1,7 +1,7 @@
 ﻿{
     "schema":  "beat_the_house.integ06_1_historical_fixture_provenance",
     "version":  1,
-    "fixture_id":  "v051_smoke_foundation_run",
+    "fixture_id":  "v051_gas_station_mid_game",
     "historical_release":  "v0.5.1",
     "historical_commit":  "f1ce7ec814b5034c229f53dcc0db6e799aaaee0b",
     "historical_tree":  "19c5ed82c0d2d2390dab2b9b6662c70d8aed5d0d",
@@ -12,28 +12,31 @@
     "driver_sha256":  "9A7E85A237A280A0C52365A8BDE2AFFC0CC2F358BB712CA9E67E6C0754D800C8",
     "capture":  {
                     "action_index":  0,
-                    "archetype_id":  "house",
-                    "environment_id":  "house_001",
-                    "fixture_id":  "v051_smoke_foundation_run",
-                    "game_clock_minutes":  720,
-                    "game_id":  "",
-                    "game_state_key":  "",
+                    "archetype_id":  "gas_station_casino",
+                    "environment_id":  "gas_station_casino_002",
+                    "fixture_id":  "v051_gas_station_mid_game",
+                    "game_clock_minutes":  774,
+                    "game_id":  "slot",
+                    "game_state_key":  "slot",
                     "methods":  [
                                     "FoundationMain.start_foundation_run",
+                                    "FoundationMain.select_travel_option:gas_station_casino",
+                                    "FoundationMain.confirm_selected_travel",
+                                    "FoundationMain.enter_game",
                                     "FoundationMain.save_foundation_run",
                                     "SaveService.wait_for_async_save"
                                 ],
                     "project_version":  "0.5.1",
-                    "save_path":  "isolated_distribution_root/saves/v051_smoke_foundation_run.json",
+                    "save_path":  "isolated_distribution_root/saves/v051_gas_station_mid_game.json",
                     "save_schema":  "beat_the_house.foundation_run",
                     "save_version":  2,
-                    "screen":  "ENVIRONMENT",
+                    "screen":  "GAME",
                     "seed":  "INTEG06-1-V051-SMOKE-001",
                     "travel_path":  [
-
+                                        "gas_station_casino"
                                     ]
                 },
-    "save_file":  "v051_smoke_foundation_run.json",
-    "save_size_bytes":  18998,
-    "save_sha256":  "81B4C5EAB4571E8BCB836647E9D25CA0F2EB31608C24D5C89933ADBEFAB2F17B"
+    "save_file":  "v051_gas_station_mid_game.json",
+    "save_size_bytes":  54516,
+    "save_sha256":  "9A1AEC5AE9B548C451DA0F4F534F0926A4DD372893CFCCA19E47B56368FE890A"
 }

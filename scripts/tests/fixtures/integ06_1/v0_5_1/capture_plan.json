@@ -1,0 +1,45 @@
+{
+  "schema": "beat_the_house.integ06_1_historical_capture_plan",
+  "version": 1,
+  "historical_commit": "f1ce7ec814b5034c229f53dcc0db6e799aaaee0b",
+  "cases": [
+    {
+      "fixture_id": "v051_smoke_foundation_run",
+      "seed": "INTEG06-1-V051-SMOKE-001",
+      "expected_archetype": "house"
+    },
+    {
+      "fixture_id": "v051_gas_station_mid_game",
+      "seed": "INTEG06-1-V051-SMOKE-001",
+      "travel_path": ["gas_station_casino"],
+      "expected_archetype": "gas_station_casino",
+      "enter_game": "slot"
+    },
+    {
+      "fixture_id": "v051_gas_station_pull_tabs_mid_game",
+      "seed": "INTEG06-1-V051-SMOKE-001",
+      "travel_path": ["gas_station_casino"],
+      "expected_archetype": "gas_station_casino",
+      "enter_game": "pull_tabs"
+    },
+    {
+      "fixture_id": "v051_gas_station_scratch_mid_game",
+      "seed": "INTEG06-1-V051-SMOKE-001",
+      "travel_path": ["gas_station_casino"],
+      "expected_archetype": "gas_station_casino",
+      "enter_game": "scratch_tickets"
+    },
+    {
+      "fixture_id": "v051_motel_environment",
+      "seed": "INTEG06-1-V051-SMOKE-001",
+      "travel_path": ["motel"],
+      "expected_archetype": "motel"
+    },
+    {
+      "fixture_id": "v051_corner_store_environment",
+      "seed": "INTEG06-1-V051-SMOKE-001",
+      "travel_path": ["gas_station_casino", "corner_store"],
+      "expected_archetype": "corner_store"
+    }
+  ]
+}
