@@ -353,7 +353,10 @@ var _world1_host_capability: RefCounted
 var _crew_heist_host_capability: RefCounted
 var _crew_heist_private_capsule := ""
 var _crew_heist_private_fingerprint := ""
-var _crew_private_authority_id := ""
+# A RunState can be populated by small host/test fixtures before start_new().
+# Give every instance a valid authority; start_new() remints it for each run and
+# from_dict() replaces it with the authenticated saved or migrated authority.
+var _crew_private_authority_id := CrewTurnModelScript.new_authority_id()
 var active_delivery_run: Dictionary = {}
 var crew_pattern_memory: Dictionary = {}
 var scenario_host_transaction_ledger: Dictionary = {}

@@ -27,6 +27,8 @@ func _initialize() -> void:
 
 
 func _check_save_authority_lifecycle(failures: Array) -> void:
+	var unstarted := RunStateScript.new()
+	_check(CrewTurnModelScript.valid_authority_id(str(unstarted.get("_crew_private_authority_id"))), "A newly constructed RunState lacked private save authority before fixture population.", failures)
 	var run := RunStateScript.new()
 	run.start_new("WORLD06-7-AUTHORITY-LIFECYCLE", RunStateScript.standard_challenge("WORLD06-7-AUTHORITY-LIFECYCLE"))
 	var authority_before_save := str(run.get("_crew_private_authority_id"))
