@@ -2,8 +2,9 @@
 
 Status: **IN PROGRESS — static preparation only; no binding measurements yet**
 
-Prepared from integrated source `ee9545fa` on 2026-09-03. The final candidate
-is still changing, so this review deliberately records no performance verdict.
+Prepared from integrated source `ee9545fa` and refreshed on current integration
+root `47a3a241` through harness head `9ba11ee8` on 2026-09-03. The final
+candidate is still changing, so this review deliberately records no performance verdict.
 It converts the existing prestage contract into an executable coverage map and
 names every missing measurement before a quiesced run begins.
 
@@ -139,6 +140,45 @@ row is absent.
 
 These are provenance checks, not final identities. Every hash will be
 recomputed after the last functional integration and before each export.
+
+## Qualified Web crypto/template unblock (nonbinding)
+
+The first exact exported-Web diagnostic reached READY but proved that the
+previous locked thin template omitted not only `Crypto` but also
+`HMACContext`. The minimal correction in `0a508712` keeps Godot's standard
+mbedTLS module in the pinned Godot 4.6/Emscripten 4.0.20 single-threaded dlink
+template; no custom cipher, authenticator, entropy bridge, or privacy downgrade
+is present.
+
+- Deterministic template SHA-256:
+  `CF371F607AA9CB18E690BD595976C1BAAF00C8CEC24078E4A307FD515AD07913`.
+- Template size: 6,055,590 bytes, an increase of 306,863 bytes over the prior
+  5,748,727-byte locked template.
+- Fresh exact-`9ba11ee8` Web export aggregate SHA-256:
+  `18DE35F88146D39B88A91DF1D087924D672A3FC2DCC7951C8A6E97CC83D7F3D4`.
+- Upload archive: 40,821,103 bytes, SHA-256
+  `F7EC1E7877E4A4A566F4AA8B6349D9D44E1D149B0D13FC8454609CED25BA29CA`;
+  exported main module `index.wasm` is 1,508,237 bytes.
+- Chrome 152 fresh-profile READY was 4,889 ms from navigation and 5,162 ms
+  wall clock; the complete focused proof finished in 6,386 ms. This is current
+  load evidence, not the final cold/warm performance verdict.
+- Exported Web stock `Crypto` returned exact, non-repeating 16-, 32-, and
+  65,536-byte values. `AESContext` round-tripped, `HMACContext` rejected a
+  tampered capsule, two capsules stayed distinct and fixed at 65,584 bytes,
+  and canonical private payload bytes were absent. Page, request, and HTTP
+  failure counts were zero; the only captured console entry was the expected
+  browser audio-autoplay warning.
+- The native Coin Pusher Web side-module remained ABI-compatible and passed
+  the live-batch parity contract. Its binary SHA-256 is
+  `67213C258BAB0330EB0CCD57E3B64F7E1415D0432BB9317DB21F0ECB66D5771C`;
+  the parity payload SHA-256 is
+  `C03588BABF0A5FB40B36349020DD90E43BBA4A1C8644C6A15C7BC1F54E31953F`.
+
+The focused report and native-extension manifest are retained under
+`.tmp/perf06_crypto_mbedtls_exact_9ba11ee8/` and
+`.tmp/perf06_native_live_batch_exact_9ba11ee8_retry/`. These artifacts qualify
+the release-input repair and harness. They do not replace the final exact-head
+scenario matrix after all integration work lands.
 
 ## Final execution order
 
