@@ -505,7 +505,10 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	_crew_heist_host_capability = RefCounted.new()
 	_crew_heist_private_capsule = ""
 	_crew_heist_private_fingerprint = ""
-	_crew_private_authority_id = ""
+	# Mint the opaque save authority as part of run construction. Save projection
+	# must be observational: lazily creating this id inside to_dict() made the
+	# first read mutate a live run and invalidated transaction fingerprints.
+	_crew_private_authority_id = CrewTurnModelScript.new_authority_id()
 	active_delivery_run = {}
 	crew_pattern_memory = CrewPokerModelScript.default_observations()
 	scenario_host_transaction_ledger = {}
@@ -15805,8 +15808,6 @@ func _crew_state_for_save(deep_copy: bool, _opaque_hidden: bool = true) -> Dicti
 		result["private_authority_error"] = "private_authority_capacity_exceeded"
 		return result
 	if not CrewTurnModelScript.valid_authority_id(_crew_private_authority_id):
-		_crew_private_authority_id = CrewTurnModelScript.new_authority_id()
-	if not CrewTurnModelScript.valid_authority_id(_crew_private_authority_id):
 		result["private_authority_error"] = "private_authority_unavailable"
 		return result
 	var payload := {"x": private_heist, "g": packed_ledger, "q": crew_grievance_sequence}
@@ -15933,6 +15934,9 @@ func _restore_crew_state(saved: Dictionary, legacy: bool) -> void:
 	if not saved.has("z") and not saved.has("private_authority_error") and not partial_private_authority:
 		crew_grievance_ledger = _crew_unpack_ledger(saved.get("g", saved.get("grievances", [])))
 		crew_grievance_sequence = maxi(int(saved.get("q", saved.get("grievance_sequence", crew_grievance_ledger.size()))), crew_grievance_ledger.size())
+		# Historical saves predate the opaque envelope. Give the migrated run a
+		# fresh authority during restore so subsequent save reads remain pure.
+		_crew_private_authority_id = CrewTurnModelScript.new_authority_id()
 	if saved.has("private_authority_error") or partial_private_authority:
 		saved_heist = _crew_private_restore_failed(saved_heist)
 	elif saved.has("z"):

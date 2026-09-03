@@ -8,6 +8,7 @@ const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 
 func _initialize() -> void:
 	var failures: Array = []
+	_check_save_authority_lifecycle(failures)
 	_check_semantic_indistinguishability(failures)
 	_check_zero_to_one_indistinguishability(failures)
 	_check_public_job_failure_projection(failures)
@@ -23,6 +24,17 @@ func _initialize() -> void:
 	for failure in failures:
 		push_error(str(failure))
 	quit(1)
+
+
+func _check_save_authority_lifecycle(failures: Array) -> void:
+	var run := RunStateScript.new()
+	run.start_new("WORLD06-7-AUTHORITY-LIFECYCLE", RunStateScript.standard_challenge("WORLD06-7-AUTHORITY-LIFECYCLE"))
+	var authority_before_save := str(run.get("_crew_private_authority_id"))
+	_check(CrewTurnModelScript.valid_authority_id(authority_before_save), "A new run did not mint its private save authority during construction.", failures)
+	var first := run.to_save_snapshot()
+	var second := run.to_save_snapshot()
+	_check(str(run.get("_crew_private_authority_id")) == authority_before_save, "Save projection replaced the live run's private authority.", failures)
+	_check(str(_saved_crew(first).get("a", "")) == authority_before_save and JSON.stringify(first) == JSON.stringify(second), "Save projection did not retain one stable per-run private envelope.", failures)
 
 
 func _check_semantic_indistinguishability(failures: Array) -> void:
