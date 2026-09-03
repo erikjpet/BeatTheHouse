@@ -1,9 +1,9 @@
 # integ06_1 composition, migration, and soak report
 
-Status: **PARTIAL — keep `integ06_1` TODO**  
-Audit base: `6875646b19cb8c8ce242414e1251a8ae7bcffc2c`  
-Harness prerequisite: `1131c6262eb04b2cbbabc6265caba71c4c234e22`  
-Product/content repair: `c9e5941f43c3f507921482bdac1e7a8c34a75a18`  
+Status: **PARTIAL — keep `integ06_1` TODO**
+Audit base: `6875646b19cb8c8ce242414e1251a8ae7bcffc2c`
+Harness prerequisite: `1131c6262eb04b2cbbabc6265caba71c4c234e22`
+Product/content repair: `c9e5941f43c3f507921482bdac1e7a8c34a75a18`
 Composition harness: `91af060af1b28bd5217f8c2ee9454fc0aa589567`
 
 This report records the completed historical-save and maximal-composition work
@@ -125,13 +125,38 @@ expiry/abandonment orderings.
 | package-C author | PASS — 11 scenarios, 55 pairs |
 | package-D author | PASS — 12 scenarios, 66 pairs |
 
-The broad `check_core_content.gd` entrypoint is not green on this integrated
-base. Its content check itself reported zero failures, but the aggregate later
-reported 69 Crew-recruitment failures, attempted a missing inherited method
-`_check_canonical_pack_paths`, and compared stale Crew-ignored byte/hash
-goldens. A direct Crew-recruitment invocation produced no error before the
-180-second command limit but therefore has no pass verdict. This aggregate red
-is recorded for main-tree ownership and is not counted as green evidence here.
+The earlier direct `check_core_content.gd` invocation is invalid setup evidence,
+not a product verdict. That file is an intermediate inheritance source for the
+marker-aware split runner assembled by `tools/check_godot.ps1`; its content
+check deliberately calls `_check_canonical_pack_paths`, which is supplied by
+the descendant `check_lenders_release_saves.gd`. `check_delivery_runs.gd` is
+likewise an intermediate source, not a standalone test entrypoint.
+
+The supported generated Contracts runner completed project validation and the
+306-file GDScript load check with zero failures. It then exceeded the 300-second
+hard limit after reporting two `content` failures and 69
+`crew_recruitment_contract` failures. The later Crew layer-3 jobs, plays, heist,
+Turn, character-chain, content-depth, and coach checks that completed before the
+timeout all reported zero failures. This run is a release red: neither the two
+content differences nor the 69 Crew differences may be waived because they
+also existed on an earlier tree.
+
+The relevant test sources are byte-identical at audit base `6875646b`, accepted
+root `47a3a241`, and this branch. The exact ordered 69-message list captured by
+the unsupported diagnostic is identical on accepted root `47a3a241` and this
+branch; the supported runner independently confirmed the same failure count.
+The first eight messages are failed Velvet/Bishop production placements. A
+focused production-path diagnostic traced them to four real layout conflicts:
+Kitty Cat Lounge buyout ropes versus request cart, Grand Casino gala badges
+versus coat check, Grand Casino gala coat check versus host, and the base video
+poker control versus the convention coordinator. Repairs are under focused
+normal/small-screen verification. The remaining 61 messages are the aggregate
+guard plus exact byte/hash differences for the two Crew-ignoring control seeds.
+The golden was last authored at `9e8af74b`; six later accepted world changes
+alter Crew authority initialization, scenario-authored routes, scenario
+layouts, and composed-sequence retention. Full normalized captures from the
+exact golden commit and the repaired current tree must prove that every leaf
+difference is intended before the fixture is refreshed.
 
 ## Work still required before DONE
 
@@ -145,7 +170,8 @@ is recorded for main-tree ownership and is not counted as green evidence here.
 - Prove native/Web outcome-trace parity, bounded retained state/frame cost,
   repeated mid-run save/load, representative failure routes, every victory
   route, and terminal profile recording.
-- Resolve and rerun the broad core-content aggregate on the final main tree.
+- Run the supported generated Foundation suite on the final main tree; never
+  invoke its intermediate inheritance sources directly.
 
 Until those items have reproducible green evidence, `integ06_1` must remain
 TODO and cannot unblock the owner playtest by itself.
