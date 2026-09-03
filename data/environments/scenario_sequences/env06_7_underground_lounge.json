@@ -4945,6 +4945,9 @@
           "anchors": [
             "base::anchor:punchline_high_stakes_protected_table",
             "base::anchor:punchline_high_stakes_floor_runner",
+            "base::anchor:punchline_high_stakes_chair_stack",
+            "base::anchor:punchline_high_stakes_guard",
+            "base::anchor:punchline_high_stakes_safe_exit",
             "base::anchor:punchline_high_stakes_task",
             "base::anchor:punchline_high_stakes_runner_work_2",
             "base::anchor:punchline_headliner_door_guard"
@@ -5037,6 +5040,7 @@
               "actor_ops": [
                 {
                   "actor": {
+                    "anchor_id": "punchline_high_stakes_guard",
                     "actor_id": "actor_high_stakes_guard",
                     "behavior": "guard",
                     "label": "High-stakes guard",
@@ -5211,6 +5215,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
+                    "anchor_id": "punchline_high_stakes_protected_table",
                     "appearance": "reserved",
                     "bounds": {
                       "h": 46.0,
@@ -5251,6 +5256,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
+                    "anchor_id": "punchline_high_stakes_chair_stack",
                     "appearance": "stacked",
                     "bounds": {
                       "h": 58.0,
@@ -5271,7 +5277,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "punchline_headliner_door_guard",
+                    "anchor_id": "punchline_high_stakes_safe_exit",
                     "appearance": "marked_lane",
                     "bounds": {
                       "h": 56.0,
@@ -6107,7 +6113,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "031a56c740f40c79c5c5000b820a5a6233ea421c4d51ea8717aeef1fea072dff"
+        "sequence_signature": "01caedeeb68c86a99535fcba405c846d1d6749c551200f3e3a4591cf8d985fb1"
       }
     },
     {
