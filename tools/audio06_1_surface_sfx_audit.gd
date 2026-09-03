@@ -38,7 +38,8 @@ func _run() -> void:
 	var profiles := ManifestScript.profile_map(entries)
 	for failure in ManifestScript.validation_errors(entries):
 		failures.append("Manifest validation: %s" % failure)
-	_run_negative_manifest_cases(entries)
+	var manifest_negative_phase_complete: bool = _run_negative_manifest_cases(entries)
+	_check(manifest_negative_phase_complete, "Negative manifest audit phase aborted before completion")
 	var actual_ids: Array[String] = []
 	for key in profiles.keys():
 		actual_ids.append(str(key))
@@ -117,7 +118,8 @@ func _run() -> void:
 		print("AUDIO06_1 delivery %d/%d: %s" % [delivery_index, unique_events.size(), str(event_value)])
 		_check(bool(sfx.call("debug_event_delivery_has_signal", str(event_value))), "Declared event %s has no generated/delivered signal" % event_value)
 	print("AUDIO06_1 audit: authority, voice, mixer, and frame-budget probes")
-	_run_authority_and_budget_cases(sfx)
+	var authority_budget_phase_complete: bool = _run_authority_and_budget_cases(sfx)
+	_check(authority_budget_phase_complete, "Authority and voice-budget audit phase aborted before completion")
 	sfx.free()
 
 	var sfx_source := FileAccess.get_file_as_string("res://scripts/ui/sfx_player.gd")
@@ -148,7 +150,7 @@ func _check(condition: bool, failure: String) -> void:
 		failures.append(failure)
 
 
-func _run_negative_manifest_cases(entries: Array) -> void:
+func _run_negative_manifest_cases(entries: Array) -> bool:
 	var duplicate := entries.duplicate(true)
 	duplicate.append((entries[0] as Dictionary).duplicate(true))
 	_expect_invalid(duplicate, "duplicate profile")
@@ -183,13 +185,14 @@ func _run_negative_manifest_cases(entries: Array) -> void:
 
 	_check(ManifestScript.resolve_profile("undeclared_profile", entries).is_empty(), "Undeclared profile resolved")
 	_check(ManifestScript.select_event("coin_pusher", "undeclared_class", 1, 0, -1, entries).is_empty(), "Unknown event class selected a delivery")
+	return true
 
 
 func _expect_invalid(entries: Array, label: String) -> void:
 	_check(not ManifestScript.validation_errors(entries).is_empty(), "Manifest accepted %s" % label)
 
 
-func _run_authority_and_budget_cases(sfx: Node) -> void:
+func _run_authority_and_budget_cases(sfx: Node) -> bool:
 	var authority_a := RefCounted.new()
 	var authority_b := RefCounted.new()
 	sfx.call("bind_surface_audio_authority", authority_a)
@@ -246,6 +249,7 @@ func _run_authority_and_budget_cases(sfx: Node) -> void:
 	var frame_after := sfx.call("debug_soak_snapshot") as Dictionary
 	_check(int(frame_after.get("stream_cache_size", 0)) == int(frame_before.get("stream_cache_size", 0)), "Idle frame generated or loaded audio")
 	_check(int(frame_after.get("surface_selection_trace_size", 0)) == int(frame_before.get("surface_selection_trace_size", 0)), "Frame advance created an audio event without a fact/op")
+	return true
 
 
 func _process_is_bounded_prewarm_only(source: String) -> bool:
