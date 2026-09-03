@@ -1,7 +1,9 @@
 # teach06_2 candidate lesson classification
 
-Status: **CANDIDATE CLASSIFICATION — `game06_8` acceptance pending**  
-Exact classification root: `039e3326d7f09ab911f8903adc03b94c2cc12e4f`  
+Status: **CANDIDATE CLASSIFICATION — `game06_8` acceptance pending**
+
+Exact classification root: `039e3326d7f09ab911f8903adc03b94c2cc12e4f`
+
 Catalog: `data/tutorial/lessons.json` (63 entries: 56 `tutorial_run`, 7 `normal_run`)
 
 This is the mandatory section 1 classification artifact. It was completed before
