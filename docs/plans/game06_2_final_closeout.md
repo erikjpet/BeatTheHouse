@@ -4,7 +4,8 @@ Date: 2026-09-03
 Recovered depth integration: `d47feee3`
 Post-land authority recovery: `b091bc43`, `d3018288`, `9053c4b3`, `831f15ee`, `f0f68746`, `cb878b21`, `6f6c010e`, `683f5e11`
 Final bounded-authority remediation: `73b7a9523116712be266240397b3901e17476f4a`
-Audited product tree: `8964fc29e38d7c3b2d5704ae089952a56a4cdbf4`
+Public basic-play confirmation repair: `039e3326d7f09ab911f8903adc03b94c2cc12e4f`
+Exact integrated candidate tree: `d78c3337825c68e416e21aaba4ae8f6af881340e`
 
 ## Verdict
 
@@ -116,6 +117,15 @@ materially.
   continues ordinary selection-only interactions, and adds a deterministic
   two-click confirmation regression. Its 64-action safety ceiling covers the
   authored four split hands plus deck-bounded decisions and confirmation steps.
+- The deterministic regression then exposed that the live `blackjack_deal`
+  active-hand fallback discarded its received confirmation flag while telling
+  the player to click again. Exact integrated commit `039e3326` passes that
+  flag into the existing action-command seam; the second public click now seals
+  through the unchanged host authority. Its 1-seed/25-hand qualification passed
+  every forced rule fixture, one clean and count hand, the new selection/
+  confirmation fixture, and all 25 payout hands (`+18 / 135`, edge
+  `0.1333333333`) with zero failures/warnings. Report SHA-256:
+  `87DC8DF1D16565CB8EAA358947877A401F4D7A03A69CA0ABDBC282259597693C`.
 - The first repeated-reprieve rerun failed because the fixture pinned an old
   whole `games.json` hash; after refreshing content provenance it exposed a
   nondeterministic whole-save fingerprint caused solely by the intentionally
