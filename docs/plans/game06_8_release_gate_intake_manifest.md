@@ -268,3 +268,28 @@ reports from different product trees are incomparable.
    verdict and board/archive action. This prestage authorizes neither.
 
 Current overall verdict: **BLOCKED/UNVERIFIED**. No completion claim is made.
+
+## Superseding game06_3 reconciliation — 2026-09-02
+
+This section supersedes only the historical game06_3/D3 entries above; it does
+not change the manifest's overall game06_8 verdict or any other row.
+
+- D3 is resolved by the delivered state and the owner's direction to close the
+  row: full Roulette is preserved and full Baccarat is completed. No scope
+  reduction, exception, or `game06_3b` successor is used.
+- The implementation is on `main` through
+  `212475356cedb42056a2677b590e5b69ed0ac8aa`, plus sealed-authority corrections
+  `1354ae26` and `679b1d8a`.
+- Closeout audits `45239305` and `9c2e6b1a` passed the combined depth contract,
+  focused Foundation suites, all 157 Roulette wager targets, 400 Baccarat
+  hands, 10 sealed host commits per game path, byte-identical 10-seed/560-point
+  determinism, and fresh native/Web presentation parity with semantic hash
+  `ba2fa83da58c9865fb2801b6d561e7e98b2ecd26fcbc3fa0df6b5cfd6c010ab7`.
+- Row-local performance budgets and coverage passed for both games. Canonical
+  visual QA exited cleanly with no warnings. The aggregate probe's unrelated
+  Coin Pusher red remains recorded and unmodified.
+
+Accordingly, `game06_3` is **VERIFIED/DONE** for board and dependency purposes.
+game06_8 must use the final closeout in `docs/plans/game06_3_handoff.md` for this
+slice and must not revive the older D3 blocker unless a new regression is
+demonstrated on current `main`.

@@ -1,5 +1,45 @@
-Status: IN_PROGRESS — implementation landed on `main`; Family 1 release-gate closeout remains open
+Status: COMPLETE — full Baccarat and Roulette depth is landed, verified, and archived
 Board row: `game06_3` in `docs/todo/README_0_6_board.md`
+
+## Execution Record
+
+- Completed: 2026-09-02.
+- Recovered implementation: `212475356cedb42056a2677b590e5b69ed0ac8aa`
+  (including the preserved Roulette and completed Baccarat depth work), with
+  later sealed-authority corrections `1354ae26` and `679b1d8a` already on
+  `main`.
+- Closeout verification: `45239305` modernizes the seed audits to exercise the
+  real sealed host boundary; `9c2e6b1a` adds the 10-seed native/Web
+  presentation-parity probe. No product rules, payouts, budgets, or acceptance
+  limits were changed during closeout.
+- Focused acceptance: the combined depth contract passed for both games. The
+  focused Foundation Roulette and Baccarat suites each passed with zero
+  failures. Roulette's rules audit passed all 157 payout and hit-region
+  targets. Roulette passed 10/10 live authoritative spins with 96 trajectory
+  frames per spin; Baccarat passed 400 advancing-shoe hands plus 10/10 sealed
+  host commits with exact bankroll and road-history accounting.
+- Determinism: two independent 10-seed runs produced the same 560 checkpoints,
+  combined hash `1246250829`, and byte-identical report SHA-256
+  `E5C12ECAE8FEC14D78F4AEBA30AF04B6552892C153956C9EB6D3F6569D869F94`.
+- Platform parity: a fresh Web release export in Chrome 152 and native Windows
+  produced the identical semantic hash
+  `ba2fa83da58c9865fb2801b6d561e7e98b2ecd26fcbc3fa0df6b5cfd6c010ab7`
+  across 10 Roulette spins and 10 Baccarat squeeze states, with no browser
+  errors.
+- Performance and visual/accessibility: all measured Baccarat and Roulette
+  renderer/resolve coverage and unchanged budgets passed. Canonical visual QA
+  exited cleanly with no warnings; the focused contract additionally covers
+  sparse/crowded/max-energy states, small-screen hit regions, reduced motion,
+  non-color phase cues, save/revisit, actors, objects, crew, and security.
+- Honest aggregate-gate note: the unchanged full performance probe retained an
+  unrelated Coin Pusher skill-stop draw red (`7.90 ms` versus `7.00 ms`) and did
+  not mark that separate active sequence checked. It did not produce a
+  Baccarat or Roulette failure and was not weakened or hidden. Broad wrapper
+  attempts that included unrelated prechecks timed out; the row-owned suites
+  were rerun directly and passed.
+- Disposition: the owner's direction to close this row is fulfilled by the
+  actual full two-game implementation (the earlier D3 full-closure outcome),
+  without a requirement reduction, split successor, or exception.
 
 # Agent Prompt — 0.6 game06_3: Baccarat and Roulette Depth
 
