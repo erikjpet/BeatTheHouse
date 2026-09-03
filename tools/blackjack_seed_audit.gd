@@ -341,20 +341,26 @@ func _play_to_resolve(game: GameModule, run_state: RunState, environment: Dictio
 			confirm_requested = action == pending_confirmation_action
 		var command_start_usec := Time.get_ticks_usec()
 		var command := BlackjackAuthorityTestDriverScript.surface_intent(game, action, 5, run_state, environment, 0, confirm_requested)
+		var issued_action := action
 		_record_action_command_time(command_start_usec)
 		if not bool(command.get("handled", false)) and action != "blackjack_stand":
+			issued_action = "blackjack_stand"
 			var fallback_start_usec := Time.get_ticks_usec()
-			command = BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_stand", 5, run_state, run_state.current_environment)
+			command = BlackjackAuthorityTestDriverScript.surface_intent(game, issued_action, 5, run_state, run_state.current_environment, 0, issued_action == pending_confirmation_action)
 			_record_action_command_time(fallback_start_usec)
 		var command_ui: Dictionary = command.get("ui_state", {}) if typeof(command.get("ui_state", {})) == TYPE_DICTIONARY else {}
 		_audit_compact_ui_state(command_ui, "hand command %s" % action)
 		var command_requests_resolution := bool(command.get("resolve", false)) or bool(command.get("direct_resolve", false))
 		if not str(command.get("action_id", "")).is_empty() and command_requests_resolution:
+			# Confirmation is consumed by this one resolving public command, even
+			# when its authoritative result advances to another nonterminal hand.
+			pending_confirmation_action = ""
 			if typeof(command.get("_sealed_action_host_delivery", null)) != TYPE_DICTIONARY:
 				last_play_failure = {
 					"iteration": iteration,
 					"phase": str(surface.get("surface_phase", surface.get("phase", ""))),
 					"chosen_action": action,
+					"issued_action": issued_action,
 					"command_handled": bool(command.get("handled", false)),
 					"command_resolve": true,
 					"command_action_id": str(command.get("action_id", "")),
@@ -380,13 +386,14 @@ func _play_to_resolve(game: GameModule, run_state: RunState, environment: Dictio
 			# flag instead of presenting the selection command to the authority
 			# resolver as if it were a delivery.  The headless adapter intentionally
 			# does not retain FoundationMain's UI-local selected-action fields.
-			pending_confirmation_action = action
+			pending_confirmation_action = issued_action
 			continue
 		pending_confirmation_action = ""
 		last_play_failure = {
 			"iteration": iteration,
 			"phase": str(surface.get("surface_phase", surface.get("phase", ""))),
 			"chosen_action": action,
+			"issued_action": issued_action,
 			"command_handled": bool(command.get("handled", false)),
 			"command_resolve": bool(command.get("resolve", false)),
 			"command_action_id": str(command.get("action_id", "")),
