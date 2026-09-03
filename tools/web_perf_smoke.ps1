@@ -43,6 +43,8 @@ $frameP95BudgetsMs = @{
     "corner_store_idle" = 120.0
     "pull_tabs_idle" = 20.0
     "pull_tabs_active" = 60.0
+    "scratch_tickets_idle" = 25.0
+    "scratch_tickets_active" = 65.0
     "slot_idle" = 45.0
     "slot_active" = 110.0
     "bar_dice_idle" = 25.0
@@ -53,6 +55,10 @@ $frameP95BudgetsMs = @{
     "baccarat_active" = 120.0
     "roulette_idle" = 30.0
     "roulette_active" = 160.0
+    "craps_idle" = 30.0
+    "craps_active" = 160.0
+    "crew_draw_poker_idle" = 25.0
+    "crew_draw_poker_active" = 110.0
     "video_poker_idle" = 20.0
     "video_poker_active" = 60.0
     "slot_autoplay_active" = 100.0
@@ -225,6 +231,11 @@ $scenariosByName = @{}
 foreach ($scenario in @($report.scenarios)) {
     $scenariosByName[[string]$scenario.name] = $scenario
 }
+$l02AnimatedIdleGameIds = @(
+    "pull_tabs", "scratch_tickets", "slot", "bar_dice", "blackjack",
+    "baccarat", "roulette", "craps", "crew_draw_poker", "video_poker"
+)
+$minimumIdleRedraws = [Math]::Max(1, [int][Math]::Ceiling(([double]$Frames * 8.0) / 120.0))
 foreach ($scenarioName in $frameP95BudgetsMs.Keys) {
     Assert-Condition -Condition ($scenariosByName.ContainsKey($scenarioName)) -Message "Missing web perf scenario '$scenarioName'." -Failures $failures
     if (-not $scenariosByName.ContainsKey($scenarioName)) {
@@ -236,6 +247,18 @@ foreach ($scenarioName in $frameP95BudgetsMs.Keys) {
     Assert-Condition -Condition ($p95 -le $budget) -Message ("Scenario {0} frame p95 {1:N3}ms exceeded {2:N3}ms." -f $scenarioName, $p95, $budget) -Failures $failures
     $memoryDelta = [Math]::Abs([int64]$scenario.static_memory_bytes.delta)
     Assert-Condition -Condition ($memoryDelta -le $scenarioMemoryDeltaBudgetBytes) -Message ("Scenario {0} memory delta {1:N0} bytes exceeded {2:N0} bytes." -f $scenarioName, $memoryDelta, $scenarioMemoryDeltaBudgetBytes) -Failures $failures
+    # Keep each idle timing assertion structurally paired with evidence from
+    # the same sample window that scheduler and drawing stayed alive. Absolute
+    # counters can be nonzero because of an earlier transition and are not proof.
+    if ($Plan -eq "l02" -and $scenarioName.EndsWith("_idle")) {
+        $gameId = $scenarioName.Substring(0, $scenarioName.Length - 5)
+        if ($l02AnimatedIdleGameIds -notcontains $gameId) { continue }
+        $surfaceDelta = $scenario.liveness_counter_delta.game_surface
+        $redrawDelta = [int]$surfaceDelta.surface_animation_redraw_count
+        $drawSampleDelta = [int]$surfaceDelta.draw_sample_count
+        Assert-Condition -Condition ($redrawDelta -ge $minimumIdleRedraws) -Message ("Scenario {0} met its frame budget without the paired animation liveness floor: redraw delta {1}, required {2}." -f $scenarioName, $redrawDelta, $minimumIdleRedraws) -Failures $failures
+        Assert-Condition -Condition ($drawSampleDelta -gt 0) -Message ("Scenario {0} reported no draw samples in its paired idle liveness window." -f $scenarioName) -Failures $failures
+    }
 }
 
 if ($Plan -eq "coin_pusher") {

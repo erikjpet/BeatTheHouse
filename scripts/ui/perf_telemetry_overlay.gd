@@ -12,22 +12,26 @@ const CoinPusherLiveSessionScript := preload("res://scripts/games/coin_pusher/co
 
 const REQUIRED_GAME_IDS := [
 	"pull_tabs",
+	"scratch_tickets",
 	"slot",
 	"bar_dice",
 	"blackjack",
 	"baccarat",
 	"roulette",
 	"craps",
+	"crew_draw_poker",
 	"video_poker",
 ]
 const ACTIVE_ACTIONS := {
 	"pull_tabs": "buy_tab",
+	"scratch_tickets": "buy_scratch_ticket",
 	"slot": "spin",
 	"bar_dice": "roll",
 	"blackjack": "play_basic",
 	"baccarat": "deal_baccarat",
 	"roulette": "spin_roulette",
 	"craps": "roll_craps",
+	"crew_draw_poker": "deal",
 	"video_poker": "draw",
 }
 const DEFAULT_SAMPLE_STRIDE_FRAMES := 30
@@ -67,6 +71,7 @@ var current_tags: Dictionary = {}
 var current_start_msec := 0
 var current_start_memory_bytes := 0
 var current_last_memory_bytes := 0
+var current_start_liveness: Dictionary = {}
 var frame_ms_samples: Array = []
 var process_ms_samples: Array = []
 var physics_ms_samples: Array = []
@@ -1240,6 +1245,7 @@ func _begin_scenario(name: String, tags: Dictionary = {}) -> void:
 	current_start_msec = Time.get_ticks_msec()
 	current_start_memory_bytes = _current_memory_bytes()
 	current_last_memory_bytes = current_start_memory_bytes
+	current_start_liveness = _liveness_counter_snapshot()
 	frame_ms_samples = []
 	process_ms_samples = []
 	physics_ms_samples = []
@@ -1281,6 +1287,7 @@ func _end_scenario() -> void:
 	_sample_monitors()
 	var end_msec := Time.get_ticks_msec()
 	var memory_stats := _int_stats(memory_samples)
+	var end_liveness := _liveness_counter_snapshot()
 	var frame_attribution_samples := {}
 	if current_scenario.begins_with("coin_pusher_"):
 		# Keep the per-frame rows for Coin Pusher closure captures. Aggregate p95
@@ -1331,7 +1338,9 @@ func _end_scenario() -> void:
 			"surface_realtime_augment": _int_stats(foundation_surface_realtime_augment_usec_samples),
 		},
 		"frame_attribution_samples": frame_attribution_samples,
-		"liveness_counters": _liveness_counter_snapshot(),
+		"liveness_counters_start": current_start_liveness.duplicate(false),
+		"liveness_counters": end_liveness,
+		"liveness_counter_delta": _liveness_counter_delta(current_start_liveness, end_liveness),
 		"allocation_proxy": {
 			"sample_count": monitor_sample_count,
 			"sample_stride_frames": sample_stride_frames,
@@ -1554,6 +1563,22 @@ func _liveness_counter_snapshot() -> Dictionary:
 	return {
 		"game_surface": game_status,
 		"environment_scene": environment_status,
+	}
+
+
+func _liveness_counter_delta(before: Dictionary, after: Dictionary) -> Dictionary:
+	var before_game := before.get("game_surface", {}) as Dictionary
+	var after_game := after.get("game_surface", {}) as Dictionary
+	var before_environment := before.get("environment_scene", {}) as Dictionary
+	var after_environment := after.get("environment_scene", {}) as Dictionary
+	return {
+		"game_surface": {
+			"surface_animation_redraw_count": int(after_game.get("surface_animation_redraw_count", 0)) - int(before_game.get("surface_animation_redraw_count", 0)),
+			"draw_sample_count": int(after_game.get("draw_sample_count", 0)) - int(before_game.get("draw_sample_count", 0)),
+		},
+		"environment_scene": {
+			"scene_idle_animation_redraw_count": int(after_environment.get("scene_idle_animation_redraw_count", 0)) - int(before_environment.get("scene_idle_animation_redraw_count", 0)),
+		},
 	}
 
 
