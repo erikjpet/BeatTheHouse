@@ -203,17 +203,34 @@ func _prove_holdout_feedback() -> void:
 			return
 		var beat_index := clampi(int(challenge.get("current_beat", 0)), 0, beats.size() - 1)
 		var beat: Dictionary = beats[beat_index] if typeof(beats[beat_index]) == TYPE_DICTIONARY else {}
-		var target_msec := int(beat.get("target_msec", Time.get_ticks_msec()))
-		var delay_msec := maxi(0, target_msec - Time.get_ticks_msec())
-		if delay_msec > 0:
-			await create_timer(float(delay_msec) / 1000.0).timeout
 		var target_index := int(challenge.get("target_slot", 0)) if str(beat.get("kind", "")) == "target" else 0
-		_emit_surface_input("video_poker_palm", target_index, false)
+		# Resolve the hit target before entering the narrow timing window. Building
+		# proof-only hit geometry on a freshly changed beat can be substantially
+		# slower than dispatching an already-positioned real pointer event.
+		var palm_position: Vector2 = canvas.call("local_position_for_surface_action", "video_poker_palm", target_index)
+		if palm_position.x < 0.0 or palm_position.y < 0.0:
+			failures.append("Visible hit target missing for video_poker_palm[%d]." % target_index)
+			return
+		# Follow the rendered sweep instead of comparing its machine-local clock
+		# with Time.get_ticks_msec().  The two clocks intentionally have different
+		# epochs, and the visible meter is the player-facing source of truth.
+		var target_reached := false
+		for _frame in range(180):
+			var live_msec := int(canvas.call("surface_simulation_time_msec"))
+			if absi(_holdout_beat_margin_msec(beat, live_msec)) <= 12:
+				target_reached = true
+				break
+			await process_frame
+		if not target_reached:
+			failures.append("Live HOLDOUT sweep never reached its visible target.")
+			return
+		_emit_mouse_at(palm_position)
 		await _settle(3)
 	var completed := _surface_state(canvas)
 	var completed_grade := str(completed.get("holdout_grade", ""))
 	if completed_grade != "perfect":
-		failures.append("Live HOLDOUT inputs did not grade perfect.")
+		var completed_challenge: Dictionary = completed.get("holdout_challenge", {}) if typeof(completed.get("holdout_challenge", {})) == TYPE_DICTIONARY else {}
+		failures.append("Live HOLDOUT inputs did not grade perfect: grade=%s beats=%s" % [completed_grade, JSON.stringify(completed_challenge.get("beats", []))])
 		return
 	_emit_surface_input("video_poker_draw", 0, false)
 	await _wait_card_reveal()
@@ -422,6 +439,14 @@ func _emit_surface_input(action: String, index: int, touch: bool) -> void:
 		touch_event.position = position
 		canvas.call("_gui_input", touch_event)
 		return
+	_emit_mouse_at(position)
+
+
+func _emit_mouse_at(position: Vector2) -> void:
+	var canvas: Control = app.get("game_surface_canvas")
+	if canvas == null:
+		failures.append("Game surface disappeared before mouse input.")
+		return
 	var mouse_event := InputEventMouseButton.new()
 	mouse_event.button_index = MOUSE_BUTTON_LEFT
 	mouse_event.pressed = true
@@ -434,6 +459,17 @@ func _surface_state(canvas: Control) -> Dictionary:
 		return {}
 	var snapshot: Dictionary = canvas.call("current_view_snapshot")
 	return snapshot.get("state", {}) if typeof(snapshot.get("state", {})) == TYPE_DICTIONARY else {}
+
+
+func _holdout_beat_margin_msec(beat: Dictionary, current_msec: int) -> int:
+	var started := int(beat.get("started_msec", current_msec))
+	var duration := maxi(1, int(beat.get("duration_msec", 880)))
+	var target_msec := int(beat.get("target_msec", started + int(round(float(duration) * 0.58))))
+	var target_progress := clampf(float(target_msec - started) / float(duration), 0.0, 1.0)
+	var cycle_msec := posmod(maxi(0, current_msec - started), duration * 2)
+	var phase := float(cycle_msec) / float(duration)
+	var progress := phase if phase <= 1.0 else 2.0 - phase
+	return int(round((progress - target_progress) * float(duration)))
 
 
 func _save_shot(file_id: String) -> void:

@@ -170,9 +170,15 @@ func _apply_numbers_sequence(run_state: RunState, checkpoints: Array, seed: Stri
 	_checkpoint(run_state, checkpoints, seed, "numbers_punchline_post")
 	run_state.set_environment({"id": "corner_store", "archetype_id": "corner_store", "world_node_id": "corner_store", "turns": 0})
 	run_state.advance_numbers_past_post_travel_actions(8)
+	# This is a deterministic route fixture, not an economy-pressure assertion.
+	# Earlier seeded encounters can legitimately leave less than the fixed $10
+	# late-book stake, so fund only the missing fixture amount before exercising
+	# the Numbers state transition (the camouflage fixture below does the same).
+	if run_state.bankroll < 10:
+		run_state.change_bankroll(10 - run_state.bankroll)
 	var past_post := run_state.numbers_buy_slip(handle, 10, "straight")
 	if not bool(past_post.get("ok", false)):
-		failures.append("%s could not write the deterministic late-book Numbers slip." % seed)
+		failures.append("%s could not write the deterministic late-book Numbers slip: %s" % [seed, JSON.stringify(past_post)])
 		return
 	_checkpoint(run_state, checkpoints, seed, "numbers_past_post_detection")
 	run_state.advance_environment_turns(run_state.numbers_state.settlement_action(day) - int(run_state.numbers_state.action_index))

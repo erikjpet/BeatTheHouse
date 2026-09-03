@@ -1147,7 +1147,7 @@ func _on_game_surface_pointer_action(action: String, index: int, phase: String, 
 			str(command.get(surface_intent_key, "")),
 			int(command.get(surface_intent_index_key, index)),
 			false,
-			_environment_simulation_time_msec()
+			_current_game_surface_input_time_msec()
 		)
 	command["_resolved_surface_ui_state"] = ui_state
 	_apply_game_surface_command(command, index, false, notify_coach, true)
@@ -1174,7 +1174,7 @@ func _handle_module_surface_action(action: String, index: int, confirm_requested
 	debug_outer_stage_started_usec = Time.get_ticks_usec() if debug_coin_pusher_outer else 0
 	var command: Dictionary
 	if _current_game_uses_action_authority():
-		command = _sealed_action_host_surface_intent(action, index, confirm_requested, _environment_simulation_time_msec())
+		command = _sealed_action_host_surface_intent(action, index, confirm_requested, _current_game_surface_input_time_msec())
 	else:
 		command = current_game.surface_action_command(action, index, confirm_requested, ui_state, run_state, run_state.current_environment)
 	var debug_outer_command_usec := Time.get_ticks_usec() - debug_outer_stage_started_usec if debug_coin_pusher_outer else 0
@@ -1208,6 +1208,17 @@ func _current_game_uses_action_authority() -> bool:
 		and current_game == canonical \
 		and current_game.has_method(resolve_method) \
 		and current_game.has_method(wager_method)
+
+
+func _current_game_surface_input_time_msec() -> int:
+	# Timing skills are graded against the exact simulation frame the player can
+	# see. A slow draw can advance the wall clock without advancing the cabinet;
+	# using that hidden time would turn a visually perfect input into a miss.
+	if game_surface_canvas != null and current_game != null and game_surface_canvas.is_visible_in_tree():
+		var rendered_surface := game_surface_canvas.realtime_surface_state()
+		if str(rendered_surface.get("game_id", "")) == current_game.get_id():
+			return game_surface_canvas.surface_simulation_time_msec()
+	return _environment_simulation_time_msec()
 
 
 func _sealed_action_host_table_binding(environment: Dictionary = {}) -> String:

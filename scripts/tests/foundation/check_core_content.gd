@@ -5605,20 +5605,27 @@ func _check_slot_gold_buffalo_collection(library: ContentLibrary, definition: Di
 	if game == null:
 		return
 	var run_state: RunState = _slot_run_state("SLOT-GOLD-BUFFALO", 10000000)
-	var environment: Dictionary = _slot_environment()
 	var machine: Dictionary = _slot_machine(definition, run_state, "buffalo", "line_5x3", "standard", "plain")
-	_slot_store_machine(run_state, environment, machine)
-	var rng: RngStream = run_state.create_rng("slot_gold_buffalo_collection")
-	for _spin_index in range(10000):
-		var result: Dictionary = game.resolve_with_context("spin", 10, run_state, environment, rng, {})
-		if bool(result.get("ok", false)):
-			GameModule.apply_result(run_state, result, rng)
-		_slot_complete_active_bonus(game, run_state, environment, rng)
-	var final_machine: Dictionary = SlotMachineStateScript.read_machine(environment, "slot")
-	var bonus_state: Dictionary = _slot_dict(final_machine.get("bonus_state", {}))
-	var total_collected := int(bonus_state.get("gold_buffalo_total_collected", 0))
-	if total_collected <= 0:
-		failures.append("Gold Buffalo collection did not advance over 10,000 paid base spins.")
+	var buffalo = SlotFamilyBuffaloScript.new()
+	var animal_cells: Array = [
+		{"reel": 0, "row": 0},
+		{"reel": 1, "row": 0},
+		{"reel": 2, "row": 0},
+		{"reel": 3, "row": 0},
+	]
+	var grid: Array = [
+		["EAGLE", "A", "BLANK"],
+		["WOLF", "K", "BLANK"],
+		["HORSE", "Q", "BLANK"],
+		["ELK", "J", "BLANK"],
+		["10", "A", "BLANK"],
+	]
+	var entry := {"id": "gold_buffalo_collection_fixture", "classification": "true_win", "forced_placement": {"kind": "line", "symbol": "EAGLE", "cells": animal_cells}}
+	var side_effects: Dictionary = buffalo.apply_grid_side_effects(machine, grid, 10, entry, definition)
+	var bonus_state: Dictionary = _slot_dict(machine.get("bonus_state", {}))
+	var bet_bucket: Dictionary = _slot_dict(_slot_dict(bonus_state.get("per_bet", {})).get("bet_10", {}))
+	if int(side_effects.get("animal_count", 0)) != 4 or int(bonus_state.get("gold_buffalo_total_collected", 0)) != 4 or int(bet_bucket.get("gold_buffalo_heads", 0)) != 4:
+		failures.append("Gold Buffalo collection did not advance exactly from a settled four-animal base grid.")
 	if not _slot_gold_buffalo_conversion_fixture(definition):
 		failures.append("Gold Buffalo conversion fixture did not convert a ready collection meter.")
 
@@ -5892,6 +5899,8 @@ func _slot_check_metrics(definition: Dictionary, family_id: String, key: String,
 	var feature_target := float(targets.get("feature_frequency", 0.0))
 	var feature_tolerance := float(targets.get("feature_tolerance", 0.0))
 	_slot_assert_between(feature, feature_target - feature_tolerance, feature_target + feature_tolerance, "%s feature frequency" % key, failures)
+	if family_id == "buffalo" and int(metrics.get("conversion_count", 0)) <= 0:
+		failures.append("%s completed no Gold Buffalo collection conversions in the 10,000-spin RTP sample." % key)
 
 
 func _check_slot_determinism(library: ContentLibrary, definition: Dictionary, failures: Array) -> void:
@@ -6894,7 +6903,8 @@ func _check_slot_bonus_trigger_reveal_order(definition: Dictionary, failures: Ar
 		var trigger_grid: Array = _slot_array(result.get("slot_grid", []))
 		if _slot_symbol_count(trigger_grid, str(fixture.get("trigger_symbol", ""))) < 3:
 			failures.append("%s did not produce a visible three-symbol trigger grid." % str(fixture.get("label", "Slot trigger")))
-		var before_surface: Dictionary = presentation.surface_state(machine, run_state, definition, _slot_surface_ui_at_spin_msec(before_reveal_msec))
+		var animation_id := str(machine.get("slot_animation_id", ""))
+		var before_surface: Dictionary = presentation.surface_state(machine, run_state, definition, _slot_surface_ui_at_spin_msec(before_reveal_msec, animation_id))
 		var before_scene: Dictionary = _slot_dict(before_surface.get("slot_feature_scene", {}))
 		var before_manifest: Dictionary = renderer.render_signature(before_surface, definition, before_reveal_msec, "")
 		if not bool(before_surface.get("slot_bonus_trigger_reveal_pending", false)):
@@ -6905,7 +6915,7 @@ func _check_slot_bonus_trigger_reveal_order(definition: Dictionary, failures: Ar
 			failures.append("%s render signature left spin mode before reveal." % str(fixture.get("label", "Slot trigger")))
 		if JSON.stringify(_slot_array(before_surface.get("slot_grid", []))) != JSON.stringify(trigger_grid):
 			failures.append("%s did not keep the trigger grid visible during the pre-feature reveal." % str(fixture.get("label", "Slot trigger")))
-		var after_surface: Dictionary = presentation.surface_state(machine, run_state, definition, _slot_surface_ui_at_spin_msec(after_reveal_msec))
+		var after_surface: Dictionary = presentation.surface_state(machine, run_state, definition, _slot_surface_ui_at_spin_msec(after_reveal_msec, animation_id))
 		var after_scene: Dictionary = _slot_dict(after_surface.get("slot_feature_scene", {}))
 		var after_manifest: Dictionary = renderer.render_signature(after_surface, definition, after_reveal_msec, "")
 		if bool(after_surface.get("slot_bonus_trigger_reveal_pending", true)):
@@ -8165,7 +8175,7 @@ func _slot_surface_channel_duration(surface_state: Dictionary, channel_id: Strin
 			return maxi(0, int(channel.get("duration_msec", 0)))
 	return 0
 
-func _slot_surface_ui_at_spin_msec(spin_msec: int) -> Dictionary:
+func _slot_surface_ui_at_spin_msec(spin_msec: int, active_id: String) -> Dictionary:
 	var elapsed_sec := float(maxi(0, spin_msec)) / 1000.0
 	return {
 		"surface_time_msec": maxi(0, spin_msec),
@@ -8174,6 +8184,7 @@ func _slot_surface_ui_at_spin_msec(spin_msec: int) -> Dictionary:
 			"surface_animations": {
 				"slot_spin": {
 					"id": "slot_spin",
+					"active_id": active_id,
 					"active": true,
 					"elapsed": elapsed_sec,
 				},

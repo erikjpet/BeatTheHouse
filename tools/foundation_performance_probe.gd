@@ -37,12 +37,13 @@ const IDLE_SURFACE_DRAW_WAIVERS := {}
 const ANIMATED_IDLE_SURFACE_DRAW_BUDGETS := {
 	"roulette": 7.0,
 	"scratch_tickets": 5.0,
+	"slot": 5.0,
 	"video_poker": 5.0,
 }
 const GAME_IDLE_LIVENESS := {
 	"pull_tabs": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
 	"scratch_tickets": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
-	"slot": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 0, "zero_reason": "The idle slot cabinet is static until autoplay or a spin animation starts."},
+	"slot": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
 	"bar_dice": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
 	"craps": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
 	"blackjack": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},

@@ -145,6 +145,11 @@ func _check_slot_spin_and_host_ack(library) -> void:
 	run_state.set_environment(environment)
 	environment = run_state.current_environment
 	slot.enter(run_state, environment)
+	var idle_surface: Dictionary = slot.surface_state(run_state, run_state.current_environment, {"surface_time_msec": 0})
+	_check(bool(idle_surface.get("surface_animates_idle", false)) and bool(idle_surface.get("surface_realtime_state_refresh", false)), "Slot attract/idle cabinet lost its nonzero bounded liveness path.")
+	var idle_machine_before := JSON.stringify(slot.call("_peek_machine", run_state.current_environment))
+	var idle_patch: Dictionary = slot.surface_realtime_state_patch(run_state, run_state.current_environment, {"surface_time_msec": 1000}, idle_surface)
+	_check(int(idle_patch.get("slot_visual_time_msec", 0)) == 1000 and not idle_patch.has("ritual_projection") and JSON.stringify(slot.call("_peek_machine", run_state.current_environment)) == idle_machine_before, "Slot idle liveness rebuilt or mutated machine authority instead of advancing bounded presentation scalars.")
 	var forged_before := RuntimeScript.canonical_json(run_state.to_save_snapshot())
 	GameModule.apply_result(run_state, {"ok": true, "game_id": "slot", "source_id": "slot", "action_id": "spin", "sealed_action_authoritative": true, "deltas": {"bankroll_delta": 999}}, run_state.create_rng("forged_slot_apply"))
 	_check(RuntimeScript.canonical_json(run_state.to_save_snapshot()) == forged_before, "Slot accepted a direct unreceipted authoritative apply.")

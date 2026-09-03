@@ -79,7 +79,6 @@ func surface_state(machine: Dictionary, run_state: RunState, definition: Diction
 	if str(active_bonus.get("family", "")) == "pinball" and bool(active_bonus.get("active", false)):
 		active_bonus["pinball_launch_meter"] = _pinball_launch_meter(active_bonus, surface_time_msec)
 	var bet_options: Array = _bet_options(selected_bet)
-	var surface_motion_active := spin_motion_active or feature_active or nudge_available
 	var trigger_bonus_armed := _bonus_visible_on_surface(stored_active_bonus)
 	return _slot_surface_spec({
 		"surface_renderer": "slot_machine",
@@ -88,8 +87,11 @@ func surface_state(machine: Dictionary, run_state: RunState, definition: Diction
 		"surface_controls_native": true,
 		"surface_fixed_price_actions": true,
 		"surface_stake_controls_required": false,
-		"surface_animates_idle": surface_motion_active,
-		"surface_realtime_state_refresh": nudge_available or trigger_reveal_pending or (feature_active and (str(active_bonus.get("family", "")) == "pinball" or str(active_bonus.get("family", "")) == "buffalo")),
+		# The cabinet remains mechanically alive in attract/idle. Its realtime path
+		# below emits only bounded presentation scalars and shallow views; outcome,
+		# wager, feature, and machine authority still change only at action boundaries.
+		"surface_animates_idle": true,
+		"surface_realtime_state_refresh": true,
 		"surface_embeds_outcomes": true,
 		"surface_suppresses_game_result_burst": true,
 		"surface_action_bindings": {
@@ -246,7 +248,7 @@ func realtime_state_patch(machine: Dictionary, run_state: RunState, ui_state: Di
 	var skin: Dictionary = current_surface_state.get("slot_skin", {}) if typeof(current_surface_state.get("slot_skin", {})) == TYPE_DICTIONARY else {}
 	var feature_family := str(active_bonus.get("family", ""))
 	return {
-		"surface_realtime_state_refresh": nudge_available or trigger_reveal_pending or (feature_active and (feature_family == "pinball" or feature_family == "buffalo")),
+		"surface_realtime_state_refresh": true,
 		"slot_visual_time_msec": surface_time_msec,
 		"slot_attract_phase": _attract_phase(surface_time_msec, skin),
 		"slot_bonus_trigger_reveal_pending": trigger_reveal_pending,

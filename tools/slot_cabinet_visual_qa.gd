@@ -267,6 +267,11 @@ func _check_pinball_feature_manifests(definition: Dictionary, presentation, rend
 		"cabinet_variant_id": "neon_magenta",
 	}, prelaunch_run.create_rng("machine"))
 	prelaunch_machine["active_bonus"] = pinball.open_feature(prelaunch_machine, 10, prelaunch_run.create_rng("feature"), definition)
+	# Mirror the action-boundary marker installed by Slot when an authoritative
+	# spin opens the feature. A raw family fixture does not set host presentation
+	# metadata on its own.
+	prelaunch_machine["slot_pending_feature_alert"] = true
+	prelaunch_machine["slot_pending_feature_alert_msec"] = maxi(1, Time.get_ticks_msec())
 	var prelaunch_surface: Dictionary = presentation.surface_state(prelaunch_machine, prelaunch_run, definition, {"surface_time_msec": 240})
 	var prelaunch_manifest: Dictionary = renderer.render_signature(prelaunch_surface, definition, 240, "feature")
 	if str(prelaunch_manifest.get("pinball_feature_music_id", "")) != "bonus_music_pinball":
@@ -395,6 +400,10 @@ func _pinball_visual_sample(definition: Dictionary, format_id: String, inputs: A
 	machine = SlotMachineStateScript.set_selected_bet(machine, "bet_10")
 	var rng: RngStream = run_state.create_rng("feature")
 	var active: Dictionary = pinball.open_feature(machine, 10, rng, definition)
+	# The visual manifest consumes the bounded deterministic trajectory retained
+	# by a completed subsimulation. Live product play advances the same simulation
+	# through surface_refresh; this headless fixture drains it synchronously.
+	active["headless"] = true
 	machine["active_bonus"] = active
 	var guard := 0
 	var input_index := 0
