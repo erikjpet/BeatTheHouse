@@ -1,14 +1,18 @@
-# teach06_2 dependency-complete lesson classification
+# teach06_2 candidate lesson classification
 
-Status: **CLASSIFIED — implementation authoring has not begun**  
+Status: **CANDIDATE CLASSIFICATION — `game06_8` acceptance pending**  
 Exact classification root: `039e3326d7f09ab911f8903adc03b94c2cc12e4f`  
 Catalog: `data/tutorial/lessons.json` (63 entries: 56 `tutorial_run`, 7 `normal_run`)
 
 This is the mandatory section 1 classification artifact. It was completed before
-any lesson, coach, or teaching test was changed. The required `depth06_1`,
-`game06_8`, and `world06_7` surfaces are present on this root. Native cold-run and
-visual evidence remain final acceptance work; they were not started while the
-Blackjack closeout audit owned the Godot runtime.
+any lesson, coach, or teaching test was changed. The required `depth06_1` and
+`world06_7` work and the current `game06_8` surfaces are present on this root,
+but `game06_8` remains in binding audit. This candidate becomes the section 1
+final only if the `039e3326` game surface is accepted unchanged. If that surface
+changes before acceptance, every affected physical-game row must be re-audited
+before authoring. Native cold-run and visual evidence remain final acceptance
+work; they were not started while the Blackjack closeout audit owned the Godot
+runtime.
 
 ## Result
 
@@ -125,7 +129,7 @@ Three other contextual tips are also stale on the dependency-complete root:
 | 62 | `tip06_craps_pass_line` | stale | CAT:743; PUBLIC; LIVE | Rewrite the accurate Pass rule together with the current grab/drag/release physical throw. |
 | 63 | `tip06_venue_depth` | correct | CAT:752; PUBLIC | Keep unchanged; it preserves discovery without naming hidden rooms. |
 
-## Authoring decisions unlocked by this classification
+## Candidate authoring decisions (held for `game06_8` acceptance)
 
 1. Rewrite the four stale contextual tips; do not retain conflated triggers or
    obsolete physical-game wording.
@@ -135,3 +139,6 @@ Three other contextual tips are also stale on the dependency-complete root:
    and the physical craps throw.
 4. Prefer precise public predicates and actions over arrival-only triggers; a run
    that ignores Crew and never reaches these systems must see none of them.
+
+No lesson/code authoring is authorized by this candidate while `game06_8` remains
+in progress.
