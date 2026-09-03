@@ -63,6 +63,12 @@ const COIN_PUSHER_IDLE_SAMPLE_FRAMES := 120
 const COIN_PUSHER_ACTION_SAMPLE_FRAMES := 60
 const IDLE_LIVENESS_MINIMUM_INTERVALS := 2
 const IDLE_LIVENESS_WAIT_GRACE_MSEC := 5000
+const ACTIVE_PHASE_MINIMUM_FRAMES := 12
+const ACTIVE_PHASE_MINIMUM_MSEC := 500
+const ACTIVE_PHASE_CHANNELS := {
+	"baccarat": "baccarat_deal",
+	"roulette": "roulette_spin",
+}
 # CPU-throttled shipped Web frames can leave a substantial live-session
 # accumulator for the production chunked-exit path to drain. This bound affects
 # setup synchronization only; locked measurement windows remain unchanged.
@@ -210,6 +216,10 @@ func configure_for_probe(owner: FoundationMain, overlay_visible: bool) -> void:
 	if show_overlay:
 		_build_overlay()
 	_begin_scenario("overlay_cost_probe", {"surface": "environment", "mode": "idle"})
+
+
+func travel_stage_timing_enabled(target_id: String) -> bool:
+	return target_id == "corner_store" and plan_id in ["l02", "corner_store"]
 
 
 func begin_foundation_frame() -> void:
@@ -956,9 +966,15 @@ func _set_coin_pusher_reduce_motion(enabled: bool) -> void:
 
 
 func _measure_corner_store() -> void:
+	var total_started_usec := Time.get_ticks_usec()
+	var stage_started_usec := total_started_usec
 	app.start_foundation_run("WEB-CORNER-STORE")
+	var foundation_run_start_ms := _duration_ms_since(stage_started_usec)
+	stage_started_usec = Time.get_ticks_usec()
 	await _wait_frames(8)
+	var post_start_settle_ms := _duration_ms_since(stage_started_usec)
 	var run_state: RunState = app.get("run_state") as RunState
+	stage_started_usec = Time.get_ticks_usec()
 	var choice: Dictionary = app.call("_travel_choice", "corner_store")
 	if choice.is_empty() or not bool(choice.get("enabled", true)):
 		choice = {
@@ -967,6 +983,7 @@ func _measure_corner_store() -> void:
 			"enabled": true,
 			"route": app.call("_world_route_for_target", "corner_store"),
 		}
+	var choice_build_ms := _duration_ms_since(stage_started_usec)
 	var started_usec := Time.get_ticks_usec()
 	_emit_console("BTH_CORNER_STORE_OPEN_START ", {
 		"from": run_state.current_world_node_id() if run_state != null else "",
@@ -979,6 +996,13 @@ func _measure_corner_store() -> void:
 		"environment_id": str(run_state.current_environment.get("archetype_id", "")) if run_state != null else "",
 	})
 	mark_event("corner_store_open", {"duration_ms": duration_ms})
+	mark_event("corner_store_startup_timing", {
+		"foundation_run_start_ms": foundation_run_start_ms,
+		"post_start_settle_ms": post_start_settle_ms,
+		"choice_build_ms": choice_build_ms,
+		"travel_ms": duration_ms,
+		"total_ms": _duration_ms_since(total_started_usec),
+	})
 	await _measure_scenario("corner_store_idle", {"surface": "environment", "mode": "idle"}, scenario_frames)
 
 
@@ -1289,7 +1313,13 @@ func _measure_game(game_id: String) -> void:
 	await _measure_game_idle(game_id)
 	_begin_scenario("%s_active" % game_id, {"surface": game_id, "mode": "active"})
 	current_tags["action_evidence"] = _trigger_active_game_action(game_id)
-	await _wait_frames(active_frames)
+	if ACTIVE_PHASE_CHANNELS.has(game_id):
+		current_tags["active_phase_evidence"] = await _measure_named_active_phase(
+			str(ACTIVE_PHASE_CHANNELS.get(game_id, "")),
+			active_frames
+		)
+	else:
+		await _wait_frames(active_frames)
 	_end_scenario()
 	app.back_to_environment()
 	if not await _wait_for_game_exit():
@@ -1324,6 +1354,47 @@ func _game_surface_live_status() -> Dictionary:
 	if canvas == null or not canvas.has_method("performance_live_status"):
 		return {}
 	return canvas.call("performance_live_status") as Dictionary
+
+
+func _measure_named_active_phase(channel_id: String, frame_count: int) -> Dictionary:
+	var canvas := app.get("game_surface_canvas") as Control if app != null else null
+	var sample_frames := maxi(1, frame_count)
+	var active_at_start := canvas != null and canvas.has_method("surface_animation_active") \
+		and bool(canvas.call("surface_animation_active", channel_id))
+	var active_frame_count := 0
+	var longest_consecutive_active_frames := 0
+	var consecutive_active_frames := 0
+	var active_elapsed_msec := 0.0
+	var prior_usec := Time.get_ticks_usec()
+	for _frame_index in range(sample_frames):
+		await get_tree().process_frame
+		var now_usec := Time.get_ticks_usec()
+		var active := canvas != null and canvas.has_method("surface_animation_active") \
+			and bool(canvas.call("surface_animation_active", channel_id))
+		if active:
+			active_frame_count += 1
+			consecutive_active_frames += 1
+			longest_consecutive_active_frames = maxi(longest_consecutive_active_frames, consecutive_active_frames)
+			active_elapsed_msec += float(maxi(0, now_usec - prior_usec)) / 1000.0
+		else:
+			consecutive_active_frames = 0
+		prior_usec = now_usec
+	var active_at_end := canvas != null and canvas.has_method("surface_animation_active") \
+		and bool(canvas.call("surface_animation_active", channel_id))
+	return {
+		"channel_id": channel_id,
+		"active_at_start": active_at_start,
+		"active_at_end": active_at_end,
+		"sample_frames": sample_frames,
+		"active_frame_count": active_frame_count,
+		"longest_consecutive_active_frames": longest_consecutive_active_frames,
+		"active_elapsed_msec": active_elapsed_msec,
+		"minimum_active_frames": ACTIVE_PHASE_MINIMUM_FRAMES,
+		"minimum_active_msec": ACTIVE_PHASE_MINIMUM_MSEC,
+		"coverage_passed": active_at_start \
+			and longest_consecutive_active_frames >= ACTIVE_PHASE_MINIMUM_FRAMES \
+			and active_elapsed_msec >= float(ACTIVE_PHASE_MINIMUM_MSEC),
+	}
 
 
 func _measure_slot_autoplay() -> void:

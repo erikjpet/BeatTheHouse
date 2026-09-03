@@ -21,6 +21,7 @@ $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 . (Join-Path $PSScriptRoot "web_perf_coin_pusher_clock_contract.ps1")
 . (Join-Path $PSScriptRoot "web_perf_idle_liveness_contract.ps1")
+. (Join-Path $PSScriptRoot "web_perf_prestage_contract.ps1")
 . (Join-Path $PSScriptRoot "web_server_lifecycle.ps1")
 $trackedStatus = @(& git -C $root status --short --untracked-files=no)
 if ($Plan -eq "coin_pusher" -and $trackedStatus.Count -gt 0) {
@@ -236,6 +237,11 @@ if ($Plan -eq "l02") {
         $cornerStoreOpenMs = [double]$cornerStoreOpenEvents[-1].data.duration_ms
         Assert-Condition -Condition ($cornerStoreOpenMs -le $cornerStoreOpenBudgetMs) -Message ("Corner Store open {0:N3}ms exceeded {1:N3}ms." -f $cornerStoreOpenMs, $cornerStoreOpenBudgetMs) -Failures $failures
     }
+    $cornerStoreTiming = Get-WebPerfCornerStoreTimingEvaluation -Report $report
+    Assert-Condition -Condition ([bool]$cornerStoreTiming.startup_schema_present) -Message "Corner Store startup timing did not preserve every outer startup boundary." -Failures $failures
+    Assert-Condition -Condition ([bool]$cornerStoreTiming.travel_schema_present) -Message "Corner Store travel timing did not preserve every inner production boundary." -Failures $failures
+    Assert-Condition -Condition ([bool]$cornerStoreTiming.stage_values_valid) -Message "Corner Store stage timing contained an invalid stage value or target identity." -Failures $failures
+    Assert-Condition -Condition ([bool]$cornerStoreTiming.totals_valid) -Message "Corner Store stage timing did not reconcile with its measured startup/travel totals." -Failures $failures
 }
 
 $scenariosByName = @{}
@@ -255,7 +261,20 @@ foreach ($scenarioName in $frameP95BudgetsMs.Keys) {
     $scenario = $scenariosByName[$scenarioName]
     $p95 = [double]$scenario.frame_time_ms.p95
     $budget = [double]$frameP95BudgetsMs[$scenarioName]
-    Assert-Condition -Condition ($p95 -le $budget) -Message ("Scenario {0} frame p95 {1:N3}ms exceeded {2:N3}ms." -f $scenarioName, $p95, $budget) -Failures $failures
+    $frameSampleEligible = $true
+    if ($Plan -eq "l02" -and $scenarioName -in @("baccarat_active", "roulette_active")) {
+        $expectedChannel = if ($scenarioName -eq "baccarat_active") { "baccarat_deal" } else { "roulette_spin" }
+        $activePhase = Get-WebPerfActivePhaseEvaluation -Scenario $scenario -ExpectedChannel $expectedChannel
+        Assert-Condition -Condition ([bool]$activePhase.schema_present) -Message ("Scenario {0} omitted named active-phase evidence." -f $scenarioName) -Failures $failures
+        Assert-Condition -Condition ([bool]$activePhase.channel_matches) -Message ("Scenario {0} measured channel '{1}' instead of '{2}'." -f $scenarioName, [string]$activePhase.channel_id, $expectedChannel) -Failures $failures
+        Assert-Condition -Condition ([bool]$activePhase.active_at_start) -Message ("Scenario {0} did not enter its named animation phase at the action boundary." -f $scenarioName) -Failures $failures
+        Assert-Condition -Condition ([bool]$activePhase.frame_window_passed) -Message ("Scenario {0} retained only {1} consecutive active frames; at least {2} are required before frame p95 is eligible." -f $scenarioName, [int]$activePhase.longest_consecutive_active_frames, [int]$activePhase.minimum_active_frames) -Failures $failures
+        Assert-Condition -Condition ([bool]$activePhase.elapsed_window_passed) -Message ("Scenario {0} retained only {1:N3}ms in its named phase; at least {2:N3}ms are required before frame p95 is eligible." -f $scenarioName, [double]$activePhase.active_elapsed_msec, [double]$activePhase.minimum_active_msec) -Failures $failures
+        $frameSampleEligible = [bool]$activePhase.passed
+    }
+    if ($frameSampleEligible) {
+        Assert-Condition -Condition ($p95 -le $budget) -Message ("Scenario {0} frame p95 {1:N3}ms exceeded {2:N3}ms." -f $scenarioName, $p95, $budget) -Failures $failures
+    }
     $memoryDelta = [Math]::Abs([int64]$scenario.static_memory_bytes.delta)
     Assert-Condition -Condition ($memoryDelta -le $scenarioMemoryDeltaBudgetBytes) -Message ("Scenario {0} memory delta {1:N0} bytes exceeded {2:N0} bytes." -f $scenarioName, $memoryDelta, $scenarioMemoryDeltaBudgetBytes) -Failures $failures
     # Keep each idle timing assertion structurally paired with evidence from
