@@ -1766,7 +1766,7 @@ func _blackjack_surface_action_command(surface_action: String, index: int, confi
 					if str(next_state.get("selected_action_id", "")) == "play_basic" and str(next_state.get("selected_action_kind", "")) == "legal":
 						_stand_all_hands(next_state)
 						return _settle_completed_round_command(next_state, index, "You wave off the hand. Dealer reveals and settles.", table, run_state)
-					return _action_command("play_basic", "legal", false, next_state, index, "Basic play selected. Click again to stand and settle, or use the live hand buttons.", true)
+					return _action_command("play_basic", "legal", confirm_requested, next_state, index, "Basic play selected. Click again to stand and settle, or use the live hand buttons.", true)
 				return _settle_completed_round_command(next_state, index, _terminal_round_message(next_state), table, run_state)
 			var ritual_envelope := blackjack_ritual_deal_envelope(next_state, environment)
 			if not blackjack_ritual_deal_envelope_authorized(ritual_envelope, "wagering"):

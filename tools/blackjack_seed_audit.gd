@@ -547,7 +547,15 @@ func _run_selection_confirmation_fixture(game: GameModule) -> void:
 			or str(confirmation.get("action_id", "")) != "play_basic" \
 			or not confirmation_requests_resolution \
 			or typeof(confirmation.get("_sealed_action_host_delivery", null)) != TYPE_DICTIONARY:
-		failures.append("Selection-confirmation fixture did not seal the confirming public click.")
+		failures.append("Selection-confirmation fixture did not seal the confirming public click: %s" % JSON.stringify({
+			"handled": bool(confirmation.get("handled", false)),
+			"action_id": str(confirmation.get("action_id", "")),
+			"resolve": bool(confirmation.get("resolve", false)),
+			"direct_resolve": bool(confirmation.get("direct_resolve", false)),
+			"error_code": str(confirmation.get("error_code", "")),
+			"message": str(confirmation.get("message", "")),
+			"has_delivery": typeof(confirmation.get("_sealed_action_host_delivery", null)) == TYPE_DICTIONARY,
+		}))
 		return
 	var result := BlackjackAuthorityTestDriverScript.resolve_surface_command(game, confirmation, 5, data.run_state, data.run_state.current_environment)
 	if not bool(result.get("ok", false)) or (result.get("blackjack_hand_results", []) as Array).is_empty():
