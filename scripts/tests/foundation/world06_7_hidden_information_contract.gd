@@ -30,13 +30,17 @@ func _check_save_authority_lifecycle(failures: Array) -> void:
 	var unstarted := RunStateScript.new()
 	_check(CrewTurnModelScript.valid_authority_id(str(unstarted.get("_crew_private_authority_id"))), "A newly constructed RunState lacked private save authority before fixture population.", failures)
 	var run := RunStateScript.new()
-	run.start_new("WORLD06-7-AUTHORITY-LIFECYCLE", RunStateScript.standard_challenge("WORLD06-7-AUTHORITY-LIFECYCLE"))
+	run.start_new("WORLD06-7-AUTHORITY-LIFECYCLE", RunStateScript.custom_challenge("authority_lifecycle", "WORLD06-7-AUTHORITY-LIFECYCLE", {"starting_bankroll": 4500, "starting_heat": 4}))
 	var authority_before_save := str(run.get("_crew_private_authority_id"))
 	_check(CrewTurnModelScript.valid_authority_id(authority_before_save), "A new run did not mint its private save authority during construction.", failures)
 	var first := run.to_save_snapshot()
 	var second := run.to_save_snapshot()
 	_check(str(run.get("_crew_private_authority_id")) == authority_before_save, "Save projection replaced the live run's private authority.", failures)
 	_check(str(_saved_crew(first).get("a", "")) == authority_before_save and JSON.stringify(first) == JSON.stringify(second), "Save projection did not retain one stable per-run private envelope.", failures)
+	var json_restored := RunStateScript.new()
+	json_restored.from_dict(JSON.parse_string(JSON.stringify(first)))
+	var restored_crew := _saved_crew(json_restored.to_save_snapshot())
+	_check(str(restored_crew.get("a", "")) == authority_before_save and not restored_crew.has("private_authority_error"), "A valid private envelope failed authentication after JSON normalized integer-valued public context.", failures)
 
 
 func _check_semantic_indistinguishability(failures: Array) -> void:

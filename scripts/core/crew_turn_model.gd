@@ -270,6 +270,13 @@ static func _canonical(value: Variant) -> Variant:
 		var result: Array = []
 		for entry in value as Array: result.append(_canonical(entry))
 		return result
+	if typeof(value) == TYPE_FLOAT:
+		# Godot's JSON parser represents every JSON number as a float. Treat exact
+		# JSON-safe integers identically before and after disk round-trip so the
+		# authenticated public binding does not reject its own valid save.
+		var number := float(value)
+		if absf(number) <= 9007199254740991.0 and number == floor(number):
+			return int(number)
 	return value
 
 
