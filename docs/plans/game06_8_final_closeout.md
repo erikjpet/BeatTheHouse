@@ -2,17 +2,16 @@
 
 Date: 2026-09-03  
 Independent closeout lane: `/root/game_closeout`  
-Frozen landed product base: `914e5ac822d8ee3127f210203dc688b182a19c65`  
-Frozen product tree: `82ea2d051fdef2926f02a390410369bc7bc31ae8`
+Frozen landed game product base: `73b7a9523116712be266240397b3901e17476f4a`
+Frozen game product tree: `8964fc29e38d7c3b2d5704ae089952a56a4cdbf4`
 
 ## Verdict
 
-`game06_8` is **IN PROGRESS** while the final Blackjack statistical audit and
-exact-tree aggregate games suite finish. The `depth06_1` dependency is accepted
-at `b33a0584`, every
-row-focused Family 1 contract
-is green on the frozen product tree, and no game implementation has been
-rebuilt. This report becomes the final closure record only after the two
+`game06_8` is **IN PROGRESS** while the final Blackjack statistical audit, the
+Crew depth comparison repair, and the exact-tree aggregate games suite finish.
+The `depth06_1` dependency is accepted at `b33a0584`, the game-owned focused
+contracts are green on the frozen product tree, and no game implementation has
+been rebuilt. This report becomes the final closure record only after the
 remaining entries in the gate ledger below are replaced with immutable PASS
 evidence.
 
@@ -30,7 +29,7 @@ All recovered product integrations are ancestors of the frozen base:
 | Row | Accepted landed implementation | Final evidence source |
 | --- | --- | --- |
 | `game06_1` | `5a2b1e1a6782a13308585e1a974adeeb86be0647` | `game06_1_final_closeout.md` |
-| `game06_2` | `d47feee3`, recovery `b091bc43` | `game06_2_final_closeout.md` |
+| `game06_2` | `d47feee3`, recovery through `683f5e11`, bounded-authority remediation `73b7a952` | `game06_2_final_closeout.md` |
 | `game06_3` | `212475356cedb42056a2677b590e5b69ed0ac8aa` | `game06_3_handoff.md` |
 | `game06_4` | `e874d6bc1636ab8094bd88c0c304a5db29902535`, remediation `bd77ac54da2c9a911587802968d66cd589a7a1c9` | `game06_4_final_closeout.md` |
 | `game06_5` | `996a98b69a3ab477e8cb4e83109693b730fcb1b3` | archived row prompt and Crossword decision evidence |
@@ -57,8 +56,8 @@ SHA-256 is
 | 8. Neighbour outcome isolation | Blackjack, Roulette/Baccarat, Bar Dice and showdown row contracts run ten deterministic actor/opponent seeds and compare authoritative player outcomes/bankroll. Crew Poker policies inspect only public/dealt state. | PASS |
 | 9. Save/exit/revisit | Focused contracts cover every declared phase, including mid-shoe, squeeze, spin, scratch, feature, street interruption and duel. Receipt and one-shot ledgers prevent a second charge, payout, reward, dialogue or audio event. | PASS |
 | 10. Maximal composition | Family 1 consumer checks plus accepted `depth06_1` exercise games at scenario/event/service/traveler/Sweep-capable nodes and preserve ordinary exit behavior. The exact 55-id/1,485-pair audit had zero failures; its reproducible 24-scenario sample and focused authority/visual/RTP checks are green. | PASS |
-| 11. Exact performance/liveness | Accepted row reports include native/low-end-Web budgets, zero forbidden full-snapshot calls and nonzero liveness for all touched animated surfaces. Coin Pusher's final locked Chrome run is green at unchanged caps. Performance is not rerun locally outside the program cadence. | PASS BY BINDING CHECKPOINTS |
-| 12. Exact-tree complete gates | Project validation and every Family 1 row contract pass on this tree. The aggregate functional games suite is PENDING its clean no-concurrency rerun. Native/Web, accessibility, determinism, RTP and visual artifacts are bound to unchanged product blobs above. | PENDING AGGREGATE RUN |
+| 11. Exact performance/liveness | Accepted row reports include native/low-end-Web budgets, zero forbidden full-snapshot calls and nonzero liveness for all touched animated surfaces. Blackjack's authoritative repeat path now retains eight replay boundaries: the exact 25-hand prefix fell from 142.213s to 44.392s while preserving outcome/checkpoint chains and plateauing near 56KB. Coin Pusher's final locked Chrome run remains green at unchanged caps. | PASS BY BINDING CHECKPOINTS |
+| 12. Exact-tree complete gates | Game-owned focused contracts pass on this tree. The final Blackjack audit, repaired Crew depth comparison, and aggregate functional games suite remain pending. Native/Web, accessibility, determinism, RTP and visual artifacts are bound to unchanged product blobs above. | PENDING FINAL GATES |
 
 ## Complete shipped-surface ledger
 
@@ -88,13 +87,15 @@ presentation only, never the authoritative timing window or result.
 | `tools/game_ritual_vocabulary_contract_test.ps1` | PASS; `game_ritual/1`, 132 negative fixtures, seven neutrality targets, env vocabulary `749390ce` |
 | `game_ritual_runtime_test.gd` | PASS |
 | `game06_2_depth_contract.gd` | PASS |
+| `game06_2_repeated_reprieve_contract.gd` | PASS; two fresh normalized semantic fixtures plus terminal reprieve mechanics |
 | `game06_3_depth_contract.gd` | PASS; Roulette and Baccarat |
 | `game06_4_machine_ritual_contract.gd` | PASS |
 | `game06_6_bar_dice_contract.gd` | PASS; seven phases, ten seeds |
 | `game06_7_showdown_duel_contract.gd` | PASS; nine phases, ten seeds |
 | Independent contact-sheet inspection | PASS for checked-in Bar Dice and Rourke matrices: cup/dice/pot/opponent staging and rail/table/stacks/Rourke staging remain distinguishable when title/reward copy is ignored; phase, pressure, crowd and terminal changes are materially visible |
 | Project validation during first aggregate attempt | PASS in 109.128s; aggregate did not start because the intentional concurrent-process guard found the still-running Blackjack audit. This setup-only red is retained and will not be called a suite result. |
-| Clean aggregate `FoundationSuite games` | PENDING |
+| `crew06_10_depth_contract.gd` exact integrated rerun | PENDING depth-lane comparison repair integration |
+| Clean aggregate `FoundationSuite games` | PENDING; inherited `check_slots_surfaces.gd` parser gap must close first |
 | `depth06_1` exact-tree dependency | PASS/DONE at `b33a05843fb161cd1c2970b4af2a475473beac40`; 55 ids, 1,485 pairs, zero failures; two byte-identical 10-seed/560-checkpoint reports, combined hash `1473694648` |
 
 The earlier Blackjack wrapper is retained timing-red under four-lane closeout
@@ -112,13 +113,23 @@ aggregate run above is the Family 1 binding result.
   hands and advances terminal presentation through sealed auto intents. Its
   predecessor's detached repeated-hand path is retained as a failed audit
   attempt, not a product defect or pass.
+- `73b7a952` removes the sealed-host repeat-play growth blocker without changing
+  outcomes. Historical 128-entry v3 saves remain valid and converge on their
+  next commit to eight retained boundaries; retained replay, evicted rejection,
+  save/load, caller isolation, hostile receipt/proposal rejection, and exact
+  25-hand outcome/checkpoint parity pass. See
+  `docs/plans/game06_2_final_closeout.md`.
 - A fresh-worktree direct run before Godot imported its class cache printed
   parse errors and is invalid setup evidence. Clean import and reruns pass.
 - The first aggregate attempt stopped at the concurrent-Godot guard after
   validation. The guard was not bypassed; the clean rerun is recorded above.
 
-No row requirement, fixture assertion, sample count, performance limit or
-economy band was weakened. No product code changed in this independent gate.
+No row requirement, sample count, performance limit or economy band was
+weakened. The repeated-reprieve fixture now normalizes only valid fixed-width
+randomized Crew `a`/`z` envelope values for semantic identity while preserving
+the actual encrypted bytes for save/restore. Two fresh fixtures must agree
+before its mechanics run. The complete per-surface routing is recorded in
+`docs/plans/game06_8_exact_per_game_gate_inventory.md`.
 
 ## Human handoff
 
