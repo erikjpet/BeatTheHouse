@@ -1253,6 +1253,13 @@ func _sealed_action_host_store_ledger(candidate: RunState, ledger: Dictionary) -
 func _sealed_action_host_trusted_context(candidate: RunState, stake: int) -> Dictionary:
 	var environment := candidate.current_environment
 	var snapshot := candidate.to_save_snapshot()
+	# Crew's per-run save authority is intentionally random and private. It is not
+	# Blackjack action authority, so exclude only that opaque id/capsule from the
+	# trusted-context fingerprint while retaining every public Crew state field.
+	var crew_state: Dictionary = (snapshot.get("crew_state", {}) as Dictionary).duplicate(true) if typeof(snapshot.get("crew_state", {})) == TYPE_DICTIONARY else {}
+	crew_state.erase("a")
+	crew_state.erase("z")
+	snapshot["crew_state"] = crew_state
 	var snapshot_environment: Dictionary = (snapshot.get("current_environment", {}) as Dictionary).duplicate(true)
 	var game_states: Dictionary = (snapshot_environment.get("game_states", {}) as Dictionary).duplicate(true)
 	var game_id := current_game.get_id()
@@ -1653,12 +1660,28 @@ func _sealed_action_host_proposal_valid(proposal: Dictionary, proposal_input: Di
 	return GameRitualRuntimeScript.canonical_json(canonical) == GameRitualRuntimeScript.canonical_json(proposal)
 
 
-func _sealed_action_host_proposal_fingerprints(proposal: Dictionary) -> Dictionary:
+func _sealed_action_host_public_run_snapshot(value: Variant) -> Dictionary:
+	var snapshot: Dictionary = (value as Dictionary).duplicate(true) if typeof(value) == TYPE_DICTIONARY else {}
+	var crew_state: Dictionary = (snapshot.get("crew_state", {}) as Dictionary).duplicate(true) if typeof(snapshot.get("crew_state", {})) == TYPE_DICTIONARY else {}
+	crew_state.erase("a")
+	crew_state.erase("z")
+	snapshot["crew_state"] = crew_state
+	return snapshot
+
+
+func _sealed_action_host_proposal_fingerprints(proposal: Dictionary, proposal_input: Dictionary) -> Dictionary:
 	var content := proposal.duplicate(true)
 	content.erase("output_fingerprint")
+	# The full opaque proposal was already replayed and validated above. Receipts
+	# persist a public gameplay identity, so Crew's random private save authority
+	# must not make otherwise identical Blackjack transactions hash differently.
+	var public_input := proposal_input.duplicate(true)
+	public_input["run_snapshot"] = _sealed_action_host_public_run_snapshot(public_input.get("run_snapshot", {}))
+	content["input_fingerprint"] = GameRitualRuntimeScript.canonical_fingerprint(public_input)
+	content["run_snapshot"] = _sealed_action_host_public_run_snapshot(content.get("run_snapshot", {}))
 	return {
 		"proposal_fingerprint": GameRitualRuntimeScript.canonical_fingerprint(content),
-		"run_fingerprint": GameRitualRuntimeScript.canonical_fingerprint(proposal.get("run_snapshot", {})),
+		"run_fingerprint": GameRitualRuntimeScript.canonical_fingerprint(content.get("run_snapshot", {})),
 		"rng_fingerprint": GameRitualRuntimeScript.canonical_fingerprint(proposal.get("rng_snapshot", {})),
 	}
 
@@ -1739,7 +1762,7 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 	)
 	if not _sealed_action_host_proposal_valid(proposal, proposal_input):
 		return _sealed_action_host_rejection("invalid_proposal", "Blackjack game proposal failed closed validation.", request_key)
-	var proposal_fingerprints := _sealed_action_host_proposal_fingerprints(proposal)
+	var proposal_fingerprints := _sealed_action_host_proposal_fingerprints(proposal, proposal_input)
 	var result: Dictionary = (proposal.get("result", {}) as Dictionary).duplicate(true)
 	if not bool(proposal.get("ok", false)) or not bool(result.get("ok", false)):
 		result["ok"] = false

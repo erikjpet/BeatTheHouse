@@ -2030,6 +2030,8 @@ func _blackjack_resolve_proposal(action_id: String, stake: int, run_snapshot: Di
 	if not resolution_ui_state.has("surface_time_msec"):
 		resolution_ui_state["surface_time_msec"] = GameModule.deterministic_time_msec(candidate, {})
 	var result := _resolve_blackjack_proposal_core(action_id, stake, candidate, candidate.current_environment, rng, resolution_ui_state)
+	if bool(result.get("ok", false)) and action_id.begins_with("crew_play:"):
+		_rebind_pending_authority_checkpoint(candidate)
 	var proposal := {
 		"ok": bool(result.get("ok", false)),
 		"input_fingerprint": input_fingerprint,
@@ -2039,6 +2041,26 @@ func _blackjack_resolve_proposal(action_id: String, stake: int, run_snapshot: Di
 	}
 	proposal["output_fingerprint"] = RuntimeScript.canonical_fingerprint(proposal)
 	return proposal
+
+
+# Crew plays are the only Blackjack proposals that apply their visible fee and
+# Crew state directly to the detached candidate. Keep the already sealed pending
+# delivery intact while rebinding its restore checkpoint to those canonical
+# balances; otherwise the proposal's own save/load validation discards the
+# ledger before the host can verify and commit it.
+func _rebind_pending_authority_checkpoint(run_state: RunState) -> void:
+	if run_state == null:
+		return
+	var environment := run_state.current_environment
+	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	var table: Dictionary = game_states.get(get_id(), {}) if typeof(game_states.get(get_id(), {})) == TYPE_DICTIONARY else {}
+	var binding := "%s:%s:%s" % [get_id(), str(environment.get("id", "unknown")), str(environment.get("archetype_id", "unknown"))]
+	var ledger := ActionAuthorityScript.validate_persisted_ledger(table.get(BLACKJACK_HOST_LEDGER_KEY, {}), binding)
+	if ledger.is_empty() or (ledger.get("pending_delivery", {}) as Dictionary).is_empty():
+		return
+	ledger["checkpoint_fingerprint"] = run_state.action_authority_checkpoint_fingerprint()
+	table[BLACKJACK_HOST_LEDGER_KEY] = ledger
+	_update_environment_table(environment, table)
 
 
 func _resolve_blackjack_proposal_core(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary = {}, read_only_run_state: bool = false) -> Dictionary:
