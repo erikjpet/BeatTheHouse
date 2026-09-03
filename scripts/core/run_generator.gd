@@ -591,6 +591,7 @@ func _world_environment_data_for_node(run_state: RunState, map_data: Dictionary,
 		_apply_world_travel_targets(restored, run_state, map_data, node_id)
 		restored["world_node_id"] = node_id
 		var restored_definition := _apply_scenario_pin_suppression(run_state, node_id, run_state._seeded_scenario_definition_for_node_readonly(node_id))
+		_apply_scenario_sequence_travel_targets(restored, restored_definition)
 		ScenarioEngineScript.ensure_sequence_state(restored, restored_definition)
 		restored["layout"] = EnvironmentInstance.ensure_generated_layout(restored)
 		return restored
@@ -613,6 +614,7 @@ func _world_environment_data_for_node(run_state: RunState, map_data: Dictionary,
 	if str(archetype.get("kind", "")) == "home":
 		_apply_home_profile(run_state, environment_data, archetype, node_id, rng.fork("home_profile:%s" % node_id))
 	_apply_world_travel_targets(environment_data, run_state, map_data, node_id)
+	_apply_scenario_sequence_travel_targets(environment_data, scenario)
 	environment_data["layout"] = EnvironmentInstance.ensure_generated_layout(environment_data)
 	return environment_data
 
@@ -625,6 +627,31 @@ func _apply_world_travel_targets(environment_data: Dictionary, run_state: RunSta
 	environment_data["next_archetypes"] = targets.duplicate(true)
 	environment_data["travel_hooks"] = targets.duplicate(true)
 	environment_data["world_map_travel"] = true
+
+
+# A sequence may deliberately retarget an authored base route during its
+# aftermath. World-map generation replaces an archetype's static route list
+# with its current graph neighbors, so retain every exact base route that the
+# selected sequence declares before sealing semantic inventory and layout.
+# Every town node exists in the generated map; this only makes the scenario's
+# explicitly authored route reachable from its host node.
+func _apply_scenario_sequence_travel_targets(environment_data: Dictionary, definition: Dictionary) -> void:
+	if not ScenarioSequenceSchemaScript.is_sequence(definition):
+		return
+	var sequence := ScenarioSequenceSchemaScript.sequence(definition)
+	var declared := _copy_dict(sequence.get("declared_targets", {}))
+	var targets := _string_array(environment_data.get("next_archetypes", []))
+	for identity_value in _copy_array(declared.get("routes", [])):
+		var identity := str(identity_value).strip_edges()
+		if not identity.begins_with("base::world:"):
+			continue
+		var route_id := identity.trim_prefix("base::world:").strip_edges()
+		if route_id.is_empty() or library == null or library.route(route_id).is_empty():
+			continue
+		if not targets.has(route_id):
+			targets.append(route_id)
+	environment_data["next_archetypes"] = targets.duplicate(true)
+	environment_data["travel_hooks"] = targets.duplicate(true)
 
 
 func _grand_casino_local_target_ids(environment_data: Dictionary) -> Array:

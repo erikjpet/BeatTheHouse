@@ -273,10 +273,27 @@ static func check(library: ContentLibrary, failures: Array, scene_tree: SceneTre
 	_check_transition_and_event_delivery(failures)
 	_check_rollout_growth_contract(library, failures)
 	_check_delivery_day_production_package(library, failures)
+	_check_delivery_day_world_map_route_install(library, failures)
 	_check_executable_evidence_contract(failures)
 	_check_material_projection(failures)
 	ScenarioPresentationContractScript.check(failures)
 	_check_host_transaction_seam(failures)
+
+
+static func _check_delivery_day_world_map_route_install(library: ContentLibrary, failures: Array) -> void:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("WAVE-B-COMPOSITION-08")
+	var generator: RunGenerator = RunGeneratorScript.new(library)
+	generator.next_environment(run_state)
+	var result := generator.travel_environment_result(run_state, "corner_store", true)
+	if not bool(result.get("ok", false)) or run_state.current_world_node_id() != "corner_store":
+		failures.append("Delivery-day world-map node could not install its declared base route: %s." % JSON.stringify(result.get("errors", [])))
+		return
+	var routes := _array(run_state.current_environment.get("travel_hooks", []))
+	var semantic := _dict(run_state.current_environment.get("scenario_semantic_inventory", {}))
+	var exact := EnvironmentSemanticInventoryScript.exact_collections(semantic)
+	if not routes.has("bar") or not _array(exact.get("routes", [])).has("base::world:bar"):
+		failures.append("Delivery-day world-map install did not retain the declared bar route through semantic inventory sealing.")
 
 
 static func _check_lifecycle_caller_failure_contract(library: ContentLibrary, failures: Array, scene_tree: SceneTree) -> void:
