@@ -531,6 +531,8 @@ static func build_run_screen(host: Variant) -> void:
 	host.environment_canvas.view_geometry_changed.connect(host._on_environment_view_geometry_changed)
 	visual_stack.add_child(host.environment_canvas)
 	host.game_surface_canvas = host.GameSurfaceCanvasScript.new()
+	if host.game_surface_canvas.has_method("bind_surface_audio_authority"):
+		host.game_surface_canvas.call("bind_surface_audio_authority", host._game_surface_audio_authority)
 	host.game_surface_canvas.custom_minimum_size = host.GAME_SURFACE_PREVIEW_MIN_SIZE
 	host.game_surface_canvas.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	host.game_surface_canvas.size_flags_vertical = Control.SIZE_EXPAND_FILL

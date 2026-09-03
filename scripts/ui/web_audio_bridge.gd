@@ -269,6 +269,7 @@ const WEB_AUDIO_SCRIPT := """
 			var loopId = String(payload.loop_id || "");
 			var profileId = String(payload.profile_id || "");
 			var maxVoices = Math.max(1, Math.min(10, Number(payload.max_voices || 10) | 0));
+			var globalMaxVoices = 10;
 			this.sfxOneShots = this.sfxOneShots.filter(function (candidate) {
 				return candidate && !candidate.ended;
 			});
@@ -284,6 +285,16 @@ const WEB_AUDIO_SCRIPT := """
 						return candidate !== stolen;
 					});
 				}
+			}
+			// Match the native ten-player pool. Once the requesting surface is
+			// within its own cap, steal the oldest remaining global one-shot.
+			if (!isLoop && this.sfxOneShots.length >= globalMaxVoices) {
+				var oldestGlobal = this.sfxOneShots[0];
+				oldestGlobal.ended = true;
+				stopEntry(oldestGlobal);
+				this.sfxOneShots = this.sfxOneShots.filter(function (candidate) {
+					return candidate !== oldestGlobal;
+				});
 			}
 			source.buffer = buffer;
 			source.loop = isLoop;
@@ -733,6 +744,8 @@ static func mix_contract_snapshot() -> Dictionary:
 		"script_has_music_stems": WEB_AUDIO_SCRIPT.find("playMusicStems") >= 0 and WEB_AUDIO_SCRIPT.find("setMusicMix") >= 0,
 		"script_syncs_user_bus_levels": WEB_AUDIO_SCRIPT.find("setBusLevels") >= 0 and WEB_AUDIO_SCRIPT.find("this.musicBus.gain.setTargetAtTime") >= 0 and WEB_AUDIO_SCRIPT.find("this.sfxBus.gain.setTargetAtTime") >= 0,
 		"script_has_loop_stop": WEB_AUDIO_SCRIPT.find("stopLoop") >= 0,
+		"script_has_global_sfx_cap": WEB_AUDIO_SCRIPT.find("var globalMaxVoices = 10") >= 0 \
+			and WEB_AUDIO_SCRIPT.find("this.sfxOneShots.length >= globalMaxVoices") >= 0,
 		"script_requires_explicit_one_shot_unlock": WEB_AUDIO_SCRIPT.find("(!this.unlocked && !payload.loop)") >= 0 \
 			and WEB_AUDIO_SCRIPT.find("if (!this.ensure() || (!this.unlocked && !payload.loop)") >= 0,
 		"script_has_oscillator_fallback": WEB_AUDIO_SCRIPT.find("createOscillator") >= 0,

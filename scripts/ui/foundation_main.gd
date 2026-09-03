@@ -430,6 +430,8 @@ var settings_margin: MarginContainer
 var settings_menu: SettingsMenu
 var procedural_music_player: ProceduralMusicPlayer
 var environment_sfx_player: Node
+var _game_surface_audio_authority := RefCounted.new()
+var _environment_audio_authority := RefCounted.new()
 var perf_telemetry_overlay: PerfTelemetryOverlay
 var boot_telemetry_events: Array = []
 var boot_start_msec := 0
@@ -1968,12 +1970,13 @@ func _deferred_embedded_refresh_blocks_current_surface_input() -> bool:
 func _play_surface_command_audio(command: Dictionary, fallback_index: int) -> void:
 	if game_surface_canvas == null:
 		return
+	_bind_game_surface_audio_authority()
 	var loop_stop := str(command.get("surface_audio_loop_stop", "")).strip_edges()
 	if not loop_stop.is_empty():
-		game_surface_canvas.surface_stop_audio_loop(loop_stop)
+		game_surface_canvas.surface_stop_audio_loop(loop_stop, _game_surface_audio_authority)
 	var loop_start := str(command.get("surface_audio_loop_start", "")).strip_edges()
 	if not loop_start.is_empty():
-		game_surface_canvas.surface_start_audio_loop(loop_start, float(command.get("surface_audio_loop_volume_db", -10.0)), float(command.get("surface_audio_loop_pitch", 1.0)))
+		game_surface_canvas.surface_start_audio_loop(loop_start, float(command.get("surface_audio_loop_volume_db", -10.0)), float(command.get("surface_audio_loop_pitch", 1.0)), _game_surface_audio_authority)
 	var cue_id := str(command.get("surface_audio_cue", "")).strip_edges()
 	if cue_id.is_empty():
 		return
@@ -1983,7 +1986,7 @@ func _play_surface_command_audio(command: Dictionary, fallback_index: int) -> vo
 		context["index"] = int(command.get("selected_index", fallback_index))
 	if not context.has("action"):
 		context["action"] = str(command.get("surface_audio_action", ""))
-	game_surface_canvas.surface_play_audio_cue(cue_id, context)
+	game_surface_canvas.surface_play_audio_cue(cue_id, context, _game_surface_audio_authority)
 
 
 func _select_or_resolve_surface_game_action(action_kind: String, index: int, confirm_requested: bool, input_route_guarded: bool = false) -> bool:
@@ -10968,6 +10971,7 @@ func _invalidate_deferred_embedded_action_refresh() -> void:
 func _play_result_surface_audio_cue(result: Dictionary) -> void:
 	if game_surface_canvas == null or result.is_empty() or not bool(result.get("ok", false)):
 		return
+	_bind_game_surface_audio_authority()
 	var cue_id := str(result.get("surface_audio_cue", "")).strip_edges()
 	if cue_id.is_empty():
 		return
@@ -10977,16 +10981,17 @@ func _play_result_surface_audio_cue(result: Dictionary) -> void:
 		context = (context_value as Dictionary).duplicate(true)
 	if not context.has("action"):
 		context["action"] = cue_id
-	game_surface_canvas.surface_play_audio_cue(cue_id, context)
+	game_surface_canvas.surface_play_audio_cue(cue_id, context, _game_surface_audio_authority)
 
 
 func _play_result_drink_audio_cue(result: Dictionary) -> void:
 	if not _result_consumed_alcohol(result) or game_surface_canvas == null:
 		return
+	_bind_game_surface_audio_authority()
 	game_surface_canvas.surface_play_audio_cue("drink_consumed", {
 		"action": "drink_consumed",
 		"volume_db": -2.0,
-	})
+	}, _game_surface_audio_authority)
 
 
 func _play_result_environment_audio_cue(result: Dictionary) -> void:
@@ -11386,16 +11391,23 @@ func _play_environment_audio_cue(cue_id: String, volume_db: float = -1.0, profil
 		}
 		environment_sfx_player.call("play_surface_cue", normalized_cue, context, {
 			"surface_audio": {"profile_id": profile_id, "selection_seed": context["selection_seed"]},
-		})
+		}, _environment_audio_authority)
 
 
 func _ensure_environment_sfx_player() -> void:
 	if environment_sfx_player != null:
 		return
 	environment_sfx_player = SfxPlayerScript.new()
+	if environment_sfx_player.has_method("bind_surface_audio_authority"):
+		environment_sfx_player.call("bind_surface_audio_authority", _environment_audio_authority)
 	if environment_sfx_player.has_method("set_prewarm_events"):
 		environment_sfx_player.call("set_prewarm_events", ["phone_call", "phone_out_of_service", "heat_gain"])
 	add_child(environment_sfx_player)
+
+
+func _bind_game_surface_audio_authority() -> void:
+	if game_surface_canvas != null and game_surface_canvas.has_method("bind_surface_audio_authority"):
+		game_surface_canvas.call("bind_surface_audio_authority", _game_surface_audio_authority)
 
 
 func _on_game_surface_music_cue(cue_id: String, context: Dictionary) -> void:

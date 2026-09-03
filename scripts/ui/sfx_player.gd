@@ -225,6 +225,25 @@ var _surface_cue_occurrences: Dictionary = {}
 var _surface_last_variation_step: Dictionary = {}
 var _surface_selection_trace: Array = []
 var _surface_voice_serial := 0
+var _surface_audio_authority: RefCounted
+var _surface_audio_authority_bound := false
+var _rejected_surface_authority_calls := 0
+
+
+func bind_surface_audio_authority(authority: RefCounted) -> void:
+	# The host owns this opaque capability. Presentation dictionaries are
+	# intentionally insufficient authority because they are caller-forgeable.
+	if authority == null or _surface_audio_authority_bound:
+		return
+	_surface_audio_authority = authority
+	_surface_audio_authority_bound = true
+
+
+func _has_surface_audio_authority(authority: Variant) -> bool:
+	var accepted: bool = _surface_audio_authority != null and authority is RefCounted and authority == _surface_audio_authority
+	if not accepted:
+		_rejected_surface_authority_calls += 1
+	return accepted
 
 
 func set_prewarm_events(event_ids: Array) -> void:
@@ -252,7 +271,9 @@ func _process(_delta: float) -> void:
 	_process_prewarm_chunk()
 
 
-func play_surface_cue(cue_id: String, context: Dictionary = {}, surface_state: Dictionary = {}) -> void:
+func play_surface_cue(cue_id: String, context: Dictionary = {}, surface_state: Dictionary = {}, authority: Variant = null) -> void:
+	if not _has_surface_audio_authority(authority):
+		return
 	if not audio_enabled or _running_headless():
 		return
 	var normalized_cue := cue_id.strip_edges()
@@ -302,7 +323,9 @@ func play_surface_cue(cue_id: String, context: Dictionary = {}, surface_state: D
 				_play(normalized_cue, float(context.get("volume_db", -3.0)), float(context.get("pitch", 1.0)))
 
 
-func prewarm_surface_profile(profile_id: String) -> void:
+func prewarm_surface_profile(profile_id: String, authority: Variant = null) -> void:
+	if not _has_surface_audio_authority(authority):
+		return
 	var normalized_profile := profile_id.strip_edges()
 	if not WebAudioBridgeScript.available() or normalized_profile.is_empty() \
 			or bool(_prewarmed_surface_profiles.get(normalized_profile, false)):
@@ -318,7 +341,9 @@ func prewarm_surface_profile(profile_id: String) -> void:
 	_prewarmed_surface_profiles[normalized_profile] = true
 
 
-func start_surface_loop(cue_id: String, volume_db: float = -10.0, pitch: float = 1.0) -> void:
+func start_surface_loop(cue_id: String, volume_db: float = -10.0, pitch: float = 1.0, authority: Variant = null) -> void:
+	if not _has_surface_audio_authority(authority):
+		return
 	if not audio_enabled or _running_headless():
 		return
 	var clean_cue := cue_id.strip_edges()
@@ -337,7 +362,9 @@ func start_surface_loop(cue_id: String, volume_db: float = -10.0, pitch: float =
 	_start_reel_loop(normalized_cue, volume_db, pitch)
 
 
-func stop_surface_loop(cue_id: String = "") -> void:
+func stop_surface_loop(cue_id: String = "", authority: Variant = null) -> void:
+	if not _has_surface_audio_authority(authority):
+		return
 	var normalized_cue := _normalized_event_id(cue_id.strip_edges()) if not cue_id.strip_edges().is_empty() else ""
 	if not normalized_cue.is_empty() and normalized_cue != _surface_loop_event_id:
 		return
@@ -351,7 +378,9 @@ func stop_surface_loop(cue_id: String = "") -> void:
 	_stop_reel_loop()
 
 
-func sync_surface_state(surface_state: Dictionary, sync_spec: Dictionary, timing: Dictionary) -> void:
+func sync_surface_state(surface_state: Dictionary, sync_spec: Dictionary, timing: Dictionary, authority: Variant = null) -> void:
+	if not _has_surface_audio_authority(authority):
+		return
 	if not audio_enabled or _running_headless():
 		return
 	var method := str(sync_spec.get("method", ""))
@@ -1105,6 +1134,41 @@ func preview_event_stream(event_id: String) -> AudioStreamWAV:
 	return _event_stream(event_id)
 
 
+func debug_event_delivery_has_signal(event_id: String) -> bool:
+	var normalized := _normalized_event_id(event_id)
+	if normalized.is_empty() or normalized != event_id.strip_edges():
+		return false
+	var native_stream := _native_delivery_event_stream(normalized)
+	if native_stream != null:
+		return _pcm_stream_has_signal(native_stream)
+	var web_stream := _web_delivery_event_stream(normalized)
+	if web_stream != null and not web_stream.data.is_empty():
+		return true
+	# Probe the actual deterministic synthesizer without allocating an entire
+	# waveform. Unknown IDs take the zero-valued default branch.
+	var seconds := _event_seconds(normalized)
+	var sample_rate := _event_sample_rate(normalized)
+	var frame_count := maxi(1, int(seconds * float(sample_rate)))
+	var probes := mini(128, frame_count)
+	for probe_index in range(probes):
+		var frame := mini(frame_count - 1, int(float(probe_index) * float(frame_count - 1) / float(maxi(1, probes - 1))))
+		var t := float(frame) / float(sample_rate)
+		if absf(_event_sample(normalized, t, frame, seconds)) > 0.000001:
+			return true
+	return false
+
+
+func _pcm_stream_has_signal(stream: AudioStreamWAV) -> bool:
+	if stream == null or stream.data.is_empty():
+		return false
+	if stream.format != AudioStreamWAV.FORMAT_16_BITS:
+		return true
+	for offset in range(0, stream.data.size() - 1, 2):
+		if stream.data.decode_s16(offset) != 0:
+			return true
+	return false
+
+
 func render_event_master_stream(event_id: String) -> AudioStreamWAV:
 	return _synthesized_event_stream(_normalized_event_id(event_id))
 
@@ -1219,6 +1283,8 @@ func debug_soak_snapshot() -> Dictionary:
 		"prewarm_active_frame_count": _prewarm_active_frame_count,
 		"surface_selection_trace_size": _surface_selection_trace.size(),
 		"surface_profile_count": _surface_sfx_manifest.size(),
+		"surface_loop_event_id": _surface_loop_event_id,
+		"rejected_surface_authority_calls": _rejected_surface_authority_calls,
 	}
 
 
@@ -1583,30 +1649,29 @@ func _play(event_id: String, volume_db: float = 0.0, pitch: float = 1.0, profile
 
 func _next_player(profile_id: String = "", max_voices: int = ONE_SHOT_PLAYER_COUNT) -> AudioStreamPlayer:
 	_ensure_players()
-	var active_for_profile: Array[AudioStreamPlayer] = []
-	for player_value in _players:
+	var first_idle: AudioStreamPlayer = null
+	var active_voices: Array = []
+	for index in range(_players.size()):
+		var player_value: Variant = _players[index]
 		if not (player_value is AudioStreamPlayer):
 			continue
 		var player := player_value as AudioStreamPlayer
 		if not player.playing:
-			return player
-		if not profile_id.is_empty() and str(player.get_meta("surface_profile_id", "")) == profile_id:
-			active_for_profile.append(player)
+			if first_idle == null:
+				first_idle = player
+			continue
+		active_voices.append({
+			"source_index": index,
+			"profile_id": str(player.get_meta("surface_profile_id", "")),
+			"serial": int(player.get_meta("surface_voice_serial", 0)),
+		})
 	if _players.is_empty():
 		return null
-	if not profile_id.is_empty() and active_for_profile.size() >= clampi(max_voices, 1, ONE_SHOT_PLAYER_COUNT):
-		active_for_profile.sort_custom(func(a: AudioStreamPlayer, b: AudioStreamPlayer) -> bool:
-			return int(a.get_meta("surface_voice_serial", 0)) < int(b.get_meta("surface_voice_serial", 0))
-		)
-		return active_for_profile[0]
-	var oldest: AudioStreamPlayer = _players[0] as AudioStreamPlayer
-	for player_value in _players:
-		if not (player_value is AudioStreamPlayer):
-			continue
-		var candidate := player_value as AudioStreamPlayer
-		if int(candidate.get_meta("surface_voice_serial", 0)) < int(oldest.get_meta("surface_voice_serial", 0)):
-			oldest = candidate
-	return oldest
+	var decision := SurfaceSfxManifestScript.voice_slot_decision(active_voices, profile_id, max_voices, ONE_SHOT_PLAYER_COUNT)
+	if str(decision.get("kind", "")) == "allocate_idle":
+		return first_idle
+	var source_index := int(decision.get("source_index", -1))
+	return _players[source_index] as AudioStreamPlayer if source_index >= 0 and source_index < _players.size() else null
 
 
 func _ensure_players() -> void:

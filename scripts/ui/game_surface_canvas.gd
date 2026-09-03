@@ -99,6 +99,17 @@ var transient_surface_loop_deadline_msec := 0
 var transient_surface_loop_id := ""
 var environment_activity_paused := false
 var surface_render_state_dirty := false
+var _surface_audio_authority := RefCounted.new()
+var _surface_audio_authority_bound := false
+
+
+func bind_surface_audio_authority(authority: RefCounted) -> void:
+	if authority == null or _surface_audio_authority_bound:
+		return
+	_surface_audio_authority = authority
+	_surface_audio_authority_bound = true
+	if surface_sfx_player != null and surface_sfx_player.has_method("bind_surface_audio_authority"):
+		surface_sfx_player.call("bind_surface_audio_authority", _surface_audio_authority)
 
 
 func set_game_module(game_module: GameModule) -> void:
@@ -708,15 +719,19 @@ func surface_animation_metadata(channel_id: String) -> Dictionary:
 	return _copy_dict(_surface_animation_channel(channel_id).get("metadata", {}))
 
 
-func surface_play_audio_cue(cue_id: String, context: Dictionary = {}) -> void:
+func surface_play_audio_cue(cue_id: String, context: Dictionary = {}, authority: Variant = null) -> void:
+	if authority != _surface_audio_authority:
+		return
 	var normalized_cue := cue_id.strip_edges()
 	if normalized_cue.is_empty():
 		return
 	_ensure_surface_sfx_player()
-	surface_sfx_player.play_surface_cue(normalized_cue, context, state)
+	surface_sfx_player.play_surface_cue(normalized_cue, context, state, _surface_audio_authority)
 
 
-func surface_start_audio_loop(cue_id: String, volume_db: float = -10.0, pitch: float = 1.0) -> void:
+func surface_start_audio_loop(cue_id: String, volume_db: float = -10.0, pitch: float = 1.0, authority: Variant = null) -> void:
+	if authority != _surface_audio_authority:
+		return
 	var normalized_cue := cue_id.strip_edges()
 	if normalized_cue.is_empty():
 		return
@@ -725,14 +740,16 @@ func surface_start_audio_loop(cue_id: String, volume_db: float = -10.0, pitch: f
 		transient_surface_loop_id = normalized_cue
 		transient_surface_loop_deadline_msec = Time.get_ticks_msec() + TRANSIENT_SURFACE_LOOP_HOLD_MSEC
 	if surface_sfx_player.has_method("start_surface_loop"):
-		surface_sfx_player.call("start_surface_loop", normalized_cue, volume_db, pitch)
+		surface_sfx_player.call("start_surface_loop", normalized_cue, volume_db, pitch, _surface_audio_authority)
 
 
-func surface_stop_audio_loop(cue_id: String = "") -> void:
+func surface_stop_audio_loop(cue_id: String = "", authority: Variant = null) -> void:
+	if authority != _surface_audio_authority:
+		return
 	transient_surface_loop_deadline_msec = 0
 	transient_surface_loop_id = ""
 	if surface_sfx_player != null and surface_sfx_player.has_method("stop_surface_loop"):
-		surface_sfx_player.call("stop_surface_loop", cue_id)
+		surface_sfx_player.call("stop_surface_loop", cue_id, _surface_audio_authority)
 
 
 func surface_add_hit(rect: Rect2, action: String, index: int = -1, expand_touch_hit: bool = true) -> void:
@@ -1097,7 +1114,7 @@ func _activate_surface_at_position(position: Vector2, confirm_requested: bool) -
 				surface_play_audio_cue(audio_cue, {
 					"action": hovered_surface_action,
 					"index": hovered_surface_index,
-				})
+				}, _surface_audio_authority)
 			surface_action.emit(hovered_surface_action, hovered_surface_index, confirm_requested)
 			accept_event()
 			return
@@ -1203,7 +1220,7 @@ func _process(delta: float) -> void:
 		return
 	_flush_captured_pointer_move()
 	if transient_surface_loop_deadline_msec > 0 and Time.get_ticks_msec() >= transient_surface_loop_deadline_msec:
-		surface_stop_audio_loop(transient_surface_loop_id)
+		surface_stop_audio_loop(transient_surface_loop_id, _surface_audio_authority)
 	# Reduced motion freezes presentation clocks and redraws, not state-driven
 	# audio. Sync before the visual early return so completed actions still land
 	# their terminal cues without advancing any presentation state.
@@ -1292,6 +1309,8 @@ func _ensure_surface_sfx_player() -> void:
 	if surface_sfx_player != null:
 		return
 	surface_sfx_player = SfxPlayerScript.new()
+	if surface_sfx_player.has_method("bind_surface_audio_authority"):
+		surface_sfx_player.call("bind_surface_audio_authority", _surface_audio_authority)
 	if surface_sfx_player.has_signal("music_cue_requested"):
 		surface_sfx_player.music_cue_requested.connect(_on_surface_sfx_music_cue)
 	add_child(surface_sfx_player)
@@ -1409,8 +1428,8 @@ func _sync_surface_audio() -> void:
 		return
 	_ensure_surface_sfx_player()
 	if surface_sfx_player.has_method("prewarm_surface_profile"):
-		surface_sfx_player.call("prewarm_surface_profile", profile_id)
-	surface_sfx_player.sync_surface_state(state, sync_spec, _surface_audio_timing(sync_spec))
+		surface_sfx_player.call("prewarm_surface_profile", profile_id, _surface_audio_authority)
+	surface_sfx_player.sync_surface_state(state, sync_spec, _surface_audio_timing(sync_spec), _surface_audio_authority)
 
 
 func _surface_audio_timing(sync_spec: Dictionary) -> Dictionary:
@@ -1692,7 +1711,7 @@ func _set_hovered_surface_region(local_position: Vector2) -> void:
 					return
 				var audio_cue := _surface_action_audio_cue(next_action)
 				if not audio_cue.is_empty():
-					surface_play_audio_cue(audio_cue, {"action": next_action, "index": next_index})
+					surface_play_audio_cue(audio_cue, {"action": next_action, "index": next_index}, _surface_audio_authority)
 				surface_action.emit(next_action, next_index, false)
 			return
 	if hovered_surface_action.is_empty():
