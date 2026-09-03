@@ -13,6 +13,7 @@ var stats: Dictionary = {}
 var resolve_ms_samples: Array = []
 var action_command_ms_samples: Array = []
 var surface_state_ms_samples: Array = []
+var last_play_failure: Dictionary = {}
 
 
 func _init() -> void:
@@ -228,7 +229,20 @@ func _audit_clean_hand(game: GameModule, run_state: RunState, environment: Dicti
 	ui = deal.get("ui_state", {})
 	_audit_compact_ui_state(ui, "seed %d deal" % index)
 	stats["clean_hands"] = int(stats.get("clean_hands", 0)) + 1
-	var result := _play_to_resolve(game, run_state, environment, ui, "clean_%03d" % index)
+	var placement := BlackjackAuthorityTestDriverScript.resolve(
+		game,
+		str(deal.get("action_id", "blackjack_place_bet")),
+		int(deal.get("set_stake", ui.get("selected_stake", 5))),
+		run_state,
+		environment,
+		run_state.create_rng("clean_place_%03d" % index),
+		ui
+	)
+	if not bool(placement.get("ok", false)):
+		failures.append("Seed %d clean hand placement did not resolve: %s" % [index, JSON.stringify(placement)])
+		return
+	environment = run_state.current_environment
+	var result := _play_to_resolve(game, run_state, environment, {}, "clean_%03d" % index)
 	if result.is_empty():
 		failures.append("Seed %d clean hand did not resolve." % index)
 		return
@@ -300,30 +314,55 @@ func _audit_count_challenge(challenge: Dictionary, label: String) -> void:
 
 
 func _play_to_resolve(game: GameModule, run_state: RunState, environment: Dictionary, ui: Dictionary, rng_key: String) -> Dictionary:
+	last_play_failure = {}
 	var rng := run_state.create_rng(rng_key)
-	for _i in range(16):
-		var surface := game.surface_state(run_state, environment, ui)
+	for iteration in range(16):
+		environment = run_state.current_environment
+		var surface := game.surface_state(run_state, environment, {})
+		var resolve_error_code := ""
+		var resolve_message := ""
+		var action := "blackjack_deal"
+		var confirm_requested := false
 		if bool(surface.get("settle_available", false)) or bool(surface.get("round_complete", false)):
-			var settle_start_usec := Time.get_ticks_usec()
-			var settle := game.surface_action_command("blackjack_deal", 0, true, ui, run_state, environment)
-			_record_action_command_time(settle_start_usec)
-			ui = settle.get("ui_state", {})
-			_audit_compact_ui_state(ui, "settle command")
-			if bool(settle.get("resolve", false)):
-				return _resolve_and_record(game, str(settle.get("action_id", "play_basic")), int(ui.get("locked_stake", ui.get("selected_stake", 5))), run_state, environment, rng, ui)
-			continue
-		var action := _choose_clean_action(surface, rng)
+			confirm_requested = true
+		else:
+			action = _choose_clean_action(surface, rng)
 		var command_start_usec := Time.get_ticks_usec()
-		var command := game.surface_action_command(action, 0, false, ui, run_state, environment)
+		var command := BlackjackAuthorityTestDriverScript.surface_intent(game, action, 5, run_state, environment, 0, confirm_requested)
 		_record_action_command_time(command_start_usec)
-		if not bool(command.get("handled", false)):
+		if not bool(command.get("handled", false)) and action != "blackjack_stand":
 			var fallback_start_usec := Time.get_ticks_usec()
-			command = game.surface_action_command("blackjack_stand", 0, false, ui, run_state, environment)
+			command = BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_stand", 5, run_state, run_state.current_environment)
 			_record_action_command_time(fallback_start_usec)
-		ui = command.get("ui_state", {})
-		_audit_compact_ui_state(ui, "hand command %s" % action)
-		if bool(command.get("resolve", false)):
-			return _resolve_and_record(game, str(command.get("action_id", "play_basic")), int(ui.get("locked_stake", ui.get("selected_stake", 5))), run_state, environment, rng, ui)
+		var command_ui: Dictionary = command.get("ui_state", {}) if typeof(command.get("ui_state", {})) == TYPE_DICTIONARY else {}
+		_audit_compact_ui_state(command_ui, "hand command %s" % action)
+		if not str(command.get("action_id", "")).is_empty():
+			var started := Time.get_ticks_usec()
+			var result := BlackjackAuthorityTestDriverScript.resolve_surface_command(game, command, 5, run_state, run_state.current_environment)
+			var elapsed_ms := float(Time.get_ticks_usec() - started) / 1000.0
+			resolve_ms_samples.append(elapsed_ms)
+			stats["resolve_samples"] = resolve_ms_samples.size()
+			stats["max_resolve_ms"] = maxf(float(stats.get("max_resolve_ms", 0.0)), elapsed_ms)
+			if bool(result.get("ok", false)) and not (result.get("blackjack_hand_results", []) as Array).is_empty():
+				return result
+			if bool(result.get("ok", false)):
+				continue
+			resolve_error_code = str(result.get("error_code", ""))
+			resolve_message = str(result.get("message", ""))
+		last_play_failure = {
+			"iteration": iteration,
+			"phase": str(surface.get("surface_phase", surface.get("phase", ""))),
+			"chosen_action": action,
+			"command_handled": bool(command.get("handled", false)),
+			"command_resolve": bool(command.get("resolve", false)),
+			"command_action_id": str(command.get("action_id", "")),
+			"command_error_code": str(command.get("error_code", "")),
+			"command_message": str(command.get("message", "")),
+			"round_complete": bool(surface.get("round_complete", false)),
+			"settle_available": bool(surface.get("settle_available", false)),
+			"resolve_error_code": resolve_error_code,
+			"resolve_message": resolve_message,
+		}
 	return {}
 
 
@@ -518,7 +557,7 @@ func _run_payout_drift_probe(game: GameModule) -> void:
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("BLACKJACK-AUDIT-PAYOUT-DRIFT")
 	run_state.bankroll = 100000
-	var environment := _audit_environment(30000)
+	var environment: Dictionary = _audit_environment(30000)
 	var table: Dictionary = game.generate_environment_state(run_state, environment, run_state.create_rng("payout_drift_table"))
 	table["side_bets"] = []
 	table["patrons"] = []
@@ -541,14 +580,31 @@ func _run_payout_drift_probe(game: GameModule) -> void:
 				payout_table.erase(key)
 			payout_states["blackjack"] = payout_table
 			environment["game_states"] = payout_states
-		var deal := game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 5}, run_state, environment)
+		run_state.current_environment = environment
+		var deal := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_deal", 5, run_state, environment)
 		if not bool(deal.get("handled", false)):
-			failures.append("Payout drift probe could not deal hand %d." % i)
+			failures.append("Payout drift probe could not deal hand %d: %s." % [i, JSON.stringify({
+				"error_code": str(deal.get("error_code", "")),
+				"message": str(deal.get("message", "")),
+				"phase": str(deal.get("surface_phase", deal.get("phase", ""))),
+			})])
 			break
-		var result := _play_to_resolve(game, run_state, environment, deal.get("ui_state", {}), "payout_drift_%04d" % i)
+		if str(deal.get("action_id", "")).is_empty():
+			failures.append("Payout drift probe deal hand %d did not issue a sealed placement delivery." % i)
+			break
+		var placement := BlackjackAuthorityTestDriverScript.resolve_surface_command(game, deal, 5, run_state, run_state.current_environment)
+		if not bool(placement.get("ok", false)):
+			failures.append("Payout drift probe could not commit hand %d placement: %s." % [i, JSON.stringify({
+				"error_code": str(placement.get("error_code", "")),
+				"message": str(placement.get("message", "")),
+			})])
+			break
+		environment = run_state.current_environment
+		var result := _play_to_resolve(game, run_state, environment, {}, "payout_drift_%04d" % i)
 		if result.is_empty():
-			failures.append("Payout drift probe could not resolve hand %d." % i)
+			failures.append("Payout drift probe could not resolve hand %d: %s." % [i, JSON.stringify(last_play_failure)])
 			break
+		environment = run_state.current_environment
 		var hand_wager := 0
 		for hand_value in result.get("blackjack_hand_results", []) as Array:
 			if typeof(hand_value) != TYPE_DICTIONARY:
@@ -559,6 +615,11 @@ func _run_payout_drift_probe(game: GameModule) -> void:
 		total_wager += maxi(1, hand_wager)
 		main_delta += int(result.get("blackjack_main_delta", 0))
 		resolved += 1
+		var terminal := BlackjackAuthorityTestDriverScript.advance_terminal_presentation(game, 5, run_state, environment)
+		if not bool(terminal.get("ok", false)):
+			failures.append("Payout drift probe could not clear terminal presentation after hand %d: %s." % [i, JSON.stringify(terminal)])
+			break
+		environment = run_state.current_environment
 	stats["payout_drift_hands"] = resolved
 	stats["payout_drift_total_wager"] = total_wager
 	stats["payout_drift_main_delta"] = main_delta

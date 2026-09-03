@@ -2405,6 +2405,18 @@ func _resolve_and_apply_table_game_surface_contract(game: GameModule, action_id:
 	return result
 
 
+# Shared Slot/Table consumer checks exercise the deterministic Roulette and
+# Baccarat proposal cores directly. Live gameplay reaches these same cores only
+# through the sealed Foundation host; public compatibility resolvers remain
+# read-only and are covered by their dedicated authority contracts.
+func _resolve_table_game_surface_contract(game: GameModule, action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
+	var method := "_resolve_roulette_proposal_core" if game.get_id() == "roulette" else "_resolve_baccarat_proposal_core"
+	var result: Dictionary = game.call(method, action_id, stake, run_state, environment, rng, ui_state)
+	if bool(result.get("ok", false)):
+		result["host_apply_result"] = true
+	return result
+
+
 func _skill_contract_bar_dice_palm_ui(game: GameModule, run_state: RunState, environment: Dictionary, base_ui: Dictionary) -> Dictionary:
 	var ui: Dictionary = base_ui.duplicate(true)
 	ui["surface_time_msec"] = int(ui.get("surface_time_msec", 18000))
