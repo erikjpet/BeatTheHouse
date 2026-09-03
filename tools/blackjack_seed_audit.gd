@@ -326,6 +326,7 @@ func _audit_count_challenge(challenge: Dictionary, label: String) -> void:
 func _play_to_resolve(game: GameModule, run_state: RunState, environment: Dictionary, ui: Dictionary, rng_key: String) -> Dictionary:
 	last_play_failure = {}
 	var rng := run_state.create_rng(rng_key)
+	var pending_confirmation_action := ""
 	for iteration in range(MAX_HAND_SURFACE_ACTIONS):
 		environment = run_state.current_environment
 		var surface := game.surface_state(run_state, environment, {})
@@ -337,6 +338,7 @@ func _play_to_resolve(game: GameModule, run_state: RunState, environment: Dictio
 			confirm_requested = true
 		else:
 			action = _choose_clean_action(surface, rng)
+			confirm_requested = action == pending_confirmation_action
 		var command_start_usec := Time.get_ticks_usec()
 		var command := BlackjackAuthorityTestDriverScript.surface_intent(game, action, 5, run_state, environment, 0, confirm_requested)
 		_record_action_command_time(command_start_usec)
@@ -374,9 +376,13 @@ func _play_to_resolve(game: GameModule, run_state: RunState, environment: Dictio
 		elif bool(command.get("handled", false)) and not command_requests_resolution:
 			# Selection-only surface commands are real public interaction steps, but
 			# they deliberately carry no sealed delivery yet.  Re-read the canonical
-			# surface and issue the confirming click instead of presenting the
-			# selection command to the authority resolver as if it were a delivery.
+			# surface and issue the same public action with the explicit confirmation
+			# flag instead of presenting the selection command to the authority
+			# resolver as if it were a delivery.  The headless adapter intentionally
+			# does not retain FoundationMain's UI-local selected-action fields.
+			pending_confirmation_action = action
 			continue
+		pending_confirmation_action = ""
 		last_play_failure = {
 			"iteration": iteration,
 			"phase": str(surface.get("surface_phase", surface.get("phase", ""))),
@@ -528,7 +534,7 @@ func _run_selection_confirmation_fixture(game: GameModule) -> void:
 			or typeof(selection.get("_sealed_action_host_delivery", null)) == TYPE_DICTIONARY:
 		failures.append("Selection-confirmation fixture did not produce a public selection-only first click.")
 		return
-	var confirmation := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_deal", 5, data.run_state, data.run_state.current_environment)
+	var confirmation := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_deal", 5, data.run_state, data.run_state.current_environment, 0, true)
 	var confirmation_requests_resolution := bool(confirmation.get("resolve", false)) or bool(confirmation.get("direct_resolve", false))
 	if not bool(confirmation.get("handled", false)) \
 			or str(confirmation.get("action_id", "")) != "play_basic" \
