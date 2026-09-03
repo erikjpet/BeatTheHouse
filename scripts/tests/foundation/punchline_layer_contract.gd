@@ -26,11 +26,29 @@ static func check(library: ContentLibrary, failures: Array) -> void:
 	_check_public_identity(library, archetype, failures)
 	_check_l2_baseline(layers, failures)
 	_check_generation_and_tutorial(library, archetype, failures)
+	_check_production_scenario_layer_entry(library, failures)
 	_check_discovery_and_save(library, archetype, failures)
 	_check_back_room_access(library, archetype, failures)
 	_check_legacy_migration(library, archetype, failures)
 	_check_shortcut_edge(library, failures)
 	_check_scenario_layer_scope(failures)
+
+
+static func _check_production_scenario_layer_entry(library: ContentLibrary, failures: Array) -> void:
+	var run_state := RunStateScript.new()
+	run_state.start_new("WAVE-B-COMPOSITION-08")
+	var generator := RunGeneratorScript.new(library)
+	generator.next_environment(run_state)
+	var travel := generator.travel_environment_result(run_state, PUNCHLINE_ID, true)
+	if not bool(travel.get("ok", false)) or str(run_state.current_environment.get("scenario_id", "")) != "punchline_high_stakes_night":
+		failures.append("Production Punchline high-stakes scenario could not install on L1: %s." % JSON.stringify(travel.get("errors", [])))
+		return
+	var side_door := EventModuleScript.new()
+	side_door.setup(library.event("side_door"), library)
+	var discovery := side_door.resolve(run_state, run_state.current_environment, "punchline_password")
+	var entered := generator.enter_environment_layer(run_state, "casino", false)
+	if not bool(discovery.get("ok", false)) or not bool(entered.get("ok", false)) or str(run_state.current_environment.get("current_layer_id", "")) != "casino":
+		failures.append("Production Punchline high-stakes scenario could not cross its L1-to-L2 semantic layout boundary: %s." % JSON.stringify(entered))
 
 
 static func _check_public_identity(library: ContentLibrary, archetype: Dictionary, failures: Array) -> void:
