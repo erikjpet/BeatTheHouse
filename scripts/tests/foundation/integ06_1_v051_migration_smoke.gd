@@ -377,9 +377,14 @@ func _file_sha256(path: String) -> String:
 	var bytes := FileAccess.get_file_as_bytes(path)
 	if bytes.is_empty():
 		return ""
+	# Git stores the fixture driver with LF line endings, while a Windows
+	# checkout may materialize the same blob with CRLF. Provenance identifies
+	# the source text, not the checkout policy, so canonicalize text endings
+	# before comparing the driver identity recorded by the capture wrapper.
+	var normalized_text := bytes.get_string_from_utf8().replace("\r\n", "\n").replace("\r", "\n")
 	var hash_context := HashingContext.new()
 	hash_context.start(HashingContext.HASH_SHA256)
-	hash_context.update(bytes)
+	hash_context.update(normalized_text.to_utf8_buffer())
 	return hash_context.finish().hex_encode().to_lower()
 
 

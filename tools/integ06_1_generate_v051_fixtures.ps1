@@ -215,7 +215,18 @@ try {
 	if ($resultLines.Count -ne $expectedResultCount) {
 		throw "Historical capture emitted $($resultLines.Count) provenance results; expected $expectedResultCount."
     }
-    $harnessHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $sourceHarness).Hash
+    # Provenance is stable across Git's LF/CRLF checkout policy. The historical
+    # driver is source text, so identify its canonical LF bytes rather than the
+    # platform-specific working-tree representation.
+    $harnessText = [IO.File]::ReadAllText($sourceHarness).Replace("`r`n", "`n").Replace("`r", "`n")
+    $utf8NoBom = New-Object Text.UTF8Encoding($false)
+    $sha256 = [Security.Cryptography.SHA256]::Create()
+    try {
+        $harnessHash = ([BitConverter]::ToString($sha256.ComputeHash($utf8NoBom.GetBytes($harnessText)))).Replace('-', '')
+    }
+    finally {
+        $sha256.Dispose()
+    }
 	foreach ($resultLine in $resultLines) {
 		$capture = ("$resultLine" -replace '^INTEG06_1_FIXTURE_RESULT=', '') | ConvertFrom-Json
 		$capturedFixtureId = [string]$capture.fixture_id
