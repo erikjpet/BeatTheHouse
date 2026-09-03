@@ -672,6 +672,8 @@ func _check_event_system_state_foundation(library: ContentLibrary, failures: Arr
 		failures.append("Event system fixture did not enter volatile economy state.")
 	if not debt_event.can_trigger(strained_run, strained_run.current_environment, {"turns": 1}):
 		failures.append("Economy-gated event did not trigger from strained economy state.")
+	elif not strained_run.enqueue_triggered_event("motel_knock", "event_system_state_foundation", {"turns": 1}):
+		failures.append("Economy-gated event could not enter the authoritative triggered-event queue.")
 	var debt_before := _run_state_result_snapshot(strained_run)
 	var debt_result := debt_event.resolve(strained_run, strained_run.current_environment, "borrow")
 	_check_event_result_delta_shape(debt_result, failures)
