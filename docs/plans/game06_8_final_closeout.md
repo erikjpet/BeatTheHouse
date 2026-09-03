@@ -2,8 +2,8 @@
 
 Date: 2026-09-03  
 Independent closeout lane: `/root/game_closeout`  
-Frozen landed game product base: `73b7a9523116712be266240397b3901e17476f4a`
-Frozen game product tree: `8964fc29e38d7c3b2d5704ae089952a56a4cdbf4`
+Frozen landed game product base: `039e3326d7f09ab911f8903adc03b94c2cc12e4f`
+Frozen integrated candidate tree: `d78c3337825c68e416e21aaba4ae8f6af881340e`
 
 ## Verdict
 
@@ -128,6 +128,14 @@ aggregate run above is the Family 1 binding result.
   public selection from sealed resolution, fails closed on a resolving command
   without delivery, adds an exact two-click regression, and bounds four-split-
   hand action traversal at 64 surface steps. Product authority is unchanged.
+- That deterministic regression revealed one real public interaction defect:
+  Blackjack's active-hand Deal fallback advertised a second click but discarded
+  the host's confirmation flag. Exact integrated commit `039e3326` forwards the
+  flag into the existing action command, so the second click now mints its
+  ordinary sealed delivery. The focused 1-seed/25-hand audit passed every rule
+  fixture plus the new confirmation fixture and all 25 payout hands with zero
+  failures/warnings; report SHA-256
+  `87DC8DF1D16565CB8EAA358947877A401F4D7A03A69CA0ABDBC282259597693C`.
 - `73b7a952` removes the sealed-host repeat-play growth blocker without changing
   outcomes. Historical 128-entry v3 saves remain valid and converge on their
   next commit to eight retained boundaries; retained replay, evicted rejection,
