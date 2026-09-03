@@ -1483,18 +1483,6 @@ func _poker_max_observation_count(run_state: RunState, member_id: String) -> int
 	return maximum
 
 
-# Surface contracts exercise the deterministic proposal core directly. Live
-# gameplay reaches the same core only through the sealed Foundation host; the
-# public compatibility resolver is intentionally read-only and is covered by
-# the authority depth contracts.
-func _resolve_table_game_surface_contract(game: GameModule, action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
-	var method := "_resolve_roulette_proposal_core" if game.get_id() == "roulette" else "_resolve_baccarat_proposal_core"
-	var result: Dictionary = game.call(method, action_id, stake, run_state, environment, rng, ui_state)
-	if bool(result.get("ok", false)):
-		result["host_apply_result"] = true
-	return result
-
-
 func _check_roulette_surface_contract(game: GameModule, failures: Array, library: ContentLibrary = null) -> void:
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("ROULETTE-SURFACE-CONTRACT")
