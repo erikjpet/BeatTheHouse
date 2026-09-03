@@ -6,6 +6,23 @@ function Assert-PrestageContract {
     if (-not $Condition) { throw $Message }
 }
 
+function Get-ActiveElapsedModelMsec {
+    param([int[]]$SampleUsec, [bool[]]$ActiveSamples)
+    if ($SampleUsec.Count -ne $ActiveSamples.Count -or $SampleUsec.Count -lt 2) {
+        throw "Elapsed model requires paired timestamps and activity samples."
+    }
+    $elapsedMsec = 0.0
+    $priorUsec = $SampleUsec[0]
+    for ($index = 1; $index -lt $SampleUsec.Count; $index++) {
+        $nowUsec = $SampleUsec[$index]
+        if ($ActiveSamples[$index]) {
+            $elapsedMsec += [Math]::Max(0, $nowUsec - $priorUsec) / 1000.0
+        }
+        $priorUsec = $nowUsec
+    }
+    return $elapsedMsec
+}
+
 function New-ActivePhaseScenario {
     param(
         [string]$Channel = "baccarat_deal",
@@ -74,6 +91,11 @@ Assert-PrestageContract -Condition (-not [bool]$shortFrames.passed -and -not [bo
 $shortElapsed = Get-WebPerfActivePhaseEvaluation -Scenario (New-ActivePhaseScenario -ActiveMsec 499.9) -ExpectedChannel "baccarat_deal"
 Assert-PrestageContract -Condition (-not [bool]$shortElapsed.passed -and -not [bool]$shortElapsed.elapsed_window_passed) -Message "A short active elapsed-time window passed."
 
+$linearElapsed = Get-ActiveElapsedModelMsec -SampleUsec @(0, 100000, 200000, 300000) -ActiveSamples @($false, $true, $true, $true)
+Assert-PrestageContract -Condition ([Math]::Abs($linearElapsed - 300.0) -lt 0.001) -Message "Sustained active elapsed time was triangularly overcounted."
+$gappedElapsed = Get-ActiveElapsedModelMsec -SampleUsec @(0, 100000, 350000, 500000) -ActiveSamples @($false, $true, $false, $true)
+Assert-PrestageContract -Condition ([Math]::Abs($gappedElapsed - 250.0) -lt 0.001) -Message "Inactive gaps leaked into active elapsed time."
+
 $validCorner = Get-WebPerfCornerStoreTimingEvaluation -Report (New-CornerStoreReport)
 Assert-PrestageContract -Condition ([bool]$validCorner.passed) -Message "Complete Corner Store stage evidence was rejected."
 
@@ -86,5 +108,6 @@ $smokeSource = Get-Content -LiteralPath (Join-Path $PSScriptRoot "web_perf_smoke
 Assert-PrestageContract -Condition ($smokeSource -match "Get-WebPerfActivePhaseEvaluation" -and $smokeSource -match "Get-WebPerfCornerStoreTimingEvaluation") -Message "The Web smoke does not consume the prestage contract."
 $overlaySource = Get-Content -LiteralPath (Join-Path $PSScriptRoot "../scripts/ui/perf_telemetry_overlay.gd") -Raw
 Assert-PrestageContract -Condition ($overlaySource -match '"baccarat": "baccarat_deal"' -and $overlaySource -match '"roulette": "roulette_spin"') -Message "The runtime probe no longer names the production Baccarat/Roulette phases."
+Assert-PrestageContract -Condition ($overlaySource -match '(?ms)if active:.*?active_elapsed_msec \+=.*?else:\s+consecutive_active_frames = 0\s+prior_usec = now_usec') -Message "The runtime probe no longer advances its elapsed-time baseline on every sampled frame."
 
 Write-Host "Web performance prestage contract: PASS"

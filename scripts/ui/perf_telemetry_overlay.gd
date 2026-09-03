@@ -1378,6 +1378,8 @@ func _measure_named_active_phase(channel_id: String, frame_count: int) -> Dictio
 			active_elapsed_msec += float(maxi(0, now_usec - prior_usec)) / 1000.0
 		else:
 			consecutive_active_frames = 0
+		# Advance on both branches: retaining the old baseline while active would
+		# triangularly overcount a sustained phase and qualify a short sample.
 		prior_usec = now_usec
 	var active_at_end := canvas != null and canvas.has_method("surface_animation_active") \
 		and bool(canvas.call("surface_animation_active", channel_id))
