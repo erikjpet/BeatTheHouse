@@ -1599,7 +1599,12 @@ func _check_m2_system_interaction_scenario(library: ContentLibrary, failures: Ar
 	if not travel_hooks.has("small_underground_casino"):
 		travel_hooks.append("small_underground_casino")
 	scenario_environment["travel_hooks"] = travel_hooks
-	run_state.set_environment(scenario_environment)
+	# This probe augments the already-installed production room in place. Sending
+	# the same active scenario through set_environment() starts a new visit and
+	# intentionally clears its derived semantic authorization until the UI host
+	# rebuilds records; there is no UI controller in this model-only check.
+	run_state.current_environment = scenario_environment
+	run_state.current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(run_state.current_environment)
 
 	var underground_route := library.route("small_underground_casino")
 	if underground_route.is_empty():

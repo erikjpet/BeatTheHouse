@@ -7225,6 +7225,7 @@
                 {
                   "actor": {
                     "actor_id": "actor_eliminated_players",
+                    "anchor_id": "delta_noninteractive_right",
                     "behavior": "watch",
                     "label": "Eliminated players",
                     "pose": "arrival",
@@ -8599,7 +8600,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "5670763feb31eb47525676f6e50de8c24feb23310264a08606eb4ee28af3a848"
+        "sequence_signature": "fad42b174fc870436e74ba1f2b4976802b1f659c769322ed1a0f31cfd8a4dc2a"
       }
     },
     {
@@ -10714,7 +10715,7 @@
                     "actor_id": "actor_convention_coordinator",
                     "anchor_id": "grand_convention_coordinator",
                     "behavior": "work",
-                    "label": "Convention coordinator",
+                    "label": "Coordinator",
                     "pose": "arrival"
                   },
                   "family": "actor_ops",
@@ -10861,7 +10862,7 @@
                       "ui_accept",
                       "ui_right"
                     ],
-                    "label": "Read Booking Board",
+                    "label": "Booking Board",
                     "min_target_size": 44.0,
                     "non_color_state": "arrival_ready",
                     "owner_namespace": "scenario",
@@ -10976,7 +10977,7 @@
                       "w": 64.0
                     },
                     "enabled": true,
-                    "label": "Read Booking Board",
+                    "label": "Booking Board",
                     "role": "task_station",
                     "state": "ready",
                     "visible": true
@@ -11903,7 +11904,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "3de3d852fc8faab6b4ed8f7de2c8fc40178ec29f04ba00eef94248ce25386947"
+        "sequence_signature": "a54f94bed47371bcc3737259ea0a0166c639e5c93b22b510e35d244359294e30"
       }
     },
     {

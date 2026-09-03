@@ -115,6 +115,9 @@ static func from_archetype(archetype: Dictionary, p_depth: int, rng: RngStream, 
 	environment.tier = int(archetype.get("tier", 1))
 	environment.kind = archetype.get("kind", "unknown")
 	environment.archetype_id = archetype.get("id", "unknown")
+	# Legacy travel still needs a stable physical-node identity. World-map
+	# generation replaces this with the concrete node id before installation.
+	environment.world_node_id = environment.archetype_id
 	environment.id = "%s_%03d" % [environment.archetype_id, p_depth + 1]
 	environment.display_name = _build_name(archetype, rng)
 	environment.art_key = _art_key(archetype)

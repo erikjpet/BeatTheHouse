@@ -1829,7 +1829,8 @@ func has_world_map() -> bool:
 
 func current_world_node_id() -> String:
 	if world_map.is_empty():
-		return str(current_environment.get("world_node_id", current_environment.get("archetype_id", ""))).strip_edges()
+		var node_id := str(current_environment.get("world_node_id", "")).strip_edges()
+		return node_id if not node_id.is_empty() else str(current_environment.get("archetype_id", "")).strip_edges()
 	return WorldMap.current_node_id(world_map)
 
 
@@ -1838,7 +1839,9 @@ func scenario_for_node(node_id: String) -> Dictionary:
 	var wanted := node_id.strip_edges()
 	if wanted.is_empty():
 		return {}
-	var current_node := str(current_environment.get("world_node_id", current_environment.get("archetype_id", ""))).strip_edges()
+	var current_node := str(current_environment.get("world_node_id", "")).strip_edges()
+	if current_node.is_empty():
+		current_node = str(current_environment.get("archetype_id", "")).strip_edges()
 	if wanted == current_node or wanted == str(current_environment.get("id", "")):
 		var current_scenario := ScenarioEngineScript.public_snapshot(current_environment.get("scenario_state", {}))
 		return current_scenario if not current_scenario.is_empty() else seeded_scenario_for_node(wanted)
@@ -3108,7 +3111,7 @@ func _ensure_scenario_host_public_context() -> void:
 		environment_visit_id = "visit_%s_%d" % [_scenario_host_safe_id(str(current_environment.get("id", node_id))), maxi(1, environment_travel_count() + 1)]
 	current_environment["environment_visit_id"] = environment_visit_id
 	var night_instance_id := _scenario_host_safe_id(str(current_environment.get("night_instance_id", "")))
-	if night_instance_id.is_empty(): night_instance_id = "night_%d" % maxi(1, act_index + 1)
+	if night_instance_id.is_empty(): night_instance_id = "night_%d" % act_marker()
 	current_environment["night_instance_id"] = night_instance_id
 	var context_instance_id := _scenario_host_safe_id(str(current_environment.get("context_instance_id", "")))
 	if context_instance_id.is_empty(): context_instance_id = "context_%s" % environment_visit_id

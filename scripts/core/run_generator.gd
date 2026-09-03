@@ -555,25 +555,32 @@ func _legacy_next_environment(run_state: RunState, target_archetype_id: String, 
 	var scenario := _select_scenario(run_state, str(archetype.get("id", "")), rng)
 	var environment := EnvironmentInstance.from_archetype(archetype, depth, rng, library, run_state.challenge_config, scenario)
 	var environment_data := environment.to_dict()
-	var destination_id := str(environment_data.get("world_node_id", environment_data.get("archetype_id", ""))).strip_edges()
+	var destination_id := str(environment_data.get("world_node_id", "")).strip_edges()
+	if destination_id.is_empty():
+		destination_id = str(environment_data.get("archetype_id", "")).strip_edges()
 	if had_source:
 		# Legacy travel learns its destination through generation, so reserve both
 		# the departure fact and leave/visit-end expiry only after that identity is
 		# known, but before any generated-room mutation is committed to the run.
 		var preflight := run_state.scenario_preflight_environment_change(source_id, destination_id, "legacy")
 		if destination_id.is_empty() or not bool(preflight.get("ok", false)):
+			_last_environment_install_errors = ["Generated travel destination identity is empty."] if destination_id.is_empty() else _copy_array(preflight.get("errors", []))
 			_restore_travel_snapshot(run_state, rollback)
 			return EnvironmentInstance.from_dict(run_state.current_environment)
 	run_state.apply_town_generation_modifiers(environment_data, rng)
 	CrewRecruitmentModelScript.apply_to_environment(run_state, environment_data)
 	environment_data["game_states"] = _generated_game_states(run_state, environment_data, rng)
 	environment_data["layout"] = EnvironmentInstance.ensure_generated_layout(environment_data)
-	if had_source and not bool(_commit_travel_departure(run_state, source_id, destination_id, "legacy").get("ok", false)):
-		_restore_travel_snapshot(run_state, rollback)
-		return EnvironmentInstance.from_dict(run_state.current_environment)
+	if had_source:
+		var departure := _commit_travel_departure(run_state, source_id, destination_id, "legacy")
+		if not bool(departure.get("ok", false)):
+			_last_environment_install_errors = _copy_array(departure.get("errors", []))
+			_restore_travel_snapshot(run_state, rollback)
+			return EnvironmentInstance.from_dict(run_state.current_environment)
 	run_state.save_rng(rng)
 	var installed := _install_environment(run_state, environment_data)
 	if not bool(installed.get("ok", false)):
+		_last_environment_install_errors = _copy_array(installed.get("errors", []))
 		_restore_travel_snapshot(run_state, rollback)
 		return EnvironmentInstance.from_dict(run_state.current_environment)
 	if had_source:
@@ -748,7 +755,11 @@ func _pick_archetype(run_state: RunState, depth: int, rng: RngStream, target_arc
 		if not starts.is_empty():
 			return rng.pick(starts, {})
 
-	var next_ids: Array = run_state.current_environment.get("next_archetypes", [])
+	var next_ids: Array = []
+	for routed_id in _copy_array(run_state.current_environment.get("next_archetypes", [])) + _copy_array(run_state.current_environment.get("travel_hooks", [])):
+		var clean_routed_id := str(routed_id).strip_edges()
+		if not clean_routed_id.is_empty() and not next_ids.has(clean_routed_id):
+			next_ids.append(clean_routed_id)
 	if not target_archetype_id.is_empty() and next_ids.has(target_archetype_id):
 		var target := _archetype_by_id(target_archetype_id)
 		if not target.is_empty():

@@ -453,6 +453,14 @@ static func _check_swept_collection_consequences(failures: Array) -> void:
 	if not bool(started.get("ok", false)):
 		failures.append("Complete swept-consequence fixture could not start Lucky's collection.")
 		return
+	var pickup := run_state.delivery_apply_physical_action("pickup", "numbers:sweep-pickup:%s" % str(run_state.active_delivery_run.get("run_id", "delivery")))
+	if not bool(pickup.get("ok", false)):
+		failures.append("Complete swept-consequence fixture could not pick up Lucky's collection cargo.")
+		return
+	# Beginning the route installs its authored pickup room. Move both the world
+	# cursor and room projection to the swept Bar before resolving that boundary.
+	run_state.world_map = NumbersWorldMapScript.enter_node(run_state.world_map, "bar", {})
+	run_state.current_environment = {"id": "bar", "archetype_id": "bar", "world_node_id": "bar", "turns": 0}
 	var trust_before := run_state.crew_trust("crew_lucky")
 	run_state.add_suspicion("fixture", 50, "test", false)
 	var heat_before := run_state.suspicion_level()
@@ -576,7 +584,7 @@ static func _check_midstate_save_load(failures: Array) -> void:
 		failures.append("RunState save/load changed active Lucky collection cargo or its real-map delivery state.")
 	var fix_run: RunState = RunStateScript.new()
 	fix_run.start_new("NUMBERS-SAVE-FIX")
-	fix_run.current_environment = {"id": "small_underground_casino", "archetype_id": "small_underground_casino", "world_node_id": "small_underground_casino", "turns": 0}
+	fix_run.set_environment({"id": "small_underground_casino", "archetype_id": "small_underground_casino", "world_node_id": "small_underground_casino", "turns": 0})
 	fix_run.numbers_state.fix_unlock(true)
 	fix_run.numbers_state.fix_begin_bribe()
 	fix_run.numbers_state.fix_record_bribe(true, {"clean": true, "fast": true})
