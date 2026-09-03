@@ -119,6 +119,15 @@ aggregate run above is the Family 1 binding result.
   carries the current environment, and clears terminal presentation. The shared
   Roulette/Baccarat proposal resolver now lives in the intermediate parent that
   calls it, so the generated table-game leaf compiles with unchanged semantics.
+- The first full run of that repaired audit passed 120 generated clean/count
+  cases and 769 payout hands, then retained a selection-only `play_basic`
+  command as if it were a sealed resolving delivery at the old 16-iteration
+  ceiling. Report SHA-256
+  `E951F17595B611EE9F8D66F4D7283A9CA529558FB2FA81ACB7C90A391334D175`
+  is preserved as RED. Test-only successor `cae8bc6e` distinguishes staged
+  public selection from sealed resolution, fails closed on a resolving command
+  without delivery, adds an exact two-click regression, and bounds four-split-
+  hand action traversal at 64 surface steps. Product authority is unchanged.
 - `73b7a952` removes the sealed-host repeat-play growth blocker without changing
   outcomes. Historical 128-entry v3 saves remain valid and converge on their
   next commit to eight retained boundaries; retained replay, evicted rejection,

@@ -102,6 +102,20 @@ materially.
   real settled-hand result, advances terminal presentation, and emits exact
   failure detail. A 25-hand qualification passed before restoring the binding
   count to 1,000.
+- The next exact-root run at harness commit `47a3a241` passed all 120 generated
+  clean/count cases and settled 769 continuous-shoe payout hands with sampled
+  edge `-0.0173076923` before exposing a second probe defect. At the last
+  iteration of the probe's fixed 16-step hand loop, a public first click staged
+  `play_basic` and correctly carried no sealed delivery; the probe incorrectly
+  offered that selection-only command to the authority resolver and then ran
+  out of iterations. The retained RED report is
+  `.tmp/game06_closeout/blackjack_seed_final_47a3a241.json`, SHA-256
+  `E951F17595B611EE9F8D66F4D7283A9CA529558FB2FA81ACB7C90A391334D175`.
+  Harness commit `cae8bc6e` resolves only commands that request resolution and
+  carry a sealed delivery, fails closed if a resolving command lacks one,
+  continues ordinary selection-only interactions, and adds a deterministic
+  two-click confirmation regression. Its 64-action safety ceiling covers the
+  authored four split hands plus deck-bounded decisions and confirmation steps.
 - The first repeated-reprieve rerun failed because the fixture pinned an old
   whole `games.json` hash; after refreshing content provenance it exposed a
   nondeterministic whole-save fingerprint caused solely by the intentionally
