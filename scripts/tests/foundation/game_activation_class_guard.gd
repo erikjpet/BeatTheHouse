@@ -5,6 +5,7 @@ extends RefCounted
 
 const EnvironmentInstanceScript := preload("res://scripts/core/environment_instance.gd")
 const GameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.gd")
+const FoundationMainScript := preload("res://scripts/ui/foundation_main.gd")
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const BlackjackAuthorityTestDriverScript := preload("res://scripts/tests/foundation/blackjack_authority_test_driver.gd")
@@ -514,12 +515,27 @@ static func _commit_staff_action_boundary(game_id: String, game: GameModule, run
 		"blackjack":
 			BlackjackAuthorityTestDriverScript.resolve(game, "blackjack_place_bet", 10, run_state, environment, rng, {})
 		"roulette":
-			game.resolve_with_context("spin_roulette", 10, run_state, environment, rng, {"roulette_bets": [game.call("_default_smoke_bet", 10)]})
+			_commit_sealed_staff_surface(game, run_state, 10, ["roulette_bet", "roulette_spin", "roulette_spin"])
 		"bar_dice":
-			var roll_command := game.surface_action_command("bar_dice_roll", 0, false, {}, run_state, environment)
-			game.resolve_with_context("roll", 10, run_state, environment, rng, _dict(roll_command.get("ui_state", {})))
+			_commit_sealed_staff_surface(game, run_state, 10, ["bar_dice_roll", "bar_dice_ack_cover", "bar_dice_resolve", "bar_dice_throw", "bar_dice_reveal", "bar_dice_ack_call"])
 		"baccarat":
-			game.resolve_with_context("deal_baccarat", 20, run_state, environment, rng, {"baccarat_bets": {"player": 20}})
+			_commit_sealed_staff_surface(game, run_state, 20, ["baccarat_bet", "baccarat_deal"])
+
+
+static func _commit_sealed_staff_surface(game: GameModule, run_state: RunState, stake: int, surface_actions: Array) -> void:
+	var host := FoundationMainScript.new()
+	host.set("current_game", game)
+	host.set("game_module_cache", {game.get_id(): game})
+	host.set("run_state", run_state)
+	host.set("selected_stake", stake)
+	var command: Dictionary = {}
+	for surface_action_value in surface_actions:
+		command = host.call("_sealed_action_host_surface_intent", str(surface_action_value), 0, false, run_state.simulation_time_msec())
+	var delivery := _dict(command.get("_sealed_action_host_delivery", {}))
+	var action_id := str(command.get("action_id", ""))
+	if not delivery.is_empty() and not action_id.is_empty():
+		host.call("_sealed_action_host_resolve_intent", action_id, int(delivery.get("stake", stake)), delivery)
+	host.free()
 
 
 static func _check_reintroduced_defect_fixture(failures: Array) -> void:

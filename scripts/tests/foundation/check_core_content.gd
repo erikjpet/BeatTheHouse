@@ -2956,6 +2956,8 @@ func _check_talk_content_resolve_delta(library: ContentLibrary, event_id: String
 		run_state.add_suspicion("talk_parity_start", 20, "behavior")
 	var event_module := EventModule.new()
 	event_module.setup(event, library)
+	if event_module.get_interaction_mode() == "triggered":
+		run_state.enqueue_triggered_event(event_id, "talk_content_parity")
 	var result: Dictionary = event_module.resolve(run_state, run_state.current_environment, choice_id)
 	var deltas: Dictionary = result.get("deltas", {}) if typeof(result.get("deltas", {})) == TYPE_DICTIONARY else {}
 	if int(result.get("bankroll_delta", deltas.get("bankroll_delta", 0))) != expected_bankroll_delta:
@@ -3144,6 +3146,7 @@ func _check_t4_3_event_chains_and_checks(library: ContentLibrary, failures: Arra
 	rival_run.set_environment(_t4_3_fixture_environment("delta_queen", "casino", 2, ["blackjack"], ["rival_counter", "counter_payoff"], ["grand_casino"]))
 	var rival_event := EventModule.new()
 	rival_event.setup(library.event("rival_counter"))
+	rival_run.enqueue_triggered_event("rival_counter", "t4_3_event_chain", action_context)
 	var rival_result := rival_event.resolve(rival_run, rival_run.current_environment, "tip_off")
 	call("_check_event_result_delta_shape", rival_result, failures)
 	if not bool(rival_run.narrative_flags.get("rival_counter_owes_you", false)):
@@ -3168,6 +3171,8 @@ func _check_t4_3_event_chains_and_checks(library: ContentLibrary, failures: Arra
 	var collector_b := EventModule.new()
 	collector_a.setup(library.event("the_collector"))
 	collector_b.setup(library.event("the_collector"))
+	collector_run_a.enqueue_triggered_event("the_collector", "t4_3_event_check", action_context)
+	collector_run_b.enqueue_triggered_event("the_collector", "t4_3_event_check", action_context)
 	var result_a := collector_a.resolve(collector_run_a, collector_run_a.current_environment, "stand_ground")
 	var result_b := collector_b.resolve(collector_run_b, collector_run_b.current_environment, "stand_ground")
 	call("_check_event_result_delta_shape", result_a, failures)
