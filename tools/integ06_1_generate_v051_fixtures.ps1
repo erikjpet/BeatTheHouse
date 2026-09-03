@@ -183,6 +183,7 @@ try {
     if (-not (Test-Path -LiteralPath $sourceSave)) {
         throw "Historical SaveService output is missing: $sourceSave"
     }
+	$capture.save_path = "isolated_distribution_root/saves/$FixtureId.json"
 
     $destinationSave = Join-Path $OutputDirectory "$FixtureId.json"
     Copy-Item -LiteralPath $sourceSave -Destination $destinationSave -Force

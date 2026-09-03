@@ -1,0 +1,36 @@
+﻿{
+    "schema":  "beat_the_house.integ06_1_historical_fixture_provenance",
+    "version":  1,
+    "fixture_id":  "v051_smoke_foundation_run",
+    "historical_release":  "v0.5.1",
+    "historical_commit":  "f1ce7ec814b5034c229f53dcc0db6e799aaaee0b",
+    "historical_tree":  "19c5ed82c0d2d2390dab2b9b6662c70d8aed5d0d",
+    "historical_main_scene_blob":  "4b0643365098308dadfaee909d35e51784905811",
+    "historical_foundation_main_blob":  "3bc98efec993b8bfdd9252687a0ba041ebba7f23",
+    "historical_save_service_blob":  "57a6526016123feb9bcf1ebeb50cc8f937f0b265",
+    "driver_path":  "scripts/tests/foundation/integ06_1_v051_fixture_driver.gd",
+    "driver_sha256":  "6C2C8CC8BAB9D8F2A098E3B6020B26B0374228837B63D3638ECC3CFC17873CD3",
+    "capture":  {
+                    "action_index":  0,
+                    "archetype_id":  "house",
+                    "environment_id":  "house_001",
+                    "fixture_id":  "v051_smoke_foundation_run",
+                    "game_clock_minutes":  720,
+                    "game_id":  "",
+                    "game_state_key":  "",
+                    "methods":  [
+                                    "FoundationMain.start_foundation_run",
+                                    "FoundationMain.save_foundation_run",
+                                    "SaveService.wait_for_async_save"
+                                ],
+                    "project_version":  "0.5.1",
+                    "save_path":  "isolated_distribution_root/saves/v051_smoke_foundation_run.json",
+                    "save_schema":  "beat_the_house.foundation_run",
+                    "save_version":  2,
+                    "screen":  "ENVIRONMENT",
+                    "seed":  "INTEG06-1-V051-SMOKE-001"
+                },
+    "save_file":  "v051_smoke_foundation_run.json",
+    "save_size_bytes":  18998,
+    "save_sha256":  "81B4C5EAB4571E8BCB836647E9D25CA0F2EB31608C24D5C89933ADBEFAB2F17B"
+}

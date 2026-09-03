@@ -45,6 +45,29 @@ if one expires, so even a main-thread stall cannot orphan another capture.
 
 The historical worktree remained clean at `f1ce7ec8` throughout.
 
+## Genuine smoke fixture
+
+The corrected bounded run produced
+`scripts/tests/fixtures/integ06_1/v0_5_1/v051_smoke_foundation_run.json`
+from the historical House start. It was generated twice with the same seed and
+both captures had SHA-256
+`81B4C5EAB4571E8BCB836647E9D25CA0F2EB31608C24D5C89933ADBEFAB2F17B`.
+The checked-in sidecar records the exact historical Git identities, driver
+hash, public-call transcript, save size and save hash. Temporary capture paths
+are normalized out of the sidecar.
+
+The generating command is:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/integ06_1_generate_v051_fixtures.ps1 -OutputDirectory scripts/tests/fixtures/integ06_1/v0_5_1
+```
+
+The smoke fixture covers a genuine active run at the `house` archetype, before
+any player action. `scripts/tests/foundation/integ06_1_v051_migration_smoke.gd`
+loads it through current FoundationMain, saves it again through the current
+public save boundary, reloads it, and checks its playable invariants. This is
+one matrix seed only and is not row acceptance.
+
 ## Coverage still required
 
 This checkpoint is infrastructure, not migration evidence. It does not claim

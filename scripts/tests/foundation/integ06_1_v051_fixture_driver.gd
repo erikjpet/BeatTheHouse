@@ -95,6 +95,7 @@ func _capture() -> void:
 		return
 
 	var screen_snapshot: Dictionary = app.call("current_screen_snapshot")
+	var event_cadence: Dictionary = run_state.get("event_cadence")
 	var result := {
 		"fixture_id": fixture_id,
 		"seed": seed_text,
@@ -107,7 +108,7 @@ func _capture() -> void:
 		"game_id": game_id,
 		"screen": str(screen_snapshot.get("screen", "")),
 		"game_state_key": str(app.get("current_game_state_key")),
-		"action_index": run_state.get("action_index"),
+		"action_index": int(event_cadence.get("action_index", 0)),
 		"game_clock_minutes": run_state.get("game_clock_minutes"),
 		"methods": methods,
 	}
