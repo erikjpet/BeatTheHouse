@@ -166,8 +166,11 @@ func _valid_provenance(provenance: Dictionary, capture_case: Dictionary, fixture
 			expected_methods.append("FoundationMain.select_travel_option:%s" % target_id)
 			expected_methods.append("FoundationMain.confirm_selected_travel")
 		elif step_type == "event":
-			expected_methods.append("FoundationMain.select_event_choice:%s:%s" % [str(step.get("event_id", "")), str(step.get("choice_id", ""))])
-			expected_methods.append("FoundationMain.confirm_selected_event_choice")
+			if bool(step.get("popup", false)):
+				expected_methods.append("FoundationMain.resolve_event_choice:%s:%s" % [str(step.get("event_id", "")), str(step.get("choice_id", ""))])
+			else:
+				expected_methods.append("FoundationMain.select_event_choice:%s:%s" % [str(step.get("event_id", "")), str(step.get("choice_id", ""))])
+				expected_methods.append("FoundationMain.confirm_selected_event_choice")
 		elif step_type == "item":
 			expected_methods.append("FoundationMain.select_item_offer:%s" % str(step.get("item_id", "")))
 			expected_methods.append("FoundationMain.confirm_selected_item_offer")
@@ -273,6 +276,12 @@ func _expected_fixture_state(run_state: Variant, capture_case: Dictionary) -> bo
 	var expectation := str(capture_case.get("expected_surface_state", "")).strip_edges()
 	if expectation.is_empty():
 		return true
+	if expectation == "grand_showdown_duel":
+		var flags: Dictionary = run_state.get("narrative_flags")
+		var duel: Dictionary = flags.get("grand_casino_duel_state", {}) if typeof(flags.get("grand_casino_duel_state", {})) == TYPE_DICTIONARY else {}
+		return str(flags.get("grand_casino_showdown_step", "")) == "duel" \
+			and bool(flags.get("grand_casino_showdown_active", false)) \
+			and str(duel.get("status", "")) == "active"
 	if expectation != "partial_scratch":
 		return false
 	var environment: Dictionary = run_state.get("current_environment")
@@ -316,6 +325,12 @@ func _migration_contract(run_state: Variant) -> Dictionary:
 		"tutorial_beat": narrative_flags.get("tutorial_beat", 0),
 		"tutorial_lessons_completed": narrative_flags.get("tutorial_lessons_completed", {}).duplicate(true),
 		"tutorial_actions_performed": narrative_flags.get("tutorial_actions_performed", {}).duplicate(true),
+		"grand_casino_showdown_active": narrative_flags.get("grand_casino_showdown_active", false),
+		"grand_casino_showdown_step": narrative_flags.get("grand_casino_showdown_step", ""),
+		"grand_casino_showdown_pat_down": narrative_flags.get("grand_casino_showdown_pat_down", {}).duplicate(true),
+		"grand_casino_showdown_interrogation_answers": narrative_flags.get("grand_casino_showdown_interrogation_answers", []).duplicate(true),
+		"grand_casino_duel_terms": narrative_flags.get("grand_casino_duel_terms", {}).duplicate(true),
+		"grand_casino_duel_state": narrative_flags.get("grand_casino_duel_state", {}).duplicate(true),
 		"story_log": run_state.get("story_log").duplicate(true),
 		"world_current_node_id": str(world_map.get("current_node_id", "")),
 		"world_visited_path": world_map.get("visited_path", []).duplicate(true),

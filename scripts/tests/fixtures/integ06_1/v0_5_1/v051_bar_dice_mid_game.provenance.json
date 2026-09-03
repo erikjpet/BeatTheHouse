@@ -9,7 +9,7 @@
     "historical_foundation_main_blob":  "3bc98efec993b8bfdd9252687a0ba041ebba7f23",
     "historical_save_service_blob":  "57a6526016123feb9bcf1ebeb50cc8f937f0b265",
     "driver_path":  "scripts/tests/foundation/integ06_1_v051_fixture_driver.gd",
-    "driver_sha256":  "1A05D099024678B73EEE9528996E0AFA4536493BAF9224C589BA1840F99623A6",
+    "driver_sha256":  "25E29653F4284C9AB6261432B3BCA98006C8CB37F1D1C87DDF859E25F741FAAF",
     "capture":  {
                     "action_index":  0,
                     "archetype_id":  "bar",

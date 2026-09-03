@@ -80,11 +80,12 @@ func _capture_case(app: Control, capture_case: Dictionary, version: String) -> D
 		methods.append("FoundationMain.start_foundation_run")
 	await process_frame
 	await process_frame
-	print("INTEG06_1_PHASE=%s:foundation_run_started" % fixture_id)
+	print("INTEG06_1_PHASE=%s:foundation_run_started:requested_modifiers=%s" % [fixture_id, str(challenge_modifiers)])
 	var run_state: Variant = app.get("run_state")
 	if run_state == null:
 		_fail("FoundationMain did not create a run")
 		return {}
+	print("INTEG06_1_PHASE=%s:foundation_run_state:bankroll=%s:heat=%s:challenge=%s" % [fixture_id, str(run_state.get("bankroll")), str(run_state.call("suspicion_level")), str(run_state.get("challenge_config"))])
 	var travel_path: Array[String] = []
 	var tutorial_checkpoint := str(capture_case.get("tutorial_checkpoint", "")).strip_edges()
 	if tutorial_checkpoint in ["corner_store_arrival", "family_debt"]:
@@ -223,12 +224,20 @@ func _capture_case(app: Control, capture_case: Dictionary, version: String) -> D
 		if step_type == "event":
 			var event_id := str(step.get("event_id", "")).strip_edges()
 			var choice_id := str(step.get("choice_id", "")).strip_edges()
-			if not bool(app.call("select_event_choice", event_id, choice_id)):
-				_fail("%s could not select public event choice %s:%s" % [fixture_id, event_id, choice_id])
-				return {}
-			app.call("confirm_selected_event_choice")
-			methods.append("FoundationMain.select_event_choice:%s:%s" % [event_id, choice_id])
-			methods.append("FoundationMain.confirm_selected_event_choice")
+			var popup_snapshot: Dictionary = app.call("current_event_choice_popup_snapshot")
+			if bool(step.get("popup", false)):
+				if not bool(popup_snapshot.get("visible", false)) or str(popup_snapshot.get("event_id", "")) != event_id or not _string_array(popup_snapshot.get("choice_ids", [])).has(choice_id):
+					_fail("%s could not resolve public popup event choice %s:%s from %s" % [fixture_id, event_id, choice_id, str(popup_snapshot)])
+					return {}
+				app.call("resolve_event_choice", event_id, choice_id)
+				methods.append("FoundationMain.resolve_event_choice:%s:%s" % [event_id, choice_id])
+			else:
+				if not bool(app.call("select_event_choice", event_id, choice_id)):
+					_fail("%s could not select public event choice %s:%s" % [fixture_id, event_id, choice_id])
+					return {}
+				app.call("confirm_selected_event_choice")
+				methods.append("FoundationMain.select_event_choice:%s:%s" % [event_id, choice_id])
+				methods.append("FoundationMain.confirm_selected_event_choice")
 			await process_frame
 			await process_frame
 			run_state = app.get("run_state")
@@ -253,7 +262,8 @@ func _capture_case(app: Control, capture_case: Dictionary, version: String) -> D
 		methods.append("FoundationMain.select_travel_option:%s" % target_id)
 		methods.append("FoundationMain.confirm_selected_travel")
 		travel_path.append(target_id)
-		print("INTEG06_1_PHASE=%s:travel:%s:next=%s" % [fixture_id, target_id, str(arrived_environment.get("next_archetypes", []))])
+		var objective: Dictionary = run_state.call("demo_objective_status")
+		print("INTEG06_1_PHASE=%s:travel:%s:next=%s:heat=%s:objective=%s:showdown=%s" % [fixture_id, target_id, str(arrived_environment.get("next_archetypes", [])), str(run_state.call("suspicion_level")), str(objective.get("objective_state", "inactive")), str(run_state.get("narrative_flags").get("grand_casino_showdown_step", ""))])
 
 	var environment: Dictionary = run_state.get("current_environment")
 	var expected_archetype := str(capture_case.get("expected_archetype", "")).strip_edges()
@@ -286,8 +296,8 @@ func _capture_case(app: Control, capture_case: Dictionary, version: String) -> D
 		await process_frame
 		if not await _apply_surface_steps(app, capture_case, fixture_id, methods):
 			return {}
-		if not _expected_surface_state(run_state, capture_case, fixture_id):
-			return {}
+	if not _expected_surface_state(run_state, capture_case, fixture_id):
+		return {}
 
 	# This is the public, synchronous player save boundary. It checkpoints the
 	# live game surface before SaveService writes the historical envelope.
@@ -416,7 +426,18 @@ func _expected_surface_state(run_state: Variant, capture_case: Dictionary, fixtu
 	var expectation := str(capture_case.get("expected_surface_state", "")).strip_edges()
 	if expectation.is_empty():
 		return true
-	if expectation != "partial_scratch" or run_state == null:
+	if run_state == null:
+		_fail("%s has no run state for surface-state expectation %s" % [fixture_id, expectation])
+		return false
+	if expectation == "grand_showdown_duel":
+		var flags: Dictionary = run_state.get("narrative_flags")
+		var duel: Dictionary = flags.get("grand_casino_duel_state", {}) if typeof(flags.get("grand_casino_duel_state", {})) == TYPE_DICTIONARY else {}
+		var duel_environment: Dictionary = run_state.get("current_environment")
+		if str(duel_environment.get("archetype_id", "")) != "grand_casino_back_room" or not bool(flags.get("grand_casino_showdown_active", false)) or str(flags.get("grand_casino_showdown_step", "")) != "duel" or str(duel.get("status", "")) != "active":
+			_fail("%s did not produce a genuinely active Grand Casino Back Room duel" % fixture_id)
+			return false
+		return true
+	if expectation != "partial_scratch":
 		_fail("%s has unsupported surface-state expectation %s" % [fixture_id, expectation])
 		return false
 	var environment: Dictionary = run_state.get("current_environment")

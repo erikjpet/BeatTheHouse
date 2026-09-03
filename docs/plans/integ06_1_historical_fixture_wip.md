@@ -224,11 +224,38 @@ tutorial active/beat state, completed lessons, and performed-action state over
 the public current-build save/reload boundary. Historical capture passes 34 of
 34, and the current strict migration matrix passes 34 of 34.
 
+## Seventh verified batch
+
+`v051_grand_casino_back_room_duel` closes the final historical environment gap.
+It reaches the Grand Casino Back Room through a complete player-facing route:
+the generated Parking Lot Tip, Crew and Kitty lender hooks, Grand invitation,
+ordinary travel, naturally accumulated travel heat, and all five choices in
+the live `the_house_calls` event. Those choices are dispatched through
+`FoundationMain.resolve_event_choice`, the same callback bound to the popup's
+choice buttons. FoundationMain then enters the Back Room automatically and
+opens the Rourke showdown at its active duel step.
+
+The run uses a legitimate v0.5.1 custom challenge whose exact modifiers are
+captured in provenance. Its only route-enabling changes disable local-risk
+decay and set all three generated home profiles to a fixed $3,000 starting-cash
+range, because v0.5.1 home-profile generation replaces the challenge's generic
+starting-bankroll and starting-heat values. The driver does not author RunState
+narrative, heat, invitation, showdown, environment, debt, or duel flags.
+
+Admission explicitly verifies the active showdown step, pat-down result,
+interrogation answers, duel terms, active duel state, Back Room archetype, and
+the genuine Crew debt. Its canonical SHA-256 is
+`9CF3C57CA22242B08D4FB87E797B9F78FE11B684080ADB938ACD6FB77361E104`.
+All 35 historical captures regenerate from the exact v0.5.1 commit with clean,
+matching provenance; all 35 migrate through current FoundationMain and remain
+stable after the public SaveService round trip. Environment coverage is now 18
+of 18 archetypes.
+
 ## Coverage still required
 
 This checkpoint is historical migration evidence, but not the complete row. It
-does not claim the Grand Casino Back Room, tutorial checkpoints beyond the
-family-debt lesson, victory thresholds, maximal composition, or soak. It also does not yet cover the
+does not claim tutorial checkpoints beyond the family-debt lesson, victory
+thresholds, maximal composition, or soak. It also does not yet cover the
 promised mid-0.6 Punchline, delivery, coin-pusher, or scenario-snapshot schemas.
-The 34 checked-in fixtures do pass the current-build migration and public
+The 35 checked-in fixtures do pass the current-build migration and public
 save/reload contract.
