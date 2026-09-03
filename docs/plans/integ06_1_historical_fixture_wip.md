@@ -251,11 +251,59 @@ matching provenance; all 35 migrate through current FoundationMain and remain
 stable after the public SaveService round trip. Environment coverage is now 18
 of 18 archetypes.
 
+### Exact-root portability failure ledger
+
+The first exact-root gate after integrating the seventh batch at `b12053e4`
+rejected fixture-driver provenance on Windows. Git's checkout had converted the
+driver to CRLF, so hashing the checked-out bytes did not match the LF bytes
+copied into the historical archive. This was a real portability defect in the
+harness, not a fixture or migration failure, and the rejected run is retained
+as the first result.
+
+Commit `11f3aeed` canonicalizes the driver to LF before hashing in both the
+generator and verifier. The exact-root retry passed all 35 fixtures in 38.1
+seconds with no `ERROR` or `SCRIPT ERROR` output. Future fixture batches are
+based on that correction.
+
+## Eighth verified batch
+
+Two checkpoints from the shipped `tutorial_first_card` challenge extend the
+inventory to 37 genuine historical saves:
+
+- `v051_tutorial_gas_station_arrival` continues the existing Family Loan
+  checkpoint through Pal's real debt acknowledgement, the Parking Lot Tip
+  room response, and the authored world-map route to Gas Station Casino.
+  SHA-256:
+  `D5978D43E05F4B2F4E5A166A6C9F474D78CB9D652C1A77E8E4B9EAFB58DB998B`.
+- `v051_tutorial_gas_machine_open` repeats that player path and opens the
+  shipped Pull Tabs machine through `FoundationMain.enter_game`. It preserves
+  the live GAME screen and untouched machine state before the first Peek.
+  SHA-256:
+  `851C11D307CFCC5EFC338F359536DB7D39DD110FF3D7A676FFFFC6C9D23EA58B`.
+
+An attempted four-Peek checkpoint was rejected rather than admitted. Pal's
+live progress dialogue and surface refresh ownership accepted only a subset of
+the automated clicks, so the result did not reach the declared historical
+state. The two stable boundaries above remain entirely player-facing and do
+not author tutorial, environment, debt, game, or narrative state.
+
+The full historical regeneration completed 37 captures in 331.8 seconds. That
+run mechanically changed all 35 older provenance files to the new driver hash
+and changed the partial Scratch Ticket bytes through its wall-clock-like
+dispense timestamp. Those 36 files were restored byte-for-byte; they are
+immutable prior evidence, not content to refresh. The verifier pins their
+existing driver SHA-256 and requires the current canonical-LF driver hash only
+for the two new checkpoints. On that final candidate shape, the strict
+current-build migration matrix passed all 37 fixtures in 38.4 seconds with
+verified provenance and a stable public FoundationMain/SaveService round trip.
+
 ## Coverage still required
 
 This checkpoint is historical migration evidence, but not the complete row. It
-does not claim tutorial checkpoints beyond the family-debt lesson, victory
-thresholds, maximal composition, or soak. It also does not yet cover the
-promised mid-0.6 Punchline, delivery, coin-pusher, or scenario-snapshot schemas.
-The 35 checked-in fixtures do pass the current-build migration and public
-save/reload contract.
+does not claim tutorial checkpoints beyond opening the tutorial Pull Tabs
+machine, victory thresholds, maximal composition, or soak. No economical
+ordinary-run or shipped-challenge path has yet demonstrated the victory
+threshold states, so no synthetic threshold fixture is admitted. The inventory
+also does not yet cover the promised mid-0.6 Punchline, delivery, coin-pusher,
+or scenario-snapshot schemas. The 37 checked-in fixtures do pass the
+current-build migration and public save/reload contract.

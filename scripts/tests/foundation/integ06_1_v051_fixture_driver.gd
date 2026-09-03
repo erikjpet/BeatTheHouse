@@ -6,6 +6,12 @@ extends SceneTree
 
 const MainScene := preload("res://scenes/main.tscn")
 const CAPTURE_TIMEOUT_SECONDS := 90.0
+const TUTORIAL_CORNER_CHECKPOINTS := [
+	"corner_store_arrival",
+	"family_debt",
+	"gas_station_arrival",
+	"gas_machine_open",
+]
 
 
 func _init() -> void:
@@ -88,7 +94,7 @@ func _capture_case(app: Control, capture_case: Dictionary, version: String) -> D
 	print("INTEG06_1_PHASE=%s:foundation_run_state:bankroll=%s:heat=%s:challenge=%s" % [fixture_id, str(run_state.get("bankroll")), str(run_state.call("suspicion_level")), str(run_state.get("challenge_config"))])
 	var travel_path: Array[String] = []
 	var tutorial_checkpoint := str(capture_case.get("tutorial_checkpoint", "")).strip_edges()
-	if tutorial_checkpoint in ["corner_store_arrival", "family_debt"]:
+	if tutorial_checkpoint in TUTORIAL_CORNER_CHECKPOINTS:
 		if not bool(app.call("apply_item_offer", "xray_glasses")):
 			_fail("%s could not pick up the tutorial X-ray Glasses through FoundationMain" % fixture_id)
 			return {}
@@ -119,7 +125,7 @@ func _capture_case(app: Control, capture_case: Dictionary, version: String) -> D
 			_fail("%s tutorial map action did not reach the Corner Store" % fixture_id)
 			return {}
 		travel_path.append("corner_store")
-		if tutorial_checkpoint == "family_debt":
+		if tutorial_checkpoint != "corner_store_arrival":
 			if not bool(app.call("focus_interactable_object", "item:ledger_pencil")) or not bool(app.call("activate_interactable_object", "item:ledger_pencil")):
 				_fail("%s could not buy the tutorial Ledger Pencil through its room object" % fixture_id)
 				return {}
@@ -170,12 +176,108 @@ func _capture_case(app: Control, capture_case: Dictionary, version: String) -> D
 	if steps.is_empty():
 		for target_id in _string_array(capture_case.get("travel_path", [])):
 			steps.append({"type": "travel", "target": target_id})
+	var game_id := ""
 	for step_value in steps:
 		if typeof(step_value) != TYPE_DICTIONARY:
 			_fail("%s capture step was not a dictionary" % fixture_id)
 			return {}
 		var step: Dictionary = step_value
 		var step_type := str(step.get("type", "")).strip_edges()
+		if step_type == "event_action":
+			var action_event_id := str(step.get("event_id", "")).strip_edges()
+			var action_choice_id := str(step.get("choice_id", "")).strip_edges()
+			var action_event_object_id := "event:%s" % action_event_id
+			var action_response_object_id := "event_response:%s:%s" % [action_event_id, action_choice_id]
+			if not bool(app.call("focus_interactable_object", action_event_object_id)) or not bool(app.call("activate_interactable_object", action_response_object_id)):
+				_fail("%s could not activate public event-card action %s:%s" % [fixture_id, action_event_id, action_choice_id])
+				return {}
+			methods.append("FoundationMain.focus_interactable_object:%s" % action_event_object_id)
+			methods.append("FoundationMain.activate_interactable_object:%s" % action_response_object_id)
+			for _frame in range(4):
+				await process_frame
+			run_state = app.get("run_state")
+			continue
+		if step_type == "map_travel":
+			var map_target_id := str(step.get("target", "")).strip_edges()
+			if not bool(app.call("open_world_map")):
+				_fail("%s could not open the public world map for %s" % [fixture_id, map_target_id])
+				return {}
+			methods.append("FoundationMain.open_world_map")
+			await process_frame
+			await process_frame
+			if not bool(app.call("select_world_map_node", map_target_id)):
+				_fail("%s could not select public world-map target %s" % [fixture_id, map_target_id])
+				return {}
+			methods.append("FoundationMain.select_world_map_node:%s" % map_target_id)
+			app.call("confirm_world_map_travel")
+			methods.append("FoundationMain.confirm_world_map_travel")
+			for _frame in range(4):
+				await process_frame
+			run_state = app.get("run_state")
+			var map_arrival: Dictionary = run_state.get("current_environment")
+			if str(map_arrival.get("archetype_id", "")) != map_target_id:
+				_fail("%s world-map travel reached %s instead of %s" % [fixture_id, str(map_arrival.get("archetype_id", "")), map_target_id])
+				return {}
+			travel_path.append(map_target_id)
+			continue
+		if step_type == "interact":
+			var object_id := str(step.get("object_id", "")).strip_edges()
+			if not bool(app.call("focus_interactable_object", object_id)) or not bool(app.call("activate_interactable_object", object_id)):
+				_fail("%s could not activate public room object %s" % [fixture_id, object_id])
+				return {}
+			methods.append("FoundationMain.focus_interactable_object:%s" % object_id)
+			methods.append("FoundationMain.activate_interactable_object:%s" % object_id)
+			await process_frame
+			await process_frame
+			run_state = app.get("run_state")
+			continue
+		if step_type == "talk":
+			var talk_event_id := str(step.get("event_id", "")).strip_edges()
+			var talk_choice_id := str(step.get("choice_id", "")).strip_edges()
+			var talk_snapshot: Dictionary = {}
+			for _frame in range(30):
+				talk_snapshot = app.call("current_talk_dock_snapshot")
+				if bool(talk_snapshot.get("visible", false)) and str(talk_snapshot.get("event_id", "")) == talk_event_id and _string_array(talk_snapshot.get("choice_ids", [])).has(talk_choice_id):
+					break
+				await process_frame
+			if not bool(talk_snapshot.get("visible", false)) or str(talk_snapshot.get("event_id", "")) != talk_event_id or not _string_array(talk_snapshot.get("choice_ids", [])).has(talk_choice_id):
+				_fail("%s could not resolve public TalkDock choice %s:%s from %s" % [fixture_id, talk_event_id, talk_choice_id, str(talk_snapshot)])
+				return {}
+			if bool(step.get("require_enabled", false)) and talk_choice_id.begins_with("cage_"):
+				var cage_status: Dictionary = app.call("_linda_cage_choice_status", talk_choice_id)
+				if not bool(cage_status.get("enabled", false)):
+					_fail("%s required enabled Cage choice %s, got %s" % [fixture_id, talk_choice_id, str(cage_status)])
+					return {}
+			app.call("_on_talk_dock_choice_requested", talk_event_id, talk_choice_id)
+			methods.append("TalkDock.choice_requested:%s:%s" % [talk_event_id, talk_choice_id])
+			await process_frame
+			await process_frame
+			run_state = app.get("run_state")
+			continue
+		if step_type == "enter_game":
+			var step_game_id := str(step.get("game_id", "")).strip_edges()
+			var step_environment: Dictionary = run_state.get("current_environment")
+			if not _string_array(step_environment.get("game_ids", [])).has(step_game_id) or not bool(app.call("enter_game", step_game_id)):
+				_fail("%s could not enter generated game %s" % [fixture_id, step_game_id])
+				return {}
+			game_id = step_game_id
+			methods.append("FoundationMain.enter_game:%s" % step_game_id)
+			await process_frame
+			await process_frame
+			continue
+		if step_type == "surface":
+			if game_id.is_empty() or not await _apply_surface_step(app, step, fixture_id, methods):
+				return {}
+			run_state = app.get("run_state")
+			print("INTEG06_1_PHASE=%s:surface:%s:result=%s:objective=%s" % [fixture_id, str(step.get("action", "")), str(app.get("last_game_result")), str(run_state.call("demo_objective_status"))])
+			continue
+		if step_type == "back_to_environment":
+			app.call("back_to_environment")
+			methods.append("FoundationMain.back_to_environment")
+			game_id = ""
+			await process_frame
+			await process_frame
+			continue
 		if step_type == "item":
 			var item_id := str(step.get("item_id", "")).strip_edges()
 			if not bool(app.call("select_item_offer", item_id)):
@@ -274,20 +376,19 @@ func _capture_case(app: Control, capture_case: Dictionary, version: String) -> D
 	if not expected_lender_debt.is_empty() and not _has_active_lender_debt(run_state.get("debt"), expected_lender_debt):
 		_fail("%s did not reach active debt for %s through the declared player path" % [fixture_id, expected_lender_debt])
 		return {}
-	var game_ids := _string_array(environment.get("game_ids", []))
-	var game_id := ""
 	var requested_game := str(capture_case.get("enter_game", "")).strip_edges()
-	if requested_game == "first":
-		if game_ids.is_empty():
-			_fail("%s reached an environment with no playable game" % fixture_id)
-			return {}
-		game_id = str(game_ids[0])
-	elif not requested_game.is_empty():
-		if not game_ids.has(requested_game):
+	if not requested_game.is_empty():
+		var game_ids := _string_array(environment.get("game_ids", []))
+		if requested_game == "first":
+			if game_ids.is_empty():
+				_fail("%s reached an environment with no playable game" % fixture_id)
+				return {}
+			game_id = str(game_ids[0])
+		elif not game_ids.has(requested_game):
 			_fail("%s requested unavailable generated game %s from %s" % [fixture_id, requested_game, str(game_ids)])
 			return {}
-		game_id = requested_game
-	if not game_id.is_empty():
+		else:
+			game_id = requested_game
 		if not bool(app.call("enter_game", game_id)):
 			_fail("FoundationMain could not enter generated game %s" % game_id)
 			return {}
@@ -365,32 +466,45 @@ func _apply_surface_steps(app: Control, capture_case: Dictionary, fixture_id: St
 		if typeof(step_value) != TYPE_DICTIONARY:
 			_fail("%s surface step was not a dictionary" % fixture_id)
 			return false
-		var step: Dictionary = step_value
-		var action_id := str(step.get("action", "")).strip_edges()
-		var requested_index := int(step.get("index", -1))
-		var index := requested_index
-		var input_type := str(step.get("type", "click")).strip_edges()
-		if input_type == "click":
-			if index < 0 and action_id == "scratch_buy":
-				index = _first_stocked_scratch_index(app.get("run_state"))
-			if index < 0:
-				_fail("%s could not resolve surface action index for %s" % [fixture_id, action_id])
-				return false
-			canvas.emit_signal("surface_action", action_id, index, false)
-			methods.append("GameSurfaceCanvas.surface_action:%s:%s" % [action_id, "first_stocked" if requested_index < 0 else str(index)])
-		elif input_type == "drag":
-			var from_value: Variant = step.get("from", [400.0, 160.0])
-			var to_value: Variant = step.get("to", [520.0, 160.0])
-			var from := Vector2(float((from_value as Array)[0]), float((from_value as Array)[1])) if typeof(from_value) == TYPE_ARRAY and (from_value as Array).size() >= 2 else Vector2(400.0, 160.0)
-			var to := Vector2(float((to_value as Array)[0]), float((to_value as Array)[1])) if typeof(to_value) == TYPE_ARRAY and (to_value as Array).size() >= 2 else Vector2(520.0, 160.0)
-			canvas.emit_signal("surface_pointer_action", action_id, index, "begin", from)
-			canvas.emit_signal("surface_pointer_action", action_id, index, "move", to)
-			canvas.emit_signal("surface_pointer_action", action_id, index, "end", to)
-			methods.append("GameSurfaceCanvas.surface_pointer_drag:%s:%d" % [action_id, index])
-		else:
-			_fail("%s surface step had unsupported type %s" % [fixture_id, input_type])
+		if not await _apply_surface_step(app, step_value as Dictionary, fixture_id, methods):
 			return false
-		await process_frame
+	return true
+
+
+func _apply_surface_step(app: Control, step: Dictionary, fixture_id: String, methods: Array[String]) -> bool:
+	var canvas: Variant = app.get("game_surface_canvas")
+	if canvas == null:
+		_fail("%s game surface canvas was unavailable" % fixture_id)
+		return false
+	var action_id := str(step.get("action", "")).strip_edges()
+	var requested_index := int(step.get("index", -1))
+	var index := requested_index
+	var input_type := str(step.get("input_type", "click" if str(step.get("type", "")) == "surface" else step.get("type", "click"))).strip_edges()
+	if input_type == "click":
+		if index < 0 and action_id == "scratch_buy":
+			index = _first_stocked_scratch_index(app.get("run_state"))
+		if index < 0:
+			_fail("%s could not resolve surface action index for %s" % [fixture_id, action_id])
+			return false
+		canvas.emit_signal("surface_action", action_id, index, false)
+		methods.append("GameSurfaceCanvas.surface_action:%s:%s" % [action_id, "first_stocked" if requested_index < 0 else str(index)])
+	elif input_type == "drag":
+		var from_value: Variant = step.get("from", [400.0, 160.0])
+		var to_value: Variant = step.get("to", [520.0, 160.0])
+		var from := Vector2(float((from_value as Array)[0]), float((from_value as Array)[1])) if typeof(from_value) == TYPE_ARRAY and (from_value as Array).size() >= 2 else Vector2(400.0, 160.0)
+		var to := Vector2(float((to_value as Array)[0]), float((to_value as Array)[1])) if typeof(to_value) == TYPE_ARRAY and (to_value as Array).size() >= 2 else Vector2(520.0, 160.0)
+		canvas.emit_signal("surface_pointer_action", action_id, index, "begin", from)
+		canvas.emit_signal("surface_pointer_action", action_id, index, "move", to)
+		canvas.emit_signal("surface_pointer_action", action_id, index, "end", to)
+		methods.append("GameSurfaceCanvas.surface_pointer_drag:%s:%d" % [action_id, index])
+	else:
+		_fail("%s surface step had unsupported type %s" % [fixture_id, input_type])
+		return false
+	await process_frame
+	await process_frame
+	var wait_msec := maxi(0, int(step.get("wait_msec", 0)))
+	if wait_msec > 0:
+		await create_timer(float(wait_msec) / 1000.0).timeout
 		await process_frame
 	return true
 
@@ -435,6 +549,15 @@ func _expected_surface_state(run_state: Variant, capture_case: Dictionary, fixtu
 		var duel_environment: Dictionary = run_state.get("current_environment")
 		if str(duel_environment.get("archetype_id", "")) != "grand_casino_back_room" or not bool(flags.get("grand_casino_showdown_active", false)) or str(flags.get("grand_casino_showdown_step", "")) != "duel" or str(duel.get("status", "")) != "active":
 			_fail("%s did not produce a genuinely active Grand Casino Back Room duel" % fixture_id)
+			return false
+		return true
+	if expectation == "tutorial_gas_machine_open":
+		var environment: Dictionary = run_state.get("current_environment")
+		var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+		var machine: Dictionary = game_states.get("pull_tabs", {}) if typeof(game_states.get("pull_tabs", {})) == TYPE_DICTIONARY else {}
+		var item_state: Dictionary = machine.get("item_state", {}) if typeof(machine.get("item_state", {})) == TYPE_DICTIONARY else {}
+		if str(environment.get("archetype_id", "")) != "gas_station_casino" or machine.is_empty() or int(item_state.get("tab_detector_peek_count", 0)) != 0:
+			_fail("%s did not preserve the shipped tutorial's freshly opened pull-tab machine" % fixture_id)
 			return false
 		return true
 	if expectation != "partial_scratch":
