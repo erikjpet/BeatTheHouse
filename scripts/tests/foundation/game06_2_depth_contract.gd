@@ -84,6 +84,7 @@ func _run() -> void:
 	_check_first_entry_surface_delivery(game)
 	_check_proposal_replay_ignores_wall_time(game)
 	_check_host_authority_and_replay(game)
+	_check_legacy_replay_window_convergence(game)
 	_check_hostile_delivery_and_restore(game)
 	_check_failure_atomic_rng_retry(game)
 	_check_failed_turn_retry(game)
@@ -636,6 +637,113 @@ func _check_failure_atomic_rng_retry(game: GameModule) -> void:
 	var control_result: Dictionary = control_host.call("_sealed_action_host_resolve_intent", "play_basic", 5)
 	_check(RitualRuntimeScript.canonical_json(retry_result) == RitualRuntimeScript.canonical_json(control_result), "Legitimate retry after post-RNG rejection diverged from clean control.")
 	_check(RitualRuntimeScript.canonical_json(retry_run.to_save_snapshot()) == RitualRuntimeScript.canonical_json(control_fixture.run.to_save_snapshot()), "Post-RNG retry committed different state/RNG than clean control.")
+
+
+func _check_legacy_replay_window_convergence(game: GameModule) -> void:
+	var fixture := _prepared_authority_fixture(game, "GAME06-2-LEGACY-REPLAY", 38, 5)
+	var run: RunState = fixture.run
+	var environment: Dictionary = fixture.environment
+	var binding := "blackjack:%s:%s" % [str(environment.get("id", "unknown")), str(environment.get("archetype_id", "unknown"))]
+	var checkpoint := run.blackjack_authority_checkpoint_fingerprint()
+	var legacy := _legacy_replay_ledger(binding, checkpoint, fixture.session, str(environment.get("id", "")), BlackjackActionAuthorityScript.CACHE_LIMIT)
+	var validated := BlackjackActionAuthorityScript.validate_persisted_ledger(legacy, binding, checkpoint)
+	_check(not validated.is_empty() and (validated.get("request_order", []) as Array).size() == BlackjackActionAuthorityScript.CACHE_LIMIT, "Historical 128-entry Blackjack replay window no longer validates.")
+
+	var legacy_json := RitualRuntimeScript.canonical_json(legacy)
+	var oldest_key := str((legacy.get("request_order", []) as Array)[0])
+	var newest_key := str((legacy.get("request_order", []) as Array)[-1])
+	var isolated_cache: Dictionary = validated.get("request_cache", {})
+	var isolated_entry: Dictionary = isolated_cache.get(oldest_key, {})
+	var isolated_response: Dictionary = isolated_entry.get("response", {})
+	isolated_response["bankroll_delta"] = 999999
+	_check(RitualRuntimeScript.canonical_json(legacy) == legacy_json, "Public Blackjack ledger validation leaked a nested mutable alias to persisted input.")
+
+	var table: Dictionary = game.call("_table_state", run, environment)
+	table[BlackjackActionAuthorityScript.LEDGER_KEY] = legacy.duplicate(true)
+	game.call("_update_environment_table", environment, table)
+	run.current_environment = environment
+	var saved := run.to_save_snapshot()
+	var restored := RunStateScript.new()
+	restored.from_dict(saved)
+	var restored_table: Dictionary = game.call("_table_state_preview", restored, restored.current_environment)
+	var restored_legacy: Dictionary = restored_table.get(BlackjackActionAuthorityScript.LEDGER_KEY, {})
+	_check((restored_legacy.get("request_order", []) as Array).size() == BlackjackActionAuthorityScript.CACHE_LIMIT, "Save/load discarded a valid historical 128-entry Blackjack replay window.")
+
+	var restored_host := _authority_host(game, restored, 5)
+	var committed: Dictionary = restored_host.call("_sealed_action_host_resolve_intent", "play_basic", 5)
+	_check(bool(committed.get("ok", false)) and bool(committed.get(BlackjackActionAuthorityScript.HOST_COMMITTED_KEY, false)), "First action after loading a historical replay window did not commit.")
+	var converged_table: Dictionary = game.call("_table_state_preview", restored, restored.current_environment)
+	var converged: Dictionary = converged_table.get(BlackjackActionAuthorityScript.LEDGER_KEY, {})
+	var converged_order: Array = converged.get("request_order", [])
+	_check(not BlackjackActionAuthorityScript.validate_persisted_ledger(converged, binding, restored.blackjack_authority_checkpoint_fingerprint()).is_empty(), "Historical Blackjack replay window did not converge to a valid bounded ledger.")
+	_check(converged_order.size() == BlackjackActionAuthorityScript.ACTIVE_REPLAY_LIMIT and (converged.get("journal", []) as Array).size() == BlackjackActionAuthorityScript.ACTIVE_REPLAY_LIMIT, "First post-load commit did not converge replay cache and journal to the active bound.")
+	var legacy_cache: Dictionary = legacy.get("request_cache", {})
+	var oldest_delivery: Dictionary = ((legacy_cache.get(oldest_key, {}) as Dictionary).get("response", {}) as Dictionary).get(BlackjackActionAuthorityScript.HOST_DELIVERY_KEY, {})
+	var newest_delivery: Dictionary = ((legacy_cache.get(newest_key, {}) as Dictionary).get("response", {}) as Dictionary).get(BlackjackActionAuthorityScript.HOST_DELIVERY_KEY, {})
+	_check(BlackjackActionAuthorityScript.cached_response(converged, oldest_key, oldest_delivery).is_empty(), "Evicted historical Blackjack delivery remained replayable after bounded convergence.")
+	var newest_replay := BlackjackActionAuthorityScript.cached_response(converged, newest_key, newest_delivery)
+	_check(not newest_replay.is_empty() and bool(newest_replay.get("ok", false)), "Newest retained historical Blackjack delivery stopped replaying after bounded convergence.")
+	_check(RitualRuntimeScript.canonical_json(legacy) == legacy_json, "Bounded Blackjack convergence mutated the caller-owned historical ledger.")
+
+
+func _legacy_replay_ledger(binding: String, checkpoint: String, session: Dictionary, environment_id: String, entry_count: int) -> Dictionary:
+	var rolling := BlackjackActionAuthorityScript.stage_session(BlackjackActionAuthorityScript.default_ledger(binding, checkpoint), session)
+	var cache := {}
+	var order: Array = []
+	var journal: Array = []
+	var previous := ""
+	for index in range(entry_count):
+		var trusted_context := {"legacy_entry": index}
+		var issued: Dictionary = BlackjackActionAuthorityScript.issue_delivery(rolling, "play_basic", trusted_context, 5, session)
+		var delivery: Dictionary = issued.get("delivery", {})
+		rolling = issued.get("ledger", {})
+		var response := GameModule.build_action_result({
+			"ok": true,
+			"source_id": "blackjack",
+			"game_id": "blackjack",
+			"action_id": "play_basic",
+			"action_kind": "legal",
+			"stake": 5,
+			"bankroll_delta": 0,
+			"deltas": {"bankroll_delta": 0},
+			"environment_id": environment_id,
+		})
+		var request_key := str(delivery.get("request_key", ""))
+		response[BlackjackActionAuthorityScript.HOST_REQUEST_KEY] = request_key
+		response[BlackjackActionAuthorityScript.HOST_DELIVERY_KEY] = delivery.duplicate(true)
+		var proposal_fingerprint := RitualRuntimeScript.canonical_fingerprint({"legacy_proposal": index})
+		var run_fingerprint := RitualRuntimeScript.canonical_fingerprint({"legacy_run": index})
+		var rng_fingerprint := RitualRuntimeScript.canonical_fingerprint({"legacy_rng": index})
+		var result_fingerprint := BlackjackActionAuthorityScript.result_fingerprint(response)
+		response[BlackjackActionAuthorityScript.HOST_CONTENT_FINGERPRINT_KEY] = result_fingerprint
+		response[BlackjackActionAuthorityScript.HOST_APPLY_RECEIPT_KEY] = BlackjackActionAuthorityScript.receipt_for(delivery, binding, response, proposal_fingerprint, run_fingerprint, rng_fingerprint)
+		var committed := BlackjackActionAuthorityScript.commit_response(rolling, delivery, response, proposal_fingerprint, run_fingerprint, rng_fingerprint, checkpoint)
+		var committed_cache: Dictionary = committed.get("request_cache", {})
+		var cache_entry: Dictionary = committed_cache.get(request_key, {})
+		cache[request_key] = cache_entry.duplicate(true)
+		order.append(request_key)
+		var journal_entry := {
+			"request_key": request_key,
+			"boundary_ordinal": int(delivery.get("boundary_ordinal", -1)),
+			"intent_fingerprint": str(delivery.get("intent_fingerprint", "")),
+			"trusted_context_fingerprint": str(delivery.get("trusted_context_fingerprint", "")),
+			"recovery_session_fingerprint": str(delivery.get("recovery_session_fingerprint", "")),
+			"stake": int(delivery.get("stake", 0)),
+			"proposal_fingerprint": proposal_fingerprint,
+			"run_fingerprint": run_fingerprint,
+			"rng_fingerprint": rng_fingerprint,
+			"result_fingerprint": str(cache_entry.get("result_fingerprint", "")),
+			"previous_fingerprint": previous,
+		}
+		journal_entry["entry_fingerprint"] = RitualRuntimeScript.canonical_fingerprint(journal_entry)
+		previous = str(journal_entry.get("entry_fingerprint", ""))
+		journal.append(journal_entry)
+		rolling = committed
+	rolling["request_cache"] = cache
+	rolling["request_order"] = order
+	rolling["journal"] = journal
+	rolling["journal_head"] = previous
+	return rolling
 
 
 func _check_failed_turn_retry(game: GameModule) -> void:

@@ -17,8 +17,13 @@ func _run_repeated_reprieve_contract() -> void:
 	root.add_child(app)
 	await _settle(8)
 	var baseline := _blackjack_count_fixture_baseline()
+	var independent_baseline := _blackjack_count_fixture_baseline()
 	if not bool(baseline.get("valid", false)):
 		_fail("Repeated reprieve baseline contract changed: fingerprint=%s heat=%d." % [str(baseline.get("fingerprint", "")), int(baseline.get("heat", -1))])
+		return
+	if str(independent_baseline.get("fingerprint", "")) != str(baseline.get("fingerprint", "")) \
+			or int(independent_baseline.get("heat", -1)) != int(baseline.get("heat", -2)):
+		_fail("Fresh repeated reprieve fixtures did not share one normalized semantic baseline: first=%s/%d second=%s/%d." % [str(baseline.get("fingerprint", "")), int(baseline.get("heat", -1)), str(independent_baseline.get("fingerprint", "")), int(independent_baseline.get("heat", -1))])
 		return
 	if not _blackjack_isolated_repeated_peek_reprieve_is_terminal(baseline):
 		return
