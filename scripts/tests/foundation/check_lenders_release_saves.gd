@@ -6039,7 +6039,13 @@ func _locked_rate_bar_dice_fixture(library: ContentLibrary, step_msec: int, fail
 		return {}
 	var roll_ui: Dictionary = roll_command.get("ui_state", {"surface_time_msec": start_msec})
 	roll_ui["surface_time_msec"] = start_msec
-	var load_command: Dictionary = game.surface_action_command("bar_dice_load", 0, false, roll_ui, run_state, active_environment)
+	var cover_command: Dictionary = game.surface_action_command("bar_dice_ack_cover", 0, false, roll_ui, run_state, active_environment)
+	if not bool(cover_command.get("handled", false)):
+		failures.append("Locked-rate Bar Dice fixture could not acknowledge the covered roll.")
+		return {}
+	var covered_ui: Dictionary = cover_command.get("ui_state", roll_ui)
+	covered_ui["surface_time_msec"] = start_msec
+	var load_command: Dictionary = game.surface_action_command("bar_dice_load", 0, false, covered_ui, run_state, active_environment)
 	if not bool(load_command.get("handled", false)):
 		failures.append("Locked-rate Bar Dice fixture could not arm loaded toss.")
 		return {}
@@ -6070,7 +6076,12 @@ func _locked_rate_bar_dice_fixture(library: ContentLibrary, step_msec: int, fail
 		return {}
 	var resolved_ui: Dictionary = release_command.get("ui_state", release_ui)
 	var controlled: Dictionary = resolved_ui.get("controlled_roll", {}) if typeof(resolved_ui.get("controlled_roll", {})) == TYPE_DICTIONARY else {}
-	var result: Dictionary = game.resolve_with_context("loaded_toss", 10, run_state, active_environment, run_state.create_rng("locked_rate_bar_dice_resolve"), resolved_ui)
+	# The compatibility resolver is intentionally receipt-required and read-only.
+	# This locked-rate probe compares the deterministic rules proposal without
+	# claiming or mutating Foundation's live settlement authority.
+	var resolve_rng := run_state.create_rng("locked_rate_bar_dice_resolve")
+	var proposal: Dictionary = game.call("_bar_dice_resolve_proposal", "loaded_toss", 10, run_state.to_save_snapshot(), resolve_rng.snapshot(), resolved_ui)
+	var result: Dictionary = proposal.get("result", {}) if typeof(proposal.get("result", {})) == TYPE_DICTIONARY else {}
 	if not bool(result.get("ok", false)):
 		failures.append("Locked-rate Bar Dice fixture did not resolve loaded toss.")
 		return {}
