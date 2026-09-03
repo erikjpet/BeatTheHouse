@@ -609,7 +609,7 @@ func _check_host_authority_and_replay(game: GameModule) -> void:
 
 func _check_failure_atomic_rng_retry(game: GameModule) -> void:
 	var retry_fixture := _prepared_authority_fixture(game, "GAME06-2-RNG-ROLLBACK", 32, 5)
-	var control_fixture := _prepared_authority_fixture(game, "GAME06-2-RNG-ROLLBACK", 32, 5)
+	var control_fixture := _clone_prepared_authority_fixture(game, retry_fixture)
 	var retry_run: RunState = retry_fixture.run
 	var retry_environment: Dictionary = retry_fixture.environment
 	var before := RitualRuntimeScript.canonical_json(retry_run.to_save_snapshot())
@@ -640,7 +640,7 @@ func _check_failure_atomic_rng_retry(game: GameModule) -> void:
 
 func _check_failed_turn_retry(game: GameModule) -> void:
 	var retry_fixture := _prepared_authority_fixture(game, "GAME06-2-TURN-ROLLBACK", 36, 5)
-	var control_fixture := _prepared_authority_fixture(game, "GAME06-2-TURN-ROLLBACK", 36, 5)
+	var control_fixture := _clone_prepared_authority_fixture(game, retry_fixture)
 	var retry_run: RunState = retry_fixture.run
 	var control_run: RunState = control_fixture.run
 	var before_bankroll := retry_run.bankroll
@@ -788,6 +788,21 @@ func _prepared_authority_fixture(game: GameModule, seed_text: String, seed_index
 	var stand: Dictionary = game.surface_action_command("blackjack_stand", 0, true, deal.get("ui_state", {}), run, environment)
 	var session: Dictionary = stand.get("ui_state", {}) if typeof(stand.get("ui_state", {})) == TYPE_DICTIONARY else deal.get("ui_state", {})
 	_seed_authority_session(game, run, environment, session)
+	return {"run": run, "environment": environment, "session": session}
+
+
+func _clone_prepared_authority_fixture(game: GameModule, source: Dictionary) -> Dictionary:
+	# The Crew privacy contract intentionally gives independent runs distinct
+	# authenticated ciphertext. Retry controls need an exact pre-divergence clone
+	# so their byte comparisons continue to cover every Blackjack fingerprint,
+	# receipt and state field without normalizing away that private authority.
+	var source_run: RunState = source.run
+	var run: RunState = RunStateScript.new()
+	run.from_dict(source_run.to_save_snapshot())
+	var environment: Dictionary = run.current_environment
+	var table: Dictionary = game.call("_table_state_preview", run, environment)
+	var ledger: Dictionary = table.get("_blackjack_action_authority", {})
+	var session: Dictionary = (ledger.get("session", {}) as Dictionary).duplicate(true)
 	return {"run": run, "environment": environment, "session": session}
 
 
