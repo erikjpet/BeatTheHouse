@@ -9,8 +9,12 @@ const CAPTURE_TIMEOUT_SECONDS := 90.0
 
 
 func _init() -> void:
-	get_root().get_tree().create_timer(CAPTURE_TIMEOUT_SECONDS).timeout.connect(_capture_timed_out)
-	call_deferred("_capture")
+	call_deferred("_begin_capture")
+
+
+func _begin_capture() -> void:
+	create_timer(CAPTURE_TIMEOUT_SECONDS).timeout.connect(_capture_timed_out)
+	await _capture()
 
 
 func _capture() -> void:

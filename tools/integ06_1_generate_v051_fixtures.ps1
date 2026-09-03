@@ -5,6 +5,8 @@ param(
     [string]$FixtureId = "v051_smoke_foundation_run",
     [string]$Seed = "INTEG06-1-V051-SMOKE-001",
     [string]$OutputDirectory = "",
+    [ValidateRange(30, 600)]
+    [int]$CaptureTimeoutSeconds = 120,
     [switch]$KeepHistoricalArchive
 )
 
@@ -44,8 +46,45 @@ function Get-GitObject([string]$RevisionPath) {
     return Invoke-Git @("rev-parse", $RevisionPath)
 }
 
+function Stop-DisposableProcessTree([int]$ProcessId) {
+    $children = @(Get-CimInstance Win32_Process -Filter "ParentProcessId = $ProcessId" -ErrorAction SilentlyContinue)
+    foreach ($child in $children) {
+        Stop-DisposableProcessTree ([int]$child.ProcessId)
+    }
+    Stop-Process -Id $ProcessId -Force -ErrorAction SilentlyContinue
+}
+
+function Invoke-BoundedNative(
+    [string]$FilePath,
+    [string[]]$Arguments,
+    [int]$TimeoutSeconds,
+    [string]$StdoutPath,
+    [string]$StderrPath
+) {
+    $process = Start-Process -FilePath $FilePath -ArgumentList $Arguments -NoNewWindow -PassThru -RedirectStandardOutput $StdoutPath -RedirectStandardError $StderrPath
+    if (-not $process.WaitForExit($TimeoutSeconds * 1000)) {
+        Stop-DisposableProcessTree $process.Id
+        throw "Process $($process.Id) exceeded the $TimeoutSeconds-second bound: $FilePath $($Arguments -join ' ')"
+    }
+    $process.WaitForExit()
+    $output = @()
+    if (Test-Path -LiteralPath $StdoutPath) {
+        $output += @(Get-Content -LiteralPath $StdoutPath)
+    }
+    if (Test-Path -LiteralPath $StderrPath) {
+        $output += @(Get-Content -LiteralPath $StderrPath)
+    }
+    return @{ ExitCode = $process.ExitCode; Output = $output }
+}
+
 $resolvedProjectRoot = (Resolve-Path -LiteralPath $ProjectRoot).Path
 $ProjectRoot = $resolvedProjectRoot
+if ($FixtureId -notmatch '^[A-Za-z0-9_-]+$') {
+    throw "FixtureId may contain only letters, numbers, underscores, and hyphens."
+}
+if ($Seed -notmatch '^[A-Za-z0-9_.:-]+$') {
+    throw "Seed may contain only letters, numbers, underscores, periods, colons, and hyphens."
+}
 $resolvedCommit = Get-GitObject "$HistoricalCommit^{commit}"
 if ($resolvedCommit -ne $PinnedV051Commit) {
     throw "Historical commit resolved to $resolvedCommit; this driver is pinned to v0.5.1 $PinnedV051Commit."
@@ -108,22 +147,16 @@ try {
         # A Git archive deliberately contains no .godot editor cache. Import
         # the isolated archive first so its historical global class registry is
         # built from that tree rather than borrowed from a modern checkout.
-        # Windows PowerShell promotes native stderr (including ordinary Godot
-        # warnings) to ErrorRecord objects when Stop is active. Capture the
-        # process output and trust its exit code at this boundary.
-        $oldErrorActionPreference = $ErrorActionPreference
-        $ErrorActionPreference = "Continue"
-        $importOutput = & $godot --headless --import --path $historicalRoot 2>&1
-        $importExit = $LASTEXITCODE
-        if ($importExit -ne 0) {
-            throw "Historical Godot archive import exited $importExit`n$($importOutput -join [Environment]::NewLine)"
+        $importResult = Invoke-BoundedNative $godot @("--headless", "--import", "--path", $historicalRoot) 300 (Join-Path $temporaryRoot "import.stdout.log") (Join-Path $temporaryRoot "import.stderr.log")
+        if ([int]$importResult.ExitCode -ne 0) {
+            throw "Historical Godot archive import exited $($importResult.ExitCode)`n$($importResult.Output -join [Environment]::NewLine)"
         }
         Write-Host "Imported isolated historical archive at $resolvedCommit."
         Write-Host "Starting bounded historical FoundationMain capture for $FixtureId."
         $captureLog = Join-Path $temporaryRoot "historical_capture.log"
-        $godotOutput = & $godot --headless --audio-driver Dummy --log-file $captureLog --path $historicalRoot --script "res://$HarnessRelativePath" -- --fixture-id $FixtureId --seed $Seed 2>&1
-        $godotExit = $LASTEXITCODE
-        $ErrorActionPreference = $oldErrorActionPreference
+        $captureResult = Invoke-BoundedNative $godot @("--headless", "--audio-driver", "Dummy", "--log-file", $captureLog, "--path", $historicalRoot, "--script", "res://$HarnessRelativePath", "--", "--fixture-id", $FixtureId, "--seed", $Seed) $CaptureTimeoutSeconds (Join-Path $temporaryRoot "capture.stdout.log") (Join-Path $temporaryRoot "capture.stderr.log")
+        $godotOutput = @($captureResult.Output)
+        $godotExit = [int]$captureResult.ExitCode
     }
     finally {
         $env:BTH_DISTRIBUTION_BUILD = $oldDistributionBuild

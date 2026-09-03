@@ -35,6 +35,14 @@ unnecessarily passed through a dynamic `int()` conversion. The conversion is
 removed, explicit progress markers and a 90-second in-engine capture watchdog
 are now present, and the next smoke rerun remains pending at this checkpoint.
 
+A second pre-fixture attempt exposed an initialization-order bug in that new
+watchdog: a SceneTree timer was requested before the tree existed. Its exact
+failure was `Cannot call method 'create_timer' on a null value`; no historical
+gameplay ran and no output was admitted. Timer setup now occurs on the deferred
+capture boundary. The wrapper also owns independent, bounded import/capture
+process waits and recursively terminates only its disposable child process tree
+if one expires, so even a main-thread stall cannot orphan another capture.
+
 The historical worktree remained clean at `f1ce7ec8` throughout.
 
 ## Coverage still required
