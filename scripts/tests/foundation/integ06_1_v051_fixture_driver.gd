@@ -86,6 +86,85 @@ func _capture_case(app: Control, capture_case: Dictionary, version: String) -> D
 		_fail("FoundationMain did not create a run")
 		return {}
 	var travel_path: Array[String] = []
+	var tutorial_checkpoint := str(capture_case.get("tutorial_checkpoint", "")).strip_edges()
+	if tutorial_checkpoint in ["corner_store_arrival", "family_debt"]:
+		if not bool(app.call("apply_item_offer", "xray_glasses")):
+			_fail("%s could not pick up the tutorial X-ray Glasses through FoundationMain" % fixture_id)
+			return {}
+		methods.append("FoundationMain.apply_item_offer:xray_glasses")
+		await process_frame
+		app.call("open_run_inventory")
+		methods.append("FoundationMain.open_run_inventory")
+		await process_frame
+		await process_frame
+		app.call("close_run_inventory")
+		methods.append("FoundationMain.close_run_inventory")
+		await process_frame
+		if not bool(app.call("open_world_map")):
+			_fail("%s could not open the tutorial world map through FoundationMain" % fixture_id)
+			return {}
+		methods.append("FoundationMain.open_world_map")
+		await process_frame
+		if not bool(app.call("select_world_map_node", "corner_store")):
+			_fail("%s could not select the authored tutorial Corner Store node" % fixture_id)
+			return {}
+		methods.append("FoundationMain.select_world_map_node:corner_store")
+		app.call("confirm_world_map_travel")
+		methods.append("FoundationMain.confirm_world_map_travel")
+		for _frame in range(4):
+			await process_frame
+		run_state = app.get("run_state")
+		if str((run_state.get("current_environment") as Dictionary).get("archetype_id", "")) != "corner_store":
+			_fail("%s tutorial map action did not reach the Corner Store" % fixture_id)
+			return {}
+		travel_path.append("corner_store")
+		if tutorial_checkpoint == "family_debt":
+			if not bool(app.call("focus_interactable_object", "item:ledger_pencil")) or not bool(app.call("activate_interactable_object", "item:ledger_pencil")):
+				_fail("%s could not buy the tutorial Ledger Pencil through its room object" % fixture_id)
+				return {}
+			methods.append("FoundationMain.focus_interactable_object:item:ledger_pencil")
+			methods.append("FoundationMain.activate_interactable_object:item:ledger_pencil")
+			await process_frame
+			await process_frame
+			if not bool(app.call("focus_interactable_object", "item:instant_coffee")):
+				_fail("%s could not inspect the tutorial Instant Coffee" % fixture_id)
+				return {}
+			methods.append("FoundationMain.focus_interactable_object:item:instant_coffee")
+			for _frame in range(4):
+				await process_frame
+			if not bool(app.call("activate_interactable_object", "item:instant_coffee")):
+				_fail("%s could not buy the tutorial Instant Coffee through its room object" % fixture_id)
+				return {}
+			methods.append("FoundationMain.activate_interactable_object:item:instant_coffee")
+			await process_frame
+			await process_frame
+			app.call("_on_talk_dock_choice_requested", "tutorial_guide:tutorial_crew_warning", "continue")
+			methods.append("TalkDock.choice_requested:tutorial_guide:tutorial_crew_warning:continue")
+			await process_frame
+			await process_frame
+			if not bool(app.call("focus_interactable_object", "event:call_brother_in_law")) or not bool(app.call("activate_interactable_object", "event_response:call_brother_in_law:make_call")):
+				_fail("%s could not make the tutorial family call through its room action" % fixture_id)
+				return {}
+			methods.append("FoundationMain.focus_interactable_object:event:call_brother_in_law")
+			methods.append("FoundationMain.activate_interactable_object:event_response:call_brother_in_law:make_call")
+			var family_talk_ready := false
+			for _frame in range(10):
+				await process_frame
+				var talk: Dictionary = app.call("current_talk_dock_snapshot")
+				if bool(talk.get("visible", false)) and str(talk.get("event_id", "")) == "family_loan":
+					family_talk_ready = true
+					break
+			if not family_talk_ready:
+				_fail("%s tutorial family loan conversation did not become available" % fixture_id)
+				return {}
+			app.call("_on_talk_dock_choice_requested", "family_loan", "accept")
+			methods.append("TalkDock.choice_requested:family_loan:accept")
+			await process_frame
+			await process_frame
+			run_state = app.get("run_state")
+	elif not tutorial_checkpoint.is_empty():
+		_fail("%s requested unsupported tutorial checkpoint %s" % [fixture_id, tutorial_checkpoint])
+		return {}
 	var steps: Array = capture_case.get("steps", []) if typeof(capture_case.get("steps", [])) == TYPE_ARRAY else []
 	if steps.is_empty():
 		for target_id in _string_array(capture_case.get("travel_path", [])):

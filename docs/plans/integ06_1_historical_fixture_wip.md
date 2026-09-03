@@ -202,11 +202,33 @@ passes all 32 with verified provenance, preserved mid-state contracts, and
 stable public save/reload. This remains fixture preparation only and does not
 claim `integ06_1`.
 
+## Sixth verified batch
+
+Two genuine later tutorial checkpoints extend the inventory to 34 saves:
+
+- `v051_tutorial_corner_store_arrival` picks up the authored X-ray Glasses,
+  opens and closes the real inventory surface, opens the authored world map,
+  selects Corner Store, and confirms travel through FoundationMain. SHA-256:
+  `5DFC287A2BDD14F3CE0E4DB383E572173C9BAA1A00E9FE1F10648C014C05C904`.
+- `v051_tutorial_family_debt` continues from that route, buys both authored
+  Corner Store items through room-object actions, advances Pal's conversation,
+  makes the family call through its inline room action, and accepts the live
+  Family Loan TalkDock choice. SHA-256:
+  `F61FD03F54A3920023176C4AEC7CA61FCCBCDE1C0BD196F45D3A2AA3EE560283`.
+
+No tutorial completion flags are authored by the fixture driver. Admission
+requires the production actions to record the expected completed lessons,
+retain the three acquired items, and create the real Brother-in-Law debt. The
+current migration contract now explicitly compares challenge configuration,
+tutorial active/beat state, completed lessons, and performed-action state over
+the public current-build save/reload boundary. Historical capture passes 34 of
+34, and the current strict migration matrix passes 34 of 34.
+
 ## Coverage still required
 
 This checkpoint is historical migration evidence, but not the complete row. It
-does not claim the Grand Casino Back Room, later tutorial checkpoints, victory
-thresholds, maximal composition, or soak. It also does not yet cover the
+does not claim the Grand Casino Back Room, tutorial checkpoints beyond the
+family-debt lesson, victory thresholds, maximal composition, or soak. It also does not yet cover the
 promised mid-0.6 Punchline, delivery, coin-pusher, or scenario-snapshot schemas.
-The 32 checked-in fixtures do pass the current-build migration and public
+The 34 checked-in fixtures do pass the current-build migration and public
 save/reload contract.

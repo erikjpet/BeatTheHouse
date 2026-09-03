@@ -9,7 +9,7 @@
     "historical_foundation_main_blob":  "3bc98efec993b8bfdd9252687a0ba041ebba7f23",
     "historical_save_service_blob":  "57a6526016123feb9bcf1ebeb50cc8f937f0b265",
     "driver_path":  "scripts/tests/foundation/integ06_1_v051_fixture_driver.gd",
-    "driver_sha256":  "95ECDE512B49F2005F3D52ADB324A838CBD1B3137025BE69D42D33EDC6B685E5",
+    "driver_sha256":  "1A05D099024678B73EEE9528996E0AFA4536493BAF9224C589BA1840F99623A6",
     "capture":  {
                     "action_index":  1,
                     "archetype_id":  "gas_station_casino",
@@ -43,6 +43,6 @@
                                     ]
                 },
     "save_file":  "v051_scratch_ticket_partial.json",
-    "save_size_bytes":  172192,
-    "save_sha256":  "2B47524738A9043F199F36DDBAC843D25D87746F2BDC706265A666F57F4D8D05"
+    "save_size_bytes":  172191,
+    "save_sha256":  "6931B3CDA4A4C9C5E37C41A6A49FC1FD47B4FA3A5912EE24ABA3349A0419000C"
 }

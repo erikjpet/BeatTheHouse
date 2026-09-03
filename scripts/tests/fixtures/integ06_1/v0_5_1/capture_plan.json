@@ -335,6 +335,21 @@
       "seed": "FIRST-NIGHT-ACE-17",
       "tutorial_start": true,
       "expected_archetype": "apartment"
+    },
+    {
+      "fixture_id": "v051_tutorial_corner_store_arrival",
+      "seed": "FIRST-NIGHT-ACE-17",
+      "tutorial_start": true,
+      "tutorial_checkpoint": "corner_store_arrival",
+      "expected_archetype": "corner_store"
+    },
+    {
+      "fixture_id": "v051_tutorial_family_debt",
+      "seed": "FIRST-NIGHT-ACE-17",
+      "tutorial_start": true,
+      "tutorial_checkpoint": "family_debt",
+      "expected_archetype": "corner_store",
+      "expected_lender_debt": "brother_in_law"
     }
   ]
 }

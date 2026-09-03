@@ -133,6 +133,24 @@ func _valid_provenance(provenance: Dictionary, capture_case: Dictionary, fixture
 	else:
 		expected_methods.append("FoundationMain.start_foundation_run")
 	var expected_travel_path: Array[String] = []
+	var tutorial_checkpoint := str(capture_case.get("tutorial_checkpoint", "")).strip_edges()
+	if tutorial_checkpoint in ["corner_store_arrival", "family_debt"]:
+		expected_methods.append("FoundationMain.apply_item_offer:xray_glasses")
+		expected_methods.append("FoundationMain.open_run_inventory")
+		expected_methods.append("FoundationMain.close_run_inventory")
+		expected_methods.append("FoundationMain.open_world_map")
+		expected_methods.append("FoundationMain.select_world_map_node:corner_store")
+		expected_methods.append("FoundationMain.confirm_world_map_travel")
+		expected_travel_path.append("corner_store")
+		if tutorial_checkpoint == "family_debt":
+			expected_methods.append("FoundationMain.focus_interactable_object:item:ledger_pencil")
+			expected_methods.append("FoundationMain.activate_interactable_object:item:ledger_pencil")
+			expected_methods.append("FoundationMain.focus_interactable_object:item:instant_coffee")
+			expected_methods.append("FoundationMain.activate_interactable_object:item:instant_coffee")
+			expected_methods.append("TalkDock.choice_requested:tutorial_guide:tutorial_crew_warning:continue")
+			expected_methods.append("FoundationMain.focus_interactable_object:event:call_brother_in_law")
+			expected_methods.append("FoundationMain.activate_interactable_object:event_response:call_brother_in_law:make_call")
+			expected_methods.append("TalkDock.choice_requested:family_loan:accept")
 	var steps: Array = capture_case.get("steps", []) if typeof(capture_case.get("steps", [])) == TYPE_ARRAY else []
 	if steps.is_empty():
 		for target_id in _string_array(capture_case.get("travel_path", [])):
@@ -239,6 +257,19 @@ func _expected_fixture_state(run_state: Variant, capture_case: Dictionary) -> bo
 	var expected_lender_debt := str(capture_case.get("expected_lender_debt", "")).strip_edges()
 	if not expected_lender_debt.is_empty() and not _has_active_lender_debt(run_state.get("debt"), expected_lender_debt):
 		return false
+	var tutorial_checkpoint := str(capture_case.get("tutorial_checkpoint", "")).strip_edges()
+	if tutorial_checkpoint in ["corner_store_arrival", "family_debt"]:
+		var completed: Dictionary = run_state.get("narrative_flags").get("tutorial_lessons_completed", {}) if typeof(run_state.get("narrative_flags").get("tutorial_lessons_completed", {})) == TYPE_DICTIONARY else {}
+		for lesson_id in ["tutorial_apartment_xray", "tutorial_inventory_xray", "tutorial_open_map_corner", "tutorial_travel_corner"]:
+			if not bool(completed.get(lesson_id, false)):
+				return false
+		if not run_state.get("inventory").has("xray_glasses"):
+			return false
+		if tutorial_checkpoint == "family_debt":
+			if not run_state.get("inventory").has("ledger_pencil") or not run_state.get("inventory").has("instant_coffee"):
+				return false
+			if not _has_active_lender_debt(run_state.get("debt"), "brother_in_law"):
+				return false
 	var expectation := str(capture_case.get("expected_surface_state", "")).strip_edges()
 	if expectation.is_empty():
 		return true
@@ -268,6 +299,7 @@ func _has_active_lender_debt(debt_value: Variant, lender_id: String) -> bool:
 func _migration_contract(run_state: Variant) -> Dictionary:
 	var environment: Dictionary = run_state.get("current_environment")
 	var world_map: Dictionary = run_state.get("world_map")
+	var narrative_flags: Dictionary = run_state.get("narrative_flags")
 	return {
 		"seed_text": str(run_state.get("seed_text")),
 		"run_status": str(run_state.get("run_status")),
@@ -279,6 +311,11 @@ func _migration_contract(run_state: Variant) -> Dictionary:
 		"game_ids": environment.get("game_ids", []).duplicate(true),
 		"game_states": environment.get("game_states", {}).duplicate(true),
 		"debt": run_state.get("debt").duplicate(true),
+		"challenge_config": run_state.get("challenge_config").duplicate(true),
+		"tutorial_active": narrative_flags.get("tutorial_active", false),
+		"tutorial_beat": narrative_flags.get("tutorial_beat", 0),
+		"tutorial_lessons_completed": narrative_flags.get("tutorial_lessons_completed", {}).duplicate(true),
+		"tutorial_actions_performed": narrative_flags.get("tutorial_actions_performed", {}).duplicate(true),
 		"story_log": run_state.get("story_log").duplicate(true),
 		"world_current_node_id": str(world_map.get("current_node_id", "")),
 		"world_visited_path": world_map.get("visited_path", []).duplicate(true),

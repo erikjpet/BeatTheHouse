@@ -1,7 +1,7 @@
 ﻿{
     "schema":  "beat_the_house.integ06_1_historical_fixture_provenance",
     "version":  1,
-    "fixture_id":  "v051_tutorial_start",
+    "fixture_id":  "v051_tutorial_corner_store_arrival",
     "historical_release":  "v0.5.1",
     "historical_commit":  "f1ce7ec814b5034c229f53dcc0db6e799aaaee0b",
     "historical_tree":  "19c5ed82c0d2d2390dab2b9b6662c70d8aed5d0d",
@@ -11,8 +11,8 @@
     "driver_path":  "scripts/tests/foundation/integ06_1_v051_fixture_driver.gd",
     "driver_sha256":  "1A05D099024678B73EEE9528996E0AFA4536493BAF9224C589BA1840F99623A6",
     "capture":  {
-                    "action_index":  0,
-                    "archetype_id":  "apartment",
+                    "action_index":  1,
+                    "archetype_id":  "corner_store",
                     "challenge_id":  "tutorial_first_card",
                     "challenge_modifiers":  {
                                                 "home_archetype_id":  "apartment",
@@ -198,27 +198,33 @@
                                                                                        "grand_casino":  5.0
                                                                                    }
                                             },
-                    "environment_id":  "apartment_001",
-                    "fixture_id":  "v051_tutorial_start",
-                    "game_clock_minutes":  720,
+                    "environment_id":  "corner_store_002",
+                    "fixture_id":  "v051_tutorial_corner_store_arrival",
+                    "game_clock_minutes":  750,
                     "game_id":  "",
                     "game_state_key":  "",
                     "methods":  [
                                     "FoundationMain.start_tutorial_run",
+                                    "FoundationMain.apply_item_offer:xray_glasses",
+                                    "FoundationMain.open_run_inventory",
+                                    "FoundationMain.close_run_inventory",
+                                    "FoundationMain.open_world_map",
+                                    "FoundationMain.select_world_map_node:corner_store",
+                                    "FoundationMain.confirm_world_map_travel",
                                     "FoundationMain.save_foundation_run",
                                     "SaveService.wait_for_async_save"
                                 ],
                     "project_version":  "0.5.1",
-                    "save_path":  "isolated_distribution_root/saves/v051_tutorial_start.json",
+                    "save_path":  "isolated_distribution_root/saves/v051_tutorial_corner_store_arrival.json",
                     "save_schema":  "beat_the_house.foundation_run",
                     "save_version":  2,
-                    "screen":  "ENVIRONMENT",
+                    "screen":  "RESULT",
                     "seed":  "FIRST-NIGHT-ACE-17",
                     "travel_path":  [
-
+                                        "corner_store"
                                     ]
                 },
-    "save_file":  "v051_tutorial_start.json",
-    "save_size_bytes":  25197,
-    "save_sha256":  "AB18510F66243F9EA4EC01D361422ACBCE2876F8CD14A1E0212213CFBB40DD35"
+    "save_file":  "v051_tutorial_corner_store_arrival.json",
+    "save_size_bytes":  30305,
+    "save_sha256":  "5DFC287A2BDD14F3CE0E4DB383E572173C9BAA1A00E9FE1F10648C014C05C904"
 }
