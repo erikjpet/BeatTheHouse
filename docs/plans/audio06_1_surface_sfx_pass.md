@@ -1,11 +1,13 @@
 # audio06_1 Surface SFX Closeout
 
 Date: 2026-09-03
-Working branch: `codex/closeout06-final`
+Independent closeout branch: `codex/audio-closeout`
+Integrated starting point: `9e8af74b712ed9c3a2bf69f9a330a57719cb0f85`
+Status: **IN_PROGRESS pending the exact Family 1 integration and green cross-system rerun**
 
 ## Outcome
 
-The existing shared surface-audio route is now manifest-driven for every 0.6
+The existing shared surface-audio route is manifest-driven for every 0.6
 ritual family. This extends the shipped Coin Pusher precedent; it does not add
 a parallel sound system and does not change music behavior.
 
@@ -20,8 +22,26 @@ a parallel sound system and does not change music behavior.
 The thirteen profiles declare 80 unique procedural or delivered sound events.
 Every event class declares a visible/text counterpart, uses the shipped SFX
 bus, and carries the public-fact-only hidden-state policy. Each profile has a
-hard voice cap. Native and Web both replace the oldest voice on the same
-surface first, then the oldest global voice.
+hard voice cap.
+
+The independent closeout found and corrected three gaps in the landed pass:
+
+- Native playback previously consumed another idle global player before
+  enforcing the requesting profile's cap. The shared deterministic planner now
+  enforces same-surface stealing first.
+- Web playback enforced the profile cap but did not enforce the ten-source
+  global cap. It now performs the same same-surface-then-oldest-global policy as
+  native playback.
+- Generic cue, state-sync, prewarm, and loop helpers trusted caller-provided
+  dictionaries. Foundation now injects a one-time opaque capability when it
+  constructs the game canvas; Canvas and SfxPlayer reject missing, foreign, and
+  rebound capabilities. Standalone canvases retain a private construction-time
+  capability for their internal accepted-input path.
+
+Manifest validation was also closed over entry/profile/loop keys, finite numeric
+variation arrays, deterministic salts, safe IDs, counterpart classes, and
+non-ambiguous wildcard profiles. These are validation and delivery hardening;
+the legacy generic-cue fallback remains unchanged.
 
 ## Determinism and platform behavior
 
@@ -32,16 +52,36 @@ receive the same selected event, pitch offset, and volume offset; platform code
 only delivers that result. Profile palettes use the existing incremental Web
 prewarm queue, so no manifest parsing or bulk sound generation occurs per frame.
 
-## Verification to date
+## Independent verification
 
-- `tools/audio06_1_surface_sfx_audit.gd`: PASS — 13 profiles, 80 streams, ten
-  deterministic seed traces, visual counterpart/hidden-state policy, native/Web
-  voice bounds, mixer/settings route, and transition-boundary checks.
-- `tools/validate_project.ps1 -Quiet`: PASS after implementation.
+- `tools/audio06_1_surface_sfx_audit.gd`: PASS on the closeout candidate — 13
+  profiles, 80 complete generated/delivered waveforms with signal, ten seed
+  traces, native/Web selection parity, paired hidden-state observers, strict
+  negative manifest cases, hostile capability/rebind cases, deterministic
+  same/global stealing, bounded native/Web pools, SFX-bus routing, visual/text
+  counterparts, and idle-frame no-event/no-load behavior.
+- Focused Foundation combined runner: PASS — `music_fx_foundation` (79 ms) and
+  `music_stem_director_foundation` (254 ms).
+- `tools/roulette_audio_audit.gd`: PASS — 14 events, 254,016 PCM bytes, one
+  intentional loop.
+- `tools/validate_project.ps1 -Quiet`: PASS twice through the supported harness.
+- Godot import: PASS. Non-test GDScript load sweep: PASS.
 
-Final repository-wide foundation, determinism, performance, accessibility, and
-native/Web gates will be recorded here when the Family 1 and Family 2 closeout
-branches have landed into the exact integration tree.
+## Program-level findings still open
+
+- The first Systems attempt placed its report under `docs/`, so the shard
+  harness correctly refused a recursive `docs` junction. The retry used
+  `.tmp/audio06_1/` as required.
+- The broad Systems retry reached the inherited integrated Family 2 tree but
+  timed out with broad non-audio game/world/save failures. Audio's two focused
+  Foundation checks pass independently. Root is attributing the broad result
+  against the untouched integration head before the Family 1 closeout lands.
+- The UI-scene compile reached runtime and reported one unrelated Slot fixture-3
+  serialize/restore mismatch. No audio/capability failure was reported.
+
+For that reason this row is not archived or marked DONE here. After Family 1 is
+integrated, rerun the exact audio audit, focused Foundation checks, UI compile,
+full Systems/project validation, and native/Web release gates on the final tree.
 
 The external music delta is recorded in
 `docs/plans/audio_engineer_handoff.md`; no production music or music-system
