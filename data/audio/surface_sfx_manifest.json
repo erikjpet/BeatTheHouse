@@ -1,34 +1,275 @@
-[{
-  "id": "coin_pusher",
-  "profile": {
+[
+  {
+    "id": "coin_pusher",
+    "profile": {
       "bus": "SFX",
-      "motor_loop": {
-        "event_id": "coin_pusher_motor",
-        "idle_volume_db": -18.0,
-        "loaded_volume_db": -13.0,
-        "idle_pitch": 0.88,
-        "loaded_pitch": 0.96
-      },
+      "max_voices": 8,
+      "steal_policy": "oldest_same_surface_then_oldest_global",
+      "hidden_state_policy": "public_fact_or_transition_op_only",
+      "selection_seed_salt": "coin_pusher_cabinet",
+      "variation_pitch_steps": [-0.035, 0.0, 0.028],
+      "variation_volume_db_steps": [-0.7, 0.0, 0.45],
+      "motor_loop": {"event_id": "coin_pusher_motor", "idle_volume_db": -18.0, "loaded_volume_db": -13.0, "idle_pitch": 0.88, "loaded_pitch": 0.96},
       "event_classes": {
-        "impact_metal": "coin_pusher_coin_metal",
-        "impact_stack": "coin_pusher_coin_stack",
-        "good_drop": "coin_pusher_chirp",
-        "bad_drop": "coin_pusher_coin_stack",
-        "plinko_cup": "pinball_money_ding",
-        "feature_bank": "jackpot_hit",
-        "slide": "coin_pusher_slide",
-        "mass_slide": "coin_pusher_slide",
-        "plate_clink": "coin_pusher_coin_metal",
-        "upper_to_lower": "coin_pusher_fall",
-        "topple": "coin_pusher_topple",
-        "ledge_tip": "coin_pusher_ledge_tip",
-        "tray_landing": "coin_pusher_tray",
-        "gutter_loss": "coin_pusher_gutter",
-        "cabinet_shake": "coin_pusher_shake",
-        "tell_rock": "coin_pusher_tell_rock",
-        "tell_chirp": "coin_pusher_chirp",
-        "attendant_glance": "coin_pusher_chirp",
+        "impact_metal": "coin_pusher_coin_metal", "impact_stack": "coin_pusher_coin_stack",
+        "good_drop": "coin_pusher_chirp", "bad_drop": "coin_pusher_coin_stack",
+        "plinko_cup": "pinball_money_ding", "feature_bank": "jackpot_hit",
+        "slide": "coin_pusher_slide", "mass_slide": "coin_pusher_slide",
+        "plate_clink": "coin_pusher_coin_metal", "upper_to_lower": "coin_pusher_fall",
+        "topple": "coin_pusher_topple", "ledge_tip": "coin_pusher_ledge_tip",
+        "tray_landing": "coin_pusher_tray", "gutter_loss": "coin_pusher_gutter",
+        "cabinet_shake": "coin_pusher_shake", "tell_rock": "coin_pusher_tell_rock",
+        "tell_chirp": "coin_pusher_chirp", "attendant_glance": "coin_pusher_chirp",
         "alarm": "coin_pusher_alarm"
+      },
+      "visual_counterparts": {
+        "impact_metal": "cabinet.body_contact", "impact_stack": "cabinet.body_contact",
+        "good_drop": "cabinet.drop_result", "bad_drop": "cabinet.drop_result",
+        "plinko_cup": "cabinet.plinko_capture", "feature_bank": "cabinet.feature_bank",
+        "slide": "cabinet.body_motion", "mass_slide": "cabinet.body_motion",
+        "plate_clink": "cabinet.plate_contact", "upper_to_lower": "cabinet.deck_transfer",
+        "topple": "cabinet.weighted_object_motion", "ledge_tip": "cabinet.ledge_motion",
+        "tray_landing": "cabinet.tray_counter", "gutter_loss": "cabinet.gutter_counter",
+        "cabinet_shake": "cabinet.shake_motion", "tell_rock": "cabinet.public_tell",
+        "tell_chirp": "cabinet.public_tell", "attendant_glance": "cabinet.attendant_reaction",
+        "alarm": "cabinet.alarm_lamp"
       }
+    }
+  },
+  {
+    "id": "craps_table",
+    "profile": {
+      "bus": "SFX", "max_voices": 7, "steal_policy": "oldest_same_surface_then_oldest_global",
+      "hidden_state_policy": "public_fact_or_transition_op_only", "selection_seed_salt": "craps_ritual",
+      "variation_pitch_steps": [-0.045, 0.0, 0.035], "variation_volume_db_steps": [-0.8, 0.0, 0.4],
+      "event_classes": {
+        "dice_shake": "dice_cup_shake", "dice_offer": "chip_offer", "dice_roll": "dice_throw",
+        "table_contact": "dice_table_contact", "dice_settle": "dice_settle", "public_call": "dealer_call",
+        "chip_place": "blackjack_chip", "chip_collect": "roulette_chip_sweep", "payout": "blackjack_payout",
+        "crowd_swell": "crowd_swell", "crowd_drop": "crowd_drop", "street_warning": "police_radio",
+        "street_scatter": "shutter_scrape"
+      },
+      "visual_counterparts": {
+        "dice_shake": "craps.cup_motion", "dice_offer": "craps.dice_offer", "dice_roll": "craps.throw_motion",
+        "table_contact": "craps.dice_contact", "dice_settle": "craps.dice_final", "public_call": "craps.result_call",
+        "chip_place": "craps.pending_bet", "chip_collect": "craps.collection", "payout": "craps.payout",
+        "crowd_swell": "craps.energy_up", "crowd_drop": "craps.energy_down", "street_warning": "craps.lookout_warning",
+        "street_scatter": "craps.street_dispersal"
+      }
+    }
+  },
+  {
+    "id": "blackjack_table",
+    "profile": {
+      "bus": "SFX", "max_voices": 7, "steal_policy": "oldest_same_surface_then_oldest_global",
+      "hidden_state_policy": "public_fact_or_transition_op_only", "selection_seed_salt": "blackjack_ritual",
+      "variation_pitch_steps": [-0.03, 0.0, 0.025], "variation_volume_db_steps": [-0.5, 0.0, 0.35],
+      "event_classes": {
+        "blackjack_chip": "blackjack_chip", "blackjack_deal": "blackjack_card", "blackjack_hit": "blackjack_card",
+        "blackjack_stand": "blackjack_felt", "blackjack_double": "blackjack_chip", "blackjack_split": "blackjack_card",
+        "blackjack_surrender": "roulette_chip_sweep", "blackjack_side_bet": "blackjack_chip",
+        "blackjack_distraction": "blackjack_distraction", "blackjack_peek": "blackjack_peek",
+        "blackjack_count": "blackjack_count", "blackjack_count_toggle": "blackjack_count",
+        "blackjack_count_icon": "blackjack_count", "clear": "roulette_chip_sweep", "payout": "blackjack_payout", "shift_change": "dealer_procedure"
+      },
+      "visual_counterparts": {
+        "blackjack_chip": "blackjack.wager", "blackjack_deal": "blackjack.deal", "blackjack_hit": "blackjack.card_added",
+        "blackjack_stand": "blackjack.stand_gesture", "blackjack_double": "blackjack.double_wager", "blackjack_split": "blackjack.split_hands",
+        "blackjack_surrender": "blackjack.surrendered_wager", "blackjack_side_bet": "blackjack.side_bet",
+        "blackjack_distraction": "blackjack.public_distraction", "blackjack_peek": "blackjack.public_peek_action",
+        "blackjack_count": "blackjack.public_count_prompt", "blackjack_count_toggle": "blackjack.count_panel",
+        "blackjack_count_icon": "blackjack.count_icon", "clear": "blackjack.cleared_bets", "payout": "blackjack.payout", "shift_change": "blackjack.dealer_shift"
+      }
+    }
+  },
+  {
+    "id": "baccarat_table",
+    "profile": {
+      "bus": "SFX", "max_voices": 7, "steal_policy": "oldest_same_surface_then_oldest_global",
+      "hidden_state_policy": "public_fact_or_transition_op_only", "selection_seed_salt": "baccarat_ritual",
+      "variation_pitch_steps": [-0.028, 0.0, 0.022], "variation_volume_db_steps": [-0.55, 0.0, 0.3],
+      "event_classes": {
+        "baccarat_chip": "blackjack_chip", "baccarat_deal": "blackjack_card", "baccarat_read_shoe": "blackjack_peek",
+        "baccarat_edge_sort": "blackjack_felt", "shoe": "shoe_slide", "cut_card": "paper_peel",
+        "card_squeeze": "card_squeeze", "clear": "roulette_chip_sweep", "payout": "blackjack_payout",
+        "dealer_procedure": "dealer_procedure", "shift_change": "dealer_procedure"
+      },
+      "visual_counterparts": {
+        "baccarat_chip": "baccarat.wager", "baccarat_deal": "baccarat.deal", "baccarat_read_shoe": "baccarat.shoe_read_panel",
+        "baccarat_edge_sort": "baccarat.edge_sort_panel", "shoe": "baccarat.shoe", "cut_card": "baccarat.cut_card",
+        "card_squeeze": "baccarat.squeeze", "clear": "baccarat.cleared_bets", "payout": "baccarat.payout",
+        "dealer_procedure": "baccarat.dealer_procedure", "shift_change": "baccarat.dealer_shift"
+      }
+    }
+  },
+  {
+    "id": "roulette_table",
+    "profile": {
+      "bus": "SFX", "max_voices": 8, "steal_policy": "oldest_same_surface_then_oldest_global",
+      "hidden_state_policy": "public_fact_or_transition_op_only", "selection_seed_salt": "roulette_ritual",
+      "variation_pitch_steps": [-0.025, 0.0, 0.03], "variation_volume_db_steps": [-0.5, 0.0, 0.35],
+      "event_classes": {
+        "roulette_chip_select": "roulette_chip_select", "roulette_chip_place": "roulette_chip_place",
+        "roulette_chip_lift": "roulette_chip_lift", "roulette_chip_stack": "roulette_chip_stack",
+        "roulette_chip_sweep": "roulette_chip_sweep", "roulette_spin": "roulette_rotor_launch",
+        "roulette_read_wheel": "roulette_ball_rim_tick", "wheel": "roulette_ball_loop", "ball": "roulette_ball_roll",
+        "dolly": "roulette_dolly_tap", "clear": "roulette_chip_sweep", "payout": "roulette_payout",
+        "dealer_procedure": "dealer_procedure", "shift_change": "dealer_procedure"
+      },
+      "visual_counterparts": {
+        "roulette_chip_select": "roulette.selected_chip", "roulette_chip_place": "roulette.bet_layout",
+        "roulette_chip_lift": "roulette.bet_removed", "roulette_chip_stack": "roulette.bet_stack",
+        "roulette_chip_sweep": "roulette.cleared_bets", "roulette_spin": "roulette.wheel_motion",
+        "roulette_read_wheel": "roulette.wheel_read", "wheel": "roulette.rotor", "ball": "roulette.ball",
+        "dolly": "roulette.dolly", "clear": "roulette.table_clear", "payout": "roulette.payout",
+        "dealer_procedure": "roulette.croupier_procedure", "shift_change": "roulette.croupier_shift"
+      }
+    }
+  },
+  {
+    "id": "slot_machine:*",
+    "profile": {
+      "bus": "SFX", "max_voices": 8, "steal_policy": "oldest_same_surface_then_oldest_global",
+      "hidden_state_policy": "public_fact_or_transition_op_only", "selection_seed_salt": "slot_cabinet",
+      "variation_pitch_steps": [-0.02, 0.0, 0.018], "variation_volume_db_steps": [-0.4, 0.0, 0.25],
+      "event_classes": {
+        "machine_button": "button", "wager_accept": "coin_pusher_coin_metal", "settlement": "payout",
+        "reel_stop": "reel_stop", "feature_entry": "bonus_start", "jackpot_ack": "jackpot_hit",
+        "tower_light": "coin_pusher_chirp", "attract": "reel_loop"
+      },
+      "visual_counterparts": {
+        "machine_button": "slot.control_press", "wager_accept": "slot.bankroll_change", "settlement": "slot.payout_countup",
+        "reel_stop": "slot.reel_stop", "feature_entry": "slot.feature_scene", "jackpot_ack": "slot.jackpot_panel",
+        "tower_light": "slot.tower_light", "attract": "slot.attract_animation"
+      }
+    }
+  },
+  {
+    "id": "video_poker_machine",
+    "profile": {
+      "bus": "SFX", "max_voices": 6, "steal_policy": "oldest_same_surface_then_oldest_global",
+      "hidden_state_policy": "public_fact_or_transition_op_only", "selection_seed_salt": "video_poker_cabinet",
+      "variation_pitch_steps": [-0.018, 0.0, 0.022], "variation_volume_db_steps": [-0.35, 0.0, 0.25],
+      "event_classes": {
+        "video_poker_button": "video_poker_button", "video_poker_deal": "video_poker_deal",
+        "video_poker_hold": "video_poker_hold", "video_poker_draw": "video_poker_draw",
+        "video_poker_cheat": "video_poker_cheat", "video_poker_cheat_beat": "video_poker_cheat_beat",
+        "video_poker_double": "video_poker_double", "video_poker_win": "video_poker_win",
+        "wager_accept": "coin_pusher_coin_metal", "settlement": "payout", "tower_light": "coin_pusher_chirp", "attract": "button_digital"
+      },
+      "visual_counterparts": {
+        "video_poker_button": "video_poker.control_press", "video_poker_deal": "video_poker.initial_deal",
+        "video_poker_hold": "video_poker.hold_lamp", "video_poker_draw": "video_poker.draw_cascade",
+        "video_poker_cheat": "video_poker.public_skill_meter", "video_poker_cheat_beat": "video_poker.public_skill_result",
+        "video_poker_double": "video_poker.double_up", "video_poker_win": "video_poker.win_meter",
+        "wager_accept": "video_poker.bankroll_change", "settlement": "video_poker.payout",
+        "tower_light": "video_poker.tower_light", "attract": "video_poker.attract_animation"
+      }
+    }
+  },
+  {
+    "id": "pull_tab_dispenser",
+    "profile": {
+      "bus": "SFX", "max_voices": 5, "steal_policy": "oldest_same_surface_then_oldest_global",
+      "hidden_state_policy": "public_fact_or_transition_op_only", "selection_seed_salt": "pull_tab_counter",
+      "variation_pitch_steps": [-0.035, 0.0, 0.025], "variation_volume_db_steps": [-0.7, 0.0, 0.35],
+      "event_classes": {
+        "ticket_dispenser": "pull_tab_thump", "ticket_peel": "paper_peel", "ticket_navigation": "paper_peek",
+        "ticket_handoff": "paper_peel", "redemption": "payout", "refusal": "lose", "machine_button": "button"
+      },
+      "visual_counterparts": {
+        "ticket_dispenser": "pull_tabs.tray", "ticket_peel": "pull_tabs.reveal", "ticket_navigation": "pull_tabs.active_ticket",
+        "ticket_handoff": "pull_tabs.handoff", "redemption": "pull_tabs.redemption", "refusal": "pull_tabs.refusal", "machine_button": "pull_tabs.control_press"
+      }
+    }
+  },
+  {
+    "id": "scratch_ticket_machine",
+    "profile": {
+      "bus": "SFX", "max_voices": 5, "steal_policy": "oldest_same_surface_then_oldest_global",
+      "hidden_state_policy": "public_fact_or_transition_op_only", "selection_seed_salt": "scratch_counter",
+      "variation_pitch_steps": [-0.03, 0.0, 0.02], "variation_volume_db_steps": [-0.6, 0.0, 0.3],
+      "event_classes": {
+        "ticket_dispenser": "pull_tab_thump", "scratch": "scratch_paper_foley_loop", "ticket_peel": "paper_peel",
+        "paper_peel": "paper_peel", "scratch_box_pop": "scratch_box_pop", "redemption": "payout", "refusal": "lose", "ticket_win": "payout"
+      },
+      "visual_counterparts": {
+        "ticket_dispenser": "scratch.machine_tray", "scratch": "scratch.cleared_mask", "ticket_peel": "scratch.ticket_reveal",
+        "paper_peel": "scratch.file_motion", "scratch_box_pop": "scratch.revealed_region", "redemption": "scratch.redemption",
+        "refusal": "scratch.refusal", "ticket_win": "scratch.payout"
+      }
+    }
+  },
+  {
+    "id": "bar_dice_table",
+    "profile": {
+      "bus": "SFX", "max_voices": 6, "steal_policy": "oldest_same_surface_then_oldest_global",
+      "hidden_state_policy": "public_fact_or_transition_op_only", "selection_seed_salt": "bar_dice_ritual",
+      "variation_pitch_steps": [-0.045, 0.0, 0.04], "variation_volume_db_steps": [-0.8, 0.0, 0.4],
+      "event_classes": {
+        "machine_button": "button", "cup_shake": "dice_cup_shake", "cup_slam": "dice_table_contact",
+        "cup_lift": "paper_peel", "dice_reveal": "dice_settle", "cash_bar": "blackjack_chip", "payout": "blackjack_payout"
+      },
+      "visual_counterparts": {
+        "machine_button": "bar_dice.control_press", "cup_shake": "bar_dice.cup_motion", "cup_slam": "bar_dice.cup_contact",
+        "cup_lift": "bar_dice.cup_lift", "dice_reveal": "bar_dice.dice_rows", "cash_bar": "bar_dice.cash_on_bar", "payout": "bar_dice.payout"
+      }
+    }
+  },
+  {
+    "id": "crew_cards",
+    "profile": {
+      "bus": "SFX", "max_voices": 6, "steal_policy": "oldest_same_surface_then_oldest_global",
+      "hidden_state_policy": "public_fact_or_transition_op_only", "selection_seed_salt": "crew_poker_night",
+      "variation_pitch_steps": [-0.025, 0.0, 0.02], "variation_volume_db_steps": [-0.45, 0.0, 0.25],
+      "event_classes": {
+        "card_deal": "blackjack_card", "card_draw": "blackjack_card", "card_fold": "blackjack_felt",
+        "chips_place": "blackjack_chip", "card_showdown": "paper_peel", "public_tell_beat": "blackjack_distraction"
+      },
+      "visual_counterparts": {
+        "card_deal": "crew_poker.deal", "card_draw": "crew_poker.draw", "card_fold": "crew_poker.fold",
+        "chips_place": "crew_poker.pot", "card_showdown": "crew_poker.showdown", "public_tell_beat": "crew_poker.public_observation"
+      }
+    }
+  },
+  {
+    "id": "crew_world",
+    "profile": {
+      "bus": "SFX", "max_voices": 6, "steal_policy": "oldest_same_surface_then_oldest_global",
+      "hidden_state_policy": "public_fact_or_transition_op_only", "selection_seed_salt": "crew_world_sequence",
+      "variation_pitch_steps": [-0.04, 0.0, 0.032], "variation_volume_db_steps": [-0.75, 0.0, 0.4],
+      "event_classes": {
+        "door": "shop_bell", "handoff": "paper_peel", "package": "crate_latch", "stash": "shutter_scrape",
+        "duck": "blackjack_felt", "pursuit": "police_radio", "sweep_proximity": "police_radio",
+        "book_close": "lotto_counter", "slip_written": "ticket_rattle", "draw_called": "dealer_call", "confrontation": "crowd_drop"
+      },
+      "visual_counterparts": {
+        "door": "world.door_transition", "handoff": "world.handoff_object", "package": "world.package_state", "stash": "world.stash_state",
+        "duck": "world.actor_duck", "pursuit": "world.pursuit_actor", "sweep_proximity": "world.sweep_indicator",
+        "book_close": "numbers.book_state", "slip_written": "numbers.slip_state", "draw_called": "numbers.public_draw", "confrontation": "world.confrontation_stage"
+      }
+    }
+  },
+  {
+    "id": "scenario_transition",
+    "profile": {
+      "bus": "SFX", "max_voices": 5, "steal_policy": "oldest_same_surface_then_oldest_global",
+      "hidden_state_policy": "public_fact_or_transition_op_only", "selection_seed_salt": "scenario_transition_ops",
+      "variation_pitch_steps": [-0.035, 0.0, 0.03], "variation_volume_db_steps": [-0.65, 0.0, 0.35],
+      "event_classes": {
+        "appraisal_stamp": "appraisal_stamp", "breaker_snap": "breaker_snap", "crate_latch": "crate_latch",
+        "dice_curb": "dice_curb", "estate_floor": "estate_floor", "evidence_bag": "evidence_bag",
+        "lotto_counter": "lotto_counter", "police_radio": "police_radio", "record_stamp": "record_stamp",
+        "scanner_beep": "scanner_beep", "shop_bell": "shop_bell", "shutter_scrape": "shutter_scrape",
+        "sightline_tension": "sightline_tension", "silent_alley": "silent_alley", "street_game": "street_game", "ticket_rattle": "ticket_rattle"
+      },
+      "visual_counterparts": {
+        "appraisal_stamp": "scenario.transition.appraisal", "breaker_snap": "scenario.transition.breaker", "crate_latch": "scenario.transition.crate",
+        "dice_curb": "scenario.transition.dice", "estate_floor": "scenario.transition.estate", "evidence_bag": "scenario.transition.evidence",
+        "lotto_counter": "scenario.transition.lotto", "police_radio": "scenario.transition.police", "record_stamp": "scenario.transition.record",
+        "scanner_beep": "scenario.transition.scanner", "shop_bell": "scenario.transition.shop", "shutter_scrape": "scenario.transition.shutter",
+        "sightline_tension": "scenario.transition.sightline", "silent_alley": "scenario.transition.alley", "street_game": "scenario.transition.street_game", "ticket_rattle": "scenario.transition.ticket"
+      }
+    }
   }
-}]
+]

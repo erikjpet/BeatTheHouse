@@ -232,7 +232,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"legal_actions": actions_now,
 		"cheat_actions": [],
 		"native_selected_surface_actions": [],
-		"surface_audio": GameModule.surface_audio_spec({"profile_id": "crew_cards", "action_cues": {"poker_deal": "card_deal", "poker_draw": "card_draw", "poker_call": "chips_place", "poker_raise": "chips_place", "poker_fold": "card_fold"}}),
+		"surface_audio": GameModule.surface_audio_spec({"profile_id": "crew_cards", "selection_seed": run_state.seed_value if run_state != null else 1, "action_cues": {"poker_deal": "card_deal", "poker_draw": "card_draw", "poker_call": "chips_place", "poker_raise": "chips_place", "poker_fold": "card_fold"}}),
 	})
 
 

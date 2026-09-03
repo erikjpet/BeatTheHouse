@@ -254,6 +254,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		],
 		"surface_audio": GameModule.surface_audio_spec({
 			"profile_id": "scratch_ticket_machine",
+			"selection_seed": run_state.seed_value if run_state != null else 1,
 			"action_cues": {BUY_ACTION: "ticket_dispenser", SCRATCH_ALL_ACTION: "ticket_peel", FILE_TICKET_ACTION: "paper_peel", SCRATCH_POP_CUE: SCRATCH_POP_CUE},
 		}),
 	})

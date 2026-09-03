@@ -484,6 +484,7 @@ static func surface_animation_channel(channel_id: String, active_id: String = ""
 static func surface_audio_spec(payload: Dictionary = {}) -> Dictionary:
 	var spec := payload.duplicate(true)
 	spec["profile_id"] = str(spec.get("profile_id", "default"))
+	spec["selection_seed"] = maxi(1, int(spec.get("selection_seed", 1)))
 	spec["action_cues"] = _copy_dict(spec.get("action_cues", {}))
 	spec["state_sync"] = _copy_dict(spec.get("state_sync", {}))
 	return spec

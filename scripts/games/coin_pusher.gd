@@ -1261,7 +1261,7 @@ func _v3_headless_surface_state(machine: Dictionary, run_state: RunState = null,
 		"native_selected_surface_actions": _native_surface_actions(machine),
 		"surface_action_bindings": _coin_pusher_action_bindings(machine, simulation, tray, run_state, environment),
 		"surface_animation_channels": [],
-		"surface_audio": GameModule.surface_audio_spec({"profile_id": "coin_pusher", "state_sync": {"method": "coin_pusher_state"}}),
+		"surface_audio": GameModule.surface_audio_spec({"profile_id": "coin_pusher", "selection_seed": run_state.seed_value if run_state != null else 1, "state_sync": {"method": "coin_pusher_state"}}),
 	})
 
 

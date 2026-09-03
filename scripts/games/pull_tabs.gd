@@ -229,6 +229,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		],
 		"surface_audio": GameModule.surface_audio_spec({
 			"profile_id": "pull_tab_dispenser",
+			"selection_seed": run_state.seed_value if run_state != null else 1,
 			"action_cues": {
 				"pull_tab_buy": "ticket_dispenser",
 				"pull_tab_buy_all": "ticket_dispenser",

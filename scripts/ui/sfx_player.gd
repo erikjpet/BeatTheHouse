@@ -2,6 +2,7 @@ class_name SfxPlayer
 extends Node
 
 const WebAudioBridgeScript := preload("res://scripts/ui/web_audio_bridge.gd")
+const SurfaceSfxManifestScript := preload("res://scripts/core/surface_sfx_manifest.gd")
 
 # Central procedural SFX router for game surfaces and environment UI.
 #
@@ -220,6 +221,10 @@ var _prewarm_active_frame_cursor := 0
 var _prewarm_active_data := PackedByteArray()
 var _surface_sfx_manifest: Dictionary = {}
 var _prewarmed_surface_profiles: Dictionary = {}
+var _surface_cue_occurrences: Dictionary = {}
+var _surface_last_variation_step: Dictionary = {}
+var _surface_selection_trace: Array = []
+var _surface_voice_serial := 0
 
 
 func set_prewarm_events(event_ids: Array) -> void:
@@ -257,6 +262,21 @@ func play_surface_cue(cue_id: String, context: Dictionary = {}, surface_state: D
 		return
 	_ensure_players()
 	var action := str(context.get("action", normalized_cue))
+	var audio := _dict(surface_state.get("surface_audio", {}))
+	var profile_id := str(context.get("profile_id", audio.get("profile_id", ""))).strip_edges()
+	var manifest_event := _resolve_manifest_surface_event(profile_id, normalized_cue, context, surface_state)
+	# Slot cabinets retain their existing family-aware mechanical synthesis. The
+	# manifest still declares the public class and validates its bounds, while
+	# the existing cabinet resolver chooses the correct physical family sample.
+	if not manifest_event.is_empty() and not (profile_id.begins_with("slot_machine:") and normalized_cue == "machine_button"):
+		_play(
+			str(manifest_event.get("event_id", normalized_cue)),
+			float(context.get("volume_db", -3.0)) + float(manifest_event.get("volume_db_offset", 0.0)),
+			float(context.get("pitch", 1.0)) + float(manifest_event.get("pitch_offset", 0.0)),
+			profile_id,
+			int(manifest_event.get("max_voices", ONE_SHOT_PLAYER_COUNT))
+		)
+		return
 	var route := str(context.get("route", SURFACE_CUE_ROUTES.get(normalized_cue, SURFACE_CUE_ROUTES.get(action, ""))))
 	match route:
 		"slot_button":
@@ -284,16 +304,17 @@ func play_surface_cue(cue_id: String, context: Dictionary = {}, surface_state: D
 
 func prewarm_surface_profile(profile_id: String) -> void:
 	var normalized_profile := profile_id.strip_edges()
-	if not WebAudioBridgeScript.available() or normalized_profile != "coin_pusher" \
+	if not WebAudioBridgeScript.available() or normalized_profile.is_empty() \
 			or bool(_prewarmed_surface_profiles.get(normalized_profile, false)):
 		return
-	# Decode the cabinet's finite event palette when its surface opens. Doing
-	# this before the first accepted DROP avoids deferring multiple AudioBuffer
-	# allocations into the first physical impact and fall frames.
-	for event_id in COIN_PUSHER_PREWARM_EVENTS:
-		var normalized_event := _normalized_event_id(str(event_id))
-		var stream := _event_stream(normalized_event)
-		WebAudioBridgeScript.prewarm_stream(stream, "sfx:%s" % normalized_event)
+	# Queue the profile's finite palette into the existing incremental prewarm
+	# path. No profile parses its manifest or decodes an asset per frame.
+	var profile := _surface_sfx_profile(normalized_profile)
+	for event_value in _dict(profile.get("event_classes", {})).values():
+		_queue_prewarm_event(_normalized_event_id(str(event_value)))
+	var motor := _dict(profile.get("motor_loop", {}))
+	if not str(motor.get("event_id", "")).is_empty():
+		_queue_prewarm_event(_normalized_event_id(str(motor.get("event_id", ""))))
 	_prewarmed_surface_profiles[normalized_profile] = true
 
 
@@ -397,6 +418,24 @@ func sync_surface_state(surface_state: Dictionary, sync_spec: Dictionary, timing
 				_timing_active(timing, "payout_animation_channel"),
 				_timing_active_id(timing, "payout_animation_channel")
 			)
+		"craps_table_state":
+			_sync_manifest_timed_events(
+				"craps_table",
+				_timing_active_id(timing, "roll_animation_channel"),
+				_timing_elapsed(timing, "roll_animation_channel"),
+				_timing_active(timing, "roll_animation_channel"),
+				surface_state,
+				[["dice_shake", 0.0], ["dice_offer", 0.12], ["dice_roll", 0.24], ["table_contact", 0.46], ["dice_settle", 0.68], ["public_call", 0.78]]
+			)
+		"bar_dice_table_state":
+			_sync_manifest_timed_events(
+				"bar_dice_table",
+				_timing_active_id(timing, "tumble_channel"),
+				_timing_elapsed(timing, "tumble_channel"),
+				_timing_active(timing, "tumble_channel"),
+				surface_state,
+				[["cup_shake", 0.0], ["cup_slam", 0.18], ["cup_lift", 0.48], ["dice_reveal", 0.70]]
+			)
 		"coin_pusher_state":
 			sync_coin_pusher_state(
 				surface_state,
@@ -404,6 +443,35 @@ func sync_surface_state(surface_state: Dictionary, sync_spec: Dictionary, timing
 				_timing_active(timing, "animation_channel"),
 				_timing_active_id(timing, "animation_channel")
 			)
+
+
+func _sync_manifest_timed_events(profile_id: String, active_id: String, elapsed: float, animation_active: bool, surface_state: Dictionary, events: Array) -> void:
+	if active_id.is_empty():
+		return
+	for event_value in events:
+		if typeof(event_value) != TYPE_ARRAY or (event_value as Array).size() < 2:
+			continue
+		var event: Array = event_value
+		var event_class := str(event[0])
+		var threshold := float(event[1])
+		var marker := "surface_manifest|%s|%s|%s" % [profile_id, active_id, event_class]
+		if bool(_played_markers.get(marker, false)) or not (animation_active and elapsed >= threshold):
+			continue
+		var selected := _resolve_manifest_surface_event(profile_id, event_class, {
+			"action": event_class,
+			"authority_token": active_id,
+			"boundary": "animation_fact",
+		}, surface_state)
+		if selected.is_empty():
+			continue
+		_played_markers[marker] = true
+		_play(
+			str(selected.get("event_id", "")),
+			-3.0 + float(selected.get("volume_db_offset", 0.0)),
+			1.0 + float(selected.get("pitch_offset", 0.0)),
+			profile_id,
+			int(selected.get("max_voices", ONE_SHOT_PLAYER_COUNT))
+		)
 
 
 func sync_coin_pusher_state(surface_state: Dictionary, elapsed: float, animation_active: bool, active_id: String, suppress_physical_playback: bool = false) -> void:
@@ -1061,6 +1129,14 @@ func debug_surface_sfx_profile(profile_id: String) -> Dictionary:
 	return _surface_sfx_profile(profile_id).duplicate(true)
 
 
+func debug_surface_selection_trace() -> Array:
+	return _surface_selection_trace.duplicate(true)
+
+
+func debug_select_surface_event(profile_id: String, event_class: String, selection_seed: int, occurrence: int, last_step: int = -1) -> Dictionary:
+	return SurfaceSfxManifestScript.select_event(profile_id, event_class, selection_seed, occurrence, last_step)
+
+
 func debug_coin_pusher_event_schedule(surface_state: Dictionary) -> Array:
 	var profile := _surface_sfx_profile("coin_pusher")
 	var event_classes: Dictionary = _dict(profile.get("event_classes", {}))
@@ -1141,6 +1217,8 @@ func debug_soak_snapshot() -> Dictionary:
 		"prewarm_active": not _prewarm_active_event_id.is_empty(),
 		"prewarm_active_frame_cursor": _prewarm_active_frame_cursor,
 		"prewarm_active_frame_count": _prewarm_active_frame_count,
+		"surface_selection_trace_size": _surface_selection_trace.size(),
+		"surface_profile_count": _surface_sfx_manifest.size(),
 	}
 
 
@@ -1484,30 +1562,51 @@ func _stop_one_shot_loops() -> void:
 			audio_player.stop()
 
 
-func _play(event_id: String, volume_db: float = 0.0, pitch: float = 1.0) -> void:
+func _play(event_id: String, volume_db: float = 0.0, pitch: float = 1.0, profile_id: String = "", max_voices: int = ONE_SHOT_PLAYER_COUNT) -> void:
 	_remove_from_prewarm_queue(_normalized_event_id(event_id))
 	var stream := _event_stream(event_id)
 	if WebAudioBridgeScript.available():
-		WebAudioBridgeScript.play_stream(stream, "sfx:%s" % _normalized_event_id(event_id), volume_db, pitch)
+		WebAudioBridgeScript.play_stream(stream, "sfx:%s" % _normalized_event_id(event_id), volume_db, pitch, "", false, profile_id, max_voices)
 		return
-	var player := _next_player()
+	var player := _next_player(profile_id, max_voices)
 	if player == null:
 		return
 	player.stop()
 	player.stream = stream
 	player.volume_db = volume_db
 	player.pitch_scale = pitch
+	_surface_voice_serial += 1
+	player.set_meta("surface_profile_id", profile_id)
+	player.set_meta("surface_voice_serial", _surface_voice_serial)
 	player.play()
 
 
-func _next_player() -> AudioStreamPlayer:
+func _next_player(profile_id: String = "", max_voices: int = ONE_SHOT_PLAYER_COUNT) -> AudioStreamPlayer:
 	_ensure_players()
-	for player in _players:
-		if player is AudioStreamPlayer and not (player as AudioStreamPlayer).playing:
+	var active_for_profile: Array[AudioStreamPlayer] = []
+	for player_value in _players:
+		if not (player_value is AudioStreamPlayer):
+			continue
+		var player := player_value as AudioStreamPlayer
+		if not player.playing:
 			return player
+		if not profile_id.is_empty() and str(player.get_meta("surface_profile_id", "")) == profile_id:
+			active_for_profile.append(player)
 	if _players.is_empty():
 		return null
-	return _players[0]
+	if not profile_id.is_empty() and active_for_profile.size() >= clampi(max_voices, 1, ONE_SHOT_PLAYER_COUNT):
+		active_for_profile.sort_custom(func(a: AudioStreamPlayer, b: AudioStreamPlayer) -> bool:
+			return int(a.get_meta("surface_voice_serial", 0)) < int(b.get_meta("surface_voice_serial", 0))
+		)
+		return active_for_profile[0]
+	var oldest: AudioStreamPlayer = _players[0] as AudioStreamPlayer
+	for player_value in _players:
+		if not (player_value is AudioStreamPlayer):
+			continue
+		var candidate := player_value as AudioStreamPlayer
+		if int(candidate.get_meta("surface_voice_serial", 0)) < int(oldest.get_meta("surface_voice_serial", 0)):
+			oldest = candidate
+	return oldest
 
 
 func _ensure_players() -> void:
@@ -1628,6 +1727,8 @@ func _queue_prewarm_event(event_id: String) -> void:
 	if _stream_cache.has(normalized) or _prewarm_queue.has(normalized):
 		return
 	_prewarm_queue.append(normalized)
+	if _prewarm_started and not _running_headless():
+		set_process(true)
 
 
 func _remove_from_prewarm_queue(event_id: String) -> void:
@@ -1744,17 +1845,49 @@ func _event_sample_rate(event_id: String) -> int:
 
 func _surface_sfx_profile(profile_id: String) -> Dictionary:
 	if _surface_sfx_manifest.is_empty():
-		var source := FileAccess.get_file_as_string(SURFACE_SFX_MANIFEST_PATH)
-		var parsed: Variant = JSON.parse_string(source)
-		if typeof(parsed) == TYPE_ARRAY:
-			for entry_value in parsed:
-				if typeof(entry_value) != TYPE_DICTIONARY:
-					continue
-				var entry: Dictionary = entry_value
-				var entry_id := str(entry.get("id", ""))
-				if not entry_id.is_empty():
-					_surface_sfx_manifest[entry_id] = _dict(entry.get("profile", {}))
-	return _dict(_surface_sfx_manifest.get(profile_id, {}))
+		_surface_sfx_manifest = SurfaceSfxManifestScript.profile_map()
+	if _surface_sfx_manifest.has(profile_id):
+		return _dict(_surface_sfx_manifest.get(profile_id, {}))
+	for candidate_value in _surface_sfx_manifest.keys():
+		var candidate := str(candidate_value)
+		if candidate.ends_with("*") and profile_id.begins_with(candidate.trim_suffix("*")):
+			return _dict(_surface_sfx_manifest.get(candidate, {}))
+	return {}
+
+
+func _resolve_manifest_surface_event(profile_id: String, event_class: String, context: Dictionary, surface_state: Dictionary) -> Dictionary:
+	if profile_id.is_empty():
+		return {}
+	var profile := _surface_sfx_profile(profile_id)
+	if profile.is_empty():
+		push_error("Unknown surface SFX profile: %s" % profile_id)
+		return {}
+	var classes := _dict(profile.get("event_classes", {}))
+	if not classes.has(event_class):
+		push_error("Unknown surface SFX event class %s for profile %s" % [event_class, profile_id])
+		return {}
+	var occurrence_key := "%s|%s" % [profile_id, event_class]
+	var occurrence := int(context.get("occurrence", _surface_cue_occurrences.get(occurrence_key, 0)))
+	var audio := _dict(surface_state.get("surface_audio", {}))
+	var selection_seed := int(context.get("selection_seed", audio.get("selection_seed", surface_state.get("seed_value", 1))))
+	var selected := SurfaceSfxManifestScript.select_event(
+		profile_id,
+		event_class,
+		selection_seed,
+		occurrence,
+		int(_surface_last_variation_step.get(occurrence_key, -1))
+	)
+	if selected.is_empty():
+		return {}
+	_surface_cue_occurrences[occurrence_key] = occurrence + 1
+	_surface_last_variation_step[occurrence_key] = int(selected.get("variation_step", -1))
+	var trace_entry := selected.duplicate(true)
+	trace_entry["authority_token"] = str(context.get("authority_token", context.get("action", event_class)))
+	trace_entry["boundary"] = str(context.get("boundary", "action"))
+	_surface_selection_trace.append(trace_entry)
+	if _surface_selection_trace.size() > 256:
+		_surface_selection_trace.pop_front()
+	return selected
 
 
 func _normalized_event_id(event_id: String) -> String:
@@ -1849,6 +1982,30 @@ func _normalized_event_id_uncached(event_id: String) -> String:
 	if family_event == "scratch_paper_foley_loop" or family_event == "scratch_box_pop":
 		return family_event
 	match family_event:
+		"dice_cup_shake":
+			return "nudge"
+		"chip_offer", "cash_bar":
+			return "blackjack_chip"
+		"dice_throw", "dice_table_contact", "dice_curb":
+			return "coin_pusher_coin_metal"
+		"dice_settle", "street_game":
+			return "coin_pusher_tray"
+		"dealer_call", "crowd_swell":
+			return "bonus_total"
+		"crowd_drop", "silent_alley":
+			return "blackjack_felt"
+		"shoe_slide", "card_squeeze", "ticket_rattle", "evidence_bag":
+			return "paper_peel"
+		"dealer_procedure", "appraisal_stamp", "record_stamp", "lotto_counter":
+			return "pull_tab_thump"
+		"breaker_snap", "scanner_beep", "shop_bell":
+			return "button"
+		"crate_latch", "shutter_scrape":
+			return "coin_pusher_ledge_tip"
+		"estate_floor":
+			return "coin_pusher_slide"
+		"police_radio", "sightline_tension":
+			return "heat_gain"
 		"button", "button_pinball", "button_buffalo", "button_digital", "lever", "lever_buffalo", "lever_digital", "nudge", "nudge_pinball", "nudge_buffalo", "nudge_digital", "reel_loop", "reel_loop_pinball", "reel_loop_buffalo", "reel_loop_digital", "reel_stop", "reel_stop_pinball", "reel_stop_buffalo", "reel_stop_digital", "gold_coin_tease", "double_gold_coin_tease", "bonus_start", "bonus_start_pinball", "bonus_start_buffalo", "bonus_start_digital", "bumper", "pinball_money_ding", "bonus_step_buffalo", "bonus_step_digital", "jackpot_hit", "jackpot_hit_buffalo", "jackpot_hit_digital", "payout", "payout_digital", "bonus_total", "bonus_total_buffalo", "bonus_total_digital", "jackpot", "jackpot_buffalo", "jackpot_digital", "lose", "pull_tab_click", "pull_tab_thump", "paper_peek", "paper_peel", "blackjack_card", "blackjack_chip", "blackjack_felt", "blackjack_payout", "blackjack_bust", "blackjack_peek", "blackjack_count", "blackjack_distraction", "video_poker_button", "video_poker_deal", "video_poker_hold", "video_poker_draw", "video_poker_cheat", "video_poker_cheat_beat", "video_poker_double", "video_poker_win", "roulette_chip_select", "roulette_chip_place", "roulette_chip_lift", "roulette_chip_stack", "roulette_chip_sweep", "roulette_rotor_launch", "roulette_ball_loop", "roulette_ball_rim_tick", "roulette_ball_roll", "roulette_ball_drop", "roulette_ball_scatter", "roulette_ball_bounce", "roulette_ball_pocket", "roulette_dolly_tap", "roulette_payout", "coin_pusher_motor", "coin_pusher_coin_metal", "coin_pusher_coin_stack", "coin_pusher_slide", "coin_pusher_fall", "coin_pusher_topple", "coin_pusher_ledge_tip", "coin_pusher_tray", "coin_pusher_gutter", "coin_pusher_shake", "coin_pusher_tell_rock", "coin_pusher_chirp", "coin_pusher_alarm":
 			return event_id
 		"slot_reel_spin_loop":

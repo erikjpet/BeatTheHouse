@@ -869,6 +869,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		},
 		"surface_audio": GameModule.surface_audio_spec({
 			"profile_id": "blackjack_table",
+			"selection_seed": run_state.seed_value if run_state != null else 1,
 			"action_cues": {
 				"blackjack_chip": "blackjack_chip",
 				"blackjack_correct_bet": "blackjack_chip",

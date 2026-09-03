@@ -197,6 +197,17 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"craps_switching_item_modifiers": skill_item_modifier_badges(run_state, _string_array(_dict(_config().get("switching", {})).get("item_effect_keys", []))),
 		"result_message": str(last_result.get("message", "")),
 		"table_notice": _table_notice(table, pending, street),
+		"surface_audio": GameModule.surface_audio_spec({
+			"profile_id": "craps_table",
+			"selection_seed": run_state.seed_value if run_state != null else 1,
+			"action_cues": {
+				"craps_bet": "chip_place", "craps_chip": "chip_place", "craps_remove": "chip_collect",
+				"craps_clear": "chip_collect", "craps_undo": "chip_collect", "craps_repeat": "chip_place",
+				"craps_rebet": "chip_place", "craps_roll": "dice_shake", "craps_throw": "dice_roll",
+				"surface_stake_up": "chip_place", "surface_stake_down": "chip_collect",
+			},
+			"state_sync": {"method": "craps_table_state", "roll_animation_channel": ROLL_CHANNEL},
+		}),
 	})
 	if street:
 		spec["craps_variant"] = "street_craps"

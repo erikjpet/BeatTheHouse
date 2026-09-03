@@ -11368,7 +11368,7 @@ func _wager_confirmation_action_label(action_id: String, source_game_id: String 
 	return _action_label(action) if not action.is_empty() else action_id
 
 
-func _play_environment_audio_cue(cue_id: String, volume_db: float = -1.0) -> void:
+func _play_environment_audio_cue(cue_id: String, volume_db: float = -1.0, profile_id: String = "crew_world", authority: Dictionary = {}) -> void:
 	var normalized_cue := cue_id.strip_edges()
 	if normalized_cue.is_empty():
 		return
@@ -11376,7 +11376,17 @@ func _play_environment_audio_cue(cue_id: String, volume_db: float = -1.0) -> voi
 	if normalized_cue.begins_with("bonus_start") and environment_sfx_player.has_method("play_slot_event"):
 		environment_sfx_player.call("play_slot_event", normalized_cue, volume_db, 1.0)
 	elif environment_sfx_player.has_method("play_surface_cue"):
-		environment_sfx_player.call("play_surface_cue", normalized_cue, {"action": normalized_cue, "volume_db": volume_db}, {})
+		var context := {
+			"action": normalized_cue,
+			"volume_db": volume_db,
+			"profile_id": profile_id,
+			"selection_seed": run_state.seed_value if run_state != null else 1,
+			"authority_token": str(authority.get("receipt_id", authority.get("stable_object_id", normalized_cue))),
+			"boundary": "transition_op" if not authority.is_empty() else "game_fact",
+		}
+		environment_sfx_player.call("play_surface_cue", normalized_cue, context, {
+			"surface_audio": {"profile_id": profile_id, "selection_seed": context["selection_seed"]},
+		})
 
 
 func _ensure_environment_sfx_player() -> void:
@@ -12410,7 +12420,7 @@ func _consume_scenario_transitions() -> String:
 			if str(transition.get("op", "")) == "music":
 				_on_game_surface_music_cue(cue_id, {"source": "scenario", "transition": transition})
 			else:
-				_play_environment_audio_cue(cue_id)
+				_play_environment_audio_cue(cue_id, -1.0, "scenario_transition", transition)
 		var message := str(transition.get("message", "")).strip_edges()
 		if not message.is_empty() and not messages.has(message):
 			messages.append(message)

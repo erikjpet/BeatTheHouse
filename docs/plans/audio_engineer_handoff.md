@@ -105,3 +105,26 @@ win/loss accents part of the song. A big win affects exactly four musical bars.
 Before producing the full set, please tell us if you want any fundamental
 change to this design. The first test delivery above is enough for us to hear
 the complete system working with your music.
+
+## 0.6 living-town delta
+
+This section is the new 0.6 delivery delta. It does not replace the Jazz Club
+test delivery above, and the sounds currently in the build remain procedural
+or test material.
+
+| Place or sequence | Needed musical role | Register and energy | Transition boundary |
+| --- | --- | --- | --- |
+| Street Craps / alley action | Sparse hand percussion, low bass pulse, room crowd | Low-mid; calm, gathering, hot, dispersal | Public table phase and street-warning transition |
+| Casino table rituals | Restrained brushed rhythm, upright/electric bass, light harmonic bed | Mid; idle, wager, deal/spin, settlement, shift change | Public game-action and settlement facts |
+| Machine floor | Mechanical/electric pulse that leaves room for cabinet sounds | Low-mid; attract, play, feature, jackpot | Wager acceptance, feature entry, settlement |
+| Counter games | Dry paper/rack texture with a minimal tonal bed | Mid-high; browse, reveal, redeem/refuse | Public ticket state and counter handoff |
+| Bar Dice | Small-room bass/percussion, cup motion left exposed | Low-mid; ante, shake, reveal, settle | Public tumble and cash-on-bar beats |
+| Crew back room | Quiet cards/chips groove with no character-specific tell motif | Low; deal, pressure, showdown | Only public card/character beats |
+| Crew and town sequences | Location bed plus restrained pursuit/sweep tension layer | Low-mid; approach, exchange, pressure, escape | Host-authored scenario transition operation |
+| Grand Casino / heist path | Existing jazz vocabulary with additional tension and release layers | Full range; stealth, commitment, pursuit, confrontation, aftermath | Host-authored heist/Turn transition operations |
+
+All new layers must preserve the existing loop length, tempo, key, stem-role,
+and compatibility metadata rules. Sound must not identify a hidden tell,
+traitor, rigged draw, unrevealed result, or future transition. In-game code
+will select intensity and transitions from public facts; delivered music
+should not encode secret-state variants.

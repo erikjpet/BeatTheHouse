@@ -105,6 +105,7 @@ func surface_state(machine: Dictionary, run_state: RunState, definition: Diction
 		],
 		"surface_audio": GameModule.surface_audio_spec({
 			"profile_id": "slot_machine:%s" % str(machine.get("machine_key", "")),
+			"selection_seed": run_state.seed_value if run_state != null else 1,
 			"action_cues": {
 				"slot_spin": "machine_button",
 				"slot_nudge": "machine_button",

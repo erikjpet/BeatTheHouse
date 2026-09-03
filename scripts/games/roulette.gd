@@ -386,6 +386,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		},
 		"surface_audio": GameModule.surface_audio_spec({
 			"profile_id": "roulette_table",
+			"selection_seed": run_state.seed_value if run_state != null else 1,
 			"action_cues": {
 				"roulette_chip": "roulette_chip_select",
 				"roulette_patron_focus": "roulette_chip_select",

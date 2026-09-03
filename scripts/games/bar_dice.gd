@@ -501,6 +501,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		},
 		"surface_audio": GameModule.surface_audio_spec({
 			"profile_id": "bar_dice_table",
+			"selection_seed": run_state.seed_value if run_state != null else 1,
 			"action_cues": {
 				"bar_dice_roll": "machine_button",
 				"bar_dice_shake": "machine_button",

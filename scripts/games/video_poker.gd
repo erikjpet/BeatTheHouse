@@ -681,6 +681,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_action_bindings": _video_poker_surface_action_bindings(phase),
 		"surface_audio": GameModule.surface_audio_spec({
 			"profile_id": "video_poker_machine",
+			"selection_seed": run_state.seed_value if run_state != null else 1,
 			"action_cues": {
 				"video_poker_hold": "video_poker_hold",
 				"video_poker_draw": "video_poker_draw",
