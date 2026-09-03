@@ -12,6 +12,18 @@ const SIGNAL_PATTERN := "p"
 const SIGNAL_ROUTE := "r"
 const SIGNAL_PAYMENT := "e"
 const SIGNAL_IDS := [SIGNAL_PATTERN, SIGNAL_ROUTE, SIGNAL_PAYMENT]
+const PRIVATE_SAVE_PLAIN_BYTES := 65536
+const PRIVATE_SAVE_BYTES := 16 + PRIVATE_SAVE_PLAIN_BYTES + 32
+const PRIVATE_SAVE_FORMAT := 2
+const LEGACY_PRIVATE_SAVE_BYTES := 512
+const LEGACY_PRIVATE_SAVE_PLAIN_BYTES := 464
+const LEGACY_PRIVATE_SAVE_FORMAT := 1
+const PRIVATE_GRIEVANCE_LIMIT := 256
+const PRIVATE_TEXT_BYTE_LIMIT := 128
+const PRIVATE_SEQUENCE_LIMIT := 1000000000
+const PRIVATE_KEY_PATH := "user://.crew_host_authority_v1"
+
+static var _private_key_cache := PackedByteArray()
 
 
 static func empty_state() -> Dictionary:
@@ -67,6 +79,260 @@ static func record_tombstone(state_value: Variant, boundary: int, code: int, mem
 	while rows.size() > TOMBSTONE_LIMIT: rows.pop_front()
 	state["t"] = rows
 	return state
+
+
+static func private_save_fingerprint(payload_value: Variant, member_ids: Array, grievance_kinds: Array, binding: String) -> String:
+	var payload := normalize_private_payload(payload_value, member_ids, grievance_kinds)
+	return "" if payload.is_empty() else (binding + "\n" + canonical_json(payload)).sha256_text()
+
+
+# The run save carries only a fixed-size authenticated capsule. Its key is a
+# random per-install host secret stored outside the run save; there is no
+# shipped key or deterministic ciphertext for an offline save observer to use
+# as a clean/turned classifier.
+static func pack_private_save(payload_value: Variant, member_ids: Array, grievance_kinds: Array, binding: String) -> String:
+	var payload := normalize_private_payload(payload_value, member_ids, grievance_kinds)
+	if payload.is_empty(): return ""
+	var master_key := _private_install_key()
+	if master_key.size() != 32: return ""
+	var encryption_key := _private_subkey(master_key, "aes-cbc")
+	var authentication_key := _private_subkey(master_key, "hmac-sha256")
+	var body := canonical_json(payload).to_utf8_buffer()
+	if body.size() + 4 > PRIVATE_SAVE_PLAIN_BYTES: return ""
+	var plain := Crypto.new().generate_random_bytes(PRIVATE_SAVE_PLAIN_BYTES)
+	plain[0] = (body.size() >> 24) & 0xff
+	plain[1] = (body.size() >> 16) & 0xff
+	plain[2] = (body.size() >> 8) & 0xff
+	plain[3] = body.size() & 0xff
+	for index in range(body.size()): plain[index + 4] = body[index]
+	var iv := Crypto.new().generate_random_bytes(16)
+	var aes := AESContext.new()
+	if aes.start(AESContext.MODE_CBC_ENCRYPT, encryption_key, iv) != OK: return ""
+	var encrypted := aes.update(plain)
+	aes.finish()
+	if encrypted.size() != PRIVATE_SAVE_PLAIN_BYTES: return ""
+	var authenticated := PackedByteArray()
+	authenticated.append_array(iv)
+	authenticated.append_array(encrypted)
+	var mac := _private_save_mac(authentication_key, binding, authenticated)
+	if mac.size() != 32: return ""
+	authenticated.append_array(mac)
+	return Marshalls.raw_to_base64(authenticated) if authenticated.size() == PRIVATE_SAVE_BYTES else ""
+
+
+static func unpack_private_save(encoded: String, member_ids: Array, grievance_kinds: Array, binding: String) -> Dictionary:
+	var master_key := _private_install_key()
+	var capsule := Marshalls.base64_to_raw(encoded)
+	if master_key.size() != 32 or capsule.size() != PRIVATE_SAVE_BYTES: return {}
+	var encryption_key := _private_subkey(master_key, "aes-cbc")
+	var authentication_key := _private_subkey(master_key, "hmac-sha256")
+	var authenticated := capsule.slice(0, 16 + PRIVATE_SAVE_PLAIN_BYTES)
+	var supplied_mac := capsule.slice(16 + PRIVATE_SAVE_PLAIN_BYTES)
+	var expected_mac := _private_save_mac(authentication_key, binding, authenticated)
+	if supplied_mac.size() != expected_mac.size() or not _constant_time_equal(supplied_mac, expected_mac): return {}
+	var aes := AESContext.new()
+	if aes.start(AESContext.MODE_CBC_DECRYPT, encryption_key, authenticated.slice(0, 16)) != OK: return {}
+	var plain := aes.update(authenticated.slice(16))
+	aes.finish()
+	if plain.size() != PRIVATE_SAVE_PLAIN_BYTES: return {}
+	var body_size := (int(plain[0]) << 24) | (int(plain[1]) << 16) | (int(plain[2]) << 8) | int(plain[3])
+	if body_size <= 0 or body_size + 4 > PRIVATE_SAVE_PLAIN_BYTES: return {}
+	var parsed: Variant = JSON.parse_string(plain.slice(4, body_size + 4).get_string_from_utf8())
+	return normalize_private_payload(parsed, member_ids, grievance_kinds)
+
+
+static func unpack_legacy_private_save(encoded: String, member_ids: Array, binding: String) -> Dictionary:
+	var master_key := _private_install_key()
+	var capsule := Marshalls.base64_to_raw(encoded)
+	if master_key.size() != 32 or capsule.size() != LEGACY_PRIVATE_SAVE_BYTES: return {}
+	var encryption_key := _private_subkey(master_key, "aes-cbc")
+	var authentication_key := _private_subkey(master_key, "hmac-sha256")
+	var authenticated := capsule.slice(0, 16 + LEGACY_PRIVATE_SAVE_PLAIN_BYTES)
+	var supplied_mac := capsule.slice(16 + LEGACY_PRIVATE_SAVE_PLAIN_BYTES)
+	var expected_mac := _private_save_mac(authentication_key, binding, authenticated)
+	if supplied_mac.size() != expected_mac.size() or not _constant_time_equal(supplied_mac, expected_mac): return {}
+	var aes := AESContext.new()
+	if aes.start(AESContext.MODE_CBC_DECRYPT, encryption_key, authenticated.slice(0, 16)) != OK: return {}
+	var plain := aes.update(authenticated.slice(16))
+	aes.finish()
+	if plain.size() != LEGACY_PRIVATE_SAVE_PLAIN_BYTES: return {}
+	var body_size := (int(plain[0]) << 24) | (int(plain[1]) << 16) | (int(plain[2]) << 8) | int(plain[3])
+	if body_size <= 0 or body_size + 4 > LEGACY_PRIVATE_SAVE_PLAIN_BYTES: return {}
+	var parsed: Variant = JSON.parse_string(plain.slice(4, body_size + 4).get_string_from_utf8())
+	return restore_state(parsed, member_ids) if can_restore_state(parsed, member_ids) else {}
+
+
+static func private_save_binding(authority_id: String, seed_text: String, public_context: Dictionary) -> String:
+	if not valid_authority_id(authority_id): return ""
+	return "%d\n%s\n%s\n%s" % [PRIVATE_SAVE_FORMAT, authority_id, seed_text, canonical_json(public_context).sha256_text()]
+
+
+static func legacy_private_save_binding(seed_text: String, plan_id: String, locked_action: int) -> String:
+	return "%d\n%s\n%s\n%d" % [LEGACY_PRIVATE_SAVE_FORMAT, seed_text, plan_id, maxi(0, locked_action)]
+
+
+# Retained only to prove and support migration from the shipped 512-byte
+# heist-local capsule. New saves must use pack_private_save().
+static func pack_legacy_private_save(state_value: Variant, member_ids: Array, binding: String) -> String:
+	var state := normalize_state(state_value, member_ids)
+	if not can_restore_state(state, member_ids): return ""
+	var master_key := _private_install_key()
+	if master_key.size() != 32: return ""
+	var body := canonical_json(state).to_utf8_buffer()
+	if body.size() + 4 > LEGACY_PRIVATE_SAVE_PLAIN_BYTES: return ""
+	var plain := Crypto.new().generate_random_bytes(LEGACY_PRIVATE_SAVE_PLAIN_BYTES)
+	plain[0] = (body.size() >> 24) & 0xff
+	plain[1] = (body.size() >> 16) & 0xff
+	plain[2] = (body.size() >> 8) & 0xff
+	plain[3] = body.size() & 0xff
+	for index in range(body.size()): plain[index + 4] = body[index]
+	var iv := Crypto.new().generate_random_bytes(16)
+	var aes := AESContext.new()
+	if aes.start(AESContext.MODE_CBC_ENCRYPT, _private_subkey(master_key, "aes-cbc"), iv) != OK: return ""
+	var encrypted := aes.update(plain)
+	aes.finish()
+	if encrypted.size() != LEGACY_PRIVATE_SAVE_PLAIN_BYTES: return ""
+	var authenticated := PackedByteArray()
+	authenticated.append_array(iv)
+	authenticated.append_array(encrypted)
+	var mac := _private_save_mac(_private_subkey(master_key, "hmac-sha256"), binding, authenticated)
+	if mac.size() != 32: return ""
+	authenticated.append_array(mac)
+	return Marshalls.raw_to_base64(authenticated) if authenticated.size() == LEGACY_PRIVATE_SAVE_BYTES else ""
+
+
+static func new_authority_id() -> String:
+	var value := Crypto.new().generate_random_bytes(32).hex_encode()
+	return value if valid_authority_id(value) else ""
+
+
+static func valid_authority_id(value: String) -> bool:
+	var clean := value.strip_edges().to_lower()
+	if clean.length() != 64: return false
+	for code in clean.to_ascii_buffer():
+		if not (code >= 48 and code <= 57) and not (code >= 97 and code <= 102): return false
+	return true
+
+
+# Stable, install-private join key for hidden consequences whose public carrier
+# intentionally omits its original source identifier. The label is retained for
+# host diagnostics; the identifying suffix cannot be recomputed from a run save.
+static func private_reference(label: String, context: String) -> String:
+	var master_key := _private_install_key()
+	if master_key.size() != 32 or label.strip_edges().is_empty(): return ""
+	var hmac := HMACContext.new()
+	if hmac.start(HashingContext.HASH_SHA256, master_key) != OK: return ""
+	if hmac.update(("bth06:private-reference:" + label + ":" + context).to_utf8_buffer()) != OK: return ""
+	return "%s:%s" % [label, hmac.finish().hex_encode()]
+
+
+static func normalize_private_payload(value: Variant, member_ids: Array, grievance_kinds: Array) -> Dictionary:
+	if typeof(value) != TYPE_DICTIONARY: return {}
+	var source: Dictionary = value
+	if not _exact_keys(source, ["g", "q", "x"]): return {}
+	var private_state := restore_state(source.get("x", {}), member_ids)
+	if not can_restore_state(source.get("x", {}), member_ids): return {}
+	var ledger_value: Variant = source.get("g", [])
+	if typeof(ledger_value) != TYPE_ARRAY or (ledger_value as Array).size() > PRIVATE_GRIEVANCE_LIMIT: return {}
+	var ledger: Array = []
+	for row_value in ledger_value as Array:
+		if typeof(row_value) != TYPE_ARRAY: return {}
+		var row: Array = row_value
+		if row.size() != 6: return {}
+		var member_index := int(row[0])
+		var kind_index := int(row[1])
+		var weight := int(row[2])
+		var turn_recorded := int(row[3])
+		var id_hex := str(row[4])
+		var source_hex := str(row[5])
+		if member_index < 0 or member_index >= member_ids.size() or kind_index < 0 or kind_index >= grievance_kinds.size() \
+				or weight < 1 or weight > PRIVATE_SEQUENCE_LIMIT or turn_recorded < 0 or turn_recorded > PRIVATE_SEQUENCE_LIMIT \
+				or id_hex.is_empty() or not _bounded_hex_text(id_hex) or not _bounded_hex_text(source_hex):
+			return {}
+		ledger.append([member_index, kind_index, weight, turn_recorded, id_hex, source_hex])
+	var sequence := int(source.get("q", -1))
+	if sequence < ledger.size() or sequence > PRIVATE_SEQUENCE_LIMIT: return {}
+	return {"x": private_state, "g": ledger, "q": sequence}
+
+
+static func canonical_json(value: Variant) -> String:
+	return JSON.stringify(_canonical(value))
+
+
+static func _canonical(value: Variant) -> Variant:
+	if typeof(value) == TYPE_DICTIONARY:
+		var source: Dictionary = value
+		var keys := source.keys(); keys.sort()
+		var result: Dictionary = {}
+		for key in keys: result[str(key)] = _canonical(source.get(key))
+		return result
+	if typeof(value) == TYPE_ARRAY:
+		var result: Array = []
+		for entry in value as Array: result.append(_canonical(entry))
+		return result
+	return value
+
+
+static func _bounded_hex_text(value: String) -> bool:
+	if value.length() % 2 != 0 or value.length() > PRIVATE_TEXT_BYTE_LIMIT * 2: return false
+	for code in value.to_ascii_buffer():
+		if not (code >= 48 and code <= 57) and not (code >= 97 and code <= 102): return false
+	var decoded := value.hex_decode()
+	return decoded.size() <= PRIVATE_TEXT_BYTE_LIMIT and decoded.get_string_from_utf8().to_utf8_buffer() == decoded
+
+
+static func _private_subkey(master_key: PackedByteArray, label: String) -> PackedByteArray:
+	var context := HMACContext.new()
+	if context.start(HashingContext.HASH_SHA256, master_key) != OK: return PackedByteArray()
+	if context.update(("bth06:crew-turn:kdf:" + label).to_utf8_buffer()) != OK: return PackedByteArray()
+	return context.finish()
+
+
+static func _private_save_mac(authentication_key: PackedByteArray, binding: String, authenticated: PackedByteArray) -> PackedByteArray:
+	var context := HMACContext.new()
+	if context.start(HashingContext.HASH_SHA256, authentication_key) != OK: return PackedByteArray()
+	if context.update((binding + "\n").to_utf8_buffer()) != OK: return PackedByteArray()
+	if context.update(authenticated) != OK: return PackedByteArray()
+	return context.finish()
+
+
+static func _constant_time_equal(first: PackedByteArray, second: PackedByteArray) -> bool:
+	if first.size() != second.size(): return false
+	var difference := 0
+	for index in range(first.size()): difference |= int(first[index]) ^ int(second[index])
+	return difference == 0
+
+
+static func _private_install_key() -> PackedByteArray:
+	if _private_key_cache.size() == 32: return _private_key_cache
+	var absolute_path := ProjectSettings.globalize_path(PRIVATE_KEY_PATH)
+	if FileAccess.file_exists(PRIVATE_KEY_PATH):
+		var existing := FileAccess.get_file_as_bytes(PRIVATE_KEY_PATH)
+		if existing.size() == 32:
+			_private_key_cache = existing
+			return _private_key_cache
+	var generated := Crypto.new().generate_random_bytes(32)
+	if generated.size() != 32: return PackedByteArray()
+	var temporary_path := "%s.%d.%d.tmp" % [absolute_path, OS.get_process_id(), Time.get_ticks_usec()]
+	var temporary := FileAccess.open(temporary_path, FileAccess.WRITE)
+	if temporary == null: return PackedByteArray()
+	temporary.store_buffer(generated)
+	temporary.flush()
+	temporary = null
+	# Another process may win first creation. Never replace a valid host key.
+	if FileAccess.file_exists(PRIVATE_KEY_PATH):
+		DirAccess.remove_absolute(temporary_path)
+		var raced := FileAccess.get_file_as_bytes(PRIVATE_KEY_PATH)
+		if raced.size() != 32: return PackedByteArray()
+		_private_key_cache = raced
+		return _private_key_cache
+	if DirAccess.rename_absolute(temporary_path, absolute_path) != OK:
+		DirAccess.remove_absolute(temporary_path)
+		return PackedByteArray()
+	if OS.get_name() not in ["Windows", "Web"]:
+		FileAccess.set_unix_permissions(absolute_path, 384)
+	_private_key_cache = generated
+	return _private_key_cache
 
 
 static func eligible_members(plan_definition: Dictionary, met_members: Array, member_ids: Array) -> Array:

@@ -81,7 +81,7 @@ func _check_contact_uses_trusted_run_state(failures: Array) -> void:
 	_assert_contact(available, "associate", "familiar", failures)
 	run_state.grievance_add({"member_id": "crew_switch", "kind": "job_abandoned", "weight": 9, "source_ref": "fixture"})
 	var aggrieved := Recruitment.contact_proposal(run_state, run_state.current_environment, "crew_switch")
-	_assert_contact(aggrieved, "associate", "aggrieved", failures)
+	_assert_contact(aggrieved, "associate", "familiar", failures)
 	var clean_job: Variant = _marked_run("WORLD64-JOB", ["gas_station_casino"])
 	_recruit_for_fixture(clean_job, "crew_switch")
 	clean_job.current_environment = _environment("gas_station_casino")
@@ -94,7 +94,7 @@ func _check_contact_uses_trusted_run_state(failures: Array) -> void:
 	if str(rejected.get("reason", "")) != "ineligible_environment":
 		failures.append("Substituted contact environment escaped trusted current-environment binding.")
 	var public_text := JSON.stringify(aggrieved).to_lower()
-	for hidden in ["weight", "source_ref", "turn_recorded", "grievance_id"]:
+	for hidden in ["aggrieved", "weight", "source_ref", "turn_recorded", "grievance_id"]:
 		if public_text.contains(hidden): failures.append("Contact proposal exposed hidden ledger field %s." % hidden)
 
 

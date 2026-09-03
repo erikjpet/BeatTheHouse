@@ -34,6 +34,14 @@ Use these distinctions when choosing work:
 The complete file-by-file reconciliation and recommended execution order are
 in `docs/plans/0.6_todo_state_audit_2026-08-31.md`.
 
+Family 2 is now closed on the exact-tree remediation
+`57b01ed40cf9fdabf2de016d9df6ef2e8db42019`. The release-gate report is
+`docs/plans/world06_7_final_closeout.md`; all seven `world06_*` prompts are
+archived. Hidden Crew state is sealed in an always-present fixed-width capsule,
+all focused world contracts and project validation are green, and independent
+detached security review passed. Human experience validation remains in the
+later program playtest rather than as unfinished Family 2 implementation.
+
 ## What 0.6 is (direction, for any agent landing here cold)
 
 0.5 shipped the complete game loop. 0.6 makes the world alive and adds
@@ -313,13 +321,13 @@ an automatic P0 and blocks the program.
 
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| world06_1 | `world06_1_crew_sequence_adapter_prompt.md` | IN_PROGRESS | env06_6 runtime | world06_2..6 | recovery landing | 2026-08-28 | — | Host-sealed sequence adapter landed at `95c6aaf5`; formal Family 2 closeout remains. |
-| world06_2 | `world06_2_streets_sequences_prompt.md` | IN_PROGRESS | world06_1 | world06_6 | recovery landing | 2026-08-28 | — | Host-authoritative delivery depth and no-op rejection fix landed at `e46ae808`/`a244eb6a`; formal closeout remains. |
-| world06_3 | `world06_3_numbers_depth_prompt.md` | IN_PROGRESS | world06_1, world06_2 | — | recovery landing | 2026-08-29 | — | Host-rooted Numbers depth landed at `7425fb53`; formal closeout remains. |
-| world06_4 | `world06_4_backroom_jobs_recruitment_prompt.md` | IN_PROGRESS | world06_1 | — | recovery landing | 2026-08-29 | — | Jobs/recruitment depth and event-rooted aftermath fix landed at `d94977b9`/`334674fb`; formal closeout remains. |
-| world06_5 | `world06_5_plays_and_sweep_encounters_prompt.md` | IN_PROGRESS | world06_1, game06_1 | — | recovery landing | 2026-08-29 | — | Crew plays/sweeps and capability sealing landed at `418d6e7f`/`9f89b615`; formal closeout remains. |
-| world06_6 | `world06_6_heist_and_turn_staging_prompt.md` | IN_PROGRESS | world06_1, world06_2, crew06_10 | world06_7 | recovery landing | 2026-08-29 | — | Host-derived heist sequences and migration repair landed at `4822d288`/`613f5013`; formal closeout remains. |
-| world06_7 | `world06_7_crew_world_depth_release_gate_prompt.md` | TODO | world06_2..6 | Family 2 closure | — | — | — | Independent audit; the hidden-information audit is the blocking one. |
+| world06_1 | `../todone/world06_1_crew_sequence_adapter_prompt.md` | DONE | env06_6 runtime | world06_2..6 | recovery landing; Codex closeout | 2026-08-28 | 2026-09-03 | Host-sealed adapter `95c6aaf5`; production delivery proof and hostile authority matrix pass at Family 2 remediation `57b01ed4`. |
+| world06_2 | `../todone/world06_2_streets_sequences_prompt.md` | DONE | world06_1 | world06_6 | recovery landing; Codex closeout | 2026-08-28 | 2026-09-03 | Delivery depth/no-op payload `e46ae808`/`a244eb6a`; pickup, handoff, save/revisit, replay, expiry, and public-sequence proof pass. |
+| world06_3 | `../todone/world06_3_numbers_depth_prompt.md` | DONE | world06_1, world06_2 | — | recovery landing; Codex closeout | 2026-08-29 | 2026-09-03 | Numbers depth `7425fb53`; authored math, both rig-route authority boundaries, migration, and hidden-state contracts pass unchanged. |
+| world06_4 | `../todone/world06_4_backroom_jobs_recruitment_prompt.md` | DONE | world06_1 | — | recovery landing; Codex closeout | 2026-08-29 | 2026-09-03 | Jobs/recruitment `d94977b9`/`334674fb`; all 13 jobs/five kinds, seven members, host-rooted aftermath, save/load, and privacy pass. |
+| world06_5 | `../todone/world06_5_plays_and_sweep_encounters_prompt.md` | DONE | world06_1, game06_1 | — | recovery landing; Codex closeout | 2026-08-29 | 2026-09-03 | Plays/sweeps `418d6e7f`/`9f89b615`; five plays, 13 game surfaces, five sweep rungs, ten seeds, costs, replay safety, and authority gates pass. |
+| world06_6 | `../todone/world06_6_heist_and_turn_staging_prompt.md` | DONE | world06_1, world06_2, crew06_10 | world06_7 | recovery landing; Codex closeout | 2026-08-29 | 2026-09-03 | Heist `4822d288`/`613f5013`; both plans, four exits/failure beats, real Blackjack host flow, confrontation, migration, and privacy pass at `57b01ed4`. |
+| world06_7 | `../todone/world06_7_crew_world_depth_release_gate_prompt.md` | DONE | world06_2..6 | Family 2 closure | independent depth reviewer; Codex closeout | 2026-09-03 | 2026-09-03 | Exact-tree Family 2 gate accepted. Report: `docs/plans/world06_7_final_closeout.md`; remediation `57b01ed4`; project validation and focused contracts green. |
 
 ### Family 3 — Cross-cutting completion (2026-08-25)
 

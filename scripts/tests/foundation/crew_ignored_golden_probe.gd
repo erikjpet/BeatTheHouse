@@ -3,12 +3,17 @@ extends RefCounted
 
 # Full serialized checkpoints for runs that never take the Crew loan or gain
 # Crew trust. The accepted fixture includes authored scenario anchors and the
-# persisted Coin Pusher settled state, so no fields are broadly stripped: only
-# a real byte-for-byte match passes.
+# persisted Coin Pusher settled state. Each newly sealed or resealed Crew
+# capsule uses a fresh nonce, so only a valid fixed-width authority id and
+# capsule payload are replaced with equal-width placeholders before the exact
+# hash comparison. Missing, malformed, or differently sized envelopes remain
+# visible to the golden and fail it.
 
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
+const CrewTurnModelScript := preload("res://scripts/core/crew_turn_model.gd")
 const SEEDS := ["CREW-IGNORED-GOLDEN-A", "CREW-IGNORED-GOLDEN-B"]
+const NORMALIZED_AUTHORITY_ID := "0000000000000000000000000000000000000000000000000000000000000000"
 
 
 static func capture(library: ContentLibrary) -> Dictionary:
@@ -103,7 +108,7 @@ static func _world_sequence_noop_snapshot(run_state: RunState) -> Dictionary:
 
 
 static func _json_identity(value: Variant) -> Dictionary:
-	var text := JSON.stringify(value)
+	var text := JSON.stringify(_normalize_private_capsules(value))
 	return {"json": text, "bytes": text.to_utf8_buffer().size(), "sha256": text.sha256_text()}
 
 
@@ -141,18 +146,48 @@ static func _append_world_sequence_noop_diff(label: String, expected: Dictionary
 
 
 static func _checkpoint(label: String, run_state: RunState) -> Dictionary:
-	var run_json := JSON.stringify(run_state.to_dict())
-	var environment_json := JSON.stringify(run_state.current_environment)
-	var world_environment_json := JSON.stringify(_world_environments(run_state.world_map))
+	var raw_run := run_state.to_dict()
+	var raw_environment := run_state.current_environment
+	var raw_world_environments := _world_environments(run_state.world_map)
+	var run_json := JSON.stringify(raw_run)
+	var environment_json := JSON.stringify(raw_environment)
+	var world_environment_json := JSON.stringify(raw_world_environments)
+	var normalized_run_json := JSON.stringify(_normalize_private_capsules(raw_run))
+	var normalized_environment_json := JSON.stringify(_normalize_private_capsules(raw_environment))
+	var normalized_world_environment_json := JSON.stringify(_normalize_private_capsules(raw_world_environments))
 	return {
 		"label": label,
 		"run_state_bytes": run_json.to_utf8_buffer().size(),
-		"run_state_sha256": run_json.sha256_text(),
+		"run_state_sha256": normalized_run_json.sha256_text(),
 		"current_environment_bytes": environment_json.to_utf8_buffer().size(),
-		"current_environment_sha256": environment_json.sha256_text(),
+		"current_environment_sha256": normalized_environment_json.sha256_text(),
 		"world_environments_bytes": world_environment_json.to_utf8_buffer().size(),
-		"world_environments_sha256": world_environment_json.sha256_text(),
+		"world_environments_sha256": normalized_world_environment_json.sha256_text(),
 	}
+
+
+static func _normalize_private_capsules(value: Variant) -> Variant:
+	if typeof(value) == TYPE_ARRAY:
+		var normalized_array: Array = []
+		for child in value as Array:
+			normalized_array.append(_normalize_private_capsules(child))
+		return normalized_array
+	if typeof(value) != TYPE_DICTIONARY:
+		return value
+	var normalized: Dictionary = (value as Dictionary).duplicate(false)
+	for key_value in normalized.keys():
+		normalized[key_value] = _normalize_private_capsules(normalized.get(key_value))
+	if not normalized.has("crew_state") or typeof(normalized.get("crew_state")) != TYPE_DICTIONARY:
+		return normalized
+	var crew_state: Dictionary = normalized.get("crew_state")
+	var authority_id := str(crew_state.get("a", ""))
+	var capsule_text := str(crew_state.get("z", ""))
+	if CrewTurnModelScript.valid_authority_id(authority_id) \
+			and Marshalls.base64_to_raw(capsule_text).size() == CrewTurnModelScript.PRIVATE_SAVE_BYTES:
+		crew_state["a"] = NORMALIZED_AUTHORITY_ID
+		crew_state["z"] = "A".repeat(capsule_text.length())
+		normalized["crew_state"] = crew_state
+	return normalized
 
 
 static func _world_environments(world_map: Dictionary) -> Array:

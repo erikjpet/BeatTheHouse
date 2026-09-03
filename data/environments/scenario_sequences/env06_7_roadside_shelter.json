@@ -15563,7 +15563,8 @@
                     "actor_id": "beach_stall_vendor",
                     "zone_id": "left",
                     "behavior": "work",
-                    "pose": "waiting"
+                    "pose": "waiting",
+                    "anchor_id": "package_b_beach_top_left"
                   }
                 }
               ],
@@ -16748,7 +16749,7 @@
           "props_6",
           "actors_2"
         ],
-        "sequence_signature": "bf8f66724e25f8a40c2b3647b62cbf2e370dc82770d5ecba519f86f4c736cece",
+        "sequence_signature": "2dd1fedeb4911cb810806ce11fed6c391b9a2383535eaaa504ba92de89909b99",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],

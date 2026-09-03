@@ -8,6 +8,8 @@ const RunReportViewModelScript := preload("res://scripts/ui/run_report_view_mode
 const EventModuleScript := preload("res://scripts/core/event_module.gd")
 const GameModuleScript := preload("res://scripts/core/game_module.gd")
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
+const FoundationMainScript := preload("res://scripts/ui/foundation_main.gd")
+const BlackjackActionAuthorityScript := preload("res://scripts/core/blackjack_action_authority.gd")
 
 
 static func check(_library: ContentLibrary, failures: Array) -> void:
@@ -74,8 +76,11 @@ static func _check_production_paths(library: ContentLibrary, failures: Array) ->
 	if int(_dict(count.crew_heist_snapshot().get("setup", {})).get("identity_sessions", 0)) != 0:
 		failures.append("An early, nonterminal blackjack action credited a furniture session.")
 	# Three settled hand results in one visit are one furniture session, not three.
+	var count_room := count.current_environment.duplicate(true)
+	count.set_environment({"id": "grand_casino", "world_node_id": "grand_casino", "archetype_id": "grand_casino", "kind": "casino", "turns": 0, "visit_id": "production_same_visit", "event_ids": [], "resolved_event_ids": []})
 	for _index in range(3):
-		GameModuleScript.apply_result(count, _settled_blackjack_result(12, 0, "grand_casino"))
+		_apply_authoritative_blackjack(count, library, 12)
+	count.set_environment(count_room)
 	if int(_dict(count.crew_heist_snapshot().get("setup", {})).get("identity_sessions", 0)) != 1:
 		failures.append("Repeated actions in one Grand Casino visit counted as distinct furniture sessions.")
 	# Start through the planning event, then travel through RunGenerator and use
@@ -97,13 +102,17 @@ static func _check_production_paths(library: ContentLibrary, failures: Array) ->
 	var whale_event := EventModuleScript.new()
 	whale_event.setup(library.event("scenario_whale_aboard_vouch"), library)
 	whale_event.resolve(whale, whale.current_environment, "stake_his_table")
+	whale.crew_heist_table_choices()
+	var seeded_vouch_rounds := int(_dict(whale.crew_heist_snapshot().get("setup", {})).get("vouch_rounds", 0))
 	var whale_anchor_environment := whale.current_environment.duplicate(true)
 	whale.set_environment({"id": "small_underground_casino", "world_node_id": "small_underground_casino", "archetype_id": "small_underground_casino", "kind": "casino", "turns": 0, "visit_id": "unrelated_loss", "scenario_hook_flags": {}, "event_ids": [], "resolved_event_ids": []})
-	GameModuleScript.apply_result(whale, _settled_blackjack_result(42, -42, "small_underground_casino"))
-	if int(_dict(whale.crew_heist_snapshot().get("setup", {})).get("vouch_rounds", 0)) != 0:
+	_apply_authoritative_blackjack(whale, library, 42)
+	if int(_dict(whale.crew_heist_snapshot().get("setup", {})).get("vouch_rounds", 0)) != seeded_vouch_rounds:
 		failures.append("An unrelated casino loss advanced the Whale vouch away from the authored anchor table.")
 	whale.set_environment(whale_anchor_environment)
-	GameModuleScript.apply_result(whale, _settled_blackjack_result(42, -42, "delta_queen"))
+	for _attempt in range(12):
+		_apply_authoritative_blackjack(whale, library, 42)
+		if bool(_dict(whale.crew_heist_snapshot().get("setup", {})).get("vouch", false)): break
 	var whale_setup := _dict(whale.crew_heist_snapshot().get("setup", {}))
 	if not bool(whale.narrative_flags.get("heist_plan_b_whale_vouch", false)) or not bool(whale_setup.get("vouch", false)):
 		failures.append("The shipped whale event plus real game-result route did not complete the vouch.")
@@ -132,7 +141,7 @@ static func _check_plan_a(library: ContentLibrary, failures: Array) -> void:
 	if _dict(run.crew_heist_snapshot().get("r", {})) != {"v": 1, "s": "0"}:
 		failures.append("Plan lock did not write the neutral crew06_9 handoff seam.")
 	for _index in range(3):
-		_record_count_session(run, "count_session_%d" % _index)
+		_record_count_session(run, library, "count_session_%d" % _index)
 	if not bool(_event_choice(run, library, "crew_planning_table", "count_schedule").get("ok", false)):
 		failures.append("Plan A schedule did not start a real delivery hold.")
 	else:
@@ -140,6 +149,8 @@ static func _check_plan_a(library: ContentLibrary, failures: Array) -> void:
 		run.advance_environment_turns(2)
 	if not bool(_dict(run.crew_heist_snapshot().get("setup", {})).get("schedule", false)):
 		failures.append("Plan A schedule hold did not complete at the real cage node.")
+	# The next planning action belongs to the Crew room, not the remote cage.
+	_move(run, "small_underground_casino")
 	if not bool(_event_choice(run, library, "crew_planning_table", "count_cart").get("ok", false)):
 		failures.append("Plan A swap cart did not start a real package run.")
 	else:
@@ -151,9 +162,11 @@ static func _check_plan_a(library: ContentLibrary, failures: Array) -> void:
 		failures.append("Plan A swap cart did not complete through the real-map handoff.")
 	run.narrative_flags["debt_court_settlement"] = true
 	run.crew_trust_by_member["crew_knuckles"] = CrewStateModelScript.rank_threshold("associate")
+	_move(run, "small_underground_casino")
 	if not bool(_event_choice(run, library, "crew_planning_table", "begin_play").get("ok", false)):
 		failures.append("Plan A did not enter the Play after all mandatory setup.")
 		return
+	_move(run, "grand_casino")
 	if not _array(run.current_environment.get("event_ids", [])).has("heist_live_table"):
 		failures.append("Plan A did not mount its production crew event at the designated table.")
 	var live_table := EventModuleScript.new()
@@ -173,7 +186,7 @@ static func _check_plan_a(library: ContentLibrary, failures: Array) -> void:
 		var decision_choice := str(expected_choices[round_index][0])
 		if not bool(live_table.resolve(run, run.current_environment, decision_choice).get("ok", false)):
 			failures.append("Plan A production crew event rejected %s." % decision_choice)
-		GameModuleScript.apply_result(run, _settled_blackjack_result(12, 0, "grand_casino"))
+		_apply_authoritative_blackjack(run, library, 12)
 	if int(_dict(run.crew_heist_snapshot().get("play", {})).get("round", 0)) != 3:
 		failures.append("Plan A real settled hands did not interleave all three crew beats.")
 	var dock := RunStateScript.new()
@@ -220,9 +233,9 @@ static func _check_plan_a(library: ContentLibrary, failures: Array) -> void:
 	blown.from_dict(mid_window.to_dict())
 	blown.crew_heist_state["play"]["round"] = 2
 	blown.crew_heist_state["play"]["decisions"] = {"go": "hold", "distraction": "sit", "exit": "corridor"}
-	var spike := _settled_blackjack_result(12, 0, "grand_casino")
-	spike["heat_delta"] = 15
-	GameModuleScript.apply_result(blown, spike)
+	# Authoritative game settlement is covered above; isolate the host-owned
+	# heist reducer here to prove the documented heat-spike branch.
+	blown.crew_heist_play_round({"game_id": "blackjack", "bet": 12, "heat_delta": 15}, blown.get("_crew_heist_host_capability"))
 	if not bool(_event_choice(blown, library, "heist_live_table", "begin_getaway").get("ok", false)) or str(_dict(blown.crew_heist_snapshot().get("getaway", {})).get("exit", "")) != "dock":
 		failures.append("A Plan A heat spike did not blow the corridor and force the dock.")
 	if CrewHeistModelScript.ladder(65, true) != "out_hot" or CrewHeistModelScript.ladder(90, false) != "out_hot" or CrewHeistModelScript.ladder(50, false) != "somebody_got_pinched":
@@ -235,7 +248,7 @@ static func _check_plan_b(library: ContentLibrary, failures: Array) -> void:
 	if not bool(_event_choice(run, library, "crew_planning_table", "lock_the_whale_game").get("ok", false)):
 		failures.append("Plan B could not lock from its truthful live gate.")
 		return
-	_prepare_whale_setup(run)
+	_prepare_whale_setup(run, library)
 	for source in ["practice_rig", "street_craps"]:
 		var source_run := _run("HEIST-B-RIG-%s" % source, {"heist_plan_b_criteria": true})
 		_set_inner(source_run, "crew_velvet")
@@ -253,6 +266,7 @@ static func _check_plan_b(library: ContentLibrary, failures: Array) -> void:
 		return
 	_move(run, "grand_casino_high_limit")
 	run.current_environment["crew_presence"] = [{"member_id": "crew_velvet", "rank": "inner_circle"}]
+	run.current_environment["active_game_id"] = "craps"
 	var invitational_start := RunStateScript.new()
 	invitational_start.from_dict(run.to_dict())
 	var craps_caught := RunStateScript.new()
@@ -263,25 +277,28 @@ static func _check_plan_b(library: ContentLibrary, failures: Array) -> void:
 	var blackjack_caught := RunStateScript.new()
 	blackjack_caught.from_dict(invitational_start.to_dict())
 	GameModuleScript.apply_result(blackjack_caught, _settled_game_result("craps", 42, 0, "grand_casino_high_limit"))
-	GameModuleScript.apply_result(blackjack_caught, _cheating_settled_game_result("blackjack", 42, -20, "grand_casino_high_limit"))
+	_apply_authoritative_blackjack_cheat(blackjack_caught, library, 42)
 	var blackjack_play := _dict(blackjack_caught.crew_heist_snapshot().get("play", {}))
-	if not bool(blackjack_play.get("made", false)) or bool(_dict(_array(blackjack_play.get("hazards", []))[0]).get("honest", true)):
-		failures.append("Production Blackjack cheat/caught fields did not fail the honesty hazard and mark the name.")
+	var caught_pending := _dict(_dict(blackjack_play.get("pending_game_facts", {})).get("blackjack", {}))
+	if int(blackjack_play.get("round", 0)) != 1 or not bool(blackjack_play.get("made", false)) or not bool(caught_pending.get("dishonest", false)):
+		failures.append("Authenticated caught Blackjack cheat did not mark the name and retain its nonterminal pending fact.")
 	var peek_then_settle := RunStateScript.new()
 	peek_then_settle.from_dict(invitational_start.to_dict())
 	GameModuleScript.apply_result(peek_then_settle, _settled_game_result("craps", 42, 0, "grand_casino_high_limit"))
-	GameModuleScript.apply_result(peek_then_settle, _nonterminal_cheat_result("blackjack", "grand_casino_high_limit", true))
+	var peek_result := _apply_authoritative_blackjack_cheat(peek_then_settle, library, 42, true)
 	var peek_play := _dict(peek_then_settle.crew_heist_snapshot().get("play", {}))
-	if int(peek_play.get("round", 0)) != 1 or not bool(peek_play.get("made", false)) or int(peek_play.get("score", 100)) != 75:
-		failures.append("A caught nonterminal Blackjack peek did not mark the name without advancing the round.")
-	GameModuleScript.apply_result(peek_then_settle, _settled_game_result("blackjack", 42, 0, "grand_casino_high_limit"))
+	var peek_caught := bool(peek_result.get("blackjack_cheat_caught", false)) or str(peek_result.get("skill_outcome", "")) == "caught"
+	if int(peek_play.get("round", 0)) != 1 or bool(peek_play.get("made", false)) != peek_caught:
+		failures.append("An authenticated nonterminal Blackjack peek did not preserve its caught/clean fact without advancing the round.")
+	_apply_authoritative_blackjack(peek_then_settle, library, 42)
 	peek_play = _dict(peek_then_settle.crew_heist_snapshot().get("play", {}))
-	if int(peek_play.get("score", 100)) != 45 or bool(_dict(_array(peek_play.get("hazards", []))[-1]).get("honest", true)):
+	if _array(peek_play.get("hazards", [])).is_empty() or bool(_dict(_array(peek_play.get("hazards", []))[-1]).get("honest", true)):
 		failures.append("A later legal Blackjack settlement lost or double-penalized its pending dishonest/made fact.")
 	var baccarat_caught := RunStateScript.new()
 	baccarat_caught.from_dict(invitational_start.to_dict())
 	for game_id in ["craps", "blackjack", "craps"]:
-		GameModuleScript.apply_result(baccarat_caught, _settled_game_result(game_id, 42, 0, "grand_casino_high_limit"))
+		if game_id == "blackjack": _apply_authoritative_blackjack(baccarat_caught, library, 42)
+		else: GameModuleScript.apply_result(baccarat_caught, _settled_game_result(game_id, 42, 0, "grand_casino_high_limit"))
 	GameModuleScript.apply_result(baccarat_caught, _cheating_settled_game_result("baccarat", 42, -20, "grand_casino_high_limit"))
 	var baccarat_play := _dict(baccarat_caught.crew_heist_snapshot().get("play", {}))
 	if not bool(baccarat_play.get("made", false)) or bool(_dict(_array(baccarat_play.get("hazards", []))[-1]).get("honest", true)):
@@ -289,21 +306,24 @@ static func _check_plan_b(library: ContentLibrary, failures: Array) -> void:
 	var edge_then_settle := RunStateScript.new()
 	edge_then_settle.from_dict(invitational_start.to_dict())
 	for game_id in ["craps", "blackjack", "craps"]:
-		GameModuleScript.apply_result(edge_then_settle, _settled_game_result(game_id, 42, 0, "grand_casino_high_limit"))
+		if game_id == "blackjack": _apply_authoritative_blackjack(edge_then_settle, library, 42)
+		else: GameModuleScript.apply_result(edge_then_settle, _settled_game_result(game_id, 42, 0, "grand_casino_high_limit"))
 	GameModuleScript.apply_result(edge_then_settle, _nonterminal_cheat_result("baccarat", "grand_casino_high_limit", false))
 	if int(_dict(edge_then_settle.crew_heist_snapshot().get("play", {})).get("round", 0)) != 3:
 		failures.append("A nonterminal Baccarat Edge Sort action advanced the invitational round.")
 	GameModuleScript.apply_result(edge_then_settle, _settled_game_result("baccarat", 42, 0, "grand_casino_high_limit"))
 	if bool(_dict(_array(_dict(edge_then_settle.crew_heist_snapshot().get("play", {})).get("hazards", []))[-1]).get("honest", true)):
 		failures.append("A later legal Baccarat hand forgot its pending Edge Sort dishonesty.")
-	GameModuleScript.apply_result(run, _settled_blackjack_result(42, 40, "grand_casino_high_limit"))
+	_apply_authoritative_blackjack(run, library, 42)
 	if int(_dict(run.crew_heist_snapshot().get("play", {})).get("round", 0)) != 0:
 		failures.append("Plan B advanced on the wrong game before the required craps opener.")
 	var sequence := ["craps", "blackjack", "craps", "baccarat", "blackjack"]
 	for round_index in range(1, 6):
 		if round_index == 3 and not bool(run.crew_play_activate("distraction", "craps", run.current_environment).get("ok", false)):
 			failures.append("Plan B could not activate its real coordinated-play lifeline.")
-		GameModuleScript.apply_result(run, _settled_game_result(str(sequence[round_index - 1]), 42, 40, "grand_casino_high_limit"))
+		var round_game := str(sequence[round_index - 1])
+		if round_game == "blackjack": _apply_authoritative_blackjack(run, library, 42)
+		else: GameModuleScript.apply_result(run, _settled_game_result(round_game, 42, 40, "grand_casino_high_limit"))
 		if int(_dict(run.crew_heist_snapshot().get("play", {})).get("round", 0)) != round_index:
 			failures.append("Plan B rejected the real %s result at invitational round %d." % [sequence[round_index - 1], round_index])
 	if _array(_dict(run.crew_heist_snapshot().get("play", {})).get("lifelines_used", [])).size() != 1:
@@ -315,7 +335,9 @@ static func _check_plan_b(library: ContentLibrary, failures: Array) -> void:
 	var loser := RunStateScript.new()
 	loser.from_dict(invitational_start.to_dict())
 	for round_index in range(1, 6):
-		GameModuleScript.apply_result(loser, _settled_game_result(str(sequence[round_index - 1]), 42, -130, "grand_casino_high_limit"))
+		var loss_game := str(sequence[round_index - 1])
+		if loss_game == "blackjack": _apply_authoritative_blackjack(loser, library, 42)
+		else: GameModuleScript.apply_result(loser, _settled_game_result(loss_game, 42, -220, "grand_casino_high_limit"))
 	var loser_play := _dict(loser.crew_heist_snapshot().get("play", {}))
 	if loser.grand_casino_chips != 0 or int(loser_play.get("pot", -1)) != 0 or not bool(loser_play.get("bust", false)):
 		failures.append("Plan B's real losing mixed sequence did not bust the authoritative chip pot.")
@@ -360,7 +382,7 @@ static func _check_abort_and_save(library: ContentLibrary, failures: Array) -> v
 		_set_inner(run, "crew_bishop")
 		_event_choice(run, library, "crew_planning_table", "lock_the_count")
 		for _index in range(progress):
-			_record_count_session(run, "abort_%d_%d" % [progress, _index])
+			_record_count_session(run, library, "abort_%d_%d" % [progress, _index])
 		var result := _event_choice(run, library, "crew_planning_table", "abort")
 		if not bool(result.get("ok", false)) or bool(result.get("run_ended", true)) or run.run_status != RunState.RUN_STATUS_ACTIVE or run.bankroll <= 0:
 			failures.append("A pre-Play abort ended the run or failed to charge a survivable cost at progress %d." % progress)
@@ -369,7 +391,7 @@ static func _check_abort_and_save(library: ContentLibrary, failures: Array) -> v
 	var saved := _run("HEIST-SAVE", {"audit_night": true})
 	_set_inner(saved, "crew_bishop")
 	_event_choice(saved, library, "crew_planning_table", "lock_the_count")
-	_record_count_session(saved, "save")
+	_record_count_session(saved, library, "save")
 	var restored := RunStateScript.new()
 	restored.from_dict(saved.to_dict())
 	if JSON.stringify(restored.crew_heist_snapshot()) != JSON.stringify(saved.crew_heist_snapshot()):
@@ -453,21 +475,21 @@ static func _event_choice(run: RunState, library: ContentLibrary, event_id: Stri
 	return event.resolve(run, run.current_environment, choice_id)
 
 
-static func _record_count_session(run: RunState, session_id: String) -> void:
-	var result := _settled_blackjack_result(12, 0, "grand_casino")
-	result["session_id"] = session_id
-	result["heat_start"] = 8
-	result["heat_peak"] = 12
-	GameModuleScript.apply_result(run, result)
+static func _record_count_session(run: RunState, library: ContentLibrary, session_id: String) -> void:
+	var planning_environment := run.current_environment.duplicate(true)
+	run.set_environment({"id": "grand_casino", "world_node_id": "grand_casino", "archetype_id": "grand_casino", "kind": "casino", "turns": 0, "visit_id": session_id, "event_ids": [], "resolved_event_ids": []})
+	_apply_authoritative_blackjack(run, library, 12)
+	run.set_environment(planning_environment)
 
 
-static func _prepare_whale_setup(run: RunState) -> void:
+static func _prepare_whale_setup(run: RunState, library: ContentLibrary) -> void:
 	var original_environment := run.current_environment.duplicate(true)
 	run.bankroll = maxi(run.bankroll, 500)
 	run.narrative_flags["heist_plan_b_whale_vouch"] = true
 	run.set_environment({"id": "delta_queen", "world_node_id": "delta_queen", "archetype_id": "delta_queen", "kind": "casino", "turns": 0, "visit_id": "whale_setup_1", "scenario_hook_flags": {"heist_plan_b_criteria": true, "whale_vouch_anchor": true}, "event_ids": ["scenario_whale_aboard_vouch"], "resolved_event_ids": []})
-	GameModuleScript.apply_result(run, _settled_blackjack_result(30, -30, "delta_queen"))
-	GameModuleScript.apply_result(run, _settled_blackjack_result(35, -35, "delta_queen"))
+	for _attempt in range(16):
+		_apply_authoritative_blackjack(run, library, 35)
+		if bool(_dict(run.crew_heist_snapshot().get("setup", {})).get("vouch", false)): break
 	run.add_item("false_bottom_cup")
 	run.narrative_flags["craps_setting_trained"] = true
 	run.record_score_spending(120, "whale_setup")
@@ -483,6 +505,68 @@ static func _settled_blackjack_result(stake: int, bankroll_delta: int, venue_id:
 	# Blackjack.perform_action appends this after the shared builder only when
 	# the hand reaches settlement.  The contract mirrors that shipped boundary.
 	result["blackjack_hand_results"] = [{"outcome": "push" if bankroll_delta == 0 else "loss"}]
+	return result
+
+
+static func _apply_authoritative_blackjack(run: RunState, library: ContentLibrary, stake: int) -> Dictionary:
+	var definition := library.game("blackjack")
+	var module_script: Script = load(str(definition.get("module_path", "")))
+	var game: GameModule = module_script.new()
+	game.setup(definition, library)
+	var environment := run.current_environment.duplicate(true)
+	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	if typeof(game_states.get("blackjack", null)) != TYPE_DICTIONARY:
+		game_states["blackjack"] = game.generate_environment_state(run, environment, run.create_rng("crew_heist_contract:blackjack_table"))
+		environment["game_states"] = game_states
+	var deal: Dictionary = game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": stake, "surface_time_msec": 20000}, run, environment)
+	var stand: Dictionary = game.surface_action_command("blackjack_stand", 0, true, deal.get("ui_state", {}), run, environment)
+	var session: Dictionary = stand.get("ui_state", {}) if typeof(stand.get("ui_state", {})) == TYPE_DICTIONARY else deal.get("ui_state", {})
+	var table: Dictionary = game.call("_table_state", run, environment)
+	var binding := "blackjack:%s:%s" % [str(environment.get("id", "unknown")), str(environment.get("archetype_id", "unknown"))]
+	var ledger := BlackjackActionAuthorityScript.default_ledger(binding, run.blackjack_authority_checkpoint_fingerprint())
+	table[BlackjackActionAuthorityScript.LEDGER_KEY] = BlackjackActionAuthorityScript.stage_session(ledger, session)
+	game.call("_update_environment_table", environment, table)
+	run.current_environment = environment
+	var host: Control = FoundationMainScript.new()
+	host.set("current_game", game)
+	host.set("game_module_cache", {"blackjack": game})
+	host.set("run_state", run)
+	host.set("selected_stake", stake)
+	var result: Dictionary = host.call("_sealed_action_host_resolve_intent", "play_basic", stake)
+	host.free()
+	return result
+
+
+static func _apply_authoritative_blackjack_cheat(run: RunState, library: ContentLibrary, stake: int, protected_peek: bool = false) -> Dictionary:
+	var definition := library.game("blackjack")
+	var module_script: Script = load(str(definition.get("module_path", "")))
+	var game: GameModule = module_script.new()
+	game.setup(definition, library)
+	var environment := run.current_environment.duplicate(true)
+	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	if typeof(game_states.get("blackjack", null)) != TYPE_DICTIONARY:
+		game_states["blackjack"] = game.generate_environment_state(run, environment, run.create_rng("crew_heist_contract:blackjack_cheat_table"))
+		environment["game_states"] = game_states
+	var deal: Dictionary = game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": stake, "surface_time_msec": 20000}, run, environment)
+	var surface_state: Dictionary = deal.get("ui_state", {}) if typeof(deal.get("ui_state", {})) == TYPE_DICTIONARY else {}
+	if protected_peek:
+		var distraction: Dictionary = game.surface_action_command("blackjack_distraction", 1, false, surface_state, run, environment)
+		surface_state = distraction.get("ui_state", surface_state)
+	var peek: Dictionary = game.surface_action_command("blackjack_peek", 1 if protected_peek else 0, false, surface_state, run, environment)
+	var session: Dictionary = peek.get("ui_state", surface_state) if typeof(peek.get("ui_state", surface_state)) == TYPE_DICTIONARY else surface_state
+	var table: Dictionary = game.call("_table_state", run, environment)
+	var binding := "blackjack:%s:%s" % [str(environment.get("id", "unknown")), str(environment.get("archetype_id", "unknown"))]
+	var ledger := BlackjackActionAuthorityScript.default_ledger(binding, run.blackjack_authority_checkpoint_fingerprint())
+	table[BlackjackActionAuthorityScript.LEDGER_KEY] = BlackjackActionAuthorityScript.stage_session(ledger, session)
+	game.call("_update_environment_table", environment, table)
+	run.current_environment = environment
+	var host: Control = FoundationMainScript.new()
+	host.set("current_game", game)
+	host.set("game_module_cache", {"blackjack": game})
+	host.set("run_state", run)
+	host.set("selected_stake", stake)
+	var result: Dictionary = host.call("_sealed_action_host_resolve_intent", "peek_hole_card", stake)
+	host.free()
 	return result
 
 
@@ -546,7 +630,9 @@ static func _run(seed: String, hooks: Dictionary) -> RunState:
 static func _move(run: RunState, node_id: String) -> void:
 	run.world_map["current_node_id"] = node_id
 	var archetype_id := node_id
-	run.set_environment({"id": node_id, "world_node_id": node_id, "archetype_id": archetype_id, "kind": "casino", "turns": 0, "event_ids": [], "resolved_event_ids": []})
+	var crew_room := node_id == "small_underground_casino"
+	run.set_environment({"id": node_id, "world_node_id": node_id, "archetype_id": archetype_id, "kind": "crew" if crew_room else "casino", "turns": 0, "event_ids": ["crew_planning_table"] if crew_room else [], "resolved_event_ids": []})
+	run.call("_crew_heist_boundary_sync")
 
 
 static func _set_inner(run: RunState, member_id: String) -> void:

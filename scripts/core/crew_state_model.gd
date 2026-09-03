@@ -202,10 +202,9 @@ static func layer3_room_state(resident_member_ids: Array, trust_value: Variant, 
 
 static func member_public_state(member_id: String, trust: int, grievances_value: Variant, jobs_value: Variant, resident: bool = false) -> Dictionary:
 	if not MEMBER_IDS.has(member_id): return {}
-	var grievances: Array = []
-	for grievance in normalize_grievances(grievances_value):
-		if str(grievance.get("member_id", "")) == member_id:
-			grievances.append({"id": str(grievance.get("id", "")), "kind": str(grievance.get("kind", ""))})
+	# The ledger is model-private. Room/actor state must not expose its presence,
+	# kind, source, count, or a behavior classifier derived from it.
+	var _private_grievances_ignored: Variant = grievances_value
 	var active_job_ids: Array = []
 	for job_value in normalize_jobs(jobs_value).values():
 		var job: Dictionary = job_value
@@ -216,10 +215,9 @@ static func member_public_state(member_id: String, trust: int, grievances_value:
 		"member_id": member_id,
 		"resident": resident,
 		"rank": rank,
-		"pose": "working" if not active_job_ids.is_empty() else ("guarded" if not grievances.is_empty() else "at_ease"),
-		"behavior_state": "job_out" if not active_job_ids.is_empty() else ("aggrieved" if not grievances.is_empty() else "available"),
+		"pose": "working" if not active_job_ids.is_empty() else "at_ease",
+		"behavior_state": "job_out" if not active_job_ids.is_empty() else "available",
 		"active_job_ids": active_job_ids,
-		"grievances": grievances,
 	}
 
 

@@ -38,9 +38,17 @@ static func validate_frozen_event_module_inventory(event_catalog: Array, event_m
 	var actual_hooks: Array = []
 	for line in event_module_source.split("\n"):
 		var trimmed := str(line).strip_edges()
-		if not trimmed.begins_with('"crew_') or not trimmed.ends_with('":') or trimmed.count('"') != 2: continue
-		var hook_id := trimmed.trim_prefix('"').trim_suffix('":')
-		if not actual_hooks.has(hook_id): actual_hooks.append(hook_id)
+		if not trimmed.begins_with('"crew_') or not trimmed.ends_with(":"): continue
+		# GDScript match arms may group semantically identical hooks on one line,
+		# for example `"crew_recruit", "crew_meet":`. Inventory validation must
+		# still account for each literal instead of treating the grouped syntax as
+		# a removed production route.
+		var arm := trimmed.trim_suffix(":")
+		for hook_literal_value in arm.split(","):
+			var hook_literal := str(hook_literal_value).strip_edges()
+			if not hook_literal.begins_with('"crew_') or not hook_literal.ends_with('"') or hook_literal.count('"') != 2: continue
+			var hook_id := hook_literal.trim_prefix('"').trim_suffix('"')
+			if not actual_hooks.has(hook_id): actual_hooks.append(hook_id)
 	var diagnostics: Array = []
 	_append_inventory_difference(diagnostics, "event_catalog", actual_events, _array(frozen_inventory.get("event_catalog", [])))
 	_append_inventory_difference(diagnostics, "dynamic_kind", actual_kinds, _array(frozen_inventory.get("dynamic_kind", [])))

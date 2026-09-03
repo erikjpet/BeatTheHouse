@@ -1,4 +1,4 @@
-Status: IN_PROGRESS — implementation landed on `main`; Family 2 release-gate closeout remains open
+Status: DONE — accepted by the exact-tree Family 2 closeout on 2026-09-03
 Board row: `world06_6` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — 0.6 world06_6: Heist Phases and the Turn Confrontation

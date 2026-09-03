@@ -155,6 +155,16 @@ func can_trigger(run_state: RunState, environment: Dictionary, context: Dictiona
 
 # Applies simple event consequences to the run.
 func resolve(run_state: RunState, environment: Dictionary, choice_id: String = "") -> Dictionary:
+	# Resolution is an authority boundary, not merely a UI convenience. A stale
+	# module reference or copied pre-resolution environment must not replay an
+	# event. Triggered/talk events are authorized by the host queue; ordinary
+	# events are authorized by the live RunState environment, never this caller's
+	# presentation snapshot.
+	var host_authorized := false
+	if run_state != null:
+		host_authorized = run_state.triggered_event_pending(get_id()) if get_interaction_mode() == "triggered" else can_trigger(run_state, run_state.current_environment)
+	if not host_authorized:
+		return _empty_result(choice_id, environment, "Event is no longer available.")
 	var payload := _copy_dict(definition.get("payload", {}))
 	if str(payload.get("kind", "")) == "grand_casino_showdown":
 		return _resolve_grand_casino_showdown(run_state, environment, payload, choice_id)
@@ -354,6 +364,12 @@ func apply_event_result(run_state: RunState, result: Dictionary) -> void:
 				result["message"] = "That Crew service is no longer available."
 				return
 			result["crew_service_result"] = service_result
+			# Heist abort/forced-abort facts are public command outcomes. Preserve
+			# them at the shared Event result boundary used by UI and automation;
+			# private Turn state remains confined to the sealed Crew capsule.
+			if str(pre_hook.get("type", "")) == "crew_heist":
+				for public_key in ["cost", "forced", "run_ended"]:
+					if service_result.has(public_key): result[public_key] = service_result.get(public_key)
 	var advance_result := run_state.advance_environment_turns(1)
 	if not bool(advance_result.get("ok", false)):
 		run_state.from_dict(rollback_run)

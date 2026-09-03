@@ -77,7 +77,7 @@ static func normalize_state(value: Variant) -> Dictionary:
 	if not STATUSES.has(status):
 		status = STATUS_ABORTED
 	var result := {
-		"schema_version": SCHEMA_VERSION,
+		"schema_version": STATE_SCHEMA_VERSION,
 		"plan_id": plan_id,
 		"status": status,
 		"locked_action": maxi(0, int(source.get("locked_action", 0))),

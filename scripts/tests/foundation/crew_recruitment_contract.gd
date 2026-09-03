@@ -12,7 +12,7 @@ const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
 const IGNORED_BASELINE_PATH := "res://scripts/tests/fixtures/crew06_5_ignored_run_baseline.json"
-const IGNORED_BASELINE_CHANGE_COMMIT := "b466aa7a9d191197480ac8c47b2ed725f24b8431"
+const IGNORED_BASELINE_CHANGE_COMMIT := "36248df0d163dc0a41a267abf912b0fccac92fb8"
 const JSON_EXACT_INTEGER_LIMIT := 9007199254740991.0
 
 
@@ -44,12 +44,13 @@ static func _check_host_rooted_aftermath(library: ContentLibrary, failures: Arra
 		var refused_state := switch_run.crew_recruitment_public_state("crew_switch")
 		if not bool(_dict(refused.get("crew_recruitment_result", {})).get("ok", false)) or str(refused_state.get("meeting_state", "")) != "refused" or str(refused_state.get("actor_state", "")) != "guarded":
 			failures.append("Resolved Switch refusal did not commit distinct durable aftermath.")
+		var stale_acceptance_environment := switch_run.current_environment.duplicate(true)
 		var accepted := switch_event.resolve(switch_run, switch_run.current_environment, "work_with_switch")
 		var accepted_state := switch_run.crew_recruitment_public_state("crew_switch")
 		if not bool(_dict(accepted.get("crew_recruitment_result", {})).get("ok", false)) or str(accepted_state.get("meeting_state", "")) != "accepted" or switch_run.crew_rank("crew_switch") != "associate":
 			failures.append("Resolved Switch acceptance did not commit through the host-rooted event boundary.")
 		var trust_after := switch_run.crew_trust("crew_switch")
-		var replay := switch_event.resolve(switch_run, switch_run.current_environment, "work_with_switch")
+		var replay := switch_event.resolve(switch_run, stale_acceptance_environment, "work_with_switch")
 		if bool(replay.get("ok", false)) or switch_run.crew_trust("crew_switch") != trust_after:
 			failures.append("Resolved recruitment acceptance replayed its trust consequence.")
 		var restored := RunStateScript.new()
@@ -102,35 +103,17 @@ static func _check_placement_matrix(library: ContentLibrary, failures: Array) ->
 	for member_id in CrewRecruitmentModelScript.MEMBER_IDS:
 		if member_id == "crew_rook":
 			continue
-		var definition := CrewRecruitmentModelScript.member_definition(member_id)
 		for path_kind in ["primary", "fallback"]:
-			var run_state := _marked_run("CREW-RECRUIT-%s-%s" % [member_id, path_kind])
-			var location := _dict(definition.get(path_kind, {}))
-			var archetypes := _string_array(location.get("archetype_ids", []))
-			var scenarios := _string_array(location.get("scenario_ids", []))
-			var layers := _string_array(location.get("layer_ids", []))
-			if archetypes.is_empty():
-				failures.append("Crew recruitment %s %s fixture has no archetype." % [member_id, path_kind])
+			var generated := _generated_path(library, member_id, path_kind)
+			var run_state: RunState = generated.get("run_state") as RunState
+			if run_state == null or not bool(generated.get("entered", false)):
+				failures.append("Crew recruitment %s could not enter its generated %s placement." % [member_id, path_kind])
 				continue
-			if path_kind == "fallback":
-				_set_fixture_world(run_state, [str(archetypes[0])])
-			var environment := {
-				"id": "%s_%s_fixture" % [member_id, path_kind],
-				"archetype_id": str(archetypes[0]),
-				"world_node_id": str(archetypes[0]),
-				"kind": "casino",
-				"tier": 2,
-				"scenario_id": str(scenarios[0]) if not scenarios.is_empty() else "",
-				"current_layer_id": str(layers[0]) if not layers.is_empty() else "",
-				"event_ids": [],
-				"resolved_event_ids": [],
-			}
-			CrewRecruitmentModelScript.apply_to_environment(run_state, environment)
+			var definition := CrewRecruitmentModelScript.member_definition(member_id)
 			var event_id := str(definition.get("event_id", ""))
-			if not _string_array(environment.get("event_ids", [])).has(event_id):
+			if not _string_array(run_state.current_environment.get("event_ids", [])).has(event_id):
 				failures.append("Crew recruitment %s did not place its %s encounter." % [member_id, path_kind])
 				continue
-			run_state.set_environment(environment)
 			var module := EventModuleScript.new()
 			module.setup(library.event(event_id), library)
 			if not module.can_trigger(run_state, run_state.current_environment):
@@ -141,8 +124,9 @@ static func _check_placement_matrix(library: ContentLibrary, failures: Array) ->
 				var between_beats := RunStateScript.new()
 				between_beats.from_dict(run_state.to_dict())
 				run_state = between_beats
+				var restored_host := run_state.scenario_finalize_installed_environment(library)
 				module.setup(library.event(event_id), library)
-				if not bool(first.get("ok", false)) or run_state.crew_rank(member_id) != "marker" \
+				if not bool(first.get("ok", false)) or not bool(restored_host.get("ok", false)) or run_state.crew_rank(member_id) != "marker" \
 					or not bool(run_state.narrative_flags.get("bishop_recruitment_first_beat", false)) \
 					or module.choice("work_with_bishop", run_state, run_state.current_environment).is_empty():
 					failures.append("Bishop's quiet first beat failed on the %s path." % path_kind)
@@ -648,32 +632,65 @@ static func _set_fixture_world(run_state: RunState, node_ids: Array) -> void:
 
 
 static func _generated_path(library: ContentLibrary, member_id: String, path_kind: String) -> Dictionary:
-	var run_state := _marked_run("CREW-PRODUCTION-%s-%s" % [member_id, path_kind])
 	var definition := CrewRecruitmentModelScript.member_definition(member_id)
 	var location := _dict(definition.get(path_kind, {}))
 	var archetypes := _string_array(location.get("archetype_ids", []))
 	if archetypes.is_empty():
-		return {"run_state": run_state, "entered": false}
-	var generator := RunGeneratorScript.new(library)
-	if member_id == "crew_bishop" and path_kind == "fallback":
-		_set_fixture_world(run_state, ["grand_casino"])
-		generator.next_environment(run_state, "grand_casino", true)
-		return {"run_state": run_state, "entered": generator.enter_grand_casino_room(run_state, "grand_casino_cage")}
-	var archetype_id := str(archetypes[0])
-	_set_fixture_world(run_state, [archetype_id])
+		return {"run_state": null, "entered": false}
 	var scenarios := _string_array(location.get("scenario_ids", []))
 	if scenarios.is_empty():
 		scenarios = _string_array(location.get("preferred_scenario_ids", []))
+	var scenario_id := str(scenarios[0]) if not scenarios.is_empty() else ""
+	var run_state := _marked_run(_production_path_seed(member_id, path_kind, scenario_id))
+	var world_map := WorldMapScript.new(library).build(run_state, run_state.create_rng("map"))
+	if world_map.is_empty():
+		return {"run_state": run_state, "entered": false}
+	run_state.set_world_map(world_map)
+	var generator := RunGeneratorScript.new(library)
+	if member_id == "crew_bishop" and path_kind == "fallback":
+		generator.next_environment(run_state, "grand_casino", true)
+		var grand_entered := str(run_state.current_environment.get("archetype_id", "")) == "grand_casino" and generator._last_environment_install_errors.is_empty()
+		var room_entered := grand_entered and generator.enter_grand_casino_room(run_state, "grand_casino_cage")
+		if room_entered:
+			var finalized := run_state.world_sequence_finalize_base_semantics([], library, {"viewport_size": {"x": 1280, "y": 720}})
+			room_entered = bool(finalized.get("ok", false)) or bool(finalized.get("inactive", false))
+		return {"run_state": run_state, "entered": room_entered}
+	var archetype_id := str(archetypes[0])
+	if path_kind == "fallback":
+		var selected_fallback := CrewRecruitmentModelScript.fallback_node_id(run_state, definition)
+		if not selected_fallback.is_empty():
+			archetype_id = selected_fallback
 	if not scenarios.is_empty():
 		var scenario := library.scenario(str(scenarios[0]))
 		if not scenario.is_empty():
 			run_state.seed_scenario_for_node(archetype_id, scenario)
 	generator.next_environment(run_state, archetype_id, true)
-	var entered := true
+	var entered := str(run_state.current_environment.get("archetype_id", "")) == archetype_id and generator._last_environment_install_errors.is_empty()
 	var layers := _string_array(location.get("layer_ids", []))
-	if not layers.is_empty() and str(run_state.current_environment.get("current_layer_id", "")) != str(layers[0]):
+	if entered and not layers.is_empty() and str(run_state.current_environment.get("current_layer_id", "")) != str(layers[0]):
 		entered = bool(generator.enter_environment_layer(run_state, str(layers[0]), false).get("ok", false))
+	if entered:
+		var world_finalized := run_state.world_sequence_finalize_base_semantics([], library, {"viewport_size": {"x": 1280, "y": 720}})
+		entered = bool(world_finalized.get("ok", false)) or bool(world_finalized.get("inactive", false))
 	return {"run_state": run_state, "entered": entered}
+
+
+static func _production_path_seed(member_id: String, path_kind: String, scenario_id: String) -> String:
+	if path_kind == "fallback" and member_id in ["crew_mags", "crew_knuckles"]:
+		return "CREW-PROOF-punchline-casino-1"
+	match scenario_id:
+		"gas_station_trucker_convoy":
+			return "gas_station_trucker_convoy_env06_7_b"
+		"back_alley_fence_night":
+			return "CREW-PROOF-back_alley_fence_night-0"
+		"bar_fight_night":
+			return "CREW-PROOF-bar_fight_night-0"
+		"kitty_cat_lounge_buyout":
+			return "CREW-PROOF-kitty_cat_lounge_buyout-1"
+		"beach_festival_weekend":
+			return "beach_festival_weekend_env06_7_b"
+		_:
+			return "CREW-PRODUCTION-%s-%s" % [member_id, path_kind]
 
 
 static func _presence_environment(run_state: RunState, member_id: String, configure_world: bool = true) -> Dictionary:

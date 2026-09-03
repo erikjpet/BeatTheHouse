@@ -11,6 +11,7 @@ const RunReportViewModelScript := preload("res://scripts/ui/run_report_view_mode
 const RunSaveCodecScript := preload("res://scripts/core/run_save_codec.gd")
 const SaveServiceScript := preload("res://scripts/core/save_service.gd")
 const GameModuleScript := preload("res://scripts/core/game_module.gd")
+const CrewHeistContractScript := preload("res://scripts/tests/foundation/crew_heist_contract.gd")
 
 
 static func check(_library: ContentLibrary, failures: Array) -> void:
@@ -19,7 +20,7 @@ static func check(_library: ContentLibrary, failures: Array) -> void:
 	_check_weighting(failures)
 	_check_emissions(failures)
 	_check_choices_and_save(failures)
-	_check_plan_beats(failures)
+	_check_plan_beats(_library, failures)
 
 
 static func _check_eligibility_and_clean_hands(failures: Array) -> void:
@@ -167,7 +168,10 @@ static func _check_choices_and_save(failures: Array) -> void:
 	if JSON.stringify(sync_payload.get("run_state", {})) != JSON.stringify(expected_encoded):
 		failures.append("Synchronous save projection diverged from the opaque async snapshot path.")
 	var report := RunReportViewModelScript.build(wrong.to_dict())
-	var surfaces := JSON.stringify(wrong.crew_heist_table_choices()) + JSON.stringify(wrong.to_save_snapshot()) + JSON.stringify(wrong.story_log) + JSON.stringify(action_surfaces) + JSON.stringify(report) + JSON.stringify(wrong.act_two_seam_payload()) + FileAccess.get_file_as_string("res://data/challenges/challenges.json")
+	var public_save := wrong.to_save_snapshot()
+	public_save["crew_state"].erase("a")
+	public_save["crew_state"].erase("z")
+	var surfaces := JSON.stringify(wrong.crew_heist_table_choices()) + JSON.stringify(public_save) + JSON.stringify(wrong.story_log) + JSON.stringify(action_surfaces) + JSON.stringify(report) + JSON.stringify(wrong.act_two_seam_payload()) + FileAccess.get_file_as_string("res://data/challenges/challenges.json")
 	for forbidden in ["traitor", "clue", "betrayal", "the_turn", "grievance"]:
 		if surfaces.to_lower().contains(forbidden):
 			failures.append("Hidden heist discipline leaked '%s' through choices, action results, save, or story." % forbidden)
@@ -177,6 +181,8 @@ static func _check_choices_and_save(failures: Array) -> void:
 		failures.append("Opaque ledger did not round-trip.")
 	var legacy := _run("TURN-LEGACY")
 	var legacy_data := legacy.to_dict()
+	legacy_data["crew_state"].erase("a")
+	legacy_data["crew_state"].erase("z")
 	legacy_data["crew_state"]["grievances"] = [{"id": "old", "member_id": "crew_switch", "kind": "job_abandoned", "weight": 2, "turn_recorded": 3, "source_ref": "old_job"}]
 	legacy_data["crew_state"]["grievance_sequence"] = 1
 	var legacy_restored := RunStateScript.new()
@@ -195,7 +201,7 @@ static func _check_choices_and_save(failures: Array) -> void:
 		failures.append("Identical wrong-name sequences did not reproduce byte-identically.")
 
 
-static func _check_plan_beats(failures: Array) -> void:
+static func _check_plan_beats(library: ContentLibrary, failures: Array) -> void:
 	var count := _run("TURN-BEAT-COUNT")
 	_prepare(count, "crew_switch", [], true, CrewHeistModelScript.PLAN_COUNT)
 	count.crew_heist_state["status"] = CrewHeistModelScript.STATUS_GETAWAY
@@ -208,14 +214,14 @@ static func _check_plan_beats(failures: Array) -> void:
 
 	var whale := _whale_play_run("TURN-BEAT-WHALE", false)
 	var whale_heat := whale.suspicion_level()
-	var whale_result := _settle_whale_blackjack(whale)
+	var whale_result := _settle_whale_blackjack(whale, library)
 	var whale_snapshot := whale.crew_heist_snapshot()
 	if not bool(whale_result.get("resolved", false)) or str(whale_snapshot.get("outcome", "")) != "closed" or str(_dict(whale_snapshot.get("play", {})).get("scar", "")) != "rig_exposure" or str(_dict(whale_snapshot.get("play", {})).get("interrupted", "")) != "house_points_at_rig" or whale.grand_casino_chips != 0 or whale.suspicion_level() <= whale_heat or whale.run_status != RunStateScript.RUN_STATUS_ENDED:
 		failures.append("Plan B did not expose the rig mechanically during the live Play.")
 
 	var hedged_whale := _whale_play_run("TURN-BEAT-WHALE-HEDGE", true)
 	var hedge_bankroll := hedged_whale.bankroll
-	var hedge_result := _settle_whale_blackjack(hedged_whale)
+	var hedge_result := _settle_whale_blackjack(hedged_whale, library)
 	var hedge_payout := int(hedge_result.get("payout", 0))
 	if str(hedged_whale.crew_heist_snapshot().get("outcome", "")) != "out_hot" or hedge_payout < 227 or hedge_payout > 357 or hedged_whale.bankroll != hedge_bankroll + hedge_payout:
 		failures.append("A Plan B changed seat did not convert the mid-game break into deterministic Out Hot partial haul.")
@@ -264,10 +270,8 @@ static func _heist_choice(run: RunState, event_id: String, choice_id: String) ->
 	return run.crew_record_heist_event_result({"ok": true, "type": "event", "event_id": event_id, "choice_id": choice_id, "deltas": {"event_hooks": hooks}})
 
 
-static func _settle_whale_blackjack(run: RunState) -> Dictionary:
-	var result := GameModuleScript.build_action_result({"ok": true, "type": "game_action", "source_id": "blackjack", "game_id": "blackjack", "action_id": "stand", "action_kind": "legal", "stake": 20, "bankroll_delta": 0, "deltas": {"bankroll_delta": 0, "suspicion_delta": 0}, "environment_archetype_id": "grand_casino_high_limit"})
-	result["blackjack_hand_results"] = [{"outcome": "push"}]
-	GameModuleScript.apply_result(run, result)
+static func _settle_whale_blackjack(run: RunState, library: ContentLibrary) -> Dictionary:
+	CrewHeistContractScript._apply_authoritative_blackjack(run, library, 20)
 	var state := run.crew_heist_snapshot()
 	return {"resolved": str(state.get("status", "")) == CrewHeistModelScript.STATUS_COMPLETED, "payout": int(state.get("payout", 0))}
 

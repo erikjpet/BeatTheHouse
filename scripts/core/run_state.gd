@@ -351,6 +351,9 @@ var _crew_job_host_capability: RefCounted
 var _crew_recruitment_host_capability: RefCounted
 var _world1_host_capability: RefCounted
 var _crew_heist_host_capability: RefCounted
+var _crew_heist_private_capsule := ""
+var _crew_heist_private_fingerprint := ""
+var _crew_private_authority_id := ""
 var active_delivery_run: Dictionary = {}
 var crew_pattern_memory: Dictionary = {}
 var scenario_host_transaction_ledger: Dictionary = {}
@@ -400,6 +403,7 @@ const TURN_TRANSACTION_SCALAR_FIELDS := [
 	"game_clock_minutes", "grand_casino_atm_interest_boundary_index", "act_index",
 	"run_status", "run_failure_reason", "run_failure_message",
 	"run_spending_score", "defer_next_bankroll_zero_failure",
+	"_crew_private_authority_id",
 	"_item_effects_loaded", "_item_definitions_loaded",
 	"_owned_item_lookup_cache_valid", "_turn_transaction_test_failure_stage",
 ]
@@ -499,6 +503,9 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	_crew_recruitment_host_capability = RefCounted.new()
 	_world1_host_capability = RefCounted.new()
 	_crew_heist_host_capability = RefCounted.new()
+	_crew_heist_private_capsule = ""
+	_crew_heist_private_fingerprint = ""
+	_crew_private_authority_id = ""
 	active_delivery_run = {}
 	crew_pattern_memory = CrewPokerModelScript.default_observations()
 	scenario_host_transaction_ledger = {}
@@ -3736,7 +3743,7 @@ func install_environment_layer_state(layer_id: String, layer_state: Dictionary) 
 	target["world_map_travel"] = bool(source.get("world_map_travel", false))
 	target["display_name"] = str(source.get("display_name", target.get("display_name", "")))
 	target["turns"] = int(source.get("turns", target.get("turns", 0)))
-	for clock_key in ["entered_game_clock_minutes", "departed_game_clock_minutes"]:
+	for clock_key in ["entered_game_clock_minutes", "departed_game_clock_minutes", "environment_visit_id", "night_instance_id", "context_instance_id"]:
 		if source.has(clock_key):
 			target[clock_key] = source.get(clock_key)
 	var scenario_state := ScenarioEngineScript.normalize_state(source.get("scenario_state", {}))
@@ -4627,7 +4634,7 @@ func add_suspicion(cue_id: String, amount: int, visibility: String = "behavior",
 				"member_id": str(distraction_liability.get("member_id", "")),
 				"kind": "distraction_heat_dumped",
 				"weight": 2,
-				"source_ref": str(distraction_liability.get("source_ref", "crew_play:distraction")),
+				"source_ref": _crew_distraction_grievance_source(distraction_liability),
 			})
 			crew_play_state = CrewPlayModelScript.mark_distraction_grievance_recorded(crew_play_state)
 	if tutorial_heat_intervention:
@@ -8625,7 +8632,7 @@ func crew_recruitment_public_state(member_id: String) -> Dictionary:
 			break
 	var standing := crew_rank(member_id)
 	result["standing"] = standing
-	result["contact_state"] = "aggrieved" if not crew_grievances(member_id).is_empty() else ("job_out" if job_out else ("trusted" if standing in ["made", "inner_circle"] else "familiar"))
+	result["contact_state"] = "job_out" if job_out else ("trusted" if standing in ["made", "inner_circle"] else "familiar")
 	return result
 
 
@@ -9081,8 +9088,6 @@ func crew_heist_planning_status() -> Dictionary:
 
 func crew_heist_table_choices() -> Array:
 	var status := crew_heist_planning_status()
-	if not bool(status.get("visible", false)):
-		return [{"id": "leave", "label": "Leave the table clear", "text": "The center waits for somebody inside the circle.", "consequences": {}}]
 	if not crew_heist_state.is_empty():
 		var active_choices: Array = []
 		var phase := str(crew_heist_state.get("status", "setup"))
@@ -9107,6 +9112,8 @@ func crew_heist_table_choices() -> Array:
 			active_choices.append({"id": "live_table_direction", "label": "Return to the live table", "text": "The decisions happen inside the session, not over the planning map.", "disabled": true, "consequences": {}})
 		active_choices.append({"id": "leave", "label": "Leave the table", "text": "The map stays where it is.", "consequences": {}})
 		return active_choices
+	if not bool(status.get("visible", false)):
+		return [{"id": "leave", "label": "Leave the table clear", "text": "The center waits for somebody inside the circle.", "consequences": {}}]
 	var choices: Array = []
 	for row_value in _copy_array(status.get("plans", [])):
 		var row := _copy_dict(row_value)
@@ -9232,7 +9239,11 @@ func crew_heist_event_action(hook: Dictionary, host_capability: Variant = null) 
 		_apply_environment_turn_snapshot(rollback, false)
 		return {"ok": false, "message": "The heist scene could not be staged atomically.", "errors": _copy_array(sequence_result.get("errors", []))}
 	result["world_sequence_scheduled"] = not bool(sequence_result.get("inactive", false))
-	result["world_sequence_owner_token"] = str(sequence_result.get("owner_token", ""))
+	# Quiet-table actions schedule their scene internally, but the package/owner
+	# token names the private observation channel. It is never needed as a player
+	# command receipt, so do not echo it through the public action result.
+	if action not in ["observe_table", "confront", "hedge"]:
+		result["world_sequence_owner_token"] = str(sequence_result.get("owner_token", ""))
 	return result
 
 
@@ -9289,7 +9300,8 @@ func crew_heist_observe_table(host_capability: Variant = null) -> Dictionary:
 		crew_heist_state = state
 		if learned:
 			return {"ok": true, "message": "A familiar table tell surfaces in the quiet room. No cards are on the table."}
-		return {"ok": true, "message": "A neutral Crew voice checks the route and gives you nothing you have learned to read."}
+		# An unlearned tell must be observationally identical to a clean table.
+		return {"ok": true, "message": "The room talks through the route one more time."}
 	if not emitted.has(CrewTurnModelScript.SIGNAL_ROUTE):
 		var contradiction := _crew_heist_route_contradiction(member_id)
 		if not contradiction.is_empty():
@@ -9807,7 +9819,9 @@ func crew_heist_begin_getaway(host_capability: Variant = null) -> Dictionary:
 
 
 func crew_heist_snapshot() -> Dictionary:
-	return CrewHeistModelScript.normalize_state(crew_heist_state)
+	var public_state := CrewHeistModelScript.normalize_state(crew_heist_state)
+	public_state.erase("x")
+	return public_state
 
 
 func _crew_heist_whale_attention_active() -> bool:
@@ -10067,17 +10081,28 @@ func grievance_add(entry: Dictionary) -> Dictionary:
 	var kind := str(entry.get("kind", "")).strip_edges()
 	if not CrewStateModelScript.MEMBER_IDS.has(member_id) or not CrewStateModelScript.GRIEVANCE_KINDS.has(kind):
 		return {}
-	crew_grievance_sequence += 1
+	if crew_grievance_ledger.size() >= CrewTurnModelScript.PRIVATE_GRIEVANCE_LIMIT or crew_grievance_sequence >= CrewTurnModelScript.PRIVATE_SEQUENCE_LIMIT:
+		narrative_flags["crew_private_authority_error"] = "private_authority_capacity_exceeded"
+		return {"ok": false, "reason": "private_authority_capacity_exceeded"}
 	var grievance_id := str(entry.get("id", "")).strip_edges()
 	if grievance_id.is_empty():
-		grievance_id = "crew_grievance_%04d" % crew_grievance_sequence
+		grievance_id = "crew_grievance_%04d" % (crew_grievance_sequence + 1)
+	var source_ref := str(entry.get("source_ref", "")).strip_edges()
+	var weight := int(entry.get("weight", 1))
+	var turn_recorded := int(entry.get("turn_recorded", _crew_action_index()))
+	if grievance_id.to_utf8_buffer().size() > CrewTurnModelScript.PRIVATE_TEXT_BYTE_LIMIT or source_ref.to_utf8_buffer().size() > CrewTurnModelScript.PRIVATE_TEXT_BYTE_LIMIT \
+			or weight < 1 or weight > CrewTurnModelScript.PRIVATE_SEQUENCE_LIMIT \
+			or turn_recorded < 0 or turn_recorded > CrewTurnModelScript.PRIVATE_SEQUENCE_LIMIT:
+		narrative_flags["crew_private_authority_error"] = "private_authority_capacity_exceeded"
+		return {"ok": false, "reason": "private_authority_capacity_exceeded"}
+	crew_grievance_sequence += 1
 	var normalized := {
 		"id": grievance_id,
 		"member_id": member_id,
 		"kind": kind,
-		"weight": maxi(1, int(entry.get("weight", 1))),
-		"turn_recorded": maxi(0, int(entry.get("turn_recorded", _crew_action_index()))),
-		"source_ref": str(entry.get("source_ref", "")).strip_edges(),
+		"weight": weight,
+		"turn_recorded": turn_recorded,
+		"source_ref": source_ref,
 	}
 	crew_grievance_ledger.append(normalized)
 	return normalized.duplicate(true)
@@ -10148,7 +10173,7 @@ func job_offer(job_definition: Dictionary, host_capability: RefCounted = null) -
 	job["offered_action"] = action_index
 	job["expires_at_action"] = action_index + maxi(1, int(definition.get("expiry_in_actions", 1)))
 	crew_jobs[instance_id] = job
-	return job.duplicate(true)
+	return _crew_job_public_projection(job)
 
 
 # Accepts one offered job without consuming an action boundary.
@@ -10162,7 +10187,7 @@ func job_accept(job_id: String, host_capability: RefCounted = null) -> Dictionar
 	job["accepted_action"] = _crew_action_index()
 	crew_jobs[job_id] = job
 	_scenario_publish_crew_job(job)
-	return job.duplicate(true)
+	return _crew_job_public_projection(job)
 
 
 # Activates one accepted job; later gameplay slices own their active surface.
@@ -10176,7 +10201,7 @@ func job_activate(job_id: String, host_capability: RefCounted = null) -> Diction
 	job["active_action"] = _crew_action_index()
 	crew_jobs[job_id] = job
 	_scenario_publish_crew_job(job)
-	return job.duplicate(true)
+	return _crew_job_public_projection(job)
 
 
 # Resolves one accepted/active job and applies configured success or failure effects.
@@ -10217,7 +10242,7 @@ func job_resolve(job_id: String, outcome: String, host_capability: RefCounted = 
 	job["resolved_action"] = _crew_action_index()
 	crew_jobs[job_id] = job
 	_scenario_publish_crew_job(job)
-	return job.duplicate(true)
+	return _crew_job_public_projection(job)
 
 
 func _crew_heist_job_payment(member_id: String, posted_cash: int, job_id: String) -> Dictionary:
@@ -10359,7 +10384,7 @@ func crew_record_game_result(result: Dictionary, deltas: Dictionary) -> Dictiona
 			job["payload"] = payload
 			crew_jobs[job_id] = job
 			_crew_add_room_event("crew_stake_horse_loss")
-		return job.duplicate(true)
+		return _crew_job_public_projection(job)
 	return {}
 
 
@@ -13116,6 +13141,11 @@ func _advance_environment_turns_candidate(amount: int) -> Dictionary:
 		var expiry_result := scenario_sequence_apply_expiry_boundary("town_action", safe_amount)
 		if not bool(expiry_result.get("ok", false)):
 			return {"ok": false, "applied": false, "errors": _copy_array(expiry_result.get("errors", []))}
+		# Cleanup expiry is a valid terminal transition. Do not enqueue the later
+		# town/world facts into a sequence that this same boundary just cleaned.
+		# The pre-expiry value is retained only when the sequence remains active.
+		var post_expiry_state := _copy_dict(current_environment.get("scenario_sequence_state", {}))
+		scenario_facts_active = str(post_expiry_state.get("status", "")) == ScenarioSequenceRuntimeScript.STATUS_ACTIVE
 	forced_failure = _environment_turn_test_failure("expiry")
 	if not forced_failure.is_empty(): return forced_failure
 	# Town/sweep snapshots exist only to author scenario facts. Ordinary rooms have
@@ -14917,8 +14947,8 @@ func to_dict() -> Dictionary:
 		"story_flags": story_flags.duplicate(true),
 		"story_log": _normalize_story_log(story_log),
 		"story_log_archive_count": story_log_archive_count,
-		# Runtime serialization remains the established public projection for
-		# compatibility/goldens. Persistent saves use to_save_snapshot().
+		# Every serialized projection is observer-safe. Hidden Turn authority and
+		# grievances live only in the authenticated fixed-size private capsule.
 		"crew_state": _crew_state_for_save(true, false),
 		"scenario_host_transaction_ledger": scenario_host_transaction_ledger.duplicate(true),
 		"active_delivery_run": active_delivery_run.duplicate(true),
@@ -15647,20 +15677,24 @@ static func _world_map_for_save_snapshot(map_data: Dictionary) -> Dictionary:
 
 
 func _crew_pack_ledger() -> Array:
+	if crew_grievance_ledger.size() > CrewTurnModelScript.PRIVATE_GRIEVANCE_LIMIT:
+		return []
 	var result: Array = []
 	for entry_value in crew_grievance_ledger:
 		var entry := _copy_dict(entry_value)
 		var member_index := CrewStateModelScript.MEMBER_IDS.find(str(entry.get("member_id", "")))
 		var kind_index := CrewStateModelScript.GRIEVANCE_KINDS.find(str(entry.get("kind", "")))
-		if member_index >= 0 and kind_index >= 0:
-			result.append([
-				member_index,
-				kind_index,
-				maxi(1, int(entry.get("weight", 1))),
-				maxi(0, int(entry.get("turn_recorded", 0))),
-				str(entry.get("id", "")).to_utf8_buffer().hex_encode(),
-				str(entry.get("source_ref", "")).to_utf8_buffer().hex_encode(),
-			])
+		var entry_id := str(entry.get("id", ""))
+		var source_ref := str(entry.get("source_ref", ""))
+		var weight := int(entry.get("weight", 1))
+		var turn_recorded := int(entry.get("turn_recorded", 0))
+		if member_index < 0 or kind_index < 0 or entry_id.is_empty() \
+				or entry_id.to_utf8_buffer().size() > CrewTurnModelScript.PRIVATE_TEXT_BYTE_LIMIT \
+				or source_ref.to_utf8_buffer().size() > CrewTurnModelScript.PRIVATE_TEXT_BYTE_LIMIT \
+				or weight < 1 or weight > CrewTurnModelScript.PRIVATE_SEQUENCE_LIMIT \
+				or turn_recorded < 0 or turn_recorded > CrewTurnModelScript.PRIVATE_SEQUENCE_LIMIT:
+			return []
+		result.append([member_index, kind_index, weight, turn_recorded, entry_id.to_utf8_buffer().hex_encode(), source_ref.to_utf8_buffer().hex_encode()])
 	return result
 
 
@@ -15691,15 +15725,7 @@ func _crew_unpack_ledger(value: Variant) -> Array:
 func _crew_jobs_for_save(deep_copy: bool) -> Dictionary:
 	var result := crew_jobs.duplicate(deep_copy)
 	for job_id in result.keys():
-		var job := _copy_dict(result.get(job_id, {}))
-		var failure := _copy_dict(job.get("failure", {}))
-		var kind_index := CrewStateModelScript.GRIEVANCE_KINDS.find(str(failure.get("grievance_kind", "")))
-		failure.erase("grievance_kind")
-		failure.erase("grievance_weight")
-		if kind_index >= 0:
-			failure["g"] = [kind_index, maxi(1, int(_copy_dict(job.get("failure", {})).get("grievance_weight", 1)))]
-		job["failure"] = failure
-		result[job_id] = job
+		result[job_id] = _crew_job_public_projection(_copy_dict(result.get(job_id, {})))
 	return result
 
 
@@ -15708,18 +15734,35 @@ func _crew_jobs_from_save(value: Variant) -> Dictionary:
 	for job_id in result.keys():
 		var job := _copy_dict(result.get(job_id, {}))
 		var failure := _copy_dict(job.get("failure", {}))
+		# Legacy packed failure readers remain supported, but new public saves do
+		# not duplicate grievance authority outside the private capsule.
 		var packed := _copy_array(failure.get("g", []))
 		if packed.size() >= 2:
 			var kind_index := int(packed[0])
 			failure["grievance_kind"] = CrewStateModelScript.GRIEVANCE_KINDS[kind_index] if kind_index >= 0 and kind_index < CrewStateModelScript.GRIEVANCE_KINDS.size() else ""
 			failure["grievance_weight"] = maxi(1, int(packed[1]))
 			failure.erase("g")
+		else:
+			var definition := CrewStateModelScript.job_definition(str(job.get("definition_id", "")))
+			var authored_failure := _copy_dict(definition.get("failure", {}))
+			failure["grievance_kind"] = str(authored_failure.get("grievance_kind", ""))
+			failure["grievance_weight"] = maxi(1, int(authored_failure.get("grievance_weight", 1)))
 		job["failure"] = failure
 		result[job_id] = job
 	return result
 
 
-func _crew_state_for_save(deep_copy: bool, opaque_hidden: bool = false) -> Dictionary:
+func _crew_job_public_projection(job_value: Dictionary) -> Dictionary:
+	var job := job_value.duplicate(true)
+	var failure := _copy_dict(job.get("failure", {}))
+	failure.erase("grievance_kind")
+	failure.erase("grievance_weight")
+	failure.erase("g")
+	job["failure"] = failure
+	return job
+
+
+func _crew_state_for_save(deep_copy: bool, _opaque_hidden: bool = true) -> Dictionary:
 	var result := {
 		"schema_version": CrewStateModelScript.STATE_SCHEMA_VERSION,
 		"trust": crew_trust_by_member.duplicate(deep_copy),
@@ -15729,20 +15772,12 @@ func _crew_state_for_save(deep_copy: bool, opaque_hidden: bool = false) -> Dicti
 		"p": CrewPokerModelScript.pack_observations(crew_pattern_memory),
 		"m": crew_match_marks.duplicate(deep_copy),
 	}
-	# The runtime projection is byte-compatible with the established crew API.
-	# The actual persistent projection is opaque even when the ledger is empty.
-	if not opaque_hidden:
-		result["grievances"] = crew_grievance_ledger.duplicate(deep_copy)
-		result["grievance_sequence"] = crew_grievance_sequence
-	else:
-		result["g"] = _crew_pack_ledger()
-		result["q"] = crew_grievance_sequence
 	# Keep a crew-ignoring save byte-identical to the crew06_1 projection. The
 	# optional field carries its own addition version only after the stash is used.
 	if not crew_contraband_stash.is_empty():
 		result["recruitment_schema_version"] = CrewRecruitmentModelScript.SCHEMA_VERSION
 		result["stash"] = crew_contraband_stash.duplicate(deep_copy)
-	var recruitment_encounters := CrewRecruitmentModelScript.normalize_encounter_state(crew_recruitment_encounters)
+	var recruitment_encounters := _crew_recruitment_encounters_for_save()
 	if not recruitment_encounters.is_empty() and (not _copy_dict(recruitment_encounters.get("meetings", {})).is_empty() or not _copy_dict(recruitment_encounters.get("contacts", {})).is_empty()):
 		result["recruitment_schema_version"] = CrewRecruitmentModelScript.SCHEMA_VERSION
 		result["encounters"] = recruitment_encounters.duplicate(deep_copy)
@@ -15751,19 +15786,124 @@ func _crew_state_for_save(deep_copy: bool, opaque_hidden: bool = false) -> Dicti
 			or not (normalized_plays.get("active", []) as Array).is_empty() \
 			or not (normalized_plays.get("member_cooldowns", {}) as Dictionary).is_empty() \
 			or not (normalized_plays.get("tombstones", []) as Array).is_empty():
-		result["plays"] = normalized_plays.duplicate(deep_copy)
+		result["plays"] = _crew_plays_for_save(normalized_plays, deep_copy)
 	var normalized_heist := CrewHeistModelScript.normalize_state(crew_heist_state)
+	var private_heist := CrewTurnModelScript.empty_state()
 	if not normalized_heist.is_empty():
+		private_heist = _copy_dict(normalized_heist.get("x", CrewTurnModelScript.empty_state()))
+		normalized_heist.erase("x")
 		result["crew_heist_schema_version"] = CrewHeistModelScript.SCHEMA_VERSION
 		result["crew_heist"] = normalized_heist.duplicate(deep_copy)
+	# Every save carries the same fixed-size private authority envelope, including
+	# a pristine zero-grievance run. Omitting it (or writing public empty
+	# sentinels) made zero versus one grievance distinguishable by keys and size.
+	# `_opaque_hidden` remains in the signature for old callers only.
+	var _legacy_projection_ignored := _opaque_hidden
+	var packed_ledger := _crew_pack_ledger()
+	if packed_ledger.size() != crew_grievance_ledger.size() or crew_grievance_sequence < packed_ledger.size() \
+			or crew_grievance_sequence > CrewTurnModelScript.PRIVATE_SEQUENCE_LIMIT:
+		result["private_authority_error"] = "private_authority_capacity_exceeded"
+		return result
+	if not CrewTurnModelScript.valid_authority_id(_crew_private_authority_id):
+		_crew_private_authority_id = CrewTurnModelScript.new_authority_id()
+	if not CrewTurnModelScript.valid_authority_id(_crew_private_authority_id):
+		result["private_authority_error"] = "private_authority_unavailable"
+		return result
+	var payload := {"x": private_heist, "g": packed_ledger, "q": crew_grievance_sequence}
+	var binding := _crew_private_save_binding(_crew_private_authority_id, normalized_heist)
+	var fingerprint := CrewTurnModelScript.private_save_fingerprint(payload, CrewStateModelScript.MEMBER_IDS, CrewStateModelScript.GRIEVANCE_KINDS, binding)
+	if binding.is_empty() or fingerprint.is_empty():
+		result["private_authority_error"] = "private_authority_capacity_exceeded"
+		return result
+	if _crew_heist_private_capsule.is_empty() or _crew_heist_private_fingerprint != fingerprint:
+		_crew_heist_private_capsule = CrewTurnModelScript.pack_private_save(payload, CrewStateModelScript.MEMBER_IDS, CrewStateModelScript.GRIEVANCE_KINDS, binding)
+		_crew_heist_private_fingerprint = fingerprint if not _crew_heist_private_capsule.is_empty() else ""
+	if _crew_heist_private_capsule.is_empty():
+		result["private_authority_error"] = "private_authority_unavailable"
+		return result
+	result["a"] = _crew_private_authority_id
+	result["z"] = _crew_heist_private_capsule
 	return result
+
+
+func _crew_private_save_binding(authority_id: String, public_heist: Dictionary) -> String:
+	return CrewTurnModelScript.private_save_binding(authority_id, seed_text, {
+		"challenge_config": challenge_config.duplicate(true),
+		"member_ids": CrewStateModelScript.MEMBER_IDS.duplicate(),
+		"trust": CrewStateModelScript.normalize_trust(crew_trust_by_member),
+		"jobs": _crew_jobs_for_save(true),
+		"heist": public_heist.duplicate(true),
+	})
+
+
+func _crew_plays_for_save(normalized_plays: Dictionary, deep_copy: bool) -> Dictionary:
+	var result := normalized_plays.duplicate(deep_copy)
+	var liability := _copy_dict(result.get("distraction_liability", {}))
+	if not liability.is_empty():
+		# The source is a hidden-ledger join key. It is reconstructed from the
+		# already-public play sequence after authentication, never serialized.
+		liability["source_ref"] = ""
+		result["distraction_liability"] = liability
+	return result
+
+
+func _crew_recruitment_encounters_for_save() -> Dictionary:
+	var result := CrewRecruitmentModelScript.normalize_encounter_state(crew_recruitment_encounters)
+	var contacts := _copy_dict(result.get("contacts", {}))
+	for member_id in contacts.keys():
+		var contact := _copy_dict(contacts.get(member_id, {}))
+		# `aggrieved` was a legacy public classifier derived from the private
+		# ledger. Preserve the durable meeting/contact receipt but project a
+		# neutral state based only on public standing and active-job facts.
+		if str(contact.get("contact_state", "")) == "aggrieved":
+			var standing := str(contact.get("standing", ""))
+			var job_out := false
+			for job_value in crew_jobs.values():
+				var job := _copy_dict(job_value)
+				if str(job.get("member_id", "")) == str(member_id) and str(job.get("status", "")) in ["offered", "accepted", "active"]:
+					job_out = true
+					break
+			contact["contact_state"] = "job_out" if job_out else ("trusted" if standing in ["made", "inner_circle"] else "familiar")
+		contacts[member_id] = contact
+	result["contacts"] = contacts
+	return result
+
+
+func _crew_plays_from_save(value: Variant) -> Dictionary:
+	var result := CrewPlayModelScript.restore_state(value)
+	return result
+
+
+func _crew_distraction_grievance_source(liability: Dictionary) -> String:
+	return CrewTurnModelScript.private_reference("crew_play", CrewTurnModelScript.canonical_json({
+		"seed": seed_text,
+		"member_id": str(liability.get("member_id", "")),
+		"until_action": maxi(0, int(liability.get("until_action", 0))),
+	}))
+
+
+func _crew_private_restore_failed(saved_heist: Dictionary) -> Dictionary:
+	crew_grievance_ledger = []
+	crew_grievance_sequence = 0
+	_crew_private_authority_id = ""
+	_crew_heist_private_capsule = ""
+	_crew_heist_private_fingerprint = ""
+	narrative_flags["crew_private_authority_error"] = "private_authority_unavailable"
+	# Preserve an active heist as an explicit terminal result. A missing capsule
+	# must never become a fresh attempt with erased hidden consequences.
+	if not saved_heist.is_empty():
+		saved_heist["x"] = CrewTurnModelScript.empty_state()
+		saved_heist["status"] = CrewHeistModelScript.STATUS_ABORTED
+		saved_heist["abort"] = {"reason": "private_authority_unavailable", "cost": 0, "action": _crew_action_index()}
+		narrative_flags["crew_heist_private_restore_error"] = "private_authority_unavailable"
+	return saved_heist
 
 
 func _restore_crew_state(saved: Dictionary, legacy: bool) -> void:
 	crew_trust_by_member = CrewStateModelScript.normalize_trust(saved.get("trust", {}))
-	crew_grievance_ledger = _crew_unpack_ledger(saved.get("g", saved.get("grievances", [])))
 	crew_jobs = CrewStateModelScript.normalize_jobs(_crew_jobs_from_save(saved.get("jobs", {})))
-	crew_grievance_sequence = maxi(int(saved.get("q", saved.get("grievance_sequence", crew_grievance_ledger.size()))), crew_grievance_ledger.size())
+	crew_grievance_ledger = []
+	crew_grievance_sequence = 0
 	crew_job_sequence = maxi(int(saved.get("job_sequence", crew_jobs.size())), crew_jobs.size())
 	crew_pattern_memory = CrewPokerModelScript.unpack_observations(saved.get("p", {}))
 	crew_match_marks = {}
@@ -15771,6 +15911,10 @@ func _restore_crew_state(saved: Dictionary, legacy: bool) -> void:
 	crew_recruitment_encounters = CrewRecruitmentModelScript.normalize_encounter_state(saved.get("encounters", CrewRecruitmentModelScript.new_encounter_state()))
 	if crew_recruitment_encounters.is_empty():
 		crew_recruitment_encounters = CrewRecruitmentModelScript.new_encounter_state()
+	else:
+		# Migrate legacy persisted `aggrieved` contact classifiers immediately so
+		# they cannot reappear through encounter_public_state before the next save.
+		crew_recruitment_encounters = _crew_recruitment_encounters_for_save()
 	if _crew_job_host_capability == null:
 		_crew_job_host_capability = RefCounted.new()
 	if _crew_recruitment_host_capability == null:
@@ -15779,8 +15923,49 @@ func _restore_crew_state(saved: Dictionary, legacy: bool) -> void:
 		_world1_host_capability = RefCounted.new()
 	if _crew_heist_host_capability == null:
 		_crew_heist_host_capability = RefCounted.new()
-	crew_play_state = CrewPlayModelScript.restore_state(saved.get("plays", {}))
-	crew_heist_state = CrewHeistModelScript.restore_state(saved.get("crew_heist", {}))
+	crew_play_state = _crew_plays_from_save(saved.get("plays", {}))
+	var saved_heist := _copy_dict(saved.get("crew_heist", {}))
+	_crew_heist_private_capsule = ""
+	_crew_heist_private_fingerprint = ""
+	_crew_private_authority_id = ""
+	var partial_private_authority := saved.has("a") != saved.has("z") \
+			or (not saved_heist.is_empty() and not saved.has("z") and not saved_heist.has("z") and not saved_heist.has("x"))
+	if not saved.has("z") and not saved.has("private_authority_error") and not partial_private_authority:
+		crew_grievance_ledger = _crew_unpack_ledger(saved.get("g", saved.get("grievances", [])))
+		crew_grievance_sequence = maxi(int(saved.get("q", saved.get("grievance_sequence", crew_grievance_ledger.size()))), crew_grievance_ledger.size())
+	if saved.has("private_authority_error") or partial_private_authority:
+		saved_heist = _crew_private_restore_failed(saved_heist)
+	elif saved.has("z"):
+		var capsule := str(saved.get("z", ""))
+		var authority_id := str(saved.get("a", ""))
+		var public_heist := saved_heist.duplicate(true)
+		public_heist.erase("x")
+		public_heist.erase("z")
+		var binding := _crew_private_save_binding(authority_id, public_heist)
+		var restored_payload := CrewTurnModelScript.unpack_private_save(capsule, CrewStateModelScript.MEMBER_IDS, CrewStateModelScript.GRIEVANCE_KINDS, binding)
+		var restored_ledger := _crew_unpack_ledger(restored_payload.get("g", [])) if not restored_payload.is_empty() else []
+		if restored_payload.is_empty() or restored_ledger.size() != _copy_array(restored_payload.get("g", [])).size():
+			saved_heist = _crew_private_restore_failed(saved_heist)
+		else:
+			crew_grievance_ledger = restored_ledger
+			crew_grievance_sequence = int(restored_payload.get("q", restored_ledger.size()))
+			if not saved_heist.is_empty(): saved_heist["x"] = _copy_dict(restored_payload.get("x", CrewTurnModelScript.empty_state()))
+			_crew_private_authority_id = authority_id
+			_crew_heist_private_capsule = capsule
+			_crew_heist_private_fingerprint = CrewTurnModelScript.private_save_fingerprint(restored_payload, CrewStateModelScript.MEMBER_IDS, CrewStateModelScript.GRIEVANCE_KINDS, binding)
+	elif saved_heist.has("z") and not saved_heist.has("x"):
+		# Migration reader for the shipped 512-byte heist-local x-only capsule.
+		var capsule := str(saved_heist.get("z", ""))
+		saved_heist.erase("z")
+		var binding := CrewTurnModelScript.legacy_private_save_binding(
+			seed_text, str(saved_heist.get("plan_id", "")), int(saved_heist.get("locked_action", 0))
+		)
+		var restored_private := CrewTurnModelScript.unpack_legacy_private_save(capsule, CrewStateModelScript.MEMBER_IDS, binding)
+		if restored_private.is_empty():
+			saved_heist = _crew_private_restore_failed(saved_heist)
+		else:
+			saved_heist["x"] = restored_private
+	crew_heist_state = CrewHeistModelScript.restore_state(saved_heist)
 	var saved_marks: Dictionary = saved.get("m", {}) if typeof(saved.get("m", {})) == TYPE_DICTIONARY else {}
 	for member_id in CrewStateModelScript.MEMBER_IDS:
 		# Keep an empty/sparse save projection sparse. Session recording already

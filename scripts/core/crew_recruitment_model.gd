@@ -126,14 +126,13 @@ static func contact_proposal(run_state: Variant, environment: Dictionary, member
 			or not run_state.crew_member_present(clean_member, environment):
 		return {"authoritative": false, "proposal_only": true, "can_mutate": false, "reason": "ineligible_environment", "member_id": clean_member}
 	var standing: String = str(run_state.crew_rank(clean_member))
-	var aggrieved: bool = not run_state.crew_grievances(clean_member).is_empty()
 	var job_out := false
 	for job_value in run_state.crew_jobs.values():
 		var job := _dict(job_value)
 		if str(job.get("member_id", "")) == clean_member and str(job.get("status", "")) in ["offered", "accepted", "active"]:
 			job_out = true
 			break
-	var contact_state := "aggrieved" if aggrieved else ("job_out" if job_out else ("trusted" if standing in ["made", "inner_circle"] else "familiar"))
+	var contact_state := "job_out" if job_out else ("trusted" if standing in ["made", "inner_circle"] else "familiar")
 	return {
 		"authoritative": false,
 		"proposal_only": true,

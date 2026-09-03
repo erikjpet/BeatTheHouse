@@ -1,4 +1,4 @@
-Status: TODO
+Status: DONE — independent exact-tree security acceptance completed 2026-09-03
 Board row: `world06_7` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — 0.6 world06_7: Crew and World Depth Release Gate

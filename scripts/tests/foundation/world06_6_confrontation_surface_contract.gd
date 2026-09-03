@@ -4,7 +4,7 @@ const RngStreamScript := preload("res://scripts/core/rng_stream.gd")
 const Model := preload("res://scripts/core/crew_turn_model.gd")
 const MODEL_PATH := "res://scripts/core/crew_turn_model.gd"
 const MARKER := "# WORLD06_6_PUBLIC_SURFACE_BEGIN"
-const EXPECTED_GOVERNING_PREFIX_SHA256 := "4d9edd594a595156d59a931b167d7db20d4165f6374ee04316a1a395d65dae63"
+const EXPECTED_GOVERNING_PREFIX_SHA256 := "78995bc5d02c353fd1edb0c05bc2ca1d41ff63c95c3755ee673cb390d0b60b4f"
 
 
 func _initialize() -> void:

@@ -785,6 +785,10 @@ func _production_run(library: ContentLibrary, seed: String) -> RunState:
 		"turns": 0,
 		"resolved_event_ids": [],
 	}
+	# `crew_favor_delivery` is a triggered event in production. Exercise the
+	# real host queue instead of relying on the pre-authority fixture shortcut
+	# where the narrative flag alone made a copied EventModule resolvable.
+	run_state.enqueue_triggered_event("crew_favor_delivery", "world06_1_contract")
 	return run_state
 
 
