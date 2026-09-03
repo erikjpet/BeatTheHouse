@@ -293,3 +293,30 @@ Accordingly, `game06_3` is **VERIFIED/DONE** for board and dependency purposes.
 game06_8 must use the final closeout in `docs/plans/game06_3_handoff.md` for this
 slice and must not revive the older D3 blocker unless a new regression is
 demonstrated on current `main`.
+
+## Superseding game06_6 reconciliation — 2026-09-02
+
+This section supersedes only the historical game06_6/D7/D8 entries above; it
+does not change the manifest's overall game06_8 verdict or any other row.
+
+- The complete recovered Bar Dice product is on `main` through
+  `d98de5440bec7685f4bb26eace77f2dbb1627f53`; Game 1 sealed-host integration
+  `5a2b1e1a` and Craps depth integration `7d230a63` are ancestors.
+- The intentionally Craps-owned environment adapter rejects foreign ownership.
+  The game06_6 prompt-authorized finding is accepted: Bar Dice remains
+  fail-closed, does not duplicate private Craps authority, and projects only a
+  future already-authoritative interruption fact. A generic street adapter is
+  outside this row.
+- The exact-tree seven-phase contract, focused shipped-game suite, live
+  Main-scene wager selection, sealed wager accounting, dependency contracts,
+  save/revisit lifecycle, two byte-identical ten-seed determinism passes,
+  fresh native/Web semantic parity, unchanged performance budgets, canonical
+  visual QA, and all 15 retained accessibility/presentation states passed.
+- The complete evidence ledger and retained non-green attempts are recorded in
+  `docs/plans/game06_6_final_closeout.md`; no timeout or rejected attempt is
+  relabeled as passing evidence.
+
+Accordingly, `game06_6` is **VERIFIED/DONE** for board and Family 1 dependency
+purposes. game06_8 must consume the final closeout for this slice and must not
+revive the earlier contract-only/product-missing blocker unless a new
+regression is demonstrated on current `main`.

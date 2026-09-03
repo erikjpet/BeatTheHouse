@@ -1,5 +1,44 @@
-Status: IN_PROGRESS — implementation landed on `main`; Family 1 release-gate closeout remains open
+Status: COMPLETE — recovered Bar Dice depth is landed, verified, and archived
 Board row: `game06_6` in `docs/todo/README_0_6_board.md`
+
+## Execution Record
+
+- Completed: 2026-09-02.
+- Recovered implementation: `d98de5440bec7685f4bb26eace77f2dbb1627f53`.
+  Closeout proof tooling: `9a6b6abb43b41bebd5d3a12a9a6bbddb25ad68f5`.
+- Rules/economy: focused shipped-game suite passed with zero failures. The
+  1,000-round friendly/standard/sharp samples retained house edges
+  `0.1106/0.1423/0.1719`; exact sealed wagers, carries, presses, cheats,
+  rejected input, and save/load passed.
+- Ritual/lifecycle: all seven phases, every save boundary, receipt replay and
+  conflict protection, exact partial/refused cover accounting, 10-seed
+  opponent/onlooker/tell noninterference, and input/reduced-motion equivalence
+  passed. The production Main-scene ante probe passed before and after revisit.
+- Dependencies: Game 1's sealed host and both Craps depth/environment contracts
+  passed, including five distinct profiles and nine hostile-authority cases.
+  The Craps environment seam remains intentionally Craps-owned and rejects Bar
+  Dice identity; per the prompt's explicit finding clause, Bar Dice neither
+  copies that logic nor invents a second interruption authority. Its projection
+  safely handles a future already-authoritative interruption fact.
+- Determinism: two byte-identical ten-seed runs, 560 checkpoints each, combined
+  hash `3142248255`, including 20 Bar Dice roll/controlled-roll checkpoints per
+  pass.
+- Platform: native and fresh Web release export under Chrome 152 CPU4 passed
+  all 15 states with identical semantic hash
+  `4e24b5f7230e6169cec55ce0e812fe76639dfff64ce3f49165d7644fc115019c`
+  and zero browser errors.
+- Performance: full unchanged probe passed; Bar Dice resolve average/p95/max
+  `0.611/0.646/0.677 ms` against `1.5/3.0/4.0 ms` budgets, with surface and
+  resolve coverage present.
+- Visual/accessibility: 15 current native 1280x720 captures and the contact
+  sheet reproduced byte-for-byte; canonical visual QA exited zero with no
+  warnings. Quiet/crowded, every phase, refused/partial, win/loss,
+  interruption, reduced-motion, small-screen, and colorblind states are covered.
+- Retained caveats: an extra whole-runtime contract exceeded its 900-second
+  outer limit without verdict, and an initial dummy-renderer screenshot attempt
+  produced no pixels. Neither is claimed green; the focused dependency gates
+  and real-renderer rerun passed. Full report and hashes:
+  `docs/plans/game06_6_final_closeout.md`.
 
 # Agent Prompt — 0.6 game06_6: Bar Dice Depth
 
