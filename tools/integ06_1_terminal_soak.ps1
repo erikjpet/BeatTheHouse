@@ -26,7 +26,11 @@ if ($LASTEXITCODE -ne 0) { throw "Tracked working tree changes make exact-source
 & git -C $root diff --cached --quiet
 if ($LASTEXITCODE -ne 0) { throw "Staged changes make exact-source evidence invalid." }
 $candidateTree = (& git -C $root rev-parse "$candidate^{tree}").Trim()
-$resolvedProfile = [IO.Path]::GetFullPath((Join-Path $root $ProfilePath))
+$resolvedProfile = if ([IO.Path]::IsPathRooted($ProfilePath)) {
+    [IO.Path]::GetFullPath($ProfilePath)
+} else {
+    [IO.Path]::GetFullPath((Join-Path $root $ProfilePath))
+}
 if (-not (Test-Path -LiteralPath $resolvedProfile -PathType Leaf)) { throw "Evidence profile not found: $resolvedProfile" }
 $profileHash = (Get-FileHash -LiteralPath $resolvedProfile -Algorithm SHA256).Hash.ToLowerInvariant()
 
