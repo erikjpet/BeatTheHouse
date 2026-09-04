@@ -31,8 +31,9 @@ func _capture() -> void:
 		_fail("capture plan did not contain a case")
 		return
 	var version := str(ProjectSettings.get_setting("application/config/version", "")).strip_edges()
-	if version != "0.5.1":
-		_fail("historical capture requires project version 0.5.1, got %s" % version)
+	var expected_version := str(options.get("expected-version", "0.5.1")).strip_edges()
+	if version != expected_version:
+		_fail("historical capture requires project version %s, got %s" % [expected_version, version])
 		return
 
 	for case_value in cases:
