@@ -639,35 +639,18 @@ func _prepare_natural_crew_delivery(library: ContentLibrary, delivery_seed: Stri
 	run_state.start_new(delivery_seed)
 	var generator: RunGenerator = RunGeneratorScript.new(library)
 	generator.next_environment(run_state)
-	var crew_lender_node := ""
-	for node_value in _array(run_state.world_map.get("nodes", [])):
-		if typeof(node_value) != TYPE_DICTIONARY:
-			continue
-		var node_id := str((node_value as Dictionary).get("id", ""))
-		if node_id.is_empty():
-			continue
-		var traveled := generator.travel_environment_result(run_state, node_id, true)
-		if bool(traveled.get("ok", false)) and _array(run_state.current_environment.get("lender_hooks", [])).has("the_crew"):
-			crew_lender_node = node_id
-			break
-	if crew_lender_node.is_empty():
-		return {"eligibility_source": "production_world_map+RunActionService+production_event_selector"}
-	var exploration := _visit_all_real_map_nodes_and_return(run_state, generator, crew_lender_node)
+	var action_service: RunActionService = RunActionServiceScript.new()
+	action_service.setup(library, run_state)
+	var exploration := _visit_delivery_eligible_nodes(run_state, generator, library, action_service, target_layer_id == "back_room")
 	if not bool(exploration.get("ok", false)):
 		return {
 			"eligibility_source": "production_world_map+real_edge_travel+RunActionService+production_event_selector",
-			"crew_lender_node": crew_lender_node,
+			"crew_lender_node": str(exploration.get("crew_lender_node", "")),
 			"exploration": exploration,
 		}
-	var action_service: RunActionService = RunActionServiceScript.new()
-	action_service.setup(library, run_state)
-	var progression := {"ok": true, "action_trace": []}
-	var lender_result: Dictionary = {}
-	if target_layer_id == "back_room":
-		progression = _earn_rook_made_standing(run_state, generator, library, action_service, crew_lender_node)
-		lender_result = _dict(progression.get("final_lender_result", {}))
-	else:
-		lender_result = action_service.use_hook("lender", "the_crew")
+	var crew_lender_node := str(exploration.get("crew_lender_node", ""))
+	var progression := _dict(exploration.get("progression", {"ok": true, "action_trace": []}))
+	var lender_result := _dict(exploration.get("lender_result", {}))
 	if not bool(progression.get("ok", false)):
 		return {
 			"eligibility_source": "production_world_map+real_edge_travel+RunActionService+production_event_selector",
@@ -718,36 +701,155 @@ func _prepare_natural_crew_delivery(library: ContentLibrary, delivery_seed: Stri
 	}
 
 
-func _visit_all_real_map_nodes_and_return(run_state: RunState, generator: RunGenerator, return_node_id: String) -> Dictionary:
-	var visited_ids: Array = []
+func _visit_delivery_eligible_nodes(run_state: RunState, generator: RunGenerator, library: ContentLibrary, action_service: RunActionService, require_made_rank: bool) -> Dictionary:
+	# This is a real-edge player route through every production-eligible maximal
+	# composition venue. It ends at a non-eligible venue so the delivery selector
+	# sees every eligible venue in its preferred visited bucket instead of excluding
+	# the current room. The two hidden destinations are opened by their shipped
+	# public event choices before the route reaches them.
+	var expected_start := "gas_station_casino"
+	if run_state.current_world_node_id() != expected_start:
+		var public_departure := generator.travel_environment_result(run_state, expected_start, true)
+		if not bool(public_departure.get("ok", false)) or run_state.current_world_node_id() != expected_start:
+			return {"ok": false, "message": "Production run could not leave home for the authored public route start.", "current_node_id": run_state.current_world_node_id(), "travel_result": public_departure}
+	var start_finalized := run_state.scenario_finalize_installed_environment(library, {"viewport_size": {"x": 1280, "y": 720}})
+	if not bool(start_finalized.get("ok", false)):
+		return {"ok": false, "message": "Initial production scenario surface did not finalize.", "finalization_result": start_finalized}
+	var underground_unlock := _resolve_public_event_choice(run_state, library, "parking_lot_tip", "follow_tip")
+	if not bool(underground_unlock.get("ok", false)):
+		return {"ok": false, "message": "The shipped parking-lot tip did not open The Punchline route.", "unlock_result": underground_unlock}
+	var eligible_ids: Array = []
+	for archetype_value in library.environment_archetypes:
+		if typeof(archetype_value) != TYPE_DICTIONARY:
+			continue
+		var archetype: Dictionary = archetype_value
+		var archetype_id := str(archetype.get("id", ""))
+		if not library.scenarios_for_archetype(archetype_id).is_empty() and not _array(archetype.get("game_pool", [])).is_empty() and not _array(archetype.get("event_pool", [])).is_empty() and not _array(archetype.get("service_pool", [])).is_empty():
+			eligible_ids.append(archetype_id)
+	if not eligible_ids.has(PUNCHLINE_ID):
+		eligible_ids.append(PUNCHLINE_ID)
+	var visited_ids: Array = [expected_start]
+	var route := _find_delivery_catalog_route(run_state, eligible_ids)
+	if route.is_empty():
+		return {"ok": false, "message": "The generated production graph has no non-repeating route through every eligible composition venue.", "eligible_ids": eligible_ids}
+	var crew_lender_node := ""
+	var lender_result: Dictionary = {}
+	var progression := {"ok": true, "action_trace": []}
+	var grand_unlock: Dictionary = {}
+	for step_id_value in route:
+		var step_id := str(step_id_value)
+		if WorldMapScript.edge_between(run_state.world_map, run_state.current_world_node_id(), step_id).is_empty():
+			return {"ok": false, "message": "Authored composition route lost real edge into %s." % step_id, "visited_ids": visited_ids}
+		var traveled := generator.travel_environment_result(run_state, step_id, true)
+		if not bool(traveled.get("ok", false)) or run_state.current_world_node_id() != step_id:
+			return {"ok": false, "message": "Production travel failed on real edge into %s." % step_id, "visited_ids": visited_ids, "travel_result": traveled}
+		var finalized := run_state.scenario_finalize_installed_environment(library, {"viewport_size": {"x": 1280, "y": 720}})
+		if not bool(finalized.get("ok", false)):
+			return {"ok": false, "message": "Production scenario surface failed to finalize at %s." % step_id, "visited_ids": visited_ids, "finalization_result": finalized}
+		visited_ids.append(step_id)
+		if crew_lender_node.is_empty() and _array(run_state.current_environment.get("lender_hooks", [])).has("the_crew"):
+			crew_lender_node = step_id
+			if require_made_rank:
+				progression = _earn_rook_made_standing(run_state, generator, library, action_service, crew_lender_node)
+				lender_result = _dict(progression.get("final_lender_result", {}))
+			else:
+				lender_result = action_service.use_hook("lender", "the_crew")
+			if not bool(lender_result.get("ok", false)):
+				return {"ok": false, "message": "The shipped Crew lender action was unavailable on the public route.", "visited_ids": visited_ids, "lender_result": lender_result, "progression": progression, "crew_lender_node": crew_lender_node}
+		if step_id == "delta_queen":
+			grand_unlock = _resolve_public_event_choice(run_state, library, "grand_casino_invite", "accept_invite")
+			if not bool(grand_unlock.get("ok", false)):
+				return {"ok": false, "message": "The shipped invitation did not open the Grand Casino route.", "visited_ids": visited_ids, "unlock_result": grand_unlock, "crew_lender_node": crew_lender_node}
+	var missing_ids: Array = []
+	for eligible_id_value in eligible_ids:
+		var eligible_id := str(eligible_id_value)
+		var node := WorldMapScript.node_metadata_by_id(run_state.world_map, eligible_id)
+		if str(node.get("state", "")) != WorldMapScript.STATE_VISITED:
+			missing_ids.append(eligible_id)
+	return {
+		"ok": missing_ids.is_empty() and not eligible_ids.has(run_state.current_world_node_id()) and bool(lender_result.get("ok", false)) and bool(progression.get("ok", false)),
+		"visited_ids": visited_ids,
+		"eligible_ids": eligible_ids,
+		"missing_ids": missing_ids,
+		"crew_lender_node": crew_lender_node,
+		"lender_result": lender_result,
+		"progression": progression,
+		"unlock_results": {"underground": underground_unlock, "grand": grand_unlock},
+	}
+
+
+func _find_delivery_catalog_route(run_state: RunState, eligible_ids: Array) -> Array:
+	var adjacency: Dictionary = {}
 	for node_value in _array(run_state.world_map.get("nodes", [])):
 		if typeof(node_value) != TYPE_DICTIONARY:
 			continue
-		var target_id := str((node_value as Dictionary).get("id", ""))
-		if target_id.is_empty() or target_id == run_state.current_world_node_id():
+		adjacency[str((node_value as Dictionary).get("id", ""))] = []
+	for edge_value in _array(run_state.world_map.get("edges", [])):
+		if typeof(edge_value) != TYPE_DICTIONARY:
 			continue
-		var query := WorldMapScript.prepare_path_query(run_state.world_map, run_state.current_world_node_id(), false)
-		var path := WorldMapScript.prepared_path(query, target_id)
-		if path.is_empty() or not WorldMapScript.prepared_path_uses_real_edges(query, path):
-			return {"ok": false, "message": "No real-edge path to %s." % target_id, "visited_ids": visited_ids}
-		for path_index in range(1, path.size()):
-			var step_id := str(path[path_index])
-			var traveled := generator.travel_environment_result(run_state, step_id, true)
-			if not bool(traveled.get("ok", false)) or run_state.current_world_node_id() != step_id:
-				return {"ok": false, "message": "Production travel failed on real edge into %s." % step_id, "visited_ids": visited_ids}
-			if not visited_ids.has(step_id):
-				visited_ids.append(step_id)
-	if run_state.current_world_node_id() != return_node_id:
-		var return_query := WorldMapScript.prepare_path_query(run_state.world_map, run_state.current_world_node_id(), false)
-		var return_path := WorldMapScript.prepared_path(return_query, return_node_id)
-		if return_path.is_empty() or not WorldMapScript.prepared_path_uses_real_edges(return_query, return_path):
-			return {"ok": false, "message": "No real-edge return path to Crew lender.", "visited_ids": visited_ids}
-		for path_index in range(1, return_path.size()):
-			var step_id := str(return_path[path_index])
-			var traveled := generator.travel_environment_result(run_state, step_id, true)
-			if not bool(traveled.get("ok", false)) or run_state.current_world_node_id() != step_id:
-				return {"ok": false, "message": "Production return travel failed at %s." % step_id, "visited_ids": visited_ids}
-	return {"ok": run_state.current_world_node_id() == return_node_id, "visited_ids": visited_ids}
+		var edge: Dictionary = edge_value
+		var a := str(edge.get("a", ""))
+		var b := str(edge.get("b", ""))
+		if a.is_empty() or b.is_empty() or not adjacency.has(a) or not adjacency.has(b):
+			continue
+		(adjacency[a] as Array).append(b)
+		(adjacency[b] as Array).append(a)
+	var start_id := run_state.current_world_node_id()
+	var visited := {start_id: true}
+	var path: Array = [start_id]
+	if _search_delivery_catalog_route(start_id, eligible_ids, adjacency, visited, path):
+		return path.slice(1)
+	return []
+
+
+func _search_delivery_catalog_route(current_id: String, eligible_ids: Array, adjacency: Dictionary, visited: Dictionary, path: Array) -> bool:
+	var all_eligible_visited := true
+	for eligible_value in eligible_ids:
+		if not visited.has(str(eligible_value)):
+			all_eligible_visited = false
+			break
+	if all_eligible_visited and not eligible_ids.has(current_id):
+		return true
+	var neighbors := _array(adjacency.get(current_id, [])).duplicate()
+	neighbors.sort_custom(func(left: Variant, right: Variant) -> bool:
+		var left_id := str(left)
+		var right_id := str(right)
+		var left_required := eligible_ids.has(left_id)
+		var right_required := eligible_ids.has(right_id)
+		if left_required != right_required:
+			return left_required
+		return left_id < right_id
+	)
+	for neighbor_value in neighbors:
+		var neighbor_id := str(neighbor_value)
+		if visited.has(neighbor_id):
+			continue
+		# The Grand's real edge remains closed until its public invitation has been
+		# accepted at Delta Queen, so only consider graph paths in that order.
+		if neighbor_id == "grand_casino" and not visited.has("delta_queen"):
+			continue
+		visited[neighbor_id] = true
+		path.append(neighbor_id)
+		if _search_delivery_catalog_route(neighbor_id, eligible_ids, adjacency, visited, path):
+			return true
+		path.pop_back()
+		visited.erase(neighbor_id)
+	return false
+
+
+func _resolve_public_event_choice(run_state: RunState, library: ContentLibrary, event_id: String, choice_id: String) -> Dictionary:
+	if not _array(run_state.current_environment.get("event_ids", [])).has(event_id):
+		return {"ok": false, "message": "%s is not offered in the current production environment." % event_id}
+	var module: EventModule = EventModuleScript.new()
+	module.setup(library.event(event_id), library)
+	var choice_available := false
+	for choice_value in module.choices(run_state, run_state.current_environment):
+		if typeof(choice_value) == TYPE_DICTIONARY and str((choice_value as Dictionary).get("id", "")) == choice_id:
+			choice_available = true
+			break
+	if not choice_available:
+		return {"ok": false, "message": "%s is not a public choice for %s." % [choice_id, event_id]}
+	return module.resolve(run_state, run_state.current_environment, choice_id)
 
 
 func _earn_rook_made_standing(run_state: RunState, generator: RunGenerator, library: ContentLibrary, action_service: RunActionService, crew_lender_node: String) -> Dictionary:
