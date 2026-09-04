@@ -1650,7 +1650,10 @@ func _sealed_action_host_proposal_valid(proposal: Dictionary, proposal_input: Di
 		return false
 	if str(proposal.get("input_fingerprint", "")) != GameRitualRuntimeScript.canonical_fingerprint(proposal_input):
 		return false
-	var output := proposal.duplicate(true)
+	# Validation erases only one top-level field. The proposal's nested result and
+	# snapshots remain immutable here, so cloning the entire saved run would add
+	# a second full-state allocation to every accepted action.
+	var output := proposal.duplicate(false)
 	var provided_output_fingerprint := str(output.get("output_fingerprint", ""))
 	output.erase("output_fingerprint")
 	if provided_output_fingerprint != GameRitualRuntimeScript.canonical_fingerprint(output):
@@ -1665,9 +1668,9 @@ func _sealed_action_host_proposal_valid(proposal: Dictionary, proposal_input: Di
 		resolve_method,
 		str(proposal_input.get("action_id", "")),
 		int(proposal_input.get("stake", 0)),
-		(proposal_input.get("run_snapshot", {}) as Dictionary).duplicate(true),
-		(proposal_input.get("rng_snapshot", {}) as Dictionary).duplicate(true),
-		(proposal_input.get("ui_state", {}) as Dictionary).duplicate(true)
+		proposal_input.get("run_snapshot", {}),
+		proposal_input.get("rng_snapshot", {}),
+		proposal_input.get("ui_state", {})
 	)
 	return GameRitualRuntimeScript.canonical_json(canonical) == GameRitualRuntimeScript.canonical_json(proposal)
 
@@ -1843,7 +1846,9 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 	var expanded_ledger := _sealed_action_host_expand_proposal_ledger(funded_ledger, compact_input_ledger, compact_output_ledger)
 	if expanded_ledger.is_empty():
 		return _sealed_action_host_rejection("invalid_proposal", "Blackjack proposal changed sealed authority history or delivery state.", request_key)
-	var proposal := compact_proposal.duplicate(true)
+	# Both replacements below are top-level. The compact proposal has already
+	# passed exact replay validation, and its nested values remain read-only.
+	var proposal := compact_proposal.duplicate(false)
 	proposal["input_fingerprint"] = GameRitualRuntimeScript.canonical_fingerprint(proposal_input)
 	proposal["run_snapshot"] = _sealed_action_host_snapshot_with_ledger(
 		compact_proposal.get("run_snapshot", {}),
@@ -1864,7 +1869,7 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 			or str(result.get("environment_id", "")) != str(candidate.current_environment.get("id", "")):
 		return _sealed_action_host_rejection("invalid_proposal", "Blackjack result identity did not match the sealed delivery.", request_key)
 	var proposed_candidate := _sealed_action_host_restored_candidate(
-		(compact_proposal.get("run_snapshot", {}) as Dictionary).duplicate(true),
+		compact_proposal.get("run_snapshot", {}),
 		_copy_dict(candidate.current_environment.get("scenario_layout_context", {})),
 		candidate.current_environment
 	)
@@ -1879,7 +1884,7 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 	if proposed_ledger.is_empty() or GameRitualRuntimeScript.canonical_json(proposed_ledger.get("pending_delivery", {})) != GameRitualRuntimeScript.canonical_json(delivery):
 		return _sealed_action_host_rejection("invalid_proposal", "Blackjack proposal changed its delivery authority.", request_key)
 	var proposed_rng := RngStream.new()
-	proposed_rng.restore((proposal.get("rng_snapshot", {}) as Dictionary).duplicate(true))
+	proposed_rng.restore(proposal.get("rng_snapshot", {}))
 	var skip_environment_turn := _sealed_action_host_normalize_environment_turn(result, action_id)
 	var requires_apply := _sealed_action_host_normalize_result_authority(result, provider_contract)
 	result[ActionAuthorityScript.HOST_COMMITTED_KEY] = true
@@ -6732,9 +6737,19 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		return {"ok": false, "errors": ["Travel requires an active run."]}
 	if travel_transition_active:
 		return {"ok": false, "errors": ["Travel is already in progress."]}
+	# This stage clock exists only for an explicitly enabled performance probe.
+	# Normal travel skips timestamp reads and publishes no diagnostics.
+	var perf_corner_store_timing := perf_telemetry_overlay != null \
+		and perf_telemetry_overlay.travel_stage_timing_enabled(target_id)
+	var perf_corner_store_total_started_usec := Time.get_ticks_usec() if perf_corner_store_timing else 0
+	var perf_corner_store_stage_started_usec := perf_corner_store_total_started_usec
+	var perf_corner_store_stages := {}
 	var lifecycle_rollback := _foundation_lifecycle_snapshot()
 	_protect_foundation_coach_attention(lifecycle_rollback)
 	_clear_recent_result_feedback()
+	if perf_corner_store_timing:
+		perf_corner_store_stages["lifecycle_snapshot_ms"] = float(Time.get_ticks_usec() - perf_corner_store_stage_started_usec) / 1000.0
+		perf_corner_store_stage_started_usec = Time.get_ticks_usec()
 	var ignored_talk_entries: Array = []
 	if choice_data.is_empty():
 		choice_data = _travel_choice(target_id)
@@ -6798,6 +6813,9 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	_show_message("Traveling to %s..." % target_label)
 	if not web_atomic_travel:
 		_refresh()
+	if perf_corner_store_timing:
+		perf_corner_store_stages["route_preflight_ms"] = float(Time.get_ticks_usec() - perf_corner_store_stage_started_usec) / 1000.0
+		perf_corner_store_stage_started_usec = Time.get_ticks_usec()
 	# The result-returning lifecycle boundary must remain synchronous so callers
 	# can atomically commit or roll back the complete travel transaction.
 	var route_risk := {} if local_casino_room_move else run_state.travel_route_risk(route, target_id)
@@ -6824,6 +6842,9 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		_refresh_after_foundation_lifecycle_rollback(lifecycle_rollback)
 		return {"ok": false, "errors": [clock_error]}
 	route["arrived_game_clock_minutes"] = maxi(departed_game_clock_minutes, run_state.game_clock_minutes)
+	if perf_corner_store_timing:
+		perf_corner_store_stages["route_clock_ms"] = float(Time.get_ticks_usec() - perf_corner_store_stage_started_usec) / 1000.0
+		perf_corner_store_stage_started_usec = Time.get_ticks_usec()
 	var install_result: Dictionary
 	if local_casino_room_move:
 		install_result = generator.enter_grand_casino_room_result(run_state, target_id)
@@ -6846,6 +6867,9 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 			_show_message(install_error)
 			_refresh_after_foundation_lifecycle_rollback(lifecycle_rollback)
 			return {"ok": false, "errors": [install_error]}
+	if perf_corner_store_timing:
+		perf_corner_store_stages["destination_generation_install_ms"] = float(Time.get_ticks_usec() - perf_corner_store_stage_started_usec) / 1000.0
+		perf_corner_store_stage_started_usec = Time.get_ticks_usec()
 	var delivery_arrival := run_state.delivery_resolve_travel_arrival(route, route_risk) if run_state.delivery_has_active_run() else {}
 	if not delivery_arrival.is_empty() and not bool(delivery_arrival.get("ok", false)):
 		_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
@@ -6911,6 +6935,9 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		var travel_deltas: Dictionary = travel_result.get("deltas", {}) if typeof(travel_result.get("deltas", {})) == TYPE_DICTIONARY else {}
 		travel_deltas["messages"] = [str(travel_result.get("message", ""))]
 		travel_result["deltas"] = travel_deltas
+	if perf_corner_store_timing:
+		perf_corner_store_stages["destination_postprocess_ms"] = float(Time.get_ticks_usec() - perf_corner_store_stage_started_usec) / 1000.0
+		perf_corner_store_stage_started_usec = Time.get_ticks_usec()
 	GameModule.apply_result(run_state, travel_result)
 	if not ignored_talk_entries.is_empty():
 		_apply_talk_ignore_penalty(ignored_talk_entries, "travel")
@@ -6919,6 +6946,9 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	_show_message(str(travel_result.get("message", "Travel complete: %s." % destination_name)))
 	_advance_alcohol_absorption()
 	_autosave_foundation_run("Autosaved.")
+	if perf_corner_store_timing:
+		perf_corner_store_stages["result_commit_save_ms"] = float(Time.get_ticks_usec() - perf_corner_store_stage_started_usec) / 1000.0
+		perf_corner_store_stage_started_usec = Time.get_ticks_usec()
 	if web_atomic_travel:
 		_hide_travel_transition()
 	else:
@@ -6945,6 +6975,13 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 			_refresh()
 	elif web_atomic_travel:
 		_refresh()
+	if perf_corner_store_timing:
+		perf_corner_store_stages["triggered_events_refresh_ms"] = float(Time.get_ticks_usec() - perf_corner_store_stage_started_usec) / 1000.0
+		perf_telemetry_overlay.mark_event("corner_store_travel_stage_timing", {
+			"target_id": target_id,
+			"stages": perf_corner_store_stages,
+			"total_ms": float(Time.get_ticks_usec() - perf_corner_store_total_started_usec) / 1000.0,
+		})
 	_commit_foundation_coach_attention(lifecycle_rollback)
 	return {"ok": true, "errors": [], "travel_result": travel_result.duplicate(true)}
 
