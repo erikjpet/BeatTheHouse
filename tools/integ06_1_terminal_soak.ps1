@@ -14,6 +14,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $root = [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
+. (Join-Path $PSScriptRoot "integ06_1_terminal_soak_contract.ps1")
 if ($ShardCount -lt 1) { throw "ShardCount must be positive." }
 if ($Cpu -lt 1) { throw "Cpu must be positive." }
 if ($TimeoutMs -lt 1) { throw "TimeoutMs must be positive." }
@@ -58,6 +59,7 @@ $toolFiles = @(
     (Join-Path $root "tools\integ06_1_terminal_soak_main.gd"),
     (Join-Path $root "tools\integ06_1_terminal_soak_main.tscn"),
     (Join-Path $root "tools\integ06_1_terminal_soak_web_capture.mjs"),
+    (Join-Path $root "tools\integ06_1_terminal_soak_contract.ps1"),
     (Join-Path $root "tools\endgame_metrics_probe.gd")
 )
 $toolHashInput = ($toolFiles | Sort-Object | ForEach-Object { "$(Split-Path -Leaf $_):$((Get-FileHash -LiteralPath $_ -Algorithm SHA256).Hash.ToLowerInvariant())" }) -join "`n"
@@ -104,12 +106,14 @@ function Read-TerminalMarker {
 }
 
 function Assert-Provenance {
-    param($Report, [string]$Label, [string]$Platform)
+    param($Report, [string]$Label, [string]$Platform, [int]$ExpectedShardIndex)
     if ([string]$Report.schema -cne "beat_the_house.integ06_1_terminal_soak_shard/v1" -or [int]$Report.version -ne 1) { throw "$Label has the wrong schema." }
     if ([string]$Report.candidate_commit -cne $candidate -or [string]$Report.candidate_tree -cne $candidateTree) { throw "$Label has stale candidate provenance." }
     if ([string]$Report.tool_source_sha256 -cne $toolHash) { throw "$Label has stale tool provenance." }
     if ([string]$Report.profile.sha256 -cne $profileHash -or [string]$Report.profile.evidence_profile -cne $EvidenceProfile) { throw "$Label has stale evidence-profile provenance." }
     if ([string]$Report.platform -cne $Platform) { throw "$Label reported platform $([string]$Report.platform), expected $Platform." }
+    $contractFailures = @(Get-IntegTerminalShardFailures $Report $ExpectedShardIndex $ShardCount $Label)
+    if ($contractFailures.Count -ne 0) { throw "$Label failed terminal shard custody: $($contractFailures -join ' | ')" }
 }
 
 foreach ($fileName in @("icon.svg", "project.godot", "export_presets.cfg")) {
@@ -194,7 +198,7 @@ function Invoke-NativeShard {
         $env:BTH_DISTRIBUTION_BUILD = $previousBuild
     }
     $report = if (Test-Path -LiteralPath $runtimeReport -PathType Leaf) { Get-Content -LiteralPath $runtimeReport -Raw | ConvertFrom-Json } else { Read-TerminalMarker -StdoutPath $stdout -Label $stem }
-    Assert-Provenance -Report $report -Label $stem -Platform "Windows"
+    Assert-Provenance -Report $report -Label $stem -Platform "Windows" -ExpectedShardIndex $ShardIndex
     $report | ConvertTo-Json -Depth 100 | Set-Content -LiteralPath (Join-Path $out "$stem.json")
     return $report
 }
@@ -229,7 +233,7 @@ try {
         Invoke-BoundedProcess -FilePath "node" -ArgumentList @((Join-Path $root "tools\integ06_1_terminal_soak_web_capture.mjs"), "--url=http://127.0.0.1:$WebPort/index.html?$query", "--out=$webJson", "--profile=$(Join-Path $out "${stem}_profile")", "--cpu=$Cpu", "--timeout-ms=$TimeoutMs", "--playwright-package=$playwrightPackage", ('--chrome="{0}"' -f $chrome)) -StdoutPath (Join-Path $out "$stem.stdout.txt") -StderrPath (Join-Path $out "$stem.stderr.txt") -Label $stem -AllowFailure | Out-Null
         if (-not (Test-Path -LiteralPath $webJson -PathType Leaf)) { throw "$stem emitted no report." }
         $report = Get-Content -LiteralPath $webJson -Raw | ConvertFrom-Json
-        Assert-Provenance -Report $report -Label $stem -Platform "Web"
+        Assert-Provenance -Report $report -Label $stem -Platform "Web" -ExpectedShardIndex $shard
         $webReports[$shard] = $report
     }
 } finally {
@@ -255,6 +259,12 @@ for ($shard = 0; $shard -lt $ShardCount; $shard++) {
     $activeSystems += @($first.active_systems)
     $artifacts += @("shard_${shard}_native_1.json", "shard_${shard}_native_2.json", "shard_${shard}_web.json")
 }
+$nativeFirstReports = @($nativeFirst.Keys | Sort-Object | ForEach-Object { $nativeFirst[$_] })
+$nativeSecondReports = @($nativeSecond.Keys | Sort-Object | ForEach-Object { $nativeSecond[$_] })
+$webReportRows = @($webReports.Keys | Sort-Object | ForEach-Object { $webReports[$_] })
+foreach ($failure in @(Get-IntegTerminalAggregateFailures $nativeFirstReports "native")) { $failures += $failure }
+foreach ($failure in @(Get-IntegTerminalAggregateFailures $nativeSecondReports "native repeat")) { $failures += $failure }
+foreach ($failure in @(Get-IntegTerminalAggregateFailures $webReportRows "Web")) { $failures += $failure }
 $routeRows = @($rows | Where-Object { [string]$_.terminal.status -eq "ended" } | ForEach-Object { [string]$_.terminal.route } | Sort-Object -Unique)
 $failureRows = @($rows | Where-Object { [string]$_.terminal.status -eq "failed" } | ForEach-Object { [string]$_.terminal.failure_reason } | Sort-Object -Unique)
 $expectedVictoryRoutes = @("high_roller_cashout", "pit_boss_showdown", "crew_heist")
@@ -287,6 +297,16 @@ for ($shard = 0; $shard -lt $ShardCount; $shard++) {
 }
 $crewIgnoreCovered = $control.Count -eq 1 -and @($control[0].lender_ids) -cnotcontains "the_crew"
 $artifactRecords = @($artifacts | ForEach-Object { New-EvidenceArtifact ([string]$_) })
+$systemWitnessEvidence = [ordered]@{
+    native = @($nativeFirstReports | ForEach-Object { [pscustomobject]@{ shard = $_.shard.index; witnesses = $_.system_witnesses } })
+    native_repeat = @($nativeSecondReports | ForEach-Object { [pscustomobject]@{ shard = $_.shard.index; witnesses = $_.system_witnesses } })
+    web = @($webReportRows | ForEach-Object { [pscustomobject]@{ shard = $_.shard.index; witnesses = $_.system_witnesses } })
+}
+$retainedEvidence = [ordered]@{
+    native = @($nativeFirstReports | ForEach-Object { [pscustomobject]@{ shard = $_.shard.index; counters = $_.retained_counters } })
+    native_repeat = @($nativeSecondReports | ForEach-Object { [pscustomobject]@{ shard = $_.shard.index; counters = $_.retained_counters } })
+    web = @($webReportRows | ForEach-Object { [pscustomobject]@{ shard = $_.shard.index; counters = $_.retained_counters } })
+}
 
 $manifest = [ordered]@{
     schema = "beat_the_house.integ06_1_terminal_soak_manifest/v1"
@@ -298,6 +318,8 @@ $manifest = [ordered]@{
     shard = [ordered]@{ count = $ShardCount; seed_ids = @($seedIds | Sort-Object -Unique) }
     platform = @("Windows", "Web")
     active_systems = @($activeSystems | Sort-Object -Unique)
+    required_active_systems = $script:IntegRequiredSystemWitnesses
+    system_witnesses = $systemWitnessEvidence
     authored_max_counts = [ordered]@{ documented_seed_cases = 9; victory_routes = 3; representative_failure_routes_min = 2; max_actions_per_case = 132; save_load_stride_actions = 7 }
     crew_ignore_control = $crewIgnoreCovered
     victory_routes = $routeRows
@@ -316,7 +338,7 @@ $manifest = [ordered]@{
     terminal = [ordered]@{ status = if ($failures.Count -eq 0) { "covered" } else { "incomplete" }; routes = $routeRows; failure_reasons = $failureRows; profile_recorded = @($rows | Where-Object { -not $_.terminal.profile_recorded }).Count -eq 0 }
     semantic_trace_sha256 = (($nativeFirst.Keys | Sort-Object | ForEach-Object { [string]$nativeFirst[$_].semantic_trace_sha256 }) -join ":")
     save_load_points = ($rows | Measure-Object -Property save_load_count -Sum).Sum
-    retained_counters = [ordered]@{ available = $true; measured = @("state_bytes"); nodes = $null; resources = $null; objects = $null; orphans = $null; state_bytes = ($rows | Measure-Object -Property state_bytes -Maximum).Maximum }
+    retained_counters = [ordered]@{ available = $true; measured = @("resources", "objects", "nodes", "orphans", "state_bytes"); limits = $script:IntegRetainedGrowthLimits; shards = $retainedEvidence; state_bytes = ($rows | Measure-Object -Property state_bytes -Maximum).Maximum }
     allocation_copy_counters = [ordered]@{ available = $false; allocations = $null; shallow_copies = $null; deep_copies = $null; bytes = $null; source = "not_instrumented_by_terminal_policy_driver" }
     rows = $rows
     shard_reports = $artifacts
