@@ -1519,6 +1519,14 @@ func _measure_scenario(name: String, tags: Dictionary, frames: int) -> void:
 func _begin_scenario(name: String, tags: Dictionary = {}) -> void:
 	if scenario_active:
 		_end_scenario()
+	# Reset the production canvases before the start snapshot so draw cost and
+	# liveness belong to this phase rather than an earlier fixture.
+	var game_canvas := app.get("game_surface_canvas") as Control if app != null else null
+	if game_canvas != null and game_canvas.has_method("reset_performance_counters"):
+		game_canvas.call("reset_performance_counters")
+	var environment_canvas := app.get("environment_canvas") as Control if app != null else null
+	if environment_canvas != null and environment_canvas.has_method("reset_performance_counters"):
+		environment_canvas.call("reset_performance_counters")
 	current_scenario = name
 	_emit_console("BTH_PERF_SCENARIO ", {"phase": "begin", "name": name, "ticks_msec": Time.get_ticks_msec()})
 	current_tags = tags.duplicate(false)
@@ -1592,6 +1600,7 @@ func _end_scenario() -> void:
 		"end_msec": end_msec,
 		"duration_msec": maxi(0, end_msec - current_start_msec),
 		"frame_time_ms": _float_stats(frame_ms_samples),
+		"surface_draw_time_ms": _surface_draw_stats(end_liveness, frame_ms_samples),
 		"process_time_ms": _float_stats(process_ms_samples),
 		"physics_time_ms": _float_stats(physics_ms_samples),
 		"draw_calls": _int_stats(draw_call_samples),
@@ -1643,6 +1652,30 @@ func _end_scenario() -> void:
 	_emit_console("BTH_PERF_SCENARIO ", {"phase": "end", "name": current_scenario, "ticks_msec": end_msec, "frame_count": frame_ms_samples.size()})
 	scenario_active = false
 	current_scenario = ""
+
+
+func _surface_draw_stats(end_liveness: Dictionary, measured_frame_samples: Array) -> Dictionary:
+	var game_status: Dictionary = end_liveness.get("game_surface", {}) if typeof(end_liveness.get("game_surface", {})) == TYPE_DICTIONARY else {}
+	var sample_count := int(game_status.get("draw_sample_count", 0))
+	if sample_count > 0:
+		return {
+			"count": sample_count,
+			"avg_ms": float(game_status.get("draw_avg_ms", 0.0)),
+			"p95_ms": float(game_status.get("draw_p95_ms", 0.0)),
+			"max_ms": float(game_status.get("draw_max_ms", 0.0)),
+			"source": "production_game_canvas",
+		}
+	# PixelSceneCanvas exposes a liveness count but does not publish a separate
+	# CPU draw timer. The complete frame cost is a conservative upper bound for
+	# environment/system draw cost and can never hide a draw regression.
+	var frame_stats := _float_stats(measured_frame_samples)
+	return {
+		"count": int(frame_stats.get("count", 0)),
+		"avg_ms": float(frame_stats.get("avg", 0.0)),
+		"p95_ms": float(frame_stats.get("p95", 0.0)),
+		"max_ms": float(frame_stats.get("max", 0.0)),
+		"source": "complete_frame_upper_bound",
+	}
 
 
 func _allocation_copy_snapshot() -> Dictionary:
