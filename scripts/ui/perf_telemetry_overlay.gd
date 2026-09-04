@@ -1972,7 +1972,7 @@ func _measure_followup_game_phases(game_id: String) -> void:
 
 
 func _measure_observed_game_phase(game_id: String, phase_id: String, scenario_name: String, frames: int) -> bool:
-	var before := _perf06_surface_evidence(_current_game_phase_snapshot())
+	var before := _current_game_phase_evidence()
 	var observed := _game_phase_observed(game_id, phase_id, before)
 	if not observed:
 		mark_event("perf06_phase_not_observed", {"game_id": game_id, "phase_id": phase_id, "evidence": before})
@@ -1985,7 +1985,7 @@ func _measure_observed_game_phase(game_id: String, phase_id: String, scenario_na
 		"phase_evidence": {"observed": true, "before": before},
 	})
 	await _wait_frames(frames)
-	var after := _perf06_surface_evidence(_current_game_phase_snapshot())
+	var after := _current_game_phase_evidence()
 	var phase_evidence: Dictionary = current_tags.get("phase_evidence", {})
 	phase_evidence["after"] = after
 	current_tags["phase_evidence"] = phase_evidence
@@ -1995,7 +1995,7 @@ func _measure_observed_game_phase(game_id: String, phase_id: String, scenario_na
 
 func _wait_for_game_phase(game_id: String, phase_id: String, max_frames: int) -> bool:
 	for _frame_index in range(maxi(1, max_frames)):
-		var evidence := _perf06_surface_evidence(_current_game_phase_snapshot())
+		var evidence := _current_game_phase_evidence()
 		if _game_phase_observed(game_id, phase_id, evidence):
 			return true
 		await get_tree().process_frame
@@ -2017,6 +2017,21 @@ func _current_game_phase_snapshot() -> Dictionary:
 	return app.current_game_view_snapshot()
 
 
+func _current_game_phase_evidence() -> Dictionary:
+	var evidence := _perf06_surface_evidence(_current_game_phase_snapshot())
+	var canvas := app.get("game_surface_canvas") as Control if app != null else null
+	var animation_channels := {}
+	if canvas != null and canvas.has_method("surface_animation_active") and canvas.has_method("surface_animation_progress"):
+		for channel_value in ["baccarat_deal", "baccarat_payout", "roulette_spin", "roulette_payout", "craps_roll"]:
+			var channel := str(channel_value)
+			animation_channels[channel] = {
+				"active": bool(canvas.call("surface_animation_active", channel)),
+				"progress": float(canvas.call("surface_animation_progress", channel)),
+			}
+	evidence["animation_channels"] = animation_channels
+	return evidence
+
+
 func _measure_pull_tab_redeem_phase() -> void:
 	# The purchased tab first exists in the dispenser tray. Follow the ordinary
 	# collect/reveal/file controls; never mutate the ticket outcome to manufacture
@@ -2024,13 +2039,13 @@ func _measure_pull_tab_redeem_phase() -> void:
 	await _wait_for_animation_quiet(240)
 	_emit_surface_action("pull_tab_collect_tray", 0, false)
 	await _wait_frames(4)
-	for _reveal_index in range(10):
-		var evidence := _perf06_surface_evidence(_current_game_phase_snapshot())
+	_emit_surface_action("pull_tab_auto_open", 0, false)
+	for _reveal_index in range(1200):
+		var evidence := _current_game_phase_evidence()
 		if str(evidence.get("counter_phase", "")) == "file":
 			break
-		_emit_surface_action("pull_tab_reveal_next", 0, false)
-		await _wait_frames(60)
-	var revealed := _perf06_surface_evidence(_current_game_phase_snapshot())
+		await get_tree().process_frame
+	var revealed := _current_game_phase_evidence()
 	if str(revealed.get("counter_phase", "")) != "file":
 		mark_event("perf06_phase_not_observed", {"game_id": "pull_tabs", "phase_id": "payout_redeem", "evidence": revealed})
 		return
@@ -2041,7 +2056,7 @@ func _measure_pull_tab_redeem_phase() -> void:
 
 func _wait_for_animation_quiet(max_frames: int) -> bool:
 	for _frame_index in range(maxi(1, max_frames)):
-		var evidence := _perf06_surface_evidence(_current_game_phase_snapshot())
+		var evidence := _current_game_phase_evidence()
 		if (evidence.get("active_animation_channels", []) as Array).is_empty():
 			return true
 		await get_tree().process_frame
@@ -2079,6 +2094,7 @@ func _game_phase_observed(game_id: String, phase_id: String, evidence: Dictionar
 	var phase := str(evidence.get("phase", ""))
 	var ritual_phase := str(evidence.get("ritual_phase", evidence.get("bar_dice_ritual_phase", "")))
 	var result_visible := bool(evidence.get("last_result_present", false)) or not str(evidence.get("result_message", "")).is_empty()
+	var animations: Dictionary = evidence.get("animation_channels", {}) if typeof(evidence.get("animation_channels", {})) == TYPE_DICTIONARY else {}
 	if phase_id == "ritual":
 		return bool(evidence.get("ritual_projection_present", false)) \
 			or bool(evidence.get("bar_dice_ritual_projection_present", false)) \
@@ -2101,22 +2117,28 @@ func _game_phase_observed(game_id: String, phase_id: String, evidence: Dictionar
 				and str(evidence.get("ritual_projection_phase", "")) == "payout_or_handpay" \
 				and bool(evidence.get("ritual_acknowledgement_available", false))
 		"baccarat":
+			var baccarat_deal: Dictionary = animations.get("baccarat_deal", {}) if typeof(animations.get("baccarat_deal", {})) == TYPE_DICTIONARY else {}
+			var baccarat_payout: Dictionary = animations.get("baccarat_payout", {}) if typeof(animations.get("baccarat_payout", {})) == TYPE_DICTIONARY else {}
 			if phase_id == "skill":
-				return ritual_phase == "squeeze_reveal"
+				var deal_progress := float(baccarat_deal.get("progress", 0.0))
+				return ritual_phase == "squeeze_reveal" or (bool(baccarat_deal.get("active", false)) and deal_progress >= 0.43 and deal_progress < 0.58)
 			if phase_id == "resolve_payout":
-				return ritual_phase == "settlement" and result_visible
+				return (ritual_phase == "settlement" or bool(baccarat_payout.get("active", false))) and result_visible
 		"roulette":
+			var roulette_spin: Dictionary = animations.get("roulette_spin", {}) if typeof(animations.get("roulette_spin", {})) == TYPE_DICTIONARY else {}
+			var roulette_payout: Dictionary = animations.get("roulette_payout", {}) if typeof(animations.get("roulette_payout", {})) == TYPE_DICTIONARY else {}
 			if phase_id == "post_spin":
-				return ritual_phase == "ball_settle"
+				return ritual_phase == "ball_settle" or (bool(roulette_spin.get("active", false)) and float(roulette_spin.get("progress", 0.0)) >= 0.80)
 			if phase_id == "resolve_payout":
-				return ritual_phase == "croupier_settlement" and result_visible
+				return (ritual_phase == "croupier_settlement" or bool(roulette_payout.get("active", false))) and result_visible
 		"craps":
+			var craps_roll: Dictionary = animations.get("craps_roll", {}) if typeof(animations.get("craps_roll", {})) == TYPE_DICTIONARY else {}
 			if phase_id == "bounce":
-				return ritual_phase == "bounce_read"
+				return ritual_phase == "bounce_read" or (bool(craps_roll.get("active", false)) and float(craps_roll.get("progress", 0.0)) < 0.55)
 			if phase_id == "settle":
-				return ritual_phase == "dealer_settlement"
+				return ritual_phase == "dealer_settlement" or (bool(craps_roll.get("active", false)) and float(craps_roll.get("progress", 0.0)) >= 0.55)
 			if phase_id == "resolve":
-				return ritual_phase == "betting" and result_visible
+				return not bool(craps_roll.get("active", false)) and result_visible
 		"crew_draw_poker":
 			return phase_id == "ordered_hand" and phase in ["before", "draw", "after"]
 		"video_poker":
