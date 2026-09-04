@@ -83,6 +83,9 @@ const REPORT_PREFIX := "BTH_PERF_REPORT "
 const READY_PREFIX := "BTH_PERF_READY "
 const COIN_PUSHER_FIXTURE_SEED := "practice:coin_pusher_full_cap"
 const COIN_PUSHER_SHIPPED_BODY_COUNT := 160
+const COIN_PUSHER_SOLVER_STRESS_BODY_COUNT := 300
+const COIN_PUSHER_SOLVER_SAMPLE_COUNT := 60
+const COIN_PUSHER_SOLVER_TICK_P95_BUDGET_MS := 12.0
 const COIN_PUSHER_IDLE_SAMPLE_FRAMES := 120
 const COIN_PUSHER_ACTION_SAMPLE_FRAMES := 60
 const IDLE_LIVENESS_MINIMUM_INTERVALS := 2
@@ -660,6 +663,8 @@ func _run_coin_pusher_plan() -> void:
 	mark_event("coin_pusher_fixture_identity", fixture)
 	await _wait_frames(4)
 	await _measure_coin_pusher_idle("coin_pusher_idle", false, fixture)
+	await _measure_coin_pusher_goal_ritual(fixture)
+	await _measure_coin_pusher_raw_solver(run_state, game)
 	for action_value in [
 		["coin_pusher_drop", "coin_pusher_active_drop"],
 		["coin_pusher_carriage_left", "coin_pusher_active_carriage"],
@@ -707,6 +712,7 @@ func _run_coin_pusher_plan() -> void:
 	})
 	await _measure_coin_pusher_idle("coin_pusher_reduced_motion", true, reduced_fixture)
 	await _set_coin_pusher_reduce_motion(false)
+	await _measure_coin_pusher_ceiling_refusal(run_state, game)
 	l02_driver_complete = true
 	dump_report()
 	await _quit_after_report_flush()
@@ -778,9 +784,15 @@ func _coin_pusher_machine_definition(game: GameModule) -> Dictionary:
 # shipped-cap Quarter Falls fixture: same seed namespace, fork, production solver
 # API, durable snapshot and real cabinet entry path.
 func _install_coin_pusher_fixture(run_state: RunState, game: GameModule) -> bool:
+	if not _install_coin_pusher_fixture_at_body_count(run_state, game, COIN_PUSHER_SHIPPED_BODY_COUNT):
+		return false
+	return int(game.call("_coin_cap")) == COIN_PUSHER_SHIPPED_BODY_COUNT
+
+
+func _install_coin_pusher_fixture_at_body_count(run_state: RunState, game: GameModule, body_count: int) -> bool:
 	var machine_definition := _coin_pusher_machine_definition(game)
-	var fixture_rng := run_state.create_rng("performance_coin_pusher_full_cap").fork("bodies:%d" % COIN_PUSHER_SHIPPED_BODY_COUNT)
-	var simulation := CoinPusherSolverScript.create_machine(fixture_rng, machine_definition, COIN_PUSHER_SHIPPED_BODY_COUNT)
+	var fixture_rng := run_state.create_rng("performance_coin_pusher_full_cap").fork("bodies:%d" % body_count)
+	var simulation := CoinPusherSolverScript.create_machine(fixture_rng, machine_definition, body_count)
 	var machine := game.call("_ensure_machine_state", run_state, run_state.current_environment, true) as Dictionary
 	machine["variation_id"] = "quarter_falls"
 	machine["variation_state"] = {}
@@ -796,9 +808,8 @@ func _install_coin_pusher_fixture(run_state: RunState, game: GameModule) -> bool
 	machine.erase("live_session")
 	game.call("_write_machine_state", run_state.current_environment, machine)
 	app.call("_refresh")
-	return CoinPusherSolverScript.coin_count(simulation) == COIN_PUSHER_SHIPPED_BODY_COUNT \
-		and int(game.call("_coin_cap")) == COIN_PUSHER_SHIPPED_BODY_COUNT \
-		and int(machine_definition.get("ceiling", 0)) >= COIN_PUSHER_SHIPPED_BODY_COUNT \
+	return CoinPusherSolverScript.coin_count(simulation) == body_count \
+		and int(machine_definition.get("ceiling", 0)) >= body_count \
 		and int(simulation.get("fixed_hz", 0)) == CoinPusherSolverScript.FIXED_HZ
 
 
@@ -923,6 +934,147 @@ func _coin_pusher_surface_state(canvas: Control) -> Dictionary:
 		# cloning presentation data that the report never consumes.
 		return (canvas.call("realtime_surface_state") as Dictionary).duplicate(false)
 	return {}
+
+
+func _measure_coin_pusher_goal_ritual(fixture: Dictionary) -> void:
+	var canvas := _coin_pusher_canvas()
+	if canvas != null and canvas.has_method("reset_performance_counters"):
+		canvas.call("reset_performance_counters")
+	var before := _coin_pusher_surface_state(canvas)
+	var goal_before: Dictionary = before.get("coin_pusher_goal", {}) if typeof(before.get("coin_pusher_goal", {})) == TYPE_DICTIONARY else {}
+	_begin_scenario("coin_pusher_machine_goal_ritual", {
+		"surface": "coin_pusher",
+		"mode": "machine_goal",
+		"perf06_surface_id": "coin_pusher",
+		"perf06_phase_id": "ritual",
+		"fixture": fixture.duplicate(true),
+	})
+	await _wait_frames(maxi(scenario_frames, 30))
+	var after := _coin_pusher_surface_state(canvas)
+	var goal_after: Dictionary = after.get("coin_pusher_goal", {}) if typeof(after.get("coin_pusher_goal", {})) == TYPE_DICTIONARY else {}
+	var observed := not str(goal_after.get("id", "")).is_empty() \
+		and not str(goal_after.get("title", "")).is_empty() \
+		and not str(goal_after.get("instruction", "")).is_empty() \
+		and int(goal_after.get("target", 0)) > 0 \
+		and int(goal_after.get("bonus_tokens", 0)) > 0
+	current_tags["phase_evidence"] = {
+		"observed": observed,
+		"goal_before": goal_before.duplicate(true),
+		"goal_after": goal_after.duplicate(true),
+	}
+	current_tags["solver_backend"] = CoinPusherSolverScript.last_step_backend_for_test()
+	_end_scenario()
+
+
+func _measure_coin_pusher_raw_solver(run_state: RunState, game: GameModule) -> void:
+	var canvas := _coin_pusher_canvas()
+	if canvas != null and canvas.has_method("reset_performance_counters"):
+		canvas.call("reset_performance_counters")
+	var opening_rng := run_state.create_rng("performance_coin_pusher_raw_solver").fork("opening")
+	var machine_definition := _coin_pusher_machine_definition(game)
+	var machine_ceiling := int(machine_definition.get("ceiling", 0))
+	var state := CoinPusherSolverScript.create_machine(opening_rng, machine_definition, COIN_PUSHER_SOLVER_STRESS_BODY_COUNT)
+	var initial_body_count := CoinPusherSolverScript.coin_count(state)
+	var bodies: Array = state.get("bodies", []) if typeof(state.get("bodies", [])) == TYPE_ARRAY else []
+	for body_index in range(mini(80, bodies.size())):
+		var body: Dictionary = bodies[body_index]
+		body["sleeping"] = false
+		body["sleep_ticks"] = 0
+		body["vx"] = opening_rng.randi_range(-1600, 1600)
+		body["vy"] = opening_rng.randi_range(-1800, 900)
+	_begin_scenario("coin_pusher_raw_solver_300", {
+		"surface": "coin_pusher",
+		"mode": "coin_pusher_solver_tick_300_body_stress",
+		"perf06_surface_id": "coin_pusher",
+		"perf06_phase_id": "raw_solver",
+	})
+	var samples: Array = []
+	var fixed_tick_samples := 0
+	var capped_samples := 0
+	for _sample_index in range(COIN_PUSHER_SOLVER_SAMPLE_COUNT):
+		var start_usec := Time.get_ticks_usec()
+		var step := CoinPusherSolverScript.step_ticks(state, {"motor_enabled": true}, 1)
+		samples.append(float(Time.get_ticks_usec() - start_usec) / 1000.0)
+		var metrics: Dictionary = step.get("metrics", {}) if typeof(step.get("metrics", {})) == TYPE_DICTIONARY else {}
+		if int(metrics.get("fixed_ticks", 0)) == 1:
+			fixed_tick_samples += 1
+		if int(metrics.get("body_count", machine_ceiling + 1)) <= machine_ceiling:
+			capped_samples += 1
+		await get_tree().process_frame
+	var stats := _float_stats(samples)
+	var backend := CoinPusherSolverScript.last_step_backend_for_test()
+	var observed := samples.size() == COIN_PUSHER_SOLVER_SAMPLE_COUNT \
+		and fixed_tick_samples == samples.size() \
+		and capped_samples == samples.size() \
+		and backend == "native_v3" \
+		and int(state.get("fixed_hz", 0)) == CoinPusherSolverScript.FIXED_HZ \
+		and initial_body_count == COIN_PUSHER_SOLVER_STRESS_BODY_COUNT \
+		and float(stats.get("p95", 0.0)) <= COIN_PUSHER_SOLVER_TICK_P95_BUDGET_MS
+	current_tags["raw_solver_timing"] = stats
+	current_tags["raw_solver_initial_body_count"] = initial_body_count
+	current_tags["raw_solver_final_body_count"] = CoinPusherSolverScript.coin_count(state)
+	current_tags["raw_solver_fixed_tick_samples"] = fixed_tick_samples
+	current_tags["raw_solver_capped_samples"] = capped_samples
+	current_tags["raw_solver_machine_ceiling"] = machine_ceiling
+	current_tags["raw_solver_p95_budget_ms"] = COIN_PUSHER_SOLVER_TICK_P95_BUDGET_MS
+	current_tags["solver_backend"] = backend
+	current_tags["phase_evidence"] = {"observed": observed, "sample_count": samples.size(), "solver_backend": backend}
+	_end_scenario()
+
+
+func _measure_coin_pusher_ceiling_refusal(run_state: RunState, game: GameModule) -> void:
+	app.back_to_environment()
+	if not await _wait_for_coin_pusher_exit():
+		mark_event("coin_pusher_ceiling_fixture_failed", {"reason": "exit_timeout"})
+		return
+	var ceiling := int(_coin_pusher_machine_definition(game).get("ceiling", 0))
+	if ceiling <= 0 or not _install_coin_pusher_fixture_at_body_count(run_state, game, ceiling):
+		mark_event("coin_pusher_ceiling_fixture_failed", {"reason": "fixture", "ceiling": ceiling})
+		return
+	if not bool(app.call("enter_game", "coin_pusher")):
+		mark_event("coin_pusher_ceiling_fixture_failed", {"reason": "enter", "ceiling": ceiling})
+		return
+	await _wait_frames(4)
+	_enable_coin_pusher_stage_diagnostic()
+	var canvas := _coin_pusher_canvas()
+	if canvas != null and canvas.has_method("reset_performance_counters"):
+		canvas.call("reset_performance_counters")
+	var before := _coin_pusher_surface_state(canvas)
+	var bankroll_before := run_state.bankroll
+	var turns_before := int(run_state.current_environment.get("turns", 0))
+	var story_before := run_state.story_log_entry_count()
+	var fallback_before := int(app.get("embedded_full_snapshot_fallback_count"))
+	_begin_scenario("coin_pusher_authored_ceiling_refusal", {
+		"surface": "coin_pusher",
+		"mode": "authored_ceiling_refusal",
+		"perf06_surface_id": "coin_pusher",
+		"perf06_phase_id": "ceiling_refusal",
+	})
+	var handled := bool(app.call("_handle_module_surface_action", "coin_pusher_drop", 0, true))
+	await _wait_frames(maxi(scenario_frames, 30))
+	var after := _coin_pusher_surface_state(canvas)
+	var result: Dictionary = app.get("last_game_result") if typeof(app.get("last_game_result")) == TYPE_DICTIONARY else {}
+	var observed := handled \
+		and int(before.get("coin_pusher_body_count", -1)) == ceiling \
+		and int(after.get("coin_pusher_body_count", -2)) == ceiling \
+		and int(after.get("coin_pusher_input_trace_count", -1)) == int(before.get("coin_pusher_input_trace_count", -2)) \
+		and run_state.bankroll == bankroll_before \
+		and int(run_state.current_environment.get("turns", 0)) == turns_before \
+		and run_state.story_log_entry_count() == story_before \
+		and int(app.get("embedded_full_snapshot_fallback_count")) == fallback_before \
+		and _coin_pusher_free_controls_present(after)
+	current_tags["phase_evidence"] = {
+		"observed": observed,
+		"handled": handled,
+		"reason": str(result.get("reason", result.get("message", ""))),
+		"ceiling": ceiling,
+		"body_count_before": int(before.get("coin_pusher_body_count", -1)),
+		"body_count_after": int(after.get("coin_pusher_body_count", -1)),
+		"input_trace_before": int(before.get("coin_pusher_input_trace_count", -1)),
+		"input_trace_after": int(after.get("coin_pusher_input_trace_count", -1)),
+	}
+	current_tags["solver_backend"] = CoinPusherSolverScript.last_step_backend_for_test()
+	_end_scenario()
 
 
 func _measure_coin_pusher_idle(name: String, reduced_motion: bool, fixture: Dictionary) -> void:
@@ -1931,7 +2083,7 @@ func _perf06_surface_evidence(snapshot: Dictionary) -> Dictionary:
 		"rolled", "presentation_phase", "last_net", "win_meter",
 		"bar_dice_ritual_phase", "ticket_complete", "pending_payout",
 		"revealed_count", "reveal_progress", "session_settled", "pending_double_credits",
-		"counting_enabled", "wheel_read_active",
+		"counting_enabled", "wheel_read_active", "roulette_motion_active",
 	]:
 		var key := str(key_value)
 		if snapshot.has(key):
@@ -2015,7 +2167,7 @@ func _measure_followup_game_phases(game_id: String) -> void:
 				await _measure_observed_game_phase(game_id, "post_spin", "roulette_ball_settle", 30)
 			if await _wait_for_game_phase(game_id, "resolve_payout", 600):
 				await _measure_observed_game_phase(game_id, "resolve_payout", "roulette_resolve_payout", 30)
-			await _wait_for_surface_animation_inactive("roulette_payout", 600)
+			await _wait_for_surface_flag_clear("roulette_motion_active", 900)
 			_emit_surface_action("roulette_read_wheel", 0, false)
 			await _wait_frames(2)
 			await _measure_observed_game_phase(game_id, "skill", "roulette_wheel_read_skill", 30)
@@ -2086,6 +2238,16 @@ func _wait_for_surface_animation_inactive(channel_id: String, max_frames: int) -
 			return true
 		await get_tree().process_frame
 	mark_event("perf06_animation_wait_timeout", {"channel_id": channel_id, "max_frames": max_frames})
+	return false
+
+
+func _wait_for_surface_flag_clear(flag_id: String, max_frames: int) -> bool:
+	for _frame_index in range(max_frames):
+		var snapshot := _current_game_phase_snapshot()
+		if not bool(snapshot.get(flag_id, false)):
+			return true
+		await get_tree().process_frame
+	mark_event("perf06_surface_flag_wait_timeout", {"flag_id": flag_id, "max_frames": max_frames})
 	return false
 
 
@@ -2246,9 +2408,11 @@ func _game_phase_observed(game_id: String, phase_id: String, evidence: Dictionar
 			or int(evidence.get("ritual_object_count", 0)) > 0
 	match game_id:
 		"pull_tabs":
-			return phase_id == "payout_redeem" \
-				and not str(evidence.get("result_message", "")).is_empty() \
-				and bool(evidence.get("counter_ritual_present", false))
+			if phase_id != "payout_redeem":
+				return false
+			if str(evidence.get("result_message", "")).is_empty():
+				return false
+			return bool(evidence.get("counter_ritual_present", false))
 		"scratch_tickets":
 			if phase_id == "scratch_reveal":
 				return str(evidence.get("counter_phase", "")) in ["play", "file"]
