@@ -138,10 +138,11 @@ static func _prepare_extension_visual(environment: Dictionary, semantic_state: D
 		"visual_type": "scenario_actor" if actor else "scenario_object",
 		"source_id": str(semantic.get("actor_id", stable_id)),
 		"label": label,
-		"short_description": str(semantic.get("behavior", semantic.get("role", "Room object"))).replace("_", " ").capitalize(),
+		"short_description": _scenario_description(semantic),
+		"icon_key": _scenario_icon_key(semantic),
 		"presence": "scenario",
-		"interactive": false,
-		"decorative": true,
+		"interactive": true,
+		"decorative": false,
 		"enabled": bool(semantic.get("enabled", true)),
 		"visible": bool(semantic.get("visible", true)),
 		"normalized_rect": _normalized_rect(rect),
@@ -160,6 +161,25 @@ static func _prepare_extension_visual(environment: Dictionary, semantic_state: D
 		"non_color_state": str(semantic.get("non_color_state", semantic.get("state", "present"))),
 		"z_order": int(round(rect.get_center().y)) + (20 if actor else 0),
 	}
+
+
+static func _scenario_description(semantic: Dictionary) -> String:
+	var description := str(semantic.get("description", "")).strip_edges()
+	var variants := _dict(semantic.get("description_variants", {}))
+	for key in [str(semantic.get("state", "")), str(semantic.get("appearance", "")), str(semantic.get("pose", "")), str(semantic.get("behavior", "")), str(semantic.get("anchor_id", "")), str(semantic.get("zone_id", ""))]:
+		var variant := str(variants.get(key, "")).strip_edges()
+		if not variant.is_empty():
+			return variant
+	return description
+
+
+static func _scenario_icon_key(semantic: Dictionary) -> String:
+	var parts: Array[String] = []
+	for key in ["role", "state", "appearance", "behavior", "pose"]:
+		var value := str(semantic.get(key, "")).strip_edges()
+		if not value.is_empty() and not parts.has(value):
+			parts.append(value)
+	return " ".join(parts)
 
 
 static func _ordered_semantic_values(value: Dictionary) -> Array:
@@ -210,10 +230,11 @@ static func sealed_renderer_snapshot(layout_result: Dictionary) -> Dictionary:
 				"visual_type": "scenario_actor" if actor else "scenario_object",
 				"source_id": str(semantic.get("actor_id", semantic.get("stable_object_id", ""))),
 				"label": str(semantic.get("label", "")),
-				"short_description": str(semantic.get("behavior", semantic.get("role", "Room object"))).replace("_", " ").capitalize(),
+				"short_description": _scenario_description(semantic),
+				"icon_key": _scenario_icon_key(semantic),
 				"presence": "scenario",
-				"interactive": bool(sealed.get("presentation_interactive", false)),
-				"decorative": not bool(sealed.get("presentation_interactive", false)),
+				"interactive": true,
+				"decorative": false,
 				"enabled": bool(semantic.get("enabled", true)),
 				"visible": bool(sealed.get("presentation_visible", true)),
 				"normalized_rect": _dict(sealed.get("normalized_hit_rect", {})),

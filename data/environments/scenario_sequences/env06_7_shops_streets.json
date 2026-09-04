@@ -53,7 +53,12 @@
                     "visible": true,
                     "enabled": true,
                     "state": "unsorted",
-                    "appearance": "mixed_labels"
+                    "appearance": "mixed_labels",
+                    "description": "The cartons are stacked by mismatched labels; sorting them would clear the clerk's work path.",
+                    "description_variants": {
+                      "center": "The cartons now fill the sorting spot, close enough for every damaged label to be compared.",
+                      "package_a_delivery_cartons_wait": "The cartons wait off the aisle in a neat stack while the clerk holds for your decision."
+                    }
                   }
                 },
                 {
@@ -74,7 +79,13 @@
                     "enabled": true,
                     "state": "unread",
                     "appearance": "torn_label",
-                    "anchor_id": "package_a_delivery_crate"
+                    "anchor_id": "package_a_delivery_crate",
+                    "description": "A torn label hides the crate's destination, which is why the rest of the delivery cannot be trusted yet.",
+                    "description_variants": {
+                      "crushed_corner": "A crushed corner exposes enough of the old label to trace where the crate belongs.",
+                      "foreground": "The damaged crate has been pulled forward as the clearest piece of evidence in the shipment.",
+                      "manifest_open": "The open manifest and the crate's torn label now tell the same story."
+                    }
                   }
                 },
                 {
@@ -95,7 +106,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "inspectable",
-                    "appearance": "damaged_manifest"
+                    "appearance": "damaged_manifest",
+                    "description": "A damaged manifest lies open at the work station; reading it will start a real stock conversation.",
+                    "description_variants": {
+
+                    }
                   }
                 },
                 {
@@ -115,7 +130,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "clear",
-                    "appearance": "marked_lane"
+                    "appearance": "marked_lane",
+                    "description": "The front-door lane is deliberately open, so the delivery never traps anyone in the store.",
+                    "description_variants": {
+
+                    }
                   }
                 }
               ],
@@ -228,7 +247,14 @@
                     "actor_id": "ada_corner_merchant",
                     "anchor_id": "delivery_clerk",
                     "behavior": "work",
-                    "pose": "checking_manifest"
+                    "pose": "checking_manifest",
+                    "description": "The delivery clerk checks the manifest twice, unwilling to shelve anything under the wrong name.",
+                    "description_variants": {
+                      "checking_labels": "The clerk works down the exposed labels, waiting for the mismatched carton to surface.",
+                      "checking_manifest": "The clerk has returned to the manifest, keeping the stock decision open.",
+                      "awaiting_choice": "The clerk has stopped moving boxes and is plainly waiting for your answer."
+                    },
+                    "zone_id": "background"
                   }
                 },
                 {
@@ -242,7 +268,14 @@
                     "actor_id": "priya_travel_merchant",
                     "anchor_id": "package_a_delivery_runner",
                     "behavior": "work",
-                    "pose": "unloading_dolly"
+                    "pose": "unloading_dolly",
+                    "description": "The runner braces the dolly and watches the aisle, ready to move whatever the manifest clears.",
+                    "description_variants": {
+                      "shifting_cartons": "The runner rolls the mismarked cartons into the sorting spot without closing the front lane.",
+                      "holding_twine": "The runner holds fresh twine beside the verified shelf, ready to bind the corrected lot.",
+                      "waiting_on_choice": "The runner rests both hands on the dolly while the stock choice hangs in the air."
+                    },
+                    "zone_id": "left"
                   }
                 }
               ],
@@ -499,7 +532,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "awaiting_check",
-                    "appearance": "manifest_and_twine"
+                    "appearance": "manifest_and_twine",
+                    "description": "The cleared shelf pairs twine with the manifest, making the corrected lot easy to verify.",
+                    "description_variants": {
+                      "event_pending": "The shelf is staged and the manifest is checked; the clerk's stock decision is ready to open."
+                    }
                   }
                 }
               ],
@@ -1091,7 +1128,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "stocked",
-                  "appearance": "stocked_rack"
+                  "appearance": "stocked_rack",
+                  "description": "The corrected cartons are on the rack with their labels facing out; the delivery is plainly finished.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ],
@@ -1107,7 +1148,14 @@
                   "actor_id": "ada_corner_merchant",
                   "anchor_id": "delivery_clerk_work",
                   "behavior": "work",
-                  "pose": "relieved"
+                  "pose": "relieved",
+                  "description": "The delivery clerk checks the manifest twice, unwilling to shelve anything under the wrong name.",
+                  "description_variants": {
+                    "checking_labels": "The clerk works down the exposed labels, waiting for the mismatched carton to surface.",
+                    "checking_manifest": "The clerk has returned to the manifest, keeping the stock decision open.",
+                    "awaiting_choice": "The clerk has stopped moving boxes and is plainly waiting for your answer."
+                  },
+                  "zone_id": "background"
                 }
               }
             ],
@@ -1158,7 +1206,7 @@
                 "object": {
                   "label": "Torn carton",
                   "role": "hazard",
-                  "zone_id": "left",
+                  "zone_id": "foreground",
                   "bounds": {
                     "w": 78.0,
                     "h": 58.0
@@ -1166,7 +1214,11 @@
                   "visible": true,
                   "enabled": false,
                   "state": "broken",
-                  "appearance": "torn_carton"
+                  "appearance": "torn_carton",
+                  "description": "A torn carton leaks packing paper beside the shelf, evidence that the rushed sort ended badly.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ],
@@ -1219,7 +1271,7 @@
                 "object": {
                   "label": "Sealed pallet",
                   "role": "barrier",
-                  "zone_id": "center",
+                  "zone_id": "background",
                   "bounds": {
                     "w": 74.0,
                     "h": 56.0
@@ -1227,7 +1279,11 @@
                   "visible": true,
                   "enabled": false,
                   "state": "refused",
-                  "appearance": "sealed_pallet"
+                  "appearance": "sealed_pallet",
+                  "description": "The refused delivery remains sealed on its pallet, taking up space but preserving the clerk's choice.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ],
@@ -1243,7 +1299,14 @@
                   "actor_id": "ada_corner_merchant",
                   "anchor_id": "delivery_clerk_work",
                   "behavior": "watch",
-                  "pose": "watching_return"
+                  "pose": "watching_return",
+                  "description": "The delivery clerk checks the manifest twice, unwilling to shelve anything under the wrong name.",
+                  "description_variants": {
+                    "checking_labels": "The clerk works down the exposed labels, waiting for the mismatched carton to surface.",
+                    "checking_manifest": "The clerk has returned to the manifest, keeping the stock decision open.",
+                    "awaiting_choice": "The clerk has stopped moving boxes and is plainly waiting for your answer."
+                  },
+                  "zone_id": "background"
                 }
               }
             ],
@@ -1295,7 +1358,11 @@
                   "visible": true,
                   "enabled": false,
                   "state": "abandoned",
-                  "appearance": "abandoned_manifest"
+                  "appearance": "abandoned_manifest",
+                  "description": "The abandoned manifest lies under the dolly wheel, leaving the mismarked stock unresolved.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ],
@@ -1337,7 +1404,7 @@
           "sweep_coexistence",
           "host_event_authority_gate"
         ],
-        "sequence_signature": "edd0a1ee531be9c3c428b57db020b9c86f0f833c5cb82e3ea2a6597ea2d25e2a",
+        "sequence_signature": "87244dfe3f69ef651bff5d362104ebafcaacb40f2ed9d397784797bec4de7d68",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -1817,7 +1884,11 @@
                   "role": "aftermath",
                   "state": "restricted",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "center",
+                  "description": "The queue has bunched around crossed-out place marks; nobody trusts the order now.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -1858,7 +1929,11 @@
                   "role": "aftermath",
                   "state": "occupied",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "service_lane",
+                  "description": "The ticket tray is empty and the counter sign is turned over; the crowd waited too long.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -1899,7 +1974,11 @@
                   "role": "aftermath",
                   "state": "paused",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "background",
+                  "description": "The dark number board still carries half-checked chalk marks from an interrupted draw.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -1940,7 +2019,11 @@
                   "role": "aftermath",
                   "state": "public_service",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "service_lane",
+                  "description": "A public stock notice lists the draw-day shortage where every customer can see it.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -1981,7 +2064,11 @@
                   "role": "aftermath",
                   "state": "closed",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "service_lane",
+                  "description": "The counter is sold out and the untouched queue marks show where the request was refused.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -2022,7 +2109,11 @@
                   "role": "aftermath",
                   "state": "open",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "center",
+                  "description": "Winning slips and paper cups cover the counter; the verified draw ended in a loud celebration.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -2237,7 +2328,13 @@
                     "behavior": "work",
                     "label": "Lotto Regular",
                     "pose": "observing",
-                    "zone_id": "background"
+                    "zone_id": "background",
+                    "description": "A lottery regular studies the board and the queue, making any sleight of hand feel conspicuous.",
+                    "description_variants": {
+                      "service_lane": "The regular has edged up beside the counter for a clean view of the draw.",
+                      "watching_draw": "The regular watches the lit digits without blinking.",
+                      "watch": "The regular is openly keeping watch, raising the cost of anything that looks crooked."
+                    }
                   },
                   "family": "actor_ops",
                   "op": "spawn",
@@ -2433,7 +2530,13 @@
                     "role": "primary_task",
                     "state": "arrival",
                     "visible": true,
-                    "zone_id": "left"
+                    "zone_id": "left",
+                    "description": "Handwritten place marks crowd the rail; holding a spot makes the draw easier to follow but harder to leave casually.",
+                    "description_variants": {
+                      "center": "The queue rail has been pulled into the open so every claimed place can be seen.",
+                      "places_marked": "Fresh marks fix the queue order, and the regulars are watching who respects it.",
+                      "left": "The rail is back against the wall with the final queue order still visible."
+                    }
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -2453,7 +2556,12 @@
                     "role": "evidence",
                     "state": "unread",
                     "visible": true,
-                    "zone_id": "right"
+                    "zone_id": "right",
+                    "description": "The number board is dark enough that nobody can honestly claim a result yet.",
+                    "description_variants": {
+                      "active_station": "The board is lit for the draw, drawing every eye in the store.",
+                      "verified_digits": "The posted digits have been checked in public and can no longer be quietly changed."
+                    }
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -2473,7 +2581,11 @@
                     "role": "exit",
                     "state": "clear",
                     "visible": true,
-                    "zone_id": "exit_lane"
+                    "zone_id": "exit_lane",
+                    "description": "A taped path to the door stays clear beyond the restless lottery line.",
+                    "description_variants": {
+
+                    }
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -2819,7 +2931,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "702c0e25eb945670c651d443cb725b44a52679b646fa888680d7135d41f50d98"
+        "sequence_signature": "f4f86e98618ae87548eeb27380e3dcd83909619ee5c76675ea75360f126dc584"
       }
     },
     {
@@ -2909,7 +3021,11 @@
                   "role": "aftermath",
                   "state": "restricted",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "service_lane",
+                  "description": "A signed police hold occupies the evidence shelf, stopping the recovered object from moving quietly.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -2950,7 +3066,11 @@
                   "role": "aftermath",
                   "state": "occupied",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "background",
+                  "description": "The repaired aisle looks ordinary except for an officer's fresh sightline marks on the floor.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -2991,7 +3111,11 @@
                   "role": "aftermath",
                   "state": "paused",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "foreground",
+                  "description": "The suspect object remains where the trace work stopped, exposed but never properly bagged.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -3032,7 +3156,11 @@
                   "role": "aftermath",
                   "state": "security_pressure",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "service_lane",
+                  "description": "A sweep tag seals the evidence station and warns that official attention is still active.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -3073,7 +3201,11 @@
                   "role": "aftermath",
                   "state": "closed",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "background",
+                  "description": "The aisle is open, but a refused evidence tag tells everyone it is still being watched.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -3114,7 +3246,11 @@
                   "role": "aftermath",
                   "state": "open",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "background",
+                  "description": "New glass and a clean shelf leave only a small trace bag to show the break-in was resolved.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -3328,7 +3464,12 @@
                     "behavior": "work",
                     "label": "Plainclothes Officer",
                     "pose": "observing",
-                    "zone_id": "background"
+                    "zone_id": "background",
+                    "description": "A plainclothes officer watches the repair work rather than the customers, inviting careful cooperation.",
+                    "description_variants": {
+                      "service_lane": "The officer has moved beside the evidence station to see the recovery clearly.",
+                      "left": "The officer stands off to the side with the bagged object in view."
+                    }
                   },
                   "family": "actor_ops",
                   "op": "spawn",
@@ -3523,7 +3664,12 @@
                     "role": "primary_task",
                     "state": "arrival",
                     "visible": true,
-                    "zone_id": "left"
+                    "zone_id": "left",
+                    "description": "Fresh boards cover the broken pane; their hurried nail pattern shows the store closed in a rush.",
+                    "description_variants": {
+                      "center": "The boarded pane is now the room's center of attention, with the break pattern exposed.",
+                      "foreground": "The boards have been pulled close enough to trace where the impact began."
+                    }
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -3543,7 +3689,12 @@
                     "role": "evidence",
                     "state": "unread",
                     "visible": true,
-                    "zone_id": "right"
+                    "zone_id": "right",
+                    "description": "A small object sits where the broken glass was swept aside, still too obscured to identify safely.",
+                    "description_variants": {
+                      "active_station": "The object is isolated under the counter light for a careful look.",
+                      "bagged_for_trace": "The object is sealed in a trace bag, preserving what it may reveal later."
+                    }
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -3563,7 +3714,11 @@
                     "role": "exit",
                     "state": "clear",
                     "visible": true,
-                    "zone_id": "exit_lane"
+                    "zone_id": "exit_lane",
+                    "description": "The marked door path avoids both the broken glass and the evidence station.",
+                    "description_variants": {
+
+                    }
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -3891,7 +4046,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "778d31aef513e20289c5313ce43124bdb8a9b2e0393fb177a59a80bbff4f5c1a"
+        "sequence_signature": "efbc1dbd0b9268e33be495045f607913729d7fb9a967400ac929f9ef0c931707"
       }
     },
     {
@@ -3981,7 +4136,11 @@
                   "role": "aftermath",
                   "state": "restricted",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "background",
+                  "description": "Only the private back counter has power; the dark coolers make lingering expensive.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -4022,7 +4181,11 @@
                   "role": "aftermath",
                   "state": "occupied",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "service_lane",
+                  "description": "A lockout tag hangs from the flickering breaker while the cooler doors stay shut.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -4063,7 +4226,11 @@
                   "role": "aftermath",
                   "state": "paused",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "foreground",
+                  "description": "The cooler circuit is open and unattended, freezing the repair exactly where it stopped.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -4104,7 +4271,11 @@
                   "role": "aftermath",
                   "state": "rumor_pressure",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "background",
+                  "description": "A handwritten warning points from the dead circuit toward a camera outside the store.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -4145,7 +4316,11 @@
                   "role": "aftermath",
                   "state": "closed",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "service_lane",
+                  "description": "The same bad light pulses over a signed refusal tag; the circuit remains unsafe to touch.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -4186,7 +4361,11 @@
                   "role": "aftermath",
                   "state": "open",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "background",
+                  "description": "The coolers hum under steady light again, and the night counter has reopened.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -4402,7 +4581,12 @@
                     "behavior": "work",
                     "label": "Night Clerk",
                     "pose": "observing",
-                    "zone_id": "background"
+                    "zone_id": "background",
+                    "description": "The night clerk listens to the cooler and keeps one hand near the emergency light.",
+                    "description_variants": {
+                      "service_lane": "The clerk waits beside the breaker lane, leaving room for someone to work.",
+                      "holding_flashlight": "The clerk holds a steady flashlight on the isolated circuit."
+                    }
                   },
                   "family": "actor_ops",
                   "op": "spawn",
@@ -4598,7 +4782,12 @@
                     "role": "primary_task",
                     "state": "arrival",
                     "visible": true,
-                    "zone_id": "foreground"
+                    "zone_id": "foreground",
+                    "description": "The breaker panel hums behind a warm cover; isolating it would stop the cooler from worsening.",
+                    "description_variants": {
+                      "center": "The suspect breaker has been brought into the work area where its feed can be isolated.",
+                      "open_breaker": "The breaker cover is open and the bad circuit is plainly separated from the live rows."
+                    }
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -4618,7 +4807,12 @@
                     "role": "evidence",
                     "state": "unread",
                     "visible": true,
-                    "zone_id": "right"
+                    "zone_id": "right",
+                    "description": "Condensation beads around a dark cooler circuit, warning that the stock will not keep forever.",
+                    "description_variants": {
+                      "active_station": "The cooler circuit is exposed under a work light for a safe restart.",
+                      "circuit_isolated": "The failed circuit is tagged and isolated; the rest of the cooler can be handled without guessing."
+                    }
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -4639,7 +4833,11 @@
                     "role": "exit",
                     "state": "clear",
                     "visible": true,
-                    "zone_id": "exit_lane"
+                    "zone_id": "exit_lane",
+                    "description": "Glow tape marks a clear route out even with half the store dark.",
+                    "description_variants": {
+
+                    }
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -4955,7 +5153,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "9a6c56fc543fa68ae38303304012421216dbcc308f26343b67c5b216538db800"
+        "sequence_signature": "ab724da764867e5103ded332478608369e6a010f875b13d66d06535fc75ed584"
       }
     },
     {
@@ -5045,7 +5243,11 @@
                   "role": "aftermath",
                   "state": "restricted",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "background",
+                  "description": "One stock section is roped off with discrepancy tags after the count failed.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -5086,7 +5288,11 @@
                   "role": "aftermath",
                   "state": "occupied",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "background",
+                  "description": "Folding gates close the uncounted aisles while the unresolved sheets sit at the counter.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -5127,7 +5333,11 @@
                   "role": "aftermath",
                   "state": "paused",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "foreground",
+                  "description": "Loose count tags remain mid-sort on the shelf, showing exactly where the recount stopped.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -5168,7 +5378,11 @@
                   "role": "aftermath",
                   "state": "public_service",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "service_lane",
+                  "description": "A public inventory notice explains the missing stock without naming anyone responsible.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -5209,7 +5423,11 @@
                   "role": "aftermath",
                   "state": "closed",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "background",
+                  "description": "The aisles stay gated after the recount was refused, leaving fewer shelves available.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -5250,7 +5468,11 @@
                   "role": "aftermath",
                   "state": "open",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "background",
+                  "description": "Counted sections stand open with signed tags, restoring the store's normal paths.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -5468,7 +5690,12 @@
                     "behavior": "work",
                     "label": "Inventory Clerk",
                     "pose": "observing",
-                    "zone_id": "background"
+                    "zone_id": "background",
+                    "description": "The inventory clerk guards the pencil marks, knowing a careless recount could hide the shortage.",
+                    "description_variants": {
+                      "service_lane": "The clerk takes the counter side of the cage and leaves the customer lane open.",
+                      "recounting_shelf": "The clerk calls each shelf tag aloud and waits for the count to match."
+                    }
                   },
                   "family": "actor_ops",
                   "op": "spawn",
@@ -5664,7 +5891,13 @@
                     "role": "primary_task",
                     "state": "arrival",
                     "visible": true,
-                    "zone_id": "left"
+                    "zone_id": "left",
+                    "description": "Open count sheets and separated stock show that tonight's inventory has not balanced.",
+                    "description_variants": {
+                      "center": "The count cage sits in the open with each section ready to be checked aloud.",
+                      "right": "The cage has been shifted beside the discrepancy shelf for a direct recount.",
+                      "section_counted": "One cage section is sealed and initialed, narrowing the remaining discrepancy."
+                    }
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -5684,7 +5917,12 @@
                     "role": "evidence",
                     "state": "unread",
                     "visible": true,
-                    "zone_id": "right"
+                    "zone_id": "right",
+                    "description": "A shelf of duplicate tags marks the stock nobody is willing to sign off yet.",
+                    "description_variants": {
+                      "active_station": "The discrepancy shelf is lit for a second count.",
+                      "discrepancy_tags": "Matched and unmatched tags now hang in separate rows, making the short lot obvious."
+                    }
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -5704,7 +5942,11 @@
                     "role": "exit",
                     "state": "clear",
                     "visible": true,
-                    "zone_id": "exit_lane"
+                    "zone_id": "exit_lane",
+                    "description": "The door lane stays clear of the count cage and its loose paperwork.",
+                    "description_variants": {
+
+                    }
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -6049,7 +6291,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "35c1e64ec7e435b5e73ddec76d0e4c0f818f145d06fd0537747f3762a1de10aa"
+        "sequence_signature": "31f29293401a8bc7408ffc8517c0fc5ef5eedcf23acefd30b113aa3e79a4fedc"
       }
     },
     {
@@ -6139,7 +6381,11 @@
                   "role": "aftermath",
                   "state": "restricted",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "background",
+                  "description": "The chalk ring has moved deeper into the alley, where the next game will be harder to see from the street.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -6180,7 +6426,11 @@
                   "role": "aftermath",
                   "state": "occupied",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "background",
+                  "description": "Only smeared chalk and hurried footprints remain; the street game broke up without a finish.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -6221,7 +6471,11 @@
                   "role": "aftermath",
                   "state": "paused",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "foreground",
+                  "description": "The warning marker lies on its side beside an unfinished point, marking an interrupted game.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -6262,7 +6516,11 @@
                   "role": "aftermath",
                   "state": "stake_recovery",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "foreground",
+                  "description": "A tied stake pouch rests where the public game ended, ready for its rightful owner.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -6303,7 +6561,11 @@
                   "role": "aftermath",
                   "state": "closed",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "background",
+                  "description": "The ring is scuffed out and the untouched dice show the game was refused before the throw.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -6344,7 +6606,11 @@
                   "role": "aftermath",
                   "state": "open",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "center",
+                  "description": "A clean point and upright lookout marker show the street game is still running.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -6563,7 +6829,14 @@
                     "behavior": "work",
                     "label": "Street Shooter",
                     "pose": "observing",
-                    "zone_id": "background"
+                    "zone_id": "background",
+                    "description": "The shooter palms the dice and listens for the lookout before setting a point.",
+                    "description_variants": {
+                      "service_lane": "The shooter has stepped to the edge of the ring so the alley route stays open.",
+                      "setting_dice": "The shooter squares the dice in the chalk, ready for a visible throw.",
+                      "watch": "The shooter pauses to watch the warning marker instead of rolling blind.",
+                      "right": "The shooter has backed off to the right, leaving the marked exit clear."
+                    }
                   },
                   "family": "actor_ops",
                   "op": "spawn",
@@ -6758,7 +7031,12 @@
                     "role": "primary_task",
                     "state": "arrival",
                     "visible": true,
-                    "zone_id": "left"
+                    "zone_id": "left",
+                    "description": "A scuffed chalk circle and heel marks show where the street dice have been landing.",
+                    "description_variants": {
+                      "center": "The chalk ring has been redrawn in the center where every throw can be seen.",
+                      "chalk_point_ring": "Fresh point marks ring the layout, recording how this game has been running."
+                    }
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -6778,7 +7056,13 @@
                     "role": "evidence",
                     "state": "unread",
                     "visible": true,
-                    "zone_id": "right"
+                    "zone_id": "right",
+                    "description": "A bottle cap on the curb is the lookout's signal; when it moves, the game is no longer safe.",
+                    "description_variants": {
+                      "active_station": "The lookout marker has been set upright where the shooter can read it.",
+                      "foreground": "The marker has been kicked forward into everyone's sightline.",
+                      "warning_active": "The marker is turned to warning, making another throw a conspicuous risk."
+                    }
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -6798,7 +7082,11 @@
                     "role": "exit",
                     "state": "clear",
                     "visible": true,
-                    "zone_id": "exit_lane"
+                    "zone_id": "exit_lane",
+                    "description": "A gap beside the chalk ring remains wide enough to leave without crossing the game.",
+                    "description_variants": {
+
+                    }
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -7141,7 +7429,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "3249380478959fe1c1f2c945aa6ac7e4de0db914c300f458a4458b7524305063"
+        "sequence_signature": "c6ed587986854a0e498e34a6740acd1998f4e84dbbdcd372d4127213287374d7"
       }
     },
     {
@@ -7231,7 +7519,11 @@
                   "role": "aftermath",
                   "state": "restricted",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "background",
+                  "description": "Fresh tire marks turn away from the alley after the diversion pulled the cruiser off route.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -7272,7 +7564,11 @@
                   "role": "aftermath",
                   "state": "occupied",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "background",
+                  "description": "The cruiser remains parked with its beam trained along the wall route.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -7313,7 +7609,11 @@
                   "role": "aftermath",
                   "state": "paused",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "foreground",
+                  "description": "The shifted cover stack remains half-built, exposing the route where work stopped.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -7354,7 +7654,11 @@
                   "role": "aftermath",
                   "state": "active_sweep",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "exit_lane",
+                  "description": "A chalk warning redirects foot traffic away from the cruiser's persistent beam.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -7395,7 +7699,11 @@
                   "role": "aftermath",
                   "state": "closed",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "background",
+                  "description": "The wall route is still watched, and the untouched cover records the refused diversion.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -7436,7 +7744,11 @@
                   "role": "aftermath",
                   "state": "open",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "background",
+                  "description": "Cooling tire tracks and a dark alley mouth show the cruiser finally left.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -7647,7 +7959,14 @@
                     "behavior": "work",
                     "label": "Patrol Officer",
                     "pose": "observing",
-                    "zone_id": "background"
+                    "zone_id": "background",
+                    "description": "A patrol officer scans the alley in a practiced rhythm, punishing movement made at the wrong moment.",
+                    "description_variants": {
+                      "service_lane": "The officer has walked toward the service side, changing which cover matters.",
+                      "patrol": "The officer is actively patrolling instead of merely watching the cruiser.",
+                      "scanning_doorway": "The officer's attention is fixed on the doorway, briefly leaving the far wall unwatched.",
+                      "center": "The officer has entered the alley center and made the open ground unsafe."
+                    }
                   },
                   "family": "actor_ops",
                   "op": "spawn",
@@ -7842,7 +8161,12 @@
                     "role": "primary_task",
                     "state": "arrival",
                     "visible": true,
-                    "zone_id": "left"
+                    "zone_id": "left",
+                    "description": "A patrol-car beam cuts across the alley mouth, closing any route that crosses its white sweep.",
+                    "description_variants": {
+                      "center": "The beam reaches the center of the alley, forcing movement into the remaining cover.",
+                      "background": "The cruiser beam has swung away, leaving only a pale reflection on the far wall."
+                    }
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -7862,7 +8186,13 @@
                     "role": "evidence",
                     "state": "unread",
                     "visible": true,
-                    "zone_id": "right"
+                    "zone_id": "right",
+                    "description": "Stacked crates break the cruiser's sightline, though moving them will be easy to hear.",
+                    "description_variants": {
+                      "active_station": "The cover stack has been measured against the beam's sweep.",
+                      "right": "The crates now shield the right-hand route without blocking the exit.",
+                      "diversion_ready": "The top crate is tipped for a noisy diversion if the patrol looks back."
+                    }
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -7882,7 +8212,11 @@
                     "role": "exit",
                     "state": "clear",
                     "visible": true,
-                    "zone_id": "exit_lane"
+                    "zone_id": "exit_lane",
+                    "description": "The marked exit hugs the wall outside the cruiser's direct beam.",
+                    "description_variants": {
+
+                    }
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -8235,7 +8569,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "3e2fc864dc446c67f5b6ae71b3d07b07b0d903f8a4f778f2b9b314b964b5c073"
+        "sequence_signature": "585a38af2e5c22024d8b8b9f6bcb1e12098d4ebab7e4449c1b2d08e7599acf36"
       }
     },
     {
@@ -8325,7 +8659,11 @@
                   "role": "aftermath",
                   "state": "restricted",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "background",
+                  "description": "A closed ledger and empty hooks show the questionable lot was moved through another exit.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -8366,7 +8704,11 @@
                   "role": "aftermath",
                   "state": "occupied",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "center",
+                  "description": "The buyer's tags now control every bundle on the table, making later bargaining harder.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -8407,7 +8749,11 @@
                   "role": "aftermath",
                   "state": "paused",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "foreground",
+                  "description": "The loupe and open ledger remain beside an unchecked lot, preserving the interrupted appraisal.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -8448,7 +8794,11 @@
                   "role": "aftermath",
                   "state": "public_service",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "service_lane",
+                  "description": "A public price card replaces the private ledger, making the night's terms visible.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -8489,7 +8839,11 @@
                   "role": "aftermath",
                   "state": "closed",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "background",
+                  "description": "The buyer has tagged the refused lot and left it apart from the open goods.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -8530,7 +8884,11 @@
                   "role": "aftermath",
                   "state": "open",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "center",
+                  "description": "Verified lots sit under matching marks at an orderly stall, ready for honest comparison.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -8743,7 +9101,13 @@
                     "behavior": "work",
                     "label": "Rotating Buyer",
                     "pose": "observing",
-                    "zone_id": "background"
+                    "zone_id": "background",
+                    "description": "A buyer checks hands and marks more closely than faces, making provenance matter here.",
+                    "description_variants": {
+                      "service_lane": "The buyer waits by the checking station instead of crowding the goods.",
+                      "checking_marks": "The buyer compares each chalk mark against the open ledger.",
+                      "foreground": "The buyer has stepped forward for the final authentication."
+                    }
                   },
                   "family": "actor_ops",
                   "op": "spawn",
@@ -8938,7 +9302,13 @@
                     "role": "primary_task",
                     "state": "arrival",
                     "visible": true,
-                    "zone_id": "left"
+                    "zone_id": "left",
+                    "description": "Several bundled lots carry conflicting marks; a clean sale starts with separating their histories.",
+                    "description_variants": {
+                      "center": "The goods have been spread through the center so every maker's mark can be compared.",
+                      "left": "The rejected lot sits apart on the left, leaving the likely match near the station.",
+                      "marked_goods_lots": "Each bundle now carries a chalk lot mark tied to its visible provenance."
+                    }
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -8958,7 +9328,12 @@
                     "role": "evidence",
                     "state": "unread",
                     "visible": true,
-                    "zone_id": "right"
+                    "zone_id": "right",
+                    "description": "A loupe, lamp, and ledger wait at the authentication station, promising proof before payment.",
+                    "description_variants": {
+                      "active_station": "The authentication lamp is on and the ledger is open to the relevant page.",
+                      "authentication_open": "The station is ready for a public check, making a false claim harder to pass."
+                    }
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -8978,7 +9353,11 @@
                     "role": "exit",
                     "state": "clear",
                     "visible": true,
-                    "zone_id": "exit_lane"
+                    "zone_id": "exit_lane",
+                    "description": "A painted arrow keeps the alley exit separate from the rotating goods lots.",
+                    "description_variants": {
+
+                    }
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -9322,7 +9701,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "b3cc40ba38bce970ea786c1358f0887ee6e733874560fa450b0e8a08a6a2795c"
+        "sequence_signature": "f937a7eff29c8438b86f53ec9c3178fa46553245c5198cbd0d5e53b50ebc35b5"
       }
     },
     {
@@ -9412,7 +9791,11 @@
                   "role": "aftermath",
                   "state": "restricted",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "exit_lane",
+                  "description": "The shutter trail has been brushed away, leaving a clean exit and no proof of who used it.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -9453,7 +9836,11 @@
                   "role": "aftermath",
                   "state": "occupied",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "background",
+                  "description": "The alley is empty except for old scuffs that nobody chose to follow.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -9494,7 +9881,11 @@
                   "role": "aftermath",
                   "state": "paused",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "foreground",
+                  "description": "The lit shutter gap remains open with the trace ending abruptly at its edge.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -9535,7 +9926,11 @@
                   "role": "aftermath",
                   "state": "rumor_route",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "exit_lane",
+                  "description": "Rain arrows painted near the shutter point toward a sheltered route out.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -9576,7 +9971,11 @@
                   "role": "aftermath",
                   "state": "closed",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "background",
+                  "description": "The traces remain untouched in an otherwise empty alley after the search was refused.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -9617,7 +10016,11 @@
                   "role": "aftermath",
                   "state": "open",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "exit_lane",
+                  "description": "The opened shutter reveals a narrow follow route with dust still settling beyond it.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -9828,7 +10231,13 @@
                     "behavior": "work",
                     "label": "Returning Regular",
                     "pose": "observing",
-                    "zone_id": "background"
+                    "zone_id": "background",
+                    "description": "A returning regular recognizes the scuffs and keeps glancing toward the shutter.",
+                    "description_variants": {
+                      "service_lane": "The regular has moved aside to let the trail be examined.",
+                      "flee": "The regular bolts after seeing where the matched trail leads.",
+                      "pointing_to_exit": "While retreating, the regular points out the clear wall-side exit."
+                    }
                   },
                   "family": "actor_ops",
                   "op": "spawn",
@@ -10023,7 +10432,12 @@
                     "role": "primary_task",
                     "state": "arrival",
                     "visible": true,
-                    "zone_id": "left"
+                    "zone_id": "left",
+                    "description": "Three faint scuffs cross at the shutter, proof that the supposedly quiet alley has seen traffic.",
+                    "description_variants": {
+                      "center": "The three traces are exposed together in the center light.",
+                      "three_traces_compared": "The scuffs have been matched into one route, pointing toward the shutter gap."
+                    }
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -10043,7 +10457,13 @@
                     "role": "evidence",
                     "state": "unread",
                     "visible": true,
-                    "zone_id": "right"
+                    "zone_id": "right",
+                    "description": "A narrow gap under the shutter carries dust in both directions, suggesting recent passage.",
+                    "description_variants": {
+                      "active_station": "A low work light makes the dust trail beneath the shutter readable.",
+                      "background": "The shutter gap sits at the end of the matched trail, away from the open lane.",
+                      "opened_trace_gap": "The gap is open enough to follow, but it also leaves the route visible to anyone returning."
+                    }
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -10063,7 +10483,11 @@
                     "role": "exit",
                     "state": "clear",
                     "visible": true,
-                    "zone_id": "exit_lane"
+                    "zone_id": "exit_lane",
+                    "description": "The wall-side exit remains untouched by the trace work around the shutter.",
+                    "description_variants": {
+
+                    }
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -10409,7 +10833,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "5ae318c2661592d827c1b0f88e9a37214ace4a3dcdf72bb9dae930931b020580"
+        "sequence_signature": "0ab5ac5b096e3ed1e64d358c6042f2cc97937492441f995b7170675d61bee8bc"
       }
     },
     {
@@ -10499,7 +10923,11 @@
                   "role": "aftermath",
                   "state": "restricted",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "background",
+                  "description": "The estate cart is packed for return, its rejected pieces wrapped separately.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -10540,7 +10968,11 @@
                   "role": "aftermath",
                   "state": "occupied",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "background",
+                  "description": "The estate lot sits behind a quarantine cord until its missing history can be resolved.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -10581,7 +11013,11 @@
                   "role": "aftermath",
                   "state": "paused",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "foreground",
+                  "description": "The marks remain under the lamp beside an unfinished ledger comparison.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -10622,7 +11058,11 @@
                   "role": "aftermath",
                   "state": "public_service",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "service_lane",
+                  "description": "A public provenance card lists the matched marks and makes the lot easier to price fairly.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -10663,7 +11103,11 @@
                   "role": "aftermath",
                   "state": "closed",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "background",
+                  "description": "The refused lot remains quarantined with its estate sheet folded shut.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -10704,7 +11148,11 @@
                   "role": "aftermath",
                   "state": "open",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "center",
+                  "description": "Matched estate pieces are displayed with their history cards facing the room.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -10920,7 +11368,13 @@
                     "behavior": "work",
                     "label": "Estate Appraiser",
                     "pose": "observing",
-                    "zone_id": "service_lane"
+                    "zone_id": "service_lane",
+                    "description": "The appraiser handles every piece in view, making quiet substitutions difficult.",
+                    "description_variants": {
+                      "comparing_marks": "The appraiser compares the faded marks against the estate sheet line by line.",
+                      "guard": "The appraiser now guards the matched lot until its disposition is settled.",
+                      "foreground": "The appraiser stands with the provenanced pieces at the front of the station."
+                    }
                   },
                   "family": "actor_ops",
                   "op": "spawn",
@@ -11115,7 +11569,13 @@
                     "role": "primary_task",
                     "state": "arrival",
                     "visible": true,
-                    "zone_id": "left"
+                    "zone_id": "left",
+                    "description": "An estate cart mixes keepsakes with ordinary stock; separating them protects both value and trust.",
+                    "description_variants": {
+                      "center": "The estate lot is spread through the appraisal space so nothing stays hidden beneath the pile.",
+                      "segmented_appraisal_cart": "The cart is divided into signed sections, giving every object a visible place in the appraisal.",
+                      "service_lane": "The sorted cart waits beside the counter without blocking the customer path."
+                    }
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -11135,7 +11595,12 @@
                     "role": "evidence",
                     "state": "unread",
                     "visible": true,
-                    "zone_id": "right"
+                    "zone_id": "right",
+                    "description": "Faded initials and auction dots offer the only honest trail through the estate lot.",
+                    "description_variants": {
+                      "active_station": "The marks are under the appraisal lamp beside the matching ledger.",
+                      "provenance_matched": "The visible marks now agree with the estate record, clearing the lot for a decision."
+                    }
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -11155,7 +11620,11 @@
                     "role": "exit",
                     "state": "clear",
                     "visible": true,
-                    "zone_id": "exit_lane"
+                    "zone_id": "exit_lane",
+                    "description": "The front path skirts the appraisal cart and remains open to the street.",
+                    "description_variants": {
+
+                    }
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -11516,7 +11985,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "635c93987c8913b811ad1d279f7679b15fd013873bf725cbf374d1990411865c"
+        "sequence_signature": "0d352c28684e9fcc313fbea28bf5c7fa5b09dec0d805e627e9a9ca84924bd1bc"
       }
     },
     {
@@ -11606,7 +12075,11 @@
                   "role": "aftermath",
                   "state": "restricted",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "background",
+                  "description": "The serial-checked object has been pulled from sale and sealed in the back rack.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -11647,7 +12120,11 @@
                   "role": "aftermath",
                   "state": "occupied",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "service_lane",
+                  "description": "The held object waits beside an incomplete serial sheet, unable to move without a match.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -11688,7 +12165,11 @@
                   "role": "aftermath",
                   "state": "paused",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "foreground",
+                  "description": "The unsealed hold and carbon copy remain exactly where the serial check stopped.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -11729,7 +12210,11 @@
                   "role": "aftermath",
                   "state": "security_inventory",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "service_lane",
+                  "description": "An official sweep tag seals the held object and makes the paper trail public.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -11770,7 +12255,11 @@
                   "role": "aftermath",
                   "state": "closed",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "service_lane",
+                  "description": "The refused serial hold sits under the lamp with no clerk's signature.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -11811,7 +12300,11 @@
                   "role": "aftermath",
                   "state": "open",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "center",
+                  "description": "The sealed hold is displayed with its matching serial record, leaving no hidden swap.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -12025,7 +12518,13 @@
                     "behavior": "work",
                     "label": "Records Clerk",
                     "pose": "observing",
-                    "zone_id": "service_lane"
+                    "zone_id": "service_lane",
+                    "description": "The records clerk keeps the carbon copy visible, making the hold accountable.",
+                    "description_variants": {
+                      "copying_serial": "The clerk copies each serial digit under the lamp and checks it once more.",
+                      "guard": "The clerk guards the sealed hold until the record decision is complete.",
+                      "left": "The clerk stands beside the filed copy, away from the open door."
+                    }
                   },
                   "family": "actor_ops",
                   "op": "spawn",
@@ -12220,7 +12719,13 @@
                     "role": "primary_task",
                     "state": "arrival",
                     "visible": true,
-                    "zone_id": "left"
+                    "zone_id": "left",
+                    "description": "A lamp and carbon sheet wait for a serial check that will leave a paper trail.",
+                    "description_variants": {
+                      "center": "The serial station is pulled into the open for a legible copy.",
+                      "serial_lamp": "The lamp catches every stamped digit, removing the excuse of a bad reading.",
+                      "background": "The lamp is dark and the station has been put away after the copy was made."
+                    }
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -12240,7 +12745,13 @@
                     "role": "evidence",
                     "state": "unread",
                     "visible": true,
-                    "zone_id": "right"
+                    "zone_id": "right",
+                    "description": "The held object is wrapped but unsealed, pending a serial match before it can move.",
+                    "description_variants": {
+                      "active_station": "The object is unwrapped beside the serial copy for comparison.",
+                      "record_hold_sealed": "The matched object is sealed with the record attached, preventing a quiet swap.",
+                      "right": "The sealed hold rests to the right of the active customer lane."
+                    }
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -12260,7 +12771,11 @@
                     "role": "exit",
                     "state": "clear",
                     "visible": true,
-                    "zone_id": "exit_lane"
+                    "zone_id": "exit_lane",
+                    "description": "The shop door remains clear of both the serial lamp and the held object.",
+                    "description_variants": {
+
+                    }
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -12612,7 +13127,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "e3c1b5c7d6871127af0129f4f0914454d0748e05df64b82fe4d1b73cb5effe8c"
+        "sequence_signature": "ce9d360191b8dbeba0da6bbccf574817ebf6cdcff1539548d99b7d2a75331653"
       }
     },
     {
@@ -12702,7 +13217,11 @@
                   "role": "aftermath",
                   "state": "restricted",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "background",
+                  "description": "Sal's shutters are down and the unfinished bench explains why business ended early.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -12743,7 +13262,13 @@
                   "role": "aftermath",
                   "state": "occupied",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "background",
+                  "description": "A curtained appraisal waits behind the public counter, promising privacy at the cost of outside witnesses.",
+                  "description_variants": {
+                    "active_station": "The private lamp is on and the appraisal tools are arranged for a serious offer.",
+                    "background": "The appraisal has moved behind the counter, out of the public traffic.",
+                    "privacy_screen": "The screen is closed around the appraisal, making the conversation quieter and less observable."
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -12784,7 +13309,11 @@
                   "role": "aftermath",
                   "state": "paused",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "foreground",
+                  "description": "The privacy screen remains half-closed around tools left mid-appraisal.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -12825,7 +13354,11 @@
                   "role": "aftermath",
                   "state": "public_service",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "service_lane",
+                  "description": "The appraisal sheet is posted at the counter, turning a private offer into a visible service.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -12866,7 +13399,11 @@
                   "role": "aftermath",
                   "state": "closed",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "background",
+                  "description": "The screen is closed and the untouched appraisal tools record the refusal.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -12907,7 +13444,11 @@
                   "role": "aftermath",
                   "state": "open",
                   "visible": true,
-                  "zone_id": "foreground"
+                  "zone_id": "service_lane",
+                  "description": "The repaired job sits beside an open register; Sal's counter is plainly back in business.",
+                  "description_variants": {
+
+                  }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
@@ -13123,7 +13664,13 @@
                     "behavior": "work",
                     "label": "Sal Shopkeeper",
                     "pose": "observing",
-                    "zone_id": "service_lane"
+                    "zone_id": "service_lane",
+                    "description": "Sal studies the unfinished bench before looking at customers; useful work will get farther than flattery.",
+                    "description_variants": {
+                      "service_lane": "Sal waits behind the counter with the open work lane between you.",
+                      "work": "Sal has turned back to the bench, judging the room by what gets finished.",
+                      "checking_finished_job": "Sal checks the completed repair closely, ready to talk once the work proves itself."
+                    }
                   },
                   "family": "actor_ops",
                   "op": "spawn",
@@ -13318,7 +13865,12 @@
                     "role": "primary_task",
                     "state": "arrival",
                     "visible": true,
-                    "zone_id": "left"
+                    "zone_id": "left",
+                    "description": "Half-finished repairs crowd Sal's bench; finishing one would change the shop's mood more than small talk.",
+                    "description_variants": {
+                      "center": "The unfinished jobs are laid out in order of what can actually be completed tonight.",
+                      "jobs_prioritized": "The bench now shows a workable order, with the most urgent repair already pulled forward."
+                    }
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -13338,7 +13890,13 @@
                     "role": "evidence",
                     "state": "unread",
                     "visible": true,
-                    "zone_id": "right"
+                    "zone_id": "right",
+                    "description": "A curtained appraisal waits behind the public counter, promising privacy at the cost of outside witnesses.",
+                    "description_variants": {
+                      "active_station": "The private lamp is on and the appraisal tools are arranged for a serious offer.",
+                      "background": "The appraisal has moved behind the counter, out of the public traffic.",
+                      "privacy_screen": "The screen is closed around the appraisal, making the conversation quieter and less observable."
+                    }
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -13358,7 +13916,11 @@
                     "role": "exit",
                     "state": "clear",
                     "visible": true,
-                    "zone_id": "exit_lane"
+                    "zone_id": "exit_lane",
+                    "description": "The front door path stays clear even while Sal's bench spills into the room.",
+                    "description_variants": {
+
+                    }
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
@@ -13695,7 +14257,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "d146839e29753f3e3eecc7c2cd3dfd3bb0e6d88ffaa3f9bf651e1b0f5f1d14a4"
+        "sequence_signature": "5d420ddfa9491145792d1494b10f6db698f5b750c361d915281a574f4ef85912"
       }
     }
   ]
