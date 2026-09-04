@@ -129,10 +129,11 @@ is to bind `active_game_id` before `GameModule.enter`/legal-action presentation
 and clear it on every game-exit path; this integration branch does not modify
 `foundation_main.gd`.
 
-Final acceptance still requires one clean rerun after env06_8 and the final
-perf06 evidence profile are both frozen: project validation, both migration
-matrices, the full composition matrix, and the repeated native/Web terminal soak
-with parity, route, profile, retained-state, and cleanup checks.
+Final acceptance still requires the shared-host Crew Play binding repair and one
+clean rerun after env06_8 and the final perf06 evidence profile are both frozen:
+project validation, the Crew Play entry reproduction, both migration matrices,
+the full composition matrix, and the repeated native/Web terminal soak with
+parity, route, profile, retained-state, and cleanup checks.
 
 ## Historical migration matrix
 
@@ -286,6 +287,8 @@ difference is intended before the fixture is refreshed.
 
 ## Work still required before DONE
 
+- Repair the Foundation game-entry/game-exit binding seam, then require
+  `integ06_1_crew_play_entry_repro.gd` to exit 0 with the Crew Play present.
 - Re-run both admitted migration classes on the final frozen candidate and
   retain their exact logs.
 - Run the checked-in maximal composition matrix across every production-
