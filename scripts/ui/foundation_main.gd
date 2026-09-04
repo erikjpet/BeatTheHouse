@@ -181,6 +181,7 @@ const RUN_UI_SCRIPT_PATHS := {
 	"BagOpenReelViewModelScript": "res://scripts/ui/bag_open_reel_view_model.gd",
 	"RunJournalViewModelScript": "res://scripts/ui/run_journal_view_model.gd",
 	"FoundationTravelViewModelScript": "res://scripts/ui/foundation_travel_view_model.gd",
+	"CoinPusherGameScript": "res://scripts/games/coin_pusher.gd",
 }
 const RUN_UI_STAGE_SCRIPT_FIELDS := {
 	0: ["GameSurfaceCanvasScript", "SfxPlayerScript", "FoundationHudBarScript", "EnvironmentHeaderScript", "CheatDockScript", "RunReportScreenScript", "RunReportViewModelScript", "HeatGainFeedbackOverlayScript", "EnvironmentInteractionViewModelScript", "EnvironmentInteractionControllerScript", "FoundationActionViewModelScript", "TerminalConsequenceViewModelScript", "FoundationHudViewModelScript", "CageCounterViewModelScript", "CageAtmViewModelScript"],
@@ -192,6 +193,7 @@ const RUN_UI_STAGE_SCRIPT_FIELDS := {
 	10: ["WorldMapCanvasScript", "WorldMapOverlayControllerScript", "FoundationTravelViewModelScript"],
 	11: ["ItemFoundPopupScript"],
 	12: ["CoachOverlayScript", "CoachViewModelScript"],
+	14: ["CoinPusherGameScript"],
 }
 const RUN_UI_UNAVAILABLE_MESSAGE := "The run interface is unavailable. Restart the game and try again."
 
@@ -225,6 +227,7 @@ var MetaItemInteractionViewModelScript: Script
 var BagOpenReelViewModelScript: Script
 var RunJournalViewModelScript: Script
 var FoundationTravelViewModelScript: Script
+var CoinPusherGameScript: Script
 
 var ActionAuthorityScript: Script:
 	get:
@@ -7816,6 +7819,14 @@ func _build_next_run_ui_stage() -> bool:
 			_build_item_found_popup()
 		12:
 			_build_coach_overlay()
+		13:
+			# The Web prewarmer advances two light stages per frame. This spacer
+			# keeps the following large resource graph off the coach-build frame.
+			pass
+		14:
+			# Loading happens in _ensure_run_ui_stage_scripts(). Holding the Script
+			# makes RunGenerator's ordinary load(module_path) a resource-cache hit.
+			pass
 		_:
 			run_ui_built = true
 			run_ui_build_in_progress = false

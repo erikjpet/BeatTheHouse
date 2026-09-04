@@ -35,6 +35,7 @@ $roots = [ordered]@{
     BagOpenReelViewModelScript = "res://scripts/ui/bag_open_reel_view_model.gd"
     RunJournalViewModelScript = "res://scripts/ui/run_journal_view_model.gd"
     FoundationTravelViewModelScript = "res://scripts/ui/foundation_travel_view_model.gd"
+    CoinPusherGameScript = "res://scripts/games/coin_pusher.gd"
 }
 
 foreach ($entry in $roots.GetEnumerator()) {
@@ -57,6 +58,7 @@ $stageContracts = @(
     '7: ["MetaItemInteractionScreenScript", "BagOpenReelScript", "MetaItemInteractionViewModelScript", "BagOpenReelViewModelScript"]',
     '8: ["RunJournalViewModelScript"]',
     '10: ["WorldMapCanvasScript", "WorldMapOverlayControllerScript", "FoundationTravelViewModelScript"]'
+    '14: ["CoinPusherGameScript"]'
 )
 foreach ($stageContract in $stageContracts) {
     if (-not $source.Contains($stageContract)) {
@@ -112,4 +114,4 @@ foreach ($forbidden in $forbiddenTypeChecks) {
     }
 }
 
-Write-Output "PASS: 30 run-UI roots are deferred behind atomic staged loading with fail-closed start/load guards."
+Write-Output "PASS: 31 run-UI roots are deferred behind atomic staged loading with fail-closed start/load guards."

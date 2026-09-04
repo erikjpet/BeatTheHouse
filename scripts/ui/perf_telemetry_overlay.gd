@@ -4,15 +4,20 @@ extends Control
 # Debug-only runtime telemetry for low-end/web baselines. The node is never
 # created unless an explicit command-line flag or web query parameter enables it.
 
-const SlotStateScript := preload("res://scripts/games/slots/slot_machine_state.gd")
-const SlotPinballScript := preload("res://scripts/games/slots/slot_family_pinball.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 const CrewTurnModelScript := preload("res://scripts/core/crew_turn_model.gd")
 const TutorialFlowScript := preload("res://scripts/core/tutorial_flow.gd")
-const PerformanceFixtureSetupScript := preload("res://scripts/ui/performance_fixture_setup.gd")
 const WebAudioBridgeScript := preload("res://scripts/ui/web_audio_bridge.gd")
-const CoinPusherSolverScript := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
-const CoinPusherLiveSessionScript := preload("res://scripts/games/coin_pusher/coin_pusher_live_session.gd")
+
+const PERF_PLAN_SCRIPT_PATHS := {
+	"SlotStateScript": "res://scripts/games/slots/slot_machine_state.gd",
+	"SlotPinballScript": "res://scripts/games/slots/slot_family_pinball.gd",
+	"PerformanceFixtureSetupScript": "res://scripts/ui/performance_fixture_setup.gd",
+	"CoinPusherSolverScript": "res://scripts/games/coin_pusher/coin_pusher_solver_api.gd",
+	"CoinPusherLiveSessionScript": "res://scripts/games/coin_pusher/coin_pusher_live_session.gd",
+}
+const L02_PLAN_SCRIPT_FIELDS := ["SlotStateScript", "SlotPinballScript", "PerformanceFixtureSetupScript"]
+const COIN_PUSHER_PLAN_SCRIPT_FIELDS := ["CoinPusherSolverScript", "CoinPusherLiveSessionScript"]
 
 const REQUIRED_GAME_IDS := [
 	"pull_tabs",
@@ -131,6 +136,12 @@ const PERF06_SYSTEM_ALLOCATION_ROOTS := {
 const COIN_PUSHER_EXIT_WAIT_FRAMES := 600
 
 var app: FoundationMain
+var SlotStateScript: Script
+var SlotPinballScript: Script
+var PerformanceFixtureSetupScript: Script
+var CoinPusherSolverScript: Script
+var CoinPusherLiveSessionScript: Script
+var plan_script_failure_reason := ""
 var runtime_options: Dictionary = {}
 var telemetry_enabled := false
 var show_overlay := false
@@ -279,6 +290,40 @@ func configure_for_probe(owner: FoundationMain, overlay_visible: bool) -> void:
 	if show_overlay:
 		_build_overlay()
 	_begin_scenario("overlay_cost_probe", {"surface": "environment", "mode": "idle"})
+
+
+func _ensure_perf_plan_scripts(script_fields: Array) -> bool:
+	if not plan_script_failure_reason.is_empty():
+		return false
+	for field_name_value in script_fields:
+		var field_name := str(field_name_value)
+		if get(field_name) is Script:
+			continue
+		# configure() has already emitted truthful READY. Give every optional
+		# helper graph its own later frame so plan setup does not form a new
+		# monolithic post-READY hitch.
+		await get_tree().process_frame
+		var script_path := str(PERF_PLAN_SCRIPT_PATHS.get(field_name, ""))
+		var loaded_script: Variant = ResourceLoader.load(script_path) if not script_path.is_empty() else null
+		if not (loaded_script is Script):
+			plan_script_failure_reason = "Could not load %s from %s." % [field_name, script_path if not script_path.is_empty() else "an unregistered path"]
+			push_error("Performance plan setup stopped: %s" % plan_script_failure_reason)
+			mark_event("perf_plan_script_load_failed", {
+				"plan": plan_id,
+				"field": field_name,
+				"path": script_path,
+				"reason": plan_script_failure_reason,
+			})
+			return false
+		set(field_name, loaded_script)
+	return true
+
+
+func _abort_perf_plan_setup() -> void:
+	_end_scenario()
+	l02_driver_complete = true
+	dump_report()
+	await _quit_after_report_flush()
 
 
 func travel_stage_timing_enabled(target_id: String) -> bool:
@@ -437,6 +482,9 @@ func _run_l02_plan() -> void:
 	if l02_driver_started:
 		return
 	l02_driver_started = true
+	if not await _ensure_perf_plan_scripts(L02_PLAN_SCRIPT_FIELDS):
+		await _abort_perf_plan_setup()
+		return
 	await _wait_frames(8)
 	_end_scenario()
 	await _measure_meta_home()
@@ -1112,6 +1160,9 @@ func _run_coin_pusher_plan() -> void:
 	if l02_driver_started:
 		return
 	l02_driver_started = true
+	if not await _ensure_perf_plan_scripts(COIN_PUSHER_PLAN_SCRIPT_FIELDS):
+		await _abort_perf_plan_setup()
+		return
 	await _wait_frames(8)
 	_end_scenario()
 	if app == null:
@@ -1275,7 +1326,7 @@ func _install_coin_pusher_fixture(run_state: RunState, game: GameModule) -> bool
 func _install_coin_pusher_fixture_at_body_count(run_state: RunState, game: GameModule, body_count: int) -> bool:
 	var machine_definition := _coin_pusher_machine_definition(game)
 	var fixture_rng := run_state.create_rng("performance_coin_pusher_full_cap").fork("bodies:%d" % body_count)
-	var simulation := CoinPusherSolverScript.create_machine(fixture_rng, machine_definition, body_count)
+	var simulation: Dictionary = CoinPusherSolverScript.create_machine(fixture_rng, machine_definition, body_count)
 	var machine := game.call("_ensure_machine_state", run_state, run_state.current_environment, true) as Dictionary
 	machine["variation_id"] = "quarter_falls"
 	machine["variation_state"] = {}
@@ -1456,8 +1507,8 @@ func _measure_coin_pusher_raw_solver(run_state: RunState, game: GameModule) -> v
 	var opening_rng := run_state.create_rng("performance_coin_pusher_raw_solver").fork("opening")
 	var machine_definition := _coin_pusher_machine_definition(game)
 	var machine_ceiling := int(machine_definition.get("ceiling", 0))
-	var state := CoinPusherSolverScript.create_machine(opening_rng, machine_definition, COIN_PUSHER_SOLVER_STRESS_BODY_COUNT)
-	var initial_body_count := CoinPusherSolverScript.coin_count(state)
+	var state: Dictionary = CoinPusherSolverScript.create_machine(opening_rng, machine_definition, COIN_PUSHER_SOLVER_STRESS_BODY_COUNT)
+	var initial_body_count: int = CoinPusherSolverScript.coin_count(state)
 	var bodies: Array = state.get("bodies", []) if typeof(state.get("bodies", [])) == TYPE_ARRAY else []
 	for body_index in range(mini(80, bodies.size())):
 		var body: Dictionary = bodies[body_index]
@@ -1476,7 +1527,7 @@ func _measure_coin_pusher_raw_solver(run_state: RunState, game: GameModule) -> v
 	var capped_samples := 0
 	for _sample_index in range(COIN_PUSHER_SOLVER_SAMPLE_COUNT):
 		var start_usec := Time.get_ticks_usec()
-		var step := CoinPusherSolverScript.step_ticks(state, {"motor_enabled": true}, 1)
+		var step: Dictionary = CoinPusherSolverScript.step_ticks(state, {"motor_enabled": true}, 1)
 		samples.append(float(Time.get_ticks_usec() - start_usec) / 1000.0)
 		var metrics: Dictionary = step.get("metrics", {}) if typeof(step.get("metrics", {})) == TYPE_DICTIONARY else {}
 		if int(metrics.get("fixed_ticks", 0)) == 1:
@@ -1485,8 +1536,8 @@ func _measure_coin_pusher_raw_solver(run_state: RunState, game: GameModule) -> v
 			capped_samples += 1
 		await get_tree().process_frame
 	var stats := _float_stats(samples)
-	var backend := CoinPusherSolverScript.last_step_backend_for_test()
-	var observed := samples.size() == COIN_PUSHER_SOLVER_SAMPLE_COUNT \
+	var backend: String = CoinPusherSolverScript.last_step_backend_for_test()
+	var observed: bool = samples.size() == COIN_PUSHER_SOLVER_SAMPLE_COUNT \
 		and fixed_tick_samples == samples.size() \
 		and capped_samples == samples.size() \
 		and backend == "native_v3" \
@@ -2931,7 +2982,7 @@ func _install_slot_handpay_fixture() -> bool:
 	if run_state == null or game == null or game.get_id() != "slot":
 		return false
 	var environment := run_state.current_environment
-	var machine := SlotStateScript.read_machine(environment, "slot")
+	var machine: Dictionary = SlotStateScript.read_machine(environment, "slot")
 	if machine.is_empty():
 		return false
 	# Install a presentation-only jackpot result around the machine's current
@@ -3144,7 +3195,7 @@ func _force_pinball_feature() -> bool:
 	if machine.is_empty():
 		return false
 	machine = SlotStateScript.set_selected_bet(machine, "bet_10")
-	var pinball := SlotPinballScript.new()
+	var pinball: Variant = SlotPinballScript.new()
 	var rng := run_state.create_rng("l02_pinball_feature")
 	var active: Dictionary = pinball.open_feature(machine, 10, rng, definition)
 	machine["active_bonus"] = active
