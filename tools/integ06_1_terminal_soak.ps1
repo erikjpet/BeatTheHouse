@@ -258,7 +258,14 @@ $manifest = [ordered]@{
     shard = [ordered]@{ count = $ShardCount; seed_ids = @($seedIds | Sort-Object -Unique) }
     platform = @("Windows", "Web")
     active_systems = @($activeSystems | Sort-Object -Unique)
-    authored_max_counts = [ordered]@{ documented_seed_cases = 9; victory_routes = 3; representative_failure_routes_min = 2 }
+    authored_max_counts = [ordered]@{ documented_seed_cases = 9; victory_routes = 3; representative_failure_routes_min = 2; max_actions_per_case = 132; save_load_stride_actions = 7 }
+    journey_binding = [ordered]@{
+        fixture_id_field = "rows[].fixture_id"
+        checkpoint_field = "rows[].journey_checkpoints[]"
+        checkpoint_ordinal_field = "rows[].journey_checkpoints[].ordinal"
+        action_ordinal_field = "rows[].journey_checkpoints[].action_count"
+        save_load_boundary_field = "rows[].save_load_points[].action_index"
+    }
     phase_samples = @()
     phase_samples_status = [ordered]@{ available = $false; reason = "Frame trajectory is consumed from the exact-candidate perf06_1 release manifest." }
     lifecycle_status = if ($failures.Count -eq 0) { "clean" } else { "failed" }

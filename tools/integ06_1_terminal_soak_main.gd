@@ -114,6 +114,7 @@ func _run() -> void:
 		seed_ids.append(str(case_data.get("seed", "")))
 		rows.append({
 			"case_id": str(case_data.get("id", "")),
+			"fixture_id": str(case_data.get("id", "")),
 			"seed": str(case_data.get("seed", "")),
 			"scenario_id": str(case_data.get("scenario_id", "")),
 			"policy": str(run.get("policy", "")),
@@ -130,7 +131,9 @@ func _run() -> void:
 			"visited_archetypes": _array(run.get("visited_archetypes", [])),
 			"game_mix": _dict(run.get("game_mix", {})),
 			"save_load_count": save_points.size(),
+			"save_load_points": save_points,
 			"save_load_failures": save_failures,
+			"journey_checkpoints": _journey_checkpoints(_array(run.get("semantic_trace", []))),
 			"elapsed_ms": snapped(elapsed_ms, 0.001),
 			"terminal": {"status": str(run.get("final_status", "")), "route": route, "failure_reason": str(run.get("failure_reason", "")), "profile_recorded": bool(profile_result.get("ok", false))},
 			"state_bytes": JSON.stringify(run.get("integration_final_state", {})).to_utf8_buffer().size(),
@@ -205,6 +208,29 @@ func _run() -> void:
 		_write_report(out_path, report)
 	print("%s%s" % [MARKER, JSON.stringify(report)])
 	get_tree().quit(0 if bool(report.get("passed", false)) else 1)
+
+
+func _journey_checkpoints(trace: Array) -> Array:
+	var checkpoints: Array = []
+	for entry_value in trace:
+		var entry := _dict(entry_value)
+		var state := _dict(entry.get("state", {}))
+		checkpoints.append({
+			"ordinal": checkpoints.size(),
+			"label": str(entry.get("label", "")),
+			"action_count": int(entry.get("action_count", 0)),
+			"node_id": str(state.get("node_id", "")),
+			"archetype_id": str(state.get("archetype_id", "")),
+			"scenario_id": str(state.get("scenario_id", "")),
+			"layer_id": str(state.get("layer_id", "")),
+			"run_status": str(state.get("run_status", "")),
+			"game_actions": int(entry.get("game_actions", 0)),
+			"travel_count": int(entry.get("travel_count", 0)),
+			"events_resolved": int(entry.get("events_resolved", 0)),
+			"service_uses": int(entry.get("service_uses", 0)),
+			"lender_uses": int(entry.get("lender_uses", 0)),
+		})
+	return checkpoints
 
 
 func _scenario(scenario_id: String) -> Dictionary:
