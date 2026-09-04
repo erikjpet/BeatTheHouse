@@ -52,6 +52,7 @@ $readyBudgetMs = [int]$budgetTable.web_global.ready_ms
 $cornerStoreOpenBudgetMs = [int]$budgetTable.web_global.corner_store_open_ms
 $telemetryOverheadAvgBudgetMs = [double]$budgetTable.web_global.telemetry_overhead_mean_ms
 $scenarioMemoryDeltaBudgetBytes = [int64]$budgetTable.policy.web_scenario_memory_delta_bytes_max
+$coinPusherDrawMinimumSamples = 20
 
 function Wait-ForWebServer {
     param([string]$Url, [int]$TimeoutSec)
@@ -335,7 +336,7 @@ if ($Plan -eq "coin_pusher") {
             $requiredRedraws = Get-CoinPusherRequiredIdleRedraws -DurationMsec ([double]$idleDraw.surface_animation_scheduler_elapsed_msec)
             Assert-Condition -Condition (Test-CoinPusherIdleSchedulerEvidence -Counters $idleDraw) -Message ("Coin Pusher idle redraw delta {0} was below the production scheduler floor {1} for {2}ms." -f [int]$idleDraw.surface_animation_redraw_count, $requiredRedraws, [int]$idleDraw.surface_animation_scheduler_elapsed_msec) -Failures $failures
         }
-        Assert-Condition -Condition ([int]$idleDraw.draw_sample_count -gt 0) -Message "Coin Pusher normal idle produced no surface draw samples despite required liveness." -Failures $failures
+        Assert-Condition -Condition (Test-CoinPusherDrawSamplingEvidence -ScenarioTags $idle.tags -Counters $idleDraw -MinimumSamples $coinPusherDrawMinimumSamples) -Message ("Coin Pusher normal idle draw p95 was not backed by at least {0} retained samples after a three-draw warm-up." -f $coinPusherDrawMinimumSamples) -Failures $failures
         Assert-Condition -Condition ([double]$idleDraw.draw_p95_ms -le 5.0) -Message ("Coin Pusher idle draw p95 {0:N3}ms exceeded 5.000ms." -f [double]$idleDraw.draw_p95_ms) -Failures $failures
         Assert-Condition -Condition ([int]$idle.tags.solver_liveness_delta -gt 0) -Message "Coin Pusher normal idle solver liveness did not advance." -Failures $failures
         Assert-Condition -Condition (Test-CoinPusherSurfaceConservationBinding -BodyCount ([int]$idle.tags.body_count_before) -TrayCount ([int]$idle.tags.tray_count_before) -Snapshot $idle.tags.conservation_before -ExpectedOrigin $CoinPusherShippedBodyCount) -Message "Coin Pusher normal idle did not begin from the exact conserved shipped-origin fixture." -Failures $failures
@@ -356,7 +357,7 @@ if ($Plan -eq "coin_pusher") {
             Assert-Condition -Condition ([int]$reduced.tags.body_count_after -gt 0) -Message "Coin Pusher reduced-motion sample lost the production body surface." -Failures $failures
             Assert-Condition -Condition (Test-CoinPusherSurfaceConservationBinding -BodyCount ([int]$reduced.tags.body_count_after) -TrayCount ([int]$reduced.tags.tray_count_after) -Snapshot $reduced.tags.conservation_after -ExpectedOrigin $CoinPusherShippedBodyCount) -Message "Coin Pusher reduced-motion after-state did not bind its surface counts to every conserved production outcome channel." -Failures $failures
             Assert-Condition -Condition ([int]$reduced.tags.redraw_delta -eq 0 -and (-not [bool]$reducedDraw.surface_animation_liveness_active)) -Message "Coin Pusher reduced motion unexpectedly advanced the presentation-animation scheduler." -Failures $failures
-            Assert-Condition -Condition ([int]$reducedDraw.draw_sample_count -gt 0) -Message "Coin Pusher reduced motion recorded no canvas draw sample." -Failures $failures
+            Assert-Condition -Condition (Test-CoinPusherDrawSamplingEvidence -ScenarioTags $reduced.tags -Counters $reducedDraw -MinimumSamples $coinPusherDrawMinimumSamples) -Message ("Coin Pusher reduced-motion draw p95 was not backed by at least {0} retained samples after a three-draw warm-up." -f $coinPusherDrawMinimumSamples) -Failures $failures
             Assert-Condition -Condition ([double]$reducedDraw.draw_p95_ms -le 5.0) -Message ("Coin Pusher reduced-motion draw p95 {0:N3}ms exceeded 5.000ms." -f [double]$reducedDraw.draw_p95_ms) -Failures $failures
             Assert-Condition -Condition ([string]$reduced.tags.solver_backend -ceq "native_v3") -Message "Coin Pusher reduced motion did not use the locked native_v3 solver." -Failures $failures
         }
@@ -377,7 +378,7 @@ if ($Plan -eq "coin_pusher") {
         Assert-Condition -Condition ([int]$action.frame_time_ms.count -ge 60) -Message "Coin Pusher $actionName sampled fewer than 60 active frames." -Failures $failures
         Assert-Condition -Condition ([bool]$tags.handled) -Message "Coin Pusher $actionName was not accepted by production action dispatch." -Failures $failures
         Assert-Condition -Condition ([double]$tags.resolve_call_ms -le 16.0) -Message ("Coin Pusher {0} synchronous resolve {1:N3}ms exceeded 16.000ms." -f $actionName, [double]$tags.resolve_call_ms) -Failures $failures
-        Assert-Condition -Condition ([int]$draw.draw_sample_count -gt 0) -Message "Coin Pusher $actionName produced no surface draw samples." -Failures $failures
+        Assert-Condition -Condition (Test-CoinPusherDrawSamplingEvidence -ScenarioTags $tags -Counters $draw -MinimumSamples $coinPusherDrawMinimumSamples) -Message ("Coin Pusher {0} draw p95 was not backed by at least {1} retained samples after a three-draw warm-up." -f $actionName, $coinPusherDrawMinimumSamples) -Failures $failures
         Assert-Condition -Condition ([double]$draw.draw_p95_ms -le 7.0) -Message ("Coin Pusher {0} draw p95 {1:N3}ms exceeded the maintained 7.000ms active baseline." -f $actionName, [double]$draw.draw_p95_ms) -Failures $failures
         Assert-Condition -Condition ([int]$tags.input_trace_after -gt [int]$tags.input_trace_before) -Message "Coin Pusher $actionName did not grow the production input trace." -Failures $failures
         Assert-Condition -Condition ([bool]$tags.physical_motion_seen) -Message "Coin Pusher $actionName did not show physical motion." -Failures $failures

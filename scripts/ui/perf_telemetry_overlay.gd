@@ -89,6 +89,10 @@ const COIN_PUSHER_SOLVER_SAMPLE_COUNT := 60
 const COIN_PUSHER_SOLVER_TICK_P95_BUDGET_MS := 12.0
 const COIN_PUSHER_IDLE_SAMPLE_FRAMES := 120
 const COIN_PUSHER_ACTION_SAMPLE_FRAMES := 60
+const COIN_PUSHER_DRAW_WARMUP_SAMPLES := 3
+const COIN_PUSHER_DRAW_MINIMUM_SAMPLES := 20
+const COIN_PUSHER_DRAW_PROBE_INTERVAL_FRAMES := 15
+const COIN_PUSHER_DRAW_SAMPLE_MAX_FRAMES := 720
 const IDLE_LIVENESS_MINIMUM_INTERVALS := 2
 const IDLE_LIVENESS_WAIT_GRACE_MSEC := 5000
 const ACTIVE_PHASE_MINIMUM_FRAMES := 12
@@ -1565,6 +1569,7 @@ func _measure_coin_pusher_ceiling_refusal(run_state: RunState, game: GameModule)
 
 func _measure_coin_pusher_idle(name: String, reduced_motion: bool, fixture: Dictionary) -> void:
 	var canvas := _coin_pusher_canvas()
+	var warmup_samples := await _warm_coin_pusher_draw_path(canvas)
 	if canvas != null and canvas.has_method("reset_performance_counters"):
 		canvas.call("reset_performance_counters")
 	var before_state := _coin_pusher_surface_state(canvas)
@@ -1579,7 +1584,7 @@ func _measure_coin_pusher_idle(name: String, reduced_motion: bool, fixture: Dict
 		"perf06_phase_id": "" if reduced_motion else "cap_idle",
 		"fixture": fixture.duplicate(true),
 	})
-	await _wait_frames(maxi(scenario_frames, COIN_PUSHER_IDLE_SAMPLE_FRAMES))
+	var draw_window := await _wait_coin_pusher_draw_sample_window(canvas, maxi(scenario_frames, COIN_PUSHER_IDLE_SAMPLE_FRAMES))
 	var after_state := _coin_pusher_surface_state(canvas)
 	var conservation_after := _coin_pusher_conservation_snapshot(run_state, game) if run_state != null and game != null else {}
 	var after_counters := _coin_pusher_canvas_counters(canvas)
@@ -1596,11 +1601,20 @@ func _measure_coin_pusher_idle(name: String, reduced_motion: bool, fixture: Dict
 	current_tags["conservation_before"] = conservation_before
 	current_tags["conservation_after"] = conservation_after
 	current_tags["solver_backend"] = CoinPusherSolverScript.last_step_backend_for_test()
+	current_tags["draw_sampling"] = {
+		"warmup_samples": warmup_samples,
+		"minimum_samples": COIN_PUSHER_DRAW_MINIMUM_SAMPLES,
+		"sample_frames": int(draw_window.get("sample_frames", 0)),
+		"sample_count": int(after_counters.get("draw_sample_count", 0)),
+		"floor_met": bool(draw_window.get("floor_met", false)),
+		"probe_interval_frames": COIN_PUSHER_DRAW_PROBE_INTERVAL_FRAMES,
+	}
 	_end_scenario()
 
 
 func _measure_coin_pusher_action(surface_action: String, name: String, fixture: Dictionary) -> void:
 	var canvas := _coin_pusher_canvas()
+	var warmup_samples := await _warm_coin_pusher_draw_path(canvas)
 	if canvas != null and canvas.has_method("reset_performance_counters"):
 		canvas.call("reset_performance_counters")
 	var before_state := _coin_pusher_surface_state(canvas)
@@ -1630,7 +1644,7 @@ func _measure_coin_pusher_action(surface_action: String, name: String, fixture: 
 	# proof of what the accepted action itself did.
 	var accepted_state := _coin_pusher_surface_state(canvas)
 	var accepted_conservation := _coin_pusher_conservation_snapshot(run_state, game) if run_state != null else {}
-	await _wait_frames(maxi(active_frames, COIN_PUSHER_ACTION_SAMPLE_FRAMES))
+	var draw_window := await _wait_coin_pusher_draw_sample_window(canvas, maxi(active_frames, COIN_PUSHER_ACTION_SAMPLE_FRAMES))
 	var after_state := _coin_pusher_surface_state(canvas)
 	var after_conservation := _coin_pusher_conservation_snapshot(run_state, game) if run_state != null else {}
 	var after_counters := _coin_pusher_canvas_counters(canvas)
@@ -1679,7 +1693,53 @@ func _measure_coin_pusher_action(surface_action: String, name: String, fixture: 
 	current_tags["surface_ui_preserved"] = _coin_pusher_free_controls_present(after_state)
 	current_tags["bankroll_delta"] = int(result.get("bankroll_delta", 0))
 	current_tags["action_patch_present"] = typeof(result.get("surface_action_view_patch", {})) == TYPE_DICTIONARY and not (result.get("surface_action_view_patch", {}) as Dictionary).is_empty()
+	current_tags["draw_sampling"] = {
+		"warmup_samples": warmup_samples,
+		"minimum_samples": COIN_PUSHER_DRAW_MINIMUM_SAMPLES,
+		"sample_frames": int(draw_window.get("sample_frames", 0)),
+		"sample_count": int(after_counters.get("draw_sample_count", 0)),
+		"floor_met": bool(draw_window.get("floor_met", false)),
+		"probe_interval_frames": COIN_PUSHER_DRAW_PROBE_INTERVAL_FRAMES,
+	}
 	_end_scenario()
+
+
+func _warm_coin_pusher_draw_path(canvas: Control) -> int:
+	if canvas == null or not canvas.has_method("reset_performance_counters") or not canvas.has_method("performance_live_status"):
+		return 0
+	canvas.call("reset_performance_counters")
+	for frame_index in range(COIN_PUSHER_DRAW_PROBE_INTERVAL_FRAMES * COIN_PUSHER_DRAW_WARMUP_SAMPLES * 2):
+		if frame_index % COIN_PUSHER_DRAW_PROBE_INTERVAL_FRAMES == 0:
+			canvas.queue_redraw()
+		await get_tree().process_frame
+		var status: Dictionary = canvas.call("performance_live_status")
+		if int(status.get("draw_sample_count", 0)) >= COIN_PUSHER_DRAW_WARMUP_SAMPLES:
+			return int(status.get("draw_sample_count", 0))
+	return int((canvas.call("performance_live_status") as Dictionary).get("draw_sample_count", 0))
+
+
+func _wait_coin_pusher_draw_sample_window(canvas: Control, minimum_frames: int) -> Dictionary:
+	var sampled_frames := 0
+	var sample_count := 0
+	var maximum_frames := maxi(minimum_frames, COIN_PUSHER_DRAW_SAMPLE_MAX_FRAMES)
+	while sampled_frames < maximum_frames:
+		# Measurement-only redraws exercise the real production canvas at a sparse
+		# cadence. They make the draw percentile eligible without changing gameplay,
+		# the animation scheduler, or the maintained frame/draw thresholds.
+		if canvas != null and sampled_frames % COIN_PUSHER_DRAW_PROBE_INTERVAL_FRAMES == 0:
+			canvas.queue_redraw()
+		await get_tree().process_frame
+		sampled_frames += 1
+		if canvas != null and canvas.has_method("performance_live_status"):
+			var status: Dictionary = canvas.call("performance_live_status")
+			sample_count = int(status.get("draw_sample_count", 0))
+		if sampled_frames >= minimum_frames and sample_count >= COIN_PUSHER_DRAW_MINIMUM_SAMPLES:
+			break
+	return {
+		"sample_frames": sampled_frames,
+		"sample_count": sample_count,
+		"floor_met": sample_count >= COIN_PUSHER_DRAW_MINIMUM_SAMPLES,
+	}
 
 
 func _coin_pusher_free_controls_present(surface_state: Dictionary) -> bool:

@@ -15,6 +15,19 @@ Assert-ClockContract -Condition (-not (Test-CoinPusherIdleSchedulerEvidence -Cou
 $missingSchedulerElapsed = [pscustomobject]@{ surface_animation_redraw_count = 16 }
 Assert-ClockContract -Condition (-not (Test-CoinPusherIdleSchedulerEvidence -Counters $missingSchedulerElapsed)) -Message "Missing production scheduler elapsed time was accepted."
 
+$eligibleDrawTags = [pscustomobject]@{ draw_sampling = [pscustomobject]@{ warmup_samples = 3; minimum_samples = 20; sample_frames = 120; sample_count = 20; floor_met = $true; probe_interval_frames = 15 } }
+$eligibleDrawCounters = [pscustomobject]@{ draw_sample_count = 20; draw_sample_buffer_count = 20; draw_frame_usec_samples = @(1..20) }
+Assert-ClockContract -Condition (Test-CoinPusherDrawSamplingEvidence -ScenarioTags $eligibleDrawTags -Counters $eligibleDrawCounters) -Message "Eligible warmed 20-draw percentile evidence was rejected."
+$sparseDrawCounters = $eligibleDrawCounters.PSObject.Copy()
+$sparseDrawCounters.draw_sample_count = 19
+$sparseDrawCounters.draw_sample_buffer_count = 19
+$sparseDrawCounters.draw_frame_usec_samples = @(1..19)
+Assert-ClockContract -Condition (-not (Test-CoinPusherDrawSamplingEvidence -ScenarioTags $eligibleDrawTags -Counters $sparseDrawCounters)) -Message "Sparse 19-draw percentile evidence was accepted."
+$coldDrawTags = $eligibleDrawTags.PSObject.Copy()
+$coldDrawTags.draw_sampling = $eligibleDrawTags.draw_sampling.PSObject.Copy()
+$coldDrawTags.draw_sampling.warmup_samples = 2
+Assert-ClockContract -Condition (-not (Test-CoinPusherDrawSamplingEvidence -ScenarioTags $coldDrawTags -Counters $eligibleDrawCounters)) -Message "Under-warmed draw percentile evidence was accepted."
+
 $pathRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot ".."))
 $validEvidencePath = Resolve-WebPerfEvidencePath -Root $pathRoot -Out ".tmp/fix06_14_unique/report.json"
 Assert-ClockContract -Condition ($validEvidencePath -eq [System.IO.Path]::GetFullPath((Join-Path $pathRoot ".tmp/fix06_14_unique/report.json"))) -Message "Valid relative evidence path was not resolved beneath the repository root."
