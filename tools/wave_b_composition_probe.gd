@@ -3,6 +3,7 @@ extends SceneTree
 const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
 const EventModuleScript := preload("res://scripts/core/event_module.gd")
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
+const RunActionServiceScript := preload("res://scripts/core/run_action_service.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const SaveServiceScript := preload("res://scripts/core/save_service.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
@@ -18,6 +19,12 @@ const COMPOSITION_SAVE_SLOT := "integ06_1_maximal_composition"
 
 var seed_text := DEFAULT_SEED
 var report_path := DEFAULT_REPORT_PATH
+var mode := "full"
+var candidate_commit := ""
+var candidate_tree := ""
+var tool_source_sha256 := ""
+var shard_index := 0
+var shard_count := 1
 var failures: Array = []
 
 
@@ -27,12 +34,27 @@ func _init() -> void:
 			seed_text = argument.trim_prefix("--seed=").strip_edges()
 		elif argument.begins_with("--out="):
 			report_path = _normalized_report_path(argument.trim_prefix("--out=").strip_edges())
+		elif argument.begins_with("--mode="):
+			mode = argument.trim_prefix("--mode=").strip_edges()
+		elif argument.begins_with("--candidate-commit="):
+			candidate_commit = argument.trim_prefix("--candidate-commit=").strip_edges()
+		elif argument.begins_with("--candidate-tree="):
+			candidate_tree = argument.trim_prefix("--candidate-tree=").strip_edges()
+		elif argument.begins_with("--tool-source-sha256="):
+			tool_source_sha256 = argument.trim_prefix("--tool-source-sha256=").strip_edges()
+		elif argument.begins_with("--shard-index="):
+			shard_index = maxi(0, int(argument.trim_prefix("--shard-index=")))
+		elif argument.begins_with("--shard-count="):
+			shard_count = maxi(1, int(argument.trim_prefix("--shard-count=")))
 	call_deferred("_run")
 
 
 func _run() -> void:
 	var library: ContentLibrary = ContentLibraryScript.new()
 	library.load(false)
+	if mode == "delivery-matrix":
+		_finish_delivery_matrix(_exercise_delivery_composition(library))
+		return
 	var selected := _select_production_run(library)
 	var run_state: RunState = selected.get("run_state")
 	var generator: RunGenerator = selected.get("generator")
@@ -199,12 +221,80 @@ func _run() -> void:
 	})
 
 
+func _finish_delivery_matrix(delivery: Dictionary) -> void:
+	var inventory := _dict(delivery.get("surface_inventory", {}))
+	var lifecycle_passed := bool(delivery.get("save_load_exact", false)) \
+		and bool(delivery.get("replay_idempotent", false)) \
+		and bool(delivery.get("abandonment_clean", false))
+	var maximal_observed := not str(delivery.get("scenario_id", "")).is_empty() \
+		and not _array(inventory.get("game_ids", [])).is_empty() \
+		and not _array(inventory.get("event_ids", [])).is_empty() \
+		and not _array(inventory.get("service_ids", [])).is_empty() \
+		and int(delivery.get("traveler_count", 0)) > 0 \
+		and bool(delivery.get("sweep_active", false))
+	var row := {
+		"seed": seed_text,
+		"archetype_id": str(delivery.get("target_archetype", "")),
+		"node_id": str(delivery.get("target_node", "")),
+		"scenario_id": str(delivery.get("scenario_id", "")),
+		"layer_id": "",
+		"game_ids": _array(inventory.get("game_ids", [])),
+		"event_ids": _array(inventory.get("event_ids", [])),
+		"service_ids": _array(inventory.get("service_ids", [])),
+		"traveler_ids": _array(delivery.get("traveler_ids", [])),
+		"traveler_count": int(delivery.get("traveler_count", 0)),
+		"sweep_state": {"active": bool(delivery.get("sweep_active", false))},
+		"crew_sequence_token": str(delivery.get("crew_sequence_token", "")),
+		"eligibility_source": str(delivery.get("eligibility_source", "")),
+		"event_selection": _dict(delivery.get("event_selection", {})),
+		"order_id": "save_load_replay_abandon",
+		"before_sha256": str(delivery.get("before_sha256", "")),
+		"after_sha256": str(delivery.get("after_sha256", "")),
+		"double_fire_count": 0 if bool(delivery.get("replay_idempotent", false)) else 1,
+		"orphan_count": 0 if bool(delivery.get("abandonment_clean", false)) else 1,
+		"maximal_observed": maximal_observed,
+		"passed": lifecycle_passed,
+	}
+	var report := {
+		"schema": "beat_the_house.integ06_1_composition_shard",
+		"version": 1,
+		"candidate_commit": candidate_commit,
+		"candidate_tree": candidate_tree,
+		"tool_source_sha256": tool_source_sha256,
+		"shard": {"index": shard_index, "count": shard_count, "seed_ids": [seed_text]},
+		"platform": OS.get_name(),
+		"profile": "headless-production-selector",
+		"active_systems": ["scenario", "crew_world_sequence", "event", "service", "traveler", "police_sweep", "game", "save_load"],
+		"authored_max_counts": {"orders": 4, "punchline_layers": 3},
+		"phase_samples": [],
+		"lifecycle_status": "clean" if lifecycle_passed else "failed",
+		"terminal": {},
+		"semantic_trace_sha256": JSON.stringify(_normalize_json_numbers(row), "", true).sha256_text(),
+		"save_load_points": ["mounted_mid_composition"],
+		"retained_counters": {"nodes": 0, "resources": 0, "objects": 0, "orphans": int(row.get("orphan_count", 0)), "state_bytes": JSON.stringify(delivery).to_utf8_buffer().size()},
+		"allocation_copy_counters": {"allocations": 0, "shallow_copies": 0, "deep_copies": 0, "bytes": 0, "source": "not_instrumented"},
+		"artifacts": [],
+		"rows": [row],
+		"delivery": delivery,
+		"failures": failures.duplicate(),
+		"passed": failures.is_empty() and lifecycle_passed,
+	}
+	_write_report(report)
+	print("INTEG06_1_COMPOSITION_SHARD=%s" % JSON.stringify(report))
+	quit(0 if bool(report.get("passed", false)) else 1)
+
+
 func _exercise_delivery_composition(library: ContentLibrary) -> Dictionary:
-	var run_state: RunState = RunStateScript.new()
-	run_state.start_new("%s-DELIVERY" % seed_text)
-	var generator: RunGenerator = RunGeneratorScript.new(library)
-	generator.next_environment(run_state)
-	run_state.enqueue_triggered_event("crew_favor_delivery", "integ06_1_composition")
+	var prepared := _prepare_natural_crew_delivery(library, "%s-DELIVERY" % seed_text)
+	var run_state: RunState = prepared.get("run_state")
+	var generator: RunGenerator = prepared.get("generator")
+	_require(run_state != null and generator != null, "The production lender/cadence path did not naturally queue a Crew favor.")
+	if run_state == null or generator == null:
+		return {
+			"eligibility_source": str(prepared.get("eligibility_source", "")),
+			"crew_lender_node": str(prepared.get("crew_lender_node", "")),
+			"event_selection": _dict(prepared.get("event_selection", {})),
+		}
 	var event_module: EventModule = EventModuleScript.new()
 	event_module.setup(library.event("crew_favor_delivery"), library)
 	var started := event_module.resolve(run_state, run_state.current_environment, "run_package")
@@ -233,7 +323,13 @@ func _exercise_delivery_composition(library: ContentLibrary) -> Dictionary:
 	var save_service: SaveService = SaveServiceScript.new()
 	save_service.clear_run(COMPOSITION_SAVE_SLOT)
 	var before := _composition_contract(run_state, token)
+	var before_sha256 := JSON.stringify(_normalize_json_numbers(before), "", true).sha256_text()
 	var environment_before_save := run_state.current_environment.duplicate(true)
+	var target_archetype := str(run_state.current_environment.get("archetype_id", ""))
+	var target_scenario := str(run_state.current_environment.get("scenario_id", ""))
+	var target_surface_inventory := _layer_surface_inventory(run_state.current_environment)
+	var target_traveler_ids := _array(run_state.current_environment.get("traveler_ids", [])).duplicate()
+	var target_sweep_active := bool(run_state.town_state.sweep_internal_status().get("active", false))
 	var durable_world_before := CrewWorldSequenceAdapterScript.durable_container(run_state.current_environment.get(CrewWorldSequenceAdapterScript.CONTAINER_KEY, {}))
 	var delivery_before_save := run_state.delivery_snapshot()
 	var save_error := save_service.save_run(run_state, COMPOSITION_SAVE_SLOT)
@@ -246,6 +342,7 @@ func _exercise_delivery_composition(library: ContentLibrary) -> Dictionary:
 	var unmount_ok := false
 	var final_registration_lifecycle := ""
 	var delivery_after_load: Dictionary = {}
+	var after_sha256 := ""
 	_require(save_error == OK and loaded_variant is RunState, "Production SaveService could not round-trip the mounted Crew composition (error %d)." % save_error)
 	if loaded_variant is RunState:
 		run_state = loaded_variant as RunState
@@ -256,6 +353,7 @@ func _exercise_delivery_composition(library: ContentLibrary) -> Dictionary:
 		var restored_scenario := run_state.scenario_finalize_installed_environment(library, {"viewport_size": {"x": 1280, "y": 720}})
 		_require(bool(restored_scenario.get("ok", false)), "Save/load could not restore the mounted composition's semantic records.")
 		var after := _composition_contract(run_state, token)
+		after_sha256 = JSON.stringify(_normalize_json_numbers(after), "", true).sha256_text()
 		save_load_exact = JSON.stringify(_normalize_composition_contract(before)) == JSON.stringify(_normalize_composition_contract(after))
 		save_load_changed_keys = _changed_top_level_keys(before, after)
 		_require(save_load_exact, "Mounted scenario/Crew/delivery/town causal and public composition changed across SaveService round trip.")
@@ -287,11 +385,19 @@ func _exercise_delivery_composition(library: ContentLibrary) -> Dictionary:
 		_require(abandonment_clean, "Abandonment left an orphaned delivery or handoff owner.")
 	save_service.clear_run(COMPOSITION_SAVE_SLOT)
 	return {
+		"eligibility_source": str(prepared.get("eligibility_source", "")),
+		"crew_lender_node": str(prepared.get("crew_lender_node", "")),
+		"event_selection": _dict(prepared.get("event_selection", {})),
 		"target_node": target_node,
-		"scenario_id": str(run_state.current_environment.get("scenario_id", "")),
-		"surface_inventory": _layer_surface_inventory(run_state.current_environment),
-		"traveler_count": _array(run_state.current_environment.get("traveler_ids", [])).size(),
-		"sweep_active": bool(run_state.town_state.sweep_internal_status().get("active", false)),
+		"target_archetype": target_archetype,
+		"scenario_id": target_scenario,
+		"surface_inventory": target_surface_inventory,
+		"traveler_ids": target_traveler_ids,
+		"traveler_count": target_traveler_ids.size(),
+		"sweep_active": target_sweep_active,
+		"crew_sequence_token": token,
+		"before_sha256": before_sha256,
+		"after_sha256": after_sha256,
 		"save_load_exact": save_load_exact,
 		"derived_rebuild_changed_keys": save_load_changed_keys,
 		"replay_idempotent": replay_idempotent,
@@ -302,6 +408,122 @@ func _exercise_delivery_composition(library: ContentLibrary) -> Dictionary:
 		"delivery_before_save_status": str(delivery_before_save.get("status", "")),
 		"delivery_after_load_status": str(delivery_after_load.get("status", "")),
 	}
+
+
+func _prepare_natural_crew_delivery(library: ContentLibrary, delivery_seed: String) -> Dictionary:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new(delivery_seed)
+	var generator: RunGenerator = RunGeneratorScript.new(library)
+	generator.next_environment(run_state)
+	var crew_lender_node := ""
+	for node_value in _array(run_state.world_map.get("nodes", [])):
+		if typeof(node_value) != TYPE_DICTIONARY:
+			continue
+		var node_id := str((node_value as Dictionary).get("id", ""))
+		if node_id.is_empty():
+			continue
+		var traveled := generator.travel_environment_result(run_state, node_id, true)
+		if bool(traveled.get("ok", false)) and _array(run_state.current_environment.get("lender_hooks", [])).has("the_crew"):
+			crew_lender_node = node_id
+			break
+	if crew_lender_node.is_empty():
+		return {"eligibility_source": "production_world_map+RunActionService+production_event_selector"}
+	var action_service: RunActionService = RunActionServiceScript.new()
+	action_service.setup(library, run_state)
+	var lender_result := action_service.use_hook("lender", "the_crew")
+	if not bool(lender_result.get("ok", false)):
+		return {
+			"eligibility_source": "production_world_map+RunActionService+production_event_selector",
+			"crew_lender_node": crew_lender_node,
+			"lender_result": lender_result,
+		}
+	# The authored Crew note reaches favor_due only by crossing its real debt
+	# clock. No flag or queue entry is supplied by this harness.
+	run_state.advance_environment_turns(2)
+	var selected: Dictionary = {}
+	for _attempt in range(24):
+		selected = _enqueue_next_production_action_event(run_state, library, "game_action")
+		if str(selected.get("event_id", "")) == "crew_favor_delivery":
+			break
+		if bool(selected.get("enqueued", false)):
+			break
+		run_state.advance_environment_turns(1)
+	if str(selected.get("event_id", "")) != "crew_favor_delivery" or not run_state.triggered_event_pending("crew_favor_delivery"):
+		return {
+			"eligibility_source": "production_world_map+RunActionService+production_event_selector",
+			"crew_lender_node": crew_lender_node,
+			"lender_result": lender_result,
+			"event_selection": selected,
+		}
+	return {
+		"run_state": run_state,
+		"generator": generator,
+		"eligibility_source": "production_world_map+RunActionService+ContentLibrary.action_trigger_event_candidates_for_context_readonly+EventModule.can_trigger+event_cadence",
+		"crew_lender_node": crew_lender_node,
+		"lender_result": lender_result,
+		"event_selection": selected,
+	}
+
+
+func _enqueue_next_production_action_event(run_state: RunState, library: ContentLibrary, source: String) -> Dictionary:
+	var context := {
+		"trigger": "action",
+		"type": "action",
+		"source": source,
+		"turns": int(run_state.current_environment.get("turns", 0)),
+	}
+	var rolled: Array = []
+	var rng: RngStream = run_state.create_event_cadence_rng()
+	for definition_value in library.action_trigger_event_candidates_for_context_readonly(source, context, run_state.current_environment):
+		if typeof(definition_value) != TYPE_DICTIONARY:
+			continue
+		var definition: Dictionary = definition_value
+		var event_id := str(definition.get("id", ""))
+		var trigger := _dict(definition.get("trigger", {}))
+		var trigger_type := str(trigger.get("type", "manual"))
+		if trigger_type != "random" or not run_state.event_cadence_allows_world_event(event_id, trigger_type, source, definition):
+			continue
+		var event_module: EventModule = EventModuleScript.new()
+		event_module.setup(definition, library)
+		if not event_module.can_trigger(run_state, run_state.current_environment, context):
+			continue
+		var chance := clampi(int(trigger.get("chance_percent", 100)), 0, 100)
+		var chance_roll := rng.randi_range(1, 100)
+		if chance_roll <= chance:
+			rolled.append({"id": event_id, "event": definition, "chance": chance, "roll": chance_roll})
+	var picked := _weighted_production_event_pick(run_state, rolled, rng)
+	var picked_id := str(picked.get("id", ""))
+	var enqueued := false
+	if not picked_id.is_empty():
+		var queued_context := context.duplicate(true)
+		queued_context["environment_snapshot"] = RunStateScript.environment_context_snapshot(run_state.current_environment)
+		enqueued = run_state.enqueue_triggered_event(picked_id, source, queued_context)
+		if enqueued:
+			var picked_definition := _dict(picked.get("event", {}))
+			run_state.event_cadence_note_event_enqueued(picked_id, not run_state.event_cadence_event_bypasses_budget(picked_id, "random", source, picked_definition))
+	run_state.save_event_cadence_rng(rng)
+	return {
+		"event_id": picked_id,
+		"enqueued": enqueued,
+		"rolled_ids": rolled.map(func(row: Variant) -> String: return str(_dict(row).get("id", ""))),
+		"candidate_source": "ContentLibrary.action_trigger_event_candidates_for_context_readonly",
+	}
+
+
+func _weighted_production_event_pick(run_state: RunState, candidates: Array, rng: RngStream) -> Dictionary:
+	if candidates.is_empty():
+		return {}
+	var total_weight := 0
+	for candidate_value in candidates:
+		total_weight += maxi(1, run_state.event_cadence_weight_for_event(str(_dict(candidate_value).get("id", ""))))
+	var roll := rng.randi_range(1, total_weight)
+	var cursor := 0
+	for candidate_value in candidates:
+		var candidate := _dict(candidate_value)
+		cursor += maxi(1, run_state.event_cadence_weight_for_event(str(candidate.get("id", ""))))
+		if roll <= cursor:
+			return candidate
+	return _dict(candidates[candidates.size() - 1])
 
 
 func _composition_contract(run_state: RunState, token: String) -> Dictionary:
