@@ -12,6 +12,17 @@ foreach ($surface in @($matrix.games.PSObject.Properties) + @($matrix.systems.PS
     if ($phases.Count -eq 0 -or @($phases | Sort-Object -Unique).Count -ne $phases.Count) { throw "Surface '$($surface.Name)' has empty or duplicate phases." }
     if (-not ($matrix.allocation_roots.PSObject.Properties.Name -contains $surface.Name) -or @($matrix.allocation_roots.PSObject.Properties[$surface.Name].Value).Count -eq 0) { throw "Surface '$($surface.Name)' has no allocation roots." }
 }
+foreach ($surfaceOverride in @($matrix.allocation_roots_by_phase.PSObject.Properties)) {
+    $surfaceDefinition = if ($matrix.games.PSObject.Properties.Name -contains $surfaceOverride.Name) { $matrix.games.PSObject.Properties[$surfaceOverride.Name].Value } else { $matrix.systems.PSObject.Properties[$surfaceOverride.Name].Value }
+    if ($null -eq $surfaceDefinition) { throw "Phase allocation override names unknown surface '$($surfaceOverride.Name)'." }
+    $unionRoots = @($matrix.allocation_roots.PSObject.Properties[$surfaceOverride.Name].Value)
+    foreach ($phaseOverride in @($surfaceOverride.Value.PSObject.Properties)) {
+        if (@($surfaceDefinition) -cnotcontains $phaseOverride.Name) { throw "Allocation override names unknown phase '$($surfaceOverride.Name)/$($phaseOverride.Name)'." }
+        $phaseRoots = @($phaseOverride.Value)
+        if ($phaseRoots.Count -eq 0) { throw "Allocation override is empty for '$($surfaceOverride.Name)/$($phaseOverride.Name)'." }
+        foreach ($rootName in $phaseRoots) { if ($unionRoots -cnotcontains [string]$rootName) { throw "Allocation override '$rootName' is not in the surface union for '$($surfaceOverride.Name)'." } }
+    }
+}
 $lowEndLauncher = Get-Content -LiteralPath (Join-Path $PSScriptRoot "perf06_low_end_matrix.ps1") -Raw
 foreach ($needle in @("reproducible_whole_matrix_throttle", "ProcessorAffinity", "PriorityClass", "native_surface_probe.json", "ProfileManifestSha256", "PERF06 LOW-END PREFLIGHT PASS")) {
     if (-not $lowEndLauncher.Contains($needle)) { throw "Low-end launcher lost reproducible whole-matrix binding '$needle'." }

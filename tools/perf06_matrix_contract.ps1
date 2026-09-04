@@ -112,7 +112,13 @@ function Test-PhaseRow($Row) {
         $failures.Add("$label has empty or incomplete allocation/copy instrumentation coverage.")
     }
     $requiredRoots = @()
-    if ($null -ne $matrix -and $matrix.allocation_roots.PSObject.Properties.Name -contains [string]$Row.surface_id) {
+    $phaseOverrides = $null
+    if ($null -ne $matrix -and $matrix.PSObject.Properties.Name -contains "allocation_roots_by_phase" -and $matrix.allocation_roots_by_phase.PSObject.Properties.Name -contains [string]$Row.surface_id) {
+        $phaseOverrides = $matrix.allocation_roots_by_phase.PSObject.Properties[[string]$Row.surface_id].Value
+    }
+    if ($null -ne $phaseOverrides -and $phaseOverrides.PSObject.Properties.Name -contains [string]$Row.phase_id) {
+        $requiredRoots = @($phaseOverrides.PSObject.Properties[[string]$Row.phase_id].Value)
+    } elseif ($null -ne $matrix -and $matrix.allocation_roots.PSObject.Properties.Name -contains [string]$Row.surface_id) {
         $requiredRoots = @($matrix.allocation_roots.PSObject.Properties[[string]$Row.surface_id].Value)
     }
     if ($requiredRoots.Count -eq 0) { $failures.Add("$label has no declared required allocation roots in the matrix contract.") }

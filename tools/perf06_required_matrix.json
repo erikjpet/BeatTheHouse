@@ -40,7 +40,7 @@
     "crew_draw_poker": ["surface_automation", "surface_realtime", "foundation_snapshot"],
     "video_poker": ["surface_automation", "surface_realtime", "foundation_snapshot"],
     "coin_pusher": ["surface_automation", "surface_realtime", "foundation_snapshot", "coin_pusher_native_step"],
-    "meta_home": ["layout", "foundation_snapshot"],
+    "meta_home": ["environment_runtime", "layout", "foundation_snapshot"],
     "room_environment": ["environment_runtime", "layout", "foundation_snapshot"],
     "dynamic_scenario": ["environment_runtime", "layout", "foundation_snapshot"],
     "crew": ["environment_runtime", "surface_realtime", "foundation_snapshot"],
@@ -52,5 +52,19 @@
     "save_restore": ["autosave_flush", "foundation_snapshot"],
     "maximal_composition": ["environment_runtime", "surface_automation", "surface_realtime", "layout", "autosave_flush", "foundation_snapshot", "coin_pusher_native_step", "producer_fixture"],
     "run_trajectory": ["environment_runtime", "surface_automation", "surface_realtime", "layout", "autosave_flush", "foundation_snapshot", "coin_pusher_native_step", "producer_fixture"]
+  },
+  "allocation_roots_by_phase": {
+    "meta_home": {
+      "animated_idle": ["environment_runtime"]
+    },
+    "room_environment": {
+      "quiet_idle": ["environment_runtime"]
+    },
+    "world": {
+      "map_idle": ["environment_runtime"]
+    },
+    "run_trajectory": {
+      "mid_run": ["environment_runtime"]
+    }
   }
 }
