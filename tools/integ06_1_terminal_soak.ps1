@@ -164,6 +164,7 @@ function Invoke-NativeShard {
     $stem = "shard_${ShardIndex}_native_$Repeat"
     $stdout = Join-Path $out "$stem.stdout.txt"
     $stderr = Join-Path $out "$stem.stderr.txt"
+    $runtimeReport = Join-Path $out "$stem.runtime.json"
     $dataRoot = Join-Path $out "${stem}_data"
     New-Item -ItemType Directory -Path $dataRoot | Out-Null
     $previousData = $env:BTH_DISTRIBUTION_DATA_ROOT
@@ -171,12 +172,12 @@ function Invoke-NativeShard {
     try {
         $env:BTH_DISTRIBUTION_BUILD = "1"
         $env:BTH_DISTRIBUTION_DATA_ROOT = $dataRoot
-        Invoke-BoundedProcess -FilePath $nativeExe -ArgumentList @("--headless", "--rendering-method", "gl_compatibility", "--", "--candidate-commit=$candidate", "--candidate-tree=$candidateTree", "--tool-source-sha256=$toolHash", "--evidence-profile=$EvidenceProfile", "--profile-path=$resolvedProfile", "--profile-sha256=$profileHash", "--shard-index=$ShardIndex", "--shard-count=$ShardCount") -StdoutPath $stdout -StderrPath $stderr -Label $stem -AllowFailure | Out-Null
+        Invoke-BoundedProcess -FilePath $nativeExe -ArgumentList @("--headless", "--rendering-method", "gl_compatibility", "--", "--candidate-commit=$candidate", "--candidate-tree=$candidateTree", "--tool-source-sha256=$toolHash", "--evidence-profile=$EvidenceProfile", "--profile-path=$resolvedProfile", "--profile-sha256=$profileHash", "--shard-index=$ShardIndex", "--shard-count=$ShardCount", "--out=$runtimeReport") -StdoutPath $stdout -StderrPath $stderr -Label $stem -AllowFailure | Out-Null
     } finally {
         $env:BTH_DISTRIBUTION_DATA_ROOT = $previousData
         $env:BTH_DISTRIBUTION_BUILD = $previousBuild
     }
-    $report = Read-TerminalMarker -StdoutPath $stdout -Label $stem
+    $report = if (Test-Path -LiteralPath $runtimeReport -PathType Leaf) { Get-Content -LiteralPath $runtimeReport -Raw | ConvertFrom-Json } else { Read-TerminalMarker -StdoutPath $stdout -Label $stem }
     Assert-Provenance -Report $report -Label $stem -Platform "Windows"
     $report | ConvertTo-Json -Depth 100 | Set-Content -LiteralPath (Join-Path $out "$stem.json")
     return $report
