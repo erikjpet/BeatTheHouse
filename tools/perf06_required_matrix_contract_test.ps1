@@ -24,6 +24,10 @@ $profileCapture = Get-Content -LiteralPath (Join-Path $PSScriptRoot "perf06_capt
 foreach ($needle in @("hardware_fingerprint_sha256", "reproducible_whole_matrix_throttle", "Refusing to overwrite immutable host profile")) {
     if (-not $profileCapture.Contains($needle)) { throw "Host-profile capture lost '$needle'." }
 }
+$nativeRuntime = Get-Content -LiteralPath (Join-Path $PSScriptRoot "perf06_native_runtime_matrix.ps1") -Raw
+foreach ($needle in @("--export-release", "Windows Steam", "Refusing to overwrite immutable native evidence", "profile_manifest_sha256", "runtime_report_sha256")) {
+    if (-not $nativeRuntime.Contains($needle)) { throw "Native release-runtime matrix lost '$needle'." }
+}
 $unknownRootOwners = @($matrix.allocation_roots.PSObject.Properties.Name | Where-Object { $_ -notin $matrixIds -and $_ -notin @($matrix.systems.PSObject.Properties.Name) })
 if ($unknownRootOwners.Count -ne 0) { throw "Allocation roots contain unknown surfaces: $($unknownRootOwners -join ',')" }
 Write-Host "PERF06 REQUIRED MATRIX CONTRACT PASS games=$($matrixIds.Count) systems=$(@($matrix.systems.PSObject.Properties).Count)"
