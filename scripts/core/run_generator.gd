@@ -13,6 +13,8 @@ var library: ContentLibrary
 var _last_environment_install_errors: Array = []
 var _world_environment_timing_enabled := false
 var _last_world_environment_timing_usec: Dictionary = {}
+var _world_environment_build_stages_usec: Dictionary = {}
+var _world_environment_install_stages_usec: Dictionary = {}
 
 
 func set_world_environment_timing_enabled(enabled: bool) -> void:
@@ -37,15 +39,28 @@ func _install_environment(run_state: RunState, environment_data: Dictionary) -> 
 # Travel callers already hold the exact atomic rollback snapshot. Reuse it so
 # large visited-room machines are not copied a second time at every transition.
 func _install_environment_with_rollback(run_state: RunState, environment_data: Dictionary, rollback: Dictionary) -> Dictionary:
+	var perf_stage_started_usec := Time.get_ticks_usec() if _world_environment_timing_enabled else 0
+	_world_environment_install_stages_usec = {}
 	var trusted := _trusted_scenario_install_data(run_state, environment_data)
+	if _world_environment_timing_enabled:
+		_world_environment_install_stages_usec["trusted_data"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stage_started_usec = Time.get_ticks_usec()
 	if not bool(trusted.get("ok", false)):
 		_restore_travel_snapshot(run_state, rollback)
 		return {"ok": false, "applied": false, "errors": _copy_array(trusted.get("errors", []))}
 	var install_data: Dictionary = _copy_dict(trusted.get("environment", {}))
+	if _world_environment_timing_enabled:
+		_world_environment_install_stages_usec["trusted_copy"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stage_started_usec = Time.get_ticks_usec()
 	var installed := run_state.set_environment(install_data)
+	if _world_environment_timing_enabled:
+		_world_environment_install_stages_usec["set_environment"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stage_started_usec = Time.get_ticks_usec()
 	if not bool(installed.get("ok", false)):
 		return installed
 	var finalized := run_state.scenario_finalize_installed_environment(library)
+	if _world_environment_timing_enabled:
+		_world_environment_install_stages_usec["scenario_finalize"] = Time.get_ticks_usec() - perf_stage_started_usec
 	if not bool(finalized.get("ok", false)):
 		_restore_travel_snapshot(run_state, rollback)
 		return {"ok": false, "applied": true, "errors": _copy_array(finalized.get("errors", []))}
@@ -529,6 +544,8 @@ func _next_world_environment(run_state: RunState, target_archetype_id: String, r
 		_last_world_environment_timing_usec = {
 			"target_id": target_id,
 			"stages_usec": perf_stages,
+			"build_stages_usec": _world_environment_build_stages_usec.duplicate(true),
+			"install_stages_usec": _world_environment_install_stages_usec.duplicate(true),
 			"total_usec": Time.get_ticks_usec() - perf_total_started_usec,
 		}
 	return result
@@ -638,6 +655,8 @@ func _legacy_next_environment(run_state: RunState, target_archetype_id: String, 
 
 
 func _world_environment_data_for_node(run_state: RunState, map_data: Dictionary, node: Dictionary, rng: RngStream) -> Dictionary:
+	var perf_stage_started_usec := Time.get_ticks_usec() if _world_environment_timing_enabled else 0
+	_world_environment_build_stages_usec = {}
 	var node_id := str(node.get("id", "")).strip_edges()
 	var stored_environment: Dictionary = node.get("environment", {}) if typeof(node.get("environment", {})) == TYPE_DICTIONARY else {}
 	if not stored_environment.is_empty() and str(node.get("state", "")) == WorldMap.STATE_VISITED:
@@ -658,20 +677,34 @@ func _world_environment_data_for_node(run_state: RunState, map_data: Dictionary,
 	if archetype.is_empty():
 		archetype = _pick_archetype(run_state, depth, rng, node_id)
 	var scenario := _select_scenario(run_state, str(archetype.get("id", node_id)), rng)
+	if _world_environment_timing_enabled:
+		_world_environment_build_stages_usec["scenario_select"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stage_started_usec = Time.get_ticks_usec()
 	var environment := EnvironmentInstance.from_archetype(archetype, depth, rng, library, run_state.challenge_config, scenario)
 	var environment_data := environment.to_dict()
+	if _world_environment_timing_enabled:
+		_world_environment_build_stages_usec["environment_from_archetype"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stage_started_usec = Time.get_ticks_usec()
 	run_state.apply_town_generation_modifiers(environment_data, rng)
 	# Game generation hooks may publish node-scoped facts. Give them the stable
 	# world-node identity before generating their canonical machine state.
 	environment_data["world_node_id"] = node_id
 	ScenarioEngineScript.ensure_sequence_state(environment_data, scenario)
+	if _world_environment_timing_enabled:
+		_world_environment_build_stages_usec["town_and_sequence"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stage_started_usec = Time.get_ticks_usec()
 	CrewRecruitmentModelScript.apply_to_environment(run_state, environment_data)
 	environment_data["game_states"] = _generated_game_states(run_state, environment_data, rng)
+	if _world_environment_timing_enabled:
+		_world_environment_build_stages_usec["crew_and_games"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stage_started_usec = Time.get_ticks_usec()
 	if str(archetype.get("kind", "")) == "home":
 		_apply_home_profile(run_state, environment_data, archetype, node_id, rng.fork("home_profile:%s" % node_id))
 	_apply_world_travel_targets(environment_data, run_state, map_data, node_id)
 	_apply_scenario_sequence_travel_targets(environment_data, scenario)
 	environment_data["layout"] = EnvironmentInstance.ensure_generated_layout(environment_data)
+	if _world_environment_timing_enabled:
+		_world_environment_build_stages_usec["targets_and_layout"] = Time.get_ticks_usec() - perf_stage_started_usec
 	return environment_data
 
 
