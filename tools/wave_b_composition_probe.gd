@@ -23,8 +23,13 @@ var mode := "full"
 var candidate_commit := ""
 var candidate_tree := ""
 var tool_source_sha256 := ""
+var evidence_profile := ""
+var evidence_profile_path := ""
+var evidence_profile_sha256 := ""
 var shard_index := 0
 var shard_count := 1
+var order_id := "save_load_replay_abandon"
+var target_layer_id := ""
 var failures: Array = []
 
 
@@ -42,10 +47,20 @@ func _init() -> void:
 			candidate_tree = argument.trim_prefix("--candidate-tree=").strip_edges()
 		elif argument.begins_with("--tool-source-sha256="):
 			tool_source_sha256 = argument.trim_prefix("--tool-source-sha256=").strip_edges()
+		elif argument.begins_with("--evidence-profile="):
+			evidence_profile = argument.trim_prefix("--evidence-profile=").strip_edges()
+		elif argument.begins_with("--profile-path="):
+			evidence_profile_path = argument.trim_prefix("--profile-path=").strip_edges()
+		elif argument.begins_with("--profile-sha256="):
+			evidence_profile_sha256 = argument.trim_prefix("--profile-sha256=").strip_edges()
 		elif argument.begins_with("--shard-index="):
 			shard_index = maxi(0, int(argument.trim_prefix("--shard-index=")))
 		elif argument.begins_with("--shard-count="):
 			shard_count = maxi(1, int(argument.trim_prefix("--shard-count=")))
+		elif argument.begins_with("--order-id="):
+			order_id = argument.trim_prefix("--order-id=").strip_edges()
+		elif argument.begins_with("--target-layer-id="):
+			target_layer_id = argument.trim_prefix("--target-layer-id=").strip_edges()
 	call_deferred("_run")
 
 
@@ -225,8 +240,12 @@ func _finish_delivery_matrix(delivery: Dictionary) -> void:
 	var inventory := _dict(delivery.get("surface_inventory", {}))
 	var lifecycle_passed := bool(delivery.get("save_load_exact", false)) \
 		and bool(delivery.get("replay_idempotent", false)) \
-		and bool(delivery.get("abandonment_clean", false))
-	var maximal_observed := not str(delivery.get("scenario_id", "")).is_empty() \
+		and bool(delivery.get("abandonment_clean", false)) \
+		and bool(delivery.get("order_pre_replay_ok", false)) \
+		and bool(delivery.get("order_travel_return_ok", false)) \
+		and bool(delivery.get("order_expired_ok", false))
+	var maximal_observed := bool(delivery.get("initial_maximal_live", false)) \
+		and not str(delivery.get("scenario_id", "")).is_empty() \
 		and not _array(inventory.get("game_ids", [])).is_empty() \
 		and not _array(inventory.get("event_ids", [])).is_empty() \
 		and not _array(inventory.get("service_ids", [])).is_empty() \
@@ -237,7 +256,7 @@ func _finish_delivery_matrix(delivery: Dictionary) -> void:
 		"archetype_id": str(delivery.get("target_archetype", "")),
 		"node_id": str(delivery.get("target_node", "")),
 		"scenario_id": str(delivery.get("scenario_id", "")),
-		"layer_id": "",
+		"layer_id": str(delivery.get("layer_id", "")),
 		"game_ids": _array(inventory.get("game_ids", [])),
 		"event_ids": _array(inventory.get("event_ids", [])),
 		"service_ids": _array(inventory.get("service_ids", [])),
@@ -247,11 +266,12 @@ func _finish_delivery_matrix(delivery: Dictionary) -> void:
 		"crew_sequence_token": str(delivery.get("crew_sequence_token", "")),
 		"eligibility_source": str(delivery.get("eligibility_source", "")),
 		"event_selection": _dict(delivery.get("event_selection", {})),
-		"order_id": "save_load_replay_abandon",
+		"order_id": order_id,
 		"before_sha256": str(delivery.get("before_sha256", "")),
 		"after_sha256": str(delivery.get("after_sha256", "")),
 		"double_fire_count": 0 if bool(delivery.get("replay_idempotent", false)) else 1,
 		"orphan_count": 0 if bool(delivery.get("abandonment_clean", false)) else 1,
+		"state_bytes": JSON.stringify(delivery).to_utf8_buffer().size(),
 		"maximal_observed": maximal_observed,
 		"passed": lifecycle_passed,
 	}
@@ -261,6 +281,7 @@ func _finish_delivery_matrix(delivery: Dictionary) -> void:
 		"candidate_commit": candidate_commit,
 		"candidate_tree": candidate_tree,
 		"tool_source_sha256": tool_source_sha256,
+		"profile": {"evidence_profile": evidence_profile, "path": evidence_profile_path, "sha256": evidence_profile_sha256},
 		"shard": {"index": shard_index, "count": shard_count, "seed_ids": [seed_text]},
 		"platform": OS.get_name(),
 		"profile": "headless-production-selector",
@@ -271,8 +292,23 @@ func _finish_delivery_matrix(delivery: Dictionary) -> void:
 		"terminal": {},
 		"semantic_trace_sha256": JSON.stringify(_normalize_json_numbers(row), "", true).sha256_text(),
 		"save_load_points": ["mounted_mid_composition"],
-		"retained_counters": {"nodes": 0, "resources": 0, "objects": 0, "orphans": int(row.get("orphan_count", 0)), "state_bytes": JSON.stringify(delivery).to_utf8_buffer().size()},
-		"allocation_copy_counters": {"allocations": 0, "shallow_copies": 0, "deep_copies": 0, "bytes": 0, "source": "not_instrumented"},
+		"retained_counters": {
+			"available": true,
+			"measured": ["nodes", "orphans", "state_bytes"],
+			"nodes": int(delivery.get("world_node_count", 0)),
+			"resources": null,
+			"objects": null,
+			"orphans": int(row.get("orphan_count", 0)),
+			"state_bytes": JSON.stringify(delivery).to_utf8_buffer().size(),
+		},
+		"allocation_copy_counters": {
+			"available": false,
+			"allocations": null,
+			"shallow_copies": null,
+			"deep_copies": null,
+			"bytes": null,
+			"source": "not_instrumented_by_semantic_composition_probe",
+		},
 		"artifacts": [],
 		"rows": [row],
 		"delivery": delivery,
@@ -285,6 +321,16 @@ func _finish_delivery_matrix(delivery: Dictionary) -> void:
 
 
 func _exercise_delivery_composition(library: ContentLibrary) -> Dictionary:
+	var supported_orders := [
+		"save_load_replay_abandon",
+		"replay_save_load_abandon",
+		"travel_return_save_load_abandon",
+		"save_load_abandon_travel_return",
+		"expire_save_load_travel_return",
+	]
+	_require(supported_orders.has(order_id), "Unknown composition order: %s" % order_id)
+	if not supported_orders.has(order_id):
+		return {"order_id": order_id}
 	var prepared := _prepare_natural_crew_delivery(library, "%s-DELIVERY" % seed_text)
 	var run_state: RunState = prepared.get("run_state")
 	var generator: RunGenerator = prepared.get("generator")
@@ -297,7 +343,11 @@ func _exercise_delivery_composition(library: ContentLibrary) -> Dictionary:
 		}
 	var event_module: EventModule = EventModuleScript.new()
 	event_module.setup(library.event("crew_favor_delivery"), library)
+	var pending_entry := run_state.next_pending_triggered_event()
+	var active_entry := run_state.begin_triggered_event_resolution(pending_entry)
+	_require(str(active_entry.get("event_id", "")) == "crew_favor_delivery", "The production modal queue did not begin the naturally selected Crew favor.")
 	var started := event_module.resolve(run_state, run_state.current_environment, "run_package")
+	run_state.complete_triggered_event_resolution("crew_favor_delivery")
 	var token := str(started.get("world_sequence_owner_token", ""))
 	_require(bool(started.get("delivery_started", false)) and bool(started.get("world_sequence_scheduled", false)) and not token.is_empty(), "The production Crew-favor event did not schedule its delivery sequence.")
 	var physical := _dict(run_state.delivery_snapshot().get("physical", {}))
@@ -308,14 +358,42 @@ func _exercise_delivery_composition(library: ContentLibrary) -> Dictionary:
 	var target_node := str(_dict(targets[0]).get("node_id", "")) if not targets.is_empty() else ""
 	_require(not target_node.is_empty(), "The production delivery selected no real-map target.")
 	var traveled := generator.travel_environment_result(run_state, target_node, true) if not target_node.is_empty() else {}
+	var layer_entry := _enter_requested_punchline_layer(run_state, generator, library) if bool(traveled.get("ok", false)) else {"ok": false}
+	_require(bool(layer_entry.get("ok", false)), "The requested production Punchline layer could not be entered: %s" % JSON.stringify(layer_entry))
 	var arrival := run_state.delivery_resolve_travel_arrival({}, {}) if bool(traveled.get("ok", false)) else {}
 	# FoundationMain routes a room with an installed scenario through scenario
 	# finalization; that same boundary activates and composes eligible Crew/world
 	# mounts without replacing the scenario-owned base inventory.
 	var finalized := run_state.scenario_finalize_installed_environment(library, {"viewport_size": {"x": 1280, "y": 720}}) if bool(arrival.get("ok", false)) else {}
 	var composed := run_state.world_sequence_composed_projection()
-	_require(bool(traveled.get("ok", false)) and bool(arrival.get("ok", false)) and bool(finalized.get("ok", false)), "The production Crew delivery did not mount at its real target: %s" % JSON.stringify({"travel": traveled, "arrival": arrival, "finalized": finalized}))
+	_require(bool(traveled.get("ok", false)) and bool(layer_entry.get("ok", false)) and bool(arrival.get("ok", false)) and bool(finalized.get("ok", false)), "The production Crew delivery did not mount at its real target: %s" % JSON.stringify({"travel": traveled, "layer": layer_entry, "arrival": arrival, "finalized": finalized}))
 	_require(not composed.is_empty() and run_state.world_sequence_mounted_owner_for_channel("delivery_handoff", target_node) == token, "The mounted Crew sequence did not own the delivery handoff channel.")
+	var observed_archetype := str(run_state.current_environment.get("archetype_id", ""))
+	var observed_scenario := str(run_state.current_environment.get("scenario_id", ""))
+	var observed_layer := str(run_state.current_environment.get("current_layer_id", ""))
+	var observed_surface_inventory := _layer_surface_inventory(run_state.current_environment)
+	var observed_traveler_ids := _array(run_state.current_environment.get("traveler_ids", [])).duplicate()
+	var observed_sweep_active := bool(run_state.town_state.sweep_internal_status().get("active", false))
+	var initial_maximal_live := not str(run_state.current_environment.get("scenario_id", "")).is_empty() \
+		and not _array(observed_surface_inventory.get("game_ids", [])).is_empty() \
+		and not _array(observed_surface_inventory.get("event_ids", [])).is_empty() \
+		and not _array(observed_surface_inventory.get("service_ids", [])).is_empty() \
+		and not observed_traveler_ids.is_empty() \
+		and observed_sweep_active
+	var pre_replay_ok := true
+	if order_id == "replay_save_load_abandon":
+		pre_replay_ok = _replay_finalize_is_idempotent(run_state, library)
+		_require(pre_replay_ok, "Finalization replay before save fired a consequence twice or changed the registration ledger.")
+	var travel_return_ok := true
+	if order_id == "travel_return_save_load_abandon":
+		travel_return_ok = _travel_away_and_return(run_state, generator, library, target_node, token, true)
+		_require(travel_return_ok, "Travel away and return did not restore the active maximal composition cleanly.")
+	var expired_ok := true
+	if order_id == "expire_save_load_travel_return":
+		var remaining := maxi(1, int(run_state.delivery_snapshot().get("deadline_remaining", 1)))
+		run_state.advance_environment_turns(remaining + 1)
+		expired_ok = not run_state.delivery_has_active_run() and not str(_dict(run_state.delivery_snapshot().get("resolution", {})).get("reason", "")).is_empty()
+		_require(expired_ok, "Letting the maximal composition expire did not close the delivery at its production action boundary.")
 
 	# Save while the scenario/world sequence/delivery/town systems coexist.  Then
 	# replay the same arrival and finalization boundaries; neither may duplicate a
@@ -325,11 +403,11 @@ func _exercise_delivery_composition(library: ContentLibrary) -> Dictionary:
 	var before := _composition_contract(run_state, token)
 	var before_sha256 := JSON.stringify(_normalize_json_numbers(before), "", true).sha256_text()
 	var environment_before_save := run_state.current_environment.duplicate(true)
-	var target_archetype := str(run_state.current_environment.get("archetype_id", ""))
-	var target_scenario := str(run_state.current_environment.get("scenario_id", ""))
-	var target_surface_inventory := _layer_surface_inventory(run_state.current_environment)
-	var target_traveler_ids := _array(run_state.current_environment.get("traveler_ids", [])).duplicate()
-	var target_sweep_active := bool(run_state.town_state.sweep_internal_status().get("active", false))
+	var target_archetype := observed_archetype
+	var target_scenario := observed_scenario
+	var target_surface_inventory := observed_surface_inventory
+	var target_traveler_ids := observed_traveler_ids
+	var target_sweep_active := observed_sweep_active
 	var durable_world_before := CrewWorldSequenceAdapterScript.durable_container(run_state.current_environment.get(CrewWorldSequenceAdapterScript.CONTAINER_KEY, {}))
 	var delivery_before_save := run_state.delivery_snapshot()
 	var save_error := save_service.save_run(run_state, COMPOSITION_SAVE_SLOT)
@@ -357,18 +435,9 @@ func _exercise_delivery_composition(library: ContentLibrary) -> Dictionary:
 		save_load_exact = JSON.stringify(_normalize_composition_contract(before)) == JSON.stringify(_normalize_composition_contract(after))
 		save_load_changed_keys = _changed_top_level_keys(before, after)
 		_require(save_load_exact, "Mounted scenario/Crew/delivery/town causal and public composition changed across SaveService round trip.")
-		var bankroll_before_replay := run_state.bankroll
-		var heat_before_replay := run_state.suspicion_level()
-		var story_before_replay := run_state.story_log.size()
-		var registrations_before_replay := JSON.stringify(run_state.world_sequence_registrations)
-		run_state.scenario_finalize_installed_environment(library, {"viewport_size": {"x": 1280, "y": 720}})
-		replay_idempotent = run_state.bankroll == bankroll_before_replay \
-			and run_state.suspicion_level() == heat_before_replay \
-			and run_state.story_log.size() == story_before_replay \
-			and JSON.stringify(run_state.world_sequence_registrations) == registrations_before_replay
-		_require(run_state.bankroll == bankroll_before_replay and run_state.suspicion_level() == heat_before_replay and run_state.story_log.size() == story_before_replay, "Replayed arrival/finalization fired a Crew delivery consequence twice.")
-		_require(JSON.stringify(run_state.world_sequence_registrations) == registrations_before_replay, "Replayed arrival/finalization changed the Crew registration ledger.")
-		var abandoned := run_state.delivery_abandon("integ06_1_leave_mid_everything")
+		replay_idempotent = _replay_finalize_is_idempotent(run_state, library) if run_state.delivery_has_active_run() else true
+		_require(replay_idempotent, "Replayed arrival/finalization fired a Crew delivery consequence twice or changed the registration ledger.")
+		var abandoned := run_state.delivery_abandon("integ06_1_leave_mid_everything") if run_state.delivery_has_active_run() else {"ok": true, "inactive": true}
 		var owner_after_abandon := run_state.world_sequence_mounted_owner_for_channel("delivery_handoff", target_node)
 		var unmounted := {"ok": true, "inactive": true}
 		if not owner_after_abandon.is_empty():
@@ -383,14 +452,25 @@ func _exercise_delivery_composition(library: ContentLibrary) -> Dictionary:
 			and _array(final_registration.get("pending_outcomes", [])).is_empty()
 		_require(bool(abandoned.get("ok", false)) and bool(unmounted.get("ok", false)), "Leaving mid-composition did not provide a safe delivery/sequence cleanup path.")
 		_require(abandonment_clean, "Abandonment left an orphaned delivery or handoff owner.")
+		if order_id in ["save_load_abandon_travel_return", "expire_save_load_travel_return"]:
+			var cleanup_return_ok := _travel_away_and_return(run_state, generator, library, target_node, token, false)
+			abandonment_clean = abandonment_clean and cleanup_return_ok
+			_require(cleanup_return_ok, "Travel away and return resurrected an expired or abandoned composition.")
 	save_service.clear_run(COMPOSITION_SAVE_SLOT)
 	return {
 		"eligibility_source": str(prepared.get("eligibility_source", "")),
 		"crew_lender_node": str(prepared.get("crew_lender_node", "")),
 		"event_selection": _dict(prepared.get("event_selection", {})),
+		"initial_maximal_live": initial_maximal_live,
+		"order_id": order_id,
+		"order_pre_replay_ok": pre_replay_ok,
+		"order_travel_return_ok": travel_return_ok,
+		"order_expired_ok": expired_ok,
 		"target_node": target_node,
+		"world_node_count": _array(run_state.world_map.get("nodes", [])).size(),
 		"target_archetype": target_archetype,
 		"scenario_id": target_scenario,
+		"layer_id": observed_layer,
 		"surface_inventory": target_surface_inventory,
 		"traveler_ids": target_traveler_ids,
 		"traveler_count": target_traveler_ids.size(),
@@ -408,6 +488,90 @@ func _exercise_delivery_composition(library: ContentLibrary) -> Dictionary:
 		"delivery_before_save_status": str(delivery_before_save.get("status", "")),
 		"delivery_after_load_status": str(delivery_after_load.get("status", "")),
 	}
+
+
+func _replay_finalize_is_idempotent(run_state: RunState, library: ContentLibrary) -> bool:
+	var bankroll_before := run_state.bankroll
+	var heat_before := run_state.suspicion_level()
+	var story_before := run_state.story_log.size()
+	var registrations_before := JSON.stringify(_normalize_json_numbers(run_state.world_sequence_registrations), "", true)
+	var finalized := run_state.scenario_finalize_installed_environment(library, {"viewport_size": {"x": 1280, "y": 720}})
+	return bool(finalized.get("ok", false)) \
+		and run_state.bankroll == bankroll_before \
+		and run_state.suspicion_level() == heat_before \
+		and run_state.story_log.size() == story_before \
+		and JSON.stringify(_normalize_json_numbers(run_state.world_sequence_registrations), "", true) == registrations_before
+
+
+func _enter_requested_punchline_layer(run_state: RunState, generator: RunGenerator, library: ContentLibrary) -> Dictionary:
+	if target_layer_id.is_empty():
+		return {"ok": true, "layer_id": str(run_state.current_environment.get("current_layer_id", "")), "method": "default"}
+	if str(run_state.current_environment.get("archetype_id", "")) != PUNCHLINE_ID:
+		return {"ok": false, "message": "A layer was requested for a non-Punchline delivery target."}
+	if str(run_state.current_environment.get("current_layer_id", "")) == target_layer_id:
+		return {"ok": true, "layer_id": target_layer_id, "method": "persisted_layer_reentry"}
+	if target_layer_id == "club":
+		var club_entry := generator.enter_environment_layer(run_state, "club", false)
+		return {"ok": bool(club_entry.get("ok", false)), "layer_id": "club", "method": "public_layer_transition", "entry": club_entry}
+	if target_layer_id not in ["casino", "back_room"]:
+		return {"ok": false, "message": "Unknown Punchline layer: %s" % target_layer_id}
+	var casino_access := run_state.environment_layer_access_status("casino")
+	var discovery: Dictionary = {"ok": true, "already_discovered": true}
+	if not bool(casino_access.get("available", false)):
+		var side_door: EventModule = EventModuleScript.new()
+		side_door.setup(library.event("side_door"), library)
+		discovery = side_door.resolve(run_state, run_state.current_environment, "punchline_password")
+		if not bool(discovery.get("ok", false)):
+			return {"ok": false, "message": "The authored side-door discovery path did not open L2.", "discovery": discovery}
+	var casino_entry := {"ok": true, "already_entered": true}
+	if str(run_state.current_environment.get("current_layer_id", "")) != "casino":
+		casino_entry = generator.enter_environment_layer(run_state, "casino", false)
+		if not bool(casino_entry.get("ok", false)):
+			return {"ok": false, "message": "The discovered casino layer could not be entered.", "casino_entry": casino_entry}
+	if target_layer_id == "casino":
+		return {"ok": true, "layer_id": "casino", "method": "side_door:punchline_password"}
+	# L3 is reached through the shipped Crew-standing gate, using the same public
+	# trust mutation that ordinary Crew consequences apply. The layer's own access
+	# check remains authoritative; this probe never installs a layer directly.
+	run_state.crew_add_trust("crew_rook", 10000, "integ06_1_composition_progression")
+	var back_room_access := run_state.environment_layer_access_status("back_room")
+	var back_room_entry := generator.enter_environment_layer(run_state, "back_room", false) if bool(back_room_access.get("available", false)) else {"ok": false}
+	return {
+		"ok": bool(back_room_entry.get("ok", false)),
+		"layer_id": "back_room",
+		"method": "crew_rook_made_standing",
+		"access": back_room_access,
+		"entry": back_room_entry,
+	}
+
+
+func _travel_away_and_return(run_state: RunState, generator: RunGenerator, library: ContentLibrary, target_node: String, token: String, require_remount: bool) -> bool:
+	var neighbors := WorldMapScript.neighbor_ids(run_state.world_map, target_node, false)
+	var away_node := ""
+	for neighbor_value in neighbors:
+		var candidate := str(neighbor_value)
+		if not candidate.is_empty() and candidate != target_node:
+			away_node = candidate
+			break
+	if away_node.is_empty():
+		return false
+	var away := generator.travel_environment_result(run_state, away_node, true)
+	if not bool(away.get("ok", false)):
+		return false
+	var returned := generator.travel_environment_result(run_state, target_node, true)
+	if not bool(returned.get("ok", false)):
+		return false
+	var layer_entry := _enter_requested_punchline_layer(run_state, generator, library)
+	if not bool(layer_entry.get("ok", false)):
+		return false
+	var arrival := run_state.delivery_resolve_travel_arrival({}, {}) if run_state.delivery_has_active_run() else {"ok": true, "inactive": true}
+	var finalized := run_state.scenario_finalize_installed_environment(library, {"viewport_size": {"x": 1280, "y": 720}})
+	if not bool(arrival.get("ok", false)) or not bool(finalized.get("ok", false)):
+		return false
+	var mounted_owner := run_state.world_sequence_mounted_owner_for_channel("delivery_handoff", target_node)
+	if require_remount:
+		return run_state.delivery_has_active_run() and mounted_owner == token
+	return not run_state.delivery_has_active_run() and mounted_owner.is_empty()
 
 
 func _prepare_natural_crew_delivery(library: ContentLibrary, delivery_seed: String) -> Dictionary:
@@ -438,8 +602,11 @@ func _prepare_natural_crew_delivery(library: ContentLibrary, delivery_seed: Stri
 			"lender_result": lender_result,
 		}
 	# The authored Crew note reaches favor_due only by crossing its real debt
-	# clock. No flag or queue entry is supplied by this harness.
-	run_state.advance_environment_turns(2)
+	# clock. Align the same production action clock with the authored Police Sweep
+	# start so the resulting node is maximal without mutating either subsystem.
+	var sweep_start_action := int(run_state.town_state.police_sweep.snapshot().get("start_action", 0))
+	var action_advance := maxi(2, sweep_start_action - int(run_state.town_state.action_index))
+	run_state.advance_environment_turns(action_advance)
 	var selected: Dictionary = {}
 	for _attempt in range(24):
 		selected = _enqueue_next_production_action_event(run_state, library, "game_action")
