@@ -95,9 +95,9 @@ const COIN_PUSHER_SOLVER_TICK_P95_BUDGET_MS := 12.0
 const COIN_PUSHER_IDLE_SAMPLE_FRAMES := 120
 const COIN_PUSHER_ACTION_SAMPLE_FRAMES := 60
 const COIN_PUSHER_DRAW_WARMUP_SAMPLES := 3
-const COIN_PUSHER_DRAW_MINIMUM_SAMPLES := 20
+const COIN_PUSHER_DRAW_TARGET_SAMPLES := 64
 const COIN_PUSHER_DRAW_PROBE_INTERVAL_FRAMES := 15
-const COIN_PUSHER_DRAW_SAMPLE_MAX_FRAMES := 720
+const COIN_PUSHER_DRAW_SAMPLE_MAX_FRAMES := COIN_PUSHER_DRAW_TARGET_SAMPLES * COIN_PUSHER_DRAW_PROBE_INTERVAL_FRAMES
 const IDLE_LIVENESS_MINIMUM_INTERVALS := 2
 const IDLE_LIVENESS_WAIT_GRACE_MSEC := 5000
 const ACTIVE_PHASE_MINIMUM_FRAMES := 12
@@ -1655,10 +1655,12 @@ func _measure_coin_pusher_idle(name: String, reduced_motion: bool, fixture: Dict
 	current_tags["solver_backend"] = CoinPusherSolverScript.last_step_backend_for_test()
 	current_tags["draw_sampling"] = {
 		"warmup_samples": warmup_samples,
-		"minimum_samples": COIN_PUSHER_DRAW_MINIMUM_SAMPLES,
+		"target_samples": COIN_PUSHER_DRAW_TARGET_SAMPLES,
 		"sample_frames": int(draw_window.get("sample_frames", 0)),
 		"sample_count": int(after_counters.get("draw_sample_count", 0)),
-		"floor_met": bool(draw_window.get("floor_met", false)),
+		"complete": bool(draw_window.get("complete", false)),
+		"p95_percentile": 0.95,
+		"p95_rank": ceili(float(int(after_counters.get("draw_sample_count", 0))) * 0.95),
 		"probe_interval_frames": COIN_PUSHER_DRAW_PROBE_INTERVAL_FRAMES,
 	}
 	_end_scenario()
@@ -1755,10 +1757,12 @@ func _measure_coin_pusher_action(surface_action: String, name: String, fixture: 
 	current_tags["action_patch_present"] = typeof(result.get("surface_action_view_patch", {})) == TYPE_DICTIONARY and not (result.get("surface_action_view_patch", {}) as Dictionary).is_empty()
 	current_tags["draw_sampling"] = {
 		"warmup_samples": warmup_samples,
-		"minimum_samples": COIN_PUSHER_DRAW_MINIMUM_SAMPLES,
+		"target_samples": COIN_PUSHER_DRAW_TARGET_SAMPLES,
 		"sample_frames": int(draw_window.get("sample_frames", 0)),
 		"sample_count": int(after_counters.get("draw_sample_count", 0)),
-		"floor_met": bool(draw_window.get("floor_met", false)),
+		"complete": bool(draw_window.get("complete", false)),
+		"p95_percentile": 0.95,
+		"p95_rank": ceili(float(int(after_counters.get("draw_sample_count", 0))) * 0.95),
 		"probe_interval_frames": COIN_PUSHER_DRAW_PROBE_INTERVAL_FRAMES,
 	}
 	_end_scenario()
@@ -1793,12 +1797,12 @@ func _wait_coin_pusher_draw_sample_window(canvas: Control, minimum_frames: int) 
 		if canvas != null and canvas.has_method("performance_live_status"):
 			var status: Dictionary = canvas.call("performance_live_status")
 			sample_count = int(status.get("draw_sample_count", 0))
-		if sampled_frames >= minimum_frames and sample_count >= COIN_PUSHER_DRAW_MINIMUM_SAMPLES:
+		if sampled_frames >= minimum_frames and sample_count >= COIN_PUSHER_DRAW_TARGET_SAMPLES:
 			break
 	return {
 		"sample_frames": sampled_frames,
 		"sample_count": sample_count,
-		"floor_met": sample_count >= COIN_PUSHER_DRAW_MINIMUM_SAMPLES,
+		"complete": sample_count >= COIN_PUSHER_DRAW_TARGET_SAMPLES,
 	}
 
 

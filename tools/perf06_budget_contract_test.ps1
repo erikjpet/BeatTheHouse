@@ -40,7 +40,7 @@ foreach ($token in $nativeTokens) {
 foreach ($token in @("perf06_budget_table.json", "web_perf_idle_liveness_contract.ps1", "scenario_frame_p95_budgets_ms", "budget_table_sha256")) {
     if (-not $webText.Contains($token)) { throw "Web budget enforcement lost '$token'." }
 }
-foreach ($token in @('$coinPusherDrawMinimumSamples = 20', 'Test-CoinPusherDrawSamplingEvidence')) {
+foreach ($token in @('$coinPusherDrawRequiredSamples = 64', 'Test-CoinPusherDrawSamplingEvidence', 'coin_pusher_draw_required_p95_rank')) {
     if (-not $webText.Contains($token)) { throw "Coin Pusher Web draw percentile lost its statistical eligibility contract '$token'." }
 }
 foreach ($token in @("distribution_fresh_start", "distribution_fresh_start_contract", "fresh Web export", "cold browser profile")) {
