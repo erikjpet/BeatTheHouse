@@ -868,20 +868,31 @@ func _prime_town_scenarios(run_state: RunState, map_data: Dictionary) -> void:
 		if not run_state.seeded_scenario_for_node(node_id).is_empty():
 			continue
 		var scenario_rng := run_state.create_rng("town_scenario_seed:%s" % node_id)
-		var scenario := _select_scenario(run_state, node_id, scenario_rng)
+		var scenario := _select_scenario(run_state, node_id, scenario_rng, false)
 		if not scenario.is_empty():
 			run_state.seed_scenario_for_node(node_id, scenario)
 
 
-func _select_scenario(run_state: RunState, archetype_id: String, rng: RngStream) -> Dictionary:
+func _select_scenario(run_state: RunState, archetype_id: String, rng: RngStream, validate_runtime: bool = true) -> Dictionary:
 	if run_state == null or library == null or rng == null:
+		return {}
+	var seeded_definition := run_state._seeded_scenario_definition_for_node_readonly(archetype_id)
+	if not seeded_definition.is_empty():
+		if bool(seeded_definition.get(ScenarioEngineScript.SEQUENCE_SUPPRESSION_KEY, false)):
+			return _apply_scenario_pin_suppression(run_state, archetype_id, seeded_definition)
+		var resolved_seeded := library._runtime_validated_scenario_definition(seeded_definition) if validate_runtime else seeded_definition
+		return _apply_scenario_pin_suppression(run_state, archetype_id, resolved_seeded)
+	var modifiers := _copy_dict(run_state.challenge_config.get("modifiers", {}))
+	var pins := _copy_dict(modifiers.get("scenario_pins", {}))
+	var pinned_id := str(pins.get(archetype_id, "")).strip_edges()
+	# Tutorial overrides author the complete room. Unless the lesson explicitly
+	# pins a scenario, skip the sequence pool before any runtime validation work.
+	var tutorial_overrides := _copy_dict(modifiers.get("tutorial_environment_overrides", {}))
+	if tutorial_overrides.has(archetype_id) and pinned_id.is_empty():
 		return {}
 	var pool := library._scenarios_for_archetype_readonly(archetype_id)
 	if pool.is_empty():
 		return {}
-	var seeded_definition := run_state._seeded_scenario_definition_for_node_readonly(archetype_id)
-	if not seeded_definition.is_empty():
-		return _apply_scenario_pin_suppression(run_state, archetype_id, seeded_definition)
 	var seeded := run_state.seeded_scenario_for_node(archetype_id)
 	var seeded_id := str(seeded.get("id", "")).strip_edges()
 	if not seeded_id.is_empty():
@@ -890,10 +901,8 @@ func _select_scenario(run_state: RunState, archetype_id: String, rng: RngStream)
 				continue
 			var definition: Dictionary = definition_value
 			if str(definition.get("id", "")) == seeded_id:
-				return _apply_scenario_pin_suppression(run_state, archetype_id, definition)
-	var modifiers := _copy_dict(run_state.challenge_config.get("modifiers", {}))
-	var pins := _copy_dict(modifiers.get("scenario_pins", {}))
-	var pinned_id := str(pins.get(archetype_id, "")).strip_edges()
+				var resolved_definition := library._runtime_validated_scenario_definition(definition) if validate_runtime else library._runtime_scenario_definition_unvalidated(definition)
+				return _apply_scenario_pin_suppression(run_state, archetype_id, resolved_definition)
 	if not pinned_id.is_empty():
 		for definition_value in pool:
 			if typeof(definition_value) != TYPE_DICTIONARY:
@@ -901,14 +910,14 @@ func _select_scenario(run_state: RunState, archetype_id: String, rng: RngStream)
 			var pinned: Dictionary = definition_value
 			if str(pinned.get("id", "")) == pinned_id:
 				run_state.remember_scenario_selection(archetype_id, pinned_id)
-				return _apply_scenario_pin_suppression(run_state, archetype_id, pinned)
+				var resolved_pinned := library._runtime_validated_scenario_definition(pinned) if validate_runtime else library._runtime_scenario_definition_unvalidated(pinned)
+				return _apply_scenario_pin_suppression(run_state, archetype_id, resolved_pinned)
 		return {}
 	# Tutorial environment overrides author the complete room contract. A normal
 	# scenario overlay can add games, events, and semantic actors after that
 	# contract is built, making the guided route nondeterministic or even
 	# impossible to seal. Explicit tutorial pins above remain available when the
 	# lesson needs a named, mutation-suppressed identity such as Delivery Day.
-	var tutorial_overrides := _copy_dict(modifiers.get("tutorial_environment_overrides", {}))
 	if tutorial_overrides.has(archetype_id):
 		return {}
 	var excludes := _copy_dict(modifiers.get("scenario_excludes", {}))
@@ -957,7 +966,8 @@ func _select_scenario(run_state: RunState, archetype_id: String, rng: RngStream)
 			break
 	var selected_id := str(selected.get("id", ""))
 	run_state.remember_scenario_selection(archetype_id, selected_id)
-	return selected.duplicate(true)
+	var resolved_selected := library._runtime_validated_scenario_definition(selected) if validate_runtime else library._runtime_scenario_definition_unvalidated(selected)
+	return resolved_selected.duplicate(true)
 
 
 func _apply_scenario_pin_suppression(run_state: RunState, archetype_id: String, definition: Dictionary) -> Dictionary:

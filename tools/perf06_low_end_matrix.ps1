@@ -115,6 +115,9 @@ try {
         return
     }
 
+    & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "perf06_deferred_validation_contract.ps1") -GodotPath $GodotPath
+    if ($LASTEXITCODE -ne 0) { throw "Deferred runtime validation contract failed." }
+
     & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "foundation_performance_probe.ps1") -RunCount 8 -FramesPerSurface 120 -ResolveSampleCount 48 -SeedPrefix "PERF06-LOW-$($profile.profile_id)" -Out (Join-Path $out "native_surface_probe.json") -CandidateCommit $head -ProfileManifestSha256 $profileHash -EvidenceProfile "low_end:$($profile.profile_id)" -RequireGodot:$RequireGodot
     if ($LASTEXITCODE -ne 0) { throw "Native low-end surface matrix failed." }
 

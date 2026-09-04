@@ -4,6 +4,7 @@ $tablePath = Join-Path $PSScriptRoot "perf06_budget_table.json"
 $table = Get-Content -LiteralPath $tablePath -Raw | ConvertFrom-Json
 $webText = Get-Content -LiteralPath (Join-Path $PSScriptRoot "web_perf_smoke.ps1") -Raw
 $nativeText = Get-Content -LiteralPath (Join-Path $PSScriptRoot "foundation_performance_probe.gd") -Raw
+$lowEndText = Get-Content -LiteralPath (Join-Path $PSScriptRoot "perf06_low_end_matrix.ps1") -Raw
 
 if ([string]$table.schema -cne "beat_the_house.perf06_budget_table/v1" -or [int]$table.version -ne 1) {
     throw "Published performance budget table schema/version changed without a contract update."
@@ -41,6 +42,9 @@ foreach ($token in @("perf06_budget_table.json", "web_perf_idle_liveness_contrac
 }
 foreach ($token in @("distribution_fresh_start", "distribution_fresh_start_contract", "fresh Web export", "cold browser profile")) {
     if (-not $webText.Contains($token)) { throw "Exported Web fresh-start contract lost '$token'." }
+}
+if (-not $lowEndText.Contains("perf06_deferred_validation_contract.ps1")) {
+    throw "Low-end qualification no longer protects deferred runtime validation."
 }
 if ($webText -notmatch 'solver_backend -ceq "native_v3"') {
     throw "Exported Web performance gate no longer requires the locked native_v3 Coin Pusher solver."

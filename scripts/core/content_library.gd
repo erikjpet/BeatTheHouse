@@ -86,6 +86,7 @@ var _content_index_generation := 0
 var _load_timing: Dictionary = {}
 var _load_pack_timings: Array = []
 var _validated_scenario_definition_cache: Dictionary = {}
+var _runtime_validated_scenario_definition_cache: Dictionary = {}
 var _fully_loaded := false
 
 
@@ -124,6 +125,7 @@ static func future_pack_paths() -> Dictionary:
 func load(run_validation: bool = true) -> Dictionary:
 	var load_started_usec := Time.get_ticks_usec()
 	_validated_scenario_definition_cache.clear()
+	_runtime_validated_scenario_definition_cache.clear()
 	_load_errors = []
 	_load_pack_timings = []
 	validation_complete = false
@@ -205,6 +207,7 @@ func load_start_menu() -> Dictionary:
 	if _fully_loaded:
 		return {"environment_archetypes": environment_archetypes, "challenges": challenges}
 	var load_started_usec := Time.get_ticks_usec()
+	_runtime_validated_scenario_definition_cache.clear()
 	_load_errors = []
 	_load_pack_timings = []
 	validation_complete = false
@@ -763,16 +766,29 @@ func scenarios_for_archetype(archetype_id: String) -> Array:
 # selector duplicates only the chosen result instead of rebuilding every overlay
 # in the pool for every reachability probe or destination visit.
 func _scenarios_for_archetype_readonly(archetype_id: String) -> Array:
-	if not validation_complete or not validation_errors.is_empty():
-		return scenarios_for_archetype(archetype_id)
 	var value: Variant = environment_scenarios.get(archetype_id, [])
 	var result: Array = []
 	if typeof(value) != TYPE_ARRAY:
 		return result
 	for definition_value in value as Array:
 		if typeof(definition_value) == TYPE_DICTIONARY:
-			result.append(_canonical_runtime_scenario_definition(definition_value as Dictionary))
+			if validation_complete and validation_errors.is_empty():
+				result.append(_canonical_runtime_scenario_definition(definition_value as Dictionary))
+			else:
+				# Selection consumes immutable identity/weight metadata. Exact semantic
+				# validation and sequence-overlay expansion belong to the one definition
+				# that is actually installed. The legacy fields retained here also carry
+				# the node-scoped hook/security facts queried before a room is visited.
+				result.append(definition_value as Dictionary)
 	return result
+
+
+func _runtime_validated_scenario_definition(definition: Dictionary) -> Dictionary:
+	return _canonical_runtime_scenario_definition(definition)
+
+
+func _runtime_scenario_definition_unvalidated(definition: Dictionary) -> Dictionary:
+	return ScenarioSequenceCatalogScript.apply_overlay(definition, scenario_sequence_catalog)
 
 
 # Finds one scenario definition without regenerating any environment state.
@@ -813,17 +829,64 @@ func _canonical_runtime_scenario_definition(definition: Dictionary) -> Dictionar
 	var cache_enabled := validation_complete and validation_errors.is_empty() and not scenario_id.is_empty()
 	if cache_enabled and _validated_scenario_definition_cache.has(scenario_id):
 		return _validated_scenario_definition_cache.get(scenario_id, {})
+	if not validation_complete and not scenario_id.is_empty() and _runtime_validated_scenario_definition_cache.has(scenario_id):
+		return _runtime_validated_scenario_definition_cache.get(scenario_id, {})
 	var result := ScenarioSequenceCatalogScript.apply_overlay(definition, scenario_sequence_catalog)
-	# The staged load validates sequence overlays against the exact independent
-	# semantic target inventory. Runtime has no ContentLibrary at its migration
-	# seam, so complete deferred validation at the first sequence lookup and carry
-	# only that all-green receipt forward. Non-sequence startup remains deferred.
+	# A release start defers the exhaustive all-catalog authoring audit. That audit
+	# includes pairwise uniqueness comparisons and is intentionally kept in the
+	# content/CI gate; making the first selected sequence run it blocked Play for
+	# many seconds. Validate the selected definition against its exact semantic
+	# target catalog instead, then cache that runtime receipt for this loaded pack.
 	if ScenarioSequenceSchemaScript.is_sequence(result) and not validation_complete:
-		validate()
+		var runtime_errors := _validate_runtime_scenario_sequence(result)
+		if runtime_errors.is_empty():
+			result[ScenarioEngineScript.VALIDATED_SEQUENCE_MARKER] = true
+			if not scenario_id.is_empty():
+				_runtime_validated_scenario_definition_cache[scenario_id] = result
+		else:
+			for error_value in runtime_errors:
+				var message := "scenario %s runtime validation: %s" % [scenario_id, str(error_value)]
+				if not validation_errors.has(message):
+					validation_errors.append(message)
+			result = _without_sequence_overlay(result)
 	if validation_complete and validation_errors.is_empty() and ScenarioSequenceSchemaScript.is_sequence(result):
 		result[ScenarioEngineScript.VALIDATED_SEQUENCE_MARKER] = true
 	if cache_enabled:
 		_validated_scenario_definition_cache[scenario_id] = result
+	return result
+
+
+func _validate_runtime_scenario_sequence(definition: Dictionary) -> Array:
+	var errors: Array = _load_errors.duplicate(true)
+	var scenario_id := str(definition.get("id", "")).strip_edges()
+	var archetype_id := str(definition.get("archetype_id", "")).strip_edges()
+	var target_catalog := scenario_target_catalog(definition)
+	if target_catalog.is_empty() or not _copy_array(target_catalog.get("errors", [])).is_empty():
+		errors.append_array(scenario_target_catalog_messages(scenario_id, target_catalog))
+		return errors
+	var target_inventory := _as_dict(target_catalog.get("guaranteed", {})).duplicate(true)
+	target_inventory["event_choices"] = _as_dict(target_catalog.get("event_choices", {}))
+	var references := {
+		"archetype_ids": _ids_for(environment_archetypes),
+		"event_ids": _ids_for(events),
+		"service_ids": _ids_for(services),
+		"game_ids": _ids_for(games),
+		"item_ids": _ids_for(items),
+		"actor_ids": _ids_for(characters),
+		"archetype": environment_archetype(archetype_id),
+		"scenario_semantic_inventory": _as_dict(target_catalog.get("inventory", {})),
+	}
+	errors.append_array(ScenarioEngineScript.validate_sequence_definition(definition, references, target_inventory))
+	var overlay := ScenarioSequenceCatalogScript.overlay_for(scenario_id, scenario_sequence_catalog)
+	if definition.has("sequence_package_id") and (overlay.is_empty() or str(overlay.get("package_id", "")) != str(definition.get("sequence_package_id", ""))):
+		errors.append("scenario sequence package is not active in the fail-closed content catalog")
+	return errors
+
+
+static func _without_sequence_overlay(definition: Dictionary) -> Dictionary:
+	var result := definition.duplicate(true)
+	for key in ["sequence", "sequence_package_id", "sequence_handler_pack", "sequence_renderer_id", "sequence_authoring", ScenarioEngineScript.VALIDATED_SEQUENCE_MARKER]:
+		result.erase(key)
 	return result
 
 
