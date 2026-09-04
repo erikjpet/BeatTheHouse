@@ -63,6 +63,24 @@ $policyHash = $inputs["tools/cross_economy_audit.gd"]
 $inputJson = $inputs | ConvertTo-Json -Depth 4 -Compress
 $inputHash = ([Security.Cryptography.SHA256]::Create().ComputeHash([Text.Encoding]::UTF8.GetBytes($inputJson)) | ForEach-Object { $_.ToString("x2") }) -join ""
 
+# Private shard roots need the imported runtime artifacts referenced by tracked
+# asset manifests. Copying only the script cache lets preload() parse failures
+# silently remove game modules from an otherwise successful audit run.
+$runtimeImportedArtifacts = [Collections.Generic.SortedSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+$assetRoot = Join-Path $projectRoot "assets"
+foreach ($manifest in Get-ChildItem -LiteralPath $assetRoot -Recurse -Filter "*.import" -File) {
+    $manifestText = Get-Content -LiteralPath $manifest.FullName -Raw
+    foreach ($match in [regex]::Matches($manifestText, 'res://\.godot/imported/([^"\r\n]+)')) {
+        [void]$runtimeImportedArtifacts.Add($match.Groups[1].Value)
+    }
+}
+foreach ($artifact in $runtimeImportedArtifacts) {
+    $source = Join-Path $projectRoot ".godot\imported\$artifact"
+    if (-not (Test-Path -LiteralPath $source -PathType Leaf)) {
+        throw "Required imported runtime artifact is missing: $source"
+    }
+}
+
 $jobs = [Collections.Generic.List[object]]::new()
 $shardProjectsRoot = Join-Path $OutDir "shard_projects"
 New-Item -ItemType Directory -Path $shardProjectsRoot -Force | Out-Null
@@ -82,6 +100,16 @@ foreach ($style in $styles) {
     }
     $privateCache = Join-Path $privateRoot ".godot"
     New-Item -ItemType Directory -Path $privateCache -Force | Out-Null
+    $privateImported = Join-Path $privateCache "imported"
+    New-Item -ItemType Directory -Path $privateImported -Force | Out-Null
+    foreach ($artifact in $runtimeImportedArtifacts) {
+        $source = Join-Path $projectRoot ".godot\imported\$artifact"
+        Copy-Item -LiteralPath $source -Destination (Join-Path $privateImported $artifact) -Force
+        $sourceMd5 = [IO.Path]::ChangeExtension($source, ".md5")
+        if (Test-Path -LiteralPath $sourceMd5 -PathType Leaf) {
+            Copy-Item -LiteralPath $sourceMd5 -Destination (Join-Path $privateImported ([IO.Path]::GetFileName($sourceMd5))) -Force
+        }
+    }
     foreach ($cacheFile in @("global_script_class_cache.cfg", "uid_cache.bin")) {
         Copy-Item -LiteralPath (Join-Path $projectRoot ".godot\$cacheFile") -Destination (Join-Path $privateCache $cacheFile) -Force
     }
