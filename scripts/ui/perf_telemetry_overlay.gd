@@ -252,6 +252,7 @@ func begin_foundation_frame() -> void:
 
 func record_foundation_subsystem_usec(subsystem: String, elapsed_usec: int) -> void:
 	var value := maxi(0, elapsed_usec)
+	var allocation_source := "foundation_snapshot" if subsystem == "snapshot_builds" else subsystem
 	match subsystem:
 		"snapshot_builds":
 			foundation_snapshot_last_usec += value
@@ -273,6 +274,8 @@ func record_foundation_subsystem_usec(subsystem: String, elapsed_usec: int) -> v
 			foundation_surface_realtime_module_last_usec += value
 		"surface_realtime_augment":
 			foundation_surface_realtime_augment_last_usec += value
+	if allocation_source in ALLOCATION_COPY_SOURCE_IDS:
+		mark_allocation_root_audited(allocation_source)
 
 
 # Opt-in probes call this only when the telemetry overlay exists. Normal play

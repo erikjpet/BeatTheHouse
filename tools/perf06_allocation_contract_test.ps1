@@ -22,4 +22,7 @@ foreach ($needle in @("audited_call_roots", "required allocation roots", "static
 foreach ($needle in @("ALLOCATION_COPY_SOURCE_IDS", "mark_allocation_root_audited", "explicit_allocation_audited_sources", '"coverage_complete"')) {
     if (-not $overlayText.Contains($needle)) { throw "Opt-in allocation seam lost '$needle'." }
 }
+if ($overlayText -notmatch 'allocation_source := "foundation_snapshot" if subsystem == "snapshot_builds" else subsystem' -or $overlayText -notmatch 'mark_allocation_root_audited\(allocation_source\)') {
+    throw "Measured foundation subsystem execution no longer marks its allocation call root without shared foundation_main instrumentation."
+}
 Write-Host "PERF06 ALLOCATION CONTRACT PASS negative=empty,partial"
