@@ -33,7 +33,6 @@ if (-not $out.StartsWith($allowedRoot + [IO.Path]::DirectorySeparatorChar, [Stri
     throw "OutDir must resolve below the repository .tmp directory: $out"
 }
 if (Test-Path -LiteralPath $out) { throw "OutDir already exists; evidence is immutable: $out" }
-New-Item -ItemType Directory -Path $out | Out-Null
 
 if (-not $GodotPath) { $GodotPath = $env:GODOT_BIN }
 if (-not $GodotPath) {
@@ -43,10 +42,10 @@ if (-not $GodotPath) {
 }
 if (-not $GodotPath -or -not (Test-Path -LiteralPath $GodotPath -PathType Leaf)) {
     if ($RequireGodot) { throw "Godot console was not found; pass -GodotPath or set GODOT_BIN." }
-    Remove-Item -LiteralPath $out -Recurse -Force
     Write-Host "INTEG06_1_COMPOSITION_MATRIX NOT RUN (Godot unavailable)."
     exit 0
 }
+New-Item -ItemType Directory -Path $out | Out-Null
 
 $probePath = Join-Path $root "tools\wave_b_composition_probe.gd"
 $toolHash = (Get-FileHash -LiteralPath $probePath -Algorithm SHA256).Hash.ToLowerInvariant()
@@ -106,7 +105,9 @@ function Invoke-CompositionCase {
         [string]$OrderId,
         [string]$LayerId,
         [string]$CaseRoot,
-        [int]$ShardIndex
+        [int]$ShardIndex,
+        [ValidateSet("delivery-matrix", "delivery-discovery")]
+        [string]$Mode = "delivery-matrix"
     )
     New-Item -ItemType Directory -Force -Path $CaseRoot | Out-Null
     $reportPath = Join-Path $CaseRoot "report.json"
@@ -117,7 +118,7 @@ function Invoke-CompositionCase {
     $args = @(
         "--headless", "--audio-driver", "Dummy", "--path", $root,
         "--script", "res://tools/wave_b_composition_probe.gd", "--",
-        "--mode=delivery-matrix", "--seed=$Seed", "--order-id=$OrderId",
+        "--mode=$Mode", "--seed=$Seed", "--order-id=$OrderId",
         "--candidate-commit=$candidate", "--candidate-tree=$candidateTree",
         "--tool-source-sha256=$toolHash", "--shard-index=$ShardIndex", "--shard-count=$ShardCount",
         "--evidence-profile=$EvidenceProfile", "--profile-path=$resolvedProfile", "--profile-sha256=$profileHash",
@@ -154,12 +155,20 @@ $seedByTarget = @{}
 for ($index = 0; $index -lt $SeedCount -and $seedByTarget.Count -lt $requiredTargets.Count; $index++) {
     $seed = "INTEG06-1-COMPOSITION-{0:D4}" -f $index
     $caseRoot = Join-Path $discoveryRoot ("seed_{0:D4}" -f $index)
-    $result = Invoke-CompositionCase -Seed $seed -OrderId $orders[0] -LayerId "" -CaseRoot $caseRoot -ShardIndex ($index % $ShardCount)
-    if ($null -eq $result.report -or @($result.report.rows).Count -ne 1) { continue }
-    $row = @($result.report.rows)[0]
-    $archetypeId = [string]$row.archetype_id
+    $result = Invoke-CompositionCase -Seed $seed -OrderId $orders[0] -LayerId "" -CaseRoot $caseRoot -ShardIndex ($index % $ShardCount) -Mode "delivery-discovery"
+    if ($null -eq $result.report -or [string]$result.report.schema -cne "beat_the_house.integ06_1_composition_discovery/v1") { continue }
+    $archetypeId = [string]$result.report.target_archetype
     if ($requiredTargets -contains $archetypeId -and -not $seedByTarget.ContainsKey($archetypeId)) {
         $seedByTarget[$archetypeId] = $seed
+    }
+}
+$backRoomSeed = ""
+for ($index = 0; $index -lt $SeedCount -and -not $backRoomSeed; $index++) {
+    $seed = "INTEG06-1-COMPOSITION-L3-{0:D4}" -f $index
+    $caseRoot = Join-Path $discoveryRoot ("l3_seed_{0:D4}" -f $index)
+    $result = Invoke-CompositionCase -Seed $seed -OrderId $orders[0] -LayerId "back_room" -CaseRoot $caseRoot -ShardIndex ($index % $ShardCount) -Mode "delivery-discovery"
+    if ($null -ne $result.report -and [string]$result.report.schema -ceq "beat_the_house.integ06_1_composition_discovery/v1" -and [string]$result.report.target_archetype -ceq $punchlineId) {
+        $backRoomSeed = $seed
     }
 }
 
@@ -168,13 +177,14 @@ foreach ($archetypeId in $requiredTargets) {
     if (-not $seedByTarget.ContainsKey($archetypeId)) { continue }
     $layers = if ($archetypeId -ceq $punchlineId) { @("club", "casino", "back_room") } else { @("") }
     foreach ($layerId in $layers) {
+        if ($archetypeId -ceq $punchlineId -and $layerId -ceq "back_room" -and -not $backRoomSeed) { continue }
         foreach ($orderId in $orders) {
             $cases += [pscustomobject]@{
                 id = "$archetypeId|$layerId|$orderId"
                 archetype_id = $archetypeId
                 layer_id = $layerId
                 order_id = $orderId
-                seed = [string]$seedByTarget[$archetypeId]
+                seed = if ($archetypeId -ceq $punchlineId -and $layerId -ceq "back_room") { $backRoomSeed } else { [string]$seedByTarget[$archetypeId] }
             }
         }
     }
@@ -224,7 +234,7 @@ for ($shardIndex = 0; $shardIndex -lt $ShardCount; $shardIndex++) {
     $stateBytes = [long](($shardRows | ForEach-Object { [long]$_.PSObject.Properties['state_bytes'].Value } | Measure-Object -Sum).Sum)
     $orphanCount = [long](($shardRows | ForEach-Object { [long]$_.orphan_count } | Measure-Object -Sum).Sum)
     $shardReport = [ordered]@{
-        schema = "beat_the_house.integ06_1_composition_shard"
+        schema = "beat_the_house.integ06_1_composition_shard/v1"
         version = 1
         candidate_commit = $candidate
         candidate_tree = $candidateTree
@@ -260,7 +270,7 @@ foreach ($archetypeId in $requiredTargets) {
 $coveredRows = @($rowsByShard.Values | ForEach-Object { $_ } | ForEach-Object { [string]$_.case_id } | Sort-Object -Unique)
 $uncoveredRows = @($eligibleRows | Where-Object { $coveredRows -notcontains $_ })
 $manifest = [ordered]@{
-    schema = "beat_the_house.integ06_1_composition_manifest"
+    schema = "beat_the_house.integ06_1_composition_manifest/v1"
     version = 1
     candidate_commit = $candidate
     candidate_tree = $candidateTree
