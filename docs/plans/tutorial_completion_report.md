@@ -135,3 +135,35 @@ This supersedes the older automated-candidate qualification for the 0.6 tree.
 It does not supersede or waive `TUT-N17`: five cold-player sessions, including
 two players without Blackjack knowledge, remain owner/human-only and move to
 `playtest06_1`.
+
+## 0.6 teaching-pass-two closeout — 2026-09-04
+
+`teach06_2` recovered the existing 0.6 tutorial work and completed it at product
+head `c1cc6df82acfde2404012470f9709202e9ad7b78`; it did not rebuild the guided
+tutorial. The original 63-row classification found 59 correct and four stale
+lessons. All four are repaired, the 56-lesson guided prefix is byte-for-byte
+unchanged, and three just-in-time lessons now cover back-room Poker/tells,
+truthful rumor use, and Police Sweep reading. The final catalog contains 66
+lessons: 56 guided and ten once-only contextual lessons.
+
+The focused content, coach, and onboarding checks pass with zero failures. They
+cover every contextual positive and negative trigger, once-only and double-
+notify behavior, non-consuming action handoff, secrecy vocabulary, deterministic
+action-boundary evaluation, and pointer-safe placement at 1280x720 and 854x480
+with reduced motion both off and on. A Crew-ignoring context triggers none of the
+five Crew/world-work lessons.
+
+Two independent guided audits pass the fixed `FIRST-NIGHT-ACE-17` routes, 100/100
+alternating cold seeds with zero stuck runs, all 56 guided save/load boundaries,
+and normal-run isolation. Both produced identical normal-start hash `1024435150`
+and normal-stock hash `2121162340`:
+
+- Run A: `148123.894ms`, SHA-256
+  `DE5D25E90AEF3DCDD427D4F4B6F0A196EF31D062393D5F5467B0259D36B4929C`.
+- Run B: `154014.529ms`, SHA-256
+  `ED48193D55CCF1D3199123BE56C2D611C621F3CE9F34E6B280B484C025A74DC7`.
+
+The earlier 63-lesson hashes remain retained history and are superseded by this
+completed pass. `TUT-N17` remains explicitly owner/human-only: five cold-player
+sessions, including two players without Blackjack knowledge, with 5/5
+unassisted completion and at least 80% aggregate core-concept comprehension.

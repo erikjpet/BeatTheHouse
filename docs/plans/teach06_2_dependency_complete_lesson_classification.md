@@ -1,20 +1,17 @@
-# teach06_2 candidate lesson classification
+# teach06_2 dependency-complete lesson classification
 
-Status: **CANDIDATE CLASSIFICATION — `game06_8` acceptance pending**
+Status: **FINAL — accepted before lesson authoring**
 
 Exact classification root: `039e3326d7f09ab911f8903adc03b94c2cc12e4f`
 
 Catalog: `data/tutorial/lessons.json` (63 entries: 56 `tutorial_run`, 7 `normal_run`)
 
 This is the mandatory section 1 classification artifact. It was completed before
-any lesson, coach, or teaching test was changed. The required `depth06_1` and
-`world06_7` work and the current `game06_8` surfaces are present on this root,
-but `game06_8` remains in binding audit. This candidate becomes the section 1
-final only if the `039e3326` game surface is accepted unchanged. If that surface
-changes before acceptance, every affected physical-game row must be re-audited
-before authoring. Native cold-run and visual evidence remain final acceptance
-work; they were not started while the Blackjack closeout audit owned the Godot
-runtime.
+any lesson, coach, or teaching test was changed. `depth06_1`, `world06_7`, and
+the physical-game surface at this classification root were subsequently accepted
+without a conflicting tutorial-facing change; `game06_8` closed on integrated
+head `af48b531`. The classification therefore became final before the teaching
+implementation at `c1cc6df8`.
 
 ## Result
 
@@ -131,7 +128,7 @@ Three other contextual tips are also stale on the dependency-complete root:
 | 62 | `tip06_craps_pass_line` | stale | CAT:743; PUBLIC; LIVE | Rewrite the accurate Pass rule together with the current grab/drag/release physical throw. |
 | 63 | `tip06_venue_depth` | correct | CAT:752; PUBLIC | Keep unchanged; it preserves discovery without naming hidden rooms. |
 
-## Candidate authoring decisions (held for `game06_8` acceptance)
+## Implemented authoring decisions
 
 1. Rewrite the four stale contextual tips; do not retain conflated triggers or
    obsolete physical-game wording.
@@ -142,5 +139,9 @@ Three other contextual tips are also stale on the dependency-complete root:
 4. Prefer precise public predicates and actions over arrival-only triggers; a run
    that ignores Crew and never reaches these systems must see none of them.
 
-No lesson/code authoring is authorized by this candidate while `game06_8` remains
-in progress.
+All four stale tips were repaired. The scenario and rumor promises are now
+separate; delivery copy covers package routes and stationary lookout holds
+without lying about either; Craps names the current grab/drag/release throw; and
+Coin Pusher names its carriage, charged drop, token cups, and heavy feature goal.
+Three once-only lessons add back-room Poker/tells, true-rumor use, and Police
+Sweep reading. The 56 guided lessons remain unchanged.
