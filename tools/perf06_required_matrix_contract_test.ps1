@@ -42,6 +42,9 @@ foreach ($needle in @("build_native_solver.ps1", "-Platform Windows", "-Target t
 foreach ($needle in @("perf06_native_runtime_matrix.ps1", 'foreach ($nativePlan in @("l02", "grand_casino", "coin_pusher"))', "perf06_build_surface_report.ps1", "-Profile low_end", "allocation_call_root_audit.json", "integrationOutRelative", "perf06_matrix_contract.ps1", "-RequiredProfiles low_end", "matrix_contract.json")) {
     if (-not $lowEndLauncher.Contains($needle)) { throw "Low-end launcher lost complete report production seam '$needle'." }
 }
+foreach ($needle in @("distribution_fresh_start", "native_runtime_distribution_fresh_start", 'surface=$false')) {
+    if (-not $lowEndLauncher.Contains($needle)) { throw "Low-end launcher lost exported fresh-start coverage '$needle'." }
+}
 if ($nativeRuntime.Contains("SkipExport")) { throw "Native binding evidence must always use a fresh release export." }
 $overlay = Get-Content -LiteralPath (Join-Path $root "scripts/ui/perf_telemetry_overlay.gd") -Raw
 foreach ($needle in @('"surface_draw_time_ms"', '"production_game_canvas"', '"complete_frame_upper_bound"', 'reset_performance_counters')) {

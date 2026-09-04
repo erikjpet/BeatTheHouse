@@ -241,6 +241,8 @@ func configure(owner: FoundationMain) -> void:
 	})
 	if plan_id == "l02":
 		call_deferred("_run_l02_plan")
+	elif plan_id == "distribution_fresh_start":
+		call_deferred("_run_distribution_fresh_start_plan")
 	elif plan_id == "secure_entropy":
 		call_deferred("_run_secure_entropy_plan")
 	elif plan_id == "corner_store":
@@ -483,6 +485,52 @@ func _run_secure_entropy_plan() -> void:
 	await _wait_frames(8)
 	_end_scenario()
 	mark_event("secure_entropy_contract", _secure_entropy_contract())
+	l02_driver_complete = true
+	dump_report()
+	await _quit_after_report_flush()
+
+
+func _run_distribution_fresh_start_plan() -> void:
+	if l02_driver_started:
+		return
+	l02_driver_started = true
+	await _wait_frames(8)
+	_end_scenario()
+	var profile: Variant = app.get("profile_inventory") if app != null else null
+	var play_button: Button = app.get("new_run_button") as Button if app != null else null
+	var before_screen: Dictionary = app.call("current_screen_snapshot") if app != null else {}
+	var fresh_profile := profile != null \
+		and not bool(profile.get("loaded_from_disk")) \
+		and not bool(profile.get("tutorial_completed"))
+	var no_saved_run := app != null and not bool(app.call("_has_foundation_save"))
+	var play_ready := play_button != null \
+		and play_button.text == "PLAY" \
+		and not play_button.disabled \
+		and play_button.is_visible_in_tree()
+	var play_started_msec := Time.get_ticks_msec()
+	if play_ready:
+		app.call("_on_start_pressed")
+	await _wait_frames(12)
+	var run_state: RunState = app.get("run_state") as RunState if app != null else null
+	var after_screen: Dictionary = app.call("current_screen_snapshot") if app != null else {}
+	var tutorial_started := run_state != null and run_state.is_tutorial_run()
+	var passed := fresh_profile \
+		and no_saved_run \
+		and play_ready \
+		and str(before_screen.get("screen", "")) == "START" \
+		and tutorial_started \
+		and str(after_screen.get("screen", "")) == "ENVIRONMENT"
+	mark_event("distribution_fresh_start_contract", {
+		"passed": passed,
+		"fresh_profile": fresh_profile,
+		"no_saved_run": no_saved_run,
+		"play_ready": play_ready,
+		"before_screen": str(before_screen.get("screen", "")),
+		"after_screen": str(after_screen.get("screen", "")),
+		"tutorial_started": tutorial_started,
+		"play_to_tutorial_msec": maxi(0, Time.get_ticks_msec() - play_started_msec),
+		"first_interactive_msec": maxi(0, play_started_msec - created_msec),
+	})
 	l02_driver_complete = true
 	dump_report()
 	await _quit_after_report_flush()

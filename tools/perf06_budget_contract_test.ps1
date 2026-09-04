@@ -39,6 +39,9 @@ foreach ($token in $nativeTokens) {
 foreach ($token in @("perf06_budget_table.json", "web_perf_idle_liveness_contract.ps1", "scenario_frame_p95_budgets_ms", "budget_table_sha256")) {
     if (-not $webText.Contains($token)) { throw "Web budget enforcement lost '$token'." }
 }
+foreach ($token in @("distribution_fresh_start", "distribution_fresh_start_contract", "fresh Web export", "cold browser profile")) {
+    if (-not $webText.Contains($token)) { throw "Exported Web fresh-start contract lost '$token'." }
+}
 if ($webText -notmatch 'solver_backend -ceq "native_v3"') {
     throw "Exported Web performance gate no longer requires the locked native_v3 Coin Pusher solver."
 }

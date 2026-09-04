@@ -10,7 +10,7 @@ param(
     [string]$Out = ".tmp/web_perf_smoke/report.json",
     [ValidateSet("cold", "warm")]
     [string]$CacheMode = "cold",
-    [ValidateSet("l02", "grand_casino", "coin_pusher", "secure_entropy")]
+    [ValidateSet("l02", "grand_casino", "coin_pusher", "secure_entropy", "distribution_fresh_start")]
     [string]$Plan = "l02",
     [ValidatePattern("^[A-Za-z0-9_.:-]*$")]
     [string]$EvidenceProfile = "web",
@@ -439,6 +439,24 @@ if ($Plan -eq "secure_entropy") {
         Assert-Condition -Condition ([bool]$contract.aes_round_trip) -Message "AESContext failed the exported Web capsule round-trip." -Failures $failures
         Assert-Condition -Condition ([bool]$contract.hmac_tamper_rejected) -Message "HMACContext did not reject the exported Web tamper probe." -Failures $failures
         Assert-Condition -Condition ([bool]$contract.privacy_preserved) -Message "Exported Web capsule exposed its canonical private payload." -Failures $failures
+    }
+}
+
+if ($Plan -eq "distribution_fresh_start") {
+    Assert-Condition -Condition ($CacheMode -eq "cold") -Message "Distribution fresh-start evidence requires a cold browser profile." -Failures $failures
+    Assert-Condition -Condition (-not $SkipExport) -Message "Distribution fresh-start evidence requires a fresh Web export." -Failures $failures
+    Assert-Condition -Condition (@($reportEnvelope.page_errors).Count -eq 0) -Message "Distribution fresh-start browser probe captured a page error." -Failures $failures
+    Assert-Condition -Condition (@($reportEnvelope.request_failures).Count -eq 0) -Message "Distribution fresh-start browser probe captured a failed request." -Failures $failures
+    Assert-Condition -Condition (@($reportEnvelope.failed_responses).Count -eq 0) -Message "Distribution fresh-start browser probe captured an HTTP failure response." -Failures $failures
+    Assert-Condition -Condition ([string]$report.build_identity.source_commit -eq $sourceCommit -and [string]$report.build_identity.export_sha256 -eq $exportSha256) -Message "Distribution fresh-start runtime identity did not match the served export." -Failures $failures
+    $distributionEvents = @($report.events | Where-Object { [string]$_.id -eq "distribution_fresh_start_contract" })
+    Assert-Condition -Condition ($distributionEvents.Count -eq 1) -Message "Distribution fresh-start contract did not run exactly once." -Failures $failures
+    if ($distributionEvents.Count -eq 1) {
+        $distribution = $distributionEvents[0].data
+        Assert-Condition -Condition ([bool]$distribution.passed) -Message "A clean exported-Web profile did not reach the tutorial through PLAY." -Failures $failures
+        Assert-Condition -Condition ([bool]$distribution.fresh_profile -and [bool]$distribution.no_saved_run -and [bool]$distribution.play_ready) -Message "Exported Web did not begin from a clean interactive PLAY state." -Failures $failures
+        Assert-Condition -Condition ([bool]$distribution.tutorial_started -and [string]$distribution.after_screen -eq "ENVIRONMENT") -Message "Exported Web PLAY did not enter the tutorial environment." -Failures $failures
+        Assert-Condition -Condition ([int]$distribution.first_interactive_msec -ge 0 -and [int]$distribution.play_to_tutorial_msec -gt 0) -Message "Exported Web fresh-start timing was not recorded." -Failures $failures
     }
 }
 

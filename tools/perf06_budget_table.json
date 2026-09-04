@@ -59,6 +59,9 @@
     },
     "secure_entropy": {
       "menu_idle": 180.0
+    },
+    "distribution_fresh_start": {
+      "menu_idle": 180.0
     }
   },
   "native": {
