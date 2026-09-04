@@ -592,6 +592,13 @@ func _prepare_natural_crew_delivery(library: ContentLibrary, delivery_seed: Stri
 			break
 	if crew_lender_node.is_empty():
 		return {"eligibility_source": "production_world_map+RunActionService+production_event_selector"}
+	var exploration := _visit_all_real_map_nodes_and_return(run_state, generator, crew_lender_node)
+	if not bool(exploration.get("ok", false)):
+		return {
+			"eligibility_source": "production_world_map+real_edge_travel+RunActionService+production_event_selector",
+			"crew_lender_node": crew_lender_node,
+			"exploration": exploration,
+		}
 	var action_service: RunActionService = RunActionServiceScript.new()
 	action_service.setup(library, run_state)
 	var lender_result := action_service.use_hook("lender", "the_crew")
@@ -629,7 +636,40 @@ func _prepare_natural_crew_delivery(library: ContentLibrary, delivery_seed: Stri
 		"crew_lender_node": crew_lender_node,
 		"lender_result": lender_result,
 		"event_selection": selected,
+		"exploration": exploration,
 	}
+
+
+func _visit_all_real_map_nodes_and_return(run_state: RunState, generator: RunGenerator, return_node_id: String) -> Dictionary:
+	var visited_ids: Array = []
+	for node_value in _array(run_state.world_map.get("nodes", [])):
+		if typeof(node_value) != TYPE_DICTIONARY:
+			continue
+		var target_id := str((node_value as Dictionary).get("id", ""))
+		if target_id.is_empty() or target_id == run_state.current_world_node_id():
+			continue
+		var query := WorldMapScript.prepare_path_query(run_state.world_map, run_state.current_world_node_id(), false)
+		var path := WorldMapScript.prepared_path(query, target_id)
+		if path.is_empty() or not WorldMapScript.prepared_path_uses_real_edges(query, path):
+			return {"ok": false, "message": "No real-edge path to %s." % target_id, "visited_ids": visited_ids}
+		for path_index in range(1, path.size()):
+			var step_id := str(path[path_index])
+			var traveled := generator.travel_environment_result(run_state, step_id, true)
+			if not bool(traveled.get("ok", false)) or run_state.current_world_node_id() != step_id:
+				return {"ok": false, "message": "Production travel failed on real edge into %s." % step_id, "visited_ids": visited_ids}
+			if not visited_ids.has(step_id):
+				visited_ids.append(step_id)
+	if run_state.current_world_node_id() != return_node_id:
+		var return_query := WorldMapScript.prepare_path_query(run_state.world_map, run_state.current_world_node_id(), false)
+		var return_path := WorldMapScript.prepared_path(return_query, return_node_id)
+		if return_path.is_empty() or not WorldMapScript.prepared_path_uses_real_edges(return_query, return_path):
+			return {"ok": false, "message": "No real-edge return path to Crew lender.", "visited_ids": visited_ids}
+		for path_index in range(1, return_path.size()):
+			var step_id := str(return_path[path_index])
+			var traveled := generator.travel_environment_result(run_state, step_id, true)
+			if not bool(traveled.get("ok", false)) or run_state.current_world_node_id() != step_id:
+				return {"ok": false, "message": "Production return travel failed at %s." % step_id, "visited_ids": visited_ids}
+	return {"ok": run_state.current_world_node_id() == return_node_id, "visited_ids": visited_ids}
 
 
 func _enqueue_next_production_action_event(run_state: RunState, library: ContentLibrary, source: String) -> Dictionary:
