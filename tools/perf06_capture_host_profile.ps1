@@ -1,6 +1,7 @@
 param(
     [string]$ProfileId = "reproducible_low_end_cpu1",
     [string]$Out = ".tmp/perf06_1/profiles/reproducible_low_end_cpu1.json",
+    [ValidateSet("physical", "reproducible_whole_matrix_throttle")][string]$Method = "reproducible_whole_matrix_throttle",
     [string]$NativeProcessorAffinityHex = "0x1",
     [ValidateSet("Idle", "BelowNormal")][string]$NativePriorityClass = "BelowNormal",
     [ValidateRange(1, 20)][int]$WebCpuThrottleRate = 4
@@ -35,7 +36,7 @@ if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($powerPlan)) { throw "C
 $profile = [ordered]@{
     schema = "beat_the_house.perf06_low_end_profile/v1"
     profile_id = $ProfileId
-    method = "reproducible_whole_matrix_throttle"
+    method = $Method
     computer_name = [string]$env:COMPUTERNAME
     resolution = "1280x720"
     renderer = "compatibility"
