@@ -1495,7 +1495,7 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 		if str((projected_value as Dictionary).get("object_id", "")) == "scenario::fixture_100": projected_scene = projected_value as Dictionary
 	if not bool(production_projection.get("ok", false)) or projected_console.is_empty() or str(projected_console.get("object_type", "")) != "scenario_sequence" or typeof(projected_console.get("focus_rect")) != TYPE_RECT2 or projected_console.get("focus_rect", Rect2()) == Rect2(0.1, 0.1, 0.12, 0.18) or _array(projected_console.get("scenario_sequence_actions", [])).size() != 2 or str(projected_console.get("scenario_layout_authority_identity", "")) != "scenario::command_console" or str(production_projection.get("layout_authority_digest", "")).length() != 64:
 		failures.append("Final semantic interaction projection did not materialize the scenario command surface in the room UI.")
-	if projected_scene.is_empty() or str(projected_scene.get("object_type", "")) != "scenario_scene_object" or bool(projected_scene.get("interactive", true)):
+	if projected_scene.is_empty() or str(projected_scene.get("object_type", "")) != "scenario_scene_object" or not bool(projected_scene.get("interactive", false)) or not bool(projected_scene.get("scenario_presentation_read_only", false)):
 		failures.append("Final semantic projection did not materialize scenario scene objects alongside interactions.")
 	var missing_layout_projection := EnvironmentInteractionControllerScript.project_sequence_interaction_result(_array(finalized.get("records", [])), run_state.scenario_sequence_projection())
 	var missing_layout_records := _array(missing_layout_projection.get("records", []))
