@@ -627,8 +627,11 @@
                         "input_action": "ui_left",
                         "label": "Manage Open Mic Bill",
                         "non_color_state": "ready",
-                        "handler": "publish_feedback",
+                        "handler": "change_scene_object",
                         "inputs": {
+                          "owner_namespace": "scenario",
+                          "stable_object_id": "punchline_open_mic_night_task_0",
+                          "state": "changed_by_manage_open_mic_bill",
                           "message": "You manage Open Mic Bill. A signup lectern, movable stage steps, and half-filled chair banks form a live queue from Layer 1 to the microphone."
                         }
                       },
@@ -801,7 +804,8 @@
                     "visible": true,
                     "description": "A signup lectern, movable stage steps, and half-filled chair banks form a live queue from Layer 1 to the microphone. The pin signup slot now reads as ready through task ready.",
                     "description_variants": {
-                      "changed_by_fail_punchline_open_mic_night": "You let the pressure win. A signup lectern, movable stage steps, and half-filled chair banks form a live queue from Layer 1 to the microphone."
+                      "changed_by_fail_punchline_open_mic_night": "You let the pressure win. A signup lectern, movable stage steps, and half-filled chair banks form a live queue from Layer 1 to the microphone.",
+                      "changed_by_manage_open_mic_bill": "You manage Open Mic Bill. A signup lectern, movable stage steps, and half-filled chair banks form a live queue from Layer 1 to the microphone."
                     },
                     "zone_id": "center"
                   },
@@ -1582,7 +1586,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "46e92ee90f1329fa73d59318f55c89fa4e811599410b195d39fcf619335892da"
+        "sequence_signature": "d1bda70cf336c79e766b2fe9f2f3d8661940e122cce722d96fe71b1a0d0dae62"
       }
     },
     {
@@ -2499,8 +2503,11 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready",
-                        "handler": "publish_feedback",
+                        "handler": "change_scene_object",
                         "inputs": {
+                          "owner_namespace": "scenario",
+                          "stable_object_id": "punchline_headliner_night_task_1",
+                          "state": "changed_by_fail_punchline_headliner_night",
                           "message": "You let the pressure win. The visible setup now supports carry l 2 runner case."
                         }
                       },
@@ -2612,7 +2619,7 @@
                     "visible": true,
                     "description": "Carry L 2 Runner Case is ready in task ready. The visible setup now supports carry l 2 runner case.",
                     "description_variants": {
-
+                      "changed_by_fail_punchline_headliner_night": "You let the pressure win. The visible setup now supports carry l 2 runner case."
                     },
                     "zone_id": "background"
                   },
@@ -3388,7 +3395,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "be56aa53d2388582979bb6711413f255f7824c7d31c6b8947736d8153d401fd4"
+        "sequence_signature": "a60fc07a23b4646772346c03aff5ce7d127d1fb12bfab3ef99141ab995b79d20"
       }
     },
     {
@@ -4285,8 +4292,11 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready",
-                        "handler": "publish_feedback",
+                        "handler": "change_scene_object",
                         "inputs": {
+                          "owner_namespace": "scenario",
+                          "stable_object_id": "punchline_bringer_show_task_1",
+                          "state": "changed_by_fail_punchline_bringer_show",
                           "message": "You let the pressure win. The visible setup now supports usher supporters to block."
                         }
                       },
@@ -4398,7 +4408,7 @@
                     "visible": true,
                     "description": "Usher Supporters To Block is ready in task ready. The visible setup now supports usher supporters to block.",
                     "description_variants": {
-
+                      "changed_by_fail_punchline_bringer_show": "You let the pressure win. The visible setup now supports usher supporters to block."
                     },
                     "zone_id": "background"
                   },
@@ -4972,7 +4982,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "9a56d7c1f733e9c3fe2fab0235d94013a52e386ff95cce3d7d09356f7fdfd452"
+        "sequence_signature": "5a58faf9bbfc19f5d0ad1b60504dade5afcb1edf6f684e19997aa0e9c89e286d"
       }
     },
     {
@@ -5845,8 +5855,11 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready",
-                        "handler": "publish_feedback",
+                        "handler": "change_scene_object",
                         "inputs": {
+                          "owner_namespace": "scenario",
+                          "stable_object_id": "punchline_high_stakes_night_task_1",
+                          "state": "changed_by_fail_punchline_high_stakes_night",
                           "message": "You let the pressure win. The visible setup now supports mark guard sightline."
                         }
                       },
@@ -5925,7 +5938,7 @@
                     "visible": true,
                     "description": "Mark Guard Sightline remains ready with task ready, preserving a visible trace of what happened here. The visible setup now supports mark guard sightline.",
                     "description_variants": {
-
+                      "changed_by_fail_punchline_high_stakes_night": "You let the pressure win. The visible setup now supports mark guard sightline."
                     },
                     "zone_id": "background"
                   },
@@ -6572,7 +6585,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "9cf6e02326d25cf113c41c48bd9509254c0d7d8f327cfa7911d8341ed3773adb"
+        "sequence_signature": "fdc00aa994e6cd5aebdb74da695d4beff33369c43644dcd1ea7515dbaf431f5f"
       }
     },
     {
@@ -7489,8 +7502,11 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready",
-                        "handler": "publish_feedback",
+                        "handler": "change_scene_object",
                         "inputs": {
+                          "owner_namespace": "scenario",
+                          "stable_object_id": "punchline_greased_week_task_1",
+                          "state": "changed_by_fail_punchline_greased_week",
                           "message": "You let the pressure win. The visible setup now supports carry ledger to l 2."
                         }
                       },
@@ -7602,7 +7618,7 @@
                     "visible": true,
                     "description": "The visible setup now supports carry ledger to l 2. The carry ledger to l 2 is ready and shows task ready, so the room cannot quietly erase the work.",
                     "description_variants": {
-
+                      "changed_by_fail_punchline_greased_week": "You let the pressure win. The visible setup now supports carry ledger to l 2."
                     },
                     "zone_id": "background"
                   },
@@ -8378,7 +8394,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "7fcb30cf094f9cd18a183b1b087afb9bb08d0124343f2dcde11eb23f76af6118"
+        "sequence_signature": "b392eec7f01047cba371fc84f8b02f61efdbd8e9ffd87eeaa9cd00b986cfa9e6"
       }
     },
     {
@@ -9538,8 +9554,11 @@
                         "input_action": "ui_right",
                         "label": "Adjourn Debt Court",
                         "non_color_state": "ready",
-                        "handler": "publish_feedback",
+                        "handler": "change_scene_object",
                         "inputs": {
+                          "owner_namespace": "scenario",
+                          "stable_object_id": "punchline_debt_court_task_2",
+                          "state": "changed_by_adjourn_debt_court",
                           "message": "You adjourn Debt Court. The visible setup now supports call room witness."
                         }
                       }
@@ -9610,7 +9629,8 @@
                     "visible": true,
                     "description": "The visible setup now supports call room witness. The call room witness now reads as ready through task ready.",
                     "description_variants": {
-                      "changed_by_uphold_debt_ruling": "You uphold Debt Ruling. The visible setup now supports call room witness."
+                      "changed_by_uphold_debt_ruling": "You uphold Debt Ruling. The visible setup now supports call room witness.",
+                      "changed_by_adjourn_debt_court": "You adjourn Debt Court. The visible setup now supports call room witness."
                     },
                     "zone_id": "left"
                   },
@@ -9985,7 +10005,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "79bacf050661753e4fb8d70ad79b5bcac1d850a0053aeeede61a86d2b7e72495"
+        "sequence_signature": "df95e89de521ce7deb90ae1275ba5525b62c724fd24713a544c29a28fd6132bc"
       }
     },
     {
@@ -10634,8 +10654,11 @@
                         "input_action": "ui_left",
                         "label": "Train New Guard Posts",
                         "non_color_state": "ready",
-                        "handler": "publish_feedback",
+                        "handler": "change_scene_object",
                         "inputs": {
+                          "owner_namespace": "scenario",
+                          "stable_object_id": "punchline_new_muscle_task_0",
+                          "state": "changed_by_train_new_guard_posts",
                           "message": "You train New Guard Posts. New guard posts, inspection trays, and a marked bypass lane create functional checkpoints across the three layers."
                         }
                       },
@@ -10808,7 +10831,8 @@
                     "visible": true,
                     "description": "The present item at l 1 tray carries the room's ready state, marked by task ready. New guard posts, inspection trays, and a marked bypass lane create functional checkpoints across the three layers.",
                     "description_variants": {
-                      "changed_by_fail_punchline_new_muscle": "You let the pressure win. New guard posts, inspection trays, and a marked bypass lane create functional checkpoints across the three layers."
+                      "changed_by_fail_punchline_new_muscle": "You let the pressure win. New guard posts, inspection trays, and a marked bypass lane create functional checkpoints across the three layers.",
+                      "changed_by_train_new_guard_posts": "You train New Guard Posts. New guard posts, inspection trays, and a marked bypass lane create functional checkpoints across the three layers."
                     },
                     "zone_id": "center"
                   },
@@ -11791,7 +11815,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "e1df2efabef390e1b35344bee8e89076dcb2215a065b9382d9a90dc4524e9ae5"
+        "sequence_signature": "0e96dbabb2af80a98d14078863002dc481bbc8ae14d66b0758f7b0ed5a3e5898"
       }
     },
     {
@@ -12677,8 +12701,11 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready",
-                        "handler": "publish_feedback",
+                        "handler": "change_scene_object",
                         "inputs": {
+                          "owner_namespace": "scenario",
+                          "stable_object_id": "punchline_raid_jitters_task_1",
+                          "state": "changed_by_fail_punchline_raid_jitters",
                           "message": "You let the pressure win. The visible setup now supports clear l 2 service lane."
                         }
                       },
@@ -12757,7 +12784,7 @@
                     "visible": true,
                     "description": "The clear l 2 service lane is marked ready, keeping departure legible beside the room's activity.",
                     "description_variants": {
-
+                      "changed_by_fail_punchline_raid_jitters": "You let the pressure win. The visible setup now supports clear l 2 service lane."
                     },
                     "zone_id": "background"
                   },
@@ -13599,7 +13626,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "f96441ed34441e0ba7c15e6f12ee78c1e686b58781d00b5f6e6a15c0270cbf7d"
+        "sequence_signature": "4c67bc36dff24e16e75cabda68cedf735aa84fec58d358896628b8263ef616ba"
       }
     },
     {
@@ -14485,8 +14512,11 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready",
-                        "handler": "publish_feedback",
+                        "handler": "change_scene_object",
                         "inputs": {
+                          "owner_namespace": "scenario",
+                          "stable_object_id": "kitty_cat_lounge_amateur_night_task_1",
+                          "state": "changed_by_fail_kitty_cat_lounge_amateur_night",
                           "message": "You let the pressure win. The visible setup now supports carry costume to dressing."
                         }
                       },
@@ -14565,7 +14595,7 @@
                     "visible": true,
                     "description": "Carry Costume To Dressing is ready in task ready. The visible setup now supports carry costume to dressing.",
                     "description_variants": {
-
+                      "changed_by_fail_kitty_cat_lounge_amateur_night": "You let the pressure win. The visible setup now supports carry costume to dressing."
                     },
                     "zone_id": "background"
                   },
@@ -15407,7 +15437,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "8c973f6317c6d06261e05c0ee13c21893bdb8dc017878073ccfafd27b8743d1a"
+        "sequence_signature": "e26c3092c5f14b0bd14b93b032df0e5e7ee5fb69af827dee7dc96f51030d3134"
       }
     },
     {
@@ -16323,8 +16353,11 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready",
-                        "handler": "publish_feedback",
+                        "handler": "change_scene_object",
                         "inputs": {
+                          "owner_namespace": "scenario",
+                          "stable_object_id": "kitty_cat_lounge_buyout_task_1",
+                          "state": "changed_by_fail_kitty_cat_lounge_buyout",
                           "message": "You let the pressure win. The visible setup now supports advance buyout rope."
                         }
                       },
@@ -16435,7 +16468,7 @@
                     "visible": true,
                     "description": "Advance Buyout Rope is ready in task ready. The visible setup now supports advance buyout rope.",
                     "description_variants": {
-
+                      "changed_by_fail_kitty_cat_lounge_buyout": "You let the pressure win. The visible setup now supports advance buyout rope."
                     },
                     "zone_id": "background"
                   },
@@ -17211,7 +17244,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "d9921c7a1996ea8b9164fb45df47b4fba302623b90ee683d3021aa482ce05b34"
+        "sequence_signature": "ea552bd97c0903e70ec9ceaaaf24bb92e89ef752765ee64cb1d2ccfe0ada57de"
       }
     },
     {
@@ -20192,8 +20225,11 @@
                         "input_action": "ui_up",
                         "label": "Commandeer Lounge Stage",
                         "non_color_state": "ready",
-                        "handler": "publish_feedback",
+                        "handler": "change_scene_object",
                         "inputs": {
+                          "owner_namespace": "scenario",
+                          "stable_object_id": "kitty_cat_lounge_bachelorette_storm_task_3",
+                          "state": "changed_by_commandeer_lounge_stage",
                           "message": "You commandeer Lounge Stage. The visible setup now supports return stage prop."
                         }
                       },
@@ -20274,7 +20310,8 @@
                     "visible": true,
                     "description": "The return stage prop carries the room's ready state, marked by task ready. The visible setup now supports return stage prop.",
                     "description_variants": {
-                      "changed_by_rescue_missing_guest": "You rescue Missing Guest. The visible setup now supports return stage prop."
+                      "changed_by_rescue_missing_guest": "You rescue Missing Guest. The visible setup now supports return stage prop.",
+                      "changed_by_commandeer_lounge_stage": "You commandeer Lounge Stage. The visible setup now supports return stage prop."
                     },
                     "zone_id": "right"
                   },
@@ -20848,7 +20885,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "1df75e30b6ce507abbad7d794356f4d7d17c3e08965ee95fd8fe056d5d484655"
+        "sequence_signature": "9fa39eeafb1c154d34222df0e7c15c2fb31dfdcc1f7c854e33f56ad6613c0ee7"
       }
     }
   ],

@@ -1002,8 +1002,11 @@
                         "input_action": "ui_up",
                         "label": "Exploit Loose Wedding Tables",
                         "non_color_state": "ready",
-                        "handler": "publish_feedback",
+                        "handler": "change_scene_object",
                         "inputs": {
+                          "owner_namespace": "scenario",
+                          "stable_object_id": "delta_queen_wedding_charter_work_1_choice_1",
+                          "state": "changed_by_exploit_loose_wedding_tables",
                           "message": "You exploit Loose Wedding Tables. The visible setup now supports return rings to best man."
                         }
                       }
@@ -1146,7 +1149,7 @@
                     "zone_id": "center",
                     "description": "Route 2 is route 1 ready in route 1 ready. The visible setup now supports return rings to best man.",
                     "description_variants": {
-
+                      "changed_by_exploit_loose_wedding_tables": "You exploit Loose Wedding Tables. The visible setup now supports return rings to best man."
                     }
                   },
                   "op": "spawn",
@@ -1772,7 +1775,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "67fe58488892632b908abd89aa8fdc15630ce67477bc1220799b487fd2ade92a"
+        "sequence_signature": "e3a3b1e30804a07d3a3ba02d54d71951cd284d3eea842ffa50bc31a11f02853c"
       }
     },
     {
@@ -2685,8 +2688,11 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready",
-                        "handler": "publish_feedback",
+                        "handler": "change_scene_object",
                         "inputs": {
+                          "owner_namespace": "scenario",
+                          "stable_object_id": "delta_queen_whale_aboard_task_1",
+                          "state": "changed_by_fail_delta_queen_whale_aboard",
                           "message": "You let the pressure win. The visible setup now supports carry whale service."
                         }
                       },
@@ -2765,7 +2771,7 @@
                     "visible": true,
                     "description": "The carry whale service carries the room's ready state, marked by task ready. The visible setup now supports carry whale service.",
                     "description_variants": {
-
+                      "changed_by_fail_delta_queen_whale_aboard": "You let the pressure win. The visible setup now supports carry whale service."
                     },
                     "zone_id": "foreground"
                   },
@@ -3512,7 +3518,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "c84d027ce432ee082fe4270ff9062e43c825d8cb779e9fb6d5bebbc5935e5592"
+        "sequence_signature": "e8daf329e014464257c8e57cc218435d9f2d3332059e452cbf981a6ccec7e169"
       }
     },
     {
@@ -4436,8 +4442,11 @@
                         "input_action": "ui_left",
                         "label": "Assist Fog Reroute",
                         "non_color_state": "ready",
-                        "handler": "publish_feedback",
+                        "handler": "change_scene_object",
                         "inputs": {
+                          "owner_namespace": "scenario",
+                          "stable_object_id": "delta_queen_fog_delay_work_1_choice_0",
+                          "state": "changed_by_assist_fog_reroute",
                           "message": "You assist Fog Reroute. The visible setup now supports assist fog reroute."
                         }
                       },
@@ -4599,7 +4608,7 @@
                     "zone_id": "foreground",
                     "description": "Route 1 is route 0 ready in route 0 ready. The visible setup now supports assist fog reroute.",
                     "description_variants": {
-
+                      "changed_by_assist_fog_reroute": "You assist Fog Reroute. The visible setup now supports assist fog reroute."
                     }
                   },
                   "op": "spawn",
@@ -5250,7 +5259,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "47f589765f25a1e7b9cf74f380559b499e5399004f973a4294a44ab1b5df1b44"
+        "sequence_signature": "0b41a5a94df507830feeb8611aff09f722f68c679ebd7e783ebd9db7eaae08ea"
       }
     },
     {
@@ -6217,8 +6226,11 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready",
-                        "handler": "publish_feedback",
+                        "handler": "change_scene_object",
                         "inputs": {
+                          "owner_namespace": "scenario",
+                          "stable_object_id": "delta_queen_engine_trouble_task_1",
+                          "state": "changed_by_fail_delta_queen_engine_trouble",
                           "message": "You let the pressure win. The visible setup now supports diagnose pressure."
                         }
                       },
@@ -6297,7 +6309,7 @@
                     "visible": true,
                     "description": "The diagnose pressure carries the room's ready state, marked by task ready. The visible setup now supports diagnose pressure.",
                     "description_variants": {
-
+                      "changed_by_fail_delta_queen_engine_trouble": "You let the pressure win. The visible setup now supports diagnose pressure."
                     },
                     "zone_id": "center"
                   },
@@ -7244,7 +7256,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "f10e6f3a84da072cd31fa7b86d3200e6a6def4d9a903d0f086ff6c722a330b6b"
+        "sequence_signature": "e7be86635313b57a44d49d5b3138bb79ca5031d17bbfca04ab0aeef7f7bbe1df"
       }
     },
     {
@@ -8694,8 +8706,11 @@
                         "input_action": "ui_up",
                         "label": "Observe Captains Final",
                         "non_color_state": "ready",
-                        "handler": "publish_feedback",
+                        "handler": "change_scene_object",
                         "inputs": {
+                          "owner_namespace": "scenario",
+                          "stable_object_id": "delta_queen_captains_invitational_work_3_choice_1",
+                          "state": "changed_by_observe_captains_final",
                           "message": "You observe Captains Final. The visible setup now supports qualify for captains final."
                         }
                       }
@@ -8829,7 +8844,7 @@
                     "zone_id": "left",
                     "description": "Route 2 is route 1 ready in route 1 ready. The visible setup now supports qualify for captains final.",
                     "description_variants": {
-
+                      "changed_by_observe_captains_final": "You observe Captains Final. The visible setup now supports qualify for captains final."
                     }
                   },
                   "op": "spawn",
@@ -9247,7 +9262,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "e4b8689d500bef2eea5f094bd6e0b03ab25960fd78fea3c862e85d22fb146555"
+        "sequence_signature": "399f4b5d04ae3c4b1d8831ce53d67fa8fe8c4806daea7216ee9d1ab805d2cca2"
       }
     },
     {
@@ -10172,8 +10187,11 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready",
-                        "handler": "publish_feedback",
+                        "handler": "change_scene_object",
                         "inputs": {
+                          "owner_namespace": "scenario",
+                          "stable_object_id": "grand_casino_gala_night_task_1",
+                          "state": "changed_by_fail_grand_casino_gala_night",
                           "message": "You let the pressure win. The visible setup now supports verify charity badge."
                         }
                       },
@@ -10252,7 +10270,7 @@
                     "visible": true,
                     "description": "The visible setup now supports verify charity badge. The verify charity badge now reads as ready through task ready.",
                     "description_variants": {
-
+                      "changed_by_fail_grand_casino_gala_night": "You let the pressure win. The visible setup now supports verify charity badge."
                     },
                     "zone_id": "foreground"
                   },
@@ -11021,7 +11039,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "1cf93fef59d1930d1a2d6c5b07717fb6dded63787bad1f369c0a921ce4c43be6"
+        "sequence_signature": "56a10251b35c5309c69e696daee251fd837de8a7af7a8833db21a987d550c2a9"
       }
     },
     {
@@ -11948,8 +11966,11 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready",
-                        "handler": "publish_feedback",
+                        "handler": "change_scene_object",
                         "inputs": {
+                          "owner_namespace": "scenario",
+                          "stable_object_id": "grand_casino_convention_crowd_task_1",
+                          "state": "changed_by_fail_grand_casino_convention_crowd",
                           "message": "You let the pressure win. The visible setup now supports sort delegation badges."
                         }
                       },
@@ -12028,7 +12049,7 @@
                     "visible": true,
                     "description": "Sort Delegation Badges is ready in task ready. The visible setup now supports sort delegation badges.",
                     "description_variants": {
-
+                      "changed_by_fail_grand_casino_convention_crowd": "You let the pressure win. The visible setup now supports sort delegation badges."
                     },
                     "zone_id": "foreground"
                   },
@@ -12798,7 +12819,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "143ad2c76ce3ce9f71ecf79770342790dbf4aa2a88e2877595b9b70c0b10230a"
+        "sequence_signature": "2551a646310377aeafb5471f1c2f511f3d30c3b9328d29f5b66301565ea31656"
       }
     },
     {
@@ -13777,8 +13798,11 @@
                         "input_action": "ui_left",
                         "label": "Comply With Audit Route",
                         "non_color_state": "ready",
-                        "handler": "publish_feedback",
+                        "handler": "change_scene_object",
                         "inputs": {
+                          "owner_namespace": "scenario",
+                          "stable_object_id": "grand_casino_audit_night_work_1_choice_0",
+                          "state": "changed_by_comply_with_audit_route",
                           "message": "You comply With Audit Route. The visible setup now supports comply with audit route."
                         }
                       },
@@ -13957,7 +13981,7 @@
                     "zone_id": "center",
                     "description": "The route 1 carries the room's route 0 ready state, marked by route 0 ready. The visible setup now supports comply with audit route.",
                     "description_variants": {
-
+                      "changed_by_comply_with_audit_route": "You comply With Audit Route. The visible setup now supports comply with audit route."
                     }
                   },
                   "op": "spawn",
@@ -14608,7 +14632,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "c79d56d937fbad9a00c1c8031b609f96277810d288e8e343c4dfc4a61e3b6195"
+        "sequence_signature": "5ec876e5ef9437c9d65e2733a5c0502f5f47d6919762b57bc22a199a26039d04"
       }
     }
   ]

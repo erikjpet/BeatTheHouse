@@ -57,8 +57,7 @@
                     "description": "The cartons are stacked by mismatched labels; sorting them would clear the clerk's work path.",
                     "description_variants": {
                       "center": "The cartons now fill the sorting spot, close enough for every damaged label to be compared.",
-                      "package_a_delivery_cartons_wait": "The cartons wait off the aisle in a neat stack while the clerk holds for your decision.",
-                      "changed_by_shift_cartons": "You reroute the cartons. The clerk shifts the dolly aside, exposing the damaged label and a route for the mismarked cartons."
+                      "package_a_delivery_cartons_wait": "The cartons wait off the aisle in a neat stack while the clerk holds for your decision."
                     }
                   }
                 },
@@ -259,6 +258,8 @@
                     "pose": "checking_manifest",
                     "description": "The delivery clerk checks the manifest twice, unwilling to shelve anything under the wrong name.",
                     "description_variants": {
+                      "delivery_clerk_work": "The clerk has moved to the open work side of the shelf, keeping every label in view.",
+                      "work": "The clerk works the delivery in public instead of waving the mismatch through.",
                       "checking_labels": "The clerk works down the exposed labels, waiting for the mismatched carton to surface.",
                       "checking_manifest": "The clerk has returned to the manifest, keeping the stock decision open.",
                       "awaiting_choice": "The clerk has stopped moving boxes and is plainly waiting for your answer."
@@ -280,6 +281,8 @@
                     "pose": "unloading_dolly",
                     "description": "The runner braces the dolly and watches the aisle, ready to move whatever the manifest clears.",
                     "description_variants": {
+                      "left": "The runner holds the left edge of the aisle so the marked exit stays open.",
+                      "delivery_runner_route": "The runner follows the dolly route between the cartons and verification shelf.",
                       "shifting_cartons": "The runner rolls the mismarked cartons into the sorting spot without closing the front lane.",
                       "holding_twine": "The runner holds fresh twine beside the verified shelf, ready to bind the corrected lot.",
                       "waiting_on_choice": "The runner rests both hands on the dolly while the stock choice hangs in the air."
@@ -1167,6 +1170,8 @@
                   "pose": "relieved",
                   "description": "The delivery clerk checks the manifest twice, unwilling to shelve anything under the wrong name.",
                   "description_variants": {
+                    "delivery_clerk_work": "The clerk has moved to the open work side of the shelf, keeping every label in view.",
+                    "work": "The clerk works the delivery in public instead of waving the mismatch through.",
                     "checking_labels": "The clerk works down the exposed labels, waiting for the mismatched carton to surface.",
                     "checking_manifest": "The clerk has returned to the manifest, keeping the stock decision open.",
                     "awaiting_choice": "The clerk has stopped moving boxes and is plainly waiting for your answer."
@@ -1318,6 +1323,8 @@
                   "pose": "watching_return",
                   "description": "The delivery clerk checks the manifest twice, unwilling to shelve anything under the wrong name.",
                   "description_variants": {
+                    "delivery_clerk_work": "The clerk has moved to the open work side of the shelf, keeping every label in view.",
+                    "work": "The clerk works the delivery in public instead of waving the mismatch through.",
                     "checking_labels": "The clerk works down the exposed labels, waiting for the mismatched carton to surface.",
                     "checking_manifest": "The clerk has returned to the manifest, keeping the stock decision open.",
                     "awaiting_choice": "The clerk has stopped moving boxes and is plainly waiting for your answer."
@@ -1420,7 +1427,7 @@
           "sweep_coexistence",
           "host_event_authority_gate"
         ],
-        "sequence_signature": "0a293e9a47a9eb5105a92c9e0a30061810c6811371ef301606114ca69b1c80f8",
+        "sequence_signature": "5234a87ce6265ab418fcc370d810b0c646ff197fcdbfcba0f513c1295f73bd1b",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -5706,7 +5713,9 @@
                     "zone_id": "background",
                     "description": "The inventory clerk guards the pencil marks, knowing a careless recount could hide the shortage.",
                     "description_variants": {
+                      "package_a_inventory_clerk_work": "The clerk moves to the signed work mark beside the discrepancy shelf.",
                       "service_lane": "The clerk takes the counter side of the cage and leaves the customer lane open.",
+                      "work": "The clerk keeps working the visible count instead of closing the books early.",
                       "recounting_shelf": "The clerk calls each shelf tag aloud and waits for the count to match."
                     }
                   },
@@ -6304,7 +6313,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "31f29293401a8bc7408ffc8517c0fc5ef5eedcf23acefd30b113aa3e79a4fedc"
+        "sequence_signature": "940d26f97642a251385b8a364ea06a5b765e7c176fcb8561c3e2f077f125c20d"
       }
     },
     {
@@ -6845,6 +6854,7 @@
                     "zone_id": "background",
                     "description": "The shooter palms the dice and listens for the lookout before setting a point.",
                     "description_variants": {
+                      "alley_background_right": "The shooter waits against the back-right wall, leaving the chalk ring readable.",
                       "service_lane": "The shooter has stepped to the edge of the ring so the alley route stays open.",
                       "setting_dice": "The shooter squares the dice in the chalk, ready for a visible throw.",
                       "watch": "The shooter pauses to watch the warning marker instead of rolling blind.",
@@ -7442,7 +7452,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "c6ed587986854a0e498e34a6740acd1998f4e84dbbdcd372d4127213287374d7"
+        "sequence_signature": "5a1acc48e66360557b0603a46b8d009c87abcf4e5b6cee138ffcb01cdf3453d9"
       }
     },
     {
@@ -11384,6 +11394,7 @@
                     "zone_id": "service_lane",
                     "description": "The appraiser handles every piece in view, making quiet substitutions difficult.",
                     "description_variants": {
+                      "service_lane": "The appraiser keeps to the service side of the cart, leaving the customer route open.",
                       "comparing_marks": "The appraiser compares the faded marks against the estate sheet line by line.",
                       "guard": "The appraiser now guards the matched lot until its disposition is settled.",
                       "foreground": "The appraiser stands with the provenanced pieces at the front of the station."
@@ -11998,7 +12009,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "0d352c28684e9fcc313fbea28bf5c7fa5b09dec0d805e627e9a9ca84924bd1bc"
+        "sequence_signature": "f4dc5d05968ad38919d328b86118e4398c1be04a73253a470bd4d6d57557c199"
       }
     },
     {
@@ -12534,6 +12545,7 @@
                     "zone_id": "service_lane",
                     "description": "The records clerk keeps the carbon copy visible, making the hold accountable.",
                     "description_variants": {
+                      "service_lane": "The clerk works from the service side, leaving the door path clear.",
                       "copying_serial": "The clerk copies each serial digit under the lamp and checks it once more.",
                       "guard": "The clerk guards the sealed hold until the record decision is complete.",
                       "left": "The clerk stands beside the filed copy, away from the open door."
@@ -13140,7 +13152,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "ce9d360191b8dbeba0da6bbccf574817ebf6cdcff1539548d99b7d2a75331653"
+        "sequence_signature": "54be2f6dfa088d55b836289330c9e6df12e9459d8be843578e8aa88c31d5c842"
       }
     },
     {
