@@ -283,7 +283,7 @@ if (-not (Test-Path -LiteralPath $godotWorker -PathType Leaf)) { throw "Godot wo
 # Freeze the exact commit once. Every worker gets an independently expanded
 # copy; no tracked source path is linked back to the mutable caller worktree.
 $archivePath = Join-Path $OutDir "frozen_source_$head.zip"
-$archivePathspec = @("project.godot", "icon.svg", "tools", "scripts", "data", "assets", "addons", "native")
+$archivePathspec = @("project.godot", "icon.svg", "tools", "scripts", "scenes", "data", "assets", "branding", "native")
 & git -C $projectRoot archive --format=zip --output=$archivePath $head -- @archivePathspec
 if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $archivePath -PathType Leaf)) { throw "Could not archive frozen commit $head." }
 $archiveSha = (Get-FileHash -LiteralPath $archivePath -Algorithm SHA256).Hash.ToLowerInvariant()
