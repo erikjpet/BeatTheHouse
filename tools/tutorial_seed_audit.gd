@@ -26,16 +26,31 @@ func _init() -> void:
 
 
 func _run() -> void:
+	var audit_started_usec := Time.get_ticks_usec()
+	var phase_started_usec := _timing_start("library", audit_started_usec)
 	library = ContentLibraryScript.new()
 	library.load()
+	_timing_done("library", phase_started_usec, audit_started_usec)
 	for error_value in library.validation_errors:
 		failures.append("Content validation: %s" % str(error_value))
+	phase_started_usec = _timing_start("authored_contract", audit_started_usec)
 	var authored_contract := _verify_authored_contract()
+	_timing_done("authored_contract", phase_started_usec, audit_started_usec)
+	phase_started_usec = _timing_start("path_a", audit_started_usec)
 	var path_a := await _run_route("path_a")
+	_timing_done("path_a", phase_started_usec, audit_started_usec)
+	phase_started_usec = _timing_start("path_b_skip", audit_started_usec)
 	var path_b := await _run_route("path_b_skip")
+	_timing_done("path_b_skip", phase_started_usec, audit_started_usec)
+	phase_started_usec = _timing_start("normal_isolation", audit_started_usec)
 	var isolation := _normal_run_isolation()
+	_timing_done("normal_isolation", phase_started_usec, audit_started_usec)
+	phase_started_usec = _timing_start("tutorial_stuck_sweep_100", audit_started_usec)
 	var stuck_sweep := _tutorial_stuck_sweep(100)
+	_timing_done("tutorial_stuck_sweep_100", phase_started_usec, audit_started_usec)
+	phase_started_usec = _timing_start("lesson_boundary_save_load", audit_started_usec)
 	var lesson_boundary_save_load := _tutorial_lesson_boundary_save_load()
+	_timing_done("lesson_boundary_save_load", phase_started_usec, audit_started_usec)
 	var report := {
 		"challenge_id": "tutorial_first_card",
 		"fixed_seed": str(library.challenge_config_for("tutorial_first_card", "ignored").get("seed_text", "")),
@@ -143,34 +158,76 @@ func _verify_authored_contract() -> Dictionary:
 
 func _tutorial_stuck_sweep(seed_count: int) -> Dictionary:
 	var stuck: Array = []
+	var sweep_started_usec := Time.get_ticks_usec()
+	var phase_usec := {
+		"challenge_config": 0,
+		"start_new": 0,
+		"initial_environment": 0,
+		"corner_environment": 0,
+		"parking_tip": 0,
+		"gas_environment": 0,
+		"underground_environment": 0,
+		"grand_invitation": 0,
+		"grand_environment": 0,
+	}
 	for seed_index in range(seed_count):
 		var route_id := "path_a" if seed_index % 2 == 0 else "path_b_skip"
+		var phase_started_usec := Time.get_ticks_usec()
 		var config: Dictionary = library.challenge_config_for("tutorial_first_card", "TUTORIAL-SWEEP-%03d" % seed_index)
+		_add_elapsed_usec(phase_usec, "challenge_config", phase_started_usec)
 		var run_state: RunState = RunStateScript.new()
+		phase_started_usec = Time.get_ticks_usec()
 		run_state.start_new(str(config.get("seed_text", "")), config)
+		_add_elapsed_usec(phase_usec, "start_new", phase_started_usec)
 		run_state.begin_act(1)
 		var generator := RunGeneratorScript.new(library)
+		phase_started_usec = Time.get_ticks_usec()
 		generator.next_environment(run_state)
+		_add_elapsed_usec(phase_usec, "initial_environment", phase_started_usec)
 		var ok := str(run_state.current_environment.get("archetype_id", "")) == "apartment"
 		ok = ok and _string_array(run_state.current_environment.get("next_archetypes", [])) == ["corner_store"]
 		if ok:
+			phase_started_usec = Time.get_ticks_usec()
 			generator.next_environment(run_state, "corner_store", true)
+			_add_elapsed_usec(phase_usec, "corner_environment", phase_started_usec)
+			phase_started_usec = Time.get_ticks_usec()
 			var tip := _resolve_event(run_state, "parking_lot_tip", "follow_tip")
+			_add_elapsed_usec(phase_usec, "parking_tip", phase_started_usec)
 			ok = bool(tip.get("ok", false))
 		if ok and route_id == "path_a":
+			phase_started_usec = Time.get_ticks_usec()
 			generator.next_environment(run_state, "gas_station_casino", true)
+			_add_elapsed_usec(phase_usec, "gas_environment", phase_started_usec)
 			ok = str(run_state.current_environment.get("archetype_id", "")) == "gas_station_casino"
 		if ok:
+			phase_started_usec = Time.get_ticks_usec()
 			generator.next_environment(run_state, "small_underground_casino", true)
+			_add_elapsed_usec(phase_usec, "underground_environment", phase_started_usec)
 			ok = str(run_state.current_environment.get("archetype_id", "")) == "small_underground_casino"
 		if ok:
+			phase_started_usec = Time.get_ticks_usec()
 			var invite := _resolve_event(run_state, "tutorial_grand_casino_invitation", "accept_first_invitation")
+			_add_elapsed_usec(phase_usec, "grand_invitation", phase_started_usec)
 			ok = bool(invite.get("ok", false)) and bool(run_state.narrative_flags.get("grand_casino_invite", false))
 		if ok:
+			phase_started_usec = Time.get_ticks_usec()
 			generator.next_environment(run_state, "grand_casino", true)
+			_add_elapsed_usec(phase_usec, "grand_environment", phase_started_usec)
 			ok = str(run_state.current_environment.get("archetype_id", "")) == RunState.GRAND_CASINO_ARCHETYPE_ID
 		if not ok:
 			stuck.append({"index": seed_index, "route": route_id, "environment": str(run_state.current_environment.get("archetype_id", ""))})
+		if (seed_index + 1) % 10 == 0 or seed_index + 1 == seed_count:
+			print("TUTORIAL_AUDIT_SWEEP_PROGRESS completed=%d total=%d elapsed_msec=%.3f phase_msec=%s" % [
+				seed_index + 1,
+				seed_count,
+				_elapsed_msec(sweep_started_usec),
+				JSON.stringify(_phase_msec(phase_usec)),
+			])
+	print("TUTORIAL_AUDIT_SWEEP_TIMING iterations=%d elapsed_msec=%.3f phase_msec=%s" % [
+		seed_count,
+		_elapsed_msec(sweep_started_usec),
+		JSON.stringify(_phase_msec(phase_usec)),
+	])
 	_check(stuck.is_empty(), "Tutorial route stuck-state sweep failed: %s" % JSON.stringify(stuck), failures)
 	return {"iterations": seed_count, "path_a": int(ceil(float(seed_count) / 2.0)), "path_b_skip": int(floor(float(seed_count) / 2.0)), "stuck": stuck.size(), "fixed_seed": "FIRST-NIGHT-ACE-17"}
 
@@ -547,6 +604,35 @@ func _resolve_event(run_state: RunState, event_id: String, choice_id: String) ->
 func _check(condition: bool, message: String, target_failures: Array) -> void:
 	if not condition and not message.is_empty():
 		target_failures.append(message)
+
+
+func _timing_start(phase: String, audit_started_usec: int) -> int:
+	print("TUTORIAL_AUDIT_TIMING_START phase=%s total_msec=%.3f" % [phase, _elapsed_msec(audit_started_usec)])
+	return Time.get_ticks_usec()
+
+
+func _timing_done(phase: String, phase_started_usec: int, audit_started_usec: int) -> void:
+	print("TUTORIAL_AUDIT_TIMING_DONE phase=%s elapsed_msec=%.3f total_msec=%.3f" % [
+		phase,
+		_elapsed_msec(phase_started_usec),
+		_elapsed_msec(audit_started_usec),
+	])
+
+
+func _add_elapsed_usec(phase_usec: Dictionary, phase: String, started_usec: int) -> void:
+	phase_usec[phase] = int(phase_usec.get(phase, 0)) + maxi(0, Time.get_ticks_usec() - started_usec)
+
+
+func _phase_msec(phase_usec: Dictionary) -> Dictionary:
+	var result: Dictionary = {}
+	for phase_value in phase_usec.keys():
+		var phase := str(phase_value)
+		result[phase] = float(phase_usec.get(phase_value, 0)) / 1000.0
+	return result
+
+
+func _elapsed_msec(started_usec: int) -> float:
+	return float(maxi(0, Time.get_ticks_usec() - started_usec)) / 1000.0
 
 
 func _dict(value: Variant) -> Dictionary:
