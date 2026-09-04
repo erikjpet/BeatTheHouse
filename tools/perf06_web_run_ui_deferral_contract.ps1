@@ -3,6 +3,11 @@ $ErrorActionPreference = "Stop"
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $hostPath = Join-Path $repoRoot "scripts/ui/foundation_main.gd"
 $source = [System.IO.File]::ReadAllText($hostPath)
+$readySnapshotTestPath = Join-Path $repoRoot "tools/perf06_web_ready_snapshot_contract.gd"
+if (-not (Test-Path -LiteralPath $readySnapshotTestPath -PathType Leaf)) {
+    throw "Missing immediate-after-READY public snapshot runtime contract."
+}
+$readySnapshotTestSource = [System.IO.File]::ReadAllText($readySnapshotTestPath)
 
 $roots = [ordered]@{
     GameSurfaceCanvasScript = "res://scripts/ui/game_surface_canvas.gd"
@@ -103,6 +108,35 @@ foreach ($entry in $guardedEntryPatterns.GetEnumerator()) {
     }
 }
 
+$readySnapshotContracts = @(
+    "if RunInventoryViewModelScript == null:",
+    "if RunJournalViewModelScript == null:",
+    "if EnvironmentInteractionViewModelScript == null or EnvironmentInteractionControllerScript == null:",
+    "func _builtin_rect_to_dict(rect: Rect2) -> Dictionary:",
+    "return _builtin_rect_to_dict(rect)",
+    '"available": false',
+    '"loading": run_ui_build_failure_reason.is_empty()'
+)
+foreach ($contract in $readySnapshotContracts) {
+    if (-not $source.Contains($contract)) {
+        throw "Deferred script public snapshot lost its READY-safe fallback: $contract"
+    }
+}
+foreach ($contract in @(
+    'app.call("current_screen_snapshot")',
+    'app.call("current_start_menu_snapshot")',
+    'app.call("current_run_inventory_snapshot")',
+    'app.call("current_run_journal_snapshot")',
+    'app.call("current_spatial_interaction_snapshot")',
+    'app.call("_rect_to_dict"',
+    'app.call("_vector2_to_dict"',
+    'PERF06_WEB_READY_SNAPSHOT_CONTRACT_'
+)) {
+    if (-not $readySnapshotTestSource.Contains($contract)) {
+        throw "Immediate-after-READY runtime coverage lost a public seam: $contract"
+    }
+}
+
 $forbiddenTypeChecks = @(
     "restored_world_map_controller is WorldMapOverlayController",
     "restored_coach is CoachOverlay",
@@ -114,4 +148,4 @@ foreach ($forbidden in $forbiddenTypeChecks) {
     }
 }
 
-Write-Output "PASS: 31 run-UI roots are deferred behind atomic staged loading with fail-closed start/load guards."
+Write-Output "PASS: 31 run-UI roots are deferred behind atomic staged loading with fail-closed start/load and READY-safe snapshot guards."

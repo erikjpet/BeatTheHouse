@@ -12146,10 +12146,30 @@ func current_environment_result_feedback_snapshot() -> Dictionary:
 
 
 func current_run_inventory_snapshot() -> Dictionary:
+	if RunInventoryViewModelScript == null:
+		return {
+			"available": false,
+			"loading": run_ui_build_failure_reason.is_empty(),
+			"visible": false,
+			"mode": run_inventory_popup_mode,
+			"items": [],
+			"grid": true,
+			"selected_item_id": selected_run_inventory_item_id,
+			"selected_item_source": selected_run_inventory_item_source,
+			"selected_item": {},
+			"container_id": run_inventory_context_container_id,
+			"containers": [],
+			"selected_key": "",
+			"active_container_key": "",
+			"merchant_available": false,
+			"shop_description": "",
+		}
 	var popup_model := _run_inventory_popup_model(run_inventory_popup_mode, run_inventory_context_container_id)
 	var popup_items: Array = popup_model.get("items", []) if typeof(popup_model.get("items", [])) == TYPE_ARRAY else []
 	var selected_item := _selected_inventory_popup_item(popup_items)
 	var snapshot := {
+		"available": true,
+		"loading": false,
 		"visible": _run_inventory_popup_is_visible(),
 		"mode": run_inventory_popup_mode,
 		"items": popup_items,
@@ -12196,8 +12216,20 @@ func current_bag_open_reel_snapshot() -> Dictionary:
 
 
 func current_run_journal_snapshot() -> Dictionary:
+	if RunJournalViewModelScript == null:
+		return {
+			"available": false,
+			"loading": run_ui_build_failure_reason.is_empty(),
+			"visible": false,
+			"entries": [],
+			"entry_count": 0,
+			"summary": "Run journal is loading.",
+			"chronological": true,
+		}
 	var entries := _run_journal_entry_view_list()
 	var snapshot := {
+		"available": true,
+		"loading": false,
 		"visible": _run_journal_popup_is_visible(),
 		"entries": entries,
 		"entry_count": entries.size(),
@@ -12277,7 +12309,24 @@ func current_cheat_dock_snapshot() -> Dictionary:
 
 
 func current_spatial_interaction_snapshot() -> Dictionary:
+	if EnvironmentInteractionViewModelScript == null or EnvironmentInteractionControllerScript == null:
+		return {
+			"available": false,
+			"loading": run_ui_build_failure_reason.is_empty(),
+			"hover_target_id": hover_target_id,
+			"focus_target_id": focus_target_id,
+			"selected_object_id": selected_object_id,
+			"camera_focus_rect": _builtin_rect_to_dict(camera_focus_rect),
+			"camera_focus_point": {"x": camera_focus_point.x, "y": camera_focus_point.y},
+			"current_context_mode": current_context_mode,
+			"selected_stake": selected_stake,
+			"selected_action_id": selected_action_id,
+			"objects": [],
+			"grand_casino_staffing": {},
+		}
 	return {
+		"available": true,
+		"loading": false,
 		"hover_target_id": hover_target_id,
 		"focus_target_id": focus_target_id,
 		"selected_object_id": selected_object_id,
@@ -13956,7 +14005,13 @@ func _normalized_interaction_rect(object_type: String, index: int) -> Rect2:
 
 
 func _rect_to_dict(rect: Rect2) -> Dictionary:
-	return EnvironmentInteractionViewModelScript.rect_to_dict(rect)
+	if EnvironmentInteractionViewModelScript != null:
+		return EnvironmentInteractionViewModelScript.rect_to_dict(rect)
+	return _builtin_rect_to_dict(rect)
+
+
+func _builtin_rect_to_dict(rect: Rect2) -> Dictionary:
+	return {"x": rect.position.x, "y": rect.position.y, "w": rect.size.x, "h": rect.size.y}
 
 
 func _rect_from_dict(value: Variant) -> Rect2:
@@ -13972,7 +14027,9 @@ func _active_play_surface_global_rect() -> Rect2:
 
 
 func _vector2_to_dict(value: Vector2) -> Dictionary:
-	return EnvironmentInteractionViewModelScript.vector2_to_dict(value)
+	if EnvironmentInteractionViewModelScript != null:
+		return EnvironmentInteractionViewModelScript.vector2_to_dict(value)
+	return {"x": value.x, "y": value.y}
 
 
 func _vector2_from_dict(value: Variant, fallback: Vector2 = Vector2.ZERO) -> Vector2:
