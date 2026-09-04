@@ -107,6 +107,28 @@ layout resolver/controller, icon fallback, package generators, or
 `foundation_main.gd`. The final repeated native/Web run remains correctly
 deferred until that environment work lands.
 
+The aggregate composition and terminal manifests are now directly consumable
+by `tools/perf06_matrix_contract.ps1`: shard references are relative path
+strings, every aggregate artifact has a SHA-256 and byte count, composition
+coverage fields are numeric, and terminal evidence includes the required
+Crew-ignoring control, victory/failure routes, and per-seed native/repeat/Web
+trace triples. A synthetic consumer smoke passed exact nested-path and artifact-
+hash validation before the producer change was committed. This proves the
+schema handoff only; it is not a substitute for the final candidate run.
+
+A separate real-Foundation entry reproduction found one non-environment blocker.
+`FoundationMain.enter_game("blackjack")` returns true with `current_screen=GAME`
+and the live Blackjack module, but leaves
+`current_environment.active_game_id` empty. The resulting legal actions contain
+only `play_basic`, and `RunState.crew_play_activate("spotter", "blackjack", ... )`
+rejects the call as not bound to the live table. Setting only that missing field
+in a control copy exposes both `play_basic` and `crew_play:spotter`. The opt-in
+`tools/integ06_1_crew_play_entry_repro.gd` records those values and intentionally
+exits 1 while the regression is present. The smallest post-env shared-host fix
+is to bind `active_game_id` before `GameModule.enter`/legal-action presentation
+and clear it on every game-exit path; this integration branch does not modify
+`foundation_main.gd`.
+
 Final acceptance still requires one clean rerun after env06_8 and the final
 perf06 evidence profile are both frozen: project validation, both migration
 matrices, the full composition matrix, and the repeated native/Web terminal soak
