@@ -269,6 +269,9 @@ victory routes, at least two failure routes, and a Crew-ignoring control:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File `
+  tools\integ06_1_terminal_soak_contract_test.ps1
+
+powershell -NoProfile -ExecutionPolicy Bypass -File `
   tools\integ06_1_terminal_soak.ps1 `
   -CandidateCommit $head `
   -ProfilePath $profilePath `
@@ -281,7 +284,14 @@ Each shard records its authority-setup audit. The producer refuses an existing
 output directory, dirty tracked source,
 mismatched candidate commit/tree, or mismatched profile/tool hashes. It reports
 allocation counters unavailable instead of zero and delegates frame-trajectory
-measurement explicitly to the exact-candidate `perf06_1` manifest. This
+measurement explicitly to the exact-candidate `perf06_1` manifest. The terminal
+contract rejects missing, duplicated, unexpected, or misindexed cases rather
+than trusting only a total count. Each native, repeated-native, and Web cohort
+must contain the exact nine-case catalog and exact shard custody. Every cohort
+must also retain concrete witnesses for Crew, Crew jobs, Crew heists, Numbers,
+deliveries, scenarios, Police Sweep, travelers, and Coin Pusher. Post-warmup
+retained growth is fail-closed at eight nodes, eight resources, and 32 objects,
+with zero orphan growth and a 1,500,000-byte state ceiling. This
 acceptance item remains **NOT PROVEN** until the command itself runs green; the
 producer commit is not runtime evidence.
 

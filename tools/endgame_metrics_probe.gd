@@ -336,6 +336,7 @@ func _simulate_run(run_index: int, scenario: Dictionary, seed: String, max_actio
 		"victory_route": "",
 		"save_load_points": [],
 		"save_load_failures": [],
+		"integration_system_witnesses": {},
 		"semantic_trace": [],
 	}
 	_record_curve(run, run_state, "start")
@@ -486,6 +487,7 @@ func _integration_changed_values(before: Dictionary, after: Dictionary, fields: 
 
 
 func _record_integration_trace(run: Dictionary, run_state: RunState, label: String) -> void:
+	_record_integration_system_witnesses(run, run_state, label)
 	var trace := _array(run.get("semantic_trace", []))
 	trace.append({
 		"label": label,
@@ -498,6 +500,72 @@ func _record_integration_trace(run: Dictionary, run_state: RunState, label: Stri
 		"state": _integration_state_snapshot(run_state),
 	})
 	run["semantic_trace"] = trace
+
+
+func _record_integration_system_witnesses(run: Dictionary, run_state: RunState, label: String) -> void:
+	var witnesses := _dict(run.get("integration_system_witnesses", {}))
+	var action_index := int(run_state.event_cadence.get("action_index", 0))
+	var evidence := {
+		"crew": {
+			"active": action_index > 0 and not run_state.crew_trust_by_member.is_empty(),
+			"detail": {"crew_clock_action": action_index},
+		},
+		"crew_jobs": {
+			"active": not run_state.crew_jobs.is_empty(),
+			"detail": {"job_count": run_state.crew_jobs.size()},
+		},
+		"crew_heist": {
+			"active": not run_state.crew_heist_state.is_empty(),
+			"detail": {
+				"plan_id": str(run_state.crew_heist_state.get("plan_id", "")),
+				"status": str(run_state.crew_heist_state.get("status", "")),
+			},
+		},
+		"numbers": {
+			"active": int(run_state.numbers_status().get("action_index", 0)) > 0,
+			"detail": {"numbers_action": int(run_state.numbers_status().get("action_index", 0))},
+		},
+		"delivery": {
+			"active": not run_state.delivery_snapshot().is_empty() and not str(run_state.delivery_snapshot().get("status", "")).is_empty(),
+			"detail": {
+				"run_id": str(run_state.delivery_snapshot().get("run_id", "")),
+				"status": str(run_state.delivery_snapshot().get("status", "")),
+			},
+		},
+		"scenario": {
+			"active": not str(run_state.current_environment.get("scenario_id", "")).is_empty() and bool(run_state.current_environment.get("scenario_semantic_ready", false)),
+			"detail": {
+				"scenario_id": str(run_state.current_environment.get("scenario_id", "")),
+				"semantic_ready": bool(run_state.current_environment.get("scenario_semantic_ready", false)),
+			},
+		},
+		"police_sweep": {
+			"active": run_state.town_state != null and bool(run_state.town_state.sweep_internal_status().get("active", false)),
+			"detail": run_state.town_state.sweep_internal_status() if run_state.town_state != null else {},
+		},
+		"traveler": {
+			"active": not _array(run_state.current_environment.get("traveler_presence_ids", [])).is_empty(),
+			"detail": {"traveler_ids": _array(run_state.current_environment.get("traveler_presence_ids", []))},
+		},
+		"coin_pusher": {
+			"active": str(run_state.current_environment.get("active_game_id", "")) == "coin_pusher" or int(_dict(run.get("game_mix", {})).get("coin_pusher", 0)) > 0 or int(_dict(run_state.narrative_flags.get("profile_games_played", {})).get("coin_pusher", 0)) > 0,
+			"detail": {
+				"active_game_id": str(run_state.current_environment.get("active_game_id", "")),
+				"resolved_actions": maxi(int(_dict(run.get("game_mix", {})).get("coin_pusher", 0)), int(_dict(run_state.narrative_flags.get("profile_games_played", {})).get("coin_pusher", 0))),
+			},
+		},
+	}
+	for system_value in evidence.keys():
+		var system_id := str(system_value)
+		if witnesses.has(system_id) or not bool(_dict(evidence.get(system_id, {})).get("active", false)):
+			continue
+		witnesses[system_id] = {
+			"seed": str(run.get("seed", "")),
+			"action_index": action_index,
+			"trace_label": label,
+			"evidence": _dict(evidence.get(system_id, {})).get("detail", {}),
+		}
+	run["integration_system_witnesses"] = witnesses
 
 
 func _integration_state_snapshot(run_state: RunState) -> Dictionary:

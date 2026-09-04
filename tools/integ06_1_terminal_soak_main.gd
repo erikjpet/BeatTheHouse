@@ -14,6 +14,10 @@ const SCHEMA := "beat_the_house.integ06_1_terminal_soak_shard/v1"
 const VERSION := 1
 const DEFAULT_MAX_ACTIONS := 132
 const DEFAULT_SAVE_LOAD_STRIDE := 7
+const REQUIRED_SYSTEM_WITNESSES := ["crew", "crew_jobs", "crew_heist", "numbers", "delivery", "scenario", "police_sweep", "traveler", "coin_pusher"]
+const MAX_POST_WARMUP_RESOURCE_GROWTH := 8
+const MAX_POST_WARMUP_OBJECT_GROWTH := 32
+const MAX_POST_WARMUP_NODE_GROWTH := 8
 const POLICY_SCENARIOS := [
 	{"id": "clean_prepared", "policy": "clean", "challenge_id": "", "label": "Clean policy from a standard production challenge"},
 	{"id": "clean_tight", "policy": "clean", "challenge_id": "", "label": "Clean policy alternate seed from a standard production challenge"},
@@ -70,6 +74,8 @@ func _run() -> void:
 	var semantic_cases: Array = []
 	var seed_ids: Array = []
 	var retained_before := _retained_runtime_snapshot()
+	var retained_warmup: Dictionary = {}
+	var retained_samples: Array = []
 	var started_usec := Time.get_ticks_usec()
 	for case_index in range(CASES.size()):
 		if case_index % shard_count != shard_index:
@@ -95,6 +101,7 @@ func _run() -> void:
 		var save_failures := _array(run.get("save_load_failures", []))
 		var action_boundary_failures := _array(run.get("action_boundary_failures", []))
 		var travel_failures := _array(run.get("travel_failures", []))
+		var system_witnesses := _dict(run.get("integration_system_witnesses", {}))
 		var row_passed := terminal and authority_violations.is_empty() and action_boundary_failures.is_empty() and travel_failures.is_empty() and str(run.get("authority_setup", "")) == "standard_production_challenge" and save_points.size() >= 3 and save_failures.is_empty() and bool(profile_result.get("ok", false))
 		if not authority_violations.is_empty():
 			failures.append("%s rejected caller-injected authority setup: %s" % [str(case_data.get("id", "")), ", ".join(authority_violations)])
@@ -125,6 +132,7 @@ func _run() -> void:
 			"stopped_reason": str(run.get("stopped_reason", "")),
 			"action_boundary_failures": action_boundary_failures,
 			"travel_failures": travel_failures,
+			"system_witnesses": system_witnesses,
 		}
 		semantic_cases.append(semantic_case)
 		seed_ids.append(str(case_data.get("seed", "")))
@@ -155,6 +163,7 @@ func _run() -> void:
 			"travel_failures": travel_failures,
 			"action_boundary_failures": action_boundary_failures,
 			"game_mix": _dict(run.get("game_mix", {})),
+			"system_witnesses": system_witnesses,
 			"save_load_count": save_points.size(),
 			"save_load_points": save_points,
 			"save_load_failures": save_failures,
@@ -165,6 +174,12 @@ func _run() -> void:
 			"semantic_trace_sha256": JSON.stringify(semantic_case).sha256_text(),
 			"passed": row_passed,
 		})
+		await _settle_retained_state()
+		var retained_sample := _retained_runtime_snapshot()
+		retained_sample["case_id"] = str(case_data.get("id", ""))
+		retained_samples.append(retained_sample)
+		if retained_warmup.is_empty():
+			retained_warmup = retained_sample.duplicate(true)
 
 	var profile_save_error: Error = profile.save()
 	var restored_profile: Variant = ProfileInventoryScript.new()
@@ -178,17 +193,33 @@ func _run() -> void:
 	var max_state_bytes := 0
 	for row_value in rows:
 		max_state_bytes = maxi(max_state_bytes, int(_dict(row_value).get("state_bytes", 0)))
+	await _settle_retained_state()
 	var retained_after := _retained_runtime_snapshot()
+	var retained_baseline := retained_warmup if not retained_warmup.is_empty() else retained_before
 	var retained_growth := {
-		"nodes": int(retained_after.get("nodes", 0)) - int(retained_before.get("nodes", 0)),
-		"resources": int(retained_after.get("resources", 0)) - int(retained_before.get("resources", 0)),
-		"objects": int(retained_after.get("objects", 0)) - int(retained_before.get("objects", 0)),
-		"orphans": int(retained_after.get("orphans", 0)) - int(retained_before.get("orphans", 0)),
+		"nodes": int(retained_after.get("nodes", 0)) - int(retained_baseline.get("nodes", 0)),
+		"resources": int(retained_after.get("resources", 0)) - int(retained_baseline.get("resources", 0)),
+		"objects": int(retained_after.get("objects", 0)) - int(retained_baseline.get("objects", 0)),
+		"orphans": int(retained_after.get("orphans", 0)) - int(retained_baseline.get("orphans", 0)),
 	}
 	if int(retained_after.get("orphans", 0)) != 0:
 		failures.append("Terminal-soak process retained %d orphan nodes." % int(retained_after.get("orphans", 0)))
 	if max_state_bytes > 1500000:
 		failures.append("Terminal-soak serialized semantic state exceeded the 1,500,000-byte release bound.")
+	var retained_limits := {
+		"nodes": MAX_POST_WARMUP_NODE_GROWTH,
+		"resources": MAX_POST_WARMUP_RESOURCE_GROWTH,
+		"objects": MAX_POST_WARMUP_OBJECT_GROWTH,
+	}
+	for metric_value in retained_limits.keys():
+		var metric := str(metric_value)
+		if int(retained_growth.get(metric, 0)) > int(retained_limits.get(metric, 0)):
+			failures.append("Terminal-soak post-warmup %s growth %d exceeded %d." % [metric, int(retained_growth.get(metric, 0)), int(retained_limits.get(metric, 0))])
+	var aggregate_system_witnesses := _merge_system_witnesses(rows)
+	for system_value in REQUIRED_SYSTEM_WITNESSES:
+		var system_id := str(system_value)
+		if _array(aggregate_system_witnesses.get(system_id, [])).is_empty():
+			failures.append("Terminal-soak has no exact active-system witness for %s." % system_id)
 	var authority_audit_violations: Array = []
 	for row_value in rows:
 		authority_audit_violations.append_array(_array(_dict(row_value).get("authority_violations", [])))
@@ -201,7 +232,9 @@ func _run() -> void:
 		"profile": {"evidence_profile": str(options.get("evidence-profile", "")), "path": str(options.get("profile-path", "")), "sha256": str(options.get("profile-sha256", ""))},
 		"shard": {"index": shard_index, "count": shard_count, "seed_ids": seed_ids},
 		"platform": OS.get_name(),
-		"active_systems": _observed_systems(rows),
+		"active_systems": _active_system_ids(aggregate_system_witnesses),
+		"required_active_systems": REQUIRED_SYSTEM_WITNESSES,
+		"system_witnesses": aggregate_system_witnesses,
 		"authority_setup_audit": {
 			"binding_mode": "standard_production_challenge_policy_only",
 			"caller_injected_bankroll": false,
@@ -218,7 +251,7 @@ func _run() -> void:
 		"terminal": {"status": "covered" if rows.all(func(row: Dictionary) -> bool: return bool(row.get("passed", false))) else "incomplete", "route": "multiple", "failure_reason": "", "profile_recorded": profile_persisted},
 		"semantic_trace_sha256": JSON.stringify(semantic_payload).sha256_text(),
 		"save_load_points": rows.reduce(func(total: int, row: Dictionary) -> int: return total + int(row.get("save_load_count", 0)), 0),
-		"retained_counters": {"available": true, "measured": ["resources", "objects", "nodes", "orphans", "state_bytes"], "nodes": int(retained_after.get("nodes", 0)), "resources": int(retained_after.get("resources", 0)), "objects": int(retained_after.get("objects", 0)), "orphans": int(retained_after.get("orphans", 0)), "state_bytes": max_state_bytes, "baseline": retained_before, "growth": retained_growth},
+		"retained_counters": {"available": true, "measured": ["resources", "objects", "nodes", "orphans", "state_bytes"], "nodes": int(retained_after.get("nodes", 0)), "resources": int(retained_after.get("resources", 0)), "objects": int(retained_after.get("objects", 0)), "orphans": int(retained_after.get("orphans", 0)), "state_bytes": max_state_bytes, "pre_run": retained_before, "baseline": retained_baseline, "growth": retained_growth, "limits": retained_limits, "samples": retained_samples},
 		"allocation_copy_counters": {"available": false, "allocations": null, "shallow_copies": null, "deep_copies": null, "bytes": null, "source": "not_instrumented_by_terminal_policy_driver"},
 		"elapsed_ms": snapped(elapsed_total_ms, 0.001),
 		"rows": rows,
@@ -295,6 +328,38 @@ func _observed_systems(rows: Array) -> Array:
 	var result: Array = systems.keys()
 	result.sort()
 	return result
+
+
+func _merge_system_witnesses(rows: Array) -> Dictionary:
+	var merged := {}
+	for row_value in rows:
+		var row := _dict(row_value)
+		var case_id := str(row.get("case_id", ""))
+		var witnesses := _dict(row.get("system_witnesses", {}))
+		for system_value in witnesses.keys():
+			var system_id := str(system_value)
+			var witness := _dict(witnesses.get(system_id, {})).duplicate(true)
+			witness["case_id"] = case_id
+			if not merged.has(system_id):
+				merged[system_id] = []
+			var records := _array(merged.get(system_id, []))
+			records.append(witness)
+			merged[system_id] = records
+	return merged
+
+
+func _active_system_ids(witnesses: Dictionary) -> Array:
+	var result: Array = []
+	for system_value in witnesses.keys():
+		if not _array(witnesses.get(system_value, [])).is_empty():
+			result.append(str(system_value))
+	result.sort()
+	return result
+
+
+func _settle_retained_state() -> void:
+	for _frame in range(4):
+		await get_tree().process_frame
 
 
 func _retained_runtime_snapshot() -> Dictionary:

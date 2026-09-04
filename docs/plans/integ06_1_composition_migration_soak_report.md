@@ -397,3 +397,15 @@ advancing an idle turn when no visible player action can be selected; such a
 case remains nonterminal and fails the gate. This source hardening is not
 runtime evidence; the strict producer must still compile and pass on the exact
 final candidate.
+
+The producer now has a fail-closed terminal contract before that candidate run.
+It requires the exact nine case IDs and seeds, verifies each shard's declared
+index/count and exact custody, and rejects missing or duplicated aggregate cases.
+Native, repeated-native, and Web cohorts must independently witness Crew, Crew
+jobs, Crew heists, Numbers, deliveries, scenarios, Police Sweep, travelers, and
+Coin Pusher. The reports also carry post-warmup retained node/resource/object
+measurements; growth beyond 8/8/32, any orphan growth, a changed bound, or a
+state size above 1,500,000 bytes fails the gate. Hostile contract self-tests
+exercise case omission, duplication, misindexing, missing witnesses, and growth
+or bound tampering. These checks harden evidence acceptance but do not replace
+the pending exact-candidate native/Web run.
