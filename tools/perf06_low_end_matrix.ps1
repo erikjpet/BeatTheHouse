@@ -167,7 +167,7 @@ try {
     }
 
     $matrixReport = Join-Path $out "matrix_contract.json"
-    & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "perf06_matrix_contract.ps1") -CandidateCommit $head -CompositionManifest $integrationManifests["integ06_1_composition_matrix.ps1"] -TerminalManifest $integrationManifests["integ06_1_terminal_soak.ps1"] -SurfaceReports @($surfaceReports) -Out $matrixReport
+    & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "perf06_matrix_contract.ps1") -CandidateCommit $head -CompositionManifest $integrationManifests["integ06_1_composition_matrix.ps1"] -TerminalManifest $integrationManifests["integ06_1_terminal_soak.ps1"] -SurfaceReports @($surfaceReports) -RequiredProfiles low_end -Out $matrixReport
     if ($LASTEXITCODE -ne 0) { throw "Low-end combined matrix contract failed." }
 
     $hostEvidence.completed_utc = [DateTime]::UtcNow.ToString("o")
