@@ -127,7 +127,7 @@ func _travel_rollback_snapshot(run_state: RunState) -> Dictionary:
 		# Seeded scenario definitions are trusted immutable catalog projections.
 		# Own their outer map but share the authored nested payload on the success
 		# path; a rare rollback deep-copies it while restoring through from_dict().
-		"run": run_state.to_dict(false),
+		"run": run_state.to_save_snapshot(false),
 		"environment": run_state.current_environment.duplicate(true),
 		"world_map": run_state.world_map.duplicate(true),
 		"room_states": run_state.grand_casino_room_states.duplicate(true),
