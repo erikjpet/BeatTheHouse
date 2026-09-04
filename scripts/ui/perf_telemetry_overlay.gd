@@ -8,6 +8,7 @@ const SlotStateScript := preload("res://scripts/games/slots/slot_machine_state.g
 const SlotPinballScript := preload("res://scripts/games/slots/slot_family_pinball.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 const CrewTurnModelScript := preload("res://scripts/core/crew_turn_model.gd")
+const TutorialFlowScript := preload("res://scripts/core/tutorial_flow.gd")
 const PerformanceFixtureSetupScript := preload("res://scripts/ui/performance_fixture_setup.gd")
 const WebAudioBridgeScript := preload("res://scripts/ui/web_audio_bridge.gd")
 const CoinPusherSolverScript := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
@@ -512,6 +513,27 @@ func _run_distribution_fresh_start_plan() -> void:
 		var music_player: Variant = app.get("procedural_music_player")
 		if music_player != null:
 			music_player.set("audio_enabled", false)
+	var startup_attribution := {}
+	if OS.get_environment("BTH_PERF_STARTUP_ATTRIBUTION").strip_edges() == "1" and app != null:
+		var stage_started_usec := Time.get_ticks_usec()
+		app.call("_ensure_full_content_library_loaded")
+		startup_attribution["full_content_msec"] = float(Time.get_ticks_usec() - stage_started_usec) / 1000.0
+		var content_library: ContentLibrary = app.get("library") as ContentLibrary
+		stage_started_usec = Time.get_ticks_usec()
+		var tutorial_config := TutorialFlowScript.challenge_config(content_library)
+		startup_attribution["tutorial_config_msec"] = float(Time.get_ticks_usec() - stage_started_usec) / 1000.0
+		var probe_state := RunState.new()
+		stage_started_usec = Time.get_ticks_usec()
+		probe_state.start_new(str(tutorial_config.get("seed_text", "FIRST-NIGHT-ACE-17")), tutorial_config)
+		probe_state.begin_act(1)
+		startup_attribution["run_state_msec"] = float(Time.get_ticks_usec() - stage_started_usec) / 1000.0
+		var probe_generator := RunGenerator.new(content_library)
+		stage_started_usec = Time.get_ticks_usec()
+		probe_generator.next_environment(probe_state)
+		startup_attribution["generation_msec"] = float(Time.get_ticks_usec() - stage_started_usec) / 1000.0
+	var world_map_disabled_control := OS.get_environment("BTH_PERF_DISABLE_WORLD_MAP").strip_edges() == "1"
+	if world_map_disabled_control and app != null:
+		app.set("world_map_overlay", null)
 	var play_started_msec := Time.get_ticks_msec()
 	if play_ready:
 		app.call("_on_start_pressed")
@@ -531,6 +553,8 @@ func _run_distribution_fresh_start_plan() -> void:
 		"no_saved_run": no_saved_run,
 		"play_ready": play_ready,
 		"audio_disabled_control": audio_disabled_control,
+		"world_map_disabled_control": world_map_disabled_control,
+		"startup_attribution": startup_attribution,
 		"before_screen": str(before_screen.get("screen", "")),
 		"after_screen": str(after_screen.get("screen", "")),
 		"tutorial_started": tutorial_started,
