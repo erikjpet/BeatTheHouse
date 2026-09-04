@@ -25,6 +25,12 @@ Required local outputs are `builds/windows/BeatTheHouse.exe` and the complete
 Windows and Chrome smoke reports. Commit those three files without committing
 the ignored local build directories.
 
+The owner command refuses tracked, staged, or nonignored untracked files before
+and after the run. Its Web smoke performs the required fresh distribution export
+itself with `-NoPackageFreshExport`; `-SkipExport` is not valid for this custody
+path. Both smoke reports bind the candidate commit/tree, actual platform, pass
+result, and aggregate export identity.
+
 ## Route evidence
 
 Every verified named seed needs, per actual platform used:
@@ -37,6 +43,12 @@ Every verified named seed needs, per actual platform used:
   coverage witness for every claimed id;
 - a witness action index, visible result, required outcome type, runtime trace
   path, and runtime event id.
+
+The referenced runtime event must repeat the witness action index, coverage
+field/id, outcome type, and visible result, and its action id and visible result
+must match that indexed public action. FINAL parses both smoke reports, rehashes
+every owner-build tool and local export file, and verifies the locked Web
+template identity; opaque or substituted JSON blobs do not qualify.
 
 `FULL-RUN-CONTROLS` needs separate Windows and Chrome reports. A coverage string
 without its action-indexed runtime event is rejected. Scenario representatives

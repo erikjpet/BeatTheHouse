@@ -50,11 +50,20 @@ function Get-BuildFiles {
     })
 }
 
+function Get-BuildIdentity {
+    param($Rows, [string]$RelativeRoot)
+    $prefix = $RelativeRoot.TrimEnd('/') + "/"
+    $canonical = @($Rows | Sort-Object { [string]$_.path } | ForEach-Object { "{0}`t{1}`t{2}" -f ([string]$_.path).Substring($prefix.Length), [int64]$_.bytes, [string]$_.sha256 }) -join "`n"
+    $sha = [Security.Cryptography.SHA256]::Create()
+    try { return ([BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($canonical)))).Replace("-", "").ToLowerInvariant() }
+    finally { $sha.Dispose() }
+}
+
 $candidate = (& git -C $root rev-parse "$CandidateCommit^{commit}").Trim()
 if ($LASTEXITCODE -ne 0 -or -not $candidate) { throw "CandidateCommit does not resolve to a commit." }
 $head = (& git -C $root rev-parse HEAD).Trim()
 if ($head -cne $candidate) { throw "HEAD $head does not equal CandidateCommit $candidate." }
-if (@(& git -C $root status --short --untracked-files=no).Count -ne 0) { throw "Owner build requires a clean tracked candidate." }
+if (@(& git -C $root status --short --untracked-files=all).Count -ne 0) { throw "Owner build requires exact HEAD with no tracked changes or nonignored untracked files." }
 $candidateTree = (& git -C $root rev-parse "$candidate^{tree}").Trim()
 
 if (-not $GodotPath) { $GodotPath = $env:GODOT_BIN }
@@ -86,9 +95,6 @@ try {
     $env:GODOT_BIN = $GodotPath
     & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "export_itch.ps1") -Target windows -NoPackage
     if ($LASTEXITCODE -ne 0) { throw "No-package Windows export failed." }
-    & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "export_itch.ps1") -Target web -NoPackage
-    if ($LASTEXITCODE -ne 0) { throw "No-package Web export failed." }
-
     $windowsExe = Join-Path $root "builds/windows/BeatTheHouse.exe"
     if (-not (Test-Path -LiteralPath $windowsExe -PathType Leaf)) { throw "Windows owner build is missing." }
     $windows = Start-Process -FilePath $windowsExe -PassThru -WindowStyle Hidden
@@ -102,7 +108,7 @@ try {
 
     $webReport = ".tmp/playtest06_owner_build/web_smoke.json"
     if (Test-Path -LiteralPath (Join-Path $root $webReport)) { Remove-Item -LiteralPath (Join-Path $root $webReport) -Force }
-    & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "web_perf_smoke.ps1") -Browser chrome -Cpu 1 -Port $WebPort -Frames 45 -ActiveFrames 60 -MemorySeconds 20 -TimeoutMs $WebTimeoutMs -Out $webReport -CacheMode cold -Plan distribution_fresh_start -EvidenceProfile playtest06_owner_build -SkipExport
+    & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "web_perf_smoke.ps1") -Browser chrome -Cpu 1 -Port $WebPort -Frames 45 -ActiveFrames 60 -MemorySeconds 20 -TimeoutMs $WebTimeoutMs -Out $webReport -CacheMode cold -Plan distribution_fresh_start -EvidenceProfile playtest06_owner_build -NoPackageFreshExport
     if ($LASTEXITCODE -ne 0) { throw "Web owner build did not complete its Chrome launch smoke." }
 }
 finally {
@@ -111,10 +117,12 @@ finally {
 }
 
 if ((Get-DirectoryFingerprint $itchPath) -cne $itchBefore) { throw "No-package owner build changed builds/itch; refusing release-like output." }
-if (@(& git -C $root status --short --untracked-files=no).Count -ne 0 -or (& git -C $root rev-parse HEAD).Trim() -cne $candidate) { throw "Tracked candidate changed while producing the owner build." }
+if (@(& git -C $root status --short --untracked-files=all).Count -ne 0 -or (& git -C $root rev-parse HEAD).Trim() -cne $candidate) { throw "Candidate changed or gained a nonignored untracked file while producing the owner build." }
 
 $windowsFiles = @(Get-BuildFiles "builds/windows")
 $webFiles = @(Get-BuildFiles "builds/web")
+$windowsExportIdentity = Get-BuildIdentity $windowsFiles "builds/windows"
+$webExportIdentity = Get-BuildIdentity $webFiles "builds/web"
 if (@($windowsFiles | Where-Object { $_.path -like "*coin_pusher_native*.dll" }).Count -ne 1) { throw "Windows build must contain exactly one Coin Pusher native solver DLL." }
 if (@($webFiles | Where-Object { $_.path -like "*coin_pusher_native*.wasm" }).Count -ne 1) { throw "Web build must contain exactly one Coin Pusher native solver WASM." }
 
@@ -129,12 +137,30 @@ $windowsSmokePath = Join-Path $root $windowsSmokeRelative
     executable = "builds/windows/BeatTheHouse.exe"
     stayed_alive_seconds = $WindowsSmokeSeconds
     passed = $windowsSmokePassed
+    export_identity_sha256 = $windowsExportIdentity
 } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $windowsSmokePath -Encoding utf8
 $webSmokeRelative = "docs/plans/evidence/playtest06_2/owner_build_web_smoke.json"
 $webSmokePath = Join-Path $root $webSmokeRelative
-Copy-Item -LiteralPath (Join-Path $root ".tmp/playtest06_owner_build/web_smoke.json") -Destination $webSmokePath
+$webRawReport = Join-Path $root ".tmp/playtest06_owner_build/web_smoke.json"
+$webSummaryPath = [IO.Path]::ChangeExtension($webRawReport, ".summary.json")
+$webSummary = Get-Content -LiteralPath $webSummaryPath -Raw | ConvertFrom-Json
+[ordered]@{
+    schema = "beat_the_house.playtest06_owner_build_smoke/v1"
+    candidate_commit = $candidate
+    candidate_tree = $candidateTree
+    platform = "WEB_CHROME"
+    passed = [bool]$webSummary.passed
+    export_identity_sha256 = $webExportIdentity
+    runtime_source_commit = [string]$webSummary.source_commit
+    runtime_export_sha256 = [string]$webSummary.web_export_identity.aggregate_sha256
+    raw_report_sha256 = (Get-FileHash -LiteralPath $webRawReport -Algorithm SHA256).Hash.ToLowerInvariant()
+    summary_report_sha256 = (Get-FileHash -LiteralPath $webSummaryPath -Algorithm SHA256).Hash.ToLowerInvariant()
+} | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $webSmokePath -Encoding utf8
+if (-not [bool]$webSummary.passed -or [string]$webSummary.source_commit -cne $candidate -or [string]$webSummary.web_export_identity.aggregate_sha256 -cne $webExportIdentity) {
+    throw "Web owner-build smoke did not bind the candidate and complete export identity."
+}
 
-$toolFiles = @("tools/playtest06_owner_build.ps1", "tools/export_itch.ps1", "tools/build_native_solver.ps1", "tools/verify_native_solver_runtime.ps1", "tools/web_perf_smoke.ps1", "tools/l02_web_perf_probe.mjs", "tools/serve_web.ps1")
+$toolFiles = @("tools/playtest06_owner_build.ps1", "tools/export_itch.ps1", "tools/build_native_solver.ps1", "tools/verify_native_solver_runtime.ps1", "tools/web_perf_smoke.ps1", "tools/web_perf_export_mode.ps1", "tools/l02_web_perf_probe.mjs", "tools/serve_web.ps1")
 $manifest = [ordered]@{
     schema = "beat_the_house.playtest06_owner_build/v1"
     candidate_commit = $candidate
@@ -150,8 +176,8 @@ $manifest = [ordered]@{
     web_template_sha256 = $webTemplateHash
     export_presets_sha256 = Get-RepoHash "export_presets.cfg"
     tool_hashes = @($toolFiles | ForEach-Object { [ordered]@{ path = $_; sha256 = Get-RepoHash $_ } })
-    windows = [ordered]@{ platform = "WINDOWS_NATIVE"; output_root = "builds/windows"; smoke_passed = $windowsSmokePassed; smoke_seconds = $WindowsSmokeSeconds; smoke_evidence = [ordered]@{ path = $windowsSmokeRelative; sha256 = Get-RepoHash $windowsSmokeRelative }; files = $windowsFiles }
-    web = [ordered]@{ platform = "WEB_CHROME"; output_root = "builds/web"; smoke_passed = $true; smoke_evidence = [ordered]@{ path = $webSmokeRelative; sha256 = Get-RepoHash $webSmokeRelative }; files = $webFiles }
+    windows = [ordered]@{ platform = "WINDOWS_NATIVE"; output_root = "builds/windows"; export_identity_sha256 = $windowsExportIdentity; smoke_passed = $windowsSmokePassed; smoke_seconds = $WindowsSmokeSeconds; smoke_evidence = [ordered]@{ path = $windowsSmokeRelative; sha256 = Get-RepoHash $windowsSmokeRelative }; files = $windowsFiles }
+    web = [ordered]@{ platform = "WEB_CHROME"; output_root = "builds/web"; export_identity_sha256 = $webExportIdentity; smoke_passed = $true; smoke_evidence = [ordered]@{ path = $webSmokeRelative; sha256 = Get-RepoHash $webSmokeRelative }; files = $webFiles }
 }
 $manifest | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $evidencePath -Encoding utf8
 Write-Host "PLAYTEST06_OWNER_BUILD PASS candidate=$candidate windows_files=$($windowsFiles.Count) web_files=$($webFiles.Count) evidence=$EvidenceOut"

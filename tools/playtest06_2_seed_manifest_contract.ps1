@@ -401,8 +401,11 @@ function Test-OwnerBuildPlatform {
     $smokePath = [string]$PlatformRecord.smoke_evidence.path
     if (-not (Test-Sha256Text $PlatformRecord.smoke_evidence.sha256)) { Add-Failure "$Label.smoke_evidence.sha256 must be a lowercase SHA-256." }
     $smokeEvidence = Resolve-CommittedEvidence $smokePath "$Label.smoke_evidence"
+    $smoke = $null
     if ($null -ne $smokeEvidence -and [string]$smokeEvidence.sha256 -cne [string]$PlatformRecord.smoke_evidence.sha256) {
         Add-Failure "$Label.smoke_evidence SHA-256 does not match its committed HEAD blob."
+    } elseif ($null -ne $smokeEvidence) {
+        $smoke = ConvertFrom-Utf8JsonBytes ([byte[]]$smokeEvidence.bytes) "$Label.smoke_evidence"
     }
     $files = @(As-Array $PlatformRecord.files)
     if ($files.Count -eq 0) { Add-Failure "$Label.files must contain every local build output." }
@@ -439,6 +442,17 @@ function Test-OwnerBuildPlatform {
     }
     Test-ExactSet @($paths.Keys) $actualPaths "$Label declared versus local build outputs"
     if (-not $foundNative) { Add-Failure "$Label is missing the locked Coin Pusher native solver output ($RequiredNativeSuffix)." }
+    $buildPrefix = $RequiredRoot.TrimEnd('/') + "/"
+    $canonicalRows = @($files | Sort-Object { [string]$_.path } | ForEach-Object { "{0}`t{1}`t{2}" -f ([string]$_.path).Substring($buildPrefix.Length), [int64]$_.bytes, [string]$_.sha256 })
+    $exportIdentity = Get-Sha256Bytes ([Text.Encoding]::UTF8.GetBytes(($canonicalRows -join "`n")))
+    if ([string]$PlatformRecord.export_identity_sha256 -cne $exportIdentity) { Add-Failure "$Label.export_identity_sha256 does not match the complete build output set." }
+    if ($null -ne $smoke) {
+        if ([string]$smoke.schema -cne "beat_the_house.playtest06_owner_build_smoke/v1") { Add-Failure "$Label.smoke_evidence has the wrong schema." }
+        if ([string]$smoke.candidate_commit -cne $script:ExpectedTestedCommit -or [string]$smoke.candidate_tree -cne $script:expectedTree) { Add-Failure "$Label.smoke_evidence candidate identity does not match the tested candidate." }
+        if ([string]$smoke.platform -cne $ExpectedPlatform) { Add-Failure "$Label.smoke_evidence platform does not match $ExpectedPlatform." }
+        if ($smoke.passed -isnot [bool] -or -not [bool]$smoke.passed) { Add-Failure "$Label.smoke_evidence passed must be true." }
+        if ([string]$smoke.export_identity_sha256 -cne $exportIdentity) { Add-Failure "$Label.smoke_evidence export identity does not match the complete build output set." }
+    }
 }
 
 if ([int]$manifest.schema_version -ne 2) { Add-Failure "schema_version must be 2." }
@@ -642,6 +656,44 @@ if ($RequireFinal) {
                         Add-Failure "owner_build_evidence.$($input.label) does not match $($input.path)."
                     }
                 }
+                $requiredOwnerTools = @(
+                    "tools/playtest06_owner_build.ps1",
+                    "tools/export_itch.ps1",
+                    "tools/build_native_solver.ps1",
+                    "tools/verify_native_solver_runtime.ps1",
+                    "tools/web_perf_smoke.ps1",
+                    "tools/web_perf_export_mode.ps1",
+                    "tools/l02_web_perf_probe.mjs",
+                    "tools/serve_web.ps1"
+                )
+                $actualOwnerTools = @()
+                $ownerToolPaths = @{}
+                foreach ($toolEntry in @(As-Array $ownerBuild.tool_hashes)) {
+                    $toolPath = [string]$toolEntry.path
+                    $actualOwnerTools += $toolPath
+                    if ($ownerToolPaths.ContainsKey($toolPath)) { Add-Failure "owner_build_evidence.tool_hashes contains duplicate '$toolPath'." } else { $ownerToolPaths[$toolPath] = $true }
+                    if ([IO.Path]::IsPathRooted($toolPath) -or -not $toolPath.StartsWith("tools/", [StringComparison]::Ordinal)) {
+                        Add-Failure "owner_build_evidence.tool_hashes path must be repository-relative under tools/: $toolPath"
+                        continue
+                    }
+                    if (-not (Test-Sha256Text $toolEntry.sha256)) { Add-Failure "owner_build_evidence.tool_hashes[$toolPath].sha256 must be a lowercase SHA-256."; continue }
+                    $toolFullPath = Join-Path $Root $toolPath
+                    if (-not (Test-Path -LiteralPath $toolFullPath -PathType Leaf)) {
+                        Add-Failure "owner_build_evidence.tool_hashes file is missing: $toolPath"
+                    } elseif ((Get-FileHash -LiteralPath $toolFullPath -Algorithm SHA256).Hash.ToLowerInvariant() -cne [string]$toolEntry.sha256) {
+                        Add-Failure "owner_build_evidence.tool_hashes[$toolPath] does not match the local tool."
+                    }
+                }
+                Test-ExactSet $requiredOwnerTools $actualOwnerTools "owner_build_evidence required tool hashes"
+                $lockPath = Join-Path $Root "native/coin_pusher/toolchain.lock.json"
+                if (Test-Path -LiteralPath $lockPath -PathType Leaf) {
+                    $lock = Get-Content -LiteralPath $lockPath -Raw | ConvertFrom-Json
+                    if (-not (Test-Sha256Text $ownerBuild.web_template_sha256)) {
+                        Add-Failure "owner_build_evidence.web_template_sha256 must be a lowercase SHA-256."
+                    } elseif ([string]$ownerBuild.web_template_sha256 -cne [string]$lock.web.template_sha256) {
+                        Add-Failure "owner_build_evidence.web_template_sha256 does not match the locked Web template identity."
+                    }
+                }
                 $godotPath = [string]$ownerBuild.godot_path
                 if (-not [IO.Path]::IsPathRooted($godotPath) -or -not (Test-Path -LiteralPath $godotPath -PathType Leaf)) {
                     Add-Failure "owner_build_evidence.godot_path must identify the local engine used for the build."
@@ -784,8 +836,14 @@ foreach ($seed in $seeds) {
                 foreach ($event in @(As-Array $trace.events)) {
                     $eventId = [string]$event.event_id
                     Require-Text $eventId "$label.events[].event_id" | Out-Null
+                    Require-Text $event.action_id "$label.events[$eventId].action_id" | Out-Null
+                    Require-Text $event.coverage_field "$label.events[$eventId].coverage_field" | Out-Null
+                    Require-Text $event.coverage_id "$label.events[$eventId].coverage_id" | Out-Null
+                    Require-Text $event.outcome_type "$label.events[$eventId].outcome_type" | Out-Null
                     Require-Text $event.visible_result "$label.events[$eventId].visible_result" | Out-Null
-                    if ($eventSet.ContainsKey($eventId)) { Add-Failure "$label contains duplicate runtime event '$eventId'." } else { $eventSet[$eventId] = $true }
+                    $traceActionIndex = -1
+                    if (-not [int]::TryParse([string]$event.action_index, [ref]$traceActionIndex) -or $traceActionIndex -lt 0) { Add-Failure "$label.events[$eventId].action_index must be a nonnegative integer." }
+                    if ($eventSet.ContainsKey($eventId)) { Add-Failure "$label contains duplicate runtime event '$eventId'." } else { $eventSet[$eventId] = $event }
                 }
                 if ($eventSet.Count -eq 0) { Add-Failure "$label must contain runtime events." }
                 $runtimeEventsByPath[$path] = $eventSet
@@ -864,6 +922,19 @@ foreach ($seed in $seeds) {
                 Add-Failure "$witnessLabel must reference a retained RUNTIME_TRACE."
             } elseif (-not $runtimeEventsByPath.ContainsKey($runtimePath) -or -not $runtimeEventsByPath[$runtimePath].ContainsKey($runtimeEventId)) {
                 Add-Failure "$witnessLabel runtime_event_id is absent from its retained runtime trace."
+            } else {
+                $runtimeEvent = $runtimeEventsByPath[$runtimePath][$runtimeEventId]
+                if ([int]$runtimeEvent.action_index -ne $actionIndex) { Add-Failure "$witnessLabel action_index does not match its runtime event." }
+                if ([string]$runtimeEvent.coverage_field -cne $field) { Add-Failure "$witnessLabel coverage_field does not match its runtime event." }
+                if ([string]$runtimeEvent.coverage_id -cne $coverageId) { Add-Failure "$witnessLabel coverage_id does not match its runtime event." }
+                if ([string]$runtimeEvent.outcome_type -cne [string]$witness.outcome_type) { Add-Failure "$witnessLabel outcome_type does not match its runtime event." }
+                if ([string]$runtimeEvent.visible_result -cne [string]$witness.visible_result) { Add-Failure "$witnessLabel visible_result does not match its runtime event." }
+                if ($actionIndex -ge 0 -and $actionIndex -lt $publicActions.Count) {
+                    $publicAction = $publicActions[$actionIndex]
+                    if ([string]$runtimeEvent.action_id -cne [string]$publicAction.action_id) { Add-Failure "$witnessLabel runtime event action_id does not match its indexed public action." }
+                    if ([string]$runtimeEvent.visible_result -cne [string]$publicAction.visible_result) { Add-Failure "$witnessLabel runtime event visible_result does not match its indexed public action." }
+                    if ([string]$witness.visible_result -cne [string]$publicAction.visible_result) { Add-Failure "$witnessLabel visible_result does not match its indexed public action." }
+                }
             }
             $witnessCoverage[$field][$coverageId] = $true
         }

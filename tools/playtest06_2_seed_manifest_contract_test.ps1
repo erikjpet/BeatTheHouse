@@ -84,7 +84,8 @@ try {
         New-Item -ItemType Directory -Path (Join-Path $repo $directory) -Force | Out-Null
     }
     Copy-Item -LiteralPath $sourceContract -Destination (Join-Path $repo "tools/playtest06_2_seed_manifest_contract.ps1")
-    Copy-Item -LiteralPath (Join-Path $sourceRoot "tools/playtest06_owner_build.ps1") -Destination (Join-Path $repo "tools/playtest06_owner_build.ps1")
+    $ownerTools = @("tools/playtest06_owner_build.ps1", "tools/export_itch.ps1", "tools/build_native_solver.ps1", "tools/verify_native_solver_runtime.ps1", "tools/web_perf_smoke.ps1", "tools/web_perf_export_mode.ps1", "tools/l02_web_perf_probe.mjs", "tools/serve_web.ps1")
+    foreach ($ownerTool in $ownerTools) { Copy-Item -LiteralPath (Join-Path $sourceRoot $ownerTool) -Destination (Join-Path $repo $ownerTool) }
     Copy-Item -LiteralPath (Join-Path $sourceRoot "native/coin_pusher/toolchain.lock.json") -Destination (Join-Path $repo "native/coin_pusher/toolchain.lock.json")
     Copy-Item -LiteralPath (Join-Path $sourceRoot "export_presets.cfg") -Destination (Join-Path $repo "export_presets.cfg")
     Copy-Item -LiteralPath (Join-Path $sourceRoot "data/games/games.json") -Destination (Join-Path $repo "data/games/games.json")
@@ -144,15 +145,27 @@ try {
     Set-Content -LiteralPath $fakeGodot -Value "fake exact engine" -Encoding utf8
     $windowsSmokeRelative = "docs/plans/evidence/playtest06_2/owner_build_windows_smoke.json"
     $webSmokeRelative = "docs/plans/evidence/playtest06_2/owner_build_web_smoke.json"
-    Write-Json ([ordered]@{ schema = "beat_the_house.playtest06_owner_build_smoke/v1"; platform = "WINDOWS_NATIVE"; passed = $true }) (Join-Path $repo $windowsSmokeRelative)
-    Write-Json ([ordered]@{ schema = "beat_the_house.playtest06_owner_build_smoke/v1"; platform = "WEB_CHROME"; passed = $true }) (Join-Path $repo $webSmokeRelative)
     function Get-BuildRows([string]$relativeRoot) {
         return @(Get-ChildItem (Join-Path $repo $relativeRoot) -File -Recurse | Sort-Object FullName | ForEach-Object {
             [ordered]@{ path = $_.FullName.Substring($repo.Length).TrimStart('\','/').Replace('\','/'); bytes = [int64]$_.Length; sha256 = (Get-Hash $_.FullName) }
         })
     }
+    function Get-BuildIdentity($rows, [string]$relativeRoot) {
+        $prefix = $relativeRoot.TrimEnd('/') + "/"
+        $canonical = @($rows | Sort-Object { [string]$_.path } | ForEach-Object { "{0}`t{1}`t{2}" -f ([string]$_.path).Substring($prefix.Length), [int64]$_.bytes, [string]$_.sha256 }) -join "`n"
+        $sha = [Security.Cryptography.SHA256]::Create()
+        try { return ([BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($canonical)))).Replace("-", "").ToLowerInvariant() }
+        finally { $sha.Dispose() }
+    }
+    $windowsRows = @(Get-BuildRows "builds/windows")
+    $webRows = @(Get-BuildRows "builds/web")
+    $windowsIdentity = Get-BuildIdentity $windowsRows "builds/windows"
+    $webIdentity = Get-BuildIdentity $webRows "builds/web"
+    Write-Json ([ordered]@{ schema = "beat_the_house.playtest06_owner_build_smoke/v1"; candidate_commit = $candidateCommit; candidate_tree = $candidateTree; platform = "WINDOWS_NATIVE"; passed = $true; export_identity_sha256 = $windowsIdentity }) (Join-Path $repo $windowsSmokeRelative)
+    Write-Json ([ordered]@{ schema = "beat_the_house.playtest06_owner_build_smoke/v1"; candidate_commit = $candidateCommit; candidate_tree = $candidateTree; platform = "WEB_CHROME"; passed = $true; export_identity_sha256 = $webIdentity }) (Join-Path $repo $webSmokeRelative)
     $buildRelative = "docs/plans/evidence/playtest06_2/owner_build_manifest.json"
     $buildPath = Join-Path $repo $buildRelative
+    $selftestLock = Get-Content (Join-Path $repo "native/coin_pusher/toolchain.lock.json") -Raw | ConvertFrom-Json
     $build = [ordered]@{
         schema = "beat_the_house.playtest06_owner_build/v1"; candidate_commit = $candidateCommit; candidate_tree = $candidateTree
         distribution_artifact = $false; archive_created = $false; upload_performed = $false
@@ -160,8 +173,10 @@ try {
         godot_path = $fakeGodot; godot_sha256 = Get-Hash $fakeGodot
         toolchain_lock_sha256 = Get-Hash (Join-Path $repo "native/coin_pusher/toolchain.lock.json")
         export_presets_sha256 = Get-Hash (Join-Path $repo "export_presets.cfg")
-        windows = [ordered]@{ platform = "WINDOWS_NATIVE"; output_root = "builds/windows"; smoke_passed = $true; smoke_evidence = [ordered]@{ path = $windowsSmokeRelative; sha256 = Get-Hash (Join-Path $repo $windowsSmokeRelative) }; files = @(Get-BuildRows "builds/windows") }
-        web = [ordered]@{ platform = "WEB_CHROME"; output_root = "builds/web"; smoke_passed = $true; smoke_evidence = [ordered]@{ path = $webSmokeRelative; sha256 = Get-Hash (Join-Path $repo $webSmokeRelative) }; files = @(Get-BuildRows "builds/web") }
+        web_template_sha256 = [string]$selftestLock.web.template_sha256
+        tool_hashes = @($ownerTools | ForEach-Object { [ordered]@{ path = $_; sha256 = Get-Hash (Join-Path $repo $_) } })
+        windows = [ordered]@{ platform = "WINDOWS_NATIVE"; output_root = "builds/windows"; export_identity_sha256 = $windowsIdentity; smoke_passed = $true; smoke_evidence = [ordered]@{ path = $windowsSmokeRelative; sha256 = Get-Hash (Join-Path $repo $windowsSmokeRelative) }; files = $windowsRows }
+        web = [ordered]@{ platform = "WEB_CHROME"; output_root = "builds/web"; export_identity_sha256 = $webIdentity; smoke_passed = $true; smoke_evidence = [ordered]@{ path = $webSmokeRelative; sha256 = Get-Hash (Join-Path $repo $webSmokeRelative) }; files = $webRows }
     }
     Write-Json $build $buildPath
     $buildHash = Get-Hash $buildPath
@@ -179,7 +194,7 @@ try {
         $stem = $platform.ToLowerInvariant()
         $traceRelative = "docs/plans/evidence/playtest06_2/${stem}_runtime_trace.json"
         $tracePath = Join-Path $repo $traceRelative
-        $events = @(for ($i = 0; $i -lt $pairs.Count; $i++) { [ordered]@{ event_id = "event_$i"; visible_result = "Runtime witness $i." } })
+        $events = @(for ($i = 0; $i -lt $pairs.Count; $i++) { [ordered]@{ event_id = "event_$i"; action_index = $i; action_id = "route_$i"; coverage_field = $pairs[$i].field; coverage_id = $pairs[$i].id; outcome_type = Get-OutcomeType $pairs[$i].field $pairs[$i].id; visible_result = "Witness $i is visible." } })
         Write-Json ([ordered]@{ schema = "beat_the_house.playtest06_runtime_trace/v1"; candidate_commit = $candidateCommit; candidate_tree = $candidateTree; seed_id = "selftest_verified"; seed = "PLAYTEST-SELFTEST"; platform = $platform; owner_build_manifest_sha256 = $buildHash; events = $events }) $tracePath
         $actions = @(for ($i = 0; $i -lt $pairs.Count; $i++) { [ordered]@{ action_id = "route_$i"; instruction = "Use the visible control for witness $i."; visible_result = "Witness $i is visible."; authority = "PUBLIC_UI_ACTION" } })
         $witnesses = @(for ($i = 0; $i -lt $pairs.Count; $i++) { [ordered]@{ coverage_field = $pairs[$i].field; coverage_id = $pairs[$i].id; action_index = $i; outcome_type = Get-OutcomeType $pairs[$i].field $pairs[$i].id; visible_result = "Witness $i is visible."; runtime_evidence_path = $traceRelative; runtime_event_id = "event_$i" } })
@@ -246,19 +261,70 @@ try {
     Assert-True ($tamperedBuild.exit_code -ne 0 -and $tamperedBuild.output.Contains("SHA-256 does not match the local build")) "FINAL accepted a replaced local owner build."
     [IO.File]::WriteAllBytes($windowsExe, $originalWindowsBytes)
 
-    $webSessionRelative = "docs/plans/evidence/playtest06_2/web_chrome_owner_session.json"
-    $webSessionPath = Join-Path $repo $webSessionRelative
-    $badSession = Get-Content $webSessionPath -Raw | ConvertFrom-Json
-    $badSession.coverage_witnesses[0].runtime_event_id = "missing_event"
-    Write-Json $badSession $webSessionPath
-    $badSessionHash = Get-Hash $webSessionPath
-    $badManifest = Copy-JsonObject $manifest
-    ($badManifest.seeds[0].evidence | Where-Object { $_.path -eq $webSessionRelative }).sha256 = $badSessionHash
-    Write-Json $badManifest $manifestPath
-    Invoke-Git @("add", "--", $webSessionRelative, $manifestRelative) | Out-Null
-    Invoke-Git @("commit", "-q", "-m", "hostile missing runtime witness") | Out-Null
-    $missingWitness = Invoke-Contract $sandboxContract $manifestPath -Final -ExpectedCommit $candidateCommit
-    Assert-True ($missingWitness.exit_code -ne 0 -and $missingWitness.output.Contains("runtime_event_id is absent")) "FINAL accepted coverage without a runtime event witness."
+    $webTraceRelative = "docs/plans/evidence/playtest06_2/web_chrome_runtime_trace.json"
+    $webTracePath = Join-Path $repo $webTraceRelative
+    $originalWebTrace = Get-Content $webTracePath -Raw | ConvertFrom-Json
+    $traceMismatchCases = @(
+        @{ field = "action_index"; value = 1; message = "action_index does not match" },
+        @{ field = "coverage_field"; value = "layer_ids"; message = "coverage_field does not match" },
+        @{ field = "coverage_id"; value = "wrong_coverage_id"; message = "coverage_id does not match" },
+        @{ field = "outcome_type"; value = "WRONG_OUTCOME"; message = "outcome_type does not match" },
+        @{ field = "visible_result"; value = "Wrong visible result."; message = "visible_result does not match" },
+        @{ field = "action_id"; value = "wrong_action"; message = "action_id does not match" }
+    )
+    foreach ($case in $traceMismatchCases) {
+        $badTrace = Copy-JsonObject $originalWebTrace
+        $badTrace.events[0].($case.field) = $case.value
+        Write-Json $badTrace $webTracePath
+        $badManifest = Copy-JsonObject $manifest
+        ($badManifest.seeds[0].evidence | Where-Object { $_.path -eq $webTraceRelative }).sha256 = Get-Hash $webTracePath
+        Write-Json $badManifest $manifestPath
+        Invoke-Git @("add", "--", $webTraceRelative, $manifestRelative) | Out-Null
+        Invoke-Git @("commit", "-q", "-m", "hostile trace $($case.field) mismatch") | Out-Null
+        $traceMismatch = Invoke-Contract $sandboxContract $manifestPath -Final -ExpectedCommit $candidateCommit
+        Assert-True ($traceMismatch.exit_code -ne 0 -and $traceMismatch.output.Contains([string]$case.message)) "FINAL accepted runtime trace/witness $($case.field) mismatch."
+    }
+
+    $windowsSmokePath = Join-Path $repo $windowsSmokeRelative
+    $originalWindowsSmoke = Get-Content $windowsSmokePath -Raw | ConvertFrom-Json
+    function Invoke-SmokeFixture($SmokeValue, [string]$Name) {
+        if ($SmokeValue -is [string]) { Set-Content -LiteralPath $windowsSmokePath -Value $SmokeValue -Encoding utf8 } else { Write-Json $SmokeValue $windowsSmokePath }
+        $badBuild = Copy-JsonObject $build
+        $badBuild.windows.smoke_evidence.sha256 = Get-Hash $windowsSmokePath
+        Write-Json $badBuild $buildPath
+        $badManifest = Copy-JsonObject $manifest
+        $badManifest.owner_build_evidence.sha256 = Get-Hash $buildPath
+        Write-Json $badManifest $manifestPath
+        Invoke-Git @("add", "--", $windowsSmokeRelative, $buildRelative, $manifestRelative) | Out-Null
+        Invoke-Git @("commit", "-q", "-m", "hostile smoke $Name") | Out-Null
+        return Invoke-Contract $sandboxContract $manifestPath -Final -ExpectedCommit $candidateCommit
+    }
+    $randomSmoke = Invoke-SmokeFixture "not a JSON smoke report" "random content"
+    Assert-True ($randomSmoke.exit_code -ne 0 -and $randomSmoke.output.Contains("is not valid UTF-8 JSON")) "FINAL accepted random committed smoke content."
+
+    $wrongSmokeValue = Copy-JsonObject $originalWindowsSmoke
+    $wrongSmokeValue.schema = "wrong.schema"
+    $wrongSmokeValue.candidate_commit = "0" * 40
+    $wrongSmokeValue.candidate_tree = "1" * 40
+    $wrongSmokeValue.platform = "WEB_CHROME"
+    $wrongSmokeValue.passed = $false
+    $wrongSmokeValue.export_identity_sha256 = "9" * 64
+    $wrongSmoke = Invoke-SmokeFixture $wrongSmokeValue "wrong fields"
+    foreach ($message in @("wrong schema", "candidate identity", "platform does not match", "passed must be true", "export identity does not match")) {
+        Assert-True ($wrongSmoke.output.Contains($message)) "Smoke hostile fixture did not reject '$message'."
+    }
+
+    $wrongBuild = Copy-JsonObject $build
+    $wrongBuild.tool_hashes[0].sha256 = "8" * 64
+    $wrongBuild.web_template_sha256 = "7" * 64
+    Write-Json $wrongBuild $buildPath
+    $wrongBuildManifest = Copy-JsonObject $manifest
+    $wrongBuildManifest.owner_build_evidence.sha256 = Get-Hash $buildPath
+    Write-Json $wrongBuildManifest $manifestPath
+    Invoke-Git @("add", "--", $buildRelative, $manifestRelative) | Out-Null
+    Invoke-Git @("commit", "-q", "-m", "hostile tool and template identity") | Out-Null
+    $wrongBuildIdentity = Invoke-Contract $sandboxContract $manifestPath -Final -ExpectedCommit $candidateCommit
+    Assert-True ($wrongBuildIdentity.exit_code -ne 0 -and $wrongBuildIdentity.output.Contains("does not match the local tool") -and $wrongBuildIdentity.output.Contains("does not match the locked Web template identity")) "FINAL accepted wrong owner tool or Web-template identity."
 
     Set-Content -LiteralPath (Join-Path $repo "data/unauthorized_product_change.txt") -Value "product delta" -Encoding utf8
     Invoke-Git @("add", "--", "data/unauthorized_product_change.txt") | Out-Null
@@ -271,7 +337,7 @@ try {
         foreach ($failure in $failures) { Write-Host " - $failure" }
         exit 1
     }
-    Write-Host "playtest06_2 seed manifest selftest: PASS checks=31 custody=manifest/evidence/build/runtime catalogs=18_archetypes/3_layers/11_games/55_scenarios/$($materialBranches.Count)_selected_branches platforms=2"
+    Write-Host "playtest06_2 seed manifest selftest: PASS checks=45 custody=manifest/evidence/build/smoke/runtime catalogs=18_archetypes/3_layers/11_games/55_scenarios/$($materialBranches.Count)_selected_branches platforms=2"
 }
 finally {
     if (Test-Path -LiteralPath $temp) {

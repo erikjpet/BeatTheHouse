@@ -116,8 +116,11 @@ That tool requires clean exact HEAD, produces the existing `builds/windows` and
 `docs/plans/evidence/playtest06_2/owner_build_manifest.json`. It hashes every
 local output plus the engine, locked native toolchain, export presets, and build
 tools, and retains separate Windows and Chrome smoke reports beside the
-manifest. It passes `-NoPackage` to the existing exporter and refuses any change to
-`builds/itch`; it creates no zip, upload, tag, version change, or publish
+manifest. Windows passes `-NoPackage` to the existing exporter; the Chrome smoke
+performs its own required fresh distribution export with
+`-NoPackageFreshExport`. Both paths refuse tracked, staged, or nonignored
+untracked files and any change to `builds/itch`; they create no zip, upload, tag,
+version change, or publish
 artifact. Each final runtime trace and owner-session report must cite the
 committed owner-build-manifest SHA-256.
 
