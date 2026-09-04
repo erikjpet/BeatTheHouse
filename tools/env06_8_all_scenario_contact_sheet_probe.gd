@@ -16,6 +16,10 @@ func _init() -> void:
 
 
 func _run() -> void:
+	if DisplayServer.get_name().to_lower() == "headless":
+		printerr("ENV06_8_CONTACT_SHEETS_FAIL raster capture cannot use the headless display driver; run tools/env06_8_capture_contact_sheets.ps1 for an explicit Windows/OpenGL capture.")
+		quit(2)
+		return
 	var output_dir := _argument("evidence-dir")
 	if output_dir.is_empty():
 		output_dir = "res://.tmp/env06_8_contact_sheets"
@@ -39,24 +43,31 @@ func _run() -> void:
 	var failures: Array = []
 	var scenario_rows: Array = []
 	var master_thumbnails: Array[Image] = []
+	var rendered_icon_counts: Dictionary = {}
 	for definition_value in definitions:
 		var definition := _dict(definition_value)
 		var scenario_id := str(definition.get("id", ""))
 		var archetype_id := str(definition.get("archetype_id", ""))
 		var host := ReadabilityContractScript._production_host_semantics(library, definition, failures)
-		var observer := ReadabilityContractScript._reachable_presentation_observer(definition, host, false, failures)
+		var layout_fixture := ReadabilityContractScript._production_layout_fixture(library, definition, failures)
+		var observer := ReadabilityContractScript._reachable_presentation_observer(definition, host, failures, layout_fixture)
 		var snapshots := _representative_snapshots(_array(observer.get("snapshots", [])))
 		print("ENV06_8_CONTACT_SCENARIO %s reachable=%d captures=%d" % [scenario_id, int(observer.get("reachable_state_count", 0)), snapshots.size()])
 		var state_rows: Array = []
 		var thumbnails: Array[Image] = []
 		for snapshot_value in snapshots:
 			var snapshot := _dict(snapshot_value)
+			var authority_digest := str(snapshot.get("layout_authority_digest", ""))
+			if authority_digest.length() != 64:
+				failures.append("env06_8 %s capture state lacks a sealed production layout authority digest." % scenario_id)
+				continue
 			var records: Array = []
 			var icon_keys: Array = []
 			for row_value in _array(snapshot.get("rows", [])):
 				var row := _dict(row_value)
 				var icon_key := str(row.get("icon", ""))
 				icon_keys.append(icon_key)
+				rendered_icon_counts[icon_key] = int(rendered_icon_counts.get(icon_key, 0)) + 1
 				records.append({
 					"object_id": str(row.get("id", "")),
 					"object_type": str(row.get("object_type", "scenario_scene_object")),
@@ -71,7 +82,8 @@ func _run() -> void:
 					"normalized_rect": _dict(row.get("normalized_rect", {})),
 					"small_screen_rect": _dict(row.get("small_screen_rect", {})),
 					"scenario_layout_resolved": true,
-					"scenario_z_order": records.size(),
+					"scenario_layout_authority_digest": str(row.get("layout_authority_digest", "")),
+					"scenario_z_order": int(row.get("z_order", 0)),
 					"semantic_state": str(row.get("state", "")),
 				})
 			_canvas.render_environment_snapshot({
@@ -91,6 +103,9 @@ func _run() -> void:
 			if image == null or image.is_empty():
 				failures.append("env06_8 %s produced an empty unlabeled state raster." % scenario_id)
 				continue
+			if not records.is_empty() and not _raster_has_visible_scene(image):
+				failures.append("env06_8 %s produced a blank raster despite %d resolved room objects; use tools/env06_8_capture_contact_sheets.ps1 with the Windows/OpenGL display path." % [scenario_id, records.size()])
+				continue
 			var thumbnail := image.duplicate()
 			thumbnail.resize(CELL_SIZE.x, CELL_SIZE.y, Image.INTERPOLATE_LANCZOS)
 			thumbnails.append(thumbnail)
@@ -100,6 +115,7 @@ func _run() -> void:
 				"outcomes": _array(snapshot.get("outcomes", [])),
 				"object_count": records.size(),
 				"icon_keys": icon_keys,
+				"layout_authority_digest": authority_digest,
 				"description_set_sha256": JSON.stringify(snapshot.get("rows", [])).sha256_text(),
 			})
 		var sheet_path := output_dir.path_join("%s_unlabeled_contact_sheet.png" % scenario_id)
@@ -124,11 +140,14 @@ func _run() -> void:
 	var master_sheet := _contact_sheet(master_thumbnails, MASTER_COLUMNS)
 	if master_sheet.is_empty() or master_sheet.save_png(master_path) != OK:
 		failures.append("env06_8 all-scenario unlabeled contact sheet could not be written.")
+	if rendered_icon_counts.size() < 20:
+		failures.append("env06_8 production contact sheets collapsed below 20 visible semantic icon families: %s" % JSON.stringify(rendered_icon_counts))
 	var manifest := {
-		"schema": "env06_8_all_scenario_contact_sheets_v1",
+		"schema": "env06_8_all_scenario_contact_sheets_v2",
 		"scenario_count": scenario_rows.size(),
 		"expected_scenario_count": 55,
 		"unlabeled": true,
+		"rendered_icon_counts": rendered_icon_counts,
 		"scenarios": scenario_rows,
 		"master_file": master_path.get_file(),
 		"master_sha256": FileAccess.get_sha256(master_path) if FileAccess.file_exists(master_path) else "",
@@ -173,6 +192,23 @@ func _representative_snapshots(snapshots: Array) -> Array:
 		seen[key] = true
 		representatives.append(snapshot)
 	return representatives
+
+
+func _raster_has_visible_scene(image: Image) -> bool:
+	# A headless/null renderer can return a correctly sized Image containing no
+	# rendered scene. Require a useful spread of lit pixels rather than accepting
+	# dimensions alone as evidence.
+	var sampled := 0
+	var lit := 0
+	var colors: Dictionary = {}
+	for y in range(0, image.get_height(), 8):
+		for x in range(0, image.get_width(), 8):
+			var pixel := image.get_pixel(x, y)
+			sampled += 1
+			if pixel.a > 0.5 and maxf(pixel.r, maxf(pixel.g, pixel.b)) > 0.18:
+				lit += 1
+				colors[Color8(int(pixel.r * 255.0), int(pixel.g * 255.0), int(pixel.b * 255.0), 255).to_html(false)] = true
+	return sampled > 0 and lit >= 24 and colors.size() >= 4
 
 
 func _argument(name: String) -> String:

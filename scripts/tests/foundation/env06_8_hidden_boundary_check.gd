@@ -8,10 +8,11 @@ func _init() -> void:
 	var library := ContentLibraryScript.new()
 	library.load()
 	var failures: Array = []
-	ContractScript.check(library, failures)
+	ContractScript._check_production_hidden_state_boundary(library, failures)
 	if failures.is_empty():
-		print("ENV06_8_ENVIRONMENT_READABILITY PASS scenarios=55 objects=1108 actions=727 dialogues=55")
+		print("ENV06_8_HIDDEN_BOUNDARY PASS negative=arrival,complication,aftermath positive=heat_changed")
 		quit(0)
 		return
-	for failure in failures: printerr("ENV06_8_ENVIRONMENT_READABILITY_FAIL %s" % str(failure))
+	for failure in failures:
+		printerr("ENV06_8_HIDDEN_BOUNDARY_FAIL %s" % str(failure))
 	quit(1)

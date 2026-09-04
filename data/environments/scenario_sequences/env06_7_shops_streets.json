@@ -2335,6 +2335,16 @@
               "kind": "scenario_service",
               "service_id": "economy_stock"
             }
+          },
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_lotto_fever_jackpot",
+              "choice_id": "chase_the_rumor",
+              "resolution_id": "chase_the_rumor",
+              "resolved": true,
+              "ok": true
+            }
           }
         ],
         "local_state_schema": {
@@ -2518,6 +2528,17 @@
                         },
                         "label": "Refuse the task",
                         "non_color_state": "refuse_sequence"
+                      },
+                      {
+                        "id": "open_lotto_fever_jackpot",
+                        "label": "Talk: Jackpot Talk",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_lotto_fever_jackpot",
+                          "resolution_id": "chase_the_rumor"
+                        }
                       }
                     ],
                     "disabled_reason": "",
@@ -3016,7 +3037,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "d9e3c69d65aab387d0490de249232b3e57b52c757433685e86eed97b4b65e6d2"
+        "sequence_signature": "209cc808ffff019740c1871f6fab6a96ef2a28e09920884730b9d30badca0075"
       }
     },
     {
@@ -3490,6 +3511,16 @@
             "payload_equals": {
               "node_id": "corner_store"
             }
+          },
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_aftermath_fence_offer",
+              "choice_id": "move_the_goods",
+              "resolution_id": "move_the_goods",
+              "resolved": true,
+              "ok": true
+            }
           }
         ],
         "local_state_schema": {
@@ -3673,6 +3704,17 @@
                         },
                         "label": "Refuse the task",
                         "non_color_state": "refuse_sequence"
+                      },
+                      {
+                        "id": "open_aftermath_fence_offer",
+                        "label": "Talk: What Fell Off",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_aftermath_fence_offer",
+                          "resolution_id": "move_the_goods"
+                        }
                       }
                     ],
                     "disabled_reason": "",
@@ -4150,7 +4192,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "7c200a130ae6e4fe7b6075d1d3890ace9380746a6fa0caca0668bf9e531d85d9"
+        "sequence_signature": "27a83a95c55449e967285c0140e02b4de7a6f4111354dec02df65df9d2f7cafd"
       }
     },
     {
@@ -4625,6 +4667,16 @@
             "payload_equals": {
               "source": "corner_store_surveillance"
             }
+          },
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_dead_shift_rumor",
+              "choice_id": "stay_for_the_good_part",
+              "resolution_id": "stay_for_the_good_part",
+              "resolved": true,
+              "ok": true
+            }
           }
         ],
         "local_state_schema": {
@@ -4809,6 +4861,17 @@
                         },
                         "label": "Refuse the task",
                         "non_color_state": "refuse_sequence"
+                      },
+                      {
+                        "id": "open_dead_shift_rumor",
+                        "label": "Talk: Nothing but Time",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_dead_shift_rumor",
+                          "resolution_id": "stay_for_the_good_part"
+                        }
                       }
                     ],
                     "disabled_reason": "",
@@ -5278,7 +5341,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "2e516dea7656ffb128f0643b338b7c9d5479c4c95b3d8ffc0cc93b0224edd36f"
+        "sequence_signature": "de114e3e6005a6400f87d967e2df191d1cfb5a911f6e0ed695d45eabb387f258"
       }
     },
     {
@@ -5756,6 +5819,16 @@
               "kind": "scenario_service",
               "service_id": "economy_inventory"
             }
+          },
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_inventory_night_count",
+              "choice_id": "take_the_short_count",
+              "resolution_id": "take_the_short_count",
+              "resolved": true,
+              "ok": true
+            }
           }
         ],
         "local_state_schema": {
@@ -5940,6 +6013,17 @@
                         },
                         "label": "Refuse the task",
                         "non_color_state": "refuse_sequence"
+                      },
+                      {
+                        "id": "open_inventory_night_count",
+                        "label": "Talk: The Short Count",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_inventory_night_count",
+                          "resolution_id": "take_the_short_count"
+                        }
                       }
                     ],
                     "disabled_reason": "",
@@ -6439,7 +6523,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "02cada6009694ad3a0b8c4e37652a2fb7a0b35e722aaa19028864b20f5ceed7b"
+        "sequence_signature": "8e88ff379075be7f2a5404a6cb29176c46a4c0b440e3f1fe65b541f85b196d82"
       }
     },
     {
@@ -6916,6 +7000,16 @@
               "action_id": "street_craps_disperse",
               "game_id": "craps"
             }
+          },
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_street_craps_circle",
+              "choice_id": "join_the_circle",
+              "resolution_id": "join_the_circle",
+              "resolved": true,
+              "ok": true
+            }
           }
         ],
         "local_state_schema": {
@@ -7104,6 +7198,17 @@
                         },
                         "label": "Refuse the task",
                         "non_color_state": "refuse_sequence"
+                      },
+                      {
+                        "id": "open_street_craps_circle",
+                        "label": "Talk: The Chalk Ring",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_street_craps_circle",
+                          "resolution_id": "join_the_circle"
+                        }
                       }
                     ],
                     "disabled_reason": "",
@@ -7600,7 +7705,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "5a7b98e06cb7559a2d2b4e7491899060f638ca82d058bba0ce33b804c2cbdf5e"
+        "sequence_signature": "9cc79845bed9e36e653e6569ba415f4228c653a162902d4aac5304a0add42907"
       }
     },
     {
@@ -8021,10 +8126,14 @@
         },
         "declared_targets": {
           "actors": [],
-          "anchors": [],
+          "anchors": [
+            "base::anchor:bar"
+          ],
           "games": [],
           "interactions": [],
-          "routes": [],
+          "routes": [
+            "base::route:bar"
+          ],
           "scene_objects": [],
           "services": [],
           "zones": [
@@ -8071,6 +8180,16 @@
             },
             "payload_equals": {
               "node_id": "back_alley"
+            }
+          },
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_cruiser_parked_watch",
+              "choice_id": "watch_who_moves",
+              "resolution_id": "watch_who_moves",
+              "resolved": true,
+              "ok": true
             }
           }
         ],
@@ -8256,6 +8375,17 @@
                         },
                         "label": "Refuse the task",
                         "non_color_state": "refuse_sequence"
+                      },
+                      {
+                        "id": "open_cruiser_parked_watch",
+                        "label": "Talk: Wrong Target",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_cruiser_parked_watch",
+                          "resolution_id": "watch_who_moves"
+                        }
                       }
                     ],
                     "disabled_reason": "",
@@ -8430,9 +8560,10 @@
               "actor_ops": [
                 {
                   "family": "actor_ops",
-                  "op": "set_position",
+                  "op": "set_route",
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_cruiser_parked_work_actor",
+                  "route_id": "base::route:bar",
                   "stable_object_id": "patrol_officer",
                   "zone_id": "background"
                 },
@@ -8761,7 +8892,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "bb42a2b03155e7d0a0edc2deb9de342a9d7b42710c9240e18c9fd68d1c0578be"
+        "sequence_signature": "ec8dc0d65abf11dbcf374e400fe7d1fa55ee28ff5a026d5911e6383d4f7e0dae"
       }
     },
     {
@@ -9235,6 +9366,16 @@
               "kind": "scenario_service",
               "service_id": "economy_fence"
             }
+          },
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_fence_night_mags",
+              "choice_id": "take_the_real_price",
+              "resolution_id": "take_the_real_price",
+              "resolved": true,
+              "ok": true
+            }
           }
         ],
         "local_state_schema": {
@@ -9418,6 +9559,17 @@
                         },
                         "label": "Refuse the task",
                         "non_color_state": "refuse_sequence"
+                      },
+                      {
+                        "id": "open_fence_night_mags",
+                        "label": "Talk: Real Prices",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_fence_night_mags",
+                          "resolution_id": "take_the_real_price"
+                        }
                       }
                     ],
                     "disabled_reason": "",
@@ -9913,7 +10065,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "e5c6424ac0db1b8f5dcb820f92a00c3eae56fd3cafdd8096cd460ee0d3af37e2"
+        "sequence_signature": "cd15765c6ec6fea444a9c35f04244ae77d09cfb1f598c71a43842deee4c44ca7"
       }
     },
     {
@@ -10334,10 +10486,14 @@
         },
         "declared_targets": {
           "actors": [],
-          "anchors": [],
+          "anchors": [
+            "base::anchor:small_underground_casino"
+          ],
           "games": [],
           "interactions": [],
-          "routes": [],
+          "routes": [
+            "base::route:small_underground_casino"
+          ],
           "scene_objects": [],
           "services": [],
           "zones": [
@@ -10384,6 +10540,16 @@
             },
             "payload_equals": {
               "day_type": "weekday"
+            }
+          },
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_nothing_moving_wait",
+              "choice_id": "wait_out_the_light",
+              "resolution_id": "wait_out_the_light",
+              "resolved": true,
+              "ok": true
             }
           }
         ],
@@ -10568,6 +10734,17 @@
                         },
                         "label": "Refuse the task",
                         "non_color_state": "refuse_sequence"
+                      },
+                      {
+                        "id": "open_nothing_moving_wait",
+                        "label": "Talk: One Light",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_nothing_moving_wait",
+                          "resolution_id": "wait_out_the_light"
+                        }
                       }
                     ],
                     "disabled_reason": "",
@@ -10743,9 +10920,10 @@
               "actor_ops": [
                 {
                   "family": "actor_ops",
-                  "op": "set_position",
+                  "op": "set_route",
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_nothing_moving_work_actor",
+                  "route_id": "base::route:small_underground_casino",
                   "stable_object_id": "returning_regular",
                   "zone_id": "background"
                 },
@@ -11067,7 +11245,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "0960ed2b6b41f5051a3f715e76a4436915003dc0f5da2c2c2d3010665dbe6c14"
+        "sequence_signature": "155e73bfc98c25c043a3007dc7ccff3bc9285a487be1696d2c9889f46a8d3294"
       }
     },
     {
@@ -11543,6 +11721,16 @@
               "kind": "scenario_service",
               "service_id": "economy_provenance"
             }
+          },
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_estate_lot_provenance",
+              "choice_id": "ask_about_the_lot",
+              "resolution_id": "ask_about_the_lot",
+              "resolved": true,
+              "ok": true
+            }
           }
         ],
         "local_state_schema": {
@@ -11727,6 +11915,17 @@
                         },
                         "label": "Refuse the task",
                         "non_color_state": "refuse_sequence"
+                      },
+                      {
+                        "id": "open_estate_lot_provenance",
+                        "label": "Talk: One Owner",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_estate_lot_provenance",
+                          "resolution_id": "ask_about_the_lot"
+                        }
                       }
                     ],
                     "disabled_reason": "",
@@ -12241,7 +12440,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "3b685bcd03814fb78449d86a3a834432237fd9474a8ae3b7e8d23dd2ea1f927d"
+        "sequence_signature": "b4996d9af804a8b030ae8b51a0dece1679f8ac825f25ef375ab6d4155e9783ce"
       }
     },
     {
@@ -12715,6 +12914,16 @@
             "payload_equals": {
               "node_id": "pawn_shop"
             }
+          },
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_serial_check_hot_goods",
+              "choice_id": "move_the_hot_deck",
+              "resolution_id": "move_the_hot_deck",
+              "resolved": true,
+              "ok": true
+            }
           }
         ],
         "local_state_schema": {
@@ -12899,6 +13108,17 @@
                         },
                         "label": "Refuse the task",
                         "non_color_state": "refuse_sequence"
+                      },
+                      {
+                        "id": "open_serial_check_hot_goods",
+                        "label": "Talk: The Open Book",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_serial_check_hot_goods",
+                          "resolution_id": "move_the_hot_deck"
+                        }
                       }
                     ],
                     "disabled_reason": "",
@@ -13405,7 +13625,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "835ff2d08b2a41057c1616f92cdf1c161b84e68fb94d6b6b28442e20ee1f3dd3"
+        "sequence_signature": "c737a248ec32fdafd9569232b55db397c44cfafabb697738b8dbfa517a93ca71"
       }
     },
     {
@@ -13884,6 +14104,16 @@
               "kind": "scenario_service",
               "service_id": "service_appraisal"
             }
+          },
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_sals_mood_read",
+              "choice_id": "take_the_first_number",
+              "resolution_id": "take_the_first_number",
+              "resolved": true,
+              "ok": true
+            }
           }
         ],
         "local_state_schema": {
@@ -14067,6 +14297,17 @@
                         },
                         "label": "Refuse the task",
                         "non_color_state": "refuse_sequence"
+                      },
+                      {
+                        "id": "open_sals_mood_read",
+                        "label": "Talk: Sal Quotes Once",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_sals_mood_read",
+                          "resolution_id": "take_the_first_number"
+                        }
                       }
                     ],
                     "disabled_reason": "",
@@ -14557,7 +14798,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "df5aced0fb22cbc370bb9e99ed4f5d6efa189af8d381a1ff0328e5e402d2648e"
+        "sequence_signature": "5548641c30274d446bb9dd54df142eb9a45a824cd0c962a066463d91f3202041"
       }
     }
   ]

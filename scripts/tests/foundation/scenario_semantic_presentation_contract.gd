@@ -665,9 +665,10 @@ static func _check_finalized_accessibility(library: Variant, failures: Array) ->
 		run_state.current_environment = _finalization_environment(definition)
 		run_state.current_environment["semantic_anchors"]["bar_actor"]["position"] = _array(case.get("anchor", []))
 		run_state.scenario_prepare_semantic_finalization()
-		var rejected := run_state.scenario_finalize_base_semantics([_production_presentation()], library, _dict(case.get("context", {})))
-		if bool(rejected.get("ok", true)) or not _contains_text(_array(rejected.get("errors", [])), str(case.get("needle", ""))) or run_state.current_environment.has("scenario_semantic_ready"):
-			failures.append("Validated finalization did not reject the expanded small-screen %s hostile layout atomically: %s" % [str(case.get("id", "")), JSON.stringify(rejected.get("errors", []))])
+		var resolved := run_state.scenario_finalize_base_semantics([_production_presentation()], library, _dict(case.get("context", {})))
+		var audit := _dict(resolved.get("layout_audit", {}))
+		if not bool(resolved.get("ok", false)) or int(audit.get("collision_adjustment_count", 0)) < 1 or int(audit.get("normal_overlap_count", -1)) != 0 or int(audit.get("small_screen_overlap_count", -1)) != 0:
+			failures.append("Validated finalization did not deterministically reflow the expanded small-screen %s conflict: %s" % [str(case.get("id", "")), JSON.stringify(resolved.get("errors", []))])
 
 	_check_finalized_expanded_path_and_label(library, failures)
 	_check_explicit_alternate_exit(library, failures)
@@ -687,10 +688,10 @@ static func _check_finalized_expanded_path_and_label(library: Variant, failures:
 	path_run.current_environment["semantic_anchors"]["path_target"] = {"position": [450.0, 215.0]}
 	path_run.current_environment["semantic_anchors"]["path_blocker"] = {"position": [470.0, 300.0]}
 	path_run.scenario_prepare_semantic_finalization()
-	var path_rejected := path_run.scenario_finalize_base_semantics([_production_presentation()], library, _production_layout_context())
-	var path_errors := _array(path_rejected.get("errors", []))
-	if bool(path_rejected.get("ok", true)) or not _contains_text(path_errors, "Expanded small-screen scenario obstruction") or not _contains_text(path_errors, "not reachable"):
-		failures.append("Validated finalization did not evaluate expanded obstacle path and interaction reachability in parallel with normal geometry: %s" % JSON.stringify(path_errors))
+	var path_resolved := path_run.scenario_finalize_base_semantics([_production_presentation()], library, _production_layout_context())
+	var path_audit := _dict(path_resolved.get("layout_audit", {}))
+	if not bool(path_resolved.get("ok", false)) or int(path_audit.get("collision_adjustment_count", 0)) < 1 or int(path_audit.get("normal_overlap_count", -1)) != 0 or int(path_audit.get("small_screen_overlap_count", -1)) != 0:
+		failures.append("Validated finalization did not reflow the expanded obstacle while preserving reachable normal/small-screen paths: %s" % JSON.stringify(path_resolved.get("errors", [])))
 
 	var label_definition := ScenarioSequenceContractScript.finalization_fixture_definition()
 	var label_visual := _command_visual(label_definition)
@@ -706,9 +707,23 @@ static func _check_finalized_expanded_path_and_label(library: Variant, failures:
 	label_run.current_environment["semantic_anchors"]["small_label"] = {"position": [380.0, 100.0]}
 	label_run.current_environment["semantic_anchors"]["large_label"] = {"position": [300.0, 100.0]}
 	label_run.scenario_prepare_semantic_finalization()
-	var label_rejected := label_run.scenario_finalize_base_semantics([_production_presentation()], library, _production_layout_context())
-	if bool(label_rejected.get("ok", true)) or not _contains_text(_array(label_rejected.get("errors", [])), "text-safe in expanded small-screen"):
-		failures.append("Validated finalization did not reject expanded-only label overlap with the production label geometry: %s" % JSON.stringify(label_rejected.get("errors", [])))
+	var label_resolved := label_run.scenario_finalize_base_semantics([_production_presentation()], library, _production_layout_context())
+	var label_audit := _dict(label_resolved.get("layout_audit", {}))
+	if not bool(label_resolved.get("ok", false)) or int(label_audit.get("collision_adjustment_count", 0)) < 1 or int(label_audit.get("normal_overlap_count", -1)) != 0 or int(label_audit.get("small_screen_overlap_count", -1)) != 0:
+		failures.append("Validated finalization did not reflow expanded-only label overlap into text-safe sealed geometry: %s" % JSON.stringify(label_resolved.get("errors", [])))
+
+	# Reflow is bounded, not permissive. A production overlay that occupies every
+	# valid candidate must still reject atomically rather than minting geometry
+	# outside the board or dropping an interaction.
+	var saturated_definition := ScenarioSequenceContractScript.finalization_fixture_definition()
+	var saturated_run := RunStateScript.new()
+	saturated_run.current_environment = _finalization_environment(saturated_definition)
+	saturated_run.scenario_prepare_semantic_finalization()
+	var saturated_context := _production_layout_context()
+	saturated_context["reserved_overlay_board_rect"] = {"x": 0.0, "y": 0.0, "w": BOARD_SIZE.x, "h": BOARD_SIZE.y}
+	var saturated := saturated_run.scenario_finalize_base_semantics([_production_presentation()], library, saturated_context)
+	if bool(saturated.get("ok", true)) or saturated_run.current_environment.has("scenario_semantic_ready"):
+		failures.append("A saturated production board did not fail closed after exhausting bounded placement candidates.")
 
 
 static func _check_explicit_alternate_exit(library: Variant, failures: Array) -> void:

@@ -1,6 +1,7 @@
 extends RefCounted
 
 const EnvironmentBaseSemanticRecordsScript := preload("res://scripts/core/environment_base_semantic_records.gd")
+const ScenarioLayoutResolverScript := preload("res://scripts/core/scenario_layout_resolver.gd")
 const ScenarioSequenceSchemaScript := preload("res://scripts/core/scenario_sequence_schema.gd")
 const ScenarioSemanticViewModelScript := preload("res://scripts/ui/scenario_semantic_view_model.gd")
 
@@ -458,7 +459,11 @@ static func _merge_projected_interaction(base: Dictionary, semantic: Dictionary,
 	result["object_type"] = "scenario_sequence" if scenario_owned else str(result.get("object_type", "info"))
 	result["visual_type"] = str(result.get("visual_type", "fixture"))
 	result["source_id"] = str(semantic.get("source_id", result.get("source_id", semantic.get("stable_object_id", ""))))
-	result["icon_key"] = _scenario_icon_key(semantic, str(semantic.get("semantic_kind", "")) == "actor")
+	# When an actionable projection overlays a scene object or actor, retain the
+	# concrete visual's semantic icon. Interaction payloads intentionally omit
+	# room-role fields and must not collapse that icon back to a generic fixture.
+	if str(result.get("icon_key", "")).strip_edges().is_empty():
+		result["icon_key"] = ScenarioLayoutResolverScript.scenario_icon_key(semantic)
 	result["owner_namespace"] = str(semantic.get("owner_namespace", ""))
 	result["stable_object_id"] = str(semantic.get("stable_object_id", ""))
 	if not world_owner_token.is_empty(): result["world_sequence_owner_token"] = world_owner_token
@@ -526,7 +531,7 @@ static func _merge_projected_scene_object(base: Dictionary, semantic: Dictionary
 	result["role"] = result["semantic_role"]
 	result["state"] = result["semantic_state"]
 	result["appearance"] = result["semantic_appearance"]
-	result["icon_key"] = _scenario_icon_key(semantic, false)
+	result["icon_key"] = ScenarioLayoutResolverScript.scenario_icon_key(semantic)
 	result["non_color_state"] = str(semantic.get("non_color_state", result.get("non_color_state", result.get("state_label", "Present"))))
 	result["visual_state"] = {
 		"role": result["semantic_role"],
@@ -554,37 +559,12 @@ static func _merge_projected_actor(base: Dictionary, semantic: Dictionary, autho
 	result["actor_behavior"] = str(semantic.get("behavior", "idle"))
 	result["pose"] = result["actor_pose"]
 	result["behavior"] = result["actor_behavior"]
-	result["icon_key"] = _scenario_icon_key(semantic, true)
+	result["icon_key"] = ScenarioLayoutResolverScript.scenario_icon_key(semantic)
 	result["actor_route_id"] = str(semantic.get("route_id", ""))
 	result["actor_route_points"] = _array(authority.get("actor_route_points", []))
 	result["actor_route_stage"] = _dict(authority.get("actor_route_stage", {}))
 	result["character_actor"] = ScenarioSemanticViewModelScript.actor_character_model(semantic)
 	return result
-
-
-static func _scenario_icon_key(semantic: Dictionary, actor: bool) -> String:
-	if actor:
-		var behavior := str(semantic.get("behavior", "idle"))
-		if behavior in ["guard", "watch", "patrol", "fight"]: return "scenario_actor_watch"
-		if behavior in ["flee", "depart"]: return "scenario_actor_moving"
-		return "scenario_actor_work"
-	var role := str(semantic.get("role", "prop"))
-	var words := ("%s %s %s %s" % [role, str(semantic.get("stable_object_id", "")), str(semantic.get("state", "")), str(semantic.get("appearance", ""))]).to_lower()
-	if role in ["exit", "route"] or _contains_any(words, ["exit", "door", "lane", "route", "gangway"]): return "scenario_route"
-	if role in ["barrier", "hazard", "obstacle"] or _contains_any(words, ["barrier", "hazard", "lockout", "shutter", "police_hold"]): return "scenario_barrier"
-	if role == "evidence" or _contains_any(words, ["evidence", "trace", "manifest", "serial", "record", "provenance", "marks", "clue"]): return "scenario_evidence"
-	if role in ["workstation", "primary_task"] or _contains_any(words, ["station", "counter", "panel", "circuit", "board", "cage"]): return "scenario_workstation"
-	if _contains_any(words, ["cart", "crate", "stock", "goods", "shelf", "pallet", "lot"]): return "scenario_stock"
-	if _contains_any(words, ["cruiser", "patrol", "vehicle"]): return "scenario_vehicle"
-	if _contains_any(words, ["ring", "dice", "lotto", "number"]): return "scenario_game"
-	if role in ["aftermath", "display"]: return "scenario_aftermath"
-	return "scenario_fixture"
-
-
-static func _contains_any(value: String, needles: Array) -> bool:
-	for needle_value in needles:
-		if value.contains(str(needle_value)): return true
-	return false
 
 
 static func _scenario_description(semantic: Dictionary, base: Dictionary, fallback: String) -> String:

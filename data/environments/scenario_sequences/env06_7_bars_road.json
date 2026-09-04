@@ -361,7 +361,17 @@
         },
         "fact_subscriptions": [
           "crew_changed",
-          "travel_departed"
+          "travel_departed",
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_wake_route_story",
+              "choice_id": "buy_the_next_round",
+              "resolution_id": "buy_the_next_round",
+              "resolved": true,
+              "ok": true
+            }
+          }
         ],
         "local_state_schema": {
           "pressure_seen": {
@@ -519,7 +529,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "record_stamp",
-                          "message": "You refuse the task. Memorial tables join across the center aisle while a remembrance tray waits by the first patron."
+                          "message": "You leave the memorial arrangements to the regulars. You leave the room unchanged: memorial tables join across the center aisle while a remembrance tray waits by the first patron."
                         }
                       }
                     ],
@@ -572,7 +582,18 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "record_stamp",
-                          "message": "You let the pressure win. Memorial tables join across the center aisle while a remembrance tray waits by the first patron."
+                          "message": "The wake carries on without your hand in it. Memorial tables join across the center aisle while a remembrance tray waits by the first patron."
+                        }
+                      },
+                      {
+                        "id": "open_wake_route_story",
+                        "label": "Talk: The Empty Stool",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_wake_route_story",
+                          "resolution_id": "buy_the_next_round"
                         }
                       }
                     ],
@@ -719,7 +740,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "bar_wake_arrival_transition_stage",
-                  "reduced_motion_message": "In reduced motion, bar wake settles directly into the same visible result.",
+                  "reduced_motion_message": "The joined tables, remembrance tray, and mourners appear in their settled places without animated movement.",
                   "stable_object_id": "bar_wake_arrival_transition",
                   "stage_id": "bar_wake_arrival_stage"
                 }
@@ -873,7 +894,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "record_stamp",
-                          "message": "You let the pressure win. The remembrance tray changes hands in plain view, clearing the way to carry to regular."
+                          "message": "The wake carries on without your hand in it. The remembrance tray changes hands in plain view, clearing the way to carry to regular."
                         }
                       },
                       {
@@ -1123,7 +1144,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "shop_bell",
-                          "message": "You let the pressure win. The remembrance tray changes hands in plain view, clearing the way to offer before toast."
+                          "message": "The wake carries on without your hand in it. The remembrance tray changes hands in plain view, clearing the way to offer before toast."
                         }
                       },
                       {
@@ -1224,7 +1245,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "bar_wake_work_2_transition_stage",
-                  "reduced_motion_message": "In reduced motion, bar wake settles directly into the same visible result.",
+                  "reduced_motion_message": "The joined tables, remembrance tray, and mourners appear in their settled places without animated movement.",
                   "stable_object_id": "bar_wake_work_2_transition",
                   "stage_id": "bar_wake_work_2_stage"
                 }
@@ -1370,7 +1391,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "9c2ba20241bffcc090e953acb2693b59f22e5caa7f3bb77b15f35293cdb32277"
+        "sequence_signature": "9f4769eca5b0cd1e713b263e941b32d8bb4afd2a0522c793429326507703b965"
       }
     },
     {
@@ -1787,7 +1808,17 @@
         },
         "fact_subscriptions": [
           "heat_changed",
-          "travel_departed"
+          "travel_departed",
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_fight_night_swing_bet",
+              "choice_id": "take_the_other_corner",
+              "resolution_id": "take_the_other_corner",
+              "resolved": true,
+              "ok": true
+            }
+          }
         ],
         "local_state_schema": {
           "pressure_seen": {
@@ -1965,7 +1996,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "record_stamp",
-                          "message": "You refuse the task. Two argument lines split the room and a toppled chair narrows the marked door lane."
+                          "message": "You keep out of the fight and give the marked door a wide berth. You leave the room unchanged: two argument lines split the room and a toppled chair narrows the marked door lane."
                         }
                       }
                     ],
@@ -2020,7 +2051,18 @@
                           "owner_namespace": "scenario",
                           "stable_object_id": "bar_fight_night_task_0",
                           "state": "changed_by_fail_bar_fight_night",
-                          "message": "You let the pressure win. Two argument lines split the room and a toppled chair narrows the marked door lane."
+                          "message": "The argument gets another breath and the room tightens around it. Two argument lines split the room and a toppled chair narrows the marked door lane."
+                        }
+                      },
+                      {
+                        "id": "open_fight_night_swing_bet",
+                        "label": "Talk: One Big Swing",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_fight_night_swing_bet",
+                          "resolution_id": "take_the_other_corner"
                         }
                       }
                     ],
@@ -2195,7 +2237,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "bar_fight_night_arrival_transition_stage",
-                  "reduced_motion_message": "In reduced motion, bar fight night settles directly into the same visible result.",
+                  "reduced_motion_message": "The two argument lines, fallen chair, and escape lane snap directly to their settled positions.",
                   "stable_object_id": "bar_fight_night_arrival_transition",
                   "stage_id": "bar_fight_night_arrival_stage"
                 }
@@ -2309,7 +2351,7 @@
                           "owner_namespace": "scenario",
                           "stable_object_id": "bar_fight_night_task_1",
                           "state": "changed_by_fail_bar_fight_night",
-                          "message": "You let the pressure win. Chairs scrape and the two argument lines reset, leaving an opening to warn brawlers."
+                          "message": "The argument gets another breath and the room tightens around it. Chairs scrape and the two argument lines reset, leaving an opening to warn brawlers."
                         }
                       },
                       {
@@ -2552,7 +2594,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "record_stamp",
-                          "message": "You let the pressure win. Chairs scrape and the two argument lines reset, leaving an opening to separate sides."
+                          "message": "The argument gets another breath and the room tightens around it. Chairs scrape and the two argument lines reset, leaving an opening to separate sides."
                         }
                       },
                       {
@@ -2688,7 +2730,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "bar_fight_night_work_2_transition_stage",
-                  "reduced_motion_message": "In reduced motion, bar fight night settles directly into the same visible result.",
+                  "reduced_motion_message": "The two argument lines, fallen chair, and escape lane snap directly to their settled positions.",
                   "stable_object_id": "bar_fight_night_work_2_transition",
                   "stage_id": "bar_fight_night_work_2_stage"
                 }
@@ -2800,7 +2842,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "record_stamp",
-                          "message": "You let the pressure win. Chairs scrape and the two argument lines reset, leaving an opening to clear broken glass."
+                          "message": "The argument gets another breath and the room tightens around it. Chairs scrape and the two argument lines reset, leaving an opening to clear broken glass."
                         }
                       },
                       {
@@ -3010,7 +3052,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "record_stamp",
-                          "message": "You let the pressure win. Chairs scrape and the two argument lines reset, leaving an opening to escort hothead."
+                          "message": "The argument gets another breath and the room tightens around it. Chairs scrape and the two argument lines reset, leaving an opening to escort hothead."
                         }
                       },
                       {
@@ -3219,7 +3261,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "record_stamp",
-                          "message": "You let the pressure win. Chairs scrape and the two argument lines reset, leaving an opening to reset chairs."
+                          "message": "The argument gets another breath and the room tightens around it. Chairs scrape and the two argument lines reset, leaving an opening to reset chairs."
                         }
                       },
                       {
@@ -3320,7 +3362,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "bar_fight_night_work_5_transition_stage",
-                  "reduced_motion_message": "In reduced motion, bar fight night settles directly into the same visible result.",
+                  "reduced_motion_message": "The two argument lines, fallen chair, and escape lane snap directly to their settled positions.",
                   "stable_object_id": "bar_fight_night_work_5_transition",
                   "stage_id": "bar_fight_night_work_5_stage"
                 }
@@ -3466,7 +3508,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "878793d4e02866da69080bcdeb38d447510b74729b81d1db60c480f2bd6b9c70"
+        "sequence_signature": "774e5720ea1432dff9bdfac4225103d381556e6a24e01d852fc8e79695dcb79e"
       }
     },
     {
@@ -3833,7 +3875,17 @@
         },
         "fact_subscriptions": [
           "service_result",
-          "travel_departed"
+          "travel_departed",
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_payday_rush_side_pot",
+              "choice_id": "work_the_side_pot",
+              "resolution_id": "work_the_side_pot",
+              "resolved": true,
+              "ok": true
+            }
+          }
         ],
         "local_state_schema": {
           "pressure_seen": {
@@ -3990,7 +4042,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "record_stamp",
-                          "message": "You refuse the task. Order rails fill the counter while settlement envelopes and carrying trays divide service lanes."
+                          "message": "You leave the trays and pay envelopes to the overwhelmed bar staff. You leave the room unchanged: order rails fill the counter while settlement envelopes and carrying trays divide service lanes."
                         }
                       }
                     ],
@@ -4045,7 +4097,18 @@
                           "owner_namespace": "scenario",
                           "stable_object_id": "bar_payday_rush_task_0",
                           "state": "changed_by_fail_bar_payday_rush",
-                          "message": "You let the pressure win. Order rails fill the counter while settlement envelopes and carrying trays divide service lanes."
+                          "message": "The payday crowd surges ahead before you can steady the rail. Order rails fill the counter while settlement envelopes and carrying trays divide service lanes."
+                        }
+                      },
+                      {
+                        "id": "open_payday_rush_side_pot",
+                        "label": "Talk: Pay Envelope",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_payday_rush_side_pot",
+                          "resolution_id": "work_the_side_pot"
                         }
                       }
                     ],
@@ -4217,7 +4280,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "bar_payday_rush_arrival_transition_stage",
-                  "reduced_motion_message": "In reduced motion, bar payday rush settles directly into the same visible result.",
+                  "reduced_motion_message": "Order rails, carrying trays, and settlement envelopes appear already arranged along the service lanes.",
                   "stable_object_id": "bar_payday_rush_arrival_transition",
                   "stage_id": "bar_payday_rush_arrival_stage"
                 }
@@ -4364,7 +4427,7 @@
                           "owner_namespace": "scenario",
                           "stable_object_id": "bar_payday_rush_task_1",
                           "state": "changed_by_fail_bar_payday_rush",
-                          "message": "You let the pressure win. A tray advances along the crowded rail, making room to deliver table round."
+                          "message": "The payday crowd surges ahead before you can steady the rail. A tray advances along the crowded rail, making room to deliver table round."
                         }
                       },
                       {
@@ -4609,7 +4672,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "record_stamp",
-                          "message": "You let the pressure win. A tray advances along the crowded rail, making room to settle open tab."
+                          "message": "The payday crowd surges ahead before you can steady the rail. A tray advances along the crowded rail, making room to settle open tab."
                         }
                       },
                       {
@@ -4710,7 +4773,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "bar_payday_rush_work_2_transition_stage",
-                  "reduced_motion_message": "In reduced motion, bar payday rush settles directly into the same visible result.",
+                  "reduced_motion_message": "Order rails, carrying trays, and settlement envelopes appear already arranged along the service lanes.",
                   "stable_object_id": "bar_payday_rush_work_2_transition",
                   "stage_id": "bar_payday_rush_work_2_stage"
                 }
@@ -4856,7 +4919,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "1ec5a5be9516e9cab4ce3f652c138d4b9867d9ad373b4449cbcbe4c0b6a3c45d"
+        "sequence_signature": "fc2878518baad4c46c87248d0ac82fbe37235fda903d89398be982481f128b30"
       }
     },
     {
@@ -5255,7 +5318,17 @@
         },
         "fact_subscriptions": [
           "sweep_changed",
-          "travel_departed"
+          "travel_departed",
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_lock_in_private_game",
+              "choice_id": "take_the_private_seat",
+              "resolution_id": "take_the_private_seat",
+              "resolved": true,
+              "ok": true
+            }
+          }
         ],
         "local_state_schema": {
           "pressure_seen": {
@@ -5425,7 +5498,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "record_stamp",
-                          "message": "You refuse the task. Shutters seal the legal door while a cellar hatch and private task bench become visible."
+                          "message": "You decline the private work and stay clear of the cellar hatch. You leave the room unchanged: shutters seal the legal door while a cellar hatch and private task bench become visible."
                         }
                       }
                     ],
@@ -5480,7 +5553,18 @@
                           "owner_namespace": "scenario",
                           "stable_object_id": "bar_lock_in_task_0",
                           "state": "changed_by_fail_bar_lock_in",
-                          "message": "You let the pressure win. Shutters seal the legal door while a cellar hatch and private task bench become visible."
+                          "message": "The locked-in crowd makes its own choice while you hesitate. Shutters seal the legal door while a cellar hatch and private task bench become visible."
+                        }
+                      },
+                      {
+                        "id": "open_lock_in_private_game",
+                        "label": "Talk: After the Bolt",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_lock_in_private_game",
+                          "resolution_id": "take_the_private_seat"
                         }
                       }
                     ],
@@ -5653,7 +5737,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "bar_lock_in_arrival_transition_stage",
-                  "reduced_motion_message": "In reduced motion, bar lock in settles directly into the same visible result.",
+                  "reduced_motion_message": "Shutters, hatch, and task bench appear in their final locked-room arrangement without sliding into place.",
                   "stable_object_id": "bar_lock_in_arrival_transition",
                   "stage_id": "bar_lock_in_arrival_stage"
                 }
@@ -5767,7 +5851,7 @@
                           "owner_namespace": "scenario",
                           "stable_object_id": "bar_lock_in_task_1",
                           "state": "changed_by_fail_bar_lock_in",
-                          "message": "You let the pressure win. A shutter, hatch, or host token moves where everyone can see it, opening the chance to inspect cellar hatch."
+                          "message": "The locked-in crowd makes its own choice while you hesitate. A shutter, hatch, or host token moves where everyone can see it, opening the chance to inspect cellar hatch."
                         }
                       },
                       {
@@ -6010,7 +6094,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "record_stamp",
-                          "message": "You let the pressure win. A shutter, hatch, or host token moves where everyone can see it, opening the chance to earn host token."
+                          "message": "The locked-in crowd makes its own choice while you hesitate. A shutter, hatch, or host token moves where everyone can see it, opening the chance to earn host token."
                         }
                       },
                       {
@@ -6146,7 +6230,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "bar_lock_in_work_2_transition_stage",
-                  "reduced_motion_message": "In reduced motion, bar lock in settles directly into the same visible result.",
+                  "reduced_motion_message": "Shutters, hatch, and task bench appear in their final locked-room arrangement without sliding into place.",
                   "stable_object_id": "bar_lock_in_work_2_transition",
                   "stage_id": "bar_lock_in_work_2_stage"
                 }
@@ -6258,7 +6342,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "record_stamp",
-                          "message": "You let the pressure win. A shutter, hatch, or host token moves where everyone can see it, opening the chance to complete private task."
+                          "message": "The locked-in crowd makes its own choice while you hesitate. A shutter, hatch, or host token moves where everyone can see it, opening the chance to complete private task."
                         }
                       },
                       {
@@ -6468,7 +6552,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "record_stamp",
-                          "message": "You let the pressure win. A shutter, hatch, or host token moves where everyone can see it, opening the chance to signal reopening."
+                          "message": "The locked-in crowd makes its own choice while you hesitate. A shutter, hatch, or host token moves where everyone can see it, opening the chance to signal reopening."
                         }
                       },
                       {
@@ -6711,7 +6795,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "a1c3e3bb6c511d91ae38b94098c21f733b06f08102f124e66b53931b30966173"
+        "sequence_signature": "7f8ace1fff0f4310347237785d8d15e3392fd87b7be9f2ad3a96c84f511086dc"
       }
     },
     {
@@ -7130,7 +7214,17 @@
         },
         "fact_subscriptions": [
           "game_result",
-          "travel_departed"
+          "travel_departed",
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_darts_league_decider",
+              "choice_id": "back_the_home_side",
+              "resolution_id": "back_the_home_side",
+              "resolved": true,
+              "ok": true
+            }
+          }
         ],
         "local_state_schema": {
           "pressure_seen": {
@@ -7204,7 +7298,7 @@
                 {
                   "actor": {
                     "actor_id": "actor_league_captain",
-                    "anchor_id": "darts_captain",
+                    "anchor_id": "env06_8_darts_captain",
                     "behavior": "watch",
                     "label": "League captain",
                     "pose": "arrival",
@@ -7214,8 +7308,7 @@
                       "oche_move": "The route now turns around a visible move at League captain.",
                       "watch": "The active route passes under watch at League captain.",
                       "finished": "The end of this step is visible at League captain."
-                    },
-                    "anchor_id": "env06_8_darts_captain"
+                    }
                   },
                   "family": "actor_ops",
                   "op": "spawn",
@@ -7310,7 +7403,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "record_stamp",
-                          "message": "You refuse the task. Two throw lanes and a bracket easel replace ordinary seating around the oche."
+                          "message": "You step away from the oche and leave the deciding leg to the captains. You leave the room unchanged: two throw lanes and a bracket easel replace ordinary seating around the oche."
                         }
                       }
                     ],
@@ -7365,7 +7458,18 @@
                           "owner_namespace": "scenario",
                           "stable_object_id": "bar_darts_league_night_task_0",
                           "state": "changed_by_fail_bar_darts_league_night",
-                          "message": "You let the pressure win. Two throw lanes and a bracket easel replace ordinary seating around the oche."
+                          "message": "The league advances the bracket without waiting for your call. Two throw lanes and a bracket easel replace ordinary seating around the oche."
+                        }
+                      },
+                      {
+                        "id": "open_darts_league_decider",
+                        "label": "Talk: The Deciding Leg",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_darts_league_decider",
+                          "resolution_id": "back_the_home_side"
                         }
                       }
                     ],
@@ -7541,7 +7645,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "bar_darts_league_night_arrival_transition_stage",
-                  "reduced_motion_message": "In reduced motion, bar darts league night settles directly into the same visible result.",
+                  "reduced_motion_message": "Throw lanes, bracket easel, and players appear at their current stations without animated travel.",
                   "stable_object_id": "bar_darts_league_night_arrival_transition",
                   "stage_id": "bar_darts_league_night_arrival_stage"
                 }
@@ -7655,7 +7759,7 @@
                           "owner_namespace": "scenario",
                           "stable_object_id": "bar_darts_league_night_task_1",
                           "state": "changed_by_fail_bar_darts_league_night",
-                          "message": "You let the pressure win. The bracket and throw lane visibly advance, inviting you to score opening round."
+                          "message": "The league advances the bracket without waiting for your call. The bracket and throw lane visibly advance, inviting you to score opening round."
                         }
                       },
                       {
@@ -7865,7 +7969,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "record_stamp",
-                          "message": "You let the pressure win. The bracket and throw lane visibly advance, inviting you to rotate second lane."
+                          "message": "The league advances the bracket without waiting for your call. The bracket and throw lane visibly advance, inviting you to rotate second lane."
                         }
                       },
                       {
@@ -7966,7 +8070,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "bar_darts_league_night_work_2_transition_stage",
-                  "reduced_motion_message": "In reduced motion, bar darts league night settles directly into the same visible result.",
+                  "reduced_motion_message": "Throw lanes, bracket easel, and players appear at their current stations without animated travel.",
                   "stable_object_id": "bar_darts_league_night_work_2_transition",
                   "stage_id": "bar_darts_league_night_work_2_stage"
                 }
@@ -8111,7 +8215,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "record_stamp",
-                          "message": "You let the pressure win. The bracket and throw lane visibly advance, inviting you to score second round."
+                          "message": "The league advances the bracket without waiting for your call. The bracket and throw lane visibly advance, inviting you to score second round."
                         }
                       },
                       {
@@ -8356,7 +8460,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "record_stamp",
-                          "message": "You let the pressure win. The bracket and throw lane visibly advance, inviting you to inspect disputed dart."
+                          "message": "The league advances the bracket without waiting for your call. The bracket and throw lane visibly advance, inviting you to inspect disputed dart."
                         }
                       },
                       {
@@ -8565,7 +8669,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "record_stamp",
-                          "message": "You let the pressure win. The bracket and throw lane visibly advance, inviting you to post final bracket."
+                          "message": "The league advances the bracket without waiting for your call. The bracket and throw lane visibly advance, inviting you to post final bracket."
                         }
                       },
                       {
@@ -8666,7 +8770,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "bar_darts_league_night_work_5_transition_stage",
-                  "reduced_motion_message": "In reduced motion, bar darts league night settles directly into the same visible result.",
+                  "reduced_motion_message": "Throw lanes, bracket easel, and players appear at their current stations without animated travel.",
                   "stable_object_id": "bar_darts_league_night_work_5_transition",
                   "stage_id": "bar_darts_league_night_work_5_stage"
                 }
@@ -8812,7 +8916,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "fb87c3016bd799bc84a2350f3718faaa80d84a457a978f50e839ac305222595e"
+        "sequence_signature": "8f85a0b0f7f40b6522807a331915311260c79272dc8f8d01082da4ac86f5e666"
       }
     },
     {
@@ -9212,7 +9316,17 @@
         },
         "fact_subscriptions": [
           "town_transition",
-          "travel_departed"
+          "travel_departed",
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_live_band_request",
+              "choice_id": "fold_an_eight",
+              "resolution_id": "fold_an_eight",
+              "resolved": true,
+              "ok": true
+            }
+          }
         ],
         "local_state_schema": {
           "pressure_seen": {
@@ -9383,7 +9497,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "record_stamp",
-                          "message": "You refuse the task. Speaker stacks, a cable crossing, and an unfinished stage consume the usual service route."
+                          "message": "You leave the stage crew to solve its own crossing. You leave the room unchanged: speaker stacks, a cable crossing, and an unfinished stage consume the usual service route."
                         }
                       }
                     ],
@@ -9438,7 +9552,18 @@
                           "owner_namespace": "scenario",
                           "stable_object_id": "bar_live_band_task_0",
                           "state": "changed_by_fail_bar_live_band",
-                          "message": "You let the pressure win. Speaker stacks, a cable crossing, and an unfinished stage consume the usual service route."
+                          "message": "Soundcheck rolls on and the cable route changes without you. Speaker stacks, a cable crossing, and an unfinished stage consume the usual service route."
+                        }
+                      },
+                      {
+                        "id": "open_live_band_request",
+                        "label": "Talk: One Request",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_live_band_request",
+                          "resolution_id": "fold_an_eight"
                         }
                       }
                     ],
@@ -9611,7 +9736,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "bar_live_band_arrival_transition_stage",
-                  "reduced_motion_message": "In reduced motion, bar live band settles directly into the same visible result.",
+                  "reduced_motion_message": "Speaker stacks, cables, and stage crew appear at their settled soundcheck marks without motion.",
                   "stable_object_id": "bar_live_band_arrival_transition",
                   "stage_id": "bar_live_band_arrival_stage"
                 }
@@ -9725,7 +9850,7 @@
                           "owner_namespace": "scenario",
                           "stable_object_id": "bar_live_band_task_1",
                           "state": "changed_by_fail_bar_live_band",
-                          "message": "You let the pressure win. Cables and stage gear shift out of the service route, making it possible to patch soundcheck."
+                          "message": "Soundcheck rolls on and the cable route changes without you. Cables and stage gear shift out of the service route, making it possible to patch soundcheck."
                         }
                       },
                       {
@@ -9968,7 +10093,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "record_stamp",
-                          "message": "You let the pressure win. Cables and stage gear shift out of the service route, making it possible to balance speaker stack."
+                          "message": "Soundcheck rolls on and the cable route changes without you. Cables and stage gear shift out of the service route, making it possible to balance speaker stack."
                         }
                       },
                       {
@@ -10104,7 +10229,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "bar_live_band_work_2_transition_stage",
-                  "reduced_motion_message": "In reduced motion, bar live band settles directly into the same visible result.",
+                  "reduced_motion_message": "Speaker stacks, cables, and stage crew appear at their settled soundcheck marks without motion.",
                   "stable_object_id": "bar_live_band_work_2_transition",
                   "stage_id": "bar_live_band_work_2_stage"
                 }
@@ -10216,7 +10341,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "record_stamp",
-                          "message": "You let the pressure win. Cables and stage gear shift out of the service route, making it possible to mark service crossing."
+                          "message": "Soundcheck rolls on and the cable route changes without you. Cables and stage gear shift out of the service route, making it possible to mark service crossing."
                         }
                       },
                       {
@@ -10426,7 +10551,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "record_stamp",
-                          "message": "You let the pressure win. Cables and stage gear shift out of the service route, making it possible to reroute crowd."
+                          "message": "Soundcheck rolls on and the cable route changes without you. Cables and stage gear shift out of the service route, making it possible to reroute crowd."
                         }
                       },
                       {
@@ -10669,7 +10794,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "e185598c50e6b290b2941cdfd80f58b5d84989ed6614ce71b933cdbdcc646272"
+        "sequence_signature": "a896dc16d64b9bcd8848bfa05cdb8f27563790f554333343106831f1dae8897a"
       }
     },
     {
@@ -11021,7 +11146,17 @@
         },
         "fact_subscriptions": [
           "world_boundary",
-          "travel_departed"
+          "travel_departed",
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_dead_tuesday_regular",
+              "choice_id": "take_the_small_tip",
+              "resolution_id": "take_the_small_tip",
+              "resolved": true,
+              "ok": true
+            }
+          }
         ],
         "local_state_schema": {
           "pressure_seen": {
@@ -11206,7 +11341,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "record_stamp",
-                          "message": "You refuse the task. Three isolated task zones glow around the bartender, lone patron, and closed back booth."
+                          "message": "You leave the bartender, patron, and closed booth to their separate silences. You leave the room unchanged: three isolated task zones glow around the bartender, lone patron, and closed back booth."
                         }
                       }
                     ],
@@ -11261,7 +11396,7 @@
                           "owner_namespace": "scenario",
                           "stable_object_id": "bar_dead_tuesday_task_0",
                           "state": "changed_by_fail_bar_dead_tuesday",
-                          "message": "You let the pressure win. Three isolated task zones glow around the bartender, lone patron, and closed back booth."
+                          "message": "The quiet room chooses its own company before you do. Three isolated task zones glow around the bartender, lone patron, and closed back booth."
                         }
                       },
                       {
@@ -11297,6 +11432,17 @@
                         "inputs": {
                           "cue_id": "shop_bell",
                           "message": "You take Closed Booth Task. Three isolated task zones glow around the bartender, lone patron, and closed back booth."
+                        }
+                      },
+                      {
+                        "id": "open_dead_tuesday_regular",
+                        "label": "Talk: Last Regular",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_dead_tuesday_regular",
+                          "resolution_id": "take_the_small_tip"
                         }
                       }
                     ],
@@ -11472,7 +11618,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "bar_dead_tuesday_arrival_transition_stage",
-                  "reduced_motion_message": "In reduced motion, bar dead tuesday settles directly into the same visible result.",
+                  "reduced_motion_message": "The three pools of company appear at their current stations without a transition animation.",
                   "stable_object_id": "bar_dead_tuesday_arrival_transition",
                   "stage_id": "bar_dead_tuesday_arrival_stage"
                 }
@@ -11584,7 +11730,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "record_stamp",
-                          "message": "You let the pressure win. Someone in the quiet room finally responds, leaving space to close other zones."
+                          "message": "The quiet room chooses its own company before you do. Someone in the quiet room finally responds, leaving space to close other zones."
                         }
                       },
                       {
@@ -11828,7 +11974,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "e1533bb8db68f714b9f451e5194b5dc25db1b89194c262570a01772912d2da9d"
+        "sequence_signature": "315ba84c534312d46f3d6d2935376fcc7f0e901c731260d6341be241b19ea740"
       }
     },
     {
@@ -12245,7 +12391,17 @@
         },
         "fact_subscriptions": [
           "travel_arrived",
-          "travel_departed"
+          "travel_departed",
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_guest_legend_tip",
+              "choice_id": "tip_the_chair",
+              "resolution_id": "tip_the_chair",
+              "resolved": true,
+              "ok": true
+            }
+          }
         ],
         "local_state_schema": {
           "pressure_seen": {
@@ -12423,7 +12579,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "record_stamp",
-                          "message": "You refuse the task. A reserved guest table blocks the stage stair while an empty instrument stand waits backstage."
+                          "message": "You leave the reserved table and backstage search to the club staff. You leave the room unchanged: a reserved guest table blocks the stage stair while an empty instrument stand waits backstage."
                         }
                       }
                     ],
@@ -12478,7 +12634,18 @@
                           "owner_namespace": "scenario",
                           "stable_object_id": "jazz_club_guest_legend_task_0",
                           "state": "changed_by_fail_jazz_club_guest_legend",
-                          "message": "You let the pressure win. A reserved guest table blocks the stage stair while an empty instrument stand waits backstage."
+                          "message": "The set order moves on while the missing piece stays unresolved. A reserved guest table blocks the stage stair while an empty instrument stand waits backstage."
+                        }
+                      },
+                      {
+                        "id": "open_guest_legend_tip",
+                        "label": "Talk: The Extra Chair",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_guest_legend_tip",
+                          "resolution_id": "tip_the_chair"
                         }
                       }
                     ],
@@ -12653,7 +12820,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "jazz_club_guest_legend_arrival_transition_stage",
-                  "reduced_motion_message": "In reduced motion, jazz club guest legend settles directly into the same visible result.",
+                  "reduced_motion_message": "Guest table, empty stand, and backstage hands appear in their settled positions without animated movement.",
                   "stable_object_id": "jazz_club_guest_legend_arrival_transition",
                   "stage_id": "jazz_club_guest_legend_arrival_stage"
                 }
@@ -12767,7 +12934,7 @@
                           "owner_namespace": "scenario",
                           "stable_object_id": "jazz_club_guest_legend_task_1",
                           "state": "changed_by_fail_jazz_club_guest_legend",
-                          "message": "You let the pressure win. The backstage route changes around the missing case, clearing a path to open backstage lane."
+                          "message": "The set order moves on while the missing piece stays unresolved. The backstage route changes around the missing case, clearing a path to open backstage lane."
                         }
                       },
                       {
@@ -12977,7 +13144,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "record_stamp",
-                          "message": "You let the pressure win. The backstage route changes around the missing case, clearing a path to inspect missing piece."
+                          "message": "The set order moves on while the missing piece stays unresolved. The backstage route changes around the missing case, clearing a path to inspect missing piece."
                         }
                       },
                       {
@@ -13078,7 +13245,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "jazz_club_guest_legend_work_2_transition_stage",
-                  "reduced_motion_message": "In reduced motion, jazz club guest legend settles directly into the same visible result.",
+                  "reduced_motion_message": "Guest table, empty stand, and backstage hands appear in their settled positions without animated movement.",
                   "stable_object_id": "jazz_club_guest_legend_work_2_transition",
                   "stage_id": "jazz_club_guest_legend_work_2_stage"
                 }
@@ -13223,7 +13390,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "record_stamp",
-                          "message": "You let the pressure win. The backstage route changes around the missing case, clearing a path to prepare missing cue."
+                          "message": "The set order moves on while the missing piece stays unresolved. The backstage route changes around the missing case, clearing a path to prepare missing cue."
                         }
                       },
                       {
@@ -13468,7 +13635,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "record_stamp",
-                          "message": "You let the pressure win. The backstage route changes around the missing case, clearing a path to reorder set cards."
+                          "message": "The set order moves on while the missing piece stays unresolved. The backstage route changes around the missing case, clearing a path to reorder set cards."
                         }
                       },
                       {
@@ -13677,7 +13844,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "record_stamp",
-                          "message": "You let the pressure win. The backstage route changes around the missing case, clearing a path to time guest reveal."
+                          "message": "The set order moves on while the missing piece stays unresolved. The backstage route changes around the missing case, clearing a path to time guest reveal."
                         }
                       },
                       {
@@ -13778,7 +13945,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "jazz_club_guest_legend_work_5_transition_stage",
-                  "reduced_motion_message": "In reduced motion, jazz club guest legend settles directly into the same visible result.",
+                  "reduced_motion_message": "Guest table, empty stand, and backstage hands appear in their settled positions without animated movement.",
                   "stable_object_id": "jazz_club_guest_legend_work_5_transition",
                   "stage_id": "jazz_club_guest_legend_work_5_stage"
                 }
@@ -13924,7 +14091,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "3bf6b5c80370a75233d622f28a31165ee1506599dd66b2d25b979a9a0f645ad7"
+        "sequence_signature": "67cc20e7e010806f2851341db9fecc99131de9d599a554822e2f5a1c88d60b27"
       }
     },
     {
@@ -14313,7 +14480,17 @@
         },
         "fact_subscriptions": [
           "crew_job_changed",
-          "travel_departed"
+          "travel_departed",
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_rent_party_hat",
+              "choice_id": "cover_a_corner",
+              "resolution_id": "cover_a_corner",
+              "resolved": true,
+              "ok": true
+            }
+          }
         ],
         "local_state_schema": {
           "pressure_seen": {
@@ -14479,7 +14656,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "record_stamp",
-                          "message": "You refuse the task. Donation stations and moved chairs form a visible funding circuit around the bandstand."
+                          "message": "You decline the collection work and leave the hat to make its own circuit. You leave the room unchanged: donation stations and moved chairs form a visible funding circuit around the bandstand."
                         }
                       }
                     ],
@@ -14534,7 +14711,18 @@
                           "owner_namespace": "scenario",
                           "stable_object_id": "jazz_club_rent_party_task_0",
                           "state": "changed_by_fail_jazz_club_rent_party",
-                          "message": "You let the pressure win. Donation stations and moved chairs form a visible funding circuit around the bandstand."
+                          "message": "The rent clock keeps running while the room reorganizes around it. Donation stations and moved chairs form a visible funding circuit around the bandstand."
+                        }
+                      },
+                      {
+                        "id": "open_rent_party_hat",
+                        "label": "Talk: The Rent Hat",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_rent_party_hat",
+                          "resolution_id": "cover_a_corner"
                         }
                       }
                     ],
@@ -14708,7 +14896,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "jazz_club_rent_party_arrival_transition_stage",
-                  "reduced_motion_message": "In reduced motion, jazz club rent party settles directly into the same visible result.",
+                  "reduced_motion_message": "Donation stations, chair lanes, and the creditor appear at their current marks without moving onscreen.",
                   "stable_object_id": "jazz_club_rent_party_arrival_transition",
                   "stage_id": "jazz_club_rent_party_arrival_stage"
                 }
@@ -14822,7 +15010,7 @@
                           "owner_namespace": "scenario",
                           "stable_object_id": "jazz_club_rent_party_task_1",
                           "state": "changed_by_fail_jazz_club_rent_party",
-                          "message": "You let the pressure win. The chairs open a path to the record crate for the next sale."
+                          "message": "The rent clock keeps running while the room reorganizes around it. The chairs open a path to the record crate for the next sale."
                         }
                       },
                       {
@@ -15065,7 +15253,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "record_stamp",
-                          "message": "You let the pressure win. The cleared bandstand puts the rent marker within reach."
+                          "message": "The rent clock keeps running while the room reorganizes around it. The cleared bandstand puts the rent marker within reach."
                         }
                       },
                       {
@@ -15201,7 +15389,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "jazz_club_rent_party_work_2_transition_stage",
-                  "reduced_motion_message": "In reduced motion, jazz club rent party settles directly into the same visible result.",
+                  "reduced_motion_message": "Donation stations, chair lanes, and the creditor appear at their current marks without moving onscreen.",
                   "stable_object_id": "jazz_club_rent_party_work_2_transition",
                   "stage_id": "jazz_club_rent_party_work_2_stage"
                 }
@@ -15313,7 +15501,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "record_stamp",
-                          "message": "You let the pressure win. With the room settled, the waiting creditor can no longer be ignored."
+                          "message": "The rent clock keeps running while the room reorganizes around it. With the room settled, the waiting creditor can no longer be ignored."
                         }
                       },
                       {
@@ -15558,7 +15746,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "03cdb0113649d25231e4fd96bbdde84087ec73039c6a857bbfc45021b5ea99fd"
+        "sequence_signature": "5e7debc22ad40e8467dd74ed7c3a64356d459e4b4044433a0e624e850a0c1a91"
       }
     },
     {
@@ -15927,7 +16115,17 @@
         },
         "fact_subscriptions": [
           "scenario_command",
-          "travel_departed"
+          "travel_departed",
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_recording_night_tape",
+              "choice_id": "use_the_quiet",
+              "resolution_id": "use_the_quiet",
+              "resolved": true,
+              "ok": true
+            }
+          }
         ],
         "local_state_schema": {
           "pressure_seen": {
@@ -16085,7 +16283,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "record_stamp",
-                          "message": "You refuse the task. Microphone trees and taped silence zones create a narrow, quiet route to the recording desk."
+                          "message": "You stay off the session and leave the taped floor to the engineer. You leave the room unchanged: microphone trees and taped silence zones create a narrow, quiet route to the recording desk."
                         }
                       }
                     ],
@@ -16140,7 +16338,18 @@
                           "owner_namespace": "scenario",
                           "stable_object_id": "jazz_club_recording_night_task_0",
                           "state": "changed_by_fail_jazz_club_recording_night",
-                          "message": "You let the pressure win. Microphone trees and taped silence zones create a narrow, quiet route to the recording desk."
+                          "message": "The take continues and the quiet route closes behind it. Microphone trees and taped silence zones create a narrow, quiet route to the recording desk."
+                        }
+                      },
+                      {
+                        "id": "open_recording_night_tape",
+                        "label": "Talk: Tape Rolling",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_recording_night_tape",
+                          "resolution_id": "use_the_quiet"
                         }
                       }
                     ],
@@ -16313,7 +16522,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "jazz_club_recording_night_arrival_transition_stage",
-                  "reduced_motion_message": "In reduced motion, jazz club recording night settles directly into the same visible result.",
+                  "reduced_motion_message": "Microphone trees, silence tape, and recording desk appear at their settled marks without animation.",
                   "stable_object_id": "jazz_club_recording_night_arrival_transition",
                   "stage_id": "jazz_club_recording_night_arrival_stage"
                 }
@@ -16460,7 +16669,7 @@
                           "owner_namespace": "scenario",
                           "stable_object_id": "jazz_club_recording_night_task_1",
                           "state": "changed_by_fail_jazz_club_recording_night",
-                          "message": "You let the pressure win. The taped quiet route advances toward the desk, making it safe to reset microphone tree."
+                          "message": "The take continues and the quiet route closes behind it. The taped quiet route advances toward the desk, making it safe to reset microphone tree."
                         }
                       },
                       {
@@ -16705,7 +16914,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "record_stamp",
-                          "message": "You let the pressure win. The taped quiet route advances toward the desk, making it safe to mark clean take."
+                          "message": "The take continues and the quiet route closes behind it. The taped quiet route advances toward the desk, making it safe to mark clean take."
                         }
                       },
                       {
@@ -16806,7 +17015,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "jazz_club_recording_night_work_2_transition_stage",
-                  "reduced_motion_message": "In reduced motion, jazz club recording night settles directly into the same visible result.",
+                  "reduced_motion_message": "Microphone trees, silence tape, and recording desk appear at their settled marks without animation.",
                   "stable_object_id": "jazz_club_recording_night_work_2_transition",
                   "stage_id": "jazz_club_recording_night_work_2_stage"
                 }
@@ -16952,7 +17161,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "9ffa07305b42b8ab7c37bb3f1e828d3f8fac0470a8fec2d94505a79f8dbc0ecd"
+        "sequence_signature": "96e076213970741103caa3e7e86304a2f12b8802083783596f59f895ff03ea88"
       }
     },
     {
@@ -17341,7 +17550,17 @@
         },
         "fact_subscriptions": [
           "heat_band_changed",
-          "travel_departed"
+          "travel_departed",
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_union_trouble_line",
+              "choice_id": "cover_one_due",
+              "resolution_id": "cover_one_due",
+              "resolved": true,
+              "ok": true
+            }
+          }
         ],
         "local_state_schema": {
           "pressure_seen": {
@@ -17507,7 +17726,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "record_stamp",
-                          "message": "You refuse the task. A picket line and management rope split the two entrances while the stage remains unbuilt."
+                          "message": "You refuse to mediate and keep to the neutral edge of the room. You leave the room unchanged: a picket line and management rope split the two entrances while the stage remains unbuilt."
                         }
                       }
                     ],
@@ -17562,7 +17781,18 @@
                           "owner_namespace": "scenario",
                           "stable_object_id": "jazz_club_union_trouble_task_0",
                           "state": "changed_by_fail_jazz_club_union_trouble",
-                          "message": "You let the pressure win. A picket line and management rope split the two entrances while the stage remains unbuilt."
+                          "message": "Both sides redraw the line while the stage waits. A picket line and management rope split the two entrances while the stage remains unbuilt."
+                        }
+                      },
+                      {
+                        "id": "open_union_trouble_line",
+                        "label": "Talk: The Meeting Line",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_union_trouble_line",
+                          "resolution_id": "cover_one_due"
                         }
                       }
                     ],
@@ -17735,7 +17965,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "jazz_club_union_trouble_arrival_transition_stage",
-                  "reduced_motion_message": "In reduced motion, jazz club union trouble settles directly into the same visible result.",
+                  "reduced_motion_message": "Picket line, management rope, and unfinished stage appear in their current positions without animated movement.",
                   "stable_object_id": "jazz_club_union_trouble_arrival_transition",
                   "stage_id": "jazz_club_union_trouble_arrival_stage"
                 }
@@ -17882,7 +18112,7 @@
                           "owner_namespace": "scenario",
                           "stable_object_id": "jazz_club_union_trouble_task_1",
                           "state": "changed_by_fail_jazz_club_union_trouble",
-                          "message": "You let the pressure win. The picket and management lines visibly adjust, creating room to carry neutral stand."
+                          "message": "Both sides redraw the line while the stage waits. The picket and management lines visibly adjust, creating room to carry neutral stand."
                         }
                       },
                       {
@@ -18127,7 +18357,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "record_stamp",
-                          "message": "You let the pressure win. The picket and management lines visibly adjust, creating room to assemble agreed stage."
+                          "message": "Both sides redraw the line while the stage waits. The picket and management lines visibly adjust, creating room to assemble agreed stage."
                         }
                       },
                       {
@@ -18228,7 +18458,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "jazz_club_union_trouble_work_2_transition_stage",
-                  "reduced_motion_message": "In reduced motion, jazz club union trouble settles directly into the same visible result.",
+                  "reduced_motion_message": "Picket line, management rope, and unfinished stage appear in their current positions without animated movement.",
                   "stable_object_id": "jazz_club_union_trouble_work_2_transition",
                   "stage_id": "jazz_club_union_trouble_work_2_stage"
                 }
@@ -18340,7 +18570,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "record_stamp",
-                          "message": "You let the pressure win. The picket and management lines visibly adjust, creating room to open entry route."
+                          "message": "Both sides redraw the line while the stage waits. The picket and management lines visibly adjust, creating room to open entry route."
                         }
                       },
                       {
@@ -18585,7 +18815,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "c3468051ba80c65369610cd7a0087cec4bffb4f0857db4951a0c350d09c8c8ef"
+        "sequence_signature": "4c0d0c8731ffd222d419693b97b13570310c7e739354c590d7a4c8d27cdc1018"
       }
     }
   ]

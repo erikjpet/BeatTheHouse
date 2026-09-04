@@ -385,7 +385,17 @@
         },
         "fact_subscriptions": [
           "town_transition",
-          "travel_departed"
+          "travel_departed",
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_open_mic_signup",
+              "choice_id": "take_five_minutes",
+              "resolution_id": "take_five_minutes",
+              "resolved": true,
+              "ok": true
+            }
+          }
         ],
         "local_state_schema": {
           "pressure_seen": {
@@ -582,7 +592,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse the task. A signup lectern, movable stage steps, and half-filled chair banks form a live queue from Layer 1 to the microphone."
+                          "message": "You leave the open-mic bill and waiting comics to the host. You leave the room unchanged: a signup lectern, movable stage steps, and half-filled chair banks form a live queue from Layer 1 to the microphone."
                         }
                       }
                     ],
@@ -637,7 +647,7 @@
                           "owner_namespace": "scenario",
                           "stable_object_id": "punchline_open_mic_night_task_0",
                           "state": "changed_by_fail_punchline_open_mic_night",
-                          "message": "You let the pressure win. A signup lectern, movable stage steps, and half-filled chair banks form a live queue from Layer 1 to the microphone."
+                          "message": "The signup queue advances and the room spends your five minutes. A signup lectern, movable stage steps, and half-filled chair banks form a live queue from Layer 1 to the microphone."
                         }
                       },
                       {
@@ -673,6 +683,17 @@
                         "inputs": {
                           "cue_id": "sightline_tension",
                           "message": "You sabotage Open Mic. A signup lectern, movable stage steps, and half-filled chair banks form a live queue from Layer 1 to the microphone."
+                        }
+                      },
+                      {
+                        "id": "open_open_mic_signup",
+                        "label": "Talk: Five Bad Minutes",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_open_mic_signup",
+                          "resolution_id": "take_five_minutes"
                         }
                       }
                     ],
@@ -848,7 +869,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_open_mic_night_arrival_transition_stage",
-                  "reduced_motion_message": "In reduced motion, punchline open mic night settles directly into the same visible result.",
+                  "reduced_motion_message": "Lectern, stage steps, chair banks, microphone, and performers appear at their current show stations.",
                   "stable_object_id": "punchline_open_mic_night_arrival_transition",
                   "stage_id": "punchline_open_mic_night_arrival_stage"
                 }
@@ -960,7 +981,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You let the pressure win. The queue parts as the movable steps are called forward."
+                          "message": "The signup queue advances and the room spends your five minutes. The queue parts as the movable steps are called forward."
                         }
                       },
                       {
@@ -971,7 +992,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse and leave cleanly. The queue parts as the movable steps are called forward."
+                          "message": "You leave the open-mic bill and waiting comics to the host. The queue parts as the movable steps are called forward."
                         }
                       }
                     ],
@@ -1170,7 +1191,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You let the pressure win. The moved steps open chair space for the late audience."
+                          "message": "The signup queue advances and the room spends your five minutes. The moved steps open chair space for the late audience."
                         }
                       },
                       {
@@ -1181,7 +1202,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse and leave cleanly. The moved steps open chair space for the late audience."
+                          "message": "You leave the open-mic bill and waiting comics to the host. The moved steps open chair space for the late audience."
                         }
                       }
                     ],
@@ -1271,7 +1292,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_open_mic_night_work_2_transition_stage",
-                  "reduced_motion_message": "In reduced motion, punchline open mic night settles directly into the same visible result.",
+                  "reduced_motion_message": "Lectern, stage steps, chair banks, microphone, and performers appear at their current show stations.",
                   "stable_object_id": "punchline_open_mic_night_work_2_transition",
                   "stage_id": "punchline_open_mic_night_work_2_stage"
                 }
@@ -1383,7 +1404,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You let the pressure win. The settled audience lane leaves the final act ready for the microphone."
+                          "message": "The signup queue advances and the room spends your five minutes. The settled audience lane leaves the final act ready for the microphone."
                         }
                       },
                       {
@@ -1394,7 +1415,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse and leave cleanly. The settled audience lane leaves the final act ready for the microphone."
+                          "message": "You leave the open-mic bill and waiting comics to the host. The settled audience lane leaves the final act ready for the microphone."
                         }
                       }
                     ],
@@ -1628,7 +1649,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "a8c8f44cbf9675c2a87552ca348a253935c1ac4c90be317411254236d8653728"
+        "sequence_signature": "00663b95cf821a39a9a48a8c118a026713e34235c0cd2f9f3c4a24a73159bc35"
       }
     },
     {
@@ -2031,7 +2052,17 @@
         },
         "fact_subscriptions": [
           "service_result",
-          "travel_departed"
+          "travel_departed",
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_headliner_cover",
+              "choice_id": "move_with_the_crowd",
+              "resolution_id": "move_with_the_crowd",
+              "resolved": true,
+              "ok": true
+            }
+          }
         ],
         "local_state_schema": {
           "pressure_seen": {
@@ -2203,7 +2234,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse the task. Credential ropes seal the L1 stair, an equipment case waits on L2, and a runner holds at the L3 service door."
+                          "message": "You leave the credential route and equipment case to the runner. You leave the room unchanged: credential ropes seal the L1 stair, an equipment case waits on L2, and a runner holds at the L3 service door."
                         }
                       }
                     ],
@@ -2258,7 +2289,18 @@
                           "owner_namespace": "scenario",
                           "stable_object_id": "punchline_headliner_night_task_0",
                           "state": "changed_by_fail_punchline_headliner_night",
-                          "message": "You let the pressure win. Credential ropes seal the L1 stair, an equipment case waits on L2, and a runner holds at the L3 service door."
+                          "message": "The headliner crowd closes another rope while you wait. Credential ropes seal the L1 stair, an equipment case waits on L2, and a runner holds at the L3 service door."
+                        }
+                      },
+                      {
+                        "id": "open_headliner_cover",
+                        "label": "Talk: House Full",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_headliner_cover",
+                          "resolution_id": "move_with_the_crowd"
                         }
                       }
                     ],
@@ -2429,11 +2471,11 @@
                   "channel": "room",
                   "duration_boundaries": 1.0,
                   "family": "transition_ops",
-                  "message": "A rope, case, or guarded door changes position, opening the next layer to refuse the task.",
+                  "message": "A rope, case, or guarded door changes position; Refuse the task is now the clear next move.",
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_headliner_night_arrival_transition_stage",
-                  "reduced_motion_message": "In reduced motion, punchline headliner night settles directly into the same visible result.",
+                  "reduced_motion_message": "Credential ropes, equipment case, stair, and runner appear at their settled club positions.",
                   "stable_object_id": "punchline_headliner_night_arrival_transition",
                   "stage_id": "punchline_headliner_night_arrival_stage"
                 }
@@ -2452,7 +2494,7 @@
                 }
               ],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "A rope, case, or guarded door changes position, opening the next layer to carry second-layer runner case.",
+              "arrival_feedback": "A rope, case, or guarded door changes position; Carry second-layer runner case is now the clear next move.",
               "branches": [
                 {
                   "condition": {
@@ -2580,7 +2622,7 @@
                           "owner_namespace": "scenario",
                           "stable_object_id": "punchline_headliner_night_task_1",
                           "state": "changed_by_fail_punchline_headliner_night",
-                          "message": "You let the pressure win. A rope, case, or guarded door changes position, opening the next layer to carry second-layer runner case."
+                          "message": "The headliner crowd closes another rope while you wait. A rope, case, or guarded door changes position; Carry second-layer runner case is now the clear next move."
                         }
                       },
                       {
@@ -2591,7 +2633,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse and leave cleanly. A rope, case, or guarded door changes position, opening the next layer to carry second-layer runner case."
+                          "message": "You leave the credential route and equipment case to the runner. A rope, case, or guarded door changes position; Carry second-layer runner case is now the clear next move."
                         }
                       },
                       {
@@ -2602,7 +2644,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You honor Headliner Route. A rope, case, or guarded door changes position, opening the next layer to carry second-layer runner case."
+                          "message": "You honor Headliner Route. A rope, case, or guarded door changes position; Carry second-layer runner case is now the clear next move."
                         }
                       },
                       {
@@ -2613,7 +2655,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You escort Headliner Direct. A rope, case, or guarded door changes position, opening the next layer to carry second-layer runner case."
+                          "message": "You escort Headliner Direct. A rope, case, or guarded door changes position; Carry second-layer runner case is now the clear next move."
                         }
                       },
                       {
@@ -2624,7 +2666,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "dice_curb",
-                          "message": "You divert Headliner Runner. A rope, case, or guarded door changes position, opening the next layer to carry second-layer runner case."
+                          "message": "You divert Headliner Runner. A rope, case, or guarded door changes position; Carry second-layer runner case is now the clear next move."
                         }
                       }
                     ],
@@ -2711,7 +2753,7 @@
                 {
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "A rope, case, or guarded door changes position, opening the next layer to carry second-layer runner case.",
+                  "message": "A rope, case, or guarded door changes position; Carry second-layer runner case is now the clear next move.",
                   "op": "feedback",
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_headliner_night_work_1_transition_feedback",
@@ -2732,7 +2774,7 @@
                 }
               ],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "A rope, case, or guarded door changes position, opening the next layer to signal third-layer door.",
+              "arrival_feedback": "A rope, case, or guarded door changes position; Signal third-layer door is now the clear next move.",
               "branches": [
                 {
                   "condition": {
@@ -2825,7 +2867,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You let the pressure win. A rope, case, or guarded door changes position, opening the next layer to signal third-layer door."
+                          "message": "The headliner crowd closes another rope while you wait. A rope, case, or guarded door changes position; Signal third-layer door is now the clear next move."
                         }
                       },
                       {
@@ -2836,7 +2878,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse and leave cleanly. A rope, case, or guarded door changes position, opening the next layer to signal third-layer door."
+                          "message": "You leave the credential route and equipment case to the runner. A rope, case, or guarded door changes position; Signal third-layer door is now the clear next move."
                         }
                       }
                     ],
@@ -2922,11 +2964,11 @@
                   "channel": "room",
                   "duration_boundaries": 1.0,
                   "family": "transition_ops",
-                  "message": "A rope, case, or guarded door changes position, opening the next layer to signal third-layer door.",
+                  "message": "A rope, case, or guarded door changes position; Signal third-layer door is now the clear next move.",
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_headliner_night_work_2_transition_stage",
-                  "reduced_motion_message": "In reduced motion, punchline headliner night settles directly into the same visible result.",
+                  "reduced_motion_message": "Credential ropes, equipment case, stair, and runner appear at their settled club positions.",
                   "stable_object_id": "punchline_headliner_night_work_2_transition",
                   "stage_id": "punchline_headliner_night_work_2_stage"
                 }
@@ -2945,7 +2987,7 @@
                 }
               ],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "A rope, case, or guarded door changes position, opening the next layer to escort headliner route.",
+              "arrival_feedback": "A rope, case, or guarded door changes position; Escort headliner route is now the clear next move.",
               "branches": [
                 {
                   "condition": {
@@ -3038,7 +3080,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You let the pressure win. A rope, case, or guarded door changes position, opening the next layer to escort headliner route."
+                          "message": "The headliner crowd closes another rope while you wait. A rope, case, or guarded door changes position; Escort headliner route is now the clear next move."
                         }
                       },
                       {
@@ -3049,7 +3091,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse and leave cleanly. A rope, case, or guarded door changes position, opening the next layer to escort headliner route."
+                          "message": "You leave the credential route and equipment case to the runner. A rope, case, or guarded door changes position; Escort headliner route is now the clear next move."
                         }
                       }
                     ],
@@ -3135,7 +3177,7 @@
                   "change_id": "punchline_headliner_night_work_3_change",
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "A rope, case, or guarded door changes position, opening the next layer to escort headliner route.",
+                  "message": "A rope, case, or guarded door changes position; Escort headliner route is now the clear next move.",
                   "op": "scene_change",
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_headliner_night_work_3_transition_scene_change",
@@ -3155,7 +3197,7 @@
                 }
               ],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "A rope, case, or guarded door changes position, opening the next layer to reset service rope.",
+              "arrival_feedback": "A rope, case, or guarded door changes position; Reset service rope is now the clear next move.",
               "branches": [
                 {
                   "condition": {
@@ -3248,7 +3290,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You let the pressure win. A rope, case, or guarded door changes position, opening the next layer to reset service rope."
+                          "message": "The headliner crowd closes another rope while you wait. A rope, case, or guarded door changes position; Reset service rope is now the clear next move."
                         }
                       },
                       {
@@ -3259,7 +3301,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse and leave cleanly. A rope, case, or guarded door changes position, opening the next layer to reset service rope."
+                          "message": "You leave the credential route and equipment case to the runner. A rope, case, or guarded door changes position; Reset service rope is now the clear next move."
                         }
                       }
                     ],
@@ -3343,7 +3385,7 @@
                 {
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "A rope, case, or guarded door changes position, opening the next layer to reset service rope.",
+                  "message": "A rope, case, or guarded door changes position; Reset service rope is now the clear next move.",
                   "op": "feedback",
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_headliner_night_work_4_transition_feedback",
@@ -3491,7 +3533,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "e01d884fd0e8a0d9f133d3499d71be284fbda8717a333ec57924ff04bbec1522"
+        "sequence_signature": "74ca81a804e12615d83ff4b1fbcfbde9d84b6c40d8a5c8229d89a248813f1701"
       }
     },
     {
@@ -3877,7 +3919,17 @@
         },
         "fact_subscriptions": [
           "travel_arrived",
-          "travel_departed"
+          "travel_departed",
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_bringer_show_favor",
+              "choice_id": "fill_the_chair",
+              "resolution_id": "fill_the_chair",
+              "resolved": true,
+              "ok": true
+            }
+          }
         ],
         "local_state_schema": {
           "pressure_seen": {
@@ -4042,7 +4094,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse the task. Three labeled crowd groups wait behind separate ropes while empty chair blocks face an unlit stage."
+                          "message": "You leave the ropes, chair blocks, and dark stage to the show crew. You leave the room unchanged: three labeled crowd groups wait behind separate ropes while empty chair blocks face an unlit stage."
                         }
                       }
                     ],
@@ -4097,7 +4149,18 @@
                           "owner_namespace": "scenario",
                           "stable_object_id": "punchline_bringer_show_task_0",
                           "state": "changed_by_fail_punchline_bringer_show",
-                          "message": "You let the pressure win. Three labeled crowd groups wait behind separate ropes while empty chair blocks face an unlit stage."
+                          "message": "The crowd groups shift and another empty chair becomes your problem. Three labeled crowd groups wait behind separate ropes while empty chair blocks face an unlit stage."
+                        }
+                      },
+                      {
+                        "id": "open_bringer_show_favor",
+                        "label": "Talk: Fill a Chair",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_bringer_show_favor",
+                          "resolution_id": "fill_the_chair"
                         }
                       }
                     ],
@@ -4271,7 +4334,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_bringer_show_arrival_transition_stage",
-                  "reduced_motion_message": "In reduced motion, punchline bringer show settles directly into the same visible result.",
+                  "reduced_motion_message": "Crowd groups, ropes, chair blocks, and stage appear at their current bringer-show stations.",
                   "stable_object_id": "punchline_bringer_show_arrival_transition",
                   "stage_id": "punchline_bringer_show_arrival_stage"
                 }
@@ -4418,7 +4481,7 @@
                           "owner_namespace": "scenario",
                           "stable_object_id": "punchline_bringer_show_task_1",
                           "state": "changed_by_fail_punchline_bringer_show",
-                          "message": "You let the pressure win. A crowd rope and chair block visibly reset, making room to usher supporters to block."
+                          "message": "The crowd groups shift and another empty chair becomes your problem. A crowd rope and chair block visibly reset, making room to usher supporters to block."
                         }
                       },
                       {
@@ -4429,7 +4492,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse and leave cleanly. A crowd rope and chair block visibly reset, making room to usher supporters to block."
+                          "message": "You leave the ropes, chair blocks, and dark stage to the show crew. A crowd rope and chair block visibly reset, making room to usher supporters to block."
                         }
                       },
                       {
@@ -4663,7 +4726,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You let the pressure win. A crowd rope and chair block visibly reset, making room to count minimum seats."
+                          "message": "The crowd groups shift and another empty chair becomes your problem. A crowd rope and chair block visibly reset, making room to count minimum seats."
                         }
                       },
                       {
@@ -4674,7 +4737,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse and leave cleanly. A crowd rope and chair block visibly reset, making room to count minimum seats."
+                          "message": "You leave the ropes, chair blocks, and dark stage to the show crew. A crowd rope and chair block visibly reset, making room to count minimum seats."
                         }
                       }
                     ],
@@ -4764,7 +4827,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_bringer_show_work_2_transition_stage",
-                  "reduced_motion_message": "In reduced motion, punchline bringer show settles directly into the same visible result.",
+                  "reduced_motion_message": "Crowd groups, ropes, chair blocks, and stage appear at their current bringer-show stations.",
                   "stable_object_id": "punchline_bringer_show_work_2_transition",
                   "stage_id": "punchline_bringer_show_work_2_stage"
                 }
@@ -4876,7 +4939,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You let the pressure win. A crowd rope and chair block visibly reset, making room to close hostile pitch."
+                          "message": "The crowd groups shift and another empty chair becomes your problem. A crowd rope and chair block visibly reset, making room to close hostile pitch."
                         }
                       },
                       {
@@ -4887,7 +4950,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse and leave cleanly. A crowd rope and chair block visibly reset, making room to close hostile pitch."
+                          "message": "You leave the ropes, chair blocks, and dark stage to the show crew. A crowd rope and chair block visibly reset, making room to close hostile pitch."
                         }
                       }
                     ],
@@ -5121,7 +5184,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "5dfc5b6f2708be98e47a57c7239d57e00c667d8544d33240e7bf5e98d1f6df1c"
+        "sequence_signature": "2b461d3cca80508b0511913452453aa718a9879c81b212fa538e892302b62eab"
       }
     },
     {
@@ -5515,7 +5578,17 @@
               "game_id": "underground_high_stakes"
             }
           },
-          "travel_departed"
+          "travel_departed",
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_punchline_high_stakes_table",
+              "choice_id": "post_the_stake",
+              "resolution_id": "post_the_stake",
+              "resolved": true,
+              "ok": true
+            }
+          }
         ],
         "local_state_schema": {
           "pressure_seen": {
@@ -5681,7 +5754,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse the task. A protected table displaces ordinary chairs while guard sightlines and an observer rail divide the casino floor."
+                          "message": "You leave the chair line and guarded table outside your reach. You leave the room unchanged: a protected table displaces ordinary chairs while guard sightlines and an observer rail divide the casino floor."
                         }
                       }
                     ],
@@ -5736,7 +5809,18 @@
                           "owner_namespace": "scenario",
                           "stable_object_id": "punchline_high_stakes_night_task_0",
                           "state": "changed_by_fail_punchline_high_stakes_night",
-                          "message": "You let the pressure win. A protected table displaces ordinary chairs while guard sightlines and an observer rail divide the casino floor."
+                          "message": "The protected table expands its claim on the floor without you. A protected table displaces ordinary chairs while guard sightlines and an observer rail divide the casino floor."
+                        }
+                      },
+                      {
+                        "id": "open_punchline_high_stakes_table",
+                        "label": "Talk: The Serious Table",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_punchline_high_stakes_table",
+                          "resolution_id": "post_the_stake"
                         }
                       }
                     ],
@@ -5911,7 +5995,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_high_stakes_night_arrival_transition_stage",
-                  "reduced_motion_message": "In reduced motion, punchline high stakes night settles directly into the same visible result.",
+                  "reduced_motion_message": "Protected table, chair stacks, guard lines, and observer rail appear at their settled floor positions.",
                   "stable_object_id": "punchline_high_stakes_night_arrival_transition",
                   "stage_id": "punchline_high_stakes_night_arrival_stage"
                 }
@@ -6029,7 +6113,7 @@
                           "owner_namespace": "scenario",
                           "stable_object_id": "punchline_high_stakes_night_task_1",
                           "state": "changed_by_fail_punchline_high_stakes_night",
-                          "message": "You let the pressure win. The guard's new angle makes the watched lane clear enough to mark."
+                          "message": "The protected table expands its claim on the floor without you. The guard's new angle makes the watched lane clear enough to mark."
                         }
                       },
                       {
@@ -6040,7 +6124,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse and leave cleanly. The guard's new angle makes the watched lane clear enough to mark."
+                          "message": "You leave the chair line and guarded table outside your reach. The guard's new angle makes the watched lane clear enough to mark."
                         }
                       }
                     ],
@@ -6276,7 +6360,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You let the pressure win. The marked sightline leaves room to open the observer rail."
+                          "message": "The protected table expands its claim on the floor without you. The marked sightline leaves room to open the observer rail."
                         }
                       },
                       {
@@ -6287,7 +6371,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse and leave cleanly. The marked sightline leaves room to open the observer rail."
+                          "message": "You leave the chair line and guarded table outside your reach. The marked sightline leaves room to open the observer rail."
                         }
                       },
                       {
@@ -6412,7 +6496,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_high_stakes_night_work_2_transition_stage",
-                  "reduced_motion_message": "In reduced motion, punchline high stakes night settles directly into the same visible result.",
+                  "reduced_motion_message": "Protected table, chair stacks, guard lines, and observer rail appear at their settled floor positions.",
                   "stable_object_id": "punchline_high_stakes_night_work_2_transition",
                   "stage_id": "punchline_high_stakes_night_work_2_stage"
                 }
@@ -6528,7 +6612,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You let the pressure win. The opened observer rail leaves the public game lane ready to restore."
+                          "message": "The protected table expands its claim on the floor without you. The opened observer rail leaves the public game lane ready to restore."
                         }
                       },
                       {
@@ -6539,7 +6623,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse and leave cleanly. The opened observer rail leaves the public game lane ready to restore."
+                          "message": "You leave the chair line and guarded table outside your reach. The opened observer rail leaves the public game lane ready to restore."
                         }
                       }
                     ],
@@ -6773,7 +6857,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "c8e999b00dcb03ca98b813a67aef41200219b9ec14d5416e515302c039b211f3"
+        "sequence_signature": "aa5c5e60c44fa2159ea03bf519d14500fdc70d7ec7e3d55feb74b96644882958"
       }
     },
     {
@@ -7175,7 +7259,17 @@
         },
         "fact_subscriptions": [
           "heat_changed",
-          "travel_departed"
+          "travel_departed",
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_greased_week_window",
+              "choice_id": "mark_the_window",
+              "resolution_id": "mark_the_window",
+              "resolved": true,
+              "ok": true
+            }
+          }
         ],
         "local_state_schema": {
           "pressure_seen": {
@@ -7345,7 +7439,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse the task. Inspection seals mark three layer doors while a payoff ledger and moving inspector define a visible route through the club."
+                          "message": "You leave the payoff ledger and inspection marks where they lie. You leave the room unchanged: inspection seals mark three layer doors while a payoff ledger and moving inspector define a visible route through the club."
                         }
                       }
                     ],
@@ -7400,7 +7494,18 @@
                           "owner_namespace": "scenario",
                           "stable_object_id": "punchline_greased_week_task_0",
                           "state": "changed_by_fail_punchline_greased_week",
-                          "message": "You let the pressure win. Inspection seals mark three layer doors while a payoff ledger and moving inspector define a visible route through the club."
+                          "message": "The inspector reaches the next seal before you can redirect the route. Inspection seals mark three layer doors while a payoff ledger and moving inspector define a visible route through the club."
+                        }
+                      },
+                      {
+                        "id": "open_greased_week_window",
+                        "label": "Talk: Paid Quiet",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_greased_week_window",
+                          "resolution_id": "mark_the_window"
                         }
                       }
                     ],
@@ -7574,7 +7679,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_greased_week_arrival_transition_stage",
-                  "reduced_motion_message": "In reduced motion, punchline greased week settles directly into the same visible result.",
+                  "reduced_motion_message": "Door seals, payoff ledger, inspector, and club route appear at their current inspection stations.",
                   "stable_object_id": "punchline_greased_week_arrival_transition",
                   "stage_id": "punchline_greased_week_arrival_stage"
                 }
@@ -7721,7 +7826,7 @@
                           "owner_namespace": "scenario",
                           "stable_object_id": "punchline_greased_week_task_1",
                           "state": "changed_by_fail_punchline_greased_week",
-                          "message": "You let the pressure win. A seal, ledger, or inspector advances through the club, exposing a chance to carry ledger to second-layer."
+                          "message": "The inspector reaches the next seal before you can redirect the route. A seal, ledger, or inspector advances through the club, exposing a chance to carry ledger to second-layer."
                         }
                       },
                       {
@@ -7732,7 +7837,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse and leave cleanly. A seal, ledger, or inspector advances through the club, exposing a chance to carry ledger to second-layer."
+                          "message": "You leave the payoff ledger and inspection marks where they lie. A seal, ledger, or inspector advances through the club, exposing a chance to carry ledger to second-layer."
                         }
                       },
                       {
@@ -7966,7 +8071,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You let the pressure win. A seal, ledger, or inspector advances through the club, exposing a chance to shadow inspector to third-layer."
+                          "message": "The inspector reaches the next seal before you can redirect the route. A seal, ledger, or inspector advances through the club, exposing a chance to shadow inspector to third-layer."
                         }
                       },
                       {
@@ -7977,7 +8082,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse and leave cleanly. A seal, ledger, or inspector advances through the club, exposing a chance to shadow inspector to third-layer."
+                          "message": "You leave the payoff ledger and inspection marks where they lie. A seal, ledger, or inspector advances through the club, exposing a chance to shadow inspector to third-layer."
                         }
                       }
                     ],
@@ -8067,7 +8172,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_greased_week_work_2_transition_stage",
-                  "reduced_motion_message": "In reduced motion, punchline greased week settles directly into the same visible result.",
+                  "reduced_motion_message": "Door seals, payoff ledger, inspector, and club route appear at their current inspection stations.",
                   "stable_object_id": "punchline_greased_week_work_2_transition",
                   "stage_id": "punchline_greased_week_work_2_stage"
                 }
@@ -8179,7 +8284,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You let the pressure win. A seal, ledger, or inspector advances through the club, exposing a chance to unseal declared service."
+                          "message": "The inspector reaches the next seal before you can redirect the route. A seal, ledger, or inspector advances through the club, exposing a chance to unseal declared service."
                         }
                       },
                       {
@@ -8190,7 +8295,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse and leave cleanly. A seal, ledger, or inspector advances through the club, exposing a chance to unseal declared service."
+                          "message": "You leave the payoff ledger and inspection marks where they lie. A seal, ledger, or inspector advances through the club, exposing a chance to unseal declared service."
                         }
                       }
                     ],
@@ -8389,7 +8494,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You let the pressure win. A seal, ledger, or inspector advances through the club, exposing a chance to post route record."
+                          "message": "The inspector reaches the next seal before you can redirect the route. A seal, ledger, or inspector advances through the club, exposing a chance to post route record."
                         }
                       },
                       {
@@ -8400,7 +8505,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse and leave cleanly. A seal, ledger, or inspector advances through the club, exposing a chance to post route record."
+                          "message": "You leave the payoff ledger and inspection marks where they lie. A seal, ledger, or inspector advances through the club, exposing a chance to post route record."
                         }
                       }
                     ],
@@ -8632,7 +8737,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "083e71ed63bb2fd4bd2c457a0c08d18bc0331ecdcd75980e8d2b09e4879fa9b1"
+        "sequence_signature": "c5e42e93a060738dc50754f69f467ccc5771949e48a079b25e0d4446419d31ea"
       }
     },
     {
@@ -9025,7 +9130,17 @@
               "game_id": "crew_draw_poker"
             }
           },
-          "travel_departed"
+          "travel_departed",
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_debt_court_office_hours",
+              "choice_id": "settle_the_marker",
+              "resolution_id": "settle_the_marker",
+              "resolved": true,
+              "ok": true
+            }
+          }
         ],
         "local_state_schema": {
           "pressure_seen": {
@@ -9189,7 +9304,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse the task. Hearing chairs replace the L3 poker-night room while an evidence stand and witness mark sit outside the paused table boundary."
+                          "message": "You leave the hearing chairs and witness mark to the court steward. You leave the room unchanged: hearing chairs replace the L3 poker-night room while an evidence stand and witness mark sit outside the paused table boundary."
                         }
                       }
                     ],
@@ -9242,7 +9357,18 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "dice_curb",
-                          "message": "You let the pressure win. Hearing chairs replace the L3 poker-night room while an evidence stand and witness mark sit outside the paused table boundary."
+                          "message": "The next name is called while your evidence remains unplaced. Hearing chairs replace the L3 poker-night room while an evidence stand and witness mark sit outside the paused table boundary."
+                        }
+                      },
+                      {
+                        "id": "open_debt_court_office_hours",
+                        "label": "Talk: Office Hours",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_debt_court_office_hours",
+                          "resolution_id": "settle_the_marker"
                         }
                       }
                     ],
@@ -9416,7 +9542,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_debt_court_arrival_transition_stage",
-                  "reduced_motion_message": "In reduced motion, punchline debt court settles directly into the same visible result.",
+                  "reduced_motion_message": "Hearing chairs, evidence stand, witness mark, and paused table appear at their settled court positions.",
                   "stable_object_id": "punchline_debt_court_arrival_transition",
                   "stage_id": "punchline_debt_court_arrival_stage"
                 }
@@ -9532,7 +9658,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "dice_curb",
-                          "message": "You let the pressure win. Evidence and hearing furniture visibly change, clearing the floor to place public evidence."
+                          "message": "The next name is called while your evidence remains unplaced. Evidence and hearing furniture visibly change, clearing the floor to place public evidence."
                         }
                       },
                       {
@@ -9543,7 +9669,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse and leave cleanly. Evidence and hearing furniture visibly change, clearing the floor to place public evidence."
+                          "message": "You leave the hearing chairs and witness mark to the court steward. Evidence and hearing furniture visibly change, clearing the floor to place public evidence."
                         }
                       }
                     ],
@@ -9779,7 +9905,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "dice_curb",
-                          "message": "You let the pressure win. Evidence and hearing furniture visibly change, clearing the floor to call room witness."
+                          "message": "The next name is called while your evidence remains unplaced. Evidence and hearing furniture visibly change, clearing the floor to call room witness."
                         }
                       },
                       {
@@ -9790,7 +9916,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse and leave cleanly. Evidence and hearing furniture visibly change, clearing the floor to call room witness."
+                          "message": "You leave the hearing chairs and witness mark to the court steward. Evidence and hearing furniture visibly change, clearing the floor to call room witness."
                         }
                       },
                       {
@@ -9920,7 +10046,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_debt_court_work_2_transition_stage",
-                  "reduced_motion_message": "In reduced motion, punchline debt court settles directly into the same visible result.",
+                  "reduced_motion_message": "Hearing chairs, evidence stand, witness mark, and paused table appear at their settled court positions.",
                   "stable_object_id": "punchline_debt_court_work_2_transition",
                   "stage_id": "punchline_debt_court_work_2_stage"
                 }
@@ -10036,7 +10162,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "dice_curb",
-                          "message": "You let the pressure win. Evidence and hearing furniture visibly change, clearing the floor to clear chairs for work."
+                          "message": "The next name is called while your evidence remains unplaced. Evidence and hearing furniture visibly change, clearing the floor to clear chairs for work."
                         }
                       },
                       {
@@ -10047,7 +10173,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse and leave cleanly. Evidence and hearing furniture visibly change, clearing the floor to clear chairs for work."
+                          "message": "You leave the hearing chairs and witness mark to the court steward. Evidence and hearing furniture visibly change, clearing the floor to clear chairs for work."
                         }
                       }
                     ],
@@ -10281,7 +10407,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "42f481bd7201d190621672806f01a4158ac7b436079d72dce2031ef2318ab328"
+        "sequence_signature": "54ed90784808a623a2d76c617ab1c70974751698dcfb1065f38b426c1be4615f"
       }
     },
     {
@@ -10683,7 +10809,17 @@
         },
         "fact_subscriptions": [
           "crew_changed",
-          "travel_departed"
+          "travel_departed",
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_new_muscle_door",
+              "choice_id": "take_the_slow_read",
+              "resolution_id": "take_the_slow_read",
+              "resolved": true,
+              "ok": true
+            }
+          }
         ],
         "local_state_schema": {
           "pressure_seen": {
@@ -10887,7 +11023,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse the task. New guard posts, inspection trays, and a marked bypass lane create functional checkpoints across the three layers."
+                          "message": "You leave the inspection trays and bypass lane to the new crew. You leave the room unchanged: new guard posts, inspection trays, and a marked bypass lane create functional checkpoints across the three layers."
                         }
                       }
                     ],
@@ -10942,7 +11078,7 @@
                           "owner_namespace": "scenario",
                           "stable_object_id": "punchline_new_muscle_task_0",
                           "state": "changed_by_fail_punchline_new_muscle",
-                          "message": "You let the pressure win. New guard posts, inspection trays, and a marked bypass lane create functional checkpoints across the three layers."
+                          "message": "The new guards harden their checkpoint while you study them. New guard posts, inspection trays, and a marked bypass lane create functional checkpoints across the three layers."
                         }
                       },
                       {
@@ -10978,6 +11114,17 @@
                         "inputs": {
                           "cue_id": "sightline_tension",
                           "message": "You entrench Checkpoint Posts. New guard posts, inspection trays, and a marked bypass lane create functional checkpoints across the three layers."
+                        }
+                      },
+                      {
+                        "id": "open_new_muscle_door",
+                        "label": "Talk: The New Coat",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_new_muscle_door",
+                          "resolution_id": "take_the_slow_read"
                         }
                       }
                     ],
@@ -11155,7 +11302,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_new_muscle_arrival_transition_stage",
-                  "reduced_motion_message": "In reduced motion, punchline new muscle settles directly into the same visible result.",
+                  "reduced_motion_message": "Guard posts, trays, bypass marks, and new muscle appear at their current checkpoint stations.",
                   "stable_object_id": "punchline_new_muscle_arrival_transition",
                   "stage_id": "punchline_new_muscle_arrival_stage"
                 }
@@ -11267,7 +11414,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You let the pressure win. A checkpoint post or bypass mark moves, making it possible to test second-layer guard gap."
+                          "message": "The new guards harden their checkpoint while you study them. A checkpoint post or bypass mark moves, making it possible to test second-layer guard gap."
                         }
                       },
                       {
@@ -11278,7 +11425,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse and leave cleanly. A checkpoint post or bypass mark moves, making it possible to test second-layer guard gap."
+                          "message": "You leave the inspection trays and bypass lane to the new crew. A checkpoint post or bypass mark moves, making it possible to test second-layer guard gap."
                         }
                       }
                     ],
@@ -11477,7 +11624,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You let the pressure win. A checkpoint post or bypass mark moves, making it possible to mark third-layer bypass lane."
+                          "message": "The new guards harden their checkpoint while you study them. A checkpoint post or bypass mark moves, making it possible to mark third-layer bypass lane."
                         }
                       },
                       {
@@ -11488,7 +11635,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse and leave cleanly. A checkpoint post or bypass mark moves, making it possible to mark third-layer bypass lane."
+                          "message": "You leave the inspection trays and bypass lane to the new crew. A checkpoint post or bypass mark moves, making it possible to mark third-layer bypass lane."
                         }
                       }
                     ],
@@ -11578,7 +11725,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_new_muscle_work_2_transition_stage",
-                  "reduced_motion_message": "In reduced motion, punchline new muscle settles directly into the same visible result.",
+                  "reduced_motion_message": "Guard posts, trays, bypass marks, and new muscle appear at their current checkpoint stations.",
                   "stable_object_id": "punchline_new_muscle_work_2_transition",
                   "stage_id": "punchline_new_muscle_work_2_stage"
                 }
@@ -11690,7 +11837,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You let the pressure win. A checkpoint post or bypass mark moves, making it possible to reassign checkpoint posts."
+                          "message": "The new guards harden their checkpoint while you study them. A checkpoint post or bypass mark moves, making it possible to reassign checkpoint posts."
                         }
                       },
                       {
@@ -11701,7 +11848,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse and leave cleanly. A checkpoint post or bypass mark moves, making it possible to reassign checkpoint posts."
+                          "message": "You leave the inspection trays and bypass lane to the new crew. A checkpoint post or bypass mark moves, making it possible to reassign checkpoint posts."
                         }
                       }
                     ],
@@ -11900,7 +12047,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You let the pressure win. A checkpoint post or bypass mark moves, making it possible to open clean route."
+                          "message": "The new guards harden their checkpoint while you study them. A checkpoint post or bypass mark moves, making it possible to open clean route."
                         }
                       },
                       {
@@ -11911,7 +12058,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse and leave cleanly. A checkpoint post or bypass mark moves, making it possible to open clean route."
+                          "message": "You leave the inspection trays and bypass lane to the new crew. A checkpoint post or bypass mark moves, making it possible to open clean route."
                         }
                       }
                     ],
@@ -12143,7 +12290,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "dc19441ef1a1e61ecc77edb9e665c938049a51e2031e6c5504daca273a7911d0"
+        "sequence_signature": "cf8b5d0758fd61b9aa4d82a5e8751735fc21f955f837efa157faecd40e6db33f"
       }
     },
     {
@@ -12546,7 +12693,17 @@
         },
         "fact_subscriptions": [
           "sweep_changed",
-          "travel_departed"
+          "travel_departed",
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_raid_jitters_check",
+              "choice_id": "use_the_second_check",
+              "resolution_id": "use_the_second_check",
+              "resolved": true,
+              "ok": true
+            }
+          }
         ],
         "local_state_schema": {
           "pressure_seen": {
@@ -12717,7 +12874,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse the task. Hide carts, clear bins, and reopen seals wait on different layers while a lookout listens at the outer knock point."
+                          "message": "You leave the hide carts and reopen seals to the rattled staff. You leave the room unchanged: hide carts, clear bins, and reopen seals wait on different layers while a lookout listens at the outer knock point."
                         }
                       }
                     ],
@@ -12772,7 +12929,18 @@
                           "owner_namespace": "scenario",
                           "stable_object_id": "punchline_raid_jitters_task_0",
                           "state": "changed_by_fail_punchline_raid_jitters",
-                          "message": "You let the pressure win. Hide carts, clear bins, and reopen seals wait on different layers while a lookout listens at the outer knock point."
+                          "message": "Another nervous check closes before you can use it. Hide carts, clear bins, and reopen seals wait on different layers while a lookout listens at the outer knock point."
+                        }
+                      },
+                      {
+                        "id": "open_raid_jitters_check",
+                        "label": "Talk: The Second Check",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_raid_jitters_check",
+                          "resolution_id": "use_the_second_check"
                         }
                       }
                     ],
@@ -12947,7 +13115,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_raid_jitters_arrival_transition_stage",
-                  "reduced_motion_message": "In reduced motion, punchline raid jitters settles directly into the same visible result.",
+                  "reduced_motion_message": "Hide carts, clear bins, lookout, and seals appear at their settled raid-prep stations.",
                   "stable_object_id": "punchline_raid_jitters_arrival_transition",
                   "stage_id": "punchline_raid_jitters_arrival_stage"
                 }
@@ -13061,7 +13229,7 @@
                           "owner_namespace": "scenario",
                           "stable_object_id": "punchline_raid_jitters_task_1",
                           "state": "changed_by_fail_punchline_raid_jitters",
-                          "message": "You let the pressure win. A cart, bin, or screen changes the hiding route, leaving time to clear second-layer service lane."
+                          "message": "Another nervous check closes before you can use it. A cart, bin, or screen changes the hiding route, leaving time to clear second-layer service lane."
                         }
                       },
                       {
@@ -13072,7 +13240,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse and leave cleanly. A cart, bin, or screen changes the hiding route, leaving time to clear second-layer service lane."
+                          "message": "You leave the hide carts and reopen seals to the rattled staff. A cart, bin, or screen changes the hiding route, leaving time to clear second-layer service lane."
                         }
                       }
                     ],
@@ -13271,7 +13439,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You let the pressure win. A cart, bin, or screen changes the hiding route, leaving time to seal third-layer room screen."
+                          "message": "Another nervous check closes before you can use it. A cart, bin, or screen changes the hiding route, leaving time to seal third-layer room screen."
                         }
                       },
                       {
@@ -13282,7 +13450,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse and leave cleanly. A cart, bin, or screen changes the hiding route, leaving time to seal third-layer room screen."
+                          "message": "You leave the hide carts and reopen seals to the rattled staff. A cart, bin, or screen changes the hiding route, leaving time to seal third-layer room screen."
                         }
                       }
                     ],
@@ -13372,7 +13540,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "punchline_raid_jitters_work_2_transition_stage",
-                  "reduced_motion_message": "In reduced motion, punchline raid jitters settles directly into the same visible result.",
+                  "reduced_motion_message": "Hide carts, clear bins, lookout, and seals appear at their settled raid-prep stations.",
                   "stable_object_id": "punchline_raid_jitters_work_2_transition",
                   "stage_id": "punchline_raid_jitters_work_2_stage"
                 }
@@ -13517,7 +13685,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You let the pressure win. A cart, bin, or screen changes the hiding route, leaving time to answer outer knock."
+                          "message": "Another nervous check closes before you can use it. A cart, bin, or screen changes the hiding route, leaving time to answer outer knock."
                         }
                       },
                       {
@@ -13528,7 +13696,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse and leave cleanly. A cart, bin, or screen changes the hiding route, leaving time to answer outer knock."
+                          "message": "You leave the hide carts and reopen seals to the rattled staff. A cart, bin, or screen changes the hiding route, leaving time to answer outer knock."
                         }
                       },
                       {
@@ -13762,7 +13930,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You let the pressure win. A cart, bin, or screen changes the hiding route, leaving time to reopen safe floor."
+                          "message": "Another nervous check closes before you can use it. A cart, bin, or screen changes the hiding route, leaving time to reopen safe floor."
                         }
                       },
                       {
@@ -13773,7 +13941,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse and leave cleanly. A cart, bin, or screen changes the hiding route, leaving time to reopen safe floor."
+                          "message": "You leave the hide carts and reopen seals to the rattled staff. A cart, bin, or screen changes the hiding route, leaving time to reopen safe floor."
                         }
                       }
                     ],
@@ -14005,7 +14173,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "19bf0bb1103be072fee15418aca54a18888f4628bdafd19b2036dfb447796ec7"
+        "sequence_signature": "5ada1d4a0b2b0e0aecc3a05c21b3d2e62dbb8aca95e194f5aa5ad17531017f0a"
       }
     },
     {
@@ -14406,7 +14574,17 @@
         },
         "fact_subscriptions": [
           "town_transition",
-          "travel_departed"
+          "travel_departed",
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_amateur_night_applause",
+              "choice_id": "back_the_first_timer",
+              "resolution_id": "back_the_first_timer",
+              "resolved": true,
+              "ok": true
+            }
+          }
         ],
         "local_state_schema": {
           "pressure_seen": {
@@ -14578,7 +14756,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse the task. Signup, dressing, stage, and judging stations form a visible four-stop contestant circuit around the lounge."
+                          "message": "You leave signup, dressing, and judging to the amateur-night host. You leave the room unchanged: signup, dressing, stage, and judging stations form a visible four-stop contestant circuit around the lounge."
                         }
                       }
                     ],
@@ -14633,7 +14811,18 @@
                           "owner_namespace": "scenario",
                           "stable_object_id": "kitty_cat_lounge_amateur_night_task_0",
                           "state": "changed_by_fail_kitty_cat_lounge_amateur_night",
-                          "message": "You let the pressure win. Signup, dressing, stage, and judging stations form a visible four-stop contestant circuit around the lounge."
+                          "message": "The contestant circuit advances without your cue. Signup, dressing, stage, and judging stations form a visible four-stop contestant circuit around the lounge."
+                        }
+                      },
+                      {
+                        "id": "open_amateur_night_applause",
+                        "label": "Talk: Easy Applause",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_amateur_night_applause",
+                          "resolution_id": "back_the_first_timer"
                         }
                       }
                     ],
@@ -14809,7 +14998,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_amateur_night_arrival_transition_stage",
-                  "reduced_motion_message": "In reduced motion, kitty cat lounge amateur night settles directly into the same visible result.",
+                  "reduced_motion_message": "Signup, dressing, stage, judging, and contestants appear at their current circuit stations.",
                   "stable_object_id": "kitty_cat_lounge_amateur_night_arrival_transition",
                   "stage_id": "kitty_cat_lounge_amateur_night_arrival_stage"
                 }
@@ -14923,7 +15112,7 @@
                           "owner_namespace": "scenario",
                           "stable_object_id": "kitty_cat_lounge_amateur_night_task_1",
                           "state": "changed_by_fail_kitty_cat_lounge_amateur_night",
-                          "message": "You let the pressure win. A contestant marker advances through the four stations, inviting you to carry costume to dressing."
+                          "message": "The contestant circuit advances without your cue. A contestant marker advances through the four stations, inviting you to carry costume to dressing."
                         }
                       },
                       {
@@ -14934,7 +15123,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse and leave cleanly. A contestant marker advances through the four stations, inviting you to carry costume to dressing."
+                          "message": "You leave signup, dressing, and judging to the amateur-night host. A contestant marker advances through the four stations, inviting you to carry costume to dressing."
                         }
                       }
                     ],
@@ -15166,7 +15355,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You let the pressure win. A contestant marker advances through the four stations, inviting you to set stage mark."
+                          "message": "The contestant circuit advances without your cue. A contestant marker advances through the four stations, inviting you to set stage mark."
                         }
                       },
                       {
@@ -15177,7 +15366,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse and leave cleanly. A contestant marker advances through the four stations, inviting you to set stage mark."
+                          "message": "You leave signup, dressing, and judging to the amateur-night host. A contestant marker advances through the four stations, inviting you to set stage mark."
                         }
                       },
                       {
@@ -15302,7 +15491,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_amateur_night_work_2_transition_stage",
-                  "reduced_motion_message": "In reduced motion, kitty cat lounge amateur night settles directly into the same visible result.",
+                  "reduced_motion_message": "Signup, dressing, stage, judging, and contestants appear at their current circuit stations.",
                   "stable_object_id": "kitty_cat_lounge_amateur_night_work_2_transition",
                   "stage_id": "kitty_cat_lounge_amateur_night_work_2_stage"
                 }
@@ -15414,7 +15603,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You let the pressure win. A contestant marker advances through the four stations, inviting you to deliver judges card."
+                          "message": "The contestant circuit advances without your cue. A contestant marker advances through the four stations, inviting you to deliver judges card."
                         }
                       },
                       {
@@ -15425,7 +15614,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse and leave cleanly. A contestant marker advances through the four stations, inviting you to deliver judges card."
+                          "message": "You leave signup, dressing, and judging to the amateur-night host. A contestant marker advances through the four stations, inviting you to deliver judges card."
                         }
                       }
                     ],
@@ -15624,7 +15813,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You let the pressure win. A contestant marker advances through the four stations, inviting you to rotate final lineup."
+                          "message": "The contestant circuit advances without your cue. A contestant marker advances through the four stations, inviting you to rotate final lineup."
                         }
                       },
                       {
@@ -15635,7 +15824,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse and leave cleanly. A contestant marker advances through the four stations, inviting you to rotate final lineup."
+                          "message": "You leave signup, dressing, and judging to the amateur-night host. A contestant marker advances through the four stations, inviting you to rotate final lineup."
                         }
                       }
                     ],
@@ -15867,7 +16056,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "158663e8ede091000da88e83a8ecdf1e81c22cfe708f12fbb1fa45537c82bb98"
+        "sequence_signature": "93fcbcaf662e545acd4f6da9aa42867d6b9f9c96031b4827a2f6fae89f988963"
       }
     },
     {
@@ -16271,7 +16460,17 @@
         },
         "fact_subscriptions": [
           "service_result",
-          "travel_departed"
+          "travel_departed",
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_buyout_rope",
+              "choice_id": "use_the_name",
+              "resolution_id": "use_the_name",
+              "resolved": true,
+              "ok": true
+            }
+          }
         ],
         "local_state_schema": {
           "pressure_seen": {
@@ -16443,7 +16642,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse the task. Private-party ropes advance from the entrance toward the stage while a guest desk and request cart split public circulation."
+                          "message": "You leave the guest desk and request cart to the buyout staff. You leave the room unchanged: private-party ropes advance from the entrance toward the stage while a guest desk and request cart split public circulation."
                         }
                       }
                     ],
@@ -16498,7 +16697,18 @@
                           "owner_namespace": "scenario",
                           "stable_object_id": "kitty_cat_lounge_buyout_task_0",
                           "state": "changed_by_fail_kitty_cat_lounge_buyout",
-                          "message": "You let the pressure win. Private-party ropes advance from the entrance toward the stage while a guest desk and request cart split public circulation."
+                          "message": "The private ropes advance another station while you wait. Private-party ropes advance from the entrance toward the stage while a guest desk and request cart split public circulation."
+                        }
+                      },
+                      {
+                        "id": "open_buyout_rope",
+                        "label": "Talk: The Private Rope",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_buyout_rope",
+                          "resolution_id": "use_the_name"
                         }
                       }
                     ],
@@ -16674,7 +16884,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_buyout_arrival_transition_stage",
-                  "reduced_motion_message": "In reduced motion, kitty cat lounge buyout settles directly into the same visible result.",
+                  "reduced_motion_message": "Private ropes, guest desk, request cart, and party host appear at their settled lounge positions.",
                   "stable_object_id": "kitty_cat_lounge_buyout_arrival_transition",
                   "stage_id": "kitty_cat_lounge_buyout_arrival_stage"
                 }
@@ -16821,7 +17031,7 @@
                           "owner_namespace": "scenario",
                           "stable_object_id": "kitty_cat_lounge_buyout_task_1",
                           "state": "changed_by_fail_kitty_cat_lounge_buyout",
-                          "message": "You let the pressure win. The request cart clears enough floor to advance the buyout rope."
+                          "message": "The private ropes advance another station while you wait. The request cart clears enough floor to advance the buyout rope."
                         }
                       },
                       {
@@ -16832,7 +17042,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse and leave cleanly. The request cart clears enough floor to advance the buyout rope."
+                          "message": "You leave the guest desk and request cart to the buyout staff. The request cart clears enough floor to advance the buyout rope."
                         }
                       },
                       {
@@ -17066,7 +17276,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You let the pressure win. The advanced rope opens a lane for the request cart."
+                          "message": "The private ropes advance another station while you wait. The advanced rope opens a lane for the request cart."
                         }
                       },
                       {
@@ -17077,7 +17287,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse and leave cleanly. The advanced rope opens a lane for the request cart."
+                          "message": "You leave the guest desk and request cart to the buyout staff. The advanced rope opens a lane for the request cart."
                         }
                       }
                     ],
@@ -17167,7 +17377,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_buyout_work_2_transition_stage",
-                  "reduced_motion_message": "In reduced motion, kitty cat lounge buyout settles directly into the same visible result.",
+                  "reduced_motion_message": "Private ropes, guest desk, request cart, and party host appear at their settled lounge positions.",
                   "stable_object_id": "kitty_cat_lounge_buyout_work_2_transition",
                   "stage_id": "kitty_cat_lounge_buyout_work_2_stage"
                 }
@@ -17279,7 +17489,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You let the pressure win. The parked cart leaves the public half ready to mark."
+                          "message": "The private ropes advance another station while you wait. The parked cart leaves the public half ready to mark."
                         }
                       },
                       {
@@ -17290,7 +17500,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse and leave cleanly. The parked cart leaves the public half ready to mark."
+                          "message": "You leave the guest desk and request cart to the buyout staff. The parked cart leaves the public half ready to mark."
                         }
                       }
                     ],
@@ -17489,7 +17699,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You let the pressure win. The marked floor leaves a clear route back to the entry desk."
+                          "message": "The private ropes advance another station while you wait. The marked floor leaves a clear route back to the entry desk."
                         }
                       },
                       {
@@ -17500,7 +17710,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse and leave cleanly. The marked floor leaves a clear route back to the entry desk."
+                          "message": "You leave the guest desk and request cart to the buyout staff. The marked floor leaves a clear route back to the entry desk."
                         }
                       }
                     ],
@@ -17732,7 +17942,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "ac5fd753a72bfadb3057107fb0fca2befd31e222747eeb4e67394b751e86a0c5"
+        "sequence_signature": "890e617414d32cb303f4fe8c0a937a0c5320339e15cf789e674ac95d093e13ea"
       }
     },
     {
@@ -18118,7 +18328,17 @@
         },
         "fact_subscriptions": [
           "world_boundary",
-          "travel_departed"
+          "travel_departed",
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_slow_night_intel",
+              "choice_id": "stay_for_the_truth",
+              "resolution_id": "stay_for_the_truth",
+              "resolved": true,
+              "ok": true
+            }
+          }
         ],
         "local_state_schema": {
           "pressure_seen": {
@@ -18317,7 +18537,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse the task. Closed section ropes consolidate the room around a dark mini-stage, an exposed maintenance panel, and one occupied conversation booth."
+                          "message": "You leave the dark stage, maintenance panel, and occupied booth alone. You leave the room unchanged: closed section ropes consolidate the room around a dark mini-stage, an exposed maintenance panel, and one occupied conversation booth."
                         }
                       }
                     ],
@@ -18370,7 +18590,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "dice_curb",
-                          "message": "You let the pressure win. Closed section ropes consolidate the room around a dark mini-stage, an exposed maintenance panel, and one occupied conversation booth."
+                          "message": "The empty room closes one more useful corner on its own. Closed section ropes consolidate the room around a dark mini-stage, an exposed maintenance panel, and one occupied conversation booth."
                         }
                       },
                       {
@@ -18406,6 +18626,17 @@
                         "inputs": {
                           "cue_id": "sightline_tension",
                           "message": "You close Wrong Lounge Zone. Closed section ropes consolidate the room around a dark mini-stage, an exposed maintenance panel, and one occupied conversation booth."
+                        }
+                      },
+                      {
+                        "id": "open_slow_night_intel",
+                        "label": "Talk: Nothing to Pour",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_slow_night_intel",
+                          "resolution_id": "stay_for_the_truth"
                         }
                       }
                     ],
@@ -18582,7 +18813,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_slow_night_arrival_transition_stage",
-                  "reduced_motion_message": "In reduced motion, kitty cat lounge slow night settles directly into the same visible result.",
+                  "reduced_motion_message": "Closed ropes, mini-stage, maintenance panel, and booth appear at their current quiet-room stations.",
                   "stable_object_id": "kitty_cat_lounge_slow_night_arrival_transition",
                   "stage_id": "kitty_cat_lounge_slow_night_arrival_stage"
                 }
@@ -18694,7 +18925,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "dice_curb",
-                          "message": "You let the pressure win. A rope, booth, or maintenance light changes in the quiet room, opening a chance to coil closed section rope."
+                          "message": "The empty room closes one more useful corner on its own. A rope, booth, or maintenance light changes in the quiet room, opening a chance to coil closed section rope."
                         }
                       },
                       {
@@ -18705,7 +18936,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse and leave cleanly. A rope, booth, or maintenance light changes in the quiet room, opening a chance to coil closed section rope."
+                          "message": "You leave the dark stage, maintenance panel, and occupied booth alone. A rope, booth, or maintenance light changes in the quiet room, opening a chance to coil closed section rope."
                         }
                       }
                     ],
@@ -18904,7 +19135,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "dice_curb",
-                          "message": "You let the pressure win. A rope, booth, or maintenance light changes in the quiet room, opening a chance to power selected station."
+                          "message": "The empty room closes one more useful corner on its own. A rope, booth, or maintenance light changes in the quiet room, opening a chance to power selected station."
                         }
                       },
                       {
@@ -18915,7 +19146,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse and leave cleanly. A rope, booth, or maintenance light changes in the quiet room, opening a chance to power selected station."
+                          "message": "You leave the dark stage, maintenance panel, and occupied booth alone. A rope, booth, or maintenance light changes in the quiet room, opening a chance to power selected station."
                         }
                       }
                     ],
@@ -19005,7 +19236,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_slow_night_work_2_transition_stage",
-                  "reduced_motion_message": "In reduced motion, kitty cat lounge slow night settles directly into the same visible result.",
+                  "reduced_motion_message": "Closed ropes, mini-stage, maintenance panel, and booth appear at their current quiet-room stations.",
                   "stable_object_id": "kitty_cat_lounge_slow_night_work_2_transition",
                   "stage_id": "kitty_cat_lounge_slow_night_work_2_stage"
                 }
@@ -19117,7 +19348,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "dice_curb",
-                          "message": "You let the pressure win. A rope, booth, or maintenance light changes in the quiet room, opening a chance to move remaining staff."
+                          "message": "The empty room closes one more useful corner on its own. A rope, booth, or maintenance light changes in the quiet room, opening a chance to move remaining staff."
                         }
                       },
                       {
@@ -19128,7 +19359,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse and leave cleanly. A rope, booth, or maintenance light changes in the quiet room, opening a chance to move remaining staff."
+                          "message": "You leave the dark stage, maintenance panel, and occupied booth alone. A rope, booth, or maintenance light changes in the quiet room, opening a chance to move remaining staff."
                         }
                       }
                     ],
@@ -19362,7 +19593,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "670ea781629c56dc56cf7d37af58aed69030cb82e0377a43927eb93b693db37b"
+        "sequence_signature": "72edddd2ac6fd8483e24f8ad4df1ecb3dd1ee2f8fa51d9c70f9c96a52568e1ad"
       }
     },
     {
@@ -19782,7 +20013,17 @@
         },
         "fact_subscriptions": [
           "heat_band_changed",
-          "travel_departed"
+          "travel_departed",
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_bachelorette_storm_table",
+              "choice_id": "cover_one_round",
+              "resolution_id": "cover_one_round",
+              "resolved": true,
+              "ok": true
+            }
+          }
         ],
         "local_state_schema": {
           "pressure_seen": {
@@ -19961,7 +20202,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse the task. Two party groups, a rolling prop trunk, and a missing-person marker crowd the stage-to-bar lane."
+                          "message": "You leave the prop trunk and missing-person marker to the hosts. You leave the room unchanged: two party groups, a rolling prop trunk, and a missing-person marker crowd the stage-to-bar lane."
                         }
                       }
                     ],
@@ -20014,7 +20255,18 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "dice_curb",
-                          "message": "You let the pressure win. Two party groups, a rolling prop trunk, and a missing-person marker crowd the stage-to-bar lane."
+                          "message": "The two parties surge together before you can clear the lane. Two party groups, a rolling prop trunk, and a missing-person marker crowd the stage-to-bar lane."
+                        }
+                      },
+                      {
+                        "id": "open_bachelorette_storm_table",
+                        "label": "Talk: The Saved Table",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_bachelorette_storm_table",
+                          "resolution_id": "cover_one_round"
                         }
                       }
                     ],
@@ -20192,7 +20444,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_bachelorette_storm_arrival_transition_stage",
-                  "reduced_motion_message": "In reduced motion, kitty cat lounge bachelorette storm settles directly into the same visible result.",
+                  "reduced_motion_message": "Party groups, prop trunk, search marker, and bar lane appear at their settled storm positions.",
                   "stable_object_id": "kitty_cat_lounge_bachelorette_storm_arrival_transition",
                   "stage_id": "kitty_cat_lounge_bachelorette_storm_arrival_stage"
                 }
@@ -20304,7 +20556,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "dice_curb",
-                          "message": "You let the pressure win. The prop trunk and party groups visibly separate, making room to roll prop trunk off lane."
+                          "message": "The two parties surge together before you can clear the lane. The prop trunk and party groups visibly separate, making room to roll prop trunk off lane."
                         }
                       },
                       {
@@ -20315,7 +20567,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse and leave cleanly. The prop trunk and party groups visibly separate, making room to roll prop trunk off lane."
+                          "message": "You leave the prop trunk and missing-person marker to the hosts. The prop trunk and party groups visibly separate, making room to roll prop trunk off lane."
                         }
                       }
                     ],
@@ -20514,7 +20766,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "dice_curb",
-                          "message": "You let the pressure win. The prop trunk and party groups visibly separate, making room to trace missing guest marker."
+                          "message": "The two parties surge together before you can clear the lane. The prop trunk and party groups visibly separate, making room to trace missing guest marker."
                         }
                       },
                       {
@@ -20525,7 +20777,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse and leave cleanly. The prop trunk and party groups visibly separate, making room to trace missing guest marker."
+                          "message": "You leave the prop trunk and missing-person marker to the hosts. The prop trunk and party groups visibly separate, making room to trace missing guest marker."
                         }
                       }
                     ],
@@ -20615,7 +20867,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_bachelorette_storm_work_2_transition_stage",
-                  "reduced_motion_message": "In reduced motion, kitty cat lounge bachelorette storm settles directly into the same visible result.",
+                  "reduced_motion_message": "Party groups, prop trunk, search marker, and bar lane appear at their settled storm positions.",
                   "stable_object_id": "kitty_cat_lounge_bachelorette_storm_work_2_transition",
                   "stage_id": "kitty_cat_lounge_bachelorette_storm_work_2_stage"
                 }
@@ -20760,7 +21012,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "dice_curb",
-                          "message": "You let the pressure win. The prop trunk and party groups visibly separate, making room to return stage prop."
+                          "message": "The two parties surge together before you can clear the lane. The prop trunk and party groups visibly separate, making room to return stage prop."
                         }
                       },
                       {
@@ -20771,7 +21023,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse and leave cleanly. The prop trunk and party groups visibly separate, making room to return stage prop."
+                          "message": "You leave the prop trunk and missing-person marker to the hosts. The prop trunk and party groups visibly separate, making room to return stage prop."
                         }
                       },
                       {
@@ -21010,7 +21262,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "dice_curb",
-                          "message": "You let the pressure win. The prop trunk and party groups visibly separate, making room to restore bar route."
+                          "message": "The two parties surge together before you can clear the lane. The prop trunk and party groups visibly separate, making room to restore bar route."
                         }
                       },
                       {
@@ -21021,7 +21273,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse and leave cleanly. The prop trunk and party groups visibly separate, making room to restore bar route."
+                          "message": "You leave the prop trunk and missing-person marker to the hosts. The prop trunk and party groups visibly separate, making room to restore bar route."
                         }
                       }
                     ],
@@ -21219,7 +21471,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "dice_curb",
-                          "message": "You let the pressure win. The prop trunk and party groups visibly separate, making room to seat orderly finale."
+                          "message": "The two parties surge together before you can clear the lane. The prop trunk and party groups visibly separate, making room to seat orderly finale."
                         }
                       },
                       {
@@ -21230,7 +21482,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "sightline_tension",
-                          "message": "You refuse and leave cleanly. The prop trunk and party groups visibly separate, making room to seat orderly finale."
+                          "message": "You leave the prop trunk and missing-person marker to the hosts. The prop trunk and party groups visibly separate, making room to seat orderly finale."
                         }
                       }
                     ],
@@ -21320,7 +21572,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_bachelorette_storm_work_5_transition_stage",
-                  "reduced_motion_message": "In reduced motion, kitty cat lounge bachelorette storm settles directly into the same visible result.",
+                  "reduced_motion_message": "Party groups, prop trunk, search marker, and bar lane appear at their settled storm positions.",
                   "stable_object_id": "kitty_cat_lounge_bachelorette_storm_work_5_transition",
                   "stage_id": "kitty_cat_lounge_bachelorette_storm_work_5_stage"
                 }
@@ -21466,7 +21718,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "c078118e1f7755382b623fee4aa81c8a5dc852c02b30d9c41523bce3bb716325"
+        "sequence_signature": "0d8b72f12f99cf3fe302b3434ec1c980dddfeaa1e2d6e810b02de32def47deff"
       }
     }
   ],

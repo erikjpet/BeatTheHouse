@@ -261,6 +261,17 @@
                           "objective_id": "motel_conventioneers_work",
                           "step_id": "compare_claim_tags"
                         }
+                      },
+                      {
+                        "id": "open_conventioneers_room_nine",
+                        "label": "Talk: Room Nine",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_conventioneers_room_nine",
+                          "resolution_id": "sit_for_one_orbit"
+                        }
                       }
                     ],
                     "input_actions": [
@@ -1340,7 +1351,7 @@
           "props_4",
           "actors_2"
         ],
-        "sequence_signature": "422108f61de244e82f6ed392d40b777989ffe0d536f050fb5ad4105079ee28d1",
+        "sequence_signature": "c6572c9bdbd2fe4aef344cfc0b427aa3e1863bb42fbf4df36424c860b77e6bfb",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -1372,6 +1383,16 @@
             "inputs": {
               "key": "world_boundary_seen",
               "value": true
+            }
+          },
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_conventioneers_room_nine",
+              "choice_id": "sit_for_one_orbit",
+              "resolution_id": "sit_for_one_orbit",
+              "resolved": true,
+              "ok": true
             }
           }
         ],
@@ -1748,6 +1769,17 @@
                         "inputs": {
                           "objective_id": "motel_stakeout_work",
                           "step_id": "trace_sight_cones"
+                        }
+                      },
+                      {
+                        "id": "open_stakeout_watch_or_leave",
+                        "label": "Talk: The Long Watch",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_stakeout_watch_or_leave",
+                          "resolution_id": "watch_the_watchers"
                         }
                       }
                     ],
@@ -2661,7 +2693,7 @@
           "props_5",
           "actors_2"
         ],
-        "sequence_signature": "0c74fe38b5cee08e6d1a721c69073f56e3b8e2245aba625bf2bf460d0f9bb60d",
+        "sequence_signature": "ae74aecb0babb8ceafb5fa4c5a5a182d1bb9562e30ecdf2e7963ad61dd39c25f",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -2695,6 +2727,16 @@
             "inputs": {
               "key": "world_boundary_seen",
               "value": true
+            }
+          },
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_stakeout_watch_or_leave",
+              "choice_id": "watch_the_watchers",
+              "resolution_id": "watch_the_watchers",
+              "resolved": true,
+              "ok": true
             }
           }
         ],
@@ -3045,6 +3087,17 @@
                         "inputs": {
                           "objective_id": "motel_weekly_rates_work",
                           "step_id": "inspect_room_faults"
+                        }
+                      },
+                      {
+                        "id": "open_weekly_rates_soft_terms",
+                        "label": "Talk: Soft Terms",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_weekly_rates_soft_terms",
+                          "resolution_id": "take_the_small_float"
                         }
                       }
                     ],
@@ -4201,7 +4254,7 @@
           "props_4",
           "actors_1"
         ],
-        "sequence_signature": "caf4b2430c82d2302ddc3b3bc0bf52a9fc470ced253c33c197baa6ed263593b5",
+        "sequence_signature": "007ad3f2339cc1e62181777ce44c18bfdcf7caffb19b2671a54170ee9161cf02",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -4233,6 +4286,16 @@
             "inputs": {
               "key": "world_boundary_seen",
               "value": true
+            }
+          },
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_weekly_rates_soft_terms",
+              "choice_id": "take_the_small_float",
+              "resolution_id": "take_the_small_float",
+              "resolved": true,
+              "ok": true
             }
           }
         ],
@@ -4610,6 +4673,17 @@
                         "inputs": {
                           "objective_id": "motel_wedding_overflow_work",
                           "step_id": "read_room_key_trail"
+                        }
+                      },
+                      {
+                        "id": "open_wedding_overflow_hallway",
+                        "label": "Talk: Hallway Table",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_wedding_overflow_hallway",
+                          "resolution_id": "take_the_hallway_seat"
                         }
                       }
                     ],
@@ -5702,7 +5776,7 @@
           "props_5",
           "actors_3"
         ],
-        "sequence_signature": "cba6ba147392d6d44aa1f264b112335e42f67ff401921ffb3b99954ba73ac56a",
+        "sequence_signature": "2c400e8b1c607fae180d4f1ac7b727c011ef2197a3367aaae583731ba141e7a5",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -5736,6 +5810,16 @@
             "inputs": {
               "key": "world_boundary_seen",
               "value": true
+            }
+          },
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_wedding_overflow_hallway",
+              "choice_id": "take_the_hallway_seat",
+              "resolution_id": "take_the_hallway_seat",
+              "resolved": true,
+              "ok": true
             }
           }
         ],
@@ -6114,6 +6198,17 @@
                         "inputs": {
                           "objective_id": "gas_station_trucker_convoy_work",
                           "step_id": "read_departure_board"
+                        }
+                      },
+                      {
+                        "id": "open_trucker_convoy_route",
+                        "label": "Talk: Convoy Talk",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_trucker_convoy_route",
+                          "resolution_id": "trade_for_the_route"
                         }
                       }
                     ],
@@ -7201,7 +7296,7 @@
           "props_5",
           "actors_3"
         ],
-        "sequence_signature": "dfccc469d7bde31eba93eead9daf722dbf8778855c54159bf2ada2e9f9c6f2f4",
+        "sequence_signature": "5de083fe67b68e17f647f1fab3b55a60d66e6de3e4c7efad92aedc1587d21f27",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -7233,6 +7328,16 @@
             "inputs": {
               "key": "world_boundary_seen",
               "value": true
+            }
+          },
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_trucker_convoy_route",
+              "choice_id": "trade_for_the_route",
+              "resolution_id": "trade_for_the_route",
+              "resolved": true,
+              "ok": true
             }
           }
         ],
@@ -7585,6 +7690,17 @@
                         "inputs": {
                           "objective_id": "gas_station_tour_bus_stop_work",
                           "step_id": "count_boarding_groups"
+                        }
+                      },
+                      {
+                        "id": "open_tour_bus_ticket_rush",
+                        "label": "Talk: Regional Stock",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_tour_bus_ticket_rush",
+                          "resolution_id": "buy_before_boarding"
                         }
                       }
                     ],
@@ -8646,7 +8762,7 @@
           "props_4",
           "actors_3"
         ],
-        "sequence_signature": "51c8d4bbe9418b5dfd756e32b7693f7cea29cfe6766ce9fa1ea782be744be67f",
+        "sequence_signature": "fb641c6c937f792e149c67a0b1ca0ad709c2696baf2f1c551cdc079f347816da",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -8679,6 +8795,16 @@
             "inputs": {
               "key": "world_boundary_seen",
               "value": true
+            }
+          },
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_tour_bus_ticket_rush",
+              "choice_id": "buy_before_boarding",
+              "resolution_id": "buy_before_boarding",
+              "resolved": true,
+              "ok": true
             }
           }
         ],
@@ -9057,6 +9183,17 @@
                         "inputs": {
                           "objective_id": "gas_station_graveyard_shift_work",
                           "step_id": "take_flashlight"
+                        }
+                      },
+                      {
+                        "id": "open_graveyard_maintenance",
+                        "label": "Talk: Panel Open",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_graveyard_maintenance",
+                          "resolution_id": "study_the_window"
                         }
                       }
                     ],
@@ -10246,7 +10383,7 @@
           "props_5",
           "actors_1"
         ],
-        "sequence_signature": "26424b0901d867c20fd2a146073db3c48a50d608a0cc6d7a4abfa7ee708639da",
+        "sequence_signature": "dce1235de28c4608ce41d6249456531162170f26c36cf9604865296e893cd31d",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -10278,6 +10415,16 @@
             "inputs": {
               "key": "world_boundary_seen",
               "value": true
+            }
+          },
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_graveyard_maintenance",
+              "choice_id": "study_the_window",
+              "resolution_id": "study_the_window",
+              "resolved": true,
+              "ok": true
             }
           }
         ],
@@ -10632,6 +10779,17 @@
                         "inputs": {
                           "objective_id": "gas_station_road_crew_payday_work",
                           "step_id": "audit_pooled_stake"
+                        }
+                      },
+                      {
+                        "id": "open_road_crew_payday_pool",
+                        "label": "Talk: Pay Envelope Pool",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_road_crew_payday_pool",
+                          "resolution_id": "cover_the_crew_side"
                         }
                       }
                     ],
@@ -11691,7 +11849,7 @@
           "props_4",
           "actors_3"
         ],
-        "sequence_signature": "5c6408cf3165d5221c54b0b2425e3c6015fe8a118d444e6f48bef70f9fef0aa1",
+        "sequence_signature": "d81c8d7072058bd88fa3bc268fa3638f5c0e69e88017b8ac77d85fc853207593",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -11724,6 +11882,16 @@
             "inputs": {
               "key": "world_boundary_seen",
               "value": true
+            }
+          },
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_road_crew_payday_pool",
+              "choice_id": "cover_the_crew_side",
+              "resolution_id": "cover_the_crew_side",
+              "resolved": true,
+              "ok": true
             }
           }
         ],
@@ -12102,6 +12270,17 @@
                         "inputs": {
                           "objective_id": "gas_station_storm_shelter_work",
                           "step_id": "close_rain_shutters"
+                        }
+                      },
+                      {
+                        "id": "open_storm_shelter_corner",
+                        "label": "Talk: The Dry Corner",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_storm_shelter_corner",
+                          "resolution_id": "cover_the_coffee"
                         }
                       }
                     ],
@@ -13294,7 +13473,7 @@
           "props_5",
           "actors_2"
         ],
-        "sequence_signature": "1ae65fa2fa04765752335a558519c44180bc28c8f937fa9f11af8c1d08fe4576",
+        "sequence_signature": "d69a6c75567dd194ee3c289cda0ad5fe38522c4ad17f56b0ed892e543f3ed5d3",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -13330,6 +13509,16 @@
             "inputs": {
               "key": "world_boundary_seen",
               "value": true
+            }
+          },
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_storm_shelter_corner",
+              "choice_id": "cover_the_coffee",
+              "resolution_id": "cover_the_coffee",
+              "resolved": true,
+              "ok": true
             }
           }
         ],
@@ -13708,6 +13897,17 @@
                         "inputs": {
                           "objective_id": "beach_bonfire_night_work",
                           "step_id": "read_tide_wind"
+                        }
+                      },
+                      {
+                        "id": "open_bonfire_story",
+                        "label": "Talk: The Warm Side",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_bonfire_story",
+                          "resolution_id": "take_the_warm_side"
                         }
                       }
                     ],
@@ -14775,7 +14975,7 @@
           "props_5",
           "actors_2"
         ],
-        "sequence_signature": "dcc8b37105fa14dc708e69235a1965e40e9cd0faf59d1590a6fb3b19463b3058",
+        "sequence_signature": "375865d8de8676e3d6bb2aaf5f67bf557a141da4a87547a7780a629b84d7a7e3",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -14806,6 +15006,16 @@
             "inputs": {
               "key": "world_boundary_seen",
               "value": true
+            }
+          },
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_bonfire_story",
+              "choice_id": "take_the_warm_side",
+              "resolution_id": "take_the_warm_side",
+              "resolved": true,
+              "ok": true
             }
           }
         ],
@@ -15184,6 +15394,17 @@
                         "inputs": {
                           "objective_id": "beach_storm_coming_work",
                           "step_id": "raise_warning_flag"
+                        }
+                      },
+                      {
+                        "id": "open_storm_stranger",
+                        "label": "Talk: One Stranger",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_storm_stranger",
+                          "resolution_id": "take_the_advice"
                         }
                       }
                     ],
@@ -16374,7 +16595,7 @@
           "props_5",
           "actors_2"
         ],
-        "sequence_signature": "8e867963ee31009b7e7206ab00fc417c4c99a64608ff0042aedde72db7330765",
+        "sequence_signature": "3bce34ef4e3989be36ba491d587ae90dac72c3a829442532c86c2fb69ab2290c",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -16406,6 +16627,16 @@
             "inputs": {
               "key": "world_boundary_seen",
               "value": true
+            }
+          },
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_storm_stranger",
+              "choice_id": "take_the_advice",
+              "resolution_id": "take_the_advice",
+              "resolved": true,
+              "ok": true
             }
           }
         ],
@@ -16812,6 +17043,17 @@
                         "inputs": {
                           "objective_id": "beach_festival_weekend_work",
                           "step_id": "read_festival_schedule"
+                        }
+                      },
+                      {
+                        "id": "open_festival_lucky_pitch",
+                        "label": "Talk: Lucky's Pitch",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_festival_lucky_pitch",
+                          "resolution_id": "work_one_stall"
                         }
                       }
                     ],
@@ -18118,7 +18360,7 @@
           "props_6",
           "actors_2"
         ],
-        "sequence_signature": "a806717050e5b06d637641aed23b19d87d51be912051d72695f225449a380051",
+        "sequence_signature": "bdcda4ab134b61dac1ce27eae9484de712e9b4613326ac79c6c51175fc7961f2",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -18152,6 +18394,16 @@
             "inputs": {
               "key": "world_boundary_seen",
               "value": true
+            }
+          },
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_festival_lucky_pitch",
+              "choice_id": "work_one_stall",
+              "resolution_id": "work_one_stall",
+              "resolved": true,
+              "ok": true
             }
           }
         ],

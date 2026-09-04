@@ -1994,12 +1994,24 @@ func _draw_scenario_icon(rect: Rect2, icon_key: String, accent: Color) -> void:
 	var right := rect.end.x
 	var bottom := rect.end.y
 	match icon_key:
+		"scenario_exit":
+			var door := Rect2(left + 5.0, top + 2.0, rect.size.x * 0.55, rect.size.y - 4.0)
+			draw_rect(door, accent, false, 3.0)
+			draw_circle(Vector2(door.end.x - 5.0, center.y), 2.0, C_WHITE)
+			draw_line(Vector2(door.end.x + 2.0, center.y), Vector2(right - 2.0, center.y), C_WHITE, 3.0)
+			draw_line(Vector2(right - 8.0, center.y - 6.0), Vector2(right - 2.0, center.y), C_WHITE, 3.0)
+			draw_line(Vector2(right - 8.0, center.y + 6.0), Vector2(right - 2.0, center.y), C_WHITE, 3.0)
 		"scenario_route":
-			draw_rect(Rect2(left + 3.0, top + 2.0, rect.size.x * 0.48, rect.size.y - 4.0), accent, false, 3.0)
-			draw_circle(Vector2(left + rect.size.x * 0.42, center.y), 2.0, C_WHITE)
-			draw_line(Vector2(center.x, center.y), Vector2(right - 3.0, center.y), C_WHITE, 3.0)
-			draw_line(Vector2(right - 10.0, center.y - 7.0), Vector2(right - 3.0, center.y), C_WHITE, 3.0)
-			draw_line(Vector2(right - 10.0, center.y + 7.0), Vector2(right - 3.0, center.y), C_WHITE, 3.0)
+			draw_line(Vector2(left + 3.0, bottom - 4.0), Vector2(center.x - 3.0, top + 4.0), accent, 4.0)
+			draw_line(Vector2(center.x - 3.0, top + 4.0), Vector2(right - 3.0, bottom - 4.0), C_WHITE, 4.0)
+			draw_circle(Vector2(left + 3.0, bottom - 4.0), 3.0, accent)
+			draw_circle(Vector2(center.x - 3.0, top + 4.0), 3.0, C_WHITE)
+			draw_circle(Vector2(right - 3.0, bottom - 4.0), 3.0, C_WHITE)
+		"scenario_hazard":
+			var hazard_points := PackedVector2Array([Vector2(center.x, top + 1.0), Vector2(right - 2.0, bottom - 2.0), Vector2(left + 2.0, bottom - 2.0)])
+			draw_polyline(hazard_points, C_ORANGE, 4.0)
+			draw_line(Vector2(center.x, top + 10.0), Vector2(center.x, bottom - 11.0), C_WHITE, 4.0)
+			draw_circle(Vector2(center.x, bottom - 6.0), 2.5, C_WHITE)
 		"scenario_barrier":
 			for stripe in range(3):
 				var stripe_y := top + 5.0 + float(stripe) * maxf(7.0, rect.size.y * 0.25)
@@ -2013,6 +2025,17 @@ func _draw_scenario_icon(rect: Rect2, icon_key: String, accent: Color) -> void:
 				draw_line(paper.position + Vector2(5.0, 8.0 + line_index * 7.0), Vector2(paper.end.x - 5.0, paper.position.y + 8.0 + line_index * 7.0), accent, 2.0)
 			draw_circle(Vector2(right - 9.0, bottom - 10.0), 7.0, C_WHITE, false, 3.0)
 			draw_line(Vector2(right - 4.0, bottom - 5.0), Vector2(right, bottom - 1.0), C_WHITE, 3.0)
+		"scenario_document":
+			var ledger := Rect2(left + 4.0, top + 2.0, rect.size.x - 8.0, rect.size.y - 4.0)
+			draw_rect(ledger, accent.darkened(0.35))
+			draw_rect(ledger, accent, false, 3.0)
+			draw_line(Vector2(ledger.position.x + 8.0, ledger.position.y), Vector2(ledger.position.x + 8.0, ledger.end.y), C_WHITE, 2.0)
+			for line_index in range(3):
+				draw_line(ledger.position + Vector2(13.0, 8.0 + line_index * 7.0), Vector2(ledger.end.x - 4.0, ledger.position.y + 8.0 + line_index * 7.0), C_WHITE, 2.0)
+		"scenario_task":
+			draw_circle(center, minf(rect.size.x, rect.size.y) * 0.38, accent, false, 4.0)
+			draw_line(Vector2(left + 8.0, center.y), Vector2(center.x - 3.0, bottom - 7.0), C_WHITE, 4.0)
+			draw_line(Vector2(center.x - 3.0, bottom - 7.0), Vector2(right - 5.0, top + 6.0), C_WHITE, 4.0)
 		"scenario_workstation":
 			draw_rect(Rect2(left + 2.0, top + rect.size.y * 0.45, rect.size.x - 4.0, rect.size.y * 0.23), accent)
 			draw_line(Vector2(left + 8.0, top + rect.size.y * 0.68), Vector2(left + 5.0, bottom - 2.0), accent, 4.0)
@@ -2032,6 +2055,43 @@ func _draw_scenario_icon(rect: Rect2, icon_key: String, accent: Color) -> void:
 			draw_circle(center, minf(rect.size.x, rect.size.y) * 0.34, accent)
 			for offset in [Vector2(-7.0, -6.0), Vector2(7.0, 6.0), Vector2(0.0, 0.0)]:
 				draw_circle(center + offset, 2.5, C_WHITE)
+		"scenario_stage":
+			draw_line(Vector2(left + 3.0, bottom - 4.0), Vector2(right - 3.0, bottom - 4.0), accent, 5.0)
+			draw_line(Vector2(left + 6.0, top + 3.0), Vector2(left + 6.0, bottom - 6.0), accent, 3.0)
+			draw_line(Vector2(right - 6.0, top + 3.0), Vector2(right - 6.0, bottom - 6.0), accent, 3.0)
+			draw_circle(Vector2(center.x - 4.0, center.y - 4.0), 6.0, C_WHITE, false, 3.0)
+			draw_line(Vector2(center.x + 2.0, center.y), Vector2(center.x + 8.0, bottom - 7.0), C_WHITE, 3.0)
+		"scenario_equipment":
+			draw_circle(center, minf(rect.size.x, rect.size.y) * 0.28, accent, false, 5.0)
+			for offset in [Vector2(0.0, -15.0), Vector2(0.0, 15.0), Vector2(-15.0, 0.0), Vector2(15.0, 0.0)]:
+				draw_line(center + offset * 0.62, center + offset, C_WHITE, 4.0)
+			draw_circle(center, 4.0, C_WHITE)
+		"scenario_signage":
+			draw_rect(Rect2(left + 3.0, top + 3.0, rect.size.x - 6.0, rect.size.y * 0.55), accent, false, 3.0)
+			_neon_text("INFO", Vector2(center.x - 16.0, center.y + 2.0), 7, C_WHITE)
+			draw_line(Vector2(center.x, top + rect.size.y * 0.60), Vector2(center.x, bottom - 2.0), accent, 4.0)
+		"scenario_seating":
+			draw_rect(Rect2(left + 4.0, center.y - 3.0, rect.size.x - 8.0, rect.size.y * 0.30), accent)
+			draw_line(Vector2(left + 7.0, top + 4.0), Vector2(left + 7.0, bottom - 2.0), accent, 4.0)
+			draw_line(Vector2(right - 7.0, center.y + 4.0), Vector2(right - 5.0, bottom - 2.0), accent, 4.0)
+		"scenario_shelter":
+			var roof := PackedVector2Array([Vector2(left + 2.0, center.y - 2.0), Vector2(center.x, top + 2.0), Vector2(right - 2.0, center.y - 2.0)])
+			draw_polyline(roof, accent, 4.0)
+			draw_line(Vector2(left + 7.0, center.y - 2.0), Vector2(left + 7.0, bottom - 2.0), accent, 4.0)
+			draw_line(Vector2(right - 7.0, center.y - 2.0), Vector2(right - 7.0, bottom - 2.0), accent, 4.0)
+			draw_circle(Vector2(center.x, center.y + 5.0), 5.0, C_WHITE)
+		"scenario_service":
+			draw_rect(Rect2(left + 2.0, center.y + 5.0, rect.size.x - 4.0, 6.0), accent)
+			draw_arc(Vector2(center.x, center.y + 4.0), minf(rect.size.x, rect.size.y) * 0.30, PI, TAU, 16, C_WHITE, 3.0)
+			draw_circle(Vector2(center.x, center.y - rect.size.y * 0.29), 3.0, C_WHITE)
+		"scenario_success":
+			draw_circle(center, minf(rect.size.x, rect.size.y) * 0.38, accent, false, 4.0)
+			draw_line(Vector2(left + 8.0, center.y), Vector2(center.x - 3.0, bottom - 7.0), C_WHITE, 4.0)
+			draw_line(Vector2(center.x - 3.0, bottom - 7.0), Vector2(right - 5.0, top + 6.0), C_WHITE, 4.0)
+		"scenario_damage":
+			draw_line(Vector2(left + 4.0, top + 4.0), Vector2(right - 4.0, bottom - 4.0), C_ORANGE, 5.0)
+			draw_line(Vector2(right - 4.0, top + 4.0), Vector2(left + 4.0, bottom - 4.0), C_ORANGE, 5.0)
+			draw_circle(center, minf(rect.size.x, rect.size.y) * 0.40, accent, false, 2.0)
 		"scenario_aftermath":
 			draw_line(Vector2(left + 8.0, top + 2.0), Vector2(left + 8.0, bottom - 2.0), accent, 3.0)
 			draw_colored_polygon([Vector2(left + 9.0, top + 3.0), Vector2(right - 2.0, top + 10.0), Vector2(left + 9.0, center.y)], accent)
@@ -2062,11 +2122,26 @@ func _draw_scenario_actor(rect: Rect2, object_data: Dictionary, active: bool) ->
 	var arm_y := body.position.y + body.size.y * 0.38
 	var arm_spread := rect.size.x * (0.38 if pose in ["fight", "warning"] else 0.28)
 	draw_line(Vector2(center.x - arm_spread, arm_y), Vector2(center.x + arm_spread, arm_y), accent, 3.0)
-	if icon_key == "scenario_actor_watch" or behavior in ["guard", "watch", "patrol"]:
+	if icon_key == "scenario_actor_conflict":
+		draw_line(Vector2(center.x - 11.0, rect.end.y - 14.0), Vector2(center.x + 11.0, rect.end.y - 5.0), C_ORANGE, 3.0)
+		draw_line(Vector2(center.x + 11.0, rect.end.y - 14.0), Vector2(center.x - 11.0, rect.end.y - 5.0), C_ORANGE, 3.0)
+	elif icon_key == "scenario_actor_guard":
+		draw_colored_polygon([Vector2(center.x, rect.end.y - 16.0), Vector2(center.x + 10.0, rect.end.y - 12.0), Vector2(center.x + 7.0, rect.end.y - 4.0), Vector2(center.x, rect.end.y), Vector2(center.x - 7.0, rect.end.y - 4.0), Vector2(center.x - 10.0, rect.end.y - 12.0)], C_WHITE)
+	elif icon_key == "scenario_actor_watch" or behavior == "watch":
 		_neon_text("EYE", Vector2(center.x - 10.0, rect.end.y - 4.0), 8, C_WHITE)
 	elif icon_key == "scenario_actor_moving":
 		draw_line(Vector2(center.x - 11.0, rect.end.y - 7.0), Vector2(center.x + 12.0, rect.end.y - 7.0), C_WHITE, 2.0)
 		draw_line(Vector2(center.x + 5.0, rect.end.y - 13.0), Vector2(center.x + 12.0, rect.end.y - 7.0), C_WHITE, 2.0)
+	elif icon_key == "scenario_actor_performer":
+		draw_circle(Vector2(center.x - 5.0, rect.end.y - 10.0), 4.0, C_WHITE, false, 2.0)
+		draw_line(Vector2(center.x - 1.0, rect.end.y - 7.0), Vector2(center.x + 7.0, rect.end.y - 2.0), C_WHITE, 2.0)
+	elif icon_key == "scenario_actor_staff":
+		draw_rect(Rect2(center.x - 9.0, rect.end.y - 15.0, 18.0, 11.0), C_WHITE, false, 2.0)
+		draw_line(Vector2(center.x - 4.0, rect.end.y - 16.0), Vector2(center.x + 4.0, rect.end.y - 16.0), C_WHITE, 2.0)
+	elif icon_key == "scenario_actor_guest":
+		draw_circle(Vector2(center.x - 5.0, rect.end.y - 10.0), 3.0, C_WHITE)
+		draw_circle(Vector2(center.x + 5.0, rect.end.y - 10.0), 3.0, C_WHITE)
+		draw_line(Vector2(center.x - 10.0, rect.end.y - 4.0), Vector2(center.x + 10.0, rect.end.y - 4.0), C_WHITE, 2.0)
 	else:
 		draw_rect(Rect2(center.x - 8.0, rect.end.y - 14.0, 16.0, 10.0), C_SOFT.darkened(0.22))
 		draw_line(Vector2(center.x - 5.0, rect.end.y - 10.0), Vector2(center.x + 5.0, rect.end.y - 10.0), accent, 2.0)

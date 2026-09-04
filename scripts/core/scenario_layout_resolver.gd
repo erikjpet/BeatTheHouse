@@ -18,6 +18,8 @@ const PROMPT_MAX_LENGTH := 240
 const LABEL_HEIGHT := 15.0
 const LABEL_GAP := 4.0
 const LABEL_MAX_WIDTH := 126.0
+const MAX_PLACEMENT_CANDIDATES := 384
+const MAX_PLACEMENT_SEARCH_CHECKS := 799
 const WALK_LANE := Rect2(16.0, 378.0, 868.0, 36.0)
 const ROUTE_BEHAVIORS := ["patrol", "flee", "depart"]
 const COLLISION_OFFSETS := [
@@ -139,7 +141,7 @@ static func _prepare_extension_visual(environment: Dictionary, semantic_state: D
 		"source_id": str(semantic.get("actor_id", stable_id)),
 		"label": label,
 		"short_description": _scenario_description(semantic),
-		"icon_key": _scenario_icon_key(semantic),
+		"icon_key": scenario_icon_key(semantic),
 		"presence": "scenario",
 		"interactive": true,
 		"decorative": false,
@@ -173,22 +175,60 @@ static func _scenario_description(semantic: Dictionary) -> String:
 	return description
 
 
-static func _scenario_icon_key(semantic: Dictionary) -> String:
+static func scenario_icon_key(semantic: Dictionary) -> String:
 	if str(semantic.get("semantic_kind", "")) == "actor" or semantic.has("actor_id"):
-		var behavior := str(semantic.get("behavior", "idle"))
-		if behavior in ["guard", "watch", "patrol", "fight"]: return "scenario_actor_watch"
+		var behavior := str(semantic.get("behavior", "idle")).to_lower()
+		var actor_words := ("%s %s %s %s" % [str(semantic.get("actor_id", "")), str(semantic.get("label", "")), str(semantic.get("role", "")), str(semantic.get("pose", ""))]).to_lower()
+		if behavior == "fight": return "scenario_actor_conflict"
+		if behavior in ["guard", "patrol"]: return "scenario_actor_guard"
+		if behavior == "watch": return "scenario_actor_watch"
 		if behavior in ["flee", "depart"]: return "scenario_actor_moving"
+		if _contains_any(actor_words, ["band", "comic", "comedian", "dancer", "dj", "musician", "performer", "singer"]): return "scenario_actor_performer"
+		if _contains_any(actor_words, ["bartender", "captain", "clerk", "coach", "delegate", "host", "manager", "marshal", "mechanic", "operator", "security"]): return "scenario_actor_staff"
+		if behavior == "idle" or _contains_any(actor_words, ["crowd", "guest", "patron", "regular", "tourist", "witness"]): return "scenario_actor_guest"
 		return "scenario_actor_work"
-	var role := str(semantic.get("role", "prop"))
-	var words := ("%s %s %s %s" % [role, str(semantic.get("stable_object_id", "")), str(semantic.get("state", "")), str(semantic.get("appearance", ""))]).to_lower()
-	if role in ["exit", "route"] or _contains_any(words, ["exit", "door", "lane", "route", "gangway"]): return "scenario_route"
-	if role in ["barrier", "hazard", "obstacle"] or _contains_any(words, ["barrier", "hazard", "lockout", "shutter", "police_hold"]): return "scenario_barrier"
-	if role == "evidence" or _contains_any(words, ["evidence", "trace", "manifest", "serial", "record", "provenance", "marks", "clue"]): return "scenario_evidence"
-	if role in ["workstation", "primary_task"] or _contains_any(words, ["station", "counter", "panel", "circuit", "board", "cage"]): return "scenario_workstation"
-	if _contains_any(words, ["cart", "crate", "stock", "goods", "shelf", "pallet", "lot"]): return "scenario_stock"
-	if _contains_any(words, ["cruiser", "patrol", "vehicle"]): return "scenario_vehicle"
-	if _contains_any(words, ["ring", "dice", "lotto", "number"]): return "scenario_game"
-	if role in ["aftermath", "display"]: return "scenario_aftermath"
+	var role := str(semantic.get("role", "prop")).to_lower()
+	var words := ("%s %s %s %s %s" % [role, str(semantic.get("stable_object_id", "")), str(semantic.get("label", "")), str(semantic.get("state", "")), str(semantic.get("appearance", ""))]).to_lower()
+	# Authored roles are the primary vocabulary. Text inference is reserved for
+	# legacy records with a generic or absent role so labels cannot accidentally
+	# turn a task into evidence (or "busy" into a bus).
+	if role in ["exit", "alternate_route"]: return "scenario_exit"
+	if role in ["route", "decision_route", "route_fixture", "navigation", "route_marker"]: return "scenario_route"
+	if role in ["hazard", "route_hazard"]: return "scenario_hazard"
+	if role in ["barrier", "obstacle", "door"]: return "scenario_barrier"
+	if role in ["evidence", "clue", "credential"]: return "scenario_evidence"
+	if role == "ledger": return "scenario_document"
+	if role in ["primary_task", "task_station", "task_zone"]: return "scenario_task"
+	if role in ["workstation", "economy_station", "queue_station"]: return "scenario_workstation"
+	if role in ["stock", "storage"]: return "scenario_stock"
+	if role == "vehicle": return "scenario_vehicle"
+	if role in ["game_fixture", "game_lane", "game_station"]: return "scenario_game"
+	if role in ["performance", "worksite"]: return "scenario_stage"
+	if role in ["equipment", "instrument", "recording_equipment", "utility"]: return "scenario_equipment"
+	if role in ["scoreboard", "signal"]: return "scenario_signage"
+	if role in ["furniture", "seating"]: return "scenario_seating"
+	if role in ["shelter", "safety"]: return "scenario_shelter"
+	if role in ["service", "memorial"]: return "scenario_service"
+	if role in ["arrangement", "display"]: return "scenario_success"
+	if role == "debris": return "scenario_damage"
+	if role == "aftermath":
+		if _contains_any(words, ["balanced", "cleared", "completed", "coordinated", "open", "repaired", "reunited", "shared"]): return "scenario_success"
+		if _contains_any(words, ["abandoned", "broken", "failed", "interrupted", "jammed", "locked", "misdirected", "spilled", "withheld"]): return "scenario_damage"
+		return "scenario_aftermath"
+	if _contains_any(words, ["clean exit", "safe exit", "cellar hatch"]): return "scenario_exit"
+	if _contains_any(words, ["route marker", "service door", "gangway", "stage steps"]): return "scenario_route"
+	if _contains_any(words, ["cable crossing", "hot engine", "leaking", "torn carton"]): return "scenario_hazard"
+	if _contains_any(words, ["barrier", "barricade", "bulkhead", "picket line", "shutter"]): return "scenario_barrier"
+	if _contains_any(words, ["evidence", "manifest", "serial", "provenance", "clue", "scope", "camera"]): return "scenario_evidence"
+	if _contains_any(words, ["clipboard", "ledger", "booking board", "envelope"]): return "scenario_document"
+	if _contains_any(words, ["counter", "panel", "circuit", "cage"]): return "scenario_workstation"
+	if _contains_any(words, ["cart", "case", "crate", "goods", "pallet", "shelf", "stock", "trunk"]): return "scenario_stock"
+	if _contains_any(words, ["tour bus", "cruiser", "lead rig", "relay rig", "tail rig", "skiff", "vehicle"]): return "scenario_vehicle"
+	if _contains_any(words, ["dice", "darts", "lotto", "machine banks", "premium table"]): return "scenario_game"
+	if _contains_any(words, ["band stage", "mini-stage", "microphone", "speaker"]): return "scenario_stage"
+	if _contains_any(words, ["equipment", "flashlight", "gauge", "generator", "lamp", "sink"]): return "scenario_equipment"
+	if _contains_any(words, ["easel", "flag", "placard", "scoreboard", "signage"]): return "scenario_signage"
+	if _contains_any(words, ["bench", "bed", "chair", "seating"]): return "scenario_seating"
 	return "scenario_fixture"
 
 
@@ -247,7 +287,7 @@ static func sealed_renderer_snapshot(layout_result: Dictionary) -> Dictionary:
 				"source_id": str(semantic.get("actor_id", semantic.get("stable_object_id", ""))),
 				"label": str(semantic.get("label", "")),
 				"short_description": _scenario_description(semantic),
-				"icon_key": _scenario_icon_key(semantic),
+				"icon_key": scenario_icon_key(semantic),
 				"presence": "scenario",
 				"interactive": true,
 				"decorative": false,
@@ -340,9 +380,13 @@ static func resolve(base_records: Array, projection: Dictionary, environment: Di
 			"identity": "system::reserved_overlay",
 			"rect": reserved_overlay,
 			"small_rect": reserved_overlay,
+			"label_rect": Rect2(),
+			"small_label_rect": Rect2(),
 		})
 	var authority := _base_layout_authority(base_records, errors)
 	var collision_adjustments := 0
+	var placement_candidate_checks := 0
+	var max_placement_search := 0
 	var visual_count := 0
 	var resolved_scenes: Dictionary = {}
 	var resolved_actors: Dictionary = {}
@@ -379,6 +423,10 @@ static func resolve(base_records: Array, projection: Dictionary, environment: Di
 			)
 			if resolved.is_empty():
 				continue
+			var visual_search_count := int(resolved.get("_layout_candidate_checks", 0))
+			placement_candidate_checks += visual_search_count
+			max_placement_search = maxi(max_placement_search, visual_search_count)
+			resolved.erase("_layout_candidate_checks")
 			resolved["layout_valid"] = true
 			if bool(resolved.get("collision_adjusted", false)):
 				collision_adjustments += 1
@@ -386,7 +434,17 @@ static func resolve(base_records: Array, projection: Dictionary, environment: Di
 			if bool(resolved.get("visible", true)):
 				var normal_rect := _pixel_rect(_dict(resolved.get("normalized_hit_rect", {})))
 				var small_rect := _pixel_rect(_dict(resolved.get("small_screen_rect", {})))
-				occupied.append({"identity": identity, "rect": normal_rect, "small_rect": small_rect})
+				var resolved_label := str(resolved.get("label", ""))
+				var overlay_label := str(_dict(_dict(semantic_state.get("interactions", {})).get(identity, {})).get("label", ""))
+				if overlay_label.length() > resolved_label.length():
+					resolved_label = overlay_label
+				occupied.append({
+					"identity": identity,
+					"rect": normal_rect,
+					"small_rect": small_rect,
+					"label_rect": _label_rect(normal_rect, resolved_label),
+					"small_label_rect": _label_rect(small_rect, resolved_label),
+				})
 
 	semantic_state["scene_objects"] = resolved_scenes
 	semantic_state["actors"] = resolved_actors
@@ -410,6 +468,9 @@ static func resolve(base_records: Array, projection: Dictionary, environment: Di
 		"valid": true,
 		"visual_count": mini(visual_count, MAX_VISUALS),
 		"collision_adjustment_count": collision_adjustments,
+		"placement_candidate_checks": placement_candidate_checks,
+		"max_placement_search": max_placement_search,
+		"placement_candidate_limit": MAX_PLACEMENT_SEARCH_CHECKS,
 		"board_size": _size_snapshot(BOARD_SIZE),
 		"small_screen_target": _size_snapshot(SMALL_SCREEN_TARGET),
 		"walk_lane": _rect_snapshot(WALK_LANE),
@@ -470,11 +531,7 @@ static func _resolve_visual(
 	var base_rect := _record_pixel_rect(base_record)
 	var anchor_id := str(semantic.get("anchor_id", base_record.get("anchor_id", "")))
 	var zone_id := str(semantic.get("zone_id", base_record.get("zone_id", "")))
-	var center := _resolve_center(
-		environment,
-		anchor_id,
-		zone_id
-	)
+	var center := _resolve_visual_center(environment, anchor_id, zone_id)
 	if (not _finite_point(center) or center.x < 0.0) and anchor_id.is_empty() and zone_id.is_empty() and base_rect.size.x > 0.0 and base_rect.size.y > 0.0:
 		center = base_rect.get_center()
 	if not _finite_point(center) or center.x < 0.0:
@@ -491,8 +548,22 @@ static func _resolve_visual(
 	if not _readable_text(str(semantic.get("label", base_record.get("label", ""))), LABEL_MAX_LENGTH):
 		errors.append("Scenario visual %s requires a bounded, readable label." % identity)
 		return {}
-	var authored_rect := _clamp_inside_board(Rect2(center - size * 0.5, size))
-	var placement := _collision_safe_rect(identity, authored_rect, occupied)
+	var placement_regions := _visual_placement_regions(environment, anchor_id, zone_id, str(semantic.get("role", "")), actor)
+	var preferred_region: Rect2 = placement_regions[0] if not placement_regions.is_empty() else Rect2(Vector2.ZERO, BOARD_SIZE)
+	var authored_rect := _clamp_inside_region(Rect2(center - size * 0.5, size), preferred_region)
+	var placement_label := str(semantic.get("label", base_record.get("label", "")))
+	var matching_interaction := _dict(_dict(semantic_state.get("interactions", {})).get(identity, {}))
+	var interaction_label := str(matching_interaction.get("label", ""))
+	if interaction_label.length() > placement_label.length():
+		placement_label = interaction_label
+	var placement := _collision_safe_rect(
+		identity,
+		authored_rect,
+		occupied,
+		placement_label,
+		placement_regions,
+		str(semantic.get("role", "")).to_lower() in ["obstacle", "barrier", "blockade"]
+	)
 	if bool(placement.get("colliding", true)):
 		errors.append("Scenario visual %s cannot resolve both normal and expanded small-screen geometry without ambiguity." % identity)
 		return {}
@@ -531,6 +602,7 @@ static func _resolve_visual(
 	result["small_screen_rect"] = _normalized_rect(_expanded_rect(pixel_rect, SMALL_SCREEN_TARGET))
 	result["resolved_bounds"] = {"w": pixel_rect.size.x, "h": pixel_rect.size.y}
 	result["collision_adjusted"] = bool(placement.get("adjusted", false))
+	result["_layout_candidate_checks"] = int(placement.get("candidates_checked", 0))
 	result["route_points"] = route_points
 	result["route_stage"] = route_stage
 	result["visible"] = bool(result.get("visible", true))
@@ -1106,64 +1178,106 @@ static func _point_clear(point: Vector2, obstacles: Array, ignored_identity: Str
 	return true
 
 
-static func _collision_safe_rect(identity: String, authored: Rect2, occupied: Array) -> Dictionary:
-	# A normal-layout collision may be deterministically displaced. Expanded-only
-	# contact must retain authored placement so the later small-screen hit, label,
-	# lane, and reachability validators can reject the exact authored conflict
-	# instead of silently manufacturing different room geometry.
+static func _collision_safe_rect(identity: String, authored: Rect2, occupied: Array, label: String = "", placement_regions: Array = [], avoid_walk_lane: bool = false) -> Dictionary:
+	# Authored anchors remain the first candidate. When their icon, touch target,
+	# or label conflicts with an already sealed room control, search only inside
+	# the authored semantic zone. The chosen rectangle is deterministic and is
+	# subsequently sealed into layout authority for every renderer/input path.
+	var regions := placement_regions.duplicate()
+	if regions.is_empty():
+		regions.append(Rect2(Vector2.ZERO, BOARD_SIZE))
+	var preferred_region: Rect2 = regions[0]
 	var authored_raw_collision := _raw_hit_overlaps(identity, authored, occupied)
-	if not authored_raw_collision and not _normal_hit_overlaps(identity, authored, occupied):
-		return {"rect": _clamp_inside_board(authored), "adjusted": false, "colliding": false}
+	var candidates_checked := 1
+	if _candidate_text_safe(identity, authored, label, occupied, true, avoid_walk_lane):
+		return {"rect": _clamp_inside_region(authored, preferred_region), "adjusted": false, "colliding": false, "candidates_checked": candidates_checked}
 	for offset_value in COLLISION_OFFSETS:
 		var offset := offset_value as Vector2
-		var candidate := _clamp_inside_board(Rect2(authored.position + offset, authored.size))
-		var small_candidate := _expanded_rect(candidate, SMALL_SCREEN_TARGET)
-		if not _normal_hit_overlaps(identity, candidate, occupied) and not _expanded_overlaps(identity, small_candidate, occupied):
-			return {"rect": candidate, "adjusted": not offset.is_zero_approx(), "colliding": false}
-	var bounded_candidates := _bounded_collision_candidates(authored)
+		var candidate := _clamp_inside_region(Rect2(authored.position + offset, authored.size), preferred_region)
+		candidates_checked += 1
+		if _candidate_text_safe(identity, candidate, label, occupied, true, avoid_walk_lane):
+			return {"rect": candidate, "adjusted": not offset.is_zero_approx(), "colliding": false, "candidates_checked": candidates_checked}
+	var bounded_candidates := _bounded_collision_candidates(authored, regions)
 	for candidate_value in bounded_candidates:
 		var candidate := candidate_value as Rect2
-		var small_candidate := _expanded_rect(candidate, SMALL_SCREEN_TARGET)
-		if not _normal_hit_overlaps(identity, candidate, occupied) and not _expanded_overlaps(identity, small_candidate, occupied):
-			return {"rect": candidate, "adjusted": not candidate.position.is_equal_approx(authored.position), "colliding": false}
-	# Preserve the original exact-hitbox fallback for authored raw collisions when
-	# a crowded room cannot also provide the preferred extra visual gap.
-	if authored_raw_collision:
-		for offset_value in COLLISION_OFFSETS:
-			var offset := offset_value as Vector2
-			var candidate := _clamp_inside_board(Rect2(authored.position + offset, authored.size))
-			var small_candidate := _expanded_rect(candidate, SMALL_SCREEN_TARGET)
-			if not _raw_hit_overlaps(identity, candidate, occupied) and not _expanded_overlaps(identity, small_candidate, occupied):
-				return {"rect": candidate, "adjusted": not offset.is_zero_approx(), "colliding": false}
-		for candidate_value in bounded_candidates:
-			var candidate := candidate_value as Rect2
-			var small_candidate := _expanded_rect(candidate, SMALL_SCREEN_TARGET)
-			if not _raw_hit_overlaps(identity, candidate, occupied) and not _expanded_overlaps(identity, small_candidate, occupied):
-				return {"rect": candidate, "adjusted": not candidate.position.is_equal_approx(authored.position), "colliding": false}
-	# A raw-safe authored placement remains valid when the room cannot provide the
-	# renderer's preferred extra breathing room. Raw ambiguity still fails closed;
-	# this compatibility path only avoids rejecting an otherwise valid crowded
-	# destination during travel.
-	if not authored_raw_collision:
-		return {"rect": _clamp_inside_board(authored), "adjusted": false, "colliding": false}
-	return {"rect": authored, "adjusted": false, "colliding": true}
+		candidates_checked += 1
+		if _candidate_text_safe(identity, candidate, label, occupied, true, avoid_walk_lane):
+			return {"rect": candidate, "adjusted": not candidate.position.is_equal_approx(authored.position), "colliding": false, "candidates_checked": candidates_checked}
+	# A dense authored zone may not provide the preferred visual gap. Preserve an
+	# exact non-overlapping hit target only when both label surfaces remain safe.
+	for offset_value in COLLISION_OFFSETS:
+		var offset := offset_value as Vector2
+		var candidate := _clamp_inside_region(Rect2(authored.position + offset, authored.size), preferred_region)
+		candidates_checked += 1
+		if _candidate_text_safe(identity, candidate, label, occupied, false, avoid_walk_lane):
+			return {"rect": candidate, "adjusted": not offset.is_zero_approx(), "colliding": false, "candidates_checked": candidates_checked}
+	for candidate_value in bounded_candidates:
+		var candidate := candidate_value as Rect2
+		candidates_checked += 1
+		if _candidate_text_safe(identity, candidate, label, occupied, false, avoid_walk_lane):
+			return {"rect": candidate, "adjusted": not candidate.position.is_equal_approx(authored.position), "colliding": false, "candidates_checked": candidates_checked}
+	return {"rect": authored, "adjusted": false, "colliding": true, "candidates_checked": candidates_checked, "authored_raw_collision": authored_raw_collision}
 
 
-static func _bounded_collision_candidates(authored: Rect2) -> Array:
+static func _bounded_collision_candidates(authored: Rect2, placement_regions: Array = []) -> Array:
 	var candidates: Array = []
-	var maximum_x := maxi(0, floori(BOARD_SIZE.x - authored.size.x))
-	var maximum_y := maxi(0, floori(BOARD_SIZE.y - authored.size.y))
-	for y in range(0, maximum_y + 1, 16):
-		for x in range(0, maximum_x + 1, 16):
-			candidates.append(Rect2(Vector2(x, y), authored.size))
-	candidates.sort_custom(func(left: Rect2, right: Rect2) -> bool:
-		var left_distance := left.position.distance_squared_to(authored.position)
-		var right_distance := right.position.distance_squared_to(authored.position)
-		if not is_equal_approx(left_distance, right_distance):
-			return left_distance < right_distance
-		return left.position.y < right.position.y if not is_equal_approx(left.position.y, right.position.y) else left.position.x < right.position.x
-	)
+	var regions := placement_regions.duplicate()
+	if regions.is_empty(): regions.append(Rect2(Vector2.ZERO, BOARD_SIZE))
+	for region_value in regions:
+		var bounded_region: Rect2 = region_value
+		bounded_region = bounded_region.intersection(Rect2(Vector2.ZERO, BOARD_SIZE))
+		if not bounded_region.has_area() or bounded_region.size.x < authored.size.x or bounded_region.size.y < authored.size.y:
+			continue
+		var minimum_x := ceili(bounded_region.position.x)
+		var minimum_y := ceili(bounded_region.position.y)
+		var maximum_x := floori(bounded_region.end.x - authored.size.x)
+		var maximum_y := floori(bounded_region.end.y - authored.size.y)
+		var column_count := maxi(1, floori(float(maximum_x - minimum_x) / 16.0) + 1)
+		var row_count := maxi(1, floori(float(maximum_y - minimum_y) / 16.0) + 1)
+		var origin_column := clampi(roundi((authored.position.x - float(minimum_x)) / 16.0), 0, column_count - 1)
+		var origin_row := clampi(roundi((authored.position.y - float(minimum_y)) / 16.0), 0, row_count - 1)
+		var maximum_radius := maxi(column_count, row_count)
+		for radius in range(maximum_radius):
+			for row_offset in range(-radius, radius + 1):
+				for column_offset in range(-radius, radius + 1):
+					if maxi(absi(column_offset), absi(row_offset)) != radius:
+						continue
+					var column := origin_column + column_offset
+					var row := origin_row + row_offset
+					if column < 0 or column >= column_count or row < 0 or row >= row_count:
+						continue
+					var candidate := Rect2(Vector2(minimum_x + column * 16, minimum_y + row * 16), authored.size)
+					if not candidates.has(candidate): candidates.append(candidate)
+					if candidates.size() >= MAX_PLACEMENT_CANDIDATES:
+						return candidates
+		var clamped_authored := _clamp_inside_region(authored, bounded_region)
+		if not candidates.has(clamped_authored): candidates.append(clamped_authored)
+		if candidates.size() >= MAX_PLACEMENT_CANDIDATES:
+			return candidates
 	return candidates
+
+
+static func _candidate_text_safe(identity: String, rect: Rect2, label: String, occupied: Array, require_gap: bool = true, avoid_walk_lane: bool = false) -> bool:
+	var small_rect := _expanded_rect(rect, SMALL_SCREEN_TARGET)
+	if avoid_walk_lane and (rect.intersects(WALK_LANE) or small_rect.intersects(WALK_LANE)):
+		return false
+	if _raw_hit_overlaps(identity, rect, occupied) or _expanded_overlaps(identity, small_rect, occupied):
+		return false
+	if require_gap and _normal_hit_overlaps(identity, rect, occupied):
+		return false
+	var label_rect := _label_rect(rect, label)
+	var small_label_rect := _label_rect(small_rect, label)
+	for occupied_value in occupied:
+		var occupied_record := _dict(occupied_value)
+		if str(occupied_record.get("identity", "")) == identity:
+			continue
+		var other_label: Rect2 = occupied_record.get("label_rect", Rect2())
+		var other_small_label: Rect2 = occupied_record.get("small_label_rect", Rect2())
+		if label_rect.has_area() and other_label.has_area() and label_rect.intersects(other_label) and label_rect.intersection(other_label).get_area() > 0.01:
+			return false
+		if small_label_rect.has_area() and other_small_label.has_area() and small_label_rect.intersects(other_small_label) and small_label_rect.intersection(other_small_label).get_area() > 0.01:
+			return false
+	return true
 
 
 static func _substantially_overlaps(identity: String, rect: Rect2, occupied: Array) -> bool:
@@ -1318,6 +1432,51 @@ static func _resolve_center(environment: Dictionary, anchor_id: String, zone_id:
 	return Vector2(-1.0, -1.0)
 
 
+static func _resolve_visual_center(environment: Dictionary, anchor_id: String, zone_id: String) -> Vector2:
+	var anchors := _dict(environment.get("semantic_anchors", {}))
+	var anchor := _dict(anchors.get(anchor_id, {}))
+	var anchor_zone := str(anchor.get("zone_id", "")).strip_edges()
+	# A phase move changes zone while retaining the object's stable authored
+	# anchor. In that state the current zone is the visible instruction and must
+	# produce a real relocation instead of snapping back to the arrival anchor.
+	if not zone_id.is_empty() and not anchor_zone.is_empty() and zone_id != anchor_zone:
+		return _resolve_center(environment, "", zone_id)
+	return _resolve_center(environment, anchor_id, zone_id)
+
+
+static func _visual_placement_regions(environment: Dictionary, anchor_id: String, zone_id: String, role_value: String, actor: bool) -> Array:
+	var anchors := _dict(environment.get("semantic_anchors", {}))
+	var anchor_zone := str(_dict(anchors.get(anchor_id, {})).get("zone_id", "")).strip_edges()
+	var effective_zone := zone_id if not zone_id.is_empty() else anchor_zone
+	var zones := _dict(environment.get("semantic_zones", {}))
+	var role := role_value.to_lower()
+	var compatible_zone_ids: Array = [effective_zone]
+	if actor:
+		compatible_zone_ids.append_array(["background", "left", "right", "center", "service_lane", "foreground"])
+	elif role in ["exit", "route", "alternate_route", "decision_route", "route_fixture", "navigation", "route_marker"]:
+		compatible_zone_ids.append_array(["exit_lane", "foreground", "right", "background"])
+	elif role in ["obstacle", "barrier", "blockade", "hazard", "route_hazard"]:
+		compatible_zone_ids.append_array(["left", "right", "background", "service_lane", "center"])
+	elif role in ["primary_task", "task_station", "task_zone", "workstation", "economy_station", "queue_station", "service"]:
+		compatible_zone_ids.append_array(["center", "service_lane", "left", "right", "background", "foreground"])
+	else:
+		compatible_zone_ids.append_array(["center", "left", "right", "service_lane", "background", "foreground", "exit_lane"])
+	var regions: Array = []
+	var seen_zone_ids: Dictionary = {}
+	for compatible_zone_value in compatible_zone_ids:
+		var compatible_zone := str(compatible_zone_value).strip_edges()
+		if compatible_zone.is_empty() or seen_zone_ids.has(compatible_zone) or not zones.has(compatible_zone):
+			continue
+		seen_zone_ids[compatible_zone] = true
+		var zone_rect := _pixel_bounds(_dict(zones.get(compatible_zone, {})).get("bounds", []))
+		zone_rect = zone_rect.intersection(Rect2(Vector2.ZERO, BOARD_SIZE))
+		if zone_rect.has_area() and not regions.has(zone_rect):
+			regions.append(zone_rect)
+	if regions.is_empty():
+		regions.append(Rect2(Vector2.ZERO, BOARD_SIZE))
+	return regions
+
+
 static func _resolve_route_center(environment: Dictionary, semantic_state: Dictionary, route_id: String) -> Vector2:
 	var result := _resolve_route_center_result(environment, semantic_state, route_id)
 	return result.get("center", Vector2(-1.0, -1.0)) if bool(result.get("ok", false)) else Vector2(-1.0, -1.0)
@@ -1393,7 +1552,15 @@ static func _base_occupied_records(base_records: Array) -> Array:
 		var rect := _record_pixel_rect(record)
 		if not rect.has_area():
 			continue
-		result.append({"identity": _record_identity(record), "rect": rect, "small_rect": _expanded_rect(rect, SMALL_SCREEN_TARGET)})
+		var small_rect := _expanded_rect(rect, SMALL_SCREEN_TARGET)
+		var label := str(record.get("label", ""))
+		result.append({
+			"identity": _record_identity(record),
+			"rect": rect,
+			"small_rect": small_rect,
+			"label_rect": _label_rect(rect, label),
+			"small_label_rect": _label_rect(small_rect, label),
+		})
 	return result
 
 
@@ -1426,6 +1593,17 @@ static func _clamp_inside_board(rect: Rect2) -> Rect2:
 	var size := Vector2(minf(rect.size.x, BOARD_SIZE.x), minf(rect.size.y, BOARD_SIZE.y))
 	var position := Vector2(clampf(rect.position.x, 0.0, BOARD_SIZE.x - size.x), clampf(rect.position.y, 0.0, BOARD_SIZE.y - size.y))
 	return Rect2(position, size)
+
+
+static func _clamp_inside_region(rect: Rect2, region: Rect2) -> Rect2:
+	var bounded_region := region.intersection(Rect2(Vector2.ZERO, BOARD_SIZE))
+	if not bounded_region.has_area() or bounded_region.size.x < rect.size.x or bounded_region.size.y < rect.size.y:
+		return _clamp_inside_board(rect)
+	var position := Vector2(
+		clampf(rect.position.x, bounded_region.position.x, bounded_region.end.x - rect.size.x),
+		clampf(rect.position.y, bounded_region.position.y, bounded_region.end.y - rect.size.y)
+	)
+	return Rect2(position, rect.size)
 
 
 static func _expanded_rect(rect: Rect2, minimum: Vector2) -> Rect2:

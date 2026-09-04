@@ -435,7 +435,17 @@
         },
         "fact_subscriptions": [
           "travel_arrived",
-          "travel_departed"
+          "travel_departed",
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_wedding_best_man",
+              "choice_id": "cover_one_hand",
+              "resolution_id": "cover_one_hand",
+              "resolved": true,
+              "ok": true
+            }
+          }
         ],
         "local_state_schema": {
           "pressure_seen": {
@@ -601,7 +611,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "crate_latch",
-                          "message": "You refuse the task. Ceremony ropes split the promenade while the open bar, a loose ring case, and a losing best man pull guests into competing deck lanes."
+                          "message": "You leave the rings, ropes, and rattled best man to the charter crew. You leave the room unchanged: ceremony ropes split the promenade while the open bar, a loose ring case, and a losing best man pull guests into competing deck lanes."
                         }
                       }
                     ],
@@ -654,7 +664,18 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "crate_latch",
-                          "message": "You let the pressure win. Ceremony ropes split the promenade while the open bar, a loose ring case, and a losing best man pull guests into competing deck lanes."
+                          "message": "The wedding party sweeps past and leaves the deck in a new tangle. Ceremony ropes split the promenade while the open bar, a loose ring case, and a losing best man pull guests into competing deck lanes."
+                        }
+                      },
+                      {
+                        "id": "open_wedding_best_man",
+                        "label": "Talk: The Best Man's Table",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_wedding_best_man",
+                          "resolution_id": "cover_one_hand"
                         }
                       }
                     ],
@@ -830,7 +851,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_wedding_charter_arrival_transition_stage",
-                  "reduced_motion_message": "In reduced motion, delta queen wedding charter settles directly into the same visible result.",
+                  "reduced_motion_message": "Ceremony ropes, ring case, bar, and wedding party appear at their settled deck stations without motion.",
                   "stable_object_id": "delta_queen_wedding_charter_arrival_transition",
                   "stage_id": "delta_queen_wedding_charter_arrival_stage"
                 }
@@ -988,7 +1009,7 @@
                           "owner_namespace": "scenario",
                           "stable_object_id": "delta_queen_wedding_charter_work_1_choice_0",
                           "state": "changed_by_fail_delta_queen_wedding_charter",
-                          "message": "You let the pressure win. Guests and ceremony gear shift across the promenade, leaving an opening to return rings to best man."
+                          "message": "The wedding party sweeps past and leaves the deck in a new tangle. Guests and ceremony gear shift across the promenade, leaving an opening to return rings to best man."
                         }
                       }
                     ],
@@ -1348,7 +1369,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "crate_latch",
-                          "message": "You let the pressure win. Guests and ceremony gear shift across the promenade, leaving an opening to steady best man."
+                          "message": "The wedding party sweeps past and leaves the deck in a new tangle. Guests and ceremony gear shift across the promenade, leaving an opening to steady best man."
                         }
                       },
                       {
@@ -1465,7 +1486,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_wedding_charter_work_2_transition_stage",
-                  "reduced_motion_message": "In reduced motion, delta queen wedding charter settles directly into the same visible result.",
+                  "reduced_motion_message": "Ceremony ropes, ring case, bar, and wedding party appear at their settled deck stations without motion.",
                   "stable_object_id": "delta_queen_wedding_charter_work_2_transition",
                   "stage_id": "delta_queen_wedding_charter_work_2_stage"
                 }
@@ -1577,7 +1598,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "crate_latch",
-                          "message": "You let the pressure win. Guests and ceremony gear shift across the promenade, leaving an opening to deliver rings."
+                          "message": "The wedding party sweeps past and leaves the deck in a new tangle. Guests and ceremony gear shift across the promenade, leaving an opening to deliver rings."
                         }
                       },
                       {
@@ -1822,7 +1843,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "976ba6cb4030cff6c33df0e5f269c645b697e2363ae3ee7241b3c61807fcd6a3"
+        "sequence_signature": "407c736d958c16671dfe02215193aff46f0eddf71610fed5427f2028a321899a"
       }
     },
     {
@@ -2256,7 +2277,17 @@
         },
         "fact_subscriptions": [
           "game_result",
-          "travel_departed"
+          "travel_departed",
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_whale_aboard_vouch",
+              "choice_id": "stake_his_table",
+              "resolution_id": "stake_his_table",
+              "resolved": true,
+              "ok": true
+            }
+          }
         ],
         "local_state_schema": {
           "pressure_seen": {
@@ -2422,7 +2453,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "crate_latch",
-                          "message": "You refuse the task. A whale's entourage seals a premium table and bends every adjacent stake placard while staff abandon the public service lane."
+                          "message": "You decline the whale's business and keep outside the premium table cordon. You leave the room unchanged: a whale's entourage seals a premium table and bends every adjacent stake placard while staff abandon the public service lane."
                         }
                       }
                     ],
@@ -2477,7 +2508,18 @@
                           "owner_namespace": "scenario",
                           "stable_object_id": "delta_queen_whale_aboard_task_0",
                           "state": "changed_by_fail_delta_queen_whale_aboard",
-                          "message": "You let the pressure win. A whale's entourage seals a premium table and bends every adjacent stake placard while staff abandon the public service lane."
+                          "message": "The entourage closes ranks before you can shape the service route. A whale's entourage seals a premium table and bends every adjacent stake placard while staff abandon the public service lane."
+                        }
+                      },
+                      {
+                        "id": "open_whale_aboard_vouch",
+                        "label": "Talk: The Whale's Receipt",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_whale_aboard_vouch",
+                          "resolution_id": "stake_his_table"
                         }
                       }
                     ],
@@ -2653,7 +2695,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_whale_aboard_arrival_transition_stage",
-                  "reduced_motion_message": "In reduced motion, delta queen whale aboard settles directly into the same visible result.",
+                  "reduced_motion_message": "Premium table, stake placards, entourage, and staff appear in their current places without animated travel.",
                   "stable_object_id": "delta_queen_whale_aboard_arrival_transition",
                   "stage_id": "delta_queen_whale_aboard_arrival_stage"
                 }
@@ -2767,7 +2809,7 @@
                           "owner_namespace": "scenario",
                           "stable_object_id": "delta_queen_whale_aboard_task_1",
                           "state": "changed_by_fail_delta_queen_whale_aboard",
-                          "message": "You let the pressure win. The entourage yields a little of the sealed floor, making it possible to carry whale service."
+                          "message": "The entourage closes ranks before you can shape the service route. The entourage yields a little of the sealed floor, making it possible to carry whale service."
                         }
                       },
                       {
@@ -3224,7 +3266,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_whale_aboard_work_2_transition_stage",
-                  "reduced_motion_message": "In reduced motion, delta queen whale aboard settles directly into the same visible result.",
+                  "reduced_motion_message": "Premium table, stake placards, entourage, and staff appear in their current places without animated travel.",
                   "stable_object_id": "delta_queen_whale_aboard_work_2_transition",
                   "stage_id": "delta_queen_whale_aboard_work_2_stage"
                 }
@@ -3350,7 +3392,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "crate_latch",
-                          "message": "You let the pressure win. The entourage yields a little of the sealed floor, making it possible to choose whale access."
+                          "message": "The entourage closes ranks before you can shape the service route. The entourage yields a little of the sealed floor, making it possible to choose whale access."
                         }
                       },
                       {
@@ -3611,7 +3653,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "9a13f1fc12ae9007499c5232d1c96ddc74d7be5582fda4298a85248bda1a9cac"
+        "sequence_signature": "0768f87eacdc4b91356087c00fa8002b54e72130b470727e8a63617465ae299c"
       }
     },
     {
@@ -4046,7 +4088,17 @@
         },
         "fact_subscriptions": [
           "town_transition",
-          "travel_departed"
+          "travel_departed",
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_fog_delay_pool",
+              "choice_id": "take_the_delayed_pool",
+              "resolution_id": "take_the_delayed_pool",
+              "resolved": true,
+              "ok": true
+            }
+          }
         ],
         "local_state_schema": {
           "pressure_seen": {
@@ -4212,7 +4264,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "crate_latch",
-                          "message": "You refuse the task. Fog shutters the gangway, traps a restless boarding crowd, and raises the visible stake board one phase at a time."
+                          "message": "You leave the signal board and boarding dispute to the deck crew. You leave the room unchanged: fog shutters the gangway, traps a restless boarding crowd, and raises the visible stake board one phase at a time."
                         }
                       }
                     ],
@@ -4267,7 +4319,18 @@
                           "owner_namespace": "scenario",
                           "stable_object_id": "delta_queen_fog_delay_task_0",
                           "state": "changed_by_fail_delta_queen_fog_delay",
-                          "message": "You let the pressure win. Fog shutters the gangway, traps a restless boarding crowd, and raises the visible stake board one phase at a time."
+                          "message": "The fog delay deepens and the waiting crowd makes the next move. Fog shutters the gangway, traps a restless boarding crowd, and raises the visible stake board one phase at a time."
+                        }
+                      },
+                      {
+                        "id": "open_fog_delay_pool",
+                        "label": "Talk: Held at the Rail",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_fog_delay_pool",
+                          "resolution_id": "take_the_delayed_pool"
                         }
                       }
                     ],
@@ -4443,7 +4506,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_fog_delay_arrival_transition_stage",
-                  "reduced_motion_message": "In reduced motion, delta queen fog delay settles directly into the same visible result.",
+                  "reduced_motion_message": "Fog signal, crowd lanes, gangway, and stake board appear at their current delay positions without motion.",
                   "stable_object_id": "delta_queen_fog_delay_arrival_transition",
                   "stage_id": "delta_queen_fog_delay_arrival_stage"
                 }
@@ -4927,7 +4990,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "crate_latch",
-                          "message": "You let the pressure win. The signal, crowd, and gangway visibly change, clearing the next chance to mark stake drift."
+                          "message": "The fog delay deepens and the waiting crowd makes the next move. The signal, crowd, and gangway visibly change, clearing the next chance to mark stake drift."
                         }
                       },
                       {
@@ -5044,7 +5107,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_fog_delay_work_2_transition_stage",
-                  "reduced_motion_message": "In reduced motion, delta queen fog delay settles directly into the same visible result.",
+                  "reduced_motion_message": "Fog signal, crowd lanes, gangway, and stake board appear at their current delay positions without motion.",
                   "stable_object_id": "delta_queen_fog_delay_work_2_transition",
                   "stage_id": "delta_queen_fog_delay_work_2_stage"
                 }
@@ -5156,7 +5219,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "crate_latch",
-                          "message": "You let the pressure win. The signal, crowd, and gangway visibly change, clearing the next chance to choose dock plan."
+                          "message": "The fog delay deepens and the waiting crowd makes the next move. The signal, crowd, and gangway visibly change, clearing the next chance to choose dock plan."
                         }
                       },
                       {
@@ -5401,7 +5464,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "54dc6c89a304edb102dad83a60c30b7d13bae6d79d2cbcd60ff42f1d21e88f86"
+        "sequence_signature": "bb70038b89256a20668c6a0e32757c8338bd00ac342ebd533cc7960019c94972"
       }
     },
     {
@@ -5860,7 +5923,17 @@
         },
         "fact_subscriptions": [
           "world_boundary",
-          "travel_departed"
+          "travel_departed",
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_engine_trouble_repairs",
+              "choice_id": "carry_the_wrench",
+              "resolution_id": "carry_the_wrench",
+              "resolved": true,
+              "ok": true
+            }
+          }
         ],
         "local_state_schema": {
           "pressure_seen": {
@@ -6032,7 +6105,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "crate_latch",
-                          "message": "You refuse the task. A dead engine anchors the boat mid-river; the locked gangway, falling pressure gauge, and evacuation benches make every route visible."
+                          "message": "You stay above deck and leave the engine fault to the crew. You leave the room unchanged: a dead engine anchors the boat mid-river; the locked gangway, falling pressure gauge, and evacuation benches make every route visible."
                         }
                       }
                     ],
@@ -6087,7 +6160,18 @@
                           "owner_namespace": "scenario",
                           "stable_object_id": "delta_queen_engine_trouble_task_0",
                           "state": "changed_by_fail_delta_queen_engine_trouble",
-                          "message": "You let the pressure win. A dead engine anchors the boat mid-river; the locked gangway, falling pressure gauge, and evacuation benches make every route visible."
+                          "message": "The failing machinery dictates the next step before you can. A dead engine anchors the boat mid-river; the locked gangway, falling pressure gauge, and evacuation benches make every route visible."
+                        }
+                      },
+                      {
+                        "id": "open_engine_trouble_repairs",
+                        "label": "Talk: Below Deck",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_engine_trouble_repairs",
+                          "resolution_id": "carry_the_wrench"
                         }
                       }
                     ],
@@ -6289,7 +6373,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_engine_trouble_arrival_transition_stage",
-                  "reduced_motion_message": "In reduced motion, delta queen engine trouble settles directly into the same visible result.",
+                  "reduced_motion_message": "Pressure gauge, locked gangway, engine station, and evacuation benches appear at their settled emergency positions.",
                   "stable_object_id": "delta_queen_engine_trouble_arrival_transition",
                   "stage_id": "delta_queen_engine_trouble_arrival_stage"
                 }
@@ -6403,7 +6487,7 @@
                           "owner_namespace": "scenario",
                           "stable_object_id": "delta_queen_engine_trouble_task_1",
                           "state": "changed_by_fail_delta_queen_engine_trouble",
-                          "message": "You let the pressure win. The exposed gauge makes the pressure fault ready for inspection."
+                          "message": "The failing machinery dictates the next step before you can. The exposed gauge makes the pressure fault ready for inspection."
                         }
                       },
                       {
@@ -6613,7 +6697,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "crate_latch",
-                          "message": "You let the pressure win. The shifted benches open a route to the impeller key."
+                          "message": "The failing machinery dictates the next step before you can. The shifted benches open a route to the impeller key."
                         }
                       },
                       {
@@ -6714,7 +6798,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_engine_trouble_work_2_transition_stage",
-                  "reduced_motion_message": "In reduced motion, delta queen engine trouble settles directly into the same visible result.",
+                  "reduced_motion_message": "Pressure gauge, locked gangway, engine station, and evacuation benches appear at their settled emergency positions.",
                   "stable_object_id": "delta_queen_engine_trouble_work_2_transition",
                   "stage_id": "delta_queen_engine_trouble_work_2_stage"
                 }
@@ -7196,7 +7280,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "crate_latch",
-                          "message": "You let the pressure win. The repaired line leaves the engine controls ready for a restart."
+                          "message": "The failing machinery dictates the next step before you can. The repaired line leaves the engine controls ready for a restart."
                         }
                       },
                       {
@@ -7455,7 +7539,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "cd7b0fc4498c4ab5c522830c88ab4e6a92accd2e5662dcde802eb2321b1440a6"
+        "sequence_signature": "25171ff510f2939b1d4c1dffc3a9dd86ba66b20d9c9b0108156b9e16c643c6ee"
       }
     },
     {
@@ -7907,7 +7991,17 @@
         },
         "fact_subscriptions": [
           "game_result",
-          "travel_departed"
+          "travel_departed",
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_captains_invitational_card",
+              "choice_id": "post_the_entry",
+              "resolution_id": "post_the_entry",
+              "resolved": true,
+              "ok": true
+            }
+          }
         ],
         "local_state_schema": {
           "pressure_seen": {
@@ -8082,7 +8176,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "crate_latch",
-                          "message": "You refuse the task. Entry cards, three bracket tables, and a scorer rail replace the open deck while eliminated players close lanes behind them."
+                          "message": "You decline the invitational work and leave your entry card on the rail. You leave the room unchanged: entry cards, three bracket tables, and a scorer rail replace the open deck while eliminated players close lanes behind them."
                         }
                       }
                     ],
@@ -8135,7 +8229,18 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "crate_latch",
-                          "message": "You let the pressure win. Entry cards, three bracket tables, and a scorer rail replace the open deck while eliminated players close lanes behind them."
+                          "message": "The captains advance the bracket while your place goes cold. Entry cards, three bracket tables, and a scorer rail replace the open deck while eliminated players close lanes behind them."
+                        }
+                      },
+                      {
+                        "id": "open_captains_invitational_card",
+                        "label": "Talk: The Captain's Card",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_captains_invitational_card",
+                          "resolution_id": "post_the_entry"
                         }
                       }
                     ],
@@ -8314,7 +8419,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_captains_invitational_arrival_transition_stage",
-                  "reduced_motion_message": "In reduced motion, delta queen captains invitational settles directly into the same visible result.",
+                  "reduced_motion_message": "Entry cards, bracket tables, scorer rail, and players appear at their current tournament stations without motion.",
                   "stable_object_id": "delta_queen_captains_invitational_arrival_transition",
                   "stage_id": "delta_queen_captains_invitational_arrival_stage"
                 }
@@ -8426,7 +8531,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "crate_latch",
-                          "message": "You let the pressure win. Cards and bracket markers advance along the deck, inviting you to score opening bracket."
+                          "message": "The captains advance the bracket while your place goes cold. Cards and bracket markers advance along the deck, inviting you to score opening bracket."
                         }
                       },
                       {
@@ -8653,7 +8758,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "crate_latch",
-                          "message": "You let the pressure win. Cards and bracket markers advance along the deck, inviting you to rotate eliminated table."
+                          "message": "The captains advance the bracket while your place goes cold. Cards and bracket markers advance along the deck, inviting you to rotate eliminated table."
                         }
                       },
                       {
@@ -8772,7 +8877,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_captains_invitational_work_2_transition_stage",
-                  "reduced_motion_message": "In reduced motion, delta queen captains invitational settles directly into the same visible result.",
+                  "reduced_motion_message": "Entry cards, bracket tables, scorer rail, and players appear at their current tournament stations without motion.",
                   "stable_object_id": "delta_queen_captains_invitational_work_2_transition",
                   "stage_id": "delta_queen_captains_invitational_work_2_stage"
                 }
@@ -9258,7 +9363,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "crate_latch",
-                          "message": "You let the pressure win. Cards and bracket markers advance along the deck, inviting you to seat finalists."
+                          "message": "The captains advance the bracket while your place goes cold. Cards and bracket markers advance along the deck, inviting you to seat finalists."
                         }
                       },
                       {
@@ -9517,7 +9622,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "c7ffe28d42ca9b62f7cc5a5abb998f3163d8ca81511da8ff825888af1b66ac05"
+        "sequence_signature": "d8524966ee6fee5ad531a75b8a75be8fe2c1088982db6ff1870d73ad8d8c1c89"
       }
     },
     {
@@ -9961,7 +10066,17 @@
         },
         "fact_subscriptions": [
           "service_result",
-          "travel_departed"
+          "travel_departed",
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_gala_cover",
+              "choice_id": "wear_the_name",
+              "resolution_id": "wear_the_name",
+              "resolved": true,
+              "ok": true
+            }
+          }
         ],
         "local_state_schema": {
           "pressure_seen": {
@@ -10128,7 +10243,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "crate_latch",
-                          "message": "You refuse the task. Coat check, charity credentials, and a stalled stage lift replace the normal floor route without touching the duel or invite gate."
+                          "message": "You leave the charity credentials and stalled lift to the floor staff. You leave the room unchanged: coat check, charity credentials, and a stalled stage lift replace the normal floor route without touching the duel or invite gate."
                         }
                       }
                     ],
@@ -10183,7 +10298,18 @@
                           "owner_namespace": "scenario",
                           "stable_object_id": "grand_casino_gala_night_task_0",
                           "state": "changed_by_fail_grand_casino_gala_night",
-                          "message": "You let the pressure win. Coat check, charity credentials, and a stalled stage lift replace the normal floor route without touching the duel or invite gate."
+                          "message": "The gala machine turns another notch without your help. Coat check, charity credentials, and a stalled stage lift replace the normal floor route without touching the duel or invite gate."
+                        }
+                      },
+                      {
+                        "id": "open_gala_cover",
+                        "label": "Talk: A Borrowed Name",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_gala_cover",
+                          "resolution_id": "wear_the_name"
                         }
                       }
                     ],
@@ -10362,7 +10488,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_gala_night_arrival_transition_stage",
-                  "reduced_motion_message": "In reduced motion, grand casino gala night settles directly into the same visible result.",
+                  "reduced_motion_message": "Coat check, credential desk, stage lift, and guests appear at their settled gala stations without animation.",
                   "stable_object_id": "grand_casino_gala_night_arrival_transition",
                   "stage_id": "grand_casino_gala_night_arrival_stage"
                 }
@@ -10476,7 +10602,7 @@
                           "owner_namespace": "scenario",
                           "stable_object_id": "grand_casino_gala_night_task_1",
                           "state": "changed_by_fail_grand_casino_gala_night",
-                          "message": "You let the pressure win. Credentials and stage equipment visibly change places, opening the route to verify charity badge."
+                          "message": "The gala machine turns another notch without your help. Credentials and stage equipment visibly change places, opening the route to verify charity badge."
                         }
                       },
                       {
@@ -10959,7 +11085,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_gala_night_work_2_transition_stage",
-                  "reduced_motion_message": "In reduced motion, grand casino gala night settles directly into the same visible result.",
+                  "reduced_motion_message": "Coat check, credential desk, stage lift, and guests appear at their settled gala stations without animation.",
                   "stable_object_id": "grand_casino_gala_night_work_2_transition",
                   "stage_id": "grand_casino_gala_night_work_2_stage"
                 }
@@ -11085,7 +11211,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "crate_latch",
-                          "message": "You let the pressure win. Credentials and stage equipment visibly change places, opening the route to choose gala identity."
+                          "message": "The gala machine turns another notch without your help. Credentials and stage equipment visibly change places, opening the route to choose gala identity."
                         }
                       },
                       {
@@ -11346,7 +11472,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "27d5a6415c6ceb2705f6e139527727f5b9ce891cb3d8d9803ee9ce49875f25e1"
+        "sequence_signature": "7f8be1ababc8728d2e08c8f30c8090b055386bf25cf69577e10d05fc7122249c"
       }
     },
     {
@@ -11791,7 +11917,17 @@
         },
         "fact_subscriptions": [
           "game_result",
-          "travel_departed"
+          "travel_departed",
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_convention_badge",
+              "choice_id": "join_the_badges",
+              "resolution_id": "join_the_badges",
+              "resolved": true,
+              "ok": true
+            }
+          }
         ],
         "local_state_schema": {
           "pressure_seen": {
@@ -11958,7 +12094,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "crate_latch",
-                          "message": "You refuse the task. Badge-wearing delegations reserve two machine banks and collide at one table block, making camouflage and reduced comps publicly legible."
+                          "message": "You stay outside the badge traffic and leave the booking dispute alone. You leave the room unchanged: badge-wearing delegations reserve two machine banks and collide at one table block, making camouflage and reduced comps publicly legible."
                         }
                       }
                     ],
@@ -12013,7 +12149,18 @@
                           "owner_namespace": "scenario",
                           "stable_object_id": "grand_casino_convention_crowd_task_0",
                           "state": "changed_by_fail_grand_casino_convention_crowd",
-                          "message": "You let the pressure win. Badge-wearing delegations reserve two machine banks and collide at one table block, making camouflage and reduced comps publicly legible."
+                          "message": "The delegations claim more floor while you hold back. Badge-wearing delegations reserve two machine banks and collide at one table block, making camouflage and reduced comps publicly legible."
+                        }
+                      },
+                      {
+                        "id": "open_convention_badge",
+                        "label": "Talk: Borrowed Badge",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_convention_badge",
+                          "resolution_id": "join_the_badges"
                         }
                       }
                     ],
@@ -12191,7 +12338,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_convention_crowd_arrival_transition_stage",
-                  "reduced_motion_message": "In reduced motion, grand casino convention crowd settles directly into the same visible result.",
+                  "reduced_motion_message": "Delegations, machine banks, badge lines, and table block appear at their current convention positions.",
                   "stable_object_id": "grand_casino_convention_crowd_arrival_transition",
                   "stage_id": "grand_casino_convention_crowd_arrival_stage"
                 }
@@ -12305,7 +12452,7 @@
                           "owner_namespace": "scenario",
                           "stable_object_id": "grand_casino_convention_crowd_task_1",
                           "state": "changed_by_fail_grand_casino_convention_crowd",
-                          "message": "You let the pressure win. Badges and reserved floor markers shift, leaving room to sort delegation badges."
+                          "message": "The delegations claim more floor while you hold back. Badges and reserved floor markers shift, leaving room to sort delegation badges."
                         }
                       },
                       {
@@ -12789,7 +12936,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_convention_crowd_work_2_transition_stage",
-                  "reduced_motion_message": "In reduced motion, grand casino convention crowd settles directly into the same visible result.",
+                  "reduced_motion_message": "Delegations, machine banks, badge lines, and table block appear at their current convention positions.",
                   "stable_object_id": "grand_casino_convention_crowd_work_2_transition",
                   "stage_id": "grand_casino_convention_crowd_work_2_stage"
                 }
@@ -12915,7 +13062,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "crate_latch",
-                          "message": "You let the pressure win. Badges and reserved floor markers shift, leaving room to choose convention route."
+                          "message": "The delegations claim more floor while you hold back. Badges and reserved floor markers shift, leaving room to choose convention route."
                         }
                       },
                       {
@@ -13176,7 +13323,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "73b213c723d39149bb3041341cad1ef89a2679b9b53c2bbb5bec7eb37bd22fcb"
+        "sequence_signature": "c3283306446ab8b1356fbff8176ec655f7940841fd71a9602ab958653e410912"
       }
     },
     {
@@ -13630,7 +13777,17 @@
         },
         "fact_subscriptions": [
           "heat_band_changed",
-          "travel_departed"
+          "travel_departed",
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "event_id": "scenario_audit_roster",
+              "choice_id": "read_the_shift",
+              "resolution_id": "read_the_shift",
+              "resolved": true,
+              "ok": true
+            }
+          }
         ],
         "local_state_schema": {
           "pressure_seen": {
@@ -13797,7 +13954,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "crate_latch",
-                          "message": "You refuse the task. Auditors move from cage seal to pit ledger while staff close each inspected zone; the public route anchors heist Plan A without revealing hidden audit state."
+                          "message": "You leave the seals and pit ledger to the audit team. You leave the room unchanged: auditors move from cage seal to pit ledger while staff close each inspected zone; the public route anchors heist Plan A without revealing hidden audit state."
                         }
                       }
                     ],
@@ -13852,7 +14009,18 @@
                           "owner_namespace": "scenario",
                           "stable_object_id": "grand_casino_audit_night_task_0",
                           "state": "changed_by_fail_grand_casino_audit_night",
-                          "message": "You let the pressure win. Auditors move from cage seal to pit ledger while staff close each inspected zone; the public route anchors heist Plan A without revealing hidden audit state."
+                          "message": "The auditors close another zone before you can read the shift. Auditors move from cage seal to pit ledger while staff close each inspected zone; the public route anchors heist Plan A without revealing hidden audit state."
+                        }
+                      },
+                      {
+                        "id": "open_audit_roster",
+                        "label": "Talk: The Audit Roster",
+                        "input_action": "ui_accept",
+                        "non_color_state": "conversation",
+                        "handler": "event_bridge",
+                        "inputs": {
+                          "event_id": "scenario_audit_roster",
+                          "resolution_id": "read_the_shift"
                         }
                       }
                     ],
@@ -14056,7 +14224,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_audit_night_arrival_transition_stage",
-                  "reduced_motion_message": "In reduced motion, grand casino audit night settles directly into the same visible result.",
+                  "reduced_motion_message": "Cage seal, pit ledger, auditors, and closed zones appear at their current audit stations without animated movement.",
                   "stable_object_id": "grand_casino_audit_night_arrival_transition",
                   "stage_id": "grand_casino_audit_night_arrival_stage"
                 }
@@ -14567,7 +14735,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "crate_latch",
-                          "message": "You let the pressure win. An inspected zone closes behind the auditors, exposing the next chance to mark closed games."
+                          "message": "The auditors close another zone before you can read the shift. An inspected zone closes behind the auditors, exposing the next chance to mark closed games."
                         }
                       },
                       {
@@ -14684,7 +14852,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_audit_night_work_2_transition_stage",
-                  "reduced_motion_message": "In reduced motion, grand casino audit night settles directly into the same visible result.",
+                  "reduced_motion_message": "Cage seal, pit ledger, auditors, and closed zones appear at their current audit stations without animated movement.",
                   "stable_object_id": "grand_casino_audit_night_work_2_transition",
                   "stage_id": "grand_casino_audit_night_work_2_stage"
                 }
@@ -14796,7 +14964,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "crate_latch",
-                          "message": "You let the pressure win. An inspected zone closes behind the auditors, exposing the next chance to choose audit response."
+                          "message": "The auditors close another zone before you can read the shift. An inspected zone closes behind the auditors, exposing the next chance to choose audit response."
                         }
                       },
                       {
@@ -15041,7 +15209,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "ddfc8e60462d04a103e6200c1ad3403e9f420d298c12239447d3a1f2422d3a26"
+        "sequence_signature": "f6b9f57a000ea3e0f6080992f2893418cd79fbdd792309e26b9d4564d9a4fd13"
       }
     }
   ]
