@@ -2,6 +2,9 @@ class_name Env068EnvironmentReadabilityContract
 extends RefCounted
 
 const SequenceCatalogScript := preload("res://scripts/core/scenario_sequence_catalog.gd")
+const SequenceRuntimeScript := preload("res://scripts/core/scenario_sequence_runtime.gd")
+const OperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
+const SemanticInventoryScript := preload("res://scripts/core/environment_semantic_inventory.gd")
 const EnvironmentInteractionControllerScript := preload("res://scripts/ui/environment_interaction_controller.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
@@ -16,6 +19,12 @@ const GENERATED_PROSE_MARKERS := [
 	"the room advances to a new physical station",
 	"beat moves props and actors",
 	"shared aftermath fixes a distinct",
+	"arrangement remains physically readable",
+	"chosen outcome settles into a visible",
+	"allowing you to",
+	"now bears the visible signs",
+	"has shifted to a new part of the room",
+	"the choice to",
 ]
 
 
@@ -50,7 +59,7 @@ static func check(library: Variant, failures: Array) -> void:
 		if int(handlers.get(handler_id, 0)) <= 0:
 			failures.append("env06_8 consequence vocabulary is not exercised by %s." % handler_id)
 	_check_presentation_records(presentation_records, failures)
-	_check_hidden_state_neutrality(library, definitions, failures)
+	_check_reachable_presentation_and_hidden_state(library, definitions, failures)
 
 
 static func _check_definition(definition: Dictionary, counts: Dictionary, presentation_records: Array, failures: Array) -> void:
@@ -110,25 +119,49 @@ static func _collect_create_records(value: Variant, scenario_id: String, counts:
 	for child in row.values(): _collect_create_records(child, scenario_id, counts, creates, presentation_records, failures)
 
 
-static func _check_hidden_state_neutrality(library: Variant, definitions: Array, failures: Array) -> void:
+static func _check_reachable_presentation_and_hidden_state(library: Variant, definitions: Array, failures: Array) -> void:
 	for definition_value in definitions:
 		var definition := _dict(definition_value)
 		var scenario_id := str(definition.get("id", ""))
-		var archetype_id := str(definition.get("archetype_id", ""))
-		var original_pool := _array(library.environment_scenarios.get(archetype_id, []))
-		var selected: Dictionary = {}
-		for candidate_value in original_pool:
-			if str(_dict(candidate_value).get("id", "")) == scenario_id: selected = _dict(candidate_value); break
-		if selected.is_empty():
-			failures.append("env06_8 paired observer cannot find %s in %s." % [scenario_id, archetype_id])
+		var host := _production_host_semantics(library, definition, failures)
+		if host.is_empty():
 			continue
-		library.environment_scenarios[archetype_id] = [selected]
-		var clean := _seeded_description_observer(library, archetype_id, scenario_id, false, failures)
-		var hidden := _seeded_description_observer(library, archetype_id, scenario_id, true, failures)
-		library.environment_scenarios[archetype_id] = original_pool
-		if clean.is_empty() or hidden.is_empty(): continue
+		var clean := _reachable_presentation_observer(definition, host, false, failures)
+		var hidden := _reachable_presentation_observer(definition, host, true, failures)
+		if clean.is_empty() or hidden.is_empty():
+			continue
 		if JSON.stringify(clean) != JSON.stringify(hidden):
-			failures.append("env06_8 paired seeded observers diverged for %s under Turn/grievance/Numbers/ticket hidden state." % scenario_id)
+			failures.append("env06_8 complete reachable presentation diverged for %s under paired Turn/grievance, rigged Numbers, or unrevealed-ticket state." % scenario_id)
+
+
+static func _production_host_semantics(library: Variant, definition: Dictionary, failures: Array) -> Dictionary:
+	var scenario_id := str(definition.get("id", ""))
+	var catalog := _dict(library.scenario_target_catalog(definition))
+	var inventory := _dict(catalog.get("inventory", {}))
+	var inventory_errors := SemanticInventoryScript.validate(inventory)
+	if not inventory_errors.is_empty():
+		failures.append("env06_8 %s production target inventory is invalid: %s" % [scenario_id, JSON.stringify(inventory_errors)])
+		return {}
+	var exact := SemanticInventoryScript.exact_collections(inventory)
+	var declared := _dict(_dict(definition.get("sequence", {})).get("declared_targets", {}))
+	var bounded: Dictionary = {}
+	for collection in ["scene_objects", "interactions", "actors", "services", "games", "routes", "anchors", "zones"]:
+		bounded[collection] = []
+		for identity_value in _array(declared.get(collection, [])):
+			var identity := str(identity_value)
+			if _array(exact.get(collection, [])).has(identity):
+				(bounded[collection] as Array).append(identity)
+			else:
+				failures.append("env06_8 %s production target %s is absent from %s." % [scenario_id, identity, collection])
+	bounded["event_choices"] = _dict(catalog.get("event_choices", exact.get("event_choices", {})))
+	return {
+		"target_inventory": bounded,
+		"inventory_schema_version": int(inventory.get("schema_version", 0)),
+		"inventory_digest": str(inventory.get("digest", "")),
+		"event_choices": _dict(bounded.get("event_choices", {})),
+		"inventory_errors": [],
+		"base_interactions": [],
+	}
 
 
 static func _check_presentation_records(records: Array, failures: Array) -> void:
@@ -144,46 +177,170 @@ static func _check_presentation_records(records: Array, failures: Array) -> void
 			failures.append("env06_8 projected object %s lacks complete inspectable presentation." % str(record.get("stable_object_id", "")))
 
 
-static func _seeded_description_observer(library: Variant, archetype_id: String, scenario_id: String, hidden: bool, failures: Array) -> Dictionary:
-	var run_state := RunStateScript.new()
-	run_state.start_new("ENV06_8-HIDDEN-%s" % scenario_id)
+static func _reachable_presentation_observer(definition: Dictionary, host: Dictionary, hidden: bool, failures: Array) -> Dictionary:
+	var scenario_id := str(definition.get("id", ""))
+	# The paired host owns secret state. Only the closed production scenario host
+	# contract crosses into the runtime/presentation path below.
+	var hidden_host := RunStateScript.new()
+	hidden_host.start_new("ENV06_8-PAIR-%s" % scenario_id)
 	if hidden:
 		var turn := CrewTurnModelScript.empty_state()
 		turn["m"] = str(CrewStateModelScript.MEMBER_IDS[1])
-		run_state.crew_heist_state = CrewHeistModelScript.begin(CrewHeistModelScript.PLAN_COUNT, 0)
-		run_state.crew_heist_state["x"] = turn
-		run_state.grievance_add({"member_id": str(CrewStateModelScript.MEMBER_IDS[1]), "kind": "job_abandoned", "weight": 9, "source_ref": "env06_8_hidden_probe"})
-		run_state.numbers_state.draws_by_day[0] = {"number": "777", "posted": false, "fixed": true}
-		run_state.numbers_state.fix_state = {"status": "ready", "retry_day": 0, "number": "777"}
-		run_state.portable_ticket_piles = {
+		hidden_host.crew_heist_state = CrewHeistModelScript.begin(CrewHeistModelScript.PLAN_COUNT, 0)
+		hidden_host.crew_heist_state["x"] = turn
+		hidden_host.grievance_add({"member_id": str(CrewStateModelScript.MEMBER_IDS[1]), "kind": "job_abandoned", "weight": 9, "source_ref": "env06_8_hidden_probe"})
+		hidden_host.numbers_state.draws_by_day[0] = {"number": "777", "posted": false, "fixed": true}
+		hidden_host.numbers_state.fix_state = {"status": "ready", "retry_day": 0, "number": "777"}
+		hidden_host.portable_ticket_piles = {
 			"scratch_tickets": {"env06_8_hidden": {"active_ticket": {"id": "hidden_scratch", "mechanic_result": {"payout": 500}}, "pending_queue": [{"id": "hidden_next", "mechanic_result": {"payout": 0}}]}},
-			"pull_tabs": {"env06_8_hidden": {"ticket_stack": [{"id": "hidden_pull_tab", "payout": 100}]}}
+			"pull_tabs": {"env06_8_hidden": {"ticket_stack": [{"id": "hidden_pull_tab", "payout": 100}]}},
 		}
-	var generator := RunGeneratorScript.new(library)
-	generator.next_environment(run_state)
-	var target_node := ""
-	for node_value in _array(run_state.world_map.get("nodes", [])):
-		var node := _dict(node_value)
-		if str(node.get("archetype_id", "")) == archetype_id:
-			target_node = str(node.get("id", ""))
-			break
-	if target_node.is_empty(): target_node = archetype_id
-	var travel := generator.travel_environment_result(run_state, target_node, true)
-	if not bool(travel.get("ok", false)) or str(run_state.current_environment.get("scenario_id", "")) != scenario_id:
-		failures.append("env06_8 paired observer could not enter %s: %s" % [scenario_id, JSON.stringify(travel.get("errors", []))])
+	var initial := SequenceRuntimeScript.initial_state(definition, "%s_env06_8" % scenario_id, "ENV06_8-REACHABLE-%s" % scenario_id, host)
+	if str(initial.get("status", "")) != SequenceRuntimeScript.STATUS_ACTIVE:
+		failures.append("env06_8 %s could not initialize its production-authorized reachable observer: %s" % [scenario_id, JSON.stringify(initial.get("errors", []))])
 		return {}
-	var projection := run_state.world_sequence_composed_projection()
+	var queue: Array = [initial]
+	var seen: Dictionary = {}
+	var phase_ids: Dictionary = {}
+	var snapshots: Array = []
+	var serial := 0
+	while not queue.is_empty() and seen.size() < 128:
+		var state := _dict(queue.pop_front())
+		var state_key := _reachable_state_key(state, definition)
+		if seen.has(state_key):
+			continue
+		seen[state_key] = true
+		phase_ids[str(state.get("phase_id", ""))] = true
+		var snapshot := _resolved_presentation_snapshot(state, definition, scenario_id, failures)
+		snapshots.append(snapshot)
+		if str(state.get("status", "")) != SequenceRuntimeScript.STATUS_ACTIVE:
+			continue
+		var semantic := _dict(OperationRegistryScript.resolved_semantic_state(state.get("semantic_state", {})))
+		for interaction_value in _dict(semantic.get("interactions", {})).values():
+			var interaction := _dict(interaction_value)
+			if not bool(interaction.get("enabled", false)):
+				continue
+			for action_value in _array(interaction.get("available_actions", [])):
+				var action := _dict(action_value)
+				var command_id := str(action.get("id", ""))
+				var descriptor := SequenceRuntimeScript._command_descriptor(state, definition, str(interaction.get("owner_namespace", "")), str(interaction.get("stable_object_id", "")), command_id, {})
+				if descriptor.is_empty():
+					continue
+				serial += 1
+				var receipt := "%s_reachable_%d" % [scenario_id, serial]
+				var command := SequenceRuntimeScript.command(
+					command_id, str(state.get("node_id", "")), str(state.get("phase_id", "")), receipt, {},
+					str(interaction.get("owner_namespace", "")), str(interaction.get("stable_object_id", "")),
+					str(descriptor.get("action_origin_owner_namespace", "")), str(descriptor.get("action_origin_stable_object_id", "")),
+					str(descriptor.get("action_origin_receipt_key", "")), str(descriptor.get("action_origin_boundary_id", "")), str(descriptor.get("action_origin_fingerprint", "")))
+				var applied := SequenceRuntimeScript.apply_command(state, definition, command, {"available_funds": 100000})
+				if not bool(applied.get("ok", false)):
+					continue
+				var next := _dict(applied.get("state", {}))
+				_check_exactly_once_consequence(definition, command, action, next, failures, scenario_id)
+				queue.append(next)
+	# Exercise every authored aftermath from an actually initialized state. The
+	# production reducer performs cleanup before installing each visible receipt.
+	for outcome_value in _dict(_dict(definition.get("sequence", {})).get("aftermath", {})).keys():
+		var outcome := str(outcome_value)
+		var resolved := SequenceRuntimeScript._resolve_outcome(initial, definition, outcome, "env06_8_%s" % outcome)
+		if not bool(resolved.get("ok", false)):
+			failures.append("env06_8 %s aftermath %s could not resolve: %s" % [scenario_id, outcome, JSON.stringify(resolved.get("errors", []))])
+			continue
+		snapshots.append(_resolved_presentation_snapshot(_dict(resolved.get("state", {})), definition, scenario_id, failures))
+	var expected_phases: Dictionary = {}
+	for phase_value in _array(_dict(_dict(definition.get("sequence", {})).get("phase_graph", {})).get("phases", [])):
+		expected_phases[str(_dict(phase_value).get("id", ""))] = true
+	for phase_id_value in expected_phases.keys():
+		if not phase_ids.has(str(phase_id_value)):
+			failures.append("env06_8 %s reachable observer did not exercise phase %s." % [scenario_id, str(phase_id_value)])
+	snapshots.sort_custom(func(a: Variant, b: Variant) -> bool: return JSON.stringify(a) < JSON.stringify(b))
+	return {"scenario_id": scenario_id, "reachable_state_count": seen.size(), "snapshots": snapshots}
+
+
+static func _reachable_state_key(state: Dictionary, definition: Dictionary) -> String:
+	return JSON.stringify({
+		"status": str(state.get("status", "")),
+		"phase_id": str(state.get("phase_id", "")),
+		"local_state": _dict(state.get("local_state", {})),
+		"objectives": _dict(state.get("objective_progress", {})),
+		"outcomes": _array(state.get("resolved_outcomes", [])),
+		"semantic": SequenceRuntimeScript.public_projection(state, definition).get("semantic_state", {}),
+	})
+
+
+static func _resolved_presentation_snapshot(state: Dictionary, definition: Dictionary, scenario_id: String, failures: Array) -> Dictionary:
+	var projection := SequenceRuntimeScript.public_projection(state, definition)
 	var semantic := _dict(projection.get("semantic_state", {}))
-	var arrival: Array = []
-	for collection_key in ["scene_objects", "actors"]:
-		for record_value in _dict(semantic.get(collection_key, {})).values():
-			var record := _dict(record_value)
-			arrival.append("%s|%s|%s" % [str(record.get("stable_object_id", "")), str(record.get("description", "")), JSON.stringify(record.get("description_variants", {}))])
-	arrival.sort()
-	var authored: Array = []
-	_collect_description_lines(_dict(run_state.current_environment.get("scenario_sequence_definition", {})), authored)
-	authored.sort()
-	return {"arrival": arrival, "authored_states": authored}
+	var identities: Dictionary = {}
+	for collection_key in ["scene_objects", "actors", "interactions"]:
+		for identity_value in _dict(semantic.get(collection_key, {})).keys():
+			identities[str(identity_value)] = true
+	var authority: Dictionary = {}
+	var identity_keys := identities.keys()
+	identity_keys.sort()
+	for index in range(identity_keys.size()):
+		var identity := str(identity_keys[index])
+		var x := 0.03 + float(index % 8) * 0.115
+		var y := 0.08 + float((int(index / 8)) % 4) * 0.2
+		authority[identity] = {
+			"identity": identity,
+			"presentation_object_id": identity,
+			"normalized_hit_rect": {"x": x, "y": y, "w": 0.09, "h": 0.13},
+			"small_screen_rect": {"x": x, "y": y, "w": 0.10, "h": 0.14},
+			"z_order": index,
+		}
+	var authority_digest := JSON.stringify(authority).sha256_text()
+	var composed := EnvironmentInteractionControllerScript._compose_projected_records([], projection, authority, authority_digest)
+	if not bool(composed.get("ok", false)):
+		failures.append("env06_8 %s production presentation resolver rejected reachable %s/%s: %s" % [scenario_id, str(projection.get("phase_id", "")), str(projection.get("status", "")), JSON.stringify(composed.get("errors", []))])
+		return {}
+	var rows: Array = []
+	for record_value in _array(composed.get("records", [])):
+		var record := _dict(record_value)
+		if not bool(record.get("visible", true)):
+			continue
+		var actions := _array(record.get("scenario_sequence_actions", []))
+		var complete := not str(record.get("label", "")).strip_edges().is_empty() \
+			and not str(record.get("short_description", "")).strip_edges().is_empty() \
+			and not str(record.get("icon_key", "")).strip_edges().is_empty() \
+			and bool(record.get("interactive", false)) \
+			and (not actions.is_empty() or bool(record.get("scenario_presentation_read_only", false)))
+		if not complete:
+			failures.append("env06_8 %s reachable %s/%s object %s lacks complete icon/label/description/panel presentation." % [scenario_id, str(projection.get("phase_id", "")), str(projection.get("status", "")), str(record.get("object_id", ""))])
+		var action_ids: Array = []
+		for action_value in actions:
+			action_ids.append(str(_dict(action_value).get("id", "")))
+		rows.append({
+			"id": str(record.get("object_id", "")),
+			"icon": str(record.get("icon_key", "")),
+			"label": str(record.get("label", "")),
+			"description": str(record.get("short_description", "")),
+			"state": str(record.get("semantic_state", record.get("state_label", ""))),
+			"actions": action_ids,
+			"read_only": bool(record.get("scenario_presentation_read_only", false)),
+		})
+	rows.sort_custom(func(a: Variant, b: Variant) -> bool: return str(_dict(a).get("id", "")) < str(_dict(b).get("id", "")))
+	return {"phase_id": str(projection.get("phase_id", "")), "status": str(projection.get("status", "")), "outcomes": _array(projection.get("resolved_outcomes", [])), "rows": rows}
+
+
+static func _check_exactly_once_consequence(definition: Dictionary, command: Dictionary, action: Dictionary, state: Dictionary, failures: Array, scenario_id: String) -> void:
+	var handler := str(action.get("handler", ""))
+	if handler not in ["event_bridge", "grant_item", "grant_cash", "change_scene_object", "play_cue"]:
+		return
+	var saved := SequenceRuntimeScript.normalize_state(state, definition)
+	var before := JSON.stringify(saved)
+	var replay := SequenceRuntimeScript.apply_command(saved, definition, command, {"available_funds": 100000})
+	if not bool(replay.get("ok", false)) or not bool(replay.get("replayed", false)) or JSON.stringify(replay.get("state", {})) != before:
+		failures.append("env06_8 %s consequence %s/%s did not replay exactly once after save/load." % [scenario_id, handler, str(action.get("id", ""))])
+	if handler in ["event_bridge", "grant_item", "grant_cash"]:
+		var drained := SequenceRuntimeScript.drain_event_requests(saved, definition)
+		if not bool(drained.get("ok", false)):
+			failures.append("env06_8 %s consequence %s could not drain its external request." % [scenario_id, str(action.get("id", ""))])
+			return
+		var redrained := SequenceRuntimeScript.drain_event_requests(_dict(drained.get("state", {})), definition)
+		if _array(drained.get("requests", [])).size() != 1 or not _array(redrained.get("requests", [])).is_empty():
+			failures.append("env06_8 %s consequence %s delivered more or less than exactly once." % [scenario_id, str(action.get("id", ""))])
 
 
 static func _collect_description_lines(value: Variant, result: Array) -> void:

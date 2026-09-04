@@ -361,8 +361,9 @@ static func _compose_projected_records(base_records: Array, resolved_projection:
 	for collection in [semantic_visuals, semantic_interactions]:
 		for semantic_value in (collection as Dictionary).values():
 			var semantic := _dict(semantic_value)
-			if str(semantic.get("owner_namespace", "")) == "scenario":
-				var owned_identity := "scenario::%s" % str(semantic.get("stable_object_id", ""))
+			var world_owner_token := str(semantic.get("world_sequence_owner_token", ""))
+			if str(semantic.get("owner_namespace", "")) == "scenario" or not world_owner_token.is_empty():
+				var owned_identity := "%s::%s" % [str(semantic.get("owner_namespace", "")), str(semantic.get("stable_object_id", ""))]
 				scenario_presentation_ids[owned_identity] = true
 	for record_value in base_records:
 		if typeof(record_value) != TYPE_DICTIONARY: continue
@@ -391,8 +392,8 @@ static func _compose_projected_records(base_records: Array, resolved_projection:
 				continue
 			record = _merge_projected_visual(record, semantic_scene, _dict(authority.get(identity, {})), authority_digest)
 		if not semantic_interactions.has(identity):
-			if semantic_visuals.has(identity) and str(semantic_scene.get("owner_namespace", "")) == "scenario":
-				record["interactive"] = false
+			if semantic_visuals.has(identity) and (str(semantic_scene.get("owner_namespace", "")) == "scenario" or not str(semantic_scene.get("world_sequence_owner_token", "")).is_empty()):
+				record["interactive"] = true
 				record["scenario_sequence_actions"] = []
 			projected.append(record)
 			used_presentation_ids[str(record.get("object_id", ""))] = true
@@ -457,7 +458,7 @@ static func _merge_projected_interaction(base: Dictionary, semantic: Dictionary,
 	result["object_type"] = "scenario_sequence" if scenario_owned else str(result.get("object_type", "info"))
 	result["visual_type"] = str(result.get("visual_type", "fixture"))
 	result["source_id"] = str(semantic.get("source_id", result.get("source_id", semantic.get("stable_object_id", ""))))
-	result["icon_key"] = _scenario_icon_key(semantic, result)
+	result["icon_key"] = _scenario_icon_key(semantic, str(semantic.get("semantic_kind", "")) == "actor")
 	result["owner_namespace"] = str(semantic.get("owner_namespace", ""))
 	result["stable_object_id"] = str(semantic.get("stable_object_id", ""))
 	if not world_owner_token.is_empty(): result["world_sequence_owner_token"] = world_owner_token
@@ -496,30 +497,36 @@ static func _merge_projected_scene_object(base: Dictionary, semantic: Dictionary
 	var owner := str(semantic.get("owner_namespace", result.get("owner_namespace", "")))
 	var stable_id := str(semantic.get("stable_object_id", result.get("stable_object_id", "")))
 	var owned_identity := "%s::%s" % [owner, stable_id]
-	result["object_id"] = owned_identity if owner == "scenario" else str(result.get("object_id", semantic.get("presentation_object_id", owned_identity)))
-	result["object_type"] = str(result.get("object_type", "scenario_scene_object" if owner == "scenario" else "info"))
-	result["visual_type"] = str(result.get("visual_type", "fixture"))
+	var world_owner_token := str(semantic.get("world_sequence_owner_token", ""))
+	var scenario_owned := owner == "scenario" or not world_owner_token.is_empty()
+	result["object_id"] = owned_identity if scenario_owned else str(result.get("object_id", semantic.get("presentation_object_id", owned_identity)))
+	result["object_type"] = str(result.get("object_type", "scenario_scene_object" if scenario_owned else "info"))
+	result["visual_type"] = "scenario_object" if scenario_owned else str(result.get("visual_type", "fixture"))
 	result["source_id"] = str(result.get("source_id", stable_id))
-	result["icon_key"] = _scenario_icon_key(semantic, result)
 	result["owner_namespace"] = owner
 	result["stable_object_id"] = stable_id
-	var world_owner_token := str(semantic.get("world_sequence_owner_token", ""))
 	if not world_owner_token.is_empty(): result["world_sequence_owner_token"] = world_owner_token
+	result["scenario_presentation_read_only"] = scenario_owned
 	result["label"] = str(semantic.get("label", result.get("label", stable_id)))
 	result["short_description"] = _scenario_description(semantic, result, "Room fixture")
-	result["action_summary"] = str(result.get("action_summary", "Inspect the room detail."))
+	result["action_summary"] = str(result.get("action_summary", "Room detail — read only."))
 	result["state_label"] = str(semantic.get("state", semantic.get("appearance", result.get("state_label", "Present"))))
 	result["enabled"] = bool(semantic.get("enabled", result.get("enabled", true)))
 	result["visible"] = bool(semantic.get("visible", result.get("visible", true)))
 	# Decorative scenario records are still selectable. `interactive` means the
 	# information panel can be opened; an empty action list remains read-only.
-	result["interactive"] = true
+	result["interactive"] = true if scenario_owned else bool(result.get("interactive", false))
+	result["decorative"] = false if scenario_owned else bool(result.get("decorative", not bool(result.get("interactive", false))))
 	result["scenario_sequence_actions"] = _array(result.get("scenario_sequence_actions", []))
 	result["anchor_id"] = str(semantic.get("anchor_id", result.get("anchor_id", "")))
 	result["zone_id"] = str(semantic.get("zone_id", result.get("zone_id", "")))
 	result["semantic_role"] = str(semantic.get("role", result.get("semantic_role", "prop")))
 	result["semantic_state"] = str(semantic.get("state", result.get("semantic_state", "")))
 	result["semantic_appearance"] = str(semantic.get("appearance", result.get("semantic_appearance", "")))
+	result["role"] = result["semantic_role"]
+	result["state"] = result["semantic_state"]
+	result["appearance"] = result["semantic_appearance"]
+	result["icon_key"] = _scenario_icon_key(semantic, false)
 	result["non_color_state"] = str(semantic.get("non_color_state", result.get("non_color_state", result.get("state_label", "Present"))))
 	result["visual_state"] = {
 		"role": result["semantic_role"],
@@ -532,9 +539,10 @@ static func _merge_projected_scene_object(base: Dictionary, semantic: Dictionary
 static func _merge_projected_actor(base: Dictionary, semantic: Dictionary, authority: Dictionary, authority_digest: String) -> Dictionary:
 	var result := _merge_projected_scene_object(base, semantic, authority, authority_digest)
 	var owner := str(semantic.get("owner_namespace", result.get("owner_namespace", "")))
+	var scenario_owned := owner == "scenario" or not str(semantic.get("world_sequence_owner_token", "")).is_empty()
 	if base.is_empty() or str(result.get("object_type", "")) == "scenario_scene_object":
-		result["object_type"] = "scenario_actor" if owner == "scenario" else "character"
-	result["visual_type"] = "character"
+		result["object_type"] = "scenario_actor" if scenario_owned else "character"
+	result["visual_type"] = "scenario_actor" if scenario_owned else "character"
 	result["presence"] = "character"
 	result["short_description"] = _scenario_description(semantic, result, "%s; %s" % [
 		str(semantic.get("behavior", "idle")).replace("_", " ").capitalize(),
@@ -544,6 +552,9 @@ static func _merge_projected_actor(base: Dictionary, semantic: Dictionary, autho
 	result["source_id"] = result["actor_id"]
 	result["actor_pose"] = str(semantic.get("pose", "idle"))
 	result["actor_behavior"] = str(semantic.get("behavior", "idle"))
+	result["pose"] = result["actor_pose"]
+	result["behavior"] = result["actor_behavior"]
+	result["icon_key"] = _scenario_icon_key(semantic, true)
 	result["actor_route_id"] = str(semantic.get("route_id", ""))
 	result["actor_route_points"] = _array(authority.get("actor_route_points", []))
 	result["actor_route_stage"] = _dict(authority.get("actor_route_stage", {}))
@@ -551,15 +562,29 @@ static func _merge_projected_actor(base: Dictionary, semantic: Dictionary, autho
 	return result
 
 
-static func _scenario_icon_key(semantic: Dictionary, base: Dictionary) -> String:
-	var parts: Array[String] = []
-	for key in ["role", "state", "appearance", "behavior", "pose"]:
-		var value := str(semantic.get(key, base.get("semantic_%s" % key, base.get(key, "")))).strip_edges()
-		if not value.is_empty() and not parts.has(value):
-			parts.append(value)
-	if parts.is_empty():
-		parts.append("character" if str(semantic.get("semantic_kind", "")) == "actor" else "room_fixture")
-	return " ".join(parts)
+static func _scenario_icon_key(semantic: Dictionary, actor: bool) -> String:
+	if actor:
+		var behavior := str(semantic.get("behavior", "idle"))
+		if behavior in ["guard", "watch", "patrol", "fight"]: return "scenario_actor_watch"
+		if behavior in ["flee", "depart"]: return "scenario_actor_moving"
+		return "scenario_actor_work"
+	var role := str(semantic.get("role", "prop"))
+	var words := ("%s %s %s %s" % [role, str(semantic.get("stable_object_id", "")), str(semantic.get("state", "")), str(semantic.get("appearance", ""))]).to_lower()
+	if role in ["exit", "route"] or _contains_any(words, ["exit", "door", "lane", "route", "gangway"]): return "scenario_route"
+	if role in ["barrier", "hazard", "obstacle"] or _contains_any(words, ["barrier", "hazard", "lockout", "shutter", "police_hold"]): return "scenario_barrier"
+	if role == "evidence" or _contains_any(words, ["evidence", "trace", "manifest", "serial", "record", "provenance", "marks", "clue"]): return "scenario_evidence"
+	if role in ["workstation", "primary_task"] or _contains_any(words, ["station", "counter", "panel", "circuit", "board", "cage"]): return "scenario_workstation"
+	if _contains_any(words, ["cart", "crate", "stock", "goods", "shelf", "pallet", "lot"]): return "scenario_stock"
+	if _contains_any(words, ["cruiser", "patrol", "vehicle"]): return "scenario_vehicle"
+	if _contains_any(words, ["ring", "dice", "lotto", "number"]): return "scenario_game"
+	if role in ["aftermath", "display"]: return "scenario_aftermath"
+	return "scenario_fixture"
+
+
+static func _contains_any(value: String, needles: Array) -> bool:
+	for needle_value in needles:
+		if value.contains(str(needle_value)): return true
+	return false
 
 
 static func _scenario_description(semantic: Dictionary, base: Dictionary, fallback: String) -> String:

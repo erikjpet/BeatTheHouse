@@ -867,11 +867,10 @@ static func public_projection(state_value: Dictionary, definition: Dictionary = 
 	if state.is_empty():
 		return {}
 	var public_semantics := OperationRegistryScript.public_semantic_state(_dict(state.get("semantic_state", {})))
-	# Terminal states retain causal base-interaction authority for replay and
-	# restore, but do not publish those host controls as active scenario
-	# presentation. Ordinary room controls are composed separately by the trusted
-	# host after this sealed passive projection is committed.
-	if str(state.get("status", "")) in [STATUS_AFTERMATH, STATUS_CLEANED]:
+	# Cleanup removes scenario presentation. Authored aftermath is deliberately
+	# still public: its objects are the visible, inspectable receipt for how the
+	# room ended and must survive leave/revisit and save/load.
+	if str(state.get("status", "")) == STATUS_CLEANED:
 		for presentation_collection in ["scene_objects", "actors", "interactions"]:
 			public_semantics[presentation_collection] = {}
 	var public_interactions := _dict(public_semantics.get("interactions", {}))

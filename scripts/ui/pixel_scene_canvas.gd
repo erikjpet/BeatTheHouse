@@ -1975,24 +1975,79 @@ func _draw_scene_objects() -> void:
 
 
 func _draw_scenario_prop(rect: Rect2, object_data: Dictionary, active: bool) -> void:
-	var role := str(object_data.get("role", "prop"))
-	var appearance := str(object_data.get("appearance", ""))
+	var role := str(object_data.get("role", object_data.get("semantic_role", "prop")))
+	var appearance := str(object_data.get("appearance", object_data.get("semantic_appearance", "")))
+	var icon_key := str(object_data.get("icon_key", "scenario_fixture"))
 	var accent := C_ORANGE if role == "obstacle" else C_PURPLE_2 if role == "exit" else C_CYAN_2
 	var fill := C_SHADOW.lightened(0.10) if appearance.is_empty() else accent.darkened(0.66)
 	draw_rect(rect, fill)
 	draw_rect(rect, accent.lightened(0.16) if active else accent, false, 3.0)
-	var mark := "!" if role == "obstacle" else ">" if role == "exit" else "#"
-	_neon_text(mark, rect.get_center() + Vector2(-4.0, 5.0), 14, C_WHITE)
-	if not str(object_data.get("state", "")).is_empty():
+	_draw_scenario_icon(rect.grow(-6.0), icon_key, accent)
+	if not str(object_data.get("state", object_data.get("semantic_state", ""))).is_empty():
 		draw_line(rect.position + Vector2(8.0, rect.size.y - 9.0), rect.end - Vector2(8.0, 9.0), accent, 3.0)
 
 
+func _draw_scenario_icon(rect: Rect2, icon_key: String, accent: Color) -> void:
+	var center := rect.get_center()
+	var left := rect.position.x
+	var top := rect.position.y
+	var right := rect.end.x
+	var bottom := rect.end.y
+	match icon_key:
+		"scenario_route":
+			draw_rect(Rect2(left + 3.0, top + 2.0, rect.size.x * 0.48, rect.size.y - 4.0), accent, false, 3.0)
+			draw_circle(Vector2(left + rect.size.x * 0.42, center.y), 2.0, C_WHITE)
+			draw_line(Vector2(center.x, center.y), Vector2(right - 3.0, center.y), C_WHITE, 3.0)
+			draw_line(Vector2(right - 10.0, center.y - 7.0), Vector2(right - 3.0, center.y), C_WHITE, 3.0)
+			draw_line(Vector2(right - 10.0, center.y + 7.0), Vector2(right - 3.0, center.y), C_WHITE, 3.0)
+		"scenario_barrier":
+			for stripe in range(3):
+				var stripe_y := top + 5.0 + float(stripe) * maxf(7.0, rect.size.y * 0.25)
+				draw_line(Vector2(left + 3.0, stripe_y), Vector2(right - 3.0, stripe_y), C_ORANGE, 5.0)
+			draw_line(Vector2(left + 7.0, top + 2.0), Vector2(left + 7.0, bottom - 2.0), accent, 3.0)
+			draw_line(Vector2(right - 7.0, top + 2.0), Vector2(right - 7.0, bottom - 2.0), accent, 3.0)
+		"scenario_evidence":
+			var paper := Rect2(left + 4.0, top + 2.0, rect.size.x * 0.56, rect.size.y - 4.0)
+			draw_rect(paper, C_SOFT.darkened(0.25))
+			for line_index in range(3):
+				draw_line(paper.position + Vector2(5.0, 8.0 + line_index * 7.0), Vector2(paper.end.x - 5.0, paper.position.y + 8.0 + line_index * 7.0), accent, 2.0)
+			draw_circle(Vector2(right - 9.0, bottom - 10.0), 7.0, C_WHITE, false, 3.0)
+			draw_line(Vector2(right - 4.0, bottom - 5.0), Vector2(right, bottom - 1.0), C_WHITE, 3.0)
+		"scenario_workstation":
+			draw_rect(Rect2(left + 2.0, top + rect.size.y * 0.45, rect.size.x - 4.0, rect.size.y * 0.23), accent)
+			draw_line(Vector2(left + 8.0, top + rect.size.y * 0.68), Vector2(left + 5.0, bottom - 2.0), accent, 4.0)
+			draw_line(Vector2(right - 8.0, top + rect.size.y * 0.68), Vector2(right - 5.0, bottom - 2.0), accent, 4.0)
+			_neon_text("TASK", Vector2(center.x - 15.0, top + rect.size.y * 0.36), 7, C_WHITE)
+		"scenario_stock":
+			var box_size := Vector2(rect.size.x * 0.45, rect.size.y * 0.38)
+			draw_rect(Rect2(Vector2(left + 2.0, center.y), box_size), accent.darkened(0.22))
+			draw_rect(Rect2(Vector2(right - box_size.x - 2.0, top + 2.0), box_size), accent.lightened(0.08))
+			draw_line(Vector2(left + 4.0, center.y + 3.0), Vector2(left + box_size.x, center.y + box_size.y - 3.0), C_WHITE, 2.0)
+		"scenario_vehicle":
+			draw_rect(Rect2(left + 2.0, center.y - 7.0, rect.size.x - 4.0, 15.0), accent)
+			draw_rect(Rect2(center.x - rect.size.x * 0.24, center.y - 15.0, rect.size.x * 0.48, 9.0), accent)
+			draw_circle(Vector2(left + 9.0, center.y + 10.0), 5.0, C_SHADOW)
+			draw_circle(Vector2(right - 9.0, center.y + 10.0), 5.0, C_SHADOW)
+		"scenario_game":
+			draw_circle(center, minf(rect.size.x, rect.size.y) * 0.34, accent)
+			for offset in [Vector2(-7.0, -6.0), Vector2(7.0, 6.0), Vector2(0.0, 0.0)]:
+				draw_circle(center + offset, 2.5, C_WHITE)
+		"scenario_aftermath":
+			draw_line(Vector2(left + 8.0, top + 2.0), Vector2(left + 8.0, bottom - 2.0), accent, 3.0)
+			draw_colored_polygon([Vector2(left + 9.0, top + 3.0), Vector2(right - 2.0, top + 10.0), Vector2(left + 9.0, center.y)], accent)
+			_neon_text("DONE", Vector2(center.x - 17.0, bottom - 3.0), 7, C_WHITE)
+		_:
+			draw_rect(Rect2(center - Vector2(12.0, 12.0), Vector2(24.0, 24.0)), accent, false, 3.0)
+			draw_circle(center, 4.0, C_WHITE)
+
+
 func _draw_scenario_actor(rect: Rect2, object_data: Dictionary, active: bool) -> void:
-	var behavior := str(object_data.get("behavior", "idle"))
-	var pose := str(object_data.get("pose", "idle"))
+	var behavior := str(object_data.get("behavior", object_data.get("actor_behavior", "idle")))
+	var pose := str(object_data.get("pose", object_data.get("actor_pose", "idle")))
+	var icon_key := str(object_data.get("icon_key", "scenario_actor_work"))
 	var accent := C_ORANGE if behavior in ["guard", "fight", "flee"] else C_TEAL
 	var center := rect.get_center()
-	var route_points := _copy_array(object_data.get("route_points", []))
+	var route_points := _copy_array(object_data.get("route_points", object_data.get("actor_route_points", [])))
 	if route_points.size() >= 2:
 		var start := _vector2_from_dict(route_points[0], Vector2.ZERO) * Vector2(BOARD_SIZE)
 		var finish := _vector2_from_dict(route_points[1], Vector2.ZERO) * Vector2(BOARD_SIZE)
@@ -2007,8 +2062,14 @@ func _draw_scenario_actor(rect: Rect2, object_data: Dictionary, active: bool) ->
 	var arm_y := body.position.y + body.size.y * 0.38
 	var arm_spread := rect.size.x * (0.38 if pose in ["fight", "warning"] else 0.28)
 	draw_line(Vector2(center.x - arm_spread, arm_y), Vector2(center.x + arm_spread, arm_y), accent, 3.0)
-	if behavior in ["guard", "watch", "patrol"]:
+	if icon_key == "scenario_actor_watch" or behavior in ["guard", "watch", "patrol"]:
 		_neon_text("EYE", Vector2(center.x - 10.0, rect.end.y - 4.0), 8, C_WHITE)
+	elif icon_key == "scenario_actor_moving":
+		draw_line(Vector2(center.x - 11.0, rect.end.y - 7.0), Vector2(center.x + 12.0, rect.end.y - 7.0), C_WHITE, 2.0)
+		draw_line(Vector2(center.x + 5.0, rect.end.y - 13.0), Vector2(center.x + 12.0, rect.end.y - 7.0), C_WHITE, 2.0)
+	else:
+		draw_rect(Rect2(center.x - 8.0, rect.end.y - 14.0, 16.0, 10.0), C_SOFT.darkened(0.22))
+		draw_line(Vector2(center.x - 5.0, rect.end.y - 10.0), Vector2(center.x + 5.0, rect.end.y - 10.0), accent, 2.0)
 
 
 func _draw_selected_object_info() -> void:
@@ -2514,6 +2575,7 @@ func _objects_from_interactable_records(records: Array) -> Array:
 			"scenario_layout_resolved": bool(record.get("scenario_layout_resolved", false)),
 			"scenario_layout_authority_identity": str(record.get("scenario_layout_authority_identity", "")),
 			"scenario_layout_authority_digest": str(record.get("scenario_layout_authority_digest", "")),
+			"scenario_presentation_read_only": bool(record.get("scenario_presentation_read_only", false)),
 			"source_order": index,
 			"state_badge": str(record.get("state_badge", "")),
 			"visual_key": str(record.get("visual_key", "")),
