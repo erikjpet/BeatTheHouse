@@ -8,6 +8,8 @@ param(
     [string]$SeedPrefix = "BALANCE06-1-FINAL",
     [string]$OutDir = "",
     [string]$RuntimeSourceRoot = "",
+    [string]$ResumeFrom = "",
+    [switch]$AllowIncompleteCoverage,
     [switch]$SelfTest
 )
 
@@ -263,9 +265,16 @@ if (-not $OutDir) {
     $OutDir = Join-Path $projectRoot ".tmp\balance06_1_follow_on\distribution_$(Get-Date -Format 'yyyy-MM-dd_HH-mm-ss')"
 }
 $OutDir = [IO.Path]::GetFullPath($OutDir)
+if ($ResumeFrom) {
+    $ResumeFrom = [IO.Path]::GetFullPath($ResumeFrom)
+    if (-not (Test-Path -LiteralPath $ResumeFrom -PathType Container)) { throw "ResumeFrom does not exist: $ResumeFrom" }
+    if ($ResumeFrom -ceq $OutDir) { throw "ResumeFrom and OutDir must differ so prior evidence is never overwritten." }
+}
 $startedAt = Get-Date
 $startedAtUtc = $startedAt.ToUniversalTime().ToString("o")
-$invocationCommand = "powershell -NoProfile -ExecutionPolicy Bypass -File tools/cross_economy_audit_shards.ps1 -SeedsPerPlaystyle $SeedsPerPlaystyle -MaxActions $MaxActions -WorkerCount $WorkerCount -SeedPrefix '$SeedPrefix' -RuntimeSourceRoot '$RuntimeSourceRoot' -OutDir '$OutDir'"
+$resumeArgument = if ($ResumeFrom) { " -ResumeFrom '$ResumeFrom'" } else { "" }
+$coverageArgument = if ($AllowIncompleteCoverage) { " -AllowIncompleteCoverage" } else { "" }
+$invocationCommand = "powershell -NoProfile -ExecutionPolicy Bypass -File tools/cross_economy_audit_shards.ps1 -SeedsPerPlaystyle $SeedsPerPlaystyle -MaxActions $MaxActions -WorkerCount $WorkerCount -SeedPrefix '$SeedPrefix' -RuntimeSourceRoot '$RuntimeSourceRoot' -OutDir '$OutDir'$resumeArgument$coverageArgument"
 $rootPrefix = [IO.Path]::GetFullPath($projectRoot)
 if (-not $rootPrefix.EndsWith([IO.Path]::DirectorySeparatorChar)) { $rootPrefix += [IO.Path]::DirectorySeparatorChar }
 if (-not $OutDir.StartsWith($rootPrefix, [StringComparison]::OrdinalIgnoreCase)) {
@@ -503,11 +512,52 @@ foreach ($style in $styles) {
         TrackedManifest = $privateTrackedManifest; RuntimeManifest = $privateRuntimeManifest; IdentityManifest = $privateIdentityManifest
         Stdout = Join-Path $OutDir "$style.stdout.txt"; Stderr = Join-Path $OutDir "$style.stderr.txt"
         Process = $null; ProcessExitCode = $null; DurationSec = 0.0; Started = $null
+        Reused = $false; ResumeSource = ""
     })
 }
 
+# Resume into a new custody directory only. A prior successful shard is copied
+# only when its complete identity and report hash bind to this exact freeze;
+# missing or previously failed shards are run normally below.
+$resumedStyles = [Collections.Generic.List[string]]::new()
+if ($ResumeFrom) {
+    $priorIdentityPath = Join-Path $ResumeFrom "shard_identity_manifest.json"
+    if (-not (Test-Path -LiteralPath $priorIdentityPath -PathType Leaf)) { throw "Resume source has no shard identity manifest: $priorIdentityPath" }
+    try { $priorIdentity = Get-Content -LiteralPath $priorIdentityPath -Raw | ConvertFrom-Json }
+    catch { throw "Resume source identity manifest is malformed: $($_.Exception.Message)" }
+    $identityFailures = @(Get-IdentityFailures $priorIdentity ([pscustomobject]$identity) "resume source")
+    if ($identityFailures.Count -ne 0 -or (Get-FileHash -LiteralPath $priorIdentityPath -Algorithm SHA256).Hash.ToLowerInvariant() -cne $identityManifestSha) {
+        throw "Resume source does not match the exact frozen identity: $($identityFailures -join ' | ')"
+    }
+    foreach ($job in $jobs) {
+        $priorProjectRoot = Join-Path (Join-Path $ResumeFrom "w") $job.Style
+        $priorJson = Join-Path $priorProjectRoot "$($job.Style).json"
+        $priorExit = Join-Path $priorProjectRoot "$($job.Style).exit.json"
+        if (-not (Test-Path -LiteralPath $priorJson -PathType Leaf) -or -not (Test-Path -LiteralPath $priorExit -PathType Leaf)) { continue }
+        try { $priorExitRecord = Get-Content -LiteralPath $priorExit -Raw | ConvertFrom-Json }
+        catch { throw "Resume shard exit record is malformed for $($job.Style): $($_.Exception.Message)" }
+        $resumeFailures = @(Get-IdentityFailures $priorExitRecord ([pscustomobject]$identity) "resume $($job.Style)")
+        $priorReportSha = (Get-FileHash -LiteralPath $priorJson -Algorithm SHA256).Hash.ToLowerInvariant()
+        if ($resumeFailures.Count -ne 0 -or [string](Get-ObjectValue $priorExitRecord "schema") -cne "balance06_1_distribution_shard_exit_v2" -or
+            [int](Get-ObjectValue $priorExitRecord "exit_code") -ne 0 -or [string](Get-ObjectValue $priorExitRecord "playstyle") -cne $job.Style -or
+            [string](Get-ObjectValue $priorExitRecord "seed_prefix") -cne $SeedPrefix -or [int](Get-ObjectValue $priorExitRecord "seed_start") -ne 1 -or
+            [int](Get-ObjectValue $priorExitRecord "seed_count") -ne $SeedsPerPlaystyle -or [int](Get-ObjectValue $priorExitRecord "max_actions") -ne $MaxActions -or
+            [string](Get-ObjectValue $priorExitRecord "identity_manifest_sha256") -cne $identityManifestSha -or
+            [string](Get-ObjectValue $priorExitRecord "report_sha256") -cne $priorReportSha -or @(Get-ObjectValue $priorExitRecord "validation_failures").Count -ne 0) {
+            throw "Resume shard failed exact identity/run/hash validation: $($job.Style)"
+        }
+        Copy-Item -LiteralPath $priorJson -Destination $job.Json
+        Copy-Item -LiteralPath $priorExit -Destination $job.ExitRecord
+        foreach ($pair in @(@((Join-Path $ResumeFrom "$($job.Style).stdout.txt"), $job.Stdout), @((Join-Path $ResumeFrom "$($job.Style).stderr.txt"), $job.Stderr))) {
+            if (Test-Path -LiteralPath $pair[0] -PathType Leaf) { Copy-Item -LiteralPath $pair[0] -Destination $pair[1] }
+        }
+        $job.ProcessExitCode = 0; $job.Reused = $true; $job.ResumeSource = $priorJson
+        $resumedStyles.Add($job.Style)
+    }
+}
+
 $pending = [Collections.Generic.Queue[object]]::new()
-foreach ($job in $jobs) { $pending.Enqueue($job) }
+foreach ($job in $jobs) { if (-not $job.Reused) { $pending.Enqueue($job) } }
 $running = [Collections.Generic.List[object]]::new()
 while ($pending.Count -gt 0 -or $running.Count -gt 0) {
     for ($index = $running.Count - 1; $index -ge 0; $index--) {
@@ -624,7 +674,9 @@ foreach ($job in $jobs) {
         if (-not $actualShardSeeds.Add($seed)) { $failures.Add("Duplicate run seed in $($job.Style): $seed") }
     }
     if ($runs.Count -ne $SeedsPerPlaystyle -or -not $actualShardSeeds.SetEquals($expectedShardSeeds)) { $failures.Add("Per-run seed/count coverage mismatch: $($job.Style).") }
-    foreach ($failure in @(Get-SpecialistCoverageFailures $job.Style $runs)) { $failures.Add($failure) }
+    foreach ($failure in @(Get-SpecialistCoverageFailures $job.Style $runs)) {
+        if ($AllowIncompleteCoverage) { $warnings.Add("NONQUALIFYING_COVERAGE: $failure") } else { $failures.Add($failure) }
+    }
     $aggregate = Get-ObjectValue $report "aggregate"
     $aggregatePlaystyles = @(Get-ObjectValue $aggregate "playstyles")
     if ($aggregatePlaystyles.Count -ne 1 -or [string](Get-ObjectValue $aggregatePlaystyles[0] "playstyle") -cne $job.Style) {
@@ -633,6 +685,7 @@ foreach ($job in $jobs) {
     $shardIndex.Add([ordered]@{
         style = $job.Style; seed_start = 1; seed_count = $SeedsPerPlaystyle
         process_exit_code = $job.ProcessExitCode; duration_sec = $job.DurationSec
+        reused = $job.Reused; resume_source = $job.ResumeSource
         bytes = (Get-Item -LiteralPath $job.Json).Length; sha256 = $reportSha
         path = $job.Json; exit_record = $job.ExitRecord
         exact_head = $head; exact_tree = $tree; input_manifest_sha256 = $inputHash
@@ -692,6 +745,7 @@ $custody = [ordered]@{
     exact_head = $head; exact_tree = $tree; generated_at_utc = $completedAtUtc
     command = $invocationCommand; working_directory = [IO.Path]::GetFullPath($projectRoot)
     runtime_source_root = $RuntimeSourceRoot
+    resume_from = $ResumeFrom; resumed_styles = @($resumedStyles); allow_incomplete_coverage = [bool]$AllowIncompleteCoverage
     started_at_utc = $startedAtUtc; completed_at_utc = $completedAtUtc; elapsed_seconds = $elapsedSeconds
     frozen_archive = [ordered]@{ path = $archivePath; bytes = (Get-Item -LiteralPath $archivePath).Length; sha256 = $archiveSha }
     engine_path = [IO.Path]::GetFullPath($godot); engine_sha256 = (Get-FileHash -LiteralPath $godot -Algorithm SHA256).Hash.ToLowerInvariant()

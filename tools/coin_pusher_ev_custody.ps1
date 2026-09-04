@@ -3,6 +3,7 @@ param(
     [int]$ShardsPerMachine = 8,
     [string]$OutDir = "",
     [string]$RuntimeSourceRoot = "",
+    [string]$ResumeFrom = "",
     [switch]$SelfTest
 )
 
@@ -343,7 +344,7 @@ if ($SelfTest) {
             $actualBlob = (git -C $projectRoot hash-object -- $extracted).Trim()
             if ($actualBlob -cne $expectedBlob) { throw "Self-test failed: extracted input hash mismatch for $required." }
         }
-        $selfRuntimeRoot = if ($RuntimeSourceRoot) { [IO.Path]::GetFullPath($RuntimeSourceRoot) } elseif (Test-Path -LiteralPath "D:\Projects\Beat-The-House\.godot\extension_list.cfg") { "D:\Projects\Beat-The-House" } else { $projectRoot }
+        $selfRuntimeRoot = if ($RuntimeSourceRoot) { [IO.Path]::GetFullPath($RuntimeSourceRoot) } else { $projectRoot }
         $testTrackedPaths = @{}
         foreach ($path in $listing) {
             $normalized = ([string]$path).Replace("\", "/").TrimEnd("/")
@@ -369,6 +370,10 @@ if ($SelfTest) {
 
 if (-not $RuntimeSourceRoot) { $RuntimeSourceRoot = $projectRoot }
 $RuntimeSourceRoot = [IO.Path]::GetFullPath($RuntimeSourceRoot)
+if ($ResumeFrom) {
+    $ResumeFrom = [IO.Path]::GetFullPath($ResumeFrom)
+    if (-not (Test-Path -LiteralPath $ResumeFrom -PathType Container)) { throw "ResumeFrom does not exist: $ResumeFrom" }
+}
 if (-not $OutDir) { $OutDir = Join-Path $projectRoot ".tmp\evc\$(Get-Date -Format 'yyyyMMdd_HHmmss')" }
 $OutDir = [IO.Path]::GetFullPath($OutDir)
 $projectPrefix = [IO.Path]::GetFullPath($projectRoot)
@@ -388,7 +393,8 @@ $rawEvidence = [Collections.Generic.List[object]]::new()
 $rawRoot = ""; $harnessStdout = ""; $harnessStderr = ""
 $startedAt = Get-Date
 $startedAtUtc = $startedAt.ToUniversalTime().ToString("o")
-$invocationCommand = "powershell -NoProfile -ExecutionPolicy Bypass -File tools/coin_pusher_ev_custody.ps1 -ShardsPerMachine $ShardsPerMachine -RuntimeSourceRoot '$RuntimeSourceRoot' -OutDir '$OutDir'"
+$resumeCommandSuffix = if ($ResumeFrom) { " -ResumeFrom '$ResumeFrom'" } else { "" }
+$invocationCommand = "powershell -NoProfile -ExecutionPolicy Bypass -File tools/coin_pusher_ev_custody.ps1 -ShardsPerMachine $ShardsPerMachine -RuntimeSourceRoot '$RuntimeSourceRoot' -OutDir '$OutDir'$resumeCommandSuffix"
 
 try {
     $dirty = @(git -C $projectRoot status --porcelain)
@@ -484,6 +490,23 @@ try {
     $enginePath = $engine.engine_path; $engineHash = $engine.engine_sha256
     $workerPath = $engine.worker_path; $workerHash = $engine.worker_sha256
 
+    $resumeRawRoot = ""
+    if ($ResumeFrom) {
+        $priorCustodyPath = Join-Path $ResumeFrom "custody_manifest.json"
+        if (-not (Test-Path -LiteralPath $priorCustodyPath -PathType Leaf)) { throw "Resume source has no custody manifest: $priorCustodyPath" }
+        try { $priorCustody = Get-Content -LiteralPath $priorCustodyPath -Raw | ConvertFrom-Json }
+        catch { throw "Resume source custody manifest is malformed: $($_.Exception.Message)" }
+        $expectedResumeIdentity = [pscustomobject]@{
+            exact_head = $head; exact_tree = $tree; tracked_input_sha256 = $trackedHash
+            policy_source_sha256 = $policyHash; runtime_manifest_sha256 = $runtimeHash
+            plugin_identity_sha256 = $pluginHash; engine_sha256 = $engineHash; worker_sha256 = $workerHash
+        }
+        $resumeIdentityFailures = @(Get-IdentityFailures (Get-ObjectValue $priorCustody "identity") $expectedResumeIdentity "resume source")
+        if ($resumeIdentityFailures.Count -ne 0) { throw "Resume source identity mismatch: $($resumeIdentityFailures -join ' | ')" }
+        $resumeRawRoot = Join-Path $ResumeFrom "p\.tmp\e"
+        if (-not (Test-Path -LiteralPath $resumeRawRoot -PathType Container)) { throw "Resume source has no retained raw shard directory: $resumeRawRoot" }
+    }
+
     Add-FileManifestFailures "tracked source (pre-run)" $frozenRoot $trackedManifest $failures
     Add-FileManifestFailures "runtime input (pre-run)" $frozenRoot $runtimeManifest $failures
     if ((git -C $projectRoot rev-parse HEAD).Trim() -cne $head -or (git -C $projectRoot rev-parse "HEAD^{tree}").Trim() -cne $tree -or @(git -C $projectRoot status --porcelain).Count -ne 0) {
@@ -502,6 +525,7 @@ try {
             "-AcceptedPerMachine", "$acceptedPerMachine", "-ShardsPerMachine", "$ShardsPerMachine",
             "-Throttle", "1", "-OutDir", $rawRoot
         )
+        if ($resumeRawRoot) { $arguments += @("-ResumeFrom", $resumeRawRoot) }
         $process = Start-Process -FilePath (Get-Command powershell.exe).Source -ArgumentList $arguments -WorkingDirectory $frozenRoot -WindowStyle Hidden -RedirectStandardOutput $harnessStdout -RedirectStandardError $harnessStderr -PassThru
         $process.WaitForExit(); $process.Refresh(); $harnessExitCode = [int]$process.ExitCode; $process.Dispose()
     }
@@ -622,6 +646,7 @@ $custody = [ordered]@{
     frozen_archive = [ordered]@{ path = $archivePath; sha256 = $archiveHash }
     accepted_per_machine = $acceptedPerMachine; required_machines = $machines; expected_total_accepted = $expectedTotalAccepted
     shards_per_machine = $ShardsPerMachine; harness_exit_code = $harnessExitCode
+    resume_from = $ResumeFrom; resume_raw_root = $resumeRawRoot
     tracked_manifest = $trackedManifest; runtime_manifest = $runtimeManifest
     harness_manifest = $harnessManifest; raw_evidence = @($rawEvidence)
     failure_ledger = @($failures); warning_ledger = @($warnings)
