@@ -11,13 +11,18 @@ param(
     [string]$IdentityManifestSha256,
     [string]$TrackedManifest,
     [string]$RuntimeManifest,
+    [string]$ExpectedRunMode,
     [string]$ExpectedHead,
     [string]$ExpectedTree,
     [string]$ExpectedInputManifestSha256,
     [string]$ExpectedPolicyBlob,
     [string]$ExpectedPluginIdentitySha256,
     [string]$ExpectedRuntimeManifestSha256,
-    [string]$ExpectedReportSchema
+    [string]$ExpectedReportSchema,
+    [string]$GodotConsolePath,
+    [string]$ExpectedGodotConsoleSha256,
+    [string]$GodotWorkerPath,
+    [string]$ExpectedGodotWorkerSha256
 )
 
 $ErrorActionPreference = "Stop"
@@ -66,7 +71,8 @@ function Add-ManifestFailures([string]$Label, [string]$Root, [string]$ManifestPa
 
 function Add-IdentityFailures([object]$Identity, [Collections.Generic.List[string]]$Failures) {
     $expected = [ordered]@{
-        schema = "balance06_1_distribution_shard_identity_v2"
+        schema = "balance06_1_distribution_shard_identity_v3"
+        run_mode = $ExpectedRunMode
         exact_head = $ExpectedHead
         exact_tree = $ExpectedTree
         input_manifest_sha256 = $ExpectedInputManifestSha256
@@ -74,6 +80,8 @@ function Add-IdentityFailures([object]$Identity, [Collections.Generic.List[strin
         plugin_identity_sha256 = $ExpectedPluginIdentitySha256
         runtime_artifact_manifest_sha256 = $ExpectedRuntimeManifestSha256
         report_schema = $ExpectedReportSchema
+        godot_console_sha256 = $ExpectedGodotConsoleSha256
+        godot_worker_sha256 = $ExpectedGodotWorkerSha256
     }
     foreach ($key in $expected.Keys) {
         $actual = [string](Get-ObjectValue $Identity $key)
@@ -83,12 +91,31 @@ function Add-IdentityFailures([object]$Identity, [Collections.Generic.List[strin
     }
 }
 
+function Add-ToolchainFailures([string]$Label, [Collections.Generic.List[string]]$Failures) {
+    foreach ($tool in @(
+        [pscustomobject]@{ Name = "Godot console"; Path = $GodotConsolePath; Sha = $ExpectedGodotConsoleSha256 },
+        [pscustomobject]@{ Name = "Godot worker"; Path = $GodotWorkerPath; Sha = $ExpectedGodotWorkerSha256 }
+    )) {
+        if (-not (Test-Path -LiteralPath $tool.Path -PathType Leaf)) {
+            $Failures.Add("$Label $($tool.Name) is missing: $($tool.Path)")
+            continue
+        }
+        $actualSha = (Get-FileHash -LiteralPath $tool.Path -Algorithm SHA256).Hash.ToLowerInvariant()
+        if ($actualSha -cne $tool.Sha) { $Failures.Add("$Label $($tool.Name) identity mismatch.") }
+    }
+}
+
 function Resolve-OutputPath([string]$Path) {
     if ($Path.StartsWith("res://")) { return Join-Path $projectRoot $Path.Substring(6).Replace("/", "\") }
     return [IO.Path]::GetFullPath($Path)
 }
 
+$priorGodotBin = $env:GODOT_BIN
 try {
+    if ($ExpectedRunMode -notin @("FINAL", "DIAGNOSTIC")) { $validationFailures.Add("Shard run_mode must be FINAL or DIAGNOSTIC.") }
+    if ($ExpectedRunMode -eq "FINAL" -and ($SeedsPerPlaystyle -ne 64 -or $MaxActions -ne 208)) {
+        $validationFailures.Add("FINAL shard requires exactly 64 seeds and 208 actions.")
+    }
     if ((Get-FileHash -LiteralPath $IdentityManifest -Algorithm SHA256).Hash.ToLowerInvariant() -cne $IdentityManifestSha256) {
         $validationFailures.Add("Shard identity manifest file hash mismatch.")
     }
@@ -112,8 +139,10 @@ try {
     }
     Add-ManifestFailures "tracked source (pre-run)" $projectRoot $TrackedManifest $validationFailures
     Add-ManifestFailures "runtime artifact (pre-run)" $projectRoot $RuntimeManifest $validationFailures
+    Add-ToolchainFailures "pre-run" $validationFailures
     if ($validationFailures.Count -ne 0) { throw ($validationFailures -join " | ") }
 
+    $env:GODOT_BIN = [IO.Path]::GetFullPath($GodotConsolePath)
     & (Join-Path $PSScriptRoot "cross_economy_audit.ps1") `
         -SeedsPerPlaystyle $SeedsPerPlaystyle -SeedStart $SeedStart `
         -MaxActions $MaxActions -SeedPrefix $SeedPrefix -Playstyle $Playstyle `
@@ -122,6 +151,7 @@ try {
 
     Add-ManifestFailures "tracked source (post-run)" $projectRoot $TrackedManifest $validationFailures
     Add-ManifestFailures "runtime artifact (post-run)" $projectRoot $RuntimeManifest $validationFailures
+    Add-ToolchainFailures "post-run" $validationFailures
     if ($validationFailures.Count -ne 0) { throw ($validationFailures -join " | ") }
 
     $reportPath = Resolve-OutputPath $Output
@@ -135,8 +165,9 @@ try {
     }
 
     $record = [ordered]@{
-        schema = "balance06_1_distribution_shard_exit_v2"
+        schema = "balance06_1_distribution_shard_exit_v3"
         exit_code = 0
+        run_mode = $ExpectedRunMode
         playstyle = $Playstyle
         seed_prefix = $SeedPrefix
         seed_start = $SeedStart
@@ -150,6 +181,8 @@ try {
         plugin_identity_sha256 = $ExpectedPluginIdentitySha256
         runtime_artifact_manifest_sha256 = $ExpectedRuntimeManifestSha256
         report_schema = $ExpectedReportSchema
+        godot_console_sha256 = $ExpectedGodotConsoleSha256
+        godot_worker_sha256 = $ExpectedGodotWorkerSha256
         identity_manifest_sha256 = $IdentityManifestSha256
         tracked_manifest_file_sha256 = $trackedManifestFileSha
         runtime_manifest_file_sha256 = $runtimeManifestFileSha
@@ -164,8 +197,9 @@ try {
 catch {
     if ($validationFailures.Count -eq 0) { $validationFailures.Add($_.Exception.Message) }
     $record = [ordered]@{
-        schema = "balance06_1_distribution_shard_exit_v2"
+        schema = "balance06_1_distribution_shard_exit_v3"
         exit_code = 1
+        run_mode = $ExpectedRunMode
         playstyle = $Playstyle
         seed_prefix = $SeedPrefix
         seed_start = $SeedStart
@@ -179,6 +213,8 @@ catch {
         plugin_identity_sha256 = $ExpectedPluginIdentitySha256
         runtime_artifact_manifest_sha256 = $ExpectedRuntimeManifestSha256
         report_schema = $ExpectedReportSchema
+        godot_console_sha256 = $ExpectedGodotConsoleSha256
+        godot_worker_sha256 = $ExpectedGodotWorkerSha256
         identity_manifest_sha256 = $IdentityManifestSha256
         tracked_manifest_file_sha256 = if (Test-Path -LiteralPath $TrackedManifest -PathType Leaf) { (Get-FileHash -LiteralPath $TrackedManifest -Algorithm SHA256).Hash.ToLowerInvariant() } else { "missing" }
         runtime_manifest_file_sha256 = if (Test-Path -LiteralPath $RuntimeManifest -PathType Leaf) { (Get-FileHash -LiteralPath $RuntimeManifest -Algorithm SHA256).Hash.ToLowerInvariant() } else { "missing" }
@@ -190,4 +226,7 @@ catch {
     $record | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $ExitRecord -Encoding utf8
     Write-Error $_
     exit 1
+}
+finally {
+    $env:GODOT_BIN = $priorGodotBin
 }

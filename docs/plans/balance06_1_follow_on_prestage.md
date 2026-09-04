@@ -103,8 +103,13 @@ Fast, freeze-independent qualification completed:
 
 - PowerShell parser: PASS for both launchers, both custody wrappers, and the
   shard worker.
-- Cross-economy custody selftest: PASS; mixed input identity is rejected and a
-  specialist with zero accepted/settled evidence cannot be accepted.
+- Cross-economy custody selftest: PASS; mixed input identity, changed Godot
+  console identity, and reduced FINAL counts are rejected, and a specialist
+  with zero accepted/settled evidence cannot be accepted. FINAL is fixed at
+  eight playstyles, exactly 64 seeds per playstyle, and exactly 208 actions.
+  Reduced runs require explicit `-RunMode DIAGNOSTIC`; they emit diagnostic
+  schemas and `diagnostic_manifest.json`, never `custody_manifest.json`, and
+  always record `qualifies_for_final=false`.
 - Pusher custody selftest: PASS; changed identity, mixed policy, and missing
   machine evidence are rejected; the executable-only archive and `tar.exe`
   extraction are verified; descriptor-selected runtime artifacts are staged
@@ -121,7 +126,10 @@ run, rebase it onto the owner-declared env/integration freeze and rerun the
 one-seed hostile/public-observer probe. The wrappers retain immutable failed
 artifacts, reject mixed aggregation, and resume only into a new custody path.
 Cross-economy reuse requires the prior pre-run identity and each shard's exact
-exit/report hash. Pusher custody writes its frozen identity checkpoint before
+exit/report hash. The pre-run identity now includes the configured Godot console
+and spawned worker executable hashes; both are rechecked by every shard and the
+orchestrator after execution, and either change rejects resume. Pusher custody
+writes its frozen identity checkpoint before
 launching the long harness, so a killed wrapper does not need a post-run custody
 manifest; each completed raw shard is then revalidated against engine, target,
 policy, and geometry identities before reuse. Native/Web, save/resume,
@@ -147,7 +155,7 @@ $frozenHead = (git rev-parse HEAD).Trim()
 $runRoot = Join-Path (Get-Location) ".tmp\balance06_1_follow_on\full_$($frozenHead.Substring(0, 12))"
 if (Test-Path -LiteralPath $runRoot) { throw "Custody path already exists: $runRoot" }
 $crossOut = Join-Path $runRoot 'cross_8x64x208'
-powershell -NoProfile -ExecutionPolicy Bypass -File tools/cross_economy_audit_shards.ps1 -SeedsPerPlaystyle 64 -MaxActions 208 -WorkerCount 4 -SeedPrefix "BALANCE06-1-FINAL-$($frozenHead.Substring(0, 12))" -RuntimeSourceRoot (Get-Location).Path -OutDir $crossOut
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/cross_economy_audit_shards.ps1 -RunMode FINAL -SeedsPerPlaystyle 64 -MaxActions 208 -WorkerCount 4 -SeedPrefix "BALANCE06-1-FINAL-$($frozenHead.Substring(0, 12))" -RuntimeSourceRoot (Get-Location).Path -OutDir $crossOut
 if ($LASTEXITCODE -ne 0) { throw "Cross-economy distribution failed; evidence retained at $crossOut" }
 $pusherOut = Join-Path $runRoot 'pusher_3x200000'
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/coin_pusher_ev_custody.ps1 -ShardsPerMachine 8 -RuntimeSourceRoot (Get-Location).Path -OutDir $pusherOut

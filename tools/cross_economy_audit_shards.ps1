@@ -9,12 +9,17 @@ param(
     [string]$OutDir = "",
     [string]$RuntimeSourceRoot = "",
     [string]$ResumeFrom = "",
+    [ValidateSet("FINAL", "DIAGNOSTIC")]
+    [string]$RunMode = "FINAL",
     [switch]$SelfTest
 )
 
 $ErrorActionPreference = "Stop"
 $reportSchema = "cross_economy_audit_v1"
-$identitySchema = "balance06_1_distribution_shard_identity_v2"
+$identitySchema = "balance06_1_distribution_shard_identity_v3"
+$exitSchema = "balance06_1_distribution_shard_exit_v3"
+$finalSeedsPerPlaystyle = 64
+$finalMaxActions = 208
 $styles = @(
     "control_crew_ignoring", "pure_gambler", "crew_maximizer",
     "numbers_specialist", "coin_pusher_grinder", "cheater",
@@ -74,14 +79,45 @@ function Add-ManifestFailures([string]$Label, [string]$Root, [string]$ManifestPa
 function Get-IdentityFailures([object]$Record, [object]$Expected, [string]$Label) {
     $result = [Collections.Generic.List[string]]::new()
     foreach ($key in @(
-        "exact_head", "exact_tree", "input_manifest_sha256", "policy_blob",
-        "plugin_identity_sha256", "runtime_artifact_manifest_sha256", "report_schema"
+        "run_mode", "exact_head", "exact_tree", "input_manifest_sha256", "policy_blob",
+        "plugin_identity_sha256", "runtime_artifact_manifest_sha256", "report_schema",
+        "godot_console_sha256", "godot_worker_sha256"
     )) {
         $actual = [string](Get-ObjectValue $Record $key)
         $wanted = [string](Get-ObjectValue $Expected $key)
         if ($actual -cne $wanted) { $result.Add("$Label identity mismatch for ${key}: expected '$wanted', got '$actual'.") }
     }
     return @($result)
+}
+
+function Get-RunModeFailures([string]$Mode, [int]$SeedCount, [int]$ActionCount) {
+    $result = [Collections.Generic.List[string]]::new()
+    if ($Mode -eq "FINAL") {
+        if ($SeedCount -ne $finalSeedsPerPlaystyle) {
+            $result.Add("FINAL requires exactly $finalSeedsPerPlaystyle seeds for each of the eight fixed playstyles; got $SeedCount.")
+        }
+        if ($ActionCount -ne $finalMaxActions) {
+            $result.Add("FINAL requires exactly $finalMaxActions actions; got $ActionCount.")
+        }
+    }
+    return @($result)
+}
+
+function Get-RunArtifactContract([string]$Mode, [bool]$Passed) {
+    if ($Mode -eq "FINAL") {
+        return [pscustomobject]@{
+            summary_schema = "balance06_1_cross_economy_distribution_v3"
+            manifest_schema = "balance06_1_cross_economy_custody_v2"
+            manifest_name = "custody_manifest.json"
+            qualifies_for_final = $Passed
+        }
+    }
+    return [pscustomobject]@{
+        summary_schema = "balance06_1_cross_economy_diagnostic_v1"
+        manifest_schema = "balance06_1_cross_economy_diagnostic_manifest_v1"
+        manifest_name = "diagnostic_manifest.json"
+        qualifies_for_final = $false
+    }
 }
 
 function Get-OpportunityCounter([object]$Run, [string]$System, [string]$Counter) {
@@ -221,18 +257,38 @@ function Get-Distribution([double[]]$Values) {
 
 if ($SelfTest) {
     $expected = [ordered]@{
-        exact_head = "head-a"; exact_tree = "tree-a"; input_manifest_sha256 = "input-a"
+        run_mode = "FINAL"; exact_head = "head-a"; exact_tree = "tree-a"; input_manifest_sha256 = "input-a"
         policy_blob = "policy-a"; plugin_identity_sha256 = "plugin-a"
         runtime_artifact_manifest_sha256 = "runtime-a"; report_schema = $reportSchema
+        godot_console_sha256 = "console-a"; godot_worker_sha256 = "worker-a"
     }
     $mixed = [ordered]@{
-        exact_head = "head-a"; exact_tree = "tree-a"; input_manifest_sha256 = "input-b"
+        run_mode = "FINAL"; exact_head = "head-a"; exact_tree = "tree-a"; input_manifest_sha256 = "input-b"
         policy_blob = "policy-a"; plugin_identity_sha256 = "plugin-a"
         runtime_artifact_manifest_sha256 = "runtime-a"; report_schema = $reportSchema
+        godot_console_sha256 = "console-a"; godot_worker_sha256 = "worker-a"
     }
     $mixedFailures = @(Get-IdentityFailures $mixed $expected "self-test")
     if ($mixedFailures.Count -eq 0 -or -not (($mixedFailures -join " ") -match "input_manifest_sha256")) {
         throw "Self-test failed: a mixed input manifest was accepted."
+    }
+    $changedEngine = [ordered]@{}
+    foreach ($key in $expected.Keys) { $changedEngine[$key] = $expected[$key] }
+    $changedEngine.godot_console_sha256 = "console-changed"
+    $engineFailures = @(Get-IdentityFailures $changedEngine $expected "resume self-test")
+    if ($engineFailures.Count -eq 0 -or -not (($engineFailures -join " ") -match "godot_console_sha256")) {
+        throw "Self-test failed: a changed Godot console was accepted for resume."
+    }
+    $reducedFinalFailures = @(Get-RunModeFailures "FINAL" 1 8)
+    if ($reducedFinalFailures.Count -ne 2 -or -not (($reducedFinalFailures -join " ") -match "exactly 64") -or -not (($reducedFinalFailures -join " ") -match "exactly 208")) {
+        throw "Self-test failed: reduced FINAL counts were accepted."
+    }
+    if (@(Get-RunModeFailures "DIAGNOSTIC" 1 8).Count -ne 0) {
+        throw "Self-test failed: explicitly diagnostic reduced counts were rejected."
+    }
+    $diagnosticArtifacts = Get-RunArtifactContract "DIAGNOSTIC" $true
+    if ($diagnosticArtifacts.qualifies_for_final -or $diagnosticArtifacts.manifest_name -ceq "custody_manifest.json" -or $diagnosticArtifacts.manifest_schema -match "custody") {
+        throw "Self-test failed: a reduced diagnostic could emit FINAL custody."
     }
     $zeroOpportunity = [ordered]@{ accepted = 0; settled = 0 }
     $zeroRun = [pscustomobject]@{
@@ -250,8 +306,14 @@ if ($SelfTest) {
     if (@(Get-SpecialistCoverageFailures "coin_pusher_grinder" @($qualifiedRun)).Count -ne 0) {
         throw "Self-test failed: complete specialist evidence was rejected."
     }
-    Write-Host "CROSS_ECONOMY_SHARDS_SELF_TEST_PASS mixed_manifest_rejected=true zero_specialist_rejected=true"
+    Write-Host "CROSS_ECONOMY_SHARDS_SELF_TEST_PASS mixed_manifest_rejected=true changed_engine_resume_rejected=true reduced_final_rejected=true diagnostic_counts_separate=true zero_specialist_rejected=true"
     exit 0
+}
+
+$runModeFailures = @(Get-RunModeFailures $RunMode $SeedsPerPlaystyle $MaxActions)
+if ($runModeFailures.Count -ne 0) { throw ($runModeFailures -join " | ") }
+if ($RunMode -eq "DIAGNOSTIC" -and -not $PSBoundParameters.ContainsKey("SeedPrefix")) {
+    $SeedPrefix = "BALANCE06-1-DIAGNOSTIC"
 }
 
 $projectRoot = Split-Path -Parent $PSScriptRoot
@@ -272,7 +334,7 @@ if ($ResumeFrom) {
 $startedAt = Get-Date
 $startedAtUtc = $startedAt.ToUniversalTime().ToString("o")
 $resumeArgument = if ($ResumeFrom) { " -ResumeFrom '$ResumeFrom'" } else { "" }
-$invocationCommand = "powershell -NoProfile -ExecutionPolicy Bypass -File tools/cross_economy_audit_shards.ps1 -SeedsPerPlaystyle $SeedsPerPlaystyle -MaxActions $MaxActions -WorkerCount $WorkerCount -SeedPrefix '$SeedPrefix' -RuntimeSourceRoot '$RuntimeSourceRoot' -OutDir '$OutDir'$resumeArgument"
+$invocationCommand = "powershell -NoProfile -ExecutionPolicy Bypass -File tools/cross_economy_audit_shards.ps1 -RunMode $RunMode -SeedsPerPlaystyle $SeedsPerPlaystyle -MaxActions $MaxActions -WorkerCount $WorkerCount -SeedPrefix '$SeedPrefix' -RuntimeSourceRoot '$RuntimeSourceRoot' -OutDir '$OutDir'$resumeArgument"
 $rootPrefix = [IO.Path]::GetFullPath($projectRoot)
 if (-not $rootPrefix.EndsWith([IO.Path]::DirectorySeparatorChar)) { $rootPrefix += [IO.Path]::DirectorySeparatorChar }
 if (-not $OutDir.StartsWith($rootPrefix, [StringComparison]::OrdinalIgnoreCase)) {
@@ -290,11 +352,14 @@ $tree = (git -C $projectRoot rev-parse "HEAD^{tree}").Trim()
 $godot = $env:GODOT_BIN
 if (-not $godot) { $godot = "D:\Projects\Beat-The-House\.tools\godot-4.6-stable\Godot_v4.6-stable_win64_console.exe" }
 if (-not (Test-Path -LiteralPath $godot -PathType Leaf)) { throw "Godot console executable not found: $godot" }
+$godot = [IO.Path]::GetFullPath($godot)
 $godotWorker = [IO.Path]::GetFullPath($godot)
 if ($godotWorker.EndsWith("_console.exe", [StringComparison]::OrdinalIgnoreCase)) {
     $godotWorker = $godotWorker.Substring(0, $godotWorker.Length - "_console.exe".Length) + ".exe"
 }
 if (-not (Test-Path -LiteralPath $godotWorker -PathType Leaf)) { throw "Godot worker executable not found: $godotWorker" }
+$godotConsoleSha = (Get-FileHash -LiteralPath $godot -Algorithm SHA256).Hash.ToLowerInvariant()
+$godotWorkerSha = (Get-FileHash -LiteralPath $godotWorker -Algorithm SHA256).Hash.ToLowerInvariant()
 
 # Freeze the exact commit once. Every worker gets an independently expanded
 # copy; no tracked source path is linked back to the mutable caller worktree.
@@ -471,11 +536,12 @@ if ($pluginLines.Count -eq 0) { throw "Native plugin identity contains no tracke
 $pluginHash = Get-Sha256Text (@($pluginLines) -join "`n")
 
 $identity = [ordered]@{
-    schema = $identitySchema; exact_head = $head; exact_tree = $tree
+    schema = $identitySchema; run_mode = $RunMode; exact_head = $head; exact_tree = $tree
     input_manifest_sha256 = $inputHash; tracked_manifest_file_sha256 = $trackedManifestFileSha
     policy_blob = $policyBlob; plugin_identity_sha256 = $pluginHash; plugin_material = @($pluginLines)
     runtime_artifact_manifest_sha256 = $runtimeHash; runtime_manifest_file_sha256 = $runtimeManifestFileSha
     report_schema = $reportSchema; frozen_archive_sha256 = $archiveSha
+    godot_console_sha256 = $godotConsoleSha; godot_worker_sha256 = $godotWorkerSha
 }
 $identityManifestPath = Join-Path $OutDir "shard_identity_manifest.json"
 Write-JsonFile $identity $identityManifestPath 8
@@ -536,7 +602,7 @@ if ($ResumeFrom) {
         catch { throw "Resume shard exit record is malformed for $($job.Style): $($_.Exception.Message)" }
         $resumeFailures = @(Get-IdentityFailures $priorExitRecord ([pscustomobject]$identity) "resume $($job.Style)")
         $priorReportSha = (Get-FileHash -LiteralPath $priorJson -Algorithm SHA256).Hash.ToLowerInvariant()
-        if ($resumeFailures.Count -ne 0 -or [string](Get-ObjectValue $priorExitRecord "schema") -cne "balance06_1_distribution_shard_exit_v2" -or
+        if ($resumeFailures.Count -ne 0 -or [string](Get-ObjectValue $priorExitRecord "schema") -cne $exitSchema -or
             [int](Get-ObjectValue $priorExitRecord "exit_code") -ne 0 -or [string](Get-ObjectValue $priorExitRecord "playstyle") -cne $job.Style -or
             [string](Get-ObjectValue $priorExitRecord "seed_prefix") -cne $SeedPrefix -or [int](Get-ObjectValue $priorExitRecord "seed_start") -ne 1 -or
             [int](Get-ObjectValue $priorExitRecord "seed_count") -ne $SeedsPerPlaystyle -or [int](Get-ObjectValue $priorExitRecord "max_actions") -ne $MaxActions -or
@@ -577,9 +643,11 @@ while ($pending.Count -gt 0 -or $running.Count -gt 0) {
             "-Output", "res://$($job.Style).json", "-ExitRecord", $job.ExitRecord,
             "-IdentityManifest", $job.IdentityManifest, "-IdentityManifestSha256", $identityManifestSha,
             "-TrackedManifest", $job.TrackedManifest, "-RuntimeManifest", $job.RuntimeManifest,
-            "-ExpectedHead", $head, "-ExpectedTree", $tree, "-ExpectedInputManifestSha256", $inputHash,
+            "-ExpectedRunMode", $RunMode, "-ExpectedHead", $head, "-ExpectedTree", $tree, "-ExpectedInputManifestSha256", $inputHash,
             "-ExpectedPolicyBlob", $policyBlob, "-ExpectedPluginIdentitySha256", $pluginHash,
-            "-ExpectedRuntimeManifestSha256", $runtimeHash, "-ExpectedReportSchema", $reportSchema
+            "-ExpectedRuntimeManifestSha256", $runtimeHash, "-ExpectedReportSchema", $reportSchema,
+            "-GodotConsolePath", $godot, "-ExpectedGodotConsoleSha256", $godotConsoleSha,
+            "-GodotWorkerPath", $godotWorker, "-ExpectedGodotWorkerSha256", $godotWorkerSha
         )
         $job.Started = Get-Date
         $job.Process = Start-Process -FilePath (Get-Command powershell.exe).Source -ArgumentList $args -WorkingDirectory $job.ProjectRoot -WindowStyle Hidden -RedirectStandardOutput $job.Stdout -RedirectStandardError $job.Stderr -PassThru
@@ -600,6 +668,8 @@ if ((git -C $projectRoot rev-parse HEAD).Trim() -cne $head -or (git -C $projectR
     $failures.Add("Caller source identity changed while shards were running.")
 }
 if (@(git -C $projectRoot status --porcelain --untracked-files=no).Count -ne 0) { $failures.Add("Caller tracked worktree changed while shards were running.") }
+if (-not (Test-Path -LiteralPath $godot -PathType Leaf) -or (Get-FileHash -LiteralPath $godot -Algorithm SHA256).Hash.ToLowerInvariant() -cne $godotConsoleSha) { $failures.Add("Configured Godot console changed while shards were running.") }
+if (-not (Test-Path -LiteralPath $godotWorker -PathType Leaf) -or (Get-FileHash -LiteralPath $godotWorker -Algorithm SHA256).Hash.ToLowerInvariant() -cne $godotWorkerSha) { $failures.Add("Configured Godot worker changed while shards were running.") }
 if ((Get-FileHash -LiteralPath $archivePath -Algorithm SHA256).Hash.ToLowerInvariant() -cne $archiveSha) { $failures.Add("Frozen source archive changed while shards were running.") }
 Add-ManifestFailures "frozen tracked source" $snapshotRoot $trackedManifestPath $failures
 Add-ManifestFailures "frozen runtime artifact" $runtimeFreezeRoot $runtimeManifestPath $failures
@@ -627,7 +697,7 @@ foreach ($job in $jobs) {
         catch { $failures.Add("Invalid shard exit record for $($job.Style): $($_.Exception.Message)") }
     }
     if ($null -ne $exitRecord) {
-        if ([string](Get-ObjectValue $exitRecord "schema") -cne "balance06_1_distribution_shard_exit_v2") { $failures.Add("Shard exit schema mismatch: $($job.Style).") }
+        if ([string](Get-ObjectValue $exitRecord "schema") -cne $exitSchema) { $failures.Add("Shard exit schema mismatch: $($job.Style).") }
         foreach ($failure in @(Get-IdentityFailures $exitRecord $expectedIdentity "$($job.Style) exit")) { $failures.Add($failure) }
         if ([int](Get-ObjectValue $exitRecord "exit_code") -ne $job.ProcessExitCode) { $failures.Add("Shard process/record exit mismatch: $($job.Style).") }
         if ([string](Get-ObjectValue $exitRecord "playstyle") -cne $job.Style -or [string](Get-ObjectValue $exitRecord "seed_prefix") -cne $SeedPrefix -or
@@ -684,9 +754,10 @@ foreach ($job in $jobs) {
         reused = $job.Reused; resume_source = $job.ResumeSource
         bytes = (Get-Item -LiteralPath $job.Json).Length; sha256 = $reportSha
         path = $job.Json; exit_record = $job.ExitRecord
-        exact_head = $head; exact_tree = $tree; input_manifest_sha256 = $inputHash
+        run_mode = $RunMode; exact_head = $head; exact_tree = $tree; input_manifest_sha256 = $inputHash
         policy_blob = $policyBlob; plugin_identity_sha256 = $pluginHash
         runtime_artifact_manifest_sha256 = $runtimeHash; report_schema = $reportSchema
+        godot_console_sha256 = $godotConsoleSha; godot_worker_sha256 = $godotWorkerSha
     })
 }
 
@@ -722,11 +793,13 @@ $passed = $failures.Count -eq 0
 $completedAt = Get-Date
 $completedAtUtc = $completedAt.ToUniversalTime().ToString("o")
 $elapsedSeconds = ($completedAt - $startedAt).TotalSeconds
+$artifactContract = Get-RunArtifactContract $RunMode $passed
 $summary = [ordered]@{
-    schema = "balance06_1_cross_economy_distribution_v3"; passed = $passed
+    schema = $artifactContract.summary_schema; passed = $passed; run_mode = $RunMode; qualifies_for_final = $artifactContract.qualifies_for_final
     exact_head = $head; exact_tree = $tree; input_manifest_sha256 = $inputHash
     policy_blob = $policyBlob; plugin_identity_sha256 = $pluginHash
     runtime_artifact_manifest_sha256 = $runtimeHash; report_schema = $reportSchema
+    godot_console_sha256 = $godotConsoleSha; godot_worker_sha256 = $godotWorkerSha
     seed_prefix = $SeedPrefix; seeds_per_playstyle = $SeedsPerPlaystyle; max_actions = $MaxActions
     run_count = $allRuns.Count; expected_run_count = $styles.Count * $SeedsPerPlaystyle
     warnings = @($warnings); failures = @($failures); overall = $overall
@@ -737,15 +810,16 @@ $summary = [ordered]@{
 $summaryPath = Join-Path $OutDir "aggregate_summary.json"
 Write-JsonFile $summary $summaryPath 30
 $custody = [ordered]@{
-    schema = "balance06_1_cross_economy_custody_v2"; passed = $passed
+    schema = $artifactContract.manifest_schema
+    passed = $passed; run_mode = $RunMode; qualifies_for_final = $artifactContract.qualifies_for_final
     exact_head = $head; exact_tree = $tree; generated_at_utc = $completedAtUtc
     command = $invocationCommand; working_directory = [IO.Path]::GetFullPath($projectRoot)
     runtime_source_root = $RuntimeSourceRoot
     resume_from = $ResumeFrom; resumed_styles = @($resumedStyles)
     started_at_utc = $startedAtUtc; completed_at_utc = $completedAtUtc; elapsed_seconds = $elapsedSeconds
     frozen_archive = [ordered]@{ path = $archivePath; bytes = (Get-Item -LiteralPath $archivePath).Length; sha256 = $archiveSha }
-    engine_path = [IO.Path]::GetFullPath($godot); engine_sha256 = (Get-FileHash -LiteralPath $godot -Algorithm SHA256).Hash.ToLowerInvariant()
-    worker_path = $godotWorker; worker_sha256 = (Get-FileHash -LiteralPath $godotWorker -Algorithm SHA256).Hash.ToLowerInvariant()
+    engine_path = $godot; engine_sha256 = $godotConsoleSha
+    worker_path = $godotWorker; worker_sha256 = $godotWorkerSha
     os = [Environment]::OSVersion.VersionString; processor_count = [Environment]::ProcessorCount; worker_count = $WorkerCount
     input_manifest_sha256 = $inputHash; tracked_manifest_file_sha256 = $trackedManifestFileSha
     policy_blob = $policyBlob; plugin_identity_sha256 = $pluginHash
@@ -755,7 +829,11 @@ $custody = [ordered]@{
     aggregate_summary = [ordered]@{ path = $summaryPath; bytes = (Get-Item -LiteralPath $summaryPath).Length; sha256 = (Get-FileHash -LiteralPath $summaryPath -Algorithm SHA256).Hash.ToLowerInvariant() }
     shards = $shardIndex
 }
-$custodyPath = Join-Path $OutDir "custody_manifest.json"
+$custodyPath = Join-Path $OutDir $artifactContract.manifest_name
 Write-JsonFile $custody $custodyPath 20
 if (-not $passed) { throw "Cross-economy shard distribution rejected with $($failures.Count) failure(s); see $summaryPath" }
-Write-Host "CROSS_ECONOMY_SHARDS_PASS runs=$($allRuns.Count) output=$summaryPath"
+if ($RunMode -eq "FINAL") {
+    Write-Host "CROSS_ECONOMY_SHARDS_PASS runs=$($allRuns.Count) output=$summaryPath"
+} else {
+    Write-Host "CROSS_ECONOMY_DIAGNOSTIC_PASS qualifies_for_final=false runs=$($allRuns.Count) output=$summaryPath"
+}
