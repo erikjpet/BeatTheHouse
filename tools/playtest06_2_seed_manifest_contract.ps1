@@ -229,6 +229,16 @@ function Resolve-CommittedEvidence {
         Add-Failure "$Label.path must be Git-tracked and committed at HEAD: $gitPath"
         return $null
     }
+    $indexResult = Invoke-GitCapture @("rev-parse", "--verify", ":$gitPath")
+    $indexBlobId = ([string]$indexResult.output).Trim()
+    if ($indexResult.exit_code -ne 0 -or -not (Test-CommitText $indexBlobId)) {
+        Add-Failure "$Label.path must resolve to a file blob in the Git index: $gitPath"
+        return $null
+    }
+    if ($indexBlobId -cne $blobId) {
+        Add-Failure "$Label.path Git index blob does not exactly match the committed HEAD blob: $gitPath"
+        return $null
+    }
     $typeResult = Invoke-GitCapture @("cat-file", "-t", $blobId)
     $blobType = ([string]$typeResult.output).Trim()
     if ($typeResult.exit_code -ne 0 -or $blobType -cne "blob") {
