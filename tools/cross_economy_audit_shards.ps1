@@ -11,6 +11,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $projectRoot = Split-Path -Parent $PSScriptRoot
+. (Join-Path $PSScriptRoot "foundation_systems_shards.ps1")
 $styles = @(
     "control_crew_ignoring", "pure_gambler", "crew_maximizer",
     "numbers_specialist", "coin_pusher_grinder", "cheater",
@@ -41,7 +42,8 @@ if (-not (Test-Path -LiteralPath $godot -PathType Leaf)) { throw "Godot console 
 
 $inputPaths = @(
     "tools/cross_economy_audit.gd", "tools/cross_economy_audit.ps1",
-    "tools/cross_economy_audit_shards.ps1", "data/economy/content06_1_audit.json",
+    "tools/cross_economy_audit_shards.ps1", "tools/foundation_systems_shards.ps1",
+    "data/economy/content06_1_audit.json",
     "data/games/games.json", "data/crew/jobs.json", "data/crew/plays.json",
     "data/crew/numbers.json", "data/crew/heist.json", "data/items/items.json",
     "data/services/services.json", "data/debt/lenders.json", "data/travel/routes.json",
@@ -56,11 +58,29 @@ $inputJson = $inputs | ConvertTo-Json -Depth 4 -Compress
 $inputHash = ([Security.Cryptography.SHA256]::Create().ComputeHash([Text.Encoding]::UTF8.GetBytes($inputJson)) | ForEach-Object { $_.ToString("x2") }) -join ""
 
 $jobs = [Collections.Generic.List[object]]::new()
+$shardProjectsRoot = Join-Path $OutDir "shard_projects"
+New-Item -ItemType Directory -Path $shardProjectsRoot -Force | Out-Null
 foreach ($style in $styles) {
     $stem = $style
+    $privateRoot = Join-Path $shardProjectsRoot $style
+    New-Item -ItemType Directory -Path $privateRoot -Force | Out-Null
+    foreach ($file in Get-ChildItem -LiteralPath $projectRoot -File -Force) {
+        Copy-Item -LiteralPath $file.FullName -Destination (Join-Path $privateRoot $file.Name) -Force
+    }
+    foreach ($directoryName in @(".agents", "addons", "assets", "branding", "data", "docs", "scenes", "scripts", "tools")) {
+        $sourceDirectory = Join-Path $projectRoot $directoryName
+        if (Test-Path -LiteralPath $sourceDirectory) {
+            if (-not (Test-FoundationJunctionTargetSafe -ProjectRoot $privateRoot -TargetPath $sourceDirectory)) { throw "Unsafe shard junction target: $sourceDirectory" }
+            New-Item -ItemType Junction -Path (Join-Path $privateRoot $directoryName) -Target $sourceDirectory | Out-Null
+        }
+    }
+    $privateCache = Join-Path $privateRoot ".godot"
+    Copy-FoundationShardCache -SourceCache (Join-Path $projectRoot ".godot") -DestinationCache $privateCache
+    Copy-Item -LiteralPath (Join-Path $projectRoot ".godot\extension_list.cfg") -Destination (Join-Path $privateCache "extension_list.cfg") -Force
     $jobs.Add([pscustomobject]@{
         Style = $style
-        Json = Join-Path $OutDir "$stem.json"
+        ProjectRoot = $privateRoot
+        Json = Join-Path $privateRoot "$stem.json"
         Stdout = Join-Path $OutDir "$stem.stdout.txt"
         Stderr = Join-Path $OutDir "$stem.stderr.txt"
         Process = $null
@@ -88,16 +108,15 @@ while ($pending.Count -gt 0 -or $running.Count -gt 0) {
     }
     while ($pending.Count -gt 0 -and $running.Count -lt $WorkerCount) {
         $job = $pending.Dequeue()
-        $relative = $job.Json.Substring($rootPrefix.Length).Replace("\", "/")
         $args = @(
-            "--headless", "--path", $projectRoot,
+            "--headless", "--path", $job.ProjectRoot,
             "--script", "res://tools/cross_economy_audit.gd", "--",
             "--seeds-per-style=$SeedsPerPlaystyle", "--seed-start=1",
             "--max-actions=$MaxActions", "--seed-prefix=$SeedPrefix",
-            "--playstyle=$($job.Style)", "--build-ref=$head", "--output=res://$relative"
+            "--playstyle=$($job.Style)", "--build-ref=$head", "--output=res://$($job.Style).json"
         )
         $job.Started = Get-Date
-        $job.Process = Start-Process -FilePath $godot -ArgumentList $args -WorkingDirectory $projectRoot -WindowStyle Hidden -RedirectStandardOutput $job.Stdout -RedirectStandardError $job.Stderr -PassThru
+        $job.Process = Start-Process -FilePath $godot -ArgumentList $args -WorkingDirectory $job.ProjectRoot -WindowStyle Hidden -RedirectStandardOutput $job.Stdout -RedirectStandardError $job.Stderr -PassThru
         $running.Add($job)
         Write-Host "BALANCE_SHARD_START style=$($job.Style)"
     }
