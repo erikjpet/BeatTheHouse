@@ -1402,6 +1402,10 @@ func _measure_game(game_id: String) -> void:
 	else:
 		await _wait_frames(active_frames)
 	_end_scenario()
+	app.back_to_environment()
+	if not await _wait_for_game_exit():
+		mark_event("game_fixture_exit_failed", {"game_id": game_id, "reason": "exit_timeout"})
+	await _wait_frames(2)
 
 
 func _coin_pusher_perf06_phase(scenario_name: String) -> String:
@@ -1417,10 +1421,6 @@ func _coin_pusher_perf06_phase(scenario_name: String) -> String:
 		"coin_pusher_active_collect":
 			return "collect"
 	return ""
-	app.back_to_environment()
-	if not await _wait_for_game_exit():
-		mark_event("game_fixture_exit_failed", {"game_id": game_id, "reason": "exit_timeout"})
-	await _wait_frames(2)
 
 
 func _measure_game_idle(game_id: String) -> void:
