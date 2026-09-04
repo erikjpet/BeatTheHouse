@@ -7,8 +7,7 @@ param(
     [int]$Frames = 120,
     [int]$ActiveFrames = 240,
     [int]$MemorySeconds = 600,
-    [int]$TimeoutMs = 900000,
-    [switch]$SkipExport
+    [int]$TimeoutMs = 900000
 )
 
 $ErrorActionPreference = "Stop"
@@ -41,12 +40,8 @@ $rawReport = Join-Path $out "runtime_report.json"
 $exportStdout = Join-Path $out "export.stdout.txt"
 $exportStderr = Join-Path $out "export.stderr.txt"
 
-if (-not $SkipExport) {
-    $export = Start-Process -FilePath $GodotPath -ArgumentList @("--headless", "--path", $root, "--editor", "--export-release", '"Windows Steam"', $exe) -RedirectStandardOutput $exportStdout -RedirectStandardError $exportStderr -PassThru -WindowStyle Hidden -Wait
-    if ($export.ExitCode -ne 0 -or -not (Test-Path -LiteralPath $exe -PathType Leaf)) { throw "Windows release export failed with exit code $($export.ExitCode)." }
-} elseif (-not (Test-Path -LiteralPath $exe -PathType Leaf)) {
-    throw "SkipExport requires the immutable output directory to already contain BeatTheHouse.exe."
-}
+$export = Start-Process -FilePath $GodotPath -ArgumentList @("--headless", "--path", $root, "--editor", "--export-release", '"Windows Steam"', $exe) -RedirectStandardOutput $exportStdout -RedirectStandardError $exportStderr -PassThru -WindowStyle Hidden -Wait
+if ($export.ExitCode -ne 0 -or -not (Test-Path -LiteralPath $exe -PathType Leaf)) { throw "Windows release export failed with exit code $($export.ExitCode)." }
 $buildHash = (Get-FileHash -LiteralPath $exe -Algorithm SHA256).Hash.ToLowerInvariant()
 $runStdout = Join-Path $out "runtime.stdout.txt"
 $runStderr = Join-Path $out "runtime.stderr.txt"

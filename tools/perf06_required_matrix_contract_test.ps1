@@ -28,6 +28,7 @@ $nativeRuntime = Get-Content -LiteralPath (Join-Path $PSScriptRoot "perf06_nativ
 foreach ($needle in @("--export-release", "Windows Steam", "Refusing to overwrite immutable native evidence", "profile_manifest_sha256", "runtime_report_sha256")) {
     if (-not $nativeRuntime.Contains($needle)) { throw "Native release-runtime matrix lost '$needle'." }
 }
+if ($nativeRuntime.Contains("SkipExport")) { throw "Native binding evidence must always use a fresh release export." }
 $overlay = Get-Content -LiteralPath (Join-Path $root "scripts/ui/perf_telemetry_overlay.gd") -Raw
 foreach ($needle in @('"surface_draw_time_ms"', '"production_game_canvas"', '"complete_frame_upper_bound"', 'reset_performance_counters')) {
     if (-not $overlay.Contains($needle)) { throw "Runtime surface measurement lost '$needle'." }
