@@ -1579,7 +1579,7 @@
 	  "punchline_high_stakes_guard": {"position": [650, 300], "zone_id": "right"},
 	  "punchline_high_stakes_safe_exit": {"position": [700, 360], "zone_id": "exit_lane"},
 	  "punchline_high_stakes_task": {"position": [300, 320], "zone_id": "center"},
-	  "punchline_high_stakes_runner_work_2": {"position": [500, 70], "zone_id": "background"},
+	  "punchline_high_stakes_runner_work_2": {"position": [96, 350], "zone_id": "background"},
       "punchline_greased_inspection_seals": {"position": [786, 302]},
       "punchline_greased_payoff_runner": {"position": [410, 96]},
 	  "punchline_greased_seals_work_1": {"position": [560, 330], "zone_id": "center"},
