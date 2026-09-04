@@ -1,0 +1,57 @@
+﻿{
+    "schema":  "beat_the_house.integ06_1_historical_fixture_provenance",
+    "version":  1,
+    "fixture_id":  "mid06_pre_game_depth_slot",
+    "capture_class":  "mid_0_6",
+    "capture_milestone":  "pre_game_depth",
+    "historical_release":  "mid-0.6-development-boundary",
+    "historical_commit":  "31e434c412ba8bdeda03bee86db1f8b4d899c962",
+    "historical_tree":  "dc735cd49780e48549fa6b85a24694f9e973dcf6",
+    "historical_main_scene_blob":  "4b0643365098308dadfaee909d35e51784905811",
+    "historical_foundation_main_blob":  "9cd8431f598fdc8cfc174a7ea49930351b728191",
+    "historical_save_service_blob":  "15a56c4d9f4be1723a721596b9b67c48ac5c2eae",
+    "driver_path":  "scripts/tests/foundation/integ06_1_v051_fixture_driver.gd",
+    "driver_sha256":  "ABA72F8D9969DF3569C1F65654E3AE229278557C8D6679003C4F672227A3EE76",
+    "capture":  {
+                    "action_index":  1,
+                    "archetype_id":  "gas_station_casino",
+                    "challenge_id":  "",
+                    "challenge_modifiers":  {
+
+                                            },
+                    "environment_id":  "gas_station_casino_002",
+                    "fixture_id":  "mid06_pre_game_depth_slot",
+                    "game_clock_minutes":  756,
+                    "game_id":  "slot",
+                    "game_state_key":  "slot",
+                    "methods":  [
+                                    "FoundationMain.start_foundation_run",
+                                    "FoundationMain.select_travel_option:gas_station_casino",
+                                    "FoundationMain.confirm_selected_travel",
+                                    "FoundationMain.enter_game",
+                                    "GameSurfaceCanvas.surface_action:slot_spin:0:confirm=true",
+                                    "FoundationMain.save_foundation_run",
+                                    "SaveService.wait_for_async_save"
+                                ],
+                    "project_version":  "0.5.1",
+                    "save_path":  "isolated_distribution_root/saves/mid06_pre_game_depth_slot.json",
+                    "save_schema":  "beat_the_house.foundation_run",
+                    "save_version":  2,
+                    "screen":  "GAME",
+                    "seed":  "INTEG06-1-MID06-PRE-GAME-009",
+                    "surface_state_evidence":  {
+                                                   "last_outcome_id":  "zero_loss",
+                                                   "last_reels_present":  true,
+                                                   "spin_count":  1
+                                               },
+                    "travel_path":  [
+                                        "gas_station_casino"
+                                    ]
+                },
+    "save_file":  "mid06_pre_game_depth_slot.json",
+    "save_size_bytes":  121392,
+    "save_sha256":  "5FD6351E8B39F35934C0B22FCFED25817DCCE06320BB160463897C569842FA34",
+    "custody_root":  "C:\\Users\\theep\\AppData\\Local\\Temp\\bth-integ06-1-historical-ab6c4661da4d4d30b21f40da83e2ca13",
+    "custody_inventory_path":  "C:\\Users\\theep\\AppData\\Local\\Temp\\bth-integ06-1-historical-ab6c4661da4d4d30b21f40da83e2ca13\\custody_inventory.json",
+    "custody_inventory_sha256":  "94F5FF10E3BF254057A16087294906A636167303DFE14BAF88A78064E39C351E"
+}
