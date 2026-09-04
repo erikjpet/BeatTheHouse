@@ -10,6 +10,9 @@ $ErrorActionPreference = "Stop"
 $root = [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
 $profileFile = if ([IO.Path]::IsPathRooted($ProfilePath)) { [IO.Path]::GetFullPath($ProfilePath) } else { [IO.Path]::GetFullPath((Join-Path $root $ProfilePath)) }
 if (-not (Test-Path -LiteralPath $profileFile -PathType Leaf)) { throw "Low-end profile is missing: $profileFile" }
+$profileRoot = [IO.Path]::GetFullPath((Join-Path $root ".tmp"))
+if (-not $profileFile.StartsWith($profileRoot + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) { throw "Low-end profile must resolve below the repository .tmp directory." }
+$profileFileRelative = $profileFile.Substring($root.Length).TrimStart([char[]]@('\', '/'))
 $profile = Get-Content -LiteralPath $profileFile -Raw | ConvertFrom-Json
 foreach ($field in @("schema", "profile_id", "method", "computer_name", "resolution", "renderer", "power_plan", "web_browser", "web_cpu_throttle_rate", "web_device_scale_factor", "web_launch_flags", "hardware_fingerprint_sha256", "hardware")) {
     if (-not ($profile.PSObject.Properties.Name -contains $field)) { throw "Low-end profile is missing '$field'." }
@@ -161,7 +164,7 @@ try {
         if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "Integration producer is not available: $path" }
         $integrationOut = Join-Path $out ($orchestrator -replace '\.ps1$', '')
         $integrationOutRelative = $integrationOut.Substring($root.Length).TrimStart([char[]]@('\', '/'))
-        & powershell -NoProfile -ExecutionPolicy Bypass -File $path -CandidateCommit $head -ProfilePath $profileFile -EvidenceProfile "low_end:$($profile.profile_id)" -OutDir $integrationOutRelative -GodotPath $GodotPath -RequireGodot:$RequireGodot
+        & powershell -NoProfile -ExecutionPolicy Bypass -File $path -CandidateCommit $head -ProfilePath $profileFileRelative -EvidenceProfile "low_end:$($profile.profile_id)" -OutDir $integrationOutRelative -GodotPath $GodotPath -RequireGodot:$RequireGodot
         if ($LASTEXITCODE -ne 0) { throw "Integration low-end producer failed: $orchestrator" }
         $integrationManifests[$orchestrator] = Join-Path $integrationOut "manifest.json"
     }

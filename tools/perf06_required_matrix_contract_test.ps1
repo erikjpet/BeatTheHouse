@@ -24,7 +24,7 @@ foreach ($surfaceOverride in @($matrix.allocation_roots_by_phase.PSObject.Proper
     }
 }
 $lowEndLauncher = Get-Content -LiteralPath (Join-Path $PSScriptRoot "perf06_low_end_matrix.ps1") -Raw
-foreach ($needle in @("reproducible_whole_matrix_throttle", "ProcessorAffinity", "PriorityClass", "native_surface_probe.json", "ProfileManifestSha256", "PERF06 LOW-END PREFLIGHT PASS")) {
+foreach ($needle in @("reproducible_whole_matrix_throttle", "ProcessorAffinity", "PriorityClass", "native_surface_probe.json", "ProfileManifestSha256", "profileFileRelative", "Low-end profile must resolve below", "PERF06 LOW-END PREFLIGHT PASS")) {
     if (-not $lowEndLauncher.Contains($needle)) { throw "Low-end launcher lost reproducible whole-matrix binding '$needle'." }
 }
 $nativeWrapper = Get-Content -LiteralPath (Join-Path $PSScriptRoot "foundation_performance_probe.ps1") -Raw
