@@ -53,4 +53,8 @@ foreach ($needle in @("perf06_surface_id", "perf06_phase_id", "surface_draw_time
 }
 $unknownRootOwners = @($matrix.allocation_roots.PSObject.Properties.Name | Where-Object { $_ -notin $matrixIds -and $_ -notin @($matrix.systems.PSObject.Properties.Name) })
 if ($unknownRootOwners.Count -ne 0) { throw "Allocation roots contain unknown surfaces: $($unknownRootOwners -join ',')" }
+$declaredRoots = @($matrix.allocation_roots.PSObject.Properties.Value | ForEach-Object { @($_) } | ForEach-Object { [string]$_ } | Sort-Object -Unique)
+if ($declaredRoots -contains "producer_fixture" -or $overlay.Contains('"producer_fixture"')) {
+    throw "Opt-in fixture producers are not production steady-frame allocation roots."
+}
 Write-Host "PERF06 REQUIRED MATRIX CONTRACT PASS games=$($matrixIds.Count) systems=$(@($matrix.systems.PSObject.Properties).Count)"

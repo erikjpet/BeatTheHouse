@@ -105,7 +105,6 @@ const ALLOCATION_COPY_SOURCE_IDS := [
 	"layout",
 	"autosave_flush",
 	"coin_pusher_native_step",
-	"producer_fixture",
 ]
 const PERF06_SYSTEM_ALLOCATION_ROOTS := {
 	"meta_home": ["environment_runtime", "layout", "foundation_snapshot"],

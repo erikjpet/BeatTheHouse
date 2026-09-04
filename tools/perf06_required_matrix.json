@@ -50,8 +50,8 @@
     "inventory_service": ["surface_realtime", "layout", "foundation_snapshot"],
     "audio": ["environment_runtime", "foundation_snapshot"],
     "save_restore": ["autosave_flush", "foundation_snapshot"],
-    "maximal_composition": ["environment_runtime", "surface_automation", "surface_realtime", "layout", "autosave_flush", "foundation_snapshot", "coin_pusher_native_step", "producer_fixture"],
-    "run_trajectory": ["environment_runtime", "surface_automation", "surface_realtime", "layout", "autosave_flush", "foundation_snapshot", "coin_pusher_native_step", "producer_fixture"]
+    "maximal_composition": ["environment_runtime", "surface_automation", "surface_realtime", "layout", "autosave_flush", "foundation_snapshot", "coin_pusher_native_step"],
+    "run_trajectory": ["environment_runtime", "surface_automation", "surface_realtime", "layout", "autosave_flush", "foundation_snapshot", "coin_pusher_native_step"]
   },
   "allocation_roots_by_phase": {
     "meta_home": {
