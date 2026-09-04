@@ -151,8 +151,9 @@ $projectText = (Get-Content -LiteralPath $projectPath -Raw).Replace('run/main_sc
 if (-not $projectText.Contains('run/main_scene="res://tools/integ06_1_terminal_soak_main.tscn"')) { throw "Transient project main-scene replacement failed." }
 Set-Content -LiteralPath $projectPath -Value $projectText
 $presetsPath = Join-Path $project "export_presets.cfg"
-$presetsText = (Get-Content -LiteralPath $presetsPath -Raw).Replace(',tools/*,tools/**', '').Replace('binary_format/embed_pck=true', 'binary_format/embed_pck=false')
+$presetsText = (Get-Content -LiteralPath $presetsPath -Raw).Replace(',tools/*,tools/**', '').Replace(',scripts/tests/*,scripts/tests/**', '').Replace('binary_format/embed_pck=true', 'binary_format/embed_pck=false')
 if ($presetsText.Contains(',tools/*,tools/**')) { throw "Transient export preset still excludes probe tools." }
+if ($presetsText.Contains(',scripts/tests/*,scripts/tests/**')) { throw "Transient export preset still excludes the probe's checked-in authority driver." }
 Set-Content -LiteralPath $presetsPath -Value $presetsText
 
 $nativeExe = Join-Path $nativeBuild "integ06_1_terminal_soak.exe"
@@ -210,7 +211,7 @@ try {
         $stem = "shard_${shard}_web"
         $webJson = Join-Path $out "$stem.json"
         $query = "candidate-commit=$candidate&candidate-tree=$candidateTree&tool-source-sha256=$toolHash&evidence-profile=$([Uri]::EscapeDataString($EvidenceProfile))&profile-path=$([Uri]::EscapeDataString($resolvedProfile))&profile-sha256=$profileHash&shard-index=$shard&shard-count=$ShardCount"
-        Invoke-BoundedProcess -FilePath "node" -ArgumentList @((Join-Path $root "tools\integ06_1_terminal_soak_web_capture.mjs"), "--url=http://127.0.0.1:$WebPort/index.html?$query", "--out=$webJson", "--profile=$(Join-Path $out "${stem}_profile")", "--cpu=$Cpu", "--timeout-ms=$TimeoutMs", "--playwright-package=$playwrightPackage", ('--chrome={0}' -f $chrome)) -StdoutPath (Join-Path $out "$stem.stdout.txt") -StderrPath (Join-Path $out "$stem.stderr.txt") -Label $stem -AllowFailure | Out-Null
+        Invoke-BoundedProcess -FilePath "node" -ArgumentList @((Join-Path $root "tools\integ06_1_terminal_soak_web_capture.mjs"), "--url=http://127.0.0.1:$WebPort/index.html?$query", "--out=$webJson", "--profile=$(Join-Path $out "${stem}_profile")", "--cpu=$Cpu", "--timeout-ms=$TimeoutMs", "--playwright-package=$playwrightPackage", ('--chrome="{0}"' -f $chrome)) -StdoutPath (Join-Path $out "$stem.stdout.txt") -StderrPath (Join-Path $out "$stem.stderr.txt") -Label $stem -AllowFailure | Out-Null
         if (-not (Test-Path -LiteralPath $webJson -PathType Leaf)) { throw "$stem emitted no report." }
         $report = Get-Content -LiteralPath $webJson -Raw | ConvertFrom-Json
         Assert-Provenance -Report $report -Label $stem -Platform "Web"
