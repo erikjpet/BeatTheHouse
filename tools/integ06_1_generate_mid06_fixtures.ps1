@@ -30,7 +30,7 @@ $captures = @(
             expected_archetype = "gas_station_casino"
             enter_game = "slot"
             surface_steps = @(
-                [ordered]@{ type = "click"; action = "slot_spin"; index = 0; confirm = $true; wait_msec = 50 }
+                [ordered]@{ type = "click"; action = "slot_spin"; index = 0; confirm = $true; pre_wait_msec = 250; wait_msec = 50 }
             )
             expected_surface_state = "slot_after_spin"
         }

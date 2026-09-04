@@ -477,6 +477,11 @@ func _apply_surface_step(app: Control, step: Dictionary, fixture_id: String, met
 	if canvas == null:
 		_fail("%s game surface canvas was unavailable" % fixture_id)
 		return false
+	var pre_wait_msec := maxi(0, int(step.get("pre_wait_msec", 0)))
+	if pre_wait_msec > 0:
+		await create_timer(float(pre_wait_msec) / 1000.0).timeout
+		await process_frame
+		await process_frame
 	var action_id := str(step.get("action", "")).strip_edges()
 	var requested_index := int(step.get("index", -1))
 	var index := requested_index
