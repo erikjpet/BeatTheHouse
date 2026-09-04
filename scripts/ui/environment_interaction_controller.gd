@@ -457,6 +457,7 @@ static func _merge_projected_interaction(base: Dictionary, semantic: Dictionary,
 	result["object_type"] = "scenario_sequence" if scenario_owned else str(result.get("object_type", "info"))
 	result["visual_type"] = str(result.get("visual_type", "fixture"))
 	result["source_id"] = str(semantic.get("source_id", result.get("source_id", semantic.get("stable_object_id", ""))))
+	result["icon_key"] = _scenario_icon_key(semantic, result)
 	result["owner_namespace"] = str(semantic.get("owner_namespace", ""))
 	result["stable_object_id"] = str(semantic.get("stable_object_id", ""))
 	if not world_owner_token.is_empty(): result["world_sequence_owner_token"] = world_owner_token
@@ -499,16 +500,20 @@ static func _merge_projected_scene_object(base: Dictionary, semantic: Dictionary
 	result["object_type"] = str(result.get("object_type", "scenario_scene_object" if owner == "scenario" else "info"))
 	result["visual_type"] = str(result.get("visual_type", "fixture"))
 	result["source_id"] = str(result.get("source_id", stable_id))
+	result["icon_key"] = _scenario_icon_key(semantic, result)
 	result["owner_namespace"] = owner
 	result["stable_object_id"] = stable_id
 	var world_owner_token := str(semantic.get("world_sequence_owner_token", ""))
 	if not world_owner_token.is_empty(): result["world_sequence_owner_token"] = world_owner_token
 	result["label"] = str(semantic.get("label", result.get("label", stable_id)))
-	result["short_description"] = str(semantic.get("role", result.get("short_description", "Room fixture")))
+	result["short_description"] = _scenario_description(semantic, result, "Room fixture")
+	result["action_summary"] = str(result.get("action_summary", "Inspect the room detail."))
 	result["state_label"] = str(semantic.get("state", semantic.get("appearance", result.get("state_label", "Present"))))
 	result["enabled"] = bool(semantic.get("enabled", result.get("enabled", true)))
 	result["visible"] = bool(semantic.get("visible", result.get("visible", true)))
-	result["interactive"] = bool(result.get("interactive", false))
+	# Decorative scenario records are still selectable. `interactive` means the
+	# information panel can be opened; an empty action list remains read-only.
+	result["interactive"] = true
 	result["scenario_sequence_actions"] = _array(result.get("scenario_sequence_actions", []))
 	result["anchor_id"] = str(semantic.get("anchor_id", result.get("anchor_id", "")))
 	result["zone_id"] = str(semantic.get("zone_id", result.get("zone_id", "")))
@@ -531,10 +536,10 @@ static func _merge_projected_actor(base: Dictionary, semantic: Dictionary, autho
 		result["object_type"] = "scenario_actor" if owner == "scenario" else "character"
 	result["visual_type"] = "character"
 	result["presence"] = "character"
-	result["short_description"] = "%s; %s" % [
+	result["short_description"] = _scenario_description(semantic, result, "%s; %s" % [
 		str(semantic.get("behavior", "idle")).replace("_", " ").capitalize(),
 		str(semantic.get("pose", "idle")).replace("_", " ").capitalize(),
-	]
+	])
 	result["actor_id"] = str(semantic.get("actor_id", result.get("source_id", "")))
 	result["source_id"] = result["actor_id"]
 	result["actor_pose"] = str(semantic.get("pose", "idle"))
@@ -544,6 +549,28 @@ static func _merge_projected_actor(base: Dictionary, semantic: Dictionary, autho
 	result["actor_route_stage"] = _dict(authority.get("actor_route_stage", {}))
 	result["character_actor"] = ScenarioSemanticViewModelScript.actor_character_model(semantic)
 	return result
+
+
+static func _scenario_icon_key(semantic: Dictionary, base: Dictionary) -> String:
+	var parts: Array[String] = []
+	for key in ["role", "state", "appearance", "behavior", "pose"]:
+		var value := str(semantic.get(key, base.get("semantic_%s" % key, base.get(key, "")))).strip_edges()
+		if not value.is_empty() and not parts.has(value):
+			parts.append(value)
+	if parts.is_empty():
+		parts.append("character" if str(semantic.get("semantic_kind", "")) == "actor" else "room_fixture")
+	return " ".join(parts)
+
+
+static func _scenario_description(semantic: Dictionary, base: Dictionary, fallback: String) -> String:
+	var description := str(semantic.get("description", base.get("short_description", ""))).strip_edges()
+	var variants := _dict(semantic.get("description_variants", {}))
+	for key in [str(semantic.get("state", "")), str(semantic.get("appearance", "")), str(semantic.get("pose", "")), str(semantic.get("behavior", ""))]:
+		var variant := str(variants.get(key, "")).strip_edges()
+		if not variant.is_empty():
+			description = variant
+			break
+	return fallback if description.is_empty() else description
 
 
 static func _apply_layout_authority(record: Dictionary, authority: Dictionary, authority_digest: String) -> Dictionary:
