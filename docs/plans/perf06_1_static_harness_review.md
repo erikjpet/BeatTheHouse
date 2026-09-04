@@ -281,3 +281,43 @@ native game surfaces and Coin Pusher, but the final `perf06_1` verdict is not
 available. Missing maximal-composition, Crew Draw Poker, complete Craps and
 Scratch Web, general Web liveness, warm-start, and measured low-end rows are
 real work—not paperwork—and remain open until the final candidate is frozen.
+
+## 2026-09-04 recovered closeout preparation
+
+The prebuilt platform series was recovered from
+`codex/perf06-platform-mbedtls` and the aggregate candidate, then merged over
+integrated main `3c836d18` without replaying old product branches. The inherited
+performance edits to `scripts/ui/foundation_main.gd` were removed; that shared
+file is byte-identical to the integrated base. Runtime allocation coverage now
+binds to the subsystem timings the performance overlay already receives.
+
+The recovered harness now also provides:
+
+- a fresh Windows-release measurement launcher with exact executable, Godot,
+  source, tree, profile and raw-report hashes;
+- immutable per-phase runtime tags and phase-local production-canvas draw cost
+  (or a conservative complete-frame upper bound where PixelSceneCanvas exposes
+  liveness but no separate CPU draw timer);
+- an honest surface-report builder that rejects missing action progress,
+  liveness, draw samples, deep-copy evidence or exact-source identity;
+- an immutable host-profile capture and a reproducible whole-matrix low-end
+  mode that constrains the complete launcher tree to a declared processor mask
+  and priority while retaining the required Web CPU throttle; and
+- start/end clean-tree checks for native and Web evidence so a moving candidate
+  cannot produce a qualifying report.
+
+Preparation checks are green: the required 11-game/12-system catalog, negative
+allocation fixtures, Web idle-liveness contract, Web active/prestage contract,
+and seven direct call-root source audits. Godot import and the focused 177-file
+UI/tools load are green. A deliberately shortened, nonbinding Windows release
+diagnostic at `f152e480` completed all 27 L0.2 runtime scenarios; its numbers are
+not release evidence because it used 30-frame/10-second diagnostic windows and
+the final candidate is still moving. A concurrent broad smoke retained one
+pre-existing lifecycle red (`Second foundation EnvironmentInstance should leave
+home into the world`); content and all parse/load stages were green, and no
+performance-owned file participates in that assertion.
+
+The final verdict remains unavailable. It still requires the landed
+`integ06_1` composition/terminal manifests, the final env06_8 candidate, full
+120/240/600 native and Web windows, cold/warm Web starts, the exact low-end
+whole-matrix run, all remaining canonical phase rows, and a clean-host rerun.
