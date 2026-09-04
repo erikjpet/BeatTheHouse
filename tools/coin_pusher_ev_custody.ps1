@@ -48,6 +48,152 @@ function Test-ArchivePathSelected([string]$Path) {
     return $false
 }
 
+function Get-NativeRuntimeDiscovery([string]$Root) {
+    $extensionList = Join-Path $Root ".godot\extension_list.cfg"
+    if (-not (Test-Path -LiteralPath $extensionList -PathType Leaf)) { throw "Godot extension list is missing: $extensionList" }
+    $registered = @(Get-Content -LiteralPath $extensionList | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+    $descriptors = @($registered | Where-Object { $_ -match '^res://addons/coin_pusher_native/[^/]+\.gdextension$' } | Sort-Object -Unique)
+    if ($descriptors.Count -ne 1) { throw "Expected exactly one registered Coin Pusher native descriptor; found $($descriptors.Count)." }
+    $descriptorTarget = $descriptors[0].Substring(6).Replace("\", "/")
+    $descriptorSource = Join-Path $Root $descriptorTarget.Replace("/", "\")
+    if (-not (Test-Path -LiteralPath $descriptorSource -PathType Leaf)) { throw "Registered Coin Pusher descriptor is missing: $descriptorSource" }
+    $descriptorText = Get-Content -LiteralPath $descriptorSource -Raw
+    $windowsMatches = [regex]::Matches($descriptorText, '(?m)^\s*(?<key>windows\.[^=\r\n]+)\s*=\s*"res://(?<path>[^"\r\n]+)"')
+    if ($windowsMatches.Count -eq 0) { throw "Registered Coin Pusher descriptor has no Windows libraries." }
+    $libraryRows = [Collections.Generic.List[object]]::new()
+    foreach ($match in $windowsMatches) {
+        $key = $match.Groups["key"].Value.Trim()
+        $target = $match.Groups["path"].Value.Replace("\", "/")
+        if (-not $target.StartsWith("addons/coin_pusher_native/", [StringComparison]::Ordinal) -or $target.Contains("..")) {
+            throw "Coin Pusher descriptor contains an unsafe Windows library path: $target"
+        }
+        $source = Join-Path $Root $target.Replace("/", "\")
+        if (-not (Test-Path -LiteralPath $source -PathType Leaf)) { throw "Descriptor-referenced Windows library is missing: $source" }
+        $libraryRows.Add([pscustomobject]@{ key = $key; path = $target; source = $source })
+    }
+    if (@($libraryRows | Where-Object { [string]$_.key -like "windows.debug.*" }).Count -eq 0 -or
+        @($libraryRows | Where-Object { [string]$_.key -like "windows.release.*" }).Count -eq 0) {
+        throw "Coin Pusher descriptor must supply current Windows debug and release libraries."
+    }
+    $targets = @($descriptorTarget) + @($libraryRows | ForEach-Object { $_.path } | Sort-Object -Unique)
+    return [pscustomobject]@{
+        extension_list = $extensionList; descriptor_path = $descriptorTarget; descriptor_source = $descriptorSource
+        windows_libraries = @($libraryRows); targets = $targets
+    }
+}
+
+function Get-RuntimeSourceDiscovery([string]$Root, [hashtable]$TrackedPaths) {
+    $sources = @{}
+    $skippedImports = [Collections.Generic.List[string]]::new()
+    function Add-DiscoveredSource([string]$Target, [string]$Source) {
+        $normalized = $Target.Replace("\", "/")
+        if (-not $sources.ContainsKey($normalized)) { $sources[$normalized] = $Source }
+    }
+    $native = Get-NativeRuntimeDiscovery $Root
+    Add-DiscoveredSource ".godot/extension_list.cfg" $native.extension_list
+    Add-DiscoveredSource $native.descriptor_path $native.descriptor_source
+    foreach ($library in $native.windows_libraries) { Add-DiscoveredSource $library.path $library.source }
+    foreach ($cache in @("global_script_class_cache.cfg", "uid_cache.bin")) {
+        $source = Join-Path $Root ".godot\$cache"
+        if (-not (Test-Path -LiteralPath $source -PathType Leaf)) { throw "Required ignored Godot runtime cache is missing: $source" }
+        Add-DiscoveredSource ".godot/$cache" $source
+    }
+    $assetRoot = Join-Path $Root "assets"
+    if (Test-Path -LiteralPath $assetRoot -PathType Container) {
+        foreach ($importManifest in Get-ChildItem -LiteralPath $assetRoot -Recurse -Filter "*.import" -File) {
+            $relativeManifest = $importManifest.FullName.Substring($Root.Length).TrimStart("\", "/").Replace("\", "/")
+            $matches = [regex]::Matches((Get-Content -LiteralPath $importManifest.FullName -Raw), 'res://\.godot/imported/([^"\r\n]+)')
+            $artifactRows = [Collections.Generic.List[object]]::new()
+            $complete = $true
+            foreach ($match in $matches) {
+                $name = $match.Groups[1].Value
+                $source = Join-Path $Root ".godot\imported\$name"
+                if (-not (Test-Path -LiteralPath $source -PathType Leaf)) { $complete = $false; break }
+                $artifactRows.Add([pscustomobject]@{ path = ".godot/imported/$name"; source = $source })
+            }
+            if (-not $complete) {
+                if ($null -ne $TrackedPaths -and $TrackedPaths.ContainsKey($relativeManifest)) { throw "Tracked import manifest has missing generated artifacts: $relativeManifest" }
+                $skippedImports.Add($relativeManifest)
+                continue
+            }
+            if ($null -eq $TrackedPaths -or -not $TrackedPaths.ContainsKey($relativeManifest)) { Add-DiscoveredSource $relativeManifest $importManifest.FullName }
+            foreach ($artifact in $artifactRows) {
+                Add-DiscoveredSource $artifact.path $artifact.source
+                $source = $artifact.source
+                $md5 = [IO.Path]::ChangeExtension($source, ".md5")
+                if (Test-Path -LiteralPath $md5 -PathType Leaf) { Add-DiscoveredSource ".godot/imported/$([IO.Path]::GetFileName($md5))" $md5 }
+            }
+        }
+    }
+    return [pscustomobject]@{ sources = $sources; native = $native; skipped_incomplete_imports = @($skippedImports) }
+}
+
+function Copy-RuntimeSources([hashtable]$Sources, [string]$DestinationRoot, [hashtable]$TrackedPaths) {
+    $entries = [Collections.Generic.List[object]]::new()
+    foreach ($target in @($Sources.Keys | Sort-Object)) {
+        if ($null -ne $TrackedPaths -and $TrackedPaths.ContainsKey($target)) { throw "Ignored runtime staging attempted to overwrite tracked source: $target" }
+        $source = $Sources[$target]
+        $destination = Join-Path $DestinationRoot $target.Replace("/", "\")
+        New-Item -ItemType Directory -Path (Split-Path -Parent $destination) -Force | Out-Null
+        Copy-Item -LiteralPath $source -Destination $destination -Force
+        $sourceHash = (Get-FileHash -LiteralPath $source -Algorithm SHA256).Hash.ToLowerInvariant()
+        $destinationHash = (Get-FileHash -LiteralPath $destination -Algorithm SHA256).Hash.ToLowerInvariant()
+        if ($sourceHash -cne $destinationHash) { throw "Runtime stage hash mismatch: $target" }
+        $entries.Add([ordered]@{ path = $target; bytes = (Get-Item -LiteralPath $destination).Length; sha256 = $destinationHash })
+    }
+    return @($entries)
+}
+
+function Get-EvEngineIdentity {
+    $configured = $env:GODOT_BIN
+    if (-not $configured) { $configured = "D:\Projects\Beat-The-House\.tools\godot-4.6-stable\Godot_v4.6-stable_win64_console.exe" }
+    if (-not (Test-Path -LiteralPath $configured -PathType Leaf)) { throw "Godot console executable is missing: $configured" }
+    $configured = [IO.Path]::GetFullPath($configured)
+    $worker = $configured
+    if ($worker.EndsWith("_console.exe", [StringComparison]::OrdinalIgnoreCase)) {
+        $worker = $worker.Substring(0, $worker.Length - "_console.exe".Length) + ".exe"
+    }
+    if (-not (Test-Path -LiteralPath $worker -PathType Leaf)) { throw "Godot worker executable is missing: $worker" }
+    return [pscustomobject]@{
+        engine_path = $configured; engine_sha256 = (Get-FileHash -LiteralPath $configured -Algorithm SHA256).Hash.ToLowerInvariant()
+        worker_path = $worker; worker_sha256 = (Get-FileHash -LiteralPath $worker -Algorithm SHA256).Hash.ToLowerInvariant()
+    }
+}
+
+function Invoke-FrozenNativeEvSmoke([string]$Root, [object]$Engine) {
+    $provenance = [ordered]@{
+        schema = "coin_pusher_ev_runner_provenance_v1"; runner_version = "fix06_11_v2"; status = "verified"
+        guard = [ordered]@{ schema = "coin_pusher_ev_no_progress_guard_v1"; kind = "deterministic_consecutive_refusal_limit"; limit = 4096; ticks_after_each_refusal = 20 }
+        engine = [ordered]@{
+            configured_path = $Engine.engine_path; configured_sha256 = $Engine.engine_sha256
+            worker_path = $Engine.worker_path; worker_sha256 = $Engine.worker_sha256
+        }
+    }
+    $encoded = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes(($provenance | ConvertTo-Json -Depth 8 -Compress)))
+    $reportPath = Join-Path $Root ".tmp\n.json"
+    New-Item -ItemType Directory -Path (Split-Path -Parent $reportPath) -Force | Out-Null
+    $stdoutPath = Join-Path $Root ".tmp\n.out"
+    $stderrPath = Join-Path $Root ".tmp\n.err"
+    $arguments = @(
+        "--headless", "--path", $Root, "--script", "res://tools/coin_pusher_ev_shard.gd", "--",
+        "--machine=quarter_falls", "--shard=0", "--accepted=64", "--out=res://.tmp/n.json",
+        "--runner-provenance-base64=$encoded"
+    )
+    $process = Start-Process -FilePath $Engine.worker_path -ArgumentList $arguments -WorkingDirectory $Root -WindowStyle Hidden -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath -PassThru
+    $process.WaitForExit(); $process.Refresh(); $exitCode = [int]$process.ExitCode; $process.Dispose()
+    $output = @()
+    if (Test-Path -LiteralPath $stdoutPath -PathType Leaf) { $output += Get-Content -LiteralPath $stdoutPath }
+    if (Test-Path -LiteralPath $stderrPath -PathType Leaf) { $output += Get-Content -LiteralPath $stderrPath }
+    if (-not (Test-Path -LiteralPath $reportPath -PathType Leaf)) { throw "Native EV smoke wrote no shard report. Output: $($output -join ' | ')" }
+    $report = Get-Content -LiteralPath $reportPath -Raw | ConvertFrom-Json
+    if ($exitCode -ne 0 -or -not [bool](Get-ObjectValue (Get-ObjectValue $report "assertions") "native_solver") -or
+        [string](Get-ObjectValue $report "solver_backend") -cne "native_v3" -or
+        [int64](Get-ObjectValue $report "accepted_player_inserts") -ne 64) {
+        throw "Native EV smoke did not execute 64 accepted inserts on native_v3 (exit=$exitCode). Output: $($output -join ' | ')"
+    }
+    return [pscustomobject]@{ report = $reportPath; sha256 = (Get-FileHash -LiteralPath $reportPath -Algorithm SHA256).Hash.ToLowerInvariant(); accepted = 64; backend = "native_v3" }
+}
+
 function Get-IdentityFailures([object]$Actual, [object]$Expected, [string]$Label) {
     $failures = [Collections.Generic.List[string]]::new()
     foreach ($key in @(
@@ -172,7 +318,7 @@ if ($SelfTest) {
     }
     if (Test-ArchivePathSelected $knownLongExcludedPath) { throw "Self-test failed: known long documentation evidence path was selected." }
     $tarCommand = Get-Command tar.exe -ErrorAction Stop
-    $testRoot = Join-Path ([IO.Path]::GetTempPath()) ("bth_evc_" + [guid]::NewGuid().ToString("N"))
+    $testRoot = Join-Path $projectRoot (".tmp\evc_selftest\" + [guid]::NewGuid().ToString("N"))
     $testArchive = Join-Path $testRoot "s.tar"
     $testExtract = Join-Path $testRoot "x"
     try {
@@ -197,11 +343,27 @@ if ($SelfTest) {
             $actualBlob = (git -C $projectRoot hash-object -- $extracted).Trim()
             if ($actualBlob -cne $expectedBlob) { throw "Self-test failed: extracted input hash mismatch for $required." }
         }
+        $selfRuntimeRoot = if ($RuntimeSourceRoot) { [IO.Path]::GetFullPath($RuntimeSourceRoot) } elseif (Test-Path -LiteralPath "D:\Projects\Beat-The-House\.godot\extension_list.cfg") { "D:\Projects\Beat-The-House" } else { $projectRoot }
+        $testTrackedPaths = @{}
+        foreach ($path in $listing) {
+            $normalized = ([string]$path).Replace("\", "/").TrimEnd("/")
+            if ($normalized -and (Test-Path -LiteralPath (Join-Path $testExtract $normalized.Replace("/", "\")) -PathType Leaf)) { $testTrackedPaths[$normalized] = $true }
+        }
+        $runtimeDiscovery = Get-RuntimeSourceDiscovery $selfRuntimeRoot $testTrackedPaths
+        $runtimeEntries = @(Copy-RuntimeSources $runtimeDiscovery.sources $testExtract $testTrackedPaths)
+        $nativeTargets = @($runtimeDiscovery.native.targets | Sort-Object -Unique)
+        $stagedNativeTargets = @($runtimeEntries | Where-Object { [string]$_.path -like "addons/coin_pusher_native/*" } | ForEach-Object { [string]$_.path } | Sort-Object -Unique)
+        if ($nativeTargets.Count -lt 3 -or ($nativeTargets -join "|") -cne ($stagedNativeTargets -join "|")) {
+            throw "Self-test failed: descriptor-discovered Windows native runtime was not staged exactly."
+        }
+        $engine = Get-EvEngineIdentity
+        $smoke = Invoke-FrozenNativeEvSmoke $testExtract $engine
+        if ($smoke.backend -cne "native_v3" -or $smoke.accepted -ne 64) { throw "Self-test failed: frozen native EV smoke evidence is incomplete." }
     }
     finally {
-        if (Test-Path -LiteralPath $testRoot) { Remove-Item -LiteralPath $testRoot -Recurse -Force }
+        Write-Host "COIN_PUSHER_EV_CUSTODY_SELF_TEST_EVIDENCE path=$testRoot"
     }
-    Write-Host "COIN_PUSHER_EV_CUSTODY_SELF_TEST_PASS changed_identity_rejected=true mixed_policy_rejected=true missing_machine_rejected=true long_docs_excluded=true tar_extract_verified=true"
+    Write-Host "COIN_PUSHER_EV_CUSTODY_SELF_TEST_PASS changed_identity_rejected=true mixed_policy_rejected=true missing_machine_rejected=true long_docs_excluded=true tar_extract_verified=true runtime_stage_verified=true native_ev_smoke=true"
     exit 0
 }
 
@@ -221,6 +383,7 @@ $head = ""; $tree = ""; $trackedHash = ""; $policyHash = ""; $runtimeHash = ""; 
 $enginePath = ""; $engineHash = ""; $workerPath = ""; $workerHash = ""; $archivePath = ""; $archiveHash = ""
 $trackedManifestFileHash = ""; $runtimeManifestFileHash = ""
 $trackedManifest = $null; $runtimeManifest = $null; $harnessManifest = $null; $harnessExitCode = -999
+$nativeDiscovery = $null
 $rawEvidence = [Collections.Generic.List[object]]::new()
 $rawRoot = ""; $harnessStdout = ""; $harnessStderr = ""
 $startedAt = Get-Date
@@ -295,55 +458,9 @@ try {
     $policyCanonical = (@($policyEntries | ForEach-Object { "$($_.path)|$($_.git_blob)|$($_.sha256)" }) -join "`n")
     $policyHash = Get-Sha256Text $policyCanonical
 
-    $runtimeSources = @{}
-    function Add-RuntimeSource([string]$Target, [string]$Source) {
-        $normalized = $Target.Replace("\", "/")
-        if (-not $runtimeSources.ContainsKey($normalized)) { $runtimeSources[$normalized] = $Source }
-    }
-    $nativeTargets = @(
-        "addons/coin_pusher_native/coin_pusher_native.gdextension",
-        "addons/coin_pusher_native/coin_pusher_native.gdextension.uid",
-        "addons/coin_pusher_native/bin/coin_pusher_native.windows.template_debug.x86_64.nothreads.dll",
-        "addons/coin_pusher_native/bin/coin_pusher_native_v3_10.windows.template_debug.x86_64.nothreads.dll"
-    )
-    foreach ($target in $nativeTargets) {
-        $source = Join-Path $RuntimeSourceRoot $target.Replace("/", "\")
-        if (-not (Test-Path -LiteralPath $source -PathType Leaf)) { throw "Required ignored native runtime asset is missing: $source" }
-        Add-RuntimeSource $target $source
-    }
-    foreach ($cache in @("global_script_class_cache.cfg", "uid_cache.bin", "extension_list.cfg")) {
-        $source = Join-Path $RuntimeSourceRoot ".godot\$cache"
-        if (-not (Test-Path -LiteralPath $source -PathType Leaf)) { throw "Required ignored Godot runtime cache is missing: $source" }
-        Add-RuntimeSource ".godot/$cache" $source
-    }
-    $assetRoot = Join-Path $RuntimeSourceRoot "assets"
-    if (Test-Path -LiteralPath $assetRoot -PathType Container) {
-        foreach ($importManifest in Get-ChildItem -LiteralPath $assetRoot -Recurse -Filter "*.import" -File) {
-            $relativeManifest = $importManifest.FullName.Substring($RuntimeSourceRoot.Length).TrimStart("\", "/").Replace("\", "/")
-            if (-not $trackedByPath.ContainsKey($relativeManifest)) { Add-RuntimeSource $relativeManifest $importManifest.FullName }
-            foreach ($match in [regex]::Matches((Get-Content -LiteralPath $importManifest.FullName -Raw), 'res://\.godot/imported/([^"\r\n]+)')) {
-                $name = $match.Groups[1].Value
-                $source = Join-Path $RuntimeSourceRoot ".godot\imported\$name"
-                if (-not (Test-Path -LiteralPath $source -PathType Leaf)) { throw "Required ignored import artifact is missing: $source" }
-                Add-RuntimeSource ".godot/imported/$name" $source
-                $md5 = [IO.Path]::ChangeExtension($source, ".md5")
-                if (Test-Path -LiteralPath $md5 -PathType Leaf) { Add-RuntimeSource ".godot/imported/$([IO.Path]::GetFileName($md5))" $md5 }
-            }
-        }
-    }
-
-    $runtimeEntries = [Collections.Generic.List[object]]::new()
-    foreach ($target in @($runtimeSources.Keys | Sort-Object)) {
-        if ($trackedByPath.ContainsKey($target)) { throw "Ignored runtime staging attempted to overwrite tracked source: $target" }
-        $source = $runtimeSources[$target]
-        $destination = Join-Path $frozenRoot $target.Replace("/", "\")
-        New-Item -ItemType Directory -Path (Split-Path -Parent $destination) -Force | Out-Null
-        Copy-Item -LiteralPath $source -Destination $destination -Force
-        $runtimeEntries.Add([ordered]@{
-            path = $target; bytes = (Get-Item -LiteralPath $destination).Length
-            sha256 = (Get-FileHash -LiteralPath $destination -Algorithm SHA256).Hash.ToLowerInvariant()
-        })
-    }
+    $runtimeDiscovery = Get-RuntimeSourceDiscovery $RuntimeSourceRoot $trackedByPath
+    $nativeDiscovery = $runtimeDiscovery.native
+    $runtimeEntries = @(Copy-RuntimeSources $runtimeDiscovery.sources $frozenRoot $trackedByPath)
     $runtimeCanonical = (@($runtimeEntries | ForEach-Object { "$($_.path)|$($_.bytes)|$($_.sha256)" }) -join "`n")
     $runtimeHash = Get-Sha256Text $runtimeCanonical
     $runtimeManifest = [ordered]@{
@@ -354,20 +471,16 @@ try {
     Write-JsonFile $runtimeManifest $runtimeManifestPath 8
     $runtimeManifestFileHash = (Get-FileHash -LiteralPath $runtimeManifestPath -Algorithm SHA256).Hash.ToLowerInvariant()
     $pluginEntries = @($runtimeEntries | Where-Object { [string]$_.path -like "addons/coin_pusher_native/*" } | Sort-Object path)
-    if ($pluginEntries.Count -ne $nativeTargets.Count) { throw "Native plugin manifest is incomplete." }
+    $nativeTargets = @($runtimeDiscovery.native.targets | Sort-Object -Unique)
+    if ($pluginEntries.Count -ne $nativeTargets.Count -or
+        (@($pluginEntries | ForEach-Object { [string]$_.path } | Sort-Object -Unique) -join "|") -cne ($nativeTargets -join "|")) {
+        throw "Native plugin manifest does not exactly match descriptor-referenced Windows runtime inputs."
+    }
     $pluginHash = Get-Sha256Text (@($pluginEntries | ForEach-Object { "$($_.path)|$($_.bytes)|$($_.sha256)" }) -join "`n")
 
-    $enginePath = $env:GODOT_BIN
-    if (-not $enginePath) { $enginePath = "D:\Projects\Beat-The-House\.tools\godot-4.6-stable\Godot_v4.6-stable_win64_console.exe" }
-    if (-not (Test-Path -LiteralPath $enginePath -PathType Leaf)) { throw "Godot console executable is missing: $enginePath" }
-    $enginePath = [IO.Path]::GetFullPath($enginePath)
-    $workerPath = $enginePath
-    if ($workerPath.EndsWith("_console.exe", [StringComparison]::OrdinalIgnoreCase)) {
-        $workerPath = $workerPath.Substring(0, $workerPath.Length - "_console.exe".Length) + ".exe"
-    }
-    if (-not (Test-Path -LiteralPath $workerPath -PathType Leaf)) { throw "Godot worker executable is missing: $workerPath" }
-    $engineHash = (Get-FileHash -LiteralPath $enginePath -Algorithm SHA256).Hash.ToLowerInvariant()
-    $workerHash = (Get-FileHash -LiteralPath $workerPath -Algorithm SHA256).Hash.ToLowerInvariant()
+    $engine = Get-EvEngineIdentity
+    $enginePath = $engine.engine_path; $engineHash = $engine.engine_sha256
+    $workerPath = $engine.worker_path; $workerHash = $engine.worker_sha256
 
     Add-FileManifestFailures "tracked source (pre-run)" $frozenRoot $trackedManifest $failures
     Add-FileManifestFailures "runtime input (pre-run)" $frozenRoot $runtimeManifest $failures
@@ -497,6 +610,7 @@ $custody = [ordered]@{
     policy_source_sha256 = $policyHash
     runtime_manifest_sha256 = $runtimeHash; runtime_manifest_file_sha256 = $runtimeManifestFileHash
     plugin_identity_sha256 = $pluginHash
+    native_runtime = $nativeDiscovery
     engine = [ordered]@{ path = $enginePath; sha256 = $engineHash; worker_path = $workerPath; worker_sha256 = $workerHash }
     frozen_archive = [ordered]@{ path = $archivePath; sha256 = $archiveHash }
     accepted_per_machine = $acceptedPerMachine; required_machines = $machines; expected_total_accepted = $expectedTotalAccepted
