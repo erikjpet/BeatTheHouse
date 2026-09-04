@@ -96,7 +96,7 @@ func advance_to(next_action_index: int) -> void:
 	_prune_expired_incidents()
 
 
-func snapshot() -> Dictionary:
+func snapshot(deep_copy_seeded_definitions: bool = true) -> Dictionary:
 	return {
 		"schema_version": SCHEMA_VERSION,
 		"seed_value": seed_value,
@@ -107,7 +107,10 @@ func snapshot() -> Dictionary:
 		"rumor_registry": rumor_registry.duplicate(true),
 		"heard_by_node": heard_by_node.duplicate(true),
 		"seeded_scenarios_by_node": seeded_scenarios_by_node.duplicate(true),
-		"seeded_scenario_definitions_by_node": seeded_scenario_definitions_by_node.duplicate(true),
+		# Definitions are immutable after trusted seeding. Travel rollback can own
+		# the outer map without recursively copying every authored sequence on its
+		# success path; restore still deep-copies before installing the snapshot.
+		"seeded_scenario_definitions_by_node": seeded_scenario_definitions_by_node.duplicate(deep_copy_seeded_definitions),
 		"reputation_incidents": reputation_incidents.duplicate(true),
 		"reputation_type_registry": reputation_type_registry.duplicate(true),
 		"reputation_sequence": reputation_sequence,
