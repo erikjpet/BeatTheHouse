@@ -1575,7 +1575,7 @@
       "punchline_high_stakes_protected_table": {"position": [798, 176]},
       "punchline_high_stakes_floor_runner": {"position": [78, 220]},
 	  "punchline_high_stakes_task": {"position": [300, 320], "zone_id": "center"},
-	  "punchline_high_stakes_runner_work_2": {"position": [500, 70], "zone_id": "background"},
+	  "punchline_high_stakes_runner_work_2": {"position": [96, 350], "zone_id": "background"},
       "punchline_greased_inspection_seals": {"position": [786, 302]},
       "punchline_greased_payoff_runner": {"position": [410, 96]},
 	  "punchline_greased_seals_work_1": {"position": [560, 330], "zone_id": "center"},
