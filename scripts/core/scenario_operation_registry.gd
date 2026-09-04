@@ -40,6 +40,10 @@ const REGISTERED_HANDLERS := {
 	"publish_feedback": {"inputs": ["message"], "input_specs": {"message": "bounded_nonblank_path_safe_string"}, "fact_projection": "none", "allowed_sources": ["command", "fact"], "outputs": ["last_feedback", "semantic_state"], "output_paths": ["last_feedback", "semantic_state.transition_queue"], "write_algebra": "replace_plus_queue_append", "persistent": true, "rng": "none", "fallible": true, "atomic": true, "idempotence": "dispatch receipt exactly-once", "may_trigger_branch_resolution": [], "external_effects": []},
 	"request_cleanup": {"inputs": ["reason"], "input_specs": {"reason": "CanonicalId"}, "fact_projection": "none", "allowed_sources": ["command", "fact"], "outputs": ["semantic_state", "cleanup_receipts", "cleanup_receipt_records", "cleanup_fingerprints", "cleanup_content_fingerprint", "status"], "output_paths": ["semantic_state", "cleanup_receipts", "cleanup_receipt_records", "cleanup_fingerprints", "cleanup_content_fingerprint", "status"], "write_algebra": "transactional_cleanup_batch", "persistent": true, "rng": "none", "fallible": true, "atomic": true, "idempotence": "fingerprint-verified replay", "may_trigger_branch_resolution": [], "external_effects": []},
 	"event_bridge": {"inputs": ["event_id", "resolution_id"], "input_specs": {"event_id": "EventChoiceRef.event_id", "resolution_id": "EventChoiceRef.choice_id"}, "fact_projection": "none", "allowed_sources": ["command", "fact"], "outputs": ["event_request_queue", "last_feedback", "event_correlations"], "output_paths": ["event_request_queue", "last_feedback", "event_correlations"], "write_algebra": "replace_plus_ordered_set_union", "persistent": true, "rng": "none", "fallible": true, "atomic": true, "idempotence": "correlation-key state-idempotent", "may_trigger_branch_resolution": [], "external_effects": [{"type": "event_correlation", "owner": "EventModule"}]},
+	"grant_item": {"inputs": ["item_id", "message"], "input_specs": {"item_id": "CanonicalId", "message": "bounded_nonblank_path_safe_string"}, "fact_projection": "none", "allowed_sources": ["command"], "outputs": ["event_request_queue", "last_feedback"], "output_paths": ["event_request_queue", "last_feedback"], "write_algebra": "exactly_once_external_request", "persistent": true, "rng": "none", "fallible": true, "atomic": true, "idempotence": "request delivery receipt exactly-once", "may_trigger_branch_resolution": [], "external_effects": [{"type": "inventory_grant", "owner": "RunState"}]},
+	"grant_cash": {"inputs": ["amount", "message"], "input_specs": {"amount": "bounded_positive_int", "message": "bounded_nonblank_path_safe_string"}, "fact_projection": "none", "allowed_sources": ["command"], "outputs": ["event_request_queue", "last_feedback"], "output_paths": ["event_request_queue", "last_feedback"], "write_algebra": "exactly_once_external_request", "persistent": true, "rng": "none", "fallible": true, "atomic": true, "idempotence": "request delivery receipt exactly-once", "may_trigger_branch_resolution": [], "external_effects": [{"type": "cash_grant", "owner": "RunState"}]},
+	"change_scene_object": {"inputs": ["owner_namespace", "stable_object_id", "state", "message"], "input_specs": {"owner_namespace": "OwnerNamespace", "stable_object_id": "SemanticObjectId", "state": "bounded_nonblank_path_safe_string", "message": "bounded_nonblank_path_safe_string"}, "fact_projection": "none", "allowed_sources": ["command"], "outputs": ["semantic_state", "last_feedback"], "output_paths": ["semantic_state.scene_objects.<identity>.state", "semantic_state.transition_queue", "last_feedback"], "write_algebra": "authorized_visible_replace_plus_feedback", "persistent": true, "rng": "none", "fallible": true, "atomic": true, "idempotence": "command receipt exactly-once", "may_trigger_branch_resolution": [], "external_effects": []},
+	"play_cue": {"inputs": ["cue_id", "message"], "input_specs": {"cue_id": "CanonicalId", "message": "bounded_nonblank_path_safe_string"}, "fact_projection": "none", "allowed_sources": ["command"], "outputs": ["semantic_state", "last_feedback"], "output_paths": ["semantic_state.transition_queue", "last_feedback"], "write_algebra": "queue_append", "persistent": true, "rng": "none", "fallible": true, "atomic": true, "idempotence": "command receipt exactly-once", "may_trigger_branch_resolution": [], "external_effects": [{"type": "audio_cue", "owner": "Foundation"}]},
 }
 const MAX_OPERATIONS_PER_BATCH := 32
 const MAX_ACTIONS_PER_INTERACTION := 8
@@ -159,7 +163,26 @@ static func validate_handler_inputs(handler_id: String, inputs: Dictionary, loca
 			if typeof(inputs.get("event_id")) != TYPE_STRING or typeof(inputs.get("resolution_id")) != TYPE_STRING or not _canonical_id(str(inputs.get("event_id", ""))) or not _canonical_id(str(inputs.get("resolution_id", ""))): errors.append("event_bridge requires canonical event and resolution ids.")
 			var event_choices := _dict(context.get("event_choices", {}))
 			if event_choices.is_empty() or not _array(event_choices.get(str(inputs.get("event_id", "")), [])).has(str(inputs.get("resolution_id", ""))): errors.append("event_bridge requires a catalog-proven choice belonging to the exact event.")
+		"grant_item":
+			if not _canonical_id(str(inputs.get("item_id", ""))): errors.append("grant_item requires a canonical item id.")
+			_validate_handler_message("grant_item", inputs.get("message"), errors)
+		"grant_cash":
+			var cash_amount := float(inputs.get("amount", 0.0))
+			if not _finite_number(inputs.get("amount")) or cash_amount != floor(cash_amount) or cash_amount <= 0.0 or cash_amount > 100.0: errors.append("grant_cash amount must be an integer from 1 through 100.")
+			_validate_handler_message("grant_cash", inputs.get("message"), errors)
+		"change_scene_object":
+			if str(inputs.get("owner_namespace", "")) not in OWNER_NAMESPACES or not _valid_semantic_object_id(str(inputs.get("stable_object_id", ""))): errors.append("change_scene_object requires an owned semantic target.")
+			if str(inputs.get("state", "")).strip_edges().is_empty(): errors.append("change_scene_object requires a visible state.")
+			_validate_handler_message("change_scene_object", inputs.get("message"), errors)
+		"play_cue":
+			if not _canonical_id(str(inputs.get("cue_id", ""))): errors.append("play_cue requires a canonical cue id.")
+			_validate_handler_message("play_cue", inputs.get("message"), errors)
 	return errors
+
+
+static func _validate_handler_message(handler_id: String, value: Variant, errors: Array) -> void:
+	if typeof(value) != TYPE_STRING or str(value).strip_edges().is_empty() or str(value).length() > MAX_VARIANT_TEXT or _contains_forbidden_path(value):
+		errors.append("%s requires bounded nonempty path-safe message text." % handler_id)
 
 
 static func validate_any_operation(operation: Dictionary) -> Array:

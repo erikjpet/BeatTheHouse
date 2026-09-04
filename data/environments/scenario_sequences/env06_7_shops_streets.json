@@ -57,7 +57,8 @@
                     "description": "The cartons are stacked by mismatched labels; sorting them would clear the clerk's work path.",
                     "description_variants": {
                       "center": "The cartons now fill the sorting spot, close enough for every damaged label to be compared.",
-                      "package_a_delivery_cartons_wait": "The cartons wait off the aisle in a neat stack while the clerk holds for your decision."
+                      "package_a_delivery_cartons_wait": "The cartons wait off the aisle in a neat stack while the clerk holds for your decision.",
+                      "changed_by_shift_cartons": "You reroute the cartons. The clerk shifts the dolly aside, exposing the damaged label and a route for the mismarked cartons."
                     }
                   }
                 },
@@ -158,13 +159,21 @@
                         "id": "ignore_delivery",
                         "label": "Ignore the delivery",
                         "input_action": "ui_down",
-                        "non_color_state": "ignore"
+                        "non_color_state": "ignore",
+                        "handler": "publish_feedback",
+                        "inputs": {
+                          "message": "You ignore the delivery. A delivery dolly waits beside mismarked cartons while the front-door lane remains visibly open."
+                        }
                       },
                       {
                         "id": "refuse_sort",
                         "label": "Refuse to sort the cartons",
                         "input_action": "ui_cancel",
-                        "non_color_state": "refuse"
+                        "non_color_state": "refuse",
+                        "handler": "publish_feedback",
+                        "inputs": {
+                          "message": "You refuse to sort the cartons. A delivery dolly waits beside mismarked cartons while the front-door lane remains visibly open."
+                        }
                       }
                     ],
                     "input_actions": [
@@ -396,7 +405,14 @@
                             "objective_id": "sort_delivery",
                             "step_id": "inspect_manifest"
                           }
-                        ]
+                        ],
+                        "handler": "change_scene_object",
+                        "inputs": {
+                          "owner_namespace": "scenario",
+                          "stable_object_id": "delivery_cartons",
+                          "state": "changed_by_shift_cartons",
+                          "message": "You reroute the cartons. The clerk shifts the dolly aside, exposing the damaged label and a route for the mismarked cartons."
+                        }
                       }
                     ],
                     "input_actions": [
@@ -1404,7 +1420,7 @@
           "sweep_coexistence",
           "host_event_authority_gate"
         ],
-        "sequence_signature": "87244dfe3f69ef651bff5d362104ebafcaacb40f2ed9d397784797bec4de7d68",
+        "sequence_signature": "0a293e9a47a9eb5105a92c9e0a30061810c6811371ef301606114ca69b1c80f8",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],

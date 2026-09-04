@@ -47,7 +47,7 @@
                   "object": {
                     "label": "Brass luggage cart",
                     "role": "obstacle",
-                    "zone_id": "left",
+                    "zone_id": "foreground",
                     "bounds": {
                       "w": 48.0,
                       "h": 44.0
@@ -55,7 +55,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "luggage_cart_arrival"
+                    "appearance": "luggage_cart_arrival",
+                    "description": "Suitcases, a brass luggage cart, and two guest groups divide the lobby while the exterior stair remains clear. The brass luggage cart now reads as arrival through luggage cart arrival.",
+                    "description_variants": {
+                      "package_b_motel_top_mid": "Brass luggage cart is now package b motel top mid; roll the cart through the unoccupied wing before the guests move."
+                    }
                   }
                 },
                 {
@@ -67,7 +71,7 @@
                   "object": {
                     "label": "Blue-tag suitcases",
                     "role": "stock",
-                    "zone_id": "center",
+                    "zone_id": "left",
                     "bounds": {
                       "w": 60.0,
                       "h": 56.0
@@ -75,7 +79,12 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "blue_cases_arrival"
+                    "appearance": "blue_cases_arrival",
+                    "description": "Suitcases, a brass luggage cart, and two guest groups divide the lobby while the exterior stair remains clear. The blue-tag suitcases now reads as arrival through blue cases arrival.",
+                    "description_variants": {
+                      "sorted_tags": "The blue-tag suitcases has shifted to sorted tags. Match the separated cases to a room and hand over the corrected keys.",
+                      "decision_ready": "Blue-tag suitcases is now decision ready; the room mix deadline now demands a physical resolution."
+                    }
                   }
                 },
                 {
@@ -95,7 +104,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "red_cases_arrival"
+                    "appearance": "red_cases_arrival",
+                    "description": "Red-tag suitcases is arrival in red cases arrival. Suitcases, a brass luggage cart, and two guest groups divide the lobby while the exterior stair remains clear.",
+                    "description_variants": {
+
+                    }
                   }
                 },
                 {
@@ -107,7 +120,7 @@
                   "object": {
                     "label": "Room assignment board",
                     "role": "workstation",
-                    "zone_id": "background",
+                    "zone_id": "service_lane",
                     "bounds": {
                       "w": 48.0,
                       "h": 56.0
@@ -115,7 +128,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "room_board_arrival"
+                    "appearance": "room_board_arrival",
+                    "description": "The room assignment board carries the room's arrival state, marked by room board arrival. Suitcases, a brass luggage cart, and two guest groups divide the lobby while the exterior stair remains clear.",
+                    "description_variants": {
+                      "cross_checked": "The room assignment board has shifted to cross checked. Inspect the cart tags against the room board."
+                    }
                   }
                 },
                 {
@@ -135,7 +152,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "clear",
-                    "appearance": "marked_lane"
+                    "appearance": "marked_lane",
+                    "description": "The marked safe exit is marked clear, keeping departure legible beside the room's activity.",
+                    "description_variants": {
+
+                    }
                   }
                 },
                 {
@@ -155,7 +176,15 @@
                     "visible": true,
                     "enabled": true,
                     "state": "ready",
-                    "appearance": "task_ready"
+                    "appearance": "task_ready",
+                    "description": "Suitcases, a brass luggage cart, and two guest groups divide the lobby while the exterior stair remains clear. The compare claim tags now reads as ready through task ready.",
+                    "description_variants": {
+                      "beat_1_ready": "The compare claim tags has shifted to beat 1 ready. Inspect the cart tags against the room board.",
+                      "beat_2_ready": "Compare claim tags is now beat 2 ready; roll the cart through the unoccupied wing before the guests move.",
+                      "decision_available": "Match the separated cases to a room and hand over the corrected keys. The compare claim tags visibly holds at decision available.",
+                      "decision_ready": "The compare claim tags has shifted to decision ready. The room mix deadline now demands a physical resolution."
+                    },
+                    "zone_id": "background"
                   }
                 }
               ],
@@ -253,9 +282,14 @@
                   "actor": {
                     "label": "Desk clerk",
                     "actor_id": "motel_desk_clerk",
-                    "zone_id": "service_lane",
+                    "zone_id": "background",
                     "behavior": "work",
-                    "pose": "working"
+                    "pose": "working",
+                    "description": "Suitcases, a brass luggage cart, and two guest groups divide the lobby while the exterior stair remains clear. Desk clerk remains working, showing who is still involved.",
+                    "description_variants": {
+                      "checking_ledger": "Inspect the cart tags against the room board. The desk clerk visibly holds at checking ledger.",
+                      "work": "The desk clerk has shifted to work. Match the separated cases to a room and hand over the corrected keys."
+                    }
                   }
                 },
                 {
@@ -270,7 +304,11 @@
                     "zone_id": "left",
                     "behavior": "idle",
                     "pose": "waiting",
-                    "anchor_id": "package_b_motel_top_right"
+                    "anchor_id": "package_b_motel_top_right",
+                    "description": "Coach guests is waiting, their attention making the room's latest work easy to read. Suitcases, a brass luggage cart, and two guest groups divide the lobby while the exterior stair remains clear.",
+                    "description_variants": {
+                      "center": "Coach guests is now center; roll the cart through the unoccupied wing before the guests move."
+                    }
                   }
                 }
               ],
@@ -1036,7 +1074,7 @@
                 "object": {
                   "label": "Balanced wings physical marker",
                   "role": "aftermath",
-                  "zone_id": "center",
+                  "zone_id": "foreground",
                   "bounds": {
                     "w": 48.0,
                     "h": 44.0
@@ -1044,7 +1082,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "parked_right",
-                  "appearance": "set_state_luggage_cart_parked_right"
+                  "appearance": "set_state_luggage_cart_parked_right",
+                  "description": "Suitcases, a brass luggage cart, and two guest groups divide the lobby while the exterior stair remains clear. The balanced wings physical marker is parked right and shows set state luggage cart parked right, so the room cannot quietly erase the work.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ],
@@ -1058,9 +1100,13 @@
                 "actor": {
                   "label": "Balanced wings witness",
                   "actor_id": "motel_rooms_balanced_witness",
-                  "zone_id": "right",
+                  "zone_id": "background",
                   "behavior": "idle",
-                  "pose": "aftermath_0"
+                  "pose": "aftermath_0",
+                  "description": "Balanced wings witness is aftermath 0, their attention making the room's latest work easy to read. Suitcases, a brass luggage cart, and two guest groups divide the lobby while the exterior stair remains clear.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -1078,7 +1124,7 @@
                 "object": {
                   "label": "Service wing open physical marker",
                   "role": "route",
-                  "zone_id": "right",
+                  "zone_id": "background",
                   "bounds": {
                     "w": 56.0,
                     "h": 52.0
@@ -1086,7 +1132,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "reassigned",
-                  "appearance": "set_appearance_room_board_reassigned"
+                  "appearance": "set_appearance_room_board_reassigned",
+                  "description": "The service wing open physical marker is marked reassigned, keeping departure legible beside the room's activity.",
+                  "description_variants": {
+
+                  }
                 }
               },
               {
@@ -1098,7 +1148,7 @@
                 "object": {
                   "label": "Service wing open secondary route marker",
                   "role": "route",
-                  "zone_id": "service_lane",
+                  "zone_id": "left",
                   "bounds": {
                     "w": 72.0,
                     "h": 48.0
@@ -1106,7 +1156,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "secondary",
-                  "appearance": "split_route"
+                  "appearance": "split_route",
+                  "description": "The service wing open secondary route marker is marked secondary, keeping departure legible beside the room's activity.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -1124,7 +1178,7 @@
                 "object": {
                   "label": "Lobby jammed physical marker",
                   "role": "service",
-                  "zone_id": "left",
+                  "zone_id": "service_lane",
                   "bounds": {
                     "w": 64.0,
                     "h": 60.0
@@ -1132,7 +1186,11 @@
                   "visible": true,
                   "enabled": false,
                   "state": "misrouted",
-                  "appearance": "set_state_red_cases_misrouted"
+                  "appearance": "set_state_red_cases_misrouted",
+                  "description": "Suitcases, a brass luggage cart, and two guest groups divide the lobby while the exterior stair remains clear. The lobby jammed physical marker is misrouted and shows set state red cases misrouted, so the room cannot quietly erase the work.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ],
@@ -1146,9 +1204,13 @@
                 "actor": {
                   "label": "Lobby jammed witness",
                   "actor_id": "motel_crowd_jammed_witness",
-                  "zone_id": "background",
+                  "zone_id": "left",
                   "behavior": "guard",
-                  "pose": "aftermath_2"
+                  "pose": "aftermath_2",
+                  "description": "Lobby jammed witness is aftermath 2, their attention making the room's latest work easy to read. Suitcases, a brass luggage cart, and two guest groups divide the lobby while the exterior stair remains clear.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -1166,7 +1228,7 @@
                 "object": {
                   "label": "Mix-up refused physical marker",
                   "role": "evidence",
-                  "zone_id": "background",
+                  "zone_id": "foreground",
                   "bounds": {
                     "w": 72.0,
                     "h": 44.0
@@ -1174,7 +1236,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "roped_off",
-                  "appearance": "set_appearance_luggage_cart_roped_off"
+                  "appearance": "set_appearance_luggage_cart_roped_off",
+                  "description": "Mix-up refused physical marker remains roped off with set appearance luggage cart roped off, preserving a visible trace of what happened here. Suitcases, a brass luggage cart, and two guest groups divide the lobby while the exterior stair remains clear.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -1192,7 +1258,7 @@
                 "object": {
                   "label": "Mix-up interrupted physical marker",
                   "role": "shelter",
-                  "zone_id": "foreground",
+                  "zone_id": "background",
                   "bounds": {
                     "w": 80.0,
                     "h": 52.0
@@ -1200,7 +1266,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "paused",
-                  "appearance": "set_state_room_board_paused"
+                  "appearance": "set_state_room_board_paused",
+                  "description": "Suitcases, a brass luggage cart, and two guest groups divide the lobby while the exterior stair remains clear. The mix-up interrupted physical marker is paused and shows set state room board paused, so the room cannot quietly erase the work.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ],
@@ -1216,7 +1286,11 @@
                   "actor_id": "motel_mixup_interrupted_witness",
                   "zone_id": "left",
                   "behavior": "idle",
-                  "pose": "aftermath_4"
+                  "pose": "aftermath_4",
+                  "description": "Suitcases, a brass luggage cart, and two guest groups divide the lobby while the exterior stair remains clear. Mix-up interrupted witness remains aftermath 4, showing who is still involved.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -1230,7 +1304,7 @@
           "props_4",
           "actors_2"
         ],
-        "sequence_signature": "cf4a6a9cc49835ec798b1b579e07466035b31e519033c8d09c0f023f558cbee3",
+        "sequence_signature": "124f2c8ab111b1af823a0a2ae9e4984138ecbcdfc449231128bdb0d241e2b541",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -1397,7 +1471,7 @@
                   "object": {
                     "label": "North surveillance scope",
                     "role": "evidence",
-                    "zone_id": "background",
+                    "zone_id": "foreground",
                     "bounds": {
                       "w": 48.0,
                       "h": 44.0
@@ -1405,7 +1479,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "north_scope_arrival"
+                    "appearance": "north_scope_arrival",
+                    "description": "North surveillance scope remains arrival with north scope arrival, preserving a visible trace of what happened here. Two observers hold opposite balcony angles while a laundry trolley creates one moving patch of cover.",
+                    "description_variants": {
+                      "cone_marked": "Compare the two observer angles without entering either cone. The north surveillance scope visibly holds at cone marked."
+                    }
                   }
                 },
                 {
@@ -1425,7 +1503,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "south_camera_arrival"
+                    "appearance": "south_camera_arrival",
+                    "description": "Two observers hold opposite balcony angles while a laundry trolley creates one moving patch of cover. The south balcony camera is arrival and shows south camera arrival, so the room cannot quietly erase the work.",
+                    "description_variants": {
+
+                    }
                   }
                 },
                 {
@@ -1437,7 +1519,7 @@
                   "object": {
                     "label": "Laundry trolley cover",
                     "role": "obstacle",
-                    "zone_id": "left",
+                    "zone_id": "foreground",
                     "bounds": {
                       "w": 72.0,
                       "h": 44.0
@@ -1445,7 +1527,12 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "laundry_trolley_arrival"
+                    "appearance": "laundry_trolley_arrival",
+                    "description": "Laundry trolley cover is arrival in laundry trolley arrival. Two observers hold opposite balcony angles while a laundry trolley creates one moving patch of cover.",
+                    "description_variants": {
+                      "package_b_motel_top_mid": "Move the trolley once to expose which door both observers track. The laundry trolley cover visibly holds at package b motel top mid.",
+                      "decision_ready": "The laundry trolley cover has shifted to decision ready. The moving sight cones now demands a physical resolution."
+                    }
                   }
                 },
                 {
@@ -1457,7 +1544,7 @@
                   "object": {
                     "label": "Watched room door",
                     "role": "door",
-                    "zone_id": "center",
+                    "zone_id": "foreground",
                     "bounds": {
                       "w": 48.0,
                       "h": 56.0
@@ -1465,7 +1552,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "watched_door_arrival"
+                    "appearance": "watched_door_arrival",
+                    "description": "Two observers hold opposite balcony angles while a laundry trolley creates one moving patch of cover. The watched room door now reads as arrival through watched door arrival.",
+                    "description_variants": {
+
+                    }
                   }
                 },
                 {
@@ -1485,7 +1576,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "courtyard_gate_arrival"
+                    "appearance": "courtyard_gate_arrival",
+                    "description": "Clear courtyard gate stays visibly arrival; it is the readable way out while the scene continues.",
+                    "description_variants": {
+
+                    }
                   }
                 },
                 {
@@ -1505,7 +1600,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "clear",
-                    "appearance": "marked_lane"
+                    "appearance": "marked_lane",
+                    "description": "The marked safe exit is marked clear, keeping departure legible beside the room's activity.",
+                    "description_variants": {
+
+                    }
                   }
                 },
                 {
@@ -1525,7 +1624,14 @@
                     "visible": true,
                     "enabled": true,
                     "state": "ready",
-                    "appearance": "task_ready"
+                    "appearance": "task_ready",
+                    "description": "The trace both sight cones carries the room's ready state, marked by task ready. Two observers hold opposite balcony angles while a laundry trolley creates one moving patch of cover.",
+                    "description_variants": {
+                      "beat_1_ready": "Compare the two observer angles without entering either cone. The trace both sight cones visibly holds at beat 1 ready.",
+                      "decision_available": "Move the trolley once to expose which door both observers track. The trace both sight cones visibly holds at decision available.",
+                      "decision_ready": "The trace both sight cones has shifted to decision ready. The moving sight cones now demands a physical resolution."
+                    },
+                    "zone_id": "foreground"
                   }
                 }
               ],
@@ -1623,9 +1729,13 @@
                   "actor": {
                     "label": "North observer",
                     "actor_id": "motel_north_observer",
-                    "zone_id": "background",
+                    "zone_id": "left",
                     "behavior": "watch",
-                    "pose": "working"
+                    "pose": "working",
+                    "description": "Two observers hold opposite balcony angles while a laundry trolley creates one moving patch of cover. North observer remains working, showing who is still involved.",
+                    "description_variants": {
+                      "scanning": "The north observer has shifted to scanning. Compare the two observer angles without entering either cone."
+                    }
                   }
                 },
                 {
@@ -1640,7 +1750,11 @@
                     "zone_id": "right",
                     "behavior": "watch",
                     "pose": "waiting",
-                    "anchor_id": "package_b_motel_top_left"
+                    "anchor_id": "package_b_motel_top_left",
+                    "description": "Two observers hold opposite balcony angles while a laundry trolley creates one moving patch of cover. South observer remains waiting, showing who is still involved.",
+                    "description_variants": {
+                      "background": "The south observer has shifted to background. Move the trolley once to expose which door both observers track."
+                    }
                   }
                 }
               ],
@@ -2296,7 +2410,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "cleared",
-                  "appearance": "set_state_watched_door_cleared"
+                  "appearance": "set_state_watched_door_cleared",
+                  "description": "Two observers hold opposite balcony angles while a laundry trolley creates one moving patch of cover. The occupant warned physical marker is cleared and shows set state watched door cleared, so the room cannot quietly erase the work.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ],
@@ -2310,9 +2428,13 @@
                 "actor": {
                   "label": "Occupant warned witness",
                   "actor_id": "motel_occupant_warned_witness",
-                  "zone_id": "right",
+                  "zone_id": "left",
                   "behavior": "idle",
-                  "pose": "aftermath_0"
+                  "pose": "aftermath_0",
+                  "description": "Occupant warned witness is aftermath 0, their attention making the room's latest work easy to read. Two observers hold opposite balcony angles while a laundry trolley creates one moving patch of cover.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -2330,7 +2452,7 @@
                 "object": {
                   "label": "Observers misdirected physical marker",
                   "role": "route",
-                  "zone_id": "right",
+                  "zone_id": "left",
                   "bounds": {
                     "w": 60.0,
                     "h": 60.0
@@ -2338,7 +2460,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "false_target",
-                  "appearance": "set_appearance_south_camera_false_target"
+                  "appearance": "set_appearance_south_camera_false_target",
+                  "description": "The observers misdirected physical marker is marked false target, keeping departure legible beside the room's activity.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -2356,7 +2482,7 @@
                 "object": {
                   "label": "Wait-out failed physical marker",
                   "role": "service",
-                  "zone_id": "left",
+                  "zone_id": "service_lane",
                   "bounds": {
                     "w": 68.0,
                     "h": 44.0
@@ -2364,7 +2490,11 @@
                   "visible": true,
                   "enabled": false,
                   "state": "mobile_watch",
-                  "appearance": "set_state_north_scope_mobile_watch"
+                  "appearance": "set_state_north_scope_mobile_watch",
+                  "description": "Two observers hold opposite balcony angles while a laundry trolley creates one moving patch of cover. The wait-out failed physical marker is mobile watch and shows set state north scope mobile watch, so the room cannot quietly erase the work.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ],
@@ -2378,9 +2508,13 @@
                 "actor": {
                   "label": "Wait-out failed witness",
                   "actor_id": "motel_observer_waitout_failed_witness",
-                  "zone_id": "background",
+                  "zone_id": "left",
                   "behavior": "guard",
-                  "pose": "aftermath_2"
+                  "pose": "aftermath_2",
+                  "description": "Wait-out failed witness holds a aftermath 2 posture beside the active scene. Two observers hold opposite balcony angles while a laundry trolley creates one moving patch of cover.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -2398,7 +2532,7 @@
                 "object": {
                   "label": "Stakeout refused physical marker",
                   "role": "evidence",
-                  "zone_id": "background",
+                  "zone_id": "foreground",
                   "bounds": {
                     "w": 76.0,
                     "h": 52.0
@@ -2406,7 +2540,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "watched",
-                  "appearance": "set_appearance_watched_door_watched"
+                  "appearance": "set_appearance_watched_door_watched",
+                  "description": "Two observers hold opposite balcony angles while a laundry trolley creates one moving patch of cover. The stakeout refused physical marker is watched and shows set appearance watched door watched, so the room cannot quietly erase the work.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -2424,7 +2562,7 @@
                 "object": {
                   "label": "Stakeout interrupted physical marker",
                   "role": "shelter",
-                  "zone_id": "foreground",
+                  "zone_id": "background",
                   "bounds": {
                     "w": 84.0,
                     "h": 60.0
@@ -2432,7 +2570,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "partial_cover",
-                  "appearance": "set_state_laundry_trolley_partial_cover"
+                  "appearance": "set_state_laundry_trolley_partial_cover",
+                  "description": "Two observers hold opposite balcony angles while a laundry trolley creates one moving patch of cover. The stakeout interrupted physical marker is partial cover and shows set state laundry trolley partial cover, so the room cannot quietly erase the work.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -2446,7 +2588,7 @@
           "props_5",
           "actors_2"
         ],
-        "sequence_signature": "af13f3f02e53f308f351bd00dd16aa6af882fd256ee1019c0a18321401e51cc5",
+        "sequence_signature": "6e685af4580b60fd627f45c075aa907cfbaf4d74f423524c1e7d826706d297ef",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -2612,7 +2754,7 @@
                   "object": {
                     "label": "Sagging weekly bed",
                     "role": "furniture",
-                    "zone_id": "left",
+                    "zone_id": "background",
                     "bounds": {
                       "w": 48.0,
                       "h": 44.0
@@ -2620,7 +2762,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "weekly_bed_arrival"
+                    "appearance": "weekly_bed_arrival",
+                    "description": "A sagging bed, dead lamp, leaking sink, and landlord's clipboard make the weekly room physically inspectable. The sagging weekly bed now reads as arrival through weekly bed arrival.",
+                    "description_variants": {
+                      "braced": "The sagging weekly bed has shifted to braced. Fit the loose brace and demonstrate whether the room is rest-ready."
+                    }
                   }
                 },
                 {
@@ -2632,7 +2778,7 @@
                   "object": {
                     "label": "Dead bedside lamp",
                     "role": "utility",
-                    "zone_id": "right",
+                    "zone_id": "left",
                     "bounds": {
                       "w": 60.0,
                       "h": 56.0
@@ -2640,7 +2786,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "weekly_lamp_arrival"
+                    "appearance": "weekly_lamp_arrival",
+                    "description": "A sagging bed, dead lamp, leaking sink, and landlord's clipboard make the weekly room physically inspectable. The dead bedside lamp now reads as arrival through weekly lamp arrival.",
+                    "description_variants": {
+                      "tested_dead": "The dead bedside lamp has shifted to tested dead. Test the lamp, sink, and bed before discussing a weekly price."
+                    }
                   }
                 },
                 {
@@ -2652,7 +2802,7 @@
                   "object": {
                     "label": "Leaking sink",
                     "role": "utility",
-                    "zone_id": "background",
+                    "zone_id": "right",
                     "bounds": {
                       "w": 72.0,
                       "h": 44.0
@@ -2660,7 +2810,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "weekly_sink_arrival"
+                    "appearance": "weekly_sink_arrival",
+                    "description": "The leaking sink carries the room's arrival state, marked by weekly sink arrival. A sagging bed, dead lamp, leaking sink, and landlord's clipboard make the weekly room physically inspectable.",
+                    "description_variants": {
+                      "valve_closed": "Shut the leaking valve without disabling the room door. The leaking sink visibly holds at valve closed."
+                    }
                   }
                 },
                 {
@@ -2672,7 +2826,7 @@
                   "object": {
                     "label": "Weekly lease clipboard",
                     "role": "workstation",
-                    "zone_id": "center",
+                    "zone_id": "service_lane",
                     "bounds": {
                       "w": 48.0,
                       "h": 56.0
@@ -2680,7 +2834,12 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "lease_clipboard_arrival"
+                    "appearance": "lease_clipboard_arrival",
+                    "description": "A sagging bed, dead lamp, leaking sink, and landlord's clipboard make the weekly room physically inspectable. The weekly lease clipboard now reads as arrival through lease clipboard arrival.",
+                    "description_variants": {
+                      "terms_marked": "The weekly lease clipboard has shifted to terms marked. Mark repaired or accepted-as-is utilities on the clipboard.",
+                      "decision_ready": "Weekly lease clipboard is now decision ready; the failing room inspection now demands a physical resolution."
+                    }
                   }
                 },
                 {
@@ -2701,7 +2860,11 @@
                     "enabled": true,
                     "state": "clear",
                     "appearance": "marked_lane",
-                    "anchor_id": "package_b_motel_safe_exit"
+                    "anchor_id": "package_b_motel_safe_exit",
+                    "description": "Marked safe exit stays visibly clear; it is the readable way out while the scene continues.",
+                    "description_variants": {
+
+                    }
                   }
                 },
                 {
@@ -2721,7 +2884,16 @@
                     "visible": true,
                     "enabled": true,
                     "state": "ready",
-                    "appearance": "task_ready"
+                    "appearance": "task_ready",
+                    "description": "Inspect the room faults is ready in task ready. A sagging bed, dead lamp, leaking sink, and landlord's clipboard make the weekly room physically inspectable.",
+                    "description_variants": {
+                      "beat_1_ready": "Test the lamp, sink, and bed before discussing a weekly price. The inspect the room faults visibly holds at beat 1 ready.",
+                      "beat_2_ready": "The inspect the room faults has shifted to beat 2 ready. Shut the leaking valve without disabling the room door.",
+                      "beat_3_ready": "Fit the loose brace and demonstrate whether the room is rest-ready. The inspect the room faults visibly holds at beat 3 ready.",
+                      "decision_available": "Inspect the room faults is now decision available; mark repaired or accepted-as-is utilities on the clipboard.",
+                      "decision_ready": "The failing room inspection now demands a physical resolution. The inspect the room faults visibly holds at decision ready."
+                    },
+                    "zone_id": "background"
                   }
                 }
               ],
@@ -2819,9 +2991,16 @@
                   "actor": {
                     "label": "Motel landlord",
                     "actor_id": "motel_landlord",
-                    "zone_id": "service_lane",
+                    "zone_id": "background",
                     "behavior": "watch",
-                    "pose": "working"
+                    "pose": "working",
+                    "description": "Motel landlord holds a working posture beside the active scene. A sagging bed, dead lamp, leaking sink, and landlord's clipboard make the weekly room physically inspectable.",
+                    "description_variants": {
+                      "taking_notes": "Motel landlord is now taking notes; test the lamp, sink, and bed before discussing a weekly price.",
+                      "work": "Shut the leaking valve without disabling the room door. The motel landlord visibly holds at work.",
+                      "checking_repair": "Fit the loose brace and demonstrate whether the room is rest-ready. The motel landlord visibly holds at checking repair.",
+                      "idle": "Mark repaired or accepted-as-is utilities on the clipboard. The motel landlord visibly holds at idle."
+                    }
                   }
                 }
               ],
@@ -3703,7 +3882,7 @@
                 "object": {
                   "label": "Room repaired physical marker",
                   "role": "aftermath",
-                  "zone_id": "center",
+                  "zone_id": "right",
                   "bounds": {
                     "w": 56.0,
                     "h": 60.0
@@ -3711,7 +3890,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "lit",
-                  "appearance": "set_appearance_weekly_lamp_lit"
+                  "appearance": "set_appearance_weekly_lamp_lit",
+                  "description": "Room repaired physical marker remains lit with set appearance weekly lamp lit, preserving a visible trace of what happened here. A sagging bed, dead lamp, leaking sink, and landlord's clipboard make the weekly room physically inspectable.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ],
@@ -3727,7 +3910,11 @@
                   "actor_id": "motel_room_repaired_witness",
                   "zone_id": "right",
                   "behavior": "idle",
-                  "pose": "aftermath_0"
+                  "pose": "aftermath_0",
+                  "description": "Room repaired witness is aftermath 0, their attention making the room's latest work easy to read. A sagging bed, dead lamp, leaking sink, and landlord's clipboard make the weekly room physically inspectable.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -3745,7 +3932,7 @@
                 "object": {
                   "label": "Room accepted as-is physical marker",
                   "role": "route",
-                  "zone_id": "right",
+                  "zone_id": "center",
                   "bounds": {
                     "w": 64.0,
                     "h": 44.0
@@ -3753,7 +3940,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "accepted_brace",
-                  "appearance": "set_state_weekly_bed_accepted_brace"
+                  "appearance": "set_state_weekly_bed_accepted_brace",
+                  "description": "The room accepted as-is physical marker is marked accepted brace, keeping departure legible beside the room's activity.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -3771,7 +3962,7 @@
                 "object": {
                   "label": "Negotiation failed physical marker",
                   "role": "service",
-                  "zone_id": "left",
+                  "zone_id": "service_lane",
                   "bounds": {
                     "w": 72.0,
                     "h": 52.0
@@ -3779,7 +3970,11 @@
                   "visible": true,
                   "enabled": false,
                   "state": "withdrawn",
-                  "appearance": "set_state_lease_clipboard_withdrawn"
+                  "appearance": "set_state_lease_clipboard_withdrawn",
+                  "description": "Negotiation failed physical marker remains withdrawn with set state lease clipboard withdrawn, preserving a visible trace of what happened here. A sagging bed, dead lamp, leaking sink, and landlord's clipboard make the weekly room physically inspectable.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ],
@@ -3793,9 +3988,13 @@
                 "actor": {
                   "label": "Negotiation failed witness",
                   "actor_id": "motel_negotiation_failed_witness",
-                  "zone_id": "background",
+                  "zone_id": "right",
                   "behavior": "guard",
-                  "pose": "aftermath_2"
+                  "pose": "aftermath_2",
+                  "description": "A sagging bed, dead lamp, leaking sink, and landlord's clipboard make the weekly room physically inspectable. Negotiation failed witness remains aftermath 2, showing who is still involved.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -3813,7 +4012,7 @@
                 "object": {
                   "label": "Inspection refused physical marker",
                   "role": "evidence",
-                  "zone_id": "background",
+                  "zone_id": "foreground",
                   "bounds": {
                     "w": 80.0,
                     "h": 60.0
@@ -3821,7 +4020,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "warning_tag",
-                  "appearance": "set_appearance_weekly_sink_warning_tag"
+                  "appearance": "set_appearance_weekly_sink_warning_tag",
+                  "description": "Inspection refused physical marker remains warning tag with set appearance weekly sink warning tag, preserving a visible trace of what happened here. A sagging bed, dead lamp, leaking sink, and landlord's clipboard make the weekly room physically inspectable.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -3847,7 +4050,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "repair_paused",
-                  "appearance": "set_state_weekly_lamp_repair_paused"
+                  "appearance": "set_state_weekly_lamp_repair_paused",
+                  "description": "A sagging bed, dead lamp, leaking sink, and landlord's clipboard make the weekly room physically inspectable. The repair interrupted physical marker is repair paused and shows set state weekly lamp repair paused, so the room cannot quietly erase the work.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ],
@@ -3861,9 +4068,13 @@
                 "actor": {
                   "label": "Repair interrupted witness",
                   "actor_id": "motel_repair_interrupted_witness",
-                  "zone_id": "left",
+                  "zone_id": "right",
                   "behavior": "idle",
-                  "pose": "aftermath_4"
+                  "pose": "aftermath_4",
+                  "description": "A sagging bed, dead lamp, leaking sink, and landlord's clipboard make the weekly room physically inspectable. Repair interrupted witness remains aftermath 4, showing who is still involved.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -3877,7 +4088,7 @@
           "props_4",
           "actors_1"
         ],
-        "sequence_signature": "bffd7704fdccf5f649189429d4b704881a89dd8ce15df18f5c30ee7a27d83825",
+        "sequence_signature": "109e00e490a44ff7a8d2c09e0111e9489073754657c87fdb09247b06b6959571",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -4044,7 +4255,7 @@
                   "object": {
                     "label": "Missing bouquet case",
                     "role": "clue",
-                    "zone_id": "left",
+                    "zone_id": "background",
                     "bounds": {
                       "w": 48.0,
                       "h": 44.0
@@ -4052,7 +4263,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "bouquet_case_arrival"
+                    "appearance": "bouquet_case_arrival",
+                    "description": "The missing bouquet case carries the room's arrival state, marked by bouquet case arrival. Bouquet cases, garment bags, and two wedding parties occupy alternating doors along the motel corridor.",
+                    "description_variants": {
+                      "package_b_motel_top_left": "Missing bouquet case is now package b motel top left; carry the recovered case to either the reception cart or the arguing party."
+                    }
                   }
                 },
                 {
@@ -4064,7 +4279,7 @@
                   "object": {
                     "label": "Wedding garment rack",
                     "role": "obstacle",
-                    "zone_id": "center",
+                    "zone_id": "right",
                     "bounds": {
                       "w": 60.0,
                       "h": 56.0
@@ -4073,7 +4288,11 @@
                     "enabled": true,
                     "state": "arrival",
                     "appearance": "garment_rack_arrival",
-                    "anchor_id": "package_b_motel_top_mid"
+                    "anchor_id": "package_b_motel_top_mid",
+                    "description": "Wedding garment rack is arrival in garment rack arrival. Bouquet cases, garment bags, and two wedding parties occupy alternating doors along the motel corridor.",
+                    "description_variants": {
+                      "right": "Wedding garment rack is now right; wheel the rack to open the second-room clue without blocking the stair."
+                    }
                   }
                 },
                 {
@@ -4093,7 +4312,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "room_key_tray_arrival"
+                    "appearance": "room_key_tray_arrival",
+                    "description": "Bouquet cases, garment bags, and two wedding parties occupy alternating doors along the motel corridor. The mixed room-key tray now reads as arrival through room key tray arrival.",
+                    "description_variants": {
+                      "three_clues": "Mixed room-key tray is now three clues; compare the mixed keys with ribbons left at three doors."
+                    }
                   }
                 },
                 {
@@ -4105,7 +4328,7 @@
                   "object": {
                     "label": "Reception cart",
                     "role": "furniture",
-                    "zone_id": "right",
+                    "zone_id": "foreground",
                     "bounds": {
                       "w": 48.0,
                       "h": 56.0
@@ -4113,7 +4336,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "reception_cart_arrival"
+                    "appearance": "reception_cart_arrival",
+                    "description": "Bouquet cases, garment bags, and two wedding parties occupy alternating doors along the motel corridor. The reception cart now reads as arrival through reception cart arrival.",
+                    "description_variants": {
+
+                    }
                   }
                 },
                 {
@@ -4133,7 +4360,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "ribbon_stair_arrival"
+                    "appearance": "ribbon_stair_arrival",
+                    "description": "The ribbon-marked stair is marked arrival, keeping departure legible beside the room's activity.",
+                    "description_variants": {
+                      "decision_ready": "The ribbon-marked stair has shifted to decision ready. The processional room clock now demands a physical resolution."
+                    }
                   }
                 },
                 {
@@ -4153,7 +4384,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "clear",
-                    "appearance": "marked_lane"
+                    "appearance": "marked_lane",
+                    "description": "The marked safe exit is marked clear, keeping departure legible beside the room's activity.",
+                    "description_variants": {
+
+                    }
                   }
                 },
                 {
@@ -4173,7 +4408,15 @@
                     "visible": true,
                     "enabled": true,
                     "state": "ready",
-                    "appearance": "task_ready"
+                    "appearance": "task_ready",
+                    "description": "Read the room-key trail is ready in task ready. Bouquet cases, garment bags, and two wedding parties occupy alternating doors along the motel corridor.",
+                    "description_variants": {
+                      "beat_1_ready": "The read the room-key trail has shifted to beat 1 ready. Compare the mixed keys with ribbons left at three doors.",
+                      "beat_2_ready": "Read the room-key trail is now beat 2 ready; wheel the rack to open the second-room clue without blocking the stair.",
+                      "decision_available": "Carry the recovered case to either the reception cart or the arguing party. The read the room-key trail visibly holds at decision available.",
+                      "decision_ready": "The processional room clock now demands a physical resolution. The read the room-key trail visibly holds at decision ready."
+                    },
+                    "zone_id": "left"
                   }
                 }
               ],
@@ -4274,7 +4517,11 @@
                     "zone_id": "left",
                     "behavior": "work",
                     "pose": "working",
-                    "anchor_id": "package_b_motel_top_left"
+                    "anchor_id": "package_b_motel_top_left",
+                    "description": "Wedding runner is working, their attention making the room's latest work easy to read. Bouquet cases, garment bags, and two wedding parties occupy alternating doors along the motel corridor.",
+                    "description_variants": {
+                      "center": "Wedding runner is now center; compare the mixed keys with ribbons left at three doors."
+                    }
                   }
                 },
                 {
@@ -4288,7 +4535,11 @@
                     "actor_id": "motel_best_person",
                     "zone_id": "right",
                     "behavior": "watch",
-                    "pose": "waiting"
+                    "pose": "waiting",
+                    "description": "Best person holds a waiting posture beside the active scene. Bouquet cases, garment bags, and two wedding parties occupy alternating doors along the motel corridor.",
+                    "description_variants": {
+                      "checking_tags": "The best person has shifted to checking tags. Wheel the rack to open the second-room clue without blocking the stair."
+                    }
                   }
                 },
                 {
@@ -4300,10 +4551,14 @@
                   "actor": {
                     "label": "Clerk",
                     "actor_id": "motel_desk_clerk",
-                    "zone_id": "service_lane",
+                    "zone_id": "background",
                     "behavior": "work",
                     "pose": "working",
-                    "anchor_id": "package_b_motel_service_top_right"
+                    "anchor_id": "package_b_motel_service_top_right",
+                    "description": "Clerk holds a working posture beside the active scene. Bouquet cases, garment bags, and two wedding parties occupy alternating doors along the motel corridor.",
+                    "description_variants": {
+
+                    }
                   }
                 }
               ],
@@ -5082,7 +5337,7 @@
                 "object": {
                   "label": "Reception reunited physical marker",
                   "role": "aftermath",
-                  "zone_id": "center",
+                  "zone_id": "background",
                   "bounds": {
                     "w": 48.0,
                     "h": 44.0
@@ -5090,7 +5345,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "reception_ready",
-                  "appearance": "set_state_reception_cart_reception_ready"
+                  "appearance": "set_state_reception_cart_reception_ready",
+                  "description": "Bouquet cases, garment bags, and two wedding parties occupy alternating doors along the motel corridor. The reception reunited physical marker is reception ready and shows set state reception cart reception ready, so the room cannot quietly erase the work.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ],
@@ -5106,7 +5365,11 @@
                   "actor_id": "motel_reception_reunited_witness",
                   "zone_id": "right",
                   "behavior": "idle",
-                  "pose": "aftermath_0"
+                  "pose": "aftermath_0",
+                  "description": "Bouquet cases, garment bags, and two wedding parties occupy alternating doors along the motel corridor. Reception reunited witness remains aftermath 0, showing who is still involved.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -5132,7 +5395,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "contested",
-                  "appearance": "set_appearance_bouquet_case_contested"
+                  "appearance": "set_appearance_bouquet_case_contested",
+                  "description": "Corridor argument physical marker stays visibly contested; it is the readable way out while the scene continues.",
+                  "description_variants": {
+
+                  }
                 }
               },
               {
@@ -5144,7 +5411,7 @@
                 "object": {
                   "label": "Corridor argument secondary route marker",
                   "role": "route",
-                  "zone_id": "service_lane",
+                  "zone_id": "foreground",
                   "bounds": {
                     "w": 72.0,
                     "h": 48.0
@@ -5152,7 +5419,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "secondary",
-                  "appearance": "split_route"
+                  "appearance": "split_route",
+                  "description": "The corridor argument secondary route marker is marked secondary, keeping departure legible beside the room's activity.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -5170,7 +5441,7 @@
                 "object": {
                   "label": "Corridor locked physical marker",
                   "role": "service",
-                  "zone_id": "left",
+                  "zone_id": "service_lane",
                   "bounds": {
                     "w": 64.0,
                     "h": 60.0
@@ -5178,7 +5449,11 @@
                   "visible": true,
                   "enabled": false,
                   "state": "keys_recalled",
-                  "appearance": "set_state_room_key_tray_keys_recalled"
+                  "appearance": "set_state_room_key_tray_keys_recalled",
+                  "description": "Corridor locked physical marker remains keys recalled with set state room key tray keys recalled, preserving a visible trace of what happened here. Bouquet cases, garment bags, and two wedding parties occupy alternating doors along the motel corridor.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ],
@@ -5194,7 +5469,11 @@
                   "actor_id": "motel_corridor_locked_witness",
                   "zone_id": "background",
                   "behavior": "guard",
-                  "pose": "aftermath_2"
+                  "pose": "aftermath_2",
+                  "description": "Bouquet cases, garment bags, and two wedding parties occupy alternating doors along the motel corridor. Corridor locked witness remains aftermath 2, showing who is still involved.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -5212,7 +5491,7 @@
                 "object": {
                   "label": "Wedding task refused physical marker",
                   "role": "evidence",
-                  "zone_id": "background",
+                  "zone_id": "foreground",
                   "bounds": {
                     "w": 72.0,
                     "h": 44.0
@@ -5220,7 +5499,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "unclaimed",
-                  "appearance": "set_appearance_garment_rack_unclaimed"
+                  "appearance": "set_appearance_garment_rack_unclaimed",
+                  "description": "Wedding task refused physical marker remains unclaimed with set appearance garment rack unclaimed, preserving a visible trace of what happened here. Bouquet cases, garment bags, and two wedding parties occupy alternating doors along the motel corridor.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -5238,7 +5521,7 @@
                 "object": {
                   "label": "Wedding task interrupted physical marker",
                   "role": "shelter",
-                  "zone_id": "foreground",
+                  "zone_id": "right",
                   "bounds": {
                     "w": 80.0,
                     "h": 52.0
@@ -5246,7 +5529,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "clue_pinned",
-                  "appearance": "set_state_room_key_tray_clue_pinned"
+                  "appearance": "set_state_room_key_tray_clue_pinned",
+                  "description": "Wedding task interrupted physical marker remains clue pinned with set state room key tray clue pinned, preserving a visible trace of what happened here. Bouquet cases, garment bags, and two wedding parties occupy alternating doors along the motel corridor.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -5260,7 +5547,7 @@
           "props_5",
           "actors_3"
         ],
-        "sequence_signature": "69b6cf30d7af746e22e12b6bde422a0a041518234fd4dffc64e6ed4ec9627239",
+        "sequence_signature": "c9b01c9ebb1ceedf9e76738199c4b8f853ba6fe58d13776c13a94a92be7d953c",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -5430,7 +5717,7 @@
                   "object": {
                     "label": "Lead rig marker",
                     "role": "vehicle",
-                    "zone_id": "left",
+                    "zone_id": "background",
                     "bounds": {
                       "w": 48.0,
                       "h": 44.0
@@ -5438,7 +5725,12 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "lead_rig_arrival"
+                    "appearance": "lead_rig_arrival",
+                    "description": "Three rig markers, a pallet lane, and driver groups occupy alternating pumps and machines in a visible departure queue. The lead rig marker is arrival and shows lead rig arrival, so the room cannot quietly erase the work.",
+                    "description_variants": {
+                      "released": "Signal the correct driver group and mark its lead rig released. The lead rig marker visibly holds at released.",
+                      "decision_ready": "Lead rig marker is now decision ready; the departure wave now demands a physical resolution."
+                    }
                   }
                 },
                 {
@@ -5450,7 +5742,7 @@
                   "object": {
                     "label": "Relay rig marker",
                     "role": "vehicle",
-                    "zone_id": "center",
+                    "zone_id": "left",
                     "bounds": {
                       "w": 60.0,
                       "h": 56.0
@@ -5458,7 +5750,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "relay_rig_arrival"
+                    "appearance": "relay_rig_arrival",
+                    "description": "Three rig markers, a pallet lane, and driver groups occupy alternating pumps and machines in a visible departure queue. The relay rig marker is arrival and shows relay rig arrival, so the room cannot quietly erase the work.",
+                    "description_variants": {
+
+                    }
                   }
                 },
                 {
@@ -5479,7 +5775,11 @@
                     "enabled": true,
                     "state": "arrival",
                     "appearance": "tail_rig_arrival",
-                    "anchor_id": "package_b_gas_top_left"
+                    "anchor_id": "package_b_gas_top_left",
+                    "description": "Three rig markers, a pallet lane, and driver groups occupy alternating pumps and machines in a visible departure queue. The tail rig marker is arrival and shows tail rig arrival, so the room cannot quietly erase the work.",
+                    "description_variants": {
+
+                    }
                   }
                 },
                 {
@@ -5499,7 +5799,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "freight_pallet_arrival"
+                    "appearance": "freight_pallet_arrival",
+                    "description": "The freight pallet carries the room's arrival state, marked by freight pallet arrival. Three rig markers, a pallet lane, and driver groups occupy alternating pumps and machines in a visible departure queue.",
+                    "description_variants": {
+                      "background": "The freight pallet has shifted to background. Shift the pallet to free one rig and send the machine-side driver back to the convoy."
+                    }
                   }
                 },
                 {
@@ -5511,7 +5815,7 @@
                   "object": {
                     "label": "Convoy departure board",
                     "role": "workstation",
-                    "zone_id": "background",
+                    "zone_id": "service_lane",
                     "bounds": {
                       "w": 60.0,
                       "h": 44.0
@@ -5519,7 +5823,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "departure_board_arrival"
+                    "appearance": "departure_board_arrival",
+                    "description": "Convoy departure board is arrival in departure board arrival. Three rig markers, a pallet lane, and driver groups occupy alternating pumps and machines in a visible departure queue.",
+                    "description_variants": {
+                      "wave_order": "Convoy departure board is now wave order; compare the board with the rigs physically blocking each wave."
+                    }
                   }
                 },
                 {
@@ -5539,7 +5847,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "clear",
-                    "appearance": "marked_lane"
+                    "appearance": "marked_lane",
+                    "description": "Marked safe exit stays visibly clear; it is the readable way out while the scene continues.",
+                    "description_variants": {
+
+                    }
                   }
                 },
                 {
@@ -5559,7 +5871,15 @@
                     "visible": true,
                     "enabled": true,
                     "state": "ready",
-                    "appearance": "task_ready"
+                    "appearance": "task_ready",
+                    "description": "Read departure order is ready in task ready. Three rig markers, a pallet lane, and driver groups occupy alternating pumps and machines in a visible departure queue.",
+                    "description_variants": {
+                      "beat_1_ready": "The read departure order has shifted to beat 1 ready. Compare the board with the rigs physically blocking each wave.",
+                      "beat_2_ready": "Read departure order is now beat 2 ready; shift the pallet to free one rig and send the machine-side driver back to the convoy.",
+                      "decision_available": "The read departure order has shifted to decision available. Signal the correct driver group and mark its lead rig released.",
+                      "decision_ready": "The departure wave now demands a physical resolution. The read departure order visibly holds at decision ready."
+                    },
+                    "zone_id": "left"
                   }
                 }
               ],
@@ -5659,7 +5979,11 @@
                     "actor_id": "gas_lead_driver",
                     "zone_id": "left",
                     "behavior": "work",
-                    "pose": "working"
+                    "pose": "working",
+                    "description": "Three rig markers, a pallet lane, and driver groups occupy alternating pumps and machines in a visible departure queue. Lead driver remains working, showing who is still involved.",
+                    "description_variants": {
+                      "calling_wave": "Compare the board with the rigs physically blocking each wave. The lead driver visibly holds at calling wave."
+                    }
                   }
                 },
                 {
@@ -5671,10 +5995,14 @@
                   "actor": {
                     "label": "Relay driver",
                     "actor_id": "gas_relay_driver",
-                    "zone_id": "center",
+                    "zone_id": "right",
                     "behavior": "idle",
                     "pose": "waiting",
-                    "anchor_id": "package_b_gas_top_right"
+                    "anchor_id": "package_b_gas_top_right",
+                    "description": "Relay driver holds a waiting posture beside the active scene. Three rig markers, a pallet lane, and driver groups occupy alternating pumps and machines in a visible departure queue.",
+                    "description_variants": {
+
+                    }
                   }
                 },
                 {
@@ -5686,10 +6014,14 @@
                   "actor": {
                     "label": "Machine driver",
                     "actor_id": "gas_machine_driver",
-                    "zone_id": "right",
+                    "zone_id": "background",
                     "behavior": "idle",
                     "pose": "working",
-                    "anchor_id": "package_b_gas_top_mid"
+                    "anchor_id": "package_b_gas_top_mid",
+                    "description": "Machine driver is working, their attention making the room's latest work easy to read. Three rig markers, a pallet lane, and driver groups occupy alternating pumps and machines in a visible departure queue.",
+                    "description_variants": {
+
+                    }
                   }
                 }
               ],
@@ -6466,7 +6798,7 @@
                 "object": {
                   "label": "Convoy coordinated physical marker",
                   "role": "aftermath",
-                  "zone_id": "center",
+                  "zone_id": "background",
                   "bounds": {
                     "w": 52.0,
                     "h": 52.0
@@ -6474,7 +6806,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "departed_orderly",
-                  "appearance": "set_state_departure_board_departed_orderly"
+                  "appearance": "set_state_departure_board_departed_orderly",
+                  "description": "Convoy coordinated physical marker remains departed orderly with set state departure board departed orderly, preserving a visible trace of what happened here. Three rig markers, a pallet lane, and driver groups occupy alternating pumps and machines in a visible departure queue.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ],
@@ -6490,7 +6826,11 @@
                   "actor_id": "gas_station_casino_convoy_coordinated_witness",
                   "zone_id": "right",
                   "behavior": "idle",
-                  "pose": "aftermath_0"
+                  "pose": "aftermath_0",
+                  "description": "Three rig markers, a pallet lane, and driver groups occupy alternating pumps and machines in a visible departure queue. Convoy coordinated witness remains aftermath 0, showing who is still involved.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -6516,7 +6856,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "loading_hold",
-                  "appearance": "set_appearance_relay_rig_loading_hold"
+                  "appearance": "set_appearance_relay_rig_loading_hold",
+                  "description": "The machine claim won physical marker is marked loading hold, keeping departure legible beside the room's activity.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -6534,7 +6878,7 @@
                 "object": {
                   "label": "Convoy gridlocked physical marker",
                   "role": "service",
-                  "zone_id": "left",
+                  "zone_id": "service_lane",
                   "bounds": {
                     "w": 68.0,
                     "h": 44.0
@@ -6542,7 +6886,11 @@
                   "visible": true,
                   "enabled": false,
                   "state": "cross_pumps",
-                  "appearance": "set_state_tail_rig_cross_pumps"
+                  "appearance": "set_state_tail_rig_cross_pumps",
+                  "description": "Convoy gridlocked physical marker remains cross pumps with set state tail rig cross pumps, preserving a visible trace of what happened here. Three rig markers, a pallet lane, and driver groups occupy alternating pumps and machines in a visible departure queue.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ],
@@ -6556,9 +6904,13 @@
                 "actor": {
                   "label": "Convoy gridlocked witness",
                   "actor_id": "gas_station_casino_convoy_gridlocked_witness",
-                  "zone_id": "background",
+                  "zone_id": "right",
                   "behavior": "guard",
-                  "pose": "aftermath_2"
+                  "pose": "aftermath_2",
+                  "description": "Convoy gridlocked witness holds a aftermath 2 posture beside the active scene. Three rig markers, a pallet lane, and driver groups occupy alternating pumps and machines in a visible departure queue.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -6576,7 +6928,7 @@
                 "object": {
                   "label": "Convoy refused physical marker",
                   "role": "evidence",
-                  "zone_id": "background",
+                  "zone_id": "right",
                   "bounds": {
                     "w": 76.0,
                     "h": 52.0
@@ -6584,7 +6936,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "no_coordinator",
-                  "appearance": "set_appearance_departure_board_no_coordinator"
+                  "appearance": "set_appearance_departure_board_no_coordinator",
+                  "description": "Three rig markers, a pallet lane, and driver groups occupy alternating pumps and machines in a visible departure queue. The convoy refused physical marker is no coordinator and shows set appearance departure board no coordinator, so the room cannot quietly erase the work.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -6602,7 +6958,7 @@
                 "object": {
                   "label": "Convoy interrupted physical marker",
                   "role": "shelter",
-                  "zone_id": "foreground",
+                  "zone_id": "left",
                   "bounds": {
                     "w": 84.0,
                     "h": 60.0
@@ -6610,7 +6966,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "departed_partial",
-                  "appearance": "set_state_lead_rig_departed_partial"
+                  "appearance": "set_state_lead_rig_departed_partial",
+                  "description": "Convoy interrupted physical marker remains departed partial with set state lead rig departed partial, preserving a visible trace of what happened here. Three rig markers, a pallet lane, and driver groups occupy alternating pumps and machines in a visible departure queue.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ],
@@ -6624,9 +6984,13 @@
                 "actor": {
                   "label": "Convoy interrupted witness",
                   "actor_id": "gas_station_casino_convoy_interrupted_witness",
-                  "zone_id": "left",
+                  "zone_id": "right",
                   "behavior": "idle",
-                  "pose": "aftermath_4"
+                  "pose": "aftermath_4",
+                  "description": "Three rig markers, a pallet lane, and driver groups occupy alternating pumps and machines in a visible departure queue. Convoy interrupted witness remains aftermath 4, showing who is still involved.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -6640,7 +7004,7 @@
           "props_5",
           "actors_3"
         ],
-        "sequence_signature": "c3b4c911c4f55f54df19e1f37207275eb40be6b33aead7eec411a02bf75833c0",
+        "sequence_signature": "8bdd478759529930bccec7e996b762315d3ed5380dabc9293ad7387c2489c965",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -6810,7 +7174,7 @@
                   "object": {
                     "label": "Tour bus door",
                     "role": "vehicle",
-                    "zone_id": "right",
+                    "zone_id": "background",
                     "bounds": {
                       "w": 48.0,
                       "h": 44.0
@@ -6819,7 +7183,11 @@
                     "enabled": true,
                     "state": "arrival",
                     "appearance": "tour_bus_door_arrival",
-                    "anchor_id": "package_b_gas_top_left"
+                    "anchor_id": "package_b_gas_top_left",
+                    "description": "A bus door, passenger queue, restroom line, and ticket basket divide the forecourt into timed boarding stations. The tour bus door now reads as arrival through tour bus door arrival.",
+                    "description_variants": {
+                      "final_call": "Tour bus door is now final call; reconcile the driver count before the bus door closes."
+                    }
                   }
                 },
                 {
@@ -6831,7 +7199,7 @@
                   "object": {
                     "label": "Loose ticket basket",
                     "role": "clue",
-                    "zone_id": "center",
+                    "zone_id": "left",
                     "bounds": {
                       "w": 60.0,
                       "h": 56.0
@@ -6839,7 +7207,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "ticket_basket_arrival"
+                    "appearance": "ticket_basket_arrival",
+                    "description": "A bus door, passenger queue, restroom line, and ticket basket divide the forecourt into timed boarding stations. The loose ticket basket is arrival and shows ticket basket arrival, so the room cannot quietly erase the work.",
+                    "description_variants": {
+                      "stub_matched": "The loose ticket basket has shifted to stub matched. Match the loose ticket stub to the passenger's three physical stops."
+                    }
                   }
                 },
                 {
@@ -6851,7 +7223,7 @@
                   "object": {
                     "label": "Boarding counter",
                     "role": "workstation",
-                    "zone_id": "background",
+                    "zone_id": "service_lane",
                     "bounds": {
                       "w": 72.0,
                       "h": 44.0
@@ -6859,7 +7231,12 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "boarding_counter_arrival"
+                    "appearance": "boarding_counter_arrival",
+                    "description": "Boarding counter is arrival in boarding counter arrival. A bus door, passenger queue, restroom line, and ticket basket divide the forecourt into timed boarding stations.",
+                    "description_variants": {
+                      "count_started": "Mark passengers at the bus, restroom, and machines on the counter. The boarding counter visibly holds at count started.",
+                      "decision_ready": "Boarding counter is now decision ready; the boarding countdown now demands a physical resolution."
+                    }
                   }
                 },
                 {
@@ -6871,7 +7248,7 @@
                   "object": {
                     "label": "Restroom queue marker",
                     "role": "obstacle",
-                    "zone_id": "left",
+                    "zone_id": "right",
                     "bounds": {
                       "w": 48.0,
                       "h": 56.0
@@ -6879,7 +7256,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "restroom_queue_arrival"
+                    "appearance": "restroom_queue_arrival",
+                    "description": "Restroom queue marker remains arrival with restroom queue arrival, preserving a visible trace of what happened here. A bus door, passenger queue, restroom line, and ticket basket divide the forecourt into timed boarding stations.",
+                    "description_variants": {
+
+                    }
                   }
                 },
                 {
@@ -6899,7 +7280,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "clear",
-                    "appearance": "marked_lane"
+                    "appearance": "marked_lane",
+                    "description": "The marked safe exit is marked clear, keeping departure legible beside the room's activity.",
+                    "description_variants": {
+
+                    }
                   }
                 },
                 {
@@ -6919,7 +7304,15 @@
                     "visible": true,
                     "enabled": true,
                     "state": "ready",
-                    "appearance": "task_ready"
+                    "appearance": "task_ready",
+                    "description": "A bus door, passenger queue, restroom line, and ticket basket divide the forecourt into timed boarding stations. The count boarding groups now reads as ready through task ready.",
+                    "description_variants": {
+                      "beat_1_ready": "Mark passengers at the bus, restroom, and machines on the counter. The count boarding groups visibly holds at beat 1 ready.",
+                      "beat_2_ready": "Match the loose ticket stub to the passenger's three physical stops. The count boarding groups visibly holds at beat 2 ready.",
+                      "decision_available": "Reconcile the driver count before the bus door closes. The count boarding groups visibly holds at decision available.",
+                      "decision_ready": "Count boarding groups is now decision ready; the boarding countdown now demands a physical resolution."
+                    },
+                    "zone_id": "background"
                   }
                 }
               ],
@@ -7017,10 +7410,14 @@
                   "actor": {
                     "label": "Tour bus driver",
                     "actor_id": "gas_bus_driver",
-                    "zone_id": "right",
+                    "zone_id": "background",
                     "behavior": "watch",
                     "pose": "working",
-                    "anchor_id": "package_b_gas_top_mid"
+                    "anchor_id": "package_b_gas_top_mid",
+                    "description": "A bus door, passenger queue, restroom line, and ticket basket divide the forecourt into timed boarding stations. Tour bus driver remains working, showing who is still involved.",
+                    "description_variants": {
+                      "work": "Tour bus driver is now work; reconcile the driver count before the bus door closes."
+                    }
                   }
                 },
                 {
@@ -7032,10 +7429,14 @@
                   "actor": {
                     "label": "Ticketless passenger",
                     "actor_id": "gas_stranded_passenger",
-                    "zone_id": "center",
+                    "zone_id": "left",
                     "behavior": "idle",
                     "pose": "waiting",
-                    "anchor_id": "package_b_gas_top_right"
+                    "anchor_id": "package_b_gas_top_right",
+                    "description": "Ticketless passenger holds a waiting posture beside the active scene. A bus door, passenger queue, restroom line, and ticket basket divide the forecourt into timed boarding stations.",
+                    "description_variants": {
+                      "left": "The ticketless passenger has shifted to left. Match the loose ticket stub to the passenger's three physical stops."
+                    }
                   }
                 },
                 {
@@ -7047,9 +7448,13 @@
                   "actor": {
                     "label": "Queue marshal",
                     "actor_id": "gas_queue_marshal",
-                    "zone_id": "left",
+                    "zone_id": "right",
                     "behavior": "work",
-                    "pose": "working"
+                    "pose": "working",
+                    "description": "A bus door, passenger queue, restroom line, and ticket basket divide the forecourt into timed boarding stations. Queue marshal remains working, showing who is still involved.",
+                    "description_variants": {
+                      "counting": "Queue marshal is now counting; mark passengers at the bus, restroom, and machines on the counter."
+                    }
                   }
                 }
               ],
@@ -7829,7 +8234,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "departing",
-                  "appearance": "set_appearance_tour_bus_door_departing"
+                  "appearance": "set_appearance_tour_bus_door_departing",
+                  "description": "Bus boarded physical marker remains departing with set appearance tour bus door departing, preserving a visible trace of what happened here. A bus door, passenger queue, restroom line, and ticket basket divide the forecourt into timed boarding stations.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ],
@@ -7843,9 +8252,13 @@
                 "actor": {
                   "label": "Bus boarded witness",
                   "actor_id": "gas_station_casino_bus_boarded_witness",
-                  "zone_id": "right",
+                  "zone_id": "left",
                   "behavior": "idle",
-                  "pose": "aftermath_0"
+                  "pose": "aftermath_0",
+                  "description": "Bus boarded witness is aftermath 0, their attention making the room's latest work easy to read. A bus door, passenger queue, restroom line, and ticket basket divide the forecourt into timed boarding stations.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -7863,7 +8276,7 @@
                 "object": {
                   "label": "Passenger stranded physical marker",
                   "role": "route",
-                  "zone_id": "right",
+                  "zone_id": "left",
                   "bounds": {
                     "w": 64.0,
                     "h": 44.0
@@ -7871,7 +8284,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "stranded",
-                  "appearance": "set_state_stranded_passenger_stranded"
+                  "appearance": "set_state_stranded_passenger_stranded",
+                  "description": "The passenger stranded physical marker is marked stranded, keeping departure legible beside the room's activity.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -7889,7 +8306,7 @@
                 "object": {
                   "label": "Bus delayed physical marker",
                   "role": "service",
-                  "zone_id": "left",
+                  "zone_id": "service_lane",
                   "bounds": {
                     "w": 72.0,
                     "h": 52.0
@@ -7897,7 +8314,11 @@
                   "visible": true,
                   "enabled": false,
                   "state": "recount",
-                  "appearance": "set_state_boarding_counter_recount"
+                  "appearance": "set_state_boarding_counter_recount",
+                  "description": "A bus door, passenger queue, restroom line, and ticket basket divide the forecourt into timed boarding stations. The bus delayed physical marker is recount and shows set state boarding counter recount, so the room cannot quietly erase the work.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ],
@@ -7911,9 +8332,13 @@
                 "actor": {
                   "label": "Bus delayed witness",
                   "actor_id": "gas_station_casino_bus_delayed_witness",
-                  "zone_id": "background",
+                  "zone_id": "left",
                   "behavior": "guard",
-                  "pose": "aftermath_2"
+                  "pose": "aftermath_2",
+                  "description": "A bus door, passenger queue, restroom line, and ticket basket divide the forecourt into timed boarding stations. Bus delayed witness remains aftermath 2, showing who is still involved.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -7931,7 +8356,7 @@
                 "object": {
                   "label": "Count refused physical marker",
                   "role": "evidence",
-                  "zone_id": "background",
+                  "zone_id": "foreground",
                   "bounds": {
                     "w": 80.0,
                     "h": 60.0
@@ -7939,7 +8364,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "unmanaged",
-                  "appearance": "set_appearance_restroom_queue_unmanaged"
+                  "appearance": "set_appearance_restroom_queue_unmanaged",
+                  "description": "Count refused physical marker remains unmanaged with set appearance restroom queue unmanaged, preserving a visible trace of what happened here. A bus door, passenger queue, restroom line, and ticket basket divide the forecourt into timed boarding stations.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -7957,7 +8386,7 @@
                 "object": {
                   "label": "Count interrupted physical marker",
                   "role": "shelter",
-                  "zone_id": "foreground",
+                  "zone_id": "background",
                   "bounds": {
                     "w": 88.0,
                     "h": 44.0
@@ -7965,7 +8394,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "partial_tally",
-                  "appearance": "set_state_boarding_counter_partial_tally"
+                  "appearance": "set_state_boarding_counter_partial_tally",
+                  "description": "Count interrupted physical marker remains partial tally with set state boarding counter partial tally, preserving a visible trace of what happened here. A bus door, passenger queue, restroom line, and ticket basket divide the forecourt into timed boarding stations.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -7979,7 +8412,7 @@
           "props_4",
           "actors_3"
         ],
-        "sequence_signature": "2a79e9f28b2a72e7f0e960afb25b3efe50bb0ebde3d9c25e48b75e32ce45b534",
+        "sequence_signature": "9c4c9c8940cf25801190418ee439fed11829b5af4d3e91c10a50d92f80ed70eb",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -8156,7 +8589,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "camera_monitor_arrival"
+                    "appearance": "camera_monitor_arrival",
+                    "description": "Camera monitor is arrival in camera monitor arrival. A camera monitor, shutter panel, flashlight dock, and alternating locked zones define a solitary night-check route.",
+                    "description_variants": {
+                      "gap_marked": "Return to the monitor and reconcile the route with the recorded blind spot. The camera monitor visibly holds at gap marked."
+                    }
                   }
                 },
                 {
@@ -8168,7 +8605,7 @@
                   "object": {
                     "label": "Shutter control panel",
                     "role": "workstation",
-                    "zone_id": "right",
+                    "zone_id": "service_lane",
                     "bounds": {
                       "w": 60.0,
                       "h": 56.0
@@ -8176,7 +8613,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "shutter_panel_arrival"
+                    "appearance": "shutter_panel_arrival",
+                    "description": "The shutter control panel carries the room's arrival state, marked by shutter panel arrival. A camera monitor, shutter panel, flashlight dock, and alternating locked zones define a solitary night-check route.",
+                    "description_variants": {
+
+                    }
                   }
                 },
                 {
@@ -8188,7 +8629,7 @@
                   "object": {
                     "label": "Flashlight dock",
                     "role": "utility",
-                    "zone_id": "center",
+                    "zone_id": "right",
                     "bounds": {
                       "w": 72.0,
                       "h": 44.0
@@ -8196,7 +8637,12 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "flashlight_dock_arrival"
+                    "appearance": "flashlight_dock_arrival",
+                    "description": "A camera monitor, shutter panel, flashlight dock, and alternating locked zones define a solitary night-check route. The flashlight dock now reads as arrival through flashlight dock arrival.",
+                    "description_variants": {
+                      "empty_dock": "The flashlight dock has shifted to empty dock. Remove the flashlight and acknowledge the first camera blind spot.",
+                      "decision_ready": "The flashlight dock has shifted to decision ready. The alternating lock cycle now demands a physical resolution."
+                    }
                   }
                 },
                 {
@@ -8208,7 +8654,7 @@
                   "object": {
                     "label": "Cooler-zone gate",
                     "role": "door",
-                    "zone_id": "left",
+                    "zone_id": "foreground",
                     "bounds": {
                       "w": 48.0,
                       "h": 56.0
@@ -8216,7 +8662,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "cooler_gate_arrival"
+                    "appearance": "cooler_gate_arrival",
+                    "description": "The cooler-zone gate carries the room's arrival state, marked by cooler gate arrival. A camera monitor, shutter panel, flashlight dock, and alternating locked zones define a solitary night-check route.",
+                    "description_variants": {
+                      "checked": "Cooler-zone gate is now checked; cross the open zone and physically test the cooler gate."
+                    }
                   }
                 },
                 {
@@ -8228,7 +8678,7 @@
                   "object": {
                     "label": "Gate",
                     "role": "door",
-                    "zone_id": "foreground",
+                    "zone_id": "center",
                     "bounds": {
                       "w": 60.0,
                       "h": 44.0
@@ -8236,7 +8686,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "machine_gate_arrival"
+                    "appearance": "machine_gate_arrival",
+                    "description": "The gate carries the room's arrival state, marked by machine gate arrival. A camera monitor, shutter panel, flashlight dock, and alternating locked zones define a solitary night-check route.",
+                    "description_variants": {
+                      "open": "Gate is now open; close the cooler before opening the machine zone."
+                    }
                   }
                 },
                 {
@@ -8257,7 +8711,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "clear",
-                    "appearance": "marked_lane"
+                    "appearance": "marked_lane",
+                    "description": "Marked safe exit stays visibly clear; it is the readable way out while the scene continues.",
+                    "description_variants": {
+
+                    }
                   }
                 },
                 {
@@ -8277,7 +8735,16 @@
                     "visible": true,
                     "enabled": true,
                     "state": "ready",
-                    "appearance": "task_ready"
+                    "appearance": "task_ready",
+                    "description": "Take the docked flashlight is ready in task ready. A camera monitor, shutter panel, flashlight dock, and alternating locked zones define a solitary night-check route.",
+                    "description_variants": {
+                      "beat_1_ready": "The take the docked flashlight has shifted to beat 1 ready. Remove the flashlight and acknowledge the first camera blind spot.",
+                      "beat_2_ready": "Cross the open zone and physically test the cooler gate. The take the docked flashlight visibly holds at beat 2 ready.",
+                      "beat_3_ready": "Close the cooler before opening the machine zone. The take the docked flashlight visibly holds at beat 3 ready.",
+                      "decision_available": "The take the docked flashlight has shifted to decision available. Return to the monitor and reconcile the route with the recorded blind spot.",
+                      "decision_ready": "The take the docked flashlight has shifted to decision ready. The alternating lock cycle now demands a physical resolution."
+                    },
+                    "zone_id": "left"
                   }
                 }
               ],
@@ -8375,10 +8842,17 @@
                   "actor": {
                     "label": "Night clerk",
                     "actor_id": "gas_night_clerk",
-                    "zone_id": "service_lane",
+                    "zone_id": "left",
                     "behavior": "guard",
                     "pose": "working",
-                    "anchor_id": "package_b_gas_top_mid"
+                    "anchor_id": "package_b_gas_top_mid",
+                    "description": "A camera monitor, shutter panel, flashlight dock, and alternating locked zones define a solitary night-check route. Night clerk remains working, showing who is still involved.",
+                    "description_variants": {
+                      "watching_monitor": "The night clerk has shifted to watching monitor. Remove the flashlight and acknowledge the first camera blind spot.",
+                      "left": "Cross the open zone and physically test the cooler gate. The night clerk visibly holds at left.",
+                      "watch": "The night clerk has shifted to watch. Close the cooler before opening the machine zone.",
+                      "logging": "The night clerk has shifted to logging. Return to the monitor and reconcile the route with the recorded blind spot."
+                    }
                   }
                 }
               ],
@@ -9267,7 +9741,7 @@
                 "object": {
                   "label": "Night check complete physical marker",
                   "role": "aftermath",
-                  "zone_id": "center",
+                  "zone_id": "foreground",
                   "bounds": {
                     "w": 48.0,
                     "h": 44.0
@@ -9275,7 +9749,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "verified_cycle",
-                  "appearance": "set_state_shutter_panel_verified_cycle"
+                  "appearance": "set_state_shutter_panel_verified_cycle",
+                  "description": "Night check complete physical marker remains verified cycle with set state shutter panel verified cycle, preserving a visible trace of what happened here. A camera monitor, shutter panel, flashlight dock, and alternating locked zones define a solitary night-check route.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ],
@@ -9289,9 +9767,13 @@
                 "actor": {
                   "label": "Night check complete witness",
                   "actor_id": "gas_station_casino_night_check_complete_witness",
-                  "zone_id": "right",
+                  "zone_id": "background",
                   "behavior": "idle",
-                  "pose": "aftermath_0"
+                  "pose": "aftermath_0",
+                  "description": "Night check complete witness holds a aftermath 0 posture beside the active scene. A camera monitor, shutter panel, flashlight dock, and alternating locked zones define a solitary night-check route.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -9309,7 +9791,7 @@
                 "object": {
                   "label": "Camera bypassed physical marker",
                   "role": "route",
-                  "zone_id": "right",
+                  "zone_id": "background",
                   "bounds": {
                     "w": 56.0,
                     "h": 52.0
@@ -9317,7 +9799,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "bypassed_lane",
-                  "appearance": "set_appearance_camera_monitor_bypassed_lane"
+                  "appearance": "set_appearance_camera_monitor_bypassed_lane",
+                  "description": "The camera bypassed physical marker is marked bypassed lane, keeping departure legible beside the room's activity.",
+                  "description_variants": {
+
+                  }
                 }
               },
               {
@@ -9329,7 +9815,7 @@
                 "object": {
                   "label": "Camera bypassed secondary route marker",
                   "role": "route",
-                  "zone_id": "service_lane",
+                  "zone_id": "left",
                   "bounds": {
                     "w": 72.0,
                     "h": 48.0
@@ -9337,7 +9823,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "secondary",
-                  "appearance": "split_route"
+                  "appearance": "split_route",
+                  "description": "Camera bypassed secondary route marker stays visibly secondary; it is the readable way out while the scene continues.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -9355,7 +9845,7 @@
                 "object": {
                   "label": "Lock cycle failed physical marker",
                   "role": "service",
-                  "zone_id": "left",
+                  "zone_id": "service_lane",
                   "bounds": {
                     "w": 64.0,
                     "h": 60.0
@@ -9363,7 +9853,11 @@
                   "visible": true,
                   "enabled": false,
                   "state": "failed_closed",
-                  "appearance": "set_state_machine_gate_failed_closed"
+                  "appearance": "set_state_machine_gate_failed_closed",
+                  "description": "A camera monitor, shutter panel, flashlight dock, and alternating locked zones define a solitary night-check route. The lock cycle failed physical marker is failed closed and shows set state machine gate failed closed, so the room cannot quietly erase the work.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ],
@@ -9377,9 +9871,13 @@
                 "actor": {
                   "label": "Lock cycle failed witness",
                   "actor_id": "gas_station_casino_lock_cycle_failed_witness",
-                  "zone_id": "background",
+                  "zone_id": "left",
                   "behavior": "guard",
-                  "pose": "aftermath_2"
+                  "pose": "aftermath_2",
+                  "description": "Lock cycle failed witness is aftermath 2, their attention making the room's latest work easy to read. A camera monitor, shutter panel, flashlight dock, and alternating locked zones define a solitary night-check route.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -9397,7 +9895,7 @@
                 "object": {
                   "label": "Night check refused physical marker",
                   "role": "evidence",
-                  "zone_id": "background",
+                  "zone_id": "foreground",
                   "bounds": {
                     "w": 72.0,
                     "h": 44.0
@@ -9405,7 +9903,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "manual_lock",
-                  "appearance": "set_appearance_shutter_panel_manual_lock"
+                  "appearance": "set_appearance_shutter_panel_manual_lock",
+                  "description": "A camera monitor, shutter panel, flashlight dock, and alternating locked zones define a solitary night-check route. The night check refused physical marker is manual lock and shows set appearance shutter panel manual lock, so the room cannot quietly erase the work.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -9423,7 +9925,7 @@
                 "object": {
                   "label": "Night check interrupted physical marker",
                   "role": "shelter",
-                  "zone_id": "foreground",
+                  "zone_id": "background",
                   "bounds": {
                     "w": 80.0,
                     "h": 52.0
@@ -9431,7 +9933,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "partial_route",
-                  "appearance": "set_state_flashlight_dock_partial_route"
+                  "appearance": "set_state_flashlight_dock_partial_route",
+                  "description": "A camera monitor, shutter panel, flashlight dock, and alternating locked zones define a solitary night-check route. The night check interrupted physical marker is partial route and shows set state flashlight dock partial route, so the room cannot quietly erase the work.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ],
@@ -9447,7 +9953,11 @@
                   "actor_id": "gas_station_casino_night_check_interrupted_witness",
                   "zone_id": "left",
                   "behavior": "idle",
-                  "pose": "aftermath_4"
+                  "pose": "aftermath_4",
+                  "description": "Night check interrupted witness holds a aftermath 4 posture beside the active scene. A camera monitor, shutter panel, flashlight dock, and alternating locked zones define a solitary night-check route.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -9461,7 +9971,7 @@
           "props_5",
           "actors_1"
         ],
-        "sequence_signature": "b3328e5dad0c22433a68a9cb1e69cf4c31e74f4dc19e033b37ae8772a1027663",
+        "sequence_signature": "973d6fbfe8c1d741a49058b5c71e3153e8dfb08316a789618940e86b3890179e",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -9630,7 +10140,7 @@
                   "object": {
                     "label": "Road work-order board",
                     "role": "workstation",
-                    "zone_id": "background",
+                    "zone_id": "service_lane",
                     "bounds": {
                       "w": 48.0,
                       "h": 44.0
@@ -9638,7 +10148,12 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "work_order_board_arrival"
+                    "appearance": "work_order_board_arrival",
+                    "description": "A work-order board, pooled-stake envelope, barricade stack, and rotating road crew occupy counter and machine stations. The road work-order board now reads as arrival through work order board arrival.",
+                    "description_variants": {
+                      "reconciled": "Road work-order board is now reconciled; mark whether pooled play funded parts or delayed the crew.",
+                      "decision_ready": "The road work-order board has shifted to decision ready. The pooled stake rotation now demands a physical resolution."
+                    }
                   }
                 },
                 {
@@ -9650,7 +10165,7 @@
                   "object": {
                     "label": "Pooled-stake envelope",
                     "role": "evidence",
-                    "zone_id": "center",
+                    "zone_id": "right",
                     "bounds": {
                       "w": 60.0,
                       "h": 56.0
@@ -9658,7 +10173,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "stake_envelope_arrival"
+                    "appearance": "stake_envelope_arrival",
+                    "description": "Pooled-stake envelope remains arrival with stake envelope arrival, preserving a visible trace of what happened here. A work-order board, pooled-stake envelope, barricade stack, and rotating road crew occupy counter and machine stations.",
+                    "description_variants": {
+                      "audited": "Pooled-stake envelope is now audited; match envelope marks to the crew names and occupied machine station."
+                    }
                   }
                 },
                 {
@@ -9670,7 +10189,7 @@
                   "object": {
                     "label": "Road barricade stack",
                     "role": "obstacle",
-                    "zone_id": "left",
+                    "zone_id": "foreground",
                     "bounds": {
                       "w": 72.0,
                       "h": 44.0
@@ -9679,7 +10198,11 @@
                     "enabled": true,
                     "state": "arrival",
                     "appearance": "barricade_stack_arrival",
-                    "anchor_id": "package_b_gas_top_mid"
+                    "anchor_id": "package_b_gas_top_mid",
+                    "description": "A work-order board, pooled-stake envelope, barricade stack, and rotating road crew occupy counter and machine stations. The road barricade stack now reads as arrival through barricade stack arrival.",
+                    "description_variants": {
+
+                    }
                   }
                 },
                 {
@@ -9691,7 +10214,7 @@
                   "object": {
                     "label": "Repair parts crate",
                     "role": "stock",
-                    "zone_id": "right",
+                    "zone_id": "foreground",
                     "bounds": {
                       "w": 48.0,
                       "h": 56.0
@@ -9699,7 +10222,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "repair_crate_arrival"
+                    "appearance": "repair_crate_arrival",
+                    "description": "A work-order board, pooled-stake envelope, barricade stack, and rotating road crew occupy counter and machine stations. The repair parts crate now reads as arrival through repair crate arrival.",
+                    "description_variants": {
+                      "left": "The repair parts crate has shifted to left. Move the correct crate beside the barricades before settling the work order."
+                    }
                   }
                 },
                 {
@@ -9719,7 +10246,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "clear",
-                    "appearance": "marked_lane"
+                    "appearance": "marked_lane",
+                    "description": "Marked safe exit stays visibly clear; it is the readable way out while the scene continues.",
+                    "description_variants": {
+
+                    }
                   }
                 },
                 {
@@ -9739,7 +10270,15 @@
                     "visible": true,
                     "enabled": true,
                     "state": "ready",
-                    "appearance": "task_ready"
+                    "appearance": "task_ready",
+                    "description": "A work-order board, pooled-stake envelope, barricade stack, and rotating road crew occupy counter and machine stations. The audit the pooled stake now reads as ready through task ready.",
+                    "description_variants": {
+                      "beat_1_ready": "Audit the pooled stake is now beat 1 ready; match envelope marks to the crew names and occupied machine station.",
+                      "beat_2_ready": "Audit the pooled stake is now beat 2 ready; move the correct crate beside the barricades before settling the work order.",
+                      "decision_available": "Mark whether pooled play funded parts or delayed the crew. The audit the pooled stake visibly holds at decision available.",
+                      "decision_ready": "The pooled stake rotation now demands a physical resolution. The audit the pooled stake visibly holds at decision ready."
+                    },
+                    "zone_id": "background"
                   }
                 }
               ],
@@ -9837,9 +10376,13 @@
                   "actor": {
                     "label": "Road foreman",
                     "actor_id": "gas_crew_foreman",
-                    "zone_id": "left",
+                    "zone_id": "background",
                     "behavior": "work",
-                    "pose": "working"
+                    "pose": "working",
+                    "description": "Road foreman is working, their attention making the room's latest work easy to read. A work-order board, pooled-stake envelope, barricade stack, and rotating road crew occupy counter and machine stations.",
+                    "description_variants": {
+                      "staging_parts": "The road foreman has shifted to staging parts. Move the correct crate beside the barricades before settling the work order."
+                    }
                   }
                 },
                 {
@@ -9851,10 +10394,14 @@
                   "actor": {
                     "label": "Stake keeper",
                     "actor_id": "gas_stake_keeper",
-                    "zone_id": "center",
+                    "zone_id": "left",
                     "behavior": "watch",
                     "pose": "waiting",
-                    "anchor_id": "package_b_gas_top_right"
+                    "anchor_id": "package_b_gas_top_right",
+                    "description": "A work-order board, pooled-stake envelope, barricade stack, and rotating road crew occupy counter and machine stations. Stake keeper remains waiting, showing who is still involved.",
+                    "description_variants": {
+                      "checking_marks": "The stake keeper has shifted to checking marks. Match envelope marks to the crew names and occupied machine station."
+                    }
                   }
                 },
                 {
@@ -9869,7 +10416,11 @@
                     "zone_id": "right",
                     "behavior": "idle",
                     "pose": "working",
-                    "anchor_id": "package_b_gas_top_left"
+                    "anchor_id": "package_b_gas_top_left",
+                    "description": "Crew player holds a working posture beside the active scene. A work-order board, pooled-stake envelope, barricade stack, and rotating road crew occupy counter and machine stations.",
+                    "description_variants": {
+
+                    }
                   }
                 }
               ],
@@ -10648,7 +11199,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "loaded_out",
-                  "appearance": "set_state_barricade_stack_loaded_out"
+                  "appearance": "set_state_barricade_stack_loaded_out",
+                  "description": "Route repaired physical marker remains loaded out with set state barricade stack loaded out, preserving a visible trace of what happened here. A work-order board, pooled-stake envelope, barricade stack, and rotating road crew occupy counter and machine stations.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ],
@@ -10662,9 +11217,13 @@
                 "actor": {
                   "label": "Route repaired witness",
                   "actor_id": "gas_station_casino_route_repaired_witness",
-                  "zone_id": "right",
+                  "zone_id": "left",
                   "behavior": "idle",
-                  "pose": "aftermath_0"
+                  "pose": "aftermath_0",
+                  "description": "Route repaired witness holds a aftermath 0 posture beside the active scene. A work-order board, pooled-stake envelope, barricade stack, and rotating road crew occupy counter and machine stations.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -10682,7 +11241,7 @@
                 "object": {
                   "label": "Floor occupied physical marker",
                   "role": "route",
-                  "zone_id": "right",
+                  "zone_id": "left",
                   "bounds": {
                     "w": 60.0,
                     "h": 60.0
@@ -10690,7 +11249,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "active_pool",
-                  "appearance": "set_appearance_stake_envelope_active_pool"
+                  "appearance": "set_appearance_stake_envelope_active_pool",
+                  "description": "Floor occupied physical marker stays visibly active pool; it is the readable way out while the scene continues.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -10708,7 +11271,7 @@
                 "object": {
                   "label": "Crew departed early physical marker",
                   "role": "service",
-                  "zone_id": "left",
+                  "zone_id": "service_lane",
                   "bounds": {
                     "w": 68.0,
                     "h": 44.0
@@ -10716,7 +11279,11 @@
                   "visible": true,
                   "enabled": false,
                   "state": "departed_early",
-                  "appearance": "set_state_work_order_board_departed_early"
+                  "appearance": "set_state_work_order_board_departed_early",
+                  "description": "A work-order board, pooled-stake envelope, barricade stack, and rotating road crew occupy counter and machine stations. The crew departed early physical marker is departed early and shows set state work order board departed early, so the room cannot quietly erase the work.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ],
@@ -10730,9 +11297,13 @@
                 "actor": {
                   "label": "Crew departed early witness",
                   "actor_id": "gas_station_casino_crew_departed_early_witness",
-                  "zone_id": "background",
+                  "zone_id": "left",
                   "behavior": "guard",
-                  "pose": "aftermath_2"
+                  "pose": "aftermath_2",
+                  "description": "A work-order board, pooled-stake envelope, barricade stack, and rotating road crew occupy counter and machine stations. Crew departed early witness remains aftermath 2, showing who is still involved.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -10750,7 +11321,7 @@
                 "object": {
                   "label": "Stake dispute refused physical marker",
                   "role": "evidence",
-                  "zone_id": "background",
+                  "zone_id": "foreground",
                   "bounds": {
                     "w": 76.0,
                     "h": 52.0
@@ -10758,7 +11329,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "sealed_dispute",
-                  "appearance": "set_appearance_stake_envelope_sealed_dispute"
+                  "appearance": "set_appearance_stake_envelope_sealed_dispute",
+                  "description": "A work-order board, pooled-stake envelope, barricade stack, and rotating road crew occupy counter and machine stations. The stake dispute refused physical marker is sealed dispute and shows set appearance stake envelope sealed dispute, so the room cannot quietly erase the work.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -10776,7 +11351,7 @@
                 "object": {
                   "label": "Payday interrupted physical marker",
                   "role": "shelter",
-                  "zone_id": "foreground",
+                  "zone_id": "background",
                   "bounds": {
                     "w": 84.0,
                     "h": 60.0
@@ -10784,7 +11359,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "audit_paused",
-                  "appearance": "set_state_stake_envelope_audit_paused"
+                  "appearance": "set_state_stake_envelope_audit_paused",
+                  "description": "A work-order board, pooled-stake envelope, barricade stack, and rotating road crew occupy counter and machine stations. The payday interrupted physical marker is audit paused and shows set state stake envelope audit paused, so the room cannot quietly erase the work.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -10798,7 +11377,7 @@
           "props_4",
           "actors_3"
         ],
-        "sequence_signature": "54ec9e3cdceeb0c0ca0a366b97c05181b18349501f72f5f4204736890698d618",
+        "sequence_signature": "f229e4c8f81f024e0dba7e36b451374cf0aa3f1a7f247e73c9b5ae81350d45de",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -10975,7 +11554,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "rain_shutters_arrival"
+                    "appearance": "rain_shutters_arrival",
+                    "description": "The rain shutters carries the room's arrival state, marked by rain shutters arrival. Rain shutters, a generator cart, supply shelves, and arriving patrons progressively compress the shop into marked safe zones.",
+                    "description_variants": {
+                      "latched": "The rain shutters has shifted to latched. Latch the exterior shutters before wind reaches the supply lane."
+                    }
                   }
                 },
                 {
@@ -10995,7 +11578,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "generator_cart_arrival"
+                    "appearance": "generator_cart_arrival",
+                    "description": "Rain shutters, a generator cart, supply shelves, and arriving patrons progressively compress the shop into marked safe zones. The generator now reads as arrival through generator cart arrival.",
+                    "description_variants": {
+                      "dry_pad": "Generator is now dry pad; secure the generator cart on its dry pad while the drivers check power."
+                    }
                   }
                 },
                 {
@@ -11016,7 +11603,11 @@
                     "enabled": true,
                     "state": "arrival",
                     "appearance": "supply_shelves_arrival",
-                    "anchor_id": "package_b_gas_top_left"
+                    "anchor_id": "package_b_gas_top_left",
+                    "description": "Rain shutters, a generator cart, supply shelves, and arriving patrons progressively compress the shop into marked safe zones. The supplies now reads as arrival through supply shelves arrival.",
+                    "description_variants": {
+                      "counted": "The supplies has shifted to counted. Count water and blankets before allocating the taped zones."
+                    }
                   }
                 },
                 {
@@ -11028,7 +11619,7 @@
                   "object": {
                     "label": "Safe-zone floor tape",
                     "role": "route",
-                    "zone_id": "center",
+                    "zone_id": "foreground",
                     "bounds": {
                       "w": 48.0,
                       "h": 56.0
@@ -11036,7 +11627,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "safe_zone_tape_arrival"
+                    "appearance": "safe_zone_tape_arrival",
+                    "description": "The safe-zone floor tape is marked arrival, keeping departure legible beside the room's activity.",
+                    "description_variants": {
+                      "allocated": "The safe-zone floor tape has shifted to allocated. Place drivers and family on opposite sides of the powered lane."
+                    }
                   }
                 },
                 {
@@ -11056,7 +11651,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "power_panel_arrival"
+                    "appearance": "power_panel_arrival",
+                    "description": "The shelter power panel carries the room's arrival state, marked by power panel arrival. Rain shutters, a generator cart, supply shelves, and arriving patrons progressively compress the shop into marked safe zones.",
+                    "description_variants": {
+                      "decision_ready": "Shelter power panel is now decision ready; the progressive weather closure now demands a physical resolution."
+                    }
                   }
                 },
                 {
@@ -11076,7 +11675,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "clear",
-                    "appearance": "marked_lane"
+                    "appearance": "marked_lane",
+                    "description": "Marked safe exit stays visibly clear; it is the readable way out while the scene continues.",
+                    "description_variants": {
+
+                    }
                   }
                 },
                 {
@@ -11096,7 +11699,16 @@
                     "visible": true,
                     "enabled": true,
                     "state": "ready",
-                    "appearance": "task_ready"
+                    "appearance": "task_ready",
+                    "description": "Rain shutters, a generator cart, supply shelves, and arriving patrons progressively compress the shop into marked safe zones. The close rain shutters now reads as ready through task ready.",
+                    "description_variants": {
+                      "beat_1_ready": "Close rain shutters is now beat 1 ready; latch the exterior shutters before wind reaches the supply lane.",
+                      "beat_2_ready": "Close rain shutters is now beat 2 ready; secure the generator cart on its dry pad while the drivers check power.",
+                      "beat_3_ready": "Close rain shutters is now beat 3 ready; count water and blankets before allocating the taped zones.",
+                      "decision_available": "The close rain shutters has shifted to decision available. Place drivers and family on opposite sides of the powered lane.",
+                      "decision_ready": "Close rain shutters is now decision ready; the progressive weather closure now demands a physical resolution."
+                    },
+                    "zone_id": "left"
                   }
                 }
               ],
@@ -11194,10 +11806,14 @@
                   "actor": {
                     "label": "Sheltering family",
                     "actor_id": "gas_shelter_family",
-                    "zone_id": "right",
+                    "zone_id": "left",
                     "behavior": "idle",
                     "pose": "working",
-                    "anchor_id": "package_b_gas_top_mid"
+                    "anchor_id": "package_b_gas_top_mid",
+                    "description": "Rain shutters, a generator cart, supply shelves, and arriving patrons progressively compress the shop into marked safe zones. Family remains working, showing who is still involved.",
+                    "description_variants": {
+                      "receiving_supplies": "The family has shifted to receiving supplies. Count water and blankets before allocating the taped zones."
+                    }
                   }
                 },
                 {
@@ -11209,9 +11825,15 @@
                   "actor": {
                     "label": "Sheltering drivers",
                     "actor_id": "gas_shelter_drivers",
-                    "zone_id": "left",
+                    "zone_id": "right",
                     "behavior": "idle",
-                    "pose": "waiting"
+                    "pose": "waiting",
+                    "description": "Sheltering drivers holds a waiting posture beside the active scene. Rain shutters, a generator cart, supply shelves, and arriving patrons progressively compress the shop into marked safe zones.",
+                    "description_variants": {
+                      "sheltering": "Latch the exterior shutters before wind reaches the supply lane. The sheltering drivers visibly holds at sheltering.",
+                      "checking_power": "The sheltering drivers has shifted to checking power. Secure the generator cart on its dry pad while the drivers check power.",
+                      "idle": "The sheltering drivers has shifted to idle. Place drivers and family on opposite sides of the powered lane."
+                    }
                   }
                 }
               ],
@@ -12115,7 +12737,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "open_after_storm",
-                  "appearance": "set_appearance_rain_shutters_open_after_storm"
+                  "appearance": "set_appearance_rain_shutters_open_after_storm",
+                  "description": "Rain shutters, a generator cart, supply shelves, and arriving patrons progressively compress the shop into marked safe zones. The station reopened physical marker is open after storm and shows set appearance rain shutters open after storm, so the room cannot quietly erase the work.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ],
@@ -12129,9 +12755,13 @@
                 "actor": {
                   "label": "Station reopened witness",
                   "actor_id": "gas_station_casino_station_reopened_witness",
-                  "zone_id": "right",
+                  "zone_id": "left",
                   "behavior": "idle",
-                  "pose": "aftermath_0"
+                  "pose": "aftermath_0",
+                  "description": "Station reopened witness holds a aftermath 0 posture beside the active scene. Rain shutters, a generator cart, supply shelves, and arriving patrons progressively compress the shop into marked safe zones.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -12149,7 +12779,7 @@
                 "object": {
                   "label": "Shelter blackout physical marker",
                   "role": "route",
-                  "zone_id": "right",
+                  "zone_id": "left",
                   "bounds": {
                     "w": 64.0,
                     "h": 44.0
@@ -12157,7 +12787,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "blackout",
-                  "appearance": "set_state_power_panel_blackout"
+                  "appearance": "set_state_power_panel_blackout",
+                  "description": "Shelter blackout physical marker stays visibly blackout; it is the readable way out while the scene continues.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -12175,7 +12809,7 @@
                 "object": {
                   "label": "Shelter remains crowded physical marker",
                   "role": "service",
-                  "zone_id": "left",
+                  "zone_id": "service_lane",
                   "bounds": {
                     "w": 72.0,
                     "h": 52.0
@@ -12183,7 +12817,11 @@
                   "visible": true,
                   "enabled": false,
                   "state": "crowded_split",
-                  "appearance": "set_state_safe_zone_tape_crowded_split"
+                  "appearance": "set_state_safe_zone_tape_crowded_split",
+                  "description": "Shelter remains crowded physical marker remains crowded split with set state safe zone tape crowded split, preserving a visible trace of what happened here. Rain shutters, a generator cart, supply shelves, and arriving patrons progressively compress the shop into marked safe zones.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ],
@@ -12197,9 +12835,13 @@
                 "actor": {
                   "label": "Shelter remains crowded witness",
                   "actor_id": "gas_station_casino_shelter_crowded_witness",
-                  "zone_id": "background",
+                  "zone_id": "left",
                   "behavior": "guard",
-                  "pose": "aftermath_2"
+                  "pose": "aftermath_2",
+                  "description": "Rain shutters, a generator cart, supply shelves, and arriving patrons progressively compress the shop into marked safe zones. Shelter remains crowded witness remains aftermath 2, showing who is still involved.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -12217,7 +12859,7 @@
                 "object": {
                   "label": "Shelter duty refused physical marker",
                   "role": "evidence",
-                  "zone_id": "background",
+                  "zone_id": "foreground",
                   "bounds": {
                     "w": 80.0,
                     "h": 60.0
@@ -12225,7 +12867,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "clerk_only",
-                  "appearance": "set_appearance_power_panel_clerk_only"
+                  "appearance": "set_appearance_power_panel_clerk_only",
+                  "description": "Rain shutters, a generator cart, supply shelves, and arriving patrons progressively compress the shop into marked safe zones. The shelter duty refused physical marker is clerk only and shows set appearance power panel clerk only, so the room cannot quietly erase the work.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -12243,7 +12889,7 @@
                 "object": {
                   "label": "Shelter duty interrupted physical marker",
                   "role": "shelter",
-                  "zone_id": "foreground",
+                  "zone_id": "background",
                   "bounds": {
                     "w": 88.0,
                     "h": 44.0
@@ -12251,7 +12897,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "partial_count",
-                  "appearance": "set_state_supply_shelves_partial_count"
+                  "appearance": "set_state_supply_shelves_partial_count",
+                  "description": "Shelter duty interrupted physical marker remains partial count with set state supply shelves partial count, preserving a visible trace of what happened here. Rain shutters, a generator cart, supply shelves, and arriving patrons progressively compress the shop into marked safe zones.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ],
@@ -12267,7 +12917,11 @@
                   "actor_id": "gas_station_casino_shelter_interrupted_witness",
                   "zone_id": "left",
                   "behavior": "idle",
-                  "pose": "aftermath_4"
+                  "pose": "aftermath_4",
+                  "description": "Shelter duty interrupted witness holds a aftermath 4 posture beside the active scene. Rain shutters, a generator cart, supply shelves, and arriving patrons progressively compress the shop into marked safe zones.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -12281,7 +12935,7 @@
           "props_5",
           "actors_2"
         ],
-        "sequence_signature": "33184b01da8d2437c0033d3452cf214d14635a2efbf0e3ed7a14d69f101eb16b",
+        "sequence_signature": "aea03d82edf8191e02ee9381385877a42052bda4588affe10f87eb3bda879330",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -12451,7 +13105,7 @@
                   "object": {
                     "label": "Dry driftwood bundle",
                     "role": "stock",
-                    "zone_id": "left",
+                    "zone_id": "background",
                     "bounds": {
                       "w": 48.0,
                       "h": 44.0
@@ -12459,7 +13113,12 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "driftwood_bundle_arrival"
+                    "appearance": "driftwood_bundle_arrival",
+                    "description": "Dry driftwood bundle is arrival in driftwood bundle arrival. Driftwood bundles, movable seats, a tide marker, and a windbreak outline define a growing fire site above the clear dune exit.",
+                    "description_variants": {
+                      "stacked_dry": "The dry driftwood bundle has shifted to stacked dry. Stack the dry driftwood beside the ring above the wet line.",
+                      "decision_ready": "The dry driftwood bundle has shifted to decision ready. The tide and wind window now demands a physical resolution."
+                    }
                   }
                 },
                 {
@@ -12471,7 +13130,7 @@
                   "object": {
                     "label": "Stone bonfire ring",
                     "role": "workstation",
-                    "zone_id": "center",
+                    "zone_id": "service_lane",
                     "bounds": {
                       "w": 60.0,
                       "h": 56.0
@@ -12479,7 +13138,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "bonfire_ring_arrival"
+                    "appearance": "bonfire_ring_arrival",
+                    "description": "Stone bonfire ring is arrival in bonfire ring arrival. Driftwood bundles, movable seats, a tide marker, and a windbreak outline define a growing fire site above the clear dune exit.",
+                    "description_variants": {
+
+                    }
                   }
                 },
                 {
@@ -12499,7 +13162,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "beach_seats_arrival"
+                    "appearance": "beach_seats_arrival",
+                    "description": "The movable beach seats carries the room's arrival state, marked by beach seats arrival. Driftwood bundles, movable seats, a tide marker, and a windbreak outline define a growing fire site above the clear dune exit.",
+                    "description_variants": {
+                      "lee_arc": "The movable beach seats has shifted to lee arc. Arc the seats around the lee side without closing the dune stair."
+                    }
                   }
                 },
                 {
@@ -12519,7 +13186,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "tide_marker_arrival"
+                    "appearance": "tide_marker_arrival",
+                    "description": "Rising tide marker stays visibly arrival; it is the readable way out while the scene continues.",
+                    "description_variants": {
+                      "wind_read": "The rising tide marker has shifted to wind read. Compare the tide marker with the windbreak before placing fuel."
+                    }
                   }
                 },
                 {
@@ -12531,7 +13202,7 @@
                   "object": {
                     "label": "Windbreak outline",
                     "role": "obstacle",
-                    "zone_id": "background",
+                    "zone_id": "foreground",
                     "bounds": {
                       "w": 60.0,
                       "h": 44.0
@@ -12539,7 +13210,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "windbreak_arrival"
+                    "appearance": "windbreak_arrival",
+                    "description": "The windbreak outline carries the room's arrival state, marked by windbreak arrival. Driftwood bundles, movable seats, a tide marker, and a windbreak outline define a growing fire site above the clear dune exit.",
+                    "description_variants": {
+
+                    }
                   }
                 },
                 {
@@ -12560,7 +13235,11 @@
                     "enabled": true,
                     "state": "clear",
                     "appearance": "marked_lane",
-                    "anchor_id": "package_b_beach_safe_exit_low_left"
+                    "anchor_id": "package_b_beach_safe_exit_low_left",
+                    "description": "The marked safe exit is marked clear, keeping departure legible beside the room's activity.",
+                    "description_variants": {
+
+                    }
                   }
                 },
                 {
@@ -12580,7 +13259,15 @@
                     "visible": true,
                     "enabled": true,
                     "state": "ready",
-                    "appearance": "task_ready"
+                    "appearance": "task_ready",
+                    "description": "Driftwood bundles, movable seats, a tide marker, and a windbreak outline define a growing fire site above the clear dune exit. The read tide and wind now reads as ready through task ready.",
+                    "description_variants": {
+                      "beat_1_ready": "Read tide and wind is now beat 1 ready; compare the tide marker with the windbreak before placing fuel.",
+                      "beat_2_ready": "Read tide and wind is now beat 2 ready; stack the dry driftwood beside the ring above the wet line.",
+                      "decision_available": "The read tide and wind has shifted to decision available. Arc the seats around the lee side without closing the dune stair.",
+                      "decision_ready": "Read tide and wind is now decision ready; the tide and wind window now demands a physical resolution."
+                    },
+                    "zone_id": "left"
                   }
                 }
               ],
@@ -12678,9 +13365,14 @@
                   "actor": {
                     "label": "Fire tender",
                     "actor_id": "beach_fire_tender",
-                    "zone_id": "center",
+                    "zone_id": "left",
                     "behavior": "work",
-                    "pose": "working"
+                    "pose": "working",
+                    "description": "Fire tender holds a working posture beside the active scene. Driftwood bundles, movable seats, a tide marker, and a windbreak outline define a growing fire site above the clear dune exit.",
+                    "description_variants": {
+                      "testing_wind": "The fire tender has shifted to testing wind. Compare the tide marker with the windbreak before placing fuel.",
+                      "stacking_fuel": "Stack the dry driftwood beside the ring above the wet line. The fire tender visibly holds at stacking fuel."
+                    }
                   }
                 },
                 {
@@ -12695,7 +13387,11 @@
                     "zone_id": "right",
                     "behavior": "idle",
                     "pose": "waiting",
-                    "anchor_id": "package_b_beach_top_left"
+                    "anchor_id": "package_b_beach_top_left",
+                    "description": "Driftwood bundles, movable seats, a tide marker, and a windbreak outline define a growing fire site above the clear dune exit. Night swimmers remains waiting, showing who is still involved.",
+                    "description_variants": {
+                      "idle": "The night swimmers has shifted to idle. Arc the seats around the lee side without closing the dune stair."
+                    }
                   }
                 }
               ],
@@ -13475,7 +14171,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "communal_lit",
-                  "appearance": "set_state_bonfire_ring_communal_lit"
+                  "appearance": "set_state_bonfire_ring_communal_lit",
+                  "description": "Communal fire physical marker remains communal lit with set state bonfire ring communal lit, preserving a visible trace of what happened here. Driftwood bundles, movable seats, a tide marker, and a windbreak outline define a growing fire site above the clear dune exit.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ],
@@ -13489,9 +14189,13 @@
                 "actor": {
                   "label": "Communal fire witness",
                   "actor_id": "beach_communal_fire_witness",
-                  "zone_id": "right",
+                  "zone_id": "left",
                   "behavior": "idle",
-                  "pose": "aftermath_0"
+                  "pose": "aftermath_0",
+                  "description": "Communal fire witness holds a aftermath 0 posture beside the active scene. Driftwood bundles, movable seats, a tide marker, and a windbreak outline define a growing fire site above the clear dune exit.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -13509,7 +14213,7 @@
                 "object": {
                   "label": "Hidden fire physical marker",
                   "role": "route",
-                  "zone_id": "right",
+                  "zone_id": "left",
                   "bounds": {
                     "w": 56.0,
                     "h": 52.0
@@ -13517,7 +14221,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "concealing_fire",
-                  "appearance": "set_appearance_windbreak_concealing_fire"
+                  "appearance": "set_appearance_windbreak_concealing_fire",
+                  "description": "The hidden fire physical marker is marked concealing fire, keeping departure legible beside the room's activity.",
+                  "description_variants": {
+
+                  }
                 }
               },
               {
@@ -13529,7 +14237,7 @@
                 "object": {
                   "label": "Hidden fire secondary route marker",
                   "role": "route",
-                  "zone_id": "service_lane",
+                  "zone_id": "right",
                   "bounds": {
                     "w": 72.0,
                     "h": 48.0
@@ -13537,7 +14245,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "secondary",
-                  "appearance": "split_route"
+                  "appearance": "split_route",
+                  "description": "Hidden fire secondary route marker stays visibly secondary; it is the readable way out while the scene continues.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -13555,7 +14267,7 @@
                 "object": {
                   "label": "Fire extinguished physical marker",
                   "role": "service",
-                  "zone_id": "left",
+                  "zone_id": "service_lane",
                   "bounds": {
                     "w": 64.0,
                     "h": 60.0
@@ -13563,7 +14275,11 @@
                   "visible": true,
                   "enabled": false,
                   "state": "extinguished",
-                  "appearance": "set_state_bonfire_ring_extinguished"
+                  "appearance": "set_state_bonfire_ring_extinguished",
+                  "description": "Driftwood bundles, movable seats, a tide marker, and a windbreak outline define a growing fire site above the clear dune exit. The fire extinguished physical marker is extinguished and shows set state bonfire ring extinguished, so the room cannot quietly erase the work.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ],
@@ -13577,9 +14293,13 @@
                 "actor": {
                   "label": "Fire extinguished witness",
                   "actor_id": "beach_fire_extinguished_witness",
-                  "zone_id": "background",
+                  "zone_id": "right",
                   "behavior": "guard",
-                  "pose": "aftermath_2"
+                  "pose": "aftermath_2",
+                  "description": "Fire extinguished witness holds a aftermath 2 posture beside the active scene. Driftwood bundles, movable seats, a tide marker, and a windbreak outline define a growing fire site above the clear dune exit.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -13597,7 +14317,7 @@
                 "object": {
                   "label": "Bonfire refused physical marker",
                   "role": "evidence",
-                  "zone_id": "background",
+                  "zone_id": "right",
                   "bounds": {
                     "w": 72.0,
                     "h": 44.0
@@ -13605,7 +14325,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "untouched",
-                  "appearance": "set_appearance_driftwood_bundle_untouched"
+                  "appearance": "set_appearance_driftwood_bundle_untouched",
+                  "description": "Driftwood bundles, movable seats, a tide marker, and a windbreak outline define a growing fire site above the clear dune exit. The bonfire refused physical marker is untouched and shows set appearance driftwood bundle untouched, so the room cannot quietly erase the work.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -13623,7 +14347,7 @@
                 "object": {
                   "label": "Bonfire interrupted physical marker",
                   "role": "shelter",
-                  "zone_id": "foreground",
+                  "zone_id": "left",
                   "bounds": {
                     "w": 80.0,
                     "h": 52.0
@@ -13631,7 +14355,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "partial_build",
-                  "appearance": "set_state_tide_marker_partial_build"
+                  "appearance": "set_state_tide_marker_partial_build",
+                  "description": "Driftwood bundles, movable seats, a tide marker, and a windbreak outline define a growing fire site above the clear dune exit. The bonfire interrupted physical marker is partial build and shows set state tide marker partial build, so the room cannot quietly erase the work.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -13645,7 +14373,7 @@
           "props_5",
           "actors_2"
         ],
-        "sequence_signature": "f656848fc0ff719688604dc9a170ea8dd063b318f9d55308fd3d018993822a00",
+        "sequence_signature": "3b7bb446b272304813f03e8d8debb4298a0f2551406bea1acf6eb70d2a0d1758",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -13813,7 +14541,7 @@
                   "object": {
                     "label": "Storm warning flag",
                     "role": "signal",
-                    "zone_id": "background",
+                    "zone_id": "foreground",
                     "bounds": {
                       "w": 48.0,
                       "h": 44.0
@@ -13821,7 +14549,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "warning_flag_arrival"
+                    "appearance": "warning_flag_arrival",
+                    "description": "The storm warning flag carries the room's arrival state, marked by warning flag arrival. A warning flag, loose rental props, rescue skiff, and inland staging line make the approaching storm physically readable.",
+                    "description_variants": {
+                      "raised": "Hoist the visible warning before securing shoreline props. The storm warning flag visibly holds at raised."
+                    }
                   }
                 },
                 {
@@ -13833,7 +14565,7 @@
                   "object": {
                     "label": "Loose beach rentals",
                     "role": "stock",
-                    "zone_id": "right",
+                    "zone_id": "left",
                     "bounds": {
                       "w": 60.0,
                       "h": 56.0
@@ -13842,7 +14574,12 @@
                     "enabled": true,
                     "state": "arrival",
                     "appearance": "rental_props_arrival",
-                    "anchor_id": "package_b_beach_top_left"
+                    "anchor_id": "package_b_beach_top_left",
+                    "description": "The loose beach rentals carries the room's arrival state, marked by rental props arrival. A warning flag, loose rental props, rescue skiff, and inland staging line make the approaching storm physically readable.",
+                    "description_variants": {
+                      "lashed_inland": "Loose beach rentals is now lashed inland; bundle loose rentals onto the stall's inland side.",
+                      "decision_ready": "Loose beach rentals is now decision ready; the evacuation warning phases now demands a physical resolution."
+                    }
                   }
                 },
                 {
@@ -13854,7 +14591,7 @@
                   "object": {
                     "label": "Rescue skiff",
                     "role": "vehicle",
-                    "zone_id": "left",
+                    "zone_id": "right",
                     "bounds": {
                       "w": 72.0,
                       "h": 44.0
@@ -13862,7 +14599,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "rescue_skiff_arrival"
+                    "appearance": "rescue_skiff_arrival",
+                    "description": "The rescue skiff carries the room's arrival state, marked by rescue skiff arrival. A warning flag, loose rental props, rescue skiff, and inland staging line make the approaching storm physically readable.",
+                    "description_variants": {
+                      "staged_inland": "Secure the skiff beside the evacuation line for the late swimmer. The rescue skiff visibly holds at staged inland."
+                    }
                   }
                 },
                 {
@@ -13874,7 +14615,7 @@
                   "object": {
                     "label": "Inland staging line",
                     "role": "route",
-                    "zone_id": "center",
+                    "zone_id": "foreground",
                     "bounds": {
                       "w": 48.0,
                       "h": 56.0
@@ -13882,7 +14623,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "evacuation_line_arrival"
+                    "appearance": "evacuation_line_arrival",
+                    "description": "The inland staging line is marked arrival, keeping departure legible beside the room's activity.",
+                    "description_variants": {
+                      "active_inland": "Move the final actor inland before the warning phase closes. The inland staging line visibly holds at active inland."
+                    }
                   }
                 },
                 {
@@ -13894,7 +14639,7 @@
                   "object": {
                     "label": "Closing rental stall",
                     "role": "workstation",
-                    "zone_id": "foreground",
+                    "zone_id": "service_lane",
                     "bounds": {
                       "w": 60.0,
                       "h": 44.0
@@ -13902,7 +14647,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "closed_stall_arrival"
+                    "appearance": "closed_stall_arrival",
+                    "description": "A warning flag, loose rental props, rescue skiff, and inland staging line make the approaching storm physically readable. The closing rental stall now reads as arrival through closed stall arrival.",
+                    "description_variants": {
+
+                    }
                   }
                 },
                 {
@@ -13923,7 +14672,11 @@
                     "enabled": true,
                     "state": "clear",
                     "appearance": "marked_lane",
-                    "anchor_id": "package_b_beach_safe_exit_low_left"
+                    "anchor_id": "package_b_beach_safe_exit_low_left",
+                    "description": "The marked safe exit is marked clear, keeping departure legible beside the room's activity.",
+                    "description_variants": {
+
+                    }
                   }
                 },
                 {
@@ -13943,7 +14696,16 @@
                     "visible": true,
                     "enabled": true,
                     "state": "ready",
-                    "appearance": "task_ready"
+                    "appearance": "task_ready",
+                    "description": "Raise the warning flag is ready in task ready. A warning flag, loose rental props, rescue skiff, and inland staging line make the approaching storm physically readable.",
+                    "description_variants": {
+                      "beat_1_ready": "The raise the warning flag has shifted to beat 1 ready. Hoist the visible warning before securing shoreline props.",
+                      "beat_2_ready": "Raise the warning flag is now beat 2 ready; bundle loose rentals onto the stall's inland side.",
+                      "beat_3_ready": "Secure the skiff beside the evacuation line for the late swimmer. The raise the warning flag visibly holds at beat 3 ready.",
+                      "decision_available": "The raise the warning flag has shifted to decision available. Move the final actor inland before the warning phase closes.",
+                      "decision_ready": "The evacuation warning phases now demands a physical resolution. The raise the warning flag visibly holds at decision ready."
+                    },
+                    "zone_id": "foreground"
                   }
                 }
               ],
@@ -14041,9 +14803,15 @@
                   "actor": {
                     "label": "Lifeguard",
                     "actor_id": "beach_lifeguard",
-                    "zone_id": "center",
+                    "zone_id": "left",
                     "behavior": "guard",
-                    "pose": "working"
+                    "pose": "working",
+                    "description": "Lifeguard is working, their attention making the room's latest work easy to read. A warning flag, loose rental props, rescue skiff, and inland staging line make the approaching storm physically readable.",
+                    "description_variants": {
+                      "signaling": "Lifeguard is now signaling; hoist the visible warning before securing shoreline props.",
+                      "securing_rentals": "Lifeguard is now securing rentals; bundle loose rentals onto the stall's inland side.",
+                      "work": "The lifeguard has shifted to work. Secure the skiff beside the evacuation line for the late swimmer."
+                    }
                   }
                 },
                 {
@@ -14058,7 +14826,11 @@
                     "zone_id": "right",
                     "behavior": "idle",
                     "pose": "waiting",
-                    "anchor_id": "package_b_beach_top_mid"
+                    "anchor_id": "package_b_beach_top_mid",
+                    "description": "Late swimmer holds a waiting posture beside the active scene. A warning flag, loose rental props, rescue skiff, and inland staging line make the approaching storm physically readable.",
+                    "description_variants": {
+
+                    }
                   }
                 }
               ],
@@ -14961,7 +15733,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "secured",
-                  "appearance": "set_state_closed_stall_secured"
+                  "appearance": "set_state_closed_stall_secured",
+                  "description": "A warning flag, loose rental props, rescue skiff, and inland staging line make the approaching storm physically readable. The shoreline protected physical marker is secured and shows set state closed stall secured, so the room cannot quietly erase the work.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ],
@@ -14975,9 +15751,13 @@
                 "actor": {
                   "label": "Shoreline protected witness",
                   "actor_id": "beach_shoreline_protected_witness",
-                  "zone_id": "right",
+                  "zone_id": "left",
                   "behavior": "idle",
-                  "pose": "aftermath_0"
+                  "pose": "aftermath_0",
+                  "description": "Shoreline protected witness is aftermath 0, their attention making the room's latest work easy to read. A warning flag, loose rental props, rescue skiff, and inland staging line make the approaching storm physically readable.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -14995,7 +15775,7 @@
                 "object": {
                   "label": "Shoreline damaged physical marker",
                   "role": "route",
-                  "zone_id": "right",
+                  "zone_id": "left",
                   "bounds": {
                     "w": 60.0,
                     "h": 60.0
@@ -15003,7 +15783,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "storm_scattered",
-                  "appearance": "set_appearance_rental_props_storm_scattered"
+                  "appearance": "set_appearance_rental_props_storm_scattered",
+                  "description": "Shoreline damaged physical marker stays visibly storm scattered; it is the readable way out while the scene continues.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -15021,7 +15805,7 @@
                 "object": {
                   "label": "Shoreline abandoned physical marker",
                   "role": "service",
-                  "zone_id": "left",
+                  "zone_id": "service_lane",
                   "bounds": {
                     "w": 68.0,
                     "h": 44.0
@@ -15029,7 +15813,11 @@
                   "visible": true,
                   "enabled": false,
                   "state": "abandoned",
-                  "appearance": "set_state_rescue_skiff_abandoned"
+                  "appearance": "set_state_rescue_skiff_abandoned",
+                  "description": "A warning flag, loose rental props, rescue skiff, and inland staging line make the approaching storm physically readable. The shoreline abandoned physical marker is abandoned and shows set state rescue skiff abandoned, so the room cannot quietly erase the work.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ],
@@ -15043,9 +15831,13 @@
                 "actor": {
                   "label": "Shoreline abandoned witness",
                   "actor_id": "beach_shoreline_abandoned_witness",
-                  "zone_id": "background",
+                  "zone_id": "left",
                   "behavior": "guard",
-                  "pose": "aftermath_2"
+                  "pose": "aftermath_2",
+                  "description": "Shoreline abandoned witness is aftermath 2, their attention making the room's latest work easy to read. A warning flag, loose rental props, rescue skiff, and inland staging line make the approaching storm physically readable.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -15063,7 +15855,7 @@
                 "object": {
                   "label": "Storm task refused physical marker",
                   "role": "evidence",
-                  "zone_id": "background",
+                  "zone_id": "foreground",
                   "bounds": {
                     "w": 76.0,
                     "h": 52.0
@@ -15071,7 +15863,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "people_only_warning",
-                  "appearance": "set_appearance_warning_flag_people_only_warning"
+                  "appearance": "set_appearance_warning_flag_people_only_warning",
+                  "description": "Storm task refused physical marker remains people only warning with set appearance warning flag people only warning, preserving a visible trace of what happened here. A warning flag, loose rental props, rescue skiff, and inland staging line make the approaching storm physically readable.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -15089,7 +15885,7 @@
                 "object": {
                   "label": "Evacuation interrupted physical marker",
                   "role": "shelter",
-                  "zone_id": "foreground",
+                  "zone_id": "background",
                   "bounds": {
                     "w": 84.0,
                     "h": 60.0
@@ -15097,7 +15893,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "partial_evacuation",
-                  "appearance": "set_state_evacuation_line_partial_evacuation"
+                  "appearance": "set_state_evacuation_line_partial_evacuation",
+                  "description": "Evacuation interrupted physical marker remains partial evacuation with set state evacuation line partial evacuation, preserving a visible trace of what happened here. A warning flag, loose rental props, rescue skiff, and inland staging line make the approaching storm physically readable.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ],
@@ -15113,7 +15913,11 @@
                   "actor_id": "beach_evacuation_interrupted_witness",
                   "zone_id": "left",
                   "behavior": "idle",
-                  "pose": "aftermath_4"
+                  "pose": "aftermath_4",
+                  "description": "Evacuation interrupted witness holds a aftermath 4 posture beside the active scene. A warning flag, loose rental props, rescue skiff, and inland staging line make the approaching storm physically readable.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -15127,7 +15931,7 @@
           "props_5",
           "actors_2"
         ],
-        "sequence_signature": "146fefe1282afee64e2d33e500814995d627d63a07c0ddac96e8ae6dcf0d0860",
+        "sequence_signature": "4c34e5ff2d97b4eff426563610177a28a6af96f4f5bf6b6cf79dfe9ad8e4c3e0",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -15298,7 +16102,7 @@
                   "object": {
                     "label": "Food stall",
                     "role": "service",
-                    "zone_id": "left",
+                    "zone_id": "service_lane",
                     "bounds": {
                       "w": 48.0,
                       "h": 44.0
@@ -15306,7 +16110,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "food_stall_arrival"
+                    "appearance": "food_stall_arrival",
+                    "description": "The food stall carries the room's arrival state, marked by food stall arrival. Vendor stalls, a cable stage, moving crowd lanes, and a lost-child marker divide the beach into distinct festival zones.",
+                    "description_variants": {
+                      "decision_ready": "The food stall has shifted to decision ready. The moving show schedule now demands a physical resolution."
+                    }
                   }
                 },
                 {
@@ -15318,7 +16126,7 @@
                   "object": {
                     "label": "Craft stall",
                     "role": "service",
-                    "zone_id": "right",
+                    "zone_id": "service_lane",
                     "bounds": {
                       "w": 60.0,
                       "h": 56.0
@@ -15327,7 +16135,11 @@
                     "enabled": true,
                     "state": "arrival",
                     "appearance": "craft_stall_arrival",
-                    "anchor_id": "package_b_beach_top_left"
+                    "anchor_id": "package_b_beach_top_left",
+                    "description": "The craft stall carries the room's arrival state, marked by craft stall arrival. Vendor stalls, a cable stage, moving crowd lanes, and a lost-child marker divide the beach into distinct festival zones.",
+                    "description_variants": {
+                      "clue_found": "The craft stall has shifted to clue found. Follow physical stall clues as the crowd changes zones."
+                    }
                   }
                 },
                 {
@@ -15339,7 +16151,7 @@
                   "object": {
                     "label": "Festival cable stage",
                     "role": "workstation",
-                    "zone_id": "background",
+                    "zone_id": "service_lane",
                     "bounds": {
                       "w": 72.0,
                       "h": 44.0
@@ -15347,7 +16159,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "festival_stage_arrival"
+                    "appearance": "festival_stage_arrival",
+                    "description": "Festival cable stage is arrival in festival stage arrival. Vendor stalls, a cable stage, moving crowd lanes, and a lost-child marker divide the beach into distinct festival zones.",
+                    "description_variants": {
+                      "cables_safe": "The festival cable stage has shifted to cables safe. Clear the route while the schedule gap is active."
+                    }
                   }
                 },
                 {
@@ -15359,7 +16175,7 @@
                   "object": {
                     "label": "Festival schedule board",
                     "role": "clue",
-                    "zone_id": "center",
+                    "zone_id": "foreground",
                     "bounds": {
                       "w": 48.0,
                       "h": 56.0
@@ -15367,7 +16183,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "schedule_board_arrival"
+                    "appearance": "schedule_board_arrival",
+                    "description": "Festival schedule board is arrival in schedule board arrival. Vendor stalls, a cable stage, moving crowd lanes, and a lost-child marker divide the beach into distinct festival zones.",
+                    "description_variants": {
+                      "route_noted": "Festival schedule board is now route noted; compare stage changes with the child's last seen stall."
+                    }
                   }
                 },
                 {
@@ -15379,7 +16199,7 @@
                   "object": {
                     "label": "Lost-child meeting marker",
                     "role": "signal",
-                    "zone_id": "foreground",
+                    "zone_id": "center",
                     "bounds": {
                       "w": 60.0,
                       "h": 44.0
@@ -15387,7 +16207,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "lost_child_marker_arrival"
+                    "appearance": "lost_child_marker_arrival",
+                    "description": "Vendor stalls, a cable stage, moving crowd lanes, and a lost-child marker divide the beach into distinct festival zones. The lost-child meeting marker is arrival and shows lost child marker arrival, so the room cannot quietly erase the work.",
+                    "description_variants": {
+                      "reunion_ready": "Lost-child meeting marker is now reunion ready; return the child through the reopened lane before the final set."
+                    }
                   }
                 },
                 {
@@ -15399,7 +16223,7 @@
                   "object": {
                     "label": "Moving crowd rope",
                     "role": "route",
-                    "zone_id": "service_lane",
+                    "zone_id": "background",
                     "bounds": {
                       "w": 72.0,
                       "h": 56.0
@@ -15407,7 +16231,11 @@
                     "visible": true,
                     "enabled": true,
                     "state": "arrival",
-                    "appearance": "crowd_rope_arrival"
+                    "appearance": "crowd_rope_arrival",
+                    "description": "Moving crowd rope stays visibly arrival; it is the readable way out while the scene continues.",
+                    "description_variants": {
+                      "lane_open": "The moving crowd rope has shifted to lane open. Open a lane from the marker to the next attraction."
+                    }
                   }
                 },
                 {
@@ -15428,7 +16256,11 @@
                     "enabled": true,
                     "state": "clear",
                     "appearance": "marked_lane",
-                    "anchor_id": "package_b_beach_safe_exit_low_left"
+                    "anchor_id": "package_b_beach_safe_exit_low_left",
+                    "description": "Marked safe exit stays visibly clear; it is the readable way out while the scene continues.",
+                    "description_variants": {
+
+                    }
                   }
                 },
                 {
@@ -15448,7 +16280,17 @@
                     "visible": true,
                     "enabled": true,
                     "state": "ready",
-                    "appearance": "task_ready"
+                    "appearance": "task_ready",
+                    "description": "Vendor stalls, a cable stage, moving crowd lanes, and a lost-child marker divide the beach into distinct festival zones. The read the moving schedule now reads as ready through task ready.",
+                    "description_variants": {
+                      "beat_1_ready": "Compare stage changes with the child's last seen stall. The read the moving schedule visibly holds at beat 1 ready.",
+                      "beat_2_ready": "The read the moving schedule has shifted to beat 2 ready. Open a lane from the marker to the next attraction.",
+                      "beat_3_ready": "Read the moving schedule is now beat 3 ready; follow physical stall clues as the crowd changes zones.",
+                      "beat_4_ready": "Read the moving schedule is now beat 4 ready; clear the route while the schedule gap is active.",
+                      "decision_available": "Read the moving schedule is now decision available; return the child through the reopened lane before the final set.",
+                      "decision_ready": "Read the moving schedule is now decision ready; the moving show schedule now demands a physical resolution."
+                    },
+                    "zone_id": "right"
                   }
                 }
               ],
@@ -15546,10 +16388,14 @@
                   "actor": {
                     "label": "Lost child",
                     "actor_id": "beach_lost_child",
-                    "zone_id": "foreground",
+                    "zone_id": "right",
                     "behavior": "idle",
                     "pose": "working",
-                    "anchor_id": "package_b_beach_top_mid"
+                    "anchor_id": "package_b_beach_top_mid",
+                    "description": "Lost child is working, their attention making the room's latest work easy to read. Vendor stalls, a cable stage, moving crowd lanes, and a lost-child marker divide the beach into distinct festival zones.",
+                    "description_variants": {
+                      "following_route": "Follow physical stall clues as the crowd changes zones. The lost child visibly holds at following route."
+                    }
                   }
                 },
                 {
@@ -15561,9 +16407,16 @@
                   "actor": {
                     "label": "Stall vendor",
                     "actor_id": "beach_stall_vendor",
-                    "zone_id": "left",
+                    "zone_id": "background",
                     "behavior": "work",
-                    "pose": "waiting"
+                    "pose": "waiting",
+                    "anchor_id": "package_b_beach_top_left",
+                    "description": "Vendor stalls, a cable stage, moving crowd lanes, and a lost-child marker divide the beach into distinct festival zones. Stall vendor remains waiting, showing who is still involved.",
+                    "description_variants": {
+                      "checking_schedule": "Stall vendor is now checking schedule; compare stage changes with the child's last seen stall.",
+                      "directing_lane": "The stall vendor has shifted to directing lane. Open a lane from the marker to the next attraction.",
+                      "work": "Clear the route while the schedule gap is active. The stall vendor visibly holds at work."
+                    }
                   }
                 }
               ],
@@ -16590,7 +17443,7 @@
                 "object": {
                   "label": "Lineup changed physical marker",
                   "role": "aftermath",
-                  "zone_id": "center",
+                  "zone_id": "background",
                   "bounds": {
                     "w": 56.0,
                     "h": 60.0
@@ -16598,7 +17451,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "revised_lineup",
-                  "appearance": "set_state_schedule_board_revised_lineup"
+                  "appearance": "set_state_schedule_board_revised_lineup",
+                  "description": "Vendor stalls, a cable stage, moving crowd lanes, and a lost-child marker divide the beach into distinct festival zones. The lineup changed physical marker is revised lineup and shows set state schedule board revised lineup, so the room cannot quietly erase the work.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ],
@@ -16614,7 +17471,11 @@
                   "actor_id": "beach_lineup_changed_witness",
                   "zone_id": "right",
                   "behavior": "idle",
-                  "pose": "aftermath_0"
+                  "pose": "aftermath_0",
+                  "description": "Lineup changed witness is aftermath 0, their attention making the room's latest work easy to read. Vendor stalls, a cable stage, moving crowd lanes, and a lost-child marker divide the beach into distinct festival zones.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -16640,7 +17501,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "closed_after_search",
-                  "appearance": "set_appearance_craft_stall_closed_after_search"
+                  "appearance": "set_appearance_craft_stall_closed_after_search",
+                  "description": "The stall closed physical marker is marked closed after search, keeping departure legible beside the room's activity.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -16658,7 +17523,7 @@
                 "object": {
                   "label": "After-hours beach physical marker",
                   "role": "service",
-                  "zone_id": "left",
+                  "zone_id": "service_lane",
                   "bounds": {
                     "w": 72.0,
                     "h": 52.0
@@ -16666,7 +17531,11 @@
                   "visible": true,
                   "enabled": false,
                   "state": "after_hours",
-                  "appearance": "set_state_festival_stage_after_hours"
+                  "appearance": "set_state_festival_stage_after_hours",
+                  "description": "Vendor stalls, a cable stage, moving crowd lanes, and a lost-child marker divide the beach into distinct festival zones. The after-hours beach physical marker is after hours and shows set state festival stage after hours, so the room cannot quietly erase the work.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ],
@@ -16680,9 +17549,13 @@
                 "actor": {
                   "label": "After-hours beach witness",
                   "actor_id": "beach_after_hours_beach_witness",
-                  "zone_id": "background",
+                  "zone_id": "right",
                   "behavior": "guard",
-                  "pose": "aftermath_2"
+                  "pose": "aftermath_2",
+                  "description": "After-hours beach witness holds a aftermath 2 posture beside the active scene. Vendor stalls, a cable stage, moving crowd lanes, and a lost-child marker divide the beach into distinct festival zones.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -16700,7 +17573,7 @@
                 "object": {
                   "label": "Festival task refused physical marker",
                   "role": "evidence",
-                  "zone_id": "background",
+                  "zone_id": "right",
                   "bounds": {
                     "w": 80.0,
                     "h": 60.0
@@ -16708,7 +17581,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "marshal_staffed",
-                  "appearance": "set_appearance_lost_child_marker_marshal_staffed"
+                  "appearance": "set_appearance_lost_child_marker_marshal_staffed",
+                  "description": "Vendor stalls, a cable stage, moving crowd lanes, and a lost-child marker divide the beach into distinct festival zones. The festival task refused physical marker is marshal staffed and shows set appearance lost child marker marshal staffed, so the room cannot quietly erase the work.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -16726,7 +17603,7 @@
                 "object": {
                   "label": "Festival task interrupted physical marker",
                   "role": "shelter",
-                  "zone_id": "foreground",
+                  "zone_id": "left",
                   "bounds": {
                     "w": 88.0,
                     "h": 44.0
@@ -16734,7 +17611,11 @@
                   "visible": true,
                   "enabled": true,
                   "state": "partial_route",
-                  "appearance": "set_state_crowd_rope_partial_route"
+                  "appearance": "set_state_crowd_rope_partial_route",
+                  "description": "Festival task interrupted physical marker remains partial route with set state crowd rope partial route, preserving a visible trace of what happened here. Vendor stalls, a cable stage, moving crowd lanes, and a lost-child marker divide the beach into distinct festival zones.",
+                  "description_variants": {
+
+                  }
                 }
               }
             ]
@@ -16748,7 +17629,7 @@
           "props_6",
           "actors_2"
         ],
-        "sequence_signature": "bf8f66724e25f8a40c2b3647b62cbf2e370dc82770d5ecba519f86f4c736cece",
+        "sequence_signature": "2075e2933ec5677333c5a7a426620d30c45af41b8b4cfa1e9809953f1ada4c43",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
