@@ -14901,7 +14901,7 @@ func _failure_message_for_reason(reason: String) -> String:
 
 
 # Converts the run to saveable data.
-func to_dict() -> Dictionary:
+func to_dict(deep_copy_seeded_scenario_definitions: bool = true) -> Dictionary:
 	var result := {
 		"seed_text": seed_text,
 		"seed_value": seed_value,
@@ -14963,7 +14963,7 @@ func to_dict() -> Dictionary:
 		"active_delivery_run": active_delivery_run.duplicate(true),
 		"numbers_state": numbers_state.snapshot() if numbers_state != null else {},
 		"heat_history": normalize_heat_history(heat_history),
-		"town_state": town_state.snapshot() if town_state != null else {},
+		"town_state": town_state.snapshot(deep_copy_seeded_scenario_definitions) if town_state != null else {},
 		"simulation_msec": simulation_msec,
 		"game_clock_minutes": game_clock_minutes,
 		"grand_casino_atm_interest_boundary_index": grand_casino_atm_interest_boundary_index,
