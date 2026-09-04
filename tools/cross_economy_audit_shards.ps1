@@ -123,15 +123,14 @@ while ($pending.Count -gt 0 -or $running.Count -gt 0) {
     while ($pending.Count -gt 0 -and $running.Count -lt $WorkerCount) {
         $job = $pending.Dequeue()
         $args = @(
-            "--headless", "--path", $job.ProjectRoot,
-            "--script", "res://tools/cross_economy_audit.gd", "--",
-            "--seeds-per-style=$SeedsPerPlaystyle", "--seed-start=1",
-            "--max-actions=$MaxActions", "--seed-prefix=$SeedPrefix",
-            "--playstyle=$($job.Style)", "--build-ref=$head", "--output=res://$($job.Style).json"
+            "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", (Join-Path $job.ProjectRoot "tools\cross_economy_audit.ps1"),
+            "-SeedsPerPlaystyle", "$SeedsPerPlaystyle", "-SeedStart", "1",
+            "-MaxActions", "$MaxActions", "-SeedPrefix", $SeedPrefix,
+            "-Playstyle", $job.Style, "-BuildRef", $head, "-Output", "res://$($job.Style).json"
         )
         $job.Started = Get-Date
         $startInfo = [Diagnostics.ProcessStartInfo]::new()
-        $startInfo.FileName = $godotWorker
+        $startInfo.FileName = (Get-Command powershell.exe).Source
         $startInfo.Arguments = Join-ProcessArguments $args
         $startInfo.WorkingDirectory = $job.ProjectRoot
         $startInfo.UseShellExecute = $false
