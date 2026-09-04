@@ -350,7 +350,15 @@ function Add-ExtensionRuntime([string]$DescriptorTarget, [string]$DescriptorSour
         $target = $match.Groups[1].Value.Replace("\", "/")
         if (-not $trackedByPath.ContainsKey($target)) {
             $source = Join-Path $projectRoot $target.Replace("/", "\")
-            if (-not (Test-Path -LiteralPath $source -PathType Leaf)) { throw "Native extension binary is missing: $target" }
+            if (-not (Test-Path -LiteralPath $source -PathType Leaf)) {
+                # A generated descriptor lists every export platform. This
+                # Windows qualification requires its Windows DLLs; Web/Unix
+                # artifacts may correctly be absent from the local toolchain.
+                if ($target.EndsWith(".dll", [StringComparison]::OrdinalIgnoreCase)) {
+                    throw "Native extension binary is missing: $target"
+                }
+                continue
+            }
             Add-RuntimeSource $target $source
         }
     }
