@@ -131,7 +131,7 @@ while ($pending.Count -gt 0 -or $running.Count -gt 0) {
         )
         $job.Started = Get-Date
         $startInfo = [Diagnostics.ProcessStartInfo]::new()
-        $startInfo.FileName = [IO.Path]::GetFullPath($godot)
+        $startInfo.FileName = $godotWorker
         $startInfo.Arguments = Join-ProcessArguments $args
         $startInfo.WorkingDirectory = $job.ProjectRoot
         $startInfo.UseShellExecute = $false
