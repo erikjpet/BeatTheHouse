@@ -1621,7 +1621,9 @@ func _scenario_environment_change_expiry_boundary() -> String:
 
 
 # Sets the current environment and records the previous one.
-func set_environment(environment_data: Dictionary) -> Dictionary:
+func set_environment(environment_data: Dictionary, debug_timing: Dictionary = {}) -> Dictionary:
+	var perf_timing_enabled := not debug_timing.is_empty()
+	var perf_stage_started_usec := Time.get_ticks_usec() if perf_timing_enabled else 0
 	var previous_was_grand_casino := _is_grand_casino_environment(current_environment)
 	var destination_sequence_state := ScenarioSequenceRuntimeScript.normalize_state(environment_data.get("scenario_sequence_state", {}))
 	var destination_is_revisit := environment_data.has("departed_game_clock_minutes") or not destination_sequence_state.is_empty() and (
@@ -1632,6 +1634,9 @@ func set_environment(environment_data: Dictionary) -> Dictionary:
 		or not _copy_array(destination_sequence_state.get("visit_receipts", [])).is_empty()
 	)
 	var departure_check := scenario_preflight_environment_change()
+	if perf_timing_enabled:
+		debug_timing["initial_preflight"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stage_started_usec = Time.get_ticks_usec()
 	if not bool(departure_check.get("ok", false)):
 		return {"ok": false, "applied": false, "errors": _copy_array(departure_check.get("errors", []))}
 	var departure_boundary := _scenario_environment_change_expiry_boundary()
@@ -1666,15 +1671,40 @@ func set_environment(environment_data: Dictionary) -> Dictionary:
 		_store_current_local_suspicion()
 		environment_history.append(_environment_history_entry(current_environment))
 		_compact_environment_history()
+	if perf_timing_enabled:
+		debug_timing["source_persist"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stage_started_usec = Time.get_ticks_usec()
 	current_environment = _normalize_environment(environment_data)
-	ScenarioEngineScript.migrate_environment_sequence(
-		current_environment,
-		{},
-		"%d:set_environment:%s" % [seed_value, str(current_environment.get("world_node_id", current_environment.get("archetype_id", "")))]
-	)
-	var destination_definition := _scenario_sequence_definition_readonly()
-	if ScenarioSequenceSchemaScript.is_sequence(destination_definition):
-		_ensure_scenario_host_public_context()
+	if perf_timing_enabled:
+		debug_timing["destination_normalize"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stage_started_usec = Time.get_ticks_usec()
+	# Fresh generated rooms have no trusted semantic inventory yet; finalization
+	# initializes their sequence atomically below. Running legacy migration here
+	# only reloaded and revalidated the same package before returning `pending`.
+	if bool(current_environment.get("scenario_semantic_ready", false)) or current_environment.has("scenario_sequence_state") or current_environment.has("scenario_sequence_migration"):
+		ScenarioEngineScript.migrate_environment_sequence(
+			current_environment,
+			{},
+			"%d:set_environment:%s" % [seed_value, str(current_environment.get("world_node_id", current_environment.get("archetype_id", "")))]
+		)
+	if perf_timing_enabled:
+		debug_timing["sequence_migration"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stage_started_usec = Time.get_ticks_usec()
+	# The world-map cursor advances only after this installation succeeds. Resolve
+	# the destination's seed from its explicit node id, not the still-current
+	# source cursor, so first entry reuses the accepted package receipt.
+	var destination_node_id := str(current_environment.get("world_node_id", current_environment.get("archetype_id", ""))).strip_edges()
+	var destination_definition := _seeded_scenario_definition_for_node_readonly(destination_node_id)
+	if perf_timing_enabled:
+		debug_timing["sequence_definition_lookup"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stage_started_usec = Time.get_ticks_usec()
+	if destination_definition.is_empty():
+		destination_definition = _scenario_sequence_definition_readonly()
+	var destination_sequence_value: Variant = destination_definition.get("sequence", {})
+	if typeof(destination_sequence_value) == TYPE_DICTIONARY and not (destination_sequence_value as Dictionary).is_empty():
+		if perf_timing_enabled:
+			debug_timing["sequence_definition_presence"] = Time.get_ticks_usec() - perf_stage_started_usec
+			perf_stage_started_usec = Time.get_ticks_usec()
 		# V2 initialization/reentry is intentionally deferred until the controller's
 		# final pre-overlay interaction record set and ContentLibrary are sealed.
 		current_environment.erase("scenario_semantic_ready")
@@ -1683,8 +1713,16 @@ func set_environment(environment_data: Dictionary) -> Dictionary:
 		current_environment.erase("scenario_base_actors")
 		current_environment.erase("scenario_base_producer_context")
 		current_environment.erase("scenario_semantic_action_digest")
-		current_environment["scenario_sequence_pending_visit_id"] = str(current_environment.get("environment_visit_id", ""))
+		# Finalization creates the public visit identity and falls back to it when
+		# this optional persisted migration hint is absent.
+		current_environment.erase("scenario_sequence_pending_visit_id")
+	if perf_timing_enabled:
+		debug_timing["sequence_definition_prepare"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stage_started_usec = Time.get_ticks_usec()
 	CharacterChainModelScript.apply_to_environment(self, current_environment)
+	if perf_timing_enabled:
+		debug_timing["character_chain"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stage_started_usec = Time.get_ticks_usec()
 	# The Punchline's posted board is a physical source. Arriving after the post
 	# reveals only the current published handle; it does not grant solo-route lore.
 	if numbers_state != null and str(current_environment.get("archetype_id", "")) == "small_underground_casino":
@@ -1732,6 +1770,8 @@ func set_environment(environment_data: Dictionary) -> Dictionary:
 	_initialize_grand_casino_living_floor()
 	_queue_grand_casino_entry_cue(previous_was_grand_casino)
 	_evaluate_immediate_terminal_state()
+	if perf_timing_enabled:
+		debug_timing["destination_models"] = Time.get_ticks_usec() - perf_stage_started_usec
 	return {"ok": true, "applied": true, "errors": []}
 
 

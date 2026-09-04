@@ -52,9 +52,11 @@ func _install_environment_with_rollback(run_state: RunState, environment_data: D
 	if _world_environment_timing_enabled:
 		_world_environment_install_stages_usec["trusted_copy"] = Time.get_ticks_usec() - perf_stage_started_usec
 		perf_stage_started_usec = Time.get_ticks_usec()
-	var installed := run_state.set_environment(install_data)
+	var state_timing := {"enabled": true} if _world_environment_timing_enabled else {}
+	var installed := run_state.set_environment(install_data, state_timing)
 	if _world_environment_timing_enabled:
 		_world_environment_install_stages_usec["set_environment"] = Time.get_ticks_usec() - perf_stage_started_usec
+		_world_environment_install_stages_usec["set_environment_stages"] = state_timing
 		perf_stage_started_usec = Time.get_ticks_usec()
 	if not bool(installed.get("ok", false)):
 		return installed
@@ -85,15 +87,24 @@ func _trusted_scenario_install_data(run_state: RunState, environment_data: Dicti
 		return {"ok": false, "environment": {}, "errors": ["Selected scenario %s does not belong to destination archetype %s." % [scenario_id, archetype_id]]}
 	var definition := catalog_definition
 	var destination_id := str(install_data.get("world_node_id", archetype_id)).strip_edges()
+	var map_seeded_definition: Dictionary = {}
 	if run_state != null and run_state.has_world_map():
-		var seeded := run_state.seeded_scenario_definition_for_node(destination_id)
+		var seeded := run_state._seeded_scenario_definition_for_node_readonly(destination_id)
 		if seeded.is_empty() or str(seeded.get("id", "")).strip_edges() != scenario_id or str(seeded.get("archetype_id", "")).strip_edges() != archetype_id:
 			return {"ok": false, "environment": {}, "errors": ["Selected scenario %s does not match the destination node's seeded definition." % scenario_id]}
-		definition = seeded
+		# The node seed proves the chosen identity. Use the library's exact accepted
+		# overlay so its runtime package receipt survives installation; the primed
+		# seed intentionally carries no receipt before the room is selected.
+		definition = seeded if bool(seeded.get("sequence_suppressed", false)) else catalog_definition
+		map_seeded_definition = run_state._seeded_scenario_definition_for_node_readonly(destination_id)
+		if not bool(definition.get("sequence_suppressed", false)) and bool(catalog_definition.get(ScenarioEngineScript.VALIDATED_SEQUENCE_MARKER, false)):
+			map_seeded_definition[ScenarioEngineScript.VALIDATED_SEQUENCE_MARKER] = true
 	var trusted_suppression := bool(definition.get("sequence_suppressed", false))
 	if ScenarioSequenceSchemaScript.is_sequence(catalog_definition) and not ScenarioSequenceSchemaScript.is_sequence(definition) and not trusted_suppression:
 		return {"ok": false, "environment": {}, "errors": ["Selected scenario %s lost its valid destination sequence definition." % scenario_id]}
-	if ScenarioSequenceSchemaScript.is_sequence(definition) or trusted_suppression:
+	# A generated town already retains the exact selected definition in TownState.
+	# Do not embed the same large sequence payload into every environment copy.
+	if (ScenarioSequenceSchemaScript.is_sequence(definition) or trusted_suppression) and map_seeded_definition.is_empty():
 		install_data["scenario_sequence_definition"] = definition.duplicate(true)
 	return {"ok": true, "environment": install_data, "errors": []}
 
@@ -694,9 +705,12 @@ func _world_environment_data_for_node(run_state: RunState, map_data: Dictionary,
 		_world_environment_build_stages_usec["town_and_sequence"] = Time.get_ticks_usec() - perf_stage_started_usec
 		perf_stage_started_usec = Time.get_ticks_usec()
 	CrewRecruitmentModelScript.apply_to_environment(run_state, environment_data)
+	if _world_environment_timing_enabled:
+		_world_environment_build_stages_usec["crew"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stage_started_usec = Time.get_ticks_usec()
 	environment_data["game_states"] = _generated_game_states(run_state, environment_data, rng)
 	if _world_environment_timing_enabled:
-		_world_environment_build_stages_usec["crew_and_games"] = Time.get_ticks_usec() - perf_stage_started_usec
+		_world_environment_build_stages_usec["games"] = Time.get_ticks_usec() - perf_stage_started_usec
 		perf_stage_started_usec = Time.get_ticks_usec()
 	if str(archetype.get("kind", "")) == "home":
 		_apply_home_profile(run_state, environment_data, archetype, node_id, rng.fork("home_profile:%s" % node_id))
