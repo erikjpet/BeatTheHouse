@@ -1730,8 +1730,14 @@ func _measure_corner_store() -> void:
 		"from": run_state.current_world_node_id() if run_state != null else "",
 		"target": "corner_store",
 	})
+	var generator_value: Variant = app.get("generator")
+	if generator_value != null and generator_value.has_method("set_world_environment_timing_enabled"):
+		generator_value.call("set_world_environment_timing_enabled", true)
 	_begin_system_phase("room_environment_transition", "room_environment", "transition", "transition")
 	var travel_result: Variant = app.call("_travel_to", "corner_store", "Corner Store", choice)
+	if generator_value != null and generator_value.has_method("world_environment_timing_snapshot"):
+		mark_event("core_world_environment_timing", generator_value.call("world_environment_timing_snapshot"))
+		generator_value.call("set_world_environment_timing_enabled", false)
 	var travel_ok := typeof(travel_result) == TYPE_DICTIONARY and bool((travel_result as Dictionary).get("ok", false))
 	_complete_system_evidence(travel_ok and str(run_state.current_environment.get("archetype_id", "")) == "corner_store", {
 		"accepted": travel_ok,

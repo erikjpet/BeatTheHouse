@@ -11,6 +11,18 @@ const TutorialFlowScript := preload("res://scripts/core/tutorial_flow.gd")
 
 var library: ContentLibrary
 var _last_environment_install_errors: Array = []
+var _world_environment_timing_enabled := false
+var _last_world_environment_timing_usec: Dictionary = {}
+
+
+func set_world_environment_timing_enabled(enabled: bool) -> void:
+	_world_environment_timing_enabled = enabled
+	if not enabled:
+		_last_world_environment_timing_usec = {}
+
+
+func world_environment_timing_snapshot() -> Dictionary:
+	return _last_world_environment_timing_usec.duplicate(true)
 
 
 # Stores the content library used for generation.
@@ -439,6 +451,9 @@ func world_map_snapshot(run_state: RunState, selected_id: String = "") -> Dictio
 
 
 func _next_world_environment(run_state: RunState, target_archetype_id: String, rng: RngStream, target_prevalidated: bool = false) -> EnvironmentInstance:
+	var perf_total_started_usec := Time.get_ticks_usec() if _world_environment_timing_enabled else 0
+	var perf_stage_started_usec := perf_total_started_usec
+	var perf_stages: Dictionary = {}
 	var rollback := _travel_rollback_snapshot(run_state)
 	var had_source := not run_state.current_environment.is_empty()
 	var map := WorldMap.new(library)
@@ -450,6 +465,9 @@ func _next_world_environment(run_state: RunState, target_archetype_id: String, r
 	var map_data := run_state.world_map
 	run_state.configure_town_world(map_data)
 	_prime_town_scenarios(run_state, map_data)
+	if _world_environment_timing_enabled:
+		perf_stages["map_setup_prime"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stage_started_usec = Time.get_ticks_usec()
 	var target_id := target_archetype_id.strip_edges()
 	var current_node_id := run_state.current_world_node_id()
 	if run_state.current_environment.is_empty() and target_id.is_empty():
@@ -480,12 +498,21 @@ func _next_world_environment(run_state: RunState, target_archetype_id: String, r
 				_last_environment_install_errors = _copy_array(departure.get("errors", []))
 				_restore_travel_snapshot(run_state, rollback)
 				return EnvironmentInstance.from_dict(run_state.current_environment)
+	if _world_environment_timing_enabled:
+		perf_stages["route_departure"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stage_started_usec = Time.get_ticks_usec()
 	var environment_data := _world_environment_data_for_node(run_state, map_data, node, rng)
+	if _world_environment_timing_enabled:
+		perf_stages["environment_build"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stage_started_usec = Time.get_ticks_usec()
 	var installed := _install_environment_with_rollback(run_state, environment_data, rollback)
 	if not bool(installed.get("ok", false)):
 		_last_environment_install_errors = _copy_array(installed.get("errors", []))
 		_restore_travel_snapshot(run_state, rollback)
 		return EnvironmentInstance.from_dict(run_state.current_environment)
+	if _world_environment_timing_enabled:
+		perf_stages["environment_install"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stage_started_usec = Time.get_ticks_usec()
 	run_state.enter_world_node(target_id, run_state.current_environment)
 	if not current_node_id.is_empty() and current_node_id != target_id:
 		run_state.scenario_publish_travel("travel_arrived", current_node_id, target_id, "world")
@@ -496,7 +523,15 @@ func _next_world_environment(run_state: RunState, target_archetype_id: String, r
 		# first tutorial map before the Corner Store route beat.
 		run_state.set_world_map(_apply_tutorial_initial_map_targets(run_state.world_map, run_state))
 	run_state.save_rng(rng)
-	return EnvironmentInstance.from_dict(run_state.current_environment)
+	var result := EnvironmentInstance.from_dict(run_state.current_environment)
+	if _world_environment_timing_enabled:
+		perf_stages["post_install"] = Time.get_ticks_usec() - perf_stage_started_usec
+		_last_world_environment_timing_usec = {
+			"target_id": target_id,
+			"stages_usec": perf_stages,
+			"total_usec": Time.get_ticks_usec() - perf_total_started_usec,
+		}
+	return result
 
 
 func _apply_tutorial_authored_travel_targets(run_state: RunState, environment_id: String) -> void:
