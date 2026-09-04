@@ -1,0 +1,251 @@
+{
+  "schema_version": 1,
+  "stage": "PRESTAGE",
+  "candidate_base_commit": "9b52c27ada01b0048bd938908b9bcae701d93ec6",
+  "purpose": "Recovered seed candidates for playtest06_2. This file is not final reachability evidence.",
+  "prohibitions": [
+    "No candidate in this manifest is an owner-playtest route until it is VERIFIED on the frozen handoff build.",
+    "Debug actions, direct state edits, save edits, teleports, bankroll overrides, invitation injection, and synthetic collection progress cannot qualify an owner-playtest route.",
+    "Diagnostic prevalidated travel may discover catalog assignments but cannot prove player reachability."
+  ],
+  "coverage_policy": {
+    "representative_scenario_ids": [],
+    "material_scenario_branch_ids": [],
+    "notes": "The final playtest owner selects the representative scenario spread after env06_8 and integration freeze. Empty policy targets are valid only during PRESTAGE."
+  },
+  "seeds": [
+    {
+      "id": "composition_max_recovered",
+      "seed": "WAVE-B-COMPOSITION-08",
+      "status": "CANDIDATE",
+      "route_authority": "HEADLESS_PRODUCTION_ACTIONS",
+      "route_shortcuts": [],
+      "owner_playtest_eligible": false,
+      "purpose": "Recover the integration lane's maximal Bar composition and all three Punchline layers for final-tree revalidation.",
+      "coverage_slots": [
+        "COMPOSITION-MAX",
+        "SAVE-BOUNDARIES"
+      ],
+      "archetype_ids": [
+        "bar",
+        "small_underground_casino"
+      ],
+      "game_ids": [],
+      "pusher_machine_ids": [],
+      "scenario_ids": [],
+      "scenario_branch_ids": [],
+      "source_evidence": "codex/integ06-1-victory-root docs/plans/integ06_1_composition_migration_soak_report.md; partial report records a green maximal-composition run on an earlier integration candidate.",
+      "pending_verification": "Run tools/wave_b_composition_probe.gd and the exhaustive composition matrix on the frozen final tree; separately prove a natural owner route."
+    },
+    {
+      "id": "tutorial_recovered",
+      "seed": "FIRST-NIGHT-ACE-17",
+      "status": "CANDIDATE",
+      "route_authority": "PRODUCTION_PUBLIC_ACTIONS",
+      "route_shortcuts": [],
+      "owner_playtest_eligible": true,
+      "purpose": "Start the accepted first-night guided tutorial route for owner orientation.",
+      "coverage_slots": [
+        "FULL-RUN-CONTROLS"
+      ],
+      "archetype_ids": [
+        "apartment",
+        "corner_store",
+        "gas_station_casino",
+        "small_underground_casino",
+        "grand_casino",
+        "grand_casino_cage"
+      ],
+      "game_ids": [
+        "pull_tabs",
+        "blackjack"
+      ],
+      "pusher_machine_ids": [],
+      "scenario_ids": [],
+      "scenario_branch_ids": [],
+      "source_evidence": "docs/plans/teach06_2_final_closeout.md; accepted guided tutorial audit candidate.",
+      "pending_verification": "Replay on the frozen owner build and record actual reached environments, decisions, and terminal state. This is not a major-victory seed claim."
+    },
+    {
+      "id": "crew_ignore_control_a_recovered",
+      "seed": "CREW-IGNORED-GOLDEN-A",
+      "status": "CANDIDATE",
+      "route_authority": "HEADLESS_PRODUCTION_ACTIONS",
+      "route_shortcuts": [],
+      "owner_playtest_eligible": false,
+      "purpose": "Recover the first accepted crew-ignoring control candidate without treating a historical golden as current evidence.",
+      "coverage_slots": [
+        "CREW-IGNORING",
+        "FULL-RUN-CONTROLS"
+      ],
+      "archetype_ids": [],
+      "game_ids": [],
+      "pusher_machine_ids": [],
+      "scenario_ids": [],
+      "scenario_branch_ids": [],
+      "source_evidence": "scripts/tests/fixtures/crew06_5_ignored_run_baseline.json; historical accepted baseline only.",
+      "pending_verification": "Regenerate through the final integration producer, compare all observable and hidden no-op authority, then derive a player-followable route."
+    },
+    {
+      "id": "crew_ignore_control_b_recovered",
+      "seed": "CREW-IGNORED-GOLDEN-B",
+      "status": "CANDIDATE",
+      "route_authority": "HEADLESS_PRODUCTION_ACTIONS",
+      "route_shortcuts": [],
+      "owner_playtest_eligible": false,
+      "purpose": "Recover the independent crew-ignoring control candidate for paired final-tree validation.",
+      "coverage_slots": [
+        "CREW-IGNORING",
+        "FULL-RUN-CONTROLS"
+      ],
+      "archetype_ids": [],
+      "game_ids": [],
+      "pusher_machine_ids": [],
+      "scenario_ids": [],
+      "scenario_branch_ids": [],
+      "source_evidence": "scripts/tests/fixtures/crew06_5_ignored_run_baseline.json; historical accepted baseline only.",
+      "pending_verification": "Regenerate through the final integration producer, compare all observable and hidden no-op authority, then derive a player-followable route."
+    },
+    {
+      "id": "terminal_soak_prefix_recovered",
+      "seed": "INTEG06-1-FINAL-SOAK",
+      "status": "CANDIDATE",
+      "route_authority": "HEADLESS_PRODUCTION_ACTIONS",
+      "route_shortcuts": [],
+      "owner_playtest_eligible": false,
+      "purpose": "Retain the integration terminal-soak seed prefix for final native/Web producer execution.",
+      "coverage_slots": [
+        "FULL-RUN-CONTROLS",
+        "SAVE-BOUNDARIES"
+      ],
+      "archetype_ids": [],
+      "game_ids": [],
+      "pusher_machine_ids": [],
+      "scenario_ids": [],
+      "scenario_branch_ids": [],
+      "source_evidence": "codex/integ06-1-victory-root terminal-soak producer and partial integration report.",
+      "pending_verification": "Run the strict native/Web terminal producer on the frozen tree. This prefix is not a single player route."
+    },
+    {
+      "id": "catalog_probe_discovery_01",
+      "seed": "PLAYTEST-CATALOG-01",
+      "status": "CANDIDATE",
+      "route_authority": "DIAGNOSTIC_PREVALIDATED_TRAVEL",
+      "route_shortcuts": [
+        "PREVALIDATED_TRAVEL"
+      ],
+      "owner_playtest_eligible": false,
+      "purpose": "Retain a current-main diagnostic candidate that generated Vault Drop, eight game ids, and twelve scenario assignments.",
+      "coverage_slots": [
+        "ARCHETYPES",
+        "SCENARIO-REPRESENTATIVE",
+        "GAMES",
+        "PUSHER-MACHINES"
+      ],
+      "archetype_ids": [
+        "back_alley",
+        "bar",
+        "beach",
+        "corner_store",
+        "delta_queen",
+        "gas_station_casino",
+        "grand_casino",
+        "house",
+        "jazz_club",
+        "kitty_cat_lounge",
+        "motel",
+        "pawn_shop",
+        "small_underground_casino"
+      ],
+      "game_ids": [
+        "bar_dice",
+        "blackjack",
+        "coin_pusher",
+        "pull_tabs",
+        "roulette",
+        "scratch_tickets",
+        "slot",
+        "video_poker"
+      ],
+      "pusher_machine_ids": [
+        "vault_drop"
+      ],
+      "scenario_ids": [
+        "back_alley_nothing_moving",
+        "bar_fight_night",
+        "beach_bonfire_night",
+        "corner_store_dead_shift",
+        "delta_queen_fog_delay",
+        "gas_station_tour_bus_stop",
+        "grand_casino_audit_night",
+        "jazz_club_union_trouble",
+        "kitty_cat_lounge_slow_night",
+        "motel_conventioneers",
+        "pawn_shop_estate_lot_day",
+        "punchline_new_muscle"
+      ],
+      "scenario_branch_ids": [],
+      "source_evidence": "Current-main catalog probe at 9b52c27a; .tmp/playtest06_2/catalog_probe_smoke.json SHA256 CC665A3F8BE64A620BC0120237B8ABD2B718A86F28A3E3F263297FA75A480CC3.",
+      "pending_verification": "Replace every diagnostic assignment with a natural public-action route after the environment and integration trees freeze."
+    },
+    {
+      "id": "catalog_probe_baseline",
+      "seed": "SCENARIO-AUDIT",
+      "status": "CANDIDATE",
+      "route_authority": "DIAGNOSTIC_PREVALIDATED_TRAVEL",
+      "route_shortcuts": [
+        "PREVALIDATED_TRAVEL"
+      ],
+      "owner_playtest_eligible": false,
+      "purpose": "Discover deterministic first-visit archetype, game, pusher-machine, and scenario assignments without claiming natural reachability.",
+      "coverage_slots": [
+        "ARCHETYPES",
+        "SCENARIO-REPRESENTATIVE",
+        "GAMES",
+        "PUSHER-MACHINES"
+      ],
+      "archetype_ids": [
+        "back_alley",
+        "bar",
+        "beach",
+        "corner_store",
+        "delta_queen",
+        "gas_station_casino",
+        "grand_casino",
+        "jazz_club",
+        "kitty_cat_lounge",
+        "motel",
+        "motel_room",
+        "pawn_shop",
+        "small_underground_casino"
+      ],
+      "game_ids": [
+        "bar_dice",
+        "blackjack",
+        "pull_tabs",
+        "roulette",
+        "scratch_tickets",
+        "slot",
+        "video_poker"
+      ],
+      "pusher_machine_ids": [],
+      "scenario_ids": [
+        "back_alley_nothing_moving",
+        "bar_lock_in",
+        "beach_storm_coming",
+        "corner_store_delivery_day",
+        "delta_queen_captains_invitational",
+        "gas_station_graveyard_shift",
+        "grand_casino_convention_crowd",
+        "jazz_club_rent_party",
+        "kitty_cat_lounge_bachelorette_storm",
+        "motel_wedding_overflow",
+        "pawn_shop_estate_lot_day",
+        "punchline_open_mic_night"
+      ],
+      "scenario_branch_ids": [],
+      "source_evidence": "tools/scenario_seed_audit.gd plus current-main .tmp/playtest06_2/catalog_probe_smoke.json SHA256 CC665A3F8BE64A620BC0120237B8ABD2B718A86F28A3E3F263297FA75A480CC3.",
+      "pending_verification": "Run tools/playtest06_2_seed_catalog_probe.gd on the final tree, then replace diagnostic coverage with production-public owner routes."
+    }
+  ]
+}
