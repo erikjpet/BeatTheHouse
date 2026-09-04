@@ -20,6 +20,8 @@ Require-Text $surface 'func surface_register_text_protected_rect(rect: Rect2) ->
 Require-Text $surface '_register_surface_text_panel_rect(rect)' "Retained-layer readability bypasses the normal validation and cap."
 Require-Text $cacheCanvas 'surface_text_protected_rects.clear()' "Static cache redraws can accumulate stale readability rectangles."
 Require-Text $runtimeContract 'cached_backglass_registers_live_readability_rect_' "The production static-cache contract does not verify exact live backglass rectangles."
+Require-Text $runtimeContract 'backglass_live_offset := mini(expected_shell_protected_rects.size(), protected_rect_cap)' "The production contract does not account for preceding cached shell text."
+Require-Text $runtimeContract 'cached_surface_text_protection_respects_cap' "The production contract does not verify the shared text-protection cap."
 
 if ($failures.Count -gt 0) {
     $failures | ForEach-Object { Write-Error $_ }
