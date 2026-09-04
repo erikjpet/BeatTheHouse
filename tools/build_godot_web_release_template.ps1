@@ -95,7 +95,7 @@ try {
         "threads=no",
         "production=yes",
         "optimize=size",
-        "lto=thin",
+        "lto=none",
         "build_profile=$($profilePath.Replace('\', '/'))",
         "modules_enabled_by_default=no",
         "module_gdscript_enabled=yes",
