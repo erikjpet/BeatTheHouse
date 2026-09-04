@@ -798,7 +798,10 @@ function Get-FoundationLastStartedCheck {
 }
 
 function New-FoundationShardProjectRoot {
-    param([string]$ShardId)
+    param(
+        [string]$ShardId,
+        [switch]$IncludeAddons
+    )
     $safeShardId = $ShardId -replace "[^A-Za-z0-9_.-]", "_"
     $projectRoot = Join-Path $script:ReportRoot ("shard_projects\$safeShardId")
     New-Item -ItemType Directory -Force -Path $projectRoot | Out-Null
@@ -806,7 +809,11 @@ function New-FoundationShardProjectRoot {
     foreach ($file in Get-ChildItem -LiteralPath $root -File -Force) {
         Copy-Item -LiteralPath $file.FullName -Destination (Join-Path $projectRoot $file.Name) -Force
     }
-    foreach ($directoryName in @(".agents", "assets", "branding", "data", "docs", "scenes", "scripts", "tools")) {
+    $shardDirectories = @(".agents", "assets", "branding", "data", "docs", "scenes", "scripts", "tools")
+    if ($IncludeAddons) {
+        $shardDirectories += "addons"
+    }
+    foreach ($directoryName in $shardDirectories) {
         $sourceDirectory = Join-Path $root $directoryName
         if (Test-Path -LiteralPath $sourceDirectory) {
             if (-not (Test-FoundationJunctionTargetSafe -ProjectRoot $projectRoot -TargetPath $sourceDirectory)) {
@@ -818,6 +825,13 @@ function New-FoundationShardProjectRoot {
     $sourceCache = Join-Path $root ".godot"
     $shardCache = Join-Path $projectRoot ".godot"
     Copy-FoundationShardCache -SourceCache $sourceCache -DestinationCache $shardCache
+    if ($IncludeAddons) {
+        $extensionList = Join-Path $sourceCache "extension_list.cfg"
+        if (-not (Test-Path -LiteralPath $extensionList -PathType Leaf)) {
+            throw "Native game shard requested addons but the parent extension list is missing."
+        }
+        Copy-Item -LiteralPath $extensionList -Destination (Join-Path $shardCache "extension_list.cfg") -Force
+    }
     return $projectRoot
     }
     catch {
@@ -827,16 +841,20 @@ function New-FoundationShardProjectRoot {
 }
 
 function Invoke-FoundationSystemsSharded {
-    param([int]$StageTimeoutSec = 0)
-    $name = "foundation_systems"
+    param(
+        [int]$StageTimeoutSec = 0,
+        [ValidateSet("systems", "games")]
+        [string]$FoundationSuite = "systems"
+    )
+    $name = "foundation_$FoundationSuite"
     $timeout = if ($StageTimeoutSec -gt 0) { $StageTimeoutSec } else { Get-StageTimeout $name }
     $records = New-Object System.Collections.Generic.List[object]
     $shardProjectsRoot = Join-Path $script:ReportRoot "shard_projects"
     $startedMsec = [Environment]::TickCount64
     $wall = [System.Diagnostics.Stopwatch]::StartNew()
     try {
-    $expectedIds = Get-FoundationSystemsCheckIds
-    $plan = Get-FoundationSystemsShardPlan
+    $expectedIds = if ($FoundationSuite -eq "games") { Get-FoundationGamesCheckIds } else { Get-FoundationSystemsCheckIds }
+    $plan = if ($FoundationSuite -eq "games") { Get-FoundationGamesShardPlan } else { Get-FoundationSystemsShardPlan }
     $planCheck = Test-FoundationSystemsShardPlan -ExpectedIds $expectedIds -Shards $plan
     if (-not $planCheck.valid) {
         throw "Invalid foundation systems shard plan: $(@($planCheck.errors) -join ' | ')"
@@ -855,13 +873,15 @@ function Invoke-FoundationSystemsSharded {
     foreach ($shardIdValue in $plan.Keys) {
         $shardId = [string]$shardIdValue
         $safeShardId = $shardId -replace "[^A-Za-z0-9_.-]", "_"
-        $reportFile = "foundation_systems.$safeShardId.json"
+        $reportFile = "$name.$safeShardId.json"
         $reportPath = Join-Path $script:ReportRoot $reportFile
-        $stdoutPath = Join-Path $script:ReportRoot ("foundation_systems.$safeShardId.stdout.txt")
-        $stderrPath = Join-Path $script:ReportRoot ("foundation_systems.$safeShardId.stderr.txt")
-        $logPath = Join-Path $script:ReportRoot ("foundation_systems.$safeShardId.godot.log")
+        $stdoutPath = Join-Path $script:ReportRoot ("$name.$safeShardId.stdout.txt")
+        $stderrPath = Join-Path $script:ReportRoot ("$name.$safeShardId.stderr.txt")
+        $logPath = Join-Path $script:ReportRoot ("$name.$safeShardId.godot.log")
         $userRoot = Join-Path $script:ReportRoot ("user_data\$safeShardId")
-        $shardProjectRoot = New-FoundationShardProjectRoot -ShardId $shardId
+        $checkIds = @($plan[$shardId])
+        $needsNativePlugin = $FoundationSuite -eq "games" -and @($checkIds | Where-Object { $_ -in @("content", "game_activation_class_guard", "coin_pusher_contract") }).Count -gt 0
+        $shardProjectRoot = New-FoundationShardProjectRoot -ShardId $shardId -IncludeAddons:$needsNativePlugin
         try {
         $shardRunnerPath = Join-Path $shardProjectRoot ($runnerRelativePath.Replace("/", "\"))
         New-Item -ItemType Directory -Force -Path (Split-Path -Parent $shardRunnerPath) | Out-Null
@@ -869,13 +889,12 @@ function Invoke-FoundationSystemsSharded {
         New-Item -ItemType Directory -Force -Path $userRoot | Out-Null
         Remove-Item -LiteralPath $reportPath -Force -ErrorAction SilentlyContinue
         $resourceReport = $reportPath.Replace("\", "/")
-        $checkIds = @($plan[$shardId])
         $arguments = @(
             "--headless", "--path", $shardProjectRoot,
             "--log-file", $logPath,
             "--script", $runnerResourcePath,
             "--",
-            "--suite=systems",
+            "--suite=$FoundationSuite",
             "--report=$resourceReport",
             "--check-ids=$($checkIds -join ',')"
         )
@@ -1003,12 +1022,12 @@ function Invoke-FoundationSystemsSharded {
             last_started_check = Get-FoundationLastStartedCheck -StdoutText $stdoutText
         }
     }
-    $stdout = Join-Path $script:ReportRoot "foundation_systems.stdout.txt"
-    $stderr = Join-Path $script:ReportRoot "foundation_systems.stderr.txt"
+    $stdout = Join-Path $script:ReportRoot "$name.stdout.txt"
+    $stderr = Join-Path $script:ReportRoot "$name.stderr.txt"
     [System.IO.File]::WriteAllText($stdout, $combinedStdout.ToString())
     [System.IO.File]::WriteAllText($stderr, $combinedStderr.ToString())
 
-    $merged = Merge-FoundationSystemsShardReports -ExpectedIds $expectedIds -ShardResults $shardResults
+    $merged = Merge-FoundationSystemsShardReports -ExpectedIds $expectedIds -ShardResults $shardResults -SuiteName $FoundationSuite
     $aggregateReport = $merged.report
     $aggregateReport.started_msec = $startedMsec
     $cacheCheck = {
@@ -1019,7 +1038,7 @@ function Invoke-FoundationSystemsSharded {
     }
     $completion = Complete-FoundationTimedCleanup -Records $records -AllowedProjectRoot $shardProjectsRoot -Stopwatch $wall -Report $aggregateReport -AfterCleanupCheck $cacheCheck
     $aggregateReport = $completion.report
-    $reportPath = Join-Path $script:ReportRoot "foundation_systems.json"
+    $reportPath = Join-Path $script:ReportRoot "$name.json"
     $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
     $aggregateReport.duration_msec = [int]$wall.ElapsedMilliseconds
     [System.IO.File]::WriteAllText($reportPath, ($aggregateReport | ConvertTo-Json -Depth 20), $utf8NoBom)
@@ -1043,7 +1062,7 @@ function Invoke-FoundationSystemsSharded {
     $result = [pscustomobject][ordered]@{
         name = $name
         command = $script:Godot
-        arguments = @("four deterministic systems shards")
+        arguments = @("$($plan.Count) deterministic $FoundationSuite shards")
         exit_code = $exitCode
         timed_out = $timedOut
         duration_msec = [int]$wall.ElapsedMilliseconds
@@ -1077,7 +1096,7 @@ function Invoke-FoundationSystemsSharded {
         if ($exceptionCleanupFailures.Count -gt 0) {
             $errorText += " " + ($exceptionCleanupFailures -join " | ")
         }
-        $stderr = Join-Path $script:ReportRoot "foundation_systems.stderr.txt"
+        $stderr = Join-Path $script:ReportRoot "$name.stderr.txt"
         try { [System.IO.File]::WriteAllText($stderr, $errorText) } catch { }
         if (@($script:StageResults | Where-Object { $_.name -eq $name }).Count -eq 0) {
             $baseline = Get-FoundationSuiteStageBaselineSec $name
@@ -1088,7 +1107,7 @@ function Invoke-FoundationSystemsSharded {
                 -DurationMsec ([int]$wall.ElapsedMilliseconds) `
                 -BaselineSec $baseline `
                 -BudgetSec $budget `
-                -StdoutPath (Join-Path $script:ReportRoot "foundation_systems.stdout.txt") `
+                -StdoutPath (Join-Path $script:ReportRoot "$name.stdout.txt") `
                 -StderrPath $stderr))
         }
         Write-Host ("{0,-28} {1,7} {2,8}ms" -f $name, "FAIL", [int]$wall.ElapsedMilliseconds)
@@ -1194,8 +1213,8 @@ if (-not [string]::IsNullOrWhiteSpace($foundationSuiteKey)) {
         Invoke-GodotScript -Name "inventory_spatial_main_integration" -ScriptPath "res://scripts/tests/inventory_spatial_main_integration_check.gd" -StageTimeoutSec 180
         Invoke-GodotScript -Name "ui05_design_system" -ScriptPath "res://scripts/tests/ui05_design_system_check.gd" -StageTimeoutSec 120
     }
-    elseif ($foundationSuiteKey -eq "systems") {
-        Invoke-FoundationSystemsSharded -StageTimeoutSec (Get-StageTimeout "foundation_systems") | Out-Null
+    elseif ($foundationSuiteKey -eq "systems" -or $foundationSuiteKey -eq "games") {
+        Invoke-FoundationSystemsSharded -FoundationSuite $foundationSuiteKey -StageTimeoutSec (Get-StageTimeout ("foundation_{0}" -f $foundationSuiteKey)) | Out-Null
     }
     else {
         Invoke-FoundationSuite -FoundationSuite $foundationSuiteKey -StageTimeoutSec (Get-StageTimeout ("foundation_{0}" -f $foundationSuiteKey))

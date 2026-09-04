@@ -12,12 +12,18 @@ function Assert-True {
 
 $productionPlan = Test-FoundationSystemsShardPlan -ExpectedIds (Get-FoundationSystemsCheckIds) -Shards (Get-FoundationSystemsShardPlan)
 Assert-True $productionPlan.valid ("Production systems shard plan is invalid: " + (@($productionPlan.errors) -join " | "))
+$gamesPlan = Test-FoundationSystemsShardPlan -ExpectedIds (Get-FoundationGamesCheckIds) -Shards (Get-FoundationGamesShardPlan)
+Assert-True $gamesPlan.valid ("Production games shard plan is invalid: " + (@($gamesPlan.errors) -join " | "))
 
 $runnerSource = Get-Content -LiteralPath (Join-Path (Split-Path -Parent $PSScriptRoot) "scripts/tests/foundation/check_core_content.gd") -Raw
 $systemsMatch = [regex]::Match($runnerSource, '(?s)func _foundation_run_system_suite\(.*?(?=\nfunc _foundation_run_all_suite\()')
 Assert-True $systemsMatch.Success "Could not locate the systems registration in the foundation runner source."
 $registeredIds = @([regex]::Matches($systemsMatch.Value, '_foundation_run_check\(report, failures, "([^"]+)"') | ForEach-Object { $_.Groups[1].Value })
 Assert-True (($registeredIds -join "|") -eq ((Get-FoundationSystemsCheckIds) -join "|")) "Shard manifest diverged from the systems registration or changed its canonical order."
+$gamesMatch = [regex]::Match($runnerSource, '(?s)\t\t"games":(.*?)(?=\n\t\t"systems":)')
+Assert-True $gamesMatch.Success "Could not locate the games registration in the foundation runner source."
+$registeredGamesIds = @([regex]::Matches($gamesMatch.Value, '_foundation_run_check\(report, failures, "([^"]+)"') | ForEach-Object { $_.Groups[1].Value })
+Assert-True (($registeredGamesIds -join "|") -eq ((Get-FoundationGamesCheckIds) -join "|")) "Shard manifest diverged from the games registration or changed its canonical order."
 
 $missingPlan = [ordered]@{ first = @("alpha"); second = @() }
 $missingResult = Test-FoundationSystemsShardPlan -ExpectedIds @("alpha", "beta") -Shards $missingPlan

@@ -2402,6 +2402,9 @@ func _resolve_and_apply_table_game_surface_contract(game: GameModule, action_id:
 	var result := _resolve_table_game_surface_contract(game, action_id, stake, run_state, environment, rng, ui_state)
 	if bool(result.get("ok", false)):
 		GameModule.apply_result(run_state, result, rng)
+		# This helper has already consumed the proposal. Clear the host flag so a
+		# fixture returning the result cannot accidentally apply its deltas twice.
+		result["host_apply_result"] = false
 	return result
 
 
