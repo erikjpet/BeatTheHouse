@@ -783,10 +783,18 @@ static func drain_event_requests(state_value: Dictionary, definition: Dictionary
 		var request := _dict(request_value)
 		var request_id := str(request.get("request_id", "")).strip_edges()
 		if request_id.is_empty() or delivered.has(request_id): continue
-		emitted.append({
-			"event_id": str(request.get("event_id", "")),
-			"resolution_id": str(request.get("resolution_id", "")),
-		})
+		var public_request := {"kind": str(request.get("kind", "event"))}
+		match str(public_request.get("kind", "event")):
+			"item":
+				public_request["item_id"] = str(request.get("item_id", ""))
+				public_request["message"] = str(request.get("message", ""))
+			"cash":
+				public_request["amount"] = int(request.get("amount", 0))
+				public_request["message"] = str(request.get("message", ""))
+			_:
+				public_request["event_id"] = str(request.get("event_id", ""))
+				public_request["resolution_id"] = str(request.get("resolution_id", ""))
+		emitted.append(public_request)
 		history.append(request)
 		delivered.append(request_id)
 	state["event_request_queue"] = []
@@ -1167,6 +1175,41 @@ static func _run_handler(state: Dictionary, definition: Dictionary, handler_id: 
 				requests.append({"request_id": request_id, "event_id": event_id, "resolution_id": resolution_id, "scenario_id": str(next.get("scenario_id", "")), "node_id": str(next.get("node_id", "")), "phase_id": str(next.get("phase_id", ""))})
 			next["event_request_queue"] = _bounded_records(requests, MAX_RECEIPTS)
 			next["last_feedback"] = feedback
+		"grant_item", "grant_cash":
+			var consequence_kind := "item" if handler_id == "grant_item" else "cash"
+			var consequence_message := str(inputs.get("message", ""))
+			var consequence_id := "consequence:%s:%s" % [consequence_kind, _trigger_receipt(trigger)]
+			var consequence_requests := _bounded_records(next.get("event_request_queue", []), MAX_RECEIPTS)
+			var consequence_known := false
+			for request_value in consequence_requests:
+				if str(_dict(request_value).get("request_id", "")) == consequence_id: consequence_known = true
+			if not consequence_known:
+				var consequence := {"request_id": consequence_id, "kind": consequence_kind, "message": consequence_message}
+				if consequence_kind == "item": consequence["item_id"] = str(inputs.get("item_id", ""))
+				else: consequence["amount"] = int(inputs.get("amount", 0))
+				consequence_requests.append(consequence)
+			next["event_request_queue"] = _bounded_records(consequence_requests, MAX_RECEIPTS)
+			next["last_feedback"] = consequence_message
+		"change_scene_object":
+			var scene_identity := OperationRegistryScript.identity(str(inputs.get("owner_namespace", "")), str(inputs.get("stable_object_id", "")))
+			var scene_semantic := _dict(next.get("semantic_state", {}))
+			var scene_objects := _dict(scene_semantic.get("scene_objects", {}))
+			if not scene_objects.has(scene_identity):
+				return {"ok": false, "state": state, "errors": ["change_scene_object target is not currently visible"]}
+			var scene_object := _dict(scene_objects.get(scene_identity, {}))
+			scene_object["state"] = str(inputs.get("state", ""))
+			scene_objects[scene_identity] = scene_object
+			scene_semantic["scene_objects"] = scene_objects
+			next["semantic_state"] = scene_semantic
+			next["last_feedback"] = str(inputs.get("message", ""))
+			next = _queue_feedback_transition(next, str(inputs.get("message", "")), trigger)
+		"play_cue":
+			var cue_semantic := _dict(next.get("semantic_state", {}))
+			var cue_queue := _array(cue_semantic.get("transition_queue", []))
+			cue_queue.append({"op": "sound", "cue_id": str(inputs.get("cue_id", "")), "message": str(inputs.get("message", "")), "receipt_id": _trigger_receipt(trigger)})
+			cue_semantic["transition_queue"] = cue_queue
+			next["semantic_state"] = cue_semantic
+			next["last_feedback"] = str(inputs.get("message", ""))
 		_:
 			return {"ok": false, "state": state, "errors": ["scenario handler is unregistered: %s." % handler_id]}
 	return {"ok": true, "state": next, "errors": [], "replayed": handler_replayed}
