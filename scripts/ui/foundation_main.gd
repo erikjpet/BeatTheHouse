@@ -128,44 +128,27 @@ const CollectionDropServiceScript := preload("res://scripts/core/collection_drop
 const CollectionItemResolverScript := preload("res://scripts/core/collection_item_resolver.gd")
 const SettingsMenuScript := preload("res://scripts/ui/settings_menu.gd")
 const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd")
-const GameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.gd")
-const WorldMapCanvasScript := preload("res://scripts/ui/world_map_canvas.gd")
 const FoundationWidgetsScript := preload("res://scripts/ui/foundation_widgets.gd")
 const UIArtScript := preload("res://scripts/ui/ui_art.gd")
 const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.gd")
 const AttributeBadgeRowScript := preload("res://scripts/ui/attribute_badge_row.gd")
-const RunInventoryScreenScript := preload("res://scripts/ui/run_inventory_screen.gd")
 const RunInventoryViewModelScript := preload("res://scripts/ui/run_inventory_view_model.gd")
-const MetaItemInteractionScreenScript := preload("res://scripts/ui/meta_item_interaction_screen.gd")
 const MetaItemInteractionViewModelScript := preload("res://scripts/ui/meta_item_interaction_view_model.gd")
-const BagOpenReelScript := preload("res://scripts/ui/bag_open_reel.gd")
 const BagOpenReelViewModelScript := preload("res://scripts/ui/bag_open_reel_view_model.gd")
 const CageCounterViewModelScript := preload("res://scripts/ui/cage_counter_view_model.gd")
 const CageAtmViewModelScript := preload("res://scripts/ui/cage_atm_view_model.gd")
 const MetaCollectionViewModelScript := preload("res://scripts/ui/meta_collection_view_model.gd")
 const RunJournalViewModelScript := preload("res://scripts/ui/run_journal_view_model.gd")
-const RunReportViewModelScript := preload("res://scripts/ui/run_report_view_model.gd")
-const RunReportScreenScript := preload("res://scripts/ui/run_report_screen.gd")
 const CareerStatsScreenScript := preload("res://scripts/ui/career_stats_screen.gd")
 const TerminalConsequenceViewModelScript := preload("res://scripts/ui/terminal_consequence_view_model.gd")
 const EnvironmentInteractionViewModelScript := preload("res://scripts/ui/environment_interaction_view_model.gd")
 const EnvironmentInteractionControllerScript := preload("res://scripts/ui/environment_interaction_controller.gd")
 const FoundationHudViewModelScript := preload("res://scripts/ui/foundation_hud_view_model.gd")
-const FoundationHudBarScript := preload("res://scripts/ui/foundation_hud_bar.gd")
-const HeatGainFeedbackOverlayScript := preload("res://scripts/ui/heat_gain_feedback_overlay.gd")
-const EnvironmentHeaderScript := preload("res://scripts/ui/environment_header.gd")
-const CheatDockScript := preload("res://scripts/ui/cheat_dock.gd")
 const FoundationActionViewModelScript := preload("res://scripts/ui/foundation_action_view_model.gd")
 const FoundationTravelViewModelScript := preload("res://scripts/ui/foundation_travel_view_model.gd")
 const FoundationScreenBuilderScript := preload("res://scripts/ui/foundation_screen_builder.gd")
 const MetaSessionControllerScript := preload("res://scripts/ui/meta_session_controller.gd")
-const WorldMapOverlayControllerScript := preload("res://scripts/ui/world_map_overlay_controller.gd")
 const WagerConfirmationControllerScript := preload("res://scripts/ui/wager_confirmation_controller.gd")
-const TalkDockScript := preload("res://scripts/ui/talk_dock.gd")
-const ItemFoundPopupScript := preload("res://scripts/ui/item_found_popup.gd")
-const CoachViewModelScript := preload("res://scripts/ui/coach_view_model.gd")
-const CoachOverlayScript := preload("res://scripts/ui/coach_overlay.gd")
-const SfxPlayerScript := preload("res://scripts/ui/sfx_player.gd")
 const ProceduralMusicPlayerScript := preload("res://scripts/ui/procedural_music_player.gd")
 const PerfTelemetryOverlayScript := preload("res://scripts/ui/perf_telemetry_overlay.gd")
 const RunTerminalEvaluatorScript := preload("res://scripts/core/run_terminal_evaluator.gd")
@@ -176,6 +159,57 @@ const ItemEffectScript := preload("res://scripts/core/item_effect.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
 const CharacterRosterScript := preload("res://scripts/core/character_roster.gd")
 const EnvironmentRuntimeSchedulerScript := preload("res://scripts/core/environment_runtime_scheduler.gd")
+
+# Web reaches an interactive start menu before the run shell is needed. Keep
+# these dynamic property names stable for FoundationScreenBuilder, but load each
+# complete stage atomically so a missing script cannot leave a partial run UI.
+const RUN_UI_SCRIPT_PATHS := {
+	"GameSurfaceCanvasScript": "res://scripts/ui/game_surface_canvas.gd",
+	"WorldMapCanvasScript": "res://scripts/ui/world_map_canvas.gd",
+	"RunInventoryScreenScript": "res://scripts/ui/run_inventory_screen.gd",
+	"MetaItemInteractionScreenScript": "res://scripts/ui/meta_item_interaction_screen.gd",
+	"BagOpenReelScript": "res://scripts/ui/bag_open_reel.gd",
+	"RunReportViewModelScript": "res://scripts/ui/run_report_view_model.gd",
+	"RunReportScreenScript": "res://scripts/ui/run_report_screen.gd",
+	"FoundationHudBarScript": "res://scripts/ui/foundation_hud_bar.gd",
+	"HeatGainFeedbackOverlayScript": "res://scripts/ui/heat_gain_feedback_overlay.gd",
+	"EnvironmentHeaderScript": "res://scripts/ui/environment_header.gd",
+	"CheatDockScript": "res://scripts/ui/cheat_dock.gd",
+	"WorldMapOverlayControllerScript": "res://scripts/ui/world_map_overlay_controller.gd",
+	"TalkDockScript": "res://scripts/ui/talk_dock.gd",
+	"ItemFoundPopupScript": "res://scripts/ui/item_found_popup.gd",
+	"CoachViewModelScript": "res://scripts/ui/coach_view_model.gd",
+	"CoachOverlayScript": "res://scripts/ui/coach_overlay.gd",
+	"SfxPlayerScript": "res://scripts/ui/sfx_player.gd",
+}
+const RUN_UI_STAGE_SCRIPT_FIELDS := {
+	0: ["GameSurfaceCanvasScript", "SfxPlayerScript", "FoundationHudBarScript", "EnvironmentHeaderScript", "CheatDockScript", "RunReportScreenScript", "RunReportViewModelScript", "HeatGainFeedbackOverlayScript"],
+	1: ["TalkDockScript"],
+	6: ["RunInventoryScreenScript"],
+	7: ["MetaItemInteractionScreenScript", "BagOpenReelScript"],
+	10: ["WorldMapCanvasScript", "WorldMapOverlayControllerScript"],
+	11: ["ItemFoundPopupScript"],
+	12: ["CoachOverlayScript", "CoachViewModelScript"],
+}
+const RUN_UI_UNAVAILABLE_MESSAGE := "The run interface is unavailable. Restart the game and try again."
+
+var GameSurfaceCanvasScript: Script
+var WorldMapCanvasScript: Script
+var RunInventoryScreenScript: Script
+var MetaItemInteractionScreenScript: Script
+var BagOpenReelScript: Script
+var RunReportViewModelScript: Script
+var RunReportScreenScript: Script
+var FoundationHudBarScript: Script
+var HeatGainFeedbackOverlayScript: Script
+var EnvironmentHeaderScript: Script
+var CheatDockScript: Script
+var WorldMapOverlayControllerScript: Script
+var TalkDockScript: Script
+var ItemFoundPopupScript: Script
+var CoachViewModelScript: Script
+var CoachOverlayScript: Script
+var SfxPlayerScript: Script
 
 var ActionAuthorityScript: Script:
 	get:
@@ -348,6 +382,7 @@ var screen_stack_root: Control
 var run_ui_built := false
 var run_ui_build_stage := 0
 var run_ui_build_in_progress := false
+var run_ui_build_failure_reason := ""
 var main_menu_panel: PanelContainer
 var main_menu_logo: TextureRect
 var start_menu_controls: VBoxContainer
@@ -452,18 +487,18 @@ var numbers_slip_submit_button: Button
 var numbers_runner_button: Button
 var numbers_fix_button: Button
 var numbers_allocation_submit_button: Button
-var talk_dock: TalkDock
+var talk_dock
 var talk_dock_avoid_sync_active := false
-var item_found_popup: ItemFoundPopup
-var coach_overlay: CoachOverlay
+var item_found_popup
+var coach_overlay
 var item_found_talk_dock_suspended := false
 var conclusion_animation_overlay: Control
 var conclusion_animation_snapshot: Dictionary = {}
 var conclusion_animation_tweens: Array[Tween] = []
-var run_inventory_screen: RunInventoryScreen
+var run_inventory_screen
 var run_inventory_overlay: Control
-var meta_item_interaction_screen: MetaItemInteractionScreen
-var bag_open_reel: BagOpenReel
+var meta_item_interaction_screen
+var bag_open_reel
 var meta_item_interaction_mode := ""
 var selected_meta_item_key := ""
 var meta_trade_selected_instance_ids: Array = []
@@ -493,7 +528,7 @@ var world_map_badge_slot: VBoxContainer
 var world_map_badge_row: HFlowContainer
 var world_map_badge_cells: Array = []
 var world_map_confirm_button: Button
-var world_map_overlay_controller: WorldMapOverlayController
+var world_map_overlay_controller
 var wager_confirmation_controller: WagerConfirmationController
 var selected_world_map_node_id: String = ""
 var world_map_button_ids: Array = []
@@ -520,17 +555,17 @@ var interactable_object_view_cache: Array = []
 var interactable_object_view_cache_valid := false
 var interactable_object_view_cache_key := ""
 var run_hud_panel: Panel
-var structured_hud: FoundationHudBar
+var structured_hud
 var heat_gain_feedback_overlay
-var environment_header: EnvironmentHeader
-var cheat_dock: CheatDock
+var environment_header
+var cheat_dock
 var visual_panel_container: PanelContainer
 var title_label: Label
 var summary_label: Label
 var environment_result_panel: PanelContainer
 var environment_result_title_label: Label
 var environment_result_body_label: Label
-var run_report_screen: RunReportScreen
+var run_report_screen
 var run_report_model: Dictionary = {}
 var run_report_model_key := ""
 var status_label: Label
@@ -550,7 +585,7 @@ var action_hint_label: Label
 var stake_input: SpinBox
 var actions_list: VBoxContainer
 var environment_canvas: PixelSceneCanvas
-var game_surface_canvas: GameSurfaceCanvas
+var game_surface_canvas
 var run_layout_dirty := true
 var run_layout_last_screen_size := Vector2(-1.0, -1.0)
 var accessibility_tree_transform_active := false
@@ -726,11 +761,12 @@ func uses_foundation_runtime() -> bool:
 
 
 # Starts a deterministic foundation run.
-func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Dictionary = {}, include_meta_home_modifiers: bool = true) -> void:
+func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Dictionary = {}, include_meta_home_modifiers: bool = true) -> bool:
+	if not _ensure_run_ui_built():
+		return false
 	if library == null:
 		_initialize_foundation()
 	_ensure_full_content_library_loaded()
-	_ensure_run_ui_built()
 	_finish_conclusion_animation()
 	if structured_hud != null:
 		structured_hud.reset_wallet_delta()
@@ -804,18 +840,21 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	_autosave_foundation_run("Autosaved.")
 	_refresh()
 	_prewarm_world_map_overlay_for_run()
+	return true
 
 
-func start_daily_challenge_run() -> void:
+func start_daily_challenge_run() -> bool:
 	var today: Dictionary = Time.get_datetime_dict_from_system()
 	var day := int(today.get("day", 1))
 	var month := int(today.get("month", 1))
 	var seed_text := _daily_challenge_seed_for_date(day, month)
 	var daily_id := _daily_challenge_id_for_datetime(today)
 	var challenge_config: Dictionary = RunState.daily_challenge(daily_id, seed_text, true)
-	start_foundation_run(seed_text, challenge_config)
+	if not start_foundation_run(seed_text, challenge_config):
+		return false
 	_show_message("Daily challenge begins. The seed is hidden.")
 	_refresh()
+	return true
 
 
 func _daily_challenge_seed_for_date(day: int, month: int) -> String:
@@ -5828,11 +5867,13 @@ func _game_surface_autosave_blocked() -> bool:
 
 
 # Loads the current foundation run.
-func load_foundation_run() -> void:
-	_load_foundation_run_from_slot(true)
+func load_foundation_run() -> bool:
+	return _load_foundation_run_from_slot(true)
 
 
 func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
+	if not _ensure_run_ui_built():
+		return false
 	if save_service == null:
 		save_status_message = "Save service unavailable."
 		_show_message("Save service unavailable.")
@@ -6103,7 +6144,7 @@ func _restore_foundation_lifecycle_snapshot(snapshot: Dictionary) -> void:
 		if control is CanvasItem:
 			(control as CanvasItem).visible = bool(visibility.get(control_name, false))
 	var restored_world_map_controller: Variant = snapshot.get("world_map_controller_ref", null)
-	world_map_overlay_controller = restored_world_map_controller as WorldMapOverlayController if restored_world_map_controller is WorldMapOverlayController else null
+	world_map_overlay_controller = restored_world_map_controller if restored_world_map_controller is RefCounted and restored_world_map_controller.has_method("sync_from_host") else null
 	if world_map_overlay_controller != null:
 		var controller_state := _copy_dict(snapshot.get("world_map_controller", {}))
 		world_map_overlay_controller.set_small_screen_mode(bool(controller_state.get("small_screen_mode", false)))
@@ -6194,7 +6235,7 @@ func _coach_lifecycle_snapshot() -> Dictionary:
 
 func _restore_coach_lifecycle_snapshot(snapshot: Dictionary) -> void:
 	var restored_coach: Variant = snapshot.get("ref", null)
-	if not (restored_coach is CoachOverlay) or coach_overlay != restored_coach:
+	if not (restored_coach is Control) or coach_overlay != restored_coach:
 		return
 	var restored_parent: Variant = snapshot.get("parent_ref", null)
 	if restored_parent is Node and coach_overlay.get_parent() == restored_parent:
@@ -6252,7 +6293,7 @@ func _restore_coach_lifecycle_snapshot(snapshot: Dictionary) -> void:
 func _protect_foundation_coach_attention(snapshot: Dictionary) -> void:
 	var coach_snapshot := _copy_dict(snapshot.get("coach", {}))
 	var restored_coach: Variant = coach_snapshot.get("ref", null)
-	if restored_coach is CoachOverlay and coach_overlay == restored_coach:
+	if restored_coach is Control and coach_overlay == restored_coach:
 		coach_snapshot["attention"] = coach_overlay.protect_attention_tween_lifecycle_snapshot(_copy_dict(coach_snapshot.get("attention", {})))
 		snapshot["coach"] = coach_snapshot
 		snapshot["_coach_attention_rolled_back"] = false
@@ -6263,7 +6304,7 @@ func _commit_foundation_coach_attention(snapshot: Dictionary) -> void:
 		return
 	var coach_snapshot := _copy_dict(snapshot.get("coach", {}))
 	var restored_coach: Variant = coach_snapshot.get("ref", null)
-	if restored_coach is CoachOverlay and coach_overlay == restored_coach:
+	if restored_coach is Control and coach_overlay == restored_coach:
 		coach_overlay.commit_attention_tween_lifecycle_snapshot(_copy_dict(coach_snapshot.get("attention", {})))
 
 
@@ -6363,7 +6404,7 @@ func _talk_dock_lifecycle_snapshot() -> Dictionary:
 
 func _restore_talk_dock_lifecycle_snapshot(snapshot: Dictionary) -> void:
 	var restored_dock: Variant = snapshot.get("ref", null)
-	if not (restored_dock is TalkDock) or talk_dock != restored_dock:
+	if not (restored_dock is Control) or talk_dock != restored_dock:
 		return
 	var restored_parent: Variant = snapshot.get("parent_ref", null)
 	if restored_parent is Node and talk_dock.get_parent() == restored_parent:
@@ -7647,30 +7688,85 @@ func _build_ui() -> void:
 	_apply_accessibility_settings()
 
 
-func _ensure_run_ui_built() -> void:
+func _ensure_run_ui_built() -> bool:
 	if run_ui_built:
-		return
+		return true
+	if not run_ui_build_failure_reason.is_empty():
+		_present_run_ui_unavailable()
+		return false
 	if screen_stack_root == null:
-		return
+		_fail_run_ui_build("screen_stack_root", "the run interface root")
+		return false
 	while not run_ui_built:
-		_build_next_run_ui_stage()
+		if not _build_next_run_ui_stage():
+			return false
+	return true
 
 
 func _prewarm_run_ui_after_web_start() -> void:
-	if run_ui_built or run_ui_build_in_progress or screen_stack_root == null:
+	if run_ui_built or run_ui_build_in_progress or not run_ui_build_failure_reason.is_empty() or screen_stack_root == null:
 		return
 	run_ui_build_in_progress = true
 	await get_tree().process_frame
 	while not run_ui_built:
-		_build_next_run_ui_stage()
+		if not _build_next_run_ui_stage():
+			return
 		if not run_ui_built:
-			_build_next_run_ui_stage()
+			if not _build_next_run_ui_stage():
+				return
 		if not run_ui_built:
 			await get_tree().process_frame
 	run_ui_build_in_progress = false
 
 
-func _build_next_run_ui_stage() -> void:
+func _ensure_run_ui_stage_scripts(stage_index: int) -> bool:
+	var stage_fields: Array = RUN_UI_STAGE_SCRIPT_FIELDS.get(stage_index, [])
+	if stage_fields.is_empty():
+		return true
+	var staged_scripts: Dictionary = {}
+	for field_name_value in stage_fields:
+		var field_name := str(field_name_value)
+		if get(field_name) is Script:
+			continue
+		var script_path := str(RUN_UI_SCRIPT_PATHS.get(field_name, ""))
+		if script_path.is_empty():
+			_fail_run_ui_build(field_name, "an unregistered script path")
+			return false
+		var loaded_script: Variant = ResourceLoader.load(script_path)
+		if not (loaded_script is Script):
+			_fail_run_ui_build(field_name, script_path)
+			return false
+		staged_scripts[field_name] = loaded_script
+	# Publish the stage only after every required script has loaded. The instance
+	# fields keep strong references so later stages never repeat resource lookup.
+	for field_name_value in staged_scripts.keys():
+		set(str(field_name_value), staged_scripts.get(field_name_value))
+	return true
+
+
+func _fail_run_ui_build(field_name: String, script_path: String) -> void:
+	if run_ui_build_failure_reason.is_empty():
+		run_ui_build_failure_reason = "Could not load %s from %s." % [field_name, script_path]
+		push_error("Run UI build stopped: %s" % run_ui_build_failure_reason)
+	run_ui_build_in_progress = false
+	_present_run_ui_unavailable()
+
+
+func _present_run_ui_unavailable() -> void:
+	if start_status_label != null:
+		start_status_label.text = RUN_UI_UNAVAILABLE_MESSAGE
+	for button in [new_run_button, continue_button, daily_run_button, replay_tutorial_button, run_config_start_button]:
+		if button is Button:
+			button.disabled = true
+			button.tooltip_text = RUN_UI_UNAVAILABLE_MESSAGE
+
+
+func _build_next_run_ui_stage() -> bool:
+	if not run_ui_build_failure_reason.is_empty():
+		_present_run_ui_unavailable()
+		return false
+	if not _ensure_run_ui_stage_scripts(run_ui_build_stage):
+		return false
 	match run_ui_build_stage:
 		0:
 			run_screen = Control.new()
@@ -7709,8 +7805,9 @@ func _build_next_run_ui_stage() -> void:
 			run_ui_built = true
 			run_ui_build_in_progress = false
 			_apply_accessibility_settings()
-			return
+			return true
 	run_ui_build_stage += 1
+	return true
 
 
 func _build_start_screen() -> void:
@@ -9577,7 +9674,8 @@ func _render_start_screen() -> void:
 
 
 func _render_environment_screen() -> void:
-	_ensure_run_ui_built()
+	if not _ensure_run_ui_built():
+		return
 	if current_screen == SCREEN_START:
 		_set_current_screen(SCREEN_ENVIRONMENT)
 	start_screen.visible = false
@@ -14531,22 +14629,22 @@ func _style_hud_for_recent_consequence() -> void:
 	_set_control_font_color(status_label, color)
 
 
-func _on_start_pressed() -> void:
+func _on_start_pressed() -> bool:
+	if not _ensure_run_ui_built():
+		return false
 	var seed_text := seed_input.text.strip_edges()
 	if seed_text.is_empty():
 		seed_text = _generate_menu_seed_text()
 		seed_input.text = seed_text
 	if selected_challenge_id.is_empty() and _fresh_profile_needs_tutorial():
-		start_tutorial_run()
-		return
-	start_foundation_run(seed_text, _new_run_challenge_for_seed(seed_text))
+		return start_tutorial_run()
+	return start_foundation_run(seed_text, _new_run_challenge_for_seed(seed_text))
 
 
-func start_or_continue_primary() -> void:
+func start_or_continue_primary() -> bool:
 	if _has_foundation_save():
-		load_foundation_run()
-	else:
-		_on_start_pressed()
+		return load_foundation_run()
+	return _on_start_pressed()
 
 
 func request_delete_saved_run() -> void:
@@ -14574,14 +14672,16 @@ func confirm_delete_saved_run() -> void:
 	_show_message("Saved run deleted.")
 
 
-func start_tutorial_run() -> void:
+func start_tutorial_run() -> bool:
+	if not _ensure_run_ui_built():
+		return false
 	_ensure_full_content_library_loaded()
 	var config := TutorialFlowScript.challenge_config(library)
 	if config.is_empty():
 		_show_message("The First Night lesson is unavailable.")
-		return
+		return false
 	selected_challenge_id = ""
-	start_foundation_run(str(config.get("seed_text", "FIRST-NIGHT-ACE-17")), config, false)
+	return start_foundation_run(str(config.get("seed_text", "FIRST-NIGHT-ACE-17")), config, false)
 
 
 func _fresh_profile_needs_tutorial() -> bool:
@@ -14621,18 +14721,22 @@ func _confirm_skip_tutorial() -> void:
 	return_to_main_menu()
 
 
-func start_generated_foundation_run() -> void:
+func start_generated_foundation_run() -> bool:
+	if not _ensure_run_ui_built():
+		return false
 	var seed_text := _generate_menu_seed_text()
 	if seed_input != null:
 		seed_input.text = seed_text
-	start_foundation_run(seed_text, _new_run_challenge_for_seed(seed_text))
+	return start_foundation_run(seed_text, _new_run_challenge_for_seed(seed_text))
 
 
-func start_meta_quick_run() -> void:
+func start_meta_quick_run() -> bool:
+	if not _ensure_run_ui_built():
+		return false
 	var seed_text := _generate_menu_seed_text()
 	if seed_input != null:
 		seed_input.text = seed_text
-	start_foundation_run(seed_text, {}, false)
+	return start_foundation_run(seed_text, {}, false)
 
 
 func _on_run_report_new_run_requested() -> void:
@@ -15921,7 +16025,9 @@ func _refresh_start_screen() -> void:
 	var has_save := _has_foundation_save()
 	var save_slot_status := save_service.slot_status(autosave_slot_id) if save_service != null else {}
 	if start_status_label != null:
-		if not content_validation_status_message.is_empty():
+		if not run_ui_build_failure_reason.is_empty():
+			start_status_label.text = RUN_UI_UNAVAILABLE_MESSAGE
+		elif not content_validation_status_message.is_empty():
 			start_status_label.text = content_validation_status_message
 		elif has_save:
 			if bool(save_slot_status.get("primary_corrupt", false)) and bool(save_slot_status.get("backup_loadable", false)):
@@ -15943,6 +16049,8 @@ func _refresh_start_screen() -> void:
 		delete_saved_run_button.disabled = not bool(save_slot_status.get("primary_exists", false)) and not bool(save_slot_status.get("backup_exists", false))
 	_refresh_content_group_controls()
 	_refresh_challenge_controls()
+	if not run_ui_build_failure_reason.is_empty():
+		_present_run_ui_unavailable()
 
 
 func _release_version_text() -> String:
