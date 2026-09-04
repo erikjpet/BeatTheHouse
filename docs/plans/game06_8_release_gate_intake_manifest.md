@@ -405,3 +405,23 @@ listed in the final game06_8 report is an ancestor of that frozen base.
 Accordingly, all Family 1 intake dependencies are **VERIFIED/DONE**. The final
 game06_8 verdict is governed by
 `docs/plans/game06_8_final_closeout.md`, not this historical prestage section.
+
+## Superseding final Family 1 closure — 2026-09-03
+
+This section supersedes every remaining pending aggregate, Blackjack, and Crew
+entry in this historical intake manifest.
+
+- Final exact integrated commit `af48b5311036793266d9e19e30699c98a0739d16`
+  passes project validation, import, script loading, and the four-shard
+  `FoundationSuite games` aggregate: 10/10 checks, zero failures, `197.329s`
+  inside the unchanged `220.425s` budget. Foundation report SHA-256:
+  `F85F24AA0F34584F5920D18C753733C8E7D419DCB368B99CA2178CBA9E00F89C`.
+- The exact Blackjack audit passes 120 generated-table cases and 1,000 hands
+  with zero failures/warnings and report SHA-256
+  `DCB214CDFFA5E4E17F427E3D679F9803D128EE0D3889E507D028C001227EACD0`.
+- The repaired Crew depth contract passes ten seeds and five profiles on the
+  same exact root; log SHA-256
+  `A86F4D7B4B3C10818080A49C09A9CB2C9DCDA93728B82C672C958E25ACDDB993`.
+
+Accordingly, `game06_2` and `game06_8` are **VERIFIED/DONE**. Only the program's
+owner/human playtest remains for taste, comprehension, pacing, and readability.

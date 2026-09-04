@@ -56,10 +56,13 @@ const SUPPORT_MARGIN := 800
 const SKILL_STOP_RAMP_TICKS := 24
 const NATIVE_BACKEND_ID := "coin_pusher_native_integer_v3"
 const NATIVE_ABI_VERSION := 3
+const OPENING_TEMPLATE_CACHE_CAPACITY := 16
 
 static var _native_backend: Object = null
 static var _native_backend_checked := false
 static var _last_step_backend := "gdscript_v3"
+static var _opening_template_cache: Dictionary = {}
+static var _opening_template_cache_order: Array = []
 
 # Compile-time integer cosine table. Outcome state never evaluates a float.
 const COS_TABLE := [
@@ -138,6 +141,14 @@ static var _scratch_grid: SpatialHash2D = SpatialHash2D.new()
 
 
 static func create_machine(seed_rng: RngStream, machine_definition: Dictionary, opening_bodies: int = 0, capture_opening_report: bool = false) -> Dictionary:
+	var cache_key := ""
+	if opening_bodies > 0 and opening_bodies <= 180:
+		cache_key = _opening_template_cache_key(seed_rng, machine_definition, opening_bodies, capture_opening_report)
+		var cached_value: Variant = _opening_template_cache.get(cache_key)
+		if typeof(cached_value) == TYPE_DICTIONARY:
+			var cached: Dictionary = cached_value
+			seed_rng.restore(cached.get("post_rng", {}))
+			return (cached.get("state", {}) as Dictionary).duplicate(true)
 	var definition := machine_definition.duplicate(true)
 	var geometry := _geometry(definition)
 	var stroke := _stroke(definition)
@@ -208,7 +219,45 @@ static func create_machine(seed_rng: RngStream, machine_definition: Dictionary, 
 			state["last_invariants"] = _invariant_report(state, true)
 	else:
 		state["opening_body_count"] = 0
+	if not cache_key.is_empty():
+		_store_opening_template(cache_key, state, seed_rng.snapshot())
 	return state
+
+
+static func _opening_template_cache_key(seed_rng: RngStream, machine_definition: Dictionary, opening_bodies: int, capture_opening_report: bool) -> String:
+	return "%d|%d|%d|%d|%s" % [
+		seed_rng.seed_value,
+		seed_rng.state_value,
+		opening_bodies,
+		1 if capture_opening_report else 0,
+		Marshalls.raw_to_base64(var_to_bytes(machine_definition)),
+	]
+
+
+static func _store_opening_template(cache_key: String, state: Dictionary, post_rng: Dictionary) -> void:
+	if _opening_template_cache.has(cache_key):
+		return
+	while _opening_template_cache_order.size() >= OPENING_TEMPLATE_CACHE_CAPACITY:
+		var evicted_key := str(_opening_template_cache_order.pop_front())
+		_opening_template_cache.erase(evicted_key)
+	_opening_template_cache[cache_key] = {
+		"state": state.duplicate(true),
+		"post_rng": post_rng.duplicate(true),
+	}
+	_opening_template_cache_order.append(cache_key)
+
+
+static func clear_opening_template_cache_for_test() -> void:
+	_opening_template_cache = {}
+	_opening_template_cache_order = []
+
+
+static func opening_template_cache_snapshot_for_test() -> Dictionary:
+	return {
+		"capacity": OPENING_TEMPLATE_CACHE_CAPACITY,
+		"size": _opening_template_cache.size(),
+		"keys": _opening_template_cache_order.duplicate(),
+	}
 
 
 static func public_contract() -> Dictionary:

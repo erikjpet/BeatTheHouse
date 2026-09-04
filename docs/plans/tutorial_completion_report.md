@@ -116,3 +116,22 @@ Stand, bust and wager lock; Peek/counting risk; Players Card progress; and the
 next normal-run goal. Two participants must begin without Blackjack knowledge.
 TUT-N17 passes only at 5/5 unassisted completion and at least 80% aggregate
 core-concept comprehension.
+
+## 0.6 exact-root addendum — 2026-09-03
+
+The landed 0.6 tutorial implementation was recovered and verified on the final
+integrated game/depth/audio/world root; it was not rebuilt from the older 0.5
+candidate. Two independent exact-source guided audits passed all `63/63`
+lessons across `100/100` deterministic seeds, comprising 56 guided and seven
+contextual lessons. Normal-run isolation remained green and both runs produced
+complete, distinct immutable reports:
+
+- Run A: `152679.622ms`, SHA-256
+  `5249EB5654FEDA8D21C1130353126F3DE0600A2497DC3FF7FE1DB75DED50E072`.
+- Run B: `152394.376ms`, SHA-256
+  `C543D6D293632C3548979460105FBB6F88AC2A60053EB374466B32C7B6942FCC`.
+
+This supersedes the older automated-candidate qualification for the 0.6 tree.
+It does not supersede or waive `TUT-N17`: five cold-player sessions, including
+two players without Blackjack knowledge, remain owner/human-only and move to
+`playtest06_1`.

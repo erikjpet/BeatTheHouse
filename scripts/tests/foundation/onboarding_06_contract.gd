@@ -120,7 +120,7 @@ static func _check_contextual_lesson_matrix(library: Variant, failures: Array) -
 			"id": "tip06_coin_pusher",
 			"encounter": _game_context("coin_pusher"),
 			"miss": _game_context("blackjack"),
-			"terms": ["paid drop", "shelf", "lane", "nudges", "rock", "chirp", "stare", "lock"],
+			"terms": ["carriage", "hold", "drop", "bonus-token cups", "heavy feature pieces", "cabinet goal"],
 		},
 		{
 			"id": "tip06_craps_pass_line",

@@ -199,29 +199,36 @@ static func _check_environment(library: ContentLibrary, source_run: RunState, sc
 	var environment := source_run.current_environment
 	var archetype_id := str(environment.get("archetype_id", ""))
 	var layer_id := str(environment.get("current_layer_id", "base"))
-	# Every checked context in this environment starts from the same cold-restored
-	# run. Build its canonical representation lazily: most later seed contexts are
-	# already covered, so eagerly encoding them would add work without assertions.
-	var source_snapshot: Dictionary = {}
-	var source_text := ""
-	var cold_source: Dictionary = {}
-	var cold_source_text := ""
+	# Each game is checked against the same cold-restored run fields and complete
+	# environment metadata, but carries only its own generated machine states.
+	# Passive hooks cannot legitimately read or mutate another game's private
+	# machine payload. Keeping unrelated ticket inventories and physical piles in
+	# every one of seven cold clones made this guard scale quadratically as new
+	# surfaces were added, without strengthening the mutation assertion.
+	var complete_snapshot: Dictionary = {}
 	for game_id_value in _string_array(environment.get("game_ids", [])):
 		var game_id := str(game_id_value)
 		covered_game_ids[game_id] = true
-		for state_key_value in _generated_state_keys(environment, game_id):
+		var state_keys := _generated_state_keys(environment, game_id)
+		var unchecked_state_keys: Array = []
+		for state_key_value in state_keys:
 			var state_key := str(state_key_value)
 			var context_key := "%s|%s|%s|%s|%s" % [game_id, state_key, archetype_id, layer_id, scenario_id]
-			if checked_contexts.has(context_key):
-				continue
+			if not checked_contexts.has(context_key):
+				unchecked_state_keys.append(state_key)
+		if unchecked_state_keys.is_empty():
+			continue
+		if complete_snapshot.is_empty():
+			complete_snapshot = source_run.to_dict()
+		var source_snapshot := _single_game_activation_snapshot(complete_snapshot, game_id)
+		var source_text := JSON.stringify(source_snapshot)
+		var parsed_source: Variant = JSON.parse_string(source_text)
+		var cold_source: Dictionary = parsed_source as Dictionary if typeof(parsed_source) == TYPE_DICTIONARY else {}
+		var cold_source_text := JSON.stringify(cold_source) if not cold_source.is_empty() else ""
+		for state_key_value in unchecked_state_keys:
+			var state_key := str(state_key_value)
+			var context_key := "%s|%s|%s|%s|%s" % [game_id, state_key, archetype_id, layer_id, scenario_id]
 			checked_contexts[context_key] = true
-			if source_snapshot.is_empty():
-				source_snapshot = source_run.to_dict()
-				source_text = JSON.stringify(source_snapshot)
-				var parsed_source: Variant = JSON.parse_string(source_text)
-				if typeof(parsed_source) == TYPE_DICTIONARY:
-					cold_source = parsed_source as Dictionary
-					cold_source_text = JSON.stringify(cold_source)
 			var game := _load_game(library, game_id, failures)
 			if game == null:
 				continue
@@ -229,10 +236,43 @@ static func _check_environment(library: ContentLibrary, source_run: RunState, sc
 			# opens a non-default generated fixture. It must select presentation
 			# without recording that selection in the serialized environment.
 			game.set_transient_state_key_context(state_key)
-			var violation := _activation_violation(game, source_run, source_snapshot, source_text, cold_source, cold_source_text)
+			var violation := _activation_violation(game, source_run, source_snapshot, source_text, cold_source, cold_source_text, true)
 			game.set_transient_state_key_context("")
 			if not violation.is_empty():
 				failures.append("Game activation mutated serialized RunState for %s (%s) in %s/%s/%s: %s" % [game_id, state_key, archetype_id, layer_id, scenario_id, violation])
+
+
+static func _single_game_activation_snapshot(complete_snapshot: Dictionary, game_id: String) -> Dictionary:
+	var projected := complete_snapshot.duplicate(true)
+	var current_value: Variant = projected.get("current_environment", {})
+	if typeof(current_value) != TYPE_DICTIONARY:
+		return projected
+	var current := current_value as Dictionary
+	var reference_id := str(current.get("__bth_environment_ref", "")).strip_edges()
+	if not reference_id.is_empty():
+		var registry_value: Variant = projected.get("environment_registry", {})
+		if typeof(registry_value) == TYPE_DICTIONARY:
+			var registry := registry_value as Dictionary
+			var registered_value: Variant = registry.get(reference_id, {})
+			if typeof(registered_value) == TYPE_DICTIONARY:
+				_filter_environment_game_states(registered_value as Dictionary, game_id)
+	else:
+		_filter_environment_game_states(current, game_id)
+	return projected
+
+
+static func _filter_environment_game_states(environment: Dictionary, game_id: String) -> void:
+	environment["game_ids"] = [game_id]
+	var states_value: Variant = environment.get("game_states", {})
+	if typeof(states_value) != TYPE_DICTIONARY:
+		return
+	var states := states_value as Dictionary
+	var filtered := {}
+	for state_key_value in states.keys():
+		var state_key := str(state_key_value)
+		if state_key == game_id or state_key.begins_with("%s:" % game_id):
+			filtered[state_key] = states.get(state_key_value)
+	environment["game_states"] = filtered
 
 
 static func _record_environment_catalog_coverage(environment: Dictionary, covered_game_ids: Dictionary) -> void:
@@ -617,7 +657,7 @@ static func _check_reintroduced_defect_fixture(failures: Array) -> void:
 			failures.append("Game activation class guard did not isolate its immutable parsed source from live hook state: %s" % source_alias_violation)
 
 
-static func _activation_violation(game: GameModule, run_state: RunState, cached_source_snapshot: Dictionary = {}, cached_source_text: String = "", cached_cold_source: Dictionary = {}, cached_cold_source_text: String = "") -> String:
+static func _activation_violation(game: GameModule, run_state: RunState, cached_source_snapshot: Dictionary = {}, cached_source_text: String = "", cached_cold_source: Dictionary = {}, cached_cold_source_text: String = "", accept_initial_normalization: bool = false) -> String:
 	var source_snapshot := cached_source_snapshot if not cached_source_snapshot.is_empty() else run_state.to_dict()
 	var source_text := cached_source_text if not cached_source_text.is_empty() else JSON.stringify(source_snapshot)
 	# Parse the canonical bytes once. Every hook restores from this immutable
@@ -632,24 +672,22 @@ static func _activation_violation(game: GameModule, run_state: RunState, cached_
 	# later canonicalizes back to source_text. Preserve the parser's own exact
 	# baseline solely for detecting retained-reference writes into cold_source.
 	var cold_source_text := cached_cold_source_text if not cached_cold_source_text.is_empty() else JSON.stringify(cold_source)
-	# Validate one pristine cold clone exactly. RunState.from_dict retains some
-	# nested references, so every live fixture receives its own deep source copy;
-	# hooks never share state with each other or with the canonical dictionary.
-	var first_method_run := RunStateScript.new()
-	first_method_run.from_dict(cold_source.duplicate(true))
-	var canonical_snapshot := first_method_run.to_dict()
+	# Validate one pristine cold clone exactly. Each hook begins from the same
+	# serialized state: a passing hook has proved that graph byte-identical, so it
+	# can be reused after clearing transient Object metadata. Returning on the
+	# first serialized mutation prevents a dirty hook from masking a later one,
+	# while the explicit masking fixture below proves metadata cannot carry over.
+	var method_run := RunStateScript.new()
+	method_run.from_dict(cold_source.duplicate(true))
+	var canonical_snapshot := method_run.to_dict()
 	var canonical_text := JSON.stringify(canonical_snapshot)
-	if canonical_text != source_text:
+	if canonical_text != source_text and not accept_initial_normalization:
 		return "%s could not cold-clone its canonical activation fixture" % str(ACTIVATION_METHODS[0])
-	var first_method_available := true
+	var comparison_snapshot := canonical_snapshot if accept_initial_normalization else source_snapshot
+	var comparison_text := canonical_text if accept_initial_normalization else source_text
 	for method in ACTIVATION_METHODS:
-		var method_run: RunState
-		if first_method_available:
-			method_run = first_method_run
-			first_method_available = false
-		else:
-			method_run = RunStateScript.new()
-			method_run.from_dict(cold_source.duplicate(true))
+		for metadata_key in method_run.get_meta_list():
+			method_run.remove_meta(metadata_key)
 		match method:
 			"environment_runtime_state":
 				game.environment_runtime_state(method_run, method_run.current_environment)
@@ -668,9 +706,9 @@ static func _activation_violation(game: GameModule, run_state: RunState, cached_
 		var after := method_run.to_dict()
 		var after_text := JSON.stringify(after)
 		# Exact canonical bytes remain the invariant after every individual hook.
-		if after_text != source_text:
+		if after_text != comparison_text:
 			var paths: Array = []
-			_collect_changed_paths(canonical_snapshot, after, "", paths)
+			_collect_changed_paths(comparison_snapshot, after, "", paths)
 			var change_summary := ", ".join(paths)
 			if change_summary.is_empty():
 				change_summary = "canonical byte order/type changed"

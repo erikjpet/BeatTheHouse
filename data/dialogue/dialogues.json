@@ -1111,6 +1111,34 @@
       "meta_home_card": {
         "text": "This is Home. Your new Bronze Players Card is already packed in the highlighted Bag. Open it to inspect the card. Packed collection items enter your next run; if a carried Players Card is destroyed on a loss, it is gone for good.",
         "choices": [{"id": "continue", "label": "Open the Bag", "effects": {}, "end": true}]
+      },
+      "tip06_tonight_changes_rooms": {
+        "text": "Tonight's scenario changes this room. Read the objective and listen before acting; a rumor here can sharpen another map stop.",
+        "choices": [{"id": "continue", "label": "Read the room", "effects": {}, "end": true}]
+      },
+      "tip06_delivery_route": {
+        "text": "That package is contraband and every action spends its deadline. Use the map to choose among the marked real stops.",
+        "choices": [{"id": "continue", "label": "Plan the route", "effects": {}, "end": true}]
+      },
+      "tip06_numbers_book": {
+        "text": "Pick three digits and a stake before the daily draw. Town talk can guide the numbers, but carrying the slip is contraband.",
+        "choices": [{"id": "continue", "label": "Open the book", "effects": {}, "end": true}]
+      },
+      "tip06_crew_standing": {
+        "text": "Crew jobs build standing and missed work is remembered. That standing opens rooms; it is a path, not another loan.",
+        "choices": [{"id": "continue", "label": "Mind the standing", "effects": {}, "end": true}]
+      },
+      "tip06_coin_pusher": {
+        "text": "Drag the carriage to aim, then hold and release DROP. Bonus-token cups extend play; bank the heavy feature pieces to finish this cabinet's goal.",
+        "choices": [{"id": "continue", "label": "Aim for the feature", "effects": {}, "end": true}]
+      },
+      "tip06_craps_pass_line": {
+        "text": "Put one stake on Pass. Seven or eleven wins the come-out; otherwise make the point before a seven.",
+        "choices": [{"id": "continue", "label": "Bet Pass", "effects": {}, "end": true}]
+      },
+      "tip06_venue_depth": {
+        "text": "Some venues have more room behind them. Watch the room itself for a way through; a usable door appears when the time is right.",
+        "choices": [{"id": "continue", "label": "Watch the room", "effects": {}, "end": true}]
       }
     }
   },

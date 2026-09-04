@@ -1315,6 +1315,38 @@ func _check_tier1_scenario_content(library: ContentLibrary, failures: Array) -> 
 	var tutorial_seeded_bytes := JSON.stringify(tutorial_seeded_before_entry)
 	if tutorial_seeded_bytes != JSON.stringify(tutorial_pin):
 		failures.append("Tutorial pre-seed did not cache the canonical mutation-suppressed Delivery Day selection byte-for-byte.")
+	var default_snapshot_probe := RunStateScript.new()
+	default_snapshot_probe.from_dict(stored_run.to_dict())
+	var default_save_snapshot := default_snapshot_probe.to_save_snapshot()
+	var default_snapshot_town: Dictionary = default_save_snapshot.get("town_state", {})
+	var default_snapshot_world: Dictionary = default_snapshot_town.get("living_world", {})
+	var default_snapshot_definitions: Dictionary = default_snapshot_world.get("seeded_scenario_definitions_by_node", {})
+	var default_snapshot_corner: Dictionary = default_snapshot_definitions.get("corner_store", {})
+	var default_live_corner: Dictionary = default_snapshot_probe.town_state.living_world.seeded_scenario_definitions_by_node.get("corner_store", {})
+	default_live_corner["default_deep_snapshot_probe"] = true
+	if default_snapshot_corner.has("default_deep_snapshot_probe"):
+		failures.append("The default save snapshot stopped deeply isolating seeded scenario definitions.")
+	var rollback_probe := RunStateScript.new()
+	rollback_probe.from_dict(stored_run.to_dict())
+	var rollback_snapshot: Dictionary = stored_generator.call("_travel_rollback_snapshot", rollback_probe)
+	var rollback_run: Dictionary = rollback_snapshot.get("run", {})
+	var rollback_run_bytes := var_to_bytes(rollback_run)
+	var rollback_town: Dictionary = rollback_run.get("town_state", {})
+	var rollback_world: Dictionary = rollback_town.get("living_world", {})
+	var rollback_definitions: Dictionary = rollback_world.get("seeded_scenario_definitions_by_node", {})
+	rollback_probe.town_state.living_world.seeded_scenario_definitions_by_node["rollback_outer_map_probe"] = {"id": "rollback_outer_map_probe"}
+	rollback_probe.current_environment["rollback_environment_probe"] = true
+	rollback_probe.world_map["rollback_world_map_probe"] = true
+	rollback_probe.grand_casino_room_states["rollback_room_states_probe"] = true
+	if rollback_definitions.has("rollback_outer_map_probe"):
+		failures.append("The travel rollback snapshot did not isolate the seeded-definition outer map.")
+	stored_generator.call("_restore_travel_snapshot", rollback_probe, rollback_snapshot)
+	if var_to_bytes(rollback_probe.to_save_snapshot(false)) != rollback_run_bytes \
+		or rollback_probe.current_environment.has("rollback_environment_probe") \
+		or rollback_probe.world_map.has("rollback_world_map_probe") \
+		or rollback_probe.grand_casino_room_states.has("rollback_room_states_probe") \
+		or rollback_probe.town_state.living_world.seeded_scenario_definitions_by_node.has("rollback_outer_map_probe"):
+		failures.append("Travel rollback did not restore its worker-safe snapshot byte-identically.")
 	stored_generator.next_environment(stored_run, "corner_store", true)
 	if str(stored_run.scenario_for_node("corner_store").get("id", "")) != "corner_store_delivery_day" or not _copy_dict(stored_run.current_environment.get("scenario_exclusive_opportunity", {})).is_empty() or not _copy_dict(stored_run.current_environment.get("scenario_hook_flags", {})).is_empty():
 		failures.append("Tutorial neutral pin did not store scenario identity without opportunity or hook leakage.")

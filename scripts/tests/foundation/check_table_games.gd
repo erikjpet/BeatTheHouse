@@ -1424,7 +1424,10 @@ func _check_crew_poker_hidden_leaks(run_state: RunState, save_projection: Varian
 		var public_text := JSON.stringify(projections[projection_name])
 		for token_value in forbidden:
 			var token := str(token_value)
-			if public_text.contains(token):
+			# Compare a complete serialized string token. Several legitimate save
+			# ids (for example tutorial ids beginning with `tip01`) contain these
+			# deliberately opaque short ids as substrings without exposing them.
+			if public_text.contains(JSON.stringify(token)):
 				failures.append("Crew poker hidden authored token '%s' leaked through the public %s projection." % [token, str(projection_name)])
 
 

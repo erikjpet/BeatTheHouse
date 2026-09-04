@@ -122,6 +122,38 @@ $script:FoundationSystemsShardPlan = [ordered]@{
     )
 }
 
+$script:FoundationGamesCheckIds = @(
+    "content",
+    "game_surface_contracts",
+    "table_environment_entry_contracts",
+    "bar_dice_contract",
+    "video_poker_contract",
+    "all_game_module_contracts",
+    "game_activation_class_guard",
+    "cross_game_integration_matrix",
+    "slot_contract_smoke",
+    "coin_pusher_contract"
+)
+
+# Balance by measured exact-tree cost. Each check still runs once with its
+# original seeds, limits, and assertions; only independent processes overlap.
+$script:FoundationGamesShardPlan = [ordered]@{
+    "games_content" = @("content")
+    "games_activation" = @("game_activation_class_guard")
+    "games_surfaces" = @(
+        "game_surface_contracts",
+        "table_environment_entry_contracts",
+        "bar_dice_contract"
+    )
+    "games_math_runtime" = @(
+        "video_poker_contract",
+        "all_game_module_contracts",
+        "cross_game_integration_matrix",
+        "slot_contract_smoke",
+        "coin_pusher_contract"
+    )
+}
+
 $script:FoundationSystemsUserPathOwners = [ordered]@{
     "user://foundation_tutorial_meta_store.json" = "onboarding_tutorial_arc"
     "user://foundation_profile_inventory_check.json" = "profile_inventory_boundary"
@@ -152,6 +184,14 @@ function Get-FoundationSystemsCheckIds {
 
 function Get-FoundationSystemsShardPlan {
     return $script:FoundationSystemsShardPlan
+}
+
+function Get-FoundationGamesCheckIds {
+    return @($script:FoundationGamesCheckIds)
+}
+
+function Get-FoundationGamesShardPlan {
+    return $script:FoundationGamesShardPlan
 }
 
 function Get-FoundationSystemsUserPathOwners {
@@ -285,7 +325,7 @@ function Remove-FoundationShardProjectRoot {
     if (-not $fullRoot.StartsWith($allowedRoot + [System.IO.Path]::DirectorySeparatorChar, [System.StringComparison]::OrdinalIgnoreCase)) {
         throw "Refusing to remove shard project outside allowed root: $fullRoot"
     }
-    foreach ($directoryName in @(".agents", "assets", "branding", "data", "docs", "scenes", "scripts", "tools")) {
+    foreach ($directoryName in @(".agents", "addons", "assets", "branding", "data", "docs", "scenes", "scripts", "tools")) {
         $junction = Join-Path $fullRoot $directoryName
         if (Test-Path -LiteralPath $junction) {
             [System.IO.Directory]::Delete($junction, $false)
@@ -522,7 +562,8 @@ function Test-FoundationSystemsShardPlan {
 function Merge-FoundationSystemsShardReports {
     param(
         [string[]]$ExpectedIds,
-        [object[]]$ShardResults
+        [object[]]$ShardResults,
+        [string]$SuiteName = "systems"
     )
     $harnessFailures = New-Object System.Collections.Generic.List[string]
     $checksById = @{}
@@ -536,7 +577,7 @@ function Merge-FoundationSystemsShardReports {
             $harnessFailures.Add("Systems shard '$shardId' did not produce a readable report.")
         }
         else {
-            if ([string]$report.tool -ne "foundation_check" -or [string]$report.suite -ne "systems") {
+            if ([string]$report.tool -ne "foundation_check" -or [string]$report.suite -ne $SuiteName) {
                 $harnessFailures.Add("Systems shard '$shardId' produced a report with the wrong tool or suite.")
             }
             $registeredIds = @($report.registered_check_ids)
@@ -643,7 +684,7 @@ function Merge-FoundationSystemsShardReports {
     $passed = ($failures.Count -eq 0)
     $mergedReport = [ordered]@{
         tool = "foundation_check"
-        suite = "systems"
+        suite = $SuiteName
         sharded = $true
         shard_count = $ShardResults.Count
         started_msec = 0
