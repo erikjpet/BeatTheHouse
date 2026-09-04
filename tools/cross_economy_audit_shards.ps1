@@ -103,6 +103,8 @@ while ($pending.Count -gt 0 -or $running.Count -gt 0) {
     for ($index = $running.Count - 1; $index -ge 0; $index--) {
         $job = $running[$index]
         if ($job.Process.HasExited) {
+            $job.Process.WaitForExit()
+            $job.Process.Refresh()
             $job.ExitCode = $job.Process.ExitCode
             $job.DurationSec = ((Get-Date) - $job.Started).TotalSeconds
             $job.Process.Dispose()
