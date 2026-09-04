@@ -1,7 +1,7 @@
 {
   "schema": "beat_the_house.perf06_low_end_profile/v1",
   "profile_id": "replace_with_owner_host_id",
-  "method": "physical",
+  "method": "reproducible_whole_matrix_throttle",
   "computer_name": "REPLACE_WITH_WINDOWS_COMPUTER_NAME",
   "resolution": "1280x720",
   "renderer": "compatibility",
@@ -14,6 +14,8 @@
     "--disable-renderer-backgrounding",
     "--disable-backgrounding-occluded-windows"
   ],
+  "native_processor_affinity_hex": "0x1",
+  "native_priority_class": "BelowNormal",
   "hardware_fingerprint_sha256": "replace_with_sha256_of_launcher_actual_hardware_json",
   "hardware": {
     "os_build": "replace",

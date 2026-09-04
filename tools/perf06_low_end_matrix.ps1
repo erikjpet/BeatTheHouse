@@ -14,7 +14,14 @@ foreach ($field in @("schema", "profile_id", "method", "computer_name", "resolut
     if (-not ($profile.PSObject.Properties.Name -contains $field)) { throw "Low-end profile is missing '$field'." }
 }
 if ([string]$profile.schema -cne "beat_the_house.perf06_low_end_profile/v1") { throw "Unsupported low-end profile schema '$($profile.schema)'." }
-if ([string]$profile.method -cne "physical") { throw "The maintained whole-matrix launcher accepts a named physical low-end host; Web-only CPU throttling is not a whole-matrix low-end result." }
+$method = [string]$profile.method
+if ($method -notin @("physical", "reproducible_whole_matrix_throttle")) { throw "Low-end method must be physical or reproducible_whole_matrix_throttle." }
+if ($method -eq "reproducible_whole_matrix_throttle") {
+    foreach ($field in @("native_processor_affinity_hex", "native_priority_class")) {
+        if (-not ($profile.PSObject.Properties.Name -contains $field)) { throw "Reproducible whole-matrix throttle is missing '$field'." }
+    }
+    if ([string]$profile.native_priority_class -notin @("Idle", "BelowNormal")) { throw "Reproducible native priority must be Idle or BelowNormal." }
+}
 if ([string]$profile.computer_name -cne $env:COMPUTERNAME) { throw "Profile host '$($profile.computer_name)' does not match '$env:COMPUTERNAME'." }
 if ([string]$profile.resolution -cne "1280x720" -or [string]$profile.renderer -cne "compatibility") { throw "Low-end profile must use 1280x720 and the compatibility renderer." }
 if ([string]$profile.web_browser -cne "chrome") { throw "Low-end Web qualification requires the maintained Chrome path." }
@@ -64,9 +71,19 @@ New-Item -ItemType Directory -Path $out | Out-Null
 $profileHash = (Get-FileHash -LiteralPath $profileFile -Algorithm SHA256).Hash.ToLowerInvariant()
 $oldEvidenceProfile = $env:BTH_PERF_EVIDENCE_PROFILE
 $oldLowEndProfile = $env:BTH_PERF_LOW_END_PROFILE
+$launcherProcess = Get-Process -Id $PID
+$oldProcessorAffinity = $launcherProcess.ProcessorAffinity
+$oldPriorityClass = $launcherProcess.PriorityClass
 $env:BTH_PERF_EVIDENCE_PROFILE = "low_end:$($profile.profile_id)"
 $env:BTH_PERF_LOW_END_PROFILE = $profileFile
 try {
+    if ($method -eq "reproducible_whole_matrix_throttle") {
+        $affinityText = ([string]$profile.native_processor_affinity_hex).Trim().ToLowerInvariant().Replace("0x", "")
+        $affinityMask = [Convert]::ToInt64($affinityText, 16)
+        if ($affinityMask -le 0) { throw "Native processor affinity mask must select at least one logical CPU." }
+        $launcherProcess.ProcessorAffinity = [IntPtr]$affinityMask
+        $launcherProcess.PriorityClass = [Diagnostics.ProcessPriorityClass]([string]$profile.native_priority_class)
+    }
     $processInventory = Get-Process | Select-Object Name, Id, CPU, WorkingSet64
     $hostEvidence = [ordered]@{
         schema = "beat_the_house.perf06_low_end_run/v1"
@@ -76,13 +93,16 @@ try {
         hardware_fingerprint_sha256 = $hardwareFingerprint
         actual_hardware = $actualHardware
         actual_power_plan = $actualPowerPlan
+        low_end_method = $method
+        actual_launcher_processor_affinity = ("0x{0:x}" -f [int64]$launcherProcess.ProcessorAffinity)
+        actual_launcher_priority_class = [string]$launcherProcess.PriorityClass
         computer_name = $env:COMPUTERNAME
         started_utc = [DateTime]::UtcNow.ToString("o")
         process_inventory_before = @($processInventory)
     }
     $hostEvidence | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $out "run_identity.json") -Encoding utf8
 
-    & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "foundation_performance_probe.ps1") -RunCount 8 -FramesPerSurface 120 -ResolveSampleCount 48 -SeedPrefix "PERF06-LOW-$($profile.profile_id)" -RequireGodot:$RequireGodot
+    & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "foundation_performance_probe.ps1") -RunCount 8 -FramesPerSurface 120 -ResolveSampleCount 48 -SeedPrefix "PERF06-LOW-$($profile.profile_id)" -Out (Join-Path $out "native_surface_probe.json") -CandidateCommit $head -ProfileManifestSha256 $profileHash -EvidenceProfile "low_end:$($profile.profile_id)" -RequireGodot:$RequireGodot
     if ($LASTEXITCODE -ne 0) { throw "Native low-end surface matrix failed." }
 
     $webRuns = @(
@@ -122,4 +142,6 @@ try {
 finally {
     $env:BTH_PERF_EVIDENCE_PROFILE = $oldEvidenceProfile
     $env:BTH_PERF_LOW_END_PROFILE = $oldLowEndProfile
+    $launcherProcess.ProcessorAffinity = $oldProcessorAffinity
+    $launcherProcess.PriorityClass = $oldPriorityClass
 }

@@ -2057,6 +2057,8 @@ func _percentile(sorted_samples: Array, percentile: float) -> float:
 func _write_report() -> void:
 	var report := {
 		"tool": "foundation_performance_probe",
+		"candidate_commit": OS.get_environment("BTH_PERF_CANDIDATE_COMMIT"),
+		"profile_manifest_sha256": OS.get_environment("BTH_PERF_PROFILE_MANIFEST_SHA256"),
 		"evidence_profile": OS.get_environment("BTH_PERF_EVIDENCE_PROFILE"),
 		"run_count": run_count,
 		"frames_per_surface": frames_per_surface,
@@ -2091,14 +2093,16 @@ func _write_report() -> void:
 		"warnings": warnings,
 		"failures": failures,
 	}
-	var file := FileAccess.open(REPORT_PATH, FileAccess.WRITE)
+	var requested_report_path := OS.get_environment("BTH_PERF_REPORT_PATH").strip_edges()
+	var output_path := requested_report_path if not requested_report_path.is_empty() else REPORT_PATH
+	var file := FileAccess.open(output_path, FileAccess.WRITE)
 	if file == null:
 		push_error("Could not write performance probe report.")
 		return
 	file.store_string(JSON.stringify(report, "\t"))
 	file.close()
 	print(JSON.stringify(report, "\t"))
-	print("Foundation performance probe report written to %s" % ProjectSettings.globalize_path(REPORT_PATH))
+	print("Foundation performance probe report written to %s" % ProjectSettings.globalize_path(output_path))
 
 
 func _print_summary() -> void:
