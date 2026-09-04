@@ -39,6 +39,11 @@ $tree = (git -C $projectRoot rev-parse "HEAD^{tree}").Trim()
 $godot = $env:GODOT_BIN
 if (-not $godot) { $godot = "D:\Projects\Beat-The-House\.tools\godot-4.6-stable\Godot_v4.6-stable_win64_console.exe" }
 if (-not (Test-Path -LiteralPath $godot -PathType Leaf)) { throw "Godot console executable not found: $godot" }
+$godotWorker = [IO.Path]::GetFullPath($godot)
+if ($godotWorker.EndsWith("_console.exe", [StringComparison]::OrdinalIgnoreCase)) {
+    $godotWorker = $godotWorker.Substring(0, $godotWorker.Length - "_console.exe".Length) + ".exe"
+}
+if (-not (Test-Path -LiteralPath $godotWorker -PathType Leaf)) { throw "Godot worker executable not found: $godotWorker" }
 
 $inputPaths = @(
     "tools/cross_economy_audit.gd", "tools/cross_economy_audit.ps1",
@@ -116,7 +121,7 @@ while ($pending.Count -gt 0 -or $running.Count -gt 0) {
             "--playstyle=$($job.Style)", "--build-ref=$head", "--output=res://$($job.Style).json"
         )
         $job.Started = Get-Date
-        $job.Process = Start-Process -FilePath $godot -ArgumentList $args -WorkingDirectory $job.ProjectRoot -WindowStyle Hidden -RedirectStandardOutput $job.Stdout -RedirectStandardError $job.Stderr -PassThru
+        $job.Process = Start-Process -FilePath $godotWorker -ArgumentList $args -WorkingDirectory $job.ProjectRoot -WindowStyle Hidden -RedirectStandardOutput $job.Stdout -RedirectStandardError $job.Stderr -PassThru
         $running.Add($job)
         Write-Host "BALANCE_SHARD_START style=$($job.Style)"
     }
@@ -214,6 +219,7 @@ $custody = [ordered]@{
     schema = "balance06_1_cross_economy_custody_v1"
     exact_head = $head; exact_tree = $tree; generated_at_utc = (Get-Date).ToUniversalTime().ToString("o")
     engine_path = [IO.Path]::GetFullPath($godot); engine_sha256 = (Get-FileHash -LiteralPath $godot -Algorithm SHA256).Hash.ToLowerInvariant()
+    worker_path = $godotWorker; worker_sha256 = (Get-FileHash -LiteralPath $godotWorker -Algorithm SHA256).Hash.ToLowerInvariant()
     os = [Environment]::OSVersion.VersionString; processor_count = [Environment]::ProcessorCount; worker_count = $WorkerCount
     input_manifest_sha256 = $inputHash; inputs = $inputs; policy_blob = $policyHash
     aggregate_summary = [ordered]@{ path = $summaryPath; bytes = (Get-Item $summaryPath).Length; sha256 = (Get-FileHash -LiteralPath $summaryPath -Algorithm SHA256).Hash.ToLowerInvariant() }
