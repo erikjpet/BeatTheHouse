@@ -59,6 +59,7 @@ func _run() -> void:
 	var rows: Array = []
 	var semantic_cases: Array = []
 	var seed_ids: Array = []
+	var retained_before := _retained_runtime_snapshot()
 	var started_usec := Time.get_ticks_usec()
 	for case_index in range(CASES.size()):
 		if case_index % shard_count != shard_index:
@@ -135,6 +136,17 @@ func _run() -> void:
 	var max_state_bytes := 0
 	for row_value in rows:
 		max_state_bytes = maxi(max_state_bytes, int(_dict(row_value).get("state_bytes", 0)))
+	var retained_after := _retained_runtime_snapshot()
+	var retained_growth := {
+		"nodes": int(retained_after.get("nodes", 0)) - int(retained_before.get("nodes", 0)),
+		"resources": int(retained_after.get("resources", 0)) - int(retained_before.get("resources", 0)),
+		"objects": int(retained_after.get("objects", 0)) - int(retained_before.get("objects", 0)),
+		"orphans": int(retained_after.get("orphans", 0)) - int(retained_before.get("orphans", 0)),
+	}
+	if int(retained_after.get("orphans", 0)) != 0:
+		failures.append("Terminal-soak process retained %d orphan nodes." % int(retained_after.get("orphans", 0)))
+	if max_state_bytes > 1500000:
+		failures.append("Terminal-soak serialized semantic state exceeded the 1,500,000-byte release bound.")
 	var report := {
 		"schema": SCHEMA,
 		"version": VERSION,
@@ -152,7 +164,7 @@ func _run() -> void:
 		"terminal": {"status": "covered" if rows.all(func(row: Dictionary) -> bool: return bool(row.get("passed", false))) else "incomplete", "route": "multiple", "failure_reason": "", "profile_recorded": profile_persisted},
 		"semantic_trace_sha256": JSON.stringify(semantic_payload).sha256_text(),
 		"save_load_points": rows.reduce(func(total: int, row: Dictionary) -> int: return total + int(row.get("save_load_count", 0)), 0),
-		"retained_counters": {"available": true, "measured": ["resources", "objects", "nodes", "orphans", "state_bytes"], "nodes": int(Performance.get_monitor(Performance.OBJECT_NODE_COUNT)), "resources": int(Performance.get_monitor(Performance.OBJECT_RESOURCE_COUNT)), "objects": int(Performance.get_monitor(Performance.OBJECT_COUNT)), "orphans": int(Performance.get_monitor(Performance.OBJECT_ORPHAN_NODE_COUNT)), "state_bytes": max_state_bytes},
+		"retained_counters": {"available": true, "measured": ["resources", "objects", "nodes", "orphans", "state_bytes"], "nodes": int(retained_after.get("nodes", 0)), "resources": int(retained_after.get("resources", 0)), "objects": int(retained_after.get("objects", 0)), "orphans": int(retained_after.get("orphans", 0)), "state_bytes": max_state_bytes, "baseline": retained_before, "growth": retained_growth},
 		"allocation_copy_counters": {"available": false, "allocations": null, "shallow_copies": null, "deep_copies": null, "bytes": null, "source": "not_instrumented_by_terminal_policy_driver"},
 		"elapsed_ms": snapped(elapsed_total_ms, 0.001),
 		"rows": rows,
@@ -205,6 +217,15 @@ func _observed_systems(rows: Array) -> Array:
 	var result: Array = systems.keys()
 	result.sort()
 	return result
+
+
+func _retained_runtime_snapshot() -> Dictionary:
+	return {
+		"nodes": int(Performance.get_monitor(Performance.OBJECT_NODE_COUNT)),
+		"resources": int(Performance.get_monitor(Performance.OBJECT_RESOURCE_COUNT)),
+		"objects": int(Performance.get_monitor(Performance.OBJECT_COUNT)),
+		"orphans": int(Performance.get_monitor(Performance.OBJECT_ORPHAN_NODE_COUNT)),
+	}
 
 
 func _options() -> Dictionary:
