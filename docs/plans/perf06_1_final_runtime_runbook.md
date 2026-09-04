@@ -32,8 +32,17 @@ $normalRoot = ".tmp/perf06-final-$tag-normal"
 $lowRoot = ".tmp/perf06-final-$tag-low-end"
 $normalProfile = ".tmp/perf06-final-$tag-host.json"
 $lowProfile = ".tmp/perf06-final-$tag-low-end-host.json"
+$beforeQuiescence = Join-Path $normalRoot "quiescence_before.json"
+$afterQuiescence = Join-Path $normalRoot "quiescence_after.json"
+$seedPrefix = "PERF06-FINAL"
+$workerWitness = [string]$env:BTH_PERF_WORKER_WITNESS
+$directorWitness = [string]$env:BTH_PERF_DIRECTOR_WITNESS
+if ([string]::IsNullOrWhiteSpace($workerWitness) -or [string]::IsNullOrWhiteSpace($directorWitness)) { throw "Set distinct BTH_PERF_WORKER_WITNESS and BTH_PERF_DIRECTOR_WITNESS identities before qualification." }
+if ($workerWitness -ceq $directorWitness) { throw "Worker and director quiescence witnesses must be distinct." }
 New-Item -ItemType Directory -Path $normalRoot | Out-Null
 
+& tools/perf06_capture_quiescence.ps1 -Stage before -WorkerWitness $workerWitness -DirectorWitness $directorWitness -CandidateCommit $candidate -Out $beforeQuiescence -SampleCount 3 -RequireNoQualificationProcesses
+if ($LASTEXITCODE -ne 0) { throw "Before-run quiescence custody failed." }
 & tools/perf06_capture_host_profile.ps1 -ProfileId "perf06-final-$tag-host" -Out $normalProfile -Method physical -WebCpuThrottleRate 4
 if ($LASTEXITCODE -ne 0) { throw "Normal host-profile capture failed." }
 & tools/perf06_capture_host_profile.ps1 -ProfileId "perf06-final-$tag-low-end" -Out $lowProfile -Method reproducible_whole_matrix_throttle -NativeProcessorAffinityHex 0x1 -NativePriorityClass BelowNormal -WebCpuThrottleRate 4
@@ -53,6 +62,10 @@ if ($LASTEXITCODE -ne 0) { throw "Godot parser/import gate failed." }
 if ($LASTEXITCODE -ne 0) { throw "Required-matrix contract failed." }
 & tools/perf06_budget_contract_test.ps1
 if ($LASTEXITCODE -ne 0) { throw "Budget contract failed." }
+& tools/perf06_phase_qualification_contract_test.ps1
+if ($LASTEXITCODE -ne 0) { throw "Native timing/liveness qualification contract failed." }
+& tools/perf06_quiescence_contract_test.ps1
+if ($LASTEXITCODE -ne 0) { throw "Quiescence custody contract failed." }
 & tools/perf06_allocation_contract_test.ps1
 if ($LASTEXITCODE -ne 0) { throw "Allocation negative-fixture contract failed." }
 & tools/web_perf_idle_liveness_contract_test.ps1
@@ -86,7 +99,7 @@ if ($LASTEXITCODE -ne 0) { throw "Coin Pusher production static-cache contract f
 $normalAudit = Join-Path $normalRoot "allocation_call_root_audit.json"
 & tools/perf06_allocation_call_root_audit.ps1 -CandidateCommit $candidate -Out $normalAudit
 if ($LASTEXITCODE -ne 0) { throw "Allocation call-root audit failed." }
-& tools/foundation_performance_probe.ps1 -RunCount 8 -FramesPerSurface 120 -ResolveSampleCount 48 -SeedPrefix "PERF06-FINAL-$tag" -Out (Join-Path $normalRoot "foundation_probe.json") -CandidateCommit $candidate -ProfileManifestSha256 $normalProfileHash -EvidenceProfile native -RequireGodot
+& tools/foundation_performance_probe.ps1 -RunCount 8 -FramesPerSurface 120 -ResolveSampleCount 48 -SeedPrefix $seedPrefix -Out (Join-Path $normalRoot "foundation_probe.json") -CandidateCommit $candidate -ProfileManifestSha256 $normalProfileHash -EvidenceProfile native -RequireGodot
 if ($LASTEXITCODE -ne 0) { throw "Foundation native probe failed." }
 
 $surfaceReports = [Collections.Generic.List[string]]::new()
@@ -157,7 +170,7 @@ Web CPU throttle 4. Its own preflight and matrix consumer are mandatory.
 ```powershell
 & tools/perf06_low_end_matrix.ps1 -ProfilePath $lowProfile -GodotPath $godot -OutDir "$lowRoot-preflight" -PreflightOnly -RequireGodot
 if ($LASTEXITCODE -ne 0) { throw "Low-end preflight failed." }
-& tools/perf06_low_end_matrix.ps1 -ProfilePath $lowProfile -GodotPath $godot -OutDir $lowRoot -RequireGodot
+& tools/perf06_low_end_matrix.ps1 -ProfilePath $lowProfile -GodotPath $godot -OutDir $lowRoot -SeedPrefix $seedPrefix -RequireGodot
 if ($LASTEXITCODE -ne 0) { throw "Low-end matrix failed." }
 ```
 
@@ -174,6 +187,9 @@ if (& git status --porcelain --untracked-files=no) { throw "Tracked source chang
 $matrix = Get-Content -LiteralPath $finalMatrix -Raw | ConvertFrom-Json
 if (-not $matrix.passed) { throw "Final matrix did not pass." }
 if (@($matrix.coverage | Where-Object { -not $_.present }).Count -ne 0) { throw "Final matrix has missing cells." }
+if (@($matrix.coverage | Where-Object { $_.samples -le 0 }).Count -ne 0) { throw "Final matrix contains an empty coverage row." }
+& tools/perf06_capture_quiescence.ps1 -Stage after -WorkerWitness $workerWitness -DirectorWitness $directorWitness -CandidateCommit $candidate -Out $afterQuiescence -SampleCount 3 -RequireNoQualificationProcesses
+if ($LASTEXITCODE -ne 0) { throw "After-run quiescence custody failed." }
 Get-ChildItem -LiteralPath $normalRoot, $lowRoot -Recurse -File |
     Get-FileHash -Algorithm SHA256 |
     Sort-Object Path |
@@ -181,7 +197,8 @@ Get-ChildItem -LiteralPath $normalRoot, $lowRoot -Recurse -File |
     Set-Content -LiteralPath (Join-Path $normalRoot "artifact_sha256.txt") -Encoding utf8
 ```
 
-Only after this final consumer passes may its 336-cell matrix, producer
-findings and artifact hashes be copied into the performance report and the
-board row be considered for DONE. A red budget remains red unless the owner
-records an explicit exception; this runbook does not create one.
+Only after this final consumer passes every published timing check, every real
+liveness floor and its 336-cell matrix may the producer findings and artifact
+hashes be copied into the performance report and the board row be considered
+for DONE. A red budget remains red unless the owner records an explicit
+exception; this runbook does not create one.

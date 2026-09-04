@@ -460,8 +460,9 @@ The required catalog contains 11 games with 62 phases and 12 systems with 50
 phases. Across native, Web and low-end profiles, the final consumer therefore
 requires 336 phase/profile cells. A deliberate empty-input execution of
 `perf06_matrix_contract.ps1` failed closed with all 336 cells absent plus 24
-missing composition/terminal manifest-field failures. This confirms that no
-development artifact can currently be mistaken for the final report.
+manifest-related failures: 22 missing required fields and two missing manifest
+files. This confirms that no development artifact can currently be mistaken
+for the final report.
 
 At the checkpoint commit, the required-matrix, published-budget, negative
 allocation, seven-root allocation source audit, Web idle-liveness, Coin Pusher
@@ -481,3 +482,12 @@ consumer invocation are recorded in
 PROGRESS** until that sequence runs on a clean, quiesced, exact main candidate,
 all producers pass without a budget waiver, all 336 cells are present, and the
 raw artifact hashes are added to the final report.
+
+The final sequence uses the frozen `PERF06-FINAL-01` through
+`PERF06-FINAL-08` surface seeds for both normal and low-end native probes. Its
+before/after custody records distinct worker and director witnesses, three idle
+CPU/memory observations, and full process inventories. Native release rows now
+retain and enforce the unchanged published timing caps and scaled 8-per-120
+animated-idle floor; the combined consumer independently rejects any row whose
+recorded value exceeds its cap or misses that floor. These are harness
+requirements only and do not constitute final measurement evidence.

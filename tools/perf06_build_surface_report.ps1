@@ -40,6 +40,8 @@ $profileManifest = Read-Json $profileFile
 $summary = Read-Json $summaryFile
 $audit = Read-Json $auditFile
 $budgetTable = Read-Json $budgetFile
+$phaseContract = Join-Path $PSScriptRoot "perf06_phase_qualification_contract.ps1"
+. $phaseContract
 if (-not [bool]$audit.passed -or [string]$audit.candidate_commit -cne $candidate) { throw "Static allocation audit is not green for the candidate." }
 if (-not [bool]$summary.passed -or @($summary.failures).Count -ne 0) { throw "Runtime launch summary did not pass its enforced budgets and contracts." }
 
@@ -89,14 +91,9 @@ foreach ($scenario in @($runtime.scenarios)) {
     $surfaceId = [string]$tags.perf06_surface_id
     $phaseId = [string]$tags.perf06_phase_id
     if ([string]::IsNullOrWhiteSpace($surfaceId) -or [string]::IsNullOrWhiteSpace($phaseId)) { continue }
-    $gameLive = $scenario.liveness_counter_delta.game_surface
-    $environmentLive = $scenario.liveness_counter_delta.environment_scene
-    $gameMeasured = [int]$gameLive.draw_sample_count
-    $environmentMeasured = [int]$environmentLive.scene_idle_animation_redraw_count
-    $isIdle = [string]$tags.mode -match "idle"
-    $counter = if ($gameMeasured -gt 0) { "draw_sample_count" } elseif ($environmentMeasured -gt 0) { "scene_idle_animation_redraw_count" } else { "static_phase" }
-    $measured = if ($gameMeasured -gt 0) { $gameMeasured } else { $environmentMeasured }
-    $zeroReason = if ($measured -le 0 -and -not $isIdle) { "Synchronous/static action phase; production action progress is required instead." } else { "" }
+    $plan = [string]$summary.plan
+    $livenessEvaluation = Get-Perf06PhaseLivenessEvaluation -Scenario $scenario -Platform $Platform -BudgetTable $budgetTable
+    $budgetEvaluation = Get-Perf06PhaseBudgetEvaluation -Scenario $scenario -Platform $Platform -BudgetTable $budgetTable -Plan $plan
     $drawStats = $scenario.surface_draw_time_ms
     $frameMetric = Metric $scenario.frame_time_ms
     $drawMetric = [ordered]@{
@@ -117,7 +114,7 @@ foreach ($scenario in @($runtime.scenarios)) {
     if (Has-Property $tags "phase_evidence") { $phaseEvidencePassed = [bool]$tags.phase_evidence.observed }
     $activePhasePassed = $true
     if (Has-Property $tags "active_phase_evidence") { $activePhasePassed = [bool]$tags.active_phase_evidence.coverage_passed }
-    $passed = $frameMetric.count -gt 0 -and $drawMetric.count -gt 0 -and $actionPassed -and $phaseEvidencePassed -and $activePhasePassed -and ($measured -gt 0 -or -not [string]::IsNullOrWhiteSpace($zeroReason)) -and [int64]$allocation.deep_copies -eq 0
+    $passed = $frameMetric.count -gt 0 -and $drawMetric.count -gt 0 -and $actionPassed -and $phaseEvidencePassed -and $activePhasePassed -and [bool]$livenessEvaluation.passed -and [bool]$budgetEvaluation.passed -and [int64]$allocation.deep_copies -eq 0
     if (-not $passed) { $failures.Add("Phase did not produce complete live evidence: $surfaceId/$phaseId/$Profile") }
     $rows.Add([pscustomobject][ordered]@{
         surface_id = $surfaceId
@@ -128,7 +125,8 @@ foreach ($scenario in @($runtime.scenarios)) {
         launch_identity = $launch
         frame = $frameMetric
         draw = $drawMetric
-        liveness = [ordered]@{ counter=$counter; floor=if ($measured -gt 0) { 1 } else { 0 }; measured=$measured; zero_reason=$zeroReason }
+        liveness = $livenessEvaluation
+        budget_evaluation = $budgetEvaluation
         allocation_copy_counters = $allocation
         retained_counters = [ordered]@{ static_memory=$scenario.static_memory_bytes; objects=$scenario.object_count; nodes=$scenario.node_count; orphans=$scenario.orphan_node_count }
         action_evidence = $(if (Has-Property $tags "action_evidence") { $tags.action_evidence } else { $null })
