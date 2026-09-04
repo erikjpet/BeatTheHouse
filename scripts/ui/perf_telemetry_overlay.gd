@@ -1860,7 +1860,45 @@ func _trigger_active_game_action(game_id: String) -> Dictionary:
 		"hand_number_after": int(after.get("hand_number", 0)),
 		"action_ordinal_before": int(before.get("action_ordinal", 0)),
 		"action_ordinal_after": int(after.get("action_ordinal", 0)),
+		"surface_before": _perf06_surface_evidence(before),
+		"surface_after": _perf06_surface_evidence(after),
 	}
+
+
+func _perf06_surface_evidence(snapshot: Dictionary) -> Dictionary:
+	var evidence := {}
+	for key_value in [
+		"game_id", "phase", "ritual_phase", "counter_phase", "hand_number",
+		"action_ordinal", "result_message", "showdown_active", "deal_staged",
+		"payout_staged", "double_up_offered", "baccarat_squeeze_available",
+		"rolled", "presentation_phase", "last_net", "win_meter",
+	]:
+		var key := str(key_value)
+		if snapshot.has(key):
+			evidence[key] = snapshot.get(key)
+	var last_result: Variant = snapshot.get("last_result", {})
+	evidence["last_result_present"] = typeof(last_result) == TYPE_DICTIONARY and not (last_result as Dictionary).is_empty()
+	var ritual_projection: Variant = snapshot.get("ritual_projection", {})
+	if typeof(ritual_projection) == TYPE_DICTIONARY:
+		var projection: Dictionary = ritual_projection
+		evidence["ritual_projection_present"] = not projection.is_empty()
+		evidence["ritual_projection_phase"] = str(projection.get("phase_id", projection.get("phase", "")))
+	else:
+		evidence["ritual_projection_present"] = false
+		evidence["ritual_projection_phase"] = ""
+	var channels: Array = snapshot.get("surface_animation_channels", []) if typeof(snapshot.get("surface_animation_channels", [])) == TYPE_ARRAY else []
+	var active_channels: Array = []
+	for channel_value in channels:
+		if typeof(channel_value) != TYPE_DICTIONARY:
+			continue
+		var channel: Dictionary = channel_value
+		if not str(channel.get("active_id", channel.get("id", ""))).is_empty():
+			active_channels.append({
+				"channel": str(channel.get("channel", channel.get("channel_id", ""))),
+				"active_id": str(channel.get("active_id", channel.get("id", ""))),
+			})
+	evidence["active_animation_channels"] = active_channels
+	return evidence
 
 
 func _preferred_action_id(game_id: String) -> String:
