@@ -13,6 +13,9 @@ $machines = @("quarter_falls", "jackpot_ridge", "vault_drop")
 $custodySchema = "coin_pusher_ev_custody_v1"
 $harnessSchema = "coin_pusher_v3_physical_ev_harness_v2"
 $shardSchema = "coin_pusher_v3_physical_ev_shard_v2"
+$archivePathspecs = @("project.godot", "icon.svg", "tools", "scripts", "scenes", "data", "assets", "branding", "native")
+$knownLongExcludedPath = "docs/plans/evidence/balance06_1/validation/foundation_systems_retry1/user_data/systems_events_saves/Godot/app_userdata/Beat the House/saves/foundation_check_grand_casino_showdown_pending.json"
+$projectRoot = Split-Path -Parent $PSScriptRoot
 
 function Get-ObjectValue([object]$Object, [string]$Name) {
     if ($null -eq $Object) { return $null }
@@ -34,6 +37,15 @@ function Write-JsonFile([object]$Value, [string]$Path, [int]$Depth = 20) {
     $parent = Split-Path -Parent $Path
     if ($parent) { New-Item -ItemType Directory -Path $parent -Force | Out-Null }
     $Value | ConvertTo-Json -Depth $Depth | Set-Content -LiteralPath $Path -Encoding utf8
+}
+
+function Test-ArchivePathSelected([string]$Path) {
+    $normalized = $Path.Replace("\", "/").TrimStart("./")
+    if ($normalized -in @("project.godot", "icon.svg")) { return $true }
+    foreach ($root in @("tools", "scripts", "scenes", "data", "assets", "branding", "native")) {
+        if ($normalized.StartsWith("$root/", [StringComparison]::Ordinal)) { return $true }
+    }
+    return $false
 }
 
 function Get-IdentityFailures([object]$Actual, [object]$Expected, [string]$Label) {
@@ -158,14 +170,44 @@ if ($SelfTest) {
     if (@(Get-EvidenceContractFailures $missingManifest $ShardsPerMachine $expectedIdentity).Count -eq 0) {
         throw "Self-test failed: missing machine evidence was accepted."
     }
-    Write-Host "COIN_PUSHER_EV_CUSTODY_SELF_TEST_PASS changed_identity_rejected=true mixed_policy_rejected=true missing_machine_rejected=true"
+    if (Test-ArchivePathSelected $knownLongExcludedPath) { throw "Self-test failed: known long documentation evidence path was selected." }
+    $tarCommand = Get-Command tar.exe -ErrorAction Stop
+    $testRoot = Join-Path ([IO.Path]::GetTempPath()) ("bth_evc_" + [guid]::NewGuid().ToString("N"))
+    $testArchive = Join-Path $testRoot "s.tar"
+    $testExtract = Join-Path $testRoot "x"
+    try {
+        New-Item -ItemType Directory -Path $testExtract -Force | Out-Null
+        & git -C $projectRoot archive --format=tar --output=$testArchive HEAD -- @archivePathspecs
+        if ($LASTEXITCODE -ne 0) { throw "Self-test failed: executable-input git archive could not be created." }
+        $listing = @(& $tarCommand.Source -tf $testArchive)
+        if ($LASTEXITCODE -ne 0) { throw "Self-test failed: executable-input archive could not be listed." }
+        if ($listing -contains $knownLongExcludedPath -or @($listing | Where-Object { -not (Test-ArchivePathSelected $_) }).Count -ne 0) {
+            throw "Self-test failed: archive contains a path outside the executable-input allowlist."
+        }
+        & $tarCommand.Source -xf $testArchive -C $testExtract
+        if ($LASTEXITCODE -ne 0) { throw "Self-test failed: executable-input archive could not be extracted with tar.exe." }
+        foreach ($required in @(
+            "project.godot", "icon.svg", "tools/coin_pusher_ev_custody.ps1", "tools/coin_pusher_ev_harness.ps1",
+            "tools/coin_pusher_ev_shard.gd", "scripts/core/rng_stream.gd", "scripts/games/coin_pusher.gd",
+            "data/games/games.json", "data/economy/content06_1_audit.json"
+        )) {
+            $extracted = Join-Path $testExtract $required.Replace("/", "\")
+            if (-not (Test-Path -LiteralPath $extracted -PathType Leaf)) { throw "Self-test failed: archive omitted required input $required." }
+            $expectedBlob = (git -C $projectRoot rev-parse "HEAD:$required").Trim()
+            $actualBlob = (git -C $projectRoot hash-object -- $extracted).Trim()
+            if ($actualBlob -cne $expectedBlob) { throw "Self-test failed: extracted input hash mismatch for $required." }
+        }
+    }
+    finally {
+        if (Test-Path -LiteralPath $testRoot) { Remove-Item -LiteralPath $testRoot -Recurse -Force }
+    }
+    Write-Host "COIN_PUSHER_EV_CUSTODY_SELF_TEST_PASS changed_identity_rejected=true mixed_policy_rejected=true missing_machine_rejected=true long_docs_excluded=true tar_extract_verified=true"
     exit 0
 }
 
-$projectRoot = Split-Path -Parent $PSScriptRoot
 if (-not $RuntimeSourceRoot) { $RuntimeSourceRoot = $projectRoot }
 $RuntimeSourceRoot = [IO.Path]::GetFullPath($RuntimeSourceRoot)
-if (-not $OutDir) { $OutDir = Join-Path $projectRoot ".tmp\coin_pusher_ev_custody_$(Get-Date -Format 'yyyy-MM-dd_HH-mm-ss')" }
+if (-not $OutDir) { $OutDir = Join-Path $projectRoot ".tmp\evc\$(Get-Date -Format 'yyyyMMdd_HHmmss')" }
 $OutDir = [IO.Path]::GetFullPath($OutDir)
 $projectPrefix = [IO.Path]::GetFullPath($projectRoot)
 if (-not $projectPrefix.EndsWith([IO.Path]::DirectorySeparatorChar)) { $projectPrefix += [IO.Path]::DirectorySeparatorChar }
@@ -189,16 +231,19 @@ try {
     $head = (git -C $projectRoot rev-parse HEAD).Trim()
     $tree = (git -C $projectRoot rev-parse "HEAD^{tree}").Trim()
 
-    $archivePath = Join-Path $OutDir "frozen_source_$head.zip"
-    & git -C $projectRoot archive --format=zip --output=$archivePath $head
+    $tarCommand = Get-Command tar.exe -ErrorAction Stop
+    $archivePath = Join-Path $OutDir "s.tar"
+    & git -C $projectRoot archive --format=tar --output=$archivePath $head -- @archivePathspecs
     if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $archivePath -PathType Leaf)) { throw "Could not archive exact HEAD $head." }
     $archiveHash = (Get-FileHash -LiteralPath $archivePath -Algorithm SHA256).Hash.ToLowerInvariant()
-    $frozenRoot = Join-Path $OutDir "frozen_project"
-    Expand-Archive -LiteralPath $archivePath -DestinationPath $frozenRoot
+    $frozenRoot = Join-Path $OutDir "p"
+    New-Item -ItemType Directory -Path $frozenRoot -Force | Out-Null
+    & $tarCommand.Source -xf $archivePath -C $frozenRoot
+    if ($LASTEXITCODE -ne 0) { throw "Could not extract the executable-input archive with tar.exe." }
 
     $trackedEntries = [Collections.Generic.List[object]]::new()
     $trackedByPath = @{}
-    foreach ($line in @(git -C $projectRoot -c core.quotepath=false ls-tree -r --full-tree $head)) {
+    foreach ($line in @(git -C $projectRoot -c core.quotepath=false ls-tree -r --full-tree $head -- @archivePathspecs)) {
         if ($line -notmatch '^(?<mode>[0-9]+) (?<type>[^ ]+) (?<blob>[0-9a-f]+)\t(?<path>.+)$') { throw "Could not parse git tree entry: $line" }
         if ($Matches.type -ne "blob") { throw "Unsupported non-blob tracked entry: $($Matches.path)" }
         $relative = $Matches.path.Replace("\", "/")
@@ -211,12 +256,22 @@ try {
         }
         $trackedEntries.Add($entry); $trackedByPath[$relative] = $entry
     }
+    foreach ($entry in $trackedEntries) {
+        if (-not (Test-ArchivePathSelected ([string]$entry.path)) -or [string]$entry.path -like "docs/*") {
+            throw "Executable input archive included a disallowed path: $($entry.path)"
+        }
+    }
     foreach ($required in @(
         "tools/coin_pusher_ev_custody.ps1", "tools/coin_pusher_ev_harness.ps1", "tools/coin_pusher_ev_shard.gd",
         "scripts/games/coin_pusher.gd", "scripts/games/coin_pusher/coin_pusher_solver.gd",
         "scripts/games/coin_pusher/coin_pusher_solver_api.gd", "scripts/games/coin_pusher/coin_pusher_live_session.gd",
-        "scripts/core/content_library.gd", "scripts/core/rng_stream.gd", "data/games/games.json"
+        "scripts/core/content_library.gd", "scripts/core/run_state.gd", "scripts/core/rng_stream.gd",
+        "scripts/core/game_module.gd", "data/games/games.json", "data/economy/content06_1_audit.json",
+        "project.godot", "icon.svg"
     )) { if (-not $trackedByPath.ContainsKey($required)) { throw "Tracked EV input is missing: $required" } }
+    foreach ($prefix in @("tools/", "scripts/", "scenes/", "data/", "data/economy/", "data/games/", "assets/", "branding/", "native/coin_pusher/")) {
+        if (@($trackedEntries | Where-Object { [string]$_.path -like "$prefix*" }).Count -eq 0) { throw "Executable input archive is missing required group: $prefix" }
+    }
 
     $trackedCanonical = (@($trackedEntries | Sort-Object path | ForEach-Object { "$($_.path)|$($_.mode)|$($_.git_blob)|$($_.bytes)|$($_.sha256)" }) -join "`n")
     $trackedHash = Get-Sha256Text $trackedCanonical
@@ -224,13 +279,18 @@ try {
         schema = "coin_pusher_ev_tracked_input_manifest_v1"; exact_head = $head; exact_tree = $tree
         canonical_sha256 = $trackedHash; entry_count = $trackedEntries.Count; entries = @($trackedEntries)
     }
-    $trackedManifestPath = Join-Path $OutDir "tracked_input_manifest.json"
+    $trackedManifestPath = Join-Path $OutDir "t.json"
     Write-JsonFile $trackedManifest $trackedManifestPath 8
     $trackedManifestFileHash = (Get-FileHash -LiteralPath $trackedManifestPath -Algorithm SHA256).Hash.ToLowerInvariant()
 
     $policyEntries = @($trackedEntries | Where-Object {
-        [string]$_.path -in @("tools/coin_pusher_ev_custody.ps1", "tools/coin_pusher_ev_harness.ps1", "tools/coin_pusher_ev_shard.gd", "scripts/games/coin_pusher.gd", "data/games/games.json") -or
-        [string]$_.path -like "scripts/games/coin_pusher/*" -or [string]$_.path -like "native/coin_pusher/*"
+        [string]$_.path -in @(
+            "project.godot", "tools/coin_pusher_ev_custody.ps1", "tools/coin_pusher_ev_harness.ps1",
+            "tools/coin_pusher_ev_shard.gd", "scripts/games/coin_pusher.gd", "scripts/core/rng_stream.gd",
+            "scripts/core/content_library.gd", "scripts/core/game_module.gd", "scripts/core/item_effect.gd"
+        ) -or [string]$_.path -like "scripts/games/coin_pusher/*" -or
+        [string]$_.path -like "data/games/*" -or [string]$_.path -like "data/economy/*" -or
+        [string]$_.path -like "native/coin_pusher/*"
     } | Sort-Object path)
     $policyCanonical = (@($policyEntries | ForEach-Object { "$($_.path)|$($_.git_blob)|$($_.sha256)" }) -join "`n")
     $policyHash = Get-Sha256Text $policyCanonical
@@ -290,7 +350,7 @@ try {
         schema = "coin_pusher_ev_runtime_manifest_v1"; source_root = $RuntimeSourceRoot
         canonical_sha256 = $runtimeHash; entry_count = $runtimeEntries.Count; entries = @($runtimeEntries)
     }
-    $runtimeManifestPath = Join-Path $OutDir "runtime_manifest.json"
+    $runtimeManifestPath = Join-Path $OutDir "r.json"
     Write-JsonFile $runtimeManifest $runtimeManifestPath 8
     $runtimeManifestFileHash = (Get-FileHash -LiteralPath $runtimeManifestPath -Algorithm SHA256).Hash.ToLowerInvariant()
     $pluginEntries = @($runtimeEntries | Where-Object { [string]$_.path -like "addons/coin_pusher_native/*" } | Sort-Object path)
@@ -316,9 +376,9 @@ try {
     }
     if ($failures.Count -ne 0) { throw "Pre-run custody verification failed." }
 
-    $rawRoot = Join-Path $frozenRoot ".tmp\coin_pusher_ev_raw"
-    $harnessStdout = Join-Path $OutDir "harness.stdout.txt"
-    $harnessStderr = Join-Path $OutDir "harness.stderr.txt"
+    $rawRoot = Join-Path $frozenRoot ".tmp\e"
+    $harnessStdout = Join-Path $OutDir "h.out"
+    $harnessStderr = Join-Path $OutDir "h.err"
     $previousGodotBin = $env:GODOT_BIN
     try {
         $env:GODOT_BIN = $enginePath
