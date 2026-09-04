@@ -93,6 +93,7 @@ const ACTIVE_PHASE_CHANNELS := {
 	"baccarat": "baccarat_deal",
 	"roulette": "roulette_spin",
 }
+const PERF06_TIMELINE_GAMES := ["baccarat", "roulette", "craps"]
 const ALLOCATION_COPY_SOURCE_IDS := [
 	"foundation_snapshot",
 	"environment_runtime",
@@ -1416,8 +1417,9 @@ func _measure_game(game_id: String) -> void:
 			active_frames
 		)
 	else:
-		await _wait_frames(active_frames)
+		await _wait_frames(mini(active_frames, 30) if game_id in PERF06_TIMELINE_GAMES else active_frames)
 	_end_scenario()
+	await _measure_followup_game_phases(game_id)
 	app.back_to_environment()
 	if not await _wait_for_game_exit():
 		mark_event("game_fixture_exit_failed", {"game_id": game_id, "reason": "exit_timeout"})
@@ -1872,6 +1874,8 @@ func _perf06_surface_evidence(snapshot: Dictionary) -> Dictionary:
 		"action_ordinal", "result_message", "showdown_active", "deal_staged",
 		"payout_staged", "double_up_offered", "baccarat_squeeze_available",
 		"rolled", "presentation_phase", "last_net", "win_meter",
+		"bar_dice_ritual_phase", "ticket_complete", "pending_payout",
+		"revealed_count", "reveal_progress", "session_settled",
 	]:
 		var key := str(key_value)
 		if snapshot.has(key):
@@ -1898,7 +1902,140 @@ func _perf06_surface_evidence(snapshot: Dictionary) -> Dictionary:
 				"active_id": str(channel.get("active_id", channel.get("id", ""))),
 			})
 	evidence["active_animation_channels"] = active_channels
+	for projection_key_value in ["bar_dice_ritual_projection", "counter_ritual"]:
+		var projection_key := str(projection_key_value)
+		var projection_value: Variant = snapshot.get(projection_key, {})
+		if typeof(projection_value) == TYPE_DICTIONARY:
+			var named_projection: Dictionary = projection_value
+			evidence["%s_present" % projection_key] = not named_projection.is_empty()
+			evidence["%s_phase" % projection_key] = str(named_projection.get("phase_id", named_projection.get("phase", "")))
+	var ritual_actors: Array = snapshot.get("ritual_actors", []) if typeof(snapshot.get("ritual_actors", [])) == TYPE_ARRAY else []
+	var ritual_objects: Array = snapshot.get("ritual_scene_objects", []) if typeof(snapshot.get("ritual_scene_objects", [])) == TYPE_ARRAY else []
+	evidence["ritual_actor_count"] = ritual_actors.size()
+	evidence["ritual_object_count"] = ritual_objects.size()
 	return evidence
+
+
+func _measure_followup_game_phases(game_id: String) -> void:
+	match game_id:
+		"pull_tabs":
+			await _measure_observed_game_phase(game_id, "ritual", "pull_tabs_counter_ritual", 30)
+		"scratch_tickets":
+			_emit_surface_action("scratch_all", 0, false)
+			await _wait_frames(2)
+			await _measure_observed_game_phase(game_id, "scratch_reveal", "scratch_ticket_full_reveal", 30)
+			_emit_surface_action("scratch_file_ticket", 0, false)
+			await _wait_frames(2)
+			await _measure_observed_game_phase(game_id, "payout", "scratch_ticket_outcome", 30)
+			await _measure_observed_game_phase(game_id, "ritual", "scratch_ticket_counter_ritual", 30)
+		"slot":
+			await _measure_observed_game_phase(game_id, "ritual", "slot_machine_ritual", 30)
+		"bar_dice":
+			await _measure_observed_game_phase(game_id, "resolve_payout", "bar_dice_resolve_payout", 30)
+			await _measure_observed_game_phase(game_id, "ritual", "bar_dice_table_ritual", 30)
+		"blackjack":
+			await _measure_observed_game_phase(game_id, "resolve_payout", "blackjack_resolve_payout", 30)
+			await _measure_observed_game_phase(game_id, "ritual", "blackjack_table_ritual", 30)
+		"baccarat":
+			await _measure_observed_game_phase(game_id, "ritual", "baccarat_table_ritual", 30)
+			if await _wait_for_game_phase(game_id, "skill", 360):
+				await _measure_observed_game_phase(game_id, "skill", "baccarat_squeeze_skill", 30)
+			if await _wait_for_game_phase(game_id, "resolve_payout", 360):
+				await _measure_observed_game_phase(game_id, "resolve_payout", "baccarat_resolve_payout", 30)
+		"roulette":
+			await _measure_observed_game_phase(game_id, "ritual", "roulette_table_ritual", 30)
+			if await _wait_for_game_phase(game_id, "post_spin", 480):
+				await _measure_observed_game_phase(game_id, "post_spin", "roulette_ball_settle", 30)
+			if await _wait_for_game_phase(game_id, "resolve_payout", 360):
+				await _measure_observed_game_phase(game_id, "resolve_payout", "roulette_resolve_payout", 30)
+		"craps":
+			await _measure_observed_game_phase(game_id, "bounce", "craps_bounce_read", 20)
+			await _measure_observed_game_phase(game_id, "ritual", "craps_table_ritual", 20)
+			if await _wait_for_game_phase(game_id, "settle", 180):
+				await _measure_observed_game_phase(game_id, "settle", "craps_dealer_settlement", 20)
+			if await _wait_for_game_phase(game_id, "resolve", 180):
+				await _measure_observed_game_phase(game_id, "resolve", "craps_resolved_table", 30)
+		"crew_draw_poker":
+			await _measure_observed_game_phase(game_id, "ordered_hand", "crew_poker_ordered_hand", 30)
+			await _measure_observed_game_phase(game_id, "ritual", "crew_poker_table_ritual", 30)
+		"video_poker":
+			await _measure_observed_game_phase(game_id, "payout", "video_poker_payout", 30)
+			await _measure_observed_game_phase(game_id, "ritual", "video_poker_machine_ritual", 30)
+
+
+func _measure_observed_game_phase(game_id: String, phase_id: String, scenario_name: String, frames: int) -> bool:
+	var before := _perf06_surface_evidence(app.current_game_view_snapshot()) if app != null else {}
+	var observed := _game_phase_observed(game_id, phase_id, before)
+	if not observed:
+		mark_event("perf06_phase_not_observed", {"game_id": game_id, "phase_id": phase_id, "evidence": before})
+		return false
+	_begin_scenario(scenario_name, {
+		"surface": game_id,
+		"mode": phase_id,
+		"perf06_surface_id": game_id,
+		"perf06_phase_id": phase_id,
+		"phase_evidence": {"observed": true, "before": before},
+	})
+	await _wait_frames(frames)
+	var after := _perf06_surface_evidence(app.current_game_view_snapshot()) if app != null else {}
+	var phase_evidence: Dictionary = current_tags.get("phase_evidence", {})
+	phase_evidence["after"] = after
+	current_tags["phase_evidence"] = phase_evidence
+	_end_scenario()
+	return true
+
+
+func _wait_for_game_phase(game_id: String, phase_id: String, max_frames: int) -> bool:
+	for _frame_index in range(maxi(1, max_frames)):
+		var evidence := _perf06_surface_evidence(app.current_game_view_snapshot()) if app != null else {}
+		if _game_phase_observed(game_id, phase_id, evidence):
+			return true
+		await get_tree().process_frame
+	mark_event("perf06_phase_wait_timeout", {"game_id": game_id, "phase_id": phase_id, "max_frames": max_frames})
+	return false
+
+
+func _game_phase_observed(game_id: String, phase_id: String, evidence: Dictionary) -> bool:
+	var phase := str(evidence.get("phase", ""))
+	var ritual_phase := str(evidence.get("ritual_phase", evidence.get("bar_dice_ritual_phase", "")))
+	var result_visible := bool(evidence.get("last_result_present", false)) or not str(evidence.get("result_message", "")).is_empty()
+	if phase_id == "ritual":
+		return bool(evidence.get("ritual_projection_present", false)) \
+			or bool(evidence.get("bar_dice_ritual_projection_present", false)) \
+			or bool(evidence.get("counter_ritual_present", false)) \
+			or not ritual_phase.is_empty() \
+			or int(evidence.get("ritual_actor_count", 0)) > 0 \
+			or int(evidence.get("ritual_object_count", 0)) > 0
+	match game_id:
+		"scratch_tickets":
+			if phase_id == "scratch_reveal":
+				return str(evidence.get("counter_phase", "")) == "play"
+			if phase_id == "payout":
+				return result_visible or str(evidence.get("counter_phase", "")) in ["result", "selection"]
+		"bar_dice", "blackjack":
+			return phase_id == "resolve_payout" and result_visible
+		"baccarat":
+			if phase_id == "skill":
+				return ritual_phase == "squeeze_reveal"
+			if phase_id == "resolve_payout":
+				return ritual_phase == "settlement" and result_visible
+		"roulette":
+			if phase_id == "post_spin":
+				return ritual_phase == "ball_settle"
+			if phase_id == "resolve_payout":
+				return ritual_phase == "croupier_settlement" and result_visible
+		"craps":
+			if phase_id == "bounce":
+				return ritual_phase == "bounce_read"
+			if phase_id == "settle":
+				return ritual_phase == "dealer_settlement"
+			if phase_id == "resolve":
+				return ritual_phase == "betting" and result_visible
+		"crew_draw_poker":
+			return phase_id == "ordered_hand" and phase in ["before", "draw", "after"]
+		"video_poker":
+			return phase_id == "payout" and phase in ["settled", "double_result"] and result_visible
+	return false
 
 
 func _preferred_action_id(game_id: String) -> String:
