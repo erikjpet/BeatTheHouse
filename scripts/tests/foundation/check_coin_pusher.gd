@@ -15,6 +15,7 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 	_check_pusher_v3_machine_data(machine_definition, failures)
 	_check_pusher_v3_10_idle_queue_cups_and_stack(library, game_definition, machine_definition, failures)
 	_check_pusher_v3_10_hold_inputs(library, game_definition, failures)
+	_check_pusher_v3_opening_template_cache(machine_definition, failures)
 	_check_pusher_v3_10_opening_generation_guard(machine_definition, failures)
 	_check_pusher_v3_10_stack_support_matrix(machine_definition, failures)
 	_check_pusher_v3_coin_scale_lower_bed_and_edge_ramp(machine_definition, failures)
@@ -561,6 +562,62 @@ func _check_pusher_v3_10_opening_generation_guard(machine_definition: Dictionary
 	var opening_source := solver_source.substr(seed_start, seed_end - seed_start) if seed_start >= 0 and seed_end > seed_start else ""
 	if opening_source.is_empty() or opening_source.contains("body[\"sleeping\"] = true") or opening_source.contains("body.erase(\"vx\")") or opening_source.contains("body.erase(\"vz\")"):
 		failures.append("pusherv3_10 opening generation bypassed deterministic physical settlement by manufacturing sleeping bodies or erasing motion fields.")
+
+
+func _check_pusher_v3_opening_template_cache(machine_definition: Dictionary, failures: Array) -> void:
+	CoinPusherSolverScript.clear_opening_template_cache_for_test()
+	var seed := "PUSHER-V3-OPENING-TEMPLATE-CACHE"
+	var first_rng := _pusher_v3_rng(seed)
+	var first := CoinPusherSolverScript.create_machine(first_rng, machine_definition, 24)
+	var expected_bytes := var_to_bytes(first)
+	var expected_post_rng := first_rng.snapshot()
+	var hit_rng := _pusher_v3_rng(seed)
+	var hit := CoinPusherSolverScript.create_machine(hit_rng, machine_definition, 24)
+	if var_to_bytes(hit) != expected_bytes or hit_rng.snapshot() != expected_post_rng:
+		failures.append("Coin Pusher settled-opening cache changed exact state bytes or the final RNG snapshot on a hit.")
+	var hit_bodies: Array = hit.get("bodies", []) if typeof(hit.get("bodies", [])) == TYPE_ARRAY else []
+	if not hit_bodies.is_empty() and typeof(hit_bodies[0]) == TYPE_DICTIONARY:
+		(hit_bodies[0] as Dictionary)["x"] = int((hit_bodies[0] as Dictionary).get("x", 0)) + 777
+	var isolated_rng := _pusher_v3_rng(seed)
+	var isolated := CoinPusherSolverScript.create_machine(isolated_rng, machine_definition, 24)
+	if var_to_bytes(isolated) != expected_bytes or isolated_rng.snapshot() != expected_post_rng:
+		failures.append("Coin Pusher settled-opening cache returned a mutable alias instead of an isolated deep copy.")
+	var report_rng := _pusher_v3_rng(seed)
+	var with_report := CoinPusherSolverScript.create_machine(report_rng, machine_definition, 24, true)
+	var report_hit_rng := _pusher_v3_rng(seed)
+	var with_report_hit := CoinPusherSolverScript.create_machine(report_hit_rng, machine_definition, 24, true)
+	var report_cache := CoinPusherSolverScript.opening_template_cache_snapshot_for_test()
+	if first.has("opening_settle_report") \
+		or not with_report.has("opening_settle_report") \
+		or var_to_bytes(with_report_hit) != var_to_bytes(with_report) \
+		or report_hit_rng.snapshot() != report_rng.snapshot() \
+		or int(report_cache.get("size", 0)) != 2:
+		failures.append("Coin Pusher settled-opening cache did not separate production and opt-in report templates exactly.")
+	CoinPusherSolverScript.clear_opening_template_cache_for_test()
+	var evicted_key := ""
+	var evicted_bytes := PackedByteArray()
+	var evicted_post_rng: Dictionary = {}
+	for cache_index in range(17):
+		var cache_rng := _pusher_v3_rng("PUSHER-V3-OPENING-CACHE-EVICTION-%02d" % cache_index)
+		var cached_state := CoinPusherSolverScript.create_machine(cache_rng, machine_definition, 1)
+		if cache_index == 0:
+			var first_cache_snapshot := CoinPusherSolverScript.opening_template_cache_snapshot_for_test()
+			var first_keys: Array = first_cache_snapshot.get("keys", []) if typeof(first_cache_snapshot.get("keys", [])) == TYPE_ARRAY else []
+			evicted_key = str(first_keys[0]) if not first_keys.is_empty() else ""
+			evicted_bytes = var_to_bytes(cached_state)
+			evicted_post_rng = cache_rng.snapshot()
+			var cached_bodies: Array = cached_state.get("bodies", []) if typeof(cached_state.get("bodies", [])) == TYPE_ARRAY else []
+			if not cached_bodies.is_empty() and typeof(cached_bodies[0]) == TYPE_DICTIONARY:
+				(cached_bodies[0] as Dictionary)["y"] = int((cached_bodies[0] as Dictionary).get("y", 0)) + 999
+	var bounded_cache := CoinPusherSolverScript.opening_template_cache_snapshot_for_test()
+	var bounded_keys: Array = bounded_cache.get("keys", []) if typeof(bounded_cache.get("keys", [])) == TYPE_ARRAY else []
+	if int(bounded_cache.get("capacity", 0)) != 16 or int(bounded_cache.get("size", 0)) != 16 or evicted_key.is_empty() or bounded_keys.has(evicted_key):
+		failures.append("Coin Pusher settled-opening cache did not enforce deterministic capacity-16 eviction.")
+	var recreated_rng := _pusher_v3_rng("PUSHER-V3-OPENING-CACHE-EVICTION-00")
+	var recreated := CoinPusherSolverScript.create_machine(recreated_rng, machine_definition, 1)
+	if var_to_bytes(recreated) != evicted_bytes or recreated_rng.snapshot() != evicted_post_rng:
+		failures.append("Coin Pusher settled-opening cache eviction recreated a stale alias or changed deterministic output.")
+	CoinPusherSolverScript.clear_opening_template_cache_for_test()
 
 
 func _pusher_v3_body_has_genuine_contact(body: Dictionary, bodies: Array) -> bool:
