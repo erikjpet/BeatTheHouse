@@ -65,6 +65,14 @@ powershell -NoProfile -File tools/playtest06_2_seed_manifest_contract.ps1 `
   -RequireFinal -ExpectedTestedCommit <frozen-owner-build-commit>
 ```
 
+The final manifest path is fixed to
+`docs/plans/evidence/playtest06_2/final_seed_manifest.json`. FINAL refuses an
+untracked, staged-only, unstaged, or noncanonical manifest and parses its
+committed Git blob. The tested commit must be an ancestor of the custody HEAD;
+every intervening path must be one of the declared playtest documents or an
+artifact below `docs/plans/evidence/playtest06_2`. Product changes after the
+tested candidate invalidate the result.
+
 That mode fails closed unless verified public-action seeds collectively name
 every current archetype, all three authored Punchline layers, all eleven games,
 all three pusher machines, every required major route/control slot, at least one
@@ -86,9 +94,32 @@ records, while `-ExpectedTestedCommit` continues to name that tested candidate.
 At least one entry must be an `OWNER_SESSION_REPORT` JSON document with schema
 `beat_the_house.playtest06_owner_route/v1`; that retained report binds the same
 candidate, seed, platform, public actions, no-soft-lock/dead-interaction result,
-and observed coverage. The contract counts coverage from that hashed report,
-then requires it to match the manifest declaration. A diagnostic seed can stay
+and owner-build manifest. Every observed coverage id needs a typed witness tied
+to a retained public-action index and an event in a committed
+`beat_the_house.playtest06_runtime_trace/v1` artifact. Terminal, game, pusher,
+scenario-branch, save, and route slots each have a required outcome type. A
+combined Windows/Web claim requires separate sealed session reports from the two
+actual platforms; one combined-platform label cannot count twice. The contract
+counts coverage from those hashed reports, then requires it to match the
+manifest declaration. A diagnostic seed can stay
 in the file for provenance, but it cannot satisfy a final slot.
+
+Create the local, non-release owner build only with:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/playtest06_owner_build.ps1 `
+  -CandidateCommit <frozen-owner-build-commit> -RequireGodot
+```
+
+That tool requires clean exact HEAD, produces the existing `builds/windows` and
+`builds/web` directories, launches both, and writes
+`docs/plans/evidence/playtest06_2/owner_build_manifest.json`. It hashes every
+local output plus the engine, locked native toolchain, export presets, and build
+tools, and retains separate Windows and Chrome smoke reports beside the
+manifest. It passes `-NoPackage` to the existing exporter and refuses any change to
+`builds/itch`; it creates no zip, upload, tag, version change, or publish
+artifact. Each final runtime trace and owner-session report must cite the
+committed owner-build-manifest SHA-256.
 
 ## Catalog-discovery helper
 

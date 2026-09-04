@@ -5,6 +5,8 @@
 #   .\tools\export_itch.ps1 -Target windows       # export Windows, produce BeatTheHouse-windows.zip
 #   .\tools\export_itch.ps1 -Debug                # export a debug build instead of release
 #   .\tools\export_itch.ps1 -SkipExport           # repackage existing build output without re-exporting
+#   .\tools\export_itch.ps1 -Target windows -NoPackage
+#                                                 # local build only; no zip or upload instructions
 #   .\tools\export_itch.ps1 -Push -ItchTarget you/beat-the-house
 #                                                 # push via butler (default channels: web=html, windows=windows)
 #   .\tools\export_itch.ps1 -Push -DryRun -ItchTarget you/beat-the-house
@@ -18,6 +20,7 @@ param(
     [string]$Target = "web",
     [switch]$Debug,
     [switch]$SkipExport,
+    [switch]$NoPackage,
     [switch]$Push,
     [switch]$DryRun,
     [string]$ItchTarget = "",
@@ -182,6 +185,7 @@ $config = @{
     "windows" = @{ Preset = "Windows Steam"; Out = "builds/windows/BeatTheHouse.exe"; Dir = "builds/windows"; Zip = "BeatTheHouse-windows.zip"; DefaultChannel = "windows" }
 }
 $cfg = $config[$Target]
+if ($NoPackage -and $Push) { throw "-NoPackage cannot be combined with -Push." }
 
 $outDir  = Join-Path $root $cfg.Dir
 $outFile = Join-Path $root $cfg.Out
@@ -238,6 +242,11 @@ else {
 
 Assert-CleanDistributionOutput $outDir
 Assert-NativeSolverExport -Directory $outDir -ExportTarget $Target
+
+if ($NoPackage) {
+    Write-Host "Local $Target build ready: $outDir (no archive, upload, or publish artifact created)." -ForegroundColor Green
+    return
+}
 
 # 2. Package the uploadable zip.
 #    For web the zip MUST contain index.html at its root, so we archive the

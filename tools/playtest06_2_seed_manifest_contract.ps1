@@ -197,14 +197,14 @@ function ConvertFrom-Utf8JsonBytes {
     }
 }
 
-function Resolve-CommittedEvidence {
-    param([string]$Path, [string]$Label)
+function Resolve-CommittedRepoFile {
+    param([string]$Path, [string]$Label, [string]$RequiredPrefix = "")
     if ([string]::IsNullOrWhiteSpace($Path)) {
         Add-Failure "$Label.path must be non-empty."
         return $null
     }
     if ([IO.Path]::IsPathRooted($Path)) {
-        Add-Failure "$Label.path must be repository-relative under $script:EvidenceRootRelative."
+        Add-Failure "$Label.path must be repository-relative."
         return $null
     }
     try {
@@ -213,16 +213,23 @@ function Resolve-CommittedEvidence {
         Add-Failure "$Label.path is invalid: $Path"
         return $null
     }
-    $evidencePrefix = $script:EvidenceRoot.TrimEnd([char[]]@('\', '/')) + [IO.Path]::DirectorySeparatorChar
-    if (-not $candidate.StartsWith($evidencePrefix, [StringComparison]::OrdinalIgnoreCase)) {
-        Add-Failure "$Label.path must remain under $($script:EvidenceRootRelative): $Path"
+    $rootPrefix = $script:Root.TrimEnd([char[]]@('\', '/')) + [IO.Path]::DirectorySeparatorChar
+    if (-not $candidate.StartsWith($rootPrefix, [StringComparison]::OrdinalIgnoreCase)) {
+        Add-Failure "$Label.path must remain inside the repository: $Path"
         return $null
+    }
+    $gitPath = $candidate.Substring($script:Root.Length).TrimStart([char[]]@('\', '/')).Replace('\', '/')
+    if (-not [string]::IsNullOrWhiteSpace($RequiredPrefix)) {
+        $cleanPrefix = $RequiredPrefix.Trim('/').Replace('\', '/') + "/"
+        if (-not $gitPath.StartsWith($cleanPrefix, [StringComparison]::Ordinal)) {
+            Add-Failure "$Label.path must remain under $RequiredPrefix`: $Path"
+            return $null
+        }
     }
     if (-not (Test-Path -LiteralPath $candidate -PathType Leaf)) {
         Add-Failure "$Label.path does not exist: $Path"
         return $null
     }
-    $gitPath = $candidate.Substring($script:Root.Length).TrimStart([char[]]@('\', '/')).Replace('\', '/')
     $blobResult = Invoke-GitCapture @("rev-parse", "--verify", "HEAD:$gitPath")
     $blobId = ([string]$blobResult.output).Trim()
     if ($blobResult.exit_code -ne 0 -or -not (Test-CommitText $blobId)) {
@@ -261,6 +268,11 @@ function Resolve-CommittedEvidence {
     }
 }
 
+function Resolve-CommittedEvidence {
+    param([string]$Path, [string]$Label)
+    return Resolve-CommittedRepoFile $Path $Label $script:EvidenceRootRelative
+}
+
 function New-CoverageSets {
     return @{
         coverage_slots = @{}
@@ -287,6 +299,7 @@ $Failures = [Collections.Generic.List[string]]::new()
 $Root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $EvidenceRootRelative = "docs/plans/evidence/playtest06_2"
 $EvidenceRoot = [IO.Path]::GetFullPath((Join-Path $Root $EvidenceRootRelative))
+$CanonicalFinalManifestRelative = "$EvidenceRootRelative/final_seed_manifest.json"
 $ValidShortcuts = @(
     "PREVALIDATED_TRAVEL",
     "DEBUG_ACTION",
@@ -301,6 +314,7 @@ $validStages = @("PRESTAGE", "FINAL")
 $validStatuses = @("CANDIDATE", "VERIFIED", "BLOCKED")
 $validAuthorities = @("PRODUCTION_PUBLIC_ACTIONS", "HEADLESS_PRODUCTION_ACTIONS", "DIAGNOSTIC_PREVALIDATED_TRAVEL")
 $validPlatforms = @("WINDOWS_NATIVE", "WEB_CHROME", "WINDOWS_NATIVE_AND_WEB_CHROME")
+$validSessionPlatforms = @("WINDOWS_NATIVE", "WEB_CHROME")
 $validEvidenceKinds = @("OWNER_SESSION_REPORT", "SCREENSHOT", "VIDEO", "RUNTIME_TRACE", "SAVE_ROUNDTRIP_REPORT")
 $requiredSlots = @(
     "ARCHETYPES",
@@ -338,6 +352,95 @@ if (-not (Test-Path -LiteralPath $resolvedManifest -PathType Leaf)) { throw "See
 try { $manifest = Get-Content -LiteralPath $resolvedManifest -Raw | ConvertFrom-Json }
 catch { throw "Seed manifest is not valid JSON: $($_.Exception.Message)" }
 
+if ([string]$manifest.stage -eq "FINAL") {
+    $canonicalFinalManifest = [IO.Path]::GetFullPath((Join-Path $Root $CanonicalFinalManifestRelative))
+    if ($resolvedManifest -cne $canonicalFinalManifest) {
+        Add-Failure "FINAL manifest must use canonical path $CanonicalFinalManifestRelative."
+    } else {
+        $committedManifest = Resolve-CommittedRepoFile $CanonicalFinalManifestRelative "FINAL manifest" $EvidenceRootRelative
+        if ($null -ne $committedManifest) {
+            $manifest = ConvertFrom-Utf8JsonBytes ([byte[]]$committedManifest.bytes) "FINAL manifest"
+        }
+    }
+}
+
+function Get-ExpectedCoverageOutcomeType {
+    param([string]$Field, [string]$Id)
+    switch ($Field) {
+        "archetype_ids" { return "ARCHETYPE_ENTERED" }
+        "layer_ids" { return "LAYER_ENTERED" }
+        "game_ids" { return "GAME_ENTRY_ACTION_SETTLEMENT_EXIT" }
+        "pusher_machine_ids" { return "PUSHER_DEFINING_GOAL_COMPLETED" }
+        "scenario_ids" { return "SCENARIO_ENTERED" }
+        "scenario_branch_ids" { return "SCENARIO_BRANCH_AFTERMATH_OBSERVED" }
+        "coverage_slots" {
+            if ($Id -like "HEIST-PLAN-*") { return "HEIST_TERMINAL_OR_ABORT" }
+            if ($Id -like "TURN-*") { return "TURN_OUTCOME_OBSERVED" }
+            if ($Id -like "CASS-END-*") { return "CASS_ENDING_OBSERVED" }
+            if ($Id -like "VICTORY-*") { return "TERMINAL_PROFILE_HANDOFF" }
+            if ($Id -eq "SAVE-BOUNDARIES") { return "SAVE_ROUNDTRIP" }
+            if ($Id -eq "FULL-RUN-CONTROLS") { return "FULL_RUN_TERMINAL" }
+            if ($Id -eq "PUSHER-MACHINES") { return "PUSHER_DEFINING_GOAL_COMPLETED" }
+            if ($Id -eq "GAMES") { return "GAME_ENTRY_ACTION_SETTLEMENT_EXIT" }
+            if ($Id -eq "SCENARIO-BRANCHES") { return "SCENARIO_BRANCH_AFTERMATH_OBSERVED" }
+            return "ROUTE_REQUIREMENT_OBSERVED"
+        }
+    }
+    return ""
+}
+
+function Test-OwnerBuildPlatform {
+    param($PlatformRecord, [string]$Label, [string]$ExpectedPlatform, [string]$RequiredRoot, [string]$RequiredNativeSuffix)
+    if ($null -eq $PlatformRecord) {
+        Add-Failure "$Label is missing."
+        return
+    }
+    if ([string]$PlatformRecord.platform -cne $ExpectedPlatform) { Add-Failure "$Label.platform must be $ExpectedPlatform." }
+    if ($PlatformRecord.smoke_passed -isnot [bool] -or -not [bool]$PlatformRecord.smoke_passed) { Add-Failure "$Label.smoke_passed must be true." }
+    if ([string]$PlatformRecord.output_root -cne $RequiredRoot) { Add-Failure "$Label.output_root must be $RequiredRoot." }
+    $smokePath = [string]$PlatformRecord.smoke_evidence.path
+    if (-not (Test-Sha256Text $PlatformRecord.smoke_evidence.sha256)) { Add-Failure "$Label.smoke_evidence.sha256 must be a lowercase SHA-256." }
+    $smokeEvidence = Resolve-CommittedEvidence $smokePath "$Label.smoke_evidence"
+    if ($null -ne $smokeEvidence -and [string]$smokeEvidence.sha256 -cne [string]$PlatformRecord.smoke_evidence.sha256) {
+        Add-Failure "$Label.smoke_evidence SHA-256 does not match its committed HEAD blob."
+    }
+    $files = @(As-Array $PlatformRecord.files)
+    if ($files.Count -eq 0) { Add-Failure "$Label.files must contain every local build output." }
+    $paths = @{}
+    $foundNative = $false
+    foreach ($file in $files) {
+        $path = [string]$file.path
+        $fileLabel = "$Label.files[$path]"
+        if ([IO.Path]::IsPathRooted($path) -or -not $path.StartsWith("$RequiredRoot/", [StringComparison]::Ordinal)) {
+            Add-Failure "$fileLabel must be repository-relative under $RequiredRoot."
+            continue
+        }
+        if ($paths.ContainsKey($path)) { Add-Failure "$Label contains duplicate build output '$path'." } else { $paths[$path] = $true }
+        if (-not (Test-Sha256Text $file.sha256)) { Add-Failure "$fileLabel.sha256 must be a lowercase SHA-256." }
+        if ([int64]$file.bytes -lt 1) { Add-Failure "$fileLabel.bytes must be positive." }
+        $full = [IO.Path]::GetFullPath((Join-Path $script:Root $path))
+        $rootPrefix = [IO.Path]::GetFullPath((Join-Path $script:Root $RequiredRoot)).TrimEnd([char[]]@('\', '/')) + [IO.Path]::DirectorySeparatorChar
+        if (-not $full.StartsWith($rootPrefix, [StringComparison]::OrdinalIgnoreCase) -or -not (Test-Path -LiteralPath $full -PathType Leaf)) {
+            Add-Failure "$fileLabel local build output is missing."
+            continue
+        }
+        $info = Get-Item -LiteralPath $full
+        if ([int64]$info.Length -ne [int64]$file.bytes) { Add-Failure "$fileLabel byte length does not match the local build." }
+        $hash = (Get-FileHash -LiteralPath $full -Algorithm SHA256).Hash.ToLowerInvariant()
+        if ($hash -cne [string]$file.sha256) { Add-Failure "$fileLabel SHA-256 does not match the local build." }
+        if ($path.EndsWith($RequiredNativeSuffix, [StringComparison]::OrdinalIgnoreCase) -and ([IO.Path]::GetFileName($path) -like "coin_pusher_native*")) { $foundNative = $true }
+    }
+    $actualRoot = [IO.Path]::GetFullPath((Join-Path $script:Root $RequiredRoot))
+    $actualPaths = @()
+    if (Test-Path -LiteralPath $actualRoot -PathType Container) {
+        $actualPaths = @(Get-ChildItem -LiteralPath $actualRoot -File -Recurse | ForEach-Object {
+            $_.FullName.Substring($script:Root.Length).TrimStart([char[]]@('\', '/')).Replace('\', '/')
+        })
+    }
+    Test-ExactSet @($paths.Keys) $actualPaths "$Label declared versus local build outputs"
+    if (-not $foundNative) { Add-Failure "$Label is missing the locked Coin Pusher native solver output ($RequiredNativeSuffix)." }
+}
+
 if ([int]$manifest.schema_version -ne 2) { Add-Failure "schema_version must be 2." }
 if ($validStages -notcontains [string]$manifest.stage) { Add-Failure "stage must be PRESTAGE or FINAL." }
 if ([string]$manifest.stage -eq "FINAL" -and -not $RequireFinal) {
@@ -361,8 +464,38 @@ if (-not (Test-CommitText $candidateTree)) {
     Add-Failure "candidate_base_tree does not match candidate_base_commit."
 }
 if ($RequireFinal -and $expectedTree) {
+    $worktreeDiff = Invoke-GitCapture @("diff", "--quiet")
+    if ($worktreeDiff.exit_code -ne 0) { Add-Failure "FINAL requires a clean tracked working tree." }
+    $indexDiff = Invoke-GitCapture @("diff", "--cached", "--quiet")
+    if ($indexDiff.exit_code -ne 0) { Add-Failure "FINAL requires a clean Git index." }
     if ($candidateCommit -cne $ExpectedTestedCommit) { Add-Failure "FINAL candidate_base_commit does not equal ExpectedTestedCommit." }
     if ($candidateTree -cne $expectedTree) { Add-Failure "FINAL candidate_base_tree does not equal ExpectedTestedCommit's tree." }
+    $ancestor = Invoke-GitCapture @("merge-base", "--is-ancestor", $candidateCommit, "HEAD")
+    if ($ancestor.exit_code -ne 0) {
+        Add-Failure "FINAL candidate_base_commit must be an ancestor of the custody HEAD."
+    } else {
+        $allowedExactDeltas = @(
+            "docs/plans/playtest06_2_playtest_script.md",
+            "docs/plans/playtest06_2_findings_capture.md",
+            "docs/plans/0.6_playtest_handoff.md",
+            "docs/todo/playtest06_1_playtest_readiness_prompt.md",
+            "docs/todo/playtest06_2_playtest_gate_refresh_prompt.md",
+            "docs/todo/README_0_6_board.md",
+            "docs/todo/README_0_6_work_log_2026-08-26.md",
+            "docs/todone/playtest06_2_playtest_gate_refresh_prompt.md"
+        )
+        $deltaResult = Invoke-GitCapture @("diff", "--name-only", $candidateCommit, "HEAD", "--")
+        if ($deltaResult.exit_code -ne 0) {
+            Add-Failure "FINAL could not enumerate candidate-to-custody deltas."
+        } else {
+            foreach ($deltaPath in @(([string]$deltaResult.output -split "`n") | Where-Object { $_ })) {
+                $allowed = $deltaPath.StartsWith("$EvidenceRootRelative/", [StringComparison]::Ordinal) -or $allowedExactDeltas -ccontains $deltaPath
+                if (-not $allowed) {
+                    Add-Failure "FINAL candidate-to-custody delta is outside declared playtest evidence/docs: $deltaPath"
+                }
+            }
+        }
+    }
 }
 Require-Text $manifest.purpose "purpose" | Out-Null
 
@@ -468,6 +601,60 @@ if ($RequireFinal) {
     Test-ExactSet $expectedBranches $materialBranchTargets "coverage_policy material scenario branches"
 }
 
+$ownerBuildManifestHash = ""
+if ($RequireFinal) {
+    if ($null -eq $manifest.owner_build_evidence) {
+        Add-Failure "FINAL requires owner_build_evidence."
+    } else {
+        $ownerBuildPath = [string]$manifest.owner_build_evidence.path
+        if ($ownerBuildPath -cne "$EvidenceRootRelative/owner_build_manifest.json") {
+            Add-Failure "FINAL owner_build_evidence.path must be $EvidenceRootRelative/owner_build_manifest.json."
+        }
+        if (-not (Test-Sha256Text $manifest.owner_build_evidence.sha256)) {
+            Add-Failure "FINAL owner_build_evidence.sha256 must be a lowercase SHA-256."
+        }
+        $committedBuild = Resolve-CommittedEvidence $ownerBuildPath "owner_build_evidence"
+        if ($null -ne $committedBuild) {
+            $ownerBuildManifestHash = [string]$committedBuild.sha256
+            if ($ownerBuildManifestHash -cne [string]$manifest.owner_build_evidence.sha256) {
+                Add-Failure "owner_build_evidence SHA-256 does not match its committed HEAD blob."
+            }
+            $ownerBuild = ConvertFrom-Utf8JsonBytes ([byte[]]$committedBuild.bytes) "owner_build_evidence"
+            if ($null -ne $ownerBuild) {
+                if ([string]$ownerBuild.schema -cne "beat_the_house.playtest06_owner_build/v1") { Add-Failure "owner_build_evidence has the wrong schema." }
+                if ([string]$ownerBuild.candidate_commit -cne $ExpectedTestedCommit) { Add-Failure "owner_build_evidence candidate_commit does not match ExpectedTestedCommit." }
+                if ([string]$ownerBuild.candidate_tree -cne $expectedTree) { Add-Failure "owner_build_evidence candidate_tree does not match ExpectedTestedCommit's tree." }
+                foreach ($field in @("builder_script_sha256", "godot_sha256", "toolchain_lock_sha256", "export_presets_sha256")) {
+                    if (-not (Test-Sha256Text $ownerBuild.$field)) { Add-Failure "owner_build_evidence.$field must be a lowercase SHA-256." }
+                }
+                foreach ($field in @("distribution_artifact", "archive_created", "upload_performed")) {
+                    if ($ownerBuild.$field -isnot [bool] -or [bool]$ownerBuild.$field) { Add-Failure "owner_build_evidence.$field must be false." }
+                }
+                foreach ($input in @(
+                    @{ path = "tools/playtest06_owner_build.ps1"; hash = [string]$ownerBuild.builder_script_sha256; label = "builder_script_sha256" },
+                    @{ path = "native/coin_pusher/toolchain.lock.json"; hash = [string]$ownerBuild.toolchain_lock_sha256; label = "toolchain_lock_sha256" },
+                    @{ path = "export_presets.cfg"; hash = [string]$ownerBuild.export_presets_sha256; label = "export_presets_sha256" }
+                )) {
+                    $inputPath = Join-Path $Root $input.path
+                    if (-not (Test-Path -LiteralPath $inputPath -PathType Leaf)) {
+                        Add-Failure "owner_build_evidence input is missing: $($input.path)"
+                    } elseif ((Get-FileHash -LiteralPath $inputPath -Algorithm SHA256).Hash.ToLowerInvariant() -cne $input.hash) {
+                        Add-Failure "owner_build_evidence.$($input.label) does not match $($input.path)."
+                    }
+                }
+                $godotPath = [string]$ownerBuild.godot_path
+                if (-not [IO.Path]::IsPathRooted($godotPath) -or -not (Test-Path -LiteralPath $godotPath -PathType Leaf)) {
+                    Add-Failure "owner_build_evidence.godot_path must identify the local engine used for the build."
+                } elseif ((Get-FileHash -LiteralPath $godotPath -Algorithm SHA256).Hash.ToLowerInvariant() -cne [string]$ownerBuild.godot_sha256) {
+                    Add-Failure "owner_build_evidence.godot_sha256 does not match the local engine binary."
+                }
+                Test-OwnerBuildPlatform $ownerBuild.windows "owner_build_evidence.windows" "WINDOWS_NATIVE" "builds/windows" ".dll"
+                Test-OwnerBuildPlatform $ownerBuild.web "owner_build_evidence.web" "WEB_CHROME" "builds/web" ".wasm"
+            }
+        }
+    }
+}
+
 $seedIds = @{}
 $seedValues = @{}
 $verifiedCoverage = New-CoverageSets
@@ -566,9 +753,13 @@ foreach ($seed in $seeds) {
 
     $observedCoverage = New-CoverageSets
     $ownerSessionCount = 0
+    $seedSessionPlatforms = @{}
     $evidenceRows = @(As-Array $seed.evidence)
     if ($evidenceRows.Count -eq 0) { Add-Failure "seeds[$id].evidence must contain retained hashed artifacts." }
     $evidencePaths = @{}
+    $resolvedEvidenceByPath = @{}
+    $evidenceKindByPath = @{}
+    $runtimeEventsByPath = @{}
     foreach ($evidence in $evidenceRows) {
         $kind = [string]$evidence.kind
         $path = [string]$evidence.path
@@ -579,7 +770,35 @@ foreach ($seed in $seeds) {
         if ($evidencePaths.ContainsKey($path)) { Add-Failure "seeds[$id] contains duplicate evidence path '$path'." } else { $evidencePaths[$path] = $true }
         if ($null -eq $committedEvidence) { continue }
         if ([string]$committedEvidence.sha256 -cne [string]$evidence.sha256) { Add-Failure "$label SHA-256 does not match the committed HEAD blob." }
+        $resolvedEvidenceByPath[$path] = $committedEvidence
+        $evidenceKindByPath[$path] = $kind
+        if ($kind -eq "RUNTIME_TRACE") {
+            $trace = ConvertFrom-Utf8JsonBytes ([byte[]]$committedEvidence.bytes) "$label RUNTIME_TRACE"
+            if ($null -ne $trace) {
+                if ([string]$trace.schema -cne "beat_the_house.playtest06_runtime_trace/v1") { Add-Failure "$label has the wrong runtime-trace schema." }
+                if ([string]$trace.candidate_commit -cne [string]$seed.tested_commit -or [string]$trace.candidate_tree -cne [string]$seed.tested_tree) { Add-Failure "$label runtime trace candidate identity does not match the seed." }
+                if ([string]$trace.seed_id -cne $id -or [string]$trace.seed -cne $value) { Add-Failure "$label runtime trace seed identity does not match the manifest." }
+                if ($validSessionPlatforms -notcontains [string]$trace.platform) { Add-Failure "$label runtime trace platform must identify one actual platform." }
+                if ([string]$trace.owner_build_manifest_sha256 -cne $ownerBuildManifestHash) { Add-Failure "$label runtime trace does not bind the owner build manifest." }
+                $eventSet = @{}
+                foreach ($event in @(As-Array $trace.events)) {
+                    $eventId = [string]$event.event_id
+                    Require-Text $eventId "$label.events[].event_id" | Out-Null
+                    Require-Text $event.visible_result "$label.events[$eventId].visible_result" | Out-Null
+                    if ($eventSet.ContainsKey($eventId)) { Add-Failure "$label contains duplicate runtime event '$eventId'." } else { $eventSet[$eventId] = $true }
+                }
+                if ($eventSet.Count -eq 0) { Add-Failure "$label must contain runtime events." }
+                $runtimeEventsByPath[$path] = $eventSet
+            }
+        }
+    }
+    foreach ($evidence in $evidenceRows) {
+        $kind = [string]$evidence.kind
+        $path = [string]$evidence.path
+        $label = "seeds[$id].evidence[$path]"
         if ($kind -ne "OWNER_SESSION_REPORT") { continue }
+        if (-not $resolvedEvidenceByPath.ContainsKey($path)) { continue }
+        $committedEvidence = $resolvedEvidenceByPath[$path]
         $ownerSessionCount += 1
         $session = ConvertFrom-Utf8JsonBytes ([byte[]]$committedEvidence.bytes) "$label OWNER_SESSION_REPORT"
         if ($null -eq $session) { continue }
@@ -587,7 +806,10 @@ foreach ($seed in $seeds) {
         if ([string]$session.candidate_commit -cne [string]$seed.tested_commit) { Add-Failure "$label candidate_commit does not match the seed." }
         if ([string]$session.candidate_tree -cne [string]$seed.tested_tree) { Add-Failure "$label candidate_tree does not match the seed." }
         if ([string]$session.seed_id -cne $id -or [string]$session.seed -cne $value) { Add-Failure "$label seed identity does not match the manifest." }
-        if ([string]$session.platform -cne [string]$seed.platform) { Add-Failure "$label platform does not match the manifest." }
+        if ($validSessionPlatforms -notcontains [string]$session.platform) { Add-Failure "$label platform must identify one actual platform." }
+        if ([string]$seed.platform -ne "WINDOWS_NATIVE_AND_WEB_CHROME" -and [string]$session.platform -cne [string]$seed.platform) { Add-Failure "$label platform does not match the manifest." }
+        if ([string]$session.owner_build_manifest_sha256 -cne $ownerBuildManifestHash) { Add-Failure "$label does not bind the owner build manifest." }
+        $seedSessionPlatforms[[string]$session.platform] = $true
         if ([string]$session.route_authority -cne "PRODUCTION_PUBLIC_ACTIONS") { Add-Failure "$label route_authority must be PRODUCTION_PUBLIC_ACTIONS." }
         if (@(As-Array $session.route_shortcuts).Count -gt 0) { Add-Failure "$label records forbidden route shortcuts." }
         if ($session.completed -isnot [bool] -or -not [bool]$session.completed) { Add-Failure "$label must record completed=true." }
@@ -610,27 +832,60 @@ foreach ($seed in $seeds) {
         foreach ($stepId in $routeStepIds.Keys) {
             if (-not $sessionActionIds.ContainsKey($stepId)) { Add-Failure "$label is missing manifest route action '$stepId'." }
         }
+        $sessionObservedCoverage = New-CoverageSets
         if ($null -eq $session.observed_coverage) {
             Add-Failure "$label must contain observed_coverage."
         } else {
+            Add-CoverageValues $sessionObservedCoverage $session.observed_coverage
             Add-CoverageValues $observedCoverage $session.observed_coverage
+        }
+        $witnessCoverage = New-CoverageSets
+        $witnesses = @(As-Array $session.coverage_witnesses)
+        if ($witnesses.Count -eq 0) { Add-Failure "$label must contain typed coverage_witnesses." }
+        foreach ($witness in $witnesses) {
+            $field = [string]$witness.coverage_field
+            $coverageId = [string]$witness.coverage_id
+            $witnessLabel = "$label.coverage_witnesses[$field/$coverageId]"
+            if (-not $witnessCoverage.ContainsKey($field)) {
+                Add-Failure "$witnessLabel coverage_field is invalid."
+                continue
+            }
+            if ([string]::IsNullOrWhiteSpace($coverageId)) { Add-Failure "$witnessLabel coverage_id must be non-empty."; continue }
+            $actionIndex = -1
+            if (-not [int]::TryParse([string]$witness.action_index, [ref]$actionIndex) -or $actionIndex -lt 0 -or $actionIndex -ge $publicActions.Count) {
+                Add-Failure "$witnessLabel action_index must reference a retained public action."
+            }
+            $expectedOutcome = Get-ExpectedCoverageOutcomeType $field $coverageId
+            if ([string]$witness.outcome_type -cne $expectedOutcome) { Add-Failure "$witnessLabel outcome_type must be $expectedOutcome." }
+            Require-Text $witness.visible_result "$witnessLabel.visible_result" | Out-Null
+            $runtimePath = [string]$witness.runtime_evidence_path
+            $runtimeEventId = [string]$witness.runtime_event_id
+            if (-not $evidenceKindByPath.ContainsKey($runtimePath) -or [string]$evidenceKindByPath[$runtimePath] -cne "RUNTIME_TRACE") {
+                Add-Failure "$witnessLabel must reference a retained RUNTIME_TRACE."
+            } elseif (-not $runtimeEventsByPath.ContainsKey($runtimePath) -or -not $runtimeEventsByPath[$runtimePath].ContainsKey($runtimeEventId)) {
+                Add-Failure "$witnessLabel runtime_event_id is absent from its retained runtime trace."
+            }
+            $witnessCoverage[$field][$coverageId] = $true
+        }
+        foreach ($field in $sessionObservedCoverage.Keys) {
+            Test-ExactSet @($sessionObservedCoverage[$field].Keys) @($witnessCoverage[$field].Keys) "$label $field observed coverage versus typed witnesses"
+        }
+        if ($sessionObservedCoverage.coverage_slots.ContainsKey("FULL-RUN-CONTROLS")) {
+            $verifiedPlatforms[[string]$session.platform] = $true
         }
     }
     if ($ownerSessionCount -eq 0) { Add-Failure "seeds[$id] VERIFIED requires at least one OWNER_SESSION_REPORT." }
+    if ([string]$seed.platform -eq "WINDOWS_NATIVE_AND_WEB_CHROME") {
+        foreach ($platform in $validSessionPlatforms) {
+            if (-not $seedSessionPlatforms.ContainsKey($platform)) { Add-Failure "seeds[$id] combined-platform claim is missing a separate $platform owner session report." }
+        }
+    }
 
     foreach ($field in $observedCoverage.Keys) {
         $manifestValues = @(As-Array $seed.$field)
         $observedValues = @($observedCoverage[$field].Keys)
         Test-ExactSet $manifestValues $observedValues "seeds[$id] $field versus retained owner evidence"
         foreach ($item in $observedValues) { $verifiedCoverage[$field][$item] = $true }
-    }
-    if ($observedCoverage.coverage_slots.ContainsKey("FULL-RUN-CONTROLS")) {
-        if ([string]$seed.platform -eq "WINDOWS_NATIVE_AND_WEB_CHROME") {
-            $verifiedPlatforms["WINDOWS_NATIVE"] = $true
-            $verifiedPlatforms["WEB_CHROME"] = $true
-        } else {
-            $verifiedPlatforms[[string]$seed.platform] = $true
-        }
     }
 }
 
