@@ -33,12 +33,11 @@ const JackpotRidgeScript := preload("res://scripts/games/coin_pusher/jackpot_rid
 const VaultDropScript := preload("res://scripts/games/coin_pusher/vault_drop.gd")
 const CoinPusherSolverScript := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
 const CoinPusherLiveSessionScript := preload("res://scripts/games/coin_pusher/coin_pusher_live_session.gd")
-const CoinPusherRendererScript := preload("res://scripts/games/coin_pusher/coin_pusher_renderer.gd")
 const V3_HEADLESS_MESSAGE := "Aim for bonus-token cups, use the stop to build pressure, and push the machine's heavy feature pieces into the win tray."
 
 var _live_machines: Dictionary = {}
 var _exit_settle_active := false
-var _renderer := CoinPusherRendererScript.new()
+var _renderer = null
 var _machine_definition_cache: Dictionary = {}
 var _tell_labels_cache: Array = []
 
@@ -508,7 +507,7 @@ func _rail_x_from_board_position(machine: Dictionary, board_position: Vector2) -
 	var rail: Dictionary = apparatus.get("rail", {}) if typeof(apparatus.get("rail", {})) == TYPE_DICTIONARY else {}
 	var rail_min := int(rail.get("x_min", 8000))
 	var rail_max := int(rail.get("x_max", 92000))
-	var layout: Dictionary = _renderer.debug_entry_hardware_layout_for_test({"coin_pusher_geometry": geometry, "coin_pusher_apparatus": apparatus, "coin_pusher_carriage_x": int(_simulation(machine).get("carriage_x", (rail_min + rail_max) / 2))})
+	var layout: Dictionary = _coin_pusher_renderer().debug_entry_hardware_layout_for_test({"coin_pusher_geometry": geometry, "coin_pusher_apparatus": apparatus, "coin_pusher_carriage_x": int(_simulation(machine).get("carriage_x", (rail_min + rail_max) / 2))})
 	var drag_rect: Rect2 = layout.get("drag_rect", V3_RAIL_DRAG_RECT)
 	var normalized := clampf((board_position.x - drag_rect.position.x) / maxf(1.0, drag_rect.size.x), 0.0, 1.0)
 	return clampi(int(round(lerpf(float(rail_min), float(rail_max), normalized))), rail_min, rail_max)
@@ -539,23 +538,33 @@ func surface_motion_signature(_surface, surface_state: Dictionary) -> Dictionary
 
 
 func draw_surface(surface, state: Dictionary, _render_context: Dictionary = {}) -> bool:
-	return _renderer.draw(surface, state)
+	return _coin_pusher_renderer().draw(surface, state)
 
 
 func renderer_signature(state: Dictionary) -> Dictionary:
-	return _renderer.render_signature(state)
+	return _coin_pusher_renderer().render_signature(state)
 
 
 func reset_renderer_performance_counters() -> void:
-	_renderer.reset_performance_stage_counters()
+	_coin_pusher_renderer().reset_performance_stage_counters()
 
 
 func renderer_performance_counters() -> Dictionary:
-	return _renderer.performance_stage_counters()
+	return _coin_pusher_renderer().performance_stage_counters()
 
 
 func prepare_surface_render_state(state: Dictionary) -> void:
-	_renderer.prepare_render_state(state)
+	_coin_pusher_renderer().prepare_render_state(state)
+
+
+func _coin_pusher_renderer() -> RefCounted:
+	# Run generation constructs every game module, including Coin Pusher, while
+	# opening a destination. Keep the presentation-only dependency graph out of
+	# that path; the renderer is needed only when the player opens this cabinet.
+	if _renderer == null:
+		var renderer_script: Script = load("res://scripts/games/coin_pusher/coin_pusher_renderer.gd")
+		_renderer = renderer_script.new() as RefCounted
+	return _renderer
 
 
 func resolve(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:

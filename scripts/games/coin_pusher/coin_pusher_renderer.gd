@@ -58,6 +58,8 @@ var _static_cache_render_serial := 0
 var _static_cache_rebuild_serial := 0
 var _static_cache_fallback_reason := "cold"
 var _static_cache_pixel_size := Vector2i.ZERO
+var _static_cache_state_key := ""
+var _static_cache_locked := false
 var _hardware_cache_canvas: Control
 var _hardware_cache_host: Control
 var _hardware_cache_key := ""
@@ -815,6 +817,20 @@ func _prepare_static_cache(surface, state: Dictionary) -> bool:
 	if not OS.has_feature("web") and not bool(state.get("coin_pusher_static_cache_test", false)):
 		_static_cache_fallback_reason = "non_web_runtime"
 		return false
+	var state_key := str(state.get("coin_pusher_static_content_key", "missing"))
+	var locked := bool(state.get("coin_pusher_locked", false))
+	var requested_pixel_size := Vector2i(maxi(1, int(round(surface.size.x))), maxi(1, int(round(surface.size.y))))
+	var requested_font: Font = surface.get_theme_default_font()
+	if not _static_cache_pending \
+			and not _static_cache_key.is_empty() \
+			and is_instance_valid(_static_cache_host) \
+			and _static_cache_host == surface \
+			and _static_cache_pixel_size == requested_pixel_size \
+			and _static_cache_font == requested_font \
+			and _static_cache_state_key == state_key \
+			and _static_cache_locked == locked:
+		_static_cache_fallback_reason = ""
+		return true
 	var transform: Dictionary = surface.debug_design_space_transform(DESIGN_SIZE)
 	var design_scale: Vector2 = transform.get("design_scale", Vector2.ONE)
 	var board_rect: Rect2 = surface.board_rect()
@@ -826,10 +842,10 @@ func _prepare_static_cache(surface, state: Dictionary) -> bool:
 		_static_cache_pending = true
 		_static_cache_fallback_reason = "unsupported_design_transform"
 		return false
-	var cache_pixel_size := Vector2i(maxi(1, int(round(surface.size.x))), maxi(1, int(round(surface.size.y))))
+	var cache_pixel_size := requested_pixel_size
 	if not is_instance_valid(_static_cache_host) or _static_cache_host != surface:
 		_recreate_static_cache_for_host(surface)
-	var effective_font: Font = surface.get_theme_default_font()
+	var effective_font: Font = requested_font
 	_bind_static_cache_font(effective_font)
 	var font_identity: int = effective_font.get_instance_id() if effective_font != null else 0
 	# The full snapshot owns the nested static-content fingerprint. Keep the
@@ -845,8 +861,8 @@ func _prepare_static_cache(surface, state: Dictionary) -> bool:
 		(transform.get("scale", Vector2.ONE) as Vector2).x,
 		(transform.get("scale", Vector2.ONE) as Vector2).y,
 		font_identity,
-		str(state.get("coin_pusher_static_content_key", "missing")),
-		1 if bool(state.get("coin_pusher_locked", false)) else 0,
+		state_key,
+		1 if locked else 0,
 	]
 	if _static_cache_viewports.is_empty():
 		var canvas_script: Script = load("res://scripts/games/coin_pusher/coin_pusher_static_cache_canvas.gd")
@@ -872,6 +888,8 @@ func _prepare_static_cache(surface, state: Dictionary) -> bool:
 	if key != _static_cache_key:
 		_static_cache_key = key
 		_static_cache_pixel_size = cache_pixel_size
+		_static_cache_state_key = state_key
+		_static_cache_locked = locked
 		_static_cache_pending = true
 		_static_cache_pending_layers = [true, true, true]
 		_static_cache_rebuild_serial += 1
@@ -923,6 +941,7 @@ func _recreate_static_cache_for_host(surface: Control) -> void:
 	_static_cache_canvases.clear()
 	_static_cache_host = surface
 	_static_cache_key = ""
+	_static_cache_state_key = ""
 	_static_cache_pending = true
 	_static_cache_pending_layers = [true, true, true]
 	_static_cache_fallback_reason = "host_reentry"
