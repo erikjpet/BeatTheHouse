@@ -109,16 +109,23 @@ Fast, freeze-independent qualification completed:
   machine evidence are rejected; the executable-only archive and `tar.exe`
   extraction are verified; descriptor-selected runtime artifacts are staged
   exactly; a frozen native shard completes exactly 64 accepted inserts on
-  `native_v3`.
+  `native_v3`. The accepted rerun used only this worktree's built/imported
+  runtime. An earlier selftest that silently selected the mutable primary
+  worktree is invalidated and is not evidence.
+- Resume selftests: PASS; exact pusher shard evidence is reusable, while changed
+  engine or target-count evidence is rejected. Exact pre-run custody checkpoints
+  are accepted and changed checkpoints are rejected.
 
 The hardened harness is not yet final measurement evidence. Before the costly
 run, rebase it onto the owner-declared env/integration freeze and rerun the
-one-seed hostile/public-observer probe. The present wrappers retain immutable
-failed artifacts and reject mixed aggregation, but they do not yet resume an
-interrupted multi-shard invocation in place. Interrupted-run resumability must
-be qualified or repaired before the 512-run/600,000-drop evidence is claimed.
-Native/Web, save/resume, migration, and maximal-composition checks also remain
-exact-final-tree work.
+one-seed hostile/public-observer probe. The wrappers retain immutable failed
+artifacts, reject mixed aggregation, and resume only into a new custody path.
+Cross-economy reuse requires the prior pre-run identity and each shard's exact
+exit/report hash. Pusher custody writes its frozen identity checkpoint before
+launching the long harness, so a killed wrapper does not need a post-run custody
+manifest; each completed raw shard is then revalidated against engine, target,
+policy, and geometry identities before reuse. Native/Web, save/resume,
+migration, and maximal-composition checks remain exact-final-tree work.
 
 One attempted preparation smoke pointed `RuntimeSourceRoot` at the mutable
 external env06_8 worktree and encountered an incomplete generated import cache
@@ -146,6 +153,11 @@ $pusherOut = Join-Path $runRoot 'pusher_3x200000'
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/coin_pusher_ev_custody.ps1 -ShardsPerMachine 8 -RuntimeSourceRoot (Get-Location).Path -OutDir $pusherOut
 if ($LASTEXITCODE -ne 0) { throw "Pusher EV custody failed; evidence retained at $pusherOut" }
 ```
+
+After an interruption, preserve the prior directory and choose a new output
+directory. Repeat the same command with `-ResumeFrom '<prior custody path>'`.
+The new package records every reused shard and reruns only missing or validly
+failed shards; changed or malformed identity fails closed.
 
 Historical preparation timing gives only an operator estimate, not a budget or
 acceptance result. An eight-style, one-seed, eight-action hardened smoke took

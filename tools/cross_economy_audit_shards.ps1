@@ -9,7 +9,6 @@ param(
     [string]$OutDir = "",
     [string]$RuntimeSourceRoot = "",
     [string]$ResumeFrom = "",
-    [switch]$AllowIncompleteCoverage,
     [switch]$SelfTest
 )
 
@@ -273,8 +272,7 @@ if ($ResumeFrom) {
 $startedAt = Get-Date
 $startedAtUtc = $startedAt.ToUniversalTime().ToString("o")
 $resumeArgument = if ($ResumeFrom) { " -ResumeFrom '$ResumeFrom'" } else { "" }
-$coverageArgument = if ($AllowIncompleteCoverage) { " -AllowIncompleteCoverage" } else { "" }
-$invocationCommand = "powershell -NoProfile -ExecutionPolicy Bypass -File tools/cross_economy_audit_shards.ps1 -SeedsPerPlaystyle $SeedsPerPlaystyle -MaxActions $MaxActions -WorkerCount $WorkerCount -SeedPrefix '$SeedPrefix' -RuntimeSourceRoot '$RuntimeSourceRoot' -OutDir '$OutDir'$resumeArgument$coverageArgument"
+$invocationCommand = "powershell -NoProfile -ExecutionPolicy Bypass -File tools/cross_economy_audit_shards.ps1 -SeedsPerPlaystyle $SeedsPerPlaystyle -MaxActions $MaxActions -WorkerCount $WorkerCount -SeedPrefix '$SeedPrefix' -RuntimeSourceRoot '$RuntimeSourceRoot' -OutDir '$OutDir'$resumeArgument"
 $rootPrefix = [IO.Path]::GetFullPath($projectRoot)
 if (-not $rootPrefix.EndsWith([IO.Path]::DirectorySeparatorChar)) { $rootPrefix += [IO.Path]::DirectorySeparatorChar }
 if (-not $OutDir.StartsWith($rootPrefix, [StringComparison]::OrdinalIgnoreCase)) {
@@ -674,9 +672,7 @@ foreach ($job in $jobs) {
         if (-not $actualShardSeeds.Add($seed)) { $failures.Add("Duplicate run seed in $($job.Style): $seed") }
     }
     if ($runs.Count -ne $SeedsPerPlaystyle -or -not $actualShardSeeds.SetEquals($expectedShardSeeds)) { $failures.Add("Per-run seed/count coverage mismatch: $($job.Style).") }
-    foreach ($failure in @(Get-SpecialistCoverageFailures $job.Style $runs)) {
-        if ($AllowIncompleteCoverage) { $warnings.Add("NONQUALIFYING_COVERAGE: $failure") } else { $failures.Add($failure) }
-    }
+    foreach ($failure in @(Get-SpecialistCoverageFailures $job.Style $runs)) { $failures.Add($failure) }
     $aggregate = Get-ObjectValue $report "aggregate"
     $aggregatePlaystyles = @(Get-ObjectValue $aggregate "playstyles")
     if ($aggregatePlaystyles.Count -ne 1 -or [string](Get-ObjectValue $aggregatePlaystyles[0] "playstyle") -cne $job.Style) {
@@ -745,7 +741,7 @@ $custody = [ordered]@{
     exact_head = $head; exact_tree = $tree; generated_at_utc = $completedAtUtc
     command = $invocationCommand; working_directory = [IO.Path]::GetFullPath($projectRoot)
     runtime_source_root = $RuntimeSourceRoot
-    resume_from = $ResumeFrom; resumed_styles = @($resumedStyles); allow_incomplete_coverage = [bool]$AllowIncompleteCoverage
+    resume_from = $ResumeFrom; resumed_styles = @($resumedStyles)
     started_at_utc = $startedAtUtc; completed_at_utc = $completedAtUtc; elapsed_seconds = $elapsedSeconds
     frozen_archive = [ordered]@{ path = $archivePath; bytes = (Get-Item -LiteralPath $archivePath).Length; sha256 = $archiveSha }
     engine_path = [IO.Path]::GetFullPath($godot); engine_sha256 = (Get-FileHash -LiteralPath $godot -Algorithm SHA256).Hash.ToLowerInvariant()

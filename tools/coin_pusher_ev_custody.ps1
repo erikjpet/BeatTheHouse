@@ -210,6 +210,21 @@ function Get-IdentityFailures([object]$Actual, [object]$Expected, [string]$Label
     return @($failures)
 }
 
+function Get-ResumeCheckpointFailures([object]$Checkpoint, [object]$ExpectedIdentity, [int]$ExpectedShards, [string]$ExpectedTrackedManifestFileSha256, [string]$ExpectedRuntimeManifestFileSha256) {
+    $failures = [Collections.Generic.List[string]]::new()
+    if ($null -eq $Checkpoint -or [string](Get-ObjectValue $Checkpoint "schema") -cne "coin_pusher_ev_pre_run_identity_v1") {
+        return @("Resume source pre-run checkpoint is missing or incompatible.")
+    }
+    foreach ($failure in @(Get-IdentityFailures (Get-ObjectValue $Checkpoint "identity") $ExpectedIdentity "resume source")) { $failures.Add($failure) }
+    if ([int](Get-ObjectValue $Checkpoint "shards_per_machine") -ne $ExpectedShards -or
+        [int64](Get-ObjectValue $Checkpoint "accepted_per_machine") -ne $acceptedPerMachine -or
+        [string](Get-ObjectValue $Checkpoint "tracked_manifest_file_sha256") -cne $ExpectedTrackedManifestFileSha256 -or
+        [string](Get-ObjectValue $Checkpoint "runtime_manifest_file_sha256") -cne $ExpectedRuntimeManifestFileSha256) {
+        $failures.Add("Resume source pre-run count or manifest identity mismatch.")
+    }
+    return @($failures)
+}
+
 function Add-FileManifestFailures([string]$Label, [string]$Root, [object]$Manifest, [Collections.Generic.List[string]]$Failures) {
     foreach ($entry in @(Get-ObjectValue $Manifest "entries")) {
         if ($null -eq $entry) { continue }
@@ -290,6 +305,19 @@ if ($SelfTest) {
     if (@(Get-IdentityFailures $changedIdentity $expectedIdentity "self-test").Count -eq 0) {
         throw "Self-test failed: changed input identity was accepted."
     }
+    $checkpoint = [pscustomobject]@{
+        schema = "coin_pusher_ev_pre_run_identity_v1"; identity = $expectedIdentity
+        accepted_per_machine = $acceptedPerMachine; shards_per_machine = $ShardsPerMachine
+        tracked_manifest_file_sha256 = $hashA; runtime_manifest_file_sha256 = $hashA
+    }
+    if (@(Get-ResumeCheckpointFailures $checkpoint $expectedIdentity $ShardsPerMachine $hashA $hashA).Count -ne 0) {
+        throw "Self-test failed: exact pre-run resume checkpoint was rejected."
+    }
+    $changedCheckpoint = $checkpoint | ConvertTo-Json -Depth 10 | ConvertFrom-Json
+    $changedCheckpoint.identity.exact_tree = "changed-tree"
+    if (@(Get-ResumeCheckpointFailures $changedCheckpoint $expectedIdentity $ShardsPerMachine $hashA $hashA).Count -eq 0) {
+        throw "Self-test failed: changed pre-run resume checkpoint was accepted."
+    }
     $machineRows = foreach ($machine in $machines) {
         [pscustomobject]@{
             machine_id = $machine; accepted_player_inserts = $acceptedPerMachine; passed = $true
@@ -364,7 +392,7 @@ if ($SelfTest) {
     finally {
         Write-Host "COIN_PUSHER_EV_CUSTODY_SELF_TEST_EVIDENCE path=$testRoot"
     }
-    Write-Host "COIN_PUSHER_EV_CUSTODY_SELF_TEST_PASS changed_identity_rejected=true mixed_policy_rejected=true missing_machine_rejected=true long_docs_excluded=true tar_extract_verified=true runtime_stage_verified=true native_ev_smoke=true"
+    Write-Host "COIN_PUSHER_EV_CUSTODY_SELF_TEST_PASS changed_identity_rejected=true exact_pre_run_checkpoint_accepted=true changed_pre_run_checkpoint_rejected=true mixed_policy_rejected=true missing_machine_rejected=true long_docs_excluded=true tar_extract_verified=true runtime_stage_verified=true native_ev_smoke=true"
     exit 0
 }
 
@@ -376,6 +404,7 @@ if ($ResumeFrom) {
 }
 if (-not $OutDir) { $OutDir = Join-Path $projectRoot ".tmp\evc\$(Get-Date -Format 'yyyyMMdd_HHmmss')" }
 $OutDir = [IO.Path]::GetFullPath($OutDir)
+if ($ResumeFrom -and $ResumeFrom -ceq $OutDir) { throw "ResumeFrom and OutDir must differ so prior evidence is never overwritten." }
 $projectPrefix = [IO.Path]::GetFullPath($projectRoot)
 if (-not $projectPrefix.EndsWith([IO.Path]::DirectorySeparatorChar)) { $projectPrefix += [IO.Path]::DirectorySeparatorChar }
 if (-not $OutDir.StartsWith($projectPrefix, [StringComparison]::OrdinalIgnoreCase)) { throw "OutDir must remain inside the caller worktree." }
@@ -389,6 +418,7 @@ $enginePath = ""; $engineHash = ""; $workerPath = ""; $workerHash = ""; $archive
 $trackedManifestFileHash = ""; $runtimeManifestFileHash = ""
 $trackedManifest = $null; $runtimeManifest = $null; $harnessManifest = $null; $harnessExitCode = -999
 $nativeDiscovery = $null
+$expectedResumeIdentity = $null; $preRunIdentityPath = ""; $preRunIdentityFileHash = ""; $resumeRawRoot = ""
 $rawEvidence = [Collections.Generic.List[object]]::new()
 $rawRoot = ""; $harnessStdout = ""; $harnessStderr = ""
 $startedAt = Get-Date
@@ -490,19 +520,35 @@ try {
     $enginePath = $engine.engine_path; $engineHash = $engine.engine_sha256
     $workerPath = $engine.worker_path; $workerHash = $engine.worker_sha256
 
-    $resumeRawRoot = ""
+    $expectedResumeIdentity = [pscustomobject]@{
+        exact_head = $head; exact_tree = $tree; tracked_input_sha256 = $trackedHash
+        policy_source_sha256 = $policyHash; runtime_manifest_sha256 = $runtimeHash
+        plugin_identity_sha256 = $pluginHash; engine_sha256 = $engineHash; worker_sha256 = $workerHash
+    }
+    $preRunIdentity = [ordered]@{
+        schema = "coin_pusher_ev_pre_run_identity_v1"; created_at_utc = (Get-Date).ToUniversalTime().ToString("o")
+        identity = $expectedResumeIdentity; accepted_per_machine = $acceptedPerMachine; shards_per_machine = $ShardsPerMachine
+        tracked_manifest_file_sha256 = $trackedManifestFileHash; runtime_manifest_file_sha256 = $runtimeManifestFileHash
+        raw_root_relative = "p/.tmp/e"
+    }
+    $preRunIdentityPath = Join-Path $OutDir "pre_run_identity_manifest.json"
+    Write-JsonFile $preRunIdentity $preRunIdentityPath 12
+    $preRunIdentityFileHash = (Get-FileHash -LiteralPath $preRunIdentityPath -Algorithm SHA256).Hash.ToLowerInvariant()
     if ($ResumeFrom) {
-        $priorCustodyPath = Join-Path $ResumeFrom "custody_manifest.json"
-        if (-not (Test-Path -LiteralPath $priorCustodyPath -PathType Leaf)) { throw "Resume source has no custody manifest: $priorCustodyPath" }
-        try { $priorCustody = Get-Content -LiteralPath $priorCustodyPath -Raw | ConvertFrom-Json }
-        catch { throw "Resume source custody manifest is malformed: $($_.Exception.Message)" }
-        $expectedResumeIdentity = [pscustomobject]@{
-            exact_head = $head; exact_tree = $tree; tracked_input_sha256 = $trackedHash
-            policy_source_sha256 = $policyHash; runtime_manifest_sha256 = $runtimeHash
-            plugin_identity_sha256 = $pluginHash; engine_sha256 = $engineHash; worker_sha256 = $workerHash
-        }
-        $resumeIdentityFailures = @(Get-IdentityFailures (Get-ObjectValue $priorCustody "identity") $expectedResumeIdentity "resume source")
+        $priorCheckpointPath = Join-Path $ResumeFrom "pre_run_identity_manifest.json"
+        if (-not (Test-Path -LiteralPath $priorCheckpointPath -PathType Leaf)) { throw "Resume source has no pre-run identity checkpoint: $priorCheckpointPath" }
+        try { $priorCheckpoint = Get-Content -LiteralPath $priorCheckpointPath -Raw | ConvertFrom-Json }
+        catch { throw "Resume source pre-run identity checkpoint is malformed: $($_.Exception.Message)" }
+        $resumeIdentityFailures = @(Get-ResumeCheckpointFailures $priorCheckpoint $expectedResumeIdentity $ShardsPerMachine $trackedManifestFileHash $runtimeManifestFileHash)
         if ($resumeIdentityFailures.Count -ne 0) { throw "Resume source identity mismatch: $($resumeIdentityFailures -join ' | ')" }
+        foreach ($priorManifest in @(
+            @((Join-Path $ResumeFrom "t.json"), [string](Get-ObjectValue $priorCheckpoint "tracked_manifest_file_sha256")),
+            @((Join-Path $ResumeFrom "r.json"), [string](Get-ObjectValue $priorCheckpoint "runtime_manifest_file_sha256"))
+        )) {
+            if (-not (Test-Path -LiteralPath $priorManifest[0] -PathType Leaf) -or (Get-FileHash -LiteralPath $priorManifest[0] -Algorithm SHA256).Hash.ToLowerInvariant() -cne $priorManifest[1]) {
+                throw "Resume source pre-run manifest file is missing or changed: $($priorManifest[0])"
+            }
+        }
         $resumeRawRoot = Join-Path $ResumeFrom "p\.tmp\e"
         if (-not (Test-Path -LiteralPath $resumeRawRoot -PathType Container)) { throw "Resume source has no retained raw shard directory: $resumeRawRoot" }
     }
@@ -621,20 +667,21 @@ foreach ($artifact in $rawArtifacts) {
     })
 }
 
-$identity = [ordered]@{
+$identity = if ($null -ne $expectedResumeIdentity) { $expectedResumeIdentity } else { [ordered]@{
     exact_head = $head; exact_tree = $tree; tracked_input_sha256 = $trackedHash
     policy_source_sha256 = $policyHash; runtime_manifest_sha256 = $runtimeHash
     plugin_identity_sha256 = $pluginHash; engine_sha256 = $engineHash; worker_sha256 = $workerHash
-}
+} }
 $passed = $failures.Count -eq 0 -and $harnessExitCode -eq 0
 $completedAt = Get-Date
 $completedAtUtc = $completedAt.ToUniversalTime().ToString("o")
 $elapsedSeconds = ($completedAt - $startedAt).TotalSeconds
+$harnessResumeSuffix = if ($resumeRawRoot) { " -ResumeFrom '$resumeRawRoot'" } else { "" }
 $custody = [ordered]@{
     schema = $custodySchema; passed = $passed; generated_at_utc = $completedAtUtc
     command = $invocationCommand; working_directory = [IO.Path]::GetFullPath($projectRoot)
     started_at_utc = $startedAtUtc; completed_at_utc = $completedAtUtc; elapsed_seconds = $elapsedSeconds
-    harness_command = "tools/coin_pusher_ev_harness.ps1 -AcceptedPerMachine 200000 -ShardsPerMachine $ShardsPerMachine -Throttle 1"
+    harness_command = "tools/coin_pusher_ev_harness.ps1 -AcceptedPerMachine 200000 -ShardsPerMachine $ShardsPerMachine -Throttle 1$harnessResumeSuffix"
     identity = $identity
     exact_head = $head; exact_tree = $tree
     tracked_input_sha256 = $trackedHash; tracked_manifest_file_sha256 = $trackedManifestFileHash
@@ -642,6 +689,7 @@ $custody = [ordered]@{
     runtime_manifest_sha256 = $runtimeHash; runtime_manifest_file_sha256 = $runtimeManifestFileHash
     plugin_identity_sha256 = $pluginHash
     native_runtime = $nativeDiscovery
+    pre_run_identity_manifest = [ordered]@{ path = $preRunIdentityPath; sha256 = $preRunIdentityFileHash }
     engine = [ordered]@{ path = $enginePath; sha256 = $engineHash; worker_path = $workerPath; worker_sha256 = $workerHash }
     frozen_archive = [ordered]@{ path = $archivePath; sha256 = $archiveHash }
     accepted_per_machine = $acceptedPerMachine; required_machines = $machines; expected_total_accepted = $expectedTotalAccepted
