@@ -608,10 +608,13 @@ func _probe_coin_pusher_raw_solver_timing(run_state: RunState, game: GameModule)
 	coin_pusher_solver_timing_checked = samples.size() == COIN_PUSHER_SOLVER_SAMPLE_COUNT \
 		and fixed_tick_samples == samples.size() \
 		and capped_samples == samples.size() \
+		and str(stats.get("solver_backend", "")) == "native_v3" \
 		and int(state.get("fixed_hz", 0)) == 60 \
 		and int(stats.get("initial_body_count", 0)) == COIN_PUSHER_SOLVER_STRESS_BODY_COUNT \
 		and float(stats.get("p95_ms", 0.0)) <= COIN_PUSHER_SOLVER_TICK_P95_BUDGET_MS
 	if not coin_pusher_solver_timing_checked:
+		if str(stats.get("solver_backend", "")) != "native_v3":
+			failures.append("Coin Pusher V3 timing used %s instead of the locked native_v3 solver." % str(stats.get("solver_backend", "missing")))
 		if samples.size() != COIN_PUSHER_SOLVER_SAMPLE_COUNT or fixed_tick_samples != samples.size() or capped_samples != samples.size():
 			failures.append("Coin Pusher V3 timing did not preserve all %d one-tick, authored-ceiling samples." % COIN_PUSHER_SOLVER_SAMPLE_COUNT)
 		if int(state.get("fixed_hz", 0)) != 60:
@@ -2059,6 +2062,7 @@ func _write_report() -> void:
 		"tool": "foundation_performance_probe",
 		"candidate_commit": OS.get_environment("BTH_PERF_CANDIDATE_COMMIT"),
 		"profile_manifest_sha256": OS.get_environment("BTH_PERF_PROFILE_MANIFEST_SHA256"),
+		"native_plugin_sha256": OS.get_environment("BTH_PERF_NATIVE_PLUGIN_SHA256"),
 		"evidence_profile": OS.get_environment("BTH_PERF_EVIDENCE_PROFILE"),
 		"run_count": run_count,
 		"frames_per_surface": frames_per_surface,
