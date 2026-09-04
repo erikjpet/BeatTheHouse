@@ -1,4 +1,4 @@
-Status: TODO — current-lesson audit prestage landed; the teaching pass has not run
+Status: DONE — dependency-complete teaching pass accepted; TUT-N17 remains owner-human only
 Board row: `teach06_2` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — 0.6 teach06_2: Teaching Pass Two
