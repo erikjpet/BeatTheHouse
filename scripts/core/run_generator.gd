@@ -1237,6 +1237,8 @@ func _generated_game_states(run_state: RunState, environment_data: Dictionary, r
 		var generated_base := false
 		if not states.has(game_id):
 			var perf_generate_started_usec := Time.get_ticks_usec() if _world_environment_timing_enabled else 0
+			if _world_environment_timing_enabled and game.has_method("set_generation_timing_enabled"):
+				game.call("set_generation_timing_enabled", true)
 			var generated: Dictionary = game.generate_environment_state(run_state, environment_data, state_rng)
 			var perf_generate_usec := Time.get_ticks_usec() - perf_generate_started_usec if _world_environment_timing_enabled else 0
 			if typeof(generated) == TYPE_DICTIONARY and not (generated as Dictionary).is_empty():
@@ -1249,6 +1251,8 @@ func _generated_game_states(run_state: RunState, environment_data: Dictionary, r
 					"generate": perf_generate_usec,
 					"base_total": Time.get_ticks_usec() - perf_game_started_usec,
 				}
+				if game.has_method("generation_timing_snapshot"):
+					perf_games_detail[game_id]["generation_detail"] = game.call("generation_timing_snapshot")
 		var fixture_count := maxi(1, int(_copy_dict(_copy_dict(environment_data.get("layout", {})).get("game_fixture_counts", {})).get(game_id, 1)))
 		if fixture_count <= 1 or not game.has_method("generate_environment_fixture_states"):
 			continue

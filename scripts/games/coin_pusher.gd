@@ -1,6 +1,9 @@
 class_name CoinPusherGame
 extends GameModule
 
+var _generation_timing_enabled := false
+var _last_generation_timing_usec: Dictionary = {}
+
 const STATE_SCHEMA := "coin_pusher_discrete_pile"
 const DROP_ACTION := "drop_quarter"
 const DROP_CHARGE_ACTION := "coin_pusher_drop_charge"
@@ -208,6 +211,16 @@ func generate_environment_state(run_state: RunState, environment: Dictionary, rn
 	var machine := _generate_machine_state(run_state, environment, rng)
 	_initialize_owned_shim(run_state, machine)
 	return machine
+
+
+func set_generation_timing_enabled(enabled: bool) -> void:
+	_generation_timing_enabled = enabled
+	if not enabled:
+		_last_generation_timing_usec = {}
+
+
+func generation_timing_snapshot() -> Dictionary:
+	return _last_generation_timing_usec.duplicate(true)
 
 
 func environment_state_generated(run_state: RunState, environment: Dictionary, generated_state: Dictionary) -> void:
@@ -816,6 +829,9 @@ func finalize_chunked_exit_settle(run_state: RunState, environment: Dictionary) 
 
 
 func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: RngStream = null) -> Dictionary:
+	var perf_started_usec := Time.get_ticks_usec() if _generation_timing_enabled else 0
+	var perf_stage_started_usec := perf_started_usec
+	_last_generation_timing_usec = {}
 	var local_rng := rng
 	if local_rng == null:
 		local_rng = RngStream.new()
@@ -824,7 +840,13 @@ func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: 
 	variation_rng.configure(_stable_hash("coin_pusher_variation:%s:%s" % [str(run_state.seed_text if run_state != null else "fallback"), _environment_node_id(run_state, environment)]))
 	var variation_id := _seeded_variation_id(environment, variation_rng)
 	var variation_config := _variation_config(variation_id)
+	if _generation_timing_enabled:
+		_last_generation_timing_usec["setup"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stage_started_usec = Time.get_ticks_usec()
 	var simulation := CoinPusherSolverScript.create_machine(local_rng.fork("fixed_point_pile"), _machine_definition(variation_id), _opening_coin_count(variation_id))
+	if _generation_timing_enabled:
+		_last_generation_timing_usec["solver_create"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stage_started_usec = Time.get_ticks_usec()
 	# Keep never-visited world generation byte-identical to the Stage-1 snapshot.
 	# Live apparatus defaults are initialized at the actual entry boundary.
 	simulation.erase("carriage_x")
@@ -842,6 +864,9 @@ func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: 
 		variation_state = JackpotRidgeScript.initial_state(variation_config, local_rng.fork("jackpot_ridge"), _lane_count(), _cell_count())
 	elif variation_id == "vault_drop":
 		variation_state = VaultDropScript.initial_state(variation_config, local_rng.fork("vault_drop"), _lane_count(), _cell_count(), node_id)
+	if _generation_timing_enabled:
+		_last_generation_timing_usec["variation_state"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stage_started_usec = Time.get_ticks_usec()
 	var machine := {
 		"schema": STATE_SCHEMA,
 		"version": _state_version(),
@@ -875,10 +900,20 @@ func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: 
 		"scenario_reset_token": _scenario_reset_token(environment),
 		"last_message": _variation_intro(variation_id),
 	}
+	if _generation_timing_enabled:
+		_last_generation_timing_usec["machine_state"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stage_started_usec = Time.get_ticks_usec()
 	_sync_physical_features(machine)
+	if _generation_timing_enabled:
+		_last_generation_timing_usec["physical_features"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stage_started_usec = Time.get_ticks_usec()
 	machine["rider_serial"] = (machine.get("riders", []) as Array).size()
 	machine["settled_state"] = CoinPusherLiveSessionScript.make_snapshot(_simulation(machine), machine)
+	if _generation_timing_enabled:
+		_last_generation_timing_usec["snapshot"] = Time.get_ticks_usec() - perf_stage_started_usec
 	machine.erase("simulation")
+	if _generation_timing_enabled:
+		_last_generation_timing_usec["total"] = Time.get_ticks_usec() - perf_started_usec
 	return machine
 func _ensure_machine_state(run_state: RunState, environment: Dictionary, persist: bool) -> Dictionary:
 	var game_states := _game_states(environment)
