@@ -76,8 +76,14 @@ bind that commit and its Git tree exactly.
 Every verified seed must use one of `WINDOWS_NATIVE`, `WEB_CHROME`, or
 `WINDOWS_NATIVE_AND_WEB_CHROME`, an ISO `yyyy-MM-dd` verification date, explicit
 `PUBLIC_UI_ACTION` route steps, and no shortcut. Its `evidence` is an array of
-repository-local paths plus lowercase SHA-256 hashes. At least one entry must be
-an `OWNER_SESSION_REPORT` JSON document with schema
+paths under `docs/plans/evidence/playtest06_2` plus lowercase SHA-256 hashes.
+Every evidence file must already be tracked at repository `HEAD`, and its
+working-tree bytes must exactly equal that committed blob; staged, unstaged,
+ignored, and `.tmp` evidence cannot qualify. The contract reads, parses, and
+hashes the committed blob rather than trusting the cited working file. Evidence
+is therefore committed in a custody commit after the frozen candidate it
+records, while `-ExpectedTestedCommit` continues to name that tested candidate.
+At least one entry must be an `OWNER_SESSION_REPORT` JSON document with schema
 `beat_the_house.playtest06_owner_route/v1`; that retained report binds the same
 candidate, seed, platform, public actions, no-soft-lock/dead-interaction result,
 and observed coverage. The contract counts coverage from that hashed report,
