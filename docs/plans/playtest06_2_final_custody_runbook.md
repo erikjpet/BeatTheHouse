@@ -29,7 +29,7 @@ The owner command refuses tracked, staged, or nonignored untracked files before
 and after the run. Its Web smoke performs the required fresh distribution export
 itself with `-NoPackageFreshExport`; `-SkipExport` is not valid for this custody
 path. Both smoke reports bind the candidate commit/tree, actual platform, pass
-result, and aggregate export identity.
+result, and one shared lowercase-canonical aggregate export identity.
 
 ## Route evidence
 
@@ -48,7 +48,9 @@ The referenced runtime event must repeat the witness action index, coverage
 field/id, outcome type, and visible result, and its action id and visible result
 must match that indexed public action. FINAL parses both smoke reports, rehashes
 every owner-build tool and local export file, and verifies the locked Web
-template identity; opaque or substituted JSON blobs do not qualify.
+template identity; opaque or substituted JSON blobs do not qualify. Runtime
+trace platforms must match their referencing sessions, and each session's
+unique public actions must exactly match the documented manifest route in order.
 
 `FULL-RUN-CONTROLS` needs separate Windows and Chrome reports. A coverage string
 without its action-indexed runtime event is rejected. Scenario representatives

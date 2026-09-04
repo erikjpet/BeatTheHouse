@@ -478,6 +478,8 @@ if (-not (Test-CommitText $candidateTree)) {
     Add-Failure "candidate_base_tree does not match candidate_base_commit."
 }
 if ($RequireFinal -and $expectedTree) {
+    $status = Invoke-GitCapture @("status", "--porcelain=v1", "--untracked-files=all")
+    if ($status.exit_code -ne 0 -or -not [string]::IsNullOrWhiteSpace([string]$status.output)) { Add-Failure "FINAL requires no tracked, staged, or nonignored untracked files." }
     $worktreeDiff = Invoke-GitCapture @("diff", "--quiet")
     if ($worktreeDiff.exit_code -ne 0) { Add-Failure "FINAL requires a clean tracked working tree." }
     $indexDiff = Invoke-GitCapture @("diff", "--cached", "--quiet")
@@ -663,6 +665,7 @@ if ($RequireFinal) {
                     "tools/verify_native_solver_runtime.ps1",
                     "tools/web_perf_smoke.ps1",
                     "tools/web_perf_export_mode.ps1",
+                    "tools/export_tree_identity.ps1",
                     "tools/l02_web_perf_probe.mjs",
                     "tools/serve_web.ps1"
                 )
@@ -812,6 +815,7 @@ foreach ($seed in $seeds) {
     $resolvedEvidenceByPath = @{}
     $evidenceKindByPath = @{}
     $runtimeEventsByPath = @{}
+    $runtimePlatformByPath = @{}
     foreach ($evidence in $evidenceRows) {
         $kind = [string]$evidence.kind
         $path = [string]$evidence.path
@@ -847,6 +851,7 @@ foreach ($seed in $seeds) {
                 }
                 if ($eventSet.Count -eq 0) { Add-Failure "$label must contain runtime events." }
                 $runtimeEventsByPath[$path] = $eventSet
+                $runtimePlatformByPath[$path] = [string]$trace.platform
             }
         }
     }
@@ -877,7 +882,8 @@ foreach ($seed in $seeds) {
         $publicActions = @(As-Array $session.public_actions)
         if ($publicActions.Count -eq 0) { Add-Failure "$label must retain public_actions." }
         $sessionActionIds = @{}
-        foreach ($action in $publicActions) {
+        for ($actionPosition = 0; $actionPosition -lt $publicActions.Count; $actionPosition++) {
+            $action = $publicActions[$actionPosition]
             $actionId = [string]$action.action_id
             Require-Text $actionId "$label.public_actions[].action_id" | Out-Null
             Require-Text $action.instruction "$label.public_actions[$actionId].instruction" | Out-Null
@@ -885,11 +891,20 @@ foreach ($seed in $seeds) {
             if ([string]$action.authority -cne "PUBLIC_UI_ACTION") { Add-Failure "$label.public_actions[$actionId].authority must be PUBLIC_UI_ACTION." }
             Test-NoShortcutToken $actionId "$label.public_actions[$actionId].action_id"
             Test-NoShortcutToken $action.instruction "$label.public_actions[$actionId].instruction"
-            $sessionActionIds[$actionId] = $true
+            if ($sessionActionIds.ContainsKey($actionId)) { Add-Failure "$label contains duplicate public action '$actionId'." } else { $sessionActionIds[$actionId] = $true }
+            if ($actionPosition -ge $routeSteps.Count) {
+                Add-Failure "$label has an undocumented public action at index $actionPosition."
+            } else {
+                $routeStep = $routeSteps[$actionPosition]
+                if ($actionId -cne [string]$routeStep.action_id -or
+                    [string]$action.instruction -cne [string]$routeStep.instruction -or
+                    [string]$action.visible_result -cne [string]$routeStep.expected_visible_result -or
+                    [string]$action.authority -cne [string]$routeStep.authority) {
+                    Add-Failure "$label public_actions does not exactly match manifest route_steps at index $actionPosition."
+                }
+            }
         }
-        foreach ($stepId in $routeStepIds.Keys) {
-            if (-not $sessionActionIds.ContainsKey($stepId)) { Add-Failure "$label is missing manifest route action '$stepId'." }
-        }
+        if ($publicActions.Count -ne $routeSteps.Count) { Add-Failure "$label public_actions count does not match manifest route_steps." }
         $sessionObservedCoverage = New-CoverageSets
         if ($null -eq $session.observed_coverage) {
             Add-Failure "$label must contain observed_coverage."
@@ -924,6 +939,7 @@ foreach ($seed in $seeds) {
                 Add-Failure "$witnessLabel runtime_event_id is absent from its retained runtime trace."
             } else {
                 $runtimeEvent = $runtimeEventsByPath[$runtimePath][$runtimeEventId]
+                if (-not $runtimePlatformByPath.ContainsKey($runtimePath) -or [string]$runtimePlatformByPath[$runtimePath] -cne [string]$session.platform) { Add-Failure "$witnessLabel runtime trace platform does not match its referencing owner session." }
                 if ([int]$runtimeEvent.action_index -ne $actionIndex) { Add-Failure "$witnessLabel action_index does not match its runtime event." }
                 if ([string]$runtimeEvent.coverage_field -cne $field) { Add-Failure "$witnessLabel coverage_field does not match its runtime event." }
                 if ([string]$runtimeEvent.coverage_id -cne $coverageId) { Add-Failure "$witnessLabel coverage_id does not match its runtime event." }

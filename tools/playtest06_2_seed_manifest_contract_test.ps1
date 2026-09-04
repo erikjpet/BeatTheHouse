@@ -1,6 +1,8 @@
 $ErrorActionPreference = "Stop"
 $sourceRoot = [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
 $sourceContract = Join-Path $PSScriptRoot "playtest06_2_seed_manifest_contract.ps1"
+$sourceIdentityHelper = Join-Path $PSScriptRoot "export_tree_identity.ps1"
+. $sourceIdentityHelper
 $failures = [Collections.Generic.List[string]]::new()
 $tempRelative = ".tmp/playtest06_2_seed_manifest_contract_test/$([guid]::NewGuid().ToString('N'))"
 $temp = [IO.Path]::GetFullPath((Join-Path $sourceRoot $tempRelative))
@@ -84,7 +86,7 @@ try {
         New-Item -ItemType Directory -Path (Join-Path $repo $directory) -Force | Out-Null
     }
     Copy-Item -LiteralPath $sourceContract -Destination (Join-Path $repo "tools/playtest06_2_seed_manifest_contract.ps1")
-    $ownerTools = @("tools/playtest06_owner_build.ps1", "tools/export_itch.ps1", "tools/build_native_solver.ps1", "tools/verify_native_solver_runtime.ps1", "tools/web_perf_smoke.ps1", "tools/web_perf_export_mode.ps1", "tools/l02_web_perf_probe.mjs", "tools/serve_web.ps1")
+    $ownerTools = @("tools/playtest06_owner_build.ps1", "tools/export_itch.ps1", "tools/build_native_solver.ps1", "tools/verify_native_solver_runtime.ps1", "tools/web_perf_smoke.ps1", "tools/web_perf_export_mode.ps1", "tools/export_tree_identity.ps1", "tools/l02_web_perf_probe.mjs", "tools/serve_web.ps1")
     foreach ($ownerTool in $ownerTools) { Copy-Item -LiteralPath (Join-Path $sourceRoot $ownerTool) -Destination (Join-Path $repo $ownerTool) }
     Copy-Item -LiteralPath (Join-Path $sourceRoot "native/coin_pusher/toolchain.lock.json") -Destination (Join-Path $repo "native/coin_pusher/toolchain.lock.json")
     Copy-Item -LiteralPath (Join-Path $sourceRoot "export_presets.cfg") -Destination (Join-Path $repo "export_presets.cfg")
@@ -150,17 +152,10 @@ try {
             [ordered]@{ path = $_.FullName.Substring($repo.Length).TrimStart('\','/').Replace('\','/'); bytes = [int64]$_.Length; sha256 = (Get-Hash $_.FullName) }
         })
     }
-    function Get-BuildIdentity($rows, [string]$relativeRoot) {
-        $prefix = $relativeRoot.TrimEnd('/') + "/"
-        $canonical = @($rows | Sort-Object { [string]$_.path } | ForEach-Object { "{0}`t{1}`t{2}" -f ([string]$_.path).Substring($prefix.Length), [int64]$_.bytes, [string]$_.sha256 }) -join "`n"
-        $sha = [Security.Cryptography.SHA256]::Create()
-        try { return ([BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($canonical)))).Replace("-", "").ToLowerInvariant() }
-        finally { $sha.Dispose() }
-    }
     $windowsRows = @(Get-BuildRows "builds/windows")
     $webRows = @(Get-BuildRows "builds/web")
-    $windowsIdentity = Get-BuildIdentity $windowsRows "builds/windows"
-    $webIdentity = Get-BuildIdentity $webRows "builds/web"
+    $windowsIdentity = [string](Get-ExportTreeIdentityFromRows -Rows $windowsRows -PathPrefix "builds/windows").aggregate_sha256
+    $webIdentity = [string](Get-ExportTreeIdentityFromRows -Rows $webRows -PathPrefix "builds/web").aggregate_sha256
     Write-Json ([ordered]@{ schema = "beat_the_house.playtest06_owner_build_smoke/v1"; candidate_commit = $candidateCommit; candidate_tree = $candidateTree; platform = "WINDOWS_NATIVE"; passed = $true; export_identity_sha256 = $windowsIdentity }) (Join-Path $repo $windowsSmokeRelative)
     Write-Json ([ordered]@{ schema = "beat_the_house.playtest06_owner_build_smoke/v1"; candidate_commit = $candidateCommit; candidate_tree = $candidateTree; platform = "WEB_CHROME"; passed = $true; export_identity_sha256 = $webIdentity }) (Join-Path $repo $webSmokeRelative)
     $buildRelative = "docs/plans/evidence/playtest06_2/owner_build_manifest.json"
@@ -240,6 +235,12 @@ try {
     $positive = Invoke-Contract $sandboxContract $manifestPath -Final -ExpectedCommit $candidateCommit
     Assert-True ($positive.exit_code -eq 0) "Valid FINAL fixture failed: $($positive.output)"
 
+    $untrackedProbePath = Join-Path $repo "hostile_nonignored_untracked.txt"
+    Set-Content -LiteralPath $untrackedProbePath -Value "must fail closed" -Encoding ascii
+    $untrackedCandidate = Invoke-Contract $sandboxContract $manifestPath -Final -ExpectedCommit $candidateCommit
+    Assert-True ($untrackedCandidate.exit_code -ne 0 -and $untrackedCandidate.output.Contains("nonignored untracked files")) "FINAL accepted an arbitrary nonignored untracked file."
+    Remove-Item -LiteralPath $untrackedProbePath -Force
+
     Add-Content -LiteralPath $manifestPath -Value " " -Encoding utf8
     $unstagedManifest = Invoke-Contract $sandboxContract $manifestPath -Final -ExpectedCommit $candidateCommit
     Assert-True ($unstagedManifest.exit_code -ne 0 -and $unstagedManifest.output.Contains("working-tree bytes do not exactly match")) "FINAL accepted an unstaged manifest mutation."
@@ -261,10 +262,41 @@ try {
     Assert-True ($tamperedBuild.exit_code -ne 0 -and $tamperedBuild.output.Contains("SHA-256 does not match the local build")) "FINAL accepted a replaced local owner build."
     [IO.File]::WriteAllBytes($windowsExe, $originalWindowsBytes)
 
+    $webSessionRelative = "docs/plans/evidence/playtest06_2/web_chrome_owner_session.json"
+    $webSessionPath = Join-Path $repo $webSessionRelative
+    $originalWebSession = Get-Content $webSessionPath -Raw | ConvertFrom-Json
+    function Invoke-SessionFixture($SessionValue, [string]$Name) {
+        Write-Json $SessionValue $webSessionPath
+        $badManifest = Copy-JsonObject $manifest
+        ($badManifest.seeds[0].evidence | Where-Object { $_.path -eq $webSessionRelative }).sha256 = Get-Hash $webSessionPath
+        Write-Json $badManifest $manifestPath
+        Invoke-Git @("add", "--", $webSessionRelative, $manifestRelative) | Out-Null
+        Invoke-Git @("commit", "-q", "-m", "hostile session $Name") | Out-Null
+        return Invoke-Contract $sandboxContract $manifestPath -Final -ExpectedCommit $candidateCommit
+    }
+    $duplicateActions = Copy-JsonObject $originalWebSession
+    $duplicateActions.public_actions[1].action_id = [string]$duplicateActions.public_actions[0].action_id
+    $duplicateActionResult = Invoke-SessionFixture $duplicateActions "duplicate action"
+    Assert-True ($duplicateActionResult.exit_code -ne 0 -and $duplicateActionResult.output.Contains("duplicate public action")) "FINAL accepted duplicate public action ids."
+
+    $reorderedActions = Copy-JsonObject $originalWebSession
+    $firstAction = Copy-JsonObject $reorderedActions.public_actions[0]
+    $secondAction = Copy-JsonObject $reorderedActions.public_actions[1]
+    $reorderedActions.public_actions[0] = $secondAction
+    $reorderedActions.public_actions[1] = $firstAction
+    $reorderedActionResult = Invoke-SessionFixture $reorderedActions "reordered actions"
+    Assert-True ($reorderedActionResult.exit_code -ne 0 -and $reorderedActionResult.output.Contains("does not exactly match manifest route_steps at index")) "FINAL accepted public actions out of documented route order."
+
+    Write-Json $originalWebSession $webSessionPath
+    Write-Json $manifest $manifestPath
+    Invoke-Git @("add", "--", $webSessionRelative, $manifestRelative) | Out-Null
+    Invoke-Git @("commit", "-q", "-m", "restore positive owner session") | Out-Null
+
     $webTraceRelative = "docs/plans/evidence/playtest06_2/web_chrome_runtime_trace.json"
     $webTracePath = Join-Path $repo $webTraceRelative
     $originalWebTrace = Get-Content $webTracePath -Raw | ConvertFrom-Json
     $traceMismatchCases = @(
+        @{ field = "platform"; value = "WINDOWS_NATIVE"; message = "platform does not match its referencing owner session"; target = "trace" },
         @{ field = "action_index"; value = 1; message = "action_index does not match" },
         @{ field = "coverage_field"; value = "layer_ids"; message = "coverage_field does not match" },
         @{ field = "coverage_id"; value = "wrong_coverage_id"; message = "coverage_id does not match" },
@@ -274,7 +306,7 @@ try {
     )
     foreach ($case in $traceMismatchCases) {
         $badTrace = Copy-JsonObject $originalWebTrace
-        $badTrace.events[0].($case.field) = $case.value
+        if ([string]$case.target -eq "trace") { $badTrace.($case.field) = $case.value } else { $badTrace.events[0].($case.field) = $case.value }
         Write-Json $badTrace $webTracePath
         $badManifest = Copy-JsonObject $manifest
         ($badManifest.seeds[0].evidence | Where-Object { $_.path -eq $webTraceRelative }).sha256 = Get-Hash $webTracePath
@@ -284,6 +316,11 @@ try {
         $traceMismatch = Invoke-Contract $sandboxContract $manifestPath -Final -ExpectedCommit $candidateCommit
         Assert-True ($traceMismatch.exit_code -ne 0 -and $traceMismatch.output.Contains([string]$case.message)) "FINAL accepted runtime trace/witness $($case.field) mismatch."
     }
+
+    Write-Json $originalWebTrace $webTracePath
+    Write-Json $manifest $manifestPath
+    Invoke-Git @("add", "--", $webTraceRelative, $manifestRelative) | Out-Null
+    Invoke-Git @("commit", "-q", "-m", "restore positive runtime trace") | Out-Null
 
     $windowsSmokePath = Join-Path $repo $windowsSmokeRelative
     $originalWindowsSmoke = Get-Content $windowsSmokePath -Raw | ConvertFrom-Json
@@ -337,7 +374,7 @@ try {
         foreach ($failure in $failures) { Write-Host " - $failure" }
         exit 1
     }
-    Write-Host "playtest06_2 seed manifest selftest: PASS checks=45 custody=manifest/evidence/build/smoke/runtime catalogs=18_archetypes/3_layers/11_games/55_scenarios/$($materialBranches.Count)_selected_branches platforms=2"
+    Write-Host "playtest06_2 seed manifest selftest: PASS checks=49 custody=manifest/evidence/build/smoke/runtime/order/untracked catalogs=18_archetypes/3_layers/11_games/55_scenarios/$($materialBranches.Count)_selected_branches platforms=2"
 }
 finally {
     if (Test-Path -LiteralPath $temp) {

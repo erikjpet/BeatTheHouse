@@ -10,6 +10,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $root = [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
+. (Join-Path $PSScriptRoot "export_tree_identity.ps1")
 $evidenceRoot = [IO.Path]::GetFullPath((Join-Path $root "docs/plans/evidence/playtest06_2"))
 $evidencePath = if ([IO.Path]::IsPathRooted($EvidenceOut)) { [IO.Path]::GetFullPath($EvidenceOut) } else { [IO.Path]::GetFullPath((Join-Path $root $EvidenceOut)) }
 $requiredEvidencePath = Join-Path $evidenceRoot "owner_build_manifest.json"
@@ -48,15 +49,6 @@ function Get-BuildFiles {
             sha256 = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
         }
     })
-}
-
-function Get-BuildIdentity {
-    param($Rows, [string]$RelativeRoot)
-    $prefix = $RelativeRoot.TrimEnd('/') + "/"
-    $canonical = @($Rows | Sort-Object { [string]$_.path } | ForEach-Object { "{0}`t{1}`t{2}" -f ([string]$_.path).Substring($prefix.Length), [int64]$_.bytes, [string]$_.sha256 }) -join "`n"
-    $sha = [Security.Cryptography.SHA256]::Create()
-    try { return ([BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($canonical)))).Replace("-", "").ToLowerInvariant() }
-    finally { $sha.Dispose() }
 }
 
 $candidate = (& git -C $root rev-parse "$CandidateCommit^{commit}").Trim()
@@ -121,8 +113,8 @@ if (@(& git -C $root status --short --untracked-files=all).Count -ne 0 -or (& gi
 
 $windowsFiles = @(Get-BuildFiles "builds/windows")
 $webFiles = @(Get-BuildFiles "builds/web")
-$windowsExportIdentity = Get-BuildIdentity $windowsFiles "builds/windows"
-$webExportIdentity = Get-BuildIdentity $webFiles "builds/web"
+$windowsExportIdentity = [string](Get-ExportTreeIdentityFromRows -Rows $windowsFiles -PathPrefix "builds/windows").aggregate_sha256
+$webExportIdentity = [string](Get-ExportTreeIdentityFromRows -Rows $webFiles -PathPrefix "builds/web").aggregate_sha256
 if (@($windowsFiles | Where-Object { $_.path -like "*coin_pusher_native*.dll" }).Count -ne 1) { throw "Windows build must contain exactly one Coin Pusher native solver DLL." }
 if (@($webFiles | Where-Object { $_.path -like "*coin_pusher_native*.wasm" }).Count -ne 1) { throw "Web build must contain exactly one Coin Pusher native solver WASM." }
 
@@ -160,7 +152,7 @@ if (-not [bool]$webSummary.passed -or [string]$webSummary.source_commit -cne $ca
     throw "Web owner-build smoke did not bind the candidate and complete export identity."
 }
 
-$toolFiles = @("tools/playtest06_owner_build.ps1", "tools/export_itch.ps1", "tools/build_native_solver.ps1", "tools/verify_native_solver_runtime.ps1", "tools/web_perf_smoke.ps1", "tools/web_perf_export_mode.ps1", "tools/l02_web_perf_probe.mjs", "tools/serve_web.ps1")
+$toolFiles = @("tools/playtest06_owner_build.ps1", "tools/export_itch.ps1", "tools/build_native_solver.ps1", "tools/verify_native_solver_runtime.ps1", "tools/web_perf_smoke.ps1", "tools/web_perf_export_mode.ps1", "tools/export_tree_identity.ps1", "tools/l02_web_perf_probe.mjs", "tools/serve_web.ps1")
 $manifest = [ordered]@{
     schema = "beat_the_house.playtest06_owner_build/v1"
     candidate_commit = $candidate

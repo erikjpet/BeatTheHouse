@@ -4,6 +4,8 @@ $builder = Join-Path $PSScriptRoot "playtest06_owner_build.ps1"
 $exporter = Join-Path $PSScriptRoot "export_itch.ps1"
 $webSmoke = Join-Path $PSScriptRoot "web_perf_smoke.ps1"
 $exportModeContract = Join-Path $PSScriptRoot "web_perf_export_mode_contract_test.ps1"
+$identityHelper = Join-Path $PSScriptRoot "export_tree_identity.ps1"
+$identityContract = Join-Path $PSScriptRoot "export_tree_identity_contract_test.ps1"
 $failures = [Collections.Generic.List[string]]::new()
 
 function Assert-True {
@@ -22,7 +24,7 @@ function Invoke-PowerShellCapture {
     return [pscustomobject]@{ exit_code = $exitCode; output = ($lines -join "`n") }
 }
 
-foreach ($path in @($builder, $exporter, $webSmoke, $exportModeContract)) {
+foreach ($path in @($builder, $exporter, $webSmoke, $exportModeContract, $identityHelper, $identityContract)) {
     $tokens = $null
     $errors = $null
     [void][Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$errors)
@@ -38,10 +40,12 @@ $webSmokeText = Get-Content -LiteralPath $webSmoke -Raw
 Assert-True (($webSmokeText | Select-String -Pattern '--untracked-files=all' -AllMatches).Matches.Count -eq 2) "Web smoke must reject nonignored untracked files before and after execution."
 Assert-True (-not $builderText.Contains("--untracked-files=no")) "Owner builder must not hide untracked files."
 Assert-True (-not $webSmokeText.Contains("--untracked-files=no")) "Web smoke must not hide untracked files."
+Assert-True ($builderText.Contains("Get-ExportTreeIdentityFromRows")) "Owner builder does not use the shared export identity canonicalizer."
+Assert-True ($webSmokeText.Contains("Get-ExportTreeIdentityFromDirectory")) "Web smoke does not use the shared export identity canonicalizer."
 foreach ($forbidden in @("Compress-Archive", "butler push", "git tag", "GitHub Release")) {
     Assert-True (-not $builderText.Contains($forbidden)) "Owner builder contains forbidden release operation '$forbidden'."
 }
-foreach ($required in @("CandidateCommit", "owner_build_manifest.json", "builds/windows", "builds/web", "smoke_passed", "toolchain_lock_sha256", "export_presets_sha256", "Get-BuildFiles")) {
+foreach ($required in @("CandidateCommit", "owner_build_manifest.json", "builds/windows", "builds/web", "smoke_passed", "toolchain_lock_sha256", "export_presets_sha256", "Get-BuildFiles", "export_tree_identity.ps1")) {
     Assert-True ($builderText.Contains($required)) "Owner builder is missing custody marker '$required'."
 }
 
@@ -55,6 +59,8 @@ Assert-True ($result.exit_code -ne 0 -and $result.output.Contains("cannot be com
 
 $modeResult = Invoke-PowerShellCapture @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $exportModeContract)
 Assert-True ($modeResult.exit_code -eq 0) "Web fresh-export mode contract failed: $($modeResult.output)"
+$identityResult = Invoke-PowerShellCapture @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $identityContract)
+Assert-True ($identityResult.exit_code -eq 0) "Owner/Web export identity contract failed: $($identityResult.output)"
 
 $initialStatus = @(& git -C $root status --short --untracked-files=all)
 if ($initialStatus.Count -eq 0) {
