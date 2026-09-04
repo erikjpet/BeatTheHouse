@@ -260,7 +260,7 @@ func _public_opportunity_visibility(run_state: RunState) -> Dictionary:
 		"heists": heist_visible,
 		"items": not _array(environment.get("item_ids", environment.get("item_offers", []))).is_empty(),
 		"services": not _array(environment.get("service_ids", environment.get("services", []))).is_empty(),
-		"events": environment.has("event_id") or not _array(environment.get("events", [])).is_empty(),
+		"events": environment.has("event_id") or not _array(environment.get("event_ids", environment.get("events", []))).is_empty(),
 		"travel": not run_state.is_terminal(),
 		"lenders_debt": _total_debt_balance(run_state) > 0 or archetype_id in ["motel", "back_alley", "small_underground_casino"],
 		"heat": true,
@@ -501,7 +501,7 @@ func _try_style_action(run_state: RunState, run: Dictionary, policy: String) -> 
 	match _active_style:
 		"crew_maximizer":
 			if int(run.get("actions", 0)) < SPECIALIST_ACTION_BUDGET:
-				return _crew_job_boundary(run_state, run, "crew_bishop", "inner_circle", true)
+				return _natural_crew_job_boundary(run_state, run, true)
 		"numbers_specialist":
 			if int(run.get("actions", 0)) < NUMBERS_SPECIALIST_ACTION_BUDGET:
 				return _numbers_boundary(run_state, run)
@@ -512,11 +512,25 @@ func _try_style_action(run_state: RunState, run: Dictionary, policy: String) -> 
 			return _heist_boundary(run_state, run)
 		"mixed_opportunist":
 			if int(run.get("actions", 0)) % 7 == 0:
-				return _crew_job_boundary(run_state, run, "crew_switch", "made", false)
+				return _natural_crew_job_boundary(run_state, run, false)
 			if int(run.get("actions", 0)) % 11 == 0 and run_state.bankroll >= 60:
 				return _buy_numbers_slip_boundary(run_state, run, "mixed_numbers_slip")
 		_:
 			pass
+	return ""
+
+
+func _natural_crew_job_boundary(run_state: RunState, run: Dictionary, keep_working: bool) -> String:
+	var member_ids: Array[String] = []
+	for value in _array(run_state.current_environment.get("crew_presence", [])):
+		var member_id := str(_dict(value).get("member_id", "")).strip_edges()
+		if not member_id.is_empty() and not member_ids.has(member_id):
+			member_ids.append(member_id)
+	member_ids.sort()
+	for member_id in member_ids:
+		var label := _crew_job_boundary(run_state, run, member_id, "inner_circle" if keep_working else "made", keep_working)
+		if not label.is_empty():
+			return label
 	return ""
 
 
@@ -813,6 +827,10 @@ func _play_specific_game_boundary(run_state: RunState, run: Dictionary, game_id:
 
 func _numbers_boundary(run_state: RunState, run: Dictionary) -> String:
 	var state := _dict(run.get("style_state", {}))
+	if int(run.get("actions", 0)) % 5 == 0:
+		var ordinary_slip := _buy_numbers_slip_boundary(run_state, run, "numbers_visible_slip")
+		if not ordinary_slip.is_empty():
+			return ordinary_slip
 	var phase := str(state.get("numbers_phase", "runner"))
 	if phase == "runner":
 		var runner_label := _numbers_runner_boundary(run_state, run)
