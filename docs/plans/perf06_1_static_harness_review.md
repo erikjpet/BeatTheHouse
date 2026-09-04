@@ -417,3 +417,33 @@ passed that exact fixture/liveness linkage check. Their eligible idle draw p95
 values were 7.395, 7.670 and 7.400 ms against 5.000 ms; reduced-motion draw p95
 was 5.580, 7.195 and 6.480 ms against 5.000 ms. This is now a reproducible draw
 hot-path failure, separate from the rejected engine-startup experiment.
+
+### Staged run-UI closure experiment
+
+Candidate `2c1fa028` removes the complete 24-script, 703,404-source-byte run-UI
+closure from Foundation's initial Web menu load. Seventeen direct roots are
+held as nullable strong `Script` references and loaded transactionally at the
+first stage that constructs them. A stage publishes no references or controls
+until all of its scripts load; a failure is persistent, leaves the current menu
+in place, disables run entry, and returns before any normal, tutorial, daily,
+meta-home, Continue/load, or game-test run mutation. Desktop retains the
+synchronous build, and immediate Web Play completes pending stages
+synchronously. A focused static contract and Godot 4.6 parser passed; the real
+native main scene also started and built the complete run UI without errors.
+
+One fresh no-LTO Chrome 152 CPU4 cold run is retained at
+`.tmp/perf06_1/web_pusher_staged_deferral_cpu4_fresh.json`. The template stayed
+at hash `cf371f607aa9cb18e690bd595976c1baaf00c8cec24078e4a307fd515ad07913`
+and 6,055,590 bytes; side/main Wasm sizes stayed 21,802,358 / 1,508,237 bytes.
+READY improved to 21,477 ms, 1,269 ms (5.6%) below the primary 22,746 ms
+baseline, but remained 1,477 ms over budget. The engine did not enter
+Foundation `_ready` until 19,273 ms; Foundation reached the interactive menu
+728 ms later, so the remaining miss is still dominated by pre-project engine
+startup rather than run-shell construction.
+
+All seven maintained Coin Pusher frame-p95 rows passed, but the eligible
+20-sample production-canvas draw gate remained red in six rows: idle 5.635 / 5
+ms, reduced motion 6.895 / 5 ms, drop 9.025 / 7 ms, carriage 7.275 / 7 ms,
+skill-stop 7.080 / 7 ms, and skill-release 11.840 / 7 ms. Collect passed at
+6.845 / 7 ms. The startup and draw budgets remain unchanged and unwaived;
+staged deferral is a measured improvement, not a `perf06_1` closeout.
