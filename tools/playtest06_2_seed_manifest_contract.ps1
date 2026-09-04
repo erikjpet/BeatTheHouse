@@ -36,19 +36,33 @@ function Test-CommitText {
     return [string]$Value -cmatch '^[0-9a-f]{40}$'
 }
 
+function Invoke-GitCapture {
+    param([string[]]$Arguments)
+    $priorErrorPreference = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    try {
+        $lines = @(& git -C $script:Root @Arguments 2>$null | ForEach-Object { [string]$_ })
+        $exitCode = $LASTEXITCODE
+    } finally {
+        $ErrorActionPreference = $priorErrorPreference
+    }
+    return [pscustomobject]@{ exit_code = $exitCode; output = ($lines -join "`n") }
+}
+
 function Get-CommitTree {
     param([string]$Commit, [string]$Label)
     if (-not (Test-CommitText $Commit)) {
         Add-Failure "$Label must be a full lowercase Git commit id."
         return ""
     }
-    & git -C $script:Root cat-file -e "$Commit`^{commit}" 2>$null
-    if ($LASTEXITCODE -ne 0) {
+    $commitResult = Invoke-GitCapture @("cat-file", "-e", "$Commit`^{commit}")
+    if ($commitResult.exit_code -ne 0) {
         Add-Failure "$Label does not resolve to a commit in this repository."
         return ""
     }
-    $tree = (& git -C $script:Root rev-parse "$Commit`^{tree}" 2>$null).Trim()
-    if ($LASTEXITCODE -ne 0 -or -not (Test-CommitText $tree)) {
+    $treeResult = Invoke-GitCapture @("rev-parse", "$Commit`^{tree}")
+    $tree = ([string]$treeResult.output).Trim()
+    if ($treeResult.exit_code -ne 0 -or -not (Test-CommitText $tree)) {
         Add-Failure "$Label does not resolve to an exact tree."
         return ""
     }
@@ -127,32 +141,114 @@ function Test-NoShortcutToken {
     }
 }
 
-function Resolve-EvidenceFile {
+function Get-GitBlobBytes {
+    param([string]$BlobId, [string]$Label)
+    $startInfo = New-Object System.Diagnostics.ProcessStartInfo
+    $startInfo.FileName = "git"
+    $escapedRoot = $script:Root.Replace('"', '\"')
+    $startInfo.Arguments = "-C `"$escapedRoot`" cat-file blob $BlobId"
+    $startInfo.UseShellExecute = $false
+    $startInfo.RedirectStandardOutput = $true
+    $startInfo.RedirectStandardError = $true
+    $startInfo.CreateNoWindow = $true
+    $process = New-Object System.Diagnostics.Process
+    $process.StartInfo = $startInfo
+    [void]$process.Start()
+    $stderrTask = $process.StandardError.ReadToEndAsync()
+    $memory = New-Object System.IO.MemoryStream
+    $process.StandardOutput.BaseStream.CopyTo($memory)
+    $process.WaitForExit()
+    [void]$stderrTask.Wait(5000)
+    if ($process.ExitCode -ne 0) {
+        Add-Failure "$Label could not read its committed HEAD blob: $($stderrTask.Result.Trim())"
+        return $null
+    }
+    return ,([byte[]]$memory.ToArray())
+}
+
+function Get-Sha256Bytes {
+    param([byte[]]$Bytes)
+    $sha = [Security.Cryptography.SHA256]::Create()
+    try {
+        return ([BitConverter]::ToString($sha.ComputeHash($Bytes))).Replace("-", "").ToLowerInvariant()
+    } finally {
+        $sha.Dispose()
+    }
+}
+
+function Test-ExactBytes {
+    param([byte[]]$Expected, [byte[]]$Actual)
+    if ($Expected.Length -ne $Actual.Length) { return $false }
+    for ($index = 0; $index -lt $Expected.Length; $index++) {
+        if ($Expected[$index] -ne $Actual[$index]) { return $false }
+    }
+    return $true
+}
+
+function ConvertFrom-Utf8JsonBytes {
+    param([byte[]]$Bytes, [string]$Label)
+    try {
+        $utf8 = New-Object System.Text.UTF8Encoding($false, $true)
+        $text = $utf8.GetString($Bytes).TrimStart([char]0xFEFF)
+        return $text | ConvertFrom-Json
+    } catch {
+        Add-Failure "$Label is not valid UTF-8 JSON."
+        return $null
+    }
+}
+
+function Resolve-CommittedEvidence {
     param([string]$Path, [string]$Label)
     if ([string]::IsNullOrWhiteSpace($Path)) {
         Add-Failure "$Label.path must be non-empty."
-        return ""
+        return $null
+    }
+    if ([IO.Path]::IsPathRooted($Path)) {
+        Add-Failure "$Label.path must be repository-relative under $script:EvidenceRootRelative."
+        return $null
     }
     try {
-        $candidate = if ([IO.Path]::IsPathRooted($Path)) {
-            [IO.Path]::GetFullPath($Path)
-        } else {
-            [IO.Path]::GetFullPath((Join-Path $script:Root $Path))
-        }
+        $candidate = [IO.Path]::GetFullPath((Join-Path $script:Root $Path))
     } catch {
         Add-Failure "$Label.path is invalid: $Path"
-        return ""
+        return $null
     }
-    $rootPrefix = $script:Root.TrimEnd([char[]]@('\', '/')) + [IO.Path]::DirectorySeparatorChar
-    if (-not $candidate.StartsWith($rootPrefix, [StringComparison]::OrdinalIgnoreCase)) {
-        Add-Failure "$Label.path must remain inside the repository: $Path"
-        return ""
+    $evidencePrefix = $script:EvidenceRoot.TrimEnd([char[]]@('\', '/')) + [IO.Path]::DirectorySeparatorChar
+    if (-not $candidate.StartsWith($evidencePrefix, [StringComparison]::OrdinalIgnoreCase)) {
+        Add-Failure "$Label.path must remain under $($script:EvidenceRootRelative): $Path"
+        return $null
     }
     if (-not (Test-Path -LiteralPath $candidate -PathType Leaf)) {
         Add-Failure "$Label.path does not exist: $Path"
-        return ""
+        return $null
     }
-    return $candidate
+    $gitPath = $candidate.Substring($script:Root.Length).TrimStart([char[]]@('\', '/')).Replace('\', '/')
+    $blobResult = Invoke-GitCapture @("rev-parse", "--verify", "HEAD:$gitPath")
+    $blobId = ([string]$blobResult.output).Trim()
+    if ($blobResult.exit_code -ne 0 -or -not (Test-CommitText $blobId)) {
+        Add-Failure "$Label.path must be Git-tracked and committed at HEAD: $gitPath"
+        return $null
+    }
+    $typeResult = Invoke-GitCapture @("cat-file", "-t", $blobId)
+    $blobType = ([string]$typeResult.output).Trim()
+    if ($typeResult.exit_code -ne 0 -or $blobType -cne "blob") {
+        Add-Failure "$Label.path does not resolve to a committed file blob at HEAD: $gitPath"
+        return $null
+    }
+    [byte[]]$committedBytes = Get-GitBlobBytes $blobId $Label
+    if ($null -eq $committedBytes) { return $null }
+    [byte[]]$workingBytes = [IO.File]::ReadAllBytes($candidate)
+    if (-not (Test-ExactBytes $committedBytes $workingBytes)) {
+        Add-Failure "$Label.path working-tree bytes do not exactly match the committed HEAD blob: $gitPath"
+        return $null
+    }
+    return [pscustomobject]@{
+        full_path = $candidate
+        git_path = $gitPath
+        blob_id = $blobId
+        bytes = $committedBytes
+        sha256 = Get-Sha256Bytes $committedBytes
+    }
 }
 
 function New-CoverageSets {
@@ -179,6 +275,8 @@ function Add-CoverageValues {
 
 $Failures = [Collections.Generic.List[string]]::new()
 $Root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+$EvidenceRootRelative = "docs/plans/evidence/playtest06_2"
+$EvidenceRoot = [IO.Path]::GetFullPath((Join-Path $Root $EvidenceRootRelative))
 $ValidShortcuts = @(
     "PREVALIDATED_TRAVEL",
     "DEBUG_ACTION",
@@ -467,18 +565,14 @@ foreach ($seed in $seeds) {
         $label = "seeds[$id].evidence[$path]"
         if ($validEvidenceKinds -notcontains $kind) { Add-Failure "$label.kind is not allowed." }
         if (-not (Test-Sha256Text $evidence.sha256)) { Add-Failure "$label.sha256 must be a lowercase SHA-256." }
-        $evidenceFile = Resolve-EvidenceFile $path $label
+        $committedEvidence = Resolve-CommittedEvidence $path $label
         if ($evidencePaths.ContainsKey($path)) { Add-Failure "seeds[$id] contains duplicate evidence path '$path'." } else { $evidencePaths[$path] = $true }
-        if (-not $evidenceFile) { continue }
-        $actualHash = (Get-FileHash -LiteralPath $evidenceFile -Algorithm SHA256).Hash.ToLowerInvariant()
-        if ($actualHash -cne [string]$evidence.sha256) { Add-Failure "$label SHA-256 does not match the retained file." }
+        if ($null -eq $committedEvidence) { continue }
+        if ([string]$committedEvidence.sha256 -cne [string]$evidence.sha256) { Add-Failure "$label SHA-256 does not match the committed HEAD blob." }
         if ($kind -ne "OWNER_SESSION_REPORT") { continue }
         $ownerSessionCount += 1
-        try { $session = Get-Content -LiteralPath $evidenceFile -Raw | ConvertFrom-Json }
-        catch {
-            Add-Failure "$label OWNER_SESSION_REPORT is not valid JSON."
-            continue
-        }
+        $session = ConvertFrom-Utf8JsonBytes ([byte[]]$committedEvidence.bytes) "$label OWNER_SESSION_REPORT"
+        if ($null -eq $session) { continue }
         if ([string]$session.schema -cne "beat_the_house.playtest06_owner_route/v1") { Add-Failure "$label has the wrong owner-session schema." }
         if ([string]$session.candidate_commit -cne [string]$seed.tested_commit) { Add-Failure "$label candidate_commit does not match the seed." }
         if ([string]$session.candidate_tree -cne [string]$seed.tested_tree) { Add-Failure "$label candidate_tree does not match the seed." }
