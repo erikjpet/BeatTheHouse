@@ -88,6 +88,17 @@ do not contain the complete runner and their results are invalid setup evidence.
 Direct standalone `extends SceneTree` contracts named elsewhere in this ledger
 are valid entry points.
 
+Run the player-facing Crew Play binding reproduction after the shared
+Foundation host repair. It must enter Blackjack through `FoundationMain`, retain
+`current_environment.active_game_id=blackjack`, expose `crew_play:spotter`, and
+exit 0. Before that repair it intentionally exits 1 and prints the exact missing-
+binding evidence.
+
+```powershell
+& $godot --headless --path . --script `
+  res://tools/integ06_1_crew_play_entry_repro.gd
+```
+
 ## 3. Save migration matrices
 
 Run the provenance-bound v0.5.1 admission matrix. It must retain the exact

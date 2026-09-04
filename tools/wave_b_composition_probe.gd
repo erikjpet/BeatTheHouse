@@ -355,7 +355,7 @@ func _discover_natural_delivery_target(library: ContentLibrary) -> Dictionary:
 	var prepared := _prepare_natural_crew_delivery(library, "%s-DELIVERY" % seed_text)
 	var run_state: RunState = prepared.get("run_state")
 	if run_state == null:
-		_require(false, "The production lender/cadence path did not naturally queue a Crew favor.")
+		_require(false, "The production lender/cadence path did not naturally queue a Crew favor: %s" % JSON.stringify(_delivery_preparation_failure(prepared)))
 		return prepared
 	var active_entry := _begin_triggered_event(run_state, "crew_favor_delivery")
 	if str(active_entry.get("event_id", "")) != "crew_favor_delivery":
@@ -396,7 +396,7 @@ func _exercise_delivery_composition(library: ContentLibrary) -> Dictionary:
 	var prepared := _prepare_natural_crew_delivery(library, "%s-DELIVERY" % seed_text)
 	var run_state: RunState = prepared.get("run_state")
 	var generator: RunGenerator = prepared.get("generator")
-	_require(run_state != null and generator != null, "The production lender/cadence path did not naturally queue a Crew favor.")
+	_require(run_state != null and generator != null, "The production lender/cadence path did not naturally queue a Crew favor: %s" % JSON.stringify(_delivery_preparation_failure(prepared)))
 	if run_state == null or generator == null:
 		return {
 			"eligibility_source": str(prepared.get("eligibility_source", "")),
@@ -724,6 +724,16 @@ func _prepare_natural_crew_delivery(library: ContentLibrary, delivery_seed: Stri
 		"event_selection": selected,
 		"exploration": exploration,
 		"progression": progression,
+	}
+
+
+func _delivery_preparation_failure(prepared: Dictionary) -> Dictionary:
+	return {
+		"crew_lender_node": str(prepared.get("crew_lender_node", "")),
+		"event_selection": _dict(prepared.get("event_selection", {})),
+		"exploration": _dict(prepared.get("exploration", {})),
+		"lender_result": _dict(prepared.get("lender_result", {})),
+		"progression": _dict(prepared.get("progression", {})),
 	}
 
 
