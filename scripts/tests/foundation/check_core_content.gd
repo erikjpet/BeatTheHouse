@@ -268,6 +268,9 @@ class SurfaceHarness:
 		labels.append(text)
 		label_records.append({"text": text, "rect": rect, "font_size": font_size})
 
+	func surface_register_text_protected_rect(_rect: Rect2) -> void:
+		pass
+
 	func surface_reel_symbol_label(text: String, rect: Rect2, font_size: int, _color: Color) -> void:
 		labels.append(text)
 		label_records.append({"text": text, "rect": rect, "font_size": font_size, "reel_motion": true})
