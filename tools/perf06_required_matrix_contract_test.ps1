@@ -13,7 +13,7 @@ foreach ($surface in @($matrix.games.PSObject.Properties) + @($matrix.systems.PS
     if (-not ($matrix.allocation_roots.PSObject.Properties.Name -contains $surface.Name) -or @($matrix.allocation_roots.PSObject.Properties[$surface.Name].Value).Count -eq 0) { throw "Surface '$($surface.Name)' has no allocation roots." }
 }
 $lowEndLauncher = Get-Content -LiteralPath (Join-Path $PSScriptRoot "perf06_low_end_matrix.ps1") -Raw
-foreach ($needle in @("reproducible_whole_matrix_throttle", "ProcessorAffinity", "PriorityClass", "native_surface_probe.json", "ProfileManifestSha256")) {
+foreach ($needle in @("reproducible_whole_matrix_throttle", "ProcessorAffinity", "PriorityClass", "native_surface_probe.json", "ProfileManifestSha256", "PERF06 LOW-END PREFLIGHT PASS")) {
     if (-not $lowEndLauncher.Contains($needle)) { throw "Low-end launcher lost reproducible whole-matrix binding '$needle'." }
 }
 $nativeWrapper = Get-Content -LiteralPath (Join-Path $PSScriptRoot "foundation_performance_probe.ps1") -Raw

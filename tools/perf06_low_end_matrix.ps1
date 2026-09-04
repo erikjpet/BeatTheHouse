@@ -2,6 +2,7 @@ param(
     [Parameter(Mandatory = $true)][string]$ProfilePath,
     [string]$GodotPath = "",
     [string]$OutDir = ".tmp/perf06_1/low_end",
+    [switch]$PreflightOnly,
     [switch]$RequireGodot
 )
 
@@ -101,6 +102,15 @@ try {
         process_inventory_before = @($processInventory)
     }
     $hostEvidence | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $out "run_identity.json") -Encoding utf8
+
+    if ($PreflightOnly) {
+        $hostEvidence.completed_utc = [DateTime]::UtcNow.ToString("o")
+        $hostEvidence.preflight_only = $true
+        $hostEvidence.passed = $true
+        $hostEvidence | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $out "run_identity.json") -Encoding utf8
+        Write-Host "PERF06 LOW-END PREFLIGHT PASS profile=$($profile.profile_id) commit=$head out=$out"
+        return
+    }
 
     & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "foundation_performance_probe.ps1") -RunCount 8 -FramesPerSurface 120 -ResolveSampleCount 48 -SeedPrefix "PERF06-LOW-$($profile.profile_id)" -Out (Join-Path $out "native_surface_probe.json") -CandidateCommit $head -ProfileManifestSha256 $profileHash -EvidenceProfile "low_end:$($profile.profile_id)" -RequireGodot:$RequireGodot
     if ($LASTEXITCODE -ne 0) { throw "Native low-end surface matrix failed." }
