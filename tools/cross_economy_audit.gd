@@ -7,6 +7,7 @@ extends "res://tools/endgame_metrics_probe.gd"
 # tables/deliveries settle through production.
 
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
+const CrewRecruitmentModelScript := preload("res://scripts/core/crew_recruitment_model.gd")
 
 const TOOL_ID := "cross_economy_audit_v1"
 const DEFAULT_SEEDS_PER_STYLE := 64
@@ -501,23 +502,131 @@ func _try_style_action(run_state: RunState, run: Dictionary, policy: String) -> 
 	match _active_style:
 		"crew_maximizer":
 			if int(run.get("actions", 0)) < SPECIALIST_ACTION_BUDGET:
-				return _natural_crew_job_boundary(run_state, run, true)
+				var marker_label := _crew_marker_boundary(run_state, run)
+				if not marker_label.is_empty():
+					return marker_label
+				var crew_label := _natural_crew_job_boundary(run_state, run, true)
+				return crew_label if not crew_label.is_empty() else _specialist_visible_event_boundary(run_state, run, policy)
 		"numbers_specialist":
 			if int(run.get("actions", 0)) < NUMBERS_SPECIALIST_ACTION_BUDGET:
-				return _numbers_boundary(run_state, run)
+				var marker_label := _crew_marker_boundary(run_state, run)
+				if not marker_label.is_empty():
+					return marker_label
+				var numbers_label := _numbers_boundary(run_state, run)
+				return numbers_label if not numbers_label.is_empty() else _specialist_visible_event_boundary(run_state, run, policy)
 		"coin_pusher_grinder":
 			if int(_dict(run.get("style_state", {})).get("drops", 0)) < PUSHER_DROP_BUDGET:
 				return _pusher_boundary(run_state, run)
 		"heist_rusher":
-			return _heist_boundary(run_state, run)
+			var marker_label := _crew_marker_boundary(run_state, run)
+			if not marker_label.is_empty():
+				return marker_label
+			var heist_label := _heist_boundary(run_state, run)
+			return heist_label if not heist_label.is_empty() else _specialist_visible_event_boundary(run_state, run, policy)
 		"mixed_opportunist":
 			if int(run.get("actions", 0)) % 7 == 0:
-				return _natural_crew_job_boundary(run_state, run, false)
+				var marker_label := _crew_marker_boundary(run_state, run)
+				if not marker_label.is_empty():
+					return marker_label
+				var crew_label := _natural_crew_job_boundary(run_state, run, false)
+				if not crew_label.is_empty():
+					return crew_label
+				var event_label := _specialist_visible_event_boundary(run_state, run, policy)
+				if not event_label.is_empty():
+					return event_label
 			if int(run.get("actions", 0)) % 11 == 0 and run_state.bankroll >= 60:
 				return _buy_numbers_slip_boundary(run_state, run, "mixed_numbers_slip")
 		_:
 			pass
 	return ""
+
+
+func _specialist_visible_event_boundary(run_state: RunState, run: Dictionary, policy: String) -> String:
+	var recruitment_label := _crew_recruitment_event_boundary(run_state, run)
+	if not recruitment_label.is_empty():
+		return recruitment_label
+	var seek_label := _seek_ranked_crew_boundary(run_state, run)
+	if not seek_label.is_empty():
+		return seek_label
+	if not _try_resolve_event(run_state, run, policy):
+		return ""
+	_count_action(run, "event")
+	return "specialist_visible_event"
+
+
+func _crew_recruitment_event_boundary(run_state: RunState, run: Dictionary) -> String:
+	var recruitment_event_ids := CrewRecruitmentModelScript.recruitment_event_ids()
+	for event_id_value in _current_event_ids(run_state):
+		var event_id := str(event_id_value)
+		if not recruitment_event_ids.has(event_id):
+			continue
+		var definition := library.event(event_id)
+		if definition.is_empty():
+			continue
+		var event := EventModuleScript.new()
+		event.setup(definition, library)
+		if not event.can_trigger(run_state, run_state.current_environment):
+			continue
+		var selected_choice_id := ""
+		for choice_value in event.choices(run_state, run_state.current_environment):
+			var choice := _dict(choice_value)
+			var choice_id := str(choice.get("id", ""))
+			if choice_id.begins_with("work_with_"):
+				selected_choice_id = choice_id
+				break
+		if selected_choice_id.is_empty():
+			continue
+		var result := event.resolve(run_state, run_state.current_environment, selected_choice_id)
+		if not bool(result.get("ok", false)):
+			continue
+		run_state.advance_environment_turns(1)
+		run["events_resolved"] = int(run.get("events_resolved", 0)) + 1
+		_count_action(run, "event")
+		return "crew_recruitment_event:%s" % event_id
+	return ""
+
+
+func _seek_ranked_crew_boundary(run_state: RunState, run: Dictionary) -> String:
+	if not _array(run_state.current_environment.get("crew_presence", [])).is_empty():
+		return ""
+	var desired_member_ids: Array[String] = []
+	match _active_style:
+		"numbers_specialist":
+			desired_member_ids.assign(["crew_lucky", "crew_mags"])
+		"heist_rusher":
+			desired_member_ids.assign(["crew_bishop"])
+		_:
+			for member_id_value in CrewStateModelScript.MEMBER_IDS:
+				desired_member_ids.append(str(member_id_value))
+	for member_id in desired_member_ids:
+		if not _crew_at_least_rank(run_state, member_id, "associate"):
+			continue
+		var definition := CrewRecruitmentModelScript.member_definition(member_id)
+		for archetype_id_value in _array(definition.get("presence", [])):
+			var archetype_id := str(archetype_id_value)
+			var target_node_id := _world_node_for_archetype(run_state, archetype_id)
+			if target_node_id.is_empty() or target_node_id == run_state.current_world_node_id():
+				continue
+			var label := _travel_to_node_boundary(run_state, run, target_node_id, false, "crew_seek:%s:%s" % [member_id, archetype_id])
+			if not label.is_empty():
+				return label
+	return ""
+
+
+func _crew_marker_boundary(run_state: RunState, run: Dictionary) -> String:
+	if str(run_state.crew_standing().get("rank", "stranger")) != "stranger":
+		return ""
+	var service := RunActionServiceScript.new()
+	service.setup(library, run_state)
+	var option := service.lender_hook("the_crew")
+	if option.is_empty() or not bool(option.get("enabled", false)) or not bool(option.get("mutation_supported", false)):
+		return ""
+	var used := service.use_hook("lender", "the_crew")
+	if not bool(used.get("ok", false)):
+		return ""
+	run["lender_uses"] = int(run.get("lender_uses", 0)) + 1
+	_count_action(run, "hook")
+	return "crew_marker_loan"
 
 
 func _natural_crew_job_boundary(run_state: RunState, run: Dictionary, keep_working: bool) -> String:
@@ -569,11 +678,31 @@ func _try_general_action(run_state: RunState, run: Dictionary, policy: String) -
 	if _active_style in ["control_crew_ignoring", "mixed_opportunist"] and _try_resolve_event(run_state, run, policy):
 		_count_action(run, "event")
 		return "event"
-	if _try_travel(run_state, run, policy):
+	if _try_travel(run_state, run, policy) or _try_any_visible_travel(run_state, run, policy):
 		_count_action(run, "travel")
 		_record_visit(run, run_state)
 		return "travel:%s" % str(run_state.current_environment.get("archetype_id", "unknown"))
 	return ""
+
+
+func _try_any_visible_travel(run_state: RunState, run: Dictionary, policy: String) -> bool:
+	var best_choice := {}
+	var best_score := -99999
+	for choice_value in _travel_choices(run_state):
+		var choice := _dict(choice_value)
+		var target_id := str(choice.get("id", ""))
+		if target_id.is_empty() or target_id == run_state.current_world_node_id() or not bool(choice.get("enabled", false)):
+			continue
+		var cost := maxi(0, int(choice.get("cost", 0)))
+		if cost > run_state.bankroll or run_state.bankroll - cost < _destination_minimum_bankroll(target_id):
+			continue
+		var score := _travel_score(run_state, run, choice, policy)
+		if score > best_score:
+			best_score = score
+			best_choice = choice
+	if best_choice.is_empty():
+		return false
+	return _apply_travel_choice(run_state, run, best_choice)
 
 
 func _incremented_map_key(before: Dictionary, after: Dictionary, fallback: String) -> String:
@@ -614,12 +743,7 @@ func _crew_job_boundary(run_state: RunState, run: Dictionary, member_id: String,
 				return "crew_job:%s:collection" % str(job.get("definition_id", "unknown"))
 		return ""
 	if run_state.crew_rank(member_id) == "stranger" or run_state.crew_rank(member_id) == "marker":
-		var recruited := run_state.crew_recruit_member(member_id)
-		if not bool(recruited.get("ok", false)):
-			return ""
-		run_state.advance_environment_turns(1)
-		_count_action(run, "hook")
-		return "crew_recruitment_gate"
+		return ""
 	var rank_index := CrewStateModelScript.RANK_IDS.find(run_state.crew_rank(member_id))
 	var target_index := CrewStateModelScript.RANK_IDS.find(target_rank)
 	if rank_index >= target_index and not keep_working:
@@ -705,11 +829,29 @@ func _world_node_for_archetype(run_state: RunState, archetype_id: String) -> Str
 
 
 func _apply_travel_choice(run_state: RunState, run: Dictionary, choice: Dictionary) -> bool:
-	var route_cost_before := int(run.get("route_cost_total", 0))
-	var traveled := super._apply_travel_choice(run_state, run, choice)
-	if traveled:
-		run["route_cost_total"] = route_cost_before + maxi(0, int(choice.get("cost", 0)))
-	return traveled
+	var target_node_id := str(choice.get("id", "")).strip_edges()
+	var route := _dict(choice.get("route", {}))
+	if target_node_id.is_empty() or route.is_empty() or target_node_id == run_state.current_world_node_id():
+		return false
+	var route_status := _dict(choice.get("status", {}))
+	route["cost"] = int(choice.get("cost", route.get("cost", 0)))
+	if route_status.has("suspicion_delta"):
+		route["suspicion_delta"] = int(route_status.get("suspicion_delta", route.get("suspicion_delta", 0)))
+	var previous_environment := run_state.current_environment.duplicate(true)
+	var route_risk := run_state.travel_route_risk(route, target_node_id)
+	var travel_heat := run_state.begin_travel_suspicion_decay(route, target_node_id)
+	generator.next_environment(run_state, target_node_id, true)
+	if run_state.has_world_map() and run_state.current_world_node_id() != target_node_id:
+		return false
+	var travel_decay := run_state.finish_travel_suspicion_decay(travel_heat)
+	var result := _travel_result(target_node_id, previous_environment, run_state.current_environment, route, travel_decay, route_risk)
+	GameModule.apply_result(run_state, result)
+	run_state.advance_environment_turns(1)
+	run["travel_count"] = int(run.get("travel_count", 0)) + 1
+	run["route_cost_total"] = int(run.get("route_cost_total", 0)) + maxi(0, int(choice.get("cost", route.get("cost", 0))))
+	if str(run_state.current_environment.get("archetype_id", "")) == GRAND_CASINO_ID:
+		run["grand_casino_entries"] = int(run.get("grand_casino_entries", 0)) + 1
+	return true
 
 
 func _drive_active_delivery_boundary(run_state: RunState, run: Dictionary, label_prefix: String) -> String:
