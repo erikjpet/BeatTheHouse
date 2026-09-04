@@ -421,6 +421,11 @@ $runtimeManifest = [ordered]@{
     schema = "balance06_1_runtime_artifact_manifest_v2"; canonical_sha256 = $runtimeHash
     entry_count = $runtimeEntries.Count; entries = @($runtimeEntries)
 }
+$nativeDescriptorEntries = @($runtimeEntries | Where-Object { [string]$_.path -like "addons/coin_pusher_native/*.gdextension" })
+$nativeWindowsEntries = @($runtimeEntries | Where-Object { [string]$_.path -like "addons/coin_pusher_native/bin/*.dll" })
+if ($nativeDescriptorEntries.Count -ne 1 -or $nativeWindowsEntries.Count -lt 1) {
+    throw "Frozen audit runtime must contain the registered Coin Pusher extension descriptor and at least one Windows library."
+}
 $runtimeManifestPath = Join-Path $OutDir "runtime_artifact_manifest.json"
 Write-JsonFile $runtimeManifest $runtimeManifestPath 8
 $runtimeManifestFileSha = (Get-FileHash -LiteralPath $runtimeManifestPath -Algorithm SHA256).Hash.ToLowerInvariant()
@@ -539,6 +544,12 @@ foreach ($job in $jobs) {
     if (-not (Test-Path -LiteralPath $job.RuntimeManifest -PathType Leaf) -or (Get-FileHash -LiteralPath $job.RuntimeManifest -Algorithm SHA256).Hash.ToLowerInvariant() -cne $runtimeManifestFileSha) { $failures.Add("$($job.Style) runtime manifest file mismatch.") }
     if (-not (Test-Path -LiteralPath $job.IdentityManifest -PathType Leaf) -or (Get-FileHash -LiteralPath $job.IdentityManifest -Algorithm SHA256).Hash.ToLowerInvariant() -cne $identityManifestSha) { $failures.Add("$($job.Style) identity manifest file mismatch.") }
     if ($job.ProcessExitCode -ne 0) { $failures.Add("Shard process failed: $($job.Style) exit=$($job.ProcessExitCode).") }
+    if (Test-Path -LiteralPath $job.Stderr -PathType Leaf) {
+        $stderrText = Get-Content -LiteralPath $job.Stderr -Raw
+        if ($stderrText -match 'Error loading GDExtension|GDExtension dynamic library not found|Error loading extension') {
+            $failures.Add("Shard did not load the frozen native extension: $($job.Style).")
+        }
+    }
     $exitRecord = $null
     if (-not (Test-Path -LiteralPath $job.ExitRecord -PathType Leaf)) { $failures.Add("Missing shard exit record: $($job.Style).") }
     else {
