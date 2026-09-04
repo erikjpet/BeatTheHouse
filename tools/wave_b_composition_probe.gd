@@ -67,6 +67,9 @@ func _init() -> void:
 func _run() -> void:
 	var library: ContentLibrary = ContentLibraryScript.new()
 	library.load(false)
+	if mode == "delivery-discovery":
+		_finish_delivery_discovery(_discover_natural_delivery_target(library))
+		return
 	if mode == "delivery-matrix":
 		_finish_delivery_matrix(_exercise_delivery_composition(library))
 		return
@@ -276,7 +279,7 @@ func _finish_delivery_matrix(delivery: Dictionary) -> void:
 		"passed": lifecycle_passed,
 	}
 	var report := {
-		"schema": "beat_the_house.integ06_1_composition_shard",
+		"schema": "beat_the_house.integ06_1_composition_shard/v1",
 		"version": 1,
 		"candidate_commit": candidate_commit,
 		"candidate_tree": candidate_tree,
@@ -320,6 +323,59 @@ func _finish_delivery_matrix(delivery: Dictionary) -> void:
 	quit(0 if bool(report.get("passed", false)) else 1)
 
 
+func _finish_delivery_discovery(discovery: Dictionary) -> void:
+	var passed := failures.is_empty() \
+		and not str(discovery.get("target_node", "")).is_empty() \
+		and not str(discovery.get("target_archetype", "")).is_empty()
+	var report := {
+		"schema": "beat_the_house.integ06_1_composition_discovery/v1",
+		"version": 1,
+		"candidate_commit": candidate_commit,
+		"candidate_tree": candidate_tree,
+		"tool_source_sha256": tool_source_sha256,
+		"profile": {"evidence_profile": evidence_profile, "path": evidence_profile_path, "sha256": evidence_profile_sha256},
+		"seed": seed_text,
+		"eligibility_source": str(discovery.get("eligibility_source", "")),
+		"event_selection": _dict(discovery.get("event_selection", {})),
+		"target_node": str(discovery.get("target_node", "")),
+		"target_archetype": str(discovery.get("target_archetype", "")),
+		"failures": failures.duplicate(),
+		"passed": passed,
+	}
+	_write_report(report)
+	print("INTEG06_1_COMPOSITION_DISCOVERY=%s" % JSON.stringify(report))
+	quit(0 if passed else 1)
+
+
+func _discover_natural_delivery_target(library: ContentLibrary) -> Dictionary:
+	var prepared := _prepare_natural_crew_delivery(library, "%s-DELIVERY" % seed_text)
+	var run_state: RunState = prepared.get("run_state")
+	if run_state == null:
+		_require(false, "The production lender/cadence path did not naturally queue a Crew favor.")
+		return prepared
+	var active_entry := _begin_triggered_event(run_state, "crew_favor_delivery")
+	if str(active_entry.get("event_id", "")) != "crew_favor_delivery":
+		_require(false, "The production modal queue did not begin the naturally selected Crew favor.")
+		return prepared
+	var event_module: EventModule = EventModuleScript.new()
+	event_module.setup(library.event("crew_favor_delivery"), library)
+	var started := event_module.resolve(run_state, run_state.current_environment, "run_package")
+	_complete_triggered_event(run_state, "crew_favor_delivery", active_entry)
+	var targets := _array(run_state.delivery_snapshot().get("targets", []))
+	var target_node := str(_dict(targets[0]).get("node_id", "")) if not targets.is_empty() else ""
+	var node := WorldMapScript.node_metadata_by_id(run_state.world_map, target_node)
+	var target_archetype := str(node.get("archetype_id", ""))
+	_require(bool(started.get("delivery_started", false)) and not target_node.is_empty() and not target_archetype.is_empty(), "The naturally selected Crew favor did not produce a real-map target.")
+	if run_state.delivery_has_active_run():
+		run_state.delivery_abandon("integ06_1_discovery_cleanup")
+	return {
+		"eligibility_source": str(prepared.get("eligibility_source", "")),
+		"event_selection": _dict(prepared.get("event_selection", {})),
+		"target_node": target_node,
+		"target_archetype": target_archetype,
+	}
+
+
 func _exercise_delivery_composition(library: ContentLibrary) -> Dictionary:
 	var supported_orders := [
 		"save_load_replay_abandon",
@@ -343,11 +399,10 @@ func _exercise_delivery_composition(library: ContentLibrary) -> Dictionary:
 		}
 	var event_module: EventModule = EventModuleScript.new()
 	event_module.setup(library.event("crew_favor_delivery"), library)
-	var pending_entry := run_state.next_pending_triggered_event()
-	var active_entry := run_state.begin_triggered_event_resolution(pending_entry)
+	var active_entry := _begin_triggered_event(run_state, "crew_favor_delivery")
 	_require(str(active_entry.get("event_id", "")) == "crew_favor_delivery", "The production modal queue did not begin the naturally selected Crew favor.")
 	var started := event_module.resolve(run_state, run_state.current_environment, "run_package")
-	run_state.complete_triggered_event_resolution("crew_favor_delivery")
+	_complete_triggered_event(run_state, "crew_favor_delivery", active_entry)
 	var token := str(started.get("world_sequence_owner_token", ""))
 	_require(bool(started.get("delivery_started", false)) and bool(started.get("world_sequence_scheduled", false)) and not token.is_empty(), "The production Crew-favor event did not schedule its delivery sequence.")
 	var physical := _dict(run_state.delivery_snapshot().get("physical", {}))
@@ -371,6 +426,7 @@ func _exercise_delivery_composition(library: ContentLibrary) -> Dictionary:
 	var observed_archetype := str(run_state.current_environment.get("archetype_id", ""))
 	var observed_scenario := str(run_state.current_environment.get("scenario_id", ""))
 	var observed_layer := str(run_state.current_environment.get("current_layer_id", ""))
+	_require(target_layer_id.is_empty() or observed_layer == target_layer_id, "The composed Punchline row did not retain the requested production layer.")
 	var observed_surface_inventory := _layer_surface_inventory(run_state.current_environment)
 	var observed_traveler_ids := _array(run_state.current_environment.get("traveler_ids", [])).duplicate()
 	var observed_sweep_active := bool(run_state.town_state.sweep_internal_status().get("active", false))
@@ -530,10 +586,6 @@ func _enter_requested_punchline_layer(run_state: RunState, generator: RunGenerat
 			return {"ok": false, "message": "The discovered casino layer could not be entered.", "casino_entry": casino_entry}
 	if target_layer_id == "casino":
 		return {"ok": true, "layer_id": "casino", "method": "side_door:punchline_password"}
-	# L3 is reached through the shipped Crew-standing gate, using the same public
-	# trust mutation that ordinary Crew consequences apply. The layer's own access
-	# check remains authoritative; this probe never installs a layer directly.
-	run_state.crew_add_trust("crew_rook", 10000, "integ06_1_composition_progression")
 	var back_room_access := run_state.environment_layer_access_status("back_room")
 	var back_room_entry := generator.enter_environment_layer(run_state, "back_room", false) if bool(back_room_access.get("available", false)) else {"ok": false}
 	return {
@@ -601,7 +653,20 @@ func _prepare_natural_crew_delivery(library: ContentLibrary, delivery_seed: Stri
 		}
 	var action_service: RunActionService = RunActionServiceScript.new()
 	action_service.setup(library, run_state)
-	var lender_result := action_service.use_hook("lender", "the_crew")
+	var progression := {"ok": true, "action_trace": []}
+	var lender_result: Dictionary = {}
+	if target_layer_id == "back_room":
+		progression = _earn_rook_made_standing(run_state, generator, library, action_service, crew_lender_node)
+		lender_result = _dict(progression.get("final_lender_result", {}))
+	else:
+		lender_result = action_service.use_hook("lender", "the_crew")
+	if not bool(progression.get("ok", false)):
+		return {
+			"eligibility_source": "production_world_map+real_edge_travel+RunActionService+production_event_selector",
+			"crew_lender_node": crew_lender_node,
+			"exploration": exploration,
+			"progression": progression,
+		}
 	if not bool(lender_result.get("ok", false)):
 		return {
 			"eligibility_source": "production_world_map+RunActionService+production_event_selector",
@@ -637,6 +702,7 @@ func _prepare_natural_crew_delivery(library: ContentLibrary, delivery_seed: Stri
 		"lender_result": lender_result,
 		"event_selection": selected,
 		"exploration": exploration,
+		"progression": progression,
 	}
 
 
@@ -672,6 +738,130 @@ func _visit_all_real_map_nodes_and_return(run_state: RunState, generator: RunGen
 	return {"ok": run_state.current_world_node_id() == return_node_id, "visited_ids": visited_ids}
 
 
+func _earn_rook_made_standing(run_state: RunState, generator: RunGenerator, library: ContentLibrary, action_service: RunActionService, crew_lender_node: String) -> Dictionary:
+	var action_trace: Array = []
+	var lender_result := action_service.use_hook("lender", "the_crew")
+	action_trace.append({"action": "accept_crew_loan", "ok": bool(lender_result.get("ok", false)), "rook_rank": run_state.crew_rank("crew_rook"), "rook_trust": run_state.crew_trust("crew_rook")})
+	if not bool(lender_result.get("ok", false)):
+		return {"ok": false, "action_trace": action_trace, "final_lender_result": lender_result}
+	for favor_index in range(16):
+		if run_state.crew_rank("crew_rook") in ["made", "inner_circle"]:
+			break
+		var queued := _queue_crew_favor_through_player_actions(run_state, generator, library)
+		action_trace.append({"action": "natural_crew_favor_selected", "favor_index": favor_index, "selection": queued})
+		if not bool(queued.get("ok", false)):
+			return {"ok": false, "action_trace": action_trace, "final_lender_result": {}}
+		var completed := _complete_natural_crew_favor(run_state, generator, library)
+		action_trace.append({"action": "complete_crew_favor", "favor_index": favor_index, "result": completed, "rook_rank": run_state.crew_rank("crew_rook"), "rook_trust": run_state.crew_trust("crew_rook")})
+		if not bool(completed.get("ok", false)):
+			return {"ok": false, "action_trace": action_trace, "final_lender_result": {}}
+		if run_state.crew_rank("crew_rook") in ["made", "inner_circle"]:
+			break
+		if _active_crew_favor_debt_id(run_state).is_empty():
+			var returned := _travel_real_path(run_state, generator, crew_lender_node)
+			if not bool(returned.get("ok", false)):
+				return {"ok": false, "action_trace": action_trace, "final_lender_result": {}}
+			lender_result = action_service.use_hook("lender", "the_crew")
+			action_trace.append({"action": "accept_crew_loan", "ok": bool(lender_result.get("ok", false)), "rook_rank": run_state.crew_rank("crew_rook"), "rook_trust": run_state.crew_trust("crew_rook")})
+			if not bool(lender_result.get("ok", false)):
+				return {"ok": false, "action_trace": action_trace, "final_lender_result": lender_result}
+	if run_state.crew_rank("crew_rook") not in ["made", "inner_circle"]:
+		return {"ok": false, "action_trace": action_trace, "message": "Shipped Crew consequences did not reach Made standing."}
+	if _active_crew_favor_debt_id(run_state).is_empty():
+		var returned := _travel_real_path(run_state, generator, crew_lender_node)
+		if not bool(returned.get("ok", false)):
+			return {"ok": false, "action_trace": action_trace, "final_lender_result": {}}
+		lender_result = action_service.use_hook("lender", "the_crew")
+		action_trace.append({"action": "accept_final_crew_loan", "ok": bool(lender_result.get("ok", false)), "rook_rank": run_state.crew_rank("crew_rook"), "rook_trust": run_state.crew_trust("crew_rook")})
+	else:
+		lender_result = {"ok": true, "existing_favor_debt": true}
+	return {"ok": bool(lender_result.get("ok", false)), "action_trace": action_trace, "final_lender_result": lender_result, "rook_rank": run_state.crew_rank("crew_rook"), "rook_trust": run_state.crew_trust("crew_rook")}
+
+
+func _queue_crew_favor_through_player_actions(run_state: RunState, generator: RunGenerator, library: ContentLibrary) -> Dictionary:
+	run_state.advance_environment_turns(2)
+	var resolved_events: Array = []
+	for _attempt in range(96):
+		var selected := _enqueue_next_production_action_event(run_state, library, "game_action")
+		var selected_id := str(selected.get("event_id", ""))
+		if selected_id == "crew_favor_delivery" and run_state.triggered_event_pending(selected_id):
+			return {"ok": true, "selection": selected, "resolved_intervening_events": resolved_events}
+		if bool(selected.get("enqueued", false)) and not selected_id.is_empty():
+			var entry := _begin_triggered_event(run_state, selected_id)
+			var definition := library.event(selected_id)
+			var module: EventModule = EventModuleScript.new()
+			module.setup(definition, library)
+			var choices := module.choices(run_state, run_state.current_environment)
+			var choice_id := str(_dict(choices[0]).get("id", "")) if not choices.is_empty() else ""
+			var result := module.resolve(run_state, run_state.current_environment, choice_id) if not choice_id.is_empty() else {"ok": true, "dismissed_empty_event": true}
+			_complete_triggered_event(run_state, selected_id, entry)
+			resolved_events.append({"event_id": selected_id, "choice_id": choice_id, "ok": bool(result.get("ok", false))})
+			if run_state.is_terminal():
+				return {"ok": false, "selection": selected, "resolved_intervening_events": resolved_events, "message": "Intervening production event ended the run."}
+		run_state.advance_environment_turns(1)
+	return {"ok": false, "resolved_intervening_events": resolved_events, "message": "Crew favor did not win production cadence within 96 player actions."}
+
+
+func _complete_natural_crew_favor(run_state: RunState, generator: RunGenerator, library: ContentLibrary) -> Dictionary:
+	var entry := _begin_triggered_event(run_state, "crew_favor_delivery")
+	if str(entry.get("event_id", "")) != "crew_favor_delivery":
+		return {"ok": false, "message": "Crew favor was not present on the production event queue."}
+	var module: EventModule = EventModuleScript.new()
+	module.setup(library.event("crew_favor_delivery"), library)
+	var started := module.resolve(run_state, run_state.current_environment, "run_package")
+	_complete_triggered_event(run_state, "crew_favor_delivery", entry)
+	if not bool(started.get("delivery_started", false)):
+		return {"ok": false, "message": "Crew favor did not start its shipped delivery.", "start": started}
+	if str(_dict(run_state.delivery_snapshot().get("physical", {})).get("cargo_state", "")) == "pickup_pending":
+		var pickup := run_state.delivery_apply_physical_action("pickup", "integ06_1:made_progression")
+		if not bool(pickup.get("ok", false)):
+			return {"ok": false, "message": "Crew favor cargo pickup failed.", "pickup": pickup}
+	var targets := _array(run_state.delivery_snapshot().get("targets", []))
+	var target_node := str(_dict(targets[0]).get("node_id", "")) if not targets.is_empty() else ""
+	var traveled := _travel_real_path(run_state, generator, target_node)
+	if not bool(traveled.get("ok", false)):
+		return {"ok": false, "message": "Crew favor real-edge travel failed.", "travel": traveled}
+	var arrival := run_state.delivery_resolve_travel_arrival({}, {})
+	var finalized := run_state.scenario_finalize_installed_environment(library, {"viewport_size": {"x": 1280, "y": 720}})
+	var handoff := run_state.delivery_complete_handoff(target_node) if bool(arrival.get("ok", false)) and bool(finalized.get("ok", false)) else {}
+	var debt_id := _active_crew_favor_debt_id(run_state)
+	var debt_completion := run_state.complete_debt_favor(debt_id) if bool(handoff.get("ok", false)) and not debt_id.is_empty() else {}
+	return {
+		"ok": bool(arrival.get("ok", false)) and bool(finalized.get("ok", false)) and bool(handoff.get("ok", false)) and bool(debt_completion.get("ok", false)),
+		"target_node": target_node,
+		"arrival": arrival,
+		"handoff": handoff,
+		"debt_completion": debt_completion,
+	}
+
+
+func _active_crew_favor_debt_id(run_state: RunState) -> String:
+	for debt_value in run_state.debt:
+		if typeof(debt_value) != TYPE_DICTIONARY:
+			continue
+		var debt_entry: Dictionary = debt_value
+		if str(debt_entry.get("lender_id", "")) == "the_crew" and str(debt_entry.get("debt_kind", "")) == "favor" and str(debt_entry.get("status", "")) in ["active", "overdue", "favor_due"]:
+			return str(debt_entry.get("id", ""))
+	return ""
+
+
+func _travel_real_path(run_state: RunState, generator: RunGenerator, target_node_id: String) -> Dictionary:
+	if target_node_id.is_empty():
+		return {"ok": false, "message": "Missing travel target."}
+	if run_state.current_world_node_id() == target_node_id:
+		return {"ok": true, "path": [target_node_id]}
+	var query := WorldMapScript.prepare_path_query(run_state.world_map, run_state.current_world_node_id(), false)
+	var path := WorldMapScript.prepared_path(query, target_node_id)
+	if path.is_empty() or not WorldMapScript.prepared_path_uses_real_edges(query, path):
+		return {"ok": false, "message": "No real path to %s." % target_node_id, "path": path}
+	for path_index in range(1, path.size()):
+		var step_id := str(path[path_index])
+		var traveled := generator.travel_environment_result(run_state, step_id, true)
+		if not bool(traveled.get("ok", false)) or run_state.current_world_node_id() != step_id:
+			return {"ok": false, "message": "Production travel failed at %s." % step_id, "path": path}
+	return {"ok": true, "path": path}
+
+
 func _enqueue_next_production_action_event(run_state: RunState, library: ContentLibrary, source: String) -> Dictionary:
 	var context := {
 		"trigger": "action",
@@ -704,9 +894,13 @@ func _enqueue_next_production_action_event(run_state: RunState, library: Content
 	if not picked_id.is_empty():
 		var queued_context := context.duplicate(true)
 		queued_context["environment_snapshot"] = RunStateScript.environment_context_snapshot(run_state.current_environment)
-		enqueued = run_state.enqueue_triggered_event(picked_id, source, queued_context)
+		var picked_definition := _dict(picked.get("event", {}))
+		enqueued = run_state.enqueue_triggered_event(picked_id, source, queued_context, {
+			"presentation": str(picked_definition.get("presentation", "modal")),
+			"speaker": _dict(picked_definition.get("speaker", {})),
+			"timing": _triggered_event_timing(_dict(picked_definition.get("payload", {}))),
+		})
 		if enqueued:
-			var picked_definition := _dict(picked.get("event", {}))
 			run_state.event_cadence_note_event_enqueued(picked_id, not run_state.event_cadence_event_bypasses_budget(picked_id, "random", source, picked_definition))
 	run_state.save_event_cadence_rng(rng)
 	return {
@@ -715,6 +909,30 @@ func _enqueue_next_production_action_event(run_state: RunState, library: Content
 		"rolled_ids": rolled.map(func(row: Variant) -> String: return str(_dict(row).get("id", ""))),
 		"candidate_source": "ContentLibrary.action_trigger_event_candidates_for_context_readonly",
 	}
+
+
+func _triggered_event_timing(payload: Dictionary) -> Dictionary:
+	var timing := _dict(payload.get("timing", {}))
+	var expires := bool(timing.get("expires", false))
+	var duration := maxi(0, int(timing.get("duration_actions", 0)))
+	var timeout_choice_id := str(timing.get("timeout_choice_id", ""))
+	if not expires or duration <= 0 or timeout_choice_id.is_empty():
+		return {"expires": false, "duration_actions": 0, "remaining_actions": 0, "timeout_choice_id": ""}
+	return {"expires": true, "duration_actions": duration, "remaining_actions": duration, "timeout_choice_id": timeout_choice_id}
+
+
+func _begin_triggered_event(run_state: RunState, event_id: String) -> Dictionary:
+	var talk_entry := run_state.pending_talk_event(event_id)
+	if not talk_entry.is_empty():
+		return talk_entry
+	return run_state.begin_triggered_event_resolution(run_state.next_pending_triggered_event())
+
+
+func _complete_triggered_event(run_state: RunState, event_id: String, entry: Dictionary) -> void:
+	if str(entry.get("presentation", "modal")) == "talk":
+		run_state.complete_talk_event_resolution(event_id)
+	else:
+		run_state.complete_triggered_event_resolution(event_id)
 
 
 func _weighted_production_event_pick(run_state: RunState, candidates: Array, rng: RngStream) -> Dictionary:
