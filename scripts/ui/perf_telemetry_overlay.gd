@@ -1964,7 +1964,7 @@ func _measure_followup_game_phases(game_id: String) -> void:
 
 
 func _measure_observed_game_phase(game_id: String, phase_id: String, scenario_name: String, frames: int) -> bool:
-	var before := _perf06_surface_evidence(app.current_game_view_snapshot()) if app != null else {}
+	var before := _perf06_surface_evidence(_current_game_phase_snapshot())
 	var observed := _game_phase_observed(game_id, phase_id, before)
 	if not observed:
 		mark_event("perf06_phase_not_observed", {"game_id": game_id, "phase_id": phase_id, "evidence": before})
@@ -1977,7 +1977,7 @@ func _measure_observed_game_phase(game_id: String, phase_id: String, scenario_na
 		"phase_evidence": {"observed": true, "before": before},
 	})
 	await _wait_frames(frames)
-	var after := _perf06_surface_evidence(app.current_game_view_snapshot()) if app != null else {}
+	var after := _perf06_surface_evidence(_current_game_phase_snapshot())
 	var phase_evidence: Dictionary = current_tags.get("phase_evidence", {})
 	phase_evidence["after"] = after
 	current_tags["phase_evidence"] = phase_evidence
@@ -1987,12 +1987,26 @@ func _measure_observed_game_phase(game_id: String, phase_id: String, scenario_na
 
 func _wait_for_game_phase(game_id: String, phase_id: String, max_frames: int) -> bool:
 	for _frame_index in range(maxi(1, max_frames)):
-		var evidence := _perf06_surface_evidence(app.current_game_view_snapshot()) if app != null else {}
+		var evidence := _perf06_surface_evidence(_current_game_phase_snapshot())
 		if _game_phase_observed(game_id, phase_id, evidence):
 			return true
 		await get_tree().process_frame
 	mark_event("perf06_phase_wait_timeout", {"game_id": game_id, "phase_id": phase_id, "max_frames": max_frames})
 	return false
+
+
+func _current_game_phase_snapshot() -> Dictionary:
+	if app == null:
+		return {}
+	var game: GameModule = app.get("current_game") as GameModule
+	var canvas := app.get("game_surface_canvas") as Control
+	if game != null and canvas != null and canvas.has_method("realtime_surface_state"):
+		var live_value: Variant = canvas.call("realtime_surface_state")
+		if typeof(live_value) == TYPE_DICTIONARY:
+			var live: Dictionary = live_value
+			if str(live.get("game_id", "")) == game.get_id():
+				return live
+	return app.current_game_view_snapshot()
 
 
 func _game_phase_observed(game_id: String, phase_id: String, evidence: Dictionary) -> bool:
@@ -2009,7 +2023,7 @@ func _game_phase_observed(game_id: String, phase_id: String, evidence: Dictionar
 	match game_id:
 		"scratch_tickets":
 			if phase_id == "scratch_reveal":
-				return str(evidence.get("counter_phase", "")) == "play"
+				return str(evidence.get("counter_phase", "")) in ["play", "file"]
 			if phase_id == "payout":
 				return result_visible or str(evidence.get("counter_phase", "")) in ["result", "selection"]
 		"bar_dice", "blackjack":
