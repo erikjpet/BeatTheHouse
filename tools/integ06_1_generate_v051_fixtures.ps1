@@ -117,7 +117,7 @@ else {
         throw "Capture milestone $resolvedMilestone does not match reviewed boundary $expectedMilestone for $resolvedCommit."
     }
     $resolvedMilestone = $expectedMilestone
-    $historicalRelease = "mid-0.6-owner-build"
+    $historicalRelease = "mid-0.6-development-boundary"
 }
 
 $godot = Resolve-GodotExecutable $GodotPath
@@ -252,6 +252,30 @@ try {
     finally {
         $sha256.Dispose()
     }
+	$custodyInventoryPath = ""
+	$custodyInventoryHash = ""
+	if ($KeepHistoricalArchive) {
+		$custodyInventoryPath = Join-Path $temporaryRoot "custody_inventory.json"
+		$inventoryEntries = @(Get-ChildItem -LiteralPath $temporaryRoot -Recurse -File | Where-Object { $_.FullName -ne $custodyInventoryPath } | Sort-Object FullName | ForEach-Object {
+			$relativePath = $_.FullName.Substring($temporaryRoot.Length).TrimStart([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar).Replace("\", "/")
+			[ordered]@{
+				path = $relativePath
+				size_bytes = $_.Length
+				sha256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $_.FullName).Hash
+			}
+		})
+		$custodyInventory = [ordered]@{
+			schema = "beat_the_house.integ06_1_historical_custody_inventory"
+			version = 1
+			capture_class = $CaptureClass
+			capture_milestone = $resolvedMilestone
+			historical_commit = $resolvedCommit
+			custody_root = $temporaryRoot
+			files = $inventoryEntries
+		}
+		$custodyInventory | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $custodyInventoryPath -Encoding utf8
+		$custodyInventoryHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $custodyInventoryPath).Hash
+	}
 	foreach ($resultLine in $resultLines) {
 		$capture = ("$resultLine" -replace '^INTEG06_1_FIXTURE_RESULT=', '') | ConvertFrom-Json
 		$capturedFixtureId = [string]$capture.fixture_id
@@ -288,6 +312,9 @@ try {
 			save_file = [IO.Path]::GetFileName($destinationSave)
 			save_size_bytes = (Get-Item -LiteralPath $destinationSave).Length
 			save_sha256 = $saveHash
+			custody_root = if ($KeepHistoricalArchive) { $temporaryRoot } else { "" }
+			custody_inventory_path = if ($KeepHistoricalArchive) { $custodyInventoryPath } else { "" }
+			custody_inventory_sha256 = if ($KeepHistoricalArchive) { $custodyInventoryHash } else { "" }
 		}
 		$manifestPath = Join-Path $OutputDirectory "$capturedFixtureId.provenance.json"
 		$manifest | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $manifestPath -Encoding utf8
