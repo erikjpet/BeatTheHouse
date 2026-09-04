@@ -8,6 +8,9 @@ const CrewRecruitmentModelScript := preload("res://scripts/core/crew_recruitment
 const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
 const ScenarioSequenceSchemaScript := preload("res://scripts/core/scenario_sequence_schema.gd")
 const TutorialFlowScript := preload("res://scripts/core/tutorial_flow.gd")
+# Coin Pusher carries the largest game-module dependency graph. Resolve it with
+# the generator itself so first travel never pays Web resource-linking latency.
+const CoinPusherGameScript := preload("res://scripts/games/coin_pusher.gd")
 
 var library: ContentLibrary
 var _last_environment_install_errors: Array = []
@@ -1274,7 +1277,7 @@ func _create_game_module(definition: Dictionary) -> GameModule:
 	var module_path := str(definition.get("module_path", ""))
 	if module_path.is_empty() or module_path.ends_with("_ui.gd") or module_path.begins_with("res://data/runtime/"):
 		return null
-	var module_script: Script = load(module_path)
+	var module_script: Script = CoinPusherGameScript if module_path == "res://scripts/games/coin_pusher.gd" else load(module_path)
 	if module_script == null:
 		return null
 	var module_instance = module_script.new()
