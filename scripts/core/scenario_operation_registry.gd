@@ -831,7 +831,7 @@ static func _collection_key(family: String) -> String:
 
 
 static func _validate_scene_payload(payload: Dictionary, errors: Array) -> void:
-	_append_unknown_keys("scene object payload", payload, ["label", "role", "anchor_id", "zone_id", "bounds", "visible", "enabled", "state", "appearance"], errors)
+	_append_unknown_keys("scene object payload", payload, ["label", "role", "anchor_id", "zone_id", "bounds", "visible", "enabled", "state", "appearance", "description", "description_variants"], errors)
 	if str(payload.get("label", "")).strip_edges().is_empty() or str(payload.get("role", "")).strip_edges().is_empty():
 		errors.append("scene object requires label and semantic role.")
 	if str(payload.get("anchor_id", "")).strip_edges().is_empty() and str(payload.get("zone_id", "")).strip_edges().is_empty():
@@ -840,6 +840,7 @@ static func _validate_scene_payload(payload: Dictionary, errors: Array) -> void:
 	_append_unknown_keys("scene object bounds", bounds, ["w", "h"], errors)
 	if bounds.is_empty() or not _finite_number(bounds.get("w")) or not _finite_number(bounds.get("h")) or float(bounds.get("w", 0.0)) <= 0.0 or float(bounds.get("h", 0.0)) <= 0.0:
 		errors.append("scene object requires positive semantic bounds.")
+	_validate_description_authoring("scene object", payload, errors)
 
 
 static func _validate_interaction_payload(payload: Dictionary, errors: Array) -> void:
@@ -926,13 +927,30 @@ static func _validate_interaction_payload(payload: Dictionary, errors: Array) ->
 
 
 static func _validate_actor_payload(payload: Dictionary, errors: Array) -> void:
-	_append_unknown_keys("actor payload", payload, ["label", "actor_id", "anchor_id", "zone_id", "behavior", "route_id", "pose"], errors)
+	_append_unknown_keys("actor payload", payload, ["label", "actor_id", "anchor_id", "zone_id", "behavior", "route_id", "pose", "description", "description_variants"], errors)
 	if str(payload.get("label", "")).strip_edges().is_empty() or str(payload.get("actor_id", "")).strip_edges().is_empty():
 		errors.append("actor requires label and actor_id.")
 	if str(payload.get("anchor_id", "")).strip_edges().is_empty() and str(payload.get("zone_id", "")).strip_edges().is_empty():
 		errors.append("actor requires authored anchor_id or zone_id.")
 	if not ["idle", "watch", "patrol", "guard", "flee", "fight", "work", "depart"].has(str(payload.get("behavior", "idle"))):
 		errors.append("actor payload behavior is not bounded.")
+	_validate_description_authoring("actor", payload, errors)
+
+
+static func _validate_description_authoring(label: String, payload: Dictionary, errors: Array) -> void:
+	var description := str(payload.get("description", "")).strip_edges()
+	if description.is_empty() or description.length() > MAX_VARIANT_TEXT or _contains_forbidden_path(description):
+		errors.append("%s requires a bounded authored description." % label)
+	var variants_value: Variant = payload.get("description_variants", {})
+	if typeof(variants_value) != TYPE_DICTIONARY:
+		errors.append("%s description_variants must be a dictionary." % label)
+		return
+	var variants := variants_value as Dictionary
+	for key_value in variants.keys():
+		var key := str(key_value).strip_edges()
+		var line := str(variants.get(key_value, "")).strip_edges()
+		if key.is_empty() or line.is_empty() or line.length() > MAX_VARIANT_TEXT or _contains_forbidden_path(line):
+			errors.append("%s description variant %s is invalid." % [label, key])
 
 
 static func _validate_service_game_payload(payload: Dictionary, errors: Array) -> void:

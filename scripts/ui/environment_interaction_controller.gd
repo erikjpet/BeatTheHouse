@@ -565,7 +565,7 @@ static func _scenario_icon_key(semantic: Dictionary, base: Dictionary) -> String
 static func _scenario_description(semantic: Dictionary, base: Dictionary, fallback: String) -> String:
 	var description := str(semantic.get("description", base.get("short_description", ""))).strip_edges()
 	var variants := _dict(semantic.get("description_variants", {}))
-	for key in [str(semantic.get("state", "")), str(semantic.get("appearance", "")), str(semantic.get("pose", "")), str(semantic.get("behavior", ""))]:
+	for key in [str(semantic.get("state", "")), str(semantic.get("appearance", "")), str(semantic.get("pose", "")), str(semantic.get("behavior", "")), str(semantic.get("anchor_id", "")), str(semantic.get("zone_id", ""))]:
 		var variant := str(variants.get(key, "")).strip_edges()
 		if not variant.is_empty():
 			description = variant
