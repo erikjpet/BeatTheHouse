@@ -5445,7 +5445,7 @@
                     "actor_id": "actor_floor_runner",
                     "anchor_id": "punchline_high_stakes_runner_work_2",
                     "behavior": "work",
-                    "label": "Floor service runner",
+                    "label": "Table runner",
                     "pose": "arrival",
                     "zone_id": "background",
                     "description": "Floor service runner is arrival, their attention making the room's latest work easy to read. A protected table displaces ordinary chairs while guard sightlines and an observer rail divide the casino floor.",
@@ -6591,7 +6591,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "895f60c0ff36ada63797eba0b442f0629364e2fa4c1a8f950c7f214fa6629c14"
+        "sequence_signature": "ccc3b41f8a5a348cc2e8d34e6b02213ee96b5c61be8cc3bcf63bc4628f809f7f"
       }
     },
     {
