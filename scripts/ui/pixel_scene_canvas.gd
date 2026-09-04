@@ -4793,18 +4793,26 @@ func _draw_travel_arrow(rect: Rect2, accent: Color) -> void:
 
 func _fallback_event_prop(visual_key: String, icon_key: String) -> String:
 	var key := ("%s %s" % [visual_key, icon_key]).to_lower()
+	if key.find("manifest") != -1 or key.find("paper") != -1 or key.find("label") != -1 or key.find("evidence") != -1:
+		return "paper_note"
+	if key.find("crate") != -1 or key.find("carton") != -1 or key.find("stock") != -1 or key.find("goods") != -1:
+		return "trunk_offer"
+	if key.find("machine") != -1 or key.find("workstation") != -1 or key.find("terminal") != -1 or key.find("station") != -1:
+		return "jammed_machine"
 	if key.find("phone") != -1:
 		return "payphone"
 	if key.find("camera") != -1 or key.find("sky") != -1:
 		return "security_camera"
 	if key.find("security") != -1 or key.find("heat") != -1:
 		return "security_exit"
-	if key.find("progression") != -1 or key.find("door") != -1:
+	if key.find("progression") != -1 or key.find("door") != -1 or key.find("exit") != -1 or key.find("lane") != -1:
 		return "side_door"
 	if key.find("note") != -1 or key.find("tip") != -1:
 		return "paper_note"
 	if key.find("offer") != -1:
 		return "trunk_offer"
+	if key.find("clerk") != -1 or key.find("server") != -1 or key.find("staff") != -1 or key.find("worker") != -1:
+		return "clerk_talk"
 	return "patron_talk"
 
 
