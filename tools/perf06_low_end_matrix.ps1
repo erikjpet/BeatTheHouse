@@ -115,6 +115,18 @@ try {
     & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "foundation_performance_probe.ps1") -RunCount 8 -FramesPerSurface 120 -ResolveSampleCount 48 -SeedPrefix "PERF06-LOW-$($profile.profile_id)" -Out (Join-Path $out "native_surface_probe.json") -CandidateCommit $head -ProfileManifestSha256 $profileHash -EvidenceProfile "low_end:$($profile.profile_id)" -RequireGodot:$RequireGodot
     if ($LASTEXITCODE -ne 0) { throw "Native low-end surface matrix failed." }
 
+    $staticAudit = Join-Path $out "allocation_call_root_audit.json"
+    & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "perf06_allocation_call_root_audit.ps1") -CandidateCommit $head -Out $staticAudit
+    if ($LASTEXITCODE -ne 0) { throw "Low-end allocation call-root audit failed." }
+
+    foreach ($nativePlan in @("l02", "grand_casino", "coin_pusher")) {
+        $nativeOut = Join-Path $out ("native_runtime_{0}" -f $nativePlan)
+        & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "perf06_native_runtime_matrix.ps1") -ProfilePath $profileFile -GodotPath $GodotPath -OutDir $nativeOut -Plan $nativePlan -EvidenceProfile "low_end:$($profile.profile_id)" -Frames 120 -ActiveFrames 240 -MemorySeconds 600 -TimeoutMs 900000
+        if ($LASTEXITCODE -ne 0) { throw "Low-end native runtime plan failed: $nativePlan." }
+        & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "perf06_build_surface_report.ps1") -CandidateCommit $head -Platform native -Profile low_end -ProfilePath $profileFile -LaunchSummary (Join-Path $nativeOut "summary.json") -StaticAudit $staticAudit -Out (Join-Path $nativeOut "surface_report.json")
+        if ($LASTEXITCODE -ne 0) { throw "Low-end native surface report failed: $nativePlan." }
+    }
+
     $webRuns = @(
         @{ plan="l02"; cache="cold"; port=18620 },
         @{ plan="l02"; cache="warm"; port=18621 },
@@ -133,6 +145,10 @@ try {
         if ([string]::IsNullOrWhiteSpace([string]$captured.browser_version) -or [string]::IsNullOrWhiteSpace([string]$captured.user_agent)) { throw "Web capture did not record browser identity." }
         $actualFlags = @($captured.launch_options.args)
         foreach ($flag in @($profile.web_launch_flags)) { if ($actualFlags -cnotcontains [string]$flag) { throw "Web capture omitted declared launch flag '$flag'." } }
+        $webSummary = [System.IO.Path]::ChangeExtension($webOut, ".summary.json")
+        $webSurfaceReport = [System.IO.Path]::ChangeExtension($webOut, ".surface.json")
+        & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "perf06_build_surface_report.ps1") -CandidateCommit $head -Platform web -Profile low_end -ProfilePath $profileFile -LaunchSummary $webSummary -StaticAudit $staticAudit -Out $webSurfaceReport
+        if ($LASTEXITCODE -ne 0) { throw "Low-end Web surface report failed: $($run.plan)/$($run.cache)." }
     }
 
     foreach ($orchestrator in @("integ06_1_composition_matrix.ps1", "integ06_1_terminal_soak.ps1")) {

@@ -39,6 +39,9 @@ $nativeRuntime = Get-Content -LiteralPath (Join-Path $PSScriptRoot "perf06_nativ
 foreach ($needle in @("build_native_solver.ps1", "-Platform Windows", "-Target template_release", "native_plugin_sha256", "--export-release", "Windows Steam", "Refusing to overwrite immutable native evidence", "profile_manifest_sha256", "runtime_report_sha256")) {
     if (-not $nativeRuntime.Contains($needle)) { throw "Native release-runtime matrix lost '$needle'." }
 }
+foreach ($needle in @("perf06_native_runtime_matrix.ps1", 'foreach ($nativePlan in @("l02", "grand_casino", "coin_pusher"))', "perf06_build_surface_report.ps1", "-Profile low_end", "allocation_call_root_audit.json")) {
+    if (-not $lowEndLauncher.Contains($needle)) { throw "Low-end launcher lost complete report production seam '$needle'." }
+}
 if ($nativeRuntime.Contains("SkipExport")) { throw "Native binding evidence must always use a fresh release export." }
 $overlay = Get-Content -LiteralPath (Join-Path $root "scripts/ui/perf_telemetry_overlay.gd") -Raw
 foreach ($needle in @('"surface_draw_time_ms"', '"production_game_canvas"', '"complete_frame_upper_bound"', 'reset_performance_counters')) {
