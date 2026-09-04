@@ -5,6 +5,7 @@ const CoachViewModelScript := preload("res://scripts/ui/coach_view_model.gd")
 const CoinPusherLiveSessionScript := preload("res://scripts/games/coin_pusher/coin_pusher_live_session.gd")
 const CoinPusherSolverScript := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
 const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
+const LENDER_CONVERSATION_CONTEXT_MAX_CHARS := 512
 
 
 class EmbeddedCoachFixtureGame:
@@ -4019,6 +4020,14 @@ func _check_lender_acceptance_does_not_open_motel_popup(app: Control) -> bool:
 		push_error("Crew lender did not resolve three visible unique identities with an authored lead voice: %s." % JSON.stringify(talk))
 		return false
 	var crew_entry: Dictionary = run_state.pending_talk_event(str(talk.get("event_id", "")))
+	var crew_context: Dictionary = crew_entry.get("context", {}) if typeof(crew_entry.get("context", {})) == TYPE_DICTIONARY else {}
+	var crew_context_json := JSON.stringify(crew_context)
+	if crew_context.has("environment_snapshot") \
+		or crew_context_json.length() > LENDER_CONVERSATION_CONTEXT_MAX_CHARS \
+		or crew_context_json.find("\"scenario_") >= 0 \
+		or crew_context_json.find("\"game_states\"") >= 0:
+		push_error("Crew lender queued an oversized environment/authority context: %s." % crew_context_json)
+		return false
 	var crew_speaker: Dictionary = crew_entry.get("speaker", {}) if typeof(crew_entry.get("speaker", {})) == TYPE_DICTIONARY else {}
 	var crew_members: Array = crew_speaker.get("members", []) if typeof(crew_speaker.get("members", [])) == TYPE_ARRAY else []
 	var unique_models := {}

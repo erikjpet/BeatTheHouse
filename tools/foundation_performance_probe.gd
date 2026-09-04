@@ -66,7 +66,9 @@ const FOCUS_PROBE_FRAMES := 18
 const MAX_FOCUS_OBJECTS_PER_SEED := 4
 const GRAND_CASINO_LIVING_FLOOR_FRAME_P95_BUDGET_MS := 16.0
 const NEW_SURFACE_SAMPLE_FRAMES := 120
-const COIN_PUSHER_PERFORMANCE_BODY_COUNT := 300
+const LENDER_CONVERSATION_CONTEXT_MAX_CHARS := 512
+const COIN_PUSHER_SHIPPED_BODY_COUNT := 160
+const COIN_PUSHER_SOLVER_STRESS_BODY_COUNT := 300
 const COIN_PUSHER_SOLVER_SAMPLE_COUNT := 60
 const COIN_PUSHER_SOLVER_TICK_P95_BUDGET_MS := 12.0
 const COIN_PUSHER_ACTIVE_SAMPLE_FRAMES := 60
@@ -490,21 +492,25 @@ func _probe_coin_pusher_full_cap_performance() -> void:
 		failures.append("Full-cap Coin Pusher performance probe could not build its practice session.")
 		return
 	var environment_id := str(run_state.current_environment.get("id", "practice_coin_pusher"))
-	_install_coin_pusher_fixture(run_state, game, COIN_PUSHER_PERFORMANCE_BODY_COUNT)
+	_install_coin_pusher_fixture(run_state, game, COIN_PUSHER_SHIPPED_BODY_COUNT)
 	var machine := game.call("_ensure_machine_state", run_state, run_state.current_environment, false) as Dictionary
 	var simulation := CoinPusherLiveSessionScript.restore_snapshot(machine.get("settled_state", {}), _coin_pusher_machine_definition(game))
 	var machine_definition := _coin_pusher_machine_definition(game)
 	var loaded_coin_count := CoinPusherSolverScript.coin_count(simulation)
 	var machine_ceiling := int(machine_definition.get("ceiling", 0))
-	coin_pusher_full_cap_checked = loaded_coin_count == COIN_PUSHER_PERFORMANCE_BODY_COUNT \
-		and machine_ceiling >= COIN_PUSHER_PERFORMANCE_BODY_COUNT \
+	var shipped_coin_cap := int(game.call("_coin_cap"))
+	coin_pusher_full_cap_checked = loaded_coin_count == COIN_PUSHER_SHIPPED_BODY_COUNT \
+		and shipped_coin_cap == COIN_PUSHER_SHIPPED_BODY_COUNT \
+		and machine_ceiling >= COIN_PUSHER_SHIPPED_BODY_COUNT \
 		and int(simulation.get("fixed_hz", 0)) == CoinPusherSolverScript.FIXED_HZ
 	coin_pusher_performance_status["loaded_coin_count"] = loaded_coin_count
-	coin_pusher_performance_status["performance_body_count"] = COIN_PUSHER_PERFORMANCE_BODY_COUNT
+	coin_pusher_performance_status["shipped_live_body_count"] = COIN_PUSHER_SHIPPED_BODY_COUNT
+	coin_pusher_performance_status["raw_solver_stress_body_count"] = COIN_PUSHER_SOLVER_STRESS_BODY_COUNT
+	coin_pusher_performance_status["reported_shipped_coin_cap"] = shipped_coin_cap
 	coin_pusher_performance_status["machine_ceiling"] = machine_ceiling
 	coin_pusher_performance_status["solver_fixed_hz"] = int(simulation.get("fixed_hz", 0))
 	if not coin_pusher_full_cap_checked:
-		failures.append("Coin Pusher V3 performance fixture loaded %d/%d bodies at %d Hz with authored ceiling %d; expected 300 bodies at 60 Hz." % [loaded_coin_count, COIN_PUSHER_PERFORMANCE_BODY_COUNT, int(simulation.get("fixed_hz", 0)), machine_ceiling])
+		failures.append("Coin Pusher V3 shipped-cap fixture loaded %d/%d bodies at %d Hz with reported cap %d and authored ceiling %d; expected the 160-body shipped cap at 60 Hz." % [loaded_coin_count, COIN_PUSHER_SHIPPED_BODY_COUNT, int(simulation.get("fixed_hz", 0)), shipped_coin_cap, machine_ceiling])
 	await _probe_game("practice:coin_pusher_full_cap", -1, environment_id, "coin_pusher")
 	_probe_coin_pusher_raw_solver_timing(run_state, game)
 	await _wait_for_coin_pusher_exit("idle full-cap sample")
@@ -541,7 +547,7 @@ func _probe_coin_pusher_raw_solver_timing(run_state: RunState, game: GameModule)
 	var opening_rng := run_state.create_rng("performance_coin_pusher_raw_solver").fork("opening")
 	var machine_definition := _coin_pusher_machine_definition(game)
 	var machine_ceiling := int(machine_definition.get("ceiling", 0))
-	var state := CoinPusherSolverScript.create_machine(opening_rng, machine_definition, COIN_PUSHER_PERFORMANCE_BODY_COUNT)
+	var state := CoinPusherSolverScript.create_machine(opening_rng, machine_definition, COIN_PUSHER_SOLVER_STRESS_BODY_COUNT)
 	var initial_body_count := CoinPusherSolverScript.coin_count(state)
 	var bodies: Array = state.get("bodies", []) if typeof(state.get("bodies", [])) == TYPE_ARRAY else []
 	for body_index in range(mini(80, bodies.size())):
@@ -563,16 +569,17 @@ func _probe_coin_pusher_raw_solver_timing(run_state: RunState, game: GameModule)
 		if int(metrics.get("body_count", machine_ceiling + 1)) <= machine_ceiling:
 			capped_samples += 1
 	var stats := _timing_stats(samples)
-	stats["seed"] = "practice:coin_pusher_full_cap"
+	stats["seed"] = "practice:coin_pusher_solver_stress"
 	stats["run_index"] = -1
 	stats["game_id"] = "coin_pusher"
 	stats["action_id"] = "continuous_tick"
-	stats["mode"] = "coin_pusher_solver_tick_300_body"
+	stats["mode"] = "coin_pusher_solver_tick_300_body_stress"
 	stats["sample_count"] = samples.size()
 	stats["fixed_tick_samples"] = fixed_tick_samples
 	stats["capped_samples"] = capped_samples
 	stats["initial_body_count"] = initial_body_count
 	stats["final_body_count"] = CoinPusherSolverScript.coin_count(state)
+	stats["stress_body_count"] = COIN_PUSHER_SOLVER_STRESS_BODY_COUNT
 	stats["machine_ceiling"] = machine_ceiling
 	stats["solver_fixed_hz"] = int(state.get("fixed_hz", 0))
 	stats["solver_backend"] = CoinPusherSolverScript.last_step_backend_for_test()
@@ -583,7 +590,7 @@ func _probe_coin_pusher_raw_solver_timing(run_state: RunState, game: GameModule)
 		and fixed_tick_samples == samples.size() \
 		and capped_samples == samples.size() \
 		and int(state.get("fixed_hz", 0)) == 60 \
-		and int(stats.get("initial_body_count", 0)) == COIN_PUSHER_PERFORMANCE_BODY_COUNT \
+		and int(stats.get("initial_body_count", 0)) == COIN_PUSHER_SOLVER_STRESS_BODY_COUNT \
 		and float(stats.get("p95_ms", 0.0)) <= COIN_PUSHER_SOLVER_TICK_P95_BUDGET_MS
 	if not coin_pusher_solver_timing_checked:
 		if samples.size() != COIN_PUSHER_SOLVER_SAMPLE_COUNT or fixed_tick_samples != samples.size() or capped_samples != samples.size():
@@ -602,7 +609,7 @@ func _probe_coin_pusher_active_sequence(run_state: RunState, game: GameModule, e
 	run_state.current_environment["resolved_event_ids"] = []
 	run_state.pending_triggered_events = []
 	run_state.active_triggered_event = {}
-	_install_coin_pusher_fixture(run_state, game, COIN_PUSHER_PERFORMANCE_BODY_COUNT)
+	_install_coin_pusher_fixture(run_state, game, COIN_PUSHER_SHIPPED_BODY_COUNT)
 	if not bool(app.call("enter_game", "coin_pusher")):
 		failures.append("Coin Pusher active performance fixture could not enter the production surface.")
 		return
@@ -1448,6 +1455,10 @@ func _probe_late_run_crew_dialogue_budget() -> void:
 	var queued_context: Dictionary = _dict(queued_entry.get("context", {}))
 	var queued_environment: Dictionary = _dict(queued_context.get("environment_snapshot", {}))
 	var queued_environment_chars := JSON.stringify(queued_environment).length()
+	var queued_context_json := JSON.stringify(queued_context)
+	var queued_context_chars := queued_context_json.length()
+	var queued_authority_payload_present := queued_context_json.find("\"scenario_") >= 0 \
+		or queued_context_json.find("\"game_states\"") >= 0
 	var talk_snapshot: Dictionary = app.call("current_talk_dock_snapshot")
 	var budget := _dict(NEW_SURFACE_BUDGETS.get("late_run_crew_dialogue_open", {}))
 	observations.append({
@@ -1471,13 +1482,19 @@ func _probe_late_run_crew_dialogue_budget() -> void:
 		"legacy_build_serialize_ms": legacy_build_serialize_ms,
 		"compacted_build_serialize_ms": compact_build_serialize_ms,
 		"queued_environment_chars": queued_environment_chars,
+		"queued_context_chars": queued_context_chars,
+		"queued_authority_payload_present": queued_authority_payload_present,
 		"budget": budget,
 	})
 	new_surface_coverage["late_run_crew_dialogue_open"] = int(new_surface_coverage.get("late_run_crew_dialogue_open", 0)) + 1
 	if not opened or not bool(talk_snapshot.get("visible", false)):
 		failures.append("Late-run Crew dialogue performance probe did not open the conversation.")
-	if queued_environment.has("game_states"):
-		failures.append("Late-run Crew dialogue copied live game-machine state into its presentation context.")
+	if queued_context.has("environment_snapshot"):
+		failures.append("Late-run Crew dialogue copied an unconsumed environment snapshot into its lender context.")
+	if queued_authority_payload_present:
+		failures.append("Late-run Crew dialogue copied scenario or game-state authority into its lender context.")
+	if queued_context_chars > LENDER_CONVERSATION_CONTEXT_MAX_CHARS:
+		failures.append("Late-run Crew dialogue queued %d context characters; bounded lender context allows at most %d." % [queued_context_chars, LENDER_CONVERSATION_CONTEXT_MAX_CHARS])
 	var call_budget := float(budget.get("call_ms", 0.0))
 	if call_budget > 0.0 and (select_ms > call_budget or open_ms > call_budget):
 		failures.append("Late-run Crew interaction took %.3f ms to select and %.3f ms to open; budget is %.3f ms per call." % [select_ms, open_ms, call_budget])
@@ -1688,9 +1705,9 @@ func _assert_required_game_surface_coverage() -> void:
 	if not coin_pusher_full_cap_checked:
 		failures.append("Performance probe did not build and verify the shipped full-cap Coin Pusher fixture.")
 	if not coin_pusher_active_sequence_checked:
-		failures.append("Performance probe did not exercise the 300-body Coin Pusher DROP/carriage/skill-stop/collect live sequence.")
+		failures.append("Performance probe did not exercise the shipped 160-body Coin Pusher DROP/carriage/skill-stop/collect live sequence.")
 	if not coin_pusher_solver_timing_checked:
-		failures.append("Performance probe did not report raw full-cap Coin Pusher solver timing.")
+		failures.append("Performance probe did not report raw 300-body Coin Pusher solver stress timing.")
 	if not coin_pusher_ceiling_refusal_checked:
 		failures.append("Performance probe did not verify authored-ceiling Coin Pusher DROP refusal.")
 

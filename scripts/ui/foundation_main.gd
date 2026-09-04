@@ -12705,7 +12705,6 @@ func _start_lender_conversation(lender_id: String, mode: String) -> bool:
 		"lender_id": clean_id,
 		"lender_mode": clean_mode,
 		"source_object_id": "lender:%s" % clean_id,
-		"environment_snapshot": RunState.environment_context_snapshot(run_state.current_environment),
 	}
 	var lender_line_key := "loan_offer" if clean_mode == "borrow" else "loan_repayment" if clean_mode == "repay" else "pawn_offer"
 	speaker = _resolve_character_speaker(_normalized_talk_speaker(speaker), clean_id, lender_line_key)

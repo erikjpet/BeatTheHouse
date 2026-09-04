@@ -39,7 +39,7 @@ const WEB_HEAP_SAMPLE_STRIDE_FRAMES := 60
 const REPORT_PREFIX := "BTH_PERF_REPORT "
 const READY_PREFIX := "BTH_PERF_READY "
 const COIN_PUSHER_FIXTURE_SEED := "practice:coin_pusher_full_cap"
-const COIN_PUSHER_FIXTURE_BODY_COUNT := 300
+const COIN_PUSHER_SHIPPED_BODY_COUNT := 160
 const COIN_PUSHER_IDLE_SAMPLE_FRAMES := 120
 const COIN_PUSHER_ACTION_SAMPLE_FRAMES := 60
 # CPU-throttled shipped Web frames can leave a substantial live-session
@@ -432,7 +432,7 @@ func _run_coin_pusher_plan() -> void:
 		return
 	# start_game_test_session opens the ordinary 150-body practice machine. Exit
 	# it through the production boundary first so that transient live state cannot
-	# shadow the durable 300-body fixture installed below.
+	# shadow the durable shipped-cap fixture installed below.
 	app.back_to_environment()
 	if not await _wait_for_coin_pusher_exit():
 		mark_event("coin_pusher_fixture_failed", {"reason": "initial_exit_timeout"})
@@ -464,7 +464,7 @@ func _run_coin_pusher_plan() -> void:
 		await _measure_coin_pusher_action(str(action_value[0]), str(action_value[1]), fixture)
 	# COLLECT receives a fresh authoritative fixture. Earlier action windows may
 	# legitimately move or consume bodies, so seeding their derivative live state
-	# cannot prove the binding 300-origin conservation law.
+	# cannot prove the binding shipped-origin conservation law.
 	var collect_reinstall := await _reinstall_coin_pusher_fixture(run_state, game)
 	if collect_reinstall.is_empty():
 		mark_event("coin_pusher_collect_fixture_failed")
@@ -481,7 +481,7 @@ func _run_coin_pusher_plan() -> void:
 		return
 	await _measure_coin_pusher_action("coin_pusher_collect", "coin_pusher_active_collect", collect_fixture)
 	# The active-action sequence is allowed to consume or move fixture bodies.
-	# Reinstall and re-enter the identical durable 300-body fixture so reduced-
+	# Reinstall and re-enter the identical durable 160-body fixture so reduced-
 	# motion evidence cannot silently measure a depleted derivative state.
 	var reduced_reinstall := await _reinstall_coin_pusher_fixture(run_state, game)
 	if reduced_reinstall.is_empty():
@@ -566,12 +566,12 @@ func _coin_pusher_machine_definition(game: GameModule) -> Dictionary:
 
 
 # This intentionally mirrors foundation_performance_probe's maintained native
-# 300-body Quarter Falls fixture: same seed namespace, fork, production solver
+# shipped-cap Quarter Falls fixture: same seed namespace, fork, production solver
 # API, durable snapshot and real cabinet entry path.
 func _install_coin_pusher_fixture(run_state: RunState, game: GameModule) -> bool:
 	var machine_definition := _coin_pusher_machine_definition(game)
-	var fixture_rng := run_state.create_rng("performance_coin_pusher_full_cap").fork("bodies:%d" % COIN_PUSHER_FIXTURE_BODY_COUNT)
-	var simulation := CoinPusherSolverScript.create_machine(fixture_rng, machine_definition, COIN_PUSHER_FIXTURE_BODY_COUNT)
+	var fixture_rng := run_state.create_rng("performance_coin_pusher_full_cap").fork("bodies:%d" % COIN_PUSHER_SHIPPED_BODY_COUNT)
+	var simulation := CoinPusherSolverScript.create_machine(fixture_rng, machine_definition, COIN_PUSHER_SHIPPED_BODY_COUNT)
 	var machine := game.call("_ensure_machine_state", run_state, run_state.current_environment, true) as Dictionary
 	machine["variation_id"] = "quarter_falls"
 	machine["variation_state"] = {}
@@ -587,8 +587,9 @@ func _install_coin_pusher_fixture(run_state: RunState, game: GameModule) -> bool
 	machine.erase("live_session")
 	game.call("_write_machine_state", run_state.current_environment, machine)
 	app.call("_refresh")
-	return CoinPusherSolverScript.coin_count(simulation) == COIN_PUSHER_FIXTURE_BODY_COUNT \
-		and int(machine_definition.get("ceiling", 0)) >= COIN_PUSHER_FIXTURE_BODY_COUNT \
+	return CoinPusherSolverScript.coin_count(simulation) == COIN_PUSHER_SHIPPED_BODY_COUNT \
+		and int(game.call("_coin_cap")) == COIN_PUSHER_SHIPPED_BODY_COUNT \
+		and int(machine_definition.get("ceiling", 0)) >= COIN_PUSHER_SHIPPED_BODY_COUNT \
 		and int(simulation.get("fixed_hz", 0)) == CoinPusherSolverScript.FIXED_HZ
 
 
@@ -599,12 +600,13 @@ func _coin_pusher_fixture_identity(run_state: RunState, game: GameModule) -> Dic
 	return {
 		"fixture_seed": COIN_PUSHER_FIXTURE_SEED,
 		"rng_namespace": "performance_coin_pusher_full_cap",
-		"rng_fork": "bodies:%d" % COIN_PUSHER_FIXTURE_BODY_COUNT,
+		"rng_fork": "bodies:%d" % COIN_PUSHER_SHIPPED_BODY_COUNT,
 		"fixture_api": "CoinPusherSolverScript.create_machine",
 		"snapshot_api": "CoinPusherLiveSessionScript.make_snapshot",
 		"variation_id": "quarter_falls",
 		"cabinet_scope": "Quarter Falls shared V3 cabinet/render/live-session path",
 		"body_count": int(state.get("coin_pusher_body_count", -1)),
+		"shipped_body_cap": int(game.call("_coin_cap")),
 		"machine_ceiling": int(definition.get("ceiling", 0)),
 		"solver_fixed_hz": 60,
 		"solver_backend": CoinPusherSolverScript.last_step_backend_for_test(),
@@ -660,8 +662,8 @@ func _seed_coin_pusher_collect_fixture(run_state: RunState, game: GameModule) ->
 	var tray: Array = simulation.get("tray_ledger", []) if typeof(simulation.get("tray_ledger", [])) == TYPE_ARRAY else []
 	if bodies.is_empty() or not tray.is_empty():
 		return false
-	# Preserve the 300-origin conservation law: move one deterministic fixture
-	# coin into the tray instead of fabricating a 301st outcome.
+	# Preserve the shipped-origin conservation law: move one deterministic fixture
+	# coin into the tray instead of fabricating an extra outcome.
 	var seeded_body: Dictionary = bodies.pop_back() as Dictionary
 	tray.append({
 		"body_id": str(seeded_body.get("id", "web_perf_collect_seed")),
@@ -686,7 +688,7 @@ func _seed_coin_pusher_collect_fixture(run_state: RunState, game: GameModule) ->
 	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
 	session["native_cache_reset"] = true
 	session["native_body_state_dirty"] = false
-	return bodies.size() == COIN_PUSHER_FIXTURE_BODY_COUNT - 1 and tray.size() == 1
+	return bodies.size() == COIN_PUSHER_SHIPPED_BODY_COUNT - 1 and tray.size() == 1
 
 
 func _coin_pusher_canvas() -> Control:
@@ -705,7 +707,7 @@ func _coin_pusher_canvas_counters(canvas: Control) -> Dictionary:
 func _coin_pusher_surface_state(canvas: Control) -> Dictionary:
 	if canvas != null and canvas.has_method("realtime_surface_state"):
 		# Performance evidence only reads boundary scalars plus the existing action
-		# binding dictionary. Deep-copying the 300-body presentation arrays here
+		# binding dictionary. Deep-copying the shipped-cap presentation arrays here
 		# made the observer allocate several complete machines inside an active
 		# action window, then charged the resulting browser GC pauses to gameplay.
 		# A shallow boundary copy keeps the scalar observations stable without
