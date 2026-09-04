@@ -1431,6 +1431,7 @@ func _seed_coin_pusher_collect_fixture(run_state: RunState, game: GameModule) ->
 	# Refresh from that same live authority so the sampled before-state observes
 	# the seeded tray rather than a stale durable projection.
 	app.call("_refresh")
+	_enable_coin_pusher_stage_diagnostic()
 	mark_event("coin_pusher_collect_seed", {
 		"body_id": str(seeded_body.get("id", "")),
 		"origin_body_count": bodies.size() + tray.size(),
@@ -1690,6 +1691,12 @@ func _measure_coin_pusher_action(surface_action: String, name: String, fixture: 
 	var accepted_result: Dictionary = app.get("last_game_result") if typeof(app.get("last_game_result")) == TYPE_DICTIONARY else {}
 	var accepted_host_timing_variant: Variant = accepted_result.get("coin_pusher_debug_host_timing_usec", {})
 	var host_timing: Dictionary = accepted_host_timing_variant if typeof(accepted_host_timing_variant) == TYPE_DICTIONARY else {}
+	# Only DROP crosses the host resolve boundary in this fixture sequence. The
+	# other controls are immediate production surface commands, so the retained
+	# last result would otherwise mislabel DROP's timing as their own.
+	if surface_action != "coin_pusher_drop" or str(accepted_result.get("action_id", "")) != "drop_quarter":
+		host_timing = {}
+	var action_timing: Dictionary = game.call("action_timing_snapshot") if game != null and game.has_method("action_timing_snapshot") else {}
 	# Action acceptance and the maintained 60-frame physical observation are
 	# distinct boundaries. Retain both so later legitimate exits cannot overwrite
 	# proof of what the accepted action itself did.
@@ -1705,6 +1712,8 @@ func _measure_coin_pusher_action(surface_action: String, name: String, fixture: 
 	current_tags["resolve_call_ms"] = resolve_call_ms
 	if not host_timing.is_empty():
 		current_tags["host_timing_usec"] = host_timing.duplicate(true)
+	if not action_timing.is_empty():
+		current_tags["action_timing_usec"] = action_timing.duplicate(true)
 	current_tags["canvas_before"] = before_counters
 	current_tags["canvas_after"] = after_counters
 	current_tags["redraw_delta"] = int(after_counters.get("surface_animation_redraw_count", 0)) - int(before_counters.get("surface_animation_redraw_count", 0))
@@ -1804,7 +1813,9 @@ func _set_coin_pusher_reduce_motion(enabled: bool) -> void:
 	if settings != null:
 		settings.set("reduce_motion", enabled)
 	app.call("_refresh")
+	_enable_coin_pusher_stage_diagnostic()
 	await _wait_frames(4)
+	_enable_coin_pusher_stage_diagnostic()
 
 
 func _measure_corner_store() -> void:
