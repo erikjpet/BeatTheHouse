@@ -1222,19 +1222,30 @@ func _int_range(value: Variant, fallback_min: int, fallback_max: int) -> Array:
 # Lets GameModule instances attach generated per-environment state before entry.
 func _generated_game_states(run_state: RunState, environment_data: Dictionary, rng: RngStream) -> Dictionary:
 	var states := _copy_dict(environment_data.get("game_states", {}))
+	var perf_games_detail: Dictionary = {}
 	for game_id in _string_array(environment_data.get("game_ids", [])):
+		var perf_game_started_usec := Time.get_ticks_usec() if _world_environment_timing_enabled else 0
 		var definition := library.game(game_id)
 		var game: GameModule = _create_game_module(definition)
 		if game == null:
 			continue
+		var perf_module_usec := Time.get_ticks_usec() - perf_game_started_usec if _world_environment_timing_enabled else 0
 		var state_rng := rng.fork("environment_game_state:%s:%s" % [str(environment_data.get("id", "")), game_id])
 		var generated_base := false
 		if not states.has(game_id):
+			var perf_generate_started_usec := Time.get_ticks_usec() if _world_environment_timing_enabled else 0
 			var generated: Dictionary = game.generate_environment_state(run_state, environment_data, state_rng)
+			var perf_generate_usec := Time.get_ticks_usec() - perf_generate_started_usec if _world_environment_timing_enabled else 0
 			if typeof(generated) == TYPE_DICTIONARY and not (generated as Dictionary).is_empty():
 				states[game_id] = (generated as Dictionary).duplicate(true)
 				game.environment_state_generated(run_state, environment_data, states[game_id] as Dictionary)
 				generated_base = true
+			if _world_environment_timing_enabled:
+				perf_games_detail[game_id] = {
+					"module": perf_module_usec,
+					"generate": perf_generate_usec,
+					"base_total": Time.get_ticks_usec() - perf_game_started_usec,
+				}
 		var fixture_count := maxi(1, int(_copy_dict(_copy_dict(environment_data.get("layout", {})).get("game_fixture_counts", {})).get(game_id, 1)))
 		if fixture_count <= 1 or not game.has_method("generate_environment_fixture_states"):
 			continue
@@ -1250,6 +1261,12 @@ func _generated_game_states(run_state: RunState, environment_data: Dictionary, r
 			var fixture_state_value: Variant = (fixture_states_value as Dictionary).get(fixture_key, {})
 			if typeof(fixture_state_value) == TYPE_DICTIONARY and not (fixture_state_value as Dictionary).is_empty():
 				states[fixture_key] = (fixture_state_value as Dictionary).duplicate(true)
+		if _world_environment_timing_enabled:
+			var game_detail: Dictionary = perf_games_detail.get(game_id, {}) if typeof(perf_games_detail.get(game_id, {})) == TYPE_DICTIONARY else {}
+			game_detail["total"] = Time.get_ticks_usec() - perf_game_started_usec
+			perf_games_detail[game_id] = game_detail
+	if _world_environment_timing_enabled:
+		_world_environment_build_stages_usec["games_detail"] = perf_games_detail
 	return states
 
 
