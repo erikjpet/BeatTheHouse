@@ -1,7 +1,8 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "stage": "PRESTAGE",
-  "candidate_base_commit": "9b52c27ada01b0048bd938908b9bcae701d93ec6",
+  "candidate_base_commit": "49841960750a873707e79dbf6b5c7836041fcbf5",
+  "candidate_base_tree": "7e6c8862141b3c707d89b7172d3d5ad8a8272d2e",
   "purpose": "Recovered seed candidates for playtest06_2. This file is not final reachability evidence.",
   "prohibitions": [
     "No candidate in this manifest is an owner-playtest route until it is VERIFIED on the frozen handoff build.",
@@ -30,6 +31,7 @@
         "bar",
         "small_underground_casino"
       ],
+      "layer_ids": [],
       "game_ids": [],
       "pusher_machine_ids": [],
       "scenario_ids": [],
@@ -56,6 +58,7 @@
         "grand_casino",
         "grand_casino_cage"
       ],
+      "layer_ids": [],
       "game_ids": [
         "pull_tabs",
         "blackjack"
@@ -79,6 +82,7 @@
         "FULL-RUN-CONTROLS"
       ],
       "archetype_ids": [],
+      "layer_ids": [],
       "game_ids": [],
       "pusher_machine_ids": [],
       "scenario_ids": [],
@@ -99,6 +103,7 @@
         "FULL-RUN-CONTROLS"
       ],
       "archetype_ids": [],
+      "layer_ids": [],
       "game_ids": [],
       "pusher_machine_ids": [],
       "scenario_ids": [],
@@ -119,6 +124,7 @@
         "SAVE-BOUNDARIES"
       ],
       "archetype_ids": [],
+      "layer_ids": [],
       "game_ids": [],
       "pusher_machine_ids": [],
       "scenario_ids": [],
@@ -135,7 +141,7 @@
         "PREVALIDATED_TRAVEL"
       ],
       "owner_playtest_eligible": false,
-      "purpose": "Retain a current-main diagnostic candidate that generated Vault Drop, eight game ids, and twelve scenario assignments.",
+      "purpose": "Retain a historical diagnostic candidate reported to generate Vault Drop, eight game ids, and twelve scenario assignments at 9b52c27a; the local output was not retained.",
       "coverage_slots": [
         "ARCHETYPES",
         "SCENARIO-REPRESENTATIVE",
@@ -157,6 +163,7 @@
         "pawn_shop",
         "small_underground_casino"
       ],
+      "layer_ids": [],
       "game_ids": [
         "bar_dice",
         "blackjack",
@@ -185,7 +192,7 @@
         "punchline_new_muscle"
       ],
       "scenario_branch_ids": [],
-      "source_evidence": "Current-main catalog probe at 9b52c27a; .tmp/playtest06_2/catalog_probe_smoke.json SHA256 CC665A3F8BE64A620BC0120237B8ABD2B718A86F28A3E3F263297FA75A480CC3.",
+      "source_evidence": "Historical local catalog probe at 9b52c27a. Its .tmp report was not retained in Git and is not independently admissible evidence.",
       "pending_verification": "Replace every diagnostic assignment with a natural public-action route after the environment and integration trees freeze."
     },
     {
@@ -219,6 +226,7 @@
         "pawn_shop",
         "small_underground_casino"
       ],
+      "layer_ids": [],
       "game_ids": [
         "bar_dice",
         "blackjack",
@@ -244,7 +252,7 @@
         "punchline_open_mic_night"
       ],
       "scenario_branch_ids": [],
-      "source_evidence": "tools/scenario_seed_audit.gd plus current-main .tmp/playtest06_2/catalog_probe_smoke.json SHA256 CC665A3F8BE64A620BC0120237B8ABD2B718A86F28A3E3F263297FA75A480CC3.",
+      "source_evidence": "tools/scenario_seed_audit.gd plus an unretained historical local smoke at 9b52c27a; final use requires a provenance-bound rerun.",
       "pending_verification": "Run tools/playtest06_2_seed_catalog_probe.gd on the final tree, then replace diagnostic coverage with production-public owner routes."
     }
   ]

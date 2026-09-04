@@ -10,6 +10,9 @@ const RunStateScript := preload("res://scripts/core/run_state.gd")
 
 var seed_values: Array = []
 var output_path := ""
+var source_commit := ""
+var source_tree := ""
+var build_identity := ""
 
 
 func _init() -> void:
@@ -18,6 +21,16 @@ func _init() -> void:
 			seed_values = _clean_strings(argument.trim_prefix("--seeds=").split(",", false))
 		elif argument.begins_with("--out="):
 			output_path = argument.trim_prefix("--out=").strip_edges()
+		elif argument.begins_with("--source-commit="):
+			source_commit = argument.trim_prefix("--source-commit=").strip_edges()
+		elif argument.begins_with("--source-tree="):
+			source_tree = argument.trim_prefix("--source-tree=").strip_edges()
+		elif argument.begins_with("--build-identity="):
+			build_identity = argument.trim_prefix("--build-identity=").strip_edges()
+	if not _is_lower_hex_identity(source_commit) or not _is_lower_hex_identity(source_tree) or build_identity.is_empty():
+		push_error("Catalog discovery requires --source-commit, --source-tree, and --build-identity provenance.")
+		quit(2)
+		return
 	if seed_values.is_empty():
 		for index in range(1, 13):
 			seed_values.append("PLAYTEST-CATALOG-%02d" % index)
@@ -37,8 +50,14 @@ func _run() -> void:
 		reports.append(_audit_seed(library, str(seed_value)))
 	var all_scenario_ids := _scenario_catalog_ids(library)
 	var selection := _greedy_scenario_selection(reports, all_scenario_ids)
+	var tool_path := ProjectSettings.globalize_path("res://tools/playtest06_2_seed_catalog_probe.gd")
 	var report := {
-		"schema_version": 1,
+		"schema_version": 2,
+		"source_commit": source_commit,
+		"source_tree": source_tree,
+		"build_identity": build_identity,
+		"tool_source_sha256": FileAccess.get_sha256(tool_path),
+		"godot_version": Engine.get_version_info(),
 		"authority": "DIAGNOSTIC_PREVALIDATED_TRAVEL",
 		"owner_playtest_eligible": false,
 		"warning": "Assignments prove deterministic catalog generation only. They do not prove natural travel, route prerequisites, branch outcomes, or player reachability.",
@@ -195,6 +214,16 @@ func _append_unique(values: Array, value: String) -> void:
 	var clean := value.strip_edges()
 	if not clean.is_empty() and not values.has(clean):
 		values.append(clean)
+
+
+func _is_lower_hex_identity(value: String) -> bool:
+	if value.length() != 40:
+		return false
+	for index in range(value.length()):
+		var code := value.unicode_at(index)
+		if not (code >= 48 and code <= 57) and not (code >= 97 and code <= 102):
+			return false
+	return true
 
 
 func _write_output(path: String, encoded: String) -> bool:

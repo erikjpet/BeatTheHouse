@@ -2,7 +2,8 @@
 
 Status: **PRESTAGE ONLY — no owner build, final seed, route, or readiness claim**
 
-Prepared from landed main `9b52c27ada01b0048bd938908b9bcae701d93ec6`,
+Prepared from its actual main parent
+`49841960750a873707e79dbf6b5c7836041fcbf5`,
 the accepted teaching closeout, the existing
 `playtest06_2_intake_prestage.md`, and recovered partial integration evidence.
 This document does not claim `playtest06_2`, amend `playtest06_1`, change the
@@ -23,7 +24,7 @@ single-process catalog-discovery helper.
 | `CREW-IGNORED-GOLDEN-A/B` | Preserve independent no-crew control candidates from the accepted fixture lineage. | That their historical golden still matches main, or that either is a usable owner route. |
 | `INTEG06-1-FINAL-SOAK` | Preserve the strict integration producer's seed prefix. | A completed soak or a single player-followable seed. |
 | `SCENARIO-AUDIT` | Baseline for deterministic scenario/catalog discovery. | Natural travel, prerequisites, branch outcomes, or player reachability. |
-| `PLAYTEST-CATALOG-01` | Current-main diagnostic candidate: 13 generated archetypes, eight game ids, Vault Drop, and twelve scenario assignments. | Natural travel or completion of any game, machine goal, scenario branch, or major route. |
+| `PLAYTEST-CATALOG-01` | Historical diagnostic candidate: 13 generated archetypes, eight game ids, Vault Drop, and twelve scenario assignments were reported at `9b52c27a`, but the local output was not retained. | Natural travel or completion of any game, machine goal, scenario branch, or major route. |
 
 The structured form is
 `tools/playtest06_2_candidate_seeds.json`. Every row is deliberately
@@ -51,6 +52,12 @@ references, route-authority labels, and the rule that only public production
 actions may be owner-playtest eligible. It passes while clearly reporting that
 it proves structure, not reachability.
 
+The negative/positive promotion fixtures are executable with:
+
+```powershell
+powershell -NoProfile -File tools/playtest06_2_seed_manifest_contract_test.ps1
+```
+
 Finalization must change the manifest to `FINAL` and run:
 
 ```powershell
@@ -59,12 +66,23 @@ powershell -NoProfile -File tools/playtest06_2_seed_manifest_contract.ps1 `
 ```
 
 That mode fails closed unless verified public-action seeds collectively name
-every current archetype, all eleven games, all three pusher machines, every
-required major route/control slot, the chosen representative scenarios, and
-their material branches. Every verified seed must bind its commit and tree,
-platform, setup, expected/actual route, evidence, and verification date. A
-diagnostic seed can stay in the file for provenance, but it cannot satisfy a
-final slot.
+every current archetype, all three authored Punchline layers, all eleven games,
+all three pusher machines, every required major route/control slot, at least one
+scenario from every live scenario pool, and every phase-graph branch belonging
+to those representative scenarios. `-ExpectedTestedCommit` is mandatory in
+FINAL mode; the manifest, each verified seed, and each owner-session report must
+bind that commit and its Git tree exactly.
+
+Every verified seed must use one of `WINDOWS_NATIVE`, `WEB_CHROME`, or
+`WINDOWS_NATIVE_AND_WEB_CHROME`, an ISO `yyyy-MM-dd` verification date, explicit
+`PUBLIC_UI_ACTION` route steps, and no shortcut. Its `evidence` is an array of
+repository-local paths plus lowercase SHA-256 hashes. At least one entry must be
+an `OWNER_SESSION_REPORT` JSON document with schema
+`beat_the_house.playtest06_owner_route/v1`; that retained report binds the same
+candidate, seed, platform, public actions, no-soft-lock/dead-interaction result,
+and observed coverage. The contract counts coverage from that hashed report,
+then requires it to match the manifest declaration. A diagnostic seed can stay
+in the file for provenance, but it cannot satisfy a final slot.
 
 ## Catalog-discovery helper
 
@@ -77,29 +95,37 @@ scenario discovery.
 Example:
 
 ```powershell
-Godot_v4.6-stable_win64_console.exe --headless --path . `
+$godot = "D:\Projects\Beat-The-House\.tools\godot-4.6-stable\Godot_v4.6-stable_win64_console.exe"
+$sourceCommit = (git rev-parse HEAD).Trim()
+$sourceTree = (git rev-parse "$sourceCommit`^{tree}").Trim()
+$godotHash = (Get-FileHash -LiteralPath $godot -Algorithm SHA256).Hash.ToLowerInvariant()
+& $godot --headless --path . `
   --script res://tools/playtest06_2_seed_catalog_probe.gd -- `
   --seeds=PLAYTEST-CATALOG-01,PLAYTEST-CATALOG-02,SCENARIO-AUDIT `
-  --out=res://.tmp/playtest06_2/catalog_probe.json
+  --out=res://.tmp/playtest06_2/catalog_probe.json `
+  "--source-commit=$sourceCommit" "--source-tree=$sourceTree" `
+  "--build-identity=godot-4.6-stable:$godotHash"
 ```
 
 The helper deliberately uses prevalidated node travel so it can inspect the
 catalog without grinding. Its report stamps
 `DIAGNOSTIC_PREVALIDATED_TRAVEL` and `owner_playtest_eligible=false`. Final seed
 selection must reproduce every claimed route using visible public actions.
-The current-main two-seed smoke covered 22 of 55 first-visit scenario
-assignments and found a Vault Drop cabinet; the retained report is
-`.tmp/playtest06_2/catalog_probe_smoke.json` with SHA-256
-`CC665A3F8BE64A620BC0120237B8ABD2B718A86F28A3E3F263297FA75A480CC3`.
-Those are discovery results, not playtest passes.
+An earlier local smoke at `9b52c27a` was reported to cover 22 of 55 first-visit
+scenario assignments and find a Vault Drop cabinet, but its `.tmp` report was
+not retained in Git and cannot be independently audited. It is historical seed
+discovery only, not admissible playtest evidence. The helper now refuses to run
+without source commit, source tree and build identity, and its report records
+those values, its own source hash and the Godot version. Final use requires a
+fresh exact-candidate report.
 
 ## Dependency/status snapshot at current main
 
-This is a transcription of the active board at main
-`9b52c27ada01b0048bd938908b9bcae701d93ec6`, not an acceptance decision by this
+This is a transcription of the active board at the branch's actual main parent,
+`49841960750a873707e79dbf6b5c7836041fcbf5`, not an acceptance decision by this
 prestage lane.
 
-| Dependency or gate | Board state at `9b52c27a` | What current main establishes | What still blocks final seed promotion |
+| Dependency or gate | Board state at `49841960` | What that main establishes | What still blocks final seed promotion |
 | --- | --- | --- | --- |
 | `depth06_1` | DONE | 55 scenario identities and the depth release gate are accepted. | `env06_8` is changing their owner-reported presentation consequences. |
 | `game06_8` | DONE | All eleven games and Showdown are accounted for with the recorded exact-tree gate. | Natural named player routes still need final-tree verification. |
@@ -109,8 +135,8 @@ prestage lane.
 | `teach06_2` | DONE | `FIRST-NIGHT-ACE-17` is accepted for the guided tutorial/orientation claim. | TUT-N17 and broad owner comprehension remain human-only; tutorial evidence is not major-route evidence. |
 | `env06_8` | IN_PROGRESS | Owner regression is claimed and isolated to the parallel environment lane. | Final scenario/archetype seed expectations cannot freeze before its landed evidence. |
 | `balance06_1` | DONE (partial accepted scope) | The original opt-in cross-system harness is landed. | Ordered follow-on distributions/600k pusher EV/findings are still unreviewed outside main and must be accepted or explicitly dispositioned. |
-| `integ06_1` | TODO on board; substantial branch work is PARTIAL | Historical 0.5 migration and one maximal composition run are recoverable from its branch. | Mid-0.6 saves, exhaustive composition, strict native/Web terminal soaks, failures, all victories, and final-tree broad suite. |
-| `perf06_1` | IN_PROGRESS | Aggregate/platform tooling and fail-closed pusher backend checks are on main. | Binding final matrix waits for `integ06_1`, `env06_8`, and a quiesced candidate. |
+| `integ06_1` | TODO on board; substantial closeout work is merged but unaccepted | Migration/composition/terminal producers and recovered fixtures are on main. | Exact final-source composition and terminal results, all victories, and accepted final report. |
+| `perf06_1` | IN_PROGRESS | Aggregate/platform tooling and fail-closed pusher backend checks are on main. | Binding final matrix waits for accepted `integ06_1`, `env06_8`, and a quiesced candidate. |
 | `playtest06_2` | TODO | Intake prestage exists. | Dependency rewrite, final named seeds, playtest script, and exact-build evidence. |
 | `playtest06_1` | TODO | Original hard rules remain authoritative. | Must wait for explicit refreshed dependencies and every final gate; only then build and hand off locally. |
 
@@ -124,7 +150,8 @@ does not depend on environment, performance, or integration finalization.
 | Requirement | Recovered candidate/evidence | Freeze-time action | Current state |
 | --- | --- | --- | --- |
 | Every archetype | Catalog probe enumerates generated nodes. | Prove natural player reachability and record route per archetype. | PENDING |
-| Representative scenarios and branches | Catalog probe can minimize discovery seeds; env06_8 owns final authored scenario presentation. | Owner defines the representative set after env freeze; exercise each material branch and aftermath publicly. | PENDING ENV FREEZE |
+| Three Punchline layers | Live `small_underground_casino.layers` catalog names `club`, `casino`, and `back_room`. | Reach each layer through visible public transitions and retain exact-build owner-session evidence. | PENDING INTEG FREEZE |
+| Representative scenarios and branches | Catalog probe can minimize discovery seeds; env06_8 owns final authored scenario presentation. | Select at least one scenario per live pool after env freeze; exercise every selected scenario's authored `phase_graph.phases[].branches[].id` publicly. | PENDING ENV FREEZE |
 | All eleven games | Manifest contract derives the live game catalog. | Enter, act, settle, and exit each game on the exact owner build. | PENDING |
 | Three pusher machines | Catalog probe reads generated `variation_id`; performance lane now rejects fallback backends. | Prove Quarter Falls, Jackpot Ridge, and Vault Drop through their defining public goals on the frozen native/Web candidate. | PENDING PERF/PUSHER FREEZE |
 | Crew recruitment through `inner_circle` | Integration branch contains production selectors and eligibility probes. | Produce a short public route and replay it without hidden-state injection. | PENDING INTEG FREEZE |
