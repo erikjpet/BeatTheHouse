@@ -15119,9 +15119,12 @@ func open_meta_home() -> void:
 
 
 func _enter_meta_location(location_id: String, tutorial_handoff: bool = false) -> Dictionary:
+	if not _ensure_run_ui_built():
+		return {"ok": false, "errors": [RUN_UI_UNAVAILABLE_MESSAGE]}
 	var clean_location := location_id.strip_edges()
 	if clean_location == META_LOCATION_START_RUN:
-		start_meta_quick_run()
+		if not start_meta_quick_run():
+			return {"ok": false, "errors": [RUN_UI_UNAVAILABLE_MESSAGE]}
 		return {"ok": true, "errors": []}
 	var pawn_location := _meta_pawn_location_id()
 	if clean_location != pawn_location:
@@ -15904,6 +15907,8 @@ func close_game_test_menu() -> void:
 func start_game_test_session(game_id: String) -> Dictionary:
 	if not show_game_library_launcher:
 		return {"ok": false, "errors": ["The game test launcher is disabled."]}
+	if not _ensure_run_ui_built():
+		return {"ok": false, "errors": [RUN_UI_UNAVAILABLE_MESSAGE]}
 	if library == null:
 		_initialize_foundation()
 	_ensure_full_content_library_loaded()

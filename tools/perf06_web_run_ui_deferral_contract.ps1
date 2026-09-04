@@ -48,11 +48,29 @@ $requiredContracts = @(
     "RUN_UI_UNAVAILABLE_MESSAGE",
     "func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Dictionary = {}, include_meta_home_modifiers: bool = true) -> bool:",
     "func load_foundation_run() -> bool:",
-    "if WorldMapOverlayControllerScript != null:"
+    "if WorldMapOverlayControllerScript != null:",
+    "func _enter_meta_location(location_id: String, tutorial_handoff: bool = false) -> Dictionary:",
+    "func start_game_test_session(game_id: String) -> Dictionary:"
 )
 foreach ($contract in $requiredContracts) {
     if (-not $source.Contains($contract)) {
         throw "Missing web run-UI deferral contract: $contract"
+    }
+}
+
+$guardedEntryPatterns = [ordered]@{
+    start_foundation_run = '(?m)^func start_foundation_run\([^\r\n]+\) -> bool:\r?\n\tif not _ensure_run_ui_built\(\):'
+    load_slot = '(?m)^func _load_foundation_run_from_slot\([^\r\n]+\) -> bool:\r?\n\tif not _ensure_run_ui_built\(\):'
+    start_button = '(?m)^func _on_start_pressed\(\) -> bool:\r?\n\tif not _ensure_run_ui_built\(\):'
+    tutorial = '(?m)^func start_tutorial_run\(\) -> bool:\r?\n\tif not _ensure_run_ui_built\(\):'
+    generated = '(?m)^func start_generated_foundation_run\(\) -> bool:\r?\n\tif not _ensure_run_ui_built\(\):'
+    meta_quick = '(?m)^func start_meta_quick_run\(\) -> bool:\r?\n\tif not _ensure_run_ui_built\(\):'
+    meta_location = '(?m)^func _enter_meta_location\([^\r\n]+\) -> Dictionary:\r?\n\tif not _ensure_run_ui_built\(\):'
+    game_test = '(?ms)^func start_game_test_session\([^\r\n]+\) -> Dictionary:\r?\n\tif not show_game_library_launcher:[^\r\n]*\r?\n\t\treturn[^\r\n]*\r?\n\tif not _ensure_run_ui_built\(\):'
+}
+foreach ($entry in $guardedEntryPatterns.GetEnumerator()) {
+    if ($source -notmatch $entry.Value) {
+        throw "Run-UI loader guard no longer precedes mutation for entry point: $($entry.Key)"
     }
 }
 
