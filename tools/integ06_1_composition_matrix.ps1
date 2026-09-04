@@ -220,7 +220,7 @@ for ($caseIndex = 0; $caseIndex -lt $cases.Count; $caseIndex++) {
     $artifactsByShard[$shardIndex] += [ordered]@{
         path = $artifactPath
         sha256 = (Get-FileHash -LiteralPath ([string]$result.path) -Algorithm SHA256).Hash.ToLowerInvariant()
-        size_bytes = (Get-Item -LiteralPath ([string]$result.path).Length)
+        size_bytes = (Get-Item -LiteralPath ([string]$result.path)).Length
     }
 }
 
