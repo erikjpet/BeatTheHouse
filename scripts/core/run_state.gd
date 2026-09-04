@@ -14901,7 +14901,7 @@ func _failure_message_for_reason(reason: String) -> String:
 
 
 # Converts the run to saveable data.
-func to_dict(deep_copy_seeded_scenario_definitions: bool = true) -> Dictionary:
+func to_dict() -> Dictionary:
 	var result := {
 		"seed_text": seed_text,
 		"seed_value": seed_value,
@@ -14963,7 +14963,7 @@ func to_dict(deep_copy_seeded_scenario_definitions: bool = true) -> Dictionary:
 		"active_delivery_run": active_delivery_run.duplicate(true),
 		"numbers_state": numbers_state.snapshot() if numbers_state != null else {},
 		"heat_history": normalize_heat_history(heat_history),
-		"town_state": town_state.snapshot(deep_copy_seeded_scenario_definitions) if town_state != null else {},
+		"town_state": town_state.snapshot() if town_state != null else {},
 		"simulation_msec": simulation_msec,
 		"game_clock_minutes": game_clock_minutes,
 		"grand_casino_atm_interest_boundary_index": grand_casino_atm_interest_boundary_index,
@@ -15047,7 +15047,7 @@ func world_sequence_resume_delivery_checkpoint() -> Dictionary:
 # top-level maps, while this snapshot owns each mutable root container. The v2
 # codec is non-mutating and performs the final compact deep projection on the
 # worker.
-func to_save_snapshot() -> Dictionary:
+func to_save_snapshot(deep_copy_seeded_scenario_definitions: bool = true) -> Dictionary:
 	var result := {
 		"seed_text": seed_text,
 		"seed_value": seed_value,
@@ -15105,7 +15105,7 @@ func to_save_snapshot() -> Dictionary:
 		"active_delivery_run": active_delivery_run.duplicate(false),
 		"numbers_state": numbers_state.snapshot() if numbers_state != null else {},
 		"heat_history": heat_history.duplicate(false),
-		"town_state": town_state.snapshot() if town_state != null else {},
+		"town_state": town_state.snapshot(deep_copy_seeded_scenario_definitions) if town_state != null else {},
 		"simulation_msec": simulation_msec,
 		"game_clock_minutes": game_clock_minutes,
 		"grand_casino_atm_interest_boundary_index": grand_casino_atm_interest_boundary_index,
