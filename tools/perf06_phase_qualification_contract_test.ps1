@@ -36,11 +36,13 @@ $goodLive = Get-Perf06PhaseLivenessEvaluation -Scenario $goodIdle -Platform nati
 if (-not $goodLive.passed -or $goodLive.floor -ne 8 -or $goodLive.measured -ne 8) { throw "Published native 8-per-120 liveness floor did not pass exactly." }
 $frozenIdle = New-Scenario -Redraws 7
 if ((Get-Perf06PhaseLivenessEvaluation -Scenario $frozenIdle -Platform native -BudgetTable $budget).passed) { throw "Below-floor native idle liveness was accepted." }
-$staticIdle = New-Scenario -Surface slot -Phase idle -Redraws 0 -DrawP95 1.4
-$staticIdle.tags | Add-Member -NotePropertyName accepted_zero_liveness_reason -NotePropertyValue "No authored idle animation." -Force
-$staticLive = Get-Perf06PhaseLivenessEvaluation -Scenario $staticIdle -Platform native -BudgetTable $budget
-$staticBudget = Get-Perf06PhaseBudgetEvaluation -Scenario $staticIdle -Platform native -BudgetTable $budget -Plan l02
-if (-not $staticLive.passed -or $staticLive.floor -ne 0 -or [double]$staticBudget.checks[0].maximum -ne 1.5) { throw "Accepted static idle did not retain the published zero-liveness reason and 1.5ms draw cap." }
+$forgedStaticIdle = New-Scenario -Surface slot -Phase idle -Redraws 0 -DrawP95 1.4
+$forgedStaticIdle.tags | Add-Member -NotePropertyName accepted_zero_liveness_reason -NotePropertyValue "No authored idle animation." -Force
+$forgedStaticLive = Get-Perf06PhaseLivenessEvaluation -Scenario $forgedStaticIdle -Platform native -BudgetTable $budget
+if ($forgedStaticLive.passed -or $forgedStaticLive.floor -ne 8) { throw "Caller-authored static-zero text bypassed the contract-owned idle liveness floor." }
+$forgedRoulette = New-Scenario -Surface roulette -Phase betting_idle -Redraws 0
+$forgedRoulette.tags | Add-Member -NotePropertyName accepted_zero_liveness_reason -NotePropertyValue "Trust me." -Force
+if ((Get-Perf06PhaseLivenessEvaluation -Scenario $forgedRoulette -Platform native -BudgetTable $budget).passed) { throw "Animated Roulette idle accepted caller-authored zero-liveness authority." }
 $environmentIdle = New-Scenario -Surface room_environment -Phase quiet_idle -Redraws 0
 $environmentIdle.liveness_counter_delta.environment_scene.scene_idle_animation_redraw_count = 8
 $environmentLive = Get-Perf06PhaseLivenessEvaluation -Scenario $environmentIdle -Platform native -BudgetTable $budget
@@ -50,6 +52,13 @@ $goodBudget = Get-Perf06PhaseBudgetEvaluation -Scenario $goodIdle -Platform nati
 if (-not $goodBudget.passed -or @($goodBudget.checks).Count -eq 0) { throw "Published native draw budget was not evaluated." }
 $slowIdle = New-Scenario -DrawP95 5.1
 if ((Get-Perf06PhaseBudgetEvaluation -Scenario $slowIdle -Platform native -BudgetTable $budget -Plan l02).passed) { throw "Native draw p95 above the unchanged 5ms cap was accepted." }
+
+$missingProgress = New-Scenario -Surface slot -Phase spin -Mode active
+if ((Get-Perf06PhaseProgressEvaluation -SurfaceId slot -PhaseId spin -Evidence $missingProgress.tags).passed) { throw "Active phase omitted all progress evidence and passed." }
+$missingProgress.tags | Add-Member -NotePropertyName action_evidence -NotePropertyValue ([pscustomobject]@{ accepted=$true; progressed=$true }) -Force
+if (-not (Get-Perf06PhaseProgressEvaluation -SurfaceId slot -PhaseId spin -Evidence $missingProgress.tags).passed) { throw "Observed accepted active action did not satisfy progress evidence." }
+$missingProgress.tags.action_evidence.progressed = $false
+if ((Get-Perf06PhaseProgressEvaluation -SurfaceId slot -PhaseId spin -Evidence $missingProgress.tags).passed) { throw "Rejected active progress evidence passed." }
 
 $goodPusher = New-Scenario -Surface coin_pusher -Phase drop -Mode active -Frames 240 -Redraws 0 -DrawP95 6.9 -FrameP95 21.9 -ResolveMs 15.9
 $goodPusherBudget = Get-Perf06PhaseBudgetEvaluation -Scenario $goodPusher -Platform native -BudgetTable $budget -Plan coin_pusher
@@ -71,12 +80,12 @@ if ($nativeLauncher.Contains('passed = $true')) { throw "Native launcher still h
 
 $builder = Get-Content -LiteralPath (Join-Path $PSScriptRoot "perf06_build_surface_report.ps1") -Raw
 if ($builder.Contains('floor=if ($measured -gt 0) { 1 } else { 0 }')) { throw "Surface builder still replaces published liveness floors with one tick." }
-foreach ($token in @("budget_evaluation =", "liveness = `$livenessEvaluation", "Get-Perf06PhaseBudgetEvaluation")) {
+foreach ($token in @("budget_evaluation =", "progress_evaluation =", "liveness = `$livenessEvaluation", "Get-Perf06PhaseBudgetEvaluation", "Get-Perf06PhaseProgressEvaluation")) {
     if (-not $builder.Contains($token)) { throw "Surface builder lost qualification evidence '$token'." }
 }
 
 $consumer = Get-Content -LiteralPath (Join-Path $PSScriptRoot "perf06_matrix_contract.ps1") -Raw
-foreach ($token in @('liveness.measured -lt [int]$Row.liveness.floor', 'observed -gt [double]$check.maximum', 'budget_evaluation')) {
+foreach ($token in @('liveness.measured -lt [int]$Row.liveness.floor', 'observed -gt [double]$check.maximum', 'budget_evaluation', 'progress_evaluation', 'active phase has no passing retained progress evidence')) {
     if (-not $consumer.Contains($token)) { throw "Final consumer lost fail-closed check '$token'." }
 }
 
