@@ -8,6 +8,7 @@ extends "res://tools/endgame_metrics_probe.gd"
 
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 const CrewRecruitmentModelScript := preload("res://scripts/core/crew_recruitment_model.gd")
+const CrewHeistModelScript := preload("res://scripts/core/crew_heist_model.gd")
 
 const TOOL_ID := "cross_economy_audit_v1"
 const DEFAULT_SEEDS_PER_STYLE := 64
@@ -195,7 +196,7 @@ func _check_hostile_policy_input_rejection() -> void:
 
 func _sanitize_policy_observation(value: Dictionary) -> Dictionary:
 	var clean := {}
-	for key in ["world_node_id", "archetype_id", "bankroll", "heat", "terminal", "game_ids", "crew_presence", "delivery_active", "numbers", "numbers_desk", "heist", "scenario_hook_ids"]:
+	for key in ["world_node_id", "archetype_id", "bankroll", "heat", "terminal", "game_ids", "crew_presence", "delivery_active", "numbers", "numbers_desk", "heist", "heist_planning"]:
 		if value.has(key):
 			clean[key] = value[key]
 	return clean
@@ -211,8 +212,6 @@ func _policy_observation(run_state: RunState) -> Dictionary:
 				member[key] = source[key]
 		if not member.is_empty():
 			public_crew.append(member)
-	var hook_ids := _dict(run_state.current_environment.get("scenario_hook_flags", {})).keys()
-	hook_ids.sort()
 	return {
 		"world_node_id": run_state.current_world_node_id(),
 		"archetype_id": str(run_state.current_environment.get("archetype_id", "")),
@@ -225,7 +224,7 @@ func _policy_observation(run_state: RunState) -> Dictionary:
 		"numbers": run_state.numbers_status(),
 		"numbers_desk": run_state.numbers_desk_status(),
 		"heist": run_state.crew_heist_snapshot(),
-		"scenario_hook_ids": hook_ids,
+		"heist_planning": run_state.crew_heist_planning_status(),
 	}
 
 
@@ -236,97 +235,186 @@ func _empty_opportunity_ledger() -> Dictionary:
 	return ledger
 
 
-func _public_opportunity_visibility(run_state: RunState) -> Dictionary:
-	var observation := _policy_observation(run_state)
-	var game_ids := _string_array(observation.get("game_ids", []))
-	var crew_visible := not _array(observation.get("crew_presence", [])).is_empty()
-	var numbers_visible := false
-	for value in _array(_dict(observation.get("numbers", {})).get("venue_status", [])):
-		if bool(_dict(value).get("open", false)):
-			numbers_visible = true
-			break
-	var desk := _dict(observation.get("numbers_desk", {}))
-	numbers_visible = numbers_visible or bool(desk.get("runner_available", false)) or str(desk.get("fix_stage", "locked")) != "locked"
+func _public_opportunity_ids(run_state: RunState) -> Dictionary:
+	var result := {}
+	for system_id in OPPORTUNITY_SYSTEMS:
+		result[system_id] = []
 	var environment := run_state.current_environment
-	var archetype_id := str(observation.get("archetype_id", ""))
-	var heist := _dict(observation.get("heist", {}))
-	var heist_visible := _string_array(observation.get("scenario_hook_ids", [])).has("audit_night") or str(heist.get("status", "idle")) not in ["", "idle", "available"]
-	return {
-		"games": not game_ids.is_empty(),
-		"jobs": crew_visible,
-		"crew": crew_visible,
-		"plays": crew_visible,
-		"numbers": numbers_visible,
-		"deliveries": bool(observation.get("delivery_active", false)),
-		"heists": heist_visible,
-		"items": not _array(environment.get("item_ids", environment.get("item_offers", []))).is_empty(),
-		"services": not _array(environment.get("service_ids", environment.get("services", []))).is_empty(),
-		"events": environment.has("event_id") or not _array(environment.get("event_ids", environment.get("events", []))).is_empty(),
-		"travel": not run_state.is_terminal(),
-		"lenders_debt": _total_debt_balance(run_state) > 0 or archetype_id in ["motel", "back_alley", "small_underground_casino"],
-		"heat": true,
-		"scenarios": environment.has("scenario_state") or not _dict(environment.get("scenario_hook_flags", {})).is_empty(),
-		"pusher_machines": game_ids.has("coin_pusher"),
-	}
+	var game_ids := _string_array(environment.get("game_ids", []))
+	for game_id in game_ids:
+		_append_offer_id(result, "games", "game:%s" % game_id)
+	if game_ids.has("coin_pusher"):
+		_append_offer_id(result, "pusher_machines", "game:coin_pusher")
+	for offer_value in run_state.crew_job_board_offers():
+		_append_offer_id(result, "jobs", "job:%s" % str(_dict(offer_value).get("definition_id", "")))
+	for presence_value in _array(environment.get("crew_presence", [])):
+		var member_id := str(_dict(presence_value).get("member_id", ""))
+		if not member_id.is_empty():
+			_append_offer_id(result, "crew", "crew:%s" % member_id)
+	var recruitment_ids := CrewRecruitmentModelScript.recruitment_event_ids()
+	for event_id_value in _current_event_ids(run_state):
+		var event_id := str(event_id_value)
+		_append_offer_id(result, "events", "event:%s" % event_id)
+		if recruitment_ids.has(event_id):
+			_append_offer_id(result, "crew", "recruit:%s" % event_id)
+	var active_game_id := str(environment.get("active_game_id", ""))
+	if not active_game_id.is_empty():
+		for play_value in run_state.crew_play_actions(active_game_id, environment):
+			_append_offer_id(result, "plays", str(_dict(play_value).get("id", "")))
+	var numbers := run_state.numbers_status()
+	for venue_value in _array(numbers.get("venue_status", [])):
+		var venue := _dict(venue_value)
+		if bool(venue.get("open", false)):
+			_append_offer_id(result, "numbers", "numbers:book:%s" % str(venue.get("id", "")))
+	var desk := run_state.numbers_desk_status()
+	if bool(desk.get("runner_available", false)):
+		_append_offer_id(result, "numbers", "numbers:runner")
+	if bool(desk.get("fix_available", false)) or str(desk.get("fix_stage", "locked")) != "locked":
+		_append_offer_id(result, "numbers", "numbers:fix:%s" % str(desk.get("fix_stage", "locked")))
+	if run_state.delivery_has_active_run():
+		_append_offer_id(result, "deliveries", "delivery:%s" % str(run_state.delivery_snapshot().get("run_id", "active")))
+	var planning := run_state.crew_heist_planning_status()
+	for plan_value in _array(planning.get("plans", [])):
+		var plan := _dict(plan_value)
+		if bool(plan.get("live", false)):
+			_append_offer_id(result, "heists", "heist:%s" % str(plan.get("id", "")))
+	var heist := run_state.crew_heist_snapshot()
+	if str(heist.get("status", "")) not in ["", "idle", "available"]:
+		_append_offer_id(result, "heists", "heist:%s:%s" % [str(heist.get("plan_id", "active")), str(heist.get("status", "active"))])
+	var service := RunActionServiceScript.new()
+	service.setup(library, run_state)
+	for item_value in service.item_offer_view_list():
+		_append_offer_id(result, "items", "item:%s" % str(_dict(item_value).get("id", "")))
+	for service_value in service.service_hook_view_list():
+		_append_offer_id(result, "services", "service:%s" % str(_dict(service_value).get("id", "")))
+	for lender_value in service.lender_hook_view_list():
+		_append_offer_id(result, "lenders_debt", "lender:%s" % str(_dict(lender_value).get("id", "")))
+	for choice_value in _travel_choices(run_state):
+		var choice := _dict(choice_value)
+		if bool(choice.get("enabled", false)):
+			_append_offer_id(result, "travel", "travel:%s" % str(choice.get("id", "")))
+	_append_offer_id(result, "heat", "heat:current")
+	var scenario_state := _dict(environment.get("scenario_state", {}))
+	var scenario_id := str(scenario_state.get("scenario_id", environment.get("scenario_id", "")))
+	if not scenario_id.is_empty():
+		_append_offer_id(result, "scenarios", "scenario:%s" % scenario_id)
+	return result
 
 
-func _record_public_opportunities(run_state: RunState, run: Dictionary) -> void:
+func _append_offer_id(result: Dictionary, system_id: String, offer_id: String) -> void:
+	var clean_id := offer_id.strip_edges()
+	if clean_id.is_empty() or clean_id.ends_with(":"):
+		return
+	var ids := _array(result.get(system_id, []))
+	if not ids.has(clean_id):
+		ids.append(clean_id)
+	result[system_id] = ids
+
+
+func _record_public_opportunities(opportunity_ids: Dictionary, run: Dictionary) -> void:
 	var ledger := _dict(run.get("opportunities", {}))
-	var visibility := _public_opportunity_visibility(run_state)
 	for system_id in OPPORTUNITY_SYSTEMS:
 		var row := _dict(ledger.get(system_id, {}))
-		var key := "visible" if bool(visibility.get(system_id, false)) else "inaccessible"
-		row[key] = int(row.get(key, 0)) + 1
+		var offered_count := _array(opportunity_ids.get(system_id, [])).size()
+		if offered_count > 0:
+			row["visible"] = int(row.get("visible", 0)) + offered_count
+		else:
+			row["inaccessible"] = int(row.get("inaccessible", 0)) + 1
 		ledger[system_id] = row
 	run["opportunities"] = ledger
 
 
-func _selected_opportunity_systems(label: String) -> Array:
-	var systems: Array = []
+func _selected_opportunity_events(label: String) -> Array:
+	var events: Array = []
 	if label.begins_with("game:") or label.begins_with("heist_identity_session") or label.begins_with("heist_live_round"):
-		systems.append("games")
-	if label.begins_with("coin_pusher"):
-		systems.append_array(["games", "pusher_machines"])
-	if label.begins_with("crew_job"):
-		systems.append_array(["jobs", "crew"])
-	if label.begins_with("crew_recruitment"):
-		systems.append("crew")
+		events.append({"system": "games", "settled": true})
+	if label == "coin_pusher_drop":
+		events.append_array([{"system": "games", "settled": true}, {"system": "pusher_machines", "settled": true}])
+	if label == "coin_pusher_seek_travel" or label.begins_with("crew_recruit_seek:") or label.begins_with("crew_seek:"):
+		events.append({"system": "travel", "settled": true})
+	if label == "crew_job_accept":
+		events.append({"system": "jobs", "settled": false})
+	if label.begins_with("crew_recruitment_event:"):
+		events.append_array([{"system": "crew", "settled": true}, {"system": "events", "settled": true}])
 	if label.begins_with("numbers") or label == "mixed_numbers_slip":
-		systems.append("numbers")
-	if label.contains("delivery") or label.contains("schedule") or label.contains("swap_cart") or label.contains("getaway"):
-		systems.append("deliveries")
+		if label.contains("travel"):
+			events.append({"system": "travel", "settled": true})
+		elif not label.ends_with("_wait"):
+			events.append({"system": "numbers", "settled": not label.ends_with("_begin")})
+	if label.contains("delivery") or label.contains("schedule") or label.contains("swap_cart") or label.contains("getaway") or label.ends_with("_work"):
+		events.append({"system": "deliveries", "settled": not label.contains("travel") and not label.ends_with("_begin")})
 	if label.begins_with("heist"):
-		systems.append("heists")
+		events.append({"system": "heists", "settled": label.contains("round") or label.contains("getaway")})
 	if label.begins_with("item:"):
-		systems.append("items")
+		events.append({"system": "items", "settled": true})
 	if label.begins_with("service:"):
-		systems.append("services")
-	if label == "event" or label == "progression" or label == "endgame":
-		systems.append_array(["events", "scenarios"])
+		events.append({"system": "services", "settled": true})
+	if label in ["event", "progression", "endgame", "specialist_visible_event"]:
+		events.append({"system": "events", "settled": true})
 	if label.begins_with("travel:") or label.contains("_travel"):
-		systems.append("travel")
-	if label == "lender":
-		systems.append("lenders_debt")
-	return systems
+		events.append({"system": "travel", "settled": true})
+	if label in ["lender", "crew_marker_loan"]:
+		events.append({"system": "lenders_debt", "settled": true})
+	var unique: Array = []
+	var seen := {}
+	for event_value in events:
+		var event := _dict(event_value)
+		var system_id := str(event.get("system", ""))
+		if system_id.is_empty() or seen.has(system_id):
+			continue
+		seen[system_id] = true
+		unique.append(event)
+	return unique
 
 
-func _record_selected_opportunity(run: Dictionary, label: String) -> void:
+func _record_selected_opportunity(run_state: RunState, run: Dictionary, label: String, opportunity_ids: Dictionary) -> void:
 	var ledger := _dict(run.get("opportunities", {}))
-	for system_id in _selected_opportunity_systems(label):
+	var records := _array(run.get("opportunity_records", []))
+	var selected_events := _selected_opportunity_events(label)
+	if label in ["event", "progression", "endgame", "specialist_visible_event"] and not _array(opportunity_ids.get("scenarios", [])).is_empty():
+		selected_events.append({"system": "scenarios", "settled": true})
+	for event_value in selected_events:
+		var event := _dict(event_value)
+		var system_id := str(event.get("system", ""))
+		var offered_ids := _array(opportunity_ids.get(system_id, []))
+		if offered_ids.is_empty():
+			failures.append("Policy selected %s for %s without a public pre-action opportunity in seed %s." % [label, system_id, run_state.seed_text])
+			continue
 		var row := _dict(ledger.get(system_id, {}))
 		row["selected"] = int(row.get("selected", 0)) + 1
 		row["accepted"] = int(row.get("accepted", 0)) + 1
-		if not label.ends_with("_begin") and not label.ends_with("_wait") and not label.ends_with("_accept"):
+		if bool(event.get("settled", false)):
 			row["settled"] = int(row.get("settled", 0)) + 1
 		ledger[system_id] = row
+		records.append({"action": int(run.get("actions", 0)), "system": system_id, "offered_ids": offered_ids, "selection": label, "outcome": "settled" if bool(event.get("settled", false)) else "accepted"})
 	run["opportunities"] = ledger
+	run["opportunity_records"] = records
+
+
+func _record_new_job_settlements(run_state: RunState, run: Dictionary) -> void:
+	var observed := _array(run.get("observed_settled_job_ids", []))
+	var ledger := _dict(run.get("opportunities", {}))
+	var records := _array(run.get("opportunity_records", []))
+	for job_id_value in run_state.crew_jobs.keys():
+		var job_id := str(job_id_value)
+		var job := _dict(run_state.crew_jobs.get(job_id_value, {}))
+		if str(job.get("status", "")) != "resolved" or observed.has(job_id):
+			continue
+		observed.append(job_id)
+		var row := _dict(ledger.get("jobs", {}))
+		row["settled"] = int(row.get("settled", 0)) + 1
+		ledger["jobs"] = row
+		records.append({"action": int(run.get("actions", 0)), "system": "jobs", "selection": "job:%s" % str(job.get("definition_id", job_id)), "outcome": "settled"})
+	run["observed_settled_job_ids"] = observed
+	run["opportunities"] = ledger
+	run["opportunity_records"] = records
 
 
 func _visible_opportunity_ids(run_state: RunState) -> Array:
 	var ids: Array = []
-	var visibility := _public_opportunity_visibility(run_state)
+	var visibility := _public_opportunity_ids(run_state)
 	for system_id in OPPORTUNITY_SYSTEMS:
-		if bool(visibility.get(system_id, false)):
+		if not _array(visibility.get(system_id, [])).is_empty():
 			ids.append(system_id)
 	return ids
 
@@ -335,7 +423,14 @@ func _finalize_opportunity_ledger(run: Dictionary) -> void:
 	var ledger := _dict(run.get("opportunities", {}))
 	for system_id in OPPORTUNITY_SYSTEMS:
 		var row := _dict(ledger.get(system_id, {}))
-		row["visible_not_selected"] = maxi(0, int(row.get("visible", 0)) - int(row.get("selected", 0)))
+		var visible := int(row.get("visible", 0))
+		var selected := int(row.get("selected", 0))
+		var accepted := int(row.get("accepted", 0))
+		var rejected := int(row.get("rejected", 0))
+		var settled := int(row.get("settled", 0))
+		if selected > visible or accepted + rejected != selected or settled > accepted:
+			failures.append("Opportunity accounting invariant failed for %s in seed %s: visible=%d selected=%d accepted=%d rejected=%d settled=%d." % [system_id, str(run.get("seed", "")), visible, selected, accepted, rejected, settled])
+		row["visible_not_selected"] = visible - selected
 		ledger[system_id] = row
 	run["opportunities"] = ledger
 
@@ -411,6 +506,8 @@ func _simulate_audit_run(style: Dictionary, seed: String, max_actions: int) -> D
 		"first_bankroll_action": {},
 		"first_heat_50_action": -1,
 		"first_heat_80_action": -1,
+		"debt_was_open": false,
+		"first_debt_recovery_action": -1,
 		"victory_action": -1,
 		"peak_bankroll": run_state.bankroll,
 		"minimum_bankroll": run_state.bankroll,
@@ -418,6 +515,8 @@ func _simulate_audit_run(style: Dictionary, seed: String, max_actions: int) -> D
 		"peak_debt": 0,
 		"style_state": {},
 		"opportunities": _empty_opportunity_ledger(),
+		"opportunity_records": [],
+		"observed_settled_job_ids": [],
 		"remaining_reachable_routes": [],
 	}
 	_prepare_style_fixture(run_state, run)
@@ -427,7 +526,8 @@ func _simulate_audit_run(style: Dictionary, seed: String, max_actions: int) -> D
 	for _action_index in range(max_actions):
 		if run_state.is_terminal():
 			break
-		_record_public_opportunities(run_state, run)
+		var opportunity_ids := _public_opportunity_ids(run_state)
+		_record_public_opportunities(opportunity_ids, run)
 		var before_bankroll := run_state.bankroll
 		var before_heat := run_state.suspicion_level()
 		var before_debt := _total_debt_balance(run_state)
@@ -438,7 +538,8 @@ func _simulate_audit_run(style: Dictionary, seed: String, max_actions: int) -> D
 			run_state.advance_environment_turns(1)
 			label = "idle"
 			_count_action(run, "idle")
-		_record_selected_opportunity(run, label)
+		_record_selected_opportunity(run_state, run, label, opportunity_ids)
+		_record_new_job_settlements(run_state, run)
 		_record_economy_boundary(run, run_state, label, before_bankroll, before_heat, before_debt)
 		_record_curve(run, run_state, label)
 		_record_thresholds(run, run_state)
@@ -548,6 +649,9 @@ func _specialist_visible_event_boundary(run_state: RunState, run: Dictionary, po
 	var seek_label := _seek_ranked_crew_boundary(run_state, run)
 	if not seek_label.is_empty():
 		return seek_label
+	var recruitment_seek_label := _seek_recruitment_boundary(run_state, run)
+	if not recruitment_seek_label.is_empty():
+		return recruitment_seek_label
 	if not _try_resolve_event(run_state, run, policy):
 		return ""
 	_count_action(run, "event")
@@ -579,11 +683,56 @@ func _crew_recruitment_event_boundary(run_state: RunState, run: Dictionary) -> S
 		var result := event.resolve(run_state, run_state.current_environment, selected_choice_id)
 		if not bool(result.get("ok", false)):
 			continue
-		run_state.advance_environment_turns(1)
 		run["events_resolved"] = int(run.get("events_resolved", 0)) + 1
 		_count_action(run, "event")
 		return "crew_recruitment_event:%s" % event_id
 	return ""
+
+
+func _try_resolve_required_progression_event(run_state: RunState, run: Dictionary, _policy: String) -> bool:
+	if bool(run_state.narrative_flags.get("grand_casino_invite", false)) or not _current_event_ids(run_state).has("grand_casino_invite"):
+		return false
+	var event := EventModuleScript.new()
+	event.setup(library.event("grand_casino_invite"), library)
+	if not event.can_trigger(run_state, run_state.current_environment):
+		return false
+	var result := event.resolve(run_state, run_state.current_environment, "accept_invite")
+	if not bool(result.get("ok", false)):
+		return false
+	run["events_resolved"] = int(run.get("events_resolved", 0)) + 1
+	return true
+
+
+func _try_resolve_event(run_state: RunState, run: Dictionary, policy: String) -> bool:
+	var best_event_id := ""
+	var best_choice_id := ""
+	var best_score := -999
+	for event_id_value in _current_event_ids(run_state):
+		var event_id := str(event_id_value)
+		var definition := library.event(event_id)
+		if definition.is_empty():
+			continue
+		var event := EventModuleScript.new()
+		event.setup(definition, library)
+		if not event.can_trigger(run_state, run_state.current_environment):
+			continue
+		for choice_value in event.choices(run_state, run_state.current_environment):
+			var choice := _dict(choice_value)
+			var choice_id := str(choice.get("id", ""))
+			var score := _event_choice_score(choice, policy, run_state)
+			if not bool(choice.get("disabled", false)) and score > best_score:
+				best_score = score
+				best_event_id = event_id
+				best_choice_id = choice_id
+	if best_event_id.is_empty() or best_score < 0:
+		return false
+	var selected_event := EventModuleScript.new()
+	selected_event.setup(library.event(best_event_id), library)
+	var result := selected_event.resolve(run_state, run_state.current_environment, best_choice_id)
+	if not bool(result.get("ok", false)):
+		return false
+	run["events_resolved"] = int(run.get("events_resolved", 0)) + 1
+	return true
 
 
 func _seek_ranked_crew_boundary(run_state: RunState, run: Dictionary) -> String:
@@ -595,6 +744,12 @@ func _seek_ranked_crew_boundary(run_state: RunState, run: Dictionary) -> String:
 			desired_member_ids.assign(["crew_lucky", "crew_mags"])
 		"heist_rusher":
 			desired_member_ids.assign(["crew_bishop"])
+		"crew_maximizer", "mixed_opportunist":
+			# Lucky's fallback is a public Numbers route across several early
+			# venues. Prefer it before the narrower scenario-only contacts so
+			# this deterministic policy keeps sampling legal recruitment
+			# opportunities instead of camping a hidden destination.
+			desired_member_ids.assign(["crew_lucky", "crew_mags", "crew_knuckles", "crew_switch", "crew_velvet", "crew_bishop"])
 		_:
 			for member_id_value in CrewStateModelScript.MEMBER_IDS:
 				desired_member_ids.append(str(member_id_value))
@@ -602,15 +757,78 @@ func _seek_ranked_crew_boundary(run_state: RunState, run: Dictionary) -> String:
 		if not _crew_at_least_rank(run_state, member_id, "associate"):
 			continue
 		var definition := CrewRecruitmentModelScript.member_definition(member_id)
-		for archetype_id_value in _array(definition.get("presence", [])):
-			var archetype_id := str(archetype_id_value)
-			var target_node_id := _world_node_for_archetype(run_state, archetype_id)
-			if target_node_id.is_empty() or target_node_id == run_state.current_world_node_id():
-				continue
-			var label := _travel_to_node_boundary(run_state, run, target_node_id, false, "crew_seek:%s:%s" % [member_id, archetype_id])
-			if not label.is_empty():
-				return label
+		var label := _travel_toward_archetypes_boundary(run_state, run, _array(definition.get("presence", [])), "crew_seek:%s" % member_id)
+		if not label.is_empty():
+			return label
 	return ""
+
+
+func _seek_recruitment_boundary(run_state: RunState, run: Dictionary) -> String:
+	if str(run_state.crew_standing().get("rank", "stranger")) == "stranger":
+		return ""
+	var desired_member_ids: Array[String] = []
+	match _active_style:
+		"numbers_specialist":
+			desired_member_ids.assign(["crew_lucky", "crew_mags"])
+		"heist_rusher":
+			desired_member_ids.assign(["crew_bishop"])
+		"crew_maximizer", "mixed_opportunist":
+			desired_member_ids.assign(["crew_lucky", "crew_mags", "crew_knuckles", "crew_switch", "crew_velvet", "crew_bishop"])
+		_:
+			for member_id_value in CrewStateModelScript.MEMBER_IDS:
+				var member_id := str(member_id_value)
+				if member_id != "crew_rook":
+					desired_member_ids.append(member_id)
+	for member_id in desired_member_ids:
+		if _crew_at_least_rank(run_state, member_id, "associate"):
+			continue
+		var archetype_ids: Array = []
+		for path_kind in ["primary", "fallback"]:
+			for archetype_id_value in _array(CrewRecruitmentModelScript.meeting_path_public(member_id, path_kind).get("archetype_ids", [])):
+				var archetype_id := str(archetype_id_value)
+				if not archetype_id.is_empty() and not archetype_ids.has(archetype_id):
+					archetype_ids.append(archetype_id)
+		var label := _travel_toward_archetypes_boundary(run_state, run, archetype_ids, "crew_recruit_seek:%s" % member_id)
+		if not label.is_empty():
+			return label
+	return ""
+
+
+func _travel_toward_archetypes_boundary(run_state: RunState, run: Dictionary, archetype_ids: Array, label_prefix: String) -> String:
+	var candidates: Array[Dictionary] = []
+	for archetype_id_value in archetype_ids:
+		var archetype_id := str(archetype_id_value)
+		# Recruitment data predates the world-map schema and its
+		# `archetype_ids` entries can name either a public node id (for example
+		# `motel`) or an environment archetype (for example `bar`). Resolve only
+		# against the currently disclosed map so the policy can visit every legal
+		# fallback without learning which seeded location owns the meeting.
+		var target_node_id := _world_node_for_public_location(run_state, archetype_id)
+		if target_node_id.is_empty() or target_node_id == run_state.current_world_node_id():
+			continue
+		# The policy may route through only nodes already disclosed by the public
+		# map. A hidden destination or hidden intermediate is not audit input.
+		var path := WorldMapScript.path_between(run_state.world_map, run_state.current_world_node_id(), target_node_id, true)
+		if path.size() < 2:
+			continue
+		candidates.append({"archetype_id": archetype_id, "target_node_id": target_node_id, "path_size": path.size()})
+	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		if int(a.get("path_size", 999)) != int(b.get("path_size", 999)):
+			return int(a.get("path_size", 999)) < int(b.get("path_size", 999))
+		return str(a.get("archetype_id", "")) < str(b.get("archetype_id", ""))
+	)
+	for candidate in candidates:
+		var label := _travel_to_node_boundary(run_state, run, str(candidate.get("target_node_id", "")), false, "%s:%s" % [label_prefix, str(candidate.get("archetype_id", ""))])
+		if not label.is_empty():
+			return label
+	return ""
+
+
+func _world_node_for_public_location(run_state: RunState, location_id: String) -> String:
+	var visible_node_ids := WorldMapScript.visible_node_ids(run_state.world_map) if run_state.has_world_map() else []
+	if visible_node_ids.has(location_id):
+		return location_id
+	return _world_node_for_archetype(run_state, location_id)
 
 
 func _crew_marker_boundary(run_state: RunState, run: Dictionary) -> String:
@@ -821,10 +1039,12 @@ func _drive_stake_job_boundary(run_state: RunState, run: Dictionary, job: Dictio
 
 
 func _world_node_for_archetype(run_state: RunState, archetype_id: String) -> String:
+	var visible_node_ids := WorldMapScript.visible_node_ids(run_state.world_map) if run_state.has_world_map() else []
 	for node_value in _array(run_state.world_map.get("nodes", [])):
 		var node := _dict(node_value)
-		if str(node.get("archetype_id", "")) == archetype_id:
-			return str(node.get("id", ""))
+		var node_id := str(node.get("id", ""))
+		if visible_node_ids.has(node_id) and str(node.get("archetype_id", "")) == archetype_id:
+			return node_id
 	return ""
 
 
@@ -888,22 +1108,34 @@ func _travel_to_node_boundary(run_state: RunState, run: Dictionary, target_node_
 	var choices := _travel_choices(run_state)
 	for choice_value in choices:
 		var choice := _dict(choice_value)
-		if str(choice.get("id", "")) == target_node_id and bool(choice.get("enabled", false)) and int(choice.get("cost", 0)) <= run_state.bankroll:
+		var choice_id := str(choice.get("id", ""))
+		var choice_cost := maxi(0, int(choice.get("cost", 0)))
+		var keeps_reserve := delivery_active or run_state.bankroll - choice_cost >= _destination_minimum_bankroll(choice_id)
+		if choice_id == target_node_id and bool(choice.get("enabled", false)) and choice_cost <= run_state.bankroll and keeps_reserve:
 			selected = choice
 			break
 	if selected.is_empty() and run_state.has_world_map():
-		var path := WorldMapScript.path_between(run_state.world_map, run_state.current_world_node_id(), target_node_id, false)
+		var path := WorldMapScript.path_between(run_state.world_map, run_state.current_world_node_id(), target_node_id, true)
 		for path_index in range(path.size() - 1, 0, -1):
 			var waypoint_id := str(path[path_index])
 			for choice_value in choices:
 				var choice := _dict(choice_value)
-				if str(choice.get("id", "")) == waypoint_id and bool(choice.get("enabled", false)) and int(choice.get("cost", 0)) <= run_state.bankroll:
+				var choice_id := str(choice.get("id", ""))
+				var choice_cost := maxi(0, int(choice.get("cost", 0)))
+				var keeps_reserve := delivery_active or run_state.bankroll - choice_cost >= _destination_minimum_bankroll(choice_id)
+				if choice_id == waypoint_id and bool(choice.get("enabled", false)) and choice_cost <= run_state.bankroll and keeps_reserve:
 					selected = choice
 					break
 			if not selected.is_empty():
 				break
 	if selected.is_empty():
 		return ""
+	if not delivery_active:
+		if not _apply_travel_choice(run_state, run, selected):
+			return ""
+		_record_visit(run, run_state)
+		_count_action(run, "travel")
+		return label
 	var selected_target_id := str(selected.get("id", ""))
 	var route := _dict(selected.get("route", {}))
 	var route_status := _dict(selected.get("status", {}))
@@ -914,13 +1146,13 @@ func _travel_to_node_boundary(run_state: RunState, run: Dictionary, target_node_
 	var route_risk := run_state.travel_route_risk(route, selected_target_id)
 	var travel_heat := run_state.begin_travel_suspicion_decay(route, selected_target_id)
 	generator.next_environment(run_state, selected_target_id, true)
+	if run_state.has_world_map() and run_state.current_world_node_id() != selected_target_id:
+		return ""
 	var travel_decay := run_state.finish_travel_suspicion_decay(travel_heat)
-	var arrival := run_state.delivery_resolve_travel_arrival(route, route_risk) if delivery_active else {}
+	var arrival := run_state.delivery_resolve_travel_arrival(route, route_risk)
 	var result := _travel_result(selected_target_id, previous_environment, run_state.current_environment, route, travel_decay, route_risk)
 	GameModule.apply_result(run_state, result)
-	if not delivery_active:
-		run_state.advance_environment_turns(1)
-	elif bool(arrival.get("handoff_ready", false)):
+	if bool(arrival.get("handoff_ready", false)):
 		run_state.delivery_complete_handoff(selected_target_id)
 	run["travel_count"] = int(run.get("travel_count", 0)) + 1
 	run["route_cost_total"] = int(run.get("route_cost_total", 0)) + maxi(0, int(selected.get("cost", route.get("cost", 0))))
@@ -965,6 +1197,46 @@ func _play_specific_game_boundary(run_state: RunState, run: Dictionary, game_id:
 	run["game_mix"] = mix
 	_count_action(run, "game")
 	return label
+
+
+# The inherited metrics helper reads challenge answers and target timing from
+# private surface payloads. Audit actors instead use a predeclared reaction
+# offset and answer choice derived only from public run identity and action
+# count; misses remain legitimate measured outcomes.
+func _prepared_metrics_ui_state(game: GameModule, run_state: RunState, game_id: String, action_id: String, stake: int, policy: String) -> Dictionary:
+	var ui_state := _ui_state_for_game(game_id, action_id, stake, policy)
+	var environment := run_state.current_environment
+	var policy_key := "%s:%s:%s:%d" % [run_state.seed_text, game_id, action_id, run_state.crew_action_index()]
+	var reaction_msec := 900 + posmod(_stable_hash(policy_key + ":reaction"), 3201)
+	match action_id:
+		"read_wheel_bias":
+			var wheel_start := game.surface_action_command("roulette_read_wheel", 0, false, ui_state, run_state, environment)
+			ui_state = _dict(wheel_start.get("ui_state", ui_state))
+			ui_state["surface_time_msec"] = int(ui_state.get("surface_time_msec", 0)) + reaction_msec
+			var wheel_lock := game.surface_action_command("roulette_read_wheel", 0, false, ui_state, run_state, environment)
+			return _dict(wheel_lock.get("ui_state", ui_state))
+		"read_baccarat_shoe":
+			var shoe_start := game.surface_action_command("baccarat_read_shoe", 0, false, ui_state, run_state, environment)
+			ui_state = _dict(shoe_start.get("ui_state", ui_state))
+			ui_state["surface_time_msec"] = int(ui_state.get("surface_time_msec", 0)) + reaction_msec
+			var answer_index := posmod(_stable_hash(policy_key + ":answer"), 3)
+			var shoe_answer := game.surface_action_command("baccarat_shoe_read_answer", answer_index, false, ui_state, run_state, environment)
+			return _dict(shoe_answer.get("ui_state", ui_state))
+		"palmed_swap":
+			var dice_roll := game.surface_action_command("bar_dice_roll", 0, false, ui_state, run_state, environment)
+			ui_state = _dict(dice_roll.get("ui_state", ui_state))
+			var shake_count := posmod(_stable_hash(policy_key + ":shakes"), 3)
+			for _shake_index in range(shake_count):
+				var dice_shake := game.surface_action_command("bar_dice_shake", 0, false, ui_state, run_state, environment)
+				if not bool(dice_shake.get("handled", false)):
+					break
+				ui_state = _dict(dice_shake.get("ui_state", ui_state))
+			var palm_start := game.surface_action_command("bar_dice_palm", 0, false, ui_state, run_state, environment)
+			ui_state = _dict(palm_start.get("ui_state", ui_state))
+			ui_state["surface_time_msec"] = int(ui_state.get("surface_time_msec", 0)) + reaction_msec
+			var palm_lock := game.surface_action_command("bar_dice_palm", 0, false, ui_state, run_state, environment)
+			return _dict(palm_lock.get("ui_state", ui_state))
+	return ui_state
 
 
 func _numbers_boundary(run_state: RunState, run: Dictionary) -> String:
@@ -1105,13 +1377,8 @@ func _pusher_boundary(run_state: RunState, run: Dictionary) -> String:
 	var state := _dict(run.get("style_state", {}))
 	var phase := str(state.get("pusher_phase", "seek_natural_machine"))
 	if phase == "seek_natural_machine":
-		var gas_node_id := _world_node_for_archetype(run_state, "gas_station_casino")
-		if run_state.current_world_node_id() != gas_node_id:
-			return _travel_to_node_boundary(run_state, run, gas_node_id, false, "coin_pusher_seek_travel")
 		if not _string_array(run_state.current_environment.get("game_ids", [])).has("coin_pusher"):
-			state["pusher_phase"] = "natural_machine_unavailable"
-			run["style_state"] = state
-			return ""
+			return _seek_public_casino_boundary(run_state, run, "coin_pusher_seek_travel")
 		game.enter(run_state, run_state.current_environment)
 		var surface := game.surface_state(run_state, run_state.current_environment, {})
 		state["pusher_phase"] = "grind"
@@ -1122,9 +1389,10 @@ func _pusher_boundary(run_state: RunState, run: Dictionary) -> String:
 		return _pusher_boundary(run_state, run)
 	# Keep one travel/debt dollar in reserve instead of intentionally triggering
 	# the global bankroll-zero terminal before a physical tray can be collected.
-	if phase == "natural_machine_unavailable" or run_state.bankroll <= 1:
+	if run_state.bankroll <= 1:
 		return ""
-	var rng := run_state.create_rng("balance06_pusher_drop")
+	# Use the same default run stream as the shipped Foundation action path.
+	var rng := run_state.create_rng()
 	var result := game.resolve_with_context("drop_quarter", 1, run_state, run_state.current_environment, rng, {})
 	if not bool(result.get("ok", false)):
 		return ""
@@ -1153,147 +1421,210 @@ func _pusher_boundary(run_state: RunState, run: Dictionary) -> String:
 	return "coin_pusher_drop"
 
 
+func _seek_public_casino_boundary(run_state: RunState, run: Dictionary, label: String) -> String:
+	var choices := _travel_choices(run_state)
+	var visited := _array(run.get("visited_archetypes", []))
+	var candidates: Array[Dictionary] = []
+	for choice_value in choices:
+		var choice := _dict(choice_value)
+		var target_id := str(choice.get("id", ""))
+		var cost := maxi(0, int(choice.get("cost", 0)))
+		if target_id.is_empty() or not bool(choice.get("enabled", false)) or str(choice.get("kind", "")) != "casino" \
+				or cost > run_state.bankroll or run_state.bankroll - cost < _destination_minimum_bankroll(target_id):
+			continue
+		candidates.append({"choice": choice, "unvisited": not visited.has(target_id), "target_id": target_id, "cost": cost})
+	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		if bool(a.get("unvisited", false)) != bool(b.get("unvisited", false)):
+			return bool(a.get("unvisited", false))
+		if int(a.get("cost", 0)) != int(b.get("cost", 0)):
+			return int(a.get("cost", 0)) < int(b.get("cost", 0))
+		return str(a.get("target_id", "")) < str(b.get("target_id", ""))
+	)
+	if candidates.is_empty() or not _apply_travel_choice(run_state, run, _dict(candidates[0].get("choice", {}))):
+		return ""
+	_record_visit(run, run_state)
+	_count_action(run, "travel")
+	return label
+
+
 func _heist_boundary(run_state: RunState, run: Dictionary) -> String:
 	var state := _dict(run.get("style_state", {}))
-	var phase := str(state.get("heist_phase", "rank"))
-	if phase == "rank":
-		var label := _crew_job_boundary(run_state, run, "crew_bishop", "inner_circle", false)
+	var plan_id := str(state.get("heist_plan_id", ""))
+	if plan_id.is_empty():
+		plan_id = CrewHeistModelScript.PLAN_IDS[posmod(_stable_hash(run_state.seed_text + ":heist_plan"), CrewHeistModelScript.PLAN_IDS.size())]
+		state["heist_plan_id"] = plan_id
+		run["style_state"] = state
+	var heist := run_state.crew_heist_snapshot()
+	if heist.is_empty():
+		var architect_id := "crew_bishop" if plan_id == CrewHeistModelScript.PLAN_COUNT else "crew_velvet"
+		var rank_label := _crew_job_boundary(run_state, run, architect_id, "inner_circle", false)
+		if not rank_label.is_empty():
+			return rank_label
+		if not _crew_at_least_rank(run_state, architect_id, "inner_circle"):
+			return ""
+		var planning_label := _travel_to_planning_table_boundary(run_state, run, "heist_planning_travel")
+		if not planning_label.is_empty():
+			return planning_label
+		var planning := run_state.crew_heist_planning_status()
+		var plan_live := false
+		for plan_value in _array(planning.get("plans", [])):
+			var plan := _dict(plan_value)
+			if str(plan.get("id", "")) == plan_id:
+				plan_live = bool(plan.get("live", false))
+				break
+		if not plan_live:
+			return ""
+		if not _resolve_public_event_choice(run_state, "crew_planning_table", "lock_%s" % plan_id):
+			failures.append("Public planning-table lock failed for %s in seed %s." % [plan_id, run_state.seed_text])
+			return ""
+		_count_action(run, "event")
+		return "heist_lock:%s" % plan_id
+	heist = run_state.crew_heist_snapshot()
+	plan_id = str(heist.get("plan_id", plan_id))
+	state = _dict(run.get("style_state", {}))
+	state["heist_plan_id"] = plan_id
+	run["style_state"] = state
+	match str(heist.get("status", "")):
+		CrewHeistModelScript.STATUS_SETUP:
+			return _heist_count_setup_boundary(run_state, run, heist) if plan_id == CrewHeistModelScript.PLAN_COUNT else _heist_whale_setup_boundary(run_state, run, heist)
+		CrewHeistModelScript.STATUS_PLAY:
+			return _heist_live_play_boundary(run_state, run, heist)
+		CrewHeistModelScript.STATUS_INTERVIEW:
+			var interview_choice := "interview_show_receipt" if _public_event_choice_enabled(run_state, "heist_live_table", "interview_show_receipt") else "interview_cut_short"
+			if _resolve_public_event_choice(run_state, "heist_live_table", interview_choice):
+				_count_action(run, "event")
+				return "heist_interview"
+		CrewHeistModelScript.STATUS_GETAWAY:
+			var getaway_label := _drive_active_delivery_boundary(run_state, run, "heist_getaway")
+			if run_state.is_terminal():
+				run["victory_action"] = int(run.get("actions", 0))
+			return getaway_label
+	return ""
+
+
+func _travel_to_planning_table_boundary(run_state: RunState, run: Dictionary, label: String) -> String:
+	if str(run_state.current_environment.get("archetype_id", "")) == "small_underground_casino":
+		return ""
+	return _travel_to_node_boundary(run_state, run, _world_node_for_archetype(run_state, "small_underground_casino"), false, label)
+
+
+func _heist_count_setup_boundary(run_state: RunState, run: Dictionary, heist: Dictionary) -> String:
+	var setup := _dict(heist.get("setup", {}))
+	var state := _dict(run.get("style_state", {}))
+	if not bool(setup.get("identity", false)):
+		if bool(state.get("identity_leave_required", false)) and str(run_state.current_environment.get("archetype_id", "")) == GRAND_CASINO_ID:
+			for reset_archetype in ["bar", "motel", "gas_station_casino"]:
+				var reset_label := _travel_to_node_boundary(run_state, run, _world_node_for_archetype(run_state, reset_archetype), false, "heist_identity_reset")
+				if not reset_label.is_empty():
+					state["identity_leave_required"] = false
+					run["style_state"] = state
+					return reset_label
+		var grand_node_id := _world_node_for_archetype(run_state, GRAND_CASINO_ID)
+		if str(run_state.current_environment.get("archetype_id", "")) != GRAND_CASINO_ID:
+			return _travel_to_node_boundary(run_state, run, grand_node_id, false, "heist_identity_travel")
+		var session := int(setup.get("identity_sessions", 0))
+		var bet := 8 + posmod(_stable_hash(run_state.seed_text + ":identity:" + str(session)), 23)
+		var label := _play_specific_game_boundary(run_state, run, "blackjack", "clean", bet, "heist_identity_session")
+		if not label.is_empty() and int(_dict(run_state.crew_heist_snapshot().get("setup", {})).get("identity_sessions", session)) > session:
+			state = _dict(run.get("style_state", {}))
+			state["identity_leave_required"] = true
+			run["style_state"] = state
+		return label
+	if run_state.delivery_has_active_run():
+		var step := "heist_schedule" if not bool(setup.get("schedule", false)) else "heist_swap_cart"
+		return _drive_active_delivery_boundary(run_state, run, step)
+	var planning_label := _travel_to_planning_table_boundary(run_state, run, "heist_planning_travel")
+	if not planning_label.is_empty():
+		return planning_label
+	for setup_choice in ["count_schedule", "count_cart"]:
+		if setup_choice == "count_schedule" and bool(setup.get("schedule", false)):
+			continue
+		if setup_choice == "count_cart" and bool(setup.get("swap_cart", false)):
+			continue
+		if _resolve_public_event_choice(run_state, "crew_planning_table", setup_choice):
+			_count_action(run, "event")
+			return "heist_%s_begin" % setup_choice
+		return ""
+	return _heist_begin_play_boundary(run_state, run, heist)
+
+
+func _heist_whale_setup_boundary(run_state: RunState, run: Dictionary, heist: Dictionary) -> String:
+	if CrewHeistModelScript.setup_complete(heist):
+		return _heist_begin_play_boundary(run_state, run, heist)
+	if _try_buy_helpful_item(run_state, run, "clean"):
+		_count_action(run, "item")
+		return "heist_whale_setup_item"
+	for game_id_value in _string_array(run_state.current_environment.get("game_ids", [])):
+		var game_id := str(game_id_value)
+		var label := _play_specific_game_boundary(run_state, run, game_id, "clean", 0, "heist_whale_setup_game:%s" % game_id)
 		if not label.is_empty():
 			return label
-		if not _crew_at_least_rank(run_state, "crew_bishop", "inner_circle"):
-			return ""
-		state = _dict(run.get("style_state", {}))
-		state["heist_phase"] = "lock"
-		run["style_state"] = state
-		return _heist_boundary(run_state, run)
-	if phase == "lock":
-		var hooks := _dict(run_state.current_environment.get("scenario_hook_flags", {}))
-		if not bool(hooks.get("audit_night", false)):
-			return ""
-		var locked := run_state.crew_heist_lock("the_count")
-		if not bool(locked.get("ok", false)):
-			failures.append("Heist rusher could not lock The Count for seed %s: %s" % [run_state.seed_text, str(locked.get("message", ""))])
-			return ""
-		state["heist_phase"] = "identity_travel"
-		state["identity_sessions_seen"] = 0
-		run["style_state"] = state
-		run_state.advance_environment_turns(1)
-		_count_action(run, "hook")
-		return "heist_lock"
-	if phase == "identity_travel":
-		var identity_grand_node_id := _world_node_for_archetype(run_state, GRAND_CASINO_ID)
-		if run_state.current_world_node_id() != identity_grand_node_id:
-			return _travel_to_node_boundary(run_state, run, identity_grand_node_id, false, "heist_identity_travel")
-		state["heist_phase"] = "identity"
-		run["style_state"] = state
-		return _heist_boundary(run_state, run)
-	if phase == "identity":
-		var heist_state := run_state.crew_heist_snapshot()
-		var setup := _dict(heist_state.get("setup", {}))
-		var session := int(setup.get("identity_sessions", 0))
-		var sessions_seen := int(state.get("identity_sessions_seen", 0))
-		if bool(setup.get("identity", false)) or session >= 3:
-			state["heist_phase"] = "schedule"
-			run["style_state"] = state
-			return _heist_boundary(run_state, run)
-		if session > sessions_seen:
-			state["identity_sessions_seen"] = session
-			state["heist_phase"] = "identity_reset"
-			run["style_state"] = state
-			return _heist_boundary(run_state, run)
-		var bet := 8 + posmod(_stable_hash(run_state.seed_text + ":identity:" + str(session)), 23)
-		var identity_label := _play_specific_game_boundary(run_state, run, "blackjack", "clean", bet, "heist_identity_session")
-		if identity_label.is_empty():
-			return ""
-		var post_setup := _dict(run_state.crew_heist_snapshot().get("setup", {}))
-		var post_session := int(post_setup.get("identity_sessions", session))
-		state = _dict(run.get("style_state", {}))
-		state["identity_sessions_seen"] = maxi(sessions_seen, post_session)
-		state["heist_phase"] = "schedule" if bool(post_setup.get("identity", false)) or post_session >= 3 else "identity_reset"
-		run["style_state"] = state
-		return identity_label
-	if phase == "identity_reset":
-		var reset_target := _world_node_for_archetype(run_state, "bar")
-		if reset_target.is_empty():
-			reset_target = _world_node_for_archetype(run_state, "motel")
-		var reset_label := _travel_to_node_boundary(run_state, run, reset_target, false, "heist_identity_reset")
-		if run_state.current_world_node_id() == reset_target:
-			state["heist_phase"] = "identity_travel"
-			run["style_state"] = state
-		return reset_label
-	if phase == "schedule":
-		var count_state := run_state.crew_heist_snapshot()
-		if bool(_dict(count_state.get("setup", {})).get("schedule", false)):
-			state["heist_phase"] = "swap_cart"
-			run["style_state"] = state
-			return _heist_boundary(run_state, run)
-		if run_state.delivery_has_active_run():
-			return _drive_active_delivery_boundary(run_state, run, "heist_schedule")
-		var schedule := run_state.crew_heist_begin_count_schedule()
-		if not bool(schedule.get("ok", false)):
-			failures.append("Heist rusher could not begin Count schedule for seed %s: %s" % [run_state.seed_text, str(schedule.get("message", ""))])
-			return ""
-		run_state.advance_environment_turns(1)
-		_count_action(run, "hook")
-		return "heist_schedule_begin"
-	if phase == "swap_cart":
-		var count_state := run_state.crew_heist_snapshot()
-		if bool(_dict(count_state.get("setup", {})).get("swap_cart", false)):
-			state["heist_phase"] = "begin_play"
-			run["style_state"] = state
-			return _heist_boundary(run_state, run)
-		if run_state.delivery_has_active_run():
-			return _drive_active_delivery_boundary(run_state, run, "heist_swap_cart")
-		var cart := run_state.crew_heist_begin_count_swap_cart()
-		if not bool(cart.get("ok", false)):
-			failures.append("Heist rusher could not begin Count cart for seed %s: %s" % [run_state.seed_text, str(cart.get("message", ""))])
-			return ""
-		run_state.advance_environment_turns(1)
-		_count_action(run, "hook")
-		return "heist_swap_cart_begin"
-	if phase == "begin_play":
-		var begin_play_grand_node_id := _world_node_for_archetype(run_state, GRAND_CASINO_ID)
-		if run_state.current_world_node_id() != begin_play_grand_node_id:
-			return _travel_to_node_boundary(run_state, run, begin_play_grand_node_id, false, "heist_live_table_travel")
-		var begun := run_state.crew_heist_begin_play()
-		if not bool(begun.get("ok", false)):
-			failures.append("Heist rusher could not begin The Count for seed %s: %s" % [run_state.seed_text, str(begun.get("message", ""))])
-			return ""
-		state["heist_phase"] = "play"
-		run["style_state"] = state
-		run_state.advance_environment_turns(1)
-		_count_action(run, "hook")
-		return "heist_begin_play"
-	if phase == "play":
-		var play_grand_node_id := _world_node_for_archetype(run_state, GRAND_CASINO_ID)
-		if run_state.current_world_node_id() != play_grand_node_id:
-			return _travel_to_node_boundary(run_state, run, play_grand_node_id, false, "heist_live_table_travel")
-		var count_state := run_state.crew_heist_snapshot()
-		var round_index := int(_dict(count_state.get("play", {})).get("round", 0))
-		if round_index >= 3:
-			state["heist_phase"] = "getaway"
-			run["style_state"] = state
-			return _heist_boundary(run_state, run)
-		var decision_ids := ["go", "distraction", "exit"]
-		var decisions := ["hold", "sit", "dock"]
-		if round_index < decision_ids.size():
-			run_state.crew_heist_decide(str(decision_ids[round_index]), str(decisions[round_index]))
-		var bet := 8 + posmod(_stable_hash(run_state.seed_text + ":heist_bet:" + str(round_index)), 23)
-		return _play_specific_game_boundary(run_state, run, "blackjack", "clean", bet, "heist_live_round")
-	if phase == "getaway":
-		if not run_state.delivery_has_active_run():
-			var getaway := run_state.crew_heist_begin_getaway()
-			if not bool(getaway.get("ok", false)):
-				failures.append("Heist rusher getaway failed for seed %s: %s" % [run_state.seed_text, str(getaway.get("message", ""))])
-				return ""
-			run_state.advance_environment_turns(1)
-			_count_action(run, "hook")
-			return "heist_getaway_begin"
-		var getaway_label := _drive_active_delivery_boundary(run_state, run, "heist_getaway")
-		if run_state.is_terminal():
-			run["victory_action"] = int(run.get("actions", 0))
-		return getaway_label
-	return ""
+	return _seek_public_casino_boundary(run_state, run, "heist_whale_setup_travel")
+
+
+func _heist_begin_play_boundary(run_state: RunState, run: Dictionary, _heist: Dictionary) -> String:
+	var planning_label := _travel_to_planning_table_boundary(run_state, run, "heist_planning_travel")
+	if not planning_label.is_empty():
+		return planning_label
+	if not _resolve_public_event_choice(run_state, "crew_planning_table", "begin_play"):
+		return ""
+	_count_action(run, "event")
+	return "heist_begin_play"
+
+
+func _heist_live_play_boundary(run_state: RunState, run: Dictionary, heist: Dictionary) -> String:
+	var plan_id := str(heist.get("plan_id", ""))
+	var grand_node_id := _world_node_for_archetype(run_state, GRAND_CASINO_ID)
+	if not run_state.is_grand_casino_environment():
+		return _travel_to_node_boundary(run_state, run, grand_node_id, false, "heist_live_table_travel")
+	if plan_id == CrewHeistModelScript.PLAN_WHALE and str(run_state.current_environment.get("archetype_id", "")) != RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID:
+		if generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID):
+			_count_action(run, "travel")
+			_record_visit(run, run_state)
+			return "heist_high_limit_room"
+		return ""
+	var play := _dict(heist.get("play", {}))
+	var round_index := int(play.get("round", 0))
+	for choice_value in run_state.crew_heist_live_table_choices():
+		var choice := _dict(choice_value)
+		var choice_id := str(choice.get("id", ""))
+		if choice_id.begins_with("go_") or choice_id.begins_with("distraction_") or choice_id.begins_with("exit_"):
+			if _resolve_public_event_choice(run_state, "heist_live_table", choice_id):
+				_count_action(run, "event")
+				return "heist_decision:%s" % choice_id
+	for terminal_choice in ["begin_interview", "begin_getaway"]:
+		if _public_event_choice_enabled(run_state, "heist_live_table", terminal_choice) and _resolve_public_event_choice(run_state, "heist_live_table", terminal_choice):
+			_count_action(run, "event")
+			return "heist_%s" % terminal_choice
+	var game_id := "blackjack"
+	if plan_id == CrewHeistModelScript.PLAN_WHALE:
+		var sequence := _string_array(_dict(CrewHeistModelScript.plan(plan_id).get("play", {})).get("game_sequence", []))
+		if round_index < sequence.size():
+			game_id = str(sequence[round_index])
+	var bet := 8 + posmod(_stable_hash(run_state.seed_text + ":heist_bet:" + str(round_index)), 23)
+	return _play_specific_game_boundary(run_state, run, game_id, "clean", bet, "heist_live_round:%s" % game_id)
+
+
+func _public_event_choice_enabled(run_state: RunState, event_id: String, choice_id: String) -> bool:
+	if not _current_event_ids(run_state).has(event_id):
+		return false
+	var event := EventModuleScript.new()
+	event.setup(library.event(event_id), library)
+	if not event.can_trigger(run_state, run_state.current_environment):
+		return false
+	for choice_value in event.choices(run_state, run_state.current_environment):
+		var choice := _dict(choice_value)
+		if str(choice.get("id", "")) == choice_id:
+			return not bool(choice.get("disabled", false))
+	return false
+
+
+func _resolve_public_event_choice(run_state: RunState, event_id: String, choice_id: String) -> bool:
+	if not _public_event_choice_enabled(run_state, event_id, choice_id):
+		return false
+	var event := EventModuleScript.new()
+	event.setup(library.event(event_id), library)
+	return bool(event.resolve(run_state, run_state.current_environment, choice_id).get("ok", false))
 
 
 func _record_economy_boundary(run: Dictionary, run_state: RunState, label: String, before_bankroll: int, before_heat: int, before_debt: int) -> void:
@@ -1330,6 +1661,10 @@ func _record_economy_boundary(run: Dictionary, run_state: RunState, label: Strin
 func _record_thresholds(run: Dictionary, run_state: RunState) -> void:
 	var action := int(run.get("actions", 0))
 	var debt := _total_debt_balance(run_state)
+	if debt > 0:
+		run["debt_was_open"] = true
+	elif bool(run.get("debt_was_open", false)) and int(run.get("first_debt_recovery_action", -1)) < 0:
+		run["first_debt_recovery_action"] = action
 	var debt_actions := _dict(run.get("first_debt_action", {}))
 	for threshold in DEBT_THRESHOLDS:
 		var key := str(threshold)
@@ -1380,20 +1715,21 @@ func _audit_aggregate(runs: Array, max_actions: int) -> Dictionary:
 			"game_actions": _distribution(selected, "game_actions"),
 			"travel_count": _distribution(selected, "travel_count"),
 			"victory_action": _distribution_nonnegative(selected, "victory_action"),
+			"first_debt_recovery_action": _distribution_nonnegative(selected, "first_debt_recovery_action"),
 			"victory_action_by_route": _grouped_nonnegative_distribution(selected, "victory_route", "victory_action"),
-			"victory_rate": _rate(_won_count(selected), selected.size()),
-			"conditioned_probe_rate": _rate(_bool_count(selected, "conditioned_probe"), selected.size()),
-			"pusher_machine_reached_rate": _rate(pusher_reached.size(), selected.size()),
+			"victory_rate": _rate_stat(_won_count(selected), selected.size()),
+			"conditioned_probe_rate": _rate_stat(_bool_count(selected, "conditioned_probe"), selected.size()),
+			"pusher_machine_reached_rate": _rate_stat(pusher_reached.size(), selected.size()),
 			"pusher_variation_counts": _value_counts(pusher_reached, "pusher_variation"),
 			"pusher_reached_final_bankroll": _distribution(pusher_reached, "final_bankroll"),
 			"pusher_reached_final_bankroll_by_variation": _grouped_nonnegative_distribution(pusher_reached, "pusher_variation", "final_bankroll"),
 			"pusher_reached_actions": _distribution(pusher_reached, "actions"),
-			"terminal_observation_rate": _rate(observed_terminals.size(), selected.size()),
-			"censored_action_cap_rate": _rate(_bool_count(selected, "censored"), selected.size()),
-			"pressure_terminal_rate_observed_terminals": _rate(_bool_count(observed_terminals, "pressure_terminal"), observed_terminals.size()),
-			"choice_terminal_rate_observed_terminals": _rate(_bool_count(observed_terminals, "choice_terminal"), observed_terminals.size()),
-			"pressure_terminal_share_all_runs": _rate(_bool_count(selected, "pressure_terminal"), selected.size()),
-			"choice_terminal_share_all_runs": _rate(_bool_count(selected, "choice_terminal"), selected.size()),
+			"terminal_observation_rate": _rate_stat(observed_terminals.size(), selected.size()),
+			"censored_action_cap_rate": _rate_stat(_bool_count(selected, "censored"), selected.size()),
+			"pressure_terminal_rate_observed_terminals": _rate_stat(_bool_count(observed_terminals, "pressure_terminal"), observed_terminals.size()),
+			"choice_terminal_rate_observed_terminals": _rate_stat(_bool_count(observed_terminals, "choice_terminal"), observed_terminals.size()),
+			"pressure_terminal_share_all_runs": _rate_stat(_bool_count(selected, "pressure_terminal"), selected.size()),
+			"choice_terminal_share_all_runs": _rate_stat(_bool_count(selected, "choice_terminal"), selected.size()),
 			"failure_causes_observed_terminals": _value_counts(observed_terminals, "failure_reason"),
 			"victory_routes": _value_counts(selected, "victory_route"),
 			"debt_threshold_actions": _threshold_distributions(selected),
@@ -1472,6 +1808,25 @@ func _distribution_values(values: Array) -> Dictionary:
 		"sample_standard_deviation": standard_deviation,
 		"mean_ci95_lower": mean - margin_95,
 		"mean_ci95_upper": mean + margin_95,
+	}
+
+
+func _rate_stat(numerator: int, denominator: int) -> Dictionary:
+	if denominator <= 0:
+		return {"n": 0, "numerator": numerator, "rate": null, "ci95": null, "method": "wilson_score"}
+	var n := float(denominator)
+	var p := float(numerator) / n
+	var z := 1.959963984540054
+	var z2 := z * z
+	var denominator_adjusted := 1.0 + z2 / n
+	var center := (p + z2 / (2.0 * n)) / denominator_adjusted
+	var radius := z * sqrt((p * (1.0 - p) + z2 / (4.0 * n)) / n) / denominator_adjusted
+	return {
+		"n": denominator,
+		"numerator": numerator,
+		"rate": p,
+		"ci95": {"lower": maxf(0.0, center - radius), "upper": minf(1.0, center + radius)},
+		"method": "wilson_score",
 	}
 
 
