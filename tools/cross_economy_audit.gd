@@ -17,6 +17,11 @@ const DEBT_THRESHOLDS := [1, 25, 45, 90]
 const SPECIALIST_ACTION_BUDGET := 64
 const NUMBERS_SPECIALIST_ACTION_BUDGET := 112
 const PUSHER_DROP_BUDGET := 64
+const OPPORTUNITY_SYSTEMS := [
+	"games", "jobs", "crew", "plays", "numbers", "deliveries", "heists",
+	"items", "services", "events", "travel", "lenders_debt", "heat",
+	"scenarios", "pusher_machines",
+]
 const PLAYSTYLES := [
 	{"id": "control_crew_ignoring", "policy": "clean", "label": "Crew-ignoring 0.5-compatible control"},
 	{"id": "pure_gambler", "policy": "clean", "label": "Pure gambler"},
@@ -34,6 +39,7 @@ var _active_style := ""
 func _run() -> void:
 	var options := _audit_options()
 	var seeds_per_style := maxi(1, int(options.get("seeds_per_style", DEFAULT_SEEDS_PER_STYLE)))
+	var seed_start := maxi(1, int(options.get("seed_start", 1)))
 	var max_actions := maxi(8, int(options.get("max_actions", DEFAULT_MAX_ACTIONS)))
 	var seed_prefix := str(options.get("seed_prefix", AUDIT_DEFAULT_SEED_PREFIX)).strip_edges()
 	var style_filter := str(options.get("playstyle", "")).strip_edges()
@@ -48,14 +54,17 @@ func _run() -> void:
 		warnings.append("Content validation warning: %s" % str(warning_value))
 	generator = RunGeneratorScript.new(library)
 	_build_game_modules()
+	_check_public_observer_isolation()
+	_check_hostile_policy_input_rejection()
 
 	var runs: Array = []
 	for style_value in PLAYSTYLES:
 		var style: Dictionary = style_value
 		if not style_filter.is_empty() and style_filter != str(style.get("id", "")):
 			continue
-		for seed_index in range(seeds_per_style):
-			var seed := "%s-%s-%03d" % [seed_prefix, str(style.get("id", "")), seed_index + 1]
+		for seed_offset in range(seeds_per_style):
+			var seed_index := seed_start + seed_offset
+			var seed := "%s-%s-%03d" % [seed_prefix, str(style.get("id", "")), seed_index]
 			runs.append(_simulate_audit_run(style, seed, max_actions))
 
 	var report := {
@@ -65,6 +74,7 @@ func _run() -> void:
 		"clock_model": "RunState action boundaries only; no wall-clock reads",
 		"seed_prefix": seed_prefix,
 		"seeds_per_playstyle": seeds_per_style,
+		"seed_start": seed_start,
 		"playstyle_filter": style_filter,
 		"max_actions": max_actions,
 		"run_count": runs.size(),
@@ -74,14 +84,14 @@ func _run() -> void:
 			"crew_jobs": "one-boundary deterministic contact selection; production acceptance, delivery/stake play, route cost/risk, resolution, trust, and cash",
 			"numbers": "production fix bribe delivery, camouflage allocation, slip settlement/payday, and ordinary slip purchase paths",
 			"coin_pusher": "paid travel to a naturally generated gas-station room; grind only when the seed offers a pusher; never reset; real drops, fixed-tick patches, and post-drop COLLECT",
-			"heist": "route-conditioned by injected audit_night only; production lock, blackjack identity/play, schedule/cart delivery, route cost/risk, getaway, and terminal payout paths",
+			"heist": "production-visible audit-night discovery only; production lock, blackjack identity/play, schedule/cart delivery, route cost/risk, getaway, and terminal payout paths",
 		},
 		"measurement_interpretation": {
 			"censoring": "Action-cap survivors remain active RunState observations and are excluded from observed-terminal pressure/choice denominators.",
 			"specialization_budget": "Crew specializes through action 64, Numbers through action 112 after one real runner route, and pusher for 64 paid drops. They then return to the ordinary endgame driver so the global cap is a censoring guard rather than their planned ending.",
 			"pusher": "Unconditional natural availability plus reached-machine conditional distributions.",
-			"specialists": "Runs dynamically record conditioning when the policy selects a desired Crew contact who was not naturally present; such times are route-conditioned, not natural opportunity rates.",
-			"heist": "Completion distributions are conditional on audit_night and any recorded contact selection; they must not be read as natural opportunity frequency.",
+			"specialists": "Policies act only on naturally visible Crew contacts and record inaccessible, visible-not-selected, selected, accepted, rejected, and settled opportunity denominators.",
+			"heist": "The policy never injects audit_night; unavailable routes remain explicit unavailable/censored observations.",
 			"legacy_control": "Current quantitative control plus separate two-seed 0.5 structural compatibility evidence; no historical distribution inference.",
 		},
 		"source_register": _source_register(),
@@ -104,6 +114,8 @@ func _audit_options() -> Dictionary:
 		var arg := str(arg_value)
 		if arg.begins_with("--seeds-per-style="):
 			options["seeds_per_style"] = int(arg.trim_prefix("--seeds-per-style="))
+		elif arg.begins_with("--seed-start="):
+			options["seed_start"] = int(arg.trim_prefix("--seed-start="))
 		elif arg.begins_with("--max-actions="):
 			options["max_actions"] = int(arg.trim_prefix("--max-actions="))
 		elif arg.begins_with("--seed-prefix="):
@@ -148,6 +160,183 @@ func _json_value(path: String) -> Variant:
 
 func _json_array(path: String) -> Array:
 	return _array(_json_value(path))
+
+
+func _check_public_observer_isolation() -> void:
+	var left: RunState = RunStateScript.new()
+	var right: RunState = RunStateScript.new()
+	var challenge := RunStateScript.standard_challenge("BALANCE06-PUBLIC-OBSERVER")
+	left.start_new("BALANCE06-PUBLIC-OBSERVER", challenge)
+	right.start_new("BALANCE06-PUBLIC-OBSERVER", challenge)
+	generator.next_environment(left)
+	generator.next_environment(right)
+	var left_heist := _dict(left.crew_heist_state).duplicate(true)
+	var right_heist := _dict(right.crew_heist_state).duplicate(true)
+	left_heist["x"] = {"future_outcome": "left", "private_roll": 1}
+	right_heist["x"] = {"future_outcome": "right", "private_roll": 999}
+	left.crew_heist_state = left_heist
+	right.crew_heist_state = right_heist
+	if JSON.stringify(_policy_observation(left)) != JSON.stringify(_policy_observation(right)):
+		failures.append("Public policy observation changed when only private heist authority changed.")
+
+
+func _check_hostile_policy_input_rejection() -> void:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("BALANCE06-HOSTILE-POLICY", RunStateScript.standard_challenge("BALANCE06-HOSTILE-POLICY"))
+	generator.next_environment(run_state)
+	var baseline := _policy_observation(run_state)
+	var hostile := baseline.duplicate(true)
+	for key in ["seed", "rng_state", "future_numbers_draw", "turn_traitor", "heist_outcome", "caller_reward", "caller_capability", "terminal_status"]:
+		hostile[key] = "forged"
+	if JSON.stringify(_sanitize_policy_observation(hostile)) != JSON.stringify(baseline):
+		failures.append("Audit policy sanitizer accepted caller-authored authority or hidden state.")
+
+
+func _sanitize_policy_observation(value: Dictionary) -> Dictionary:
+	var clean := {}
+	for key in ["world_node_id", "archetype_id", "bankroll", "heat", "terminal", "game_ids", "crew_presence", "delivery_active", "numbers", "numbers_desk", "heist", "scenario_hook_ids"]:
+		if value.has(key):
+			clean[key] = value[key]
+	return clean
+
+
+func _policy_observation(run_state: RunState) -> Dictionary:
+	var public_crew: Array = []
+	for value in _array(run_state.current_environment.get("crew_presence", [])):
+		var source := _dict(value)
+		var member := {}
+		for key in ["member_id", "presentation_id", "pose", "public_state"]:
+			if source.has(key):
+				member[key] = source[key]
+		if not member.is_empty():
+			public_crew.append(member)
+	var hook_ids := _dict(run_state.current_environment.get("scenario_hook_flags", {})).keys()
+	hook_ids.sort()
+	return {
+		"world_node_id": run_state.current_world_node_id(),
+		"archetype_id": str(run_state.current_environment.get("archetype_id", "")),
+		"bankroll": run_state.bankroll,
+		"heat": run_state.suspicion_level(),
+		"terminal": run_state.is_terminal(),
+		"game_ids": _string_array(run_state.current_environment.get("game_ids", [])),
+		"crew_presence": public_crew,
+		"delivery_active": run_state.delivery_has_active_run(),
+		"numbers": run_state.numbers_status(),
+		"numbers_desk": run_state.numbers_desk_status(),
+		"heist": run_state.crew_heist_snapshot(),
+		"scenario_hook_ids": hook_ids,
+	}
+
+
+func _empty_opportunity_ledger() -> Dictionary:
+	var ledger := {}
+	for system_id in OPPORTUNITY_SYSTEMS:
+		ledger[system_id] = {"visible": 0, "inaccessible": 0, "selected": 0, "accepted": 0, "rejected": 0, "settled": 0, "visible_not_selected": 0}
+	return ledger
+
+
+func _public_opportunity_visibility(run_state: RunState) -> Dictionary:
+	var observation := _policy_observation(run_state)
+	var game_ids := _string_array(observation.get("game_ids", []))
+	var crew_visible := not _array(observation.get("crew_presence", [])).is_empty()
+	var numbers_visible := false
+	for value in _array(_dict(observation.get("numbers", {})).get("venue_status", [])):
+		if bool(_dict(value).get("open", false)):
+			numbers_visible = true
+			break
+	var desk := _dict(observation.get("numbers_desk", {}))
+	numbers_visible = numbers_visible or bool(desk.get("runner_available", false)) or str(desk.get("fix_stage", "locked")) != "locked"
+	var environment := run_state.current_environment
+	var archetype_id := str(observation.get("archetype_id", ""))
+	var heist := _dict(observation.get("heist", {}))
+	var heist_visible := _string_array(observation.get("scenario_hook_ids", [])).has("audit_night") or str(heist.get("status", "idle")) not in ["", "idle", "available"]
+	return {
+		"games": not game_ids.is_empty(),
+		"jobs": crew_visible,
+		"crew": crew_visible,
+		"plays": crew_visible,
+		"numbers": numbers_visible,
+		"deliveries": bool(observation.get("delivery_active", false)),
+		"heists": heist_visible,
+		"items": not _array(environment.get("item_ids", environment.get("item_offers", []))).is_empty(),
+		"services": not _array(environment.get("service_ids", environment.get("services", []))).is_empty(),
+		"events": environment.has("event_id") or not _array(environment.get("events", [])).is_empty(),
+		"travel": not run_state.is_terminal(),
+		"lenders_debt": _total_debt_balance(run_state) > 0 or archetype_id in ["motel", "back_alley", "small_underground_casino"],
+		"heat": true,
+		"scenarios": environment.has("scenario_state") or not _dict(environment.get("scenario_hook_flags", {})).is_empty(),
+		"pusher_machines": game_ids.has("coin_pusher"),
+	}
+
+
+func _record_public_opportunities(run_state: RunState, run: Dictionary) -> void:
+	var ledger := _dict(run.get("opportunities", {}))
+	var visibility := _public_opportunity_visibility(run_state)
+	for system_id in OPPORTUNITY_SYSTEMS:
+		var row := _dict(ledger.get(system_id, {}))
+		var key := "visible" if bool(visibility.get(system_id, false)) else "inaccessible"
+		row[key] = int(row.get(key, 0)) + 1
+		ledger[system_id] = row
+	run["opportunities"] = ledger
+
+
+func _selected_opportunity_systems(label: String) -> Array:
+	var systems: Array = []
+	if label.begins_with("game:") or label.begins_with("heist_identity_session") or label.begins_with("heist_live_round"):
+		systems.append("games")
+	if label.begins_with("coin_pusher"):
+		systems.append_array(["games", "pusher_machines"])
+	if label.begins_with("crew_job"):
+		systems.append_array(["jobs", "crew"])
+	if label.begins_with("crew_recruitment"):
+		systems.append("crew")
+	if label.begins_with("numbers") or label == "mixed_numbers_slip":
+		systems.append("numbers")
+	if label.contains("delivery") or label.contains("schedule") or label.contains("swap_cart") or label.contains("getaway"):
+		systems.append("deliveries")
+	if label.begins_with("heist"):
+		systems.append("heists")
+	if label.begins_with("item:"):
+		systems.append("items")
+	if label.begins_with("service:"):
+		systems.append("services")
+	if label == "event" or label == "progression" or label == "endgame":
+		systems.append_array(["events", "scenarios"])
+	if label.begins_with("travel:") or label.contains("_travel"):
+		systems.append("travel")
+	if label == "lender":
+		systems.append("lenders_debt")
+	return systems
+
+
+func _record_selected_opportunity(run: Dictionary, label: String) -> void:
+	var ledger := _dict(run.get("opportunities", {}))
+	for system_id in _selected_opportunity_systems(label):
+		var row := _dict(ledger.get(system_id, {}))
+		row["selected"] = int(row.get("selected", 0)) + 1
+		row["accepted"] = int(row.get("accepted", 0)) + 1
+		if not label.ends_with("_begin") and not label.ends_with("_wait") and not label.ends_with("_accept"):
+			row["settled"] = int(row.get("settled", 0)) + 1
+		ledger[system_id] = row
+	run["opportunities"] = ledger
+
+
+func _visible_opportunity_ids(run_state: RunState) -> Array:
+	var ids: Array = []
+	var visibility := _public_opportunity_visibility(run_state)
+	for system_id in OPPORTUNITY_SYSTEMS:
+		if bool(visibility.get(system_id, false)):
+			ids.append(system_id)
+	return ids
+
+
+func _finalize_opportunity_ledger(run: Dictionary) -> void:
+	var ledger := _dict(run.get("opportunities", {}))
+	for system_id in OPPORTUNITY_SYSTEMS:
+		var row := _dict(ledger.get(system_id, {}))
+		row["visible_not_selected"] = maxi(0, int(row.get("visible", 0)) - int(row.get("selected", 0)))
+		ledger[system_id] = row
+	run["opportunities"] = ledger
 
 
 func _simulate_audit_run(style: Dictionary, seed: String, max_actions: int) -> Dictionary:
@@ -227,6 +416,8 @@ func _simulate_audit_run(style: Dictionary, seed: String, max_actions: int) -> D
 		"peak_heat": run_state.suspicion_level(),
 		"peak_debt": 0,
 		"style_state": {},
+		"opportunities": _empty_opportunity_ledger(),
+		"remaining_reachable_routes": [],
 	}
 	_prepare_style_fixture(run_state, run)
 	_record_curve(run, run_state, "start")
@@ -235,6 +426,7 @@ func _simulate_audit_run(style: Dictionary, seed: String, max_actions: int) -> D
 	for _action_index in range(max_actions):
 		if run_state.is_terminal():
 			break
+		_record_public_opportunities(run_state, run)
 		var before_bankroll := run_state.bankroll
 		var before_heat := run_state.suspicion_level()
 		var before_debt := _total_debt_balance(run_state)
@@ -245,31 +437,64 @@ func _simulate_audit_run(style: Dictionary, seed: String, max_actions: int) -> D
 			run_state.advance_environment_turns(1)
 			label = "idle"
 			_count_action(run, "idle")
+		_record_selected_opportunity(run, label)
 		_record_economy_boundary(run, run_state, label, before_bankroll, before_heat, before_debt)
 		_record_curve(run, run_state, label)
 		_record_thresholds(run, run_state)
 
 	if not run_state.is_terminal():
 		run["stopped_reason"] = "censored_action_cap"
+		run["remaining_reachable_routes"] = _visible_opportunity_ids(run_state)
 	else:
 		run["stopped_reason"] = "terminal"
+	_finalize_opportunity_ledger(run)
 	_finalize_run(run, run_state)
+	run["inventory_value"] = _inventory_resale_value(run_state)
+	run["liquid_cash"] = run_state.bankroll
+	run["net_position"] = run_state.bankroll + int(run.get("inventory_value", 0)) - int(run.get("debt_balance", 0))
+	var source_total := _sum_int_map(_dict(run.get("source_totals", {})))
+	var sink_total := _sum_int_map(_dict(run.get("sink_totals", {})))
+	run["bankroll_reconciliation_delta"] = int(run.get("start_bankroll", 0)) + source_total - sink_total - run_state.bankroll
 	run["censored"] = not run_state.is_terminal()
 	run["pressure_terminal"] = _is_pressure_terminal(run)
 	run["choice_terminal"] = bool(run.get("won", false)) or str(run.get("failure_reason", "")) == RunState.FAILURE_ABANDONED
 	return run
 
 
+func _record_curve(run: Dictionary, run_state: RunState, label: String) -> void:
+	super._record_curve(run, run_state, label)
+	var curve := _array(run.get("curve", []))
+	if curve.is_empty():
+		return
+	var row := _dict(curve[-1])
+	var inventory_value := _inventory_resale_value(run_state)
+	row["liquid_cash"] = run_state.bankroll
+	row["inventory_value"] = inventory_value
+	row["net_position"] = run_state.bankroll + inventory_value - _total_debt_balance(run_state)
+	curve[-1] = row
+	run["curve"] = curve
+
+
+func _inventory_resale_value(run_state: RunState) -> int:
+	var total := 0
+	for item_value in run_state.inventory:
+		total += maxi(0, int(library.item(str(item_value)).get("sale_price", 0)))
+	return total
+
+
+func _sum_int_map(value: Dictionary) -> int:
+	var total := 0
+	for amount in value.values():
+		total += int(amount)
+	return total
+
+
 func _prepare_style_fixture(run_state: RunState, run: Dictionary) -> void:
 	match _active_style:
 		"coin_pusher_grinder":
 			_prepare_pusher(run_state, run)
-		"heist_rusher":
-			_mark_conditioning(run, "The Count route is conditioned on audit_night; rank, costs, play, and terminal resolution remain production-owned.")
-			var hooks := _dict(run_state.current_environment.get("scenario_hook_flags", {}))
-			hooks["audit_night"] = true
-			run_state.current_environment["scenario_hook_flags"] = hooks
-			run_state.store_current_world_node_environment()
+		_:
+			pass
 
 
 func _try_style_action(run_state: RunState, run: Dictionary, policy: String) -> String:
@@ -388,18 +613,13 @@ func _crew_job_boundary(run_state: RunState, run: Dictionary, member_id: String,
 	var definition := _best_job_for_member(member_id, run_state.crew_rank(member_id), run_state.current_world_node_id())
 	if definition.is_empty():
 		return ""
-	# Contact/presence is the one human-search adapter in this route. Acceptance,
-	# delivery, stakes, game settlement, rewards, trust, and route costs all flow
-	# through the production RunState paths after this one-boundary contact.
-	var original_presence := _array(run_state.current_environment.get("crew_presence", []))
-	var contact_presence := original_presence.duplicate(true)
+	# A policy may act only on a naturally visible contact. It never rewrites
+	# presence, rank, route, capability, or any other production authority.
+	var contact_presence := _array(run_state.current_environment.get("crew_presence", []))
 	var naturally_present := contact_presence.any(func(value: Variant) -> bool: return typeof(value) == TYPE_DICTIONARY and str((value as Dictionary).get("member_id", "")) == member_id)
 	if not naturally_present:
-		_mark_conditioning(run, "Desired-member contact availability is selected at one action boundary; production acceptance and consequences follow.")
-		contact_presence.append({"member_id": member_id})
-	run_state.current_environment["crew_presence"] = contact_presence
+		return ""
 	var accepted := run_state.crew_job_accept_definition(str(definition.get("id", "")))
-	run_state.current_environment["crew_presence"] = original_presence
 	var job_id := str(accepted.get("job_id", ""))
 	if not bool(accepted.get("ok", false)) or job_id.is_empty():
 		return ""
@@ -788,9 +1008,8 @@ func _heist_boundary(run_state: RunState, run: Dictionary) -> String:
 		return _heist_boundary(run_state, run)
 	if phase == "lock":
 		var hooks := _dict(run_state.current_environment.get("scenario_hook_flags", {}))
-		hooks["audit_night"] = true
-		run_state.current_environment["scenario_hook_flags"] = hooks
-		run_state.store_current_world_node_environment()
+		if not bool(hooks.get("audit_night", false)):
+			return ""
 		var locked := run_state.crew_heist_lock("the_count")
 		if not bool(locked.get("ok", false)):
 			failures.append("Heist rusher could not lock The Count for seed %s: %s" % [run_state.seed_text, str(locked.get("message", ""))])
@@ -809,7 +1028,7 @@ func _heist_boundary(run_state: RunState, run: Dictionary) -> String:
 		run["style_state"] = state
 		return _heist_boundary(run_state, run)
 	if phase == "identity":
-		var heist_state := _dict(run_state.crew_heist_state)
+		var heist_state := run_state.crew_heist_snapshot()
 		var setup := _dict(heist_state.get("setup", {}))
 		var session := int(setup.get("identity_sessions", 0))
 		var sessions_seen := int(state.get("identity_sessions_seen", 0))
@@ -826,7 +1045,7 @@ func _heist_boundary(run_state: RunState, run: Dictionary) -> String:
 		var identity_label := _play_specific_game_boundary(run_state, run, "blackjack", "clean", bet, "heist_identity_session")
 		if identity_label.is_empty():
 			return ""
-		var post_setup := _dict(_dict(run_state.crew_heist_state).get("setup", {}))
+		var post_setup := _dict(run_state.crew_heist_snapshot().get("setup", {}))
 		var post_session := int(post_setup.get("identity_sessions", session))
 		state = _dict(run.get("style_state", {}))
 		state["identity_sessions_seen"] = maxi(sessions_seen, post_session)
@@ -843,7 +1062,7 @@ func _heist_boundary(run_state: RunState, run: Dictionary) -> String:
 			run["style_state"] = state
 		return reset_label
 	if phase == "schedule":
-		var count_state := _dict(run_state.crew_heist_state)
+		var count_state := run_state.crew_heist_snapshot()
 		if bool(_dict(count_state.get("setup", {})).get("schedule", false)):
 			state["heist_phase"] = "swap_cart"
 			run["style_state"] = state
@@ -858,7 +1077,7 @@ func _heist_boundary(run_state: RunState, run: Dictionary) -> String:
 		_count_action(run, "hook")
 		return "heist_schedule_begin"
 	if phase == "swap_cart":
-		var count_state := _dict(run_state.crew_heist_state)
+		var count_state := run_state.crew_heist_snapshot()
 		if bool(_dict(count_state.get("setup", {})).get("swap_cart", false)):
 			state["heist_phase"] = "begin_play"
 			run["style_state"] = state
@@ -889,7 +1108,7 @@ func _heist_boundary(run_state: RunState, run: Dictionary) -> String:
 		var play_grand_node_id := _world_node_for_archetype(run_state, GRAND_CASINO_ID)
 		if run_state.current_world_node_id() != play_grand_node_id:
 			return _travel_to_node_boundary(run_state, run, play_grand_node_id, false, "heist_live_table_travel")
-		var count_state := _dict(run_state.crew_heist_state)
+		var count_state := run_state.crew_heist_snapshot()
 		var round_index := int(_dict(count_state.get("play", {})).get("round", 0))
 		if round_index >= 3:
 			state["heist_phase"] = "getaway"
@@ -992,6 +1211,10 @@ func _audit_aggregate(runs: Array, max_actions: int) -> Dictionary:
 			"final_heat": _distribution(selected, "final_heat"),
 			"peak_heat": _distribution(selected, "peak_heat"),
 			"final_debt": _distribution(selected, "debt_balance"),
+			"inventory_value": _distribution(selected, "inventory_value"),
+			"liquid_cash": _distribution(selected, "liquid_cash"),
+			"net_position": _distribution(selected, "net_position"),
+			"bankroll_reconciliation_delta": _distribution(selected, "bankroll_reconciliation_delta"),
 			"peak_debt": _distribution(selected, "peak_debt"),
 			"route_cost_total": _distribution(selected, "route_cost_total"),
 			"game_actions": _distribution(selected, "game_actions"),
@@ -1019,6 +1242,7 @@ func _audit_aggregate(runs: Array, max_actions: int) -> Dictionary:
 			"sink_totals": _map_value_distributions(selected, "sink_totals"),
 			"game_mix": _map_value_distributions(selected, "game_mix"),
 			"game_action_share": _map_share_distributions(selected, "game_mix", "game_actions"),
+			"opportunity_denominators": _opportunity_aggregate(selected),
 			"bankroll_curve": _curve_distribution(selected, max_actions),
 		})
 	return {"playstyles": rows}
@@ -1073,6 +1297,8 @@ func _distribution_values(values: Array) -> Dictionary:
 	var squared := 0.0
 	for value in values:
 		squared += pow(float(value) - mean, 2.0)
+	var standard_deviation := sqrt(squared / float(maxi(1, values.size() - 1)))
+	var margin_95 := 1.96 * standard_deviation / sqrt(float(values.size()))
 	return {
 		"n": values.size(),
 		"min": float(values[0]),
@@ -1083,8 +1309,24 @@ func _distribution_values(values: Array) -> Dictionary:
 		"p95": _percentile(values, 0.95),
 		"max": float(values[-1]),
 		"mean": mean,
-		"sample_standard_deviation": sqrt(squared / float(maxi(1, values.size() - 1))),
+		"sample_standard_deviation": standard_deviation,
+		"mean_ci95_lower": mean - margin_95,
+		"mean_ci95_upper": mean + margin_95,
 	}
+
+
+func _opportunity_aggregate(runs: Array) -> Dictionary:
+	var result := _empty_opportunity_ledger()
+	for run_value in runs:
+		var run := _dict(run_value)
+		var ledger := _dict(run.get("opportunities", {}))
+		for system_id in OPPORTUNITY_SYSTEMS:
+			var total := _dict(result.get(system_id, {}))
+			var row := _dict(ledger.get(system_id, {}))
+			for key in ["visible", "inaccessible", "selected", "accepted", "rejected", "settled", "visible_not_selected"]:
+				total[key] = int(total.get(key, 0)) + int(row.get(key, 0))
+			result[system_id] = total
+	return result
 
 
 func _percentile(sorted_values: Array, fraction: float) -> float:
