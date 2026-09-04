@@ -10540,6 +10540,11 @@ func _add_context_object_actions(card: VBoxContainer, object_data: Dictionary) -
 			_add_context_scenario_actions(card, object_data)
 		CONTEXT_MODE_SCENARIO_SEQUENCE:
 			_add_context_scenario_sequence_actions(card, object_data)
+		"scenario_scene_object", "scenario_actor", "character":
+			if _copy_array(object_data.get("scenario_sequence_actions", [])).is_empty():
+				card.add_child(_muted_label("Read-only room detail", 13))
+			else:
+				_add_context_scenario_sequence_actions(card, object_data)
 	if not _copy_array(object_data.get("scenario_augmented_inline_actions", [])).is_empty():
 		_add_context_scenario_actions(card, {"inline_actions": object_data.get("scenario_augmented_inline_actions", [])})
 
@@ -12614,6 +12619,13 @@ func _activate_interactable_object_with_lifecycle_snapshot(object_id: String, ca
 			var actions := _copy_array(object_data.get("scenario_sequence_actions", []))
 			if actions.is_empty() or typeof(actions[0]) != TYPE_DICTIONARY: return false
 			return _activate_scenario_sequence_action(object_data, actions[0] as Dictionary)
+		"scenario_scene_object", "scenario_actor", "character":
+			var actions := _copy_array(object_data.get("scenario_sequence_actions", []))
+			if not actions.is_empty() and typeof(actions[0]) == TYPE_DICTIONARY:
+				return _activate_scenario_sequence_action(object_data, actions[0] as Dictionary)
+			_show_message(str(object_data.get("short_description", "This room detail is here to be read.")))
+			_refresh()
+			return true
 	_show_message("Inspect this first.")
 	_refresh()
 	return false
@@ -12730,10 +12742,12 @@ func _execute_scenario_sequence_action(object_data: Dictionary, action: Dictiona
 
 
 func _finish_scenario_sequence_action(fallback_feedback: String) -> void:
-	_consume_scenario_event_requests()
+	var consequence_feedback := _consume_scenario_event_requests()
 	var feedback := _consume_scenario_transitions()
 	if feedback.is_empty():
-		feedback = fallback_feedback
+		feedback = consequence_feedback if not consequence_feedback.is_empty() else fallback_feedback
+	elif not consequence_feedback.is_empty():
+		feedback = "%s %s" % [consequence_feedback, feedback]
 	if not feedback.is_empty():
 		_show_message(feedback)
 	_autosave_foundation_run("Scenario progress saved.")
@@ -12851,20 +12865,36 @@ func _consume_scenario_transitions() -> String:
 	return " ".join(messages)
 
 
-func _consume_scenario_event_requests() -> void:
+func _consume_scenario_event_requests() -> String:
 	if run_state == null \
 		or not bool(run_state.current_environment.get("scenario_semantic_ready", false)) \
 		or bool(run_state.current_environment.get("scenario_restore_pending_trusted_rebuild", false)) \
 		or not run_state.scenario_sequence_present():
-		return
+		return ""
 	var drained := run_state.scenario_drain_event_requests()
 	if not bool(drained.get("ok", false)):
-		return
+		return ""
+	var messages: Array[String] = []
 	for request_value in _copy_array(drained.get("requests", [])):
 		var request := _copy_dict(request_value)
+		var kind := str(request.get("kind", "event"))
+		var message := str(request.get("message", "")).strip_edges()
+		if kind == "item":
+			var item_id := str(request.get("item_id", "")).strip_edges()
+			if library != null and not library.item(item_id).is_empty():
+				run_state.add_item(item_id)
+				if not message.is_empty(): messages.append(message)
+			continue
+		if kind == "cash":
+			var amount := clampi(int(request.get("amount", 0)), 0, 100)
+			if amount > 0:
+				run_state.change_bankroll(amount)
+				if not message.is_empty(): messages.append(message)
+			continue
 		var event_id := str(request.get("event_id", "")).strip_edges()
 		if not event_id.is_empty():
 			_activate_event_object(event_id)
+	return " ".join(messages)
 func _complete_delivery_handoff(node_id: String) -> bool:
 	if run_state == null:
 		return false
