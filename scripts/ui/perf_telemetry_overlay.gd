@@ -69,6 +69,16 @@ const ACTIVE_PHASE_CHANNELS := {
 	"baccarat": "baccarat_deal",
 	"roulette": "roulette_spin",
 }
+const ALLOCATION_COPY_SOURCE_IDS := [
+	"foundation_snapshot",
+	"environment_runtime",
+	"surface_automation",
+	"surface_realtime",
+	"layout",
+	"autosave_flush",
+	"coin_pusher_native_step",
+	"producer_fixture",
+]
 # CPU-throttled shipped Web frames can leave a substantial live-session
 # accumulator for the production chunked-exit path to drain. This bound affects
 # setup synchronization only; locked measurement windows remain unchanged.
@@ -146,6 +156,11 @@ var foundation_surface_realtime_last_usec := 0
 var foundation_surface_realtime_ui_last_usec := 0
 var foundation_surface_realtime_module_last_usec := 0
 var foundation_surface_realtime_augment_last_usec := 0
+var explicit_allocation_counts := PackedInt64Array()
+var explicit_shallow_copy_counts := PackedInt64Array()
+var explicit_deep_copy_counts := PackedInt64Array()
+var explicit_allocation_copy_bytes := PackedInt64Array()
+var explicit_allocation_audited_sources := PackedByteArray()
 
 
 static func runtime_enabled() -> bool:
@@ -260,6 +275,33 @@ func record_foundation_subsystem_usec(subsystem: String, elapsed_usec: int) -> v
 			foundation_surface_realtime_augment_last_usec += value
 
 
+# Opt-in probes call this only when the telemetry overlay exists. Normal play
+# never constructs this node, so explicit allocation/copy accounting has zero
+# default-game frame cost. `source` must name the instrumented operation rather
+# than inferring language allocations from memory deltas.
+func record_allocation_copy(kind: String, source: String, count: int = 1, bytes: int = 0) -> void:
+	var normalized_kind := kind.strip_edges().to_lower()
+	if normalized_kind not in ["allocation", "shallow_copy", "deep_copy"]:
+		return
+	var source_index := ALLOCATION_COPY_SOURCE_IDS.find(source.strip_edges())
+	if source_index < 0 or count <= 0 or bytes < 0:
+		return
+	explicit_allocation_audited_sources[source_index] = 1
+	if normalized_kind == "allocation":
+		explicit_allocation_counts[source_index] += count
+	elif normalized_kind == "shallow_copy":
+		explicit_shallow_copy_counts[source_index] += count
+	else:
+		explicit_deep_copy_counts[source_index] += count
+	explicit_allocation_copy_bytes[source_index] += bytes
+
+
+func mark_allocation_root_audited(source: String) -> void:
+	var source_index := ALLOCATION_COPY_SOURCE_IDS.find(source.strip_edges())
+	if source_index >= 0:
+		explicit_allocation_audited_sources[source_index] = 1
+
+
 func _process(delta: float) -> void:
 	if not telemetry_enabled:
 		return
@@ -312,6 +354,7 @@ func dump_report() -> Dictionary:
 			"source_commit": str(runtime_options.get("bth_perf_source_commit", "")),
 			"export_sha256": str(runtime_options.get("bth_perf_export_sha256", "")),
 		},
+		"evidence_profile": str(runtime_options.get("bth_perf_evidence_profile", OS.get_environment("BTH_PERF_EVIDENCE_PROFILE"))),
 	}
 	_write_report_file(report)
 	_emit_console(REPORT_PREFIX, report)
@@ -1478,6 +1521,7 @@ func _begin_scenario(name: String, tags: Dictionary = {}) -> void:
 	current_start_memory_bytes = _current_memory_bytes()
 	current_last_memory_bytes = current_start_memory_bytes
 	current_start_liveness = _liveness_counter_snapshot()
+	_reset_allocation_copy_counters()
 	frame_ms_samples = []
 	process_ms_samples = []
 	physics_ms_samples = []
@@ -1588,11 +1632,56 @@ func _end_scenario() -> void:
 			"object_count_negative_delta_total": _sum_int(object_count_negative_delta_samples),
 			"node_count_delta": _int_stats(node_count_delta_samples),
 		},
+		"allocation_copy_counters": _allocation_copy_snapshot(),
 	}
 	scenario_records.append(record)
 	_emit_console("BTH_PERF_SCENARIO ", {"phase": "end", "name": current_scenario, "ticks_msec": end_msec, "frame_count": frame_ms_samples.size()})
 	scenario_active = false
 	current_scenario = ""
+
+
+func _allocation_copy_snapshot() -> Dictionary:
+	var totals := {"allocations": 0, "shallow_copies": 0, "deep_copies": 0, "bytes": 0}
+	var sources: Array = []
+	var audited_call_roots: Array = []
+	for source_index in range(ALLOCATION_COPY_SOURCE_IDS.size()):
+		var row := {
+			"source": str(ALLOCATION_COPY_SOURCE_IDS[source_index]),
+			"audited": explicit_allocation_audited_sources[source_index] != 0,
+			"allocations": int(explicit_allocation_counts[source_index]),
+			"shallow_copies": int(explicit_shallow_copy_counts[source_index]),
+			"deep_copies": int(explicit_deep_copy_counts[source_index]),
+			"bytes": int(explicit_allocation_copy_bytes[source_index]),
+		}
+		totals["allocations"] = int(totals.get("allocations", 0)) + int(row.allocations)
+		totals["shallow_copies"] = int(totals.get("shallow_copies", 0)) + int(row.shallow_copies)
+		totals["deep_copies"] = int(totals.get("deep_copies", 0)) + int(row.deep_copies)
+		totals["bytes"] = int(totals.get("bytes", 0)) + int(row.bytes)
+		sources.append(row)
+		if explicit_allocation_audited_sources[source_index] != 0:
+			audited_call_roots.append(str(ALLOCATION_COPY_SOURCE_IDS[source_index]))
+	totals["source"] = "explicit_instrumented_probe"
+	totals["sources"] = sources
+	totals["instrumented_source_count"] = ALLOCATION_COPY_SOURCE_IDS.size()
+	totals["scope"] = "steady_state_frame"
+	totals["evidence_kind"] = "explicit_counter"
+	totals["audited_call_roots"] = audited_call_roots
+	totals["coverage_complete"] = not audited_call_roots.is_empty()
+	return totals
+
+
+func _reset_allocation_copy_counters() -> void:
+	var size := ALLOCATION_COPY_SOURCE_IDS.size()
+	explicit_allocation_counts.resize(size)
+	explicit_shallow_copy_counts.resize(size)
+	explicit_deep_copy_counts.resize(size)
+	explicit_allocation_copy_bytes.resize(size)
+	explicit_allocation_audited_sources.resize(size)
+	explicit_allocation_counts.fill(0)
+	explicit_shallow_copy_counts.fill(0)
+	explicit_deep_copy_counts.fill(0)
+	explicit_allocation_copy_bytes.fill(0)
+	explicit_allocation_audited_sources.fill(0)
 
 
 func _sample_monitors() -> void:

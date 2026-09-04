@@ -1,0 +1,30 @@
+{
+  "schema": "beat_the_house.perf06_low_end_profile/v1",
+  "profile_id": "replace_with_owner_host_id",
+  "method": "physical",
+  "computer_name": "REPLACE_WITH_WINDOWS_COMPUTER_NAME",
+  "resolution": "1280x720",
+  "renderer": "compatibility",
+  "power_plan": "replace_with_recorded_power_plan",
+  "web_cpu_throttle_rate": 4,
+  "web_browser": "chrome",
+  "web_device_scale_factor": 1.0,
+  "web_launch_flags": [
+    "--disable-background-timer-throttling",
+    "--disable-renderer-backgrounding",
+    "--disable-backgrounding-occluded-windows"
+  ],
+  "hardware_fingerprint_sha256": "replace_with_sha256_of_launcher_actual_hardware_json",
+  "hardware": {
+    "os_build": "replace",
+    "cpu": "replace",
+    "physical_cores": 0,
+    "logical_cores": 0,
+    "ram_bytes": 0,
+    "gpu": "replace",
+    "gpu_driver": "replace",
+    "storage": "replace",
+    "display_refresh_hz": 0,
+    "thermal_state": "replace"
+  }
+}

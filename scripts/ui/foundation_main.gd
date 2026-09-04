@@ -628,6 +628,7 @@ func _process(delta: float) -> void:
 		var layout_started_usec := Time.get_ticks_usec()
 		_apply_run_screen_layout()
 		perf_telemetry_overlay.record_foundation_subsystem_usec("layout", Time.get_ticks_usec() - layout_started_usec)
+		perf_telemetry_overlay.mark_allocation_root_audited("layout")
 	var clock_started_usec := Time.get_ticks_usec()
 	_advance_run_game_clock(delta)
 	perf_telemetry_overlay.record_foundation_subsystem_usec("environment_runtime", Time.get_ticks_usec() - clock_started_usec)
@@ -636,10 +637,13 @@ func _process(delta: float) -> void:
 		var automation_started_usec := snapshot_started_usec
 		_advance_game_surface_automation()
 		perf_telemetry_overlay.record_foundation_subsystem_usec("surface_automation", Time.get_ticks_usec() - automation_started_usec)
+		perf_telemetry_overlay.mark_allocation_root_audited("surface_automation")
 		var realtime_started_usec := Time.get_ticks_usec()
 		_advance_game_surface_realtime_state()
 		perf_telemetry_overlay.record_foundation_subsystem_usec("surface_realtime", Time.get_ticks_usec() - realtime_started_usec)
+		perf_telemetry_overlay.mark_allocation_root_audited("surface_realtime")
 		perf_telemetry_overlay.record_foundation_subsystem_usec("snapshot_builds", Time.get_ticks_usec() - snapshot_started_usec)
+		perf_telemetry_overlay.mark_allocation_root_audited("foundation_snapshot")
 	if presented_bankroll_hold_active:
 		var presented_started_usec := Time.get_ticks_usec()
 		_advance_presented_bankroll()
@@ -648,10 +652,12 @@ func _process(delta: float) -> void:
 		var environment_started_usec := Time.get_ticks_usec()
 		_advance_environment_game_runtime()
 		perf_telemetry_overlay.record_foundation_subsystem_usec("environment_runtime", Time.get_ticks_usec() - environment_started_usec)
+		perf_telemetry_overlay.mark_allocation_root_audited("environment_runtime")
 	if pending_autosave or (save_service != null and save_service.async_save_in_flight()):
 		var autosave_started_usec := Time.get_ticks_usec()
 		_flush_pending_autosave_if_ready()
 		perf_telemetry_overlay.record_foundation_subsystem_usec("autosave_flush", Time.get_ticks_usec() - autosave_started_usec)
+		perf_telemetry_overlay.mark_allocation_root_audited("autosave_flush")
 
 
 func _advance_run_game_clock(delta: float) -> void:
@@ -2210,6 +2216,7 @@ func _advance_game_surface_realtime_state() -> void:
 		var native_metrics: Dictionary = patch.get("coin_pusher_last_step_metrics", {})
 		if int(native_metrics.get("fixed_ticks", 0)) > 0:
 			perf_telemetry_overlay.record_foundation_subsystem_usec("coin_pusher_native_step", maxi(0, int(native_metrics.get("elapsed_usec", 0))))
+			perf_telemetry_overlay.mark_allocation_root_audited("coin_pusher_native_step")
 	game_surface_canvas.apply_surface_state_patch(patch)
 
 

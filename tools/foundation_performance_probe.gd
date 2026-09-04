@@ -2040,6 +2040,7 @@ func _percentile(sorted_samples: Array, percentile: float) -> float:
 func _write_report() -> void:
 	var report := {
 		"tool": "foundation_performance_probe",
+		"evidence_profile": OS.get_environment("BTH_PERF_EVIDENCE_PROFILE"),
 		"run_count": run_count,
 		"frames_per_surface": frames_per_surface,
 		"seed_prefix": seed_prefix,

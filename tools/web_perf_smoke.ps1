@@ -12,6 +12,8 @@ param(
     [string]$CacheMode = "cold",
     [ValidateSet("l02", "grand_casino", "coin_pusher", "secure_entropy")]
     [string]$Plan = "l02",
+    [ValidatePattern("^[A-Za-z0-9_.:-]*$")]
+    [string]$EvidenceProfile = "web",
     [switch]$CoinPusherStageDiagnostic,
     [switch]$SkipExport,
     [switch]$Headed
@@ -180,7 +182,7 @@ try {
     Wait-ForWebServer -Url "http://127.0.0.1:$Port/" -TimeoutSec 30
     Assert-OwnedWebServerListener -Launch $server
     $headless = if ($Headed) { "false" } else { "true" }
-    $url = "http://127.0.0.1:$Port/?bth_perf=1&bth_perf_plan=$Plan&bth_perf_auto_quit=1&bth_perf_frames=$Frames&bth_perf_active_frames=$ActiveFrames&bth_perf_memory_seconds=$MemorySeconds&bth_perf_source_commit=$sourceCommit&bth_perf_export_sha256=$exportSha256"
+    $url = "http://127.0.0.1:$Port/?bth_perf=1&bth_perf_plan=$Plan&bth_perf_auto_quit=1&bth_perf_frames=$Frames&bth_perf_active_frames=$ActiveFrames&bth_perf_memory_seconds=$MemorySeconds&bth_perf_source_commit=$sourceCommit&bth_perf_export_sha256=$exportSha256&bth_perf_evidence_profile=$EvidenceProfile"
     if ($Plan -eq "coin_pusher" -and $CoinPusherStageDiagnostic) {
         $url += "&bth_perf_coin_pusher_stage_diagnostic=1"
     }
@@ -513,7 +515,9 @@ $summary = [ordered]@{
     web_export_identity = $webExportIdentity
     browser_version = [string]$reportEnvelope.browser_version
     user_agent = [string]$reportEnvelope.user_agent
+    launch_options = $reportEnvelope.launch_options
     cold_cache = [bool]$reportEnvelope.cold_cache
+    evidence_profile = $EvidenceProfile
     cache_mode = $CacheMode
     host_name = [string]$env:COMPUTERNAME
     viewport = $reportEnvelope.viewport

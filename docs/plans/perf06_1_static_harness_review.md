@@ -221,6 +221,41 @@ that stalled animation cannot pass as a cheap frame. They are not a waiver,
 optimization baseline, or final performance verdict. The misses remain for the
 exact integrated, quiesced-host pass to reproduce and attribute.
 
+## Final matrix consumer and low-end launcher
+
+The opt-in closeout harness now freezes every required shipped game and system
+phase in `tools/perf06_required_matrix.json`. The catalog is checked against
+`data/games/games.json`, so a newly shipped game cannot silently escape the
+native, Web, and low-end matrix. `tools/perf06_matrix_contract.ps1` consumes,
+rather than recreates, the integration lane's all-archetype composition and
+terminal-soak manifests and shards. It requires exact candidate identity,
+artifact hashes, zero uncovered composition rows, every ordering, Crew-ignore,
+victory/failure/profile coverage, and equal same-seed native-repeat/Web traces.
+
+Every required phase row fails closed unless it includes launch-bound hardware,
+build, browser/throttle/device-scale metadata; frame/draw/liveness/retained-state
+figures; and complete allocation/copy evidence for the phase's declared call
+roots. The telemetry overlay's counters are pre-registered and exist only when
+the explicit perf overlay is constructed. The measured code path marks a root
+only after that root actually executes. Empty or partially marked roots are
+ineligible, as frozen by `perf06_allocation_contract_test.ps1`; a label claiming
+zero allocations is not evidence. The companion source audit hashes exact root
+functions and rejects direct deep copies, JSON codecs, delays, and callable
+creation. Its `direct_root_source` scope is deliberately narrower than a
+transitive call graph and cannot be presented as one.
+
+`tools/perf06_low_end_matrix.ps1` runs the same native/Web/integration producers
+on a declared physical low-end host. It rejects a dirty or wrong candidate,
+pre-existing evidence directories, a caller-selected label without a matching
+profile hash, hardware fingerprint, actual Windows power plan, Chrome identity,
+captured CPU throttle, 1280x720 viewport, device scale, and launch flags. It
+passes exact candidate/profile/output arguments to the integration producers;
+their simulation remains owned by `integ06_1`.
+
+These files prepare the missing execution seams. They contain no measurement,
+budget change, terminal simulation, or product optimization, and do not change
+the `perf06_1` verdict before the exact final candidate populates every row.
+
 ## Final execution order
 
 1. Receive the exact integrated candidate and composition manifest; rebase this
