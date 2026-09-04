@@ -415,7 +415,7 @@ func _run_l02_plan() -> void:
 	l02_driver_started = true
 	await _wait_frames(8)
 	_end_scenario()
-	await _measure_scenario("start_menu_idle", {"surface": "menu", "mode": "idle", "perf06_surface_id": "meta_home", "perf06_phase_id": "animated_idle"}, scenario_frames)
+	await _measure_meta_home()
 	await _measure_corner_store()
 	for game_id_value in REQUIRED_GAME_IDS:
 		var game_id := str(game_id_value)
@@ -427,6 +427,22 @@ func _run_l02_plan() -> void:
 	l02_driver_complete = true
 	dump_report()
 	await _quit_after_report_flush()
+
+
+func _measure_meta_home() -> void:
+	var opened_started_usec := Time.get_ticks_usec()
+	app.call("open_meta_home")
+	mark_event("meta_home_open", {
+		"duration_ms": _duration_ms_since(opened_started_usec),
+		"environment_id": str(app.call("current_environment_view_snapshot").get("id", "")),
+	})
+	await _wait_frames(8)
+	await _measure_scenario("meta_home_animated_idle", {
+		"surface": "meta_home",
+		"mode": "animated_idle",
+		"perf06_surface_id": "meta_home",
+		"perf06_phase_id": "animated_idle",
+	}, scenario_frames)
 
 
 func _run_secure_entropy_plan() -> void:
