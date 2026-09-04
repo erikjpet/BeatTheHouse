@@ -18,6 +18,10 @@ if ($LASTEXITCODE -ne 0 -or -not $head) { throw "Could not resolve candidate com
 if (@(& git -C $root status --short --untracked-files=no).Count -ne 0) { throw "Native runtime measurement requires a clean tracked candidate." }
 $profileFile = if ([IO.Path]::IsPathRooted($ProfilePath)) { [IO.Path]::GetFullPath($ProfilePath) } else { [IO.Path]::GetFullPath((Join-Path $root $ProfilePath)) }
 if (-not (Test-Path -LiteralPath $profileFile -PathType Leaf)) { throw "Evidence profile is missing: $profileFile" }
+$profile = Get-Content -LiteralPath $profileFile -Raw | ConvertFrom-Json
+foreach ($field in @("schema", "profile_id", "method", "computer_name", "resolution", "renderer", "power_plan", "hardware_fingerprint_sha256", "hardware")) {
+    if (-not ($profile.PSObject.Properties.Name -contains $field)) { throw "Evidence profile is missing '$field'." }
+}
 $profileHash = (Get-FileHash -LiteralPath $profileFile -Algorithm SHA256).Hash.ToLowerInvariant()
 $out = if ([IO.Path]::IsPathRooted($OutDir)) { [IO.Path]::GetFullPath($OutDir) } else { [IO.Path]::GetFullPath((Join-Path $root $OutDir)) }
 $tmpRoot = [IO.Path]::GetFullPath((Join-Path $root ".tmp"))
@@ -69,7 +73,6 @@ $report = Get-Content -LiteralPath $rawReport -Raw | ConvertFrom-Json
 if ([string]$report.build_identity.source_commit -cne $head -or [string]$report.build_identity.export_sha256 -cne $buildHash) { throw "Native report identity does not match the exported candidate." }
 if ([string]$report.platform -cne "windows" -or [string]$report.plan -cne $Plan) { throw "Native report platform/plan identity is invalid." }
 
-$profile = Get-Content -LiteralPath $profileFile -Raw | ConvertFrom-Json
 $summary = [ordered]@{
     schema = "beat_the_house.perf06_native_runtime/v1"
     passed = $true
