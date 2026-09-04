@@ -4,6 +4,7 @@ param(
     [Parameter(Mandatory = $true)][string]$EvidenceProfile,
     [Parameter(Mandatory = $true)][string]$OutDir,
     [string]$GodotPath = "",
+    [string]$ToolRoot = "",
     [int]$ShardCount = 3,
     [int]$Cpu = 4,
     [int]$TimeoutMs = 900000,
@@ -121,7 +122,7 @@ $transientSource = Join-Path $project "native\coin_pusher"
 $transientAddon = Join-Path $project "addons\coin_pusher_native"
 Copy-Item -LiteralPath (Join-Path $transientSource "coin_pusher_native.gdextension.template") -Destination (Join-Path $transientAddon "coin_pusher_native.gdextension") -Force
 
-$toolRoot = Join-Path $canonicalRepoRoot ".tools\native_solver"
+$toolRoot = if ($ToolRoot) { [IO.Path]::GetFullPath($ToolRoot) } else { Join-Path $canonicalRepoRoot ".tools\native_solver" }
 $python = Join-Path $toolRoot "python\python.exe"
 $wheel = Join-Path $toolRoot "downloads\scons-4.10.1-py3-none-any.whl"
 $godotCpp = Join-Path $toolRoot "godot-cpp"
