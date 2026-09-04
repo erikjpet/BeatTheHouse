@@ -703,7 +703,7 @@ static func _validate_provenance_payload(collection: String, source_field: Strin
 			if source_field != "semantic_zones" or not _closed_dictionary(payload, ["bounds"], []) or _semantic_bounds(payload.get("bounds")).is_empty():
 				errors.append("semantic inventory provenance record %s has an open or invalid zone payload." % label)
 		"anchors":
-			if source_field != "semantic_anchors" or not _closed_dictionary(payload, ["position"], ["zone_id"]) or _semantic_position(payload.get("position")).is_empty() or payload.has("zone_id") and (typeof(payload.get("zone_id")) != TYPE_STRING or str(payload.get("zone_id", "")).is_empty() or str(payload.get("zone_id", "")) != str(payload.get("zone_id", "")).strip_edges()):
+			if source_field != "semantic_anchors" or not _closed_dictionary(payload, ["position"], ["zone_id", "exclusive"]) or _semantic_position(payload.get("position")).is_empty() or payload.has("zone_id") and (typeof(payload.get("zone_id")) != TYPE_STRING or str(payload.get("zone_id", "")).is_empty() or str(payload.get("zone_id", "")) != str(payload.get("zone_id", "")).strip_edges()) or payload.has("exclusive") and typeof(payload.get("exclusive")) != TYPE_BOOL:
 				errors.append("semantic inventory provenance record %s has an open or invalid anchor payload." % label)
 		"actors":
 			if source_field not in ["semantic_actors", "event_ids"] or not _closed_semantic_actor(payload):
@@ -890,8 +890,8 @@ static func _validated_semantic_content(source: Dictionary, library: Variant, so
 			if not _canonical_semantic_id(anchor_id):
 				errors.append("%s semantic anchor id %s is not canonical." % [source_label, anchor_id])
 				continue
-			if not _closed_dictionary(anchor, ["position"], ["zone_id"]):
-				errors.append("%s semantic anchor %s must be closed with position and optional zone_id." % [source_label, anchor_id])
+			if not _closed_dictionary(anchor, ["position"], ["zone_id", "exclusive"]):
+				errors.append("%s semantic anchor %s must be closed with position and optional zone_id/exclusive." % [source_label, anchor_id])
 				continue
 			var position := _semantic_position(anchor.get("position"))
 			if position.is_empty():
@@ -901,8 +901,12 @@ static func _validated_semantic_content(source: Dictionary, library: Variant, so
 			if not zone_id.is_empty() and (zone_id != zone_id.strip_edges() or not zones.has(zone_id)):
 				errors.append("%s semantic anchor %s references unavailable zone %s." % [source_label, anchor_id, zone_id])
 				continue
+			if anchor.has("exclusive") and typeof(anchor.get("exclusive")) != TYPE_BOOL:
+				errors.append("%s semantic anchor %s exclusive must be a boolean." % [source_label, anchor_id])
+				continue
 			var normalized := {"position": position}
 			if not zone_id.is_empty(): normalized["zone_id"] = zone_id
+			if bool(anchor.get("exclusive", false)): normalized["exclusive"] = true
 			anchors[anchor_id] = normalized
 	var actors_value: Variant = source.get("semantic_actors", [])
 	if typeof(actors_value) != TYPE_ARRAY:

@@ -11,6 +11,16 @@ const MAX_VISUALS := 128
 const MIN_SCENE_SIZE := Vector2(16.0, 16.0)
 const DEFAULT_SCENE_SIZE := Vector2(48.0, 48.0)
 const DEFAULT_ACTOR_SIZE := Vector2(72.0, 80.0)
+const AUTHORING_PROBE_SCENARIOS := [
+	"gas_station_trucker_convoy", "gas_station_road_crew_payday",
+	"kitty_cat_lounge_amateur_night", "kitty_cat_lounge_buyout",
+	"kitty_cat_lounge_slow_night", "kitty_cat_lounge_bachelorette_storm",
+	"delta_queen_wedding_charter", "delta_queen_whale_aboard",
+	"delta_queen_fog_delay", "delta_queen_engine_trouble",
+	"grand_casino_audit_night",
+]
+static var _authoring_probe_rows: Dictionary = {}
+static var _authoring_probe_solutions: Dictionary = {}
 const COLLISION_RATIO := 0.65
 const VISUAL_LAYOUT_GAP := 8.0
 const LABEL_MAX_LENGTH := 64
@@ -387,6 +397,10 @@ static func resolve(base_records: Array, projection: Dictionary, environment: Di
 			"label_rect": Rect2(),
 			"small_label_rect": Rect2(),
 		})
+	var reservation_result := _exclusive_visual_reservations(environment, semantic_state, base_by_identity, occupied)
+	var exclusive_reservations := _array(reservation_result.get("records", []))
+	errors.append_array(_array(reservation_result.get("errors", [])))
+	occupied.append_array(exclusive_reservations)
 	var authority := _base_layout_authority(base_records, errors)
 	var collision_adjustments := 0
 	var placement_candidate_checks := 0
@@ -501,6 +515,7 @@ static func resolve(base_records: Array, projection: Dictionary, environment: Di
 		"valid": true,
 		"visual_count": mini(visual_count, MAX_VISUALS),
 		"collision_adjustment_count": collision_adjustments,
+		"exclusive_reservation_count": exclusive_reservations.size(),
 		"placement_candidate_checks": placement_candidate_checks,
 		"max_placement_search": max_placement_search,
 		"placement_candidate_limit": MAX_PLACEMENT_SEARCH_CHECKS,
@@ -558,6 +573,319 @@ static func failure_authority(base_records: Array = []) -> Dictionary:
 	)
 
 
+static func authoring_probe_rows() -> Array:
+	var keys := _authoring_probe_rows.keys()
+	keys.sort()
+	var rows: Array = []
+	for key_value in keys:
+		rows.append(_dict(_authoring_probe_rows.get(key_value, {})))
+	return rows
+
+
+static func _exclusive_visual_reservations(environment: Dictionary, semantic_state: Dictionary, base_by_identity: Dictionary, occupied: Array) -> Dictionary:
+	var anchors := _dict(environment.get("semantic_anchors", {}))
+	var records: Array = []
+	var errors: Array = []
+	var claims: Dictionary = {}
+	var interactions := _dict(semantic_state.get("interactions", {}))
+	var probe_scenario_id := str(environment.get("_authoring_probe_scenario_id", ""))
+	var probe_all := probe_scenario_id in AUTHORING_PROBE_SCENARIOS
+	var active_identities: Array = []
+	if probe_all:
+		for family_value in [semantic_state.get("scene_objects", {}), semantic_state.get("actors", {})]:
+			for identity_value in _dict(family_value).keys():
+				var active_semantic := _dict(_dict(family_value).get(identity_value, {}))
+				if not active_semantic.is_empty() and bool(active_semantic.get("present", true)) and bool(active_semantic.get("visible", true)):
+					active_identities.append(str(identity_value))
+		active_identities.sort()
+	var probe_state_key := "%s|%s" % [probe_scenario_id, ",".join(active_identities)]
+	if probe_all:
+		return _authoring_probe_full_set(environment, semantic_state, base_by_identity, occupied, probe_scenario_id, probe_state_key)
+	for collection_entry in [
+		[semantic_state.get("scene_objects", {}), false],
+		[semantic_state.get("actors", {}), true],
+	]:
+		var collection := _dict((collection_entry as Array)[0])
+		var actor := bool((collection_entry as Array)[1])
+		var identities := collection.keys()
+		identities.sort()
+		for identity_value in identities:
+			var identity := str(identity_value)
+			var semantic := _dict(collection.get(identity_value, {}))
+			if semantic.is_empty() or not bool(semantic.get("present", true)) or not bool(semantic.get("visible", true)):
+				continue
+			var base_record := _dict(base_by_identity.get(identity, {}))
+			var anchor_id := str(semantic.get("anchor_id", base_record.get("anchor_id", ""))).strip_edges()
+			var anchor := _dict(anchors.get(anchor_id, {}))
+			if not probe_all and (anchor_id.is_empty() or not bool(anchor.get("exclusive", false))):
+				continue
+			if not probe_all and claims.has(anchor_id):
+				errors.append("Exclusive semantic anchor %s is claimed by both %s and %s." % [anchor_id, str(claims.get(anchor_id, "")), identity])
+				continue
+			if not anchor_id.is_empty():
+				claims[anchor_id] = identity
+			var zone_id := str(semantic.get("zone_id", base_record.get("zone_id", ""))).strip_edges()
+			var center := _resolve_visual_center(environment, anchor_id, zone_id)
+			if not _finite_point(center) or center.x < 0.0:
+				errors.append("Exclusive semantic anchor %s cannot be resolved for %s." % [anchor_id, identity])
+				continue
+			var base_rect := _record_pixel_rect(base_record)
+			var bounds := _dict(semantic.get("bounds", {}))
+			var size := Vector2(float(bounds.get("w", 0.0)), float(bounds.get("h", 0.0)))
+			if size.x <= 0.0 or size.y <= 0.0:
+				size = base_rect.size if base_rect.has_area() else (DEFAULT_ACTOR_SIZE if actor else DEFAULT_SCENE_SIZE)
+			var regions := _visual_placement_regions(environment, anchor_id, zone_id, str(semantic.get("role", "")), actor)
+			var preferred: Rect2 = regions[0] if not regions.is_empty() else Rect2(Vector2.ZERO, BOARD_SIZE)
+			var rect := _clamp_inside_region(Rect2(center - size * 0.5, size), preferred)
+			var label := str(semantic.get("label", base_record.get("label", "")))
+			var interaction_label := str(_dict(interactions.get(identity, {})).get("label", ""))
+			if interaction_label.length() > label.length():
+				label = interaction_label
+			var candidate_occupied := occupied.duplicate()
+			candidate_occupied.append_array(records)
+			if probe_all and not _candidate_text_safe(identity, rect, label, candidate_occupied, false):
+				var probe_placement := _collision_safe_rect(
+					identity,
+					rect,
+					candidate_occupied,
+					label,
+					regions,
+					str(semantic.get("role", "")).to_lower() in ["obstacle", "barrier", "blockade"]
+				)
+				if bool(probe_placement.get("colliding", true)):
+					errors.append("Authoring probe cannot allocate active visual %s in %s." % [identity, probe_state_key])
+					continue
+				rect = probe_placement.get("rect", rect)
+			elif not _candidate_text_safe(identity, rect, label, candidate_occupied, false):
+				errors.append("Exclusive semantic anchor %s for %s conflicts with validated layout geometry." % [anchor_id, identity])
+				continue
+			var small_rect := _expanded_rect(rect, SMALL_SCREEN_TARGET)
+			records.append({
+				"identity": identity,
+				"anchor_id": anchor_id,
+				"rect": rect,
+				"small_rect": small_rect,
+				"label_rect": _label_rect(rect, label),
+				"small_label_rect": _label_rect(small_rect, label),
+				"exclusive_reservation": true,
+			})
+			if probe_all:
+				var selected_zone := _probe_zone_for_rect(environment, rect, zone_id)
+				var row_key := "%s|%s" % [probe_state_key, identity]
+				_authoring_probe_rows[row_key] = {
+					"scenario_id": probe_scenario_id,
+					"state_key": probe_state_key,
+					"identity": identity,
+					"source_anchor": anchor_id,
+					"source_zone": zone_id,
+					"selected_zone": selected_zone,
+					"position": [rect.get_center().x, rect.get_center().y],
+					"bounds": {"w": rect.size.x, "h": rect.size.y},
+					"label": label,
+				}
+	return {"records": records, "errors": errors}
+
+
+static func _authoring_probe_full_set(environment: Dictionary, semantic_state: Dictionary, base_by_identity: Dictionary, occupied: Array, scenario_id: String, state_key: String) -> Dictionary:
+	var interactions := _dict(semantic_state.get("interactions", {}))
+	var descriptors: Array = []
+	var errors: Array = []
+	for collection_entry in [[semantic_state.get("scene_objects", {}), false], [semantic_state.get("actors", {}), true]]:
+		var collection := _dict((collection_entry as Array)[0])
+		var actor := bool((collection_entry as Array)[1])
+		var identities := collection.keys()
+		identities.sort()
+		for identity_value in identities:
+			var identity := str(identity_value)
+			var semantic := _dict(collection.get(identity_value, {}))
+			if semantic.is_empty() or not bool(semantic.get("present", true)) or not bool(semantic.get("visible", true)):
+				continue
+			var base_record := _dict(base_by_identity.get(identity, {}))
+			var anchor_id := str(semantic.get("anchor_id", base_record.get("anchor_id", ""))).strip_edges()
+			var zone_id := str(semantic.get("zone_id", base_record.get("zone_id", ""))).strip_edges()
+			var center := _resolve_visual_center(environment, anchor_id, zone_id)
+			if not _finite_point(center) or center.x < 0.0:
+				errors.append("Authoring probe cannot resolve active visual %s." % identity)
+				continue
+			var base_rect := _record_pixel_rect(base_record)
+			var bounds := _dict(semantic.get("bounds", {}))
+			var size := Vector2(float(bounds.get("w", 0.0)), float(bounds.get("h", 0.0)))
+			if size.x <= 0.0 or size.y <= 0.0:
+				size = base_rect.size if base_rect.has_area() else (DEFAULT_ACTOR_SIZE if actor else DEFAULT_SCENE_SIZE)
+			var regions := _visual_placement_regions(environment, anchor_id, zone_id, str(semantic.get("role", "")), actor)
+			var preferred: Rect2 = regions[0] if not regions.is_empty() else Rect2(Vector2.ZERO, BOARD_SIZE)
+			var authored := _clamp_inside_region(Rect2(center - size * 0.5, size), preferred)
+			var label := str(semantic.get("label", base_record.get("label", "")))
+			var interaction_label := str(_dict(interactions.get(identity, {})).get("label", ""))
+			if interaction_label.length() > label.length(): label = interaction_label
+			var candidates: Array = [authored]
+			for offset_value in COLLISION_OFFSETS:
+				var candidate := _clamp_inside_region(Rect2(authored.position + (offset_value as Vector2), authored.size), preferred)
+				if not candidates.has(candidate): candidates.append(candidate)
+			for candidate_value in _bounded_collision_candidates(authored, regions):
+				var candidate: Rect2 = candidate_value
+				if not candidates.has(candidate): candidates.append(candidate)
+			var options: Array = []
+			var avoid_walk_lane := str(semantic.get("role", "")).to_lower() in ["obstacle", "barrier", "blockade"]
+			for candidate_value in candidates:
+				var candidate: Rect2 = candidate_value
+				if _candidate_text_safe(identity, candidate, label, occupied, false, avoid_walk_lane):
+					options.append(candidate)
+			if options.size() > 72:
+				var sampled_options: Array = []
+				for sample_index in range(72):
+					var option_index := floori(float(sample_index) * float(options.size() - 1) / 71.0)
+					var sampled: Rect2 = options[option_index]
+					if not sampled_options.has(sampled): sampled_options.append(sampled)
+				options = sampled_options
+			descriptors.append({
+				"identity": identity, "anchor_id": anchor_id, "zone_id": zone_id,
+				"label": label, "size": size, "options": options,
+				"avoid_walk_lane": avoid_walk_lane,
+			})
+	# Temporary authoring-domain dump: enumerate the complete base-safe domain for
+	# each co-active visual, then let the external explicit state solver compose
+	# one stable anchor map across every reachable state.
+	for descriptor_value in descriptors:
+		var descriptor := _dict(descriptor_value)
+		var option_rows: Array = []
+		for option_value in _array(descriptor.get("options", [])):
+			var option: Rect2 = option_value
+			option_rows.append({
+				"position": [option.get_center().x, option.get_center().y],
+				"zone": _probe_zone_for_rect(environment, option, str(descriptor.get("zone_id", ""))),
+			})
+		print("ENV06_8_DOMAIN_ROW %s" % JSON.stringify({
+			"scenario_id": scenario_id, "state_key": state_key,
+			"identity": str(descriptor.get("identity", "")),
+			"source_anchor": str(descriptor.get("anchor_id", "")),
+			"source_zone": str(descriptor.get("zone_id", "")),
+			"label": str(descriptor.get("label", "")),
+			"bounds": {"w": (descriptor.get("size", Vector2.ZERO) as Vector2).x, "h": (descriptor.get("size", Vector2.ZERO) as Vector2).y},
+			"options": option_rows,
+		}))
+	return {"records": [], "errors": ["Authoring probe captured explicit domains for %s." % state_key]}
+	if not errors.is_empty():
+		return {"records": [], "errors": errors}
+	for descriptor_value in descriptors:
+		var descriptor := _dict(descriptor_value)
+		if _array(descriptor.get("options", [])).is_empty():
+			errors.append("Authoring probe has no base-safe option for active visual %s in %s." % [str(descriptor.get("identity", "")), state_key])
+	if not errors.is_empty():
+		return {"records": [], "errors": errors}
+	descriptors.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
+		var left := _dict(left_value)
+		var right := _dict(right_value)
+		var left_count := _array(left.get("options", [])).size()
+		var right_count := _array(right.get("options", [])).size()
+		if left_count != right_count: return left_count < right_count
+		return str(left.get("identity", "")) < str(right.get("identity", ""))
+	)
+	var placements: Dictionary = {}
+	var context := {"visits": 0, "limit": 5000}
+	if not _authoring_probe_search(descriptors, 0, occupied, placements, context):
+		return {"records": [], "errors": ["Authoring probe exhausted simultaneous layout search for %s after %d visits." % [state_key, int(context.get("visits", 0))]]}
+	var records: Array = []
+	for descriptor_value in descriptors:
+		var descriptor := _dict(descriptor_value)
+		var identity := str(descriptor.get("identity", ""))
+		var rect: Rect2 = placements.get(identity, Rect2())
+		var label := str(descriptor.get("label", ""))
+		var small_rect := _expanded_rect(rect, SMALL_SCREEN_TARGET)
+		records.append({
+			"identity": identity,
+			"anchor_id": str(descriptor.get("anchor_id", "")),
+			"rect": rect,
+			"small_rect": small_rect,
+			"label_rect": _label_rect(rect, label),
+			"small_label_rect": _label_rect(small_rect, label),
+			"exclusive_reservation": true,
+		})
+		var row_key := "%s|%s" % [state_key, identity]
+		_authoring_probe_rows[row_key] = {
+			"scenario_id": scenario_id, "state_key": state_key, "identity": identity,
+			"source_anchor": str(descriptor.get("anchor_id", "")),
+			"source_zone": str(descriptor.get("zone_id", "")),
+			"selected_zone": _probe_zone_for_rect(environment, rect, str(descriptor.get("zone_id", ""))),
+			"position": [rect.get_center().x, rect.get_center().y],
+			"bounds": {"w": rect.size.x, "h": rect.size.y}, "label": label,
+		}
+	_authoring_probe_solutions[state_key] = placements
+	return {"records": records, "errors": []}
+
+
+static func _authoring_probe_search(descriptors: Array, index: int, occupied: Array, placements: Dictionary, context: Dictionary) -> bool:
+	context["visits"] = int(context.get("visits", 0)) + 1
+	if int(context.get("visits", 0)) > int(context.get("limit", 0)):
+		return false
+	if index >= descriptors.size():
+		return true
+	var best_index := index
+	var best_count := 2147483647
+	for descriptor_index in range(index, descriptors.size()):
+		var candidate_descriptor := _dict(descriptors[descriptor_index])
+		var compatible_count := 0
+		for candidate_value in _array(candidate_descriptor.get("options", [])):
+			if _candidate_text_safe(
+				str(candidate_descriptor.get("identity", "")), candidate_value,
+				str(candidate_descriptor.get("label", "")), occupied, false,
+				bool(candidate_descriptor.get("avoid_walk_lane", false))
+			):
+				compatible_count += 1
+				if compatible_count >= best_count:
+					break
+		if compatible_count < best_count:
+			best_count = compatible_count
+			best_index = descriptor_index
+		if best_count == 0:
+			break
+	if best_count == 0:
+		return false
+	if best_index != index:
+		var swap_value: Variant = descriptors[index]
+		descriptors[index] = descriptors[best_index]
+		descriptors[best_index] = swap_value
+	var descriptor := _dict(descriptors[index])
+	var identity := str(descriptor.get("identity", ""))
+	var label := str(descriptor.get("label", ""))
+	var avoid_walk_lane := bool(descriptor.get("avoid_walk_lane", false))
+	for candidate_value in _array(descriptor.get("options", [])):
+		var candidate: Rect2 = candidate_value
+		if not _candidate_text_safe(identity, candidate, label, occupied, false, avoid_walk_lane):
+			continue
+		var small_rect := _expanded_rect(candidate, SMALL_SCREEN_TARGET)
+		var record := {
+			"identity": identity, "rect": candidate, "small_rect": small_rect,
+			"label_rect": _label_rect(candidate, label), "small_label_rect": _label_rect(small_rect, label),
+		}
+		occupied.append(record)
+		placements[identity] = candidate
+		if _authoring_probe_search(descriptors, index + 1, occupied, placements, context):
+			return true
+		placements.erase(identity)
+		occupied.pop_back()
+	if best_index != index:
+		var swap_value: Variant = descriptors[index]
+		descriptors[index] = descriptors[best_index]
+		descriptors[best_index] = swap_value
+	return false
+
+
+static func _probe_zone_for_rect(environment: Dictionary, rect: Rect2, fallback_zone: String) -> String:
+	var zones := _dict(environment.get("semantic_zones", {}))
+	var zone_ids: Array = [fallback_zone, "background", "center", "left", "right", "service_lane", "foreground", "exit_lane"]
+	var seen: Dictionary = {}
+	for zone_id_value in zone_ids:
+		var zone_id := str(zone_id_value).strip_edges()
+		if zone_id.is_empty() or seen.has(zone_id) or not zones.has(zone_id):
+			continue
+		seen[zone_id] = true
+		var zone_rect := _pixel_bounds(_dict(zones.get(zone_id, {})).get("bounds", []))
+		if zone_rect.encloses(rect):
+			return zone_id
+	return fallback_zone
+
+
 static func _repair_visual_suffix(history: Array, failed_entry: Dictionary, occupied: Array, environment: Dictionary, semantic_state: Dictionary) -> Dictionary:
 	var replaced_count := mini(MAX_REPAIR_VISUALS - 1, history.size())
 	var repair_entries: Array = []
@@ -569,7 +897,7 @@ static func _repair_visual_suffix(history: Array, failed_entry: Dictionary, occu
 	var fixed_occupied: Array = []
 	for occupied_value in occupied:
 		var occupied_record := _dict(occupied_value)
-		if not repair_identities.has(str(occupied_record.get("identity", ""))): fixed_occupied.append(occupied_record)
+		if bool(occupied_record.get("exclusive_reservation", false)) or not repair_identities.has(str(occupied_record.get("identity", ""))): fixed_occupied.append(occupied_record)
 	var context := {"generation_checks": 0, "backtrack_visits": 0}
 	var descriptors: Array = []
 	for entry_value in repair_entries:

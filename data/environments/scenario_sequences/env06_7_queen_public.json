@@ -411,7 +411,9 @@
             "base::anchor:delta_wedding_rope",
             "base::anchor:delta_wedding_safe_exit",
             "base::anchor:delta_wedding_table",
-            "base::anchor:delta_wedding_task"
+            "base::anchor:delta_wedding_task",
+            "base::anchor:env06_8_wedding_coordinator_exclusive",
+            "base::anchor:env06_8_wedding_choice_right_exclusive"
           ],
           "games": [],
           "interactions": [],
@@ -528,7 +530,7 @@
                 {
                   "actor": {
                     "actor_id": "actor_deck_coordinator",
-                    "anchor_id": "delta_wedding_coordinator",
+                    "anchor_id": "env06_8_wedding_coordinator_exclusive",
                     "behavior": "work",
                     "label": "Deck coordinator",
                     "pose": "arrival",
@@ -536,13 +538,12 @@
                     "description_variants": {
                       "delta_wedding_coordinator": "Changed details at Deck coordinator preserve the scene's progress."
                     },
-                    "zone_id": "left"
+                    "zone_id": "background"
                   },
                   "family": "actor_ops",
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_wedding_charter_arrival_spawn_delta_queen_wedding_charter_deck_coordinator",
-                  "anchor_id": "env06_8_wedding_coordinator_arrival",
                   "stable_object_id": "delta_queen_wedding_charter_deck_coordinator",
                   "zone_id": "background"
                 }
@@ -1214,7 +1215,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "delta_wedding_choice_right",
+                    "anchor_id": "env06_8_wedding_choice_right_exclusive",
                     "appearance": "route_2_ready",
                     "bounds": {
                       "h": 56.0,
@@ -1225,7 +1226,7 @@
                     "role": "decision_route",
                     "state": "route_2_ready",
                     "visible": true,
-                    "zone_id": "background",
+                    "zone_id": "center",
                     "description": "Ceremony ropes split the promenade while the open bar, a loose ring case, and a losing best man pull guests into competing deck lanes. Route 3 is clearly marked as one of the public paths through the room; choosing it will commit the next move.",
                     "description_variants": {
 
@@ -1234,7 +1235,6 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_wedding_charter_work_1_spawn_delta_queen_wedding_charter_work_1_choice_2",
-                  "anchor_id": "delta_wedding_choice_right",
                   "stable_object_id": "delta_queen_wedding_charter_work_1_choice_2",
                   "zone_id": "center"
                 }
@@ -1845,7 +1845,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "d448ccf3fc93ef02820d05d701bedbf5c343db6afc77fa8811061391da4390cc"
+        "sequence_signature": "9ae7dcbfd98015f087090cfd8f767e416de791561f91a684259a4710c34dbeb7"
       }
     },
     {
@@ -2255,7 +2255,10 @@
             "base::anchor:delta_scenario_safe_exit",
             "base::anchor:delta_scenario_spare",
             "base::anchor:delta_scenario_task",
-            "base::anchor:delta_secondary_top"
+            "base::anchor:delta_secondary_top",
+            "base::anchor:env06_8_whale_host_exclusive",
+            "base::anchor:env06_8_whale_entourage_runner_exclusive",
+            "base::anchor:env06_8_whale_choice_middle_exclusive"
           ],
           "games": [],
           "interactions": [],
@@ -2351,7 +2354,7 @@
                 {
                   "actor": {
                     "actor_id": "actor_whale_host",
-                    "anchor_id": "delta_bottom_left",
+                    "anchor_id": "env06_8_whale_host_exclusive",
                     "behavior": "guard",
                     "label": "Whale host",
                     "pose": "arrival",
@@ -2366,14 +2369,13 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_whale_aboard_arrival_spawn_delta_queen_whale_aboard_whale_host",
-                  "anchor_id": "delta_secondary_top",
                   "stable_object_id": "delta_queen_whale_aboard_whale_host",
-                  "zone_id": "foreground"
+                  "zone_id": "background"
                 },
                 {
                   "actor": {
                     "actor_id": "actor_entourage_runner",
-                    "anchor_id": "delta_bottom_middle",
+                    "anchor_id": "env06_8_whale_entourage_runner_exclusive",
                     "behavior": "work",
                     "label": "Entourage runner",
                     "pose": "arrival",
@@ -2381,15 +2383,14 @@
                     "description_variants": {
                       "delta_bottom_middle": "The new position at Entourage runner leaves the old route altered."
                     },
-                    "zone_id": "left"
+                    "zone_id": "background"
                   },
                   "family": "actor_ops",
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_whale_aboard_arrival_spawn_delta_queen_whale_aboard_entourage_runner",
-                  "anchor_id": "delta_noninteractive_right",
                   "stable_object_id": "delta_queen_whale_aboard_entourage_runner",
-                  "zone_id": "right"
+                  "zone_id": "background"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -3211,7 +3212,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "delta_decision_middle",
+                    "anchor_id": "env06_8_whale_choice_middle_exclusive",
                     "appearance": "route_1_ready",
                     "bounds": {
                       "h": 56.0,
@@ -3222,7 +3223,7 @@
                     "role": "decision_route",
                     "state": "route_1_ready",
                     "visible": true,
-                    "zone_id": "background",
+                    "zone_id": "center",
                     "description": "A whale's entourage seals a premium table and bends every adjacent stake placard while staff abandon the public service lane. Route 2 is clearly marked as one of the public paths through the room; choosing it will commit the next move.",
                     "description_variants": {
 
@@ -3231,7 +3232,6 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_whale_aboard_work_2_spawn_delta_queen_whale_aboard_work_2_choice_1",
-                  "anchor_id": "delta_decision_middle",
                   "stable_object_id": "delta_queen_whale_aboard_work_2_choice_1",
                   "zone_id": "center"
                 },
@@ -3658,7 +3658,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "d8134956cc13adbdd61bd35c480d86e475ec2068f618f388c071c19df03f8f78"
+        "sequence_signature": "59a6dd776543806b0fd944e91e429520a06450fee5dc80695debeec9cb139242"
       }
     },
     {
@@ -4069,7 +4069,7 @@
             "base::anchor:delta_scenario_spare",
             "base::anchor:delta_scenario_task",
             "base::anchor:delta_secondary_top",
-            "base::anchor:env06_8_fog_waiting_crowd"
+            "base::anchor:env06_8_fog_waiting_crowd_exclusive"
           ],
           "games": [],
           "interactions": [],
@@ -4186,7 +4186,7 @@
                 {
                   "actor": {
                     "actor_id": "actor_waiting_crowd",
-                    "anchor_id": "env06_8_fog_waiting_crowd",
+                    "anchor_id": "env06_8_fog_waiting_crowd_exclusive",
                     "behavior": "watch",
                     "label": "Waiting crowd",
                     "pose": "arrival",
@@ -4200,7 +4200,6 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_fog_delay_arrival_spawn_delta_queen_fog_delay_waiting_crowd",
-                  "anchor_id": "env06_8_fog_waiting_crowd",
                   "stable_object_id": "delta_queen_fog_delay_waiting_crowd",
                   "zone_id": "right"
                 }
@@ -5470,7 +5469,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "66b867a93302bf95a7713af52a53a16d2c192ece34493d412286e801ad0a1131"
+        "sequence_signature": "a6b2ac574a33be59c68413ea2728613074de17a076ab89ad99c0e3460cfe763f"
       }
     },
     {
@@ -5905,7 +5904,8 @@
             "base::anchor:delta_scenario_safe_exit",
             "base::anchor:delta_scenario_spare",
             "base::anchor:delta_scenario_task",
-            "base::anchor:delta_secondary_top"
+            "base::anchor:delta_secondary_top",
+            "base::anchor:env06_8_engine_mate_exclusive"
           ],
           "games": [],
           "interactions": [],
@@ -6007,7 +6007,7 @@
                 {
                   "actor": {
                     "actor_id": "actor_engine_mate",
-                    "anchor_id": "delta_secondary_top",
+                    "anchor_id": "env06_8_engine_mate_exclusive",
                     "behavior": "work",
                     "label": "Engine mate",
                     "pose": "arrival",
@@ -6022,7 +6022,6 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_engine_trouble_arrival_spawn_delta_queen_engine_trouble_engine_mate",
-                  "anchor_id": "delta_engine_guard",
                   "stable_object_id": "delta_queen_engine_trouble_engine_mate",
                   "zone_id": "background"
                 },
@@ -7546,7 +7545,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "0c297b4a242c9c9e84d48eeb291cf840b2467904f3c8c5c136d327d31965d63a"
+        "sequence_signature": "36ba396beedac3375b7e5da97317554c480f9e2d9120a7232cba6a1a5161b841"
       }
     },
     {
@@ -13752,7 +13751,8 @@
             "base::anchor:grand_scenario_top_650",
             "base::anchor:grand_scenario_top_800_low",
             "base::anchor:grand_work_actor_right",
-            "base::anchor:grand_work_object_left"
+            "base::anchor:grand_work_object_left",
+            "base::anchor:env06_8_audit_pit_manager_exclusive"
           ],
           "games": [],
           "interactions": [
@@ -13878,7 +13878,7 @@
                 {
                   "actor": {
                     "actor_id": "actor_pit_manager",
-                    "anchor_id": "grand_scenario_top_50_actor",
+                    "anchor_id": "env06_8_audit_pit_manager_exclusive",
                     "behavior": "guard",
                     "label": "Pit manager",
                     "pose": "arrival",
@@ -13886,13 +13886,12 @@
                     "description_variants": {
                       "grand_scenario_top_50_actor": "The move at Pit manager visibly redirects traffic through the room."
                     },
-                    "zone_id": "left"
+                    "zone_id": "center"
                   },
                   "family": "actor_ops",
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_audit_night_arrival_spawn_grand_casino_audit_night_pit_manager",
-                  "anchor_id": "grand_work_actor_right",
                   "stable_object_id": "grand_casino_audit_night_pit_manager",
                   "zone_id": "center"
                 }
@@ -15217,7 +15216,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "f52780e3415bf42cf8ace767623b756fccc7ea4de569c6afcb9411f829b207a2"
+        "sequence_signature": "66a0bb9f7a395c2a7e53b903dabdde75da2384158205145b1be76afd11f9d61c"
       }
     }
   ]

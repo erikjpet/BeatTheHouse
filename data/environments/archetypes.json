@@ -1142,7 +1142,10 @@
     ,
       "env06_8_darts_oche": {"position": [620, 285], "zone_id": "right"},
       "env06_8_disputed_dart": {"position": [790, 90], "zone_id": "background"},
-      "env06_8_darts_captain": {"position": [450, 65], "zone_id": "background"}
+      "env06_8_darts_captain": {"position": [450, 65], "zone_id": "background"},
+      "env06_8_dead_tuesday_lone_patron_exclusive": {"position": [370.4167, 92], "zone_id": "background", "exclusive": true},
+      "env06_8_fight_right_brawler_exclusive": {"position": [370.4167, 92], "zone_id": "background", "exclusive": true},
+      "env06_8_live_band_floor_runner_exclusive": {"position": [84, 92], "zone_id": "background", "exclusive": true}
     },
     "security_profile": {
       "strictness": "loose",
@@ -1391,7 +1394,11 @@
       "env06_8_storm_drivers": {"position": [735, 75], "zone_id": "background"},
       "env06_8_bus_marshal": {"position": [450, 350], "zone_id": "foreground"},
       "env06_8_cooler_gate": {"position": [700, 300], "zone_id": "right"},
-      "env06_8_roadside_actor_left": {"position": [140, 180], "zone_id": "left"}
+      "env06_8_convoy_lead_driver_exclusive": {"position": [140, 180], "zone_id": "left", "exclusive": true},
+      "env06_8_convoy_relay_driver_exclusive": {"position": [800, 180], "zone_id": "right", "exclusive": true},
+      "env06_8_convoy_machine_driver_exclusive": {"position": [650, 40], "zone_id": "background", "exclusive": true},
+      "env06_8_payday_stake_keeper_exclusive": {"position": [140, 130], "zone_id": "left", "exclusive": true},
+      "env06_8_payday_machine_player_exclusive": {"position": [800, 180], "zone_id": "right", "exclusive": true}
     },
     "security_profile": {
       "strictness": "low",
@@ -2583,12 +2590,20 @@
       "env06_8_buyout_ropes": {"position": [520, 220], "zone_id": "center"},
       "env06_8_buyout_cart": {"position": [300, 330], "zone_id": "center"},
       "env06_8_storm_recovery_host": {"position": [250, 70], "zone_id": "background"},
-      "env06_8_task_left": {"position": [80, 340], "zone_id": "left"},
-      "env06_8_task_center": {"position": [450, 340], "zone_id": "center"},
-      "env06_8_task_right": {"position": [760, 340], "zone_id": "right"},
-      "env06_8_task_background_left": {"position": [80, 70], "zone_id": "background"},
-      "env06_8_task_background_center": {"position": [450, 70], "zone_id": "background"},
-      "env06_8_task_background_right": {"position": [800, 70], "zone_id": "background"}
+      "env06_8_amateur_contestant_exclusive": {"position": [832, 280], "zone_id": "right", "exclusive": true},
+      "env06_8_amateur_judge_exclusive": {"position": [714.4615, 72], "zone_id": "background", "exclusive": true},
+      "env06_8_amateur_exit_exclusive": {"position": [800, 300], "zone_id": "exit_lane", "exclusive": true},
+      "env06_8_amateur_task_exclusive": {"position": [450, 250], "zone_id": "center", "exclusive": true},
+      "env06_8_buyout_host_exclusive": {"position": [674, 75], "zone_id": "background", "exclusive": true},
+      "env06_8_slow_host_exclusive": {"position": [714.4615, 72], "zone_id": "background", "exclusive": true},
+      "env06_8_slow_regular_exclusive": {"position": [220, 130], "zone_id": "left", "exclusive": true},
+      "env06_8_slow_task_exclusive": {"position": [450, 250], "zone_id": "center", "exclusive": true},
+      "env06_8_storm_party_leader_exclusive": {"position": [832, 230], "zone_id": "right", "exclusive": true},
+      "env06_8_storm_recovery_host_exclusive": {"position": [744, 130], "zone_id": "right", "exclusive": true},
+      "env06_8_storm_task_exclusive": {"position": [404, 150], "zone_id": "center", "exclusive": true},
+      "env06_8_storm_trunk_exclusive": {"position": [500, 176], "zone_id": "center", "exclusive": true},
+      "env06_8_storm_marker_exclusive": {"position": [120, 210], "zone_id": "left", "exclusive": true},
+      "env06_8_storm_exit_exclusive": {"position": [800, 300], "zone_id": "exit_lane", "exclusive": true}
     },
     "security_profile": {
       "strictness": "velvet",
@@ -2907,7 +2922,17 @@
 		"delta_wedding_aftermath_actor": {"position": [320, 190], "zone_id": "center"}
       ,
       "env06_8_fog_waiting_crowd": {"position": [700, 300], "zone_id": "right"},
-      "env06_8_wedding_coordinator_arrival": {"position": [700, 80], "zone_id": "background"}
+      "env06_8_wedding_coordinator_arrival": {"position": [700, 80], "zone_id": "background"},
+      "env06_8_engine_mate_exclusive": {"position": [620, 80], "zone_id": "background", "exclusive": true},
+      "env06_8_fog_waiting_crowd_exclusive": {"position": [700, 300], "zone_id": "right", "exclusive": true},
+      "env06_8_wedding_coordinator_exclusive": {"position": [700, 80], "zone_id": "background", "exclusive": true},
+      "env06_8_wedding_choice_left_exclusive": {"position": [60, 170], "zone_id": "left", "exclusive": true},
+      "env06_8_wedding_choice_right_exclusive": {"position": [344, 270], "zone_id": "center", "exclusive": true},
+      "env06_8_fog_choice_right_exclusive": {"position": [700, 300], "zone_id": "right", "exclusive": true},
+      "env06_8_engine_choice_foreground_exclusive": {"position": [500, 350], "zone_id": "foreground", "exclusive": true},
+      "env06_8_whale_entourage_runner_exclusive": {"position": [832, 92], "zone_id": "background", "exclusive": true},
+      "env06_8_whale_host_exclusive": {"position": [513.6666, 92], "zone_id": "background", "exclusive": true},
+      "env06_8_whale_choice_middle_exclusive": {"position": [325, 190], "zone_id": "center", "exclusive": true}
     },
     "security_profile": {
       "strictness": "licensed-gray",
@@ -3127,7 +3152,7 @@
     ,
       "env06_8_festival_board": {"position": [190, 210], "zone_id": "left"},
       "env06_8_festival_station": {"position": [620, 335], "zone_id": "right"},
-      "env06_8_storm_lifeguard": {"position": [700, 70], "zone_id": "background"}
+      "env06_8_storm_lifeguard": {"position": [812, 72], "zone_id": "background", "exclusive": true}
     },
     "security_profile": {
       "strictness": "loose",
@@ -3617,6 +3642,8 @@
         "grand_audit_cage": {"position": [480, 230], "zone_id": "center"},
 		"grand_audit_pit_ledger": {"position": [338, 348], "zone_id": "foreground"},
       "grand_work_actor_right": {"position": [696, 230], "zone_id": "center"},
+      "env06_8_audit_pit_manager_exclusive": {"position": [405.3333, 163.3333], "zone_id": "center", "exclusive": true},
+      "env06_8_audit_lead_exclusive": {"position": [700, 300], "zone_id": "right", "exclusive": true},
       "grand_scenario_safe_exit": {"position": [268, 70], "zone_id": "background"},
       "grand_scenario_top_400": {"position": [400, 70], "zone_id": "background"},
       "grand_scenario_top_520": {"position": [520, 70], "zone_id": "background"},

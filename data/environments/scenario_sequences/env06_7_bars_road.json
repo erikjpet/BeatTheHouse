@@ -1784,7 +1784,8 @@
             "base::anchor:fight_right_brawler",
             "base::anchor:fight_task",
             "base::anchor:fight_door_buffer",
-            "base::anchor:fight_right_brawler_arrival"
+            "base::anchor:fight_right_brawler_arrival",
+            "base::anchor:env06_8_fight_right_brawler_exclusive"
           ],
           "games": [],
           "interactions": [],
@@ -1913,7 +1914,7 @@
                 {
                   "actor": {
                     "actor_id": "actor_right_brawler",
-                    "anchor_id": "fight_right_brawler_arrival",
+                    "anchor_id": "env06_8_fight_right_brawler_exclusive",
                     "behavior": "fight",
                     "label": "Right-side brawler",
                     "pose": "arrival",
@@ -1927,9 +1928,8 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "bar_fight_night_arrival_spawn_bar_fight_night_right_brawler",
-                  "anchor_id": "fight_right_brawler_arrival",
                   "stable_object_id": "bar_fight_night_right_brawler",
-                  "zone_id": "foreground"
+                  "zone_id": "background"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -3509,7 +3509,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "a44afdec7e770005e407f9ad474e1a2b2a68b263c97be6e27176e366667cfb09"
+        "sequence_signature": "3f6ee2cee661d43a34fb9c11e6ea63d16e3e884aa6938d10e0c8e5dcba3b6eb6"
       }
     },
     {
@@ -9292,6 +9292,7 @@
           "anchors": [
             "base::anchor:live_band_speakers",
             "base::anchor:live_band_runner",
+            "base::anchor:env06_8_live_band_floor_runner_exclusive",
             "base::anchor:live_band_task",
             "base::anchor:live_band_leader_arrival"
           ],
@@ -9416,6 +9417,7 @@
                 {
                   "actor": {
                     "actor_id": "actor_floor_runner",
+                    "anchor_id": "env06_8_live_band_floor_runner_exclusive",
                     "behavior": "watch",
                     "label": "Floor runner",
                     "pose": "arrival",
@@ -9429,9 +9431,8 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "bar_live_band_arrival_spawn_bar_live_band_floor_runner",
-                  "anchor_id": "live_band_runner",
                   "stable_object_id": "bar_live_band_floor_runner",
-                  "zone_id": "left"
+                  "zone_id": "background"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -10796,7 +10797,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "29dbf2ee7d3f94bc1fe94c6432bbaa905ea2504c0aafda23bfffe514da1f082a"
+        "sequence_signature": "cee0631eff1410e76427b858f3eb086d4b867f0b64fa42e0a7dcc5075554ec4f"
       }
     },
     {
@@ -11124,7 +11125,8 @@
             "base::anchor:dead_tuesday_bartender",
             "base::anchor:dead_tuesday_task",
             "base::anchor:dead_tuesday_booth",
-            "base::anchor:dead_tuesday_lone_patron"
+            "base::anchor:dead_tuesday_lone_patron",
+            "base::anchor:env06_8_dead_tuesday_lone_patron_exclusive"
           ],
           "games": [],
           "interactions": [],
@@ -11227,7 +11229,7 @@
                 {
                   "actor": {
                     "actor_id": "actor_lone_patron",
-                    "anchor_id": "dead_tuesday_lone_patron",
+                    "anchor_id": "env06_8_dead_tuesday_lone_patron_exclusive",
                     "behavior": "idle",
                     "label": "Lone Tuesday patron",
                     "pose": "arrival",
@@ -11241,9 +11243,8 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "bar_dead_tuesday_arrival_spawn_bar_dead_tuesday_lone_patron",
-                  "anchor_id": "dead_tuesday_lone_patron",
                   "stable_object_id": "bar_dead_tuesday_lone_patron",
-                  "zone_id": "foreground"
+                  "zone_id": "background"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -11977,7 +11978,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "0fca228e0d97e0898508da918e4470ab684546ce74de090591ea07b0da2df74a"
+        "sequence_signature": "3b7c470510237dd9567cca7f3e5d03bfe61fab8b0d74da8aae2ca7dd4ef156b9"
       }
     },
     {

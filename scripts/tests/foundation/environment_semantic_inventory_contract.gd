@@ -362,6 +362,11 @@ static func _check_semantic_anchor_shapes(_library: ContentLibrary, failures: Ar
 	var inventory := EnvironmentSemanticInventoryScript.for_archetype(valid, fixture_library)
 	if not EnvironmentSemanticInventoryScript.guaranteed_collections(inventory).get("anchors", []).has("base::anchor:stage"):
 		failures.append("Valid semantic anchor did not derive base::anchor:<id> ownership.")
+	var exclusive_valid := valid.duplicate(true)
+	exclusive_valid["semantic_anchors"]["stage"]["exclusive"] = true
+	var exclusive_inventory := EnvironmentSemanticInventoryScript.for_archetype(exclusive_valid, fixture_library)
+	if not EnvironmentSemanticInventoryScript.validate(exclusive_inventory).is_empty():
+		failures.append("Valid exclusive semantic anchor was rejected.")
 	var malformed_values: Array = [
 		[],
 		{"stage": {}},
@@ -370,6 +375,7 @@ static func _check_semantic_anchor_shapes(_library: ContentLibrary, failures: Ar
 		{"stage": {"position": [50, 50], "zone_id": "missing"}},
 		{"Bad Anchor": {"position": [50, 50]}},
 		{"stage": {"position": [50, 50], "label": "forged"}},
+		{"stage": {"position": [50, 50], "exclusive": "true"}},
 	]
 	for malformed_value in malformed_values:
 		var candidate := valid.duplicate(true)

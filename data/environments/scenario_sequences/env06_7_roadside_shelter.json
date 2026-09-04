@@ -6233,13 +6233,12 @@
                   "op": "spawn",
                   "receipt_id": "arrival_gas_station_trucker_convoy_lead_driver",
                   "owner_namespace": "scenario",
-                  "anchor_id": "env06_8_roadside_actor_left",
                   "stable_object_id": "gas_station_trucker_convoy_lead_driver",
                   "actor": {
                     "label": "Lead driver",
                     "actor_id": "gas_lead_driver",
                     "zone_id": "left",
-                    "anchor_id": "env06_8_roadside_actor_left",
+                    "anchor_id": "env06_8_convoy_lead_driver_exclusive",
                     "behavior": "work",
                     "pose": "working",
                     "description": "Three rig markers, a pallet lane, and driver groups occupy alternating pumps and machines in a visible departure queue. Lead driver remains working, showing who is still involved.",
@@ -6261,7 +6260,7 @@
                     "zone_id": "right",
                     "behavior": "idle",
                     "pose": "waiting",
-                    "anchor_id": "package_b_gas_top_right",
+                    "anchor_id": "env06_8_convoy_relay_driver_exclusive",
                     "description": "Relay driver holds a waiting posture beside the active scene. Three rig markers, a pallet lane, and driver groups occupy alternating pumps and machines in a visible departure queue.",
                     "description_variants": {
 
@@ -6274,7 +6273,6 @@
                   "op": "spawn",
                   "receipt_id": "arrival_gas_station_trucker_convoy_machine_driver",
                   "owner_namespace": "scenario",
-                  "anchor_id": "package_b_gas_top_right",
                   "stable_object_id": "gas_station_trucker_convoy_machine_driver",
                   "actor": {
                     "label": "Machine driver",
@@ -6282,7 +6280,7 @@
                     "zone_id": "background",
                     "behavior": "idle",
                     "pose": "working",
-                    "anchor_id": "package_b_gas_top_right",
+                    "anchor_id": "env06_8_convoy_machine_driver_exclusive",
                     "description": "The current condition is still plain on machine driver, a physical record of the room's current stage. Three rig markers, a pallet lane, and driver groups occupy alternating pumps and machines in a visible departure queue.",
                     "description_variants": {
 
@@ -7299,7 +7297,7 @@
           "props_5",
           "actors_3"
         ],
-        "sequence_signature": "82f010265780e316bae9a262e154b9dcf1804a25a45034ae23dfa220caf1abdf",
+        "sequence_signature": "41c59198f4282750a37ad4deb06be956e23670128a1690192eb064098bc39282",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -7312,7 +7310,10 @@
             "base::anchor:cashier_counter",
             "base::anchor:package_b_gas_top_left",
             "base::anchor:package_b_gas_top_mid",
-            "base::anchor:package_b_gas_top_right"
+            "base::anchor:package_b_gas_top_right",
+            "base::anchor:env06_8_convoy_lead_driver_exclusive",
+            "base::anchor:env06_8_convoy_relay_driver_exclusive",
+            "base::anchor:env06_8_convoy_machine_driver_exclusive"
           ],
           "zones": [
             "base::zone:background",
@@ -10836,7 +10837,6 @@
                   "op": "spawn",
                   "receipt_id": "arrival_gas_station_road_crew_payday_stake_keeper",
                   "owner_namespace": "scenario",
-                  "anchor_id": "env06_8_roadside_actor_left",
                   "stable_object_id": "gas_station_road_crew_payday_stake_keeper",
                   "actor": {
                     "label": "Stake keeper",
@@ -10844,7 +10844,7 @@
                     "zone_id": "left",
                     "behavior": "watch",
                     "pose": "waiting",
-                    "anchor_id": "env06_8_roadside_actor_left",
+                    "anchor_id": "env06_8_payday_stake_keeper_exclusive",
                     "description": "A work-order board, pooled-stake envelope, barricade stack, and rotating road crew occupy counter and machine stations. Stake keeper remains waiting, showing who is still involved.",
                     "description_variants": {
                       "checking_marks": "The latest turn is now visible at Stake keeper."
@@ -11853,7 +11853,7 @@
           "props_4",
           "actors_3"
         ],
-        "sequence_signature": "86f775ea725e59ee18890070fcaa1c914f0c67c9fea724f6b65e343281f74954",
+        "sequence_signature": "f2d46ff8a537a4ec65fd038451da27cff25f947cf6a690b01467c1e917a1cec6",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -11867,7 +11867,8 @@
             "base::anchor:package_b_gas_top_mid",
             "base::anchor:package_b_gas_top_left",
             "base::anchor:package_b_gas_top_right",
-            "base::anchor:env06_8_payday_board"
+            "base::anchor:env06_8_payday_board",
+            "base::anchor:env06_8_payday_stake_keeper_exclusive"
           ],
           "zones": [
             "base::zone:background",
@@ -15433,7 +15434,6 @@
                   "op": "spawn",
                   "receipt_id": "arrival_beach_storm_coming_lifeguard",
                   "owner_namespace": "scenario",
-                  "anchor_id": "env06_8_storm_lifeguard",
                   "stable_object_id": "beach_storm_coming_lifeguard",
                   "actor": {
                     "label": "Lifeguard",
@@ -16601,7 +16601,7 @@
           "props_5",
           "actors_2"
         ],
-        "sequence_signature": "076f207661ea5446616bede56355f94a5f902d09512033bdf782d7b80efb15e2",
+        "sequence_signature": "c2ee3f123d0cadcb7668d70dbd94b4e166d8b564f64e54471dbf67c017545a88",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -16614,7 +16614,8 @@
             "base::anchor:shoreline",
             "base::anchor:package_b_beach_safe_exit_low_left",
             "base::anchor:package_b_beach_top_left",
-            "base::anchor:package_b_beach_top_mid"
+            "base::anchor:package_b_beach_top_mid",
+            "base::anchor:env06_8_storm_lifeguard"
           ],
           "zones": [
             "base::zone:background",
