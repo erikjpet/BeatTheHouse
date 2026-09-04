@@ -12,6 +12,7 @@ const PullTabsScript := preload("res://scripts/games/pull_tabs.gd")
 const BlackjackAuthorityTestDriverScript := preload("res://scripts/tests/foundation/blackjack_authority_test_driver.gd")
 
 const DEFAULT_OUTPUT_DIR := "res://.tmp/tutorial_rework"
+const AUDIT_DURATION_BUDGET_MSEC := 180000.0
 
 var library
 var failures: Array = []
@@ -51,6 +52,9 @@ func _run() -> void:
 	phase_started_usec = _timing_start("lesson_boundary_save_load", audit_started_usec)
 	var lesson_boundary_save_load := _tutorial_lesson_boundary_save_load()
 	_timing_done("lesson_boundary_save_load", phase_started_usec, audit_started_usec)
+	_check(bool(lesson_boundary_save_load.get("passed", false)), "Tutorial lesson-boundary save/load sub-audit failed: %s" % JSON.stringify(lesson_boundary_save_load), failures)
+	var duration_msec := _elapsed_msec(audit_started_usec)
+	_check(duration_msec <= AUDIT_DURATION_BUDGET_MSEC, "Tutorial audit exceeded its frozen %.0f ms duration budget: %.3f ms." % [AUDIT_DURATION_BUDGET_MSEC, duration_msec], failures)
 	var report := {
 		"challenge_id": "tutorial_first_card",
 		"fixed_seed": str(library.challenge_config_for("tutorial_first_card", "ignored").get("seed_text", "")),
@@ -59,6 +63,9 @@ func _run() -> void:
 		"normal_run_isolation": isolation,
 		"tutorial_stuck_sweep": stuck_sweep,
 		"lesson_boundary_save_load": lesson_boundary_save_load,
+		"duration_msec": duration_msec,
+		"duration_budget_msec": AUDIT_DURATION_BUDGET_MSEC,
+		"duration_within_budget": duration_msec <= AUDIT_DURATION_BUDGET_MSEC,
 		"failures": failures.duplicate(),
 		"passed": failures.is_empty(),
 	}
@@ -83,14 +90,16 @@ func _verify_authored_contract() -> Dictionary:
 		var lesson_id := str(lesson.get("id", ""))
 		if lesson_id.begins_with("tip_first_") or lesson_id == "tip_starter_card_home":
 			ambient_ids.append(lesson_id)
-		if str(lesson.get("scope", "")) == "tutorial_run":
-			if ["dialogue", "coach"].has(str(lesson.get("delivery", ""))) and not str(lesson.get("dialogue_id", "")).is_empty() and not str(lesson.get("dialogue_node", "")).is_empty():
-				authored_delivery_count += 1
-			var anchor: Dictionary = lesson.get("anchor", {}) if typeof(lesson.get("anchor", {})) == TYPE_DICTIONARY else {}
-			if str(anchor.get("kind", "none")) != "none" and not str(anchor.get("id", "")).is_empty():
-				highlighted_count += 1
+		var dialogue_id := str(lesson.get("dialogue_id", "")).strip_edges()
+		var dialogue_node := str(lesson.get("dialogue_node", "")).strip_edges()
+		var dialogue_nodes := _dict(library.dialogue(dialogue_id).get("nodes", {}))
+		if ["dialogue", "coach"].has(str(lesson.get("delivery", ""))) and not dialogue_id.is_empty() and not dialogue_node.is_empty() and dialogue_nodes.has(dialogue_node):
+			authored_delivery_count += 1
+		var anchor: Dictionary = lesson.get("anchor", {}) if typeof(lesson.get("anchor", {})) == TYPE_DICTIONARY else {}
+		if str(anchor.get("kind", "none")) != "none" and not str(anchor.get("id", "")).is_empty():
+			highlighted_count += 1
 	_check(ambient_ids.is_empty(), "Removed ambient tutorial tips still exist: %s" % JSON.stringify(ambient_ids), failures)
-	_check(authored_delivery_count == library.tutorial_lessons.size(), "Not every shipped tutorial lesson uses an authored dialogue or coach delivery.", failures)
+	_check(authored_delivery_count == library.tutorial_lessons.size(), "Not every shipped tutorial lesson resolves to an authored dialogue or coach node.", failures)
 	_check(highlighted_count == library.tutorial_lessons.size(), "Not every shipped tutorial lesson owns a highlight anchor.", failures)
 
 	var pal: Dictionary = library.character("pal_tutorial_guide")
@@ -167,6 +176,7 @@ func _tutorial_stuck_sweep(seed_count: int) -> Dictionary:
 		"parking_tip": 0,
 		"gas_environment": 0,
 		"underground_environment": 0,
+		"drink_lesson_boundary": 0,
 		"grand_invitation": 0,
 		"grand_environment": 0,
 	}
@@ -206,6 +216,10 @@ func _tutorial_stuck_sweep(seed_count: int) -> Dictionary:
 			ok = str(run_state.current_environment.get("archetype_id", "")) == "small_underground_casino"
 		if ok:
 			phase_started_usec = Time.get_ticks_usec()
+			ok = _record_completed_tutorial_lesson_boundary(run_state, "tutorial_drink_intro")
+			_add_elapsed_usec(phase_usec, "drink_lesson_boundary", phase_started_usec)
+		if ok:
+			phase_started_usec = Time.get_ticks_usec()
 			var invite := _resolve_event(run_state, "tutorial_grand_casino_invitation", "accept_first_invitation")
 			_add_elapsed_usec(phase_usec, "grand_invitation", phase_started_usec)
 			ok = bool(invite.get("ok", false)) and bool(run_state.narrative_flags.get("grand_casino_invite", false))
@@ -241,11 +255,13 @@ func _tutorial_lesson_boundary_save_load() -> Dictionary:
 	RunGeneratorScript.new(library).next_environment(current)
 	var completed: Dictionary = {}
 	var checked_ids: Array = []
+	var contextual_profile_lesson_ids: Array = []
 	for lesson_value in library.tutorial_lessons:
 		if typeof(lesson_value) != TYPE_DICTIONARY:
 			continue
 		var lesson: Dictionary = lesson_value
 		if str(lesson.get("scope", "")) != "tutorial_run":
+			contextual_profile_lesson_ids.append(str(lesson.get("id", "")).strip_edges())
 			continue
 		var lesson_id := str(lesson.get("id", "")).strip_edges()
 		var dialogue_id := str(lesson.get("dialogue_id", "")).strip_edges()
@@ -279,13 +295,16 @@ func _tutorial_lesson_boundary_save_load() -> Dictionary:
 		current = RunStateScript.new()
 		current.from_dict(restored.to_dict())
 		checked_ids.append(lesson_id)
+	_check(checked_ids.size() + contextual_profile_lesson_ids.size() == library.tutorial_lessons.size(), "Tutorial lesson scope accounting omitted a shipped lesson.", boundary_failures)
 	for failure in boundary_failures:
 		failures.append(failure)
 	return {
 		"boundaries_checked": checked_ids.size(),
+		"guided_boundaries_expected": library.tutorial_lessons.size() - contextual_profile_lesson_ids.size(),
 		"lesson_ids": checked_ids,
+		"contextual_profile_lessons": contextual_profile_lesson_ids,
 		"failures": boundary_failures,
-		"passed": boundary_failures.is_empty() and checked_ids.size() == library.tutorial_lessons.size(),
+		"passed": boundary_failures.is_empty() and checked_ids.size() + contextual_profile_lesson_ids.size() == library.tutorial_lessons.size(),
 	}
 
 
@@ -346,6 +365,7 @@ func _run_route(route_id: String) -> Dictionary:
 		generator.next_environment(run_state, "small_underground_casino", true)
 	_check(str(run_state.current_environment.get("archetype_id", "")) == "small_underground_casino", "%s did not reach Path B." % route_id, route_failures)
 	var blackjack_proof := await _play_tutorial_blackjack(run_state, route_failures)
+	_check(_record_completed_tutorial_lesson_boundary(run_state, "tutorial_drink_intro"), "%s did not cross the authored drink-intro lesson boundary." % route_id, route_failures)
 	var invite_result := _resolve_event(run_state, "tutorial_grand_casino_invitation", "accept_first_invitation")
 	_check(bool(invite_result.get("ok", false)) and bool(run_state.narrative_flags.get("grand_casino_invite", false)), "%s could not accept the real high-roller invitation." % route_id, route_failures)
 
@@ -599,6 +619,19 @@ func _resolve_event(run_state: RunState, event_id: String, choice_id: String) ->
 	var event_module := EventModuleScript.new()
 	event_module.setup(library.event(event_id), library)
 	return event_module.resolve(run_state, run_state.current_environment, choice_id)
+
+
+func _record_completed_tutorial_lesson_boundary(run_state: RunState, lesson_id: String) -> bool:
+	if run_state == null:
+		return false
+	var lesson: Dictionary = library.tutorial_lesson(lesson_id)
+	if lesson.is_empty() or str(lesson.get("scope", "")).strip_edges() != "tutorial_run":
+		return false
+	var completed: Dictionary = run_state.narrative_flags.get("tutorial_lessons_completed", {}) if typeof(run_state.narrative_flags.get("tutorial_lessons_completed", {})) == TYPE_DICTIONARY else {}
+	completed = completed.duplicate(true)
+	completed[lesson_id] = true
+	run_state.narrative_flags["tutorial_lessons_completed"] = completed
+	return bool(_dict(run_state.narrative_flags.get("tutorial_lessons_completed", {})).get(lesson_id, false))
 
 
 func _check(condition: bool, message: String, target_failures: Array) -> void:
