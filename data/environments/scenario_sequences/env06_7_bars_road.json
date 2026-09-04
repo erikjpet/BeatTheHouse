@@ -893,8 +893,11 @@
                         "input_action": "ui_right",
                         "label": "Decline Wake Toast",
                         "non_color_state": "ready",
-                        "handler": "publish_feedback",
+                        "handler": "change_scene_object",
                         "inputs": {
+                          "owner_namespace": "scenario",
+                          "stable_object_id": "bar_wake_task_1",
+                          "state": "changed_by_decline_wake_toast",
                           "message": "You decline Wake Toast. The visible setup now supports carry to regular."
                         }
                       }
@@ -965,7 +968,8 @@
                     "visible": true,
                     "description": "The visible setup now supports carry to regular. The carry to regular now reads as ready through task ready.",
                     "description_variants": {
-                      "changed_by_withhold_wake_toast": "You withhold Wake Toast. The visible setup now supports carry to regular."
+                      "changed_by_withhold_wake_toast": "You withhold Wake Toast. The visible setup now supports carry to regular.",
+                      "changed_by_decline_wake_toast": "You decline Wake Toast. The visible setup now supports carry to regular."
                     },
                     "zone_id": "left"
                   },
@@ -1335,7 +1339,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "c064ed2591091e0cd67ee8b87eebe204501140460b4158d62b745a9a44eb8209"
+        "sequence_signature": "39f518a4753890d270ae463baf3db449d6b5a227110717ba8b32946797a202eb"
       }
     },
     {
@@ -2243,8 +2247,11 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready",
-                        "handler": "publish_feedback",
+                        "handler": "change_scene_object",
                         "inputs": {
+                          "owner_namespace": "scenario",
+                          "stable_object_id": "bar_fight_night_task_1",
+                          "state": "changed_by_fail_bar_fight_night",
                           "message": "You let the pressure win. The visible setup now supports warn brawlers."
                         }
                       },
@@ -2323,7 +2330,7 @@
                     "visible": true,
                     "description": "Warn Brawlers is ready in task ready. The visible setup now supports warn brawlers.",
                     "description_variants": {
-
+                      "changed_by_fail_bar_fight_night": "You let the pressure win. The visible setup now supports warn brawlers."
                     },
                     "zone_id": "right"
                   },
@@ -3371,7 +3378,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "d5409b4b2865b3de85d5136bb6152c2325c14a4ef5abf6f2b9e66a2eb84508e4"
+        "sequence_signature": "7cad1896be67d6f1ad4cfe363681fe8fe901c7a5eeeefd70946d72eccb620ded"
       }
     },
     {
@@ -4241,8 +4248,11 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready",
-                        "handler": "publish_feedback",
+                        "handler": "change_scene_object",
                         "inputs": {
+                          "owner_namespace": "scenario",
+                          "stable_object_id": "bar_payday_rush_task_1",
+                          "state": "changed_by_fail_bar_payday_rush",
                           "message": "You let the pressure win. The visible setup now supports deliver table round."
                         }
                       },
@@ -4353,7 +4363,7 @@
                     "visible": true,
                     "description": "The visible setup now supports deliver table round. The deliver table round now reads as ready through task ready.",
                     "description_variants": {
-
+                      "changed_by_fail_bar_payday_rush": "You let the pressure win. The visible setup now supports deliver table round."
                     },
                     "zone_id": "right"
                   },
@@ -4722,7 +4732,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "fdd884f160a5afbac729601d2e195ea2cecd9044f2974538bf9a5b2ff0ebebf5"
+        "sequence_signature": "8d8979689a0666fb9f465c2cb890e0c71a88c9df94a1033b9a802183aba06543"
       }
     },
     {
@@ -5603,8 +5613,11 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready",
-                        "handler": "publish_feedback",
+                        "handler": "change_scene_object",
                         "inputs": {
+                          "owner_namespace": "scenario",
+                          "stable_object_id": "bar_lock_in_task_1",
+                          "state": "changed_by_fail_bar_lock_in",
                           "message": "You let the pressure win. The visible setup now supports inspect cellar hatch."
                         }
                       },
@@ -5683,7 +5696,7 @@
                     "visible": true,
                     "description": "The visible setup now supports inspect cellar hatch. The inspect cellar hatch now reads as ready through task ready.",
                     "description_variants": {
-
+                      "changed_by_fail_bar_lock_in": "You let the pressure win. The visible setup now supports inspect cellar hatch."
                     },
                     "zone_id": "right"
                   },
@@ -6524,7 +6537,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "2eb2a3362d3bd8df230e8ba75bd9b3b942f5892fb4a62ce2de7b4373552f271c"
+        "sequence_signature": "cf5f767d5fb20ca4da96edf27b3863a4494775ce74eb3519d7d69452e61a5592"
       }
     },
     {
@@ -7431,8 +7444,11 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready",
-                        "handler": "publish_feedback",
+                        "handler": "change_scene_object",
                         "inputs": {
+                          "owner_namespace": "scenario",
+                          "stable_object_id": "bar_darts_league_night_task_1",
+                          "state": "changed_by_fail_bar_darts_league_night",
                           "message": "You let the pressure win. The visible setup now supports score opening round."
                         }
                       },
@@ -7511,7 +7527,7 @@
                     "visible": true,
                     "description": "The score opening round carries the room's ready state, marked by task ready. The visible setup now supports score opening round.",
                     "description_variants": {
-
+                      "changed_by_fail_bar_darts_league_night": "You let the pressure win. The visible setup now supports score opening round."
                     },
                     "zone_id": "right"
                   },
@@ -8560,7 +8576,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "f51fc8a4c197a9af811f660fd26c3f17a192e44cebcc07167920f79dfbbe1146"
+        "sequence_signature": "eae0b9bce493ca420ef8895610ab068a22bc7dbf8e48df442aa2f752cd58c04a"
       }
     },
     {
@@ -9443,8 +9459,11 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready",
-                        "handler": "publish_feedback",
+                        "handler": "change_scene_object",
                         "inputs": {
+                          "owner_namespace": "scenario",
+                          "stable_object_id": "bar_live_band_task_1",
+                          "state": "changed_by_fail_bar_live_band",
                           "message": "You let the pressure win. The visible setup now supports patch soundcheck."
                         }
                       },
@@ -9523,7 +9542,7 @@
                     "visible": true,
                     "description": "The visible setup now supports patch soundcheck. The patch soundcheck now reads as ready through task ready.",
                     "description_variants": {
-
+                      "changed_by_fail_bar_live_band": "You let the pressure win. The visible setup now supports patch soundcheck."
                     },
                     "zone_id": "right"
                   },
@@ -10364,7 +10383,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "21eab2fc787fd0842d9f9fdea7da50d6889af4c96c41922ca07a21bcac748415"
+        "sequence_signature": "d16ad09ed0fc50e8e97532ef4f77626cc2937728c6dc19460318a8297897d8e9"
       }
     },
     {
@@ -10948,8 +10967,11 @@
                         "input_action": "ui_left",
                         "label": "Keep Bartender Company",
                         "non_color_state": "ready",
-                        "handler": "publish_feedback",
+                        "handler": "change_scene_object",
                         "inputs": {
+                          "owner_namespace": "scenario",
+                          "stable_object_id": "bar_dead_tuesday_task_0",
+                          "state": "changed_by_keep_bartender_company",
                           "message": "You keep Bartender Company. Three isolated task zones glow around the bartender, lone patron, and closed back booth."
                         }
                       },
@@ -11123,7 +11145,8 @@
                     "visible": true,
                     "description": "Choose Company Zone is ready in task ready. Three isolated task zones glow around the bartender, lone patron, and closed back booth.",
                     "description_variants": {
-                      "changed_by_fail_bar_dead_tuesday": "You let the pressure win. Three isolated task zones glow around the bartender, lone patron, and closed back booth."
+                      "changed_by_fail_bar_dead_tuesday": "You let the pressure win. Three isolated task zones glow around the bartender, lone patron, and closed back booth.",
+                      "changed_by_keep_bartender_company": "You keep Bartender Company. Three isolated task zones glow around the bartender, lone patron, and closed back booth."
                     },
                     "zone_id": "left"
                   },
@@ -11492,7 +11515,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "e17f8b6f2eeb5dd26a5fb8e28df91d7a6d18b99a6a44429aa12a120ccc007a98"
+        "sequence_signature": "467f409edb84320bcb8aa77ecd3b76ca04495431548f957f8a39bc38d5720028"
       }
     },
     {
@@ -12398,8 +12421,11 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready",
-                        "handler": "publish_feedback",
+                        "handler": "change_scene_object",
                         "inputs": {
+                          "owner_namespace": "scenario",
+                          "stable_object_id": "jazz_club_guest_legend_task_1",
+                          "state": "changed_by_fail_jazz_club_guest_legend",
                           "message": "You let the pressure win. The visible setup now supports open backstage lane."
                         }
                       },
@@ -12478,7 +12504,7 @@
                     "visible": true,
                     "description": "The open backstage lane is marked ready, keeping departure legible beside the room's activity.",
                     "description_variants": {
-
+                      "changed_by_fail_jazz_club_guest_legend": "You let the pressure win. The visible setup now supports open backstage lane."
                     },
                     "zone_id": "right"
                   },
@@ -13526,7 +13552,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "66a8818d5fd7cfc9e4a17e779f8ef4305b545c22a9909a20e6c33d472bf6b443"
+        "sequence_signature": "f7cafcf8a34365e2fcf89aecf68fe551282b6caa3dc4a9bb709db10adb3f8b52"
       }
     },
     {
@@ -14387,8 +14413,11 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready",
-                        "handler": "publish_feedback",
+                        "handler": "change_scene_object",
                         "inputs": {
+                          "owner_namespace": "scenario",
+                          "stable_object_id": "jazz_club_rent_party_task_1",
+                          "state": "changed_by_fail_jazz_club_rent_party",
                           "message": "You let the pressure win. The visible setup now supports run record sale."
                         }
                       },
@@ -14467,7 +14496,7 @@
                     "visible": true,
                     "description": "The visible setup now supports run record sale. The run record sale is ready and shows task ready, so the room cannot quietly erase the work.",
                     "description_variants": {
-
+                      "changed_by_fail_jazz_club_rent_party": "You let the pressure win. The visible setup now supports run record sale."
                     },
                     "zone_id": "right"
                   },
@@ -15107,7 +15136,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "337b64bc926e2de6ec03e736a0fdc5abeded687b934b8c6afb86f7c0b456cbe7"
+        "sequence_signature": "9ef099015c4c2d4e16b40280cf2df1fb6757b5989fa38f69f2057d51f2f9441c"
       }
     },
     {
@@ -15978,8 +16007,11 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready",
-                        "handler": "publish_feedback",
+                        "handler": "change_scene_object",
                         "inputs": {
+                          "owner_namespace": "scenario",
+                          "stable_object_id": "jazz_club_recording_night_task_1",
+                          "state": "changed_by_fail_jazz_club_recording_night",
                           "message": "You let the pressure win. The visible setup now supports reset microphone tree."
                         }
                       },
@@ -16091,7 +16123,7 @@
                     "visible": true,
                     "description": "The reset microphone tree carries the room's ready state, marked by task ready. The visible setup now supports reset microphone tree.",
                     "description_variants": {
-
+                      "changed_by_fail_jazz_club_recording_night": "You let the pressure win. The visible setup now supports reset microphone tree."
                     },
                     "zone_id": "right"
                   },
@@ -16460,7 +16492,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "ecd3127b8bc37fa0c0bc9e103b6bdf998615abbc3543a3c9aff783ea067c391a"
+        "sequence_signature": "f6fdace3b7c1b6a39190c7ff45004023237402f2bc3bd6fac5c926263551ca32"
       }
     },
     {
@@ -17356,8 +17388,11 @@
                         "input_action": "ui_right",
                         "label": "Let the pressure win",
                         "non_color_state": "ready",
-                        "handler": "publish_feedback",
+                        "handler": "change_scene_object",
                         "inputs": {
+                          "owner_namespace": "scenario",
+                          "stable_object_id": "jazz_club_union_trouble_task_1",
+                          "state": "changed_by_fail_jazz_club_union_trouble",
                           "message": "You let the pressure win. The visible setup now supports carry neutral stand."
                         }
                       },
@@ -17468,7 +17503,7 @@
                     "visible": true,
                     "description": "Carry Neutral Stand is ready in task ready. The visible setup now supports carry neutral stand.",
                     "description_variants": {
-
+                      "changed_by_fail_jazz_club_union_trouble": "You let the pressure win. The visible setup now supports carry neutral stand."
                     },
                     "zone_id": "right"
                   },
@@ -18042,7 +18077,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "50b15dd154d268914b5f38a97effcf03315fab65c5770a04ee923c70970c1ac3"
+        "sequence_signature": "7b441edc0d911d3ac89ad13c4a43cac828d5feeebc4221a3b7f7b4bdd90f5736"
       }
     }
   ]
