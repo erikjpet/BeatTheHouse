@@ -14,6 +14,64 @@ without claiming the native/Web terminal soak that has not yet run. The
 provenance and capture history for every historical fixture remain in
 `docs/plans/integ06_1_historical_fixture_wip.md` and the checked-in sidecars.
 
+## 2026-09-04 closeout checkpoint
+
+The recovery branch was rebased without conflict onto `origin/main` at
+`9b52c27a`. It has no diff in the env06_8-owned scenario data, archetype layout
+authority, environment interaction controller, pixel-scene icon fallback, or
+`foundation_main.gd`.
+
+Three genuine mid-0.6 saves are now retained under
+`scripts/tests/fixtures/integ06_1/mid_0_6/`. Each was captured from its exact
+historical commit by that commit's production FoundationMain and SaveService,
+using only public player actions. Each save has a provenance sidecar and a
+portable custody manifest:
+
+- `mid06_pre_game_depth_slot` (`31e434c`): entered Gas Station Slot and retained
+  a completed spin outcome;
+- `mid06_pre_environment_depth_bar_dice` (`5a2b1e1a`): entered Bar Dice and
+  retained one resolved round; and
+- `mid06_pre_world_depth_crew_debt` (`f1ebe9a7`): followed the public parking-lot
+  tip to Corner Store and retained an active Crew favor debt.
+
+On candidate `70a239bd`, foundation architecture validation passed, the v0.5.1
+matrix passed all 37 fixtures, and the new mid-0.6 matrix passed all three
+fixtures. Both matrices reported `provenance=verified source=FoundationMain
+round_trip=stable`.
+
+The composition producer now derives a non-repeating real-edge route for each
+generated map and opens hidden destinations only through the shipped public
+Parking Lot Tip and Grand Casino Invitation choices. It no longer uses
+arbitrary prevalidated jumps or creates false revisit failures. On the current
+pre-env candidate it reaches one external blocker while entering Grand Casino:
+
+- `game::game:video_poker` overlaps
+  `scenario::grand_casino_convention_crowd_convention_coordinator` in normal and
+  expanded-small layouts; and
+- `base::travel:grand_casino_back_room` and
+  `base::travel:grand_casino_cage` have ambiguous hit authority and overlapping
+  labels in both layouts.
+
+Those records are owned by env06_8 and were routed there; this integration branch
+does not alter them. Composition remains unaccepted until the env repair lands
+and the exact-candidate matrix is green.
+
+The terminal producer successfully built fresh pinned Web native code and a
+fresh Windows release export on diagnostic candidate `de49c753`. A contended
+three-case native shard exceeded 900 seconds, and an isolated one-case,
+132-action run with save/load every seven actions exceeded 1,800 seconds while
+remaining responsive and steadily consuming CPU. These are timeout diagnostics,
+not terminal evidence. The runner now writes native reports through its existing
+`--out` surface instead of depending on unavailable GUI-subsystem stdout, accepts
+an explicit shared pinned-toolchain root, and exposes fixture/checkpoint/action
+ordinals plus exact save/load boundaries for perf06 phase binding. No action cap,
+save/load cadence, route requirement, or semantic assertion was weakened.
+
+Final acceptance still requires one clean rerun after env06_8 and the final
+perf06 evidence profile are both frozen: project validation, both migration
+matrices, the full composition matrix, and the repeated native/Web terminal soak
+with parity, route, profile, retained-state, and cleanup checks.
+
 ## Historical migration matrix
 
 The current strict verifier passed all 37 genuine v0.5.1 saves. They were
@@ -42,10 +100,10 @@ Godot_v4.6-stable_win64_console.exe --headless --path . --script res://scripts/t
 
 Verdict: `fixtures=37 provenance=verified source=FoundationMain round_trip=stable`.
 
-No authentic mid-0.6 owner-build inventory has been located or admitted. In
-particular, this matrix does not yet prove saves taken before the Punchline,
-delivery, scenario-snapshot, or Coin Pusher V3 successor migrations. Synthetic
-lookalike saves were not substituted.
+The recovery audit found no owner-retained mid-0.6 save inventory, so the
+approved historical capture path produced the three genuine public-action saves
+listed in the closeout checkpoint above. The current verifier admits and
+round-trips all three. Synthetic lookalike saves were not substituted.
 
 ## Maximal production composition
 
@@ -166,8 +224,8 @@ difference is intended before the fixture is refreshed.
 
 ## Work still required before DONE
 
-- Generate and admit the three approved player-reachable mid-0.6 development-
-  boundary saves; no owner-authored inventory existed to recover.
+- Re-run both admitted migration classes on the final frozen candidate and
+  retain their exact logs.
 - Run the checked-in maximal composition matrix across every production-
   eligible archetype and all five lifecycle orderings.
 - Run the checked-in native/Web terminal-soak producer, including its

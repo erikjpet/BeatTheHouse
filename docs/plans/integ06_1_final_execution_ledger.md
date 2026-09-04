@@ -101,10 +101,11 @@ verdict.
 
 No owner-authored pre-depth mid-0.6 save inventory was found after the exhaustive
 recovery pass documented in
-`docs/plans/integ06_1_mid06_fixture_capture_plan.md`. Generated validation saves
-must not be promoted or relabeled as player evidence. The approved constructive
-path uses historical production FoundationMain and SaveService code at three
-exact pre-depth development boundaries:
+`docs/plans/integ06_1_mid06_fixture_capture_plan.md`. The approved constructive
+path used historical production FoundationMain and SaveService code at three
+exact pre-depth development boundaries. Those genuine public-action captures,
+their provenance sidecars, and portable custody manifests are now checked in.
+Regenerate them only when auditing custody itself:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File tools\integ06_1_generate_mid06_fixtures.ps1 `
@@ -113,12 +114,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools\integ06_1_generate_mid
   -KeepHistoricalArchive
 ```
 
-Until those genuine, player-reachable historical outputs are captured, admitted
-on the final candidate, and round-tripped, the mid-0.6 migration requirement
-remains **NOT PROVEN** and `integ06_1` remains TODO.
-
-After capture, admit only that fixture class with the provenance-aware current
-verifier:
+Admit that fixture class with the provenance-aware current verifier on the final
+candidate:
 
 ```powershell
 & $godot --headless --audio-driver Dummy --path . --script `
