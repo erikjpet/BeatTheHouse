@@ -44,6 +44,7 @@ func _run() -> void:
 	var max_actions := maxi(1, int(options.get("max-actions", DEFAULT_MAX_ACTIONS)))
 	var save_load_stride := maxi(1, int(options.get("save-load-stride", DEFAULT_SAVE_LOAD_STRIDE)))
 	var failures: Array = []
+	print("INTEG06_1_TERMINAL_PROGRESS stage=start shard=%d/%d" % [shard_index, shard_count])
 	if shard_index >= shard_count:
 		failures.append("Shard index must be below shard count.")
 	OS.set_environment("BTH_INTEG06_1_EMBED_ENDGAME", "1")
@@ -51,6 +52,7 @@ func _run() -> void:
 	var probe: Variant = EndgameProbeScript.new()
 	var library: Variant = ContentLibraryScript.new()
 	library.load(false)
+	print("INTEG06_1_TERMINAL_PROGRESS stage=library_loaded shard=%d/%d" % [shard_index, shard_count])
 	for error_value in library.validation_errors:
 		failures.append("Content validation error: %s" % str(error_value))
 	probe.set("library", library)
@@ -60,6 +62,7 @@ func _run() -> void:
 	probe.set("integration_save_slot_prefix", "integ06_1_terminal_%d" % shard_index)
 	probe.set("integration_production_only", true)
 	probe.call("_build_game_modules")
+	print("INTEG06_1_TERMINAL_PROGRESS stage=modules_built shard=%d/%d" % [shard_index, shard_count])
 
 	var profile: Variant = ProfileInventoryScript.new()
 	profile.from_dict({})
@@ -72,6 +75,7 @@ func _run() -> void:
 		if case_index % shard_count != shard_index:
 			continue
 		var case_data: Dictionary = CASES[case_index]
+		print("INTEG06_1_TERMINAL_PROGRESS stage=case_start shard=%d/%d case=%s" % [shard_index, shard_count, str(case_data.get("id", ""))])
 		var scenario := _scenario(str(case_data.get("scenario_id", "")))
 		if scenario.is_empty():
 			failures.append("Unknown terminal-soak scenario: %s" % str(case_data.get("scenario_id", "")))
@@ -79,6 +83,7 @@ func _run() -> void:
 		probe.set("integration_ignore_crew", bool(case_data.get("crew_ignoring_control", false)))
 		var case_started_usec := Time.get_ticks_usec()
 		var run: Dictionary = probe.call("_simulate_run", case_index, scenario, str(case_data.get("seed", "")), max_actions)
+		print("INTEG06_1_TERMINAL_PROGRESS stage=case_complete shard=%d/%d case=%s actions=%d" % [shard_index, shard_count, str(case_data.get("id", "")), int(run.get("actions", 0))])
 		var elapsed_ms := float(Time.get_ticks_usec() - case_started_usec) / 1000.0
 		var terminal := bool(run.get("won", false)) or bool(run.get("lost", false))
 		var authority_violations := _array(run.get("authority_violations", []))
@@ -144,8 +149,8 @@ func _run() -> void:
 	var profile_save_error: Error = profile.save()
 	var restored_profile: Variant = ProfileInventoryScript.new()
 	restored_profile.load()
-	var profile_expected := rows.filter(func(row: Dictionary) -> bool: return bool(_dict(row.get("terminal", {})).get("profile_recorded", false))).size()
-	var profile_persisted := profile_save_error == OK and restored_profile.loaded_from_disk and restored_profile.run_history.size() == profile_expected
+	var profile_expected: int = rows.filter(func(row: Dictionary) -> bool: return bool(_dict(row.get("terminal", {})).get("profile_recorded", false))).size()
+	var profile_persisted: bool = profile_save_error == OK and bool(restored_profile.loaded_from_disk) and restored_profile.run_history.size() == profile_expected
 	if not profile_persisted:
 		failures.append("ProfileInventory did not persist exactly one history row per terminal soak case.")
 	var semantic_payload := {"schema": SCHEMA, "version": VERSION, "cases": semantic_cases}

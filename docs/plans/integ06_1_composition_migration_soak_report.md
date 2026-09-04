@@ -57,14 +57,18 @@ does not alter them. Composition remains unaccepted until the env repair lands
 and the exact-candidate matrix is green.
 
 The terminal producer successfully built fresh pinned Web native code and a
-fresh Windows release export on diagnostic candidate `de49c753`. A contended
-three-case native shard exceeded 900 seconds, and an isolated one-case,
-132-action run with save/load every seven actions exceeded 1,800 seconds while
-remaining responsive and steadily consuming CPU. These are timeout diagnostics,
-not terminal evidence. The runner now writes native reports through its existing
-`--out` surface instead of depending on unavailable GUI-subsystem stdout, accepts
-an explicit shared pinned-toolchain root, and exposes fixture/checkpoint/action
-ordinals plus exact save/load boundaries for perf06 phase binding. No action cap,
+fresh Windows release export on diagnostic candidate `de49c753`. Its first runs
+exceeded 900 and 1,800 seconds because an inferred `profile_persisted` local did
+not parse in the exported scene; with no attached script, Godot remained in an
+empty main loop. Those timeouts are invalid setup evidence, not performance or
+terminal verdicts. The local is now explicitly typed, progress stages make this
+failure mode visible, and a one-case/one-action schema smoke completed in 29.3
+seconds wall / 16.6 seconds probe time, writing the expected report and journey
+fields. The runner also writes native reports through its existing `--out`
+surface instead of depending on unavailable GUI-subsystem stdout, accepts an
+explicit shared pinned-toolchain root, and exposes fixture/checkpoint/action
+ordinals plus exact save/load boundaries. These are production-core policy
+checkpoints, not executable FoundationMain UI replay commands. No action cap,
 save/load cadence, route requirement, or semantic assertion was weakened.
 
 Final acceptance still requires one clean rerun after env06_8 and the final
