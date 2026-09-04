@@ -388,3 +388,32 @@ Therefore `perf06_1` remains **IN PROGRESS**. The 20-second READY and 5/7 ms
 draw budgets are unchanged and unwaived. The final candidate must rerun the
 20-sample Coin Pusher gate and complete the native/Web/declared-low-end and
 `integ06_1` composition matrices before this row can close.
+
+### LTO cold-start experiment
+
+Two isolated engine-template experiments changed only the pinned Godot LTO
+mode and its mirrored artifact identity. Every run used a fresh export, Chrome
+152, CPU throttle 4, cold cache, a clean exact commit and a quiesced host. All
+red reports were retained; none was retried into a pass.
+
+| Template | Archive SHA-256 | Archive bytes | Side/main Wasm bytes | CPU4 cold READY runs |
+| --- | --- | ---: | ---: | --- |
+| no LTO baseline | `cf371f607aa9cb18e690bd595976c1baaf00c8cec24078e4a307fd515ad07913` | 6,055,590 | 21,802,358 / 1,508,237 | 22,746; 23,150 ms |
+| ThinLTO | `71e8ece320188e450f1d0272de590b87b53cd3ef654219c36dde5a304746e8de` | 6,225,810 | 22,433,415 / 1,508,095 | 22,144; 22,885; 22,616 ms |
+| FullLTO | `726c7427795bb0b78c3d4051457c82e98ddddce8ae24f98a1903a097497fc03e` | 6,155,921 | 21,521,191 / 1,497,255 | 22,661; 23,199; 23,148 ms |
+
+ThinLTO's `engine_ready_start` values were 20,165, 20,801 and 20,510 ms.
+FullLTO's were 20,554, 21,053 and 21,058 ms. Neither candidate reached the
+20,000 ms READY cap, much less enough margin to qualify as a stable fix.
+ThinLTO increased the dominant side module by 2.9%; FullLTO reduced it by only
+1.3% and did not improve startup. Both candidates were explicitly reverted;
+the reviewed final source and lock remain on `lto=none` and the baseline hash.
+
+The first eligible 20-sample runs also exposed a harness ordering defect: its
+reduced-motion boundary event was recorded before the three discarded warm-up
+draws, while the scenario's before-state was recorded after them. The marker is
+now emitted at the actual post-warm sample boundary. All three FullLTO runs
+passed that exact fixture/liveness linkage check. Their eligible idle draw p95
+values were 7.395, 7.670 and 7.400 ms against 5.000 ms; reduced-motion draw p95
+was 5.580, 7.195 and 6.480 ms against 5.000 ms. This is now a reproducible draw
+hot-path failure, separate from the rejected engine-startup experiment.
