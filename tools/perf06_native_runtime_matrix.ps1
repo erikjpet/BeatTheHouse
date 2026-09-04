@@ -90,6 +90,31 @@ if ((& git -C $root rev-parse HEAD).Trim() -cne $head -or @(& git -C $root statu
 $report = Get-Content -LiteralPath $rawReport -Raw | ConvertFrom-Json
 if ([string]$report.build_identity.source_commit -cne $head -or [string]$report.build_identity.export_sha256 -cne $buildHash) { throw "Native report identity does not match the exported candidate." }
 if ([string]$report.platform -cne "windows" -or [string]$report.plan -cne $Plan) { throw "Native report platform/plan identity is invalid." }
+$budgetTablePath = Join-Path $PSScriptRoot "perf06_budget_table.json"
+$phaseContractPath = Join-Path $PSScriptRoot "perf06_phase_qualification_contract.ps1"
+. $phaseContractPath
+$budgetTable = Get-Content -LiteralPath $budgetTablePath -Raw | ConvertFrom-Json
+$qualificationFailures = [Collections.Generic.List[string]]::new()
+$phaseEvaluations = [Collections.Generic.List[object]]::new()
+if ($report.PSObject.Properties.Name -contains "failures") {
+    foreach ($failure in @($report.failures)) { $qualificationFailures.Add("Runtime report failure: $failure") }
+}
+if ($report.PSObject.Properties.Name -contains "passed" -and -not [bool]$report.passed) {
+    $qualificationFailures.Add("Runtime report did not pass.")
+}
+foreach ($scenario in @($report.scenarios)) {
+    if ($null -eq $scenario.tags -or -not ($scenario.tags.PSObject.Properties.Name -contains "perf06_surface_id") -or [string]::IsNullOrWhiteSpace([string]$scenario.tags.perf06_phase_id)) { continue }
+    $budgetEvaluation = Get-Perf06PhaseBudgetEvaluation -Scenario $scenario -Platform native -BudgetTable $budgetTable -Plan $Plan
+    $livenessEvaluation = Get-Perf06PhaseLivenessEvaluation -Scenario $scenario -Platform native -BudgetTable $budgetTable
+    $phaseEvaluations.Add([pscustomobject][ordered]@{
+        surface_id = [string]$scenario.tags.perf06_surface_id
+        phase_id = [string]$scenario.tags.perf06_phase_id
+        budget = $budgetEvaluation
+        liveness = $livenessEvaluation
+    })
+    if (-not [bool]$budgetEvaluation.passed) { $qualificationFailures.Add("Native timing budget failed: $($scenario.tags.perf06_surface_id)/$($scenario.tags.perf06_phase_id)") }
+    if (-not [bool]$livenessEvaluation.passed) { $qualificationFailures.Add("Native published liveness floor failed: $($scenario.tags.perf06_surface_id)/$($scenario.tags.perf06_phase_id) measured=$($livenessEvaluation.measured) floor=$($livenessEvaluation.floor)") }
+}
 if ($Plan -eq "coin_pusher") {
     $pusherScenarios = @($report.scenarios | Where-Object { [string]$_.tags.perf06_surface_id -ceq "coin_pusher" })
     if ($pusherScenarios.Count -eq 0) { throw "Native Coin Pusher runtime emitted no canonical phase scenarios." }
@@ -106,8 +131,8 @@ if ($Plan -eq "distribution_fresh_start") {
 
 $summary = [ordered]@{
     schema = "beat_the_house.perf06_native_runtime/v1"
-    passed = $true
-    failures = @()
+    passed = $qualificationFailures.Count -eq 0
+    failures = @($qualificationFailures)
     candidate_commit = $head
     candidate_tree = (& git -C $root rev-parse "HEAD^{tree}").Trim()
     plan = $Plan
@@ -129,8 +154,13 @@ $summary = [ordered]@{
     runtime_report = $rawReport
     runtime_report_sha256 = (Get-FileHash -LiteralPath $rawReport -Algorithm SHA256).Hash.ToLowerInvariant()
     scenario_count = @($report.scenarios).Count
+    phase_evaluations = @($phaseEvaluations)
+    budget_table_version = [int]$budgetTable.version
+    budget_table_sha256 = (Get-FileHash -LiteralPath $budgetTablePath -Algorithm SHA256).Hash.ToLowerInvariant()
+    phase_contract_sha256 = (Get-FileHash -LiteralPath $phaseContractPath -Algorithm SHA256).Hash.ToLowerInvariant()
     distribution_fresh_start = $distributionEvidence
 }
 $summaryPath = Join-Path $out "summary.json"
 $summary | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $summaryPath -Encoding utf8
+if ($qualificationFailures.Count -ne 0) { Write-Error "PERF06 NATIVE RUNTIME FAIL failures=$($qualificationFailures.Count) summary=$summaryPath"; exit 1 }
 Write-Host "PERF06 NATIVE RUNTIME PASS plan=$Plan scenarios=$(@($report.scenarios).Count) commit=$head out=$out"

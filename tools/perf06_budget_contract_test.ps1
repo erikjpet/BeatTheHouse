@@ -5,6 +5,9 @@ $table = Get-Content -LiteralPath $tablePath -Raw | ConvertFrom-Json
 $webText = Get-Content -LiteralPath (Join-Path $PSScriptRoot "web_perf_smoke.ps1") -Raw
 $nativeText = Get-Content -LiteralPath (Join-Path $PSScriptRoot "foundation_performance_probe.gd") -Raw
 $lowEndText = Get-Content -LiteralPath (Join-Path $PSScriptRoot "perf06_low_end_matrix.ps1") -Raw
+$nativeRuntimeText = Get-Content -LiteralPath (Join-Path $PSScriptRoot "perf06_native_runtime_matrix.ps1") -Raw
+$phaseContractText = Get-Content -LiteralPath (Join-Path $PSScriptRoot "perf06_phase_qualification_contract.ps1") -Raw
+$matrixConsumerText = Get-Content -LiteralPath (Join-Path $PSScriptRoot "perf06_matrix_contract.ps1") -Raw
 
 if ([string]$table.schema -cne "beat_the_house.perf06_budget_table/v1" -or [int]$table.version -ne 1) {
     throw "Published performance budget table schema/version changed without a contract update."
@@ -58,5 +61,15 @@ foreach ($token in @("-Target template_debug", "BTH_PERF_NATIVE_PLUGIN_SHA256", 
 }
 if (-not $nativeText.Contains('str(stats.get("solver_backend", "")) == "native_v3"')) {
     throw "Native performance gate no longer requires the locked native_v3 solver."
+}
+foreach ($token in @("Get-Perf06PhaseBudgetEvaluation", "Get-Perf06PhaseLivenessEvaluation", 'passed = $qualificationFailures.Count -eq 0')) {
+    if (-not $nativeRuntimeText.Contains($token)) { throw "Native release qualification lost '$token'." }
+}
+if ($nativeRuntimeText.Contains('passed = $true')) { throw "Native release qualification must not hard-code a pass." }
+foreach ($token in @("animated_idle_liveness_minimum_per_120_frames", "active_frame_p95_ms", "active_draw_p95_ms", "active_action_ms", "solver_tick_p95_ms")) {
+    if (-not $phaseContractText.Contains($token)) { throw "Native phase qualification lost published budget/floor '$token'." }
+}
+foreach ($token in @('liveness.measured -lt [int]$Row.liveness.floor', 'observed -gt [double]$check.maximum')) {
+    if (-not $matrixConsumerText.Contains($token)) { throw "Final matrix consumer lost independent budget/liveness check '$token'." }
 }
 Write-Host "PERF06 BUDGET CONTRACT PASS version=$($table.version) protected_web=$($protectedWeb.Count)"

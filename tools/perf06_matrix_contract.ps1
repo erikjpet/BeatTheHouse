@@ -77,7 +77,7 @@ function Test-ArtifactHashes($Report, [string]$ManifestPath, [string]$Label) {
 
 function Test-PhaseRow($Row) {
     $label = "phase row from $($Row._source_label)"
-    foreach ($field in @("surface_id", "phase_id", "platform", "profile", "launch_identity", "frame", "draw", "liveness", "allocation_copy_counters", "retained_counters", "passed")) {
+    foreach ($field in @("surface_id", "phase_id", "platform", "profile", "launch_identity", "frame", "draw", "liveness", "budget_evaluation", "allocation_copy_counters", "retained_counters", "passed")) {
         [void](Require-Property $Row $field $label)
     }
     if (-not [bool]$Row.passed) { $failures.Add("$label did not pass: $($Row.surface_id)/$($Row.phase_id)/$($Row.profile)") }
@@ -86,6 +86,11 @@ function Test-PhaseRow($Row) {
         [void](Require-Property $launch $field "$label launch_identity")
     }
     if ([string]$launch.candidate_commit -cne $CandidateCommit) { $failures.Add("$label launch identity is from a different candidate.") }
+    if ($null -ne $budgetTable) {
+        if ([int]$launch.budget_table_version -ne [int]$budgetTable.version -or ([string]$launch.budget_table_sha256).ToLowerInvariant() -cne $budgetTableHash) {
+            $failures.Add("$label launch identity does not bind the published budget table.")
+        }
+    }
     if ([string]$Row.platform -ceq "web") {
         foreach ($field in @("browser_version", "browser_flags", "viewport", "worker_mode", "export_sha256")) { [void](Require-Property $launch $field "$label Web launch_identity") }
     } else {
@@ -101,9 +106,59 @@ function Test-PhaseRow($Row) {
         foreach ($field in @("count", "mean_ms", "p95_ms", "max_ms")) { [void](Require-Property $metric $field "$label $metricName") }
     }
     [void](Require-Property $Row.draw "calls_mean" "$label draw")
-    foreach ($field in @("counter", "floor", "measured", "zero_reason")) { [void](Require-Property $Row.liveness $field "$label liveness") }
+    foreach ($field in @("counter", "floor", "measured", "zero_reason", "source", "passed")) { [void](Require-Property $Row.liveness $field "$label liveness") }
     if ([int]$Row.liveness.floor -le 0 -and [string]::IsNullOrWhiteSpace([string]$Row.liveness.zero_reason)) {
         $failures.Add("$label has no positive liveness floor or accepted zero reason.")
+    }
+    if (-not [bool]$Row.liveness.passed -or ([int]$Row.liveness.floor -gt 0 -and [int]$Row.liveness.measured -lt [int]$Row.liveness.floor)) {
+        $failures.Add("$label did not meet its published liveness floor: measured=$($Row.liveness.measured) floor=$($Row.liveness.floor).")
+    }
+    $budgetEvaluation = $Row.budget_evaluation
+    foreach ($field in @("budget_table_version", "applicable", "checks", "passed")) { [void](Require-Property $budgetEvaluation $field "$label budget_evaluation") }
+    if ([int]$budgetEvaluation.budget_table_version -ne [int]$launch.budget_table_version) { $failures.Add("$label evaluated a different budget-table version than its launch identity.") }
+    foreach ($check in @($budgetEvaluation.checks)) {
+        foreach ($field in @("metric", "observed", "maximum", "passed")) { [void](Require-Property $check $field "$label budget check") }
+        if (-not [bool]$check.passed -or [double]$check.observed -gt [double]$check.maximum) {
+            $failures.Add("$label exceeded published budget '$($check.metric)': observed=$($check.observed) maximum=$($check.maximum).")
+        }
+    }
+    if (-not [bool]$budgetEvaluation.passed) { $failures.Add("$label did not pass its published timing-budget evaluation.") }
+    if ([string]$Row.platform -ceq "native" -and $null -ne $budgetTable) {
+        $surfaceId = [string]$Row.surface_id
+        $phaseId = [string]$Row.phase_id
+        $gameIds = @($budgetTable.native.resolve_ms.PSObject.Properties.Name) + @("coin_pusher")
+        $checksByMetric = @{}
+        foreach ($check in @($budgetEvaluation.checks)) { $checksByMetric[[string]$check.metric] = $check }
+        if ($gameIds -ccontains $surfaceId) {
+            $expectedDrawMaximum = [double]$budgetTable.native.surface_draw_p95_ms
+            if ($surfaceId -ceq "coin_pusher" -and $phaseId -in @("drop", "carriage", "skill_stop", "skill_release", "collect")) {
+                $expectedDrawMaximum = [double]$budgetTable.native.coin_pusher.active_draw_p95_ms
+            } elseif (-not [string]::IsNullOrWhiteSpace([string]$Row.liveness.zero_reason)) {
+                $expectedDrawMaximum = [double]$budgetTable.native.static_idle_surface_draw_p95_ms
+            } elseif ([int]$Row.liveness.floor -gt 0 -and $budgetTable.native.animated_idle_surface_draw_p95_ms.PSObject.Properties.Name -ccontains $surfaceId) {
+                $expectedDrawMaximum = [double]$budgetTable.native.animated_idle_surface_draw_p95_ms.PSObject.Properties[$surfaceId].Value
+            }
+            if (-not $checksByMetric.ContainsKey("draw_p95_ms") -or [double]$checksByMetric["draw_p95_ms"].maximum -ne $expectedDrawMaximum -or [double]$checksByMetric["draw_p95_ms"].observed -ne [double]$Row.draw.p95_ms) {
+                $failures.Add("$label did not evaluate its exact published native draw budget.")
+            }
+        }
+        if ($surfaceId -ceq "coin_pusher" -and $phaseId -in @("drop", "carriage", "skill_stop", "skill_release", "collect")) {
+            if (-not $checksByMetric.ContainsKey("frame_p95_ms") -or [double]$checksByMetric["frame_p95_ms"].maximum -ne [double]$budgetTable.native.coin_pusher.active_frame_p95_ms -or [double]$checksByMetric["frame_p95_ms"].observed -ne [double]$Row.frame.p95_ms) {
+                $failures.Add("$label did not evaluate the exact published Coin Pusher native frame budget.")
+            }
+            if (-not $checksByMetric.ContainsKey("resolve_call_ms") -or [double]$checksByMetric["resolve_call_ms"].maximum -ne [double]$budgetTable.native.coin_pusher.active_action_ms) {
+                $failures.Add("$label did not evaluate the exact published Coin Pusher action budget.")
+            }
+        }
+        if ($surfaceId -ceq "coin_pusher" -and $phaseId -ceq "raw_solver") {
+            if (-not $checksByMetric.ContainsKey("solver_tick_p95_ms") -or [double]$checksByMetric["solver_tick_p95_ms"].maximum -ne [double]$budgetTable.native.coin_pusher.solver_tick_p95_ms) {
+                $failures.Add("$label did not evaluate the exact published Coin Pusher solver budget.")
+            }
+        }
+        if ([int]$Row.liveness.floor -gt 0) {
+            $expectedFloor = [Math]::Max(1, [int][Math]::Ceiling(([double]$Row.frame.count * [double]$budgetTable.native.animated_idle_liveness_minimum_per_120_frames) / 120.0))
+            if ([int]$Row.liveness.floor -ne $expectedFloor) { $failures.Add("$label replaced the published native liveness floor: recorded=$($Row.liveness.floor) expected=$expectedFloor.") }
+        }
     }
     foreach ($field in @("allocations", "shallow_copies", "deep_copies", "bytes", "source", "scope", "evidence_kind", "audited_call_roots", "coverage_complete")) {
         [void](Require-Property $Row.allocation_copy_counters $field "$label allocation_copy_counters")
@@ -223,6 +278,9 @@ function Import-ShardReports($Manifest, [string]$ManifestPath, [string]$Kind) {
 }
 
 $matrix = Read-Json $RequiredMatrix "required matrix"
+$budgetTablePath = Resolve-RepoPath "tools/perf06_budget_table.json"
+$budgetTable = Read-Json $budgetTablePath "published budget table"
+$budgetTableHash = if ($null -ne $budgetTable) { (Get-FileHash -LiteralPath $budgetTablePath -Algorithm SHA256).Hash.ToLowerInvariant() } else { "" }
 $composition = Read-Json $CompositionManifest "composition manifest"
 $terminal = Read-Json $TerminalManifest "terminal manifest"
 $profilesToRequire = if ($RequiredProfiles.Count -gt 0) { @($RequiredProfiles | Sort-Object -Unique) } elseif ($null -ne $matrix) { @($matrix.required_profiles) } else { @() }

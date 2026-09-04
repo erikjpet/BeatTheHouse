@@ -24,7 +24,7 @@ foreach ($surfaceOverride in @($matrix.allocation_roots_by_phase.PSObject.Proper
     }
 }
 $lowEndLauncher = Get-Content -LiteralPath (Join-Path $PSScriptRoot "perf06_low_end_matrix.ps1") -Raw
-foreach ($needle in @("reproducible_whole_matrix_throttle", "ProcessorAffinity", "PriorityClass", "native_surface_probe.json", "ProfileManifestSha256", "profileFileRelative", "Low-end profile must resolve below", "PERF06 LOW-END PREFLIGHT PASS")) {
+foreach ($needle in @("reproducible_whole_matrix_throttle", "ProcessorAffinity", "PriorityClass", "native_surface_probe.json", "ProfileManifestSha256", "profileFileRelative", "Low-end profile must resolve below", "PERF06 LOW-END PREFLIGHT PASS", '[string]$SeedPrefix = "PERF06-FINAL"', "-SeedPrefix `$SeedPrefix")) {
     if (-not $lowEndLauncher.Contains($needle)) { throw "Low-end launcher lost reproducible whole-matrix binding '$needle'." }
 }
 $nativeWrapper = Get-Content -LiteralPath (Join-Path $PSScriptRoot "foundation_performance_probe.ps1") -Raw
@@ -53,6 +53,13 @@ foreach ($needle in @('"surface_draw_time_ms"', '"production_game_canvas"', '"co
 $surfaceBuilder = Get-Content -LiteralPath (Join-Path $PSScriptRoot "perf06_build_surface_report.ps1") -Raw
 foreach ($needle in @("perf06_surface_id", "perf06_phase_id", "surface_draw_time_ms", "action_evidence", "static_call_root_audit_sha256", "Refusing to overwrite immutable surface report")) {
     if (-not $surfaceBuilder.Contains($needle)) { throw "Surface-report builder lost '$needle'." }
+}
+foreach ($needle in @("Get-Perf06PhaseLivenessEvaluation", "Get-Perf06PhaseBudgetEvaluation", "budget_evaluation")) {
+    if (-not $surfaceBuilder.Contains($needle)) { throw "Surface-report builder lost fail-closed phase qualification '$needle'." }
+}
+$matrixConsumer = Get-Content -LiteralPath (Join-Path $PSScriptRoot "perf06_matrix_contract.ps1") -Raw
+foreach ($needle in @('liveness.measured -lt [int]$Row.liveness.floor', 'observed -gt [double]$check.maximum', 'budget_evaluation')) {
+    if (-not $matrixConsumer.Contains($needle)) { throw "Matrix consumer lost fail-closed budget/liveness enforcement '$needle'." }
 }
 $unknownRootOwners = @($matrix.allocation_roots.PSObject.Properties.Name | Where-Object { $_ -notin $matrixIds -and $_ -notin @($matrix.systems.PSObject.Properties.Name) })
 if ($unknownRootOwners.Count -ne 0) { throw "Allocation roots contain unknown surfaces: $($unknownRootOwners -join ',')" }
