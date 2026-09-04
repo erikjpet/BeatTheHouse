@@ -628,6 +628,7 @@ func _process(delta: float) -> void:
 		var layout_started_usec := Time.get_ticks_usec()
 		_apply_run_screen_layout()
 		perf_telemetry_overlay.record_foundation_subsystem_usec("layout", Time.get_ticks_usec() - layout_started_usec)
+		perf_telemetry_overlay.mark_allocation_root_audited("layout")
 	var clock_started_usec := Time.get_ticks_usec()
 	_advance_run_game_clock(delta)
 	perf_telemetry_overlay.record_foundation_subsystem_usec("environment_runtime", Time.get_ticks_usec() - clock_started_usec)
@@ -636,10 +637,13 @@ func _process(delta: float) -> void:
 		var automation_started_usec := snapshot_started_usec
 		_advance_game_surface_automation()
 		perf_telemetry_overlay.record_foundation_subsystem_usec("surface_automation", Time.get_ticks_usec() - automation_started_usec)
+		perf_telemetry_overlay.mark_allocation_root_audited("surface_automation")
 		var realtime_started_usec := Time.get_ticks_usec()
 		_advance_game_surface_realtime_state()
 		perf_telemetry_overlay.record_foundation_subsystem_usec("surface_realtime", Time.get_ticks_usec() - realtime_started_usec)
+		perf_telemetry_overlay.mark_allocation_root_audited("surface_realtime")
 		perf_telemetry_overlay.record_foundation_subsystem_usec("snapshot_builds", Time.get_ticks_usec() - snapshot_started_usec)
+		perf_telemetry_overlay.mark_allocation_root_audited("foundation_snapshot")
 	if presented_bankroll_hold_active:
 		var presented_started_usec := Time.get_ticks_usec()
 		_advance_presented_bankroll()
@@ -648,10 +652,12 @@ func _process(delta: float) -> void:
 		var environment_started_usec := Time.get_ticks_usec()
 		_advance_environment_game_runtime()
 		perf_telemetry_overlay.record_foundation_subsystem_usec("environment_runtime", Time.get_ticks_usec() - environment_started_usec)
+		perf_telemetry_overlay.mark_allocation_root_audited("environment_runtime")
 	if pending_autosave or (save_service != null and save_service.async_save_in_flight()):
 		var autosave_started_usec := Time.get_ticks_usec()
 		_flush_pending_autosave_if_ready()
 		perf_telemetry_overlay.record_foundation_subsystem_usec("autosave_flush", Time.get_ticks_usec() - autosave_started_usec)
+		perf_telemetry_overlay.mark_allocation_root_audited("autosave_flush")
 
 
 func _advance_run_game_clock(delta: float) -> void:
@@ -2210,6 +2216,7 @@ func _advance_game_surface_realtime_state() -> void:
 		var native_metrics: Dictionary = patch.get("coin_pusher_last_step_metrics", {})
 		if int(native_metrics.get("fixed_ticks", 0)) > 0:
 			perf_telemetry_overlay.record_foundation_subsystem_usec("coin_pusher_native_step", maxi(0, int(native_metrics.get("elapsed_usec", 0))))
+			perf_telemetry_overlay.mark_allocation_root_audited("coin_pusher_native_step")
 	game_surface_canvas.apply_surface_state_patch(patch)
 
 
@@ -6732,9 +6739,19 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		return {"ok": false, "errors": ["Travel requires an active run."]}
 	if travel_transition_active:
 		return {"ok": false, "errors": ["Travel is already in progress."]}
+	# This stage clock exists only for an explicitly enabled performance probe.
+	# Normal travel skips timestamp reads and publishes no diagnostics.
+	var perf_corner_store_timing := perf_telemetry_overlay != null \
+		and perf_telemetry_overlay.travel_stage_timing_enabled(target_id)
+	var perf_corner_store_total_started_usec := Time.get_ticks_usec() if perf_corner_store_timing else 0
+	var perf_corner_store_stage_started_usec := perf_corner_store_total_started_usec
+	var perf_corner_store_stages := {}
 	var lifecycle_rollback := _foundation_lifecycle_snapshot()
 	_protect_foundation_coach_attention(lifecycle_rollback)
 	_clear_recent_result_feedback()
+	if perf_corner_store_timing:
+		perf_corner_store_stages["lifecycle_snapshot_ms"] = float(Time.get_ticks_usec() - perf_corner_store_stage_started_usec) / 1000.0
+		perf_corner_store_stage_started_usec = Time.get_ticks_usec()
 	var ignored_talk_entries: Array = []
 	if choice_data.is_empty():
 		choice_data = _travel_choice(target_id)
@@ -6798,6 +6815,9 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	_show_message("Traveling to %s..." % target_label)
 	if not web_atomic_travel:
 		_refresh()
+	if perf_corner_store_timing:
+		perf_corner_store_stages["route_preflight_ms"] = float(Time.get_ticks_usec() - perf_corner_store_stage_started_usec) / 1000.0
+		perf_corner_store_stage_started_usec = Time.get_ticks_usec()
 	# The result-returning lifecycle boundary must remain synchronous so callers
 	# can atomically commit or roll back the complete travel transaction.
 	var route_risk := {} if local_casino_room_move else run_state.travel_route_risk(route, target_id)
@@ -6824,6 +6844,9 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		_refresh_after_foundation_lifecycle_rollback(lifecycle_rollback)
 		return {"ok": false, "errors": [clock_error]}
 	route["arrived_game_clock_minutes"] = maxi(departed_game_clock_minutes, run_state.game_clock_minutes)
+	if perf_corner_store_timing:
+		perf_corner_store_stages["route_clock_ms"] = float(Time.get_ticks_usec() - perf_corner_store_stage_started_usec) / 1000.0
+		perf_corner_store_stage_started_usec = Time.get_ticks_usec()
 	var install_result: Dictionary
 	if local_casino_room_move:
 		install_result = generator.enter_grand_casino_room_result(run_state, target_id)
@@ -6846,6 +6869,9 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 			_show_message(install_error)
 			_refresh_after_foundation_lifecycle_rollback(lifecycle_rollback)
 			return {"ok": false, "errors": [install_error]}
+	if perf_corner_store_timing:
+		perf_corner_store_stages["destination_generation_install_ms"] = float(Time.get_ticks_usec() - perf_corner_store_stage_started_usec) / 1000.0
+		perf_corner_store_stage_started_usec = Time.get_ticks_usec()
 	var delivery_arrival := run_state.delivery_resolve_travel_arrival(route, route_risk) if run_state.delivery_has_active_run() else {}
 	if not delivery_arrival.is_empty() and not bool(delivery_arrival.get("ok", false)):
 		_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
@@ -6911,6 +6937,9 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		var travel_deltas: Dictionary = travel_result.get("deltas", {}) if typeof(travel_result.get("deltas", {})) == TYPE_DICTIONARY else {}
 		travel_deltas["messages"] = [str(travel_result.get("message", ""))]
 		travel_result["deltas"] = travel_deltas
+	if perf_corner_store_timing:
+		perf_corner_store_stages["destination_postprocess_ms"] = float(Time.get_ticks_usec() - perf_corner_store_stage_started_usec) / 1000.0
+		perf_corner_store_stage_started_usec = Time.get_ticks_usec()
 	GameModule.apply_result(run_state, travel_result)
 	if not ignored_talk_entries.is_empty():
 		_apply_talk_ignore_penalty(ignored_talk_entries, "travel")
@@ -6919,6 +6948,9 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	_show_message(str(travel_result.get("message", "Travel complete: %s." % destination_name)))
 	_advance_alcohol_absorption()
 	_autosave_foundation_run("Autosaved.")
+	if perf_corner_store_timing:
+		perf_corner_store_stages["result_commit_save_ms"] = float(Time.get_ticks_usec() - perf_corner_store_stage_started_usec) / 1000.0
+		perf_corner_store_stage_started_usec = Time.get_ticks_usec()
 	if web_atomic_travel:
 		_hide_travel_transition()
 	else:
@@ -6945,6 +6977,13 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 			_refresh()
 	elif web_atomic_travel:
 		_refresh()
+	if perf_corner_store_timing:
+		perf_corner_store_stages["triggered_events_refresh_ms"] = float(Time.get_ticks_usec() - perf_corner_store_stage_started_usec) / 1000.0
+		perf_telemetry_overlay.mark_event("corner_store_travel_stage_timing", {
+			"target_id": target_id,
+			"stages": perf_corner_store_stages,
+			"total_ms": float(Time.get_ticks_usec() - perf_corner_store_total_started_usec) / 1000.0,
+		})
 	_commit_foundation_coach_attention(lifecycle_rollback)
 	return {"ok": true, "errors": [], "travel_result": travel_result.duplicate(true)}
 

@@ -8,6 +8,7 @@ const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 
 func _initialize() -> void:
 	var failures: Array = []
+	_check_entropy_source(failures)
 	_check_save_authority_lifecycle(failures)
 	_check_semantic_indistinguishability(failures)
 	_check_zero_to_one_indistinguishability(failures)
@@ -18,12 +19,21 @@ func _initialize() -> void:
 	_check_capacity_failure(failures)
 	_check_legacy_migration(failures)
 	if failures.is_empty():
-		print("world06_7 hidden-information contract passed capsule_bytes=%d key=per_install nonce=random cache=stable tamper=fail_closed binding=sealed legacy=v1_migrated" % CrewTurnModelScript.PRIVATE_SAVE_BYTES)
+		print("world06_7 hidden-information contract passed entropy=length_nonrepeat capsule_bytes=%d key=per_install nonce=random aes=roundtrip hmac=tamper_reject cache=stable binding=sealed legacy=v1_migrated" % CrewTurnModelScript.PRIVATE_SAVE_BYTES)
 		quit(0)
 		return
 	for failure in failures:
 		push_error(str(failure))
 	quit(1)
+
+
+func _check_entropy_source(failures: Array) -> void:
+	var crypto := Crypto.new()
+	for byte_count in [16, 32, CrewTurnModelScript.PRIVATE_SAVE_PLAIN_BYTES]:
+		var first := crypto.generate_random_bytes(byte_count)
+		var second := crypto.generate_random_bytes(byte_count)
+		_check(first.size() == byte_count and second.size() == byte_count, "Godot crypto did not satisfy an exact %d-byte entropy request." % byte_count, failures)
+		_check(first != second, "Independent Godot crypto requests returned the same %d-byte value." % byte_count, failures)
 
 
 func _check_save_authority_lifecycle(failures: Array) -> void:

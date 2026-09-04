@@ -3212,6 +3212,31 @@ func _check_performance_liveness_guard_component() -> bool:
 		await process_frame
 	var restored: Dictionary = canvas.call("performance_counters")
 	var restored_check := PerformanceLivenessGuardScript.evaluate("UI regression blackjack surface", counter, 1, int(restored.get(counter, 0)))
+	if int(restored.get("surface_animation_scheduler_elapsed_msec", 0)) <= 0 \
+			or not is_equal_approx(float(restored.get("surface_idle_animation_fps", 0.0)), 60.0) \
+			or int(restored.get("draw_sample_count", 0)) <= 0:
+		canvas.queue_free()
+		push_error("Restored idle-animation evidence omitted cadence, scheduler elapsed, or draw count.")
+		return false
+	# The timing buffer is intentionally bounded, but liveness uses a separate
+	# reset-scoped total so a long performance run cannot make its draw delta zero.
+	canvas.set_process(false)
+	canvas.call("reset_performance_counters")
+	for _sample_index in range(520):
+		canvas.call("_record_draw_performance", Time.get_ticks_usec())
+	var saturated: Dictionary = canvas.call("performance_counters")
+	if int(saturated.get("draw_sample_count", -1)) != 520 or int(saturated.get("draw_sample_buffer_count", -1)) != 512:
+		canvas.queue_free()
+		push_error("The monotonic draw count saturated with its bounded timing buffer.")
+		return false
+	canvas.call("reset_performance_counters")
+	var reset: Dictionary = canvas.call("performance_counters")
+	if int(reset.get("draw_sample_count", -1)) != 0 \
+			or int(reset.get("draw_sample_buffer_count", -1)) != 0 \
+			or int(reset.get("surface_animation_scheduler_elapsed_msec", -1)) != 0:
+		canvas.queue_free()
+		push_error("Performance counter reset retained draw or scheduler evidence.")
+		return false
 	canvas.queue_free()
 	await process_frame
 	if not bool(restored_check.get("passed", false)):

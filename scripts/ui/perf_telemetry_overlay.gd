@@ -6,29 +6,48 @@ extends Control
 
 const SlotStateScript := preload("res://scripts/games/slots/slot_machine_state.gd")
 const SlotPinballScript := preload("res://scripts/games/slots/slot_family_pinball.gd")
+const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
+const CrewTurnModelScript := preload("res://scripts/core/crew_turn_model.gd")
+const PerformanceFixtureSetupScript := preload("res://scripts/ui/performance_fixture_setup.gd")
 const WebAudioBridgeScript := preload("res://scripts/ui/web_audio_bridge.gd")
 const CoinPusherSolverScript := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
 const CoinPusherLiveSessionScript := preload("res://scripts/games/coin_pusher/coin_pusher_live_session.gd")
 
 const REQUIRED_GAME_IDS := [
 	"pull_tabs",
+	"scratch_tickets",
 	"slot",
 	"bar_dice",
 	"blackjack",
 	"baccarat",
 	"roulette",
 	"craps",
+	"crew_draw_poker",
 	"video_poker",
 ]
 const ACTIVE_ACTIONS := {
 	"pull_tabs": "buy_tab",
+	"scratch_tickets": "buy_scratch_ticket",
 	"slot": "spin",
 	"bar_dice": "roll",
 	"blackjack": "play_basic",
 	"baccarat": "deal_baccarat",
 	"roulette": "spin_roulette",
 	"craps": "roll_craps",
+	"crew_draw_poker": "deal",
 	"video_poker": "draw",
+}
+const ACTIVE_STAKES := {
+	"pull_tabs": 1,
+	"scratch_tickets": 2,
+	"slot": 10,
+	"bar_dice": 10,
+	"blackjack": 10,
+	"baccarat": 20,
+	"roulette": 10,
+	"craps": 10,
+	"crew_draw_poker": 5,
+	"video_poker": 5,
 }
 const DEFAULT_SAMPLE_STRIDE_FRAMES := 30
 const DEFAULT_SCENARIO_FRAMES := 180
@@ -42,6 +61,24 @@ const COIN_PUSHER_FIXTURE_SEED := "practice:coin_pusher_full_cap"
 const COIN_PUSHER_SHIPPED_BODY_COUNT := 160
 const COIN_PUSHER_IDLE_SAMPLE_FRAMES := 120
 const COIN_PUSHER_ACTION_SAMPLE_FRAMES := 60
+const IDLE_LIVENESS_MINIMUM_INTERVALS := 2
+const IDLE_LIVENESS_WAIT_GRACE_MSEC := 5000
+const ACTIVE_PHASE_MINIMUM_FRAMES := 12
+const ACTIVE_PHASE_MINIMUM_MSEC := 500
+const ACTIVE_PHASE_CHANNELS := {
+	"baccarat": "baccarat_deal",
+	"roulette": "roulette_spin",
+}
+const ALLOCATION_COPY_SOURCE_IDS := [
+	"foundation_snapshot",
+	"environment_runtime",
+	"surface_automation",
+	"surface_realtime",
+	"layout",
+	"autosave_flush",
+	"coin_pusher_native_step",
+	"producer_fixture",
+]
 # CPU-throttled shipped Web frames can leave a substantial live-session
 # accumulator for the production chunked-exit path to drain. This bound affects
 # setup synchronization only; locked measurement windows remain unchanged.
@@ -67,6 +104,7 @@ var current_tags: Dictionary = {}
 var current_start_msec := 0
 var current_start_memory_bytes := 0
 var current_last_memory_bytes := 0
+var current_start_liveness: Dictionary = {}
 var frame_ms_samples: Array = []
 var process_ms_samples: Array = []
 var physics_ms_samples: Array = []
@@ -118,6 +156,11 @@ var foundation_surface_realtime_last_usec := 0
 var foundation_surface_realtime_ui_last_usec := 0
 var foundation_surface_realtime_module_last_usec := 0
 var foundation_surface_realtime_augment_last_usec := 0
+var explicit_allocation_counts := PackedInt64Array()
+var explicit_shallow_copy_counts := PackedInt64Array()
+var explicit_deep_copy_counts := PackedInt64Array()
+var explicit_allocation_copy_bytes := PackedInt64Array()
+var explicit_allocation_audited_sources := PackedByteArray()
 
 
 static func runtime_enabled() -> bool:
@@ -157,6 +200,8 @@ func configure(owner: FoundationMain) -> void:
 	})
 	if plan_id == "l02":
 		call_deferred("_run_l02_plan")
+	elif plan_id == "secure_entropy":
+		call_deferred("_run_secure_entropy_plan")
 	elif plan_id == "corner_store":
 		call_deferred("_run_corner_store_plan")
 	elif plan_id == "lb3":
@@ -186,6 +231,10 @@ func configure_for_probe(owner: FoundationMain, overlay_visible: bool) -> void:
 	if show_overlay:
 		_build_overlay()
 	_begin_scenario("overlay_cost_probe", {"surface": "environment", "mode": "idle"})
+
+
+func travel_stage_timing_enabled(target_id: String) -> bool:
+	return target_id == "corner_store" and plan_id in ["l02", "corner_store"]
 
 
 func begin_foundation_frame() -> void:
@@ -224,6 +273,33 @@ func record_foundation_subsystem_usec(subsystem: String, elapsed_usec: int) -> v
 			foundation_surface_realtime_module_last_usec += value
 		"surface_realtime_augment":
 			foundation_surface_realtime_augment_last_usec += value
+
+
+# Opt-in probes call this only when the telemetry overlay exists. Normal play
+# never constructs this node, so explicit allocation/copy accounting has zero
+# default-game frame cost. `source` must name the instrumented operation rather
+# than inferring language allocations from memory deltas.
+func record_allocation_copy(kind: String, source: String, count: int = 1, bytes: int = 0) -> void:
+	var normalized_kind := kind.strip_edges().to_lower()
+	if normalized_kind not in ["allocation", "shallow_copy", "deep_copy"]:
+		return
+	var source_index := ALLOCATION_COPY_SOURCE_IDS.find(source.strip_edges())
+	if source_index < 0 or count <= 0 or bytes < 0:
+		return
+	explicit_allocation_audited_sources[source_index] = 1
+	if normalized_kind == "allocation":
+		explicit_allocation_counts[source_index] += count
+	elif normalized_kind == "shallow_copy":
+		explicit_shallow_copy_counts[source_index] += count
+	else:
+		explicit_deep_copy_counts[source_index] += count
+	explicit_allocation_copy_bytes[source_index] += bytes
+
+
+func mark_allocation_root_audited(source: String) -> void:
+	var source_index := ALLOCATION_COPY_SOURCE_IDS.find(source.strip_edges())
+	if source_index >= 0:
+		explicit_allocation_audited_sources[source_index] = 1
 
 
 func _process(delta: float) -> void:
@@ -278,6 +354,7 @@ func dump_report() -> Dictionary:
 			"source_commit": str(runtime_options.get("bth_perf_source_commit", "")),
 			"export_sha256": str(runtime_options.get("bth_perf_export_sha256", "")),
 		},
+		"evidence_profile": str(runtime_options.get("bth_perf_evidence_profile", OS.get_environment("BTH_PERF_EVIDENCE_PROFILE"))),
 	}
 	_write_report_file(report)
 	_emit_console(REPORT_PREFIX, report)
@@ -323,6 +400,90 @@ func _run_l02_plan() -> void:
 	l02_driver_complete = true
 	dump_report()
 	await _quit_after_report_flush()
+
+
+func _run_secure_entropy_plan() -> void:
+	if l02_driver_started:
+		return
+	l02_driver_started = true
+	await _wait_frames(8)
+	_end_scenario()
+	mark_event("secure_entropy_contract", _secure_entropy_contract())
+	l02_driver_complete = true
+	dump_report()
+	await _quit_after_report_flush()
+
+
+func _secure_entropy_contract() -> Dictionary:
+	var requested_sizes := [16, 32, CrewTurnModelScript.PRIVATE_SAVE_PLAIN_BYTES]
+	var exact_lengths := true
+	var nonrepeating := true
+	var crypto := Crypto.new()
+	for byte_count_value in requested_sizes:
+		var byte_count := int(byte_count_value)
+		var first := crypto.generate_random_bytes(byte_count)
+		var second := crypto.generate_random_bytes(byte_count)
+		exact_lengths = exact_lengths and first.size() == byte_count and second.size() == byte_count
+		nonrepeating = nonrepeating and first != second
+	var authority_id := CrewTurnModelScript.new_authority_id()
+	var binding := CrewTurnModelScript.private_save_binding(authority_id, "WEB-ENTROPY-CONTRACT", {"surface": "exported_web"})
+	var private_state := {
+		"v": CrewTurnModelScript.STATE_VERSION,
+		"m": "crew_switch",
+		"w": [CrewTurnModelScript.SIGNAL_PATTERN],
+		"e": [CrewTurnModelScript.SIGNAL_PATTERN],
+		"h": false,
+		"c": false,
+		"f": 1,
+		"t": [{"b": 9, "q": 2}],
+	}
+	var payload := {"x": private_state, "g": [[2, 0, 8, 4, "6730303031", "666978747572655f6a6f62"]], "q": 1}
+	var normalized := CrewTurnModelScript.normalize_private_payload(payload, CrewStateModelScript.MEMBER_IDS, CrewStateModelScript.GRIEVANCE_KINDS)
+	var first_encoded := CrewTurnModelScript.pack_private_save(payload, CrewStateModelScript.MEMBER_IDS, CrewStateModelScript.GRIEVANCE_KINDS, binding)
+	var second_encoded := CrewTurnModelScript.pack_private_save(payload, CrewStateModelScript.MEMBER_IDS, CrewStateModelScript.GRIEVANCE_KINDS, binding)
+	var first_capsule := Marshalls.base64_to_raw(first_encoded)
+	var second_capsule := Marshalls.base64_to_raw(second_encoded)
+	var restored := CrewTurnModelScript.unpack_private_save(first_encoded, CrewStateModelScript.MEMBER_IDS, CrewStateModelScript.GRIEVANCE_KINDS, binding)
+	var tamper_rejected := false
+	if first_capsule.size() == CrewTurnModelScript.PRIVATE_SAVE_BYTES:
+		var tampered := first_capsule.duplicate()
+		tampered[tampered.size() - 1] = int(tampered[tampered.size() - 1]) ^ 1
+		tamper_rejected = CrewTurnModelScript.unpack_private_save(Marshalls.raw_to_base64(tampered), CrewStateModelScript.MEMBER_IDS, CrewStateModelScript.GRIEVANCE_KINDS, binding).is_empty()
+	var plain_payload := CrewTurnModelScript.canonical_json(normalized).to_utf8_buffer()
+	var fixed_width := first_capsule.size() == CrewTurnModelScript.PRIVATE_SAVE_BYTES and second_capsule.size() == CrewTurnModelScript.PRIVATE_SAVE_BYTES
+	var distinct_capsules := fixed_width and first_capsule.slice(0, 16) != second_capsule.slice(0, 16) and first_capsule != second_capsule
+	var round_trip := not normalized.is_empty() and CrewTurnModelScript.canonical_json(restored) == CrewTurnModelScript.canonical_json(normalized)
+	var privacy_preserved := fixed_width and not _packed_contains(first_capsule, plain_payload) and not _packed_contains(second_capsule, plain_payload)
+	var passed := exact_lengths and nonrepeating and CrewTurnModelScript.valid_authority_id(authority_id) \
+		and fixed_width and distinct_capsules and round_trip and tamper_rejected and privacy_preserved
+	return {
+		"passed": passed,
+		"entropy_provider": "godot_crypto_mbedtls",
+		"requested_sizes": requested_sizes,
+		"exact_lengths": exact_lengths,
+		"nonrepeating": nonrepeating,
+		"authority_id_valid": CrewTurnModelScript.valid_authority_id(authority_id),
+		"capsule_bytes": first_capsule.size(),
+		"fixed_width": fixed_width,
+		"distinct_capsules": distinct_capsules,
+		"aes_round_trip": round_trip,
+		"hmac_tamper_rejected": tamper_rejected,
+		"privacy_preserved": privacy_preserved,
+	}
+
+
+func _packed_contains(haystack: PackedByteArray, needle: PackedByteArray) -> bool:
+	if needle.is_empty() or needle.size() > haystack.size():
+		return false
+	for start in range(haystack.size() - needle.size() + 1):
+		var matches := true
+		for offset in range(needle.size()):
+			if haystack[start + offset] != needle[offset]:
+				matches = false
+				break
+		if matches:
+			return true
+	return false
 
 
 func _run_corner_store_plan() -> void:
@@ -508,6 +669,10 @@ func _run_coin_pusher_plan() -> void:
 
 
 func _wait_for_coin_pusher_exit() -> bool:
+	return await _wait_for_game_exit()
+
+
+func _wait_for_game_exit() -> bool:
 	for _frame_index in range(COIN_PUSHER_EXIT_WAIT_FRAMES):
 		if not bool(app.get("game_exit_settle_active")):
 			return true
@@ -699,7 +864,7 @@ func _coin_pusher_canvas_counters(canvas: Control) -> Dictionary:
 	if canvas != null and canvas.has_method("performance_counters"):
 		var counters := (canvas.call("performance_counters") as Dictionary).duplicate(true)
 		var samples: Array = counters.get("draw_frame_usec_samples", []) if typeof(counters.get("draw_frame_usec_samples", [])) == TYPE_ARRAY else []
-		counters["draw_sample_count"] = samples.size()
+		counters["draw_sample_count"] = int(counters.get("draw_sample_count", samples.size()))
 		return counters
 	return {}
 
@@ -846,9 +1011,15 @@ func _set_coin_pusher_reduce_motion(enabled: bool) -> void:
 
 
 func _measure_corner_store() -> void:
+	var total_started_usec := Time.get_ticks_usec()
+	var stage_started_usec := total_started_usec
 	app.start_foundation_run("WEB-CORNER-STORE")
+	var foundation_run_start_ms := _duration_ms_since(stage_started_usec)
+	stage_started_usec = Time.get_ticks_usec()
 	await _wait_frames(8)
+	var post_start_settle_ms := _duration_ms_since(stage_started_usec)
 	var run_state: RunState = app.get("run_state") as RunState
+	stage_started_usec = Time.get_ticks_usec()
 	var choice: Dictionary = app.call("_travel_choice", "corner_store")
 	if choice.is_empty() or not bool(choice.get("enabled", true)):
 		choice = {
@@ -857,6 +1028,7 @@ func _measure_corner_store() -> void:
 			"enabled": true,
 			"route": app.call("_world_route_for_target", "corner_store"),
 		}
+	var choice_build_ms := _duration_ms_since(stage_started_usec)
 	var started_usec := Time.get_ticks_usec()
 	_emit_console("BTH_CORNER_STORE_OPEN_START ", {
 		"from": run_state.current_world_node_id() if run_state != null else "",
@@ -869,6 +1041,13 @@ func _measure_corner_store() -> void:
 		"environment_id": str(run_state.current_environment.get("archetype_id", "")) if run_state != null else "",
 	})
 	mark_event("corner_store_open", {"duration_ms": duration_ms})
+	mark_event("corner_store_startup_timing", {
+		"foundation_run_start_ms": foundation_run_start_ms,
+		"post_start_settle_ms": post_start_settle_ms,
+		"choice_build_ms": choice_build_ms,
+		"travel_ms": duration_ms,
+		"total_ms": _duration_ms_since(total_started_usec),
+	})
 	await _measure_scenario("corner_store_idle", {"surface": "environment", "mode": "idle"}, scenario_frames)
 
 
@@ -1154,15 +1333,115 @@ func _force_drunk_distortion_level(level: int) -> void:
 func _measure_game(game_id: String) -> void:
 	if app == null:
 		return
-	app.start_game_test_session(game_id)
+	if not await _wait_for_game_exit():
+		mark_event("game_fixture_entry_failed", {"game_id": game_id, "reason": "prior_exit_timeout"})
+		return
+	var session_result := app.start_game_test_session(game_id)
 	await _wait_frames(12)
-	await _measure_scenario("%s_idle" % game_id, {"surface": game_id, "mode": "idle"}, scenario_frames)
+	if not bool(session_result.get("ok", false)):
+		mark_event("game_fixture_entry_failed", {"game_id": game_id, "errors": session_result.get("errors", [])})
+		return
+	if game_id == "crew_draw_poker" and not bool(PerformanceFixtureSetupScript.install_actor_present_crew_draw_poker(app).get("ok", false)):
+		mark_event("crew_draw_poker_fixture_failed")
+		return
+	if game_id == "craps":
+		var craps_run: RunState = app.get("run_state") as RunState
+		if craps_run != null and craps_run.grand_casino_table_uses_chips("craps", craps_run.current_environment):
+			# Retain cash so the host's normal zero-bankroll terminal guard does not
+			# close the table while preparing this disposable active fixture.
+			craps_run.buy_grand_casino_chips(mini(1000, maxi(100, int(craps_run.bankroll / 2))), craps_run.grand_casino_chip_exchange_rate())
+			app.call("_refresh")
+	var entered_game: GameModule = app.get("current_game") as GameModule
+	if entered_game == null or entered_game.get_id() != game_id:
+		mark_event("game_fixture_entry_failed", {"game_id": game_id, "reason": "current_game_mismatch", "actual_game_id": entered_game.get_id() if entered_game != null else ""})
+		return
+	await _measure_game_idle(game_id)
 	_begin_scenario("%s_active" % game_id, {"surface": game_id, "mode": "active"})
-	_trigger_active_game_action(game_id)
-	await _wait_frames(active_frames)
+	current_tags["action_evidence"] = _trigger_active_game_action(game_id)
+	if ACTIVE_PHASE_CHANNELS.has(game_id):
+		current_tags["active_phase_evidence"] = await _measure_named_active_phase(
+			str(ACTIVE_PHASE_CHANNELS.get(game_id, "")),
+			active_frames
+		)
+	else:
+		await _wait_frames(active_frames)
 	_end_scenario()
 	app.back_to_environment()
-	await _wait_frames(8)
+	if not await _wait_for_game_exit():
+		mark_event("game_fixture_exit_failed", {"game_id": game_id, "reason": "exit_timeout"})
+	await _wait_frames(2)
+
+
+func _measure_game_idle(game_id: String) -> void:
+	_begin_scenario("%s_idle" % game_id, {"surface": game_id, "mode": "idle"})
+	var start_game: Dictionary = current_start_liveness.get("game_surface", {}) if typeof(current_start_liveness.get("game_surface", {})) == TYPE_DICTIONARY else {}
+	var declared_fps := maxf(0.0, float(start_game.get("surface_idle_animation_fps", 0.0)))
+	var required_window_msec := ceili(float(IDLE_LIVENESS_MINIMUM_INTERVALS) * 1000.0 / declared_fps) if declared_fps > 0.0 else 0
+	current_tags["idle_liveness_declared_fps"] = declared_fps
+	current_tags["idle_liveness_required_intervals"] = IDLE_LIVENESS_MINIMUM_INTERVALS
+	current_tags["idle_liveness_required_window_msec"] = required_window_msec
+	await _wait_frames(scenario_frames)
+	if required_window_msec > 0:
+		var start_elapsed_msec := int(start_game.get("surface_animation_scheduler_elapsed_msec", 0))
+		var deadline_msec := Time.get_ticks_msec() + required_window_msec + IDLE_LIVENESS_WAIT_GRACE_MSEC
+		while Time.get_ticks_msec() < deadline_msec:
+			var live := _game_surface_live_status()
+			if int(live.get("surface_animation_scheduler_elapsed_msec", 0)) - start_elapsed_msec >= required_window_msec:
+				break
+			await get_tree().process_frame
+	_end_scenario()
+
+
+func _game_surface_live_status() -> Dictionary:
+	if app == null:
+		return {}
+	var canvas := app.get("game_surface_canvas") as Control
+	if canvas == null or not canvas.has_method("performance_live_status"):
+		return {}
+	return canvas.call("performance_live_status") as Dictionary
+
+
+func _measure_named_active_phase(channel_id: String, frame_count: int) -> Dictionary:
+	var canvas := app.get("game_surface_canvas") as Control if app != null else null
+	var sample_frames := maxi(1, frame_count)
+	var active_at_start := canvas != null and canvas.has_method("surface_animation_active") \
+		and bool(canvas.call("surface_animation_active", channel_id))
+	var active_frame_count := 0
+	var longest_consecutive_active_frames := 0
+	var consecutive_active_frames := 0
+	var active_elapsed_msec := 0.0
+	var prior_usec := Time.get_ticks_usec()
+	for _frame_index in range(sample_frames):
+		await get_tree().process_frame
+		var now_usec := Time.get_ticks_usec()
+		var active := canvas != null and canvas.has_method("surface_animation_active") \
+			and bool(canvas.call("surface_animation_active", channel_id))
+		if active:
+			active_frame_count += 1
+			consecutive_active_frames += 1
+			longest_consecutive_active_frames = maxi(longest_consecutive_active_frames, consecutive_active_frames)
+			active_elapsed_msec += float(maxi(0, now_usec - prior_usec)) / 1000.0
+		else:
+			consecutive_active_frames = 0
+		# Advance on both branches: retaining the old baseline while active would
+		# triangularly overcount a sustained phase and qualify a short sample.
+		prior_usec = now_usec
+	var active_at_end := canvas != null and canvas.has_method("surface_animation_active") \
+		and bool(canvas.call("surface_animation_active", channel_id))
+	return {
+		"channel_id": channel_id,
+		"active_at_start": active_at_start,
+		"active_at_end": active_at_end,
+		"sample_frames": sample_frames,
+		"active_frame_count": active_frame_count,
+		"longest_consecutive_active_frames": longest_consecutive_active_frames,
+		"active_elapsed_msec": active_elapsed_msec,
+		"minimum_active_frames": ACTIVE_PHASE_MINIMUM_FRAMES,
+		"minimum_active_msec": ACTIVE_PHASE_MINIMUM_MSEC,
+		"coverage_passed": active_at_start \
+			and longest_consecutive_active_frames >= ACTIVE_PHASE_MINIMUM_FRAMES \
+			and active_elapsed_msec >= float(ACTIVE_PHASE_MINIMUM_MSEC),
+	}
 
 
 func _measure_slot_autoplay() -> void:
@@ -1238,10 +1517,13 @@ func _begin_scenario(name: String, tags: Dictionary = {}) -> void:
 	if scenario_active:
 		_end_scenario()
 	current_scenario = name
+	_emit_console("BTH_PERF_SCENARIO ", {"phase": "begin", "name": name, "ticks_msec": Time.get_ticks_msec()})
 	current_tags = tags.duplicate(false)
 	current_start_msec = Time.get_ticks_msec()
 	current_start_memory_bytes = _current_memory_bytes()
 	current_last_memory_bytes = current_start_memory_bytes
+	current_start_liveness = _liveness_counter_snapshot()
+	_reset_allocation_copy_counters()
 	frame_ms_samples = []
 	process_ms_samples = []
 	physics_ms_samples = []
@@ -1283,6 +1565,7 @@ func _end_scenario() -> void:
 	_sample_monitors()
 	var end_msec := Time.get_ticks_msec()
 	var memory_stats := _int_stats(memory_samples)
+	var end_liveness := _liveness_counter_snapshot()
 	var frame_attribution_samples := {}
 	if current_scenario.begins_with("coin_pusher_"):
 		# Keep the per-frame rows for Coin Pusher closure captures. Aggregate p95
@@ -1333,7 +1616,9 @@ func _end_scenario() -> void:
 			"surface_realtime_augment": _int_stats(foundation_surface_realtime_augment_usec_samples),
 		},
 		"frame_attribution_samples": frame_attribution_samples,
-		"liveness_counters": _liveness_counter_snapshot(),
+		"liveness_counters_start": current_start_liveness.duplicate(false),
+		"liveness_counters": end_liveness,
+		"liveness_counter_delta": _liveness_counter_delta(current_start_liveness, end_liveness),
 		"allocation_proxy": {
 			"sample_count": monitor_sample_count,
 			"sample_stride_frames": sample_stride_frames,
@@ -1349,10 +1634,56 @@ func _end_scenario() -> void:
 			"object_count_negative_delta_total": _sum_int(object_count_negative_delta_samples),
 			"node_count_delta": _int_stats(node_count_delta_samples),
 		},
+		"allocation_copy_counters": _allocation_copy_snapshot(),
 	}
 	scenario_records.append(record)
+	_emit_console("BTH_PERF_SCENARIO ", {"phase": "end", "name": current_scenario, "ticks_msec": end_msec, "frame_count": frame_ms_samples.size()})
 	scenario_active = false
 	current_scenario = ""
+
+
+func _allocation_copy_snapshot() -> Dictionary:
+	var totals := {"allocations": 0, "shallow_copies": 0, "deep_copies": 0, "bytes": 0}
+	var sources: Array = []
+	var audited_call_roots: Array = []
+	for source_index in range(ALLOCATION_COPY_SOURCE_IDS.size()):
+		var row := {
+			"source": str(ALLOCATION_COPY_SOURCE_IDS[source_index]),
+			"audited": explicit_allocation_audited_sources[source_index] != 0,
+			"allocations": int(explicit_allocation_counts[source_index]),
+			"shallow_copies": int(explicit_shallow_copy_counts[source_index]),
+			"deep_copies": int(explicit_deep_copy_counts[source_index]),
+			"bytes": int(explicit_allocation_copy_bytes[source_index]),
+		}
+		totals["allocations"] = int(totals.get("allocations", 0)) + int(row.allocations)
+		totals["shallow_copies"] = int(totals.get("shallow_copies", 0)) + int(row.shallow_copies)
+		totals["deep_copies"] = int(totals.get("deep_copies", 0)) + int(row.deep_copies)
+		totals["bytes"] = int(totals.get("bytes", 0)) + int(row.bytes)
+		sources.append(row)
+		if explicit_allocation_audited_sources[source_index] != 0:
+			audited_call_roots.append(str(ALLOCATION_COPY_SOURCE_IDS[source_index]))
+	totals["source"] = "explicit_instrumented_probe"
+	totals["sources"] = sources
+	totals["instrumented_source_count"] = ALLOCATION_COPY_SOURCE_IDS.size()
+	totals["scope"] = "steady_state_frame"
+	totals["evidence_kind"] = "explicit_counter"
+	totals["audited_call_roots"] = audited_call_roots
+	totals["coverage_complete"] = not audited_call_roots.is_empty()
+	return totals
+
+
+func _reset_allocation_copy_counters() -> void:
+	var size := ALLOCATION_COPY_SOURCE_IDS.size()
+	explicit_allocation_counts.resize(size)
+	explicit_shallow_copy_counts.resize(size)
+	explicit_deep_copy_counts.resize(size)
+	explicit_allocation_copy_bytes.resize(size)
+	explicit_allocation_audited_sources.resize(size)
+	explicit_allocation_counts.fill(0)
+	explicit_shallow_copy_counts.fill(0)
+	explicit_deep_copy_counts.fill(0)
+	explicit_allocation_copy_bytes.fill(0)
+	explicit_allocation_audited_sources.fill(0)
 
 
 func _sample_monitors() -> void:
@@ -1379,16 +1710,49 @@ func _sample_monitors() -> void:
 	orphan_node_count_samples.append(int(Performance.get_monitor(Performance.OBJECT_ORPHAN_NODE_COUNT)))
 
 
-func _trigger_active_game_action(game_id: String) -> void:
+func _trigger_active_game_action(game_id: String) -> Dictionary:
 	if app == null:
-		return
+		return {"accepted": false, "progressed": false, "reason": "missing_app"}
 	var action_id := _preferred_action_id(game_id)
 	if action_id.is_empty():
 		mark_event("missing_action", {"game_id": game_id})
-		return
+		return {"accepted": false, "progressed": false, "reason": "missing_action"}
+	var run_state: RunState = app.get("run_state") as RunState
+	var turns_before := int(run_state.current_environment.get("turns", 0)) if run_state != null else -1
+	var story_before := run_state.story_log_entry_count() if run_state != null else -1
+	var before := app.current_game_view_snapshot()
 	app.select_game_action(action_id, "legal")
-	app.set_selected_stake(_safe_stake())
+	app.set_selected_stake(_safe_stake(game_id))
 	app.resolve_selected_game_action()
+	var result: Dictionary = app.get("last_game_result") if typeof(app.get("last_game_result")) == TYPE_DICTIONARY else {}
+	var after := app.current_game_view_snapshot()
+	var turns_after := int(run_state.current_environment.get("turns", 0)) if run_state != null else -1
+	var story_after := run_state.story_log_entry_count() if run_state != null else -1
+	# Accepted alone is not progress: a host bug could acknowledge a no-op. Every
+	# ordinary game action must advance a canonical turn or append its story fact.
+	var progressed := bool(result.get("ok", false)) and (turns_after > turns_before or story_after > story_before)
+	if game_id == "crew_draw_poker":
+		progressed = bool(result.get("ok", false)) and str(after.get("phase", "idle")) != "idle" \
+			and (int(after.get("hand_number", 0)) > int(before.get("hand_number", 0)) \
+				or int(after.get("action_ordinal", 0)) > int(before.get("action_ordinal", 0))) \
+			and (turns_after > turns_before or story_after > story_before)
+	return {
+		"game_id": game_id,
+		"action_id": action_id,
+		"accepted": bool(result.get("ok", false)),
+		"progressed": progressed,
+		"message": str(result.get("message", "")),
+		"environment_turns_before": turns_before,
+		"environment_turns_after": turns_after,
+		"story_entries_before": story_before,
+		"story_entries_after": story_after,
+		"phase_before": str(before.get("phase", "")),
+		"phase_after": str(after.get("phase", "")),
+		"hand_number_before": int(before.get("hand_number", 0)),
+		"hand_number_after": int(after.get("hand_number", 0)),
+		"action_ordinal_before": int(before.get("action_ordinal", 0)),
+		"action_ordinal_after": int(after.get("action_ordinal", 0)),
+	}
 
 
 func _preferred_action_id(game_id: String) -> String:
@@ -1413,13 +1777,13 @@ func _preferred_action_id(game_id: String) -> String:
 	return fallback
 
 
-func _safe_stake() -> int:
+func _safe_stake(game_id: String = "") -> int:
 	var run_state: RunState = app.get("run_state") as RunState
 	if run_state == null:
 		return 1
 	var environment: Dictionary = run_state.current_environment
 	var economic_profile: Dictionary = environment.get("economic_profile", {})
-	return maxi(1, int(economic_profile.get("stake_floor", 1)))
+	return maxi(int(ACTIVE_STAKES.get(game_id, 1)), int(economic_profile.get("stake_floor", 1)))
 
 
 func _emit_surface_action(action_id: String, index: int, confirm: bool) -> void:
@@ -1546,7 +1910,7 @@ func _liveness_counter_snapshot() -> Dictionary:
 	if game_canvas != null and game_canvas.has_method("performance_counters"):
 		game_status = game_canvas.call("performance_counters")
 		var draw_samples: Array = game_status.get("draw_frame_usec_samples", []) if typeof(game_status.get("draw_frame_usec_samples", [])) == TYPE_ARRAY else []
-		game_status["draw_sample_count"] = draw_samples.size()
+		game_status["draw_sample_count"] = int(game_status.get("draw_sample_count", draw_samples.size()))
 	elif game_canvas != null and game_canvas.has_method("performance_live_status"):
 		game_status = game_canvas.call("performance_live_status")
 	var environment_status: Dictionary = {}
@@ -1556,6 +1920,24 @@ func _liveness_counter_snapshot() -> Dictionary:
 	return {
 		"game_surface": game_status,
 		"environment_scene": environment_status,
+	}
+
+
+func _liveness_counter_delta(before: Dictionary, after: Dictionary) -> Dictionary:
+	var before_game := before.get("game_surface", {}) as Dictionary
+	var after_game := after.get("game_surface", {}) as Dictionary
+	var before_environment := before.get("environment_scene", {}) as Dictionary
+	var after_environment := after.get("environment_scene", {}) as Dictionary
+	return {
+		"game_surface": {
+			"surface_animation_redraw_count": int(after_game.get("surface_animation_redraw_count", 0)) - int(before_game.get("surface_animation_redraw_count", 0)),
+			"surface_animation_scheduler_elapsed_msec": int(after_game.get("surface_animation_scheduler_elapsed_msec", 0)) - int(before_game.get("surface_animation_scheduler_elapsed_msec", 0)),
+			"surface_idle_animation_fps": float(after_game.get("surface_idle_animation_fps", 0.0)),
+			"draw_sample_count": int(after_game.get("draw_sample_count", 0)) - int(before_game.get("draw_sample_count", 0)),
+		},
+		"environment_scene": {
+			"scene_idle_animation_redraw_count": int(after_environment.get("scene_idle_animation_redraw_count", 0)) - int(before_environment.get("scene_idle_animation_redraw_count", 0)),
+		},
 	}
 
 

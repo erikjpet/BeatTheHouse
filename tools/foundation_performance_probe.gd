@@ -13,6 +13,7 @@ const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd"
 const PerfTelemetryOverlayScript := preload("res://scripts/ui/perf_telemetry_overlay.gd")
 const PerformanceLivenessGuardScript := preload("res://scripts/ui/performance_liveness_guard.gd")
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
+const PerformanceFixtureSetupScript := preload("res://scripts/ui/performance_fixture_setup.gd")
 const SlotMachineStateScript := preload("res://scripts/games/slots/slot_machine_state.gd")
 const CoinPusherSolverScript := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
 const CoinPusherLiveSessionScript := preload("res://scripts/games/coin_pusher/coin_pusher_live_session.gd")
@@ -46,6 +47,7 @@ const GAME_IDLE_LIVENESS := {
 	"slot": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
 	"bar_dice": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
 	"craps": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
+	"crew_draw_poker": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
 	"blackjack": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
 	"baccarat": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
 	"roulette": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
@@ -93,9 +95,11 @@ const REQUIRED_GAME_IDS := [
 	"scratch_tickets",
 	"slot",
 	"bar_dice",
+	"craps",
 	"blackjack",
 	"baccarat",
 	"roulette",
+	"crew_draw_poker",
 	"video_poker",
 	"coin_pusher",
 ]
@@ -104,9 +108,11 @@ const REQUIRED_RESOLVE_GAME_IDS := [
 	"scratch_tickets",
 	"slot",
 	"bar_dice",
+	"craps",
 	"blackjack",
 	"baccarat",
 	"roulette",
+	"crew_draw_poker",
 	"video_poker",
 ]
 const RESOLVE_PROBE_CONFIGS := {
@@ -114,9 +120,11 @@ const RESOLVE_PROBE_CONFIGS := {
 	"scratch_tickets": {"action_id": "buy_scratch_ticket", "stake": 2},
 	"slot": {"action_id": "spin", "stake": 10},
 	"bar_dice": {"action_id": "roll", "stake": 10},
+	"craps": {"action_id": "roll_craps", "stake": 10},
 	"blackjack": {"action_id": "play_basic", "stake": 10},
 	"baccarat": {"action_id": "deal_baccarat", "stake": 20},
 	"roulette": {"action_id": "spin_roulette", "stake": 10},
+	"crew_draw_poker": {"action_id": "deal", "stake": 5},
 	"video_poker": {"action_id": "draw", "stake": 5},
 }
 const RESOLVE_BUDGETS := {
@@ -124,9 +132,14 @@ const RESOLVE_BUDGETS := {
 	"scratch_tickets": {"avg_ms": 3.0, "p95_ms": 5.0, "max_ms": 6.0},
 	"slot": {"avg_ms": 6.0, "p95_ms": 8.0, "max_ms": 10.0},
 	"bar_dice": {"avg_ms": 1.5, "p95_ms": 3.0, "max_ms": 4.0},
+	# Pre-measurement guardrails deliberately match the nearest existing dice and
+	# card-family envelopes. The retained final-candidate samples, not these
+	# initial caps, determine whether a tighter maintained baseline is justified.
+	"craps": {"avg_ms": 4.5, "p95_ms": 5.5, "max_ms": 7.0},
 	"blackjack": {"avg_ms": 4.5, "p95_ms": 5.5, "max_ms": 7.0},
 	"baccarat": {"avg_ms": 1.25, "p95_ms": 1.75, "max_ms": 3.0},
 	"roulette": {"avg_ms": 2.0, "p95_ms": 3.0, "max_ms": 4.0},
+	"crew_draw_poker": {"avg_ms": 4.5, "p95_ms": 5.5, "max_ms": 7.0},
 	"video_poker": {"avg_ms": 2.5, "p95_ms": 4.5, "max_ms": 5.0},
 }
 const LOW_END_HEADROOM_WAIVERS := {
@@ -473,8 +486,14 @@ func _probe_practice_game_surface_coverage() -> void:
 		var game_id := str(game_id_value)
 		if game_id == "coin_pusher":
 			continue
-		app.call("start_game_test_session", game_id)
+		var session_result: Dictionary = app.call("start_game_test_session", game_id)
 		await _settle(4)
+		if not bool(session_result.get("ok", false)):
+			failures.append("Practice performance probe could not enter %s: %s" % [game_id, JSON.stringify(session_result.get("errors", []))])
+			continue
+		if game_id == "crew_draw_poker" and not bool(PerformanceFixtureSetupScript.install_actor_present_crew_draw_poker(app).get("ok", false)):
+			failures.append("Practice performance probe could not install the actor-present Crew Draw Poker fixture.")
+			continue
 		var environment_snapshot: Dictionary = app.call("current_environment_view_snapshot")
 		var environment_id := str(environment_snapshot.get("id", "practice_%s" % game_id))
 		if not _string_array(environment_snapshot.get("game_ids", [])).has(game_id):
@@ -901,8 +920,14 @@ func _probe_game_resolve_budgets() -> void:
 		if action_id.is_empty():
 			failures.append("Resolve performance probe has no action configured for %s." % game_id)
 			continue
-		app.call("start_game_test_session", game_id)
+		var session_result: Dictionary = app.call("start_game_test_session", game_id)
 		await _settle(4)
+		if not bool(session_result.get("ok", false)):
+			failures.append("Resolve performance probe could not enter %s: %s" % [game_id, JSON.stringify(session_result.get("errors", []))])
+			continue
+		if game_id == "crew_draw_poker" and not bool(PerformanceFixtureSetupScript.install_actor_present_crew_draw_poker(app).get("ok", false)):
+			failures.append("Resolve performance probe could not install the actor-present Crew Draw Poker fixture.")
+			continue
 		var run_state: RunState = app.get("run_state")
 		var game: GameModule = app.get("current_game") as GameModule
 		if run_state == null or game == null:
@@ -913,8 +938,16 @@ func _probe_game_resolve_budgets() -> void:
 		var baseline_rng_seed := int(run_state.rng_seed)
 		var baseline_rng_state := int(run_state.rng_state)
 		var baseline_suspicion: Dictionary = run_state.suspicion.duplicate(true)
+		var legal_action_ids: Array = []
+		for action_value in game.legal_actions(run_state, run_state.current_environment):
+			if typeof(action_value) == TYPE_DICTIONARY:
+				legal_action_ids.append(str((action_value as Dictionary).get("id", "")))
+		if not legal_action_ids.has(action_id):
+			failures.append("Resolve performance fixture for %s did not expose required legal action %s." % [game_id, action_id])
+			continue
 		var samples: Array = []
 		var ok_count := 0
+		var progress_count := 0
 		var failure_messages: Array = []
 		for sample_index in range(resolve_sample_count):
 			_prepare_run_for_resolve_probe(run_state, game_id, baseline_environment, baseline_rng_seed, baseline_rng_state, baseline_suspicion)
@@ -935,6 +968,8 @@ func _probe_game_resolve_budgets() -> void:
 			samples.append(float(elapsed_usec) / 1000.0)
 			if bool(result.get("ok", false)):
 				ok_count += 1
+				if game_id != "crew_draw_poker" or PerformanceFixtureSetupScript.crew_draw_poker_progressed(run_state.current_environment):
+					progress_count += 1
 			elif failure_messages.size() < 3:
 				var failure_message := str(result.get("message", "Resolve returned ok=false.")).strip_edges()
 				if not failure_messages.has(failure_message):
@@ -948,6 +983,7 @@ func _probe_game_resolve_budgets() -> void:
 		stats["mode"] = "resolve_path"
 		stats["sample_count"] = samples.size()
 		stats["ok_count"] = ok_count
+		stats["progress_count"] = progress_count
 		stats["failure_messages"] = failure_messages
 		stats["budget"] = budget
 		resolve_observations.append(stats)
@@ -957,6 +993,8 @@ func _probe_game_resolve_budgets() -> void:
 			failures.append("Resolve performance probe did not get a successful %s result: %s" % [game_id, "; ".join(failure_messages)])
 		elif ok_count < samples.size():
 			failures.append("Resolve performance probe only got %d/%d successful %s results." % [ok_count, samples.size(), game_id])
+		elif progress_count < samples.size():
+			failures.append("Resolve performance probe only observed %d/%d progressing %s actions." % [progress_count, samples.size(), game_id])
 		_assert_resolve_budget(game_id, stats, budget)
 
 
@@ -2019,6 +2057,7 @@ func _percentile(sorted_samples: Array, percentile: float) -> float:
 func _write_report() -> void:
 	var report := {
 		"tool": "foundation_performance_probe",
+		"evidence_profile": OS.get_environment("BTH_PERF_EVIDENCE_PROFILE"),
 		"run_count": run_count,
 		"frames_per_surface": frames_per_surface,
 		"seed_prefix": seed_prefix,

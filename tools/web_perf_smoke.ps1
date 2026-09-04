@@ -8,8 +8,12 @@ param(
     [int]$MemorySeconds = 20,
     [int]$TimeoutMs = 600000,
     [string]$Out = ".tmp/web_perf_smoke/report.json",
-    [ValidateSet("l02", "grand_casino", "coin_pusher")]
+    [ValidateSet("cold", "warm")]
+    [string]$CacheMode = "cold",
+    [ValidateSet("l02", "grand_casino", "coin_pusher", "secure_entropy")]
     [string]$Plan = "l02",
+    [ValidatePattern("^[A-Za-z0-9_.:-]*$")]
+    [string]$EvidenceProfile = "web",
     [switch]$CoinPusherStageDiagnostic,
     [switch]$SkipExport,
     [switch]$Headed
@@ -18,6 +22,8 @@ param(
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 . (Join-Path $PSScriptRoot "web_perf_coin_pusher_clock_contract.ps1")
+. (Join-Path $PSScriptRoot "web_perf_idle_liveness_contract.ps1")
+. (Join-Path $PSScriptRoot "web_perf_prestage_contract.ps1")
 . (Join-Path $PSScriptRoot "web_server_lifecycle.ps1")
 $trackedStatus = @(& git -C $root status --short --untracked-files=no)
 if ($Plan -eq "coin_pusher" -and $trackedStatus.Count -gt 0) {
@@ -43,6 +49,8 @@ $frameP95BudgetsMs = @{
     "corner_store_idle" = 120.0
     "pull_tabs_idle" = 20.0
     "pull_tabs_active" = 60.0
+    "scratch_tickets_idle" = 25.0
+    "scratch_tickets_active" = 65.0
     "slot_idle" = 45.0
     "slot_active" = 110.0
     "bar_dice_idle" = 25.0
@@ -53,6 +61,10 @@ $frameP95BudgetsMs = @{
     "baccarat_active" = 120.0
     "roulette_idle" = 30.0
     "roulette_active" = 160.0
+    "craps_idle" = 30.0
+    "craps_active" = 160.0
+    "crew_draw_poker_idle" = 25.0
+    "crew_draw_poker_active" = 110.0
     "video_poker_idle" = 20.0
     "video_poker_active" = 60.0
     "slot_autoplay_active" = 100.0
@@ -81,6 +93,11 @@ if ($Plan -eq "coin_pusher") {
         "coin_pusher_active_skill_release" = 22.0
         "coin_pusher_active_collect" = 22.0
         "coin_pusher_reduced_motion" = 16.0
+    }
+}
+if ($Plan -eq "secure_entropy") {
+    $frameP95BudgetsMs = @{
+        "menu_idle" = 180.0
     }
 }
 $readyBudgetMs = 20000
@@ -155,18 +172,21 @@ $exportSha256 = [string]$webExportIdentity.aggregate_sha256
 $serverStdout = Join-Path $outDir "serve_web.stdout.txt"
 $serverStderr = Join-Path $outDir "serve_web.stderr.txt"
 $serverOwnership = Join-Path $outDir ("serve_web.ownership.{0}.json" -f [guid]::NewGuid().ToString("N"))
+$profile = Join-Path $root (".tmp/web_perf_smoke/{0}_profile" -f $Browser)
+if ($CacheMode -eq "warm" -and -not (Test-Path -LiteralPath $profile)) {
+    throw "Warm-cache Web performance evidence requires an existing profile from a preceding cold-cache run: $profile"
+}
 $server = $null
 try {
     $server = Start-OwnedWebServer -ServeScript (Join-Path $PSScriptRoot "serve_web.ps1") -ServerScript (Join-Path $PSScriptRoot "serve_web_server.py") -ServeRoot (Join-Path $root "builds/web") -Port $Port -OwnershipFile $serverOwnership -StandardOutput $serverStdout -StandardError $serverStderr
     Wait-ForWebServer -Url "http://127.0.0.1:$Port/" -TimeoutSec 30
     Assert-OwnedWebServerListener -Launch $server
     $headless = if ($Headed) { "false" } else { "true" }
-    $url = "http://127.0.0.1:$Port/?bth_perf=1&bth_perf_plan=$Plan&bth_perf_auto_quit=1&bth_perf_frames=$Frames&bth_perf_active_frames=$ActiveFrames&bth_perf_memory_seconds=$MemorySeconds&bth_perf_source_commit=$sourceCommit&bth_perf_export_sha256=$exportSha256"
+    $url = "http://127.0.0.1:$Port/?bth_perf=1&bth_perf_plan=$Plan&bth_perf_auto_quit=1&bth_perf_frames=$Frames&bth_perf_active_frames=$ActiveFrames&bth_perf_memory_seconds=$MemorySeconds&bth_perf_source_commit=$sourceCommit&bth_perf_export_sha256=$exportSha256&bth_perf_evidence_profile=$EvidenceProfile"
     if ($Plan -eq "coin_pusher" -and $CoinPusherStageDiagnostic) {
         $url += "&bth_perf_coin_pusher_stage_diagnostic=1"
     }
-    $profile = Join-Path $root (".tmp/web_perf_smoke/{0}_profile" -f $Browser)
-    $coldCache = if ($SkipExport) { "false" } else { "true" }
+    $coldCache = if ($CacheMode -eq "cold") { "true" } else { "false" }
     $probeArgs = @(
         (Join-Path $PSScriptRoot "l02_web_perf_probe.mjs"),
         "--browser=$Browser",
@@ -219,12 +239,22 @@ if ($Plan -eq "l02") {
         $cornerStoreOpenMs = [double]$cornerStoreOpenEvents[-1].data.duration_ms
         Assert-Condition -Condition ($cornerStoreOpenMs -le $cornerStoreOpenBudgetMs) -Message ("Corner Store open {0:N3}ms exceeded {1:N3}ms." -f $cornerStoreOpenMs, $cornerStoreOpenBudgetMs) -Failures $failures
     }
+    $cornerStoreTiming = Get-WebPerfCornerStoreTimingEvaluation -Report $report
+    Assert-Condition -Condition ([bool]$cornerStoreTiming.startup_schema_present) -Message "Corner Store startup timing did not preserve every outer startup boundary." -Failures $failures
+    Assert-Condition -Condition ([bool]$cornerStoreTiming.travel_schema_present) -Message "Corner Store travel timing did not preserve every inner production boundary." -Failures $failures
+    Assert-Condition -Condition ([bool]$cornerStoreTiming.stage_values_valid) -Message "Corner Store stage timing contained an invalid stage value or target identity." -Failures $failures
+    Assert-Condition -Condition ([bool]$cornerStoreTiming.totals_valid) -Message "Corner Store stage timing did not reconcile with its measured startup/travel totals." -Failures $failures
 }
 
 $scenariosByName = @{}
 foreach ($scenario in @($report.scenarios)) {
     $scenariosByName[[string]$scenario.name] = $scenario
 }
+$l02AnimatedIdleGameIds = @(
+    "pull_tabs", "scratch_tickets", "slot", "bar_dice", "blackjack",
+    "baccarat", "roulette", "craps", "crew_draw_poker", "video_poker"
+)
+$l02ActiveGameIds = $l02AnimatedIdleGameIds
 foreach ($scenarioName in $frameP95BudgetsMs.Keys) {
     Assert-Condition -Condition ($scenariosByName.ContainsKey($scenarioName)) -Message "Missing web perf scenario '$scenarioName'." -Failures $failures
     if (-not $scenariosByName.ContainsKey($scenarioName)) {
@@ -233,9 +263,46 @@ foreach ($scenarioName in $frameP95BudgetsMs.Keys) {
     $scenario = $scenariosByName[$scenarioName]
     $p95 = [double]$scenario.frame_time_ms.p95
     $budget = [double]$frameP95BudgetsMs[$scenarioName]
-    Assert-Condition -Condition ($p95 -le $budget) -Message ("Scenario {0} frame p95 {1:N3}ms exceeded {2:N3}ms." -f $scenarioName, $p95, $budget) -Failures $failures
+    $frameSampleEligible = $true
+    if ($Plan -eq "l02" -and $scenarioName -in @("baccarat_active", "roulette_active")) {
+        $expectedChannel = if ($scenarioName -eq "baccarat_active") { "baccarat_deal" } else { "roulette_spin" }
+        $activePhase = Get-WebPerfActivePhaseEvaluation -Scenario $scenario -ExpectedChannel $expectedChannel
+        Assert-Condition -Condition ([bool]$activePhase.schema_present) -Message ("Scenario {0} omitted named active-phase evidence." -f $scenarioName) -Failures $failures
+        Assert-Condition -Condition ([bool]$activePhase.channel_matches) -Message ("Scenario {0} measured channel '{1}' instead of '{2}'." -f $scenarioName, [string]$activePhase.channel_id, $expectedChannel) -Failures $failures
+        Assert-Condition -Condition ([bool]$activePhase.active_at_start) -Message ("Scenario {0} did not enter its named animation phase at the action boundary." -f $scenarioName) -Failures $failures
+        Assert-Condition -Condition ([bool]$activePhase.frame_window_passed) -Message ("Scenario {0} retained only {1} consecutive active frames; at least {2} are required before frame p95 is eligible." -f $scenarioName, [int]$activePhase.longest_consecutive_active_frames, [int]$activePhase.minimum_active_frames) -Failures $failures
+        Assert-Condition -Condition ([bool]$activePhase.elapsed_window_passed) -Message ("Scenario {0} retained only {1:N3}ms in its named phase; at least {2:N3}ms are required before frame p95 is eligible." -f $scenarioName, [double]$activePhase.active_elapsed_msec, [double]$activePhase.minimum_active_msec) -Failures $failures
+        $frameSampleEligible = [bool]$activePhase.passed
+    }
+    if ($frameSampleEligible) {
+        Assert-Condition -Condition ($p95 -le $budget) -Message ("Scenario {0} frame p95 {1:N3}ms exceeded {2:N3}ms." -f $scenarioName, $p95, $budget) -Failures $failures
+    }
     $memoryDelta = [Math]::Abs([int64]$scenario.static_memory_bytes.delta)
     Assert-Condition -Condition ($memoryDelta -le $scenarioMemoryDeltaBudgetBytes) -Message ("Scenario {0} memory delta {1:N0} bytes exceeded {2:N0} bytes." -f $scenarioName, $memoryDelta, $scenarioMemoryDeltaBudgetBytes) -Failures $failures
+    # Keep each idle timing assertion structurally paired with evidence from
+    # the same sample window that scheduler and drawing stayed alive. Absolute
+    # counters can be nonzero because of an earlier transition and are not proof.
+    if ($Plan -eq "l02" -and $scenarioName.EndsWith("_idle")) {
+        $gameId = $scenarioName.Substring(0, $scenarioName.Length - 5)
+        if ($l02AnimatedIdleGameIds -notcontains $gameId) { continue }
+        $idleEvidence = Get-WebPerfIdleLivenessEvaluation -Scenario $scenario
+        Assert-Condition -Condition ([bool]$idleEvidence.schema_present) -Message ("Scenario {0} omitted declared idle FPS, scheduler elapsed, redraw, or draw evidence." -f $scenarioName) -Failures $failures
+        Assert-Condition -Condition ([bool]$idleEvidence.cadence_stable) -Message ("Scenario {0} did not retain one positive production-declared idle cadence across the sample (declared {1:N3} FPS)." -f $scenarioName, [double]$idleEvidence.declared_fps) -Failures $failures
+        Assert-Condition -Condition ([bool]$idleEvidence.window_complete) -Message ("Scenario {0} sampled only {1}ms of its production scheduler; at {2:N3} FPS at least two intervals ({3}ms) are required." -f $scenarioName, [int]$idleEvidence.scheduler_elapsed_msec, [double]$idleEvidence.declared_fps, [int]$idleEvidence.minimum_window_msec) -Failures $failures
+        Assert-Condition -Condition ([bool]$idleEvidence.redraw_cadence_passed) -Message ("Scenario {0} scheduled {1} redraw(s), below the elapsed-time floor {2} for {3}ms at {4:N3} FPS." -f $scenarioName, [int]$idleEvidence.redraw_delta, [int]$idleEvidence.required_redraws, [int]$idleEvidence.scheduler_elapsed_msec, [double]$idleEvidence.declared_fps) -Failures $failures
+        Assert-Condition -Condition ([bool]$idleEvidence.paired_draw_passed) -Message ("Scenario {0} had no production canvas draw paired with its same-window scheduler evidence." -f $scenarioName) -Failures $failures
+    }
+    if ($Plan -eq "l02" -and $scenarioName.EndsWith("_active")) {
+        $gameId = $scenarioName.Substring(0, $scenarioName.Length - 7)
+        if ($l02ActiveGameIds -notcontains $gameId) { continue }
+        $actionEvidence = $scenario.tags.action_evidence
+        Assert-Condition -Condition ([bool]$actionEvidence.accepted) -Message ("Scenario {0} measured a rejected/no-op action instead of an accepted action." -f $scenarioName) -Failures $failures
+        Assert-Condition -Condition ([bool]$actionEvidence.progressed) -Message ("Scenario {0} accepted no observable game progress." -f $scenarioName) -Failures $failures
+        if ($scenarioName -in @("craps_active", "crew_draw_poker_active")) {
+            $expectedAction = if ($scenarioName -eq "craps_active") { "roll_craps" } else { "deal" }
+            Assert-Condition -Condition ([string]$actionEvidence.action_id -eq $expectedAction) -Message ("Scenario {0} did not dispatch required legal action {1}." -f $scenarioName, $expectedAction) -Failures $failures
+        }
+    }
 }
 
 if ($Plan -eq "coin_pusher") {
@@ -397,6 +464,32 @@ if ($Plan -eq "coin_pusher") {
     }
 }
 
+if ($Plan -eq "secure_entropy") {
+    Assert-Condition -Condition (-not $SkipExport) -Message "Secure entropy closure evidence requires a fresh Web export; -SkipExport is not accepted." -Failures $failures
+    Assert-Condition -Condition (@($reportEnvelope.page_errors).Count -eq 0) -Message "Secure entropy browser probe captured a page error." -Failures $failures
+    Assert-Condition -Condition (@($reportEnvelope.request_failures).Count -eq 0) -Message "Secure entropy browser probe captured a failed request." -Failures $failures
+    Assert-Condition -Condition (@($reportEnvelope.failed_responses).Count -eq 0) -Message "Secure entropy browser probe captured an HTTP failure response." -Failures $failures
+    $startupErrors = @($reportEnvelope.startup_console | Where-Object { [string]$_.type -eq "error" -or [string]$_.classification -eq "error" })
+    $unexpectedStartupConsole = @($reportEnvelope.startup_console | Where-Object { [string]$_.classification -ne "expected_audio_autoplay_warning" })
+    Assert-Condition -Condition ($startupErrors.Count -eq 0) -Message "Secure entropy browser probe captured a startup console error." -Failures $failures
+    Assert-Condition -Condition ($unexpectedStartupConsole.Count -eq 0) -Message "Secure entropy browser probe captured an unexpected or unclassified startup warning/error." -Failures $failures
+    Assert-Condition -Condition ([string]$report.build_identity.source_commit -eq $sourceCommit) -Message "Secure entropy runtime source commit identity did not match the exported source commit." -Failures $failures
+    Assert-Condition -Condition ([string]$report.build_identity.export_sha256 -eq $exportSha256) -Message "Secure entropy runtime Web export identity did not match the served export." -Failures $failures
+    $contractEvents = @($report.events | Where-Object { [string]$_.id -eq "secure_entropy_contract" })
+    Assert-Condition -Condition ($contractEvents.Count -eq 1) -Message "Secure entropy report did not contain exactly one contract event." -Failures $failures
+    if ($contractEvents.Count -eq 1) {
+        $contract = $contractEvents[0].data
+        Assert-Condition -Condition ([bool]$contract.passed) -Message "Secure entropy Web contract did not pass." -Failures $failures
+        Assert-Condition -Condition ([string]$contract.entropy_provider -eq "godot_crypto_mbedtls") -Message "Web contract did not use the pinned Godot mbedTLS crypto provider." -Failures $failures
+        Assert-Condition -Condition ([bool]$contract.exact_lengths -and [bool]$contract.nonrepeating) -Message "Web entropy requests were short or repeated." -Failures $failures
+        Assert-Condition -Condition ([bool]$contract.authority_id_valid) -Message "Web entropy did not mint a valid authority id." -Failures $failures
+        Assert-Condition -Condition ([int]$contract.capsule_bytes -eq 65584 -and [bool]$contract.fixed_width -and [bool]$contract.distinct_capsules) -Message "Web capsules were not fixed-width and independently randomized." -Failures $failures
+        Assert-Condition -Condition ([bool]$contract.aes_round_trip) -Message "AESContext failed the exported Web capsule round-trip." -Failures $failures
+        Assert-Condition -Condition ([bool]$contract.hmac_tamper_rejected) -Message "HMACContext did not reject the exported Web tamper probe." -Failures $failures
+        Assert-Condition -Condition ([bool]$contract.privacy_preserved) -Message "Exported Web capsule exposed its canonical private payload." -Failures $failures
+    }
+}
+
 $summary = [ordered]@{
     tool = "web_perf_smoke"
     passed = ($failures.Count -eq 0)
@@ -422,7 +515,10 @@ $summary = [ordered]@{
     web_export_identity = $webExportIdentity
     browser_version = [string]$reportEnvelope.browser_version
     user_agent = [string]$reportEnvelope.user_agent
+    launch_options = $reportEnvelope.launch_options
     cold_cache = [bool]$reportEnvelope.cold_cache
+    evidence_profile = $EvidenceProfile
+    cache_mode = $CacheMode
     host_name = [string]$env:COMPUTERNAME
     viewport = $reportEnvelope.viewport
     page_errors = @($reportEnvelope.page_errors)
