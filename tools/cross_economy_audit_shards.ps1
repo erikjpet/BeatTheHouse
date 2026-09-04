@@ -47,7 +47,8 @@ if (-not (Test-Path -LiteralPath $godotWorker -PathType Leaf)) { throw "Godot wo
 
 $inputPaths = @(
     "tools/cross_economy_audit.gd", "tools/cross_economy_audit.ps1",
-    "tools/cross_economy_audit_shards.ps1", "tools/foundation_systems_shards.ps1",
+    "tools/cross_economy_audit_shards.ps1", "tools/cross_economy_audit_shard_worker.ps1",
+    "tools/foundation_systems_shards.ps1",
     "data/economy/content06_1_audit.json",
     "data/games/games.json", "data/crew/jobs.json", "data/crew/plays.json",
     "data/crew/numbers.json", "data/crew/heist.json", "data/items/items.json",
@@ -89,6 +90,7 @@ foreach ($style in $styles) {
         Style = $style
         ProjectRoot = $privateRoot
         Json = Join-Path $privateRoot "$stem.json"
+        ExitRecord = Join-Path $privateRoot "$stem.exit.json"
         Stdout = Join-Path $OutDir "$stem.stdout.txt"
         Stderr = Join-Path $OutDir "$stem.stderr.txt"
         Process = $null
@@ -108,7 +110,12 @@ while ($pending.Count -gt 0 -or $running.Count -gt 0) {
         if ($job.Process.HasExited) {
             $job.Process.WaitForExit()
             $job.Process.Refresh()
-            $job.ExitCode = $job.Process.ExitCode
+            if (Test-Path -LiteralPath $job.ExitRecord) {
+                $job.ExitCode = [int](Get-Content -LiteralPath $job.ExitRecord -Raw | ConvertFrom-Json).exit_code
+            }
+            else {
+                $job.ExitCode = -999
+            }
             $job.DurationSec = ((Get-Date) - $job.Started).TotalSeconds
             $job.Process.Dispose()
             $running.RemoveAt($index)
@@ -119,10 +126,11 @@ while ($pending.Count -gt 0 -or $running.Count -gt 0) {
     while ($pending.Count -gt 0 -and $running.Count -lt $WorkerCount) {
         $job = $pending.Dequeue()
         $args = @(
-            "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", (Join-Path $job.ProjectRoot "tools\cross_economy_audit.ps1"),
+            "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", (Join-Path $job.ProjectRoot "tools\cross_economy_audit_shard_worker.ps1"),
             "-SeedsPerPlaystyle", "$SeedsPerPlaystyle", "-SeedStart", "1",
             "-MaxActions", "$MaxActions", "-SeedPrefix", $SeedPrefix,
-            "-Playstyle", $job.Style, "-BuildRef", $head, "-Output", "res://$($job.Style).json"
+            "-Playstyle", $job.Style, "-BuildRef", $head, "-Output", "res://$($job.Style).json",
+            "-ExitRecord", $job.ExitRecord
         )
         $job.Started = Get-Date
         $job.Process = Start-Process -FilePath (Get-Command powershell.exe).Source -ArgumentList $args -WorkingDirectory $job.ProjectRoot -WindowStyle Hidden -RedirectStandardOutput $job.Stdout -RedirectStandardError $job.Stderr -PassThru
@@ -166,7 +174,7 @@ foreach ($job in $jobs) {
     if ([string]$report.build_ref -ne $head -or [string]$report.playstyle_filter -ne $job.Style -or [int]$report.seed_start -ne 1 -or [int]$report.run_count -ne $SeedsPerPlaystyle) { throw "Shard provenance mismatch: $($job.Style)" }
     foreach ($run in @($report.runs)) { $allRuns.Add($run) }
     $sha = (Get-FileHash -LiteralPath $job.Json -Algorithm SHA256).Hash.ToLowerInvariant()
-    $shardIndex.Add([ordered]@{ style = $job.Style; seed_start = 1; seed_count = $SeedsPerPlaystyle; duration_sec = $job.DurationSec; bytes = (Get-Item $job.Json).Length; sha256 = $sha; path = $job.Json })
+    $shardIndex.Add([ordered]@{ style = $job.Style; seed_start = 1; seed_count = $SeedsPerPlaystyle; exit_code = $job.ExitCode; duration_sec = $job.DurationSec; bytes = (Get-Item $job.Json).Length; sha256 = $sha; path = $job.Json; exit_record = $job.ExitRecord })
     $styleSummaries[$job.Style] = @($report.aggregate.playstyles)[0]
 }
 
