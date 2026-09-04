@@ -1259,7 +1259,9 @@ func _sealed_action_host_trusted_context(candidate: RunState, stake: int) -> Dic
 	# Crew's per-run save authority is intentionally random and private. It is not
 	# Blackjack action authority, so exclude only that opaque id/capsule from the
 	# trusted-context fingerprint while retaining every public Crew state field.
-	var crew_state: Dictionary = (snapshot.get("crew_state", {}) as Dictionary).duplicate(true) if typeof(snapshot.get("crew_state", {})) == TYPE_DICTIONARY else {}
+	# Only the two opaque top-level capability fields are removed. Nested Crew
+	# models remain read-only while the snapshot is fingerprinted.
+	var crew_state: Dictionary = (snapshot.get("crew_state", {}) as Dictionary).duplicate(false) if typeof(snapshot.get("crew_state", {})) == TYPE_DICTIONARY else {}
 	crew_state.erase("a")
 	crew_state.erase("z")
 	snapshot["crew_state"] = crew_state
@@ -1523,7 +1525,9 @@ func _sealed_action_host_preview_wager_cost(action_id: String, stake: int) -> in
 	var ledger := _sealed_action_host_ledger(candidate, true)
 	_sealed_action_host_store_ledger(candidate, ledger)
 	var snapshot := candidate.to_save_snapshot()
-	var session: Dictionary = (ledger.get("session", {}) as Dictionary).duplicate(true)
+	# The wager proposal is read-only and the canonical module binds this exact
+	# session into its input fingerprint; no mutable staging happens on this path.
+	var session: Dictionary = ledger.get("session", {}) if typeof(ledger.get("session", {})) == TYPE_DICTIONARY else {}
 	var wager_method := StringName(action_authority_contract.get("wager_cost_proposal_method", &""))
 	if wager_method.is_empty() or not current_game.has_method(wager_method):
 		return 0
@@ -1583,7 +1587,12 @@ func _sealed_action_host_prepare_delivery(action_id: String, stake: int, deliver
 		var matched: Dictionary = ActionAuthorityScript.delivery_matches(ledger, str(pending.get("request_key", "")), action_id, context, stake)
 		if not bool(matched.get("ok", false)):
 			return _sealed_action_host_rejection(str(matched.get("error_code", "receipt_content_conflict")), "Blackjack delivery content changed before settlement.", str(pending.get("request_key", "")))
-		return {"ok": true, "delivery": pending.duplicate(true)}
+		return {
+			"ok": true,
+			"delivery": pending.duplicate(true),
+			"_sealed_candidate": candidate,
+			"_sealed_ledger": ledger,
+		}
 	if not requested_key.is_empty():
 		return _sealed_action_host_rejection("stale_boundary", "Blackjack delivery is no longer pending.", requested_key)
 	var issued: Dictionary = ActionAuthorityScript.issue_delivery_cow(ledger, action_id, context, stake, ledger.get("session", {}))
@@ -1594,7 +1603,15 @@ func _sealed_action_host_prepare_delivery(action_id: String, stake: int, deliver
 	# Delivery identity is durable before any RNG, funding, or game proposal work.
 	if not _sealed_action_host_publish(candidate):
 		return _sealed_action_host_rejection("internal_fail_closed", "Blackjack delivery could not be persisted.")
-	return {"ok": true, "delivery": (issued.get("delivery", {}) as Dictionary).duplicate(true)}
+	# The detached candidate and validated ledger are still the exact state that
+	# successfully crossed the publish boundary. Hand them only to the synchronous
+	# resolver so it need not serialize and restore the just-published run again.
+	return {
+		"ok": true,
+		"delivery": (issued.get("delivery", {}) as Dictionary).duplicate(true),
+		"_sealed_candidate": candidate,
+		"_sealed_ledger": ledger,
+	}
 
 
 func _sealed_action_host_is_canonical_replay(result: Dictionary) -> bool:
@@ -1723,7 +1740,14 @@ func _sealed_action_host_expand_proposal_ledger(full_input: Dictionary, compact_
 	for key in ActionAuthorityScript.LEDGER_KEYS:
 		if key in ["checkpoint_fingerprint", "request_cache", "request_order", "journal", "journal_head"]:
 			continue
-		if GameRitualRuntimeScript.canonical_json(compact_output.get(key)) != GameRitualRuntimeScript.canonical_json(compact_input.get(key)):
+		var output_value: Variant = compact_output.get(key)
+		var input_value: Variant = compact_input.get(key)
+		if typeof(output_value) != typeof(input_value):
+			return {}
+		if typeof(output_value) in [TYPE_DICTIONARY, TYPE_ARRAY]:
+			if GameRitualRuntimeScript.canonical_fingerprint(output_value) != GameRitualRuntimeScript.canonical_fingerprint(input_value):
+				return {}
+		elif output_value != input_value:
 			return {}
 	var expanded := full_input.duplicate(false)
 	expanded["checkpoint_fingerprint"] = compact_output.get("checkpoint_fingerprint")
@@ -1732,7 +1756,9 @@ func _sealed_action_host_expand_proposal_ledger(full_input: Dictionary, compact_
 
 func _sealed_action_host_public_run_snapshot(value: Variant) -> Dictionary:
 	var snapshot: Dictionary = (value as Dictionary).duplicate(false) if typeof(value) == TYPE_DICTIONARY else {}
-	var crew_state: Dictionary = (snapshot.get("crew_state", {}) as Dictionary).duplicate(true) if typeof(snapshot.get("crew_state", {})) == TYPE_DICTIONARY else {}
+	# This projection erases top-level private authority only; nested public Crew
+	# state is immutable and can be shared by the temporary fingerprint view.
+	var crew_state: Dictionary = (snapshot.get("crew_state", {}) as Dictionary).duplicate(false) if typeof(snapshot.get("crew_state", {})) == TYPE_DICTIONARY else {}
 	crew_state.erase("a")
 	crew_state.erase("z")
 	snapshot["crew_state"] = crew_state
@@ -1771,18 +1797,23 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 		return (prepared.get("cached_response", {}) as Dictionary).duplicate(true)
 	var delivery: Dictionary = prepared.get("delivery", {})
 	var request_key := str(delivery.get("request_key", ""))
-	var candidate := _sealed_action_host_detached()
+	var candidate_value: Variant = prepared.get("_sealed_candidate", null)
+	var candidate: RunState = candidate_value as RunState
+	if candidate == null:
+		candidate = _sealed_action_host_detached()
 	if candidate == null:
 		return _sealed_action_host_rejection("internal_fail_closed", "Sealed table semantics could not be rebuilt.", request_key)
-	# This candidate crossed RunState.from_dict immediately above, so its saved
-	# authority history has already been fully validated and isolated. Keep the
-	# exact value local for the remainder of this synchronous resolution.
-	var candidate_states: Dictionary = candidate.current_environment.get("game_states", {}) if typeof(candidate.current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
-	var candidate_table: Dictionary = candidate_states.get(current_game.get_id(), {}) if typeof(candidate_states.get(current_game.get_id(), {})) == TYPE_DICTIONARY else {}
-	var ledger: Dictionary = (candidate_table.get(ActionAuthorityScript.LEDGER_KEY, {}) as Dictionary).duplicate(false) if typeof(candidate_table.get(ActionAuthorityScript.LEDGER_KEY, {})) == TYPE_DICTIONARY else {}
+	# prepare_delivery validated this ledger and either observed an already durable
+	# pending delivery or published the newly issued one. Keep a top-level local
+	# copy for the remaining copy-on-write stages.
+	var prepared_ledger_value: Variant = prepared.get("_sealed_ledger", {})
+	var ledger: Dictionary = (prepared_ledger_value as Dictionary).duplicate(false) if typeof(prepared_ledger_value) == TYPE_DICTIONARY else {}
 	if ledger.is_empty() or GameRitualRuntimeScript.canonical_json(ledger.get("pending_delivery", {})) != GameRitualRuntimeScript.canonical_json(delivery):
 		return _sealed_action_host_rejection("stale_boundary", "Blackjack delivery was not present on the canonical candidate.", request_key)
-	var session: Dictionary = (ledger.get("session", {}) as Dictionary).duplicate(true)
+	# Resolution proposals copy the session at their own mutation boundary. Keep
+	# the validated ledger value read-only here instead of cloning it once in the
+	# host and a second time in the provider.
+	var session: Dictionary = ledger.get("session", {}) if typeof(ledger.get("session", {})) == TYPE_DICTIONARY else {}
 	var wager_snapshot := candidate.to_save_snapshot()
 	var provider_contract: Dictionary = action_authority_contract
 	var wager_method := StringName(provider_contract.get("wager_cost_proposal_method", &""))
@@ -1863,7 +1894,10 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 	expanded_proposal_content.erase("output_fingerprint")
 	proposal["output_fingerprint"] = GameRitualRuntimeScript.canonical_fingerprint(expanded_proposal_content)
 	var proposal_fingerprints := _sealed_action_host_proposal_fingerprints(proposal, proposal_input)
-	var result: Dictionary = (proposal.get("result", {}) as Dictionary).duplicate(true)
+	# Proposal fingerprints are sealed above and the local proposal is never read
+	# again. Isolate the result's top-level host metadata without cloning nested
+	# game presentation/delta payloads that apply_result already owns defensively.
+	var result: Dictionary = (proposal.get("result", {}) as Dictionary).duplicate(false)
 	if not bool(proposal.get("ok", false)) or not bool(result.get("ok", false)):
 		result["ok"] = false
 		result[ActionAuthorityScript.HOST_REQUEST_KEY] = request_key
@@ -1900,7 +1934,6 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 	result[ActionAuthorityScript.HOST_FUNDING_LEASE_KEY] = funding_preview.duplicate(true)
 	result[ActionAuthorityScript.HOST_INTENT_FINGERPRINT_KEY] = str(delivery.get("intent_fingerprint", ""))
 	result[ActionAuthorityScript.HOST_CONTEXT_FINGERPRINT_KEY] = str(delivery.get("trusted_context_fingerprint", ""))
-	result[ActionAuthorityScript.HOST_CONTENT_FINGERPRINT_KEY] = ActionAuthorityScript.result_fingerprint(result)
 	var binding := _sealed_action_host_table_binding(proposed_candidate.current_environment)
 	var receipt: Dictionary = ActionAuthorityScript.receipt_for(
 		delivery,
@@ -1910,6 +1943,10 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 		str(proposal_fingerprints.get("run_fingerprint", "")),
 		str(proposal_fingerprints.get("rng_fingerprint", ""))
 	)
+	# receipt_for has just fingerprinted the same result content and excludes both
+	# host receipt fields by contract. Reuse that verified binding instead of
+	# serializing the result a second time before apply.
+	result[ActionAuthorityScript.HOST_CONTENT_FINGERPRINT_KEY] = str(receipt.get("result_fingerprint", ""))
 	result[ActionAuthorityScript.HOST_APPLY_RECEIPT_KEY] = receipt.duplicate(true)
 	var environment_id := str(proposed_candidate.current_environment.get("id", ""))
 	var suspicion_before := proposed_candidate.suspicion_level_for_environment_id(environment_id)
@@ -1945,15 +1982,15 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 		GameModule.normalize_skill_cheat_contract(result)
 	var committed_session: Dictionary = {}
 	if typeof(result.get("ui_state", null)) == TYPE_DICTIONARY:
-		committed_session = (result.get("ui_state", {}) as Dictionary).duplicate(true)
+		committed_session = result.get("ui_state", {})
 	elif typeof(result.get(ActionAuthorityScript.SURFACE_UI_STATE_KEY, null)) == TYPE_DICTIONARY:
-		committed_session = (result.get(ActionAuthorityScript.SURFACE_UI_STATE_KEY, {}) as Dictionary).duplicate(true)
+		committed_session = result.get(ActionAuthorityScript.SURFACE_UI_STATE_KEY, {})
 	elif action_id != "play_basic":
-		committed_session = session.duplicate(true)
+		committed_session = session
 	if proposed_ledger.is_empty():
 		return _sealed_action_host_rejection("invalid_proposal", "Blackjack ledger disappeared before commit.", request_key)
 	proposed_ledger = ActionAuthorityScript.stage_session_cow(proposed_ledger, committed_session)
-	result[ActionAuthorityScript.HOST_APPLY_RECEIPT_KEY] = ActionAuthorityScript.receipt_for(
+	var committed_receipt: Dictionary = ActionAuthorityScript.receipt_for(
 		delivery,
 		binding,
 		result,
@@ -1961,7 +1998,8 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 		str(proposal_fingerprints.get("run_fingerprint", "")),
 		str(proposal_fingerprints.get("rng_fingerprint", ""))
 	)
-	result[ActionAuthorityScript.HOST_CONTENT_FINGERPRINT_KEY] = ActionAuthorityScript.result_fingerprint(result)
+	result[ActionAuthorityScript.HOST_APPLY_RECEIPT_KEY] = committed_receipt
+	result[ActionAuthorityScript.HOST_CONTENT_FINGERPRINT_KEY] = str(committed_receipt.get("result_fingerprint", ""))
 	proposed_ledger = ActionAuthorityScript.commit_response_cow(
 		proposed_ledger,
 		delivery,
