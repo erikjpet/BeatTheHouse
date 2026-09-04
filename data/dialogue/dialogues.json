@@ -1113,12 +1113,12 @@
         "choices": [{"id": "continue", "label": "Open the Bag", "effects": {}, "end": true}]
       },
       "tip06_tonight_changes_rooms": {
-        "text": "Tonight's scenario changes this room. Read the objective and listen before acting; a rumor here can sharpen another map stop.",
+        "text": "Tonight's scenario changes this room. Read the objective before acting; it names what can be changed and what ends the night.",
         "choices": [{"id": "continue", "label": "Read the room", "effects": {}, "end": true}]
       },
       "tip06_delivery_route": {
-        "text": "That package is contraband and every action spends its deadline. Use the map to choose among the marked real stops.",
-        "choices": [{"id": "continue", "label": "Plan the route", "effects": {}, "end": true}]
+        "text": "Crew work runs on action deadlines. A package moves between marked stops; a lookout hold stays put until its watch ends. Both can end badly if you leave the job or carry contraband into trouble.",
+        "choices": [{"id": "continue", "label": "Mind the job", "effects": {}, "end": true}]
       },
       "tip06_numbers_book": {
         "text": "Pick three digits and a stake before the daily draw. Town talk can guide the numbers, but carrying the slip is contraband.",
@@ -1133,12 +1133,24 @@
         "choices": [{"id": "continue", "label": "Aim for the feature", "effects": {}, "end": true}]
       },
       "tip06_craps_pass_line": {
-        "text": "Put one stake on Pass. Seven or eleven wins the come-out; otherwise make the point before a seven.",
+        "text": "Put one stake on Pass. Seven or eleven wins the come-out; otherwise make the point before seven. Grab the dice, drag through the throw lane, and release to roll.",
         "choices": [{"id": "continue", "label": "Bet Pass", "effects": {}, "end": true}]
       },
       "tip06_venue_depth": {
         "text": "Some venues have more room behind them. Watch the room itself for a way through; a usable door appears when the time is right.",
         "choices": [{"id": "continue", "label": "Watch the room", "effects": {}, "end": true}]
+      },
+      "tip06_back_room_poker": {
+        "text": "A back-room poker night is one seeded session: ante, play each hand, then cash out between hands. Watch public behavior for a tell; it matters only after the table verifies what you observed.",
+        "choices": [{"id": "continue", "label": "Watch the table", "effects": {}, "end": true}]
+      },
+      "tip06_true_rumor": {
+        "text": "A heard rumor describes a real fact about another place without revealing what is hidden there. Use its marked map stop to decide where to go; the rumor stays truthful as the town changes.",
+        "choices": [{"id": "continue", "label": "Check the map", "effects": {}, "end": true}]
+      },
+      "tip06_police_sweep": {
+        "text": "The Police Sweep moves on action boundaries, not a clock. Read its public map marker before traveling; waiting spends an action, while contraband and Heat make an encounter worse.",
+        "choices": [{"id": "continue", "label": "Read the sweep", "effects": {}, "end": true}]
       }
     }
   },

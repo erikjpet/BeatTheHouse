@@ -701,7 +701,7 @@
     "dialogue_node": "tip06_tonight_changes_rooms",
     "trigger": {"screen": "ENVIRONMENT", "state_predicates": [{"path": "run.scenario_active", "op": "equals", "value": true}]},
     "anchor": {"kind": "hud_element", "id": "objective"},
-    "copy": "Tonight changes a room. Listen before you settle in; a rumor here can sharpen another stop on the map.",
+    "copy": "Tonight's scenario changes this room. Read the objective: it says what can change and what ends the night.",
     "completion": {"type": "any_action"}
   },
   {
@@ -711,10 +711,9 @@
     "dialogue_id": "tutorial_pal_guidance",
     "dialogue_node": "tip06_delivery_route",
     "trigger": {"screen": "ENVIRONMENT", "state_predicates": [{"path": "run.delivery_active", "op": "equals", "value": true}]},
-    "anchor": {"kind": "interactable_object", "id": "travel:leave"},
-    "copy": "That package is contraband. Every action spends the deadline. The map marks real stops; choose your route.",
-    "completion": {"type": "anchored_action", "action_id": "map"},
-    "gating": {"allowed_action_ids": ["travel:leave", "map"]}
+    "anchor": {"kind": "hud_element", "id": "objective"},
+    "copy": "Crew jobs have action deadlines. Packages follow stops; lookout holds stay until the watch ends. Contraband raises risk.",
+    "completion": {"type": "any_action"}
   },
   {
     "id": "tip06_numbers_book",
@@ -758,7 +757,7 @@
     "dialogue_node": "tip06_craps_pass_line",
     "trigger": {"screen": "GAME", "game_id": "craps", "state_predicates": []},
     "anchor": {"kind": "surface_action", "id": "craps_bet:0"},
-    "copy": "Put one stake on Pass. Seven or eleven wins the first roll; otherwise it sets a point. Make that point before seven.",
+    "copy": "Bet Pass. Seven or eleven wins come-out; else make the point before seven. Grab, drag the throw lane, and release.",
     "completion": {"type": "any_action"}
   },
   {
@@ -770,6 +769,39 @@
     "trigger": {"screen": "ENVIRONMENT", "state_predicates": [{"path": "run.venue_depth_surface", "op": "equals", "value": true}]},
     "anchor": {"kind": "interactable_object", "id": "environment_layer:ambient"},
     "copy": "Some venues keep more room behind them. Watch the room for a way through; it will show you when the time is right.",
+    "completion": {"type": "any_action"}
+  },
+  {
+    "id": "tip06_back_room_poker",
+    "scope": "normal_run",
+    "delivery": "coach",
+    "dialogue_id": "tutorial_pal_guidance",
+    "dialogue_node": "tip06_back_room_poker",
+    "trigger": {"screen": "GAME", "game_id": "crew_draw_poker", "state_predicates": []},
+    "anchor": {"kind": "surface_action", "id": "poker_deal"},
+    "copy": "A poker night is one seeded session: ante, play, then cash out. Public behavior becomes a tell only when verified.",
+    "completion": {"type": "any_action"}
+  },
+  {
+    "id": "tip06_true_rumor",
+    "scope": "normal_run",
+    "delivery": "coach",
+    "dialogue_id": "tutorial_pal_guidance",
+    "dialogue_node": "tip06_true_rumor",
+    "trigger": {"screen": "ENVIRONMENT", "state_predicates": [{"path": "run.flags.chain06_dave_true_rumor_heard", "op": "equals", "value": true}]},
+    "anchor": {"kind": "hud_element", "id": "map"},
+    "copy": "A heard rumor is a true fact about another place. Use its marked map stop; it stays truthful as the town changes.",
+    "completion": {"type": "any_action"}
+  },
+  {
+    "id": "tip06_police_sweep",
+    "scope": "normal_run",
+    "delivery": "coach",
+    "dialogue_id": "tutorial_pal_guidance",
+    "dialogue_node": "tip06_police_sweep",
+    "trigger": {"screen": "ENVIRONMENT", "state_predicates": [{"path": "action.last_action_id", "op": "equals", "value": "sweep_wait"}]},
+    "anchor": {"kind": "hud_element", "id": "objective"},
+    "copy": "The Police Sweep moves on action boundaries. Read its public marker; wait spends one action. Heat and contraband hurt.",
     "completion": {"type": "any_action"}
   }
 ]
