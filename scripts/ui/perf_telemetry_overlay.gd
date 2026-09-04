@@ -1887,6 +1887,8 @@ func _perf06_surface_evidence(snapshot: Dictionary) -> Dictionary:
 		var projection: Dictionary = ritual_projection
 		evidence["ritual_projection_present"] = not projection.is_empty()
 		evidence["ritual_projection_phase"] = str(projection.get("phase_id", projection.get("phase", "")))
+		evidence["ritual_acknowledgement_available"] = bool(projection.get("acknowledgement_available", false))
+		evidence["ritual_energy_tier"] = str(projection.get("energy_tier", ""))
 	else:
 		evidence["ritual_projection_present"] = false
 		evidence["ritual_projection_phase"] = ""
@@ -1920,6 +1922,7 @@ func _measure_followup_game_phases(game_id: String) -> void:
 	match game_id:
 		"pull_tabs":
 			await _measure_observed_game_phase(game_id, "ritual", "pull_tabs_counter_ritual", 30)
+			await _measure_pull_tab_redeem_phase()
 		"scratch_tickets":
 			_emit_surface_action("scratch_all", 0, false)
 			await _wait_frames(2)
@@ -1930,6 +1933,11 @@ func _measure_followup_game_phases(game_id: String) -> void:
 			await _measure_observed_game_phase(game_id, "ritual", "scratch_ticket_counter_ritual", 30)
 		"slot":
 			await _measure_observed_game_phase(game_id, "ritual", "slot_machine_ritual", 30)
+			if _install_slot_handpay_fixture():
+				await _wait_frames(2)
+				await _measure_observed_game_phase(game_id, "jackpot_attendant", "slot_jackpot_attendant", 30)
+				_emit_surface_action("slot_handpay_acknowledge", 0, true)
+				await _wait_frames(2)
 		"bar_dice":
 			await _measure_observed_game_phase(game_id, "resolve_payout", "bar_dice_resolve_payout", 30)
 			await _measure_observed_game_phase(game_id, "ritual", "bar_dice_table_ritual", 30)
@@ -2009,6 +2017,64 @@ func _current_game_phase_snapshot() -> Dictionary:
 	return app.current_game_view_snapshot()
 
 
+func _measure_pull_tab_redeem_phase() -> void:
+	# The purchased tab first exists in the dispenser tray. Follow the ordinary
+	# collect/reveal/file controls; never mutate the ticket outcome to manufacture
+	# a winning row for this measurement.
+	await _wait_for_animation_quiet(240)
+	_emit_surface_action("pull_tab_collect_tray", 0, false)
+	await _wait_frames(4)
+	for _reveal_index in range(10):
+		var evidence := _perf06_surface_evidence(_current_game_phase_snapshot())
+		if str(evidence.get("counter_phase", "")) == "file":
+			break
+		_emit_surface_action("pull_tab_reveal_next", 0, false)
+		await _wait_frames(60)
+	var revealed := _perf06_surface_evidence(_current_game_phase_snapshot())
+	if str(revealed.get("counter_phase", "")) != "file":
+		mark_event("perf06_phase_not_observed", {"game_id": "pull_tabs", "phase_id": "payout_redeem", "evidence": revealed})
+		return
+	_emit_surface_action("pull_tab_file_ticket", 0, false)
+	await _wait_frames(2)
+	await _measure_observed_game_phase("pull_tabs", "payout_redeem", "pull_tabs_payout_redeem", 30)
+
+
+func _wait_for_animation_quiet(max_frames: int) -> bool:
+	for _frame_index in range(maxi(1, max_frames)):
+		var evidence := _perf06_surface_evidence(_current_game_phase_snapshot())
+		if (evidence.get("active_animation_channels", []) as Array).is_empty():
+			return true
+		await get_tree().process_frame
+	return false
+
+
+func _install_slot_handpay_fixture() -> bool:
+	if app == null:
+		return false
+	var run_state: RunState = app.get("run_state") as RunState
+	var game: GameModule = app.get("current_game") as GameModule
+	if run_state == null or game == null or game.get_id() != "slot":
+		return false
+	var environment := run_state.current_environment
+	var machine := SlotStateScript.read_machine(environment, "slot")
+	if machine.is_empty():
+		return false
+	# Install a presentation-only jackpot result around the machine's current
+	# authoritative spin ordinal. The sealed acknowledgement still travels through
+	# Foundation's normal action boundary and writes the only durable receipt.
+	machine["spin_count"] = maxi(1, int(machine.get("spin_count", 0)))
+	machine["last_outcome_id"] = "perf06_jackpot_attendant"
+	machine["last_classification"] = "jackpot"
+	machine["slot_celebration_tier"] = "jackpot"
+	machine["slot_animation_id"] = ""
+	machine["active_bonus"] = {}
+	machine.erase("ritual_acknowledged_result_id")
+	SlotStateScript.write_machine(environment, "slot", machine)
+	run_state.current_environment = environment
+	app.call("_refresh")
+	return true
+
+
 func _game_phase_observed(game_id: String, phase_id: String, evidence: Dictionary) -> bool:
 	var phase := str(evidence.get("phase", ""))
 	var ritual_phase := str(evidence.get("ritual_phase", evidence.get("bar_dice_ritual_phase", "")))
@@ -2021,6 +2087,8 @@ func _game_phase_observed(game_id: String, phase_id: String, evidence: Dictionar
 			or int(evidence.get("ritual_actor_count", 0)) > 0 \
 			or int(evidence.get("ritual_object_count", 0)) > 0
 	match game_id:
+		"pull_tabs":
+			return phase_id == "payout_redeem" and (result_visible or str(evidence.get("counter_phase", "")) in ["file", "selection"])
 		"scratch_tickets":
 			if phase_id == "scratch_reveal":
 				return str(evidence.get("counter_phase", "")) in ["play", "file"]
@@ -2028,6 +2096,10 @@ func _game_phase_observed(game_id: String, phase_id: String, evidence: Dictionar
 				return result_visible or str(evidence.get("counter_phase", "")) in ["result", "selection"]
 		"bar_dice", "blackjack":
 			return phase_id == "resolve_payout" and result_visible
+		"slot":
+			return phase_id == "jackpot_attendant" \
+				and str(evidence.get("ritual_projection_phase", "")) == "payout_or_handpay" \
+				and bool(evidence.get("ritual_acknowledgement_available", false))
 		"baccarat":
 			if phase_id == "skill":
 				return ritual_phase == "squeeze_reveal"
