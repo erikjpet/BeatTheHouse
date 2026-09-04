@@ -180,6 +180,7 @@ func _run() -> void:
 			"caller_injected_invite": false,
 			"caller_selected_collection": false,
 			"legacy_conditioned_scenarios_binding": false,
+			"synthetic_idle_or_lock_advance": false,
 			"violations": authority_audit_violations,
 		},
 		"authored_max_counts": {"documented_seed_cases": CASES.size(), "save_load_stride_actions": save_load_stride, "max_actions_per_case": max_actions},
