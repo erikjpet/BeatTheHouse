@@ -2737,15 +2737,13 @@ func _measure_pull_tab_redeem_phase() -> void:
 	_emit_surface_action("pull_tab_auto_open", 0, false)
 	for _reveal_index in range(1200):
 		var evidence := _current_game_phase_evidence()
-		if str(evidence.get("counter_phase", "")) == "file":
+		if _game_phase_observed("pull_tabs", "payout_redeem", evidence):
 			break
 		await get_tree().process_frame
 	var revealed := _current_game_phase_evidence()
-	if str(revealed.get("counter_phase", "")) != "file":
+	if not _game_phase_observed("pull_tabs", "payout_redeem", revealed):
 		mark_event("perf06_phase_not_observed", {"game_id": "pull_tabs", "phase_id": "payout_redeem", "evidence": revealed})
 		return
-	_emit_surface_action("pull_tab_file_ticket", 0, false)
-	await _wait_frames(2)
 	await _measure_observed_game_phase("pull_tabs", "payout_redeem", "pull_tabs_payout_redeem", 30)
 
 
