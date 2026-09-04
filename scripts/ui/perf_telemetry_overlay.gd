@@ -1479,18 +1479,20 @@ func _game_surface_live_status() -> Dictionary:
 func _measure_named_active_phase(channel_id: String, frame_count: int) -> Dictionary:
 	var canvas := app.get("game_surface_canvas") as Control if app != null else null
 	# Headless/exported builds can advance much faster than an interactive frame.
-	# Keep sampling long enough to prove the required wall-clock residency while
-	# the production animation channel is live.
-	var sample_frames := maxi(240, frame_count)
+	# Sample until both the frame and wall-clock residency gates are proven, while
+	# retaining a finite bound when a production channel goes missing.
+	var maximum_sample_frames := maxi(600, frame_count)
 	var active_at_start := canvas != null and canvas.has_method("surface_animation_active") \
 		and bool(canvas.call("surface_animation_active", channel_id))
 	var active_frame_count := 0
+	var sample_frames := 0
 	var longest_consecutive_active_frames := 0
 	var consecutive_active_frames := 0
 	var active_elapsed_msec := 0.0
 	var prior_usec := Time.get_ticks_usec()
-	for _frame_index in range(sample_frames):
+	for _frame_index in range(maximum_sample_frames):
 		await get_tree().process_frame
+		sample_frames += 1
 		var now_usec := Time.get_ticks_usec()
 		var active := canvas != null and canvas.has_method("surface_animation_active") \
 			and bool(canvas.call("surface_animation_active", channel_id))
@@ -1504,6 +1506,9 @@ func _measure_named_active_phase(channel_id: String, frame_count: int) -> Dictio
 		# Advance on both branches: retaining the old baseline while active would
 		# triangularly overcount a sustained phase and qualify a short sample.
 		prior_usec = now_usec
+		if longest_consecutive_active_frames >= ACTIVE_PHASE_MINIMUM_FRAMES \
+				and active_elapsed_msec >= float(ACTIVE_PHASE_MINIMUM_MSEC):
+			break
 	var active_at_end := canvas != null and canvas.has_method("surface_animation_active") \
 		and bool(canvas.call("surface_animation_active", channel_id))
 	return {
@@ -1926,7 +1931,7 @@ func _perf06_surface_evidence(snapshot: Dictionary) -> Dictionary:
 		"rolled", "presentation_phase", "last_net", "win_meter",
 		"bar_dice_ritual_phase", "ticket_complete", "pending_payout",
 		"revealed_count", "reveal_progress", "session_settled", "pending_double_credits",
-		"counting_enabled",
+		"counting_enabled", "wheel_read_active",
 	]:
 		var key := str(key_value)
 		if snapshot.has(key):
@@ -2010,6 +2015,12 @@ func _measure_followup_game_phases(game_id: String) -> void:
 				await _measure_observed_game_phase(game_id, "post_spin", "roulette_ball_settle", 30)
 			if await _wait_for_game_phase(game_id, "resolve_payout", 600):
 				await _measure_observed_game_phase(game_id, "resolve_payout", "roulette_resolve_payout", 30)
+			await _wait_for_surface_animation_inactive("roulette_payout", 600)
+			_emit_surface_action("roulette_read_wheel", 0, false)
+			await _wait_frames(2)
+			await _measure_observed_game_phase(game_id, "skill", "roulette_wheel_read_skill", 30)
+			_emit_surface_action("roulette_read_wheel", 0, false)
+			await _wait_frames(2)
 		"craps":
 			await _measure_observed_game_phase(game_id, "bounce", "craps_bounce_read", 20)
 			await _measure_observed_game_phase(game_id, "ritual", "craps_table_ritual", 20)
@@ -2063,6 +2074,18 @@ func _wait_for_game_phase(game_id: String, phase_id: String, max_frames: int) ->
 			return true
 		await get_tree().process_frame
 	mark_event("perf06_phase_wait_timeout", {"game_id": game_id, "phase_id": phase_id, "max_frames": max_frames})
+	return false
+
+
+func _wait_for_surface_animation_inactive(channel_id: String, max_frames: int) -> bool:
+	var canvas := app.get("game_surface_canvas") as Control if app != null else null
+	if canvas == null or not canvas.has_method("surface_animation_active"):
+		return false
+	for _frame_index in range(max_frames):
+		if not bool(canvas.call("surface_animation_active", channel_id)):
+			return true
+		await get_tree().process_frame
+	mark_event("perf06_animation_wait_timeout", {"channel_id": channel_id, "max_frames": max_frames})
 	return false
 
 
@@ -2186,7 +2209,7 @@ func _measure_craps_offer_and_aim() -> void:
 	# point is established, which leaves the real throw interaction unavailable.
 	_emit_surface_action("craps_rebet", 0, false)
 	await _wait_frames(2)
-	_emit_surface_pointer("craps_throw", 0, "begin", Vector2(426, 278))
+	_emit_surface_pointer("craps_throw", 0, "begin", Vector2(426, 240))
 	if await _wait_for_game_phase("craps", "offer", 30):
 		await _measure_observed_game_phase("craps", "offer", "craps_dice_offer", 20)
 	_emit_surface_pointer("craps_throw", 0, "move", Vector2(438, 190))
@@ -2223,8 +2246,9 @@ func _game_phase_observed(game_id: String, phase_id: String, evidence: Dictionar
 			or int(evidence.get("ritual_object_count", 0)) > 0
 	match game_id:
 		"pull_tabs":
-			return phase_id == "payout_redeem" and result_visible \
-				and str(evidence.get("counter_phase", "")) in ["file", "handover", "selection"]
+			return phase_id == "payout_redeem" \
+				and not str(evidence.get("result_message", "")).is_empty() \
+				and bool(evidence.get("counter_ritual_present", false))
 		"scratch_tickets":
 			if phase_id == "scratch_reveal":
 				return str(evidence.get("counter_phase", "")) in ["play", "file"]
@@ -2255,6 +2279,8 @@ func _game_phase_observed(game_id: String, phase_id: String, evidence: Dictionar
 				return ritual_phase == "ball_settle" or (bool(roulette_spin.get("active", false)) and float(roulette_spin.get("progress", 0.0)) >= 0.80)
 			if phase_id == "resolve_payout":
 				return (ritual_phase == "croupier_settlement" or bool(roulette_payout.get("active", false))) and result_visible
+			if phase_id == "skill":
+				return bool(evidence.get("wheel_read_active", false))
 		"craps":
 			var craps_roll: Dictionary = animations.get("craps_roll", {}) if typeof(animations.get("craps_roll", {})) == TYPE_DICTIONARY else {}
 			if phase_id == "bounce":
