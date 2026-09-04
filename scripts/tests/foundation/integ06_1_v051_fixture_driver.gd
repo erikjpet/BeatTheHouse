@@ -513,6 +513,7 @@ func _apply_surface_step(app: Control, step: Dictionary, fixture_id: String, met
 	if wait_msec > 0:
 		await create_timer(float(wait_msec) / 1000.0).timeout
 		await process_frame
+	print("INTEG06_1_PHASE=%s:surface_action:%s:last_result=%s:block=%s" % [fixture_id, action_id, str(app.get("last_game_result")), str(app.call("_blocking_modal_message"))])
 	return true
 
 
