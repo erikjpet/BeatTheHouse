@@ -1,4 +1,4 @@
-Status: TODO
+Status: DONE — all Family 1 automated gates passed on `af48b531`
 Board row: `game06_8` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — 0.6 game06_8: Games Depth Release Gate

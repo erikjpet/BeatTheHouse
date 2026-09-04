@@ -2,18 +2,16 @@
 
 Date: 2026-09-03  
 Independent closeout lane: `/root/game_closeout`  
-Frozen landed game product base: `039e3326d7f09ab911f8903adc03b94c2cc12e4f`
-Frozen integrated candidate tree: `d78c3337825c68e416e21aaba4ae8f6af881340e`
+Final exact integrated commit: `af48b5311036793266d9e19e30699c98a0739d16`
+Final exact integrated tree: `4d6b92ec3a240278dd1fb792b860ac5abfa3e3b6`
 
 ## Verdict
 
-`game06_8` is **IN PROGRESS** while the final Blackjack statistical audit, the
-Crew depth comparison repair, and the exact-tree aggregate games suite finish.
-The `depth06_1` dependency is accepted at `b33a0584`, the game-owned focused
-contracts are green on the frozen product tree, and no game implementation has
-been rebuilt. This report becomes the final closure record only after the
-remaining entries in the gate ledger below are replaced with immutable PASS
-evidence.
+`game06_8` is **DONE/ACCEPTED**. The final Blackjack statistical audit, repaired
+Crew depth comparison, and exact-tree aggregate games suite are green. The
+`depth06_1` dependency is accepted at `b33a0584`, all game-owned focused
+contracts are green on the final integrated tree, and no game implementation
+was rebuilt.
 
 The audit accounts for all eleven ids in `data/games/games.json` plus the Grand
 Casino duel/showdown presentation. Coin Pusher is included as a shipped game,
@@ -57,7 +55,7 @@ SHA-256 is
 | 9. Save/exit/revisit | Focused contracts cover every declared phase, including mid-shoe, squeeze, spin, scratch, feature, street interruption and duel. Receipt and one-shot ledgers prevent a second charge, payout, reward, dialogue or audio event. | PASS |
 | 10. Maximal composition | Family 1 consumer checks plus accepted `depth06_1` exercise games at scenario/event/service/traveler/Sweep-capable nodes and preserve ordinary exit behavior. The exact 55-id/1,485-pair audit had zero failures; its reproducible 24-scenario sample and focused authority/visual/RTP checks are green. | PASS |
 | 11. Exact performance/liveness | Accepted row reports include native/low-end-Web budgets, zero forbidden full-snapshot calls and nonzero liveness for all touched animated surfaces. Blackjack's authoritative repeat path now retains eight replay boundaries: the exact 25-hand prefix fell from 142.213s to 44.392s while preserving outcome/checkpoint chains and plateauing near 56KB. Coin Pusher's final locked Chrome run remains green at unchanged caps. | PASS BY BINDING CHECKPOINTS |
-| 12. Exact-tree complete gates | Game-owned focused contracts pass on this tree. The final Blackjack audit, repaired Crew depth comparison, and aggregate functional games suite remain pending. Native/Web, accessibility, determinism, RTP and visual artifacts are bound to unchanged product blobs above. | PENDING FINAL GATES |
+| 12. Exact-tree complete gates | Game-owned focused contracts, the final Blackjack audit, repaired Crew depth comparison, and the ten-check aggregate games suite pass on this tree. Native/Web, accessibility, determinism, RTP and visual artifacts remain bound to the accepted product blobs above. | PASS |
 
 ## Complete shipped-surface ledger
 
@@ -71,7 +69,7 @@ presentation only, never the authoritative timing window or result.
 | Pull Tabs | browse/buy/collect tray/open windows in order/file/redeem/repeat | clerk, dispenser, tray, persistent ticket windows; stock, queue and winner states | 24-machine seeded deal audit and complete authored prize/stock matrix | PASS |
 | Slot | approach/commit/spin/feature/settlement/acknowledgement/repeat; chips/buttons, nudge and Pinball controls have semantic equivalents | cabinet, reels/balls/feature objects, neighbours and attendant; idle/active/bonus/lockup/jackpot states | 10,000 spins: Pinball classic `0.95176`, Pinball video `0.97507`, Buffalo line `0.94640`, Buffalo video `0.96964` | PASS |
 | Bar Dice | wager/cover/cup/throw/reveal/call/settle; place/correct, shake/throw/keep-reroll and call equivalents | opponent, onlookers, cup/dice/pot; quiet/crowded/tell/pressure/interruption states | 1,000 rounds each: friendly/standard/sharp house edge `0.1106/0.1423/0.1719` | PASS |
-| Blackjack | wagering/deal/player decision/dealer procedure/settlement/terminal presentation/rebet; chip place/remove, deal, hit/stand/double/split/surrender, peek/count equivalents | dealer, neighbours, pit, shoe/cards/chips/count bubbles; attention/heat/backoff materially alters table/actors | exact rule/paytable/conservation suite plus current sealed-host 1,000-hand payout audit (final report hash pending) | PENDING AUDIT HASH |
+| Blackjack | wagering/deal/player decision/dealer procedure/settlement/terminal presentation/rebet; chip place/remove, deal, hit/stand/double/split/surrender, peek/count equivalents | dealer, neighbours, pit, shoe/cards/chips/count bubbles; attention/heat/backoff materially alters table/actors | exact rule/paytable/conservation suite plus sealed-host 120-case/1,000-hand audit; edge `-0.00593141798`, zero failures/warnings | PASS |
 | Baccarat | commitment/deal/squeeze/third-card/reveal/settle/repeat; stack correction and card squeeze equivalents | dealer, neighbours, shoe/cards/stacks; shoe depth, attention and security tiers | 400 advancing-shoe hands: Banker/Player/Tie `0.477/0.440/0.083`, flat Banker delta `+109`; commission exact | PASS |
 | Craps | approach/bet correction/come-out/point/working bets/throw/settle/interruption/repeat | stick/dealer/shooter/crowd, dice/table/bet stacks; five profiles and warning/relocation/dispersal states | million-roll wager matrix; core/street pass parity `0.988326`; every documented wager band PASS | PASS |
 | Roulette | commitment/correction/spin/ball/drop/settlement/repeat; named-stack placement/removal and spin equivalents | dealer/neighbours, wheel/ball/layout/stacks; crowd and heat tiers | all 157 targets pass hit-region and payout checks; ten sealed spins, 96 trajectory frames each | PASS |
@@ -94,8 +92,9 @@ presentation only, never the authoritative timing window or result.
 | `game06_7_showdown_duel_contract.gd` | PASS; nine phases, ten seeds |
 | Independent contact-sheet inspection | PASS for checked-in Bar Dice and Rourke matrices: cup/dice/pot/opponent staging and rail/table/stacks/Rourke staging remain distinguishable when title/reward copy is ignored; phase, pressure, crowd and terminal changes are materially visible |
 | Project validation during first aggregate attempt | PASS in 109.128s; aggregate did not start because the intentional concurrent-process guard found the still-running Blackjack audit. This setup-only red is retained and will not be called a suite result. |
-| `crew06_10_depth_contract.gd` exact integrated rerun | PENDING depth-lane comparison repair integration |
-| Clean aggregate `FoundationSuite games` | PENDING; inherited `check_slots_surfaces.gd` parser gap must close first |
+| `crew06_10_depth_contract.gd` exact integrated rerun | PASS; ten seeds, five profiles, ordered_v1; log SHA-256 `A86F4D7B4B3C10818080A49C09A9CB2C9DCDA93728B82C672C958E25ACDDB993` |
+| Clean aggregate `FoundationSuite games` | PASS; 10/10 checks, zero failures, `197.329s` inside unchanged `220.425s` budget; report SHA-256 `F85F24AA0F34584F5920D18C753733C8E7D419DCB368B99CA2178CBA9E00F89C` |
+| Exact 120-case/1,000-hand Blackjack statistical audit | PASS; zero failures/warnings; report SHA-256 `DCB214CDFFA5E4E17F427E3D679F9803D128EE0D3889E507D028C001227EACD0` |
 | `depth06_1` exact-tree dependency | PASS/DONE at `b33a05843fb161cd1c2970b4af2a475473beac40`; 55 ids, 1,485 pairs, zero failures; two byte-identical 10-seed/560-checkpoint reports, combined hash `1473694648` |
 
 The earlier Blackjack wrapper is retained timing-red under four-lane closeout
@@ -156,8 +155,8 @@ before its mechanics run. The complete per-surface routing is recorded in
 
 ## Human handoff
 
-After the two pending automated entries close, no Family 1 implementation or
-automated acceptance work remains. `playtest06_1` should still ask the owner to
+No Family 1 implementation or automated acceptance work remains.
+`playtest06_1` should still ask the owner to
 judge learnability, pacing, tactile satisfaction and visual identity across a
 fresh game cycle. That human taste check is not misrepresented here as an
 automated pass.

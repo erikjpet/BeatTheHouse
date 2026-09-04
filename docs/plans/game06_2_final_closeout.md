@@ -5,11 +5,12 @@ Recovered depth integration: `d47feee3`
 Post-land authority recovery: `b091bc43`, `d3018288`, `9053c4b3`, `831f15ee`, `f0f68746`, `cb878b21`, `6f6c010e`, `683f5e11`
 Final bounded-authority remediation: `73b7a9523116712be266240397b3901e17476f4a`
 Public basic-play confirmation repair: `039e3326d7f09ab911f8903adc03b94c2cc12e4f`
-Exact integrated candidate tree: `d78c3337825c68e416e21aaba4ae8f6af881340e`
+Final exact integrated commit: `af48b5311036793266d9e19e30699c98a0739d16`
+Final exact integrated tree: `4d6b92ec3a240278dd1fb792b860ac5abfa3e3b6`
 
 ## Verdict
 
-`game06_2` is functionally complete on the exact product tree above. The
+`game06_2` is **DONE/ACCEPTED** on the exact integrated tree above. The
 substantial played-table implementation was recovered from the landed lineage;
 it was not rebuilt. Blackjack retains its shipped rules, paytable, seeded shoe,
 detection, heat, Crew costs, tutorial meanings, and single money authority while
@@ -49,7 +50,7 @@ materially.
 | Input and accessibility | Pointer/touch, keyboard/controller, reduced-motion, non-color labels, and tactile place/cut/wave/tap semantics map to the same action ids. Wrong-phase and malformed input reject without charge, RNG advance, or settlement. | PASS |
 | Persistence and exactly-once | Mid-action authority, pending delivery, settlement, save/load replay, duplicate delivery, receipt consumption, retry, cancellation, and terminal presentation are covered. Duplicate apply and duplicate post-result consumers remain inert. | PASS |
 | Authority and hidden state | Public validation returns deep-isolated data. Compact proposal helpers are pure; the host independently replays the proposal, validates closed ledger shapes and fingerprints, restores exact history, and rejects forged/transplanted/stale inputs. Crew private `a`/`z` never enter public receipt identity. | PASS |
-| Rules, math, and RTP | Rule/paytable fixtures, natural/split/double/surrender/insurance conservation, seeded outcome chains, and the 1,000-hand payout sample remain binding. No odds, payout, RNG, economy, schema, or migration changed in closeout. | PASS pending final report hash |
+| Rules, math, and RTP | Rule/paytable fixtures, natural/split/double/surrender/insurance conservation, seeded outcome chains, and the 1,000-hand payout sample remain binding. No odds, payout, RNG, economy, schema, or migration changed in closeout. | PASS |
 
 ## Exact automated evidence
 
@@ -79,11 +80,15 @@ materially.
   table states. The checked-in terminal audit has zero failures and covers eight
   generated tables, every rule fixture, count/peek/patron/side-bet paths, and a
   1,000-hand payout sample at edge `-0.0505069`.
-- The final exact-root `blackjack_seed_audit.gd` run is in progress from harness
-  commit `47a3a241c8edd782cf1621938689990b5adcbf3d` against unchanged game product
-  commit/tree `73b7a952` / `8964fc29`. Its immutable result path is
-  `.tmp/game06_closeout/blackjack_seed_final_47a3a241.json`. This report becomes
-  archive-ready when that row is replaced by the final PASS metrics and hash.
+- The final exact-root `blackjack_seed_audit.gd` passed all 120 generated-table
+  cases and 1,000 settled hands with zero failures and zero warnings. Total
+  wager was `5395`, bankroll delta was `-32`, and sampled edge was
+  `-0.00593141798`. Action latency maxed at `713.782ms`; resolve latency
+  average/p95/max was `1189.606/1664.203/1760ms`; surface latency
+  average/p95/max was `2.267/2.460/4.110ms`. The two-click selection/
+  confirmation regression also passed. Immutable report:
+  `.tmp/game06-closeout-final/blackjack_seed_final_59d976d9.json`, SHA-256
+  `DCB214CDFFA5E4E17F427E3D679F9803D128EE0D3889E507D028C001227EACD0`.
 
 ## Retained non-green evidence
 
@@ -140,8 +145,8 @@ materially.
 
 ## Remaining human check
 
-No Blackjack implementation work remains after the exact statistical audit
-finishes. The owner playtest still needs to judge whether a new player can place
+No Blackjack implementation or automated acceptance work remains. The owner
+playtest still needs to judge whether a new player can place
 and correct a bet, follow dealer procedure, choose an action, read itemized
 settlement, recognize heat/Crew presence, safely repeat, and leave without
 outside rules knowledge. That experiential judgment belongs to

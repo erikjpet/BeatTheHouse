@@ -1,4 +1,4 @@
-Status: IN_PROGRESS — implementation landed on `main`; Family 1 release-gate closeout remains open
+Status: DONE — exact Blackjack and Family 1 release gates passed on `af48b531`
 Board row: `game06_2` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — 0.6 game06_2: Blackjack Table Depth
