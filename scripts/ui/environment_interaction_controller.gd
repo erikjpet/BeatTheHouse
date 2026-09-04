@@ -392,7 +392,9 @@ static func _compose_projected_records(base_records: Array, resolved_projection:
 			record = _merge_projected_visual(record, semantic_scene, _dict(authority.get(identity, {})), authority_digest)
 		if not semantic_interactions.has(identity):
 			if semantic_visuals.has(identity) and str(semantic_scene.get("owner_namespace", "")) == "scenario":
-				record["interactive"] = false
+				# Scenario-owned decoration is read-only, not inert: selecting it must
+				# still open its authored room-history description.
+				record["interactive"] = true
 				record["scenario_sequence_actions"] = []
 			projected.append(record)
 			used_presentation_ids[str(record.get("object_id", ""))] = true
@@ -497,8 +499,11 @@ static func _merge_projected_scene_object(base: Dictionary, semantic: Dictionary
 	var stable_id := str(semantic.get("stable_object_id", result.get("stable_object_id", "")))
 	var owned_identity := "%s::%s" % [owner, stable_id]
 	result["object_id"] = owned_identity if owner == "scenario" else str(result.get("object_id", semantic.get("presentation_object_id", owned_identity)))
-	result["object_type"] = str(result.get("object_type", "scenario_scene_object" if owner == "scenario" else "info"))
-	result["visual_type"] = str(result.get("visual_type", "fixture"))
+	var object_type := str(result.get("object_type", "scenario_scene_object" if owner == "scenario" else "info"))
+	if owner == "scenario" and object_type in ["", "scenario_object"]:
+		object_type = "scenario_scene_object"
+	result["object_type"] = object_type
+	result["visual_type"] = "scenario_object" if owner == "scenario" else str(result.get("visual_type", "fixture"))
 	result["source_id"] = str(result.get("source_id", stable_id))
 	result["icon_key"] = _scenario_icon_key(semantic, result)
 	result["owner_namespace"] = owner
@@ -520,6 +525,9 @@ static func _merge_projected_scene_object(base: Dictionary, semantic: Dictionary
 	result["semantic_role"] = str(semantic.get("role", result.get("semantic_role", "prop")))
 	result["semantic_state"] = str(semantic.get("state", result.get("semantic_state", "")))
 	result["semantic_appearance"] = str(semantic.get("appearance", result.get("semantic_appearance", "")))
+	result["role"] = result["semantic_role"]
+	result["state"] = result["semantic_state"]
+	result["appearance"] = result["semantic_appearance"]
 	result["non_color_state"] = str(semantic.get("non_color_state", result.get("non_color_state", result.get("state_label", "Present"))))
 	result["visual_state"] = {
 		"role": result["semantic_role"],
@@ -544,6 +552,8 @@ static func _merge_projected_actor(base: Dictionary, semantic: Dictionary, autho
 	result["source_id"] = result["actor_id"]
 	result["actor_pose"] = str(semantic.get("pose", "idle"))
 	result["actor_behavior"] = str(semantic.get("behavior", "idle"))
+	result["pose"] = result["actor_pose"]
+	result["behavior"] = result["actor_behavior"]
 	result["actor_route_id"] = str(semantic.get("route_id", ""))
 	result["actor_route_points"] = _array(authority.get("actor_route_points", []))
 	result["actor_route_stage"] = _dict(authority.get("actor_route_stage", {}))
@@ -552,14 +562,13 @@ static func _merge_projected_actor(base: Dictionary, semantic: Dictionary, autho
 
 
 static func _scenario_icon_key(semantic: Dictionary, base: Dictionary) -> String:
-	var parts: Array[String] = []
-	for key in ["role", "state", "appearance", "behavior", "pose"]:
-		var value := str(semantic.get(key, base.get("semantic_%s" % key, base.get(key, "")))).strip_edges()
-		if not value.is_empty() and not parts.has(value):
-			parts.append(value)
-	if parts.is_empty():
-		parts.append("character" if str(semantic.get("semantic_kind", "")) == "actor" else "room_fixture")
-	return " ".join(parts)
+	var authored_icon := str(semantic.get("icon_key", "")).strip_edges()
+	if not authored_icon.is_empty():
+		return authored_icon
+	var semantic_kind := str(semantic.get("semantic_kind", "scene_object")).strip_edges()
+	var label := str(semantic.get("label", base.get("label", ""))).strip_edges()
+	var role := str(semantic.get("role", base.get("semantic_role", base.get("role", "")))).strip_edges()
+	return "%s %s %s" % ["scenario_actor" if semantic_kind == "actor" else "scenario_scene", label, role]
 
 
 static func _scenario_description(semantic: Dictionary, base: Dictionary, fallback: String) -> String:
@@ -785,8 +794,8 @@ static func _semantic_projection_coverage_errors(projection: Dictionary, authori
 			var expected_interactive := required and bool(interaction.get("present", true))
 			if expected_interactive != bool(sealed.get("presentation_interactive", false)):
 				errors.append("Semantic interaction %s presence diverged from sealed canvas interactivity." % identity)
-		elif not visual.is_empty() and str(visual.get("owner_namespace", "")) == "scenario" and bool(sealed.get("presentation_interactive", true)):
-			errors.append("Scenario visual %s gained interactivity without a finalized interaction." % identity)
+		elif not visual.is_empty() and str(visual.get("owner_namespace", "")) == "scenario" and required and not bool(sealed.get("presentation_interactive", false)):
+			errors.append("Scenario visual %s lost its sealed read-only inspectability." % identity)
 	var sealed_identities := authority.keys()
 	sealed_identities.sort()
 	for identity_value in sealed_identities:

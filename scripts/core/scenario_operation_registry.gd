@@ -39,7 +39,7 @@ const REGISTERED_HANDLERS := {
 	"record_outcome": {"inputs": ["outcome"], "input_specs": {"outcome": "OutcomeRef"}, "fact_projection": "none", "allowed_sources": ["command", "fact"], "outputs": ["resolved_outcomes"], "output_paths": ["resolved_outcomes"], "write_algebra": "ordered_set_union_append", "persistent": true, "rng": "none", "fallible": true, "atomic": true, "idempotence": "state-idempotent", "may_trigger_branch_resolution": ["outcome"], "external_effects": []},
 	"publish_feedback": {"inputs": ["message"], "input_specs": {"message": "bounded_nonblank_path_safe_string"}, "fact_projection": "none", "allowed_sources": ["command", "fact"], "outputs": ["last_feedback", "semantic_state"], "output_paths": ["last_feedback", "semantic_state.transition_queue"], "write_algebra": "replace_plus_queue_append", "persistent": true, "rng": "none", "fallible": true, "atomic": true, "idempotence": "dispatch receipt exactly-once", "may_trigger_branch_resolution": [], "external_effects": []},
 	"request_cleanup": {"inputs": ["reason"], "input_specs": {"reason": "CanonicalId"}, "fact_projection": "none", "allowed_sources": ["command", "fact"], "outputs": ["semantic_state", "cleanup_receipts", "cleanup_receipt_records", "cleanup_fingerprints", "cleanup_content_fingerprint", "status"], "output_paths": ["semantic_state", "cleanup_receipts", "cleanup_receipt_records", "cleanup_fingerprints", "cleanup_content_fingerprint", "status"], "write_algebra": "transactional_cleanup_batch", "persistent": true, "rng": "none", "fallible": true, "atomic": true, "idempotence": "fingerprint-verified replay", "may_trigger_branch_resolution": [], "external_effects": []},
-	"event_bridge": {"inputs": ["event_id", "resolution_id"], "input_specs": {"event_id": "EventChoiceRef.event_id", "resolution_id": "EventChoiceRef.choice_id"}, "fact_projection": "none", "allowed_sources": ["command", "fact"], "outputs": ["event_request_queue", "last_feedback", "event_correlations"], "output_paths": ["event_request_queue", "last_feedback", "event_correlations"], "write_algebra": "replace_plus_ordered_set_union", "persistent": true, "rng": "none", "fallible": true, "atomic": true, "idempotence": "correlation-key state-idempotent", "may_trigger_branch_resolution": [], "external_effects": [{"type": "event_correlation", "owner": "EventModule"}]},
+	"event_bridge": {"inputs": ["event_id", "resolution_id"], "optional_inputs": ["message"], "input_specs": {"event_id": "EventChoiceRef.event_id", "resolution_id": "EventChoiceRef.choice_id", "message": "bounded_nonblank_path_safe_string"}, "fact_projection": "none", "allowed_sources": ["command", "fact"], "outputs": ["event_request_queue", "last_feedback", "event_correlations"], "output_paths": ["event_request_queue", "last_feedback", "event_correlations"], "write_algebra": "replace_plus_ordered_set_union", "persistent": true, "rng": "none", "fallible": true, "atomic": true, "idempotence": "correlation-key state-idempotent", "may_trigger_branch_resolution": [], "external_effects": [{"type": "event_correlation", "owner": "EventModule"}]},
 	"grant_item": {"inputs": ["item_id", "message"], "input_specs": {"item_id": "CanonicalId", "message": "bounded_nonblank_path_safe_string"}, "fact_projection": "none", "allowed_sources": ["command"], "outputs": ["event_request_queue", "last_feedback"], "output_paths": ["event_request_queue", "last_feedback"], "write_algebra": "exactly_once_external_request", "persistent": true, "rng": "none", "fallible": true, "atomic": true, "idempotence": "request delivery receipt exactly-once", "may_trigger_branch_resolution": [], "external_effects": [{"type": "inventory_grant", "owner": "RunState"}]},
 	"grant_cash": {"inputs": ["amount", "message"], "input_specs": {"amount": "bounded_positive_int", "message": "bounded_nonblank_path_safe_string"}, "fact_projection": "none", "allowed_sources": ["command"], "outputs": ["event_request_queue", "last_feedback"], "output_paths": ["event_request_queue", "last_feedback"], "write_algebra": "exactly_once_external_request", "persistent": true, "rng": "none", "fallible": true, "atomic": true, "idempotence": "request delivery receipt exactly-once", "may_trigger_branch_resolution": [], "external_effects": [{"type": "cash_grant", "owner": "RunState"}]},
 	"change_scene_object": {"inputs": ["owner_namespace", "stable_object_id", "state", "message"], "input_specs": {"owner_namespace": "OwnerNamespace", "stable_object_id": "SemanticObjectId", "state": "bounded_nonblank_path_safe_string", "message": "bounded_nonblank_path_safe_string"}, "fact_projection": "none", "allowed_sources": ["command"], "outputs": ["semantic_state", "last_feedback"], "output_paths": ["semantic_state.scene_objects.<identity>.state", "semantic_state.transition_queue", "last_feedback"], "write_algebra": "authorized_visible_replace_plus_feedback", "persistent": true, "rng": "none", "fallible": true, "atomic": true, "idempotence": "command receipt exactly-once", "may_trigger_branch_resolution": [], "external_effects": []},
@@ -113,6 +113,7 @@ static func validate_handler_inputs(handler_id: String, inputs: Dictionary, loca
 	if not _array(contract.get("allowed_sources", [])).has(source): errors.append("scenario handler %s is not allowed from %s." % [handler_id, source])
 	var projection := inputs.has("value_from_payload")
 	var allowed_inputs := _array(contract.get("inputs", []))
+	allowed_inputs.append_array(_array(contract.get("optional_inputs", [])))
 	if projection: allowed_inputs.append("value_from_payload")
 	_append_unknown_keys("scenario handler %s inputs" % handler_id, inputs, allowed_inputs, errors)
 	if projection and handler_id != "set_local": errors.append("value_from_payload is allowed only for set_local.")
@@ -161,6 +162,7 @@ static func validate_handler_inputs(handler_id: String, inputs: Dictionary, loca
 			if typeof(inputs.get("reason")) != TYPE_STRING or not _canonical_id(str(inputs.get("reason", ""))): errors.append("request_cleanup requires a canonical lowercase cleanup reason id.")
 		"event_bridge":
 			if typeof(inputs.get("event_id")) != TYPE_STRING or typeof(inputs.get("resolution_id")) != TYPE_STRING or not _canonical_id(str(inputs.get("event_id", ""))) or not _canonical_id(str(inputs.get("resolution_id", ""))): errors.append("event_bridge requires canonical event and resolution ids.")
+			if inputs.has("message"): _validate_handler_message("event_bridge", inputs.get("message"), errors)
 			var event_choices := _dict(context.get("event_choices", {}))
 			if event_choices.is_empty() or not _array(event_choices.get(str(inputs.get("event_id", "")), [])).has(str(inputs.get("resolution_id", ""))): errors.append("event_bridge requires a catalog-proven choice belonging to the exact event.")
 		"grant_item":
@@ -854,11 +856,13 @@ static func _collection_key(family: String) -> String:
 
 
 static func _validate_scene_payload(payload: Dictionary, errors: Array) -> void:
-	_append_unknown_keys("scene object payload", payload, ["label", "role", "anchor_id", "zone_id", "bounds", "visible", "enabled", "state", "appearance", "description", "description_variants"], errors)
+	_append_unknown_keys("scene object payload", payload, ["label", "role", "icon_key", "anchor_id", "zone_id", "bounds", "visible", "enabled", "state", "appearance", "description", "description_variants"], errors)
 	if str(payload.get("label", "")).strip_edges().is_empty() or str(payload.get("role", "")).strip_edges().is_empty():
 		errors.append("scene object requires label and semantic role.")
 	if str(payload.get("anchor_id", "")).strip_edges().is_empty() and str(payload.get("zone_id", "")).strip_edges().is_empty():
 		errors.append("scene object requires bounded anchor_id or zone_id.")
+	if payload.has("icon_key") and str(payload.get("icon_key", "")).strip_edges().is_empty():
+		errors.append("scene object icon_key cannot be blank when authored.")
 	var bounds := _dict(payload.get("bounds", {}))
 	_append_unknown_keys("scene object bounds", bounds, ["w", "h"], errors)
 	if bounds.is_empty() or not _finite_number(bounds.get("w")) or not _finite_number(bounds.get("h")) or float(bounds.get("w", 0.0)) <= 0.0 or float(bounds.get("h", 0.0)) <= 0.0:
@@ -904,9 +908,11 @@ static func _validate_interaction_payload(payload: Dictionary, errors: Array) ->
 			if typeof(action.get("inputs", {})) != TYPE_DICTIONARY:
 				errors.append("interaction action handler inputs must be a dictionary.")
 			var inputs := _dict(action.get("inputs", {}))
-			var expected_inputs := _array(_dict(REGISTERED_HANDLERS.get(handler_id, {})).get("inputs", []))
-			_append_unknown_keys("interaction action handler inputs", inputs, expected_inputs, errors)
-			for input_value in expected_inputs:
+			var required_inputs := _array(_dict(REGISTERED_HANDLERS.get(handler_id, {})).get("inputs", []))
+			var allowed_inputs := required_inputs.duplicate()
+			allowed_inputs.append_array(_array(_dict(REGISTERED_HANDLERS.get(handler_id, {})).get("optional_inputs", [])))
+			_append_unknown_keys("interaction action handler inputs", inputs, allowed_inputs, errors)
+			for input_value in required_inputs:
 				if not inputs.has(str(input_value)):
 					errors.append("interaction action handler %s requires input %s." % [handler_id, str(input_value)])
 		for requirement_value in _array(action.get("requires_objective_steps", [])):

@@ -32,7 +32,7 @@ const BENCH_OUTPUTS := ["mags_loaded_dice", "mags_tuned_loupe", "mags_lined_slee
 
 
 static func check(library: ContentLibrary, failures: Array) -> void:
-	EnvironmentReadabilityContractScript.check(library, failures)
+	EnvironmentReadabilityContractScript.check_static(library, failures)
 	_check_souvenirs(library, failures)
 	_check_scenario_budgets(library, failures)
 	_check_services(library, failures)

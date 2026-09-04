@@ -281,14 +281,24 @@ func _production_host(definition: Dictionary, failures: Array) -> Dictionary:
 	if archetype.is_empty():
 		failures.append("%s production ContentLibrary lacks archetype %s." % [scenario_id, archetype_id])
 		return {}
-	var composition: Dictionary = _composition_cache.get(archetype_id, {})
+	var production_definition: Dictionary = _library.scenario(scenario_id)
+	if production_definition.is_empty():
+		failures.append("%s production ContentLibrary lacks the merged scenario definition." % scenario_id)
+		return {}
+	var composition: Dictionary = _composition_cache.get(scenario_id, {})
 	if composition.is_empty():
 		var rng: Variant = RngStreamScript.new()
-		rng.configure(abs(archetype_id.hash()) + 1)
+		rng.configure(abs(scenario_id.hash()) + 1)
 		# Invoke through Script.call so headless --script parsing does not depend on
 		# the global-class cache resolving this external static member first.
-		var environment: Variant = EnvironmentInstanceScript.from_archetype(archetype, 1, rng, _library, {}, definition)
+		var environment: Variant = EnvironmentInstanceScript.from_archetype(archetype, 1, rng, _library, {}, production_definition)
 		var environment_data: Dictionary = environment.call("to_dict")
+		var event_ids := _array(environment_data.get("event_ids", []))
+		var mutations := _dict(production_definition.get("mutations", {}))
+		for event_id_value in _array(mutations.get("event_pool_add", [])):
+			if not event_ids.has(event_id_value): event_ids.append(event_id_value)
+		var exclusive_event_id := str(_dict(mutations.get("exclusive_opportunity", {})).get("event_id", ""))
+		if not exclusive_event_id.is_empty() and not event_ids.has(exclusive_event_id): event_ids.append(exclusive_event_id)
 		var sealed: Dictionary = SemanticInventory.for_instance(environment_data, _library, [], [])
 		var inventory_errors: Array = SemanticInventory.validate_instance_binding(sealed, environment_data)
 		var exact: Dictionary = SemanticInventory.exact_collections(sealed)
@@ -297,11 +307,12 @@ func _production_host(definition: Dictionary, failures: Array) -> Dictionary:
 			return {}
 		composition = {
 			"exact": exact,
+			"event_choices": SemanticInventory.event_choice_index(event_ids, _library),
 			"schema_version": int(sealed.get("schema_version", 0)),
 			"digest": str(sealed.get("digest", "")),
 			"environment_id": str(environment_data.get("id", "")),
 		}
-		_composition_cache[archetype_id] = composition
+		_composition_cache[scenario_id] = composition
 	var exact: Dictionary = composition.get("exact", {})
 	var declared := _dict(_dict(definition.get("sequence", {})).get("declared_targets", {}))
 	var bounded: Dictionary = {}
@@ -313,7 +324,7 @@ func _production_host(definition: Dictionary, failures: Array) -> Dictionary:
 				failures.append("%s declared %s is absent from production-composed %s." % [scenario_id, identity, archetype_id])
 			else:
 				bounded[collection].append(identity)
-	bounded["event_choices"] = _dict(exact.get("event_choices", {}))
+	bounded["event_choices"] = _dict(composition.get("event_choices", {}))
 	return {
 		"target_inventory": bounded,
 		"inventory_schema_version": int(composition.get("schema_version", 0)),
@@ -322,7 +333,7 @@ func _production_host(definition: Dictionary, failures: Array) -> Dictionary:
 		"environment_id": str(composition.get("environment_id", "")),
 		"inventory_errors": [],
 		"base_interactions": [],
-		"event_choices": _dict(exact.get("event_choices", {})),
+		"event_choices": _dict(composition.get("event_choices", {})),
 	}
 
 

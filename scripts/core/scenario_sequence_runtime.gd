@@ -868,10 +868,12 @@ static func public_projection(state_value: Dictionary, definition: Dictionary = 
 		return {}
 	var public_semantics := OperationRegistryScript.public_semantic_state(_dict(state.get("semantic_state", {})))
 	# Terminal states retain causal base-interaction authority for replay and
-	# restore, but do not publish those host controls as active scenario
-	# presentation. Ordinary room controls are composed separately by the trusted
-	# host after this sealed passive projection is committed.
-	if str(state.get("status", "")) in [STATUS_AFTERMATH, STATUS_CLEANED]:
+	# restore, but no longer publish actionable controls. Authored aftermath props
+	# and witnesses remain visible and inspectable so a returning player can read
+	# what happened from the room itself. Fully cleaned sequences publish nothing.
+	if str(state.get("status", "")) == STATUS_AFTERMATH:
+		public_semantics["interactions"] = {}
+	elif str(state.get("status", "")) == STATUS_CLEANED:
 		for presentation_collection in ["scene_objects", "actors", "interactions"]:
 			public_semantics[presentation_collection] = {}
 	var public_interactions := _dict(public_semantics.get("interactions", {}))
@@ -1155,7 +1157,7 @@ static func _run_handler(state: Dictionary, definition: Dictionary, handler_id: 
 			var event_choices := _dict(_dict(next.get("semantic_state", {})).get("event_choices", {}))
 			if _array(event_choices.get(event_id, [])).is_empty() or not _authored_event_resolution_pair(definition, event_id, resolution_id):
 				return {"ok": false, "state": state, "errors": ["scenario event correlation requires a catalog-proven event choice pair"]}
-			var feedback := "Event %s resolved as %s." % [event_id, resolution_id]
+			var feedback := str(inputs.get("message", "Event %s resolved as %s." % [event_id, resolution_id]))
 			if feedback.length() > OperationRegistryScript.MAX_VARIANT_TEXT:
 				return {"ok": false, "state": state, "errors": ["scenario event correlation feedback exceeds the persisted text boundary"]}
 			var correlation_key := _structural_receipt("event_correlation", [event_id, resolution_id, trigger_kind, trigger_id])

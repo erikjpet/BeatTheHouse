@@ -1976,13 +1976,15 @@ func _draw_scene_objects() -> void:
 
 func _draw_scenario_prop(rect: Rect2, object_data: Dictionary, active: bool) -> void:
 	var role := str(object_data.get("role", "prop"))
-	var appearance := str(object_data.get("appearance", ""))
 	var accent := C_ORANGE if role == "obstacle" else C_PURPLE_2 if role == "exit" else C_CYAN_2
-	var fill := C_SHADOW.lightened(0.10) if appearance.is_empty() else accent.darkened(0.66)
-	draw_rect(rect, fill)
-	draw_rect(rect, accent.lightened(0.16) if active else accent, false, 3.0)
-	var mark := "!" if role == "obstacle" else ">" if role == "exit" else "#"
-	_neon_text(mark, rect.get_center() + Vector2(-4.0, 5.0), 14, C_WHITE)
+	# Scenario props use the same concrete icon vocabulary as ordinary event
+	# props. The semantic icon key chooses paper, furniture, barriers, lights,
+	# refreshments, machinery, doors, or a neutral fixture silhouette.
+	_draw_event_prop(rect, object_data, active)
+	draw_rect(rect, accent.lightened(0.16) if active else accent, false, 2.0)
+	if role in ["obstacle", "exit"]:
+		var mark := "!" if role == "obstacle" else ">"
+		_neon_text(mark, rect.position + Vector2(5.0, 14.0), 12, C_WHITE)
 	if not str(object_data.get("state", "")).is_empty():
 		draw_line(rect.position + Vector2(8.0, rect.size.y - 9.0), rect.end - Vector2(8.0, 9.0), accent, 3.0)
 
@@ -2650,6 +2652,15 @@ func _apply_draw_hints(object_data: Dictionary, object_type: String, index: int)
 		"event":
 			if str(object_data.get("prop", "")).strip_edges().is_empty():
 				object_data["prop"] = _fallback_event_prop(str(object_data.get("visual_key", "")), str(object_data.get("icon_key", "")))
+		"scenario_object":
+			if str(object_data.get("prop", "")).strip_edges().is_empty():
+				var scenario_prop := _fallback_event_prop(str(object_data.get("visual_key", "")), str(object_data.get("icon_key", "")))
+				# A scenario-authored object with no more specific icon still needs a
+				# physical fixture silhouette. Ordinary events retain their 0.5-era
+				# conversational fallback below.
+				var icon_hint := str(object_data.get("icon_key", "")).strip_edges().to_lower()
+				var authored_patron := icon_hint == "patron_talk" or icon_hint.begins_with("scenario_scene ")
+				object_data["prop"] = "room_fixture" if scenario_prop == "patron_talk" and not authored_patron else scenario_prop
 		"service":
 			if str(object_data.get("surface", "")).strip_edges().is_empty():
 				object_data["surface"] = "counter_case"
@@ -4792,13 +4803,44 @@ func _draw_travel_arrow(rect: Rect2, accent: Color) -> void:
 
 
 func _fallback_event_prop(visual_key: String, icon_key: String) -> String:
+	var explicit_icon := icon_key.strip_edges().to_lower()
+	if explicit_icon in [
+		"paper_note", "room_seating", "room_barrier", "room_signal", "room_refreshment",
+		"room_surface", "room_storage", "room_display", "room_vehicle", "room_hazard",
+		"payphone", "security_camera", "security_exit", "side_door", "room_route",
+		"trunk_offer", "jammed_machine", "clerk_counter", "clerk_talk", "patron_talk",
+		"room_trace", "room_fixture", "motel_door",
+	]:
+		return explicit_icon
+	if explicit_icon.begins_with("scenario_scene ") or explicit_icon.begins_with("scenario_actor "):
+		return _fallback_scenario_semantic_prop(explicit_icon)
 	var key := ("%s %s" % [visual_key, icon_key]).to_lower()
 	if key.find("manifest") != -1 or key.find("paper") != -1 or key.find("label") != -1 or key.find("evidence") != -1:
 		return "paper_note"
-	if key.find("crate") != -1 or key.find("carton") != -1 or key.find("stock") != -1 or key.find("goods") != -1:
+	if key.find("ledger") != -1 or key.find("record") != -1 or key.find("ticket") != -1 or key.find("badge") != -1 or key.find("clipboard") != -1 or key.find("entry card") != -1:
+		return "paper_note"
+	if key.find("crate") != -1 or key.find("carton") != -1 or key.find("stock") != -1 or key.find("goods") != -1 or key.find("case") != -1 or key.find("luggage") != -1 or key.find("trunk") != -1:
 		return "trunk_offer"
-	if key.find("machine") != -1 or key.find("workstation") != -1 or key.find("terminal") != -1 or key.find("station") != -1:
+	if key.find("rope") != -1 or key.find("rail") != -1 or key.find("barrier") != -1 or key.find("barricade") != -1 or key.find("fence") != -1 or key.find("picket") != -1 or key.find("windbreak") != -1 or key.find("cage") != -1:
+		return "room_barrier"
+	if key.find("chair") != -1 or key.find("seat") != -1 or key.find("booth") != -1 or key.find("bench") != -1:
+		return "room_seating"
+	if key.find("light") != -1 or key.find("lamp") != -1 or key.find("sign") != -1 or key.find("signal") != -1 or key.find("beacon") != -1:
+		return "room_signal"
+	if key.find("bottle") != -1 or key.find("drink") != -1 or key.find("glass") != -1 or key.find("keg") != -1 or key.find("food") != -1:
+		return "room_refreshment"
+	if key.find("table") != -1 or key.find("counter") != -1 or key.find("desk") != -1 or key.find("stage") != -1 or key.find("platform") != -1 or key.find("surface") != -1 or key.find("stand") != -1 or key.find("stall") != -1:
+		return "room_surface"
+	if key.find("machine") != -1 or key.find("workstation") != -1 or key.find("terminal") != -1 or key.find("engine") != -1 or key.find("pump") != -1 or key.find("repair") != -1 or key.find("tool") != -1 or key.find("speaker") != -1 or key.find("equipment") != -1 or key.find("panel") != -1 or key.find("job") != -1:
 		return "jammed_machine"
+	if key.find("bed") != -1 or key.find("furniture") != -1 or key.find("rack") != -1 or key.find("shelf") != -1 or key.find("cart") != -1 or key.find("tray") != -1 or key.find("trolley") != -1:
+		return "room_storage"
+	if key.find("gauge") != -1 or key.find("instrument") != -1 or key.find("board") != -1 or key.find("score") != -1 or key.find("bracket") != -1 or key.find("display") != -1:
+		return "room_display"
+	if key.find("vehicle") != -1 or key.find("rig") != -1 or key.find("cruiser") != -1 or key.find("bus") != -1 or key.find("dolly") != -1:
+		return "room_vehicle"
+	if key.find("fire") != -1 or key.find("smoke") != -1 or key.find("fog") != -1 or key.find("storm") != -1 or key.find("flood") != -1 or key.find("leak") != -1:
+		return "room_hazard"
 	if key.find("phone") != -1:
 		return "payphone"
 	if key.find("camera") != -1 or key.find("sky") != -1:
@@ -4807,13 +4849,59 @@ func _fallback_event_prop(visual_key: String, icon_key: String) -> String:
 		return "security_exit"
 	if key.find("progression") != -1 or key.find("door") != -1 or key.find("exit") != -1 or key.find("lane") != -1:
 		return "side_door"
+	if key.find("route") != -1 or key.find("marker") != -1 or key.find("path") != -1 or key.find("corridor") != -1 or key.find("hallway") != -1 or key.find("gangway") != -1 or key.find("ring") != -1 or key.find("zone") != -1:
+		return "room_route"
 	if key.find("note") != -1 or key.find("tip") != -1:
 		return "paper_note"
 	if key.find("offer") != -1:
 		return "trunk_offer"
 	if key.find("clerk") != -1 or key.find("server") != -1 or key.find("staff") != -1 or key.find("worker") != -1:
 		return "clerk_talk"
+	if key.find("actor") != -1 or key.find("person") != -1 or key.find("patron") != -1 or key.find("guest") != -1 or key.find("witness") != -1 or key.find("crowd") != -1 or key.find("audience") != -1:
+		return "patron_talk"
+	# Lifecycle words are useful only when the author supplied no physical noun.
+	# Keep them last so an aftermath tray remains a tray and an interrupted row
+	# of chairs remains seating in the unlabeled room.
+	if key.find("trace") != -1 or key.find("aftermath") != -1 or key.find("debris") != -1 or key.find("abandoned") != -1 or key.find("interrupted") != -1:
+		return "room_trace"
 	return "patron_talk"
+
+
+func _fallback_scenario_semantic_prop(value: String) -> String:
+	var tokens: Dictionary = {}
+	var normalized := value.to_lower()
+	for separator in ["_", "-", "/", "\\", ".", ",", ":", ";", "!", "?", "'", "(", ")"]:
+		normalized = normalized.replace(separator, " ")
+	for token_value in normalized.split(" ", false): tokens[str(token_value)] = true
+	if normalized.begins_with("scenario actor "):
+		return "clerk_talk" if _tokens_have(tokens, ["clerk", "server", "worker"]) else "patron_talk"
+	if _tokens_have(tokens, ["exit", "door", "doorway", "gangway"]): return "side_door"
+	if _tokens_have(tokens, ["route", "lane", "corridor", "path", "aisle", "trail", "ring"]): return "room_route"
+	if _tokens_have(tokens, ["manifest", "paper", "label", "evidence", "ledger", "record", "ticket", "badge", "clipboard", "note", "card", "cards", "tag", "sheet", "slip", "receipt", "pencil", "placard", "placards"]): return "paper_note"
+	if _tokens_have(tokens, ["crate", "carton", "stock", "goods", "case", "luggage", "trunk", "pallet", "box", "boxes", "pouch"]): return "trunk_offer"
+	if _tokens_have(tokens, ["rope", "rail", "barrier", "barricade", "fence", "picket", "windbreak", "cage", "cordon", "gate", "gates", "shutter", "shutters"]): return "room_barrier"
+	if _tokens_have(tokens, ["chair", "chairs", "seat", "seats", "booth", "bench", "benches", "stool"]): return "room_seating"
+	if _tokens_have(tokens, ["light", "lights", "flashlight", "lamp", "sign", "signal", "beacon", "marker"]): return "room_signal"
+	if _tokens_have(tokens, ["bottle", "drink", "glass", "keg", "food", "cup", "coffee"]): return "room_refreshment"
+	if _tokens_have(tokens, ["table", "tables", "counter", "desk", "lectern", "stage", "platform", "surface", "stand", "stall", "station"]): return "room_surface"
+	if _tokens_have(tokens, ["machine", "workstation", "terminal", "engine", "generator", "pump", "repair", "tool", "tools", "speaker", "equipment", "panel", "microphone", "cable", "circuit", "cooler", "sink", "job", "jobs"]): return "jammed_machine"
+	if _tokens_have(tokens, ["bed", "furniture", "rack", "shelf", "cart", "tray", "trolley", "stack", "dock", "coat"]): return "room_storage"
+	if _tokens_have(tokens, ["gauge", "instrument", "board", "score", "scoreboard", "bracket", "display", "slate", "tally"]): return "room_display"
+	if _tokens_have(tokens, ["vehicle", "rig", "cruiser", "bus", "dolly", "patrol", "car"]): return "room_vehicle"
+	if _tokens_have(tokens, ["fire", "smoke", "fog", "storm", "flood", "leak", "hazard"]): return "room_hazard"
+	if _tokens_have(tokens, ["phone", "payphone"]): return "payphone"
+	if _tokens_have(tokens, ["camera"]): return "security_camera"
+	if _tokens_have(tokens, ["security", "heat"]): return "security_exit"
+	if _tokens_have(tokens, ["clerk", "server", "worker"]): return "clerk_talk"
+	if _tokens_have(tokens, ["actor", "person", "patron", "guest", "witness", "crowd", "audience", "queue", "staff", "brawler", "passenger", "bartender", "judges"]): return "patron_talk"
+	if _tokens_have(tokens, ["trace", "traces", "clue", "clues", "aftermath", "debris", "abandoned", "interrupted"]): return "room_trace"
+	return "room_fixture"
+
+
+func _tokens_have(tokens: Dictionary, candidates: Array) -> bool:
+	for candidate_value in candidates:
+		if tokens.has(str(candidate_value)): return true
+	return false
 
 
 func _draw_event_prop(rect: Rect2, object_data: Dictionary, selected: bool) -> void:
@@ -4845,6 +4933,30 @@ func _draw_event_prop(rect: Rect2, object_data: Dictionary, selected: bool) -> v
 			_draw_event_patron_prop(rect, accent, 0.64, false, true)
 		"payphone", "counter_phone":
 			_draw_travel_payphone(rect, accent)
+		"room_barrier":
+			_draw_scenario_barrier_prop(rect, accent)
+		"room_seating":
+			_draw_scenario_seating_prop(rect, accent)
+		"room_signal":
+			_draw_scenario_signal_prop(rect, accent)
+		"room_refreshment":
+			_draw_scenario_refreshment_prop(rect, accent)
+		"room_surface":
+			_draw_scenario_surface_prop(rect, accent)
+		"room_fixture":
+			_draw_scenario_fixture_prop(rect, accent)
+		"room_trace":
+			_draw_scenario_trace_prop(rect, accent)
+		"room_route":
+			_draw_scenario_route_prop(rect, accent)
+		"room_storage":
+			_draw_scenario_storage_prop(rect, accent)
+		"room_display":
+			_draw_scenario_display_prop(rect, accent)
+		"room_vehicle":
+			_draw_scenario_vehicle_prop(rect, accent)
+		"room_hazard":
+			_draw_scenario_hazard_prop(rect, accent)
 		_:
 			_draw_event_patron_prop(rect, accent)
 	var icon_texture := _texture_for_asset_path(str(object_data.get("asset_path", "")))
@@ -4875,6 +4987,107 @@ func _event_icon_rect(rect: Rect2, prop: String) -> Rect2:
 		"payphone", "counter_phone":
 			return _centered_icon_rect(rect, 26.0, Vector2(24, -10))
 	return _centered_icon_rect(rect, 34.0, Vector2(24, -18))
+
+
+func _draw_scenario_barrier_prop(rect: Rect2, accent: Color) -> void:
+	var floor_y := rect.position.y + rect.size.y * 0.78
+	for x_ratio in [0.22, 0.78]:
+		var x: float = rect.position.x + rect.size.x * float(x_ratio)
+		draw_line(Vector2(x, floor_y), Vector2(x, rect.position.y + rect.size.y * 0.30), C_SHADOW, 5)
+		draw_circle(Vector2(x, rect.position.y + rect.size.y * 0.27), 4, accent)
+	draw_line(rect.position + Vector2(rect.size.x * 0.22, rect.size.y * 0.44), rect.position + Vector2(rect.size.x * 0.78, rect.size.y * 0.58), accent, 4)
+	draw_line(rect.position + Vector2(rect.size.x * 0.16, floor_y), rect.position + Vector2(rect.size.x * 0.84, floor_y), Color(accent.r, accent.g, accent.b, 0.28), 3)
+
+
+func _draw_scenario_seating_prop(rect: Rect2, accent: Color) -> void:
+	for x_ratio in [0.28, 0.62]:
+		var chair: Rect2 = Rect2(rect.position + Vector2(rect.size.x * float(x_ratio), rect.size.y * 0.34), Vector2(rect.size.x * 0.22, rect.size.y * 0.30))
+		draw_rect(chair, Color("#281a31"))
+		draw_rect(chair, accent, false, 2)
+		draw_line(chair.position + Vector2(2, chair.size.y), chair.position + Vector2(0, chair.size.y + rect.size.y * 0.20), C_SHADOW, 3)
+		draw_line(chair.end - Vector2(2, 0), chair.end + Vector2(0, rect.size.y * 0.20), C_SHADOW, 3)
+
+
+func _draw_scenario_signal_prop(rect: Rect2, accent: Color) -> void:
+	var center := rect.get_center()
+	draw_line(center + Vector2(0, rect.size.y * 0.35), center - Vector2(0, rect.size.y * 0.12), C_SHADOW, 5)
+	draw_circle(center - Vector2(0, rect.size.y * 0.22), minf(rect.size.x, rect.size.y) * 0.16, accent)
+	for radius in [0.25, 0.34]:
+		draw_arc(center - Vector2(0, rect.size.y * 0.22), minf(rect.size.x, rect.size.y) * radius, PI * 1.12, PI * 1.88, 12, Color(accent.r, accent.g, accent.b, 0.42), 2)
+
+
+func _draw_scenario_refreshment_prop(rect: Rect2, accent: Color) -> void:
+	draw_rect(Rect2(rect.position + Vector2(rect.size.x * 0.12, rect.size.y * 0.70), Vector2(rect.size.x * 0.76, 5)), C_SHADOW)
+	for index in range(3):
+		var bottle := Rect2(rect.position + Vector2(rect.size.x * (0.25 + index * 0.20), rect.size.y * (0.30 + (index % 2) * 0.08)), Vector2(8, rect.size.y * 0.34))
+		draw_rect(bottle, accent.darkened(float(index) * 0.10))
+		draw_rect(Rect2(bottle.position + Vector2(2, -5), Vector2(4, 6)), C_YELLOW)
+
+
+func _draw_scenario_surface_prop(rect: Rect2, accent: Color) -> void:
+	var top := Rect2(rect.position + Vector2(rect.size.x * 0.08, rect.size.y * 0.50), Vector2(rect.size.x * 0.84, rect.size.y * 0.18))
+	draw_rect(top, Color("#34213a"))
+	draw_rect(top, accent, false, 2)
+	draw_line(top.position + Vector2(top.size.x * 0.16, top.size.y), top.position + Vector2(top.size.x * 0.12, rect.size.y * 0.42), C_SHADOW, 4)
+	draw_line(top.position + Vector2(top.size.x * 0.84, top.size.y), top.position + Vector2(top.size.x * 0.88, rect.size.y * 0.42), C_SHADOW, 4)
+
+
+func _draw_scenario_fixture_prop(rect: Rect2, accent: Color) -> void:
+	var fixture := Rect2(rect.position + Vector2(rect.size.x * 0.22, rect.size.y * 0.28), Vector2(rect.size.x * 0.56, rect.size.y * 0.46))
+	draw_rect(fixture, Color("#19172b"))
+	draw_rect(fixture, accent, false, 2)
+	draw_line(fixture.position + Vector2(5, fixture.size.y * 0.34), fixture.end - Vector2(5, fixture.size.y * 0.66), Color(accent.r, accent.g, accent.b, 0.45), 2)
+	draw_line(fixture.position + Vector2(5, fixture.size.y * 0.66), fixture.end - Vector2(5, fixture.size.y * 0.34), Color(accent.r, accent.g, accent.b, 0.45), 2)
+
+
+func _draw_scenario_trace_prop(rect: Rect2, accent: Color) -> void:
+	var baseline := rect.position.y + rect.size.y * 0.72
+	draw_line(Vector2(rect.position.x + rect.size.x * 0.12, baseline), Vector2(rect.end.x - rect.size.x * 0.12, baseline), Color(accent.r, accent.g, accent.b, 0.35), 2)
+	for index in range(4):
+		var center := rect.position + Vector2(rect.size.x * (0.20 + float(index) * 0.19), rect.size.y * (0.38 + float(index % 2) * 0.16))
+		draw_circle(center, 4.0 + float(index % 2), accent.darkened(float(index) * 0.08))
+		draw_line(center + Vector2(-5, 7), center + Vector2(6, 10), C_SHADOW, 2)
+
+
+func _draw_scenario_route_prop(rect: Rect2, accent: Color) -> void:
+	var start := rect.position + Vector2(rect.size.x * 0.14, rect.size.y * 0.68)
+	var finish := rect.position + Vector2(rect.size.x * 0.78, rect.size.y * 0.32)
+	draw_dashed_line(start, finish, accent, 3.0, 7.0, true)
+	draw_colored_polygon(PackedVector2Array([finish, finish + Vector2(-10, -1), finish + Vector2(-3, 9)]), accent)
+
+
+func _draw_scenario_storage_prop(rect: Rect2, accent: Color) -> void:
+	var frame := Rect2(rect.position + Vector2(rect.size.x * 0.14, rect.size.y * 0.24), Vector2(rect.size.x * 0.72, rect.size.y * 0.54))
+	draw_rect(frame, Color("#21182d"))
+	draw_rect(frame, accent, false, 2)
+	for y_ratio in [0.34, 0.66]:
+		draw_line(Vector2(frame.position.x + 3, frame.position.y + frame.size.y * float(y_ratio)), Vector2(frame.end.x - 3, frame.position.y + frame.size.y * float(y_ratio)), accent.darkened(0.22), 2)
+
+
+func _draw_scenario_display_prop(rect: Rect2, accent: Color) -> void:
+	var board := Rect2(rect.position + Vector2(rect.size.x * 0.12, rect.size.y * 0.18), Vector2(rect.size.x * 0.76, rect.size.y * 0.55))
+	draw_rect(board, Color("#161b2d"))
+	draw_rect(board, accent, false, 2)
+	for index in range(3):
+		var y := board.position.y + board.size.y * (0.25 + float(index) * 0.23)
+		draw_line(Vector2(board.position.x + 7, y), Vector2(board.end.x - 7 - index * 5, y), accent.lightened(0.10), 2)
+	draw_line(board.get_center() + Vector2(0, board.size.y * 0.50), board.get_center() + Vector2(0, board.size.y * 0.72), C_SHADOW, 4)
+
+
+func _draw_scenario_vehicle_prop(rect: Rect2, accent: Color) -> void:
+	var body := Rect2(rect.position + Vector2(rect.size.x * 0.10, rect.size.y * 0.40), Vector2(rect.size.x * 0.80, rect.size.y * 0.30))
+	draw_rect(body, accent.darkened(0.50))
+	draw_rect(body, accent, false, 2)
+	draw_colored_polygon(PackedVector2Array([body.position + Vector2(body.size.x * 0.22, 0), body.position + Vector2(body.size.x * 0.38, -rect.size.y * 0.18), body.position + Vector2(body.size.x * 0.68, -rect.size.y * 0.18), body.position + Vector2(body.size.x * 0.82, 0)]), accent.darkened(0.36))
+	draw_circle(body.position + Vector2(body.size.x * 0.24, body.size.y), 5, C_SHADOW)
+	draw_circle(body.position + Vector2(body.size.x * 0.76, body.size.y), 5, C_SHADOW)
+
+
+func _draw_scenario_hazard_prop(rect: Rect2, accent: Color) -> void:
+	var center := rect.get_center()
+	draw_colored_polygon(PackedVector2Array([center + Vector2(0, -rect.size.y * 0.32), center + Vector2(rect.size.x * 0.34, rect.size.y * 0.28), center + Vector2(-rect.size.x * 0.34, rect.size.y * 0.28)]), accent.darkened(0.42))
+	draw_polyline(PackedVector2Array([center + Vector2(0, -rect.size.y * 0.32), center + Vector2(rect.size.x * 0.34, rect.size.y * 0.28), center + Vector2(-rect.size.x * 0.34, rect.size.y * 0.28), center + Vector2(0, -rect.size.y * 0.32)]), accent, 2)
+	_neon_text("!", center + Vector2(-4, 8), 16, C_WHITE)
 
 
 func _draw_event_clerk_prop(rect: Rect2, accent: Color, talking: bool) -> void:

@@ -20,6 +20,9 @@ const SMALL_SCREEN_TARGET := Vector2(ArtContractsScript.ENVIRONMENT_OBJECT_HIT_S
 
 
 static func check(library: Variant, failures: Array) -> void:
+	# This is the single standard-suite authority for the complete env06_8
+	# through-state icon and paired-hidden observer. ContentDepth keeps the fast
+	# static pass so the expensive matrix is not duplicated.
 	Env068EnvironmentReadabilityContractScript.check(library, failures)
 	_check_ordinary_interaction_coexistence(failures)
 	_check_public_removal_tombstones(failures)
@@ -706,9 +709,12 @@ static func _check_finalized_expanded_path_and_label(library: Variant, failures:
 	label_run.current_environment["semantic_anchors"]["small_label"] = {"position": [380.0, 100.0]}
 	label_run.current_environment["semantic_anchors"]["large_label"] = {"position": [300.0, 100.0]}
 	label_run.scenario_prepare_semantic_finalization()
-	var label_rejected := label_run.scenario_finalize_base_semantics([_production_presentation()], library, _production_layout_context())
-	if bool(label_rejected.get("ok", true)) or not _contains_text(_array(label_rejected.get("errors", [])), "text-safe in expanded small-screen"):
-		failures.append("Validated finalization did not reject expanded-only label overlap with the production label geometry: %s" % JSON.stringify(label_rejected.get("errors", [])))
+	var label_resolved := label_run.scenario_finalize_base_semantics([_production_presentation()], library, _production_layout_context())
+	var label_projection := _dict(label_resolved.get("projection", {}))
+	var label_semantic := _dict(_dict(label_projection.get("semantic_state", {})).get("scene_objects", {}))
+	var adjusted_label := _dict(label_semantic.get("scenario::command_console", {}))
+	if not bool(label_resolved.get("ok", false)) or not bool(adjusted_label.get("collision_adjusted", false)):
+		failures.append("Validated finalization did not deterministically separate expanded-only label overlap from production labels: %s" % JSON.stringify(label_resolved.get("errors", [])))
 
 
 static func _check_explicit_alternate_exit(library: Variant, failures: Array) -> void:

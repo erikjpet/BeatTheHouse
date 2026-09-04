@@ -174,12 +174,15 @@ static func _scenario_description(semantic: Dictionary) -> String:
 
 
 static func _scenario_icon_key(semantic: Dictionary) -> String:
-	var parts: Array[String] = []
-	for key in ["role", "state", "appearance", "behavior", "pose"]:
-		var value := str(semantic.get(key, "")).strip_edges()
-		if not value.is_empty() and not parts.has(value):
-			parts.append(value)
-	return " ".join(parts)
+	var authored_icon := str(semantic.get("icon_key", "")).strip_edges()
+	if not authored_icon.is_empty():
+		return authored_icon
+	var semantic_kind := str(semantic.get("semantic_kind", "scene_object")).strip_edges()
+	return "%s %s %s" % [
+		"scenario_actor" if semantic_kind == "actor" else "scenario_scene",
+		str(semantic.get("label", "")).strip_edges(),
+		str(semantic.get("role", "")).strip_edges(),
+	]
 
 
 static func _ordered_semantic_values(value: Dictionary) -> Array:
@@ -370,7 +373,12 @@ static func resolve(base_records: Array, projection: Dictionary, environment: Di
 			if bool(resolved.get("visible", true)):
 				var normal_rect := _pixel_rect(_dict(resolved.get("normalized_hit_rect", {})))
 				var small_rect := _pixel_rect(_dict(resolved.get("small_screen_rect", {})))
-				occupied.append({"identity": identity, "rect": normal_rect, "small_rect": small_rect})
+				occupied.append({
+					"identity": identity,
+					"rect": normal_rect,
+					"small_rect": small_rect,
+					"label": str(resolved.get("label", "")),
+				})
 
 	semantic_state["scene_objects"] = resolved_scenes
 	semantic_state["actors"] = resolved_actors
@@ -472,11 +480,12 @@ static func _resolve_visual(
 	if not _finite_point(size) or size.x < MIN_SCENE_SIZE.x or size.y < MIN_SCENE_SIZE.y or size.x > BOARD_SIZE.x or size.y > BOARD_SIZE.y:
 		errors.append("Scenario visual %s has out-of-bounds semantic dimensions." % identity)
 		return {}
-	if not _readable_text(str(semantic.get("label", base_record.get("label", ""))), LABEL_MAX_LENGTH):
+	var label := str(semantic.get("label", base_record.get("label", "")))
+	if not _readable_text(label, LABEL_MAX_LENGTH):
 		errors.append("Scenario visual %s requires a bounded, readable label." % identity)
 		return {}
 	var authored_rect := _clamp_inside_board(Rect2(center - size * 0.5, size))
-	var placement := _collision_safe_rect(identity, authored_rect, occupied)
+	var placement := _collision_safe_rect(identity, authored_rect, occupied, label)
 	if bool(placement.get("colliding", true)):
 		errors.append("Scenario visual %s cannot resolve both normal and expanded small-screen geometry without ambiguity." % identity)
 		return {}
@@ -652,6 +661,7 @@ static func _validate_interactions(interactions: Dictionary, authority: Dictiona
 			errors.append("Scenario interaction %s collides with the reserved TalkDock overlay." % identity)
 		active_targets.append({
 			"identity": identity,
+			"scenario_owned": str(interaction.get("owner_namespace", "")) == "scenario",
 			"rect": rect,
 			"small_rect": small_rect,
 			"label_rect": _label_rect(rect, str(interaction.get("label", ""))),
@@ -681,6 +691,11 @@ static func _validate_interactions(interactions: Dictionary, authority: Dictiona
 		var left := _dict(active_targets[left_index])
 		for right_index in range(left_index + 1, active_targets.size()):
 			var right := _dict(active_targets[right_index])
+			# This validator owns scenario composition. Base-only room collisions are
+			# validated by the base-environment contracts and must not become
+			# scenario failures merely because a scenario is active.
+			if not bool(left.get("scenario_owned", false)) and not bool(right.get("scenario_owned", false)):
+				continue
 			for rect_key in ["rect", "small_rect"]:
 				var left_rect: Rect2 = left.get(rect_key, Rect2())
 				var right_rect: Rect2 = right.get(rect_key, Rect2())
@@ -693,6 +708,8 @@ static func _validate_interactions(interactions: Dictionary, authority: Dictiona
 					errors.append("Scenario interaction labels %s and %s overlap in %s layout." % [str(left.get("identity", "")), str(right.get("identity", "")), "expanded small-screen" if label_key == "small_label_rect" else "normal"])
 	for target_value in active_targets:
 		var target := _dict(target_value)
+		if not bool(target.get("scenario_owned", false)):
+			continue
 		var target_identity := str(target.get("identity", ""))
 		for base_value in base_records:
 			var base_record := _dict(base_value)
@@ -887,7 +904,9 @@ static func _seal_projection_coverage(authority: Dictionary, semantic_state: Dic
 		if not interaction.is_empty():
 			interactive = required and bool(interaction.get("present", true))
 		elif not visual.is_empty() and str(visual.get("owner_namespace", "")) == "scenario":
-			interactive = false
+			# Scenario decoration is deliberately inspectable even when it has no
+			# command actions. The sealed flag means canvas selection, not mutation.
+			interactive = required
 		if not required:
 			visible = false
 			interactive = false
@@ -1088,25 +1107,34 @@ static func _point_clear(point: Vector2, obstacles: Array, ignored_identity: Str
 	return true
 
 
-static func _collision_safe_rect(identity: String, authored: Rect2, occupied: Array) -> Dictionary:
+static func _collision_safe_rect(identity: String, authored: Rect2, occupied: Array, label: String = "") -> Dictionary:
 	# A normal-layout collision may be deterministically displaced. Expanded-only
 	# contact must retain authored placement so the later small-screen hit, label,
 	# lane, and reachability validators can reject the exact authored conflict
 	# instead of silently manufacturing different room geometry.
 	var authored_raw_collision := _raw_hit_overlaps(identity, authored, occupied)
-	if not authored_raw_collision and not _normal_hit_overlaps(identity, authored, occupied):
+	if not authored_raw_collision \
+			and not _normal_hit_overlaps(identity, authored, occupied) \
+			and not _label_overlaps(identity, authored, label, occupied, false) \
+			and not _label_overlaps(identity, _expanded_rect(authored, SMALL_SCREEN_TARGET), label, occupied, true):
 		return {"rect": _clamp_inside_board(authored), "adjusted": false, "colliding": false}
 	for offset_value in COLLISION_OFFSETS:
 		var offset := offset_value as Vector2
 		var candidate := _clamp_inside_board(Rect2(authored.position + offset, authored.size))
 		var small_candidate := _expanded_rect(candidate, SMALL_SCREEN_TARGET)
-		if not _normal_hit_overlaps(identity, candidate, occupied) and not _expanded_overlaps(identity, small_candidate, occupied):
+		if not _normal_hit_overlaps(identity, candidate, occupied) \
+				and not _expanded_overlaps(identity, small_candidate, occupied) \
+				and not _label_overlaps(identity, candidate, label, occupied, false) \
+				and not _label_overlaps(identity, small_candidate, label, occupied, true):
 			return {"rect": candidate, "adjusted": not offset.is_zero_approx(), "colliding": false}
 	var bounded_candidates := _bounded_collision_candidates(authored)
 	for candidate_value in bounded_candidates:
 		var candidate := candidate_value as Rect2
 		var small_candidate := _expanded_rect(candidate, SMALL_SCREEN_TARGET)
-		if not _normal_hit_overlaps(identity, candidate, occupied) and not _expanded_overlaps(identity, small_candidate, occupied):
+		if not _normal_hit_overlaps(identity, candidate, occupied) \
+				and not _expanded_overlaps(identity, small_candidate, occupied) \
+				and not _label_overlaps(identity, candidate, label, occupied, false) \
+				and not _label_overlaps(identity, small_candidate, label, occupied, true):
 			return {"rect": candidate, "adjusted": not candidate.position.is_equal_approx(authored.position), "colliding": false}
 	# Preserve the original exact-hitbox fallback for authored raw collisions when
 	# a crowded room cannot also provide the preferred extra visual gap.
@@ -1115,20 +1143,44 @@ static func _collision_safe_rect(identity: String, authored: Rect2, occupied: Ar
 			var offset := offset_value as Vector2
 			var candidate := _clamp_inside_board(Rect2(authored.position + offset, authored.size))
 			var small_candidate := _expanded_rect(candidate, SMALL_SCREEN_TARGET)
-			if not _raw_hit_overlaps(identity, candidate, occupied) and not _expanded_overlaps(identity, small_candidate, occupied):
+			if not _raw_hit_overlaps(identity, candidate, occupied) \
+					and not _expanded_overlaps(identity, small_candidate, occupied) \
+					and not _label_overlaps(identity, candidate, label, occupied, false) \
+					and not _label_overlaps(identity, small_candidate, label, occupied, true):
 				return {"rect": candidate, "adjusted": not offset.is_zero_approx(), "colliding": false}
 		for candidate_value in bounded_candidates:
 			var candidate := candidate_value as Rect2
 			var small_candidate := _expanded_rect(candidate, SMALL_SCREEN_TARGET)
-			if not _raw_hit_overlaps(identity, candidate, occupied) and not _expanded_overlaps(identity, small_candidate, occupied):
+			if not _raw_hit_overlaps(identity, candidate, occupied) \
+					and not _expanded_overlaps(identity, small_candidate, occupied) \
+					and not _label_overlaps(identity, candidate, label, occupied, false) \
+					and not _label_overlaps(identity, small_candidate, label, occupied, true):
 				return {"rect": candidate, "adjusted": not candidate.position.is_equal_approx(authored.position), "colliding": false}
 	# A raw-safe authored placement remains valid when the room cannot provide the
 	# renderer's preferred extra breathing room. Raw ambiguity still fails closed;
 	# this compatibility path only avoids rejecting an otherwise valid crowded
 	# destination during travel.
-	if not authored_raw_collision:
+	if not authored_raw_collision \
+			and not _label_overlaps(identity, authored, label, occupied, false) \
+			and not _label_overlaps(identity, _expanded_rect(authored, SMALL_SCREEN_TARGET), label, occupied, true):
 		return {"rect": _clamp_inside_board(authored), "adjusted": false, "colliding": false}
 	return {"rect": authored, "adjusted": false, "colliding": true}
+
+
+static func _label_overlaps(identity: String, rect: Rect2, label: String, occupied: Array, small_screen: bool) -> bool:
+	var candidate_label := _label_rect(rect, label)
+	if not candidate_label.has_area():
+		return false
+	var rect_key := "small_rect" if small_screen else "rect"
+	for occupied_value in occupied:
+		var occupied_record := _dict(occupied_value)
+		if str(occupied_record.get("identity", "")) == identity:
+			continue
+		var other_rect: Rect2 = occupied_record.get(rect_key, Rect2())
+		var other_label := _label_rect(other_rect, str(occupied_record.get("label", "")))
+		if other_label.has_area() and candidate_label.intersects(other_label) and candidate_label.intersection(other_label).get_area() > 0.01:
+			return true
+	return false
 
 
 static func _bounded_collision_candidates(authored: Rect2) -> Array:
@@ -1375,7 +1427,12 @@ static func _base_occupied_records(base_records: Array) -> Array:
 		var rect := _record_pixel_rect(record)
 		if not rect.has_area():
 			continue
-		result.append({"identity": _record_identity(record), "rect": rect, "small_rect": _expanded_rect(rect, SMALL_SCREEN_TARGET)})
+		result.append({
+			"identity": _record_identity(record),
+			"rect": rect,
+			"small_rect": _expanded_rect(rect, SMALL_SCREEN_TARGET),
+			"label": str(record.get("label", "")),
+		})
 	return result
 
 
