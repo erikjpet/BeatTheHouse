@@ -315,7 +315,7 @@ static func _check_lifecycle_caller_failure_contract(library: ContentLibrary, fa
 			and layer_probe.hover_target_id == "event:side_door" and layer_probe.environment_canvas.hovered_object_id == "event:side_door" \
 			and layer_probe.environment_canvas.mouse_default_cursor_shape == Control.CURSOR_POINTING_HAND
 	var layer_before := _public_caller_probe_state(layer_probe)
-	var layer_preexisting_talk_tweens := layer_probe.talk_dock.attention_tween_lifecycle_snapshot()
+	var layer_preexisting_talk_tweens: Array = layer_probe.talk_dock.attention_tween_lifecycle_snapshot()
 	var layer_preexisting_coach_tween: Variant = layer_probe.coach_overlay.attention_tween_lifecycle_snapshot().get("tween", null)
 	var layer_message_start := layer_probe.message_log.size()
 	layer_probe.capture_transaction_attention = true
@@ -329,18 +329,18 @@ static func _check_lifecycle_caller_failure_contract(library: ContentLibrary, fa
 	layer_probe._on_talk_dock_occupied_rect_changed(layer_probe.talk_dock.occupied_global_rect())
 	var unrelated_tween_advanced := layer_generator.unrelated_boundary_tween != null and layer_generator.unrelated_boundary_tween.custom_step(0.5)
 	var layer_stale_work_ignored := _public_caller_probe_state(layer_probe) == layer_before
-	var talk_alpha_before_step := layer_probe.talk_dock.panel.modulate.a
+	var talk_alpha_before_step: float = layer_probe.talk_dock.panel.modulate.a
 	var preexisting_talk_tween_advanced := false
 	if not layer_preexisting_talk_tweens.is_empty() and layer_preexisting_talk_tweens[0] is Tween:
 		preexisting_talk_tween_advanced = (layer_preexisting_talk_tweens[0] as Tween).custom_step(0.05)
-	var preexisting_talk_tween_progressed := layer_probe.talk_dock.panel.modulate.a > talk_alpha_before_step
-	var coach_alpha_before_step := layer_probe.coach_overlay.panel.modulate.a
+	var preexisting_talk_tween_progressed: bool = layer_probe.talk_dock.panel.modulate.a > talk_alpha_before_step
+	var coach_alpha_before_step: float = layer_probe.coach_overlay.panel.modulate.a
 	var preexisting_coach_tween_advanced := false
 	if layer_preexisting_coach_tween is Tween:
 		preexisting_coach_tween_advanced = (layer_preexisting_coach_tween as Tween).custom_step(0.05)
-	var preexisting_coach_tween_progressed := layer_probe.coach_overlay.panel.modulate.a > coach_alpha_before_step
+	var preexisting_coach_tween_progressed: bool = layer_probe.coach_overlay.panel.modulate.a > coach_alpha_before_step
 	var layer_preexisting_coach_survived := layer_preexisting_coach_tween is Tween and (layer_preexisting_coach_tween as Tween).is_valid()
-	var layer_rollback_checkpoint_clean := layer_probe.coach_overlay.lifecycle_protected_attention_tweens.is_empty()
+	var layer_rollback_checkpoint_clean: bool = layer_probe.coach_overlay.lifecycle_protected_attention_tweens.is_empty()
 	var layer_hover_rollback_exact := layer_probe.environment_hover_signal_log.size() == layer_hover_signal_count \
 			and layer_probe.selected_object_id.is_empty() and layer_probe.environment_canvas.selected_object_id.is_empty() \
 			and layer_probe.hover_target_id == "event:side_door" and layer_probe.environment_canvas.hovered_object_id == "event:side_door" \
@@ -363,7 +363,7 @@ static func _check_lifecycle_caller_failure_contract(library: ContentLibrary, fa
 	_install_real_world_map_popup(map_probe, "motel", "Motel")
 	_install_active_tutorial_presentation(map_probe, "tutorial_travel_corner", "travel:motel", "map_destination", scene_tree)
 	var map_before := _public_caller_probe_state(map_probe)
-	var map_preexisting_talk_tweens := map_probe.talk_dock.attention_tween_lifecycle_snapshot()
+	var map_preexisting_talk_tweens: Array = map_probe.talk_dock.attention_tween_lifecycle_snapshot()
 	var map_preexisting_coach_tween: Variant = map_probe.coach_overlay.attention_tween_lifecycle_snapshot().get("tween", null)
 	var map_message_start := map_probe.message_log.size()
 	map_probe.capture_transaction_attention = true

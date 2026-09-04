@@ -1444,6 +1444,7 @@ func _sealed_action_host_publish(candidate: RunState) -> bool:
 	for key in published_environment:
 		original_environment[key] = published_environment[key]
 	run_state.current_environment = original_environment
+	_set_active_game_binding(current_game.get_id() if current_game != null else "")
 	return true
 
 
@@ -1608,7 +1609,7 @@ func _sealed_action_host_preview_wager_cost(action_id: String, stake: int) -> in
 		return 0
 	var ledger := _sealed_action_host_ledger(candidate, true)
 	_sealed_action_host_store_ledger(candidate, ledger)
-	var snapshot := candidate.to_save_snapshot()
+	var snapshot := _sealed_action_host_transient_run_snapshot(candidate)
 	# The wager proposal is read-only and the canonical module binds this exact
 	# session into its input fingerprint; no mutable staging happens on this path.
 	var session: Dictionary = ledger.get("session", {}) if typeof(ledger.get("session", {})) == TYPE_DICTIONARY else {}
@@ -1898,7 +1899,7 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 	# the validated ledger value read-only here instead of cloning it once in the
 	# host and a second time in the provider.
 	var session: Dictionary = ledger.get("session", {}) if typeof(ledger.get("session", {})) == TYPE_DICTIONARY else {}
-	var wager_snapshot := candidate.to_save_snapshot()
+	var wager_snapshot := _sealed_action_host_transient_run_snapshot(candidate)
 	var provider_contract: Dictionary = action_authority_contract
 	var wager_method := StringName(provider_contract.get("wager_cost_proposal_method", &""))
 	var resolve_method := StringName(provider_contract.get("resolve_proposal_method", &""))
