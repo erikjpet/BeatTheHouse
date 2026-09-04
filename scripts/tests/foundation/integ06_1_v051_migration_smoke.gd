@@ -261,7 +261,8 @@ func _valid_provenance(provenance: Dictionary, capture_case: Dictionary, fixture
 			if str(step.get("input_type", "click")) == "drag":
 				expected_methods.append("GameSurfaceCanvas.surface_pointer_drag:%s:%d" % [generic_surface_action, generic_surface_index])
 			else:
-				expected_methods.append("GameSurfaceCanvas.surface_action:%s:%s" % [generic_surface_action, "first_stocked" if generic_surface_index < 0 else str(generic_surface_index)])
+				var generic_confirm_suffix := ":confirm=%s" % str(bool(step.get("confirm", false))) if fixture_class == "mid_0_6" else ""
+				expected_methods.append("GameSurfaceCanvas.surface_action:%s:%s%s" % [generic_surface_action, "first_stocked" if generic_surface_index < 0 else str(generic_surface_index), generic_confirm_suffix])
 		elif step_type == "back_to_environment":
 			expected_methods.append("FoundationMain.back_to_environment")
 	if not str(capture_case.get("enter_game", "")).strip_edges().is_empty():
@@ -278,7 +279,8 @@ func _valid_provenance(provenance: Dictionary, capture_case: Dictionary, fixture
 			if surface_type == "drag":
 				expected_methods.append("GameSurfaceCanvas.surface_pointer_drag:%s:%d" % [surface_action, surface_index])
 			else:
-				expected_methods.append("GameSurfaceCanvas.surface_action:%s:%s" % [surface_action, "first_stocked" if surface_index < 0 else str(surface_index)])
+				var confirm_suffix := ":confirm=%s" % str(bool(surface_step.get("confirm", false))) if fixture_class == "mid_0_6" else ""
+				expected_methods.append("GameSurfaceCanvas.surface_action:%s:%s%s" % [surface_action, "first_stocked" if surface_index < 0 else str(surface_index), confirm_suffix])
 	expected_methods.append("FoundationMain.save_foundation_run")
 	expected_methods.append("SaveService.wait_for_async_save")
 	var actual_methods := _string_array(capture.get("methods", []))
@@ -301,6 +303,8 @@ func _valid_provenance(provenance: Dictionary, capture_case: Dictionary, fixture
 			failures.append("wrong mid-0.6 historical runtime blob identity")
 		expected_driver_sha256 = _file_sha256(DRIVER_PATH)
 		var custody_path := str(provenance.get("custody_inventory_path", ""))
+		if not FileAccess.file_exists(custody_path):
+			custody_path = "%s/%s.custody.json" % [fixture_root, fixture_id]
 		var custody := _load_json_dictionary(custody_path)
 		if custody_path.is_empty() or custody.is_empty() or _raw_file_sha256(custody_path) != str(provenance.get("custody_inventory_sha256", "")).to_lower() \
 				or str(custody.get("schema", "")) != "beat_the_house.integ06_1_historical_custody_inventory" or str(custody.get("historical_commit", "")) != str(boundary.get("commit", "")):
@@ -400,10 +404,24 @@ func _expected_fixture_state(run_state: Variant, capture_case: Dictionary) -> bo
 			and int(tutorial_item_state.get("tab_detector_peek_count", 0)) == 0 \
 			and bool(tutorial_completed.get("tutorial_gas_machine", false)) \
 			and not bool(tutorial_completed.get("tutorial_gas_peek", false))
-	if expectation != "partial_scratch":
-		return false
 	var environment: Dictionary = run_state.get("current_environment")
 	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	var requested_game := str(capture_case.get("enter_game", "")).strip_edges()
+	var persisted: Dictionary = game_states.get(requested_game, {}) if typeof(game_states.get(requested_game, {})) == TYPE_DICTIONARY else {}
+	if expectation == "slot_after_spin":
+		return int(persisted.get("spin_count", 0)) >= 1 \
+			and not str(persisted.get("last_outcome_id", "")).is_empty() \
+			and persisted.has("last_reels")
+	if expectation == "bar_dice_after_round":
+		return int(persisted.get("rounds_played", 0)) >= 1 \
+			and typeof(persisted.get("last_result", null)) == TYPE_DICTIONARY \
+			and not (persisted.get("last_result", {}) as Dictionary).is_empty()
+	if expectation == "blackjack_after_hand":
+		return int(persisted.get("hands_played", 0)) >= 1 \
+			and typeof(persisted.get("last_result", null)) == TYPE_DICTIONARY \
+			and not (persisted.get("last_result", {}) as Dictionary).is_empty()
+	if expectation != "partial_scratch":
+		return false
 	var machine: Dictionary = game_states.get("scratch_tickets", {}) if typeof(game_states.get("scratch_tickets", {})) == TYPE_DICTIONARY else {}
 	var ticket: Dictionary = machine.get("active_ticket", {}) if typeof(machine.get("active_ticket", {})) == TYPE_DICTIONARY else {}
 	return not ticket.is_empty() \

@@ -293,6 +293,9 @@ try {
 		$capture.save_path = "isolated_distribution_root/saves/$capturedFixtureId.json"
 		$destinationSave = Join-Path $OutputDirectory "$capturedFixtureId.json"
 		Copy-Item -LiteralPath $sourceSave -Destination $destinationSave -Force
+		if ($KeepHistoricalArchive) {
+			Copy-Item -LiteralPath $custodyInventoryPath -Destination (Join-Path $OutputDirectory "$capturedFixtureId.custody.json") -Force
+		}
 		$saveHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $destinationSave).Hash
 		$manifest = [ordered]@{
 			schema = "beat_the_house.integ06_1_historical_fixture_provenance"
