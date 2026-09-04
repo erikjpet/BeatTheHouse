@@ -1328,13 +1328,13 @@ func _sealed_action_host_publish(candidate: RunState) -> bool:
 	if normalized == null:
 		return false
 	var snapshot := normalized.to_save_snapshot()
-	var verifier := RunState.new()
-	verifier.from_dict(snapshot)
-	if GameRitualRuntimeScript.canonical_fingerprint(verifier.to_save_snapshot()) != GameRitualRuntimeScript.canonical_fingerprint(snapshot):
-		return false
+	# _sealed_action_host_normalized_candidate() has already crossed the exact
+	# save/restore boundary. The live restore below is the independent second
+	# crossing, so a third throwaway RunState added no authority while forcing two
+	# more full-run serializations for every publish.
+	var snapshot_fingerprint := GameRitualRuntimeScript.canonical_fingerprint(snapshot)
 	var original_snapshot := run_state.to_save_snapshot()
 	var original_environment := run_state.current_environment
-	var original_environment_snapshot := original_environment.duplicate(true)
 	run_state.from_dict(snapshot)
 	var published_restored := run_state.restore_trusted_scenario_semantics(normalized.current_environment)
 	if not published_restored:
@@ -1345,24 +1345,20 @@ func _sealed_action_host_publish(candidate: RunState) -> bool:
 		published_restored = bool(published_finalization.get("ok", false))
 	if not published_restored:
 		run_state.from_dict(original_snapshot)
-		original_environment.clear()
-		for key in original_environment_snapshot:
-			original_environment[key] = original_environment_snapshot[key]
 		run_state.current_environment = original_environment
 		return false
-	var published_environment := run_state.current_environment.duplicate(true)
+	# Verify before changing the old environment object. It remains an untouched
+	# rollback capsule until every restored field has matched the sealed snapshot.
+	if GameRitualRuntimeScript.canonical_fingerprint(run_state.to_save_snapshot()) != snapshot_fingerprint:
+		run_state.from_dict(original_snapshot)
+		run_state.current_environment = original_environment
+		return false
+	var published_environment := run_state.current_environment
 	original_environment.clear()
 	for key in published_environment:
 		original_environment[key] = published_environment[key]
 	run_state.current_environment = original_environment
-	if GameRitualRuntimeScript.canonical_fingerprint(run_state.to_save_snapshot()) == GameRitualRuntimeScript.canonical_fingerprint(snapshot):
-		return true
-	run_state.from_dict(original_snapshot)
-	original_environment.clear()
-	for key in original_environment_snapshot:
-		original_environment[key] = original_environment_snapshot[key]
-	run_state.current_environment = original_environment
-	return false
+	return true
 
 
 func _sealed_action_host_rejection(error_code: String, message: String, request_key: String = "") -> Dictionary:
