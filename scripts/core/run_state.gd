@@ -3724,6 +3724,7 @@ func store_current_environment_layer_state() -> void:
 	var states := _copy_dict(current_environment.get("layer_states", {}))
 	var body := current_environment.duplicate(true)
 	body.erase("layer_states")
+	body.erase("active_game_id")
 	_strip_scenario_semantic_ephemera(body)
 	states[current_id] = body
 	current_environment["layer_states"] = states
@@ -15541,12 +15542,13 @@ static func _environment_for_persistent_storage(environment: Dictionary, deep_co
 	var stored: Dictionary = {}
 	for key_value in environment.keys():
 		var key := str(key_value)
-		if key == "game_states" or key == ScenarioEngineScript.TRUSTED_STATE_REFERENCE_KEY or key == ScenarioEngineScript.TRUSTED_LAYOUT_INPUT_DIGEST_KEY:
+		if key == "game_states" or key == "active_game_id" or key == ScenarioEngineScript.TRUSTED_STATE_REFERENCE_KEY or key == ScenarioEngineScript.TRUSTED_LAYOUT_INPUT_DIGEST_KEY:
 			continue
 		stored[key] = _persistent_copy_value(environment.get(key_value)) if deep_copy else environment.get(key_value)
 	var states_value: Variant = environment.get("game_states", {})
 	if typeof(states_value) != TYPE_DICTIONARY:
 		_strip_scenario_semantic_ephemera(stored)
+		_strip_persistent_active_game_bindings(stored)
 		return stored
 	var stored_states: Dictionary = {}
 	for game_key_value in (states_value as Dictionary).keys():
@@ -15566,7 +15568,22 @@ static func _environment_for_persistent_storage(environment: Dictionary, deep_co
 			stored_states[game_key] = _persistent_copy_value(state_value) if deep_copy else state_value
 	stored["game_states"] = stored_states
 	_strip_scenario_semantic_ephemera(stored)
+	_strip_persistent_active_game_bindings(stored)
 	return stored
+
+
+static func _strip_persistent_active_game_bindings(environment: Dictionary) -> void:
+	# This Foundation-to-game capability exists only while its surface is live.
+	# Scrub nested venue-layer snapshots as well as the current room projection.
+	environment.erase("active_game_id")
+	var layer_states := _copy_dict(environment.get("layer_states", {}))
+	for layer_id_value in layer_states.keys():
+		var layer_body := _copy_dict(layer_states.get(layer_id_value, {}))
+		layer_body.erase("layer_states")
+		_strip_persistent_active_game_bindings(layer_body)
+		layer_states[layer_id_value] = layer_body
+	if not layer_states.is_empty():
+		environment["layer_states"] = layer_states
 
 
 static func _strip_scenario_semantic_ephemera(environment: Dictionary) -> void:

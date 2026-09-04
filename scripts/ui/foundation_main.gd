@@ -889,6 +889,7 @@ func _enter_game_after_input_guard(clean_game_id: String, clean_state_key: Strin
 		return false
 	_clear_recent_result_feedback()
 	_reset_game_surface_runtime_state()
+	_set_active_game_binding(clean_game_id)
 	current_game = game_module
 	current_game_state_key = clean_state_key
 	current_game.set_transient_state_key_context(clean_state_key)
@@ -906,6 +907,16 @@ func _enter_game_after_input_guard(clean_game_id: String, clean_state_key: Strin
 	_clear_selected_stake()
 	_refresh_stake_input()
 	return current_screen == SCREEN_GAME and current_game == game_module
+
+
+func _set_active_game_binding(game_id: String = "") -> void:
+	if run_state == null:
+		return
+	var clean_game_id := game_id.strip_edges()
+	if clean_game_id.is_empty():
+		run_state.current_environment.erase("active_game_id")
+	else:
+		run_state.current_environment["active_game_id"] = clean_game_id
 
 
 func _enter_grand_casino_duel_surface() -> bool:
@@ -929,6 +940,7 @@ func _enter_grand_casino_duel_surface() -> bool:
 	var game_module := _game_module_for_id(duel_game_id)
 	if game_module == null:
 		return false
+	_set_active_game_binding(duel_game_id)
 	current_game = game_module
 	current_game_state_key = duel_game_id
 	current_game.set_transient_state_key_context(duel_game_id)
@@ -998,6 +1010,7 @@ func _finish_chunked_game_exit() -> void:
 func _complete_back_to_environment() -> void:
 	_sync_presented_bankroll_to_actual()
 	_reset_game_surface_runtime_state()
+	_set_active_game_binding()
 	current_game = null
 	_invalidate_environment_runtime_schedule(run_state.current_environment if run_state != null else {})
 	_clear_recent_result_feedback()
@@ -1286,6 +1299,16 @@ func _sealed_action_host_trusted_context(candidate: RunState, stake: int) -> Dic
 	}
 
 
+func _sealed_action_host_transient_run_snapshot(candidate: RunState) -> Dictionary:
+	var snapshot := candidate.to_save_snapshot()
+	if current_game == null:
+		return snapshot
+	var environment: Dictionary = (snapshot.get("current_environment", {}) as Dictionary).duplicate(false) if typeof(snapshot.get("current_environment", {})) == TYPE_DICTIONARY else {}
+	environment["active_game_id"] = current_game.get_id()
+	snapshot["current_environment"] = environment
+	return snapshot
+
+
 func _sealed_action_host_detached() -> RunState:
 	if run_state == null:
 		return null
@@ -1300,6 +1323,8 @@ func _sealed_action_host_restored_candidate(snapshot: Dictionary, layout_context
 	var candidate := RunState.new()
 	candidate.from_dict(snapshot)
 	if candidate.restore_trusted_scenario_semantics(trusted_environment):
+		if current_game != null:
+			candidate.current_environment["active_game_id"] = current_game.get_id()
 		return candidate
 	# Save snapshots deliberately omit renderer-derived scenario semantics and
 	# mark dynamic rooms for a trusted rebuild. Sealed game transactions operate
@@ -1308,6 +1333,8 @@ func _sealed_action_host_restored_candidate(snapshot: Dictionary, layout_context
 	var finalized := candidate.scenario_finalize_installed_environment(library, layout_context)
 	if not bool(finalized.get("ok", false)):
 		return null
+	if current_game != null:
+		candidate.current_environment["active_game_id"] = current_game.get_id()
 	return candidate
 
 
@@ -1355,6 +1382,7 @@ func _sealed_action_host_publish(candidate: RunState) -> bool:
 	for key in published_environment:
 		original_environment[key] = published_environment[key]
 	run_state.current_environment = original_environment
+	_set_active_game_binding(current_game.get_id() if current_game != null else "")
 	if GameRitualRuntimeScript.canonical_fingerprint(run_state.to_save_snapshot()) == GameRitualRuntimeScript.canonical_fingerprint(snapshot):
 		return true
 	run_state.from_dict(original_snapshot)
@@ -1526,7 +1554,7 @@ func _sealed_action_host_preview_wager_cost(action_id: String, stake: int) -> in
 		return 0
 	var ledger := _sealed_action_host_ledger(candidate, true)
 	_sealed_action_host_store_ledger(candidate, ledger)
-	var snapshot := candidate.to_save_snapshot()
+	var snapshot := _sealed_action_host_transient_run_snapshot(candidate)
 	var session: Dictionary = (ledger.get("session", {}) as Dictionary).duplicate(true)
 	var wager_method := StringName(action_authority_contract.get("wager_cost_proposal_method", &""))
 	if wager_method.is_empty() or not current_game.has_method(wager_method):
@@ -1775,7 +1803,7 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 	if ledger.is_empty() or GameRitualRuntimeScript.canonical_json(ledger.get("pending_delivery", {})) != GameRitualRuntimeScript.canonical_json(delivery):
 		return _sealed_action_host_rejection("stale_boundary", "Blackjack delivery was not present on the canonical candidate.", request_key)
 	var session: Dictionary = (ledger.get("session", {}) as Dictionary).duplicate(true)
-	var wager_snapshot := candidate.to_save_snapshot()
+	var wager_snapshot := _sealed_action_host_transient_run_snapshot(candidate)
 	var provider_contract: Dictionary = action_authority_contract
 	var wager_method := StringName(provider_contract.get("wager_cost_proposal_method", &""))
 	var resolve_method := StringName(provider_contract.get("resolve_proposal_method", &""))
@@ -1815,7 +1843,7 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 	var proposal_input := {
 		"action_id": action_id,
 		"stake": stake,
-		"run_snapshot": candidate.to_save_snapshot(),
+		"run_snapshot": _sealed_action_host_transient_run_snapshot(candidate),
 		"rng_snapshot": rng.snapshot(),
 		"ui_state": session,
 	}
@@ -5819,6 +5847,7 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 	environment_runtime_active_keys_scratch.clear()
 	environment_runtime_scheduler.clear()
 	run_state = loaded
+	_set_active_game_binding()
 	_bind_run_state_presentation_signals()
 	_configure_coach_for_run()
 	_sync_presented_bankroll_to_actual()
@@ -6866,6 +6895,7 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		if coach_overlay.notify_action("travel:%s" % target_id) and not completed_travel_lesson_id.is_empty():
 			_advance_completed_tutorial_action_dialogue(completed_travel_lesson_id)
 	_reset_game_surface_runtime_state(false)
+	_set_active_game_binding()
 	if not local_casino_room_move:
 		var numbers_travel_actions := run_state.advance_numbers_past_post_travel_actions(travel_minutes)
 		if numbers_travel_actions > 0:
@@ -14629,6 +14659,7 @@ func return_to_main_menu() -> void:
 	pending_all_in_result_terminal_check = false
 	_finish_conclusion_animation()
 	_reset_game_surface_runtime_state()
+	_set_active_game_binding()
 	current_game = null
 	game_surface_ui_state = {}
 	last_environment_runtime_result = {}
@@ -14691,6 +14722,7 @@ func _restore_main_menu_surface_visibility() -> void:
 
 func exit_game() -> void:
 	_reset_game_surface_runtime_state()
+	_set_active_game_binding()
 	if run_state != null:
 		_autosave_foundation_run("Autosaved before exit.", true)
 	get_tree().quit()
@@ -14971,6 +15003,7 @@ func _enter_meta_location(location_id: String, tutorial_handoff: bool = false) -
 	_hide_world_map_overlay()
 	_hide_travel_transition()
 	_reset_game_surface_runtime_state()
+	_set_active_game_binding()
 	current_game = null
 	last_game_result = {}
 	last_item_result = {}
@@ -15022,6 +15055,7 @@ func _exit_meta_session() -> void:
 	_hide_travel_transition()
 	_finish_conclusion_animation()
 	_reset_game_surface_runtime_state()
+	_set_active_game_binding()
 	current_game = null
 	run_state = null
 	_clear_run_guidance_for_start_screen()
@@ -15738,6 +15772,7 @@ func _start_game_test_session_with_lifecycle_snapshot(game_id: String, game: Gam
 	_bind_run_state_presentation_signals()
 	_hide_travel_transition()
 	_reset_game_surface_runtime_state()
+	_set_active_game_binding()
 	_refresh_run_action_service()
 	current_game = null
 	last_game_result = {}
@@ -16449,6 +16484,7 @@ func _clear_terminal_interaction_state() -> void:
 		talk_dock.clear_entry()
 	item_found_talk_dock_suspended = false
 	_reset_game_surface_runtime_state()
+	_set_active_game_binding()
 	current_game = null
 	game_surface_ui_state = {}
 	_hide_run_menu()
