@@ -573,7 +573,7 @@ func _expected_surface_state(run_state: Variant, capture_case: Dictionary, fixtu
 	var requested_game := str(capture_case.get("enter_game", "")).strip_edges()
 	var persisted: Dictionary = game_states.get(requested_game, {}) if typeof(game_states.get(requested_game, {})) == TYPE_DICTIONARY else {}
 	if expectation == "slot_after_spin":
-		if int(persisted.get("spin_count", 0)) < 1 or typeof(persisted.get("last_result", null)) != TYPE_DICTIONARY or (persisted.get("last_result", {}) as Dictionary).is_empty():
+		if int(persisted.get("spin_count", 0)) < 1 or str(persisted.get("last_outcome_id", "")).is_empty() or not persisted.has("last_reels"):
 			_fail("%s did not persist a completed public Slot spin" % fixture_id)
 			return false
 		return true
@@ -609,7 +609,7 @@ func _surface_state_evidence(run_state: Variant, capture_case: Dictionary) -> Di
 	var persisted: Dictionary = game_states.get(game_id, {}) if typeof(game_states.get(game_id, {})) == TYPE_DICTIONARY else {}
 	match game_id:
 		"slot":
-			return {"spin_count": int(persisted.get("spin_count", 0)), "last_result_present": typeof(persisted.get("last_result", null)) == TYPE_DICTIONARY and not (persisted.get("last_result", {}) as Dictionary).is_empty()}
+			return {"spin_count": int(persisted.get("spin_count", 0)), "last_outcome_id": str(persisted.get("last_outcome_id", "")), "last_reels_present": persisted.has("last_reels")}
 		"bar_dice":
 			return {"rounds_played": int(persisted.get("rounds_played", 0)), "last_result_present": typeof(persisted.get("last_result", null)) == TYPE_DICTIONARY and not (persisted.get("last_result", {}) as Dictionary).is_empty()}
 		"blackjack":
