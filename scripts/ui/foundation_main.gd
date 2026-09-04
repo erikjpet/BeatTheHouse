@@ -19246,8 +19246,12 @@ func _apply_accessibility_settings() -> void:
 	if career_stats_screen != null:
 		career_stats_screen.set_reduce_motion(bool(user_settings.reduce_motion) if user_settings != null else false)
 		career_stats_screen.set_small_screen_mode(small_screen_enabled)
-	_ensure_world_map_overlay_controller()
-	world_map_overlay_controller.set_small_screen_mode(small_screen_enabled)
+	# The Web start menu applies accessibility before staged run-UI loading begins.
+	# Do not force the stage-10 controller root through a null Script field here.
+	if WorldMapOverlayControllerScript != null:
+		_ensure_world_map_overlay_controller()
+		if world_map_overlay_controller != null:
+			world_map_overlay_controller.set_small_screen_mode(small_screen_enabled)
 	var transform_active := (user_settings != null and user_settings.high_contrast) \
 			or not is_equal_approx(font_scale, 1.0) \
 			or not is_equal_approx(control_scale, 1.0)

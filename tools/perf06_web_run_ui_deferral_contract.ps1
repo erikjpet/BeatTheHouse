@@ -47,7 +47,8 @@ $requiredContracts = @(
     "func _present_run_ui_unavailable() -> void:",
     "RUN_UI_UNAVAILABLE_MESSAGE",
     "func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Dictionary = {}, include_meta_home_modifiers: bool = true) -> bool:",
-    "func load_foundation_run() -> bool:"
+    "func load_foundation_run() -> bool:",
+    "if WorldMapOverlayControllerScript != null:"
 )
 foreach ($contract in $requiredContracts) {
     if (-not $source.Contains($contract)) {
