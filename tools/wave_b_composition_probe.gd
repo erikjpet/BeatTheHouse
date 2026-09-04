@@ -337,6 +337,8 @@ func _finish_delivery_discovery(discovery: Dictionary) -> void:
 		"seed": seed_text,
 		"eligibility_source": str(discovery.get("eligibility_source", "")),
 		"event_selection": _dict(discovery.get("event_selection", {})),
+		"exploration": _dict(discovery.get("exploration", {})),
+		"progression": _dict(discovery.get("progression", {})),
 		"target_node": str(discovery.get("target_node", "")),
 		"target_archetype": str(discovery.get("target_archetype", "")),
 		"failures": failures.duplicate(),
@@ -371,6 +373,8 @@ func _discover_natural_delivery_target(library: ContentLibrary) -> Dictionary:
 	return {
 		"eligibility_source": str(prepared.get("eligibility_source", "")),
 		"event_selection": _dict(prepared.get("event_selection", {})),
+		"exploration": _dict(prepared.get("exploration", {})),
+		"progression": _dict(prepared.get("progression", {})),
 		"target_node": target_node,
 		"target_archetype": target_archetype,
 	}
@@ -396,6 +400,8 @@ func _exercise_delivery_composition(library: ContentLibrary) -> Dictionary:
 			"eligibility_source": str(prepared.get("eligibility_source", "")),
 			"crew_lender_node": str(prepared.get("crew_lender_node", "")),
 			"event_selection": _dict(prepared.get("event_selection", {})),
+			"exploration": _dict(prepared.get("exploration", {})),
+			"progression": _dict(prepared.get("progression", {})),
 		}
 	var event_module: EventModule = EventModuleScript.new()
 	event_module.setup(library.event("crew_favor_delivery"), library)
@@ -517,6 +523,8 @@ func _exercise_delivery_composition(library: ContentLibrary) -> Dictionary:
 		"eligibility_source": str(prepared.get("eligibility_source", "")),
 		"crew_lender_node": str(prepared.get("crew_lender_node", "")),
 		"event_selection": _dict(prepared.get("event_selection", {})),
+		"exploration": _dict(prepared.get("exploration", {})),
+		"progression": _dict(prepared.get("progression", {})),
 		"initial_maximal_live": initial_maximal_live,
 		"order_id": order_id,
 		"order_pre_replay_ok": pre_replay_ok,
@@ -672,6 +680,8 @@ func _prepare_natural_crew_delivery(library: ContentLibrary, delivery_seed: Stri
 			"eligibility_source": "production_world_map+RunActionService+production_event_selector",
 			"crew_lender_node": crew_lender_node,
 			"lender_result": lender_result,
+			"exploration": exploration,
+			"progression": progression,
 		}
 	# The authored Crew note reaches favor_due only by crossing its real debt
 	# clock. Align the same production action clock with the authored Police Sweep
@@ -693,6 +703,8 @@ func _prepare_natural_crew_delivery(library: ContentLibrary, delivery_seed: Stri
 			"crew_lender_node": crew_lender_node,
 			"lender_result": lender_result,
 			"event_selection": selected,
+			"exploration": exploration,
+			"progression": progression,
 		}
 	return {
 		"run_state": run_state,
@@ -740,42 +752,111 @@ func _visit_all_real_map_nodes_and_return(run_state: RunState, generator: RunGen
 
 func _earn_rook_made_standing(run_state: RunState, generator: RunGenerator, library: ContentLibrary, action_service: RunActionService, crew_lender_node: String) -> Dictionary:
 	var action_trace: Array = []
+	var lender_definition := library.lender("the_crew")
+	var availability := action_service.lender_hook("the_crew")
+	action_trace.append({"action": "crew_loan_availability", "stage": "initial", "status": availability, "active_debt": _crew_favor_debt_snapshot(run_state), "pending_job": run_state.crew_job_definition_pending("crew_favor_delivery"), "single_use_flag": str(_dict(lender_definition.get("availability", {})).get("single_use_flag", ""))})
+	if not bool(availability.get("enabled", false)) or not _active_crew_favor_debt_id(run_state).is_empty() or run_state.crew_job_definition_pending("crew_favor_delivery"):
+		return {"ok": false, "action_trace": action_trace, "message": "Initial Crew loan was not eligible under the shipped lender/job rules."}
 	var lender_result := action_service.use_hook("lender", "the_crew")
-	action_trace.append({"action": "accept_crew_loan", "ok": bool(lender_result.get("ok", false)), "rook_rank": run_state.crew_rank("crew_rook"), "rook_trust": run_state.crew_trust("crew_rook")})
+	var blocked_after_loan := action_service.lender_hook("the_crew")
+	action_trace.append({"action": "accept_crew_loan", "ok": bool(lender_result.get("ok", false)), "status_after": blocked_after_loan, "active_debt": _crew_favor_debt_snapshot(run_state), "rook_rank": run_state.crew_rank("crew_rook"), "rook_trust": run_state.crew_trust("crew_rook")})
 	if not bool(lender_result.get("ok", false)):
 		return {"ok": false, "action_trace": action_trace, "final_lender_result": lender_result}
+	if bool(blocked_after_loan.get("enabled", true)) or _active_crew_favor_debt_id(run_state).is_empty():
+		return {"ok": false, "action_trace": action_trace, "final_lender_result": lender_result, "message": "Crew lender did not enforce its ordinary active-marker block."}
 	for favor_index in range(16):
 		if run_state.crew_rank("crew_rook") in ["made", "inner_circle"]:
 			break
+		var debt_before := _crew_favor_debt_snapshot(run_state)
+		var trust_before := run_state.crew_trust("crew_rook")
+		var resolved_jobs_before := _resolved_successful_crew_favor_jobs(run_state).size()
+		if debt_before.is_empty() or run_state.crew_job_definition_pending("crew_favor_delivery"):
+			action_trace.append({"action": "favor_precondition_rejected", "favor_index": favor_index, "active_debt": debt_before, "pending_job": run_state.crew_job_definition_pending("crew_favor_delivery")})
+			return {"ok": false, "action_trace": action_trace, "final_lender_result": {}, "message": "Crew favor progression attempted without one active marker and no pending duplicate job."}
 		var queued := _queue_crew_favor_through_player_actions(run_state, generator, library)
 		action_trace.append({"action": "natural_crew_favor_selected", "favor_index": favor_index, "selection": queued})
 		if not bool(queued.get("ok", false)):
 			return {"ok": false, "action_trace": action_trace, "final_lender_result": {}}
 		var completed := _complete_natural_crew_favor(run_state, generator, library)
-		action_trace.append({"action": "complete_crew_favor", "favor_index": favor_index, "result": completed, "rook_rank": run_state.crew_rank("crew_rook"), "rook_trust": run_state.crew_trust("crew_rook")})
+		var debt_after := _crew_favor_debt_snapshot(run_state)
+		var trust_after := run_state.crew_trust("crew_rook")
+		var resolved_jobs_after := _resolved_successful_crew_favor_jobs(run_state).size()
+		var expected_balance := maxi(0, int(debt_before.get("balance", 0)) - 1)
+		var observed_balance := int(debt_after.get("balance", 0)) if not debt_after.is_empty() else 0
+		var ordinary_resolution_exact := observed_balance == expected_balance \
+			and trust_after == trust_before + 5 \
+			and resolved_jobs_after == resolved_jobs_before + 1 \
+			and not run_state.crew_job_definition_pending("crew_favor_delivery")
+		action_trace.append({"action": "complete_crew_favor", "favor_index": favor_index, "result": completed, "debt_before": debt_before, "debt_after": debt_after, "expected_balance": expected_balance, "resolved_success_jobs_before": resolved_jobs_before, "resolved_success_jobs_after": resolved_jobs_after, "pending_job_after": run_state.crew_job_definition_pending("crew_favor_delivery"), "ordinary_resolution_exact": ordinary_resolution_exact, "rook_rank": run_state.crew_rank("crew_rook"), "rook_trust_before": trust_before, "rook_trust": trust_after})
 		if not bool(completed.get("ok", false)):
 			return {"ok": false, "action_trace": action_trace, "final_lender_result": {}}
+		if not ordinary_resolution_exact:
+			return {"ok": false, "action_trace": action_trace, "final_lender_result": {}, "message": "Crew favor did not follow the authored debt, trust, and job-resolution contract exactly."}
 		if run_state.crew_rank("crew_rook") in ["made", "inner_circle"]:
 			break
 		if _active_crew_favor_debt_id(run_state).is_empty():
 			var returned := _travel_real_path(run_state, generator, crew_lender_node)
 			if not bool(returned.get("ok", false)):
 				return {"ok": false, "action_trace": action_trace, "final_lender_result": {}}
+			availability = action_service.lender_hook("the_crew")
+			action_trace.append({"action": "crew_loan_availability", "stage": "repeat", "favor_index": favor_index, "status": availability, "active_debt": _crew_favor_debt_snapshot(run_state), "pending_job": run_state.crew_job_definition_pending("crew_favor_delivery")})
+			if not bool(availability.get("enabled", false)) or run_state.crew_job_definition_pending("crew_favor_delivery"):
+				return {"ok": false, "action_trace": action_trace, "final_lender_result": {}, "message": "Repeat Crew loan was not eligible through the shipped lender status."}
 			lender_result = action_service.use_hook("lender", "the_crew")
-			action_trace.append({"action": "accept_crew_loan", "ok": bool(lender_result.get("ok", false)), "rook_rank": run_state.crew_rank("crew_rook"), "rook_trust": run_state.crew_trust("crew_rook")})
+			blocked_after_loan = action_service.lender_hook("the_crew")
+			action_trace.append({"action": "accept_crew_loan", "ok": bool(lender_result.get("ok", false)), "status_after": blocked_after_loan, "active_debt": _crew_favor_debt_snapshot(run_state), "rook_rank": run_state.crew_rank("crew_rook"), "rook_trust": run_state.crew_trust("crew_rook")})
 			if not bool(lender_result.get("ok", false)):
 				return {"ok": false, "action_trace": action_trace, "final_lender_result": lender_result}
+			if bool(blocked_after_loan.get("enabled", true)) or _active_crew_favor_debt_id(run_state).is_empty():
+				return {"ok": false, "action_trace": action_trace, "final_lender_result": lender_result, "message": "Repeat Crew marker bypassed the ordinary active-marker block."}
 	if run_state.crew_rank("crew_rook") not in ["made", "inner_circle"]:
 		return {"ok": false, "action_trace": action_trace, "message": "Shipped Crew consequences did not reach Made standing."}
 	if _active_crew_favor_debt_id(run_state).is_empty():
 		var returned := _travel_real_path(run_state, generator, crew_lender_node)
 		if not bool(returned.get("ok", false)):
 			return {"ok": false, "action_trace": action_trace, "final_lender_result": {}}
+		availability = action_service.lender_hook("the_crew")
+		action_trace.append({"action": "crew_loan_availability", "stage": "final", "status": availability, "active_debt": _crew_favor_debt_snapshot(run_state), "pending_job": run_state.crew_job_definition_pending("crew_favor_delivery")})
+		if not bool(availability.get("enabled", false)) or run_state.crew_job_definition_pending("crew_favor_delivery"):
+			return {"ok": false, "action_trace": action_trace, "final_lender_result": {}, "message": "Final Crew loan was not eligible through the shipped lender status."}
 		lender_result = action_service.use_hook("lender", "the_crew")
-		action_trace.append({"action": "accept_final_crew_loan", "ok": bool(lender_result.get("ok", false)), "rook_rank": run_state.crew_rank("crew_rook"), "rook_trust": run_state.crew_trust("crew_rook")})
+		blocked_after_loan = action_service.lender_hook("the_crew")
+		action_trace.append({"action": "accept_final_crew_loan", "ok": bool(lender_result.get("ok", false)), "status_after": blocked_after_loan, "active_debt": _crew_favor_debt_snapshot(run_state), "rook_rank": run_state.crew_rank("crew_rook"), "rook_trust": run_state.crew_trust("crew_rook")})
+		if bool(blocked_after_loan.get("enabled", true)) or _active_crew_favor_debt_id(run_state).is_empty():
+			return {"ok": false, "action_trace": action_trace, "final_lender_result": lender_result, "message": "Final Crew marker bypassed the ordinary active-marker block."}
 	else:
 		lender_result = {"ok": true, "existing_favor_debt": true}
 	return {"ok": bool(lender_result.get("ok", false)), "action_trace": action_trace, "final_lender_result": lender_result, "rook_rank": run_state.crew_rank("crew_rook"), "rook_trust": run_state.crew_trust("crew_rook")}
+
+
+func _crew_favor_debt_snapshot(run_state: RunState) -> Dictionary:
+	var debt_id := _active_crew_favor_debt_id(run_state)
+	if debt_id.is_empty():
+		return {}
+	for debt_value in run_state.debt:
+		if typeof(debt_value) == TYPE_DICTIONARY and str((debt_value as Dictionary).get("id", "")) == debt_id:
+			var debt_entry: Dictionary = debt_value
+			return {
+				"id": debt_id,
+				"lender_id": str(debt_entry.get("lender_id", "")),
+				"debt_kind": str(debt_entry.get("debt_kind", "")),
+				"status": str(debt_entry.get("status", "")),
+				"balance": maxi(0, int(debt_entry.get("balance", 0))),
+				"turns_remaining": maxi(0, int(debt_entry.get("turns_remaining", 0))),
+				"source_location_id": str(debt_entry.get("source_location_id", "")),
+			}
+	return {}
+
+
+func _resolved_successful_crew_favor_jobs(run_state: RunState) -> Array:
+	var result: Array = []
+	for job_value in run_state.crew_jobs.values():
+		if typeof(job_value) != TYPE_DICTIONARY:
+			continue
+		var job: Dictionary = job_value
+		if str(job.get("definition_id", "")) == "crew_favor_delivery" and str(job.get("status", "")) == "resolved" and str(job.get("outcome", "")) == "success":
+			result.append({"id": str(job.get("id", "")), "resolved_action": int(job.get("resolved_action", -1))})
+	return result
 
 
 func _queue_crew_favor_through_player_actions(run_state: RunState, generator: RunGenerator, library: ContentLibrary) -> Dictionary:
