@@ -69,6 +69,16 @@ func _run() -> void:
 	_check(int(initial.get("viewport_parent_instance_id", 0)) == production_canvas.get_instance_id(), "production_cache_parent")
 
 	var snapshot: Dictionary = production_canvas.call("realtime_surface_state")
+	var expected_backglass_protected_rects: Array = renderer.call("debug_static_cache_text_protected_rects_for_test", 3)
+	var live_protected_rects: Array = production_canvas.get("surface_text_protected_rects")
+	_check(not expected_backglass_protected_rects.is_empty(), "backglass_fixture_contains_readable_text")
+	_check(live_protected_rects.size() >= expected_backglass_protected_rects.size(), "cached_backglass_live_readability_count")
+	for rect_index in range(expected_backglass_protected_rects.size()):
+		_check(rect_index < live_protected_rects.size() and live_protected_rects[rect_index] == expected_backglass_protected_rects[rect_index], "cached_backglass_registers_live_readability_rect_%d" % rect_index)
+	observations["cached_backglass_readability"] = {
+		"expected_rects": expected_backglass_protected_rects,
+		"live_rect_count": live_protected_rects.size(),
+	}
 	var backglass_signature := str(renderer.call("debug_backglass_cache_signature_for_test", snapshot))
 	var backglass_dynamic_mutations := {
 		"presentation_serial": {"coin_pusher_presentation_view_serial": int(snapshot.get("coin_pusher_presentation_view_serial", 0)) + 1},

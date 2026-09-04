@@ -953,6 +953,13 @@ func _register_surface_text_panel_rect(rect: Rect2) -> void:
 	surface_text_protected_rects.append(rect)
 
 
+func surface_register_text_protected_rect(rect: Rect2) -> void:
+	# Retained renderer layers still own live readability metadata. Route their
+	# exact design-space rectangles through the same cap and validation as text
+	# drawn directly on this production surface.
+	_register_surface_text_panel_rect(rect)
+
+
 func surface_title(text: String, pos: Vector2, color: Color) -> void:
 	surface_label(text, pos + Vector2(2, 0), 30, Color(color.r, color.g, color.b, 0.28))
 	surface_label(text, pos, 30, color)

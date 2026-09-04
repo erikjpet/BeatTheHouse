@@ -934,6 +934,24 @@ func _draw_static_cache_texture(surface, layer_index: int) -> void:
 	surface.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	surface.draw_texture_rect(_static_cache_viewports[layer_index].get_texture(), Rect2(Vector2.ZERO, surface.size), false)
 	surface.surface_begin_design_space(DESIGN_SIZE)
+	_register_static_cache_text_rects(surface, layer_index)
+
+
+func _register_static_cache_text_rects(surface, layer_index: int) -> void:
+	if layer_index < 0 or layer_index >= _static_cache_canvases.size():
+		return
+	var rects_value: Variant = _static_cache_canvases[layer_index].get("surface_text_protected_rects")
+	var rects: Array = rects_value if typeof(rects_value) == TYPE_ARRAY else []
+	for rect_value in rects:
+		if typeof(rect_value) == TYPE_RECT2:
+			surface.surface_register_text_protected_rect(rect_value)
+
+
+func debug_static_cache_text_protected_rects_for_test(layer_index: int) -> Array:
+	if layer_index < 0 or layer_index >= _static_cache_canvases.size():
+		return []
+	var rects_value: Variant = _static_cache_canvases[layer_index].get("surface_text_protected_rects")
+	return (rects_value as Array).duplicate() if typeof(rects_value) == TYPE_ARRAY else []
 
 
 func _on_static_cache_drawn(layer_index: int) -> void:
