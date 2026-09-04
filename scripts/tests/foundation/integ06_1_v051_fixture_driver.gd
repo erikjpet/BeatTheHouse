@@ -1,8 +1,8 @@
 extends SceneTree
 
-# Opt-in historical fixture capture. This script is copied into an archive of
-# the pinned v0.5.1 tree by tools/integ06_1_generate_v051_fixtures.ps1. Every
-# state mutation below goes through FoundationMain's player-facing runtime.
+# Opt-in historical fixture capture. The integration generators copy this
+# driver into an archived historical tree. Every state mutation below goes
+# through FoundationMain's player-facing runtime.
 
 const MainScene := preload("res://scenes/main.tscn")
 const CAPTURE_TIMEOUT_SECONDS := 90.0

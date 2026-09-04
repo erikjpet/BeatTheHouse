@@ -99,13 +99,23 @@ verdict.
   *> .tmp\integ06_1\final_candidate\v051_migration.log
 ```
 
-There is currently no authentic pre-depth mid-0.6 owner-build fixture inventory
-or runnable admission matrix in the repository. Only `v0_5_1` exists below
-`scripts/tests/fixtures/integ06_1`; generated validation saves must not be
-relabeled as owner saves. Until provenance-backed Punchline, delivery, scenario,
-Coin Pusher V3-successor, and victory-threshold owner saves are supplied and
-round-tripped, the mid-0.6 migration requirement remains **NOT PROVEN** and
-`integ06_1` remains TODO.
+No owner-authored pre-depth mid-0.6 save inventory was found after the exhaustive
+recovery pass documented in
+`docs/plans/integ06_1_mid06_fixture_capture_plan.md`. Generated validation saves
+must not be promoted or relabeled as player evidence. The approved constructive
+path uses historical production FoundationMain and SaveService code at three
+exact pre-depth development boundaries:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tools\integ06_1_generate_mid06_fixtures.ps1 `
+  -OutputDirectory scripts\tests\fixtures\integ06_1\mid_0_6 `
+  -CaptureTimeoutSeconds 180 `
+  -KeepHistoricalArchive
+```
+
+Until those genuine, player-reachable historical outputs are captured, admitted
+on the final candidate, and round-tripped, the mid-0.6 migration requirement
+remains **NOT PROVEN** and `integ06_1` remains TODO.
 
 ## 4. Maximal composition and deterministic subsystem traces
 
@@ -195,7 +205,8 @@ git rev-parse HEAD
 ```
 
 `integ06_1` can move to DONE only when the three explicit **NOT PROVEN** items
-above have real, reproducible evidence: authentic mid-0.6 owner-save admission,
+above have real, reproducible evidence: provenance-bound mid-0.6 development-
+boundary save admission,
 the every-eligible-node composition/ordering matrix, and complete native/Web
 terminal soaks with victory/failure/profile coverage. Until then, preserve the
 passing partial evidence, keep the row TODO, and hand the exact remaining gap to

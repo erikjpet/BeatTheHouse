@@ -103,4 +103,4 @@ $provenanceFiles = @(Get-ChildItem -LiteralPath $resolvedOutput -Filter "*.prove
 if ($provenanceFiles.Count -ne $captures.Count) {
     throw "Expected $($captures.Count) mid-0.6 provenance sidecars, found $($provenanceFiles.Count)."
 }
-Write-Host "INTEG06_1_MID06_FIXTURES PASS captures=$($captures.Count) output=$resolvedOutput"
+Write-Host "INTEG06_1_MID06_FIXTURES PASS captures=$($captures.Count) output=$resolvedOutput custody_preserved=$([bool]$KeepHistoricalArchive)"
