@@ -49,6 +49,30 @@ const ACTIVE_STAKES := {
 	"crew_draw_poker": 5,
 	"video_poker": 5,
 }
+const PERF06_IDLE_PHASES := {
+	"pull_tabs": "idle",
+	"scratch_tickets": "idle",
+	"slot": "idle",
+	"bar_dice": "idle",
+	"blackjack": "betting_idle",
+	"baccarat": "betting_idle",
+	"roulette": "betting_idle",
+	"craps": "idle",
+	"crew_draw_poker": "actor_idle",
+	"video_poker": "idle",
+}
+const PERF06_ACTIVE_PHASES := {
+	"pull_tabs": "purchase_active",
+	"scratch_tickets": "purchase",
+	"slot": "spin",
+	"bar_dice": "wager_roll",
+	"blackjack": "deal_action",
+	"baccarat": "deal_reveal",
+	"roulette": "spin",
+	"craps": "throw",
+	"crew_draw_poker": "deal_action",
+	"video_poker": "wager_draw_hold",
+}
 const DEFAULT_SAMPLE_STRIDE_FRAMES := 30
 const DEFAULT_SCENARIO_FRAMES := 180
 const DEFAULT_ACTIVE_FRAMES := 240
@@ -391,7 +415,7 @@ func _run_l02_plan() -> void:
 	l02_driver_started = true
 	await _wait_frames(8)
 	_end_scenario()
-	await _measure_scenario("start_menu_idle", {"surface": "menu", "mode": "idle"}, scenario_frames)
+	await _measure_scenario("start_menu_idle", {"surface": "menu", "mode": "idle", "perf06_surface_id": "meta_home", "perf06_phase_id": "animated_idle"}, scenario_frames)
 	await _measure_corner_store()
 	for game_id_value in REQUIRED_GAME_IDS:
 		var game_id := str(game_id_value)
@@ -896,6 +920,8 @@ func _measure_coin_pusher_idle(name: String, reduced_motion: bool, fixture: Dict
 	_begin_scenario(name, {
 		"surface": "coin_pusher",
 		"mode": "reduced_motion" if reduced_motion else "settled_idle",
+		"perf06_surface_id": "coin_pusher",
+		"perf06_phase_id": "" if reduced_motion else "cap_idle",
 		"fixture": fixture.duplicate(true),
 	})
 	await _wait_frames(maxi(scenario_frames, COIN_PUSHER_IDLE_SAMPLE_FRAMES))
@@ -934,6 +960,8 @@ func _measure_coin_pusher_action(surface_action: String, name: String, fixture: 
 		"surface": "coin_pusher",
 		"mode": "active",
 		"surface_action": surface_action,
+		"perf06_surface_id": "coin_pusher",
+		"perf06_phase_id": _coin_pusher_perf06_phase(name),
 		"fixture": fixture.duplicate(true),
 	})
 	var call_start_usec := Time.get_ticks_usec()
@@ -1051,7 +1079,7 @@ func _measure_corner_store() -> void:
 		"travel_ms": duration_ms,
 		"total_ms": _duration_ms_since(total_started_usec),
 	})
-	await _measure_scenario("corner_store_idle", {"surface": "environment", "mode": "idle"}, scenario_frames)
+	await _measure_scenario("corner_store_idle", {"surface": "environment", "mode": "idle", "perf06_surface_id": "room_environment", "perf06_phase_id": "quiet_idle"}, scenario_frames)
 
 
 func _run_lb3_plan() -> void:
@@ -1359,7 +1387,12 @@ func _measure_game(game_id: String) -> void:
 		mark_event("game_fixture_entry_failed", {"game_id": game_id, "reason": "current_game_mismatch", "actual_game_id": entered_game.get_id() if entered_game != null else ""})
 		return
 	await _measure_game_idle(game_id)
-	_begin_scenario("%s_active" % game_id, {"surface": game_id, "mode": "active"})
+	_begin_scenario("%s_active" % game_id, {
+		"surface": game_id,
+		"mode": "active",
+		"perf06_surface_id": game_id,
+		"perf06_phase_id": str(PERF06_ACTIVE_PHASES.get(game_id, "active")),
+	})
 	current_tags["action_evidence"] = _trigger_active_game_action(game_id)
 	if ACTIVE_PHASE_CHANNELS.has(game_id):
 		current_tags["active_phase_evidence"] = await _measure_named_active_phase(
@@ -1369,6 +1402,21 @@ func _measure_game(game_id: String) -> void:
 	else:
 		await _wait_frames(active_frames)
 	_end_scenario()
+
+
+func _coin_pusher_perf06_phase(scenario_name: String) -> String:
+	match scenario_name:
+		"coin_pusher_active_drop":
+			return "drop"
+		"coin_pusher_active_carriage":
+			return "carriage"
+		"coin_pusher_active_skill_stop":
+			return "skill_stop"
+		"coin_pusher_active_skill_release":
+			return "skill_release"
+		"coin_pusher_active_collect":
+			return "collect"
+	return ""
 	app.back_to_environment()
 	if not await _wait_for_game_exit():
 		mark_event("game_fixture_exit_failed", {"game_id": game_id, "reason": "exit_timeout"})
@@ -1376,7 +1424,12 @@ func _measure_game(game_id: String) -> void:
 
 
 func _measure_game_idle(game_id: String) -> void:
-	_begin_scenario("%s_idle" % game_id, {"surface": game_id, "mode": "idle"})
+	_begin_scenario("%s_idle" % game_id, {
+		"surface": game_id,
+		"mode": "idle",
+		"perf06_surface_id": game_id,
+		"perf06_phase_id": str(PERF06_IDLE_PHASES.get(game_id, "idle")),
+	})
 	var start_game: Dictionary = current_start_liveness.get("game_surface", {}) if typeof(current_start_liveness.get("game_surface", {})) == TYPE_DICTIONARY else {}
 	var declared_fps := maxf(0.0, float(start_game.get("surface_idle_animation_fps", 0.0)))
 	var required_window_msec := ceili(float(IDLE_LIVENESS_MINIMUM_INTERVALS) * 1000.0 / declared_fps) if declared_fps > 0.0 else 0
@@ -1452,7 +1505,7 @@ func _measure_slot_autoplay() -> void:
 		return
 	app.start_game_test_session("slot")
 	await _wait_frames(12)
-	_begin_scenario("slot_autoplay_active", {"surface": "slot", "mode": "autoplay"})
+	_begin_scenario("slot_autoplay_active", {"surface": "slot", "mode": "autoplay", "perf06_surface_id": "slot", "perf06_phase_id": "autoplay"})
 	_emit_surface_action("slot_auto_toggle", 0, false)
 	await _wait_frames(maxi(active_frames, scenario_frames))
 	_end_scenario()
@@ -1466,7 +1519,7 @@ func _measure_pinball_feature() -> void:
 	app.start_game_test_session("slot")
 	await _wait_frames(12)
 	var prepared := _force_pinball_feature()
-	_begin_scenario("pinball_feature_session", {"surface": "slot", "mode": "pinball_feature", "prepared": prepared})
+	_begin_scenario("pinball_feature_session", {"surface": "slot", "mode": "pinball_feature", "prepared": prepared, "perf06_surface_id": "slot", "perf06_phase_id": "bonus"})
 	for frame in range(maxi(active_frames * 2, 480)):
 		if frame % 45 == 0:
 			_emit_surface_action("slot_bonus_launch", 0, false)
@@ -1489,7 +1542,7 @@ func _measure_world_map() -> void:
 	await _wait_frames(20)
 	app.open_world_map()
 	await _wait_frames(8)
-	await _measure_scenario("world_map_idle", {"surface": "world_map", "mode": "idle"}, scenario_frames)
+	await _measure_scenario("world_map_idle", {"surface": "world_map", "mode": "idle", "perf06_surface_id": "world", "perf06_phase_id": "map_idle"}, scenario_frames)
 	app.close_world_map()
 	await _wait_frames(8)
 
@@ -1499,7 +1552,7 @@ func _measure_scripted_memory() -> void:
 		return
 	app.start_foundation_run("L02-MEMORY")
 	await _wait_frames(20)
-	_begin_scenario("scripted_play_memory_10m", {"surface": "full_run", "mode": "scripted_play", "target_seconds": memory_seconds})
+	_begin_scenario("scripted_play_memory_10m", {"surface": "full_run", "mode": "scripted_play", "target_seconds": memory_seconds, "perf06_surface_id": "run_trajectory", "perf06_phase_id": "mid_run"})
 	var frame := 0
 	var end_msec := Time.get_ticks_msec() + memory_seconds * 1000
 	while Time.get_ticks_msec() < end_msec:
@@ -1757,9 +1810,11 @@ func _trigger_active_game_action(game_id: String) -> Dictionary:
 	var turns_before := int(run_state.current_environment.get("turns", 0)) if run_state != null else -1
 	var story_before := run_state.story_log_entry_count() if run_state != null else -1
 	var before := app.current_game_view_snapshot()
+	var resolve_started_usec := Time.get_ticks_usec()
 	app.select_game_action(action_id, "legal")
 	app.set_selected_stake(_safe_stake(game_id))
 	app.resolve_selected_game_action()
+	var resolve_elapsed_usec := Time.get_ticks_usec() - resolve_started_usec
 	var result: Dictionary = app.get("last_game_result") if typeof(app.get("last_game_result")) == TYPE_DICTIONARY else {}
 	var after := app.current_game_view_snapshot()
 	var turns_after := int(run_state.current_environment.get("turns", 0)) if run_state != null else -1
@@ -1778,6 +1833,7 @@ func _trigger_active_game_action(game_id: String) -> Dictionary:
 		"accepted": bool(result.get("ok", false)),
 		"progressed": progressed,
 		"message": str(result.get("message", "")),
+		"resolve_ms": float(maxi(0, resolve_elapsed_usec)) / 1000.0,
 		"environment_turns_before": turns_before,
 		"environment_turns_after": turns_after,
 		"story_entries_before": story_before,

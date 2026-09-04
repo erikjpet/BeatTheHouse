@@ -32,6 +32,10 @@ $overlay = Get-Content -LiteralPath (Join-Path $root "scripts/ui/perf_telemetry_
 foreach ($needle in @('"surface_draw_time_ms"', '"production_game_canvas"', '"complete_frame_upper_bound"', 'reset_performance_counters')) {
     if (-not $overlay.Contains($needle)) { throw "Runtime surface measurement lost '$needle'." }
 }
+$surfaceBuilder = Get-Content -LiteralPath (Join-Path $PSScriptRoot "perf06_build_surface_report.ps1") -Raw
+foreach ($needle in @("perf06_surface_id", "perf06_phase_id", "surface_draw_time_ms", "action_evidence", "static_call_root_audit_sha256", "Refusing to overwrite immutable surface report")) {
+    if (-not $surfaceBuilder.Contains($needle)) { throw "Surface-report builder lost '$needle'." }
+}
 $unknownRootOwners = @($matrix.allocation_roots.PSObject.Properties.Name | Where-Object { $_ -notin $matrixIds -and $_ -notin @($matrix.systems.PSObject.Properties.Name) })
 if ($unknownRootOwners.Count -ne 0) { throw "Allocation roots contain unknown surfaces: $($unknownRootOwners -join ',')" }
 Write-Host "PERF06 REQUIRED MATRIX CONTRACT PASS games=$($matrixIds.Count) systems=$(@($matrix.systems.PSObject.Properties).Count)"
