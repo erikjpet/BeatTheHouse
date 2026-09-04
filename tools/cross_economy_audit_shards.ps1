@@ -80,7 +80,10 @@ foreach ($style in $styles) {
         }
     }
     $privateCache = Join-Path $privateRoot ".godot"
-    Copy-FoundationShardCache -SourceCache (Join-Path $projectRoot ".godot") -DestinationCache $privateCache
+    New-Item -ItemType Directory -Path $privateCache -Force | Out-Null
+    foreach ($cacheFile in @("global_script_class_cache.cfg", "uid_cache.bin")) {
+        Copy-Item -LiteralPath (Join-Path $projectRoot ".godot\$cacheFile") -Destination (Join-Path $privateCache $cacheFile) -Force
+    }
     Copy-Item -LiteralPath (Join-Path $projectRoot ".godot\extension_list.cfg") -Destination (Join-Path $privateCache "extension_list.cfg") -Force
     $jobs.Add([pscustomobject]@{
         Style = $style
