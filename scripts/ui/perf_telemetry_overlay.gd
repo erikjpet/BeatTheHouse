@@ -528,9 +528,33 @@ func _run_distribution_fresh_start_plan() -> void:
 		probe_state.begin_act(1)
 		startup_attribution["run_state_msec"] = float(Time.get_ticks_usec() - stage_started_usec) / 1000.0
 		var probe_generator := RunGenerator.new(content_library)
+		var probe_started_usec := Time.get_ticks_usec()
 		stage_started_usec = Time.get_ticks_usec()
-		probe_generator.next_environment(probe_state)
-		startup_attribution["generation_msec"] = float(Time.get_ticks_usec() - stage_started_usec) / 1000.0
+		probe_generator.call("_travel_rollback_snapshot", probe_state)
+		startup_attribution["rollback_snapshot_msec"] = float(Time.get_ticks_usec() - stage_started_usec) / 1000.0
+		stage_started_usec = Time.get_ticks_usec()
+		var probe_rng := probe_state.create_rng()
+		startup_attribution["rng_msec"] = float(Time.get_ticks_usec() - stage_started_usec) / 1000.0
+		var probe_map_builder := WorldMap.new(content_library)
+		stage_started_usec = Time.get_ticks_usec()
+		var probe_map := probe_map_builder.build(probe_state, probe_rng.fork("world_map"))
+		startup_attribution["world_map_build_msec"] = float(Time.get_ticks_usec() - stage_started_usec) / 1000.0
+		stage_started_usec = Time.get_ticks_usec()
+		probe_state.set_world_map(probe_generator.call("_apply_tutorial_initial_map_targets", probe_map, probe_state))
+		startup_attribution["world_map_install_msec"] = float(Time.get_ticks_usec() - stage_started_usec) / 1000.0
+		var probe_map_data := probe_state.world_map
+		stage_started_usec = Time.get_ticks_usec()
+		probe_state.configure_town_world(probe_map_data)
+		startup_attribution["town_configure_msec"] = float(Time.get_ticks_usec() - stage_started_usec) / 1000.0
+		stage_started_usec = Time.get_ticks_usec()
+		probe_generator.call("_prime_town_scenarios", probe_state, probe_map_data)
+		startup_attribution["scenario_prime_msec"] = float(Time.get_ticks_usec() - stage_started_usec) / 1000.0
+		var probe_target_id := WorldMap.current_node_id(probe_map_data)
+		var probe_node := WorldMap.node_by_id(probe_map_data, probe_target_id)
+		stage_started_usec = Time.get_ticks_usec()
+		probe_generator.call("_world_environment_data_for_node", probe_state, probe_map_data, probe_node, probe_rng)
+		startup_attribution["environment_data_msec"] = float(Time.get_ticks_usec() - stage_started_usec) / 1000.0
+		startup_attribution["generation_probe_total_msec"] = float(Time.get_ticks_usec() - probe_started_usec) / 1000.0
 	var world_map_disabled_control := OS.get_environment("BTH_PERF_DISABLE_WORLD_MAP").strip_edges() == "1"
 	if world_map_disabled_control and app != null:
 		app.set("world_map_overlay", null)
