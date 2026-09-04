@@ -102,11 +102,6 @@ $pending = [Collections.Generic.Queue[object]]::new()
 foreach ($job in $jobs) { $pending.Enqueue($job) }
 $running = [Collections.Generic.List[object]]::new()
 $startedAt = Get-Date
-function Join-ProcessArguments([string[]]$Arguments) {
-    return (($Arguments | ForEach-Object {
-        if ($_ -match '[\s"]') { '"' + ($_ -replace '([\\]*)"', '$1$1\"' -replace '(\\+)$', '$1$1') + '"' } else { $_ }
-    }) -join ' ')
-}
 while ($pending.Count -gt 0 -or $running.Count -gt 0) {
     for ($index = $running.Count - 1; $index -ge 0; $index--) {
         $job = $running[$index]
@@ -114,8 +109,6 @@ while ($pending.Count -gt 0 -or $running.Count -gt 0) {
             $job.Process.WaitForExit()
             $job.Process.Refresh()
             $job.ExitCode = $job.Process.ExitCode
-            [IO.File]::WriteAllText($job.Stdout, $job.Process.StandardOutput.ReadToEnd(), [Text.UTF8Encoding]::new($false))
-            [IO.File]::WriteAllText($job.Stderr, $job.Process.StandardError.ReadToEnd(), [Text.UTF8Encoding]::new($false))
             $job.DurationSec = ((Get-Date) - $job.Started).TotalSeconds
             $job.Process.Dispose()
             $running.RemoveAt($index)
@@ -132,17 +125,7 @@ while ($pending.Count -gt 0 -or $running.Count -gt 0) {
             "-Playstyle", $job.Style, "-BuildRef", $head, "-Output", "res://$($job.Style).json"
         )
         $job.Started = Get-Date
-        $startInfo = [Diagnostics.ProcessStartInfo]::new()
-        $startInfo.FileName = (Get-Command powershell.exe).Source
-        $startInfo.Arguments = Join-ProcessArguments $args
-        $startInfo.WorkingDirectory = $job.ProjectRoot
-        $startInfo.UseShellExecute = $false
-        $startInfo.CreateNoWindow = $true
-        $startInfo.RedirectStandardOutput = $true
-        $startInfo.RedirectStandardError = $true
-        $job.Process = [Diagnostics.Process]::new()
-        $job.Process.StartInfo = $startInfo
-        if (-not $job.Process.Start()) { throw "Could not launch distribution shard: $($job.Style)" }
+        $job.Process = Start-Process -FilePath (Get-Command powershell.exe).Source -ArgumentList $args -WorkingDirectory $job.ProjectRoot -WindowStyle Hidden -RedirectStandardOutput $job.Stdout -RedirectStandardError $job.Stderr -PassThru
         $running.Add($job)
         Write-Host "BALANCE_SHARD_START style=$($job.Style)"
     }
