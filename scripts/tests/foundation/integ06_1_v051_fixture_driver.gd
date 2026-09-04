@@ -1,8 +1,8 @@
 extends SceneTree
 
-# Opt-in historical fixture capture. This script is copied into an archive of
-# the pinned v0.5.1 tree by tools/integ06_1_generate_v051_fixtures.ps1. Every
-# state mutation below goes through FoundationMain's player-facing runtime.
+# Opt-in historical fixture capture. The integration generators copy this
+# driver into an archived historical tree. Every state mutation below goes
+# through FoundationMain's player-facing runtime.
 
 const MainScene := preload("res://scenes/main.tscn")
 const CAPTURE_TIMEOUT_SECONDS := 90.0
@@ -31,8 +31,9 @@ func _capture() -> void:
 		_fail("capture plan did not contain a case")
 		return
 	var version := str(ProjectSettings.get_setting("application/config/version", "")).strip_edges()
-	if version != "0.5.1":
-		_fail("historical capture requires project version 0.5.1, got %s" % version)
+	var expected_version := str(options.get("expected-version", "0.5.1")).strip_edges()
+	if version != expected_version:
+		_fail("historical capture requires project version %s, got %s" % [expected_version, version])
 		return
 
 	for case_value in cases:
@@ -397,9 +398,6 @@ func _capture_case(app: Control, capture_case: Dictionary, version: String) -> D
 		await process_frame
 		if not await _apply_surface_steps(app, capture_case, fixture_id, methods):
 			return {}
-	if not _expected_surface_state(run_state, capture_case, fixture_id):
-		return {}
-
 	# This is the public, synchronous player save boundary. It checkpoints the
 	# live game surface before SaveService writes the historical envelope.
 	app.call("save_foundation_run")
@@ -427,6 +425,8 @@ func _capture_case(app: Control, capture_case: Dictionary, version: String) -> D
 	if str(envelope.get("schema", "")) != "beat_the_house.foundation_run":
 		_fail("historical SaveService output had the wrong schema")
 		return {}
+	if not _expected_surface_state(run_state, capture_case, fixture_id):
+		return {}
 
 	var screen_snapshot: Dictionary = app.call("current_screen_snapshot")
 	var event_cadence: Dictionary = run_state.get("event_cadence")
@@ -451,6 +451,7 @@ func _capture_case(app: Control, capture_case: Dictionary, version: String) -> D
 		"challenge_modifiers": (run_state.get("challenge_config") as Dictionary).get("modifiers", {}).duplicate(true) if tutorial_start else challenge_modifiers,
 		"travel_path": travel_path,
 		"methods": methods,
+		"surface_state_evidence": _surface_state_evidence(run_state, capture_case),
 	}
 
 
@@ -476,9 +477,15 @@ func _apply_surface_step(app: Control, step: Dictionary, fixture_id: String, met
 	if canvas == null:
 		_fail("%s game surface canvas was unavailable" % fixture_id)
 		return false
+	var pre_wait_msec := maxi(0, int(step.get("pre_wait_msec", 0)))
+	if pre_wait_msec > 0:
+		await create_timer(float(pre_wait_msec) / 1000.0).timeout
+		await process_frame
+		await process_frame
 	var action_id := str(step.get("action", "")).strip_edges()
 	var requested_index := int(step.get("index", -1))
 	var index := requested_index
+	var confirm_requested := bool(step.get("confirm", false))
 	var input_type := str(step.get("input_type", "click" if str(step.get("type", "")) == "surface" else step.get("type", "click"))).strip_edges()
 	if input_type == "click":
 		if index < 0 and action_id == "scratch_buy":
@@ -486,8 +493,8 @@ func _apply_surface_step(app: Control, step: Dictionary, fixture_id: String, met
 		if index < 0:
 			_fail("%s could not resolve surface action index for %s" % [fixture_id, action_id])
 			return false
-		canvas.emit_signal("surface_action", action_id, index, false)
-		methods.append("GameSurfaceCanvas.surface_action:%s:%s" % [action_id, "first_stocked" if requested_index < 0 else str(index)])
+		canvas.emit_signal("surface_action", action_id, index, confirm_requested)
+		methods.append("GameSurfaceCanvas.surface_action:%s:%s:confirm=%s" % [action_id, "first_stocked" if requested_index < 0 else str(index), str(confirm_requested)])
 	elif input_type == "drag":
 		var from_value: Variant = step.get("from", [400.0, 160.0])
 		var to_value: Variant = step.get("to", [520.0, 160.0])
@@ -506,6 +513,7 @@ func _apply_surface_step(app: Control, step: Dictionary, fixture_id: String, met
 	if wait_msec > 0:
 		await create_timer(float(wait_msec) / 1000.0).timeout
 		await process_frame
+	print("INTEG06_1_PHASE=%s:surface_action:%s:last_result=%s:block=%s" % [fixture_id, action_id, str(app.get("last_game_result")), str(app.call("_blocking_modal_message"))])
 	return true
 
 
@@ -560,17 +568,53 @@ func _expected_surface_state(run_state: Variant, capture_case: Dictionary, fixtu
 			_fail("%s did not preserve the shipped tutorial's freshly opened pull-tab machine" % fixture_id)
 			return false
 		return true
+	var environment: Dictionary = run_state.get("current_environment")
+	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	var requested_game := str(capture_case.get("enter_game", "")).strip_edges()
+	var persisted: Dictionary = game_states.get(requested_game, {}) if typeof(game_states.get(requested_game, {})) == TYPE_DICTIONARY else {}
+	if expectation == "slot_after_spin":
+		if int(persisted.get("spin_count", 0)) < 1 or str(persisted.get("last_outcome_id", "")).is_empty() or not persisted.has("last_reels"):
+			_fail("%s did not persist a completed public Slot spin" % fixture_id)
+			return false
+		return true
+	if expectation == "bar_dice_after_round":
+		if int(persisted.get("rounds_played", 0)) < 1 or typeof(persisted.get("last_result", null)) != TYPE_DICTIONARY or (persisted.get("last_result", {}) as Dictionary).is_empty():
+			_fail("%s did not persist a completed public Bar Dice round" % fixture_id)
+			return false
+		return true
+	if expectation == "blackjack_after_hand":
+		if int(persisted.get("hands_played", 0)) < 1 or typeof(persisted.get("last_result", null)) != TYPE_DICTIONARY or (persisted.get("last_result", {}) as Dictionary).is_empty():
+			_fail("%s did not persist a completed public Blackjack hand" % fixture_id)
+			return false
+		return true
 	if expectation != "partial_scratch":
 		_fail("%s has unsupported surface-state expectation %s" % [fixture_id, expectation])
 		return false
-	var environment: Dictionary = run_state.get("current_environment")
-	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
 	var machine: Dictionary = game_states.get("scratch_tickets", {}) if typeof(game_states.get("scratch_tickets", {})) == TYPE_DICTIONARY else {}
 	var ticket: Dictionary = machine.get("active_ticket", {}) if typeof(machine.get("active_ticket", {})) == TYPE_DICTIONARY else {}
 	if ticket.is_empty() or int(machine.get("purchased_count", 0)) < 1 or int(ticket.get("mask_revision", 0)) < 1 or bool(ticket.get("result_ready", false)):
 		_fail("%s did not produce a genuinely partial scratch ticket" % fixture_id)
 		return false
 	return true
+
+
+func _surface_state_evidence(run_state: Variant, capture_case: Dictionary) -> Dictionary:
+	if run_state == null:
+		return {}
+	var game_id := str(capture_case.get("enter_game", "")).strip_edges()
+	if game_id.is_empty() or game_id == "first":
+		return {}
+	var environment: Dictionary = run_state.get("current_environment")
+	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	var persisted: Dictionary = game_states.get(game_id, {}) if typeof(game_states.get(game_id, {})) == TYPE_DICTIONARY else {}
+	match game_id:
+		"slot":
+			return {"spin_count": int(persisted.get("spin_count", 0)), "last_outcome_id": str(persisted.get("last_outcome_id", "")), "last_reels_present": persisted.has("last_reels")}
+		"bar_dice":
+			return {"rounds_played": int(persisted.get("rounds_played", 0)), "last_result_present": typeof(persisted.get("last_result", null)) == TYPE_DICTIONARY and not (persisted.get("last_result", {}) as Dictionary).is_empty()}
+		"blackjack":
+			return {"hands_played": int(persisted.get("hands_played", 0)), "last_result_present": typeof(persisted.get("last_result", null)) == TYPE_DICTIONARY and not (persisted.get("last_result", {}) as Dictionary).is_empty()}
+	return {}
 
 
 func _capture_cases(options: Dictionary) -> Array:

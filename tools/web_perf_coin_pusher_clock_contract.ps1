@@ -45,6 +45,33 @@ function Test-CoinPusherIdleSchedulerEvidence {
     return $elapsedMsec -gt 0.0 -and [int]$Counters.surface_animation_redraw_count -ge $requiredRedraws
 }
 
+function Test-CoinPusherDrawSamplingEvidence {
+    param(
+        [object]$ScenarioTags,
+        [object]$Counters,
+        [int]$RequiredSamples = 64,
+        [int]$MinimumWarmupSamples = 3
+    )
+    if (-not (Test-CoinPusherPropertiesPresent -Value $ScenarioTags -Names @("draw_sampling"))) { return $false }
+    if (-not (Test-CoinPusherPropertiesPresent -Value $Counters -Names @("draw_sample_count", "draw_sample_buffer_count", "draw_frame_usec_samples"))) { return $false }
+    $sampling = $ScenarioTags.draw_sampling
+    if (-not (Test-CoinPusherPropertiesPresent -Value $sampling -Names @("warmup_samples", "target_samples", "sample_frames", "sample_count", "complete", "p95_percentile", "p95_rank", "probe_interval_frames"))) { return $false }
+    $samples = @($Counters.draw_frame_usec_samples)
+    $expectedP95Rank = [Math]::Ceiling(0.95 * [double]$RequiredSamples)
+    return $RequiredSamples -eq 64 `
+        -and [int]$sampling.target_samples -eq $RequiredSamples `
+        -and [int]$sampling.warmup_samples -ge $MinimumWarmupSamples `
+        -and [int]$sampling.sample_frames -gt 0 `
+        -and [int]$sampling.probe_interval_frames -gt 0 `
+        -and [bool]$sampling.complete `
+        -and [double]$sampling.p95_percentile -eq 0.95 `
+        -and [int]$sampling.p95_rank -eq $expectedP95Rank `
+        -and [int]$sampling.sample_count -eq [int]$Counters.draw_sample_count `
+        -and [int]$Counters.draw_sample_count -eq $RequiredSamples `
+        -and [int]$Counters.draw_sample_buffer_count -eq $RequiredSamples `
+        -and $samples.Count -eq $RequiredSamples
+}
+
 function Test-CoinPusherReinstallClockObservation {
     param([object]$Observation)
     return (Test-CoinPusherPropertiesPresent -Value $Observation -Names @("boundary_body_count", "boundary_tray_count", "liveness_before", "liveness_after", "observed_body_count", "observed_tray_count", "conservation")) `

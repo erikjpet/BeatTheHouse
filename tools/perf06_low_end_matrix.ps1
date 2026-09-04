@@ -10,6 +10,9 @@ $ErrorActionPreference = "Stop"
 $root = [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
 $profileFile = if ([IO.Path]::IsPathRooted($ProfilePath)) { [IO.Path]::GetFullPath($ProfilePath) } else { [IO.Path]::GetFullPath((Join-Path $root $ProfilePath)) }
 if (-not (Test-Path -LiteralPath $profileFile -PathType Leaf)) { throw "Low-end profile is missing: $profileFile" }
+$profileRoot = [IO.Path]::GetFullPath((Join-Path $root ".tmp"))
+if (-not $profileFile.StartsWith($profileRoot + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) { throw "Low-end profile must resolve below the repository .tmp directory." }
+$profileFileRelative = $profileFile.Substring($root.Length).TrimStart([char[]]@('\', '/'))
 $profile = Get-Content -LiteralPath $profileFile -Raw | ConvertFrom-Json
 foreach ($field in @("schema", "profile_id", "method", "computer_name", "resolution", "renderer", "power_plan", "web_browser", "web_cpu_throttle_rate", "web_device_scale_factor", "web_launch_flags", "hardware_fingerprint_sha256", "hardware")) {
     if (-not ($profile.PSObject.Properties.Name -contains $field)) { throw "Low-end profile is missing '$field'." }
@@ -112,6 +115,9 @@ try {
         return
     }
 
+    & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "perf06_deferred_validation_contract.ps1") -GodotPath $GodotPath
+    if ($LASTEXITCODE -ne 0) { throw "Deferred runtime validation contract failed." }
+
     & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "foundation_performance_probe.ps1") -RunCount 8 -FramesPerSurface 120 -ResolveSampleCount 48 -SeedPrefix "PERF06-LOW-$($profile.profile_id)" -Out (Join-Path $out "native_surface_probe.json") -CandidateCommit $head -ProfileManifestSha256 $profileHash -EvidenceProfile "low_end:$($profile.profile_id)" -RequireGodot:$RequireGodot
     if ($LASTEXITCODE -ne 0) { throw "Native low-end surface matrix failed." }
 
@@ -119,19 +125,26 @@ try {
     & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "perf06_allocation_call_root_audit.ps1") -CandidateCommit $head -Out $staticAudit
     if ($LASTEXITCODE -ne 0) { throw "Low-end allocation call-root audit failed." }
 
+    $surfaceReports = [Collections.Generic.List[string]]::new()
+    $nativeDistributionOut = Join-Path $out "native_runtime_distribution_fresh_start"
+    & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "perf06_native_runtime_matrix.ps1") -ProfilePath $profileFile -GodotPath $GodotPath -OutDir $nativeDistributionOut -Plan distribution_fresh_start -EvidenceProfile "low_end:$($profile.profile_id)" -Frames 120 -ActiveFrames 240 -MemorySeconds 600 -TimeoutMs 900000
+    if ($LASTEXITCODE -ne 0) { throw "Low-end native distribution fresh-start contract failed." }
     foreach ($nativePlan in @("l02", "grand_casino", "coin_pusher")) {
         $nativeOut = Join-Path $out ("native_runtime_{0}" -f $nativePlan)
         & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "perf06_native_runtime_matrix.ps1") -ProfilePath $profileFile -GodotPath $GodotPath -OutDir $nativeOut -Plan $nativePlan -EvidenceProfile "low_end:$($profile.profile_id)" -Frames 120 -ActiveFrames 240 -MemorySeconds 600 -TimeoutMs 900000
         if ($LASTEXITCODE -ne 0) { throw "Low-end native runtime plan failed: $nativePlan." }
-        & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "perf06_build_surface_report.ps1") -CandidateCommit $head -Platform native -Profile low_end -ProfilePath $profileFile -LaunchSummary (Join-Path $nativeOut "summary.json") -StaticAudit $staticAudit -Out (Join-Path $nativeOut "surface_report.json")
+        $nativeSurfaceReport = Join-Path $nativeOut "surface_report.json"
+        & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "perf06_build_surface_report.ps1") -CandidateCommit $head -Platform native -Profile low_end -ProfilePath $profileFile -LaunchSummary (Join-Path $nativeOut "summary.json") -StaticAudit $staticAudit -Out $nativeSurfaceReport
         if ($LASTEXITCODE -ne 0) { throw "Low-end native surface report failed: $nativePlan." }
+        $surfaceReports.Add($nativeSurfaceReport)
     }
 
     $webRuns = @(
-        @{ plan="l02"; cache="cold"; port=18620 },
-        @{ plan="l02"; cache="warm"; port=18621 },
-        @{ plan="grand_casino"; cache="cold"; port=18622 },
-        @{ plan="coin_pusher"; cache="cold"; port=18623 }
+        @{ plan="distribution_fresh_start"; cache="cold"; port=18619; surface=$false },
+        @{ plan="l02"; cache="cold"; port=18620; surface=$true },
+        @{ plan="l02"; cache="warm"; port=18621; surface=$true },
+        @{ plan="grand_casino"; cache="cold"; port=18622; surface=$true },
+        @{ plan="coin_pusher"; cache="cold"; port=18623; surface=$true }
     )
     foreach ($run in $webRuns) {
         $webOut = Join-Path $out ("web_{0}_{1}.json" -f $run.plan, $run.cache)
@@ -145,19 +158,28 @@ try {
         if ([string]::IsNullOrWhiteSpace([string]$captured.browser_version) -or [string]::IsNullOrWhiteSpace([string]$captured.user_agent)) { throw "Web capture did not record browser identity." }
         $actualFlags = @($captured.launch_options.args)
         foreach ($flag in @($profile.web_launch_flags)) { if ($actualFlags -cnotcontains [string]$flag) { throw "Web capture omitted declared launch flag '$flag'." } }
+        if (-not [bool]$run.surface) { continue }
         $webSummary = [System.IO.Path]::ChangeExtension($webOut, ".summary.json")
         $webSurfaceReport = [System.IO.Path]::ChangeExtension($webOut, ".surface.json")
         & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "perf06_build_surface_report.ps1") -CandidateCommit $head -Platform web -Profile low_end -ProfilePath $profileFile -LaunchSummary $webSummary -StaticAudit $staticAudit -Out $webSurfaceReport
         if ($LASTEXITCODE -ne 0) { throw "Low-end Web surface report failed: $($run.plan)/$($run.cache)." }
+        $surfaceReports.Add($webSurfaceReport)
     }
 
+    $integrationManifests = @{}
     foreach ($orchestrator in @("integ06_1_composition_matrix.ps1", "integ06_1_terminal_soak.ps1")) {
         $path = Join-Path $PSScriptRoot $orchestrator
         if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "Integration producer is not available: $path" }
         $integrationOut = Join-Path $out ($orchestrator -replace '\.ps1$', '')
-        & powershell -NoProfile -ExecutionPolicy Bypass -File $path -CandidateCommit $head -ProfilePath $profileFile -EvidenceProfile "low_end:$($profile.profile_id)" -OutDir $integrationOut -GodotPath $GodotPath -RequireGodot:$RequireGodot
+        $integrationOutRelative = $integrationOut.Substring($root.Length).TrimStart([char[]]@('\', '/'))
+        & powershell -NoProfile -ExecutionPolicy Bypass -File $path -CandidateCommit $head -ProfilePath $profileFileRelative -EvidenceProfile "low_end:$($profile.profile_id)" -OutDir $integrationOutRelative -GodotPath $GodotPath -RequireGodot:$RequireGodot
         if ($LASTEXITCODE -ne 0) { throw "Integration low-end producer failed: $orchestrator" }
+        $integrationManifests[$orchestrator] = Join-Path $integrationOut "manifest.json"
     }
+
+    $matrixReport = Join-Path $out "matrix_contract.json"
+    & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "perf06_matrix_contract.ps1") -CandidateCommit $head -CompositionManifest $integrationManifests["integ06_1_composition_matrix.ps1"] -TerminalManifest $integrationManifests["integ06_1_terminal_soak.ps1"] -SurfaceReports @($surfaceReports) -RequiredProfiles low_end -Out $matrixReport
+    if ($LASTEXITCODE -ne 0) { throw "Low-end combined matrix contract failed." }
 
     $hostEvidence.completed_utc = [DateTime]::UtcNow.ToString("o")
     $hostEvidence.process_inventory_after = @(Get-Process | Select-Object Name, Id, CPU, WorkingSet64)

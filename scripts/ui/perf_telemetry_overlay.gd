@@ -4,14 +4,20 @@ extends Control
 # Debug-only runtime telemetry for low-end/web baselines. The node is never
 # created unless an explicit command-line flag or web query parameter enables it.
 
-const SlotStateScript := preload("res://scripts/games/slots/slot_machine_state.gd")
-const SlotPinballScript := preload("res://scripts/games/slots/slot_family_pinball.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 const CrewTurnModelScript := preload("res://scripts/core/crew_turn_model.gd")
-const PerformanceFixtureSetupScript := preload("res://scripts/ui/performance_fixture_setup.gd")
+const TutorialFlowScript := preload("res://scripts/core/tutorial_flow.gd")
 const WebAudioBridgeScript := preload("res://scripts/ui/web_audio_bridge.gd")
-const CoinPusherSolverScript := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
-const CoinPusherLiveSessionScript := preload("res://scripts/games/coin_pusher/coin_pusher_live_session.gd")
+
+const PERF_PLAN_SCRIPT_PATHS := {
+	"SlotStateScript": "res://scripts/games/slots/slot_machine_state.gd",
+	"SlotPinballScript": "res://scripts/games/slots/slot_family_pinball.gd",
+	"PerformanceFixtureSetupScript": "res://scripts/ui/performance_fixture_setup.gd",
+	"CoinPusherSolverScript": "res://scripts/games/coin_pusher/coin_pusher_solver_api.gd",
+	"CoinPusherLiveSessionScript": "res://scripts/games/coin_pusher/coin_pusher_live_session.gd",
+}
+const L02_PLAN_SCRIPT_FIELDS := ["SlotStateScript", "SlotPinballScript", "PerformanceFixtureSetupScript"]
+const COIN_PUSHER_PLAN_SCRIPT_FIELDS := ["CoinPusherSolverScript", "CoinPusherLiveSessionScript"]
 
 const REQUIRED_GAME_IDS := [
 	"pull_tabs",
@@ -83,8 +89,15 @@ const REPORT_PREFIX := "BTH_PERF_REPORT "
 const READY_PREFIX := "BTH_PERF_READY "
 const COIN_PUSHER_FIXTURE_SEED := "practice:coin_pusher_full_cap"
 const COIN_PUSHER_SHIPPED_BODY_COUNT := 160
+const COIN_PUSHER_SOLVER_STRESS_BODY_COUNT := 300
+const COIN_PUSHER_SOLVER_SAMPLE_COUNT := 60
+const COIN_PUSHER_SOLVER_TICK_P95_BUDGET_MS := 12.0
 const COIN_PUSHER_IDLE_SAMPLE_FRAMES := 120
 const COIN_PUSHER_ACTION_SAMPLE_FRAMES := 60
+const COIN_PUSHER_DRAW_WARMUP_SAMPLES := 3
+const COIN_PUSHER_DRAW_TARGET_SAMPLES := 64
+const COIN_PUSHER_DRAW_PROBE_INTERVAL_FRAMES := 15
+const COIN_PUSHER_DRAW_SAMPLE_MAX_FRAMES := COIN_PUSHER_DRAW_TARGET_SAMPLES * COIN_PUSHER_DRAW_PROBE_INTERVAL_FRAMES
 const IDLE_LIVENESS_MINIMUM_INTERVALS := 2
 const IDLE_LIVENESS_WAIT_GRACE_MSEC := 5000
 const ACTIVE_PHASE_MINIMUM_FRAMES := 12
@@ -93,6 +106,7 @@ const ACTIVE_PHASE_CHANNELS := {
 	"baccarat": "baccarat_deal",
 	"roulette": "roulette_spin",
 }
+const PERF06_TIMELINE_GAMES := ["baccarat", "roulette", "craps"]
 const ALLOCATION_COPY_SOURCE_IDS := [
 	"foundation_snapshot",
 	"environment_runtime",
@@ -101,14 +115,33 @@ const ALLOCATION_COPY_SOURCE_IDS := [
 	"layout",
 	"autosave_flush",
 	"coin_pusher_native_step",
-	"producer_fixture",
 ]
+const PERF06_SYSTEM_ALLOCATION_ROOTS := {
+	"meta_home": ["environment_runtime", "layout", "foundation_snapshot"],
+	"room_environment": ["environment_runtime", "layout", "foundation_snapshot"],
+	"dynamic_scenario": ["environment_runtime", "layout", "foundation_snapshot"],
+	"crew": ["environment_runtime", "surface_realtime", "foundation_snapshot"],
+	"world": ["environment_runtime", "layout", "foundation_snapshot"],
+	"talk_dialogue": ["surface_realtime", "layout", "foundation_snapshot"],
+	"run_report": ["layout", "foundation_snapshot"],
+	"inventory_service": ["surface_realtime", "layout", "foundation_snapshot"],
+	"audio": ["environment_runtime", "foundation_snapshot"],
+	"save_restore": ["autosave_flush", "foundation_snapshot"],
+	"maximal_composition": ALLOCATION_COPY_SOURCE_IDS,
+	"run_trajectory": ALLOCATION_COPY_SOURCE_IDS,
+}
 # CPU-throttled shipped Web frames can leave a substantial live-session
 # accumulator for the production chunked-exit path to drain. This bound affects
 # setup synchronization only; locked measurement windows remain unchanged.
 const COIN_PUSHER_EXIT_WAIT_FRAMES := 600
 
 var app: FoundationMain
+var SlotStateScript: Script
+var SlotPinballScript: Script
+var PerformanceFixtureSetupScript: Script
+var CoinPusherSolverScript: Script
+var CoinPusherLiveSessionScript: Script
+var plan_script_failure_reason := ""
 var runtime_options: Dictionary = {}
 var telemetry_enabled := false
 var show_overlay := false
@@ -224,6 +257,8 @@ func configure(owner: FoundationMain) -> void:
 	})
 	if plan_id == "l02":
 		call_deferred("_run_l02_plan")
+	elif plan_id == "distribution_fresh_start":
+		call_deferred("_run_distribution_fresh_start_plan")
 	elif plan_id == "secure_entropy":
 		call_deferred("_run_secure_entropy_plan")
 	elif plan_id == "corner_store":
@@ -255,6 +290,40 @@ func configure_for_probe(owner: FoundationMain, overlay_visible: bool) -> void:
 	if show_overlay:
 		_build_overlay()
 	_begin_scenario("overlay_cost_probe", {"surface": "environment", "mode": "idle"})
+
+
+func _ensure_perf_plan_scripts(script_fields: Array) -> bool:
+	if not plan_script_failure_reason.is_empty():
+		return false
+	for field_name_value in script_fields:
+		var field_name := str(field_name_value)
+		if get(field_name) is Script:
+			continue
+		# configure() has already emitted truthful READY. Give every optional
+		# helper graph its own later frame so plan setup does not form a new
+		# monolithic post-READY hitch.
+		await get_tree().process_frame
+		var script_path := str(PERF_PLAN_SCRIPT_PATHS.get(field_name, ""))
+		var loaded_script: Variant = ResourceLoader.load(script_path) if not script_path.is_empty() else null
+		if not (loaded_script is Script):
+			plan_script_failure_reason = "Could not load %s from %s." % [field_name, script_path if not script_path.is_empty() else "an unregistered path"]
+			push_error("Performance plan setup stopped: %s" % plan_script_failure_reason)
+			mark_event("perf_plan_script_load_failed", {
+				"plan": plan_id,
+				"field": field_name,
+				"path": script_path,
+				"reason": plan_script_failure_reason,
+			})
+			return false
+		set(field_name, loaded_script)
+	return true
+
+
+func _abort_perf_plan_setup() -> void:
+	_end_scenario()
+	l02_driver_complete = true
+	dump_report()
+	await _quit_after_report_flush()
 
 
 func travel_stage_timing_enabled(target_id: String) -> bool:
@@ -413,6 +482,9 @@ func _run_l02_plan() -> void:
 	if l02_driver_started:
 		return
 	l02_driver_started = true
+	if not await _ensure_perf_plan_scripts(L02_PLAN_SCRIPT_FIELDS):
+		await _abort_perf_plan_setup()
+		return
 	await _wait_frames(8)
 	_end_scenario()
 	await _measure_meta_home()
@@ -431,18 +503,32 @@ func _run_l02_plan() -> void:
 
 func _measure_meta_home() -> void:
 	var opened_started_usec := Time.get_ticks_usec()
+	_begin_system_phase("meta_home_open", "meta_home", "open", "transition")
 	app.call("open_meta_home")
+	var open_snapshot: Dictionary = app.call("current_screen_snapshot")
+	var open_environment: Dictionary = app.call("current_environment_view_snapshot")
+	_complete_system_evidence(
+		bool(open_snapshot.get("has_run", false)) and str(open_snapshot.get("screen", "")) == "ENVIRONMENT",
+		{"screen": str(open_snapshot.get("screen", "")), "environment_id": str(open_environment.get("id", ""))}
+	)
 	mark_event("meta_home_open", {
 		"duration_ms": _duration_ms_since(opened_started_usec),
-		"environment_id": str(app.call("current_environment_view_snapshot").get("id", "")),
+		"environment_id": str(open_environment.get("id", "")),
 	})
-	await _wait_frames(8)
-	await _measure_scenario("meta_home_animated_idle", {
-		"surface": "meta_home",
-		"mode": "animated_idle",
-		"perf06_surface_id": "meta_home",
-		"perf06_phase_id": "animated_idle",
-	}, scenario_frames)
+	await _finish_system_phase(mini(scenario_frames, 90))
+	await _measure_system_state(
+		"meta_home_animated_idle", "meta_home", "animated_idle",
+		bool(open_snapshot.get("has_run", false)) and str(open_snapshot.get("screen", "")) == "ENVIRONMENT",
+		{"environment_id": str(open_environment.get("id", ""))}, scenario_frames, "animated_idle"
+	)
+	_begin_system_phase("meta_home_close", "meta_home", "close", "transition")
+	app.call("return_to_main_menu")
+	var close_snapshot: Dictionary = app.call("current_screen_snapshot")
+	_complete_system_evidence(
+		str(close_snapshot.get("screen", "")) == "START" and not bool(close_snapshot.get("has_run", true)),
+		{"screen": str(close_snapshot.get("screen", "")), "has_run": bool(close_snapshot.get("has_run", true))}
+	)
+	await _finish_system_phase(mini(scenario_frames, 90))
 
 
 func _run_secure_entropy_plan() -> void:
@@ -452,6 +538,105 @@ func _run_secure_entropy_plan() -> void:
 	await _wait_frames(8)
 	_end_scenario()
 	mark_event("secure_entropy_contract", _secure_entropy_contract())
+	l02_driver_complete = true
+	dump_report()
+	await _quit_after_report_flush()
+
+
+func _run_distribution_fresh_start_plan() -> void:
+	if l02_driver_started:
+		return
+	l02_driver_started = true
+	await _wait_frames(8)
+	_end_scenario()
+	var profile: Variant = app.get("profile_inventory") if app != null else null
+	var play_button: Button = app.get("new_run_button") as Button if app != null else null
+	var before_screen: Dictionary = app.call("current_screen_snapshot") if app != null else {}
+	var fresh_profile := profile != null \
+		and not bool(profile.get("loaded_from_disk")) \
+		and not bool(profile.get("tutorial_completed"))
+	var no_saved_run := app != null and not bool(app.call("_has_foundation_save"))
+	var play_ready := play_button != null \
+		and play_button.text == "PLAY" \
+		and not play_button.disabled \
+		and play_button.is_visible_in_tree()
+	var audio_disabled_control := OS.get_environment("BTH_PERF_DISABLE_AUDIO").strip_edges() == "1"
+	if audio_disabled_control and app != null:
+		var music_player: Variant = app.get("procedural_music_player")
+		if music_player != null:
+			music_player.set("audio_enabled", false)
+	var startup_attribution := {}
+	if OS.get_environment("BTH_PERF_STARTUP_ATTRIBUTION").strip_edges() == "1" and app != null:
+		var stage_started_usec := Time.get_ticks_usec()
+		app.call("_ensure_full_content_library_loaded")
+		startup_attribution["full_content_msec"] = float(Time.get_ticks_usec() - stage_started_usec) / 1000.0
+		var content_library: ContentLibrary = app.get("library") as ContentLibrary
+		stage_started_usec = Time.get_ticks_usec()
+		var tutorial_config := TutorialFlowScript.challenge_config(content_library)
+		startup_attribution["tutorial_config_msec"] = float(Time.get_ticks_usec() - stage_started_usec) / 1000.0
+		var probe_state := RunState.new()
+		stage_started_usec = Time.get_ticks_usec()
+		probe_state.start_new(str(tutorial_config.get("seed_text", "FIRST-NIGHT-ACE-17")), tutorial_config)
+		probe_state.begin_act(1)
+		startup_attribution["run_state_msec"] = float(Time.get_ticks_usec() - stage_started_usec) / 1000.0
+		var probe_generator := RunGenerator.new(content_library)
+		var probe_started_usec := Time.get_ticks_usec()
+		stage_started_usec = Time.get_ticks_usec()
+		probe_generator.call("_travel_rollback_snapshot", probe_state)
+		startup_attribution["rollback_snapshot_msec"] = float(Time.get_ticks_usec() - stage_started_usec) / 1000.0
+		stage_started_usec = Time.get_ticks_usec()
+		var probe_rng := probe_state.create_rng()
+		startup_attribution["rng_msec"] = float(Time.get_ticks_usec() - stage_started_usec) / 1000.0
+		var probe_map_builder := WorldMap.new(content_library)
+		stage_started_usec = Time.get_ticks_usec()
+		var probe_map := probe_map_builder.build(probe_state, probe_rng.fork("world_map"))
+		startup_attribution["world_map_build_msec"] = float(Time.get_ticks_usec() - stage_started_usec) / 1000.0
+		stage_started_usec = Time.get_ticks_usec()
+		probe_state.set_world_map(probe_generator.call("_apply_tutorial_initial_map_targets", probe_map, probe_state))
+		startup_attribution["world_map_install_msec"] = float(Time.get_ticks_usec() - stage_started_usec) / 1000.0
+		var probe_map_data := probe_state.world_map
+		stage_started_usec = Time.get_ticks_usec()
+		probe_state.configure_town_world(probe_map_data)
+		startup_attribution["town_configure_msec"] = float(Time.get_ticks_usec() - stage_started_usec) / 1000.0
+		stage_started_usec = Time.get_ticks_usec()
+		probe_generator.call("_prime_town_scenarios", probe_state, probe_map_data)
+		startup_attribution["scenario_prime_msec"] = float(Time.get_ticks_usec() - stage_started_usec) / 1000.0
+		var probe_target_id := WorldMap.current_node_id(probe_map_data)
+		var probe_node := WorldMap.node_by_id(probe_map_data, probe_target_id)
+		stage_started_usec = Time.get_ticks_usec()
+		probe_generator.call("_world_environment_data_for_node", probe_state, probe_map_data, probe_node, probe_rng)
+		startup_attribution["environment_data_msec"] = float(Time.get_ticks_usec() - stage_started_usec) / 1000.0
+		startup_attribution["generation_probe_total_msec"] = float(Time.get_ticks_usec() - probe_started_usec) / 1000.0
+	var world_map_disabled_control := OS.get_environment("BTH_PERF_DISABLE_WORLD_MAP").strip_edges() == "1"
+	if world_map_disabled_control and app != null:
+		app.set("world_map_overlay", null)
+	var play_started_msec := Time.get_ticks_msec()
+	if play_ready:
+		app.call("_on_start_pressed")
+	await _wait_frames(12)
+	var run_state: RunState = app.get("run_state") as RunState if app != null else null
+	var after_screen: Dictionary = app.call("current_screen_snapshot") if app != null else {}
+	var tutorial_started := run_state != null and run_state.is_tutorial_run()
+	var passed := fresh_profile \
+		and no_saved_run \
+		and play_ready \
+		and str(before_screen.get("screen", "")) == "START" \
+		and tutorial_started \
+		and str(after_screen.get("screen", "")) == "ENVIRONMENT"
+	mark_event("distribution_fresh_start_contract", {
+		"passed": passed,
+		"fresh_profile": fresh_profile,
+		"no_saved_run": no_saved_run,
+		"play_ready": play_ready,
+		"audio_disabled_control": audio_disabled_control,
+		"world_map_disabled_control": world_map_disabled_control,
+		"startup_attribution": startup_attribution,
+		"before_screen": str(before_screen.get("screen", "")),
+		"after_screen": str(after_screen.get("screen", "")),
+		"tutorial_started": tutorial_started,
+		"play_to_tutorial_msec": maxi(0, Time.get_ticks_msec() - play_started_msec),
+		"first_interactive_msec": maxi(0, play_started_msec - created_msec),
+	})
 	l02_driver_complete = true
 	dump_report()
 	await _quit_after_report_flush()
@@ -568,14 +753,16 @@ func _run_grand_casino_plan() -> void:
 		return
 	run_state.bankroll = maxi(run_state.bankroll, 5000)
 	run_state.narrative_flags["grand_casino_invite"] = true
-	generator.next_environment(run_state, RunState.GRAND_CASINO_ARCHETYPE_ID, true)
+	var grand_installed := _install_generated_grand_casino_fixture(run_state)
+	mark_event("grand_casino_fixture_install", grand_installed)
 	run_state.add_suspicion("web_grand_casino_late_probe", 85, "behavior")
+	run_state.narrative_flags["grand_casino_high_limit_access"] = true
+	run_state.narrative_flags["grand_casino_high_limit_access_method"] = "performance_probe"
 	app.call("_refresh")
 	_begin_scenario("grand_casino_late_settle", {"surface": "grand_casino", "mode": "late_run_entry"})
 	await _wait_frames(maxi(scenario_frames, 360))
 	_end_scenario()
-	run_state.narrative_flags["grand_casino_high_limit_access"] = true
-	run_state.narrative_flags["grand_casino_high_limit_access_method"] = "performance_probe"
+	await _measure_grand_casino_system_matrix(run_state, generator)
 	_begin_scenario("grand_casino_room_churn", {"surface": "grand_casino", "mode": "repeated_room_transitions"})
 	var room_sequence := [
 		RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID,
@@ -614,10 +801,368 @@ func _publish_grand_casino_browser_summary() -> void:
 	JavaScriptBridge.eval("document.title = %s;" % JSON.stringify(title), true)
 
 
+func _install_generated_grand_casino_fixture(run_state: RunState) -> Dictionary:
+	var library: ContentLibrary = app.get("library") as ContentLibrary
+	var generator: RunGenerator = app.get("generator") as RunGenerator
+	if library == null or generator == null:
+		return {"ok": false, "reason": "missing_generation_runtime"}
+	var archetype := library.environment_archetype(RunState.GRAND_CASINO_ARCHETYPE_ID)
+	if archetype.is_empty():
+		return {"ok": false, "reason": "missing_archetype"}
+	var rng := run_state.create_rng("perf06_grand_casino_environment")
+	var scenario_value: Variant = generator.call("_select_scenario", run_state, RunState.GRAND_CASINO_ARCHETYPE_ID, rng)
+	var candidates: Array = []
+	if typeof(scenario_value) == TYPE_DICTIONARY and not (scenario_value as Dictionary).is_empty():
+		candidates.append((scenario_value as Dictionary).duplicate(true))
+	var pool_value: Variant = library.call("_scenarios_for_archetype_readonly", RunState.GRAND_CASINO_ARCHETYPE_ID)
+	if typeof(pool_value) == TYPE_ARRAY:
+		for candidate_value in pool_value as Array:
+			if typeof(candidate_value) != TYPE_DICTIONARY:
+				continue
+			var candidate: Dictionary = candidate_value
+			var candidate_id := str(candidate.get("id", ""))
+			if candidate_id.is_empty():
+				continue
+			var already_present := false
+			for existing_value in candidates:
+				already_present = already_present or str((existing_value as Dictionary).get("id", "")) == candidate_id
+			if not already_present:
+				candidates.append(candidate.duplicate(true))
+	var installed: Dictionary = {"ok": false, "errors": ["No Grand Casino scenario candidate installed."]}
+	var installed_scenario: Dictionary = {}
+	var attempts: Array = []
+	for candidate_value in candidates:
+		var scenario: Dictionary = candidate_value
+		var scenario_id := str(scenario.get("id", ""))
+		var candidate_rng := rng.fork("scenario_fixture:%s" % scenario_id)
+		run_state.seed_scenario_for_node(RunState.GRAND_CASINO_ARCHETYPE_ID, scenario)
+		var generated := EnvironmentInstance.from_archetype(archetype, 1, candidate_rng, library, run_state.challenge_config, scenario)
+		var environment := generated.to_dict()
+		environment["world_node_id"] = RunState.GRAND_CASINO_ARCHETYPE_ID
+		run_state.apply_town_generation_modifiers(environment, candidate_rng)
+		var generated_states: Variant = generator.call("_generated_game_states", run_state, environment, candidate_rng)
+		if typeof(generated_states) == TYPE_DICTIONARY:
+			environment["game_states"] = generated_states
+		environment["layout"] = EnvironmentInstance.ensure_generated_layout(environment)
+		var rollback_value: Variant = generator.call("_travel_rollback_snapshot", run_state)
+		var rollback: Dictionary = rollback_value if typeof(rollback_value) == TYPE_DICTIONARY else {}
+		var installed_value: Variant = generator.call("_install_environment_with_rollback", run_state, environment, rollback)
+		installed = installed_value if typeof(installed_value) == TYPE_DICTIONARY else {}
+		attempts.append({"scenario_id": scenario_id, "ok": bool(installed.get("ok", false)), "errors": installed.get("errors", [])})
+		if bool(installed.get("ok", false)):
+			installed_scenario = scenario
+			break
+	# Keep the rest of the system matrix runnable while an authored scenario is
+	# fail-closed by its own layout contract. The dynamic rows remain red and carry
+	# every rejected scenario attempt; no fallback is allowed to counterfeit them.
+	if not bool(installed.get("ok", false)):
+		var fallback_rng := rng.fork("scenario_fixture:plain_grand_casino")
+		var fallback := EnvironmentInstance.from_archetype(archetype, 1, fallback_rng, library, run_state.challenge_config)
+		var fallback_environment := fallback.to_dict()
+		fallback_environment["world_node_id"] = RunState.GRAND_CASINO_ARCHETYPE_ID
+		fallback_environment["layout"] = EnvironmentInstance.ensure_generated_layout(fallback_environment)
+		var fallback_rollback_value: Variant = generator.call("_travel_rollback_snapshot", run_state)
+		var fallback_rollback: Dictionary = fallback_rollback_value if typeof(fallback_rollback_value) == TYPE_DICTIONARY else {}
+		var fallback_install_value: Variant = generator.call("_install_environment_with_rollback", run_state, fallback_environment, fallback_rollback)
+		installed = fallback_install_value if typeof(fallback_install_value) == TYPE_DICTIONARY else {}
+	run_state.save_rng(rng)
+	app.call("_refresh")
+	return {
+		"ok": bool(installed.get("ok", false)) and str(run_state.current_environment.get("archetype_id", "")) == RunState.GRAND_CASINO_ARCHETYPE_ID,
+		"installed": installed,
+		"environment_id": str(run_state.current_environment.get("archetype_id", "")),
+		"scenario_id": str(run_state.current_environment.get("scenario_id", "")),
+		"selected_scenario_id": str(installed_scenario.get("id", "")),
+		"attempts": attempts,
+	}
+
+
+func _measure_grand_casino_system_matrix(run_state: RunState, generator: RunGenerator) -> void:
+	var phase_frames := mini(scenario_frames, 90)
+	var environment := run_state.current_environment
+	var environment_id := str(environment.get("archetype_id", ""))
+	var scenario_id := str(environment.get("scenario_id", ""))
+	var semantic_ready := bool(environment.get("scenario_semantic_ready", false))
+	var render_snapshot: Dictionary = environment.get("scenario_render_snapshot", {}) if typeof(environment.get("scenario_render_snapshot", {})) == TYPE_DICTIONARY else {}
+	var projection: Dictionary = run_state.scenario_sequence_projection()
+	var base_actors: Array = environment.get("scenario_base_actors", []) if typeof(environment.get("scenario_base_actors", [])) == TYPE_ARRAY else []
+	var crew_standing := run_state.crew_standing()
+	await _measure_system_state("maximal_composition_entry", "maximal_composition", "entry", environment_id == RunState.GRAND_CASINO_ARCHETYPE_ID, {"environment_id": environment_id, "scenario_id": scenario_id}, phase_frames, "transition")
+	await _measure_system_state("maximal_composition_live", "maximal_composition", "live", semantic_ready and not render_snapshot.is_empty(), {"semantic_ready": semantic_ready, "render_snapshot_present": not render_snapshot.is_empty()}, phase_frames)
+	await _measure_system_state("run_trajectory_maximal_late", "run_trajectory", "maximal_late", run_state.suspicion_level() >= 85 and environment_id == RunState.GRAND_CASINO_ARCHETYPE_ID, {"suspicion": run_state.suspicion_level(), "environment_id": environment_id}, phase_frames)
+	await _measure_system_state("world_maximal_environment", "world", "maximal_environment", environment_id == RunState.GRAND_CASINO_ARCHETYPE_ID and not environment.is_empty(), {"environment_id": environment_id, "object_count": _environment_interactable_objects().size()}, phase_frames)
+	await _measure_system_state("dynamic_scenario_fully_staged", "dynamic_scenario", "fully_staged", semantic_ready and not projection.is_empty() and not render_snapshot.is_empty(), {"scenario_id": scenario_id, "projection_phase": str(projection.get("phase_id", "")), "actor_count": base_actors.size()}, phase_frames)
+	await _measure_system_state("crew_actor_idle", "crew", "actor_idle", not base_actors.is_empty(), {"scenario_id": scenario_id, "actor_count": base_actors.size()}, phase_frames, "idle")
+	await _measure_system_state("crew_late_run", "crew", "late_run", typeof(crew_standing) == TYPE_DICTIONARY and run_state.suspicion_level() >= 85, {"standing_members": crew_standing.size(), "suspicion": run_state.suspicion_level()}, phase_frames)
+
+	await _measure_dynamic_scenario_actions(run_state, phase_frames)
+	await _measure_grand_casino_room_and_dialogue(run_state, generator, phase_frames)
+	await _measure_inventory_phases(run_state, phase_frames)
+	await _measure_audio_phases(run_state, generator, phase_frames)
+	await _measure_grand_casino_game_background(run_state, generator, phase_frames)
+	await _measure_save_terminal_restore_phases(run_state, phase_frames)
+
+
+func _environment_interactable_objects() -> Array:
+	if app == null:
+		return []
+	var snapshot: Dictionary = app.call("current_environment_view_snapshot")
+	var objects_value: Variant = snapshot.get("interactable_objects", [])
+	return objects_value if typeof(objects_value) == TYPE_ARRAY else []
+
+
+func _first_interactable_object(types: Array = []) -> Dictionary:
+	for object_value in _environment_interactable_objects():
+		if typeof(object_value) != TYPE_DICTIONARY:
+			continue
+		var object_data: Dictionary = object_value
+		var object_id := str(object_data.get("object_id", ""))
+		var object_type := str(object_data.get("object_type", ""))
+		if object_id.is_empty() or not bool(object_data.get("enabled", true)):
+			continue
+		if types.is_empty() or object_type in types:
+			return object_data
+	return {}
+
+
+func _measure_dynamic_scenario_actions(run_state: RunState, phase_frames: int) -> void:
+	var before_projection := run_state.scenario_sequence_projection()
+	var scenario_object := _first_interactable_object(["scenario_sequence", "scenario"])
+	var object_id := str(scenario_object.get("object_id", ""))
+	_begin_system_phase("dynamic_scenario_beat_transition", "dynamic_scenario", "beat_transition", "transition")
+	var accepted := not object_id.is_empty() and bool(app.call("activate_interactable_object", object_id))
+	await _wait_frames(12)
+	var after_projection := run_state.scenario_sequence_projection()
+	_complete_system_evidence(accepted and JSON.stringify(before_projection) != JSON.stringify(after_projection), {
+		"accepted": accepted,
+		"object_id": object_id,
+		"before_phase": str(before_projection.get("phase_id", "")),
+		"after_phase": str(after_projection.get("phase_id", "")),
+	})
+	await _finish_system_phase(phase_frames)
+	var action_count := 1 if accepted else 0
+	for _step in range(15):
+		var next_object := _first_interactable_object(["scenario_sequence", "scenario"])
+		var next_id := str(next_object.get("object_id", ""))
+		if next_id.is_empty():
+			break
+		if not bool(app.call("activate_interactable_object", next_id)):
+			break
+		action_count += 1
+		await _wait_frames(12)
+	var final_projection := run_state.scenario_sequence_projection()
+	var remaining_action := _first_interactable_object(["scenario_sequence", "scenario"])
+	await _measure_system_state("dynamic_scenario_terminal_cleanup", "dynamic_scenario", "terminal_cleanup", action_count > 0 and remaining_action.is_empty(), {
+		"action_count": action_count,
+		"remaining_action_id": str(remaining_action.get("object_id", "")),
+		"final_phase": str(final_projection.get("phase_id", "")),
+		"semantic_ready": bool(run_state.current_environment.get("scenario_semantic_ready", false)),
+	}, phase_frames, "transition")
+
+
+func _measure_grand_casino_room_and_dialogue(run_state: RunState, generator: RunGenerator, phase_frames: int) -> void:
+	_begin_system_phase("world_revisit", "world", "revisit", "transition")
+	var cage_entered := generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID)
+	app.call("_refresh")
+	_complete_system_evidence(cage_entered and str(run_state.current_environment.get("archetype_id", "")) == RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID, {
+		"accepted": cage_entered,
+		"environment_id": str(run_state.current_environment.get("archetype_id", "")),
+	})
+	await _finish_system_phase(phase_frames)
+	var cage_object := _first_interactable_object(["casino_fixture", "dialogue"])
+	if cage_object.is_empty():
+		for object_value in _environment_interactable_objects():
+			if typeof(object_value) == TYPE_DICTIONARY and str((object_value as Dictionary).get("object_id", "")).contains("cage_counter"):
+				cage_object = object_value as Dictionary
+				break
+	var cage_object_id := str(cage_object.get("object_id", ""))
+	_begin_system_phase("room_environment_object_focus", "room_environment", "object_focus", "transition")
+	var focused := not cage_object_id.is_empty() and bool(app.call("focus_interactable_object", cage_object_id))
+	_complete_system_evidence(focused and str(app.get("selected_object_id")) == cage_object_id, {"accepted": focused, "object_id": cage_object_id, "selected_object_id": str(app.get("selected_object_id"))})
+	await _finish_system_phase(phase_frames)
+	_begin_system_phase("room_environment_interaction", "room_environment", "interaction", "transition")
+	var activated := not cage_object_id.is_empty() and bool(app.call("activate_interactable_object", cage_object_id))
+	await _wait_frames(8)
+	var talk: Dictionary = app.call("current_talk_dock_snapshot")
+	_complete_system_evidence(activated and bool(talk.get("visible", false)), {"accepted": activated, "object_id": cage_object_id, "talk_event_id": str(talk.get("event_id", ""))})
+	await _finish_system_phase(phase_frames)
+	await _measure_live_dialogue_states(talk, phase_frames)
+	var event_id := str((app.call("current_talk_dock_snapshot") as Dictionary).get("event_id", ""))
+	if not event_id.is_empty():
+		app.call("_ignore_talk_event", event_id, "performance_probe_reset")
+		await _wait_frames(8)
+	_begin_system_phase("crew_dialogue_open", "crew", "dialogue_open", "transition")
+	var reopened := bool(app.call("_start_linda_cage_services", {"object_id": cage_object_id}))
+	await _wait_frames(8)
+	var reopened_talk: Dictionary = app.call("current_talk_dock_snapshot")
+	_complete_system_evidence(reopened and bool(reopened_talk.get("visible", false)), {"accepted": reopened, "event_id": str(reopened_talk.get("event_id", ""))})
+	await _finish_system_phase(phase_frames)
+	await _measure_system_state("crew_full_sequence", "crew", "full_sequence", bool(reopened_talk.get("visible", false)) and int(reopened_talk.get("choice_count", 0)) > 0, {"event_id": str(reopened_talk.get("event_id", "")), "choice_count": int(reopened_talk.get("choice_count", 0))}, phase_frames)
+	_begin_system_phase("crew_dialogue_close", "crew", "dialogue_close", "transition")
+	event_id = str(reopened_talk.get("event_id", ""))
+	var closed := not event_id.is_empty() and bool(app.call("_ignore_talk_event", event_id, "performance_probe_close"))
+	await _wait_frames(8)
+	var closed_talk: Dictionary = app.call("current_talk_dock_snapshot")
+	_complete_system_evidence(closed and not bool(closed_talk.get("visible", false)), {"accepted": closed, "event_id": event_id, "visible_after": bool(closed_talk.get("visible", false))})
+	await _finish_system_phase(phase_frames)
+
+
+func _measure_live_dialogue_states(initial_talk: Dictionary, phase_frames: int) -> void:
+	var visible := bool(initial_talk.get("visible", false))
+	var evidence := {"event_id": str(initial_talk.get("event_id", "")), "choice_count": int(initial_talk.get("choice_count", 0))}
+	await _measure_system_state("talk_dialogue_dock_active", "talk_dialogue", "dock_active", visible, evidence, phase_frames)
+	await _measure_system_state("talk_dialogue_dialogue_active", "talk_dialogue", "dialogue_active", visible and not str(initial_talk.get("summary", "")).is_empty(), evidence, phase_frames)
+	await _measure_system_state("crew_dialogue_active", "crew", "dialogue_active", visible, evidence, phase_frames)
+	var choice_ids: Array = initial_talk.get("choice_ids", []) if typeof(initial_talk.get("choice_ids", [])) == TYPE_ARRAY else []
+	var event_id := str(initial_talk.get("event_id", ""))
+	var choice_id := str(choice_ids[0]) if not choice_ids.is_empty() else ""
+	_begin_system_phase("talk_dialogue_choice_advance", "talk_dialogue", "choice_advance", "transition")
+	if not event_id.is_empty() and not choice_id.is_empty():
+		app.call("_on_talk_dock_choice_requested", event_id, choice_id)
+	await _wait_frames(8)
+	var advanced: Dictionary = app.call("current_talk_dock_snapshot")
+	var progressed := not event_id.is_empty() and not choice_id.is_empty() and JSON.stringify(initial_talk) != JSON.stringify(advanced)
+	_complete_system_evidence(progressed, {"event_id": event_id, "choice_id": choice_id, "visible_after": bool(advanced.get("visible", false)), "event_after": str(advanced.get("event_id", ""))})
+	await _finish_system_phase(phase_frames)
+	var close_event_id := str(advanced.get("event_id", ""))
+	_begin_system_phase("talk_dialogue_close", "talk_dialogue", "close", "transition")
+	var accepted := true
+	if not close_event_id.is_empty():
+		accepted = bool(app.call("_ignore_talk_event", close_event_id, "performance_probe_close"))
+	await _wait_frames(8)
+	var after_close: Dictionary = app.call("current_talk_dock_snapshot")
+	_complete_system_evidence(accepted and not bool(after_close.get("visible", false)), {"accepted": accepted, "event_id": close_event_id, "visible_after": bool(after_close.get("visible", false))})
+	await _finish_system_phase(phase_frames)
+
+
+func _measure_inventory_phases(run_state: RunState, phase_frames: int) -> void:
+	run_state.add_item("instant_coffee")
+	_begin_system_phase("inventory_service_open", "inventory_service", "open", "transition")
+	app.call("open_run_inventory")
+	await _wait_frames(8)
+	var opened: Dictionary = app.call("current_run_inventory_snapshot")
+	_complete_system_evidence(bool(opened.get("visible", false)), {"visible": bool(opened.get("visible", false)), "item_count": (opened.get("items", []) as Array).size()})
+	await _finish_system_phase(phase_frames)
+	await _measure_system_state("inventory_service_populated_active", "inventory_service", "populated_active", bool(opened.get("visible", false)) and (opened.get("items", []) as Array).size() > 0, {"item_count": (opened.get("items", []) as Array).size(), "fixture_item": "instant_coffee"}, phase_frames)
+	_begin_system_phase("inventory_service_mutation", "inventory_service", "mutation", "transition")
+	var had_item := run_state.inventory.has("instant_coffee")
+	run_state.remove_item("instant_coffee")
+	app.call("_refresh")
+	await _wait_frames(8)
+	var mutated: Dictionary = app.call("current_run_inventory_snapshot")
+	var removed := had_item and not run_state.inventory.has("instant_coffee")
+	_complete_system_evidence(removed, {"removed": removed, "item_count_after": (mutated.get("items", []) as Array).size()})
+	await _finish_system_phase(phase_frames)
+	run_state.add_item("instant_coffee")
+	_begin_system_phase("inventory_service_close", "inventory_service", "close", "transition")
+	app.call("close_run_inventory")
+	await _wait_frames(8)
+	var closed: Dictionary = app.call("current_run_inventory_snapshot")
+	_complete_system_evidence(not bool(closed.get("visible", false)), {"visible_after": bool(closed.get("visible", false))})
+	await _finish_system_phase(phase_frames)
+
+
+func _measure_audio_phases(run_state: RunState, generator: RunGenerator, phase_frames: int) -> void:
+	_begin_system_phase("audio_maximal_cues", "audio", "maximal_cues")
+	app.call("_play_environment_audio_cue", "phone_call", -2.0, "crew_world", {"stable_object_id": "perf06_phone"})
+	app.call("_play_environment_audio_cue", "heat_gain", -2.0, "crew_world", {"stable_object_id": "perf06_heat"})
+	await _wait_frames(8)
+	var audio_debug: Dictionary = app.call("debug_soak_snapshot")
+	var sfx_debug: Dictionary = audio_debug.get("environment_sfx", {}) if typeof(audio_debug.get("environment_sfx", {})) == TYPE_DICTIONARY else {}
+	_complete_system_evidence(not sfx_debug.is_empty(), {"requested_cues": ["phone_call", "heat_gain"], "sfx_debug_present": not sfx_debug.is_empty()})
+	await _finish_system_phase(phase_frames)
+	_begin_system_phase("audio_transition_cleanup", "audio", "transition_cleanup", "transition")
+	var entered_main := generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_ARCHETYPE_ID)
+	app.call("_update_procedural_music")
+	app.call("_refresh")
+	await _wait_frames(8)
+	_complete_system_evidence(entered_main and str(run_state.current_environment.get("archetype_id", "")) == RunState.GRAND_CASINO_ARCHETYPE_ID, {"accepted": entered_main, "environment_id": str(run_state.current_environment.get("archetype_id", ""))})
+	await _finish_system_phase(phase_frames)
+
+
+func _measure_grand_casino_game_background(run_state: RunState, generator: RunGenerator, phase_frames: int) -> void:
+	if str(run_state.current_environment.get("archetype_id", "")) != RunState.GRAND_CASINO_ARCHETYPE_ID:
+		generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_ARCHETYPE_ID)
+		app.call("_refresh")
+	var game_ids: Array = run_state.current_environment.get("game_ids", []) if typeof(run_state.current_environment.get("game_ids", [])) == TYPE_ARRAY else []
+	var game_id := str(game_ids[0]) if not game_ids.is_empty() else ""
+	_begin_system_phase("maximal_composition_active_game_background", "maximal_composition", "active_game_background", "transition")
+	var entered := not game_id.is_empty() and bool(app.call("enter_game", game_id))
+	await _wait_frames(12)
+	_complete_system_evidence(entered and app.get("current_game") != null and str(run_state.current_environment.get("archetype_id", "")) == RunState.GRAND_CASINO_ARCHETYPE_ID, {"accepted": entered, "game_id": game_id, "environment_id": str(run_state.current_environment.get("archetype_id", ""))})
+	await _finish_system_phase(phase_frames)
+	_begin_system_phase("maximal_composition_exit", "maximal_composition", "exit", "transition")
+	if entered:
+		app.back_to_environment()
+		await _wait_for_game_exit()
+	await _wait_frames(8)
+	var screen_snapshot: Dictionary = app.call("current_screen_snapshot")
+	_complete_system_evidence(str(screen_snapshot.get("screen", "")) == "ENVIRONMENT" and app.get("current_game") == null, {"screen": str(screen_snapshot.get("screen", "")), "game_id": game_id})
+	await _finish_system_phase(phase_frames)
+
+
+func _measure_save_terminal_restore_phases(run_state: RunState, phase_frames: int) -> void:
+	var original_slot := str(app.get("autosave_slot_id"))
+	var restore_slot := "perf06_grand_restore"
+	var terminal_slot := "perf06_grand_terminal"
+	app.set("autosave_slot_id", restore_slot)
+	_begin_system_phase("save_restore_start_save", "save_restore", "start_save", "transition")
+	var start_saved := bool(app.call("_autosave_foundation_run", "Performance start save.", true))
+	_complete_system_evidence(start_saved, {"accepted": start_saved, "slot": restore_slot, "boundary": "start"})
+	await _finish_system_phase(phase_frames)
+	run_state.add_item("instant_coffee")
+	_begin_system_phase("save_restore_mid_save", "save_restore", "mid_save", "transition")
+	var mid_saved := bool(app.call("_autosave_foundation_run", "Performance mid save.", true))
+	_complete_system_evidence(mid_saved, {"accepted": mid_saved, "slot": restore_slot, "boundary": "mid", "inventory_count": run_state.inventory.size()})
+	await _finish_system_phase(phase_frames)
+	_begin_system_phase("save_restore_maximal_save", "save_restore", "maximal_save", "transition")
+	var maximal_saved := bool(app.call("_autosave_foundation_run", "Performance maximal save.", true))
+	_complete_system_evidence(maximal_saved, {"accepted": maximal_saved, "slot": restore_slot, "environment_id": str(run_state.current_environment.get("archetype_id", "")), "suspicion": run_state.suspicion_level()})
+	await _finish_system_phase(phase_frames)
+	await _measure_system_state("maximal_composition_save_restore_live", "maximal_composition", "save_restore_live", maximal_saved and not run_state.current_environment.is_empty(), {"slot": restore_slot, "environment_id": str(run_state.current_environment.get("archetype_id", ""))}, phase_frames)
+
+	_begin_system_phase("run_report_terminal_transition", "run_report", "terminal_transition", "transition")
+	run_state.fail_run("performance_probe", "Performance terminal fixture.")
+	var terminal_result: Dictionary = app.call("_evaluate_run_terminal_state", true)
+	app.call("_refresh")
+	await _wait_frames(12)
+	var report: Dictionary = app.call("current_run_report_snapshot")
+	_complete_system_evidence(run_state.is_terminal() and not report.is_empty(), {"terminal": run_state.is_terminal(), "status": str(run_state.run_status), "report_present": not report.is_empty(), "evaluator": terminal_result})
+	await _finish_system_phase(phase_frames)
+	await _measure_system_state("run_report_open", "run_report", "open", run_state.is_terminal() and not report.is_empty(), {"status": str(run_state.run_status), "report_keys": report.keys()}, phase_frames)
+	var replay_before := float(report.get("replay_progress", 0.0))
+	_begin_system_phase("run_report_replay", "run_report", "replay")
+	await _wait_frames(maxi(phase_frames, 120))
+	var replay_after_report: Dictionary = app.call("current_run_report_snapshot")
+	var replay_after := float(replay_after_report.get("replay_progress", replay_before))
+	_complete_system_evidence(not replay_after_report.is_empty() and replay_after >= replay_before, {"progress_before": replay_before, "progress_after": replay_after, "report_present": not replay_after_report.is_empty()})
+	await _finish_system_phase(1)
+	app.set("autosave_slot_id", terminal_slot)
+	_begin_system_phase("save_restore_terminal_save", "save_restore", "terminal_save", "transition")
+	var terminal_saved := bool(app.call("_autosave_foundation_run", "Performance terminal save.", true))
+	_complete_system_evidence(terminal_saved and run_state.is_terminal(), {"accepted": terminal_saved, "slot": terminal_slot, "status": str(run_state.run_status)})
+	await _finish_system_phase(phase_frames)
+	await _measure_system_state("maximal_composition_terminal_cleanup", "maximal_composition", "terminal_cleanup", run_state.is_terminal() and not (app.call("current_run_report_snapshot") as Dictionary).is_empty(), {"status": str(run_state.run_status)}, phase_frames, "transition")
+
+	app.set("autosave_slot_id", restore_slot)
+	_begin_system_phase("save_restore_restore_revisit", "save_restore", "restore_revisit", "transition")
+	var restored := bool(app.call("_load_foundation_run_from_slot", false))
+	await _wait_frames(12)
+	var restored_run: RunState = app.get("run_state") as RunState
+	var restore_ok := restored and restored_run != null and not restored_run.is_terminal() and str(restored_run.current_environment.get("archetype_id", "")) == RunState.GRAND_CASINO_ARCHETYPE_ID
+	_complete_system_evidence(restore_ok, {"accepted": restored, "slot": restore_slot, "environment_id": str(restored_run.current_environment.get("archetype_id", "")) if restored_run != null else "", "terminal": restored_run.is_terminal() if restored_run != null else true})
+	await _finish_system_phase(phase_frames)
+	await _measure_system_state("run_trajectory_terminal_revisit", "run_trajectory", "terminal_revisit", restore_ok, {"restored_from_terminal": true, "slot": restore_slot}, phase_frames, "transition")
+	app.set("autosave_slot_id", original_slot)
+
+
 func _run_coin_pusher_plan() -> void:
 	if l02_driver_started:
 		return
 	l02_driver_started = true
+	if not await _ensure_perf_plan_scripts(COIN_PUSHER_PLAN_SCRIPT_FIELDS):
+		await _abort_perf_plan_setup()
+		return
 	await _wait_frames(8)
 	_end_scenario()
 	if app == null:
@@ -659,6 +1204,8 @@ func _run_coin_pusher_plan() -> void:
 	mark_event("coin_pusher_fixture_identity", fixture)
 	await _wait_frames(4)
 	await _measure_coin_pusher_idle("coin_pusher_idle", false, fixture)
+	await _measure_coin_pusher_goal_ritual(fixture)
+	await _measure_coin_pusher_raw_solver(run_state, game)
 	for action_value in [
 		["coin_pusher_drop", "coin_pusher_active_drop"],
 		["coin_pusher_carriage_left", "coin_pusher_active_carriage"],
@@ -697,15 +1244,9 @@ func _run_coin_pusher_plan() -> void:
 	mark_event("coin_pusher_reduced_fixture_identity", reduced_fixture)
 	mark_event("coin_pusher_reduced_fixture_observation", reduced_reinstall.get("observation", {}))
 	await _set_coin_pusher_reduce_motion(true)
-	var reduced_sample_state := _coin_pusher_surface_state(_coin_pusher_canvas())
-	mark_event("coin_pusher_reduced_sample_boundary", {
-		"body_count": int(reduced_sample_state.get("coin_pusher_body_count", -1)),
-		"tray_count": int(reduced_sample_state.get("coin_pusher_tray_count", -1)),
-		"liveness_ticks": int(reduced_sample_state.get("coin_pusher_liveness_ticks", 0)),
-		"conservation": _coin_pusher_conservation_snapshot(run_state, game),
-	})
 	await _measure_coin_pusher_idle("coin_pusher_reduced_motion", true, reduced_fixture)
 	await _set_coin_pusher_reduce_motion(false)
+	await _measure_coin_pusher_ceiling_refusal(run_state, game)
 	l02_driver_complete = true
 	dump_report()
 	await _quit_after_report_flush()
@@ -777,9 +1318,15 @@ func _coin_pusher_machine_definition(game: GameModule) -> Dictionary:
 # shipped-cap Quarter Falls fixture: same seed namespace, fork, production solver
 # API, durable snapshot and real cabinet entry path.
 func _install_coin_pusher_fixture(run_state: RunState, game: GameModule) -> bool:
+	if not _install_coin_pusher_fixture_at_body_count(run_state, game, COIN_PUSHER_SHIPPED_BODY_COUNT):
+		return false
+	return int(game.call("_coin_cap")) == COIN_PUSHER_SHIPPED_BODY_COUNT
+
+
+func _install_coin_pusher_fixture_at_body_count(run_state: RunState, game: GameModule, body_count: int) -> bool:
 	var machine_definition := _coin_pusher_machine_definition(game)
-	var fixture_rng := run_state.create_rng("performance_coin_pusher_full_cap").fork("bodies:%d" % COIN_PUSHER_SHIPPED_BODY_COUNT)
-	var simulation := CoinPusherSolverScript.create_machine(fixture_rng, machine_definition, COIN_PUSHER_SHIPPED_BODY_COUNT)
+	var fixture_rng := run_state.create_rng("performance_coin_pusher_full_cap").fork("bodies:%d" % body_count)
+	var simulation: Dictionary = CoinPusherSolverScript.create_machine(fixture_rng, machine_definition, body_count)
 	var machine := game.call("_ensure_machine_state", run_state, run_state.current_environment, true) as Dictionary
 	machine["variation_id"] = "quarter_falls"
 	machine["variation_state"] = {}
@@ -795,9 +1342,8 @@ func _install_coin_pusher_fixture(run_state: RunState, game: GameModule) -> bool
 	machine.erase("live_session")
 	game.call("_write_machine_state", run_state.current_environment, machine)
 	app.call("_refresh")
-	return CoinPusherSolverScript.coin_count(simulation) == COIN_PUSHER_SHIPPED_BODY_COUNT \
-		and int(game.call("_coin_cap")) == COIN_PUSHER_SHIPPED_BODY_COUNT \
-		and int(machine_definition.get("ceiling", 0)) >= COIN_PUSHER_SHIPPED_BODY_COUNT \
+	return CoinPusherSolverScript.coin_count(simulation) == body_count \
+		and int(machine_definition.get("ceiling", 0)) >= body_count \
 		and int(simulation.get("fixed_hz", 0)) == CoinPusherSolverScript.FIXED_HZ
 
 
@@ -885,6 +1431,7 @@ func _seed_coin_pusher_collect_fixture(run_state: RunState, game: GameModule) ->
 	# Refresh from that same live authority so the sampled before-state observes
 	# the seeded tray rather than a stale durable projection.
 	app.call("_refresh")
+	_enable_coin_pusher_stage_diagnostic()
 	mark_event("coin_pusher_collect_seed", {
 		"body_id": str(seeded_body.get("id", "")),
 		"origin_body_count": bodies.size() + tray.size(),
@@ -924,8 +1471,150 @@ func _coin_pusher_surface_state(canvas: Control) -> Dictionary:
 	return {}
 
 
+func _measure_coin_pusher_goal_ritual(fixture: Dictionary) -> void:
+	var canvas := _coin_pusher_canvas()
+	if canvas != null and canvas.has_method("reset_performance_counters"):
+		canvas.call("reset_performance_counters")
+	var before := _coin_pusher_surface_state(canvas)
+	var goal_before: Dictionary = before.get("coin_pusher_goal", {}) if typeof(before.get("coin_pusher_goal", {})) == TYPE_DICTIONARY else {}
+	_begin_scenario("coin_pusher_machine_goal_ritual", {
+		"surface": "coin_pusher",
+		"mode": "machine_goal",
+		"perf06_surface_id": "coin_pusher",
+		"perf06_phase_id": "ritual",
+		"fixture": fixture.duplicate(true),
+	})
+	await _wait_frames(maxi(scenario_frames, 30))
+	var after := _coin_pusher_surface_state(canvas)
+	var goal_after: Dictionary = after.get("coin_pusher_goal", {}) if typeof(after.get("coin_pusher_goal", {})) == TYPE_DICTIONARY else {}
+	var observed := not str(goal_after.get("id", "")).is_empty() \
+		and not str(goal_after.get("title", "")).is_empty() \
+		and not str(goal_after.get("instruction", "")).is_empty() \
+		and int(goal_after.get("target", 0)) > 0 \
+		and int(goal_after.get("bonus_tokens", 0)) > 0
+	current_tags["phase_evidence"] = {
+		"observed": observed,
+		"goal_before": goal_before.duplicate(true),
+		"goal_after": goal_after.duplicate(true),
+	}
+	current_tags["solver_backend"] = CoinPusherSolverScript.last_step_backend_for_test()
+	_end_scenario()
+
+
+func _measure_coin_pusher_raw_solver(run_state: RunState, game: GameModule) -> void:
+	var canvas := _coin_pusher_canvas()
+	if canvas != null and canvas.has_method("reset_performance_counters"):
+		canvas.call("reset_performance_counters")
+	var opening_rng := run_state.create_rng("performance_coin_pusher_raw_solver").fork("opening")
+	var machine_definition := _coin_pusher_machine_definition(game)
+	var machine_ceiling := int(machine_definition.get("ceiling", 0))
+	var state: Dictionary = CoinPusherSolverScript.create_machine(opening_rng, machine_definition, COIN_PUSHER_SOLVER_STRESS_BODY_COUNT)
+	var initial_body_count: int = CoinPusherSolverScript.coin_count(state)
+	var bodies: Array = state.get("bodies", []) if typeof(state.get("bodies", [])) == TYPE_ARRAY else []
+	for body_index in range(mini(80, bodies.size())):
+		var body: Dictionary = bodies[body_index]
+		body["sleeping"] = false
+		body["sleep_ticks"] = 0
+		body["vx"] = opening_rng.randi_range(-1600, 1600)
+		body["vy"] = opening_rng.randi_range(-1800, 900)
+	_begin_scenario("coin_pusher_raw_solver_300", {
+		"surface": "coin_pusher",
+		"mode": "coin_pusher_solver_tick_300_body_stress",
+		"perf06_surface_id": "coin_pusher",
+		"perf06_phase_id": "raw_solver",
+	})
+	var samples: Array = []
+	var fixed_tick_samples := 0
+	var capped_samples := 0
+	for _sample_index in range(COIN_PUSHER_SOLVER_SAMPLE_COUNT):
+		var start_usec := Time.get_ticks_usec()
+		var step: Dictionary = CoinPusherSolverScript.step_ticks(state, {"motor_enabled": true}, 1)
+		samples.append(float(Time.get_ticks_usec() - start_usec) / 1000.0)
+		var metrics: Dictionary = step.get("metrics", {}) if typeof(step.get("metrics", {})) == TYPE_DICTIONARY else {}
+		if int(metrics.get("fixed_ticks", 0)) == 1:
+			fixed_tick_samples += 1
+		if int(metrics.get("body_count", machine_ceiling + 1)) <= machine_ceiling:
+			capped_samples += 1
+		await get_tree().process_frame
+	var stats := _float_stats(samples)
+	var backend: String = CoinPusherSolverScript.last_step_backend_for_test()
+	var observed: bool = samples.size() == COIN_PUSHER_SOLVER_SAMPLE_COUNT \
+		and fixed_tick_samples == samples.size() \
+		and capped_samples == samples.size() \
+		and backend == "native_v3" \
+		and int(state.get("fixed_hz", 0)) == CoinPusherSolverScript.FIXED_HZ \
+		and initial_body_count == COIN_PUSHER_SOLVER_STRESS_BODY_COUNT \
+		and float(stats.get("p95", 0.0)) <= COIN_PUSHER_SOLVER_TICK_P95_BUDGET_MS
+	current_tags["raw_solver_timing"] = stats
+	current_tags["raw_solver_initial_body_count"] = initial_body_count
+	current_tags["raw_solver_final_body_count"] = CoinPusherSolverScript.coin_count(state)
+	current_tags["raw_solver_fixed_tick_samples"] = fixed_tick_samples
+	current_tags["raw_solver_capped_samples"] = capped_samples
+	current_tags["raw_solver_machine_ceiling"] = machine_ceiling
+	current_tags["raw_solver_p95_budget_ms"] = COIN_PUSHER_SOLVER_TICK_P95_BUDGET_MS
+	current_tags["solver_backend"] = backend
+	current_tags["phase_evidence"] = {"observed": observed, "sample_count": samples.size(), "solver_backend": backend}
+	_end_scenario()
+
+
+func _measure_coin_pusher_ceiling_refusal(run_state: RunState, game: GameModule) -> void:
+	app.back_to_environment()
+	if not await _wait_for_coin_pusher_exit():
+		mark_event("coin_pusher_ceiling_fixture_failed", {"reason": "exit_timeout"})
+		return
+	var ceiling := int(_coin_pusher_machine_definition(game).get("ceiling", 0))
+	if ceiling <= 0 or not _install_coin_pusher_fixture_at_body_count(run_state, game, ceiling):
+		mark_event("coin_pusher_ceiling_fixture_failed", {"reason": "fixture", "ceiling": ceiling})
+		return
+	if not bool(app.call("enter_game", "coin_pusher")):
+		mark_event("coin_pusher_ceiling_fixture_failed", {"reason": "enter", "ceiling": ceiling})
+		return
+	await _wait_frames(4)
+	_enable_coin_pusher_stage_diagnostic()
+	var canvas := _coin_pusher_canvas()
+	if canvas != null and canvas.has_method("reset_performance_counters"):
+		canvas.call("reset_performance_counters")
+	var before := _coin_pusher_surface_state(canvas)
+	var bankroll_before := run_state.bankroll
+	var turns_before := int(run_state.current_environment.get("turns", 0))
+	var story_before := run_state.story_log_entry_count()
+	var fallback_before := int(app.get("embedded_full_snapshot_fallback_count"))
+	_begin_scenario("coin_pusher_authored_ceiling_refusal", {
+		"surface": "coin_pusher",
+		"mode": "authored_ceiling_refusal",
+		"perf06_surface_id": "coin_pusher",
+		"perf06_phase_id": "ceiling_refusal",
+	})
+	var handled := bool(app.call("_handle_module_surface_action", "coin_pusher_drop", 0, true))
+	await _wait_frames(maxi(scenario_frames, 30))
+	var after := _coin_pusher_surface_state(canvas)
+	var result: Dictionary = app.get("last_game_result") if typeof(app.get("last_game_result")) == TYPE_DICTIONARY else {}
+	var observed := handled \
+		and int(before.get("coin_pusher_body_count", -1)) == ceiling \
+		and int(after.get("coin_pusher_body_count", -2)) == ceiling \
+		and int(after.get("coin_pusher_input_trace_count", -1)) == int(before.get("coin_pusher_input_trace_count", -2)) \
+		and run_state.bankroll == bankroll_before \
+		and int(run_state.current_environment.get("turns", 0)) == turns_before \
+		and run_state.story_log_entry_count() == story_before \
+		and int(app.get("embedded_full_snapshot_fallback_count")) == fallback_before \
+		and _coin_pusher_free_controls_present(after)
+	current_tags["phase_evidence"] = {
+		"observed": observed,
+		"handled": handled,
+		"reason": str(result.get("reason", result.get("message", ""))),
+		"ceiling": ceiling,
+		"body_count_before": int(before.get("coin_pusher_body_count", -1)),
+		"body_count_after": int(after.get("coin_pusher_body_count", -1)),
+		"input_trace_before": int(before.get("coin_pusher_input_trace_count", -1)),
+		"input_trace_after": int(after.get("coin_pusher_input_trace_count", -1)),
+	}
+	current_tags["solver_backend"] = CoinPusherSolverScript.last_step_backend_for_test()
+	_end_scenario()
+
+
 func _measure_coin_pusher_idle(name: String, reduced_motion: bool, fixture: Dictionary) -> void:
 	var canvas := _coin_pusher_canvas()
+	var warmup_samples := await _warm_coin_pusher_draw_path(canvas)
 	if canvas != null and canvas.has_method("reset_performance_counters"):
 		canvas.call("reset_performance_counters")
 	var before_state := _coin_pusher_surface_state(canvas)
@@ -933,6 +1622,13 @@ func _measure_coin_pusher_idle(name: String, reduced_motion: bool, fixture: Dict
 	var game: GameModule = app.get("current_game") as GameModule
 	var conservation_before := _coin_pusher_conservation_snapshot(run_state, game) if run_state != null and game != null else {}
 	var before_counters := _coin_pusher_canvas_counters(canvas)
+	if reduced_motion:
+		mark_event("coin_pusher_reduced_sample_boundary", {
+			"body_count": int(before_state.get("coin_pusher_body_count", -1)),
+			"tray_count": int(before_state.get("coin_pusher_tray_count", -1)),
+			"liveness_ticks": int(before_state.get("coin_pusher_liveness_ticks", 0)),
+			"conservation": conservation_before.duplicate(true),
+		})
 	_begin_scenario(name, {
 		"surface": "coin_pusher",
 		"mode": "reduced_motion" if reduced_motion else "settled_idle",
@@ -940,7 +1636,7 @@ func _measure_coin_pusher_idle(name: String, reduced_motion: bool, fixture: Dict
 		"perf06_phase_id": "" if reduced_motion else "cap_idle",
 		"fixture": fixture.duplicate(true),
 	})
-	await _wait_frames(maxi(scenario_frames, COIN_PUSHER_IDLE_SAMPLE_FRAMES))
+	var draw_window := await _wait_coin_pusher_draw_sample_window(canvas, maxi(scenario_frames, COIN_PUSHER_IDLE_SAMPLE_FRAMES))
 	var after_state := _coin_pusher_surface_state(canvas)
 	var conservation_after := _coin_pusher_conservation_snapshot(run_state, game) if run_state != null and game != null else {}
 	var after_counters := _coin_pusher_canvas_counters(canvas)
@@ -957,11 +1653,22 @@ func _measure_coin_pusher_idle(name: String, reduced_motion: bool, fixture: Dict
 	current_tags["conservation_before"] = conservation_before
 	current_tags["conservation_after"] = conservation_after
 	current_tags["solver_backend"] = CoinPusherSolverScript.last_step_backend_for_test()
+	current_tags["draw_sampling"] = {
+		"warmup_samples": warmup_samples,
+		"target_samples": COIN_PUSHER_DRAW_TARGET_SAMPLES,
+		"sample_frames": int(draw_window.get("sample_frames", 0)),
+		"sample_count": int(after_counters.get("draw_sample_count", 0)),
+		"complete": bool(draw_window.get("complete", false)),
+		"p95_percentile": 0.95,
+		"p95_rank": ceili(float(int(after_counters.get("draw_sample_count", 0))) * 0.95),
+		"probe_interval_frames": COIN_PUSHER_DRAW_PROBE_INTERVAL_FRAMES,
+	}
 	_end_scenario()
 
 
 func _measure_coin_pusher_action(surface_action: String, name: String, fixture: Dictionary) -> void:
 	var canvas := _coin_pusher_canvas()
+	var warmup_samples := await _warm_coin_pusher_draw_path(canvas)
 	if canvas != null and canvas.has_method("reset_performance_counters"):
 		canvas.call("reset_performance_counters")
 	var before_state := _coin_pusher_surface_state(canvas)
@@ -986,12 +1693,18 @@ func _measure_coin_pusher_action(surface_action: String, name: String, fixture: 
 	var accepted_result: Dictionary = app.get("last_game_result") if typeof(app.get("last_game_result")) == TYPE_DICTIONARY else {}
 	var accepted_host_timing_variant: Variant = accepted_result.get("coin_pusher_debug_host_timing_usec", {})
 	var host_timing: Dictionary = accepted_host_timing_variant if typeof(accepted_host_timing_variant) == TYPE_DICTIONARY else {}
+	# Only DROP crosses the host resolve boundary in this fixture sequence. The
+	# other controls are immediate production surface commands, so the retained
+	# last result would otherwise mislabel DROP's timing as their own.
+	if surface_action != "coin_pusher_drop" or str(accepted_result.get("action_id", "")) != "drop_quarter":
+		host_timing = {}
+	var action_timing: Dictionary = game.call("action_timing_snapshot") if game != null and game.has_method("action_timing_snapshot") else {}
 	# Action acceptance and the maintained 60-frame physical observation are
 	# distinct boundaries. Retain both so later legitimate exits cannot overwrite
 	# proof of what the accepted action itself did.
 	var accepted_state := _coin_pusher_surface_state(canvas)
 	var accepted_conservation := _coin_pusher_conservation_snapshot(run_state, game) if run_state != null else {}
-	await _wait_frames(maxi(active_frames, COIN_PUSHER_ACTION_SAMPLE_FRAMES))
+	var draw_window := await _wait_coin_pusher_draw_sample_window(canvas, maxi(active_frames, COIN_PUSHER_ACTION_SAMPLE_FRAMES))
 	var after_state := _coin_pusher_surface_state(canvas)
 	var after_conservation := _coin_pusher_conservation_snapshot(run_state, game) if run_state != null else {}
 	var after_counters := _coin_pusher_canvas_counters(canvas)
@@ -1001,6 +1714,8 @@ func _measure_coin_pusher_action(surface_action: String, name: String, fixture: 
 	current_tags["resolve_call_ms"] = resolve_call_ms
 	if not host_timing.is_empty():
 		current_tags["host_timing_usec"] = host_timing.duplicate(true)
+	if not action_timing.is_empty():
+		current_tags["action_timing_usec"] = action_timing.duplicate(true)
 	current_tags["canvas_before"] = before_counters
 	current_tags["canvas_after"] = after_counters
 	current_tags["redraw_delta"] = int(after_counters.get("surface_animation_redraw_count", 0)) - int(before_counters.get("surface_animation_redraw_count", 0))
@@ -1040,7 +1755,55 @@ func _measure_coin_pusher_action(surface_action: String, name: String, fixture: 
 	current_tags["surface_ui_preserved"] = _coin_pusher_free_controls_present(after_state)
 	current_tags["bankroll_delta"] = int(result.get("bankroll_delta", 0))
 	current_tags["action_patch_present"] = typeof(result.get("surface_action_view_patch", {})) == TYPE_DICTIONARY and not (result.get("surface_action_view_patch", {}) as Dictionary).is_empty()
+	current_tags["draw_sampling"] = {
+		"warmup_samples": warmup_samples,
+		"target_samples": COIN_PUSHER_DRAW_TARGET_SAMPLES,
+		"sample_frames": int(draw_window.get("sample_frames", 0)),
+		"sample_count": int(after_counters.get("draw_sample_count", 0)),
+		"complete": bool(draw_window.get("complete", false)),
+		"p95_percentile": 0.95,
+		"p95_rank": ceili(float(int(after_counters.get("draw_sample_count", 0))) * 0.95),
+		"probe_interval_frames": COIN_PUSHER_DRAW_PROBE_INTERVAL_FRAMES,
+	}
 	_end_scenario()
+
+
+func _warm_coin_pusher_draw_path(canvas: Control) -> int:
+	if canvas == null or not canvas.has_method("reset_performance_counters") or not canvas.has_method("performance_live_status"):
+		return 0
+	canvas.call("reset_performance_counters")
+	for frame_index in range(COIN_PUSHER_DRAW_PROBE_INTERVAL_FRAMES * COIN_PUSHER_DRAW_WARMUP_SAMPLES * 2):
+		if frame_index % COIN_PUSHER_DRAW_PROBE_INTERVAL_FRAMES == 0:
+			canvas.queue_redraw()
+		await get_tree().process_frame
+		var status: Dictionary = canvas.call("performance_live_status")
+		if int(status.get("draw_sample_count", 0)) >= COIN_PUSHER_DRAW_WARMUP_SAMPLES:
+			return int(status.get("draw_sample_count", 0))
+	return int((canvas.call("performance_live_status") as Dictionary).get("draw_sample_count", 0))
+
+
+func _wait_coin_pusher_draw_sample_window(canvas: Control, minimum_frames: int) -> Dictionary:
+	var sampled_frames := 0
+	var sample_count := 0
+	var maximum_frames := maxi(minimum_frames, COIN_PUSHER_DRAW_SAMPLE_MAX_FRAMES)
+	while sampled_frames < maximum_frames:
+		# Measurement-only redraws exercise the real production canvas at a sparse
+		# cadence. They make the draw percentile eligible without changing gameplay,
+		# the animation scheduler, or the maintained frame/draw thresholds.
+		if canvas != null and sampled_frames % COIN_PUSHER_DRAW_PROBE_INTERVAL_FRAMES == 0:
+			canvas.queue_redraw()
+		await get_tree().process_frame
+		sampled_frames += 1
+		if canvas != null and canvas.has_method("performance_live_status"):
+			var status: Dictionary = canvas.call("performance_live_status")
+			sample_count = int(status.get("draw_sample_count", 0))
+		if sampled_frames >= minimum_frames and sample_count >= COIN_PUSHER_DRAW_TARGET_SAMPLES:
+			break
+	return {
+		"sample_frames": sampled_frames,
+		"sample_count": sample_count,
+		"complete": sample_count >= COIN_PUSHER_DRAW_TARGET_SAMPLES,
+	}
 
 
 func _coin_pusher_free_controls_present(surface_state: Dictionary) -> bool:
@@ -1054,16 +1817,28 @@ func _set_coin_pusher_reduce_motion(enabled: bool) -> void:
 	if settings != null:
 		settings.set("reduce_motion", enabled)
 	app.call("_refresh")
+	_enable_coin_pusher_stage_diagnostic()
 	await _wait_frames(4)
+	_enable_coin_pusher_stage_diagnostic()
 
 
 func _measure_corner_store() -> void:
 	var total_started_usec := Time.get_ticks_usec()
 	var stage_started_usec := total_started_usec
+	_begin_system_phase("run_trajectory_start", "run_trajectory", "start", "transition")
 	app.start_foundation_run("WEB-CORNER-STORE")
+	var start_snapshot: Dictionary = app.call("current_screen_snapshot")
+	_complete_system_evidence(
+		bool(start_snapshot.get("has_run", false)) and str(start_snapshot.get("screen", "")) == "ENVIRONMENT",
+		{"seed": "WEB-CORNER-STORE", "screen": str(start_snapshot.get("screen", ""))}
+	)
 	var foundation_run_start_ms := _duration_ms_since(stage_started_usec)
 	stage_started_usec = Time.get_ticks_usec()
-	await _wait_frames(8)
+	await _finish_system_phase(mini(scenario_frames, 90))
+	await _measure_system_state(
+		"run_trajectory_post_warmup", "run_trajectory", "post_warmup",
+		bool(start_snapshot.get("has_run", false)), {"seed": "WEB-CORNER-STORE"}, mini(scenario_frames, 90), "idle"
+	)
 	var post_start_settle_ms := _duration_ms_since(stage_started_usec)
 	var run_state: RunState = app.get("run_state") as RunState
 	stage_started_usec = Time.get_ticks_usec()
@@ -1081,7 +1856,20 @@ func _measure_corner_store() -> void:
 		"from": run_state.current_world_node_id() if run_state != null else "",
 		"target": "corner_store",
 	})
-	app.call("_travel_to", "corner_store", "Corner Store", choice)
+	var generator_value: Variant = app.get("generator")
+	if generator_value != null and generator_value.has_method("set_world_environment_timing_enabled"):
+		generator_value.call("set_world_environment_timing_enabled", true)
+	_begin_system_phase("room_environment_transition", "room_environment", "transition", "transition")
+	var travel_result: Variant = app.call("_travel_to", "corner_store", "Corner Store", choice)
+	if generator_value != null and generator_value.has_method("world_environment_timing_snapshot"):
+		mark_event("core_world_environment_timing", generator_value.call("world_environment_timing_snapshot"))
+		generator_value.call("set_world_environment_timing_enabled", false)
+	var travel_ok := typeof(travel_result) == TYPE_DICTIONARY and bool((travel_result as Dictionary).get("ok", false))
+	_complete_system_evidence(travel_ok and str(run_state.current_environment.get("archetype_id", "")) == "corner_store", {
+		"accepted": travel_ok,
+		"target": "corner_store",
+		"environment_id": str(run_state.current_environment.get("archetype_id", "")),
+	})
 	var duration_ms := _duration_ms_since(started_usec)
 	_emit_console("BTH_CORNER_STORE_OPEN_DONE ", {
 		"duration_ms": duration_ms,
@@ -1095,7 +1883,13 @@ func _measure_corner_store() -> void:
 		"travel_ms": duration_ms,
 		"total_ms": _duration_ms_since(total_started_usec),
 	})
+	await _finish_system_phase(mini(scenario_frames, 90))
 	await _measure_scenario("corner_store_idle", {"surface": "environment", "mode": "idle", "perf06_surface_id": "room_environment", "perf06_phase_id": "quiet_idle"}, scenario_frames)
+	await _measure_system_state(
+		"audio_quiet_idle", "audio", "quiet_idle", travel_ok,
+		{"environment_id": str(run_state.current_environment.get("archetype_id", "")), "cue_request_count": 0},
+		mini(scenario_frames, 90), "idle"
+	)
 
 
 func _run_lb3_plan() -> void:
@@ -1409,15 +2203,17 @@ func _measure_game(game_id: String) -> void:
 		"perf06_surface_id": game_id,
 		"perf06_phase_id": str(PERF06_ACTIVE_PHASES.get(game_id, "active")),
 	})
-	current_tags["action_evidence"] = _trigger_active_game_action(game_id)
+	current_tags["action_evidence"] = await _trigger_timed_surface_game_action(game_id) \
+		if game_id in ["baccarat", "roulette"] else _trigger_active_game_action(game_id)
 	if ACTIVE_PHASE_CHANNELS.has(game_id):
 		current_tags["active_phase_evidence"] = await _measure_named_active_phase(
 			str(ACTIVE_PHASE_CHANNELS.get(game_id, "")),
 			active_frames
 		)
 	else:
-		await _wait_frames(active_frames)
+		await _wait_frames(mini(active_frames, 30) if game_id in PERF06_TIMELINE_GAMES else active_frames)
 	_end_scenario()
+	await _measure_followup_game_phases(game_id)
 	app.back_to_environment()
 	if not await _wait_for_game_exit():
 		mark_event("game_fixture_exit_failed", {"game_id": game_id, "reason": "exit_timeout"})
@@ -1475,16 +2271,21 @@ func _game_surface_live_status() -> Dictionary:
 
 func _measure_named_active_phase(channel_id: String, frame_count: int) -> Dictionary:
 	var canvas := app.get("game_surface_canvas") as Control if app != null else null
-	var sample_frames := maxi(1, frame_count)
+	# Headless/exported builds can advance much faster than an interactive frame.
+	# Sample until both the frame and wall-clock residency gates are proven, while
+	# retaining a finite bound when a production channel goes missing.
+	var maximum_sample_frames := maxi(600, frame_count)
 	var active_at_start := canvas != null and canvas.has_method("surface_animation_active") \
 		and bool(canvas.call("surface_animation_active", channel_id))
 	var active_frame_count := 0
+	var sample_frames := 0
 	var longest_consecutive_active_frames := 0
 	var consecutive_active_frames := 0
 	var active_elapsed_msec := 0.0
 	var prior_usec := Time.get_ticks_usec()
-	for _frame_index in range(sample_frames):
+	for _frame_index in range(maximum_sample_frames):
 		await get_tree().process_frame
+		sample_frames += 1
 		var now_usec := Time.get_ticks_usec()
 		var active := canvas != null and canvas.has_method("surface_animation_active") \
 			and bool(canvas.call("surface_animation_active", channel_id))
@@ -1498,6 +2299,9 @@ func _measure_named_active_phase(channel_id: String, frame_count: int) -> Dictio
 		# Advance on both branches: retaining the old baseline while active would
 		# triangularly overcount a sustained phase and qualify a short sample.
 		prior_usec = now_usec
+		if longest_consecutive_active_frames >= ACTIVE_PHASE_MINIMUM_FRAMES \
+				and active_elapsed_msec >= float(ACTIVE_PHASE_MINIMUM_MSEC):
+			break
 	var active_at_end := canvas != null and canvas.has_method("surface_animation_active") \
 		and bool(canvas.call("surface_animation_active", channel_id))
 	return {
@@ -1556,8 +2360,14 @@ func _measure_world_map() -> void:
 		return
 	app.start_foundation_run("L02-WORLD-MAP")
 	await _wait_frames(20)
-	app.open_world_map()
-	await _wait_frames(8)
+	_begin_system_phase("world_map_open", "world", "travel_transition", "transition")
+	var opened := bool(app.open_world_map())
+	var opened_snapshot: Dictionary = app.call("current_screen_snapshot")
+	_complete_system_evidence(opened and bool(opened_snapshot.get("world_map_overlay_visible", false)), {
+		"accepted": opened,
+		"world_map_visible": bool(opened_snapshot.get("world_map_overlay_visible", false)),
+	})
+	await _finish_system_phase(mini(scenario_frames, 90))
 	await _measure_scenario("world_map_idle", {"surface": "world_map", "mode": "idle", "perf06_surface_id": "world", "perf06_phase_id": "map_idle"}, scenario_frames)
 	app.close_world_map()
 	await _wait_frames(8)
@@ -1577,6 +2387,36 @@ func _measure_scripted_memory() -> void:
 		frame += 1
 		await get_tree().process_frame
 	_end_scenario()
+
+
+func _begin_system_phase(name: String, surface_id: String, phase_id: String, mode: String = "active") -> void:
+	_begin_scenario(name, {
+		"surface": surface_id,
+		"mode": mode,
+		"perf06_surface_id": surface_id,
+		"perf06_phase_id": phase_id,
+		"phase_evidence": {"observed": false, "pending": true},
+	})
+	for root_value in PERF06_SYSTEM_ALLOCATION_ROOTS.get(surface_id, []):
+		mark_allocation_root_audited(str(root_value))
+
+
+func _complete_system_evidence(observed: bool, evidence: Dictionary = {}) -> void:
+	var proof := evidence.duplicate(true)
+	proof["observed"] = observed
+	proof["pending"] = false
+	current_tags["phase_evidence"] = proof
+
+
+func _finish_system_phase(frames: int = 60) -> void:
+	await _wait_frames(maxi(1, frames))
+	_end_scenario()
+
+
+func _measure_system_state(name: String, surface_id: String, phase_id: String, observed: bool, evidence: Dictionary = {}, frames: int = 60, mode: String = "active") -> void:
+	_begin_system_phase(name, surface_id, phase_id, mode)
+	_complete_system_evidence(observed, evidence)
+	await _finish_system_phase(frames)
 
 
 func _measure_scenario(name: String, tags: Dictionary, frames: int) -> void:
@@ -1604,6 +2444,9 @@ func _begin_scenario(name: String, tags: Dictionary = {}) -> void:
 	current_last_memory_bytes = current_start_memory_bytes
 	current_start_liveness = _liveness_counter_snapshot()
 	_reset_allocation_copy_counters()
+	var canonical_surface_id := str(current_tags.get("perf06_surface_id", ""))
+	for root_value in PERF06_SYSTEM_ALLOCATION_ROOTS.get(canonical_surface_id, []):
+		mark_allocation_root_audited(str(root_value))
 	frame_ms_samples = []
 	process_ms_samples = []
 	physics_ms_samples = []
@@ -1860,7 +2703,449 @@ func _trigger_active_game_action(game_id: String) -> Dictionary:
 		"hand_number_after": int(after.get("hand_number", 0)),
 		"action_ordinal_before": int(before.get("action_ordinal", 0)),
 		"action_ordinal_after": int(after.get("action_ordinal", 0)),
+		"surface_before": _perf06_surface_evidence(before),
+		"surface_after": _perf06_surface_evidence(after),
 	}
+
+
+func _trigger_timed_surface_game_action(game_id: String) -> Dictionary:
+	if app == null:
+		return {"accepted": false, "progressed": false, "reason": "missing_app"}
+	var run_state: RunState = app.get("run_state") as RunState
+	var turns_before := int(run_state.current_environment.get("turns", 0)) if run_state != null else -1
+	var story_before := run_state.story_log_entry_count() if run_state != null else -1
+	var before := app.current_game_view_snapshot()
+	var action_id := ""
+	if game_id == "baccarat":
+		# The table minimum is $20; select that real chip before placing the wager.
+		_emit_surface_action("baccarat_chip", 2, false)
+		await _wait_frames(2)
+		_emit_surface_action("baccarat_bet", 0, false)
+		await _wait_frames(2)
+		action_id = "baccarat_deal"
+	elif game_id == "roulette":
+		_emit_surface_action("roulette_bet", 0, false)
+		await _wait_frames(2)
+		action_id = "roulette_spin"
+	else:
+		return {"accepted": false, "progressed": false, "reason": "unsupported_surface_timeline", "game_id": game_id}
+	var started_usec := Time.get_ticks_usec()
+	_emit_surface_action(action_id, 0, true)
+	await _wait_frames(2)
+	var resolve_elapsed_usec := Time.get_ticks_usec() - started_usec
+	var result: Dictionary = app.get("last_game_result") if typeof(app.get("last_game_result")) == TYPE_DICTIONARY else {}
+	var after := app.current_game_view_snapshot()
+	var turns_after := int(run_state.current_environment.get("turns", 0)) if run_state != null else -1
+	var story_after := run_state.story_log_entry_count() if run_state != null else -1
+	var accepted := bool(result.get("ok", false))
+	return {
+		"game_id": game_id,
+		"action_id": action_id,
+		"accepted": accepted,
+		"progressed": accepted and (turns_after > turns_before or story_after > story_before),
+		"message": str(result.get("message", "")),
+		"resolve_ms": float(maxi(0, resolve_elapsed_usec)) / 1000.0,
+		"environment_turns_before": turns_before,
+		"environment_turns_after": turns_after,
+		"story_entries_before": story_before,
+		"story_entries_after": story_after,
+		"surface_before": _perf06_surface_evidence(before),
+		"surface_after": _perf06_surface_evidence(after),
+	}
+
+
+func _perf06_surface_evidence(snapshot: Dictionary) -> Dictionary:
+	var evidence := {}
+	for key_value in [
+		"game_id", "phase", "ritual_phase", "counter_phase", "hand_number",
+		"action_ordinal", "result_message", "showdown_active", "deal_staged",
+		"payout_staged", "double_up_offered", "baccarat_squeeze_available",
+		"rolled", "presentation_phase", "last_net", "win_meter",
+		"bar_dice_ritual_phase", "ticket_complete", "pending_payout",
+		"revealed_count", "reveal_progress", "session_settled", "pending_double_credits",
+		"counting_enabled", "wheel_read_active", "roulette_motion_active",
+	]:
+		var key := str(key_value)
+		if snapshot.has(key):
+			evidence[key] = snapshot.get(key)
+	var last_result: Variant = snapshot.get("last_result", {})
+	evidence["last_result_present"] = typeof(last_result) == TYPE_DICTIONARY and not (last_result as Dictionary).is_empty()
+	var ritual_projection: Variant = snapshot.get("ritual_projection", {})
+	if typeof(ritual_projection) == TYPE_DICTIONARY:
+		var projection: Dictionary = ritual_projection
+		evidence["ritual_projection_present"] = not projection.is_empty()
+		evidence["ritual_projection_phase"] = str(projection.get("phase_id", projection.get("phase", "")))
+		evidence["ritual_acknowledgement_available"] = bool(projection.get("acknowledgement_available", false))
+		evidence["ritual_energy_tier"] = str(projection.get("energy_tier", ""))
+	else:
+		evidence["ritual_projection_present"] = false
+		evidence["ritual_projection_phase"] = ""
+	var channels: Array = snapshot.get("surface_animation_channels", []) if typeof(snapshot.get("surface_animation_channels", [])) == TYPE_ARRAY else []
+	var active_channels: Array = []
+	for channel_value in channels:
+		if typeof(channel_value) != TYPE_DICTIONARY:
+			continue
+		var channel: Dictionary = channel_value
+		if not str(channel.get("active_id", channel.get("id", ""))).is_empty():
+			active_channels.append({
+				"channel": str(channel.get("channel", channel.get("channel_id", ""))),
+				"active_id": str(channel.get("active_id", channel.get("id", ""))),
+			})
+	evidence["active_animation_channels"] = active_channels
+	for projection_key_value in ["bar_dice_ritual_projection", "counter_ritual"]:
+		var projection_key := str(projection_key_value)
+		var projection_value: Variant = snapshot.get(projection_key, {})
+		if typeof(projection_value) == TYPE_DICTIONARY:
+			var named_projection: Dictionary = projection_value
+			evidence["%s_present" % projection_key] = not named_projection.is_empty()
+			evidence["%s_phase" % projection_key] = str(named_projection.get("phase_id", named_projection.get("phase", "")))
+	var ritual_actors: Array = snapshot.get("ritual_actors", []) if typeof(snapshot.get("ritual_actors", [])) == TYPE_ARRAY else []
+	var ritual_objects: Array = snapshot.get("ritual_scene_objects", []) if typeof(snapshot.get("ritual_scene_objects", [])) == TYPE_ARRAY else []
+	evidence["ritual_actor_count"] = ritual_actors.size()
+	evidence["ritual_object_count"] = ritual_objects.size()
+	return evidence
+
+
+func _measure_followup_game_phases(game_id: String) -> void:
+	match game_id:
+		"pull_tabs":
+			await _measure_observed_game_phase(game_id, "ritual", "pull_tabs_counter_ritual", 30)
+			await _measure_pull_tab_redeem_phase()
+		"scratch_tickets":
+			_emit_surface_action("scratch_all", 0, false)
+			await _wait_frames(2)
+			await _measure_observed_game_phase(game_id, "scratch_reveal", "scratch_ticket_full_reveal", 30)
+			_emit_surface_action("scratch_file_ticket", 0, false)
+			await _wait_frames(2)
+			await _measure_observed_game_phase(game_id, "payout", "scratch_ticket_outcome", 30)
+			await _measure_observed_game_phase(game_id, "ritual", "scratch_ticket_counter_ritual", 30)
+		"slot":
+			await _measure_observed_game_phase(game_id, "ritual", "slot_machine_ritual", 30)
+			if _install_slot_handpay_fixture():
+				await _wait_frames(2)
+				await _measure_observed_game_phase(game_id, "jackpot_attendant", "slot_jackpot_attendant", 30)
+				_emit_surface_action("slot_handpay_acknowledge", 0, true)
+				await _wait_frames(2)
+		"bar_dice":
+			await _measure_observed_game_phase(game_id, "resolve_payout", "bar_dice_resolve_payout", 30)
+			await _measure_observed_game_phase(game_id, "ritual", "bar_dice_table_ritual", 30)
+		"blackjack":
+			await _measure_observed_game_phase(game_id, "resolve_payout", "blackjack_resolve_payout", 30)
+			await _measure_observed_game_phase(game_id, "ritual", "blackjack_table_ritual", 30)
+			_emit_surface_action("blackjack_count_toggle", 0, false)
+			await _wait_frames(2)
+			await _measure_observed_game_phase(game_id, "skill", "blackjack_counting_skill", 30)
+		"baccarat":
+			await _measure_observed_game_phase(game_id, "ritual", "baccarat_table_ritual", 30)
+			if await _wait_for_game_phase(game_id, "skill", 900):
+				await _measure_observed_game_phase(game_id, "skill", "baccarat_squeeze_skill", 30)
+			if await _wait_for_game_phase(game_id, "resolve_payout", 900):
+				await _measure_observed_game_phase(game_id, "resolve_payout", "baccarat_resolve_payout", 30)
+		"roulette":
+			await _measure_observed_game_phase(game_id, "ritual", "roulette_table_ritual", 30)
+			if await _wait_for_game_phase(game_id, "post_spin", 1200):
+				await _measure_observed_game_phase(game_id, "post_spin", "roulette_ball_settle", 30)
+			if await _wait_for_game_phase(game_id, "resolve_payout", 600):
+				await _measure_observed_game_phase(game_id, "resolve_payout", "roulette_resolve_payout", 30)
+			await _wait_for_surface_flag_clear("roulette_motion_active", 900)
+			_emit_surface_action("roulette_read_wheel", 0, false)
+			await _wait_frames(2)
+			await _measure_observed_game_phase(game_id, "skill", "roulette_wheel_read_skill", 30)
+			_emit_surface_action("roulette_read_wheel", 0, false)
+			await _wait_frames(2)
+		"craps":
+			await _measure_observed_game_phase(game_id, "bounce", "craps_bounce_read", 20)
+			await _measure_observed_game_phase(game_id, "ritual", "craps_table_ritual", 20)
+			if await _wait_for_game_phase(game_id, "settle", 180):
+				await _measure_observed_game_phase(game_id, "settle", "craps_dealer_settlement", 20)
+			if await _wait_for_game_phase(game_id, "resolve", 180):
+				await _measure_observed_game_phase(game_id, "resolve", "craps_resolved_table", 30)
+			await _measure_craps_offer_and_aim()
+		"crew_draw_poker":
+			await _measure_observed_game_phase(game_id, "ordered_hand", "crew_poker_ordered_hand", 30)
+			await _measure_observed_game_phase(game_id, "ritual", "crew_poker_table_ritual", 30)
+			await _measure_crew_poker_terminal()
+		"video_poker":
+			await _measure_observed_game_phase(game_id, "payout", "video_poker_payout", 30)
+			await _measure_observed_game_phase(game_id, "ritual", "video_poker_machine_ritual", 30)
+			if _install_video_poker_double_fixture():
+				await _wait_frames(2)
+				_emit_surface_action("video_poker_double", 0, false)
+				await _wait_frames(2)
+				await _measure_observed_game_phase(game_id, "double_up", "video_poker_double_up", 30)
+				_emit_surface_action("video_poker_double_pick", 0, false)
+				await _wait_frames(2)
+
+
+func _measure_observed_game_phase(game_id: String, phase_id: String, scenario_name: String, frames: int) -> bool:
+	var before := _current_game_phase_evidence()
+	var observed := _game_phase_observed(game_id, phase_id, before)
+	if not observed:
+		mark_event("perf06_phase_not_observed", {"game_id": game_id, "phase_id": phase_id, "evidence": before})
+		return false
+	_begin_scenario(scenario_name, {
+		"surface": game_id,
+		"mode": phase_id,
+		"perf06_surface_id": game_id,
+		"perf06_phase_id": phase_id,
+		"phase_evidence": {"observed": true, "before": before},
+	})
+	await _wait_frames(frames)
+	var after := _current_game_phase_evidence()
+	var phase_evidence: Dictionary = current_tags.get("phase_evidence", {})
+	phase_evidence["after"] = after
+	current_tags["phase_evidence"] = phase_evidence
+	_end_scenario()
+	return true
+
+
+func _wait_for_game_phase(game_id: String, phase_id: String, max_frames: int) -> bool:
+	for _frame_index in range(maxi(1, max_frames)):
+		var evidence := _current_game_phase_evidence()
+		if _game_phase_observed(game_id, phase_id, evidence):
+			return true
+		await get_tree().process_frame
+	mark_event("perf06_phase_wait_timeout", {"game_id": game_id, "phase_id": phase_id, "max_frames": max_frames})
+	return false
+
+
+func _wait_for_surface_animation_inactive(channel_id: String, max_frames: int) -> bool:
+	var canvas := app.get("game_surface_canvas") as Control if app != null else null
+	if canvas == null or not canvas.has_method("surface_animation_active"):
+		return false
+	for _frame_index in range(max_frames):
+		if not bool(canvas.call("surface_animation_active", channel_id)):
+			return true
+		await get_tree().process_frame
+	mark_event("perf06_animation_wait_timeout", {"channel_id": channel_id, "max_frames": max_frames})
+	return false
+
+
+func _wait_for_surface_flag_clear(flag_id: String, max_frames: int) -> bool:
+	for _frame_index in range(max_frames):
+		var snapshot := _current_game_phase_snapshot()
+		if not bool(snapshot.get(flag_id, false)):
+			return true
+		await get_tree().process_frame
+	mark_event("perf06_surface_flag_wait_timeout", {"flag_id": flag_id, "max_frames": max_frames})
+	return false
+
+
+func _current_game_phase_snapshot() -> Dictionary:
+	if app == null:
+		return {}
+	var game: GameModule = app.get("current_game") as GameModule
+	var canvas := app.get("game_surface_canvas") as Control
+	if game != null and canvas != null and canvas.has_method("realtime_surface_state"):
+		var live_value: Variant = canvas.call("realtime_surface_state")
+		if typeof(live_value) == TYPE_DICTIONARY:
+			var live: Dictionary = live_value
+			if str(live.get("game_id", "")) == game.get_id():
+				return live
+	return app.current_game_view_snapshot()
+
+
+func _current_game_phase_evidence() -> Dictionary:
+	var evidence := _perf06_surface_evidence(_current_game_phase_snapshot())
+	var canvas := app.get("game_surface_canvas") as Control if app != null else null
+	var animation_channels := {}
+	if canvas != null and canvas.has_method("surface_animation_active") and canvas.has_method("surface_animation_progress"):
+		for channel_value in ["blackjack_count_rhythm", "baccarat_deal", "baccarat_payout", "roulette_spin", "roulette_payout", "craps_roll"]:
+			var channel := str(channel_value)
+			animation_channels[channel] = {
+				"active": bool(canvas.call("surface_animation_active", channel)),
+				"progress": float(canvas.call("surface_animation_progress", channel)),
+			}
+	evidence["animation_channels"] = animation_channels
+	return evidence
+
+
+func _measure_pull_tab_redeem_phase() -> void:
+	# The purchased tab first exists in the dispenser tray. Follow the ordinary
+	# collect/reveal/file controls; never mutate the ticket outcome to manufacture
+	# a winning row for this measurement.
+	await _wait_for_animation_quiet(240)
+	_emit_surface_action("pull_tab_collect_tray", 0, false)
+	await _wait_frames(4)
+	_emit_surface_action("pull_tab_auto_open", 0, false)
+	for _reveal_index in range(1200):
+		var evidence := _current_game_phase_evidence()
+		if _game_phase_observed("pull_tabs", "payout_redeem", evidence):
+			break
+		await get_tree().process_frame
+	var revealed := _current_game_phase_evidence()
+	if not _game_phase_observed("pull_tabs", "payout_redeem", revealed):
+		mark_event("perf06_phase_not_observed", {"game_id": "pull_tabs", "phase_id": "payout_redeem", "evidence": revealed})
+		return
+	await _measure_observed_game_phase("pull_tabs", "payout_redeem", "pull_tabs_payout_redeem", 30)
+
+
+func _wait_for_animation_quiet(max_frames: int) -> bool:
+	for _frame_index in range(maxi(1, max_frames)):
+		var evidence := _current_game_phase_evidence()
+		if (evidence.get("active_animation_channels", []) as Array).is_empty():
+			return true
+		await get_tree().process_frame
+	return false
+
+
+func _install_slot_handpay_fixture() -> bool:
+	if app == null:
+		return false
+	var run_state: RunState = app.get("run_state") as RunState
+	var game: GameModule = app.get("current_game") as GameModule
+	if run_state == null or game == null or game.get_id() != "slot":
+		return false
+	var environment := run_state.current_environment
+	var machine: Dictionary = SlotStateScript.read_machine(environment, "slot")
+	if machine.is_empty():
+		return false
+	# Install a presentation-only jackpot result around the machine's current
+	# authoritative spin ordinal. The sealed acknowledgement still travels through
+	# Foundation's normal action boundary and writes the only durable receipt.
+	machine["spin_count"] = maxi(1, int(machine.get("spin_count", 0)))
+	machine["last_outcome_id"] = "perf06_jackpot_attendant"
+	machine["last_classification"] = "jackpot"
+	machine["slot_celebration_tier"] = "jackpot"
+	machine["slot_animation_id"] = ""
+	machine["active_bonus"] = {}
+	machine.erase("ritual_acknowledged_result_id")
+	SlotStateScript.write_machine(environment, "slot", machine)
+	run_state.current_environment = environment
+	app.call("_refresh")
+	return true
+
+
+func _install_video_poker_double_fixture() -> bool:
+	if app == null:
+		return false
+	var run_state: RunState = app.get("run_state") as RunState
+	var game: GameModule = app.get("current_game") as GameModule
+	if run_state == null or game == null or game.get_id() != "video_poker":
+		return false
+	var environment := run_state.current_environment
+	var machine_value: Variant = game.call("_machine_state", run_state, environment)
+	if typeof(machine_value) != TYPE_DICTIONARY:
+		return false
+	var machine: Dictionary = machine_value
+	var last_result: Dictionary = machine.get("last_result", {}) if typeof(machine.get("last_result", {})) == TYPE_DICTIONARY else {}
+	if last_result.is_empty():
+		return false
+	# Keep the already-rendered authoritative hand and expose the product's normal
+	# double-up offer with a bounded diagnostic credit. The following pick still
+	# resolves through the production action authority and RNG stream.
+	last_result["double_credits"] = maxi(5, int(last_result.get("win_credits", 0)))
+	last_result["win_credits"] = int(last_result["double_credits"])
+	last_result["summary"] = "Performance fixture: settled hand offers Double Up."
+	machine["last_result"] = last_result
+	game.call("_update_environment_state", environment, machine)
+	run_state.current_environment = environment
+	app.call("_refresh")
+	return true
+
+
+func _measure_craps_offer_and_aim() -> void:
+	# Rebet the completed round. A fresh pass-line wager can be illegal while a
+	# point is established, which leaves the real throw interaction unavailable.
+	_emit_surface_action("craps_rebet", 0, false)
+	await _wait_frames(2)
+	_emit_surface_pointer("craps_throw", 0, "begin", Vector2(426, 240))
+	if await _wait_for_game_phase("craps", "offer", 30):
+		await _measure_observed_game_phase("craps", "offer", "craps_dice_offer", 20)
+	_emit_surface_pointer("craps_throw", 0, "move", Vector2(438, 190))
+	if await _wait_for_game_phase("craps", "aim", 30):
+		await _measure_observed_game_phase("craps", "aim", "craps_throw_aim", 20)
+	_emit_surface_pointer("craps_throw", 0, "end", Vector2(446, 96))
+	await _wait_frames(2)
+
+
+func _measure_crew_poker_terminal() -> void:
+	for _action_index in range(32):
+		var evidence := _current_game_phase_evidence()
+		if _game_phase_observed("crew_draw_poker", "terminal", evidence):
+			break
+		var action_evidence := _trigger_active_game_action("crew_draw_poker")
+		if not bool(action_evidence.get("accepted", false)):
+			mark_event("crew_poker_terminal_action_rejected", action_evidence)
+			break
+		await _wait_frames(2)
+	await _measure_observed_game_phase("crew_draw_poker", "terminal", "crew_poker_terminal", 30)
+
+
+func _game_phase_observed(game_id: String, phase_id: String, evidence: Dictionary) -> bool:
+	var phase := str(evidence.get("phase", ""))
+	var ritual_phase := str(evidence.get("ritual_phase", evidence.get("bar_dice_ritual_phase", "")))
+	var result_visible := bool(evidence.get("last_result_present", false)) or not str(evidence.get("result_message", "")).is_empty()
+	var animations: Dictionary = evidence.get("animation_channels", {}) if typeof(evidence.get("animation_channels", {})) == TYPE_DICTIONARY else {}
+	if phase_id == "ritual":
+		return bool(evidence.get("ritual_projection_present", false)) \
+			or bool(evidence.get("bar_dice_ritual_projection_present", false)) \
+			or bool(evidence.get("counter_ritual_present", false)) \
+			or not ritual_phase.is_empty() \
+			or int(evidence.get("ritual_actor_count", 0)) > 0 \
+			or int(evidence.get("ritual_object_count", 0)) > 0
+	match game_id:
+		"pull_tabs":
+			if phase_id != "payout_redeem":
+				return false
+			if str(evidence.get("result_message", "")).is_empty():
+				return false
+			return bool(evidence.get("counter_ritual_present", false))
+		"scratch_tickets":
+			if phase_id == "scratch_reveal":
+				return str(evidence.get("counter_phase", "")) in ["play", "file"]
+			if phase_id == "payout":
+				return result_visible or str(evidence.get("counter_phase", "")) in ["result", "selection"]
+		"bar_dice", "blackjack":
+			if phase_id == "resolve_payout":
+				return result_visible
+			if game_id == "blackjack" and phase_id == "skill":
+				var count_rhythm: Dictionary = animations.get("blackjack_count_rhythm", {}) if typeof(animations.get("blackjack_count_rhythm", {})) == TYPE_DICTIONARY else {}
+				return bool(evidence.get("counting_enabled", false)) or bool(count_rhythm.get("active", false))
+		"slot":
+			return phase_id == "jackpot_attendant" \
+				and str(evidence.get("ritual_projection_phase", "")) == "payout_or_handpay" \
+				and bool(evidence.get("ritual_acknowledgement_available", false))
+		"baccarat":
+			var baccarat_deal: Dictionary = animations.get("baccarat_deal", {}) if typeof(animations.get("baccarat_deal", {})) == TYPE_DICTIONARY else {}
+			var baccarat_payout: Dictionary = animations.get("baccarat_payout", {}) if typeof(animations.get("baccarat_payout", {})) == TYPE_DICTIONARY else {}
+			if phase_id == "skill":
+				var deal_progress := float(baccarat_deal.get("progress", 0.0))
+				return ritual_phase == "squeeze_reveal" or (bool(baccarat_deal.get("active", false)) and deal_progress >= 0.43 and deal_progress < 0.58)
+			if phase_id == "resolve_payout":
+				return (ritual_phase == "settlement" or bool(baccarat_payout.get("active", false))) and result_visible
+		"roulette":
+			var roulette_spin: Dictionary = animations.get("roulette_spin", {}) if typeof(animations.get("roulette_spin", {})) == TYPE_DICTIONARY else {}
+			var roulette_payout: Dictionary = animations.get("roulette_payout", {}) if typeof(animations.get("roulette_payout", {})) == TYPE_DICTIONARY else {}
+			if phase_id == "post_spin":
+				return ritual_phase == "ball_settle" or (bool(roulette_spin.get("active", false)) and float(roulette_spin.get("progress", 0.0)) >= 0.80)
+			if phase_id == "resolve_payout":
+				return (ritual_phase == "croupier_settlement" or bool(roulette_payout.get("active", false))) and result_visible
+			if phase_id == "skill":
+				return bool(evidence.get("wheel_read_active", false))
+		"craps":
+			var craps_roll: Dictionary = animations.get("craps_roll", {}) if typeof(animations.get("craps_roll", {})) == TYPE_DICTIONARY else {}
+			if phase_id == "bounce":
+				return ritual_phase == "bounce_read" or (bool(craps_roll.get("active", false)) and float(craps_roll.get("progress", 0.0)) < 0.55)
+			if phase_id == "settle":
+				return ritual_phase == "dealer_settlement" or (bool(craps_roll.get("active", false)) and float(craps_roll.get("progress", 0.0)) >= 0.55)
+			if phase_id == "resolve":
+				return not bool(craps_roll.get("active", false)) and result_visible
+			if phase_id == "offer":
+				return ritual_phase == "dice_offered"
+			if phase_id == "aim":
+				return ritual_phase == "aiming_throw"
+		"crew_draw_poker":
+			if phase_id == "ordered_hand":
+				return phase in ["before", "draw", "after"]
+			if phase_id == "terminal":
+				return phase == "idle" and result_visible
+		"video_poker":
+			if phase_id == "payout":
+				return phase in ["settled", "double_result"] and result_visible
+			if phase_id == "double_up":
+				return phase == "double_up" and int(evidence.get("pending_double_credits", 0)) > 0
+	return false
 
 
 func _preferred_action_id(game_id: String) -> String:
@@ -1904,6 +3189,16 @@ func _emit_surface_action(action_id: String, index: int, confirm: bool) -> void:
 	canvas.emit_signal("surface_action", action_id, index, confirm)
 
 
+func _emit_surface_pointer(action_id: String, index: int, phase: String, board_position: Vector2) -> void:
+	if app == null:
+		return
+	var canvas := app.get("game_surface_canvas") as Control
+	if canvas == null:
+		mark_event("missing_surface_canvas", {"action_id": action_id, "phase": phase})
+		return
+	canvas.emit_signal("surface_pointer_action", action_id, index, phase, board_position)
+
+
 func _force_pinball_feature() -> bool:
 	var run_state: RunState = app.get("run_state") as RunState
 	var content_library: ContentLibrary = app.get("library") as ContentLibrary
@@ -1915,7 +3210,7 @@ func _force_pinball_feature() -> bool:
 	if machine.is_empty():
 		return false
 	machine = SlotStateScript.set_selected_bet(machine, "bet_10")
-	var pinball := SlotPinballScript.new()
+	var pinball: Variant = SlotPinballScript.new()
 	var rng := run_state.create_rng("l02_pinball_feature")
 	var active: Dictionary = pinball.open_feature(machine, 10, rng, definition)
 	machine["active_bonus"] = active

@@ -24,7 +24,7 @@ foreach ($surfaceOverride in @($matrix.allocation_roots_by_phase.PSObject.Proper
     }
 }
 $lowEndLauncher = Get-Content -LiteralPath (Join-Path $PSScriptRoot "perf06_low_end_matrix.ps1") -Raw
-foreach ($needle in @("reproducible_whole_matrix_throttle", "ProcessorAffinity", "PriorityClass", "native_surface_probe.json", "ProfileManifestSha256", "PERF06 LOW-END PREFLIGHT PASS")) {
+foreach ($needle in @("reproducible_whole_matrix_throttle", "ProcessorAffinity", "PriorityClass", "native_surface_probe.json", "ProfileManifestSha256", "profileFileRelative", "Low-end profile must resolve below", "PERF06 LOW-END PREFLIGHT PASS")) {
     if (-not $lowEndLauncher.Contains($needle)) { throw "Low-end launcher lost reproducible whole-matrix binding '$needle'." }
 }
 $nativeWrapper = Get-Content -LiteralPath (Join-Path $PSScriptRoot "foundation_performance_probe.ps1") -Raw
@@ -39,8 +39,11 @@ $nativeRuntime = Get-Content -LiteralPath (Join-Path $PSScriptRoot "perf06_nativ
 foreach ($needle in @("build_native_solver.ps1", "-Platform Windows", "-Target template_release", "native_plugin_sha256", "--export-release", "Windows Steam", "Refusing to overwrite immutable native evidence", "profile_manifest_sha256", "runtime_report_sha256")) {
     if (-not $nativeRuntime.Contains($needle)) { throw "Native release-runtime matrix lost '$needle'." }
 }
-foreach ($needle in @("perf06_native_runtime_matrix.ps1", 'foreach ($nativePlan in @("l02", "grand_casino", "coin_pusher"))', "perf06_build_surface_report.ps1", "-Profile low_end", "allocation_call_root_audit.json")) {
+foreach ($needle in @("perf06_native_runtime_matrix.ps1", 'foreach ($nativePlan in @("l02", "grand_casino", "coin_pusher"))', "perf06_build_surface_report.ps1", "-Profile low_end", "allocation_call_root_audit.json", "integrationOutRelative", "perf06_matrix_contract.ps1", "-RequiredProfiles low_end", "matrix_contract.json")) {
     if (-not $lowEndLauncher.Contains($needle)) { throw "Low-end launcher lost complete report production seam '$needle'." }
+}
+foreach ($needle in @("distribution_fresh_start", "native_runtime_distribution_fresh_start", 'surface=$false')) {
+    if (-not $lowEndLauncher.Contains($needle)) { throw "Low-end launcher lost exported fresh-start coverage '$needle'." }
 }
 if ($nativeRuntime.Contains("SkipExport")) { throw "Native binding evidence must always use a fresh release export." }
 $overlay = Get-Content -LiteralPath (Join-Path $root "scripts/ui/perf_telemetry_overlay.gd") -Raw
@@ -53,4 +56,8 @@ foreach ($needle in @("perf06_surface_id", "perf06_phase_id", "surface_draw_time
 }
 $unknownRootOwners = @($matrix.allocation_roots.PSObject.Properties.Name | Where-Object { $_ -notin $matrixIds -and $_ -notin @($matrix.systems.PSObject.Properties.Name) })
 if ($unknownRootOwners.Count -ne 0) { throw "Allocation roots contain unknown surfaces: $($unknownRootOwners -join ',')" }
+$declaredRoots = @($matrix.allocation_roots.PSObject.Properties.Value | ForEach-Object { @($_) } | ForEach-Object { [string]$_ } | Sort-Object -Unique)
+if ($declaredRoots -contains "producer_fixture" -or $overlay.Contains('"producer_fixture"')) {
+    throw "Opt-in fixture producers are not production steady-frame allocation roots."
+}
 Write-Host "PERF06 REQUIRED MATRIX CONTRACT PASS games=$($matrixIds.Count) systems=$(@($matrix.systems.PSObject.Properties).Count)"

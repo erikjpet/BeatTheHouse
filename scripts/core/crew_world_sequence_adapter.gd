@@ -658,7 +658,13 @@ static func _durable_state(value: Variant) -> Dictionary:
 		return {}
 	var state := (value as Dictionary).duplicate(true)
 	var semantic := _dict(state.get("semantic_state", {}))
-	for key in ["target_inventory", "declared_targets", "base_interactions", "event_choices", "scene_objects", "interactions", "actors", "services", "games", "routes", "transition_queue", "tombstones"]:
+	# Host interactions, choices, and transient transition queues are rebuilt at
+	# the ordinary presentation boundary. The public target inventory and declared
+	# zones must survive with owner-created scene/interaction/actor state: cleanup
+	# and aftermath operations validate against those mounted targets after a
+	# fresh-process load. These bounded public collections contain no private Crew
+	# authority.
+	for key in ["base_interactions", "event_choices", "transition_queue"]:
 		semantic.erase(key)
 	state["semantic_state"] = semantic
 	state.erase("resolved_branches")

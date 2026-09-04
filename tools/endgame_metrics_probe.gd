@@ -10,10 +10,12 @@ const RunStateScript := preload("res://scripts/core/run_state.gd")
 const RunActionServiceScript := preload("res://scripts/core/run_action_service.gd")
 const EventModuleScript := preload("res://scripts/core/event_module.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
+const SaveServiceScript := preload("res://scripts/core/save_service.gd")
 const MetaCollectionServiceScript := preload("res://scripts/core/meta_collection_service.gd")
 const CollectionDropServiceScript := preload("res://scripts/core/collection_drop_service.gd")
 const CollectionItemResolverScript := preload("res://scripts/core/collection_item_resolver.gd")
 const BlackjackAuthorityTestDriverScript := preload("res://scripts/tests/foundation/blackjack_authority_test_driver.gd")
+const RunTerminalEvaluatorScript := preload("res://scripts/core/run_terminal_evaluator.gd")
 
 const DEFAULT_SEEDS_PER_SCENARIO := 2
 const DEFAULT_SEED_PREFIX := "ACT1-BALANCE"
@@ -96,10 +98,18 @@ var generator: RunGenerator
 var game_modules: Dictionary = {}
 var failures: Array = []
 var warnings: Array = []
+var integration_capture_trace := false
+var integration_save_load_stride := 0
+var integration_save_slot_prefix := "integ06_1_terminal_soak"
+var integration_ignore_crew := false
+var integration_production_only := false
 
 
 func _init() -> void:
-	call_deferred("_run")
+	# The integration terminal-soak scene embeds this production policy driver so
+	# the identical code can execute inside native and Web release exports.
+	if OS.get_environment("BTH_INTEG06_1_EMBED_ENDGAME") != "1":
+		call_deferred("_run")
 
 
 func _run() -> void:
@@ -220,10 +230,36 @@ func _create_game_module(definition: Dictionary) -> GameModule:
 func _simulate_run(run_index: int, scenario: Dictionary, seed: String, max_actions: int = MAX_ACTIONS) -> Dictionary:
 	var policy := str(scenario.get("policy", "clean"))
 	var challenge_id := str(scenario.get("challenge_id", "")).strip_edges()
+	var authority_violations: Array = []
+	if integration_production_only:
+		if bool(scenario.get("start_at_grand_casino", false)):
+			authority_violations.append("start_at_grand_casino")
+		if scenario.has("casino_entry_bankroll"):
+			authority_violations.append("casino_entry_bankroll")
+		if scenario.has("collection_modifiers") or scenario.has("collection_loadout"):
+			authority_violations.append("caller_selected_collection")
+		if not authority_violations.is_empty():
+			return {
+				"run_index": run_index,
+				"seed": seed,
+				"scenario_id": str(scenario.get("id", "")),
+				"scenario_label": str(scenario.get("label", "")),
+				"policy": policy,
+				"challenge_id": challenge_id,
+				"authority_setup": "rejected",
+				"authority_violations": authority_violations,
+				"stopped_reason": "authority_setup_rejected",
+				"final_status": "not_started",
+				"won": false,
+				"lost": false,
+				"save_load_points": [],
+				"save_load_failures": ["Binding integration run rejected caller-injected authority state."],
+				"semantic_trace": [],
+			}
 	var challenge_config := RunStateScript.standard_challenge(seed)
 	if not challenge_id.is_empty():
 		challenge_config = library.challenge_config_for(challenge_id, seed)
-	var collection_context := _collection_context_for_run(seed, challenge_id)
+	var collection_context := {"enabled": false, "modifiers": {}} if integration_production_only else _collection_context_for_run(seed, challenge_id)
 	if bool(collection_context.get("enabled", false)):
 		var challenge_modifiers := _dict(challenge_config.get("modifiers", {}))
 		var collection_modifiers := _dict(collection_context.get("modifiers", {}))
@@ -246,6 +282,8 @@ func _simulate_run(run_index: int, scenario: Dictionary, seed: String, max_actio
 		"scenario_label": str(scenario.get("label", "")),
 		"policy": policy,
 		"challenge_id": challenge_id,
+		"authority_setup": "standard_production_challenge" if integration_production_only else "conditioned_balance_probe",
+		"authority_violations": authority_violations,
 		"challenge_engaged": not challenge_id.is_empty(),
 		"start_bankroll": run_state.bankroll,
 		"actions": 0,
@@ -255,6 +293,7 @@ func _simulate_run(run_index: int, scenario: Dictionary, seed: String, max_actio
 		"travel_count": 0,
 		"tier2_visits": 0,
 		"lender_uses": 0,
+		"lender_ids": [],
 		"service_uses": 0,
 		"item_purchases": 0,
 		"events_resolved": 0,
@@ -295,14 +334,38 @@ func _simulate_run(run_index: int, scenario: Dictionary, seed: String, max_actio
 		"game_mix": {},
 		"failure_reason": "",
 		"victory_route": "",
+		"save_load_points": [],
+		"save_load_failures": [],
+		"semantic_trace": [],
 	}
 	_record_curve(run, run_state, "start")
 	_record_visit(run, run_state)
 
 	for action_index in range(max_actions):
+		if integration_capture_trace:
+			_record_integration_trace(run, run_state, "before_action_%03d" % action_index)
+		if integration_save_load_stride > 0 and action_index > 0 and action_index % integration_save_load_stride == 0:
+			var round_trip := _integration_save_load_round_trip(run_state, seed, action_index)
+			var save_load_points := _array(run.get("save_load_points", []))
+			save_load_points.append(_dict(round_trip.get("point", {})))
+			run["save_load_points"] = save_load_points
+			if bool(round_trip.get("ok", false)) and round_trip.get("run_state") is RunState:
+				run_state = round_trip.get("run_state") as RunState
+			else:
+				var save_load_failures := _array(run.get("save_load_failures", []))
+				save_load_failures.append(str(round_trip.get("message", "Save/load round trip failed.")))
+				run["save_load_failures"] = save_load_failures
 		if run_state.is_terminal():
 			run["stopped_reason"] = "terminal"
 			break
+		if not _array(run.get("action_boundary_failures", [])).is_empty():
+			run["stopped_reason"] = "action_boundary_rejected"
+			break
+		if integration_production_only:
+			var boundary_terminal: Dictionary = RunTerminalEvaluatorScript.evaluate_terminal_and_apply(run_state, library)
+			if bool(boundary_terminal.get("terminal", false)):
+				run["stopped_reason"] = "production_terminal_evaluator"
+				break
 		if _try_claim_or_resolve_endgame(run_state, run):
 			_count_action(run, "event")
 			_record_curve(run, run_state, "endgame")
@@ -349,8 +412,21 @@ func _simulate_run(run_index: int, scenario: Dictionary, seed: String, max_actio
 			_record_curve(run, run_state, "travel")
 			continue
 		if not run_state.has_liquid_run_funds():
-			run_state.fail_run(RunState.FAILURE_BANKROLL_ZERO, RunState.BANKROLL_ZERO_FAILURE_MESSAGE)
-			run["stopped_reason"] = "bankroll_zero"
+			if integration_production_only:
+				var terminal_result: Dictionary = RunTerminalEvaluatorScript.evaluate_and_apply(run_state, library)
+				if bool(terminal_result.get("terminal", false)):
+					run["stopped_reason"] = "production_terminal_evaluator"
+					break
+			else:
+				run_state.fail_run(RunState.FAILURE_BANKROLL_ZERO, RunState.BANKROLL_ZERO_FAILURE_MESSAGE)
+				run["stopped_reason"] = "bankroll_zero"
+				break
+		if integration_production_only:
+			var no_action_terminal: Dictionary = RunTerminalEvaluatorScript.evaluate_and_apply(run_state, library)
+			run["no_action_terminal_diagnostic"] = no_action_terminal.duplicate(true)
+			run["no_action_event_ids"] = _current_event_ids(run_state)
+			run["no_action_travel_choices"] = _travel_choices(run_state)
+			run["stopped_reason"] = "production_terminal_evaluator" if bool(no_action_terminal.get("terminal", false)) else "no_visible_player_action"
 			break
 		run_state.advance_environment_turns(1)
 		_count_action(run, "idle")
@@ -358,7 +434,114 @@ func _simulate_run(run_index: int, scenario: Dictionary, seed: String, max_actio
 
 	_finalize_collection_engagement(run, run_state, collection_context)
 	_finalize_run(run, run_state)
+	if integration_capture_trace:
+		_record_integration_trace(run, run_state, "terminal" if run_state.is_terminal() else "action_cap")
+		run["integration_final_state"] = _integration_state_snapshot(run_state)
 	return run
+
+
+func _integration_save_load_round_trip(run_state: RunState, seed: String, action_index: int) -> Dictionary:
+	var service: SaveService = SaveServiceScript.new()
+	var slot := "%s_%s_%03d" % [integration_save_slot_prefix, seed.sha256_text().substr(0, 12), action_index]
+	service.clear_run(slot)
+	var before := _integration_state_snapshot(run_state)
+	var save_error := service.save_run(run_state, slot)
+	var loaded: Variant = service.load_run(slot) if save_error == OK else null
+	service.clear_run(slot)
+	var after := _integration_state_snapshot(loaded as RunState) if loaded is RunState else {}
+	var exact := save_error == OK and loaded is RunState and JSON.stringify(before) == JSON.stringify(after)
+	var changed_fields: Array = []
+	for key_value in before.keys():
+		var key := str(key_value)
+		if not after.has(key) or JSON.stringify(before.get(key)) != JSON.stringify(after.get(key)):
+			changed_fields.append(key)
+	for key_value in after.keys():
+		var key := str(key_value)
+		if not before.has(key) and not changed_fields.has(key):
+			changed_fields.append(key)
+	changed_fields.sort()
+	return {
+		"ok": exact,
+		"run_state": loaded if loaded is RunState else null,
+		"message": "" if exact else "SaveService did not preserve the deterministic terminal-soak state.",
+		"point": {
+			"action_index": action_index,
+			"save_error": int(save_error),
+			"loaded": loaded is RunState,
+			"exact": exact,
+			"changed_fields": changed_fields,
+			"changed_values": _integration_changed_values(before, after, changed_fields),
+			"before_sha256": JSON.stringify(before).sha256_text(),
+			"after_sha256": JSON.stringify(after).sha256_text(),
+		},
+	}
+
+
+func _integration_changed_values(before: Dictionary, after: Dictionary, fields: Array) -> Dictionary:
+	var result := {}
+	for field_value in fields:
+		var field := str(field_value)
+		result[field] = {"before": before.get(field), "after": after.get(field)}
+	return result
+
+
+func _record_integration_trace(run: Dictionary, run_state: RunState, label: String) -> void:
+	var trace := _array(run.get("semantic_trace", []))
+	trace.append({
+		"label": label,
+		"action_count": int(run.get("actions", 0)),
+		"game_actions": int(run.get("game_actions", 0)),
+		"travel_count": int(run.get("travel_count", 0)),
+		"events_resolved": int(run.get("events_resolved", 0)),
+		"service_uses": int(run.get("service_uses", 0)),
+		"lender_uses": int(run.get("lender_uses", 0)),
+		"state": _integration_state_snapshot(run_state),
+	})
+	run["semantic_trace"] = trace
+
+
+func _integration_state_snapshot(run_state: RunState) -> Dictionary:
+	var debt_rows: Array = []
+	for debt_value in run_state.debt:
+		if typeof(debt_value) != TYPE_DICTIONARY:
+			continue
+		var debt_entry: Dictionary = debt_value
+		debt_rows.append({
+			"id": str(debt_entry.get("id", "")),
+			"lender_id": str(debt_entry.get("lender_id", "")),
+			"kind": str(debt_entry.get("debt_kind", "")),
+			"status": str(debt_entry.get("status", "")),
+			"balance": int(debt_entry.get("balance", 0)),
+			"turns_remaining": int(debt_entry.get("turns_remaining", 0)),
+		})
+	debt_rows.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return str(a.get("id", "")) < str(b.get("id", "")))
+	return {
+		"seed": run_state.player_facing_seed_text(),
+		"run_status": run_state.run_status,
+		"failure_reason": run_state.run_failure_reason,
+		"victory_route": str(run_state.narrative_flags.get("demo_victory_route", "")),
+		"bankroll": run_state.bankroll,
+		"heat": run_state.suspicion_level(),
+		"action_index": int(run_state.event_cadence.get("action_index", 0)),
+		"node_id": run_state.current_world_node_id(),
+		"archetype_id": str(run_state.current_environment.get("archetype_id", "")),
+		"scenario_id": str(run_state.current_environment.get("scenario_id", "")),
+		"layer_id": str(run_state.current_environment.get("current_layer_id", "")),
+		"environment_turns": int(run_state.current_environment.get("turns", 0)),
+		"debt": debt_rows,
+		"game_tallies": _integration_integer_dict(run_state.narrative_flags.get("profile_games_played", {})),
+		"delivery_status": str(run_state.delivery_snapshot().get("status", "")),
+		"crew_jobs": run_state.crew_jobs.size(),
+		"world_sequence_registrations": run_state.world_sequence_registrations.size(),
+	}
+
+
+func _integration_integer_dict(value: Variant) -> Dictionary:
+	var result := {}
+	var source := _dict(value)
+	for key_value in source.keys():
+		result[str(key_value)] = int(source.get(key_value, 0))
+	return result
 
 
 func _collection_context_for_run(seed: String, challenge_id: String) -> Dictionary:
@@ -617,7 +800,7 @@ func _try_resolve_required_progression_event(run_state: RunState, run: Dictionar
 	var result := event.resolve(run_state, run_state.current_environment, "accept_invite")
 	if not bool(result.get("ok", false)):
 		return false
-	run_state.advance_environment_turns(1)
+	_integration_advance_turn(run_state, run, "grand_casino_invite")
 	run["events_resolved"] = int(run.get("events_resolved", 0)) + 1
 	return true
 
@@ -767,6 +950,8 @@ func _try_use_lender(run_state: RunState, run: Dictionary, policy: String) -> bo
 		if not bool(option.get("enabled", false)) or not bool(option.get("mutation_supported", false)):
 			continue
 		var lender_id := str(option.get("id", ""))
+		if integration_ignore_crew and lender_id == "the_crew":
+			continue
 		if _run_has_lender_debt(run_state, lender_id):
 			continue
 		var score := _lender_score(lender_id, policy, run_state.bankroll)
@@ -775,10 +960,15 @@ func _try_use_lender(run_state: RunState, run: Dictionary, policy: String) -> bo
 			best_option = option
 	if best_option.is_empty() or best_score < 0:
 		return false
-	var used: Dictionary = service.use_hook("lender", str(best_option.get("id", "")))
+	var selected_lender_id := str(best_option.get("id", ""))
+	var used: Dictionary = service.use_hook("lender", selected_lender_id)
 	if not bool(used.get("ok", false)):
 		return false
 	run["lender_uses"] = int(run.get("lender_uses", 0)) + 1
+	var lender_ids := _string_array(run.get("lender_ids", []))
+	if not lender_ids.has(selected_lender_id):
+		lender_ids.append(selected_lender_id)
+	run["lender_ids"] = lender_ids
 	return true
 
 
@@ -814,7 +1004,7 @@ func _try_resolve_event(run_state: RunState, run: Dictionary, policy: String) ->
 	var result: Dictionary = selected_event.resolve(run_state, run_state.current_environment, best_choice_id)
 	if not bool(result.get("ok", false)):
 		return false
-	run_state.advance_environment_turns(1)
+	_integration_advance_turn(run_state, run, "event:%s" % best_event_id)
 	run["events_resolved"] = int(run.get("events_resolved", 0)) + 1
 	return true
 
@@ -860,7 +1050,10 @@ func _try_travel(run_state: RunState, run: Dictionary, policy: String) -> bool:
 		var cost := maxi(0, int(choice.get("cost", 0)))
 		if cost > run_state.bankroll:
 			continue
-		if run_state.bankroll - cost < _destination_minimum_bankroll(str(choice.get("id", ""))):
+		# A destination stake floor is a preference, not a travel authority gate.
+		# Preserve legal recovery paths (events, lenders, shops, and cheaper onward
+		# routes) whenever production travel leaves the run with liquid funds.
+		if run_state.bankroll - cost <= 0:
 			continue
 		var score := _travel_score(run_state, run, choice, policy)
 		scored_choices.append({
@@ -878,10 +1071,12 @@ func _try_travel(run_state: RunState, run: Dictionary, policy: String) -> bool:
 		_record_travel_decision(run, run_state, scored_choices, "", best_score, "no_choice")
 		var lock_remaining := run_state.current_travel_lock_remaining()
 		if lock_remaining > 0:
+			if integration_production_only:
+				return false
 			run_state.advance_environment_turns(lock_remaining)
 			return _try_travel(run_state, run, policy)
 		return false
-	if best_score < -500 and not _string_array(run_state.current_environment.get("game_ids", [])).is_empty():
+	if best_score < -500 and not _string_array(run_state.current_environment.get("game_ids", [])).is_empty() and run_state.bankroll >= _current_stake_floor(run_state):
 		_record_travel_decision(run, run_state, scored_choices, str(best_choice.get("id", "")), best_score, "deferred")
 		return false
 	_record_travel_decision(run, run_state, scored_choices, str(best_choice.get("id", "")), best_score, "travel")
@@ -918,7 +1113,7 @@ func _try_play_game(run_state: RunState, run: Dictionary, policy: String) -> boo
 	else:
 		run_state.save_rng(rng)
 	if not bool(result.get("slot_runtime_tick", false)):
-		run_state.advance_environment_turns(1)
+		_integration_advance_turn(run_state, run, "game:%s:%s" % [game_id, action_id])
 	run["game_actions"] = int(run.get("game_actions", 0)) + 1
 	var action_kind := str(result.get("action_kind", ""))
 	if action_kind == "cheat" or action_kind == "risky" or action_kind == "advantage":
@@ -940,10 +1135,30 @@ func _apply_travel_choice(run_state: RunState, run: Dictionary, choice: Dictiona
 	var route: Dictionary = _dict(choice.get("route", {}))
 	if target_id.is_empty() or route.is_empty():
 		return false
+	if integration_production_only:
+		var finalized := run_state.scenario_finalize_installed_environment(library, {"viewport_size": {"x": 1280, "y": 720}})
+		if not bool(finalized.get("ok", false)):
+			_record_integration_travel_failure(run, target_id, _array(finalized.get("errors", [])))
+			return false
+		var preflight := run_state.scenario_preflight_environment_change(run_state.current_world_node_id(), target_id, "world")
+		if not bool(preflight.get("ok", false)):
+			_record_integration_travel_failure(run, target_id, _array(preflight.get("errors", [])))
+			return false
 	var previous_environment := run_state.current_environment.duplicate(true)
+	var route_status := _dict(choice.get("status", {}))
+	if not route_status.is_empty():
+		route["cost"] = int(choice.get("cost", route_status.get("cost", route.get("cost", 0))))
+		route["suspicion_delta"] = int(route_status.get("suspicion_delta", route.get("suspicion_delta", 0)))
+		route["risk_decay"] = int(route_status.get("risk_decay", route.get("risk_decay", 0)))
 	var route_risk := run_state.travel_route_risk(route, target_id)
 	var travel_heat := run_state.begin_travel_suspicion_decay(route, target_id)
-	generator.next_environment(run_state, target_id)
+	if integration_production_only:
+		var install := generator.travel_environment_result(run_state, target_id, true)
+		if not bool(install.get("ok", false)):
+			_record_integration_travel_failure(run, target_id, _array(install.get("errors", [])))
+			return false
+	else:
+		generator.next_environment(run_state, target_id)
 	var travel_decay := run_state.finish_travel_suspicion_decay(travel_heat)
 	var result := _travel_result(target_id, previous_environment, run_state.current_environment, route, travel_decay, route_risk)
 	GameModule.apply_result(run_state, result)
@@ -952,6 +1167,34 @@ func _apply_travel_choice(run_state: RunState, run: Dictionary, choice: Dictiona
 	if target_id == GRAND_CASINO_ID:
 		run["grand_casino_entries"] = int(run.get("grand_casino_entries", 0)) + 1
 	return true
+
+
+func _integration_advance_turn(run_state: RunState, run: Dictionary, source: String) -> bool:
+	if integration_production_only:
+		var finalized := run_state.scenario_finalize_installed_environment(library, {"viewport_size": {"x": 1280, "y": 720}})
+		if not bool(finalized.get("ok", false)):
+			_record_integration_action_boundary_failure(run, source, _array(finalized.get("errors", [])))
+			return false
+	var result := run_state.advance_environment_turns(1)
+	if bool(result.get("ok", false)):
+		return true
+	_record_integration_action_boundary_failure(run, source, _array(result.get("errors", [])))
+	return false
+
+
+func _record_integration_action_boundary_failure(run: Dictionary, source: String, errors: Array) -> void:
+	var rows := _array(run.get("action_boundary_failures", []))
+	if rows.size() < 12:
+		rows.append({"source": source, "errors": errors})
+		run["action_boundary_failures"] = rows
+
+
+func _record_integration_travel_failure(run: Dictionary, target_id: String, errors: Array) -> void:
+	var rows := _array(run.get("travel_failures", []))
+	if rows.size() >= 12:
+		return
+	rows.append({"target_id": target_id, "errors": errors})
+	run["travel_failures"] = rows
 
 
 func _travel_result(target_id: String, previous_environment: Dictionary, destination_environment: Dictionary, route: Dictionary, travel_decay: Dictionary, route_risk: Dictionary) -> Dictionary:

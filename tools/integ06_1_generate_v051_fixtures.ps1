@@ -2,6 +2,9 @@ param(
     [string]$ProjectRoot = (Split-Path -Parent $PSScriptRoot),
     [string]$GodotPath = "",
     [string]$HistoricalCommit = "f1ce7ec814b5034c229f53dcc0db6e799aaaee0b",
+    [ValidateSet("v0_5_1", "mid_0_6")]
+    [string]$CaptureClass = "v0_5_1",
+    [string]$CaptureMilestone = "",
     [string]$FixtureId = "v051_smoke_foundation_run",
     [string]$Seed = "INTEG06-1-V051-SMOKE-001",
     [string]$PlanPath = "",
@@ -13,6 +16,11 @@ param(
 
 $ErrorActionPreference = "Stop"
 $PinnedV051Commit = "f1ce7ec814b5034c229f53dcc0db6e799aaaee0b"
+$PinnedMid06Commits = @{
+    "31e434c412ba8bdeda03bee86db1f8b4d899c962" = "pre_game_depth"
+    "5a2b1e1a6782a13308585e1a974adeeb86be0647" = "pre_environment_depth"
+    "f1ebe9a729253e4ee3d4d99702a019d9328edbaf" = "pre_world_depth"
+}
 $HarnessRelativePath = "scripts/tests/foundation/integ06_1_v051_fixture_driver.gd"
 
 function Invoke-Git([string[]]$Arguments) {
@@ -87,12 +95,29 @@ if ([string]::IsNullOrWhiteSpace($PlanPath) -and $Seed -notmatch '^[A-Za-z0-9_.:
     throw "Seed may contain only letters, numbers, underscores, periods, colons, and hyphens."
 }
 $resolvedCommit = Get-GitObject "$HistoricalCommit^{commit}"
-if ($resolvedCommit -ne $PinnedV051Commit) {
-    throw "Historical commit resolved to $resolvedCommit; this driver is pinned to v0.5.1 $PinnedV051Commit."
+$historicalRelease = ""
+$resolvedMilestone = $CaptureMilestone
+if ($CaptureClass -eq "v0_5_1") {
+    if ($resolvedCommit -ne $PinnedV051Commit) {
+        throw "Historical commit resolved to $resolvedCommit; v0_5_1 capture is pinned to $PinnedV051Commit."
+    }
+    $tag = Invoke-Git @("describe", "--tags", "--exact-match", $resolvedCommit)
+    if ($tag -ne "v0.5.1") {
+        throw "Historical commit $resolvedCommit is not exactly tag v0.5.1."
+    }
+    $historicalRelease = $tag
+    if ([string]::IsNullOrWhiteSpace($resolvedMilestone)) { $resolvedMilestone = "v0_5_1_release" }
 }
-$tag = Invoke-Git @("describe", "--tags", "--exact-match", $resolvedCommit)
-if ($tag -ne "v0.5.1") {
-    throw "Historical commit $resolvedCommit is not exactly tag v0.5.1."
+else {
+    if (-not $PinnedMid06Commits.ContainsKey($resolvedCommit)) {
+        throw "Historical commit $resolvedCommit is not one of the reviewed mid-0.6 capture boundaries."
+    }
+    $expectedMilestone = [string]$PinnedMid06Commits[$resolvedCommit]
+    if (-not [string]::IsNullOrWhiteSpace($resolvedMilestone) -and $resolvedMilestone -ne $expectedMilestone) {
+        throw "Capture milestone $resolvedMilestone does not match reviewed boundary $expectedMilestone for $resolvedCommit."
+    }
+    $resolvedMilestone = $expectedMilestone
+    $historicalRelease = "mid-0.6-development-boundary"
 }
 
 $godot = Resolve-GodotExecutable $GodotPath
@@ -102,7 +127,7 @@ if ([string]::IsNullOrWhiteSpace($OutputDirectory)) {
 $OutputDirectory = [IO.Path]::GetFullPath($OutputDirectory)
 New-Item -ItemType Directory -Force -Path $OutputDirectory | Out-Null
 
-$temporaryRoot = Join-Path ([IO.Path]::GetTempPath()) ("bth-integ06-1-v051-" + [guid]::NewGuid().ToString("N"))
+$temporaryRoot = Join-Path ([IO.Path]::GetTempPath()) ("bth-integ06-1-historical-" + [guid]::NewGuid().ToString("N"))
 $archivePath = Join-Path $temporaryRoot "v051.zip"
 $historicalRoot = Join-Path $temporaryRoot "project"
 $userDataRoot = Join-Path $temporaryRoot "user_data"
@@ -168,7 +193,7 @@ try {
 			$godotOutput = @()
 			for ($caseIndex = 0; $caseIndex -lt $captureCases.Count; $caseIndex++) {
 				$captureCase = $captureCases[$caseIndex]
-				$captureArguments = @("--", "--fixture-id", $FixtureId, "--seed", $Seed)
+				$captureArguments = @("--", "--fixture-id", $FixtureId, "--seed", $Seed, "--expected-version", "0.5.1")
 				$captureLabel = $FixtureId
 				if ($null -ne $captureCase) {
 					$captureLabel = [string]$captureCase.fixture_id
@@ -180,7 +205,7 @@ try {
 						cases = @($captureCase)
 					}
 					$singleCasePlan | ConvertTo-Json -Depth 30 | Set-Content -LiteralPath $archivePlan -Encoding utf8
-					$captureArguments = @("--", "--plan", "res://integ06_1_fixture_plan.json")
+					$captureArguments = @("--", "--plan", "res://integ06_1_fixture_plan.json", "--expected-version", "0.5.1")
 				}
 				Write-Host "Starting bounded historical FoundationMain capture for $captureLabel."
 				$captureLog = Join-Path $temporaryRoot "historical_capture_$caseIndex.log"
@@ -227,6 +252,30 @@ try {
     finally {
         $sha256.Dispose()
     }
+	$custodyInventoryPath = ""
+	$custodyInventoryHash = ""
+	if ($KeepHistoricalArchive) {
+		$custodyInventoryPath = Join-Path $temporaryRoot "custody_inventory.json"
+		$inventoryEntries = @(Get-ChildItem -LiteralPath $temporaryRoot -Recurse -File | Where-Object { $_.FullName -ne $custodyInventoryPath } | Sort-Object FullName | ForEach-Object {
+			$relativePath = $_.FullName.Substring($temporaryRoot.Length).TrimStart([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar).Replace("\", "/")
+			[ordered]@{
+				path = $relativePath
+				size_bytes = $_.Length
+				sha256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $_.FullName).Hash
+			}
+		})
+		$custodyInventory = [ordered]@{
+			schema = "beat_the_house.integ06_1_historical_custody_inventory"
+			version = 1
+			capture_class = $CaptureClass
+			capture_milestone = $resolvedMilestone
+			historical_commit = $resolvedCommit
+			custody_root = $temporaryRoot
+			files = $inventoryEntries
+		}
+		$custodyInventory | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $custodyInventoryPath -Encoding utf8
+		$custodyInventoryHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $custodyInventoryPath).Hash
+	}
 	foreach ($resultLine in $resultLines) {
 		$capture = ("$resultLine" -replace '^INTEG06_1_FIXTURE_RESULT=', '') | ConvertFrom-Json
 		$capturedFixtureId = [string]$capture.fixture_id
@@ -244,12 +293,17 @@ try {
 		$capture.save_path = "isolated_distribution_root/saves/$capturedFixtureId.json"
 		$destinationSave = Join-Path $OutputDirectory "$capturedFixtureId.json"
 		Copy-Item -LiteralPath $sourceSave -Destination $destinationSave -Force
+		if ($KeepHistoricalArchive) {
+			Copy-Item -LiteralPath $custodyInventoryPath -Destination (Join-Path $OutputDirectory "$capturedFixtureId.custody.json") -Force
+		}
 		$saveHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $destinationSave).Hash
 		$manifest = [ordered]@{
 			schema = "beat_the_house.integ06_1_historical_fixture_provenance"
 			version = 1
 			fixture_id = $capturedFixtureId
-			historical_release = $tag
+			capture_class = $CaptureClass
+			capture_milestone = $resolvedMilestone
+			historical_release = $historicalRelease
 			historical_commit = $resolvedCommit
 			historical_tree = Get-GitObject "$resolvedCommit^{tree}"
 			historical_main_scene_blob = Get-GitObject "$resolvedCommit`:scenes/main.tscn"
@@ -261,10 +315,13 @@ try {
 			save_file = [IO.Path]::GetFileName($destinationSave)
 			save_size_bytes = (Get-Item -LiteralPath $destinationSave).Length
 			save_sha256 = $saveHash
+			custody_root = if ($KeepHistoricalArchive) { $temporaryRoot } else { "" }
+			custody_inventory_path = if ($KeepHistoricalArchive) { $custodyInventoryPath } else { "" }
+			custody_inventory_sha256 = if ($KeepHistoricalArchive) { $custodyInventoryHash } else { "" }
 		}
 		$manifestPath = Join-Path $OutputDirectory "$capturedFixtureId.provenance.json"
 		$manifest | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $manifestPath -Encoding utf8
-		Write-Host "Generated genuine $tag fixture: $destinationSave"
+		Write-Host "Generated genuine $historicalRelease fixture at $resolvedMilestone`: $destinationSave"
 		Write-Host "SHA-256: $saveHash"
 		Write-Host "Provenance: $manifestPath"
 	}

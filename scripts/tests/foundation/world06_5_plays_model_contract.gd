@@ -137,6 +137,9 @@ func _check_save_revisit_and_hidden_safety(failures: Array) -> void:
 	var before_proposal := PlayModel.table_presence_proposal(run, run.current_environment, "blackjack", "spotter")
 	var restored := RunStateScript.new()
 	restored.from_dict(run.to_dict())
+	# active_game_id is a live surface capability, not saved run state. Re-entering
+	# the restored table rebinds it before any table-presence proposal is exposed.
+	restored.current_environment["active_game_id"] = "blackjack"
 	var after_status := PlayModel.active_status(restored.crew_play_state, restored.crew_action_index(), restored.current_environment, "blackjack")
 	var after_proposal := PlayModel.table_presence_proposal(restored, restored.current_environment, "blackjack", "spotter")
 	if JSON.stringify(before_status) != JSON.stringify(after_status) or JSON.stringify(before_proposal) != JSON.stringify(after_proposal):

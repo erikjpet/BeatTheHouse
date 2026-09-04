@@ -260,7 +260,10 @@ static func primary_available(run_state: RunState, definition: Dictionary) -> bo
 	var scenario_ids := _string_array(primary.get("scenario_ids", []))
 	if not scenario_ids.is_empty():
 		for node_id in _world_node_ids(run_state):
-			if scenario_ids.has(str(run_state.seeded_scenario_for_node(node_id).get("id", ""))):
+			# Town scenario definitions are immutable generation authority. Placement
+			# needs only their id; duplicating every sequence payload here made each
+			# room entry scale with the full authored scenario pack.
+			if scenario_ids.has(str(run_state._seeded_scenario_definition_for_node_readonly(node_id).get("id", ""))):
 				return true
 		return false
 	var archetype_ids := _string_array(primary.get("archetype_ids", []))
@@ -573,7 +576,7 @@ static func _meeting_environment_eligible(run_state: Variant, environment: Dicti
 	var scenario_ids := _string_array(location.get("scenario_ids", []))
 	if not scenario_ids.is_empty():
 		var node_id := str(environment.get("world_node_id", environment.get("archetype_id", "")))
-		var seeded_id := str(run_state.seeded_scenario_for_node(node_id).get("id", ""))
+		var seeded_id := str(run_state._seeded_scenario_definition_for_node_readonly(node_id).get("id", ""))
 		if seeded_id.is_empty() or seeded_id != str(environment.get("scenario_id", "")) or not scenario_ids.has(seeded_id):
 			return false
 	return true

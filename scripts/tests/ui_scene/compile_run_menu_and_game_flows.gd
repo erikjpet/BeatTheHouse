@@ -195,9 +195,9 @@ func _check_embedded_refresh_deferred_coach(_app: Control) -> bool:
 
 func _check_normal_coach_lifecycle_rollback(existing_probe: Control = null) -> bool:
 	const OLD_TIP_ID := "tip06_tonight_changes_rooms"
-	const OLD_TIP_COPY := "Tonight changes a room. Listen before you settle in; a rumor here can sharpen another stop on the map."
+	const OLD_TIP_COPY := "Tonight's scenario changes this room. Read the objective: it says what can change and what ends the night."
 	const NEXT_TIP_ID := "tip06_delivery_route"
-	const NEXT_TIP_COPY := "That package is contraband. Every action spends the deadline. The map marks real stops; choose your route."
+	const NEXT_TIP_COPY := "Crew jobs have action deadlines. Packages follow stops; lookout holds stay until the watch ends. Contraband raises risk."
 	var failure_probe := await _normal_coach_lifecycle_probe(true, existing_probe)
 	if failure_probe == null:
 		return false

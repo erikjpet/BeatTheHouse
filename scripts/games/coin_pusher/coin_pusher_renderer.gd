@@ -23,6 +23,11 @@ const PEG_OCTAGON := [
 	Vector2(0.0, -1.0), Vector2(0.70710678, -0.70710678),
 ]
 const BATCH_CAPACITY := 600
+const STATIC_CACHE_LAYER_COUNT := 4
+const STATIC_CACHE_LAYER_SHELL := 0
+const STATIC_CACHE_LAYER_PLAYFIELD_PRE := 1
+const STATIC_CACHE_LAYER_PLAYFIELD_POST := 2
+const STATIC_CACHE_LAYER_BACKGLASS := 3
 # Match the pre-expansion 17x12 coin artwork exactly. The 68 px atlas belonged
 # to the temporary 31 px radius; retaining it with a 17 px ellipse compressed
 # the textured quad horizontally and made flat coins read as upright circles.
@@ -51,13 +56,16 @@ var _static_cache_viewports: Array[SubViewport] = []
 var _static_cache_canvases: Array[Control] = []
 var _static_cache_key := ""
 var _static_cache_pending := true
-var _static_cache_pending_layers := [true, true, true]
+var _static_cache_pending_layers := [true, true, true, true]
 var _static_cache_host: Control
 var _static_cache_font: Font
 var _static_cache_render_serial := 0
 var _static_cache_rebuild_serial := 0
 var _static_cache_fallback_reason := "cold"
 var _static_cache_pixel_size := Vector2i.ZERO
+var _static_cache_state_key := ""
+var _static_cache_backglass_key := ""
+var _static_cache_locked := false
 var _hardware_cache_canvas: Control
 var _hardware_cache_host: Control
 var _hardware_cache_key := ""
@@ -97,19 +105,22 @@ func draw(surface, state: Dictionary) -> bool:
 	if not static_cached:
 		_draw_floor_and_shell(surface, cabinet, colors)
 	else:
-		_draw_static_cache_texture(surface, 0)
+		_draw_static_cache_texture(surface, STATIC_CACHE_LAYER_SHELL)
 	stage_started_usec = _capture_perf_stage("shell", stage_started_usec, capture_stages)
-	_draw_backglass(surface, state, cabinet, colors)
+	if not static_cached:
+		_draw_backglass(surface, state, cabinet, colors)
+	else:
+		_draw_static_cache_texture(surface, STATIC_CACHE_LAYER_BACKGLASS)
 	stage_started_usec = _capture_perf_stage("backglass", stage_started_usec, capture_stages)
 	if not static_cached:
 		_draw_playfield(surface, state, colors, cabinet)
 		stage_started_usec = _capture_perf_stage("playfield_uncached", stage_started_usec, capture_stages)
 	else:
-		_draw_static_cache_texture(surface, 1)
+		_draw_static_cache_texture(surface, STATIC_CACHE_LAYER_PLAYFIELD_PRE)
 		stage_started_usec = _capture_perf_stage("static_pre", stage_started_usec, capture_stages)
 		_draw_playfield(surface, state, colors, cabinet, false, true, false, false)
 		stage_started_usec = _capture_perf_stage("platform", stage_started_usec, capture_stages)
-		_draw_static_cache_texture(surface, 2)
+		_draw_static_cache_texture(surface, STATIC_CACHE_LAYER_PLAYFIELD_POST)
 		stage_started_usec = _capture_perf_stage("static_post", stage_started_usec, capture_stages)
 		_draw_playfield(surface, state, colors, cabinet, false, false, false, true)
 		stage_started_usec = _capture_perf_stage("bodies", stage_started_usec, capture_stages)
@@ -694,12 +705,14 @@ func draw_static_cache_layer(surface, state: Dictionary, layer_index: int) -> vo
 		colors = _locked_colors(colors)
 	surface.surface_begin_design_space(DESIGN_SIZE)
 	match layer_index:
-		0:
+		STATIC_CACHE_LAYER_SHELL:
 			_draw_floor_and_shell(surface, cabinet, colors)
-		1:
+		STATIC_CACHE_LAYER_PLAYFIELD_PRE:
 			_draw_playfield(surface, state, colors, cabinet, true, false, false, false)
-		2:
+		STATIC_CACHE_LAYER_PLAYFIELD_POST:
 			_draw_playfield(surface, state, colors, cabinet, false, false, true, false)
+		STATIC_CACHE_LAYER_BACKGLASS:
+			_draw_backglass(surface, state, cabinet, colors)
 	surface.surface_end_design_space()
 
 
@@ -810,11 +823,27 @@ func debug_hardware_cache_signature_for_test(state: Dictionary, hover_action: St
 
 func _prepare_static_cache(surface, state: Dictionary) -> bool:
 	# The cache contains only design-space commands whose complete dependencies
-	# are listed here. Backglass content, moving platform/bodies, glass, hardware,
-	# hover/hit/control state and overlays remain on the live surface every draw.
+	# are listed here. Moving platform/bodies, glass, hardware, hover/hit/control
+	# state and overlays remain on the live surface every draw.
 	if not OS.has_feature("web") and not bool(state.get("coin_pusher_static_cache_test", false)):
 		_static_cache_fallback_reason = "non_web_runtime"
 		return false
+	var state_key := str(state.get("coin_pusher_static_content_key", "missing"))
+	var locked := bool(state.get("coin_pusher_locked", false))
+	var backglass_key := _backglass_cache_signature(state, _cabinet(state))
+	var requested_pixel_size := Vector2i(maxi(1, int(round(surface.size.x))), maxi(1, int(round(surface.size.y))))
+	var requested_font: Font = surface.get_theme_default_font()
+	if not _static_cache_pending \
+			and not _static_cache_key.is_empty() \
+			and is_instance_valid(_static_cache_host) \
+			and _static_cache_host == surface \
+			and _static_cache_pixel_size == requested_pixel_size \
+			and _static_cache_font == requested_font \
+			and _static_cache_state_key == state_key \
+			and _static_cache_backglass_key == backglass_key \
+			and _static_cache_locked == locked:
+		_static_cache_fallback_reason = ""
+		return true
 	var transform: Dictionary = surface.debug_design_space_transform(DESIGN_SIZE)
 	var design_scale: Vector2 = transform.get("design_scale", Vector2.ONE)
 	var board_rect: Rect2 = surface.board_rect()
@@ -826,16 +855,16 @@ func _prepare_static_cache(surface, state: Dictionary) -> bool:
 		_static_cache_pending = true
 		_static_cache_fallback_reason = "unsupported_design_transform"
 		return false
-	var cache_pixel_size := Vector2i(maxi(1, int(round(surface.size.x))), maxi(1, int(round(surface.size.y))))
+	var cache_pixel_size := requested_pixel_size
 	if not is_instance_valid(_static_cache_host) or _static_cache_host != surface:
 		_recreate_static_cache_for_host(surface)
-	var effective_font: Font = surface.get_theme_default_font()
+	var effective_font: Font = requested_font
 	_bind_static_cache_font(effective_font)
 	var font_identity: int = effective_font.get_instance_id() if effective_font != null else 0
 	# The full snapshot owns the nested static-content fingerprint. Keep the
 	# live draw key scalar-only: serializing the authored peg/apparatus trees on
 	# every Web draw was itself a material part of the measured draw callback.
-	var key := "%d:%d|%.3f:%.3f:%.3f:%.3f|%.4f:%.4f|%d|%s|%d" % [
+	var key := "%d:%d|%.3f:%.3f:%.3f:%.3f|%.4f:%.4f|%d|%s|%s|%d" % [
 		cache_pixel_size.x,
 		cache_pixel_size.y,
 		board_rect.position.x,
@@ -845,12 +874,13 @@ func _prepare_static_cache(surface, state: Dictionary) -> bool:
 		(transform.get("scale", Vector2.ONE) as Vector2).x,
 		(transform.get("scale", Vector2.ONE) as Vector2).y,
 		font_identity,
-		str(state.get("coin_pusher_static_content_key", "missing")),
-		1 if bool(state.get("coin_pusher_locked", false)) else 0,
+		state_key,
+		backglass_key,
+		1 if locked else 0,
 	]
 	if _static_cache_viewports.is_empty():
 		var canvas_script: Script = load("res://scripts/games/coin_pusher/coin_pusher_static_cache_canvas.gd")
-		for layer_index in range(3):
+		for layer_index in range(STATIC_CACHE_LAYER_COUNT):
 			var viewport := SubViewport.new()
 			viewport.name = "CoinPusherStaticCache%d" % layer_index
 			viewport.size = cache_pixel_size
@@ -872,11 +902,14 @@ func _prepare_static_cache(surface, state: Dictionary) -> bool:
 	if key != _static_cache_key:
 		_static_cache_key = key
 		_static_cache_pixel_size = cache_pixel_size
+		_static_cache_state_key = state_key
+		_static_cache_backglass_key = backglass_key
+		_static_cache_locked = locked
 		_static_cache_pending = true
-		_static_cache_pending_layers = [true, true, true]
+		_static_cache_pending_layers = [true, true, true, true]
 		_static_cache_rebuild_serial += 1
 		_static_cache_fallback_reason = "rebuild_pending"
-		for layer_index in range(3):
+		for layer_index in range(STATIC_CACHE_LAYER_COUNT):
 			var viewport := _static_cache_viewports[layer_index]
 			var canvas := _static_cache_canvases[layer_index]
 			viewport.size = cache_pixel_size
@@ -901,6 +934,24 @@ func _draw_static_cache_texture(surface, layer_index: int) -> void:
 	surface.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	surface.draw_texture_rect(_static_cache_viewports[layer_index].get_texture(), Rect2(Vector2.ZERO, surface.size), false)
 	surface.surface_begin_design_space(DESIGN_SIZE)
+	_register_static_cache_text_rects(surface, layer_index)
+
+
+func _register_static_cache_text_rects(surface, layer_index: int) -> void:
+	if layer_index < 0 or layer_index >= _static_cache_canvases.size():
+		return
+	var rects_value: Variant = _static_cache_canvases[layer_index].get("surface_text_protected_rects")
+	var rects: Array = rects_value if typeof(rects_value) == TYPE_ARRAY else []
+	for rect_value in rects:
+		if typeof(rect_value) == TYPE_RECT2:
+			surface.surface_register_text_protected_rect(rect_value)
+
+
+func debug_static_cache_text_protected_rects_for_test(layer_index: int) -> Array:
+	if layer_index < 0 or layer_index >= _static_cache_canvases.size():
+		return []
+	var rects_value: Variant = _static_cache_canvases[layer_index].get("surface_text_protected_rects")
+	return (rects_value as Array).duplicate() if typeof(rects_value) == TYPE_ARRAY else []
 
 
 func _on_static_cache_drawn(layer_index: int) -> void:
@@ -923,8 +974,10 @@ func _recreate_static_cache_for_host(surface: Control) -> void:
 	_static_cache_canvases.clear()
 	_static_cache_host = surface
 	_static_cache_key = ""
+	_static_cache_state_key = ""
+	_static_cache_backglass_key = ""
 	_static_cache_pending = true
-	_static_cache_pending_layers = [true, true, true]
+	_static_cache_pending_layers = [true, true, true, true]
 	_static_cache_fallback_reason = "host_reentry"
 
 
@@ -938,7 +991,7 @@ func _bind_static_cache_font(font: Font) -> void:
 		_static_cache_font.changed.connect(_on_static_cache_font_changed)
 	_static_cache_key = ""
 	_static_cache_pending = true
-	_static_cache_pending_layers = [true, true, true]
+	_static_cache_pending_layers = [true, true, true, true]
 	_static_cache_fallback_reason = "effective_font_changed"
 
 
@@ -947,7 +1000,7 @@ func _on_static_cache_font_changed() -> void:
 	# default Font is its only theme-derived dependency and can mutate in place.
 	_static_cache_key = ""
 	_static_cache_pending = true
-	_static_cache_pending_layers = [true, true, true]
+	_static_cache_pending_layers = [true, true, true, true]
 	_static_cache_fallback_reason = "effective_font_changed"
 	if is_instance_valid(_static_cache_host):
 		_static_cache_host.queue_redraw()
@@ -969,6 +1022,7 @@ func debug_static_cache_for_test() -> Dictionary:
 		"viewport_parent_instance_id": _static_cache_viewports[0].get_parent().get_instance_id() if not _static_cache_viewports.is_empty() and is_instance_valid(_static_cache_viewports[0]) and is_instance_valid(_static_cache_viewports[0].get_parent()) else 0,
 		"font_instance_id": _static_cache_font.get_instance_id() if is_instance_valid(_static_cache_font) else 0,
 		"pixel_size": _static_cache_pixel_size,
+		"backglass_key": _static_cache_backglass_key,
 		"render_serial": _static_cache_render_serial,
 		"rebuild_serial": _static_cache_rebuild_serial,
 		"fallback_reason": _static_cache_fallback_reason,
@@ -977,7 +1031,7 @@ func debug_static_cache_for_test() -> Dictionary:
 
 func debug_static_cache_command_equivalence_for_test() -> Dictionary:
 	# Layer textures replace only the commands named for that layer. Expanding
-	# those textures at their three call sites yields the unchanged production
+	# those textures at their four call sites yields the unchanged production
 	# painter's order; every stateful/dynamic stage remains a live command.
 	var uncached := [
 		"shell", "backglass", "playfield_static_pre", "platform",
@@ -995,9 +1049,43 @@ func debug_static_cache_command_equivalence_for_test() -> Dictionary:
 			{"index": 0, "commands": ["shell"]},
 			{"index": 1, "commands": ["playfield_static_pre"]},
 			{"index": 2, "commands": ["playfield_static_post"]},
+			{"index": 3, "commands": ["backglass"]},
 		],
-		"live_commands": ["backglass", "platform", "bodies", "apron", "glass", "hardware"],
+		"live_commands": ["platform", "bodies", "apron", "glass", "hardware"],
 	}
+
+
+func _backglass_cache_signature(state: Dictionary, cabinet: Dictionary) -> String:
+	var goal: Dictionary = state.get("coin_pusher_goal", {}) if typeof(state.get("coin_pusher_goal", {})) == TYPE_DICTIONARY else {}
+	if not goal.is_empty():
+		# These are exactly the fields consumed by _draw_goal_backglass. Keep the
+		# authored ID as a conservative ownership boundary between machine goals.
+		return JSON.stringify([
+			"goal",
+			str(goal.get("id", "")),
+			str(goal.get("title", "MACHINE GOAL")),
+			str(goal.get("instruction", "PUSH THE FEATURE PIECES")),
+			maxi(1, int(goal.get("target", 1))),
+			clampi(int(goal.get("progress", 0)), 0, maxi(1, int(goal.get("target", 1)))),
+			maxi(0, int(goal.get("bonus_tokens", 0))),
+			bool(goal.get("active", false)),
+		], "", true)
+	var display: Dictionary = cabinet.get("backglass_display", {}) if typeof(cabinet.get("backglass_display", {})) == TYPE_DICTIONARY else {}
+	var style := str(display.get("style", "none"))
+	var live_values: Array = []
+	match style:
+		"value_lamps":
+			live_values.append(maxi(0, int(state.get(str(display.get("value_state_key", "")), 0))))
+		"dual_value_dial":
+			live_values.append(maxi(0, int(state.get(str(display.get("primary_state_key", "")), 0))))
+			live_values.append(maxi(0, int(state.get(str(display.get("secondary_state_key", "")), 0))))
+		"prize_showcase":
+			live_values.append(maxi(0, int(state.get(str(display.get("count_state_key", "")), 0))))
+	return JSON.stringify(["display", display, live_values], "", true)
+
+
+func debug_backglass_cache_signature_for_test(state: Dictionary) -> String:
+	return _backglass_cache_signature(state, _cabinet(state))
 
 
 func _depth_sorted_body_indices(bodies: Array, presentation_view_serial: int) -> Array:

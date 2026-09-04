@@ -10,7 +10,7 @@ param(
     [string]$Out = ".tmp/web_perf_smoke/report.json",
     [ValidateSet("cold", "warm")]
     [string]$CacheMode = "cold",
-    [ValidateSet("l02", "grand_casino", "coin_pusher", "secure_entropy")]
+    [ValidateSet("l02", "grand_casino", "coin_pusher", "secure_entropy", "distribution_fresh_start")]
     [string]$Plan = "l02",
     [ValidatePattern("^[A-Za-z0-9_.:-]*$")]
     [string]$EvidenceProfile = "web",
@@ -52,6 +52,7 @@ $readyBudgetMs = [int]$budgetTable.web_global.ready_ms
 $cornerStoreOpenBudgetMs = [int]$budgetTable.web_global.corner_store_open_ms
 $telemetryOverheadAvgBudgetMs = [double]$budgetTable.web_global.telemetry_overhead_mean_ms
 $scenarioMemoryDeltaBudgetBytes = [int64]$budgetTable.policy.web_scenario_memory_delta_bytes_max
+$coinPusherDrawRequiredSamples = 64
 
 function Wait-ForWebServer {
     param([string]$Url, [int]$TimeoutSec)
@@ -335,7 +336,7 @@ if ($Plan -eq "coin_pusher") {
             $requiredRedraws = Get-CoinPusherRequiredIdleRedraws -DurationMsec ([double]$idleDraw.surface_animation_scheduler_elapsed_msec)
             Assert-Condition -Condition (Test-CoinPusherIdleSchedulerEvidence -Counters $idleDraw) -Message ("Coin Pusher idle redraw delta {0} was below the production scheduler floor {1} for {2}ms." -f [int]$idleDraw.surface_animation_redraw_count, $requiredRedraws, [int]$idleDraw.surface_animation_scheduler_elapsed_msec) -Failures $failures
         }
-        Assert-Condition -Condition ([int]$idleDraw.draw_sample_count -gt 0) -Message "Coin Pusher normal idle produced no surface draw samples despite required liveness." -Failures $failures
+        Assert-Condition -Condition (Test-CoinPusherDrawSamplingEvidence -ScenarioTags $idle.tags -Counters $idleDraw -RequiredSamples $coinPusherDrawRequiredSamples) -Message ("Coin Pusher normal idle draw p95 did not complete the fixed symmetric {0}-sample window after a three-draw warm-up." -f $coinPusherDrawRequiredSamples) -Failures $failures
         Assert-Condition -Condition ([double]$idleDraw.draw_p95_ms -le 5.0) -Message ("Coin Pusher idle draw p95 {0:N3}ms exceeded 5.000ms." -f [double]$idleDraw.draw_p95_ms) -Failures $failures
         Assert-Condition -Condition ([int]$idle.tags.solver_liveness_delta -gt 0) -Message "Coin Pusher normal idle solver liveness did not advance." -Failures $failures
         Assert-Condition -Condition (Test-CoinPusherSurfaceConservationBinding -BodyCount ([int]$idle.tags.body_count_before) -TrayCount ([int]$idle.tags.tray_count_before) -Snapshot $idle.tags.conservation_before -ExpectedOrigin $CoinPusherShippedBodyCount) -Message "Coin Pusher normal idle did not begin from the exact conserved shipped-origin fixture." -Failures $failures
@@ -356,7 +357,7 @@ if ($Plan -eq "coin_pusher") {
             Assert-Condition -Condition ([int]$reduced.tags.body_count_after -gt 0) -Message "Coin Pusher reduced-motion sample lost the production body surface." -Failures $failures
             Assert-Condition -Condition (Test-CoinPusherSurfaceConservationBinding -BodyCount ([int]$reduced.tags.body_count_after) -TrayCount ([int]$reduced.tags.tray_count_after) -Snapshot $reduced.tags.conservation_after -ExpectedOrigin $CoinPusherShippedBodyCount) -Message "Coin Pusher reduced-motion after-state did not bind its surface counts to every conserved production outcome channel." -Failures $failures
             Assert-Condition -Condition ([int]$reduced.tags.redraw_delta -eq 0 -and (-not [bool]$reducedDraw.surface_animation_liveness_active)) -Message "Coin Pusher reduced motion unexpectedly advanced the presentation-animation scheduler." -Failures $failures
-            Assert-Condition -Condition ([int]$reducedDraw.draw_sample_count -gt 0) -Message "Coin Pusher reduced motion recorded no canvas draw sample." -Failures $failures
+            Assert-Condition -Condition (Test-CoinPusherDrawSamplingEvidence -ScenarioTags $reduced.tags -Counters $reducedDraw -RequiredSamples $coinPusherDrawRequiredSamples) -Message ("Coin Pusher reduced-motion draw p95 did not complete the fixed symmetric {0}-sample window after a three-draw warm-up." -f $coinPusherDrawRequiredSamples) -Failures $failures
             Assert-Condition -Condition ([double]$reducedDraw.draw_p95_ms -le 5.0) -Message ("Coin Pusher reduced-motion draw p95 {0:N3}ms exceeded 5.000ms." -f [double]$reducedDraw.draw_p95_ms) -Failures $failures
             Assert-Condition -Condition ([string]$reduced.tags.solver_backend -ceq "native_v3") -Message "Coin Pusher reduced motion did not use the locked native_v3 solver." -Failures $failures
         }
@@ -377,7 +378,7 @@ if ($Plan -eq "coin_pusher") {
         Assert-Condition -Condition ([int]$action.frame_time_ms.count -ge 60) -Message "Coin Pusher $actionName sampled fewer than 60 active frames." -Failures $failures
         Assert-Condition -Condition ([bool]$tags.handled) -Message "Coin Pusher $actionName was not accepted by production action dispatch." -Failures $failures
         Assert-Condition -Condition ([double]$tags.resolve_call_ms -le 16.0) -Message ("Coin Pusher {0} synchronous resolve {1:N3}ms exceeded 16.000ms." -f $actionName, [double]$tags.resolve_call_ms) -Failures $failures
-        Assert-Condition -Condition ([int]$draw.draw_sample_count -gt 0) -Message "Coin Pusher $actionName produced no surface draw samples." -Failures $failures
+        Assert-Condition -Condition (Test-CoinPusherDrawSamplingEvidence -ScenarioTags $tags -Counters $draw -RequiredSamples $coinPusherDrawRequiredSamples) -Message ("Coin Pusher {0} draw p95 did not complete the fixed symmetric {1}-sample window after a three-draw warm-up." -f $actionName, $coinPusherDrawRequiredSamples) -Failures $failures
         Assert-Condition -Condition ([double]$draw.draw_p95_ms -le 7.0) -Message ("Coin Pusher {0} draw p95 {1:N3}ms exceeded the maintained 7.000ms active baseline." -f $actionName, [double]$draw.draw_p95_ms) -Failures $failures
         Assert-Condition -Condition ([int]$tags.input_trace_after -gt [int]$tags.input_trace_before) -Message "Coin Pusher $actionName did not grow the production input trace." -Failures $failures
         Assert-Condition -Condition ([bool]$tags.physical_motion_seen) -Message "Coin Pusher $actionName did not show physical motion." -Failures $failures
@@ -442,6 +443,24 @@ if ($Plan -eq "secure_entropy") {
     }
 }
 
+if ($Plan -eq "distribution_fresh_start") {
+    Assert-Condition -Condition ($CacheMode -eq "cold") -Message "Distribution fresh-start evidence requires a cold browser profile." -Failures $failures
+    Assert-Condition -Condition (-not $SkipExport) -Message "Distribution fresh-start evidence requires a fresh Web export." -Failures $failures
+    Assert-Condition -Condition (@($reportEnvelope.page_errors).Count -eq 0) -Message "Distribution fresh-start browser probe captured a page error." -Failures $failures
+    Assert-Condition -Condition (@($reportEnvelope.request_failures).Count -eq 0) -Message "Distribution fresh-start browser probe captured a failed request." -Failures $failures
+    Assert-Condition -Condition (@($reportEnvelope.failed_responses).Count -eq 0) -Message "Distribution fresh-start browser probe captured an HTTP failure response." -Failures $failures
+    Assert-Condition -Condition ([string]$report.build_identity.source_commit -eq $sourceCommit -and [string]$report.build_identity.export_sha256 -eq $exportSha256) -Message "Distribution fresh-start runtime identity did not match the served export." -Failures $failures
+    $distributionEvents = @($report.events | Where-Object { [string]$_.id -eq "distribution_fresh_start_contract" })
+    Assert-Condition -Condition ($distributionEvents.Count -eq 1) -Message "Distribution fresh-start contract did not run exactly once." -Failures $failures
+    if ($distributionEvents.Count -eq 1) {
+        $distribution = $distributionEvents[0].data
+        Assert-Condition -Condition ([bool]$distribution.passed) -Message "A clean exported-Web profile did not reach the tutorial through PLAY." -Failures $failures
+        Assert-Condition -Condition ([bool]$distribution.fresh_profile -and [bool]$distribution.no_saved_run -and [bool]$distribution.play_ready) -Message "Exported Web did not begin from a clean interactive PLAY state." -Failures $failures
+        Assert-Condition -Condition ([bool]$distribution.tutorial_started -and [string]$distribution.after_screen -eq "ENVIRONMENT") -Message "Exported Web PLAY did not enter the tutorial environment." -Failures $failures
+        Assert-Condition -Condition ([int]$distribution.first_interactive_msec -ge 0 -and [int]$distribution.play_to_tutorial_msec -gt 0) -Message "Exported Web fresh-start timing was not recorded." -Failures $failures
+    }
+}
+
 $summary = [ordered]@{
     tool = "web_perf_smoke"
     passed = ($failures.Count -eq 0)
@@ -452,6 +471,9 @@ $summary = [ordered]@{
     active_frames = $ActiveFrames
     memory_seconds = $MemorySeconds
     coin_pusher_stage_diagnostic = [bool]$CoinPusherStageDiagnostic
+    coin_pusher_draw_required_samples = $coinPusherDrawRequiredSamples
+    coin_pusher_draw_percentile = 0.95
+    coin_pusher_draw_required_p95_rank = [Math]::Ceiling(0.95 * [double]$coinPusherDrawRequiredSamples)
     ready_wall_msec = $readyWall
     ready_browser_wall_msec = if ($null -ne $reportEnvelope.ready -and $null -ne $reportEnvelope.ready.wall_msec) { [int]$reportEnvelope.ready.wall_msec } else { 0 }
     ready_node_navigation_wall_msec = if ($null -ne $reportEnvelope.ready -and $null -ne $reportEnvelope.ready.node_navigation_wall_msec) { [int]$reportEnvelope.ready.node_navigation_wall_msec } else { 0 }

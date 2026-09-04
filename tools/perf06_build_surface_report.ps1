@@ -113,7 +113,11 @@ foreach ($scenario in @($runtime.scenarios)) {
     $allocation.static_call_root_audit_sha256 = $auditHash
     $actionPassed = $true
     if (Has-Property $tags "action_evidence") { $actionPassed = [bool]$tags.action_evidence.accepted -and [bool]$tags.action_evidence.progressed }
-    $passed = $frameMetric.count -gt 0 -and $drawMetric.count -gt 0 -and $actionPassed -and ($measured -gt 0 -or -not [string]::IsNullOrWhiteSpace($zeroReason)) -and [int64]$allocation.deep_copies -eq 0
+    $phaseEvidencePassed = $true
+    if (Has-Property $tags "phase_evidence") { $phaseEvidencePassed = [bool]$tags.phase_evidence.observed }
+    $activePhasePassed = $true
+    if (Has-Property $tags "active_phase_evidence") { $activePhasePassed = [bool]$tags.active_phase_evidence.coverage_passed }
+    $passed = $frameMetric.count -gt 0 -and $drawMetric.count -gt 0 -and $actionPassed -and $phaseEvidencePassed -and $activePhasePassed -and ($measured -gt 0 -or -not [string]::IsNullOrWhiteSpace($zeroReason)) -and [int64]$allocation.deep_copies -eq 0
     if (-not $passed) { $failures.Add("Phase did not produce complete live evidence: $surfaceId/$phaseId/$Profile") }
     $rows.Add([pscustomobject][ordered]@{
         surface_id = $surfaceId
@@ -128,6 +132,8 @@ foreach ($scenario in @($runtime.scenarios)) {
         allocation_copy_counters = $allocation
         retained_counters = [ordered]@{ static_memory=$scenario.static_memory_bytes; objects=$scenario.object_count; nodes=$scenario.node_count; orphans=$scenario.orphan_node_count }
         action_evidence = $(if (Has-Property $tags "action_evidence") { $tags.action_evidence } else { $null })
+        phase_evidence = $(if (Has-Property $tags "phase_evidence") { $tags.phase_evidence } else { $null })
+        active_phase_evidence = $(if (Has-Property $tags "active_phase_evidence") { $tags.active_phase_evidence } else { $null })
         passed = $passed
     })
 }

@@ -2,7 +2,7 @@ param(
     [Parameter(Mandatory = $true)][string]$ProfilePath,
     [string]$GodotPath = "",
     [string]$OutDir = ".tmp/perf06_1/native_runtime",
-    [ValidateSet("l02", "grand_casino", "coin_pusher")][string]$Plan = "l02",
+    [ValidateSet("l02", "grand_casino", "coin_pusher", "distribution_fresh_start")][string]$Plan = "l02",
     [ValidatePattern("^[A-Za-z0-9_.:-]+$")][string]$EvidenceProfile = "native",
     [int]$Frames = 120,
     [int]$ActiveFrames = 240,
@@ -64,7 +64,19 @@ $args = @(
     "--bth_perf_evidence_profile=$EvidenceProfile"
 )
 $started = Get-Date
-$process = Start-Process -FilePath $exe -ArgumentList $args -RedirectStandardOutput $runStdout -RedirectStandardError $runStderr -PassThru -WindowStyle Hidden
+$oldDistributionBuild = $env:BTH_DISTRIBUTION_BUILD
+$oldDistributionRoot = $env:BTH_DISTRIBUTION_DATA_ROOT
+try {
+    if ($Plan -eq "distribution_fresh_start") {
+        $env:BTH_DISTRIBUTION_BUILD = "true"
+        $env:BTH_DISTRIBUTION_DATA_ROOT = (Join-Path $out "fresh_distribution_profile") -replace '\\', '/'
+    }
+    $process = Start-Process -FilePath $exe -ArgumentList $args -RedirectStandardOutput $runStdout -RedirectStandardError $runStderr -PassThru -WindowStyle Hidden
+}
+finally {
+    $env:BTH_DISTRIBUTION_BUILD = $oldDistributionBuild
+    $env:BTH_DISTRIBUTION_DATA_ROOT = $oldDistributionRoot
+}
 if (-not $process.WaitForExit($TimeoutMs)) {
     Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
     throw "Native runtime matrix timed out after $TimeoutMs ms."
@@ -84,6 +96,12 @@ if ($Plan -eq "coin_pusher") {
     foreach ($scenario in $pusherScenarios) {
         if ([string]$scenario.tags.solver_backend -cne "native_v3") { throw "Native Coin Pusher scenario '$($scenario.name)' used '$($scenario.tags.solver_backend)' instead of native_v3." }
     }
+}
+$distributionEvidence = $null
+if ($Plan -eq "distribution_fresh_start") {
+    $distributionEvents = @($report.events | Where-Object { [string]$_.id -ceq "distribution_fresh_start_contract" })
+    if ($distributionEvents.Count -ne 1 -or -not [bool]$distributionEvents[0].data.passed) { throw "Native distribution fresh-start contract did not pass exactly once." }
+    $distributionEvidence = $distributionEvents[0].data
 }
 
 $summary = [ordered]@{
@@ -111,6 +129,7 @@ $summary = [ordered]@{
     runtime_report = $rawReport
     runtime_report_sha256 = (Get-FileHash -LiteralPath $rawReport -Algorithm SHA256).Hash.ToLowerInvariant()
     scenario_count = @($report.scenarios).Count
+    distribution_fresh_start = $distributionEvidence
 }
 $summaryPath = Join-Path $out "summary.json"
 $summary | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $summaryPath -Encoding utf8

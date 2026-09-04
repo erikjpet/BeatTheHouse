@@ -1,0 +1,59 @@
+﻿{
+    "schema":  "beat_the_house.integ06_1_historical_fixture_provenance",
+    "version":  1,
+    "fixture_id":  "mid06_pre_world_depth_crew_debt",
+    "capture_class":  "mid_0_6",
+    "capture_milestone":  "pre_world_depth",
+    "historical_release":  "mid-0.6-development-boundary",
+    "historical_commit":  "f1ebe9a729253e4ee3d4d99702a019d9328edbaf",
+    "historical_tree":  "61c3ffdcb788357696c914618f684863cbb30e91",
+    "historical_main_scene_blob":  "4b0643365098308dadfaee909d35e51784905811",
+    "historical_foundation_main_blob":  "f7cdfa75cc21d2ffbc70c8db9c8cf44b0b948446",
+    "historical_save_service_blob":  "15a56c4d9f4be1723a721596b9b67c48ac5c2eae",
+    "driver_path":  "scripts/tests/foundation/integ06_1_v051_fixture_driver.gd",
+    "driver_sha256":  "ABA72F8D9969DF3569C1F65654E3AE229278557C8D6679003C4F672227A3EE76",
+    "capture":  {
+                    "action_index":  1,
+                    "archetype_id":  "corner_store",
+                    "challenge_id":  "",
+                    "challenge_modifiers":  {
+
+                                            },
+                    "environment_id":  "corner_store_003",
+                    "fixture_id":  "mid06_pre_world_depth_crew_debt",
+                    "game_clock_minutes":  798,
+                    "game_id":  "",
+                    "game_state_key":  "",
+                    "methods":  [
+                                    "FoundationMain.start_foundation_run",
+                                    "FoundationMain.select_travel_option:gas_station_casino",
+                                    "FoundationMain.confirm_selected_travel",
+                                    "FoundationMain.select_event_choice:parking_lot_tip:follow_tip",
+                                    "FoundationMain.confirm_selected_event_choice",
+                                    "FoundationMain.select_travel_option:corner_store",
+                                    "FoundationMain.confirm_selected_travel",
+                                    "FoundationMain.use_lender_hook:the_crew",
+                                    "FoundationMain.save_foundation_run",
+                                    "SaveService.wait_for_async_save"
+                                ],
+                    "project_version":  "0.5.1",
+                    "save_path":  "isolated_distribution_root/saves/mid06_pre_world_depth_crew_debt.json",
+                    "save_schema":  "beat_the_house.foundation_run",
+                    "save_version":  2,
+                    "screen":  "RESULT",
+                    "seed":  "INTEG06-1-MID06-PRE-GAME-009",
+                    "surface_state_evidence":  {
+
+                                               },
+                    "travel_path":  [
+                                        "gas_station_casino",
+                                        "corner_store"
+                                    ]
+                },
+    "save_file":  "mid06_pre_world_depth_crew_debt.json",
+    "save_size_bytes":  748356,
+    "save_sha256":  "B04ACDAF5740060344AF6E22183FD86DFD1522F15F8D351BBA06A06D84F6A44F",
+    "custody_root":  "C:\\Users\\theep\\AppData\\Local\\Temp\\bth-integ06-1-historical-0cd991c2227f4b19a88035dd82d6703b",
+    "custody_inventory_path":  "C:\\Users\\theep\\AppData\\Local\\Temp\\bth-integ06-1-historical-0cd991c2227f4b19a88035dd82d6703b\\custody_inventory.json",
+    "custody_inventory_sha256":  "F2A5301D9CD162A9FE3EF9B8B0CACD2A46F48FA1E5449584489D0A9EA7E71B16"
+}

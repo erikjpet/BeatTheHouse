@@ -331,3 +331,119 @@ idle-timing/liveness pairing, and the zero steady-state deep-copy policy. The
 first exact Windows-release diagnostic using the real meta-home environment
 produced a green 26-row canonical surface report; the earlier static start-menu
 substitution is no longer eligible as meta-home liveness evidence.
+
+## 2026-09-04 aggregate-candidate execution record
+
+Candidate `e045a27d` is an exact, clean and pushed performance branch, but it is
+not the final integrated release candidate. A fresh Chrome Web run of the L0.2
+plan at CPU throttle 1 completed all 65 scenarios with zero failures. Its
+retained report is `.tmp/perf06_1/web_l02_e045_cpu1_fresh.json`; READY was
+4,743 ms and Corner Store opened in 945.145 ms. This qualifies the harness and
+the unthrottled candidate only. It does not substitute for the required CPU4,
+low-end, composition or final-candidate rows.
+
+Two immediate fresh-export Coin Pusher runs on the quiesced Chrome 152 CPU4
+profile are retained red:
+
+| Evidence | READY | Gameplay frame result | Draw result |
+| --- | ---: | --- | --- |
+| `web_pusher_e045_cpu4_fresh` | 22,746 ms / 20,000 ms | all seven frame rows green | skill-stop 8.860 ms / 7.000 ms from only three draws |
+| `web_pusher_e045_cpu4_fresh_confirm` | 23,150 ms / 20,000 ms | six active/idle rows green; reduced-motion 16.667 ms / 16.000 ms | skill-stop returned to 3.200 ms; reduced-motion moved red to 9.000 ms / 5.000 ms from one draw |
+
+The draw miss moved between phases instead of reproducing in one path. The
+gate had accepted p95 values built from as few as one draw, which is not a
+statistically eligible nearest-rank percentile. The harness now discards three explicit
+production-canvas warm-up draws and requires at least 20 measured draws for
+every Coin Pusher p95. Sparse measurement-only redraw requests use the real
+canvas at 15-frame intervals; they do not advance the production animation
+scheduler, change gameplay, or alter the 5/7 ms draw and 16/22 ms frame caps.
+This hardening is not a pass until the exact candidate reruns it.
+
+The cold-start red is separate and stable. The release export contains a
+21,802,358-byte `index.side.wasm` engine module (41,022 functions), a
+1,508,237-byte `index.wasm` loader module (5,043 functions), a 337,393-byte
+Coin Pusher extension (516 functions), and a 43,850,988-byte PCK. The combined
+engine WebAssembly payload is 23,310,595 bytes, already 38.15% smaller than the
+37,686,550-byte official dlink template; its compressed template archive is
+36.73% smaller. In the second
+CPU4 run, the DOM loaded in 374.730 ms and every WebAssembly/PCK response ended
+by 1,190.375 ms, but project code did not reach `engine_ready_start` until
+21,049 ms. Foundation then reached the interactive menu in 636 ms. The same
+pre-project hold appears across the retained CPU4 history (22.746-24.983 s
+READY), so retry variance cannot close it.
+
+The shipped custom engine is already a stripped production release:
+single-threaded, SIMD-enabled, assertions disabled, `optimize=size`, 3D,
+physics, navigation and XR disabled, a restricted class profile, and only the
+GDScript, FreeType, fallback text, WebP and required mbedTLS modules enabled.
+It deliberately uses `lto=none`; the native extension itself is stripped O3
+release code and is less than two percent of the large engine side module.
+Loading that small extension later cannot avoid compiling the dynamic-linking
+engine before project startup. Removing the 21.8 MB engine tax would require a
+validated smaller dynamic-linking template or moving the solver into a static
+engine module/non-GDExtension bridge, neither of which may be represented as a
+narrow or already-proven change.
+
+Therefore `perf06_1` remains **IN PROGRESS**. The 20-second READY and 5/7 ms
+draw budgets are unchanged and unwaived. The final candidate must rerun the
+20-sample Coin Pusher gate and complete the native/Web/declared-low-end and
+`integ06_1` composition matrices before this row can close.
+
+### LTO cold-start experiment
+
+Two isolated engine-template experiments changed only the pinned Godot LTO
+mode and its mirrored artifact identity. Every run used a fresh export, Chrome
+152, CPU throttle 4, cold cache, a clean exact commit and a quiesced host. All
+red reports were retained; none was retried into a pass.
+
+| Template | Archive SHA-256 | Archive bytes | Side/main Wasm bytes | CPU4 cold READY runs |
+| --- | --- | ---: | ---: | --- |
+| no LTO baseline | `cf371f607aa9cb18e690bd595976c1baaf00c8cec24078e4a307fd515ad07913` | 6,055,590 | 21,802,358 / 1,508,237 | 22,746; 23,150 ms |
+| ThinLTO | `71e8ece320188e450f1d0272de590b87b53cd3ef654219c36dde5a304746e8de` | 6,225,810 | 22,433,415 / 1,508,095 | 22,144; 22,885; 22,616 ms |
+| FullLTO | `726c7427795bb0b78c3d4051457c82e98ddddce8ae24f98a1903a097497fc03e` | 6,155,921 | 21,521,191 / 1,497,255 | 22,661; 23,199; 23,148 ms |
+
+ThinLTO's `engine_ready_start` values were 20,165, 20,801 and 20,510 ms.
+FullLTO's were 20,554, 21,053 and 21,058 ms. Neither candidate reached the
+20,000 ms READY cap, much less enough margin to qualify as a stable fix.
+ThinLTO increased the dominant side module by 2.9%; FullLTO reduced it by only
+1.3% and did not improve startup. Both candidates were explicitly reverted;
+the reviewed final source and lock remain on `lto=none` and the baseline hash.
+
+The first eligible 20-sample runs also exposed a harness ordering defect: its
+reduced-motion boundary event was recorded before the three discarded warm-up
+draws, while the scenario's before-state was recorded after them. The marker is
+now emitted at the actual post-warm sample boundary. All three FullLTO runs
+passed that exact fixture/liveness linkage check. Their eligible idle draw p95
+values were 7.395, 7.670 and 7.400 ms against 5.000 ms; reduced-motion draw p95
+was 5.580, 7.195 and 6.480 ms against 5.000 ms. This is now a reproducible draw
+hot-path failure, separate from the rejected engine-startup experiment.
+
+### Staged run-UI closure experiment
+
+Candidate `2c1fa028` removes the complete 24-script, 703,404-source-byte run-UI
+closure from Foundation's initial Web menu load. Seventeen direct roots are
+held as nullable strong `Script` references and loaded transactionally at the
+first stage that constructs them. A stage publishes no references or controls
+until all of its scripts load; a failure is persistent, leaves the current menu
+in place, disables run entry, and returns before any normal, tutorial, daily,
+meta-home, Continue/load, or game-test run mutation. Desktop retains the
+synchronous build, and immediate Web Play completes pending stages
+synchronously. A focused static contract and Godot 4.6 parser passed; the real
+native main scene also started and built the complete run UI without errors.
+
+One fresh no-LTO Chrome 152 CPU4 cold run is retained at
+`.tmp/perf06_1/web_pusher_staged_deferral_cpu4_fresh.json`. The template stayed
+at hash `cf371f607aa9cb18e690bd595976c1baaf00c8cec24078e4a307fd515ad07913`
+and 6,055,590 bytes; side/main Wasm sizes stayed 21,802,358 / 1,508,237 bytes.
+READY improved to 21,477 ms, 1,269 ms (5.6%) below the primary 22,746 ms
+baseline, but remained 1,477 ms over budget. The engine did not enter
+Foundation `_ready` until 19,273 ms; Foundation reached the interactive menu
+728 ms later, so the remaining miss is still dominated by pre-project engine
+startup rather than run-shell construction.
+
+All seven maintained Coin Pusher frame-p95 rows passed, but the eligible
+20-sample production-canvas draw gate remained red in six rows: idle 5.635 / 5
+ms, reduced motion 6.895 / 5 ms, drop 9.025 / 7 ms, carriage 7.275 / 7 ms,
+skill-stop 7.080 / 7 ms, and skill-release 11.840 / 7 ms. Collect passed at
+6.845 / 7 ms. The startup and draw budgets remain unchanged and unwaived;
+staged deferral is a measured improvement, not a `perf06_1` closeout.

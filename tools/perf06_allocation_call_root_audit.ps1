@@ -1,12 +1,18 @@
 param(
     [string]$Out = ".tmp/perf06_1/allocation_call_root_audit.json",
-    [string[]]$ProducerRoot = @()
+    [string[]]$ProducerRoot = @(),
+    [string]$CandidateCommit = ""
 )
 
 $ErrorActionPreference = "Stop"
 $root = [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
 $candidate = (& git -C $root rev-parse HEAD).Trim()
 if ($LASTEXITCODE -ne 0) { throw "Could not resolve candidate commit." }
+if (-not [string]::IsNullOrWhiteSpace($CandidateCommit)) {
+    $requestedCandidate = (& git -C $root rev-parse "$CandidateCommit^{commit}").Trim()
+    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($requestedCandidate)) { throw "CandidateCommit does not resolve to a commit." }
+    if ($requestedCandidate -cne $candidate) { throw "Allocation call-root audit HEAD '$candidate' does not match CandidateCommit '$requestedCandidate'." }
+}
 
 $rootSpecs = [Collections.Generic.List[object]]::new()
 @(

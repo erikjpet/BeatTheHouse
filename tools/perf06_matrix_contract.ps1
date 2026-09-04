@@ -3,6 +3,7 @@ param(
     [Parameter(Mandatory = $true)][string]$CompositionManifest,
     [Parameter(Mandatory = $true)][string]$TerminalManifest,
     [string[]]$SurfaceReports = @(),
+    [ValidateSet("native", "web", "low_end")][string[]]$RequiredProfiles = @(),
     [string]$RequiredMatrix = "tools/perf06_required_matrix.json",
     [string]$Out = ".tmp/perf06_1/matrix_contract.json"
 )
@@ -224,6 +225,12 @@ function Import-ShardReports($Manifest, [string]$ManifestPath, [string]$Kind) {
 $matrix = Read-Json $RequiredMatrix "required matrix"
 $composition = Read-Json $CompositionManifest "composition manifest"
 $terminal = Read-Json $TerminalManifest "terminal manifest"
+$profilesToRequire = if ($RequiredProfiles.Count -gt 0) { @($RequiredProfiles | Sort-Object -Unique) } elseif ($null -ne $matrix) { @($matrix.required_profiles) } else { @() }
+if ($null -ne $matrix) {
+    foreach ($profileName in $profilesToRequire) {
+        if (@($matrix.required_profiles) -cnotcontains [string]$profileName) { $failures.Add("Requested unknown matrix profile '$profileName'.") }
+    }
+}
 
 Test-CommonReport $composition "composition manifest" "beat_the_house.integ06_1_composition_manifest/v1"
 Test-CommonReport $terminal "terminal manifest" "beat_the_house.integ06_1_terminal_soak_manifest/v1"
@@ -273,7 +280,7 @@ if ($null -ne $matrix) {
         $group = $matrix.$groupName
         foreach ($surfaceProperty in $group.PSObject.Properties) {
             foreach ($phase in @($surfaceProperty.Value)) {
-                foreach ($profile in @($matrix.required_profiles)) {
+                foreach ($profile in $profilesToRequire) {
                     $matches = @($loadedReports | Where-Object { [string]$_.surface_id -ceq $surfaceProperty.Name -and [string]$_.phase_id -ceq [string]$phase -and [string]$_.profile -ceq [string]$profile })
                     $present = $matches.Count -gt 0
                     $coverage.Add([pscustomobject]@{ surface_id=$surfaceProperty.Name; phase_id=[string]$phase; profile=[string]$profile; present=$present; samples=$matches.Count })
@@ -290,6 +297,7 @@ $result = [ordered]@{
     required_matrix = (Resolve-RepoPath $RequiredMatrix)
     composition_manifest = (Resolve-RepoPath $CompositionManifest)
     terminal_manifest = (Resolve-RepoPath $TerminalManifest)
+    required_profiles = $profilesToRequire
     phase_sample_count = $loadedReports.Count
     coverage = @($coverage)
     failures = @($failures)

@@ -15,6 +15,27 @@ Assert-ClockContract -Condition (-not (Test-CoinPusherIdleSchedulerEvidence -Cou
 $missingSchedulerElapsed = [pscustomobject]@{ surface_animation_redraw_count = 16 }
 Assert-ClockContract -Condition (-not (Test-CoinPusherIdleSchedulerEvidence -Counters $missingSchedulerElapsed)) -Message "Missing production scheduler elapsed time was accepted."
 
+$eligibleDrawTags = [pscustomobject]@{ draw_sampling = [pscustomobject]@{ warmup_samples = 3; target_samples = 64; sample_frames = 946; sample_count = 64; complete = $true; p95_percentile = 0.95; p95_rank = 61; probe_interval_frames = 15 } }
+$eligibleDrawCounters = [pscustomobject]@{ draw_sample_count = 64; draw_sample_buffer_count = 64; draw_frame_usec_samples = @(1..64) }
+Assert-ClockContract -Condition (Test-CoinPusherDrawSamplingEvidence -ScenarioTags $eligibleDrawTags -Counters $eligibleDrawCounters) -Message "Eligible warmed fixed 64-draw percentile evidence was rejected."
+$sparseDrawCounters = $eligibleDrawCounters.PSObject.Copy()
+$sparseDrawCounters.draw_sample_count = 63
+$sparseDrawCounters.draw_sample_buffer_count = 63
+$sparseDrawCounters.draw_frame_usec_samples = @(1..63)
+Assert-ClockContract -Condition (-not (Test-CoinPusherDrawSamplingEvidence -ScenarioTags $eligibleDrawTags -Counters $sparseDrawCounters)) -Message "Incomplete 63-draw percentile evidence was accepted."
+$coldDrawTags = $eligibleDrawTags.PSObject.Copy()
+$coldDrawTags.draw_sampling = $eligibleDrawTags.draw_sampling.PSObject.Copy()
+$coldDrawTags.draw_sampling.warmup_samples = 2
+Assert-ClockContract -Condition (-not (Test-CoinPusherDrawSamplingEvidence -ScenarioTags $coldDrawTags -Counters $eligibleDrawCounters)) -Message "Under-warmed draw percentile evidence was accepted."
+$incompleteDrawTags = $eligibleDrawTags.PSObject.Copy()
+$incompleteDrawTags.draw_sampling = $eligibleDrawTags.draw_sampling.PSObject.Copy()
+$incompleteDrawTags.draw_sampling.complete = $false
+Assert-ClockContract -Condition (-not (Test-CoinPusherDrawSamplingEvidence -ScenarioTags $incompleteDrawTags -Counters $eligibleDrawCounters)) -Message "An explicitly incomplete fixed draw window was accepted."
+$wrongRankDrawTags = $eligibleDrawTags.PSObject.Copy()
+$wrongRankDrawTags.draw_sampling = $eligibleDrawTags.draw_sampling.PSObject.Copy()
+$wrongRankDrawTags.draw_sampling.p95_rank = 60
+Assert-ClockContract -Condition (-not (Test-CoinPusherDrawSamplingEvidence -ScenarioTags $wrongRankDrawTags -Counters $eligibleDrawCounters)) -Message "Incorrect p95 rank was accepted."
+
 $pathRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot ".."))
 $validEvidencePath = Resolve-WebPerfEvidencePath -Root $pathRoot -Out ".tmp/fix06_14_unique/report.json"
 Assert-ClockContract -Condition ($validEvidencePath -eq [System.IO.Path]::GetFullPath((Join-Path $pathRoot ".tmp/fix06_14_unique/report.json"))) -Message "Valid relative evidence path was not resolved beneath the repository root."

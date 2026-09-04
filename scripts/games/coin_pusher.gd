@@ -1,6 +1,9 @@
 class_name CoinPusherGame
 extends GameModule
 
+var _generation_timing_enabled := false
+var _last_generation_timing_usec: Dictionary = {}
+
 const STATE_SCHEMA := "coin_pusher_discrete_pile"
 const DROP_ACTION := "drop_quarter"
 const DROP_CHARGE_ACTION := "coin_pusher_drop_charge"
@@ -30,14 +33,14 @@ const JackpotRidgeScript := preload("res://scripts/games/coin_pusher/jackpot_rid
 const VaultDropScript := preload("res://scripts/games/coin_pusher/vault_drop.gd")
 const CoinPusherSolverScript := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
 const CoinPusherLiveSessionScript := preload("res://scripts/games/coin_pusher/coin_pusher_live_session.gd")
-const CoinPusherRendererScript := preload("res://scripts/games/coin_pusher/coin_pusher_renderer.gd")
 const V3_HEADLESS_MESSAGE := "Aim for bonus-token cups, use the stop to build pressure, and push the machine's heavy feature pieces into the win tray."
 
 var _live_machines: Dictionary = {}
 var _exit_settle_active := false
-var _renderer := CoinPusherRendererScript.new()
+var _renderer = null
 var _machine_definition_cache: Dictionary = {}
 var _tell_labels_cache: Array = []
+var _last_action_timing_usec: Dictionary = {}
 
 
 func setup(p_definition: Dictionary, p_library: ContentLibrary = null) -> void:
@@ -210,6 +213,20 @@ func generate_environment_state(run_state: RunState, environment: Dictionary, rn
 	return machine
 
 
+func set_generation_timing_enabled(enabled: bool) -> void:
+	_generation_timing_enabled = enabled
+	if not enabled:
+		_last_generation_timing_usec = {}
+
+
+func generation_timing_snapshot() -> Dictionary:
+	return _last_generation_timing_usec.duplicate(true)
+
+
+func action_timing_snapshot() -> Dictionary:
+	return _last_action_timing_usec.duplicate(true)
+
+
 func environment_state_generated(run_state: RunState, environment: Dictionary, generated_state: Dictionary) -> void:
 	_register_vault_progressive(run_state, environment, generated_state)
 	_register_pile_rumor(run_state, environment, generated_state)
@@ -235,10 +252,21 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 
 
 func surface_action_command(surface_action: String, _index: int, _confirm_requested: bool, _ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
+	var debug_action_timing := bool(_ui_state.get("coin_pusher_debug_profile_stages", false))
+	var debug_action_started_usec := Time.get_ticks_usec() if debug_action_timing else 0
+	var debug_action_stage_started_usec := debug_action_started_usec
+	if debug_action_timing:
+		_last_action_timing_usec = {"surface_action": surface_action}
 	if _machine_busy(environment):
 		return GameModule.surface_command({"handled": true, "message": "The machine is occupied; no control responds."}, true)
 	var machine := _ensure_live_machine(run_state, environment)
+	if debug_action_timing:
+		_last_action_timing_usec["command_ensure_machine"] = Time.get_ticks_usec() - debug_action_stage_started_usec
+		debug_action_stage_started_usec = Time.get_ticks_usec()
 	_reconcile_tolerance_modifiers(run_state, environment, machine)
+	if debug_action_timing:
+		_last_action_timing_usec["command_reconcile_tolerance"] = Time.get_ticks_usec() - debug_action_stage_started_usec
+		debug_action_stage_started_usec = Time.get_ticks_usec()
 	var live_session: Dictionary = machine.get("live_session", {})
 	if bool(live_session.get("input_locked", false)):
 		return GameModule.surface_command({"handled": true, "message": "The controls lock while the last cascade settles."}, true)
@@ -305,6 +333,9 @@ func surface_action_command(surface_action: String, _index: int, _confirm_reques
 		"coin_pusher_drop":
 			if _drop_refused(machine):
 				return GameModule.surface_command({"handled": true, "message": "The coin slot refuses the quarter; nothing was charged."}, true)
+			if debug_action_timing:
+				_last_action_timing_usec["command_dispatch"] = Time.get_ticks_usec() - debug_action_stage_started_usec
+				_last_action_timing_usec["command_total"] = Time.get_ticks_usec() - debug_action_started_usec
 			return GameModule.surface_command({"handled": true, "direct_resolve": true, "action_id": DROP_ACTION, "action_kind": "legal", "set_stake": _drop_cost(), "skip_stake_validation": true, "preserve_surface_ui_state": true}, true)
 		CARRIAGE_LEFT_ACTION, CARRIAGE_RIGHT_ACTION:
 			var simulation := _simulation(machine)
@@ -325,11 +356,22 @@ func surface_action_command(surface_action: String, _index: int, _confirm_reques
 			immediate_patch["coin_pusher_skill_stop_engaged"] = engaged
 			immediate_patch["coin_pusher_motor_rate_fp"] = int(simulation.get("motor_rate_fp", 0))
 		COLLECT_ACTION:
-			return _collect_surface_command(run_state, environment, machine)
+			if debug_action_timing:
+				_last_action_timing_usec["command_dispatch"] = Time.get_ticks_usec() - debug_action_stage_started_usec
+			return _collect_surface_command(run_state, environment, machine, debug_action_timing, debug_action_started_usec)
 		_:
 			return {"handled": false}
+	if debug_action_timing:
+		_last_action_timing_usec["command_mutation"] = Time.get_ticks_usec() - debug_action_stage_started_usec
+		debug_action_stage_started_usec = Time.get_ticks_usec()
 	_write_live_durable(run_state, environment, machine, false)
+	if debug_action_timing:
+		_last_action_timing_usec["command_write_durable"] = Time.get_ticks_usec() - debug_action_stage_started_usec
+		debug_action_stage_started_usec = Time.get_ticks_usec()
 	immediate_patch.merge(_surface_action_view_patch(machine, run_state, environment, _ui_state), false)
+	if debug_action_timing:
+		_last_action_timing_usec["command_build_patch"] = Time.get_ticks_usec() - debug_action_stage_started_usec
+		_last_action_timing_usec["command_total"] = Time.get_ticks_usec() - debug_action_started_usec
 	return GameModule.surface_command({"handled": true, "environment_changed": true, "preserve_surface_ui_state": true, "surface_state_patch": immediate_patch}, true)
 
 
@@ -495,7 +537,7 @@ func _rail_x_from_board_position(machine: Dictionary, board_position: Vector2) -
 	var rail: Dictionary = apparatus.get("rail", {}) if typeof(apparatus.get("rail", {})) == TYPE_DICTIONARY else {}
 	var rail_min := int(rail.get("x_min", 8000))
 	var rail_max := int(rail.get("x_max", 92000))
-	var layout: Dictionary = _renderer.debug_entry_hardware_layout_for_test({"coin_pusher_geometry": geometry, "coin_pusher_apparatus": apparatus, "coin_pusher_carriage_x": int(_simulation(machine).get("carriage_x", (rail_min + rail_max) / 2))})
+	var layout: Dictionary = _coin_pusher_renderer().debug_entry_hardware_layout_for_test({"coin_pusher_geometry": geometry, "coin_pusher_apparatus": apparatus, "coin_pusher_carriage_x": int(_simulation(machine).get("carriage_x", (rail_min + rail_max) / 2))})
 	var drag_rect: Rect2 = layout.get("drag_rect", V3_RAIL_DRAG_RECT)
 	var normalized := clampf((board_position.x - drag_rect.position.x) / maxf(1.0, drag_rect.size.x), 0.0, 1.0)
 	return clampi(int(round(lerpf(float(rail_min), float(rail_max), normalized))), rail_min, rail_max)
@@ -526,23 +568,33 @@ func surface_motion_signature(_surface, surface_state: Dictionary) -> Dictionary
 
 
 func draw_surface(surface, state: Dictionary, _render_context: Dictionary = {}) -> bool:
-	return _renderer.draw(surface, state)
+	return _coin_pusher_renderer().draw(surface, state)
 
 
 func renderer_signature(state: Dictionary) -> Dictionary:
-	return _renderer.render_signature(state)
+	return _coin_pusher_renderer().render_signature(state)
 
 
 func reset_renderer_performance_counters() -> void:
-	_renderer.reset_performance_stage_counters()
+	_coin_pusher_renderer().reset_performance_stage_counters()
 
 
 func renderer_performance_counters() -> Dictionary:
-	return _renderer.performance_stage_counters()
+	return _coin_pusher_renderer().performance_stage_counters()
 
 
 func prepare_surface_render_state(state: Dictionary) -> void:
-	_renderer.prepare_render_state(state)
+	_coin_pusher_renderer().prepare_render_state(state)
+
+
+func _coin_pusher_renderer() -> RefCounted:
+	# Run generation constructs every game module, including Coin Pusher, while
+	# opening a destination. Keep the presentation-only dependency graph out of
+	# that path; the renderer is needed only when the player opens this cabinet.
+	if _renderer == null:
+		var renderer_script: Script = load("res://scripts/games/coin_pusher/coin_pusher_renderer.gd")
+		_renderer = renderer_script.new() as RefCounted
+	return _renderer
 
 
 func resolve(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
@@ -550,9 +602,15 @@ func resolve(action_id: String, stake: int, run_state: RunState, environment: Di
 
 
 func resolve_with_context(action_id: String, _stake: int, run_state: RunState, environment: Dictionary, _rng: RngStream, _ui_state: Dictionary = {}) -> Dictionary:
+	var debug_action_timing := bool(_ui_state.get("coin_pusher_debug_profile_stages", false))
+	var debug_resolve_started_usec := Time.get_ticks_usec() if debug_action_timing else 0
+	var debug_resolve_stage_started_usec := debug_resolve_started_usec
 	if _machine_busy(environment):
 		return _empty_pusher_result(action_id, environment, "The machine is occupied; no control responds.")
 	var machine := _ensure_live_machine(run_state, environment)
+	if debug_action_timing:
+		_last_action_timing_usec["resolve_ensure_machine"] = Time.get_ticks_usec() - debug_resolve_stage_started_usec
+		debug_resolve_stage_started_usec = Time.get_ticks_usec()
 	# A legal drop neither reads nor spends cabinet tolerance. Reconcile at the
 	# next tolerance-bearing control instead of rebuilding security modifiers on
 	# the measured coin-slot boundary.
@@ -577,6 +635,9 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 		if variation_id != "quarter_falls":
 			_prepare_variation_action(machine)
 			_sync_physical_features(machine)
+		if debug_action_timing:
+			_last_action_timing_usec["resolve_prepare_variation"] = Time.get_ticks_usec() - debug_resolve_stage_started_usec
+			debug_resolve_stage_started_usec = Time.get_ticks_usec()
 		var density := maxi(_cold_density(), int(machine.get("cold_quarters_density_armed", 0))) if bool(machine.get("cold_quarters_armed", false)) else 1
 		machine["cold_quarters_armed"] = false
 		machine["cold_quarters_density_armed"] = 0
@@ -584,11 +645,17 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 		var requested_count := maxi(1, _stake / maxi(1, _drop_cost()))
 		var nozzle_id := _selected_nozzle_id(machine, simulation)
 		var queued_count := CoinPusherLiveSessionScript.enqueue_drops(machine, {"nozzle_id": nozzle_id, "density": density, "provenance": provenance, "chain_depth": 0, "bonus_origin": false}, requested_count)
+		if debug_action_timing:
+			_last_action_timing_usec["resolve_enqueue_drops"] = Time.get_ticks_usec() - debug_resolve_stage_started_usec
+			debug_resolve_stage_started_usec = Time.get_ticks_usec()
 		var total_cost := queued_count * _drop_cost()
 		machine["action_count"] = int(machine.get("action_count", 0)) + queued_count
 		machine["total_cost"] = int(machine.get("total_cost", 0)) + total_cost
 		machine["last_message"] = "%d quarter%s queued through %s. The nozzle can move while they feed." % [queued_count, "" if queued_count == 1 else "s", nozzle_id]
 		_write_live_durable(run_state, environment, machine, false, DROP_DURABLE_KEYS)
+		if debug_action_timing:
+			_last_action_timing_usec["resolve_write_durable"] = Time.get_ticks_usec() - debug_resolve_stage_started_usec
+			debug_resolve_stage_started_usec = Time.get_ticks_usec()
 		var deltas := {
 			"bankroll_delta": -total_cost,
 			"story_log": [_story_entry(DROP_ACTION, "legal", environment, -total_cost, 0, {"tick": int(simulation.get("tick", 0)), "carriage_x": int(simulation.get("carriage_x", 50000)), "nozzle_id": nozzle_id, "queued_count": queued_count})],
@@ -598,6 +665,9 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 		result["host_apply_result"] = true
 		result["surface_action_view_patch"] = _drop_surface_action_view_patch(machine, run_state, environment, _ui_state)
 		result["preserve_surface_ui_state"] = true
+		if debug_action_timing:
+			_last_action_timing_usec["resolve_build_result"] = Time.get_ticks_usec() - debug_resolve_stage_started_usec
+			_last_action_timing_usec["resolve_total"] = Time.get_ticks_usec() - debug_resolve_started_usec
 		return result
 	if action_id in [VAULT_START_ACTION, VAULT_OPEN_ACTION, VAULT_STOP_ACTION, VAULT_PEEK_ACTION]:
 		return _resolve_vault_action(action_id, run_state, environment, machine, _ui_state)
@@ -816,6 +886,9 @@ func finalize_chunked_exit_settle(run_state: RunState, environment: Dictionary) 
 
 
 func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: RngStream = null) -> Dictionary:
+	var perf_started_usec := Time.get_ticks_usec() if _generation_timing_enabled else 0
+	var perf_stage_started_usec := perf_started_usec
+	_last_generation_timing_usec = {}
 	var local_rng := rng
 	if local_rng == null:
 		local_rng = RngStream.new()
@@ -824,7 +897,13 @@ func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: 
 	variation_rng.configure(_stable_hash("coin_pusher_variation:%s:%s" % [str(run_state.seed_text if run_state != null else "fallback"), _environment_node_id(run_state, environment)]))
 	var variation_id := _seeded_variation_id(environment, variation_rng)
 	var variation_config := _variation_config(variation_id)
+	if _generation_timing_enabled:
+		_last_generation_timing_usec["setup"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stage_started_usec = Time.get_ticks_usec()
 	var simulation := CoinPusherSolverScript.create_machine(local_rng.fork("fixed_point_pile"), _machine_definition(variation_id), _opening_coin_count(variation_id))
+	if _generation_timing_enabled:
+		_last_generation_timing_usec["solver_create"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stage_started_usec = Time.get_ticks_usec()
 	# Keep never-visited world generation byte-identical to the Stage-1 snapshot.
 	# Live apparatus defaults are initialized at the actual entry boundary.
 	simulation.erase("carriage_x")
@@ -842,6 +921,9 @@ func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: 
 		variation_state = JackpotRidgeScript.initial_state(variation_config, local_rng.fork("jackpot_ridge"), _lane_count(), _cell_count())
 	elif variation_id == "vault_drop":
 		variation_state = VaultDropScript.initial_state(variation_config, local_rng.fork("vault_drop"), _lane_count(), _cell_count(), node_id)
+	if _generation_timing_enabled:
+		_last_generation_timing_usec["variation_state"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stage_started_usec = Time.get_ticks_usec()
 	var machine := {
 		"schema": STATE_SCHEMA,
 		"version": _state_version(),
@@ -875,10 +957,20 @@ func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: 
 		"scenario_reset_token": _scenario_reset_token(environment),
 		"last_message": _variation_intro(variation_id),
 	}
+	if _generation_timing_enabled:
+		_last_generation_timing_usec["machine_state"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stage_started_usec = Time.get_ticks_usec()
 	_sync_physical_features(machine)
+	if _generation_timing_enabled:
+		_last_generation_timing_usec["physical_features"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stage_started_usec = Time.get_ticks_usec()
 	machine["rider_serial"] = (machine.get("riders", []) as Array).size()
 	machine["settled_state"] = CoinPusherLiveSessionScript.make_snapshot(_simulation(machine), machine)
+	if _generation_timing_enabled:
+		_last_generation_timing_usec["snapshot"] = Time.get_ticks_usec() - perf_stage_started_usec
 	machine.erase("simulation")
+	if _generation_timing_enabled:
+		_last_generation_timing_usec["total"] = Time.get_ticks_usec() - perf_started_usec
 	return machine
 func _ensure_machine_state(run_state: RunState, environment: Dictionary, persist: bool) -> Dictionary:
 	var game_states := _game_states(environment)
@@ -1698,11 +1790,21 @@ func _ledger_value(ledger: Array) -> int:
 	return total
 
 
-func _collect_surface_command(run_state: RunState, environment: Dictionary, machine: Dictionary) -> Dictionary:
+func _collect_surface_command(run_state: RunState, environment: Dictionary, machine: Dictionary, debug_action_timing: bool = false, debug_action_started_usec: int = 0) -> Dictionary:
+	var debug_stage_started_usec := Time.get_ticks_usec() if debug_action_timing else 0
 	var simulation := _simulation(machine)
 	var tray: Array = (simulation.get("tray_ledger", []) as Array).duplicate(true)
+	if debug_action_timing:
+		_last_action_timing_usec["collect_snapshot_tray"] = Time.get_ticks_usec() - debug_stage_started_usec
+		debug_stage_started_usec = Time.get_ticks_usec()
 	CoinPusherLiveSessionScript.queue_input(machine, {"kind": "collect"})
+	if debug_action_timing:
+		_last_action_timing_usec["collect_queue_input"] = Time.get_ticks_usec() - debug_stage_started_usec
+		debug_stage_started_usec = Time.get_ticks_usec()
 	var collected := CoinPusherSolverScript.collect_tray(simulation)
+	if debug_action_timing:
+		_last_action_timing_usec["collect_solver"] = Time.get_ticks_usec() - debug_stage_started_usec
+		debug_stage_started_usec = Time.get_ticks_usec()
 	var cash := _ledger_value(tray)
 	var items: Array = collected.get("items", []) if typeof(collected.get("items", [])) == TYPE_ARRAY else []
 	var message := "The tray is empty." if tray.is_empty() else "You collect $%d from %d tray pieces." % [cash, tray.size()]
@@ -1713,12 +1815,27 @@ func _collect_surface_command(run_state: RunState, environment: Dictionary, mach
 		"messages": [message],
 	}
 	var result := GameModule.build_canonical_owned_action_result({"source_id": get_id(), "game_id": get_id(), "action_id": COLLECT_ACTION, "action_kind": "free", "environment_id": str(environment.get("id", "")), "deltas": deltas, "message": message})
+	if debug_action_timing:
+		_last_action_timing_usec["collect_build_result"] = Time.get_ticks_usec() - debug_stage_started_usec
+		debug_stage_started_usec = Time.get_ticks_usec()
 	GameModule.apply_result(run_state, result)
+	if debug_action_timing:
+		_last_action_timing_usec["collect_apply_result"] = Time.get_ticks_usec() - debug_stage_started_usec
+		debug_stage_started_usec = Time.get_ticks_usec()
 	_write_live_durable(run_state, environment, machine, false)
+	if debug_action_timing:
+		_last_action_timing_usec["collect_write_durable"] = Time.get_ticks_usec() - debug_stage_started_usec
+		debug_stage_started_usec = Time.get_ticks_usec()
 	_register_pile_rumor(run_state, environment, machine)
+	if debug_action_timing:
+		_last_action_timing_usec["collect_register_rumor"] = Time.get_ticks_usec() - debug_stage_started_usec
+		debug_stage_started_usec = Time.get_ticks_usec()
 	var patch := _surface_action_view_patch(machine, run_state, environment)
 	patch["coin_pusher_collected_count"] = int(simulation.get("collected_count", 0))
 	patch["coin_pusher_collected_value"] = int(simulation.get("collected_value", 0))
+	if debug_action_timing:
+		_last_action_timing_usec["collect_build_patch"] = Time.get_ticks_usec() - debug_stage_started_usec
+		_last_action_timing_usec["command_total"] = Time.get_ticks_usec() - debug_action_started_usec
 	return GameModule.surface_command({"handled": true, "environment_changed": true, "message": message, "surface_state_patch": patch, "preserve_surface_ui_state": true}, true)
 
 
@@ -2274,8 +2391,10 @@ func _adjacent_scenario_tolerance_delta(run_state: RunState) -> int:
 		var neighbor := b if a == current_node else a if b == current_node else ""
 		if neighbor.is_empty():
 			continue
-		var public_scenario := run_state.scenario_for_node(neighbor)
-		var scenario_definition := library.scenario(str(public_scenario.get("id", "")))
+		# This is an internal read-only policy query. The public scenario accessor
+		# deep-copies the complete sequence package, which made first Web travel pay
+		# that cost once per neighboring node before a machine was ever opened.
+		var scenario_definition := run_state._seeded_scenario_definition_for_node_readonly(neighbor)
 		var mutations: Dictionary = scenario_definition.get("mutations", {}) if typeof(scenario_definition.get("mutations", {})) == TYPE_DICTIONARY else {}
 		var hooks: Dictionary = mutations.get("hook_flags", {}) if typeof(mutations.get("hook_flags", {})) == TYPE_DICTIONARY else {}
 		var nearby_band := str(hooks.get("nearby_alarm_tolerance_band", "")).to_lower()
