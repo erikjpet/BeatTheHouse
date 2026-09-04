@@ -287,7 +287,7 @@ func _finish_delivery_matrix(delivery: Dictionary) -> void:
 		"profile": {"evidence_profile": evidence_profile, "path": evidence_profile_path, "sha256": evidence_profile_sha256},
 		"shard": {"index": shard_index, "count": shard_count, "seed_ids": [seed_text]},
 		"platform": OS.get_name(),
-		"profile": "headless-production-selector",
+		"execution_profile": "headless-production-selector",
 		"active_systems": ["scenario", "crew_world_sequence", "event", "service", "traveler", "police_sweep", "game", "save_load"],
 		"authored_max_counts": {"orders": 4, "punchline_layers": 3},
 		"phase_samples": [],
