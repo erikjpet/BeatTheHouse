@@ -40,67 +40,18 @@ if (Test-Path -LiteralPath $outPath) {
 }
 New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 
-$frameP95BudgetsMs = @{
-    "menu_idle" = 180.0
-    "start_menu_idle" = 20.0
-    "corner_store_idle" = 120.0
-    "pull_tabs_idle" = 20.0
-    "pull_tabs_active" = 60.0
-    "scratch_tickets_idle" = 25.0
-    "scratch_tickets_active" = 65.0
-    "slot_idle" = 45.0
-    "slot_active" = 110.0
-    "bar_dice_idle" = 25.0
-    "bar_dice_active" = 90.0
-    "blackjack_idle" = 25.0
-    "blackjack_active" = 110.0
-    "baccarat_idle" = 25.0
-    "baccarat_active" = 120.0
-    "roulette_idle" = 30.0
-    "roulette_active" = 160.0
-    "craps_idle" = 30.0
-    "craps_active" = 160.0
-    "crew_draw_poker_idle" = 25.0
-    "crew_draw_poker_active" = 110.0
-    "video_poker_idle" = 20.0
-    "video_poker_active" = 60.0
-    "slot_autoplay_active" = 100.0
-    "pinball_feature_session" = 180.0
-    "world_map_idle" = 45.0
-    "scripted_play_memory_10m" = 45.0
+$budgetTablePath = Join-Path $PSScriptRoot "perf06_budget_table.json"
+$budgetTable = Get-Content -LiteralPath $budgetTablePath -Raw | ConvertFrom-Json
+$planBudgets = $budgetTable.web_frame_p95_ms.PSObject.Properties[$Plan].Value
+if ($null -eq $planBudgets) { throw "Published perf06 budget table has no Web plan '$Plan'." }
+$frameP95BudgetsMs = @{}
+foreach ($entry in $planBudgets.PSObject.Properties) {
+    $frameP95BudgetsMs[$entry.Name] = [double]$entry.Value
 }
-if ($Plan -eq "grand_casino") {
-    $frameP95BudgetsMs = @{
-        "menu_idle" = 180.0
-        "grand_casino_late_settle" = 60.0
-        "grand_casino_room_churn" = 50.0
-        "grand_casino_late_idle" = 50.0
-    }
-}
-if ($Plan -eq "coin_pusher") {
-    # The 22/7 active limits are the maintained owner-authorized native
-    # baseline recorded in foundation_performance_probe.gd. Idle retains the
-    # V3 plan's 16/5 shipped-cap contract.
-    $frameP95BudgetsMs = @{
-        "menu_idle" = 180.0
-        "coin_pusher_idle" = 16.0
-        "coin_pusher_active_drop" = 22.0
-        "coin_pusher_active_carriage" = 22.0
-        "coin_pusher_active_skill_stop" = 22.0
-        "coin_pusher_active_skill_release" = 22.0
-        "coin_pusher_active_collect" = 22.0
-        "coin_pusher_reduced_motion" = 16.0
-    }
-}
-if ($Plan -eq "secure_entropy") {
-    $frameP95BudgetsMs = @{
-        "menu_idle" = 180.0
-    }
-}
-$readyBudgetMs = 20000
-$cornerStoreOpenBudgetMs = 1200
-$telemetryOverheadAvgBudgetMs = 0.1
-$scenarioMemoryDeltaBudgetBytes = 128MB
+$readyBudgetMs = [int]$budgetTable.web_global.ready_ms
+$cornerStoreOpenBudgetMs = [int]$budgetTable.web_global.corner_store_open_ms
+$telemetryOverheadAvgBudgetMs = [double]$budgetTable.web_global.telemetry_overhead_mean_ms
+$scenarioMemoryDeltaBudgetBytes = [int64]$budgetTable.policy.web_scenario_memory_delta_bytes_max
 
 function Wait-ForWebServer {
     param([string]$Url, [int]$TimeoutSec)
@@ -510,6 +461,8 @@ $summary = [ordered]@{
     corner_store_open_budget_ms = $cornerStoreOpenBudgetMs
     scenario_frame_p95_budgets_ms = $frameP95BudgetsMs
     scenario_memory_delta_budget_bytes = $scenarioMemoryDeltaBudgetBytes
+    budget_table_version = [int]$budgetTable.version
+    budget_table_sha256 = (Get-FileHash -LiteralPath $budgetTablePath -Algorithm SHA256).Hash.ToLowerInvariant()
     source_commit = $sourceCommit
     fresh_export = (-not $SkipExport)
     web_export_identity = $webExportIdentity

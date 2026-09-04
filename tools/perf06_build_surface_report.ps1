@@ -39,6 +39,7 @@ $profileManifest = Read-Json $profileFile
 $summary = Read-Json $summaryFile
 $audit = Read-Json $auditFile
 if (-not [bool]$audit.passed -or [string]$audit.candidate_commit -cne $candidate) { throw "Static allocation audit is not green for the candidate." }
+if (-not [bool]$summary.passed -or @($summary.failures).Count -ne 0) { throw "Runtime launch summary did not pass its enforced budgets and contracts." }
 
 $rawPath = Resolve-RepoPath ([string]$(if ($Platform -eq "native") { $summary.runtime_report } else { $summary.report }))
 $rawEnvelope = Read-Json $rawPath
@@ -136,10 +137,10 @@ $result = [ordered]@{
     retained_counters = [ordered]@{ source="phase_rows"; phase_count=$rows.Count }
     allocation_copy_counters = [ordered]@{ source="phase_rows"; static_audit_sha256=$auditHash }
     artifacts = @(
-        [ordered]@{ path=$rawPath; sha256=(Get-FileHash -LiteralPath $rawPath -Algorithm SHA256).Hash.ToLowerInvariant() },
-        [ordered]@{ path=$summaryFile; sha256=(Get-FileHash -LiteralPath $summaryFile -Algorithm SHA256).Hash.ToLowerInvariant() },
-        [ordered]@{ path=$auditFile; sha256=$auditHash },
-        [ordered]@{ path=$profileFile; sha256=$profileHash }
+        [ordered]@{ path=$rawPath; sha256=(Get-FileHash -LiteralPath $rawPath -Algorithm SHA256).Hash.ToLowerInvariant(); size_bytes=(Get-Item -LiteralPath $rawPath).Length },
+        [ordered]@{ path=$summaryFile; sha256=(Get-FileHash -LiteralPath $summaryFile -Algorithm SHA256).Hash.ToLowerInvariant(); size_bytes=(Get-Item -LiteralPath $summaryFile).Length },
+        [ordered]@{ path=$auditFile; sha256=$auditHash; size_bytes=(Get-Item -LiteralPath $auditFile).Length },
+        [ordered]@{ path=$profileFile; sha256=$profileHash; size_bytes=(Get-Item -LiteralPath $profileFile).Length }
     )
     failures = @($failures)
     passed = $failures.Count -eq 0
