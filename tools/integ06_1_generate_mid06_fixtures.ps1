@@ -57,27 +57,18 @@ $captures = @(
         milestone = "pre_world_depth"
         commit = "f1ebe9a729253e4ee3d4d99702a019d9328edbaf"
         fixture_id = "mid06_pre_world_depth_crew_debt"
-        seed = "INTEG06-1-MID06-PRE-WORLD-001"
+        seed = "INTEG06-1-MID06-PRE-GAME-009"
         case = [ordered]@{
             fixture_id = "mid06_pre_world_depth_crew_debt"
-            seed = "INTEG06-1-MID06-PRE-WORLD-001"
+            seed = "INTEG06-1-MID06-PRE-GAME-009"
             steps = @(
                 [ordered]@{ type = "travel"; target = "gas_station_casino" }
+                [ordered]@{ type = "event"; event_id = "parking_lot_tip"; choice_id = "follow_tip" }
                 [ordered]@{ type = "travel"; target = "corner_store" }
                 [ordered]@{ type = "lender"; lender_id = "the_crew" }
-                [ordered]@{ type = "travel"; target = "gas_station_casino" }
-                [ordered]@{ type = "travel"; target = "motel" }
-                [ordered]@{ type = "travel"; target = "small_underground_casino" }
             )
-            expected_archetype = "small_underground_casino"
+            expected_archetype = "corner_store"
             expected_lender_debt = "the_crew"
-            enter_game = "blackjack"
-            surface_steps = @(
-                [ordered]@{ type = "click"; action = "blackjack_chip"; index = 0; confirm = $true; wait_msec = 50 }
-                [ordered]@{ type = "click"; action = "blackjack_deal"; index = 0; confirm = $true; wait_msec = 50 }
-                [ordered]@{ type = "click"; action = "blackjack_stand"; index = 0; confirm = $true; wait_msec = 50 }
-            )
-            expected_surface_state = "blackjack_after_hand"
         }
     }
 )

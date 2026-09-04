@@ -33,7 +33,7 @@ historical fixture driver.
 |---|---|---|---|
 | pre-game-depth | `31e434c412ba8bdeda03bee86db1f8b4d899c962` | first parent of accepted game ritual merge `5a2b1e1a6782a13308585e1a974adeeb86be0647` | seed `INTEG06-1-MID06-PRE-GAME-009`; travel by its generated public route to Gas Station Casino, open its generated Slot, execute a public spin, and require persisted `spin_count >= 1` plus a result |
 | pre-environment-depth | `5a2b1e1a6782a13308585e1a974adeeb86be0647` | first parent of accepted dynamic-scenario merge `03fee92d4fa63b7eeb60833fe9649a84fae48816` | travel through Motel to Bar, publicly roll and settle Bar Dice, and require persisted `rounds_played >= 1` plus a result |
-| pre-world-depth | `f1ebe9a729253e4ee3d4d99702a019d9328edbaf` | first parent of accepted world-adapter merge `95c6aaf502087eed21f8970a1f244a6196ef6b56` | travel to Crew lender, accept its real loan, reach Punchline, publicly stage a chip/deal/stand hand, and require persisted `hands_played >= 1` plus a result |
+| pre-world-depth | `f1ebe9a729253e4ee3d4d99702a019d9328edbaf` | first parent of accepted world-adapter merge `95c6aaf502087eed21f8970a1f244a6196ef6b56` | seed `INTEG06-1-MID06-PRE-GAME-009`; travel through the public Gas Station tip route to the Crew lender and accept its real loan, preserving active Crew debt at Corner Store before the world adapters existed |
 
 All three commits genuinely retain `config/version="0.5.1"` in their own
 `project.godot`. The milestone and exact commit/tree hashes, rather than that
