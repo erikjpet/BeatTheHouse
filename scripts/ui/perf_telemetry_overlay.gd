@@ -1193,13 +1193,6 @@ func _run_coin_pusher_plan() -> void:
 	mark_event("coin_pusher_reduced_fixture_identity", reduced_fixture)
 	mark_event("coin_pusher_reduced_fixture_observation", reduced_reinstall.get("observation", {}))
 	await _set_coin_pusher_reduce_motion(true)
-	var reduced_sample_state := _coin_pusher_surface_state(_coin_pusher_canvas())
-	mark_event("coin_pusher_reduced_sample_boundary", {
-		"body_count": int(reduced_sample_state.get("coin_pusher_body_count", -1)),
-		"tray_count": int(reduced_sample_state.get("coin_pusher_tray_count", -1)),
-		"liveness_ticks": int(reduced_sample_state.get("coin_pusher_liveness_ticks", 0)),
-		"conservation": _coin_pusher_conservation_snapshot(run_state, game),
-	})
 	await _measure_coin_pusher_idle("coin_pusher_reduced_motion", true, reduced_fixture)
 	await _set_coin_pusher_reduce_motion(false)
 	await _measure_coin_pusher_ceiling_refusal(run_state, game)
@@ -1577,6 +1570,13 @@ func _measure_coin_pusher_idle(name: String, reduced_motion: bool, fixture: Dict
 	var game: GameModule = app.get("current_game") as GameModule
 	var conservation_before := _coin_pusher_conservation_snapshot(run_state, game) if run_state != null and game != null else {}
 	var before_counters := _coin_pusher_canvas_counters(canvas)
+	if reduced_motion:
+		mark_event("coin_pusher_reduced_sample_boundary", {
+			"body_count": int(before_state.get("coin_pusher_body_count", -1)),
+			"tray_count": int(before_state.get("coin_pusher_tray_count", -1)),
+			"liveness_ticks": int(before_state.get("coin_pusher_liveness_ticks", 0)),
+			"conservation": conservation_before.duplicate(true),
+		})
 	_begin_scenario(name, {
 		"surface": "coin_pusher",
 		"mode": "reduced_motion" if reduced_motion else "settled_idle",
