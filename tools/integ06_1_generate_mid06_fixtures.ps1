@@ -123,7 +123,10 @@ try {
 }
 finally {
     if (Test-Path -LiteralPath $temporaryPlanRoot) {
-        Remove-Item -LiteralPath $temporaryPlanRoot -Recurse -Force
+        # Preserve the capture plans with the retained historical archives so
+        # custody can be audited without depending on regenerated temporary
+        # input. Closeout policy forbids destructive cleanup.
+        Write-Host "INTEG06_1_MID06_PLAN_CUSTODY=$temporaryPlanRoot"
     }
 }
 

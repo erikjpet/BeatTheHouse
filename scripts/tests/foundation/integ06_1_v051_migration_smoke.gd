@@ -15,9 +15,11 @@ const HISTORICAL_MAIN_SCENE_BLOB := "4b0643365098308dadfaee909d35e51784905811"
 const HISTORICAL_FOUNDATION_MAIN_BLOB := "3bc98efec993b8bfdd9252687a0ba041ebba7f23"
 const HISTORICAL_SAVE_SERVICE_BLOB := "57a6526016123feb9bcf1ebeb50cc8f937f0b265"
 const DRIVER_PATH := "res://scripts/tests/foundation/integ06_1_v051_fixture_driver.gd"
-# The first 35 sidecars are immutable evidence captured by the driver shipped
-# with commit 11f3aeed. New checkpoints bind to the current driver's bytes.
+# Historical sidecars are immutable evidence and remain bound to the exact
+# driver bytes that produced each capture. Mid-0.6 captures bind to the current
+# driver independently below.
 const LEGACY_DRIVER_SHA256 := "25e29653f4284c9ab6261432b3bca98006c8cb37f1d1c87ddf859e25f741faaf"
+const TUTORIAL_DRIVER_SHA256 := "06f2bd1608ab320132a9eaffb7dcdbcf0715bb7a749dee0b4af9361247a1a6fb"
 const CURRENT_DRIVER_FIXTURES := [
 	"v051_tutorial_gas_station_arrival",
 	"v051_tutorial_gas_machine_open",
@@ -308,7 +310,7 @@ func _valid_provenance(provenance: Dictionary, capture_case: Dictionary, fixture
 			failures.append("wrong historical source identity")
 		if str(provenance.get("historical_main_scene_blob", "")) != HISTORICAL_MAIN_SCENE_BLOB or str(provenance.get("historical_foundation_main_blob", "")) != HISTORICAL_FOUNDATION_MAIN_BLOB or str(provenance.get("historical_save_service_blob", "")) != HISTORICAL_SAVE_SERVICE_BLOB:
 			failures.append("wrong historical runtime blob identity")
-		expected_driver_sha256 = _file_sha256(DRIVER_PATH) if fixture_id in CURRENT_DRIVER_FIXTURES else LEGACY_DRIVER_SHA256
+		expected_driver_sha256 = TUTORIAL_DRIVER_SHA256 if fixture_id in CURRENT_DRIVER_FIXTURES else LEGACY_DRIVER_SHA256
 	if str(provenance.get("driver_path", "")) != DRIVER_PATH.trim_prefix("res://") or str(provenance.get("driver_sha256", "")).to_lower() != expected_driver_sha256:
 		failures.append("fixture driver identity mismatch")
 	if str(provenance.get("fixture_id", "")) != fixture_id or str(provenance.get("save_file", "")) != "%s.json" % fixture_id:
