@@ -78,6 +78,13 @@ if ((& git -C $root rev-parse HEAD).Trim() -cne $head -or @(& git -C $root statu
 $report = Get-Content -LiteralPath $rawReport -Raw | ConvertFrom-Json
 if ([string]$report.build_identity.source_commit -cne $head -or [string]$report.build_identity.export_sha256 -cne $buildHash) { throw "Native report identity does not match the exported candidate." }
 if ([string]$report.platform -cne "windows" -or [string]$report.plan -cne $Plan) { throw "Native report platform/plan identity is invalid." }
+if ($Plan -eq "coin_pusher") {
+    $pusherScenarios = @($report.scenarios | Where-Object { [string]$_.tags.perf06_surface_id -ceq "coin_pusher" })
+    if ($pusherScenarios.Count -eq 0) { throw "Native Coin Pusher runtime emitted no canonical phase scenarios." }
+    foreach ($scenario in $pusherScenarios) {
+        if ([string]$scenario.tags.solver_backend -cne "native_v3") { throw "Native Coin Pusher scenario '$($scenario.name)' used '$($scenario.tags.solver_backend)' instead of native_v3." }
+    }
+}
 
 $summary = [ordered]@{
     schema = "beat_the_house.perf06_native_runtime/v1"

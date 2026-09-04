@@ -39,6 +39,9 @@ foreach ($token in $nativeTokens) {
 foreach ($token in @("perf06_budget_table.json", "web_perf_idle_liveness_contract.ps1", "scenario_frame_p95_budgets_ms", "budget_table_sha256")) {
     if (-not $webText.Contains($token)) { throw "Web budget enforcement lost '$token'." }
 }
+if ($webText -notmatch 'solver_backend -ceq "native_v3"') {
+    throw "Exported Web performance gate no longer requires the locked native_v3 Coin Pusher solver."
+}
 foreach ($token in @("-Target template_debug", "BTH_PERF_NATIVE_PLUGIN_SHA256", "nativePluginHash")) {
     $probeWrapper = Get-Content -LiteralPath (Join-Path $PSScriptRoot "foundation_performance_probe.ps1") -Raw
     if (-not $probeWrapper.Contains($token)) { throw "Native source-run probe lost '$token'." }

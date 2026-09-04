@@ -339,7 +339,7 @@ if ($Plan -eq "coin_pusher") {
         Assert-Condition -Condition ([double]$idleDraw.draw_p95_ms -le 5.0) -Message ("Coin Pusher idle draw p95 {0:N3}ms exceeded 5.000ms." -f [double]$idleDraw.draw_p95_ms) -Failures $failures
         Assert-Condition -Condition ([int]$idle.tags.solver_liveness_delta -gt 0) -Message "Coin Pusher normal idle solver liveness did not advance." -Failures $failures
         Assert-Condition -Condition (Test-CoinPusherSurfaceConservationBinding -BodyCount ([int]$idle.tags.body_count_before) -TrayCount ([int]$idle.tags.tray_count_before) -Snapshot $idle.tags.conservation_before -ExpectedOrigin $CoinPusherShippedBodyCount) -Message "Coin Pusher normal idle did not begin from the exact conserved shipped-origin fixture." -Failures $failures
-        Assert-Condition -Condition (-not [string]::IsNullOrWhiteSpace([string]$idle.tags.solver_backend)) -Message "Coin Pusher normal idle did not identify its solver backend." -Failures $failures
+        Assert-Condition -Condition ([string]$idle.tags.solver_backend -ceq "native_v3") -Message "Coin Pusher normal idle did not use the locked native_v3 solver." -Failures $failures
     }
 
     if ($scenariosByName.ContainsKey("coin_pusher_reduced_motion")) {
@@ -358,6 +358,7 @@ if ($Plan -eq "coin_pusher") {
             Assert-Condition -Condition ([int]$reduced.tags.redraw_delta -eq 0 -and (-not [bool]$reducedDraw.surface_animation_liveness_active)) -Message "Coin Pusher reduced motion unexpectedly advanced the presentation-animation scheduler." -Failures $failures
             Assert-Condition -Condition ([int]$reducedDraw.draw_sample_count -gt 0) -Message "Coin Pusher reduced motion recorded no canvas draw sample." -Failures $failures
             Assert-Condition -Condition ([double]$reducedDraw.draw_p95_ms -le 5.0) -Message ("Coin Pusher reduced-motion draw p95 {0:N3}ms exceeded 5.000ms." -f [double]$reducedDraw.draw_p95_ms) -Failures $failures
+            Assert-Condition -Condition ([string]$reduced.tags.solver_backend -ceq "native_v3") -Message "Coin Pusher reduced motion did not use the locked native_v3 solver." -Failures $failures
         }
     }
 
@@ -382,7 +383,7 @@ if ($Plan -eq "coin_pusher") {
         Assert-Condition -Condition ([bool]$tags.physical_motion_seen) -Message "Coin Pusher $actionName did not show physical motion." -Failures $failures
         Assert-Condition -Condition ([int]$tags.host_full_snapshot_fallbacks -eq 0 -and [int]$tags.full_snapshot_calls -eq 0) -Message "Coin Pusher $actionName used a full-snapshot fallback instead of incremental refresh." -Failures $failures
         Assert-Condition -Condition ([bool]$tags.surface_ui_preserved) -Message "Coin Pusher $actionName did not preserve free cabinet controls." -Failures $failures
-        Assert-Condition -Condition (-not [string]::IsNullOrWhiteSpace([string]$tags.solver_backend)) -Message "Coin Pusher $actionName did not identify its solver backend." -Failures $failures
+        Assert-Condition -Condition ([string]$tags.solver_backend -ceq "native_v3") -Message "Coin Pusher $actionName did not use the locked native_v3 solver." -Failures $failures
     }
     if ($scenariosByName.ContainsKey("coin_pusher_active_drop")) {
         $drop = $scenariosByName["coin_pusher_active_drop"].tags
