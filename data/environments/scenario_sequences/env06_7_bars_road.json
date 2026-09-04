@@ -1927,8 +1927,9 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "bar_fight_night_arrival_spawn_bar_fight_night_right_brawler",
+                  "anchor_id": "fight_right_brawler_arrival",
                   "stable_object_id": "bar_fight_night_right_brawler",
-                  "zone_id": "background"
+                  "zone_id": "foreground"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -3508,7 +3509,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "774e5720ea1432dff9bdfac4225103d381556e6a24e01d852fc8e79695dcb79e"
+        "sequence_signature": "a44afdec7e770005e407f9ad474e1a2b2a68b263c97be6e27176e366667cfb09"
       }
     },
     {
@@ -9428,8 +9429,9 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "bar_live_band_arrival_spawn_bar_live_band_floor_runner",
+                  "anchor_id": "live_band_runner",
                   "stable_object_id": "bar_live_band_floor_runner",
-                  "zone_id": "background"
+                  "zone_id": "left"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -10794,7 +10796,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "a896dc16d64b9bcd8848bfa05cdb8f27563790f554333343106831f1dae8897a"
+        "sequence_signature": "29dbf2ee7d3f94bc1fe94c6432bbaa905ea2504c0aafda23bfffe514da1f082a"
       }
     },
     {
@@ -11239,8 +11241,9 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "bar_dead_tuesday_arrival_spawn_bar_dead_tuesday_lone_patron",
+                  "anchor_id": "dead_tuesday_lone_patron",
                   "stable_object_id": "bar_dead_tuesday_lone_patron",
-                  "zone_id": "background"
+                  "zone_id": "foreground"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -11974,7 +11977,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "315ba84c534312d46f3d6d2935376fcc7f0e901c731260d6341be241b19ea740"
+        "sequence_signature": "0fca228e0d97e0898508da918e4470ab684546ce74de090591ea07b0da2df74a"
       }
     },
     {

@@ -87,6 +87,14 @@ static func check_geometry(library: Variant, failures: Array, telemetry: Diction
 			telemetry["candidate_checks"] = int(telemetry.get("candidate_checks", 0)) + int(snapshot.get("placement_candidate_checks", 0))
 			telemetry["max_search"] = maxi(int(telemetry.get("max_search", 0)), int(snapshot.get("max_placement_search", 0)))
 			telemetry["candidate_limit"] = maxi(int(telemetry.get("candidate_limit", 0)), int(snapshot.get("placement_candidate_limit", 0)))
+			telemetry["repair_checks"] = int(telemetry.get("repair_checks", 0)) + int(snapshot.get("repair_candidate_checks", 0))
+			telemetry["max_repair_search"] = maxi(int(telemetry.get("max_repair_search", 0)), int(snapshot.get("max_repair_search", 0)))
+			telemetry["repair_limit"] = maxi(int(telemetry.get("repair_limit", 0)), int(snapshot.get("repair_candidate_limit", 0)))
+			telemetry["repair_count"] = int(telemetry.get("repair_count", 0)) + int(snapshot.get("repair_count", 0))
+			telemetry["repair_generation_checks"] = int(telemetry.get("repair_generation_checks", 0)) + int(snapshot.get("repair_generation_checks", 0))
+			telemetry["repair_backtrack_visits"] = int(telemetry.get("repair_backtrack_visits", 0)) + int(snapshot.get("repair_backtrack_visits", 0))
+			telemetry["max_repair_generation"] = maxi(int(telemetry.get("max_repair_generation", 0)), int(snapshot.get("max_repair_generation", 0)))
+			telemetry["max_repair_backtrack"] = maxi(int(telemetry.get("max_repair_backtrack", 0)), int(snapshot.get("max_repair_backtrack", 0)))
 
 
 static func _scenario_definitions(library: Variant) -> Array:
@@ -448,8 +456,19 @@ static func _production_layout_fixture(library: Variant, definition: Dictionary,
 	if not bool(stamped.get("ok", false)):
 		failures.append("env06_8 %s could not stamp trusted base layout records: %s" % [scenario_id, JSON.stringify(stamped.get("errors", []))])
 		return {}
+	var base_records := _array(stamped.get("records", []))
+	var sealed_inventory := SemanticInventoryScript.for_instance(environment, library, base_records, [])
+	var inventory_errors := SemanticInventoryScript.validate(sealed_inventory)
+	if not inventory_errors.is_empty():
+		failures.append("env06_8 %s could not seal its production layout inventory: %s" % [scenario_id, JSON.stringify(inventory_errors)])
+		return {}
+	# Resolver route/anchor authority is the same exact instance seal installed by
+	# RunState. Supplying only the stamped base rows proved presentation geometry
+	# but incorrectly made every authored actor route look unauthorised in this
+	# standalone exhaustive fixture.
+	environment["scenario_semantic_inventory"] = sealed_inventory
 	environment["_scenario_layout_context"] = _production_layout_context()
-	return {"environment": environment, "base_records": _array(stamped.get("records", []))}
+	return {"environment": environment, "base_records": base_records}
 
 
 static func _check_presentation_records(records: Array, failures: Array) -> void:
@@ -670,6 +689,14 @@ static func _resolved_presentation_snapshot(state: Dictionary, definition: Dicti
 			"placement_candidate_checks": int(failed_audit.get("placement_candidate_checks", 0)),
 			"max_placement_search": int(failed_audit.get("max_placement_search", 0)),
 			"placement_candidate_limit": int(failed_audit.get("placement_candidate_limit", 0)),
+			"repair_candidate_checks": int(failed_audit.get("repair_candidate_checks", 0)),
+			"max_repair_search": int(failed_audit.get("max_repair_search", 0)),
+			"repair_candidate_limit": int(failed_audit.get("repair_candidate_limit", 0)),
+			"repair_count": int(failed_audit.get("repair_count", 0)),
+			"repair_generation_checks": int(failed_audit.get("repair_generation_checks", 0)),
+			"repair_backtrack_visits": int(failed_audit.get("repair_backtrack_visits", 0)),
+			"max_repair_generation": int(failed_audit.get("max_repair_generation", 0)),
+			"max_repair_backtrack": int(failed_audit.get("max_repair_backtrack", 0)),
 			"rows": [],
 		}
 	projection = _dict(layout_result.get("projection", projection))
@@ -722,6 +749,14 @@ static func _resolved_presentation_snapshot(state: Dictionary, definition: Dicti
 		"placement_candidate_checks": int(layout_audit.get("placement_candidate_checks", 0)),
 		"max_placement_search": int(layout_audit.get("max_placement_search", 0)),
 		"placement_candidate_limit": int(layout_audit.get("placement_candidate_limit", 0)),
+		"repair_candidate_checks": int(layout_audit.get("repair_candidate_checks", 0)),
+		"max_repair_search": int(layout_audit.get("max_repair_search", 0)),
+		"repair_candidate_limit": int(layout_audit.get("repair_candidate_limit", 0)),
+		"repair_count": int(layout_audit.get("repair_count", 0)),
+		"repair_generation_checks": int(layout_audit.get("repair_generation_checks", 0)),
+		"repair_backtrack_visits": int(layout_audit.get("repair_backtrack_visits", 0)),
+		"max_repair_generation": int(layout_audit.get("max_repair_generation", 0)),
+		"max_repair_backtrack": int(layout_audit.get("max_repair_backtrack", 0)),
 		"rows": rows,
 	}
 

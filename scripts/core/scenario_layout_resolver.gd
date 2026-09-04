@@ -20,6 +20,10 @@ const LABEL_GAP := 4.0
 const LABEL_MAX_WIDTH := 126.0
 const MAX_PLACEMENT_CANDIDATES := 384
 const MAX_PLACEMENT_SEARCH_CHECKS := 799
+const MAX_REPAIR_VISUALS := 5
+const MAX_REPAIR_CHECKS := 799
+const MAX_REPAIR_GENERATION_CHECKS := 399
+const MAX_REPAIR_BACKTRACK_VISITS := 400
 const WALK_LANE := Rect2(16.0, 378.0, 868.0, 36.0)
 const ROUTE_BEHAVIORS := ["patrol", "flee", "depart"]
 const COLLISION_OFFSETS := [
@@ -387,9 +391,17 @@ static func resolve(base_records: Array, projection: Dictionary, environment: Di
 	var collision_adjustments := 0
 	var placement_candidate_checks := 0
 	var max_placement_search := 0
+	var repair_candidate_checks := 0
+	var max_repair_search := 0
+	var repair_generation_checks := 0
+	var repair_backtrack_visits := 0
+	var max_repair_generation := 0
+	var max_repair_backtrack := 0
+	var repair_count := 0
 	var visual_count := 0
 	var resolved_scenes: Dictionary = {}
 	var resolved_actors: Dictionary = {}
+	var placement_history: Array = []
 	for collection_entry in [
 		[semantic_state.get("scene_objects", {}), false, resolved_scenes],
 		[semantic_state.get("actors", {}), true, resolved_actors],
@@ -411,33 +423,54 @@ static func resolve(base_records: Array, projection: Dictionary, environment: Di
 			if visual_count > MAX_VISUALS:
 				errors.append("Scenario presentation exceeds the %d visual-object bound." % MAX_VISUALS)
 				continue
-			var resolved := _resolve_visual(
-				identity,
-				semantic,
-				actor,
-				environment,
-				semantic_state,
-				_dict(base_by_identity.get(identity, {})),
-				occupied,
-				errors
-			)
+			var visual_errors: Array = []
+			var resolved := _resolve_visual(identity, semantic, actor, environment, semantic_state, _dict(base_by_identity.get(identity, {})), occupied, visual_errors)
 			if resolved.is_empty():
+				var repair := _repair_visual_suffix(placement_history, {
+					"identity": identity,
+					"semantic": semantic,
+					"actor": actor,
+					"base_record": _dict(base_by_identity.get(identity, {})),
+				}, occupied, environment, semantic_state)
+				var repair_checks := int(repair.get("checks", 0))
+				repair_candidate_checks += repair_checks
+				max_repair_search = maxi(max_repair_search, repair_checks)
+				var generation_checks := int(repair.get("generation_checks", 0))
+				var backtrack_visits := int(repair.get("backtrack_visits", 0))
+				repair_generation_checks += generation_checks
+				repair_backtrack_visits += backtrack_visits
+				max_repair_generation = maxi(max_repair_generation, generation_checks)
+				max_repair_backtrack = maxi(max_repair_backtrack, backtrack_visits)
+				if not bool(repair.get("ok", false)):
+					errors.append_array(visual_errors)
+					errors.append_array(_array(repair.get("errors", [])))
+					continue
+				repair_count += 1
+				occupied = _array(repair.get("occupied", occupied))
+				var replaced_count := int(repair.get("replaced_count", 0))
+				for replaced_index in range(replaced_count): placement_history.pop_back()
+				for repaired_value in _array(repair.get("history", [])):
+					var repaired := _dict(repaired_value)
+					var repaired_identity := str(repaired.get("identity", ""))
+					var repaired_visual := _dict(repaired.get("resolved", {}))
+					if bool(repaired.get("actor", false)): resolved_actors[repaired_identity] = repaired_visual
+					else: resolved_scenes[repaired_identity] = repaired_visual
+					placement_history.append(repaired)
 				continue
 			var visual_search_count := int(resolved.get("_layout_candidate_checks", 0))
 			placement_candidate_checks += visual_search_count
 			max_placement_search = maxi(max_placement_search, visual_search_count)
 			resolved.erase("_layout_candidate_checks")
 			resolved["layout_valid"] = true
-			if bool(resolved.get("collision_adjusted", false)):
-				collision_adjustments += 1
+			if bool(resolved.get("collision_adjusted", false)): collision_adjustments += 1
 			destination[identity] = resolved
+			placement_history.append({"identity": identity, "semantic": semantic, "actor": actor, "base_record": _dict(base_by_identity.get(identity, {})), "resolved": resolved})
 			if bool(resolved.get("visible", true)):
 				var normal_rect := _pixel_rect(_dict(resolved.get("normalized_hit_rect", {})))
 				var small_rect := _pixel_rect(_dict(resolved.get("small_screen_rect", {})))
 				var resolved_label := str(resolved.get("label", ""))
 				var overlay_label := str(_dict(_dict(semantic_state.get("interactions", {})).get(identity, {})).get("label", ""))
-				if overlay_label.length() > resolved_label.length():
-					resolved_label = overlay_label
+				if overlay_label.length() > resolved_label.length(): resolved_label = overlay_label
 				occupied.append({
 					"identity": identity,
 					"rect": normal_rect,
@@ -471,6 +504,14 @@ static func resolve(base_records: Array, projection: Dictionary, environment: Di
 		"placement_candidate_checks": placement_candidate_checks,
 		"max_placement_search": max_placement_search,
 		"placement_candidate_limit": MAX_PLACEMENT_SEARCH_CHECKS,
+		"repair_count": repair_count,
+		"repair_candidate_checks": repair_candidate_checks,
+		"max_repair_search": max_repair_search,
+		"repair_candidate_limit": MAX_REPAIR_CHECKS,
+		"repair_generation_checks": repair_generation_checks,
+		"repair_backtrack_visits": repair_backtrack_visits,
+		"max_repair_generation": max_repair_generation,
+		"max_repair_backtrack": max_repair_backtrack,
 		"board_size": _size_snapshot(BOARD_SIZE),
 		"small_screen_target": _size_snapshot(SMALL_SCREEN_TARGET),
 		"walk_lane": _rect_snapshot(WALK_LANE),
@@ -517,6 +558,167 @@ static func failure_authority(base_records: Array = []) -> Dictionary:
 	)
 
 
+static func _repair_visual_suffix(history: Array, failed_entry: Dictionary, occupied: Array, environment: Dictionary, semantic_state: Dictionary) -> Dictionary:
+	var replaced_count := mini(MAX_REPAIR_VISUALS - 1, history.size())
+	var repair_entries: Array = []
+	for history_index in range(history.size() - replaced_count, history.size()):
+		repair_entries.append(_dict(history[history_index]))
+	repair_entries.append(failed_entry)
+	var repair_identities: Dictionary = {}
+	for entry_value in repair_entries: repair_identities[str(_dict(entry_value).get("identity", ""))] = true
+	var fixed_occupied: Array = []
+	for occupied_value in occupied:
+		var occupied_record := _dict(occupied_value)
+		if not repair_identities.has(str(occupied_record.get("identity", ""))): fixed_occupied.append(occupied_record)
+	var context := {"generation_checks": 0, "backtrack_visits": 0}
+	var descriptors: Array = []
+	for entry_value in repair_entries:
+		descriptors.append(_repair_visual_descriptor(_dict(entry_value), environment, semantic_state))
+	_allocate_repair_options(descriptors, fixed_occupied, context)
+	for descriptor_value in descriptors:
+		var descriptor := _dict(descriptor_value)
+		if _array(descriptor.get("options", [])).is_empty():
+			return _repair_failure(context, "Bounded suffix repair found no compatible authored-zone placement for %s." % str(descriptor.get("identity", "")))
+	descriptors.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
+		var left := _dict(left_value)
+		var right := _dict(right_value)
+		var left_count := _array(left.get("options", [])).size()
+		var right_count := _array(right.get("options", [])).size()
+		if left_count != right_count: return left_count < right_count
+		return str(left.get("identity", "")) < str(right.get("identity", ""))
+	)
+	var placements: Dictionary = {}
+	if not _repair_search(descriptors, 0, fixed_occupied, placements, context):
+		return _repair_failure(context, "Bounded suffix repair exhausted its deterministic candidate budget.")
+	var rebuilt_occupied := fixed_occupied.duplicate(true)
+	var rebuilt_history: Array = []
+	var build_errors: Array = []
+	for entry_value in repair_entries:
+		var entry := _dict(entry_value)
+		var identity := str(entry.get("identity", ""))
+		var resolved := _resolve_visual(identity, _dict(entry.get("semantic", {})), bool(entry.get("actor", false)), environment, semantic_state, _dict(entry.get("base_record", {})), rebuilt_occupied, build_errors, placements.get(identity, Rect2()))
+		if resolved.is_empty():
+			return _repair_failure(context, "; ".join(build_errors))
+		resolved.erase("_layout_candidate_checks")
+		resolved["layout_valid"] = true
+		var rebuilt_entry := entry.duplicate(true)
+		rebuilt_entry["resolved"] = resolved
+		rebuilt_history.append(rebuilt_entry)
+		if bool(resolved.get("visible", true)): rebuilt_occupied.append(_resolved_occupied_record(identity, resolved, semantic_state))
+	return {"ok": true, "checks": _repair_total_checks(context), "generation_checks": int(context.get("generation_checks", 0)), "backtrack_visits": int(context.get("backtrack_visits", 0)), "replaced_count": replaced_count, "occupied": rebuilt_occupied, "history": rebuilt_history, "errors": []}
+
+
+static func _repair_visual_descriptor(entry: Dictionary, environment: Dictionary, semantic_state: Dictionary) -> Dictionary:
+	var identity := str(entry.get("identity", ""))
+	var semantic := _dict(entry.get("semantic", {}))
+	var actor := bool(entry.get("actor", false))
+	var base_record := _dict(entry.get("base_record", {}))
+	var base_rect := _record_pixel_rect(base_record)
+	var anchor_id := str(semantic.get("anchor_id", base_record.get("anchor_id", "")))
+	var zone_id := str(semantic.get("zone_id", base_record.get("zone_id", "")))
+	var center := _resolve_visual_center(environment, anchor_id, zone_id)
+	if (not _finite_point(center) or center.x < 0.0) and anchor_id.is_empty() and zone_id.is_empty() and base_rect.has_area(): center = base_rect.get_center()
+	var bounds := _dict(semantic.get("bounds", {}))
+	var size := Vector2(float(bounds.get("w", 0.0)), float(bounds.get("h", 0.0)))
+	if size.x <= 0.0 or size.y <= 0.0: size = base_rect.size if base_rect.has_area() else (DEFAULT_ACTOR_SIZE if actor else DEFAULT_SCENE_SIZE)
+	var regions := _visual_placement_regions(environment, anchor_id, zone_id, str(semantic.get("role", "")), actor)
+	var preferred: Rect2 = regions[0] if not regions.is_empty() else Rect2(Vector2.ZERO, BOARD_SIZE)
+	var authored := _clamp_inside_region(Rect2(center - size * 0.5, size), preferred)
+	var candidates: Array = []
+	var existing := _pixel_rect(_dict(_dict(entry.get("resolved", {})).get("normalized_hit_rect", {})))
+	if existing.has_area(): candidates.append(existing)
+	if not candidates.has(authored): candidates.append(authored)
+	for offset_value in COLLISION_OFFSETS:
+		var candidate := _clamp_inside_region(Rect2(authored.position + (offset_value as Vector2), authored.size), preferred)
+		if not candidates.has(candidate): candidates.append(candidate)
+	for bounded_value in _bounded_collision_candidates(authored, regions):
+		var candidate: Rect2 = bounded_value
+		if not candidates.has(candidate): candidates.append(candidate)
+	var label := str(semantic.get("label", base_record.get("label", "")))
+	var interaction_label := str(_dict(_dict(semantic_state.get("interactions", {})).get(identity, {})).get("label", ""))
+	if interaction_label.length() > label.length(): label = interaction_label
+	return {
+		"identity": identity,
+		"label": label,
+		"avoid_walk_lane": str(semantic.get("role", "")).to_lower() in ["obstacle", "barrier", "blockade"],
+		"candidates": candidates,
+		"cursor": 0,
+		"options": [],
+	}
+
+
+static func _allocate_repair_options(descriptors: Array, occupied: Array, context: Dictionary) -> void:
+	# Give every member one deterministic probe, then spend the remaining
+	# generation budget on the member with the fewest feasible positions (MRV).
+	for descriptor_value in descriptors:
+		_repair_probe_next(descriptor_value as Dictionary, occupied, context)
+	while int(context.get("generation_checks", 0)) < MAX_REPAIR_GENERATION_CHECKS:
+		var available: Array = []
+		for descriptor_value in descriptors:
+			var descriptor: Dictionary = descriptor_value
+			if int(descriptor.get("cursor", 0)) < _array(descriptor.get("candidates", [])).size() and _array(descriptor.get("options", [])).size() < 16:
+				available.append(descriptor)
+		if available.is_empty(): return
+		available.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
+			var left := _dict(left_value)
+			var right := _dict(right_value)
+			var left_count := _array(left.get("options", [])).size()
+			var right_count := _array(right.get("options", [])).size()
+			if left_count != right_count: return left_count < right_count
+			return str(left.get("identity", "")) < str(right.get("identity", ""))
+		)
+		_repair_probe_next(available[0] as Dictionary, occupied, context)
+
+
+static func _repair_probe_next(descriptor: Dictionary, occupied: Array, context: Dictionary) -> void:
+	if int(context.get("generation_checks", 0)) >= MAX_REPAIR_GENERATION_CHECKS: return
+	var candidates := _array(descriptor.get("candidates", []))
+	var cursor := int(descriptor.get("cursor", 0))
+	if cursor >= candidates.size(): return
+	descriptor["cursor"] = cursor + 1
+	context["generation_checks"] = int(context.get("generation_checks", 0)) + 1
+	var candidate: Rect2 = candidates[cursor]
+	if _candidate_text_safe(str(descriptor.get("identity", "")), candidate, str(descriptor.get("label", "")), occupied, false, bool(descriptor.get("avoid_walk_lane", false))):
+		var options := _array(descriptor.get("options", []))
+		options.append(candidate)
+		descriptor["options"] = options
+
+
+static func _repair_search(descriptors: Array, index: int, occupied: Array, placements: Dictionary, context: Dictionary) -> bool:
+	if index >= descriptors.size(): return true
+	var descriptor := _dict(descriptors[index])
+	var identity := str(descriptor.get("identity", ""))
+	for candidate_value in _array(descriptor.get("options", [])):
+		if int(context.get("backtrack_visits", 0)) >= MAX_REPAIR_BACKTRACK_VISITS: return false
+		context["backtrack_visits"] = int(context.get("backtrack_visits", 0)) + 1
+		var candidate: Rect2 = candidate_value
+		if not _candidate_text_safe(identity, candidate, str(descriptor.get("label", "")), occupied, false, bool(descriptor.get("avoid_walk_lane", false))): continue
+		placements[identity] = candidate
+		var next_occupied := occupied.duplicate(true)
+		var small := _expanded_rect(candidate, SMALL_SCREEN_TARGET)
+		next_occupied.append({"identity": identity, "rect": candidate, "small_rect": small, "label_rect": _label_rect(candidate, str(descriptor.get("label", ""))), "small_label_rect": _label_rect(small, str(descriptor.get("label", "")))})
+		if _repair_search(descriptors, index + 1, next_occupied, placements, context): return true
+		placements.erase(identity)
+	return false
+
+
+static func _repair_total_checks(context: Dictionary) -> int:
+	return int(context.get("generation_checks", 0)) + int(context.get("backtrack_visits", 0))
+
+
+static func _repair_failure(context: Dictionary, message: String) -> Dictionary:
+	return {"ok": false, "checks": _repair_total_checks(context), "generation_checks": int(context.get("generation_checks", 0)), "backtrack_visits": int(context.get("backtrack_visits", 0)), "errors": [message]}
+
+
+static func _resolved_occupied_record(identity: String, resolved: Dictionary, semantic_state: Dictionary) -> Dictionary:
+	var normal_rect := _pixel_rect(_dict(resolved.get("normalized_hit_rect", {})))
+	var small_rect := _pixel_rect(_dict(resolved.get("small_screen_rect", {})))
+	var label := str(resolved.get("label", ""))
+	var overlay_label := str(_dict(_dict(semantic_state.get("interactions", {})).get(identity, {})).get("label", ""))
+	if overlay_label.length() > label.length(): label = overlay_label
+	return {"identity": identity, "rect": normal_rect, "small_rect": small_rect, "label_rect": _label_rect(normal_rect, label), "small_label_rect": _label_rect(small_rect, label)}
+
+
 static func _resolve_visual(
 	identity: String,
 	semantic: Dictionary,
@@ -525,7 +727,8 @@ static func _resolve_visual(
 	semantic_state: Dictionary,
 	base_record: Dictionary,
 	occupied: Array,
-	errors: Array
+	errors: Array,
+	forced_pixel_rect: Rect2 = Rect2()
 ) -> Dictionary:
 	var result := semantic.duplicate(true)
 	var base_rect := _record_pixel_rect(base_record)
@@ -556,7 +759,7 @@ static func _resolve_visual(
 	var interaction_label := str(matching_interaction.get("label", ""))
 	if interaction_label.length() > placement_label.length():
 		placement_label = interaction_label
-	var placement := _collision_safe_rect(
+	var placement := {"rect": forced_pixel_rect, "adjusted": not forced_pixel_rect.position.is_equal_approx(authored_rect.position), "colliding": false, "candidates_checked": 0} if forced_pixel_rect.has_area() else _collision_safe_rect(
 		identity,
 		authored_rect,
 		occupied,
@@ -570,6 +773,7 @@ static func _resolve_visual(
 	var pixel_rect: Rect2 = placement.get("rect", authored_rect)
 	var route_points: Array = []
 	var route_stage: Dictionary = {}
+	var route_candidate_checks := 0
 	if actor:
 		var behavior := str(semantic.get("behavior", "idle"))
 		var route_id := str(semantic.get("route_id", "")).strip_edges()
@@ -582,8 +786,28 @@ static func _resolve_visual(
 			if not bool(route_resolution.get("ok", false)) or not _finite_point(route_center) or route_center.x < 0.0:
 				errors.append("Scenario actor %s route %s has no room-space endpoint: %s" % [identity, route_id, str(route_resolution.get("error", "unknown route endpoint"))])
 				return {}
+			var route_anchor_id := _route_anchor_alias(route_id)
+			var route_anchor := _dict(_dict(environment.get("semantic_anchors", {})).get(route_anchor_id, {}))
+			var route_zone_id := str(route_anchor.get("zone_id", ""))
+			var route_regions := _visual_placement_regions(environment, route_anchor_id, route_zone_id, "route", false)
+			var route_preferred: Rect2 = route_regions[0] if not route_regions.is_empty() else Rect2(Vector2.ZERO, BOARD_SIZE)
+			var authored_endpoint := _clamp_inside_region(Rect2(route_center - pixel_rect.size * 0.5, pixel_rect.size), route_preferred)
+			var endpoint_placement := _collision_safe_rect(
+				"%s::route_endpoint" % identity,
+				authored_endpoint,
+				occupied,
+				placement_label,
+				route_regions,
+				false,
+				_route_destination_presentation_identity(route_id)
+			)
+			route_candidate_checks = int(endpoint_placement.get("candidates_checked", 0))
+			if bool(endpoint_placement.get("colliding", true)):
+				errors.append("Scenario actor %s route endpoint cannot resolve within its authored route region." % identity)
+				return {}
+			var route_endpoint_rect: Rect2 = endpoint_placement.get("rect", authored_endpoint)
+			route_center = route_endpoint_rect.get_center()
 			route_points = [_normalized_point(pixel_rect.get_center()), _normalized_point(route_center)]
-			var route_endpoint_rect := Rect2(route_center - pixel_rect.size * 0.5, pixel_rect.size)
 			var route_small_start := _expanded_rect(pixel_rect, SMALL_SCREEN_TARGET)
 			var route_small_endpoint := _expanded_rect(route_endpoint_rect, SMALL_SCREEN_TARGET)
 			var distance := pixel_rect.get_center().distance_to(route_center)
@@ -602,7 +826,7 @@ static func _resolve_visual(
 	result["small_screen_rect"] = _normalized_rect(_expanded_rect(pixel_rect, SMALL_SCREEN_TARGET))
 	result["resolved_bounds"] = {"w": pixel_rect.size.x, "h": pixel_rect.size.y}
 	result["collision_adjusted"] = bool(placement.get("adjusted", false))
-	result["_layout_candidate_checks"] = int(placement.get("candidates_checked", 0))
+	result["_layout_candidate_checks"] = int(placement.get("candidates_checked", 0)) + route_candidate_checks
 	result["route_points"] = route_points
 	result["route_stage"] = route_stage
 	result["visible"] = bool(result.get("visible", true))
@@ -706,7 +930,8 @@ static func _validate_actor_routes(actors: Dictionary, obstacles: Array, occupie
 			errors.append("Scenario actor %s route endpoint cannot stage its full bounds inside the room." % identity)
 			continue
 		var endpoint_small := _expanded_rect(endpoint_rect, SMALL_SCREEN_TARGET)
-		if _substantially_overlaps(identity, endpoint_rect, occupied) or _expanded_overlaps(identity, endpoint_small, occupied):
+		var destination_identity := _route_destination_presentation_identity(str(actor.get("route_id", "")))
+		if _substantially_overlaps(identity, endpoint_rect, occupied, destination_identity) or _expanded_overlaps(identity, endpoint_small, occupied, destination_identity):
 			errors.append("Scenario actor %s route endpoint collides in normal or expanded small-screen layout." % identity)
 		if overlay.has_area() and (endpoint_rect.intersects(overlay) or endpoint_small.intersects(overlay) or _label_rect(endpoint_rect, str(actor.get("label", ""))).intersects(overlay) or _label_rect(endpoint_small, str(actor.get("label", ""))).intersects(overlay)):
 			errors.append("Scenario actor %s reduced-motion endpoint collides with the reserved TalkDock overlay." % identity)
@@ -1178,7 +1403,7 @@ static func _point_clear(point: Vector2, obstacles: Array, ignored_identity: Str
 	return true
 
 
-static func _collision_safe_rect(identity: String, authored: Rect2, occupied: Array, label: String = "", placement_regions: Array = [], avoid_walk_lane: bool = false) -> Dictionary:
+static func _collision_safe_rect(identity: String, authored: Rect2, occupied: Array, label: String = "", placement_regions: Array = [], avoid_walk_lane: bool = false, allowed_destination_identity: String = "") -> Dictionary:
 	# Authored anchors remain the first candidate. When their icon, touch target,
 	# or label conflicts with an already sealed room control, search only inside
 	# the authored semantic zone. The chosen rectangle is deterministic and is
@@ -1187,21 +1412,21 @@ static func _collision_safe_rect(identity: String, authored: Rect2, occupied: Ar
 	if regions.is_empty():
 		regions.append(Rect2(Vector2.ZERO, BOARD_SIZE))
 	var preferred_region: Rect2 = regions[0]
-	var authored_raw_collision := _raw_hit_overlaps(identity, authored, occupied)
+	var authored_raw_collision := _raw_hit_overlaps(identity, authored, occupied, allowed_destination_identity)
 	var candidates_checked := 1
-	if _candidate_text_safe(identity, authored, label, occupied, true, avoid_walk_lane):
+	if _candidate_text_safe(identity, authored, label, occupied, true, avoid_walk_lane, allowed_destination_identity):
 		return {"rect": _clamp_inside_region(authored, preferred_region), "adjusted": false, "colliding": false, "candidates_checked": candidates_checked}
 	for offset_value in COLLISION_OFFSETS:
 		var offset := offset_value as Vector2
 		var candidate := _clamp_inside_region(Rect2(authored.position + offset, authored.size), preferred_region)
 		candidates_checked += 1
-		if _candidate_text_safe(identity, candidate, label, occupied, true, avoid_walk_lane):
+		if _candidate_text_safe(identity, candidate, label, occupied, true, avoid_walk_lane, allowed_destination_identity):
 			return {"rect": candidate, "adjusted": not offset.is_zero_approx(), "colliding": false, "candidates_checked": candidates_checked}
 	var bounded_candidates := _bounded_collision_candidates(authored, regions)
 	for candidate_value in bounded_candidates:
 		var candidate := candidate_value as Rect2
 		candidates_checked += 1
-		if _candidate_text_safe(identity, candidate, label, occupied, true, avoid_walk_lane):
+		if _candidate_text_safe(identity, candidate, label, occupied, true, avoid_walk_lane, allowed_destination_identity):
 			return {"rect": candidate, "adjusted": not candidate.position.is_equal_approx(authored.position), "colliding": false, "candidates_checked": candidates_checked}
 	# A dense authored zone may not provide the preferred visual gap. Preserve an
 	# exact non-overlapping hit target only when both label surfaces remain safe.
@@ -1209,12 +1434,12 @@ static func _collision_safe_rect(identity: String, authored: Rect2, occupied: Ar
 		var offset := offset_value as Vector2
 		var candidate := _clamp_inside_region(Rect2(authored.position + offset, authored.size), preferred_region)
 		candidates_checked += 1
-		if _candidate_text_safe(identity, candidate, label, occupied, false, avoid_walk_lane):
+		if _candidate_text_safe(identity, candidate, label, occupied, false, avoid_walk_lane, allowed_destination_identity):
 			return {"rect": candidate, "adjusted": not offset.is_zero_approx(), "colliding": false, "candidates_checked": candidates_checked}
 	for candidate_value in bounded_candidates:
 		var candidate := candidate_value as Rect2
 		candidates_checked += 1
-		if _candidate_text_safe(identity, candidate, label, occupied, false, avoid_walk_lane):
+		if _candidate_text_safe(identity, candidate, label, occupied, false, avoid_walk_lane, allowed_destination_identity):
 			return {"rect": candidate, "adjusted": not candidate.position.is_equal_approx(authored.position), "colliding": false, "candidates_checked": candidates_checked}
 	return {"rect": authored, "adjusted": false, "colliding": true, "candidates_checked": candidates_checked, "authored_raw_collision": authored_raw_collision}
 
@@ -1223,53 +1448,80 @@ static func _bounded_collision_candidates(authored: Rect2, placement_regions: Ar
 	var candidates: Array = []
 	var regions := placement_regions.duplicate()
 	if regions.is_empty(): regions.append(Rect2(Vector2.ZERO, BOARD_SIZE))
+	# Give every compatible semantic zone a fair near-anchor search slice. A
+	# single wide zone must not consume the global bound before later authored
+	# alternatives (for example exit_lane or service_lane) are considered.
+	var per_region_limit := maxi(32, floori(float(MAX_PLACEMENT_CANDIDATES) / float(regions.size())))
 	for region_value in regions:
-		var bounded_region: Rect2 = region_value
-		bounded_region = bounded_region.intersection(Rect2(Vector2.ZERO, BOARD_SIZE))
-		if not bounded_region.has_area() or bounded_region.size.x < authored.size.x or bounded_region.size.y < authored.size.y:
-			continue
-		var minimum_x := ceili(bounded_region.position.x)
-		var minimum_y := ceili(bounded_region.position.y)
-		var maximum_x := floori(bounded_region.end.x - authored.size.x)
-		var maximum_y := floori(bounded_region.end.y - authored.size.y)
-		var column_count := maxi(1, floori(float(maximum_x - minimum_x) / 16.0) + 1)
-		var row_count := maxi(1, floori(float(maximum_y - minimum_y) / 16.0) + 1)
-		var origin_column := clampi(roundi((authored.position.x - float(minimum_x)) / 16.0), 0, column_count - 1)
-		var origin_row := clampi(roundi((authored.position.y - float(minimum_y)) / 16.0), 0, row_count - 1)
-		var maximum_radius := maxi(column_count, row_count)
-		for radius in range(maximum_radius):
-			for row_offset in range(-radius, radius + 1):
-				for column_offset in range(-radius, radius + 1):
-					if maxi(absi(column_offset), absi(row_offset)) != radius:
-						continue
-					var column := origin_column + column_offset
-					var row := origin_row + row_offset
-					if column < 0 or column >= column_count or row < 0 or row >= row_count:
-						continue
-					var candidate := Rect2(Vector2(minimum_x + column * 16, minimum_y + row * 16), authored.size)
-					if not candidates.has(candidate): candidates.append(candidate)
-					if candidates.size() >= MAX_PLACEMENT_CANDIDATES:
-						return candidates
-		var clamped_authored := _clamp_inside_region(authored, bounded_region)
-		if not candidates.has(clamped_authored): candidates.append(clamped_authored)
-		if candidates.size() >= MAX_PLACEMENT_CANDIDATES:
-			return candidates
+		for candidate_value in _region_collision_candidates(authored, region_value, per_region_limit):
+			var candidate: Rect2 = candidate_value
+			if not candidates.has(candidate): candidates.append(candidate)
+			if candidates.size() >= MAX_PLACEMENT_CANDIDATES: return candidates
 	return candidates
 
 
-static func _candidate_text_safe(identity: String, rect: Rect2, label: String, occupied: Array, require_gap: bool = true, avoid_walk_lane: bool = false) -> bool:
+static func _region_collision_candidates(authored: Rect2, region_value: Variant, candidate_limit: int) -> Array:
+	var candidates: Array = []
+	var bounded_region: Rect2 = region_value
+	bounded_region = bounded_region.intersection(Rect2(Vector2.ZERO, BOARD_SIZE))
+	if not bounded_region.has_area() or bounded_region.size.x < authored.size.x or bounded_region.size.y < authored.size.y:
+		return candidates
+	var minimum_x := ceili(bounded_region.position.x)
+	var minimum_y := ceili(bounded_region.position.y)
+	var maximum_x := floori(bounded_region.end.x - authored.size.x)
+	var maximum_y := floori(bounded_region.end.y - authored.size.y)
+	var clamped_authored := _clamp_inside_region(authored, bounded_region)
+	candidates.append(clamped_authored)
+	# A fixed-radius walk wastes a bounded zone's entire quota near the authored
+	# point and can miss a clear opposite edge. Sample the complete semantic zone
+	# on a deterministic aspect-aware lattice, then try those points nearest the
+	# authored intent first. This keeps the same global bound while making every
+	# compatible authored region genuinely available to dense scenario layouts.
+	var available_width := float(maximum_x - minimum_x)
+	var available_height := float(maximum_y - minimum_y)
+	var aspect := maxf(0.25, (available_width + 1.0) / (available_height + 1.0))
+	var column_count := maxi(1, ceili(sqrt(float(candidate_limit) * aspect)))
+	var row_count := maxi(1, ceili(float(candidate_limit) / float(column_count)))
+	var lattice: Array = []
+	for row in range(row_count):
+		var y_ratio := 0.5 if row_count == 1 else float(row) / float(row_count - 1)
+		for column in range(column_count):
+			var x_ratio := 0.5 if column_count == 1 else float(column) / float(column_count - 1)
+			var point := Vector2(
+				lerpf(float(minimum_x), float(maximum_x), x_ratio),
+				lerpf(float(minimum_y), float(maximum_y), y_ratio)
+			)
+			lattice.append(Rect2(point, authored.size))
+	lattice.sort_custom(func(left: Variant, right: Variant) -> bool:
+		var left_rect: Rect2 = left
+		var right_rect: Rect2 = right
+		var left_distance := left_rect.position.distance_squared_to(clamped_authored.position)
+		var right_distance := right_rect.position.distance_squared_to(clamped_authored.position)
+		if not is_equal_approx(left_distance, right_distance): return left_distance < right_distance
+		if not is_equal_approx(left_rect.position.y, right_rect.position.y): return left_rect.position.y < right_rect.position.y
+		return left_rect.position.x < right_rect.position.x
+	)
+	for candidate_value in lattice:
+		var candidate: Rect2 = candidate_value
+		if not candidates.has(candidate): candidates.append(candidate)
+		if candidates.size() >= candidate_limit: return candidates
+	return candidates
+
+
+static func _candidate_text_safe(identity: String, rect: Rect2, label: String, occupied: Array, require_gap: bool = true, avoid_walk_lane: bool = false, allowed_destination_identity: String = "") -> bool:
 	var small_rect := _expanded_rect(rect, SMALL_SCREEN_TARGET)
 	if avoid_walk_lane and (rect.intersects(WALK_LANE) or small_rect.intersects(WALK_LANE)):
 		return false
-	if _raw_hit_overlaps(identity, rect, occupied) or _expanded_overlaps(identity, small_rect, occupied):
+	if _raw_hit_overlaps(identity, rect, occupied, allowed_destination_identity) or _expanded_overlaps(identity, small_rect, occupied, allowed_destination_identity):
 		return false
-	if require_gap and _normal_hit_overlaps(identity, rect, occupied):
+	if require_gap and _normal_hit_overlaps(identity, rect, occupied, allowed_destination_identity):
 		return false
 	var label_rect := _label_rect(rect, label)
 	var small_label_rect := _label_rect(small_rect, label)
 	for occupied_value in occupied:
 		var occupied_record := _dict(occupied_value)
-		if str(occupied_record.get("identity", "")) == identity:
+		var occupied_identity := str(occupied_record.get("identity", ""))
+		if occupied_identity == identity or not allowed_destination_identity.is_empty() and occupied_identity == allowed_destination_identity:
 			continue
 		var other_label: Rect2 = occupied_record.get("label_rect", Rect2())
 		var other_small_label: Rect2 = occupied_record.get("small_label_rect", Rect2())
@@ -1280,10 +1532,11 @@ static func _candidate_text_safe(identity: String, rect: Rect2, label: String, o
 	return true
 
 
-static func _substantially_overlaps(identity: String, rect: Rect2, occupied: Array) -> bool:
+static func _substantially_overlaps(identity: String, rect: Rect2, occupied: Array, allowed_destination_identity: String = "") -> bool:
 	for occupied_value in occupied:
 		var occupied_record := _dict(occupied_value)
-		if str(occupied_record.get("identity", "")) == identity:
+		var occupied_identity := str(occupied_record.get("identity", ""))
+		if occupied_identity == identity or not allowed_destination_identity.is_empty() and occupied_identity == allowed_destination_identity:
 			continue
 		var other: Rect2 = occupied_record.get("rect", Rect2())
 		if not other.has_area():
@@ -1294,11 +1547,12 @@ static func _substantially_overlaps(identity: String, rect: Rect2, occupied: Arr
 	return false
 
 
-static func _normal_hit_overlaps(identity: String, rect: Rect2, occupied: Array) -> bool:
+static func _normal_hit_overlaps(identity: String, rect: Rect2, occupied: Array, allowed_destination_identity: String = "") -> bool:
 	var footprint := rect.grow(VISUAL_LAYOUT_GAP)
 	for occupied_value in occupied:
 		var occupied_record := _dict(occupied_value)
-		if str(occupied_record.get("identity", "")) == identity:
+		var occupied_identity := str(occupied_record.get("identity", ""))
+		if occupied_identity == identity or not allowed_destination_identity.is_empty() and occupied_identity == allowed_destination_identity:
 			continue
 		var other: Rect2 = occupied_record.get("rect", Rect2())
 		var other_footprint := other.grow(VISUAL_LAYOUT_GAP)
@@ -1307,10 +1561,11 @@ static func _normal_hit_overlaps(identity: String, rect: Rect2, occupied: Array)
 	return false
 
 
-static func _raw_hit_overlaps(identity: String, rect: Rect2, occupied: Array) -> bool:
+static func _raw_hit_overlaps(identity: String, rect: Rect2, occupied: Array, allowed_destination_identity: String = "") -> bool:
 	for occupied_value in occupied:
 		var occupied_record := _dict(occupied_value)
-		if str(occupied_record.get("identity", "")) == identity:
+		var occupied_identity := str(occupied_record.get("identity", ""))
+		if occupied_identity == identity or not allowed_destination_identity.is_empty() and occupied_identity == allowed_destination_identity:
 			continue
 		var other: Rect2 = occupied_record.get("rect", Rect2())
 		if other.has_area() and rect.intersects(other) and rect.intersection(other).get_area() > 0.01:
@@ -1318,10 +1573,11 @@ static func _raw_hit_overlaps(identity: String, rect: Rect2, occupied: Array) ->
 	return false
 
 
-static func _expanded_overlaps(identity: String, rect: Rect2, occupied: Array) -> bool:
+static func _expanded_overlaps(identity: String, rect: Rect2, occupied: Array, allowed_destination_identity: String = "") -> bool:
 	for occupied_value in occupied:
 		var occupied_record := _dict(occupied_value)
-		if str(occupied_record.get("identity", "")) == identity:
+		var occupied_identity := str(occupied_record.get("identity", ""))
+		if occupied_identity == identity or not allowed_destination_identity.is_empty() and occupied_identity == allowed_destination_identity:
 			continue
 		var other: Rect2 = occupied_record.get("small_rect", Rect2())
 		if not other.has_area():
@@ -1480,6 +1736,23 @@ static func _visual_placement_regions(environment: Dictionary, anchor_id: String
 static func _resolve_route_center(environment: Dictionary, semantic_state: Dictionary, route_id: String) -> Vector2:
 	var result := _resolve_route_center_result(environment, semantic_state, route_id)
 	return result.get("center", Vector2(-1.0, -1.0)) if bool(result.get("ok", false)) else Vector2(-1.0, -1.0)
+
+
+static func _route_destination_presentation_identity(route_id: String) -> String:
+	var parsed := OperationRegistryScript.parse_owned_identity(route_id)
+	if parsed.is_empty() or str(parsed.get("owner_namespace", "")) != "base": return ""
+	var stable_id := str(parsed.get("stable_object_id", ""))
+	if not stable_id.begins_with("world:"): return ""
+	var source_id := stable_id.trim_prefix("world:").strip_edges()
+	if source_id.is_empty() or source_id.contains(":"): return ""
+	return "base::travel:%s" % source_id
+
+
+static func _route_anchor_alias(route_id: String) -> String:
+	var parsed := OperationRegistryScript.parse_owned_identity(route_id)
+	if parsed.is_empty(): return route_id.strip_edges()
+	var stable_id := str(parsed.get("stable_object_id", ""))
+	return stable_id.get_slice(":", stable_id.get_slice_count(":") - 1).strip_edges()
 
 
 static func _resolve_route_center_result(environment: Dictionary, semantic_state: Dictionary, route_id: String) -> Dictionary:

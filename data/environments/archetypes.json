@@ -1390,7 +1390,8 @@
       "env06_8_storm_tape": {"position": [430, 320], "zone_id": "foreground"},
       "env06_8_storm_drivers": {"position": [735, 75], "zone_id": "background"},
       "env06_8_bus_marshal": {"position": [450, 350], "zone_id": "foreground"},
-      "env06_8_cooler_gate": {"position": [700, 300], "zone_id": "right"}
+      "env06_8_cooler_gate": {"position": [700, 300], "zone_id": "right"},
+      "env06_8_roadside_actor_left": {"position": [140, 180], "zone_id": "left"}
     },
     "security_profile": {
       "strictness": "low",
@@ -2581,7 +2582,13 @@
       "env06_8_storm_marker": {"position": [120, 210], "zone_id": "left"},
       "env06_8_buyout_ropes": {"position": [520, 220], "zone_id": "center"},
       "env06_8_buyout_cart": {"position": [300, 330], "zone_id": "center"},
-      "env06_8_storm_recovery_host": {"position": [250, 70], "zone_id": "background"}
+      "env06_8_storm_recovery_host": {"position": [250, 70], "zone_id": "background"},
+      "env06_8_task_left": {"position": [80, 340], "zone_id": "left"},
+      "env06_8_task_center": {"position": [450, 340], "zone_id": "center"},
+      "env06_8_task_right": {"position": [760, 340], "zone_id": "right"},
+      "env06_8_task_background_left": {"position": [80, 70], "zone_id": "background"},
+      "env06_8_task_background_center": {"position": [450, 70], "zone_id": "background"},
+      "env06_8_task_background_right": {"position": [800, 70], "zone_id": "background"}
     },
     "security_profile": {
       "strictness": "velvet",
@@ -2899,7 +2906,8 @@
 		"delta_wedding_aftermath_scene": {"position": [60, 170], "zone_id": "left"},
 		"delta_wedding_aftermath_actor": {"position": [320, 190], "zone_id": "center"}
       ,
-      "env06_8_fog_waiting_crowd": {"position": [700, 300], "zone_id": "right"}
+      "env06_8_fog_waiting_crowd": {"position": [700, 300], "zone_id": "right"},
+      "env06_8_wedding_coordinator_arrival": {"position": [700, 80], "zone_id": "background"}
     },
     "security_profile": {
       "strictness": "licensed-gray",
@@ -3118,7 +3126,8 @@
       "package_b_beach_safe_exit_low_left": {"position": [100, 330], "zone_id": "exit_lane"}
     ,
       "env06_8_festival_board": {"position": [190, 210], "zone_id": "left"},
-      "env06_8_festival_station": {"position": [620, 335], "zone_id": "right"}
+      "env06_8_festival_station": {"position": [620, 335], "zone_id": "right"},
+      "env06_8_storm_lifeguard": {"position": [700, 70], "zone_id": "background"}
     },
     "security_profile": {
       "strictness": "loose",

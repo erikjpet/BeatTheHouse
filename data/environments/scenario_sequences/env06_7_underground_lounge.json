@@ -14667,8 +14667,9 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_amateur_night_arrival_spawn_kitty_cat_lounge_amateur_night_amateur_contestant",
+                  "anchor_id": "kitty_amateur_contestant_arrival",
                   "stable_object_id": "kitty_cat_lounge_amateur_night_amateur_contestant",
-                  "zone_id": "right"
+                  "zone_id": "left"
                 },
                 {
                   "actor": {
@@ -14687,8 +14688,9 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_amateur_night_arrival_spawn_kitty_cat_lounge_amateur_night_amateur_judge",
+                  "anchor_id": "kitty_amateur_judge_arrival",
                   "stable_object_id": "kitty_cat_lounge_amateur_night_amateur_judge",
-                  "zone_id": "background"
+                  "zone_id": "center"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -15219,13 +15221,13 @@
             {
               "actor_ops": [
                 {
-                  "anchor_id": "kitty_amateur_judge",
+                  "anchor_id": "kitty_amateur_judge_arrival",
                   "family": "actor_ops",
                   "op": "set_position",
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_amateur_night_costume_move_position",
                   "stable_object_id": "kitty_cat_lounge_amateur_night_amateur_judge",
-                  "zone_id": "right"
+                  "zone_id": "center"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -16056,7 +16058,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "93fcbcaf662e545acd4f6da9aa42867d6b9f9c96031b4827a2f6fae89f988963"
+        "sequence_signature": "c747479eb56a4522f1f7e42fa53cd818ec794407a06766257a00f007871e36de"
       }
     },
     {
@@ -16553,6 +16555,7 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_buyout_arrival_spawn_kitty_cat_lounge_buyout_buyout_host",
+                  "anchor_id": "env06_8_buyout_host",
                   "stable_object_id": "kitty_cat_lounge_buyout_buyout_host",
                   "zone_id": "background"
                 },
@@ -17942,7 +17945,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "890e617414d32cb303f4fe8c0a937a0c5320339e15cf789e674ac95d093e13ea"
+        "sequence_signature": "b3c20221200df6076c38586a06d9fafe0759337f5efc1b998f374fe2b6c54e62"
       }
     },
     {
@@ -18415,8 +18418,9 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_slow_night_arrival_spawn_kitty_cat_lounge_slow_night_slow_night_host",
+                  "anchor_id": "kitty_slow_host_arrival",
                   "stable_object_id": "kitty_cat_lounge_slow_night_slow_night_host",
-                  "zone_id": "right"
+                  "zone_id": "background"
                 },
                 {
                   "actor": {
@@ -18435,8 +18439,9 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_slow_night_arrival_spawn_kitty_cat_lounge_slow_night_booth_regular",
+                  "anchor_id": "kitty_slow_closed_section",
                   "stable_object_id": "kitty_cat_lounge_slow_night_booth_regular",
-                  "zone_id": "background"
+                  "zone_id": "left"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -19032,13 +19037,13 @@
             {
               "actor_ops": [
                 {
-                  "anchor_id": "kitty_slow_booth_regular",
+                  "anchor_id": "kitty_slow_closed_section",
                   "family": "actor_ops",
                   "op": "set_position",
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_slow_night_rope_coil_position",
                   "stable_object_id": "kitty_cat_lounge_slow_night_booth_regular",
-                  "zone_id": "background"
+                  "zone_id": "left"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -19593,7 +19598,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "72edddd2ac6fd8483e24f8ad4df1ecb3dd1ee2f8fa51d9c70f9c96a52568e1ad"
+        "sequence_signature": "d6c87d2df4c81fa3013e36eb6f76c20bafedab4516ec57a7e5500eef38c74286"
       }
     },
     {
@@ -20113,8 +20118,9 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_bachelorette_storm_arrival_spawn_kitty_cat_lounge_bachelorette_storm_party_leader",
+                  "anchor_id": "kitty_storm_party_leader",
                   "stable_object_id": "kitty_cat_lounge_bachelorette_storm_party_leader",
-                  "zone_id": "right"
+                  "zone_id": "background"
                 },
                 {
                   "actor": {
@@ -20133,6 +20139,7 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_bachelorette_storm_arrival_spawn_kitty_cat_lounge_bachelorette_storm_floor_recovery_host",
+                  "anchor_id": "env06_8_storm_recovery_host",
                   "stable_object_id": "kitty_cat_lounge_bachelorette_storm_floor_recovery_host",
                   "zone_id": "background"
                 }
@@ -20431,6 +20438,7 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_bachelorette_storm_arrival_spawn_kitty_cat_lounge_bachelorette_storm_task_0",
+                  "anchor_id": "env06_8_task_center",
                   "stable_object_id": "kitty_cat_lounge_bachelorette_storm_task_0",
                   "zone_id": "center"
                 }
@@ -20644,6 +20652,7 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_bachelorette_storm_work_1_spawn_kitty_cat_lounge_bachelorette_storm_task_1",
+                  "anchor_id": "env06_8_task_background_center",
                   "stable_object_id": "kitty_cat_lounge_bachelorette_storm_task_1",
                   "zone_id": "background"
                 }
@@ -20663,7 +20672,7 @@
             {
               "actor_ops": [
                 {
-                  "anchor_id": "kitty_storm_floor_host",
+                  "anchor_id": "env06_8_storm_recovery_host",
                   "family": "actor_ops",
                   "op": "set_position",
                   "owner_namespace": "scenario",
@@ -20854,8 +20863,9 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_bachelorette_storm_work_2_spawn_kitty_cat_lounge_bachelorette_storm_task_2",
+                  "anchor_id": "env06_8_task_left",
                   "stable_object_id": "kitty_cat_lounge_bachelorette_storm_task_2",
-                  "zone_id": "right"
+                  "zone_id": "left"
                 }
               ],
               "transition_ops": [
@@ -21140,6 +21150,7 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_bachelorette_storm_work_3_spawn_kitty_cat_lounge_bachelorette_storm_task_3",
+                  "anchor_id": "env06_8_task_right",
                   "stable_object_id": "kitty_cat_lounge_bachelorette_storm_task_3",
                   "zone_id": "right"
                 }
@@ -21349,8 +21360,9 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_bachelorette_storm_work_4_spawn_kitty_cat_lounge_bachelorette_storm_task_4",
+                  "anchor_id": "env06_8_task_background_left",
                   "stable_object_id": "kitty_cat_lounge_bachelorette_storm_task_4",
-                  "zone_id": "center"
+                  "zone_id": "background"
                 }
               ],
               "transition_ops": [
@@ -21559,6 +21571,7 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "kitty_cat_lounge_bachelorette_storm_work_5_spawn_kitty_cat_lounge_bachelorette_storm_task_5",
+                  "anchor_id": "env06_8_task_background_right",
                   "stable_object_id": "kitty_cat_lounge_bachelorette_storm_task_5",
                   "zone_id": "background"
                 }
@@ -21718,7 +21731,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "0d8b72f12f99cf3fe302b3434ec1c980dddfeaa1e2d6e810b02de32def47deff"
+        "sequence_signature": "44e38e36dea27472c0152fa35e6c79aff2d3ec4d007922ed51a4248a8158ab2d"
       }
     }
   ],

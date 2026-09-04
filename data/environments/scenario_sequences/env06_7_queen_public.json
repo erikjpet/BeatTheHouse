@@ -542,8 +542,9 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_wedding_charter_arrival_spawn_delta_queen_wedding_charter_deck_coordinator",
+                  "anchor_id": "env06_8_wedding_coordinator_arrival",
                   "stable_object_id": "delta_queen_wedding_charter_deck_coordinator",
-                  "zone_id": "left"
+                  "zone_id": "background"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -1233,8 +1234,9 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_wedding_charter_work_1_spawn_delta_queen_wedding_charter_work_1_choice_2",
+                  "anchor_id": "delta_wedding_choice_right",
                   "stable_object_id": "delta_queen_wedding_charter_work_1_choice_2",
-                  "zone_id": "background"
+                  "zone_id": "center"
                 }
               ],
               "transition_ops": [
@@ -1843,7 +1845,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "407c736d958c16671dfe02215193aff46f0eddf71610fed5427f2028a321899a"
+        "sequence_signature": "d448ccf3fc93ef02820d05d701bedbf5c343db6afc77fa8811061391da4390cc"
       }
     },
     {
@@ -2364,8 +2366,9 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_whale_aboard_arrival_spawn_delta_queen_whale_aboard_whale_host",
+                  "anchor_id": "delta_secondary_top",
                   "stable_object_id": "delta_queen_whale_aboard_whale_host",
-                  "zone_id": "background"
+                  "zone_id": "foreground"
                 },
                 {
                   "actor": {
@@ -2384,8 +2387,9 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_whale_aboard_arrival_spawn_delta_queen_whale_aboard_entourage_runner",
+                  "anchor_id": "delta_noninteractive_right",
                   "stable_object_id": "delta_queen_whale_aboard_entourage_runner",
-                  "zone_id": "left"
+                  "zone_id": "right"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -2916,13 +2920,13 @@
             {
               "actor_ops": [
                 {
-                  "anchor_id": "delta_bottom_middle",
+                  "anchor_id": "delta_noninteractive_right",
                   "family": "actor_ops",
                   "op": "set_position",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_whale_aboard_table_state_position",
                   "stable_object_id": "delta_queen_whale_aboard_entourage_runner",
-                  "zone_id": "foreground"
+                  "zone_id": "right"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -3227,8 +3231,9 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_whale_aboard_work_2_spawn_delta_queen_whale_aboard_work_2_choice_1",
+                  "anchor_id": "delta_decision_middle",
                   "stable_object_id": "delta_queen_whale_aboard_work_2_choice_1",
-                  "zone_id": "background"
+                  "zone_id": "center"
                 },
                 {
                   "family": "scene_ops",
@@ -3653,7 +3658,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "0768f87eacdc4b91356087c00fa8002b54e72130b470727e8a63617465ae299c"
+        "sequence_signature": "d8134956cc13adbdd61bd35c480d86e475ec2068f618f388c071c19df03f8f78"
       }
     },
     {
@@ -4195,6 +4200,7 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_fog_delay_arrival_spawn_delta_queen_fog_delay_waiting_crowd",
+                  "anchor_id": "env06_8_fog_waiting_crowd",
                   "stable_object_id": "delta_queen_fog_delay_waiting_crowd",
                   "zone_id": "right"
                 }
@@ -4873,13 +4879,13 @@
             {
               "actor_ops": [
                 {
-                  "anchor_id": "delta_fog_waiting_crowd",
+                  "anchor_id": "env06_8_fog_waiting_crowd",
                   "family": "actor_ops",
                   "op": "set_position",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_fog_delay_crowd_position_position",
                   "stable_object_id": "delta_queen_fog_delay_waiting_crowd",
-                  "zone_id": "foreground"
+                  "zone_id": "right"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -5464,7 +5470,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "bb70038b89256a20668c6a0e32757c8338bd00ac342ebd533cc7960019c94972"
+        "sequence_signature": "66b867a93302bf95a7713af52a53a16d2c192ece34493d412286e801ad0a1131"
       }
     },
     {
@@ -6016,6 +6022,7 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_engine_trouble_arrival_spawn_delta_queen_engine_trouble_engine_mate",
+                  "anchor_id": "delta_engine_guard",
                   "stable_object_id": "delta_queen_engine_trouble_engine_mate",
                   "zone_id": "background"
                 },
@@ -7539,7 +7546,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "25171ff510f2939b1d4c1dffc3a9dd86ba66b20d9c9b0108156b9e16c643c6ee"
+        "sequence_signature": "0c297b4a242c9c9e84d48eeb291cf840b2467904f3c8c5c136d327d31965d63a"
       }
     },
     {
@@ -13885,8 +13892,9 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_audit_night_arrival_spawn_grand_casino_audit_night_pit_manager",
+                  "anchor_id": "grand_work_actor_right",
                   "stable_object_id": "grand_casino_audit_night_pit_manager",
-                  "zone_id": "left"
+                  "zone_id": "center"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -14618,13 +14626,13 @@
             {
               "actor_ops": [
                 {
-                  "anchor_id": "grand_scenario_top_50_actor",
+                  "anchor_id": "grand_work_actor_right",
                   "family": "actor_ops",
                   "op": "set_position",
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_audit_night_ledger_move_position",
                   "stable_object_id": "grand_casino_audit_night_pit_manager",
-                  "zone_id": "left"
+                  "zone_id": "center"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -15209,7 +15217,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "f6b9f57a000ea3e0f6080992f2893418cd79fbdd792309e26b9d4564d9a4fd13"
+        "sequence_signature": "f52780e3415bf42cf8ace767623b756fccc7ea4de569c6afcb9411f829b207a2"
       }
     }
   ]

@@ -1119,8 +1119,25 @@ static func _check_accessibility_failures(failures: Array) -> void:
 			"endpoint": {"position": [620.0, 220.0]},
 		},
 	})
-	if bool(endpoint_result.get("ok", true)) or not _contains_text(_array(endpoint_result.get("errors", [])), "route endpoint collides"):
-		failures.append("A moving actor route/reduced-motion endpoint collided with another visual without failing projection.")
+	var endpoint_actor := _dict(_dict(_dict(_dict(endpoint_result.get("projection", {})).get("semantic_state", {})).get("actors", {})).get("scenario::runner", {}))
+	var resolved_endpoint_value := _dict(_dict(endpoint_actor.get("route_stage", {})).get("endpoint", {}))
+	var resolved_endpoint := Vector2(float(resolved_endpoint_value.get("x", -1.0)) * BOARD_SIZE.x, float(resolved_endpoint_value.get("y", -1.0)) * BOARD_SIZE.y)
+	if not bool(endpoint_result.get("ok", false)) or resolved_endpoint.is_equal_approx(Vector2(620.0, 220.0)):
+		failures.append("A moving actor route endpoint did not reflow away from an unrelated visual inside its authored route region.")
+	var canonical_destination := ScenarioLayoutResolverScript._route_destination_presentation_identity("base::world:endpoint")
+	var endpoint_rect := Rect2(584.0, 184.0, 72.0, 72.0)
+	var endpoint_small := endpoint_rect
+	var canonical_occupied := [{"identity": "base::travel:endpoint", "rect": endpoint_rect, "small_rect": endpoint_small}]
+	if canonical_destination != "base::travel:endpoint" \
+		or ScenarioLayoutResolverScript._substantially_overlaps("scenario::runner", endpoint_rect, canonical_occupied, canonical_destination) \
+		or ScenarioLayoutResolverScript._expanded_overlaps("scenario::runner", endpoint_small, canonical_occupied, canonical_destination):
+		failures.append("A routed actor could not share only its exact canonical destination presentation authority.")
+	var unrelated_occupied := canonical_occupied.duplicate(true)
+	unrelated_occupied.append({"identity": "scenario::unrelated", "rect": endpoint_rect, "small_rect": endpoint_small})
+	if not ScenarioLayoutResolverScript._substantially_overlaps("scenario::runner", endpoint_rect, unrelated_occupied, canonical_destination) \
+		or not ScenarioLayoutResolverScript._expanded_overlaps("scenario::runner", endpoint_small, unrelated_occupied, canonical_destination) \
+		or ScenarioLayoutResolverScript._route_destination_presentation_identity("scenario::world:endpoint") != "":
+		failures.append("Canonical route-destination overlap authority widened to an unrelated visual or non-base route.")
 
 
 static func _geometry_projection() -> Dictionary:

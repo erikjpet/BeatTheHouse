@@ -8132,7 +8132,7 @@
           "games": [],
           "interactions": [],
           "routes": [
-            "base::route:bar"
+            "base::world:bar"
           ],
           "scene_objects": [],
           "services": [],
@@ -8563,7 +8563,7 @@
                   "op": "set_route",
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_cruiser_parked_work_actor",
-                  "route_id": "base::route:bar",
+                  "route_id": "base::world:bar",
                   "stable_object_id": "patrol_officer",
                   "zone_id": "background"
                 },
@@ -8892,7 +8892,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "ec8dc0d65abf11dbcf374e400fe7d1fa55ee28ff5a026d5911e6383d4f7e0dae"
+        "sequence_signature": "4a08f86e9acff59c1266605efd91aa59281b01a7309c4876bba347666c3fb82f"
       }
     },
     {
@@ -10492,7 +10492,7 @@
           "games": [],
           "interactions": [],
           "routes": [
-            "base::route:small_underground_casino"
+            "base::world:small_underground_casino"
           ],
           "scene_objects": [],
           "services": [],
@@ -10923,7 +10923,7 @@
                   "op": "set_route",
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_nothing_moving_work_actor",
-                  "route_id": "base::route:small_underground_casino",
+                  "route_id": "base::world:small_underground_casino",
                   "stable_object_id": "returning_regular",
                   "zone_id": "background"
                 },
@@ -11245,7 +11245,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "155e73bfc98c25c043a3007dc7ccff3bc9285a487be1696d2c9889f46a8d3294"
+        "sequence_signature": "e1fa1b699780dee6aece4bd060ff9d6c39a11754b22df8f1b5d8ba3740ed1a62"
       }
     },
     {

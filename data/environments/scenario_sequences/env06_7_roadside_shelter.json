@@ -6233,11 +6233,13 @@
                   "op": "spawn",
                   "receipt_id": "arrival_gas_station_trucker_convoy_lead_driver",
                   "owner_namespace": "scenario",
+                  "anchor_id": "env06_8_roadside_actor_left",
                   "stable_object_id": "gas_station_trucker_convoy_lead_driver",
                   "actor": {
                     "label": "Lead driver",
                     "actor_id": "gas_lead_driver",
                     "zone_id": "left",
+                    "anchor_id": "env06_8_roadside_actor_left",
                     "behavior": "work",
                     "pose": "working",
                     "description": "Three rig markers, a pallet lane, and driver groups occupy alternating pumps and machines in a visible departure queue. Lead driver remains working, showing who is still involved.",
@@ -6272,6 +6274,7 @@
                   "op": "spawn",
                   "receipt_id": "arrival_gas_station_trucker_convoy_machine_driver",
                   "owner_namespace": "scenario",
+                  "anchor_id": "package_b_gas_top_right",
                   "stable_object_id": "gas_station_trucker_convoy_machine_driver",
                   "actor": {
                     "label": "Machine driver",
@@ -6279,7 +6282,7 @@
                     "zone_id": "background",
                     "behavior": "idle",
                     "pose": "working",
-                    "anchor_id": "package_b_gas_top_mid",
+                    "anchor_id": "package_b_gas_top_right",
                     "description": "The current condition is still plain on machine driver, a physical record of the room's current stage. Three rig markers, a pallet lane, and driver groups occupy alternating pumps and machines in a visible departure queue.",
                     "description_variants": {
 
@@ -7296,7 +7299,7 @@
           "props_5",
           "actors_3"
         ],
-        "sequence_signature": "5de083fe67b68e17f647f1fab3b55a60d66e6de3e4c7efad92aedc1587d21f27",
+        "sequence_signature": "82f010265780e316bae9a262e154b9dcf1804a25a45034ae23dfa220caf1abdf",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -10833,6 +10836,7 @@
                   "op": "spawn",
                   "receipt_id": "arrival_gas_station_road_crew_payday_stake_keeper",
                   "owner_namespace": "scenario",
+                  "anchor_id": "env06_8_roadside_actor_left",
                   "stable_object_id": "gas_station_road_crew_payday_stake_keeper",
                   "actor": {
                     "label": "Stake keeper",
@@ -10840,7 +10844,7 @@
                     "zone_id": "left",
                     "behavior": "watch",
                     "pose": "waiting",
-                    "anchor_id": "package_b_gas_top_right",
+                    "anchor_id": "env06_8_roadside_actor_left",
                     "description": "A work-order board, pooled-stake envelope, barricade stack, and rotating road crew occupy counter and machine stations. Stake keeper remains waiting, showing who is still involved.",
                     "description_variants": {
                       "checking_marks": "The latest turn is now visible at Stake keeper."
@@ -11849,7 +11853,7 @@
           "props_4",
           "actors_3"
         ],
-        "sequence_signature": "d81c8d7072058bd88fa3bc268fa3638f5c0e69e88017b8ac77d85fc853207593",
+        "sequence_signature": "86f775ea725e59ee18890070fcaa1c914f0c67c9fea724f6b65e343281f74954",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -15429,11 +15433,13 @@
                   "op": "spawn",
                   "receipt_id": "arrival_beach_storm_coming_lifeguard",
                   "owner_namespace": "scenario",
+                  "anchor_id": "env06_8_storm_lifeguard",
                   "stable_object_id": "beach_storm_coming_lifeguard",
                   "actor": {
                     "label": "Lifeguard",
                     "actor_id": "beach_lifeguard",
-                    "zone_id": "left",
+                    "zone_id": "background",
+                    "anchor_id": "env06_8_storm_lifeguard",
                     "behavior": "guard",
                     "pose": "working",
                     "description": "Lifeguard visibly carries the room's current condition. A warning flag, loose rental props, rescue skiff, and inland staging line make the approaching storm physically readable.",
@@ -15443,7 +15449,7 @@
                       "work": "A fresh detail at Lifeguard shows that the room has moved on."
                     }
                   },
-                  "zone_id": "left"
+                  "zone_id": "background"
                 },
                 {
                   "family": "actor_ops",
@@ -16595,7 +16601,7 @@
           "props_5",
           "actors_2"
         ],
-        "sequence_signature": "3bce34ef4e3989be36ba491d587ae90dac72c3a829442532c86c2fb69ab2290c",
+        "sequence_signature": "076f207661ea5446616bede56355f94a5f902d09512033bdf782d7b80efb15e2",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
