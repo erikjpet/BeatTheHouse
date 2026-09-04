@@ -352,9 +352,9 @@ profile are retained red:
 
 The draw miss moved between phases instead of reproducing in one path. The
 gate had accepted p95 values built from as few as one draw, which is not a
-statistically eligible nearest-rank percentile. The harness now discards three explicit
-production-canvas warm-up draws and requires at least 20 measured draws for
-every Coin Pusher p95. Sparse measurement-only redraw requests use the real
+statistically eligible nearest-rank percentile. The harness now discards three
+explicit production-canvas warm-up draws and requires exactly 64 measured draws
+for every Coin Pusher p95. Sparse measurement-only redraw requests use the real
 canvas at 15-frame intervals; they do not advance the production animation
 scheduler, change gameplay, or alter the 5/7 ms draw and 16/22 ms frame caps.
 This hardening is not a pass until the exact candidate reruns it.
@@ -386,7 +386,7 @@ narrow or already-proven change.
 
 Therefore `perf06_1` remains **IN PROGRESS**. The 20-second READY and 5/7 ms
 draw budgets are unchanged and unwaived. The final candidate must rerun the
-20-sample Coin Pusher gate and complete the native/Web/declared-low-end and
+64-sample Coin Pusher gate and complete the native/Web/declared-low-end and
 `integ06_1` composition matrices before this row can close.
 
 ### LTO cold-start experiment
@@ -447,3 +447,37 @@ ms, reduced motion 6.895 / 5 ms, drop 9.025 / 7 ms, carriage 7.275 / 7 ms,
 skill-stop 7.080 / 7 ms, and skill-release 11.840 / 7 ms. Collect passed at
 6.845 / 7 ms. The startup and draw budgets remain unchanged and unwaived;
 staged deferral is a measured improvement, not a `perf06_1` closeout.
+
+## 2026-09-04 final-run pre-freeze audit
+
+The clean pushed main candidate audited here is
+`49841960750a873707e79dbf6b5c7836041fcbf5`. This is a preparation checkpoint,
+not the frozen release candidate: `env06_8` and final integration work were
+still active when the audit ran. No qualifying performance capture was started
+against that moving source.
+
+The required catalog contains 11 games with 62 phases and 12 systems with 50
+phases. Across native, Web and low-end profiles, the final consumer therefore
+requires 336 phase/profile cells. A deliberate empty-input execution of
+`perf06_matrix_contract.ps1` failed closed with all 336 cells absent plus 24
+missing composition/terminal manifest-field failures. This confirms that no
+development artifact can currently be mistaken for the final report.
+
+At the checkpoint commit, the required-matrix, published-budget, negative
+allocation, seven-root allocation source audit, Web idle-liveness, Coin Pusher
+clock, Web prestage, Coin Pusher action diagnostic, complementary-startup,
+run-UI deferral and backglass readability contracts all passed. The Godot 4.6
+headless editor parse, deferred-validation runtime contract, 17-check Web READY
+snapshot contract and idle-liveness runtime contract also passed. Coin Pusher's
+production static-cache contract passed all 89 checks and all 24
+cached/uncached pixel pairs met the visual-equivalence threshold. A declared
+whole-matrix throttle profile (one native logical CPU, BelowNormal priority and
+Web CPU throttle 4) passed the low-end launch preflight. These checks validate
+the harness; they do not populate any of the 336 final matrix cells.
+
+The exact post-freeze command order, immutable output layout and final combined
+consumer invocation are recorded in
+`docs/plans/perf06_1_final_runtime_runbook.md`. `perf06_1` remains **IN
+PROGRESS** until that sequence runs on a clean, quiesced, exact main candidate,
+all producers pass without a budget waiver, all 336 cells are present, and the
+raw artifact hashes are added to the final report.
