@@ -1,0 +1,93 @@
+{
+  "schema": "beat_the_house.perf06_budget_table/v1",
+  "version": 1,
+  "policy": {
+    "idle_timing_requires_liveness": true,
+    "steady_state_deep_copies_max": 0,
+    "web_scenario_memory_delta_bytes_max": 134217728
+  },
+  "web_global": {
+    "ready_ms": 20000,
+    "corner_store_open_ms": 1200,
+    "telemetry_overhead_mean_ms": 0.1
+  },
+  "web_frame_p95_ms": {
+    "l02": {
+      "menu_idle": 180.0,
+      "meta_home_animated_idle": 20.0,
+      "corner_store_idle": 120.0,
+      "pull_tabs_idle": 20.0,
+      "pull_tabs_active": 60.0,
+      "scratch_tickets_idle": 25.0,
+      "scratch_tickets_active": 65.0,
+      "slot_idle": 45.0,
+      "slot_active": 110.0,
+      "bar_dice_idle": 25.0,
+      "bar_dice_active": 90.0,
+      "blackjack_idle": 25.0,
+      "blackjack_active": 110.0,
+      "baccarat_idle": 25.0,
+      "baccarat_active": 120.0,
+      "roulette_idle": 30.0,
+      "roulette_active": 160.0,
+      "craps_idle": 30.0,
+      "craps_active": 160.0,
+      "crew_draw_poker_idle": 25.0,
+      "crew_draw_poker_active": 110.0,
+      "video_poker_idle": 20.0,
+      "video_poker_active": 60.0,
+      "slot_autoplay_active": 100.0,
+      "pinball_feature_session": 180.0,
+      "world_map_idle": 45.0,
+      "scripted_play_memory_10m": 45.0
+    },
+    "grand_casino": {
+      "menu_idle": 180.0,
+      "grand_casino_late_settle": 60.0,
+      "grand_casino_room_churn": 50.0,
+      "grand_casino_late_idle": 50.0
+    },
+    "coin_pusher": {
+      "menu_idle": 180.0,
+      "coin_pusher_idle": 16.0,
+      "coin_pusher_active_drop": 22.0,
+      "coin_pusher_active_carriage": 22.0,
+      "coin_pusher_active_skill_stop": 22.0,
+      "coin_pusher_active_skill_release": 22.0,
+      "coin_pusher_active_collect": 22.0,
+      "coin_pusher_reduced_motion": 16.0
+    },
+    "secure_entropy": {
+      "menu_idle": 180.0
+    }
+  },
+  "native": {
+    "surface_draw_p95_ms": 5.0,
+    "static_idle_surface_draw_p95_ms": 1.5,
+    "animated_idle_surface_draw_p95_ms": {
+      "roulette": 7.0,
+      "scratch_tickets": 5.0,
+      "slot": 5.0,
+      "video_poker": 5.0
+    },
+    "animated_idle_liveness_minimum_per_120_frames": 8,
+    "coin_pusher": {
+      "solver_tick_p95_ms": 12.0,
+      "active_action_ms": 16.0,
+      "active_frame_p95_ms": 22.0,
+      "active_draw_p95_ms": 7.0
+    },
+    "resolve_ms": {
+      "pull_tabs": {"mean": 1.5, "p95": 2.5, "max": 4.0},
+      "scratch_tickets": {"mean": 3.0, "p95": 5.0, "max": 6.0},
+      "slot": {"mean": 6.0, "p95": 8.0, "max": 10.0},
+      "bar_dice": {"mean": 1.5, "p95": 3.0, "max": 4.0},
+      "craps": {"mean": 4.5, "p95": 5.5, "max": 7.0},
+      "blackjack": {"mean": 4.5, "p95": 5.5, "max": 7.0},
+      "baccarat": {"mean": 1.25, "p95": 1.75, "max": 3.0},
+      "roulette": {"mean": 2.0, "p95": 3.0, "max": 4.0},
+      "crew_draw_poker": {"mean": 4.5, "p95": 5.5, "max": 7.0},
+      "video_poker": {"mean": 2.5, "p95": 4.5, "max": 5.0}
+    }
+  }
+}

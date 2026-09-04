@@ -2,10 +2,18 @@
 
 Status: **IN PROGRESS — static preparation only; no binding measurements yet**
 
-Prepared from integrated source `ee9545fa` on 2026-09-03. The final candidate
-is still changing, so this review deliberately records no performance verdict.
+Prepared from integrated source `ee9545fa` and refreshed onto closeout candidate
+base `c2db39c0` with platform harness tip `fee1c755` on 2026-09-03. The final
+candidate is still changing, so this review deliberately records no performance verdict.
 It converts the existing prestage contract into an executable coverage map and
 names every missing measurement before a quiesced run begins.
+
+This preparation update adds native idle/resolve coverage for Craps and Crew
+Draw Poker, Web idle/active coverage for Scratch Tickets and Crew Draw Poker,
+the previously ungated Craps Web rows, same-window Web idle liveness deltas, and
+an explicit fail-closed cold/warm cache selector. These rows are prepared but
+deliberately unmeasured; their status stays `EXTEND` until the exact final
+candidate runs them successfully.
 
 ## Measurement method frozen before execution
 
@@ -38,9 +46,9 @@ final manifests; these preliminary values are not binding evidence.
 
 | Harness | Current evidence | Safe to reuse | Missing for perf06_1 |
 | --- | --- | --- | --- |
-| `foundation_performance_probe` | Native idle/draw/resolve rows, liveness guard, full-snapshot counters, 300-body Coin Pusher actions and solver | Yes | Craps and Crew Draw Poker; full phase matrix; complete runtime allocation counters; immutable host/build manifest |
-| `perf_telemetry_overlay` + desktop driver | Frame/process/physics/draw/memory/object/node/orphan samples and allocation proxy | Yes | No maximal 0.6 composition plan; L0.2 omits Scratch Tickets and Crew Draw Poker; no complete per-phase budget pairing |
-| `web_perf_smoke` | Fresh export, cold Chrome profile, 4x CPU L0.2/Grand Casino/Coin Pusher plans, startup and telemetry overhead | Yes | ValidateSet has no maximal-composition plan; general game rows do not enforce the native-style liveness pair; no warm-profile row |
+| `foundation_performance_probe` | Native idle/draw/resolve rows, liveness guard, full-snapshot counters, shipped-cap 160-body Coin Pusher actions, and separate raw 300-body solver stress | Yes | Prepared Craps and Crew Draw Poker additions await execution; full phase matrix, complete runtime allocation counters and immutable host/build manifest remain |
+| `perf_telemetry_overlay` + desktop driver | Frame/process/physics/draw/memory/object/node/orphan samples and allocation proxy | Yes | Scratch Tickets/Crew Draw Poker and same-window liveness deltas are prepared but unmeasured; no maximal 0.6 composition plan or complete per-phase pairing |
+| `web_perf_smoke` | Fresh export, explicit cold/warm Chrome profile, 4x CPU L0.2/Grand Casino/Coin Pusher plans, startup and telemetry overhead | Yes | Prepared L0.2 budgets, fail-closed liveness pairs and cold/warm selector await execution; ValidateSet still has no maximal-composition plan |
 | `scenario_sequence_parity_performance` | Native/Web sequence timings and exact semantic parity for Corner Store Delivery Day | Yes | One scenario is not the maximal composition or all-archetype coverage |
 | Family platform probes | Current native/Web parity for environment packages and game families | Yes, as functional side evidence | They are not one same-method performance matrix |
 | `foundation_soak_probe` | Native 180-minute/504-action retained-state trajectory | Yes | No Web terminal soak and no proof that every 0.6 subsystem is live together |
@@ -69,7 +77,7 @@ Legend: `READY` means an existing final-source driver can collect the row;
 | Roulette | READY | READY | EXTEND | Split spin, post-spin, skill and payout rows |
 | Crew Draw Poker | EXTEND | EXTEND | EXTEND | Add actor-present ordered-hand idle/action/terminal rows |
 | Video Poker | READY | READY | EXTEND | Add hold/draw/double-up/payout/ritual rows |
-| Coin Pusher | READY | READY | EXTEND | Retain exact 300-body cap, idle/drop/carriage/skill/collect/solver/ceiling/liveness rows |
+| Coin Pusher | READY | READY | EXTEND | Retain the exact shipped 160-body idle/drop/carriage/skill/collect rows, separate raw 300-body solver stress, ceiling refusal, and liveness rows |
 
 Every animated idle row must include the counter name, floor, measured delta and
 timing budget in one result. A zero idle value without a declared static reason
@@ -133,6 +141,122 @@ row is absent.
 These are provenance checks, not final identities. Every hash will be
 recomputed after the last functional integration and before each export.
 
+## Qualified Web crypto/template unblock (nonbinding)
+
+The first exact exported-Web diagnostic reached READY but proved that the
+previous locked thin template omitted not only `Crypto` but also
+`HMACContext`. The minimal correction in `0a508712` keeps Godot's standard
+mbedTLS module in the pinned Godot 4.6/Emscripten 4.0.20 single-threaded dlink
+template; no custom cipher, authenticator, entropy bridge, or privacy downgrade
+is present.
+
+- Deterministic template SHA-256:
+  `CF371F607AA9CB18E690BD595976C1BAAF00C8CEC24078E4A307FD515AD07913`.
+- Template size: 6,055,590 bytes, an increase of 306,863 bytes over the prior
+  5,748,727-byte locked template.
+- Fresh exact-`9ba11ee8` Web export aggregate SHA-256:
+  `18DE35F88146D39B88A91DF1D087924D672A3FC2DCC7951C8A6E97CC83D7F3D4`.
+- Upload archive: 40,821,103 bytes, SHA-256
+  `F7EC1E7877E4A4A566F4AA8B6349D9D44E1D149B0D13FC8454609CED25BA29CA`;
+  exported main module `index.wasm` is 1,508,237 bytes.
+- Chrome 152 fresh-profile READY was 4,889 ms from navigation and 5,162 ms
+  wall clock; the complete focused proof finished in 6,386 ms. This is current
+  load evidence, not the final cold/warm performance verdict.
+- Exported Web stock `Crypto` returned exact, non-repeating 16-, 32-, and
+  65,536-byte values. `AESContext` round-tripped, `HMACContext` rejected a
+  tampered capsule, two capsules stayed distinct and fixed at 65,584 bytes,
+  and canonical private payload bytes were absent. Page, request, and HTTP
+  failure counts were zero; the only captured console entry was the expected
+  browser audio-autoplay warning.
+- The native Coin Pusher Web side-module remained ABI-compatible and passed
+  the live-batch parity contract. Its binary SHA-256 is
+  `67213C258BAB0330EB0CCD57E3B64F7E1415D0432BB9317DB21F0ECB66D5771C`;
+  the parity payload SHA-256 is
+  `C03588BABF0A5FB40B36349020DD90E43BBA4A1C8644C6A15C7BC1F54E31953F`.
+
+The focused report and native-extension manifest are retained under
+`.tmp/perf06_crypto_mbedtls_exact_9ba11ee8/` and
+`.tmp/perf06_native_live_batch_exact_9ba11ee8_retry/`. These artifacts qualify
+the release-input repair and harness. They do not replace the final exact-head
+scenario matrix after all integration work lands.
+
+## Development matrix qualification (nonbinding)
+
+A short native development run at branch head `f7b4eaf2` exercised 46
+observations with zero failures. All ten game resolve rows returned eight
+accepted samples and eight observable progress samples. Its historical
+300-body Coin Pusher live workload was a nonbinding stress run, not the current
+shipped cap; it ran on `native_v3`, with DROP frame p95 9.049 ms and draw p95
+5.104 ms. One pre-existing coverage warning remained because the generated
+slot preview room was boss-kind rather than casino-like. The retained report is
+`.tmp/perf06_native_development_f7b4eaf2/report.json`, SHA-256
+`E57B0ADDDFE552DA99249BD09F04E40CCEF0FD6FD8EAF400FAB4FCE82146C56E`.
+
+The corresponding warm-profile Chrome/4x Web development run completed all 27
+L0.2 scenarios with zero page, request, or HTTP failures. Every one of the ten
+active game rows was accepted and showed canonical progress, including Craps
+and Crew Draw Poker. It correctly failed 29 release assertions: READY was
+23,390 ms against 20,000 ms; Corner Store open was 10,848.010 ms against
+1,200 ms; 17 frame-time rows exceeded their current budgets; and ten
+same-window liveness assertions failed across Baccarat, Bar Dice, Craps, Crew
+Draw Poker, Roulette, Scratch Tickets, and Video Poker. The retained
+report/summary is under `.tmp/perf06_l02_development_f7b4eaf2/`.
+
+The diagnostic also exposed a harness defect rather than seven proven frozen
+surfaces. Most shipped Web idle surfaces deliberately declare a 1 Hz low-detail
+cadence, while the first prepared gate demanded a frame-count-derived 4 Hz
+floor. The corrected gate now exports each surface's effective production idle
+FPS and scheduler elapsed time, extends every measured idle window through at
+least two declared intervals, and derives its redraw floor from that elapsed
+time. A row passes only when the same window has a stable positive declaration,
+enough scheduler time, the due scheduled redraws, and a real canvas draw. This
+does not raise a budget, reduce the 1 Hz production cadence, or let zero-draw
+idle appear cheap. Focused fail-closed coverage lives in
+`tools/web_perf_idle_liveness_contract_test.ps1`; the paired runtime contract in
+`tools/perf06_idle_liveness_runtime_contract.gd` also proves scheduler/reset
+semantics and keeps a monotonic draw total separate from the bounded 512-sample
+timing buffer, so a long L0.2 run cannot conceal drawing through saturation.
+
+These development runs prove the repaired fixtures dispatch real actions and
+that stalled animation cannot pass as a cheap frame. They are not a waiver,
+optimization baseline, or final performance verdict. The misses remain for the
+exact integrated, quiesced-host pass to reproduce and attribute.
+
+## Final matrix consumer and low-end launcher
+
+The opt-in closeout harness now freezes every required shipped game and system
+phase in `tools/perf06_required_matrix.json`. The catalog is checked against
+`data/games/games.json`, so a newly shipped game cannot silently escape the
+native, Web, and low-end matrix. `tools/perf06_matrix_contract.ps1` consumes,
+rather than recreates, the integration lane's all-archetype composition and
+terminal-soak manifests and shards. It requires exact candidate identity,
+artifact hashes, zero uncovered composition rows, every ordering, Crew-ignore,
+victory/failure/profile coverage, and equal same-seed native-repeat/Web traces.
+
+Every required phase row fails closed unless it includes launch-bound hardware,
+build, browser/throttle/device-scale metadata; frame/draw/liveness/retained-state
+figures; and complete allocation/copy evidence for the phase's declared call
+roots. The telemetry overlay's counters are pre-registered and exist only when
+the explicit perf overlay is constructed. The measured code path marks a root
+only after that root actually executes. Empty or partially marked roots are
+ineligible, as frozen by `perf06_allocation_contract_test.ps1`; a label claiming
+zero allocations is not evidence. The companion source audit hashes exact root
+functions and rejects direct deep copies, JSON codecs, delays, and callable
+creation. Its `direct_root_source` scope is deliberately narrower than a
+transitive call graph and cannot be presented as one.
+
+`tools/perf06_low_end_matrix.ps1` runs the same native/Web/integration producers
+on a declared physical low-end host. It rejects a dirty or wrong candidate,
+pre-existing evidence directories, a caller-selected label without a matching
+profile hash, hardware fingerprint, actual Windows power plan, Chrome identity,
+captured CPU throttle, 1280x720 viewport, device scale, and launch flags. It
+passes exact candidate/profile/output arguments to the integration producers;
+their simulation remains owned by `integ06_1`.
+
+These files prepare the missing execution seams. They contain no measurement,
+budget change, terminal simulation, or product optimization, and do not change
+the `perf06_1` verdict before the exact final candidate populates every row.
+
 ## Final execution order
 
 1. Receive the exact integrated candidate and composition manifest; rebase this
@@ -157,3 +281,53 @@ native game surfaces and Coin Pusher, but the final `perf06_1` verdict is not
 available. Missing maximal-composition, Crew Draw Poker, complete Craps and
 Scratch Web, general Web liveness, warm-start, and measured low-end rows are
 real work—not paperwork—and remain open until the final candidate is frozen.
+
+## 2026-09-04 recovered closeout preparation
+
+The prebuilt platform series was recovered from
+`codex/perf06-platform-mbedtls` and the aggregate candidate, then merged over
+integrated main `3c836d18` without replaying old product branches. The inherited
+performance edits to `scripts/ui/foundation_main.gd` were removed; that shared
+file is byte-identical to the integrated base. Runtime allocation coverage now
+binds to the subsystem timings the performance overlay already receives.
+
+The recovered harness now also provides:
+
+- a fresh Windows-release measurement launcher with exact executable, Godot,
+  source, tree, profile and raw-report hashes;
+- immutable per-phase runtime tags and phase-local production-canvas draw cost
+  (or a conservative complete-frame upper bound where PixelSceneCanvas exposes
+  liveness but no separate CPU draw timer);
+- an honest surface-report builder that rejects missing action progress,
+  liveness, draw samples, deep-copy evidence or exact-source identity;
+- an immutable host-profile capture and a reproducible whole-matrix low-end
+  mode that constrains the complete launcher tree to a declared processor mask
+  and priority while retaining the required Web CPU throttle; and
+- start/end clean-tree checks for native and Web evidence so a moving candidate
+  cannot produce a qualifying report.
+
+Preparation checks are green: the required 11-game/12-system catalog, negative
+allocation fixtures, Web idle-liveness contract, Web active/prestage contract,
+and seven direct call-root source audits. Godot import and the focused 177-file
+UI/tools load are green. A deliberately shortened, nonbinding Windows release
+diagnostic at `f152e480` completed all 27 L0.2 runtime scenarios; its numbers are
+not release evidence because it used 30-frame/10-second diagnostic windows and
+the final candidate is still moving. A concurrent broad smoke retained one
+pre-existing lifecycle red (`Second foundation EnvironmentInstance should leave
+home into the world`); content and all parse/load stages were green, and no
+performance-owned file participates in that assertion.
+
+The final verdict remains unavailable. It still requires the landed
+`integ06_1` composition/terminal manifests, the final env06_8 candidate, full
+120/240/600 native and Web windows, cold/warm Web starts, the exact low-end
+whole-matrix run, all remaining canonical phase rows, and a clean-host rerun.
+
+The maintained timing caps are now published without changes in
+`tools/perf06_budget_table.json` (schema/version 1). The Web gate consumes that
+file directly and records its version and SHA-256 in every summary; the native
+probe retains its existing checked-in constants. The companion budget contract
+pins representative Web caps, the native draw/solver/action caps, the required
+idle-timing/liveness pairing, and the zero steady-state deep-copy policy. The
+first exact Windows-release diagnostic using the real meta-home environment
+produced a green 26-row canonical surface report; the earlier static start-menu
+substitution is no longer eligible as meta-home liveness evidence.

@@ -5224,6 +5224,7 @@ func _check_idle_animation_liveness_contract(surface: Dictionary, label: String,
 	var after_snapshot: Dictionary = canvas.call("surface_runtime_status")
 	var after_redraw_count := int(after_snapshot.get("surface_animation_redraw_count", 0))
 	var performance_counters: Dictionary = canvas.call("performance_counters") if canvas.has_method("performance_counters") else {}
+	var live_status: Dictionary = canvas.call("performance_live_status") if canvas.has_method("performance_live_status") else {}
 	var second_sample := _idle_animation_sample_from_canvas(canvas)
 	if after_redraw_count <= before_redraw_count:
 		failures.append("%s idle animation did not schedule redraws with zero input." % label)
@@ -5231,6 +5232,14 @@ func _check_idle_animation_liveness_contract(surface: Dictionary, label: String,
 		failures.append("%s idle animation sample did not advance over simulated time." % label)
 	if int(performance_counters.get("surface_animation_scheduler_elapsed_msec", -1)) != 200:
 		failures.append("%s idle animation scheduler evidence did not record the exact 200ms production-path interval." % label)
+	if not is_equal_approx(float(performance_counters.get("surface_idle_animation_fps", 0.0)), 60.0):
+		failures.append("%s idle animation counters did not publish the native production cadence." % label)
+	if int(after_snapshot.get("surface_animation_scheduler_elapsed_msec", -1)) != 200 \
+			or not is_equal_approx(float(after_snapshot.get("surface_idle_animation_fps", 0.0)), 60.0):
+		failures.append("%s runtime status omitted the scheduler elapsed/cadence evidence." % label)
+	if int(live_status.get("surface_animation_scheduler_elapsed_msec", -1)) != 200 \
+			or not is_equal_approx(float(live_status.get("surface_idle_animation_fps", 0.0)), 60.0):
+		failures.append("%s lightweight live status omitted the scheduler elapsed/cadence evidence." % label)
 	if canvas.has_method("reset_performance_counters"):
 		canvas.call("reset_performance_counters")
 		var reset_counters: Dictionary = canvas.call("performance_counters") if canvas.has_method("performance_counters") else {}

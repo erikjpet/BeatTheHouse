@@ -72,6 +72,7 @@ var last_audio_profile_id: String = ""
 var perf_full_snapshot_calls := 0
 var perf_runtime_status_calls := 0
 var perf_draw_frame_usec_samples: Array = []
+var perf_draw_frame_total_count := 0
 var perf_patch_redraw_requests := 0
 var perf_reduced_motion_measurement_redraw_requests := 0
 var surface_label_fit_cache: Dictionary = {}
@@ -155,6 +156,7 @@ func clear_runtime_state() -> void:
 	surface_label_fit_cache.clear()
 	hit_region_group_cache.clear()
 	perf_draw_frame_usec_samples = []
+	perf_draw_frame_total_count = 0
 	surface_animation_redraw_accumulator = 0.0
 	surface_animation_redraw_count = 0
 	perf_surface_animation_scheduler_elapsed_sec = 0.0
@@ -278,7 +280,9 @@ func current_view_snapshot() -> Dictionary:
 		"drunk_distortion_debug": drunk_distortion_overlay.debug_snapshot() if drunk_distortion_overlay != null else {},
 		"surface_animations": _surface_animation_status_snapshot(),
 		"surface_animation_target_fps": SURFACE_ANIMATION_FPS,
+		"surface_idle_animation_fps": surface_idle_animation_fps(),
 		"surface_animation_redraw_count": surface_animation_redraw_count,
+		"surface_animation_scheduler_elapsed_msec": maxi(0, int(round(perf_surface_animation_scheduler_elapsed_sec * 1000.0))),
 		"surface_continuous_redraw_active": _needs_continuous_redraw(),
 		"surface_animation_liveness_active": surface_animation_liveness_active(),
 		"surface_animation_handoff_active": _surface_animation_handoff_active(),
@@ -317,7 +321,9 @@ func surface_runtime_status() -> Dictionary:
 		"drunk_distortion_debug": drunk_distortion_overlay.debug_snapshot() if drunk_distortion_overlay != null else {},
 		"surface_animations": _surface_animation_status_snapshot(),
 		"surface_animation_target_fps": SURFACE_ANIMATION_FPS,
+		"surface_idle_animation_fps": surface_idle_animation_fps(),
 		"surface_animation_redraw_count": surface_animation_redraw_count,
+		"surface_animation_scheduler_elapsed_msec": maxi(0, int(round(perf_surface_animation_scheduler_elapsed_sec * 1000.0))),
 		"surface_continuous_redraw_active": _needs_continuous_redraw(),
 		"surface_animation_liveness_active": surface_animation_liveness_active(),
 		"surface_animation_handoff_active": _surface_animation_handoff_active(),
@@ -338,6 +344,16 @@ func surface_realtime_state_refresh_enabled() -> bool:
 
 func surface_animation_liveness_active() -> bool:
 	return _surface_animation_liveness_active()
+
+
+# This is the production idle cadence, not a test floor. Web intentionally
+# renders low-detail idle motion less often; native keeps the full cadence.
+func surface_idle_animation_fps() -> float:
+	if reduce_motion or not bool(state.get("surface_animates_idle", false)):
+		return 0.0
+	if not OS.has_feature("web"):
+		return SURFACE_ANIMATION_FPS
+	return _requested_web_idle_animation_fps()
 
 
 # A lightweight boundary query for UI owners that must wait until a finite
@@ -361,6 +377,7 @@ func reset_performance_counters() -> void:
 	perf_full_snapshot_calls = 0
 	perf_runtime_status_calls = 0
 	perf_draw_frame_usec_samples = []
+	perf_draw_frame_total_count = 0
 	perf_patch_redraw_requests = 0
 	perf_reduced_motion_measurement_redraw_requests = 0
 	surface_animation_redraw_count = 0
@@ -383,7 +400,10 @@ func performance_counters() -> Dictionary:
 		"reduced_motion_measurement_redraw_requests": perf_reduced_motion_measurement_redraw_requests,
 		"surface_animation_redraw_count": surface_animation_redraw_count,
 		"surface_animation_scheduler_elapsed_msec": maxi(0, int(round(perf_surface_animation_scheduler_elapsed_sec * 1000.0))),
+		"surface_idle_animation_fps": surface_idle_animation_fps(),
 		"surface_animation_liveness_active": surface_animation_liveness_active(),
+		"draw_sample_count": perf_draw_frame_total_count,
+		"draw_sample_buffer_count": perf_draw_frame_usec_samples.size(),
 		"draw_frame_usec_samples": perf_draw_frame_usec_samples.duplicate(),
 		"draw_avg_ms": _draw_average_ms(),
 		"draw_p95_ms": _draw_percentile_ms(0.95),
@@ -397,8 +417,11 @@ func performance_counters() -> Dictionary:
 func performance_live_status() -> Dictionary:
 	return {
 		"surface_animation_redraw_count": surface_animation_redraw_count,
+		"surface_animation_scheduler_elapsed_msec": maxi(0, int(round(perf_surface_animation_scheduler_elapsed_sec * 1000.0))),
+		"surface_idle_animation_fps": surface_idle_animation_fps(),
 		"surface_animation_liveness_active": surface_animation_liveness_active(),
-		"draw_sample_count": perf_draw_frame_usec_samples.size(),
+		"draw_sample_count": perf_draw_frame_total_count,
+		"draw_sample_buffer_count": perf_draw_frame_usec_samples.size(),
 		"draw_avg_ms": _draw_average_ms(),
 	}
 
@@ -436,13 +459,15 @@ func debug_soak_snapshot() -> Dictionary:
 		"surface_label_fit_cache_size": surface_label_fit_cache.size(),
 		"hit_region_group_cache_size": hit_region_group_cache.size(),
 		"hit_region_count": hit_regions.size(),
-		"draw_sample_count": perf_draw_frame_usec_samples.size(),
+		"draw_sample_count": perf_draw_frame_total_count,
+		"draw_sample_buffer_count": perf_draw_frame_usec_samples.size(),
 		"surface_sfx": surface_sfx_player.call("debug_soak_snapshot") if surface_sfx_player != null and surface_sfx_player.has_method("debug_soak_snapshot") else {},
 	}
 
 
 func _record_draw_performance(start_usec: int) -> void:
 	var elapsed := maxi(0, Time.get_ticks_usec() - start_usec)
+	perf_draw_frame_total_count += 1
 	perf_draw_frame_usec_samples.append(elapsed)
 	if perf_draw_frame_usec_samples.size() > PERF_DRAW_SAMPLE_LIMIT:
 		perf_draw_frame_usec_samples.pop_front()
@@ -1509,8 +1534,11 @@ func _surface_animation_redraw_due(delta: float) -> bool:
 
 
 func _web_idle_animation_interval() -> float:
-	var requested_fps := clampf(float(state.get("surface_web_idle_animation_fps", DEFAULT_WEB_IDLE_ANIMATION_FPS)), DEFAULT_WEB_IDLE_ANIMATION_FPS, SURFACE_ANIMATION_FPS)
-	return 1.0 / requested_fps
+	return 1.0 / _requested_web_idle_animation_fps()
+
+
+func _requested_web_idle_animation_fps() -> float:
+	return clampf(float(state.get("surface_web_idle_animation_fps", DEFAULT_WEB_IDLE_ANIMATION_FPS)), DEFAULT_WEB_IDLE_ANIMATION_FPS, SURFACE_ANIMATION_FPS)
 
 
 func _scale_canvas() -> void:
