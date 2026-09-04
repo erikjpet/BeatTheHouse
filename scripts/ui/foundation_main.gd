@@ -1658,9 +1658,12 @@ func _sealed_action_host_proposal_valid(proposal: Dictionary, proposal_input: Di
 	output.erase("output_fingerprint")
 	if provided_output_fingerprint != GameRitualRuntimeScript.canonical_fingerprint(output):
 		return false
-	# The host replays the canonical module from the sealed serialized input and
-	# compares the entire output. A producer cannot bless a modified snapshot by
-	# merely recomputing its own hash.
+	# The host replays the canonical module from the sealed serialized input. Both
+	# outputs are independently bound to their complete canonical content by the
+	# same SHA-256 contract, so comparing those verified bindings is equivalent to
+	# serializing both full proposals a second time and comparing the strings.
+	# This keeps the hostile-input boundary fail-closed while avoiding one large,
+	# short-lived allocation on every accepted action.
 	var resolve_method := StringName(action_authority_contract.get("resolve_proposal_method", &""))
 	if resolve_method.is_empty() or not current_game.has_method(resolve_method):
 		return false
@@ -1672,7 +1675,13 @@ func _sealed_action_host_proposal_valid(proposal: Dictionary, proposal_input: Di
 		proposal_input.get("rng_snapshot", {}),
 		proposal_input.get("ui_state", {})
 	)
-	return GameRitualRuntimeScript.canonical_json(canonical) == GameRitualRuntimeScript.canonical_json(proposal)
+	var canonical_output := canonical.duplicate(false)
+	var canonical_output_fingerprint := str(canonical_output.get("output_fingerprint", ""))
+	canonical_output.erase("output_fingerprint")
+	if canonical_output_fingerprint.is_empty() \
+			or canonical_output_fingerprint != GameRitualRuntimeScript.canonical_fingerprint(canonical_output):
+		return false
+	return canonical_output_fingerprint == provided_output_fingerprint
 
 
 func _sealed_action_host_snapshot_ledger(snapshot: Dictionary) -> Dictionary:
@@ -6896,7 +6905,13 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 			route["numbers_past_post_travel_actions"] = numbers_travel_actions
 	run_state.clear_closing_time_state()
 	var travel_decay := run_state.finish_travel_suspicion_decay(travel_heat)
-	_update_procedural_music()
+	# Web callers need the authoritative travel result in this stack frame, but
+	# rebuilding the destination music mix is presentation-only. Queue it before
+	# the room refresh so both become visible together on the next idle turn.
+	if _should_use_atomic_web_travel_transition():
+		call_deferred("_update_procedural_music")
+	else:
+		_update_procedural_music()
 	current_game = null
 	last_game_result = {}
 	last_item_result = {}
@@ -6974,7 +6989,14 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 			_refresh_talk_dock()
 			_refresh()
 	elif web_atomic_travel:
-		_refresh()
+		# State, save, receipts, and triggered-event decisions are complete above.
+		# Rendering the newly committed room does not belong inside the synchronous
+		# web transaction and otherwise duplicates the next frame's presentation
+		# work while making a normal route appear to hang.
+		if _should_use_atomic_web_travel_transition():
+			call_deferred("_refresh")
+		else:
+			_refresh()
 	if perf_corner_store_timing:
 		perf_corner_store_stages["triggered_events_refresh_ms"] = float(Time.get_ticks_usec() - perf_corner_store_stage_started_usec) / 1000.0
 		perf_telemetry_overlay.mark_event("corner_store_travel_stage_timing", {
