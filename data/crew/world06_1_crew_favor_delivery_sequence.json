@@ -76,7 +76,7 @@
                   "owner_namespace": "crew",
                   "stable_object_id": "package_handoff",
                   "object": {
-                    "label": "Waiting handoff",
+                    "label": "Handoff",
                     "role": "objective",
                     "zone_id": "center",
                     "bounds": {"w": 72, "h": 56},
@@ -97,7 +97,7 @@
                   "interaction": {
                     "owner_namespace": "crew",
                     "stable_object_id": "package_handoff",
-                    "label": "Make the handoff",
+                    "label": "Handoff",
                     "state_label": "Package ready",
                     "prompt": "Pass the Crew package to the waiting hand.",
                     "enabled": true,
@@ -105,7 +105,7 @@
                     "available_actions": [
                       {
                         "id": "make_handoff",
-                        "label": "Make the handoff",
+                        "label": "Handoff",
                         "input_action": "ui_accept",
                         "non_color_state": "deliver"
                       }
@@ -372,7 +372,7 @@
           "owner_feedback",
           "environment_composition"
         ],
-        "sequence_signature": "ea253c262bbf657dc76dfe0d731aeaf03130872298799f09c303f3e15c0d5d53",
+        "sequence_signature": "1477ac8e86db26addd1b404cb9007db56af16e94a70e6ef8da66f17b67c53b8e",
         "owner_exceptions": [
           {
             "row": "world_connection",
