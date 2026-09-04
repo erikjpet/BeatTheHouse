@@ -287,7 +287,9 @@ $archivePath = Join-Path $OutDir "frozen_source_$head.zip"
 if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $archivePath -PathType Leaf)) { throw "Could not archive frozen commit $head." }
 $archiveSha = (Get-FileHash -LiteralPath $archivePath -Algorithm SHA256).Hash.ToLowerInvariant()
 $snapshotRoot = Join-Path $OutDir "frozen_source_manifest_root"
-Expand-Archive -LiteralPath $archivePath -DestinationPath $snapshotRoot
+New-Item -ItemType Directory -Path $snapshotRoot | Out-Null
+& tar.exe -xf $archivePath -C $snapshotRoot
+if ($LASTEXITCODE -ne 0) { throw "Could not expand frozen source manifest archive." }
 
 $gitEntries = [Collections.Generic.List[object]]::new()
 $trackedByPath = @{}
@@ -415,7 +417,9 @@ $shardProjectsRoot = Join-Path $OutDir "shard_projects"
 New-Item -ItemType Directory -Path $shardProjectsRoot -Force | Out-Null
 foreach ($style in $styles) {
     $privateRoot = Join-Path $shardProjectsRoot $style
-    Expand-Archive -LiteralPath $archivePath -DestinationPath $privateRoot
+    New-Item -ItemType Directory -Path $privateRoot | Out-Null
+    & tar.exe -xf $archivePath -C $privateRoot
+    if ($LASTEXITCODE -ne 0) { throw "Could not expand frozen source for $style." }
     foreach ($entry in $runtimeEntries) {
         $relative = [string]$entry.path
         $source = Join-Path $runtimeFreezeRoot $relative.Replace("/", "\")
