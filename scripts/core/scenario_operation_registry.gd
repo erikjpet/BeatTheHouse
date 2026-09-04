@@ -961,6 +961,8 @@ static func _validate_actor_payload(payload: Dictionary, errors: Array) -> void:
 
 
 static func _validate_description_authoring(label: String, payload: Dictionary, errors: Array) -> void:
+	if not payload.has("description") and not payload.has("description_variants"):
+		return
 	var description := str(payload.get("description", "")).strip_edges()
 	if description.is_empty() or description.length() > MAX_VARIANT_TEXT or _contains_forbidden_path(description):
 		errors.append("%s requires a bounded authored description." % label)

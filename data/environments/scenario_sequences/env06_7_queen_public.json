@@ -9947,6 +9947,7 @@
                 {
                   "family": "scene_ops",
                   "object": {
+                    "anchor_id": "grand_work_object_middle",
                     "appearance": "busy",
                     "bounds": {
                       "h": 46.0,
@@ -11040,7 +11041,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "56a10251b35c5309c69e696daee251fd837de8a7af7a8833db21a987d550c2a9"
+        "sequence_signature": "ee57f9519a79b506b79d640593596b4f0ad8d4c8d36b01c05c26d0975936050c"
       }
     },
     {
