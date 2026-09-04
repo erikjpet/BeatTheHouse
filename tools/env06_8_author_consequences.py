@@ -26,6 +26,15 @@ def main():
         package = json.loads(path.read_text(encoding="utf-8"))
         for scenario in package["scenarios"]:
             changed_this_scenario = False
+            def has_scene_change(value):
+                if isinstance(value, dict):
+                    if value.get("handler") == "change_scene_object":
+                        return True
+                    return any(has_scene_change(nested) for nested in value.values())
+                if isinstance(value, list):
+                    return any(has_scene_change(nested) for nested in value)
+                return False
+            changed_this_scenario = has_scene_change(scenario["sequence"])
             scene_ids = {
                 str(value).split("::", 1)[-1]
                 for value in scenario["sequence"].get("declared_targets", {}).get("scene_objects", [])
