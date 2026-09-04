@@ -107,6 +107,19 @@ try {
             throw "Historical capture failed for $($capture.milestone) at $($capture.commit)."
         }
     }
+    $combinedCases = @($captures | ForEach-Object {
+        $combinedCase = [ordered]@{ capture_milestone = [string]$_.milestone }
+        foreach ($key in $_.case.Keys) { $combinedCase[$key] = $_.case[$key] }
+        $combinedCase
+    })
+    $combinedPlan = [ordered]@{
+        schema = "beat_the_house.integ06_1_historical_capture_plan"
+        version = 1
+        capture_class = "mid_0_6"
+        historical_release = "mid-0.6-development-boundary"
+        cases = $combinedCases
+    }
+    $combinedPlan | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath (Join-Path $resolvedOutput "capture_plan.json") -Encoding utf8
 }
 finally {
     if (Test-Path -LiteralPath $temporaryPlanRoot) {

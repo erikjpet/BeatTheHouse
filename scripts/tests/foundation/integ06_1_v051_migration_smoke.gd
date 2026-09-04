@@ -6,8 +6,8 @@ extends SceneTree
 # that the migrated state is stable after a round trip.
 
 const MainScene := preload("res://scenes/main.tscn")
-const FIXTURE_ROOT := "res://scripts/tests/fixtures/integ06_1/v0_5_1"
-const PLAN_PATH := FIXTURE_ROOT + "/capture_plan.json"
+const V051_FIXTURE_ROOT := "res://scripts/tests/fixtures/integ06_1/v0_5_1"
+const MID06_FIXTURE_ROOT := "res://scripts/tests/fixtures/integ06_1/mid_0_6"
 const SLOT_ID := "integ06_1_v051_migration_matrix"
 const HISTORICAL_COMMIT := "f1ce7ec814b5034c229f53dcc0db6e799aaaee0b"
 const HISTORICAL_TREE := "19c5ed82c0d2d2390dab2b9b6662c70d8aed5d0d"
@@ -22,6 +22,20 @@ const CURRENT_DRIVER_FIXTURES := [
 	"v051_tutorial_gas_station_arrival",
 	"v051_tutorial_gas_machine_open",
 ]
+const MID06_BOUNDARIES := {
+	"pre_game_depth": {
+		"commit": "31e434c412ba8bdeda03bee86db1f8b4d899c962", "tree": "dc735cd49780e48549fa6b85a24694f9e973dcf6",
+		"main": "4b0643365098308dadfaee909d35e51784905811", "foundation": "9cd8431f598fdc8cfc174a7ea49930351b728191", "save": "15a56c4d9f4be1723a721596b9b67c48ac5c2eae",
+	},
+	"pre_environment_depth": {
+		"commit": "5a2b1e1a6782a13308585e1a974adeeb86be0647", "tree": "dd2fa24ac97cb836b7dd82eef20d7df7877debdd",
+		"main": "4b0643365098308dadfaee909d35e51784905811", "foundation": "9cd8431f598fdc8cfc174a7ea49930351b728191", "save": "15a56c4d9f4be1723a721596b9b67c48ac5c2eae",
+	},
+	"pre_world_depth": {
+		"commit": "f1ebe9a729253e4ee3d4d99702a019d9328edbaf", "tree": "61c3ffdcb788357696c914618f684863cbb30e91",
+		"main": "4b0643365098308dadfaee909d35e51784905811", "foundation": "f7cdfa75cc21d2ffbc70c8db9c8cf44b0b948446", "save": "15a56c4d9f4be1723a721596b9b67c48ac5c2eae",
+	},
+}
 const TUTORIAL_CORNER_CHECKPOINTS := [
 	"corner_store_arrival",
 	"family_debt",
@@ -29,8 +43,17 @@ const TUTORIAL_CORNER_CHECKPOINTS := [
 	"gas_machine_open",
 ]
 
+var fixture_class := "v0_5_1"
+var fixture_root := V051_FIXTURE_ROOT
+var plan_path := V051_FIXTURE_ROOT + "/capture_plan.json"
+
 
 func _init() -> void:
+	for argument in OS.get_cmdline_user_args():
+		if argument == "--fixture-class=mid_0_6":
+			fixture_class = "mid_0_6"
+			fixture_root = MID06_FIXTURE_ROOT
+			plan_path = MID06_FIXTURE_ROOT + "/capture_plan.json"
 	call_deferred("_run")
 
 
@@ -57,7 +80,7 @@ func _run() -> void:
 		if not await _verify_fixture(app, save_service, case_value as Dictionary):
 			return
 		verified += 1
-	print("integ06_1 v0.5.1 migration matrix passed fixtures=%d provenance=verified source=FoundationMain round_trip=stable" % verified)
+	print("integ06_1 %s migration matrix passed fixtures=%d provenance=verified source=FoundationMain round_trip=stable" % [fixture_class, verified])
 	app.queue_free()
 	await process_frame
 	quit(0)
@@ -71,8 +94,8 @@ func _verify_fixture(app: Control, save_service: Variant, capture_case: Dictiona
 	if fixture_id.is_empty() or expected_seed.is_empty() or expected_archetype.is_empty():
 		_fail("capture plan case omitted fixture_id, seed, or expected_archetype")
 		return false
-	var fixture_path := "%s/%s.json" % [FIXTURE_ROOT, fixture_id]
-	var provenance_path := "%s/%s.provenance.json" % [FIXTURE_ROOT, fixture_id]
+	var fixture_path := "%s/%s.json" % [fixture_root, fixture_id]
+	var provenance_path := "%s/%s.provenance.json" % [fixture_root, fixture_id]
 	var fixture_bytes := FileAccess.get_file_as_bytes(fixture_path)
 	var provenance := _load_json_dictionary(provenance_path)
 	var envelope := _parse_bytes_dictionary(fixture_bytes)
@@ -265,11 +288,27 @@ func _valid_provenance(provenance: Dictionary, capture_case: Dictionary, fixture
 	var failures: Array[String] = []
 	if str(provenance.get("schema", "")) != "beat_the_house.integ06_1_historical_fixture_provenance" or int(provenance.get("version", 0)) != 1:
 		failures.append("wrong provenance schema/version")
-	if str(provenance.get("historical_release", "")) != "v0.5.1" or str(provenance.get("historical_commit", "")) != HISTORICAL_COMMIT or str(provenance.get("historical_tree", "")) != HISTORICAL_TREE:
-		failures.append("wrong historical source identity")
-	if str(provenance.get("historical_main_scene_blob", "")) != HISTORICAL_MAIN_SCENE_BLOB or str(provenance.get("historical_foundation_main_blob", "")) != HISTORICAL_FOUNDATION_MAIN_BLOB or str(provenance.get("historical_save_service_blob", "")) != HISTORICAL_SAVE_SERVICE_BLOB:
-		failures.append("wrong historical runtime blob identity")
-	var expected_driver_sha256 := _file_sha256(DRIVER_PATH) if fixture_id in CURRENT_DRIVER_FIXTURES else LEGACY_DRIVER_SHA256
+	var expected_driver_sha256 := ""
+	if fixture_class == "mid_0_6":
+		var milestone := str(capture_case.get("capture_milestone", ""))
+		var boundary: Dictionary = MID06_BOUNDARIES.get(milestone, {}) if typeof(MID06_BOUNDARIES.get(milestone, {})) == TYPE_DICTIONARY else {}
+		if boundary.is_empty() or str(provenance.get("capture_class", "")) != "mid_0_6" or str(provenance.get("capture_milestone", "")) != milestone or str(provenance.get("historical_release", "")) != "mid-0.6-development-boundary" \
+				or str(provenance.get("historical_commit", "")) != str(boundary.get("commit", "")) or str(provenance.get("historical_tree", "")) != str(boundary.get("tree", "")):
+			failures.append("wrong mid-0.6 development-boundary source identity")
+		if str(provenance.get("historical_main_scene_blob", "")) != str(boundary.get("main", "")) or str(provenance.get("historical_foundation_main_blob", "")) != str(boundary.get("foundation", "")) or str(provenance.get("historical_save_service_blob", "")) != str(boundary.get("save", "")):
+			failures.append("wrong mid-0.6 historical runtime blob identity")
+		expected_driver_sha256 = _file_sha256(DRIVER_PATH)
+		var custody_path := str(provenance.get("custody_inventory_path", ""))
+		var custody := _load_json_dictionary(custody_path)
+		if custody_path.is_empty() or custody.is_empty() or _raw_file_sha256(custody_path) != str(provenance.get("custody_inventory_sha256", "")).to_lower() \
+				or str(custody.get("schema", "")) != "beat_the_house.integ06_1_historical_custody_inventory" or str(custody.get("historical_commit", "")) != str(boundary.get("commit", "")):
+			failures.append("retained historical custody inventory mismatch")
+	else:
+		if str(provenance.get("historical_release", "")) != "v0.5.1" or str(provenance.get("historical_commit", "")) != HISTORICAL_COMMIT or str(provenance.get("historical_tree", "")) != HISTORICAL_TREE:
+			failures.append("wrong historical source identity")
+		if str(provenance.get("historical_main_scene_blob", "")) != HISTORICAL_MAIN_SCENE_BLOB or str(provenance.get("historical_foundation_main_blob", "")) != HISTORICAL_FOUNDATION_MAIN_BLOB or str(provenance.get("historical_save_service_blob", "")) != HISTORICAL_SAVE_SERVICE_BLOB:
+			failures.append("wrong historical runtime blob identity")
+		expected_driver_sha256 = _file_sha256(DRIVER_PATH) if fixture_id in CURRENT_DRIVER_FIXTURES else LEGACY_DRIVER_SHA256
 	if str(provenance.get("driver_path", "")) != DRIVER_PATH.trim_prefix("res://") or str(provenance.get("driver_sha256", "")).to_lower() != expected_driver_sha256:
 		failures.append("fixture driver identity mismatch")
 	if str(provenance.get("fixture_id", "")) != fixture_id or str(provenance.get("save_file", "")) != "%s.json" % fixture_id:
@@ -426,7 +465,7 @@ func _migration_contract(run_state: Variant) -> Dictionary:
 
 
 func _load_capture_cases() -> Array:
-	var plan := _load_json_dictionary(PLAN_PATH)
+	var plan := _load_json_dictionary(plan_path)
 	var cases: Variant = plan.get("cases", [])
 	if typeof(cases) != TYPE_ARRAY:
 		return []
@@ -476,6 +515,16 @@ func _file_sha256(path: String) -> String:
 	return hash_context.finish().hex_encode().to_lower()
 
 
+func _raw_file_sha256(path: String) -> String:
+	var bytes := FileAccess.get_file_as_bytes(path)
+	if bytes.is_empty():
+		return ""
+	var hash_context := HashingContext.new()
+	hash_context.start(HashingContext.HASH_SHA256)
+	hash_context.update(bytes)
+	return hash_context.finish().hex_encode().to_lower()
+
+
 func _string_array(value: Variant) -> Array[String]:
 	var result: Array[String] = []
 	if typeof(value) != TYPE_ARRAY:
@@ -488,5 +537,5 @@ func _string_array(value: Variant) -> Array[String]:
 
 
 func _fail(message: String) -> void:
-	push_error("integ06_1 v0.5.1 migration smoke failed: %s" % message)
+	push_error("integ06_1 %s migration smoke failed: %s" % [fixture_class, message])
 	quit(1)
