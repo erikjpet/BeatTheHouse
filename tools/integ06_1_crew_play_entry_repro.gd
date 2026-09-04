@@ -54,27 +54,35 @@ func _run_reproduction() -> void:
 		if typeof(definition) == TYPE_DICTIONARY:
 			current_game_id = str((definition as Dictionary).get("id", ""))
 	var entered_environment: Dictionary = (run.get("current_environment") as Dictionary).duplicate(true)
-	var unbound_action_ids := _action_ids(game.call("legal_actions", run, entered_environment) if game != null else [])
+	var entry_action_ids := _action_ids(game.call("legal_actions", run, entered_environment) if game != null else [])
 	var activation_before_binding: Dictionary = run.call("crew_play_activate", "spotter", "blackjack", entered_environment)
 
-	var bound_environment := entered_environment.duplicate(true)
-	bound_environment["active_game_id"] = "blackjack"
-	run.set("current_environment", bound_environment)
-	var bound_action_ids := _action_ids(game.call("legal_actions", run, bound_environment) if game != null else [])
 	var entry_is_real := entered and current_game_id == "blackjack" and str(app.get("current_screen")) == "GAME"
+	var active_game_id := str(entered_environment.get("active_game_id", ""))
+	var binding_contract_satisfied := entry_is_real \
+		and active_game_id == "blackjack" \
+		and entry_action_ids.has("crew_play:spotter") \
+		and bool(activation_before_binding.get("ok", false))
+	var bound_action_ids := entry_action_ids.duplicate()
+	if active_game_id != "blackjack":
+		var bound_environment := entered_environment.duplicate(true)
+		bound_environment["active_game_id"] = "blackjack"
+		run.set("current_environment", bound_environment)
+		bound_action_ids = _action_ids(game.call("legal_actions", run, bound_environment) if game != null else [])
 	var unreachable := entry_is_real \
-		and str(entered_environment.get("active_game_id", "")).is_empty() \
-		and not unbound_action_ids.has("crew_play:spotter") \
+		and active_game_id.is_empty() \
+		and not entry_action_ids.has("crew_play:spotter") \
 		and not bool(activation_before_binding.get("ok", false)) \
 		and bound_action_ids.has("crew_play:spotter")
 	var report := {
 		"schema": "beat_the_house.integ06_1_crew_play_entry_reproduction/v1",
 		"version": 1,
 		"foundation_entry_success": entry_is_real,
+		"binding_contract_satisfied": binding_contract_satisfied,
 		"current_screen": str(app.get("current_screen")),
 		"current_game_id": current_game_id,
-		"active_game_id_after_entry": str(entered_environment.get("active_game_id", "")),
-		"crew_action_ids_after_entry": unbound_action_ids,
+		"active_game_id_after_entry": active_game_id,
+		"crew_action_ids_after_entry": entry_action_ids,
 		"activation_after_entry_ok": bool(activation_before_binding.get("ok", false)),
 		"activation_after_entry_message": str(activation_before_binding.get("message", "")),
 		"crew_action_ids_with_required_binding_control": bound_action_ids,
@@ -83,7 +91,7 @@ func _run_reproduction() -> void:
 	}
 	app.queue_free()
 	await process_frame
-	_finish(report, not unreachable)
+	_finish(report, binding_contract_satisfied)
 
 
 func _action_ids(actions_value: Variant) -> Array[String]:
