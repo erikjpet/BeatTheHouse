@@ -2473,25 +2473,28 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 	# remains disabled and each hash covers the full serialized value. env06_6
 	# canonically adds visit, night, and context instance identity to host state.
 	# The 0.6 sequence-authority integration also persists the complete sealed
-	# base interaction geometry/action records, so the two full-state hashes below
-	# intentionally include that now-authoritative schema while all scalar, route,
-	# RNG, and story results remain byte-identical. The final env06 rollout adds
-	# its canonical generated environment and world-map records to those hashes.
+	# base interaction geometry/action records. The final env06 rollout adds its
+	# canonical generated environment/world-map records and consumes the accepted
+	# generation RNG/story path, so those full-value hashes and RNG state move
+	# together while the scalar and selected-route contract remains unchanged.
+	# These hashes were refreshed on exact integrated candidate `039e3326` after
+	# the accepted environment/world rollout. The scalar route contract is
+	# unchanged and the delivery subsystem remains fully inactive.
 	const EXPECTED := {
 		"bankroll_delta": -4,
 		"clock_delta": 42,
-		"current_environment_sha256": "1c6d579b8da9328bb0cf1cc6fbdf7c30c964dcd111cee98b1707f999cd221907",
+		"current_environment_sha256": "7480e43371c40d7f33aca13f3857464a28c57cd214a9d9a8c077d202aa761b34",
 		"current_world_node_id": "bar",
 		"heat_delta": 0,
 		"provenance_commit": "9cff9b2309d70c6c93ab34cc60cc18f79f56201b",
-		"rng_state": 70883311,
+		"rng_state": 953559834,
 		"route_choice_sha256": "3fd96381385eb4ba8868bddac39f233b6c62d586e0cd4b249f45e050cb10657b",
 		"seed": "DELIVERY-ORDINARY-BASELINE",
 		"target_id": "bar",
 		"town_action_index": 0,
 		"travel_count_delta": 1,
-		"travel_story_sha256": "0801d8c617e0ab15f304eae949a7c70fae01fc4031f24580d34f74e2dedd72ce",
-		"world_map_sha256": "fad264b0d615c347d139f31594fe0b2d8a05bf0a39282b9b7182f2f2bc7265a9",
+		"travel_story_sha256": "0257877551b37226fd62316ee2af5e047a27387fbb87d5acfa0273d1366a0e81",
+		"world_map_sha256": "d7d5a8c3843dd06064e6433d0861f3f52c6bb02116829a7b2ca4a01980a13f74",
 	}
 	app.call("start_foundation_run", "DELIVERY-ORDINARY-BASELINE", {}, false)
 	for _start_frame in range(3):
