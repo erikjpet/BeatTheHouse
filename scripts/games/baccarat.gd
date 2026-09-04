@@ -679,14 +679,17 @@ func _table_game_resolve_proposal(action_id: String, stake: int, run_snapshot: D
 		"ui_state": ui_state,
 	}
 	var candidate := RunState.new()
-	candidate.from_dict(run_snapshot.duplicate(true))
+	# RunState.from_dict is the isolation boundary and copies every persisted
+	# collection it accepts. Copying the complete save again here doubled the
+	# largest allocation in a live Baccarat deal, producing Web GC stalls.
+	candidate.from_dict(run_snapshot)
 	var proposal_rng := RngStream.new()
-	proposal_rng.restore(rng_snapshot.duplicate(true))
+	proposal_rng.restore(rng_snapshot)
 	var result := _resolve_baccarat_proposal_core(action_id, stake, candidate, candidate.current_environment, proposal_rng, ui_state.duplicate(true))
 	var proposal := {
 		"ok": bool(result.get("ok", false)),
 		"input_fingerprint": RuntimeScript.canonical_fingerprint(proposal_input),
-		"result": result.duplicate(true),
+		"result": result,
 		"run_snapshot": candidate.to_save_snapshot(),
 		"rng_snapshot": proposal_rng.snapshot(),
 	}
@@ -695,9 +698,9 @@ func _table_game_resolve_proposal(action_id: String, stake: int, run_snapshot: D
 
 
 func _table_game_wager_cost_proposal(action_id: String, stake: int, run_snapshot: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
-	var candidate := RunState.new()
-	candidate.from_dict(run_snapshot.duplicate(true))
-	var cost := wager_cost_for_context(action_id, stake, candidate, candidate.current_environment, ui_state.duplicate(true))
+	# Baccarat's canonical wager cost depends only on its sealed UI bet map. Do
+	# not reconstruct a complete run merely to add those already-sealed chips.
+	var cost := _total_wager(_bet_dict(ui_state.get("baccarat_bets", {}))) if action_id == "deal_baccarat" else 0
 	return {
 		"cost": maxi(0, cost),
 		"input_fingerprint": RuntimeScript.canonical_fingerprint({"action_id": action_id, "stake": stake, "run_snapshot": run_snapshot, "ui_state": ui_state}),
