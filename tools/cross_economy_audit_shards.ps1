@@ -7,6 +7,7 @@ param(
     [int]$WorkerCount = 4,
     [string]$SeedPrefix = "BALANCE06-1-FINAL",
     [string]$OutDir = "",
+    [string]$RuntimeSourceRoot = "",
     [switch]$SelfTest
 )
 
@@ -253,10 +254,18 @@ if ($SelfTest) {
 }
 
 $projectRoot = Split-Path -Parent $PSScriptRoot
+if (-not $RuntimeSourceRoot) { $RuntimeSourceRoot = $projectRoot }
+$RuntimeSourceRoot = [IO.Path]::GetFullPath($RuntimeSourceRoot)
+if (-not (Test-Path -LiteralPath $RuntimeSourceRoot -PathType Container)) {
+    throw "RuntimeSourceRoot does not exist: $RuntimeSourceRoot"
+}
 if (-not $OutDir) {
     $OutDir = Join-Path $projectRoot ".tmp\balance06_1_follow_on\distribution_$(Get-Date -Format 'yyyy-MM-dd_HH-mm-ss')"
 }
 $OutDir = [IO.Path]::GetFullPath($OutDir)
+$startedAt = Get-Date
+$startedAtUtc = $startedAt.ToUniversalTime().ToString("o")
+$invocationCommand = "powershell -NoProfile -ExecutionPolicy Bypass -File tools/cross_economy_audit_shards.ps1 -SeedsPerPlaystyle $SeedsPerPlaystyle -MaxActions $MaxActions -WorkerCount $WorkerCount -SeedPrefix '$SeedPrefix' -RuntimeSourceRoot '$RuntimeSourceRoot' -OutDir '$OutDir'"
 $rootPrefix = [IO.Path]::GetFullPath($projectRoot)
 if (-not $rootPrefix.EndsWith([IO.Path]::DirectorySeparatorChar)) { $rootPrefix += [IO.Path]::DirectorySeparatorChar }
 if (-not $OutDir.StartsWith($rootPrefix, [StringComparison]::OrdinalIgnoreCase)) {
@@ -349,7 +358,7 @@ function Add-ExtensionRuntime([string]$DescriptorTarget, [string]$DescriptorSour
     foreach ($match in [regex]::Matches((Get-Content -LiteralPath $DescriptorSource -Raw), 'res://([^"\r\n]+\.(?:dll|so|dylib|wasm))')) {
         $target = $match.Groups[1].Value.Replace("\", "/")
         if (-not $trackedByPath.ContainsKey($target)) {
-            $source = Join-Path $projectRoot $target.Replace("/", "\")
+            $source = Join-Path $RuntimeSourceRoot $target.Replace("/", "\")
             if (-not (Test-Path -LiteralPath $source -PathType Leaf)) {
                 # A generated descriptor lists every export platform. This
                 # Windows qualification requires its Windows DLLs; Web/Unix
@@ -363,15 +372,15 @@ function Add-ExtensionRuntime([string]$DescriptorTarget, [string]$DescriptorSour
         }
     }
 }
-$assetRoot = Join-Path $projectRoot "assets"
+$assetRoot = Join-Path $RuntimeSourceRoot "assets"
 if (Test-Path -LiteralPath $assetRoot -PathType Container) {
     foreach ($manifest in Get-ChildItem -LiteralPath $assetRoot -Recurse -Filter "*.import" -File) {
-        $relativeManifest = $manifest.FullName.Substring($projectRoot.Length).TrimStart("\", "/").Replace("\", "/")
+        $relativeManifest = $manifest.FullName.Substring($RuntimeSourceRoot.Length).TrimStart("\", "/").Replace("\", "/")
         if (-not $trackedByPath.ContainsKey($relativeManifest)) { Add-RuntimeSource $relativeManifest $manifest.FullName }
         $manifestText = Get-Content -LiteralPath $manifest.FullName -Raw
         foreach ($match in [regex]::Matches($manifestText, 'res://\.godot/imported/([^"\r\n]+)')) {
             $artifactName = $match.Groups[1].Value
-            $artifactSource = Join-Path $projectRoot ".godot\imported\$artifactName"
+            $artifactSource = Join-Path $RuntimeSourceRoot ".godot\imported\$artifactName"
             if (-not (Test-Path -LiteralPath $artifactSource -PathType Leaf)) { throw "Required imported runtime artifact is missing: $artifactSource" }
             Add-RuntimeSource ".godot/imported/$artifactName" $artifactSource
             $md5Source = [IO.Path]::ChangeExtension($artifactSource, ".md5")
@@ -380,12 +389,12 @@ if (Test-Path -LiteralPath $assetRoot -PathType Container) {
     }
 }
 foreach ($cacheFile in @("global_script_class_cache.cfg", "uid_cache.bin", "extension_list.cfg")) {
-    $cacheSource = Join-Path $projectRoot ".godot\$cacheFile"
+    $cacheSource = Join-Path $RuntimeSourceRoot ".godot\$cacheFile"
     if (Test-Path -LiteralPath $cacheSource -PathType Leaf) { Add-RuntimeSource ".godot/$cacheFile" $cacheSource }
 }
 # Generated extension descriptors are intentionally ignored by Git, but the
 # frozen workers must load the same native backend as the source worktree.
-$extensionListSource = Join-Path $projectRoot ".godot\extension_list.cfg"
+$extensionListSource = Join-Path $RuntimeSourceRoot ".godot\extension_list.cfg"
 if (Test-Path -LiteralPath $extensionListSource -PathType Leaf) {
     foreach ($extensionLine in @(Get-Content -LiteralPath $extensionListSource)) {
         $descriptorTarget = $extensionLine.Trim()
@@ -394,7 +403,7 @@ if (Test-Path -LiteralPath $extensionListSource -PathType Leaf) {
             throw "Unsupported native extension path in extension_list.cfg: $descriptorTarget"
         }
         $descriptorTarget = $descriptorTarget.Substring("res://".Length).Replace("\", "/")
-        Add-ExtensionRuntime $descriptorTarget (Join-Path $projectRoot $descriptorTarget.Replace("/", "\"))
+        Add-ExtensionRuntime $descriptorTarget (Join-Path $RuntimeSourceRoot $descriptorTarget.Replace("/", "\"))
     }
 }
 foreach ($extension in Get-ChildItem -LiteralPath $snapshotRoot -Recurse -Filter "*.gdextension" -File) {
@@ -486,7 +495,6 @@ foreach ($style in $styles) {
 $pending = [Collections.Generic.Queue[object]]::new()
 foreach ($job in $jobs) { $pending.Enqueue($job) }
 $running = [Collections.Generic.List[object]]::new()
-$startedAt = Get-Date
 while ($pending.Count -gt 0 -or $running.Count -gt 0) {
     for ($index = $running.Count - 1; $index -ge 0; $index--) {
         $job = $running[$index]
@@ -648,6 +656,9 @@ foreach ($run in $allRuns) {
 }
 
 $passed = $failures.Count -eq 0
+$completedAt = Get-Date
+$completedAtUtc = $completedAt.ToUniversalTime().ToString("o")
+$elapsedSeconds = ($completedAt - $startedAt).TotalSeconds
 $summary = [ordered]@{
     schema = "balance06_1_cross_economy_distribution_v3"; passed = $passed
     exact_head = $head; exact_tree = $tree; input_manifest_sha256 = $inputHash
@@ -658,13 +669,16 @@ $summary = [ordered]@{
     warnings = @($warnings); failures = @($failures); overall = $overall
     terminal_causes = $terminalCauses; victory_routes = $victoryRoutes
     opportunity_denominators = $opportunities; playstyles = $styleSummaries
-    shards = $shardIndex; elapsed_seconds = ((Get-Date) - $startedAt).TotalSeconds
+    shards = $shardIndex; elapsed_seconds = $elapsedSeconds
 }
 $summaryPath = Join-Path $OutDir "aggregate_summary.json"
 Write-JsonFile $summary $summaryPath 30
 $custody = [ordered]@{
     schema = "balance06_1_cross_economy_custody_v2"; passed = $passed
-    exact_head = $head; exact_tree = $tree; generated_at_utc = (Get-Date).ToUniversalTime().ToString("o")
+    exact_head = $head; exact_tree = $tree; generated_at_utc = $completedAtUtc
+    command = $invocationCommand; working_directory = [IO.Path]::GetFullPath($projectRoot)
+    runtime_source_root = $RuntimeSourceRoot
+    started_at_utc = $startedAtUtc; completed_at_utc = $completedAtUtc; elapsed_seconds = $elapsedSeconds
     frozen_archive = [ordered]@{ path = $archivePath; bytes = (Get-Item -LiteralPath $archivePath).Length; sha256 = $archiveSha }
     engine_path = [IO.Path]::GetFullPath($godot); engine_sha256 = (Get-FileHash -LiteralPath $godot -Algorithm SHA256).Hash.ToLowerInvariant()
     worker_path = $godotWorker; worker_sha256 = (Get-FileHash -LiteralPath $godotWorker -Algorithm SHA256).Hash.ToLowerInvariant()

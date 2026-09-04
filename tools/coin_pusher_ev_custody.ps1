@@ -387,6 +387,8 @@ $nativeDiscovery = $null
 $rawEvidence = [Collections.Generic.List[object]]::new()
 $rawRoot = ""; $harnessStdout = ""; $harnessStderr = ""
 $startedAt = Get-Date
+$startedAtUtc = $startedAt.ToUniversalTime().ToString("o")
+$invocationCommand = "powershell -NoProfile -ExecutionPolicy Bypass -File tools/coin_pusher_ev_custody.ps1 -ShardsPerMachine $ShardsPerMachine -RuntimeSourceRoot '$RuntimeSourceRoot' -OutDir '$OutDir'"
 
 try {
     $dirty = @(git -C $projectRoot status --porcelain)
@@ -601,9 +603,14 @@ $identity = [ordered]@{
     plugin_identity_sha256 = $pluginHash; engine_sha256 = $engineHash; worker_sha256 = $workerHash
 }
 $passed = $failures.Count -eq 0 -and $harnessExitCode -eq 0
+$completedAt = Get-Date
+$completedAtUtc = $completedAt.ToUniversalTime().ToString("o")
+$elapsedSeconds = ($completedAt - $startedAt).TotalSeconds
 $custody = [ordered]@{
-    schema = $custodySchema; passed = $passed; generated_at_utc = (Get-Date).ToUniversalTime().ToString("o")
-    command = "tools/coin_pusher_ev_harness.ps1 -AcceptedPerMachine 200000 -ShardsPerMachine $ShardsPerMachine -Throttle 1"
+    schema = $custodySchema; passed = $passed; generated_at_utc = $completedAtUtc
+    command = $invocationCommand; working_directory = [IO.Path]::GetFullPath($projectRoot)
+    started_at_utc = $startedAtUtc; completed_at_utc = $completedAtUtc; elapsed_seconds = $elapsedSeconds
+    harness_command = "tools/coin_pusher_ev_harness.ps1 -AcceptedPerMachine 200000 -ShardsPerMachine $ShardsPerMachine -Throttle 1"
     identity = $identity
     exact_head = $head; exact_tree = $tree
     tracked_input_sha256 = $trackedHash; tracked_manifest_file_sha256 = $trackedManifestFileHash
@@ -618,7 +625,6 @@ $custody = [ordered]@{
     tracked_manifest = $trackedManifest; runtime_manifest = $runtimeManifest
     harness_manifest = $harnessManifest; raw_evidence = @($rawEvidence)
     failure_ledger = @($failures); warning_ledger = @($warnings)
-    elapsed_seconds = ((Get-Date) - $startedAt).TotalSeconds
 }
 $custodyPath = Join-Path $OutDir "custody_manifest.json"
 Write-JsonFile $custody $custodyPath 30

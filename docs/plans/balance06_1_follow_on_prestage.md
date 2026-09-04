@@ -72,3 +72,81 @@ Resolve and record the accepted landing commits and trees for `game06_8`,
 `world06_7`, and `pusherv3_11`, including every prerequisite fix they consume.
 If any is not accepted, preserve this note and park the row; do not manufacture
 an integrated measurement subject.
+
+## 2026-09-04 final-run preparation audit
+
+This is preparation evidence only. No 512-run distribution or 600,000-drop
+measurement was started.
+
+The clean preparation worktree was created at
+`D:\Projects\Beat-The-House-worktrees\balance06-final-run` on branch
+`codex/balance06-final-run` from exact `origin/main`
+`49841960750a873707e79dbf6b5c7836041fcbf5`. That main tree did not contain the
+hardened shard/custody files. The completed owned harness work was recovered,
+not rebuilt, from the isolated `origin/codex/closeout06-final` series
+`367b2cd6174fef1d6e031f5b6ef4631925db3698` through
+`141459e6ab83cbe85cf902c7fd88af8865ccd00a`. Its cross-economy custody subset is
+also preserved at `c25044e5f4336ff9bc66ead6f5f32ab68b407355`; its pusher
+custody subset is preserved at
+`247b66af2581067fa5fade4e8e788297b78c545b`.
+
+The recovered net scope is limited to the cross-economy audit tool/launcher,
+its shard wrapper/worker, and the Coin Pusher EV custody wrapper. It does not
+touch production values, gameplay, RNG, geometry, schemas, migrations,
+performance budgets, `foundation_main.gd`, or environment-owned data and UI
+files. The wrappers now also record the exact outer invocation, working
+directory, start/end timestamps, elapsed time, and an explicit runtime-source
+root. The latter lets a clean worktree freeze descriptor-selected ignored
+native binaries without copying them into or changing the mutable source tree.
+
+Fast, freeze-independent qualification completed:
+
+- PowerShell parser: PASS for both launchers, both custody wrappers, and the
+  shard worker.
+- Cross-economy custody selftest: PASS; mixed input identity is rejected and a
+  specialist with zero accepted/settled evidence cannot be accepted.
+- Pusher custody selftest: PASS; changed identity, mixed policy, and missing
+  machine evidence are rejected; the executable-only archive and `tar.exe`
+  extraction are verified; descriptor-selected runtime artifacts are staged
+  exactly; a frozen native shard completes exactly 64 accepted inserts on
+  `native_v3`.
+
+The hardened harness is not yet final measurement evidence. Before the costly
+run, rebase it onto the owner-declared env/integration freeze and rerun the
+one-seed hostile/public-observer probe. The present wrappers retain immutable
+failed artifacts and reject mixed aggregation, but they do not yet resume an
+interrupted multi-shard invocation in place. Interrupted-run resumability must
+be qualified or repaired before the 512-run/600,000-drop evidence is claimed.
+Native/Web, save/resume, migration, and maximal-composition checks also remain
+exact-final-tree work.
+
+### Deferred exact heavy-run commands
+
+Run only after the root declares the integrated source freeze and the branch is
+clean at that exact commit. The commands derive unique custody paths from the
+frozen full head and never overwrite evidence.
+
+```powershell
+Set-Location 'D:\Projects\Beat-The-House-worktrees\balance06-final-run'
+if (@(git status --porcelain).Count -ne 0) { throw 'The frozen worktree is not clean.' }
+$frozenHead = (git rev-parse HEAD).Trim()
+$runRoot = Join-Path (Get-Location) ".tmp\balance06_1_follow_on\full_$($frozenHead.Substring(0, 12))"
+if (Test-Path -LiteralPath $runRoot) { throw "Custody path already exists: $runRoot" }
+$crossOut = Join-Path $runRoot 'cross_8x64x208'
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/cross_economy_audit_shards.ps1 -SeedsPerPlaystyle 64 -MaxActions 208 -WorkerCount 4 -SeedPrefix "BALANCE06-1-FINAL-$($frozenHead.Substring(0, 12))" -RuntimeSourceRoot 'D:\Projects\Beat-The-House' -OutDir $crossOut
+if ($LASTEXITCODE -ne 0) { throw "Cross-economy distribution failed; evidence retained at $crossOut" }
+$pusherOut = Join-Path $runRoot 'pusher_3x200000'
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/coin_pusher_ev_custody.ps1 -ShardsPerMachine 8 -RuntimeSourceRoot 'D:\Projects\Beat-The-House' -OutDir $pusherOut
+if ($LASTEXITCODE -ne 0) { throw "Pusher EV custody failed; evidence retained at $pusherOut" }
+```
+
+Historical preparation timing gives only an operator estimate, not a budget or
+acceptance result. An eight-style, one-seed, eight-action hardened smoke took
+about 71 seconds with four workers. In an earlier incomplete eight-seed,
+208-action attempt, individual specialist shards ran roughly 17--19 minutes;
+linear scaling suggests reserving approximately 4--6 hours for the full 512
+runs with four workers. The accepted closure record says a current serial
+pusher shard did not finish within two minutes and projected a multi-hour
+24-shard run; reserve approximately 3--6 hours. Book an 8--12 hour unattended
+window for both programs plus aggregation, with retry time separate. The final
+custody manifests, not this estimate, must report measured durations.
