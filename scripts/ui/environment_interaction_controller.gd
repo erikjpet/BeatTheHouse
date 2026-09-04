@@ -810,8 +810,11 @@ static func _semantic_projection_coverage_errors(projection: Dictionary, authori
 			var expected_interactive := required and bool(interaction.get("present", true))
 			if expected_interactive != bool(sealed.get("presentation_interactive", false)):
 				errors.append("Semantic interaction %s presence diverged from sealed canvas interactivity." % identity)
-		elif not visual.is_empty() and str(visual.get("owner_namespace", "")) == "scenario" and bool(sealed.get("presentation_interactive", true)):
-			errors.append("Scenario visual %s gained interactivity without a finalized interaction." % identity)
+		elif not visual.is_empty() and (str(visual.get("owner_namespace", "")) == "scenario" or not str(visual.get("world_sequence_owner_token", "")).is_empty()):
+			# Scenario visuals without commands are still selectable so the
+			# information panel can present their sealed read-only description.
+			if bool(sealed.get("presentation_interactive", false)) != required:
+				errors.append("Scenario visual %s lost its finalized read-only panel interactivity." % identity)
 	var sealed_identities := authority.keys()
 	sealed_identities.sort()
 	for identity_value in sealed_identities:

@@ -1469,7 +1469,7 @@
           "sweep_coexistence",
           "host_event_authority_gate"
         ],
-        "sequence_signature": "0b352da3d30045783c4722676bc1bb1716995f2c6ef47aa7ebad6953e8599251",
+        "sequence_signature": "19c2d92590e4b4a6d6cdd2c4ee3635e5efcc8da41f94fb94e82ac0f4106d4b50",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -1966,7 +1966,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of corner store lotto fever remains.",
                   "enabled": false,
                   "id": "corner_store_lotto_fever_service_failure",
                   "label": "Failure access"
@@ -2012,7 +2012,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of corner store lotto fever remains.",
                   "enabled": false,
                   "id": "corner_store_lotto_fever_service_ignored",
                   "label": "Ignored access"
@@ -2058,7 +2058,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of corner store lotto fever remains.",
                   "enabled": false,
                   "id": "corner_store_lotto_fever_service_interrupted",
                   "label": "Interrupted access"
@@ -2104,7 +2104,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of corner store lotto fever remains.",
                   "enabled": false,
                   "id": "corner_store_lotto_fever_service_public",
                   "label": "Public access"
@@ -2150,7 +2150,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of corner store lotto fever remains.",
                   "enabled": false,
                   "id": "corner_store_lotto_fever_service_refused",
                   "label": "Refused access"
@@ -2478,7 +2478,7 @@
                   "type": "always"
                 }
               ],
-              "exit_prompt": "A marked exit remains open while you inspect the scene.",
+              "exit_prompt": "A marked exit remains open while you inspect corner store lotto fever.",
               "id": "arrival",
               "interaction_ops": [
                 {
@@ -2536,7 +2536,7 @@
                     "min_target_size": 44.0,
                     "non_color_state": "ready",
                     "owner_namespace": "scenario",
-                    "prompt": "Choose a physical action at this station.",
+                    "prompt": "Choose how to handle the active corner store lotto fever station.",
                     "safe_exit": false,
                     "stable_object_id": "queue_rail",
                     "state_label": "Available"
@@ -2577,7 +2577,7 @@
                     "min_target_size": 44.0,
                     "non_color_state": "ready",
                     "owner_namespace": "scenario",
-                    "prompt": "Choose a physical action at this station.",
+                    "prompt": "Choose how to handle the active corner store lotto fever station.",
                     "safe_exit": true,
                     "stable_object_id": "corner_store_lotto_fever_exit",
                     "state_label": "Available"
@@ -2763,7 +2763,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked exit remains clear during the second step.",
+              "exit_prompt": "The marked exit stays clear while the second corner store lotto fever step unfolds.",
               "id": "work",
               "interaction_ops": [
                 {
@@ -2816,7 +2816,7 @@
                     "min_target_size": 44.0,
                     "non_color_state": "ready",
                     "owner_namespace": "scenario",
-                    "prompt": "Choose a physical action at this station.",
+                    "prompt": "Choose how to handle the active corner store lotto fever station.",
                     "safe_exit": false,
                     "stable_object_id": "number_board",
                     "state_label": "Available"
@@ -2989,7 +2989,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "Leave through the marked clear route.",
+              "exit_prompt": "Leave corner store lotto fever through the clearly marked route.",
               "id": "resolution",
               "interaction_ops": [],
               "label": "Physical aftermath",
@@ -3016,7 +3016,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "cc78f3468472e4ddd2d6e94f071257305ccf8323192bb97fea48234a2d9ba211"
+        "sequence_signature": "d9e3c69d65aab387d0490de249232b3e57b52c757433685e86eed97b4b65e6d2"
       }
     },
     {
@@ -3123,7 +3123,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of corner store aftermath remains.",
                   "enabled": false,
                   "id": "corner_store_aftermath_service_failure",
                   "label": "Failure access"
@@ -3169,7 +3169,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of corner store aftermath remains.",
                   "enabled": false,
                   "id": "corner_store_aftermath_service_ignored",
                   "label": "Ignored access"
@@ -3215,7 +3215,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of corner store aftermath remains.",
                   "enabled": false,
                   "id": "corner_store_aftermath_service_interrupted",
                   "label": "Interrupted access"
@@ -3261,7 +3261,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of corner store aftermath remains.",
                   "enabled": false,
                   "id": "corner_store_aftermath_service_public",
                   "label": "Public access"
@@ -3307,7 +3307,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of corner store aftermath remains.",
                   "enabled": false,
                   "id": "corner_store_aftermath_service_refused",
                   "label": "Refused access"
@@ -3633,7 +3633,7 @@
                   "type": "always"
                 }
               ],
-              "exit_prompt": "A marked exit remains open while you inspect the scene.",
+              "exit_prompt": "A marked exit remains open while you inspect corner store aftermath.",
               "id": "arrival",
               "interaction_ops": [
                 {
@@ -3691,7 +3691,7 @@
                     "min_target_size": 44.0,
                     "non_color_state": "ready",
                     "owner_namespace": "scenario",
-                    "prompt": "Choose a physical action at this station.",
+                    "prompt": "Choose how to handle the active corner store aftermath station.",
                     "safe_exit": false,
                     "stable_object_id": "boarded_glass",
                     "state_label": "Available"
@@ -3732,7 +3732,7 @@
                     "min_target_size": 44.0,
                     "non_color_state": "ready",
                     "owner_namespace": "scenario",
-                    "prompt": "Choose a physical action at this station.",
+                    "prompt": "Choose how to handle the active corner store aftermath station.",
                     "safe_exit": true,
                     "stable_object_id": "corner_store_aftermath_exit",
                     "state_label": "Available"
@@ -3907,7 +3907,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked exit remains clear during the second step.",
+              "exit_prompt": "The marked exit stays clear while the second corner store aftermath step unfolds.",
               "id": "work",
               "interaction_ops": [
                 {
@@ -3960,7 +3960,7 @@
                     "min_target_size": 44.0,
                     "non_color_state": "ready",
                     "owner_namespace": "scenario",
-                    "prompt": "Choose a physical action at this station.",
+                    "prompt": "Choose how to handle the active corner store aftermath station.",
                     "safe_exit": false,
                     "stable_object_id": "suspect_object",
                     "state_label": "Available"
@@ -4123,7 +4123,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "Leave through the marked clear route.",
+              "exit_prompt": "Leave corner store aftermath through the clearly marked route.",
               "id": "resolution",
               "interaction_ops": [],
               "label": "Physical aftermath",
@@ -4150,7 +4150,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "051d6fc7c261cfd58f80fcbbd87a443367aeff08bfe519e7f4cf281eca6324bf"
+        "sequence_signature": "7c200a130ae6e4fe7b6075d1d3890ace9380746a6fa0caca0668bf9e531d85d9"
       }
     },
     {
@@ -4257,7 +4257,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of corner store dead shift remains.",
                   "enabled": false,
                   "id": "corner_store_dead_shift_service_failure",
                   "label": "Failure access"
@@ -4303,7 +4303,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of corner store dead shift remains.",
                   "enabled": false,
                   "id": "corner_store_dead_shift_service_ignored",
                   "label": "Ignored access"
@@ -4349,7 +4349,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of corner store dead shift remains.",
                   "enabled": false,
                   "id": "corner_store_dead_shift_service_interrupted",
                   "label": "Interrupted access"
@@ -4395,7 +4395,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of corner store dead shift remains.",
                   "enabled": false,
                   "id": "corner_store_dead_shift_service_public",
                   "label": "Public access"
@@ -4441,7 +4441,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of corner store dead shift remains.",
                   "enabled": false,
                   "id": "corner_store_dead_shift_service_refused",
                   "label": "Refused access"
@@ -4769,7 +4769,7 @@
                   "type": "always"
                 }
               ],
-              "exit_prompt": "A marked exit remains open while you inspect the scene.",
+              "exit_prompt": "A marked exit remains open while you inspect corner store dead shift.",
               "id": "arrival",
               "interaction_ops": [
                 {
@@ -4827,7 +4827,7 @@
                     "min_target_size": 44.0,
                     "non_color_state": "ready",
                     "owner_namespace": "scenario",
-                    "prompt": "Choose a physical action at this station.",
+                    "prompt": "Choose how to handle the active corner store dead shift station.",
                     "safe_exit": false,
                     "stable_object_id": "breaker_panel",
                     "state_label": "Available"
@@ -4868,7 +4868,7 @@
                     "min_target_size": 44.0,
                     "non_color_state": "ready",
                     "owner_namespace": "scenario",
-                    "prompt": "Choose a physical action at this station.",
+                    "prompt": "Choose how to handle the active corner store dead shift station.",
                     "safe_exit": true,
                     "stable_object_id": "corner_store_dead_shift_exit",
                     "state_label": "Available"
@@ -5046,7 +5046,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked exit remains clear during the second step.",
+              "exit_prompt": "The marked exit stays clear while the second corner store dead shift step unfolds.",
               "id": "work",
               "interaction_ops": [
                 {
@@ -5099,7 +5099,7 @@
                     "min_target_size": 44.0,
                     "non_color_state": "ready",
                     "owner_namespace": "scenario",
-                    "prompt": "Choose a physical action at this station.",
+                    "prompt": "Choose how to handle the active corner store dead shift station.",
                     "safe_exit": false,
                     "stable_object_id": "cooler_circuit",
                     "state_label": "Available"
@@ -5251,7 +5251,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "Leave through the marked clear route.",
+              "exit_prompt": "Leave corner store dead shift through the clearly marked route.",
               "id": "resolution",
               "interaction_ops": [],
               "label": "Physical aftermath",
@@ -5278,7 +5278,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "0f26865b683cd9e67b391b4f45841e44a44740ed2f2859b2fd2a68cf8e4d2009"
+        "sequence_signature": "2e516dea7656ffb128f0643b338b7c9d5479c4c95b3d8ffc0cc93b0224edd36f"
       }
     },
     {
@@ -5385,7 +5385,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of corner store inventory night remains.",
                   "enabled": false,
                   "id": "corner_store_inventory_night_service_failure",
                   "label": "Failure access"
@@ -5431,7 +5431,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of corner store inventory night remains.",
                   "enabled": false,
                   "id": "corner_store_inventory_night_service_ignored",
                   "label": "Ignored access"
@@ -5477,7 +5477,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of corner store inventory night remains.",
                   "enabled": false,
                   "id": "corner_store_inventory_night_service_interrupted",
                   "label": "Interrupted access"
@@ -5523,7 +5523,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of corner store inventory night remains.",
                   "enabled": false,
                   "id": "corner_store_inventory_night_service_public",
                   "label": "Public access"
@@ -5569,7 +5569,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of corner store inventory night remains.",
                   "enabled": false,
                   "id": "corner_store_inventory_night_service_refused",
                   "label": "Refused access"
@@ -5900,7 +5900,7 @@
                   "type": "always"
                 }
               ],
-              "exit_prompt": "A marked exit remains open while you inspect the scene.",
+              "exit_prompt": "A marked exit remains open while you inspect corner store inventory night.",
               "id": "arrival",
               "interaction_ops": [
                 {
@@ -5958,7 +5958,7 @@
                     "min_target_size": 44.0,
                     "non_color_state": "ready",
                     "owner_namespace": "scenario",
-                    "prompt": "Choose a physical action at this station.",
+                    "prompt": "Choose how to handle the active corner store inventory night station.",
                     "safe_exit": false,
                     "stable_object_id": "count_cage",
                     "state_label": "Available"
@@ -5999,7 +5999,7 @@
                     "min_target_size": 44.0,
                     "non_color_state": "ready",
                     "owner_namespace": "scenario",
-                    "prompt": "Choose a physical action at this station.",
+                    "prompt": "Choose how to handle the active corner store inventory night station.",
                     "safe_exit": true,
                     "stable_object_id": "corner_store_inventory_night_exit",
                     "state_label": "Available"
@@ -6187,7 +6187,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked exit remains clear during the second step.",
+              "exit_prompt": "The marked exit stays clear while the second corner store inventory night step unfolds.",
               "id": "work",
               "interaction_ops": [
                 {
@@ -6240,7 +6240,7 @@
                     "min_target_size": 44.0,
                     "non_color_state": "ready",
                     "owner_namespace": "scenario",
-                    "prompt": "Choose a physical action at this station.",
+                    "prompt": "Choose how to handle the active corner store inventory night station.",
                     "safe_exit": false,
                     "stable_object_id": "discrepancy_shelf",
                     "state_label": "Available"
@@ -6412,7 +6412,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "Leave through the marked clear route.",
+              "exit_prompt": "Leave corner store inventory night through the clearly marked route.",
               "id": "resolution",
               "interaction_ops": [],
               "label": "Physical aftermath",
@@ -6439,7 +6439,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "40831d836e17437bd87b3122388ca96a1c462b162ec73d8bd1608e60cbe1aedd"
+        "sequence_signature": "02cada6009694ad3a0b8c4e37652a2fb7a0b35e722aaa19028864b20f5ceed7b"
       }
     },
     {
@@ -6546,7 +6546,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of back alley street craps remains.",
                   "enabled": false,
                   "id": "back_alley_street_craps_service_failure",
                   "label": "Failure access"
@@ -6592,7 +6592,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of back alley street craps remains.",
                   "enabled": false,
                   "id": "back_alley_street_craps_service_ignored",
                   "label": "Ignored access"
@@ -6638,7 +6638,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of back alley street craps remains.",
                   "enabled": false,
                   "id": "back_alley_street_craps_service_interrupted",
                   "label": "Interrupted access"
@@ -6684,7 +6684,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of back alley street craps remains.",
                   "enabled": false,
                   "id": "back_alley_street_craps_service_public",
                   "label": "Public access"
@@ -6730,7 +6730,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of back alley street craps remains.",
                   "enabled": false,
                   "id": "back_alley_street_craps_service_refused",
                   "label": "Refused access"
@@ -7064,7 +7064,7 @@
                   "type": "always"
                 }
               ],
-              "exit_prompt": "A marked exit remains open while you inspect the scene.",
+              "exit_prompt": "A marked exit remains open while you inspect back alley street craps.",
               "id": "arrival",
               "interaction_ops": [
                 {
@@ -7122,7 +7122,7 @@
                     "min_target_size": 44.0,
                     "non_color_state": "ready",
                     "owner_namespace": "scenario",
-                    "prompt": "Choose a physical action at this station.",
+                    "prompt": "Choose how to handle the active back alley street craps station.",
                     "safe_exit": false,
                     "stable_object_id": "chalk_ring",
                     "state_label": "Available"
@@ -7163,7 +7163,7 @@
                     "min_target_size": 44.0,
                     "non_color_state": "ready",
                     "owner_namespace": "scenario",
-                    "prompt": "Choose a physical action at this station.",
+                    "prompt": "Choose how to handle the active back alley street craps station.",
                     "safe_exit": true,
                     "stable_object_id": "back_alley_street_craps_exit",
                     "state_label": "Available"
@@ -7359,7 +7359,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked exit remains clear during the second step.",
+              "exit_prompt": "The marked exit stays clear while the second back alley street craps step unfolds.",
               "id": "work",
               "interaction_ops": [
                 {
@@ -7412,7 +7412,7 @@
                     "min_target_size": 44.0,
                     "non_color_state": "ready",
                     "owner_namespace": "scenario",
-                    "prompt": "Choose a physical action at this station.",
+                    "prompt": "Choose how to handle the active back alley street craps station.",
                     "safe_exit": false,
                     "stable_object_id": "lookout_marker",
                     "state_label": "Available"
@@ -7573,7 +7573,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "Leave through the marked clear route.",
+              "exit_prompt": "Leave back alley street craps through the clearly marked route.",
               "id": "resolution",
               "interaction_ops": [],
               "label": "Physical aftermath",
@@ -7600,7 +7600,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "4c31f411a20383838f83a8eafc6914e41b2ed4720375a4c7eadad5387449b7dc"
+        "sequence_signature": "5a7b98e06cb7559a2d2b4e7491899060f638ca82d058bba0ce33b804c2cbdf5e"
       }
     },
     {
@@ -7707,7 +7707,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of back alley cruiser parked remains.",
                   "enabled": false,
                   "id": "back_alley_cruiser_parked_service_failure",
                   "label": "Failure access"
@@ -7753,7 +7753,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of back alley cruiser parked remains.",
                   "enabled": false,
                   "id": "back_alley_cruiser_parked_service_ignored",
                   "label": "Ignored access"
@@ -7799,7 +7799,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of back alley cruiser parked remains.",
                   "enabled": false,
                   "id": "back_alley_cruiser_parked_service_interrupted",
                   "label": "Interrupted access"
@@ -7845,7 +7845,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of back alley cruiser parked remains.",
                   "enabled": false,
                   "id": "back_alley_cruiser_parked_service_public",
                   "label": "Public access"
@@ -7891,7 +7891,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of back alley cruiser parked remains.",
                   "enabled": false,
                   "id": "back_alley_cruiser_parked_service_refused",
                   "label": "Refused access"
@@ -8216,7 +8216,7 @@
                   "type": "always"
                 }
               ],
-              "exit_prompt": "A marked exit remains open while you inspect the scene.",
+              "exit_prompt": "A marked exit remains open while you inspect back alley cruiser parked.",
               "id": "arrival",
               "interaction_ops": [
                 {
@@ -8274,7 +8274,7 @@
                     "min_target_size": 44.0,
                     "non_color_state": "ready",
                     "owner_namespace": "scenario",
-                    "prompt": "Choose a physical action at this station.",
+                    "prompt": "Choose how to handle the active back alley cruiser parked station.",
                     "safe_exit": false,
                     "stable_object_id": "cruiser_beam",
                     "state_label": "Available"
@@ -8315,7 +8315,7 @@
                     "min_target_size": 44.0,
                     "non_color_state": "ready",
                     "owner_namespace": "scenario",
-                    "prompt": "Choose a physical action at this station.",
+                    "prompt": "Choose how to handle the active back alley cruiser parked station.",
                     "safe_exit": true,
                     "stable_object_id": "back_alley_cruiser_parked_exit",
                     "state_label": "Available"
@@ -8509,7 +8509,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked exit remains clear during the second step.",
+              "exit_prompt": "The marked exit stays clear while the second back alley cruiser parked step unfolds.",
               "id": "work",
               "interaction_ops": [
                 {
@@ -8562,7 +8562,7 @@
                     "min_target_size": 44.0,
                     "non_color_state": "ready",
                     "owner_namespace": "scenario",
-                    "prompt": "Choose a physical action at this station.",
+                    "prompt": "Choose how to handle the active back alley cruiser parked station.",
                     "safe_exit": false,
                     "stable_object_id": "stacked_cover",
                     "state_label": "Available"
@@ -8734,7 +8734,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "Leave through the marked clear route.",
+              "exit_prompt": "Leave back alley cruiser parked through the clearly marked route.",
               "id": "resolution",
               "interaction_ops": [],
               "label": "Physical aftermath",
@@ -8761,7 +8761,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "1ab8641dbf0abfbd3e52e3ae37b50c95814c44419fd9cada64a39fe715af1b8d"
+        "sequence_signature": "bb42a2b03155e7d0a0edc2deb9de342a9d7b42710c9240e18c9fd68d1c0578be"
       }
     },
     {
@@ -8868,7 +8868,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of back alley fence night remains.",
                   "enabled": false,
                   "id": "back_alley_fence_night_service_failure",
                   "label": "Failure access"
@@ -8914,7 +8914,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of back alley fence night remains.",
                   "enabled": false,
                   "id": "back_alley_fence_night_service_ignored",
                   "label": "Ignored access"
@@ -8960,7 +8960,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of back alley fence night remains.",
                   "enabled": false,
                   "id": "back_alley_fence_night_service_interrupted",
                   "label": "Interrupted access"
@@ -9006,7 +9006,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of back alley fence night remains.",
                   "enabled": false,
                   "id": "back_alley_fence_night_service_public",
                   "label": "Public access"
@@ -9052,7 +9052,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of back alley fence night remains.",
                   "enabled": false,
                   "id": "back_alley_fence_night_service_refused",
                   "label": "Refused access"
@@ -9378,7 +9378,7 @@
                   "type": "always"
                 }
               ],
-              "exit_prompt": "A marked exit remains open while you inspect the scene.",
+              "exit_prompt": "A marked exit remains open while you inspect back alley fence night.",
               "id": "arrival",
               "interaction_ops": [
                 {
@@ -9436,7 +9436,7 @@
                     "min_target_size": 44.0,
                     "non_color_state": "ready",
                     "owner_namespace": "scenario",
-                    "prompt": "Choose a physical action at this station.",
+                    "prompt": "Choose how to handle the active back alley fence night station.",
                     "safe_exit": false,
                     "stable_object_id": "goods_lot",
                     "state_label": "Available"
@@ -9477,7 +9477,7 @@
                     "min_target_size": 44.0,
                     "non_color_state": "ready",
                     "owner_namespace": "scenario",
-                    "prompt": "Choose a physical action at this station.",
+                    "prompt": "Choose how to handle the active back alley fence night station.",
                     "safe_exit": true,
                     "stable_object_id": "back_alley_fence_night_exit",
                     "state_label": "Available"
@@ -9661,7 +9661,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked exit remains clear during the second step.",
+              "exit_prompt": "The marked exit stays clear while the second back alley fence night step unfolds.",
               "id": "work",
               "interaction_ops": [
                 {
@@ -9714,7 +9714,7 @@
                     "min_target_size": 44.0,
                     "non_color_state": "ready",
                     "owner_namespace": "scenario",
-                    "prompt": "Choose a physical action at this station.",
+                    "prompt": "Choose how to handle the active back alley fence night station.",
                     "safe_exit": false,
                     "stable_object_id": "auth_station",
                     "state_label": "Available"
@@ -9886,7 +9886,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "Leave through the marked clear route.",
+              "exit_prompt": "Leave back alley fence night through the clearly marked route.",
               "id": "resolution",
               "interaction_ops": [],
               "label": "Physical aftermath",
@@ -9913,7 +9913,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "146a243575124c796c7622c2c165ad959d6da7776f6691ae616764712dd902c4"
+        "sequence_signature": "e5c6424ac0db1b8f5dcb820f92a00c3eae56fd3cafdd8096cd460ee0d3af37e2"
       }
     },
     {
@@ -10020,7 +10020,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of back alley nothing moving remains.",
                   "enabled": false,
                   "id": "back_alley_nothing_moving_service_failure",
                   "label": "Failure access"
@@ -10066,7 +10066,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of back alley nothing moving remains.",
                   "enabled": false,
                   "id": "back_alley_nothing_moving_service_ignored",
                   "label": "Ignored access"
@@ -10112,7 +10112,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of back alley nothing moving remains.",
                   "enabled": false,
                   "id": "back_alley_nothing_moving_service_interrupted",
                   "label": "Interrupted access"
@@ -10158,7 +10158,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of back alley nothing moving remains.",
                   "enabled": false,
                   "id": "back_alley_nothing_moving_service_public",
                   "label": "Public access"
@@ -10204,7 +10204,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of back alley nothing moving remains.",
                   "enabled": false,
                   "id": "back_alley_nothing_moving_service_refused",
                   "label": "Refused access"
@@ -10528,7 +10528,7 @@
                   "type": "always"
                 }
               ],
-              "exit_prompt": "A marked exit remains open while you inspect the scene.",
+              "exit_prompt": "A marked exit remains open while you inspect back alley nothing moving.",
               "id": "arrival",
               "interaction_ops": [
                 {
@@ -10586,7 +10586,7 @@
                     "min_target_size": 44.0,
                     "non_color_state": "ready",
                     "owner_namespace": "scenario",
-                    "prompt": "Choose a physical action at this station.",
+                    "prompt": "Choose how to handle the active back alley nothing moving station.",
                     "safe_exit": false,
                     "stable_object_id": "three_traces",
                     "state_label": "Available"
@@ -10627,7 +10627,7 @@
                     "min_target_size": 44.0,
                     "non_color_state": "ready",
                     "owner_namespace": "scenario",
-                    "prompt": "Choose a physical action at this station.",
+                    "prompt": "Choose how to handle the active back alley nothing moving station.",
                     "safe_exit": true,
                     "stable_object_id": "back_alley_nothing_moving_exit",
                     "state_label": "Available"
@@ -10814,7 +10814,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked exit remains clear during the second step.",
+              "exit_prompt": "The marked exit stays clear while the second back alley nothing moving step unfolds.",
               "id": "work",
               "interaction_ops": [
                 {
@@ -10867,7 +10867,7 @@
                     "min_target_size": 44.0,
                     "non_color_state": "ready",
                     "owner_namespace": "scenario",
-                    "prompt": "Choose a physical action at this station.",
+                    "prompt": "Choose how to handle the active back alley nothing moving station.",
                     "safe_exit": false,
                     "stable_object_id": "shutter_gap",
                     "state_label": "Available"
@@ -11040,7 +11040,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "Leave through the marked clear route.",
+              "exit_prompt": "Leave back alley nothing moving through the clearly marked route.",
               "id": "resolution",
               "interaction_ops": [],
               "label": "Physical aftermath",
@@ -11067,7 +11067,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "62675f88cdb9315c32b25b9659acb4d0f90226d04fb25ee3b6300d8e6928c2c7"
+        "sequence_signature": "0960ed2b6b41f5051a3f715e76a4436915003dc0f5da2c2c2d3010665dbe6c14"
       }
     },
     {
@@ -11174,7 +11174,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of pawn shop estate lot day remains.",
                   "enabled": false,
                   "id": "pawn_shop_estate_lot_day_service_failure",
                   "label": "Failure access"
@@ -11220,7 +11220,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of pawn shop estate lot day remains.",
                   "enabled": false,
                   "id": "pawn_shop_estate_lot_day_service_ignored",
                   "label": "Ignored access"
@@ -11266,7 +11266,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of pawn shop estate lot day remains.",
                   "enabled": false,
                   "id": "pawn_shop_estate_lot_day_service_interrupted",
                   "label": "Interrupted access"
@@ -11312,7 +11312,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of pawn shop estate lot day remains.",
                   "enabled": false,
                   "id": "pawn_shop_estate_lot_day_service_public",
                   "label": "Public access"
@@ -11358,7 +11358,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of pawn shop estate lot day remains.",
                   "enabled": false,
                   "id": "pawn_shop_estate_lot_day_service_refused",
                   "label": "Refused access"
@@ -11687,7 +11687,7 @@
                   "type": "always"
                 }
               ],
-              "exit_prompt": "A marked exit remains open while you inspect the scene.",
+              "exit_prompt": "A marked exit remains open while you inspect pawn shop estate lot day.",
               "id": "arrival",
               "interaction_ops": [
                 {
@@ -11745,7 +11745,7 @@
                     "min_target_size": 44.0,
                     "non_color_state": "ready",
                     "owner_namespace": "scenario",
-                    "prompt": "Choose a physical action at this station.",
+                    "prompt": "Choose how to handle the active pawn shop estate lot day station.",
                     "safe_exit": false,
                     "stable_object_id": "estate_cart",
                     "state_label": "Available"
@@ -11786,7 +11786,7 @@
                     "min_target_size": 44.0,
                     "non_color_state": "ready",
                     "owner_namespace": "scenario",
-                    "prompt": "Choose a physical action at this station.",
+                    "prompt": "Choose how to handle the active pawn shop estate lot day station.",
                     "safe_exit": true,
                     "stable_object_id": "pawn_shop_estate_lot_day_exit",
                     "state_label": "Available"
@@ -11980,7 +11980,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked exit remains clear during the second step.",
+              "exit_prompt": "The marked exit stays clear while the second pawn shop estate lot day step unfolds.",
               "id": "work",
               "interaction_ops": [
                 {
@@ -12033,7 +12033,7 @@
                     "min_target_size": 44.0,
                     "non_color_state": "ready",
                     "owner_namespace": "scenario",
-                    "prompt": "Choose a physical action at this station.",
+                    "prompt": "Choose how to handle the active pawn shop estate lot day station.",
                     "safe_exit": false,
                     "stable_object_id": "provenance_marks",
                     "state_label": "Available"
@@ -12214,7 +12214,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "Leave through the marked clear route.",
+              "exit_prompt": "Leave pawn shop estate lot day through the clearly marked route.",
               "id": "resolution",
               "interaction_ops": [],
               "label": "Physical aftermath",
@@ -12241,7 +12241,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "cecb33710cedcd4481b1a18eb6452c08e593207f722b14165d7f1db71d5c3ed4"
+        "sequence_signature": "3b685bcd03814fb78449d86a3a834432237fd9474a8ae3b7e8d23dd2ea1f927d"
       }
     },
     {
@@ -12348,7 +12348,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of pawn shop serial check day remains.",
                   "enabled": false,
                   "id": "pawn_shop_serial_check_day_service_failure",
                   "label": "Failure access"
@@ -12394,7 +12394,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of pawn shop serial check day remains.",
                   "enabled": false,
                   "id": "pawn_shop_serial_check_day_service_ignored",
                   "label": "Ignored access"
@@ -12440,7 +12440,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of pawn shop serial check day remains.",
                   "enabled": false,
                   "id": "pawn_shop_serial_check_day_service_interrupted",
                   "label": "Interrupted access"
@@ -12486,7 +12486,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of pawn shop serial check day remains.",
                   "enabled": false,
                   "id": "pawn_shop_serial_check_day_service_public",
                   "label": "Public access"
@@ -12532,7 +12532,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of pawn shop serial check day remains.",
                   "enabled": false,
                   "id": "pawn_shop_serial_check_day_service_refused",
                   "label": "Refused access"
@@ -12859,7 +12859,7 @@
                   "type": "always"
                 }
               ],
-              "exit_prompt": "A marked exit remains open while you inspect the scene.",
+              "exit_prompt": "A marked exit remains open while you inspect pawn shop serial check day.",
               "id": "arrival",
               "interaction_ops": [
                 {
@@ -12917,7 +12917,7 @@
                     "min_target_size": 44.0,
                     "non_color_state": "ready",
                     "owner_namespace": "scenario",
-                    "prompt": "Choose a physical action at this station.",
+                    "prompt": "Choose how to handle the active pawn shop serial check day station.",
                     "safe_exit": false,
                     "stable_object_id": "serial_station",
                     "state_label": "Available"
@@ -12958,7 +12958,7 @@
                     "min_target_size": 44.0,
                     "non_color_state": "ready",
                     "owner_namespace": "scenario",
-                    "prompt": "Choose a physical action at this station.",
+                    "prompt": "Choose how to handle the active pawn shop serial check day station.",
                     "safe_exit": true,
                     "stable_object_id": "pawn_shop_serial_check_day_exit",
                     "state_label": "Available"
@@ -13153,7 +13153,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked exit remains clear during the second step.",
+              "exit_prompt": "The marked exit stays clear while the second pawn shop serial check day step unfolds.",
               "id": "work",
               "interaction_ops": [
                 {
@@ -13206,7 +13206,7 @@
                     "min_target_size": 44.0,
                     "non_color_state": "ready",
                     "owner_namespace": "scenario",
-                    "prompt": "Choose a physical action at this station.",
+                    "prompt": "Choose how to handle the active pawn shop serial check day station.",
                     "safe_exit": false,
                     "stable_object_id": "hold_object",
                     "state_label": "Available"
@@ -13378,7 +13378,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "Leave through the marked clear route.",
+              "exit_prompt": "Leave pawn shop serial check day through the clearly marked route.",
               "id": "resolution",
               "interaction_ops": [],
               "label": "Physical aftermath",
@@ -13405,7 +13405,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "edb65bf57e6899023e0bfbeebbddb20fde764e864a8639708a134eb475618c7a"
+        "sequence_signature": "835ff2d08b2a41057c1616f92cdf1c161b84e68fb94d6b6b28442e20ee1f3dd3"
       }
     },
     {
@@ -13512,7 +13512,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of pawn shop sals mood remains.",
                   "enabled": false,
                   "id": "pawn_shop_sals_mood_service_failure",
                   "label": "Failure access"
@@ -13561,7 +13561,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of pawn shop sals mood remains.",
                   "enabled": false,
                   "id": "pawn_shop_sals_mood_service_ignored",
                   "label": "Ignored access"
@@ -13607,7 +13607,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of pawn shop sals mood remains.",
                   "enabled": false,
                   "id": "pawn_shop_sals_mood_service_interrupted",
                   "label": "Interrupted access"
@@ -13653,7 +13653,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of pawn shop sals mood remains.",
                   "enabled": false,
                   "id": "pawn_shop_sals_mood_service_public",
                   "label": "Public access"
@@ -13699,7 +13699,7 @@
               {
                 "family": "service_ops",
                 "object": {
-                  "disabled_reason": "The physical aftermath restricts this service.",
+                  "disabled_reason": "This service is unavailable while the visible aftermath of pawn shop sals mood remains.",
                   "enabled": false,
                   "id": "pawn_shop_sals_mood_service_refused",
                   "label": "Refused access"
@@ -14027,7 +14027,7 @@
                   "type": "always"
                 }
               ],
-              "exit_prompt": "A marked exit remains open while you inspect the scene.",
+              "exit_prompt": "A marked exit remains open while you inspect pawn shop sals mood.",
               "id": "arrival",
               "interaction_ops": [
                 {
@@ -14085,7 +14085,7 @@
                     "min_target_size": 44.0,
                     "non_color_state": "ready",
                     "owner_namespace": "scenario",
-                    "prompt": "Choose a physical action at this station.",
+                    "prompt": "Choose how to handle the active pawn shop sals mood station.",
                     "safe_exit": false,
                     "stable_object_id": "unfinished_jobs",
                     "state_label": "Available"
@@ -14126,7 +14126,7 @@
                     "min_target_size": 44.0,
                     "non_color_state": "ready",
                     "owner_namespace": "scenario",
-                    "prompt": "Choose a physical action at this station.",
+                    "prompt": "Choose how to handle the active pawn shop sals mood station.",
                     "safe_exit": true,
                     "stable_object_id": "pawn_shop_sals_mood_exit",
                     "state_label": "Available"
@@ -14313,7 +14313,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked exit remains clear during the second step.",
+              "exit_prompt": "The marked exit stays clear while the second pawn shop sals mood step unfolds.",
               "id": "work",
               "interaction_ops": [
                 {
@@ -14366,7 +14366,7 @@
                     "min_target_size": 44.0,
                     "non_color_state": "ready",
                     "owner_namespace": "scenario",
-                    "prompt": "Choose a physical action at this station.",
+                    "prompt": "Choose how to handle the active pawn shop sals mood station.",
                     "safe_exit": false,
                     "stable_object_id": "private_appraisal",
                     "state_label": "Available"
@@ -14530,7 +14530,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "Leave through the marked clear route.",
+              "exit_prompt": "Leave pawn shop sals mood through the clearly marked route.",
               "id": "resolution",
               "interaction_ops": [],
               "label": "Physical aftermath",
@@ -14557,7 +14557,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "ebcd1f4606c56489a2dc9a5f0e3e6999be6d7e3be367bfdd8a5a72ff9dae2864"
+        "sequence_signature": "df5aced0fb22cbc370bb9e99ed4f5d6efa189af8d381a1ff0328e5e402d2648e"
       }
     }
   ]

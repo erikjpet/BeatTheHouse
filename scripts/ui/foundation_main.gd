@@ -10293,11 +10293,11 @@ func _add_context_object_actions(card: VBoxContainer, object_data: Dictionary) -
 			_add_context_scenario_actions(card, object_data)
 		CONTEXT_MODE_SCENARIO_SEQUENCE:
 			_add_context_scenario_sequence_actions(card, object_data)
-		"scenario_scene_object", "scenario_actor", "character":
-			if _copy_array(object_data.get("scenario_sequence_actions", [])).is_empty():
+		"scenario_scene_object", "scenario_actor":
+			card.add_child(_muted_label("Read-only room detail", 13))
+		"character":
+			if bool(object_data.get("scenario_presentation_read_only", false)):
 				card.add_child(_muted_label("Read-only room detail", 13))
-			else:
-				_add_context_scenario_sequence_actions(card, object_data)
 	if not _copy_array(object_data.get("scenario_augmented_inline_actions", [])).is_empty():
 		_add_context_scenario_actions(card, {"inline_actions": object_data.get("scenario_augmented_inline_actions", [])})
 
@@ -12323,13 +12323,15 @@ func _activate_interactable_object_with_lifecycle_snapshot(object_id: String, ca
 			var actions := _copy_array(object_data.get("scenario_sequence_actions", []))
 			if actions.is_empty() or typeof(actions[0]) != TYPE_DICTIONARY: return false
 			return _activate_scenario_sequence_action(object_data, actions[0] as Dictionary)
-		"scenario_scene_object", "scenario_actor", "character":
-			var actions := _copy_array(object_data.get("scenario_sequence_actions", []))
-			if not actions.is_empty() and typeof(actions[0]) == TYPE_DICTIONARY:
-				return _activate_scenario_sequence_action(object_data, actions[0] as Dictionary)
+		"scenario_scene_object", "scenario_actor":
 			_show_message(str(object_data.get("short_description", "This room detail is here to be read.")))
 			_refresh()
 			return true
+		"character":
+			if bool(object_data.get("scenario_presentation_read_only", false)):
+				_show_message(str(object_data.get("short_description", "This room detail is here to be read.")))
+				_refresh()
+				return true
 	_show_message("Inspect this first.")
 	_refresh()
 	return false

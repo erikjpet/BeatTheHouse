@@ -2578,15 +2578,9 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 	var reentry := ScenarioEngineScript.sequence_apply_reentry(candidate, definition, visit_id)
 	if not bool(reentry.get("ok", false)):
 		return {"ok": false, "errors": _copy_array(reentry.get("errors", []))}
-	var candidate_layout := {
-		"ok": true,
-		"projection": _copy_dict(reentry.get("projection", candidate.get("scenario_sequence_projection", {}))),
-		"layout_authority": _copy_dict(reentry.get("layout_authority", candidate.get("scenario_layout_authority", {}))),
-		"layout_authority_digest": str(reentry.get("layout_authority_digest", candidate.get("scenario_layout_authority_digest", ""))),
-		"layout_audit": _copy_dict(reentry.get("layout_audit", candidate.get("scenario_layout_audit", {}))),
-		"warnings": _copy_array(reentry.get("warnings", [])),
-		"errors": [],
-	}
+	var candidate_layout := _resolve_scenario_layout_candidate(candidate, stamped_records, definition, layout_context)
+	if not bool(candidate_layout.get("ok", false)):
+		return candidate_layout
 	for key in ["scenario_id", "scenario_base_interactions", "scenario_base_actors", "scenario_base_producer_context", "scenario_semantic_action_digest", "scenario_semantic_inventory", "scenario_semantic_inventory_version", "scenario_semantic_digest", "scenario_semantic_ready", "scenario_restore_contract", "scenario_event_choices", "scenario_sequence_migration", "scenario_sequence_state", ScenarioEngineScript.TRUSTED_STATE_REFERENCE_KEY, ScenarioEngineScript.TRUSTED_LAYOUT_INPUT_DIGEST_KEY, "scenario_sequence_projection", "scenario_layout_base_records", "scenario_layout_context", "scenario_layout_authority", "scenario_layout_audit", "scenario_layout_authority_digest", "scenario_render_snapshot", "game_ids", "service_ids", "travel_hooks", "scenario_game_modifiers", "scenario_sequence_base_game_ids", "scenario_sequence_base_service_ids", "scenario_sequence_base_travel_hooks", "scenario_sequence_base_game_modifiers", "scenario_sequence_base_layout_object_rects"]:
 		current_environment[key] = candidate.get(key).duplicate(true) if typeof(candidate.get(key)) in [TYPE_DICTIONARY, TYPE_ARRAY] else candidate.get(key)
 	current_environment.erase("scenario_sequence_pending_visit_id")

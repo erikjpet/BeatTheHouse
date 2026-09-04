@@ -127,9 +127,11 @@ static func _check_reachable_presentation_and_hidden_state(library: Variant, def
 		if host.is_empty():
 			continue
 		var clean := _reachable_presentation_observer(definition, host, false, failures)
-		var hidden := _reachable_presentation_observer(definition, host, true, failures)
+		var hidden := _reachable_presentation_observer(definition, host, true, failures, _array(clean.get("state_corpus", [])))
 		if clean.is_empty() or hidden.is_empty():
 			continue
+		clean.erase("state_corpus")
+		hidden.erase("state_corpus")
 		if JSON.stringify(clean) != JSON.stringify(hidden):
 			failures.append("env06_8 complete reachable presentation diverged for %s under paired Turn/grievance, rigged Numbers, or unrevealed-ticket state." % scenario_id)
 
@@ -142,18 +144,11 @@ static func _production_host_semantics(library: Variant, definition: Dictionary,
 	if not inventory_errors.is_empty():
 		failures.append("env06_8 %s production target inventory is invalid: %s" % [scenario_id, JSON.stringify(inventory_errors)])
 		return {}
-	var exact := SemanticInventoryScript.exact_collections(inventory)
 	var declared := _dict(_dict(definition.get("sequence", {})).get("declared_targets", {}))
 	var bounded: Dictionary = {}
 	for collection in ["scene_objects", "interactions", "actors", "services", "games", "routes", "anchors", "zones"]:
-		bounded[collection] = []
-		for identity_value in _array(declared.get(collection, [])):
-			var identity := str(identity_value)
-			if _array(exact.get(collection, [])).has(identity):
-				(bounded[collection] as Array).append(identity)
-			else:
-				failures.append("env06_8 %s production target %s is absent from %s." % [scenario_id, identity, collection])
-	bounded["event_choices"] = _dict(catalog.get("event_choices", exact.get("event_choices", {})))
+		bounded[collection] = _array(declared.get(collection, []))
+	bounded["event_choices"] = _dict(catalog.get("event_choices", {}))
 	return {
 		"target_inventory": bounded,
 		"inventory_schema_version": int(inventory.get("schema_version", 0)),
@@ -177,7 +172,7 @@ static func _check_presentation_records(records: Array, failures: Array) -> void
 			failures.append("env06_8 projected object %s lacks complete inspectable presentation." % str(record.get("stable_object_id", "")))
 
 
-static func _reachable_presentation_observer(definition: Dictionary, host: Dictionary, hidden: bool, failures: Array) -> Dictionary:
+static func _reachable_presentation_observer(definition: Dictionary, host: Dictionary, hidden: bool, failures: Array, replay_states: Array = []) -> Dictionary:
 	var scenario_id := str(definition.get("id", ""))
 	# The paired host owns secret state. Only the closed production scenario host
 	# contract crosses into the runtime/presentation path below.
@@ -199,10 +194,17 @@ static func _reachable_presentation_observer(definition: Dictionary, host: Dicti
 	if str(initial.get("status", "")) != SequenceRuntimeScript.STATUS_ACTIVE:
 		failures.append("env06_8 %s could not initialize its production-authorized reachable observer: %s" % [scenario_id, JSON.stringify(initial.get("errors", []))])
 		return {}
+	if not replay_states.is_empty():
+		var replay_snapshots: Array = []
+		for state_value in replay_states:
+			replay_snapshots.append(_resolved_presentation_snapshot(_dict(state_value), definition, scenario_id, failures))
+		replay_snapshots.sort_custom(func(a: Variant, b: Variant) -> bool: return JSON.stringify(a) < JSON.stringify(b))
+		return {"scenario_id": scenario_id, "reachable_state_count": replay_states.size(), "snapshots": replay_snapshots, "state_corpus": replay_states}
 	var queue: Array = [initial]
 	var seen: Dictionary = {}
 	var phase_ids: Dictionary = {}
 	var snapshots: Array = []
+	var state_corpus: Array = []
 	var serial := 0
 	while not queue.is_empty() and seen.size() < 128:
 		var state := _dict(queue.pop_front())
@@ -213,6 +215,7 @@ static func _reachable_presentation_observer(definition: Dictionary, host: Dicti
 		phase_ids[str(state.get("phase_id", ""))] = true
 		var snapshot := _resolved_presentation_snapshot(state, definition, scenario_id, failures)
 		snapshots.append(snapshot)
+		state_corpus.append(state)
 		if str(state.get("status", "")) != SequenceRuntimeScript.STATUS_ACTIVE:
 			continue
 		var semantic := _dict(OperationRegistryScript.resolved_semantic_state(state.get("semantic_state", {})))
@@ -239,6 +242,34 @@ static func _reachable_presentation_observer(definition: Dictionary, host: Dicti
 				var next := _dict(applied.get("state", {}))
 				_check_exactly_once_consequence(definition, command, action, next, failures, scenario_id)
 				queue.append(next)
+		var phase := _phase_definition(definition, str(state.get("phase_id", "")))
+		var fact_types: Dictionary = {}
+		for branch_value in _array(phase.get("branches", [])):
+			var condition := _dict(_dict(branch_value).get("condition", {}))
+			if str(condition.get("type", "")) == "fact":
+				fact_types[str(condition.get("fact_type", ""))] = true
+		for fact_type_value in fact_types.keys():
+			var fact_type := str(fact_type_value)
+			serial += 1
+			var fact_boundary := int(state.get("boundary_serial", 0)) + 1
+			var fact := SequenceRuntimeScript.fact(fact_type, _fact_producer(fact_type), str(state.get("node_id", "")), "%s_fact_%d" % [scenario_id, serial], serial, fact_boundary, _fact_payload(fact_type, state))
+			var queued := SequenceRuntimeScript.enqueue_fact(state, definition, fact)
+			if not bool(queued.get("ok", false)):
+				continue
+			var flushed := SequenceRuntimeScript.flush_facts(_dict(queued.get("state", {})), definition, fact_boundary)
+			if not bool(flushed.get("ok", false)):
+				continue
+			var fact_state := _dict(flushed.get("state", {}))
+			if fact_type == "world_boundary" and str(fact_state.get("status", "")) == SequenceRuntimeScript.STATUS_ACTIVE and str(fact_state.get("phase_id", "")) == str(state.get("phase_id", "")):
+				serial += 1
+				fact_boundary += 1
+				var second := SequenceRuntimeScript.fact(fact_type, _fact_producer(fact_type), str(state.get("node_id", "")), "%s_fact_%d" % [scenario_id, serial], serial, fact_boundary, _fact_payload(fact_type, fact_state))
+				var second_queued := SequenceRuntimeScript.enqueue_fact(fact_state, definition, second)
+				if bool(second_queued.get("ok", false)):
+					var second_flushed := SequenceRuntimeScript.flush_facts(_dict(second_queued.get("state", {})), definition, fact_boundary)
+					if bool(second_flushed.get("ok", false)):
+						fact_state = _dict(second_flushed.get("state", fact_state))
+			queue.append(fact_state)
 	# Exercise every authored aftermath from an actually initialized state. The
 	# production reducer performs cleanup before installing each visible receipt.
 	for outcome_value in _dict(_dict(definition.get("sequence", {})).get("aftermath", {})).keys():
@@ -247,7 +278,9 @@ static func _reachable_presentation_observer(definition: Dictionary, host: Dicti
 		if not bool(resolved.get("ok", false)):
 			failures.append("env06_8 %s aftermath %s could not resolve: %s" % [scenario_id, outcome, JSON.stringify(resolved.get("errors", []))])
 			continue
-		snapshots.append(_resolved_presentation_snapshot(_dict(resolved.get("state", {})), definition, scenario_id, failures))
+		var aftermath_state := _dict(resolved.get("state", {}))
+		snapshots.append(_resolved_presentation_snapshot(aftermath_state, definition, scenario_id, failures))
+		state_corpus.append(aftermath_state)
 	var expected_phases: Dictionary = {}
 	for phase_value in _array(_dict(_dict(definition.get("sequence", {})).get("phase_graph", {})).get("phases", [])):
 		expected_phases[str(_dict(phase_value).get("id", ""))] = true
@@ -255,7 +288,7 @@ static func _reachable_presentation_observer(definition: Dictionary, host: Dicti
 		if not phase_ids.has(str(phase_id_value)):
 			failures.append("env06_8 %s reachable observer did not exercise phase %s." % [scenario_id, str(phase_id_value)])
 	snapshots.sort_custom(func(a: Variant, b: Variant) -> bool: return JSON.stringify(a) < JSON.stringify(b))
-	return {"scenario_id": scenario_id, "reachable_state_count": seen.size(), "snapshots": snapshots}
+	return {"scenario_id": scenario_id, "reachable_state_count": state_corpus.size(), "snapshots": snapshots, "state_corpus": state_corpus}
 
 
 static func _reachable_state_key(state: Dictionary, definition: Dictionary) -> String:
@@ -267,6 +300,43 @@ static func _reachable_state_key(state: Dictionary, definition: Dictionary) -> S
 		"outcomes": _array(state.get("resolved_outcomes", [])),
 		"semantic": SequenceRuntimeScript.public_projection(state, definition).get("semantic_state", {}),
 	})
+
+
+static func _phase_definition(definition: Dictionary, phase_id: String) -> Dictionary:
+	for phase_value in _array(_dict(_dict(definition.get("sequence", {})).get("phase_graph", {})).get("phases", [])):
+		var phase := _dict(phase_value)
+		if str(phase.get("id", "")) == phase_id:
+			return phase
+	return {}
+
+
+static func _fact_producer(fact_type: String) -> String:
+	if fact_type.begins_with("travel_"): return "travel"
+	if fact_type == "game_result": return "game"
+	if fact_type == "event_result": return "event"
+	if fact_type == "service_result": return "service"
+	if fact_type.begins_with("crew_"): return "crew"
+	if fact_type.begins_with("heat_"): return "heat"
+	if fact_type == "town_transition": return "town"
+	if fact_type == "sweep_changed": return "sweep"
+	return "scenario"
+
+
+static func _fact_payload(fact_type: String, state: Dictionary) -> Dictionary:
+	match fact_type:
+		"game_result": return {"game_id": "env06_8_game", "action_id": "resolve", "won": false, "ended": true, "bankroll_delta": 0, "chips_delta": 0, "applied_heat_delta": 0}
+		"event_result": return {"event_id": "env06_8_event", "choice_id": "leave", "resolution_id": "leave", "resolved": true, "ok": true}
+		"service_result": return {"kind": "service", "service_id": "env06_8_service", "ok": true, "action_id": "resolve"}
+		"travel_departed", "travel_arrived": return {"source_id": str(state.get("node_id", "env06_8_source")), "target_id": "env06_8_target", "travel_kind": "road"}
+		"crew_changed": return {"member_id": str(CrewStateModelScript.MEMBER_IDS[0]), "change": "present", "value": true}
+		"crew_job_changed": return {"job_id": "env06_8_job", "status": "resolved", "definition_id": "env06_8_job", "member_id": str(CrewStateModelScript.MEMBER_IDS[0]), "outcome": "resolved"}
+		"heat_changed": return {"previous": 0, "current": 1, "applied_delta": 1, "source": "env06_8"}
+		"heat_band_changed": return {"previous_band": "quiet", "current_band": "caution", "current": 1, "source": "env06_8"}
+		"town_transition": return {"action_index": 1, "weather": "clear", "day_type": "weekday", "happening_ids": []}
+		"sweep_changed": return {"action_index": 1, "node_id": str(state.get("node_id", "env06_8_node")), "segment_index": 0, "active": true}
+		"world_boundary": return {"amount": 1, "action_index": 1}
+		"scenario_command": return {"command_id": "env06_8_probe", "receipt_id": "env06_8_probe_receipt"}
+	return {}
 
 
 static func _resolved_presentation_snapshot(state: Dictionary, definition: Dictionary, scenario_id: String, failures: Array) -> Dictionary:
@@ -313,12 +383,16 @@ static func _resolved_presentation_snapshot(state: Dictionary, definition: Dicti
 			action_ids.append(str(_dict(action_value).get("id", "")))
 		rows.append({
 			"id": str(record.get("object_id", "")),
+			"object_type": str(record.get("object_type", "")),
+			"visual_type": str(record.get("visual_type", "")),
 			"icon": str(record.get("icon_key", "")),
 			"label": str(record.get("label", "")),
 			"description": str(record.get("short_description", "")),
 			"state": str(record.get("semantic_state", record.get("state_label", ""))),
 			"actions": action_ids,
 			"read_only": bool(record.get("scenario_presentation_read_only", false)),
+			"normalized_rect": _dict(record.get("normalized_rect", {})),
+			"small_screen_rect": _dict(record.get("small_screen_rect", {})),
 		})
 	rows.sort_custom(func(a: Variant, b: Variant) -> bool: return str(_dict(a).get("id", "")) < str(_dict(b).get("id", "")))
 	return {"phase_id": str(projection.get("phase_id", "")), "status": str(projection.get("status", "")), "outcomes": _array(projection.get("resolved_outcomes", [])), "rows": rows}

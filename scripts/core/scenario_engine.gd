@@ -967,7 +967,45 @@ static func sequence_projection(environment: Dictionary, definition: Dictionary 
 	var host_semantics := sequence_host_semantics(environment)
 	if not _copy_array(host_semantics.get("inventory_errors", [])).is_empty(): return {}
 	var state := SequenceRuntimeScript.normalize_state(environment.get("scenario_sequence_state", {}), definition, host_semantics)
-	return SequenceRuntimeScript.public_projection(state, definition) if not state.is_empty() else {}
+	if state.is_empty():
+		return {}
+	return _projection_without_disabled_hook_interactions(SequenceRuntimeScript.public_projection(state, definition))
+
+
+static func _projection_without_disabled_hook_interactions(projection_value: Dictionary) -> Dictionary:
+	var projection := projection_value.duplicate(true)
+	var semantic := _copy_dict(projection.get("semantic_state", {}))
+	var disabled_by_source := {"service_ids": {}, "game_ids": {}, "travel_hooks": {}}
+	for collection_value in [
+		[semantic.get("services", {}), "service_ids"],
+		[semantic.get("games", {}), "game_ids"],
+		[semantic.get("routes", {}), "travel_hooks"],
+	]:
+		var collection := _copy_dict((collection_value as Array)[0])
+		var source_field := str((collection_value as Array)[1])
+		var disabled: Dictionary = disabled_by_source[source_field]
+		for record_value in collection.values():
+			var record := _copy_dict(record_value)
+			if bool(record.get("present", true)) and bool(record.get("enabled", true)):
+				continue
+			var stable_id := str(record.get("stable_object_id", "")).strip_edges()
+			var source_id := str(record.get("source_id", stable_id.trim_prefix("world:"))).strip_edges()
+			if not stable_id.is_empty(): disabled[stable_id] = true
+			if not source_id.is_empty(): disabled[source_id] = true
+	var interactions := _copy_dict(semantic.get("interactions", {}))
+	for identity_value in interactions.keys():
+		var interaction := _copy_dict(interactions.get(identity_value, {}))
+		var source_field := str(interaction.get("source_field", ""))
+		if not disabled_by_source.has(source_field):
+			continue
+		var source_id := str(interaction.get("source_id", "")).strip_edges()
+		var stable_id := str(interaction.get("stable_object_id", "")).strip_edges()
+		var disabled: Dictionary = disabled_by_source[source_field]
+		if disabled.has(source_id) or disabled.has(stable_id):
+			interactions.erase(identity_value)
+	semantic["interactions"] = interactions
+	projection["semantic_state"] = semantic
+	return projection
 
 
 static func sequence_reentry(environment: Dictionary, definition: Dictionary, visit_id: String) -> Dictionary:
@@ -1126,7 +1164,7 @@ static func _commit_sequence_candidate(environment: Dictionary, candidate_value:
 		return _sequence_candidate_failure(environment, result, ["Scenario operation produced no authoritative next state."])
 	candidate["scenario_sequence_state"] = next
 	candidate[TRUSTED_STATE_REFERENCE_KEY] = SequenceRuntimeScript.content_fingerprint(next)
-	var projection := SequenceRuntimeScript.public_projection(next, definition, true)
+	var projection := _projection_without_disabled_hook_interactions(SequenceRuntimeScript.public_projection(next, definition, true))
 	if projection.is_empty():
 		return _sequence_candidate_failure(environment, result, ["Scenario operation produced no public projection."])
 	if not bool(candidate.get("scenario_semantic_ready", false)):

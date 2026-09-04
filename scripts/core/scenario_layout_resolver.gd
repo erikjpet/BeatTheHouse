@@ -174,12 +174,28 @@ static func _scenario_description(semantic: Dictionary) -> String:
 
 
 static func _scenario_icon_key(semantic: Dictionary) -> String:
-	var parts: Array[String] = []
-	for key in ["role", "state", "appearance", "behavior", "pose"]:
-		var value := str(semantic.get(key, "")).strip_edges()
-		if not value.is_empty() and not parts.has(value):
-			parts.append(value)
-	return " ".join(parts)
+	if str(semantic.get("semantic_kind", "")) == "actor" or semantic.has("actor_id"):
+		var behavior := str(semantic.get("behavior", "idle"))
+		if behavior in ["guard", "watch", "patrol", "fight"]: return "scenario_actor_watch"
+		if behavior in ["flee", "depart"]: return "scenario_actor_moving"
+		return "scenario_actor_work"
+	var role := str(semantic.get("role", "prop"))
+	var words := ("%s %s %s %s" % [role, str(semantic.get("stable_object_id", "")), str(semantic.get("state", "")), str(semantic.get("appearance", ""))]).to_lower()
+	if role in ["exit", "route"] or _contains_any(words, ["exit", "door", "lane", "route", "gangway"]): return "scenario_route"
+	if role in ["barrier", "hazard", "obstacle"] or _contains_any(words, ["barrier", "hazard", "lockout", "shutter", "police_hold"]): return "scenario_barrier"
+	if role == "evidence" or _contains_any(words, ["evidence", "trace", "manifest", "serial", "record", "provenance", "marks", "clue"]): return "scenario_evidence"
+	if role in ["workstation", "primary_task"] or _contains_any(words, ["station", "counter", "panel", "circuit", "board", "cage"]): return "scenario_workstation"
+	if _contains_any(words, ["cart", "crate", "stock", "goods", "shelf", "pallet", "lot"]): return "scenario_stock"
+	if _contains_any(words, ["cruiser", "patrol", "vehicle"]): return "scenario_vehicle"
+	if _contains_any(words, ["ring", "dice", "lotto", "number"]): return "scenario_game"
+	if role in ["aftermath", "display"]: return "scenario_aftermath"
+	return "scenario_fixture"
+
+
+static func _contains_any(value: String, needles: Array) -> bool:
+	for needle_value in needles:
+		if value.contains(str(needle_value)): return true
+	return false
 
 
 static func _ordered_semantic_values(value: Dictionary) -> Array:
@@ -886,8 +902,10 @@ static func _seal_projection_coverage(authority: Dictionary, semantic_state: Dic
 				visible = bool(visual.get("visible", true))
 		if not interaction.is_empty():
 			interactive = required and bool(interaction.get("present", true))
-		elif not visual.is_empty() and str(visual.get("owner_namespace", "")) == "scenario":
-			interactive = false
+		elif not visual.is_empty() and (str(visual.get("owner_namespace", "")) == "scenario" or not str(visual.get("world_sequence_owner_token", "")).is_empty()):
+			# Scenario-owned visuals are selectable even without commands: their
+			# interaction is the read-only information panel.
+			interactive = required
 		if not required:
 			visible = false
 			interactive = false

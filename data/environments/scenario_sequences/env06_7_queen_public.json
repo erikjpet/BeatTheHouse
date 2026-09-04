@@ -78,7 +78,7 @@
                   "behavior": "work",
                   "label": "Ceremony Delivered remaining actor",
                   "pose": "arrival",
-                  "description": "Ceremony Delivered remaining actor remains as a public witness to how the room ended. Ceremony ropes split the promenade while the open bar, a loose ring case, and a losing best man pull guests into competing deck lanes.",
+                  "description": "Ordered ropes and a cleared promenade show that the ceremony was delivered.",
                   "description_variants": {
 
                   },
@@ -93,7 +93,7 @@
               }
             ],
             "label": "Ceremony Delivered",
-            "revisit_feedback": "The ceremony delivered arrangement remains physically readable on revisit.",
+            "revisit_feedback": "Ordered ropes and a cleared promenade show that the ceremony was delivered.",
             "scene_ops": [
               {
                 "family": "scene_ops",
@@ -110,7 +110,7 @@
                   "state": "ceremony_delivered",
                   "visible": true,
                   "zone_id": "left",
-                  "description": "Ceremony Delivered room marker remains as a public witness to how the room ended. Ceremony ropes split the promenade while the open bar, a loose ring case, and a losing best man pull guests into competing deck lanes.",
+                  "description": "Ordered ropes and a cleared promenade show that the ceremony was delivered.",
                   "description_variants": {
 
                   }
@@ -132,7 +132,7 @@
                   "behavior": "watch",
                   "label": "Charter Delayed remaining actor",
                   "pose": "arrival",
-                  "description": "Charter Delayed remaining actor remains as a public witness to how the room ended. Ceremony ropes split the promenade while the open bar, a loose ring case, and a losing best man pull guests into competing deck lanes.",
+                  "description": "The held deck arrangement records a charter left waiting.",
                   "description_variants": {
 
                   },
@@ -147,11 +147,11 @@
               }
             ],
             "label": "Charter Delayed",
-            "revisit_feedback": "The charter delayed arrangement remains physically readable on revisit."
+            "revisit_feedback": "The held deck arrangement records a charter left waiting."
           },
           "departure_interrupted": {
             "label": "Departure Interrupted",
-            "revisit_feedback": "The departure interrupted arrangement remains physically readable on revisit.",
+            "revisit_feedback": "The unsettled promenade shows where departure was interrupted.",
             "scene_ops": [
               {
                 "family": "scene_ops",
@@ -168,7 +168,7 @@
                   "state": "departure_interrupted",
                   "visible": true,
                   "zone_id": "foreground",
-                  "description": "Departure Interrupted room marker remains as a public witness to how the room ended. Ceremony ropes split the promenade while the open bar, a loose ring case, and a losing best man pull guests into competing deck lanes.",
+                  "description": "The unsettled promenade shows where departure was interrupted.",
                   "description_variants": {
 
                   }
@@ -190,7 +190,7 @@
                   "behavior": "guard",
                   "label": "Table Opportunity remaining actor",
                   "pose": "arrival",
-                  "description": "Table Opportunity remaining actor remains as a public witness to how the room ended. Ceremony ropes split the promenade while the open bar, a loose ring case, and a losing best man pull guests into competing deck lanes.",
+                  "description": "The open table lane remains visible beside the wedding route.",
                   "description_variants": {
 
                   },
@@ -205,7 +205,7 @@
               }
             ],
             "label": "Table Opportunity",
-            "revisit_feedback": "The table opportunity arrangement remains physically readable on revisit.",
+            "revisit_feedback": "The open table lane remains visible beside the wedding route.",
             "scene_ops": [
               {
                 "family": "scene_ops",
@@ -222,7 +222,7 @@
                   "state": "table_opportunity",
                   "visible": true,
                   "zone_id": "background",
-                  "description": "Table Opportunity room marker remains as a public witness to how the room ended. Ceremony ropes split the promenade while the open bar, a loose ring case, and a losing best man pull guests into competing deck lanes.",
+                  "description": "The open table lane remains visible beside the wedding route.",
                   "description_variants": {
 
                   }
@@ -503,8 +503,8 @@
                     "pose": "arrival",
                     "description": "Losing best man visibly carries the room's current condition. Ceremony ropes split the promenade while the open bar, a loose ring case, and a losing best man pull guests into competing deck lanes.",
                     "description_variants": {
-                      "rope_move": "Losing best man has shifted to a new part of the room, changing the route in plain view. The change remains visible to anyone who returns.",
-                      "watch": "Losing best man is openly watching the active route, warning that careless movement will draw attention. The change remains visible to anyone who returns."
+                      "rope_move": "Losing best man: a visible move has changed the route through the room.",
+                      "watch": "Observation from Losing best man leaves little cover along the route."
                     },
                     "zone_id": "background"
                   },
@@ -524,7 +524,7 @@
                     "pose": "arrival",
                     "description": "Deck coordinator visibly carries the room's current condition. Ceremony ropes split the promenade while the open bar, a loose ring case, and a losing best man pull guests into competing deck lanes.",
                     "description_variants": {
-                      "delta_wedding_coordinator": "Deck coordinator now bears the visible signs of delta wedding coordinator. The change remains visible to anyone who returns."
+                      "delta_wedding_coordinator": "Changed details at Deck coordinator preserve the scene's progress."
                     },
                     "zone_id": "left"
                   },
@@ -585,7 +585,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked clean exit remains available.",
+              "exit_prompt": "The room shifts for delta queen wedding charter, but its marked way out stays open.",
               "id": "arrival",
               "interaction_ops": [
                 {
@@ -707,7 +707,7 @@
                     "zone_id": "foreground",
                     "description": "The split condition is still plain on ceremony rope, a physical record of the room's current stage. Ceremony ropes split the promenade while the open bar, a loose ring case, and a losing best man pull guests into competing deck lanes.",
                     "description_variants": {
-                      "delta_wedding_rope": "Ceremony rope now bears the visible signs of delta wedding rope. The change remains visible to anyone who returns."
+                      "delta_wedding_rope": "A fresh detail at Ceremony rope shows that the room has moved on."
                     }
                   },
                   "op": "spawn",
@@ -732,8 +732,8 @@
                     "zone_id": "right",
                     "description": "Ceremony ropes split the promenade while the open bar, a loose ring case, and a losing best man pull guests into competing deck lanes. Up close, loose ring case still shows its unattended condition, marking what has not changed yet.",
                     "description_variants": {
-                      "delta_wedding_ring_phase": "Loose ring case now bears the visible signs of delta wedding ring phase. The change remains visible to anyone who returns.",
-                      "ring_state_changed": "Loose ring case now bears the visible signs of ring state changed. The change remains visible to anyone who returns."
+                      "delta_wedding_ring_phase": "Loose ring case: the scene's latest turn remains visible here.",
+                      "ring_state_changed": "Changed details at Loose ring case preserve the scene's progress."
                     }
                   },
                   "op": "spawn",
@@ -759,7 +759,7 @@
                     "zone_id": "background",
                     "description": "Best man table visibly carries the room's losing condition. Ceremony ropes split the promenade while the open bar, a loose ring case, and a losing best man pull guests into competing deck lanes.",
                     "description_variants": {
-                      "guest_route_resolved": "Best man table now shows that this part of the work is settled. The change remains visible to anyone who returns."
+                      "guest_route_resolved": "Completion leaves a visible mark at Best man table."
                     }
                   },
                   "op": "spawn",
@@ -830,7 +830,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_wedding_charter_arrival_transition_stage",
-                  "reduced_motion_message": "Delta Queen Wedding Charter reaches the same semantic state without motion.",
+                  "reduced_motion_message": "In reduced motion, delta queen wedding charter settles directly into the same visible result.",
                   "stable_object_id": "delta_queen_wedding_charter_arrival_transition",
                   "stage_id": "delta_queen_wedding_charter_arrival_stage"
                 }
@@ -941,7 +941,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked clean exit remains available.",
+              "exit_prompt": "The marked exit stays clear while delta queen wedding charter continues.",
               "id": "work_1",
               "interaction_ops": [
                 {
@@ -1154,7 +1154,7 @@
                     "zone_id": "foreground",
                     "description": "Ceremony ropes split the promenade while the open bar, a loose ring case, and a losing best man pull guests into competing deck lanes. Route 1 is clearly marked as one of the public paths through the room; choosing it will commit the next move.",
                     "description_variants": {
-                      "changed_by_fail_delta_queen_wedding_charter": "The choice to fail delta queen wedding charter has left a visible mark on route 1. The change remains visible to anyone who returns."
+                      "changed_by_fail_delta_queen_wedding_charter": "Unfinished delta queen wedding charter work leaves route 1 visibly altered."
                     }
                   },
                   "op": "spawn",
@@ -1180,7 +1180,7 @@
                     "zone_id": "center",
                     "description": "Ceremony ropes split the promenade while the open bar, a loose ring case, and a losing best man pull guests into competing deck lanes. Route 2 is clearly marked as one of the public paths through the room; choosing it will commit the next move.",
                     "description_variants": {
-                      "changed_by_exploit_loose_wedding_tables": "The choice to exploit loose wedding tables has left a visible mark on route 2. The change remains visible to anyone who returns."
+                      "changed_by_exploit_loose_wedding_tables": "route 2 visibly records the decision to exploit loose wedding tables."
                     }
                   },
                   "op": "spawn",
@@ -1300,7 +1300,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked clean exit remains available.",
+              "exit_prompt": "The active station leaves the marked exit within reach during delta queen wedding charter.",
               "id": "work_2",
               "interaction_ops": [
                 {
@@ -1465,7 +1465,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_wedding_charter_work_2_transition_stage",
-                  "reduced_motion_message": "Delta Queen Wedding Charter reaches the same semantic state without motion.",
+                  "reduced_motion_message": "In reduced motion, delta queen wedding charter settles directly into the same visible result.",
                   "stable_object_id": "delta_queen_wedding_charter_work_2_transition",
                   "stage_id": "delta_queen_wedding_charter_work_2_stage"
                 }
@@ -1543,7 +1543,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked clean exit remains available.",
+              "exit_prompt": "The marked exit stays clear while delta queen wedding charter continues.",
               "id": "work_3",
               "interaction_ops": [
                 {
@@ -1685,7 +1685,7 @@
             {
               "actor_ops": [],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The chosen outcome settles into the furniture and floor plan for anyone who returns. Ceremony ropes split the promenade while the open bar, a loose ring case, and a losing best man pull guests into competing deck lanes.",
+              "arrival_feedback": "Ceremony ropes split the promenade while the open bar, a loose ring case, and a losing best man pull guests into competing deck lanes.",
               "branches": [
                 {
                   "condition": {
@@ -1696,7 +1696,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked exit remains readable through cleanup.",
+              "exit_prompt": "Even after delta queen wedding charter, the exit route remains open.",
               "id": "terminal_success",
               "interaction_ops": [],
               "label": "Success",
@@ -1707,7 +1707,7 @@
                 {
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The ceremony delivered aftermath fixes a distinct delta queen wedding charter room state for revisit.",
+                  "message": "Ordered ropes and a cleared promenade show that the ceremony was delivered.",
                   "op": "feedback",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_wedding_charter_terminal_success_transition_feedback",
@@ -1718,7 +1718,7 @@
             {
               "actor_ops": [],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The chosen outcome settles into the furniture and floor plan for anyone who returns. Ceremony ropes split the promenade while the open bar, a loose ring case, and a losing best man pull guests into competing deck lanes.",
+              "arrival_feedback": "Ceremony ropes split the promenade while the open bar, a loose ring case, and a losing best man pull guests into competing deck lanes.",
               "branches": [
                 {
                   "condition": {
@@ -1729,7 +1729,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked exit remains readable through cleanup.",
+              "exit_prompt": "Even after delta queen wedding charter, the exit route remains open.",
               "id": "terminal_failure",
               "interaction_ops": [],
               "label": "Failure",
@@ -1740,7 +1740,7 @@
                 {
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The table opportunity aftermath fixes a distinct delta queen wedding charter room state for revisit.",
+                  "message": "The open table lane remains visible beside the wedding route.",
                   "op": "feedback",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_wedding_charter_terminal_failure_transition_feedback",
@@ -1751,7 +1751,7 @@
             {
               "actor_ops": [],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The chosen outcome settles into the furniture and floor plan for anyone who returns. Ceremony ropes split the promenade while the open bar, a loose ring case, and a losing best man pull guests into competing deck lanes.",
+              "arrival_feedback": "Ceremony ropes split the promenade while the open bar, a loose ring case, and a losing best man pull guests into competing deck lanes.",
               "branches": [
                 {
                   "condition": {
@@ -1762,7 +1762,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked exit remains readable through cleanup.",
+              "exit_prompt": "Even after delta queen wedding charter, the exit route remains open.",
               "id": "terminal_refused",
               "interaction_ops": [],
               "label": "Refused",
@@ -1773,7 +1773,7 @@
                 {
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The charter delayed aftermath fixes a distinct delta queen wedding charter room state for revisit.",
+                  "message": "The held deck arrangement records a charter left waiting.",
                   "op": "feedback",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_wedding_charter_terminal_refused_transition_feedback",
@@ -1784,7 +1784,7 @@
             {
               "actor_ops": [],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The chosen outcome settles into the furniture and floor plan for anyone who returns. Ceremony ropes split the promenade while the open bar, a loose ring case, and a losing best man pull guests into competing deck lanes.",
+              "arrival_feedback": "Ceremony ropes split the promenade while the open bar, a loose ring case, and a losing best man pull guests into competing deck lanes.",
               "branches": [
                 {
                   "condition": {
@@ -1795,7 +1795,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked exit remains readable through cleanup.",
+              "exit_prompt": "Even after delta queen wedding charter, the exit route remains open.",
               "id": "terminal_interrupted",
               "interaction_ops": [],
               "label": "Interrupted",
@@ -1806,7 +1806,7 @@
                 {
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The departure interrupted aftermath fixes a distinct delta queen wedding charter room state for revisit.",
+                  "message": "The unsettled promenade shows where departure was interrupted.",
                   "op": "feedback",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_wedding_charter_terminal_interrupted_transition_feedback",
@@ -1822,7 +1822,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "f7a41745837715071287f094acb06c6b43bbb329868f4c1963f991563df6dfd1"
+        "sequence_signature": "976ba6cb4030cff6c33df0e5f269c645b697e2363ae3ee7241b3c61807fcd6a3"
       }
     },
     {
@@ -1899,7 +1899,7 @@
                   "behavior": "work",
                   "label": "Earned Whale Access remaining actor",
                   "pose": "arrival",
-                  "description": "Earned Whale Access remaining actor remains as a public witness to how the room ended. A whale's entourage seals a premium table and bends every adjacent stake placard while staff abandon the public service lane.",
+                  "description": "An opened premium lane shows that access to the whale was earned.",
                   "description_variants": {
 
                   },
@@ -1914,7 +1914,7 @@
               }
             ],
             "label": "Earned Whale Access",
-            "revisit_feedback": "The earned whale access arrangement remains physically readable on revisit.",
+            "revisit_feedback": "An opened premium lane shows that access to the whale was earned.",
             "scene_ops": [
               {
                 "family": "scene_ops",
@@ -1931,7 +1931,7 @@
                   "state": "earned_whale_access",
                   "visible": true,
                   "zone_id": "left",
-                  "description": "Earned Whale Access room marker remains as a public witness to how the room ended. A whale's entourage seals a premium table and bends every adjacent stake placard while staff abandon the public service lane.",
+                  "description": "An opened premium lane shows that access to the whale was earned.",
                   "description_variants": {
 
                   }
@@ -1953,7 +1953,7 @@
                   "behavior": "watch",
                   "label": "Security Lock remaining actor",
                   "pose": "arrival",
-                  "description": "Security Lock remaining actor remains as a public witness to how the room ended. A whale's entourage seals a premium table and bends every adjacent stake placard while staff abandon the public service lane.",
+                  "description": "The sealed premium route records security's control of the floor.",
                   "description_variants": {
 
                   },
@@ -1968,7 +1968,7 @@
               }
             ],
             "label": "Security Lock",
-            "revisit_feedback": "The security lock arrangement remains physically readable on revisit."
+            "revisit_feedback": "The sealed premium route records security's control of the floor."
           },
           "shadowed_entourage": {
             "actor_ops": [
@@ -1979,7 +1979,7 @@
                   "behavior": "guard",
                   "label": "Shadowed Entourage remaining actor",
                   "pose": "arrival",
-                  "description": "Shadowed Entourage remaining actor remains as a public witness to how the room ended. A whale's entourage seals a premium table and bends every adjacent stake placard while staff abandon the public service lane.",
+                  "description": "The bent route around the premium table shows where the entourage was shadowed.",
                   "description_variants": {
 
                   },
@@ -1994,7 +1994,7 @@
               }
             ],
             "label": "Shadowed Entourage",
-            "revisit_feedback": "The shadowed entourage arrangement remains physically readable on revisit.",
+            "revisit_feedback": "The bent route around the premium table shows where the entourage was shadowed.",
             "scene_ops": [
               {
                 "family": "scene_ops",
@@ -2011,7 +2011,7 @@
                   "state": "shadowed_entourage",
                   "visible": true,
                   "zone_id": "center",
-                  "description": "Shadowed Entourage room marker remains as a public witness to how the room ended. A whale's entourage seals a premium table and bends every adjacent stake placard while staff abandon the public service lane.",
+                  "description": "The bent route around the premium table shows where the entourage was shadowed.",
                   "description_variants": {
 
                   }
@@ -2026,7 +2026,7 @@
           },
           "whale_departed": {
             "label": "Whale Departed",
-            "revisit_feedback": "The whale departed arrangement remains physically readable on revisit.",
+            "revisit_feedback": "An empty premium table and relaxing lanes show that the whale departed.",
             "scene_ops": [
               {
                 "family": "scene_ops",
@@ -2043,7 +2043,7 @@
                   "state": "whale_departed",
                   "visible": true,
                   "zone_id": "background",
-                  "description": "Whale Departed room marker remains as a public witness to how the room ended. A whale's entourage seals a premium table and bends every adjacent stake placard while staff abandon the public service lane.",
+                  "description": "An empty premium table and relaxing lanes show that the whale departed.",
                   "description_variants": {
 
                   }
@@ -2324,8 +2324,8 @@
                     "pose": "arrival",
                     "description": "The current condition is still plain on whale host, a physical record of the room's current stage. A whale's entourage seals a premium table and bends every adjacent stake placard while staff abandon the public service lane.",
                     "description_variants": {
-                      "entourage_move": "Whale host has shifted to a new part of the room, changing the route in plain view. The change remains visible to anyone who returns.",
-                      "watch": "Whale host is openly watching the active route, warning that careless movement will draw attention. The change remains visible to anyone who returns."
+                      "entourage_move": "A shifted position at Whale host changes the way across the room.",
+                      "watch": "Careless movement near Whale host risks drawing attention."
                     },
                     "zone_id": "background"
                   },
@@ -2345,7 +2345,7 @@
                     "pose": "arrival",
                     "description": "A whale's entourage seals a premium table and bends every adjacent stake placard while staff abandon the public service lane. Up close, entourage runner still shows its current condition, marking what has not changed yet.",
                     "description_variants": {
-                      "delta_bottom_middle": "Entourage runner has shifted to a new part of the room, changing the route in plain view. The change remains visible to anyone who returns."
+                      "delta_bottom_middle": "The new position at Entourage runner leaves the old route altered."
                     },
                     "zone_id": "left"
                   },
@@ -2406,7 +2406,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked clean exit remains available.",
+              "exit_prompt": "The active station leaves the marked exit within reach during delta queen whale aboard.",
               "id": "arrival",
               "interaction_ops": [
                 {
@@ -2530,7 +2530,7 @@
                     "zone_id": "foreground",
                     "description": "The whale premium table carries the room's reserved state, marked by reserved. A whale's entourage seals a premium table and bends every adjacent stake placard while staff abandon the public service lane.",
                     "description_variants": {
-                      "delta_noninteractive_right": "Whale premium table has shifted to a new part of the room, changing the route in plain view. The change remains visible to anyone who returns."
+                      "delta_noninteractive_right": "The move at Whale premium table visibly redirects traffic through the room."
                     }
                   },
                   "op": "spawn",
@@ -2556,7 +2556,7 @@
                     "zone_id": "center",
                     "description": "A whale's entourage seals a premium table and bends every adjacent stake placard while staff abandon the public service lane. Up close, shifted stake placards still shows its raised condition, marking what has not changed yet.",
                     "description_variants": {
-                      "table_state_changed": "Shifted stake placards now bears the visible signs of table state changed. The change remains visible to anyone who returns."
+                      "table_state_changed": "Shifted stake placards: a changed position records the latest turn."
                     }
                   },
                   "op": "spawn",
@@ -2582,7 +2582,7 @@
                     "zone_id": "background",
                     "description": "Whale service lane stays visibly restricted; it is the readable way out while the scene continues.",
                     "description_variants": {
-                      "staff_behavior_resolved": "Whale service lane now shows that this part of the work is settled. The change remains visible to anyone who returns."
+                      "staff_behavior_resolved": "The room records this step's completion at Whale service lane."
                     }
                   },
                   "op": "spawn",
@@ -2633,7 +2633,7 @@
                     "visible": true,
                     "description": "The marked station for map entourage route is ready; using it will leave a visible result in the room. A whale's entourage seals a premium table and bends every adjacent stake placard while staff abandon the public service lane.",
                     "description_variants": {
-                      "changed_by_fail_delta_queen_whale_aboard": "The choice to fail delta queen whale aboard has left a visible mark on map entourage route. The change remains visible to anyone who returns."
+                      "changed_by_fail_delta_queen_whale_aboard": "Unfinished delta queen whale aboard work leaves map entourage route visibly altered."
                     },
                     "zone_id": "right"
                   },
@@ -2653,7 +2653,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_whale_aboard_arrival_transition_stage",
-                  "reduced_motion_message": "Delta Queen Whale Aboard reaches the same semantic state without motion.",
+                  "reduced_motion_message": "In reduced motion, delta queen whale aboard settles directly into the same visible result.",
                   "stable_object_id": "delta_queen_whale_aboard_arrival_transition",
                   "stage_id": "delta_queen_whale_aboard_arrival_stage"
                 }
@@ -2731,7 +2731,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked clean exit remains available.",
+              "exit_prompt": "The marked exit stays clear while delta queen whale aboard continues.",
               "id": "work_1",
               "interaction_ops": [
                 {
@@ -2848,7 +2848,7 @@
                     "visible": true,
                     "description": "Carry Whale Service waits at a readable work point. Finishing it will visibly advance the room's arrangement. A whale's entourage seals a premium table and bends every adjacent stake placard while staff abandon the public service lane.",
                     "description_variants": {
-                      "changed_by_fail_delta_queen_whale_aboard": "The choice to fail delta queen whale aboard has left a visible mark on carry whale service. The change remains visible to anyone who returns."
+                      "changed_by_fail_delta_queen_whale_aboard": "Unfinished delta queen whale aboard work leaves carry whale service visibly altered."
                     },
                     "zone_id": "foreground"
                   },
@@ -2965,7 +2965,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked clean exit remains available.",
+              "exit_prompt": "The room shifts for delta queen whale aboard, but its marked way out stays open.",
               "id": "work_2",
               "interaction_ops": [
                 {
@@ -3224,7 +3224,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_whale_aboard_work_2_transition_stage",
-                  "reduced_motion_message": "Delta Queen Whale Aboard reaches the same semantic state without motion.",
+                  "reduced_motion_message": "In reduced motion, delta queen whale aboard settles directly into the same visible result.",
                   "stable_object_id": "delta_queen_whale_aboard_work_2_transition",
                   "stage_id": "delta_queen_whale_aboard_work_2_stage"
                 }
@@ -3302,7 +3302,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked clean exit remains available.",
+              "exit_prompt": "The room shifts for delta queen whale aboard, but its marked way out stays open.",
               "id": "work_3",
               "interaction_ops": [
                 {
@@ -3474,7 +3474,7 @@
             {
               "actor_ops": [],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The chosen outcome settles into the furniture and floor plan for anyone who returns. A whale's entourage seals a premium table and bends every adjacent stake placard while staff abandon the public service lane.",
+              "arrival_feedback": "A whale's entourage seals a premium table and bends every adjacent stake placard while staff abandon the public service lane.",
               "branches": [
                 {
                   "condition": {
@@ -3485,7 +3485,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked exit remains readable through cleanup.",
+              "exit_prompt": "Cleanup after delta queen whale aboard leaves the marked exit easy to find.",
               "id": "terminal_success",
               "interaction_ops": [],
               "label": "Success",
@@ -3496,7 +3496,7 @@
                 {
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The earned whale access aftermath fixes a distinct delta queen whale aboard room state for revisit.",
+                  "message": "An opened premium lane shows that access to the whale was earned.",
                   "op": "feedback",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_whale_aboard_terminal_success_transition_feedback",
@@ -3507,7 +3507,7 @@
             {
               "actor_ops": [],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The chosen outcome settles into the furniture and floor plan for anyone who returns. A whale's entourage seals a premium table and bends every adjacent stake placard while staff abandon the public service lane.",
+              "arrival_feedback": "A whale's entourage seals a premium table and bends every adjacent stake placard while staff abandon the public service lane.",
               "branches": [
                 {
                   "condition": {
@@ -3518,7 +3518,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked exit remains readable through cleanup.",
+              "exit_prompt": "The marked way out stays clear as delta queen whale aboard is packed away.",
               "id": "terminal_failure",
               "interaction_ops": [],
               "label": "Failure",
@@ -3529,7 +3529,7 @@
                 {
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The shadowed entourage aftermath fixes a distinct delta queen whale aboard room state for revisit.",
+                  "message": "The bent route around the premium table shows where the entourage was shadowed.",
                   "op": "feedback",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_whale_aboard_terminal_failure_transition_feedback",
@@ -3540,7 +3540,7 @@
             {
               "actor_ops": [],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The chosen outcome settles into the furniture and floor plan for anyone who returns. A whale's entourage seals a premium table and bends every adjacent stake placard while staff abandon the public service lane.",
+              "arrival_feedback": "A whale's entourage seals a premium table and bends every adjacent stake placard while staff abandon the public service lane.",
               "branches": [
                 {
                   "condition": {
@@ -3551,7 +3551,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked exit remains readable through cleanup.",
+              "exit_prompt": "Even after delta queen whale aboard, the exit route remains open.",
               "id": "terminal_refused",
               "interaction_ops": [],
               "label": "Refused",
@@ -3562,7 +3562,7 @@
                 {
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The security lock aftermath fixes a distinct delta queen whale aboard room state for revisit.",
+                  "message": "The sealed premium route records security's control of the floor.",
                   "op": "feedback",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_whale_aboard_terminal_refused_transition_feedback",
@@ -3573,7 +3573,7 @@
             {
               "actor_ops": [],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The chosen outcome settles into the furniture and floor plan for anyone who returns. A whale's entourage seals a premium table and bends every adjacent stake placard while staff abandon the public service lane.",
+              "arrival_feedback": "A whale's entourage seals a premium table and bends every adjacent stake placard while staff abandon the public service lane.",
               "branches": [
                 {
                   "condition": {
@@ -3584,7 +3584,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked exit remains readable through cleanup.",
+              "exit_prompt": "Even after delta queen whale aboard, the exit route remains open.",
               "id": "terminal_interrupted",
               "interaction_ops": [],
               "label": "Interrupted",
@@ -3595,7 +3595,7 @@
                 {
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The whale departed aftermath fixes a distinct delta queen whale aboard room state for revisit.",
+                  "message": "An empty premium table and relaxing lanes show that the whale departed.",
                   "op": "feedback",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_whale_aboard_terminal_interrupted_transition_feedback",
@@ -3611,7 +3611,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "bda35533fa0e754e767c55cc53b9b04971c7a7def4570e587c5081ba2c97f97a"
+        "sequence_signature": "9a13f1fc12ae9007499c5232d1c96ddc74d7be5582fda4298a85248bda1a9cac"
       }
     },
     {
@@ -3688,7 +3688,7 @@
                   "behavior": "work",
                   "label": "Assisted Reroute remaining actor",
                   "pose": "arrival",
-                  "description": "Assisted Reroute remaining actor remains as a public witness to how the room ended. Fog shutters the gangway, traps a restless boarding crowd, and raises the visible stake board one phase at a time.",
+                  "description": "The marked alternate route shows how the stranded crowd was redirected.",
                   "description_variants": {
 
                   },
@@ -3703,7 +3703,7 @@
               }
             ],
             "label": "Assisted Reroute",
-            "revisit_feedback": "The assisted reroute arrangement remains physically readable on revisit.",
+            "revisit_feedback": "The marked alternate route shows how the stranded crowd was redirected.",
             "scene_ops": [
               {
                 "family": "scene_ops",
@@ -3720,7 +3720,7 @@
                   "state": "assisted_reroute",
                   "visible": true,
                   "zone_id": "left",
-                  "description": "Assisted Reroute room marker remains as a public witness to how the room ended. Fog shutters the gangway, traps a restless boarding crowd, and raises the visible stake board one phase at a time.",
+                  "description": "The marked alternate route shows how the stranded crowd was redirected.",
                   "description_variants": {
 
                   }
@@ -3742,7 +3742,7 @@
                   "behavior": "watch",
                   "label": "Crowd Exploited remaining actor",
                   "pose": "arrival",
-                  "description": "Crowd Exploited remaining actor remains as a public witness to how the room ended. Fog shutters the gangway, traps a restless boarding crowd, and raises the visible stake board one phase at a time.",
+                  "description": "The crowded gangway still shows where the delay was exploited.",
                   "description_variants": {
 
                   },
@@ -3757,11 +3757,11 @@
               }
             ],
             "label": "Crowd Exploited",
-            "revisit_feedback": "The crowd exploited arrangement remains physically readable on revisit."
+            "revisit_feedback": "The crowded gangway still shows where the delay was exploited."
           },
           "fog_departure": {
             "label": "Fog Departure",
-            "revisit_feedback": "The fog departure arrangement remains physically readable on revisit.",
+            "revisit_feedback": "The opened gangway records the boat's departure through the fog.",
             "scene_ops": [
               {
                 "family": "scene_ops",
@@ -3778,7 +3778,7 @@
                   "state": "fog_departure",
                   "visible": true,
                   "zone_id": "foreground",
-                  "description": "Fog Departure room marker remains as a public witness to how the room ended. Fog shutters the gangway, traps a restless boarding crowd, and raises the visible stake board one phase at a time.",
+                  "description": "The opened gangway records the boat's departure through the fog.",
                   "description_variants": {
 
                   }
@@ -3800,7 +3800,7 @@
                   "behavior": "guard",
                   "label": "Safe Wait remaining actor",
                   "pose": "arrival",
-                  "description": "Safe Wait remaining actor remains as a public witness to how the room ended. Fog shutters the gangway, traps a restless boarding crowd, and raises the visible stake board one phase at a time.",
+                  "description": "Ordered benches and a held gangway show that the crowd waited safely.",
                   "description_variants": {
 
                   },
@@ -3815,7 +3815,7 @@
               }
             ],
             "label": "Safe Wait",
-            "revisit_feedback": "The safe wait arrangement remains physically readable on revisit.",
+            "revisit_feedback": "Ordered benches and a held gangway show that the crowd waited safely.",
             "scene_ops": [
               {
                 "family": "scene_ops",
@@ -3832,7 +3832,7 @@
                   "state": "safe_wait",
                   "visible": true,
                   "zone_id": "background",
-                  "description": "Safe Wait room marker remains as a public witness to how the room ended. Fog shutters the gangway, traps a restless boarding crowd, and raises the visible stake board one phase at a time.",
+                  "description": "Ordered benches and a held gangway show that the crowd waited safely.",
                   "description_variants": {
 
                   }
@@ -4114,8 +4114,8 @@
                     "pose": "arrival",
                     "description": "Fog shutters the gangway, traps a restless boarding crowd, and raises the visible stake board one phase at a time. Up close, deck officer still shows its current condition, marking what has not changed yet.",
                     "description_variants": {
-                      "signal_appearance": "Deck officer now bears the visible signs of signal appearance. The change remains visible to anyone who returns.",
-                      "watch": "Deck officer is openly watching the active route, warning that careless movement will draw attention. The change remains visible to anyone who returns."
+                      "signal_appearance": "The new state at Deck officer makes the room's progress plain.",
+                      "watch": "The route remains exposed to observation from Deck officer."
                     },
                     "zone_id": "background"
                   },
@@ -4135,7 +4135,7 @@
                     "pose": "arrival",
                     "description": "Waiting crowd visibly carries the room's current condition. Fog shutters the gangway, traps a restless boarding crowd, and raises the visible stake board one phase at a time.",
                     "description_variants": {
-                      "delta_fog_waiting_crowd": "Waiting crowd now bears the visible signs of delta fog waiting crowd. The change remains visible to anyone who returns."
+                      "delta_fog_waiting_crowd": "Waiting crowd: a changed position records the latest turn."
                     },
                     "zone_id": "right"
                   },
@@ -4196,7 +4196,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked clean exit remains available.",
+              "exit_prompt": "The marked exit stays clear while delta queen fog delay continues.",
               "id": "arrival",
               "interaction_ops": [
                 {
@@ -4320,7 +4320,7 @@
                     "zone_id": "foreground",
                     "description": "Fog shutters the gangway, traps a restless boarding crowd, and raises the visible stake board one phase at a time. Up close, fog signal lamp still shows its closed condition, marking what has not changed yet.",
                     "description_variants": {
-                      "delta_secondary_top": "Fog signal lamp has shifted to a new part of the room, changing the route in plain view. The change remains visible to anyone who returns."
+                      "delta_secondary_top": "A shifted position at Fog signal lamp changes the way across the room."
                     }
                   },
                   "op": "spawn",
@@ -4346,7 +4346,7 @@
                     "zone_id": "exit_lane",
                     "description": "Fog shutters the gangway, traps a restless boarding crowd, and raises the visible stake board one phase at a time. Up close, closed gangway still shows its sealed condition, marking what has not changed yet.",
                     "description_variants": {
-                      "crowd_position_changed": "Closed gangway now bears the visible signs of crowd position changed. The change remains visible to anyone who returns."
+                      "crowd_position_changed": "The new state at Closed gangway makes the room's progress plain."
                     }
                   },
                   "op": "spawn",
@@ -4372,7 +4372,7 @@
                     "zone_id": "background",
                     "description": "Rising stake board visibly carries the room's phase one condition. Fog shutters the gangway, traps a restless boarding crowd, and raises the visible stake board one phase at a time.",
                     "description_variants": {
-                      "stake_state_resolved": "Rising stake board now shows that this part of the work is settled. The change remains visible to anyone who returns."
+                      "stake_state_resolved": "A final change at Rising stake board shows that this step is over."
                     }
                   },
                   "op": "spawn",
@@ -4423,7 +4423,7 @@
                     "visible": true,
                     "description": "The marked station for read fog signal is ready; using it will leave a visible result in the room. Fog shutters the gangway, traps a restless boarding crowd, and raises the visible stake board one phase at a time.",
                     "description_variants": {
-                      "changed_by_fail_delta_queen_fog_delay": "The choice to fail delta queen fog delay has left a visible mark on read fog signal. The change remains visible to anyone who returns."
+                      "changed_by_fail_delta_queen_fog_delay": "Unfinished delta queen fog delay work leaves read fog signal visibly altered."
                     },
                     "zone_id": "right"
                   },
@@ -4443,7 +4443,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_fog_delay_arrival_transition_stage",
-                  "reduced_motion_message": "Delta Queen Fog Delay reaches the same semantic state without motion.",
+                  "reduced_motion_message": "In reduced motion, delta queen fog delay settles directly into the same visible result.",
                   "stable_object_id": "delta_queen_fog_delay_arrival_transition",
                   "stage_id": "delta_queen_fog_delay_arrival_stage"
                 }
@@ -4543,7 +4543,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked clean exit remains available.",
+              "exit_prompt": "The room shifts for delta queen fog delay, but its marked way out stays open.",
               "id": "work_1",
               "interaction_ops": [
                 {
@@ -4733,7 +4733,7 @@
                     "zone_id": "foreground",
                     "description": "Fog shutters the gangway, traps a restless boarding crowd, and raises the visible stake board one phase at a time. Route 1 is clearly marked as one of the public paths through the room; choosing it will commit the next move.",
                     "description_variants": {
-                      "changed_by_assist_fog_reroute": "The choice to assist fog reroute has left a visible mark on route 1. The change remains visible to anyone who returns."
+                      "changed_by_assist_fog_reroute": "A plain mark on route 1 records the decision to assist fog reroute."
                     }
                   },
                   "op": "spawn",
@@ -4879,7 +4879,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked clean exit remains available.",
+              "exit_prompt": "The room shifts for delta queen fog delay, but its marked way out stays open.",
               "id": "work_2",
               "interaction_ops": [
                 {
@@ -5044,7 +5044,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_fog_delay_work_2_transition_stage",
-                  "reduced_motion_message": "Delta Queen Fog Delay reaches the same semantic state without motion.",
+                  "reduced_motion_message": "In reduced motion, delta queen fog delay settles directly into the same visible result.",
                   "stable_object_id": "delta_queen_fog_delay_work_2_transition",
                   "stage_id": "delta_queen_fog_delay_work_2_stage"
                 }
@@ -5122,7 +5122,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked clean exit remains available.",
+              "exit_prompt": "The active station leaves the marked exit within reach during delta queen fog delay.",
               "id": "work_3",
               "interaction_ops": [
                 {
@@ -5264,7 +5264,7 @@
             {
               "actor_ops": [],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The chosen outcome settles into the furniture and floor plan for anyone who returns. Fog shutters the gangway, traps a restless boarding crowd, and raises the visible stake board one phase at a time.",
+              "arrival_feedback": "Fog shutters the gangway, traps a restless boarding crowd, and raises the visible stake board one phase at a time.",
               "branches": [
                 {
                   "condition": {
@@ -5275,7 +5275,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked exit remains readable through cleanup.",
+              "exit_prompt": "The marked way out stays clear as delta queen fog delay is packed away.",
               "id": "terminal_success",
               "interaction_ops": [],
               "label": "Success",
@@ -5286,7 +5286,7 @@
                 {
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The assisted reroute aftermath fixes a distinct delta queen fog delay room state for revisit.",
+                  "message": "The marked alternate route shows how the stranded crowd was redirected.",
                   "op": "feedback",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_fog_delay_terminal_success_transition_feedback",
@@ -5297,7 +5297,7 @@
             {
               "actor_ops": [],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The chosen outcome settles into the furniture and floor plan for anyone who returns. Fog shutters the gangway, traps a restless boarding crowd, and raises the visible stake board one phase at a time.",
+              "arrival_feedback": "Fog shutters the gangway, traps a restless boarding crowd, and raises the visible stake board one phase at a time.",
               "branches": [
                 {
                   "condition": {
@@ -5308,7 +5308,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked exit remains readable through cleanup.",
+              "exit_prompt": "Even after delta queen fog delay, the exit route remains open.",
               "id": "terminal_failure",
               "interaction_ops": [],
               "label": "Failure",
@@ -5319,7 +5319,7 @@
                 {
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The safe wait aftermath fixes a distinct delta queen fog delay room state for revisit.",
+                  "message": "Ordered benches and a held gangway show that the crowd waited safely.",
                   "op": "feedback",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_fog_delay_terminal_failure_transition_feedback",
@@ -5330,7 +5330,7 @@
             {
               "actor_ops": [],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The chosen outcome settles into the furniture and floor plan for anyone who returns. Fog shutters the gangway, traps a restless boarding crowd, and raises the visible stake board one phase at a time.",
+              "arrival_feedback": "Fog shutters the gangway, traps a restless boarding crowd, and raises the visible stake board one phase at a time.",
               "branches": [
                 {
                   "condition": {
@@ -5341,7 +5341,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked exit remains readable through cleanup.",
+              "exit_prompt": "Even after delta queen fog delay, the exit route remains open.",
               "id": "terminal_refused",
               "interaction_ops": [],
               "label": "Refused",
@@ -5352,7 +5352,7 @@
                 {
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The crowd exploited aftermath fixes a distinct delta queen fog delay room state for revisit.",
+                  "message": "The crowded gangway still shows where the delay was exploited.",
                   "op": "feedback",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_fog_delay_terminal_refused_transition_feedback",
@@ -5363,7 +5363,7 @@
             {
               "actor_ops": [],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The chosen outcome settles into the furniture and floor plan for anyone who returns. Fog shutters the gangway, traps a restless boarding crowd, and raises the visible stake board one phase at a time.",
+              "arrival_feedback": "Fog shutters the gangway, traps a restless boarding crowd, and raises the visible stake board one phase at a time.",
               "branches": [
                 {
                   "condition": {
@@ -5374,7 +5374,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked exit remains readable through cleanup.",
+              "exit_prompt": "Cleanup after delta queen fog delay leaves the marked exit easy to find.",
               "id": "terminal_interrupted",
               "interaction_ops": [],
               "label": "Interrupted",
@@ -5385,7 +5385,7 @@
                 {
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The fog departure aftermath fixes a distinct delta queen fog delay room state for revisit.",
+                  "message": "The opened gangway records the boat's departure through the fog.",
                   "op": "feedback",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_fog_delay_terminal_interrupted_transition_feedback",
@@ -5401,7 +5401,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "4a79221b2f52fef00eaccf762211beb21faa39bb316483e11c776624802c3a13"
+        "sequence_signature": "54dc6c89a304edb102dad83a60c30b7d13bae6d79d2cbcd60ff42f1d21e88f86"
       }
     },
     {
@@ -5472,7 +5472,7 @@
         "aftermath": {
           "engine_abandoned": {
             "label": "Engine Abandoned",
-            "revisit_feedback": "The engine abandoned arrangement remains physically readable on revisit.",
+            "revisit_feedback": "The sealed engine lane shows that the failed machinery was abandoned.",
             "scene_ops": [
               {
                 "family": "scene_ops",
@@ -5489,7 +5489,7 @@
                   "state": "engine_abandoned",
                   "visible": true,
                   "zone_id": "background",
-                  "description": "Engine Abandoned room marker remains as a public witness to how the room ended. A dead engine anchors the boat mid-river; the locked gangway, falling pressure gauge, and evacuation benches make every route visible.",
+                  "description": "The sealed engine lane shows that the failed machinery was abandoned.",
                   "description_variants": {
 
                   }
@@ -5511,7 +5511,7 @@
                   "behavior": "watch",
                   "label": "Evacuation Staged remaining actor",
                   "pose": "arrival",
-                  "description": "Evacuation Staged remaining actor remains as a public witness to how the room ended. A dead engine anchors the boat mid-river; the locked gangway, falling pressure gauge, and evacuation benches make every route visible.",
+                  "description": "Ordered benches and a guarded route record a staged evacuation.",
                   "description_variants": {
 
                   },
@@ -5526,7 +5526,7 @@
               }
             ],
             "label": "Evacuation Staged",
-            "revisit_feedback": "The evacuation staged arrangement remains physically readable on revisit."
+            "revisit_feedback": "Ordered benches and a guarded route record a staged evacuation."
           },
           "limited_power": {
             "actor_ops": [
@@ -5537,7 +5537,7 @@
                   "behavior": "guard",
                   "label": "Limited Power remaining actor",
                   "pose": "arrival",
-                  "description": "Limited Power remaining actor remains as a public witness to how the room ended. A dead engine anchors the boat mid-river; the locked gangway, falling pressure gauge, and evacuation benches make every route visible.",
+                  "description": "A guarded gauge and restricted lanes show that the boat remains on limited power.",
                   "description_variants": {
 
                   },
@@ -5552,7 +5552,7 @@
               }
             ],
             "label": "Limited Power",
-            "revisit_feedback": "The limited power arrangement remains physically readable on revisit.",
+            "revisit_feedback": "A guarded gauge and restricted lanes show that the boat remains on limited power.",
             "scene_ops": [
               {
                 "family": "scene_ops",
@@ -5569,7 +5569,7 @@
                   "state": "limited_power",
                   "visible": true,
                   "zone_id": "foreground",
-                  "description": "Limited Power room marker remains as a public witness to how the room ended. A dead engine anchors the boat mid-river; the locked gangway, falling pressure gauge, and evacuation benches make every route visible.",
+                  "description": "A guarded gauge and restricted lanes show that the boat remains on limited power.",
                   "description_variants": {
 
                   }
@@ -5591,7 +5591,7 @@
                   "behavior": "work",
                   "label": "Travel Resumed remaining actor",
                   "pose": "arrival",
-                  "description": "Travel Resumed remaining actor remains as a public witness to how the room ended. A dead engine anchors the boat mid-river; the locked gangway, falling pressure gauge, and evacuation benches make every route visible.",
+                  "description": "An open gangway and settled gauge show that travel resumed.",
                   "description_variants": {
 
                   },
@@ -5606,7 +5606,7 @@
               }
             ],
             "label": "Travel Resumed",
-            "revisit_feedback": "The travel resumed arrangement remains physically readable on revisit.",
+            "revisit_feedback": "An open gangway and settled gauge show that travel resumed.",
             "scene_ops": [
               {
                 "family": "scene_ops",
@@ -5623,7 +5623,7 @@
                   "state": "travel_resumed",
                   "visible": true,
                   "zone_id": "background",
-                  "description": "Travel Resumed room marker remains as a public witness to how the room ended. A dead engine anchors the boat mid-river; the locked gangway, falling pressure gauge, and evacuation benches make every route visible.",
+                  "description": "An open gangway and settled gauge show that travel resumed.",
                   "description_variants": {
 
                   }
@@ -5934,8 +5934,8 @@
                     "pose": "arrival",
                     "description": "The current condition is still plain on engine mate, a physical record of the room's current stage. A dead engine anchors the boat mid-river; the locked gangway, falling pressure gauge, and evacuation benches make every route visible.",
                     "description_variants": {
-                      "bulkhead_state": "Engine mate now bears the visible signs of bulkhead state. The change remains visible to anyone who returns.",
-                      "watch": "Engine mate is openly watching the active route, warning that careless movement will draw attention. The change remains visible to anyone who returns."
+                      "bulkhead_state": "Engine mate: the scene's latest turn remains visible here.",
+                      "watch": "Careless movement near Engine mate risks drawing attention."
                     },
                     "zone_id": "background"
                   },
@@ -5955,7 +5955,7 @@
                     "pose": "arrival",
                     "description": "Guard visibly carries the room's current condition. A dead engine anchors the boat mid-river; the locked gangway, falling pressure gauge, and evacuation benches make every route visible.",
                     "description_variants": {
-                      "delta_engine_guard": "Guard now bears the visible signs of delta engine guard. The change remains visible to anyone who returns."
+                      "delta_engine_guard": "Guard: a changed position records the latest turn."
                     },
                     "zone_id": "left"
                   },
@@ -6016,7 +6016,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked clean exit remains available.",
+              "exit_prompt": "A clean route out remains visible throughout delta queen engine trouble.",
               "id": "arrival",
               "interaction_ops": [
                 {
@@ -6140,7 +6140,7 @@
                     "zone_id": "foreground",
                     "description": "The sealed condition is still plain on hot engine bulkhead, a physical record of the room's current stage. A dead engine anchors the boat mid-river; the locked gangway, falling pressure gauge, and evacuation benches make every route visible.",
                     "description_variants": {
-                      "delta_scenario_spare": "Hot engine bulkhead now bears the visible signs of delta scenario spare. The change remains visible to anyone who returns."
+                      "delta_scenario_spare": "Changed details at Hot engine bulkhead preserve the scene's progress."
                     }
                   },
                   "op": "spawn",
@@ -6166,7 +6166,7 @@
                     "zone_id": "center",
                     "description": "Falling pressure gauge is critical in critical. A dead engine anchors the boat mid-river; the locked gangway, falling pressure gauge, and evacuation benches make every route visible.",
                     "description_variants": {
-                      "gauge_appearance_changed": "Falling pressure gauge now bears the visible signs of gauge appearance changed. The change remains visible to anyone who returns."
+                      "gauge_appearance_changed": "Changed details at Falling pressure gauge preserve the scene's progress."
                     }
                   },
                   "op": "spawn",
@@ -6192,7 +6192,7 @@
                     "zone_id": "background",
                     "description": "A dead engine anchors the boat mid-river; the locked gangway, falling pressure gauge, and evacuation benches make every route visible. Up close, benches still shows its empty condition, marking what has not changed yet.",
                     "description_variants": {
-                      "bench_move_resolved": "Benches now shows that this part of the work is settled. The change remains visible to anyone who returns."
+                      "bench_move_resolved": "The room records this step's completion at Benches."
                     }
                   },
                   "op": "spawn",
@@ -6218,7 +6218,7 @@
                     "zone_id": "exit_lane",
                     "description": "Locked mid-river gangway is locked in locked. A dead engine anchors the boat mid-river; the locked gangway, falling pressure gauge, and evacuation benches make every route visible.",
                     "description_variants": {
-                      "hide": "Locked mid-river gangway has been moved out of sight; its absence is now part of the room's readable state. The change remains visible to anyone who returns."
+                      "hide": "Locked mid-river gangway has been moved out of sight; its absence is now part of the room's readable state."
                     }
                   },
                   "op": "spawn",
@@ -6269,7 +6269,7 @@
                     "visible": true,
                     "description": "Seal Engine Lane stays visibly ready; it is the readable way out while the scene continues.",
                     "description_variants": {
-                      "changed_by_fail_delta_queen_engine_trouble": "The choice to fail delta queen engine trouble has left a visible mark on seal engine lane. The change remains visible to anyone who returns."
+                      "changed_by_fail_delta_queen_engine_trouble": "Unfinished delta queen engine trouble work leaves seal engine lane visibly altered."
                     },
                     "zone_id": "foreground"
                   },
@@ -6285,11 +6285,11 @@
                   "channel": "room",
                   "duration_boundaries": 1.0,
                   "family": "transition_ops",
-                  "message": "Pressure gear and evacuation furniture move in plain sight, allowing you to refuse the task.",
+                  "message": "The evacuation lane stays clear if you leave the engine work behind.",
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_engine_trouble_arrival_transition_stage",
-                  "reduced_motion_message": "Delta Queen Engine Trouble reaches the same semantic state without motion.",
+                  "reduced_motion_message": "In reduced motion, delta queen engine trouble settles directly into the same visible result.",
                   "stable_object_id": "delta_queen_engine_trouble_arrival_transition",
                   "stage_id": "delta_queen_engine_trouble_arrival_stage"
                 }
@@ -6308,7 +6308,7 @@
                 }
               ],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "Pressure gear and evacuation furniture move in plain sight, allowing you to diagnose pressure.",
+              "arrival_feedback": "The exposed gauge makes the pressure fault ready for inspection.",
               "branches": [
                 {
                   "condition": {
@@ -6367,7 +6367,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked clean exit remains available.",
+              "exit_prompt": "The room shifts for delta queen engine trouble, but its marked way out stays open.",
               "id": "work_1",
               "interaction_ops": [
                 {
@@ -6403,7 +6403,7 @@
                           "owner_namespace": "scenario",
                           "stable_object_id": "delta_queen_engine_trouble_task_1",
                           "state": "changed_by_fail_delta_queen_engine_trouble",
-                          "message": "You let the pressure win. Pressure gear and evacuation furniture move in plain sight, allowing you to diagnose pressure."
+                          "message": "You let the pressure win. The exposed gauge makes the pressure fault ready for inspection."
                         }
                       },
                       {
@@ -6414,7 +6414,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "crate_latch",
-                          "message": "You refuse and leave. Pressure gear and evacuation furniture move in plain sight, allowing you to diagnose pressure."
+                          "message": "You refuse and leave. The exposed gauge makes the pressure fault ready for inspection."
                         }
                       }
                     ],
@@ -6484,7 +6484,7 @@
                     "visible": true,
                     "description": "The marked station for diagnose pressure is ready; using it will leave a visible result in the room. A dead engine anchors the boat mid-river; the locked gangway, falling pressure gauge, and evacuation benches make every route visible.",
                     "description_variants": {
-                      "changed_by_fail_delta_queen_engine_trouble": "The choice to fail delta queen engine trouble has left a visible mark on diagnose pressure. The change remains visible to anyone who returns."
+                      "changed_by_fail_delta_queen_engine_trouble": "Unfinished delta queen engine trouble work leaves diagnose pressure visibly altered."
                     },
                     "zone_id": "center"
                   },
@@ -6499,7 +6499,7 @@
                 {
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "Pressure gear and evacuation furniture move in plain sight, allowing you to diagnose pressure.",
+                  "message": "The exposed gauge makes the pressure fault ready for inspection.",
                   "op": "feedback",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_engine_trouble_work_1_transition_feedback",
@@ -6520,7 +6520,7 @@
                 }
               ],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "Pressure gear and evacuation furniture move in plain sight, allowing you to fetch impeller key.",
+              "arrival_feedback": "The shifted benches open a route to the impeller key.",
               "branches": [
                 {
                   "condition": {
@@ -6579,7 +6579,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked clean exit remains available.",
+              "exit_prompt": "The active station leaves the marked exit within reach during delta queen engine trouble.",
               "id": "work_2",
               "interaction_ops": [
                 {
@@ -6613,7 +6613,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "crate_latch",
-                          "message": "You let the pressure win. Pressure gear and evacuation furniture move in plain sight, allowing you to fetch impeller key."
+                          "message": "You let the pressure win. The shifted benches open a route to the impeller key."
                         }
                       },
                       {
@@ -6624,7 +6624,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "crate_latch",
-                          "message": "You refuse and leave. Pressure gear and evacuation furniture move in plain sight, allowing you to fetch impeller key."
+                          "message": "You refuse and leave. The shifted benches open a route to the impeller key."
                         }
                       }
                     ],
@@ -6710,11 +6710,11 @@
                   "channel": "room",
                   "duration_boundaries": 1.0,
                   "family": "transition_ops",
-                  "message": "Pressure gear and evacuation furniture move in plain sight, allowing you to fetch impeller key.",
+                  "message": "The shifted benches open a route to the impeller key.",
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_engine_trouble_work_2_transition_stage",
-                  "reduced_motion_message": "Delta Queen Engine Trouble reaches the same semantic state without motion.",
+                  "reduced_motion_message": "In reduced motion, delta queen engine trouble settles directly into the same visible result.",
                   "stable_object_id": "delta_queen_engine_trouble_work_2_transition",
                   "stage_id": "delta_queen_engine_trouble_work_2_stage"
                 }
@@ -6733,7 +6733,7 @@
                 }
               ],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "Pressure gear and evacuation furniture move in plain sight, allowing you to repair engine for departure.",
+              "arrival_feedback": "The staged pressure gear is ready for a departure repair.",
               "branches": [
                 {
                   "condition": {
@@ -6814,7 +6814,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked clean exit remains available.",
+              "exit_prompt": "The active station leaves the marked exit within reach during delta queen engine trouble.",
               "id": "work_3",
               "interaction_ops": [
                 {
@@ -6837,7 +6837,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "crate_latch",
-                          "message": "You repair Engine For Departure. Pressure gear and evacuation furniture move in plain sight, allowing you to repair engine for departure."
+                          "message": "You repair Engine For Departure. The staged pressure gear is ready for a departure repair."
                         }
                       },
                       {
@@ -6891,7 +6891,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "crate_latch",
-                          "message": "You ration Limited Engine Power. Pressure gear and evacuation furniture move in plain sight, allowing you to repair engine for departure."
+                          "message": "You ration Limited Engine Power. The staged pressure gear is ready for a departure repair."
                         }
                       }
                     ],
@@ -6933,7 +6933,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "crate_latch",
-                          "message": "You stage Engine Evacuation. Pressure gear and evacuation furniture move in plain sight, allowing you to repair engine for departure."
+                          "message": "You stage Engine Evacuation. The staged pressure gear is ready for a departure repair."
                         }
                       }
                     ],
@@ -7069,7 +7069,7 @@
                   "change_id": "delta_queen_engine_trouble_work_3_change",
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "Pressure gear and evacuation furniture move in plain sight, allowing you to repair engine for departure.",
+                  "message": "The staged pressure gear is ready for a departure repair.",
                   "op": "scene_change",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_engine_trouble_work_3_transition_scene_change",
@@ -7089,7 +7089,7 @@
                 }
               ],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "Pressure gear and evacuation furniture move in plain sight, allowing you to restart engine.",
+              "arrival_feedback": "The repaired line leaves the engine controls ready for a restart.",
               "branches": [
                 {
                   "condition": {
@@ -7148,7 +7148,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked clean exit remains available.",
+              "exit_prompt": "The marked exit stays clear while delta queen engine trouble continues.",
               "id": "work_4",
               "interaction_ops": [
                 {
@@ -7196,7 +7196,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "crate_latch",
-                          "message": "You let the pressure win. Pressure gear and evacuation furniture move in plain sight, allowing you to restart engine."
+                          "message": "You let the pressure win. The repaired line leaves the engine controls ready for a restart."
                         }
                       },
                       {
@@ -7207,7 +7207,7 @@
                         "handler": "play_cue",
                         "inputs": {
                           "cue_id": "crate_latch",
-                          "message": "You refuse and leave. Pressure gear and evacuation furniture move in plain sight, allowing you to restart engine."
+                          "message": "You refuse and leave. The repaired line leaves the engine controls ready for a restart."
                         }
                       }
                     ],
@@ -7307,7 +7307,7 @@
                 {
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "Pressure gear and evacuation furniture move in plain sight, allowing you to restart engine.",
+                  "message": "The repaired line leaves the engine controls ready for a restart.",
                   "op": "feedback",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_engine_trouble_work_4_transition_feedback",
@@ -7318,7 +7318,7 @@
             {
               "actor_ops": [],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The chosen outcome settles into the furniture and floor plan for anyone who returns. A dead engine anchors the boat mid-river; the locked gangway, falling pressure gauge, and evacuation benches make every route visible.",
+              "arrival_feedback": "A dead engine anchors the boat mid-river; the locked gangway, falling pressure gauge, and evacuation benches make every route visible.",
               "branches": [
                 {
                   "condition": {
@@ -7329,7 +7329,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked exit remains readable through cleanup.",
+              "exit_prompt": "Even after delta queen engine trouble, the exit route remains open.",
               "id": "terminal_success",
               "interaction_ops": [],
               "label": "Success",
@@ -7340,7 +7340,7 @@
                 {
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The travel resumed aftermath fixes a distinct delta queen engine trouble room state for revisit.",
+                  "message": "An open gangway and settled gauge show that travel resumed.",
                   "op": "feedback",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_engine_trouble_terminal_success_transition_feedback",
@@ -7351,7 +7351,7 @@
             {
               "actor_ops": [],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The chosen outcome settles into the furniture and floor plan for anyone who returns. A dead engine anchors the boat mid-river; the locked gangway, falling pressure gauge, and evacuation benches make every route visible.",
+              "arrival_feedback": "A dead engine anchors the boat mid-river; the locked gangway, falling pressure gauge, and evacuation benches make every route visible.",
               "branches": [
                 {
                   "condition": {
@@ -7362,7 +7362,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked exit remains readable through cleanup.",
+              "exit_prompt": "The room settles after delta queen engine trouble without obstructing the marked exit.",
               "id": "terminal_failure",
               "interaction_ops": [],
               "label": "Failure",
@@ -7373,7 +7373,7 @@
                 {
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The limited power aftermath fixes a distinct delta queen engine trouble room state for revisit.",
+                  "message": "A guarded gauge and restricted lanes show that the boat remains on limited power.",
                   "op": "feedback",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_engine_trouble_terminal_failure_transition_feedback",
@@ -7384,7 +7384,7 @@
             {
               "actor_ops": [],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The chosen outcome settles into the furniture and floor plan for anyone who returns. A dead engine anchors the boat mid-river; the locked gangway, falling pressure gauge, and evacuation benches make every route visible.",
+              "arrival_feedback": "A dead engine anchors the boat mid-river; the locked gangway, falling pressure gauge, and evacuation benches make every route visible.",
               "branches": [
                 {
                   "condition": {
@@ -7395,7 +7395,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked exit remains readable through cleanup.",
+              "exit_prompt": "Cleanup after delta queen engine trouble leaves the marked exit easy to find.",
               "id": "terminal_refused",
               "interaction_ops": [],
               "label": "Refused",
@@ -7406,7 +7406,7 @@
                 {
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The evacuation staged aftermath fixes a distinct delta queen engine trouble room state for revisit.",
+                  "message": "Ordered benches and a guarded route record a staged evacuation.",
                   "op": "feedback",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_engine_trouble_terminal_refused_transition_feedback",
@@ -7417,7 +7417,7 @@
             {
               "actor_ops": [],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The chosen outcome settles into the furniture and floor plan for anyone who returns. A dead engine anchors the boat mid-river; the locked gangway, falling pressure gauge, and evacuation benches make every route visible.",
+              "arrival_feedback": "A dead engine anchors the boat mid-river; the locked gangway, falling pressure gauge, and evacuation benches make every route visible.",
               "branches": [
                 {
                   "condition": {
@@ -7428,7 +7428,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked exit remains readable through cleanup.",
+              "exit_prompt": "The marked way out stays clear as delta queen engine trouble is packed away.",
               "id": "terminal_interrupted",
               "interaction_ops": [],
               "label": "Interrupted",
@@ -7439,7 +7439,7 @@
                 {
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The engine abandoned aftermath fixes a distinct delta queen engine trouble room state for revisit.",
+                  "message": "The sealed engine lane shows that the failed machinery was abandoned.",
                   "op": "feedback",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_engine_trouble_terminal_interrupted_transition_feedback",
@@ -7455,7 +7455,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "ae3eb888a55dd227c55650fb516d97abbd493addeedff8cfe0c7f3b19971dc68"
+        "sequence_signature": "cd7b0fc4498c4ab5c522830c88ab4e6a92accd2e5662dcde802eb2321b1440a6"
       }
     },
     {
@@ -7533,7 +7533,7 @@
                   "behavior": "watch",
                   "label": "Disputed Final remaining actor",
                   "pose": "arrival",
-                  "description": "Disputed Final remaining actor remains as a public witness to how the room ended. Entry cards, three bracket tables, and a scorer rail replace the open deck while eliminated players close lanes behind them.",
+                  "description": "The held bracket and crowded rail show that the final remains disputed.",
                   "description_variants": {
 
                   },
@@ -7548,7 +7548,7 @@
               }
             ],
             "label": "Disputed Final",
-            "revisit_feedback": "The disputed final arrangement remains physically readable on revisit."
+            "revisit_feedback": "The held bracket and crowded rail show that the final remains disputed."
           },
           "observed_final": {
             "actor_ops": [
@@ -7559,7 +7559,7 @@
                   "behavior": "guard",
                   "label": "Observed Final remaining actor",
                   "pose": "arrival",
-                  "description": "Observed Final remaining actor remains as a public witness to how the room ended. Entry cards, three bracket tables, and a scorer rail replace the open deck while eliminated players close lanes behind them.",
+                  "description": "The scorer rail preserves a clear record of the observed final.",
                   "description_variants": {
 
                   },
@@ -7574,7 +7574,7 @@
               }
             ],
             "label": "Observed Final",
-            "revisit_feedback": "The observed final arrangement remains physically readable on revisit.",
+            "revisit_feedback": "The scorer rail preserves a clear record of the observed final.",
             "scene_ops": [
               {
                 "family": "scene_ops",
@@ -7591,7 +7591,7 @@
                   "state": "observed_final",
                   "visible": true,
                   "zone_id": "right",
-                  "description": "Observed Final room marker remains as a public witness to how the room ended. Entry cards, three bracket tables, and a scorer rail replace the open deck while eliminated players close lanes behind them.",
+                  "description": "The scorer rail preserves a clear record of the observed final.",
                   "description_variants": {
 
                   }
@@ -7613,7 +7613,7 @@
                   "behavior": "work",
                   "label": "Qualified Final remaining actor",
                   "pose": "arrival",
-                  "description": "Qualified Final remaining actor remains as a public witness to how the room ended. Entry cards, three bracket tables, and a scorer rail replace the open deck while eliminated players close lanes behind them.",
+                  "description": "The advanced entry card shows who qualified for the final.",
                   "description_variants": {
 
                   },
@@ -7628,7 +7628,7 @@
               }
             ],
             "label": "Qualified Final",
-            "revisit_feedback": "The qualified final arrangement remains physically readable on revisit.",
+            "revisit_feedback": "The advanced entry card shows who qualified for the final.",
             "scene_ops": [
               {
                 "family": "scene_ops",
@@ -7645,7 +7645,7 @@
                   "state": "qualified_final",
                   "visible": true,
                   "zone_id": "center",
-                  "description": "Qualified Final room marker remains as a public witness to how the room ended. Entry cards, three bracket tables, and a scorer rail replace the open deck while eliminated players close lanes behind them.",
+                  "description": "The advanced entry card shows who qualified for the final.",
                   "description_variants": {
 
                   }
@@ -7660,7 +7660,7 @@
           },
           "tournament_interrupted": {
             "label": "Tournament Interrupted",
-            "revisit_feedback": "The tournament interrupted arrangement remains physically readable on revisit.",
+            "revisit_feedback": "Idle tables and an unfinished bracket mark the interrupted tournament.",
             "scene_ops": [
               {
                 "family": "scene_ops",
@@ -7677,7 +7677,7 @@
                   "state": "tournament_interrupted",
                   "visible": true,
                   "zone_id": "background",
-                  "description": "Tournament Interrupted room marker remains as a public witness to how the room ended. Entry cards, three bracket tables, and a scorer rail replace the open deck while eliminated players close lanes behind them.",
+                  "description": "Idle tables and an unfinished bracket mark the interrupted tournament.",
                   "description_variants": {
 
                   }
@@ -7981,9 +7981,9 @@
                     "pose": "arrival",
                     "description": "Captain scorer visibly carries the room's current condition. Entry cards, three bracket tables, and a scorer rail replace the open deck while eliminated players close lanes behind them.",
                     "description_variants": {
-                      "card_state": "Captain scorer now bears the visible signs of card state. The change remains visible to anyone who returns.",
-                      "delta_captain_scorer_phase": "Captain scorer now bears the visible signs of delta captain scorer phase. The change remains visible to anyone who returns.",
-                      "watch": "Captain scorer is openly watching the active route, warning that careless movement will draw attention. The change remains visible to anyone who returns."
+                      "card_state": "The latest turn is now visible at Captain scorer.",
+                      "delta_captain_scorer_phase": "At Captain scorer, a visible shift marks the next stage.",
+                      "watch": "The watch at Captain scorer makes a careless crossing conspicuous."
                     },
                     "zone_id": "background"
                   },
@@ -8004,9 +8004,9 @@
                     "zone_id": "left",
                     "description": "Eliminated players visibly carries the room's current condition. Entry cards, three bracket tables, and a scorer rail replace the open deck while eliminated players close lanes behind them.",
                     "description_variants": {
-                      "center": "Eliminated players has shifted to a new part of the room, changing the route in plain view. The change remains visible to anyone who returns.",
-                      "delta_secondary_top": "Eliminated players has shifted to a new part of the room, changing the route in plain view. The change remains visible to anyone who returns.",
-                      "left": "Eliminated players has shifted to a new part of the room, changing the route in plain view. The change remains visible to anyone who returns."
+                      "center": "The move at Eliminated players visibly redirects traffic through the room.",
+                      "delta_secondary_top": "The route now turns around a visible move at Eliminated players.",
+                      "left": "Moving Eliminated players opened a different path through the scene."
                     }
                   },
                   "family": "actor_ops",
@@ -8066,7 +8066,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked clean exit remains available.",
+              "exit_prompt": "The room shifts for delta queen captains invitational, but its marked way out stays open.",
               "id": "arrival",
               "interaction_ops": [
                 {
@@ -8188,9 +8188,9 @@
                     "zone_id": "foreground",
                     "description": "The checking condition is still plain on invitational entry cards, a physical record of the room's current stage. Entry cards, three bracket tables, and a scorer rail replace the open deck while eliminated players close lanes behind them.",
                     "description_variants": {
-                      "delta_captains_entry": "Invitational entry cards now bears the visible signs of delta captains entry. The change remains visible to anyone who returns.",
-                      "delta_phase_left": "Invitational entry cards has shifted to a new part of the room, changing the route in plain view. The change remains visible to anyone who returns.",
-                      "hide": "Invitational entry cards has been moved out of sight; its absence is now part of the room's readable state. The change remains visible to anyone who returns."
+                      "delta_captains_entry": "The room's latest change can be read at Invitational entry cards.",
+                      "delta_phase_left": "Invitational entry cards: a visible move has changed the route through the room.",
+                      "hide": "Invitational entry cards has been moved out of sight; its absence is now part of the room's readable state."
                     }
                   },
                   "op": "spawn",
@@ -8216,8 +8216,8 @@
                     "zone_id": "center",
                     "description": "The captain bracket tables carries the room's opening state, marked by opening. Entry cards, three bracket tables, and a scorer rail replace the open deck while eliminated players close lanes behind them.",
                     "description_variants": {
-                      "bracket_move_changed": "Captain bracket tables has shifted to a new part of the room, changing the route in plain view. The change remains visible to anyone who returns.",
-                      "delta_noninteractive_right": "Captain bracket tables has shifted to a new part of the room, changing the route in plain view. The change remains visible to anyone who returns."
+                      "bracket_move_changed": "After Captain bracket tables moved, the route began following a different line.",
+                      "delta_noninteractive_right": "A shifted position at Captain bracket tables changes the way across the room."
                     }
                   },
                   "op": "spawn",
@@ -8243,7 +8243,7 @@
                     "zone_id": "background",
                     "description": "Scorer rail visibly carries the room's active condition. Entry cards, three bracket tables, and a scorer rail replace the open deck while eliminated players close lanes behind them.",
                     "description_variants": {
-                      "spectator_behavior_resolved": "Scorer rail now shows that this part of the work is settled. The change remains visible to anyone who returns."
+                      "spectator_behavior_resolved": "A final change at Scorer rail shows that this step is over."
                     }
                   },
                   "op": "spawn",
@@ -8314,7 +8314,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_captains_invitational_arrival_transition_stage",
-                  "reduced_motion_message": "Delta Queen Captains Invitational reaches the same semantic state without motion.",
+                  "reduced_motion_message": "In reduced motion, delta queen captains invitational settles directly into the same visible result.",
                   "stable_object_id": "delta_queen_captains_invitational_arrival_transition",
                   "stage_id": "delta_queen_captains_invitational_arrival_stage"
                 }
@@ -8392,7 +8392,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked clean exit remains available.",
+              "exit_prompt": "The active station leaves the marked exit within reach during delta queen captains invitational.",
               "id": "work_1",
               "interaction_ops": [
                 {
@@ -8619,7 +8619,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked clean exit remains available.",
+              "exit_prompt": "The room shifts for delta queen captains invitational, but its marked way out stays open.",
               "id": "work_2",
               "interaction_ops": [
                 {
@@ -8772,7 +8772,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_captains_invitational_work_2_transition_stage",
-                  "reduced_motion_message": "Delta Queen Captains Invitational reaches the same semantic state without motion.",
+                  "reduced_motion_message": "In reduced motion, delta queen captains invitational settles directly into the same visible result.",
                   "stable_object_id": "delta_queen_captains_invitational_work_2_transition",
                   "stage_id": "delta_queen_captains_invitational_work_2_stage"
                 }
@@ -8872,7 +8872,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked clean exit remains available.",
+              "exit_prompt": "The marked exit stays clear while delta queen captains invitational continues.",
               "id": "work_3",
               "interaction_ops": [
                 {
@@ -9064,7 +9064,7 @@
                     "zone_id": "background",
                     "description": "Entry cards, three bracket tables, and a scorer rail replace the open deck while eliminated players close lanes behind them. Route 1 is clearly marked as one of the public paths through the room; choosing it will commit the next move.",
                     "description_variants": {
-                      "changed_by_qualify_for_captains_final": "The choice to qualify for captains final has left a visible mark on route 1. The change remains visible to anyone who returns."
+                      "changed_by_qualify_for_captains_final": "A plain mark on route 1 records the decision to qualify for captains final."
                     }
                   },
                   "op": "spawn",
@@ -9090,7 +9090,7 @@
                     "zone_id": "left",
                     "description": "Entry cards, three bracket tables, and a scorer rail replace the open deck while eliminated players close lanes behind them. Route 2 is clearly marked as one of the public paths through the room; choosing it will commit the next move.",
                     "description_variants": {
-                      "changed_by_observe_captains_final": "The choice to observe captains final has left a visible mark on route 2. The change remains visible to anyone who returns."
+                      "changed_by_observe_captains_final": "A plain mark on route 2 records the decision to observe captains final."
                     }
                   },
                   "op": "spawn",
@@ -9210,7 +9210,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked clean exit remains available.",
+              "exit_prompt": "The marked exit stays clear while delta queen captains invitational continues.",
               "id": "work_4",
               "interaction_ops": [
                 {
@@ -9380,7 +9380,7 @@
             {
               "actor_ops": [],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The chosen outcome settles into the furniture and floor plan for anyone who returns. Entry cards, three bracket tables, and a scorer rail replace the open deck while eliminated players close lanes behind them.",
+              "arrival_feedback": "Entry cards, three bracket tables, and a scorer rail replace the open deck while eliminated players close lanes behind them.",
               "branches": [
                 {
                   "condition": {
@@ -9391,7 +9391,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked exit remains readable through cleanup.",
+              "exit_prompt": "The marked way out stays clear as delta queen captains invitational is packed away.",
               "id": "terminal_success",
               "interaction_ops": [],
               "label": "Success",
@@ -9402,7 +9402,7 @@
                 {
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The qualified final aftermath fixes a distinct delta queen captains invitational room state for revisit.",
+                  "message": "The advanced entry card shows who qualified for the final.",
                   "op": "feedback",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_captains_invitational_terminal_success_transition_feedback",
@@ -9413,7 +9413,7 @@
             {
               "actor_ops": [],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The chosen outcome settles into the furniture and floor plan for anyone who returns. Entry cards, three bracket tables, and a scorer rail replace the open deck while eliminated players close lanes behind them.",
+              "arrival_feedback": "Entry cards, three bracket tables, and a scorer rail replace the open deck while eliminated players close lanes behind them.",
               "branches": [
                 {
                   "condition": {
@@ -9424,7 +9424,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked exit remains readable through cleanup.",
+              "exit_prompt": "Even after delta queen captains invitational, the exit route remains open.",
               "id": "terminal_failure",
               "interaction_ops": [],
               "label": "Failure",
@@ -9435,7 +9435,7 @@
                 {
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The observed final aftermath fixes a distinct delta queen captains invitational room state for revisit.",
+                  "message": "The scorer rail preserves a clear record of the observed final.",
                   "op": "feedback",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_captains_invitational_terminal_failure_transition_feedback",
@@ -9446,7 +9446,7 @@
             {
               "actor_ops": [],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The chosen outcome settles into the furniture and floor plan for anyone who returns. Entry cards, three bracket tables, and a scorer rail replace the open deck while eliminated players close lanes behind them.",
+              "arrival_feedback": "Entry cards, three bracket tables, and a scorer rail replace the open deck while eliminated players close lanes behind them.",
               "branches": [
                 {
                   "condition": {
@@ -9457,7 +9457,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked exit remains readable through cleanup.",
+              "exit_prompt": "Even after delta queen captains invitational, the exit route remains open.",
               "id": "terminal_refused",
               "interaction_ops": [],
               "label": "Refused",
@@ -9468,7 +9468,7 @@
                 {
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The disputed final aftermath fixes a distinct delta queen captains invitational room state for revisit.",
+                  "message": "The held bracket and crowded rail show that the final remains disputed.",
                   "op": "feedback",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_captains_invitational_terminal_refused_transition_feedback",
@@ -9479,7 +9479,7 @@
             {
               "actor_ops": [],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The chosen outcome settles into the furniture and floor plan for anyone who returns. Entry cards, three bracket tables, and a scorer rail replace the open deck while eliminated players close lanes behind them.",
+              "arrival_feedback": "Entry cards, three bracket tables, and a scorer rail replace the open deck while eliminated players close lanes behind them.",
               "branches": [
                 {
                   "condition": {
@@ -9490,7 +9490,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked exit remains readable through cleanup.",
+              "exit_prompt": "Even after delta queen captains invitational, the exit route remains open.",
               "id": "terminal_interrupted",
               "interaction_ops": [],
               "label": "Interrupted",
@@ -9501,7 +9501,7 @@
                 {
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The tournament interrupted aftermath fixes a distinct delta queen captains invitational room state for revisit.",
+                  "message": "Idle tables and an unfinished bracket mark the interrupted tournament.",
                   "op": "feedback",
                   "owner_namespace": "scenario",
                   "receipt_id": "delta_queen_captains_invitational_terminal_interrupted_transition_feedback",
@@ -9517,7 +9517,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "d4490c8dd3900920180097be997dd45ad3ea9630dbeda9614df6242042c96f2b"
+        "sequence_signature": "c7ffe28d42ca9b62f7cc5a5abb998f3163d8ca81511da8ff825888af1b66ac05"
       }
     },
     {
@@ -9594,7 +9594,7 @@
                   "behavior": "work",
                   "label": "Cover Identity Accepted remaining actor",
                   "pose": "arrival",
-                  "description": "Cover Identity Accepted remaining actor remains as a public witness to how the room ended. Coat check, charity credentials, and a stalled stage lift replace the normal floor route without touching the duel or invite gate.",
+                  "description": "The cleared credential route shows that the cover identity was accepted.",
                   "description_variants": {
 
                   },
@@ -9609,7 +9609,7 @@
               }
             ],
             "label": "Cover Identity Accepted",
-            "revisit_feedback": "The cover identity accepted arrangement remains physically readable on revisit.",
+            "revisit_feedback": "The cleared credential route shows that the cover identity was accepted.",
             "scene_ops": [
               {
                 "family": "scene_ops",
@@ -9626,7 +9626,7 @@
                   "state": "cover_identity_accepted",
                   "visible": true,
                   "zone_id": "left",
-                  "description": "Cover Identity Accepted room marker remains as a public witness to how the room ended. Coat check, charity credentials, and a stalled stage lift replace the normal floor route without touching the duel or invite gate.",
+                  "description": "The cleared credential route shows that the cover identity was accepted.",
                   "description_variants": {
 
                   }
@@ -9648,7 +9648,7 @@
                   "behavior": "watch",
                   "label": "Credential Failed remaining actor",
                   "pose": "arrival",
-                  "description": "Credential Failed remaining actor remains as a public witness to how the room ended. Coat check, charity credentials, and a stalled stage lift replace the normal floor route without touching the duel or invite gate.",
+                  "description": "A stopped coat-check lane records the failed credential.",
                   "description_variants": {
 
                   },
@@ -9663,11 +9663,11 @@
               }
             ],
             "label": "Credential Failed",
-            "revisit_feedback": "The credential failed arrangement remains physically readable on revisit."
+            "revisit_feedback": "A stopped coat-check lane records the failed credential."
           },
           "gala_interrupted": {
             "label": "Gala Interrupted",
-            "revisit_feedback": "The gala interrupted arrangement remains physically readable on revisit.",
+            "revisit_feedback": "The stalled lift and abandoned route mark the interrupted gala.",
             "scene_ops": [
               {
                 "family": "scene_ops",
@@ -9684,7 +9684,7 @@
                   "state": "gala_interrupted",
                   "visible": true,
                   "zone_id": "foreground",
-                  "description": "Gala Interrupted room marker remains as a public witness to how the room ended. Coat check, charity credentials, and a stalled stage lift replace the normal floor route without touching the duel or invite gate.",
+                  "description": "The stalled lift and abandoned route mark the interrupted gala.",
                   "description_variants": {
 
                   }
@@ -9706,7 +9706,7 @@
                   "behavior": "guard",
                   "label": "Public Floor Reopened remaining actor",
                   "pose": "arrival",
-                  "description": "Public Floor Reopened remaining actor remains as a public witness to how the room ended. Coat check, charity credentials, and a stalled stage lift replace the normal floor route without touching the duel or invite gate.",
+                  "description": "Open lanes around the stage show that the public floor reopened.",
                   "description_variants": {
 
                   },
@@ -9721,7 +9721,7 @@
               }
             ],
             "label": "Public Floor Reopened",
-            "revisit_feedback": "The public floor reopened arrangement remains physically readable on revisit.",
+            "revisit_feedback": "Open lanes around the stage show that the public floor reopened.",
             "scene_ops": [
               {
                 "family": "scene_ops",
@@ -9738,7 +9738,7 @@
                   "state": "public_floor_reopened",
                   "visible": true,
                   "zone_id": "background",
-                  "description": "Public Floor Reopened room marker remains as a public witness to how the room ended. Coat check, charity credentials, and a stalled stage lift replace the normal floor route without touching the duel or invite gate.",
+                  "description": "Open lanes around the stage show that the public floor reopened.",
                   "description_variants": {
 
                   }
@@ -10029,9 +10029,9 @@
                     "pose": "arrival",
                     "description": "The current condition is still plain on gala host, a physical record of the room's current stage. Coat check, charity credentials, and a stalled stage lift replace the normal floor route without touching the duel or invite gate.",
                     "description_variants": {
-                      "token_move": "Gala host has shifted to a new part of the room, changing the route in plain view. The change remains visible to anyone who returns.",
-                      "grand_work_actor_right": "Gala host has shifted to a new part of the room, changing the route in plain view. The change remains visible to anyone who returns.",
-                      "watch": "Gala host is openly watching the active route, warning that careless movement will draw attention. The change remains visible to anyone who returns."
+                      "token_move": "A change at Gala host is now written into the room's walking path.",
+                      "grand_work_actor_right": "After Gala host moved, the route began following a different line.",
+                      "watch": "Gala host: a watchful stance makes careless movement along the route risky."
                     },
                     "zone_id": "background"
                   },
@@ -10051,7 +10051,7 @@
                     "pose": "arrival",
                     "description": "The current condition is still plain on gala stage hand, a physical record of the room's current stage. Coat check, charity credentials, and a stalled stage lift replace the normal floor route without touching the duel or invite gate.",
                     "description_variants": {
-                      "grand_scenario_bottom_830": "Gala stage hand has shifted to a new part of the room, changing the route in plain view. The change remains visible to anyone who returns."
+                      "grand_scenario_bottom_830": "A change at Gala stage hand is now written into the room's walking path."
                     },
                     "zone_id": "left"
                   },
@@ -10112,7 +10112,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked clean exit remains available.",
+              "exit_prompt": "The marked exit stays clear while grand casino gala night continues.",
               "id": "arrival",
               "interaction_ops": [
                 {
@@ -10236,8 +10236,8 @@
                     "zone_id": "service_lane",
                     "description": "The busy condition is still plain on gala coat check, a physical record of the room's current stage. Coat check, charity credentials, and a stalled stage lift replace the normal floor route without touching the duel or invite gate.",
                     "description_variants": {
-                      "foreground": "Gala coat check has shifted to a new part of the room, changing the route in plain view. The change remains visible to anyone who returns.",
-                      "service_lane": "Gala coat check has shifted to a new part of the room, changing the route in plain view. The change remains visible to anyone who returns."
+                      "foreground": "A change at Gala coat check is now written into the room's walking path.",
+                      "service_lane": "Gala coat check: a visible move has changed the route through the room."
                     }
                   },
                   "op": "spawn",
@@ -10263,8 +10263,8 @@
                     "zone_id": "center",
                     "description": "The charity credential desk carries the room's checking state, marked by checking. Coat check, charity credentials, and a stalled stage lift replace the normal floor route without touching the duel or invite gate.",
                     "description_variants": {
-                      "badge_state_changed": "Charity credential desk now bears the visible signs of badge state changed. The change remains visible to anyone who returns.",
-                      "grand_work_object_middle": "Charity credential desk now bears the visible signs of middle. The change remains visible to anyone who returns."
+                      "badge_state_changed": "This stage leaves a different, plainly visible state at Charity credential desk.",
+                      "grand_work_object_middle": "The new state at Charity credential desk makes the room's progress plain."
                     }
                   },
                   "op": "spawn",
@@ -10290,8 +10290,8 @@
                     "zone_id": "service_lane",
                     "description": "The stalled condition is still plain on lift, a physical record of the room's current stage. Coat check, charity credentials, and a stalled stage lift replace the normal floor route without touching the duel or invite gate.",
                     "description_variants": {
-                      "grand_work_object_left": "Lift has shifted to a new part of the room, changing the route in plain view. The change remains visible to anyone who returns.",
-                      "lift_appearance_resolved": "Lift now shows that this part of the work is settled. The change remains visible to anyone who returns."
+                      "grand_work_object_left": "After Lift moved, the route began following a different line.",
+                      "lift_appearance_resolved": "A settled position at Lift records the completed work."
                     }
                   },
                   "op": "spawn",
@@ -10342,7 +10342,7 @@
                     "visible": true,
                     "description": "Claim Coat Token waits at a readable work point. Finishing it will visibly advance the room's arrangement. Coat check, charity credentials, and a stalled stage lift replace the normal floor route without touching the duel or invite gate.",
                     "description_variants": {
-                      "changed_by_fail_grand_casino_gala_night": "The choice to fail grand casino gala night has left a visible mark on claim coat token. The change remains visible to anyone who returns."
+                      "changed_by_fail_grand_casino_gala_night": "Unfinished grand casino gala night work leaves claim coat token visibly altered."
                     },
                     "zone_id": "right"
                   },
@@ -10362,7 +10362,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_gala_night_arrival_transition_stage",
-                  "reduced_motion_message": "Grand Casino Gala Night reaches the same semantic state without motion.",
+                  "reduced_motion_message": "In reduced motion, grand casino gala night settles directly into the same visible result.",
                   "stable_object_id": "grand_casino_gala_night_arrival_transition",
                   "stage_id": "grand_casino_gala_night_arrival_stage"
                 }
@@ -10440,7 +10440,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked clean exit remains available.",
+              "exit_prompt": "The marked exit stays clear while grand casino gala night continues.",
               "id": "work_1",
               "interaction_ops": [
                 {
@@ -10556,7 +10556,7 @@
                     "visible": true,
                     "description": "Coat check, charity credentials, and a stalled stage lift replace the normal floor route without touching the duel or invite gate. Verify Charity Badge is the next hands-on step, marked so its effect can be checked afterward.",
                     "description_variants": {
-                      "changed_by_fail_grand_casino_gala_night": "The choice to fail grand casino gala night has left a visible mark on verify charity badge. The change remains visible to anyone who returns."
+                      "changed_by_fail_grand_casino_gala_night": "Unfinished grand casino gala night work leaves verify charity badge visibly altered."
                     },
                     "zone_id": "foreground"
                   },
@@ -10682,7 +10682,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked clean exit remains available.",
+              "exit_prompt": "A clean route out remains visible throughout grand casino gala night.",
               "id": "work_2",
               "interaction_ops": [
                 {
@@ -10959,7 +10959,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_gala_night_work_2_transition_stage",
-                  "reduced_motion_message": "Grand Casino Gala Night reaches the same semantic state without motion.",
+                  "reduced_motion_message": "In reduced motion, grand casino gala night settles directly into the same visible result.",
                   "stable_object_id": "grand_casino_gala_night_work_2_transition",
                   "stage_id": "grand_casino_gala_night_work_2_stage"
                 }
@@ -11037,7 +11037,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked clean exit remains available.",
+              "exit_prompt": "A clean route out remains visible throughout grand casino gala night.",
               "id": "work_3",
               "interaction_ops": [
                 {
@@ -11209,7 +11209,7 @@
             {
               "actor_ops": [],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The chosen outcome settles into the furniture and floor plan for anyone who returns. Coat check, charity credentials, and a stalled stage lift replace the normal floor route without touching the duel or invite gate.",
+              "arrival_feedback": "Coat check, charity credentials, and a stalled stage lift replace the normal floor route without touching the duel or invite gate.",
               "branches": [
                 {
                   "condition": {
@@ -11220,7 +11220,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked exit remains readable through cleanup.",
+              "exit_prompt": "Cleanup after grand casino gala night leaves the marked exit easy to find.",
               "id": "terminal_success",
               "interaction_ops": [],
               "label": "Success",
@@ -11231,7 +11231,7 @@
                 {
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The cover identity accepted aftermath fixes a distinct grand casino gala night room state for revisit.",
+                  "message": "The cleared credential route shows that the cover identity was accepted.",
                   "op": "feedback",
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_gala_night_terminal_success_transition_feedback",
@@ -11242,7 +11242,7 @@
             {
               "actor_ops": [],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The chosen outcome settles into the furniture and floor plan for anyone who returns. Coat check, charity credentials, and a stalled stage lift replace the normal floor route without touching the duel or invite gate.",
+              "arrival_feedback": "Coat check, charity credentials, and a stalled stage lift replace the normal floor route without touching the duel or invite gate.",
               "branches": [
                 {
                   "condition": {
@@ -11253,7 +11253,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked exit remains readable through cleanup.",
+              "exit_prompt": "Cleanup after grand casino gala night leaves the marked exit easy to find.",
               "id": "terminal_failure",
               "interaction_ops": [],
               "label": "Failure",
@@ -11264,7 +11264,7 @@
                 {
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The public floor reopened aftermath fixes a distinct grand casino gala night room state for revisit.",
+                  "message": "Open lanes around the stage show that the public floor reopened.",
                   "op": "feedback",
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_gala_night_terminal_failure_transition_feedback",
@@ -11275,7 +11275,7 @@
             {
               "actor_ops": [],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The chosen outcome settles into the furniture and floor plan for anyone who returns. Coat check, charity credentials, and a stalled stage lift replace the normal floor route without touching the duel or invite gate.",
+              "arrival_feedback": "Coat check, charity credentials, and a stalled stage lift replace the normal floor route without touching the duel or invite gate.",
               "branches": [
                 {
                   "condition": {
@@ -11286,7 +11286,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked exit remains readable through cleanup.",
+              "exit_prompt": "The marked way out stays clear as grand casino gala night is packed away.",
               "id": "terminal_refused",
               "interaction_ops": [],
               "label": "Refused",
@@ -11297,7 +11297,7 @@
                 {
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The credential failed aftermath fixes a distinct grand casino gala night room state for revisit.",
+                  "message": "A stopped coat-check lane records the failed credential.",
                   "op": "feedback",
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_gala_night_terminal_refused_transition_feedback",
@@ -11308,7 +11308,7 @@
             {
               "actor_ops": [],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The chosen outcome settles into the furniture and floor plan for anyone who returns. Coat check, charity credentials, and a stalled stage lift replace the normal floor route without touching the duel or invite gate.",
+              "arrival_feedback": "Coat check, charity credentials, and a stalled stage lift replace the normal floor route without touching the duel or invite gate.",
               "branches": [
                 {
                   "condition": {
@@ -11319,7 +11319,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked exit remains readable through cleanup.",
+              "exit_prompt": "Cleanup after grand casino gala night leaves the marked exit easy to find.",
               "id": "terminal_interrupted",
               "interaction_ops": [],
               "label": "Interrupted",
@@ -11330,7 +11330,7 @@
                 {
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The gala interrupted aftermath fixes a distinct grand casino gala night room state for revisit.",
+                  "message": "The stalled lift and abandoned route mark the interrupted gala.",
                   "op": "feedback",
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_gala_night_terminal_interrupted_transition_feedback",
@@ -11346,7 +11346,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "566c5b3bd3c1dfcbd3b2edb9a156a3fb488f46f811fedbd626d77c97afc0c537"
+        "sequence_signature": "27d5a6415c6ceb2705f6e139527727f5b9ce891cb3d8d9803ee9ce49875f25e1"
       }
     },
     {
@@ -11423,7 +11423,7 @@
                   "behavior": "work",
                   "label": "Camouflage Route remaining actor",
                   "pose": "arrival",
-                  "description": "Camouflage Route remaining actor remains as a public witness to how the room ended. Badge-wearing delegations reserve two machine banks and collide at one table block, making camouflage and reduced comps publicly legible.",
+                  "description": "The crowd's open seam preserves the route used as camouflage.",
                   "description_variants": {
 
                   },
@@ -11438,7 +11438,7 @@
               }
             ],
             "label": "Camouflage Route",
-            "revisit_feedback": "The camouflage route arrangement remains physically readable on revisit.",
+            "revisit_feedback": "The crowd's open seam preserves the route used as camouflage.",
             "scene_ops": [
               {
                 "family": "scene_ops",
@@ -11455,7 +11455,7 @@
                   "state": "camouflage_route",
                   "visible": true,
                   "zone_id": "left",
-                  "description": "Camouflage Route room marker remains as a public witness to how the room ended. Badge-wearing delegations reserve two machine banks and collide at one table block, making camouflage and reduced comps publicly legible.",
+                  "description": "The crowd's open seam preserves the route used as camouflage.",
                   "description_variants": {
 
                   }
@@ -11470,7 +11470,7 @@
           },
           "convention_departed": {
             "label": "Convention Departed",
-            "revisit_feedback": "The convention departed arrangement remains physically readable on revisit.",
+            "revisit_feedback": "Empty machine banks show that the convention has departed.",
             "scene_ops": [
               {
                 "family": "scene_ops",
@@ -11487,7 +11487,7 @@
                   "state": "convention_departed",
                   "visible": true,
                   "zone_id": "right",
-                  "description": "Convention Departed room marker remains as a public witness to how the room ended. Badge-wearing delegations reserve two machine banks and collide at one table block, making camouflage and reduced comps publicly legible.",
+                  "description": "Empty machine banks show that the convention has departed.",
                   "description_variants": {
 
                   }
@@ -11509,7 +11509,7 @@
                   "behavior": "watch",
                   "label": "Floor Standoff remaining actor",
                   "pose": "arrival",
-                  "description": "Floor Standoff remaining actor remains as a public witness to how the room ended. Badge-wearing delegations reserve two machine banks and collide at one table block, making camouflage and reduced comps publicly legible.",
+                  "description": "Delegations still facing each other make the floor standoff plain.",
                   "description_variants": {
 
                   },
@@ -11524,7 +11524,7 @@
               }
             ],
             "label": "Floor Standoff",
-            "revisit_feedback": "The floor standoff arrangement remains physically readable on revisit."
+            "revisit_feedback": "Delegations still facing each other make the floor standoff plain."
           },
           "split_schedule": {
             "actor_ops": [
@@ -11535,7 +11535,7 @@
                   "behavior": "guard",
                   "label": "Split Schedule remaining actor",
                   "pose": "arrival",
-                  "description": "Split Schedule remaining actor remains as a public witness to how the room ended. Badge-wearing delegations reserve two machine banks and collide at one table block, making camouflage and reduced comps publicly legible.",
+                  "description": "Separated delegation lanes show how the schedule was split.",
                   "description_variants": {
 
                   },
@@ -11550,7 +11550,7 @@
               }
             ],
             "label": "Split Schedule",
-            "revisit_feedback": "The split schedule arrangement remains physically readable on revisit.",
+            "revisit_feedback": "Separated delegation lanes show how the schedule was split.",
             "scene_ops": [
               {
                 "family": "scene_ops",
@@ -11567,7 +11567,7 @@
                   "state": "split_schedule",
                   "visible": true,
                   "zone_id": "background",
-                  "description": "Split Schedule room marker remains as a public witness to how the room ended. Badge-wearing delegations reserve two machine banks and collide at one table block, making camouflage and reduced comps publicly legible.",
+                  "description": "Separated delegation lanes show how the schedule was split.",
                   "description_variants": {
 
                   }
@@ -11859,9 +11859,9 @@
                     "pose": "arrival",
                     "description": "Badge-wearing delegations reserve two machine banks and collide at one table block, making camouflage and reduced comps publicly legible. Up close, convention coordinator still shows its current condition, marking what has not changed yet.",
                     "description_variants": {
-                      "board_state": "Convention coordinator now bears the visible signs of board state. The change remains visible to anyone who returns.",
-                      "grand_work_actor_right": "Convention coordinator has shifted to a new part of the room, changing the route in plain view. The change remains visible to anyone who returns.",
-                      "watch": "Convention coordinator is openly watching the active route, warning that careless movement will draw attention. The change remains visible to anyone who returns."
+                      "board_state": "Convention coordinator: a changed position records the latest turn.",
+                      "grand_work_actor_right": "After Convention coordinator moved, the route began following a different line.",
+                      "watch": "Careless movement near Convention coordinator risks drawing attention."
                     },
                     "zone_id": "background"
                   },
@@ -11881,7 +11881,7 @@
                     "pose": "arrival",
                     "description": "Badge-wearing delegations reserve two machine banks and collide at one table block, making camouflage and reduced comps publicly legible. Up close, badge delegations still shows its current condition, marking what has not changed yet.",
                     "description_variants": {
-                      "grand_convention_badge_delegations": "Badge delegations now bears the visible signs of grand convention badge delegations. The change remains visible to anyone who returns."
+                      "grand_convention_badge_delegations": "The room's latest change can be read at Badge delegations."
                     },
                     "zone_id": "left"
                   },
@@ -11942,7 +11942,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked clean exit remains available.",
+              "exit_prompt": "The active station leaves the marked exit within reach during grand casino convention crowd.",
               "id": "arrival",
               "interaction_ops": [
                 {
@@ -12066,7 +12066,7 @@
                     "zone_id": "foreground",
                     "description": "Convention booking board is conflicted in conflicted. Badge-wearing delegations reserve two machine banks and collide at one table block, making camouflage and reduced comps publicly legible.",
                     "description_variants": {
-                      "grand_scenario_bottom_830": "Convention booking board has shifted to a new part of the room, changing the route in plain view. The change remains visible to anyone who returns."
+                      "grand_scenario_bottom_830": "A change at Convention booking board is now written into the room's walking path."
                     }
                   },
                   "op": "spawn",
@@ -12092,8 +12092,8 @@
                     "zone_id": "center",
                     "description": "The reserved machine banks carries the room's split state, marked by split. Badge-wearing delegations reserve two machine banks and collide at one table block, making camouflage and reduced comps publicly legible.",
                     "description_variants": {
-                      "badge_move_changed": "Reserved machine banks has shifted to a new part of the room, changing the route in plain view. The change remains visible to anyone who returns.",
-                      "grand_work_object_middle": "Reserved machine banks now bears the visible signs of middle. The change remains visible to anyone who returns."
+                      "badge_move_changed": "A shifted position at Reserved machine banks changes the way across the room.",
+                      "grand_work_object_middle": "Reserved machine banks: the scene's latest turn remains visible here."
                     }
                   },
                   "op": "spawn",
@@ -12119,8 +12119,8 @@
                     "zone_id": "background",
                     "description": "Block is crowded in crowded. Badge-wearing delegations reserve two machine banks and collide at one table block, making camouflage and reduced comps publicly legible.",
                     "description_variants": {
-                      "grand_work_object_left": "Block has shifted to a new part of the room, changing the route in plain view. The change remains visible to anyone who returns.",
-                      "delegation_behavior_resolved": "Block now shows that this part of the work is settled. The change remains visible to anyone who returns."
+                      "grand_work_object_left": "The move at Block visibly redirects traffic through the room.",
+                      "delegation_behavior_resolved": "The end of this step is visible at Block."
                     }
                   },
                   "op": "spawn",
@@ -12144,7 +12144,7 @@
                     "state": "marked_lane",
                     "visible": true,
                     "zone_id": "exit_lane",
-                    "description": "The route beside clear exit is deliberately clear, so inspecting the room never traps anyone inside.",
+                    "description": "The route beside clear exit stays open while you inspect grand casino convention crowd.",
                     "description_variants": {
 
                     }
@@ -12171,7 +12171,7 @@
                     "visible": true,
                     "description": "The marked station for read booking board is ready; using it will leave a visible result in the room. Badge-wearing delegations reserve two machine banks and collide at one table block, making camouflage and reduced comps publicly legible.",
                     "description_variants": {
-                      "changed_by_fail_grand_casino_convention_crowd": "The choice to fail grand casino convention crowd has left a visible mark on read booking board. The change remains visible to anyone who returns."
+                      "changed_by_fail_grand_casino_convention_crowd": "Unfinished grand casino convention crowd work leaves read booking board visibly altered."
                     },
                     "zone_id": "right"
                   },
@@ -12191,7 +12191,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_convention_crowd_arrival_transition_stage",
-                  "reduced_motion_message": "Grand Casino Convention Crowd reaches the same semantic state without motion.",
+                  "reduced_motion_message": "In reduced motion, grand casino convention crowd settles directly into the same visible result.",
                   "stable_object_id": "grand_casino_convention_crowd_arrival_transition",
                   "stage_id": "grand_casino_convention_crowd_arrival_stage"
                 }
@@ -12269,7 +12269,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked clean exit remains available.",
+              "exit_prompt": "The room shifts for grand casino convention crowd, but its marked way out stays open.",
               "id": "work_1",
               "interaction_ops": [
                 {
@@ -12386,7 +12386,7 @@
                     "visible": true,
                     "description": "The marked station for sort delegation badges is ready; using it will leave a visible result in the room. Badge-wearing delegations reserve two machine banks and collide at one table block, making camouflage and reduced comps publicly legible.",
                     "description_variants": {
-                      "changed_by_fail_grand_casino_convention_crowd": "The choice to fail grand casino convention crowd has left a visible mark on sort delegation badges. The change remains visible to anyone who returns."
+                      "changed_by_fail_grand_casino_convention_crowd": "Unfinished grand casino convention crowd work leaves sort delegation badges visibly altered."
                     },
                     "zone_id": "foreground"
                   },
@@ -12512,7 +12512,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked clean exit remains available.",
+              "exit_prompt": "The marked exit stays clear while grand casino convention crowd continues.",
               "id": "work_2",
               "interaction_ops": [
                 {
@@ -12789,7 +12789,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_convention_crowd_work_2_transition_stage",
-                  "reduced_motion_message": "Grand Casino Convention Crowd reaches the same semantic state without motion.",
+                  "reduced_motion_message": "In reduced motion, grand casino convention crowd settles directly into the same visible result.",
                   "stable_object_id": "grand_casino_convention_crowd_work_2_transition",
                   "stage_id": "grand_casino_convention_crowd_work_2_stage"
                 }
@@ -12867,7 +12867,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked clean exit remains available.",
+              "exit_prompt": "The marked exit stays clear while grand casino convention crowd continues.",
               "id": "work_3",
               "interaction_ops": [
                 {
@@ -13039,7 +13039,7 @@
             {
               "actor_ops": [],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The chosen outcome settles into the furniture and floor plan for anyone who returns. Badge-wearing delegations reserve two machine banks and collide at one table block, making camouflage and reduced comps publicly legible.",
+              "arrival_feedback": "Badge-wearing delegations reserve two machine banks and collide at one table block, making camouflage and reduced comps publicly legible.",
               "branches": [
                 {
                   "condition": {
@@ -13050,7 +13050,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked exit remains readable through cleanup.",
+              "exit_prompt": "Cleanup after grand casino convention crowd leaves the marked exit easy to find.",
               "id": "terminal_success",
               "interaction_ops": [],
               "label": "Success",
@@ -13061,7 +13061,7 @@
                 {
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The camouflage route aftermath fixes a distinct grand casino convention crowd room state for revisit.",
+                  "message": "The crowd's open seam preserves the route used as camouflage.",
                   "op": "feedback",
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_convention_crowd_terminal_success_transition_feedback",
@@ -13072,7 +13072,7 @@
             {
               "actor_ops": [],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The chosen outcome settles into the furniture and floor plan for anyone who returns. Badge-wearing delegations reserve two machine banks and collide at one table block, making camouflage and reduced comps publicly legible.",
+              "arrival_feedback": "Badge-wearing delegations reserve two machine banks and collide at one table block, making camouflage and reduced comps publicly legible.",
               "branches": [
                 {
                   "condition": {
@@ -13083,7 +13083,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked exit remains readable through cleanup.",
+              "exit_prompt": "The marked way out stays clear as grand casino convention crowd is packed away.",
               "id": "terminal_failure",
               "interaction_ops": [],
               "label": "Failure",
@@ -13094,7 +13094,7 @@
                 {
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The split schedule aftermath fixes a distinct grand casino convention crowd room state for revisit.",
+                  "message": "Separated delegation lanes show how the schedule was split.",
                   "op": "feedback",
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_convention_crowd_terminal_failure_transition_feedback",
@@ -13105,7 +13105,7 @@
             {
               "actor_ops": [],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The chosen outcome settles into the furniture and floor plan for anyone who returns. Badge-wearing delegations reserve two machine banks and collide at one table block, making camouflage and reduced comps publicly legible.",
+              "arrival_feedback": "Badge-wearing delegations reserve two machine banks and collide at one table block, making camouflage and reduced comps publicly legible.",
               "branches": [
                 {
                   "condition": {
@@ -13116,7 +13116,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked exit remains readable through cleanup.",
+              "exit_prompt": "The marked way out stays clear as grand casino convention crowd is packed away.",
               "id": "terminal_refused",
               "interaction_ops": [],
               "label": "Refused",
@@ -13127,7 +13127,7 @@
                 {
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The floor standoff aftermath fixes a distinct grand casino convention crowd room state for revisit.",
+                  "message": "Delegations still facing each other make the floor standoff plain.",
                   "op": "feedback",
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_convention_crowd_terminal_refused_transition_feedback",
@@ -13138,7 +13138,7 @@
             {
               "actor_ops": [],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The chosen outcome settles into the furniture and floor plan for anyone who returns. Badge-wearing delegations reserve two machine banks and collide at one table block, making camouflage and reduced comps publicly legible.",
+              "arrival_feedback": "Badge-wearing delegations reserve two machine banks and collide at one table block, making camouflage and reduced comps publicly legible.",
               "branches": [
                 {
                   "condition": {
@@ -13149,7 +13149,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked exit remains readable through cleanup.",
+              "exit_prompt": "Cleanup after grand casino convention crowd leaves the marked exit easy to find.",
               "id": "terminal_interrupted",
               "interaction_ops": [],
               "label": "Interrupted",
@@ -13160,7 +13160,7 @@
                 {
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The convention departed aftermath fixes a distinct grand casino convention crowd room state for revisit.",
+                  "message": "Empty machine banks show that the convention has departed.",
                   "op": "feedback",
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_convention_crowd_terminal_interrupted_transition_feedback",
@@ -13176,7 +13176,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "5fc4ea0794e18d10113c2e0feb77f248b2a4dce1d39b5f25437e658e707cd2b5"
+        "sequence_signature": "73b213c723d39149bb3041341cad1ef89a2679b9b53c2bbb5bec7eb37bd22fcb"
       }
     },
     {
@@ -13246,7 +13246,7 @@
         "aftermath": {
           "audit_interrupted": {
             "label": "Audit Interrupted",
-            "revisit_feedback": "The audit interrupted arrangement remains physically readable on revisit.",
+            "revisit_feedback": "Unfinished seals and paused staff routes mark the interrupted audit.",
             "scene_ops": [
               {
                 "family": "scene_ops",
@@ -13263,7 +13263,7 @@
                   "state": "audit_interrupted",
                   "visible": true,
                   "zone_id": "background",
-                  "description": "Audit Interrupted room marker remains as a public witness to how the room ended. Auditors move from cage seal to pit ledger while staff close each inspected zone; the public route anchors heist Plan A without revealing hidden audit state.",
+                  "description": "Unfinished seals and paused staff routes mark the interrupted audit.",
                   "description_variants": {
 
                   }
@@ -13285,7 +13285,7 @@
                   "behavior": "watch",
                   "label": "Closed Games remaining actor",
                   "pose": "arrival",
-                  "description": "Closed Games remaining actor remains as a public witness to how the room ended. Auditors move from cage seal to pit ledger while staff close each inspected zone; the public route anchors heist Plan A without revealing hidden audit state.",
+                  "description": "Sealed tables show which games the audit closed.",
                   "description_variants": {
 
                   },
@@ -13300,7 +13300,7 @@
               }
             ],
             "label": "Closed Games",
-            "revisit_feedback": "The closed games arrangement remains physically readable on revisit."
+            "revisit_feedback": "Sealed tables show which games the audit closed."
           },
           "compliant_floor": {
             "actor_ops": [
@@ -13311,7 +13311,7 @@
                   "behavior": "work",
                   "label": "Compliant Floor remaining actor",
                   "pose": "arrival",
-                  "description": "Compliant Floor remaining actor remains as a public witness to how the room ended. Auditors move from cage seal to pit ledger while staff close each inspected zone; the public route anchors heist Plan A without revealing hidden audit state.",
+                  "description": "Ordered ledgers and open public lanes show that the floor complied.",
                   "description_variants": {
 
                   },
@@ -13326,7 +13326,7 @@
               }
             ],
             "label": "Compliant Floor",
-            "revisit_feedback": "The compliant floor arrangement remains physically readable on revisit.",
+            "revisit_feedback": "Ordered ledgers and open public lanes show that the floor complied.",
             "scene_ops": [
               {
                 "family": "scene_ops",
@@ -13343,7 +13343,7 @@
                   "state": "compliant_floor",
                   "visible": true,
                   "zone_id": "foreground",
-                  "description": "Compliant Floor room marker remains as a public witness to how the room ended. Auditors move from cage seal to pit ledger while staff close each inspected zone; the public route anchors heist Plan A without revealing hidden audit state.",
+                  "description": "Ordered ledgers and open public lanes show that the floor complied.",
                   "description_variants": {
 
                   }
@@ -13365,7 +13365,7 @@
                   "behavior": "guard",
                   "label": "Redirected Audit remaining actor",
                   "pose": "arrival",
-                  "description": "Redirected Audit remaining actor remains as a public witness to how the room ended. Auditors move from cage seal to pit ledger while staff close each inspected zone; the public route anchors heist Plan A without revealing hidden audit state.",
+                  "description": "The auditors' changed route remains visible across the floor.",
                   "description_variants": {
 
                   },
@@ -13380,7 +13380,7 @@
               }
             ],
             "label": "Redirected Audit",
-            "revisit_feedback": "The redirected audit arrangement remains physically readable on revisit.",
+            "revisit_feedback": "The auditors' changed route remains visible across the floor.",
             "scene_ops": [
               {
                 "family": "scene_ops",
@@ -13397,7 +13397,7 @@
                   "state": "redirected_audit",
                   "visible": true,
                   "zone_id": "background",
-                  "description": "Redirected Audit room marker remains as a public witness to how the room ended. Auditors move from cage seal to pit ledger while staff close each inspected zone; the public route anchors heist Plan A without revealing hidden audit state.",
+                  "description": "The auditors' changed route remains visible across the floor.",
                   "description_variants": {
 
                   }
@@ -13698,9 +13698,9 @@
                     "pose": "arrival",
                     "description": "Lead auditor visibly carries the room's current condition. Auditors move from cage seal to pit ledger while staff close each inspected zone; the public route anchors heist Plan A without revealing hidden audit state.",
                     "description_variants": {
-                      "seal_state": "Lead auditor now bears the visible signs of seal state. The change remains visible to anyone who returns.",
-                      "grand_work_actor_right": "Lead auditor has shifted to a new part of the room, changing the route in plain view. The change remains visible to anyone who returns.",
-                      "watch": "Lead auditor is openly watching the active route, warning that careless movement will draw attention. The change remains visible to anyone who returns."
+                      "seal_state": "This stage leaves a different, plainly visible state at Lead auditor.",
+                      "grand_work_actor_right": "Lead auditor: a visible move has changed the route through the room.",
+                      "watch": "Lead auditor: a watchful stance makes careless movement along the route risky."
                     },
                     "zone_id": "background"
                   },
@@ -13720,7 +13720,7 @@
                     "pose": "arrival",
                     "description": "Auditors move from cage seal to pit ledger while staff close each inspected zone; the public route anchors heist Plan A without revealing hidden audit state. Up close, pit manager still shows its current condition, marking what has not changed yet.",
                     "description_variants": {
-                      "grand_scenario_top_50_actor": "Pit manager has shifted to a new part of the room, changing the route in plain view. The change remains visible to anyone who returns."
+                      "grand_scenario_top_50_actor": "The move at Pit manager visibly redirects traffic through the room."
                     },
                     "zone_id": "left"
                   },
@@ -13781,7 +13781,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked clean exit remains available.",
+              "exit_prompt": "A clean route out remains visible throughout grand casino audit night.",
               "id": "arrival",
               "interaction_ops": [
                 {
@@ -13905,8 +13905,8 @@
                     "zone_id": "foreground",
                     "description": "Audit cage seal visibly carries the room's intact condition. Auditors move from cage seal to pit ledger while staff close each inspected zone; the public route anchors heist Plan A without revealing hidden audit state.",
                     "description_variants": {
-                      "grand_scenario_top_650": "Audit cage seal has shifted to a new part of the room, changing the route in plain view. The change remains visible to anyone who returns.",
-                      "grand_audit_cage": "Audit cage seal now bears the visible signs of grand audit cage. The change remains visible to anyone who returns."
+                      "grand_scenario_top_650": "The new position at Audit cage seal leaves the old route altered.",
+                      "grand_audit_cage": "Audit cage seal: the scene's latest turn remains visible here."
                     }
                   },
                   "op": "spawn",
@@ -13932,7 +13932,7 @@
                     "zone_id": "center",
                     "description": "Auditors move from cage seal to pit ledger while staff close each inspected zone; the public route anchors heist Plan A without revealing hidden audit state. Up close, pit audit ledger still shows its requested condition, marking what has not changed yet.",
                     "description_variants": {
-                      "ledger_move_changed": "Pit audit ledger has shifted to a new part of the room, changing the route in plain view. The change remains visible to anyone who returns."
+                      "ledger_move_changed": "After Pit audit ledger moved, the route began following a different line."
                     }
                   },
                   "op": "spawn",
@@ -13958,8 +13958,8 @@
                     "zone_id": "background",
                     "description": "The moving condition is still plain on audit zone barrier, a physical record of the room's current stage. Auditors move from cage seal to pit ledger while staff close each inspected zone; the public route anchors heist Plan A without revealing hidden audit state.",
                     "description_variants": {
-                      "grand_work_object_left": "Audit zone barrier has shifted to a new part of the room, changing the route in plain view. The change remains visible to anyone who returns.",
-                      "barrier_appearance_resolved": "Audit zone barrier now shows that this part of the work is settled. The change remains visible to anyone who returns."
+                      "grand_work_object_left": "The move at Audit zone barrier visibly redirects traffic through the room.",
+                      "barrier_appearance_resolved": "The finished work can still be read at Audit zone barrier."
                     }
                   },
                   "op": "spawn",
@@ -14009,7 +14009,7 @@
                     "state": "marked_lane",
                     "visible": true,
                     "zone_id": "exit_lane",
-                    "description": "The route beside clear exit is deliberately clear, so inspecting the room never traps anyone inside.",
+                    "description": "The route beside clear exit stays open while you inspect grand casino audit night.",
                     "description_variants": {
 
                     }
@@ -14036,7 +14036,7 @@
                     "visible": true,
                     "description": "Auditors move from cage seal to pit ledger while staff close each inspected zone; the public route anchors heist Plan A without revealing hidden audit state. Acknowledge Audit Route is the next hands-on step, marked so its effect can be checked afterward.",
                     "description_variants": {
-                      "changed_by_fail_grand_casino_audit_night": "The choice to fail grand casino audit night has left a visible mark on acknowledge audit route. The change remains visible to anyone who returns."
+                      "changed_by_fail_grand_casino_audit_night": "Unfinished grand casino audit night work leaves acknowledge audit route visibly altered."
                     },
                     "zone_id": "foreground"
                   },
@@ -14056,7 +14056,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_audit_night_arrival_transition_stage",
-                  "reduced_motion_message": "Grand Casino Audit Night reaches the same semantic state without motion.",
+                  "reduced_motion_message": "In reduced motion, grand casino audit night settles directly into the same visible result.",
                   "stable_object_id": "grand_casino_audit_night_arrival_transition",
                   "stage_id": "grand_casino_audit_night_arrival_stage"
                 }
@@ -14165,7 +14165,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked clean exit remains available.",
+              "exit_prompt": "A clean route out remains visible throughout grand casino audit night.",
               "id": "work_1",
               "interaction_ops": [
                 {
@@ -14373,7 +14373,7 @@
                     "zone_id": "center",
                     "description": "Auditors move from cage seal to pit ledger while staff close each inspected zone; the public route anchors heist Plan A without revealing hidden audit state. Route 1 is clearly marked as one of the public paths through the room; choosing it will commit the next move.",
                     "description_variants": {
-                      "changed_by_comply_with_audit_route": "The choice to comply with audit route has left a visible mark on route 1. The change remains visible to anyone who returns."
+                      "changed_by_comply_with_audit_route": "route 1 visibly records the decision to comply with audit route."
                     }
                   },
                   "op": "spawn",
@@ -14519,7 +14519,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked clean exit remains available.",
+              "exit_prompt": "A clean route out remains visible throughout grand casino audit night.",
               "id": "work_2",
               "interaction_ops": [
                 {
@@ -14684,7 +14684,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_audit_night_work_2_transition_stage",
-                  "reduced_motion_message": "Grand Casino Audit Night reaches the same semantic state without motion.",
+                  "reduced_motion_message": "In reduced motion, grand casino audit night settles directly into the same visible result.",
                   "stable_object_id": "grand_casino_audit_night_work_2_transition",
                   "stage_id": "grand_casino_audit_night_work_2_stage"
                 }
@@ -14762,7 +14762,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked clean exit remains available.",
+              "exit_prompt": "The active station leaves the marked exit within reach during grand casino audit night.",
               "id": "work_3",
               "interaction_ops": [
                 {
@@ -14904,7 +14904,7 @@
             {
               "actor_ops": [],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The chosen outcome settles into the furniture and floor plan for anyone who returns. Auditors move from cage seal to pit ledger while staff close each inspected zone; the public route anchors heist Plan A without revealing hidden audit state.",
+              "arrival_feedback": "Auditors move from cage seal to pit ledger while staff close each inspected zone; the public route anchors heist Plan A without revealing hidden audit state.",
               "branches": [
                 {
                   "condition": {
@@ -14915,7 +14915,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked exit remains readable through cleanup.",
+              "exit_prompt": "The room settles after grand casino audit night without obstructing the marked exit.",
               "id": "terminal_success",
               "interaction_ops": [],
               "label": "Success",
@@ -14926,7 +14926,7 @@
                 {
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The compliant floor aftermath fixes a distinct grand casino audit night room state for revisit.",
+                  "message": "Ordered ledgers and open public lanes show that the floor complied.",
                   "op": "feedback",
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_audit_night_terminal_success_transition_feedback",
@@ -14937,7 +14937,7 @@
             {
               "actor_ops": [],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The chosen outcome settles into the furniture and floor plan for anyone who returns. Auditors move from cage seal to pit ledger while staff close each inspected zone; the public route anchors heist Plan A without revealing hidden audit state.",
+              "arrival_feedback": "Auditors move from cage seal to pit ledger while staff close each inspected zone; the public route anchors heist Plan A without revealing hidden audit state.",
               "branches": [
                 {
                   "condition": {
@@ -14948,7 +14948,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked exit remains readable through cleanup.",
+              "exit_prompt": "Even after grand casino audit night, the exit route remains open.",
               "id": "terminal_failure",
               "interaction_ops": [],
               "label": "Failure",
@@ -14959,7 +14959,7 @@
                 {
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The redirected audit aftermath fixes a distinct grand casino audit night room state for revisit.",
+                  "message": "The auditors' changed route remains visible across the floor.",
                   "op": "feedback",
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_audit_night_terminal_failure_transition_feedback",
@@ -14970,7 +14970,7 @@
             {
               "actor_ops": [],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The chosen outcome settles into the furniture and floor plan for anyone who returns. Auditors move from cage seal to pit ledger while staff close each inspected zone; the public route anchors heist Plan A without revealing hidden audit state.",
+              "arrival_feedback": "Auditors move from cage seal to pit ledger while staff close each inspected zone; the public route anchors heist Plan A without revealing hidden audit state.",
               "branches": [
                 {
                   "condition": {
@@ -14981,7 +14981,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked exit remains readable through cleanup.",
+              "exit_prompt": "Cleanup after grand casino audit night leaves the marked exit easy to find.",
               "id": "terminal_refused",
               "interaction_ops": [],
               "label": "Refused",
@@ -14992,7 +14992,7 @@
                 {
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The closed games aftermath fixes a distinct grand casino audit night room state for revisit.",
+                  "message": "Sealed tables show which games the audit closed.",
                   "op": "feedback",
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_audit_night_terminal_refused_transition_feedback",
@@ -15003,7 +15003,7 @@
             {
               "actor_ops": [],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The chosen outcome settles into the furniture and floor plan for anyone who returns. Auditors move from cage seal to pit ledger while staff close each inspected zone; the public route anchors heist Plan A without revealing hidden audit state.",
+              "arrival_feedback": "Auditors move from cage seal to pit ledger while staff close each inspected zone; the public route anchors heist Plan A without revealing hidden audit state.",
               "branches": [
                 {
                   "condition": {
@@ -15014,7 +15014,7 @@
                 }
               ],
               "entry_conditions": [],
-              "exit_prompt": "The marked exit remains readable through cleanup.",
+              "exit_prompt": "The marked way out stays clear as grand casino audit night is packed away.",
               "id": "terminal_interrupted",
               "interaction_ops": [],
               "label": "Interrupted",
@@ -15025,7 +15025,7 @@
                 {
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The audit interrupted aftermath fixes a distinct grand casino audit night room state for revisit.",
+                  "message": "Unfinished seals and paused staff routes mark the interrupted audit.",
                   "op": "feedback",
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_audit_night_terminal_interrupted_transition_feedback",
@@ -15041,7 +15041,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "921d82dbfd3180f91392aa5e2b0f7f04acc89f7cf8e266b70f77b02706e33a8c"
+        "sequence_signature": "ddfc8e60462d04a103e6200c1ad3403e9f420d298c12239447d3a1f2422d3a26"
       }
     }
   ]
