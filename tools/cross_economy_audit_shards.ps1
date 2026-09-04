@@ -338,6 +338,23 @@ function Add-RuntimeSource([string]$TargetPath, [string]$SourcePath) {
     $normalized = $TargetPath.Replace("\", "/")
     if (-not $runtimeSourceByTarget.ContainsKey($normalized)) { $runtimeSourceByTarget[$normalized] = $SourcePath }
 }
+function Add-ExtensionRuntime([string]$DescriptorTarget, [string]$DescriptorSource) {
+    $normalizedDescriptor = $DescriptorTarget.Replace("\", "/")
+    if (-not (Test-Path -LiteralPath $DescriptorSource -PathType Leaf)) {
+        throw "Native extension descriptor is missing: $normalizedDescriptor"
+    }
+    if (-not $trackedByPath.ContainsKey($normalizedDescriptor)) {
+        Add-RuntimeSource $normalizedDescriptor $DescriptorSource
+    }
+    foreach ($match in [regex]::Matches((Get-Content -LiteralPath $DescriptorSource -Raw), 'res://([^"\r\n]+\.(?:dll|so|dylib|wasm))')) {
+        $target = $match.Groups[1].Value.Replace("\", "/")
+        if (-not $trackedByPath.ContainsKey($target)) {
+            $source = Join-Path $projectRoot $target.Replace("/", "\")
+            if (-not (Test-Path -LiteralPath $source -PathType Leaf)) { throw "Native extension binary is missing: $target" }
+            Add-RuntimeSource $target $source
+        }
+    }
+}
 $assetRoot = Join-Path $projectRoot "assets"
 if (Test-Path -LiteralPath $assetRoot -PathType Container) {
     foreach ($manifest in Get-ChildItem -LiteralPath $assetRoot -Recurse -Filter "*.import" -File) {
@@ -358,15 +375,23 @@ foreach ($cacheFile in @("global_script_class_cache.cfg", "uid_cache.bin", "exte
     $cacheSource = Join-Path $projectRoot ".godot\$cacheFile"
     if (Test-Path -LiteralPath $cacheSource -PathType Leaf) { Add-RuntimeSource ".godot/$cacheFile" $cacheSource }
 }
-foreach ($extension in Get-ChildItem -LiteralPath $snapshotRoot -Recurse -Filter "*.gdextension" -File) {
-    foreach ($match in [regex]::Matches((Get-Content -LiteralPath $extension.FullName -Raw), 'res://([^"\r\n]+\.(?:dll|so|dylib))')) {
-        $target = $match.Groups[1].Value.Replace("\", "/")
-        if (-not $trackedByPath.ContainsKey($target)) {
-            $source = Join-Path $projectRoot $target.Replace("/", "\")
-            if (-not (Test-Path -LiteralPath $source -PathType Leaf)) { throw "Native extension binary is missing: $target" }
-            Add-RuntimeSource $target $source
+# Generated extension descriptors are intentionally ignored by Git, but the
+# frozen workers must load the same native backend as the source worktree.
+$extensionListSource = Join-Path $projectRoot ".godot\extension_list.cfg"
+if (Test-Path -LiteralPath $extensionListSource -PathType Leaf) {
+    foreach ($extensionLine in @(Get-Content -LiteralPath $extensionListSource)) {
+        $descriptorTarget = $extensionLine.Trim()
+        if (-not $descriptorTarget) { continue }
+        if (-not $descriptorTarget.StartsWith("res://", [StringComparison]::Ordinal)) {
+            throw "Unsupported native extension path in extension_list.cfg: $descriptorTarget"
         }
+        $descriptorTarget = $descriptorTarget.Substring("res://".Length).Replace("\", "/")
+        Add-ExtensionRuntime $descriptorTarget (Join-Path $projectRoot $descriptorTarget.Replace("/", "\"))
     }
+}
+foreach ($extension in Get-ChildItem -LiteralPath $snapshotRoot -Recurse -Filter "*.gdextension" -File) {
+    $descriptorTarget = $extension.FullName.Substring($snapshotRoot.Length).TrimStart("\", "/").Replace("\", "/")
+    Add-ExtensionRuntime $descriptorTarget $extension.FullName
 }
 
 $runtimeFreezeRoot = Join-Path $OutDir "frozen_runtime_artifacts"
