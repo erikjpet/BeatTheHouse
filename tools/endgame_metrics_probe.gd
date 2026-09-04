@@ -10,6 +10,7 @@ const RunStateScript := preload("res://scripts/core/run_state.gd")
 const RunActionServiceScript := preload("res://scripts/core/run_action_service.gd")
 const EventModuleScript := preload("res://scripts/core/event_module.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
+const SaveServiceScript := preload("res://scripts/core/save_service.gd")
 const MetaCollectionServiceScript := preload("res://scripts/core/meta_collection_service.gd")
 const CollectionDropServiceScript := preload("res://scripts/core/collection_drop_service.gd")
 const CollectionItemResolverScript := preload("res://scripts/core/collection_item_resolver.gd")
@@ -96,10 +97,17 @@ var generator: RunGenerator
 var game_modules: Dictionary = {}
 var failures: Array = []
 var warnings: Array = []
+var integration_capture_trace := false
+var integration_save_load_stride := 0
+var integration_save_slot_prefix := "integ06_1_terminal_soak"
+var integration_ignore_crew := false
 
 
 func _init() -> void:
-	call_deferred("_run")
+	# The integration terminal-soak scene embeds this production policy driver so
+	# the identical code can execute inside native and Web release exports.
+	if OS.get_environment("BTH_INTEG06_1_EMBED_ENDGAME") != "1":
+		call_deferred("_run")
 
 
 func _run() -> void:
@@ -255,6 +263,7 @@ func _simulate_run(run_index: int, scenario: Dictionary, seed: String, max_actio
 		"travel_count": 0,
 		"tier2_visits": 0,
 		"lender_uses": 0,
+		"lender_ids": [],
 		"service_uses": 0,
 		"item_purchases": 0,
 		"events_resolved": 0,
@@ -295,11 +304,27 @@ func _simulate_run(run_index: int, scenario: Dictionary, seed: String, max_actio
 		"game_mix": {},
 		"failure_reason": "",
 		"victory_route": "",
+		"save_load_points": [],
+		"save_load_failures": [],
+		"semantic_trace": [],
 	}
 	_record_curve(run, run_state, "start")
 	_record_visit(run, run_state)
 
 	for action_index in range(max_actions):
+		if integration_capture_trace:
+			_record_integration_trace(run, run_state, "before_action_%03d" % action_index)
+		if integration_save_load_stride > 0 and action_index > 0 and action_index % integration_save_load_stride == 0:
+			var round_trip := _integration_save_load_round_trip(run_state, seed, action_index)
+			var save_load_points := _array(run.get("save_load_points", []))
+			save_load_points.append(_dict(round_trip.get("point", {})))
+			run["save_load_points"] = save_load_points
+			if bool(round_trip.get("ok", false)) and round_trip.get("run_state") is RunState:
+				run_state = round_trip.get("run_state") as RunState
+			else:
+				var save_load_failures := _array(run.get("save_load_failures", []))
+				save_load_failures.append(str(round_trip.get("message", "Save/load round trip failed.")))
+				run["save_load_failures"] = save_load_failures
 		if run_state.is_terminal():
 			run["stopped_reason"] = "terminal"
 			break
@@ -358,7 +383,85 @@ func _simulate_run(run_index: int, scenario: Dictionary, seed: String, max_actio
 
 	_finalize_collection_engagement(run, run_state, collection_context)
 	_finalize_run(run, run_state)
+	if integration_capture_trace:
+		_record_integration_trace(run, run_state, "terminal" if run_state.is_terminal() else "action_cap")
+		run["integration_final_state"] = _integration_state_snapshot(run_state)
 	return run
+
+
+func _integration_save_load_round_trip(run_state: RunState, seed: String, action_index: int) -> Dictionary:
+	var service: SaveService = SaveServiceScript.new()
+	var slot := "%s_%s_%03d" % [integration_save_slot_prefix, seed.sha256_text().substr(0, 12), action_index]
+	service.clear_run(slot)
+	var before := _integration_state_snapshot(run_state)
+	var save_error := service.save_run(run_state, slot)
+	var loaded: Variant = service.load_run(slot) if save_error == OK else null
+	service.clear_run(slot)
+	var after := _integration_state_snapshot(loaded as RunState) if loaded is RunState else {}
+	var exact := save_error == OK and loaded is RunState and JSON.stringify(before) == JSON.stringify(after)
+	return {
+		"ok": exact,
+		"run_state": loaded if loaded is RunState else null,
+		"message": "" if exact else "SaveService did not preserve the deterministic terminal-soak state.",
+		"point": {
+			"action_index": action_index,
+			"save_error": int(save_error),
+			"loaded": loaded is RunState,
+			"exact": exact,
+			"before_sha256": JSON.stringify(before).sha256_text(),
+			"after_sha256": JSON.stringify(after).sha256_text(),
+		},
+	}
+
+
+func _record_integration_trace(run: Dictionary, run_state: RunState, label: String) -> void:
+	var trace := _array(run.get("semantic_trace", []))
+	trace.append({
+		"label": label,
+		"action_count": int(run.get("actions", 0)),
+		"game_actions": int(run.get("game_actions", 0)),
+		"travel_count": int(run.get("travel_count", 0)),
+		"events_resolved": int(run.get("events_resolved", 0)),
+		"service_uses": int(run.get("service_uses", 0)),
+		"lender_uses": int(run.get("lender_uses", 0)),
+		"state": _integration_state_snapshot(run_state),
+	})
+	run["semantic_trace"] = trace
+
+
+func _integration_state_snapshot(run_state: RunState) -> Dictionary:
+	var debt_rows: Array = []
+	for debt_value in run_state.debt:
+		if typeof(debt_value) != TYPE_DICTIONARY:
+			continue
+		var debt_entry: Dictionary = debt_value
+		debt_rows.append({
+			"id": str(debt_entry.get("id", "")),
+			"lender_id": str(debt_entry.get("lender_id", "")),
+			"kind": str(debt_entry.get("debt_kind", "")),
+			"status": str(debt_entry.get("status", "")),
+			"balance": int(debt_entry.get("balance", 0)),
+			"turns_remaining": int(debt_entry.get("turns_remaining", 0)),
+		})
+	debt_rows.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return str(a.get("id", "")) < str(b.get("id", "")))
+	return {
+		"seed": run_state.player_facing_seed_text(),
+		"run_status": run_state.run_status,
+		"failure_reason": run_state.run_failure_reason,
+		"victory_route": str(run_state.narrative_flags.get("demo_victory_route", "")),
+		"bankroll": run_state.bankroll,
+		"heat": run_state.suspicion_level(),
+		"action_index": int(run_state.event_cadence.get("action_index", 0)),
+		"node_id": run_state.current_world_node_id(),
+		"archetype_id": str(run_state.current_environment.get("archetype_id", "")),
+		"scenario_id": str(run_state.current_environment.get("scenario_id", "")),
+		"layer_id": str(run_state.current_environment.get("current_layer_id", "")),
+		"debt": debt_rows,
+		"game_tallies": _dict(run_state.narrative_flags.get("profile_games_played", {})),
+		"delivery_status": str(run_state.delivery_snapshot().get("status", "")),
+		"crew_jobs": run_state.crew_jobs.size(),
+		"world_sequence_registrations": run_state.world_sequence_registrations.size(),
+	}
 
 
 func _collection_context_for_run(seed: String, challenge_id: String) -> Dictionary:
@@ -767,6 +870,8 @@ func _try_use_lender(run_state: RunState, run: Dictionary, policy: String) -> bo
 		if not bool(option.get("enabled", false)) or not bool(option.get("mutation_supported", false)):
 			continue
 		var lender_id := str(option.get("id", ""))
+		if integration_ignore_crew and lender_id == "the_crew":
+			continue
 		if _run_has_lender_debt(run_state, lender_id):
 			continue
 		var score := _lender_score(lender_id, policy, run_state.bankroll)
@@ -775,10 +880,15 @@ func _try_use_lender(run_state: RunState, run: Dictionary, policy: String) -> bo
 			best_option = option
 	if best_option.is_empty() or best_score < 0:
 		return false
-	var used: Dictionary = service.use_hook("lender", str(best_option.get("id", "")))
+	var selected_lender_id := str(best_option.get("id", ""))
+	var used: Dictionary = service.use_hook("lender", selected_lender_id)
 	if not bool(used.get("ok", false)):
 		return false
 	run["lender_uses"] = int(run.get("lender_uses", 0)) + 1
+	var lender_ids := _string_array(run.get("lender_ids", []))
+	if not lender_ids.has(selected_lender_id):
+		lender_ids.append(selected_lender_id)
+	run["lender_ids"] = lender_ids
 	return true
 
 
