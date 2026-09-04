@@ -376,15 +376,29 @@ $assetRoot = Join-Path $RuntimeSourceRoot "assets"
 if (Test-Path -LiteralPath $assetRoot -PathType Container) {
     foreach ($manifest in Get-ChildItem -LiteralPath $assetRoot -Recurse -Filter "*.import" -File) {
         $relativeManifest = $manifest.FullName.Substring($RuntimeSourceRoot.Length).TrimStart("\", "/").Replace("\", "/")
-        if (-not $trackedByPath.ContainsKey($relativeManifest)) { Add-RuntimeSource $relativeManifest $manifest.FullName }
         $manifestText = Get-Content -LiteralPath $manifest.FullName -Raw
+        $generatedArtifacts = [Collections.Generic.List[object]]::new()
+        $completeImport = $true
         foreach ($match in [regex]::Matches($manifestText, 'res://\.godot/imported/([^"\r\n]+)')) {
             $artifactName = $match.Groups[1].Value
             $artifactSource = Join-Path $RuntimeSourceRoot ".godot\imported\$artifactName"
-            if (-not (Test-Path -LiteralPath $artifactSource -PathType Leaf)) { throw "Required imported runtime artifact is missing: $artifactSource" }
-            Add-RuntimeSource ".godot/imported/$artifactName" $artifactSource
+            if (-not (Test-Path -LiteralPath $artifactSource -PathType Leaf)) {
+                # A mutable development cache can contain a stale .import
+                # manifest after its generated artifact was cleaned. Do not
+                # freeze half of that pair; the isolated worker will rebuild it
+                # from the exact tracked source instead.
+                $completeImport = $false
+                break
+            }
+            $generatedArtifacts.Add([ordered]@{ target = ".godot/imported/$artifactName"; source = $artifactSource })
             $md5Source = [IO.Path]::ChangeExtension($artifactSource, ".md5")
-            if (Test-Path -LiteralPath $md5Source -PathType Leaf) { Add-RuntimeSource ".godot/imported/$([IO.Path]::GetFileName($md5Source))" $md5Source }
+            if (Test-Path -LiteralPath $md5Source -PathType Leaf) {
+                $generatedArtifacts.Add([ordered]@{ target = ".godot/imported/$([IO.Path]::GetFileName($md5Source))"; source = $md5Source })
+            }
+        }
+        if ($completeImport) {
+            if (-not $trackedByPath.ContainsKey($relativeManifest)) { Add-RuntimeSource $relativeManifest $manifest.FullName }
+            foreach ($artifact in $generatedArtifacts) { Add-RuntimeSource $artifact.target $artifact.source }
         }
     }
 }

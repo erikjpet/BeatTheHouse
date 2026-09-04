@@ -120,6 +120,13 @@ be qualified or repaired before the 512-run/600,000-drop evidence is claimed.
 Native/Web, save/resume, migration, and maximal-composition checks also remain
 exact-final-tree work.
 
+One attempted preparation smoke pointed `RuntimeSourceRoot` at the mutable
+external env06_8 worktree and encountered an incomplete generated import cache
+before any shard launched. It is explicitly invalidated and is not evidence.
+No file in that external worktree was changed. Accepted runs must build or stage
+the native runtime inside the exact frozen worktree, then use that same frozen
+worktree as `RuntimeSourceRoot`.
+
 ### Deferred exact heavy-run commands
 
 Run only after the root declares the integrated source freeze and the branch is
@@ -133,10 +140,10 @@ $frozenHead = (git rev-parse HEAD).Trim()
 $runRoot = Join-Path (Get-Location) ".tmp\balance06_1_follow_on\full_$($frozenHead.Substring(0, 12))"
 if (Test-Path -LiteralPath $runRoot) { throw "Custody path already exists: $runRoot" }
 $crossOut = Join-Path $runRoot 'cross_8x64x208'
-powershell -NoProfile -ExecutionPolicy Bypass -File tools/cross_economy_audit_shards.ps1 -SeedsPerPlaystyle 64 -MaxActions 208 -WorkerCount 4 -SeedPrefix "BALANCE06-1-FINAL-$($frozenHead.Substring(0, 12))" -RuntimeSourceRoot 'D:\Projects\Beat-The-House' -OutDir $crossOut
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/cross_economy_audit_shards.ps1 -SeedsPerPlaystyle 64 -MaxActions 208 -WorkerCount 4 -SeedPrefix "BALANCE06-1-FINAL-$($frozenHead.Substring(0, 12))" -RuntimeSourceRoot (Get-Location).Path -OutDir $crossOut
 if ($LASTEXITCODE -ne 0) { throw "Cross-economy distribution failed; evidence retained at $crossOut" }
 $pusherOut = Join-Path $runRoot 'pusher_3x200000'
-powershell -NoProfile -ExecutionPolicy Bypass -File tools/coin_pusher_ev_custody.ps1 -ShardsPerMachine 8 -RuntimeSourceRoot 'D:\Projects\Beat-The-House' -OutDir $pusherOut
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/coin_pusher_ev_custody.ps1 -ShardsPerMachine 8 -RuntimeSourceRoot (Get-Location).Path -OutDir $pusherOut
 if ($LASTEXITCODE -ne 0) { throw "Pusher EV custody failed; evidence retained at $pusherOut" }
 ```
 
