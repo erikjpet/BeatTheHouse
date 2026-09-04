@@ -1206,10 +1206,17 @@ static func _run_handler(state: Dictionary, definition: Dictionary, handler_id: 
 		"play_cue":
 			var cue_semantic := _dict(next.get("semantic_state", {}))
 			var cue_queue := _array(cue_semantic.get("transition_queue", []))
-			cue_queue.append({"op": "sound", "cue_id": str(inputs.get("cue_id", "")), "message": str(inputs.get("message", "")), "receipt_id": _trigger_receipt(trigger)})
+			var cue_receipt := _trigger_receipt(trigger)
+			var cue_message := str(inputs.get("message", ""))
+			cue_queue.append({"op": "sound", "cue_id": str(inputs.get("cue_id", "")), "receipt_id": "%s:sound" % cue_receipt})
+			cue_queue.append({
+				"op": "stage", "stage_id": "action_consequence", "duration_boundaries": 1.0,
+				"message": cue_message, "reduced_motion_message": cue_message,
+				"receipt_id": "%s:stage" % cue_receipt,
+			})
 			cue_semantic["transition_queue"] = cue_queue
 			next["semantic_state"] = cue_semantic
-			next["last_feedback"] = str(inputs.get("message", ""))
+			next["last_feedback"] = cue_message
 		_:
 			return {"ok": false, "state": state, "errors": ["scenario handler is unregistered: %s." % handler_id]}
 	return {"ok": true, "state": next, "errors": [], "replayed": handler_replayed}

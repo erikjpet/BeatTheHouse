@@ -1014,6 +1014,8 @@ static func _allowed_operation_keys(family: String, op_id: String) -> Array:
 			specific = {"add": ["object"], "replace": ["object"], "gate": ["enabled", "disabled_reason"], "set_modifier": ["modifier"]}.get(op_id, [])
 		"route_ops":
 			specific = {"close": ["disabled_reason"], "gate": ["enabled", "disabled_reason"], "retarget": ["source_id"]}.get(op_id, [])
+	if family in ["scene_ops", "actor_ops"] and not specific.has("zone_id"):
+		specific.append("zone_id")
 	return COMMON_OPERATION_KEYS + specific
 
 

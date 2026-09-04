@@ -11,6 +11,7 @@ const BaccaratScript := preload("res://scripts/games/baccarat.gd")
 const RouletteScript := preload("res://scripts/games/roulette.gd")
 const CoinPusherScript := preload("res://scripts/games/coin_pusher.gd")
 const JackpotRidgeScript := preload("res://scripts/games/coin_pusher/jackpot_ridge.gd")
+const EnvironmentReadabilityContractScript := preload("res://scripts/tests/foundation/env06_8_environment_readability_contract.gd")
 
 const SOUVENIR_EVENTS := {
 	"scenario_delivery_day_stock": "delivery_twine",
@@ -31,6 +32,7 @@ const BENCH_OUTPUTS := ["mags_loaded_dice", "mags_tuned_loupe", "mags_lined_slee
 
 
 static func check(library: ContentLibrary, failures: Array) -> void:
+	EnvironmentReadabilityContractScript.check(library, failures)
 	_check_souvenirs(library, failures)
 	_check_scenario_budgets(library, failures)
 	_check_services(library, failures)
