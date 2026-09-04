@@ -81,7 +81,7 @@ function Test-PhaseRow($Row) {
     }
     if (-not [bool]$Row.passed) { $failures.Add("$label did not pass: $($Row.surface_id)/$($Row.phase_id)/$($Row.profile)") }
     $launch = $Row.launch_identity
-    foreach ($field in @("candidate_commit", "profile_manifest_sha256", "host_id", "resolution", "renderer", "power_plan", "actual_cpu_throttle_rate", "actual_device_scale_factor")) {
+    foreach ($field in @("candidate_commit", "profile_manifest_sha256", "host_id", "resolution", "renderer", "power_plan", "actual_cpu_throttle_rate", "actual_device_scale_factor", "budget_table_version", "budget_table_sha256")) {
         [void](Require-Property $launch $field "$label launch_identity")
     }
     if ([string]$launch.candidate_commit -cne $CandidateCommit) { $failures.Add("$label launch identity is from a different candidate.") }

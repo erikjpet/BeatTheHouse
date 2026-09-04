@@ -32,12 +32,14 @@ if (@(& git -C $root status --short --untracked-files=no).Count -ne 0) { throw "
 $profileFile = Resolve-RepoPath $ProfilePath
 $summaryFile = Resolve-RepoPath $LaunchSummary
 $auditFile = Resolve-RepoPath $StaticAudit
+$budgetFile = Join-Path $PSScriptRoot "perf06_budget_table.json"
 $outFile = Resolve-RepoPath $Out
-foreach ($path in @($profileFile, $summaryFile, $auditFile)) { if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "Required evidence is missing: $path" } }
+foreach ($path in @($profileFile, $summaryFile, $auditFile, $budgetFile)) { if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "Required evidence is missing: $path" } }
 if (Test-Path -LiteralPath $outFile) { throw "Refusing to overwrite immutable surface report: $outFile" }
 $profileManifest = Read-Json $profileFile
 $summary = Read-Json $summaryFile
 $audit = Read-Json $auditFile
+$budgetTable = Read-Json $budgetFile
 if (-not [bool]$audit.passed -or [string]$audit.candidate_commit -cne $candidate) { throw "Static allocation audit is not green for the candidate." }
 if (-not [bool]$summary.passed -or @($summary.failures).Count -ne 0) { throw "Runtime launch summary did not pass its enforced budgets and contracts." }
 
@@ -49,6 +51,7 @@ if ($summaryCandidate -cne $candidate -or [string]$runtime.build_identity.source
 
 $profileHash = (Get-FileHash -LiteralPath $profileFile -Algorithm SHA256).Hash.ToLowerInvariant()
 $auditHash = (Get-FileHash -LiteralPath $auditFile -Algorithm SHA256).Hash.ToLowerInvariant()
+$budgetHash = (Get-FileHash -LiteralPath $budgetFile -Algorithm SHA256).Hash.ToLowerInvariant()
 $launch = [ordered]@{
     candidate_commit = $candidate
     profile_manifest_sha256 = $profileHash
@@ -58,11 +61,14 @@ $launch = [ordered]@{
     power_plan = [string]$profileManifest.power_plan
     actual_cpu_throttle_rate = [string]$(if ($Platform -eq "native") { $summary.actual_cpu_throttle_rate } else { $summary.cpu_throttle_rate })
     actual_device_scale_factor = [double]$(if ($summary.actual_device_scale_factor) { $summary.actual_device_scale_factor } else { $summary.viewport.device_pixel_ratio })
+    budget_table_version = [int]$budgetTable.version
+    budget_table_sha256 = $budgetHash
 }
 if ($Platform -eq "native") {
     $launch.godot_sha256 = [string]$summary.godot_sha256
     $launch.build_sha256 = [string]$summary.build_sha256
 } else {
+    if ([int]$summary.budget_table_version -ne [int]$budgetTable.version -or [string]$summary.budget_table_sha256 -cne $budgetHash) { throw "Web runtime did not enforce the published budget-table identity." }
     $launch.browser_version = [string]$summary.browser_version
     $launch.browser_flags = @($summary.launch_options.args)
     $launch.viewport = $summary.viewport
@@ -140,7 +146,8 @@ $result = [ordered]@{
         [ordered]@{ path=$rawPath; sha256=(Get-FileHash -LiteralPath $rawPath -Algorithm SHA256).Hash.ToLowerInvariant(); size_bytes=(Get-Item -LiteralPath $rawPath).Length },
         [ordered]@{ path=$summaryFile; sha256=(Get-FileHash -LiteralPath $summaryFile -Algorithm SHA256).Hash.ToLowerInvariant(); size_bytes=(Get-Item -LiteralPath $summaryFile).Length },
         [ordered]@{ path=$auditFile; sha256=$auditHash; size_bytes=(Get-Item -LiteralPath $auditFile).Length },
-        [ordered]@{ path=$profileFile; sha256=$profileHash; size_bytes=(Get-Item -LiteralPath $profileFile).Length }
+        [ordered]@{ path=$profileFile; sha256=$profileHash; size_bytes=(Get-Item -LiteralPath $profileFile).Length },
+        [ordered]@{ path=$budgetFile; sha256=$budgetHash; size_bytes=(Get-Item -LiteralPath $budgetFile).Length }
     )
     failures = @($failures)
     passed = $failures.Count -eq 0
