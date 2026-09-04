@@ -283,6 +283,13 @@ $manifest = [ordered]@{
     covered_rows = $coveredRows
     uncovered_rows = $uncoveredRows
     order_ids = $orders
+    journey_binding = [ordered]@{
+        fixture_id_field = "rows[].case_id"
+        checkpoint_field = "rows[].journey_checkpoints[]"
+        checkpoint_ordinal_field = "rows[].journey_checkpoints[].ordinal"
+        action_ordinal_field = "rows[].journey_checkpoints[].action_index"
+        save_load_boundary_field = "rows[].save_load_points[]"
+    }
     shard_reports = $shardReports
     passed = ($uncoveredRows.Count -eq 0 -and @($shardReports | Where-Object { -not $_.passed }).Count -eq 0)
 }

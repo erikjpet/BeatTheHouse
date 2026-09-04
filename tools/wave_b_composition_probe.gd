@@ -270,6 +270,8 @@ func _finish_delivery_matrix(delivery: Dictionary) -> void:
 		"eligibility_source": str(delivery.get("eligibility_source", "")),
 		"event_selection": _dict(delivery.get("event_selection", {})),
 		"order_id": order_id,
+		"journey_checkpoints": _array(delivery.get("journey_checkpoints", [])),
+		"save_load_points": _array(delivery.get("journey_checkpoints", [])).filter(func(checkpoint: Variant) -> bool: return str(_dict(checkpoint).get("label", "")) in ["save_boundary", "load_boundary"]),
 		"before_sha256": str(delivery.get("before_sha256", "")),
 		"after_sha256": str(delivery.get("after_sha256", "")),
 		"double_fire_count": 0 if bool(delivery.get("replay_idempotent", false)) else 1,
@@ -409,6 +411,7 @@ func _exercise_delivery_composition(library: ContentLibrary) -> Dictionary:
 	_require(str(active_entry.get("event_id", "")) == "crew_favor_delivery", "The production modal queue did not begin the naturally selected Crew favor.")
 	var started := event_module.resolve(run_state, run_state.current_environment, "run_package")
 	_complete_triggered_event(run_state, "crew_favor_delivery", active_entry)
+	var journey_checkpoints: Array = [_composition_checkpoint(run_state, "delivery_started", 0)]
 	var token := str(started.get("world_sequence_owner_token", ""))
 	_require(bool(started.get("delivery_started", false)) and bool(started.get("world_sequence_scheduled", false)) and not token.is_empty(), "The production Crew-favor event did not schedule its delivery sequence.")
 	var physical := _dict(run_state.delivery_snapshot().get("physical", {}))
@@ -427,6 +430,7 @@ func _exercise_delivery_composition(library: ContentLibrary) -> Dictionary:
 	# mounts without replacing the scenario-owned base inventory.
 	var finalized := run_state.scenario_finalize_installed_environment(library, {"viewport_size": {"x": 1280, "y": 720}}) if bool(arrival.get("ok", false)) else {}
 	var composed := run_state.world_sequence_composed_projection()
+	journey_checkpoints.append(_composition_checkpoint(run_state, "maximal_composition_mounted", journey_checkpoints.size()))
 	_require(bool(traveled.get("ok", false)) and bool(layer_entry.get("ok", false)) and bool(arrival.get("ok", false)) and bool(finalized.get("ok", false)), "The production Crew delivery did not mount at its real target: %s" % JSON.stringify({"travel": traveled, "layer": layer_entry, "arrival": arrival, "finalized": finalized}))
 	_require(not composed.is_empty() and run_state.world_sequence_mounted_owner_for_channel("delivery_handoff", target_node) == token, "The mounted Crew sequence did not own the delivery handoff channel.")
 	var observed_archetype := str(run_state.current_environment.get("archetype_id", ""))
@@ -445,16 +449,19 @@ func _exercise_delivery_composition(library: ContentLibrary) -> Dictionary:
 	var pre_replay_ok := true
 	if order_id == "replay_save_load_abandon":
 		pre_replay_ok = _replay_finalize_is_idempotent(run_state, library)
+		journey_checkpoints.append(_composition_checkpoint(run_state, "pre_save_replay", journey_checkpoints.size()))
 		_require(pre_replay_ok, "Finalization replay before save fired a consequence twice or changed the registration ledger.")
 	var travel_return_ok := true
 	if order_id == "travel_return_save_load_abandon":
 		travel_return_ok = _travel_away_and_return(run_state, generator, library, target_node, token, true)
+		journey_checkpoints.append(_composition_checkpoint(run_state, "pre_save_travel_return", journey_checkpoints.size()))
 		_require(travel_return_ok, "Travel away and return did not restore the active maximal composition cleanly.")
 	var expired_ok := true
 	if order_id == "expire_save_load_travel_return":
 		var remaining := maxi(1, int(run_state.delivery_snapshot().get("deadline_remaining", 1)))
 		run_state.advance_environment_turns(remaining + 1)
 		expired_ok = not run_state.delivery_has_active_run() and not str(_dict(run_state.delivery_snapshot().get("resolution", {})).get("reason", "")).is_empty()
+		journey_checkpoints.append(_composition_checkpoint(run_state, "pre_save_expiry", journey_checkpoints.size()))
 		_require(expired_ok, "Letting the maximal composition expire did not close the delivery at its production action boundary.")
 
 	# Save while the scenario/world sequence/delivery/town systems coexist.  Then
@@ -473,6 +480,7 @@ func _exercise_delivery_composition(library: ContentLibrary) -> Dictionary:
 	var durable_world_before := CrewWorldSequenceAdapterScript.durable_container(run_state.current_environment.get(CrewWorldSequenceAdapterScript.CONTAINER_KEY, {}))
 	var delivery_before_save := run_state.delivery_snapshot()
 	var save_error := save_service.save_run(run_state, COMPOSITION_SAVE_SLOT)
+	journey_checkpoints.append(_composition_checkpoint(run_state, "save_boundary", journey_checkpoints.size()))
 	var loaded_variant: Variant = save_service.load_run(COMPOSITION_SAVE_SLOT) if save_error == OK else null
 	var save_load_exact := false
 	var save_load_changed_keys: Array = []
@@ -486,6 +494,7 @@ func _exercise_delivery_composition(library: ContentLibrary) -> Dictionary:
 	_require(save_error == OK and loaded_variant is RunState, "Production SaveService could not round-trip the mounted Crew composition (error %d)." % save_error)
 	if loaded_variant is RunState:
 		run_state = loaded_variant as RunState
+		journey_checkpoints.append(_composition_checkpoint(run_state, "load_boundary", journey_checkpoints.size()))
 		delivery_after_load = run_state.delivery_snapshot()
 		_require(RunStateScript.scenario_restore_equivalent(environment_before_save, run_state.current_environment), "SaveService changed the mounted room's causal scenario restore contract before rebuild.")
 		var durable_world_after_load := CrewWorldSequenceAdapterScript.durable_container(run_state.current_environment.get(CrewWorldSequenceAdapterScript.CONTAINER_KEY, {}))
@@ -498,6 +507,7 @@ func _exercise_delivery_composition(library: ContentLibrary) -> Dictionary:
 		save_load_changed_keys = _changed_top_level_keys(before, after)
 		_require(save_load_exact, "Mounted scenario/Crew/delivery/town causal and public composition changed across SaveService round trip.")
 		replay_idempotent = _replay_finalize_is_idempotent(run_state, library) if run_state.delivery_has_active_run() else true
+		journey_checkpoints.append(_composition_checkpoint(run_state, "post_load_replay", journey_checkpoints.size()))
 		_require(replay_idempotent, "Replayed arrival/finalization fired a Crew delivery consequence twice or changed the registration ledger.")
 		var abandoned := run_state.delivery_abandon("integ06_1_leave_mid_everything") if run_state.delivery_has_active_run() else {"ok": true, "inactive": true}
 		var owner_after_abandon := run_state.world_sequence_mounted_owner_for_channel("delivery_handoff", target_node)
@@ -514,6 +524,7 @@ func _exercise_delivery_composition(library: ContentLibrary) -> Dictionary:
 			and _array(final_registration.get("pending_outcomes", [])).is_empty()
 		_require(bool(abandoned.get("ok", false)) and bool(unmounted.get("ok", false)), "Leaving mid-composition did not provide a safe delivery/sequence cleanup path.")
 		_require(abandonment_clean, "Abandonment left an orphaned delivery or handoff owner.")
+		journey_checkpoints.append(_composition_checkpoint(run_state, "abandonment_cleanup", journey_checkpoints.size()))
 		if order_id in ["save_load_abandon_travel_return", "expire_save_load_travel_return"]:
 			var cleanup_return_ok := _travel_away_and_return(run_state, generator, library, target_node, token, false)
 			abandonment_clean = abandonment_clean and cleanup_return_ok
@@ -525,6 +536,7 @@ func _exercise_delivery_composition(library: ContentLibrary) -> Dictionary:
 		"event_selection": _dict(prepared.get("event_selection", {})),
 		"exploration": _dict(prepared.get("exploration", {})),
 		"progression": _dict(prepared.get("progression", {})),
+		"journey_checkpoints": journey_checkpoints,
 		"initial_maximal_live": initial_maximal_live,
 		"order_id": order_id,
 		"order_pre_replay_ok": pre_replay_ok,
@@ -551,6 +563,20 @@ func _exercise_delivery_composition(library: ContentLibrary) -> Dictionary:
 		"final_registration_lifecycle": final_registration_lifecycle,
 		"delivery_before_save_status": str(delivery_before_save.get("status", "")),
 		"delivery_after_load_status": str(delivery_after_load.get("status", "")),
+	}
+
+
+func _composition_checkpoint(run_state: RunState, label: String, ordinal: int) -> Dictionary:
+	return {
+		"ordinal": ordinal,
+		"label": label,
+		"action_index": int(run_state.town_state.action_index),
+		"node_id": run_state.current_world_node_id(),
+		"archetype_id": str(run_state.current_environment.get("archetype_id", "")),
+		"scenario_id": str(run_state.current_environment.get("scenario_id", "")),
+		"layer_id": str(run_state.current_environment.get("current_layer_id", "")),
+		"delivery_status": str(run_state.delivery_snapshot().get("status", "")),
+		"world_sequence_registrations": run_state.world_sequence_registrations.size(),
 	}
 
 
@@ -711,7 +737,7 @@ func _visit_delivery_eligible_nodes(run_state: RunState, generator: RunGenerator
 	if run_state.current_world_node_id() != expected_start:
 		var public_departure := generator.travel_environment_result(run_state, expected_start, true)
 		if not bool(public_departure.get("ok", false)) or run_state.current_world_node_id() != expected_start:
-			return {"ok": false, "message": "Production run could not leave home for the authored public route start.", "current_node_id": run_state.current_world_node_id(), "travel_result": public_departure}
+			return {"ok": false, "message": "Production run could not leave home for the authored public route start.", "current_node_id": run_state.current_world_node_id(), "travel_result": _travel_result_summary(public_departure)}
 	var start_finalized := run_state.scenario_finalize_installed_environment(library, {"viewport_size": {"x": 1280, "y": 720}})
 	if not bool(start_finalized.get("ok", false)):
 		return {"ok": false, "message": "Initial production scenario surface did not finalize.", "finalization_result": start_finalized}
@@ -742,7 +768,7 @@ func _visit_delivery_eligible_nodes(run_state: RunState, generator: RunGenerator
 			return {"ok": false, "message": "Authored composition route lost real edge into %s." % step_id, "visited_ids": visited_ids}
 		var traveled := generator.travel_environment_result(run_state, step_id, true)
 		if not bool(traveled.get("ok", false)) or run_state.current_world_node_id() != step_id:
-			return {"ok": false, "message": "Production travel failed on real edge into %s." % step_id, "visited_ids": visited_ids, "travel_result": traveled}
+			return {"ok": false, "message": "Production travel failed on real edge into %s." % step_id, "visited_ids": visited_ids, "travel_result": _travel_result_summary(traveled)}
 		var finalized := run_state.scenario_finalize_installed_environment(library, {"viewport_size": {"x": 1280, "y": 720}})
 		if not bool(finalized.get("ok", false)):
 			return {"ok": false, "message": "Production scenario surface failed to finalize at %s." % step_id, "visited_ids": visited_ids, "finalization_result": finalized}
@@ -850,6 +876,15 @@ func _resolve_public_event_choice(run_state: RunState, library: ContentLibrary, 
 	if not choice_available:
 		return {"ok": false, "message": "%s is not a public choice for %s." % [choice_id, event_id]}
 	return module.resolve(run_state, run_state.current_environment, choice_id)
+
+
+func _travel_result_summary(result: Dictionary) -> Dictionary:
+	return {
+		"ok": bool(result.get("ok", false)),
+		"source_id": str(result.get("source_id", "")),
+		"target_id": str(result.get("target_id", "")),
+		"errors": _array(result.get("errors", [])),
+	}
 
 
 func _earn_rook_made_standing(run_state: RunState, generator: RunGenerator, library: ContentLibrary, action_service: RunActionService, crew_lender_node: String) -> Dictionary:
