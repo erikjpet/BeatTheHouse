@@ -1875,7 +1875,8 @@ func _perf06_surface_evidence(snapshot: Dictionary) -> Dictionary:
 		"payout_staged", "double_up_offered", "baccarat_squeeze_available",
 		"rolled", "presentation_phase", "last_net", "win_meter",
 		"bar_dice_ritual_phase", "ticket_complete", "pending_payout",
-		"revealed_count", "reveal_progress", "session_settled",
+		"revealed_count", "reveal_progress", "session_settled", "pending_double_credits",
+		"counting_enabled",
 	]:
 		var key := str(key_value)
 		if snapshot.has(key):
@@ -1944,6 +1945,9 @@ func _measure_followup_game_phases(game_id: String) -> void:
 		"blackjack":
 			await _measure_observed_game_phase(game_id, "resolve_payout", "blackjack_resolve_payout", 30)
 			await _measure_observed_game_phase(game_id, "ritual", "blackjack_table_ritual", 30)
+			_emit_surface_action("blackjack_count_toggle", 0, false)
+			await _wait_frames(2)
+			await _measure_observed_game_phase(game_id, "skill", "blackjack_counting_skill", 30)
 		"baccarat":
 			await _measure_observed_game_phase(game_id, "ritual", "baccarat_table_ritual", 30)
 			if await _wait_for_game_phase(game_id, "skill", 360):
@@ -1963,12 +1967,21 @@ func _measure_followup_game_phases(game_id: String) -> void:
 				await _measure_observed_game_phase(game_id, "settle", "craps_dealer_settlement", 20)
 			if await _wait_for_game_phase(game_id, "resolve", 180):
 				await _measure_observed_game_phase(game_id, "resolve", "craps_resolved_table", 30)
+			await _measure_craps_offer_and_aim()
 		"crew_draw_poker":
 			await _measure_observed_game_phase(game_id, "ordered_hand", "crew_poker_ordered_hand", 30)
 			await _measure_observed_game_phase(game_id, "ritual", "crew_poker_table_ritual", 30)
+			await _measure_crew_poker_terminal()
 		"video_poker":
 			await _measure_observed_game_phase(game_id, "payout", "video_poker_payout", 30)
 			await _measure_observed_game_phase(game_id, "ritual", "video_poker_machine_ritual", 30)
+			if _install_video_poker_double_fixture():
+				await _wait_frames(2)
+				_emit_surface_action("video_poker_double", 0, false)
+				await _wait_frames(2)
+				await _measure_observed_game_phase(game_id, "double_up", "video_poker_double_up", 30)
+				_emit_surface_action("video_poker_double_pick", 0, false)
+				await _wait_frames(2)
 
 
 func _measure_observed_game_phase(game_id: String, phase_id: String, scenario_name: String, frames: int) -> bool:
@@ -2022,7 +2035,7 @@ func _current_game_phase_evidence() -> Dictionary:
 	var canvas := app.get("game_surface_canvas") as Control if app != null else null
 	var animation_channels := {}
 	if canvas != null and canvas.has_method("surface_animation_active") and canvas.has_method("surface_animation_progress"):
-		for channel_value in ["baccarat_deal", "baccarat_payout", "roulette_spin", "roulette_payout", "craps_roll"]:
+		for channel_value in ["blackjack_count_rhythm", "baccarat_deal", "baccarat_payout", "roulette_spin", "roulette_payout", "craps_roll"]:
 			var channel := str(channel_value)
 			animation_channels[channel] = {
 				"active": bool(canvas.call("surface_animation_active", channel)),
@@ -2090,6 +2103,60 @@ func _install_slot_handpay_fixture() -> bool:
 	return true
 
 
+func _install_video_poker_double_fixture() -> bool:
+	if app == null:
+		return false
+	var run_state: RunState = app.get("run_state") as RunState
+	var game: GameModule = app.get("current_game") as GameModule
+	if run_state == null or game == null or game.get_id() != "video_poker":
+		return false
+	var environment := run_state.current_environment
+	var machine_value: Variant = game.call("_machine_state", run_state, environment)
+	if typeof(machine_value) != TYPE_DICTIONARY:
+		return false
+	var machine: Dictionary = machine_value
+	var last_result: Dictionary = machine.get("last_result", {}) if typeof(machine.get("last_result", {})) == TYPE_DICTIONARY else {}
+	if last_result.is_empty():
+		return false
+	# Keep the already-rendered authoritative hand and expose the product's normal
+	# double-up offer with a bounded diagnostic credit. The following pick still
+	# resolves through the production action authority and RNG stream.
+	last_result["double_credits"] = maxi(5, int(last_result.get("win_credits", 0)))
+	last_result["win_credits"] = int(last_result["double_credits"])
+	last_result["summary"] = "Performance fixture: settled hand offers Double Up."
+	machine["last_result"] = last_result
+	game.call("_update_environment_state", environment, machine)
+	run_state.current_environment = environment
+	app.call("_refresh")
+	return true
+
+
+func _measure_craps_offer_and_aim() -> void:
+	_emit_surface_action("craps_bet", 0, false)
+	await _wait_frames(2)
+	_emit_surface_pointer("craps_throw", 0, "begin", Vector2(426, 278))
+	await _wait_frames(2)
+	await _measure_observed_game_phase("craps", "offer", "craps_dice_offer", 20)
+	_emit_surface_pointer("craps_throw", 0, "move", Vector2(438, 190))
+	await _wait_frames(2)
+	await _measure_observed_game_phase("craps", "aim", "craps_throw_aim", 20)
+	_emit_surface_pointer("craps_throw", 0, "end", Vector2(446, 96))
+	await _wait_frames(2)
+
+
+func _measure_crew_poker_terminal() -> void:
+	for _action_index in range(32):
+		var evidence := _current_game_phase_evidence()
+		if _game_phase_observed("crew_draw_poker", "terminal", evidence):
+			break
+		var action_evidence := _trigger_active_game_action("crew_draw_poker")
+		if not bool(action_evidence.get("accepted", false)):
+			mark_event("crew_poker_terminal_action_rejected", action_evidence)
+			break
+		await _wait_frames(2)
+	await _measure_observed_game_phase("crew_draw_poker", "terminal", "crew_poker_terminal", 30)
+
+
 func _game_phase_observed(game_id: String, phase_id: String, evidence: Dictionary) -> bool:
 	var phase := str(evidence.get("phase", ""))
 	var ritual_phase := str(evidence.get("ritual_phase", evidence.get("bar_dice_ritual_phase", "")))
@@ -2111,7 +2178,11 @@ func _game_phase_observed(game_id: String, phase_id: String, evidence: Dictionar
 			if phase_id == "payout":
 				return result_visible or str(evidence.get("counter_phase", "")) in ["result", "selection"]
 		"bar_dice", "blackjack":
-			return phase_id == "resolve_payout" and result_visible
+			if phase_id == "resolve_payout":
+				return result_visible
+			if game_id == "blackjack" and phase_id == "skill":
+				var count_rhythm: Dictionary = animations.get("blackjack_count_rhythm", {}) if typeof(animations.get("blackjack_count_rhythm", {})) == TYPE_DICTIONARY else {}
+				return bool(count_rhythm.get("active", false))
 		"slot":
 			return phase_id == "jackpot_attendant" \
 				and str(evidence.get("ritual_projection_phase", "")) == "payout_or_handpay" \
@@ -2139,10 +2210,20 @@ func _game_phase_observed(game_id: String, phase_id: String, evidence: Dictionar
 				return ritual_phase == "dealer_settlement" or (bool(craps_roll.get("active", false)) and float(craps_roll.get("progress", 0.0)) >= 0.55)
 			if phase_id == "resolve":
 				return not bool(craps_roll.get("active", false)) and result_visible
+			if phase_id == "offer":
+				return ritual_phase == "dice_offered"
+			if phase_id == "aim":
+				return ritual_phase == "aiming_throw"
 		"crew_draw_poker":
-			return phase_id == "ordered_hand" and phase in ["before", "draw", "after"]
+			if phase_id == "ordered_hand":
+				return phase in ["before", "draw", "after"]
+			if phase_id == "terminal":
+				return phase == "idle" and result_visible
 		"video_poker":
-			return phase_id == "payout" and phase in ["settled", "double_result"] and result_visible
+			if phase_id == "payout":
+				return phase in ["settled", "double_result"] and result_visible
+			if phase_id == "double_up":
+				return phase == "double_up" and int(evidence.get("pending_double_credits", 0)) > 0
 	return false
 
 
@@ -2185,6 +2266,16 @@ func _emit_surface_action(action_id: String, index: int, confirm: bool) -> void:
 		mark_event("missing_surface_canvas", {"action_id": action_id})
 		return
 	canvas.emit_signal("surface_action", action_id, index, confirm)
+
+
+func _emit_surface_pointer(action_id: String, index: int, phase: String, board_position: Vector2) -> void:
+	if app == null:
+		return
+	var canvas := app.get("game_surface_canvas") as Control
+	if canvas == null:
+		mark_event("missing_surface_canvas", {"action_id": action_id, "phase": phase})
+		return
+	canvas.emit_signal("surface_pointer_action", action_id, index, phase, board_position)
 
 
 func _force_pinball_feature() -> bool:
