@@ -600,15 +600,16 @@ func _run_grand_casino_plan() -> void:
 		return
 	run_state.bankroll = maxi(run_state.bankroll, 5000)
 	run_state.narrative_flags["grand_casino_invite"] = true
-	generator.next_environment(run_state, RunState.GRAND_CASINO_ARCHETYPE_ID, true)
+	var grand_installed := _install_generated_grand_casino_fixture(run_state)
+	mark_event("grand_casino_fixture_install", grand_installed)
 	run_state.add_suspicion("web_grand_casino_late_probe", 85, "behavior")
+	run_state.narrative_flags["grand_casino_high_limit_access"] = true
+	run_state.narrative_flags["grand_casino_high_limit_access_method"] = "performance_probe"
 	app.call("_refresh")
 	_begin_scenario("grand_casino_late_settle", {"surface": "grand_casino", "mode": "late_run_entry"})
 	await _wait_frames(maxi(scenario_frames, 360))
 	_end_scenario()
 	await _measure_grand_casino_system_matrix(run_state, generator)
-	run_state.narrative_flags["grand_casino_high_limit_access"] = true
-	run_state.narrative_flags["grand_casino_high_limit_access_method"] = "performance_probe"
 	_begin_scenario("grand_casino_room_churn", {"surface": "grand_casino", "mode": "repeated_room_transitions"})
 	var room_sequence := [
 		RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID,
@@ -645,6 +646,29 @@ func _publish_grand_casino_browser_summary() -> void:
 	}
 	var title := "BTH_GC_REPORT " + JSON.stringify(summary)
 	JavaScriptBridge.eval("document.title = %s;" % JSON.stringify(title), true)
+
+
+func _install_generated_grand_casino_fixture(run_state: RunState) -> Dictionary:
+	var library: ContentLibrary = app.get("library") as ContentLibrary
+	if library == null:
+		return {"ok": false, "reason": "missing_library"}
+	var archetype := library.environment_archetype(RunState.GRAND_CASINO_ARCHETYPE_ID)
+	if archetype.is_empty():
+		return {"ok": false, "reason": "missing_archetype"}
+	var rng := run_state.create_rng("perf06_grand_casino_environment")
+	var generated := EnvironmentInstance.from_archetype(archetype, 1, rng, library, run_state.challenge_config)
+	var environment := generated.to_dict()
+	environment["world_node_id"] = RunState.GRAND_CASINO_ARCHETYPE_ID
+	environment["layout"] = EnvironmentInstance.ensure_generated_layout(environment)
+	var installed := run_state.set_environment(environment)
+	run_state.save_rng(rng)
+	app.call("_refresh")
+	return {
+		"ok": bool(installed.get("ok", false)) and str(run_state.current_environment.get("archetype_id", "")) == RunState.GRAND_CASINO_ARCHETYPE_ID,
+		"installed": installed,
+		"environment_id": str(run_state.current_environment.get("archetype_id", "")),
+		"scenario_id": str(run_state.current_environment.get("scenario_id", "")),
+	}
 
 
 func _measure_grand_casino_system_matrix(run_state: RunState, generator: RunGenerator) -> void:
