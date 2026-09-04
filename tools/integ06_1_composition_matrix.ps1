@@ -84,8 +84,8 @@ function Convert-ToResourcePath {
 }
 
 function Get-RelativeEvidencePath {
-    param([string]$AbsolutePath)
-    $rootPrefix = $out
+    param([string]$AbsolutePath, [string]$BasePath = "")
+    $rootPrefix = if ($BasePath) { [IO.Path]::GetFullPath($BasePath) } else { $out }
     if (-not $rootPrefix.EndsWith([IO.Path]::DirectorySeparatorChar)) { $rootPrefix += [IO.Path]::DirectorySeparatorChar }
     return ([Uri]::UnescapeDataString(([Uri]$rootPrefix).MakeRelativeUri([Uri]$AbsolutePath).ToString()) -replace '\\', '/')
 }
@@ -216,7 +216,7 @@ for ($caseIndex = 0; $caseIndex -lt $cases.Count; $caseIndex++) {
     $row | Add-Member -NotePropertyName case_id -NotePropertyValue ([string]$case.id) -Force
     $rowsByShard[$shardIndex] += $row
     if (-not $result.report.passed -or -not $row.passed) { $failuresByShard[$shardIndex] += "$($case.id): semantic composition failed" }
-    $artifactPath = Get-RelativeEvidencePath ([string]$result.path)
+    $artifactPath = Get-RelativeEvidencePath ([string]$result.path) (Join-Path $out "shard_$shardIndex")
     $artifactsByShard[$shardIndex] += [ordered]@{
         path = $artifactPath
         sha256 = (Get-FileHash -LiteralPath ([string]$result.path) -Algorithm SHA256).Hash.ToLowerInvariant()
@@ -225,6 +225,8 @@ for ($caseIndex = 0; $caseIndex -lt $cases.Count; $caseIndex++) {
 }
 
 $shardReports = @()
+$shardReportArtifacts = @()
+$shardPasses = @()
 for ($shardIndex = 0; $shardIndex -lt $ShardCount; $shardIndex++) {
     $shardRoot = Join-Path $out "shard_$shardIndex"
     New-Item -ItemType Directory -Force -Path $shardRoot | Out-Null
@@ -259,7 +261,14 @@ for ($shardIndex = 0; $shardIndex -lt $ShardCount; $shardIndex++) {
     }
     $shardPath = Join-Path $shardRoot "report.json"
     $shardReport | ConvertTo-Json -Depth 100 | Set-Content -LiteralPath $shardPath -Encoding utf8
-    $shardReports += [ordered]@{ path = (Get-RelativeEvidencePath $shardPath); sha256 = (Get-FileHash -LiteralPath $shardPath -Algorithm SHA256).Hash.ToLowerInvariant(); passed = $shardReport.passed }
+    $shardRelativePath = Get-RelativeEvidencePath $shardPath
+    $shardReports += $shardRelativePath
+    $shardReportArtifacts += [ordered]@{
+        path = $shardRelativePath
+        sha256 = (Get-FileHash -LiteralPath $shardPath -Algorithm SHA256).Hash.ToLowerInvariant()
+        size_bytes = (Get-Item -LiteralPath $shardPath).Length
+    }
+    $shardPasses += [bool]$shardReport.passed
 }
 
 $eligibleRows = @()
@@ -269,6 +278,13 @@ foreach ($archetypeId in $requiredTargets) {
 }
 $coveredRows = @($rowsByShard.Values | ForEach-Object { $_ } | ForEach-Object { [string]$_.case_id } | Sort-Object -Unique)
 $uncoveredRows = @($eligibleRows | Where-Object { $coveredRows -notcontains $_ })
+$manifestFailures = @()
+if ($uncoveredRows.Count -ne 0) { $manifestFailures += "Composition coverage left $($uncoveredRows.Count) eligible row(s) uncovered." }
+for ($shardIndex = 0; $shardIndex -lt $shardPasses.Count; $shardIndex++) {
+    if (-not $shardPasses[$shardIndex]) { $manifestFailures += "Composition shard $shardIndex did not pass." }
+}
+$aggregateStateBytes = [long](($rowsByShard.Values | ForEach-Object { $_ } | ForEach-Object { [long]$_.PSObject.Properties['state_bytes'].Value } | Measure-Object -Sum).Sum)
+$aggregateOrphans = [long](($rowsByShard.Values | ForEach-Object { $_ } | ForEach-Object { [long]$_.orphan_count } | Measure-Object -Sum).Sum)
 $manifest = [ordered]@{
     schema = "beat_the_house.integ06_1_composition_manifest/v1"
     version = 1
@@ -279,9 +295,12 @@ $manifest = [ordered]@{
     eligibility_source = @("data/environments/archetypes.json", "data/environments/scenarios.json", "production delivery target selector")
     eligible_archetypes = $requiredTargets
     discovered_seed_by_archetype = $seedByTarget
-    eligible_rows = $eligibleRows
-    covered_rows = $coveredRows
-    uncovered_rows = $uncoveredRows
+    eligible_rows = $eligibleRows.Count
+    covered_rows = $coveredRows.Count
+    uncovered_rows = $uncoveredRows.Count
+    eligible_row_ids = $eligibleRows
+    covered_row_ids = $coveredRows
+    uncovered_row_ids = $uncoveredRows
     order_ids = $orders
     journey_binding = [ordered]@{
         fixture_id_field = "rows[].case_id"
@@ -290,8 +309,14 @@ $manifest = [ordered]@{
         action_ordinal_field = "rows[].journey_checkpoints[].action_index"
         save_load_boundary_field = "rows[].save_load_points[]"
     }
+    phase_samples = @()
+    phase_samples_status = [ordered]@{ available = $false; reason = "Semantic composition evidence; frame trajectory is owned by the paired perf06_1 release measurement." }
+    retained_counters = [ordered]@{ available = $true; measured = @("orphans", "state_bytes"); nodes = $null; resources = $null; objects = $null; orphans = $aggregateOrphans; state_bytes = $aggregateStateBytes }
+    allocation_copy_counters = [ordered]@{ available = $false; allocations = $null; shallow_copies = $null; deep_copies = $null; bytes = $null; source = "not_instrumented_by_semantic_composition_probe" }
     shard_reports = $shardReports
-    passed = ($uncoveredRows.Count -eq 0 -and @($shardReports | Where-Object { -not $_.passed }).Count -eq 0)
+    artifacts = $shardReportArtifacts
+    failures = $manifestFailures
+    passed = ($manifestFailures.Count -eq 0)
 }
 $manifestPath = Join-Path $out "manifest.json"
 $manifest | ConvertTo-Json -Depth 100 | Set-Content -LiteralPath $manifestPath -Encoding utf8

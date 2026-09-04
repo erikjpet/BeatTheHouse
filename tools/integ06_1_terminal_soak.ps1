@@ -67,6 +67,17 @@ $webBuild = Join-Path $out "web_build"
 $nativeBuild = Join-Path $out "native_build"
 New-Item -ItemType Directory -Path $project, $webBuild, $nativeBuild | Out-Null
 
+function New-EvidenceArtifact {
+    param([string]$RelativePath)
+    $path = Join-Path $out $RelativePath
+    if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "Expected evidence artifact is missing: $path" }
+    return [ordered]@{
+        path = ($RelativePath -replace '\\', '/')
+        sha256 = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant()
+        size_bytes = (Get-Item -LiteralPath $path).Length
+    }
+}
+
 function Invoke-BoundedProcess {
     param([string]$FilePath, [string[]]$ArgumentList, [string]$StdoutPath, [string]$StderrPath, [string]$Label, [switch]$AllowFailure)
     $process = Start-Process -FilePath $FilePath -ArgumentList $ArgumentList -RedirectStandardOutput $StdoutPath -RedirectStandardError $StderrPath -PassThru -WindowStyle Hidden
@@ -248,6 +259,30 @@ if ($failureRows.Count -lt 2) { $failures += "Terminal soak covered fewer than t
 $control = @($rows | Where-Object { $_.crew_ignoring_control })
 if ($control.Count -ne 1 -or @($control[0].lender_ids) -ccontains "the_crew") { $failures += "Crew-ignoring control was missing or used the Crew lender." }
 if ($rows.Count -ne 9) { $failures += "Expected 9 documented terminal seed cases, got $($rows.Count)." }
+$nativeWebTracePairs = @()
+for ($shard = 0; $shard -lt $ShardCount; $shard++) {
+    foreach ($nativeRow in @($nativeFirst[$shard].rows)) {
+        $caseId = [string]$nativeRow.case_id
+        $repeatRow = @($nativeSecond[$shard].rows | Where-Object { [string]$_.case_id -ceq $caseId } | Select-Object -First 1)
+        $webRow = @($webReports[$shard].rows | Where-Object { [string]$_.case_id -ceq $caseId } | Select-Object -First 1)
+        if ($repeatRow.Count -ne 1 -or $webRow.Count -ne 1) {
+            $failures += "Terminal trace pair is incomplete for case $caseId."
+            continue
+        }
+        $pair = [ordered]@{
+            seed_id = [string]$nativeRow.seed
+            native_sha256 = [string]$nativeRow.semantic_trace_sha256
+            native_repeat_sha256 = [string]$repeatRow[0].semantic_trace_sha256
+            web_sha256 = [string]$webRow[0].semantic_trace_sha256
+        }
+        if ($pair.native_sha256 -cne $pair.native_repeat_sha256 -or $pair.native_sha256 -cne $pair.web_sha256) {
+            $failures += "Terminal per-seed trace differs for $($pair.seed_id)."
+        }
+        $nativeWebTracePairs += $pair
+    }
+}
+$crewIgnoreCovered = $control.Count -eq 1 -and @($control[0].lender_ids) -cnotcontains "the_crew"
+$artifactRecords = @($artifacts | ForEach-Object { New-EvidenceArtifact ([string]$_) })
 
 $manifest = [ordered]@{
     schema = "beat_the_house.integ06_1_terminal_soak_manifest/v1"
@@ -260,6 +295,10 @@ $manifest = [ordered]@{
     platform = @("Windows", "Web")
     active_systems = @($activeSystems | Sort-Object -Unique)
     authored_max_counts = [ordered]@{ documented_seed_cases = 9; victory_routes = 3; representative_failure_routes_min = 2; max_actions_per_case = 132; save_load_stride_actions = 7 }
+    crew_ignore_control = $crewIgnoreCovered
+    victory_routes = $routeRows
+    failure_routes = $failureRows
+    native_web_trace_pairs = $nativeWebTracePairs
     journey_binding = [ordered]@{
         fixture_id_field = "rows[].fixture_id"
         checkpoint_field = "rows[].journey_checkpoints[]"
@@ -276,7 +315,8 @@ $manifest = [ordered]@{
     retained_counters = [ordered]@{ available = $true; measured = @("state_bytes"); nodes = $null; resources = $null; objects = $null; orphans = $null; state_bytes = ($rows | Measure-Object -Property state_bytes -Maximum).Maximum }
     allocation_copy_counters = [ordered]@{ available = $false; allocations = $null; shallow_copies = $null; deep_copies = $null; bytes = $null; source = "not_instrumented_by_terminal_policy_driver" }
     rows = $rows
-    artifacts = $artifacts
+    shard_reports = $artifacts
+    artifacts = $artifactRecords
     failures = $failures
     passed = $failures.Count -eq 0
     reproduction_command = "powershell -NoProfile -ExecutionPolicy Bypass -File tools\integ06_1_terminal_soak.ps1 -CandidateCommit $candidate -ProfilePath $ProfilePath -EvidenceProfile $EvidenceProfile -OutDir $OutDir -RequireGodot"
