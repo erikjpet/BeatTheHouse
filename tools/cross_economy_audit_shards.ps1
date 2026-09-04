@@ -165,10 +165,14 @@ function Get-SpecialistCoverageFailures([string]$Style, [object[]]$Runs) {
             }
         }
         "heist_rusher" {
+			$observedPlans = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
             foreach ($run in $Runs) {
+				$styleState = Get-ObjectValue $run "style_state"
+				$planId = if ($null -ne $styleState) { [string](Get-ObjectValue $styleState "heist_plan_id") } else { "" }
+				if ($planId) { [void]$observedPlans.Add($planId) }
                 $runLabels = @(Get-LedgerLabels @($run))
                 $hasProgress = @($runLabels | Where-Object {
-                    $_ -eq "heist_lock" -or $_.StartsWith("heist_schedule", [StringComparison]::Ordinal) -or
+					$_.StartsWith("heist_lock:", [StringComparison]::Ordinal) -or $_.StartsWith("heist_schedule", [StringComparison]::Ordinal) -or
                     $_.StartsWith("heist_swap_cart", [StringComparison]::Ordinal) -or
                     $_.StartsWith("heist_live_", [StringComparison]::Ordinal) -or
                     $_.StartsWith("heist_getaway", [StringComparison]::Ordinal)
@@ -181,6 +185,9 @@ function Get-SpecialistCoverageFailures([string]$Style, [object[]]$Runs) {
             if (-not $hasQualifiedRun) {
                 $result.Add("heist_rusher has no production heist progress evidence.")
             }
+			if ($Runs.Count -ge 8 -and (-not $observedPlans.Contains("the_count") -or -not $observedPlans.Contains("the_whale"))) {
+				$result.Add("heist_rusher did not cover both production heist plans.")
+			}
         }
     }
     return @($result)
@@ -569,7 +576,7 @@ $actualSeeds = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordi
 foreach ($run in $allRuns) { if (-not $actualSeeds.Add([string](Get-ObjectValue $run "seed"))) { $failures.Add("Duplicate aggregate run seed: $([string](Get-ObjectValue $run 'seed'))") } }
 if (-not $actualSeeds.SetEquals($expectedSeeds)) { $failures.Add("Aggregate distribution seed coverage has a gap or unexpected seed.") }
 
-$numericKeys = @("final_bankroll", "liquid_cash", "inventory_value", "debt_balance", "net_position", "actions", "final_heat", "peak_heat", "peak_debt", "bankroll_reconciliation_delta")
+$numericKeys = @("final_bankroll", "liquid_cash", "inventory_value", "debt_balance", "debt_principal", "debt_interest", "net_position", "actions", "final_heat", "peak_heat", "peak_debt", "bankroll_reconciliation_delta")
 $overall = [ordered]@{}
 foreach ($key in $numericKeys) { $overall[$key] = Get-Distribution @($allRuns | ForEach-Object { [double](Get-ObjectValue $_ $key) }) }
 $terminalCauses = [ordered]@{}

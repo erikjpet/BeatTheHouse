@@ -9,6 +9,7 @@ extends "res://tools/endgame_metrics_probe.gd"
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 const CrewRecruitmentModelScript := preload("res://scripts/core/crew_recruitment_model.gd")
 const CrewHeistModelScript := preload("res://scripts/core/crew_heist_model.gd")
+const CrewTurnModelScript := preload("res://scripts/core/crew_turn_model.gd")
 
 const TOOL_ID := "cross_economy_audit_v1"
 const DEFAULT_SEEDS_PER_STYLE := 64
@@ -31,7 +32,7 @@ const PLAYSTYLES := [
 	{"id": "numbers_specialist", "policy": "clean", "label": "Numbers specialist"},
 	{"id": "coin_pusher_grinder", "policy": "clean", "label": "Persisted coin-pusher grinder"},
 	{"id": "cheater", "policy": "cheat", "label": "Cheater"},
-	{"id": "heist_rusher", "policy": "clean", "label": "The Count heist rusher"},
+	{"id": "heist_rusher", "policy": "clean", "label": "Crew heist rusher (seed-alternating plans)"},
 	{"id": "mixed_opportunist", "policy": "tier2", "label": "Mixed opportunist"},
 ]
 
@@ -85,8 +86,8 @@ func _run() -> void:
 			"ordinary_games_travel_events_services_lenders_endgame": "production module and RunState paths inherited from endgame_metrics_probe.gd",
 			"crew_jobs": "one-boundary deterministic contact selection; production acceptance, delivery/stake play, route cost/risk, resolution, trust, and cash",
 			"numbers": "production fix bribe delivery, camouflage allocation, slip settlement/payday, and ordinary slip purchase paths",
-			"coin_pusher": "paid travel to a naturally generated gas-station room; grind only when the seed offers a pusher; never reset; real drops, fixed-tick patches, and post-drop COLLECT",
-			"heist": "production-visible audit-night discovery only; production lock, blackjack identity/play, schedule/cart delivery, route cost/risk, getaway, and terminal payout paths",
+			"coin_pusher": "paid public travel to a naturally generated casino room; grind only when the seed offers a pusher; never reset; real run RNG, drops, fixed-tick patches, and post-drop COLLECT",
+			"heist": "public recruitment, job, planning-table, and live-table actions only; stable seeds alternate both accepted plans through production lock, setup, play, interview/getaway, and terminal paths",
 		},
 		"measurement_interpretation": {
 			"censoring": "Action-cap survivors remain active RunState observations and are excluded from observed-terminal pressure/choice denominators.",
@@ -193,6 +194,119 @@ func _check_hostile_policy_input_rejection() -> void:
 	if JSON.stringify(_sanitize_policy_observation(hostile)) != JSON.stringify(baseline):
 		failures.append("Audit policy sanitizer accepted caller-authored authority or hidden state.")
 
+	# Travel is the only audit helper that accepts a structured action selected
+	# from a public list. Prove that its id is merely re-resolved against the live
+	# action surface and every caller-authored authority field is ignored.
+	var canonical_run: RunState = RunStateScript.new()
+	var hostile_run: RunState = RunStateScript.new()
+	var challenge := RunStateScript.standard_challenge("BALANCE06-HOSTILE-TRAVEL")
+	canonical_run.start_new("BALANCE06-HOSTILE-TRAVEL", challenge)
+	generator.next_environment(canonical_run)
+	# Fork from one exact persisted boundary. Independently created RunStates
+	# deliberately have different non-public authority identities, which are not
+	# a policy-visible determinism difference.
+	hostile_run.from_dict(canonical_run.to_dict())
+	var selected := {}
+	for choice_value in _travel_choices(canonical_run):
+		var public_choice := _dict(choice_value)
+		if bool(public_choice.get("enabled", false)):
+			selected = public_choice
+			break
+	if selected.is_empty():
+		failures.append("Hostile travel qualification seed exposed no public enabled route.")
+	else:
+		# Equalize the public-observation call count before comparing action
+		# outcomes; the hostile actor sees the same list before substituting its
+		# local payload.
+		_travel_choices(hostile_run)
+		var forged := {"id": str(selected.get("id", ""))}
+		forged.merge({
+			"seed": "FORGED", "game_id": "FORGED", "node_id": "FORGED",
+			"route": {"id": "FORGED", "cost": -999999, "suspicion_delta": -999999, "reward": 999999},
+			"status": {"suspicion_delta": -999999, "available": true, "capability": "FORGED"},
+			"cost": -999999, "member_id": "FORGED", "job_id": "FORGED",
+			"debt": -999999, "receipt": "FORGED", "delivery_status": "complete",
+			"reward": 999999, "payout": 999999, "outcome": "victory",
+			"availability": true, "capability": "FORGED", "rng_state": 1,
+			"value_manifest": {"bankroll": 999999}, "terminal_status": "victory",
+		}, true)
+		var canonical_audit := {"travel_count": 0, "route_cost_total": 0, "grand_casino_entries": 0}
+		var hostile_audit := canonical_audit.duplicate(true)
+		var canonical_ok := _apply_travel_choice(canonical_run, canonical_audit, selected)
+		var hostile_ok := _apply_travel_choice(hostile_run, hostile_audit, forged)
+		var state_equal := CrewTurnModelScript.canonical_json(canonical_run.to_dict()) == CrewTurnModelScript.canonical_json(hostile_run.to_dict())
+		var audit_equal := CrewTurnModelScript.canonical_json(canonical_audit) == CrewTurnModelScript.canonical_json(hostile_audit)
+		if not canonical_ok or not hostile_ok or not state_equal or not audit_equal:
+			failures.append("Audit travel seam consumed caller-authored route/cost/authority fields (canonical_ok=%s hostile_ok=%s state_equal=%s audit_equal=%s state_path=%s state_keys=%s audit_keys=%s)." % [
+				str(canonical_ok), str(hostile_ok), str(state_equal), str(audit_equal),
+				_first_mismatch_path(canonical_run.to_dict(), hostile_run.to_dict()),
+				JSON.stringify(_top_level_mismatch_keys(canonical_run.to_dict(), hostile_run.to_dict())),
+				JSON.stringify(_top_level_mismatch_keys(canonical_audit, hostile_audit)),
+			])
+
+	# A rejected opaque id must leave the complete serialized root unchanged;
+	# that snapshot includes economy, world, crew, machine, queues, receipts,
+	# saves, and every persisted RNG stream owned by RunState.
+	var rejected_run: RunState = RunStateScript.new()
+	rejected_run.start_new("BALANCE06-HOSTILE-REJECTION", RunStateScript.standard_challenge("BALANCE06-HOSTILE-REJECTION"))
+	generator.next_environment(rejected_run)
+	var rejected_audit := {"travel_count": 0, "route_cost_total": 0, "grand_casino_entries": 0}
+	var rejected_state_before := CrewTurnModelScript.canonical_json(rejected_run.to_dict())
+	var rejected_audit_before := CrewTurnModelScript.canonical_json(rejected_audit)
+	if _apply_travel_choice(rejected_run, rejected_audit, {"id": "FORGED", "route": {"cost": -999999}, "terminal_status": "victory"}) \
+			or CrewTurnModelScript.canonical_json(rejected_run.to_dict()) != rejected_state_before or CrewTurnModelScript.canonical_json(rejected_audit) != rejected_audit_before:
+		failures.append("Rejected hostile travel proposal changed canonical state.")
+	var service := RunActionServiceScript.new()
+	service.setup(library, rejected_run)
+	if bool(service.use_hook("FORGED", "FORGED").get("ok", false)) or CrewTurnModelScript.canonical_json(rejected_run.to_dict()) != rejected_state_before:
+		failures.append("Rejected hostile item/service/lender proposal changed canonical state.")
+	if bool(rejected_run.crew_job_accept_definition("FORGED").get("ok", false)) or CrewTurnModelScript.canonical_json(rejected_run.to_dict()) != rejected_state_before:
+		failures.append("Rejected hostile member/job proposal changed canonical state.")
+
+
+func _top_level_mismatch_keys(left: Dictionary, right: Dictionary) -> Array:
+	var keys: Array = left.keys()
+	for key_value in right.keys():
+		if not keys.has(key_value):
+			keys.append(key_value)
+	keys.sort_custom(func(a: Variant, b: Variant) -> bool: return str(a) < str(b))
+	var result: Array = []
+	for key_value in keys:
+		if not left.has(key_value) or not right.has(key_value) or CrewTurnModelScript.canonical_json(left.get(key_value)) != CrewTurnModelScript.canonical_json(right.get(key_value)):
+			result.append(str(key_value))
+	return result
+
+
+func _first_mismatch_path(left: Variant, right: Variant, path: String = "root") -> String:
+	if typeof(left) != typeof(right):
+		return "%s:type" % path
+	if typeof(left) == TYPE_DICTIONARY:
+		var left_dict := _dict(left)
+		var right_dict := _dict(right)
+		var keys: Array = left_dict.keys()
+		for key_value in right_dict.keys():
+			if not keys.has(key_value):
+				keys.append(key_value)
+		keys.sort_custom(func(a: Variant, b: Variant) -> bool: return str(a) < str(b))
+		for key_value in keys:
+			if not left_dict.has(key_value) or not right_dict.has(key_value):
+				return "%s.%s:missing" % [path, str(key_value)]
+			var nested := _first_mismatch_path(left_dict.get(key_value), right_dict.get(key_value), "%s.%s" % [path, str(key_value)])
+			if not nested.is_empty():
+				return nested
+		return ""
+	if typeof(left) == TYPE_ARRAY:
+		var left_array := _array(left)
+		var right_array := _array(right)
+		if left_array.size() != right_array.size():
+			return "%s:size" % path
+		for index in range(left_array.size()):
+			var nested := _first_mismatch_path(left_array[index], right_array[index], "%s[%d]" % [path, index])
+			if not nested.is_empty():
+				return nested
+		return ""
+	return "" if left == right else path
+
 
 func _sanitize_policy_observation(value: Dictionary) -> Dictionary:
 	var clean := {}
@@ -231,7 +345,7 @@ func _policy_observation(run_state: RunState) -> Dictionary:
 func _empty_opportunity_ledger() -> Dictionary:
 	var ledger := {}
 	for system_id in OPPORTUNITY_SYSTEMS:
-		ledger[system_id] = {"visible": 0, "inaccessible": 0, "selected": 0, "accepted": 0, "rejected": 0, "settled": 0, "visible_not_selected": 0}
+		ledger[system_id] = {"observations": 0, "available_actions": 0, "visible": 0, "inaccessible": 0, "selected": 0, "accepted": 0, "rejected": 0, "settled": 0, "visible_not_selected": 0}
 	return ledger
 
 
@@ -316,7 +430,9 @@ func _record_public_opportunities(opportunity_ids: Dictionary, run: Dictionary) 
 	for system_id in OPPORTUNITY_SYSTEMS:
 		var row := _dict(ledger.get(system_id, {}))
 		var offered_count := _array(opportunity_ids.get(system_id, [])).size()
+		row["observations"] = int(row.get("observations", 0)) + 1
 		if offered_count > 0:
+			row["available_actions"] = int(row.get("available_actions", 0)) + 1
 			row["visible"] = int(row.get("visible", 0)) + offered_count
 		else:
 			row["inaccessible"] = int(row.get("inaccessible", 0)) + 1
@@ -551,6 +667,9 @@ func _simulate_audit_run(style: Dictionary, seed: String, max_actions: int) -> D
 		run["stopped_reason"] = "terminal"
 	_finalize_opportunity_ledger(run)
 	_finalize_run(run, run_state)
+	var final_debt_components := _debt_components(run_state)
+	run["debt_principal"] = int(final_debt_components.get("principal", 0))
+	run["debt_interest"] = int(final_debt_components.get("interest", 0))
 	run["inventory_value"] = _inventory_resale_value(run_state)
 	run["liquid_cash"] = run_state.bankroll
 	run["net_position"] = run_state.bankroll + int(run.get("inventory_value", 0)) - int(run.get("debt_balance", 0))
@@ -570,9 +689,12 @@ func _record_curve(run: Dictionary, run_state: RunState, label: String) -> void:
 		return
 	var row := _dict(curve[-1])
 	var inventory_value := _inventory_resale_value(run_state)
+	var debt_components := _debt_components(run_state)
 	row["liquid_cash"] = run_state.bankroll
 	row["inventory_value"] = inventory_value
 	row["net_position"] = run_state.bankroll + inventory_value - _total_debt_balance(run_state)
+	row["debt_principal"] = int(debt_components.get("principal", 0))
+	row["debt_interest"] = int(debt_components.get("interest", 0))
 	curve[-1] = row
 	run["curve"] = curve
 
@@ -589,6 +711,19 @@ func _sum_int_map(value: Dictionary) -> int:
 	for amount in value.values():
 		total += int(amount)
 	return total
+
+
+func _debt_components(run_state: RunState) -> Dictionary:
+	var principal := 0
+	var interest := 0
+	for debt_value in run_state.debt:
+		var debt := _dict(debt_value)
+		var balance := maxi(0, int(debt.get("balance", 0)))
+		var original_principal := maxi(0, int(debt.get("principal", balance)))
+		var outstanding_principal := mini(balance, original_principal)
+		principal += outstanding_principal
+		interest += maxi(0, balance - outstanding_principal)
+	return {"principal": principal, "interest": interest, "balance": principal + interest}
 
 
 func _prepare_style_fixture(run_state: RunState, run: Dictionary) -> void:
@@ -764,8 +899,6 @@ func _seek_ranked_crew_boundary(run_state: RunState, run: Dictionary) -> String:
 
 
 func _seek_recruitment_boundary(run_state: RunState, run: Dictionary) -> String:
-	if str(run_state.crew_standing().get("rank", "stranger")) == "stranger":
-		return ""
 	var desired_member_ids: Array[String] = []
 	match _active_style:
 		"numbers_specialist":
@@ -832,7 +965,8 @@ func _world_node_for_public_location(run_state: RunState, location_id: String) -
 
 
 func _crew_marker_boundary(run_state: RunState, run: Dictionary) -> String:
-	if str(run_state.crew_standing().get("rank", "stranger")) != "stranger":
+	var state := _dict(run.get("style_state", {}))
+	if bool(state.get("crew_marker_used", false)):
 		return ""
 	var service := RunActionServiceScript.new()
 	service.setup(library, run_state)
@@ -842,6 +976,8 @@ func _crew_marker_boundary(run_state: RunState, run: Dictionary) -> String:
 	var used := service.use_hook("lender", "the_crew")
 	if not bool(used.get("ok", false)):
 		return ""
+	state["crew_marker_used"] = true
+	run["style_state"] = state
 	run["lender_uses"] = int(run.get("lender_uses", 0)) + 1
 	_count_action(run, "hook")
 	return "crew_marker_loan"
@@ -960,14 +1096,15 @@ func _crew_job_boundary(run_state: RunState, run: Dictionary, member_id: String,
 				_count_action(run, "hook")
 				return "crew_job:%s:collection" % str(job.get("definition_id", "unknown"))
 		return ""
-	if run_state.crew_rank(member_id) == "stranger" or run_state.crew_rank(member_id) == "marker":
+	var public_rank := _public_crew_rank(run_state, member_id)
+	if public_rank == "stranger" or public_rank == "marker":
 		return ""
-	var rank_index := CrewStateModelScript.RANK_IDS.find(run_state.crew_rank(member_id))
+	var rank_index := CrewStateModelScript.RANK_IDS.find(public_rank)
 	var target_index := CrewStateModelScript.RANK_IDS.find(target_rank)
 	if rank_index >= target_index and not keep_working:
 		return ""
-	var definition := _best_job_for_member(member_id, run_state.crew_rank(member_id), run_state.current_world_node_id())
-	if definition.is_empty():
+	var offer := _best_public_job_for_member(run_state, member_id)
+	if offer.is_empty():
 		return ""
 	# A policy may act only on a naturally visible contact. It never rewrites
 	# presence, rank, route, capability, or any other production authority.
@@ -975,7 +1112,7 @@ func _crew_job_boundary(run_state: RunState, run: Dictionary, member_id: String,
 	var naturally_present := contact_presence.any(func(value: Variant) -> bool: return typeof(value) == TYPE_DICTIONARY and str((value as Dictionary).get("member_id", "")) == member_id)
 	if not naturally_present:
 		return ""
-	var accepted := run_state.crew_job_accept_definition(str(definition.get("id", "")))
+	var accepted := run_state.crew_job_accept_definition(str(offer.get("definition_id", "")))
 	var job_id := str(accepted.get("job_id", ""))
 	if not bool(accepted.get("ok", false)) or job_id.is_empty():
 		return ""
@@ -995,30 +1132,26 @@ func _mark_conditioning(run: Dictionary, note: String) -> void:
 		run["conditioning"] = "%s %s" % [existing, note]
 
 
-func _best_job_for_member(member_id: String, rank_id: String, current_node_id: String) -> Dictionary:
-	var rank_index := CrewStateModelScript.RANK_IDS.find(rank_id)
+func _best_public_job_for_member(run_state: RunState, member_id: String) -> Dictionary:
 	var best := {}
 	var best_cash := -1
-	for value in CrewStateModelScript.job_definitions_for_member(member_id):
-		var definition := _dict(value)
-		if str(definition.get("id", "")) == "crew_favor_delivery":
+	for value in run_state.crew_job_board_offers():
+		var offer := _dict(value)
+		if str(offer.get("member_id", "")) != member_id:
 			continue
-		if CrewStateModelScript.RANK_IDS.find(str(definition.get("min_rank", "associate"))) > rank_index:
-			continue
-		var requested_nodes := _string_array(_dict(definition.get("payload", {})).get("target_node_ids", []))
-		if str(definition.get("kind", "")) in ["package_run", "package_delivery", "numbers_route", "lookout_hold"] and requested_nodes.has(current_node_id):
-			continue
-		var cash := int(_dict(definition.get("rewards", {})).get("cash", 0))
-		if str(definition.get("kind", "")) == "collection":
-			cash = int(_dict(definition.get("payload", {})).get("friendly_cash", 0))
-		if cash > best_cash:
+		var cash := int(offer.get("cash", 0))
+		if cash > best_cash or cash == best_cash and str(offer.get("definition_id", "")) < str(best.get("definition_id", "~")):
 			best_cash = cash
-			best = definition
+			best = offer
 	return best
 
 
 func _crew_at_least_rank(run_state: RunState, member_id: String, target_rank: String) -> bool:
-	return CrewStateModelScript.RANK_IDS.find(run_state.crew_rank(member_id)) >= CrewStateModelScript.RANK_IDS.find(target_rank)
+	return CrewStateModelScript.RANK_IDS.find(_public_crew_rank(run_state, member_id)) >= CrewStateModelScript.RANK_IDS.find(target_rank)
+
+
+func _public_crew_rank(run_state: RunState, member_id: String) -> String:
+	return str(run_state.crew_recruitment_public_state(member_id).get("standing", "stranger"))
 
 
 func _drive_stake_job_boundary(run_state: RunState, run: Dictionary, job: Dictionary) -> String:
@@ -1050,11 +1183,21 @@ func _world_node_for_archetype(run_state: RunState, archetype_id: String) -> Str
 
 func _apply_travel_choice(run_state: RunState, run: Dictionary, choice: Dictionary) -> bool:
 	var target_node_id := str(choice.get("id", "")).strip_edges()
-	var route := _dict(choice.get("route", {}))
-	if target_node_id.is_empty() or route.is_empty() or target_node_id == run_state.current_world_node_id():
+	# The policy selects only an opaque public id. Re-read every authoritative
+	# route/cost/status field from the live public action surface so an adapter
+	# caller cannot smuggle a cheaper route, different heat, or forged access in
+	# the dictionary it passes back.
+	var canonical_choice := {}
+	for public_value in _travel_choices(run_state):
+		var public_choice := _dict(public_value)
+		if str(public_choice.get("id", "")).strip_edges() == target_node_id and bool(public_choice.get("enabled", false)):
+			canonical_choice = public_choice
+			break
+	var route := _dict(canonical_choice.get("route", {}))
+	if target_node_id.is_empty() or canonical_choice.is_empty() or route.is_empty() or target_node_id == run_state.current_world_node_id():
 		return false
-	var route_status := _dict(choice.get("status", {}))
-	route["cost"] = int(choice.get("cost", route.get("cost", 0)))
+	var route_status := _dict(canonical_choice.get("status", {}))
+	route["cost"] = int(canonical_choice.get("cost", route.get("cost", 0)))
 	if route_status.has("suspicion_delta"):
 		route["suspicion_delta"] = int(route_status.get("suspicion_delta", route.get("suspicion_delta", 0)))
 	var previous_environment := run_state.current_environment.duplicate(true)
@@ -1068,7 +1211,7 @@ func _apply_travel_choice(run_state: RunState, run: Dictionary, choice: Dictiona
 	GameModule.apply_result(run_state, result)
 	run_state.advance_environment_turns(1)
 	run["travel_count"] = int(run.get("travel_count", 0)) + 1
-	run["route_cost_total"] = int(run.get("route_cost_total", 0)) + maxi(0, int(choice.get("cost", route.get("cost", 0))))
+	run["route_cost_total"] = int(run.get("route_cost_total", 0)) + maxi(0, int(canonical_choice.get("cost", route.get("cost", 0))))
 	if str(run_state.current_environment.get("archetype_id", "")) == GRAND_CASINO_ID:
 		run["grand_casino_entries"] = int(run.get("grand_casino_entries", 0)) + 1
 	return true
@@ -1706,6 +1849,8 @@ func _audit_aggregate(runs: Array, max_actions: int) -> Dictionary:
 			"final_heat": _distribution(selected, "final_heat"),
 			"peak_heat": _distribution(selected, "peak_heat"),
 			"final_debt": _distribution(selected, "debt_balance"),
+			"final_debt_principal": _distribution(selected, "debt_principal"),
+			"final_debt_interest": _distribution(selected, "debt_interest"),
 			"inventory_value": _distribution(selected, "inventory_value"),
 			"liquid_cash": _distribution(selected, "liquid_cash"),
 			"net_position": _distribution(selected, "net_position"),
@@ -1838,9 +1983,20 @@ func _opportunity_aggregate(runs: Array) -> Dictionary:
 		for system_id in OPPORTUNITY_SYSTEMS:
 			var total := _dict(result.get(system_id, {}))
 			var row := _dict(ledger.get(system_id, {}))
-			for key in ["visible", "inaccessible", "selected", "accepted", "rejected", "settled", "visible_not_selected"]:
+			for key in ["observations", "available_actions", "visible", "inaccessible", "selected", "accepted", "rejected", "settled", "visible_not_selected"]:
 				total[key] = int(total.get(key, 0)) + int(row.get(key, 0))
 			result[system_id] = total
+	for system_id in OPPORTUNITY_SYSTEMS:
+		var row := _dict(result.get(system_id, {}))
+		row["rates"] = {
+			"selected_per_visible_offer": _rate_stat(int(row.get("selected", 0)), int(row.get("visible", 0))),
+			"accepted_per_selection": _rate_stat(int(row.get("accepted", 0)), int(row.get("selected", 0))),
+			"rejected_per_selection": _rate_stat(int(row.get("rejected", 0)), int(row.get("selected", 0))),
+			"settled_per_acceptance": _rate_stat(int(row.get("settled", 0)), int(row.get("accepted", 0))),
+			"available_per_observed_action": _rate_stat(int(row.get("available_actions", 0)), int(row.get("observations", 0))),
+			"inaccessible_per_observed_action": _rate_stat(int(row.get("inaccessible", 0)), int(row.get("observations", 0))),
+		}
+		result[system_id] = row
 	return result
 
 
@@ -1968,6 +2124,11 @@ func _curve_distribution(runs: Array, max_actions: int) -> Array:
 		var bankrolls: Array = []
 		var heats: Array = []
 		var debts: Array = []
+		var principals: Array = []
+		var interests: Array = []
+		var inventory_values: Array = []
+		var liquid_values: Array = []
+		var net_positions: Array = []
 		for run_value in runs:
 			if typeof(run_value) != TYPE_DICTIONARY:
 				continue
@@ -1979,7 +2140,22 @@ func _curve_distribution(runs: Array, max_actions: int) -> Array:
 			bankrolls.append(float(point.get("bankroll", 0)))
 			heats.append(float(point.get("heat", 0)))
 			debts.append(float(point.get("debt_balance", 0)))
-		rows.append({"action": action, "bankroll": _distribution_values(bankrolls), "heat": _distribution_values(heats), "debt": _distribution_values(debts)})
+			principals.append(float(point.get("debt_principal", 0)))
+			interests.append(float(point.get("debt_interest", 0)))
+			inventory_values.append(float(point.get("inventory_value", 0)))
+			liquid_values.append(float(point.get("liquid_cash", point.get("bankroll", 0))))
+			net_positions.append(float(point.get("net_position", 0)))
+		rows.append({
+			"action": action,
+			"bankroll": _distribution_values(bankrolls),
+			"liquid_cash": _distribution_values(liquid_values),
+			"inventory_value": _distribution_values(inventory_values),
+			"debt": _distribution_values(debts),
+			"debt_principal": _distribution_values(principals),
+			"debt_interest": _distribution_values(interests),
+			"net_position": _distribution_values(net_positions),
+			"heat": _distribution_values(heats),
+		})
 	return rows
 
 
