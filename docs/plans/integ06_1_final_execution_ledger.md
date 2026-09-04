@@ -200,7 +200,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools\scenario_sequence_pari
 
 The supported Foundation Contracts report must also retain its terminal route,
 five representative failure reasons, and profile-recording checks. A larger
-policy simulation can supplement those contracts:
+conditioned balance simulation can supplement those contracts, but it is
+explicitly nonbinding because its legacy scenarios select a Grand Casino start,
+entry bankroll/invitation, and synthetic collection loadout:
 
 ```powershell
 & $godot --headless --path . --script res://tools/endgame_metrics_probe.gd -- `
@@ -211,12 +213,15 @@ policy simulation can supplement those contracts:
 ```
 
 Neither older command is an exact native/Web full-run composition soak. The new
-strict producer embeds the existing production-core endgame policy driver in
-fresh Windows and Web release exports. It performs SaveService round trips every
-seven actions, persists every terminal result through ProfileInventory, repeats
-each native shard independently, compares exact semantic hashes with Web, and
-requires all three victory routes, at least two failure routes, and a Crew-
-ignoring control:
+strict producer embeds the production-core action driver in fresh Windows and
+Web release exports, but replaces the conditioned balance scenarios with a
+binding policy-only catalog. Every case starts a standard production challenge;
+the binding mode disables caller-selected collection state and rejects casino
+teleports, bankroll overrides, invitations, or collection modifiers before the
+run starts. It performs SaveService round trips every seven actions, persists
+every terminal result through ProfileInventory, repeats each native shard
+independently, compares exact semantic hashes with Web, and requires all three
+victory routes, at least two failure routes, and a Crew-ignoring control:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File `
@@ -228,7 +233,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File `
   -RequireGodot
 ```
 
-The producer refuses an existing output directory, dirty tracked source,
+Each shard records its authority-setup audit. The producer refuses an existing
+output directory, dirty tracked source,
 mismatched candidate commit/tree, or mismatched profile/tool hashes. It reports
 allocation counters unavailable instead of zero and delegates frame-trajectory
 measurement explicitly to the exact-candidate `perf06_1` manifest. This

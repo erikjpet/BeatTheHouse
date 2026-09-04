@@ -14,6 +14,12 @@ const SCHEMA := "beat_the_house.integ06_1_terminal_soak_shard/v1"
 const VERSION := 1
 const DEFAULT_MAX_ACTIONS := 132
 const DEFAULT_SAVE_LOAD_STRIDE := 7
+const POLICY_SCENARIOS := [
+	{"id": "clean_prepared", "policy": "clean", "challenge_id": "", "label": "Clean policy from a standard production challenge"},
+	{"id": "clean_tight", "policy": "clean", "challenge_id": "", "label": "Clean policy alternate seed from a standard production challenge"},
+	{"id": "cheat_prepared", "policy": "cheat", "challenge_id": "", "label": "Cheat policy from a standard production challenge"},
+	{"id": "cheat_tight", "policy": "cheat_tight", "challenge_id": "", "label": "Cautious cheat policy from a standard production challenge"},
+]
 const CASES := [
 	{"id": "clean_prepared_01", "scenario_id": "clean_prepared", "seed": "INTEG06-1-CLEAN-PREPARED-001", "crew_ignoring_control": false},
 	{"id": "clean_prepared_02", "scenario_id": "clean_prepared", "seed": "INTEG06-1-CLEAN-PREPARED-002", "crew_ignoring_control": false},
@@ -52,6 +58,7 @@ func _run() -> void:
 	probe.set("integration_capture_trace", true)
 	probe.set("integration_save_load_stride", save_load_stride)
 	probe.set("integration_save_slot_prefix", "integ06_1_terminal_%d" % shard_index)
+	probe.set("integration_production_only", true)
 	probe.call("_build_game_modules")
 
 	var profile: Variant = ProfileInventoryScript.new()
@@ -74,13 +81,16 @@ func _run() -> void:
 		var run: Dictionary = probe.call("_simulate_run", case_index, scenario, str(case_data.get("seed", "")), max_actions)
 		var elapsed_ms := float(Time.get_ticks_usec() - case_started_usec) / 1000.0
 		var terminal := bool(run.get("won", false)) or bool(run.get("lost", false))
+		var authority_violations := _array(run.get("authority_violations", []))
 		var route := str(run.get("victory_route", "")) if bool(run.get("won", false)) else str(run.get("failure_reason", ""))
 		var profile_result: Dictionary = {}
 		if terminal:
 			profile_result = profile.record_run_result(_profile_snapshot(run, case_index))
 		var save_points := _array(run.get("save_load_points", []))
 		var save_failures := _array(run.get("save_load_failures", []))
-		var row_passed := terminal and save_points.size() >= 3 and save_failures.is_empty() and bool(profile_result.get("ok", false))
+		var row_passed := terminal and authority_violations.is_empty() and str(run.get("authority_setup", "")) == "standard_production_challenge" and save_points.size() >= 3 and save_failures.is_empty() and bool(profile_result.get("ok", false))
+		if not authority_violations.is_empty():
+			failures.append("%s rejected caller-injected authority setup: %s" % [str(case_data.get("id", "")), ", ".join(authority_violations)])
 		if not terminal:
 			failures.append("%s did not reach a terminal state within %d actions." % [str(case_data.get("id", "")), max_actions])
 		if save_points.size() < 3:
@@ -94,6 +104,8 @@ func _run() -> void:
 			"scenario_id": str(case_data.get("scenario_id", "")),
 			"seed": str(case_data.get("seed", "")),
 			"crew_ignoring_control": bool(case_data.get("crew_ignoring_control", false)),
+			"authority_setup": str(run.get("authority_setup", "")),
+			"authority_violations": authority_violations,
 			"trace": _array(run.get("semantic_trace", [])),
 			"terminal": {"status": str(run.get("final_status", "")), "won": bool(run.get("won", false)), "lost": bool(run.get("lost", false)), "route": route},
 			"save_load_points": save_points,
@@ -106,6 +118,8 @@ func _run() -> void:
 			"scenario_id": str(case_data.get("scenario_id", "")),
 			"policy": str(run.get("policy", "")),
 			"crew_ignoring_control": bool(case_data.get("crew_ignoring_control", false)),
+			"authority_setup": str(run.get("authority_setup", "")),
+			"authority_violations": authority_violations,
 			"actions": int(run.get("actions", 0)),
 			"game_actions": int(run.get("game_actions", 0)),
 			"travel_count": int(run.get("travel_count", 0)),
@@ -147,6 +161,9 @@ func _run() -> void:
 		failures.append("Terminal-soak process retained %d orphan nodes." % int(retained_after.get("orphans", 0)))
 	if max_state_bytes > 1500000:
 		failures.append("Terminal-soak serialized semantic state exceeded the 1,500,000-byte release bound.")
+	var authority_audit_violations: Array = []
+	for row_value in rows:
+		authority_audit_violations.append_array(_array(_dict(row_value).get("authority_violations", [])))
 	var report := {
 		"schema": SCHEMA,
 		"version": VERSION,
@@ -157,6 +174,14 @@ func _run() -> void:
 		"shard": {"index": shard_index, "count": shard_count, "seed_ids": seed_ids},
 		"platform": OS.get_name(),
 		"active_systems": _observed_systems(rows),
+		"authority_setup_audit": {
+			"binding_mode": "standard_production_challenge_policy_only",
+			"caller_injected_bankroll": false,
+			"caller_injected_invite": false,
+			"caller_selected_collection": false,
+			"legacy_conditioned_scenarios_binding": false,
+			"violations": authority_audit_violations,
+		},
 		"authored_max_counts": {"documented_seed_cases": CASES.size(), "save_load_stride_actions": save_load_stride, "max_actions_per_case": max_actions},
 		"phase_samples": [],
 		"phase_samples_status": {"available": false, "reason": "Core-policy terminal evidence; frame trajectory is owned by the paired perf06_1 release measurement."},
@@ -182,7 +207,7 @@ func _run() -> void:
 
 
 func _scenario(scenario_id: String) -> Dictionary:
-	for scenario_value in EndgameProbeScript.SCENARIOS:
+	for scenario_value in POLICY_SCENARIOS:
 		if typeof(scenario_value) == TYPE_DICTIONARY and str((scenario_value as Dictionary).get("id", "")) == scenario_id:
 			return (scenario_value as Dictionary).duplicate(true)
 	return {}

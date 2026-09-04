@@ -6,7 +6,7 @@ Harness prerequisite: `1131c6262eb04b2cbbabc6265caba71c4c234e22`
 Product/content repair: `c9e5941f43c3f507921482bdac1e7a8c34a75a18`
 Composition harness: `91af060af1b28bd5217f8c2ee9454fc0aa589567`
 Exhaustive composition producer: `408c670a` plus eligibility proof `9c30110b`
-Terminal native/Web soak producer: `2bda2450`
+Terminal native/Web soak producer: `2bda2450` plus authority hardening at the current branch head
 Package-E layout correction checkpoint: `b7a75334` (**runtime unreviewed**)
 
 This report records the completed historical-save and maximal-composition work
@@ -184,3 +184,21 @@ candidate execution, and retained green artifacts are still required.
 
 Until those items have reproducible green evidence, `integ06_1` must remain
 TODO and cannot unblock the owner playtest by itself.
+
+## Binding terminal authority boundary
+
+The standalone `endgame_metrics_probe.gd` retains four casino-conditioned
+balance scenarios for nonbinding tuning work. Those scenarios directly choose
+a Grand Casino start, bankroll, invitation, and a synthetic collection item;
+they are therefore excluded from release qualification.
+
+`integ06_1_terminal_soak_main.gd` supplies a separate policy-only scenario
+catalog. Every binding case starts with `RunState.standard_challenge`, enters
+the generated first environment, and may choose only actions returned as
+available by production game, event, service, lender, and travel interfaces.
+The binding mode disables synthetic collection/loadout setup, delegates
+no-funds termination to `RunTerminalEvaluator`, and rejects a scenario before
+start if it requests a casino teleport, bankroll override, invitation, or
+caller-selected collection state. Each shard report records that authority
+audit. This source hardening is not runtime evidence; the strict producer must
+still compile and pass on the exact final candidate.
