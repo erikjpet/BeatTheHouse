@@ -5440,6 +5440,7 @@
                 {
                   "actor": {
                     "actor_id": "actor_floor_runner",
+                    "anchor_id": "punchline_high_stakes_runner_work_2",
                     "behavior": "work",
                     "label": "Floor service runner",
                     "pose": "arrival",
@@ -6585,7 +6586,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "fdc00aa994e6cd5aebdb74da695d4beff33369c43644dcd1ea7515dbaf431f5f"
+        "sequence_signature": "895f60c0ff36ada63797eba0b442f0629364e2fa4c1a8f950c7f214fa6629c14"
       }
     },
     {
