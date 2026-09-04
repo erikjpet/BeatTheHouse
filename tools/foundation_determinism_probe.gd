@@ -11,6 +11,7 @@ const WorldMapScript := preload("res://scripts/core/world_map.gd")
 const CoinPusherSolverScript := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
 const CoinPusherLiveSessionScript := preload("res://scripts/games/coin_pusher/coin_pusher_live_session.gd")
 const FoundationMainScript := preload("res://scripts/ui/foundation_main.gd")
+const FoundationActionViewModelScript := preload("res://scripts/ui/foundation_action_view_model.gd")
 
 const DEFAULT_SEED_COUNT := 10
 const DEFAULT_SEED_PREFIX := "FOUNDATION-DETERMINISM"
@@ -729,6 +730,10 @@ func _resolve_bar_dice_host_round(run_state: RunState, action_id: String, stake:
 	host.set("current_game", game)
 	host.set("game_module_cache", {"bar_dice": game})
 	host.set("run_state", run_state)
+	# FoundationMain loads this run-UI dependency lazily during its normal scene
+	# build. This headless host seam is intentionally never mounted, so provide
+	# the same script explicitly before stake validation reaches the view model.
+	host.set("FoundationActionViewModelScript", FoundationActionViewModelScript)
 	var stake_index := _bar_dice_stake_index(run_state, stake)
 	var table := _game_state(run_state, "bar_dice")
 	var ladder: Array = table.get("stake_ladder", []) if typeof(table.get("stake_ladder", [])) == TYPE_ARRAY else []
