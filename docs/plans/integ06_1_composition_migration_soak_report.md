@@ -200,5 +200,8 @@ The binding mode disables synthetic collection/loadout setup, delegates
 no-funds termination to `RunTerminalEvaluator`, and rejects a scenario before
 start if it requests a casino teleport, bankroll override, invitation, or
 caller-selected collection state. Each shard report records that authority
-audit. This source hardening is not runtime evidence; the strict producer must
-still compile and pass on the exact final candidate.
+audit. It also refuses to manufacture progress by skipping a travel lock or
+advancing an idle turn when no visible player action can be selected; such a
+case remains nonterminal and fails the gate. This source hardening is not
+runtime evidence; the strict producer must still compile and pass on the exact
+final candidate.

@@ -413,6 +413,10 @@ func _simulate_run(run_index: int, scenario: Dictionary, seed: String, max_actio
 				run_state.fail_run(RunState.FAILURE_BANKROLL_ZERO, RunState.BANKROLL_ZERO_FAILURE_MESSAGE)
 				run["stopped_reason"] = "bankroll_zero"
 				break
+		if integration_production_only:
+			var no_action_terminal: Dictionary = RunTerminalEvaluatorScript.evaluate_and_apply(run_state, library)
+			run["stopped_reason"] = "production_terminal_evaluator" if bool(no_action_terminal.get("terminal", false)) else "no_visible_player_action"
+			break
 		run_state.advance_environment_turns(1)
 		_count_action(run, "idle")
 		_record_curve(run, run_state, "idle")
@@ -1024,6 +1028,8 @@ func _try_travel(run_state: RunState, run: Dictionary, policy: String) -> bool:
 		_record_travel_decision(run, run_state, scored_choices, "", best_score, "no_choice")
 		var lock_remaining := run_state.current_travel_lock_remaining()
 		if lock_remaining > 0:
+			if integration_production_only:
+				return false
 			run_state.advance_environment_turns(lock_remaining)
 			return _try_travel(run_state, run, policy)
 		return false
