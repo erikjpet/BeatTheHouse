@@ -29,6 +29,10 @@ $captures = @(
             travel_path = @("gas_station_casino")
             expected_archetype = "gas_station_casino"
             enter_game = "slot"
+            surface_steps = @(
+                [ordered]@{ type = "click"; action = "slot_spin"; index = 0; confirm = $true; wait_msec = 50 }
+            )
+            expected_surface_state = "slot_after_spin"
         }
     }
     [ordered]@{
@@ -42,6 +46,11 @@ $captures = @(
             travel_path = @("motel", "bar")
             expected_archetype = "bar"
             enter_game = "bar_dice"
+            surface_steps = @(
+                [ordered]@{ type = "click"; action = "bar_dice_roll"; index = 0; confirm = $true; wait_msec = 50 }
+                [ordered]@{ type = "click"; action = "bar_dice_resolve"; index = 0; confirm = $true; wait_msec = 50 }
+            )
+            expected_surface_state = "bar_dice_after_round"
         }
     }
     [ordered]@{
@@ -63,6 +72,12 @@ $captures = @(
             expected_archetype = "small_underground_casino"
             expected_lender_debt = "the_crew"
             enter_game = "blackjack"
+            surface_steps = @(
+                [ordered]@{ type = "click"; action = "blackjack_chip"; index = 0; confirm = $true; wait_msec = 50 }
+                [ordered]@{ type = "click"; action = "blackjack_deal"; index = 0; confirm = $true; wait_msec = 50 }
+                [ordered]@{ type = "click"; action = "blackjack_stand"; index = 0; confirm = $true; wait_msec = 50 }
+            )
+            expected_surface_state = "blackjack_after_hand"
         }
     }
 )
