@@ -2309,8 +2309,10 @@ func _adjacent_scenario_tolerance_delta(run_state: RunState) -> int:
 		var neighbor := b if a == current_node else a if b == current_node else ""
 		if neighbor.is_empty():
 			continue
-		var public_scenario := run_state.scenario_for_node(neighbor)
-		var scenario_definition := library.scenario(str(public_scenario.get("id", "")))
+		# This is an internal read-only policy query. The public scenario accessor
+		# deep-copies the complete sequence package, which made first Web travel pay
+		# that cost once per neighboring node before a machine was ever opened.
+		var scenario_definition := run_state._seeded_scenario_definition_for_node_readonly(neighbor)
 		var mutations: Dictionary = scenario_definition.get("mutations", {}) if typeof(scenario_definition.get("mutations", {})) == TYPE_DICTIONARY else {}
 		var hooks: Dictionary = mutations.get("hook_flags", {}) if typeof(mutations.get("hook_flags", {})) == TYPE_DICTIONARY else {}
 		var nearby_band := str(hooks.get("nearby_alarm_tolerance_band", "")).to_lower()
