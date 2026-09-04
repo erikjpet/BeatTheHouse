@@ -26,8 +26,8 @@ $root = Split-Path -Parent $PSScriptRoot
 . (Join-Path $PSScriptRoot "web_perf_prestage_contract.ps1")
 . (Join-Path $PSScriptRoot "web_server_lifecycle.ps1")
 $trackedStatus = @(& git -C $root status --short --untracked-files=no)
-if ($Plan -eq "coin_pusher" -and $trackedStatus.Count -gt 0) {
-    throw "Coin Pusher Web performance evidence requires a clean tracked source tree so its commit identity is exact."
+if ($trackedStatus.Count -gt 0) {
+    throw "Web performance evidence requires a clean tracked source tree so its commit identity is exact."
 }
 $node = Get-Command node -ErrorAction SilentlyContinue
 if (-not $node) {
@@ -36,10 +36,7 @@ if (-not $node) {
 $outPath = Resolve-WebPerfEvidencePath -Root $root -Out $Out
 $outDir = Split-Path -Parent $outPath
 if (Test-Path -LiteralPath $outPath) {
-    if ($Plan -eq "coin_pusher") {
-        throw "Refusing to overwrite retained Coin Pusher Web performance evidence: $outPath"
-    }
-    Remove-Item -LiteralPath $outPath -Force
+    throw "Refusing to overwrite retained Web performance evidence: $outPath"
 }
 New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 
@@ -214,6 +211,9 @@ if (-not (Test-Path -LiteralPath $outPath)) {
 }
 $reportEnvelope = Get-Content -LiteralPath $outPath -Raw | ConvertFrom-Json
 $report = $reportEnvelope.report
+if (@(& git -C $root status --short --untracked-files=no).Count -ne 0 -or (& git -C $root rev-parse HEAD).Trim() -cne $sourceCommit) {
+    throw "Tracked candidate changed during Web measurement."
+}
 $failures = [System.Collections.Generic.List[string]]::new()
 
 $readyWall = 0

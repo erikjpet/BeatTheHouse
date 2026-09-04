@@ -64,6 +64,7 @@ $exitCode = $null
 try { $exitCode = $process.ExitCode } catch { $exitCode = $null }
 if ($null -ne $exitCode -and $exitCode -ne 0) { throw "Native runtime matrix exited $exitCode." }
 if (-not (Test-Path -LiteralPath $rawReport -PathType Leaf)) { throw "Native runtime emitted no report." }
+if ((& git -C $root rev-parse HEAD).Trim() -cne $head -or @(& git -C $root status --short --untracked-files=no).Count -ne 0) { throw "Tracked candidate changed during native measurement." }
 $report = Get-Content -LiteralPath $rawReport -Raw | ConvertFrom-Json
 if ([string]$report.build_identity.source_commit -cne $head -or [string]$report.build_identity.export_sha256 -cne $buildHash) { throw "Native report identity does not match the exported candidate." }
 if ([string]$report.platform -cne "windows" -or [string]$report.plan -cne $Plan) { throw "Native report platform/plan identity is invalid." }

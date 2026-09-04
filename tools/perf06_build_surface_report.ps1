@@ -55,7 +55,7 @@ $launch = [ordered]@{
     resolution = "1280x720"
     renderer = "compatibility"
     power_plan = [string]$profileManifest.power_plan
-    actual_cpu_throttle_rate = [string]$summary.actual_cpu_throttle_rate
+    actual_cpu_throttle_rate = [string]$(if ($Platform -eq "native") { $summary.actual_cpu_throttle_rate } else { $summary.cpu_throttle_rate })
     actual_device_scale_factor = [double]$(if ($summary.actual_device_scale_factor) { $summary.actual_device_scale_factor } else { $summary.viewport.device_pixel_ratio })
 }
 if ($Platform -eq "native") {
