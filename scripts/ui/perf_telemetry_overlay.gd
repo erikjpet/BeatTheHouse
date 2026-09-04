@@ -507,6 +507,11 @@ func _run_distribution_fresh_start_plan() -> void:
 		and play_button.text == "PLAY" \
 		and not play_button.disabled \
 		and play_button.is_visible_in_tree()
+	var audio_disabled_control := OS.get_environment("BTH_PERF_DISABLE_AUDIO").strip_edges() == "1"
+	if audio_disabled_control and app != null:
+		var music_player: Variant = app.get("procedural_music_player")
+		if music_player != null:
+			music_player.set("audio_enabled", false)
 	var play_started_msec := Time.get_ticks_msec()
 	if play_ready:
 		app.call("_on_start_pressed")
@@ -525,6 +530,7 @@ func _run_distribution_fresh_start_plan() -> void:
 		"fresh_profile": fresh_profile,
 		"no_saved_run": no_saved_run,
 		"play_ready": play_ready,
+		"audio_disabled_control": audio_disabled_control,
 		"before_screen": str(before_screen.get("screen", "")),
 		"after_screen": str(after_screen.get("screen", "")),
 		"tutorial_started": tutorial_started,
