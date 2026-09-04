@@ -22,6 +22,19 @@ $roots = [ordered]@{
     ItemFoundPopupScript = "res://scripts/ui/item_found_popup.gd"
     CoachOverlayScript = "res://scripts/ui/coach_overlay.gd"
     CoachViewModelScript = "res://scripts/ui/coach_view_model.gd"
+    EnvironmentInteractionViewModelScript = "res://scripts/ui/environment_interaction_view_model.gd"
+    EnvironmentInteractionControllerScript = "res://scripts/ui/environment_interaction_controller.gd"
+    FoundationActionViewModelScript = "res://scripts/ui/foundation_action_view_model.gd"
+    TerminalConsequenceViewModelScript = "res://scripts/ui/terminal_consequence_view_model.gd"
+    FoundationHudViewModelScript = "res://scripts/ui/foundation_hud_view_model.gd"
+    CageCounterViewModelScript = "res://scripts/ui/cage_counter_view_model.gd"
+    CageAtmViewModelScript = "res://scripts/ui/cage_atm_view_model.gd"
+    WagerConfirmationControllerScript = "res://scripts/ui/wager_confirmation_controller.gd"
+    RunInventoryViewModelScript = "res://scripts/ui/run_inventory_view_model.gd"
+    MetaItemInteractionViewModelScript = "res://scripts/ui/meta_item_interaction_view_model.gd"
+    BagOpenReelViewModelScript = "res://scripts/ui/bag_open_reel_view_model.gd"
+    RunJournalViewModelScript = "res://scripts/ui/run_journal_view_model.gd"
+    FoundationTravelViewModelScript = "res://scripts/ui/foundation_travel_view_model.gd"
 }
 
 foreach ($entry in $roots.GetEnumerator()) {
@@ -34,6 +47,20 @@ foreach ($entry in $roots.GetEnumerator()) {
     }
     if ($source.Contains("const $($entry.Key) := preload(`"$($entry.Value)`")")) {
         throw "Run-UI root is still parsed through a direct preload: $($entry.Key)"
+    }
+}
+
+$stageContracts = @(
+    '0: ["GameSurfaceCanvasScript", "SfxPlayerScript", "FoundationHudBarScript", "EnvironmentHeaderScript", "CheatDockScript", "RunReportScreenScript", "RunReportViewModelScript", "HeatGainFeedbackOverlayScript", "EnvironmentInteractionViewModelScript", "EnvironmentInteractionControllerScript", "FoundationActionViewModelScript", "TerminalConsequenceViewModelScript", "FoundationHudViewModelScript", "CageCounterViewModelScript", "CageAtmViewModelScript"]',
+    '4: ["WagerConfirmationControllerScript"]',
+    '6: ["RunInventoryScreenScript", "RunInventoryViewModelScript"]',
+    '7: ["MetaItemInteractionScreenScript", "BagOpenReelScript", "MetaItemInteractionViewModelScript", "BagOpenReelViewModelScript"]',
+    '8: ["RunJournalViewModelScript"]',
+    '10: ["WorldMapCanvasScript", "WorldMapOverlayControllerScript", "FoundationTravelViewModelScript"]'
+)
+foreach ($stageContract in $stageContracts) {
+    if (-not $source.Contains($stageContract)) {
+        throw "Deferred run-UI stage lost its atomic root group: $stageContract"
     }
 }
 
@@ -85,4 +112,4 @@ foreach ($forbidden in $forbiddenTypeChecks) {
     }
 }
 
-Write-Output "PASS: 17 run-UI roots are deferred behind atomic staged loading with fail-closed start/load guards."
+Write-Output "PASS: 30 run-UI roots are deferred behind atomic staged loading with fail-closed start/load guards."

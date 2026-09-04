@@ -132,23 +132,10 @@ const FoundationWidgetsScript := preload("res://scripts/ui/foundation_widgets.gd
 const UIArtScript := preload("res://scripts/ui/ui_art.gd")
 const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.gd")
 const AttributeBadgeRowScript := preload("res://scripts/ui/attribute_badge_row.gd")
-const RunInventoryViewModelScript := preload("res://scripts/ui/run_inventory_view_model.gd")
-const MetaItemInteractionViewModelScript := preload("res://scripts/ui/meta_item_interaction_view_model.gd")
-const BagOpenReelViewModelScript := preload("res://scripts/ui/bag_open_reel_view_model.gd")
-const CageCounterViewModelScript := preload("res://scripts/ui/cage_counter_view_model.gd")
-const CageAtmViewModelScript := preload("res://scripts/ui/cage_atm_view_model.gd")
 const MetaCollectionViewModelScript := preload("res://scripts/ui/meta_collection_view_model.gd")
-const RunJournalViewModelScript := preload("res://scripts/ui/run_journal_view_model.gd")
 const CareerStatsScreenScript := preload("res://scripts/ui/career_stats_screen.gd")
-const TerminalConsequenceViewModelScript := preload("res://scripts/ui/terminal_consequence_view_model.gd")
-const EnvironmentInteractionViewModelScript := preload("res://scripts/ui/environment_interaction_view_model.gd")
-const EnvironmentInteractionControllerScript := preload("res://scripts/ui/environment_interaction_controller.gd")
-const FoundationHudViewModelScript := preload("res://scripts/ui/foundation_hud_view_model.gd")
-const FoundationActionViewModelScript := preload("res://scripts/ui/foundation_action_view_model.gd")
-const FoundationTravelViewModelScript := preload("res://scripts/ui/foundation_travel_view_model.gd")
 const FoundationScreenBuilderScript := preload("res://scripts/ui/foundation_screen_builder.gd")
 const MetaSessionControllerScript := preload("res://scripts/ui/meta_session_controller.gd")
-const WagerConfirmationControllerScript := preload("res://scripts/ui/wager_confirmation_controller.gd")
 const ProceduralMusicPlayerScript := preload("res://scripts/ui/procedural_music_player.gd")
 const PerfTelemetryOverlayScript := preload("res://scripts/ui/perf_telemetry_overlay.gd")
 const RunTerminalEvaluatorScript := preload("res://scripts/core/run_terminal_evaluator.gd")
@@ -181,13 +168,28 @@ const RUN_UI_SCRIPT_PATHS := {
 	"CoachViewModelScript": "res://scripts/ui/coach_view_model.gd",
 	"CoachOverlayScript": "res://scripts/ui/coach_overlay.gd",
 	"SfxPlayerScript": "res://scripts/ui/sfx_player.gd",
+	"EnvironmentInteractionViewModelScript": "res://scripts/ui/environment_interaction_view_model.gd",
+	"EnvironmentInteractionControllerScript": "res://scripts/ui/environment_interaction_controller.gd",
+	"FoundationActionViewModelScript": "res://scripts/ui/foundation_action_view_model.gd",
+	"TerminalConsequenceViewModelScript": "res://scripts/ui/terminal_consequence_view_model.gd",
+	"FoundationHudViewModelScript": "res://scripts/ui/foundation_hud_view_model.gd",
+	"CageCounterViewModelScript": "res://scripts/ui/cage_counter_view_model.gd",
+	"CageAtmViewModelScript": "res://scripts/ui/cage_atm_view_model.gd",
+	"WagerConfirmationControllerScript": "res://scripts/ui/wager_confirmation_controller.gd",
+	"RunInventoryViewModelScript": "res://scripts/ui/run_inventory_view_model.gd",
+	"MetaItemInteractionViewModelScript": "res://scripts/ui/meta_item_interaction_view_model.gd",
+	"BagOpenReelViewModelScript": "res://scripts/ui/bag_open_reel_view_model.gd",
+	"RunJournalViewModelScript": "res://scripts/ui/run_journal_view_model.gd",
+	"FoundationTravelViewModelScript": "res://scripts/ui/foundation_travel_view_model.gd",
 }
 const RUN_UI_STAGE_SCRIPT_FIELDS := {
-	0: ["GameSurfaceCanvasScript", "SfxPlayerScript", "FoundationHudBarScript", "EnvironmentHeaderScript", "CheatDockScript", "RunReportScreenScript", "RunReportViewModelScript", "HeatGainFeedbackOverlayScript"],
+	0: ["GameSurfaceCanvasScript", "SfxPlayerScript", "FoundationHudBarScript", "EnvironmentHeaderScript", "CheatDockScript", "RunReportScreenScript", "RunReportViewModelScript", "HeatGainFeedbackOverlayScript", "EnvironmentInteractionViewModelScript", "EnvironmentInteractionControllerScript", "FoundationActionViewModelScript", "TerminalConsequenceViewModelScript", "FoundationHudViewModelScript", "CageCounterViewModelScript", "CageAtmViewModelScript"],
 	1: ["TalkDockScript"],
-	6: ["RunInventoryScreenScript"],
-	7: ["MetaItemInteractionScreenScript", "BagOpenReelScript"],
-	10: ["WorldMapCanvasScript", "WorldMapOverlayControllerScript"],
+	4: ["WagerConfirmationControllerScript"],
+	6: ["RunInventoryScreenScript", "RunInventoryViewModelScript"],
+	7: ["MetaItemInteractionScreenScript", "BagOpenReelScript", "MetaItemInteractionViewModelScript", "BagOpenReelViewModelScript"],
+	8: ["RunJournalViewModelScript"],
+	10: ["WorldMapCanvasScript", "WorldMapOverlayControllerScript", "FoundationTravelViewModelScript"],
 	11: ["ItemFoundPopupScript"],
 	12: ["CoachOverlayScript", "CoachViewModelScript"],
 }
@@ -210,6 +212,19 @@ var ItemFoundPopupScript: Script
 var CoachViewModelScript: Script
 var CoachOverlayScript: Script
 var SfxPlayerScript: Script
+var EnvironmentInteractionViewModelScript: Script
+var EnvironmentInteractionControllerScript: Script
+var FoundationActionViewModelScript: Script
+var TerminalConsequenceViewModelScript: Script
+var FoundationHudViewModelScript: Script
+var CageCounterViewModelScript: Script
+var CageAtmViewModelScript: Script
+var WagerConfirmationControllerScript: Script
+var RunInventoryViewModelScript: Script
+var MetaItemInteractionViewModelScript: Script
+var BagOpenReelViewModelScript: Script
+var RunJournalViewModelScript: Script
+var FoundationTravelViewModelScript: Script
 
 var ActionAuthorityScript: Script:
 	get:
@@ -529,7 +544,7 @@ var world_map_badge_row: HFlowContainer
 var world_map_badge_cells: Array = []
 var world_map_confirm_button: Button
 var world_map_overlay_controller
-var wager_confirmation_controller: WagerConfirmationController
+var wager_confirmation_controller
 var selected_world_map_node_id: String = ""
 var world_map_button_ids: Array = []
 var world_map_button_layout_size := Vector2(-1.0, -1.0)
@@ -7137,7 +7152,7 @@ func _enqueue_normal_grand_host_greeting_without_refresh() -> bool:
 func _linda_cage_choice_status(choice_id: String) -> Dictionary:
 	if run_state == null:
 		return {"enabled": false, "reason": "No active run."}
-	var model := CageCounterViewModelScript.build(run_state)
+	var model: Dictionary = CageCounterViewModelScript.build(run_state)
 	var balance: Dictionary = model.get("balance", {}) if typeof(model.get("balance", {})) == TYPE_DICTIONARY else {}
 	var card: Dictionary = model.get("card", {}) if typeof(model.get("card", {})) == TYPE_DICTIONARY else {}
 	match choice_id:
@@ -11754,7 +11769,7 @@ func _ensure_wager_confirmation_controller() -> void:
 func _sync_wager_confirmation_controller_to_host() -> void:
 	if wager_confirmation_controller == null:
 		return
-	var state := wager_confirmation_controller.pending_state()
+	var state: Dictionary = wager_confirmation_controller.pending_state()
 	pending_wager_confirm_action_id = str(state.get("action_id", ""))
 	pending_wager_confirm_skip_stake_validation = bool(state.get("skip_stake_validation", false))
 	pending_wager_confirm_preserve_surface_ui_state = bool(state.get("preserve_surface_ui_state", false))
@@ -11769,7 +11784,7 @@ func _show_wager_confirmation_popup(action_id: String, stake: int, wager_cost: i
 		return
 	_ensure_wager_confirmation_controller()
 	var action_label := _wager_confirmation_action_label(action_id, source_game_id)
-	var view := wager_confirmation_controller.configure_confirmation(action_id, stake, wager_cost, skip_stake_validation, preserve_surface_ui_state, source_game_id, action_label, source_game_state_key)
+	var view: Dictionary = wager_confirmation_controller.configure_confirmation(action_id, stake, wager_cost, skip_stake_validation, preserve_surface_ui_state, source_game_id, action_label, source_game_state_key)
 	_sync_wager_confirmation_controller_to_host()
 	pending_event_choice_popup_event_id = ""
 	pending_event_choice_popup_focus_choice_id = ""
@@ -12847,7 +12862,7 @@ func _inspect_casino_fixture(object_data: Dictionary) -> bool:
 	if fixture_id == "cage_counter":
 		return _start_linda_cage_services(object_data)
 	if fixture_id == "cage_atm":
-		var atm := CageAtmViewModelScript.build(run_state)
+		var atm: Dictionary = CageAtmViewModelScript.build(run_state)
 		_show_message(str(atm.get("summary", "The ATM shows the house marker account.")))
 		_refresh()
 		return true
@@ -13558,7 +13573,7 @@ func _render_embedded_action_snapshot_patch() -> bool:
 	var debug_enabled := not debug_timing.is_empty()
 	var debug_stage_started_usec := Time.get_ticks_usec() if debug_enabled else 0
 	var current_state: Dictionary = game_surface_canvas.realtime_surface_state()
-	var patch := FoundationActionViewModelScript.embedded_action_view_patch(self, current_state)
+	var patch: Dictionary = FoundationActionViewModelScript.embedded_action_view_patch(self, current_state)
 	if patch.is_empty():
 		return false
 	if debug_enabled:
@@ -13643,7 +13658,7 @@ func _environment_view_snapshot() -> Dictionary:
 	var recent_result := _recent_result_snapshot()
 	var archetype := _current_environment_archetype()
 	var world_map_visible := world_map_overlay != null and world_map_overlay.visible
-	var snapshot := EnvironmentInteractionViewModelScript.environment_snapshot(run_state, {
+	var snapshot: Dictionary = EnvironmentInteractionViewModelScript.environment_snapshot(run_state, {
 		"recent_result": recent_result,
 		"drunk_effect_mode": _drunk_effect_mode(),
 		"reduce_motion": _reduce_motion_enabled(),
@@ -13890,7 +13905,7 @@ func _authored_interaction_rect(object_type: String, index: int) -> Rect2:
 
 
 func _layout_spot_for_object_type(object_type: String, index: int) -> Vector2:
-	var field_name := EnvironmentInteractionViewModelScript.layout_spot_field_name(object_type)
+	var field_name: String = EnvironmentInteractionViewModelScript.layout_spot_field_name(object_type)
 	var spots: Variant = _current_environment_layout().get(field_name, [])
 	return EnvironmentInteractionViewModelScript.layout_spot_to_board_position((spots as Array)[index]) if not field_name.is_empty() and typeof(spots) == TYPE_ARRAY and index >= 0 and index < (spots as Array).size() else Vector2(-1.0, -1.0)
 
@@ -15544,7 +15559,7 @@ func _open_meta_item_interaction(mode: String, focus_key: String = "", container
 	meta_item_interaction_mode = mode
 	if not focus_key.strip_edges().is_empty():
 		selected_meta_item_key = focus_key.strip_edges()
-	var model := MetaItemInteractionViewModelScript.build(meta_collection_service, mode, selected_meta_item_key, meta_trade_selected_instance_ids)
+	var model: Dictionary = MetaItemInteractionViewModelScript.build(meta_collection_service, mode, selected_meta_item_key, meta_trade_selected_instance_ids)
 	model["focus_explicit"] = not focus_key.strip_edges().is_empty()
 	if not container_id.strip_edges().is_empty():
 		var container_focus := _first_meta_selection_in_container(model, container_id)
@@ -15560,7 +15575,7 @@ func _open_meta_item_interaction(mode: String, focus_key: String = "", container
 func _refresh_meta_item_interaction() -> void:
 	if meta_item_interaction_screen == null or not meta_item_interaction_screen.is_open() or meta_item_interaction_mode.is_empty():
 		return
-	var model := MetaItemInteractionViewModelScript.build(meta_collection_service, meta_item_interaction_mode, selected_meta_item_key, meta_trade_selected_instance_ids)
+	var model: Dictionary = MetaItemInteractionViewModelScript.build(meta_collection_service, meta_item_interaction_mode, selected_meta_item_key, meta_trade_selected_instance_ids)
 	selected_meta_item_key = str(model.get("selected_key", ""))
 	meta_trade_selected_instance_ids = _copy_array(model.get("trade_selected_ids", []))
 	meta_item_interaction_screen.update_model(model)
@@ -15647,7 +15662,7 @@ func _open_bag_reel(open_result: Dictionary) -> void:
 	var resolver: Variant = CollectionItemResolverScript.new()
 	var bag := _copy_dict(open_result.get(BagOpenReelViewModelScript.RESULT_BAG_KEY, {}))
 	var possible_contents: Array = resolver.bag_item_options_for_bag(int(bag.get("bagdef_id", -1)))
-	var model := BagOpenReelViewModelScript.build(open_result, possible_contents, _reduce_motion_enabled())
+	var model: Dictionary = BagOpenReelViewModelScript.build(open_result, possible_contents, _reduce_motion_enabled())
 	bag_open_reel.open(model)
 
 
@@ -16243,7 +16258,7 @@ func _run_status_hud_model() -> Dictionary:
 	# private render path keeps the dense Coin Pusher trace under single ownership.
 	var recent_result := _recent_result_readonly()
 	var deltas: Dictionary = recent_result.get("deltas", {})
-	var state := FoundationHudViewModelScript.objective_presentation_state(pressure, objective)
+	var state: String = FoundationHudViewModelScript.objective_presentation_state(pressure, objective)
 	return FoundationHudViewModelScript.run_status_model(run_state, {
 		"pressure": pressure,
 		"demo_objective": objective,
@@ -16332,7 +16347,7 @@ func _objective_presentation_state(pressure: Dictionary, demo_objective: Diction
 
 
 func _objective_guidance_view(pressure: Dictionary, demo_objective: Dictionary) -> Dictionary:
-	var state := FoundationHudViewModelScript.objective_presentation_state(pressure, demo_objective)
+	var state: String = FoundationHudViewModelScript.objective_presentation_state(pressure, demo_objective)
 	return FoundationHudViewModelScript.objective_guidance_view(pressure, demo_objective, _next_objective_option_for_state(state, demo_objective))
 
 
