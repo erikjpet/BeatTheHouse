@@ -42,7 +42,11 @@ func _init() -> void:
 			break
 	var validated_definition := library._runtime_validated_scenario_definition(delivery_definition)
 	if not bool(validated_definition.get(ScenarioEngineScript.VALIDATED_SEQUENCE_MARKER, false)):
-		failures.append("Selected production scenario did not carry an exact runtime validation receipt.")
+		failures.append("Selected production scenario did not carry an exact accepted-package runtime receipt.")
+	var tampered_definition := validated_definition.duplicate(true)
+	tampered_definition["sequence_renderer_id"] = "tampered_renderer"
+	if library._runtime_scenario_sequence_authorization_errors(tampered_definition).is_empty():
+		failures.append("Runtime package authorization accepted a tampered renderer identity.")
 	if library.validation_complete:
 		failures.append("Selected scenario validation escalated into the exhaustive catalog audit.")
 	if not library.validation_errors.is_empty():

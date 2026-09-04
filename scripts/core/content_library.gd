@@ -832,13 +832,13 @@ func _canonical_runtime_scenario_definition(definition: Dictionary) -> Dictionar
 	if not validation_complete and not scenario_id.is_empty() and _runtime_validated_scenario_definition_cache.has(scenario_id):
 		return _runtime_validated_scenario_definition_cache.get(scenario_id, {})
 	var result := ScenarioSequenceCatalogScript.apply_overlay(definition, scenario_sequence_catalog)
-	# A release start defers the exhaustive all-catalog authoring audit. That audit
-	# includes pairwise uniqueness comparisons and is intentionally kept in the
-	# content/CI gate; making the first selected sequence run it blocked Play for
-	# many seconds. Validate the selected definition against its exact semantic
-	# target catalog instead, then cache that runtime receipt for this loaded pack.
+	# The package loader has already fail-closed rejected malformed, duplicate, or
+	# unregistered packages. The exhaustive semantic/layout audit belongs to the
+	# content/CI gate: repeating it in an exported build blocked Play and the first
+	# room transition for seconds. At runtime, authorize only an exact overlay from
+	# that accepted catalog, then cache the receipt for this loaded pack.
 	if ScenarioSequenceSchemaScript.is_sequence(result) and not validation_complete:
-		var runtime_errors := _validate_runtime_scenario_sequence(result)
+		var runtime_errors := _runtime_scenario_sequence_authorization_errors(result)
 		if runtime_errors.is_empty():
 			result[ScenarioEngineScript.VALIDATED_SEQUENCE_MARKER] = true
 			if not scenario_id.is_empty():
@@ -856,30 +856,30 @@ func _canonical_runtime_scenario_definition(definition: Dictionary) -> Dictionar
 	return result
 
 
-func _validate_runtime_scenario_sequence(definition: Dictionary) -> Array:
+func _runtime_scenario_sequence_authorization_errors(definition: Dictionary) -> Array:
 	var errors: Array = _load_errors.duplicate(true)
 	var scenario_id := str(definition.get("id", "")).strip_edges()
 	var archetype_id := str(definition.get("archetype_id", "")).strip_edges()
-	var target_catalog := scenario_target_catalog(definition)
-	if target_catalog.is_empty() or not _copy_array(target_catalog.get("errors", [])).is_empty():
-		errors.append_array(scenario_target_catalog_messages(scenario_id, target_catalog))
+	if scenario_id.is_empty() or archetype_id.is_empty() or environment_archetype(archetype_id).is_empty():
+		errors.append("runtime scenario sequence has an invalid scenario or archetype identity")
 		return errors
-	var target_inventory := _as_dict(target_catalog.get("guaranteed", {})).duplicate(true)
-	target_inventory["event_choices"] = _as_dict(target_catalog.get("event_choices", {}))
-	var references := {
-		"archetype_ids": _ids_for(environment_archetypes),
-		"event_ids": _ids_for(events),
-		"service_ids": _ids_for(services),
-		"game_ids": _ids_for(games),
-		"item_ids": _ids_for(items),
-		"actor_ids": _ids_for(characters),
-		"archetype": environment_archetype(archetype_id),
-		"scenario_semantic_inventory": _as_dict(target_catalog.get("inventory", {})),
-	}
-	errors.append_array(ScenarioEngineScript.validate_sequence_definition(definition, references, target_inventory))
 	var overlay := ScenarioSequenceCatalogScript.overlay_for(scenario_id, scenario_sequence_catalog)
-	if definition.has("sequence_package_id") and (overlay.is_empty() or str(overlay.get("package_id", "")) != str(definition.get("sequence_package_id", ""))):
+	if overlay.is_empty():
 		errors.append("scenario sequence package is not active in the fail-closed content catalog")
+		return errors
+	var exact_fields := {
+		"sequence_package_id": "package_id",
+		"sequence_handler_pack": "handler_pack",
+		"sequence_renderer_id": "renderer_id",
+	}
+	for definition_field_value in exact_fields.keys():
+		var definition_field := str(definition_field_value)
+		var overlay_field := str(exact_fields.get(definition_field, ""))
+		if str(definition.get(definition_field, "")) != str(overlay.get(overlay_field, "")):
+			errors.append("scenario sequence runtime authority does not match its accepted package")
+			break
+	if definition.get("sequence", {}) != overlay.get("sequence", {}) or definition.get("sequence_authoring", {}) != overlay.get("authoring", {}):
+		errors.append("scenario sequence runtime payload does not match its accepted package")
 	return errors
 
 
