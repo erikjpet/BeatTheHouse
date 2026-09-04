@@ -6,8 +6,6 @@
     {
       "authoring": {
         "arrival_summary": "A signup lectern, movable stage steps, and half-filled chair banks form a live queue from Layer 1 to the microphone.",
-        "crew_poker_turn_engine": "ordered_v1",
-        "crew_poker_night_id": "friendly_teaching",
         "capture_ids": [
           "punchline_open_mic_night_arrival",
           "punchline_open_mic_night_partial",
@@ -20,6 +18,8 @@
           "punchline_open_mic_night_hit_overlay",
           "punchline_open_mic_night_obstruction"
         ],
+        "crew_poker_night_id": "friendly_teaching",
+        "crew_poker_turn_engine": "ordered_v1",
         "masked_visual_explanations": {
 
         },
@@ -4625,8 +4625,6 @@
     {
       "authoring": {
         "arrival_summary": "A protected table displaces ordinary chairs while guard sightlines and an observer rail divide the casino floor.",
-        "crew_poker_turn_engine": "ordered_v1",
-        "crew_poker_night_id": "hustle_test",
         "capture_ids": [
           "punchline_high_stakes_night_arrival",
           "punchline_high_stakes_night_partial",
@@ -4639,6 +4637,8 @@
           "punchline_high_stakes_night_hit_overlay",
           "punchline_high_stakes_night_obstruction"
         ],
+        "crew_poker_night_id": "hustle_test",
+        "crew_poker_turn_engine": "ordered_v1",
         "masked_visual_explanations": {
 
         },
@@ -4947,10 +4947,9 @@
             "base::anchor:punchline_high_stakes_floor_runner",
             "base::anchor:punchline_high_stakes_chair_stack",
             "base::anchor:punchline_high_stakes_guard",
-            "base::anchor:punchline_high_stakes_safe_exit",
             "base::anchor:punchline_high_stakes_task",
             "base::anchor:punchline_high_stakes_runner_work_2",
-            "base::anchor:punchline_headliner_door_guard"
+            "base::anchor:punchline_high_stakes_safe_exit"
           ],
           "games": [],
           "interactions": [],
@@ -5040,8 +5039,8 @@
               "actor_ops": [
                 {
                   "actor": {
-                    "anchor_id": "punchline_high_stakes_guard",
                     "actor_id": "actor_high_stakes_guard",
+                    "anchor_id": "punchline_high_stakes_guard",
                     "behavior": "guard",
                     "label": "High-stakes guard",
                     "pose": "arrival",
@@ -5056,6 +5055,7 @@
                 {
                   "actor": {
                     "actor_id": "actor_floor_runner",
+                    "anchor_id": "punchline_high_stakes_floor_runner",
                     "behavior": "work",
                     "label": "Floor service runner",
                     "pose": "arrival",
@@ -6113,14 +6113,12 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "01caedeeb68c86a99535fcba405c846d1d6749c551200f3e3a4591cf8d985fb1"
+        "sequence_signature": "e67e6fdeee69c3d9f8a269a326c8c698773fe6effe928f320e456c7482741ae0"
       }
     },
     {
       "authoring": {
         "arrival_summary": "Inspection seals mark three layer doors while a payoff ledger and moving inspector define a visible route through the club.",
-        "crew_poker_turn_engine": "ordered_v1",
-        "crew_poker_night_id": "after_job",
         "capture_ids": [
           "punchline_greased_week_arrival",
           "punchline_greased_week_partial",
@@ -6133,6 +6131,8 @@
           "punchline_greased_week_hit_overlay",
           "punchline_greased_week_obstruction"
         ],
+        "crew_poker_night_id": "after_job",
+        "crew_poker_turn_engine": "ordered_v1",
         "masked_visual_explanations": {
 
         },
@@ -7798,8 +7798,6 @@
     {
       "authoring": {
         "arrival_summary": "Hearing chairs replace the L3 poker-night room while an evidence stand and witness mark sit outside the paused table boundary.",
-        "crew_poker_turn_engine": "ordered_v1",
-        "crew_poker_night_id": "debt_court",
         "capture_ids": [
           "punchline_debt_court_arrival",
           "punchline_debt_court_partial",
@@ -7812,6 +7810,8 @@
           "punchline_debt_court_hit_overlay",
           "punchline_debt_court_obstruction"
         ],
+        "crew_poker_night_id": "debt_court",
+        "crew_poker_turn_engine": "ordered_v1",
         "masked_visual_explanations": {
 
         },
@@ -10968,8 +10968,6 @@
     {
       "authoring": {
         "arrival_summary": "Hide carts, clear bins, and reopen seals wait on different layers while a lookout listens at the outer knock point.",
-        "crew_poker_turn_engine": "ordered_v1",
-        "crew_poker_night_id": "raid_jitters",
         "capture_ids": [
           "punchline_raid_jitters_arrival",
           "punchline_raid_jitters_partial",
@@ -10982,6 +10980,8 @@
           "punchline_raid_jitters_hit_overlay",
           "punchline_raid_jitters_obstruction"
         ],
+        "crew_poker_night_id": "raid_jitters",
+        "crew_poker_turn_engine": "ordered_v1",
         "masked_visual_explanations": {
 
         },

@@ -19,7 +19,12 @@ func _init(p_library: ContentLibrary) -> void:
 
 
 func _install_environment(run_state: RunState, environment_data: Dictionary) -> Dictionary:
-	var rollback := _travel_rollback_snapshot(run_state)
+	return _install_environment_with_rollback(run_state, environment_data, _travel_rollback_snapshot(run_state))
+
+
+# Travel callers already hold the exact atomic rollback snapshot. Reuse it so
+# large visited-room machines are not copied a second time at every transition.
+func _install_environment_with_rollback(run_state: RunState, environment_data: Dictionary, rollback: Dictionary) -> Dictionary:
 	var trusted := _trusted_scenario_install_data(run_state, environment_data)
 	if not bool(trusted.get("ok", false)):
 		_restore_travel_snapshot(run_state, rollback)
@@ -275,7 +280,7 @@ func enter_grand_casino_room(run_state: RunState, target_archetype_id: String) -
 	# rooms so itinerary rotation happens at the same revisit boundary as town.
 	CrewRecruitmentModelScript.apply_to_environment(run_state, environment_data)
 	environment_data["layout"] = EnvironmentInstance.ensure_generated_layout(environment_data)
-	var installed := _install_environment(run_state, environment_data)
+	var installed := _install_environment_with_rollback(run_state, environment_data, rollback)
 	if not bool(installed.get("ok", false)):
 		_restore_travel_snapshot(run_state, rollback)
 		return false
@@ -467,7 +472,7 @@ func _next_world_environment(run_state: RunState, target_archetype_id: String, r
 				_restore_travel_snapshot(run_state, rollback)
 				return EnvironmentInstance.from_dict(run_state.current_environment)
 	var environment_data := _world_environment_data_for_node(run_state, map_data, node, rng)
-	var installed := _install_environment(run_state, environment_data)
+	var installed := _install_environment_with_rollback(run_state, environment_data, rollback)
 	if not bool(installed.get("ok", false)):
 		_last_environment_install_errors = _copy_array(installed.get("errors", []))
 		_restore_travel_snapshot(run_state, rollback)
@@ -578,7 +583,7 @@ func _legacy_next_environment(run_state: RunState, target_archetype_id: String, 
 			_restore_travel_snapshot(run_state, rollback)
 			return EnvironmentInstance.from_dict(run_state.current_environment)
 	run_state.save_rng(rng)
-	var installed := _install_environment(run_state, environment_data)
+	var installed := _install_environment_with_rollback(run_state, environment_data, rollback)
 	if not bool(installed.get("ok", false)):
 		_last_environment_install_errors = _copy_array(installed.get("errors", []))
 		_restore_travel_snapshot(run_state, rollback)

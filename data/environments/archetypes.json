@@ -249,7 +249,7 @@
       },
       "package_a_delivery_crate": {
         "position": [
-          400,
+          432,
           280
         ],
         "zone_id": "center"
@@ -1105,6 +1105,7 @@
       "dead_tuesday_bartender": {"position": [624, 130], "zone_id": "service_lane"},
 	  "dead_tuesday_booth": {"position": [650, 250], "zone_id": "right"},
 	  "dead_tuesday_lone_patron": {"position": [500, 380], "zone_id": "foreground"},
+	  "darts_captain": {"position": [400, 280], "zone_id": "center"},
       "darts_oche": {"position": [650, 256], "zone_id": "right"},
 	  "darts_scorer": {"position": [500, 380], "zone_id": "foreground"},
 	  "darts_task": {"position": [60, 70], "zone_id": "background"},
@@ -1573,7 +1574,7 @@
 	  "punchline_bringer_performer_arrival": {"position": [700, 100], "zone_id": "right"},
 	  "punchline_bringer_ropes_work_1": {"position": [300, 320], "zone_id": "center"},
       "punchline_high_stakes_protected_table": {"position": [798, 176]},
-      "punchline_high_stakes_floor_runner": {"position": [78, 220]},
+	  "punchline_high_stakes_floor_runner": {"position": [450, 180], "zone_id": "center"},
 	  "punchline_high_stakes_chair_stack": {"position": [180, 150], "zone_id": "left"},
 	  "punchline_high_stakes_guard": {"position": [650, 300], "zone_id": "right"},
 	  "punchline_high_stakes_safe_exit": {"position": [700, 360], "zone_id": "exit_lane"},
