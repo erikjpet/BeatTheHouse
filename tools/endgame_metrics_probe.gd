@@ -15,6 +15,7 @@ const MetaCollectionServiceScript := preload("res://scripts/core/meta_collection
 const CollectionDropServiceScript := preload("res://scripts/core/collection_drop_service.gd")
 const CollectionItemResolverScript := preload("res://scripts/core/collection_item_resolver.gd")
 const BlackjackAuthorityTestDriverScript := preload("res://scripts/tests/foundation/blackjack_authority_test_driver.gd")
+const RunTerminalEvaluatorScript := preload("res://scripts/core/run_terminal_evaluator.gd")
 
 const DEFAULT_SEEDS_PER_SCENARIO := 2
 const DEFAULT_SEED_PREFIX := "ACT1-BALANCE"
@@ -101,6 +102,7 @@ var integration_capture_trace := false
 var integration_save_load_stride := 0
 var integration_save_slot_prefix := "integ06_1_terminal_soak"
 var integration_ignore_crew := false
+var integration_production_only := false
 
 
 func _init() -> void:
@@ -228,10 +230,36 @@ func _create_game_module(definition: Dictionary) -> GameModule:
 func _simulate_run(run_index: int, scenario: Dictionary, seed: String, max_actions: int = MAX_ACTIONS) -> Dictionary:
 	var policy := str(scenario.get("policy", "clean"))
 	var challenge_id := str(scenario.get("challenge_id", "")).strip_edges()
+	var authority_violations: Array = []
+	if integration_production_only:
+		if bool(scenario.get("start_at_grand_casino", false)):
+			authority_violations.append("start_at_grand_casino")
+		if scenario.has("casino_entry_bankroll"):
+			authority_violations.append("casino_entry_bankroll")
+		if scenario.has("collection_modifiers") or scenario.has("collection_loadout"):
+			authority_violations.append("caller_selected_collection")
+		if not authority_violations.is_empty():
+			return {
+				"run_index": run_index,
+				"seed": seed,
+				"scenario_id": str(scenario.get("id", "")),
+				"scenario_label": str(scenario.get("label", "")),
+				"policy": policy,
+				"challenge_id": challenge_id,
+				"authority_setup": "rejected",
+				"authority_violations": authority_violations,
+				"stopped_reason": "authority_setup_rejected",
+				"final_status": "not_started",
+				"won": false,
+				"lost": false,
+				"save_load_points": [],
+				"save_load_failures": ["Binding integration run rejected caller-injected authority state."],
+				"semantic_trace": [],
+			}
 	var challenge_config := RunStateScript.standard_challenge(seed)
 	if not challenge_id.is_empty():
 		challenge_config = library.challenge_config_for(challenge_id, seed)
-	var collection_context := _collection_context_for_run(seed, challenge_id)
+	var collection_context := {"enabled": false, "modifiers": {}} if integration_production_only else _collection_context_for_run(seed, challenge_id)
 	if bool(collection_context.get("enabled", false)):
 		var challenge_modifiers := _dict(challenge_config.get("modifiers", {}))
 		var collection_modifiers := _dict(collection_context.get("modifiers", {}))
@@ -254,6 +282,8 @@ func _simulate_run(run_index: int, scenario: Dictionary, seed: String, max_actio
 		"scenario_label": str(scenario.get("label", "")),
 		"policy": policy,
 		"challenge_id": challenge_id,
+		"authority_setup": "standard_production_challenge" if integration_production_only else "conditioned_balance_probe",
+		"authority_violations": authority_violations,
 		"challenge_engaged": not challenge_id.is_empty(),
 		"start_bankroll": run_state.bankroll,
 		"actions": 0,
@@ -374,9 +404,15 @@ func _simulate_run(run_index: int, scenario: Dictionary, seed: String, max_actio
 			_record_curve(run, run_state, "travel")
 			continue
 		if not run_state.has_liquid_run_funds():
-			run_state.fail_run(RunState.FAILURE_BANKROLL_ZERO, RunState.BANKROLL_ZERO_FAILURE_MESSAGE)
-			run["stopped_reason"] = "bankroll_zero"
-			break
+			if integration_production_only:
+				var terminal_result: Dictionary = RunTerminalEvaluatorScript.evaluate_and_apply(run_state, library)
+				if bool(terminal_result.get("terminal", false)):
+					run["stopped_reason"] = "production_terminal_evaluator"
+					break
+			else:
+				run_state.fail_run(RunState.FAILURE_BANKROLL_ZERO, RunState.BANKROLL_ZERO_FAILURE_MESSAGE)
+				run["stopped_reason"] = "bankroll_zero"
+				break
 		run_state.advance_environment_turns(1)
 		_count_action(run, "idle")
 		_record_curve(run, run_state, "idle")
