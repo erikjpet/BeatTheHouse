@@ -21,7 +21,8 @@ $godot = "D:\Projects\Beat-The-House\.tools\godot-4.6-stable\Godot_v4.6-stable_w
 $candidate = (& git rev-parse HEAD).Trim()
 $originMain = (& git rev-parse origin/main).Trim()
 if ($candidate -cne $originMain) { throw "HEAD is not the pushed origin/main candidate." }
-if (& git status --porcelain --untracked-files=no) { throw "Tracked worktree is not clean." }
+& tools/perf06_binding_preflight.ps1 -CandidateCommit $candidate
+if ($LASTEXITCODE -ne 0) { throw "Exact-source and reserved-port binding preflight failed." }
 if (-not (Test-Path -LiteralPath $godot -PathType Leaf)) { throw "Godot 4.6 stable is missing." }
 $busy = @(Get-Process -ErrorAction SilentlyContinue | Where-Object { $_.ProcessName -in @("Godot_v4.6-stable_win64", "Godot_v4.6-stable_win64_console", "BeatTheHouse", "chrome") })
 if ($busy.Count -ne 0) { throw "Qualification host is not quiescent: $($busy.ProcessName -join ', ')" }
@@ -66,6 +67,8 @@ if ($LASTEXITCODE -ne 0) { throw "Budget contract failed." }
 if ($LASTEXITCODE -ne 0) { throw "Native timing/liveness qualification contract failed." }
 & tools/perf06_quiescence_contract_test.ps1
 if ($LASTEXITCODE -ne 0) { throw "Quiescence custody contract failed." }
+& tools/perf06_binding_preflight_contract_test.ps1
+if ($LASTEXITCODE -ne 0) { throw "Binding preflight hostile-fixture contract failed." }
 & tools/perf06_allocation_contract_test.ps1
 if ($LASTEXITCODE -ne 0) { throw "Allocation negative-fixture contract failed." }
 & tools/web_perf_idle_liveness_contract_test.ps1
@@ -182,7 +185,7 @@ $allSurfaceReports = @($surfaceReports.ToArray()) + $lowSurfaceReports
 $finalMatrix = Join-Path $normalRoot "matrix_contract_all_profiles.json"
 & tools/perf06_matrix_contract.ps1 -CandidateCommit $candidate -CompositionManifest $compositionManifest -TerminalManifest $terminalManifest -SurfaceReports $allSurfaceReports -RequiredProfiles @("native", "web", "low_end") -Out $finalMatrix
 if ($LASTEXITCODE -ne 0) { throw "Combined three-profile matrix contract failed." }
-if (& git status --porcelain --untracked-files=no) { throw "Tracked source changed during qualification." }
+if (& git status --porcelain=v1 --untracked-files=all) { throw "Tracked, index or nonignored untracked source changed during qualification." }
 
 $matrix = Get-Content -LiteralPath $finalMatrix -Raw | ConvertFrom-Json
 if (-not $matrix.passed) { throw "Final matrix did not pass." }
