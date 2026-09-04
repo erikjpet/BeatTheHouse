@@ -119,12 +119,15 @@ try {
     & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "perf06_allocation_call_root_audit.ps1") -CandidateCommit $head -Out $staticAudit
     if ($LASTEXITCODE -ne 0) { throw "Low-end allocation call-root audit failed." }
 
+    $surfaceReports = [Collections.Generic.List[string]]::new()
     foreach ($nativePlan in @("l02", "grand_casino", "coin_pusher")) {
         $nativeOut = Join-Path $out ("native_runtime_{0}" -f $nativePlan)
         & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "perf06_native_runtime_matrix.ps1") -ProfilePath $profileFile -GodotPath $GodotPath -OutDir $nativeOut -Plan $nativePlan -EvidenceProfile "low_end:$($profile.profile_id)" -Frames 120 -ActiveFrames 240 -MemorySeconds 600 -TimeoutMs 900000
         if ($LASTEXITCODE -ne 0) { throw "Low-end native runtime plan failed: $nativePlan." }
-        & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "perf06_build_surface_report.ps1") -CandidateCommit $head -Platform native -Profile low_end -ProfilePath $profileFile -LaunchSummary (Join-Path $nativeOut "summary.json") -StaticAudit $staticAudit -Out (Join-Path $nativeOut "surface_report.json")
+        $nativeSurfaceReport = Join-Path $nativeOut "surface_report.json"
+        & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "perf06_build_surface_report.ps1") -CandidateCommit $head -Platform native -Profile low_end -ProfilePath $profileFile -LaunchSummary (Join-Path $nativeOut "summary.json") -StaticAudit $staticAudit -Out $nativeSurfaceReport
         if ($LASTEXITCODE -ne 0) { throw "Low-end native surface report failed: $nativePlan." }
+        $surfaceReports.Add($nativeSurfaceReport)
     }
 
     $webRuns = @(
@@ -149,15 +152,23 @@ try {
         $webSurfaceReport = [System.IO.Path]::ChangeExtension($webOut, ".surface.json")
         & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "perf06_build_surface_report.ps1") -CandidateCommit $head -Platform web -Profile low_end -ProfilePath $profileFile -LaunchSummary $webSummary -StaticAudit $staticAudit -Out $webSurfaceReport
         if ($LASTEXITCODE -ne 0) { throw "Low-end Web surface report failed: $($run.plan)/$($run.cache)." }
+        $surfaceReports.Add($webSurfaceReport)
     }
 
+    $integrationManifests = @{}
     foreach ($orchestrator in @("integ06_1_composition_matrix.ps1", "integ06_1_terminal_soak.ps1")) {
         $path = Join-Path $PSScriptRoot $orchestrator
         if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "Integration producer is not available: $path" }
         $integrationOut = Join-Path $out ($orchestrator -replace '\.ps1$', '')
-        & powershell -NoProfile -ExecutionPolicy Bypass -File $path -CandidateCommit $head -ProfilePath $profileFile -EvidenceProfile "low_end:$($profile.profile_id)" -OutDir $integrationOut -GodotPath $GodotPath -RequireGodot:$RequireGodot
+        $integrationOutRelative = $integrationOut.Substring($root.Length).TrimStart([char[]]@('\', '/'))
+        & powershell -NoProfile -ExecutionPolicy Bypass -File $path -CandidateCommit $head -ProfilePath $profileFile -EvidenceProfile "low_end:$($profile.profile_id)" -OutDir $integrationOutRelative -GodotPath $GodotPath -RequireGodot:$RequireGodot
         if ($LASTEXITCODE -ne 0) { throw "Integration low-end producer failed: $orchestrator" }
+        $integrationManifests[$orchestrator] = Join-Path $integrationOut "manifest.json"
     }
+
+    $matrixReport = Join-Path $out "matrix_contract.json"
+    & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "perf06_matrix_contract.ps1") -CandidateCommit $head -CompositionManifest $integrationManifests["integ06_1_composition_matrix.ps1"] -TerminalManifest $integrationManifests["integ06_1_terminal_soak.ps1"] -SurfaceReports @($surfaceReports) -Out $matrixReport
+    if ($LASTEXITCODE -ne 0) { throw "Low-end combined matrix contract failed." }
 
     $hostEvidence.completed_utc = [DateTime]::UtcNow.ToString("o")
     $hostEvidence.process_inventory_after = @(Get-Process | Select-Object Name, Id, CPU, WorkingSet64)
