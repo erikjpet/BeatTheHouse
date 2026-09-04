@@ -650,17 +650,68 @@ func _publish_grand_casino_browser_summary() -> void:
 
 func _install_generated_grand_casino_fixture(run_state: RunState) -> Dictionary:
 	var library: ContentLibrary = app.get("library") as ContentLibrary
-	if library == null:
-		return {"ok": false, "reason": "missing_library"}
+	var generator: RunGenerator = app.get("generator") as RunGenerator
+	if library == null or generator == null:
+		return {"ok": false, "reason": "missing_generation_runtime"}
 	var archetype := library.environment_archetype(RunState.GRAND_CASINO_ARCHETYPE_ID)
 	if archetype.is_empty():
 		return {"ok": false, "reason": "missing_archetype"}
 	var rng := run_state.create_rng("perf06_grand_casino_environment")
-	var generated := EnvironmentInstance.from_archetype(archetype, 1, rng, library, run_state.challenge_config)
-	var environment := generated.to_dict()
-	environment["world_node_id"] = RunState.GRAND_CASINO_ARCHETYPE_ID
-	environment["layout"] = EnvironmentInstance.ensure_generated_layout(environment)
-	var installed := run_state.set_environment(environment)
+	var scenario_value: Variant = generator.call("_select_scenario", run_state, RunState.GRAND_CASINO_ARCHETYPE_ID, rng)
+	var candidates: Array = []
+	if typeof(scenario_value) == TYPE_DICTIONARY and not (scenario_value as Dictionary).is_empty():
+		candidates.append((scenario_value as Dictionary).duplicate(true))
+	var pool_value: Variant = library.call("_scenarios_for_archetype_readonly", RunState.GRAND_CASINO_ARCHETYPE_ID)
+	if typeof(pool_value) == TYPE_ARRAY:
+		for candidate_value in pool_value as Array:
+			if typeof(candidate_value) != TYPE_DICTIONARY:
+				continue
+			var candidate: Dictionary = candidate_value
+			var candidate_id := str(candidate.get("id", ""))
+			if candidate_id.is_empty():
+				continue
+			var already_present := false
+			for existing_value in candidates:
+				already_present = already_present or str((existing_value as Dictionary).get("id", "")) == candidate_id
+			if not already_present:
+				candidates.append(candidate.duplicate(true))
+	var installed: Dictionary = {"ok": false, "errors": ["No Grand Casino scenario candidate installed."]}
+	var installed_scenario: Dictionary = {}
+	var attempts: Array = []
+	for candidate_value in candidates:
+		var scenario: Dictionary = candidate_value
+		var scenario_id := str(scenario.get("id", ""))
+		var candidate_rng := rng.fork("scenario_fixture:%s" % scenario_id)
+		run_state.seed_scenario_for_node(RunState.GRAND_CASINO_ARCHETYPE_ID, scenario)
+		var generated := EnvironmentInstance.from_archetype(archetype, 1, candidate_rng, library, run_state.challenge_config, scenario)
+		var environment := generated.to_dict()
+		environment["world_node_id"] = RunState.GRAND_CASINO_ARCHETYPE_ID
+		run_state.apply_town_generation_modifiers(environment, candidate_rng)
+		var generated_states: Variant = generator.call("_generated_game_states", run_state, environment, candidate_rng)
+		if typeof(generated_states) == TYPE_DICTIONARY:
+			environment["game_states"] = generated_states
+		environment["layout"] = EnvironmentInstance.ensure_generated_layout(environment)
+		var rollback_value: Variant = generator.call("_travel_rollback_snapshot", run_state)
+		var rollback: Dictionary = rollback_value if typeof(rollback_value) == TYPE_DICTIONARY else {}
+		var installed_value: Variant = generator.call("_install_environment_with_rollback", run_state, environment, rollback)
+		installed = installed_value if typeof(installed_value) == TYPE_DICTIONARY else {}
+		attempts.append({"scenario_id": scenario_id, "ok": bool(installed.get("ok", false)), "errors": installed.get("errors", [])})
+		if bool(installed.get("ok", false)):
+			installed_scenario = scenario
+			break
+	# Keep the rest of the system matrix runnable while an authored scenario is
+	# fail-closed by its own layout contract. The dynamic rows remain red and carry
+	# every rejected scenario attempt; no fallback is allowed to counterfeit them.
+	if not bool(installed.get("ok", false)):
+		var fallback_rng := rng.fork("scenario_fixture:plain_grand_casino")
+		var fallback := EnvironmentInstance.from_archetype(archetype, 1, fallback_rng, library, run_state.challenge_config)
+		var fallback_environment := fallback.to_dict()
+		fallback_environment["world_node_id"] = RunState.GRAND_CASINO_ARCHETYPE_ID
+		fallback_environment["layout"] = EnvironmentInstance.ensure_generated_layout(fallback_environment)
+		var fallback_rollback_value: Variant = generator.call("_travel_rollback_snapshot", run_state)
+		var fallback_rollback: Dictionary = fallback_rollback_value if typeof(fallback_rollback_value) == TYPE_DICTIONARY else {}
+		var fallback_install_value: Variant = generator.call("_install_environment_with_rollback", run_state, fallback_environment, fallback_rollback)
+		installed = fallback_install_value if typeof(fallback_install_value) == TYPE_DICTIONARY else {}
 	run_state.save_rng(rng)
 	app.call("_refresh")
 	return {
@@ -668,6 +719,8 @@ func _install_generated_grand_casino_fixture(run_state: RunState) -> Dictionary:
 		"installed": installed,
 		"environment_id": str(run_state.current_environment.get("archetype_id", "")),
 		"scenario_id": str(run_state.current_environment.get("scenario_id", "")),
+		"selected_scenario_id": str(installed_scenario.get("id", "")),
+		"attempts": attempts,
 	}
 
 
