@@ -258,10 +258,10 @@ if ($Plan -eq "coin_pusher") {
     if ($fixtureEvents.Count -eq 1) {
         $fixture = $fixtureEvents[0].data
         Assert-Condition -Condition ([string]$fixture.fixture_seed -eq "practice:coin_pusher_full_cap") -Message "Coin Pusher Web fixture seed did not match the native fixture." -Failures $failures
-        Assert-Condition -Condition ([string]$fixture.rng_namespace -eq "performance_coin_pusher_full_cap" -and [string]$fixture.rng_fork -eq "bodies:300") -Message "Coin Pusher Web fixture RNG identity did not match the native fixture." -Failures $failures
+        Assert-Condition -Condition ([string]$fixture.rng_namespace -eq "performance_coin_pusher_full_cap" -and [string]$fixture.rng_fork -eq "bodies:$CoinPusherShippedBodyCount") -Message "Coin Pusher Web fixture RNG identity did not match the native shipped-cap fixture." -Failures $failures
         Assert-Condition -Condition ([string]$fixture.fixture_api -eq "CoinPusherSolverScript.create_machine" -and [string]$fixture.snapshot_api -eq "CoinPusherLiveSessionScript.make_snapshot") -Message "Coin Pusher Web fixture API identity did not match the native fixture." -Failures $failures
         Assert-Condition -Condition ([string]$fixture.variation_id -eq "quarter_falls" -and [string]$fixture.cabinet_scope -like "Quarter Falls shared*") -Message "Coin Pusher Web proof did not stay scoped to Quarter Falls on the shared cabinet path." -Failures $failures
-        Assert-Condition -Condition ([int]$fixture.body_count -eq 300 -and [int]$fixture.machine_ceiling -ge 300 -and [int]$fixture.solver_fixed_hz -eq 60) -Message "Coin Pusher Web fixture was not the exact 300-body, 60 Hz production fixture." -Failures $failures
+        Assert-Condition -Condition ([int]$fixture.body_count -eq $CoinPusherShippedBodyCount -and [int]$fixture.shipped_body_cap -eq $CoinPusherShippedBodyCount -and [int]$fixture.machine_ceiling -ge $CoinPusherShippedBodyCount -and [int]$fixture.solver_fixed_hz -eq 60) -Message "Coin Pusher Web fixture was not the exact shipped-cap, 60 Hz production fixture." -Failures $failures
         Assert-Condition -Condition ([string]$fixture.platform -eq "web") -Message "Coin Pusher fixture did not execute in the Web runtime." -Failures $failures
         Assert-Condition -Condition ([string]$fixture.source_commit -eq $sourceCommit -and [string]$fixture.export_sha256 -eq $exportSha256) -Message "Coin Pusher fixture identity did not preserve source/export hashes." -Failures $failures
     }
@@ -274,11 +274,11 @@ if ($Plan -eq "coin_pusher") {
     if ($fixtureEvents.Count -eq 1 -and $reducedFixtureEvents.Count -eq 1) {
         $reducedFixture = $reducedFixtureEvents[0].data
         Assert-Condition -Condition ([string]$reducedFixture.fixture_seed -eq [string]$fixture.fixture_seed -and [string]$reducedFixture.rng_namespace -eq [string]$fixture.rng_namespace -and [string]$reducedFixture.rng_fork -eq [string]$fixture.rng_fork) -Message "Coin Pusher reduced-motion reinstall did not use the identical deterministic fixture identity." -Failures $failures
-        Assert-Condition -Condition ([int]$reducedFixture.body_count -eq 300 -and [string]$reducedFixture.variation_id -eq "quarter_falls") -Message "Coin Pusher reduced-motion reinstall did not re-enter the exact 300-body Quarter Falls fixture." -Failures $failures
+        Assert-Condition -Condition ([int]$reducedFixture.body_count -eq $CoinPusherShippedBodyCount -and [string]$reducedFixture.variation_id -eq "quarter_falls") -Message "Coin Pusher reduced-motion reinstall did not re-enter the exact shipped-cap Quarter Falls fixture." -Failures $failures
     }
     if ($reducedObservationEvents.Count -eq 1) {
         $reducedObservation = $reducedObservationEvents[0].data
-        Assert-Condition -Condition ([int]$reducedObservation.boundary_body_count -eq 300 -and [int]$reducedObservation.boundary_tray_count -eq 0) -Message "Coin Pusher reduced-motion reinstall boundary was not the exact 300-body fixture." -Failures $failures
+        Assert-Condition -Condition ([int]$reducedObservation.boundary_body_count -eq $CoinPusherShippedBodyCount -and [int]$reducedObservation.boundary_tray_count -eq 0) -Message "Coin Pusher reduced-motion reinstall boundary was not the exact shipped-cap fixture." -Failures $failures
         Assert-Condition -Condition ([int]$reducedObservation.liveness_after -gt [int]$reducedObservation.liveness_before) -Message "Coin Pusher reduced-motion reinstall did not preserve live production-clock advancement after identity capture." -Failures $failures
         Assert-Condition -Condition (Test-CoinPusherReinstallClockObservation -Observation $reducedObservation) -Message "Coin Pusher reduced-motion post-entry observation fabricated bodies, lost the live machine or froze its clock." -Failures $failures
     }
@@ -290,17 +290,17 @@ if ($Plan -eq "coin_pusher") {
     Assert-Condition -Condition ($collectSeedEvents.Count -eq 1) -Message "Coin Pusher report did not contain exactly one COLLECT conservation seed event." -Failures $failures
     if ($collectFixtureEvents.Count -eq 1) {
         $collectFixture = $collectFixtureEvents[0].data
-        Assert-Condition -Condition ([int]$collectFixture.body_count -eq 300 -and [string]$collectFixture.variation_id -eq "quarter_falls") -Message "Coin Pusher COLLECT fixture did not begin from a fresh exact 300-body Quarter Falls fixture." -Failures $failures
+        Assert-Condition -Condition ([int]$collectFixture.body_count -eq $CoinPusherShippedBodyCount -and [string]$collectFixture.variation_id -eq "quarter_falls") -Message "Coin Pusher COLLECT fixture did not begin from a fresh exact shipped-cap Quarter Falls fixture." -Failures $failures
     }
     if ($collectObservationEvents.Count -eq 1) {
         $collectObservation = $collectObservationEvents[0].data
-        Assert-Condition -Condition ([int]$collectObservation.boundary_body_count -eq 300 -and [int]$collectObservation.boundary_tray_count -eq 0) -Message "Coin Pusher COLLECT reinstall boundary was not the exact 300-body fixture." -Failures $failures
+        Assert-Condition -Condition ([int]$collectObservation.boundary_body_count -eq $CoinPusherShippedBodyCount -and [int]$collectObservation.boundary_tray_count -eq 0) -Message "Coin Pusher COLLECT reinstall boundary was not the exact shipped-cap fixture." -Failures $failures
         Assert-Condition -Condition ([int]$collectObservation.liveness_after -gt [int]$collectObservation.liveness_before) -Message "Coin Pusher COLLECT reinstall did not preserve live production-clock advancement after identity capture." -Failures $failures
         Assert-Condition -Condition (Test-CoinPusherReinstallClockObservation -Observation $collectObservation) -Message "Coin Pusher COLLECT post-entry observation fabricated bodies, lost the live machine or froze its clock." -Failures $failures
     }
     if ($collectSeedEvents.Count -eq 1) {
         $collectSeed = $collectSeedEvents[0].data
-        Assert-Condition -Condition ([int]$collectSeed.origin_body_count -eq 300 -and [int]$collectSeed.active_body_count -eq 299 -and [int]$collectSeed.tray_count -eq 1 -and [int]$collectSeed.conserved_body_count -eq 300) -Message "Coin Pusher COLLECT seed did not conserve the exact 300-origin fixture as 299 active bodies plus one tray body." -Failures $failures
+        Assert-Condition -Condition ([int]$collectSeed.origin_body_count -eq $CoinPusherShippedBodyCount -and [int]$collectSeed.active_body_count -eq ($CoinPusherShippedBodyCount - 1) -and [int]$collectSeed.tray_count -eq 1 -and [int]$collectSeed.conserved_body_count -eq $CoinPusherShippedBodyCount) -Message "Coin Pusher COLLECT seed did not conserve the exact shipped-origin fixture as one tray body plus the remaining active bodies." -Failures $failures
     }
 
     if ($scenariosByName.ContainsKey("coin_pusher_idle")) {
@@ -320,7 +320,7 @@ if ($Plan -eq "coin_pusher") {
         Assert-Condition -Condition ([int]$idleDraw.draw_sample_count -gt 0) -Message "Coin Pusher normal idle produced no surface draw samples despite required liveness." -Failures $failures
         Assert-Condition -Condition ([double]$idleDraw.draw_p95_ms -le 5.0) -Message ("Coin Pusher idle draw p95 {0:N3}ms exceeded 5.000ms." -f [double]$idleDraw.draw_p95_ms) -Failures $failures
         Assert-Condition -Condition ([int]$idle.tags.solver_liveness_delta -gt 0) -Message "Coin Pusher normal idle solver liveness did not advance." -Failures $failures
-        Assert-Condition -Condition (Test-CoinPusherSurfaceConservationBinding -BodyCount ([int]$idle.tags.body_count_before) -TrayCount ([int]$idle.tags.tray_count_before) -Snapshot $idle.tags.conservation_before -ExpectedOrigin 300) -Message "Coin Pusher normal idle did not begin from the exact conserved 300-origin fixture." -Failures $failures
+        Assert-Condition -Condition (Test-CoinPusherSurfaceConservationBinding -BodyCount ([int]$idle.tags.body_count_before) -TrayCount ([int]$idle.tags.tray_count_before) -Snapshot $idle.tags.conservation_before -ExpectedOrigin $CoinPusherShippedBodyCount) -Message "Coin Pusher normal idle did not begin from the exact conserved shipped-origin fixture." -Failures $failures
         Assert-Condition -Condition (-not [string]::IsNullOrWhiteSpace([string]$idle.tags.solver_backend)) -Message "Coin Pusher normal idle did not identify its solver backend." -Failures $failures
     }
 
@@ -333,10 +333,10 @@ if ($Plan -eq "coin_pusher") {
             Assert-Condition -Condition ([int]$reduced.frame_time_ms.count -ge 120) -Message "Coin Pusher reduced-motion sample contained fewer than 120 frames." -Failures $failures
             Assert-Condition -Condition ([int]$reduced.tags.solver_liveness_delta -gt 0) -Message "Coin Pusher reduced motion froze solver liveness." -Failures $failures
             if ($reducedFixtureEvents.Count -eq 1 -and $reducedSampleBoundaryEvents.Count -eq 1) {
-                Assert-Condition -Condition (Test-CoinPusherReducedSampleBoundary -Fixture $reducedFixtureEvents[0].data -Boundary $reducedSampleBoundaryEvents[0].data -ScenarioTags $reduced.tags) -Message "Coin Pusher reduced-motion sample was not linked to the exact-300 reinstall boundary with conserved live setup motion." -Failures $failures
+                Assert-Condition -Condition (Test-CoinPusherReducedSampleBoundary -Fixture $reducedFixtureEvents[0].data -Boundary $reducedSampleBoundaryEvents[0].data -ScenarioTags $reduced.tags) -Message "Coin Pusher reduced-motion sample was not linked to the exact shipped-cap reinstall boundary with conserved live setup motion." -Failures $failures
             }
             Assert-Condition -Condition ([int]$reduced.tags.body_count_after -gt 0) -Message "Coin Pusher reduced-motion sample lost the production body surface." -Failures $failures
-            Assert-Condition -Condition (Test-CoinPusherSurfaceConservationBinding -BodyCount ([int]$reduced.tags.body_count_after) -TrayCount ([int]$reduced.tags.tray_count_after) -Snapshot $reduced.tags.conservation_after -ExpectedOrigin 300) -Message "Coin Pusher reduced-motion after-state did not bind its surface counts to every conserved production outcome channel." -Failures $failures
+            Assert-Condition -Condition (Test-CoinPusherSurfaceConservationBinding -BodyCount ([int]$reduced.tags.body_count_after) -TrayCount ([int]$reduced.tags.tray_count_after) -Snapshot $reduced.tags.conservation_after -ExpectedOrigin $CoinPusherShippedBodyCount) -Message "Coin Pusher reduced-motion after-state did not bind its surface counts to every conserved production outcome channel." -Failures $failures
             Assert-Condition -Condition ([int]$reduced.tags.redraw_delta -eq 0 -and (-not [bool]$reducedDraw.surface_animation_liveness_active)) -Message "Coin Pusher reduced motion unexpectedly advanced the presentation-animation scheduler." -Failures $failures
             Assert-Condition -Condition ([int]$reducedDraw.draw_sample_count -gt 0) -Message "Coin Pusher reduced motion recorded no canvas draw sample." -Failures $failures
             Assert-Condition -Condition ([double]$reducedDraw.draw_p95_ms -le 5.0) -Message ("Coin Pusher reduced-motion draw p95 {0:N3}ms exceeded 5.000ms." -f [double]$reducedDraw.draw_p95_ms) -Failures $failures
@@ -387,7 +387,7 @@ if ($Plan -eq "coin_pusher") {
     }
     if ($scenariosByName.ContainsKey("coin_pusher_active_collect")) {
         $collect = $scenariosByName["coin_pusher_active_collect"].tags
-        Assert-Condition -Condition ([int]$collect.body_count_before + [int]$collect.tray_count_before -eq 300) -Message "Web COLLECT action did not execute from the exact 300-origin conserved fixture." -Failures $failures
+        Assert-Condition -Condition ([int]$collect.body_count_before + [int]$collect.tray_count_before -eq $CoinPusherShippedBodyCount) -Message "Web COLLECT action did not execute from the exact shipped-origin conserved fixture." -Failures $failures
         Assert-Condition -Condition ([int]$collect.tray_count_before -eq 1 -and [int]$collect.tray_value_before -eq 3) -Message "Web COLLECT did not begin from the meaningful seeded tray result." -Failures $failures
         Assert-Condition -Condition ([int]$collect.tray_count_at_accept -eq 0 -and [int]$collect.tray_value_at_accept -eq 0) -Message "Accepted Web COLLECT did not empty the seeded tray at action completion." -Failures $failures
         $postCollectAccounting = Get-CoinPusherPostCollectAccounting -Tags $collect
