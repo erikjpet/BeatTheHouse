@@ -36,7 +36,7 @@ foreach ($needle in @("hardware_fingerprint_sha256", "reproducible_whole_matrix_
     if (-not $profileCapture.Contains($needle)) { throw "Host-profile capture lost '$needle'." }
 }
 $nativeRuntime = Get-Content -LiteralPath (Join-Path $PSScriptRoot "perf06_native_runtime_matrix.ps1") -Raw
-foreach ($needle in @("--export-release", "Windows Steam", "Refusing to overwrite immutable native evidence", "profile_manifest_sha256", "runtime_report_sha256")) {
+foreach ($needle in @("build_native_solver.ps1", "-Platform Windows", "-Target template_release", "native_plugin_sha256", "--export-release", "Windows Steam", "Refusing to overwrite immutable native evidence", "profile_manifest_sha256", "runtime_report_sha256")) {
     if (-not $nativeRuntime.Contains($needle)) { throw "Native release-runtime matrix lost '$needle'." }
 }
 if ($nativeRuntime.Contains("SkipExport")) { throw "Native binding evidence must always use a fresh release export." }

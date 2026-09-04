@@ -40,6 +40,16 @@ $rawReport = Join-Path $out "runtime_report.json"
 $exportStdout = Join-Path $out "export.stdout.txt"
 $exportStderr = Join-Path $out "export.stderr.txt"
 
+# A Web solver build can legitimately leave only the Web side-module in the
+# shared add-on bin directory. Rebuild the locked Windows release input before
+# every fresh native export so platform execution order cannot invalidate the
+# matrix.
+& (Join-Path $PSScriptRoot "build_native_solver.ps1") -Platform Windows -Target template_release -GodotPath $GodotPath
+if ($LASTEXITCODE -ne 0) { throw "Locked Windows native solver build failed." }
+$nativePlugin = Join-Path $root "addons\coin_pusher_native\bin\coin_pusher_native_v3_10.windows.template_release.x86_64.nothreads.dll"
+if (-not (Test-Path -LiteralPath $nativePlugin -PathType Leaf)) { throw "Locked Windows native solver binary is missing after build: $nativePlugin" }
+$nativePluginHash = (Get-FileHash -LiteralPath $nativePlugin -Algorithm SHA256).Hash.ToLowerInvariant()
+
 $export = Start-Process -FilePath $GodotPath -ArgumentList @("--headless", "--path", $root, "--editor", "--export-release", '"Windows Steam"', $exe) -RedirectStandardOutput $exportStdout -RedirectStandardError $exportStderr -PassThru -WindowStyle Hidden -Wait
 if ($export.ExitCode -ne 0 -or -not (Test-Path -LiteralPath $exe -PathType Leaf)) { throw "Windows release export failed with exit code $($export.ExitCode)." }
 $buildHash = (Get-FileHash -LiteralPath $exe -Algorithm SHA256).Hash.ToLowerInvariant()
@@ -86,6 +96,7 @@ $summary = [ordered]@{
     actual_cpu_throttle_rate = if ([string]$profile.method -eq "reproducible_whole_matrix_throttle") { [string]$profile.native_processor_affinity_hex } else { "physical" }
     actual_device_scale_factor = 1.0
     godot_sha256 = $godotHash
+    native_plugin_sha256 = $nativePluginHash
     build_sha256 = $buildHash
     build_size_bytes = (Get-Item -LiteralPath $exe).Length
     started_utc = $started.ToUniversalTime().ToString("o")
