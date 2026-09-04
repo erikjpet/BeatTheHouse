@@ -57,9 +57,11 @@
                     "description": "The cartons are stacked by mismatched labels; sorting them would clear the clerk's work path.",
                     "description_variants": {
                       "center": "The cartons now fill the sorting spot, close enough for every damaged label to be compared.",
-                      "package_a_delivery_cartons_wait": "The cartons wait off the aisle in a neat stack while the clerk holds for your decision."
+                      "package_a_delivery_cartons_wait": "The cartons wait off the aisle in a neat stack while the clerk holds for your decision.",
+                      "left": "The mismarked cartons have moved left with their damaged labels exposed, reopening the clerk's path to the stock rack."
                     }
-                  }
+                  },
+                  "zone_id": "left"
                 },
                 {
                   "family": "scene_ops",
@@ -84,9 +86,11 @@
                     "description_variants": {
                       "crushed_corner": "A crushed corner exposes enough of the old label to trace where the crate belongs.",
                       "foreground": "The damaged crate has been pulled forward as the clearest piece of evidence in the shipment.",
-                      "manifest_open": "The open manifest and the crate's torn label now tell the same story."
+                      "manifest_open": "The open manifest and the crate's torn label now tell the same story.",
+                      "background": "The damaged crate waits behind the counter for verification; its torn destination label remains visible from the floor."
                     }
-                  }
+                  },
+                  "zone_id": "background"
                 },
                 {
                   "family": "scene_ops",
@@ -111,7 +115,8 @@
                     "description_variants": {
 
                     }
-                  }
+                  },
+                  "zone_id": "service_lane"
                 },
                 {
                   "family": "scene_ops",
@@ -135,7 +140,8 @@
                     "description_variants": {
 
                     }
-                  }
+                  },
+                  "zone_id": "exit_lane"
                 }
               ],
               "interaction_ops": [
@@ -159,8 +165,9 @@
                         "label": "Ignore the delivery",
                         "input_action": "ui_down",
                         "non_color_state": "ignore",
-                        "handler": "publish_feedback",
+                        "handler": "play_cue",
                         "inputs": {
+                          "cue_id": "shop_bell",
                           "message": "You ignore the delivery. A delivery dolly waits beside mismarked cartons while the front-door lane remains visibly open."
                         }
                       },
@@ -169,8 +176,9 @@
                         "label": "Refuse to sort the cartons",
                         "input_action": "ui_cancel",
                         "non_color_state": "refuse",
-                        "handler": "publish_feedback",
+                        "handler": "play_cue",
                         "inputs": {
+                          "cue_id": "shop_bell",
                           "message": "You refuse to sort the cartons. A delivery dolly waits beside mismarked cartons while the front-door lane remains visibly open."
                         }
                       }
@@ -210,8 +218,9 @@
                         "label": "Inspect the damaged manifest",
                         "input_action": "ui_accept",
                         "non_color_state": "inspect",
-                        "handler": "publish_feedback",
+                        "handler": "play_cue",
                         "inputs": {
+                          "cue_id": "shop_bell",
                           "message": "The damaged manifest identifies which cartons must move before the stock choice can be opened."
                         }
                       }
@@ -265,7 +274,8 @@
                       "awaiting_choice": "The clerk has stopped moving boxes and is plainly waiting for your answer."
                     },
                     "zone_id": "background"
-                  }
+                  },
+                  "zone_id": "background"
                 },
                 {
                   "family": "actor_ops",
@@ -288,7 +298,8 @@
                       "waiting_on_choice": "The runner rests both hands on the dolly while the stock choice hangs in the air."
                     },
                     "zone_id": "left"
-                  }
+                  },
+                  "zone_id": "left"
                 }
               ],
               "transition_ops": [
@@ -357,14 +368,15 @@
                   "receipt_id": "sorting_reroute_delivery",
                   "owner_namespace": "scenario",
                   "stable_object_id": "delivery_cartons",
-                  "zone_id": "center"
+                  "zone_id": "left"
                 },
                 {
                   "family": "scene_ops",
                   "op": "remove",
                   "receipt_id": "sorting_remove_delivery_event_gate",
                   "owner_namespace": "scenario",
-                  "stable_object_id": "delivery_event_gate"
+                  "stable_object_id": "delivery_event_gate",
+                  "zone_id": "service_lane"
                 },
                 {
                   "family": "scene_ops",
@@ -372,7 +384,8 @@
                   "receipt_id": "sorting_expose_label",
                   "owner_namespace": "scenario",
                   "stable_object_id": "mismarked_crate",
-                  "appearance": "crushed_corner"
+                  "appearance": "crushed_corner",
+                  "zone_id": "background"
                 }
               ],
               "interaction_ops": [
@@ -440,7 +453,8 @@
                   "receipt_id": "sorting_reposition_clerk",
                   "owner_namespace": "scenario",
                   "stable_object_id": "delivery_clerk",
-                  "anchor_id": "delivery_clerk_work"
+                  "anchor_id": "delivery_clerk_work",
+                  "zone_id": "center"
                 },
                 {
                   "family": "actor_ops",
@@ -448,7 +462,8 @@
                   "receipt_id": "sorting_clerk_checks_labels",
                   "owner_namespace": "scenario",
                   "stable_object_id": "delivery_clerk",
-                  "pose": "checking_labels"
+                  "pose": "checking_labels",
+                  "zone_id": "center"
                 },
                 {
                   "family": "actor_ops",
@@ -464,7 +479,8 @@
                   "receipt_id": "sorting_route_runner_to_service_lane",
                   "owner_namespace": "scenario",
                   "stable_object_id": "delivery_runner",
-                  "anchor_id": "delivery_runner_route"
+                  "anchor_id": "delivery_runner_route",
+                  "zone_id": "foreground"
                 },
                 {
                   "family": "actor_ops",
@@ -472,7 +488,8 @@
                   "receipt_id": "sorting_runner_shifts_cartons",
                   "owner_namespace": "scenario",
                   "stable_object_id": "delivery_runner",
-                  "pose": "shifting_cartons"
+                  "pose": "shifting_cartons",
+                  "zone_id": "foreground"
                 }
               ],
               "transition_ops": [
@@ -556,7 +573,8 @@
                     "description_variants": {
                       "event_pending": "The shelf is staged and the manifest is checked; the clerk's stock decision is ready to open."
                     }
-                  }
+                  },
+                  "zone_id": "right"
                 }
               ],
               "interaction_ops": [
@@ -622,7 +640,8 @@
                   "receipt_id": "verification_clerk_working",
                   "owner_namespace": "scenario",
                   "stable_object_id": "delivery_clerk",
-                  "behavior": "work"
+                  "behavior": "work",
+                  "zone_id": "center"
                 },
                 {
                   "family": "actor_ops",
@@ -630,7 +649,8 @@
                   "receipt_id": "verification_clerk_points",
                   "owner_namespace": "scenario",
                   "stable_object_id": "delivery_clerk",
-                  "pose": "checking_manifest"
+                  "pose": "checking_manifest",
+                  "zone_id": "center"
                 },
                 {
                   "family": "actor_ops",
@@ -638,7 +658,8 @@
                   "receipt_id": "verification_reposition_runner",
                   "owner_namespace": "scenario",
                   "stable_object_id": "delivery_runner",
-                  "anchor_id": "delivery_runner_route"
+                  "anchor_id": "delivery_runner_route",
+                  "zone_id": "foreground"
                 },
                 {
                   "family": "actor_ops",
@@ -646,7 +667,8 @@
                   "receipt_id": "verification_runner_holds_twine",
                   "owner_namespace": "scenario",
                   "stable_object_id": "delivery_runner",
-                  "pose": "holding_twine"
+                  "pose": "holding_twine",
+                  "zone_id": "foreground"
                 }
               ],
               "transition_ops": [
@@ -713,7 +735,8 @@
                   "receipt_id": "awaiting_stock_reposition_cartons",
                   "owner_namespace": "scenario",
                   "stable_object_id": "delivery_cartons",
-                  "anchor_id": "package_a_delivery_cartons_wait"
+                  "anchor_id": "package_a_delivery_cartons_wait",
+                  "zone_id": "foreground"
                 },
                 {
                   "family": "scene_ops",
@@ -721,7 +744,8 @@
                   "receipt_id": "awaiting_stock_mark_shelf",
                   "owner_namespace": "scenario",
                   "stable_object_id": "sorting_shelf",
-                  "state": "event_pending"
+                  "state": "event_pending",
+                  "zone_id": "right"
                 },
                 {
                   "family": "scene_ops",
@@ -729,7 +753,7 @@
                   "receipt_id": "awaiting_stock_move_crate",
                   "owner_namespace": "scenario",
                   "stable_object_id": "mismarked_crate",
-                  "zone_id": "foreground"
+                  "zone_id": "background"
                 },
                 {
                   "family": "scene_ops",
@@ -737,7 +761,8 @@
                   "receipt_id": "awaiting_stock_expose_crate",
                   "owner_namespace": "scenario",
                   "stable_object_id": "mismarked_crate",
-                  "appearance": "manifest_open"
+                  "appearance": "manifest_open",
+                  "zone_id": "background"
                 }
               ],
               "interaction_ops": [
@@ -768,7 +793,8 @@
                   "receipt_id": "awaiting_stock_clerk_repositions",
                   "owner_namespace": "scenario",
                   "stable_object_id": "delivery_clerk",
-                  "anchor_id": "delivery_clerk_work"
+                  "anchor_id": "delivery_clerk_work",
+                  "zone_id": "center"
                 },
                 {
                   "family": "actor_ops",
@@ -776,7 +802,8 @@
                   "receipt_id": "awaiting_stock_clerk_waits",
                   "owner_namespace": "scenario",
                   "stable_object_id": "delivery_clerk",
-                  "pose": "awaiting_choice"
+                  "pose": "awaiting_choice",
+                  "zone_id": "center"
                 },
                 {
                   "family": "actor_ops",
@@ -784,7 +811,8 @@
                   "receipt_id": "awaiting_stock_reposition_runner",
                   "owner_namespace": "scenario",
                   "stable_object_id": "delivery_runner",
-                  "anchor_id": "delivery_runner_route"
+                  "anchor_id": "delivery_runner_route",
+                  "zone_id": "foreground"
                 },
                 {
                   "family": "actor_ops",
@@ -792,7 +820,8 @@
                   "receipt_id": "awaiting_stock_runner_waits",
                   "owner_namespace": "scenario",
                   "stable_object_id": "delivery_runner",
-                  "pose": "waiting_on_choice"
+                  "pose": "waiting_on_choice",
+                  "zone_id": "foreground"
                 }
               ],
               "transition_ops": [
@@ -1032,35 +1061,40 @@
               "op": "remove",
               "receipt_id": "cleanup_delivery_cartons",
               "owner_namespace": "scenario",
-              "stable_object_id": "delivery_cartons"
+              "stable_object_id": "delivery_cartons",
+              "zone_id": "foreground"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "receipt_id": "cleanup_mismarked_crate",
               "owner_namespace": "scenario",
-              "stable_object_id": "mismarked_crate"
+              "stable_object_id": "mismarked_crate",
+              "zone_id": "background"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "receipt_id": "cleanup_delivery_event_gate",
               "owner_namespace": "scenario",
-              "stable_object_id": "delivery_event_gate"
+              "stable_object_id": "delivery_event_gate",
+              "zone_id": "service_lane"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "receipt_id": "cleanup_delivery_exit",
               "owner_namespace": "scenario",
-              "stable_object_id": "delivery_exit"
+              "stable_object_id": "delivery_exit",
+              "zone_id": "exit_lane"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "receipt_id": "cleanup_sorting_shelf",
               "owner_namespace": "scenario",
-              "stable_object_id": "sorting_shelf"
+              "stable_object_id": "sorting_shelf",
+              "zone_id": "right"
             },
             {
               "family": "interaction_ops",
@@ -1114,14 +1148,16 @@
               "op": "despawn",
               "receipt_id": "cleanup_delivery_clerk",
               "owner_namespace": "scenario",
-              "stable_object_id": "delivery_clerk"
+              "stable_object_id": "delivery_clerk",
+              "zone_id": "center"
             },
             {
               "family": "actor_ops",
               "op": "despawn",
               "receipt_id": "cleanup_delivery_runner",
               "owner_namespace": "scenario",
-              "stable_object_id": "delivery_runner"
+              "stable_object_id": "delivery_runner",
+              "zone_id": "foreground"
             }
           ]
         },
@@ -1152,7 +1188,8 @@
                   "description_variants": {
 
                   }
-                }
+                },
+                "zone_id": "center"
               }
             ],
             "actor_ops": [
@@ -1177,7 +1214,8 @@
                     "awaiting_choice": "The clerk has stopped moving boxes and is plainly waiting for your answer."
                   },
                   "zone_id": "background"
-                }
+                },
+                "zone_id": "background"
               }
             ],
             "interaction_ops": [
@@ -1240,7 +1278,8 @@
                   "description_variants": {
 
                   }
-                }
+                },
+                "zone_id": "foreground"
               }
             ],
             "actor_ops": [],
@@ -1305,7 +1344,8 @@
                   "description_variants": {
 
                   }
-                }
+                },
+                "zone_id": "background"
               }
             ],
             "actor_ops": [
@@ -1330,7 +1370,8 @@
                     "awaiting_choice": "The clerk has stopped moving boxes and is plainly waiting for your answer."
                   },
                   "zone_id": "background"
-                }
+                },
+                "zone_id": "background"
               }
             ],
             "interaction_ops": [],
@@ -1386,7 +1427,8 @@
                   "description_variants": {
 
                   }
-                }
+                },
+                "zone_id": "background"
               }
             ],
             "actor_ops": [],
@@ -1427,7 +1469,7 @@
           "sweep_coexistence",
           "host_event_authority_gate"
         ],
-        "sequence_signature": "5234a87ce6265ab418fcc370d810b0c646ff197fcdbfcba0f513c1295f73bd1b",
+        "sequence_signature": "0b352da3d30045783c4722676bc1bb1716995f2c6ef47aa7ebad6953e8599251",
         "owner_exceptions": [],
         "declared_targets": {
           "scene_objects": [],
@@ -1916,7 +1958,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "corner_store_lotto_fever_after_failure",
-                "stable_object_id": "angry_queue"
+                "stable_object_id": "angry_queue",
+                "zone_id": "center"
               }
             ],
             "service_ops": [
@@ -1961,7 +2004,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "corner_store_lotto_fever_after_ignored",
-                "stable_object_id": "sold_out_counter"
+                "stable_object_id": "sold_out_counter",
+                "zone_id": "service_lane"
               }
             ],
             "service_ops": [
@@ -2006,7 +2050,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "corner_store_lotto_fever_after_interrupted",
-                "stable_object_id": "number_board_abandoned"
+                "stable_object_id": "number_board_abandoned",
+                "zone_id": "background"
               }
             ],
             "service_ops": [
@@ -2051,7 +2096,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "corner_store_lotto_fever_after_public",
-                "stable_object_id": "economy_stock_public_service"
+                "stable_object_id": "economy_stock_public_service",
+                "zone_id": "service_lane"
               }
             ],
             "service_ops": [
@@ -2096,7 +2142,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "corner_store_lotto_fever_after_refused",
-                "stable_object_id": "sold_out_counter_refused"
+                "stable_object_id": "sold_out_counter_refused",
+                "zone_id": "service_lane"
               }
             ],
             "service_ops": [
@@ -2141,7 +2188,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "corner_store_lotto_fever_after_success",
-                "stable_object_id": "celebration_layout"
+                "stable_object_id": "celebration_layout",
+                "zone_id": "center"
               }
             ],
             "service_ops": [
@@ -2168,21 +2216,24 @@
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "corner_store_lotto_fever_cleanup_a",
-              "stable_object_id": "queue_rail"
+              "stable_object_id": "queue_rail",
+              "zone_id": "left"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "corner_store_lotto_fever_cleanup_b",
-              "stable_object_id": "number_board"
+              "stable_object_id": "number_board",
+              "zone_id": "right"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "corner_store_lotto_fever_cleanup_exit_visual",
-              "stable_object_id": "corner_store_lotto_fever_exit"
+              "stable_object_id": "corner_store_lotto_fever_exit",
+              "zone_id": "exit_lane"
             },
             {
               "family": "interaction_ops",
@@ -2210,7 +2261,8 @@
               "op": "despawn",
               "owner_namespace": "scenario",
               "receipt_id": "corner_store_lotto_fever_cleanup_actor",
-              "stable_object_id": "lotto_regular"
+              "stable_object_id": "lotto_regular",
+              "zone_id": "background"
             }
           ]
         },
@@ -2356,14 +2408,16 @@
                     "description_variants": {
                       "service_lane": "The regular has edged up beside the counter for a clean view of the draw.",
                       "watching_draw": "The regular watches the lit digits without blinking.",
-                      "watch": "The regular is openly keeping watch, raising the cost of anything that looks crooked."
+                      "watch": "The regular is openly keeping watch, raising the cost of anything that looks crooked.",
+                      "background": "The lottery regular steps back to study the posted board, still watching anyone who reaches toward the slips."
                     }
                   },
                   "family": "actor_ops",
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_lotto_fever_arrival_actor",
-                  "stable_object_id": "lotto_regular"
+                  "stable_object_id": "lotto_regular",
+                  "zone_id": "background"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -2564,7 +2618,8 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_lotto_fever_arrival_a",
-                  "stable_object_id": "queue_rail"
+                  "stable_object_id": "queue_rail",
+                  "zone_id": "left"
                 },
                 {
                   "family": "scene_ops",
@@ -2589,7 +2644,8 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_lotto_fever_arrival_b",
-                  "stable_object_id": "number_board"
+                  "stable_object_id": "number_board",
+                  "zone_id": "right"
                 },
                 {
                   "family": "scene_ops",
@@ -2613,7 +2669,8 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_lotto_fever_exit_visual",
-                  "stable_object_id": "corner_store_lotto_fever_exit"
+                  "stable_object_id": "corner_store_lotto_fever_exit",
+                  "zone_id": "exit_lane"
                 }
               ],
               "transition_ops": [
@@ -2625,7 +2682,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_lotto_fever_arrival_stage",
-                  "reduced_motion_message": "The physical state is now in place.",
+                  "reduced_motion_message": "The changed fixture is already in its new position. A ticket queue bends around a stock rack while the last-number board hangs over the counter.",
                   "stable_object_id": "corner_store_lotto_fever_arrival_stage",
                   "stage_id": "corner_store_lotto_fever_arrival_stage"
                 }
@@ -2639,7 +2696,7 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_lotto_fever_work_actor",
                   "stable_object_id": "lotto_regular",
-                  "zone_id": "service_lane"
+                  "zone_id": "background"
                 },
                 {
                   "family": "actor_ops",
@@ -2647,7 +2704,8 @@
                   "owner_namespace": "scenario",
                   "pose": "watching_draw",
                   "receipt_id": "corner_store_lotto_fever_draw_pose",
-                  "stable_object_id": "lotto_regular"
+                  "stable_object_id": "lotto_regular",
+                  "zone_id": "background"
                 },
                 {
                   "behavior": "watch",
@@ -2655,11 +2713,12 @@
                   "op": "set_behavior",
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_lotto_fever_draw_behavior",
-                  "stable_object_id": "lotto_regular"
+                  "stable_object_id": "lotto_regular",
+                  "zone_id": "background"
                 }
               ],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The first physical step exposes the second station and changes the actor's route.",
+              "arrival_feedback": "The first fixture moves and redirects the room's working route toward the second station. A ticket queue bends around a stock rack while the last-number board hangs over the counter.",
               "branches": [
                 {
                   "condition": {
@@ -2779,7 +2838,7 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_lotto_fever_work_move",
                   "stable_object_id": "queue_rail",
-                  "zone_id": "center"
+                  "zone_id": "left"
                 },
                 {
                   "appearance": "active_station",
@@ -2787,7 +2846,8 @@
                   "op": "set_appearance",
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_lotto_fever_work_reveal",
-                  "stable_object_id": "number_board"
+                  "stable_object_id": "number_board",
+                  "zone_id": "right"
                 },
                 {
                   "family": "scene_ops",
@@ -2795,7 +2855,8 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_lotto_fever_queue_places",
                   "stable_object_id": "queue_rail",
-                  "state": "places_marked"
+                  "state": "places_marked",
+                  "zone_id": "left"
                 },
                 {
                   "appearance": "verified_digits",
@@ -2803,7 +2864,8 @@
                   "op": "set_appearance",
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_lotto_fever_draw_digits",
-                  "stable_object_id": "number_board"
+                  "stable_object_id": "number_board",
+                  "zone_id": "right"
                 },
                 {
                   "family": "scene_ops",
@@ -2819,7 +2881,7 @@
                   "change_id": "corner_store_lotto_fever_work_change",
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The scene physically shifts into its decisive second step.",
+                  "message": "The room visibly shifts into the decisive second step. A ticket queue bends around a stock rack while the last-number board hangs over the counter.",
                   "op": "scene_change",
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_lotto_fever_work_change",
@@ -2860,7 +2922,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_lotto_fever_draw_stage",
-                  "reduced_motion_message": "The physical state is now in place.",
+                  "reduced_motion_message": "The changed fixture is already in its new position. A ticket queue bends around a stock rack while the last-number board hangs over the counter.",
                   "stable_object_id": "corner_store_lotto_fever_draw_stage",
                   "stage_id": "corner_store_lotto_fever_draw_stage"
                 }
@@ -2869,7 +2931,7 @@
             {
               "actor_ops": [],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The room holds the chosen physical aftermath for revisit.",
+              "arrival_feedback": "The room keeps the chosen aftermath in place for the next visit. A ticket queue bends around a stock rack while the last-number board hangs over the counter.",
               "branches": [
                 {
                   "condition": {
@@ -2938,7 +3000,7 @@
                 {
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The outcome is recorded once and its room changes persist.",
+                  "message": "The outcome is recorded once; its visible changes remain in the room. A ticket queue bends around a stock rack while the last-number board hangs over the counter.",
                   "op": "feedback",
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_lotto_fever_resolution_feedback",
@@ -2954,7 +3016,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "f4f86e98618ae87548eeb27380e3dcd83909619ee5c76675ea75360f126dc584"
+        "sequence_signature": "cc78f3468472e4ddd2d6e94f071257305ccf8323192bb97fea48234a2d9ba211"
       }
     },
     {
@@ -3053,7 +3115,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "corner_store_aftermath_after_failure",
-                "stable_object_id": "police_hold"
+                "stable_object_id": "police_hold",
+                "zone_id": "service_lane"
               }
             ],
             "service_ops": [
@@ -3098,7 +3161,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "corner_store_aftermath_after_ignored",
-                "stable_object_id": "watched_aisle"
+                "stable_object_id": "watched_aisle",
+                "zone_id": "background"
               }
             ],
             "service_ops": [
@@ -3143,7 +3207,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "corner_store_aftermath_after_interrupted",
-                "stable_object_id": "suspect_object_abandoned"
+                "stable_object_id": "suspect_object_abandoned",
+                "zone_id": "foreground"
               }
             ],
             "service_ops": [
@@ -3188,7 +3253,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "corner_store_aftermath_after_public",
-                "stable_object_id": "evidence_sweep_hold"
+                "stable_object_id": "evidence_sweep_hold",
+                "zone_id": "service_lane"
               }
             ],
             "service_ops": [
@@ -3233,7 +3299,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "corner_store_aftermath_after_refused",
-                "stable_object_id": "watched_aisle_refused"
+                "stable_object_id": "watched_aisle_refused",
+                "zone_id": "background"
               }
             ],
             "service_ops": [
@@ -3278,7 +3345,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "corner_store_aftermath_after_success",
-                "stable_object_id": "quiet_recovery"
+                "stable_object_id": "quiet_recovery",
+                "zone_id": "background"
               }
             ],
             "service_ops": [
@@ -3305,21 +3373,24 @@
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "corner_store_aftermath_cleanup_a",
-              "stable_object_id": "boarded_glass"
+              "stable_object_id": "boarded_glass",
+              "zone_id": "left"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "corner_store_aftermath_cleanup_b",
-              "stable_object_id": "suspect_object"
+              "stable_object_id": "suspect_object",
+              "zone_id": "right"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "corner_store_aftermath_cleanup_exit_visual",
-              "stable_object_id": "corner_store_aftermath_exit"
+              "stable_object_id": "corner_store_aftermath_exit",
+              "zone_id": "exit_lane"
             },
             {
               "family": "interaction_ops",
@@ -3347,7 +3418,8 @@
               "op": "despawn",
               "owner_namespace": "scenario",
               "receipt_id": "corner_store_aftermath_cleanup_actor",
-              "stable_object_id": "plainclothes_officer"
+              "stable_object_id": "plainclothes_officer",
+              "zone_id": "background"
             }
           ]
         },
@@ -3488,14 +3560,16 @@
                     "description": "A plainclothes officer watches the repair work rather than the customers, inviting careful cooperation.",
                     "description_variants": {
                       "service_lane": "The officer has moved beside the evidence station to see the recovery clearly.",
-                      "left": "The officer stands off to the side with the bagged object in view."
+                      "left": "The officer stands off to the side with the bagged object in view.",
+                      "background": "The plainclothes officer withdraws to the back wall, keeping the boarded window and repair route under observation."
                     }
                   },
                   "family": "actor_ops",
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_aftermath_arrival_actor",
-                  "stable_object_id": "plainclothes_officer"
+                  "stable_object_id": "plainclothes_officer",
+                  "zone_id": "background"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -3688,13 +3762,15 @@
                     "description": "Fresh boards cover the broken pane; their hurried nail pattern shows the store closed in a rush.",
                     "description_variants": {
                       "center": "The boarded pane is now the room's center of attention, with the break pattern exposed.",
-                      "foreground": "The boards have been pulled close enough to trace where the impact began."
+                      "foreground": "The boards have been pulled close enough to trace where the impact began.",
+                      "left": "The boarded pane has been moved to the left work area; the fresh nail pattern still records how quickly the store was closed."
                     }
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_aftermath_arrival_a",
-                  "stable_object_id": "boarded_glass"
+                  "stable_object_id": "boarded_glass",
+                  "zone_id": "left"
                 },
                 {
                   "family": "scene_ops",
@@ -3719,7 +3795,8 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_aftermath_arrival_b",
-                  "stable_object_id": "suspect_object"
+                  "stable_object_id": "suspect_object",
+                  "zone_id": "right"
                 },
                 {
                   "family": "scene_ops",
@@ -3743,7 +3820,8 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_aftermath_exit_visual",
-                  "stable_object_id": "corner_store_aftermath_exit"
+                  "stable_object_id": "corner_store_aftermath_exit",
+                  "zone_id": "exit_lane"
                 }
               ],
               "transition_ops": [
@@ -3755,7 +3833,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_aftermath_arrival_stage",
-                  "reduced_motion_message": "The physical state is now in place.",
+                  "reduced_motion_message": "The changed fixture is already in its new position. Boarded glass narrows the aisle while a tagged object lies between the clerk and a moving plainclothes officer.",
                   "stable_object_id": "corner_store_aftermath_arrival_stage",
                   "stage_id": "corner_store_aftermath_arrival_stage"
                 }
@@ -3769,7 +3847,7 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_aftermath_work_actor",
                   "stable_object_id": "plainclothes_officer",
-                  "zone_id": "service_lane"
+                  "zone_id": "background"
                 },
                 {
                   "family": "actor_ops",
@@ -3777,11 +3855,11 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_aftermath_officer_lane",
                   "stable_object_id": "plainclothes_officer",
-                  "zone_id": "left"
+                  "zone_id": "background"
                 }
               ],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The first physical step exposes the second station and changes the actor's route.",
+              "arrival_feedback": "The first fixture moves and redirects the room's working route toward the second station. Boarded glass narrows the aisle while a tagged object lies between the clerk and a moving plainclothes officer.",
               "branches": [
                 {
                   "condition": {
@@ -3901,7 +3979,7 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_aftermath_work_move",
                   "stable_object_id": "boarded_glass",
-                  "zone_id": "center"
+                  "zone_id": "left"
                 },
                 {
                   "appearance": "active_station",
@@ -3909,7 +3987,8 @@
                   "op": "set_appearance",
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_aftermath_work_reveal",
-                  "stable_object_id": "suspect_object"
+                  "stable_object_id": "suspect_object",
+                  "zone_id": "right"
                 },
                 {
                   "family": "scene_ops",
@@ -3917,14 +3996,15 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_aftermath_evidence_lane",
                   "stable_object_id": "boarded_glass",
-                  "zone_id": "foreground"
+                  "zone_id": "left"
                 },
                 {
                   "family": "scene_ops",
                   "op": "reveal",
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_aftermath_evidence_reveal",
-                  "stable_object_id": "suspect_object"
+                  "stable_object_id": "suspect_object",
+                  "zone_id": "right"
                 },
                 {
                   "family": "scene_ops",
@@ -3932,7 +4012,8 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_aftermath_evidence_state",
                   "stable_object_id": "suspect_object",
-                  "state": "bagged_for_trace"
+                  "state": "bagged_for_trace",
+                  "zone_id": "right"
                 }
               ],
               "transition_ops": [
@@ -3940,7 +4021,7 @@
                   "change_id": "corner_store_aftermath_work_change",
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The scene physically shifts into its decisive second step.",
+                  "message": "The room visibly shifts into the decisive second step. Boarded glass narrows the aisle while a tagged object lies between the clerk and a moving plainclothes officer.",
                   "op": "scene_change",
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_aftermath_work_change",
@@ -3954,7 +4035,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_aftermath_evidence_stage",
-                  "reduced_motion_message": "The physical state is now in place.",
+                  "reduced_motion_message": "The changed fixture is already in its new position. Boarded glass narrows the aisle while a tagged object lies between the clerk and a moving plainclothes officer.",
                   "stable_object_id": "corner_store_aftermath_evidence_stage",
                   "stage_id": "corner_store_aftermath_evidence_stage"
                 },
@@ -3981,7 +4062,7 @@
             {
               "actor_ops": [],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The room holds the chosen physical aftermath for revisit.",
+              "arrival_feedback": "The room keeps the chosen aftermath in place for the next visit. Boarded glass narrows the aisle while a tagged object lies between the clerk and a moving plainclothes officer.",
               "branches": [
                 {
                   "condition": {
@@ -4050,7 +4131,7 @@
                 {
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The outcome is recorded once and its room changes persist.",
+                  "message": "The outcome is recorded once; its visible changes remain in the room. Boarded glass narrows the aisle while a tagged object lies between the clerk and a moving plainclothes officer.",
                   "op": "feedback",
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_aftermath_resolution_feedback",
@@ -4066,7 +4147,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "efbc1dbd0b9268e33be495045f607913729d7fb9a967400ac929f9ef0c931707"
+        "sequence_signature": "051d6fc7c261cfd58f80fcbbd87a443367aeff08bfe519e7f4cf281eca6324bf"
       }
     },
     {
@@ -4165,7 +4246,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "corner_store_dead_shift_after_failure",
-                "stable_object_id": "private_darkness"
+                "stable_object_id": "private_darkness",
+                "zone_id": "background"
               }
             ],
             "service_ops": [
@@ -4210,7 +4292,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "corner_store_dead_shift_after_ignored",
-                "stable_object_id": "flicker_lockout"
+                "stable_object_id": "flicker_lockout",
+                "zone_id": "service_lane"
               }
             ],
             "service_ops": [
@@ -4255,7 +4338,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "corner_store_dead_shift_after_interrupted",
-                "stable_object_id": "cooler_circuit_abandoned"
+                "stable_object_id": "cooler_circuit_abandoned",
+                "zone_id": "foreground"
               }
             ],
             "service_ops": [
@@ -4300,7 +4384,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "corner_store_dead_shift_after_public",
-                "stable_object_id": "surveillance_rumor_route"
+                "stable_object_id": "surveillance_rumor_route",
+                "zone_id": "background"
               }
             ],
             "service_ops": [
@@ -4345,7 +4430,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "corner_store_dead_shift_after_refused",
-                "stable_object_id": "flicker_lockout_refused"
+                "stable_object_id": "flicker_lockout_refused",
+                "zone_id": "service_lane"
               }
             ],
             "service_ops": [
@@ -4390,7 +4476,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "corner_store_dead_shift_after_success",
-                "stable_object_id": "lit_service"
+                "stable_object_id": "lit_service",
+                "zone_id": "background"
               }
             ],
             "service_ops": [
@@ -4417,21 +4504,24 @@
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "corner_store_dead_shift_cleanup_a",
-              "stable_object_id": "breaker_panel"
+              "stable_object_id": "breaker_panel",
+              "zone_id": "foreground"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "corner_store_dead_shift_cleanup_b",
-              "stable_object_id": "cooler_circuit"
+              "stable_object_id": "cooler_circuit",
+              "zone_id": "right"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "corner_store_dead_shift_cleanup_exit_visual",
-              "stable_object_id": "corner_store_dead_shift_exit"
+              "stable_object_id": "corner_store_dead_shift_exit",
+              "zone_id": "exit_lane"
             },
             {
               "family": "interaction_ops",
@@ -4459,7 +4549,8 @@
               "op": "despawn",
               "owner_namespace": "scenario",
               "receipt_id": "corner_store_dead_shift_cleanup_actor",
-              "stable_object_id": "night_clerk"
+              "stable_object_id": "night_clerk",
+              "zone_id": "background"
             }
           ]
         },
@@ -4605,14 +4696,16 @@
                     "description": "The night clerk listens to the cooler and keeps one hand near the emergency light.",
                     "description_variants": {
                       "service_lane": "The clerk waits beside the breaker lane, leaving room for someone to work.",
-                      "holding_flashlight": "The clerk holds a steady flashlight on the isolated circuit."
+                      "holding_flashlight": "The clerk holds a steady flashlight on the isolated circuit.",
+                      "background": "The night clerk retreats behind the counter to watch the cooler lights and the newly exposed breaker panel together."
                     }
                   },
                   "family": "actor_ops",
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_dead_shift_arrival_actor",
-                  "stable_object_id": "night_clerk"
+                  "stable_object_id": "night_clerk",
+                  "zone_id": "background"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -4806,13 +4899,15 @@
                     "description": "The breaker panel hums behind a warm cover; isolating it would stop the cooler from worsening.",
                     "description_variants": {
                       "center": "The suspect breaker has been brought into the work area where its feed can be isolated.",
-                      "open_breaker": "The breaker cover is open and the bad circuit is plainly separated from the live rows."
+                      "open_breaker": "The breaker cover is open and the bad circuit is plainly separated from the live rows.",
+                      "foreground": "The hot breaker panel stands open in the foreground, making the cooler fault—and the risk of touching it—plain."
                     }
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_dead_shift_arrival_a",
-                  "stable_object_id": "breaker_panel"
+                  "stable_object_id": "breaker_panel",
+                  "zone_id": "foreground"
                 },
                 {
                   "family": "scene_ops",
@@ -4837,7 +4932,8 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_dead_shift_arrival_b",
-                  "stable_object_id": "cooler_circuit"
+                  "stable_object_id": "cooler_circuit",
+                  "zone_id": "right"
                 },
                 {
                   "family": "scene_ops",
@@ -4862,7 +4958,8 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_dead_shift_exit_visual",
-                  "stable_object_id": "corner_store_dead_shift_exit"
+                  "stable_object_id": "corner_store_dead_shift_exit",
+                  "zone_id": "exit_lane"
                 }
               ],
               "transition_ops": [
@@ -4874,7 +4971,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_dead_shift_arrival_stage",
-                  "reduced_motion_message": "The physical state is now in place.",
+                  "reduced_motion_message": "The changed fixture is already in its new position. A dark cooler and a flickering breaker split the store into exposed and private aisles.",
                   "stable_object_id": "corner_store_dead_shift_arrival_stage",
                   "stage_id": "corner_store_dead_shift_arrival_stage"
                 }
@@ -4888,7 +4985,7 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_dead_shift_work_actor",
                   "stable_object_id": "night_clerk",
-                  "zone_id": "service_lane"
+                  "zone_id": "background"
                 },
                 {
                   "family": "actor_ops",
@@ -4896,11 +4993,12 @@
                   "owner_namespace": "scenario",
                   "pose": "holding_flashlight",
                   "receipt_id": "corner_store_dead_shift_clerk_pose",
-                  "stable_object_id": "night_clerk"
+                  "stable_object_id": "night_clerk",
+                  "zone_id": "background"
                 }
               ],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The first physical step exposes the second station and changes the actor's route.",
+              "arrival_feedback": "The first fixture moves and redirects the room's working route toward the second station. A dark cooler and a flickering breaker split the store into exposed and private aisles.",
               "branches": [
                 {
                   "condition": {
@@ -5020,7 +5118,7 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_dead_shift_work_move",
                   "stable_object_id": "breaker_panel",
-                  "zone_id": "center"
+                  "zone_id": "foreground"
                 },
                 {
                   "appearance": "active_station",
@@ -5028,7 +5126,8 @@
                   "op": "set_appearance",
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_dead_shift_work_reveal",
-                  "stable_object_id": "cooler_circuit"
+                  "stable_object_id": "cooler_circuit",
+                  "zone_id": "right"
                 },
                 {
                   "appearance": "open_breaker",
@@ -5036,7 +5135,8 @@
                   "op": "set_appearance",
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_dead_shift_breaker_open",
-                  "stable_object_id": "breaker_panel"
+                  "stable_object_id": "breaker_panel",
+                  "zone_id": "foreground"
                 },
                 {
                   "family": "scene_ops",
@@ -5044,14 +5144,16 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_dead_shift_cooler_dark",
                   "stable_object_id": "cooler_circuit",
-                  "state": "circuit_isolated"
+                  "state": "circuit_isolated",
+                  "zone_id": "right"
                 },
                 {
                   "family": "scene_ops",
                   "op": "reveal",
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_dead_shift_cooler_reveal",
-                  "stable_object_id": "cooler_circuit"
+                  "stable_object_id": "cooler_circuit",
+                  "zone_id": "right"
                 }
               ],
               "transition_ops": [
@@ -5059,7 +5161,7 @@
                   "change_id": "corner_store_dead_shift_work_change",
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The scene physically shifts into its decisive second step.",
+                  "message": "The room visibly shifts into the decisive second step. A dark cooler and a flickering breaker split the store into exposed and private aisles.",
                   "op": "scene_change",
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_dead_shift_work_change",
@@ -5088,7 +5190,7 @@
             {
               "actor_ops": [],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The room holds the chosen physical aftermath for revisit.",
+              "arrival_feedback": "The room keeps the chosen aftermath in place for the next visit. A dark cooler and a flickering breaker split the store into exposed and private aisles.",
               "branches": [
                 {
                   "condition": {
@@ -5157,7 +5259,7 @@
                 {
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The outcome is recorded once and its room changes persist.",
+                  "message": "The outcome is recorded once; its visible changes remain in the room. A dark cooler and a flickering breaker split the store into exposed and private aisles.",
                   "op": "feedback",
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_dead_shift_resolution_feedback",
@@ -5173,7 +5275,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "ab724da764867e5103ded332478608369e6a010f875b13d66d06535fc75ed584"
+        "sequence_signature": "0f26865b683cd9e67b391b4f45841e44a44740ed2f2859b2fd2a68cf8e4d2009"
       }
     },
     {
@@ -5272,7 +5374,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "corner_store_inventory_night_after_failure",
-                "stable_object_id": "quarantined_section"
+                "stable_object_id": "quarantined_section",
+                "zone_id": "background"
               }
             ],
             "service_ops": [
@@ -5317,7 +5420,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "corner_store_inventory_night_after_ignored",
-                "stable_object_id": "closed_aisles"
+                "stable_object_id": "closed_aisles",
+                "zone_id": "background"
               }
             ],
             "service_ops": [
@@ -5362,7 +5466,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "corner_store_inventory_night_after_interrupted",
-                "stable_object_id": "discrepancy_shelf_abandoned"
+                "stable_object_id": "discrepancy_shelf_abandoned",
+                "zone_id": "foreground"
               }
             ],
             "service_ops": [
@@ -5407,7 +5512,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "corner_store_inventory_night_after_public",
-                "stable_object_id": "economy_inventory_public_service"
+                "stable_object_id": "economy_inventory_public_service",
+                "zone_id": "service_lane"
               }
             ],
             "service_ops": [
@@ -5452,7 +5558,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "corner_store_inventory_night_after_refused",
-                "stable_object_id": "closed_aisles_refused"
+                "stable_object_id": "closed_aisles_refused",
+                "zone_id": "background"
               }
             ],
             "service_ops": [
@@ -5497,7 +5604,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "corner_store_inventory_night_after_success",
-                "stable_object_id": "reopened_sections"
+                "stable_object_id": "reopened_sections",
+                "zone_id": "background"
               }
             ],
             "service_ops": [
@@ -5524,21 +5632,24 @@
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "corner_store_inventory_night_cleanup_a",
-              "stable_object_id": "count_cage"
+              "stable_object_id": "count_cage",
+              "zone_id": "left"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "corner_store_inventory_night_cleanup_b",
-              "stable_object_id": "discrepancy_shelf"
+              "stable_object_id": "discrepancy_shelf",
+              "zone_id": "right"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "corner_store_inventory_night_cleanup_exit_visual",
-              "stable_object_id": "corner_store_inventory_night_exit"
+              "stable_object_id": "corner_store_inventory_night_exit",
+              "zone_id": "exit_lane"
             },
             {
               "family": "interaction_ops",
@@ -5566,7 +5677,8 @@
               "op": "despawn",
               "owner_namespace": "scenario",
               "receipt_id": "corner_store_inventory_night_cleanup_actor",
-              "stable_object_id": "inventory_clerk"
+              "stable_object_id": "inventory_clerk",
+              "zone_id": "background"
             }
           ]
         },
@@ -5723,7 +5835,8 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_inventory_night_arrival_actor",
-                  "stable_object_id": "inventory_clerk"
+                  "stable_object_id": "inventory_clerk",
+                  "zone_id": "background"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -5918,13 +6031,15 @@
                     "description_variants": {
                       "center": "The count cage sits in the open with each section ready to be checked aloud.",
                       "right": "The cage has been shifted beside the discrepancy shelf for a direct recount.",
-                      "section_counted": "One cage section is sealed and initialed, narrowing the remaining discrepancy."
+                      "section_counted": "One cage section is sealed and initialed, narrowing the remaining discrepancy.",
+                      "left": "The count cage has shifted left with its sheets still open, exposing the stock column that refuses to balance."
                     }
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_inventory_night_arrival_a",
-                  "stable_object_id": "count_cage"
+                  "stable_object_id": "count_cage",
+                  "zone_id": "left"
                 },
                 {
                   "family": "scene_ops",
@@ -5949,7 +6064,8 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_inventory_night_arrival_b",
-                  "stable_object_id": "discrepancy_shelf"
+                  "stable_object_id": "discrepancy_shelf",
+                  "zone_id": "right"
                 },
                 {
                   "family": "scene_ops",
@@ -5973,7 +6089,8 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_inventory_night_exit_visual",
-                  "stable_object_id": "corner_store_inventory_night_exit"
+                  "stable_object_id": "corner_store_inventory_night_exit",
+                  "zone_id": "exit_lane"
                 }
               ],
               "transition_ops": [
@@ -5985,7 +6102,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_inventory_night_arrival_stage",
-                  "reduced_motion_message": "The physical state is now in place.",
+                  "reduced_motion_message": "The changed fixture is already in its new position. Rolling count cages close two aisles while shelf tags form a visible discrepancy trail.",
                   "stable_object_id": "corner_store_inventory_night_arrival_stage",
                   "stage_id": "corner_store_inventory_night_arrival_stage"
                 }
@@ -6000,7 +6117,7 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_inventory_night_work_actor",
                   "stable_object_id": "inventory_clerk",
-                  "zone_id": "service_lane"
+                  "zone_id": "background"
                 },
                 {
                   "family": "actor_ops",
@@ -6008,7 +6125,8 @@
                   "owner_namespace": "scenario",
                   "pose": "recounting_shelf",
                   "receipt_id": "corner_store_inventory_night_counter_pose",
-                  "stable_object_id": "inventory_clerk"
+                  "stable_object_id": "inventory_clerk",
+                  "zone_id": "background"
                 },
                 {
                   "behavior": "work",
@@ -6016,11 +6134,12 @@
                   "op": "set_behavior",
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_inventory_night_counter_behavior",
-                  "stable_object_id": "inventory_clerk"
+                  "stable_object_id": "inventory_clerk",
+                  "zone_id": "background"
                 }
               ],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The first physical step exposes the second station and changes the actor's route.",
+              "arrival_feedback": "The first fixture moves and redirects the room's working route toward the second station. Rolling count cages close two aisles while shelf tags form a visible discrepancy trail.",
               "branches": [
                 {
                   "condition": {
@@ -6140,7 +6259,7 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_inventory_night_work_move",
                   "stable_object_id": "count_cage",
-                  "zone_id": "center"
+                  "zone_id": "left"
                 },
                 {
                   "appearance": "active_station",
@@ -6148,7 +6267,8 @@
                   "op": "set_appearance",
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_inventory_night_work_reveal",
-                  "stable_object_id": "discrepancy_shelf"
+                  "stable_object_id": "discrepancy_shelf",
+                  "zone_id": "right"
                 },
                 {
                   "family": "scene_ops",
@@ -6156,7 +6276,7 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_inventory_night_cage_split",
                   "stable_object_id": "count_cage",
-                  "zone_id": "right"
+                  "zone_id": "left"
                 },
                 {
                   "family": "scene_ops",
@@ -6164,7 +6284,8 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_inventory_night_cage_counted",
                   "stable_object_id": "count_cage",
-                  "state": "section_counted"
+                  "state": "section_counted",
+                  "zone_id": "left"
                 },
                 {
                   "appearance": "discrepancy_tags",
@@ -6172,14 +6293,16 @@
                   "op": "set_appearance",
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_inventory_night_shelf_tags",
-                  "stable_object_id": "discrepancy_shelf"
+                  "stable_object_id": "discrepancy_shelf",
+                  "zone_id": "right"
                 },
                 {
                   "family": "scene_ops",
                   "op": "reveal",
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_inventory_night_shelf_reveal",
-                  "stable_object_id": "discrepancy_shelf"
+                  "stable_object_id": "discrepancy_shelf",
+                  "zone_id": "right"
                 }
               ],
               "transition_ops": [
@@ -6187,7 +6310,7 @@
                   "change_id": "corner_store_inventory_night_work_change",
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The scene physically shifts into its decisive second step.",
+                  "message": "The room visibly shifts into the decisive second step. Rolling count cages close two aisles while shelf tags form a visible discrepancy trail.",
                   "op": "scene_change",
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_inventory_night_work_change",
@@ -6210,7 +6333,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_inventory_night_count_stage",
-                  "reduced_motion_message": "The physical state is now in place.",
+                  "reduced_motion_message": "The changed fixture is already in its new position. Rolling count cages close two aisles while shelf tags form a visible discrepancy trail.",
                   "stable_object_id": "corner_store_inventory_night_count_stage",
                   "stage_id": "corner_store_inventory_night_count_stage"
                 },
@@ -6228,7 +6351,7 @@
             {
               "actor_ops": [],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The room holds the chosen physical aftermath for revisit.",
+              "arrival_feedback": "The room keeps the chosen aftermath in place for the next visit. Rolling count cages close two aisles while shelf tags form a visible discrepancy trail.",
               "branches": [
                 {
                   "condition": {
@@ -6297,7 +6420,7 @@
                 {
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The outcome is recorded once and its room changes persist.",
+                  "message": "The outcome is recorded once; its visible changes remain in the room. Rolling count cages close two aisles while shelf tags form a visible discrepancy trail.",
                   "op": "feedback",
                   "owner_namespace": "scenario",
                   "receipt_id": "corner_store_inventory_night_resolution_feedback",
@@ -6313,7 +6436,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "940d26f97642a251385b8a364ea06a5b765e7c176fcb8561c3e2f077f125c20d"
+        "sequence_signature": "40831d836e17437bd87b3122388ca96a1c462b162ec73d8bd1608e60cbe1aedd"
       }
     },
     {
@@ -6412,7 +6535,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "back_alley_street_craps_after_failure",
-                "stable_object_id": "ring_relocated"
+                "stable_object_id": "ring_relocated",
+                "zone_id": "background"
               }
             ],
             "service_ops": [
@@ -6457,7 +6581,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "back_alley_street_craps_after_ignored",
-                "stable_object_id": "ring_dispersed"
+                "stable_object_id": "ring_dispersed",
+                "zone_id": "background"
               }
             ],
             "service_ops": [
@@ -6502,7 +6627,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "back_alley_street_craps_after_interrupted",
-                "stable_object_id": "lookout_marker_abandoned"
+                "stable_object_id": "lookout_marker_abandoned",
+                "zone_id": "foreground"
               }
             ],
             "service_ops": [
@@ -6547,7 +6673,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "back_alley_street_craps_after_public",
-                "stable_object_id": "street_stake_recovered"
+                "stable_object_id": "street_stake_recovered",
+                "zone_id": "foreground"
               }
             ],
             "service_ops": [
@@ -6592,7 +6719,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "back_alley_street_craps_after_refused",
-                "stable_object_id": "ring_dispersed_refused"
+                "stable_object_id": "ring_dispersed_refused",
+                "zone_id": "background"
               }
             ],
             "service_ops": [
@@ -6637,7 +6765,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "back_alley_street_craps_after_success",
-                "stable_object_id": "ring_continues"
+                "stable_object_id": "ring_continues",
+                "zone_id": "center"
               }
             ],
             "service_ops": [
@@ -6664,21 +6793,24 @@
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "back_alley_street_craps_cleanup_a",
-              "stable_object_id": "chalk_ring"
+              "stable_object_id": "chalk_ring",
+              "zone_id": "left"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "back_alley_street_craps_cleanup_b",
-              "stable_object_id": "lookout_marker"
+              "stable_object_id": "lookout_marker",
+              "zone_id": "right"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "back_alley_street_craps_cleanup_exit_visual",
-              "stable_object_id": "back_alley_street_craps_exit"
+              "stable_object_id": "back_alley_street_craps_exit",
+              "zone_id": "exit_lane"
             },
             {
               "family": "interaction_ops",
@@ -6706,7 +6838,8 @@
               "op": "despawn",
               "owner_namespace": "scenario",
               "receipt_id": "back_alley_street_craps_cleanup_actor",
-              "stable_object_id": "street_shooter"
+              "stable_object_id": "street_shooter",
+              "zone_id": "background"
             }
           ]
         },
@@ -6858,14 +6991,16 @@
                       "service_lane": "The shooter has stepped to the edge of the ring so the alley route stays open.",
                       "setting_dice": "The shooter squares the dice in the chalk, ready for a visible throw.",
                       "watch": "The shooter pauses to watch the warning marker instead of rolling blind.",
-                      "right": "The shooter has backed off to the right, leaving the marked exit clear."
+                      "right": "The shooter has backed off to the right, leaving the marked exit clear.",
+                      "background": "The shooter fades to the back of the circle, waiting on the lookout before the dice can move again."
                     }
                   },
                   "family": "actor_ops",
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_street_craps_arrival_actor",
-                  "stable_object_id": "street_shooter"
+                  "stable_object_id": "street_shooter",
+                  "zone_id": "background"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -7058,13 +7193,15 @@
                     "description": "A scuffed chalk circle and heel marks show where the street dice have been landing.",
                     "description_variants": {
                       "center": "The chalk ring has been redrawn in the center where every throw can be seen.",
-                      "chalk_point_ring": "Fresh point marks ring the layout, recording how this game has been running."
+                      "chalk_point_ring": "Fresh point marks ring the layout, recording how this game has been running.",
+                      "left": "The chalk ring has been redrawn to the left, away from the open escape lane and closer to the players' heel marks."
                     }
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_street_craps_arrival_a",
-                  "stable_object_id": "chalk_ring"
+                  "stable_object_id": "chalk_ring",
+                  "zone_id": "left"
                 },
                 {
                   "family": "scene_ops",
@@ -7084,13 +7221,15 @@
                     "description_variants": {
                       "active_station": "The lookout marker has been set upright where the shooter can read it.",
                       "foreground": "The marker has been kicked forward into everyone's sightline.",
-                      "warning_active": "The marker is turned to warning, making another throw a conspicuous risk."
+                      "warning_active": "The marker is turned to warning, making another throw a conspicuous risk.",
+                      "right": "The bottle-cap marker has moved to the right curb: the lookout's warning now points toward that end of the alley."
                     }
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_street_craps_arrival_b",
-                  "stable_object_id": "lookout_marker"
+                  "stable_object_id": "lookout_marker",
+                  "zone_id": "right"
                 },
                 {
                   "family": "scene_ops",
@@ -7114,7 +7253,8 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_street_craps_exit_visual",
-                  "stable_object_id": "back_alley_street_craps_exit"
+                  "stable_object_id": "back_alley_street_craps_exit",
+                  "zone_id": "exit_lane"
                 }
               ],
               "transition_ops": [
@@ -7126,7 +7266,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_street_craps_arrival_stage",
-                  "reduced_motion_message": "The physical state is now in place.",
+                  "reduced_motion_message": "The changed fixture is already in its new position. Chalk, a curb backstop, and waiting shooters form a physical dice ring beside a clear escape lane.",
                   "stable_object_id": "back_alley_street_craps_arrival_stage",
                   "stage_id": "back_alley_street_craps_arrival_stage"
                 }
@@ -7141,7 +7281,7 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_street_craps_work_actor",
                   "stable_object_id": "street_shooter",
-                  "zone_id": "service_lane"
+                  "zone_id": "background"
                 },
                 {
                   "family": "actor_ops",
@@ -7149,7 +7289,8 @@
                   "owner_namespace": "scenario",
                   "pose": "setting_dice",
                   "receipt_id": "back_alley_street_craps_shooter_pose",
-                  "stable_object_id": "street_shooter"
+                  "stable_object_id": "street_shooter",
+                  "zone_id": "background"
                 },
                 {
                   "behavior": "watch",
@@ -7157,7 +7298,8 @@
                   "op": "set_behavior",
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_street_craps_shooter_behavior",
-                  "stable_object_id": "street_shooter"
+                  "stable_object_id": "street_shooter",
+                  "zone_id": "background"
                 },
                 {
                   "family": "actor_ops",
@@ -7165,11 +7307,11 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_street_craps_shooter_lane",
                   "stable_object_id": "street_shooter",
-                  "zone_id": "right"
+                  "zone_id": "background"
                 }
               ],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The first physical step exposes the second station and changes the actor's route.",
+              "arrival_feedback": "The first fixture moves and redirects the room's working route toward the second station. Chalk, a curb backstop, and waiting shooters form a physical dice ring beside a clear escape lane.",
               "branches": [
                 {
                   "condition": {
@@ -7289,7 +7431,7 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_street_craps_work_move",
                   "stable_object_id": "chalk_ring",
-                  "zone_id": "center"
+                  "zone_id": "left"
                 },
                 {
                   "appearance": "active_station",
@@ -7297,7 +7439,8 @@
                   "op": "set_appearance",
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_street_craps_work_reveal",
-                  "stable_object_id": "lookout_marker"
+                  "stable_object_id": "lookout_marker",
+                  "zone_id": "right"
                 },
                 {
                   "appearance": "chalk_point_ring",
@@ -7305,7 +7448,8 @@
                   "op": "set_appearance",
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_street_craps_ring_marked",
-                  "stable_object_id": "chalk_ring"
+                  "stable_object_id": "chalk_ring",
+                  "zone_id": "left"
                 },
                 {
                   "family": "scene_ops",
@@ -7313,7 +7457,7 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_street_craps_lookout_turn",
                   "stable_object_id": "lookout_marker",
-                  "zone_id": "foreground"
+                  "zone_id": "right"
                 },
                 {
                   "family": "scene_ops",
@@ -7321,7 +7465,8 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_street_craps_lookout_state",
                   "stable_object_id": "lookout_marker",
-                  "state": "warning_active"
+                  "state": "warning_active",
+                  "zone_id": "right"
                 }
               ],
               "transition_ops": [
@@ -7329,7 +7474,7 @@
                   "change_id": "back_alley_street_craps_work_change",
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The scene physically shifts into its decisive second step.",
+                  "message": "The room visibly shifts into the decisive second step. Chalk, a curb backstop, and waiting shooters form a physical dice ring beside a clear escape lane.",
                   "op": "scene_change",
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_street_craps_work_change",
@@ -7367,7 +7512,7 @@
             {
               "actor_ops": [],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The room holds the chosen physical aftermath for revisit.",
+              "arrival_feedback": "The room keeps the chosen aftermath in place for the next visit. Chalk, a curb backstop, and waiting shooters form a physical dice ring beside a clear escape lane.",
               "branches": [
                 {
                   "condition": {
@@ -7436,7 +7581,7 @@
                 {
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The outcome is recorded once and its room changes persist.",
+                  "message": "The outcome is recorded once; its visible changes remain in the room. Chalk, a curb backstop, and waiting shooters form a physical dice ring beside a clear escape lane.",
                   "op": "feedback",
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_street_craps_resolution_feedback",
@@ -7452,7 +7597,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "5a1acc48e66360557b0603a46b8d009c87abcf4e5b6cee138ffcb01cdf3453d9"
+        "sequence_signature": "4c31f411a20383838f83a8eafc6914e41b2ed4720375a4c7eadad5387449b7dc"
       }
     },
     {
@@ -7551,7 +7696,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "back_alley_cruiser_parked_after_failure",
-                "stable_object_id": "diverted_patrol"
+                "stable_object_id": "diverted_patrol",
+                "zone_id": "background"
               }
             ],
             "service_ops": [
@@ -7596,7 +7742,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "back_alley_cruiser_parked_after_ignored",
-                "stable_object_id": "watched_route"
+                "stable_object_id": "watched_route",
+                "zone_id": "background"
               }
             ],
             "service_ops": [
@@ -7641,7 +7788,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "back_alley_cruiser_parked_after_interrupted",
-                "stable_object_id": "stacked_cover_abandoned"
+                "stable_object_id": "stacked_cover_abandoned",
+                "zone_id": "foreground"
               }
             ],
             "service_ops": [
@@ -7686,7 +7834,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "back_alley_cruiser_parked_after_public",
-                "stable_object_id": "cruiser_pressure_route"
+                "stable_object_id": "cruiser_pressure_route",
+                "zone_id": "exit_lane"
               }
             ],
             "service_ops": [
@@ -7731,7 +7880,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "back_alley_cruiser_parked_after_refused",
-                "stable_object_id": "watched_route_refused"
+                "stable_object_id": "watched_route_refused",
+                "zone_id": "background"
               }
             ],
             "service_ops": [
@@ -7776,7 +7926,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "back_alley_cruiser_parked_after_success",
-                "stable_object_id": "cruiser_departed"
+                "stable_object_id": "cruiser_departed",
+                "zone_id": "background"
               }
             ],
             "service_ops": [
@@ -7803,21 +7954,24 @@
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "back_alley_cruiser_parked_cleanup_a",
-              "stable_object_id": "cruiser_beam"
+              "stable_object_id": "cruiser_beam",
+              "zone_id": "left"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "back_alley_cruiser_parked_cleanup_b",
-              "stable_object_id": "stacked_cover"
+              "stable_object_id": "stacked_cover",
+              "zone_id": "right"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "back_alley_cruiser_parked_cleanup_exit_visual",
-              "stable_object_id": "back_alley_cruiser_parked_exit"
+              "stable_object_id": "back_alley_cruiser_parked_exit",
+              "zone_id": "exit_lane"
             },
             {
               "family": "interaction_ops",
@@ -7845,7 +7999,8 @@
               "op": "despawn",
               "owner_namespace": "scenario",
               "receipt_id": "back_alley_cruiser_parked_cleanup_actor",
-              "stable_object_id": "patrol_officer"
+              "stable_object_id": "patrol_officer",
+              "zone_id": "background"
             }
           ]
         },
@@ -7988,14 +8143,16 @@
                       "service_lane": "The officer has walked toward the service side, changing which cover matters.",
                       "patrol": "The officer is actively patrolling instead of merely watching the cruiser.",
                       "scanning_doorway": "The officer's attention is fixed on the doorway, briefly leaving the far wall unwatched.",
-                      "center": "The officer has entered the alley center and made the open ground unsafe."
+                      "center": "The officer has entered the alley center and made the open ground unsafe.",
+                      "background": "The patrol officer holds at the far wall, where the cruiser beam and the alley mouth stay in one line of sight."
                     }
                   },
                   "family": "actor_ops",
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_cruiser_parked_arrival_actor",
-                  "stable_object_id": "patrol_officer"
+                  "stable_object_id": "patrol_officer",
+                  "zone_id": "background"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -8188,13 +8345,15 @@
                     "description": "A patrol-car beam cuts across the alley mouth, closing any route that crosses its white sweep.",
                     "description_variants": {
                       "center": "The beam reaches the center of the alley, forcing movement into the remaining cover.",
-                      "background": "The cruiser beam has swung away, leaving only a pale reflection on the far wall."
+                      "background": "The cruiser beam has swung away, leaving only a pale reflection on the far wall.",
+                      "left": "The cruiser beam sweeps left across the pavement, closing that approach until the white arc passes."
                     }
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_cruiser_parked_arrival_a",
-                  "stable_object_id": "cruiser_beam"
+                  "stable_object_id": "cruiser_beam",
+                  "zone_id": "left"
                 },
                 {
                   "family": "scene_ops",
@@ -8220,7 +8379,8 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_cruiser_parked_arrival_b",
-                  "stable_object_id": "stacked_cover"
+                  "stable_object_id": "stacked_cover",
+                  "zone_id": "right"
                 },
                 {
                   "family": "scene_ops",
@@ -8244,7 +8404,8 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_cruiser_parked_exit_visual",
-                  "stable_object_id": "back_alley_cruiser_parked_exit"
+                  "stable_object_id": "back_alley_cruiser_parked_exit",
+                  "zone_id": "exit_lane"
                 }
               ],
               "transition_ops": [
@@ -8256,7 +8417,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_cruiser_parked_arrival_stage",
-                  "reduced_motion_message": "The physical state is now in place.",
+                  "reduced_motion_message": "The changed fixture is already in its new position. A parked cruiser throws a hard sightline across stacked cover and the target doorway.",
                   "stable_object_id": "back_alley_cruiser_parked_arrival_stage",
                   "stage_id": "back_alley_cruiser_parked_arrival_stage"
                 }
@@ -8270,7 +8431,7 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_cruiser_parked_work_actor",
                   "stable_object_id": "patrol_officer",
-                  "zone_id": "service_lane"
+                  "zone_id": "background"
                 },
                 {
                   "behavior": "patrol",
@@ -8278,7 +8439,8 @@
                   "op": "set_behavior",
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_cruiser_parked_patrol_behavior",
-                  "stable_object_id": "patrol_officer"
+                  "stable_object_id": "patrol_officer",
+                  "zone_id": "background"
                 },
                 {
                   "family": "actor_ops",
@@ -8286,7 +8448,8 @@
                   "owner_namespace": "scenario",
                   "pose": "scanning_doorway",
                   "receipt_id": "back_alley_cruiser_parked_patrol_pose",
-                  "stable_object_id": "patrol_officer"
+                  "stable_object_id": "patrol_officer",
+                  "zone_id": "background"
                 },
                 {
                   "family": "actor_ops",
@@ -8294,11 +8457,11 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_cruiser_parked_patrol_lane",
                   "stable_object_id": "patrol_officer",
-                  "zone_id": "center"
+                  "zone_id": "background"
                 }
               ],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The first physical step exposes the second station and changes the actor's route.",
+              "arrival_feedback": "The first fixture moves and redirects the room's working route toward the second station. A parked cruiser throws a hard sightline across stacked cover and the target doorway.",
               "branches": [
                 {
                   "condition": {
@@ -8418,7 +8581,7 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_cruiser_parked_work_move",
                   "stable_object_id": "cruiser_beam",
-                  "zone_id": "center"
+                  "zone_id": "left"
                 },
                 {
                   "appearance": "active_station",
@@ -8426,14 +8589,16 @@
                   "op": "set_appearance",
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_cruiser_parked_work_reveal",
-                  "stable_object_id": "stacked_cover"
+                  "stable_object_id": "stacked_cover",
+                  "zone_id": "right"
                 },
                 {
                   "family": "scene_ops",
                   "op": "hide",
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_cruiser_parked_beam_hidden",
-                  "stable_object_id": "cruiser_beam"
+                  "stable_object_id": "cruiser_beam",
+                  "zone_id": "left"
                 },
                 {
                   "family": "scene_ops",
@@ -8449,7 +8614,8 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_cruiser_parked_cover_state",
                   "stable_object_id": "stacked_cover",
-                  "state": "diversion_ready"
+                  "state": "diversion_ready",
+                  "zone_id": "right"
                 }
               ],
               "transition_ops": [
@@ -8457,7 +8623,7 @@
                   "change_id": "back_alley_cruiser_parked_work_change",
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The scene physically shifts into its decisive second step.",
+                  "message": "The room visibly shifts into the decisive second step. A parked cruiser throws a hard sightline across stacked cover and the target doorway.",
                   "op": "scene_change",
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_cruiser_parked_work_change",
@@ -8498,7 +8664,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_cruiser_parked_diversion_stage",
-                  "reduced_motion_message": "The physical state is now in place.",
+                  "reduced_motion_message": "The changed fixture is already in its new position. A parked cruiser throws a hard sightline across stacked cover and the target doorway.",
                   "stable_object_id": "back_alley_cruiser_parked_diversion_stage",
                   "stage_id": "back_alley_cruiser_parked_diversion_stage"
                 }
@@ -8507,7 +8673,7 @@
             {
               "actor_ops": [],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The room holds the chosen physical aftermath for revisit.",
+              "arrival_feedback": "The room keeps the chosen aftermath in place for the next visit. A parked cruiser throws a hard sightline across stacked cover and the target doorway.",
               "branches": [
                 {
                   "condition": {
@@ -8576,7 +8742,7 @@
                 {
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The outcome is recorded once and its room changes persist.",
+                  "message": "The outcome is recorded once; its visible changes remain in the room. A parked cruiser throws a hard sightline across stacked cover and the target doorway.",
                   "op": "feedback",
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_cruiser_parked_resolution_feedback",
@@ -8592,7 +8758,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "585a38af2e5c22024d8b8b9f6bcb1e12098d4ebab7e4449c1b2d08e7599acf36"
+        "sequence_signature": "1ab8641dbf0abfbd3e52e3ae37b50c95814c44419fd9cada64a39fe715af1b8d"
       }
     },
     {
@@ -8691,7 +8857,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "back_alley_fence_night_after_failure",
-                "stable_object_id": "brokered_exit"
+                "stable_object_id": "brokered_exit",
+                "zone_id": "background"
               }
             ],
             "service_ops": [
@@ -8736,7 +8903,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "back_alley_fence_night_after_ignored",
-                "stable_object_id": "buyer_control"
+                "stable_object_id": "buyer_control",
+                "zone_id": "center"
               }
             ],
             "service_ops": [
@@ -8781,7 +8949,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "back_alley_fence_night_after_interrupted",
-                "stable_object_id": "auth_station_abandoned"
+                "stable_object_id": "auth_station_abandoned",
+                "zone_id": "foreground"
               }
             ],
             "service_ops": [
@@ -8826,7 +8995,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "back_alley_fence_night_after_public",
-                "stable_object_id": "economy_fence_public_service"
+                "stable_object_id": "economy_fence_public_service",
+                "zone_id": "service_lane"
               }
             ],
             "service_ops": [
@@ -8871,7 +9041,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "back_alley_fence_night_after_refused",
-                "stable_object_id": "buyer_control_refused"
+                "stable_object_id": "buyer_control_refused",
+                "zone_id": "background"
               }
             ],
             "service_ops": [
@@ -8916,7 +9087,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "back_alley_fence_night_after_success",
-                "stable_object_id": "verified_stall"
+                "stable_object_id": "verified_stall",
+                "zone_id": "center"
               }
             ],
             "service_ops": [
@@ -8943,21 +9115,24 @@
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "back_alley_fence_night_cleanup_a",
-              "stable_object_id": "goods_lot"
+              "stable_object_id": "goods_lot",
+              "zone_id": "left"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "back_alley_fence_night_cleanup_b",
-              "stable_object_id": "auth_station"
+              "stable_object_id": "auth_station",
+              "zone_id": "right"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "back_alley_fence_night_cleanup_exit_visual",
-              "stable_object_id": "back_alley_fence_night_exit"
+              "stable_object_id": "back_alley_fence_night_exit",
+              "zone_id": "exit_lane"
             },
             {
               "family": "interaction_ops",
@@ -8985,7 +9160,8 @@
               "op": "despawn",
               "owner_namespace": "scenario",
               "receipt_id": "back_alley_fence_night_cleanup_actor",
-              "stable_object_id": "rotating_buyer"
+              "stable_object_id": "rotating_buyer",
+              "zone_id": "background"
             }
           ]
         },
@@ -9129,14 +9305,16 @@
                     "description_variants": {
                       "service_lane": "The buyer waits by the checking station instead of crowding the goods.",
                       "checking_marks": "The buyer compares each chalk mark against the open ledger.",
-                      "foreground": "The buyer has stepped forward for the final authentication."
+                      "foreground": "The buyer has stepped forward for the final authentication.",
+                      "background": "The buyer falls back beneath the awning, still checking marks and provenance before approaching the fence."
                     }
                   },
                   "family": "actor_ops",
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_fence_night_arrival_actor",
-                  "stable_object_id": "rotating_buyer"
+                  "stable_object_id": "rotating_buyer",
+                  "zone_id": "background"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -9336,7 +9514,8 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_fence_night_arrival_a",
-                  "stable_object_id": "goods_lot"
+                  "stable_object_id": "goods_lot",
+                  "zone_id": "left"
                 },
                 {
                   "family": "scene_ops",
@@ -9361,7 +9540,8 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_fence_night_arrival_b",
-                  "stable_object_id": "auth_station"
+                  "stable_object_id": "auth_station",
+                  "zone_id": "right"
                 },
                 {
                   "family": "scene_ops",
@@ -9385,7 +9565,8 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_fence_night_exit_visual",
-                  "stable_object_id": "back_alley_fence_night_exit"
+                  "stable_object_id": "back_alley_fence_night_exit",
+                  "zone_id": "exit_lane"
                 }
               ],
               "transition_ops": [
@@ -9397,7 +9578,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_fence_night_arrival_stage",
-                  "reduced_motion_message": "The physical state is now in place.",
+                  "reduced_motion_message": "The changed fixture is already in its new position. Three visible goods lots occupy separate stations as buyers rotate toward a contested crate.",
                   "stable_object_id": "back_alley_fence_night_arrival_stage",
                   "stage_id": "back_alley_fence_night_arrival_stage"
                 }
@@ -9411,7 +9592,7 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_fence_night_work_actor",
                   "stable_object_id": "rotating_buyer",
-                  "zone_id": "service_lane"
+                  "zone_id": "background"
                 },
                 {
                   "family": "actor_ops",
@@ -9419,7 +9600,8 @@
                   "owner_namespace": "scenario",
                   "pose": "checking_marks",
                   "receipt_id": "back_alley_fence_night_buyer_pose",
-                  "stable_object_id": "rotating_buyer"
+                  "stable_object_id": "rotating_buyer",
+                  "zone_id": "background"
                 },
                 {
                   "family": "actor_ops",
@@ -9427,11 +9609,11 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_fence_night_buyer_rotation",
                   "stable_object_id": "rotating_buyer",
-                  "zone_id": "foreground"
+                  "zone_id": "background"
                 }
               ],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The first physical step exposes the second station and changes the actor's route.",
+              "arrival_feedback": "The first fixture moves and redirects the room's working route toward the second station. Three visible goods lots occupy separate stations as buyers rotate toward a contested crate.",
               "branches": [
                 {
                   "condition": {
@@ -9551,7 +9733,7 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_fence_night_work_move",
                   "stable_object_id": "goods_lot",
-                  "zone_id": "center"
+                  "zone_id": "left"
                 },
                 {
                   "appearance": "active_station",
@@ -9559,7 +9741,8 @@
                   "op": "set_appearance",
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_fence_night_work_reveal",
-                  "stable_object_id": "auth_station"
+                  "stable_object_id": "auth_station",
+                  "zone_id": "right"
                 },
                 {
                   "family": "scene_ops",
@@ -9575,7 +9758,8 @@
                   "op": "set_appearance",
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_fence_night_lot_marks",
-                  "stable_object_id": "goods_lot"
+                  "stable_object_id": "goods_lot",
+                  "zone_id": "left"
                 },
                 {
                   "family": "scene_ops",
@@ -9583,14 +9767,16 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_fence_night_auth_ready",
                   "stable_object_id": "auth_station",
-                  "state": "authentication_open"
+                  "state": "authentication_open",
+                  "zone_id": "right"
                 },
                 {
                   "family": "scene_ops",
                   "op": "enable",
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_fence_night_station_enable",
-                  "stable_object_id": "auth_station"
+                  "stable_object_id": "auth_station",
+                  "zone_id": "right"
                 }
               ],
               "transition_ops": [
@@ -9598,7 +9784,7 @@
                   "change_id": "back_alley_fence_night_work_change",
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The scene physically shifts into its decisive second step.",
+                  "message": "The room visibly shifts into the decisive second step. Three visible goods lots occupy separate stations as buyers rotate toward a contested crate.",
                   "op": "scene_change",
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_fence_night_work_change",
@@ -9621,7 +9807,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_fence_night_auction_stage",
-                  "reduced_motion_message": "The physical state is now in place.",
+                  "reduced_motion_message": "The changed fixture is already in its new position. Three visible goods lots occupy separate stations as buyers rotate toward a contested crate.",
                   "stable_object_id": "back_alley_fence_night_auction_stage",
                   "stage_id": "back_alley_fence_night_auction_stage"
                 },
@@ -9639,7 +9825,7 @@
             {
               "actor_ops": [],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The room holds the chosen physical aftermath for revisit.",
+              "arrival_feedback": "The room keeps the chosen aftermath in place for the next visit. Three visible goods lots occupy separate stations as buyers rotate toward a contested crate.",
               "branches": [
                 {
                   "condition": {
@@ -9708,7 +9894,7 @@
                 {
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The outcome is recorded once and its room changes persist.",
+                  "message": "The outcome is recorded once; its visible changes remain in the room. Three visible goods lots occupy separate stations as buyers rotate toward a contested crate.",
                   "op": "feedback",
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_fence_night_resolution_feedback",
@@ -9724,7 +9910,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "f937a7eff29c8438b86f53ec9c3178fa46553245c5198cbd0d5e53b50ebc35b5"
+        "sequence_signature": "146a243575124c796c7622c2c165ad959d6da7776f6691ae616764712dd902c4"
       }
     },
     {
@@ -9823,7 +10009,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "back_alley_nothing_moving_after_failure",
-                "stable_object_id": "erased_rumor_exit"
+                "stable_object_id": "erased_rumor_exit",
+                "zone_id": "exit_lane"
               }
             ],
             "service_ops": [
@@ -9868,7 +10055,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "back_alley_nothing_moving_after_ignored",
-                "stable_object_id": "empty_alley"
+                "stable_object_id": "empty_alley",
+                "zone_id": "background"
               }
             ],
             "service_ops": [
@@ -9913,7 +10101,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "back_alley_nothing_moving_after_interrupted",
-                "stable_object_id": "shutter_gap_abandoned"
+                "stable_object_id": "shutter_gap_abandoned",
+                "zone_id": "foreground"
               }
             ],
             "service_ops": [
@@ -9958,7 +10147,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "back_alley_nothing_moving_after_public",
-                "stable_object_id": "weather_rumor_exit"
+                "stable_object_id": "weather_rumor_exit",
+                "zone_id": "exit_lane"
               }
             ],
             "service_ops": [
@@ -10003,7 +10193,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "back_alley_nothing_moving_after_refused",
-                "stable_object_id": "empty_alley_refused"
+                "stable_object_id": "empty_alley_refused",
+                "zone_id": "background"
               }
             ],
             "service_ops": [
@@ -10048,7 +10239,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "back_alley_nothing_moving_after_success",
-                "stable_object_id": "opened_follow_exit"
+                "stable_object_id": "opened_follow_exit",
+                "zone_id": "exit_lane"
               }
             ],
             "service_ops": [
@@ -10075,21 +10267,24 @@
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "back_alley_nothing_moving_cleanup_a",
-              "stable_object_id": "three_traces"
+              "stable_object_id": "three_traces",
+              "zone_id": "left"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "back_alley_nothing_moving_cleanup_b",
-              "stable_object_id": "shutter_gap"
+              "stable_object_id": "shutter_gap",
+              "zone_id": "right"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "back_alley_nothing_moving_cleanup_exit_visual",
-              "stable_object_id": "back_alley_nothing_moving_exit"
+              "stable_object_id": "back_alley_nothing_moving_exit",
+              "zone_id": "exit_lane"
             },
             {
               "family": "interaction_ops",
@@ -10117,7 +10312,8 @@
               "op": "despawn",
               "owner_namespace": "scenario",
               "receipt_id": "back_alley_nothing_moving_cleanup_actor",
-              "stable_object_id": "returning_regular"
+              "stable_object_id": "returning_regular",
+              "zone_id": "background"
             }
           ]
         },
@@ -10259,14 +10455,16 @@
                     "description_variants": {
                       "service_lane": "The regular has moved aside to let the trail be examined.",
                       "flee": "The regular bolts after seeing where the matched trail leads.",
-                      "pointing_to_exit": "While retreating, the regular points out the clear wall-side exit."
+                      "pointing_to_exit": "While retreating, the regular points out the clear wall-side exit.",
+                      "background": "The returning regular waits by the rear wall, comparing the shutter gap with scuffs remembered from earlier nights."
                     }
                   },
                   "family": "actor_ops",
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_nothing_moving_arrival_actor",
-                  "stable_object_id": "returning_regular"
+                  "stable_object_id": "returning_regular",
+                  "zone_id": "background"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -10459,13 +10657,15 @@
                     "description": "Three faint scuffs cross at the shutter, proof that the supposedly quiet alley has seen traffic.",
                     "description_variants": {
                       "center": "The three traces are exposed together in the center light.",
-                      "three_traces_compared": "The scuffs have been matched into one route, pointing toward the shutter gap."
+                      "three_traces_compared": "The scuffs have been matched into one route, pointing toward the shutter gap.",
+                      "left": "The three scuff trails converge on the left side of the shutter, revealing the route recent visitors actually used."
                     }
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_nothing_moving_arrival_a",
-                  "stable_object_id": "three_traces"
+                  "stable_object_id": "three_traces",
+                  "zone_id": "left"
                 },
                 {
                   "family": "scene_ops",
@@ -10485,13 +10685,15 @@
                     "description_variants": {
                       "active_station": "A low work light makes the dust trail beneath the shutter readable.",
                       "background": "The shutter gap sits at the end of the matched trail, away from the open lane.",
-                      "opened_trace_gap": "The gap is open enough to follow, but it also leaves the route visible to anyone returning."
+                      "opened_trace_gap": "The gap is open enough to follow, but it also leaves the route visible to anyone returning.",
+                      "right": "The visible gap now runs along the shutter's right edge, where disturbed dust points both into and out of the room."
                     }
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_nothing_moving_arrival_b",
-                  "stable_object_id": "shutter_gap"
+                  "stable_object_id": "shutter_gap",
+                  "zone_id": "right"
                 },
                 {
                   "family": "scene_ops",
@@ -10515,7 +10717,8 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_nothing_moving_exit_visual",
-                  "stable_object_id": "back_alley_nothing_moving_exit"
+                  "stable_object_id": "back_alley_nothing_moving_exit",
+                  "zone_id": "exit_lane"
                 }
               ],
               "transition_ops": [
@@ -10527,7 +10730,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_nothing_moving_arrival_stage",
-                  "reduced_motion_message": "The physical state is now in place.",
+                  "reduced_motion_message": "The changed fixture is already in its new position. Closed shutters expose three physical traces: a wet print, dragged crate line, and snapped seal.",
                   "stable_object_id": "back_alley_nothing_moving_arrival_stage",
                   "stage_id": "back_alley_nothing_moving_arrival_stage"
                 }
@@ -10541,7 +10744,7 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_nothing_moving_work_actor",
                   "stable_object_id": "returning_regular",
-                  "zone_id": "service_lane"
+                  "zone_id": "background"
                 },
                 {
                   "behavior": "flee",
@@ -10549,7 +10752,8 @@
                   "op": "set_behavior",
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_nothing_moving_regular_behavior",
-                  "stable_object_id": "returning_regular"
+                  "stable_object_id": "returning_regular",
+                  "zone_id": "background"
                 },
                 {
                   "family": "actor_ops",
@@ -10557,11 +10761,12 @@
                   "owner_namespace": "scenario",
                   "pose": "pointing_to_exit",
                   "receipt_id": "back_alley_nothing_moving_regular_pose",
-                  "stable_object_id": "returning_regular"
+                  "stable_object_id": "returning_regular",
+                  "zone_id": "background"
                 }
               ],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The first physical step exposes the second station and changes the actor's route.",
+              "arrival_feedback": "The first fixture moves and redirects the room's working route toward the second station. Closed shutters expose three physical traces: a wet print, dragged crate line, and snapped seal.",
               "branches": [
                 {
                   "condition": {
@@ -10681,7 +10886,7 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_nothing_moving_work_move",
                   "stable_object_id": "three_traces",
-                  "zone_id": "center"
+                  "zone_id": "left"
                 },
                 {
                   "appearance": "active_station",
@@ -10689,7 +10894,8 @@
                   "op": "set_appearance",
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_nothing_moving_work_reveal",
-                  "stable_object_id": "shutter_gap"
+                  "stable_object_id": "shutter_gap",
+                  "zone_id": "right"
                 },
                 {
                   "family": "scene_ops",
@@ -10697,7 +10903,8 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_nothing_moving_trace_pattern",
                   "stable_object_id": "three_traces",
-                  "state": "three_traces_compared"
+                  "state": "three_traces_compared",
+                  "zone_id": "left"
                 },
                 {
                   "family": "scene_ops",
@@ -10705,7 +10912,7 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_nothing_moving_shutter_gap",
                   "stable_object_id": "shutter_gap",
-                  "zone_id": "background"
+                  "zone_id": "right"
                 },
                 {
                   "appearance": "opened_trace_gap",
@@ -10713,7 +10920,8 @@
                   "op": "set_appearance",
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_nothing_moving_gap_appearance",
-                  "stable_object_id": "shutter_gap"
+                  "stable_object_id": "shutter_gap",
+                  "zone_id": "right"
                 }
               ],
               "transition_ops": [
@@ -10721,7 +10929,7 @@
                   "change_id": "back_alley_nothing_moving_work_change",
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The scene physically shifts into its decisive second step.",
+                  "message": "The room visibly shifts into the decisive second step. Closed shutters expose three physical traces: a wet print, dragged crate line, and snapped seal.",
                   "op": "scene_change",
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_nothing_moving_work_change",
@@ -10753,7 +10961,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_nothing_moving_trace_stage",
-                  "reduced_motion_message": "The physical state is now in place.",
+                  "reduced_motion_message": "The changed fixture is already in its new position. Closed shutters expose three physical traces: a wet print, dragged crate line, and snapped seal.",
                   "stable_object_id": "back_alley_nothing_moving_trace_stage",
                   "stage_id": "back_alley_nothing_moving_trace_stage"
                 },
@@ -10771,7 +10979,7 @@
             {
               "actor_ops": [],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The room holds the chosen physical aftermath for revisit.",
+              "arrival_feedback": "The room keeps the chosen aftermath in place for the next visit. Closed shutters expose three physical traces: a wet print, dragged crate line, and snapped seal.",
               "branches": [
                 {
                   "condition": {
@@ -10840,7 +11048,7 @@
                 {
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The outcome is recorded once and its room changes persist.",
+                  "message": "The outcome is recorded once; its visible changes remain in the room. Closed shutters expose three physical traces: a wet print, dragged crate line, and snapped seal.",
                   "op": "feedback",
                   "owner_namespace": "scenario",
                   "receipt_id": "back_alley_nothing_moving_resolution_feedback",
@@ -10856,7 +11064,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "0ab5ac5b096e3ed1e64d358c6042f2cc97937492441f995b7170675d61bee8bc"
+        "sequence_signature": "62675f88cdb9315c32b25b9659acb4d0f90226d04fb25ee3b6300d8e6928c2c7"
       }
     },
     {
@@ -10955,7 +11163,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "pawn_shop_estate_lot_day_after_failure",
-                "stable_object_id": "returned_cart"
+                "stable_object_id": "returned_cart",
+                "zone_id": "background"
               }
             ],
             "service_ops": [
@@ -11000,7 +11209,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "pawn_shop_estate_lot_day_after_ignored",
-                "stable_object_id": "quarantined_lot"
+                "stable_object_id": "quarantined_lot",
+                "zone_id": "background"
               }
             ],
             "service_ops": [
@@ -11045,7 +11255,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "pawn_shop_estate_lot_day_after_interrupted",
-                "stable_object_id": "provenance_marks_abandoned"
+                "stable_object_id": "provenance_marks_abandoned",
+                "zone_id": "foreground"
               }
             ],
             "service_ops": [
@@ -11090,7 +11301,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "pawn_shop_estate_lot_day_after_public",
-                "stable_object_id": "economy_provenance_public_service"
+                "stable_object_id": "economy_provenance_public_service",
+                "zone_id": "service_lane"
               }
             ],
             "service_ops": [
@@ -11135,7 +11347,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "pawn_shop_estate_lot_day_after_refused",
-                "stable_object_id": "quarantined_lot_refused"
+                "stable_object_id": "quarantined_lot_refused",
+                "zone_id": "background"
               }
             ],
             "service_ops": [
@@ -11180,7 +11393,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "pawn_shop_estate_lot_day_after_success",
-                "stable_object_id": "displayed_lot"
+                "stable_object_id": "displayed_lot",
+                "zone_id": "center"
               }
             ],
             "service_ops": [
@@ -11207,21 +11421,24 @@
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "pawn_shop_estate_lot_day_cleanup_a",
-              "stable_object_id": "estate_cart"
+              "stable_object_id": "estate_cart",
+              "zone_id": "left"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "pawn_shop_estate_lot_day_cleanup_b",
-              "stable_object_id": "provenance_marks"
+              "stable_object_id": "provenance_marks",
+              "zone_id": "right"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "pawn_shop_estate_lot_day_cleanup_exit_visual",
-              "stable_object_id": "pawn_shop_estate_lot_day_exit"
+              "stable_object_id": "pawn_shop_estate_lot_day_exit",
+              "zone_id": "exit_lane"
             },
             {
               "family": "interaction_ops",
@@ -11249,7 +11466,8 @@
               "op": "despawn",
               "owner_namespace": "scenario",
               "receipt_id": "pawn_shop_estate_lot_day_cleanup_actor",
-              "stable_object_id": "estate_appraiser"
+              "stable_object_id": "estate_appraiser",
+              "zone_id": "service_lane"
             }
           ]
         },
@@ -11404,7 +11622,8 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_estate_lot_day_arrival_actor",
-                  "stable_object_id": "estate_appraiser"
+                  "stable_object_id": "estate_appraiser",
+                  "zone_id": "service_lane"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -11598,13 +11817,15 @@
                     "description_variants": {
                       "center": "The estate lot is spread through the appraisal space so nothing stays hidden beneath the pile.",
                       "segmented_appraisal_cart": "The cart is divided into signed sections, giving every object a visible place in the appraisal.",
-                      "service_lane": "The sorted cart waits beside the counter without blocking the customer path."
+                      "service_lane": "The sorted cart waits beside the counter without blocking the customer path.",
+                      "left": "The estate cart has been rolled left of the counter, separating family keepsakes from ordinary resale stock."
                     }
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_estate_lot_day_arrival_a",
-                  "stable_object_id": "estate_cart"
+                  "stable_object_id": "estate_cart",
+                  "zone_id": "left"
                 },
                 {
                   "family": "scene_ops",
@@ -11629,7 +11850,8 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_estate_lot_day_arrival_b",
-                  "stable_object_id": "provenance_marks"
+                  "stable_object_id": "provenance_marks",
+                  "zone_id": "right"
                 },
                 {
                   "family": "scene_ops",
@@ -11653,7 +11875,8 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_estate_lot_day_exit_visual",
-                  "stable_object_id": "pawn_shop_estate_lot_day_exit"
+                  "stable_object_id": "pawn_shop_estate_lot_day_exit",
+                  "zone_id": "exit_lane"
                 }
               ],
               "transition_ops": [
@@ -11665,7 +11888,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_estate_lot_day_arrival_stage",
-                  "reduced_motion_message": "The physical state is now in place.",
+                  "reduced_motion_message": "The changed fixture is already in its new position. Estate carts divide the floor into appraisal, display, and police-hold lanes.",
                   "stable_object_id": "pawn_shop_estate_lot_day_arrival_stage",
                   "stage_id": "pawn_shop_estate_lot_day_arrival_stage"
                 }
@@ -11687,7 +11910,8 @@
                   "owner_namespace": "scenario",
                   "pose": "comparing_marks",
                   "receipt_id": "pawn_shop_estate_lot_day_appraiser_pose",
-                  "stable_object_id": "estate_appraiser"
+                  "stable_object_id": "estate_appraiser",
+                  "zone_id": "service_lane"
                 },
                 {
                   "behavior": "guard",
@@ -11695,7 +11919,8 @@
                   "op": "set_behavior",
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_estate_lot_day_appraiser_behavior",
-                  "stable_object_id": "estate_appraiser"
+                  "stable_object_id": "estate_appraiser",
+                  "zone_id": "service_lane"
                 },
                 {
                   "family": "actor_ops",
@@ -11703,11 +11928,11 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_estate_lot_day_appraiser_lane",
                   "stable_object_id": "estate_appraiser",
-                  "zone_id": "foreground"
+                  "zone_id": "service_lane"
                 }
               ],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The first physical step exposes the second station and changes the actor's route.",
+              "arrival_feedback": "The first fixture moves and redirects the room's working route toward the second station. Estate carts divide the floor into appraisal, display, and police-hold lanes.",
               "branches": [
                 {
                   "condition": {
@@ -11827,7 +12052,7 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_estate_lot_day_work_move",
                   "stable_object_id": "estate_cart",
-                  "zone_id": "center"
+                  "zone_id": "left"
                 },
                 {
                   "appearance": "active_station",
@@ -11835,7 +12060,8 @@
                   "op": "set_appearance",
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_estate_lot_day_work_reveal",
-                  "stable_object_id": "provenance_marks"
+                  "stable_object_id": "provenance_marks",
+                  "zone_id": "right"
                 },
                 {
                   "appearance": "segmented_appraisal_cart",
@@ -11843,7 +12069,8 @@
                   "op": "set_appearance",
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_estate_lot_day_cart_display",
-                  "stable_object_id": "estate_cart"
+                  "stable_object_id": "estate_cart",
+                  "zone_id": "left"
                 },
                 {
                   "family": "scene_ops",
@@ -11851,7 +12078,8 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_estate_lot_day_marks_matched",
                   "stable_object_id": "provenance_marks",
-                  "state": "provenance_matched"
+                  "state": "provenance_matched",
+                  "zone_id": "right"
                 },
                 {
                   "family": "scene_ops",
@@ -11859,14 +12087,15 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_estate_lot_day_cart_lane",
                   "stable_object_id": "estate_cart",
-                  "zone_id": "service_lane"
+                  "zone_id": "left"
                 },
                 {
                   "family": "scene_ops",
                   "op": "enable",
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_estate_lot_day_marks_enable",
-                  "stable_object_id": "provenance_marks"
+                  "stable_object_id": "provenance_marks",
+                  "zone_id": "right"
                 }
               ],
               "transition_ops": [
@@ -11874,7 +12103,7 @@
                   "change_id": "pawn_shop_estate_lot_day_work_change",
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The scene physically shifts into its decisive second step.",
+                  "message": "The room visibly shifts into the decisive second step. Estate carts divide the floor into appraisal, display, and police-hold lanes.",
                   "op": "scene_change",
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_estate_lot_day_work_change",
@@ -11906,7 +12135,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_estate_lot_day_provenance_stage",
-                  "reduced_motion_message": "The physical state is now in place.",
+                  "reduced_motion_message": "The changed fixture is already in its new position. Estate carts divide the floor into appraisal, display, and police-hold lanes.",
                   "stable_object_id": "pawn_shop_estate_lot_day_provenance_stage",
                   "stage_id": "pawn_shop_estate_lot_day_provenance_stage"
                 },
@@ -11924,7 +12153,7 @@
             {
               "actor_ops": [],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The room holds the chosen physical aftermath for revisit.",
+              "arrival_feedback": "The room keeps the chosen aftermath in place for the next visit. Estate carts divide the floor into appraisal, display, and police-hold lanes.",
               "branches": [
                 {
                   "condition": {
@@ -11993,7 +12222,7 @@
                 {
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The outcome is recorded once and its room changes persist.",
+                  "message": "The outcome is recorded once; its visible changes remain in the room. Estate carts divide the floor into appraisal, display, and police-hold lanes.",
                   "op": "feedback",
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_estate_lot_day_resolution_feedback",
@@ -12009,7 +12238,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "f4dc5d05968ad38919d328b86118e4398c1be04a73253a470bd4d6d57557c199"
+        "sequence_signature": "cecb33710cedcd4481b1a18eb6452c08e593207f722b14165d7f1db71d5c3ed4"
       }
     },
     {
@@ -12108,7 +12337,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "pawn_shop_serial_check_day_after_failure",
-                "stable_object_id": "withdrawn_stock"
+                "stable_object_id": "withdrawn_stock",
+                "zone_id": "background"
               }
             ],
             "service_ops": [
@@ -12153,7 +12383,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "pawn_shop_serial_check_day_after_ignored",
-                "stable_object_id": "waiting_hold"
+                "stable_object_id": "waiting_hold",
+                "zone_id": "service_lane"
               }
             ],
             "service_ops": [
@@ -12198,7 +12429,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "pawn_shop_serial_check_day_after_interrupted",
-                "stable_object_id": "hold_object_abandoned"
+                "stable_object_id": "hold_object_abandoned",
+                "zone_id": "foreground"
               }
             ],
             "service_ops": [
@@ -12243,7 +12475,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "pawn_shop_serial_check_day_after_public",
-                "stable_object_id": "serial_sweep_hold"
+                "stable_object_id": "serial_sweep_hold",
+                "zone_id": "service_lane"
               }
             ],
             "service_ops": [
@@ -12288,7 +12521,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "pawn_shop_serial_check_day_after_refused",
-                "stable_object_id": "waiting_hold_refused"
+                "stable_object_id": "waiting_hold_refused",
+                "zone_id": "service_lane"
               }
             ],
             "service_ops": [
@@ -12333,7 +12567,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "pawn_shop_serial_check_day_after_success",
-                "stable_object_id": "disclosed_hold"
+                "stable_object_id": "disclosed_hold",
+                "zone_id": "center"
               }
             ],
             "service_ops": [
@@ -12360,21 +12595,24 @@
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "pawn_shop_serial_check_day_cleanup_a",
-              "stable_object_id": "serial_station"
+              "stable_object_id": "serial_station",
+              "zone_id": "left"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "pawn_shop_serial_check_day_cleanup_b",
-              "stable_object_id": "hold_object"
+              "stable_object_id": "hold_object",
+              "zone_id": "right"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "pawn_shop_serial_check_day_cleanup_exit_visual",
-              "stable_object_id": "pawn_shop_serial_check_day_exit"
+              "stable_object_id": "pawn_shop_serial_check_day_exit",
+              "zone_id": "exit_lane"
             },
             {
               "family": "interaction_ops",
@@ -12402,7 +12640,8 @@
               "op": "despawn",
               "owner_namespace": "scenario",
               "receipt_id": "pawn_shop_serial_check_day_cleanup_actor",
-              "stable_object_id": "records_clerk"
+              "stable_object_id": "records_clerk",
+              "zone_id": "service_lane"
             }
           ]
         },
@@ -12555,7 +12794,8 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_serial_check_day_arrival_actor",
-                  "stable_object_id": "records_clerk"
+                  "stable_object_id": "records_clerk",
+                  "zone_id": "service_lane"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -12749,13 +12989,15 @@
                     "description_variants": {
                       "center": "The serial station is pulled into the open for a legible copy.",
                       "serial_lamp": "The lamp catches every stamped digit, removing the excuse of a bad reading.",
-                      "background": "The lamp is dark and the station has been put away after the copy was made."
+                      "background": "The lamp is dark and the station has been put away after the copy was made.",
+                      "left": "The serial station is staged on the left under its lamp, ready to make the next ownership check leave a paper trail."
                     }
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_serial_check_day_arrival_a",
-                  "stable_object_id": "serial_station"
+                  "stable_object_id": "serial_station",
+                  "zone_id": "left"
                 },
                 {
                   "family": "scene_ops",
@@ -12781,7 +13023,8 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_serial_check_day_arrival_b",
-                  "stable_object_id": "hold_object"
+                  "stable_object_id": "hold_object",
+                  "zone_id": "right"
                 },
                 {
                   "family": "scene_ops",
@@ -12805,7 +13048,8 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_serial_check_day_exit_visual",
-                  "stable_object_id": "pawn_shop_serial_check_day_exit"
+                  "stable_object_id": "pawn_shop_serial_check_day_exit",
+                  "zone_id": "exit_lane"
                 }
               ],
               "transition_ops": [
@@ -12817,7 +13061,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_serial_check_day_arrival_stage",
-                  "reduced_motion_message": "The physical state is now in place.",
+                  "reduced_motion_message": "The changed fixture is already in its new position. A serial station and taped hold zone restrict the cases while records wait beside one tagged object.",
                   "stable_object_id": "pawn_shop_serial_check_day_arrival_stage",
                   "stage_id": "pawn_shop_serial_check_day_arrival_stage"
                 }
@@ -12839,7 +13083,8 @@
                   "owner_namespace": "scenario",
                   "pose": "copying_serial",
                   "receipt_id": "pawn_shop_serial_check_day_records_pose",
-                  "stable_object_id": "records_clerk"
+                  "stable_object_id": "records_clerk",
+                  "zone_id": "service_lane"
                 },
                 {
                   "behavior": "guard",
@@ -12847,7 +13092,8 @@
                   "op": "set_behavior",
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_serial_check_day_records_behavior",
-                  "stable_object_id": "records_clerk"
+                  "stable_object_id": "records_clerk",
+                  "zone_id": "service_lane"
                 },
                 {
                   "family": "actor_ops",
@@ -12855,11 +13101,11 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_serial_check_day_records_lane",
                   "stable_object_id": "records_clerk",
-                  "zone_id": "left"
+                  "zone_id": "service_lane"
                 }
               ],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The first physical step exposes the second station and changes the actor's route.",
+              "arrival_feedback": "The first fixture moves and redirects the room's working route toward the second station. A serial station and taped hold zone restrict the cases while records wait beside one tagged object.",
               "branches": [
                 {
                   "condition": {
@@ -12979,7 +13225,7 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_serial_check_day_work_move",
                   "stable_object_id": "serial_station",
-                  "zone_id": "center"
+                  "zone_id": "left"
                 },
                 {
                   "appearance": "active_station",
@@ -12987,7 +13233,8 @@
                   "op": "set_appearance",
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_serial_check_day_work_reveal",
-                  "stable_object_id": "hold_object"
+                  "stable_object_id": "hold_object",
+                  "zone_id": "right"
                 },
                 {
                   "appearance": "serial_lamp",
@@ -12995,7 +13242,8 @@
                   "op": "set_appearance",
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_serial_check_day_serial_lit",
-                  "stable_object_id": "serial_station"
+                  "stable_object_id": "serial_station",
+                  "zone_id": "left"
                 },
                 {
                   "family": "scene_ops",
@@ -13003,7 +13251,8 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_serial_check_day_hold_sealed",
                   "stable_object_id": "hold_object",
-                  "state": "record_hold_sealed"
+                  "state": "record_hold_sealed",
+                  "zone_id": "right"
                 },
                 {
                   "family": "scene_ops",
@@ -13018,7 +13267,8 @@
                   "op": "hide",
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_serial_check_day_station_hidden",
-                  "stable_object_id": "serial_station"
+                  "stable_object_id": "serial_station",
+                  "zone_id": "left"
                 }
               ],
               "transition_ops": [
@@ -13026,7 +13276,7 @@
                   "change_id": "pawn_shop_serial_check_day_work_change",
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The scene physically shifts into its decisive second step.",
+                  "message": "The room visibly shifts into the decisive second step. A serial station and taped hold zone restrict the cases while records wait beside one tagged object.",
                   "op": "scene_change",
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_serial_check_day_work_change",
@@ -13058,7 +13308,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_serial_check_day_hold_stage",
-                  "reduced_motion_message": "The physical state is now in place.",
+                  "reduced_motion_message": "The changed fixture is already in its new position. A serial station and taped hold zone restrict the cases while records wait beside one tagged object.",
                   "stable_object_id": "pawn_shop_serial_check_day_hold_stage",
                   "stage_id": "pawn_shop_serial_check_day_hold_stage"
                 }
@@ -13067,7 +13317,7 @@
             {
               "actor_ops": [],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The room holds the chosen physical aftermath for revisit.",
+              "arrival_feedback": "The room keeps the chosen aftermath in place for the next visit. A serial station and taped hold zone restrict the cases while records wait beside one tagged object.",
               "branches": [
                 {
                   "condition": {
@@ -13136,7 +13386,7 @@
                 {
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The outcome is recorded once and its room changes persist.",
+                  "message": "The outcome is recorded once; its visible changes remain in the room. A serial station and taped hold zone restrict the cases while records wait beside one tagged object.",
                   "op": "feedback",
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_serial_check_day_resolution_feedback",
@@ -13152,7 +13402,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "54be2f6dfa088d55b836289330c9e6df12e9459d8be843578e8aa88c31d5c842"
+        "sequence_signature": "edb65bf57e6899023e0bfbeebbddb20fde764e864a8639708a134eb475618c7a"
       }
     },
     {
@@ -13251,7 +13501,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "pawn_shop_sals_mood_after_failure",
-                "stable_object_id": "closed_shutters"
+                "stable_object_id": "closed_shutters",
+                "zone_id": "background"
               }
             ],
             "service_ops": [
@@ -13292,13 +13543,15 @@
                   "description_variants": {
                     "active_station": "The private lamp is on and the appraisal tools are arranged for a serious offer.",
                     "background": "The appraisal has moved behind the counter, out of the public traffic.",
-                    "privacy_screen": "The screen is closed around the appraisal, making the conversation quieter and less observable."
+                    "privacy_screen": "The screen is closed around the appraisal, making the conversation quieter and less observable.",
+                    "right": "The appraisal curtain is drawn at the right-hand alcove, offering discretion while removing the public counter's witnesses."
                   }
                 },
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "pawn_shop_sals_mood_after_ignored",
-                "stable_object_id": "private_appraisal"
+                "stable_object_id": "private_appraisal",
+                "zone_id": "background"
               }
             ],
             "service_ops": [
@@ -13343,7 +13596,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "pawn_shop_sals_mood_after_interrupted",
-                "stable_object_id": "private_appraisal_abandoned"
+                "stable_object_id": "private_appraisal_abandoned",
+                "zone_id": "foreground"
               }
             ],
             "service_ops": [
@@ -13388,7 +13642,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "pawn_shop_sals_mood_after_public",
-                "stable_object_id": "service_appraisal_public_service"
+                "stable_object_id": "service_appraisal_public_service",
+                "zone_id": "service_lane"
               }
             ],
             "service_ops": [
@@ -13433,7 +13688,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "pawn_shop_sals_mood_after_refused",
-                "stable_object_id": "private_appraisal_refused"
+                "stable_object_id": "private_appraisal_refused",
+                "zone_id": "background"
               }
             ],
             "service_ops": [
@@ -13478,7 +13734,8 @@
                 "op": "spawn",
                 "owner_namespace": "scenario",
                 "receipt_id": "pawn_shop_sals_mood_after_success",
-                "stable_object_id": "reopened_counter"
+                "stable_object_id": "reopened_counter",
+                "zone_id": "service_lane"
               }
             ],
             "service_ops": [
@@ -13505,21 +13762,24 @@
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "pawn_shop_sals_mood_cleanup_a",
-              "stable_object_id": "unfinished_jobs"
+              "stable_object_id": "unfinished_jobs",
+              "zone_id": "left"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "pawn_shop_sals_mood_cleanup_b",
-              "stable_object_id": "private_appraisal"
+              "stable_object_id": "private_appraisal",
+              "zone_id": "background"
             },
             {
               "family": "scene_ops",
               "op": "remove",
               "owner_namespace": "scenario",
               "receipt_id": "pawn_shop_sals_mood_cleanup_exit_visual",
-              "stable_object_id": "pawn_shop_sals_mood_exit"
+              "stable_object_id": "pawn_shop_sals_mood_exit",
+              "zone_id": "exit_lane"
             },
             {
               "family": "interaction_ops",
@@ -13547,7 +13807,8 @@
               "op": "despawn",
               "owner_namespace": "scenario",
               "receipt_id": "pawn_shop_sals_mood_cleanup_actor",
-              "stable_object_id": "sal_shopkeeper"
+              "stable_object_id": "sal_shopkeeper",
+              "zone_id": "service_lane"
             }
           ]
         },
@@ -13701,7 +13962,8 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_sals_mood_arrival_actor",
-                  "stable_object_id": "sal_shopkeeper"
+                  "stable_object_id": "sal_shopkeeper",
+                  "zone_id": "service_lane"
                 }
               ],
               "advance_after_actions": 0.0,
@@ -13894,13 +14156,15 @@
                     "description": "Half-finished repairs crowd Sal's bench; finishing one would change the shop's mood more than small talk.",
                     "description_variants": {
                       "center": "The unfinished jobs are laid out in order of what can actually be completed tonight.",
-                      "jobs_prioritized": "The bench now shows a workable order, with the most urgent repair already pulled forward."
+                      "jobs_prioritized": "The bench now shows a workable order, with the most urgent repair already pulled forward.",
+                      "left": "Sal has pushed the unfinished repairs to the left bench, making the one job he wants finished impossible to miss."
                     }
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_sals_mood_arrival_a",
-                  "stable_object_id": "unfinished_jobs"
+                  "stable_object_id": "unfinished_jobs",
+                  "zone_id": "left"
                 },
                 {
                   "family": "scene_ops",
@@ -13920,13 +14184,15 @@
                     "description_variants": {
                       "active_station": "The private lamp is on and the appraisal tools are arranged for a serious offer.",
                       "background": "The appraisal has moved behind the counter, out of the public traffic.",
-                      "privacy_screen": "The screen is closed around the appraisal, making the conversation quieter and less observable."
+                      "privacy_screen": "The screen is closed around the appraisal, making the conversation quieter and less observable.",
+                      "right": "The appraisal curtain is drawn at the right-hand alcove, offering discretion while removing the public counter's witnesses."
                     }
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_sals_mood_arrival_b",
-                  "stable_object_id": "private_appraisal"
+                  "stable_object_id": "private_appraisal",
+                  "zone_id": "right"
                 },
                 {
                   "family": "scene_ops",
@@ -13950,7 +14216,8 @@
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_sals_mood_exit_visual",
-                  "stable_object_id": "pawn_shop_sals_mood_exit"
+                  "stable_object_id": "pawn_shop_sals_mood_exit",
+                  "zone_id": "exit_lane"
                 }
               ],
               "transition_ops": [
@@ -13962,7 +14229,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_sals_mood_arrival_stage",
-                  "reduced_motion_message": "The physical state is now in place.",
+                  "reduced_motion_message": "The changed fixture is already in its new position. Sal moves between the counter and back room while three concrete shop jobs remain visibly unfinished.",
                   "stable_object_id": "pawn_shop_sals_mood_arrival_stage",
                   "stage_id": "pawn_shop_sals_mood_arrival_stage"
                 }
@@ -13984,7 +14251,8 @@
                   "op": "set_behavior",
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_sals_mood_sal_behavior",
-                  "stable_object_id": "sal_shopkeeper"
+                  "stable_object_id": "sal_shopkeeper",
+                  "zone_id": "service_lane"
                 },
                 {
                   "family": "actor_ops",
@@ -13992,11 +14260,12 @@
                   "owner_namespace": "scenario",
                   "pose": "checking_finished_job",
                   "receipt_id": "pawn_shop_sals_mood_sal_pose",
-                  "stable_object_id": "sal_shopkeeper"
+                  "stable_object_id": "sal_shopkeeper",
+                  "zone_id": "service_lane"
                 }
               ],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The first physical step exposes the second station and changes the actor's route.",
+              "arrival_feedback": "The first fixture moves and redirects the room's working route toward the second station. Sal moves between the counter and back room while three concrete shop jobs remain visibly unfinished.",
               "branches": [
                 {
                   "condition": {
@@ -14116,7 +14385,7 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_sals_mood_work_move",
                   "stable_object_id": "unfinished_jobs",
-                  "zone_id": "center"
+                  "zone_id": "left"
                 },
                 {
                   "appearance": "active_station",
@@ -14124,7 +14393,8 @@
                   "op": "set_appearance",
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_sals_mood_work_reveal",
-                  "stable_object_id": "private_appraisal"
+                  "stable_object_id": "private_appraisal",
+                  "zone_id": "right"
                 },
                 {
                   "family": "scene_ops",
@@ -14132,7 +14402,8 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_sals_mood_jobs_sorted",
                   "stable_object_id": "unfinished_jobs",
-                  "state": "jobs_prioritized"
+                  "state": "jobs_prioritized",
+                  "zone_id": "left"
                 },
                 {
                   "family": "scene_ops",
@@ -14140,7 +14411,7 @@
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_sals_mood_appraisal_privacy",
                   "stable_object_id": "private_appraisal",
-                  "zone_id": "background"
+                  "zone_id": "right"
                 },
                 {
                   "appearance": "privacy_screen",
@@ -14148,7 +14419,8 @@
                   "op": "set_appearance",
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_sals_mood_appraisal_hidden",
-                  "stable_object_id": "private_appraisal"
+                  "stable_object_id": "private_appraisal",
+                  "zone_id": "right"
                 }
               ],
               "transition_ops": [
@@ -14156,7 +14428,7 @@
                   "change_id": "pawn_shop_sals_mood_work_change",
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The scene physically shifts into its decisive second step.",
+                  "message": "The room visibly shifts into the decisive second step. Sal moves between the counter and back room while three concrete shop jobs remain visibly unfinished.",
                   "op": "scene_change",
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_sals_mood_work_change",
@@ -14179,7 +14451,7 @@
                   "op": "stage",
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_sals_mood_mood_stage",
-                  "reduced_motion_message": "The physical state is now in place.",
+                  "reduced_motion_message": "The changed fixture is already in its new position. Sal moves between the counter and back room while three concrete shop jobs remain visibly unfinished.",
                   "stable_object_id": "pawn_shop_sals_mood_mood_stage",
                   "stage_id": "pawn_shop_sals_mood_mood_stage"
                 },
@@ -14197,7 +14469,7 @@
             {
               "actor_ops": [],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The room holds the chosen physical aftermath for revisit.",
+              "arrival_feedback": "The room keeps the chosen aftermath in place for the next visit. Sal moves between the counter and back room while three concrete shop jobs remain visibly unfinished.",
               "branches": [
                 {
                   "condition": {
@@ -14266,7 +14538,7 @@
                 {
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The outcome is recorded once and its room changes persist.",
+                  "message": "The outcome is recorded once; its visible changes remain in the room. Sal moves between the counter and back room while three concrete shop jobs remain visibly unfinished.",
                   "op": "feedback",
                   "owner_namespace": "scenario",
                   "receipt_id": "pawn_shop_sals_mood_resolution_feedback",
@@ -14282,7 +14554,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "5d420ddfa9491145792d1494b10f6db698f5b750c361d915281a574f4ef85912"
+        "sequence_signature": "ebcd1f4606c56489a2dc9a5f0e3e6999be6d7e3be367bfdd8a5a72ff9dae2864"
       }
     }
   ]

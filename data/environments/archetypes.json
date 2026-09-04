@@ -851,6 +851,14 @@
       "package_b_motel_service_top_right": {"position": [550, 40], "zone_id": "service_lane"},
       "package_b_motel_safe_exit": {"position": [180, 40], "zone_id": "background"},
       "package_b_motel_station": {"position": [350, 210], "zone_id": "center"}
+    ,
+      "env06_8_convention_station": {"position": [250, 285], "zone_id": "foreground"},
+      "env06_8_stakeout_scope": {"position": [100, 80], "zone_id": "background"},
+      "env06_8_stakeout_trolley": {"position": [650, 95], "zone_id": "background"},
+      "env06_8_stakeout_exit": {"position": [100, 370], "zone_id": "exit_lane"},
+      "env06_8_weekly_station": {"position": [285, 300], "zone_id": "foreground"},
+      "env06_8_wedding_key_tray": {"position": [450, 300], "zone_id": "foreground"},
+      "env06_8_wedding_exit": {"position": [100, 370], "zone_id": "exit_lane"}
     },
     "security_profile": {
       "strictness": "private",
@@ -1128,6 +1136,10 @@
       "wake_memorial_tables": {"position": [136, 202], "zone_id": "left"},
 	  "wake_regular_work_1": {"position": [500, 380], "zone_id": "foreground"},
 	  "wake_task": {"position": [60, 70], "zone_id": "background"}
+    ,
+      "env06_8_darts_oche": {"position": [620, 285], "zone_id": "right"},
+      "env06_8_disputed_dart": {"position": [790, 90], "zone_id": "background"},
+      "env06_8_darts_captain": {"position": [450, 65], "zone_id": "background"}
     },
     "security_profile": {
       "strictness": "loose",
@@ -1369,6 +1381,13 @@
       "package_b_gas_top_mid": {"position": [420, 40], "zone_id": "background"},
       "package_b_gas_top_right": {"position": [650, 40], "zone_id": "background"},
       "package_b_gas_low_left": {"position": [250, 250], "zone_id": "left"}
+    ,
+      "env06_8_payday_board": {"position": [450, 325], "zone_id": "service_lane"},
+      "env06_8_storm_exit": {"position": [100, 370], "zone_id": "exit_lane"},
+      "env06_8_storm_tape": {"position": [430, 320], "zone_id": "foreground"},
+      "env06_8_storm_drivers": {"position": [735, 75], "zone_id": "background"},
+      "env06_8_bus_marshal": {"position": [450, 350], "zone_id": "foreground"},
+      "env06_8_cooler_gate": {"position": [700, 300], "zone_id": "right"}
     },
     "security_profile": {
       "strictness": "low",
@@ -1593,6 +1612,14 @@
 	  "punchline_raid_reopen_steward": {"position": [410, 168]},
 	  "punchline_raid_steward_arrival": {"position": [600, 70], "zone_id": "background"},
 	  "punchline_raid_cart_work_1": {"position": [300, 320], "zone_id": "center"}
+    ,
+      "env06_8_headliner_runner": {"position": [680, 65], "zone_id": "background"},
+      "env06_8_headliner_case": {"position": [500, 75], "zone_id": "background"},
+      "env06_8_headliner_guard": {"position": [800, 290], "zone_id": "right"},
+      "env06_8_bringer_task": {"position": [245, 330], "zone_id": "center"},
+      "env06_8_greased_exit": {"position": [80, 380], "zone_id": "exit_lane"},
+      "env06_8_muscle_tray": {"position": [140, 245], "zone_id": "service_lane"},
+      "env06_8_raid_bins": {"position": [140, 245], "zone_id": "service_lane"}
     },
     "security_profile": {
       "strictness": "low",
@@ -2106,6 +2133,19 @@
 	  "union_manager_arrival": {"position": [700, 100], "zone_id": "background"},
       "union_picket": {"position": [300, 160], "zone_id": "left"},
 	  "union_task": {"position": [450, 60], "zone_id": "background"}
+    ,
+      "env06_8_legend_case": {"position": [170, 300], "zone_id": "foreground"},
+      "env06_8_rent_records": {"position": [170, 300], "zone_id": "foreground"},
+      "env06_8_rent_task": {"position": [390, 365], "zone_id": "foreground"},
+      "env06_8_rent_exit": {"position": [810, 380], "zone_id": "exit_lane"},
+      "env06_8_rent_host": {"position": [450, 65], "zone_id": "background"},
+      "env06_8_recording_task": {"position": [235, 360], "zone_id": "foreground"},
+      "env06_8_union_rope": {"position": [700, 285], "zone_id": "right"},
+      "env06_8_union_task": {"position": [320, 390], "zone_id": "foreground"},
+      "env06_8_union_manager": {"position": [50, 390], "zone_id": "foreground"},
+      "env06_8_rent_creditor": {"position": [700, 205], "zone_id": "right"},
+      "env06_8_silence_tape": {"position": [140, 230], "zone_id": "left"},
+      "env06_8_union_delegate": {"position": [50, 50], "zone_id": "background"}
     },
     "security_profile": {
       "strictness": "loose",
@@ -2527,6 +2567,15 @@
 	  "kitty_storm_host_arrival": {"position": [200, 40], "zone_id": "background"},
       "kitty_storm_safe_exit": {"position": [430, 40], "zone_id": "exit_lane"},
 	  "kitty_storm_task": {"position": [320, 350], "zone_id": "center"}
+    ,
+      "env06_8_amateur_rack": {"position": [175, 300], "zone_id": "left"},
+      "env06_8_buyout_desk": {"position": [155, 300], "zone_id": "service_lane"},
+      "env06_8_buyout_steward": {"position": [400, 75], "zone_id": "background"},
+      "env06_8_buyout_host": {"position": [730, 75], "zone_id": "background"},
+      "env06_8_storm_marker": {"position": [120, 210], "zone_id": "left"},
+      "env06_8_buyout_ropes": {"position": [520, 220], "zone_id": "center"},
+      "env06_8_buyout_cart": {"position": [300, 330], "zone_id": "center"},
+      "env06_8_storm_recovery_host": {"position": [250, 70], "zone_id": "background"}
     },
     "security_profile": {
       "strictness": "velvet",
@@ -2843,7 +2892,9 @@
 		"delta_wedding_choice_right": {"position": [344, 270], "zone_id": "center"},
 		"delta_wedding_aftermath_scene": {"position": [60, 170], "zone_id": "left"},
 		"delta_wedding_aftermath_actor": {"position": [320, 190], "zone_id": "center"}
-      },
+      ,
+      "env06_8_fog_waiting_crowd": {"position": [700, 300], "zone_id": "right"}
+    },
     "security_profile": {
       "strictness": "licensed-gray",
       "attention_scale": 1.15,
@@ -3059,6 +3110,9 @@
       "package_b_beach_top_left": {"position": [100, 70], "zone_id": "background"},
       "package_b_beach_top_mid": {"position": [350, 70], "zone_id": "background"},
       "package_b_beach_safe_exit_low_left": {"position": [100, 330], "zone_id": "exit_lane"}
+    ,
+      "env06_8_festival_board": {"position": [190, 210], "zone_id": "left"},
+      "env06_8_festival_station": {"position": [620, 335], "zone_id": "right"}
     },
     "security_profile": {
       "strictness": "loose",
