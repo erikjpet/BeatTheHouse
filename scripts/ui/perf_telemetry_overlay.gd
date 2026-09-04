@@ -1478,7 +1478,10 @@ func _game_surface_live_status() -> Dictionary:
 
 func _measure_named_active_phase(channel_id: String, frame_count: int) -> Dictionary:
 	var canvas := app.get("game_surface_canvas") as Control if app != null else null
-	var sample_frames := maxi(1, frame_count)
+	# Headless/exported builds can advance much faster than an interactive frame.
+	# Keep sampling long enough to prove the required wall-clock residency while
+	# the production animation channel is live.
+	var sample_frames := maxi(240, frame_count)
 	var active_at_start := canvas != null and canvas.has_method("surface_animation_active") \
 		and bool(canvas.call("surface_animation_active", channel_id))
 	var active_frame_count := 0
@@ -1877,6 +1880,9 @@ func _trigger_timed_surface_game_action(game_id: String) -> Dictionary:
 	var before := app.current_game_view_snapshot()
 	var action_id := ""
 	if game_id == "baccarat":
+		# The table minimum is $20; select that real chip before placing the wager.
+		_emit_surface_action("baccarat_chip", 2, false)
+		await _wait_frames(2)
 		_emit_surface_action("baccarat_bet", 0, false)
 		await _wait_frames(2)
 		action_id = "baccarat_deal"
@@ -1994,15 +2000,15 @@ func _measure_followup_game_phases(game_id: String) -> void:
 			await _measure_observed_game_phase(game_id, "skill", "blackjack_counting_skill", 30)
 		"baccarat":
 			await _measure_observed_game_phase(game_id, "ritual", "baccarat_table_ritual", 30)
-			if await _wait_for_game_phase(game_id, "skill", 360):
+			if await _wait_for_game_phase(game_id, "skill", 900):
 				await _measure_observed_game_phase(game_id, "skill", "baccarat_squeeze_skill", 30)
-			if await _wait_for_game_phase(game_id, "resolve_payout", 360):
+			if await _wait_for_game_phase(game_id, "resolve_payout", 900):
 				await _measure_observed_game_phase(game_id, "resolve_payout", "baccarat_resolve_payout", 30)
 		"roulette":
 			await _measure_observed_game_phase(game_id, "ritual", "roulette_table_ritual", 30)
-			if await _wait_for_game_phase(game_id, "post_spin", 480):
+			if await _wait_for_game_phase(game_id, "post_spin", 1200):
 				await _measure_observed_game_phase(game_id, "post_spin", "roulette_ball_settle", 30)
-			if await _wait_for_game_phase(game_id, "resolve_payout", 360):
+			if await _wait_for_game_phase(game_id, "resolve_payout", 600):
 				await _measure_observed_game_phase(game_id, "resolve_payout", "roulette_resolve_payout", 30)
 		"craps":
 			await _measure_observed_game_phase(game_id, "bounce", "craps_bounce_read", 20)
@@ -2176,7 +2182,9 @@ func _install_video_poker_double_fixture() -> bool:
 
 
 func _measure_craps_offer_and_aim() -> void:
-	_emit_surface_action("craps_bet", 0, false)
+	# Rebet the completed round. A fresh pass-line wager can be illegal while a
+	# point is established, which leaves the real throw interaction unavailable.
+	_emit_surface_action("craps_rebet", 0, false)
 	await _wait_frames(2)
 	_emit_surface_pointer("craps_throw", 0, "begin", Vector2(426, 278))
 	if await _wait_for_game_phase("craps", "offer", 30):
