@@ -321,3 +321,13 @@ The final verdict remains unavailable. It still requires the landed
 `integ06_1` composition/terminal manifests, the final env06_8 candidate, full
 120/240/600 native and Web windows, cold/warm Web starts, the exact low-end
 whole-matrix run, all remaining canonical phase rows, and a clean-host rerun.
+
+The maintained timing caps are now published without changes in
+`tools/perf06_budget_table.json` (schema/version 1). The Web gate consumes that
+file directly and records its version and SHA-256 in every summary; the native
+probe retains its existing checked-in constants. The companion budget contract
+pins representative Web caps, the native draw/solver/action caps, the required
+idle-timing/liveness pairing, and the zero steady-state deep-copy policy. The
+first exact Windows-release diagnostic using the real meta-home environment
+produced a green 26-row canonical surface report; the earlier static start-menu
+substitution is no longer eligible as meta-home liveness evidence.
