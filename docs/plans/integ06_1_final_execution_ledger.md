@@ -117,6 +117,15 @@ Until those genuine, player-reachable historical outputs are captured, admitted
 on the final candidate, and round-tripped, the mid-0.6 migration requirement
 remains **NOT PROVEN** and `integ06_1` remains TODO.
 
+After capture, admit only that fixture class with the provenance-aware current
+verifier:
+
+```powershell
+& $godot --headless --audio-driver Dummy --path . --script `
+  res://scripts/tests/foundation/integ06_1_v051_migration_smoke.gd -- `
+  --fixture-class=mid_0_6
+```
+
 ## 4. Maximal composition and deterministic subsystem traces
 
 Run the existing production composition probe, then independent-process
@@ -135,10 +144,27 @@ Copy-Item .tmp\foundation_determinism_probe\run_b.json $evidence
 
 The current composition harness proves one maximal Bar route plus Punchline L1,
 L2, and L3, including mid-active SaveService recovery, revisit, replay, and
-abandonment cleanup. It does not enumerate every eligible archetype or every
-travel-away/revisit/expiry/abandonment ordering. No existing command proves that
-larger matrix; it remains **NOT PROVEN** until the harness is extended rather
-than inferred from this passing sample.
+abandonment cleanup. The exhaustive producer now derives its eligible set from
+the production archetype/scenario catalogs, discovers targets through the
+production Crew event selector, and shards five lifecycle orders across all
+eligible archetypes and all Punchline layers. Run it on the exact clean
+candidate. `$profilePath` and `$evidenceProfile` must identify the final declared
+`perf06_1` execution profile; do not substitute an unrelated file merely to
+satisfy the provenance check:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File `
+  tools\integ06_1_composition_matrix.ps1 `
+  -CandidateCommit $head `
+  -ProfilePath $profilePath `
+  -EvidenceProfile $evidenceProfile `
+  -OutDir .tmp\integ06_1\final_candidate\composition_matrix `
+  -RequireGodot
+```
+
+Require every derived row and the aggregate manifest to pass. Until that
+command produces retained exact-candidate evidence, the larger matrix remains
+**NOT PROVEN**.
 
 ## 5. Native stability soak
 
@@ -184,13 +210,30 @@ policy simulation can supplement those contracts:
   --report=res://.tmp/integ06_1/final_candidate/endgame/report.md
 ```
 
-Neither command is an exact native/Web full-run composition soak. There is no
-current supported entry point that plays complete every-system-active runs to
-terminal on both platforms, includes a Crew-ignoring control, saves at many
-mid-action points, reaches every victory and representative failure route, and
-compares exact outcome traces through profile persistence. That acceptance item
-therefore remains **NOT PROVEN**; isolated subsystem parity or synthetic terminal
-fixtures must not be reported as its substitute.
+Neither older command is an exact native/Web full-run composition soak. The new
+strict producer embeds the existing production-core endgame policy driver in
+fresh Windows and Web release exports. It performs SaveService round trips every
+seven actions, persists every terminal result through ProfileInventory, repeats
+each native shard independently, compares exact semantic hashes with Web, and
+requires all three victory routes, at least two failure routes, and a Crew-
+ignoring control:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File `
+  tools\integ06_1_terminal_soak.ps1 `
+  -CandidateCommit $head `
+  -ProfilePath $profilePath `
+  -EvidenceProfile $evidenceProfile `
+  -OutDir .tmp\integ06_1\final_candidate\terminal_soak `
+  -RequireGodot
+```
+
+The producer refuses an existing output directory, dirty tracked source,
+mismatched candidate commit/tree, or mismatched profile/tool hashes. It reports
+allocation counters unavailable instead of zero and delegates frame-trajectory
+measurement explicitly to the exact-candidate `perf06_1` manifest. This
+acceptance item remains **NOT PROVEN** until the command itself runs green; the
+producer commit is not runtime evidence.
 
 ## 7. Evidence manifest and handoff rule
 

@@ -5,6 +5,9 @@ Audit base: `6875646b19cb8c8ce242414e1251a8ae7bcffc2c`
 Harness prerequisite: `1131c6262eb04b2cbbabc6265caba71c4c234e22`
 Product/content repair: `c9e5941f43c3f507921482bdac1e7a8c34a75a18`
 Composition harness: `91af060af1b28bd5217f8c2ee9454fc0aa589567`
+Exhaustive composition producer: `408c670a` plus eligibility proof `9c30110b`
+Terminal native/Web soak producer: `2bda2450`
+Package-E layout correction checkpoint: `b7a75334` (**runtime unreviewed**)
 
 This report records the completed historical-save and maximal-composition work
 without claiming the native/Web terminal soak that has not yet run. The
@@ -76,9 +79,12 @@ Godot_v4.6-stable_win64_console.exe --headless --path . --script res://tools/wav
 Verdict: PASS; `save_load_exact=true`, `replay_idempotent=true`,
 `abandonment_clean=true`, final registration lifecycle `cleaned`.
 
-This proves a maximal real Bar composition and all three Punchline layers. It
-does not yet satisfy the prompt's every-eligible-archetype cross-product or all
-expiry/abandonment orderings.
+This proves a maximal real Bar composition and all three Punchline layers. The
+checked-in `tools/integ06_1_composition_matrix.ps1` now derives every eligible
+archetype from production catalogs and schedules five lifecycle orderings plus
+all three Punchline layers. It refuses a dirty or mismatched candidate and
+writes immutable provenance-bound shard reports. That larger matrix is a
+producer, not evidence, until it runs green on the final candidate.
 
 ## Findings repaired and routed
 
@@ -160,18 +166,21 @@ difference is intended before the fixture is refreshed.
 
 ## Work still required before DONE
 
-- Admit and verify authentic mid-0.6 owner-build saves for every promised 0.6
-  migration family, including Punchline, delivery, scenario snapshots, and all
-  Coin Pusher V3 successors.
-- Extend the maximal composition matrix to every eligible archetype and all
-  travel-away/revisit/expiry/abandonment orderings.
-- Run complete seeded terminal soaks with every system active, plus the
-  crew-ignoring control, on native and Web.
+- Generate and admit the three approved player-reachable mid-0.6 development-
+  boundary saves; no owner-authored inventory existed to recover.
+- Run the checked-in maximal composition matrix across every production-
+  eligible archetype and all five lifecycle orderings.
+- Run the checked-in native/Web terminal-soak producer, including its
+  crew-ignoring control and independent native repeat.
 - Prove native/Web outcome-trace parity, bounded retained state/frame cost,
   repeated mid-run save/load, representative failure routes, every victory
   route, and terminal profile recording.
 - Run the supported generated Foundation suite on the final main tree; never
   invoke its intermediate inheritance sources directly.
+
+The three formerly missing entry points now exist. Their presence does not
+change this report's PARTIAL verdict: generation, Godot compilation, exact-
+candidate execution, and retained green artifacts are still required.
 
 Until those items have reproducible green evidence, `integ06_1` must remain
 TODO and cannot unblock the owner playtest by itself.
