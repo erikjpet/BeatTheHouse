@@ -1410,7 +1410,8 @@ func _measure_game(game_id: String) -> void:
 		"perf06_surface_id": game_id,
 		"perf06_phase_id": str(PERF06_ACTIVE_PHASES.get(game_id, "active")),
 	})
-	current_tags["action_evidence"] = _trigger_active_game_action(game_id)
+	current_tags["action_evidence"] = await _trigger_timed_surface_game_action(game_id) \
+		if game_id in ["baccarat", "roulette"] else _trigger_active_game_action(game_id)
 	if ACTIVE_PHASE_CHANNELS.has(game_id):
 		current_tags["active_phase_evidence"] = await _measure_named_active_phase(
 			str(ACTIVE_PHASE_CHANNELS.get(game_id, "")),
@@ -1867,6 +1868,49 @@ func _trigger_active_game_action(game_id: String) -> Dictionary:
 	}
 
 
+func _trigger_timed_surface_game_action(game_id: String) -> Dictionary:
+	if app == null:
+		return {"accepted": false, "progressed": false, "reason": "missing_app"}
+	var run_state: RunState = app.get("run_state") as RunState
+	var turns_before := int(run_state.current_environment.get("turns", 0)) if run_state != null else -1
+	var story_before := run_state.story_log_entry_count() if run_state != null else -1
+	var before := app.current_game_view_snapshot()
+	var action_id := ""
+	if game_id == "baccarat":
+		_emit_surface_action("baccarat_bet", 0, false)
+		await _wait_frames(2)
+		action_id = "baccarat_deal"
+	elif game_id == "roulette":
+		_emit_surface_action("roulette_bet", 0, false)
+		await _wait_frames(2)
+		action_id = "roulette_spin"
+	else:
+		return {"accepted": false, "progressed": false, "reason": "unsupported_surface_timeline", "game_id": game_id}
+	var started_usec := Time.get_ticks_usec()
+	_emit_surface_action(action_id, 0, true)
+	await _wait_frames(2)
+	var resolve_elapsed_usec := Time.get_ticks_usec() - started_usec
+	var result: Dictionary = app.get("last_game_result") if typeof(app.get("last_game_result")) == TYPE_DICTIONARY else {}
+	var after := app.current_game_view_snapshot()
+	var turns_after := int(run_state.current_environment.get("turns", 0)) if run_state != null else -1
+	var story_after := run_state.story_log_entry_count() if run_state != null else -1
+	var accepted := bool(result.get("ok", false))
+	return {
+		"game_id": game_id,
+		"action_id": action_id,
+		"accepted": accepted,
+		"progressed": accepted and (turns_after > turns_before or story_after > story_before),
+		"message": str(result.get("message", "")),
+		"resolve_ms": float(maxi(0, resolve_elapsed_usec)) / 1000.0,
+		"environment_turns_before": turns_before,
+		"environment_turns_after": turns_after,
+		"story_entries_before": story_before,
+		"story_entries_after": story_after,
+		"surface_before": _perf06_surface_evidence(before),
+		"surface_after": _perf06_surface_evidence(after),
+	}
+
+
 func _perf06_surface_evidence(snapshot: Dictionary) -> Dictionary:
 	var evidence := {}
 	for key_value in [
@@ -2135,11 +2179,11 @@ func _measure_craps_offer_and_aim() -> void:
 	_emit_surface_action("craps_bet", 0, false)
 	await _wait_frames(2)
 	_emit_surface_pointer("craps_throw", 0, "begin", Vector2(426, 278))
-	await _wait_frames(2)
-	await _measure_observed_game_phase("craps", "offer", "craps_dice_offer", 20)
+	if await _wait_for_game_phase("craps", "offer", 30):
+		await _measure_observed_game_phase("craps", "offer", "craps_dice_offer", 20)
 	_emit_surface_pointer("craps_throw", 0, "move", Vector2(438, 190))
-	await _wait_frames(2)
-	await _measure_observed_game_phase("craps", "aim", "craps_throw_aim", 20)
+	if await _wait_for_game_phase("craps", "aim", 30):
+		await _measure_observed_game_phase("craps", "aim", "craps_throw_aim", 20)
 	_emit_surface_pointer("craps_throw", 0, "end", Vector2(446, 96))
 	await _wait_frames(2)
 
@@ -2171,7 +2215,8 @@ func _game_phase_observed(game_id: String, phase_id: String, evidence: Dictionar
 			or int(evidence.get("ritual_object_count", 0)) > 0
 	match game_id:
 		"pull_tabs":
-			return phase_id == "payout_redeem" and (result_visible or str(evidence.get("counter_phase", "")) in ["file", "selection"])
+			return phase_id == "payout_redeem" and result_visible \
+				and str(evidence.get("counter_phase", "")) in ["file", "handover", "selection"]
 		"scratch_tickets":
 			if phase_id == "scratch_reveal":
 				return str(evidence.get("counter_phase", "")) in ["play", "file"]
@@ -2182,7 +2227,7 @@ func _game_phase_observed(game_id: String, phase_id: String, evidence: Dictionar
 				return result_visible
 			if game_id == "blackjack" and phase_id == "skill":
 				var count_rhythm: Dictionary = animations.get("blackjack_count_rhythm", {}) if typeof(animations.get("blackjack_count_rhythm", {})) == TYPE_DICTIONARY else {}
-				return bool(count_rhythm.get("active", false))
+				return bool(evidence.get("counting_enabled", false)) or bool(count_rhythm.get("active", false))
 		"slot":
 			return phase_id == "jackpot_attendant" \
 				and str(evidence.get("ritual_projection_phase", "")) == "payout_or_handpay" \
