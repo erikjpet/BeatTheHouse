@@ -29,6 +29,9 @@ const LESSON_IDS := [
 	"tip06_coin_pusher",
 	"tip06_craps_pass_line",
 	"tip06_venue_depth",
+	"tip06_back_room_poker",
+	"tip06_true_rumor",
+	"tip06_police_sweep",
 ]
 
 const DISCOVERY_BLOCKERS := [
@@ -96,13 +99,13 @@ static func _check_contextual_lesson_matrix(library: Variant, failures: Array) -
 			"id": "tip06_tonight_changes_rooms",
 			"encounter": _environment_context({"scenario_active": true}),
 			"miss": _environment_context({"scenario_active": false}),
-			"terms": ["tonight", "rumor", "map"],
+			"terms": ["scenario", "read the objective", "what can change", "ends the night"],
 		},
 		{
 			"id": "tip06_delivery_route",
 			"encounter": _environment_context({"delivery_active": true}),
 			"miss": _environment_context({"delivery_active": false}),
-			"terms": ["contraband", "action", "deadline", "map", "real stops", "route"],
+			"terms": ["action deadlines", "packages", "stops", "lookout holds", "watch ends", "contraband", "risk"],
 		},
 		{
 			"id": "tip06_numbers_book",
@@ -126,13 +129,31 @@ static func _check_contextual_lesson_matrix(library: Variant, failures: Array) -
 			"id": "tip06_craps_pass_line",
 			"encounter": _game_context("craps"),
 			"miss": _game_context("blackjack"),
-			"terms": ["stake", "pass", "seven", "eleven", "point"],
+			"terms": ["bet", "pass", "seven", "eleven", "point", "grab", "drag", "release"],
 		},
 		{
 			"id": "tip06_venue_depth",
 			"encounter": _environment_context({"venue_depth_surface": true}),
 			"miss": _environment_context({"venue_depth_surface": false}),
 			"terms": ["venues", "more room", "way through"],
+		},
+		{
+			"id": "tip06_back_room_poker",
+			"encounter": _game_context("crew_draw_poker"),
+			"miss": _game_context("blackjack"),
+			"terms": ["poker night", "seeded session", "ante", "cash out", "public behavior", "tell", "verified"],
+		},
+		{
+			"id": "tip06_true_rumor",
+			"encounter": _environment_context({"flags": {"chain06_dave_true_rumor_heard": true}}),
+			"miss": _environment_context({"flags": {"chain06_dave_true_rumor_heard": false}}),
+			"terms": ["heard rumor", "true fact", "another place", "marked map stop", "truthful"],
+		},
+		{
+			"id": "tip06_police_sweep",
+			"encounter": _environment_context({}, {}, {"last_action_id": "sweep_wait"}),
+			"miss": _environment_context({}, {}, {"last_action_id": "map"}),
+			"terms": ["police sweep", "action boundaries", "public marker", "wait", "one action", "contraband", "heat"],
 		},
 	]
 	var actual_ids: Array = []
@@ -173,6 +194,9 @@ static func _check_contextual_lesson_matrix(library: Variant, failures: Array) -
 			var term := str(term_value)
 			if not copy.contains(term):
 				failures.append("%s lost required public teaching term '%s'." % [str(case.get("id", "")), term])
+		_check_contextual_determinism_and_placement(lesson, encounter, failures)
+		_check_contextual_double_notify(lesson, encounter, failures)
+	_check_crew_ignoring_run(library, failures)
 	var depth_lesson: Dictionary = library.tutorial_lesson("tip06_venue_depth")
 	var depth_context := _environment_context({"venue_depth_surface": true})
 	depth_context["viewport_rect"] = Rect2(Vector2.ZERO, Vector2(1280, 720))
@@ -356,11 +380,76 @@ static func _check_discovery_boundary(library: Variant, failures: Array) -> void
 				failures.append("Discovery-gated phrase '%s' leaked into %s." % [str(blocker), str(lesson_id)])
 
 
-static func _environment_context(run_values: Dictionary = {}, ui_values: Dictionary = {}) -> Dictionary:
+static func _check_contextual_determinism_and_placement(lesson: Dictionary, encounter: Dictionary, failures: Array) -> void:
+	if lesson.has("timing") or _dict(lesson.get("trigger", {})).has("wall_clock"):
+		failures.append("%s uses time instead of an action-boundary trigger." % str(lesson.get("id", "")))
+	var first_trigger := CoachViewModelScript.trigger_matches(lesson, encounter, {}, true)
+	var second_trigger := CoachViewModelScript.trigger_matches(lesson, encounter.duplicate(true), {}, true)
+	if first_trigger != second_trigger:
+		failures.append("%s trigger was not deterministic for the same public context." % str(lesson.get("id", "")))
+	for size_value in [Vector2(1280, 720), Vector2(854, 480)]:
+		var size: Vector2 = size_value
+		for reduce_motion in [false, true]:
+			var context := encounter.duplicate(true)
+			context["viewport_rect"] = Rect2(Vector2.ZERO, size)
+			context["small_screen"] = size.x < 1000.0
+			context["reduce_motion"] = reduce_motion
+			context["anchor_rects"] = _contextual_anchor_rects(lesson, size)
+			var model := CoachViewModelScript.build(lesson, context)
+			var viewport := Rect2(Vector2.ZERO, size)
+			var bubble := CoachViewModelScript._rect(model.get("bubble_rect", {}))
+			var anchor := CoachViewModelScript._rect(model.get("anchor_rect", {}))
+			if not bool(model.get("anchor_found", false)) or not viewport.encloses(bubble):
+				failures.append("%s placement escaped or lost its pointer at %dx%d reduced=%s." % [str(lesson.get("id", "")), int(size.x), int(size.y), str(reduce_motion)])
+			if anchor.has_area() and bubble.intersects(anchor):
+				failures.append("%s placement covered its target at %dx%d reduced=%s." % [str(lesson.get("id", "")), int(size.x), int(size.y), str(reduce_motion)])
+
+
+static func _check_contextual_double_notify(lesson: Dictionary, encounter: Dictionary, failures: Array) -> void:
+	var host := PublicHostFixture.new()
+	var overlay := CoachOverlayScript.new()
+	host.add_child(overlay)
+	overlay.set_lessons([lesson])
+	overlay.restore_seen({})
+	overlay.evaluate_at_boundary(encounter)
+	var lesson_id := str(lesson.get("id", ""))
+	if overlay.active_lesson_id() != lesson_id:
+		failures.append("%s did not activate for its double-notify fixture." % lesson_id)
+	else:
+		var first_consumed := overlay.notify_action("fixture:ordinary_action")
+		var second_consumed := overlay.notify_action("fixture:ordinary_action")
+		if first_consumed or second_consumed or not overlay.active_lesson_id().is_empty() or not bool(overlay.seen.get(lesson_id, false)):
+			failures.append("%s consumed or repeated an ordinary action across its double-notify boundary." % lesson_id)
+	host.free()
+
+
+static func _check_crew_ignoring_run(library: Variant, failures: Array) -> void:
+	var ignored_context := _environment_context({"scenario_active": false, "delivery_active": false, "crew_job_resolved": false, "flags": {}}, {"numbers_encountered": false}, {"last_action_id": "map"})
+	for lesson_id in ["tip06_delivery_route", "tip06_crew_standing", "tip06_back_room_poker", "tip06_true_rumor", "tip06_police_sweep"]:
+		if CoachViewModelScript.trigger_matches(library.tutorial_lesson(lesson_id), ignored_context, {}, true):
+			failures.append("Crew-ignoring run unexpectedly triggered %s." % lesson_id)
+
+
+static func _contextual_anchor_rects(lesson: Dictionary, viewport_size: Vector2) -> Dictionary:
+	var anchor := _dict(lesson.get("anchor", {}))
+	var kind := str(anchor.get("kind", ""))
+	var id := str(anchor.get("id", ""))
+	var rect := Rect2(Vector2(viewport_size.x * 0.44, viewport_size.y * 0.42), Vector2(maxf(72.0, viewport_size.x * 0.12), maxf(44.0, viewport_size.y * 0.10)))
+	var result := {"interactable_objects": {}, "hud_elements": {}, "surface_actions": {}}
+	var group := "interactable_objects" if kind == "interactable_object" else "hud_elements" if kind == "hud_element" else "surface_actions"
+	var group_rects: Dictionary = result[group]
+	group_rects[id] = rect
+	for additional_id in lesson.get("additional_anchor_ids", []):
+		group_rects[str(additional_id)] = Rect2(rect.position + Vector2(rect.size.x + 12.0, 0.0), rect.size)
+	result[group] = group_rects
+	return result
+
+
+static func _environment_context(run_values: Dictionary = {}, ui_values: Dictionary = {}, action_values: Dictionary = {}) -> Dictionary:
 	var run_context := {"tutorial": false}
 	for key in run_values.keys():
 		run_context[key] = run_values.get(key)
-	return {"screen": "ENVIRONMENT", "run": run_context, "ui": ui_values.duplicate(true)}
+	return {"screen": "ENVIRONMENT", "run": run_context, "ui": ui_values.duplicate(true), "action": action_values.duplicate(true)}
 
 
 static func _game_context(game_id: String) -> Dictionary:
