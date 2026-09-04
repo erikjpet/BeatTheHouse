@@ -314,7 +314,8 @@
       "spatial_anchors": [
         "base::anchor:darts_oche",
         "base::anchor:darts_scorer",
-        "base::anchor:darts_task"
+        "base::anchor:darts_task",
+        "base::anchor:darts_captain"
       ],
       "sealed_routes": [],
       "reentry_policy": {
@@ -322,7 +323,7 @@
         "partial": "resume",
         "terminal": "aftermath"
       },
-      "sequence_signature": "cf29e6fecdda66d11f72dc174d0a9d4788b8872b4b4071a2207a45b33a96f42c",
+      "sequence_signature": "159e7215f6286bda1848f8382c3f44332346470a84410d5286d434d3568782dc",
       "capture_ids": [
         "bar_darts_league_night_arrival",
         "bar_darts_league_night_partial",
@@ -1659,6 +1660,7 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_league_captain",
+                    "anchor_id": "darts_captain",
                     "behavior": "watch",
                     "label": "League captain",
                     "pose": "arrival",
@@ -2369,7 +2371,7 @@
           "services": 0,
           "games": 0,
           "routes": 0,
-          "anchors": 3,
+          "anchors": 4,
           "zones": 7
         },
         "reentry": {
@@ -2383,10 +2385,10 @@
           "policy": "cleanup"
         }
       },
-      "authored_signature": "cf29e6fecdda66d11f72dc174d0a9d4788b8872b4b4071a2207a45b33a96f42c",
-      "calculated_signature": "cf29e6fecdda66d11f72dc174d0a9d4788b8872b4b4071a2207a45b33a96f42c",
+      "authored_signature": "159e7215f6286bda1848f8382c3f44332346470a84410d5286d434d3568782dc",
+      "calculated_signature": "159e7215f6286bda1848f8382c3f44332346470a84410d5286d434d3568782dc",
       "nearest_id": "bar_fight_night",
-      "nearest_similarity": 0.539388322520853
+      "nearest_similarity": 0.538888888888889
     },
     {
       "id": "bar_dead_tuesday",
@@ -4917,7 +4919,7 @@
       "authored_signature": "bde0d4fcca7bfa559e35e0571733b9827d7ab748ccf2ddac0c81ed7938717cef",
       "calculated_signature": "bde0d4fcca7bfa559e35e0571733b9827d7ab748ccf2ddac0c81ed7938717cef",
       "nearest_id": "bar_darts_league_night",
-      "nearest_similarity": 0.539388322520853
+      "nearest_similarity": 0.538888888888889
     },
     {
       "id": "bar_live_band",
@@ -11606,7 +11608,7 @@
       "authored_signature": "8431f3ba51f4a6b84c5885bd1dfbced396d6a11c0618df2e851441f3d01e5c56",
       "calculated_signature": "8431f3ba51f4a6b84c5885bd1dfbced396d6a11c0618df2e851441f3d01e5c56",
       "nearest_id": "bar_darts_league_night",
-      "nearest_similarity": 0.534195933456562
+      "nearest_similarity": 0.535120147874307
     },
     {
       "id": "jazz_club_recording_night",
@@ -15218,7 +15220,7 @@
     {
       "left_id": "bar_darts_league_night",
       "right_id": "bar_dead_tuesday",
-      "similarity": 0.17953488372093,
+      "similarity": 0.18046511627907,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15230,7 +15232,7 @@
     {
       "left_id": "bar_darts_league_night",
       "right_id": "bar_live_band",
-      "similarity": 0.291390728476821,
+      "similarity": 0.292218543046358,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15242,7 +15244,7 @@
     {
       "left_id": "bar_darts_league_night",
       "right_id": "jazz_club_guest_legend",
-      "similarity": 0.534195933456562,
+      "similarity": 0.535120147874307,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15254,7 +15256,7 @@
     {
       "left_id": "bar_darts_league_night",
       "right_id": "jazz_club_recording_night",
-      "similarity": 0.248401826484018,
+      "similarity": 0.247037374658159,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15266,7 +15268,7 @@
     {
       "left_id": "bar_darts_league_night",
       "right_id": "jazz_club_rent_party",
-      "similarity": 0.279475982532751,
+      "similarity": 0.280349344978166,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15278,7 +15280,7 @@
     {
       "left_id": "bar_darts_league_night",
       "right_id": "jazz_club_union_trouble",
-      "similarity": 0.248722316865417,
+      "similarity": 0.248510638297872,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15338,7 +15340,7 @@
     {
       "left_id": "bar_fight_night",
       "right_id": "bar_darts_league_night",
-      "similarity": 0.539388322520853,
+      "similarity": 0.538888888888889,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15506,7 +15508,7 @@
     {
       "left_id": "bar_lock_in",
       "right_id": "bar_darts_league_night",
-      "similarity": 0.304602510460251,
+      "similarity": 0.303258145363409,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15590,7 +15592,7 @@
     {
       "left_id": "bar_payday_rush",
       "right_id": "bar_darts_league_night",
-      "similarity": 0.276635514018692,
+      "similarity": 0.275186567164179,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15686,7 +15688,7 @@
     {
       "left_id": "bar_wake",
       "right_id": "bar_darts_league_night",
-      "similarity": 0.195939982347749,
+      "similarity": 0.196822594880847,
       "equal_normalized_hash": false,
       "status": "pass",
       "blocking": false,
@@ -15881,7 +15883,7 @@
     "scenario bar_fight_night is invalid: [\"scenario bar_fight_night sequence declared_targets.anchors identity base::anchor:fight_toppled_chair has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.anchors identity base::anchor:fight_right_brawler has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.anchors identity base::anchor:fight_task has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.anchors identity base::anchor:fight_door_buffer has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.anchors identity base::anchor:fight_right_brawler_arrival has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario bar_fight_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
     "scenario bar_payday_rush is invalid: [\"scenario bar_payday_rush sequence declared_targets.anchors identity base::anchor:payday_order_rail has no independent target catalog proof.\",\"scenario bar_payday_rush sequence declared_targets.anchors identity base::anchor:payday_runner has no independent target catalog proof.\",\"scenario bar_payday_rush sequence declared_targets.anchors identity base::anchor:payday_task has no independent target catalog proof.\",\"scenario bar_payday_rush sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario bar_payday_rush sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario bar_payday_rush sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario bar_payday_rush sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario bar_payday_rush sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario bar_payday_rush sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario bar_payday_rush sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
     "scenario bar_lock_in is invalid: [\"scenario bar_lock_in sequence declared_targets.anchors identity base::anchor:lockin_shutters has no independent target catalog proof.\",\"scenario bar_lock_in sequence declared_targets.anchors identity base::anchor:lockin_regular has no independent target catalog proof.\",\"scenario bar_lock_in sequence declared_targets.anchors identity base::anchor:lockin_task has no independent target catalog proof.\",\"scenario bar_lock_in sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario bar_lock_in sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario bar_lock_in sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario bar_lock_in sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario bar_lock_in sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario bar_lock_in sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario bar_lock_in sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
-    "scenario bar_darts_league_night is invalid: [\"scenario bar_darts_league_night sequence declared_targets.anchors identity base::anchor:darts_oche has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.anchors identity base::anchor:darts_scorer has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.anchors identity base::anchor:darts_task has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
+    "scenario bar_darts_league_night is invalid: [\"scenario bar_darts_league_night sequence declared_targets.anchors identity base::anchor:darts_oche has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.anchors identity base::anchor:darts_scorer has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.anchors identity base::anchor:darts_task has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.anchors identity base::anchor:darts_captain has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario bar_darts_league_night sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
     "scenario bar_live_band is invalid: [\"scenario bar_live_band sequence declared_targets.anchors identity base::anchor:live_band_speakers has no independent target catalog proof.\",\"scenario bar_live_band sequence declared_targets.anchors identity base::anchor:live_band_runner has no independent target catalog proof.\",\"scenario bar_live_band sequence declared_targets.anchors identity base::anchor:live_band_task has no independent target catalog proof.\",\"scenario bar_live_band sequence declared_targets.anchors identity base::anchor:live_band_leader_arrival has no independent target catalog proof.\",\"scenario bar_live_band sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario bar_live_band sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario bar_live_band sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario bar_live_band sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario bar_live_band sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario bar_live_band sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario bar_live_band sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
     "scenario bar_dead_tuesday is invalid: [\"scenario bar_dead_tuesday sequence declared_targets.anchors identity base::anchor:dead_tuesday_bartender has no independent target catalog proof.\",\"scenario bar_dead_tuesday sequence declared_targets.anchors identity base::anchor:dead_tuesday_task has no independent target catalog proof.\",\"scenario bar_dead_tuesday sequence declared_targets.anchors identity base::anchor:dead_tuesday_booth has no independent target catalog proof.\",\"scenario bar_dead_tuesday sequence declared_targets.anchors identity base::anchor:dead_tuesday_lone_patron has no independent target catalog proof.\",\"scenario bar_dead_tuesday sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario bar_dead_tuesday sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario bar_dead_tuesday sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario bar_dead_tuesday sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario bar_dead_tuesday sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario bar_dead_tuesday sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario bar_dead_tuesday sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",
     "scenario jazz_club_guest_legend is invalid: [\"scenario jazz_club_guest_legend sequence declared_targets.anchors identity base::anchor:guest_legend_table has no independent target catalog proof.\",\"scenario jazz_club_guest_legend sequence declared_targets.anchors identity base::anchor:guest_legend_stage_manager has no independent target catalog proof.\",\"scenario jazz_club_guest_legend sequence declared_targets.anchors identity base::anchor:guest_legend_task has no independent target catalog proof.\",\"scenario jazz_club_guest_legend sequence declared_targets.anchors identity base::anchor:guest_legend_manager_arrival has no independent target catalog proof.\",\"scenario jazz_club_guest_legend sequence declared_targets.zones identity base::zone:left has no independent target catalog proof.\",\"scenario jazz_club_guest_legend sequence declared_targets.zones identity base::zone:right has no independent target catalog proof.\",\"scenario jazz_club_guest_legend sequence declared_targets.zones identity base::zone:center has no independent target catalog proof.\",\"scenario jazz_club_guest_legend sequence declared_targets.zones identity base::zone:background has no independent target catalog proof.\",\"scenario jazz_club_guest_legend sequence declared_targets.zones identity base::zone:service_lane has no independent target catalog proof.\",\"scenario jazz_club_guest_legend sequence declared_targets.zones identity base::zone:foreground has no independent target catalog proof.\",\"scenario jazz_club_guest_legend sequence declared_targets.zones identity base::zone:exit_lane has no independent target catalog proof.\"]",

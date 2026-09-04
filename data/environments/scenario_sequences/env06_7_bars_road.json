@@ -6414,7 +6414,8 @@
           "anchors": [
             "base::anchor:darts_oche",
             "base::anchor:darts_scorer",
-            "base::anchor:darts_task"
+            "base::anchor:darts_task",
+            "base::anchor:darts_captain"
           ],
           "games": [],
           "interactions": [],
@@ -6512,6 +6513,7 @@
                 {
                   "actor": {
                     "actor_id": "actor_league_captain",
+                    "anchor_id": "darts_captain",
                     "behavior": "watch",
                     "label": "League captain",
                     "pose": "arrival",
@@ -7952,7 +7954,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "cf29e6fecdda66d11f72dc174d0a9d4788b8872b4b4071a2207a45b33a96f42c"
+        "sequence_signature": "159e7215f6286bda1848f8382c3f44332346470a84410d5286d434d3568782dc"
       }
     },
     {
