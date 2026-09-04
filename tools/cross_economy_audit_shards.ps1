@@ -283,7 +283,8 @@ if (-not (Test-Path -LiteralPath $godotWorker -PathType Leaf)) { throw "Godot wo
 # Freeze the exact commit once. Every worker gets an independently expanded
 # copy; no tracked source path is linked back to the mutable caller worktree.
 $archivePath = Join-Path $OutDir "frozen_source_$head.zip"
-& git -C $projectRoot archive --format=zip --output=$archivePath $head
+$archivePathspec = @("project.godot", "icon.svg", "tools", "scripts", "data", "assets", "addons", "native")
+& git -C $projectRoot archive --format=zip --output=$archivePath $head -- @archivePathspec
 if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $archivePath -PathType Leaf)) { throw "Could not archive frozen commit $head." }
 $archiveSha = (Get-FileHash -LiteralPath $archivePath -Algorithm SHA256).Hash.ToLowerInvariant()
 $snapshotRoot = Join-Path $OutDir "frozen_source_manifest_root"
@@ -293,7 +294,7 @@ if ($LASTEXITCODE -ne 0) { throw "Could not expand frozen source manifest archiv
 
 $gitEntries = [Collections.Generic.List[object]]::new()
 $trackedByPath = @{}
-foreach ($line in @(git -C $projectRoot -c core.quotepath=false ls-tree -r --full-tree $head)) {
+foreach ($line in @(git -C $projectRoot -c core.quotepath=false ls-tree -r --full-tree $head -- @archivePathspec)) {
     if ($line -notmatch '^(?<mode>[0-9]+) (?<type>[^ ]+) (?<blob>[0-9a-f]+)\t(?<path>.+)$') { throw "Could not parse git tree entry: $line" }
     if ($Matches.type -ne "blob") { throw "Unsupported non-blob tracked entry: $($Matches.path)" }
     $path = $Matches.path.Replace("\", "/")
@@ -413,7 +414,7 @@ Write-JsonFile $identity $identityManifestPath 8
 $identityManifestSha = (Get-FileHash -LiteralPath $identityManifestPath -Algorithm SHA256).Hash.ToLowerInvariant()
 
 $jobs = [Collections.Generic.List[object]]::new()
-$shardProjectsRoot = Join-Path $OutDir "shard_projects"
+$shardProjectsRoot = Join-Path $OutDir "w"
 New-Item -ItemType Directory -Path $shardProjectsRoot -Force | Out-Null
 foreach ($style in $styles) {
     $privateRoot = Join-Path $shardProjectsRoot $style
