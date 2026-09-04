@@ -278,14 +278,18 @@ try {
     Assert-True ($modifiedResult.exit_code -ne 0 -and $modifiedResult.output.Contains("working-tree bytes do not exactly match the committed HEAD blob")) "FINAL accepted hash-correct unstaged modifications to tracked evidence."
     Invoke-Git @("add", "--", $sessionRelative) | Out-Null
     $stagedResult = Invoke-Contract $sandboxContract $modifiedManifestPath -Final -ExpectedCommit $candidateCommit
-    Assert-True ($stagedResult.exit_code -ne 0 -and $stagedResult.output.Contains("working-tree bytes do not exactly match the committed HEAD blob")) "FINAL accepted hash-correct staged modifications to tracked evidence."
+    Assert-True ($stagedResult.exit_code -ne 0 -and $stagedResult.output.Contains("Git index blob does not exactly match the committed HEAD blob")) "FINAL accepted hash-correct staged modifications to tracked evidence."
+
+    Invoke-Git @("restore", "--worktree", "--source=HEAD", "--", $sessionRelative) | Out-Null
+    $stagedOnlyResult = Invoke-Contract $sandboxContract $manifestPath -Final -ExpectedCommit $candidateCommit
+    Assert-True ($stagedOnlyResult.exit_code -ne 0 -and $stagedOnlyResult.output.Contains("Git index blob does not exactly match the committed HEAD blob")) "FINAL accepted staged-only modifications after the working file was restored to HEAD."
 
     if ($failures.Count -gt 0) {
         Write-Host "playtest06_2 seed manifest selftest: FAIL ($($failures.Count))" -ForegroundColor Red
         foreach ($failure in $failures) { Write-Host " - $failure" }
         exit 1
     }
-    Write-Host "playtest06_2 seed manifest selftest: PASS checks=22 custody=committed_HEAD_blob catalogs=18_archetypes/3_layers/11_games/55_scenarios/$($materialBranches.Count)_selected_branches"
+    Write-Host "playtest06_2 seed manifest selftest: PASS checks=23 custody=committed_HEAD_and_index_blob catalogs=18_archetypes/3_layers/11_games/55_scenarios/$($materialBranches.Count)_selected_branches"
 }
 finally {
     if (Test-Path -LiteralPath $temp) {
