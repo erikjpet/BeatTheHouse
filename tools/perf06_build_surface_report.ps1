@@ -94,6 +94,7 @@ foreach ($scenario in @($runtime.scenarios)) {
     $plan = [string]$summary.plan
     $livenessEvaluation = Get-Perf06PhaseLivenessEvaluation -Scenario $scenario -Platform $Platform -BudgetTable $budgetTable
     $budgetEvaluation = Get-Perf06PhaseBudgetEvaluation -Scenario $scenario -Platform $Platform -BudgetTable $budgetTable -Plan $plan
+    $progressEvaluation = Get-Perf06PhaseProgressEvaluation -SurfaceId $surfaceId -PhaseId $phaseId -Evidence $tags
     $drawStats = $scenario.surface_draw_time_ms
     $frameMetric = Metric $scenario.frame_time_ms
     $drawMetric = [ordered]@{
@@ -108,13 +109,7 @@ foreach ($scenario in @($runtime.scenarios)) {
     foreach ($property in $scenario.allocation_copy_counters.PSObject.Properties) { $allocation[$property.Name] = $property.Value }
     $allocation.static_call_root_audit_path = $auditFile
     $allocation.static_call_root_audit_sha256 = $auditHash
-    $actionPassed = $true
-    if (Has-Property $tags "action_evidence") { $actionPassed = [bool]$tags.action_evidence.accepted -and [bool]$tags.action_evidence.progressed }
-    $phaseEvidencePassed = $true
-    if (Has-Property $tags "phase_evidence") { $phaseEvidencePassed = [bool]$tags.phase_evidence.observed }
-    $activePhasePassed = $true
-    if (Has-Property $tags "active_phase_evidence") { $activePhasePassed = [bool]$tags.active_phase_evidence.coverage_passed }
-    $passed = $frameMetric.count -gt 0 -and $drawMetric.count -gt 0 -and $actionPassed -and $phaseEvidencePassed -and $activePhasePassed -and [bool]$livenessEvaluation.passed -and [bool]$budgetEvaluation.passed -and [int64]$allocation.deep_copies -eq 0
+    $passed = $frameMetric.count -gt 0 -and $drawMetric.count -gt 0 -and [bool]$progressEvaluation.passed -and [bool]$livenessEvaluation.passed -and [bool]$budgetEvaluation.passed -and [int64]$allocation.deep_copies -eq 0
     if (-not $passed) { $failures.Add("Phase did not produce complete live evidence: $surfaceId/$phaseId/$Profile") }
     $rows.Add([pscustomobject][ordered]@{
         surface_id = $surfaceId
@@ -127,6 +122,7 @@ foreach ($scenario in @($runtime.scenarios)) {
         draw = $drawMetric
         liveness = $livenessEvaluation
         budget_evaluation = $budgetEvaluation
+        progress_evaluation = $progressEvaluation
         allocation_copy_counters = $allocation
         retained_counters = [ordered]@{ static_memory=$scenario.static_memory_bytes; objects=$scenario.object_count; nodes=$scenario.node_count; orphans=$scenario.orphan_node_count }
         action_evidence = $(if (Has-Property $tags "action_evidence") { $tags.action_evidence } else { $null })

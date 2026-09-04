@@ -13,6 +13,58 @@ function New-Perf06BudgetCheck {
     }
 }
 
+function Test-Perf06IdlePhase {
+    param([string]$SurfaceId, [string]$PhaseId)
+    $idlePhases = @{
+        pull_tabs = @("idle")
+        scratch_tickets = @("idle")
+        slot = @("idle")
+        bar_dice = @("idle")
+        blackjack = @("betting_idle")
+        baccarat = @("betting_idle")
+        craps = @("idle")
+        roulette = @("betting_idle")
+        crew_draw_poker = @("actor_idle")
+        video_poker = @("idle")
+        coin_pusher = @("cap_idle")
+        meta_home = @("animated_idle")
+        room_environment = @("quiet_idle")
+        crew = @("actor_idle")
+        world = @("map_idle")
+        audio = @("quiet_idle")
+    }
+    return $idlePhases.ContainsKey($SurfaceId) -and $idlePhases[$SurfaceId] -ccontains $PhaseId
+}
+
+function Get-Perf06PhaseProgressEvaluation {
+    param(
+        [Parameter(Mandatory = $true)][string]$SurfaceId,
+        [Parameter(Mandatory = $true)][string]$PhaseId,
+        [Parameter(Mandatory = $true)][object]$Evidence
+    )
+    if (Test-Perf06IdlePhase $SurfaceId $PhaseId) {
+        return [pscustomobject][ordered]@{ applicable=$false; checks=@(); passed=$true }
+    }
+    $checks = [Collections.Generic.List[object]]::new()
+    if (Test-Perf06ValueProperty $Evidence "action_evidence") {
+        $value = $Evidence.action_evidence
+        $checks.Add([pscustomobject][ordered]@{ kind="action_evidence"; passed=([bool]$value.accepted -and [bool]$value.progressed) })
+    }
+    if (Test-Perf06ValueProperty $Evidence "phase_evidence") {
+        $value = $Evidence.phase_evidence
+        $checks.Add([pscustomobject][ordered]@{ kind="phase_evidence"; passed=[bool]$value.observed })
+    }
+    if (Test-Perf06ValueProperty $Evidence "active_phase_evidence") {
+        $value = $Evidence.active_phase_evidence
+        $checks.Add([pscustomobject][ordered]@{ kind="active_phase_evidence"; passed=[bool]$value.coverage_passed })
+    }
+    return [pscustomobject][ordered]@{
+        applicable = $true
+        checks = @($checks)
+        passed = $checks.Count -gt 0 -and @($checks | Where-Object { -not [bool]$_.passed }).Count -eq 0
+    }
+}
+
 function Get-Perf06PhaseLivenessEvaluation {
     param(
         [Parameter(Mandatory = $true)][object]$Scenario,
@@ -22,8 +74,7 @@ function Get-Perf06PhaseLivenessEvaluation {
     $tags = $Scenario.tags
     $surfaceId = [string]$tags.perf06_surface_id
     $phaseId = [string]$tags.perf06_phase_id
-    $mode = [string]$tags.mode
-    $isIdle = $mode -match "idle" -or $phaseId -match "idle"
+    $isIdle = Test-Perf06IdlePhase $surfaceId $phaseId
     if (-not $isIdle) {
         return [pscustomobject][ordered]@{
             counter = "static_phase"
@@ -45,12 +96,7 @@ function Get-Perf06PhaseLivenessEvaluation {
     $measured = if ($gameCounterPresent) { [int]$game.surface_animation_redraw_count } elseif ($environmentCounterPresent) { [int]$environment.scene_idle_animation_redraw_count } else { 0 }
     $floor = 0
     $source = "missing"
-    $zeroReason = if (Test-Perf06ValueProperty $tags "accepted_zero_liveness_reason") { [string]$tags.accepted_zero_liveness_reason } else { "" }
-
-    if (-not [string]::IsNullOrWhiteSpace($zeroReason)) {
-        $counter = "static_phase"
-        $source = "accepted_static_zero_reason"
-    } elseif ($Platform -eq "native") {
+    if ($Platform -eq "native") {
         $frames = [int]$Scenario.frame_time_ms.count
         $per120 = [int]$BudgetTable.native.animated_idle_liveness_minimum_per_120_frames
         if ($frames -gt 0 -and $per120 -gt 0) {
@@ -73,12 +119,12 @@ function Get-Perf06PhaseLivenessEvaluation {
         }
     }
 
-    $passed = if (-not [string]::IsNullOrWhiteSpace($zeroReason)) { $floor -eq 0 -and $measured -eq 0 } else { -not [string]::IsNullOrWhiteSpace($counter) -and $floor -gt 0 -and $measured -ge $floor }
+    $passed = -not [string]::IsNullOrWhiteSpace($counter) -and $floor -gt 0 -and $measured -ge $floor
     return [pscustomobject][ordered]@{
         counter = $counter
         floor = $floor
         measured = $measured
-        zero_reason = $zeroReason
+        zero_reason = ""
         source = $source
         passed = $passed
     }
@@ -94,8 +140,7 @@ function Get-Perf06PhaseBudgetEvaluation {
     $tags = $Scenario.tags
     $surfaceId = [string]$tags.perf06_surface_id
     $phaseId = [string]$tags.perf06_phase_id
-    $mode = [string]$tags.mode
-    $isIdle = $mode -match "idle" -or $phaseId -match "idle"
+    $isIdle = Test-Perf06IdlePhase $surfaceId $phaseId
     $checks = [Collections.Generic.List[object]]::new()
 
     if ($Platform -eq "native") {
@@ -104,8 +149,6 @@ function Get-Perf06PhaseBudgetEvaluation {
             $drawMaximum = [double]$BudgetTable.native.surface_draw_p95_ms
             if ($surfaceId -ceq "coin_pusher" -and $phaseId -in @("drop", "carriage", "skill_stop", "skill_release", "collect")) {
                 $drawMaximum = [double]$BudgetTable.native.coin_pusher.active_draw_p95_ms
-            } elseif ($isIdle -and (Test-Perf06ValueProperty $tags "accepted_zero_liveness_reason")) {
-                $drawMaximum = [double]$BudgetTable.native.static_idle_surface_draw_p95_ms
             } elseif ($isIdle -and $BudgetTable.native.animated_idle_surface_draw_p95_ms.PSObject.Properties.Name -ccontains $surfaceId) {
                 $drawMaximum = [double]$BudgetTable.native.animated_idle_surface_draw_p95_ms.PSObject.Properties[$surfaceId].Value
             }

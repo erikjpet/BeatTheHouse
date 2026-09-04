@@ -12,6 +12,7 @@ $ErrorActionPreference = "Stop"
 $root = [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
 $failures = [Collections.Generic.List[string]]::new()
 $loadedReports = [Collections.Generic.List[object]]::new()
+. (Join-Path $PSScriptRoot "perf06_phase_qualification_contract.ps1")
 
 function Resolve-RepoPath([string]$Path) {
     if ([IO.Path]::IsPathRooted($Path)) { return [IO.Path]::GetFullPath($Path) }
@@ -77,7 +78,7 @@ function Test-ArtifactHashes($Report, [string]$ManifestPath, [string]$Label) {
 
 function Test-PhaseRow($Row) {
     $label = "phase row from $($Row._source_label)"
-    foreach ($field in @("surface_id", "phase_id", "platform", "profile", "launch_identity", "frame", "draw", "liveness", "budget_evaluation", "allocation_copy_counters", "retained_counters", "passed")) {
+    foreach ($field in @("surface_id", "phase_id", "platform", "profile", "launch_identity", "frame", "draw", "liveness", "budget_evaluation", "progress_evaluation", "allocation_copy_counters", "retained_counters", "passed")) {
         [void](Require-Property $Row $field $label)
     }
     if (-not [bool]$Row.passed) { $failures.Add("$label did not pass: $($Row.surface_id)/$($Row.phase_id)/$($Row.profile)") }
@@ -112,6 +113,21 @@ function Test-PhaseRow($Row) {
     }
     if (-not [bool]$Row.liveness.passed -or ([int]$Row.liveness.floor -gt 0 -and [int]$Row.liveness.measured -lt [int]$Row.liveness.floor)) {
         $failures.Add("$label did not meet its published liveness floor: measured=$($Row.liveness.measured) floor=$($Row.liveness.floor).")
+    }
+    $isIdle = Test-Perf06IdlePhase ([string]$Row.surface_id) ([string]$Row.phase_id)
+    if ($isIdle -and ([int]$Row.liveness.floor -le 0 -or -not [string]::IsNullOrWhiteSpace([string]$Row.liveness.zero_reason))) {
+        $failures.Add("$label idle phase did not retain the contract-owned positive liveness floor.")
+    }
+    $recomputedProgress = Get-Perf06PhaseProgressEvaluation -SurfaceId ([string]$Row.surface_id) -PhaseId ([string]$Row.phase_id) -Evidence $Row
+    foreach ($field in @("applicable", "checks", "passed")) { [void](Require-Property $Row.progress_evaluation $field "$label progress_evaluation") }
+    if ([bool]$Row.progress_evaluation.applicable -ne [bool]$recomputedProgress.applicable -or [bool]$Row.progress_evaluation.passed -ne [bool]$recomputedProgress.passed -or @($Row.progress_evaluation.checks).Count -ne @($recomputedProgress.checks).Count) {
+        $failures.Add("$label progress evaluation does not match its retained evidence.")
+    }
+    if (-not $isIdle -and (-not [bool]$recomputedProgress.applicable -or -not [bool]$recomputedProgress.passed -or @($recomputedProgress.checks).Count -eq 0)) {
+        $failures.Add("$label active phase has no passing retained progress evidence.")
+    }
+    foreach ($check in @($recomputedProgress.checks)) {
+        if ([string]::IsNullOrWhiteSpace([string]$check.kind) -or -not [bool]$check.passed) { $failures.Add("$label retained progress check did not pass.") }
     }
     $budgetEvaluation = $Row.budget_evaluation
     foreach ($field in @("budget_table_version", "applicable", "checks", "passed")) { [void](Require-Property $budgetEvaluation $field "$label budget_evaluation") }
