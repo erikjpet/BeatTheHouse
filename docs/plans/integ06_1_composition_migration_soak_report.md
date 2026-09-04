@@ -71,6 +71,42 @@ ordinals plus exact save/load boundaries. These are production-core policy
 checkpoints, not executable FoundationMain UI replay commands. No action cap,
 save/load cadence, route requirement, or semantic assertion was weakened.
 
+A later diagnostic based on candidate `5652fb7e` reached real gameplay in the
+fresh Windows export. Its first native shard exposed integration-driver mistakes that
+would otherwise hide the product result: the driver compared JSON integer
+normalization as data loss, called the legacy destination generator without
+checking arrival, treated a preferred destination stake floor as a travel gate,
+and ignored rejected scenario action boundaries. Those results were discarded
+as superseded harness evidence. The repaired producer now canonicalizes only
+integer-valued game tallies, uses `RunGenerator.travel_environment_result`,
+finalizes scenario semantics at the same action/travel boundaries required by
+production, consults `RunTerminalEvaluator` at terminal boundaries, retains
+exact changed-field diagnostics for save/load, and fails the row on any rejected
+travel or action boundary. It also isolates ProfileInventory output per shard so
+independent diagnostic processes cannot race each other.
+
+The canonicalized save/load checks then passed exactly at every sampled point.
+All nine policy seeds were exercised far enough to inventory the current
+environment-owned blockers. No terminal verdict from those interrupted runs is
+claimed:
+
+- `jazz_club_guest_legend` and several other generated scenarios reject
+  finalization with `scenario semantic inventory version or digest changed;
+  explicit migration is required`;
+- `bar_dead_tuesday` overlaps `event::event:town_rumor_staff` in normal and
+  expanded-small layouts;
+- `kitty_cat_lounge_amateur_night` has normal/expanded-small collisions among
+  its dressing rack, task, judge, town-reputation or town-rumor events,
+  `grand_casino_invite`, and `kitty_burlesque_show`; and
+- `gas_station_trucker_convoy` overlaps `event::event:parking_lot_tip` in normal
+  and expanded-small layouts.
+
+These failures were routed to env06_8 with their exact identities. The
+integration branch changes none of the scenario JSON, archetype anchor data,
+layout resolver/controller, icon fallback, package generators, or
+`foundation_main.gd`. The final repeated native/Web run remains correctly
+deferred until that environment work lands.
+
 Final acceptance still requires one clean rerun after env06_8 and the final
 perf06 evidence profile are both frozen: project validation, both migration
 matrices, the full composition matrix, and the repeated native/Web terminal soak

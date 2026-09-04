@@ -48,7 +48,7 @@ func _run() -> void:
 	if shard_index >= shard_count:
 		failures.append("Shard index must be below shard count.")
 	OS.set_environment("BTH_INTEG06_1_EMBED_ENDGAME", "1")
-	OS.set_environment("BTH_PROFILE_INVENTORY_PATH", "user://integ06_1_terminal_profile.json")
+	OS.set_environment("BTH_PROFILE_INVENTORY_PATH", "user://integ06_1_terminal_profile_%d.json" % shard_index)
 	var probe: Variant = EndgameProbeScript.new()
 	var library: Variant = ContentLibraryScript.new()
 	library.load(false)
@@ -93,7 +93,9 @@ func _run() -> void:
 			profile_result = profile.record_run_result(_profile_snapshot(run, case_index))
 		var save_points := _array(run.get("save_load_points", []))
 		var save_failures := _array(run.get("save_load_failures", []))
-		var row_passed := terminal and authority_violations.is_empty() and str(run.get("authority_setup", "")) == "standard_production_challenge" and save_points.size() >= 3 and save_failures.is_empty() and bool(profile_result.get("ok", false))
+		var action_boundary_failures := _array(run.get("action_boundary_failures", []))
+		var travel_failures := _array(run.get("travel_failures", []))
+		var row_passed := terminal and authority_violations.is_empty() and action_boundary_failures.is_empty() and travel_failures.is_empty() and str(run.get("authority_setup", "")) == "standard_production_challenge" and save_points.size() >= 3 and save_failures.is_empty() and bool(profile_result.get("ok", false))
 		if not authority_violations.is_empty():
 			failures.append("%s rejected caller-injected authority setup: %s" % [str(case_data.get("id", "")), ", ".join(authority_violations)])
 		if not terminal:
@@ -102,6 +104,12 @@ func _run() -> void:
 			failures.append("%s produced fewer than three mid-run save/load points." % str(case_data.get("id", "")))
 		for save_failure in save_failures:
 			failures.append("%s save/load: %s" % [str(case_data.get("id", "")), str(save_failure)])
+		for boundary_failure_value in action_boundary_failures:
+			var boundary_failure := _dict(boundary_failure_value)
+			failures.append("%s action boundary %s: %s" % [str(case_data.get("id", "")), str(boundary_failure.get("source", "unknown")), ", ".join(_array(boundary_failure.get("errors", [])))])
+		for travel_failure_value in travel_failures:
+			var travel_failure := _dict(travel_failure_value)
+			failures.append("%s travel to %s: %s" % [str(case_data.get("id", "")), str(travel_failure.get("target_id", "unknown")), ", ".join(_array(travel_failure.get("errors", [])))])
 		if terminal and not bool(profile_result.get("ok", false)):
 			failures.append("%s terminal result was rejected by ProfileInventory." % str(case_data.get("id", "")))
 		var semantic_case := {
@@ -114,6 +122,9 @@ func _run() -> void:
 			"trace": _array(run.get("semantic_trace", [])),
 			"terminal": {"status": str(run.get("final_status", "")), "won": bool(run.get("won", false)), "lost": bool(run.get("lost", false)), "route": route},
 			"save_load_points": save_points,
+			"stopped_reason": str(run.get("stopped_reason", "")),
+			"action_boundary_failures": action_boundary_failures,
+			"travel_failures": travel_failures,
 		}
 		semantic_cases.append(semantic_case)
 		seed_ids.append(str(case_data.get("seed", "")))
@@ -127,6 +138,12 @@ func _run() -> void:
 			"authority_setup": str(run.get("authority_setup", "")),
 			"authority_violations": authority_violations,
 			"actions": int(run.get("actions", 0)),
+			"final_bankroll": int(run.get("final_bankroll", 0)),
+			"final_heat": int(run.get("final_heat", 0)),
+			"stopped_reason": str(run.get("stopped_reason", "")),
+			"no_action_terminal_diagnostic": _dict(run.get("no_action_terminal_diagnostic", {})),
+			"no_action_event_ids": _array(run.get("no_action_event_ids", [])),
+			"no_action_travel_choices": _array(run.get("no_action_travel_choices", [])),
 			"game_actions": int(run.get("game_actions", 0)),
 			"travel_count": int(run.get("travel_count", 0)),
 			"event_actions": int(run.get("events_resolved", 0)),
@@ -134,6 +151,9 @@ func _run() -> void:
 			"lender_actions": int(run.get("lender_uses", 0)),
 			"lender_ids": _array(run.get("lender_ids", [])),
 			"visited_archetypes": _array(run.get("visited_archetypes", [])),
+			"travel_decisions": _array(run.get("travel_decisions", [])),
+			"travel_failures": travel_failures,
+			"action_boundary_failures": action_boundary_failures,
 			"game_mix": _dict(run.get("game_mix", {})),
 			"save_load_count": save_points.size(),
 			"save_load_points": save_points,
@@ -228,6 +248,7 @@ func _journey_checkpoints(trace: Array) -> Array:
 			"archetype_id": str(state.get("archetype_id", "")),
 			"scenario_id": str(state.get("scenario_id", "")),
 			"layer_id": str(state.get("layer_id", "")),
+			"environment_turns": int(state.get("environment_turns", 0)),
 			"run_status": str(state.get("run_status", "")),
 			"game_actions": int(entry.get("game_actions", 0)),
 			"travel_count": int(entry.get("travel_count", 0)),

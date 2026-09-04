@@ -358,6 +358,14 @@ func _simulate_run(run_index: int, scenario: Dictionary, seed: String, max_actio
 		if run_state.is_terminal():
 			run["stopped_reason"] = "terminal"
 			break
+		if not _array(run.get("action_boundary_failures", [])).is_empty():
+			run["stopped_reason"] = "action_boundary_rejected"
+			break
+		if integration_production_only:
+			var boundary_terminal: Dictionary = RunTerminalEvaluatorScript.evaluate_terminal_and_apply(run_state, library)
+			if bool(boundary_terminal.get("terminal", false)):
+				run["stopped_reason"] = "production_terminal_evaluator"
+				break
 		if _try_claim_or_resolve_endgame(run_state, run):
 			_count_action(run, "event")
 			_record_curve(run, run_state, "endgame")
@@ -415,6 +423,9 @@ func _simulate_run(run_index: int, scenario: Dictionary, seed: String, max_actio
 				break
 		if integration_production_only:
 			var no_action_terminal: Dictionary = RunTerminalEvaluatorScript.evaluate_and_apply(run_state, library)
+			run["no_action_terminal_diagnostic"] = no_action_terminal.duplicate(true)
+			run["no_action_event_ids"] = _current_event_ids(run_state)
+			run["no_action_travel_choices"] = _travel_choices(run_state)
 			run["stopped_reason"] = "production_terminal_evaluator" if bool(no_action_terminal.get("terminal", false)) else "no_visible_player_action"
 			break
 		run_state.advance_environment_turns(1)
@@ -439,6 +450,16 @@ func _integration_save_load_round_trip(run_state: RunState, seed: String, action
 	service.clear_run(slot)
 	var after := _integration_state_snapshot(loaded as RunState) if loaded is RunState else {}
 	var exact := save_error == OK and loaded is RunState and JSON.stringify(before) == JSON.stringify(after)
+	var changed_fields: Array = []
+	for key_value in before.keys():
+		var key := str(key_value)
+		if not after.has(key) or JSON.stringify(before.get(key)) != JSON.stringify(after.get(key)):
+			changed_fields.append(key)
+	for key_value in after.keys():
+		var key := str(key_value)
+		if not before.has(key) and not changed_fields.has(key):
+			changed_fields.append(key)
+	changed_fields.sort()
 	return {
 		"ok": exact,
 		"run_state": loaded if loaded is RunState else null,
@@ -448,10 +469,20 @@ func _integration_save_load_round_trip(run_state: RunState, seed: String, action
 			"save_error": int(save_error),
 			"loaded": loaded is RunState,
 			"exact": exact,
+			"changed_fields": changed_fields,
+			"changed_values": _integration_changed_values(before, after, changed_fields),
 			"before_sha256": JSON.stringify(before).sha256_text(),
 			"after_sha256": JSON.stringify(after).sha256_text(),
 		},
 	}
+
+
+func _integration_changed_values(before: Dictionary, after: Dictionary, fields: Array) -> Dictionary:
+	var result := {}
+	for field_value in fields:
+		var field := str(field_value)
+		result[field] = {"before": before.get(field), "after": after.get(field)}
+	return result
 
 
 func _record_integration_trace(run: Dictionary, run_state: RunState, label: String) -> void:
@@ -496,12 +527,21 @@ func _integration_state_snapshot(run_state: RunState) -> Dictionary:
 		"archetype_id": str(run_state.current_environment.get("archetype_id", "")),
 		"scenario_id": str(run_state.current_environment.get("scenario_id", "")),
 		"layer_id": str(run_state.current_environment.get("current_layer_id", "")),
+		"environment_turns": int(run_state.current_environment.get("turns", 0)),
 		"debt": debt_rows,
-		"game_tallies": _dict(run_state.narrative_flags.get("profile_games_played", {})),
+		"game_tallies": _integration_integer_dict(run_state.narrative_flags.get("profile_games_played", {})),
 		"delivery_status": str(run_state.delivery_snapshot().get("status", "")),
 		"crew_jobs": run_state.crew_jobs.size(),
 		"world_sequence_registrations": run_state.world_sequence_registrations.size(),
 	}
+
+
+func _integration_integer_dict(value: Variant) -> Dictionary:
+	var result := {}
+	var source := _dict(value)
+	for key_value in source.keys():
+		result[str(key_value)] = int(source.get(key_value, 0))
+	return result
 
 
 func _collection_context_for_run(seed: String, challenge_id: String) -> Dictionary:
@@ -760,7 +800,7 @@ func _try_resolve_required_progression_event(run_state: RunState, run: Dictionar
 	var result := event.resolve(run_state, run_state.current_environment, "accept_invite")
 	if not bool(result.get("ok", false)):
 		return false
-	run_state.advance_environment_turns(1)
+	_integration_advance_turn(run_state, run, "grand_casino_invite")
 	run["events_resolved"] = int(run.get("events_resolved", 0)) + 1
 	return true
 
@@ -964,7 +1004,7 @@ func _try_resolve_event(run_state: RunState, run: Dictionary, policy: String) ->
 	var result: Dictionary = selected_event.resolve(run_state, run_state.current_environment, best_choice_id)
 	if not bool(result.get("ok", false)):
 		return false
-	run_state.advance_environment_turns(1)
+	_integration_advance_turn(run_state, run, "event:%s" % best_event_id)
 	run["events_resolved"] = int(run.get("events_resolved", 0)) + 1
 	return true
 
@@ -1010,7 +1050,10 @@ func _try_travel(run_state: RunState, run: Dictionary, policy: String) -> bool:
 		var cost := maxi(0, int(choice.get("cost", 0)))
 		if cost > run_state.bankroll:
 			continue
-		if run_state.bankroll - cost < _destination_minimum_bankroll(str(choice.get("id", ""))):
+		# A destination stake floor is a preference, not a travel authority gate.
+		# Preserve legal recovery paths (events, lenders, shops, and cheaper onward
+		# routes) whenever production travel leaves the run with liquid funds.
+		if run_state.bankroll - cost <= 0:
 			continue
 		var score := _travel_score(run_state, run, choice, policy)
 		scored_choices.append({
@@ -1033,7 +1076,7 @@ func _try_travel(run_state: RunState, run: Dictionary, policy: String) -> bool:
 			run_state.advance_environment_turns(lock_remaining)
 			return _try_travel(run_state, run, policy)
 		return false
-	if best_score < -500 and not _string_array(run_state.current_environment.get("game_ids", [])).is_empty():
+	if best_score < -500 and not _string_array(run_state.current_environment.get("game_ids", [])).is_empty() and run_state.bankroll >= _current_stake_floor(run_state):
 		_record_travel_decision(run, run_state, scored_choices, str(best_choice.get("id", "")), best_score, "deferred")
 		return false
 	_record_travel_decision(run, run_state, scored_choices, str(best_choice.get("id", "")), best_score, "travel")
@@ -1070,7 +1113,7 @@ func _try_play_game(run_state: RunState, run: Dictionary, policy: String) -> boo
 	else:
 		run_state.save_rng(rng)
 	if not bool(result.get("slot_runtime_tick", false)):
-		run_state.advance_environment_turns(1)
+		_integration_advance_turn(run_state, run, "game:%s:%s" % [game_id, action_id])
 	run["game_actions"] = int(run.get("game_actions", 0)) + 1
 	var action_kind := str(result.get("action_kind", ""))
 	if action_kind == "cheat" or action_kind == "risky" or action_kind == "advantage":
@@ -1092,10 +1135,30 @@ func _apply_travel_choice(run_state: RunState, run: Dictionary, choice: Dictiona
 	var route: Dictionary = _dict(choice.get("route", {}))
 	if target_id.is_empty() or route.is_empty():
 		return false
+	if integration_production_only:
+		var finalized := run_state.scenario_finalize_installed_environment(library, {"viewport_size": {"x": 1280, "y": 720}})
+		if not bool(finalized.get("ok", false)):
+			_record_integration_travel_failure(run, target_id, _array(finalized.get("errors", [])))
+			return false
+		var preflight := run_state.scenario_preflight_environment_change(run_state.current_world_node_id(), target_id, "world")
+		if not bool(preflight.get("ok", false)):
+			_record_integration_travel_failure(run, target_id, _array(preflight.get("errors", [])))
+			return false
 	var previous_environment := run_state.current_environment.duplicate(true)
+	var route_status := _dict(choice.get("status", {}))
+	if not route_status.is_empty():
+		route["cost"] = int(choice.get("cost", route_status.get("cost", route.get("cost", 0))))
+		route["suspicion_delta"] = int(route_status.get("suspicion_delta", route.get("suspicion_delta", 0)))
+		route["risk_decay"] = int(route_status.get("risk_decay", route.get("risk_decay", 0)))
 	var route_risk := run_state.travel_route_risk(route, target_id)
 	var travel_heat := run_state.begin_travel_suspicion_decay(route, target_id)
-	generator.next_environment(run_state, target_id)
+	if integration_production_only:
+		var install := generator.travel_environment_result(run_state, target_id, true)
+		if not bool(install.get("ok", false)):
+			_record_integration_travel_failure(run, target_id, _array(install.get("errors", [])))
+			return false
+	else:
+		generator.next_environment(run_state, target_id)
 	var travel_decay := run_state.finish_travel_suspicion_decay(travel_heat)
 	var result := _travel_result(target_id, previous_environment, run_state.current_environment, route, travel_decay, route_risk)
 	GameModule.apply_result(run_state, result)
@@ -1104,6 +1167,34 @@ func _apply_travel_choice(run_state: RunState, run: Dictionary, choice: Dictiona
 	if target_id == GRAND_CASINO_ID:
 		run["grand_casino_entries"] = int(run.get("grand_casino_entries", 0)) + 1
 	return true
+
+
+func _integration_advance_turn(run_state: RunState, run: Dictionary, source: String) -> bool:
+	if integration_production_only:
+		var finalized := run_state.scenario_finalize_installed_environment(library, {"viewport_size": {"x": 1280, "y": 720}})
+		if not bool(finalized.get("ok", false)):
+			_record_integration_action_boundary_failure(run, source, _array(finalized.get("errors", [])))
+			return false
+	var result := run_state.advance_environment_turns(1)
+	if bool(result.get("ok", false)):
+		return true
+	_record_integration_action_boundary_failure(run, source, _array(result.get("errors", [])))
+	return false
+
+
+func _record_integration_action_boundary_failure(run: Dictionary, source: String, errors: Array) -> void:
+	var rows := _array(run.get("action_boundary_failures", []))
+	if rows.size() < 12:
+		rows.append({"source": source, "errors": errors})
+		run["action_boundary_failures"] = rows
+
+
+func _record_integration_travel_failure(run: Dictionary, target_id: String, errors: Array) -> void:
+	var rows := _array(run.get("travel_failures", []))
+	if rows.size() >= 12:
+		return
+	rows.append({"target_id": target_id, "errors": errors})
+	run["travel_failures"] = rows
 
 
 func _travel_result(target_id: String, previous_environment: Dictionary, destination_environment: Dictionary, route: Dictionary, travel_decay: Dictionary, route_risk: Dictionary) -> Dictionary:
