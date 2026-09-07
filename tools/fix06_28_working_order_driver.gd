@@ -16,7 +16,7 @@ const SEEDS := ["FIRST-NIGHT-ACE-17", "PLAYTEST-CATALOG-01", "SCENARIO-AUDIT"]
 const SETTINGS_PATH := "user://fix06_28_working_order_settings.json"
 const META_PATH := "user://fix06_28_working_order_meta.json"
 const PROFILE_PATH := "user://fix06_28_working_order_profile.json"
-const REQUIRED_SURFACE_FAMILIES := ["novelty", "slots", "dice", "cards", "wheel", "coin_pusher"]
+const REQUIRED_SURFACE_FAMILIES := ["novelty", "slots", "dice", "cards", "wheel", "coin_pusher", "craps", "crew_poker"]
 const REQUIRED_PUNCHLINE_LAYERS := ["club", "casino", "back_room"]
 const REQUIRED_CREW_MILESTONES := ["favor", "job", "delivery"]
 
@@ -228,7 +228,11 @@ func _verify_visible_crew_favor_delivery_route() -> void:
 		route["events"].append(accepted)
 		route["favor"] = bool(accepted.get("resolved", false)) and not str(accepted.get("visible_message", "")).is_empty()
 	var alternate_target := home_target
-	for attempt in range(24):
+	for attempt in range(48):
+		var live_run: RunState = app.get("run_state")
+		if live_run != null and live_run.delivery_has_active_run():
+			route["job"] = not _first_visible_room_object_with_prefix(app, "delivery:pickup:").is_empty()
+			break
 		var talk := _visible_talk_snapshot(app)
 		if str(talk.get("event_id", "")) == "crew_favor_delivery":
 			var job_choice := await _choose_visible_talk_choice(app, "run_package", "crew_favor_delivery")
@@ -259,10 +263,14 @@ func _verify_visible_crew_favor_delivery_route() -> void:
 		if str(_visible_event_popup_snapshot(app).get("event_id", "")) == "crew_favor_delivery" \
 				or str(_visible_talk_snapshot(app).get("event_id", "")) == "crew_favor_delivery":
 			continue
-		if not await _travel_until_exact_node(app, "FIRST-NIGHT-ACE-17", alternate_target, "crew_favor_delivery"):
-			route["errors"].append("favor cadence travel failed at attempt %d" % attempt)
-			break
-		alternate_target = lender_target if alternate_target == home_target else home_target
+		# Stay in the room while it still exposes a genuine action boundary. The
+		# old driver paid for a round trip after every click, exhausting the seeded
+		# run before the random-but-budget-bypassing favor could be selected.
+		if not bool(ordinary_action.get("ok", false)):
+			if not await _travel_until_exact_node(app, "FIRST-NIGHT-ACE-17", alternate_target, "crew_favor_delivery"):
+				route["errors"].append("favor cadence travel failed at attempt %d" % attempt)
+				break
+			alternate_target = lender_target if alternate_target == home_target else home_target
 	if bool(route["job"]):
 		# The authored route begins with a physical pickup in the current room.
 		var pickup_id := _first_visible_room_object_with_prefix(app, "delivery:pickup:")
@@ -321,6 +329,8 @@ func _verify_surface_families_via_visible_library() -> void:
 		{"family": "cards", "game_id": "video_poker", "label": "Video Poker"},
 		{"family": "wheel", "game_id": "roulette", "label": "Roulette"},
 		{"family": "coin_pusher", "game_id": "coin_pusher", "label": "Quarter Falls"},
+		{"family": "craps", "game_id": "craps", "label": "Craps"},
+		{"family": "crew_poker", "game_id": "crew_draw_poker", "label": "Back-Room Poker"},
 	]
 	var records: Array = []
 	for representative_value in representatives:
@@ -532,6 +542,7 @@ func _preferred_surface_binding(hit_actions: Array) -> Dictionary:
 	var preferred := [
 		"pull_tab_buy", "slot_spin", "bar_dice_ack_cover", "bar_dice_throw", "bar_dice_reveal", "bar_dice_ack_call", "bar_dice_resolve", "bar_dice_roll", "bar_dice_press", "bar_dice_stake",
 		"video_poker_draw", "video_poker_deal", "video_poker_mark", "roulette_spin", "roulette_bet", "roulette_place_bet", "coin_pusher_collect", "coin_pusher_drop_charge", "coin_pusher_drop", "coin_pusher_skill_stop", "coin_pusher_insert", "coin_pusher_play",
+		"craps_roll", "craps_bet", "crew_poker_draw", "crew_poker_deal", "crew_poker_call", "crew_poker_check", "crew_poker_fold", "crew_poker_mark",
 	]
 	for preferred_action in preferred:
 		for value in hit_actions:
@@ -728,7 +739,7 @@ func _activate_exact_room_action(app: Control, semantic_id: String, action_index
 		result["selected_panel"] = panel
 		return result
 	var action := _dict(actions[action_index])
-	var local_position: Vector2 = canvas.call("local_position_for_selected_info_action_button") if action_index == 0 and canvas.has_method("local_position_for_selected_info_action_button") else _board_to_canvas_local(canvas, _rect(action.get("button_rect", {})).get_center())
+	var local_position: Vector2 = canvas.call("local_position_for_selected_info_action_button", action_index) if canvas.has_method("local_position_for_selected_info_action_button") else _board_to_canvas_local(canvas, _rect(action.get("button_rect", {})).get_center())
 	if local_position.x < 0.0:
 		result["route_errors"].append("selected action has no production hit position")
 		return result
@@ -1062,8 +1073,8 @@ func _verify_action_isolated(seed: String, semantic_id: String, action_index: in
 		await _dispose_app(app)
 		return action_record
 	var local_action_position := Vector2(-1.0, -1.0)
-	if action_index == 0 and canvas.has_method("local_position_for_selected_info_action_button"):
-		local_action_position = canvas.call("local_position_for_selected_info_action_button")
+	if canvas.has_method("local_position_for_selected_info_action_button"):
+		local_action_position = canvas.call("local_position_for_selected_info_action_button", action_index)
 	else:
 		local_action_position = _board_to_canvas_local(canvas, button_rect.get_center())
 	if local_action_position.x < 0.0:

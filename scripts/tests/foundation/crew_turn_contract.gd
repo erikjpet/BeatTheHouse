@@ -164,7 +164,7 @@ static func _check_choices_and_save(failures: Array) -> void:
 		failures.append("A clean persistent save names the hidden ledger.")
 	var save_service := SaveServiceScript.new()
 	var sync_payload := _dict(save_service.call("_save_payload", wrong, "fixture"))
-	var expected_encoded := RunSaveCodecScript.encode(wrong.to_save_snapshot())
+	var expected_encoded := RunSaveCodecScript.pack_for_storage(RunSaveCodecScript.encode(wrong.to_save_snapshot()))
 	if JSON.stringify(sync_payload.get("run_state", {})) != JSON.stringify(expected_encoded):
 		failures.append("Synchronous save projection diverged from the opaque async snapshot path.")
 	var report := RunReportViewModelScript.build(wrong.to_dict())

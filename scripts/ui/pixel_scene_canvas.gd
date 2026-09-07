@@ -457,8 +457,14 @@ func focus_runtime_status() -> Dictionary:
 	}
 
 
-func local_position_for_selected_info_action_button() -> Vector2:
-	var button_rect := _selected_info_action_button_rect()
+func local_position_for_selected_info_action_button(action_index: int = 0) -> Vector2:
+	var info := _selected_object_info()
+	if info.is_empty():
+		return Vector2(-1.0, -1.0)
+	var entries := _selected_info_action_entries_for_rect(info, _animated_info_card_rect(info))
+	if action_index < 0 or action_index >= entries.size() or typeof(entries[action_index]) != TYPE_DICTIONARY:
+		return Vector2(-1.0, -1.0)
+	var button_rect: Rect2 = (entries[action_index] as Dictionary).get("button_rect", Rect2())
 	if button_rect.size.x <= 0.0 or button_rect.size.y <= 0.0:
 		return Vector2(-1.0, -1.0)
 	return _board_to_local_position(button_rect.get_center())

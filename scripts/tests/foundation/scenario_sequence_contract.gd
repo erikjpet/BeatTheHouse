@@ -127,6 +127,20 @@ class LifecycleCallerProbe:
 	var failed_talk_dock_attention_tween: Tween
 	var environment_hover_signal_log: Array[String] = []
 
+	func _init() -> void:
+		# These probes intentionally bypass FoundationMain._ready() and the staged
+		# run-shell builder. Load the same script stages that their public caller
+		# paths require so a harness shortcut cannot turn production collaborators
+		# into Nil and manufacture lifecycle failures.
+		assert(_ensure_run_ui_stage_scripts(0))
+		assert(_ensure_run_ui_stage_scripts(4))
+		assert(_ensure_run_ui_stage_scripts(10))
+		assert(_ensure_run_ui_stage_scripts(12))
+		# The fixture installs only the concrete controls each transaction owns;
+		# mark that synthetic shell as complete so public caller guards do not try
+		# to build unrelated screens against a deliberately absent root container.
+		run_ui_built = true
+
 	func _show_message(text: String) -> void:
 		message_log.append(text)
 
@@ -1502,7 +1516,7 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 		if str((projected_value as Dictionary).get("object_id", "")) == "scenario::fixture_100": projected_scene = projected_value as Dictionary
 	if not bool(production_projection.get("ok", false)) or projected_console.is_empty() or str(projected_console.get("object_type", "")) != "scenario_sequence" or typeof(projected_console.get("focus_rect")) != TYPE_RECT2 or projected_console.get("focus_rect", Rect2()) == Rect2(0.1, 0.1, 0.12, 0.18) or _array(projected_console.get("scenario_sequence_actions", [])).size() != 2 or str(projected_console.get("scenario_layout_authority_identity", "")) != "scenario::command_console" or str(production_projection.get("layout_authority_digest", "")).length() != 64:
 		failures.append("Final semantic interaction projection did not materialize the scenario command surface in the room UI.")
-	if projected_scene.is_empty() or str(projected_scene.get("object_type", "")) != "scenario_scene_object" or bool(projected_scene.get("interactive", true)):
+	if projected_scene.is_empty() or str(projected_scene.get("object_type", "")) != "scenario_scene_object" or not bool(projected_scene.get("interactive", false)) or not _array(projected_scene.get("scenario_sequence_actions", [])).is_empty():
 		failures.append("Final semantic projection did not materialize scenario scene objects alongside interactions.")
 	var missing_layout_projection := EnvironmentInteractionControllerScript.project_sequence_interaction_result(_array(finalized.get("records", [])), run_state.scenario_sequence_projection())
 	var missing_layout_records := _array(missing_layout_projection.get("records", []))
@@ -4186,7 +4200,10 @@ static func _check_rollout_growth_contract(library: ContentLibrary, failures: Ar
 
 static func _check_delivery_day_production_package(library: ContentLibrary, failures: Array) -> void:
 	var raw_package: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/environments/scenario_sequences/env06_7_shops_streets.json"))
-	if typeof(raw_package) != TYPE_DICTIONARY or int(_dict(raw_package).get("schema_version", 0)) != 1 or _dict(raw_package).keys() != ["schema_version", "package_id", "handler_pack", "renderer_id", "scenarios"]:
+	var raw_package_dict := _dict(raw_package)
+	var envelope_keys := raw_package_dict.keys()
+	envelope_keys.sort()
+	if typeof(raw_package) != TYPE_DICTIONARY or int(raw_package_dict.get("schema_version", 0)) != 1 or envelope_keys != ["handler_pack", "package_id", "renderer_id", "scenarios", "schema_version"]:
 		failures.append("Delivery-day JSON is not the exact schema-v1 object envelope.")
 		return
 	var catalog := SequenceCatalogScript.load_catalog()

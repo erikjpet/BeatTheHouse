@@ -704,8 +704,8 @@ static func _check_sealed_semantic_collection_membership(library: Variant, failu
 
 static func _check_finalized_accessibility(library: Variant, failures: Array) -> void:
 	var cases := [
-		{"id": "talkdock", "anchor": [285.0, 120.0], "bounds": {"w": 20, "h": 20}, "role": "control", "context": {"reserved_overlay_board_rect": {"x": 306.0, "y": 112.0, "w": 100.0, "h": 18.0}, "small_screen_mode": true, "reduce_motion": true, "production_canvas": true}, "needle": "TalkDock"},
-		{"id": "lane", "anchor": [285.0, 355.0], "bounds": {"w": 20, "h": 20}, "role": "obstacle", "context": _production_layout_context(), "needle": "access lane"},
+		{"id": "talkdock", "anchor": [285.0, 120.0], "bounds": {"w": 20, "h": 20}, "role": "control", "context": {"reserved_overlay_board_rect": {"x": 306.0, "y": 112.0, "w": 100.0, "h": 18.0}, "small_screen_mode": true, "reduce_motion": true, "production_canvas": true}, "needle": "TalkDock", "reject": true},
+		{"id": "lane", "anchor": [285.0, 385.0], "bounds": {"w": 20, "h": 20}, "role": "obstacle", "context": _production_layout_context(), "reject": false},
 	]
 	for case_value in cases:
 		var case := _dict(case_value)
@@ -721,8 +721,13 @@ static func _check_finalized_accessibility(library: Variant, failures: Array) ->
 		run_state.current_environment["semantic_anchors"]["bar_actor"]["position"] = _array(case.get("anchor", []))
 		run_state.scenario_prepare_semantic_finalization()
 		var rejected := run_state.scenario_finalize_base_semantics([_production_presentation()], library, _dict(case.get("context", {})))
-		if bool(rejected.get("ok", true)) or not _contains_text(_array(rejected.get("errors", [])), str(case.get("needle", ""))) or run_state.current_environment.has("scenario_semantic_ready"):
-			failures.append("Validated finalization did not reject the expanded small-screen %s hostile layout atomically: %s" % [str(case.get("id", "")), JSON.stringify(rejected.get("errors", []))])
+		if bool(case.get("reject", true)):
+			if bool(rejected.get("ok", true)) or not _contains_text(_array(rejected.get("errors", [])), str(case.get("needle", ""))) or run_state.current_environment.has("scenario_semantic_ready"):
+				failures.append("Validated finalization did not reject the expanded small-screen %s hostile layout atomically: %s" % [str(case.get("id", "")), JSON.stringify(rejected.get("errors", []))])
+		else:
+			var audit := _dict(run_state.current_environment.get("scenario_layout_audit", {}))
+			if not bool(rejected.get("ok", false)) or not bool(run_state.current_environment.get("scenario_semantic_ready", false)) or int(audit.get("collision_adjustment_count", 0)) < 1:
+				failures.append("Validated finalization did not move the authored lane obstruction to a safe deterministic placement: %s" % JSON.stringify(rejected.get("errors", [])))
 
 	_check_finalized_expanded_path_and_label(library, failures)
 	_check_explicit_alternate_exit(library, failures)

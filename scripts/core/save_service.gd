@@ -157,7 +157,7 @@ func _async_save_worker(runtime_snapshot: Dictionary, slot_id: String, path: Str
 		"version": SAVE_VERSION,
 		"act": maxi(1, int(runtime_snapshot.get("act", 1))),
 		"slot_id": slot_id,
-		"run_state": RunSaveCodecScript.encode(runtime_snapshot),
+		"run_state": RunSaveCodecScript.pack_for_storage(RunSaveCodecScript.encode(runtime_snapshot)),
 	}
 	io_mutex.lock()
 	result_box["error"] = _write_payload_atomic(payload, path, backup_path, primary_trusted)
@@ -205,7 +205,14 @@ static func _worker_payload_loadable(absolute_path: String) -> bool:
 		return false
 	var payload: Dictionary = json.data
 	if payload.get("schema", "") == SAVE_SCHEMA:
-		return typeof(payload.get("run_state", {})) == TYPE_DICTIONARY
+		var run_data: Variant = payload.get("run_state", {})
+		if typeof(run_data) != TYPE_DICTIONARY or not RunSaveCodecScript.storage_envelope_valid(run_data as Dictionary):
+			return false
+		# Slot discovery must reject damaged compressed data, not merely an
+		# envelope whose field names and lengths look plausible.  Decompression
+		# and the content hash are still much cheaper than constructing RunState.
+		var unpacked := RunSaveCodecScript.unpack_from_storage(run_data as Dictionary)
+		return not unpacked.is_empty() and unpacked.has("seed_text") and unpacked.has("rng_state") and unpacked.has("current_environment")
 	return payload.has("seed_text") and payload.has("rng_state") and payload.has("current_environment")
 
 
@@ -322,7 +329,7 @@ func _save_payload(run_state: RunState, slot_id: String) -> Dictionary:
 		"version": SAVE_VERSION,
 		"act": maxi(1, int(runtime_snapshot.get("act", 1))),
 		"slot_id": slot_id,
-		"run_state": RunSaveCodecScript.encode(runtime_snapshot),
+		"run_state": RunSaveCodecScript.pack_for_storage(RunSaveCodecScript.encode(runtime_snapshot)),
 	}
 
 
@@ -332,7 +339,10 @@ func _run_data_from_payload(payload: Dictionary) -> Dictionary:
 		var run_data: Variant = payload.get("run_state", {})
 		if typeof(run_data) != TYPE_DICTIONARY:
 			return {}
-		var copied_run_data := RunSaveCodecScript.decode(run_data as Dictionary)
+		var unpacked_run_data := RunSaveCodecScript.unpack_from_storage(run_data as Dictionary)
+		if unpacked_run_data.is_empty():
+			return {}
+		var copied_run_data := RunSaveCodecScript.decode(unpacked_run_data)
 		if not copied_run_data.has("act"):
 			copied_run_data["act"] = maxi(1, int(payload.get("act", 1)))
 		return copied_run_data

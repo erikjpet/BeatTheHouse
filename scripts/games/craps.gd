@@ -1171,7 +1171,13 @@ func _chip_denominations(table: Dictionary) -> Array:
 
 
 func _first_chip(table: Dictionary) -> int:
-	return int(_chip_denominations(table)[0])
+	var chips := _chip_denominations(table)
+	var table_minimum := maxi(1, int(table.get("minimum_bet", table.get("table_minimum", 1))))
+	for chip_value in chips:
+		var chip := int(chip_value)
+		if chip >= table_minimum:
+			return chip
+	return maxi(table_minimum, int(chips[chips.size() - 1]))
 
 
 func _config() -> Dictionary:

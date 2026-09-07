@@ -3505,6 +3505,15 @@ func resolve_event_choice(event_id: String, choice_id: String) -> Dictionary:
 		if not _show_interactable_event_popup(event_id):
 			_show_message("Rourke's next showdown beat could not open.")
 		return result
+	if bool(result.get("delivery_started", false)):
+		# The package begins as a physical object in the room where the offer was
+		# accepted. Keep that room interactive until the player takes it; a closing
+		# or forced-travel boundary here would strand pickup authority behind them.
+		_hide_run_inventory_popup()
+		_hide_run_journal_popup()
+		_set_current_screen(SCREEN_ENVIRONMENT)
+		_refresh()
+		return result
 	if bool(result.get("ok", false)) and _apply_post_action_environment_interrupt("event"):
 		_refresh()
 		return result
@@ -16140,6 +16149,7 @@ func _start_game_test_session_with_lifecycle_snapshot(game_id: String, game: Gam
 	run_state.bankroll = _game_test_bankroll()
 	dev_game_test_mode = true
 	var environment := _game_test_environment(game_id, game)
+	_prepare_game_test_prerequisites(game_id, environment)
 	var installed := _install_lifecycle_environment(environment)
 	if not bool(installed.get("ok", false)):
 		_restore_foundation_lifecycle_snapshot(rollback)
@@ -16180,6 +16190,22 @@ func _start_game_test_session_with_lifecycle_snapshot(game_id: String, game: Gam
 		_restore_foundation_lifecycle_snapshot(rollback)
 		return {"ok": false, "errors": ["Could not enter the test game."]}
 	return {"ok": true, "errors": [], "environment": run_state.current_environment.duplicate(true)}
+
+
+func _prepare_game_test_prerequisites(game_id: String, environment: Dictionary) -> void:
+	if run_state == null:
+		return
+	var states := _copy_dict(environment.get("game_states", {}))
+	var table := _copy_dict(states.get(game_id, {}))
+	if str(table.get("schema", "")) != "crew_draw_table":
+		return
+	var members := _string_array(table.get("members", []))
+	if members.is_empty():
+		return
+	# The launcher is a playable practice room, not a progression preview. Give
+	# its generated table one legitimate associate so the buy-in can be acted on.
+	var member_id := str(members[0])
+	run_state.crew_add_trust(member_id, 999, "practice_table_access")
 
 
 func acquire_profile_chip() -> void:
@@ -17461,10 +17487,14 @@ func _is_valid_stake(stake: int) -> bool:
 
 
 func _stake_range(action_view: Dictionary = {}) -> Dictionary:
+	if FoundationActionViewModelScript == null and not _ensure_run_ui_stage_scripts(0):
+		return {"min": 0, "max": 0, "default": 0, "has_valid": false}
 	return FoundationActionViewModelScript.stake_range(self, action_view)
 
 
 func _stake_range_from_action_view(action_view: Dictionary = {}) -> Dictionary:
+	if FoundationActionViewModelScript == null and not _ensure_run_ui_stage_scripts(0):
+		return {"min": 0, "max": 0, "default": 0, "has_valid": false}
 	return FoundationActionViewModelScript.stake_range_from_action_view(self, action_view)
 
 

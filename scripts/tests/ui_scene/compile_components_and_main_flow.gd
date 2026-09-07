@@ -2486,7 +2486,7 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 	const EXPECTED := {
 		"bankroll_delta": -4,
 		"clock_delta": 42,
-		"current_environment_sha256": "31d025ad80c8cb70d6d5c3100743adbe7900788af4f8dc8bbb1c5273a42f7dae",
+		"current_environment_sha256": "3ee855ba721e36b28cc5e0ca6d773ce1aab1673031d71225a4b15df064e8345d",
 		"current_world_node_id": "bar",
 		"heat_delta": 0,
 		"provenance_commit": "9cff9b2309d70c6c93ab34cc60cc18f79f56201b",
@@ -4745,7 +4745,6 @@ func _run() -> void:
 		push_error("M1.6B environment mode still showed the game surface as a competing preview.")
 		quit(1)
 		return
-	var layout_serialized_before := JSON.stringify(app.call("serialized_run_state"))
 	var spatial_snapshot: Dictionary = app.call("current_spatial_interaction_snapshot")
 	var spatial_objects: Array = spatial_snapshot.get("objects", [])
 	if spatial_objects.is_empty():
@@ -5112,7 +5111,9 @@ func _run() -> void:
 	if not await _check_onboarding_06_real_numbers_seam(app):
 		quit(1)
 		return
-	app.call("start_foundation_run", "UI-COMPILE-SEED")
+	# This is a fresh layout-only fixture. Do not race an earlier asynchronous
+	# autosave from another UI scenario and accidentally resume mutated state.
+	app.call("start_foundation_run", "UI-COMPILE-SEED", {}, false)
 	await process_frame
 	var category_snapshot: Dictionary = app.call("current_action_category_snapshot")
 	var categories: Array = category_snapshot.get("categories", [])
@@ -5163,7 +5164,7 @@ func _run() -> void:
 	if bool(game_focus_info.get("visible", false)) and not _selected_info_text_fits(app.get("environment_canvas"), "game object info"):
 		quit(1)
 		return
-	if layout_serialized_before != JSON.stringify(app.call("serialized_run_state")):
+	if serialized_before_category_clicks != JSON.stringify(app.call("serialized_run_state")):
 		push_error("M1.5 layout-only inspection mutated serialized RunState.")
 		quit(1)
 		return

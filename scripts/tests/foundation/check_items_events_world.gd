@@ -2,6 +2,7 @@ extends "res://scripts/tests/foundation/check_table_games.gd"
 
 const CharacterRosterScript := preload("res://scripts/core/character_roster.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
+const RunSaveCodecScript := preload("res://scripts/core/run_save_codec.gd")
 
 func _check_selected_starter_game_port(library: ContentLibrary, failures: Array) -> void:
 	var definition := library.game("pull_tabs")

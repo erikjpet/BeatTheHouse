@@ -4262,11 +4262,29 @@ func _check_save_payload_file(save_path: String, failures: Array) -> void:
 		failures.append("SaveService save payload is missing RunState data.")
 	if payload.has("settings") or payload.has("profile") or payload.has("profile_inventory"):
 		failures.append("SaveService mixed settings/profile persistence into run persistence.")
-	var run_data: Variant = payload.get("run_state", {})
-	if typeof(run_data) == TYPE_DICTIONARY:
-		var run_dict: Dictionary = run_data
-		if run_dict.has("profile_inventory"):
-			failures.append("SaveService RunState payload included profile inventory.")
+	var stored_value: Variant = payload.get("run_state", {})
+	if typeof(stored_value) != TYPE_DICTIONARY:
+		failures.append("SaveService stored a non-dictionary RunState envelope.")
+		return
+	var stored: Dictionary = stored_value
+	if str(stored.get(RunSaveCodecScript.STORAGE_MARKER_KEY, "")) != RunSaveCodecScript.STORAGE_FORMAT \
+			or not RunSaveCodecScript.storage_envelope_valid(stored):
+		failures.append("SaveService did not store a valid compressed RunState envelope.")
+		return
+	var unpacked := RunSaveCodecScript.unpack_from_storage(stored)
+	var run_dict := RunSaveCodecScript.decode(unpacked)
+	if unpacked.is_empty() or run_dict.is_empty():
+		failures.append("SaveService compressed RunState envelope did not unpack and decode.")
+		return
+	if run_dict.has("profile_inventory"):
+		failures.append("SaveService RunState payload included profile inventory.")
+	var tampered := stored.duplicate(true)
+	var packed_data := str(tampered.get(RunSaveCodecScript.STORAGE_DATA_KEY, ""))
+	if not packed_data.is_empty():
+		var replacement := "1" if packed_data.substr(0, 1) != "1" else "2"
+		tampered[RunSaveCodecScript.STORAGE_DATA_KEY] = replacement + packed_data.substr(1)
+		if not RunSaveCodecScript.unpack_from_storage(tampered).is_empty():
+			failures.append("SaveService compressed RunState envelope accepted tampered data.")
 
 
 # Compares saved and loaded RunState domains.

@@ -36,6 +36,10 @@ func _check_craps_surface_contract(game: GameModule, failures: Array, library: C
 		failures.append("Craps surface did not expose native controls and idle liveness.")
 	if bool(surface.get("surface_realtime_state_refresh", false)):
 		failures.append("Craps idle betting surface requested full per-frame snapshot rebuilds.")
+	var default_chip := int(surface.get("selected_chip", 0))
+	var table_minimum := int(surface.get("table_minimum", table.get("table_minimum", 0)))
+	if default_chip < table_minimum or not _craps_array(surface.get("chip_denominations", [])).has(default_chip):
+		failures.append("Craps default chip was not a playable denomination at or above the table minimum.")
 	for target_id in ["pass_line", "dont_pass", "field", "place_4", "place_5", "place_6", "place_8", "place_9", "place_10"]:
 		if _craps_target_index(surface.get("bet_targets", []), target_id) < 0:
 			failures.append("Craps readable betting layout is missing %s." % target_id)
