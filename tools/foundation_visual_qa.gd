@@ -26,6 +26,8 @@ var visual_qa_seed := DEFAULT_VISUAL_QA_SEED
 var app: Control
 var report := {
 	"tool": "foundation_visual_qa",
+	"production_acceptance_admissible": false,
+	"production_acceptance_exclusion": "This development visual-QA producer installs fixture environments and direct prepared RunState conditions; it cannot prove a naturally generated owner-playtest route.",
 	"active_scene": "res://scenes/main.tscn",
 	"active_script": "res://scripts/ui/foundation_main.gd",
 	"seed": DEFAULT_VISUAL_QA_SEED,

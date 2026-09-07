@@ -158,6 +158,12 @@ var scenario_palette_overlay := Color.TRANSPARENT
 var scenario_crowd_count := 0
 var scenario_signage := ""
 var selected_info_action_index := 0
+# Mutable draw geometry is allocated once per canvas and rewritten in place.
+# Building PackedVector2Array values inside _draw_* ran at idle animation rate.
+var _scenario_route_arrow_points := PackedVector2Array([Vector2.ZERO, Vector2.ZERO, Vector2.ZERO])
+var _scenario_vehicle_canopy_points := PackedVector2Array([Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO])
+var _scenario_hazard_fill_points := PackedVector2Array([Vector2.ZERO, Vector2.ZERO, Vector2.ZERO])
+var _scenario_hazard_outline_points := PackedVector2Array([Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO])
 
 
 func _ready() -> void:
@@ -1987,6 +1993,7 @@ func _draw_scenario_prop(rect: Rect2, object_data: Dictionary, active: bool) -> 
 		_neon_text(mark, rect.position + Vector2(5.0, 14.0), 12, C_WHITE)
 	if not str(object_data.get("state", "")).is_empty():
 		draw_line(rect.position + Vector2(8.0, rect.size.y - 9.0), rect.end - Vector2(8.0, 9.0), accent, 3.0)
+		_draw_public_prop_state_marker(rect, object_data, accent)
 
 
 func _draw_scenario_actor(rect: Rect2, object_data: Dictionary, active: bool) -> void:
@@ -2644,23 +2651,29 @@ func _scene_object_layout_snapshot(objects: Array) -> Dictionary:
 func _apply_draw_hints(object_data: Dictionary, object_type: String, index: int) -> Dictionary:
 	match object_type:
 		"game":
-			if not str(object_data.get("prop", "")).strip_edges().is_empty():
-				return object_data
-			object_data["prop"] = "card_table"
+			object_data["prop"] = _production_game_prop(object_data)
 		"travel":
 			object_data["prop"] = "door" if index == 0 else "arrow"
 		"event":
 			if str(object_data.get("prop", "")).strip_edges().is_empty():
-				object_data["prop"] = _fallback_event_prop(str(object_data.get("visual_key", "")), str(object_data.get("icon_key", "")))
+				object_data["prop"] = _fallback_event_prop(str(object_data.get("visual_key", "")), str(object_data.get("icon_key", "")), str(object_data.get("state", "")))
 		"scenario_object":
 			if str(object_data.get("prop", "")).strip_edges().is_empty():
-				var scenario_prop := _fallback_event_prop(str(object_data.get("visual_key", "")), str(object_data.get("icon_key", "")))
+				var scenario_prop := _fallback_event_prop(str(object_data.get("visual_key", "")), str(object_data.get("icon_key", "")), str(object_data.get("state", "")))
 				# A scenario-authored object with no more specific icon still needs a
 				# physical fixture silhouette. Ordinary events retain their 0.5-era
 				# conversational fallback below.
 				var icon_hint := str(object_data.get("icon_key", "")).strip_edges().to_lower()
 				var authored_patron := icon_hint == "patron_talk" or icon_hint.begins_with("scenario_scene ")
 				object_data["prop"] = "room_fixture" if scenario_prop == "patron_talk" and not authored_patron else scenario_prop
+			var public_state := str(object_data.get("state", ""))
+			var state_variant := _public_prop_state_variant(public_state)
+			object_data["prop_state_variant"] = state_variant
+			object_data["prop_state_pattern"] = state_variant.trim_prefix("public_")
+			object_data["prop_state_label"] = _public_prop_state_label(public_state)
+			var first_code := str(object_data["prop_state_pattern"]).unicode_at(0) if not str(object_data["prop_state_pattern"]).is_empty() else 48
+			var first_nibble := first_code - 48 if first_code <= 57 else first_code - 87
+			object_data["prop_state_color_index"] = first_nibble % 4
 		"service":
 			if str(object_data.get("surface", "")).strip_edges().is_empty():
 				object_data["surface"] = "counter_case"
@@ -2699,6 +2712,27 @@ func _apply_draw_hints(object_data: Dictionary, object_type: String, index: int)
 			if not object_data.has("surface"):
 				object_data["surface"] = "counter"
 	return object_data
+
+
+func _production_game_prop(object_data: Dictionary) -> String:
+	var source_id := str(object_data.get("source_id", object_data.get("icon_key", ""))).strip_edges().to_lower()
+	var family := str(object_data.get("visual_key", "")).strip_edges().to_lower()
+	var authored := str(object_data.get("prop", "")).strip_edges().to_lower()
+	# Coin Pusher was authored with the historical slot_machine alias, which the
+	# room renderer did not implement and therefore drew as a card table.
+	if source_id == "coin_pusher" or family == "coin_pusher":
+		return "coin_pusher_machine"
+	if source_id == "video_poker" or authored == "video_poker_machine":
+		return "video_poker_machine"
+	if source_id == "roulette" or family == "wheel" or authored == "roulette_table":
+		return "roulette_table"
+	if source_id in ["slot", "pull_tabs", "scratch_tickets"] or family in ["slots", "novelty"]:
+		return "machine"
+	if not authored.is_empty():
+		return authored
+	if family == "dice":
+		return "dice_table"
+	return "card_table"
 
 
 func _normalized_rect_from_record(record: Dictionary) -> Rect2:
@@ -4657,12 +4691,18 @@ func _draw_game_prop(rect: Rect2, object_data: Dictionary, selected: bool) -> vo
 		var game_key := str(object_data.get("source_id", object_data.get("icon_key", "")))
 		if game_key == "pull_tabs":
 			_draw_pull_tab_machine_prop(rect, object_data, accent, selected, disabled)
+		elif game_key == "scratch_tickets":
+			_draw_scratch_ticket_machine_prop(rect, object_data, accent, selected, disabled)
 		else:
 			_draw_slot_cabinet_prop(rect, object_data, accent, selected, disabled)
+	elif prop == "coin_pusher_machine":
+		_draw_coin_pusher_room_prop(rect, object_data, accent, selected, disabled)
 	elif prop == "video_poker_machine":
 		_draw_video_poker_machine_prop(rect, object_data, accent, selected, disabled)
 	elif prop == "baccarat_table":
 		_draw_baccarat_table_prop(rect, object_data, accent, selected, disabled)
+	elif prop == "roulette_table":
+		_draw_roulette_room_prop(rect, object_data, accent, selected, disabled)
 	else:
 		draw_rect(Rect2(rect.position + Vector2(0, rect.size.y * 0.36), Vector2(rect.size.x, rect.size.y * 0.42)), Color("#12503a"))
 		draw_rect(Rect2(rect.position + Vector2(10, rect.size.y * 0.44), Vector2(rect.size.x - 20, rect.size.y * 0.20)), Color("#1c8a62"))
@@ -4680,7 +4720,7 @@ func _draw_low_detail_game_prop(rect: Rect2, object_data: Dictionary, accent: Co
 	var source_id := str(object_data.get("source_id", object_data.get("icon_key", "")))
 	var base_alpha := 0.18 if disabled else 0.30
 	draw_rect(Rect2(rect.position + Vector2(rect.size.x * 0.12, rect.size.y * 0.82), Vector2(rect.size.x * 0.76, 4)), Color(accent.r, accent.g, accent.b, base_alpha))
-	if prop == "machine" or prop == "video_poker_machine":
+	if prop in ["machine", "video_poker_machine", "coin_pusher_machine"]:
 		var cabinet := Rect2(rect.position + Vector2(rect.size.x * 0.24, rect.size.y * 0.18), Vector2(rect.size.x * 0.52, rect.size.y * 0.58))
 		draw_rect(cabinet, Color("#090a14"))
 		draw_rect(cabinet, Color(accent.r, accent.g, accent.b, 0.18), false, 1)
@@ -4691,7 +4731,7 @@ func _draw_low_detail_game_prop(rect: Rect2, object_data: Dictionary, accent: Co
 		for i in range(3):
 			var reel := Rect2(screen.position + Vector2(3.0 + float(i) * screen.size.x * 0.30, 3.0), Vector2(screen.size.x * 0.18, maxf(5.0, screen.size.y - 6.0)))
 			draw_rect(reel, _cycle_color(i * 23 + int(rect.position.x)).darkened(0.10))
-		var label := "SLOT" if source_id == "slot" or prop == "machine" else "POKER"
+		var label := "PUSH" if prop == "coin_pusher_machine" else "SLOT" if source_id == "slot" else "TIX" if source_id in ["pull_tabs", "scratch_tickets"] else "POKER"
 		var font := get_theme_default_font()
 		draw_string(font, cabinet.position + Vector2(2.0, cabinet.size.y * 0.82), _fit_draw_text(label, font, 7, cabinet.size.x - 4.0), HORIZONTAL_ALIGNMENT_CENTER, cabinet.size.x - 4.0, 7, C_YELLOW)
 	else:
@@ -4802,7 +4842,7 @@ func _draw_travel_arrow(rect: Rect2, accent: Color) -> void:
 	draw_line(base + Vector2(-26, 2), base + Vector2(20, -10), C_CYAN, 3)
 
 
-func _fallback_event_prop(visual_key: String, icon_key: String) -> String:
+func _fallback_event_prop(visual_key: String, icon_key: String, public_state: String = "") -> String:
 	var explicit_icon := icon_key.strip_edges().to_lower()
 	if explicit_icon in [
 		"paper_note", "room_seating", "room_barrier", "room_signal", "room_refreshment",
@@ -4814,7 +4854,11 @@ func _fallback_event_prop(visual_key: String, icon_key: String) -> String:
 		return explicit_icon
 	if explicit_icon.begins_with("scenario_scene ") or explicit_icon.begins_with("scenario_actor "):
 		return _fallback_scenario_semantic_prop(explicit_icon)
-	var key := ("%s %s" % [visual_key, icon_key]).to_lower()
+	# Public semantic state participates in fallback selection. Authored physical
+	# icons remain authoritative, while an un-authored changed object can now use
+	# its visible state to select a concrete prop. Private local_state never
+	# reaches this renderer.
+	var key := ("%s %s %s" % [visual_key, icon_key, public_state]).to_lower()
 	if key.find("manifest") != -1 or key.find("paper") != -1 or key.find("label") != -1 or key.find("evidence") != -1:
 		return "paper_note"
 	if key.find("ledger") != -1 or key.find("record") != -1 or key.find("ticket") != -1 or key.find("badge") != -1 or key.find("clipboard") != -1 or key.find("entry card") != -1:
@@ -4867,6 +4911,64 @@ func _fallback_event_prop(visual_key: String, icon_key: String) -> String:
 	return "patron_talk"
 
 
+func _public_prop_state_variant(public_state: String) -> String:
+	var normalized := public_state.strip_edges().to_lower()
+	if normalized.is_empty():
+		return ""
+	# The input is the validated public scene-object DTO, never scenario
+	# local_state. Persist only a presentation fingerprint in the canvas object;
+	# the authored state string is not republished under a new field.
+	return "public_%s" % normalized.sha256_text().left(10)
+
+
+func _public_prop_state_label(public_state: String) -> String:
+	var normalized := public_state.strip_edges().to_lower()
+	for prefix in ["changed_by_", "acted_", "state_"]:
+		if normalized.begins_with(prefix):
+			normalized = normalized.trim_prefix(prefix)
+			break
+	var tokens := normalized.split("_", false)
+	for preferred in ["opened", "open", "closed", "cleared", "released", "ready", "lit", "fixed", "repaired", "moved", "failed", "fail", "refused", "refuse", "complete", "completed"]:
+		if tokens.has(preferred):
+			return preferred.to_upper().substr(0, 9)
+	if tokens.is_empty():
+		return ""
+	# Never turn arbitrary state tokens into player-facing text. The explicit
+	# vocabulary above is presentation-safe; every other public state gets a
+	# generic non-color acknowledgement.
+	return "CHANGED"
+
+
+func _draw_public_prop_state_marker(rect: Rect2, object_data: Dictionary, accent: Color) -> void:
+	var variant := str(object_data.get("prop_state_variant", ""))
+	if variant.is_empty():
+		return
+	var fingerprint := str(object_data.get("prop_state_pattern", ""))
+	var marker_color := C_CYAN
+	match int(object_data.get("prop_state_color_index", 0)):
+		1: marker_color = C_YELLOW
+		2: marker_color = C_PINK
+		3: marker_color = C_TEAL
+	var badge := Rect2(rect.position + Vector2(4.0, 4.0), Vector2(minf(rect.size.x - 8.0, 58.0), 22.0))
+	draw_rect(badge, Color(0.02, 0.02, 0.05, 0.90))
+	draw_rect(badge, marker_color, false, 2.0)
+	# Ten hexadecimal cells expose forty deterministic non-color bits. Actual
+	# authored states are collision-audited by the permanent presentation gate.
+	for column in range(mini(10, fingerprint.length())):
+		var code := fingerprint.unicode_at(column)
+		var nibble := code - 48 if code <= 57 else code - 87
+		for bit in range(4):
+			var bit_rect := Rect2(badge.position + Vector2(4.0 + float(column) * 4.5, 3.0 + float(bit) * 2.0), Vector2(3.0, 1.0))
+			if (nibble & (1 << bit)) != 0:
+				draw_rect(bit_rect, marker_color)
+			else:
+				draw_rect(bit_rect, Color(marker_color.r, marker_color.g, marker_color.b, 0.18), false, 1.0)
+	var label := str(object_data.get("prop_state_label", "CHANGED"))
+	if not label.is_empty():
+		_neon_text(label, badge.position + Vector2(4.0, 19.0), 7, marker_color)
+	draw_rect(rect.grow(2.0), Color(accent.r, accent.g, accent.b, 0.70), false, 2.0)
+
+
 func _fallback_scenario_semantic_prop(value: String) -> String:
 	var tokens: Dictionary = {}
 	var normalized := value.to_lower()
@@ -4907,7 +5009,7 @@ func _tokens_have(tokens: Dictionary, candidates: Array) -> bool:
 func _draw_event_prop(rect: Rect2, object_data: Dictionary, selected: bool) -> void:
 	var prop := str(object_data.get("prop", "")).strip_edges()
 	if prop.is_empty():
-		prop = _fallback_event_prop(str(object_data.get("visual_key", "")), str(object_data.get("icon_key", "")))
+		prop = _fallback_event_prop(str(object_data.get("visual_key", "")), str(object_data.get("icon_key", "")), str(object_data.get("state", "")))
 	var accent := _event_prop_accent(prop, selected)
 	_draw_interactable_light(rect, accent, selected)
 	match prop:
@@ -5053,7 +5155,10 @@ func _draw_scenario_route_prop(rect: Rect2, accent: Color) -> void:
 	var start := rect.position + Vector2(rect.size.x * 0.14, rect.size.y * 0.68)
 	var finish := rect.position + Vector2(rect.size.x * 0.78, rect.size.y * 0.32)
 	draw_dashed_line(start, finish, accent, 3.0, 7.0, true)
-	draw_colored_polygon(PackedVector2Array([finish, finish + Vector2(-10, -1), finish + Vector2(-3, 9)]), accent)
+	_scenario_route_arrow_points[0] = finish
+	_scenario_route_arrow_points[1] = finish + Vector2(-10, -1)
+	_scenario_route_arrow_points[2] = finish + Vector2(-3, 9)
+	draw_colored_polygon(_scenario_route_arrow_points, accent)
 
 
 func _draw_scenario_storage_prop(rect: Rect2, accent: Color) -> void:
@@ -5078,15 +5183,26 @@ func _draw_scenario_vehicle_prop(rect: Rect2, accent: Color) -> void:
 	var body := Rect2(rect.position + Vector2(rect.size.x * 0.10, rect.size.y * 0.40), Vector2(rect.size.x * 0.80, rect.size.y * 0.30))
 	draw_rect(body, accent.darkened(0.50))
 	draw_rect(body, accent, false, 2)
-	draw_colored_polygon(PackedVector2Array([body.position + Vector2(body.size.x * 0.22, 0), body.position + Vector2(body.size.x * 0.38, -rect.size.y * 0.18), body.position + Vector2(body.size.x * 0.68, -rect.size.y * 0.18), body.position + Vector2(body.size.x * 0.82, 0)]), accent.darkened(0.36))
+	_scenario_vehicle_canopy_points[0] = body.position + Vector2(body.size.x * 0.22, 0)
+	_scenario_vehicle_canopy_points[1] = body.position + Vector2(body.size.x * 0.38, -rect.size.y * 0.18)
+	_scenario_vehicle_canopy_points[2] = body.position + Vector2(body.size.x * 0.68, -rect.size.y * 0.18)
+	_scenario_vehicle_canopy_points[3] = body.position + Vector2(body.size.x * 0.82, 0)
+	draw_colored_polygon(_scenario_vehicle_canopy_points, accent.darkened(0.36))
 	draw_circle(body.position + Vector2(body.size.x * 0.24, body.size.y), 5, C_SHADOW)
 	draw_circle(body.position + Vector2(body.size.x * 0.76, body.size.y), 5, C_SHADOW)
 
 
 func _draw_scenario_hazard_prop(rect: Rect2, accent: Color) -> void:
 	var center := rect.get_center()
-	draw_colored_polygon(PackedVector2Array([center + Vector2(0, -rect.size.y * 0.32), center + Vector2(rect.size.x * 0.34, rect.size.y * 0.28), center + Vector2(-rect.size.x * 0.34, rect.size.y * 0.28)]), accent.darkened(0.42))
-	draw_polyline(PackedVector2Array([center + Vector2(0, -rect.size.y * 0.32), center + Vector2(rect.size.x * 0.34, rect.size.y * 0.28), center + Vector2(-rect.size.x * 0.34, rect.size.y * 0.28), center + Vector2(0, -rect.size.y * 0.32)]), accent, 2)
+	_scenario_hazard_fill_points[0] = center + Vector2(0, -rect.size.y * 0.32)
+	_scenario_hazard_fill_points[1] = center + Vector2(rect.size.x * 0.34, rect.size.y * 0.28)
+	_scenario_hazard_fill_points[2] = center + Vector2(-rect.size.x * 0.34, rect.size.y * 0.28)
+	_scenario_hazard_outline_points[0] = _scenario_hazard_fill_points[0]
+	_scenario_hazard_outline_points[1] = _scenario_hazard_fill_points[1]
+	_scenario_hazard_outline_points[2] = _scenario_hazard_fill_points[2]
+	_scenario_hazard_outline_points[3] = _scenario_hazard_fill_points[0]
+	draw_colored_polygon(_scenario_hazard_fill_points, accent.darkened(0.42))
+	draw_polyline(_scenario_hazard_outline_points, accent, 2)
 	_neon_text("!", center + Vector2(-4, 8), 16, C_WHITE)
 
 
@@ -5256,6 +5372,68 @@ func _silhouette(pos: Vector2, scale_value: float, color: Color) -> void:
 
 func _slot_machine(rect: Rect2, accent: Color) -> void:
 	_draw_slot_cabinet_prop(rect, {"label": "SLOT", "source_id": "ambient_slot"}, accent, false, false)
+
+
+func _draw_scratch_ticket_machine_prop(rect: Rect2, object_data: Dictionary, accent: Color, selected: bool, disabled: bool = false) -> void:
+	var cabinet := Rect2(rect.position + Vector2(rect.size.x * 0.18, rect.size.y * 0.10), Vector2(rect.size.x * 0.64, rect.size.y * 0.74))
+	draw_rect(cabinet, Color("#171019"))
+	draw_rect(cabinet, accent, false, 2.0)
+	var display := Rect2(cabinet.position + Vector2(cabinet.size.x * 0.12, cabinet.size.y * 0.10), Vector2(cabinet.size.x * 0.76, cabinet.size.y * 0.26))
+	draw_rect(display, Color("#f0d9a8"))
+	for row in range(2):
+		for column in range(3):
+			var ticket := Rect2(display.position + Vector2(3.0 + column * display.size.x * 0.32, 3.0 + row * display.size.y * 0.48), Vector2(display.size.x * 0.26, display.size.y * 0.36))
+			draw_rect(ticket, _cycle_color(row * 31 + column * 17))
+			draw_line(ticket.position + Vector2(2.0, ticket.size.y * 0.5), ticket.end - Vector2(2.0, ticket.size.y * 0.5), C_WHITE, 1.0)
+	var tray := Rect2(cabinet.position + Vector2(cabinet.size.x * 0.18, cabinet.size.y * 0.62), Vector2(cabinet.size.x * 0.64, cabinet.size.y * 0.12))
+	draw_rect(tray, Color("#07070c"))
+	draw_rect(tray, C_YELLOW, false, 1.0)
+	_neon_text("SCRATCH", cabinet.position + Vector2(cabinet.size.x * 0.12, cabinet.size.y * 0.52), 8, C_YELLOW)
+	_draw_game_object_icon(object_data, _centered_icon_rect(rect, 22.0, Vector2(rect.size.x * 0.28, -rect.size.y * 0.22)), accent, selected, disabled)
+	if selected: draw_rect(cabinet.grow(3.0), C_WHITE, false, 2.0)
+	if disabled: draw_rect(cabinet, Color(0.0, 0.0, 0.0, 0.48))
+
+
+func _draw_coin_pusher_room_prop(rect: Rect2, object_data: Dictionary, accent: Color, selected: bool, disabled: bool = false) -> void:
+	var cabinet := Rect2(rect.position + Vector2(rect.size.x * 0.10, rect.size.y * 0.08), Vector2(rect.size.x * 0.80, rect.size.y * 0.78))
+	draw_rect(cabinet, Color("#10111a"))
+	draw_rect(cabinet, accent, false, 2.0)
+	var glass := Rect2(cabinet.position + Vector2(cabinet.size.x * 0.10, cabinet.size.y * 0.12), Vector2(cabinet.size.x * 0.80, cabinet.size.y * 0.50))
+	draw_rect(glass, Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.16))
+	draw_rect(glass, C_CYAN, false, 1.0)
+	var shelf_y := glass.position.y + glass.size.y * 0.64
+	draw_rect(Rect2(glass.position + Vector2(3.0, glass.size.y * 0.56), Vector2(glass.size.x - 6.0, 5.0)), Color("#57515c"))
+	for index in range(8):
+		var coin_x := glass.position.x + 6.0 + float(index % 4) * maxf(6.0, (glass.size.x - 12.0) / 4.0)
+		var coin_y := shelf_y - float(index / 4) * 7.0
+		draw_circle(Vector2(coin_x, coin_y), 3.0, C_YELLOW)
+	var chute := Rect2(cabinet.position + Vector2(cabinet.size.x * 0.22, cabinet.size.y * 0.70), Vector2(cabinet.size.x * 0.56, cabinet.size.y * 0.12))
+	draw_rect(chute, Color("#050509"))
+	draw_rect(chute, C_PINK, false, 1.0)
+	_neon_text("PUSH", cabinet.position + Vector2(cabinet.size.x * 0.28, cabinet.size.y * 0.10), 8, C_YELLOW)
+	_draw_game_object_icon(object_data, _centered_icon_rect(rect, 22.0, Vector2(rect.size.x * 0.30, -rect.size.y * 0.24)), accent, selected, disabled)
+	if selected: draw_rect(cabinet.grow(3.0), C_WHITE, false, 2.0)
+	if disabled: draw_rect(cabinet, Color(0.0, 0.0, 0.0, 0.48))
+
+
+func _draw_roulette_room_prop(rect: Rect2, object_data: Dictionary, accent: Color, selected: bool, disabled: bool = false) -> void:
+	var table := Rect2(rect.position + Vector2(rect.size.x * 0.06, rect.size.y * 0.48), Vector2(rect.size.x * 0.88, rect.size.y * 0.30))
+	draw_rect(table, Color("#14503c"))
+	draw_rect(table, accent, false, 2.0)
+	var wheel_center := rect.position + Vector2(rect.size.x * 0.30, rect.size.y * 0.38)
+	var wheel_radius := minf(rect.size.x, rect.size.y) * 0.20
+	draw_circle(wheel_center, wheel_radius, Color("#351322"))
+	draw_circle(wheel_center, wheel_radius * 0.78, C_AMBER)
+	for index in range(8):
+		var angle := float(index) * TAU / 8.0
+		draw_line(wheel_center, wheel_center + Vector2(cos(angle), sin(angle)) * wheel_radius, C_SHADOW, 1.0)
+	draw_circle(wheel_center, maxf(2.0, wheel_radius * 0.12), C_YELLOW)
+	for column in range(4):
+		var cell := Rect2(table.position + Vector2(table.size.x * (0.52 + float(column) * 0.10), table.size.y * 0.18), Vector2(table.size.x * 0.08, table.size.y * 0.56))
+		draw_rect(cell, C_PINK if column % 2 == 0 else C_DARK)
+	_draw_game_object_icon(object_data, _centered_icon_rect(rect, 22.0, Vector2(rect.size.x * 0.32, -rect.size.y * 0.25)), accent, selected, disabled)
+	if selected: draw_rect(table.grow(3.0), C_WHITE, false, 2.0)
+	if disabled: draw_rect(rect.grow(-2.0), Color(0.0, 0.0, 0.0, 0.48))
 
 
 func _draw_pull_tab_machine_prop(rect: Rect2, object_data: Dictionary, accent: Color, selected: bool, disabled: bool = false) -> void:

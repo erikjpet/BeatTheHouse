@@ -125,6 +125,165 @@ static func activate_exact_canvas_object(
 	}
 
 
+# Routes an exact rendered room object through the same viewport InputEvent path
+# used by a physical mouse.  The caller must await frames and then inspect the
+# production host; this helper deliberately does not call an interaction
+# controller or a host action method on the caller's behalf.
+static func push_exact_canvas_mouse_click(
+	viewport: Viewport,
+	canvas: Control,
+	semantic_id: String,
+	failures: Array,
+	context: String = "harness mouse activation",
+	double_click: bool = false
+) -> Dictionary:
+	var resolved := resolve_exact_canvas_object(canvas, semantic_id, failures, context)
+	if not bool(resolved.get("ok", false)):
+		return resolved
+	if viewport == null:
+		return _fail(failures, "%s has no production viewport for %s." % [context, semantic_id], "input")
+	var local_position: Vector2 = resolved.get("local_hit_position", Vector2(-1.0, -1.0))
+	var global_position := canvas.get_global_rect().position + local_position
+	var motion := InputEventMouseMotion.new()
+	motion.position = global_position
+	motion.global_position = global_position
+	viewport.push_input(motion, true)
+	var press := InputEventMouseButton.new()
+	press.button_index = MOUSE_BUTTON_LEFT
+	press.pressed = true
+	press.double_click = double_click
+	press.position = global_position
+	press.global_position = global_position
+	viewport.push_input(press, true)
+	var release := InputEventMouseButton.new()
+	release.button_index = MOUSE_BUTTON_LEFT
+	release.pressed = false
+	release.double_click = double_click
+	release.position = global_position
+	release.global_position = global_position
+	viewport.push_input(release, true)
+	return {
+		"ok": true,
+		"stage": "input_routed",
+		"object": _dict(resolved.get("object", {})),
+		"semantic_id": semantic_id,
+		"local_hit_position": local_position,
+		"global_hit_position": global_position,
+		"input_class": "InputEventMouseButton",
+		"errors": [],
+	}
+
+
+# Records only player-observable host/canvas state.  Serialized RunState is
+# intentionally excluded: a hidden variable flip cannot satisfy the owner's
+# visible-consequence acceptance bar.
+static func observable_host_snapshot(host: Variant) -> Dictionary:
+	if host == null:
+		return {}
+	var room_canvas := host.get("environment_canvas") as Control
+	var game_canvas := host.get("game_surface_canvas") as Control
+	var message_label := host.get("message_label") as Label
+	return {
+		"screen": _host_snapshot(host, "current_screen_snapshot"),
+		"environment": _host_snapshot(host, "current_environment_view_snapshot"),
+		"spatial": _host_snapshot(host, "current_spatial_interaction_snapshot"),
+		"game": _host_snapshot(host, "current_game_view_snapshot"),
+		"consequence": _host_snapshot(host, "current_consequence_view_snapshot"),
+		"status_hud": _host_snapshot(host, "current_run_status_hud_snapshot"),
+		"feedback": _host_snapshot(host, "current_environment_result_feedback_snapshot"),
+		"event_popup": _host_snapshot(host, "current_event_choice_popup_snapshot"),
+		"talk": _host_snapshot(host, "current_talk_dock_snapshot"),
+		"inventory": _host_snapshot(host, "current_run_inventory_snapshot"),
+		"message": {
+			"visible": message_label != null and message_label.is_visible_in_tree(),
+			"text": message_label.text.strip_edges() if message_label != null else "",
+		},
+		"room_canvas": room_canvas.call("current_view_snapshot") if room_canvas != null and room_canvas.visible and room_canvas.has_method("current_view_snapshot") else {},
+		"game_canvas": game_canvas.call("current_view_snapshot") if game_canvas != null and game_canvas.visible and game_canvas.has_method("current_view_snapshot") else {},
+	}
+
+
+# Returns admissible visible evidence for one accepted action.  Merely changing
+# focus, hover, camera, animation, or hidden serialized state is never evidence.
+static func observable_consequence_evidence(
+	before: Dictionary,
+	after: Dictionary,
+	target_semantic_id: String
+) -> Dictionary:
+	var channels: Array[String] = []
+	for channel in ["message", "feedback", "event_popup", "talk", "inventory", "consequence"]:
+		var before_channel := _visible_message_signature(_dict(before.get(channel, {})))
+		var after_channel := _visible_message_signature(_dict(after.get(channel, {})))
+		if bool(after_channel.get("visible", false)) and JSON.stringify(before_channel) != JSON.stringify(after_channel):
+			channels.append(channel)
+	var before_target := _rendered_object_signature(_dict(before.get("room_canvas", {})), target_semantic_id)
+	var after_target := _rendered_object_signature(_dict(after.get("room_canvas", {})), target_semantic_id)
+	if not before_target.is_empty() and JSON.stringify(before_target) != JSON.stringify(after_target):
+		channels.append("target_rendered_state")
+	var before_rewards := _public_reward_signature(_dict(before.get("status_hud", {})), _dict(before.get("environment", {})))
+	var after_rewards := _public_reward_signature(_dict(after.get("status_hud", {})), _dict(after.get("environment", {})))
+	if JSON.stringify(before_rewards) != JSON.stringify(after_rewards):
+		channels.append("item_or_cash")
+	var before_screen := _dict(before.get("screen", {}))
+	var after_screen := _dict(after.get("screen", {}))
+	var before_name := str(before_screen.get("screen", ""))
+	var after_name := str(after_screen.get("screen", ""))
+	if after_name != before_name and after_name in ["GAME", "CONSEQUENCE", "EVENT"]:
+		channels.append("opened_surface")
+	if not bool(before_screen.get("world_map_overlay_visible", false)) and bool(after_screen.get("world_map_overlay_visible", false)):
+		channels.append("opened_world_map")
+	return {
+		"ok": not channels.is_empty(),
+		"channels": channels,
+		"target_semantic_id": target_semantic_id,
+		"before_target": before_target,
+		"after_target": after_target,
+	}
+
+
+static func exact_selection_matches(host: Variant, semantic_id: String) -> bool:
+	if host == null or not host.has_method("current_spatial_interaction_snapshot"):
+		return false
+	var snapshot: Dictionary = host.call("current_spatial_interaction_snapshot")
+	return str(snapshot.get("selected_object_id", "")) == semantic_id.strip_edges()
+
+
+static func _host_snapshot(host: Variant, method_name: String) -> Dictionary:
+	if not host.has_method(method_name):
+		return {}
+	return _dict(host.call(method_name)).duplicate(true)
+
+
+static func _visible_message_signature(snapshot: Dictionary) -> Dictionary:
+	var signature := {"visible": bool(snapshot.get("visible", false))}
+	for key in ["title", "message", "text", "body", "summary", "detail", "description", "acknowledgement", "lines", "choices", "mode", "interaction_kind", "items", "shop_description"]:
+		if snapshot.has(key):
+			signature[key] = snapshot.get(key)
+	return signature
+
+
+static func _rendered_object_signature(canvas_snapshot: Dictionary, semantic_id: String) -> Dictionary:
+	for value in _array(canvas_snapshot.get("objects", [])):
+		var object_data := _dict(value)
+		if _object_id(object_data) != semantic_id:
+			continue
+		var signature := {}
+		for key in ["id", "object_id", "prop", "visual_key", "icon_key", "asset_path", "state", "visible", "disabled", "enabled"]:
+			if object_data.has(key):
+				signature[key] = object_data.get(key)
+		return signature
+	return {}
+
+
+static func _public_reward_signature(status_hud: Dictionary, environment: Dictionary) -> Dictionary:
+	var signature := {}
+	for source in [status_hud, environment]:
+		for key in ["cash", "bankroll", "money", "inventory", "items", "item_count", "inventory_count"]:
+			if (source as Dictionary).has(key):
+				signature[key] = (source as Dictionary).get(key)
+	return signature
+
+
 static func resolve_exact_canvas_object(
 	canvas: Variant,
 	semantic_id: String,

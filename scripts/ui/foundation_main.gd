@@ -258,6 +258,7 @@ var last_game_exit_final_projection_rendered := false
 var last_game_result: Dictionary = {}
 var last_music_outcome_schedule: Dictionary = {}
 var last_environment_runtime_result: Dictionary = {}
+var immediate_environment_acknowledgement := ""
 var selected_action_id: String = ""
 var selected_action_kind: String = ""
 var selected_action_label: String = ""
@@ -1086,8 +1087,10 @@ func _complete_back_to_environment() -> void:
 
 func _clear_recent_result_feedback() -> void:
 	last_game_result = {}
+	last_environment_runtime_result = {}
 	last_item_result = {}
 	last_hook_result = {}
+	immediate_environment_acknowledgement = ""
 
 
 # Selects a GameModule action without mutating simulation state.
@@ -1326,6 +1329,13 @@ func _sealed_action_host_store_ledger(candidate: RunState, ledger: Dictionary) -
 func _sealed_action_host_trusted_context(candidate: RunState, stake: int) -> Dictionary:
 	var environment := candidate.current_environment
 	var snapshot := candidate.to_save_snapshot()
+	# These are host presentation caches, not simulation authority. The UI can
+	# materialize their defaults between a sealed surface intent and synchronous
+	# settlement, and authority-ledger writes intentionally bump the room render
+	# revision. Binding either to a wager receipt makes a valid click fail closed
+	# even though game state, funds, and RNG are unchanged.
+	snapshot.erase("music_tempo_state")
+	snapshot.erase("music_choreography_state")
 	# Crew's per-run save authority is intentionally random and private. It is not
 	# Blackjack action authority, so exclude only that opaque id/capsule from the
 	# trusted-context fingerprint while retaining every public Crew state field.
@@ -1339,6 +1349,7 @@ func _sealed_action_host_trusted_context(candidate: RunState, stake: int) -> Dic
 	# containers. We erase only the current table's top-level authority keys, so
 	# shallow path copies preserve isolation without cloning the replay window.
 	var snapshot_environment: Dictionary = (snapshot.get("current_environment", {}) as Dictionary).duplicate(false)
+	snapshot_environment.erase("environment_runtime_revision")
 	var game_states: Dictionary = (snapshot_environment.get("game_states", {}) as Dictionary).duplicate(false)
 	var game_id := current_game.get_id()
 	if typeof(game_states.get(game_id, null)) == TYPE_DICTIONARY:
@@ -6998,6 +7009,21 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 			_show_message(install_error)
 			_refresh_after_foundation_lifecycle_rollback(lifecycle_rollback)
 			return {"ok": false, "errors": [install_error]}
+	# RunGenerator installs the authoritative destination but deliberately cannot
+	# finalize renderer-owned scenario semantics. Complete that production-host
+	# boundary before delivery, departure from the new room, or autosave can
+	# observe an unfinalized dynamic sequence.
+	var destination_finalization := run_state.scenario_finalize_installed_environment(
+		library,
+		_copy_dict(run_state.current_environment.get("scenario_layout_context", {}))
+	)
+	if not bool(destination_finalization.get("ok", false)):
+		_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
+		var finalization_errors := _copy_array(destination_finalization.get("errors", []))
+		var finalization_error := str(finalization_errors[0]) if not finalization_errors.is_empty() else "The arrived room could not be finalized safely."
+		_show_message(finalization_error)
+		_refresh_after_foundation_lifecycle_rollback(lifecycle_rollback)
+		return {"ok": false, "errors": [finalization_error]}
 	if perf_corner_store_timing:
 		perf_corner_store_stages["destination_generation_install_ms"] = float(Time.get_ticks_usec() - perf_corner_store_stage_started_usec) / 1000.0
 		perf_corner_store_stage_started_usec = Time.get_ticks_usec()
@@ -12675,7 +12701,11 @@ func _activate_scenario_action(owner_namespace: String, stable_object_id: String
 	if cost > 0:
 		message = "%s Paid $%d." % [message, cost]
 	clear_interaction_focus()
-	_show_message(message)
+	# A room action supersedes any prior travel/game result. Without clearing it,
+	# the visible result panel keeps rendering that stale result while the new
+	# acknowledgement is written only to the intentionally hidden legacy label.
+	_clear_recent_result_feedback()
+	_show_environment_action_acknowledgement(message)
 	_autosave_foundation_run("Room sequence saved.")
 	_refresh()
 	return true
@@ -12733,11 +12763,20 @@ func _execute_scenario_sequence_action(object_data: Dictionary, action: Dictiona
 		_show_message(str(errors[0]) if not errors.is_empty() else "That room action is no longer available.")
 		_refresh()
 		return false
+	# Confirm the accepted click at its point of interaction before the deferred
+	# room rebuild. This covers set_local and other presentation-light handlers
+	# without exposing the private value they changed or changing simulation.
+	var accepted_acknowledgement: String = EnvironmentInteractionViewModelScript.accepted_scenario_action_acknowledgement(object_data, action)
+	_clear_recent_result_feedback()
+	_show_environment_action_acknowledgement(accepted_acknowledgement)
 	# State, causal receipts, layout authority, and renderer snapshot are already
 	# committed synchronously. Drain presentation envelopes and consume the
 	# prepared snapshot at the next UI boundary so the input callback does not
 	# rebuild every room surface before acknowledging the click.
-	call_deferred("_finish_scenario_sequence_action", str(_copy_dict(result.get("state", {})).get("last_feedback", "")))
+	# set_local intentionally has no simulation feedback. Passing the sequence's
+	# last_feedback here would replay a prior action's stale message, so retain
+	# this action-local public acknowledgement as the exact fallback.
+	call_deferred("_finish_scenario_sequence_action", accepted_acknowledgement)
 	return true
 
 
@@ -12793,7 +12832,8 @@ func _activate_world_sequence_action(owner_token: String, object_data: Dictionar
 		return false
 	var message := str(outcome_result.get("message", _copy_dict(result.get("state", {})).get("last_feedback", "Room state updated.")))
 	clear_interaction_focus()
-	_show_message(message)
+	_clear_recent_result_feedback()
+	_show_environment_action_acknowledgement(message)
 	_autosave_foundation_run("Crew sequence saved.")
 	_refresh()
 	return true
@@ -14328,11 +14368,11 @@ func _environment_result_feedback_view() -> Dictionary:
 		return {"visible": false}
 	if _current_game_embeds_result_feedback():
 		return {"visible": false}
-	var result := _recent_result_snapshot()
+	var result := {} if not immediate_environment_acknowledgement.is_empty() else _recent_result_snapshot()
 	var deltas: Dictionary = result.get("deltas", {})
 	var bankroll_delta := int(result.get("bankroll_delta", deltas.get("bankroll_delta", 0)))
 	var suspicion_delta := int(result.get("suspicion_delta", deltas.get("suspicion_delta", 0)))
-	var message := _outcome_message(result)
+	var message := immediate_environment_acknowledgement if not immediate_environment_acknowledgement.is_empty() else _outcome_message(result)
 	if message.is_empty() and message_label != null:
 		message = _player_facing_text(message_label.text)
 	if message.strip_edges().is_empty() and bankroll_delta == 0 and suspicion_delta == 0:
@@ -14736,6 +14776,11 @@ func _show_message(text: String) -> void:
 		message_label.text = display_text
 	if start_status_label != null and run_state == null:
 		start_status_label.text = display_text
+
+
+func _show_environment_action_acknowledgement(text: String) -> void:
+	immediate_environment_acknowledgement = _player_facing_text(text.strip_edges())
+	_show_message(text)
 
 
 func _player_facing_text(text: String) -> String:

@@ -645,6 +645,9 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 		var requested_count := maxi(1, _stake / maxi(1, _drop_cost()))
 		var nozzle_id := _selected_nozzle_id(machine, simulation)
 		var queued_count := CoinPusherLiveSessionScript.enqueue_drops(machine, {"nozzle_id": nozzle_id, "density": density, "provenance": provenance, "chain_depth": 0, "bonus_origin": false}, requested_count)
+		if queued_count > 0:
+			var settlement_session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
+			settlement_session["pending_settlement_drop_count"] = maxi(0, int(settlement_session.get("pending_settlement_drop_count", 0))) + queued_count
 		if debug_action_timing:
 			_last_action_timing_usec["resolve_enqueue_drops"] = Time.get_ticks_usec() - debug_resolve_stage_started_usec
 			debug_resolve_stage_started_usec = Time.get_ticks_usec()
@@ -726,6 +729,7 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 		_register_pile_rumor(run_state, environment, machine)
 	_advance_tell_decay(machine, int(advanced.get("ticks", 0)))
 	var request_autosave := false
+	var settled_empty_drop_count := 0
 	if int(advanced.get("ticks", 0)) > 0:
 		var session: Dictionary = machine.get("live_session", {})
 		var simulation := _simulation(machine)
@@ -739,6 +743,8 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 			session["last_persisted_tick"] = int(simulation.get("tick", 0))
 			_write_live_durable(run_state, environment, machine, true)
 			request_autosave = true
+			var settled_tray: Array = simulation.get("tray_ledger", []) if typeof(simulation.get("tray_ledger", [])) == TYPE_ARRAY else []
+			settled_empty_drop_count = _consume_pending_empty_settlement(session, settled_tray)
 	var presentation_session_value: Variant = machine.get("live_session")
 	var presentation_session: Dictionary = presentation_session_value if typeof(presentation_session_value) == TYPE_DICTIONARY else {}
 	# The production Web canvas intentionally presents idle machine motion at a
@@ -777,7 +783,19 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 	patch["surface_defer_patch_redraw"] = true
 	patch["coin_pusher_ticks_advanced"] = int(advanced.get("ticks", 0))
 	patch["request_foundation_autosave"] = request_autosave
+	if settled_empty_drop_count > 0:
+		patch["coin_pusher_settlement_outcome"] = "no_payout"
+		patch["coin_pusher_settled_drop_count"] = settled_empty_drop_count
+		patch["outcome_message"] = "%d quarter%s settle. Nothing reaches the tray." % [settled_empty_drop_count, "" if settled_empty_drop_count == 1 else "s"]
 	return patch
+
+
+func _consume_pending_empty_settlement(session: Dictionary, settled_tray: Array) -> int:
+	var pending_count := maxi(0, int(session.get("pending_settlement_drop_count", 0)))
+	# Consume the receipt at the first all-steady boundary whether it won or lost;
+	# collecting a winning tray later must never manufacture a false empty loss.
+	session["pending_settlement_drop_count"] = 0
+	return pending_count if pending_count > 0 and settled_tray.is_empty() else 0
 
 
 func surface_realtime_entry_anchor_patch(run_state: RunState, environment: Dictionary, ui_state: Dictionary, current_surface_state: Dictionary) -> Dictionary:

@@ -124,6 +124,20 @@ static func environment_snapshot(run_state: RunState, data: Dictionary) -> Dicti
 	return snapshot
 
 
+# A scenario action is not complete from the player's perspective until the
+# same interaction surface acknowledges it. Keep this presentation-only and
+# derive it exclusively from the label that was already visible on the button;
+# local/runtime state must never become part of the acknowledgement.
+static func accepted_scenario_action_acknowledgement(object_data: Dictionary, action: Dictionary) -> String:
+	var action_label := str(action.get("label", action.get("id", "Action"))).strip_edges()
+	if action_label.is_empty():
+		action_label = "Action"
+	var object_label := str(object_data.get("label", "")).strip_edges()
+	if object_label.is_empty():
+		return "Done: %s." % action_label.trim_suffix(".")
+	return "Done at %s: %s." % [object_label.trim_suffix("."), action_label.trim_suffix(".")]
+
+
 static func interactable_object_view_list(run_state: RunState, library: ContentLibrary, data: Dictionary) -> Array:
 	if run_state == null or library == null:
 		return []

@@ -11,8 +11,9 @@ const RunActionServiceScript := preload("res://scripts/core/run_action_service.g
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
+const HarnessProductionFidelityScript := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
 const IGNORED_BASELINE_PATH := "res://scripts/tests/fixtures/crew06_5_ignored_run_baseline.json"
-const IGNORED_BASELINE_CHANGE_COMMIT := "36248df0d163dc0a41a267abf912b0fccac92fb8"
+const IGNORED_BASELINE_CHANGE_COMMIT := "48ac8521a2f1094e81453f5d65d756e035b6ab15"
 const JSON_EXACT_INTEGER_LIMIT := 9007199254740991.0
 
 
@@ -26,10 +27,28 @@ static func check(library: ContentLibrary, failures: Array) -> void:
 	_check_rook_paths(library, failures)
 	_check_rook_signposts(library, failures)
 	_check_bishop_grand_casino_presence(library, failures)
+	_check_layered_scenario_event_choice_authority(library, failures)
 	_check_perks_and_save(failures)
 	_check_contact_surfaces(library, failures)
 	_check_crew_ignoring_regression(library, failures)
 	_check_presence_determinism(failures)
+
+
+static func _check_layered_scenario_event_choice_authority(library: ContentLibrary, failures: Array) -> void:
+	var run_state := RunStateScript.new()
+	run_state.current_environment = {"event_ids": ["side_door"]}
+	var definition := {
+		"sequence_authoring": {"references": {"events": ["scenario_debt_court_office_hours", "unknown_event_reference"]}},
+		# This undeclared handler input must not be able to add catalog authority.
+		"sequence": {"phase_graph": {"phases": [{"interaction_ops": [{"interaction": {"available_actions": [{"handler": "event_bridge", "inputs": {"event_id": "chatty_clerk", "resolution_id": "ask_about_the_weather"}}]}}]}]}},
+	}
+	var authority: Dictionary = run_state._scenario_event_choice_authority(definition, library)
+	if not _array(authority.get("scenario_debt_court_office_hours", [])).has("watch_the_next_name"):
+		failures.append("Layered scenario event authority omitted an exact catalog choice declared by sequence authoring.")
+	if authority.has("unknown_event_reference"):
+		failures.append("Layered scenario event authority admitted an unknown authored event reference.")
+	if authority.has("chatty_clerk"):
+		failures.append("Layered scenario event authority was minted by an undeclared event_bridge handler input.")
 
 
 static func _check_host_rooted_aftermath(library: ContentLibrary, failures: Array) -> void:
@@ -107,7 +126,7 @@ static func _check_placement_matrix(library: ContentLibrary, failures: Array) ->
 			var generated := _generated_path(library, member_id, path_kind)
 			var run_state: RunState = generated.get("run_state") as RunState
 			if run_state == null or not bool(generated.get("entered", false)):
-				failures.append("Crew recruitment %s could not enter its generated %s placement." % [member_id, path_kind])
+				failures.append("Crew recruitment %s could not enter its generated %s placement: %s" % [member_id, path_kind, str(generated.get("errors", []))])
 				continue
 			var definition := CrewRecruitmentModelScript.member_definition(member_id)
 			var event_id := str(definition.get("event_id", ""))
@@ -650,11 +669,16 @@ static func _generated_path(library: ContentLibrary, member_id: String, path_kin
 	if member_id == "crew_bishop" and path_kind == "fallback":
 		generator.next_environment(run_state, "grand_casino", true)
 		var grand_entered := str(run_state.current_environment.get("archetype_id", "")) == "grand_casino" and generator._last_environment_install_errors.is_empty()
-		var room_entered := grand_entered and generator.enter_grand_casino_room(run_state, "grand_casino_cage")
+		var grand_finalization_failures: Array = []
+		if grand_entered:
+			var grand_finalized := HarnessProductionFidelityScript.finalize_arrival(run_state, library, grand_finalization_failures, "Crew Bishop fallback Grand Casino arrival")
+			grand_entered = bool(grand_finalized.get("ok", false))
+		var room_result: Dictionary = generator.enter_grand_casino_room_result(run_state, "grand_casino_cage") if grand_entered else {}
+		var room_entered := grand_entered and bool(room_result.get("ok", false))
 		if room_entered:
 			var finalized := run_state.world_sequence_finalize_base_semantics([], library, {"viewport_size": {"x": 1280, "y": 720}})
 			room_entered = bool(finalized.get("ok", false)) or bool(finalized.get("inactive", false))
-		return {"run_state": run_state, "entered": room_entered}
+		return {"run_state": run_state, "entered": room_entered, "errors": grand_finalization_failures if not grand_entered else _array(room_result.get("errors", [])).duplicate() if not room_entered else []}
 	var archetype_id := str(archetypes[0])
 	if path_kind == "fallback":
 		var selected_fallback := CrewRecruitmentModelScript.fallback_node_id(run_state, definition)
@@ -667,12 +691,23 @@ static func _generated_path(library: ContentLibrary, member_id: String, path_kin
 	generator.next_environment(run_state, archetype_id, true)
 	var entered := str(run_state.current_environment.get("archetype_id", "")) == archetype_id and generator._last_environment_install_errors.is_empty()
 	var layers := _string_array(location.get("layer_ids", []))
+	var layer_result: Dictionary = {}
+	var base_arrival_failures: Array = []
+	if entered and not layers.is_empty():
+		var base_arrival := HarnessProductionFidelityScript.finalize_arrival(run_state, library, base_arrival_failures, "Crew %s %s base arrival" % [member_id, path_kind])
+		entered = bool(base_arrival.get("ok", false))
 	if entered and not layers.is_empty() and str(run_state.current_environment.get("current_layer_id", "")) != str(layers[0]):
-		entered = bool(generator.enter_environment_layer(run_state, str(layers[0]), false).get("ok", false))
+		layer_result = generator.enter_environment_layer(run_state, str(layers[0]), false)
+		entered = bool(layer_result.get("ok", false))
 	if entered:
 		var world_finalized := run_state.world_sequence_finalize_base_semantics([], library, {"viewport_size": {"x": 1280, "y": 720}})
 		entered = bool(world_finalized.get("ok", false)) or bool(world_finalized.get("inactive", false))
-	return {"run_state": run_state, "entered": entered}
+	var path_errors: Array = []
+	if not base_arrival_failures.is_empty():
+		path_errors.append_array(base_arrival_failures)
+	if not layer_result.is_empty() and not bool(layer_result.get("ok", false)):
+		path_errors.append(str(layer_result.get("message", layer_result.get("errors", []))))
+	return {"run_state": run_state, "entered": entered, "errors": path_errors}
 
 
 static func _production_path_seed(member_id: String, path_kind: String, scenario_id: String) -> String:

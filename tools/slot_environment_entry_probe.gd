@@ -6,6 +6,7 @@ extends SceneTree
 # testing and the selected-object action card.
 
 const MainScene := preload("res://scenes/main.tscn")
+const SlotMachineStateScript := preload("res://scripts/games/slots/slot_machine_state.gd")
 const SAVE_SLOT := "slot_environment_entry_probe"
 const PLAYER_SAVE_SLOT := "foundation_ui_autosave"
 const SLOT_ARCHETYPES := [
@@ -36,6 +37,19 @@ func _run() -> void:
 	app.set("autosave_slot_id", PLAYER_SAVE_SLOT)
 	root.add_child(app)
 	await _settle(8)
+	if OS.get_cmdline_user_args().has("--focused-play"):
+		for seed_text in ["SLOT-HOST-PLAY-A", "SLOT-HOST-PLAY-B"]:
+			_install_environment_fixture("bar", seed_text)
+			await _settle(10)
+			var slot_ids := _slot_object_ids()
+			if slot_ids.is_empty():
+				_fail("%s production-host room exposed no slot-machine object." % seed_text)
+				continue
+			reports.append(await _exercise_visible_entry(seed_text, slot_ids[0]))
+			app.call("back_to_environment")
+			await _settle(6)
+		_finish()
+		return
 
 	# Read the player's current Continue state, but switch all subsequent writes
 	# to an isolated probe slot before exercising any interaction.
@@ -66,6 +80,10 @@ func _run() -> void:
 			app.call("back_to_environment")
 			await _settle(8)
 
+	_finish()
+
+
+func _finish() -> void:
 	print("SLOT_ENVIRONMENT_ENTRY_PROBE %s" % JSON.stringify({
 		"passed": failures.is_empty(),
 		"failures": failures,
@@ -157,8 +175,9 @@ func _button_with_text(node: Node, wanted_text: String) -> Button:
 	return null
 
 
-func _install_environment_fixture(archetype_id: String) -> void:
-	app.call("start_foundation_run", "SLOT-ENVIRONMENT-ENTRY-PROBE-%s" % archetype_id.to_upper())
+func _install_environment_fixture(archetype_id: String, seed_text: String = "") -> void:
+	var effective_seed := seed_text if not seed_text.is_empty() else "SLOT-ENVIRONMENT-ENTRY-PROBE-%s" % archetype_id.to_upper()
+	app.call("start_foundation_run", effective_seed)
 	app.set("autosave_slot_id", SAVE_SLOT)
 	var run_state: RunState = app.get("run_state")
 	run_state.bankroll = 10000
@@ -221,6 +240,10 @@ func _exercise_visible_entry(label: String, object_id: String) -> Dictionary:
 	if not object_rect.has_area():
 		_fail("%s slot machine has no live hit rectangle." % label)
 		return {"label": label, "object_id": object_id, "entered": false}
+	var rendered_object := _canvas_object(canvas, object_id)
+	var room_prop := str(rendered_object.get("prop", ""))
+	if room_prop != "machine":
+		_fail("%s slot object rendered as %s instead of a machine." % [label, room_prop if not room_prop.is_empty() else "<empty>"])
 	_move_viewport_global(object_rect.get_center())
 	await _settle(2)
 	var hovered_before_click := _hovered_control_payload()
@@ -249,6 +272,7 @@ func _exercise_visible_entry(label: String, object_id: String) -> Dictionary:
 	var entered := str(app.get("current_screen")) == "GAME" and app.get("current_game") != null and (app.get("current_game") as GameModule).get_id() == "slot"
 	if not entered:
 		_fail("%s visible slot Enter button did not open the slot surface (screen=%s game=%s)." % [label, str(app.get("current_screen")), str(app.get("current_game"))])
+	var play_report := await _exercise_one_click_spin(label) if entered else {}
 	return {
 		"label": label,
 		"object_id": object_id,
@@ -258,7 +282,114 @@ func _exercise_visible_entry(label: String, object_id: String) -> Dictionary:
 		"screen": str(app.get("current_screen")),
 		"game_state_key": str(app.get("current_game_state_key")),
 		"entered": entered,
+		"room_prop": room_prop,
+		"play": play_report,
 	}
+
+
+func _exercise_one_click_spin(label: String) -> Dictionary:
+	var surface: GameSurfaceCanvas = app.get("game_surface_canvas")
+	if surface == null or not surface.visible:
+		_fail("%s entered Slot without a visible game surface." % label)
+		return {"resolved": false}
+	var run_state: RunState = app.get("run_state")
+	var state_key := str(app.get("current_game_state_key"))
+	var before_machine: Dictionary = SlotMachineStateScript.peek_machine(run_state.current_environment, state_key)
+	var before_spins := int(before_machine.get("spin_count", 0))
+	var spin_rect := surface.global_rect_for_surface_action("slot_spin")
+	if not spin_rect.has_area():
+		_fail("%s Slot surface rendered no live Spin hit rectangle." % label)
+		return {"resolved": false, "before_spins": before_spins}
+	_move_viewport_global(spin_rect.get_center())
+	await _settle(2)
+	var hovered_control := _hovered_control_payload()
+	var hovered_surface_action := str(surface.get("hovered_surface_action"))
+	var emitted_actions: Array = []
+	surface.surface_action.connect(func(action: String, index: int, confirm_requested: bool) -> void:
+		emitted_actions.append({"action": action, "index": index, "confirm_requested": confirm_requested})
+	, CONNECT_ONE_SHOT)
+	var guard_visits_before := int(app.get("input_route_guard_visit_count"))
+	var deferred_blocks_before := int(app.get("deferred_embedded_refresh_blocked_surface_input_count"))
+	_click_viewport_global(spin_rect.get_center())
+	await _settle(10)
+	var after_machine: Dictionary = SlotMachineStateScript.peek_machine(run_state.current_environment, state_key)
+	var after_spins := int(after_machine.get("spin_count", 0))
+	var surface_snapshot: Dictionary = surface.current_view_snapshot()
+	var view_state: Dictionary = surface_snapshot.get("state", {}) if typeof(surface_snapshot.get("state", {})) == TYPE_DICTIONARY else {}
+	var ledger: Dictionary = app.call("_sealed_action_host_ledger", run_state, false)
+	var pending_cleared := (ledger.get("pending_delivery", {}) as Dictionary).is_empty()
+	var resolved := after_spins == before_spins + 1
+	if not resolved:
+		_fail("%s one physical Spin click changed spin_count from %d to %d; expected exactly one resolved spin." % [label, before_spins, after_spins])
+	if str(surface_snapshot.get("surface_renderer", "")) != "slot_machine":
+		_fail("%s Slot surface did not use the slot_machine renderer." % label)
+	if not (view_state.get("slot_grid", []) as Array).size() > 0:
+		_fail("%s resolved Slot surface exposed no reel grid." % label)
+	if emitted_actions.size() != 1 or str((emitted_actions[0] as Dictionary).get("action", "")) != "slot_spin":
+		_fail("%s physical Spin click did not emit exactly one slot_spin surface action." % label)
+	if hovered_surface_action != "slot_spin":
+		_fail("%s visible Spin button did not own its exact hover target." % label)
+	if int(app.get("deferred_embedded_refresh_blocked_surface_input_count")) != deferred_blocks_before:
+		_fail("%s Spin click was intercepted by a deferred surface refresh." % label)
+	if not pending_cleared:
+		_fail("%s resolved Spin left a sealed action pending." % label)
+	var causal_context_rejected := true
+	if label == "SLOT-HOST-PLAY-A":
+		await _settle_until_surface_idle(surface)
+		causal_context_rejected = _exercise_causal_context_rejection()
+	if not causal_context_rejected:
+		_fail("%s sealed Slot delivery did not reject a changed gameplay context." % label)
+	return {
+		"resolved": resolved,
+		"before_spins": before_spins,
+		"after_spins": after_spins,
+		"spin_rect": _rect_payload(spin_rect),
+		"hovered_control_name": str(hovered_control.get("name", "")),
+		"hovered_surface_action": hovered_surface_action,
+		"emitted_actions": emitted_actions,
+		"guard_visit_delta": int(app.get("input_route_guard_visit_count")) - guard_visits_before,
+		"deferred_block_delta": int(app.get("deferred_embedded_refresh_blocked_surface_input_count")) - deferred_blocks_before,
+		"pending_cleared": pending_cleared,
+		"causal_context_rejected": causal_context_rejected,
+		"surface_renderer": str(surface_snapshot.get("surface_renderer", "")),
+		"grid_columns": (view_state.get("slot_grid", []) as Array).size(),
+		"outcome_message": str(surface_snapshot.get("outcome_message", "")),
+	}
+
+
+func _canvas_object(canvas: PixelSceneCanvas, object_id: String) -> Dictionary:
+	var snapshot: Dictionary = canvas.current_view_snapshot()
+	var objects: Array = snapshot.get("objects", []) if typeof(snapshot.get("objects", [])) == TYPE_ARRAY else []
+	for object_value in objects:
+		if typeof(object_value) != TYPE_DICTIONARY:
+			continue
+		var object_data: Dictionary = object_value
+		if str(object_data.get("id", object_data.get("object_id", ""))) == object_id:
+			return object_data
+	return {}
+
+
+func _exercise_causal_context_rejection() -> bool:
+	var command: Dictionary = app.call("_sealed_action_host_surface_intent", "slot_spin", 0, false)
+	var delivery: Dictionary = command.get("_sealed_action_host_delivery", {}) if typeof(command.get("_sealed_action_host_delivery", {})) == TYPE_DICTIONARY else {}
+	if delivery.is_empty():
+		return false
+	var live_run_state: RunState = app.get("run_state")
+	live_run_state.baseline_luck += 1
+	var prepared: Dictionary = app.call(
+		"_sealed_action_host_prepare_delivery",
+		str(command.get("action_id", "")),
+		int(command.get("set_stake", 0)),
+		delivery
+	)
+	return not bool(prepared.get("ok", false)) and str(prepared.get("error_code", "")) == "receipt_content_conflict"
+
+
+func _settle_until_surface_idle(surface: GameSurfaceCanvas) -> void:
+	for _frame_index in range(360):
+		if not surface.surface_transition_animation_active():
+			return
+		await process_frame
 
 
 func _click_viewport_global(global_position: Vector2) -> void:

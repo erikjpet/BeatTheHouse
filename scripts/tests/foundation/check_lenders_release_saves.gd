@@ -4364,29 +4364,6 @@ func _check_environment_instance_shape(environment: EnvironmentInstance, require
 		failures.append("EnvironmentInstance did not preserve saveable data through from_dict.")
 
 
-# Checks that tests are exercising README pack paths through ContentLibrary.
-func _check_canonical_pack_paths(failures: Array) -> void:
-	var required_paths := ContentLibraryScript.required_pack_paths()
-	for pack_name in required_paths.keys():
-		var path := str(required_paths[pack_name])
-		_check_foundation_pack_path(path, failures)
-		var exists := DirAccess.dir_exists_absolute(ProjectSettings.globalize_path(path)) if path.get_extension().is_empty() else FileAccess.file_exists(path)
-		if not exists:
-			failures.append("Missing required foundation pack %s at %s." % [pack_name, path])
-
-	var future_paths := ContentLibraryScript.future_pack_paths()
-	for path in future_paths.values():
-		_check_foundation_pack_path(str(path), failures)
-
-
-# Ensures canonical foundation paths stay outside the demo runtime pack folder.
-func _check_foundation_pack_path(path: String, failures: Array) -> void:
-	if not path.begins_with("res://data/"):
-		failures.append("Foundation pack path must live under res://data/: %s." % path)
-	if path.begins_with("res://data/runtime/"):
-		failures.append("Foundation pack path must not point at demo runtime data: %s." % path)
-
-
 # Checks the canonical M2 packs without forcing unused future packs to exist.
 func _check_m2_pack_availability(library: ContentLibrary, failures: Array) -> void:
 	var future_paths := ContentLibraryScript.future_pack_paths()
