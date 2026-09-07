@@ -2479,11 +2479,14 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 	# together while the scalar and selected-route contract remains unchanged.
 	# These hashes were refreshed on exact integrated candidate `039e3326` after
 	# the accepted environment/world rollout. The scalar route contract is
-	# unchanged and the delivery subsystem remains fully inactive.
+	# unchanged and the delivery subsystem remains fully inactive. refine06_1's
+	# strict collision-safe scenario placement changes only the generated room
+	# layout and the world-map record embedding that room; the route, RNG, story,
+	# money, Heat, clock, and travel-count values remain byte-identical.
 	const EXPECTED := {
 		"bankroll_delta": -4,
 		"clock_delta": 42,
-		"current_environment_sha256": "7480e43371c40d7f33aca13f3857464a28c57cd214a9d9a8c077d202aa761b34",
+		"current_environment_sha256": "31d025ad80c8cb70d6d5c3100743adbe7900788af4f8dc8bbb1c5273a42f7dae",
 		"current_world_node_id": "bar",
 		"heat_delta": 0,
 		"provenance_commit": "9cff9b2309d70c6c93ab34cc60cc18f79f56201b",
@@ -2494,7 +2497,7 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 		"town_action_index": 0,
 		"travel_count_delta": 1,
 		"travel_story_sha256": "0257877551b37226fd62316ee2af5e047a27387fbb87d5acfa0273d1366a0e81",
-		"world_map_sha256": "d7d5a8c3843dd06064e6433d0861f3f52c6bb02116829a7b2ca4a01980a13f74",
+		"world_map_sha256": "e3a3045e4756fa85facb7a3f4a1c84b40759926b1971ac1e2de74c828c1d8ecd",
 	}
 	app.call("start_foundation_run", "DELIVERY-ORDINARY-BASELINE", {}, false)
 	for _start_frame in range(3):

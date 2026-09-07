@@ -29,6 +29,9 @@ const EXPECTED_BARRIER_PLACEMENTS := 39
 const LAYOUT_CONTEXT := {"viewport_size": {"x": 1280, "y": 720}}
 
 var _fixture_activated_id := ""
+var _fixture_input_events: Array = []
+var _fixture_map_visible := false
+var _fixture_serialized_state := {"bankroll": 50, "current_node_id": "motel"}
 
 
 class ExactCanvasFixture:
@@ -182,6 +185,10 @@ func _check_barrier_placements(library: Variant, definitions: Array, failures: A
 func _check_exact_object_helper(failures: Array) -> void:
 	var canvas := ExactCanvasFixture.new()
 	_fixture_activated_id = ""
+	_fixture_input_events = [{"object_id": "travel:motel_room", "label": "Room Door"}]
+	_fixture_map_visible = false
+	_fixture_serialized_state = {"bankroll": 50, "current_node_id": "motel"}
+	var serialized_before_leave := JSON.stringify(_fixture_serialized_state)
 	var activated := HarnessProductionFidelityScript.activate_exact_canvas_object(
 		canvas,
 		"travel:leave",
@@ -191,6 +198,11 @@ func _check_exact_object_helper(failures: Array) -> void:
 	)
 	if not bool(activated.get("ok", false)) or _fixture_activated_id != "travel:leave":
 		failures.append("Exact-object helper did not bypass render-first travel:motel_room for travel:leave.")
+	var second_input: Dictionary = _dict(_fixture_input_events[1]) if _fixture_input_events.size() > 1 else {}
+	if str(second_input.get("object_id", "")) != "travel:leave" or not _fixture_map_visible:
+		failures.append("Parent-venue regression did not record travel:leave as its second input and open the map: %s." % JSON.stringify({"inputs": _fixture_input_events, "map_visible": _fixture_map_visible}))
+	if JSON.stringify(_fixture_serialized_state) != serialized_before_leave:
+		failures.append("Parent-venue travel:leave activation mutated serialized run state before route confirmation.")
 	var missing_failures: Array = []
 	var missing := HarnessProductionFidelityScript.resolve_exact_canvas_object(canvas, "travel:missing", missing_failures, "Exact-object no-fallback regression")
 	if bool(missing.get("ok", true)) or missing_failures.is_empty():
@@ -200,6 +212,8 @@ func _check_exact_object_helper(failures: Array) -> void:
 
 func _activate_fixture_object(object_data: Dictionary, _local_hit_position: Vector2) -> bool:
 	_fixture_activated_id = str(object_data.get("id", ""))
+	_fixture_input_events.append({"object_id": _fixture_activated_id, "label": str(object_data.get("label", ""))})
+	_fixture_map_visible = _fixture_activated_id == "travel:leave"
 	return true
 
 
