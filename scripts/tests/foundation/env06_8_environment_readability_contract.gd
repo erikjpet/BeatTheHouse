@@ -678,6 +678,14 @@ static func _seeded_description_observer(library: Variant, archetype_id: String,
 	if not bool(travel.get("ok", false)) or str(run_state.current_environment.get("scenario_id", "")) != scenario_id:
 		failures.append("env06_8 paired observer could not enter %s: %s" % [scenario_id, JSON.stringify(travel.get("errors", []))])
 		return {}
+	# Travel alone leaves the room semantically unfinalized. The production host
+	# runs the same finalization immediately after arrival, and the sequence
+	# runtime installs no state until it does, so an observer that skips it reads
+	# an empty state and cannot exercise reentry at all.
+	var finalization := run_state.scenario_finalize_installed_environment(library, _dict(run_state.current_environment.get("scenario_layout_context", {})))
+	if not bool(finalization.get("ok", false)) or bool(finalization.get("inactive", false)):
+		failures.append("env06_8 paired observer could not finalize %s: %s" % [scenario_id, JSON.stringify(finalization)])
+		return {}
 	var projection := run_state.world_sequence_composed_projection()
 	var semantic := _dict(projection.get("semantic_state", {}))
 	var arrival: Array = []

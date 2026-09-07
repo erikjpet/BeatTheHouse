@@ -25,8 +25,12 @@ var evidence_canvas: Control
 
 class CueConsumerSpy extends Node:
 	var calls: Array = []
-	func bind_surface_audio_authority(_authority: Variant) -> void: pass
-	func set_prewarm_events(_events: Array) -> void: pass
+	func bind_surface_audio_authority(_authority: Variant) -> void:
+		pass
+
+	func set_prewarm_events(_events: Array) -> void:
+		pass
+
 	func play_surface_cue(cue_id: String, context: Dictionary, surface_state: Dictionary, _authority: Variant) -> void:
 		calls.append({"cue_id": cue_id, "context": context.duplicate(true), "surface_state": surface_state.duplicate(true)})
 

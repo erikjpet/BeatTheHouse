@@ -807,6 +807,10 @@ func _travel_away_and_revisit(run_state: RunState, library: ContentLibrary, targ
 	if run_state.current_world_node_id() != away_id:
 		push_warning("P1 travel/revisit departure remained at %s instead of %s; registration=%s" % [run_state.current_world_node_id(), away_id, JSON.stringify(run_state.world_sequence_registrations)])
 		return false
+	# Departure is fail-closed until the arrived room's semantic records are
+	# finalized, exactly as the production host finalizes on arrival. Without
+	# this the return leg is refused for the away room, not the target.
+	run_state.scenario_finalize_installed_environment(library, _dict(run_state.current_environment.get("scenario_layout_context", {})))
 	generator.next_environment(run_state, target_node_id, true)
 	if run_state.current_world_node_id() != target_node_id:
 		push_warning("P1 travel/revisit return remained at %s instead of %s; registration=%s" % [run_state.current_world_node_id(), target_node_id, JSON.stringify(run_state.world_sequence_registrations)])

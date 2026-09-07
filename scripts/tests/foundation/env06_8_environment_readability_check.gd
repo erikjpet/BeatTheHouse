@@ -10,7 +10,9 @@ func _init() -> void:
 	var failures: Array = []
 	ContractScript.check(library, failures)
 	if failures.is_empty():
-		print("ENV06_8_ENVIRONMENT_READABILITY PASS scenarios=55 objects=1108 actions=673")
+		# Counts are re-derived by the contract itself; printing frozen baseline
+		# figures here misreported the post-rework catalog as its pre-rework size.
+		print("ENV06_8_ENVIRONMENT_READABILITY PASS")
 		quit(0)
 		return
 	for failure in failures: printerr("ENV06_8_ENVIRONMENT_READABILITY_FAIL %s" % str(failure))
