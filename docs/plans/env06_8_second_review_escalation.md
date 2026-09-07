@@ -1,12 +1,24 @@
-# env06_8 Second-Review Escalation
+# env06_8 Second-Review Escalation and Re-Scoped Resolution
 
 Date: 2026-09-06
 
-Status: **IN_PROGRESS — OWNER ESCALATION**
+Status: **OWNER RESOLVED — RE-SCOPED STRUCTURAL REVIEW IN PROGRESS**
 
 Reviewed product head: `9c4196dd4d8b6061ee7e919cb21e22018689c77b`
 
 Independent reviewer: Gibbs (`/root/env06_8_final_review`)
+
+## Owner resolution — 2026-09-06
+
+The owner re-prioritized the program toward a safe, playtestable build and split
+the row instead of granting an exception. `env06_8` now owns the structural and
+playability work it can actually reach. Raster-visible state changes, per-object
+glyph distinctness and unlabeled contact-sheet identifiability moved intact to
+parked `env06_9` pending an owner acceptance-bar decision.
+
+The two historical rejections below remain accurate against the old bar. They do
+not count against the newly scoped row, which starts at zero rejections and must
+receive a fresh independent review against only its complete structural bar.
 
 ## Candidate work completed
 
@@ -59,7 +71,7 @@ The reviewer retained these blocking findings:
   outside the prompt's exclusive list. No prohibited game, performance,
   integration-fixture, tutorial, audio or crew-model path changed.
 
-## Control-flow result
+## Historical control-flow result
 
 This is the row's second rejection. The board's binding rule requires owner
 escalation instead of a third repair/review cycle. Therefore:
@@ -72,6 +84,9 @@ escalation instead of a third repair/review cycle. Therefore:
 - the stale `codex/closeout06-final` contract/tools remain preserved and unported
   under the controlling prompt's default.
 
-Owner decision required: explicitly accept an exception/disposition for the
-current candidate, or reopen implementation and define the visual acceptance
-bar despite the two-rejection limit.
+## Current control-flow result
+
+The owner decision is now recorded: do not reopen `env06_8` implementation and
+do not waive the visual findings. Obtain a fresh structural review, land the
+candidate if accepted, and keep `env06_9` parked. The alternate
+`codex/closeout06-final` contract remains unported.
