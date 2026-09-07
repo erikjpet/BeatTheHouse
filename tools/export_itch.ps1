@@ -216,12 +216,12 @@ if (-not $SkipExport) {
     Clear-DirectoryContents $outDir
     if ($Debug) { $exportFlag = "--export-debug" } else { $exportFlag = "--export-release" }
     Write-Host "Exporting preset '$($cfg.Preset)' ($exportFlag) with: $godot"
-    $exportExitCode = if ($Target -eq "web" -and -not $Debug) {
-        Invoke-WebExportWithLockedTemplate $godot $exportFlag $cfg.Preset $cfg.Out
+    if ($Target -eq "web" -and -not $Debug) {
+        $exportExitCode = Invoke-WebExportWithLockedTemplate $godot $exportFlag $cfg.Preset $cfg.Out
     }
     else {
         & $godot --headless --path $root $exportFlag $cfg.Preset $cfg.Out
-        $LASTEXITCODE
+        $exportExitCode = $LASTEXITCODE
     }
     if ($exportExitCode -ne 0) {
         throw "Godot export failed (exit $exportExitCode). Most common cause: export templates not installed (Editor > Manage Export Templates)."

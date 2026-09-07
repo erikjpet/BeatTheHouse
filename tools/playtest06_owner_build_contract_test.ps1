@@ -32,7 +32,10 @@ foreach ($path in @($builder, $exporter, $webSmoke, $exportModeContract, $identi
 }
 
 $builderText = Get-Content -LiteralPath $builder -Raw
+$exporterText = Get-Content -LiteralPath $exporter -Raw
 Assert-True (($builderText | Select-String -Pattern 'export_itch\.ps1"\) -Target windows -NoPackage' -AllMatches).Matches.Count -eq 1) "Owner builder must invoke exactly one no-package Windows export."
+Assert-True (-not ($exporterText | Select-String -Pattern '\$exportExitCode\s*=\s*if\s*\(')) "Exporter must not capture native process stdout into the exit-code variable."
+Assert-True (($exporterText | Select-String -Pattern '(?s)& \$godot --headless --path \$root \$exportFlag \$cfg\.Preset \$cfg\.Out\s+\$exportExitCode = \$LASTEXITCODE' -AllMatches).Matches.Count -eq 1) "Windows export must capture LASTEXITCODE only after Godot output has been written."
 Assert-True (($builderText | Select-String -Pattern 'web_perf_smoke\.ps1"\).*?-Plan distribution_fresh_start.*?-NoPackageFreshExport' -AllMatches).Matches.Count -eq 1) "Owner builder must request exactly one fresh, no-package Web export through the distribution smoke."
 Assert-True (-not ($builderText | Select-String -Pattern 'web_perf_smoke\.ps1"\).*?-SkipExport')) "Owner builder must not skip the required distribution fresh export."
 Assert-True (($builderText | Select-String -Pattern '--untracked-files=all' -AllMatches).Matches.Count -eq 2) "Owner builder must reject nonignored untracked files before and after custody production."
