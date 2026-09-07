@@ -2461,11 +2461,46 @@ func scenario_finalize_installed_environment(library: ContentLibrary, layout_con
 	var definition := _scenario_sequence_definition_readonly()
 	if not ScenarioSequenceSchemaScript.is_sequence(definition):
 		return {"ok": true, "inactive": true, "errors": []}
-	var authoritative_environment := _scenario_terminal_authoritative_environment(definition)
+	var authoritative_environment := _scenario_authoritative_environment_for_finalization(definition)
 	var authoritative := EnvironmentBaseSemanticRecordsScript.authoritative_interactable_records(authoritative_environment, library)
 	if not bool(authoritative.get("ok", false)):
 		return _scenario_semantic_finalization_failure(_copy_array(authoritative.get("errors", [])), bool(current_environment.get("scenario_semantic_ready", false)))
 	return _scenario_finalize_trusted_base_semantics(_copy_array(authoritative.get("records", [])), library, layout_context)
+
+
+func _scenario_authoritative_environment_for_finalization(definition: Dictionary) -> Dictionary:
+	var result := _scenario_terminal_authoritative_environment(definition)
+	# The pre-sequence host baseline is the only input to the immutable seal.
+	# Use it during the initial seal as well as restore so progressed scenario
+	# services, routes, games, and layout fixtures can never enter base authority.
+	# The existing inventory digest comparison below remains fail-closed.
+	result = result.duplicate(true)
+	var baseline_fields := {
+		"scenario_sequence_base_game_ids": "game_ids",
+		"scenario_sequence_base_service_ids": "service_ids",
+		"scenario_sequence_base_travel_hooks": "travel_hooks",
+		"scenario_sequence_base_game_modifiers": "scenario_game_modifiers",
+	}
+	for source_value in baseline_fields.keys():
+		var source := str(source_value)
+		if not current_environment.has(source): continue
+		var target := str(baseline_fields.get(source, ""))
+		var value: Variant = current_environment.get(source)
+		result[target] = value.duplicate(true) if typeof(value) in [TYPE_ARRAY, TYPE_DICTIONARY] else value
+	if current_environment.has("scenario_sequence_base_layout_object_rects"):
+		var layout := _copy_dict(result.get("layout", {}))
+		layout["object_rects"] = _copy_dict(current_environment.get("scenario_sequence_base_layout_object_rects", {}))
+		result["layout"] = layout
+	# Generated layouts originate in Vector2/Rect2 float32 components, while a
+	# JSON save restores scalar floats. Canonicalize through the actual persistent
+	# representation before deriving pixel hit bounds so a same-build rebuild is
+	# byte-identical instead of drifting at the final floating-point digit.
+	var canonical_layout := _copy_dict(result.get("layout", {}))
+	var canonical_rects_value: Variant = JSON.parse_string(JSON.stringify(_copy_dict(canonical_layout.get("object_rects", {}))))
+	if typeof(canonical_rects_value) == TYPE_DICTIONARY:
+		canonical_layout["object_rects"] = canonical_rects_value
+		result["layout"] = canonical_layout
+	return result
 
 
 func _scenario_terminal_authoritative_environment(definition: Dictionary) -> Dictionary:
@@ -2508,6 +2543,7 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 	var produced := EnvironmentBaseSemanticRecordsScript.from_interactable_records(stamped_records)
 	if not bool(produced.get("ok", false)): return _scenario_semantic_finalization_failure(_copy_array(produced.get("errors", [])), refresh_attempt)
 	var interactions := _scenario_declared_base_records(_copy_array(produced.get("interactions", [])), definition, ["interactions", "scene_objects"])
+	interactions = _scenario_canonical_base_interaction_geometry(interactions)
 	interactions = _scenario_terminal_semantic_interactions(interactions, definition)
 	stamped_records = _scenario_terminal_layout_base_records(stamped_records, interactions, definition)
 	var dynamic_actors := EnvironmentBaseSemanticRecordsScript.authorized_dynamic_actor_records(current_environment, library)
@@ -2516,18 +2552,8 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 	actors.append_array(_copy_array(dynamic_actors.get("records", [])))
 	actors = _scenario_declared_base_records(actors, definition, ["actors"])
 	var action_digest := ScenarioSequenceRuntimeScript.base_interaction_action_authority_digest(interactions)
-	var semantic_environment := current_environment.duplicate(true)
+	var semantic_environment := _scenario_authoritative_environment_for_finalization(definition)
 	semantic_environment["scenario_base_producer_context"] = producer_context.duplicate(true)
-	if current_environment.has("scenario_sequence_base_game_ids"):
-		semantic_environment["game_ids"] = _copy_array(current_environment.get("scenario_sequence_base_game_ids", []))
-	if current_environment.has("scenario_sequence_base_service_ids"):
-		semantic_environment["service_ids"] = _copy_array(current_environment.get("scenario_sequence_base_service_ids", []))
-	if current_environment.has("scenario_sequence_base_travel_hooks"):
-		semantic_environment["travel_hooks"] = _copy_array(current_environment.get("scenario_sequence_base_travel_hooks", []))
-	if current_environment.has("scenario_sequence_base_layout_object_rects"):
-		var semantic_layout := _copy_dict(semantic_environment.get("layout", {}))
-		semantic_layout["object_rects"] = _copy_dict(current_environment.get("scenario_sequence_base_layout_object_rects", {}))
-		semantic_environment["layout"] = semantic_layout
 	var terminal_refresh := refresh_attempt and _scenario_terminal_semantic_refresh(definition)
 	var sealed := _copy_dict(current_environment.get("scenario_semantic_inventory", {})) if terminal_refresh else EnvironmentSemanticInventoryScript.for_instance(semantic_environment, library, interactions, actors)
 	var inventory_errors := EnvironmentSemanticInventoryScript.validate(sealed)
@@ -2634,6 +2660,25 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 	current_environment.erase("scenario_restore_pending_trusted_rebuild")
 	if not definition_id.is_empty(): _scenario_sequence_definition_cache[definition_id] = definition.duplicate(true)
 	return _finalized_scenario_layout_result(false, next_digest, _copy_dict(reentry.get("state", {})), stamped_records, candidate_layout)
+
+
+func _scenario_canonical_base_interaction_geometry(records: Array) -> Array:
+	# Rect2-generated normalized coordinates and JSON-restored scalar coordinates
+	# can differ below a billionth of a pixel after board-size multiplication.
+	# Geometry remains validated at full precision before this point; snap only the
+	# sealed authority copy so equal room layouts have one persistent digest.
+	var result := records.duplicate(true)
+	for record_value in result:
+		if typeof(record_value) != TYPE_DICTIONARY: continue
+		var record := record_value as Dictionary
+		for field in ["normalized_hit_rect", "hit_bounds"]:
+			var geometry := _copy_dict(record.get(field, {}))
+			for key_value in geometry.keys():
+				var value: Variant = geometry.get(key_value)
+				if typeof(value) in [TYPE_FLOAT, TYPE_INT]:
+					geometry[key_value] = snappedf(float(value), 0.000000001)
+			record[field] = geometry
+	return result
 
 
 func _resolve_scenario_layout_candidate(candidate: Dictionary, stamped_records: Array, definition: Dictionary, layout_context: Dictionary) -> Dictionary:

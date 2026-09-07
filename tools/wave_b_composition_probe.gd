@@ -138,6 +138,11 @@ func _run() -> void:
 	var swept_window := run_state.swept_window(swept_node_id)
 	_require(int(sweep_after.get("segment_index", -1)) > sweep_segment_before, "Police Sweep did not advance to its next production track segment.")
 	_require(bool(swept_window.get("cheat_window_open", false)) and int(swept_window.get("remaining_actions", 0)) > 0, "The departed Sweep node did not expose its authored swept window.")
+	# The production host finalizes each room's semantic records on arrival, and
+	# departure is fail-closed until it has. Skipping it here refused the very
+	# next travel leg for the rumor venue rather than for its destination.
+	var rumor_venue_finalized := run_state.scenario_finalize_installed_environment(library, {"viewport_size": {"x": 1280, "y": 720}})
+	_require(bool(rumor_venue_finalized.get("ok", false)), "The rumor venue did not finalize its semantic records: %s." % JSON.stringify(rumor_venue_finalized.get("errors", [])))
 
 	# Enter the rumored node after hearing it. Its generated scenario identity must
 	# be the exact truth named by the rumor, proving scenario selection composes
@@ -149,6 +154,8 @@ func _run() -> void:
 	_require(str(target_scenario.get("id", "")) == str(heard.get("source_id", "")), "The entered node did not consume the exact scenario named by its truth-sourced rumor.")
 	_require(str(run_state.current_environment.get("scenario_id", "")) == str(target_scenario.get("id", "")), "The heard node's selected scenario was not applied to its generated environment.")
 	_require(str(source_scenario.get("id", "")) != "" and str(target_scenario.get("id", "")) != "", "Scenario selection did not coexist across both visited nodes.")
+	var rumor_target_finalized := run_state.scenario_finalize_installed_environment(library, {"viewport_size": {"x": 1280, "y": 720}})
+	_require(bool(rumor_target_finalized.get("ok", false)), "The heard scenario node did not finalize its semantic records: %s." % JSON.stringify(rumor_target_finalized.get("errors", [])))
 
 	# Finally visit The Punchline through the same generator. The shipped Side Door
 	# event discovers L2 from L1, and the production layer transition enters it.
@@ -157,6 +164,8 @@ func _run() -> void:
 	var punchline_scenario := run_state.scenario_for_node(PUNCHLINE_ID)
 	_require(str(run_state.current_environment.get("current_layer_id", "")) == "club", "The Punchline did not begin on its public L1 club layer.")
 	_require(not punchline_scenario.is_empty() and str(run_state.current_environment.get("scenario_id", "")) == str(punchline_scenario.get("id", "")), "The Punchline lost its Tier-2 scenario while entering L1.")
+	var punchline_finalized := run_state.scenario_finalize_installed_environment(library, {"viewport_size": {"x": 1280, "y": 720}})
+	_require(bool(punchline_finalized.get("ok", false)), "The Punchline L1 club layer did not finalize its semantic records: %s." % JSON.stringify(punchline_finalized.get("errors", [])))
 	var punchline_layers := {"club": _layer_surface_inventory(run_state.current_environment)}
 	var side_door: EventModule = EventModuleScript.new()
 	side_door.setup(library.event("side_door"), library)

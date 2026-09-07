@@ -89,13 +89,23 @@ func _production_host(definition: Dictionary, failures: Array) -> Dictionary:
 	if archetype.is_empty():
 		failures.append("%s production ContentLibrary lacks its environment archetype." % sid)
 		return {}
-	var composition := _dict(_composition_cache.get(archetype_id, {}))
+	var production_definition := _dict(_library.scenario(sid))
+	if production_definition.is_empty():
+		failures.append("%s production ContentLibrary lacks the merged scenario definition." % sid)
+		return {}
+	var composition := _dict(_composition_cache.get(sid, {}))
 	if composition.is_empty():
 		var rng: Variant = RngStreamScript.new()
-		rng.configure(abs(archetype_id.hash()) + 1)
+		rng.configure(abs(sid.hash()) + 1)
 		var environment_class: Variant = EnvironmentInstanceScript
-		var environment: Variant = environment_class.from_archetype(archetype, 1, rng, _library, {}, definition)
+		var environment: Variant = environment_class.from_archetype(archetype, 1, rng, _library, {}, production_definition)
 		var environment_data: Dictionary = environment.call("to_dict")
+		var event_ids := _array(environment_data.get("event_ids", []))
+		var mutations := _dict(production_definition.get("mutations", {}))
+		for event_id_value in _array(mutations.get("event_pool_add", [])):
+			if not event_ids.has(event_id_value): event_ids.append(event_id_value)
+		var exclusive_event_id := str(_dict(mutations.get("exclusive_opportunity", {})).get("event_id", ""))
+		if not exclusive_event_id.is_empty() and not event_ids.has(exclusive_event_id): event_ids.append(exclusive_event_id)
 		if archetype_id == "grand_casino":
 			environment_data["world_node_id"] = archetype_id
 			environment_data["world_map_travel"] = true
@@ -122,8 +132,8 @@ func _production_host(definition: Dictionary, failures: Array) -> Dictionary:
 		if not inventory_errors.is_empty() or exact.is_empty():
 			failures.append("%s production environment composition did not seal: %s" % [sid,JSON.stringify(inventory_errors)])
 			return {}
-		composition = {"exact":exact,"schema_version":int(sealed.get("schema_version",0)),"digest":str(sealed.get("digest","")),"environment_id":str(environment_data.get("id","")),"base_interactions":base_interactions}
-		_composition_cache[archetype_id] = composition
+		composition = {"exact":exact,"event_choices":SemanticInventory.event_choice_index(event_ids, _library),"schema_version":int(sealed.get("schema_version",0)),"digest":str(sealed.get("digest","")),"environment_id":str(environment_data.get("id","")),"base_interactions":base_interactions}
+		_composition_cache[sid] = composition
 	var exact := _dict(composition.get("exact", {}))
 	var bounded: Dictionary = {}
 	var declared := _dict(_dict(definition.get("sequence", {})).get("declared_targets", {}))
@@ -132,8 +142,8 @@ func _production_host(definition: Dictionary, failures: Array) -> Dictionary:
 		for identity in _array(declared.get(collection, [])):
 			if not _array(exact.get(collection, [])).has(identity): failures.append("%s declared %s is absent from its production-composed environment." % [sid,identity])
 			else: bounded[collection].append(identity)
-	bounded["event_choices"] = _dict(exact.get("event_choices",{}))
-	return {"target_inventory":bounded,"inventory_schema_version":int(composition.get("schema_version",0)),"inventory_digest":str(composition.get("digest","")),"inventory_errors":[],"base_interactions":_array(composition.get("base_interactions", [])),"event_choices":_dict(exact.get("event_choices",{})),"environment_id":str(composition.get("environment_id","")),"production_inventory_digest":str(composition.get("digest",""))}
+	bounded["event_choices"] = _dict(composition.get("event_choices",{}))
+	return {"target_inventory":bounded,"inventory_schema_version":int(composition.get("schema_version",0)),"inventory_digest":str(composition.get("digest","")),"inventory_errors":[],"base_interactions":_array(composition.get("base_interactions", [])),"event_choices":_dict(composition.get("event_choices",{})),"environment_id":str(composition.get("environment_id","")),"production_inventory_digest":str(composition.get("digest",""))}
 
 func _check_frozen_identity(definition: Dictionary, entry: Dictionary, failures: Array) -> void:
 	var sid := str(definition.get("id", ""))

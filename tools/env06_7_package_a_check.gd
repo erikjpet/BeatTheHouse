@@ -252,11 +252,21 @@ func _production_host(definition: Dictionary, failures: Array) -> Dictionary:
 	if archetype.is_empty():
 		failures.append("%s production ContentLibrary lacks archetype %s." % [scenario_id, archetype_id])
 		return {}
-	var composition: Dictionary = _composition_cache.get(archetype_id, {})
+	var composition_key := "%s::%s" % [archetype_id, scenario_id]
+	var composition: Dictionary = _composition_cache.get(composition_key, {})
 	if composition.is_empty():
+		var production_scenario := definition
+		for candidate_value in _array(_library.environment_scenarios.get(archetype_id, [])):
+			var candidate := _dict(candidate_value)
+			if str(candidate.get("id", "")) == scenario_id:
+				production_scenario = candidate.duplicate(true)
+				production_scenario["sequence"] = _dict(definition.get("sequence", {})).duplicate(true)
+				for key in ["sequence_package_id", "sequence_handler_pack", "sequence_renderer_id", "sequence_authoring"]:
+					if definition.has(key): production_scenario[key] = definition.get(key)
+				break
 		var rng: Variant = RngStreamScript.new()
 		rng.configure(abs(archetype_id.hash()) + 1)
-		var environment: Variant = EnvironmentInstanceScript.from_archetype(archetype, 1, rng, _library, {}, definition)
+		var environment: Variant = EnvironmentInstanceScript.from_archetype(archetype, 1, rng, _library, {}, production_scenario)
 		var environment_data: Dictionary = environment.call("to_dict")
 		var sealed: Dictionary = SemanticInventory.for_instance(environment_data, _library, [], [])
 		var inventory_errors: Array = SemanticInventory.validate_instance_binding(sealed, environment_data)
@@ -266,11 +276,12 @@ func _production_host(definition: Dictionary, failures: Array) -> Dictionary:
 			return {}
 		composition = {
 			"exact": exact,
+			"event_choices": SemanticInventory.event_choice_index(_array(environment_data.get("event_ids", [])), _library),
 			"schema_version": int(sealed.get("schema_version", 0)),
 			"digest": str(sealed.get("digest", "")),
 			"environment_id": str(environment_data.get("id", "")),
 		}
-		_composition_cache[archetype_id] = composition
+		_composition_cache[composition_key] = composition
 	var exact: Dictionary = composition.get("exact", {})
 	var declared := _dict(_dict(definition.get("sequence", {})).get("declared_targets", {}))
 	var bounded: Dictionary = {}
@@ -282,7 +293,7 @@ func _production_host(definition: Dictionary, failures: Array) -> Dictionary:
 				failures.append("%s declared %s is absent from production-composed %s." % [scenario_id, identity, archetype_id])
 			else:
 				bounded[collection].append(identity)
-	bounded["event_choices"] = _dict(exact.get("event_choices", {}))
+	bounded["event_choices"] = _dict(composition.get("event_choices", {}))
 	return {
 		"target_inventory": bounded,
 		"inventory_schema_version": int(composition.get("schema_version", 0)),
@@ -291,7 +302,7 @@ func _production_host(definition: Dictionary, failures: Array) -> Dictionary:
 		"environment_id": str(composition.get("environment_id", "")),
 		"inventory_errors": [],
 		"base_interactions": [],
-		"event_choices": _dict(exact.get("event_choices", {})),
+		"event_choices": _dict(composition.get("event_choices", {})),
 	}
 
 func _archetype(scenario_id: String) -> String:

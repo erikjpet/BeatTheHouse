@@ -13,12 +13,17 @@ const ScenarioSequenceRuntimeScript := preload("res://scripts/core/scenario_sequ
 const ScenarioSequenceContractScript := preload("res://scripts/tests/foundation/scenario_sequence_contract.gd")
 const ScenarioLayoutResolverScript := preload("res://scripts/core/scenario_layout_resolver.gd")
 const EnvironmentSemanticInventoryScript := preload("res://scripts/core/environment_semantic_inventory.gd")
+const Env068EnvironmentReadabilityContractScript := preload("res://scripts/tests/foundation/env06_8_environment_readability_contract.gd")
 
 const BOARD_SIZE := Vector2(ArtContractsScript.ENVIRONMENT_BOARD_SIZE)
 const SMALL_SCREEN_TARGET := Vector2(ArtContractsScript.ENVIRONMENT_OBJECT_HIT_SIZE)
 
 
 static func check(library: Variant, failures: Array) -> void:
+	# This is the single standard-suite authority for the complete env06_8
+	# through-state icon and paired-hidden observer. ContentDepth keeps the fast
+	# static pass so the expensive matrix is not duplicated.
+	Env068EnvironmentReadabilityContractScript.check(library, failures)
 	_check_ordinary_interaction_coexistence(failures)
 	_check_public_removal_tombstones(failures)
 	_check_finalized_canvas_authority(library, failures)
@@ -704,9 +709,14 @@ static func _check_finalized_expanded_path_and_label(library: Variant, failures:
 	label_run.current_environment["semantic_anchors"]["small_label"] = {"position": [380.0, 100.0]}
 	label_run.current_environment["semantic_anchors"]["large_label"] = {"position": [300.0, 100.0]}
 	label_run.scenario_prepare_semantic_finalization()
-	var label_rejected := label_run.scenario_finalize_base_semantics([_production_presentation()], library, _production_layout_context())
-	if bool(label_rejected.get("ok", true)) or not _contains_text(_array(label_rejected.get("errors", [])), "text-safe in expanded small-screen"):
-		failures.append("Validated finalization did not reject expanded-only label overlap with the production label geometry: %s" % JSON.stringify(label_rejected.get("errors", [])))
+	var label_resolved := label_run.scenario_finalize_base_semantics([_production_presentation()], library, _production_layout_context())
+	var label_projection := _dict(label_resolved.get("projection", {}))
+	var label_semantic := _dict(_dict(label_projection.get("semantic_state", {})).get("scene_objects", {}))
+	# Semantic identities are resolved in stable sort order. The later large_label
+	# record is the one displaced from the already-sealed command_console label.
+	var adjusted_label := _dict(label_semantic.get("scenario::large_label", {}))
+	if not bool(label_resolved.get("ok", false)) or not bool(adjusted_label.get("collision_adjusted", false)):
+		failures.append("Validated finalization did not deterministically separate expanded-only label overlap from production labels: %s" % JSON.stringify(label_resolved.get("errors", [])))
 
 
 static func _check_explicit_alternate_exit(library: Variant, failures: Array) -> void:
@@ -970,11 +980,16 @@ static func _check_atomic_projection_failures(failures: Array) -> void:
 	left["focus_rect"] = Rect2(0.20, 0.30, 44.0 / BOARD_SIZE.x, 44.0 / BOARD_SIZE.y)
 	var right := _base_record("right", "base", "Right control")
 	right["focus_rect"] = Rect2(0.29, 0.30, 44.0 / BOARD_SIZE.x, 44.0 / BOARD_SIZE.y)
+	var scenario_left := _interaction_payload("base", "left", "Left control", true)
+	# Base-only overlap belongs to the base layout contracts. Mark one side as
+	# scenario-owned so this hostile fixture continues exercising the scenario
+	# composition guard after that authority boundary was made explicit.
+	scenario_left["owner_namespace"] = "scenario"
 	var ambiguous_projection := {
 		"semantic_state": {
 			"scene_objects": {}, "actors": {},
 			"interactions": {
-				"base::left": _interaction_payload("base", "left", "Left control", true),
+				"base::left": scenario_left,
 				"base::right": _interaction_payload("base", "right", "Right control", true),
 			},
 		},
