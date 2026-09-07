@@ -89,3 +89,22 @@ Crew-state differences.
 No money, RNG, RTP, payout, odds, schema, or migration logic changed. No Web
 export, package, tag, publish, version bump, or release gate was run.
 
+## Landing and owner build
+
+Implementation head `8b0b74c3` merged cleanly to `main` at `f8ab6851`.
+Whole-project validation passed on both the implementation head (79.4 seconds)
+and merge head (82.5 seconds).
+
+The first authorized Windows export exposed the previously recorded wrapper
+false negative: the Windows branch assigned Godot's stdout and its final zero
+exit status together, so the array compared unequal to zero after a successful
+pack. `bac514c6` records only `$LASTEXITCODE` after forwarding stdout, and a
+permanent owner-build contract forbids the capture form. That contract passed.
+
+`tools/export_itch.ps1 -Target windows -NoPackage` then passed in 86.6 seconds.
+It created `builds/windows/BeatTheHouse.exe` at 171,530,840 bytes with SHA-256
+`0A0C4004E4E86B4E738A09D1B194D1D57526E3A9A80249FB9664187E6B39AE68`.
+The executable remained alive for the complete 12-second launch-smoke window.
+The process was then stopped by exact pid. No archive or upload artifact was
+created.
+
