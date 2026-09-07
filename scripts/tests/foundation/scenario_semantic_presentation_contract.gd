@@ -712,7 +712,9 @@ static func _check_finalized_expanded_path_and_label(library: Variant, failures:
 	var label_resolved := label_run.scenario_finalize_base_semantics([_production_presentation()], library, _production_layout_context())
 	var label_projection := _dict(label_resolved.get("projection", {}))
 	var label_semantic := _dict(_dict(label_projection.get("semantic_state", {})).get("scene_objects", {}))
-	var adjusted_label := _dict(label_semantic.get("scenario::command_console", {}))
+	# Semantic identities are resolved in stable sort order. The later large_label
+	# record is the one displaced from the already-sealed command_console label.
+	var adjusted_label := _dict(label_semantic.get("scenario::large_label", {}))
 	if not bool(label_resolved.get("ok", false)) or not bool(adjusted_label.get("collision_adjusted", false)):
 		failures.append("Validated finalization did not deterministically separate expanded-only label overlap from production labels: %s" % JSON.stringify(label_resolved.get("errors", [])))
 
@@ -978,11 +980,16 @@ static func _check_atomic_projection_failures(failures: Array) -> void:
 	left["focus_rect"] = Rect2(0.20, 0.30, 44.0 / BOARD_SIZE.x, 44.0 / BOARD_SIZE.y)
 	var right := _base_record("right", "base", "Right control")
 	right["focus_rect"] = Rect2(0.29, 0.30, 44.0 / BOARD_SIZE.x, 44.0 / BOARD_SIZE.y)
+	var scenario_left := _interaction_payload("base", "left", "Left control", true)
+	# Base-only overlap belongs to the base layout contracts. Mark one side as
+	# scenario-owned so this hostile fixture continues exercising the scenario
+	# composition guard after that authority boundary was made explicit.
+	scenario_left["owner_namespace"] = "scenario"
 	var ambiguous_projection := {
 		"semantic_state": {
 			"scene_objects": {}, "actors": {},
 			"interactions": {
-				"base::left": _interaction_payload("base", "left", "Left control", true),
+				"base::left": scenario_left,
 				"base::right": _interaction_payload("base", "right", "Right control", true),
 			},
 		},
