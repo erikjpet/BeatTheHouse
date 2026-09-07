@@ -15,6 +15,7 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 	_check_pusher_v3_machine_data(machine_definition, failures)
 	_check_pusher_v3_10_idle_queue_cups_and_stack(library, game_definition, machine_definition, failures)
 	_check_pusher_v3_10_hold_inputs(library, game_definition, failures)
+	_check_pusher_v3_terminal_settlement_receipt(library, game_definition, failures)
 	_check_pusher_v3_opening_template_cache(machine_definition, failures)
 	_check_pusher_v3_10_opening_generation_guard(machine_definition, failures)
 	_check_pusher_v3_10_stack_support_matrix(machine_definition, failures)
@@ -51,6 +52,24 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 	_check_pusher_v3_items_alarm_and_rumor(library, failures)
 	_check_pusher_v3_generated_rider_production(library, failures)
 	_check_pusher_v3_solver_performance(machine_definition, failures)
+
+
+func _check_pusher_v3_terminal_settlement_receipt(library: ContentLibrary, game_definition: Dictionary, failures: Array) -> void:
+	var game: GameModule = load(str(game_definition.get("module_path", ""))).new()
+	game.setup(game_definition, library)
+	var reopened_session := {"pending_settlement_drop_count": 0}
+	if int(game.call("_consume_pending_empty_settlement", reopened_session, [])) != 0:
+		failures.append("Coin Pusher reopened session announced historical drops as a new empty settlement.")
+	var winning_session := {"pending_settlement_drop_count": 4}
+	if int(game.call("_consume_pending_empty_settlement", winning_session, [{"kind": "coin", "value": 1}])) != 0 \
+			or int(winning_session.get("pending_settlement_drop_count", -1)) != 0 \
+			or int(game.call("_consume_pending_empty_settlement", winning_session, [])) != 0:
+		failures.append("Coin Pusher winning settlement receipt was not consumed before the tray became empty.")
+	var losing_session := {"pending_settlement_drop_count": 3}
+	if int(game.call("_consume_pending_empty_settlement", losing_session, [])) != 3 \
+			or int(losing_session.get("pending_settlement_drop_count", -1)) != 0 \
+			or int(game.call("_consume_pending_empty_settlement", losing_session, [])) != 0:
+		failures.append("Coin Pusher empty settlement did not emit exactly once for the explicit pending batch.")
 
 
 func _check_pusher_v3_realtime_redraw_ownership(failures: Array) -> void:

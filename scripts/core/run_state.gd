@@ -2468,6 +2468,25 @@ func scenario_finalize_installed_environment(library: ContentLibrary, layout_con
 	return _scenario_finalize_trusted_base_semantics(_copy_array(authoritative.get("records", [])), library, layout_context)
 
 
+func _scenario_event_choice_authority(definition: Dictionary, library: ContentLibrary, environment_override: Dictionary = {}) -> Dictionary:
+	var environment := environment_override if not environment_override.is_empty() else current_environment
+	# Once captured, only the immutable pre-sequence event set can seed choice
+	# authority. Live event_ids lose resolved events and may receive unrelated
+	# runtime additions; neither change may shrink or mint the sealed inventory.
+	var sealed_source := _copy_dict(_copy_dict(environment.get("scenario_semantic_inventory", {})).get("source_provenance", {}))
+	var event_ids := _copy_array(sealed_source.get("event_ids", environment.get("event_ids", [])))
+	# Sequence-authored event references are catalog-validated dependencies, even
+	# when the owning layered scenario is projected through another room layer.
+	# Include only those declared references; handler inputs cannot mint authority.
+	var authoring := _copy_dict(definition.get("sequence_authoring", {}))
+	var references := _copy_dict(authoring.get("references", {}))
+	for event_id_value in _copy_array(references.get("events", [])):
+		var event_id := str(event_id_value).strip_edges()
+		if not event_id.is_empty() and not event_ids.has(event_id):
+			event_ids.append(event_id)
+	return EnvironmentSemanticInventoryScript.event_choice_index(event_ids, library)
+
+
 func _scenario_authoritative_environment_for_finalization(definition: Dictionary) -> Dictionary:
 	var result := _scenario_terminal_authoritative_environment(definition)
 	# The pre-sequence host baseline is the only input to the immutable seal.
@@ -2475,6 +2494,10 @@ func _scenario_authoritative_environment_for_finalization(definition: Dictionary
 	# services, routes, games, and layout fixtures can never enter base authority.
 	# The existing inventory digest comparison below remains fail-closed.
 	result = result.duplicate(true)
+	var sealed_source := _copy_dict(_copy_dict(current_environment.get("scenario_semantic_inventory", {})).get("source_provenance", {}))
+	if not sealed_source.is_empty():
+		result["event_ids"] = _copy_array(sealed_source.get("event_ids", result.get("event_ids", [])))
+		result["resolved_event_ids"] = []
 	var baseline_fields := {
 		"scenario_sequence_base_game_ids": "game_ids",
 		"scenario_sequence_base_service_ids": "service_ids",
@@ -2554,13 +2577,22 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 	var action_digest := ScenarioSequenceRuntimeScript.base_interaction_action_authority_digest(interactions)
 	var semantic_environment := _scenario_authoritative_environment_for_finalization(definition)
 	semantic_environment["scenario_base_producer_context"] = producer_context.duplicate(true)
-	var terminal_refresh := refresh_attempt and _scenario_terminal_semantic_refresh(definition)
-	var sealed := _copy_dict(current_environment.get("scenario_semantic_inventory", {})) if terminal_refresh else EnvironmentSemanticInventoryScript.for_instance(semantic_environment, library, interactions, actors)
+	var sealed := EnvironmentSemanticInventoryScript.for_instance(semantic_environment, library, interactions, actors)
+	var prior_sealed := _copy_dict(current_environment.get("scenario_semantic_inventory", {}))
+	# Runtime resolution removes live events and can open routes, but neither is a
+	# new authored semantic source. When the recomputed source provenance is still
+	# exactly the source already sealed for this room/layer, retain that immutable
+	# inventory while refreshing action and presentation state independently.
+	if refresh_attempt and EnvironmentSemanticInventoryScript.validate(prior_sealed).is_empty() \
+			and str(prior_sealed.get("environment_id", "")) == str(sealed.get("environment_id", "")) \
+			and str(prior_sealed.get("layer_id", "")) == str(sealed.get("layer_id", "")) \
+			and JSON.stringify(prior_sealed.get("source_provenance", {})) == JSON.stringify(sealed.get("source_provenance", {})):
+		sealed = prior_sealed
 	var inventory_errors := EnvironmentSemanticInventoryScript.validate(sealed)
 	if not inventory_errors.is_empty(): return _scenario_semantic_finalization_failure(inventory_errors, refresh_attempt)
 	if not bool(definition.get(ScenarioEngineScript.VALIDATED_SEQUENCE_MARKER, false)):
 		var validation_inventory := EnvironmentSemanticInventoryScript.exact_collections(sealed)
-		validation_inventory["event_choices"] = EnvironmentSemanticInventoryScript.event_choice_index(_copy_array(current_environment.get("event_ids", [])), library)
+		validation_inventory["event_choices"] = _scenario_event_choice_authority(definition, library)
 		var definition_errors := ScenarioSequenceSchemaScript.validate_definition(definition, ScenarioOperationRegistryScript, validation_inventory)
 		if not definition_errors.is_empty(): return _scenario_semantic_finalization_failure(definition_errors, refresh_attempt)
 		definition[ScenarioEngineScript.VALIDATED_SEQUENCE_MARKER] = true
@@ -2597,7 +2629,7 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 		refresh_candidate["scenario_semantic_digest"] = next_digest
 		refresh_candidate["scenario_semantic_ready"] = true
 		refresh_candidate["scenario_restore_contract"] = ENV06_6B_SEMANTIC_RESTORE_EQUIVALENCE_V1
-		refresh_candidate["scenario_event_choices"] = EnvironmentSemanticInventoryScript.event_choice_index(_copy_array(refresh_candidate.get("event_ids", [])), library)
+		refresh_candidate["scenario_event_choices"] = _scenario_event_choice_authority(definition, library, refresh_candidate)
 		refresh_candidate["scenario_layout_base_records"] = stamped_records.duplicate(true)
 		refresh_candidate["scenario_layout_context"] = layout_context.duplicate(true)
 		var refreshed_state := ScenarioEngineScript.ensure_sequence_state(refresh_candidate, definition)
@@ -2626,7 +2658,7 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 	candidate["scenario_semantic_digest"] = next_digest
 	candidate["scenario_semantic_ready"] = true
 	candidate["scenario_restore_contract"] = ENV06_6B_SEMANTIC_RESTORE_EQUIVALENCE_V1
-	candidate["scenario_event_choices"] = EnvironmentSemanticInventoryScript.event_choice_index(_copy_array(candidate.get("event_ids", [])), library)
+	candidate["scenario_event_choices"] = _scenario_event_choice_authority(definition, library, candidate)
 	candidate["scenario_layout_base_records"] = stamped_records.duplicate(true)
 	candidate["scenario_layout_context"] = layout_context.duplicate(true)
 	if _copy_dict(candidate.get("scenario_state", {})).is_empty():
