@@ -258,6 +258,7 @@ var last_game_exit_final_projection_rendered := false
 var last_game_result: Dictionary = {}
 var last_music_outcome_schedule: Dictionary = {}
 var last_environment_runtime_result: Dictionary = {}
+var immediate_environment_acknowledgement := ""
 var selected_action_id: String = ""
 var selected_action_kind: String = ""
 var selected_action_label: String = ""
@@ -1086,8 +1087,10 @@ func _complete_back_to_environment() -> void:
 
 func _clear_recent_result_feedback() -> void:
 	last_game_result = {}
+	last_environment_runtime_result = {}
 	last_item_result = {}
 	last_hook_result = {}
+	immediate_environment_acknowledgement = ""
 
 
 # Selects a GameModule action without mutating simulation state.
@@ -12698,7 +12701,11 @@ func _activate_scenario_action(owner_namespace: String, stable_object_id: String
 	if cost > 0:
 		message = "%s Paid $%d." % [message, cost]
 	clear_interaction_focus()
-	_show_message(message)
+	# A room action supersedes any prior travel/game result. Without clearing it,
+	# the visible result panel keeps rendering that stale result while the new
+	# acknowledgement is written only to the intentionally hidden legacy label.
+	_clear_recent_result_feedback()
+	_show_environment_action_acknowledgement(message)
 	_autosave_foundation_run("Room sequence saved.")
 	_refresh()
 	return true
@@ -12760,7 +12767,8 @@ func _execute_scenario_sequence_action(object_data: Dictionary, action: Dictiona
 	# room rebuild. This covers set_local and other presentation-light handlers
 	# without exposing the private value they changed or changing simulation.
 	var accepted_acknowledgement: String = EnvironmentInteractionViewModelScript.accepted_scenario_action_acknowledgement(object_data, action)
-	_show_message(accepted_acknowledgement)
+	_clear_recent_result_feedback()
+	_show_environment_action_acknowledgement(accepted_acknowledgement)
 	# State, causal receipts, layout authority, and renderer snapshot are already
 	# committed synchronously. Drain presentation envelopes and consume the
 	# prepared snapshot at the next UI boundary so the input callback does not
@@ -12824,7 +12832,8 @@ func _activate_world_sequence_action(owner_token: String, object_data: Dictionar
 		return false
 	var message := str(outcome_result.get("message", _copy_dict(result.get("state", {})).get("last_feedback", "Room state updated.")))
 	clear_interaction_focus()
-	_show_message(message)
+	_clear_recent_result_feedback()
+	_show_environment_action_acknowledgement(message)
 	_autosave_foundation_run("Crew sequence saved.")
 	_refresh()
 	return true
@@ -14359,11 +14368,11 @@ func _environment_result_feedback_view() -> Dictionary:
 		return {"visible": false}
 	if _current_game_embeds_result_feedback():
 		return {"visible": false}
-	var result := _recent_result_snapshot()
+	var result := {} if not immediate_environment_acknowledgement.is_empty() else _recent_result_snapshot()
 	var deltas: Dictionary = result.get("deltas", {})
 	var bankroll_delta := int(result.get("bankroll_delta", deltas.get("bankroll_delta", 0)))
 	var suspicion_delta := int(result.get("suspicion_delta", deltas.get("suspicion_delta", 0)))
-	var message := _outcome_message(result)
+	var message := immediate_environment_acknowledgement if not immediate_environment_acknowledgement.is_empty() else _outcome_message(result)
 	if message.is_empty() and message_label != null:
 		message = _player_facing_text(message_label.text)
 	if message.strip_edges().is_empty() and bankroll_delta == 0 and suspicion_delta == 0:
@@ -14767,6 +14776,11 @@ func _show_message(text: String) -> void:
 		message_label.text = display_text
 	if start_status_label != null and run_state == null:
 		start_status_label.text = display_text
+
+
+func _show_environment_action_acknowledgement(text: String) -> void:
+	immediate_environment_acknowledgement = _player_facing_text(text.strip_edges())
+	_show_message(text)
 
 
 func _player_facing_text(text: String) -> String:

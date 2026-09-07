@@ -59,6 +59,19 @@ func _run() -> void:
 		_finish()
 		return
 	report["profile_precondition"] = "tutorial_completed"
+	var action_probe := _requested_action_probe()
+	if not action_probe.is_empty():
+		var probed_action := await _verify_action_isolated(
+			str(action_probe.get("seed", "")),
+			str(action_probe.get("semantic_id", "")),
+			int(action_probe.get("action_index", 0)),
+			str(action_probe.get("node_id", ""))
+		)
+		report["action_probe"] = probed_action
+		if not bool(probed_action.get("passed", false)):
+			_fail("Focused visible action probe did not produce an observable consequence.")
+		_finish()
+		return
 	if OS.get_cmdline_user_args().has("--surface-only"):
 		report["seeds"].append({"seed": "VISIBLE-GAME-LIBRARY", "surface_families_resolved": [], "punchline_layers": [], "crew_milestones": [], "room_objects": [], "actions": []})
 		await _verify_surface_families_via_visible_library()
@@ -79,12 +92,59 @@ func _run() -> void:
 			_fail("Visible production UI did not resolve Crew milestones: %s" % JSON.stringify(crew_missing))
 		_finish()
 		return
+	if OS.get_cmdline_user_args().has("--base-only"):
+		var base_seeds: Array = _requested_base_seeds()
+		for seed in base_seeds:
+			await _verify_seed(seed)
+		var passed_seed_count := 0
+		for seed_value in _array(report.get("seeds", [])):
+			if bool(_dict(seed_value).get("passed", false)):
+				passed_seed_count += 1
+		report["base_only"] = {
+			"passed": passed_seed_count == base_seeds.size(),
+			"passed_seed_count": passed_seed_count,
+			"required_seed_count": base_seeds.size(),
+		}
+		if passed_seed_count != base_seeds.size():
+			_fail("Visible room/action/travel/save pass completed %d of %d requested seeds." % [passed_seed_count, base_seeds.size()])
+		_finish()
+		return
 	for seed in SEEDS:
 		await _verify_seed(seed)
 	await _verify_surface_families_via_visible_library()
 	await _verify_visible_crew_favor_delivery_route()
 	_apply_full_acceptance_bar()
 	_finish()
+
+
+func _requested_base_seeds() -> Array:
+	for argument in OS.get_cmdline_user_args():
+		var value := str(argument)
+		if value.begins_with("--base-seed="):
+			var requested := value.trim_prefix("--base-seed=").strip_edges()
+			if requested in SEEDS:
+				return [requested]
+			_fail("Unsupported focused base seed: %s" % requested)
+			return []
+	return Array(SEEDS)
+
+
+func _requested_action_probe() -> Dictionary:
+	for argument in OS.get_cmdline_user_args():
+		var value := str(argument)
+		if not value.begins_with("--action-probe="):
+			continue
+		var fields := value.trim_prefix("--action-probe=").split("|", false)
+		if fields.size() != 4:
+			_fail("Action probe requires seed|node|semantic-id|action-index.")
+			return {}
+		return {
+			"seed": fields[0],
+			"node_id": fields[1],
+			"semantic_id": fields[2],
+			"action_index": int(fields[3]),
+		}
+	return {}
 
 
 func _verify_seed(seed: String) -> void:
@@ -154,10 +214,15 @@ func _verify_visible_crew_favor_delivery_route() -> void:
 		await _dispose_app(app)
 		report["crew_route"] = route
 		return
+	var lender_target := _current_visible_node_id(app)
 	await _resolve_visible_blocking_dialogue(app)
 	var lender_open := await _activate_exact_room_action(app, "lender:the_crew", 0)
+	route["lender_probe"] = lender_open
 	if not bool(lender_open.get("ok", false)):
 		route["errors"].append("exact lender interaction did not open")
+		report["crew_route"] = route
+		await _dispose_app(app)
+		return
 	else:
 		var accepted := await _choose_visible_talk_choice(app, "accept", "lender_conversation:borrow:the_crew")
 		route["events"].append(accepted)
@@ -197,7 +262,7 @@ func _verify_visible_crew_favor_delivery_route() -> void:
 		if not await _travel_until_exact_node(app, "FIRST-NIGHT-ACE-17", alternate_target, "crew_favor_delivery"):
 			route["errors"].append("favor cadence travel failed at attempt %d" % attempt)
 			break
-		alternate_target = "corner_store" if alternate_target == home_target else home_target
+		alternate_target = lender_target if alternate_target == home_target else home_target
 	if bool(route["job"]):
 		# The authored route begins with a physical pickup in the current room.
 		var pickup_id := _first_visible_room_object_with_prefix(app, "delivery:pickup:")
@@ -206,16 +271,39 @@ func _verify_visible_crew_favor_delivery_route() -> void:
 		var target_id := await _open_map_and_visible_delivery_target(app)
 		if target_id.is_empty():
 			route["errors"].append("delivery map exposed no marked target")
-		elif await _confirm_open_map_target(app, target_id):
-			var handoff_id := _first_visible_room_object_with_prefix(app, "delivery:handoff:")
-			if not handoff_id.is_empty():
-				var handoff := await _activate_exact_room_action(app, handoff_id, 0)
-				route["events"].append(handoff)
-				route["delivery"] = bool(handoff.get("ok", false)) and not str(handoff.get("visible_message", "")).is_empty()
-			else:
-				route["errors"].append("marked destination exposed no exact handoff object")
 		else:
-			route["errors"].append("marked delivery target could not be confirmed")
+			var map := _dict(_dict(app.call("current_screen_snapshot")).get("world_map", {}))
+			var target_node: Dictionary = {}
+			for node_value in _array(map.get("nodes", [])):
+				var node := _dict(node_value)
+				if str(node.get("id", "")) == target_id:
+					target_node = node.duplicate(true)
+					break
+			route["delivery_map"] = {
+				"target_id": target_id,
+				"enabled_ids": _array(map.get("travel_enabled_node_ids", [])).duplicate(),
+				"target": target_node,
+			}
+			var target_directly_enabled := _array(map.get("travel_enabled_node_ids", [])).has(target_id)
+			var arrived := await _confirm_open_map_target(app, target_id) if target_directly_enabled else false
+			if not target_directly_enabled:
+				if await _close_visible_world_map(app):
+					arrived = await _travel_until_exact_node(app, "FIRST-NIGHT-ACE-17", target_id)
+				else:
+					route["errors"].append("delivery map could not close for an indirect marked route")
+			if not arrived:
+				route["errors"].append("marked delivery target could not be reached through visible routes")
+			else:
+				await _resolve_visible_blocking_dialogue(app)
+				var handoff_id := _first_visible_room_object_with_prefix(app, "delivery:handoff:")
+				if handoff_id.is_empty():
+					handoff_id = _first_visible_room_object_with_prefix(app, "crew::package_handoff")
+				if not handoff_id.is_empty():
+					var handoff := await _activate_exact_room_action(app, handoff_id, 0)
+					route["events"].append(handoff)
+					route["delivery"] = bool(handoff.get("ok", false)) and not str(handoff.get("visible_message", "")).is_empty()
+				else:
+					route["errors"].append("marked destination exposed no exact handoff object")
 	for milestone in REQUIRED_CREW_MILESTONES:
 		if bool(route.get(milestone, false)) and not _array(report["seeds"][0]["crew_milestones"]).has(milestone):
 			report["seeds"][0]["crew_milestones"].append(milestone)
@@ -516,6 +604,14 @@ func _visible_event_popup_snapshot(app: Control) -> Dictionary:
 
 func _resolve_visible_blocking_dialogue(app: Control, preserve_event_id: String = "") -> void:
 	for _attempt in range(12):
+		var item_popup := _dict(app.call("current_item_found_popup_snapshot")) if app.has_method("current_item_found_popup_snapshot") else {}
+		if bool(item_popup.get("visible", false)):
+			# This toast deliberately ignores input and owns a fixed three-second
+			# presentation window. Waiting is the only route available to a player;
+			# once it clears, any conversation it temporarily hid becomes clickable.
+			await create_timer(3.2).timeout
+			await _settle(3)
+			continue
 		var coach: Variant = app.get("coach_overlay")
 		var ok_button: Button = coach.get("ok_button") as Button if coach != null else null
 		if ok_button != null and ok_button.is_visible_in_tree() and not ok_button.disabled:
@@ -538,7 +634,16 @@ func _resolve_visible_blocking_dialogue(app: Control, preserve_event_id: String 
 			return
 		var ids := _array(talk.get("choice_ids", []))
 		if ids.is_empty():
-			return
+			# Linear/final TalkDock beats have no choice buttons. A player advances
+			# them by clicking the visible dock itself; leaving that beat open makes
+			# the host's modal guard correctly reject the next room action.
+			var dock: Variant = app.get("talk_dock")
+			var panel: Control = dock.get("panel") as Control if dock != null else null
+			if panel == null or not panel.is_visible_in_tree():
+				return
+			await _push_click(app.get_viewport(), panel.get_global_rect().get_center())
+			await _settle(3)
+			continue
 		await _choose_visible_talk_choice(app, str(ids[0]), str(talk.get("event_id", "")))
 
 
@@ -597,22 +702,35 @@ func _collect_enabled_buttons(node: Node, output: Array[Button]) -> void:
 
 
 func _activate_exact_room_action(app: Control, semantic_id: String, action_index: int) -> Dictionary:
-	var result := {"ok": false, "semantic_id": semantic_id, "action_index": action_index, "visible_message": ""}
+	var result := {"ok": false, "semantic_id": semantic_id, "action_index": action_index, "visible_message": "", "visible_object_ids": [], "route_errors": []}
+	await _resolve_visible_blocking_dialogue(app, "crew_favor_delivery")
 	var canvas := app.get("environment_canvas") as Control
 	if canvas == null or not canvas.visible:
+		result["route_errors"].append("room canvas unavailable")
 		return result
+	for value in _array(_dict(canvas.call("current_view_snapshot")).get("objects", [])):
+		var visible_id := _object_id(_dict(value))
+		if not visible_id.is_empty():
+			result["visible_object_ids"].append(visible_id)
 	var local_failures: Array = []
 	var focused := Fidelity.push_exact_canvas_mouse_click(app.get_viewport(), canvas, semantic_id, local_failures, "fix06_28 exact route action")
 	await _settle(4)
 	if not bool(focused.get("ok", false)):
+		result["route_errors"] = local_failures.duplicate(true)
+		result["overlay_state"] = _dict(app.call("current_overlay_state_snapshot")) if app.has_method("current_overlay_state_snapshot") else {}
+		result["talk"] = _visible_talk_snapshot(app)
+		result["event_popup"] = _visible_event_popup_snapshot(app)
 		return result
 	var panel := _dict(_dict(canvas.call("current_view_snapshot")).get("selected_info", {}))
 	var actions := _array(panel.get("actions", []))
 	if action_index < 0 or action_index >= actions.size():
+		result["route_errors"].append("selected panel exposed %d actions" % actions.size())
+		result["selected_panel"] = panel
 		return result
 	var action := _dict(actions[action_index])
 	var local_position: Vector2 = canvas.call("local_position_for_selected_info_action_button") if action_index == 0 and canvas.has_method("local_position_for_selected_info_action_button") else _board_to_canvas_local(canvas, _rect(action.get("button_rect", {})).get_center())
 	if local_position.x < 0.0:
+		result["route_errors"].append("selected action has no production hit position")
 		return result
 	await _push_click(app.get_viewport(), canvas.get_global_rect().position + local_position)
 	await _settle(8)
@@ -649,22 +767,32 @@ func _activate_first_ordinary_room_action(app: Control) -> Dictionary:
 	var canvas := app.get("environment_canvas") as Control
 	if canvas == null or not canvas.visible:
 		return {"ok": false}
-	for value in _array(_dict(canvas.call("current_view_snapshot")).get("objects", [])):
-		var object_id := _object_id(_dict(value))
-		if object_id.is_empty() or object_id == "lender:the_crew" or object_id.begins_with("travel:") or object_id.begins_with("delivery:"):
-			continue
-		var local_failures: Array = []
-		var focused := Fidelity.push_exact_canvas_mouse_click(app.get_viewport(), canvas, object_id, local_failures, "fix06_28 favor cadence action")
-		await _settle(3)
-		if not bool(focused.get("ok", false)):
-			continue
-		var panel := _dict(_dict(canvas.call("current_view_snapshot")).get("selected_info", {}))
-		if not _array(panel.get("actions", [])).is_empty():
-			return await _activate_exact_room_action(app, object_id, 0)
+	var objects := _array(_dict(canvas.call("current_view_snapshot")).get("objects", []))
+	# Favor cadence must not spend the route's travel bankroll merely because a
+	# shop item happens to render first. Prefer ordinary narrative/room actions;
+	# a purchase remains the last visible fallback.
+	for preferred_prefix in ["event:", "scenario::", "home_sleep:", "service:", "game:", "item:"]:
+		for value in objects:
+			var object_id := _object_id(_dict(value))
+			if object_id.is_empty() or not object_id.begins_with(preferred_prefix) \
+					or object_id == "lender:the_crew" or object_id.begins_with("travel:") or object_id.begins_with("delivery:"):
+				continue
+			var local_failures: Array = []
+			var focused := Fidelity.push_exact_canvas_mouse_click(app.get_viewport(), canvas, object_id, local_failures, "fix06_28 favor cadence action")
+			await _settle(3)
+			if not bool(focused.get("ok", false)):
+				continue
+			var panel := _dict(_dict(canvas.call("current_view_snapshot")).get("selected_info", {}))
+			if not _array(panel.get("actions", [])).is_empty():
+				return await _activate_exact_room_action(app, object_id, 0)
 	return {"ok": false}
 
 
 func _open_map_and_visible_delivery_target(app: Control) -> String:
+	# Picking up the package uses the production item-found toast. It owns input
+	# for its fixed presentation window, so a player must wait for it to clear
+	# before the room's Travel target can receive the next click.
+	await _resolve_visible_blocking_dialogue(app)
 	var canvas := app.get("environment_canvas") as Control
 	var local_failures: Array = []
 	var opened := Fidelity.push_exact_canvas_mouse_click(app.get_viewport(), canvas, "travel:leave", local_failures, "fix06_28 delivery map", true)
@@ -690,6 +818,18 @@ func _confirm_open_map_target(app: Control, target_id: String) -> bool:
 		return false
 	await _push_click(app.get_viewport(), confirm.get_global_rect().get_center())
 	await _settle(24)
+	var screen := _dict(app.call("current_screen_snapshot"))
+	return not bool(screen.get("world_map_overlay_visible", false)) \
+			and str(_dict(screen.get("world_map", {})).get("current_node_id", "")) == target_id
+
+
+func _close_visible_world_map(app: Control) -> bool:
+	var overlay := app.get("world_map_overlay") as Control
+	var close_button := _find_button_with_text(overlay, "Close")
+	if close_button == null:
+		return false
+	await _push_click(app.get_viewport(), close_button.get_global_rect().get_center())
+	await _settle(5)
 	return not bool(_dict(app.call("current_screen_snapshot")).get("world_map_overlay_visible", false))
 
 
@@ -825,8 +965,10 @@ func _find_world_map_node_button(node: Node, target_id: String) -> Button:
 func _verify_selection(app: Control, canvas: Control, object_data: Dictionary, seed: String) -> Dictionary:
 	var semantic_id := _object_id(object_data)
 	var label := str(object_data.get("label", "")).strip_edges()
-	var icon := str(object_data.get("icon_key", object_data.get("asset_path", object_data.get("prop", "")))).strip_edges()
-	var description := str(object_data.get("description", "")).strip_edges()
+	# Some ordinary fixtures are drawn by their renderer family rather than an
+	# authored texture key. The rendered object type is their icon authority.
+	var icon := _first_visible_text(object_data, ["icon_key", "asset_path", "prop", "visual_key", "type"])
+	var description := _first_visible_text(object_data, ["description", "short_description", "action_summary"])
 	var interactive := bool(object_data.get("visible", true)) \
 		and bool(object_data.get("enabled", true)) \
 		and not bool(object_data.get("disabled", false)) \
@@ -859,6 +1001,8 @@ func _verify_selection(app: Control, canvas: Control, object_data: Dictionary, s
 	var view: Dictionary = canvas.call("current_view_snapshot")
 	var panel := _dict(view.get("selected_info", {}))
 	var lines := _array(panel.get("lines", []))
+	if description.is_empty() and not lines.is_empty():
+		description = str(lines[0]).strip_edges()
 	var ok := bool(routed.get("ok", false)) \
 		and Fidelity.exact_selection_matches(app, semantic_id) \
 		and bool(panel.get("visible", false)) \
@@ -928,9 +1072,7 @@ func _verify_action_isolated(seed: String, semantic_id: String, action_index: in
 		return action_record
 	var before := Fidelity.observable_host_snapshot(app)
 	await _push_click(app.get_viewport(), canvas.get_global_rect().position + local_action_position)
-	await _settle(8)
-	var after := Fidelity.observable_host_snapshot(app)
-	var evidence := Fidelity.observable_consequence_evidence(before, after, semantic_id)
+	var evidence := await _await_observable_action_evidence(app, before, semantic_id)
 	var ok := bool(evidence.get("ok", false))
 	if not ok:
 		_fail("%s/%s action %d (%s) accepted pointer input without an admissible visible consequence." % [seed, semantic_id, action_index, str(action.get("label", ""))])
@@ -943,6 +1085,19 @@ func _verify_action_isolated(seed: String, semantic_id: String, action_index: in
 	}, true)
 	await _dispose_app(app)
 	return action_record
+
+
+func _await_observable_action_evidence(app: Control, before: Dictionary, semantic_id: String) -> Dictionary:
+	var evidence := Fidelity.observable_consequence_evidence(before, Fidelity.observable_host_snapshot(app), semantic_id)
+	# Scenario actions commit synchronously but intentionally publish their room
+	# rebuild and acknowledgement on deferred UI boundaries. Observe those real
+	# boundaries instead of sampling an arbitrary early frame.
+	for _frame in range(120):
+		if bool(evidence.get("ok", false)):
+			return evidence
+		await process_frame
+		evidence = Fidelity.observable_consequence_evidence(before, Fidelity.observable_host_snapshot(app), semantic_id)
+	return evidence
 
 
 func _travel_one_exact_leg(app: Control, seed: String, target_id: String) -> bool:
@@ -973,8 +1128,8 @@ func _travel_one_exact_leg(app: Control, seed: String, target_id: String) -> boo
 func _travel_until_exact_node(app: Control, seed: String, target_id: String, preserve_event_id: String = "") -> bool:
 	var visited: Dictionary = {}
 	for _hop in range(12):
-		if str(_visible_event_popup_snapshot(app).get("event_id", "")) == preserve_event_id \
-				or str(_visible_talk_snapshot(app).get("event_id", "")) == preserve_event_id:
+		if not preserve_event_id.is_empty() and (str(_visible_event_popup_snapshot(app).get("event_id", "")) == preserve_event_id \
+				or str(_visible_talk_snapshot(app).get("event_id", "")) == preserve_event_id):
 			return true
 		var map := _dict(_dict(app.call("current_screen_snapshot")).get("world_map", {}))
 		var current_id := str(map.get("current_node_id", ""))
@@ -1129,6 +1284,14 @@ func _clear_room_focus_by_pointer(app: Control, canvas: Control) -> void:
 			await _settle(4)
 			await create_timer(0.2).timeout
 			return
+
+
+func _first_visible_text(source: Dictionary, keys: Array) -> String:
+	for key_value in keys:
+		var value := str(source.get(str(key_value), "")).strip_edges()
+		if not value.is_empty():
+			return value
+	return ""
 
 
 func _settle(frames: int = 4) -> void:

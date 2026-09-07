@@ -40,6 +40,11 @@ const BlackjackActionAuthorityScript := preload("res://scripts/core/blackjack_ac
 const GameRitualRuntimeScript := preload("res://scripts/core/game_ritual_runtime.gd")
 
 const ENV06_6B_SEMANTIC_RESTORE_EQUIVALENCE_V1 := "ENV06_6B_SEMANTIC_RESTORE_EQUIVALENCE_V1"
+const SCENARIO_UNCONSUMED_DYNAMIC_INTERACTION_SOURCES := [
+	"numbers_state.venue_status",
+	"numbers_state.silas_presence",
+	"active_delivery_run.handoff_pending_node_id",
+]
 const SCENARIO_DERIVED_NONCAUSAL_ENVIRONMENT_FIELDS := [
 	"scenario_sequence_projection",
 	"scenario_sequence_lifecycle_errors",
@@ -1708,7 +1713,11 @@ func set_environment(environment_data: Dictionary, debug_timing: Dictionary = {}
 		# V2 initialization/reentry is intentionally deferred until the controller's
 		# final pre-overlay interaction record set and ContentLibrary are sealed.
 		current_environment.erase("scenario_semantic_ready")
-		current_environment.erase("scenario_semantic_inventory")
+		# Persistent storage retains the immutable inventory and its source
+		# provenance. Keep a well-formed, exactly bound copy available to the
+		# mandatory rebuild; newly generated or malformed rooms still start empty.
+		if not _persisted_scenario_inventory_matches_environment(current_environment):
+			current_environment.erase("scenario_semantic_inventory")
 		current_environment.erase("scenario_base_interactions")
 		current_environment.erase("scenario_base_actors")
 		current_environment.erase("scenario_base_producer_context")
@@ -2557,7 +2566,9 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 	_ensure_scenario_host_public_context()
 	var definition := _scenario_sequence_definition_readonly()
 	if not ScenarioSequenceSchemaScript.is_sequence(definition): return {"ok": true, "inactive": true, "errors": []}
-	var refresh_attempt := bool(current_environment.get("scenario_semantic_ready", false))
+	var refresh_attempt := bool(current_environment.get("scenario_semantic_ready", false)) \
+			or current_environment.has("scenario_semantic_inventory_version") \
+			or current_environment.has("scenario_semantic_digest")
 	if library == null: return _scenario_semantic_finalization_failure(["Scenario semantic finalization requires ContentLibrary."], refresh_attempt)
 	var producer_context := _scenario_base_producer_context()
 	var stamped := EnvironmentBaseSemanticRecordsScript.stamp_interactable_records(trusted_records, current_environment, library, producer_context)
@@ -2579,14 +2590,17 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 	semantic_environment["scenario_base_producer_context"] = producer_context.duplicate(true)
 	var sealed := EnvironmentSemanticInventoryScript.for_instance(semantic_environment, library, interactions, actors)
 	var prior_sealed := _copy_dict(current_environment.get("scenario_semantic_inventory", {}))
-	# Runtime resolution removes live events and can open routes, but neither is a
-	# new authored semantic source. When the recomputed source provenance is still
-	# exactly the source already sealed for this room/layer, retain that immutable
-	# inventory while refreshing action and presentation state independently.
-	if refresh_attempt and EnvironmentSemanticInventoryScript.validate(prior_sealed).is_empty() \
+	var valid_prior_identity := refresh_attempt and EnvironmentSemanticInventoryScript.validate(prior_sealed).is_empty() \
 			and str(prior_sealed.get("environment_id", "")) == str(sealed.get("environment_id", "")) \
-			and str(prior_sealed.get("layer_id", "")) == str(sealed.get("layer_id", "")) \
-			and JSON.stringify(prior_sealed.get("source_provenance", {})) == JSON.stringify(sealed.get("source_provenance", {})):
+			and str(prior_sealed.get("layer_id", "")) == str(sealed.get("layer_id", ""))
+	# An authenticated terminal transition may consume or disable its declared
+	# interactions while flushing the departure fact. Those are consequences of
+	# the already-sealed sequence, not new semantic sources, so retain the prior
+	# immutable inventory. During non-terminal refreshes, require exact source
+	# provenance equality before doing the same.
+	var terminal_refresh := refresh_attempt and _scenario_terminal_semantic_refresh(definition)
+	if valid_prior_identity and (terminal_refresh \
+			or _scenario_refresh_source_matches_prior(_copy_dict(prior_sealed.get("source_provenance", {})), _copy_dict(sealed.get("source_provenance", {})))):
 		sealed = prior_sealed
 	var inventory_errors := EnvironmentSemanticInventoryScript.validate(sealed)
 	if not inventory_errors.is_empty(): return _scenario_semantic_finalization_failure(inventory_errors, refresh_attempt)
@@ -2692,6 +2706,39 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 	current_environment.erase("scenario_restore_pending_trusted_rebuild")
 	if not definition_id.is_empty(): _scenario_sequence_definition_cache[definition_id] = definition.duplicate(true)
 	return _finalized_scenario_layout_result(false, next_digest, _copy_dict(reentry.get("state", {})), stamped_records, candidate_layout)
+
+
+func _scenario_refresh_source_matches_prior(prior_source: Dictionary, next_source: Dictionary) -> bool:
+	if JSON.stringify(prior_source) == JSON.stringify(next_source):
+		return true
+	var comparable_next := next_source.duplicate(true)
+	var prior_authority := _copy_array(prior_source.get("base_interaction_authority", []))
+	var next_authority: Array = []
+	for record_value in _copy_array(next_source.get("base_interaction_authority", [])):
+		var record := _copy_dict(record_value)
+		# These records are accepted only after their closed producer has passed
+		# EnvironmentBaseSemanticRecords validation. A newly appearing record is
+		# unrelated runtime UI, so it cannot rewrite an existing scenario seal.
+		if SCENARIO_UNCONSUMED_DYNAMIC_INTERACTION_SOURCES.has(str(record.get("source_field", ""))) \
+				and not prior_authority.has(record):
+			continue
+		next_authority.append(record)
+	comparable_next["base_interaction_authority"] = next_authority
+	return JSON.stringify(prior_source) == JSON.stringify(comparable_next)
+
+
+func _persisted_scenario_inventory_matches_environment(environment: Dictionary) -> bool:
+	var inventory := _copy_dict(environment.get("scenario_semantic_inventory", {}))
+	if inventory.is_empty() or not EnvironmentSemanticInventoryScript.validate(inventory).is_empty():
+		return false
+	if typeof(environment.get("scenario_semantic_inventory_version")) != TYPE_INT \
+			or typeof(environment.get("scenario_semantic_digest")) != TYPE_STRING:
+		return false
+	var environment_id := str(environment.get("id", environment.get("world_node_id", environment.get("archetype_id", "")))).strip_edges()
+	return int(inventory.get("schema_version", 0)) == int(environment.get("scenario_semantic_inventory_version", 0)) \
+			and str(inventory.get("digest", "")) == str(environment.get("scenario_semantic_digest", "")) \
+			and str(inventory.get("environment_id", "")) == environment_id \
+			and str(inventory.get("layer_id", "")) == str(environment.get("current_layer_id", "")).strip_edges()
 
 
 func _scenario_canonical_base_interaction_geometry(records: Array) -> Array:

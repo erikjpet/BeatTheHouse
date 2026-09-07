@@ -29,6 +29,7 @@ static func check(library: Variant, failures: Array) -> void:
 	_check_finalized_canvas_authority(library, failures)
 	_check_atomic_finalization_layout(library, failures)
 	_check_mutable_event_and_route_source_authority(library, failures)
+	_check_persisted_inventory_dynamic_refresh_guard(failures)
 	_check_atomic_post_operation_layout(library, failures)
 	_check_passive_atomic_commits(library, failures)
 	_check_collision_adjusted_renderer_authority(failures)
@@ -38,6 +39,30 @@ static func check(library: Variant, failures: Array) -> void:
 	_check_sealed_semantic_collection_membership(library, failures)
 	_check_committed_projection_mismatch(library, failures)
 	_check_atomic_projection_failures(failures)
+
+
+static func _check_persisted_inventory_dynamic_refresh_guard(failures: Array) -> void:
+	var run_state := RunStateScript.new()
+	var prior_source := {"event_ids": ["sealed_event"], "base_interaction_authority": []}
+	var delivery_source := prior_source.duplicate(true)
+	delivery_source["base_interaction_authority"] = [{
+		"presentation_object_id": "delivery:handoff:back_alley",
+		"source_field": "active_delivery_run.handoff_pending_node_id",
+		"source_record_id": "back_alley",
+	}]
+	if not run_state._scenario_refresh_source_matches_prior(prior_source, delivery_source):
+		failures.append("A newly validated delivery handoff rewrote an existing room seal instead of remaining unconsumed dynamic UI.")
+	var unauthorized_source := prior_source.duplicate(true)
+	unauthorized_source["base_interaction_authority"] = [{
+		"presentation_object_id": "scenario::forged",
+		"source_field": "scene_objects",
+		"source_record_id": "forged",
+	}]
+	if run_state._scenario_refresh_source_matches_prior(prior_source, unauthorized_source):
+		failures.append("Scenario refresh admitted a newly minted non-dynamic interaction source.")
+	var consumed_delivery := delivery_source.duplicate(true)
+	if run_state._scenario_refresh_source_matches_prior(consumed_delivery, prior_source):
+		failures.append("Scenario refresh silently removed a previously consumed dynamic interaction source.")
 
 
 static func _check_finalized_canvas_authority(library: Variant, failures: Array) -> void:

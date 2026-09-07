@@ -193,6 +193,7 @@ static func observable_host_snapshot(host: Variant) -> Dictionary:
 		"feedback": _host_snapshot(host, "current_environment_result_feedback_snapshot"),
 		"event_popup": _host_snapshot(host, "current_event_choice_popup_snapshot"),
 		"talk": _host_snapshot(host, "current_talk_dock_snapshot"),
+		"inventory": _host_snapshot(host, "current_run_inventory_snapshot"),
 		"message": {
 			"visible": message_label != null and message_label.is_visible_in_tree(),
 			"text": message_label.text.strip_edges() if message_label != null else "",
@@ -210,7 +211,7 @@ static func observable_consequence_evidence(
 	target_semantic_id: String
 ) -> Dictionary:
 	var channels: Array[String] = []
-	for channel in ["message", "feedback", "event_popup", "talk", "consequence"]:
+	for channel in ["message", "feedback", "event_popup", "talk", "inventory", "consequence"]:
 		var before_channel := _visible_message_signature(_dict(before.get(channel, {})))
 		var after_channel := _visible_message_signature(_dict(after.get(channel, {})))
 		if bool(after_channel.get("visible", false)) and JSON.stringify(before_channel) != JSON.stringify(after_channel):
@@ -255,7 +256,7 @@ static func _host_snapshot(host: Variant, method_name: String) -> Dictionary:
 
 static func _visible_message_signature(snapshot: Dictionary) -> Dictionary:
 	var signature := {"visible": bool(snapshot.get("visible", false))}
-	for key in ["title", "message", "text", "body", "summary", "detail", "description", "acknowledgement", "lines", "choices"]:
+	for key in ["title", "message", "text", "body", "summary", "detail", "description", "acknowledgement", "lines", "choices", "mode", "interaction_kind", "items", "shop_description"]:
 		if snapshot.has(key):
 			signature[key] = snapshot.get(key)
 	return signature

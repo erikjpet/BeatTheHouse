@@ -497,11 +497,14 @@ func _foundation_options() -> Dictionary:
 
 
 func _foundation_default_suite() -> String:
-	return "contracts"
+	# This file is an inheritance shard, not a complete runner: several checks
+	# intentionally live in later shards. Direct execution must fail closed
+	# instead of printing PASS after a missing dynamic call.
+	return "abstract" if get_script().resource_path == "res://scripts/tests/foundation/check_core_content.gd" else "contracts"
 
 
 func _foundation_runner_supported_suites() -> Array:
-	return FOUNDATION_SUITES.duplicate()
+	return [] if get_script().resource_path == "res://scripts/tests/foundation/check_core_content.gd" else FOUNDATION_SUITES.duplicate()
 
 
 func _foundation_normalized_suite(raw_suite: String) -> String:
