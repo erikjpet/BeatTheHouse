@@ -164,6 +164,8 @@ func _run() -> void:
 	var punchline_scenario := run_state.scenario_for_node(PUNCHLINE_ID)
 	_require(str(run_state.current_environment.get("current_layer_id", "")) == "club", "The Punchline did not begin on its public L1 club layer.")
 	_require(not punchline_scenario.is_empty() and str(run_state.current_environment.get("scenario_id", "")) == str(punchline_scenario.get("id", "")), "The Punchline lost its Tier-2 scenario while entering L1.")
+	var punchline_finalized := run_state.scenario_finalize_installed_environment(library, {"viewport_size": {"x": 1280, "y": 720}})
+	_require(bool(punchline_finalized.get("ok", false)), "The Punchline L1 club layer did not finalize its semantic records: %s." % JSON.stringify(punchline_finalized.get("errors", [])))
 	var punchline_layers := {"club": _layer_surface_inventory(run_state.current_environment)}
 	var side_door: EventModule = EventModuleScript.new()
 	side_door.setup(library.event("side_door"), library)
