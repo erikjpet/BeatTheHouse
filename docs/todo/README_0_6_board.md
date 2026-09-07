@@ -34,6 +34,14 @@ Use these distinctions when choosing work:
 The complete file-by-file reconciliation and recommended execution order are
 in `docs/plans/0.6_todo_state_audit_2026-08-31.md`.
 
+## Playtest findings intake
+
+The owner build and known limitations are recorded in
+`docs/plans/0.6_playtest_handoff.md`. Owner notes become scoped `fix06_*` rows
+through the playtest intake process. Cosmetic, pacing and balance notes remain
+findings until the owner prioritizes them; direction changes are owner decisions
+recorded in the roadmap and are never guessed by an agent.
+
 Family 2 is now closed on the exact-tree remediation
 `57b01ed40cf9fdabf2de016d9df6ef2e8db42019`. The release-gate report is
 `docs/plans/world06_7_final_closeout.md`; all seven `world06_*` prompts are
@@ -243,7 +251,7 @@ the release, and it is where release activity finally happens.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | chain06_1 | `../todone/chain06_1_character_chains_prompt.md` | DONE | town06_2, env06_2, env06_3 | playtest06_1 | PM:Codex/sub:character-chains | 2026-08-17 | 2026-08-17 | PM verified six chains/21 beats, all three Cass endings, deterministic anchors, prefix safety, bounded effects, actionable icon projection, save compatibility, and combined release gates PASS. |
 | content06_1 | `../todone/content06_1_items_events_expansion_prompt.md` | DONE | env06_2, env06_3, crew06_6 | playtest06_1 | PM:Codex/sub:content-depth | 2026-08-17 | 2026-08-18 | Owner selected within-run-only souvenir presentation; PM verified all compatible content, real consumers, economy-audit restraint, and combined gates. |
-| playtest06_1 | `playtest06_1_playtest_readiness_prompt.md` | TODO | ALL other rows DONE (except parked) | owner playtest | | | | Verification, playability sweep, honest handoff report, local build. No version bump, no tag, no packaging, no publish, no final balance tuning. |
+| playtest06_1 | `../todone/playtest06_1_playtest_readiness_prompt.md` | DONE | ALL other rows DONE (except parked) | owner playtest | `/root` | 2026-09-07 | 2026-09-07 | Owner fast-path complete on playable source `b6093f5c`: 8 passing mouse seeds of 9 exercised, six surface families, Punchline L1→L2→L3/save/revisit, nonzero idle liveness, migration admission, verified Windows export and boot. Honest limitations/deferred gates are in `docs/plans/0.6_playtest_handoff.md`; no release activity occurred. |
 
 ### Parked until after the owner's playtest
 

@@ -1,12 +1,12 @@
-Status: TODO
+Status: DONE
 Board row: `playtest06_1` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record (fill on completion)
 
-- **Completed:** —
-- **Completion/implementation commits:** —
-- **Verification:** —
-- **Deviations:** —
+- **Completed:** 2026-09-07 by `/root`
+- **Completion/implementation commits:** playable source `b6093f5c`; this archival/documentation closeout commit
+- **Verification:** project validation PASS; v0.5.1 37/37 and mid-0.6 3/3 migration admission PASS; eight full mouse-driven seed passes from nine exercised; six surface families PASS; Punchline L1→L2→L3/save/revisit PASS; idle liveness PASS with 122 redraws, 3 draws and 0.249 ms nonzero average; verified Windows export booted from `builds/windows/BeatTheHouse.exe`.
+- **Deviations:** Owner-directed `closeout06_2` superseded this prompt's release-level matrix. Full suites/performance, Web export, exhaustive composition/terminal soak, balance follow-ons, visual `env06_9`, voice and release activity were explicitly deferred and not run. One delivery-seed QA failure, the visited-scenario/Crew-rank digest finding and a Windows export-wrapper false negative are retained in `docs/plans/0.6_playtest_handoff.md`.
 
 # Agent Prompt — 0.6 playtest06_1: Playtest Readiness & Owner Handoff
 
