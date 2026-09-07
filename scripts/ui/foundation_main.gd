@@ -610,6 +610,7 @@ var run_layout_last_screen_size := Vector2(-1.0, -1.0)
 var accessibility_tree_transform_active := false
 var web_audio_unlock_refresh_scheduled := false
 var web_audio_unlock_refresh_count := 0
+var force_deferred_startup_for_test := false
 
 const WEB_AUDIO_UNLOCK_REFRESH_ATTEMPTS := 4
 const WEB_AUDIO_UNLOCK_REFRESH_DELAY_SECONDS := 0.20
@@ -7778,11 +7779,11 @@ func _build_ui() -> void:
 	screen_stack_root.add_child(start_screen)
 	_build_start_screen()
 
-	# Web only needs the start screen for its first interactive frame. Build the
-	# much larger run shell one bounded stage per frame behind the menu instead
-	# of turning all overlays into one visible startup stall. An immediate New
-	# Run still completes any remaining stages synchronously.
-	if OS.has_feature("web"):
+	# Distribution builds only need the start screen for their first interactive
+	# frame. Build the much larger run shell one bounded stage per frame behind
+	# the menu. An immediate New Run still completes any remaining stages
+	# synchronously, so staging cannot expose a partially usable game screen.
+	if OS.has_feature("web") or _defer_start_menu_secondary_panels():
 		call_deferred("_prewarm_run_ui_after_web_start")
 	else:
 		_ensure_run_ui_built()
@@ -7939,7 +7940,12 @@ func _ensure_main_menu_background_built() -> void:
 
 
 func _defer_start_menu_secondary_panels() -> bool:
-	return PerfTelemetryOverlayScript.runtime_enabled()
+	# Content validation alone crossed 17 seconds on the 0.6 production catalog.
+	# Release exports use the already-supported start-menu-only content load and
+	# validate scenario definitions lazily at their trusted runtime boundary.
+	return force_deferred_startup_for_test \
+		or OS.has_feature("distribution_build") \
+		or PerfTelemetryOverlayScript.runtime_enabled()
 
 
 func _ensure_start_menu_config_panels_built() -> void:
