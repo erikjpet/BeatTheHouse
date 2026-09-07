@@ -4,6 +4,7 @@ const ScenarioSemanticViewModelScript := preload("res://scripts/ui/scenario_sema
 const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd")
 const ScenarioLayoutResolverScript := preload("res://scripts/core/scenario_layout_resolver.gd")
 const ScenarioExtensionDispatchScript := preload("res://scripts/core/scenario_extension_dispatch.gd")
+const EnvironmentInteractionViewModelScript := preload("res://scripts/ui/environment_interaction_view_model.gd")
 
 const BOARD_SIZE := Vector2(900.0, 430.0)
 const SCENARIO_OBJECT_ID := "scenario:scenario:console:night"
@@ -20,10 +21,177 @@ class ActivationCapture:
 
 static func check(failures: Array) -> void:
 	_check_composed_actions_and_geometry(failures)
+	_check_observable_action_consequence(failures)
+	_check_authored_action_observability_census(failures)
 	_check_small_screen_expansion(failures)
 	_check_renderer_failure_payload_is_empty(failures)
 	_check_competing_augment_presentation(failures)
 	_check_fail_closed_presentation(failures)
+
+
+static func _check_observable_action_consequence(failures: Array) -> void:
+	var canvas = PixelSceneCanvasScript.new()
+	var before := _dict(canvas.call("_apply_draw_hints", {
+		"visual_key": "scenario_scene service rope barrier",
+		"icon_key": "room_barrier",
+		"state": "intact",
+		"prop": "",
+	}, "scenario_object", 0))
+	var after := _dict(canvas.call("_apply_draw_hints", {
+		"visual_key": "scenario_scene service rope barrier",
+		"icon_key": "room_barrier",
+		"state": "acted_open_public_rail",
+		"prop": "",
+	}, "scenario_object", 0))
+	if str(before.get("prop", "")) != "room_barrier" or str(after.get("prop", "")) != "room_barrier":
+		failures.append("Observable-action rendering stopped preserving the authored physical object identity.")
+	if str(before.get("prop_state_variant", "")).is_empty() or str(after.get("prop_state_variant", "")).is_empty() or before.get("prop_state_variant") == after.get("prop_state_variant"):
+		failures.append("change_scene_object public state does not produce a distinct persistent room-prop variant.")
+	var record := {
+		"object_id": "scenario::public_rail",
+		"object_type": "scenario_scene_object",
+		"visual_type": "scenario_object",
+		"owner_namespace": "scenario",
+		"stable_object_id": "public_rail",
+		"label": "Public observer rail",
+		"icon_key": "room_barrier",
+		"state": "intact",
+		"visible": true,
+		"enabled": true,
+		"interactive": true,
+		"focus_rect": {"x": 0.2, "y": 0.2, "w": 0.12, "h": 0.16},
+	}
+	canvas.render_environment_snapshot({"id": "observable_before", "archetype_id": "bar", "interactable_objects": [record]})
+	var rendered_before := _record_by_id(_array(canvas.current_view_snapshot().get("objects", [])), "scenario::public_rail")
+	record["state"] = "acted_open_public_rail"
+	canvas.render_environment_snapshot({"id": "observable_after", "archetype_id": "bar", "interactable_objects": [record]})
+	var rendered_after := _record_by_id(_array(canvas.current_view_snapshot().get("objects", [])), "scenario::public_rail")
+	if str(rendered_before.get("prop_state_variant", "")).is_empty() or str(rendered_after.get("prop_state_variant", "")).is_empty() or rendered_before.get("prop_state_variant") == rendered_after.get("prop_state_variant"):
+		failures.append("The production canvas snapshot did not consume changed public state into its room-prop variant.")
+	if JSON.stringify(rendered_after).contains("local_state"):
+		failures.append("Observable room-prop state exposed private scenario local_state.")
+	if str(canvas.call("_public_prop_state_label", "traitor_grievance_rigged_draw_unrevealed_turn")) != "CHANGED":
+		failures.append("Room-prop marker turns unapproved state tokens into visible hidden-state text.")
+	if str(canvas.call("_fallback_event_prop", "scenario_scene", "", "opened exit")) != "side_door":
+		failures.append("Fallback prop selection does not consume public scene-object state.")
+	var expected_game_props := {
+		"scratch_tickets": ["novelty", "machine"],
+		"pull_tabs": ["novelty", "machine"],
+		"slot": ["slots", "machine"],
+		"bar_dice": ["dice", "dice_table"],
+		"blackjack": ["cards", "card_table"],
+		"roulette": ["wheel", "roulette_table"],
+		"video_poker": ["cards", "video_poker_machine"],
+		"coin_pusher": ["coin_pusher", "coin_pusher_machine"],
+	}
+	for source_value in expected_game_props.keys():
+		var source_id := str(source_value)
+		var expectation := expected_game_props.get(source_value, []) as Array
+		var game_hint := _dict(canvas.call("_apply_draw_hints", {
+			"source_id": source_id,
+			"visual_key": str(expectation[0]),
+			"prop": "slot_machine" if source_id == "coin_pusher" else "",
+		}, "game", 0))
+		if str(game_hint.get("prop", "")) != str(expectation[1]):
+			failures.append("Production room prop mapping does not distinguish game %s." % source_id)
+	var acknowledgement := EnvironmentInteractionViewModelScript.accepted_scenario_action_acknowledgement(
+		{"label": "Public observer rail", "local_state": {"traitor": true, "grievance": 2, "rigged_draw": true, "unrevealed_turn": 7}},
+		{"id": "set_local_private", "label": "Open the public rail", "handler": "set_local", "inputs": {"key": "traitor", "value": true}}
+	)
+	if acknowledgement != "Done at Public observer rail: Open the public rail.":
+		failures.append("Accepted scenario actions do not produce an immediate label-bound acknowledgement.")
+	if acknowledgement.contains("traitor") or acknowledgement.contains("grievance") or acknowledgement.contains("rigged") or acknowledgement.contains("unrevealed") or acknowledgement.contains("turn") or acknowledgement.contains("true"):
+		failures.append("Scenario action acknowledgement leaked private local/action input state.")
+	var next_acknowledgement := EnvironmentInteractionViewModelScript.accepted_scenario_action_acknowledgement(
+		{"label": "Public observer rail"},
+		{"id": "set_local_second", "label": "Close the public rail", "handler": "set_local", "inputs": {"key": "traitor", "value": false}}
+	)
+	if next_acknowledgement != "Done at Public observer rail: Close the public rail." or next_acknowledgement.contains("Open the public rail"):
+		failures.append("Back-to-back set_local acknowledgements reused stale prior-action feedback.")
+	canvas.free()
+
+
+static func _check_authored_action_observability_census(failures: Array) -> void:
+	var canvas = PixelSceneCanvasScript.new()
+	var stats := {"handlers": 0, "set_local": 0, "player_actions": 0, "player_set_local": 0, "change_scene_object": 0}
+	var signatures_by_target: Dictionary = {}
+	var files := DirAccess.get_files_at("res://data/environments/scenario_sequences")
+	files.sort()
+	for file_value in files:
+		var file_name := str(file_value)
+		if not file_name.ends_with(".json"):
+			continue
+		var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/environments/scenario_sequences/%s" % file_name))
+		if typeof(parsed) != TYPE_DICTIONARY:
+			failures.append("Observable-action census could not parse scenario package %s." % file_name)
+			continue
+		_collect_authored_action_observability(parsed, canvas, stats, signatures_by_target, failures)
+	# The original 729 measurement counts every handler-bearing definition. On
+	# the exact package inventory, 673 are clickable available_actions; the
+	# remaining 48 set_local and 8 publish_feedback handlers are fact
+	# subscriptions and therefore have no player click to acknowledge.
+	if int(stats.get("handlers", 0)) < 729:
+		failures.append("Observable-action census covered only %d authored handlers; expected at least the audited 729." % int(stats.get("handlers", 0)))
+	if int(stats.get("set_local", 0)) < 125:
+		failures.append("Observable-action census covered only %d set_local handlers; expected at least the audited 125." % int(stats.get("set_local", 0)))
+	if int(stats.get("player_actions", 0)) < 673 or int(stats.get("player_set_local", 0)) < 77:
+		failures.append("Observable-action census did not cover all 673 clickable actions, including their 77 set_local choices.")
+	if int(stats.get("change_scene_object", 0)) < 360:
+		failures.append("Observable-action census covered only %d changed room props; expected at least the audited 360." % int(stats.get("change_scene_object", 0)))
+	canvas.free()
+
+
+static func _collect_authored_action_observability(value: Variant, canvas, stats: Dictionary, signatures_by_target: Dictionary, failures: Array) -> void:
+	if typeof(value) == TYPE_ARRAY:
+		for child_value in (value as Array):
+			_collect_authored_action_observability(child_value, canvas, stats, signatures_by_target, failures)
+		return
+	if typeof(value) != TYPE_DICTIONARY:
+		return
+	var node := value as Dictionary
+	var authored_handler := str(node.get("handler", ""))
+	if not authored_handler.is_empty():
+		stats["handlers"] = int(stats.get("handlers", 0)) + 1
+		if authored_handler == "set_local":
+			stats["set_local"] = int(stats.get("set_local", 0)) + 1
+	if typeof(node.get("available_actions", [])) == TYPE_ARRAY:
+		for action_value in (node.get("available_actions", []) as Array):
+			var action := _dict(action_value)
+			if action.is_empty() or str(action.get("handler", "")).is_empty():
+				continue
+			stats["player_actions"] = int(stats.get("player_actions", 0)) + 1
+			var acknowledgement := EnvironmentInteractionViewModelScript.accepted_scenario_action_acknowledgement({}, action)
+			if acknowledgement.strip_edges().is_empty():
+				failures.append("Player-facing action %s has no immediate acknowledgement." % str(action.get("id", "")))
+			var handler := str(action.get("handler", ""))
+			if handler == "set_local":
+				stats["player_set_local"] = int(stats.get("player_set_local", 0)) + 1
+			if handler == "change_scene_object":
+				stats["change_scene_object"] = int(stats.get("change_scene_object", 0)) + 1
+				var inputs := _dict(action.get("inputs", {}))
+				_record_public_state_signature(
+					"%s::%s" % [str(inputs.get("owner_namespace", "")), str(inputs.get("stable_object_id", ""))],
+					str(inputs.get("state", "")), canvas, signatures_by_target, failures
+				)
+	if str(node.get("family", "")) == "scene_ops" and str(node.get("op", "")) in ["spawn", "update"]:
+		var payload := _dict(node.get("object", node.get("changes", {})))
+		_record_public_state_signature(
+			"%s::%s" % [str(node.get("owner_namespace", "")), str(node.get("stable_object_id", ""))],
+			str(payload.get("state", "")), canvas, signatures_by_target, failures
+		)
+	for child_value in node.values():
+		_collect_authored_action_observability(child_value, canvas, stats, signatures_by_target, failures)
+
+
+static func _record_public_state_signature(target: String, public_state: String, canvas, signatures_by_target: Dictionary, failures: Array) -> void:
+	if target == "::" or public_state.strip_edges().is_empty():
+		return
+	var signature := str(canvas.call("_public_prop_state_variant", public_state))
+	var target_signatures := _dict(signatures_by_target.get(target, {}))
+	if target_signatures.has(signature) and str(target_signatures.get(signature, "")) != public_state:
+		failures.append("Room prop %s gives two authored public states the same rendered marker signature." % target)
+	target_signatures[signature] = public_state
+	signatures_by_target[target] = target_signatures
 
 
 static func _check_composed_actions_and_geometry(failures: Array) -> void:

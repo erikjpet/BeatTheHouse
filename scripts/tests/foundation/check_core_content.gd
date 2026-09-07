@@ -555,13 +555,13 @@ func _foundation_run_suite(suite: String, content_library: ContentLibrary, fixtu
 		"systems":
 			_foundation_run_system_suite(content_library, fixture_library, failures, report)
 		"slot", "slots":
-			_foundation_run_check(report, failures, "content", Callable(self, "_check_content"), [content_library])
+			_foundation_run_check(report, failures, "slot_content", Callable(self, "_check_slot_content"), [content_library])
 			_foundation_run_check(report, failures, "slot_contract_smoke", Callable(self, "_check_slot_contract_smoke"), [content_library])
 		"slot_acceptance":
-			_foundation_run_check(report, failures, "content", Callable(self, "_check_content"), [content_library])
+			_foundation_run_check(report, failures, "slot_content", Callable(self, "_check_slot_content"), [content_library])
 			_foundation_run_check(report, failures, "slot_acceptance_deep", Callable(self, "_check_slot_acceptance"), [content_library])
 		"audit":
-			_foundation_run_check(report, failures, "content", Callable(self, "_check_content"), [content_library])
+			_foundation_run_check(report, failures, "slot_content", Callable(self, "_check_slot_content"), [content_library])
 			_foundation_run_check(report, failures, "slot_acceptance_deep", Callable(self, "_check_slot_acceptance"), [content_library])
 		"coin_pusher":
 			_foundation_run_check(report, failures, "coin_pusher_contract", Callable(self, "_check_coin_pusher_contract"), [content_library])
@@ -819,6 +819,58 @@ func _check_content(library: ContentLibrary, failures: Array) -> void:
 	call("_check_environment_instance_shape", second_environment, false, failures)
 	if second_environment.id == first_environment.id:
 		failures.append("Travel did not generate a distinct second environment.")
+
+
+# Slot-only runners deliberately stop at the slot boundary in the split test
+# inheritance chain. This preflight preserves the content requirements relevant
+# to a playable slot room without calling helpers owned by later, unrelated
+# lender/release/save shards. Full suites continue to run _check_content above.
+func _check_slot_content(library: ContentLibrary, failures: Array) -> void:
+	_check_canonical_pack_paths(failures)
+	for error in library.validation_errors:
+		failures.append("ContentLibrary validation failed: %s" % error)
+	var definition := library.game("slot")
+	if definition.is_empty():
+		failures.append("Slot content definition is missing.")
+		return
+	if str(definition.get("environment_prop", "")).strip_edges() != "machine":
+		failures.append("Slot content must render as a machine environment prop.")
+	for asset_key in ["asset_path", "scene_asset_path"]:
+		var asset_path := str(definition.get(asset_key, "")).strip_edges()
+		if asset_path.is_empty() or not FileAccess.file_exists(asset_path):
+			failures.append("Slot content is missing its loadable %s." % asset_key)
+	var room_count := 0
+	for archetype_value in library.environment_archetypes:
+		if typeof(archetype_value) != TYPE_DICTIONARY:
+			continue
+		var game_pool: Array = (archetype_value as Dictionary).get("game_pool", []) if typeof((archetype_value as Dictionary).get("game_pool", [])) == TYPE_ARRAY else []
+		if game_pool.has("slot"):
+			room_count += 1
+	if room_count < 1:
+		failures.append("No production environment exposes a slot-machine fixture.")
+
+
+# Checks that every split suite can validate the canonical pack roots without
+# depending on methods defined in a later inheritance shard.
+func _check_canonical_pack_paths(failures: Array) -> void:
+	var required_paths := ContentLibraryScript.required_pack_paths()
+	for pack_name in required_paths.keys():
+		var path := str(required_paths[pack_name])
+		_check_foundation_pack_path(path, failures)
+		var exists := DirAccess.dir_exists_absolute(ProjectSettings.globalize_path(path)) if path.get_extension().is_empty() else FileAccess.file_exists(path)
+		if not exists:
+			failures.append("Missing required foundation pack %s at %s." % [pack_name, path])
+
+	var future_paths := ContentLibraryScript.future_pack_paths()
+	for path in future_paths.values():
+		_check_foundation_pack_path(str(path), failures)
+
+
+func _check_foundation_pack_path(path: String, failures: Array) -> void:
+	if not path.begins_with("res://data/"):
+		failures.append("Foundation pack path must live under res://data/: %s." % path)
+	if path.begins_with("res://data/runtime/"):
+		failures.append("Foundation pack path must not point at demo runtime data: %s." % path)
 
 
 func _check_action_trigger_candidate_index(failures: Array) -> void:

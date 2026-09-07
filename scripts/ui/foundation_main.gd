@@ -1326,6 +1326,13 @@ func _sealed_action_host_store_ledger(candidate: RunState, ledger: Dictionary) -
 func _sealed_action_host_trusted_context(candidate: RunState, stake: int) -> Dictionary:
 	var environment := candidate.current_environment
 	var snapshot := candidate.to_save_snapshot()
+	# These are host presentation caches, not simulation authority. The UI can
+	# materialize their defaults between a sealed surface intent and synchronous
+	# settlement, and authority-ledger writes intentionally bump the room render
+	# revision. Binding either to a wager receipt makes a valid click fail closed
+	# even though game state, funds, and RNG are unchanged.
+	snapshot.erase("music_tempo_state")
+	snapshot.erase("music_choreography_state")
 	# Crew's per-run save authority is intentionally random and private. It is not
 	# Blackjack action authority, so exclude only that opaque id/capsule from the
 	# trusted-context fingerprint while retaining every public Crew state field.
@@ -1339,6 +1346,7 @@ func _sealed_action_host_trusted_context(candidate: RunState, stake: int) -> Dic
 	# containers. We erase only the current table's top-level authority keys, so
 	# shallow path copies preserve isolation without cloning the replay window.
 	var snapshot_environment: Dictionary = (snapshot.get("current_environment", {}) as Dictionary).duplicate(false)
+	snapshot_environment.erase("environment_runtime_revision")
 	var game_states: Dictionary = (snapshot_environment.get("game_states", {}) as Dictionary).duplicate(false)
 	var game_id := current_game.get_id()
 	if typeof(game_states.get(game_id, null)) == TYPE_DICTIONARY:
@@ -12733,11 +12741,19 @@ func _execute_scenario_sequence_action(object_data: Dictionary, action: Dictiona
 		_show_message(str(errors[0]) if not errors.is_empty() else "That room action is no longer available.")
 		_refresh()
 		return false
+	# Confirm the accepted click at its point of interaction before the deferred
+	# room rebuild. This covers set_local and other presentation-light handlers
+	# without exposing the private value they changed or changing simulation.
+	var accepted_acknowledgement: String = EnvironmentInteractionViewModelScript.accepted_scenario_action_acknowledgement(object_data, action)
+	_show_message(accepted_acknowledgement)
 	# State, causal receipts, layout authority, and renderer snapshot are already
 	# committed synchronously. Drain presentation envelopes and consume the
 	# prepared snapshot at the next UI boundary so the input callback does not
 	# rebuild every room surface before acknowledging the click.
-	call_deferred("_finish_scenario_sequence_action", str(_copy_dict(result.get("state", {})).get("last_feedback", "")))
+	# set_local intentionally has no simulation feedback. Passing the sequence's
+	# last_feedback here would replay a prior action's stale message, so retain
+	# this action-local public acknowledgement as the exact fallback.
+	call_deferred("_finish_scenario_sequence_action", accepted_acknowledgement)
 	return true
 
 
