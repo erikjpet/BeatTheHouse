@@ -202,10 +202,6 @@ static func observable_host_snapshot(host: Variant) -> Dictionary:
 	}
 
 
-static func observable_host_changed(before: Dictionary, after: Dictionary) -> bool:
-	return JSON.stringify(before) != JSON.stringify(after)
-
-
 # Returns admissible visible evidence for one accepted action.  Merely changing
 # focus, hover, camera, animation, or hidden serialized state is never evidence.
 static func observable_consequence_evidence(
