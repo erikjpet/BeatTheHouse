@@ -4,6 +4,20 @@ const SlotsBlackjackAuthorityDriver := preload("res://scripts/tests/foundation/b
 const BarDiceFoundationMainScript := preload("res://scripts/ui/foundation_main.gd")
 
 
+func _foundation_default_suite() -> String:
+	return "slot" if get_script().resource_path == "res://scripts/tests/foundation/check_slots_surfaces.gd" else super._foundation_default_suite()
+
+
+func _foundation_runner_supported_suites() -> Array:
+	return ["slot", "slots", "slot_acceptance", "audit"] if get_script().resource_path == "res://scripts/tests/foundation/check_slots_surfaces.gd" else super._foundation_runner_supported_suites()
+
+
+func _check_slot_content(library: ContentLibrary, failures: Array) -> void:
+	super._check_slot_content(library, failures)
+	if get_script().resource_path == "res://scripts/tests/foundation/check_slots_surfaces.gd" and (_foundation_default_suite() != "slot" or _foundation_runner_supported_suites().has("smoke")):
+		failures.append("Slot split runner suite scope regressed; it must default to slot and reject broad inherited suites.")
+
+
 class MotionSymbolHarness:
 	extends RefCounted
 

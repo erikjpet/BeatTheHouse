@@ -7006,6 +7006,21 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 			_show_message(install_error)
 			_refresh_after_foundation_lifecycle_rollback(lifecycle_rollback)
 			return {"ok": false, "errors": [install_error]}
+	# RunGenerator installs the authoritative destination but deliberately cannot
+	# finalize renderer-owned scenario semantics. Complete that production-host
+	# boundary before delivery, departure from the new room, or autosave can
+	# observe an unfinalized dynamic sequence.
+	var destination_finalization := run_state.scenario_finalize_installed_environment(
+		library,
+		_copy_dict(run_state.current_environment.get("scenario_layout_context", {}))
+	)
+	if not bool(destination_finalization.get("ok", false)):
+		_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
+		var finalization_errors := _copy_array(destination_finalization.get("errors", []))
+		var finalization_error := str(finalization_errors[0]) if not finalization_errors.is_empty() else "The arrived room could not be finalized safely."
+		_show_message(finalization_error)
+		_refresh_after_foundation_lifecycle_rollback(lifecycle_rollback)
+		return {"ok": false, "errors": [finalization_error]}
 	if perf_corner_store_timing:
 		perf_corner_store_stages["destination_generation_install_ms"] = float(Time.get_ticks_usec() - perf_corner_store_stage_started_usec) / 1000.0
 		perf_corner_store_stage_started_usec = Time.get_ticks_usec()

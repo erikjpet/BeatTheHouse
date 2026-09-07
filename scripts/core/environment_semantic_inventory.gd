@@ -1146,20 +1146,23 @@ static func _instance_source_provenance(environment: Dictionary, base_interactio
 	# Their captured base lists are the immutable authored sources sealed by this
 	# inventory; the derived live lists are covered by the projection/layout seal.
 	var source_game_ids: Variant = environment.get("scenario_sequence_base_game_ids", environment.get("game_ids", []))
+	var sealed_source := _dict(_dict(environment.get("scenario_semantic_inventory", {})).get("source_provenance", {}))
+	var source_event_ids: Variant = sealed_source.get("event_ids", environment.get("event_ids", []))
 	var source_service_ids: Variant = environment.get("scenario_sequence_base_service_ids", environment.get("service_ids", []))
 	var source_travel_hooks: Variant = environment.get("scenario_sequence_base_travel_hooks", environment.get("travel_hooks", []))
+	var source_route_ids: Variant = sealed_source.get("route_ids", _array(source_travel_hooks) + _array(environment.get("next_archetypes", [])))
 	return {
 		"world_node_id": str(environment.get("world_node_id", "")),
 		"archetype_id": str(environment.get("archetype_id", "")),
 		"layout_object_rects": _dict(environment.get("scenario_sequence_base_layout_object_rects", _dict(environment.get("layout", {})).get("object_rects", {}))),
 		"game_ids": _ids(source_game_ids),
-		"event_ids": _ids(environment.get("event_ids", [])),
+		"event_ids": _ids(source_event_ids),
 		"item_offer_authority": _consumed_item_offer_authority(environment.get("item_offers", []), base_interactions),
 		"shopkeeper_offer_source_present": _consumed_shopkeeper_offer_source_present(environment.get("item_offers", []), base_interactions),
 		"service_ids": _ids(source_service_ids),
 		"lender_ids": _ids(environment.get("lender_hooks", [])),
 		"layer_ids": _ids(environment.get("layer_ids", [])),
-		"route_ids": _ids(_array(source_travel_hooks) + _array(environment.get("next_archetypes", []))),
+		"route_ids": _ids(source_route_ids),
 		"layer_transition_ids": _layer_transition_ids(environment.get("layer_transitions", [])),
 		"casino_room_target_ids": _ids(_dict(environment.get("local_narrative_flags", {})).get("casino_room_targets", [])),
 		"casino_fixture_ids": _consumed_record_ids(_dict(environment.get("local_narrative_flags", {})).get("casino_fixtures", []), "id", base_interactions, "local_narrative_flags.casino_fixtures"),

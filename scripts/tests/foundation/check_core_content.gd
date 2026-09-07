@@ -443,7 +443,11 @@ func _foundation_init_after_tree_ready() -> void:
 	_foundation_fixture_library_ref = fixture_library
 	_foundation_content_library_fingerprint = _foundation_library_fingerprint(content_library)
 	_foundation_fixture_library_fingerprint = _foundation_library_fingerprint(fixture_library)
-	_foundation_run_suite(_foundation_active_suite, content_library, fixture_library, failures, report)
+	var supported_suites := _foundation_runner_supported_suites()
+	if not supported_suites.has(_foundation_active_suite):
+		failures.append("Foundation runner %s does not support suite '%s'; supported suites: %s." % [get_script().resource_path, _foundation_active_suite, ", ".join(supported_suites)])
+	else:
+		_foundation_run_suite(_foundation_active_suite, content_library, fixture_library, failures, report)
 	var registered_check_ids: Array = report.get("registered_check_ids", [])
 	for check_id_value in requested_check_ids:
 		if not registered_check_ids.has(str(check_id_value)):
@@ -469,7 +473,7 @@ func _foundation_init_after_tree_ready() -> void:
 
 func _foundation_options() -> Dictionary:
 	var options := {
-		"suite": "contracts",
+		"suite": _foundation_default_suite(),
 		"report": FOUNDATION_DEFAULT_REPORT_PATH,
 		"list": false,
 		"check_ids": [],
@@ -492,6 +496,14 @@ func _foundation_options() -> Dictionary:
 	return options
 
 
+func _foundation_default_suite() -> String:
+	return "contracts"
+
+
+func _foundation_runner_supported_suites() -> Array:
+	return FOUNDATION_SUITES.duplicate()
+
+
 func _foundation_normalized_suite(raw_suite: String) -> String:
 	var suite := raw_suite.strip_edges().to_lower()
 	if FOUNDATION_SUITE_ALIASES.has(suite):
@@ -505,8 +517,8 @@ func _foundation_normalized_suite(raw_suite: String) -> String:
 func _foundation_print_suite_list() -> void:
 	print(JSON.stringify({
 		"tool": "foundation_check",
-		"suites": FOUNDATION_SUITES,
-		"default_suite": "contracts",
+		"suites": _foundation_runner_supported_suites(),
+		"default_suite": _foundation_default_suite(),
 		"reports": true,
 	}))
 

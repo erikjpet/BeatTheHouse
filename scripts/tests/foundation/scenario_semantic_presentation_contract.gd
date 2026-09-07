@@ -28,6 +28,7 @@ static func check(library: Variant, failures: Array) -> void:
 	_check_public_removal_tombstones(failures)
 	_check_finalized_canvas_authority(library, failures)
 	_check_atomic_finalization_layout(library, failures)
+	_check_mutable_event_and_route_source_authority(library, failures)
 	_check_atomic_post_operation_layout(library, failures)
 	_check_passive_atomic_commits(library, failures)
 	_check_collision_adjusted_renderer_authority(failures)
@@ -121,6 +122,32 @@ static func _check_atomic_finalization_layout(library: Variant, failures: Array)
 	var invalidated := valid_run.scenario_reject_layout_projection(["fixture projection mismatch"], {"valid": false})
 	if not bool(finalized.get("ok", false)) or bool(invalidated.get("ok", true)) or valid_run.current_environment.has("scenario_semantic_ready") or not _dict(valid_run.current_environment.get("scenario_sequence_projection", {})).is_empty() or str(valid_run.current_environment.get("scenario_layout_authority_digest", "x")) != "" or JSON.stringify(valid_run.current_environment.get("scenario_sequence_state", {})) != causal_before:
 		failures.append("Post-finalization projection rejection did not invalidate ephemeral authority while preserving the durable causal journal.")
+
+
+static func _check_mutable_event_and_route_source_authority(library: Variant, failures: Array) -> void:
+	var run_state := RunStateScript.new()
+	run_state.current_environment = _finalization_environment(ScenarioSequenceContractScript.finalization_fixture_definition())
+	run_state.scenario_prepare_semantic_finalization()
+	var presentation := _production_presentation()
+	var first := run_state.scenario_finalize_base_semantics([presentation], library, _production_layout_context())
+	if not bool(first.get("ok", false)):
+		failures.append("Mutable event-source authority fixture could not seal its initial room.")
+		return
+	var initial_digest := str(run_state.current_environment.get("scenario_semantic_digest", ""))
+	var event_ids := _array(run_state.current_environment.get("event_ids", []))
+	event_ids.erase("late_shift_discount")
+	event_ids.append("parking_lot_tip")
+	run_state.current_environment["event_ids"] = event_ids
+	run_state.current_environment["resolved_event_ids"] = ["late_shift_discount"]
+	run_state.current_environment["next_archetypes"] = ["small_underground_casino"]
+	var refreshed := run_state.scenario_finalize_base_semantics([presentation], library, _production_layout_context())
+	var choices := _dict(run_state.current_environment.get("scenario_event_choices", {}))
+	if not bool(refreshed.get("ok", false)) or str(run_state.current_environment.get("scenario_semantic_digest", "")) != initial_digest:
+		failures.append("Resolving a base event or opening a live route changed the immutable scenario inventory digest.")
+	if _array(run_state.current_environment.get("event_ids", [])).has("late_shift_discount") or not _array(run_state.current_environment.get("resolved_event_ids", [])).has("late_shift_discount"):
+		failures.append("Scenario refresh resurrected the resolved base event in the live room.")
+	if choices.has("parking_lot_tip"):
+		failures.append("An injected live catalog event minted scenario choice authority after the base event set was sealed.")
 
 
 static func _check_atomic_post_operation_layout(library: Variant, failures: Array) -> void:

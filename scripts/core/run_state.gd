@@ -13257,7 +13257,9 @@ func advance_environment_turns(amount: int = 1, profile_stages: bool = false) ->
 # single graph-consistent tuple through _publish_environment_turn_candidate().
 func _advance_environment_turns_candidate(amount: int) -> Dictionary:
 	var safe_amount := maxi(0, amount)
-	var scenario_facts_active := scenario_sequence_present()
+	# A completed/cleaned sequence may remain installed as durable room history.
+	# It must not keep authoring new town or sweep facts on later ordinary turns.
+	var scenario_facts_active := scenario_sequence_present() and str(_copy_dict(current_environment.get("scenario_sequence_state", {})).get("status", "")) == ScenarioSequenceRuntimeScript.STATUS_ACTIVE
 	var uses_v2_expiry := safe_amount > 0 and _scenario_sequence_uses_expiry_boundary("town_action")
 	var turn_preflight := _scenario_preflight_environment_turn(safe_amount)
 	if not bool(turn_preflight.get("ok", false)):
