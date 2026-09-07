@@ -4052,6 +4052,17 @@ func _check_lender_acceptance_does_not_open_motel_popup(app: Control) -> bool:
 	if unique_models.size() != 3:
 		push_error("Crew lender lineup did not preserve three distinct animated character models.")
 		return false
+	# A rejected environment-turn transaction must not consume the confirmed
+	# conversation. The player must be able to retry the same deal, and no partial
+	# cash or debt mutation may leak from the failed attempt.
+	run_state.set("_turn_transaction_test_failure_stage", "preflight")
+	app.call("_on_talk_dock_choice_requested", str(talk.get("event_id", "")), "accept")
+	await process_frame
+	var rejected_talk: Dictionary = app.call("current_talk_dock_snapshot")
+	if not bool(rejected_talk.get("visible", false)) or str(rejected_talk.get("event_id", "")) != str(talk.get("event_id", "")) or run_state.bankroll != 1 or not run_state.debt.is_empty():
+		push_error("Rejected lender acceptance consumed its retryable conversation or leaked a partial transaction: %s." % JSON.stringify(rejected_talk))
+		return false
+	run_state.set("_turn_transaction_test_failure_stage", "")
 	app.call("_on_talk_dock_choice_requested", str(talk.get("event_id", "")), "accept")
 	await process_frame
 	if bool((app.call("current_talk_dock_snapshot") as Dictionary).get("visible", false)):

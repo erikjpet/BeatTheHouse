@@ -5601,7 +5601,7 @@ func use_lender_hook(lender_id: String) -> bool:
 	return _use_lender_hook_after_input_guard(lender_id)
 
 
-func _use_lender_hook_after_input_guard(lender_id: String) -> bool:
+func _use_lender_hook_after_input_guard(lender_id: String, completed_talk_event_id: String = "") -> bool:
 	var option := _lender_hook(lender_id)
 	if option.is_empty():
 		_show_message("That lender is not available.")
@@ -5614,6 +5614,21 @@ func _use_lender_hook_after_input_guard(lender_id: String) -> bool:
 		_show_message(str(option.get("disabled_reason", "Lender cannot be used right now.")))
 		_refresh()
 		return false
+	# A lender can remain visibly selectable while an earlier game/result refresh
+	# has left renderer-owned scenario proof pending its trusted rebuild. Repair
+	# that non-causal presentation seal at the actual deal boundary. Without this,
+	# the following turn transaction rejects and a recovery loan appears to do
+	# nothing even though its authored cash/debt payload is valid.
+	if run_state.scenario_sequence_present():
+		var finalized := run_state.scenario_finalize_installed_environment(
+			library,
+			_copy_dict(run_state.current_environment.get("scenario_layout_context", {}))
+		)
+		if not bool(finalized.get("ok", false)):
+			var finalization_errors := _copy_array(finalized.get("errors", []))
+			_show_message(str(finalization_errors[0]) if not finalization_errors.is_empty() else "The room changed before the deal could close. Try again.")
+			_refresh()
+			return false
 	_refresh_run_action_service()
 	var resolved := run_action_service.use_hook("lender", lender_id)
 	if not bool(resolved.get("ok", false)):
@@ -5621,6 +5636,12 @@ func _use_lender_hook_after_input_guard(lender_id: String) -> bool:
 		_refresh()
 		return false
 	var result: Dictionary = resolved.get("result", {})
+	# The response belongs to the transaction: leave it open on every rejection,
+	# and retire it only after RunState contains both the cash and the obligation.
+	var talk_event_id := completed_talk_event_id.strip_edges()
+	if not talk_event_id.is_empty():
+		run_state.complete_talk_event_resolution(talk_event_id)
+		_refresh_talk_dock()
 	last_hook_result = result.duplicate(true)
 	_start_conclusion_animation(result, _conclusion_animation_source_rect("lender:%s" % lender_id))
 	_clear_selected_lender_hook()
@@ -13225,17 +13246,21 @@ func _resolve_lender_conversation_choice(entry: Dictionary, choice_id: String) -
 		_show_message(str(choice.get("disabled_reason", "That option is no longer available.")))
 		_refresh()
 		return
-	run_state.complete_talk_event_resolution(event_id)
-	_refresh_talk_dock()
 	if mode == "repay":
-		_execute_lender_repayment(lender_id)
+		if _execute_lender_repayment(lender_id):
+			run_state.complete_talk_event_resolution(event_id)
+			_refresh_talk_dock()
 	elif mode == "pawn":
+		# Pawn inventory owns the next modal and must take input ownership only
+		# after its conversation is retired.
+		run_state.complete_talk_event_resolution(event_id)
+		_refresh_talk_dock()
 		open_pawn_counter(lender_id)
 	else:
 		# The confirmed talk response is the lender action. Do not run the room
 		# input/closing gate again after retiring its modal entry: that can discard
 		# a valid recovery loan exactly when closing pressure is active.
-		_use_lender_hook_after_input_guard(lender_id)
+		_use_lender_hook_after_input_guard(lender_id, event_id)
 
 
 func _cage_atm_inline_actions() -> Array:

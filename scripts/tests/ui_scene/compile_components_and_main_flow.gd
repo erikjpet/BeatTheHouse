@@ -1208,6 +1208,21 @@ func _check_talk_dock_component() -> bool:
 		parent.queue_free()
 		push_error("TalkDock changed side or position while the same focus boundary jittered: %s." % str(stable_snapshot))
 		return false
+	# Scenario-owned props can occupy the nominal dialogue corner, but the player
+	# has explicitly selected the actor on the left. The conversation must remain
+	# bottom-right; PixelSceneCanvas will reserve and reflow the room beneath it.
+	dock.set_avoid_global_rect(
+		Rect2(80, 520, 150, 110),
+		"fixture:left-focus-with-room-props",
+		155.0,
+		[Rect2(700, 380, 560, 320)]
+	)
+	await process_frame
+	var protected_focus_snapshot := dock.current_snapshot()
+	if str(protected_focus_snapshot.get("layout_side", "")) != "right" or str(protected_focus_snapshot.get("layout_vertical", "")) != "bottom" or not bool(protected_focus_snapshot.get("anchored_bottom", false)):
+		parent.queue_free()
+		push_error("TalkDock let unrelated room props move a selected left-side actor conversation away from bottom-right: %s." % str(protected_focus_snapshot))
+		return false
 	dock.set_avoid_global_rect(Rect2(1050, 520, 150, 110), "fixture:right-focus")
 	await process_frame
 	var right_focus_snapshot := dock.current_snapshot()

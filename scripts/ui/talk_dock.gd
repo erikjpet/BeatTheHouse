@@ -576,22 +576,40 @@ func _best_protected_layout(preferred_side: String) -> Dictionary:
 	]
 	var best: Dictionary = candidates[0]
 	var best_score := INF
+	var best_focus_overlap := INF
+	var best_side_penalty := 2
+	var best_vertical_penalty := 2
 	for candidate_value in candidates:
 		var candidate: Dictionary = candidate_value
 		var layout := _expanded_layout_rects_for(str(candidate.get("side", "left")), str(candidate.get("vertical", "bottom")), true)
 		var footprint := _local_rect_global_aabb((layout.get("portrait_rect", Rect2()) as Rect2).merge(layout.get("panel_rect", Rect2()) as Rect2))
-		var score := 0.0
+		var focus_overlap := 0.0
 		if avoid_global_rect.has_area() and footprint.intersects(avoid_global_rect):
-			score += footprint.intersection(avoid_global_rect).get_area()
+			focus_overlap = footprint.intersection(avoid_global_rect).get_area()
+		var score := 0.0
 		for protected_rect in protected_global_rects:
 			if footprint.intersects(protected_rect):
-				# A sealed scenario actor/action is authoritative room geometry;
-				# protecting it outranks the already-used focus card behind dialogue.
-				score += footprint.intersection(protected_rect).get_area() * 1000000.0
-		if score < best_score:
+				score += footprint.intersection(protected_rect).get_area()
+		# With a live selected object, conversation placement follows the player's
+		# focus first: avoid it, use the opposite horizontal side, and stay at the
+		# bottom. The environment reserve then reflows other room objects around the
+		# chosen dock. This prevents unrelated scenario props from sending a lender's
+		# conversation to the top of the screen while their actor is selected below.
+		var side_penalty := 0 if str(candidate.get("side", "left")) == preferred_side else 1
+		var vertical_penalty := 0 if str(candidate.get("vertical", "bottom")) == "bottom" else 1
+		var better := score < best_score
+		if avoid_global_rect.has_area():
+			better = focus_overlap < best_focus_overlap \
+				or (is_equal_approx(focus_overlap, best_focus_overlap) and side_penalty < best_side_penalty) \
+				or (is_equal_approx(focus_overlap, best_focus_overlap) and side_penalty == best_side_penalty and vertical_penalty < best_vertical_penalty) \
+				or (is_equal_approx(focus_overlap, best_focus_overlap) and side_penalty == best_side_penalty and vertical_penalty == best_vertical_penalty and score < best_score)
+		if better:
+			best_focus_overlap = focus_overlap
+			best_side_penalty = side_penalty
+			best_vertical_penalty = vertical_penalty
 			best_score = score
 			best = candidate
-			if is_zero_approx(score):
+			if not avoid_global_rect.has_area() and is_zero_approx(score):
 				break
 	return best
 
