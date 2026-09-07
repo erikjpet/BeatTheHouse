@@ -4510,6 +4510,13 @@ func _draw_character_actor(rect: Rect2, object_data: Dictionary) -> void:
 		base_scale * _character_actor_scale(lead_member),
 		animation_clock
 	)
+	# Talk events keep their person in the room while the authored event badge
+	# identifies why that person is selectable (rumor, offer, warning, and so on).
+	var event_icon := _texture_for_asset_path(str(object_data.get("asset_path", "")))
+	if event_icon != null:
+		var icon_size := clampf(minf(rect.size.x, rect.size.y) * 0.30, 22.0, 32.0)
+		var icon_rect := Rect2(rect.end - Vector2(icon_size + 3.0, icon_size + 3.0), Vector2(icon_size, icon_size))
+		_draw_live_texture_icon(event_icon, icon_rect, object_data, C_CYAN_2, str(object_data.get("id", "")) == selected_object_id, bool(object_data.get("disabled", false)))
 
 
 func _character_actor_style(member: Dictionary, actor: Dictionary, faceless: bool, clock: float) -> Dictionary:
@@ -4949,24 +4956,24 @@ func _draw_public_prop_state_marker(rect: Rect2, object_data: Dictionary, accent
 		1: marker_color = C_YELLOW
 		2: marker_color = C_PINK
 		3: marker_color = C_TEAL
-	var badge := Rect2(rect.position + Vector2(4.0, 4.0), Vector2(minf(rect.size.x - 8.0, 58.0), 22.0))
-	draw_rect(badge, Color(0.02, 0.02, 0.05, 0.90))
-	draw_rect(badge, marker_color, false, 2.0)
+	# Keep the state cue inside the object's lower edge. The previous boxed badge
+	# covered nearby machines and read like a second generic icon in dense rooms.
+	var rail := Rect2(rect.position + Vector2(5.0, rect.size.y - 7.0), Vector2(maxf(1.0, rect.size.x - 10.0), 3.0))
+	draw_rect(rail, Color(0.02, 0.02, 0.05, 0.72))
 	# Ten hexadecimal cells expose forty deterministic non-color bits. Actual
-	# authored states are collision-audited by the permanent presentation gate.
+	# authored states remain collision-audited by the presentation gate.
 	for column in range(mini(10, fingerprint.length())):
 		var code := fingerprint.unicode_at(column)
 		var nibble := code - 48 if code <= 57 else code - 87
 		for bit in range(4):
-			var bit_rect := Rect2(badge.position + Vector2(4.0 + float(column) * 4.5, 3.0 + float(bit) * 2.0), Vector2(3.0, 1.0))
+			var bit_rect := Rect2(rail.position + Vector2(2.0 + float(column) * 4.5, float(bit) * 0.75), Vector2(3.0, 0.65))
 			if (nibble & (1 << bit)) != 0:
 				draw_rect(bit_rect, marker_color)
 			else:
 				draw_rect(bit_rect, Color(marker_color.r, marker_color.g, marker_color.b, 0.18), false, 1.0)
-	var label := str(object_data.get("prop_state_label", "CHANGED"))
-	if not label.is_empty():
-		_neon_text(label, badge.position + Vector2(4.0, 19.0), 7, marker_color)
-	draw_rect(rect.grow(2.0), Color(accent.r, accent.g, accent.b, 0.70), false, 2.0)
+	draw_line(rect.position + Vector2(3.0, rect.size.y - 10.0), rect.position + Vector2(3.0, rect.size.y - 2.0), marker_color, 2.0)
+	draw_line(rect.end - Vector2(3.0, 10.0), rect.end - Vector2(3.0, 2.0), marker_color, 2.0)
+	draw_rect(rect.grow(1.0), Color(accent.r, accent.g, accent.b, 0.58), false, 1.0)
 
 
 func _fallback_scenario_semantic_prop(value: String) -> String:

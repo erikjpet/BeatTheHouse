@@ -4565,17 +4565,30 @@ func consume_blackjack_authority_result_receipt(result: Dictionary) -> bool:
 		return false
 	var receipt: Dictionary = result.get("blackjack_host_apply_receipt", {})
 	var game_states: Dictionary = current_environment.get("game_states", {}) if typeof(current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
-	if typeof(game_states.get(game_id, null)) != TYPE_DICTIONARY:
-		return false
-	var table: Dictionary = game_states.get(game_id, {})
-	var pending: Variant = table.get("_blackjack_pending_apply_receipt", null)
-	var binding := "%s:%s:%s" % [game_id, str(current_environment.get("id", "unknown")), str(current_environment.get("archetype_id", "unknown"))]
-	if not BlackjackActionAuthorityScript.valid_receipt(receipt, pending, result, binding):
+	# A room can contain several fixtures backed by one game module. Locate the
+	# exact pending receipt among that game's state keys instead of always reading
+	# the default table, and require a unique cryptographic match before mutation.
+	var matching_state_keys: Array = []
+	for state_key_value in game_states.keys():
+		var state_key := str(state_key_value)
+		if state_key != game_id and not state_key.begins_with("%s:" % game_id):
+			continue
+		var table_value: Variant = game_states.get(state_key_value)
+		if typeof(table_value) != TYPE_DICTIONARY:
+			continue
+		var candidate_table: Dictionary = table_value
+		var pending: Variant = candidate_table.get("_blackjack_pending_apply_receipt", null)
+		var binding := action_authority_table_binding(state_key, current_environment)
+		if BlackjackActionAuthorityScript.valid_receipt(receipt, pending, result, binding):
+			matching_state_keys.append(state_key)
+	if matching_state_keys.size() != 1:
 		return false
 	# Consume before applying any deltas. Foundation applies only to a detached
 	# candidate, so a later failure discards both this consumption and all effects.
+	var matched_state_key := str(matching_state_keys[0])
+	var table: Dictionary = game_states.get(matched_state_key, {})
 	table.erase("_blackjack_pending_apply_receipt")
-	game_states[game_id] = table
+	game_states[matched_state_key] = table
 	current_environment["game_states"] = game_states
 	return true
 
@@ -4609,7 +4622,7 @@ func _reconcile_blackjack_authority_restore() -> void:
 		var table: Dictionary = (game_states.get(game_id, {}) as Dictionary).duplicate(true)
 		if not table.has(BlackjackActionAuthorityScript.LEDGER_KEY):
 			continue
-		var binding := "%s:%s:%s" % [game_id, str(current_environment.get("id", "unknown")), str(current_environment.get("archetype_id", "unknown"))]
+		var binding := action_authority_table_binding(game_id, current_environment)
 		var ledger := BlackjackActionAuthorityScript.validate_persisted_ledger(
 			table.get(BlackjackActionAuthorityScript.LEDGER_KEY),
 			binding,
@@ -16959,7 +16972,7 @@ static func _normalize_environment(data: Dictionary) -> Dictionary:
 		# Apply receipts are transaction-local and can never survive a save boundary.
 		blackjack_table.erase("_blackjack_pending_apply_receipt")
 		if blackjack_table.has(BlackjackActionAuthorityScript.LEDGER_KEY):
-			var binding := "%s:%s:%s" % [authority_game_id, str(environment.get("id", "unknown")), str(environment.get("archetype_id", "unknown"))]
+			var binding := action_authority_table_binding(authority_game_id, environment)
 			var ledger := BlackjackActionAuthorityScript.validate_persisted_ledger(blackjack_table.get(BlackjackActionAuthorityScript.LEDGER_KEY), binding)
 			if ledger.is_empty():
 				blackjack_table.erase(BlackjackActionAuthorityScript.LEDGER_KEY)
@@ -17355,6 +17368,19 @@ static func _normalize_home_state(data: Dictionary) -> Dictionary:
 		tenure = {}
 	normalized["tenure"] = tenure
 	return normalized
+
+
+# Returns the durable authority identity for either a game's default state or
+# one of its independently generated fixture states (for example slot:2).
+static func action_authority_table_binding(state_key: String, environment: Dictionary) -> String:
+	var clean_state_key := state_key.strip_edges()
+	var game_id := clean_state_key.get_slice(":", 0)
+	if game_id.is_empty():
+		game_id = "unknown"
+	var binding := "%s:%s:%s" % [game_id, str(environment.get("id", "unknown")), str(environment.get("archetype_id", "unknown"))]
+	if not clean_state_key.is_empty() and clean_state_key != game_id:
+		binding += ":%s" % clean_state_key
+	return binding
 
 
 # Normalizes per-environment gameplay state owned by GameModule instances.

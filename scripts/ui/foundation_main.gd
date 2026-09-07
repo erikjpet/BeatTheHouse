@@ -1298,8 +1298,23 @@ func _current_game_surface_input_time_msec() -> int:
 
 func _sealed_action_host_table_binding(environment: Dictionary = {}) -> String:
 	var source := environment if not environment.is_empty() else (run_state.current_environment if run_state != null else {})
-	var game_id := current_game.get_id() if current_game != null else "unknown"
-	return "%s:%s:%s" % [game_id, str(source.get("id", "unknown")), str(source.get("archetype_id", "unknown"))]
+	# A venue can contain several independently generated cabinets for one game.
+	# Their sealed receipts must not share an identity: otherwise cabinet 2 can
+	# collide with cabinet 1's already-consumed request key and fail as stale.
+	var state_key := _sealed_action_host_state_key()
+	return RunState.action_authority_table_binding(state_key, source)
+
+
+func _sealed_action_host_state_key() -> String:
+	if current_game == null:
+		return ""
+	var game_id := current_game.get_id()
+	var state_key := current_game_state_key.strip_edges()
+	if state_key.is_empty():
+		state_key = current_game.transient_state_key_context().strip_edges()
+	if state_key == game_id or state_key.begins_with("%s:" % game_id):
+		return state_key
+	return game_id
 
 
 func _sealed_action_host_ledger(candidate: RunState, create: bool = true, reconcile_checkpoint: bool = true) -> Dictionary:
@@ -1351,12 +1366,12 @@ func _sealed_action_host_trusted_context(candidate: RunState, stake: int) -> Dic
 	var snapshot_environment: Dictionary = (snapshot.get("current_environment", {}) as Dictionary).duplicate(false)
 	snapshot_environment.erase("environment_runtime_revision")
 	var game_states: Dictionary = (snapshot_environment.get("game_states", {}) as Dictionary).duplicate(false)
-	var game_id := current_game.get_id()
-	if typeof(game_states.get(game_id, null)) == TYPE_DICTIONARY:
-		var table: Dictionary = (game_states.get(game_id, {}) as Dictionary).duplicate(false)
+	var state_key := _sealed_action_host_state_key()
+	if typeof(game_states.get(state_key, null)) == TYPE_DICTIONARY:
+		var table: Dictionary = (game_states.get(state_key, {}) as Dictionary).duplicate(false)
 		table.erase(ActionAuthorityScript.LEDGER_KEY)
 		table.erase(ActionAuthorityScript.PENDING_APPLY_RECEIPT_KEY)
-		game_states[game_id] = table
+		game_states[state_key] = table
 		snapshot_environment["game_states"] = game_states
 		snapshot["current_environment"] = snapshot_environment
 	return {
@@ -1651,7 +1666,8 @@ func _sealed_action_host_replay_request(delivery_claim: Dictionary) -> Dictionar
 	# exact local value through this synchronous transaction instead of re-reading
 	# and revalidating the growing history at every internal stage.
 	var candidate_states: Dictionary = candidate.current_environment.get("game_states", {}) if typeof(candidate.current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
-	var candidate_table: Dictionary = candidate_states.get(current_game.get_id(), {}) if typeof(candidate_states.get(current_game.get_id(), {})) == TYPE_DICTIONARY else {}
+	var state_key := _sealed_action_host_state_key()
+	var candidate_table: Dictionary = candidate_states.get(state_key, {}) if typeof(candidate_states.get(state_key, {})) == TYPE_DICTIONARY else {}
 	var ledger: Dictionary = (candidate_table.get(ActionAuthorityScript.LEDGER_KEY, {}) as Dictionary).duplicate(false) if typeof(candidate_table.get(ActionAuthorityScript.LEDGER_KEY, {})) == TYPE_DICTIONARY else {}
 	var replay: Dictionary = ActionAuthorityScript.cached_response(ledger, request_key, delivery_claim)
 	if replay.is_empty():
@@ -1796,7 +1812,8 @@ func _sealed_action_host_proposal_valid(proposal: Dictionary, proposal_input: Di
 func _sealed_action_host_snapshot_ledger(snapshot: Dictionary) -> Dictionary:
 	var environment: Dictionary = snapshot.get("current_environment", {}) if typeof(snapshot.get("current_environment", {})) == TYPE_DICTIONARY else {}
 	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
-	var table: Dictionary = game_states.get(current_game.get_id(), {}) if typeof(game_states.get(current_game.get_id(), {})) == TYPE_DICTIONARY else {}
+	var state_key := _sealed_action_host_state_key()
+	var table: Dictionary = game_states.get(state_key, {}) if typeof(game_states.get(state_key, {})) == TYPE_DICTIONARY else {}
 	return (table.get(ActionAuthorityScript.LEDGER_KEY, {}) as Dictionary).duplicate(false) if typeof(table.get(ActionAuthorityScript.LEDGER_KEY, {})) == TYPE_DICTIONARY else {}
 
 
@@ -1806,9 +1823,10 @@ func _sealed_action_host_snapshot_with_ledger(snapshot: Dictionary, ledger: Dict
 	var result := snapshot.duplicate(false)
 	var environment: Dictionary = (result.get("current_environment", {}) as Dictionary).duplicate(false) if typeof(result.get("current_environment", {})) == TYPE_DICTIONARY else {}
 	var game_states: Dictionary = (environment.get("game_states", {}) as Dictionary).duplicate(false) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
-	var table: Dictionary = (game_states.get(current_game.get_id(), {}) as Dictionary).duplicate(false) if typeof(game_states.get(current_game.get_id(), {})) == TYPE_DICTIONARY else {}
+	var state_key := _sealed_action_host_state_key()
+	var table: Dictionary = (game_states.get(state_key, {}) as Dictionary).duplicate(false) if typeof(game_states.get(state_key, {})) == TYPE_DICTIONARY else {}
 	table[ActionAuthorityScript.LEDGER_KEY] = ledger.duplicate(false)
-	game_states[current_game.get_id()] = table
+	game_states[state_key] = table
 	environment["game_states"] = game_states
 	result["current_environment"] = environment
 	return result

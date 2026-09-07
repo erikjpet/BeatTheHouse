@@ -12,7 +12,6 @@ const PLAYER_SAVE_SLOT := "foundation_ui_autosave"
 const SLOT_ARCHETYPES := [
 	"bar",
 	"gas_station_casino",
-	"small_underground_casino",
 	"kitty_cat_lounge",
 	"beach",
 	"pawn_shop",
@@ -37,6 +36,18 @@ func _run() -> void:
 	app.set("autosave_slot_id", PLAYER_SAVE_SLOT)
 	root.add_child(app)
 	await _settle(8)
+	if OS.get_cmdline_user_args().has("--focused-multi"):
+		_install_environment_fixture(RunState.GRAND_CASINO_ARCHETYPE_ID, "SLOT-HOST-MULTI")
+		await _settle(12)
+		var multi_slot_ids := _slot_object_ids()
+		if multi_slot_ids.size() < 2:
+			_fail("Grand Casino production fixture exposed fewer than two independently selectable Slot cabinets.")
+		for slot_id in multi_slot_ids:
+			reports.append(await _exercise_visible_entry("grand_casino", slot_id))
+			app.call("back_to_environment")
+			await _settle(8)
+		_finish()
+		return
 	if OS.get_cmdline_user_args().has("--focused-play"):
 		for seed_text in ["SLOT-HOST-PLAY-A", "SLOT-HOST-PLAY-B"]:
 			_install_environment_fixture("bar", seed_text)
@@ -231,6 +242,14 @@ func _exercise_visible_entry(label: String, object_id: String) -> Dictionary:
 	if canvas == null:
 		_fail("%s route has no environment canvas." % label)
 		return {"label": label, "object_id": object_id, "entered": false}
+	# A successful spin may legitimately schedule an unrelated room event. Clear
+	# that modal between cabinet cases so it cannot intercept the next machine's
+	# physical click; event presentation has its own focused acceptance probe.
+	if bool(app.call("current_event_choice_popup_snapshot").get("visible", false)):
+		app.call("_hide_event_choice_popup")
+	if app.get("current_game") != null:
+		app.call("back_to_environment")
+		await _settle(8)
 	app.call("_set_current_screen", "ENVIRONMENT")
 	app.call("clear_interaction_focus")
 	app.call("_refresh")
@@ -296,6 +315,33 @@ func _exercise_one_click_spin(label: String) -> Dictionary:
 	var state_key := str(app.get("current_game_state_key"))
 	var before_machine: Dictionary = SlotMachineStateScript.peek_machine(run_state.current_environment, state_key)
 	var before_spins := int(before_machine.get("spin_count", 0))
+	var surface_snapshot_before: Dictionary = surface.current_view_snapshot()
+	var view_state_before: Dictionary = surface_snapshot_before.get("state", {}) if typeof(surface_snapshot_before.get("state", {})) == TYPE_DICTIONARY else {}
+	var bet_options: Array = view_state_before.get("slot_bet_options", []) if typeof(view_state_before.get("slot_bet_options", [])) == TYPE_ARRAY else []
+	var target_bet_index := mini(2, bet_options.size() - 1)
+	var selected_bet_before := str(view_state_before.get("slot_selected_bet_id", ""))
+	var selected_bet_after := selected_bet_before
+	var bet_rect := Rect2()
+	var bet_emitted_actions: Array = []
+	if target_bet_index >= 0:
+		bet_rect = surface.global_rect_for_surface_action("slot_bet", target_bet_index)
+		if not bet_rect.has_area():
+			_fail("%s Slot surface rendered no live bet-%d hit rectangle." % [label, target_bet_index])
+		else:
+			surface.surface_action.connect(func(action: String, index: int, confirm_requested: bool) -> void:
+				bet_emitted_actions.append({"action": action, "index": index, "confirm_requested": confirm_requested})
+			, CONNECT_ONE_SHOT)
+			_move_viewport_global(bet_rect.get_center())
+			await _settle(2)
+			_click_viewport_global(bet_rect.get_center())
+			await _settle(8)
+			var after_bet_machine: Dictionary = SlotMachineStateScript.peek_machine(run_state.current_environment, state_key)
+			selected_bet_after = str((after_bet_machine.get("bet_ladder", {}) as Dictionary).get("selected_id", ""))
+			var expected_bet_id := str((bet_options[target_bet_index] as Dictionary).get("id", ""))
+			if selected_bet_after != expected_bet_id:
+				_fail("%s physical bet-%d click selected %s instead of %s." % [label, target_bet_index, selected_bet_after, expected_bet_id])
+			if bet_emitted_actions.size() != 1 or str((bet_emitted_actions[0] as Dictionary).get("action", "")) != "slot_bet" or int((bet_emitted_actions[0] as Dictionary).get("index", -1)) != target_bet_index:
+				_fail("%s physical bet-%d click did not emit exactly one matching slot_bet action." % [label, target_bet_index])
 	var spin_rect := surface.global_rect_for_surface_action("slot_spin")
 	if not spin_rect.has_area():
 		_fail("%s Slot surface rendered no live Spin hit rectangle." % label)
@@ -318,6 +364,8 @@ func _exercise_one_click_spin(label: String) -> Dictionary:
 	var view_state: Dictionary = surface_snapshot.get("state", {}) if typeof(surface_snapshot.get("state", {})) == TYPE_DICTIONARY else {}
 	var ledger: Dictionary = app.call("_sealed_action_host_ledger", run_state, false)
 	var pending_cleared := (ledger.get("pending_delivery", {}) as Dictionary).is_empty()
+	var last_result: Dictionary = app.get("last_game_result")
+	var table_binding := str(last_result.get("blackjack_host_apply_receipt", {}).get("table_binding", ""))
 	var resolved := after_spins == before_spins + 1
 	if not resolved:
 		_fail("%s one physical Spin click changed spin_count from %d to %d; expected exactly one resolved spin." % [label, before_spins, after_spins])
@@ -333,6 +381,8 @@ func _exercise_one_click_spin(label: String) -> Dictionary:
 		_fail("%s Spin click was intercepted by a deferred surface refresh." % label)
 	if not pending_cleared:
 		_fail("%s resolved Spin left a sealed action pending." % label)
+	if state_key != "slot" and not table_binding.ends_with(":%s" % state_key):
+		_fail("%s cabinet %s did not receive a fixture-specific sealed binding (%s)." % [label, state_key, table_binding])
 	var causal_context_rejected := true
 	if label == "SLOT-HOST-PLAY-A":
 		await _settle_until_surface_idle(surface)
@@ -343,6 +393,10 @@ func _exercise_one_click_spin(label: String) -> Dictionary:
 		"resolved": resolved,
 		"before_spins": before_spins,
 		"after_spins": after_spins,
+		"selected_bet_before": selected_bet_before,
+		"selected_bet_after": selected_bet_after,
+		"bet_rect": _rect_payload(bet_rect),
+		"bet_emitted_actions": bet_emitted_actions,
 		"spin_rect": _rect_payload(spin_rect),
 		"hovered_control_name": str(hovered_control.get("name", "")),
 		"hovered_surface_action": hovered_surface_action,
@@ -354,6 +408,13 @@ func _exercise_one_click_spin(label: String) -> Dictionary:
 		"surface_renderer": str(surface_snapshot.get("surface_renderer", "")),
 		"grid_columns": (view_state.get("slot_grid", []) as Array).size(),
 		"outcome_message": str(surface_snapshot.get("outcome_message", "")),
+		"last_game_result": {
+			"ok": bool(last_result.get("ok", false)),
+			"error_code": str(last_result.get("error_code", "")),
+			"message": str(last_result.get("message", "")),
+			"request_key": str(last_result.get("blackjack_host_request_key", last_result.get("request_key", ""))),
+			"table_binding": table_binding,
+		},
 	}
 
 

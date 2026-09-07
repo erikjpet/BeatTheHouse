@@ -5,6 +5,7 @@ const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd"
 const ScenarioLayoutResolverScript := preload("res://scripts/core/scenario_layout_resolver.gd")
 const ScenarioExtensionDispatchScript := preload("res://scripts/core/scenario_extension_dispatch.gd")
 const EnvironmentInteractionViewModelScript := preload("res://scripts/ui/environment_interaction_view_model.gd")
+const EnvironmentInteractionControllerScript := preload("res://scripts/ui/environment_interaction_controller.gd")
 
 const BOARD_SIZE := Vector2(900.0, 430.0)
 const SCENARIO_OBJECT_ID := "scenario:scenario:console:night"
@@ -27,6 +28,46 @@ static func check(failures: Array) -> void:
 	_check_renderer_failure_payload_is_empty(failures)
 	_check_competing_augment_presentation(failures)
 	_check_fail_closed_presentation(failures)
+	_check_live_event_presentation_restoration(failures)
+
+
+static func _check_live_event_presentation_restoration(failures: Array) -> void:
+	var listen_id := "event_response:town_rumor_staff:listen"
+	var live := {
+		"object_id": "event:town_rumor_staff",
+		"object_type": "event",
+		"visual_type": "character",
+		"source_id": "town_rumor_staff",
+		"label": "Word from Across Town",
+		"asset_path": "res://assets/art/events/late_shift_discount.png",
+		"icon_key": "conversation",
+		"prop": "staff",
+		"character_actor": {"name": "Staff", "role": "staff"},
+		"inline_actions": [{"id": listen_id, "emit_object_id": listen_id, "label": "Listen"}],
+	}
+	var sealed := {
+		"object_id": "event:town_rumor_staff",
+		"object_type": "event",
+		"source_id": "town_rumor_staff",
+		"label": "Word from Across Town",
+		"owner_namespace": "base",
+		"stable_object_id": "event:town_rumor_staff",
+		"available_actions": [{"id": "inspect_event_choices", "label": "Review responses"}],
+		"confirm_action_id": "inspect_event_choices",
+		"focus_rect": {"x": 0.2, "y": 0.2, "w": 0.1, "h": 0.1},
+	}
+	var restored := _record_by_id(
+		EnvironmentInteractionControllerScript.restore_live_presentation_fields([sealed], [live]),
+		"event:town_rumor_staff"
+	)
+	var actions := _array(restored.get("inline_actions", []))
+	if str(restored.get("visual_type", "")) != "character" \
+			or str(restored.get("asset_path", "")) != str(live.get("asset_path", "")) \
+			or actions.size() != 1 \
+			or str(_dict(actions[0]).get("emit_object_id", "")) != listen_id:
+		failures.append("Scenario finalization did not restore the authored Word from Across Town actor/icon and direct Listen response.")
+	if str(restored.get("confirm_action_id", "")) != "inspect_event_choices" or str(restored.get("focus_rect", {})) != str(sealed.get("focus_rect", {})):
+		failures.append("Live event presentation restoration overwrote sealed interaction authority.")
 
 
 static func _check_observable_action_consequence(failures: Array) -> void:

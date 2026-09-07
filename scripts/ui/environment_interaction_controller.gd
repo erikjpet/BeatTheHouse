@@ -116,6 +116,7 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		var committed_result := committed_projection_status_result(host.run_state, projection_result, trusted_base_result)
 		result = _array(committed_result.get("records", trusted_base_result))
 		if bool(committed_result.get("ok", false)):
+			result = restore_live_presentation_fields(result, trusted_base_result)
 			result = append_unsealed_live_records(result, trusted_base_result, sealed_base_records)
 	elif bool(world_preparation.get("active", false)):
 		var world_finalized: Dictionary = _dict(host.run_state.world_sequence_finalize_base_semantics(result, host.library, layout_context))
@@ -127,10 +128,44 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		var world_projection_result := project_finalized_sequence_interaction_result(result, world_finalized)
 		var committed_world_result := committed_projection_status_result(host.run_state, world_projection_result, trusted_base_result)
 		result = _array(committed_world_result.get("records", trusted_base_result))
+		if bool(committed_world_result.get("ok", false)):
+			result = restore_live_presentation_fields(result, trusted_base_result)
 	else:
 		host.run_state.current_environment.erase("scenario_sequence_lifecycle_errors")
 		host.run_state.current_environment.erase("scenario_layout_audit")
 		host.run_state.current_environment.erase("scenario_layout_authority_digest")
+	return result
+
+
+# Scenario authority seals identity, geometry, and any fields it explicitly
+# changes. Its compact base inventory intentionally omits live presentation
+# data, so restore only absent fields from the already trusted UI projection.
+# This keeps authored event art, character identity, and direct response
+# buttons visible without allowing the live pass to override sealed semantics.
+static func restore_live_presentation_fields(projected_records: Array, live_records: Array) -> Array:
+	var live_by_id: Dictionary = {}
+	for live_value in live_records:
+		var live := _dict(live_value)
+		var live_id := str(live.get("object_id", "")).strip_edges()
+		if not live_id.is_empty():
+			live_by_id[live_id] = live
+	var result: Array = []
+	var presentation_fields := [
+		"visual_type", "short_description", "identity_summary", "presence",
+		"status_summary", "effect_summary", "impact_summary", "risk_summary",
+		"cost_summary", "choice_summary", "classification_summary",
+		"attribute_badges", "visual_key", "prop", "surface", "icon_key",
+		"asset_path", "icon_sprite", "character_actor", "inline_actions",
+	]
+	for record_value in projected_records:
+		var record := _dict(record_value).duplicate(true)
+		var object_id := str(record.get("object_id", "")).strip_edges()
+		var live := _dict(live_by_id.get(object_id, {}))
+		if not live.is_empty() and str(record.get("owner_namespace", "base")) != "scenario":
+			for field in presentation_fields:
+				if not record.has(field) and live.has(field):
+					record[field] = _duplicate_variant(live.get(field))
+		result.append(record)
 	return result
 
 
@@ -1015,6 +1050,14 @@ static func numbers_interactable_objects(host: Variant) -> Array:
 
 static func _dict(value: Variant) -> Dictionary:
 	return value as Dictionary if typeof(value) == TYPE_DICTIONARY else {}
+
+
+static func _duplicate_variant(value: Variant) -> Variant:
+	if typeof(value) == TYPE_DICTIONARY:
+		return (value as Dictionary).duplicate(true)
+	if typeof(value) == TYPE_ARRAY:
+		return (value as Array).duplicate(true)
+	return value
 
 
 static func _array(value: Variant) -> Array:
