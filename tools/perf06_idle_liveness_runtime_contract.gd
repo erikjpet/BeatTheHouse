@@ -1,6 +1,7 @@
 extends SceneTree
 
 const GameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.gd")
+const PerformanceLivenessGuardScript := preload("res://scripts/ui/performance_liveness_guard.gd")
 
 var failures: Array = []
 
@@ -28,10 +29,19 @@ func _run() -> void:
 	var counters: Dictionary = canvas.call("performance_counters")
 	var runtime: Dictionary = canvas.call("surface_runtime_status")
 	var live: Dictionary = canvas.call("performance_live_status")
+	var redraw_count := int(counters.get("surface_animation_redraw_count", 0))
+	var liveness_check: Dictionary = PerformanceLivenessGuardScript.evaluate(
+		"Playtest 0.6 reworked blackjack surface",
+		"surface_animation_redraw_count",
+		120,
+		redraw_count,
+	)
+	_check(bool(liveness_check.get("passed", false)), str(liveness_check.get("message", "Idle liveness guard failed.")))
 	_check(int(counters.get("surface_animation_scheduler_elapsed_msec", -1)) >= 2000, "Scheduler elapsed did not preserve the complete reset-scoped interval.")
-	_check(int(counters.get("surface_animation_redraw_count", 0)) >= 120, "Native idle scheduler did not record the full production cadence.")
+	_check(redraw_count >= 120, "Native idle scheduler did not record the full production cadence.")
 	_check(is_equal_approx(float(counters.get("surface_idle_animation_fps", 0.0)), 60.0), "Performance counters omitted the native effective idle FPS.")
 	_check(int(counters.get("draw_sample_count", 0)) > 0, "Scheduled idle redraws produced no paired canvas draw.")
+	_check(float(counters.get("draw_avg_ms", 0.0)) > 0.0, "Scheduled idle draw cost was 0.000 ms; frozen or missing draw work must not pass.")
 	_check(int(runtime.get("surface_animation_scheduler_elapsed_msec", -1)) == int(counters.get("surface_animation_scheduler_elapsed_msec", -2)) and is_equal_approx(float(runtime.get("surface_idle_animation_fps", 0.0)), 60.0), "Runtime status omitted cadence or scheduler elapsed.")
 	_check(int(live.get("surface_animation_scheduler_elapsed_msec", -1)) == int(counters.get("surface_animation_scheduler_elapsed_msec", -2)) and is_equal_approx(float(live.get("surface_idle_animation_fps", 0.0)), 60.0), "Lightweight live status omitted cadence or scheduler elapsed.")
 
@@ -50,7 +60,11 @@ func _run() -> void:
 	canvas.queue_free()
 	await process_frame
 	if failures.is_empty():
-		print("PERF06_IDLE_LIVENESS_RUNTIME_CONTRACT PASS")
+		print("PERF06_IDLE_LIVENESS_RUNTIME_CONTRACT PASS redraws=%d draws=%d draw_avg_ms=%.3f" % [
+			redraw_count,
+			int(counters.get("draw_sample_count", 0)),
+			float(counters.get("draw_avg_ms", 0.0)),
+		])
 		quit(0)
 		return
 	for failure_value in failures:
