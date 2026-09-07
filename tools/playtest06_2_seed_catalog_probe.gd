@@ -7,12 +7,14 @@ extends SceneTree
 const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
+const HarnessProductionFidelityScript := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
 
 var seed_values: Array = []
 var output_path := ""
 var source_commit := ""
 var source_tree := ""
 var build_identity := ""
+var failures: Array = []
 
 
 func _init() -> void:
@@ -48,6 +50,11 @@ func _run() -> void:
 	var reports: Array = []
 	for seed_value in seed_values:
 		reports.append(_audit_seed(library, str(seed_value)))
+		if not failures.is_empty():
+			for failure_value in failures:
+				push_error(str(failure_value))
+			quit(1)
+			return
 	var all_scenario_ids := _scenario_catalog_ids(library)
 	var selection := _greedy_scenario_selection(reports, all_scenario_ids)
 	var tool_path := ProjectSettings.globalize_path("res://tools/playtest06_2_seed_catalog_probe.gd")
@@ -83,7 +90,10 @@ func _audit_seed(library: Variant, seed_value: String) -> Dictionary:
 	var run_state := RunStateScript.new()
 	run_state.start_new(seed_value)
 	var generator := RunGeneratorScript.new(library)
-	generator.next_environment(run_state)
+	if not bool(HarnessProductionFidelityScript.generate_and_finalize(
+		generator, run_state, failures, "playtest catalog initial arrival for %s" % seed_value
+	).get("ok", false)):
+		return {"seed": seed_value}
 	var node_ids: Array = []
 	for node_value in run_state.world_map.get("nodes", []):
 		if typeof(node_value) == TYPE_DICTIONARY:
@@ -95,7 +105,11 @@ func _audit_seed(library: Variant, seed_value: String) -> Dictionary:
 		var node_id := str(node_id_value)
 		if node_id == run_state.current_world_node_id():
 			continue
-		generator.next_environment(run_state, node_id, true)
+		if not bool(HarnessProductionFidelityScript.travel_and_finalize(
+			generator, run_state, node_id, true, library, failures,
+			"playtest catalog arrival at %s for %s" % [node_id, seed_value]
+		).get("ok", false)):
+			return {"seed": seed_value}
 	var assignments: Array = []
 	var archetype_ids: Array = []
 	var game_ids: Array = []

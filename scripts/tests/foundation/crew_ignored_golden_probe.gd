@@ -10,6 +10,7 @@ extends RefCounted
 # visible to the golden and fail it.
 
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
+const HarnessProductionFidelityScript := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const CrewTurnModelScript := preload("res://scripts/core/crew_turn_model.gd")
 const SEEDS := ["CREW-IGNORED-GOLDEN-A", "CREW-IGNORED-GOLDEN-B"]
@@ -18,18 +19,25 @@ const NORMALIZED_AUTHORITY_ID := "0000000000000000000000000000000000000000000000
 
 static func capture(library: ContentLibrary) -> Dictionary:
 	var runs: Array = []
+	var arrival_failures: Array = []
 	for seed_value in SEEDS:
 		var run_state := RunStateScript.new()
 		run_state.start_new(str(seed_value))
 		_set_world(run_state)
 		var generator := RunGeneratorScript.new(library)
-		generator.next_environment(run_state, "bar", true)
+		var initial_arrival := HarnessProductionFidelityScript.generate_and_finalize(generator, run_state, arrival_failures, "crew-ignored %s initial Bar arrival" % str(seed_value), "bar", true)
+		if not bool(initial_arrival.get("ok", false)):
+			return {"schema_version": 1, "runs": runs, "harness_failure": str(arrival_failures.back())}
 		var checkpoints: Array = [_checkpoint("initial_bar", run_state)]
 		run_state.advance_environment_turns(1)
 		checkpoints.append(_checkpoint("bar_action_boundary", run_state))
-		generator.next_environment(run_state, "gas_station_casino", true)
+		var away_arrival := HarnessProductionFidelityScript.travel_and_finalize(generator, run_state, "gas_station_casino", true, library, arrival_failures, "crew-ignored %s ordinary travel" % str(seed_value))
+		if not bool(away_arrival.get("ok", false)):
+			return {"schema_version": 1, "runs": runs, "harness_failure": str(arrival_failures.back())}
 		checkpoints.append(_checkpoint("ordinary_travel", run_state))
-		generator.next_environment(run_state, "bar", true)
+		var revisit_arrival := HarnessProductionFidelityScript.travel_and_finalize(generator, run_state, "bar", true, library, arrival_failures, "crew-ignored %s Bar revisit" % str(seed_value))
+		if not bool(revisit_arrival.get("ok", false)):
+			return {"schema_version": 1, "runs": runs, "harness_failure": str(arrival_failures.back())}
 		checkpoints.append(_checkpoint("bar_revisit", run_state))
 		var restored := RunStateScript.new()
 		restored.from_dict(run_state.to_dict())
@@ -46,7 +54,10 @@ static func world_sequence_noop_failures(library: ContentLibrary) -> Array:
 	var run_state := RunStateScript.new()
 	run_state.start_new("CREW-IGNORED-WORLD-SEQUENCE-NOOP")
 	_set_world(run_state)
-	RunGeneratorScript.new(library).next_environment(run_state, "bar", true)
+	var generator := RunGeneratorScript.new(library)
+	var arrival := HarnessProductionFidelityScript.generate_and_finalize(generator, run_state, failures, "crew-ignored world-sequence no-op Bar arrival", "bar", true)
+	if not bool(arrival.get("ok", false)):
+		return failures
 	if not run_state.world_sequence_registrations.is_empty():
 		failures.append("ignored fixture began with world-sequence registrations: %s" % JSON.stringify(run_state.world_sequence_registrations))
 		return failures

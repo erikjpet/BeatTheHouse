@@ -1527,9 +1527,9 @@ func _check_m2_system_interaction_scenario(library: ContentLibrary, failures: Ar
 	run_state.start_new("M2-SYSTEM-SCENARIO")
 	run_state.game_clock_minutes = 20 * 60
 	var generator: RunGenerator = RunGeneratorScript.new(library)
-	var start_environment: EnvironmentInstance = generator.next_environment(run_state)
+	var start_environment := _harness_arrive(generator, run_state, failures, "M2 interaction initial arrival")
 	var environment_target := _first_target_with_game(library, _unique_strings(start_environment.next_archetypes, start_environment.travel_hooks), "")
-	var environment: EnvironmentInstance = generator.next_environment(run_state, environment_target)
+	var environment := _harness_arrive(generator, run_state, failures, "M2 interaction destination arrival", environment_target)
 	if run_state.current_environment.is_empty():
 		failures.append("M2 scenario did not enter a generated environment.")
 		return
@@ -3528,7 +3528,7 @@ func _grand_casino_spatial_fixture_run(library: ContentLibrary, seed_text: Strin
 	var map_data := WorldMapScript.new(library).build(run_state, run_state.create_rng("gc_spatial_fixture_map"))
 	run_state.set_world_map(map_data)
 	var generator: RunGenerator = RunGeneratorScript.new(library)
-	var generated := generator.next_environment(run_state, RunState.GRAND_CASINO_ARCHETYPE_ID, true)
+	var generated := _harness_arrive(generator, run_state, failures, "Grand Casino spatial fixture arrival", RunState.GRAND_CASINO_ARCHETYPE_ID, true)
 	if generated == null or str(run_state.current_environment.get("archetype_id", "")) != RunState.GRAND_CASINO_ARCHETYPE_ID:
 		failures.append("Grand Casino spatial fixture could not generate the Main Floor under the world node.")
 		return null
@@ -5124,8 +5124,8 @@ func _check_rng(library: ContentLibrary, failures: Array) -> void:
 	run_b.start_new("FOUNDATION-TEST-SEED", custom_challenge)
 	var generator_a: RunGenerator = RunGeneratorScript.new(library)
 	var generator_b: RunGenerator = RunGeneratorScript.new(library)
-	var environment_a = generator_a.next_environment(run_a)
-	var environment_b = generator_b.next_environment(run_b)
+	var environment_a := _harness_arrive(generator_a, run_a, failures, "RNG twin A initial arrival")
+	var environment_b := _harness_arrive(generator_b, run_b, failures, "RNG twin B initial arrival")
 
 	if JSON.stringify(environment_a.to_dict()) != JSON.stringify(environment_b.to_dict()):
 		failures.append("Same fixture seed did not generate the same fixture environment.")
@@ -5177,8 +5177,8 @@ func _check_same_seed_game_result(library: ContentLibrary, challenge: Dictionary
 	run_b.start_new("FOUNDATION-TEST-SEED", challenge)
 	var generator_a: RunGenerator = RunGeneratorScript.new(library)
 	var generator_b: RunGenerator = RunGeneratorScript.new(library)
-	var environment_a = generator_a.next_environment(run_a)
-	var environment_b = generator_b.next_environment(run_b)
+	var environment_a := _harness_arrive(generator_a, run_a, failures, "game-result twin A initial arrival")
+	var environment_b := _harness_arrive(generator_b, run_b, failures, "game-result twin B initial arrival")
 	var game_a := GameModule.new()
 	game_a.setup(library.game("fixture_game"))
 	var game_b := GameModule.new()
@@ -5207,10 +5207,10 @@ func _check_run_state_source_of_truth(library: ContentLibrary, failures: Array) 
 		failures.append("RunState did not create deterministic RNG streams from initial state.")
 
 	var generator: RunGenerator = RunGeneratorScript.new(library)
-	var environment = generator.next_environment(run_a)
+	var environment := _harness_arrive(generator, run_a, failures, "RunState source-of-truth initial arrival")
 	var history_probe: RunState = RunStateScript.new()
 	history_probe.start_new("HISTORY-COMPACTION-SEED", challenge)
-	var environment_snapshot: Dictionary = environment.to_dict() if environment is EnvironmentInstance else (environment as Dictionary).duplicate(true)
+	var environment_snapshot: Dictionary = environment.to_dict()
 	var previous_environment: Dictionary = environment_snapshot.duplicate(true)
 	previous_environment["runtime_state"] = {"large_transient_machine_state": [1, 2, 3, 4]}
 	history_probe.current_environment = previous_environment
@@ -5311,7 +5311,7 @@ func _check_save_load_seed_sweep(library: ContentLibrary, failures: Array) -> vo
 		var run_state: RunState = RunStateScript.new()
 		run_state.start_new(seed_text, challenge)
 		var generator: RunGenerator = RunGeneratorScript.new(library)
-		generator.next_environment(run_state)
+		_harness_arrive(generator, run_state, failures, "%s initial arrival" % seed_text)
 		for action_index in range(SAVE_LOAD_FUZZ_ACTIONS_PER_SEED):
 			var label := "%s/action_%02d" % [seed_text, action_index]
 			var advanced := _save_load_fuzz_drive_action(library, generator, run_state, action_index, label, failures)
@@ -5329,18 +5329,18 @@ func _save_load_fuzz_drive_action(library: ContentLibrary, generator: RunGenerat
 	if run_state == null or run_state.is_terminal():
 		return false
 	if run_state.current_environment.is_empty():
-		generator.next_environment(run_state)
+		_harness_arrive(generator, run_state, failures, "%s replacement initial arrival" % label)
 	if _save_load_fuzz_resolve_triggered_event(library, run_state, label, failures):
 		return true
 	if action_index % 7 == 3 and _save_load_fuzz_use_service_item_or_lender(library, run_state):
 		return true
-	if action_index % 5 == 4 and _save_load_fuzz_travel(generator, run_state):
+	if action_index % 5 == 4 and _save_load_fuzz_travel(generator, run_state, failures):
 		return true
 	if _save_load_fuzz_play_game(library, run_state, action_index, label, failures):
 		return true
 	if _save_load_fuzz_use_service_item_or_lender(library, run_state):
 		return true
-	return _save_load_fuzz_travel(generator, run_state)
+	return _save_load_fuzz_travel(generator, run_state, failures)
 
 
 func _save_load_fuzz_resolve_triggered_event(library: ContentLibrary, run_state: RunState, label: String, failures: Array) -> bool:
@@ -5402,7 +5402,7 @@ func _save_load_fuzz_use_service_item_or_lender(library: ContentLibrary, run_sta
 	return false
 
 
-func _save_load_fuzz_travel(generator: RunGenerator, run_state: RunState) -> bool:
+func _save_load_fuzz_travel(generator: RunGenerator, run_state: RunState, failures: Array) -> bool:
 	if run_state == null or generator == null or not run_state.has_world_map():
 		return false
 	var current_node_id := run_state.current_world_node_id()
@@ -5418,7 +5418,9 @@ func _save_load_fuzz_travel(generator: RunGenerator, run_state: RunState) -> boo
 			continue
 		var cost := maxi(0, int(status.get("cost", route.get("cost", 0))))
 		var travel_heat := run_state.begin_travel_suspicion_decay(route, target_id)
-		generator.next_environment(run_state, target_id)
+		var arrived := HarnessProductionFidelityScript.travel_and_finalize(generator, run_state, target_id, false, generator.library, failures, "save/load fuzz arrival %s" % target_id)
+		if not bool(arrived.get("ok", false)):
+			return false
 		run_state.finish_travel_suspicion_decay(travel_heat)
 		if cost > 0:
 			GameModule.apply_result(run_state, _world_map_travel_charge_result(target_id, cost))
@@ -5822,21 +5824,21 @@ func _check_save_load_world_event_lender_midstates(library: ContentLibrary, fail
 	var world_run: RunState = RunStateScript.new()
 	world_run.start_new("SB3-WORLD-MAP-OPEN", RunState.custom_challenge("sb3_world", "SB3-WORLD-MAP-OPEN", {"starting_bankroll": 3000}))
 	var generator: RunGenerator = RunGeneratorScript.new(library)
-	generator.next_environment(world_run)
+	_harness_arrive(generator, world_run, failures, "world-map save fixture initial arrival")
 	WorldMapScript.snapshot(world_run.world_map, world_run.current_world_node_id())
 	_save_load_checkpoint(library, world_run, "target/world_map_open_snapshot", true, failures)
 
 	var travel_lock_run: RunState = RunStateScript.new()
 	travel_lock_run.start_new("SB3-TRAVEL-LOCK", RunState.custom_challenge("sb3_travel_lock", "SB3-TRAVEL-LOCK", {"starting_bankroll": 3000}))
-	generator.next_environment(travel_lock_run)
-	generator.next_environment(travel_lock_run, "gas_station_casino")
+	_harness_arrive(generator, travel_lock_run, failures, "travel-lock save fixture initial arrival")
+	_harness_arrive(generator, travel_lock_run, failures, "travel-lock Gas Casino arrival", "gas_station_casino")
 	travel_lock_run.current_environment["travel_locked_actions"] = 3
 	travel_lock_run.current_environment["travel_lock_remaining"] = 2
 	_save_load_checkpoint(library, travel_lock_run, "target/travel_lock_active", true, failures)
 
 	var event_run: RunState = RunStateScript.new()
 	event_run.start_new("SB3-TRIGGERED-EVENT")
-	generator.next_environment(event_run)
+	_harness_arrive(generator, event_run, failures, "triggered-event save fixture initial arrival")
 	var event_id := _save_load_first_event_id(library)
 	if event_id.is_empty() or not event_run.enqueue_triggered_event(event_id, "sb3_fixture", {"trigger": "save_load"}):
 		failures.append("SB.3 triggered-event queue fixture could not enqueue an event.")
@@ -5884,7 +5886,7 @@ func _check_save_load_world_event_lender_midstates(library: ContentLibrary, fail
 		"baseline_luck_delta": 2,
 		"local_heat_turn_decay_interval_delta": -1,
 	}))
-	generator.next_environment(challenge_run)
+	_harness_arrive(generator, challenge_run, failures, "challenge save fixture initial arrival")
 	challenge_run.advance_environment_turns(2)
 	_save_load_checkpoint(library, challenge_run, "target/challenge_mid_modifier", true, failures)
 
@@ -6176,7 +6178,7 @@ func _check_contracts(library: ContentLibrary, failures: Array) -> void:
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("FOUNDATION-CONTRACT-SEED", custom_challenge)
 	var generator: RunGenerator = RunGeneratorScript.new(library)
-	var environment = generator.next_environment(run_state)
+	var environment := _harness_arrive(generator, run_state, failures, "foundation contracts initial arrival")
 
 	if environment.lender_hooks.is_empty():
 		failures.append("Environment contract did not include debt/lender hooks.")

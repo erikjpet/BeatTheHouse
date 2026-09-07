@@ -5,6 +5,7 @@ extends SceneTree
 const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
+const HarnessProductionFidelityScript := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
 const SaveServiceScript := preload("res://scripts/core/save_service.gd")
 const PlatformServicesScript := preload("res://scripts/core/platform_services.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
@@ -803,7 +804,7 @@ func _check_content(library: ContentLibrary, failures: Array) -> void:
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("CONTENT-CHECK")
 	var generator: RunGenerator = RunGeneratorScript.new(library)
-	var first_environment: EnvironmentInstance = generator.next_environment(run_state)
+	var first_environment := _harness_arrive(generator, run_state, failures, "content check initial arrival")
 	call("_check_environment_instance_shape", first_environment, false, failures)
 	_check_start_home_environment(run_state, first_environment, failures)
 	if first_environment.kind != "home":
@@ -814,7 +815,7 @@ func _check_content(library: ContentLibrary, failures: Array) -> void:
 			failures.append("Generated environment references unknown activity: %s." % game_id)
 
 	var target: String = str(first_environment.next_archetypes[0]) if not first_environment.next_archetypes.is_empty() else ""
-	var second_environment: EnvironmentInstance = generator.next_environment(run_state, target)
+	var second_environment := _harness_arrive(generator, run_state, failures, "content check second-room arrival", target)
 	call("_check_environment_instance_shape", second_environment, false, failures)
 	if second_environment.id == first_environment.id:
 		failures.append("Travel did not generate a distinct second environment.")
@@ -998,23 +999,23 @@ func _check_scenario_engine_foundation(library: ContentLibrary, failures: Array)
 	if int(mid_phase.current_environment.get("scenario_phase_index", -1)) != 2 or int(mid_phase.current_environment.get("scenario_phase_action_counter", -1)) != 0 or str(_copy_dict(mid_phase.current_environment.get("scenario_presentation", {})).get("signage_line", "")) != "THE TAPE GETS SWEPT UP.":
 		failures.append("Fight Night did not advance from bout to aftermath on its fourth bout action boundary.")
 
-	var deterministic_a := _scenario_full_generation("SCENARIO-DETERMINISM", library)
-	var deterministic_b := _scenario_full_generation("SCENARIO-DETERMINISM", library)
+	var deterministic_a := _scenario_full_generation("SCENARIO-DETERMINISM", library, failures)
+	var deterministic_b := _scenario_full_generation("SCENARIO-DETERMINISM", library, failures)
 	_assert_json_equal(deterministic_a, deterministic_b, "Same-seed scenario assignments or phase schedule diverged.", failures)
 	var revisit_run := RunStateScript.new()
 	revisit_run.start_new("SCENARIO-REVISIT")
 	var revisit_generator := RunGeneratorScript.new(library)
-	revisit_generator.next_environment(revisit_run)
-	revisit_generator.next_environment(revisit_run, "bar", true)
+	_harness_arrive(revisit_generator, revisit_run, failures, "scenario revisit initial arrival")
+	_harness_arrive(revisit_generator, revisit_run, failures, "scenario revisit Bar arrival", "bar", true)
 	var before_revisit := revisit_run.scenario_for_node("bar")
 	revisit_run.advance_environment_turns(2)
 	before_revisit = revisit_run.scenario_for_node("bar")
-	revisit_generator.next_environment(revisit_run, "motel", true)
+	_harness_arrive(revisit_generator, revisit_run, failures, "scenario revisit away-room arrival", "motel", true)
 	var rng_before_read := revisit_run.rng_state
 	var stored_read := revisit_run.scenario_for_node("bar")
 	if revisit_run.rng_state != rng_before_read or JSON.stringify(stored_read) != JSON.stringify(before_revisit):
 		failures.append("Scenario read API regenerated state or node persistence changed the stored scenario.")
-	revisit_generator.next_environment(revisit_run, "bar", true)
+	_harness_arrive(revisit_generator, revisit_run, failures, "scenario revisit return arrival", "bar", true)
 	if JSON.stringify(revisit_run.scenario_for_node("bar")) != JSON.stringify(before_revisit):
 		failures.append("World-node revisit did not restore the stored scenario unchanged.")
 
@@ -1313,7 +1314,7 @@ func _check_tier1_scenario_content(library: ContentLibrary, failures: Array) -> 
 	var stored_run := RunStateScript.new()
 	stored_run.start_new("TIER1-TUTORIAL-STORED", tutorial_config)
 	var stored_generator := RunGeneratorScript.new(library)
-	stored_generator.next_environment(stored_run)
+	_harness_arrive(stored_generator, stored_run, failures, "tutorial stored initial arrival")
 	var tutorial_seeded_before_entry := stored_run.seeded_scenario_definition_for_node("corner_store")
 	var tutorial_seeded_bytes := JSON.stringify(tutorial_seeded_before_entry)
 	if tutorial_seeded_bytes != JSON.stringify(tutorial_pin):
@@ -1350,7 +1351,7 @@ func _check_tier1_scenario_content(library: ContentLibrary, failures: Array) -> 
 		or rollback_probe.grand_casino_room_states.has("rollback_room_states_probe") \
 		or rollback_probe.town_state.living_world.seeded_scenario_definitions_by_node.has("rollback_outer_map_probe"):
 		failures.append("Travel rollback did not restore its worker-safe snapshot byte-identically.")
-	stored_generator.next_environment(stored_run, "corner_store", true)
+	_harness_arrive(stored_generator, stored_run, failures, "tutorial stored Corner Store arrival", "corner_store", true)
 	if str(stored_run.scenario_for_node("corner_store").get("id", "")) != "corner_store_delivery_day" or not _copy_dict(stored_run.current_environment.get("scenario_exclusive_opportunity", {})).is_empty() or not _copy_dict(stored_run.current_environment.get("scenario_hook_flags", {})).is_empty():
 		failures.append("Tutorial neutral pin did not store scenario identity without opportunity or hook leakage.")
 	if JSON.stringify(stored_run.seeded_scenario_definition_for_node("corner_store")) != tutorial_seeded_bytes \
@@ -1365,10 +1366,10 @@ func _check_tier1_scenario_content(library: ContentLibrary, failures: Array) -> 
 	var ordinary_run := RunStateScript.new()
 	ordinary_run.start_new("TIER1-ORDINARY-STORED", ordinary_config)
 	var ordinary_generator := RunGeneratorScript.new(library)
-	ordinary_generator.next_environment(ordinary_run)
+	_harness_arrive(ordinary_generator, ordinary_run, failures, "ordinary stored initial arrival")
 	var ordinary_seeded := ordinary_run.seeded_scenario_definition_for_node("corner_store")
 	var ordinary_seeded_bytes := JSON.stringify(ordinary_seeded)
-	ordinary_generator.next_environment(ordinary_run, "corner_store", true)
+	_harness_arrive(ordinary_generator, ordinary_run, failures, "ordinary stored Corner Store arrival", "corner_store", true)
 	if _copy_dict(ordinary_seeded.get("mutations", {})).is_empty() \
 		or bool(ordinary_seeded.get(ScenarioEngineScript.SEQUENCE_SUPPRESSION_KEY, false)) \
 		or ordinary_seeded.has("sequence") != authored_delivery.has("sequence") \
@@ -1378,11 +1379,11 @@ func _check_tier1_scenario_content(library: ContentLibrary, failures: Array) -> 
 		failures.append("Ordinary pre-seeded Delivery Day did not preserve and apply its full authored mutations on entry.")
 
 
-func _scenario_full_generation(seed: String, library: ContentLibrary) -> Dictionary:
+func _scenario_full_generation(seed: String, library: ContentLibrary, failures: Array) -> Dictionary:
 	var run_state := RunStateScript.new()
 	run_state.start_new(seed)
 	var generator := RunGeneratorScript.new(library)
-	generator.next_environment(run_state)
+	_harness_arrive(generator, run_state, failures, "%s initial scenario-catalog arrival" % seed)
 	var node_ids: Array = []
 	for node_value in run_state.world_map.get("nodes", []):
 		if typeof(node_value) == TYPE_DICTIONARY:
@@ -1391,7 +1392,7 @@ func _scenario_full_generation(seed: String, library: ContentLibrary) -> Diction
 	for node_id_value in node_ids:
 		var node_id := str(node_id_value)
 		if node_id != run_state.current_world_node_id():
-			generator.next_environment(run_state, node_id, true)
+			_harness_arrive(generator, run_state, failures, "%s scenario-catalog arrival %s" % [seed, node_id], node_id, true)
 		if not run_state.scenario_for_node(node_id).is_empty():
 			run_state.advance_environment_turns(4)
 	var assignments: Dictionary = {}
@@ -1656,7 +1657,7 @@ func _check_connected_town_foundation(library: ContentLibrary, failures: Array) 
 	if JSON.stringify(restored_before_entry.heard_rumor_for_node("bar")) != JSON.stringify(heard):
 		failures.append("Heard-tier map state did not survive save/load.")
 	var rng_before_entry := restored_before_entry.rng_state
-	generator.next_environment(restored_before_entry, "bar", true)
+	_harness_arrive(generator, restored_before_entry, failures, "connected-town rumor target arrival", "bar", true)
 	if str(restored_before_entry.scenario_for_node("bar").get("id", "")) != before_entry_seed \
 		or str(restored_before_entry.scenario_for_node("bar").get("id", "")) != str(heard.get("source_id", "")):
 		failures.append("The later entered node did not consume the exact scenario named by its heard rumor.")
@@ -3899,10 +3900,11 @@ func _check_foundation_contract_smoke(library: ContentLibrary, failures: Array, 
 		failures.append("RngStream did not produce deterministic smoke output.")
 
 	var generator: RunGenerator = RunGeneratorScript.new(library)
-	var first_environment: EnvironmentInstance = generator.next_environment(run_state)
+	var first_environment := _harness_arrive(generator, run_state, failures, "foundation smoke initial arrival")
 	call("_check_environment_instance_shape", first_environment, false, failures)
 	_check_start_home_environment(run_state, first_environment, failures)
-	var second_environment: EnvironmentInstance = generator.next_environment(run_state, first_environment.next_archetypes[0] if not first_environment.next_archetypes.is_empty() else "")
+	var smoke_target := str(first_environment.next_archetypes[0]) if not first_environment.next_archetypes.is_empty() else ""
+	var second_environment := _harness_arrive(generator, run_state, failures, "foundation smoke second-room arrival", smoke_target)
 	call("_check_environment_instance_shape", second_environment, false, failures)
 	if second_environment.kind == "home":
 		failures.append("Second foundation EnvironmentInstance should leave home into the world.")
@@ -4334,12 +4336,12 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 	run_a.start_new("IGNORED", config_a)
 	run_a.begin_act(1)
 	var generator_a := RunGeneratorScript.new(library)
-	generator_a.next_environment(run_a)
+	_harness_arrive(generator_a, run_a, failures, "tutorial path A initial arrival")
 	var run_b := RunStateScript.new()
 	run_b.start_new("ALSO-IGNORED", config_b)
 	run_b.begin_act(1)
 	var generator_b := RunGeneratorScript.new(library)
-	generator_b.next_environment(run_b)
+	_harness_arrive(generator_b, run_b, failures, "tutorial deterministic twin initial arrival")
 	if JSON.stringify(_deterministic_run_projection(run_a)) != JSON.stringify(_deterministic_run_projection(run_b)):
 		failures.append("Tutorial fixed seed generated divergent initial runs.")
 	if not run_a.is_tutorial_run() or not run_a.excludes_profile_stats():
@@ -4373,7 +4375,7 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 	var glasses_detail := item_service.inventory_item_detail("xray_glasses")
 	if not str(glasses_detail.get("effect_summary", "")).contains("3") or not str(glasses_detail.get("effect_summary", "")).contains("6") or not str(glasses_detail.get("behavior_summary", "")).contains("Permanent passive") or bool(glasses_detail.get("active_item", true)):
 		failures.append("Tutorial X-ray inventory detail did not expose its real passive effect, Heat cost, and active-slot behavior.")
-	generator_a.next_environment(run_a, "corner_store", true)
+	_harness_arrive(generator_a, run_a, failures, "tutorial Corner Store arrival", "corner_store", true)
 	if TutorialFlowScript.travel_target_ids(run_a, noisy_tutorial_targets) != ["gas_station_casino"]:
 		failures.append("Tutorial Corner Store exposed a route other than Gas Casino before the parking tip.")
 	item_service.setup(library, run_a)
@@ -4425,15 +4427,15 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 	gas_run.start_new("PATH-A", config_a)
 	gas_run.begin_act(1)
 	var gas_generator := RunGeneratorScript.new(library)
-	gas_generator.next_environment(gas_run)
+	_harness_arrive(gas_generator, gas_run, failures, "tutorial gas path initial arrival")
 	var gas_items := RunActionServiceScript.new()
 	gas_items.setup(library, gas_run)
 	gas_items.buy_item_offer("xray_glasses")
-	gas_generator.next_environment(gas_run, "corner_store", true)
+	_harness_arrive(gas_generator, gas_run, failures, "tutorial gas path Corner Store arrival", "corner_store", true)
 	var gas_tip := EventModuleScript.new()
 	gas_tip.setup(library.event("parking_lot_tip"), library)
 	gas_tip.resolve(gas_run, gas_run.current_environment, "follow_tip")
-	gas_generator.next_environment(gas_run, "gas_station_casino", true)
+	_harness_arrive(gas_generator, gas_run, failures, "tutorial Gas Casino arrival", "gas_station_casino", true)
 	var pull_tabs: GameModule = PullTabsGameScript.new()
 	pull_tabs.setup(library.game("pull_tabs"), library)
 	pull_tabs.enter(gas_run, gas_run.current_environment)
@@ -4442,7 +4444,7 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 	var xray_target: Dictionary = xray_item_state.get("xray_target", {}) if typeof(xray_item_state.get("xray_target", {})) == TYPE_DICTIONARY else {}
 	if int(xray_target.get("offset", -1)) != 2 or int(xray_target.get("payout", 0)) <= 0:
 		failures.append("Path A did not script an X-ray-visible winner near the stack bottom.")
-	generator_a.next_environment(run_a, "small_underground_casino", true)
+	_harness_arrive(generator_a, run_a, failures, "tutorial Underground Casino arrival", "small_underground_casino", true)
 	if run_a.current_environment.get("game_ids", []) != ["blackjack"]:
 		failures.append("Tutorial end-to-end arc did not reach its real blackjack table.")
 	var invite_event := EventModuleScript.new()
@@ -4478,7 +4480,7 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 	if int(unaffordable_grand_casino_status.get("cost", -1)) != 5 or bool(unaffordable_grand_casino_status.get("available", true)):
 		failures.append("Tutorial Grand Casino route did not enforce its exact $5 affordability threshold.")
 	run_a.bankroll = 5
-	generator_a.next_environment(run_a, "grand_casino", true)
+	_harness_arrive(generator_a, run_a, failures, "tutorial Grand Casino arrival", "grand_casino", true)
 	if str(run_a.current_environment.get("archetype_id", "")) != RunState.GRAND_CASINO_ARCHETYPE_ID or run_a.current_environment.get("game_ids", []) != ["blackjack"]:
 		failures.append("Tutorial finale did not generate exactly one Main Floor table game.")
 	var tutorial_status := run_a.demo_objective_status()
@@ -8542,3 +8544,12 @@ func _assert_equal(actual: Variant, expected: Variant, message: String, failures
 
 
 # Compares dictionaries and arrays in foundation checks.
+func _harness_arrive(generator: RunGenerator, run_state: RunState, failures: Array, context: String, target_id: String = "", target_prevalidated: bool = false) -> EnvironmentInstance:
+	var result: Dictionary
+	if run_state.current_environment.is_empty() or target_id.strip_edges().is_empty():
+		result = HarnessProductionFidelityScript.generate_and_finalize(generator, run_state, failures, context, target_id, target_prevalidated)
+	else:
+		result = HarnessProductionFidelityScript.travel_and_finalize(generator, run_state, target_id, target_prevalidated, generator.library, failures, context)
+	var environment_value: Variant = result.get("environment", run_state.current_environment)
+	var environment: Dictionary = environment_value if typeof(environment_value) == TYPE_DICTIONARY else run_state.current_environment
+	return EnvironmentInstance.from_dict(environment)

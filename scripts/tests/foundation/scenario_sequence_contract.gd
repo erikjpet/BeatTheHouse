@@ -12,6 +12,7 @@ const ScenarioExtensionDispatchScript := preload("res://scripts/core/scenario_ex
 const ScenarioSequenceAuditScript := preload("res://tools/scenario_sequence_audit.gd")
 const ScenarioSequenceProbeSupportScript := preload("res://tools/scenario_sequence_probe_support.gd")
 const ScenarioPresentationContractScript := preload("res://scripts/tests/foundation/scenario_presentation_contract.gd")
+const HarnessProductionFidelityScript := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const SaveServiceScript := preload("res://scripts/core/save_service.gd")
 const EventModuleScript := preload("res://scripts/core/event_module.gd")
@@ -284,10 +285,16 @@ static func _check_delivery_day_world_map_route_install(library: ContentLibrary,
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("WAVE-B-COMPOSITION-08")
 	var generator: RunGenerator = RunGeneratorScript.new(library)
-	generator.next_environment(run_state)
-	var result := generator.travel_environment_result(run_state, "corner_store", true)
-	if not bool(result.get("ok", false)) or run_state.current_world_node_id() != "corner_store":
-		failures.append("Delivery-day world-map node could not install its declared base route: %s." % JSON.stringify(result.get("errors", [])))
+	var initial_arrival := HarnessProductionFidelityScript.generate_and_finalize(
+		generator, run_state, failures, "delivery-day world-map initial arrival"
+	)
+	if not bool(initial_arrival.get("ok", false)):
+		return
+	var result := HarnessProductionFidelityScript.travel_and_finalize(
+		generator, run_state, "corner_store", true, library, failures,
+		"delivery-day world-map route install"
+	)
+	if not bool(result.get("ok", false)):
 		return
 	var routes := _array(run_state.current_environment.get("travel_hooks", []))
 	var semantic := _dict(run_state.current_environment.get("scenario_semantic_inventory", {}))

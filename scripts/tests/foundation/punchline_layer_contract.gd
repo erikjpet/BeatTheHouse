@@ -3,6 +3,7 @@ extends RefCounted
 const EnvironmentInstanceScript := preload("res://scripts/core/environment_instance.gd")
 const EventModuleScript := preload("res://scripts/core/event_module.gd")
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
+const HarnessProductionFidelityScript := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
@@ -38,8 +39,10 @@ static func _check_production_scenario_layer_entry(library: ContentLibrary, fail
 	var run_state := RunStateScript.new()
 	run_state.start_new("WAVE-B-COMPOSITION-08")
 	var generator := RunGeneratorScript.new(library)
-	generator.next_environment(run_state)
-	var travel := generator.travel_environment_result(run_state, PUNCHLINE_ID, true)
+	var initial_arrival := HarnessProductionFidelityScript.generate_and_finalize(generator, run_state, failures, "Punchline contract initial arrival")
+	if not bool(initial_arrival.get("ok", false)):
+		return
+	var travel := HarnessProductionFidelityScript.travel_and_finalize(generator, run_state, PUNCHLINE_ID, true, library, failures, "Punchline L1 arrival")
 	if not bool(travel.get("ok", false)) or str(run_state.current_environment.get("scenario_id", "")) != "punchline_high_stakes_night":
 		failures.append("Production Punchline high-stakes scenario could not install on L1: %s." % JSON.stringify(travel.get("errors", [])))
 		return

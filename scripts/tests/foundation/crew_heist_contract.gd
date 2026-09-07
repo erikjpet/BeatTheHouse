@@ -8,6 +8,7 @@ const RunReportViewModelScript := preload("res://scripts/ui/run_report_view_mode
 const EventModuleScript := preload("res://scripts/core/event_module.gd")
 const GameModuleScript := preload("res://scripts/core/game_module.gd")
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
+const HarnessProductionFidelityScript := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
 const FoundationMainScript := preload("res://scripts/ui/foundation_main.gd")
 const BlackjackActionAuthorityScript := preload("res://scripts/core/blackjack_action_authority.gd")
 
@@ -90,7 +91,9 @@ static func _check_production_paths(library: ContentLibrary, failures: Array) ->
 		failures.append("Planning-table schedule action did not start the production hold.")
 	else:
 		var generator := RunGeneratorScript.new(library)
-		generator.next_environment(count, "grand_casino_cage", true)
+		var arrived := HarnessProductionFidelityScript.travel_and_finalize(generator, count, "grand_casino_cage", true, library, failures, "Crew heist schedule Cage arrival")
+		if not bool(arrived.get("ok", false)):
+			return
 		count.advance_environment_turns(2)
 	if not bool(_dict(count.crew_heist_snapshot().get("setup", {})).get("schedule", false)):
 		failures.append("Ordinary generated travel did not complete the production schedule hold.")
@@ -145,28 +148,28 @@ static func _check_plan_a(library: ContentLibrary, failures: Array) -> void:
 	if not bool(_event_choice(run, library, "crew_planning_table", "count_schedule").get("ok", false)):
 		failures.append("Plan A schedule did not start a real delivery hold.")
 	else:
-		_move(run, "grand_casino_cage")
+		_move(run, "grand_casino_cage", library, failures)
 		run.advance_environment_turns(2)
 	if not bool(_dict(run.crew_heist_snapshot().get("setup", {})).get("schedule", false)):
 		failures.append("Plan A schedule hold did not complete at the real cage node.")
 	# The next planning action belongs to the Crew room, not the remote cage.
-	_move(run, "small_underground_casino")
+	_move(run, "small_underground_casino", library, failures)
 	if not bool(_event_choice(run, library, "crew_planning_table", "count_cart").get("ok", false)):
 		failures.append("Plan A swap cart did not start a real package run.")
 	else:
 		run.delivery_apply_physical_action("pickup", "crew_heist:swap_cart:pickup")
-		_move(run, "grand_casino")
+		_move(run, "grand_casino", library, failures)
 		run.delivery_resolve_travel_arrival()
 		run.delivery_complete_handoff()
 	if not bool(_dict(run.crew_heist_snapshot().get("setup", {})).get("swap_cart", false)):
 		failures.append("Plan A swap cart did not complete through the real-map handoff.")
 	run.narrative_flags["debt_court_settlement"] = true
 	run.crew_trust_by_member["crew_knuckles"] = CrewStateModelScript.rank_threshold("associate")
-	_move(run, "small_underground_casino")
+	_move(run, "small_underground_casino", library, failures)
 	if not bool(_event_choice(run, library, "crew_planning_table", "begin_play").get("ok", false)):
 		failures.append("Plan A did not enter the Play after all mandatory setup.")
 		return
-	_move(run, "grand_casino")
+	_move(run, "grand_casino", library, failures)
 	if not _array(run.current_environment.get("event_ids", [])).has("heist_live_table"):
 		failures.append("Plan A did not mount its production crew event at the designated table.")
 	var live_table := EventModuleScript.new()
@@ -199,7 +202,7 @@ static func _check_plan_a(library: ContentLibrary, failures: Array) -> void:
 		return
 	if int(run.delivery_snapshot().get("pursuit_pressure", -1)) != 1 or str(_dict(run.crew_heist_snapshot().get("getaway", {})).get("exit", "")) != "corridor":
 		failures.append("Plan A slow/quiet corridor route lost its distinct pressure-1 contract.")
-	_move(run, "grand_casino_cage")
+	_move(run, "grand_casino_cage", library, failures)
 	run.delivery_resolve_travel_arrival()
 	if run.run_status != RunState.RUN_STATUS_ENDED or str(run.crew_heist_snapshot().get("outcome", "")) != "clean_sweep" or run.bankroll < 1000:
 		failures.append("Plan A clean route did not produce its deterministic flat payout and Act 1 victory.")
@@ -210,7 +213,7 @@ static func _check_plan_a(library: ContentLibrary, failures: Array) -> void:
 	no_guard_state["setup"] = {"identity": true, "schedule": true, "swap_cart": true}
 	no_guard.crew_heist_state = no_guard_state
 	_event_choice(no_guard, library, "crew_planning_table", "begin_play")
-	_move(no_guard, "grand_casino")
+	_move(no_guard, "grand_casino", library, failures)
 	no_guard.crew_heist_state["play"]["round"] = 2
 	no_guard.crew_heist_state["play"]["decisions"] = {"go": "hold", "distraction": "sit"}
 	var no_guard_live := EventModuleScript.new()
@@ -225,7 +228,7 @@ static func _check_plan_a(library: ContentLibrary, failures: Array) -> void:
 		failures.append("Plan A idle actions did not expire and degrade the deterministic live window.")
 	var left := RunStateScript.new()
 	left.from_dict(mid_window.to_dict())
-	_move(left, "delta_queen")
+	_move(left, "delta_queen", library, failures)
 	left.advance_environment_turns(1)
 	if not bool(_dict(left.crew_heist_snapshot().get("play", {})).get("left_table", false)) or _array(left.current_environment.get("event_ids", [])).has("heist_live_table"):
 		failures.append("Leaving Plan A's live session did not record its boundary-driven consequence.")
@@ -264,7 +267,7 @@ static func _check_plan_b(library: ContentLibrary, failures: Array) -> void:
 	if not bool(_event_choice(run, library, "crew_planning_table", "begin_play").get("ok", false)):
 		failures.append("Plan B did not seed Lucky's drunk and enter the invitational.")
 		return
-	_move(run, "grand_casino_high_limit")
+	_move(run, "grand_casino_high_limit", library, failures)
 	run.current_environment["crew_presence"] = [{"member_id": "crew_velvet", "rank": "inner_circle"}]
 	run.current_environment["active_game_id"] = "craps"
 	var invitational_start := RunStateScript.new()
@@ -362,7 +365,7 @@ static func _check_plan_b(library: ContentLibrary, failures: Array) -> void:
 	run.advance_environment_turns(2)
 	if int(run.delivery_snapshot().get("pursuit_pressure", -1)) != 0 or str(run.delivery_snapshot().get("status", "")) != "active":
 		failures.append("Plan B clean front-door walk silently became a chase across ordinary boundaries.")
-	_move(run, "small_underground_casino")
+	_move(run, "small_underground_casino", library, failures)
 	run.delivery_resolve_travel_arrival()
 	if _array(run.current_environment.get("event_ids", [])).has("heist_live_table") or bool(run.narrative_flags.get("heist_live_table_active", true)):
 		failures.append("The transient heist live-table event survived getaway completion.")
@@ -627,12 +630,9 @@ static func _run(seed: String, hooks: Dictionary) -> RunState:
 	return run
 
 
-static func _move(run: RunState, node_id: String) -> void:
-	run.world_map["current_node_id"] = node_id
-	var archetype_id := node_id
-	var crew_room := node_id == "small_underground_casino"
-	run.set_environment({"id": node_id, "world_node_id": node_id, "archetype_id": archetype_id, "kind": "crew" if crew_room else "casino", "turns": 0, "event_ids": ["crew_planning_table"] if crew_room else [], "resolved_event_ids": []})
-	run.call("_crew_heist_boundary_sync")
+static func _move(run: RunState, node_id: String, library: ContentLibrary, failures: Array) -> void:
+	var generator := RunGeneratorScript.new(library)
+	HarnessProductionFidelityScript.travel_and_finalize(generator, run, node_id, true, library, failures, "Crew heist arrival %s" % node_id)
 
 
 static func _set_inner(run: RunState, member_id: String) -> void:

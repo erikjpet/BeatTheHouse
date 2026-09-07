@@ -12,6 +12,7 @@ const CoinPusherSolverScript := preload("res://scripts/games/coin_pusher/coin_pu
 const CoinPusherLiveSessionScript := preload("res://scripts/games/coin_pusher/coin_pusher_live_session.gd")
 const FoundationMainScript := preload("res://scripts/ui/foundation_main.gd")
 const FoundationActionViewModelScript := preload("res://scripts/ui/foundation_action_view_model.gd")
+const HarnessProductionFidelityScript := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
 
 const DEFAULT_SEED_COUNT := 10
 const DEFAULT_SEED_PREFIX := "FOUNDATION-DETERMINISM"
@@ -123,7 +124,10 @@ func _simulate_seed(seed: String, seed_index: int) -> Dictionary:
 	run_state.bankroll = 20000
 	var checkpoints: Array = []
 
-	generator.next_environment(run_state)
+	if not bool(HarnessProductionFidelityScript.generate_and_finalize(
+		generator, run_state, failures, "determinism initial arrival for %s" % seed
+	).get("ok", false)):
+		return {"seed": seed, "checkpoint_count": 0, "final_hash": "", "checkpoints": []}
 	_checkpoint(run_state, checkpoints, seed, "world_map_generation")
 	_apply_alcohol_timing(run_state, checkpoints, seed)
 	_apply_world_travel(run_state, checkpoints, seed)
@@ -293,7 +297,11 @@ func _apply_world_travel(run_state: RunState, checkpoints: Array, seed: String) 
 	var previous_environment := run_state.current_environment.duplicate(true)
 	var route_risk := run_state.travel_route_risk(route, target_id)
 	var travel_heat := run_state.begin_travel_suspicion_decay(route, target_id)
-	generator.next_environment(run_state, target_id)
+	if not bool(HarnessProductionFidelityScript.travel_and_finalize(
+		generator, run_state, target_id, false, library, failures,
+		"%s determinism travel to %s" % [seed, target_id]
+	).get("ok", false)):
+		return
 	var travel_decay := run_state.finish_travel_suspicion_decay(travel_heat)
 	var result := _travel_result(target_id, previous_environment, run_state.current_environment, route, travel_decay, route_risk)
 	GameModule.apply_result(run_state, result)

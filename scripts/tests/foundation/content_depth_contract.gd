@@ -5,6 +5,7 @@ const EventModuleScript := preload("res://scripts/core/event_module.gd")
 const GameModuleScript := preload("res://scripts/core/game_module.gd")
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
+const HarnessProductionFidelityScript := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 const BarDiceScript := preload("res://scripts/games/bar_dice.gd")
 const BaccaratScript := preload("res://scripts/games/baccarat.gd")
@@ -77,8 +78,12 @@ static func _check_seeded_scenario_souvenir_pipeline(library: ContentLibrary, fa
 		var candidate := RunStateScript.new()
 		candidate.start_new("CONTENT-PRODUCTION-SCENARIO-%03d" % seed_index)
 		var generator := RunGeneratorScript.new(library)
-		generator.next_environment(candidate)
-		generator.next_environment(candidate, TARGET_ARCHETYPE, true)
+		var initial_arrival := HarnessProductionFidelityScript.generate_and_finalize(generator, candidate, failures, "souvenir seed %03d initial arrival" % seed_index)
+		if not bool(initial_arrival.get("ok", false)):
+			return
+		var target_arrival := HarnessProductionFidelityScript.travel_and_finalize(generator, candidate, TARGET_ARCHETYPE, true, library, failures, "souvenir seed %03d Delta Queen arrival" % seed_index)
+		if not bool(target_arrival.get("ok", false)):
+			return
 		if str(candidate.current_environment.get("scenario_id", "")) == TARGET_SCENARIO:
 			selected_run = candidate
 			break

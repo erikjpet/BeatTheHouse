@@ -28,15 +28,15 @@ func _check_selected_starter_game_port(library: ContentLibrary, failures: Array)
 	run_b.start_new("PULL-TABS-PORT")
 	var generator_a: RunGenerator = RunGeneratorScript.new(library)
 	var generator_b: RunGenerator = RunGeneratorScript.new(library)
-	var start_environment_a: EnvironmentInstance = generator_a.next_environment(run_a)
-	var start_environment_b: EnvironmentInstance = generator_b.next_environment(run_b)
+	var start_environment_a := _harness_arrive(generator_a, run_a, failures, "starter-game twin A initial arrival")
+	var start_environment_b := _harness_arrive(generator_b, run_b, failures, "starter-game twin B initial arrival")
 	var gambling_path_a := _first_reachable_target_path_with_game(library, start_environment_a.next_archetypes, "pull_tabs")
 	var gambling_path_b := _first_reachable_target_path_with_game(library, start_environment_b.next_archetypes, "pull_tabs")
 	if gambling_path_a.is_empty() or gambling_path_b.is_empty():
 		failures.append("Selected starter route did not expose a reachable pull-tabs gambling environment.")
 		return
-	var environment_a := _generate_path_target_environment(generator_a, run_a, gambling_path_a)
-	var environment_b := _generate_path_target_environment(generator_b, run_b, gambling_path_b)
+	var environment_a := _generate_path_target_environment(generator_a, run_a, gambling_path_a, failures, "starter-game twin A")
+	var environment_b := _generate_path_target_environment(generator_b, run_b, gambling_path_b, failures, "starter-game twin B")
 	if not (environment_a.get("game_ids", []) as Array).has("pull_tabs"):
 		failures.append("Selected starter pull-tabs route did not generate a pull-tabs gambling environment.")
 		return
@@ -107,10 +107,10 @@ func _first_reachable_target_path_with_game(library: ContentLibrary, target_ids:
 	return []
 
 
-func _generate_path_target_environment(generator: RunGenerator, run_state: RunState, target_path: Array) -> Dictionary:
+func _generate_path_target_environment(generator: RunGenerator, run_state: RunState, target_path: Array, failures: Array, context: String) -> Dictionary:
 	var environment := run_state.current_environment.duplicate(true)
 	for target_id_value in target_path:
-		environment = generator.next_environment(run_state, str(target_id_value)).to_dict()
+		environment = _harness_arrive(generator, run_state, failures, "%s arrival %s" % [context, str(target_id_value)], str(target_id_value)).to_dict()
 	return environment
 
 
@@ -514,13 +514,13 @@ func _check_event_module_foundation(library: ContentLibrary, failures: Array) ->
 	run_b.start_new("EVENT-MODULE-SEED")
 	var generator_a: RunGenerator = RunGeneratorScript.new(library)
 	var generator_b: RunGenerator = RunGeneratorScript.new(library)
-	var environment_a := generator_a.next_environment(run_a).to_dict()
-	var environment_b := generator_b.next_environment(run_b).to_dict()
+	var environment_a := _harness_arrive(generator_a, run_a, failures, "event-module twin A initial arrival").to_dict()
+	var environment_b := _harness_arrive(generator_b, run_b, failures, "event-module twin B initial arrival").to_dict()
 	var event_context := _first_triggerable_event_context(library, run_a, environment_a)
 	if event_context.is_empty():
 		for target_id in ["corner_store", "back_alley", "motel", "bar", "gas_station_casino", "small_underground_casino", "jazz_club"]:
-			environment_a = generator_a.next_environment(run_a, target_id).to_dict()
-			environment_b = generator_b.next_environment(run_b, target_id).to_dict()
+			environment_a = _harness_arrive(generator_a, run_a, failures, "event-module twin A arrival %s" % target_id, target_id).to_dict()
+			environment_b = _harness_arrive(generator_b, run_b, failures, "event-module twin B arrival %s" % target_id, target_id).to_dict()
 			event_context = _first_triggerable_event_context(library, run_a, environment_a)
 			if not event_context.is_empty():
 				break
@@ -1529,9 +1529,9 @@ func _check_save_service_foundation_round_trip(library: ContentLibrary, failures
 	run_state.start_new("SAVE-SERVICE-SEED", RunState.custom_challenge("save_service_round_trip", "SAVE-SERVICE-SEED", {"fixture": true}))
 	run_state.game_clock_minutes = 20 * 60
 	var generator: RunGenerator = RunGeneratorScript.new(library)
-	var start_environment: EnvironmentInstance = generator.next_environment(run_state)
+	var start_environment := _harness_arrive(generator, run_state, failures, "save-service initial arrival")
 	var environment_target := _first_target_with_game(library, _unique_strings(start_environment.next_archetypes, start_environment.travel_hooks), "")
-	var environment: EnvironmentInstance = generator.next_environment(run_state, environment_target)
+	var environment := _harness_arrive(generator, run_state, failures, "save-service destination arrival", environment_target)
 	call("_resolve_first_save_test_action", library, run_state, environment, failures)
 	if not library.items.is_empty():
 		run_state.add_item(str((library.items[0] as Dictionary).get("id", "")))
@@ -1952,7 +1952,7 @@ func _check_travel_route_foundation(library: ContentLibrary, failures: Array) ->
 		var predicted_environment := preview_generator.preview_environment(preview_run, "delta_queen")
 		var full_preview := preview_run.travel_route_preview(delta_route, delta_archetype, predicted_environment, true)
 		var travel_heat := preview_run.begin_travel_suspicion_decay(delta_route, "delta_queen")
-		var actual_environment := preview_generator.next_environment(preview_run, "delta_queen").to_dict()
+		var actual_environment := _harness_arrive(preview_generator, preview_run, failures, "scouted-preview Delta Queen arrival", "delta_queen").to_dict()
 		preview_run.finish_travel_suspicion_decay(travel_heat)
 		if _string_array(full_preview.get("game_ids", [])) != _string_array(actual_environment.get("game_ids", [])):
 			failures.append("Scouted route preview games did not match the generated destination.")
@@ -2111,7 +2111,7 @@ func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> vo
 	var topology_map_service := WorldMapScript.new(library)
 	var run_a: RunState = RunStateScript.new()
 	run_a.start_new("WORLD-MAP-SEED")
-	var start_environment := generator.next_environment(run_a)
+	var start_environment := _harness_arrive(generator, run_a, failures, "world-map initial arrival")
 	if not run_a.has_world_map():
 		failures.append("New runs should create a persistent world_map on first environment generation.")
 		return
@@ -2307,7 +2307,7 @@ func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> vo
 	if first_route.is_empty() or not bool(first_route.get("generated_world_route", false)):
 		failures.append("World route should merge generated edge metadata for visible targets.")
 	var travel_heat := run_a.begin_travel_suspicion_decay(first_route, first_target)
-	generator.next_environment(run_a, first_target)
+	_harness_arrive(generator, run_a, failures, "world-map first destination arrival", first_target)
 	run_a.finish_travel_suspicion_decay(travel_heat)
 	var visited_node_id := run_a.current_world_node_id()
 	run_a.current_environment["game_states"] = _copy_dict(run_a.current_environment.get("game_states", {}))
@@ -2331,14 +2331,14 @@ func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> vo
 		failures.append("Generated non-walking return route did not charge a distance-based cost.")
 	var bankroll_before_return := run_a.bankroll
 	var return_heat := run_a.begin_travel_suspicion_decay(return_route, start_node_id)
-	generator.next_environment(run_a, start_node_id)
+	_harness_arrive(generator, run_a, failures, "world-map return arrival", start_node_id)
 	run_a.finish_travel_suspicion_decay(return_heat)
 	GameModule.apply_result(run_a, _world_map_travel_charge_result(start_node_id, return_cost))
 	if run_a.bankroll != bankroll_before_return - return_cost:
 		failures.append("Return world-map travel did not apply the effective route cost.")
 	var revisit_route := generator.world_route_for_target(run_a, visited_node_id)
 	var revisit_heat := run_a.begin_travel_suspicion_decay(revisit_route, visited_node_id)
-	generator.next_environment(run_a, visited_node_id)
+	_harness_arrive(generator, run_a, failures, "world-map revisit arrival", visited_node_id)
 	run_a.finish_travel_suspicion_decay(revisit_heat)
 	var restored_game_states: Dictionary = run_a.current_environment.get("game_states", {}) if typeof(run_a.current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
 	var fixture_state: Dictionary = restored_game_states.get("world_map_fixture", {}) if typeof(restored_game_states.get("world_map_fixture", {})) == TYPE_DICTIONARY else {}
@@ -2404,7 +2404,7 @@ func _check_closing_soon_world_travel(library: ContentLibrary, failures: Array) 
 	if str(locked_destination.archetype_id) == RunState.GRAND_CASINO_ARCHETYPE_ID or locked_run.current_world_node_id() != "corner_store":
 		failures.append("World generation entered the Grand Casino without its invitation flag.")
 	run_state.advance_game_clock_minutes(travel_minutes)
-	var destination := generator.next_environment(run_state, "bar", true)
+	var destination := _harness_arrive(generator, run_state, failures, "closing-soon Bar arrival", "bar", true)
 	if str(destination.archetype_id) != "bar" or run_state.current_world_node_id() != "bar":
 		failures.append("A bar route that is open at arrival did not preserve the player's selected destination.")
 
@@ -2419,7 +2419,7 @@ func _check_meta_home_run_boundary(library: ContentLibrary, failures: Array) -> 
 	if not run_state.meta_collection_enabled_for_run():
 		failures.append("Standard run with meta modifiers did not enable the meta collection boundary.")
 	var generator: RunGenerator = RunGeneratorScript.new(library)
-	generator.next_environment(run_state)
+	_harness_arrive(generator, run_state, failures, "meta-home default initial arrival")
 	if str(run_state.current_environment.get("archetype_id", run_state.current_environment.get("id", ""))) != MetaCollectionServiceScript.HOUSING_BACK_ALLEY:
 		failures.append("Default homeless meta run did not start in the back alley archetype.")
 	var previous_path := OS.get_environment(MetaCollectionServiceScript.STORE_PATH_ENV)
@@ -2457,7 +2457,7 @@ func _check_meta_home_run_boundary(library: ContentLibrary, failures: Array) -> 
 		if typeof(item_value) == TYPE_DICTIONARY:
 			linked_run.inventory.append((item_value as Dictionary).duplicate(true))
 	var linked_generator: RunGenerator = RunGeneratorScript.new(library)
-	linked_generator.next_environment(linked_run)
+	_harness_arrive(linked_generator, linked_run, failures, "meta-home linked Motel arrival")
 	var spawned_containers := linked_run.current_home_containers()
 	if str(linked_run.current_environment.get("archetype_id", "")) != MetaCollectionServiceScript.HOUSING_MOTEL_ROOM or spawned_containers.size() != 1:
 		failures.append("Motel run did not spawn the meta-home bag as its only linked container.")
@@ -4194,7 +4194,7 @@ func _check_crew_trust_core(library: ContentLibrary, failures: Array) -> void:
 		failures.append("Crew favor delivery did not start a real-map package run.")
 	if event_run.bankroll != favor_bankroll_before or event_run.suspicion_level() != favor_heat_before or bool(event_run.narrative_flags.get("crew_favor_completed", false)):
 		failures.append("Starting the Crew favor applied its reward before the in-room handoff: bankroll=%d heat=%d flags=%s." % [event_run.bankroll, event_run.suspicion_level(), JSON.stringify(event_run.narrative_flags)])
-	if not _delivery_complete_all_targets(event_run) or event_run.bankroll != favor_bankroll_before + 22 or event_run.suspicion_level() != favor_heat_before + 4 \
+	if not _delivery_complete_all_targets(event_run, failures) or event_run.bankroll != favor_bankroll_before + 22 or event_run.suspicion_level() != favor_heat_before + 4 \
 		or event_run.crew_trust("crew_rook") != 5 or not bool(event_run.narrative_flags.get("crew_favor_completed", false)) \
 		or bool(event_run.narrative_flags.get("crew_favor_pending", true)):
 		failures.append("Crew favor success did not preserve exact +22 cash, +4 heat, and job trust after handoff: bankroll=%d heat=%d trust=%d snapshot=%s." % [event_run.bankroll, event_run.suspicion_level(), event_run.crew_trust("crew_rook"), JSON.stringify(event_run.delivery_snapshot())])

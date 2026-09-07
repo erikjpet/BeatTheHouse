@@ -10,6 +10,7 @@ const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 const CrewRecruitmentModelScript := preload("res://scripts/core/crew_recruitment_model.gd")
 const CrewHeistModelScript := preload("res://scripts/core/crew_heist_model.gd")
 const CrewTurnModelScript := preload("res://scripts/core/crew_turn_model.gd")
+const HarnessProductionFidelityScript := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
 
 const TOOL_ID := "cross_economy_audit_v1"
 const DEFAULT_SEEDS_PER_STYLE := 64
@@ -171,8 +172,14 @@ func _check_public_observer_isolation() -> void:
 	var challenge := RunStateScript.standard_challenge("BALANCE06-PUBLIC-OBSERVER")
 	left.start_new("BALANCE06-PUBLIC-OBSERVER", challenge)
 	right.start_new("BALANCE06-PUBLIC-OBSERVER", challenge)
-	generator.next_environment(left)
-	generator.next_environment(right)
+	if not bool(HarnessProductionFidelityScript.generate_and_finalize(
+		generator, left, failures, "public-observer left initial arrival"
+	).get("ok", false)):
+		return
+	if not bool(HarnessProductionFidelityScript.generate_and_finalize(
+		generator, right, failures, "public-observer right initial arrival"
+	).get("ok", false)):
+		return
 	var left_heist := _dict(left.crew_heist_state).duplicate(true)
 	var right_heist := _dict(right.crew_heist_state).duplicate(true)
 	left_heist["x"] = {"future_outcome": "left", "private_roll": 1}
@@ -186,7 +193,10 @@ func _check_public_observer_isolation() -> void:
 func _check_hostile_policy_input_rejection() -> void:
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("BALANCE06-HOSTILE-POLICY", RunStateScript.standard_challenge("BALANCE06-HOSTILE-POLICY"))
-	generator.next_environment(run_state)
+	if not bool(HarnessProductionFidelityScript.generate_and_finalize(
+		generator, run_state, failures, "hostile-policy initial arrival"
+	).get("ok", false)):
+		return
 	var baseline := _policy_observation(run_state)
 	var hostile := baseline.duplicate(true)
 	for key in ["seed", "rng_state", "future_numbers_draw", "turn_traitor", "heist_outcome", "caller_reward", "caller_capability", "terminal_status"]:
@@ -201,7 +211,10 @@ func _check_hostile_policy_input_rejection() -> void:
 	var hostile_run: RunState = RunStateScript.new()
 	var challenge := RunStateScript.standard_challenge("BALANCE06-HOSTILE-TRAVEL")
 	canonical_run.start_new("BALANCE06-HOSTILE-TRAVEL", challenge)
-	generator.next_environment(canonical_run)
+	if not bool(HarnessProductionFidelityScript.generate_and_finalize(
+		generator, canonical_run, failures, "hostile-travel canonical initial arrival"
+	).get("ok", false)):
+		return
 	# Fork from one exact persisted boundary. Independently created RunStates
 	# deliberately have different non-public authority identities, which are not
 	# a policy-visible determinism difference.
@@ -249,7 +262,10 @@ func _check_hostile_policy_input_rejection() -> void:
 	# saves, and every persisted RNG stream owned by RunState.
 	var rejected_run: RunState = RunStateScript.new()
 	rejected_run.start_new("BALANCE06-HOSTILE-REJECTION", RunStateScript.standard_challenge("BALANCE06-HOSTILE-REJECTION"))
-	generator.next_environment(rejected_run)
+	if not bool(HarnessProductionFidelityScript.generate_and_finalize(
+		generator, rejected_run, failures, "hostile-travel rejection initial arrival"
+	).get("ok", false)):
+		return
 	var rejected_audit := {"travel_count": 0, "route_cost_total": 0, "grand_casino_entries": 0}
 	var rejected_state_before := CrewTurnModelScript.canonical_json(rejected_run.to_dict())
 	var rejected_audit_before := CrewTurnModelScript.canonical_json(rejected_audit)
@@ -567,7 +583,10 @@ func _simulate_audit_run(style: Dictionary, seed: String, max_actions: int) -> D
 	var policy := str(style.get("policy", "clean"))
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new(seed, RunStateScript.standard_challenge(seed))
-	generator.next_environment(run_state)
+	if not bool(HarnessProductionFidelityScript.generate_and_finalize(
+		generator, run_state, failures, "cross-economy initial arrival for %s" % seed
+	).get("ok", false)):
+		return {}
 	var run := {
 		"seed": seed,
 		"playstyle": _active_style,
@@ -1203,8 +1222,11 @@ func _apply_travel_choice(run_state: RunState, run: Dictionary, choice: Dictiona
 	var previous_environment := run_state.current_environment.duplicate(true)
 	var route_risk := run_state.travel_route_risk(route, target_node_id)
 	var travel_heat := run_state.begin_travel_suspicion_decay(route, target_node_id)
-	generator.next_environment(run_state, target_node_id, true)
-	if run_state.has_world_map() and run_state.current_world_node_id() != target_node_id:
+	var arrival := HarnessProductionFidelityScript.travel_and_finalize(
+		generator, run_state, target_node_id, true, library, failures,
+		"cross-economy travel to %s" % target_node_id
+	)
+	if not bool(arrival.get("ok", false)):
 		return false
 	var travel_decay := run_state.finish_travel_suspicion_decay(travel_heat)
 	var result := _travel_result(target_node_id, previous_environment, run_state.current_environment, route, travel_decay, route_risk)
@@ -1288,8 +1310,11 @@ func _travel_to_node_boundary(run_state: RunState, run: Dictionary, target_node_
 	var previous_environment := run_state.current_environment.duplicate(true)
 	var route_risk := run_state.travel_route_risk(route, selected_target_id)
 	var travel_heat := run_state.begin_travel_suspicion_decay(route, selected_target_id)
-	generator.next_environment(run_state, selected_target_id, true)
-	if run_state.has_world_map() and run_state.current_world_node_id() != selected_target_id:
+	var room_arrival := HarnessProductionFidelityScript.travel_and_finalize(
+		generator, run_state, selected_target_id, true, library, failures,
+		"cross-economy delivery travel to %s" % selected_target_id
+	)
+	if not bool(room_arrival.get("ok", false)):
 		return ""
 	var travel_decay := run_state.finish_travel_suspicion_decay(travel_heat)
 	var arrival := run_state.delivery_resolve_travel_arrival(route, route_risk)

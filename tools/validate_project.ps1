@@ -964,6 +964,7 @@ Require-Text "tools/check_godot.ps1" 'ExpectedNativePluginSha256' "Post-land ver
 Require-Text "tools/check_godot.ps1" 'Get-GDExtensionWindowsDebugTarget' "Post-land verification must resolve the canonical Windows debug target from the native descriptor."
 Require-Text "tools/check_godot.ps1" 'Post-land verification cannot skip the required Godot import with NoImport.' "Post-land verification must reject and override import narrowing."
 Require-Text "tools/check_godot.ps1" 'native_coin_pusher_smoke.gd' "Post-land verification must prove the supplied Windows plugin executes as native_v3."
+Require-Text "tools/check_godot.ps1" 'scenario_room_multiseed_finalization.gd' "Godot audit/full suites must include the permanent 8x55 scenario room finalization gate."
 Require-Text "tools/check_godot.ps1" 'eligible_for_done' "Post-land reports must make DONE eligibility explicitly fail closed."
 Require-Text "tools/check_godot.ps1" 'gdscript_load_check.gd' "Godot check script must run the one-process GDScript load checker."
 Require-Text "tools/check_godot.ps1" 'Stop-NewGodotProcesses' "Godot check script must clean up timed-out Godot child processes."

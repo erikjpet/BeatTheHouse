@@ -2,6 +2,7 @@ extends SceneTree
 
 const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
 const EnvironmentInteractionControllerScript := preload("res://scripts/ui/environment_interaction_controller.gd")
+const HarnessProductionFidelityScript := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 
@@ -43,7 +44,12 @@ func _init() -> void:
 	run_state.begin_act(1)
 	if RunStateScript.challenge_key(run_state.challenge_config) != EXPECTED_CHALLENGE_KEY:
 		failures.append("Focused fixture diverged from the exact persisted production challenge key before generation.")
-	var generated = RunGeneratorScript.new(library).next_environment(run_state)
+	var generator := RunGeneratorScript.new(library)
+	var arrival := HarnessProductionFidelityScript.generate_and_finalize(generator, run_state, failures, "Fence Night initial arrival")
+	if not bool(arrival.get("ok", false)):
+		_finish(failures)
+		return
+	var generated := EnvironmentInstance.from_dict(run_state.current_environment)
 	var environment: Dictionary = run_state.current_environment
 	if environment.is_empty() \
 			or str(generated.archetype_id) != "back_alley" \
@@ -82,6 +88,10 @@ func _init() -> void:
 		failures.append("Fence Night cleanup does not remove both halves of the sealed exit authority.")
 	_prove_production_projection_boundary(run_state, library, failures)
 
+	_finish(failures)
+
+
+func _finish(failures: Array[String]) -> void:
 	if failures.is_empty():
 		print("BACK_ALLEY_FENCE_NIGHT_INSTALL PASS installed=1 normal=1 small_screen=1 exit=1 route_free=1 work_move=1")
 		quit(0)

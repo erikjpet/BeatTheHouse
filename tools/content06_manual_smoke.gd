@@ -5,6 +5,7 @@ const EventModuleScript := preload("res://scripts/core/event_module.gd")
 const RunActionServiceScript := preload("res://scripts/core/run_action_service.gd")
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
+const HarnessProductionFidelityScript := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 const RunViewModelScript := preload("res://scripts/ui/run_inventory_view_model.gd")
 const RunScreenScript := preload("res://scripts/ui/run_inventory_screen.gd")
@@ -92,8 +93,15 @@ func _capture_earn(library: ContentLibrary, path: String) -> void:
 		selected_seed = "CONTENT06-VISUAL-EARN-%03d" % seed_index
 		candidate.start_new(selected_seed)
 		var generator := RunGeneratorScript.new(library)
-		generator.next_environment(candidate)
-		generator.next_environment(candidate, "delta_queen", true)
+		if not bool(HarnessProductionFidelityScript.generate_and_finalize(
+			generator, candidate, failures, "manual-smoke initial arrival for %s" % selected_seed
+		).get("ok", false)):
+			return
+		if not bool(HarnessProductionFidelityScript.travel_and_finalize(
+			generator, candidate, "delta_queen", true, library, failures,
+			"manual-smoke Delta Queen arrival for %s" % selected_seed
+		).get("ok", false)):
+			return
 		if str(candidate.current_environment.get("scenario_id", "")) == "delta_queen_wedding_charter":
 			run = candidate
 			break

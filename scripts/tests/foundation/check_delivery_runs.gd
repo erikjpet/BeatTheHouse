@@ -219,20 +219,20 @@ func _delivery_test_path_uses_real_edges(map_data: Dictionary, path: Array) -> b
 
 
 func _check_delivery_modes(failures: Array) -> void:
-	var package_run := _delivery_test_run("DELIVERY-PACKAGE")
+	var package_run := _delivery_test_run("DELIVERY-PACKAGE", failures)
 	var package_start := package_run.delivery_begin_package({"run_id": "package", "deadline_actions": 8})
-	if not bool(package_start.get("ok", false)) or not _delivery_complete_all_targets(package_run):
+	if not bool(package_start.get("ok", false)) or not _delivery_complete_all_targets(package_run, failures):
 		failures.append("Package delivery did not complete through a real-room handoff: start=%s snapshot=%s." % [JSON.stringify(package_start), JSON.stringify(package_run.delivery_snapshot())])
 	elif str((package_run.delivery_snapshot().get("resolution", {}) as Dictionary).get("outcome", "")) != "success":
 		failures.append("Package delivery did not resolve success after its handoff.")
 
-	var multi_run := _delivery_test_run("DELIVERY-MULTI")
+	var multi_run := _delivery_test_run("DELIVERY-MULTI", failures)
 	var multi_start := multi_run.delivery_begin_multi_stop({"run_id": "multi", "target_count": 3, "deadline_actions": 16})
-	if not bool(multi_start.get("ok", false)) or not _delivery_complete_all_targets(multi_run):
+	if not bool(multi_start.get("ok", false)) or not _delivery_complete_all_targets(multi_run, failures):
 		failures.append("Multi-stop delivery did not complete every real-room handoff.")
 	elif int(multi_run.delivery_snapshot().get("delivered_count", 0)) != 3:
 		failures.append("Multi-stop delivery lost stop progress.")
-	var failed_multi := _delivery_test_run("DELIVERY-MULTI-FAILURE")
+	var failed_multi := _delivery_test_run("DELIVERY-MULTI-FAILURE", failures)
 	var failed_multi_start := failed_multi.delivery_begin_multi_stop({"run_id": "multi_failure", "target_count": 2, "deadline_actions": 1})
 	failed_multi.advance_environment_turns(1)
 	if not bool(failed_multi_start.get("ok", false)) or failed_multi.delivery_has_active_run() \
@@ -240,14 +240,14 @@ func _check_delivery_modes(failures: Array) -> void:
 		or int(failed_multi.delivery_snapshot().get("delivered_count", -1)) != 0:
 		failures.append("Multi-stop deadline failure did not resolve every pending stop cleanly.")
 
-	var deadline_run := _delivery_test_run("DELIVERY-DEADLINE")
+	var deadline_run := _delivery_test_run("DELIVERY-DEADLINE", failures)
 	deadline_run.delivery_begin_package({"run_id": "deadline", "deadline_actions": 1})
 	var deadline_target := _delivery_first_target(deadline_run)
-	_delivery_enter_node(deadline_run, deadline_target)
+	_delivery_enter_node(deadline_run, deadline_target, failures)
 	if deadline_run.delivery_has_active_run() or str((deadline_run.delivery_snapshot().get("resolution", {}) as Dictionary).get("reason", "")) != "deadline":
 		failures.append("A deadline expiring during travel did not fail cleanly without blocking the arrival.")
 
-	var hold_run := _delivery_test_run("DELIVERY-HOLD")
+	var hold_run := _delivery_test_run("DELIVERY-HOLD", failures)
 	var hold_node := hold_run.current_world_node_id()
 	var hold_start := hold_run.delivery_begin_hold({"run_id": "hold", "targets": [{"node_id": hold_node}], "deadline_actions": 6, "hold_required_actions": 2, "hold_attention_limit": 100})
 	if not bool(hold_start.get("ok", false)):
@@ -256,14 +256,14 @@ func _check_delivery_modes(failures: Array) -> void:
 		hold_run.advance_environment_turns(2)
 		if hold_run.delivery_has_active_run() or str((hold_run.delivery_snapshot().get("resolution", {}) as Dictionary).get("reason", "")) != "held_window":
 			failures.append("Hold mode did not resolve against real-venue action boundaries.")
-	var hot_hold := _delivery_test_run("DELIVERY-HOLD-ATTENTION")
+	var hot_hold := _delivery_test_run("DELIVERY-HOLD-ATTENTION", failures)
 	hot_hold.add_suspicion("fixture", 90, "test", false)
 	hot_hold.delivery_begin_hold({"run_id": "hot_hold", "targets": [{"node_id": hot_hold.current_world_node_id()}], "deadline_actions": 6, "hold_required_actions": 2, "hold_attention_limit": 40})
 	hot_hold.advance_environment_turns(1)
 	if hot_hold.delivery_has_active_run() or str((hot_hold.delivery_snapshot().get("resolution", {}) as Dictionary).get("reason", "")) != "attention":
 		failures.append("Hold mode did not fail when existing attention exceeded its condition.")
 
-	var getaway_run := _delivery_test_run("DELIVERY-GETAWAY")
+	var getaway_run := _delivery_test_run("DELIVERY-GETAWAY", failures)
 	var getaway_start := getaway_run.delivery_begin_getaway({"run_id": "getaway", "enabled": true, "deadline_actions": 8, "assists": ["rook_cutoff"], "pursuit_pressure": 4, "assist_relief": 3})
 	if not bool(getaway_start.get("ok", false)):
 		failures.append("Flagged getaway test harness could not start on the real map.")
@@ -273,23 +273,23 @@ func _check_delivery_modes(failures: Array) -> void:
 		var repeated := getaway_run.delivery_use_getaway_assist("rook_cutoff")
 		if not bool(assist.get("ok", false)) or bool(repeated.get("ok", false)) or int(getaway_run.delivery_snapshot().get("pursuit_pressure", 0)) >= pressure_before:
 			failures.append("Getaway one-use crew assist did not reduce pursuit exactly once.")
-		_delivery_enter_node(getaway_run, _delivery_first_target(getaway_run))
+		_delivery_enter_node(getaway_run, _delivery_first_target(getaway_run), failures)
 		if getaway_run.delivery_has_active_run() or str((getaway_run.delivery_snapshot().get("resolution", {}) as Dictionary).get("reason", "")) != "escaped":
 			failures.append("Getaway did not resolve on normal travel arrival.")
-	var caught_run := _delivery_test_run("DELIVERY-GETAWAY-CAUGHT")
+	var caught_run := _delivery_test_run("DELIVERY-GETAWAY-CAUGHT", failures)
 	caught_run.delivery_begin_getaway({"run_id": "caught", "enabled": true, "deadline_actions": 8, "pursuit_pressure": 3, "pursuit_per_boundary": 2, "pursuit_limit": 5})
 	caught_run.advance_environment_turns(1)
 	if caught_run.delivery_has_active_run() or str((caught_run.delivery_snapshot().get("resolution", {}) as Dictionary).get("reason", "")) != "caught":
 		failures.append("Getaway pursuit failure did not resolve at an action boundary.")
 
-	var abandoned_run := _delivery_test_run("DELIVERY-ABANDON")
+	var abandoned_run := _delivery_test_run("DELIVERY-ABANDON", failures)
 	abandoned_run.delivery_begin_package({"run_id": "abandon", "deadline_actions": 5})
 	if not bool(abandoned_run.delivery_abandon().get("ok", false)) or abandoned_run.delivery_has_active_run():
 		failures.append("Impossible delivery could not be abandoned into a clean non-blocking state.")
 
 
 func _check_delivery_no_soft_lock_worst_cases(failures: Array) -> void:
-	var locked_run := _delivery_test_run("DELIVERY-TRAVEL-LOCK")
+	var locked_run := _delivery_test_run("DELIVERY-TRAVEL-LOCK", failures)
 	var locked_started := locked_run.delivery_begin_package({"run_id": "travel_lock", "deadline_actions": 8})
 	var locked_target := _delivery_first_target(locked_run)
 	var locked_route := DeliveryWorldMapTestScript.new(null).route_for_target(locked_run.world_map, locked_run.current_world_node_id(), locked_target)
@@ -299,14 +299,14 @@ func _check_delivery_no_soft_lock_worst_cases(failures: Array) -> void:
 	var first_wait := locked_run.perform_sweep_wait_action()
 	var second_wait := locked_run.perform_sweep_wait_action()
 	var reopened := locked_run.travel_route_status(locked_route)
-	var generated_arrival := _delivery_generate_and_arrive(locked_run, locked_target)
+	var generated_arrival := _delivery_generate_and_arrive(locked_run, locked_target, failures)
 	if not bool(locked_started.get("ok", false)) or bool(initially_locked.get("available", true)) \
 		or not bool(first_wait.get("ok", false)) or not bool(second_wait.get("travel_reopened", false)) \
 		or not bool(reopened.get("available", false)) or locked_run.current_world_node_id() != locked_target \
 		or not bool(generated_arrival.get("handoff_ready", false)):
 		failures.append("A travel-locked delivery target did not reopen and complete normal generated arrival without a soft-lock.")
 
-	var camped_run := _delivery_test_run("DELIVERY-SWEEP-CAMPED-ONLY-ROUTE")
+	var camped_run := _delivery_test_run("DELIVERY-SWEEP-CAMPED-ONLY-ROUTE", failures)
 	var origin_id := camped_run.current_world_node_id()
 	var leaf_target := ""
 	for node_value in camped_run.world_map.get("nodes", []):
@@ -332,7 +332,7 @@ func _check_delivery_no_soft_lock_worst_cases(failures: Array) -> void:
 		sweep.segments = [{"node_id": leaf_target, "start_action": sweep.start_action, "end_action": sweep.end_action}]
 		sweep.segment_index = 0
 		sweep.action_index = int(camped_run.town_state.action_index)
-	var camped_arrival := _delivery_generate_and_arrive(camped_run, leaf_target) if bool(camped_started.get("ok", false)) else {}
+	var camped_arrival := _delivery_generate_and_arrive(camped_run, leaf_target, failures) if bool(camped_started.get("ok", false)) else {}
 	if leaf_target.is_empty() or not bool(camped_started.get("ok", false)) or camped_run.current_world_node_id() != leaf_target \
 		or (camped_run.delivery_has_active_run() and not bool(camped_arrival.get("handoff_ready", false))) \
 		or (not camped_run.delivery_has_active_run() and str((camped_run.delivery_snapshot().get("resolution", {}) as Dictionary).get("reason", "")).is_empty()):
@@ -340,7 +340,7 @@ func _check_delivery_no_soft_lock_worst_cases(failures: Array) -> void:
 
 
 func _check_delivery_sweep_and_map_intel(failures: Array) -> void:
-	var sweep_run := _delivery_test_run("DELIVERY-SWEEP")
+	var sweep_run := _delivery_test_run("DELIVERY-SWEEP", failures)
 	sweep_run.delivery_begin_package({"run_id": "sweep", "deadline_actions": 9, "cargo_id": "proof_case", "consumer_payload": {"failure": {"heat": 0}}})
 	_delivery_pickup_if_needed(sweep_run)
 	sweep_run.add_suspicion("fixture", 50, "test", false)
@@ -359,7 +359,7 @@ func _check_delivery_sweep_and_map_intel(failures: Array) -> void:
 		or sweep_run.delivery_has_active_run() or str((sweep_run.delivery_snapshot().get("resolution", {}) as Dictionary).get("reason", "")) != "swept":
 		failures.append("Police Sweep did not confiscate active delivery cargo and fail the run.")
 
-	var intel_run := _delivery_test_run("DELIVERY-SWEEP-INTEL")
+	var intel_run := _delivery_test_run("DELIVERY-SWEEP-INTEL", failures)
 	intel_run.delivery_begin_package({"run_id": "intel", "deadline_actions": 9})
 	var hidden_layer := intel_run.delivery_map_layer()
 	if bool(intel_run.sweep_status().get("available", true)) or JSON.stringify(hidden_layer).find("reported sweep") >= 0 \
@@ -370,10 +370,10 @@ func _check_delivery_sweep_and_map_intel(failures: Array) -> void:
 
 
 func _check_delivery_save_and_migration(failures: Array) -> void:
-	var source := _delivery_test_run("DELIVERY-SAVE")
+	var source := _delivery_test_run("DELIVERY-SAVE", failures)
 	source.delivery_begin_multi_stop({"run_id": "save", "target_count": 2, "deadline_actions": 12})
 	var first_target := _delivery_first_target(source)
-	_delivery_enter_node(source, first_target)
+	_delivery_enter_node(source, first_target, failures)
 	source.delivery_complete_handoff(first_target)
 	var restored: RunState = RunStateScript.new()
 	restored.from_dict(source.to_dict())
@@ -390,18 +390,18 @@ func _check_delivery_save_and_migration(failures: Array) -> void:
 
 
 func _check_delivery_ordinary_travel_identity(failures: Array) -> void:
-	var ordinary := _delivery_test_run("DELIVERY-ORDINARY")
+	var ordinary := _delivery_test_run("DELIVERY-ORDINARY", failures)
 	var before := JSON.stringify(ordinary.to_dict())
 	if not ordinary.active_delivery_run.is_empty() or ordinary.delivery_has_active_run() or not ordinary.delivery_map_layer().is_empty() \
 		or not ordinary.delivery_arrival_interaction().is_empty() or JSON.stringify(ordinary.to_dict()) != before:
 		failures.append("Inactive delivery reads mutated or leaked into the ordinary core run.")
 
 
-func _delivery_test_run(seed: String) -> RunState:
+func _delivery_test_run(seed: String, failures: Array) -> RunState:
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new(seed)
 	var generator: RunGenerator = RunGeneratorScript.new(delivery_test_library)
-	generator.next_environment(run_state)
+	HarnessProductionFidelityScript.generate_and_finalize(generator, run_state, failures, "%s initial delivery arrival" % seed)
 	return run_state
 
 
@@ -444,24 +444,22 @@ func _delivery_first_target(run_state: RunState) -> String:
 	return str((targets[0] as Dictionary).get("node_id", "")) if not targets.is_empty() else ""
 
 
-func _delivery_enter_node(run_state: RunState, node_id: String) -> Dictionary:
+func _delivery_enter_node(run_state: RunState, node_id: String, failures: Array) -> Dictionary:
 	_delivery_pickup_if_needed(run_state)
-	var node := DeliveryWorldMapTestScript.node_metadata_by_id(run_state.world_map, node_id)
-	run_state.world_map = DeliveryWorldMapTestScript.enter_node(run_state.world_map, node_id, {})
-	run_state.current_environment = {
-		"id": node_id,
-		"archetype_id": str(node.get("archetype_id", node_id)),
-		"world_node_id": node_id,
-		"turns": 0,
-		"security_profile": {},
-	}
+	var generator := RunGeneratorScript.new(delivery_test_library)
+	var arrived := HarnessProductionFidelityScript.travel_and_finalize(generator, run_state, node_id, true, delivery_test_library, failures, "delivery property arrival %s" % node_id)
+	if not bool(arrived.get("ok", false)):
+		return arrived
 	return run_state.delivery_resolve_travel_arrival({"target_node_id": node_id}, {})
 
 
-func _delivery_generate_and_arrive(run_state: RunState, node_id: String) -> Dictionary:
+func _delivery_generate_and_arrive(run_state: RunState, node_id: String, failures: Array) -> Dictionary:
 	_delivery_pickup_if_needed(run_state)
 	var route := DeliveryWorldMapTestScript.new(null).route_for_target(run_state.world_map, run_state.current_world_node_id(), node_id)
-	RunGeneratorScript.new(delivery_test_library).next_environment(run_state, node_id, true)
+	var generator := RunGeneratorScript.new(delivery_test_library)
+	var arrived := HarnessProductionFidelityScript.travel_and_finalize(generator, run_state, node_id, true, delivery_test_library, failures, "delivery generated arrival %s" % node_id)
+	if not bool(arrived.get("ok", false)):
+		return arrived
 	return run_state.delivery_resolve_travel_arrival(route, run_state.travel_route_risk(route, node_id))
 
 
@@ -472,14 +470,14 @@ func _delivery_pickup_if_needed(run_state: RunState) -> void:
 		run_state.delivery_apply_physical_action("pickup", "foundation:pickup:%s" % str(run_state.active_delivery_run.get("run_id", "delivery")))
 
 
-func _delivery_complete_all_targets(run_state: RunState) -> bool:
+func _delivery_complete_all_targets(run_state: RunState, failures: Array) -> bool:
 	var target_ids: Array = []
 	for target_value in run_state.delivery_snapshot().get("targets", []):
 		if typeof(target_value) == TYPE_DICTIONARY:
 			target_ids.append(str((target_value as Dictionary).get("node_id", "")))
 	for node_id_value in target_ids:
 		var node_id := str(node_id_value)
-		var arrival := _delivery_enter_node(run_state, node_id)
+		var arrival := _delivery_enter_node(run_state, node_id, failures)
 		if not bool(arrival.get("handoff_ready", false)) or run_state.delivery_arrival_interaction().is_empty():
 			return false
 		if not bool(run_state.delivery_complete_handoff(node_id).get("ok", false)):

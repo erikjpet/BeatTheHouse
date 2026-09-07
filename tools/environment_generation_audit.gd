@@ -6,6 +6,7 @@ const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
+const HarnessProductionFidelityScript := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
 
 const DEFAULT_RUN_COUNT := 100
 const DEFAULT_VISITS_PER_RUN := 6
@@ -118,7 +119,10 @@ func _simulate_run(run_index: int, seed: String, visits_per_run: int) -> void:
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new(seed)
 	var path_rng := run_state.create_rng("environment_generation_audit_path")
-	generator.next_environment(run_state)
+	if not bool(HarnessProductionFidelityScript.generate_and_finalize(
+		generator, run_state, failures, "environment-generation initial arrival for %s" % seed
+	).get("ok", false)):
+		return
 	_audit_world_map_beach_delta(run_state.world_map, seed)
 
 	var run_summary := {
@@ -178,6 +182,9 @@ func _simulate_run(run_index: int, seed: String, visits_per_run: int) -> void:
 		travel_record["seed"] = seed
 		travel_record["from_visit_index"] = visit_index
 		travel_records.append(travel_record)
+		if not bool(travel_record.get("ok", true)):
+			run_summary["stopped_reason"] = "room_finalization_failed"
+			break
 		run_summary["travel_count"] = int(run_summary.get("travel_count", 0)) + 1
 		if run_state.is_terminal():
 			run_summary["stopped_reason"] = str(run_state.run_failure_reason)
@@ -580,7 +587,12 @@ func _travel_to(run_state: RunState, choice: Dictionary) -> Dictionary:
 	var previous_heat := run_state.suspicion_level()
 	var route_risk := run_state.travel_route_risk(route, target_id)
 	var travel_heat := run_state.begin_travel_suspicion_decay(route, target_id)
-	generator.next_environment(run_state, target_id)
+	var arrival := HarnessProductionFidelityScript.travel_and_finalize(
+		generator, run_state, target_id, false, library, failures,
+		"environment-generation travel to %s" % target_id
+	)
+	if not bool(arrival.get("ok", false)):
+		return {"ok": false, "target_id": target_id}
 	var travel_decay := run_state.finish_travel_suspicion_decay(travel_heat)
 	var destination_name := str(run_state.current_environment.get("display_name", target_id))
 	var result := _travel_result(run_state, target_id, destination_name, route, previous_environment, run_state.current_environment, travel_decay, route_risk)

@@ -5,6 +5,7 @@ const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const TutorialFlowScript := preload("res://scripts/core/tutorial_flow.gd")
 const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
+const HarnessProductionFidelityScript := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
 
 
 func _init() -> void:
@@ -21,6 +22,14 @@ func _init() -> void:
 	var started_msec := Time.get_ticks_msec()
 	generator.next_environment(run_state)
 	var generation_msec := Time.get_ticks_msec() - started_msec
+	var initial_arrival := HarnessProductionFidelityScript.finalize_arrival(
+		run_state, library, failures, "deferred tutorial initial arrival"
+	)
+	if not bool(initial_arrival.get("ok", false)):
+		for failure in failures:
+			push_error(failure)
+		quit(1)
+		return
 	if generation_msec > 5000:
 		failures.append("Deferred tutorial generation exceeded 5000 ms: %d ms." % generation_msec)
 	if str(run_state.current_environment.get("archetype_id", "")) != "apartment":
@@ -30,8 +39,16 @@ func _init() -> void:
 		failures.append("Town priming did not retain the tutorial's suppressed Corner Store pin.")
 	if bool(seeded_corner.get(ScenarioEngineScript.VALIDATED_SEQUENCE_MARKER, false)):
 		failures.append("Unvisited scenario carried a semantic validation receipt before installation.")
-	var entered := generator.next_environment(run_state, "corner_store", true)
-	if entered == null or str(run_state.current_environment.get("archetype_id", "")) != "corner_store":
+	var entered := HarnessProductionFidelityScript.travel_and_finalize(
+		generator, run_state, "corner_store", true, library, failures,
+		"deferred tutorial Corner Store arrival"
+	)
+	if not bool(entered.get("ok", false)):
+		for failure in failures:
+			push_error(failure)
+		quit(1)
+		return
+	if str(run_state.current_environment.get("archetype_id", "")) != "corner_store":
 		failures.append("The deferred selected scenario could not be installed.")
 	if run_state.current_environment.has("scenario_sequence_state"):
 		failures.append("The tutorial's explicitly suppressed scenario installed a dynamic sequence.")

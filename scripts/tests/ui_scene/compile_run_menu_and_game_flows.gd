@@ -5,6 +5,7 @@ const CoachViewModelScript := preload("res://scripts/ui/coach_view_model.gd")
 const CoinPusherLiveSessionScript := preload("res://scripts/games/coin_pusher/coin_pusher_live_session.gd")
 const CoinPusherSolverScript := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
 const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
+const HarnessProductionFidelityScript := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
 const LENDER_CONVERSATION_CONTEXT_MAX_CHARS := 512
 
 
@@ -1161,7 +1162,14 @@ func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 	app.call("close_world_map")
 	await process_frame
 	var tutorial_generator: RunGenerator = app.get("generator")
-	tutorial_generator.next_environment(run_state, "corner_store", true)
+	var corner_arrival_failures: Array = []
+	var corner_arrival := HarnessProductionFidelityScript.travel_and_finalize(
+		tutorial_generator, run_state, "corner_store", true, tutorial_generator.library,
+		corner_arrival_failures, "compiled tutorial Corner Store arrival"
+	)
+	if not bool(corner_arrival.get("ok", false)):
+		push_error(str(corner_arrival_failures.back()))
+		return false
 	app.call("_refresh")
 	await process_frame
 	await process_frame
@@ -1340,7 +1348,14 @@ func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 	app.call("close_world_map")
 	await process_frame
 	coach_overlay.call("notify_action", "travel:gas_station_casino")
-	tutorial_generator.next_environment(run_state, "gas_station_casino", true)
+	var gas_arrival_failures: Array = []
+	var gas_arrival := HarnessProductionFidelityScript.travel_and_finalize(
+		tutorial_generator, run_state, "gas_station_casino", true, tutorial_generator.library,
+		gas_arrival_failures, "compiled tutorial Gas Casino arrival"
+	)
+	if not bool(gas_arrival.get("ok", false)):
+		push_error(str(gas_arrival_failures.back()))
+		return false
 	app.call("_refresh")
 	await process_frame
 	var gas_departure_targets: Array = app.call("_travel_target_ids")
