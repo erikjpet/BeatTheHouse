@@ -64,17 +64,19 @@ Five exposed files are intentionally unconverted:
 | `crew_poker_visual_capture_wrapper_check.ps1` | This is a source-text meta-check, not a RunState owner; it performs no runtime travel. |
 | `crew_poker_visual_seed_audit.gd` | Initial generation only advances to the pinned post-foundation RNG point, then a synthetic poker room is installed. Generated room/sequence contents are never read or departed. |
 
-The other 11 travelling harnesses were already production-faithful:
+The other 11 travelling harnesses were audited as the complement of the 25-file
+zero-finalizer exposure set:
 `crew_recruitment_contract.gd`,
 `env06_8_environment_readability_contract.gd`,
 `world_sequence_delivery_proof_contract.gd`, `endgame_metrics_probe.gd`,
 `scenario_seed_audit.gd`, `slot_bonus_stuck_sweep.gd`,
 `tier1_scenario_audit.gd`, `tutorial_seed_audit.gd`,
 `wave_a_coexistence_probe.gd`, `wave_b_composition_probe.gd`, and
-`foundation_visual_qa.gd`. The first four and `wave_b_composition_probe.gd`
-contain explicit finalizer calls; the remainder reach the same boundary through
-`RunGenerator` or the real `FoundationMain` refresh/controller. This distinction
-is recorded so textual call counting is not mistaken for behavioral fidelity.
+`foundation_visual_qa.gd`. Their relevant live scenario paths either already
+contain an explicit finalizer, drive the real `FoundationMain` host, or are
+selector/synthetic setup paths that do not inspect or depart a live dynamic
+room. No additional zero-finalizer candidate was found. This distinction is
+recorded so textual call counting is not mistaken for behavioral fidelity.
 
 ## Seed-dependent dead-room root causes and decisions
 
@@ -116,6 +118,24 @@ census runs in the same gate, preventing deletion as a collision repair.
 
 ## Verification
 
-Final exact-head results are recorded in the `qa06_1` and `fix06_27` board rows
-and work log. No money, RNG, RTP, payout, odds, schema, or migration logic was
-changed. No release, export, package, version, tag, or owner build was produced.
+Exact implementation head `8cf795d9` passed the permanent gate in 357.8 seconds:
+eight seed families, all 55 scenarios, 440 production-faithful finalizations,
+normal and expanded-small geometry, exact parent-venue departure, structural
+barrier coverage, and the unchanged object/action census. `validate_project.ps1`
+passed on the same tree in 80.6 seconds. Focused environment travel, tutorial
+Corner Store, and deferred-validation checks also passed.
+
+The broad Foundation visual QA exercised the corrected exact `travel:leave`
+input and opened the world map without a target-path failure, then stopped later
+on a Talk Dock response-chain action bound. A broader UI compile run
+proved that the room-layout repair changed only the two generated-layout hashes;
+all route, RNG, story, money, Heat, clock, and travel-count values remained
+identical. After that justified two-hash update, the auxiliary run stopped later
+on its separate M1.5 layout-only inspection assertion. The assembled Foundation
+contracts auxiliary run likewise exceeded its 360-second ceiling after the
+mandatory production finalizations and returned no contract verdict. None of
+these broader attempts is represented as a pass, waived, or used as acceptance
+evidence for these rows.
+
+No money, RNG, RTP, payout, odds, schema, or migration logic was changed. No
+release, export, package, version, tag, or owner build was produced.
