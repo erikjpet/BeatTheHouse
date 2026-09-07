@@ -2,7 +2,7 @@
 
 Date: 2026-09-06
 
-Status: **OWNER RESOLVED — RE-SCOPED STRUCTURAL REVIEW IN PROGRESS**
+Status: **DONE — RE-SCOPED STRUCTURAL ROW ACCEPTED AND LANDED**
 
 Reviewed product head: `9c4196dd4d8b6061ee7e919cb21e22018689c77b`
 
@@ -86,7 +86,13 @@ escalation instead of a third repair/review cycle. Therefore:
 
 ## Current control-flow result
 
-The owner decision is now recorded: do not reopen `env06_8` implementation and
-do not waive the visual findings. Obtain a fresh structural review, land the
-candidate if accepted, and keep `env06_9` parked. The alternate
-`codex/closeout06-final` contract remains unported.
+Fresh independent review accepted exact source
+`f1230a1b5aeaff811447ab41873d7710b7d3b157` against only the re-scoped bar.
+Every named structural gate passed, including 55/55 normal and expanded
+small-screen finalization, 0 unzoned objects, 0 handlerless actions, populated
+panels, hidden-state isolation, exactly-once, persistence and caller authority.
+
+The accepted tree landed on `main` at merge
+`ccbe9949ed2948c827e57a06cc4b020fac67d2fb`. Post-merge project validation
+passed in 83.3 seconds and `origin/main` was synchronized. `env06_9` remains
+parked and the alternate `codex/closeout06-final` contract remains unported.
