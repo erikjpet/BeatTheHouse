@@ -260,7 +260,7 @@ the owner's playtest is expected to change.
 
 | ID | Prompt | Status | Depends on | Unblocks | Agent | Started | Finished | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| env06_8 | `env06_8_environment_readability_and_object_presentation_prompt.md` | IN_PROGRESS | env06_6/7 (DONE) | playtest quality; world06_7 hidden-info audit | `/root` | 2026-09-03 | — | **Owner-reported playtest regression.** Scenario scene objects/actors have no `icon_key` and no case in either `foundation_main.gd` dispatch table, so they show empty panels and dead-end on "Inspect this first."; 768/1108 objects carry no `zone_id` so placement is fallback rather than composed; 355/673 actions have no handler, 1 `event_bridge`, 0 item grants, and transition prose is generated template text. Owner ruling: decorative objects stay and become **inspectable** flavor that shows what has been happening and hints at effect on the player. Review: `env06_8_review_prompt.md`. Supersedes `fix06_25`. Parallel-safe with the active closeouts; owns scenario data + `environment_interaction_controller.gd` only. |
+| env06_8 | `env06_8_environment_readability_and_object_presentation_prompt.md` | IN_PROGRESS — OWNER ESCALATION | env06_6/7 (DONE) | playtest quality; world06_7 hidden-info audit | `/root` | 2026-09-03 | — | Exact candidate `9c4196dd` closes the owner-selection/travel defect, finalizes all 55/55 rooms, and passes census, hidden-state, semantic layout, content-depth, delivery, package and project gates. Independent review nevertheless issued the row's second `REJECT` at that exact head: retained production visual evidence has 127 observable-consequence/coverage failures across 53/55 scenarios, and ten sampled unlabeled sheets do not make distinct objects reliably identifiable. Per the two-rejection rule there is no third agent repair/review cycle; owner disposition is required. Nothing was merged to `main`; downstream source-freeze rows remain parked. Full evidence: `docs/plans/env06_8_second_review_escalation.md`. Supersedes `fix06_25`. |
 | fix06_7 | `../todone/fix06_7_coin_pusher_v3_intro_copy_prompt.md` | DONE | V3 machine contract landed | accurate Coin Pusher player-facing copy | `/root/program_row_inventory` | 2026-08-26 | 2026-08-26 | Independently accepted by `/root/fix07_final_review` at source `62dba2e3` and integration `bb3be7fd`, then landed at main `040f9fe2`. Recursive proof found exactly 36 authorized persisted-copy leaves and zero unauthorized changes; visual matrix passed 8/8 and focused Coin Pusher passed. Post-land Contract was functionally green but timing-only red at 258.562s, retained and routed to `fix06_5` with the cap unchanged. |
 | fix06_1 | `../todone/fix06_1_dead_event_interactions_prompt.md` | DONE | env06_2, env06_3 (landed) | crew06_5+ inherit the class guard | Codex | 2026-08-14 | 2026-08-14 | Generic synthesized-speaker fix; 99-event audit shifted only 3 beach events; permanent generated-environment guard, systems/UI/all, determinism, and visual QA PASS. |
 | fix06_3 | `../todone/scratch_ticket_art_alignment_rca_and_fix_prompt.md` | DONE | — (analysed 2026-08-11, deferred from 0.5 to 0.6) | game06_5 inherits a clean surface | Codex | 2026-09-02 | 2026-09-02 | Owner chose a denser Crossword redesign. Seven-ticket alignment is complete on main `996a98b6`; Crossword has one connected seven-word/22-cell grid with eight intersections, active stock, v10→v11 migration, regenerated overlays, GPU three-state review, and green all-140 focused contracts. |
@@ -440,6 +440,24 @@ What happens then is the owner's, not an agent's:
   of 6, and declares direction `cash_to_chips`. Its authored intent says
   detection preserves laundering risk and never creates value. No separate
   owner ruling or data change is required.
+
+- **env06_8 — second independent-review rejection: OPEN (2026-09-06).**
+  Exact candidate `9c4196dd` passes the structural, hidden-information,
+  reachability and focused runtime gates, but independent review retained
+  blocking visual evidence: 127 observable-consequence/coverage failures across
+  53/55 scenarios and generic unlabeled glyphs in ten sampled rooms. This is the
+  row's second rejection, so the binding rule forbids a third agent repair/review
+  round. Should the owner (a) direct a specific exception/acceptance disposition,
+  or (b) explicitly reopen implementation and define the acceptable visual bar?
+  Until answered, do not merge `env06_8` or begin its dependent source freeze.
+
+- **env06_8 — alternate stale-branch contract: OPEN; default applied
+  (2026-09-06).** `codex/closeout06-final` retains a different 815-line
+  environment contract plus geometry, hidden-boundary and all-scenario capture
+  tools that are absent from the clean candidate's 1,057-line contract. Should
+  any of those checks be ported? The closeout prompt's required default is **no
+  port**: preserve the stale branch unchanged, record the question, and do not
+  mix its contract into the rejected candidate without an owner ruling.
 
 ## Logs and history
 
