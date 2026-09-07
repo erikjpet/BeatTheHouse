@@ -16,6 +16,7 @@ param(
     [string]$EvidenceProfile = "web",
     [switch]$CoinPusherStageDiagnostic,
     [switch]$SkipExport,
+    [switch]$NoPackageFreshExport,
     [switch]$Headed
 )
 
@@ -25,9 +26,12 @@ $root = Split-Path -Parent $PSScriptRoot
 . (Join-Path $PSScriptRoot "web_perf_idle_liveness_contract.ps1")
 . (Join-Path $PSScriptRoot "web_perf_prestage_contract.ps1")
 . (Join-Path $PSScriptRoot "web_server_lifecycle.ps1")
-$trackedStatus = @(& git -C $root status --short --untracked-files=no)
+. (Join-Path $PSScriptRoot "web_perf_export_mode.ps1")
+. (Join-Path $PSScriptRoot "export_tree_identity.ps1")
+Assert-WebPerfExportMode -Plan $Plan -SkipExport ([bool]$SkipExport) -NoPackageFreshExport ([bool]$NoPackageFreshExport)
+$trackedStatus = @(& git -C $root status --short --untracked-files=all)
 if ($trackedStatus.Count -gt 0) {
-    throw "Web performance evidence requires a clean tracked source tree so its commit identity is exact."
+    throw "Web performance evidence requires a clean source tree with no nonignored untracked files so its commit identity is exact."
 }
 $node = Get-Command node -ErrorAction SilentlyContinue
 if (-not $node) {
@@ -78,44 +82,17 @@ function Assert-Condition {
     }
 }
 
-function Get-WebExportIdentity {
-    param([string]$WebDirectory)
-    if (-not (Test-Path -LiteralPath (Join-Path $WebDirectory "index.html"))) {
-        throw "Web export identity requires builds/web/index.html."
-    }
-    $files = @(Get-ChildItem -LiteralPath $WebDirectory -File -Recurse | Sort-Object FullName)
-    $rows = @()
-    foreach ($file in $files) {
-        $relative = $file.FullName.Substring($WebDirectory.Length).TrimStart('\', '/') -replace '\\', '/'
-        $rows += [ordered]@{
-            path = $relative
-            bytes = [int64]$file.Length
-            sha256 = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash
-        }
-    }
-    $canonical = ($rows | ForEach-Object { "{0}`t{1}`t{2}" -f $_.path, $_.bytes, $_.sha256 }) -join "`n"
-    $sha = [System.Security.Cryptography.SHA256]::Create()
-    try {
-        $aggregate = [System.BitConverter]::ToString($sha.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($canonical))).Replace("-", "")
-    }
-    finally {
-        $sha.Dispose()
-    }
-    return [ordered]@{ aggregate_sha256 = $aggregate; file_count = $rows.Count; files = $rows }
-}
-
 if (-not $SkipExport) {
-    & powershell -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "export_itch.ps1") -Target web
-    if ($LASTEXITCODE -ne 0) {
-        throw "Web export failed with exit code $LASTEXITCODE."
-    }
+    Invoke-WebPerfExport -ExportScript (Join-Path $PSScriptRoot "export_itch.ps1") -NoPackageFreshExport ([bool]$NoPackageFreshExport)
 }
 
 $sourceCommit = (& git -C $root rev-parse HEAD).Trim()
 if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($sourceCommit)) {
     throw "Could not resolve the source commit for Web performance identity."
 }
-$webExportIdentity = Get-WebExportIdentity -WebDirectory (Join-Path $root "builds/web")
+$webDirectory = Join-Path $root "builds/web"
+if (-not (Test-Path -LiteralPath (Join-Path $webDirectory "index.html"))) { throw "Web export identity requires builds/web/index.html." }
+$webExportIdentity = Get-ExportTreeIdentityFromDirectory -Directory $webDirectory
 $exportSha256 = [string]$webExportIdentity.aggregate_sha256
 
 $serverStdout = Join-Path $outDir "serve_web.stdout.txt"
@@ -163,8 +140,8 @@ if (-not (Test-Path -LiteralPath $outPath)) {
 }
 $reportEnvelope = Get-Content -LiteralPath $outPath -Raw | ConvertFrom-Json
 $report = $reportEnvelope.report
-if (@(& git -C $root status --short --untracked-files=no).Count -ne 0 -or (& git -C $root rev-parse HEAD).Trim() -cne $sourceCommit) {
-    throw "Tracked candidate changed during Web measurement."
+if (@(& git -C $root status --short --untracked-files=all).Count -ne 0 -or (& git -C $root rev-parse HEAD).Trim() -cne $sourceCommit) {
+    throw "Candidate changed or gained a nonignored untracked file during Web measurement."
 }
 $failures = [System.Collections.Generic.List[string]]::new()
 
