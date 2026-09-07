@@ -116,7 +116,11 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		var committed_result := committed_projection_status_result(host.run_state, projection_result, trusted_base_result)
 		result = _array(committed_result.get("records", trusted_base_result))
 		if bool(committed_result.get("ok", false)):
-			result = restore_live_presentation_fields(result, trusted_base_result)
+			result = restore_live_presentation_fields(
+				result,
+				trusted_base_result,
+				host._copy_array(host.run_state.current_environment.get("resolved_event_ids", []))
+			)
 			result = append_unsealed_live_records(result, trusted_base_result, sealed_base_records)
 	elif bool(world_preparation.get("active", false)):
 		var world_finalized: Dictionary = _dict(host.run_state.world_sequence_finalize_base_semantics(result, host.library, layout_context))
@@ -129,7 +133,11 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		var committed_world_result := committed_projection_status_result(host.run_state, world_projection_result, trusted_base_result)
 		result = _array(committed_world_result.get("records", trusted_base_result))
 		if bool(committed_world_result.get("ok", false)):
-			result = restore_live_presentation_fields(result, trusted_base_result)
+			result = restore_live_presentation_fields(
+				result,
+				trusted_base_result,
+				host._copy_array(host.run_state.current_environment.get("resolved_event_ids", []))
+			)
 	else:
 		host.run_state.current_environment.erase("scenario_sequence_lifecycle_errors")
 		host.run_state.current_environment.erase("scenario_layout_audit")
@@ -140,9 +148,13 @@ static func interactable_object_view_list(host: Variant) -> Array:
 # Scenario authority seals identity, geometry, and any fields it explicitly
 # changes. Its compact base inventory intentionally omits live presentation
 # data, so restore only absent fields from the already trusted UI projection.
-# This keeps authored event art, character identity, and direct response
-# buttons visible without allowing the live pass to override sealed semantics.
-static func restore_live_presentation_fields(projected_records: Array, live_records: Array) -> Array:
+# Resolved base events remain in the immutable semantic seal for authorization,
+# but they no longer own a live room object and must be removed after the sealed
+# projection passes. Scenario-owned event records remain governed by their own
+# projection lifecycle. This keeps authored event art, character identity, and
+# direct response buttons visible without resurrecting a consumed event as a
+# generic fallback object.
+static func restore_live_presentation_fields(projected_records: Array, live_records: Array, resolved_event_ids: Array = []) -> Array:
 	var live_by_id: Dictionary = {}
 	for live_value in live_records:
 		var live := _dict(live_value)
@@ -161,7 +173,13 @@ static func restore_live_presentation_fields(projected_records: Array, live_reco
 		var record := _dict(record_value).duplicate(true)
 		var object_id := str(record.get("object_id", "")).strip_edges()
 		var live := _dict(live_by_id.get(object_id, {}))
-		if not live.is_empty() and str(record.get("owner_namespace", "base")) != "scenario":
+		var owner_namespace := str(record.get("owner_namespace", "base"))
+		var resolved_base_event := owner_namespace != "scenario" \
+			and str(record.get("object_type", "")) == "event" \
+			and resolved_event_ids.has(str(record.get("source_id", "")).strip_edges())
+		if resolved_base_event:
+			continue
+		if not live.is_empty() and owner_namespace != "scenario":
 			for field in presentation_fields:
 				if not record.has(field) and live.has(field):
 					record[field] = _duplicate_variant(live.get(field))

@@ -6701,6 +6701,14 @@ func _run() -> void:
 		push_error("Resolved event was not recorded in RunState.")
 		quit(1)
 		return
+	var resolved_event_objects: Array = app.call("_interactable_object_view_list")
+	for resolved_event_value in resolved_events:
+		var resolved_object_id := "event:%s" % str(resolved_event_value)
+		for object_value in resolved_event_objects:
+			if typeof(object_value) == TYPE_DICTIONARY and str((object_value as Dictionary).get("object_id", "")) == resolved_object_id:
+				push_error("Resolved event remained in the room interaction catalog: %s." % resolved_object_id)
+				quit(1)
+				return
 	var event_story_log: Array = event_run_state.get("story_log", [])
 	if event_story_log.is_empty() or str((event_story_log[event_story_log.size() - 1] as Dictionary).get("type", "")) != "event":
 		push_error("Event resolution did not record an event story entry.")

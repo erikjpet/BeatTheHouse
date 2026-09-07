@@ -14398,6 +14398,20 @@ func resolve_event(event_id: String) -> void:
 	if not resolved.has(event_id):
 		resolved.append(event_id)
 	current_environment["resolved_event_ids"] = resolved
+	# Interior layers are durable views of one venue, not independent event
+	# instances. Copy the consumed identity into every stored layer so entering a
+	# destination layer (including one opened by this choice) cannot resurrect the
+	# same event from that layer's original generated snapshot.
+	if is_layered_environment():
+		var layer_states := _copy_dict(current_environment.get("layer_states", {}))
+		for layer_id_value in layer_states.keys():
+			var layer_state := _copy_dict(layer_states.get(layer_id_value, {}))
+			var layer_resolved := _copy_array(layer_state.get("resolved_event_ids", []))
+			if not layer_resolved.has(event_id):
+				layer_resolved.append(event_id)
+			layer_state["resolved_event_ids"] = layer_resolved
+			layer_states[layer_id_value] = layer_state
+		current_environment["layer_states"] = layer_states
 
 
 func set_story_flag(flag_id: String, value: Variant = true) -> void:

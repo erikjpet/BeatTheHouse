@@ -65,6 +65,11 @@ func _run() -> void:
 		await _dispose(app)
 		_finish()
 		return
+	if not _resolved_events_are_absent(app, "parking_lot_tip"):
+		_fail("Resolved Parking Lot Tip remained as a visible generic event object.")
+		await _dispose(app)
+		_finish()
+		return
 	var post_tip_environment: Dictionary = (app.get("run_state") as RunState).current_environment
 	report["post_tip_semantics"] = {
 		"ready": bool(post_tip_environment.get("scenario_semantic_ready", false)),
@@ -81,7 +86,12 @@ func _run() -> void:
 	await _save_continue_same_layer(app, "club")
 
 	if not await _choose_event(app, "event:side_door", "side_door", "punchline_password"):
-		_fail("The exact Punchline Side Door player route did not open the hidden casino.")
+		_fail("The exact Punchline Side Door player route did not open the hidden casino: %s" % last_event_issue)
+		await _dispose(app)
+		_finish()
+		return
+	if _has_object(app.get("environment_canvas") as Control, "event:side_door"):
+		_fail("Resolved Side Door remained visible after entering the discovered room.")
 		await _dispose(app)
 		_finish()
 		return
@@ -92,6 +102,8 @@ func _run() -> void:
 	if await _enter_layer(app, "club"):
 		report["revisits"].append({"from": "casino", "to": "club", "passed": true})
 		_record_layer(app, "club_revisit")
+		if _has_object(app.get("environment_canvas") as Control, "event:side_door"):
+			_fail("Resolved Side Door returned as a generic event object on layer revisit.")
 		if await _enter_layer(app, "casino"):
 			report["revisits"].append({"from": "club", "to": "casino", "passed": true})
 		else:
@@ -209,14 +221,37 @@ func _choose_event(app: Control, object_id: String, event_id: String, choice_id:
 	var routed := Fidelity.push_exact_canvas_mouse_click(app.get_viewport(), canvas, object_id, local_failures, "Punchline player event %s" % event_id)
 	await _settle(4)
 	if not bool(routed.get("ok", false)) or not Fidelity.exact_selection_matches(app, object_id):
+		last_event_issue = "selection:%s" % JSON.stringify(local_failures)
 		return false
-	var local_position: Vector2 = canvas.call("local_position_for_selected_info_action_button")
+	var selected_snapshot := _dict(canvas.call("current_view_snapshot"))
+	var selected_info := _dict(selected_snapshot.get("selected_info", {}))
+	var selected_actions := _array(selected_info.get("actions", []))
+	var expected_response_id := "event_response:%s:%s" % [event_id, choice_id]
+	var action_index := 0
+	for index in range(selected_actions.size()):
+		var action := _dict(selected_actions[index])
+		if str(action.get("emit_object_id", "")) == expected_response_id:
+			action_index = index
+			break
+	var local_position: Vector2 = canvas.call("local_position_for_selected_info_action_button", action_index)
 	if local_position.x < 0.0:
+		last_event_issue = "info_action_unavailable:%s" % JSON.stringify(selected_actions)
 		return false
 	await _click(app.get_viewport(), canvas.get_global_rect().position + local_position)
 	await _settle(5)
 	var popup := _dict(app.call("current_event_choice_popup_snapshot"))
 	if not bool(popup.get("visible", false)) or str(popup.get("event_id", "")) != event_id:
+		# Event response choices now live directly in the selected room tooltip.
+		# Clicking the requested inline response can therefore resolve immediately
+		# without opening the compatibility popup.
+		if _event_choice_was_resolved(app, event_id, choice_id):
+			return true
+		last_event_issue = "popup:%s actions:%s resolved:%s layer:%s" % [
+			JSON.stringify(popup),
+			JSON.stringify(selected_actions),
+			JSON.stringify(_array((app.get("run_state") as RunState).current_environment.get("resolved_event_ids", []))),
+			str((app.get("run_state") as RunState).current_environment.get("current_layer_id", "")),
+		]
 		return false
 	var label := ""
 	for value in _array(popup.get("choices", [])):
@@ -225,9 +260,11 @@ func _choose_event(app: Control, object_id: String, event_id: String, choice_id:
 			label = str(choice.get("label", ""))
 			break
 	if label.is_empty():
+		last_event_issue = "choice_missing:%s" % choice_id
 		return false
 	var button := _find_button(app.get("event_choice_popup_choices_list") as Node, label)
 	if button == null:
+		last_event_issue = "choice_button_missing:%s" % label
 		return false
 	await _click(app.get_viewport(), button.get_global_rect().get_center())
 	await _settle(14)
@@ -496,6 +533,32 @@ func _has_object(canvas: Control, semantic_id: String) -> bool:
 		var object_data := _dict(value)
 		if str(object_data.get("id", object_data.get("object_id", ""))) == semantic_id and bool(object_data.get("visible", true)):
 			return true
+	return false
+
+
+func _resolved_events_are_absent(app: Control, expected_event_id: String) -> bool:
+	var run: RunState = app.get("run_state") as RunState
+	if run == null:
+		return false
+	var resolved := _array(run.current_environment.get("resolved_event_ids", []))
+	if not resolved.has(expected_event_id):
+		return false
+	var canvas := app.get("environment_canvas") as Control
+	for event_id_value in resolved:
+		if _has_object(canvas, "event:%s" % str(event_id_value)):
+			return false
+	return true
+
+
+func _event_choice_was_resolved(app: Control, event_id: String, choice_id: String) -> bool:
+	var run: RunState = app.get("run_state") as RunState
+	if run == null:
+		return false
+	for index in range(run.story_log.size() - 1, -1, -1):
+		var entry := _dict(run.story_log[index])
+		if str(entry.get("type", "")) != "event" or str(entry.get("event_id", "")) != event_id:
+			continue
+		return str(entry.get("choice_id", "")) == choice_id
 	return false
 
 
