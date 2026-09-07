@@ -1,5 +1,5 @@
 {
-    "baseline_commit":  "24f19ef7-fix06_28-production-finalization",
+    "baseline_commit":  "48ac8521-fix06_28-revisit-authority",
     "capture":  {
                     "runs":  [
                                  {
@@ -35,19 +35,19 @@
                                                              "current_environment_bytes":  109379,
                                                              "current_environment_sha256":  "718dcd760359e41cc2e89bb4c772eced3887966939d58ad5a3c25e9ee056288a",
                                                              "label":  "bar_revisit",
-                                                             "run_state_bytes":  490650,
-                                                             "run_state_sha256":  "3b210b2beb6700e2383fb5028d2278cd4fdc3af01c9d139488cf3ad64d4fee7c",
-                                                             "world_environments_bytes":  166257,
-                                                             "world_environments_sha256":  "d9f912fbcc75bf293c53f2da1dc024b6d1c8aa445d3db341e689e9e967bde474"
+                                                             "run_state_bytes":  524819,
+                                                             "run_state_sha256":  "d6b83f8aafa2a7ed8b8d857ea7875150e2d4aea587ec1696f8c9117c41fc1ca4",
+                                                             "world_environments_bytes":  200426,
+                                                             "world_environments_sha256":  "cf672d069cb189ec38151aa470f06a54f302b77341243e34b1ea23672541533c"
                                                          },
                                                          {
                                                              "current_environment_bytes":  98504,
                                                              "current_environment_sha256":  "c3b6b0a6e92f12fc968f5e733716d1c951f824d35b11ed21a090110ff0362dd5",
                                                              "label":  "save_load_round_trip",
-                                                             "run_state_bytes":  490650,
-                                                             "run_state_sha256":  "3b210b2beb6700e2383fb5028d2278cd4fdc3af01c9d139488cf3ad64d4fee7c",
-                                                             "world_environments_bytes":  166257,
-                                                             "world_environments_sha256":  "d9f912fbcc75bf293c53f2da1dc024b6d1c8aa445d3db341e689e9e967bde474"
+                                                             "run_state_bytes":  524819,
+                                                             "run_state_sha256":  "d6b83f8aafa2a7ed8b8d857ea7875150e2d4aea587ec1696f8c9117c41fc1ca4",
+                                                             "world_environments_bytes":  200426,
+                                                             "world_environments_sha256":  "cf672d069cb189ec38151aa470f06a54f302b77341243e34b1ea23672541533c"
                                                          }
                                                      ],
                                      "seed":  "CREW-IGNORED-GOLDEN-A"
@@ -85,19 +85,19 @@
                                                              "current_environment_bytes":  109776,
                                                              "current_environment_sha256":  "67b18aadc442a200430255346e88482c3f721e71a4ca4366c9071183fd692d7c",
                                                              "label":  "bar_revisit",
-                                                             "run_state_bytes":  475262,
-                                                             "run_state_sha256":  "64f0c25317856ddcd65477321ffd015f2cc81b1861d6d1e66fd294722ffd8b1f",
-                                                             "world_environments_bytes":  156881,
-                                                             "world_environments_sha256":  "8d2656ccb57525f94001385c5f321f80991591f9acd26a6756527119777dda3e"
+                                                             "run_state_bytes":  509431,
+                                                             "run_state_sha256":  "c66dd460c04f2ef6ab982bd41ae57aeeff9b8550a5f833f8b68e176d19850a38",
+                                                             "world_environments_bytes":  191050,
+                                                             "world_environments_sha256":  "f7c36b131d26eb96c674af056d96506104ef636a82e4d533d64f8aa51c4516b3"
                                                          },
                                                          {
                                                              "current_environment_bytes":  98845,
                                                              "current_environment_sha256":  "50d3b757f949e48944c62eac8d853a4728d5245d7aa7d16a32ae9283343eee74",
                                                              "label":  "save_load_round_trip",
-                                                             "run_state_bytes":  475262,
-                                                             "run_state_sha256":  "64f0c25317856ddcd65477321ffd015f2cc81b1861d6d1e66fd294722ffd8b1f",
-                                                             "world_environments_bytes":  156881,
-                                                             "world_environments_sha256":  "8d2656ccb57525f94001385c5f321f80991591f9acd26a6756527119777dda3e"
+                                                             "run_state_bytes":  509431,
+                                                             "run_state_sha256":  "c66dd460c04f2ef6ab982bd41ae57aeeff9b8550a5f833f8b68e176d19850a38",
+                                                             "world_environments_bytes":  191050,
+                                                             "world_environments_sha256":  "f7c36b131d26eb96c674af056d96506104ef636a82e4d533d64f8aa51c4516b3"
                                                          }
                                                      ],
                                      "seed":  "CREW-IGNORED-GOLDEN-B"
@@ -106,9 +106,9 @@
                     "schema_version":  1
                 },
     "provenance":  {
-                       "change_commit":  "24f19ef717350cf60ec1089d418c304919c679e4",
-                       "reason":  "858f1ac7 moved the probe onto mandatory production arrival finalization; fix06_28 then sealed immutable room/event/route provenance and active-only turn facts without adding schema fields.",
-                       "proof":  "The pre-refresh contract produced byte-identical same-seed twins, exact no-op behavior for inactive world-sequence and Crew seams, and zero Crew trust. Git ancestry proves the prior fixture predates 858f1ac7, which replaced raw next_environment calls with generate_and_finalize/travel_and_finalize. The accepted capture is from 24f19ef7 after the same production finalization path gained immutable source provenance; all two-seed/five-checkpoint byte counts and hashes are retained exactly."
+                       "change_commit":  "48ac8521a2f1094e81453f5d65d756e035b6ab15",
+                       "reason":  "fix06_28 preserves the already authenticated scenario semantic inventory on room revisit so a later validated dynamic delivery handoff cannot erase or rewrite the room seal; no schema or Crew state changed.",
+                       "proof":  "Full-value captures from 25d9231d and 48ac8521 were recursively compared after normalizing only the fixed-width private Crew capsule. Both seeds were byte-identical at initial_bar, bar_action_boundary, and ordinary_travel. At bar_revisit and save_load_round_trip the only two changed paths were world_map.nodes[0].environment.scenario_semantic_inventory and the same Bar environment in world_environments; zero changed paths contained Crew data. Same-seed twins, inactive world-sequence/Crew no-ops, and zero Crew trust remain mandatory."
                    },
     "schema_version":  1
 }
