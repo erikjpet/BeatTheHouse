@@ -1,5 +1,12 @@
-Status: TODO — save-inventory prestage landed; the composition/migration/soak audit has not run
+Status: DONE — owner-directed migration-only closeout on 2026-09-07; release-gating composition and soak deferred
 Board row: `integ06_1` in `docs/todo/README_0_6_board.md`
+
+Execution record: exact synchronized main `f9851e98377619e0e92643e469985e59c1abbb34`
+passed 37/37 genuine v0.5.1 and 3/3 genuine mid-0.6 admission fixtures,
+each with verified FoundationMain provenance and stable round trip. The owner
+explicitly deferred the exhaustive composition matrix and native/Web terminal
+soak to refinement for this playtest-build fast path. See
+`docs/plans/integ06_1_composition_migration_soak_report.md`.
 
 # Agent Prompt — 0.6 integ06_1: Composition, Migration and Soak Umbrella
 

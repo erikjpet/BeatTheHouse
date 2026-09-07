@@ -1,6 +1,6 @@
 # integ06_1 composition, migration, and soak report
 
-Status: **PARTIAL — keep `integ06_1` TODO**
+Status: **DONE for the owner-directed playtest fast path — migration admission complete; release-gating composition and terminal soak deferred**
 Audit base: `6875646b19cb8c8ce242414e1251a8ae7bcffc2c`
 Harness prerequisite: `1131c6262eb04b2cbbabc6265caba71c4c234e22`
 Product/content repair: `c9e5941f43c3f507921482bdac1e7a8c34a75a18`
@@ -13,6 +13,33 @@ This report records the completed historical-save and maximal-composition work
 without claiming the native/Web terminal soak that has not yet run. The
 provenance and capture history for every historical fixture remain in
 `docs/plans/integ06_1_historical_fixture_wip.md` and the checked-in sidecars.
+
+## 2026-09-07 owner-directed migration-only closure
+
+The owner re-scoped `integ06_1` for the playtest build. On synchronized exact
+main `f9851e98377619e0e92643e469985e59c1abbb34`, both required admission
+matrices passed:
+
+| Matrix | Result |
+|---|---|
+| v0.5.1 | PASS — 37/37, `provenance=verified source=FoundationMain round_trip=stable` |
+| genuine mid-0.6 | PASS — 3/3, `provenance=verified source=FoundationMain round_trip=stable` |
+
+The prior Punchline attribution is corrected: L1→L2→L3, the populated back
+room, save/load and revisit all pass after the composition harness performs the
+same arrival finalization as production. Those four failures were cascades from
+a missing harness step, not Punchline production defects.
+
+The contained `fix06_26` wiring repair also makes the Crew favor enter the
+home/action shortlist, pass cadence, roll and queue. Continuing the previously
+red composition diagnostic reached a distinct visited-scenario semantic-digest
+rejection after Crew-rank mutation. That finding is retained for refinement and
+is not represented as green.
+
+Per the owner decision, the exhaustive composition matrix, native/Web terminal
+soak, parity, terminal-route coverage and long stability work were not run.
+They remain release-gating refinement work, not conditions of this
+migration-only closure.
 
 ## 2026-09-04 closeout checkpoint
 
@@ -353,13 +380,11 @@ layouts, and composed-sequence retention. Full normalized captures from the
 exact golden commit and the repaired current tree must prove that every leaf
 difference is intended before the fixture is refreshed.
 
-## Work still required before DONE
+## Deferred release-gating work
 
 - Retain the landed Foundation game-entry/game-exit binding seam and require
   `integ06_1_crew_play_entry_repro.gd` to exit 0 with the Crew Play present on
   the final env-inclusive candidate.
-- Re-run both admitted migration classes on the final frozen candidate and
-  retain their exact logs.
 - Run the checked-in maximal composition matrix across every production-
   eligible archetype and all five lifecycle orderings.
 - Run the checked-in native/Web terminal-soak producer, including its
@@ -374,8 +399,8 @@ The three formerly missing entry points now exist. Their presence does not
 change this report's PARTIAL verdict: generation, Godot compilation, exact-
 candidate execution, and retained green artifacts are still required.
 
-Until those items have reproducible green evidence, `integ06_1` must remain
-TODO and cannot unblock the owner playtest by itself.
+Those items remain mandatory before a release claim, but the owner explicitly
+removed them from the playtest-build gate. No release verdict is claimed here.
 
 ## Binding terminal authority boundary
 
