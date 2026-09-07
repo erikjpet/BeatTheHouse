@@ -2248,6 +2248,7 @@
       "portrait_count": 3,
       "face_layers": [],
       "bind": "none",
+      "environment_actor": false,
       "character_pool_id": "crew_regulars",
       "character_identity_key": "the_crew",
       "voice_line_key": "favor_due"
@@ -2261,6 +2262,9 @@
       "turns": 1,
       "chance_percent": 45,
       "unavoidable": true
+    },
+    "cadence": {
+      "bypass_budget": true
     },
     "conditions": {
       "requires_flags": {
