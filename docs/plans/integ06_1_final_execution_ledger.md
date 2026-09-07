@@ -8,6 +8,42 @@ code is required for every executable step. Warnings, missing reports, absent
 expected markers, timeouts, reruns on a changed tree, and manually edited
 generated artifacts are failures.
 
+## 2026-09-04 provisional pre-env checkpoint
+
+Do not mistake the short checkpoint below for final execution. Frozen
+`origin/main` at `49841960750a873707e79dbf6b5c7836041fcbf5` passed both
+migration classes and the Crew binding reproduction. A determinism-harness-only
+repair was committed as `d27b2deed37666d6853d879d70948d8e6fdfbd35` on
+`codex/integ06-final-run`; on that exact tree, two independent 10-seed runs each
+passed 560 checkpoints with combined hash `4043921713` and clean stderr. The
+v0.5.1 matrix then passed 37/37 and the mid-0.6 matrix passed 3/3 again on the
+same candidate.
+
+The focused composition and real delivery proof both stop at the same first
+env-owned product failure: `jazz_club_guest_legend_task_0` overlaps
+`jazz_club_guest_legend_guest_legend` in normal and expanded-small layouts, so
+scenario semantics cannot finalize for departure. Do not run the exhaustive
+producer until env06_8 lands; it currently derives 50 required rows across
+eight eligible archetypes and would repeat the same rejected production entry.
+The native/Web terminal producer remains intentionally unrun.
+
+Before final execution, use a fresh output directory and replace the two
+placeholders below with the final env-inclusive candidate and perf06 profile:
+
+```powershell
+$head = (git rev-parse HEAD).Trim()
+$profilePath = '<final perf06_1 profile path>'
+$evidenceProfile = '<final perf06_1 evidence profile id>'
+```
+
+Then run this ledger from section 0 without reusing
+`.tmp/integ06_1/candidate_d27b2dee`. On the observed host, budget approximately
+15 minutes for Contracts, 1--4 hours for the 50-row composition producer and
+its seed discovery, and up to 3 hours for fresh Web-native compilation,
+Windows/Web exports, two native repetitions, and Web terminal shards. The
+accelerated three-hour stability probe and full post-land gate are separate
+required steps; these estimates are scheduling guidance, not relaxed timeouts.
+
 ## 0. Candidate custody
 
 Run from the repository root with no other Godot process using this project.

@@ -129,11 +129,79 @@ is to bind `active_game_id` before `GameModule.enter`/legal-action presentation
 and clear it on every game-exit path; this integration branch does not modify
 `foundation_main.gd`.
 
-Final acceptance still requires the shared-host Crew Play binding repair and one
-clean rerun after env06_8 and the final perf06 evidence profile are both frozen:
-project validation, the Crew Play entry reproduction, both migration matrices,
-the full composition matrix, and the repeated native/Web terminal soak with
-parity, route, profile, retained-state, and cleanup checks.
+The shared-host Crew Play binding repair has now landed and passes its focused
+reproduction. Final acceptance still requires one clean rerun after env06_8 and
+the final perf06 evidence profile are both frozen: project validation, the Crew
+Play entry reproduction, both migration matrices, the full composition matrix,
+and the repeated native/Web terminal soak with parity, route, profile,
+retained-state, and cleanup checks.
+
+## 2026-09-04 frozen-main provisional rerun
+
+`origin/main` was frozen at `49841960750a873707e79dbf6b5c7836041fcbf5`.
+The integration rerun used a new worktree and branch from that exact commit.
+One integration-harness defect was found: the determinism probe constructs an
+unmounted `FoundationMain` host for Bar Dice, but did not initialize the
+`FoundationActionViewModelScript` that the production scene normally loads in
+run-UI stage 0. Both semantic runs therefore completed with identical output,
+but the strict wrapper correctly rejected Run A after 20 nil-view-model stderr
+errors and did not accept Run B. Commit
+`d27b2deed37666d6853d879d70948d8e6fdfbd35` initializes that exact lazy
+dependency in the owned probe without changing product behavior. Its tree is
+`cb13c2208976a0ee2d6998e4b6154f82ba1c6c45`.
+
+The exact-candidate short gates on `d27b2dee` produced these verdicts:
+
+| Gate | Verdict |
+| --- | --- |
+| `tools/validate_project.ps1` | PASS |
+| Determinism probe source `--check-only` | PASS |
+| v0.5.1 admission matrix | PASS: 37/37, provenance verified, FoundationMain source, round trip stable |
+| mid-0.6 admission matrix | PASS: 3/3, provenance verified, FoundationMain source, round trip stable |
+| Crew Play Foundation entry reproduction | PASS: entry binding, legal `crew_play:spotter`, activation, persistence scrub, and exit clear |
+| 10-seed independent-process determinism | PASS: 560 checkpoints in each process; identical combined hash `4043921713`; clean stderr |
+| `world06_2_delivery_depth_contract.gd` | PASS |
+| focused maximal Bar/Punchline composition | FAIL at env-owned Jazz Club scenario finalization |
+| real world-sequence delivery proof | FAIL at the same env-owned Jazz Club target finalization |
+
+The composition failure is specific and reproducible. The production-selected
+`jazz_club_guest_legend` scenario places
+`scenario::jazz_club_guest_legend_task_0` over
+`scenario::jazz_club_guest_legend_guest_legend` in both normal and expanded
+small-screen layouts. Scenario semantics consequently remain unfinalized for
+departure; the later Punchline and Crew setup failures are cascades from that
+first rejected travel boundary. This is inside env06_8's exclusive scenario,
+anchor, and layout ownership. No integration or product source was changed to
+mask it, and the exhaustive 50-row composition producer was not started while
+its common production entry path was known red.
+
+Local immutable evidence is retained under
+`.tmp/integ06_1/candidate_d27b2dee/`. Important SHA-256 values are:
+
+- `v051_migration.log`: `f208f3067379e9425922344de586b1131b5e1a2ac91222e7bcdb3f32ff24268a`;
+- `mid06_migration.log`: `84134e513298a4dc1518fca6d1275bdf928f3a35f4240954f98c084b699fda40`;
+- `run_a.json` and `run_b.json`: `df760beb397159af85f236171d0db452aa0193cc73791585e6b7d13defa5ecfa` each;
+- `crew_play_entry_repro.log`: `5271b13fb4372fe4dc198759469f8a1c2a9d49d6f30bfbee86e60ef95e1047b0`;
+- focused composition report: `ead7e50d2ba236bde5d30ef57606d0b5519340304567937e6b3a425c00a7bc98`;
+- world-sequence delivery proof log: `f60b2894c5bdffe2faf8dcf5349475ee6f6cc8c162bdf26c4c68f0e978f4b267`;
+- validation log: `c9b2c167e11ef9f050515199ed1eec03575f3436c9efee3baf4f5ee7d52fa43c`.
+
+The captured host profile
+`provisional_low_end_cpu1.json` has SHA-256
+`b8c317e80ba4818b88d56af754ddd93887351995a9125936241056daa356c2b0`.
+It is explicitly provisional and is not a substitute for perf06_1's final
+declared execution profile. The Godot console used for this checkpoint has
+SHA-256 `fc759f9d296fe54f09ab66d41df6ddd2d278493b0e71109f6688ef029ad271ae`.
+
+This checkpoint does not change the report's PARTIAL verdict. After env06_8 is
+frozen, rebase the harness-only commit onto that candidate, capture or identify
+the final perf06 profile, and restart candidate custody. Expected wall-clock
+bounds on this host are approximately 15 minutes for the supported Contracts
+gate, 1--4 hours for composition discovery plus all 50 lifecycle rows, and up
+to 3 hours for the fresh-build native/native-repeat/Web terminal producer. The
+three-hour accelerated native stability probe and post-land gate remain
+additional release-root work. None of those long gates was started during this
+provisional parallel-env checkpoint.
 
 ## Historical migration matrix
 
@@ -287,8 +355,9 @@ difference is intended before the fixture is refreshed.
 
 ## Work still required before DONE
 
-- Repair the Foundation game-entry/game-exit binding seam, then require
-  `integ06_1_crew_play_entry_repro.gd` to exit 0 with the Crew Play present.
+- Retain the landed Foundation game-entry/game-exit binding seam and require
+  `integ06_1_crew_play_entry_repro.gd` to exit 0 with the Crew Play present on
+  the final env-inclusive candidate.
 - Re-run both admitted migration classes on the final frozen candidate and
   retain their exact logs.
 - Run the checked-in maximal composition matrix across every production-
