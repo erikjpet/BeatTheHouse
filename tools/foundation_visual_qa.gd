@@ -10,6 +10,7 @@ const ProfileInventoryScript := preload("res://scripts/core/profile_inventory.gd
 const SaveServiceScript := preload("res://scripts/core/save_service.gd")
 const CageCounterViewModelScript := preload("res://scripts/ui/cage_counter_view_model.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
+const HarnessProductionFidelityScript := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
 const REPORT_PATH := "user://foundation_visual_qa_report.json"
 const TEST_SETTINGS_PATH := "user://settings_foundation_visual_qa.json"
 const TEST_META_COLLECTION_PATH := "user://foundation_visual_qa_meta_collection.json"
@@ -649,15 +650,32 @@ func _try_travel_object_flow(context_label: String, objective: Dictionary = {}) 
 		_require(canvas != null and canvas.visible and canvas.has_method("current_view_snapshot"), "Environment canvas was not restored after local door travel.")
 		if canvas == null:
 			return false
-		travel_object = _first_clickable_canvas_object_type_enabled(canvas, "travel", true)
-		_require(not travel_object.is_empty(), "Local door travel did not expose a world-map travel object.")
+		var exact_leave_failures: Array = []
+		var exact_leave := HarnessProductionFidelityScript.resolve_exact_canvas_object(canvas, "travel:leave", exact_leave_failures, "Foundation visual QA local-parent departure")
+		var observed_travel := _first_clickable_canvas_object_type_enabled(canvas, "travel", true)
+		var observed_id := _canvas_object_id(observed_travel)
+		var observed_label := str(observed_travel.get("label", ""))
+		_require(
+			bool(exact_leave.get("ok", false)),
+			"Local door travel did not expose enabled, visible, hittable travel:leave. selected_id=%s selected_label=%s errors=%s %s" % [observed_id, observed_label, JSON.stringify(exact_leave_failures), _serialized_diff_summary(serialized_before_travel_activation, _serialized_run_text())]
+		)
+		if not bool(exact_leave.get("ok", false)):
+			return false
+		travel_object = exact_leave.get("object", {})
+		var room_door := _canvas_object_by_id(canvas, "travel:motel_room")
+		_require(not room_door.is_empty(), "Local parent-venue regression fixture did not expose both travel:motel_room and travel:leave.")
+		var recorded_inputs: Array = report.get("input_events", []) if typeof(report.get("input_events", [])) == TYPE_ARRAY else []
+		var second_input_index := recorded_inputs.size()
 		serialized_before_travel_activation = _serialized_run_text()
 		travel_button = await _double_click_canvas_object_data(canvas, travel_object, "travel")
-		_require(not travel_button.is_empty(), "Could not double-click the world-map travel objective after local door travel.")
+		_require(not travel_button.is_empty(), "Could not double-click exact departure selected_id=%s selected_label=%s. %s" % [_canvas_object_id(travel_object), str(travel_object.get("label", "")), _serialized_diff_summary(serialized_before_travel_activation, _serialized_run_text())])
 		await _settle()
 		map_open_screen = app.call("current_screen_snapshot")
-	_require(serialized_before_travel_activation == _serialized_run_text(), "Opening the world map should not mutate serialized RunState before route confirmation.")
-	_require(bool(map_open_screen.get("world_map_overlay_visible", false)), "Double-clicking Leave did not open the world map overlay.")
+		var inputs_after_departure: Array = report.get("input_events", []) if typeof(report.get("input_events", [])) == TYPE_ARRAY else []
+		var second_input: Dictionary = inputs_after_departure[second_input_index] if second_input_index < inputs_after_departure.size() and typeof(inputs_after_departure[second_input_index]) == TYPE_DICTIONARY else {}
+		_require(str(second_input.get("object_id", "")) == "travel:leave", "Parent-venue second travel input selected_id=%s selected_label=%s instead of travel:leave. %s" % [str(second_input.get("object_id", "<missing>")), str(second_input.get("label", "")), _serialized_diff_summary(serialized_before_travel_activation, _serialized_run_text())])
+	_require(serialized_before_travel_activation == _serialized_run_text(), "Opening the world map through selected_id=%s selected_label=%s mutated serialized RunState before route confirmation. %s" % [_canvas_object_id(travel_object), str(travel_object.get("label", "")), _serialized_diff_summary(serialized_before_travel_activation, _serialized_run_text())])
+	_require(bool(map_open_screen.get("world_map_overlay_visible", false)), "Double-clicking exact departure selected_id=%s selected_label=%s did not open the world map overlay. %s" % [_canvas_object_id(travel_object), str(travel_object.get("label", "")), _serialized_diff_summary(serialized_before_travel_activation, _serialized_run_text())])
 	_cover("world_map_open")
 	var map_snapshot: Dictionary = map_open_screen.get("world_map", {}) if typeof(map_open_screen.get("world_map", {})) == TYPE_DICTIONARY else {}
 	var map_nodes: Array = map_snapshot.get("nodes", []) if typeof(map_snapshot.get("nodes", [])) == TYPE_ARRAY else []

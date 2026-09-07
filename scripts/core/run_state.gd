@@ -1575,7 +1575,7 @@ func scenario_preflight_environment_change(source_id: String = "", target_id: St
 	var definition := _scenario_sequence_definition_readonly()
 	var boundary := _scenario_environment_change_expiry_boundary()
 	if not travel_kind.is_empty() and ScenarioSequenceSchemaScript.is_sequence(definition):
-		if not _scenario_semantic_ready(): return {"ok": false, "errors": ["Dynamic room sequence semantic records are not finalized for departure."]}
+		if not _scenario_semantic_ready(): return {"ok": false, "errors": ["Dynamic room sequence semantic records are not finalized for departure; the arrived room was likely never finalized by its host or harness."]}
 		var state := ScenarioEngineScript.ensure_sequence_state(candidate, definition)
 		if state.is_empty(): return {"ok": false, "errors": ["Dynamic room sequence departure could not initialize its causal state."]}
 		var state_errors := _copy_array(state.get("errors", []))
@@ -1602,7 +1602,7 @@ func scenario_preflight_environment_change(source_id: String = "", target_id: St
 			if not bool(flushed.get("ok", false)):
 				return {"ok": false, "errors": _copy_array(flushed.get("errors", []))}
 	if boundary.is_empty(): return {"ok": true, "inactive": true, "errors": []}
-	if not _scenario_semantic_ready(): return {"ok": false, "errors": ["Dynamic room sequence semantic records are not finalized for departure."]}
+	if not _scenario_semantic_ready(): return {"ok": false, "errors": ["Dynamic room sequence semantic records are not finalized for departure; the arrived room was likely never finalized by its host or harness."]}
 	var result := ScenarioEngineScript.sequence_apply_expiry_boundary(candidate, definition, boundary)
 	return {"ok": bool(result.get("ok", false)), "inactive": false, "errors": _copy_array(result.get("errors", []))}
 

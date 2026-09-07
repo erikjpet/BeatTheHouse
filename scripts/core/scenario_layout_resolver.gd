@@ -333,6 +333,7 @@ static func resolve(base_records: Array, projection: Dictionary, environment: Di
 	var visual_count := 0
 	var resolved_scenes: Dictionary = {}
 	var resolved_actors: Dictionary = {}
+	var interactions := _dict(semantic_state.get("interactions", {}))
 	for collection_entry in [
 		[semantic_state.get("scene_objects", {}), false, resolved_scenes],
 		[semantic_state.get("actors", {}), true, resolved_actors],
@@ -354,6 +355,13 @@ static func resolve(base_records: Array, projection: Dictionary, environment: Di
 			if visual_count > MAX_VISUALS:
 				errors.append("Scenario presentation exceeds the %d visual-object bound." % MAX_VISUALS)
 				continue
+			# Interaction copy can be longer than the short prop label. Placement must
+			# reserve the text users actually activate, otherwise a seed-varying base
+			# event can pass placement and fail the later strict label validator.
+			var interaction := _dict(interactions.get(identity, {}))
+			var visual_label := str(semantic.get("label", "")).strip_edges()
+			var interaction_label := str(interaction.get("label", "")).strip_edges()
+			var placement_label := interaction_label if interaction_label.length() > visual_label.length() else visual_label
 			var resolved := _resolve_visual(
 				identity,
 				semantic,
@@ -362,6 +370,7 @@ static func resolve(base_records: Array, projection: Dictionary, environment: Di
 				semantic_state,
 				_dict(base_by_identity.get(identity, {})),
 				occupied,
+				placement_label,
 				errors
 			)
 			if resolved.is_empty():
@@ -377,7 +386,7 @@ static func resolve(base_records: Array, projection: Dictionary, environment: Di
 					"identity": identity,
 					"rect": normal_rect,
 					"small_rect": small_rect,
-					"label": str(resolved.get("label", "")),
+					"label": placement_label,
 				})
 
 	semantic_state["scene_objects"] = resolved_scenes
@@ -456,6 +465,7 @@ static func _resolve_visual(
 	semantic_state: Dictionary,
 	base_record: Dictionary,
 	occupied: Array,
+	placement_label: String,
 	errors: Array
 ) -> Dictionary:
 	var result := semantic.duplicate(true)
@@ -485,7 +495,9 @@ static func _resolve_visual(
 		errors.append("Scenario visual %s requires a bounded, readable label." % identity)
 		return {}
 	var authored_rect := _clamp_inside_board(Rect2(center - size * 0.5, size))
-	var placement := _collision_safe_rect(identity, authored_rect, occupied, label)
+	var role := str(semantic.get("role", "")).to_lower()
+	var forbidden_lane := WALK_LANE if role in ["obstacle", "barrier", "blockade"] else Rect2()
+	var placement := _collision_safe_rect(identity, authored_rect, occupied, placement_label, forbidden_lane)
 	if bool(placement.get("colliding", true)):
 		errors.append("Scenario visual %s cannot resolve both normal and expanded small-screen geometry without ambiguity." % identity)
 		return {}
@@ -1107,7 +1119,7 @@ static func _point_clear(point: Vector2, obstacles: Array, ignored_identity: Str
 	return true
 
 
-static func _collision_safe_rect(identity: String, authored: Rect2, occupied: Array, label: String = "") -> Dictionary:
+static func _collision_safe_rect(identity: String, authored: Rect2, occupied: Array, label: String = "", forbidden_rect: Rect2 = Rect2()) -> Dictionary:
 	# A normal-layout collision may be deterministically displaced. Expanded-only
 	# contact must retain authored placement so the later small-screen hit, label,
 	# lane, and reachability validators can reject the exact authored conflict
@@ -1116,7 +1128,8 @@ static func _collision_safe_rect(identity: String, authored: Rect2, occupied: Ar
 	if not authored_raw_collision \
 			and not _normal_hit_overlaps(identity, authored, occupied) \
 			and not _label_overlaps(identity, authored, label, occupied, false) \
-			and not _label_overlaps(identity, _expanded_rect(authored, SMALL_SCREEN_TARGET), label, occupied, true):
+			and not _label_overlaps(identity, _expanded_rect(authored, SMALL_SCREEN_TARGET), label, occupied, true) \
+			and not _forbidden_overlap(_expanded_rect(authored, SMALL_SCREEN_TARGET), forbidden_rect):
 		return {"rect": _clamp_inside_board(authored), "adjusted": false, "colliding": false}
 	for offset_value in COLLISION_OFFSETS:
 		var offset := offset_value as Vector2
@@ -1125,7 +1138,8 @@ static func _collision_safe_rect(identity: String, authored: Rect2, occupied: Ar
 		if not _normal_hit_overlaps(identity, candidate, occupied) \
 				and not _expanded_overlaps(identity, small_candidate, occupied) \
 				and not _label_overlaps(identity, candidate, label, occupied, false) \
-				and not _label_overlaps(identity, small_candidate, label, occupied, true):
+				and not _label_overlaps(identity, small_candidate, label, occupied, true) \
+				and not _forbidden_overlap(small_candidate, forbidden_rect):
 			return {"rect": candidate, "adjusted": not offset.is_zero_approx(), "colliding": false}
 	var bounded_candidates := _bounded_collision_candidates(authored)
 	for candidate_value in bounded_candidates:
@@ -1134,7 +1148,8 @@ static func _collision_safe_rect(identity: String, authored: Rect2, occupied: Ar
 		if not _normal_hit_overlaps(identity, candidate, occupied) \
 				and not _expanded_overlaps(identity, small_candidate, occupied) \
 				and not _label_overlaps(identity, candidate, label, occupied, false) \
-				and not _label_overlaps(identity, small_candidate, label, occupied, true):
+				and not _label_overlaps(identity, small_candidate, label, occupied, true) \
+				and not _forbidden_overlap(small_candidate, forbidden_rect):
 			return {"rect": candidate, "adjusted": not candidate.position.is_equal_approx(authored.position), "colliding": false}
 	# Preserve the original exact-hitbox fallback for authored raw collisions when
 	# a crowded room cannot also provide the preferred extra visual gap.
@@ -1146,7 +1161,8 @@ static func _collision_safe_rect(identity: String, authored: Rect2, occupied: Ar
 			if not _raw_hit_overlaps(identity, candidate, occupied) \
 					and not _expanded_overlaps(identity, small_candidate, occupied) \
 					and not _label_overlaps(identity, candidate, label, occupied, false) \
-					and not _label_overlaps(identity, small_candidate, label, occupied, true):
+					and not _label_overlaps(identity, small_candidate, label, occupied, true) \
+					and not _forbidden_overlap(small_candidate, forbidden_rect):
 				return {"rect": candidate, "adjusted": not offset.is_zero_approx(), "colliding": false}
 		for candidate_value in bounded_candidates:
 			var candidate := candidate_value as Rect2
@@ -1154,7 +1170,8 @@ static func _collision_safe_rect(identity: String, authored: Rect2, occupied: Ar
 			if not _raw_hit_overlaps(identity, candidate, occupied) \
 					and not _expanded_overlaps(identity, small_candidate, occupied) \
 					and not _label_overlaps(identity, candidate, label, occupied, false) \
-					and not _label_overlaps(identity, small_candidate, label, occupied, true):
+					and not _label_overlaps(identity, small_candidate, label, occupied, true) \
+					and not _forbidden_overlap(small_candidate, forbidden_rect):
 				return {"rect": candidate, "adjusted": not candidate.position.is_equal_approx(authored.position), "colliding": false}
 	# A raw-safe authored placement remains valid when the room cannot provide the
 	# renderer's preferred extra breathing room. Raw ambiguity still fails closed;
@@ -1162,9 +1179,14 @@ static func _collision_safe_rect(identity: String, authored: Rect2, occupied: Ar
 	# destination during travel.
 	if not authored_raw_collision \
 			and not _label_overlaps(identity, authored, label, occupied, false) \
-			and not _label_overlaps(identity, _expanded_rect(authored, SMALL_SCREEN_TARGET), label, occupied, true):
+			and not _label_overlaps(identity, _expanded_rect(authored, SMALL_SCREEN_TARGET), label, occupied, true) \
+			and not _forbidden_overlap(_expanded_rect(authored, SMALL_SCREEN_TARGET), forbidden_rect):
 		return {"rect": _clamp_inside_board(authored), "adjusted": false, "colliding": false}
 	return {"rect": authored, "adjusted": false, "colliding": true}
+
+
+static func _forbidden_overlap(rect: Rect2, forbidden_rect: Rect2) -> bool:
+	return forbidden_rect.has_area() and rect.intersects(forbidden_rect) and rect.intersection(forbidden_rect).get_area() > 0.01
 
 
 static func _label_overlaps(identity: String, rect: Rect2, label: String, occupied: Array, small_screen: bool) -> bool:

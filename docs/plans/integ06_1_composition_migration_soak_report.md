@@ -188,19 +188,17 @@ The exact-candidate short gates on `d27b2dee` produced these verdicts:
 | Crew Play Foundation entry reproduction | PASS: entry binding, legal `crew_play:spotter`, activation, persistence scrub, and exit clear |
 | 10-seed independent-process determinism | PASS: 560 checkpoints in each process; identical combined hash `4043921713`; clean stderr |
 | `world06_2_delivery_depth_contract.gd` | PASS |
-| focused maximal Bar/Punchline composition | FAIL at env-owned Jazz Club scenario finalization |
-| real world-sequence delivery proof | FAIL at the same env-owned Jazz Club target finalization |
+| focused maximal Bar/Punchline composition | SUPERSEDED: harness skipped production arrival finalization before the next semantic boundary |
+| real world-sequence delivery proof | SUPERSEDED: harness skipped production arrival finalization at the away/target room |
 
-The composition failure is specific and reproducible. The production-selected
-`jazz_club_guest_legend` scenario places
-`scenario::jazz_club_guest_legend_task_0` over
-`scenario::jazz_club_guest_legend_guest_legend` in both normal and expanded
-small-screen layouts. Scenario semantics consequently remain unfinalized for
-departure; the later Punchline and Crew setup failures are cascades from that
-first rejected travel boundary. This is inside env06_8's exclusive scenario,
-anchor, and layout ownership. No integration or product source was changed to
-mask it, and the exhaustive 50-row composition producer was not started while
-its common production entry path was known red.
+This provisional attribution is superseded. The composition and delivery
+harnesses had not performed the production host's mandatory arrival
+finalization at the rumor venue/target before reading or departing it. Once the
+same host step was added, the Jazz Club route continued normally. The later
+Punchline L1→L2→L3, populated Crew room, save/load, and revisit failures were
+cascades from the same omitted harness boundary, not Punchline, Crew, or Jazz
+Club production defects. The strict departure guard was correct to refuse the
+unfinalized harness state.
 
 Local immutable evidence is retained under
 `.tmp/integ06_1/candidate_d27b2dee/`. Important SHA-256 values are:

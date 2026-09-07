@@ -6050,7 +6050,6 @@
                 {
                   "family": "scene_ops",
                   "object": {
-                    "anchor_id": "delivery_manifest",
                     "appearance": "count_cage",
                     "bounds": {
                       "h": 56.0,
@@ -6471,7 +6470,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "28f85862f626ae6d36b900a7c2deb1f31053788b6e629bd068c21ebd04f84b58"
+        "sequence_signature": "ddee7b5dfb6f97dc8361c22085fc55565806c8e006be4b3a144b20ad14167668"
       }
     },
     {
