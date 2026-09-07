@@ -701,13 +701,13 @@
                     "role": "obstacle",
                     "state": "arrival",
                     "visible": true,
-                    "zone_id": "foreground"
+                    "zone_id": "center"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario",
                   "receipt_id": "arrival_motel_conventioneers_luggage_cart",
                   "stable_object_id": "motel_conventioneers_luggage_cart",
-                  "zone_id": "foreground"
+                  "zone_id": "center"
                 },
                 {
                   "family": "scene_ops",
@@ -1473,7 +1473,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "d9701c83073f18cffbf4a132b1245ce05304f1c01065890cfa4062bb196d3dc9"
+        "sequence_signature": "8b921b02a01ee6a805f44641de4cbb729defd6c22ea1204f935ce314e1a2ed09"
       }
     },
     {
