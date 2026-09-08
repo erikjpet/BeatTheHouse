@@ -92,6 +92,16 @@ foreach ($contract in $requiredContracts) {
     }
 }
 
+$webThreadingContracts = [ordered]@{
+    build_ui = '(?ms)if OS\.has_feature\("web"\) or _defer_start_menu_secondary_panels\(\):\r?\n(?:\t\t#[^\r\n]*\r?\n)*\t\tif not OS\.has_feature\("web"\):\r?\n\t\t\t_request_run_ui_script_prewarm\(\)\r?\n\t\tcall_deferred\("_prewarm_run_ui_after_web_start"\)'
+    request_guard = '(?m)^func _request_run_ui_script_prewarm\(\) -> void:\r?\n\tif OS\.has_feature\("web"\):\r?\n\t\treturn'
+}
+foreach ($entry in $webThreadingContracts.GetEnumerator()) {
+    if ($source -notmatch $entry.Value) {
+        throw "Web single-threaded prewarm guard is missing or misplaced: $($entry.Key)"
+    }
+}
+
 $guardedEntryPatterns = [ordered]@{
     start_foundation_run = '(?m)^func start_foundation_run\([^\r\n]+\) -> bool:\r?\n\tif not _ensure_run_ui_built\(\):'
     load_slot = '(?m)^func _load_foundation_run_from_slot\([^\r\n]+\) -> bool:\r?\n\tif not _ensure_run_ui_built\(\):'

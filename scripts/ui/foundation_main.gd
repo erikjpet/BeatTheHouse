@@ -7896,7 +7896,12 @@ func _build_ui() -> void:
 	# the menu. An immediate New Run still completes any remaining stages
 	# synchronously, so staging cannot expose a partially usable game screen.
 	if OS.has_feature("web") or _defer_start_menu_secondary_panels():
-		_request_run_ui_script_prewarm()
+		# The production Web export is intentionally single-threaded. Godot's
+		# threaded ResourceLoader has no worker there and makes its compilation
+		# backlog part of first paint, so Web retains the bounded stage-per-frame
+		# loader. Native builds can compile the same scripts off the menu thread.
+		if not OS.has_feature("web"):
+			_request_run_ui_script_prewarm()
 		call_deferred("_prewarm_run_ui_after_web_start")
 	else:
 		_ensure_run_ui_built()
@@ -7941,6 +7946,8 @@ func _prewarm_run_ui_after_web_start() -> void:
 
 
 func _request_run_ui_script_prewarm() -> void:
+	if OS.has_feature("web"):
+		return
 	for script_path_value in RUN_UI_SCRIPT_PATHS.values():
 		var script_path := str(script_path_value)
 		if script_path.is_empty() or run_ui_script_prewarm_requests.has(script_path) or ResourceLoader.has_cached(script_path):
