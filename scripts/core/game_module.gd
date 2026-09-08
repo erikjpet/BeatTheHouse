@@ -293,6 +293,14 @@ func surface_uses_auto_tick() -> bool:
 	return false
 
 
+# Optional allocation-free guard for surfaces whose automatic action loop is
+# normally dormant. FoundationMain calls this before constructing timestamps,
+# stake data, or a tick snapshot. Returning false must mean that no automatic
+# command can become due until a player command changes the retained UI state.
+func surface_auto_tick_may_be_active(_retained_ui_state: Dictionary) -> bool:
+	return true
+
+
 func surface_needs_auto_tick(_ui_state: Dictionary, _run_state: RunState, _environment: Dictionary) -> bool:
 	return false
 

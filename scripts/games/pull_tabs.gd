@@ -765,6 +765,10 @@ func surface_uses_auto_tick() -> bool:
 	return true
 
 
+func surface_auto_tick_may_be_active(retained_ui_state: Dictionary) -> bool:
+	return bool(retained_ui_state.get("pull_tab_auto_open_active", false))
+
+
 func surface_needs_auto_tick(ui_state: Dictionary, _run_state: RunState, _environment: Dictionary) -> bool:
 	if not bool(ui_state.get("pull_tab_auto_open_active", false)):
 		return false

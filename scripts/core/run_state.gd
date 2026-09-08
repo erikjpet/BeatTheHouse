@@ -2504,7 +2504,10 @@ func _scenario_authoritative_environment_for_finalization(definition: Dictionary
 	# Use it during the initial seal as well as restore so progressed scenario
 	# services, routes, games, and layout fixtures can never enter base authority.
 	# The existing inventory digest comparison below remains fail-closed.
-	result = result.duplicate(true)
+	# Every consumer below treats non-scenario room state as read-only, while each
+	# field we replace receives its own owned value. A shallow envelope preserves
+	# the atomic boundary without cloning unrelated machine simulations.
+	result = result.duplicate(false)
 	var sealed_source := _copy_dict(_copy_dict(current_environment.get("scenario_semantic_inventory", {})).get("source_provenance", {}))
 	if not sealed_source.is_empty():
 		result["event_ids"] = _copy_array(sealed_source.get("event_ids", result.get("event_ids", [])))
@@ -2634,7 +2637,10 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 		# inputs and the projection on a detached copy without replaying reentry.
 		if _copy_dict(current_environment.get("scenario_sequence_state", {})).is_empty():
 			return _invalidate_scenario_semantic_proof("Scenario semantic refresh requires an initialized sequence state.")
-		var refresh_candidate := current_environment.duplicate(true)
+		# ScenarioEngine transactions replace owned top-level values and already use
+		# shallow detached envelopes internally. Keep unrelated game/runtime payloads
+		# read-only instead of cloning them during semantic proof refresh.
+		var refresh_candidate := current_environment.duplicate(false)
 		if str(refresh_candidate.get("scenario_id", "")).strip_edges().is_empty(): refresh_candidate["scenario_id"] = definition_id
 		refresh_candidate["scenario_base_interactions"] = interactions
 		refresh_candidate["scenario_base_actors"] = actors
@@ -2663,7 +2669,7 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 	# Build the proof and perform initialization/reentry against a detached
 	# environment. Readiness, authorization and runtime state become visible
 	# together only after the entire transition succeeds.
-	var candidate := current_environment.duplicate(true)
+	var candidate := current_environment.duplicate(false)
 	if str(candidate.get("scenario_id", "")).strip_edges().is_empty(): candidate["scenario_id"] = definition_id
 	candidate["scenario_base_interactions"] = interactions
 	candidate["scenario_base_actors"] = actors
@@ -2767,7 +2773,9 @@ func _scenario_canonical_base_interaction_geometry(records: Array) -> Array:
 
 func _resolve_scenario_layout_candidate(candidate: Dictionary, stamped_records: Array, definition: Dictionary, layout_context: Dictionary) -> Dictionary:
 	var projection := ScenarioEngineScript.sequence_projection(candidate, definition)
-	var layout_environment := candidate.duplicate(true)
+	# ScenarioLayoutResolver deep-owns every nested value it consumes and never
+	# mutates the environment argument. Only the private context field differs.
+	var layout_environment := candidate.duplicate(false)
 	if not layout_context.is_empty():
 		layout_environment["_scenario_layout_context"] = layout_context.duplicate(true)
 	var layout_result := ScenarioLayoutResolverScript.resolve(stamped_records, projection, layout_environment)
@@ -2792,7 +2800,7 @@ func _resolve_world_sequence_composed_layout(stamped_records: Array, layout_cont
 	var projection := world_sequence_composed_projection()
 	if not bool(projection.get("ok", true)):
 		return {"ok": false, "errors": _copy_array(projection.get("errors", ["World sequence projection composition failed closed."]))}
-	var layout_environment := current_environment.duplicate(true)
+	var layout_environment := current_environment.duplicate(false)
 	if not layout_context.is_empty(): layout_environment["_scenario_layout_context"] = layout_context.duplicate(true)
 	var layout_result := ScenarioLayoutResolverScript.resolve(stamped_records, projection, layout_environment)
 	if not bool(layout_result.get("ok", false)): return {"ok": false, "errors": _copy_array(layout_result.get("errors", ["World sequence layout resolution failed closed."])), "layout_audit": _copy_dict(layout_result.get("layout_audit", {}))}

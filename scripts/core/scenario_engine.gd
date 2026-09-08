@@ -166,9 +166,9 @@ static func migrate_environment_sequence(environment: Dictionary, preferred: Dic
 		return {"ok": true, "changed": false, "active": false, "scenario_id": ""}
 	var scenario_id := str(legacy.get("id", ""))
 	if _sequence_is_suppressed(environment, preferred):
-		var suppressed_before := JSON.stringify(environment)
+		var suppressed_before := JSON.stringify(_sequence_migration_change_snapshot(environment))
 		_clear_environment_sequence(environment)
-		return {"ok": true, "changed": suppressed_before != JSON.stringify(environment), "active": false, "suppressed": true, "scenario_id": scenario_id, "definition": sequence_definition_for_environment(environment, preferred)}
+		return {"ok": true, "changed": suppressed_before != JSON.stringify(_sequence_migration_change_snapshot(environment)), "active": false, "suppressed": true, "scenario_id": scenario_id, "definition": sequence_definition_for_environment(environment, preferred)}
 	var definition := sequence_definition_for_environment(environment, preferred)
 	# A runtime installed before its content packages must leave legacy snapshots
 	# exactly alone. Once an overlay exists, migration is deterministic and in-place.
@@ -179,7 +179,11 @@ static func migrate_environment_sequence(environment: Dictionary, preferred: Dic
 	# phase/mutation fields remain the only active contract and stay byte-identical.
 	if not bool(environment.get("scenario_semantic_ready", false)):
 		return {"ok": true, "changed": false, "active": false, "pending": true, "scenario_id": scenario_id, "definition": definition}
-	var before := JSON.stringify(environment)
+	# Migration owns scenario-prefixed fields plus the four materialized gameplay
+	# catalogs below. Serializing the complete room here also serialized unrelated
+	# machine physics state twice (most visibly Coin Pusher) merely to populate the
+	# informational `changed` bit.
+	var before := JSON.stringify(_sequence_migration_change_snapshot(environment))
 	var migration := {
 		"schema_version": SequenceRuntimeScript.STATE_SCHEMA_VERSION,
 		"scenario_id": scenario_id,
@@ -188,7 +192,17 @@ static func migrate_environment_sequence(environment: Dictionary, preferred: Dic
 	}
 	environment["scenario_sequence_migration"] = migration
 	ensure_sequence_state(environment, definition, seed_token)
-	return {"ok": true, "changed": before != JSON.stringify(environment), "active": true, "scenario_id": scenario_id, "definition": definition}
+	return {"ok": true, "changed": before != JSON.stringify(_sequence_migration_change_snapshot(environment)), "active": true, "scenario_id": scenario_id, "definition": definition}
+
+
+static func _sequence_migration_change_snapshot(environment: Dictionary) -> Dictionary:
+	var snapshot: Dictionary = {}
+	for key_value in environment.keys():
+		var key := str(key_value)
+		if key.begins_with("scenario_") \
+				or key in [TRUSTED_STATE_REFERENCE_KEY, TRUSTED_LAYOUT_INPUT_DIGEST_KEY, "game_ids", "service_ids", "travel_hooks", "scenario_game_modifiers"]:
+			snapshot[key] = environment.get(key_value)
+	return snapshot
 
 
 static func ensure_sequence_state(environment: Dictionary, definition: Dictionary, seed_token: String = "") -> Dictionary:

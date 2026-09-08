@@ -5862,6 +5862,8 @@ func _check_pull_tabs_surface_contract(game: GameModule, failures: Array) -> voi
 	var auto_due_msec := int(auto_state.get("pull_tab_auto_open_next_msec", 0))
 	if not bool(auto_state.get("pull_tab_auto_open_active", false)) or auto_due_msec <= auto_start_msec:
 		failures.append("Pull Tabs Auto Open did not activate and schedule its first simulated click.")
+	if game.surface_auto_tick_may_be_active({}) or not game.surface_auto_tick_may_be_active(auto_state):
+		failures.append("Pull Tabs automation fast gate did not distinguish dormant and active retained state.")
 	if game.surface_needs_auto_tick(auto_state, run_state, environment):
 		failures.append("Pull Tabs Auto Open requested work before its first scheduled click.")
 	var auto_tick_keys := game.surface_auto_tick_state_keys()
@@ -5893,6 +5895,8 @@ func _check_pull_tabs_surface_contract(game: GameModule, failures: Array) -> voi
 	var auto_off_state: Dictionary = auto_off.get("ui_state", {}) if typeof(auto_off.get("ui_state", {})) == TYPE_DICTIONARY else {}
 	if bool(auto_off_state.get("pull_tab_auto_open_active", true)) or int(auto_off_state.get("pull_tab_auto_open_next_msec", -1)) != 0:
 		failures.append("Pull Tabs Stop Auto did not cancel the repeating click schedule.")
+	if game.surface_auto_tick_may_be_active(auto_off_state):
+		failures.append("Pull Tabs automation fast gate stayed active after Stop Auto.")
 	var next_ticket_click := _check_surface_command_non_mutating(game, "pull_tab_next", 0, false, {}, run_state, environment, "pull-tab next ticket", failures)
 	var next_ticket_state: Dictionary = next_ticket_click.get("ui_state", {})
 	if int(next_ticket_state.get("pull_tab_stack_cursor", 0)) != mini(1, int(game.surface_state(run_state, environment, {}).get("pull_tab_stack_count", 1)) - 1):

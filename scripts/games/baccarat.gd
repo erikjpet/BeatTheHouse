@@ -178,21 +178,11 @@ func environment_state_generated(run_state: RunState, environment: Dictionary, g
 	_apply_grand_casino_dealer_assignment(generated_state, run_state, environment)
 
 
-func surface_realtime_uses_lightweight_ui_state() -> bool:
+func surface_realtime_patch_preserves_host_state() -> bool:
+	# Realtime Baccarat patches only advance its visual ceremony fields. Every
+	# command that can alter stake, bankroll, pressure, intoxication, selection,
+	# or accessibility already crosses FoundationMain's full render boundary.
 	return true
-
-
-func surface_realtime_ui_state_keys() -> Array:
-	# Realtime deal/squeeze/skill projection consumes only retained Baccarat
-	# session fields. FoundationMain adds the authoritative surface clock.
-	return [
-		"drunk_scaled_surface_time_msec", "reduce_motion",
-		"selected_action_id", "selected_action_kind", "selected_index",
-		"selected_chip", "selected_stake", "baccarat_bets", "baccarat_rebet",
-		"baccarat_undo_stack", "baccarat_squeeze_progress", "baccarat_squeeze_origin",
-		"edge_sort_answers", "edge_sort_challenge", "edge_sort_answer_mode",
-		"shoe_read_challenge", "table_notice", "table_social_alignment",
-	]
 
 
 func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:

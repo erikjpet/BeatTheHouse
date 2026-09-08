@@ -2432,6 +2432,8 @@ func _advance_game_surface_automation() -> void:
 		return
 	if not current_game.surface_uses_auto_tick():
 		return
+	if not current_game.surface_auto_tick_may_be_active(game_surface_ui_state):
+		return
 	var tick_state := _current_game_surface_auto_tick_state()
 	var ui_state := tick_state
 	if not current_game.surface_needs_auto_tick(tick_state, run_state, run_state.current_environment):
@@ -7232,7 +7234,9 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	_clear_selected_item_offer()
 	_clear_selected_service_hook()
 	_clear_selected_lender_hook()
-	clear_interaction_focus()
+	# The destination is still behind the travel/result handoff. Rendering it here
+	# was invisible and the normal refresh below rebuilt the same canvas again.
+	clear_interaction_focus(false, false)
 	var destination_name := str(run_state.current_environment.get("display_name", target_label))
 	var travel_result := _travel_result(target_id, destination_name, route, previous_environment, run_state.current_environment, travel_decay, route_risk)
 	if not local_casino_room_move:
@@ -13847,22 +13851,23 @@ func _finish_conclusion_animation() -> void:
 	conclusion_animation_snapshot["active"] = false
 
 
-func clear_interaction_focus(animate_camera_return: bool = false) -> void:
+func clear_interaction_focus(animate_camera_return: bool = false, refresh_presentation: bool = true) -> void:
 	hover_target_id = ""
 	focus_target_id = ""
 	selected_object_id = ""
 	camera_focus_rect = Rect2()
 	camera_focus_point = Vector2(0.5, 0.5)
 	current_context_mode = CONTEXT_MODE_ROOM
-	if environment_canvas != null:
+	if refresh_presentation and environment_canvas != null:
 		if _environment_canvas_snapshot_is_stale():
 			_render_environment_canvas_snapshot()
 		environment_canvas.set_selected_object("", not animate_camera_return)
 		if run_state != null:
 			_refresh_world_header()
-	if actions_list != null:
+	if refresh_presentation and actions_list != null:
 		_schedule_action_panel_refresh()
-	_sync_talk_dock_coach_avoid_rect()
+	if refresh_presentation:
+		_sync_talk_dock_coach_avoid_rect()
 
 
 func _on_environment_object_hovered(object_id: String) -> void:
