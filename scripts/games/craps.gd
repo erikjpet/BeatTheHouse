@@ -1036,7 +1036,7 @@ func _trajectory_point(position: Vector2, beat: String) -> Dictionary:
 
 
 func _trajectory_position(trajectory: Dictionary, die_id: String, progress: float, fallback: Vector2) -> Vector2:
-	var points := _dictionary_array(trajectory.get(die_id, []))
+	var points := _array(trajectory.get(die_id, []))
 	if points.is_empty():
 		return fallback
 	if points.size() == 1 or progress >= 1.0:
@@ -1397,7 +1397,7 @@ func _draw_street_dice(surface, state: Dictionary) -> void:
 		surface.draw_rect(THROW_REGION, Color(0.85, 0.77, 0.62, 0.08))
 		surface.draw_rect(THROW_REGION, Color("#b59b72"), false, 1.0)
 		surface.surface_add_exact_hit(THROW_REGION, THROW_ACTION)
-	var dice := _int_array(_dict(state.get("last_roll", {})).get("dice", []))
+	var dice := _array(_dict(state.get("last_roll", {})).get("dice", []))
 	if dice.size() != 2:
 		return
 	var progress: float = float(surface.surface_animation_progress(ROLL_CHANNEL)) if surface.surface_animation_active(ROLL_CHANNEL) else 1.0
@@ -1418,7 +1418,7 @@ func _draw_street_side_panel(surface, state: Dictionary) -> void:
 	surface.draw_rect(rect, Color(0.05, 0.06, 0.06, 0.90))
 	surface.draw_rect(rect, Color("#8f775b"), false, 1.0)
 	surface.surface_label_centered("CASH IN HAND", Rect2(658, 76, 204, 20), 12, Color("#f0d3a1"))
-	var working_rows := _dictionary_array(state.get("working_bet_rows", []))
+	var working_rows := _array(state.get("working_bet_rows", []))
 	var working_text := "No line working"
 	if not working_rows.is_empty():
 		var row: Dictionary = working_rows[0]
@@ -1426,10 +1426,10 @@ func _draw_street_side_panel(surface, state: Dictionary) -> void:
 	surface.surface_label_centered(working_text, Rect2(658, 106, 204, 20), 10, Color("#d8c8a9"))
 	surface.surface_label_centered(str(state.get("table_notice", "")), Rect2(666, 140, 188, 64), 9, Color("#bcb3a5"))
 	surface.surface_label_centered("LAST THROWS", Rect2(658, 214, 204, 18), 10, Color("#f0d3a1"))
-	var rows := _dictionary_array(state.get("roll_history", []))
+	var rows := _array(state.get("roll_history", []))
 	for index in range(mini(rows.size(), 4)):
 		var row: Dictionary = rows[index]
-		var dice := _int_array(row.get("dice", []))
+		var dice := _array(row.get("dice", []))
 		if dice.size() == 2:
 			surface.surface_label_centered("%d   %d + %d" % [int(row.get("total", 0)), int(dice[0]), int(dice[1])], Rect2(670, 238 + index * 22, 180, 18), 9, Color("#c5b8a5"))
 
@@ -1457,8 +1457,8 @@ func _draw_street_controls(surface, state: Dictionary) -> void:
 
 
 func _draw_targets(surface, state: Dictionary) -> void:
-	var targets := _dictionary_array(state.get("bet_targets", []))
-	var pending := _pending_bets(state.get("craps_pending_bets", {}))
+	var targets := _array(state.get("bet_targets", []))
+	var pending := _dict(state.get("craps_pending_bets", {}))
 	for index in range(targets.size()):
 		var target: Dictionary = targets[index]
 		var rect: Rect2 = target.get("rect", Rect2())
@@ -1525,7 +1525,7 @@ func _draw_dice(surface, state: Dictionary) -> void:
 		surface.draw_rect(THROW_REGION, Color("#d6af4b"), false, 1.0)
 		surface.surface_add_exact_hit(THROW_REGION, THROW_ACTION)
 	var roll := _dict(state.get("last_roll", {}))
-	var dice := _int_array(roll.get("dice", []))
+	var dice := _array(roll.get("dice", []))
 	if dice.size() != 2:
 		return
 	var progress: float = float(surface.surface_animation_progress(ROLL_CHANNEL)) if surface.surface_animation_active(ROLL_CHANNEL) else 1.0
@@ -1546,10 +1546,10 @@ func _draw_history(surface, state: Dictionary) -> void:
 	surface.draw_rect(rect, Color("#101c1a"))
 	surface.draw_rect(rect, Color("#6d978a"), false, 1)
 	surface.surface_label_centered("ROLLS", Rect2(778, 58, 104, 18), 11, Color("#f5e6a8"))
-	var rows := _dictionary_array(state.get("roll_history", []))
+	var rows := _array(state.get("roll_history", []))
 	for index in range(rows.size()):
 		var row: Dictionary = rows[index]
-		var dice := _int_array(row.get("dice", []))
+		var dice := _array(row.get("dice", []))
 		if dice.size() == 2:
 			surface.surface_label_centered("%d  ·  %d + %d" % [int(row.get("total", 0)), int(dice[0]), int(dice[1])], Rect2(780, 82 + index * 22, 100, 18), 9, Color("#d1dfd7"))
 
@@ -1559,7 +1559,7 @@ func _draw_working_bets(surface, state: Dictionary) -> void:
 	surface.draw_rect(rect, Color("#101c1a"))
 	surface.draw_rect(rect, Color("#6d978a"), false, 1)
 	surface.surface_label_centered("WORKING", Rect2(778, 276, 104, 16), 10, Color("#f5e6a8"))
-	var rows := _dictionary_array(state.get("working_bet_rows", []))
+	var rows := _array(state.get("working_bet_rows", []))
 	for index in range(mini(rows.size(), 5)):
 		var row: Dictionary = rows[index]
 		surface.surface_label_centered("%s  %d" % [str(row.get("label", "")).left(12), int(row.get("stake", 0))], Rect2(778, 296 + index * 16, 104, 14), 7, Color("#d1dfd7"))
@@ -1590,7 +1590,7 @@ func _draw_controls(surface, state: Dictionary) -> void:
 
 
 func _draw_denomination_controls(surface, state: Dictionary, start_x: float, y: float, street: bool) -> void:
-	var denominations := _int_array(state.get("chip_denominations", []))
+	var denominations := _array(state.get("chip_denominations", []))
 	var selected := int(state.get("selected_chip", 0))
 	for index in range(mini(denominations.size(), 4)):
 		var amount := int(denominations[index])

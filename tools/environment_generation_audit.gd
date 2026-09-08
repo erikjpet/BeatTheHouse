@@ -32,9 +32,12 @@ func _run() -> void:
 	var visits_per_run := maxi(1, int(options.get("visits", DEFAULT_VISITS_PER_RUN)))
 	var output_json := str(options.get("output_json", DEFAULT_OUTPUT_JSON))
 	var output_markdown := str(options.get("output_markdown", DEFAULT_OUTPUT_MARKDOWN))
+	var exact_seed := str(options.get("exact_seed", "")).strip_edges()
 	var seed_prefix := str(options.get("seed_prefix", "")).strip_edges()
 	if seed_prefix.is_empty():
 		seed_prefix = _random_seed_prefix()
+	if not exact_seed.is_empty():
+		run_count = 1
 
 	library = ContentLibraryScript.new()
 	library.load()
@@ -48,7 +51,7 @@ func _run() -> void:
 	entropy.randomize()
 	var used_seeds := {}
 	for run_index in range(run_count):
-		var seed := _unique_seed(seed_prefix, run_index, entropy, used_seeds)
+		var seed := exact_seed if not exact_seed.is_empty() else _unique_seed(seed_prefix, run_index, entropy, used_seeds)
 		_simulate_run(run_index, seed, visits_per_run)
 
 	var aggregate := _build_aggregate(run_count, visits_per_run, seed_prefix)
@@ -94,6 +97,8 @@ func _parse_options() -> Dictionary:
 			options["output_markdown"] = text.trim_prefix("--report=")
 		elif text.begins_with("--seed-prefix="):
 			options["seed_prefix"] = text.trim_prefix("--seed-prefix=")
+		elif text.begins_with("--exact-seed="):
+			options["exact_seed"] = text.trim_prefix("--exact-seed=")
 	return options
 
 
@@ -581,18 +586,34 @@ func _current_travel_lock_remaining(run_state: RunState) -> int:
 
 func _travel_to(run_state: RunState, choice: Dictionary) -> Dictionary:
 	var target_id := str(choice.get("id", ""))
+	var source_id := run_state.current_world_node_id()
+	var admitted_targets_before := generator._world_travel_target_ids(run_state, run_state.world_map, source_id) if run_state.has_world_map() else []
 	var route := generator.world_route_for_target(run_state, target_id)
 	var previous_environment := run_state.current_environment.duplicate(true)
 	var previous_bankroll := run_state.bankroll
 	var previous_heat := run_state.suspicion_level()
 	var route_risk := run_state.travel_route_risk(route, target_id)
 	var travel_heat := run_state.begin_travel_suspicion_decay(route, target_id)
+	var admitted_targets_after_heat := generator._world_travel_target_ids(run_state, run_state.world_map, source_id) if run_state.has_world_map() else []
 	var arrival := HarnessProductionFidelityScript.travel_and_finalize(
-		generator, run_state, target_id, false, library, failures,
+		# This choice came from the same capped route catalog and availability
+		# checks as production. The UI likewise passes a prevalidated destination
+		# after advancing its travel clock, so revalidating here would test a
+		# different time boundary and can reject a route the player was offered.
+		generator, run_state, target_id, true, library, failures,
 		"environment-generation travel to %s" % target_id
 	)
 	if not bool(arrival.get("ok", false)):
-		return {"ok": false, "target_id": target_id}
+		var target_node := WorldMapScript.node_by_id(run_state.world_map, target_id)
+		return {
+			"ok": false,
+			"target_id": target_id,
+			"admitted_targets_before": admitted_targets_before,
+			"admitted_targets_after_heat": admitted_targets_after_heat,
+			"generator_install_errors": generator._last_environment_install_errors.duplicate(true),
+			"source_scenario_state": _scenario_state_diagnostic(run_state.current_environment),
+			"stored_destination_scenario_state": _scenario_state_diagnostic(_copy_dict(target_node.get("environment", {}))),
+		}
 	var travel_decay := run_state.finish_travel_suspicion_decay(travel_heat)
 	var destination_name := str(run_state.current_environment.get("display_name", target_id))
 	var result := _travel_result(run_state, target_id, destination_name, route, previous_environment, run_state.current_environment, travel_decay, route_risk)
@@ -612,6 +633,25 @@ func _travel_to(run_state: RunState, choice: Dictionary) -> Dictionary:
 		"travel_decay": travel_decay,
 		"route_risk": route_risk,
 		"message": str(result.get("message", "")),
+	}
+
+
+func _scenario_state_diagnostic(environment: Dictionary) -> Dictionary:
+	var state := _copy_dict(environment.get("scenario_sequence_state", {}))
+	var semantic := _copy_dict(state.get("semantic_state", {}))
+	return {
+		"environment_id": str(environment.get("id", "")),
+		"archetype_id": str(environment.get("archetype_id", "")),
+		"scenario_id": str(environment.get("scenario_id", "")),
+		"status": str(state.get("status", "")),
+		"errors": _copy_array(state.get("errors", [])),
+		"cleanup_receipts": _copy_array(state.get("cleanup_receipts", [])),
+		"cleanup_receipt_records": _copy_array(state.get("cleanup_receipt_records", [])),
+		"cleanup_content_fingerprint": str(state.get("cleanup_content_fingerprint", "")),
+		"expiry_boundary_records": _copy_array(state.get("expiry_boundary_records", [])),
+		"visit_receipt_records": _copy_array(state.get("visit_receipt_records", [])),
+		"fact_receipt_records": _copy_array(state.get("fact_receipt_records", [])),
+		"operation_receipt_records": _copy_array(semantic.get("operation_receipt_records", [])),
 	}
 
 

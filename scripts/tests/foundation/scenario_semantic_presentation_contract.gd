@@ -178,6 +178,11 @@ static func _check_mutable_event_and_route_source_authority(library: Variant, fa
 
 static func _check_atomic_post_operation_layout(library: Variant, failures: Array) -> void:
 	var definition := ScenarioSequenceContractScript.finalization_fixture_definition()
+	# Keep the fixture's presentation active across its expiry boundary so the
+	# hostile layout below exercises rollback instead of the valid passive-cleanup
+	# fast path used by ignore/cleanup policies.
+	definition["sequence"]["expiry"] = {"boundary": "night_end", "after": 1, "policy": "resume"}
+	_reseal_definition(definition)
 	var run_state := RunStateScript.new()
 	run_state.bankroll = 41
 	run_state.current_environment = _finalization_environment(definition)

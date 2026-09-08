@@ -3442,7 +3442,7 @@ func _draw_pull_tab_column_stack(surface, rect: Rect2, deal: Dictionary, index: 
 	var top := Rect2(stack_rect.position + Vector2(4, -2), Vector2(stack_rect.size.x - 8, 10))
 	surface.draw_rect(top, paper)
 	surface.draw_rect(top, accent, false, 1)
-	var xray_target := _pt_copy_dict(deal.get("xray_target", {}))
+	var xray_target := deal.get("xray_target", {}) as Dictionary if typeof(deal.get("xray_target", {})) == TYPE_DICTIONARY else {}
 	if not xray_target.is_empty():
 		var offset := clampi(int(xray_target.get("offset", 0)), 0, maxi(0, remaining - 1))
 		var depth_ratio := clampf((float(offset) + 0.5) / float(maxi(1, remaining)), 0.0, 1.0)
@@ -4182,7 +4182,7 @@ func _draw_pull_tab_pile_ticket(surface, ticket: Dictionary, rect: Rect2, index:
 func _draw_pull_tab_file_animation(surface, surface_state: Dictionary, source_rect: Rect2, piles_rect: Rect2) -> void:
 	if not bool(surface.surface_animation_active(PULL_TAB_FILE_CHANNEL)):
 		return
-	var ticket := _pt_copy_dict(surface_state.get("pull_tab_file_animation_ticket", {}))
+	var ticket := surface_state.get("pull_tab_file_animation_ticket", {}) as Dictionary if typeof(surface_state.get("pull_tab_file_animation_ticket", {})) == TYPE_DICTIONARY else {}
 	if ticket.is_empty():
 		return
 	var pile_name := str(surface_state.get("pull_tab_file_animation_pile", "loser_pile"))

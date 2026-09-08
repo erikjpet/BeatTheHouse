@@ -99,6 +99,20 @@ const EUROPEAN_SEQUENCE := [
 ]
 const RED_NUMBERS := ["1", "3", "5", "7", "9", "12", "14", "16", "18", "19", "21", "23", "25", "27", "30", "32", "34", "36"]
 const BLACK_NUMBERS := ["2", "4", "6", "8", "10", "11", "13", "15", "17", "20", "22", "24", "26", "28", "29", "31", "33", "35"]
+const OUTSIDE_LABELS := [
+	{"label": "1ST 12", "rect": Rect2(332, OUTSIDE_Y, 120, 28)},
+	{"label": "2ND 12", "rect": Rect2(452, OUTSIDE_Y, 120, 28)},
+	{"label": "3RD 12", "rect": Rect2(572, OUTSIDE_Y, 120, 28)},
+	{"label": "1-18", "rect": Rect2(332, OUTSIDE_Y + 32, 60, 28)},
+	{"label": "EVEN", "rect": Rect2(392, OUTSIDE_Y + 32, 60, 28)},
+	{"label": "RED", "rect": Rect2(452, OUTSIDE_Y + 32, 60, 28), "fill": Color("#8e1026")},
+	{"label": "BLACK", "rect": Rect2(512, OUTSIDE_Y + 32, 60, 28), "fill": Color("#111922")},
+	{"label": "ODD", "rect": Rect2(572, OUTSIDE_Y + 32, 60, 28)},
+	{"label": "19-36", "rect": Rect2(632, OUTSIDE_Y + 32, 60, 28)},
+	{"label": "2:1", "rect": Rect2(692, GRID_RECT.position.y, 46, CELL_H)},
+	{"label": "2:1", "rect": Rect2(692, GRID_RECT.position.y + CELL_H, 46, CELL_H)},
+	{"label": "2:1", "rect": Rect2(692, GRID_RECT.position.y + CELL_H * 2.0, 46, CELL_H)},
+]
 
 var bet_targets_cache: Dictionary = {}
 
@@ -2906,7 +2920,7 @@ func _draw_focused_patron_panel(surface, surface_state: Dictionary, patrons: Arr
 	surface.surface_label(str(patron.get("behavior", str(patron.get("mood", "watching")))).left(22), rect.position + Vector2(10, 29), 8, accent)
 	_draw_table_button(surface, Rect2(rect.position.x + 84, rect.position.y + 10, 38, 20), "WITH", action, focused_index, C_TEAL, true)
 	_draw_table_button(surface, Rect2(rect.position.x + 128, rect.position.y + 10, 38, 20), "FADE", action, focused_index + 100, C_PINK, true)
-	var wager := _copy_dict(patron.get("visible_bet", {}))
+	var wager := _dict_ref(patron.get("visible_bet", {}))
 	var wager_text := "$%d %s" % [int(wager.get("stake", 0)), str(wager.get("label", "bet"))]
 	surface.surface_label(wager_text.left(22), rect.position + Vector2(84, 45), 8, C_YELLOW)
 
@@ -2984,20 +2998,7 @@ func _roulette_bet_hit_cache_key(surface_state: Dictionary, targets: Array) -> S
 
 
 func _draw_outside_labels(surface) -> void:
-	for label_data in [
-		{"label": "1ST 12", "rect": Rect2(332, OUTSIDE_Y, 120, 28)},
-		{"label": "2ND 12", "rect": Rect2(452, OUTSIDE_Y, 120, 28)},
-		{"label": "3RD 12", "rect": Rect2(572, OUTSIDE_Y, 120, 28)},
-		{"label": "1-18", "rect": Rect2(332, OUTSIDE_Y + 32, 60, 28)},
-		{"label": "EVEN", "rect": Rect2(392, OUTSIDE_Y + 32, 60, 28)},
-		{"label": "RED", "rect": Rect2(452, OUTSIDE_Y + 32, 60, 28), "fill": Color("#8e1026")},
-		{"label": "BLACK", "rect": Rect2(512, OUTSIDE_Y + 32, 60, 28), "fill": Color("#111922")},
-		{"label": "ODD", "rect": Rect2(572, OUTSIDE_Y + 32, 60, 28)},
-		{"label": "19-36", "rect": Rect2(632, OUTSIDE_Y + 32, 60, 28)},
-		{"label": "2:1", "rect": Rect2(692, GRID_RECT.position.y, 46, CELL_H)},
-		{"label": "2:1", "rect": Rect2(692, GRID_RECT.position.y + CELL_H, 46, CELL_H)},
-		{"label": "2:1", "rect": Rect2(692, GRID_RECT.position.y + CELL_H * 2.0, 46, CELL_H)},
-	]:
+	for label_data in OUTSIDE_LABELS:
 		var rect: Rect2 = label_data.get("rect", Rect2())
 		surface.draw_rect(rect, label_data.get("fill", Color("#063f35")))
 		surface.draw_rect(rect, Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.26), false, 1)
@@ -3015,7 +3016,7 @@ func _draw_bet_chips(surface, surface_state: Dictionary) -> void:
 	if show_locked_bets:
 		_draw_result_bet_chips(surface, last_result.get("bet_results", []), true, false)
 	else:
-		var bets := _bet_array(surface_state.get("roulette_bets", []))
+		var bets := _array_ref(surface_state.get("roulette_bets", []))
 		for bet_index in range(bets.size()):
 			var bet: Dictionary = bets[bet_index]
 			_draw_player_bet_chip(surface, bet, bet_index)
@@ -3058,7 +3059,7 @@ func _draw_patron_roulette_chips(surface, surface_state: Dictionary) -> void:
 	var targets := _array_ref(surface_state.get("bet_targets", []))
 	for i in range(patrons.size()):
 		var patron: Dictionary = patrons[i]
-		var wager := _copy_dict(patron.get("visible_bet", {}))
+		var wager := _dict_ref(patron.get("visible_bet", {}))
 		var target := _roulette_surface_target_by_id(targets, str(wager.get("id", "")))
 		if target.is_empty():
 			continue
@@ -3157,7 +3158,7 @@ func _draw_table_actions(surface, surface_state: Dictionary) -> void:
 		var past_post_selected := selected_actions.has("roulette_past_post")
 		var available := bool(surface_state.get("past_post_available", false))
 		_draw_table_button(surface, Rect2(panel.position.x + 12, panel.position.y + 25, 102, 30), "SLIDE CHIP" if past_post_selected else "LATE CHIP", "roulette_past_post", 0, C_PINK, available, past_post_selected)
-		var window := _copy_dict(surface_state.get("past_post_window", {}))
+		var window := _dict_ref(surface_state.get("past_post_window", {}))
 		var detail := "%d ms" % int(window.get("remaining_msec", 0)) if available else "LOCKED"
 		surface.surface_label("Payout window %s" % detail, panel.position + Vector2(126, 45), 10, C_SOFT)
 		return
@@ -3181,7 +3182,7 @@ func _draw_table_actions(surface, surface_state: Dictionary) -> void:
 
 
 func _draw_wheel_read_meter(surface, state: Dictionary, rect: Rect2) -> void:
-	var meter := _copy_dict(state.get("wheel_read_meter", {}))
+	var meter := _dict_ref(state.get("wheel_read_meter", {}))
 	if meter.is_empty():
 		return
 	surface.draw_rect(rect, Color("#070812"))
@@ -4537,7 +4538,7 @@ func _physics_summary(table: Dictionary) -> String:
 
 
 func _physics_summary_for_surface(surface_state: Dictionary) -> String:
-	var profile := _copy_dict(surface_state.get("physics_profile", {}))
+	var profile := _dict_ref(surface_state.get("physics_profile", {}))
 	return "wheel %s | scatter %.0f" % [str(surface_state.get("variant", "00")).replace("_", " "), float(profile.get("diamond_scatter_degrees", 24.0))]
 
 

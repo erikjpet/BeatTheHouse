@@ -4,6 +4,7 @@ param(
     [string]$Output = "res://.tmp/environment_generation_audit/report.json",
     [string]$Report = "res://.tmp/environment_generation_audit/report.md",
     [string]$SeedPrefix = "",
+    [string]$ExactSeed = "",
     [switch]$RequireGodot
 )
 
@@ -60,6 +61,9 @@ $argsList = @(
 )
 if ($SeedPrefix.Trim().Length -gt 0) {
     $argsList += "--seed-prefix=$SeedPrefix"
+}
+if ($ExactSeed.Trim().Length -gt 0) {
+    $argsList += "--exact-seed=$ExactSeed"
 }
 
 & $godot --headless --path $root --script "res://tools/environment_generation_audit.gd" -- $argsList

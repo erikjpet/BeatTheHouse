@@ -77,6 +77,7 @@ const BAR_PATRON_POSITIONS := [
 	Vector2(660, 70),
 	Vector2(808, 84),
 ]
+const DICE_GOAL_LABELS := ["SHIP 6", "CAPTAIN 5", "CREW 4", "CARGO"]
 
 const RULESET_LABEL := {
 	"ship_captain_crew": "Ship, Captain, Crew",
@@ -3013,12 +3014,12 @@ func _draw_bar_top(surface, _state: Dictionary) -> void:
 
 func _draw_dice_rows(surface, state: Dictionary) -> void:
 	var phase := str(state.get("phase", "bet"))
-	var player := _int_dice(state.get("player", []))
-	var reroll := _index_array(state.get("reroll", []))
-	var suggested := _index_array(state.get("suggested_reroll", []))
-	var scoring := _index_array(state.get("scoring_indices", []))
-	var animated := _index_array(state.get("animated_dice_indices", []))
-	var guide := _copy_dict(state.get("bar_dice_turn_guide", {}))
+	var player := _draw_array_view(state.get("player", []))
+	var reroll := _draw_array_view(state.get("reroll", []))
+	var suggested := _draw_array_view(state.get("suggested_reroll", []))
+	var scoring := _draw_array_view(state.get("scoring_indices", []))
+	var animated := _draw_array_view(state.get("animated_dice_indices", []))
+	var guide := _draw_dict_view(state.get("bar_dice_turn_guide", {}))
 	_draw_opponent_dice_rows(surface, state)
 	surface.surface_label("YOUR CUP", Vector2(262, 204), 12, C_TEAL)
 	if phase == "select":
@@ -3060,8 +3061,8 @@ func _draw_controlled_roll_meter(surface, state: Dictionary, pos: Vector2) -> vo
 
 
 func _draw_palmed_swap_meter(surface, state: Dictionary, pos: Vector2) -> void:
-	var challenge := _copy_dict(state.get("palmed_swap_challenge", {}))
-	var meter := _copy_dict(state.get("palmed_swap_meter", {}))
+	var challenge := _draw_dict_view(state.get("palmed_swap_challenge", {}))
+	var meter := _draw_dict_view(state.get("palmed_swap_meter", {}))
 	if challenge.is_empty() or meter.is_empty():
 		return
 	var bar := Rect2(pos + Vector2(0, 12), Vector2(276, 10))
@@ -3082,7 +3083,7 @@ func _draw_palmed_swap_meter(surface, state: Dictionary, pos: Vector2) -> void:
 
 
 func _draw_opponent_dice_rows(surface, state: Dictionary) -> void:
-	var rows := _dictionary_array(state.get("opponent_rows", []))
+	var rows := _draw_array_view(state.get("opponent_rows", []))
 	if rows.is_empty():
 		return
 	surface.surface_label("RAIL CUPS", Vector2(76, 134), 9, C_PINK_2)
@@ -3097,14 +3098,14 @@ func _draw_opponent_dice_rows(surface, state: Dictionary) -> void:
 		surface.surface_label(str(row.get("blurb", "Cup ready")).left(18), origin + Vector2(88, -5), 7, C_SOFT)
 		if not str(row.get("banter", "")).is_empty():
 			surface.surface_label(str(row.get("banter", "")).left(28), origin + Vector2(0, 34), 6, C_AMBER)
-		_draw_dice_row(surface, _int_dice(row.get("dice", [])), origin + Vector2(0, 7), [], [], _index_array(row.get("scoring_indices", [])), false, OPPONENT_DIE_SIZE, OPPONENT_DIE_SPACING, [], false, true)
+		_draw_dice_row(surface, _draw_array_view(row.get("dice", [])), origin + Vector2(0, 7), [], [], _draw_array_view(row.get("scoring_indices", [])), false, OPPONENT_DIE_SIZE, OPPONENT_DIE_SPACING, [], false, true)
 
 
 func _draw_dice_row(surface, values: Array, start: Vector2, reroll: Array, suggested: Array, scoring: Array, hidden: bool, die_size: Vector2, die_spacing: float, rolling_indices: Array, show_keep_labels: bool, compact: bool) -> void:
 	var tumble_active := bool(surface.surface_animation_active(TUMBLE_CHANNEL))
 	var tumble_progress := float(surface.surface_animation_progress(TUMBLE_CHANNEL))
 	var flicker := float(surface.surface_flicker())
-	var rolling := _index_array(rolling_indices)
+	var rolling := rolling_indices
 	for i in range(values.size()):
 		var rect := Rect2(start + Vector2(float(i) * die_spacing, 0.0), die_size)
 		var die_rolling := tumble_active and tumble_progress < 0.98 and rolling.has(i) and not hidden
@@ -3174,22 +3175,15 @@ func _draw_die_motion_trail(surface, rect: Rect2, index: int, flicker: float) ->
 
 
 func _draw_dice_goal_strip(surface, state: Dictionary, pos: Vector2) -> void:
-	var score := _copy_dict(state.get("player_score", {}))
+	var score := _draw_dict_view(state.get("player_score", {}))
 	var stage := int(score.get("stage", 0))
-	var steps := [
-		{"label": "SHIP 6", "done": stage >= 1},
-		{"label": "CAPTAIN 5", "done": stage >= 2},
-		{"label": "CREW 4", "done": stage >= 3},
-		{"label": "CARGO", "done": bool(score.get("qualified", false))},
-	]
-	for i in range(steps.size()):
-		var step: Dictionary = steps[i]
+	for i in range(DICE_GOAL_LABELS.size()):
 		var rect := Rect2(pos + Vector2(float(i) * 68.0, 0), Vector2(62, 16))
-		var done := bool(step.get("done", false))
+		var done := bool(score.get("qualified", false)) if i == 3 else stage >= i + 1
 		var color := C_TEAL if done else C_AMBER if i == stage else C_SOFT
 		surface.draw_rect(rect, Color(color.r, color.g, color.b, 0.16 if done or i == stage else 0.06))
 		surface.draw_rect(rect, color, false, 1)
-		surface.surface_label_centered(str(step.get("label", "")), rect.grow(-2), 7, color)
+		surface.surface_label_centered(DICE_GOAL_LABELS[i], rect.grow(-2), 7, color)
 
 
 func _draw_die_cup(surface, rect: Rect2) -> void:
@@ -3236,8 +3230,8 @@ func _draw_die_pip(surface, rect: Rect2, x_ratio: float, y_ratio: float) -> void
 
 
 func _draw_explainer(surface, state: Dictionary) -> void:
-	var explainer := _copy_dict(state.get("bar_dice_explainer", {}))
-	var guide := _copy_dict(state.get("bar_dice_turn_guide", {}))
+	var explainer := _draw_dict_view(state.get("bar_dice_explainer", {}))
+	var guide := _draw_dict_view(state.get("bar_dice_turn_guide", {}))
 	var rect := RULES_PANEL_RECT
 	_draw_neon_panel(surface, rect, C_AMBER, 0.14)
 	var title := str(guide.get("title", explainer.get("title", "How to play"))).to_upper()
@@ -3286,12 +3280,12 @@ func _draw_console(surface, state: Dictionary) -> void:
 	var panel := Rect2(0, CONSOLE_Y, 900, 86)
 	surface.draw_rect(panel, Color(0.02, 0.02, 0.05, 0.86))
 	surface.draw_rect(panel, Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.18), false, 1)
-	var guide := _copy_dict(state.get("bar_dice_turn_guide", {}))
+	var guide := _draw_dict_view(state.get("bar_dice_turn_guide", {}))
 	_draw_chip_ladder(surface, state, phase)
 	surface.surface_label("ANTE $%d" % int(state.get("active_stake", 0)), Vector2(330, CONSOLE_Y + 24), 12, C_YELLOW)
 	surface.surface_label("POT $%d" % int(state.get("pot_meter", 0)), Vector2(330, CONSOLE_Y + 44), 12, C_TEAL)
 	surface.surface_label("CARRY $%d" % int(state.get("carryover_pot", 0)), Vector2(330, CONSOLE_Y + 64), 11, C_SOFT)
-	var buttons := _dictionary_array(state.get("bar_dice_action_buttons", []))
+	var buttons := _draw_array_view(state.get("bar_dice_action_buttons", []))
 	var widths := CONSOLE_SELECT_BUTTON_WIDTHS if phase == "select" else CONSOLE_ROLL_BUTTON_WIDTHS
 	var x := 428.0
 	for i in range(mini(buttons.size(), widths.size())):
@@ -3321,7 +3315,7 @@ func _draw_console(surface, state: Dictionary) -> void:
 
 
 func _draw_chip_ladder(surface, state: Dictionary, phase: String) -> void:
-	var ladder := _int_array(state.get("stake_ladder", []))
+	var ladder := _draw_array_view(state.get("stake_ladder", []))
 	var selected := int(state.get("selected_stake_index", 0))
 	for i in range(ladder.size()):
 		var rect := Rect2(28 + i * 54, CONSOLE_Y + 22, 46, 34)
@@ -3579,6 +3573,16 @@ func _dictionary_array(value: Variant) -> Array:
 		if typeof(entry) == TYPE_DICTIONARY:
 			result.append((entry as Dictionary).duplicate(true))
 	return result
+
+
+# Surface-state collections are immutable for a draw. Renderer-only views avoid
+# rebuilding normalized dice and control data on every animation frame.
+static func _draw_dict_view(value: Variant) -> Dictionary:
+	return value as Dictionary if typeof(value) == TYPE_DICTIONARY else {}
+
+
+static func _draw_array_view(value: Variant) -> Array:
+	return value as Array if typeof(value) == TYPE_ARRAY else []
 
 
 func _color_name(name: String) -> Dictionary:

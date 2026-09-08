@@ -48,6 +48,7 @@ const BANKER_CARD_BASE := Vector2(526, 166)
 const CARD_SIZE := Vector2(42, 60)
 const CONSOLE_Y := 344.0
 const BACCARAT_SQUEEZE_REGION := Rect2(382, 190, 136, 34)
+const DRAW_CHIP_STACK_CACHE_LIMIT := 128
 
 const BET_TARGETS := [
 	{"id": "player_pair", "label": "PLAYER PAIR", "short": "P PAIR", "type": "pair", "family": "side", "payout_key": "player_pair_payout", "rect": Rect2(262, 168, 126, 48)},
@@ -80,6 +81,8 @@ const SHOE_READ_ITEM_EFFECT_KEYS := [
 	"baccarat_edge_sort_heat_delta",
 	"skill_cheat_drunk_memory_offset",
 ]
+
+var draw_chip_stack_cache: Dictionary = {}
 
 
 func sealed_action_authority_script() -> Script:
@@ -179,7 +182,8 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var table := _table_state_preview(run_state, environment)
 	var session := _normalized_session(run_state, environment, ui_state, table)
 	var bets := _bet_dict(session.get("baccarat_bets", {}))
-	var selected_chip := int(session.get("selected_chip", _chip_denominations(table)[0]))
+	var chip_denominations := _chip_denominations(table)
+	var selected_chip := int(session.get("selected_chip", chip_denominations[0]))
 	var total_wager := _total_wager(bets)
 	var last_result := _copy_dict(table.get("last_result", {}))
 	var now_msec := GameModule.deterministic_time_msec(run_state, ui_state)
@@ -272,8 +276,8 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"baccarat_rebet": _bet_dict(session.get("baccarat_rebet", table.get("last_bets", {}))),
 		"selected_chip": selected_chip,
 		"selected_stake": selected_chip,
-		"chip_denominations": _chip_denominations(table),
-		"chip_stack": _chip_stack_for_stake(total_wager, _chip_denominations(table)),
+		"chip_denominations": chip_denominations,
+		"chip_stack": _chip_stack_for_stake(total_wager, chip_denominations),
 		"total_wager_cost": total_wager,
 		"table_minimum": int(table.get("table_minimum", 20)),
 		"table_maximum": int(table.get("table_maximum", 500)),
@@ -3405,7 +3409,7 @@ func _draw_bet_chips(surface, state: Dictionary) -> void:
 			continue
 		var rect: Rect2 = target.get("rect", Rect2())
 		var center := rect.get_center() + Vector2(0, 10)
-		_draw_chip_stack(surface, center, _chip_stack_for_stake(stake, denoms), 0.86)
+		_draw_chip_stack(surface, center, _draw_chip_stack_for_stake(stake, denoms), 0.86)
 		surface.draw_rect(Rect2(center - Vector2(21, 21), Vector2(42, 44)), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.70), false, 1)
 		surface.surface_label_centered("YOU", Rect2(center + Vector2(-18, 21), Vector2(36, 10)), 7, C_CYAN)
 
@@ -3829,6 +3833,26 @@ func _chip_stack_for_stake(stake: int, chip_values: Array) -> Array:
 	if remaining > 0:
 		result.append({"value": remaining, "count": 1})
 	return result
+
+
+func _draw_chip_stack_for_stake(stake: int, chip_values: Array) -> Array:
+	# Wagers usually remain unchanged across hundreds of animated frames. Cache the
+	# immutable presentation stack while keeping gameplay/state construction on the
+	# existing fresh-value helper above.
+	var cache_key := Vector2i(stake, int(hash(chip_values)))
+	var cached_value: Variant = draw_chip_stack_cache.get(cache_key)
+	if typeof(cached_value) == TYPE_DICTIONARY:
+		var cached: Dictionary = cached_value
+		if cached.get("denominations", []) == chip_values:
+			return _draw_array_view(cached.get("stack", []))
+	var stack := _chip_stack_for_stake(stake, chip_values)
+	if draw_chip_stack_cache.size() >= DRAW_CHIP_STACK_CACHE_LIMIT:
+		draw_chip_stack_cache.clear()
+	draw_chip_stack_cache[cache_key] = {
+		"denominations": chip_values,
+		"stack": stack,
+	}
+	return stack
 
 
 func _event_point(pos: Vector2) -> Array:

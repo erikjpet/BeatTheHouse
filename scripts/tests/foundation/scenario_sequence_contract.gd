@@ -4442,6 +4442,15 @@ static func _check_delivery_day_production_package(library: ContentLibrary, fail
 			failures.append("Delivery-day %s terminal reentry was not idempotent." % outcome)
 	if not bool(expired_result.get("ok", false)) or str(expired.get("status", "")) != SequenceRuntimeScript.STATUS_CLEANED or not _has_delivery_overlay(expired, "delivery_event_terminal_gate") or not _array(expired.get("resolved_outcomes", [])).is_empty() or not _array(expired.get("event_request_queue", [])).is_empty():
 		failures.append("Delivery-day ignore expiry did not clean with durable suppression and no legacy consequences.")
+	var causal_expired_result := SequenceRuntimeScript.apply_expiry_boundary(arrival, definition, "night_end")
+	var causal_expired := _dict(causal_expired_result.get("state", {}))
+	var causal_saved := _without_transition_queue(causal_expired)
+	var causal_rebuild := ScenarioEngineScript._rebuild_receipted_semantic_mutations(causal_saved, definition, delivery_host_semantics)
+	if not bool(causal_expired_result.get("ok", false)) \
+			or str(causal_expired.get("status", "")) != SequenceRuntimeScript.STATUS_CLEANED \
+			or not bool(causal_rebuild.get("ok", false)) \
+			or SequenceRuntimeScript.content_fingerprint(causal_rebuild.get("state", {})) != SequenceRuntimeScript.content_fingerprint(causal_saved):
+		failures.append("Delivery-day causal ignore expiry did not clean through an exactly replayable journal: %s" % JSON.stringify(causal_rebuild.get("errors", [])))
 	var expiry_replay := SequenceRuntimeScript.apply_expiry(expired, definition, "night_end", 1)
 	if not bool(expiry_replay.get("ok", false)) or JSON.stringify(expiry_replay.get("state", {})) != JSON.stringify(expired):
 		failures.append("Delivery-day expiry cleanup was not idempotent.")

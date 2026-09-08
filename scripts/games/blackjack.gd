@@ -57,6 +57,7 @@ const BROKEN_CUFFLINKS_ITEM_ID := "broken_cufflinks"
 const PLAYER_CARD_SCALE := 0.84
 const DEALER_CARD_SCALE := 0.78
 const PATRON_CARD_SCALE := 0.43
+const PATRON_SEAT_POSITIONS := [Vector2(128, 176), Vector2(272, 130), Vector2(628, 130), Vector2(772, 176)]
 const COMPACT_CARD_RANK_PATTERNS := {
 	2: ["111", "001", "111", "100", "111"],
 	3: ["111", "001", "111", "001", "111"],
@@ -1342,12 +1343,12 @@ func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionar
 
 
 func _draw_blackjack_ritual_layer(surface, surface_state: Dictionary) -> void:
-	var projection := _local_copy_dict(surface_state.get("ritual_projection", {}))
+	var projection := _draw_dict_view(surface_state.get("ritual_projection", {}))
 	if projection.is_empty():
 		return
 	var phase_id := str(projection.get("phase_id", "wagering"))
 	var energy_tier := str(projection.get("energy_tier", "quiet"))
-	var totals := _local_copy_dict(projection.get("readable_totals", {}))
+	var totals := _draw_dict_view(projection.get("readable_totals", {}))
 	var accent := C_PINK if energy_tier == "hot" else C_YELLOW if energy_tier == "watched" else C_TEAL if energy_tier == "engaged" else C_CYAN
 	var phase_rect := Rect2(28, 120, 164, 20)
 	_draw_neon_panel(surface, phase_rect, accent, 0.13)
@@ -1363,7 +1364,7 @@ func _draw_blackjack_ritual_layer(surface, surface_state: Dictionary) -> void:
 		int(totals.get("payout", 0)),
 	], money_rect, 6, C_WHITE)
 	var pit_actor: Dictionary = {}
-	for actor_value in _dictionary_array(projection.get("actors", [])):
+	for actor_value in _draw_array_view(projection.get("actors", [])):
 		var actor: Dictionary = actor_value
 		if str(actor.get("id", "")) == "pit.primary":
 			pit_actor = actor
@@ -1373,7 +1374,7 @@ func _draw_blackjack_ritual_layer(surface, surface_state: Dictionary) -> void:
 		_draw_static_table_character(surface, pit_pos, 0.70, accent, Color("#261827"), "PIT", -2.0, false)
 		surface.draw_line(Vector2(790, 230), Vector2(858, 230), Color(accent.r, accent.g, accent.b, 0.48), 3.0)
 	var discard_state := "empty"
-	for object_value in _dictionary_array(projection.get("scene_objects", [])):
+	for object_value in _draw_array_view(projection.get("scene_objects", [])):
 		var object_state: Dictionary = object_value
 		if str(object_state.get("id", "")) == "discard_rack.primary":
 			discard_state = str(object_state.get("visual", "empty"))
@@ -2830,7 +2831,7 @@ func _draw_dealer_station(surface, surface_state: Dictionary) -> void:
 		surface.surface_label_centered(peek_label, Rect2(570, 134, 114, 14), 11, C_TEAL)
 	else:
 		surface.surface_label(str(focus.get("body_language", focus.get("tell", ""))).left(26), Vector2(566, 142), 9, C_SOFT)
-	_draw_card_row_for_table(surface, surface_state, _card_array(surface_state.get("dealer", [])), Vector2(386, 158), "dealer", 0, DEALER_CARD_SCALE)
+	_draw_card_row_for_table(surface, surface_state, _draw_array_view(surface_state.get("dealer", [])), Vector2(386, 158), "dealer", 0, DEALER_CARD_SCALE)
 	_draw_shoe(surface, Vector2(706, 112), int(surface_state.get("shoe_remaining", 0)))
 
 
@@ -2919,7 +2920,7 @@ func _surface_low_detail_idle(surface) -> bool:
 
 
 func _draw_patron_hand(surface, surface_state: Dictionary, patron: Dictionary, patron_index: int) -> void:
-	var patron_cards: Array = _card_array(patron.get("cards", []))
+	var patron_cards: Array = _draw_array_view(patron.get("cards", []))
 	if patron_cards.is_empty():
 		return
 	var action_event := _patron_active_action_event(surface, surface_state, patron_index)
@@ -3020,19 +3021,19 @@ func _draw_patron_move_badge(surface, pos: Vector2, patron: Dictionary, active_e
 
 
 func _draw_player_station(surface, surface_state: Dictionary, include_betting_chrome: bool = true) -> void:
-	var hands: Array = _hand_array(surface_state.get("player_hands", []))
-	var result: Dictionary = _local_copy_dict(surface_state.get("last_result", {}))
-	var showdown_hands: Array = _hand_array(result.get("player_hands", []))
+	var hands: Array = _draw_array_view(surface_state.get("player_hands", []))
+	var result: Dictionary = _draw_dict_view(surface_state.get("last_result", {}))
+	var showdown_hands: Array = _draw_array_view(result.get("player_hands", []))
 	var display_hands: Array = hands if not hands.is_empty() else showdown_hands
 	var showing_showdown := hands.is_empty() and not showdown_hands.is_empty()
 	var active_index: int = int(surface_state.get("active_hand_index", 0))
 	_draw_player_forearms(surface, surface_state)
-	var result_hands: Array = _dictionary_array(result.get("hand_results", []))
+	var result_hands: Array = _draw_array_view(result.get("hand_results", []))
 	for i in range(display_hands.size()):
 		var hand: Dictionary = display_hands[i]
 		var pos: Vector2 = _player_hand_base_position(i)
 		var active := i == active_index and not showing_showdown
-		var cards: Array = _card_array(hand.get("cards", []))
+		var cards: Array = _draw_array_view(hand.get("cards", []))
 		var cards_revealed := _hand_cards_revealed_for_deal(surface, surface_state, "player", i, cards)
 		_draw_card_row_for_table(surface, surface_state, cards, pos, "player", i, PLAYER_CARD_SCALE)
 		var hand_label := "H%d" % [i + 1]
@@ -3062,7 +3063,7 @@ func _draw_player_wager_chips(surface, surface_state: Dictionary) -> void:
 
 
 func _draw_hand_state_badge(surface, pos: Vector2, hand: Dictionary, active: bool) -> void:
-	var cards: Array = _card_array(hand.get("cards", []))
+	var cards: Array = _draw_array_view(hand.get("cards", []))
 	if cards.is_empty():
 		return
 	var total := _hand_total(cards)
@@ -3152,9 +3153,9 @@ func _draw_hand_result_badge(surface, pos: Vector2, result: Dictionary) -> void:
 
 
 func _draw_side_bet_felt(surface, surface_state: Dictionary) -> void:
-	var side_bets: Array = _dictionary_array(surface_state.get("side_bets_available", []))
-	var active: Array = _string_array(surface_state.get("side_bets_active", []))
-	var stakes: Dictionary = _local_copy_dict(surface_state.get("side_bet_stakes", {}))
+	var side_bets: Array = _draw_array_view(surface_state.get("side_bets_available", []))
+	var active: Array = _draw_array_view(surface_state.get("side_bets_active", []))
+	var stakes: Dictionary = _draw_dict_view(surface_state.get("side_bet_stakes", {}))
 	var panel := Rect2(272, BJ_CONSOLE_Y + 8.0, 302, BJ_CONSOLE_H - 16.0)
 	_draw_neon_panel(surface, panel, C_PINK_2, 0.08)
 	surface.surface_label("SIDE BETS", panel.position + Vector2(10, 15), 10, C_SOFT)
@@ -3179,7 +3180,7 @@ func _draw_side_bet_felt(surface, surface_state: Dictionary) -> void:
 
 
 func _draw_side_bet_rule_overlay(surface, surface_state: Dictionary) -> void:
-	var side_bets: Array = _dictionary_array(surface_state.get("side_bets_available", []))
+	var side_bets: Array = _draw_array_view(surface_state.get("side_bets_available", []))
 	if side_bets.is_empty():
 		return
 	var target_index := -1
@@ -3191,7 +3192,7 @@ func _draw_side_bet_rule_overlay(surface, surface_state: Dictionary) -> void:
 		return
 	var target: Dictionary = side_bets[target_index]
 	var bet_id := str(target.get("id", ""))
-	var active: Array = _string_array(surface_state.get("side_bets_active", []))
+	var active: Array = _draw_array_view(surface_state.get("side_bets_active", []))
 	var selected := active.has(bet_id)
 	var accent := C_YELLOW if selected else C_PINK_2
 	var rect := Rect2(236, 202, 428, 108)
@@ -3200,8 +3201,8 @@ func _draw_side_bet_rule_overlay(surface, surface_state: Dictionary) -> void:
 	surface.surface_label("SIDE BET RULES", rect.position + Vector2(12, 15), 9, C_SOFT)
 	surface.surface_label(str(target.get("label", bet_id)).to_upper().left(28), rect.position + Vector2(12, 31), 14, accent)
 	surface.surface_label(str(target.get("summary", "")).left(54), rect.position + Vector2(12, 47), 8, C_SOFT)
-	var rules: Array = _string_array(target.get("rules", _side_bet_definition(bet_id).get("rules", [])))
-	var payouts: Array = _string_array(target.get("payouts", _side_bet_definition(bet_id).get("payouts", [])))
+	var rules: Array = _draw_array_view(target.get("rules", _side_bet_definition(bet_id).get("rules", [])))
+	var payouts: Array = _draw_array_view(target.get("payouts", _side_bet_definition(bet_id).get("payouts", [])))
 	var y := rect.position.y + 64.0
 	for i in range(mini(rules.size(), 2)):
 		surface.surface_label("- %s" % str(rules[i]).left(58), Vector2(rect.position.x + 14.0, y), 8, C_WHITE)
@@ -3270,7 +3271,7 @@ func _draw_table_actions(surface, surface_state: Dictionary) -> void:
 			_draw_table_button(surface, Rect2(panel.position.x + 196, panel.position.y + 54, 72, 22), "SETTLE", "blackjack_deal", 0, C_YELLOW, true, surface.surface_native_action_selected("blackjack_deal"))
 		elif bool(surface_state.get("can_surrender", false)):
 			_draw_table_button(surface, Rect2(panel.position.x + 196, panel.position.y + 54, 72, 22), "SURRENDER", "blackjack_surrender", 0, C_ORANGE, bool(surface_state.get("can_surrender", false)))
-	var distractions: Array = _dictionary_array(surface_state.get("distractions", []))
+	var distractions: Array = _draw_array_view(surface_state.get("distractions", []))
 	var strip := Rect2(692, 294, 168, 34)
 	_draw_neon_panel(surface, strip, C_TEAL, 0.08)
 	surface.surface_label("LOOKAWAY", strip.position + Vector2(8, 14), 8, C_SOFT)
@@ -3283,7 +3284,7 @@ func _draw_table_actions(surface, surface_state: Dictionary) -> void:
 func _draw_rourke_duel_hud(surface, surface_state: Dictionary) -> void:
 	var hud := Rect2(18, 12, 860, 62)
 	_draw_neon_panel(surface, hud, C_YELLOW, 0.12)
-	var projection := _local_copy_dict(surface_state.get("showdown_duel_projection", {}))
+	var projection := _draw_dict_view(surface_state.get("showdown_duel_projection", {}))
 	if projection.is_empty():
 		surface.surface_label("ROURKE'S TABLE", hud.position + Vector2(14, 18), 13, C_YELLOW)
 		surface.surface_label("HAND %d / %d" % [int(surface_state.get("boss_hand_number", 1)), int(surface_state.get("boss_hand_limit", 5))], hud.position + Vector2(14, 40), 10, C_SOFT)
@@ -3292,8 +3293,8 @@ func _draw_rourke_duel_hud(surface, surface_state: Dictionary) -> void:
 		surface.surface_label(str(surface_state.get("boss_bark", "Rourke waits.")).left(42), hud.position + Vector2(510, 22), 10, C_WHITE)
 		surface.surface_label(str(surface_state.get("boss_tell", "")).left(48), hud.position + Vector2(510, 42), 9, C_SOFT)
 		return
-	var actor := _local_copy_dict(projection.get("rourke_actor", {}))
-	var room := _local_copy_dict(projection.get("room_state", {}))
+	var actor := _draw_dict_view(projection.get("rourke_actor", {}))
+	var room := _draw_dict_view(projection.get("room_state", {}))
 	var phase_id := str(projection.get("phase_id", "commitment"))
 	var actor_state := str(actor.get("behavior_state", "arrival"))
 	surface.surface_label("ROURKE'S TABLE", hud.position + Vector2(14, 18), 13, C_YELLOW)
@@ -3306,9 +3307,9 @@ func _draw_rourke_duel_hud(surface, surface_state: Dictionary) -> void:
 
 
 func _draw_showdown_duel_room_staging(surface, surface_state: Dictionary) -> void:
-	var projection := _local_copy_dict(surface_state.get("showdown_duel_projection", {}))
+	var projection := _draw_dict_view(surface_state.get("showdown_duel_projection", {}))
 	if projection.is_empty(): return
-	var room := _local_copy_dict(projection.get("room_state", {}))
+	var room := _draw_dict_view(projection.get("room_state", {}))
 	var crowd_state := str(room.get("crowd_state", "full"))
 	var crowd_count := 8 if crowd_state == "full" else 5 if crowd_state == "thinning" else 7 if crowd_state in ["celebrating", "hostile"] else 0
 	var crowd_color := C_ORANGE if crowd_state == "hostile" else C_YELLOW if crowd_state == "celebrating" else C_SOFT
@@ -3351,7 +3352,7 @@ func _draw_rourke_duel_actions(surface, surface_state: Dictionary, panel: Rect2)
 
 
 func _draw_basic_strategy_advice(surface, surface_state: Dictionary) -> void:
-	var advice: Dictionary = _local_copy_dict(surface_state.get("basic_strategy_advice", {}))
+	var advice: Dictionary = _draw_dict_view(surface_state.get("basic_strategy_advice", {}))
 	if not bool(advice.get("visible", false)):
 		return
 	var rect := Rect2(662, 88, 198, 44)
@@ -3393,11 +3394,11 @@ func _draw_deal_animation(surface, surface_state: Dictionary) -> void:
 		if str(event.get("zone", "")) == "patron" and _surface_low_detail_idle(surface):
 			_draw_compact_patron_card(surface, event.get("card", {}), pos, scale)
 		else:
-			_draw_card(surface, _local_copy_dict(event.get("card", {})), pos, scale)
+			_draw_card(surface, event.get("card", {}), pos, scale)
 
 
 func _draw_chip_payout_animation(surface, surface_state: Dictionary) -> void:
-	var result: Dictionary = _local_copy_dict(surface_state.get("last_result", {}))
+	var result: Dictionary = _draw_dict_view(surface_state.get("last_result", {}))
 	if result.is_empty():
 		return
 	if _settlement_reveal_waiting(surface, surface_state):
@@ -3474,7 +3475,7 @@ func _hand_cards_revealed_for_deal(surface, surface_state: Dictionary, zone: Str
 
 
 func _settlement_reveal_waiting(surface, surface_state: Dictionary) -> bool:
-	if _local_copy_dict(surface_state.get("last_result", {})).is_empty():
+	if _draw_dict_view(surface_state.get("last_result", {})).is_empty():
 		return false
 	if not surface.surface_animation_active(DEAL_ANIMATION_CHANNEL):
 		return false
@@ -3741,7 +3742,7 @@ func _patron_jacket_color(patron: Dictionary) -> Color:
 
 
 func _draw_blackjack_result_board(surface, surface_state: Dictionary) -> void:
-	var result: Dictionary = _local_copy_dict(surface_state.get("last_result", {}))
+	var result: Dictionary = _draw_dict_view(surface_state.get("last_result", {}))
 	var rect := Rect2(18, 12, 232, 74)
 	if result.is_empty():
 		_draw_neon_panel(surface, rect, C_CYAN, 0.10)
@@ -3764,7 +3765,7 @@ func _draw_blackjack_result_board(surface, surface_state: Dictionary) -> void:
 	surface.surface_label("$%+d" % delta, rect.position + Vector2(10, 38), 12, C_TEAL if delta >= 0 else C_ORANGE)
 	surface.surface_label("heat %+d" % heat, rect.position + Vector2(128, 38), 9, C_PINK if heat > 0 else C_SOFT)
 	var dealer_total := int(result.get("dealer_total", 0))
-	var hand_results: Array = _dictionary_array(result.get("hand_results", []))
+	var hand_results: Array = _draw_array_view(result.get("hand_results", []))
 	var hand_bits: Array = []
 	for i in range(mini(hand_results.size(), 4)):
 		var hand_result: Dictionary = hand_results[i]
@@ -3772,7 +3773,7 @@ func _draw_blackjack_result_board(surface, surface_state: Dictionary) -> void:
 	var compare := "Dealer %d" % dealer_total
 	if not hand_bits.is_empty():
 		compare += " vs %s" % " / ".join(hand_bits)
-	var side_line := _side_bet_result_line(_dictionary_array(result.get("side_bet_results", [])))
+	var side_line := _side_bet_result_line(_draw_array_view(result.get("side_bet_results", [])))
 	if not side_line.is_empty():
 		compare = side_line
 	surface.surface_label(compare.left(38), rect.position + Vector2(10, 58), 8, C_SOFT)
@@ -3872,8 +3873,7 @@ func _chip_color(value: int) -> Color:
 
 
 func _patron_seat_position(index: int) -> Vector2:
-	var positions: Array = [Vector2(128, 176), Vector2(272, 130), Vector2(628, 130), Vector2(772, 176)]
-	return positions[clampi(index, 0, positions.size() - 1)]
+	return PATRON_SEAT_POSITIONS[clampi(index, 0, PATRON_SEAT_POSITIONS.size() - 1)]
 
 
 func _draw_count_challenge(surface, surface_state: Dictionary) -> void:
@@ -7699,7 +7699,7 @@ func _count_hint(run_state: RunState, table: Dictionary, session: Dictionary) ->
 
 
 func _draw_crew_play_status(surface, state: Dictionary) -> void:
-	var statuses := _dictionary_array(state.get("crew_play_status", []))
+	var statuses := _draw_array_view(state.get("crew_play_status", []))
 	if statuses.is_empty():
 		return
 	var labels: Array = []
@@ -8137,6 +8137,17 @@ func _local_copy_dict(value: Variant) -> Dictionary:
 	if typeof(value) != TYPE_DICTIONARY:
 		return {}
 	return (value as Dictionary).duplicate(true)
+
+
+# Surface-state collections are immutable for the duration of a draw. These
+# zero-copy views keep animated hands, actors, side bets, and settlement records
+# off the allocator without changing any renderer output.
+static func _draw_dict_view(value: Variant) -> Dictionary:
+	return value as Dictionary if typeof(value) == TYPE_DICTIONARY else {}
+
+
+static func _draw_array_view(value: Variant) -> Array:
+	return value as Array if typeof(value) == TYPE_ARRAY else []
 
 
 func _stable_hash(text: String) -> int:

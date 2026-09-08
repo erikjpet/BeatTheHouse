@@ -402,6 +402,7 @@ var run_ui_built := false
 var run_ui_build_stage := 0
 var run_ui_build_in_progress := false
 var run_ui_build_failure_reason := ""
+var run_ui_script_prewarm_requests: Dictionary = {}
 var main_menu_panel: PanelContainer
 var main_menu_logo: TextureRect
 var start_menu_controls: VBoxContainer
@@ -7895,6 +7896,7 @@ func _build_ui() -> void:
 	# the menu. An immediate New Run still completes any remaining stages
 	# synchronously, so staging cannot expose a partially usable game screen.
 	if OS.has_feature("web") or _defer_start_menu_secondary_panels():
+		_request_run_ui_script_prewarm()
 		call_deferred("_prewarm_run_ui_after_web_start")
 	else:
 		_ensure_run_ui_built()
@@ -7922,14 +7924,44 @@ func _prewarm_run_ui_after_web_start() -> void:
 	run_ui_build_in_progress = true
 	await get_tree().process_frame
 	while not run_ui_built:
+		# Script compilation is the expensive part of the run shell. Let the
+		# ResourceLoader worker finish it without freezing the already-interactive
+		# menu, then keep the existing bounded node-build stages on the main thread.
+		if not _run_ui_stage_scripts_ready(run_ui_build_stage):
+			await get_tree().process_frame
+			continue
 		if not _build_next_run_ui_stage():
 			return
-		if not run_ui_built:
+		if not run_ui_built and _run_ui_stage_scripts_ready(run_ui_build_stage):
 			if not _build_next_run_ui_stage():
 				return
 		if not run_ui_built:
 			await get_tree().process_frame
 	run_ui_build_in_progress = false
+
+
+func _request_run_ui_script_prewarm() -> void:
+	for script_path_value in RUN_UI_SCRIPT_PATHS.values():
+		var script_path := str(script_path_value)
+		if script_path.is_empty() or run_ui_script_prewarm_requests.has(script_path) or ResourceLoader.has_cached(script_path):
+			continue
+		var request_error := ResourceLoader.load_threaded_request(script_path)
+		if request_error == OK:
+			run_ui_script_prewarm_requests[script_path] = true
+
+
+func _run_ui_stage_scripts_ready(stage_index: int) -> bool:
+	var stage_fields: Array = RUN_UI_STAGE_SCRIPT_FIELDS.get(stage_index, [])
+	for field_name_value in stage_fields:
+		var field_name := str(field_name_value)
+		if get(field_name) is Script:
+			continue
+		var script_path := str(RUN_UI_SCRIPT_PATHS.get(field_name, ""))
+		if not run_ui_script_prewarm_requests.has(script_path):
+			continue
+		if ResourceLoader.load_threaded_get_status(script_path) == ResourceLoader.THREAD_LOAD_IN_PROGRESS:
+			return false
+	return true
 
 
 func _ensure_run_ui_stage_scripts(stage_index: int) -> bool:
@@ -7945,7 +7977,16 @@ func _ensure_run_ui_stage_scripts(stage_index: int) -> bool:
 		if script_path.is_empty():
 			_fail_run_ui_build(field_name, "an unregistered script path")
 			return false
-		var loaded_script: Variant = ResourceLoader.load(script_path)
+		var loaded_script: Variant
+		if run_ui_script_prewarm_requests.has(script_path):
+			var threaded_status := ResourceLoader.load_threaded_get_status(script_path)
+			if threaded_status in [ResourceLoader.THREAD_LOAD_IN_PROGRESS, ResourceLoader.THREAD_LOAD_LOADED]:
+				# This only blocks the explicit immediate-Play path. The menu prewarmer
+				# calls this function after its nonblocking status check succeeds.
+				loaded_script = ResourceLoader.load_threaded_get(script_path)
+			run_ui_script_prewarm_requests.erase(script_path)
+		if not (loaded_script is Script):
+			loaded_script = ResourceLoader.load(script_path)
 		if not (loaded_script is Script):
 			_fail_run_ui_build(field_name, script_path)
 			return false

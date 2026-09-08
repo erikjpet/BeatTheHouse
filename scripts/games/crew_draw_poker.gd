@@ -1466,15 +1466,15 @@ func _draw_seats(surface, state: Dictionary) -> void:
 		var portrait_variant := str(seat.get("portrait_variant", ""))
 		if not portrait_variant.is_empty():
 			_draw_portrait_beat(surface, pos + Vector2(98, 6), portrait_variant, color)
-		var cards := _card_array(seat.get("cards", []))
+		var cards := _draw_array_view(seat.get("cards", []))
 		for card_index in range(cards.size()):
 			PlayingCardRendererScript.draw_card(surface, cards[card_index], Rect2(pos + Vector2(card_index * 20, 10), Vector2(18, 27)))
 		surface.surface_label(str(seat.get("last_action", "")).capitalize(), pos + Vector2(0, 52), 11, C_YELLOW)
 
 
 func _draw_player(surface, state: Dictionary) -> void:
-	var cards := _card_array(state.get("player_cards", []))
-	var held := _index_array(state.get("held", []))
+	var cards := _draw_array_view(state.get("player_cards", []))
+	var held := _draw_array_view(state.get("held", []))
 	var start := Vector2(294, 232)
 	for index in range(cards.size()):
 		var rect := Rect2(start + Vector2(index * 64, 0), Vector2(52, 74))
@@ -1485,7 +1485,7 @@ func _draw_player(surface, state: Dictionary) -> void:
 
 
 func _draw_observation(surface, state: Dictionary) -> void:
-	var observation := _poker_dict(state.get("observation", {}))
+	var observation := _draw_dict_view(state.get("observation", {}))
 	var channel := str(observation.get("channel", ""))
 	var text := ""
 	match channel:
@@ -1524,7 +1524,7 @@ func _draw_portrait_beat(surface, pos: Vector2, variant: String, color: Color) -
 
 
 func _draw_controls(surface, state: Dictionary) -> void:
-	var actions := _dict_array(state.get("legal_actions", []))
+	var actions := _draw_array_view(state.get("legal_actions", []))
 	var x := 168.0
 	for index in range(actions.size()):
 		var action: Dictionary = actions[index]
@@ -1586,3 +1586,13 @@ func _dict_array(value: Variant) -> Array:
 
 func _poker_dict(value: Variant) -> Dictionary:
 	return (value as Dictionary).duplicate(true) if typeof(value) == TYPE_DICTIONARY else {}
+
+
+# The surface state is a read-only presentation snapshot. Keep rendering off the
+# deep-copy helpers used by gameplay mutations.
+static func _draw_dict_view(value: Variant) -> Dictionary:
+	return value as Dictionary if typeof(value) == TYPE_DICTIONARY else {}
+
+
+static func _draw_array_view(value: Variant) -> Array:
+	return value as Array if typeof(value) == TYPE_ARRAY else []

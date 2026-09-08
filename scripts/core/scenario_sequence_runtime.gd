@@ -831,15 +831,12 @@ static func apply_expiry_boundary(state_value: Dictionary, definition: Dictionar
 	next["expired"] = true
 	if policy == "resume":
 		return {"ok": true, "state": next, "errors": [], "expired": true, "policy": policy}
-	if policy == "ignore":
-		next = _set_objective_outcomes(next, definition, "ignore")
-		return {"ok": true, "state": next, "errors": [], "expired": true, "policy": policy}
 	var cleanup_result := _apply_cleanup(next, definition, "expiry:%s" % boundary)
 	if not bool(cleanup_result.get("ok", false)):
 		return {"ok": false, "state": original, "errors": _array(cleanup_result.get("errors", [])), "expired": false}
 	next = _dict(cleanup_result.get("state", next))
 	next["status"] = STATUS_CLEANED
-	next = _set_objective_outcomes(next, definition, "failure" if policy == "fail" else "cancel")
+	next = _set_objective_outcomes(next, definition, "failure" if policy == "fail" else "ignore" if policy == "ignore" else "cancel")
 	return {"ok": true, "state": next, "errors": [], "expired": true, "policy": policy}
 
 
