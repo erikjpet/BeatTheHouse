@@ -1046,8 +1046,13 @@ func back_to_environment() -> void:
 
 
 func _finish_chunked_game_exit() -> void:
-	while game_exit_settle_active and current_game != null and run_state != null:
-		var result := current_game.advance_chunked_exit_settle(run_state, run_state.current_environment, 8)
+	var settling_game := current_game
+	var settling_run_state := run_state
+	if settling_game == null or settling_run_state == null:
+		game_exit_settle_active = false
+		return
+	while game_exit_settle_active and current_game == settling_game and run_state == settling_run_state:
+		var result := settling_game.advance_chunked_exit_settle(settling_run_state, settling_run_state.current_environment, 8)
 		var patch: Dictionary = result.get("surface_state_patch", {}) if typeof(result.get("surface_state_patch", {})) == TYPE_DICTIONARY else {}
 		if not patch.is_empty() and game_surface_canvas != null:
 			game_surface_canvas.apply_surface_state_patch(patch)
@@ -1061,7 +1066,13 @@ func _finish_chunked_game_exit() -> void:
 			await get_tree().process_frame
 			break
 		await get_tree().process_frame
-	current_game.finalize_chunked_exit_settle(run_state, run_state.current_environment)
+	# A lifecycle transition can clear the active game while this coroutine is
+	# yielding (main menu, a new run, or scene teardown). Do not finalize or
+	# navigate through a replacement/cleared session.
+	if not game_exit_settle_active or current_game != settling_game or run_state != settling_run_state:
+		game_exit_settle_active = false
+		return
+	settling_game.finalize_chunked_exit_settle(settling_run_state, settling_run_state.current_environment)
 	_complete_back_to_environment()
 	game_exit_settle_active = false
 

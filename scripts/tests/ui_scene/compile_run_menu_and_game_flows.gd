@@ -515,9 +515,31 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 					and final_projection_applied and str(probe.get("current_screen")) == "ENVIRONMENT" and zero_work_after
 			if not chunked_exit_passed:
 				push_error("Coin Pusher exit did not drain same-tick SKILL STOP, settle visibly across locked motor-on frames, or freeze absent: started=%s released=%s locked=%s frames=%d final=%s screen=%s zero=%s live=%s current_key=%s durable=%s." % [exit_started_visible, immediate_stop_exit_released, input_locked, settle_frames, final_projection_applied, str(probe.get("current_screen")), zero_work_after, JSON.stringify((game.get("_live_machines") as Dictionary).keys()), game.call("_live_key", run_state, run_state.current_environment), JSON.stringify(durable_exit)])
+			var lifecycle_abort_passed := false
+			if chunked_exit_passed:
+				# Reuse the completed fixture to cover the lifecycle race without
+				# paying for a second full game-test-room generation. With no live
+				# machine, the deferred path reaches its final presentation yield on
+				# the next frame, which is the exact seam the lifecycle transition
+				# must be able to cancel safely.
+				probe.set("current_game", game)
+				probe.set("game_exit_settle_active", true)
+				probe.call_deferred("_finish_chunked_game_exit")
+				await process_frame
+				var lifecycle_exit_started := bool(probe.get("game_exit_settle_active"))
+				probe.call("return_to_main_menu")
+				for _frame in range(4):
+					await process_frame
+				lifecycle_abort_passed = lifecycle_exit_started \
+						and not bool(probe.get("game_exit_settle_active")) \
+						and probe.get("current_game") == null \
+						and probe.get("run_state") == null \
+						and str(probe.get("current_screen")) == "START"
+			if not lifecycle_abort_passed:
+				push_error("Coin Pusher deferred exit did not cancel cleanly when a lifecycle transition cleared its game session: active=%s game=%s run=%s screen=%s." % [bool(probe.get("game_exit_settle_active")), probe.get("current_game"), probe.get("run_state"), str(probe.get("current_screen"))])
 			probe.queue_free()
 			await process_frame
-			return live_loop_passed and chunked_exit_passed
+			return live_loop_passed and chunked_exit_passed and lifecycle_abort_passed
 		var placeholder_passed: bool = game != null and game.get_id() == "coin_pusher" \
 				and str(probe.get("current_screen")) == "GAME" \
 				and probe.get("game_surface_canvas") == canvas \
