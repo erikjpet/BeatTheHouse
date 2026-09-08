@@ -36,6 +36,10 @@ func _run() -> void:
 			ScenarioSequenceContractScript._check_executable_evidence_contract(failures)
 		"layout":
 			ScenarioSemanticPresentationContractScript.check(library, failures)
+		"single_plane":
+			ScenarioSemanticPresentationContractScript._check_single_environment_plane(failures)
+		"projection_failures":
+			ScenarioSemanticPresentationContractScript._check_atomic_projection_failures(failures)
 		"layout_atomic_diag":
 			var definition = ScenarioSequenceContractScript.finalization_fixture_definition()
 			var command_visual = ScenarioSemanticPresentationContractScript._command_visual(definition)

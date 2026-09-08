@@ -25,6 +25,7 @@ static func check(library: Variant, failures: Array) -> void:
 	# static pass so the expensive matrix is not duplicated.
 	Env068EnvironmentReadabilityContractScript.check(library, failures)
 	_check_ordinary_interaction_coexistence(failures)
+	_check_single_environment_plane(failures)
 	_check_public_removal_tombstones(failures)
 	_check_finalized_canvas_authority(library, failures)
 	_check_atomic_finalization_layout(library, failures)
@@ -878,6 +879,94 @@ static func _check_ordinary_interaction_coexistence(failures: Array) -> void:
 		failures.append("A declared public removal tombstone did not suppress its exact base interaction.")
 
 
+static func _check_single_environment_plane(failures: Array) -> void:
+	var machine := _base_record("game:slot", "game", "Slot machine")
+	machine["focus_rect"] = Rect2(0.08, 0.18, 0.16, 0.20)
+	machine["scenario_z_order"] = 41
+	var merchandise := _base_record("item:marked_cards", "base", "Marked cards")
+	merchandise["object_type"] = "item"
+	merchandise["focus_rect"] = Rect2(0.66, 0.58, 0.11, 0.14)
+	merchandise["scenario_z_order"] = 52
+	var projection := {
+		"scenario_id": "single_plane_fixture",
+		"phase_id": "arrival",
+		"status": "active",
+		"semantic_state": {
+			"scene_objects": {
+				"game::game:slot": {
+					"owner_namespace": "game", "stable_object_id": "game:slot", "present": true,
+					"label": "Scenario-labelled slot", "role": "machine", "anchor_id": "scenario_corner",
+					"bounds": {"w": 240.0, "h": 180.0}, "visible": true, "enabled": true,
+				},
+				"base::item:marked_cards": {
+					"owner_namespace": "base", "stable_object_id": "item:marked_cards", "present": true,
+					"label": "Scenario-labelled cards", "role": "merchandise", "anchor_id": "scenario_corner",
+					"bounds": {"w": 200.0, "h": 160.0}, "visible": true, "enabled": true,
+				},
+			},
+			"actors": {},
+			"interactions": {},
+		},
+	}
+	var environment := {
+		"id": "single_plane_fixture",
+		"layout": {"object_rects": {}},
+		"semantic_anchors": {"scenario_corner": {"position": [820.0, 80.0]}},
+		"semantic_zones": {},
+	}
+	var resolved := ScenarioLayoutResolverScript.resolve([machine, merchandise], projection, environment)
+	var authority := _dict(resolved.get("layout_authority", {}))
+	var machine_authority := _dict(authority.get("game::game:slot", {}))
+	var merchandise_authority := _dict(authority.get("base::item:marked_cards", {}))
+	if not bool(resolved.get("ok", false)) \
+			or _snapshot_rect(machine_authority.get("normalized_hit_rect", {})) != machine.get("focus_rect", Rect2()) \
+			or _snapshot_rect(merchandise_authority.get("normalized_hit_rect", {})) != merchandise.get("focus_rect", Rect2()) \
+			or int(machine_authority.get("z_order", -1)) != 41 \
+			or int(merchandise_authority.get("z_order", -1)) != 52:
+		failures.append("Scenario semantics relocated, resized, or re-layered an object already placed by the generated environment.")
+		return
+
+	var projected := EnvironmentInteractionControllerScript.project_finalized_sequence_interaction_result([machine, merchandise], resolved)
+	var records := _array(projected.get("records", []))
+	var room_detail := {
+		"object_id": "scenario::wall_scratches", "object_type": "scenario_scene_object", "visual_type": "fixture",
+		"owner_namespace": "scenario", "stable_object_id": "wall_scratches", "label": "Wall scratches",
+		"short_description": "Several old marks stop at shoulder height.", "interactive": true, "enabled": true,
+		"focus_rect": Rect2(0.42, 0.22, 0.08, 0.12), "normalized_rect": {"x": 0.42, "y": 0.22, "w": 0.08, "h": 0.12},
+	}
+	records.append(room_detail)
+	var canvas = PixelSceneCanvasScript.new()
+	canvas.size = BOARD_SIZE
+	canvas.render_environment_snapshot({
+		"id": "single_plane_fixture",
+		"archetype_id": "bar",
+		"interactable_objects": records,
+		# These legacy renderer-only entries must not create a second plane once
+		# the unified room catalog exists.
+		"scenario_render_snapshot": {
+			"ok": true,
+			"active_stages": [{"stage_id": "floating_banner", "message": "Second layer"}],
+			"visual_objects": [{
+				"object_id": "scenario::renderer_only", "object_type": "scenario_object",
+				"label": "Renderer-only object", "visible": true, "interactive": true,
+				"normalized_rect": {"x": 0.78, "y": 0.16, "w": 0.10, "h": 0.12},
+			}],
+		},
+	})
+	var view := _dict(canvas.current_view_snapshot())
+	var objects := _array(view.get("objects", []))
+	var canvas_machine := _canvas_object_rect(canvas, "game:slot")
+	var canvas_merchandise := _canvas_object_rect(canvas, "item:marked_cards")
+	if not canvas_machine.is_equal_approx(Rect2(machine.get("focus_rect", Rect2()).position * BOARD_SIZE, machine.get("focus_rect", Rect2()).size * BOARD_SIZE)) \
+			or not canvas_merchandise.is_equal_approx(Rect2(merchandise.get("focus_rect", Rect2()).position * BOARD_SIZE, merchandise.get("focus_rect", Rect2()).size * BOARD_SIZE)):
+		failures.append("Canvas composition moved generated room objects after scenario projection.")
+	if _object(objects, "scenario::wall_scratches").is_empty() or canvas.object_id_at_local_position(_canvas_object_rect(canvas, "scenario::wall_scratches").get_center()) != "scenario::wall_scratches":
+		failures.append("A read-only exploratory room detail was not selectable on the unified environment plane.")
+	if not _object(objects, "scenario::renderer_only").is_empty() or not _object(objects, "scenario:stage:floating_banner").is_empty():
+		failures.append("Canvas appended a second scenario-renderer layer after receiving the unified environment catalog.")
+	canvas.free()
+
+
 static func _check_public_removal_tombstones(failures: Array) -> void:
 	var identity := "base::door"
 	var semantic := {
@@ -1016,8 +1105,8 @@ static func _check_atomic_projection_failures(failures: Array) -> void:
 	}
 	var stale_result := EnvironmentInteractionControllerScript.project_sequence_interaction_result([base], stale_projection, {"id": "stale_fixture", "semantic_anchors": {}})
 	var stale_base := _record(_array(stale_result.get("records", [])), "door")
-	if bool(stale_result.get("ok", true)) or stale_base.get("focus_rect", Rect2()) != base.get("focus_rect", Rect2()) or str(stale_base.get("confirm_action_id", "")) != "activate" or not _array(stale_base.get("scenario_sequence_actions", [])).is_empty():
-		failures.append("Invalid matching scene geometry combined stale base visuals with new scenario action authority.")
+	if not bool(stale_result.get("ok", false)) or stale_base.get("focus_rect", Rect2()) != base.get("focus_rect", Rect2()) or str(stale_base.get("confirm_action_id", "")) != "scenario_action" or _array(stale_base.get("scenario_sequence_actions", [])).size() != 1:
+		failures.append("A stale scenario anchor displaced an existing room object instead of applying state/action changes on its immutable generated placement.")
 
 	var orphan_projection := {
 		"semantic_state": {

@@ -472,36 +472,40 @@ static func _resolve_visual(
 	var base_rect := _record_pixel_rect(base_record)
 	var anchor_id := str(semantic.get("anchor_id", base_record.get("anchor_id", "")))
 	var zone_id := str(semantic.get("zone_id", base_record.get("zone_id", "")))
-	var center := _resolve_center(
-		environment,
-		anchor_id,
-		zone_id
-	)
-	if (not _finite_point(center) or center.x < 0.0) and anchor_id.is_empty() and zone_id.is_empty() and base_rect.size.x > 0.0 and base_rect.size.y > 0.0:
-		center = base_rect.get_center()
-	if not _finite_point(center) or center.x < 0.0:
-		errors.append("Scenario visual %s references an unresolved anchor or zone." % identity)
-		return {}
-	var default_size := DEFAULT_ACTOR_SIZE if actor else DEFAULT_SCENE_SIZE
-	var bounds := _dict(semantic.get("bounds", {}))
-	var size := Vector2(float(bounds.get("w", 0.0)), float(bounds.get("h", 0.0)))
-	if size.x <= 0.0 or size.y <= 0.0:
-		size = base_rect.size if base_rect.size.x > 0.0 and base_rect.size.y > 0.0 else default_size
-	if not _finite_point(size) or size.x < MIN_SCENE_SIZE.x or size.y < MIN_SCENE_SIZE.y or size.x > BOARD_SIZE.x or size.y > BOARD_SIZE.y:
-		errors.append("Scenario visual %s has out-of-bounds semantic dimensions." % identity)
-		return {}
 	var label := str(semantic.get("label", base_record.get("label", "")))
 	if not _readable_text(label, LABEL_MAX_LENGTH):
 		errors.append("Scenario visual %s requires a bounded, readable label." % identity)
 		return {}
-	var authored_rect := _clamp_inside_board(Rect2(center - size * 0.5, size))
-	var role := str(semantic.get("role", "")).to_lower()
-	var forbidden_lane := WALK_LANE if role in ["obstacle", "barrier", "blockade"] else Rect2()
-	var placement := _collision_safe_rect(identity, authored_rect, occupied, placement_label, forbidden_lane)
-	if bool(placement.get("colliding", true)):
-		errors.append("Scenario visual %s cannot resolve both normal and expanded small-screen geometry without ambiguity." % identity)
-		return {}
-	var pixel_rect: Rect2 = placement.get("rect", authored_rect)
+	var pixel_rect := base_rect
+	var placement := {"adjusted": false}
+	if base_rect.has_area():
+		# Existing room objects keep the environment generator's exact spatial
+		# identity. Scenario semantics may alter their label, state, visibility, or
+		# actions, but authored anchors and bounds describe only newly added props.
+		result["anchor_id"] = str(base_record.get("anchor_id", ""))
+		result["zone_id"] = str(base_record.get("zone_id", ""))
+		result["bounds"] = {"w": base_rect.size.x, "h": base_rect.size.y}
+	else:
+		var center := _resolve_center(environment, anchor_id, zone_id)
+		if not _finite_point(center) or center.x < 0.0:
+			errors.append("Scenario visual %s references an unresolved anchor or zone." % identity)
+			return {}
+		var default_size := DEFAULT_ACTOR_SIZE if actor else DEFAULT_SCENE_SIZE
+		var bounds := _dict(semantic.get("bounds", {}))
+		var size := Vector2(float(bounds.get("w", 0.0)), float(bounds.get("h", 0.0)))
+		if size.x <= 0.0 or size.y <= 0.0:
+			size = default_size
+		if not _finite_point(size) or size.x < MIN_SCENE_SIZE.x or size.y < MIN_SCENE_SIZE.y or size.x > BOARD_SIZE.x or size.y > BOARD_SIZE.y:
+			errors.append("Scenario visual %s has out-of-bounds semantic dimensions." % identity)
+			return {}
+		var authored_rect := _clamp_inside_board(Rect2(center - size * 0.5, size))
+		var role := str(semantic.get("role", "")).to_lower()
+		var forbidden_lane := WALK_LANE if role in ["obstacle", "barrier", "blockade"] else Rect2()
+		placement = _collision_safe_rect(identity, authored_rect, occupied, placement_label, forbidden_lane)
+		if bool(placement.get("colliding", true)):
+			errors.append("Scenario visual %s cannot resolve both normal and expanded small-screen geometry without ambiguity." % identity)
+			return {}
+		pixel_rect = placement.get("rect", authored_rect)
 	var route_points: Array = []
 	var route_stage: Dictionary = {}
 	if actor:
@@ -813,14 +817,28 @@ static func _add_visual_authority(authority: Dictionary, collection: Dictionary,
 			presentation_object_id = identity
 		var presentation_visible := bool(semantic.get("visible", existing.get("presentation_visible", true)))
 		var presentation_interactive := bool(existing.get("presentation_interactive", false))
+		var normal := _dict(semantic.get("normalized_hit_rect", {}))
+		var small := _dict(semantic.get("small_screen_rect", {}))
+		var z_order := int(semantic.get("z_order", 0))
+		var authority_kind := visual_kind
+		var authority_source := "semantic_visual"
+		if not existing.is_empty() and str(existing.get("source", "")) == "sealed_base_record":
+			# A semantic update to an existing machine, offer, event, or other room
+			# object shares that object's plane; it cannot create replacement draw
+			# geometry or jump ahead in a renderer-only z layer.
+			normal = _dict(existing.get("normalized_hit_rect", {}))
+			small = _dict(existing.get("small_screen_rect", {}))
+			z_order = int(existing.get("z_order", 0))
+			authority_kind = str(existing.get("visual_kind", "base_record"))
+			authority_source = "sealed_base_record"
 		authority[identity] = _authority_record(
 			identity,
 			presentation_object_id,
-			_dict(semantic.get("normalized_hit_rect", {})),
-			_dict(semantic.get("small_screen_rect", {})),
-			int(semantic.get("z_order", 0)),
-			visual_kind,
-			"semantic_visual",
+			normal,
+			small,
+			z_order,
+			authority_kind,
+			authority_source,
 			_array(semantic.get("route_points", [])) if visual_kind == "actor" else [],
 			_dict(semantic.get("route_stage", {})) if visual_kind == "actor" else {},
 			true,

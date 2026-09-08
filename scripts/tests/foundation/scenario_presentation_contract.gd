@@ -286,10 +286,12 @@ static func _check_composed_actions_and_geometry(failures: Array) -> void:
 	var view := _dict(canvas.current_view_snapshot())
 	var objects := _array(view.get("objects", []))
 	var ids := _object_ids(objects)
-	if ids.find(SCENARIO_OBJECT_ID) < 0 or ids.find("travel:leave") < 0 or ids.find("scenario:stage:arrival_shift") < 0:
-		failures.append("Canvas did not consume composed scenario visuals/staging records.")
-	elif not (ids.find(SCENARIO_OBJECT_ID) < ids.find("travel:leave") and ids.find("travel:leave") < ids.find("scenario:stage:arrival_shift")):
-		failures.append("Canvas did not apply deterministic global scenario/base/stage z ordering.")
+	if ids.find(SCENARIO_OBJECT_ID) < 0 or ids.find("travel:leave") < 0:
+		failures.append("Canvas did not consume the unified scenario/base room catalog.")
+	elif ids.find("scenario:stage:arrival_shift") >= 0:
+		failures.append("Canvas created a renderer-only scenario stage outside the unified room catalog.")
+	elif not ids.find(SCENARIO_OBJECT_ID) < ids.find("travel:leave"):
+		failures.append("Canvas did not apply deterministic global scenario/base z ordering.")
 	var layout_entry := _layout_by_id(_dict(view.get("object_layout", {})), SCENARIO_OBJECT_ID)
 	var draw_rect := _rect(_dict(layout_entry.get("rect", {})))
 	if draw_rect.size.x < 72.0 or draw_rect.size.y < 48.0:
