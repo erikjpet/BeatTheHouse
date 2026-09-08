@@ -448,6 +448,131 @@ func compact_snapshot() -> Dictionary:
 	}
 
 
+# Sealed host proposals execute twice and compare exact results before publish.
+# The live pinball simulation is intentionally kept out of RunState so it can
+# advance cheaply between rendered frames, which means proposal replay needs an
+# explicit rollback capsule. This is action-boundary-only work; it is never
+# called from the 120 Hz physics or 60 Hz presentation paths.
+func transaction_snapshot() -> Dictionary:
+	return {
+		"bumper_ready_tick": bumper_ready_tick.duplicate(),
+		"sensor_ready_tick": sensor_ready_tick.duplicate(),
+		"flipper_ready_tick": flipper_ready_tick.duplicate(),
+		"flipper_window_until_tick": flipper_window_until_tick.duplicate(),
+		"positions": positions.duplicate(),
+		"previous_positions": previous_positions.duplicate(),
+		"velocities": velocities.duplicate(),
+		"spins": spins.duplicate(),
+		"active_flags": active_flags.duplicate(),
+		"age_ticks": age_ticks.duplicate(),
+		"ball_sequence": ball_sequence.duplicate(),
+		"progress_y": progress_y.duplicate(),
+		"stuck_ticks": stuck_ticks.duplicate(),
+		"event_ticks": event_ticks.duplicate(),
+		"event_types": event_types.duplicate(),
+		"event_elements": event_elements.duplicate(),
+		"event_balls": event_balls.duplicate(),
+		"event_awards": event_awards.duplicate(),
+		"event_positions": event_positions.duplicate(),
+		"event_write_index": event_write_index,
+		"event_total_count": event_total_count,
+		"events_this_tick": events_this_tick,
+		"tick": tick,
+		"rng_state": rng_state,
+		"total_awarded": total_awarded,
+		"gross_awarded": gross_awarded,
+		"session_multiplier": session_multiplier,
+		"balls_launched": balls_launched,
+		"drain_count": drain_count,
+		"timeout_count": timeout_count,
+		"tilt_meter": tilt_meter,
+		"tilted": tilted,
+		"max_active_seen": max_active_seen,
+		"max_events_seen": max_events_seen,
+		"max_tick_usec": max_tick_usec,
+		"accumulated_tick_usec": accumulated_tick_usec,
+		"measured_ticks": measured_ticks,
+		"spawn_count": spawn_count,
+		"collision_count": collision_count,
+		"max_substeps_seen": max_substeps_seen,
+		"ball_save_count": ball_save_count,
+		"nudge_x": nudge_x,
+		"nudge_y": nudge_y,
+		"nudge_pending": nudge_pending,
+		"nudge_count": nudge_count,
+		"flipper_window_count": flipper_window_count,
+		"flipper_rescue_count": flipper_rescue_count,
+		"flipper_left_pressed": flipper_left_pressed,
+		"flipper_right_pressed": flipper_right_pressed,
+		"bumper_battery_hits_remaining": bumper_battery_hits_remaining,
+		"return_spring_remaining": return_spring_remaining,
+	}
+
+
+func restore_transaction_snapshot(snapshot: Dictionary) -> bool:
+	var required := [
+		"bumper_ready_tick", "sensor_ready_tick", "flipper_ready_tick", "flipper_window_until_tick",
+		"positions", "previous_positions", "velocities", "spins", "active_flags", "age_ticks",
+		"ball_sequence", "progress_y", "stuck_ticks", "event_ticks", "event_types", "event_elements",
+		"event_balls", "event_awards", "event_positions",
+	]
+	for key in required:
+		if not snapshot.has(key):
+			return false
+	bumper_ready_tick = snapshot["bumper_ready_tick"].duplicate()
+	sensor_ready_tick = snapshot["sensor_ready_tick"].duplicate()
+	flipper_ready_tick = snapshot["flipper_ready_tick"].duplicate()
+	flipper_window_until_tick = snapshot["flipper_window_until_tick"].duplicate()
+	positions = snapshot["positions"].duplicate()
+	previous_positions = snapshot["previous_positions"].duplicate()
+	velocities = snapshot["velocities"].duplicate()
+	spins = snapshot["spins"].duplicate()
+	active_flags = snapshot["active_flags"].duplicate()
+	age_ticks = snapshot["age_ticks"].duplicate()
+	ball_sequence = snapshot["ball_sequence"].duplicate()
+	progress_y = snapshot["progress_y"].duplicate()
+	stuck_ticks = snapshot["stuck_ticks"].duplicate()
+	event_ticks = snapshot["event_ticks"].duplicate()
+	event_types = snapshot["event_types"].duplicate()
+	event_elements = snapshot["event_elements"].duplicate()
+	event_balls = snapshot["event_balls"].duplicate()
+	event_awards = snapshot["event_awards"].duplicate()
+	event_positions = snapshot["event_positions"].duplicate()
+	event_write_index = int(snapshot.get("event_write_index", 0))
+	event_total_count = int(snapshot.get("event_total_count", 0))
+	events_this_tick = int(snapshot.get("events_this_tick", 0))
+	tick = int(snapshot.get("tick", 0))
+	rng_state = int(snapshot.get("rng_state", rng_state))
+	total_awarded = int(snapshot.get("total_awarded", 0))
+	gross_awarded = int(snapshot.get("gross_awarded", 0))
+	session_multiplier = int(snapshot.get("session_multiplier", 1))
+	balls_launched = int(snapshot.get("balls_launched", 0))
+	drain_count = int(snapshot.get("drain_count", 0))
+	timeout_count = int(snapshot.get("timeout_count", 0))
+	tilt_meter = float(snapshot.get("tilt_meter", 0.0))
+	tilted = bool(snapshot.get("tilted", false))
+	max_active_seen = int(snapshot.get("max_active_seen", 0))
+	max_events_seen = int(snapshot.get("max_events_seen", 0))
+	max_tick_usec = int(snapshot.get("max_tick_usec", 0))
+	accumulated_tick_usec = int(snapshot.get("accumulated_tick_usec", 0))
+	measured_ticks = int(snapshot.get("measured_ticks", 0))
+	spawn_count = int(snapshot.get("spawn_count", 0))
+	collision_count = int(snapshot.get("collision_count", 0))
+	max_substeps_seen = int(snapshot.get("max_substeps_seen", 0))
+	ball_save_count = int(snapshot.get("ball_save_count", 0))
+	nudge_x = float(snapshot.get("nudge_x", 0.0))
+	nudge_y = float(snapshot.get("nudge_y", 0.0))
+	nudge_pending = bool(snapshot.get("nudge_pending", false))
+	nudge_count = int(snapshot.get("nudge_count", 0))
+	flipper_window_count = int(snapshot.get("flipper_window_count", 0))
+	flipper_rescue_count = int(snapshot.get("flipper_rescue_count", 0))
+	flipper_left_pressed = bool(snapshot.get("flipper_left_pressed", false))
+	flipper_right_pressed = bool(snapshot.get("flipper_right_pressed", false))
+	bumper_battery_hits_remaining = int(snapshot.get("bumper_battery_hits_remaining", 0))
+	return_spring_remaining = int(snapshot.get("return_spring_remaining", 0))
+	return true
+
+
 func run_headless(seed_value: int, compiled_board: Dictionary, input_script: Array, params: Dictionary = {}) -> Dictionary:
 	configure(compiled_board, seed_value, params)
 	var launch_params: Variant = params.get("launch", {"power": 0.68, "aim": 0.0})

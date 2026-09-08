@@ -381,7 +381,13 @@ func _refresh_active(active: Dictionary, sim, local_events: Array, local_traject
 	active["max_active_count"] = maxi(int(active.get("max_active_count", 0)), int(snapshot.get("max_active_seen", 0)))
 	active["last_event_count"] = int(snapshot.get("event_total_count", 0))
 	active["pinball_summary"] = _summary_for(active, sim)
-	active["pinball_debug"] = snapshot
+	# Timing counters are diagnostic wall-clock measurements. Keeping them in the
+	# authoritative bonus record made two identical sealed proposals differ by a
+	# few microseconds and rejected every live pinball input.
+	var authoritative_snapshot := snapshot.duplicate(false)
+	authoritative_snapshot.erase("avg_tick_usec")
+	authoritative_snapshot.erase("max_tick_usec")
+	active["pinball_debug"] = authoritative_snapshot
 	active["display_event_log"] = _tail_array_shallow(local_events, 16)
 	active["display_trajectory"] = _sampled_array_shallow(local_trajectory, DISPLAY_TRAJECTORY_CAP)
 	active["event_log"] = _bounded_event_log(_array_static(active.get("event_log", [])), local_events, EVENT_LOG_CAP, int(snapshot.get("total_awarded", 0)), str(active.get("mode", "")))
@@ -667,6 +673,52 @@ static func runtime_session_debug_snapshot() -> Dictionary:
 		"board_template_cache_size": _board_templates.size(),
 		"board_template_cache_cap": MAX_BOARD_TEMPLATES,
 	}
+
+
+static func runtime_transaction_checkpoint(active: Dictionary) -> Dictionary:
+	var session_id := str(active.get("runtime_session_id", ""))
+	if session_id.is_empty():
+		return {"session_id": "", "present": false}
+	var runtime: RuntimeSession = _runtime_for_static(active)
+	var sim = runtime.sim if runtime != null else _session_for_static(active)
+	if sim == null or not sim.has_method("transaction_snapshot"):
+		return {"session_id": session_id, "present": false}
+	return {
+		"session_id": session_id,
+		"present": true,
+		"sim": sim.transaction_snapshot(),
+		"last_surface_msec": runtime.last_surface_msec if runtime != null else int(_surface_refresh_msec.get(session_id, 0)),
+		"surface_tick_accumulator_msec": runtime.surface_tick_accumulator_msec if runtime != null else 0.0,
+		"cached_view_tick": runtime.cached_view_tick if runtime != null else -1,
+		"cached_view": runtime.cached_view.duplicate(true) if runtime != null else {},
+		"surface_refresh_msec": int(_surface_refresh_msec.get(session_id, 0)),
+	}
+
+
+static func restore_runtime_transaction_checkpoint(active: Dictionary, checkpoint: Dictionary) -> bool:
+	var session_id := str(checkpoint.get("session_id", active.get("runtime_session_id", "")))
+	if session_id.is_empty():
+		return true
+	_erase_session(session_id)
+	if not bool(checkpoint.get("present", false)):
+		return true
+	var template := _board_template(str(active.get("mode", "")), _dict_static(active.get("pinball_item_effects", {})))
+	var layout: Dictionary = template.get("layout", {})
+	var compiled: Dictionary = template.get("compiled", {})
+	var sim := SimScript.new()
+	sim.configure(compiled, int(active.get("runtime_seed", 1)), {"cap": int(active.get("session_cap", 500))})
+	var sim_snapshot: Dictionary = checkpoint.get("sim", {}) if typeof(checkpoint.get("sim", {})) == TYPE_DICTIONARY else {}
+	if not sim.restore_transaction_snapshot(sim_snapshot):
+		return false
+	_store_session(session_id, sim, layout, compiled, template.get("layout_view", {}))
+	var runtime: RuntimeSession = _runtime_for_static(active)
+	if runtime != null:
+		runtime.last_surface_msec = int(checkpoint.get("last_surface_msec", 0))
+		runtime.surface_tick_accumulator_msec = float(checkpoint.get("surface_tick_accumulator_msec", 0.0))
+		runtime.cached_view_tick = int(checkpoint.get("cached_view_tick", -1))
+		runtime.cached_view = (checkpoint.get("cached_view", {}) as Dictionary).duplicate(true) if typeof(checkpoint.get("cached_view", {})) == TYPE_DICTIONARY else {}
+	_surface_refresh_msec[session_id] = int(checkpoint.get("surface_refresh_msec", runtime.last_surface_msec if runtime != null else 0))
+	return true
 
 
 static func _board_template(mode: String, item_effects: Dictionary) -> Dictionary:

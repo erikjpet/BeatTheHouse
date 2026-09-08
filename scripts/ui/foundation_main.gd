@@ -2029,15 +2029,35 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 	)
 	var compact_proposal: Dictionary
 	var trusted_proposed_candidate: RunState
+	var runtime_restore_method: StringName = &""
+	var runtime_checkpoint: Dictionary = {}
+	var accepted_runtime_checkpoint: Dictionary = {}
+	var has_runtime_checkpoint := false
 	if uses_trusted_candidate_provider:
 		var compact_input_fingerprint := GameRitualRuntimeScript.canonical_fingerprint(compact_proposal_input)
+		var runtime_checkpoint_method := StringName(provider_contract.get("proposal_runtime_checkpoint_method", &""))
+		runtime_restore_method = StringName(provider_contract.get("proposal_runtime_restore_method", &""))
+		has_runtime_checkpoint = not runtime_checkpoint_method.is_empty() \
+				and not runtime_restore_method.is_empty() \
+				and current_game.has_method(runtime_checkpoint_method) \
+				and current_game.has_method(runtime_restore_method)
+		runtime_checkpoint = current_game.call(runtime_checkpoint_method, candidate) if has_runtime_checkpoint else {}
 		var first_bundle := _sealed_action_host_candidate_proposal(candidate_resolve_method, action_id, stake, candidate, compact_input_ledger, compact_proposal_input, compact_input_fingerprint, session)
+		if has_runtime_checkpoint and not bool(current_game.call(runtime_restore_method, runtime_checkpoint)):
+			return _sealed_action_host_rejection("invalid_proposal", "Game runtime could not be restored for sealed replay.", request_key)
 		var replay_bundle := _sealed_action_host_candidate_proposal(candidate_resolve_method, action_id, stake, candidate, compact_input_ledger, compact_proposal_input, compact_input_fingerprint, session)
 		compact_proposal = first_bundle.get("proposal", {})
 		var replay_proposal: Dictionary = replay_bundle.get("proposal", {})
 		if not _sealed_action_host_candidate_proposals_match(compact_proposal, replay_proposal, compact_proposal_input):
+			if has_runtime_checkpoint:
+				current_game.call(runtime_restore_method, runtime_checkpoint)
 			return _sealed_action_host_rejection("invalid_proposal", "Blackjack game proposal failed closed validation.", request_key)
 		trusted_proposed_candidate = first_bundle.get("candidate", null) as RunState
+		if has_runtime_checkpoint:
+			var replay_candidate: RunState = replay_bundle.get("candidate", null) as RunState
+			accepted_runtime_checkpoint = current_game.call(runtime_checkpoint_method, replay_candidate if replay_candidate != null else candidate)
+			if not bool(current_game.call(runtime_restore_method, runtime_checkpoint)):
+				return _sealed_action_host_rejection("invalid_proposal", "Game runtime could not be restored after sealed replay.", request_key)
 	else:
 		compact_proposal = current_game.call(
 			resolve_method,
@@ -2179,7 +2199,11 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 		proposed_candidate.action_authority_checkpoint_fingerprint()
 	)
 	_sealed_action_host_store_ledger(proposed_candidate, proposed_ledger)
+	if has_runtime_checkpoint and not bool(current_game.call(runtime_restore_method, accepted_runtime_checkpoint)):
+		return _sealed_action_host_rejection("internal_fail_closed", "Game runtime could not publish the accepted transaction.", request_key)
 	if not _sealed_action_host_publish(proposed_candidate):
+		if has_runtime_checkpoint:
+			current_game.call(runtime_restore_method, runtime_checkpoint)
 		return _sealed_action_host_rejection("internal_fail_closed", "Blackjack host could not publish the accepted transaction.", request_key)
 	return result
 

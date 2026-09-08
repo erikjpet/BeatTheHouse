@@ -121,6 +121,12 @@ func _run() -> void:
 
 	var before := SlotState.read_machine(environment, "slot")
 	var before_active: Dictionary = before.get("active_bonus", {}) if typeof(before.get("active_bonus", {})) == TYPE_DICTIONARY else {}
+	var emitted_actions: Array = []
+	canvas.surface_action.connect(func(action: String, index: int, confirm_requested: bool) -> void:
+		emitted_actions.append({"action": action, "index": index, "confirm_requested": confirm_requested})
+	)
+	var deferred_blocked_before := int(app.get("deferred_embedded_refresh_blocked_surface_input_count"))
+	var visible_message_before := str(app.get("last_panel_message"))
 	if launch_position.x >= 0.0 and launch_position.y >= 0.0:
 		var click := InputEventMouseButton.new()
 		click.button_index = MOUSE_BUTTON_LEFT
@@ -149,9 +155,28 @@ func _run() -> void:
 		"takeover_active": bool(takeover_state.get("slot_active_bonus_active", false)),
 		"launch_in_progress_after_click": bool(after_active.get("launch_in_progress", false)),
 		"launched_ball_count_after_click": int(after_active.get("launched_ball_count", 0)),
+		"emitted_actions": emitted_actions,
+		"deferred_block_delta": int(app.get("deferred_embedded_refresh_blocked_surface_input_count")) - deferred_blocked_before,
+		"visible_message_before": visible_message_before,
+		"visible_message_after": str(app.get("last_panel_message")),
+		"last_game_result": _result_summary(app.get("last_game_result")),
 	}
 	print("PINBALL_GAMEPLAY_PROBE %s" % JSON.stringify(report))
 	_finish()
+
+
+func _result_summary(value: Variant) -> Dictionary:
+	if typeof(value) != TYPE_DICTIONARY:
+		return {}
+	var result: Dictionary = value
+	return {
+		"ok": bool(result.get("ok", false)),
+		"committed": bool(result.get("blackjack_host_committed", false)),
+		"action_id": str(result.get("action_id", "")),
+		"error_code": str(result.get("error_code", "")),
+		"message": str(result.get("message", "")),
+		"request_key": str(result.get("blackjack_host_request_key", "")),
+	}
 
 
 func _capture(file_name: String) -> void:

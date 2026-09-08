@@ -47,6 +47,8 @@ func sealed_action_authority_contract() -> Dictionary:
 		"wager_cost_proposal_method": &"_machine_game_wager_cost_proposal",
 		"trusted_candidate_resolve_method": &"_machine_game_resolve_candidate",
 		"trusted_candidate_wager_method": &"_machine_game_wager_cost_candidate",
+		"proposal_runtime_checkpoint_method": &"_machine_game_runtime_checkpoint",
+		"proposal_runtime_restore_method": &"_machine_game_runtime_restore",
 		"host_auto_tick_method": &"_machine_game_host_needs_auto_tick",
 		"surface_intent_key": "",
 		"surface_intent_index_key": "",
@@ -571,6 +573,27 @@ func _machine_game_wager_cost_proposal(action_id: String, stake: int, run_snapsh
 
 func _machine_game_wager_cost_candidate(action_id: String, stake: int, candidate: RunState, ui_state: Dictionary = {}) -> int:
 	return wager_cost_for_context(action_id, stake, candidate, candidate.current_environment, ui_state.duplicate(true))
+
+
+func _machine_game_runtime_checkpoint(candidate: RunState) -> Dictionary:
+	if candidate == null:
+		return {}
+	var machine := _peek_machine(candidate.current_environment)
+	var active: Dictionary = machine.get("active_bonus", {}) if typeof(machine.get("active_bonus", {})) == TYPE_DICTIONARY else {}
+	if str(active.get("family", "")) != "pinball":
+		return {}
+	return {
+		"active_bonus": active.duplicate(true),
+		"runtime": PinballFeatureScript.runtime_transaction_checkpoint(active),
+	}
+
+
+func _machine_game_runtime_restore(checkpoint: Dictionary) -> bool:
+	if checkpoint.is_empty():
+		return true
+	var active: Dictionary = checkpoint.get("active_bonus", {}) if typeof(checkpoint.get("active_bonus", {})) == TYPE_DICTIONARY else {}
+	var runtime_checkpoint: Dictionary = checkpoint.get("runtime", {}) if typeof(checkpoint.get("runtime", {})) == TYPE_DICTIONARY else {}
+	return PinballFeatureScript.restore_runtime_transaction_checkpoint(active, runtime_checkpoint)
 
 
 func _machine_game_host_needs_auto_tick(surface_time_msec: int, run_state: RunState, environment: Dictionary) -> bool:

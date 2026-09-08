@@ -16,7 +16,7 @@ const SEEDS := ["FIRST-NIGHT-ACE-17", "PLAYTEST-CATALOG-01", "SCENARIO-AUDIT"]
 const SETTINGS_PATH := "user://fix06_28_working_order_settings.json"
 const META_PATH := "user://fix06_28_working_order_meta.json"
 const PROFILE_PATH := "user://fix06_28_working_order_profile.json"
-const REQUIRED_SURFACE_FAMILIES := ["novelty", "slots", "dice", "cards", "wheel", "coin_pusher", "craps", "crew_poker"]
+const REQUIRED_SURFACE_FAMILIES := ["scratch_tickets", "pull_tabs", "slots", "dice", "blackjack", "baccarat", "cards", "wheel", "coin_pusher", "craps", "crew_poker"]
 const REQUIRED_PUNCHLINE_LAYERS := ["club", "casino", "back_room"]
 const REQUIRED_CREW_MILESTONES := ["favor", "job", "delivery"]
 
@@ -323,9 +323,12 @@ func _verify_visible_crew_favor_delivery_route() -> void:
 
 func _verify_surface_families_via_visible_library() -> void:
 	var representatives := [
-		{"family": "novelty", "game_id": "pull_tabs", "label": "Pull Tabs"},
+		{"family": "scratch_tickets", "game_id": "scratch_tickets", "label": "Scratch Tickets"},
+		{"family": "pull_tabs", "game_id": "pull_tabs", "label": "Pull Tabs"},
 		{"family": "slots", "game_id": "slot", "label": "Slot"},
 		{"family": "dice", "game_id": "bar_dice", "label": "Bar Dice"},
+		{"family": "blackjack", "game_id": "blackjack", "label": "Blackjack"},
+		{"family": "baccarat", "game_id": "baccarat", "label": "Baccarat"},
 		{"family": "cards", "game_id": "video_poker", "label": "Video Poker"},
 		{"family": "wheel", "game_id": "roulette", "label": "Roulette"},
 		{"family": "coin_pusher", "game_id": "coin_pusher", "label": "Quarter Falls"},
@@ -540,7 +543,8 @@ func _bounded_text(value: Variant, limit: int = 240) -> String:
 
 func _preferred_surface_binding(hit_actions: Array) -> Dictionary:
 	var preferred := [
-		"pull_tab_buy", "slot_spin", "bar_dice_ack_cover", "bar_dice_throw", "bar_dice_reveal", "bar_dice_ack_call", "bar_dice_resolve", "bar_dice_roll", "bar_dice_press", "bar_dice_stake",
+		"scratch_all", "scratch_file_ticket", "scratch_buy", "pull_tab_buy", "slot_spin", "bar_dice_ack_cover", "bar_dice_throw", "bar_dice_reveal", "bar_dice_ack_call", "bar_dice_resolve", "bar_dice_roll", "bar_dice_press", "bar_dice_stake",
+		"blackjack_deal", "blackjack_hit", "blackjack_stand", "blackjack_double", "blackjack_chip", "baccarat_deal", "baccarat_bet", "baccarat_chip",
 		"video_poker_draw", "video_poker_deal", "video_poker_mark", "roulette_spin", "roulette_bet", "roulette_place_bet", "coin_pusher_collect", "coin_pusher_drop_charge", "coin_pusher_drop", "coin_pusher_skill_stop", "coin_pusher_insert", "coin_pusher_play",
 		"craps_roll", "craps_bet", "crew_poker_draw", "crew_poker_deal", "crew_poker_call", "crew_poker_check", "crew_poker_fold", "crew_poker_mark",
 	]
