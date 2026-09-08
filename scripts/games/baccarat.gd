@@ -178,6 +178,23 @@ func environment_state_generated(run_state: RunState, environment: Dictionary, g
 	_apply_grand_casino_dealer_assignment(generated_state, run_state, environment)
 
 
+func surface_realtime_uses_lightweight_ui_state() -> bool:
+	return true
+
+
+func surface_realtime_ui_state_keys() -> Array:
+	# Realtime deal/squeeze/skill projection consumes only retained Baccarat
+	# session fields. FoundationMain adds the authoritative surface clock.
+	return [
+		"drunk_scaled_surface_time_msec", "reduce_motion",
+		"selected_action_id", "selected_action_kind", "selected_index",
+		"selected_chip", "selected_stake", "baccarat_bets", "baccarat_rebet",
+		"baccarat_undo_stack", "baccarat_squeeze_progress", "baccarat_squeeze_origin",
+		"edge_sort_answers", "edge_sort_challenge", "edge_sort_answer_mode",
+		"shoe_read_challenge", "table_notice", "table_social_alignment",
+	]
+
+
 func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
 	var table := _table_state_preview(run_state, environment)
 	var session := _normalized_session(run_state, environment, ui_state, table)
@@ -2993,7 +3010,11 @@ func _normalized_session(_run_state: RunState, _environment: Dictionary, ui_stat
 	# shell avoids cloning unrelated UI payload on every command/surface read.
 	var host_ledger: Dictionary = table.get("_blackjack_action_authority", {}) if typeof(table.get("_blackjack_action_authority", {})) == TYPE_DICTIONARY else {}
 	var host_session_initialized := bool(host_ledger.get("initialized", false))
-	var session: Dictionary = (host_ledger.get("session", {}) as Dictionary).duplicate(true) if host_session_initialized and typeof(host_ledger.get("session", {})) == TYPE_DICTIONARY else ui_state.duplicate(false)
+	# Every nested collection this normalizer or its command callers can mutate is
+	# replaced with a normalized copy below (bets, rebet, undo, answers, and skill
+	# challenges). Own only the session shell here instead of recursively cloning
+	# the complete retained ceremony on every 16 ms animation refresh.
+	var session: Dictionary = (host_ledger.get("session", {}) as Dictionary).duplicate(false) if host_session_initialized and typeof(host_ledger.get("session", {})) == TYPE_DICTIONARY else ui_state.duplicate(false)
 	if host_session_initialized:
 		for key in TABLE_GAME_HOST_TRANSIENT_UI_KEYS:
 			if ui_state.has(key):

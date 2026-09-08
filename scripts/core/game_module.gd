@@ -325,6 +325,14 @@ func surface_realtime_patch_preserves_host_state() -> bool:
 	return false
 
 
+# Foreground games can suspend background machine/runtime ticks while a player
+# decision is unresolved. The default is intentionally a zero-allocation false;
+# modules that need the gate can inspect their authoritative retained state
+# directly instead of asking FoundationMain to construct a complete surface.
+func foreground_blocks_environment_runtime(_run_state: RunState, _environment: Dictionary, _ui_state: Dictionary = {}) -> bool:
+	return false
+
+
 func surface_auto_action_command(_ui_state: Dictionary, _run_state: RunState, _environment: Dictionary, _surface_status: Dictionary = {}) -> Dictionary:
 	return {"handled": false}
 

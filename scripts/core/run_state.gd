@@ -6584,11 +6584,13 @@ func _begin_grand_casino_duel(terms: Dictionary) -> Dictionary:
 
 func grand_casino_duel_active(environment: Dictionary = {}) -> bool:
 	var source := current_environment if environment.is_empty() else environment
+	var duel_state_value: Variant = narrative_flags.get("grand_casino_duel_state", {})
+	var duel_status := str((duel_state_value as Dictionary).get("status", "")) if typeof(duel_state_value) == TYPE_DICTIONARY else ""
 	return (
 		_is_grand_casino_environment(source)
 		and bool(narrative_flags.get("grand_casino_showdown_active", false))
 		and str(narrative_flags.get("grand_casino_showdown_step", "")) == GRAND_CASINO_SHOWDOWN_STEP_DUEL
-		and str(_copy_dict(narrative_flags.get("grand_casino_duel_state", {})).get("status", "")) == "active"
+		and duel_status == "active"
 	)
 
 
@@ -6605,6 +6607,17 @@ func grand_casino_duel_terms() -> Dictionary:
 
 func grand_casino_duel_session() -> Dictionary:
 	return _copy_dict(grand_casino_duel_status().get("blackjack_session", {}))
+
+
+# Read-only hot-path access for predicates that never retain or mutate the
+# authoritative duel session. State-changing callers continue to use the owned
+# copy returned by grand_casino_duel_session().
+func grand_casino_duel_session_readonly() -> Dictionary:
+	var state_value: Variant = narrative_flags.get("grand_casino_duel_state", {})
+	if typeof(state_value) != TYPE_DICTIONARY:
+		return {}
+	var session_value: Variant = (state_value as Dictionary).get("blackjack_session", {})
+	return session_value as Dictionary if typeof(session_value) == TYPE_DICTIONARY else {}
 
 
 func persist_grand_casino_duel_session(session: Dictionary) -> void:

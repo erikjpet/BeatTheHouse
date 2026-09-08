@@ -2338,6 +2338,27 @@ func _check_baccarat_surface_contract(game: GameModule, failures: Array, library
 	run_state.current_environment = environment.duplicate(true)
 
 	var surface := game.surface_state(run_state, environment, {})
+	var retained_environment: Dictionary = environment.duplicate(true)
+	var retained_table: Dictionary = ((retained_environment.get("game_states", {}) as Dictionary).get("baccarat", {}) as Dictionary)
+	var retained_ledger := BlackjackActionAuthorityScript.default_ledger("baccarat:retained-session", "retained-session-checkpoint")
+	retained_ledger["session"] = {
+		"selected_chip": 20,
+		"selected_stake": 20,
+		"baccarat_bets": {"player": 20},
+		"baccarat_rebet": {"banker": 20},
+		"baccarat_undo_stack": [{"tie": 5}],
+		"edge_sort_answers": ["left", "right"],
+		"edge_sort_challenge": {"challenge_id": "cow", "answers": ["left"]},
+		"shoe_read_challenge": {"challenge_id": "cow", "cue_sequence": ["low"]},
+	}
+	retained_table["_blackjack_action_authority"] = retained_ledger
+	var retained_before := JSON.stringify(retained_ledger)
+	game.surface_realtime_state_patch(run_state, retained_environment, {"surface_time_msec": 1000}, {})
+	game.surface_action_command("baccarat_clear", 0, false, {}, run_state, retained_environment)
+	var retained_after_table: Dictionary = ((retained_environment.get("game_states", {}) as Dictionary).get("baccarat", {}) as Dictionary)
+	var retained_after_ledger: Dictionary = retained_after_table.get("_blackjack_action_authority", {}) if typeof(retained_after_table.get("_blackjack_action_authority", {})) == TYPE_DICTIONARY else {}
+	if JSON.stringify(retained_after_ledger) != retained_before:
+		failures.append("Baccarat lightweight retained-session reads or commands mutated the authoritative host ledger by alias.")
 	if str(surface.get("surface_renderer", "")) != "baccarat":
 		failures.append("Baccarat surface did not route to the baccarat renderer.")
 	_check_idle_animation_liveness_contract(surface, "Baccarat betting surface", failures)
@@ -3070,6 +3091,19 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	var deal_ui: Dictionary = deal_click.get("ui_state", {})
 	if (deal_ui.get("player_hands", []) as Array).is_empty():
 		failures.append("Blackjack deal did not create an animated table hand.")
+	var runtime_gate_session := {
+		"player_hands": [{"cards": [{"rank": 10, "suit": 0}, {"rank": 5, "suit": 1}], "stood": false}],
+		"dealer_cards": [{"rank": 9, "suit": 2}, {"rank": 7, "suit": 3}],
+	}
+	var runtime_gate_before := JSON.stringify(runtime_gate_session)
+	if not game.foreground_blocks_environment_runtime(run_state, environment, runtime_gate_session):
+		failures.append("Blackjack unfinished-hand runtime gate did not suspend background environment ticks.")
+	if JSON.stringify(runtime_gate_session) != runtime_gate_before:
+		failures.append("Blackjack runtime gate mutated the retained hand while reading it.")
+	var complete_runtime_gate_session: Dictionary = runtime_gate_session.duplicate(true)
+	(complete_runtime_gate_session.get("player_hands", []) as Array)[0]["stood"] = true
+	if game.foreground_blocks_environment_runtime(run_state, environment, complete_runtime_gate_session):
+		failures.append("Blackjack completed-hand runtime gate kept background environment ticks suspended.")
 	var deal_remaining_shoe: Array = deal_ui.get("shoe", []) as Array
 	if not deal_remaining_shoe.is_empty():
 		failures.append("Blackjack deal kept a materialized shoe in transient UI state instead of the compact consumed-card cursor.")
@@ -3422,6 +3456,21 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	var auto_hand := game.surface_auto_action_command({"surface_time_msec": Time.get_ticks_msec()}, timer_run_state, timer_environment, {})
 	if str(auto_hand.get("action_id", "")) != "play_basic" or not bool(auto_hand.get("direct_resolve", false)) or not bool((auto_hand.get("ui_state", {}) as Dictionary).get("blackjack_sit_out", false)):
 		failures.append("Blackjack timer auto command did not resolve a sit-out hand through basic play.")
+	# The direct module assertion above consumes its timer. Re-arm that same
+	# authoritative table before exercising the separate sealed-host path.
+	var host_timer_table: Dictionary = ((timer_environment.get("game_states", {}) as Dictionary).get("blackjack", {}) as Dictionary)
+	host_timer_table["table_round_timer_started_msec"] = Time.get_ticks_msec() - GameModule.TABLE_ROUND_START_DELAY_MSEC - 100
+	var host_auto_hand := _blackjack_authority_auto_command(game, 5, timer_run_state, timer_environment, {"surface_time_msec": Time.get_ticks_msec()}, Time.get_ticks_msec())
+	var host_auto_prepared: Dictionary = host_auto_hand.get("_sealed_action_host_prepared", {}) if typeof(host_auto_hand.get("_sealed_action_host_prepared", {})) == TYPE_DICTIONARY else {}
+	var host_auto_delivery: Dictionary = host_auto_hand.get("_sealed_action_host_delivery", {}) if typeof(host_auto_hand.get("_sealed_action_host_delivery", {})) == TYPE_DICTIONARY else {}
+	if not bool(host_auto_hand.get("direct_resolve", false)) or host_auto_prepared.get("candidate", null) == null or host_auto_delivery.is_empty():
+		failures.append("Blackjack host auto hand did not carry its synchronous prepared delivery into resolution.")
+	else:
+		var host_auto_resolver := _blackjack_test_host(game, timer_run_state, 5)
+		var host_auto_result: Dictionary = host_auto_resolver.call("_sealed_action_host_resolve_intent", str(host_auto_hand.get("action_id", "")), int(host_auto_hand.get("set_stake", 5)), host_auto_delivery, host_auto_prepared)
+		host_auto_resolver.free()
+		if not bool(host_auto_result.get("ok", false)):
+			failures.append("Blackjack prepared host auto hand did not resolve through the sealed action boundary.")
 	var tutorial_timer_run: RunState = RunStateScript.new()
 	tutorial_timer_run.start_new("BLACKJACK-TUTORIAL-NO-TIMER", {"tutorial": true, "modifiers": {"tutorial_run": true}})
 	tutorial_timer_run.current_environment = timer_environment.duplicate(true)

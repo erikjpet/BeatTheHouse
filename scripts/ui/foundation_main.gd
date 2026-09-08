@@ -1602,6 +1602,16 @@ func _sealed_action_host_auto_intent(surface_time_msec: int) -> Dictionary:
 	_sealed_action_host_store_ledger(candidate, ledger)
 	if not _sealed_action_host_publish(candidate):
 		return _sealed_action_host_rejection("internal_fail_closed", "Blackjack host could not publish the auto action.")
+	if command.has("_sealed_action_host_delivery"):
+		# The automatic action is resolved synchronously by
+		# _apply_game_surface_automation_command. Carry the exact candidate that
+		# crossed the publish boundary just as the manual surface path does; cloning
+		# the whole run again adds no authority or isolation.
+		command["_sealed_action_host_prepared"] = {
+			"candidate": candidate,
+			"ledger": ledger,
+			"delivery": command.get("_sealed_action_host_delivery", {}),
+		}
 	return command
 
 
@@ -1973,7 +1983,6 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 	# the validated ledger value read-only here instead of cloning it once in the
 	# host and a second time in the provider.
 	var session: Dictionary = ledger.get("session", {}) if typeof(ledger.get("session", {})) == TYPE_DICTIONARY else {}
-	var wager_snapshot := _sealed_action_host_transient_run_snapshot(candidate)
 	var provider_contract: Dictionary = action_authority_contract
 	var wager_method := StringName(provider_contract.get("wager_cost_proposal_method", &""))
 	var resolve_method := StringName(provider_contract.get("resolve_proposal_method", &""))
@@ -1992,6 +2001,10 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 			"cost": maxi(0, int(current_game.call(candidate_wager_method, action_id, stake, candidate, session))),
 		}
 	else:
+		# Trusted candidate providers above read the already isolated RunState and
+		# never consume a serialized wager input. Materialize this snapshot only for
+		# legacy proposal providers that actually bind it into their fingerprint.
+		var wager_snapshot := _sealed_action_host_transient_run_snapshot(candidate)
 		var wager_input_fingerprint := GameRitualRuntimeScript.canonical_fingerprint({
 			"action_id": action_id,
 			"stake": stake,
@@ -2930,14 +2943,10 @@ func _restore_environment_active_game_state_keys(environment_data: Dictionary, a
 func _foreground_game_blocks_environment_runtime() -> bool:
 	if current_game == null:
 		return false
-	if current_game.get_family() != "cards":
-		return false
-	var ui_state := _current_game_surface_ui_state()
-	var hands: Array = ui_state.get("player_hands", []) if typeof(ui_state.get("player_hands", [])) == TYPE_ARRAY else []
-	var dealer_cards: Array = ui_state.get("dealer_cards", []) if typeof(ui_state.get("dealer_cards", [])) == TYPE_ARRAY else []
-	if hands.is_empty() or dealer_cards.is_empty():
-		return false
-	return not bool(ui_state.get("round_complete", false))
+	# The old generic cards gate built a full render/session snapshot every frame
+	# merely to inspect Blackjack's hand-complete bit. Let each module read its
+	# authoritative retained state; all games default to an allocation-free false.
+	return current_game.foreground_blocks_environment_runtime(run_state, run_state.current_environment, game_surface_ui_state)
 
 
 func _advance_alcohol_absorption() -> void:
@@ -2993,12 +3002,22 @@ func _current_game_surface_realtime_ui_state(now_msec: int) -> Dictionary:
 	if lightweight:
 		game_surface_realtime_ui_state_scratch.clear()
 		var ui_state := game_surface_realtime_ui_state_scratch
-		for key_value in current_game.surface_realtime_ui_state_keys():
+		var requested_keys := current_game.surface_realtime_ui_state_keys()
+		for key_value in requested_keys:
 			var key := str(key_value)
 			if not key.is_empty() and game_surface_ui_state.has(key):
 				ui_state[key] = game_surface_ui_state[key]
-		ui_state["surface_time_msec"] = now_msec
-		return ui_state
+		# Lightweight state still observes the same live host values as the complete
+		# path. In particular, never reuse a retained drunk-scaled timestamp: doing
+		# so can visually pin a realtime table animation to one frame.
+		ui_state["selected_action_id"] = selected_action_id
+		ui_state["selected_action_kind"] = selected_action_kind
+		ui_state["selected_stake"] = _current_selected_stake()
+		if requested_keys.has("surface_runtime_status"):
+			ui_state["surface_runtime_status"] = game_surface_canvas.surface_realtime_ui_status() if game_surface_canvas != null else {}
+		if requested_keys.has("focused_talk_speaker"):
+			ui_state["focused_talk_speaker"] = _focused_talk_speaker_snapshot()
+		return _apply_game_surface_time_fields(ui_state, now_msec)
 	var ui_state := game_surface_ui_state.duplicate(false)
 	ui_state["selected_action_id"] = selected_action_id
 	ui_state["selected_action_kind"] = selected_action_kind
@@ -7149,14 +7168,15 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 			_show_message(install_error)
 			_refresh_after_foundation_lifecycle_rollback(lifecycle_rollback)
 			return {"ok": false, "errors": [install_error]}
-	# RunGenerator installs the authoritative destination but deliberately cannot
-	# finalize renderer-owned scenario semantics. Complete that production-host
-	# boundary before delivery, departure from the new room, or autosave can
-	# observe an unfinalized dynamic sequence.
-	var destination_finalization := run_state.scenario_finalize_installed_environment(
-		library,
-		_copy_dict(run_state.current_environment.get("scenario_layout_context", {}))
-	)
+	# Production RunGenerator seals scenario semantics as part of its atomic
+	# install. Retain the fallback for injected/custom generators that do not
+	# advertise that contract, but never rebuild the same immutable proof twice.
+	var destination_finalization := {"ok": true, "inactive": true, "errors": []}
+	if not bool(install_result.get("scenario_finalized", false)):
+		destination_finalization = run_state.scenario_finalize_installed_environment(
+			library,
+			_copy_dict(run_state.current_environment.get("scenario_layout_context", {}))
+		)
 	if not bool(destination_finalization.get("ok", false)):
 		_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
 		var finalization_errors := _copy_array(destination_finalization.get("errors", []))

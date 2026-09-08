@@ -73,7 +73,12 @@ static func finalize_arrival(
 	if run_state == null or library == null:
 		return _fail(failures, "%s requires an active RunState and ContentLibrary." % context, "finalization", travel)
 	var target_id := str(run_state.current_world_node_id())
-	var finalized: Dictionary = run_state.scenario_finalize_installed_environment(library, layout_context.duplicate(true))
+	# Production travel now reports the finalization performed inside its atomic
+	# install. Mirror that boundary exactly; direct generation and custom fixture
+	# generators omit the marker and still exercise the explicit fallback.
+	var finalized: Dictionary = {"ok": true, "inactive": true, "already_finalized": true, "errors": []}
+	if not bool(travel.get("scenario_finalized", false)):
+		finalized = run_state.scenario_finalize_installed_environment(library, layout_context.duplicate(true))
 	if not bool(finalized.get("ok", false)):
 		return _fail(
 			failures,

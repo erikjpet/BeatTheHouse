@@ -135,11 +135,13 @@
       "event_classes": {
         "machine_button": "button", "wager_accept": "coin_pusher_coin_metal", "settlement": "payout",
         "reel_stop": "reel_stop", "feature_entry": "bonus_start", "jackpot_ack": "jackpot_hit",
+        "pinball_bumper_pop": "bumper", "pinball_money_ding": "pinball_money_ding",
         "tower_light": "coin_pusher_chirp", "attract": "reel_loop"
       },
       "visual_counterparts": {
         "machine_button": "slot.control_press", "wager_accept": "slot.bankroll_change", "settlement": "slot.payout_countup",
         "reel_stop": "slot.reel_stop", "feature_entry": "slot.feature_scene", "jackpot_ack": "slot.jackpot_panel",
+        "pinball_bumper_pop": "slot.pinball_bumper", "pinball_money_ding": "slot.pinball_award",
         "tower_light": "slot.tower_light", "attract": "slot.attract_animation"
       }
     }

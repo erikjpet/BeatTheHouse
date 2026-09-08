@@ -2033,6 +2033,28 @@ func _blackjack_resolve_proposal(action_id: String, stake: int, run_snapshot: Di
 	return proposal
 
 
+func foreground_blocks_environment_runtime(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> bool:
+	var session: Dictionary = ui_state
+	if _is_rourke_duel(run_state, environment):
+		session = run_state.grand_casino_duel_session_readonly()
+	else:
+		var states_value: Variant = environment.get("game_states", {})
+		if typeof(states_value) == TYPE_DICTIONARY:
+			var table_value: Variant = (states_value as Dictionary).get(get_id(), {})
+			if typeof(table_value) == TYPE_DICTIONARY:
+				var ledger_value: Variant = (table_value as Dictionary).get(BLACKJACK_HOST_LEDGER_KEY, {})
+				if typeof(ledger_value) == TYPE_DICTIONARY and bool((ledger_value as Dictionary).get("initialized", false)):
+					var session_value: Variant = (ledger_value as Dictionary).get("session", {})
+					if typeof(session_value) == TYPE_DICTIONARY:
+						session = session_value as Dictionary
+	var hands_value: Variant = session.get("player_hands", [])
+	var dealer_value: Variant = session.get("dealer_cards", [])
+	if typeof(hands_value) != TYPE_ARRAY or (hands_value as Array).is_empty() \
+			or typeof(dealer_value) != TYPE_ARRAY or (dealer_value as Array).is_empty():
+		return false
+	return not _all_hands_complete(session)
+
+
 func _blackjack_resolve_candidate(action_id: String, stake: int, candidate: RunState, rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
 	# Proposal replay may never consult wall time. A normal rendered surface owns
 	# this clock explicitly; headless, restored, and direct host settlements can
