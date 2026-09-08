@@ -45,6 +45,8 @@ func sealed_action_authority_contract() -> Dictionary:
 	return {
 		"resolve_proposal_method": &"_machine_game_resolve_proposal",
 		"wager_cost_proposal_method": &"_machine_game_wager_cost_proposal",
+		"trusted_candidate_resolve_method": &"_machine_game_resolve_candidate",
+		"trusted_candidate_wager_method": &"_machine_game_wager_cost_candidate",
 		"host_auto_tick_method": &"_machine_game_host_needs_auto_tick",
 		"surface_intent_key": "",
 		"surface_intent_index_key": "",
@@ -526,9 +528,22 @@ func _machine_game_resolve_proposal(action_id: String, stake: int, run_snapshot:
 		"ui_state": ui_state,
 	}
 	var candidate := RunState.new()
-	candidate.from_dict(run_snapshot.duplicate(true))
+	candidate.from_dict(run_snapshot)
 	var proposal_rng := RngStream.new()
-	proposal_rng.restore(rng_snapshot.duplicate(true))
+	proposal_rng.restore(rng_snapshot)
+	var result := _machine_game_resolve_candidate(action_id, stake, candidate, proposal_rng, ui_state)
+	var proposal := {
+		"ok": bool(result.get("ok", false)),
+		"input_fingerprint": RuntimeScript.canonical_fingerprint(proposal_input),
+		"result": result.duplicate(true),
+		"run_snapshot": candidate.to_save_snapshot(),
+		"rng_snapshot": proposal_rng.snapshot(),
+	}
+	proposal["output_fingerprint"] = RuntimeScript.canonical_fingerprint(proposal)
+	return proposal
+
+
+func _machine_game_resolve_candidate(action_id: String, stake: int, candidate: RunState, proposal_rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
 	var result: Dictionary
 	if action_id == "slot_handpay_acknowledge":
 		var acknowledgement := _slot_handpay_acknowledgement_proposal(candidate.current_environment)
@@ -541,25 +556,21 @@ func _machine_game_resolve_proposal(action_id: String, stake: int, run_snapshot:
 		result = resolve_with_context(action_id, stake, candidate, candidate.current_environment, proposal_rng, ui_state.duplicate(true))
 		if bool(result.get("ok", false)) and bool(result.get("host_apply_result", false)):
 			result["machine_game_proposal_requires_apply"] = true
-	var proposal := {
-		"ok": bool(result.get("ok", false)),
-		"input_fingerprint": RuntimeScript.canonical_fingerprint(proposal_input),
-		"result": result.duplicate(true),
-		"run_snapshot": candidate.to_save_snapshot(),
-		"rng_snapshot": proposal_rng.snapshot(),
-	}
-	proposal["output_fingerprint"] = RuntimeScript.canonical_fingerprint(proposal)
-	return proposal
+	return result
 
 
 func _machine_game_wager_cost_proposal(action_id: String, stake: int, run_snapshot: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
 	var candidate := RunState.new()
-	candidate.from_dict(run_snapshot.duplicate(true))
-	var cost := wager_cost_for_context(action_id, stake, candidate, candidate.current_environment, ui_state.duplicate(true))
+	candidate.from_dict(run_snapshot)
+	var cost := _machine_game_wager_cost_candidate(action_id, stake, candidate, ui_state)
 	return {
 		"cost": maxi(0, cost),
 		"input_fingerprint": RuntimeScript.canonical_fingerprint({"action_id": action_id, "stake": stake, "run_snapshot": run_snapshot, "ui_state": ui_state}),
 	}
+
+
+func _machine_game_wager_cost_candidate(action_id: String, stake: int, candidate: RunState, ui_state: Dictionary = {}) -> int:
+	return wager_cost_for_context(action_id, stake, candidate, candidate.current_environment, ui_state.duplicate(true))
 
 
 func _machine_game_host_needs_auto_tick(surface_time_msec: int, run_state: RunState, environment: Dictionary) -> bool:

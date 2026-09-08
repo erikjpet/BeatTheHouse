@@ -411,7 +411,8 @@ const TURN_TRANSACTION_SCALAR_FIELDS := [
 	"game_clock_minutes", "grand_casino_atm_interest_boundary_index", "act_index",
 	"run_status", "run_failure_reason", "run_failure_message",
 	"run_spending_score", "defer_next_bankroll_zero_failure",
-	"_crew_private_authority_id",
+	"_crew_private_authority_id", "_crew_heist_private_capsule",
+	"_crew_heist_private_fingerprint",
 	"_item_effects_loaded", "_item_definitions_loaded",
 	"_owned_item_lookup_cache_valid", "_turn_transaction_test_failure_stage",
 ]
@@ -433,6 +434,7 @@ const TURN_TRANSACTION_COLLECTION_FIELDS := [
 	"closing_time_state", "home_state", "_item_effects_by_id",
 	"_item_definitions_by_id", "_item_effect_total_cache",
 	"_owned_item_lookup_cache", "_scenario_sequence_definition_cache",
+	"world_sequence_registrations", "_world_sequence_definition_cache",
 ]
 const TURN_TRANSACTION_SHALLOW_CACHE_FIELDS := [
 	"_item_effects_by_id", "_item_definitions_by_id", "_item_effect_total_cache",
@@ -13433,6 +13435,47 @@ func _detached_environment_turn_candidate() -> RunState:
 	var candidate := get_script().new() as RunState
 	candidate._apply_environment_turn_snapshot(_environment_turn_snapshot(), false)
 	return candidate
+
+
+# Sealed game actions begin from trusted live state, not hostile save bytes. Reuse
+# the environment-turn transaction graph so a late run does not spend seconds
+# re-running every migration and reconciliation step before each button press.
+# The turn clone deliberately shares opaque game_states; game actions do mutate
+# that subtree, so detach it once here while preserving the current-room alias.
+func detached_host_action_candidate() -> RunState:
+	var candidate := _detached_environment_turn_candidate()
+	var game_states_value: Variant = current_environment.get("game_states", {})
+	if typeof(game_states_value) == TYPE_DICTIONARY:
+		candidate.current_environment["game_states"] = (game_states_value as Dictionary).duplicate(true)
+	else:
+		candidate.current_environment["game_states"] = {}
+	# A generated/loaded room already carries the save-normalized shell. Small
+	# hand-authored hosts may omit that shell entirely; normalize them once so
+	# retry/control receipts retain the historical save-boundary identity.
+	if not candidate.current_environment.has("world_node_id") \
+			or not candidate.current_environment.has("visual_context") \
+			or not candidate.current_environment.has("travel_lock_remaining"):
+		var trusted_environment := candidate.current_environment
+		candidate.current_environment = _normalize_environment(candidate.current_environment)
+		candidate.restore_trusted_scenario_semantics(trusted_environment)
+	# Hand-authored/test rooms can enter the live host before their first save
+	# normalization. Preserve the old sealed boundary's two context-relevant
+	# defaults without replaying the full migration pipeline on every real click.
+	candidate.current_environment["economic_profile"] = _normalize_economic_profile(
+		_copy_dict(candidate.current_environment.get("economic_profile", {}))
+	)
+	candidate._activate_current_local_suspicion(true)
+	return candidate
+
+
+# Publishes an already isolated, validated game-action candidate through the
+# same graph-consistent in-place boundary used by environment turns. External
+# references to RunState, the room, TownState, and NumbersModel stay valid.
+func publish_host_action_candidate(candidate: RunState) -> bool:
+	if candidate == null or candidate == self:
+		return false
+	_publish_environment_turn_candidate(candidate)
+	return true
 
 
 func _publish_environment_turn_candidate(candidate: RunState) -> void:

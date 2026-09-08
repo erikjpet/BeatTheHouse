@@ -1398,11 +1398,7 @@ func _sealed_action_host_transient_run_snapshot(candidate: RunState) -> Dictiona
 func _sealed_action_host_detached() -> RunState:
 	if run_state == null:
 		return null
-	return _sealed_action_host_restored_candidate(
-		run_state.to_save_snapshot(),
-		_copy_dict(run_state.current_environment.get("scenario_layout_context", {})),
-		run_state.current_environment
-	)
+	return run_state.detached_host_action_candidate()
 
 
 func _sealed_action_host_restored_candidate(snapshot: Dictionary, layout_context: Dictionary = {}, trusted_environment: Dictionary = {}) -> RunState:
@@ -1437,40 +1433,8 @@ func _sealed_action_host_normalized_candidate(candidate: RunState) -> RunState:
 func _sealed_action_host_publish(candidate: RunState) -> bool:
 	if candidate == null or run_state == null:
 		return false
-	var normalized := _sealed_action_host_normalized_candidate(candidate)
-	if normalized == null:
+	if not run_state.publish_host_action_candidate(candidate):
 		return false
-	var snapshot := normalized.to_save_snapshot()
-	# _sealed_action_host_normalized_candidate() has already crossed the exact
-	# save/restore boundary. The live restore below is the independent second
-	# crossing, so a third throwaway RunState added no authority while forcing two
-	# more full-run serializations for every publish.
-	var snapshot_fingerprint := GameRitualRuntimeScript.canonical_fingerprint(snapshot)
-	var original_snapshot := run_state.to_save_snapshot()
-	var original_environment := run_state.current_environment
-	run_state.from_dict(snapshot)
-	var published_restored := run_state.restore_trusted_scenario_semantics(normalized.current_environment)
-	if not published_restored:
-		var published_finalization := run_state.scenario_finalize_installed_environment(
-			library,
-			_copy_dict(normalized.current_environment.get("scenario_layout_context", {}))
-		)
-		published_restored = bool(published_finalization.get("ok", false))
-	if not published_restored:
-		run_state.from_dict(original_snapshot)
-		run_state.current_environment = original_environment
-		return false
-	# Verify before changing the old environment object. It remains an untouched
-	# rollback capsule until every restored field has matched the sealed snapshot.
-	if GameRitualRuntimeScript.canonical_fingerprint(run_state.to_save_snapshot()) != snapshot_fingerprint:
-		run_state.from_dict(original_snapshot)
-		run_state.current_environment = original_environment
-		return false
-	var published_environment := run_state.current_environment
-	original_environment.clear()
-	for key in published_environment:
-		original_environment[key] = published_environment[key]
-	run_state.current_environment = original_environment
 	_set_active_game_binding(current_game.get_id() if current_game != null else "")
 	return true
 
@@ -1537,6 +1501,7 @@ func _sealed_action_host_surface_intent(surface_action: String, index: int, conf
 	if current_game.has_method("_has_dealt_hand") and not current_game.call("_has_dealt_hand", session) and _current_selected_stake() > 0:
 		session["selected_stake"] = _current_selected_stake()
 	var command: Dictionary = current_game.surface_action_command(surface_action, index, confirm_requested, session, candidate, candidate.current_environment)
+	command.erase("_sealed_action_host_prepared")
 	if bool(command.get("handled", false)):
 		var next_session: Dictionary = command.get("ui_state", session) if typeof(command.get("ui_state", session)) == TYPE_DICTIONARY else session
 		ledger = ActionAuthorityScript.stage_session_cow(ledger, next_session)
@@ -1546,9 +1511,6 @@ func _sealed_action_host_surface_intent(surface_action: String, index: int, conf
 			# non-ledger defaults. The delivery must fingerprint that exact stable
 			# candidate, which is the one published below.
 			_sealed_action_host_store_ledger(candidate, ledger)
-			candidate = _sealed_action_host_normalized_candidate(candidate)
-			if candidate == null:
-				return _sealed_action_host_rejection("internal_fail_closed", "Blackjack staged action could not be normalized before sealing.")
 			ledger = _sealed_action_host_ledger(candidate, true)
 			var action_id := str(command.get("action_id", ""))
 			var delivery_stake := int(command.get("set_stake", _current_selected_stake()))
@@ -1563,6 +1525,12 @@ func _sealed_action_host_surface_intent(surface_action: String, index: int, conf
 	_sealed_action_host_store_ledger(candidate, ledger)
 	if not _sealed_action_host_publish(candidate):
 		return _sealed_action_host_rejection("internal_fail_closed", "Blackjack host could not publish the staged action.")
+	if command.has("_sealed_action_host_delivery"):
+		command["_sealed_action_host_prepared"] = {
+			"candidate": candidate,
+			"ledger": ledger,
+			"delivery": command.get("_sealed_action_host_delivery", {}),
+		}
 	return command
 
 
@@ -1610,9 +1578,6 @@ func _sealed_action_host_auto_intent(surface_time_msec: int) -> Dictionary:
 		ledger = ActionAuthorityScript.stage_session_cow(ledger, next_session)
 		if bool(command.get("direct_resolve", false)) or bool(command.get("resolve", false)):
 			_sealed_action_host_store_ledger(candidate, ledger)
-			candidate = _sealed_action_host_normalized_candidate(candidate)
-			if candidate == null:
-				return _sealed_action_host_rejection("internal_fail_closed", "Blackjack staged auto action could not be normalized before sealing.")
 			ledger = _sealed_action_host_ledger(candidate, true)
 			var delivery_stake := int(command.get("set_stake", _current_selected_stake()))
 			var issued: Dictionary = ActionAuthorityScript.issue_delivery_cow(ledger, str(command.get("action_id", "")), _sealed_action_host_trusted_context(candidate, delivery_stake), delivery_stake, recovery_session)
@@ -1636,6 +1601,10 @@ func _sealed_action_host_preview_wager_cost(action_id: String, stake: int) -> in
 		return 0
 	var ledger := _sealed_action_host_ledger(candidate, true)
 	_sealed_action_host_store_ledger(candidate, ledger)
+	var trusted_wager_method := StringName(action_authority_contract.get("trusted_candidate_wager_method", &""))
+	if not trusted_wager_method.is_empty() and current_game.has_method(trusted_wager_method):
+		var trusted_session: Dictionary = ledger.get("session", {}) if typeof(ledger.get("session", {})) == TYPE_DICTIONARY else {}
+		return maxi(0, int(current_game.call(trusted_wager_method, action_id, stake, candidate, trusted_session)))
 	var snapshot := _sealed_action_host_transient_run_snapshot(candidate)
 	# The wager proposal is read-only and the canonical module binds this exact
 	# session into its input fingerprint; no mutable staging happens on this path.
@@ -1751,6 +1720,10 @@ func _sealed_action_host_cached_replay(delivery_claim: Dictionary) -> Dictionary
 func _sealed_action_host_present_cached_replay(result: Dictionary) -> bool:
 	if not _sealed_action_host_is_canonical_replay(result):
 		return false
+	if FoundationActionViewModelScript == null:
+		FoundationActionViewModelScript = load(str(RUN_UI_SCRIPT_PATHS.get("FoundationActionViewModelScript", ""))) as Script
+	if FoundationActionViewModelScript == null:
+		return false
 	# Cache hits may refresh presentation, but they are not a second action
 	# boundary and must never repeat tutorials, audio, absorption, autosave,
 	# interrupts, outcome scheduling, or any other one-shot consumer.
@@ -1808,6 +1781,47 @@ func _sealed_action_host_proposal_valid(proposal: Dictionary, proposal_input: Di
 			or canonical_output_fingerprint != GameRitualRuntimeScript.canonical_fingerprint(canonical_output):
 		return false
 	return canonical_output_fingerprint == provided_output_fingerprint
+
+
+func _sealed_action_host_candidate_proposal(resolve_method: StringName, action_id: String, stake: int, base_candidate: RunState, input_ledger: Dictionary, proposal_input: Dictionary, proposal_input_fingerprint: String, session: Dictionary) -> Dictionary:
+	if base_candidate == null or resolve_method.is_empty() or not current_game.has_method(resolve_method):
+		return {}
+	var proposal_candidate := base_candidate.detached_host_action_candidate()
+	_sealed_action_host_store_ledger(proposal_candidate, input_ledger)
+	var proposal_rng := RngStream.new()
+	proposal_rng.restore(proposal_input.get("rng_snapshot", {}))
+	var result: Dictionary = current_game.call(resolve_method, action_id, stake, proposal_candidate, proposal_rng, session)
+	var proposal := {
+		"ok": bool(result.get("ok", false)),
+		"input_fingerprint": proposal_input_fingerprint,
+		"result": result.duplicate(true),
+		"run_snapshot": proposal_candidate.to_save_snapshot(),
+		"rng_snapshot": proposal_rng.snapshot(),
+	}
+	proposal["output_fingerprint"] = GameRitualRuntimeScript.canonical_fingerprint(proposal)
+	return {"proposal": proposal, "candidate": proposal_candidate}
+
+
+func _sealed_action_host_candidate_proposals_match(first: Dictionary, replay: Dictionary, proposal_input: Dictionary) -> bool:
+	var expected_input_fingerprint := str(first.get("input_fingerprint", ""))
+	if expected_input_fingerprint.is_empty() or expected_input_fingerprint != str(replay.get("input_fingerprint", "")):
+		return false
+	var expected_keys := ["input_fingerprint", "ok", "output_fingerprint", "result", "rng_snapshot", "run_snapshot"]
+	expected_keys.sort()
+	for proposal in [first, replay]:
+		if typeof(proposal) != TYPE_DICTIONARY:
+			return false
+		var keys := (proposal as Dictionary).keys()
+		keys.sort()
+		if keys != expected_keys \
+				or str((proposal as Dictionary).get("input_fingerprint", "")) != expected_input_fingerprint \
+				or typeof((proposal as Dictionary).get("result", null)) != TYPE_DICTIONARY \
+				or typeof((proposal as Dictionary).get("run_snapshot", null)) != TYPE_DICTIONARY \
+				or typeof((proposal as Dictionary).get("rng_snapshot", null)) != TYPE_DICTIONARY:
+			return false
+		if str((proposal as Dictionary).get("output_fingerprint", "")).is_empty():
+			return false
+	return str(first.get("output_fingerprint", "")) == str(replay.get("output_fingerprint", ""))
 
 
 func _sealed_action_host_snapshot_ledger(snapshot: Dictionary) -> Dictionary:
@@ -1901,11 +1915,29 @@ func _sealed_action_host_advance_environment_turn(candidate: RunState) -> Dictio
 	return candidate.advance_environment_turns(1)
 
 
-func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_claim: Dictionary = {}) -> Dictionary:
+func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_claim: Dictionary = {}, prepared_claim: Dictionary = {}) -> Dictionary:
 	var delivery_key := str(delivery_claim.get("request_key", ""))
 	if not _current_game_uses_action_authority() or run_state == null or action_id.is_empty():
 		return _sealed_action_host_rejection("invalid_intent", "Blackjack action intent is unavailable.", delivery_key)
-	var prepared := _sealed_action_host_prepare_delivery(action_id, stake, delivery_claim)
+	var prepared: Dictionary = prepared_claim
+	if not prepared.is_empty():
+		var prepared_candidate: RunState = prepared.get("candidate", null) as RunState
+		var prepared_ledger: Dictionary = prepared.get("ledger", {}) if typeof(prepared.get("ledger", {})) == TYPE_DICTIONARY else {}
+		var prepared_delivery: Dictionary = prepared.get("delivery", {}) if typeof(prepared.get("delivery", {})) == TYPE_DICTIONARY else {}
+		if prepared_candidate == null \
+				or str(prepared_delivery.get("action_id", "")) != action_id \
+				or int(prepared_delivery.get("stake", -1)) != stake \
+				or GameRitualRuntimeScript.canonical_json(prepared_delivery) != GameRitualRuntimeScript.canonical_json(delivery_claim) \
+				or GameRitualRuntimeScript.canonical_json(prepared_ledger.get("pending_delivery", {})) != GameRitualRuntimeScript.canonical_json(prepared_delivery):
+			return _sealed_action_host_rejection("stale_boundary", "Blackjack prepared delivery no longer matched its synchronous action boundary.", delivery_key)
+		prepared = {
+			"ok": true,
+			"delivery": prepared_delivery,
+			"_sealed_candidate": prepared_candidate,
+			"_sealed_ledger": prepared_ledger,
+		}
+	else:
+		prepared = _sealed_action_host_prepare_delivery(action_id, stake, delivery_claim)
 	if not bool(prepared.get("ok", false)):
 		return prepared
 	if typeof(prepared.get("cached_response", null)) == TYPE_DICTIONARY:
@@ -1933,18 +1965,30 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 	var provider_contract: Dictionary = action_authority_contract
 	var wager_method := StringName(provider_contract.get("wager_cost_proposal_method", &""))
 	var resolve_method := StringName(provider_contract.get("resolve_proposal_method", &""))
+	var candidate_wager_method := StringName(provider_contract.get("trusted_candidate_wager_method", &""))
+	var candidate_resolve_method := StringName(provider_contract.get("trusted_candidate_resolve_method", &""))
+	var uses_trusted_candidate_provider := not candidate_wager_method.is_empty() \
+			and not candidate_resolve_method.is_empty() \
+			and current_game.has_method(candidate_wager_method) \
+			and current_game.has_method(candidate_resolve_method)
 	if wager_method.is_empty() or resolve_method.is_empty() \
 			or not current_game.has_method(wager_method) or not current_game.has_method(resolve_method):
 		return _sealed_action_host_rejection("invalid_intent", "Sealed action proposal methods are unavailable.", request_key)
-	var wager_proposal: Dictionary = current_game.call(wager_method, action_id, stake, wager_snapshot, session)
-	var wager_input_fingerprint := GameRitualRuntimeScript.canonical_fingerprint({
-		"action_id": action_id,
-		"stake": stake,
-		"run_snapshot": wager_snapshot,
-		"ui_state": session,
-	})
-	if str(wager_proposal.get("input_fingerprint", "")) != wager_input_fingerprint:
-		return _sealed_action_host_rejection("invalid_proposal", "Blackjack wager proposal did not match its canonical input.", request_key)
+	var wager_proposal: Dictionary
+	if uses_trusted_candidate_provider:
+		wager_proposal = {
+			"cost": maxi(0, int(current_game.call(candidate_wager_method, action_id, stake, candidate, session))),
+		}
+	else:
+		var wager_input_fingerprint := GameRitualRuntimeScript.canonical_fingerprint({
+			"action_id": action_id,
+			"stake": stake,
+			"run_snapshot": wager_snapshot,
+			"ui_state": session,
+		})
+		wager_proposal = current_game.call(wager_method, action_id, stake, wager_snapshot, session)
+		if str(wager_proposal.get("input_fingerprint", "")) != wager_input_fingerprint:
+			return _sealed_action_host_rejection("invalid_proposal", "Blackjack wager proposal did not match its canonical input.", request_key)
 	var wager_cost := maxi(0, int(wager_proposal.get("cost", 0)))
 	var funding_preview := candidate.preview_grand_casino_wager_funding(current_game.get_id(), wager_cost, candidate.current_environment)
 	if not bool(funding_preview.get("ok", false)):
@@ -1983,16 +2027,28 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 		proposal_input.get("run_snapshot", {}),
 		compact_input_ledger
 	)
-	var compact_proposal: Dictionary = current_game.call(
-		resolve_method,
-		action_id,
-		stake,
-		compact_proposal_input.get("run_snapshot", {}),
-		compact_proposal_input.get("rng_snapshot", {}),
-		session
-	)
-	if not _sealed_action_host_proposal_valid(compact_proposal, compact_proposal_input):
-		return _sealed_action_host_rejection("invalid_proposal", "Blackjack game proposal failed closed validation.", request_key)
+	var compact_proposal: Dictionary
+	var trusted_proposed_candidate: RunState
+	if uses_trusted_candidate_provider:
+		var compact_input_fingerprint := GameRitualRuntimeScript.canonical_fingerprint(compact_proposal_input)
+		var first_bundle := _sealed_action_host_candidate_proposal(candidate_resolve_method, action_id, stake, candidate, compact_input_ledger, compact_proposal_input, compact_input_fingerprint, session)
+		var replay_bundle := _sealed_action_host_candidate_proposal(candidate_resolve_method, action_id, stake, candidate, compact_input_ledger, compact_proposal_input, compact_input_fingerprint, session)
+		compact_proposal = first_bundle.get("proposal", {})
+		var replay_proposal: Dictionary = replay_bundle.get("proposal", {})
+		if not _sealed_action_host_candidate_proposals_match(compact_proposal, replay_proposal, compact_proposal_input):
+			return _sealed_action_host_rejection("invalid_proposal", "Blackjack game proposal failed closed validation.", request_key)
+		trusted_proposed_candidate = first_bundle.get("candidate", null) as RunState
+	else:
+		compact_proposal = current_game.call(
+			resolve_method,
+			action_id,
+			stake,
+			compact_proposal_input.get("run_snapshot", {}),
+			compact_proposal_input.get("rng_snapshot", {}),
+			session
+		)
+		if not _sealed_action_host_proposal_valid(compact_proposal, compact_proposal_input):
+			return _sealed_action_host_rejection("invalid_proposal", "Blackjack game proposal failed closed validation.", request_key)
 	var compact_output_ledger := _sealed_action_host_snapshot_ledger(compact_proposal.get("run_snapshot", {}))
 	var expanded_ledger := _sealed_action_host_expand_proposal_ledger(funded_ledger, compact_input_ledger, compact_output_ledger)
 	if expanded_ledger.is_empty():
@@ -2000,14 +2056,10 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 	# Both replacements below are top-level. The compact proposal has already
 	# passed exact replay validation, and its nested values remain read-only.
 	var proposal := compact_proposal.duplicate(false)
-	proposal["input_fingerprint"] = GameRitualRuntimeScript.canonical_fingerprint(proposal_input)
 	proposal["run_snapshot"] = _sealed_action_host_snapshot_with_ledger(
 		compact_proposal.get("run_snapshot", {}),
 		expanded_ledger
 	)
-	var expanded_proposal_content := proposal.duplicate(false)
-	expanded_proposal_content.erase("output_fingerprint")
-	proposal["output_fingerprint"] = GameRitualRuntimeScript.canonical_fingerprint(expanded_proposal_content)
 	var proposal_fingerprints := _sealed_action_host_proposal_fingerprints(proposal, proposal_input)
 	# Proposal fingerprints are sealed above and the local proposal is never read
 	# again. Isolate the result's top-level host metadata without cloning nested
@@ -2022,11 +2074,13 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 			or str(result.get("action_id", "")) != action_id \
 			or str(result.get("environment_id", "")) != str(candidate.current_environment.get("id", "")):
 		return _sealed_action_host_rejection("invalid_proposal", "Blackjack result identity did not match the sealed delivery.", request_key)
-	var proposed_candidate := _sealed_action_host_restored_candidate(
-		compact_proposal.get("run_snapshot", {}),
-		_copy_dict(candidate.current_environment.get("scenario_layout_context", {})),
-		candidate.current_environment
-	)
+	var proposed_candidate := trusted_proposed_candidate
+	if proposed_candidate == null:
+		proposed_candidate = _sealed_action_host_restored_candidate(
+			compact_proposal.get("run_snapshot", {}),
+			_copy_dict(candidate.current_environment.get("scenario_layout_context", {})),
+			candidate.current_environment
+		)
 	if proposed_candidate == null:
 		return _sealed_action_host_rejection("invalid_proposal", "Blackjack proposal scenario semantics could not be rebuilt.", request_key)
 	if str(expanded_ledger.get("checkpoint_fingerprint", "")) != proposed_candidate.action_authority_checkpoint_fingerprint():
@@ -2202,15 +2256,16 @@ func _apply_game_surface_command(command: Dictionary, index: int = -1, confirm_r
 	var action_kind := str(command.get("action_kind", ""))
 	var resolved_surface_ui_state := _surface_command_resolution_ui_state(command)
 	var authority_delivery: Dictionary = (command.get("_sealed_action_host_delivery", {}) as Dictionary).duplicate(true)
+	var authority_prepared: Dictionary = (command.get("_sealed_action_host_prepared", {}) as Dictionary).duplicate(false) if typeof(command.get("_sealed_action_host_prepared", {})) == TYPE_DICTIONARY else {}
 	if direct_resolve and not action_id.is_empty():
-		_resolve_game_action(action_id, bool(command.get("skip_stake_validation", false)), bool(command.get("preserve_surface_ui_state", false)), false, resolved_surface_ui_state, true, direct_stake_override, authority_delivery)
+		_resolve_game_action(action_id, bool(command.get("skip_stake_validation", false)), bool(command.get("preserve_surface_ui_state", false)), false, resolved_surface_ui_state, true, direct_stake_override, authority_delivery, authority_prepared)
 		return true
 	if not action_id.is_empty() and not action_kind.is_empty():
 		var already_selected := selected_action_id == action_id and selected_action_kind == action_kind
 		if not already_selected:
 			select_game_action(action_id, action_kind, true)
 		if bool(command.get("resolve", false)) or confirm_requested or already_selected:
-			_resolve_game_action(action_id, bool(command.get("skip_stake_validation", false)), bool(command.get("preserve_surface_ui_state", false)), false, resolved_surface_ui_state, true, 0, authority_delivery)
+			_resolve_game_action(action_id, bool(command.get("skip_stake_validation", false)), bool(command.get("preserve_surface_ui_state", false)), false, resolved_surface_ui_state, true, 0, authority_delivery, authority_prepared)
 			return true
 	elif command.has("message"):
 		_show_message(str(command.get("message", "")))
@@ -11092,7 +11147,7 @@ func _add_current_game_panel(environment: Dictionary) -> void:
 	actions_list = previous_actions_list
 
 
-func _resolve_game_action(action_id: String, skip_stake_validation: bool = false, preserve_surface_ui_state: bool = false, wager_confirmed: bool = false, resolved_surface_ui_state: Dictionary = {}, input_route_guarded: bool = false, stake_override: int = 0, authority_delivery: Dictionary = {}) -> void:
+func _resolve_game_action(action_id: String, skip_stake_validation: bool = false, preserve_surface_ui_state: bool = false, wager_confirmed: bool = false, resolved_surface_ui_state: Dictionary = {}, input_route_guarded: bool = false, stake_override: int = 0, authority_delivery: Dictionary = {}, authority_prepared: Dictionary = {}) -> void:
 	if action_id.is_empty() or current_game == null:
 		return
 	var current_action_uses_authority := _current_game_uses_action_authority()
@@ -11160,10 +11215,14 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 	var debug_rollback_started_usec := Time.get_ticks_usec() if debug_coin_pusher_host else 0
 	var compact_action_rollback := current_game.host_action_rollback_snapshot(action_id, run_state, run_state.current_environment)
 	var uses_compact_action_rollback := bool(compact_action_rollback.get("supported", false))
-	var boundary_rollback_run := {} if uses_compact_action_rollback else run_state.to_dict()
+	# Sealed actions resolve and publish on an isolated RunState candidate. A
+	# rejection cannot touch live state, so taking a second whole-run rollback here
+	# only blocks the input thread on accumulated saves.
+	var authority_owns_action_rollback := current_action_uses_authority
+	var boundary_rollback_run := {} if uses_compact_action_rollback or authority_owns_action_rollback else run_state.to_dict()
 	if debug_coin_pusher_host:
 		debug_host_timing["host_rollback_snapshot"] = Time.get_ticks_usec() - debug_rollback_started_usec
-	var boundary_rollback_environment := {} if uses_compact_action_rollback else run_state.current_environment.duplicate(true)
+	var boundary_rollback_environment := {} if uses_compact_action_rollback or authority_owns_action_rollback else run_state.current_environment.duplicate(true)
 	var boundary_rollback_deferred_failure := run_state.defer_next_bankroll_zero_failure
 	var confirmed_all_in_wager := wager_confirmed and _wager_needs_final_bankroll_confirmation(current_game, action_id, stake, wager_cost, action_surface_ui_state)
 	if confirmed_all_in_wager:
@@ -11175,7 +11234,7 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 		debug_host_timing["host_pre_module"] = Time.get_ticks_usec() - debug_host_stage_started_usec
 		debug_host_stage_started_usec = Time.get_ticks_usec()
 	if current_action_uses_authority:
-		result = _sealed_action_host_resolve_intent(action_id, stake, authority_delivery)
+		result = _sealed_action_host_resolve_intent(action_id, stake, authority_delivery, authority_prepared)
 	else:
 		var wager_funding := run_state.fund_grand_casino_wager(current_game.get_id(), wager_cost, run_state.current_environment)
 		if not bool(wager_funding.get("ok", false)):
@@ -11226,7 +11285,7 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 				if uses_compact_action_rollback:
 					if not current_game.restore_host_action_rollback(compact_action_rollback, run_state, run_state.current_environment):
 						push_error("Game module failed to restore its declared compact host-action rollback token.")
-				else:
+				elif not authority_owns_action_rollback:
 					run_state.from_dict(boundary_rollback_run)
 					run_state.current_environment = boundary_rollback_environment
 				run_state.defer_next_bankroll_zero_failure = boundary_rollback_deferred_failure
@@ -14199,6 +14258,10 @@ func _game_view_snapshot(read_only_render_result: bool = false) -> Dictionary:
 
 
 func _current_game_surface_ui_state() -> Dictionary:
+	if FoundationActionViewModelScript == null:
+		FoundationActionViewModelScript = load(str(RUN_UI_SCRIPT_PATHS.get("FoundationActionViewModelScript", ""))) as Script
+	if FoundationActionViewModelScript == null:
+		return {}
 	return FoundationActionViewModelScript.current_game_surface_ui_state(self)
 
 
@@ -16503,6 +16566,10 @@ func _run_status_hud_model() -> Dictionary:
 	if _is_meta_session():
 		return _meta_status_hud_model()
 	if run_state == null:
+		return {}
+	if FoundationHudViewModelScript == null:
+		FoundationHudViewModelScript = load(str(RUN_UI_SCRIPT_PATHS.get("FoundationHudViewModelScript", ""))) as Script
+	if FoundationHudViewModelScript == null:
 		return {}
 	var pressure := _run_pressure_view()
 	var objective := _demo_objective_status()

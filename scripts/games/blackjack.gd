@@ -134,6 +134,8 @@ func sealed_action_authority_contract() -> Dictionary:
 	return {
 		"resolve_proposal_method": ActionAuthorityScript.RESOLVE_PROPOSAL_METHOD,
 		"wager_cost_proposal_method": ActionAuthorityScript.WAGER_COST_PROPOSAL_METHOD,
+		"trusted_candidate_resolve_method": &"_blackjack_resolve_candidate",
+		"trusted_candidate_wager_method": &"_blackjack_wager_cost_candidate",
 		"host_auto_tick_method": ActionAuthorityScript.HOST_AUTO_TICK_METHOD,
 		"surface_intent_key": ActionAuthorityScript.SURFACE_INTENT_KEY,
 		"surface_intent_index_key": ActionAuthorityScript.SURFACE_INTENT_INDEX_KEY,
@@ -2018,9 +2020,22 @@ func _blackjack_resolve_proposal(action_id: String, stake: int, run_snapshot: Di
 	}
 	var input_fingerprint := RuntimeScript.canonical_fingerprint(proposal_input)
 	var candidate := RunState.new()
-	candidate.from_dict(run_snapshot.duplicate(true))
+	candidate.from_dict(run_snapshot)
 	var rng := RngStream.new()
-	rng.restore(rng_snapshot.duplicate(true))
+	rng.restore(rng_snapshot)
+	var result := _blackjack_resolve_candidate(action_id, stake, candidate, rng, ui_state)
+	var proposal := {
+		"ok": bool(result.get("ok", false)),
+		"input_fingerprint": input_fingerprint,
+		"result": result.duplicate(true),
+		"run_snapshot": candidate.to_save_snapshot(),
+		"rng_snapshot": rng.snapshot(),
+	}
+	proposal["output_fingerprint"] = RuntimeScript.canonical_fingerprint(proposal)
+	return proposal
+
+
+func _blackjack_resolve_candidate(action_id: String, stake: int, candidate: RunState, rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
 	# Proposal replay may never consult wall time. A normal rendered surface owns
 	# this clock explicitly; headless, restored, and direct host settlements can
 	# legitimately omit it. Bind that missing transient value to the sealed
@@ -2032,15 +2047,7 @@ func _blackjack_resolve_proposal(action_id: String, stake: int, run_snapshot: Di
 	var result := _resolve_blackjack_proposal_core(action_id, stake, candidate, candidate.current_environment, rng, resolution_ui_state)
 	if bool(result.get("ok", false)) and action_id.begins_with("crew_play:"):
 		_rebind_pending_authority_checkpoint(candidate)
-	var proposal := {
-		"ok": bool(result.get("ok", false)),
-		"input_fingerprint": input_fingerprint,
-		"result": result.duplicate(true),
-		"run_snapshot": candidate.to_save_snapshot(),
-		"rng_snapshot": rng.snapshot(),
-	}
-	proposal["output_fingerprint"] = RuntimeScript.canonical_fingerprint(proposal)
-	return proposal
+	return result
 
 
 # Crew plays are the only Blackjack proposals that apply their visible fee and
@@ -2353,26 +2360,31 @@ func wager_cost_for_context(action_id: String, stake: int, run_state: RunState, 
 
 func _blackjack_wager_cost_proposal(action_id: String, stake: int, run_snapshot: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
 	var candidate := RunState.new()
-	candidate.from_dict(run_snapshot.duplicate(true))
+	candidate.from_dict(run_snapshot)
+	var cost := _blackjack_wager_cost_candidate(action_id, stake, candidate, ui_state)
+	return {
+		"cost": cost,
+		"input_fingerprint": RuntimeScript.canonical_fingerprint({"action_id": action_id, "stake": stake, "run_snapshot": run_snapshot, "ui_state": ui_state}),
+	}
+
+
+func _blackjack_wager_cost_candidate(action_id: String, stake: int, candidate: RunState, ui_state: Dictionary = {}) -> int:
 	var environment := candidate.current_environment
 	if action_id != "play_basic" and action_id != "blackjack_place_bet":
-		return {"cost": 0, "input_fingerprint": RuntimeScript.canonical_fingerprint({"action_id": action_id, "stake": stake, "run_snapshot": run_snapshot, "ui_state": ui_state})}
+		return 0
 	# Rourke's fixed ante belongs to the duel's internal player/Rourke stacks.
 	# Charging the normal cash/chip wager again at hand settlement can reject a
 	# completed hand and leave the player trapped behind the SETTLE control.
 	if _is_rourke_duel(candidate, environment):
-		return {"cost": 0, "input_fingerprint": RuntimeScript.canonical_fingerprint({"action_id": action_id, "stake": stake, "run_snapshot": run_snapshot, "ui_state": ui_state})}
+		return 0
 	var table: Dictionary = _table_state_preview(candidate, environment)
 	if bool(table.get("barred", false)):
-		return {"cost": 0, "input_fingerprint": RuntimeScript.canonical_fingerprint({"action_id": action_id, "stake": stake, "run_snapshot": run_snapshot, "ui_state": ui_state})}
+		return 0
 	var session: Dictionary = _normalized_session(candidate, environment, ui_state, table)
 	if bool(session.get("blackjack_sit_out", false)):
-		return {"cost": 0, "input_fingerprint": RuntimeScript.canonical_fingerprint({"action_id": action_id, "stake": stake, "run_snapshot": run_snapshot, "ui_state": ui_state})}
+		return 0
 	var total_wager := _wager_cost_from_session(_session_stake(stake, session), session, table, candidate)
-	return {
-		"cost": maxi(0, total_wager - _session_debited_wager(session)),
-		"input_fingerprint": RuntimeScript.canonical_fingerprint({"action_id": action_id, "stake": stake, "run_snapshot": run_snapshot, "ui_state": ui_state}),
-	}
+	return maxi(0, total_wager - _session_debited_wager(session))
 
 
 func _resolve_place_bet(stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary, read_only_run_state: bool = false) -> Dictionary:
