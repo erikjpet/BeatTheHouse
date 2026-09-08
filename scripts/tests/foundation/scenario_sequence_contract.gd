@@ -1066,6 +1066,8 @@ static func _check_base_semantic_producer(library: ContentLibrary, failures: Arr
 
 static func _check_lifecycle_finalization(library: ContentLibrary, failures: Array) -> void:
 	var definition := finalization_fixture_definition()
+	definition["sequence"]["expiry"] = {"boundary": "night_end", "after": 1, "policy": "cleanup"}
+	definition["sequence"]["sequence_signature"] = SequenceSchemaScript.calculated_signature_hash(definition)
 	var run_state := RunStateScript.new()
 	run_state.current_environment = {
 		"id": "bar_001", "archetype_id": "bar", "world_node_id": "bar_node", "environment_visit_id": "visit_1",
@@ -1092,6 +1094,29 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 	var replay_receipts := _array(_dict(run_state.current_environment.get("scenario_sequence_state", {})).get("visit_receipts", [])).size()
 	if not bool(finalized.get("ok", false)) or bool(finalized.get("replayed", true)) or not bool(replayed.get("replayed", false)) or first_receipts != 1 or replay_receipts != 1 or not bool(run_state.current_environment.get("scenario_semantic_ready", false)):
 		failures.append("Semantic finalization was not atomic/idempotent with exactly-once reentry: %s" % JSON.stringify(finalized))
+	# Leaving an unresolved expiring room deliberately persists a clean, terminal
+	# sequence state. Reinstalling that visited room must run its authored expired
+	# reentry policy; it is not a failed initialization merely because its status
+	# is already cleaned.
+	var expiring_source := RunStateScript.new()
+	expiring_source.current_environment = run_state.current_environment.duplicate(true)
+	var expiry := expiring_source.scenario_sequence_apply_expiry_boundary("night_end", 1)
+	var cleaned_state := _dict(expiring_source.current_environment.get("scenario_sequence_state", {}))
+	var revisit_host := RunStateScript.new()
+	var installed_revisit := revisit_host.set_environment(expiring_source.current_environment.duplicate(true))
+	revisit_host.current_environment["scenario_sequence_pending_visit_id"] = "visit_2"
+	var revisit_finalized := revisit_host.scenario_finalize_base_semantics([presentation], library)
+	var revisited_state := _dict(revisit_host.current_environment.get("scenario_sequence_state", {}))
+	if not bool(expiry.get("ok", false)) \
+			or str(cleaned_state.get("status", "")) != SequenceRuntimeScript.STATUS_CLEANED \
+			or not _array(cleaned_state.get("errors", [])).is_empty() \
+			or not bool(installed_revisit.get("ok", false)) \
+			or not bool(revisit_finalized.get("ok", false)) \
+			or str(revisited_state.get("status", "")) != SequenceRuntimeScript.STATUS_CLEANED \
+			or _array(revisited_state.get("visit_receipts", [])).size() != _array(cleaned_state.get("visit_receipts", [])).size() + 1 \
+			or _array(revisited_state.get("cleanup_receipts", [])).size() != _array(cleaned_state.get("cleanup_receipts", [])).size() \
+			or not bool(revisit_host.current_environment.get("scenario_semantic_ready", false)):
+		failures.append("A valid cleaned scenario room could not be persisted, reinstalled, and reentered through its expired policy: %s" % JSON.stringify(revisit_finalized))
 	var installed_definition := run_state.scenario_sequence_definition()
 	if not SequenceSchemaScript.is_sequence(installed_definition) or not bool(installed_definition.get(ScenarioEngineScript.VALIDATED_SEQUENCE_MARKER, false)) or str(installed_definition.get("sequence_signature", "")) != str(definition.get("sequence_signature", "")):
 		failures.append("Semantic finalization did not retain the exact catalog-validated installed sequence definition.")
@@ -3483,7 +3508,11 @@ static func _check_depth_remediation_contracts(failures: Array) -> void:
 		failures.append("Source-room expiry/cleanup receipts were not persisted with the room snapshot.")
 	var reentered := SequenceRuntimeScript.apply_reentry(restored_expired, definition, "expired_return")
 	var reentered_state := _dict(reentered.get("state", {}))
-	if not bool(reentered.get("ok", false)) or str(reentered.get("policy", "")) != "expired" or not _array(reentered_state.get("visit_receipts", [])).has("visit:expired_return"):
+	if not bool(reentered.get("ok", false)) \
+			or str(reentered.get("policy", "")) != "expired" \
+			or not _array(reentered_state.get("visit_receipts", [])).has("visit:expired_return") \
+			or JSON.stringify(reentered_state.get("cleanup_receipts", [])) != JSON.stringify(restored_expired.get("cleanup_receipts", [])) \
+			or JSON.stringify(reentered_state.get("cleanup_receipt_records", [])) != JSON.stringify(restored_expired.get("cleanup_receipt_records", [])):
 		failures.append("Expired source-room state did not apply and receipt deterministic reentry.")
 	var reentry_snapshot := EnvironmentInstanceScript.from_dict({
 		"id": "bar_001", "archetype_id": "bar", "world_node_id": "bar_node",

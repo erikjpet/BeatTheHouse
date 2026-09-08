@@ -704,7 +704,17 @@ func _travel_result(run_state: RunState, target_id: String, destination_name: St
 
 func _travel_target_ids(run_state: RunState) -> Array:
 	if run_state.has_world_map():
-		return WorldMapScript.neighbor_ids(run_state.world_map, run_state.current_world_node_id(), true)
+		var source_id := run_state.current_world_node_id()
+		# Match the production travel view and RunGenerator admission boundary.
+		# Every visible neighbor is useful topology, but only the capped, ranked
+		# target catalog is actually selectable by the player on this visit.
+		return WorldMapScript.travel_target_ids(
+			run_state.world_map,
+			source_id,
+			WorldMapScript.TRAVEL_NEW_TARGET_LIMIT,
+			WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT,
+			generator._enabled_world_route_ids(run_state, run_state.world_map, source_id)
+		)
 	var result: Array = []
 	for source in [
 		run_state.current_environment.get("next_archetypes", []),

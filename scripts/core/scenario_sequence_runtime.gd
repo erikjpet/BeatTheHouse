@@ -636,10 +636,16 @@ static func apply_reentry(state_value: Dictionary, definition: Dictionary, visit
 			restarted["visit_receipt_records"] = _reordinal_visit_records(state.get("visit_receipt_records", []))
 			next = restarted
 		"expired":
-			var expired_cleanup := _apply_cleanup(next, definition, "reentry_expired:%s" % visit_id)
-			if not bool(expired_cleanup.get("ok", false)):
-				return {"ok": false, "state": original, "errors": _array(expired_cleanup.get("errors", []))}
-			next = _dict(expired_cleanup.get("state", next))
+			# A state already cleaned by its departure/expiry boundary has no live
+			# temporary material left to remove. Re-running cleanup here minted a
+			# second, visit-specific cleanup journal that causal restore could not
+			# reproduce on a later return. Preserve the authoritative cleanup and add
+			# only the visit receipt. Active/aftermath states still clean normally.
+			if status != STATUS_CLEANED:
+				var expired_cleanup := _apply_cleanup(next, definition, "reentry_expired:%s" % visit_id)
+				if not bool(expired_cleanup.get("ok", false)):
+					return {"ok": false, "state": original, "errors": _array(expired_cleanup.get("errors", []))}
+				next = _dict(expired_cleanup.get("state", next))
 			next["expired"] = true
 			next["status"] = STATUS_CLEANED
 			next["last_feedback"] = "This room sequence has expired. The exit remains clear."

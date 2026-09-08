@@ -2685,9 +2685,12 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 	var initialized_state := _copy_dict(candidate.get("scenario_sequence_state", {}))
 	if str(initialized_state.get("status", "")) == ScenarioSequenceRuntimeScript.STATUS_CLEANED:
 		var initialization_errors := _copy_array(initialized_state.get("errors", []))
-		if initialization_errors.is_empty():
-			initialization_errors = ["Scenario sequence could not initialize its sealed semantic state."]
-		return _scenario_semantic_finalization_failure(initialization_errors, refresh_attempt)
+		# A cleaned state without errors is a valid persisted lifecycle result: the
+		# room expired on departure and its authored `expired` reentry policy must be
+		# allowed to receipt the return visit. Cleaned states produced by failed
+		# initialization still carry errors and remain fail-closed here.
+		if not initialization_errors.is_empty():
+			return _scenario_semantic_finalization_failure(initialization_errors, refresh_attempt)
 	var visit_id := str(candidate.get("scenario_sequence_pending_visit_id", candidate.get("environment_visit_id", "")))
 	var reentry := ScenarioEngineScript.sequence_apply_reentry(candidate, definition, visit_id)
 	if not bool(reentry.get("ok", false)):
