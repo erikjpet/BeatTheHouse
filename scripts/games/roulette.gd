@@ -372,6 +372,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"roulette_result_settled": result_settled_for_display,
 		"roulette_motion_active": roulette_motion_active,
 		"result_message": str(last_result.get("summary", "")) if result_settled_for_display else "",
+		"surface_back_rect": {"x": 690, "y": 90, "w": 86, "h": 34},
 		"table_notice": table_notice,
 		"table_round_timer": round_timer,
 		"spin_trajectory": _dictionary_array(last_result_source.get("trajectory", [])),

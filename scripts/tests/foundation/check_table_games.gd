@@ -1538,6 +1538,9 @@ func _check_roulette_surface_contract(game: GameModule, failures: Array, library
 		failures.append("Roulette fresh table should start with an empty recent-number strip.")
 	var patron_layout: Array = _baccarat_dictionary_array(surface.get("patron_layout", []))
 	var surface_patrons: Array = _baccarat_dictionary_array(surface.get("patrons", []))
+	var roulette_back_rect := _layout_rect_from_dict(surface.get("surface_back_rect", {}))
+	if not roulette_back_rect.has_area():
+		failures.append("Roulette surface did not author a safe Leave-button rectangle.")
 	if surface_patrons.size() > 3:
 		failures.append("Roulette surface must cap visible table players at three to avoid overlap.")
 	if patron_layout.size() != surface_patrons.size():
@@ -1557,6 +1560,8 @@ func _check_roulette_surface_contract(game: GameModule, failures: Array, library
 			failures.append("Roulette patron model was not placed on the right side: %s." % str(patron_rect))
 		if not patron_board.encloses(patron_rect):
 			failures.append("Roulette patron model hit rect is outside the board: %s." % str(patron_rect))
+		if roulette_back_rect.intersects(patron_rect):
+			failures.append("Roulette Leave button overlaps a selectable patron: %s and %s." % [str(roulette_back_rect), str(patron_rect)])
 		for prior_rect in seen_patron_rects:
 			if patron_rect.intersects(prior_rect):
 				failures.append("Roulette patron model hit rects overlap: %s and %s." % [str(patron_rect), str(prior_rect)])

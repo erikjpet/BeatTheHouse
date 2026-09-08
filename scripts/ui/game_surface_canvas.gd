@@ -1933,6 +1933,17 @@ func _draw_foundation_play_overlay() -> void:
 		var back_rect := Rect2(776, 22, 86, 34)
 		if _surface_renderer() == "card_machine":
 			back_rect = Rect2(806, 22, 86, 34)
+		var authored_back_rect: Variant = state.get("surface_back_rect", {})
+		if typeof(authored_back_rect) == TYPE_DICTIONARY:
+			var authored: Dictionary = authored_back_rect
+			var candidate := Rect2(
+				float(authored.get("x", back_rect.position.x)),
+				float(authored.get("y", back_rect.position.y)),
+				float(authored.get("w", back_rect.size.x)),
+				float(authored.get("h", back_rect.size.y))
+			)
+			if candidate.has_area():
+				back_rect = candidate
 		_draw_surface_back_control(back_rect)
 		if surface_game_module == null:
 			_draw_foundation_control_strip(Rect2(22, 248, 856, 72), true)

@@ -1383,12 +1383,6 @@ func _draw_blackjack_ritual_layer(surface, surface_state: Dictionary) -> void:
 	surface.draw_rect(discard_rect, Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.42), false, 1)
 	surface.surface_label_centered("DISCARD %s" % discard_state.to_upper(), discard_rect, 7, C_SOFT)
 	if phase_id == "wagering":
-		var chips: Array = surface_state.get("chip_denominations", []) if typeof(surface_state.get("chip_denominations", [])) == TYPE_ARRAY else []
-		var chip_origin := Vector2(45, BJ_CONSOLE_Y + 56.0)
-		var chip_spacing := 20.0 if chips.size() > 4 else 30.0
-		for chip_index in range(chips.size()):
-			var chip_center := chip_origin + Vector2(float(chip_index) * chip_spacing, 0)
-			surface.surface_add_drag_hit(Rect2(chip_center - Vector2(13, 13), Vector2(26, 26)), BLACKJACK_WAGER_PLACE_GESTURE, chip_index)
 		surface.surface_add_hold_hit(Rect2(686, 92, 92, 92), BLACKJACK_CUT_GESTURE, 0)
 		surface.surface_label("DRAG CHIP TO YOU / HOLD SHOE TO CUT", Vector2(622, 246), 7, C_SOFT)
 	elif phase_id == "player_turn":
@@ -1644,7 +1638,10 @@ func surface_pointer_command(surface_action: String, index: int, pointer_phase: 
 	var invalid_message := "Incomplete gesture; nothing changed."
 	match surface_action:
 		BLACKJACK_WAGER_PLACE_GESTURE:
-			valid = phase_id == "wagering" and origin.distance_to(board_position) >= 22.0 and Rect2(414, 276, 76, 62).has_point(board_position)
+			var travel_distance := origin.distance_to(board_position)
+			var tapped_chip := travel_distance <= 12.0
+			var dragged_to_wager := travel_distance >= 22.0 and Rect2(414, 276, 76, 62).has_point(board_position)
+			valid = phase_id == "wagering" and (tapped_chip or dragged_to_wager)
 			semantic_action = "blackjack_chip"
 			invalid_message = "Return the chip to the rail or place it inside your wager circle."
 		BLACKJACK_CUT_GESTURE:
@@ -3221,16 +3218,14 @@ func _draw_chip_rack(surface, surface_state: Dictionary) -> void:
 	surface.surface_label("CHIP RAIL", rack.position + Vector2(12, 15), 10, C_SOFT)
 	surface.surface_label("BET $%d" % int(surface_state.get("selected_stake", 1)), rack.position + Vector2(112, 15), 12, C_YELLOW)
 	var chips: Array = surface_state.get("chip_denominations", []) if typeof(surface_state.get("chip_denominations", [])) == TYPE_ARRAY else []
-	var chip_origin := rack.position + Vector2(27.0, 48.0)
-	var chip_spacing := 20.0 if chips.size() > 4 else 30.0
+	var chip_origin := rack.position + Vector2(22.0, 34.0)
+	var chip_spacing := 22.0
 	for i in range(chips.size()):
 		var chip_center := chip_origin + Vector2(float(i) * chip_spacing, 0.0)
-		if i == 0:
-			surface.surface_add_exact_invisible_hit(Rect2(chip_center - Vector2(12, 12), Vector2(24, 24)), "surface_stake_up")
-		_draw_chip_button(surface, chip_center, int(chips[i]), "blackjack_chip", i)
-		var remove_rect := Rect2(chip_center.x - 8, chip_center.y + 12, 16, 12)
+		_draw_chip_button(surface, chip_center, int(chips[i]), BLACKJACK_WAGER_PLACE_GESTURE, i)
+		var remove_rect := Rect2(chip_center.x - 7, chip_center.y + 10, 14, 10)
 		_draw_table_button(surface, remove_rect, "", "blackjack_remove_chip", i, C_SOFT, true)
-		surface.draw_line(remove_rect.position + Vector2(4, 6), remove_rect.end - Vector2(4, 6), C_SOFT, 1.0)
+		surface.draw_line(remove_rect.position + Vector2(3, 5), remove_rect.end - Vector2(3, 5), C_SOFT, 1.0)
 	_draw_table_button(surface, Rect2(rack.position.x + 154, rack.position.y + 25, 40, 16), "CLR", "blackjack_clear_bet", 0, C_SOFT, true)
 	_draw_table_button(surface, Rect2(rack.position.x + 200, rack.position.y + 25, 36, 16), "MAX", "blackjack_max_bet", 0, C_YELLOW, true)
 	_draw_table_button(surface, Rect2(rack.position.x + 154, rack.position.y + 47, 26, 16), "UNDO", "blackjack_undo_bet", 0, C_CYAN, true)
@@ -3828,8 +3823,8 @@ func _draw_table_button(surface, rect: Rect2, label: String, action: String, ind
 
 func _draw_chip_button(surface, center: Vector2, value: int, action: String, index: int) -> void:
 	var hovered := bool(surface.surface_region_hovered(action, index))
-	_draw_casino_chip(surface, center, value, 11.0, 1.0, hovered)
-	surface.surface_add_exact_hit(Rect2(center - Vector2(12, 12), Vector2(24, 24)), action, index)
+	_draw_casino_chip(surface, center, value, 9.0, 1.0, hovered)
+	surface.surface_add_drag_hit(Rect2(center - Vector2(10, 10), Vector2(20, 20)), action, index)
 
 
 func _draw_chip_stack(surface, pos: Vector2, stack_value: Variant, scale: float = 1.0) -> void:
