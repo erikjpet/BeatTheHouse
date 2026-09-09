@@ -13528,6 +13528,50 @@ func detached_host_action_candidate(mutable_game_state_key: String = "") -> RunS
 	return candidate
 
 
+# Creates a proposal-only view for providers whose contract guarantees that
+# resolution mutates no RunState collection except one bound game-state table.
+# The host never publishes this candidate and never applies a result to it. All
+# broad run/world roots are therefore safe read-only aliases; only the room
+# shell, game-state index, requested machine, and mutable lookup-cache shells
+# are detached. This is the cheap second execution used to prove deterministic
+# Slot outcomes without cloning a late run's entire story/world graph again.
+func detached_host_resolution_candidate(mutable_game_state_key: String) -> RunState:
+	var candidate := get_script().new() as RunState
+	for field_name in TURN_TRANSACTION_SCALAR_FIELDS:
+		candidate.set(field_name, get(field_name))
+	for field_name in TURN_TRANSACTION_COLLECTION_FIELDS:
+		var value: Variant = get(field_name)
+		if field_name in TURN_TRANSACTION_SHALLOW_CACHE_FIELDS and typeof(value) in [TYPE_DICTIONARY, TYPE_ARRAY]:
+			candidate.set(field_name, value.duplicate(false))
+		else:
+			candidate.set(field_name, value)
+	var environment := current_environment.duplicate(false)
+	var source_states: Dictionary = current_environment.get("game_states", {}) if typeof(current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	var detached_states := source_states.duplicate(false)
+	var state_key := mutable_game_state_key.strip_edges()
+	if not state_key.is_empty() and typeof(source_states.get(state_key, null)) == TYPE_DICTIONARY:
+		detached_states[state_key] = (source_states.get(state_key, {}) as Dictionary).duplicate(true)
+	environment["game_states"] = detached_states
+	candidate.current_environment = environment
+	# Slot resolution never mutates these models, but its generic RunState helpers
+	# may inspect them. Retain the same read-only identities for proposal parity.
+	candidate.town_state = town_state
+	candidate.numbers_state = numbers_state
+	return candidate
+
+
+# The ordinary no-scenario turn path has a read-only preflight and no rejecting
+# operation. A sealed provider may use this predicate to publish its already
+# replay-validated result directly, avoiding two whole-run clone/publish passes.
+# Debug rejection fixtures and every authored scenario retain the conservative
+# detached transaction path.
+func host_action_in_place_commit_safe() -> bool:
+	return not current_environment.is_empty() \
+		and not is_terminal() \
+		and _turn_transaction_test_failure_stage.is_empty() \
+		and not scenario_sequence_present()
+
+
 # Publishes an already isolated, validated game-action candidate through the
 # same graph-consistent in-place boundary used by environment turns. External
 # references to RunState, the room, TownState, and NumbersModel stay valid.

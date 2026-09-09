@@ -99,7 +99,10 @@ func begin_save_run(run_state: RunState, slot_id: String = "autosave") -> Error:
 	if async_task_id >= 0:
 		return ERR_BUSY
 	var clean_slot := _slot_id(slot_id)
-	var runtime_snapshot := run_state.to_save_snapshot()
+	# Seeded scenario definitions are immutable content. The worker may share those
+	# records while encoding; recursively copying them on the input thread made an
+	# otherwise asynchronous late-run save pause every active cabinet frame.
+	var runtime_snapshot := run_state.to_save_snapshot(false)
 	var path := run_save_path(clean_slot)
 	var backup_path := backup_save_path(clean_slot)
 	# Loaded and successfully written primaries are fingerprinted. Passing that

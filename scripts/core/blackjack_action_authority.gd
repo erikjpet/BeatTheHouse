@@ -346,15 +346,15 @@ static func valid_receipt(receipt: Variant, pending: Variant, result: Dictionary
 		and str(provided.get("result_fingerprint", "")) == result_fingerprint(result)
 
 
-static func commit_response(ledger: Dictionary, delivery: Dictionary, response: Dictionary, proposal_fingerprint: String, run_fingerprint: String, rng_fingerprint: String, checkpoint_fingerprint: String) -> Dictionary:
-	return _commit_response(ledger, delivery, response, proposal_fingerprint, run_fingerprint, rng_fingerprint, checkpoint_fingerprint, true)
+static func commit_response(ledger: Dictionary, delivery: Dictionary, response: Dictionary, proposal_fingerprint: String, run_fingerprint: String, rng_fingerprint: String, checkpoint_fingerprint: String, active_replay_limit: int = ACTIVE_REPLAY_LIMIT) -> Dictionary:
+	return _commit_response(ledger, delivery, response, proposal_fingerprint, run_fingerprint, rng_fingerprint, checkpoint_fingerprint, true, active_replay_limit)
 
 
-static func commit_response_cow(ledger: Dictionary, delivery: Dictionary, response: Dictionary, proposal_fingerprint: String, run_fingerprint: String, rng_fingerprint: String, checkpoint_fingerprint: String) -> Dictionary:
-	return _commit_response(ledger, delivery, response, proposal_fingerprint, run_fingerprint, rng_fingerprint, checkpoint_fingerprint, false)
+static func commit_response_cow(ledger: Dictionary, delivery: Dictionary, response: Dictionary, proposal_fingerprint: String, run_fingerprint: String, rng_fingerprint: String, checkpoint_fingerprint: String, active_replay_limit: int = ACTIVE_REPLAY_LIMIT) -> Dictionary:
+	return _commit_response(ledger, delivery, response, proposal_fingerprint, run_fingerprint, rng_fingerprint, checkpoint_fingerprint, false, active_replay_limit)
 
 
-static func _commit_response(ledger: Dictionary, delivery: Dictionary, response: Dictionary, proposal_fingerprint: String, run_fingerprint: String, rng_fingerprint: String, checkpoint_fingerprint: String, isolate_nested_values: bool) -> Dictionary:
+static func _commit_response(ledger: Dictionary, delivery: Dictionary, response: Dictionary, proposal_fingerprint: String, run_fingerprint: String, rng_fingerprint: String, checkpoint_fingerprint: String, isolate_nested_values: bool, active_replay_limit: int) -> Dictionary:
 	# Copy on write: prior cache entries and journal records are immutable. Clone
 	# only the containers changed by this commit and the new response payload.
 	var next := ledger.duplicate(isolate_nested_values)
@@ -362,6 +362,7 @@ static func _commit_response(ledger: Dictionary, delivery: Dictionary, response:
 	var result_hash := result_fingerprint(response)
 	var cache: Dictionary = next.get("request_cache", {}) if isolate_nested_values else (ledger.get("request_cache", {}) as Dictionary).duplicate(false)
 	var order: Array = next.get("request_order", []) if isolate_nested_values else (ledger.get("request_order", []) as Array).duplicate()
+	var replay_limit := clampi(active_replay_limit, 1, ACTIVE_REPLAY_LIMIT)
 	cache[request_key] = {
 		"request_key": request_key,
 		"action_id": str(delivery.get("action_id", "")),
@@ -378,7 +379,7 @@ static func _commit_response(ledger: Dictionary, delivery: Dictionary, response:
 	}
 	if not order.has(request_key):
 		order.append(request_key)
-	while order.size() > ACTIVE_REPLAY_LIMIT:
+	while order.size() > replay_limit:
 		cache.erase(str(order.pop_front()))
 	next["request_cache"] = cache
 	next["request_order"] = order
@@ -400,7 +401,7 @@ static func _commit_response(ledger: Dictionary, delivery: Dictionary, response:
 	var journal: Array = next.get("journal", []) if isolate_nested_values else (ledger.get("journal", []) as Array).duplicate()
 	journal.append(journal_entry)
 	var journal_trimmed := false
-	while journal.size() > ACTIVE_REPLAY_LIMIT:
+	while journal.size() > replay_limit:
 		journal.pop_front()
 		journal_trimmed = true
 	if journal_trimmed and not journal.is_empty():

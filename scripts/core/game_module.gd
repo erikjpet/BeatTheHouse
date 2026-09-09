@@ -170,6 +170,13 @@ func surface_state(_run_state: RunState, _environment: Dictionary, _ui_state: Di
 	return {}
 
 
+# Optional complete action-boundary patch for an embedded surface. Unlike a
+# result-carried patch, this is derived after the sealed candidate has published
+# and therefore does not enlarge replay receipts with presentation-only state.
+func embedded_action_view_patch(_run_state: RunState, _environment: Dictionary, _ui_state: Dictionary = {}) -> Dictionary:
+	return {}
+
+
 # Most embedded game actions refresh their complete presentation before the
 # input callback returns. Solver-heavy modules may opt into the same next-frame
 # presentation handoff used by autoplay after their authoritative result and
