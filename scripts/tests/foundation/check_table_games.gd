@@ -2353,7 +2353,12 @@ func _check_baccarat_surface_contract(game: GameModule, failures: Array, library
 	}
 	retained_table["_blackjack_action_authority"] = retained_ledger
 	var retained_before := JSON.stringify(retained_ledger)
-	game.surface_realtime_state_patch(run_state, retained_environment, {"surface_time_msec": 1000}, {})
+	var retained_patch: Dictionary = game.surface_realtime_state_patch(run_state, retained_environment, {"surface_time_msec": 1000}, {})
+	if not game.surface_realtime_uses_lightweight_ui_state() \
+			or not bool(retained_patch.get("can_clear", false)) \
+			or not bool(retained_patch.get("can_undo", false)) \
+			or not bool(retained_patch.get("can_rebet", false)):
+		failures.append("Baccarat lightweight realtime refresh did not retain the sealed session's working bets, undo, and rebet state.")
 	game.surface_action_command("baccarat_clear", 0, false, {}, run_state, retained_environment)
 	var retained_after_table: Dictionary = ((retained_environment.get("game_states", {}) as Dictionary).get("baccarat", {}) as Dictionary)
 	var retained_after_ledger: Dictionary = retained_after_table.get("_blackjack_action_authority", {}) if typeof(retained_after_table.get("_blackjack_action_authority", {})) == TYPE_DICTIONARY else {}
@@ -2980,7 +2985,35 @@ func _check_baccarat_payout_contract(game: GameModule, failures: Array) -> void:
 		failures.append("Baccarat Tie settlement expected main pushes and +80 tie win, got %+d." % int(tie_settlement.get("bankroll_delta", 0)))
 
 
+func _check_host_action_candidate_game_state_isolation(failures: Array) -> void:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("HOST-ACTION-GAME-STATE-COW")
+	var active_table := {"nested": {"value": 1}}
+	var unrelated_machine := {"large_runtime": {"value": 2}}
+	run_state.current_environment = {
+		"id": "host_action_cow",
+		"archetype_id": "practice",
+		"world_node_id": "practice",
+		"visual_context": {},
+		"travel_lock_remaining": 0,
+		"economic_profile": {},
+		"game_states": {"blackjack": active_table, "coin_pusher": unrelated_machine},
+	}
+	var candidate := run_state.detached_host_action_candidate("blackjack")
+	var candidate_states: Dictionary = candidate.current_environment.get("game_states", {})
+	var candidate_active: Dictionary = candidate_states.get("blackjack", {})
+	var candidate_unrelated: Dictionary = candidate_states.get("coin_pusher", {})
+	if is_same(candidate_active, active_table) or not is_same(candidate_unrelated, unrelated_machine):
+		failures.append("Sealed action copy-on-write did not isolate only its host-bound game state.")
+		return
+	var candidate_nested: Dictionary = candidate_active.get("nested", {})
+	candidate_nested["value"] = 9
+	if int((active_table.get("nested", {}) as Dictionary).get("value", 0)) != 1:
+		failures.append("Sealed action candidate mutation leaked into the authoritative game table.")
+
+
 func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> void:
+	_check_host_action_candidate_game_state_isolation(failures)
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("BLACKJACK-SURFACE-CONTRACT")
 	var environment := _surface_contract_environment()

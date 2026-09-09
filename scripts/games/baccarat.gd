@@ -185,6 +185,18 @@ func surface_realtime_patch_preserves_host_state() -> bool:
 	return true
 
 
+func surface_realtime_uses_lightweight_ui_state() -> bool:
+	return true
+
+
+func surface_realtime_ui_state_keys() -> Array:
+	# Realtime refresh is enabled only after an accepted sealed action has created
+	# the authoritative table session. Ceremony patches therefore need only the
+	# live presentation fields; wagers, skill state, and undo/rebet history come
+	# directly from that sealed session rather than the much larger retained UI.
+	return TABLE_GAME_HOST_TRANSIENT_UI_KEYS
+
+
 func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
 	var table := _table_state_preview(run_state, environment)
 	var session := _normalized_session(run_state, environment, ui_state, table)

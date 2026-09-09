@@ -6,6 +6,7 @@ extends RefCounted
 # activating one exact rendered semantic object.
 
 const ArtContractsScript := preload("res://scripts/core/art_contracts.gd")
+const ScenarioSequenceSchemaScript := preload("res://scripts/core/scenario_sequence_schema.gd")
 
 const DEFAULT_LAYOUT_CONTEXT := {
 	"viewport_size": {"x": 1280, "y": 720},
@@ -79,6 +80,19 @@ static func finalize_arrival(
 	var finalized: Dictionary = {"ok": true, "inactive": true, "already_finalized": true, "errors": []}
 	if not bool(travel.get("scenario_finalized", false)):
 		finalized = run_state.scenario_finalize_installed_environment(library, layout_context.duplicate(true))
+	else:
+		# A marker proves work only when the installed destination owns the expected
+		# semantic seal. This catches atomic-travel ordering regressions where the
+		# source node was finalized and the destination was silently left inactive.
+		var destination_definition: Dictionary = run_state._scenario_sequence_definition_readonly()
+		if ScenarioSequenceSchemaScript.is_sequence(destination_definition) \
+				and not bool(run_state.current_environment.get("scenario_semantic_ready", false)):
+			return _fail(
+				failures,
+				"%s arrived at %s with a finalization marker but no destination scenario semantic seal." % [context, target_id],
+				"finalization",
+				travel
+			)
 	if not bool(finalized.get("ok", false)):
 		return _fail(
 			failures,

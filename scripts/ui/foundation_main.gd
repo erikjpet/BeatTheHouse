@@ -1410,7 +1410,7 @@ func _sealed_action_host_transient_run_snapshot(candidate: RunState) -> Dictiona
 func _sealed_action_host_detached() -> RunState:
 	if run_state == null:
 		return null
-	return run_state.detached_host_action_candidate()
+	return run_state.detached_host_action_candidate(_sealed_action_host_state_key())
 
 
 func _sealed_action_host_restored_candidate(snapshot: Dictionary, layout_context: Dictionary = {}, trusted_environment: Dictionary = {}) -> RunState:
@@ -1808,7 +1808,7 @@ func _sealed_action_host_proposal_valid(proposal: Dictionary, proposal_input: Di
 func _sealed_action_host_candidate_proposal(resolve_method: StringName, action_id: String, stake: int, base_candidate: RunState, input_ledger: Dictionary, proposal_input: Dictionary, proposal_input_fingerprint: String, session: Dictionary) -> Dictionary:
 	if base_candidate == null or resolve_method.is_empty() or not current_game.has_method(resolve_method):
 		return {}
-	var proposal_candidate := base_candidate.detached_host_action_candidate()
+	var proposal_candidate := base_candidate.detached_host_action_candidate(_sealed_action_host_state_key())
 	_sealed_action_host_store_ledger(proposal_candidate, input_ledger)
 	var proposal_rng := RngStream.new()
 	proposal_rng.restore(proposal_input.get("rng_snapshot", {}))

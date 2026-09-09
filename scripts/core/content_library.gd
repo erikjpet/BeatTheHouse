@@ -832,6 +832,12 @@ func _canonical_runtime_scenario_definition(definition: Dictionary) -> Dictionar
 	if not validation_complete and not scenario_id.is_empty() and _runtime_validated_scenario_definition_cache.has(scenario_id):
 		return _runtime_validated_scenario_definition_cache.get(scenario_id, {})
 	var result := ScenarioSequenceCatalogScript.apply_overlay(definition, scenario_sequence_catalog)
+	# Every scenario selected from this library has already been resolved against
+	# this exact loaded package catalog. Preserve that receipt for legacy scenarios
+	# with no sequence overlay too, so RunState does not lazily load and validate a
+	# second global copy of every sequence package merely to prove an empty lookup.
+	if bool(scenario_sequence_catalog.get("ok", false)):
+		result[ScenarioEngineScript.RESOLVED_SEQUENCE_CATALOG_MARKER] = true
 	# The package loader has already fail-closed rejected malformed, duplicate, or
 	# unregistered packages. The exhaustive semantic/layout audit belongs to the
 	# content/CI gate: repeating it in an exported build blocked Play and the first
@@ -841,8 +847,6 @@ func _canonical_runtime_scenario_definition(definition: Dictionary) -> Dictionar
 		var runtime_errors := _runtime_scenario_sequence_authorization_errors(result)
 		if runtime_errors.is_empty():
 			result[ScenarioEngineScript.VALIDATED_SEQUENCE_MARKER] = true
-			if not scenario_id.is_empty():
-				_runtime_validated_scenario_definition_cache[scenario_id] = result
 		else:
 			for error_value in runtime_errors:
 				var message := "scenario %s runtime validation: %s" % [scenario_id, str(error_value)]
@@ -851,6 +855,10 @@ func _canonical_runtime_scenario_definition(definition: Dictionary) -> Dictionar
 			result = _without_sequence_overlay(result)
 	if validation_complete and validation_errors.is_empty() and ScenarioSequenceSchemaScript.is_sequence(result):
 		result[ScenarioEngineScript.VALIDATED_SEQUENCE_MARKER] = true
+	if not validation_complete and not scenario_id.is_empty() \
+			and bool(result.get(ScenarioEngineScript.RESOLVED_SEQUENCE_CATALOG_MARKER, false)) \
+			and (not ScenarioSequenceSchemaScript.is_sequence(result) or bool(result.get(ScenarioEngineScript.VALIDATED_SEQUENCE_MARKER, false))):
+		_runtime_validated_scenario_definition_cache[scenario_id] = result
 	if cache_enabled:
 		_validated_scenario_definition_cache[scenario_id] = result
 	return result
@@ -885,7 +893,7 @@ func _runtime_scenario_sequence_authorization_errors(definition: Dictionary) -> 
 
 static func _without_sequence_overlay(definition: Dictionary) -> Dictionary:
 	var result := definition.duplicate(true)
-	for key in ["sequence", "sequence_package_id", "sequence_handler_pack", "sequence_renderer_id", "sequence_authoring", ScenarioEngineScript.VALIDATED_SEQUENCE_MARKER]:
+	for key in ["sequence", "sequence_package_id", "sequence_handler_pack", "sequence_renderer_id", "sequence_authoring", ScenarioEngineScript.VALIDATED_SEQUENCE_MARKER, ScenarioEngineScript.RESOLVED_SEQUENCE_CATALOG_MARKER]:
 		result.erase(key)
 	return result
 

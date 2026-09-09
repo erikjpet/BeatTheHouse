@@ -5,7 +5,9 @@ const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
 const Registry := preload("res://scripts/core/scenario_operation_registry.gd")
 const Schema := preload("res://scripts/core/scenario_sequence_schema.gd")
 
-const PRODUCTION_AUTHORITY_SHA256 := "d97b3dd830bc58b9b4d72b06a55bb9e1d67fdb1fc3299d473d7a4e11f4a4ce2c"
+# Integrated environment/scenario work after ENV-06.7 legitimately expanded
+# the authored signatures and eliminated the remaining similarity warnings.
+const PRODUCTION_AUTHORITY_SHA256 := "72da67b4adb39cc4f19f09f891e306bc90c5c15e8c94b87037197805dcbe4698"
 
 
 class RejectingRegistry:
@@ -54,6 +56,37 @@ func _init() -> void:
 		if not first_errors.is_empty() or JSON.stringify(first_errors) != JSON.stringify(second_errors) or int(exact_stats.get("full_runs", -1)) != 1 or int(exact_stats.get("hits", -1)) != 1 or int(exact_stats.get("entries", -1)) != 1:
 			failures.append("Exact repeated validation did not reuse one successful full result: %s" % JSON.stringify(exact_stats))
 
+		# Random room population can add unrelated objects and event choices, but
+		# those cannot change this sequence's declared authority. They must reuse the
+		# same static validation proof while a missing declared target still misses
+		# the memo and fails closed.
+		var unrelated_target := target_inventory.duplicate(true)
+		var unrelated_events: Dictionary = unrelated_target.get("event_choices", {}).duplicate(true) if typeof(unrelated_target.get("event_choices", {})) == TYPE_DICTIONARY else {}
+		unrelated_events["memo_unrelated_event"] = ["memo_unrelated_choice"]
+		unrelated_target["event_choices"] = unrelated_events
+		var unrelated_errors := Schema.validate_definition(definition, Registry, unrelated_target)
+		var unrelated_stats := Schema._successful_validation_memo_stats_for_tests()
+		if not unrelated_errors.is_empty() or int(unrelated_stats.get("full_runs", -1)) != 1 or int(unrelated_stats.get("hits", -1)) != 2:
+			failures.append("Unrelated room population invalidated the scenario authority memo: %s" % JSON.stringify(unrelated_stats))
+
+		var missing_declared_target := target_inventory.duplicate(true)
+		var removed_declared_identity := false
+		var authored: Dictionary = definition.get("sequence", {}) if typeof(definition.get("sequence", {})) == TYPE_DICTIONARY else {}
+		var declared: Dictionary = authored.get("declared_targets", {}) if typeof(authored.get("declared_targets", {})) == TYPE_DICTIONARY else {}
+		for collection_key in ["scene_objects", "interactions", "actors", "services", "games", "routes", "anchors", "zones"]:
+			var declared_values: Array = declared.get(collection_key, []) if typeof(declared.get(collection_key, [])) == TYPE_ARRAY else []
+			var available_values: Array = missing_declared_target.get(collection_key, []).duplicate(true) if typeof(missing_declared_target.get(collection_key, [])) == TYPE_ARRAY else []
+			if declared_values.is_empty() or not available_values.has(str(declared_values[0])):
+				continue
+			available_values.erase(str(declared_values[0]))
+			missing_declared_target[collection_key] = available_values
+			removed_declared_identity = true
+			break
+		var missing_errors_a := Schema.validate_definition(definition, Registry, missing_declared_target)
+		var missing_errors_b := Schema.validate_definition(definition, Registry, missing_declared_target)
+		if not removed_declared_identity or missing_errors_a.is_empty() or JSON.stringify(missing_errors_a) != JSON.stringify(missing_errors_b):
+			failures.append("Declared-target authority mutation did not miss the memo and reject deterministically.")
+
 		var hostile_definition := definition.duplicate(true)
 		var hostile_sequence: Dictionary = hostile_definition.get("sequence", {})
 		hostile_sequence["sequence_signature"] = "0".repeat(64)
@@ -75,7 +108,7 @@ func _init() -> void:
 		if registry_errors_a.is_empty() or JSON.stringify(registry_errors_a) != JSON.stringify(registry_errors_b):
 			failures.append("Registry substitution did not revalidate and reject deterministically.")
 		var hostile_stats := Schema._successful_validation_memo_stats_for_tests()
-		if int(hostile_stats.get("full_runs", -1)) != 7 or int(hostile_stats.get("hits", -1)) != 1 or int(hostile_stats.get("entries", -1)) != 1:
+		if int(hostile_stats.get("full_runs", -1)) != 9 or int(hostile_stats.get("hits", -1)) != 2 or int(hostile_stats.get("entries", -1)) != 1:
 			failures.append("Invalid or mutated validation inputs entered the positive-result memo: %s" % JSON.stringify(hostile_stats))
 
 	Schema._clear_successful_validation_memo_for_tests()

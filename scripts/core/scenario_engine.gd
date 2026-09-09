@@ -9,6 +9,7 @@ const OperationRegistryScript := preload("res://scripts/core/scenario_operation_
 const ScenarioExtensionDispatchScript := preload("res://scripts/core/scenario_extension_dispatch.gd")
 const ScenarioLayoutResolverScript := preload("res://scripts/core/scenario_layout_resolver.gd")
 const VALIDATED_SEQUENCE_MARKER := "__scenario_sequence_runtime_validated"
+const RESOLVED_SEQUENCE_CATALOG_MARKER := "__scenario_sequence_catalog_resolved"
 const TRUSTED_STATE_REFERENCE_KEY := "_scenario_trusted_state_digest"
 const TRUSTED_LAYOUT_INPUT_DIGEST_KEY := "_scenario_trusted_layout_input_digest"
 const SEQUENCE_SUPPRESSION_KEY := "sequence_suppressed"
@@ -135,7 +136,8 @@ static func sequence_definition_for_environment(environment: Dictionary, preferr
 	# validation receipt so refresh/presentation reads never re-run the schema.
 	if not preferred.is_empty() \
 		and str(preferred.get("id", preferred.get("scenario_id", ""))).strip_edges() == scenario_id \
-		and bool(preferred.get(VALIDATED_SEQUENCE_MARKER, false)):
+		and (bool(preferred.get(VALIDATED_SEQUENCE_MARKER, false)) \
+			or (bool(preferred.get(RESOLVED_SEQUENCE_CATALOG_MARKER, false)) and not SequenceSchemaScript.is_sequence(preferred))):
 		return preferred
 	var candidate: Dictionary = {}
 	if not preferred.is_empty() and str(preferred.get("id", preferred.get("scenario_id", ""))).strip_edges() == scenario_id:
@@ -1504,7 +1506,7 @@ static func _sequence_validation_receipts_match(definitions: Array, expected_cou
 
 static func _without_sequence_overlay(definition: Dictionary) -> Dictionary:
 	var result := definition.duplicate(true)
-	for key in ["sequence", "sequence_package_id", "sequence_handler_pack", "sequence_renderer_id", "sequence_authoring", VALIDATED_SEQUENCE_MARKER]:
+	for key in ["sequence", "sequence_package_id", "sequence_handler_pack", "sequence_renderer_id", "sequence_authoring", VALIDATED_SEQUENCE_MARKER, RESOLVED_SEQUENCE_CATALOG_MARKER]:
 		result.erase(key)
 	return result
 

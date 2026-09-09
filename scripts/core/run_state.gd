@@ -1924,7 +1924,13 @@ func scenario_sequence_definition() -> Dictionary:
 # Trusted RunState paths consume the immutable definition without cloning the
 # full authored sequence on every projection, fact, phase, and travel boundary.
 func _scenario_sequence_definition_readonly() -> Dictionary:
-	var node_id := current_world_node_id()
+	# Atomic travel installs the destination environment before moving the world-map
+	# cursor. Resolve the definition from that installed environment's explicit node
+	# identity so the destination uses its already-seeded catalog receipt instead of
+	# reparsing the legacy catalog through the still-current source node.
+	var node_id := str(current_environment.get("world_node_id", "")).strip_edges()
+	if node_id.is_empty():
+		node_id = current_world_node_id()
 	var scenario_state_value: Variant = current_environment.get("scenario_state", {})
 	var scenario_state: Dictionary = scenario_state_value as Dictionary if typeof(scenario_state_value) == TYPE_DICTIONARY else {}
 	var scenario_id := str(scenario_state.get("id", current_environment.get("scenario_id", ""))).strip_edges()
@@ -1952,7 +1958,8 @@ func _scenario_sequence_definition_readonly() -> Dictionary:
 	# against that exact inventory and stamps the runtime marker below.
 	if not ScenarioSequenceSchemaScript.is_sequence(resolved) and ScenarioSequenceSchemaScript.is_sequence(embedded_definition) and not bool(current_environment.get("scenario_semantic_ready", false)):
 		resolved = embedded_definition
-	if not scenario_id.is_empty() and bool(resolved.get(ScenarioEngineScript.VALIDATED_SEQUENCE_MARKER, false)):
+	if not scenario_id.is_empty() and (bool(resolved.get(ScenarioEngineScript.VALIDATED_SEQUENCE_MARKER, false)) \
+			or (bool(resolved.get(ScenarioEngineScript.RESOLVED_SEQUENCE_CATALOG_MARKER, false)) and not ScenarioSequenceSchemaScript.is_sequence(resolved))):
 		_scenario_sequence_definition_cache[scenario_id] = resolved.duplicate(true)
 	return resolved
 
@@ -13466,11 +13473,23 @@ func _detached_environment_turn_candidate() -> RunState:
 # re-running every migration and reconciliation step before each button press.
 # The turn clone deliberately shares opaque game_states; game actions do mutate
 # that subtree, so detach it once here while preserving the current-room alias.
-func detached_host_action_candidate() -> RunState:
+func detached_host_action_candidate(mutable_game_state_key: String = "") -> RunState:
 	var candidate := _detached_environment_turn_candidate()
 	var game_states_value: Variant = current_environment.get("game_states", {})
 	if typeof(game_states_value) == TYPE_DICTIONARY:
-		candidate.current_environment["game_states"] = (game_states_value as Dictionary).duplicate(true)
+		var source_states := game_states_value as Dictionary
+		var state_key := mutable_game_state_key.strip_edges()
+		if not state_key.is_empty() and typeof(source_states.get(state_key, null)) == TYPE_DICTIONARY:
+			# A sealed action can mutate only its host-bound machine. Detach that
+			# table and the game-state index while retaining every unrelated machine
+			# as an opaque read-only value; environment turns never inspect or mutate
+			# game_states. This keeps large Coin Pusher/slot simulations out of other
+			# games' replay clones without weakening proposal isolation.
+			var detached_states := source_states.duplicate(false)
+			detached_states[state_key] = (source_states.get(state_key, {}) as Dictionary).duplicate(true)
+			candidate.current_environment["game_states"] = detached_states
+		else:
+			candidate.current_environment["game_states"] = source_states.duplicate(true)
 	else:
 		candidate.current_environment["game_states"] = {}
 	# A generated/loaded room already carries the save-normalized shell. Small
