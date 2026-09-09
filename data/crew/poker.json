@@ -16,6 +16,10 @@
     "hustle_respect_bonus": 1,
     "opponent_count": [3, 3],
     "learned_exposures": 3,
+    "table_talk_heads_up_pot": 10,
+    "table_talk_multiway_pot": 18,
+    "table_talk_cooldown_actions": 3,
+    "table_talk_max_per_hand": 2,
     "policies": {
       "crew_rook": {"style_summary": "Patient driver: medium-tight, rarely bluffs, releases weak hands early.", "tightness": 72, "aggression": 34, "bluff": 14, "draw_caution": 70},
       "crew_velvet": {"style_summary": "Polished trap player: selective openings, persuasive raises, well-timed bluffs.", "tightness": 62, "aggression": 56, "bluff": 35, "draw_caution": 58},

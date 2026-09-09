@@ -405,7 +405,7 @@ static func validate_content(member_ids: Array) -> Array:
 	var source := config()
 	if int(source.get("schema_version", 0)) != SCHEMA_VERSION:
 		failures.append("poker.json schema_version must match CrewPokerModel.")
-	for key in ["ante", "bet_unit", "raise_unit", "session_hand_cap", "session_swing_cap", "session_trust", "hustle_threshold", "hustle_sessions_required", "learned_exposures"]:
+	for key in ["ante", "bet_unit", "raise_unit", "session_hand_cap", "session_swing_cap", "session_trust", "hustle_threshold", "hustle_sessions_required", "learned_exposures", "table_talk_heads_up_pot", "table_talk_multiway_pot", "table_talk_cooldown_actions", "table_talk_max_per_hand"]:
 		if int(source.get(key, 0)) <= 0:
 			failures.append("poker.json %s must be positive." % key)
 	var seen_keys := {}

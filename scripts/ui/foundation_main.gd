@@ -4759,6 +4759,54 @@ func _enqueue_tutorial_dialogue_without_refresh(dialogue_id: String, node_id: St
 	return run_state.enqueue_dialogue(dialogue_id, event_id, speaker, node_id, source, context)
 
 
+func _enqueue_crew_poker_table_talk(request: Dictionary) -> bool:
+	var request_game_id := str(request.get("game_id", "")).strip_edges()
+	if run_state == null or library == null or current_game == null or request_game_id.is_empty() or current_game.get_id() != request_game_id:
+		return false
+	var member_id := str(request.get("member_id", "")).strip_edges()
+	var event_id := str(request.get("event_id", "")).strip_edges()
+	var line_key := str(request.get("line_key", "")).strip_edges()
+	var node_id := str(request.get("node_id", "big_pot")).strip_edges()
+	if member_id.is_empty() or event_id.is_empty() or line_key.is_empty() or not run_state.pending_talk_event(event_id).is_empty():
+		return false
+	var dialogue := library.dialogue("crew_poker_table_talk")
+	if dialogue.is_empty():
+		return false
+	var speaker := _normalized_talk_speaker({
+		"role": "patron",
+		"name": str(request.get("member_name", "Crew")),
+		"character_id": member_id,
+		"character_identity_key": event_id,
+		"voice_line_key": line_key,
+		"mood": "competitive",
+		"behavior": "playing a live Hold'em hand",
+		"bind": "none",
+		"patron_index": int(request.get("seat_index", -1)),
+		"environment_actor": false,
+	})
+	speaker = _resolve_character_speaker(speaker, event_id, line_key)
+	speaker["role"] = "patron"
+	var context := {
+		"trigger": "game_action",
+		"type": "dialogue",
+		"dialogue_id": "crew_poker_table_talk",
+		"source": "crew_poker_table_talk",
+		"source_object_id": "game:%s" % request_game_id,
+		"environment_snapshot": RunState.environment_context_snapshot(run_state.current_environment),
+		"ignore_penalty_heat": 0,
+		"speaker_seat_index": int(request.get("seat_index", -1)),
+		"phase": str(request.get("phase", "")),
+		"action": str(request.get("action", "")),
+		"pot": int(request.get("pot", 0)),
+		"hand_number": int(request.get("hand_number", 0)),
+		"heads_up": bool(request.get("heads_up", false)),
+	}
+	var queued := run_state.enqueue_dialogue("crew_poker_table_talk", event_id, speaker, node_id, "game_action", context)
+	if queued:
+		_refresh_talk_dock()
+	return queued
+
+
 func _start_event_dialogue(event_id: String) -> bool:
 	if library == null:
 		return false
@@ -5203,6 +5251,7 @@ func _apply_talk_ignore_penalty(entries: Array, reason: String) -> int:
 			continue
 		var entry: Dictionary = entry_value
 		var speaker: Dictionary = entry.get("speaker", {}) if typeof(entry.get("speaker", {})) == TYPE_DICTIONARY else {}
+		var entry_heat := _talk_ignore_heat(entry)
 		story_entries.append({
 			"type": "talk_ignored",
 			"event_id": str(entry.get("event_id", "")),
@@ -5210,12 +5259,14 @@ func _apply_talk_ignore_penalty(entries: Array, reason: String) -> int:
 			"speaker": str(speaker.get("name", speaker.get("role", "Someone"))),
 			"reason": reason,
 			"environment_id": str(entry.get("environment_id", run_state.current_environment.get("id", ""))),
-			"suspicion_delta": TALK_IGNORE_HEAT_DELTA,
+			"suspicion_delta": entry_heat,
 			"message": _talk_ignore_story_message(entry, reason),
 		})
 	if story_entries.is_empty():
 		return 0
-	var total_heat := TALK_IGNORE_HEAT_DELTA * story_entries.size()
+	var total_heat := 0
+	for story_value in story_entries:
+		total_heat += int((story_value as Dictionary).get("suspicion_delta", 0))
 	var deltas := GameModule.empty_result_deltas()
 	deltas["suspicion_delta"] = total_heat
 	deltas["story_log"] = story_entries
@@ -5238,7 +5289,16 @@ func _apply_talk_ignore_penalty(entries: Array, reason: String) -> int:
 
 func _talk_ignore_message(entries: Array, reason: String) -> String:
 	var count := entries.size()
-	var total_heat := TALK_IGNORE_HEAT_DELTA * count
+	var total_heat := 0
+	for entry_value in entries:
+		if typeof(entry_value) == TYPE_DICTIONARY:
+			total_heat += _talk_ignore_heat(entry_value as Dictionary)
+	if total_heat == 0:
+		if count <= 1:
+			var quiet_entry: Dictionary = entries[0] if count == 1 and typeof(entries[0]) == TYPE_DICTIONARY else {}
+			var quiet_speaker: Dictionary = quiet_entry.get("speaker", {}) if typeof(quiet_entry.get("speaker", {})) == TYPE_DICTIONARY else {}
+			return "%s lets the table talk pass." % str(quiet_speaker.get("name", "The Crew"))
+		return "The table talk passes without consequence."
 	if count <= 1:
 		var entry: Dictionary = entries[0] if count == 1 and typeof(entries[0]) == TYPE_DICTIONARY else {}
 		var speaker: Dictionary = entry.get("speaker", {}) if typeof(entry.get("speaker", {})) == TYPE_DICTIONARY else {}
@@ -5248,6 +5308,11 @@ func _talk_ignore_message(entries: Array, reason: String) -> String:
 		return "%s notices you ignored them. Heat +%d." % [speaker_name, total_heat]
 	var verb := "left hanging" if reason == "travel" else "ignored"
 	return "%d conversations %s. Heat +%d." % [count, verb, total_heat]
+
+
+func _talk_ignore_heat(entry: Dictionary) -> int:
+	var context: Dictionary = entry.get("context", {}) if typeof(entry.get("context", {})) == TYPE_DICTIONARY else {}
+	return maxi(0, int(context.get("ignore_penalty_heat", TALK_IGNORE_HEAT_DELTA)))
 
 
 func _talk_ignore_story_message(entry: Dictionary, reason: String) -> String:
@@ -11651,6 +11716,9 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 				str(tutorial_dialogue_request.get("speaker", "Dealer")),
 				bool(tutorial_dialogue_request.get("advance_existing", false))
 			)
+	var poker_table_talk_request := _copy_dict(result.get("crew_poker_table_talk_request", {}))
+	if bool(result.get("ok", false)) and not poker_table_talk_request.is_empty():
+		_enqueue_crew_poker_table_talk(poker_table_talk_request)
 	var embeds_result_feedback := _current_game_embeds_result_feedback()
 	if bool(result.get("ok", false)) and embeds_result_feedback and not runtime_tick_in_progress:
 		_begin_presented_bankroll_hold(result, bankroll_before_result, wager_cost)
@@ -19614,6 +19682,16 @@ func _sync_talk_dock_coach_avoid_rect() -> void:
 				anchor_rect = anchor_rect.merge(additional_rect) if anchor_rect.has_area() else additional_rect
 		focus_x_hint = anchor_rect.get_center().x if anchor_rect.has_area() else -1.0
 		focus_boundary_id = "%s:%s" % [coach_anchor_kind, coach_anchor_id]
+	var talk_context: Dictionary = talk_dock.entry.get("context", {}) if typeof(talk_dock.entry.get("context", {})) == TYPE_DICTIONARY else {}
+	var poker_table_talk := current_screen == SCREEN_GAME \
+		and current_game != null \
+		and str(talk_context.get("source", "")) == "crew_poker_table_talk"
+	if poker_table_talk and game_surface_canvas != null and game_surface_canvas.visible and game_surface_canvas.has_method("global_rect_for_design_rect"):
+		var poker_seat_index := clampi(int(talk_context.get("speaker_seat_index", 0)), 0, 2)
+		var poker_seat_rects := [Rect2(82, 86, 166, 114), Rect2(398, 62, 166, 114), Rect2(654, 86, 166, 114)]
+		anchor_rect = game_surface_canvas.call("global_rect_for_design_rect", poker_seat_rects[poker_seat_index])
+		focus_x_hint = anchor_rect.get_center().x
+		focus_boundary_id = "crew_poker_seat:%d" % poker_seat_index
 	# The player is free to open the map before Pal asks for travel. In that
 	# case the authored room/surface anchor is behind the modal and cannot keep
 	# selectable map nodes clear. Prefer any live map node currently covered by
@@ -19641,8 +19719,11 @@ func _sync_talk_dock_coach_avoid_rect() -> void:
 			focus_boundary_id = "map:%s" % map_focus_id
 	var event_id := str(talk_dock.entry.get("event_id", ""))
 	var boundary_key := "%s|%s|%s" % [event_id, focus_boundary_id if not focus_boundary_id.is_empty() else "none", current_screen]
+	var protected_rects := _scenario_talk_dock_protected_rects()
+	if poker_table_talk:
+		protected_rects.append_array(_game_surface_talk_protected_rects())
 	talk_dock_avoid_sync_active = true
-	talk_dock.set_avoid_global_rect(anchor_rect, boundary_key, focus_x_hint, _scenario_talk_dock_protected_rects())
+	talk_dock.set_avoid_global_rect(anchor_rect, boundary_key, focus_x_hint, protected_rects)
 	talk_dock_avoid_sync_active = false
 	_apply_talk_dock_environment_reserve()
 
@@ -19681,6 +19762,24 @@ func _scenario_talk_dock_protected_rects() -> Array:
 			continue
 		var rect: Rect2 = environment_canvas.call("global_rect_for_object", object_id)
 		if rect.has_area() and not protected.has(rect):
+			protected.append(rect)
+	return protected
+
+
+func _game_surface_talk_protected_rects() -> Array:
+	var protected: Array = []
+	if game_surface_canvas == null or not game_surface_canvas.has_method("current_view_snapshot"):
+		return protected
+	var snapshot: Dictionary = game_surface_canvas.current_view_snapshot()
+	for hit_value in snapshot.get("surface_hit_actions", []):
+		if typeof(hit_value) != TYPE_DICTIONARY:
+			continue
+		var hit: Dictionary = hit_value
+		var action := str(hit.get("action", ""))
+		if not action.begins_with("poker_"):
+			continue
+		var rect: Rect2 = game_surface_canvas.global_rect_for_surface_action(action, int(hit.get("index", -1)))
+		if rect.has_area():
 			protected.append(rect)
 	return protected
 

@@ -19,14 +19,18 @@ func _init() -> void:
 	var library := ContentLibraryScript.new()
 	library.load(true)
 	if not library.validation_errors.is_empty():
-		failures.append("Content library did not load.")
+		for error_value in library.validation_errors:
+			failures.append("Content validation error: %s" % str(error_value))
 	var game: GameModule = CrewPokerGameScript.new()
 	game.setup(library.game("crew_draw_poker"), library)
 	var seed_audit := CrewPokerVisualSeedAuditScript.audit_pinned_seed(library)
 	if not bool(seed_audit.get("passed", false)):
 		failures.append("The production back-room seed route no longer reaches Hold'em cleanly.")
 	_check_best_of_seven(failures)
+	_check_hand_categories(failures)
 	_check_side_pot(game, failures)
+	_check_table_talk(game, library, failures)
+	var performance := _check_performance(game, failures)
 	var accepted := {}
 	for seed in range(7001, 7065):
 		var attempt := _play_hand(game, library, seed)
@@ -44,6 +48,10 @@ func _init() -> void:
 			failures.append("An opponent hole-card projection leaked before showdown.")
 		if int(accepted.get("max_board_cards", 0)) != 5:
 			failures.append("The shared board did not reach five visible cards.")
+		if int(accepted.get("burn_card_count", 0)) != 3:
+			failures.append("The completed hand did not burn exactly one card per board street.")
+		if int(accepted.get("history_count", 0)) > 40:
+			failures.append("The bounded public action history exceeded 40 records.")
 		if int(accepted.get("steps", 999)) > 80:
 			failures.append("A single hand exceeded the bounded interaction budget.")
 		for action_id in ["call", "raise", "all_in", "fake_tell", "fold"]:
@@ -69,6 +77,7 @@ func _init() -> void:
 		"accepted_hand": accepted,
 		"all_in_hand": all_in_hand,
 		"raised_hand": raised_hand,
+		"performance": performance,
 	}
 	print(JSON.stringify(report))
 	quit(0 if failures.is_empty() else 1)
@@ -86,6 +95,75 @@ func _check_best_of_seven(failures: Array[String]) -> void:
 		failures.append("Best-of-seven evaluation missed the board straight flush.")
 	if CrewPokerModelScript.compare_holdem(left, right) != 0:
 		failures.append("A board-playing tie did not split equally.")
+
+
+func _check_hand_categories(failures: Array[String]) -> void:
+	var fixtures := [
+		{"label": "High Card", "cards": [_card(14, 0), _card(13, 1), _card(9, 2), _card(6, 3), _card(3, 0)]},
+		{"label": "One Pair", "cards": [_card(14, 0), _card(14, 1), _card(13, 2), _card(9, 3), _card(3, 0)]},
+		{"label": "Two Pair", "cards": [_card(14, 0), _card(14, 1), _card(13, 2), _card(13, 3), _card(3, 0)]},
+		{"label": "Three of a Kind", "cards": [_card(14, 0), _card(14, 1), _card(14, 2), _card(13, 3), _card(3, 0)]},
+		{"label": "Straight", "cards": [_card(14, 0), _card(2, 1), _card(3, 2), _card(4, 3), _card(5, 0)]},
+		{"label": "Flush", "cards": [_card(14, 2), _card(11, 2), _card(8, 2), _card(5, 2), _card(2, 2)]},
+		{"label": "Full House", "cards": [_card(14, 0), _card(14, 1), _card(14, 2), _card(13, 3), _card(13, 0)]},
+		{"label": "Four of a Kind", "cards": [_card(14, 0), _card(14, 1), _card(14, 2), _card(14, 3), _card(13, 0)]},
+		{"label": "Straight Flush", "cards": [_card(5, 2), _card(6, 2), _card(7, 2), _card(8, 2), _card(9, 2)]},
+	]
+	for fixture_value in fixtures:
+		var fixture: Dictionary = fixture_value
+		var actual := str(CrewPokerModelScript.evaluate_best_hand(fixture.get("cards", [])).get("label", ""))
+		if actual != str(fixture.get("label", "")):
+			failures.append("Hold'em evaluator expected %s but reported %s." % [str(fixture.get("label", "")), actual])
+	var ace_pair_king := [_card(14, 0), _card(14, 1), _card(13, 2), _card(9, 3), _card(3, 0)]
+	var ace_pair_queen := [_card(14, 2), _card(14, 3), _card(12, 2), _card(9, 1), _card(3, 2)]
+	if CrewPokerModelScript.compare_holdem(ace_pair_king, ace_pair_queen) <= 0:
+		failures.append("Hold'em pair comparison ignored the deciding kicker.")
+
+
+func _check_table_talk(game: GameModule, library, failures: Array[String]) -> void:
+	var line_keys := ["poker_heads_up", "poker_raise", "poker_river", "poker_big_pot"]
+	for member_value in CrewStateModelScript.MEMBER_IDS:
+		var member_id := str(member_value)
+		var character: Dictionary = library.character(member_id)
+		var voice: Dictionary = character.get("voice", {}) if typeof(character.get("voice", {})) == TYPE_DICTIONARY else {}
+		var lines: Dictionary = voice.get("lines", {}) if typeof(voice.get("lines", {})) == TYPE_DICTIONARY else {}
+		for line_key in line_keys:
+			if typeof(lines.get(line_key, [])) != TYPE_ARRAY or (lines.get(line_key, []) as Array).size() < 2:
+				failures.append("%s has no authored %s pressure lines." % [member_id, line_key])
+		var state := {
+			"members": [member_id, "crew_rook" if member_id != "crew_rook" else "crew_mags", "crew_lucky" if member_id != "crew_lucky" else "crew_switch"],
+			"seats": [
+				{"member_id": member_id, "active": true, "all_in": false},
+				{"member_id": "crew_rook" if member_id != "crew_rook" else "crew_mags", "active": false, "all_in": false},
+				{"member_id": "crew_lucky" if member_id != "crew_lucky" else "crew_switch", "active": false, "all_in": false},
+			],
+			"player_active": true,
+			"player_all_in": false,
+			"phase": "turn",
+			"pot": 10,
+			"action_ordinal": 12,
+			"session_index": 1,
+			"hand_number": 1,
+			"table_talk_hand_count": 0,
+			"table_talk_last_ordinal": -999,
+			"table_talk_members_this_hand": [],
+			"table_talk_history": [],
+		}
+		var request: Dictionary = game.call("_maybe_table_talk_request", state, member_id, "call")
+		if str(request.get("member_id", "")) != member_id or str(request.get("line_key", "")) != "poker_heads_up":
+			failures.append("%s did not produce the expected heads-up conversation request." % member_id)
+		if not (game.call("_maybe_table_talk_request", state, member_id, "call") as Dictionary).is_empty():
+			failures.append("%s could spam a second conversation inside the cooldown." % member_id)
+
+
+func _check_performance(game: GameModule, failures: Array[String]) -> Dictionary:
+	var started := Time.get_ticks_usec()
+	for seed in range(9000, 10000):
+		game.call("scripted_session", seed, "crew_switch", true)
+	var elapsed_usec := Time.get_ticks_usec() - started
+	if elapsed_usec > 2000000:
+		failures.append("One thousand deterministic Hold'em evaluations exceeded the two-second audit budget.")
+	return {"sessions": 1000, "elapsed_usec": elapsed_usec, "budget_usec": 2000000}
 
 
 func _check_side_pot(game: GameModule, failures: Array[String]) -> void:
@@ -195,6 +273,8 @@ func _play_hand(game: GameModule, library, seed: int, force_all_in: bool = false
 		"raise_committed": raise_committed,
 		"player_action_set": player_action_set,
 		"steps": steps,
+		"burn_card_count": (final_table.get("burn_cards", []) as Array).size(),
+		"history_count": (final_table.get("action_history", []) as Array).size(),
 		"signature": {"last_result": final_table.get("last_result", {}), "history": final_table.get("action_history", []), "board": final_table.get("community_cards", []), "bankroll": run_state.bankroll},
 	}
 

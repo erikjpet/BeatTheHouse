@@ -1388,5 +1388,51 @@
         "choices": [{"id": "continue", "label": "Sure you do", "effects": {}, "end": true}]
       }
     }
+  },
+  {
+    "id": "crew_poker_table_talk",
+    "display_name": "Crew Table Talk",
+    "speaker": {
+      "role": "patron",
+      "name": "Crew",
+      "character_pool_id": "crew_regulars",
+      "voice_line_key": "poker_big_pot",
+      "mood": "competitive",
+      "behavior": "playing a live Hold'em hand",
+      "silhouette": "coat",
+      "bind": "none",
+      "environment_actor": false
+    },
+    "start": "big_pot",
+    "nodes": {
+      "heads_up": {
+        "text": "The last opponent studies you across the felt.",
+        "choices": [
+          {"id": "heads_up_hold_nerve", "label": "Hold their gaze", "effects": {}, "end": true},
+          {"id": "heads_up_smile", "label": "Smile back", "effects": {}, "end": true}
+        ]
+      },
+      "raise_pressure": {
+        "text": "The raise lands with a few carefully chosen words.",
+        "choices": [
+          {"id": "raise_stay_quiet", "label": "Stay quiet", "effects": {}, "end": true},
+          {"id": "raise_answer", "label": "Answer lightly", "effects": {}, "end": true}
+        ]
+      },
+      "river_pressure": {
+        "text": "With the river down, the table goes still around the challenge.",
+        "choices": [
+          {"id": "river_read_them", "label": "Read their face", "effects": {}, "end": true},
+          {"id": "river_ignore_words", "label": "Watch the chips", "effects": {}, "end": true}
+        ]
+      },
+      "big_pot": {
+        "text": "The growing pot draws a competitive word from across the table.",
+        "choices": [
+          {"id": "pot_keep_calm", "label": "Keep calm", "effects": {}, "end": true},
+          {"id": "pot_talk_back", "label": "Talk back", "effects": {}, "end": true}
+        ]
+      }
+    }
   }
 ]

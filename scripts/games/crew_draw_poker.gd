@@ -8,6 +8,7 @@ const CardShoeScript := preload("res://scripts/core/card_shoe.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 const CrewPokerModelScript := preload("res://scripts/core/crew_poker_model.gd")
 const PlayingCardRendererScript := preload("res://scripts/games/playing_card_renderer.gd")
+const TableGameVisualsScript := preload("res://scripts/games/table_game_visuals.gd")
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 
 const STATE_SCHEMA := "crew_draw_table"
@@ -22,7 +23,7 @@ const C_YELLOW := VisualStyleScript.YELLOW
 const C_WHITE := VisualStyleScript.WHITE
 const C_SOFT := VisualStyleScript.SOFT
 const SEAT_LEFT_POSITION := Vector2(92, 104)
-const SEAT_CENTER_POSITION := Vector2(354, 78)
+const SEAT_CENTER_POSITION := Vector2(408, 78)
 const SEAT_RIGHT_POSITION := Vector2(664, 104)
 const MEMBER_NAMES := {
 	"crew_rook": "Rook", "crew_velvet": "Velvet", "crew_knuckles": "Knuckles",
@@ -98,6 +99,10 @@ func generate_environment_state(run_state: RunState, environment: Dictionary, rn
 		"player_signal_history": [],
 		"player_fake_tell_used_street": "",
 		"tell_reputation": 50,
+		"table_talk_history": [],
+		"table_talk_hand_count": 0,
+		"table_talk_last_ordinal": -999,
+		"table_talk_members_this_hand": [],
 		"npc_stacks": {},
 		"pot": 0,
 		"shoe": [],
@@ -174,15 +179,41 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var phase := str(state.get("phase", "idle"))
 	var held := _index_array(ui_state.get("poker_held", []))
 	var members := _string_array(state.get("members", []))
+	var focused_speaker: Variant = ui_state.get("focused_talk_speaker", {})
 	var seats: Array = []
 	for seat_value in _dict_array(state.get("seats", [])):
 		var seat := (seat_value as Dictionary).duplicate(true)
 		var member_id := str(seat.get("member_id", ""))
 		seat["name"] = str(MEMBER_NAMES.get(member_id, member_id))
+		seat["character_model"] = _crew_character_model(member_id)
+		seat["conversation_active"] = _speaker_matches_member(focused_speaker, member_id)
 		if phase != "showdown" and not bool(seat.get("revealed", false)):
 			seat["cards"] = _hidden_cards(2 if str(state.get("turn_engine", "legacy_v1")) == ORDERED_ENGINE else 5)
 		seat.erase("policy")
 		seats.append(seat)
+	for member_id in members:
+		var already_seated := false
+		for seat_value in seats:
+			if str((seat_value as Dictionary).get("member_id", "")) == member_id:
+				already_seated = true
+				break
+		if already_seated:
+			continue
+		seats.append({
+			"member_id": member_id,
+			"name": str(MEMBER_NAMES.get(member_id, member_id)),
+			"cards": [],
+			"active": true,
+			"all_in": false,
+			"last_action": "ready",
+			"character_model": _crew_character_model(member_id),
+			"conversation_active": _speaker_matches_member(focused_speaker, member_id),
+		})
+	var table_talk_active := false
+	for seat_value in seats:
+		if bool((seat_value as Dictionary).get("conversation_active", false)):
+			table_talk_active = true
+			break
 	var beat := _poker_dict(state.get("beat", {}))
 	var visible_observations := _visible_observations(state)
 	if not visible_observations.is_empty():
@@ -218,6 +249,9 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_suppresses_game_result_burst": true,
 		"surface_animates_idle": true,
 		"surface_realtime_state_refresh": false,
+		"surface_template": "shared_table_game_v1",
+		"animated_crew_count": seats.size(),
+		"table_talk_active": table_talk_active,
 		"reduce_motion": bool(ui_state.get("reduce_motion", false)),
 		"display_name": get_display_name(),
 		"phase": phase,
@@ -434,6 +468,8 @@ func _resolve_ordered(action_id: String, run_state: RunState, environment: Dicti
 	result["preserve_surface_ui_state"] = action_id == "fake_tell"
 	result["crew_poker_turn_receipt"] = "crew-poker:%d:%d" % [int(state.get("session_index", 0)), int(state.get("action_ordinal", 0))]
 	result["crew_poker_public_facts"] = _ordered_public_facts(state, action_id)
+	if typeof(outcome.get("table_talk_request")) == TYPE_DICTIONARY and not (outcome.get("table_talk_request") as Dictionary).is_empty():
+		result["crew_poker_table_talk_request"] = (outcome.get("table_talk_request") as Dictionary).duplicate(true)
 	if typeof(outcome.get("authority_gaps")) == TYPE_ARRAY and not (outcome.get("authority_gaps") as Array).is_empty():
 		result["crew_poker_authority_gaps"] = (outcome.get("authority_gaps") as Array).duplicate()
 	if not str(outcome.get("dependency_reason", "")).is_empty():
@@ -491,6 +527,9 @@ func _deal_hand_ordered(run_state: RunState, state: Dictionary, rng: RngStream) 
 	state["player_all_in"] = false
 	state["player_signal"] = {}
 	state["player_fake_tell_used_street"] = ""
+	state["table_talk_hand_count"] = 0
+	state["table_talk_last_ordinal"] = -999
+	state["table_talk_members_this_hand"] = []
 	state["x"] = []
 	state["beat"] = {}
 	var actors := _all_actor_ids(state)
@@ -578,10 +617,73 @@ func _ordered_npc_turn(state: Dictionary, rng: RngStream, run_state: RunState) -
 		tell_cards.append_array(_card_array(state.get("community_cards", [])))
 		tell_seat["cards"] = tell_cards
 		_maybe_surface(state, tell_seat, "raise" if completed_raise else "call" if due > 0 else "check", rng)
+	var table_talk_request := _maybe_table_talk_request(state, actor, str(seat.get("last_action", action)))
 	var advance := _advance_ordered_turn(state, rng, run_state)
 	if not str(advance.get("message", "")).is_empty():
-		return {"ok": true, "delta": int(advance.get("payout", 0)), "authority_gaps": (advance.get("authority_gaps", []) as Array), "dependency_reason": str(advance.get("dependency_reason", "")), "message": str(advance.get("message", ""))}
-	return {"ok": true, "delta": 0, "message": "%s %s. %s is next." % [_actor_name(actor), str(seat.get("last_action", action)).replace("_", " ").capitalize(), _actor_name(str(state.get("turn_owner", "")))]}
+		return {"ok": true, "delta": int(advance.get("payout", 0)), "authority_gaps": (advance.get("authority_gaps", []) as Array), "dependency_reason": str(advance.get("dependency_reason", "")), "table_talk_request": table_talk_request, "message": str(advance.get("message", ""))}
+	return {"ok": true, "delta": 0, "table_talk_request": table_talk_request, "message": "%s %s. %s is next." % [_actor_name(actor), str(seat.get("last_action", action)).replace("_", " ").capitalize(), _actor_name(str(state.get("turn_owner", "")))]}
+
+
+func _maybe_table_talk_request(state: Dictionary, member_id: String, action: String) -> Dictionary:
+	if action not in ["check", "call", "raise", "all_in"] or not bool(state.get("player_active", false)):
+		return {}
+	var phase := str(state.get("phase", ""))
+	if phase not in ["preflop", "flop", "turn", "river"]:
+		return {}
+	var tuning := CrewPokerModelScript.config()
+	var active_opponents: Array = []
+	for actor_value in _active_actor_ids(state):
+		var actor := str(actor_value)
+		if actor != PLAYER_ID:
+			active_opponents.append(actor)
+	var heads_up := active_opponents.size() == 1 and str(active_opponents[0]) == member_id
+	var pot := int(state.get("pot", 0))
+	var threshold := int(tuning.get("table_talk_heads_up_pot", 10)) if heads_up else int(tuning.get("table_talk_multiway_pot", 18))
+	if pot < threshold:
+		return {}
+	if not heads_up and action not in ["raise", "all_in"]:
+		return {}
+	if int(state.get("table_talk_hand_count", 0)) >= int(tuning.get("table_talk_max_per_hand", 2)):
+		return {}
+	var ordinal := int(state.get("action_ordinal", 0))
+	if ordinal - int(state.get("table_talk_last_ordinal", -999)) < int(tuning.get("table_talk_cooldown_actions", 3)):
+		return {}
+	var spoken_members := _string_array(state.get("table_talk_members_this_hand", []))
+	if spoken_members.has(member_id):
+		return {}
+	var line_key := "poker_heads_up" if heads_up else "poker_big_pot"
+	var node_id := "heads_up" if heads_up else "big_pot"
+	if phase == "river":
+		line_key = "poker_river"
+		node_id = "river_pressure"
+	elif action in ["raise", "all_in"]:
+		line_key = "poker_raise"
+		node_id = "raise_pressure"
+	var event_id := "crew-poker-talk:%d:%d:%d:%s" % [int(state.get("session_index", 0)), int(state.get("hand_number", 0)), ordinal, member_id]
+	var request := {
+		"event_id": event_id,
+		"game_id": get_id(),
+		"member_id": member_id,
+		"member_name": _actor_name(member_id),
+		"seat_index": _seat_index(state, member_id),
+		"line_key": line_key,
+		"node_id": node_id,
+		"phase": phase,
+		"action": action,
+		"pot": pot,
+		"heads_up": heads_up,
+		"hand_number": int(state.get("hand_number", 0)),
+	}
+	spoken_members.append(member_id)
+	state["table_talk_members_this_hand"] = spoken_members
+	state["table_talk_hand_count"] = int(state.get("table_talk_hand_count", 0)) + 1
+	state["table_talk_last_ordinal"] = ordinal
+	var history := _dict_array(state.get("table_talk_history", []))
+	history.append(request.duplicate(true))
+	while history.size() > 12:
+		history.pop_front()
+	state["table_talk_history"] = history
+	return request
 
 
 func _ordered_player_bet(state: Dictionary, raising: bool, run_state: RunState, rng: RngStream) -> Dictionary:
@@ -1009,13 +1111,7 @@ func draw_surface(surface, state: Dictionary, _render_context: Dictionary = {}) 
 	if str(state.get("surface_renderer", "")) != "crew_draw_poker":
 		return false
 	surface.surface_begin_design_space(surface.surface_board_size())
-	_draw_room(surface)
-	surface.surface_title("BACK-ROOM HOLD'EM", Vector2(314, 28), C_YELLOW)
-	if str(state.get("turn_engine", "legacy_v1")) == ORDERED_ENGINE:
-		var status_line := "BETWEEN HANDS   •   STACK $%d   •   HAND %d / %d" % [int(state.get("player_stack", 0)), int(state.get("hand_number", 0)) + 1, int(state.get("hand_cap", 5))] if str(state.get("phase", "idle")) == "idle" else "%s   •   STACK $%d   •   TO CALL $%d   •   %s TO ACT" % [str(state.get("phase", "idle")).to_upper(), int(state.get("player_stack", 0)), int(state.get("amount_to_call", 0)), str(state.get("turn_owner_name", "TABLE")).to_upper()]
-		surface.surface_label_centered(status_line, Rect2(150, 46, 600, 22), 12, C_SOFT)
-	else:
-		surface.surface_label("POT $%d   SESSION %s / %d" % [int(state.get("pot", 0)), _signed_cash(int(state.get("session_swing", 0))), int(state.get("swing_cap", 60))], Vector2(312, 54), 14, C_SOFT)
+	_draw_room(surface, state)
 	_draw_seats(surface, state)
 	_draw_shared_board(surface, state)
 	_draw_chip_pot(surface, int(state.get("pot", 0)))
@@ -1554,6 +1650,10 @@ func _start_new_session(state: Dictionary, environment: Dictionary) -> void:
 	state["player_signal_history"] = []
 	state["player_fake_tell_used_street"] = ""
 	state["tell_reputation"] = 50
+	state["table_talk_history"] = []
+	state["table_talk_hand_count"] = 0
+	state["table_talk_last_ordinal"] = -999
+	state["table_talk_members_this_hand"] = []
 	state["npc_stacks"] = {}
 	state["night_task_receipt"] = ""
 	state["night_aftermath"] = ""
@@ -1630,6 +1730,14 @@ func _table_state(environment: Dictionary) -> Dictionary:
 			migrated["player_signal_history"] = []
 		if not migrated.has("tell_reputation"):
 			migrated["tell_reputation"] = 50
+		if not migrated.has("table_talk_history"):
+			migrated["table_talk_history"] = []
+		if not migrated.has("table_talk_hand_count"):
+			migrated["table_talk_hand_count"] = 0
+		if not migrated.has("table_talk_last_ordinal"):
+			migrated["table_talk_last_ordinal"] = -999
+		if not migrated.has("table_talk_members_this_hand"):
+			migrated["table_talk_members_this_hand"] = []
 		if not migrated.has("npc_stacks"):
 			migrated["npc_stacks"] = {}
 		# Version-two ordered saves contain a live five-card draw hand. Let that
@@ -1639,7 +1747,7 @@ func _table_state(environment: Dictionary) -> Dictionary:
 			migrated["turn_engine"] = "legacy_v1"
 			migrated["migrate_to_holdem_after_hand"] = true
 		return migrated
-	return {"schema": STATE_SCHEMA, "version": STATE_VERSION, "producer_id": "poker", "game_id": get_id(), "members": [], "phase": "idle", "hand_number": 0, "session_swing": 0, "session_settled": false, "session_index": 0, "night_id": _night_id(environment), "action_ordinal": 0, "observation_queue": [], "verified_observation_receipts": [], "pot": 0, "shoe": [], "player_cards": [], "community_cards": [], "burn_cards": [], "seats": [], "x": [], "beat": {}, "last_result": {}, "action_history": [], "session_memory": {}, "public_memory_receipt_id": "", "player_folded_hidden": false, "turn_engine": ORDERED_ENGINE if _ordered_engine(environment) else "legacy_v1", "button_index": 0, "turn_owner": "", "turn_order": [], "turn_cursor": 0, "current_bet": 0, "round_contributions": {}, "acted_since_raise": [], "raise_count": 0, "player_active": true, "player_all_in": false, "player_stack": int(CrewPokerModelScript.config().get("buy_in", 60)), "player_contribution": 0, "dealer_actor": "", "small_blind_actor": "", "big_blind_actor": "", "player_signal": {}, "player_signal_history": [], "player_fake_tell_used_street": "", "tell_reputation": 50, "npc_stacks": {}}
+	return {"schema": STATE_SCHEMA, "version": STATE_VERSION, "producer_id": "poker", "game_id": get_id(), "members": [], "phase": "idle", "hand_number": 0, "session_swing": 0, "session_settled": false, "session_index": 0, "night_id": _night_id(environment), "action_ordinal": 0, "observation_queue": [], "verified_observation_receipts": [], "pot": 0, "shoe": [], "player_cards": [], "community_cards": [], "burn_cards": [], "seats": [], "x": [], "beat": {}, "last_result": {}, "action_history": [], "session_memory": {}, "public_memory_receipt_id": "", "player_folded_hidden": false, "turn_engine": ORDERED_ENGINE if _ordered_engine(environment) else "legacy_v1", "button_index": 0, "turn_owner": "", "turn_order": [], "turn_cursor": 0, "current_bet": 0, "round_contributions": {}, "acted_since_raise": [], "raise_count": 0, "player_active": true, "player_all_in": false, "player_stack": int(CrewPokerModelScript.config().get("buy_in", 60)), "player_contribution": 0, "dealer_actor": "", "small_blind_actor": "", "big_blind_actor": "", "player_signal": {}, "player_signal_history": [], "player_fake_tell_used_street": "", "tell_reputation": 50, "table_talk_history": [], "table_talk_hand_count": 0, "table_talk_last_ordinal": -999, "table_talk_members_this_hand": [], "npc_stacks": {}}
 
 
 func _update_environment_state(environment: Dictionary, state: Dictionary) -> void:
@@ -1747,7 +1855,7 @@ func _night_scene_state(state: Dictionary) -> Dictionary:
 
 func _ordered_ritual_actors(state: Dictionary) -> Array:
 	var actors: Array = [{"id": PLAYER_ID, "anchor": "seat_south", "behavior": "acting" if str(state.get("turn_owner", "")) == PLAYER_ID else "watching", "bounds": Rect2(294, 220, 308, 94), "attention": str(state.get("turn_owner", ""))}]
-	var positions := [Rect2(78, 92, 190, 92), Rect2(342, 66, 190, 92), Rect2(650, 92, 190, 92)]
+	var positions := [Rect2(78, 92, 190, 92), Rect2(396, 66, 190, 92), Rect2(650, 92, 190, 92)]
 	var seats := _dict_array(state.get("seats", []))
 	for index in range(seats.size()):
 		var seat: Dictionary = seats[index]
@@ -1812,19 +1920,25 @@ func _banter_for_state(state: Dictionary) -> String:
 	return str(options[int(state.get("hand_number", 0)) % options.size()]) if not options.is_empty() else "%s cuts the deck." % MEMBER_NAMES.get(member_id, member_id)
 
 
-func _draw_room(surface) -> void:
-	surface.draw_rect(Rect2(20, 18, 860, 406), Color("#08090d"))
-	var lamp := 0.50 + sin(surface.surface_flicker() * 1.7) * 0.08
-	surface.draw_circle(Vector2(450, 66), 20.0, Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, lamp))
-	surface.draw_line(Vector2(450, 18), Vector2(450, 47), Color("#5e4d45"), 3.0)
-	surface.draw_rect(Rect2(52, 78, 796, 258), Color("#17131d"))
-	# Perspective rail and felt turn the game into a room-scale table rather than
-	# a card tray. All public cards, chips, actors, and controls share this plane.
-	var rail := PackedVector2Array([Vector2(132, 128), Vector2(768, 128), Vector2(838, 264), Vector2(758, 326), Vector2(142, 326), Vector2(62, 264)])
-	var felt := PackedVector2Array([Vector2(154, 143), Vector2(746, 143), Vector2(808, 257), Vector2(738, 306), Vector2(162, 306), Vector2(92, 257)])
-	surface.surface_filled_polygon(rail, Color("#3a211c"))
-	surface.surface_filled_polygon(felt, Color("#123c35"))
-	surface.draw_polyline(PackedVector2Array([Vector2(154, 143), Vector2(746, 143), Vector2(808, 257), Vector2(738, 306), Vector2(162, 306), Vector2(92, 257), Vector2(154, 143)]), Color(C_TEAL.r, C_TEAL.g, C_TEAL.b, 0.55), 2.0)
+func _crew_character_model(member_id: String) -> Dictionary:
+	if library == null:
+		return {}
+	var character := library.character(member_id)
+	return _poker_dict(character.get("model", {}))
+
+
+func _speaker_matches_member(speaker_value: Variant, member_id: String) -> bool:
+	if typeof(speaker_value) != TYPE_DICTIONARY:
+		return false
+	var speaker: Dictionary = speaker_value
+	return str(speaker.get("speaking_character_id", speaker.get("character_id", ""))) == member_id
+
+
+func _draw_room(surface, state: Dictionary) -> void:
+	var shared_state := state.duplicate(false)
+	shared_state["room_note"] = "STACK $%d | HAND %d/%d" % [int(state.get("player_stack", 0)), int(state.get("hand_number", 0)) + 1, int(state.get("hand_cap", 5))] if str(state.get("phase", "idle")) == "idle" else "%s | $%d | CALL $%d" % [str(state.get("phase", "idle")).to_upper(), int(state.get("player_stack", 0)), int(state.get("amount_to_call", 0))]
+	TableGameVisualsScript.draw_room(surface, shared_state, "Back-Room", "TEXAS HOLD'EM | $1 / $2")
+	TableGameVisualsScript.draw_table(surface)
 
 
 func _draw_seats(surface, state: Dictionary) -> void:
@@ -1832,31 +1946,40 @@ func _draw_seats(surface, state: Dictionary) -> void:
 	var members: Array = state.get("members", []) if typeof(state.get("members", [])) == TYPE_ARRAY else []
 	for index in range(mini(3, maxi(seats.size(), members.size()))):
 		var seat: Dictionary = seats[index] if index < seats.size() else {"member_id": members[index], "cards": _hidden_cards(2), "active": true}
-		var pos := Vector2(86, 100) if index == 0 else Vector2(374, 77) if index == 1 else Vector2(704, 100)
+		var pos := SEAT_LEFT_POSITION if index == 0 else SEAT_CENTER_POSITION if index == 1 else SEAT_RIGHT_POSITION
 		var name := str(MEMBER_NAMES.get(str(seat.get("member_id", "")), "Crew"))
 		var color := C_SOFT if bool(seat.get("active", true)) else Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.4)
-		_draw_table_actor(surface, pos + Vector2(42, 12), color, str(seat.get("portrait_variant", "")), bool(seat.get("active", true)))
-		surface.surface_label_centered(name.to_upper(), Rect2(pos.x, pos.y + 44, 86, 18), 12, color)
-		var portrait_variant := str(seat.get("portrait_variant", ""))
+		var model := _poker_dict(seat.get("character_model", {}))
+		if model.is_empty():
+			model = _crew_character_model(str(seat.get("member_id", "")))
+		var active := bool(seat.get("active", true))
+		var talking := bool(seat.get("conversation_active", false))
+		var last_action := str(seat.get("last_action", "waiting"))
+		var pose := "covered" if not active else "snitch" if talking or last_action in ["raise", "all_in"] else "watching" if str(state.get("turn_owner", "")) == str(seat.get("member_id", "")) else "idle"
+		var accent := Color(str(model.get("accent_color", "#d5d8e6"))) if active else color
+		var animation_offset := float(absi(str(seat.get("member_id", "")).hash()) % 2200) / 1000.0
+		TableGameVisualsScript._draw_table_character(surface, {
+			"name": name,
+			"skin": Color(str(model.get("skin_color", "#c49371"))),
+			"hair": Color(str(model.get("hair_color", "#171022"))),
+			"jacket": Color(str(model.get("jacket_color", "#1d2030"))),
+			"accent": accent,
+			"role": "crew",
+			"pose": pose,
+			"eye_offset": 2.0 if talking or pose == "watching" else 0.0,
+			"blink": fposmod(surface.surface_flicker() + animation_offset, 3.1) > 2.94,
+			"holding_card": active and not str(state.get("phase", "idle")) in ["idle", "showdown"],
+			"silhouette": str(model.get("silhouette", "coat")),
+		}, pos + Vector2(42, 53), clampf(float(model.get("scale", 1.0)) * 0.72, 0.66, 0.84), surface.surface_flicker() + animation_offset)
 		var cards := _draw_array_view(seat.get("cards", []))
 		for card_index in range(mini(2, cards.size())):
 			PlayingCardRendererScript.draw_card(surface, cards[card_index], Rect2(pos + Vector2(91 + card_index * 27, 14), Vector2(24, 35)))
 		var action_text := str(seat.get("last_action", "")).replace("_", " ").capitalize()
 		if bool(seat.get("all_in", false)):
 			action_text = "ALL IN"
-		surface.surface_label_centered(action_text, Rect2(pos.x, pos.y + 60, 142, 16), 10, C_YELLOW)
+		surface.surface_label_centered(action_text, Rect2(pos.x, pos.y + 69, 142, 16), 10, C_YELLOW)
 		if str(state.get("dealer_actor", "")) == str(seat.get("member_id", "")):
 			_draw_button_marker(surface, pos + Vector2(137, 58))
-
-
-func _draw_table_actor(surface, center: Vector2, color: Color, variant: String, active: bool) -> void:
-	var body_color := Color(color.r, color.g, color.b, 0.30 if active else 0.12)
-	surface.draw_circle(center, 15.0, Color("#2b2430") if active else Color("#17141a"))
-	surface.draw_rect(Rect2(center + Vector2(-22, 15), Vector2(44, 25)), body_color)
-	var phase := absi(variant.hash()) % 5 if not variant.is_empty() else 2
-	surface.draw_circle(center + Vector2(-5 + phase, -2), 1.5, color)
-	surface.draw_circle(center + Vector2(5 + phase * 0.25, -2), 1.5, color)
-	surface.draw_line(center + Vector2(-8, 35 - phase), center + Vector2(8, 31 + phase), Color(color.r, color.g, color.b, 0.55), 1.0)
 
 
 func _draw_button_marker(surface, center: Vector2) -> void:
@@ -1954,6 +2077,9 @@ func _draw_portrait_beat(surface, pos: Vector2, variant: String, color: Color) -
 
 
 func _draw_controls(surface, state: Dictionary) -> void:
+	if bool(state.get("table_talk_active", false)):
+		surface.surface_label("ANSWER THE TABLE TO CONTINUE", Vector2(226, 405), 11, C_CYAN)
+		return
 	var actions := _draw_array_view(state.get("legal_actions", []))
 	var has_fake_tell := false
 	for action_value in actions:

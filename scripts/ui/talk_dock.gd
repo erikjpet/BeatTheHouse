@@ -392,6 +392,7 @@ func handle_hotkey(event: InputEvent) -> bool:
 
 func current_snapshot() -> Dictionary:
 	var timing: Dictionary = entry.get("timing", {}) if typeof(entry.get("timing", {})) == TYPE_DICTIONARY else {}
+	var context: Dictionary = entry.get("context", {}) if typeof(entry.get("context", {})) == TYPE_DICTIONARY else {}
 	var portrait_speaker: Dictionary = portrait_model.speaker if portrait_model != null else {}
 	var portrait_members: Array = portrait_speaker.get("members", []) if typeof(portrait_speaker.get("members", [])) == TYPE_ARRAY else []
 	var character_ids: Array = []
@@ -421,7 +422,7 @@ func current_snapshot() -> Dictionary:
 		"choice_count": _choices().size(),
 		"choice_ids": choice_ids,
 		"choice_button_height": _rendered_choice_button_height(),
-		"ignore_penalty_heat": IGNORE_PENALTY_HEAT,
+		"ignore_penalty_heat": maxi(0, int(context.get("ignore_penalty_heat", IGNORE_PENALTY_HEAT))),
 		"anchored_bottom_left": locked_layout_side == "left",
 		"anchored_bottom": _layout_is_bottom_anchored(),
 		"portrait_outer_edge": _portrait_is_on_outer_edge(),
