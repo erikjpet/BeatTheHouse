@@ -85,14 +85,34 @@ static func finalize_arrival(
 		# semantic seal. This catches atomic-travel ordering regressions where the
 		# source node was finalized and the destination was silently left inactive.
 		var destination_definition: Dictionary = run_state._scenario_sequence_definition_readonly()
-		if ScenarioSequenceSchemaScript.is_sequence(destination_definition) \
-				and not bool(run_state.current_environment.get("scenario_semantic_ready", false)):
-			return _fail(
-				failures,
-				"%s arrived at %s with a finalization marker but no destination scenario semantic seal." % [context, target_id],
-				"finalization",
-				travel
-			)
+		if ScenarioSequenceSchemaScript.is_sequence(destination_definition):
+			if not run_state._scenario_semantic_ready():
+				return _fail(
+					failures,
+					"%s arrived at %s with a finalization marker but no valid destination scenario semantic seal." % [context, target_id],
+					"finalization",
+					travel
+				)
+			# Atomic production travel already paid for finalization. Preserve that
+			# boundary while returning the same sealed evidence shape callers receive
+			# from the explicit fallback; an inactive placeholder would discard the
+			# destination layout audit and turn every valid room into a false failure.
+			var environment: Dictionary = run_state.current_environment
+			finalized = {
+				"ok": true,
+				"inactive": false,
+				"already_finalized": true,
+				"digest": str(environment.get("scenario_semantic_digest", "")),
+				"state": _dict(environment.get("scenario_sequence_state", {})).duplicate(true),
+				"records": _array(environment.get("scenario_layout_base_records", [])).duplicate(true),
+				"projection": _dict(environment.get("scenario_sequence_projection", {})).duplicate(true),
+				"layout_authority": _dict(environment.get("scenario_layout_authority", {})).duplicate(true),
+				"layout_authority_digest": str(environment.get("scenario_layout_authority_digest", "")),
+				"layout_audit": _dict(environment.get("scenario_layout_audit", {})).duplicate(true),
+				"renderer_snapshot": _dict(environment.get("scenario_render_snapshot", {})).duplicate(true),
+				"warnings": [],
+				"errors": [],
+			}
 	if not bool(finalized.get("ok", false)):
 		return _fail(
 			failures,
