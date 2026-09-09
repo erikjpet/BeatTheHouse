@@ -2,8 +2,8 @@
 
 ## Status
 
-TODO after owner playtest. This is a harness-integrity row, not a blocker for
-the local 0.6 owner build whose required focused gates are green.
+IN_PROGRESS — owner opened 2026-09-09; `/root` claimed the row. This is a
+harness-integrity row, not a product-behavior change.
 
 ## Reproduction
 

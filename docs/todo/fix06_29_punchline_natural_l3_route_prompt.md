@@ -2,7 +2,7 @@
 
 ## Status
 
-TODO after owner playtest. This is not a blocker for the local 0.6 owner build.
+IN_PROGRESS — owner opened 2026-09-09; `/root` claimed the row.
 
 ## Exact scope
 
