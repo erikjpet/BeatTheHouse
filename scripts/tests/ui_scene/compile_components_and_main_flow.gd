@@ -52,6 +52,19 @@ const MusicLayerChoreographyScript := preload("res://scripts/ui/music_layer_chor
 const TEST_SETTINGS_PATH := "user://settings_ui_scene_compile_check.json"
 const TEST_META_COLLECTION_PATH := "user://ui_scene_compile_meta_collection.json"
 const TEST_PROFILE_INVENTORY_PATH := "user://ui_scene_compile_profile_inventory.json"
+const EXPECTED_GAME_LIBRARY_LAUNCHERS := [
+	{"id": "scratch_tickets", "label": "Scratch Tickets"},
+	{"id": "pull_tabs", "label": "Pull Tabs"},
+	{"id": "slot", "label": "Slot"},
+	{"id": "bar_dice", "label": "Bar Dice"},
+	{"id": "blackjack", "label": "Blackjack"},
+	{"id": "baccarat", "label": "Baccarat"},
+	{"id": "craps", "label": "Craps"},
+	{"id": "roulette", "label": "Roulette"},
+	{"id": "crew_draw_poker", "label": "Back-Room Poker"},
+	{"id": "video_poker", "label": "Video Poker"},
+	{"id": "coin_pusher", "label": "Quarter Falls"},
+]
 
 
 func _copy_array(value: Variant) -> Array:
@@ -127,6 +140,102 @@ func _click_visible_button(node: Node, text: String) -> bool:
 		if _click_visible_button(child, text):
 			return true
 	return false
+
+
+func _game_library_launch_buttons(node: Node) -> Array:
+	var result: Array = []
+	if node == null:
+		return result
+	if node is Button and node.has_meta("game_test_id"):
+		result.append(node)
+	for child in node.get_children():
+		result.append_array(_game_library_launch_buttons(child))
+	return result
+
+
+func _ancestor_scroll_container(control: Control) -> ScrollContainer:
+	var ancestor := control.get_parent()
+	while ancestor != null:
+		if ancestor is ScrollContainer:
+			return ancestor as ScrollContainer
+		ancestor = ancestor.get_parent()
+	return null
+
+
+# The production boot path intentionally loads only the lightweight start-menu
+# catalog. This probe must open Games before any run/tutorial helper can warm the
+# full catalog, otherwise the test can compare an empty page with the same empty
+# source and report a false green.
+func _check_cold_game_library_launchers() -> bool:
+	var probe: Control = MainScene.instantiate()
+	probe.set("continuous_environment_clock_enabled", false)
+	probe.set("autosave_slot_id", "foundation_ui_compile_game_library")
+	root.add_child(probe)
+	await process_frame
+	await process_frame
+	var library_button := probe.get("game_library_button") as Button
+	if library_button == null or not library_button.is_visible_in_tree() or library_button.disabled:
+		push_error("Cold main menu did not expose an enabled Games button.")
+		probe.queue_free()
+		await process_frame
+		return false
+	library_button.emit_signal("pressed")
+	await process_frame
+	var menu := probe.get("game_test_menu") as Control
+	var library := probe.get("library") as ContentLibrary
+	if menu == null or not menu.is_visible_in_tree() or library == null or not library.is_fully_loaded():
+		push_error("Opening Games from a cold start did not load and show the complete game catalog.")
+		probe.queue_free()
+		await process_frame
+		return false
+	var buttons := _game_library_launch_buttons(menu)
+	var buttons_by_id := {}
+	for button_value in buttons:
+		var button := button_value as Button
+		var game_id := str(button.get_meta("game_test_id", ""))
+		if game_id.is_empty() or buttons_by_id.has(game_id):
+			push_error("Games page exposed an empty or duplicate launcher id: %s." % game_id)
+			probe.queue_free()
+			await process_frame
+			return false
+		buttons_by_id[game_id] = button
+	if buttons.size() != EXPECTED_GAME_LIBRARY_LAUNCHERS.size():
+		push_error("Cold Games page exposed %d launch buttons instead of all %d: %s." % [buttons.size(), EXPECTED_GAME_LIBRARY_LAUNCHERS.size(), JSON.stringify(buttons_by_id.keys())])
+		probe.queue_free()
+		await process_frame
+		return false
+	for expected_value in EXPECTED_GAME_LIBRARY_LAUNCHERS:
+		var expected: Dictionary = expected_value
+		var game_id := str(expected.get("id", ""))
+		var button := buttons_by_id.get(game_id) as Button
+		if button == null or button.text != str(expected.get("label", "")):
+			push_error("Games page did not expose the exact %s launcher for %s." % [str(expected.get("label", "")), game_id])
+			probe.queue_free()
+			await process_frame
+			return false
+		var scroll := _ancestor_scroll_container(button)
+		if not button.is_visible_in_tree() or button.disabled or button.mouse_filter != Control.MOUSE_FILTER_STOP \
+				or button.get_signal_connection_list("pressed").is_empty() or not button.get_global_rect().has_area() \
+				or scroll == null or not scroll.get_global_rect().grow(1.0).encloses(button.get_global_rect()):
+			push_error("Games page launcher %s was hidden, disabled, disconnected, clipped, or unable to receive pointer input." % game_id)
+			probe.queue_free()
+			await process_frame
+			return false
+	if probe.get("run_state") != null or not _has_visible_text(menu, "%d games available" % EXPECTED_GAME_LIBRARY_LAUNCHERS.size()):
+		push_error("Opening the complete Games page mutated a run or did not report all 11 available games.")
+		probe.queue_free()
+		await process_frame
+		return false
+	probe.call("close_game_test_menu")
+	await process_frame
+	var menu_controls := probe.get("start_menu_controls") as Control
+	var closed_cleanly := not menu.visible and menu_controls != null and menu_controls.is_visible_in_tree()
+	probe.queue_free()
+	await process_frame
+	if not closed_cleanly:
+		push_error("Cold Games page did not return to the main menu cleanly.")
+		return false
+	return true
 
 
 # SPLIT_RUNNER_OMIT_BEGIN
@@ -3618,6 +3727,9 @@ func _run() -> void:
 		quit(1)
 		return
 	if not await _check_performance_liveness_guard_component():
+		quit(1)
+		return
+	if not await _check_cold_game_library_launchers():
 		quit(1)
 		return
 

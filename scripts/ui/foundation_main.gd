@@ -9346,7 +9346,8 @@ func _build_game_test_menu(parent: Node) -> void:
 	game_test_generation_overrides_text.add_theme_stylebox_override("normal", VisualStyle.pixel_box(Color("#080817", 0.98), VisualStyle.PURPLE_2, 1))
 	settings_stack.add_child(game_test_generation_overrides_text)
 
-	game_test_status_label = _label("Choose a game to enter its real interface.", 12)
+	var implemented_game_ids := _implemented_game_ids()
+	game_test_status_label = _label("%d games available. Choose one to enter its real interface." % implemented_game_ids.size(), 12)
 	_set_control_font_color(game_test_status_label, VisualStyle.CYAN_2)
 	game_test_status_label.max_lines_visible = 1
 	game_test_status_label.clip_text = true
@@ -9360,18 +9361,23 @@ func _build_game_test_menu(parent: Node) -> void:
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	game_test_menu.add_child(scroll)
 
-	var list := VBoxContainer.new()
-	list.add_theme_constant_override("separation", 8)
+	var list := GridContainer.new()
+	list.columns = 2
+	list.add_theme_constant_override("h_separation", 8)
+	list.add_theme_constant_override("v_separation", 8)
 	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(list)
 
-	for game_id in _implemented_game_ids():
+	for game_id in implemented_game_ids:
 		var definition := library.game(game_id)
 		var display_name := str(definition.get("display_name", game_id.capitalize()))
 		var description_text := str(definition.get("description", ""))
 		var button := _button(display_name, Callable(self, "start_game_test_session").bind(game_id))
+		button.name = "Launch_%s" % game_id
+		button.set_meta("game_test_id", game_id)
 		button.tooltip_text = description_text
 		button.custom_minimum_size = Vector2(0, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		list.add_child(button)
 
 
@@ -9398,6 +9404,12 @@ func _ensure_game_test_menu_built() -> void:
 		return
 	if start_menu_stack == null:
 		return
+	# Cold startup intentionally owns only the lightweight menu catalog. Games is
+	# the first screen that needs the complete game pack, so cross that boundary
+	# before constructing its cached launcher list. Building first would cache an
+	# empty page for the rest of the process even though starting a run later loads
+	# all eleven definitions.
+	_ensure_full_content_library_loaded()
 	_build_game_test_menu(start_menu_stack)
 	_apply_accessibility_settings()
 
@@ -16324,7 +16336,7 @@ func open_game_test_menu() -> void:
 		start_menu_intro.visible = false
 	game_test_menu.visible = true
 	if game_test_status_label != null:
-		game_test_status_label.text = "Choose a game to enter its real interface."
+		game_test_status_label.text = "%d games available. Choose one to enter its real interface." % _implemented_game_ids().size()
 
 
 func close_game_test_menu() -> void:
