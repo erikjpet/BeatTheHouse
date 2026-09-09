@@ -1,0 +1,12 @@
+﻿{
+    "schema":  "beat_the_house.playtest06_owner_build_smoke/v1",
+    "candidate_commit":  "f41d6db846097d9e26fe02005affc81007b42c5c",
+    "candidate_tree":  "c4438eeec36d9fc6f860c1524bf066038fb0a062",
+    "platform":  "WEB_CHROME",
+    "passed":  true,
+    "export_identity_sha256":  "ec3c392b106da273cdf526ac70f3d511ad6bffcf442cd0593e978b352a89c651",
+    "runtime_source_commit":  "f41d6db846097d9e26fe02005affc81007b42c5c",
+    "runtime_export_sha256":  "ec3c392b106da273cdf526ac70f3d511ad6bffcf442cd0593e978b352a89c651",
+    "raw_report_sha256":  "eeedfa4bd25bca892f3cbe4c887dde92b5d35e4056c7c497ca5695aef386d7a4",
+    "summary_report_sha256":  "c6401e91667bd394c3d995b480ca766b2b566f87b4c796316aee6809cc6cbbe9"
+}
