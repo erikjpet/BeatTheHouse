@@ -34,6 +34,7 @@ const STATIC_CACHE_LAYER_BACKGLASS := 3
 const ATLAS_FRAME_SIZE := Vector2i(40, 32)
 const ROTATION_VARIANTS := [-0.12, -0.04, 0.04, 0.12]
 const AIRBORNE_SHADOW_OFFSET := Vector2(12, 10)
+const MAX_FEATURE_ITEM_TEXTURES := 64
 
 const NEUTRAL_CABINET := {
 	"identity": "generic", "marquee": "COIN PUSHER", "palette": "neutral", "topper_style": "none", "marquee_subline": "",
@@ -86,6 +87,7 @@ var _prepared_batch_session_key := ""
 var _prepared_batch_view_serial := -1
 var _prepared_batch_alpha := -1.0
 var _prepared_batch_uploaded := false
+var _feature_item_texture_cache: Dictionary = {}
 
 
 func draw(surface, state: Dictionary) -> bool:
@@ -631,7 +633,7 @@ func _draw_interpolated_bodies(surface, state: Dictionary, colors: Dictionary, c
 			var shadow_point := _project_delivery_board_point(board, x, z) if on_delivery_board and z > board_z_bottom + _coin_height else _project_f(x, y, board_z_bottom)
 			airborne_shadows.append({"point": shadow_point, "scale": visual_scale})
 		if kind != "coin":
-			feature_labels.append({"kind": kind, "point": point})
+			feature_labels.append({"kind": kind, "body_id": body_id, "point": point})
 	for shadow_value in airborne_shadows:
 		var shadow: Dictionary = shadow_value
 		var shadow_scale := float(shadow.get("scale", 1.0))
@@ -645,12 +647,7 @@ func _draw_interpolated_bodies(surface, state: Dictionary, colors: Dictionary, c
 	_coin_multimesh.call("_set_color_array", _coin_color_buffer)
 	surface.surface_present_multimesh_batch(_coin_multimesh, _coin_texture, null, DESIGN_SIZE)
 	for feature_value in feature_labels:
-		var feature: Dictionary = feature_value
-		var point: Vector2 = feature["point"]
-		var kind := str(feature.get("kind", ""))
-		var label := str(labels.get(kind, kind.left(1).to_upper()))
-		if not label.is_empty():
-			surface.surface_reel_symbol_label(label, Rect2(point - Vector2(9, 8), Vector2(18, 16)), 10, Color("#111722"))
+		_draw_feature_marker(surface, state, feature_value as Dictionary, labels)
 
 
 func _draw_native_interpolated_bodies(surface, state: Dictionary, cabinet: Dictionary, current: Array, previous: Array, alpha: float) -> bool:
@@ -688,13 +685,40 @@ func _draw_native_interpolated_bodies(surface, state: Dictionary, cabinet: Dicti
 	surface.surface_present_multimesh_batch(_coin_multimesh, _coin_texture, null, DESIGN_SIZE)
 	var labels: Dictionary = cabinet.get("body_labels", {}) if typeof(cabinet.get("body_labels", {})) == TYPE_DICTIONARY else {}
 	for feature_value in batch.get("features", []):
-		var feature: Dictionary = feature_value
-		var point: Vector2 = feature["point"]
-		var kind := str(feature.get("kind", ""))
-		var label := str(labels.get(kind, kind.left(1).to_upper()))
-		if not label.is_empty():
-			surface.surface_reel_symbol_label(label, Rect2(point - Vector2(9, 8), Vector2(18, 16)), 10, Color("#111722"))
+		_draw_feature_marker(surface, state, feature_value as Dictionary, labels)
 	return true
+
+
+func _draw_feature_marker(surface, state: Dictionary, feature: Dictionary, labels: Dictionary) -> void:
+	var point: Vector2 = feature.get("point", Vector2.ZERO)
+	var body_id := str(feature.get("body_id", ""))
+	if body_id.is_empty() and feature.has("body_id_number"):
+		body_id = "body_%05d" % int(feature.get("body_id_number", 0))
+	var item_views: Dictionary = state.get("coin_pusher_feature_items", {}) if typeof(state.get("coin_pusher_feature_items", {})) == TYPE_DICTIONARY else {}
+	var item_value: Variant = item_views.get(body_id, null)
+	if typeof(item_value) == TYPE_DICTIONARY:
+		var item_view: Dictionary = item_value
+		var texture := _feature_item_texture(str(item_view.get("asset_path", "")))
+		if texture != null:
+			surface.draw_circle(point, 12.0, Color("#111722"))
+			surface.draw_texture_rect(texture, Rect2(point - Vector2(10, 10), Vector2(20, 20)), false)
+			return
+	var kind := str(feature.get("kind", ""))
+	var label := str(labels.get(kind, kind.left(1).to_upper()))
+	if not label.is_empty():
+		surface.surface_reel_symbol_label(label, Rect2(point - Vector2(9, 8), Vector2(18, 16)), 10, Color("#111722"))
+
+
+func _feature_item_texture(asset_path: String) -> Texture2D:
+	if asset_path.is_empty():
+		return null
+	if _feature_item_texture_cache.has(asset_path):
+		return _feature_item_texture_cache.get(asset_path, null) as Texture2D
+	var texture: Texture2D = load(asset_path) as Texture2D if ResourceLoader.exists(asset_path) else null
+	if _feature_item_texture_cache.size() >= MAX_FEATURE_ITEM_TEXTURES:
+		_feature_item_texture_cache.clear()
+	_feature_item_texture_cache[asset_path] = texture
+	return texture
 
 
 func draw_static_cache_layer(surface, state: Dictionary, layer_index: int) -> void:

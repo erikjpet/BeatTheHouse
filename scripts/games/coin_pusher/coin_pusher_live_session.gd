@@ -5,6 +5,7 @@ const CoinPusherSolverScript := preload("res://scripts/games/coin_pusher/coin_pu
 const SNAPSHOT_SCHEMA := "coin_pusher_settled_v3"
 const SNAPSHOT_VERSION := 3
 const FIXED_HZ := 60
+const DROP_RELEASE_INTERVAL_TICKS := 20
 const MAX_CATCH_UP_TICKS := 4
 const MAX_SETTLE_TICKS := 1200
 const WEB_PRESENTATION_INTERVAL_MSEC := 1100
@@ -599,10 +600,19 @@ static func _release_due_drop(machine: Dictionary, simulation: Dictionary, tick_
 		"bonus_origin": bool(item.get("bonus_origin", false)),
 	})
 	item["remaining"] = int(item.get("remaining", 1)) - 1
-	var apparatus: Dictionary = definition.get("apparatus", {}) if typeof(definition.get("apparatus", {})) == TYPE_DICTIONARY else {}
-	item["next_emit_tick"] = tick_value + maxi(1, int(apparatus.get("release_interval_ticks", 6)))
+	# All cabinet types share a human-readable three-drops-per-second feeder.
+	# Keeping this at the scheduler boundary also repairs old snapshots whose
+	# authored machine definition predates the cadence change.
+	item["next_emit_tick"] = tick_value + DROP_RELEASE_INTERVAL_TICKS
 	if int(item["remaining"]) <= 0:
 		queue.pop_front()
+		# Adjacent reservations are still one physical feeder queue. A later
+		# batch may have been reserved while this one was active, so move its
+		# original due tick forward instead of allowing a one-tick batch seam.
+		if not queue.is_empty() and typeof(queue[0]) == TYPE_DICTIONARY:
+			var next_item: Dictionary = queue[0]
+			next_item["next_emit_tick"] = maxi(int(next_item.get("next_emit_tick", 0)), tick_value + DROP_RELEASE_INTERVAL_TICKS)
+			queue[0] = next_item
 	else:
 		queue[0] = item
 	machine["drop_queue"] = queue

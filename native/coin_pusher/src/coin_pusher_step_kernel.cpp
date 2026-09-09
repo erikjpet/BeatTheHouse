@@ -9,6 +9,7 @@
 #include <array>
 #include <chrono>
 #include <cstdint>
+#include <functional>
 #include <limits>
 #include <memory>
 #include <unordered_map>
@@ -407,6 +408,43 @@ struct Kernel {
       state["stroke_cycle_serial"] = int64_t(state.get("stroke_cycle_serial", 0)) + 1;
     state["face_y"] = face_y(g, divi(state.get("phase_fp", 0), FP));
     return completed;
+  }
+  void refresh_platform_support_roots(int64_t oldf) {
+    body_index_scratch.clear();
+    body_index_scratch.reserve(b.size());
+    for (int index = 0; index < int(b.size()); ++index)
+      body_index_scratch[b[size_t(index)].id] = index;
+    // 0 = unknown, 1 = visiting, 2 = resolved. This makes the cached carry
+    // classification independent of body order and repairs restored stacks
+    // before the moving shelf is applied.
+    std::vector<uint8_t> marks(b.size(), uint8_t(0));
+    std::vector<uint8_t> rooted(b.size(), uint8_t(0));
+    std::function<bool(int)> resolve_root = [&](int index) -> bool {
+      if (index < 0 || index >= int(b.size()) || terminal(b[size_t(index)]))
+        return false;
+      if (marks[size_t(index)] == 2)
+        return rooted[size_t(index)] != 0;
+      if (marks[size_t(index)] == 1)
+        return false;
+      marks[size_t(index)] = 1;
+      const Body &q = b[size_t(index)];
+      bool result = q.support == "platform" ||
+                    (std::abs(q.z - g.top) <= SUPPORT_TOL && q.y >= oldf);
+      if (!result && q.support == "body") {
+        for (const String &support_id : q.support_ids) {
+          auto found = body_index_scratch.find(support_id);
+          if (found != body_index_scratch.end() && resolve_root(found->second)) {
+            result = true;
+            break;
+          }
+        }
+      }
+      rooted[size_t(index)] = result ? 1 : 0;
+      marks[size_t(index)] = 2;
+      return result;
+    };
+    for (int index = 0; index < int(b.size()); ++index)
+      b[size_t(index)].carried = resolve_root(index);
   }
   void carry(int64_t oldf, int64_t newf, int64_t delta) {
     int64_t bottom = g.top + g.plate_gap;
@@ -1469,6 +1507,7 @@ struct Kernel {
         events.append(e);
       }
       int64_t newf = state.get("face_y", oldf), delta = newf - oldf;
+      refresh_platform_support_roots(oldf);
       carry(oldf, newf, delta);
       face_push(oldf, newf, delta);
       int64_t gravity_before = energy();

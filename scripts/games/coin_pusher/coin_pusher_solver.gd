@@ -791,6 +791,7 @@ static func _step_one_tick(state: Dictionary, config: Dictionary) -> Dictionary:
 		events.append({"kind": "stroke_cycle", "stroke_cycle": int(state.get("stroke_cycle_serial", 0)), "phase_fp": int(state.get("phase_fp", 0)), "tick": int(state.get("tick", 0))})
 	var new_face := int(state.get("face_y", old_face))
 	var face_delta := new_face - old_face
+	_refresh_platform_support_roots(bodies, geometry, old_face)
 	_apply_platform_carry_and_plate(bodies, geometry, old_face, new_face, face_delta)
 	_apply_full_height_face(bodies, geometry, old_face, new_face, face_delta)
 	var platform_work := maxi(0, _kinetic_energy(bodies) - before_energy)
@@ -910,6 +911,54 @@ static func _update_motor(state: Dictionary, motor_enabled: bool) -> bool:
 		state["stroke_cycle_serial"] = int(state.get("stroke_cycle_serial", 0)) + 1
 	state["face_y"] = face_y_for_phase(definition, _divi(int(state.get("phase_fp", 0)), FP))
 	return completed
+
+
+static func _refresh_platform_support_roots(bodies: Array, geometry: Dictionary, old_face: int) -> void:
+	# `carried_sleep` is a cached property of the whole support graph, not just
+	# the immediately supporting body. Rebuild it before platform motion so an
+	# upper layer cannot miss a stroke because bodies were restored/reordered or
+	# because a sleeping intermediate support skipped contact resolution.
+	var by_id := {}
+	for body_value in bodies:
+		if typeof(body_value) == TYPE_DICTIONARY:
+			var indexed: Dictionary = body_value
+			by_id[str(indexed.get("id", ""))] = indexed
+	var memo := {}
+	var visiting := {}
+	var platform_top := int(geometry.get("platform_top_z", PLATFORM_TOP_Z))
+	for body_value in bodies:
+		if typeof(body_value) != TYPE_DICTIONARY:
+			continue
+		var body: Dictionary = body_value
+		body["carried_sleep"] = _body_has_platform_root(body, by_id, memo, visiting, platform_top, old_face)
+
+
+static func _body_has_platform_root(body: Dictionary, by_id: Dictionary, memo: Dictionary, visiting: Dictionary, platform_top: int, old_face: int) -> bool:
+	if _is_terminal_body(body):
+		return false
+	var body_id := str(body.get("id", ""))
+	if memo.has(body_id):
+		return bool(memo[body_id])
+	if bool(visiting.get(body_id, false)):
+		return false
+	var support_kind := str(body.get("support_kind", ""))
+	if support_kind == "platform" or (absi(int(body.get("z", 0)) - platform_top) <= SUPPORT_VERTICAL_TOLERANCE and int(body.get("y", 0)) >= old_face):
+		memo[body_id] = true
+		return true
+	if support_kind != "body":
+		memo[body_id] = false
+		return false
+	visiting[body_id] = true
+	var rooted := false
+	var support_ids: Array = body.get("support_ids", []) if typeof(body.get("support_ids", [])) == TYPE_ARRAY else []
+	for support_id_value in support_ids:
+		var support_value: Variant = by_id.get(str(support_id_value), null)
+		if typeof(support_value) == TYPE_DICTIONARY and _body_has_platform_root(support_value as Dictionary, by_id, memo, visiting, platform_top, old_face):
+			rooted = true
+			break
+	visiting.erase(body_id)
+	memo[body_id] = rooted
+	return rooted
 
 
 static func _apply_platform_carry_and_plate(bodies: Array, geometry: Dictionary, old_face: int, new_face: int, face_delta: int) -> void:

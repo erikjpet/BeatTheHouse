@@ -634,6 +634,7 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 		# feature pieces during prepare_action and still reconcile here.
 		if variation_id != "quarter_falls":
 			_prepare_variation_action(machine)
+			_assign_feature_items(machine, run_state, environment)
 			_sync_physical_features(machine)
 		if debug_action_timing:
 			_last_action_timing_usec["resolve_prepare_variation"] = Time.get_ticks_usec() - debug_resolve_stage_started_usec
@@ -978,6 +979,7 @@ func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: 
 	if _generation_timing_enabled:
 		_last_generation_timing_usec["machine_state"] = Time.get_ticks_usec() - perf_stage_started_usec
 		perf_stage_started_usec = Time.get_ticks_usec()
+	_assign_feature_items(machine, run_state, environment)
 	_sync_physical_features(machine)
 	if _generation_timing_enabled:
 		_last_generation_timing_usec["physical_features"] = Time.get_ticks_usec() - perf_stage_started_usec
@@ -1282,6 +1284,7 @@ func _v3_headless_surface_state(machine: Dictionary, run_state: RunState = null,
 	var variation_id := str(machine.get("variation_id", _variation_id()))
 	var feature_kind := "rider" if variation_id == "quarter_falls" else "puck" if variation_id == "jackpot_ridge" else "fragment"
 	var feature_views := _feature_views(simulation, feature_kind)
+	var feature_item_views := _feature_item_views(machine)
 	var variation_state := _variation_state(machine)
 	var vault_views: Dictionary = VaultDropScript.views(variation_state) if variation_id == "vault_drop" else {}
 	var feature_hardware := _feature_hardware_descriptor_for_session(machine, vault_views, session)
@@ -1325,6 +1328,7 @@ func _v3_headless_surface_state(machine: Dictionary, run_state: RunState = null,
 		"coin_pusher_presentation_session_key": str(session.get("native_cache_key", "")),
 		"coin_pusher_interpolation_alpha": clampf(float(int(session.get("accumulator_units", 0))) / 1000.0, 0.0, 1.0),
 		"coin_pusher_features": feature_views,
+		"coin_pusher_feature_items": feature_item_views,
 		"coin_pusher_feature_count": feature_views.size(),
 		"coin_pusher_goal": goal,
 		"coin_pusher_riders": feature_views if variation_id == "quarter_falls" else [],
@@ -1417,6 +1421,7 @@ func _v3_realtime_presentation_patch(machine: Dictionary, current_surface_state:
 		"coin_pusher_liveness_ticks": int(session.get("liveness_ticks", 0)),
 	}
 	_append_realtime_change(patch, current_surface_state, "coin_pusher_feature_count", int(session.get("presentation_feature_count", 0)))
+	_append_realtime_change(patch, current_surface_state, "coin_pusher_feature_items", _feature_item_views(machine))
 	_append_realtime_change(patch, current_surface_state, "coin_pusher_goal", goal)
 	_append_realtime_change(patch, current_surface_state, "coin_pusher_tell_rung", tell_rung)
 	_append_realtime_change(patch, current_surface_state, "coin_pusher_tell_label", str(tell_labels[tell_rung]))
@@ -1681,6 +1686,7 @@ func _ensure_live_machine(run_state: RunState, environment: Dictionary) -> Dicti
 		machine["settled_state"] = CoinPusherLiveSessionScript.make_snapshot(_simulation(machine), machine)
 	var seed := _stable_hash("pusher_live:%s:%s" % [str(run_state.seed_text if run_state != null else "fallback"), _environment_node_id(run_state, environment)])
 	CoinPusherLiveSessionScript.begin(machine, _machine_definition(str(machine.get("variation_id", _variation_id()))), seed)
+	_assign_feature_items(machine, run_state, environment)
 	_sync_physical_features(machine)
 	_sync_variation_motor(machine)
 	_live_machines[key] = machine
@@ -1826,6 +1832,8 @@ func _collect_surface_command(run_state: RunState, environment: Dictionary, mach
 	var cash := _ledger_value(tray)
 	var items: Array = collected.get("items", []) if typeof(collected.get("items", [])) == TYPE_ARRAY else []
 	var message := "The tray is empty." if tray.is_empty() else "You collect $%d from %d tray pieces." % [cash, tray.size()]
+	if not items.is_empty():
+		message = "You collect $%d and %d item%s from the tray." % [cash, items.size(), "" if items.size() == 1 else "s"]
 	var deltas := {
 		"bankroll_delta": cash,
 		"inventory_add": items,
@@ -2013,6 +2021,7 @@ func _consume_physics_events(run_state: RunState, machine: Dictionary, events: A
 			machine["last_message"] = "PRIZE RUSH! The heavy prizes trip the bonus feeder for %d extra tokens." % prize_bonus
 		machine["prize_goal_progress"] = prize_progress
 		_replenish_quarter_riders(machine, rng)
+		_assign_feature_items_from_pool(machine, _safe_pusher_item_pool(run_state), int(machine.get("feature_item_seed", 1)))
 		_sync_physical_features(machine)
 	return {"payout": payout, "prizes": prizes, "gutter_count": gutter_count, "shim_recovered": shim_recovered}
 
@@ -2210,19 +2219,104 @@ func _append_motion_audio_events(machine: Dictionary, result: Array) -> void:
 		session["presentation_last_slide_tick"] = simulation_tick
 
 
+func _logical_features(machine: Dictionary) -> Array:
+	var variation_id := str(machine.get("variation_id", "quarter_falls"))
+	if variation_id == "quarter_falls":
+		return machine.get("riders", []) if typeof(machine.get("riders", [])) == TYPE_ARRAY else []
+	var variation_state := _variation_state(machine)
+	if variation_id == "jackpot_ridge":
+		return variation_state.get("pucks", []) if typeof(variation_state.get("pucks", [])) == TYPE_ARRAY else []
+	return variation_state.get("fragments", []) if typeof(variation_state.get("fragments", [])) == TYPE_ARRAY else []
+
+
+func _safe_pusher_item_pool(run_state: RunState) -> Array:
+	if library == null:
+		return []
+	var challenge_config: Dictionary = run_state.challenge_config if run_state != null else {}
+	var candidates := library.shop_item_pool_for_challenge([], challenge_config)
+	var safe: Array = []
+	for item_id_value in candidates:
+		var item_id := str(item_id_value)
+		var item_definition := library.item(item_id)
+		var risk_flags: Array = item_definition.get("risk_flags", []) if typeof(item_definition.get("risk_flags", [])) == TYPE_ARRAY else []
+		var asset_path := str(item_definition.get("asset_path", ""))
+		if item_definition.is_empty() or not bool(item_definition.get("sellable", true)) \
+				or str(item_definition.get("class", "")).to_lower() == "contraband" \
+				or risk_flags.has("contraband") or asset_path.is_empty() or not ResourceLoader.exists(asset_path):
+			continue
+		safe.append(item_id)
+	safe.sort()
+	return safe
+
+
+func _assign_feature_items(machine: Dictionary, run_state: RunState, environment: Dictionary) -> void:
+	var seed := int(machine.get("feature_item_seed", 0))
+	if seed == 0:
+		seed = _stable_hash("pusher_items:%s:%s:%s" % [
+			str(run_state.seed_text if run_state != null else "fallback"),
+			_environment_node_id(run_state, environment),
+			str(machine.get("variation_id", "quarter_falls")),
+		])
+		machine["feature_item_seed"] = seed
+	_assign_feature_items_from_pool(machine, _safe_pusher_item_pool(run_state), seed)
+
+
+func _assign_feature_items_from_pool(machine: Dictionary, item_pool: Array, seed: int) -> void:
+	if library == null or item_pool.is_empty():
+		return
+	var allowed := {}
+	for item_id_value in item_pool:
+		allowed[str(item_id_value)] = true
+	for feature_value in _logical_features(machine):
+		if typeof(feature_value) != TYPE_DICTIONARY:
+			continue
+		var feature: Dictionary = feature_value
+		var item_id := str(feature.get("item_id", ""))
+		if not bool(feature.get("pusher_item_assigned", false)) or not bool(allowed.get(item_id, false)):
+			var feature_id := str(feature.get("id", "feature"))
+			item_id = str(item_pool[posmod(_stable_hash("%d:%s" % [seed, feature_id]), item_pool.size())])
+		var item_definition := library.item(item_id)
+		feature["item_id"] = item_id
+		feature["item_label"] = str(item_definition.get("display_name", item_id.capitalize()))
+		feature["item_asset_path"] = str(item_definition.get("asset_path", ""))
+		feature["item_icon_key"] = str(item_definition.get("icon_key", ""))
+		feature["pusher_item_assigned"] = true
+
+
+func _feature_item_views(machine: Dictionary) -> Dictionary:
+	var result := {}
+	for feature_value in _logical_features(machine):
+		if typeof(feature_value) != TYPE_DICTIONARY:
+			continue
+		var feature: Dictionary = feature_value
+		var body_id := str(feature.get("body_id", ""))
+		var item_id := str(feature.get("item_id", ""))
+		if body_id.is_empty() or item_id.is_empty():
+			continue
+		result[body_id] = {
+			"item_id": item_id,
+			"label": str(feature.get("item_label", item_id.capitalize())),
+			"asset_path": str(feature.get("item_asset_path", "")),
+			"icon_key": str(feature.get("item_icon_key", "")),
+		}
+	return result
+
+
 func _sync_physical_features(machine: Dictionary) -> void:
 	var variation_id := str(machine.get("variation_id", "quarter_falls"))
 	var simulation := _simulation(machine)
 	if simulation.is_empty():
 		return
-	var features: Array = machine.get("riders", []) if variation_id == "quarter_falls" else (_variation_state(machine).get("pucks", []) if variation_id == "jackpot_ridge" else _variation_state(machine).get("fragments", []))
+	var features := _logical_features(machine)
 	var kind := "rider" if variation_id == "quarter_falls" else "puck" if variation_id == "jackpot_ridge" else "fragment"
 	var desired_feature_ids := {}
+	var desired_features := {}
 	for value in features:
 		if typeof(value) == TYPE_DICTIONARY:
 			var desired_id := str((value as Dictionary).get("id", ""))
 			if not desired_id.is_empty():
 				desired_feature_ids[desired_id] = true
+				desired_features[desired_id] = value
 	# Bodies are authoritative physical pieces once created. Reconciliation may
 	# add a missing ledger-owned body, but it never deletes or repositions one.
 	# Terminal tray/gutter transitions are the only removal path.
@@ -2233,7 +2327,15 @@ func _sync_physical_features(machine: Dictionary) -> void:
 			continue
 		var body: Dictionary = value
 		var metadata: Dictionary = body.get("meta", {}) if typeof(body.get("meta", {})) == TYPE_DICTIONARY else {}
-		existing[str(metadata.get("feature_id", ""))] = true
+		var existing_feature_id := str(metadata.get("feature_id", ""))
+		existing[existing_feature_id] = true
+		var desired_value: Variant = desired_features.get(existing_feature_id, null)
+		if typeof(desired_value) == TYPE_DICTIONARY:
+			var desired_feature: Dictionary = desired_value
+			for item_key in ["item_id", "item_label", "item_asset_path", "item_icon_key", "pusher_item_assigned"]:
+				if desired_feature.has(item_key):
+					metadata[item_key] = desired_feature[item_key]
+			body["meta"] = metadata
 	for value in features:
 		if typeof(value) != TYPE_DICTIONARY:
 			continue

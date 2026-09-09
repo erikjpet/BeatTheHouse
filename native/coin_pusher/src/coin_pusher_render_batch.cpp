@@ -171,6 +171,7 @@ Dictionary CoinPusherNativeCore::build_live_render_batch(
     if (kind != "coin") {
       Dictionary feature;
       feature["kind"] = kind;
+      feature["body_id"] = id;
       feature["point"] = point;
       features.append(feature);
     }
@@ -307,6 +308,7 @@ Dictionary CoinPusherNativeCore::build_live_render_batch_packed(
     if (kind_index > 0) {
       Dictionary feature;
       feature["kind"] = kind_names[kind_index];
+      feature["body_id_number"] = body.id;
       feature["point"] = point;
       features.append(feature);
     }
