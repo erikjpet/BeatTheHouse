@@ -1439,6 +1439,72 @@ func _sealed_action_host_transaction_candidate() -> RunState:
 	return run_state if _sealed_action_host_can_commit_in_place() else _sealed_action_host_detached()
 
 
+func _sealed_action_host_in_place_session_intent_allowed(surface_action: String) -> bool:
+	if run_state == null or run_state.is_terminal() or surface_action.is_empty():
+		return false
+	var intents_value: Variant = action_authority_contract.get("in_place_session_intents", [])
+	return typeof(intents_value) == TYPE_ARRAY and (intents_value as Array).has(surface_action)
+
+
+func _sealed_action_host_in_place_ledger() -> Dictionary:
+	if run_state == null or current_game == null:
+		return {}
+	var states_value: Variant = run_state.current_environment.get("game_states", {})
+	if typeof(states_value) != TYPE_DICTIONARY:
+		return {}
+	var table_value: Variant = (states_value as Dictionary).get(_sealed_action_host_state_key(), {})
+	if typeof(table_value) != TYPE_DICTIONARY:
+		return {}
+	return ActionAuthorityScript.validate_persisted_ledger_cow(
+		(table_value as Dictionary).get(ActionAuthorityScript.LEDGER_KEY, {}),
+		_sealed_action_host_table_binding(run_state.current_environment),
+		run_state.action_authority_checkpoint_fingerprint()
+	)
+
+
+func _sealed_action_host_store_in_place_ledger(ledger: Dictionary) -> bool:
+	if run_state == null or current_game == null or ledger.is_empty():
+		return false
+	var states_value: Variant = run_state.current_environment.get("game_states", {})
+	if typeof(states_value) != TYPE_DICTIONARY:
+		return false
+	var states := states_value as Dictionary
+	var state_key := _sealed_action_host_state_key()
+	var table_value: Variant = states.get(state_key, {})
+	if typeof(table_value) != TYPE_DICTIONARY:
+		return false
+	var table := table_value as Dictionary
+	table[ActionAuthorityScript.LEDGER_KEY] = ledger.duplicate(false)
+	table.erase(ActionAuthorityScript.PENDING_APPLY_RECEIPT_KEY)
+	return true
+
+
+func _sealed_action_host_in_place_session_intent(surface_action: String, index: int, confirm_requested: bool, surface_time_msec: int) -> Dictionary:
+	var method := StringName(action_authority_contract.get("in_place_session_intent_method", &""))
+	if method.is_empty() or current_game == null or not current_game.has_method(method):
+		return _sealed_action_host_rejection("invalid_intent", "Session-only Blackjack input has no sealed handler.")
+	var ledger := _sealed_action_host_in_place_ledger()
+	if ledger.is_empty():
+		return _sealed_action_host_rejection("internal_fail_closed", "The live Blackjack session could not be validated.")
+	if not (ledger.get("pending_delivery", {}) as Dictionary).is_empty():
+		return _sealed_action_host_rejection("pending_delivery", "Retry or cancel the pending Blackjack action before changing the table.")
+	var session: Dictionary = (ledger.get("session", {}) as Dictionary).duplicate(true)
+	if surface_time_msec >= 0:
+		session = _apply_game_surface_time_fields(session, surface_time_msec)
+	var command_value: Variant = current_game.call(method, surface_action, index, confirm_requested, session, run_state, run_state.current_environment)
+	if typeof(command_value) != TYPE_DICTIONARY:
+		return _sealed_action_host_rejection("invalid_intent", "Session-only Blackjack input returned an invalid command.")
+	var command := command_value as Dictionary
+	if bool(command.get("direct_resolve", false)) or bool(command.get("resolve", false)) or not str(command.get("action_id", "")).is_empty():
+		return _sealed_action_host_rejection("invalid_intent", "A session-only Blackjack input attempted to cross an economic boundary.")
+	if bool(command.get("handled", false)):
+		var next_session: Dictionary = command.get("ui_state", session) if typeof(command.get("ui_state", session)) == TYPE_DICTIONARY else session
+		ledger = ActionAuthorityScript.stage_session_cow(ledger, next_session)
+		if not _sealed_action_host_store_in_place_ledger(ledger):
+			return _sealed_action_host_rejection("internal_fail_closed", "The live Blackjack session could not be staged.")
+	return command
+
+
 func _sealed_action_host_restored_candidate(snapshot: Dictionary, layout_context: Dictionary = {}, trusted_environment: Dictionary = {}) -> RunState:
 	var candidate := RunState.new()
 	candidate.from_dict(snapshot)
@@ -1494,6 +1560,11 @@ func _sealed_action_host_rejection(error_code: String, message: String, request_
 func _sealed_action_host_surface_intent(surface_action: String, index: int, confirm_requested: bool = false, surface_time_msec: int = -1) -> Dictionary:
 	if not _current_game_uses_action_authority() or run_state == null or surface_action.is_empty():
 		return _sealed_action_host_rejection("invalid_intent", "Blackjack action intent is unavailable.")
+	# A count-pulse mouse-over only stages the already sealed table session. It has
+	# no wager, RNG, environment-turn, or result authority, so cloning a late run's
+	# world/scenario graph here is both unnecessary and visibly expensive.
+	if _sealed_action_host_in_place_session_intent_allowed(surface_action):
+		return _sealed_action_host_in_place_session_intent(surface_action, index, confirm_requested, surface_time_msec)
 	var candidate := _sealed_action_host_transaction_candidate()
 	if candidate == null:
 		return _sealed_action_host_rejection("internal_fail_closed", "Sealed table semantics could not be rebuilt.")
@@ -2368,9 +2439,10 @@ func _sealed_action_host_normalize_environment_turn(result: Dictionary, action_i
 		return false
 	var game_id := current_game.get_id()
 	var allowed_value: Variant = SEALED_ACTION_HOST_SKIP_ENVIRONMENT_TURN_ALLOWLIST.get(game_id, [])
-	if typeof(allowed_value) != TYPE_ARRAY:
-		return false
-	return (allowed_value as Array).has(action_id)
+	var provider_allowed_value: Variant = action_authority_contract.get("skip_environment_turn_actions", [])
+	var legacy_allowed := typeof(allowed_value) == TYPE_ARRAY and (allowed_value as Array).has(action_id)
+	var provider_allowed := typeof(provider_allowed_value) == TYPE_ARRAY and (provider_allowed_value as Array).has(action_id)
+	return legacy_allowed or provider_allowed
 
 
 # `input_route_guarded` is trusted call-stack context only. It is never read

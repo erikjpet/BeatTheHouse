@@ -3604,8 +3604,59 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 		dirty_count_state["count_answered"] = true
 		dirty_count_state["count_correct"] = false
 		var dirty_count_result := _blackjack_authority_resolve(game, "count_cards", 1, run_state, environment, run_state.create_rng("blackjack_dirty_count_contract"), dirty_count_state)
-		if int(dirty_count_result.get("blackjack_host_action_suspicion_delta", dirty_count_result.get("suspicion_delta", 0))) < 14:
-			failures.append("Blackjack inaccurate live count did not produce significant heat.")
+		if int(dirty_count_result.get("blackjack_host_action_suspicion_delta", dirty_count_result.get("suspicion_delta", 0))) != 0:
+			failures.append("Blackjack charged Heat while merely recording an inaccurate count instead of assessing it once at hand settlement.")
+	# Counter detection is a rolling observable-behavior model, not a reward or
+	# punishment attached to completing the count interaction itself.
+	var flat_watch_table := {
+		"counter_observation_hands": 0,
+		"counter_observation_samples": [],
+		"counter_evidence_points": 0,
+		"counter_miss_streak": 0,
+	}
+	var surveillance_session := {
+		"count_answered": true,
+		"count_attempted": true,
+		"count_correct": true,
+		"count_delta": 0,
+		"cheats_used": {"count_cards": true},
+		"count_challenge": {"target_delta": 0, "recorded_delta": 0, "missed_icons": [], "bad_hits": 0},
+	}
+	var flat_watch_heat := 0
+	for watch_count in [-3, -1, 0, 2, 4, 1, -2, 3, 0, 2, -1, 4]:
+		flat_watch_table["running_count"] = watch_count
+		var flat_assessment: Dictionary = game.call("_counter_surveillance_for_hand", surveillance_session, flat_watch_table, 5)
+		flat_watch_heat += int(flat_assessment.get("heat", 0))
+		game.call("_persist_counter_surveillance", flat_watch_table, {"counter_surveillance": flat_assessment})
+	if flat_watch_heat != 0 or int(flat_watch_table.get("counter_evidence_points", -1)) != 0:
+		failures.append("Blackjack accurate flat-bet counting generated Heat/evidence across many hands.")
+	var ramp_watch_table := {
+		"counter_observation_hands": 0,
+		"counter_observation_samples": [],
+		"counter_evidence_points": 0,
+		"counter_miss_streak": 0,
+	}
+	var ramp_counts := [-2, -1, 0, 1, 2, 3, 4, 5]
+	var ramp_bets := [5, 5, 5, 5, 10, 20, 30, 40]
+	var ramp_watch_heat := 0
+	var ramp_last_assessment: Dictionary = {}
+	for ramp_index in range(ramp_counts.size()):
+		ramp_watch_table["running_count"] = ramp_counts[ramp_index]
+		ramp_last_assessment = game.call("_counter_surveillance_for_hand", surveillance_session, ramp_watch_table, ramp_bets[ramp_index])
+		ramp_watch_heat += int(ramp_last_assessment.get("heat", 0))
+		game.call("_persist_counter_surveillance", ramp_watch_table, {"counter_surveillance": ramp_last_assessment})
+	if ramp_watch_heat < 6 or float(ramp_last_assessment.get("correlation", 0.0)) < 0.70 or int(ramp_last_assessment.get("catch_chance", 0)) <= 0:
+		failures.append("Blackjack did not detect a mature positive-count wager ramp over the rolling hand sample.")
+	var miss_watch_table := {"running_count": 1, "counter_observation_hands": 0, "counter_observation_samples": [], "counter_evidence_points": 0, "counter_miss_streak": 0}
+	var miss_watch_session := surveillance_session.duplicate(true)
+	miss_watch_session["count_correct"] = false
+	(miss_watch_session.get("count_challenge", {}) as Dictionary)["missed_icons"] = ["miss_one"]
+	var first_miss_assessment: Dictionary = game.call("_counter_surveillance_for_hand", miss_watch_session, miss_watch_table, 5)
+	game.call("_persist_counter_surveillance", miss_watch_table, {"counter_surveillance": first_miss_assessment})
+	(miss_watch_session.get("count_challenge", {}) as Dictionary)["missed_icons"] = ["miss_one", "miss_two"]
+	var repeated_miss_assessment: Dictionary = game.call("_counter_surveillance_for_hand", miss_watch_session, miss_watch_table, 5)
+	if int(first_miss_assessment.get("heat", 0)) != 1 or int(first_miss_assessment.get("catch_chance", -1)) != 0 or int(repeated_miss_assessment.get("heat", 0)) < 4 or int(repeated_miss_assessment.get("heat", 99)) > 6:
+		failures.append("Blackjack count misses did not progress from a minor isolated tell to bounded significant repeated Heat.")
 	var miss_state: Dictionary = count_state.duplicate(true)
 	var miss_challenge: Dictionary = miss_state.get("count_challenge", {})
 	var miss_icons: Array = miss_challenge.get("icons", []) as Array

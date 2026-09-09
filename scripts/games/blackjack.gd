@@ -48,10 +48,14 @@ const BLACKJACK_PAYOUT_LABEL := "3:2"
 const STRATEGY_DEVIATION_MAX_HEAT := 24
 const STRATEGY_DEVIATION_MAX_WATCH := 45
 const ORDINARY_STRATEGY_HEAT_MAX := 2
-const DIRTY_COUNT_BASE_HEAT := 10
-const DIRTY_COUNT_ERROR_HEAT := 4
 const COUNT_ADVANTAGE_BASE_HEAT := 8
 const HOLE_CARD_ADVANTAGE_BASE_HEAT := 12
+const COUNTER_SURVEILLANCE_SAMPLE_LIMIT := 24
+const COUNTER_SURVEILLANCE_MIN_HANDS := 6
+const COUNTER_SURVEILLANCE_CORRELATION_THRESHOLD := 0.58
+const COUNTER_SURVEILLANCE_STRONG_CORRELATION := 0.76
+const COUNTER_SURVEILLANCE_MAX_MISS_HEAT := 6
+const COUNTER_SURVEILLANCE_CAUGHT_BONUS := 6
 const COOLERS_CUFFLINKS_ITEM_ID := "coolers_cufflinks"
 const BROKEN_CUFFLINKS_ITEM_ID := "broken_cufflinks"
 const PLAYER_CARD_SCALE := 0.84
@@ -146,6 +150,12 @@ func sealed_action_authority_contract() -> Dictionary:
 		"authoritative_result_marker": "",
 		"place_bet_action": ActionAuthorityScript.PLACE_BET_ACTION,
 		"host_pointer_intent": false,
+		# Count pulses are session-only observations. They never spend funds, advance
+		# the room, or issue a settlement delivery, so the host can stage them without
+		# cloning a late run's world graph for every mouse-over.
+		"in_place_session_intents": ["blackjack_count_icon"],
+		"in_place_session_intent_method": &"_blackjack_in_place_session_intent_command",
+		"skip_environment_turn_actions": ["count_cards"],
 	}
 
 
@@ -520,6 +530,11 @@ func generate_environment_state(run_state: RunState, environment: Dictionary, rn
 		"running_count": 0,
 		"recorded_running_count": 0,
 		"count_accuracy_streak": 0,
+		"counter_observation_hands": 0,
+		"counter_observation_samples": [],
+		"counter_evidence_points": 0,
+		"counter_miss_streak": 0,
+		"counter_last_assessment": {},
 		"rules": rules,
 		"side_bets": side_bets,
 		"dealer_profile": dealer_profile,
@@ -1905,6 +1920,15 @@ func _blackjack_surface_action_command(surface_action: String, index: int, confi
 	return {"handled": false}
 
 
+func _blackjack_in_place_session_intent_command(surface_action: String, index: int, _confirm_requested: bool, session: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
+	if surface_action != "blackjack_count_icon":
+		return {"handled": false}
+	var table := _peek_table_state(environment)
+	if table.is_empty():
+		return _message_command(session, "The count pulse is no longer available.")
+	return _hit_count_icon(index, session, table, run_state)
+
+
 func _rourke_duel_surface_action_command(surface_action: String, index: int, confirm_requested: bool, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
 	var table := _table_state(run_state, environment)
 	var next_state := _normalized_session(run_state, environment, ui_state, table)
@@ -2186,7 +2210,7 @@ func _resolve_blackjack_proposal_core(action_id: String, stake: int, run_state: 
 		result_action_kind = "cheat"
 	elif bool(cheat.get("advantage_play", false)):
 		result_action_kind = "risky"
-	_update_table_after_hand(table, session, dealer_cards, actual_count_delta, count_record_delta, rng, presentation_msec)
+	_update_table_after_hand(table, session, dealer_cards, actual_count_delta, count_record_delta, rng, presentation_msec, cheat)
 	if not sit_out:
 		_apply_patron_rapport_after_blackjack(table, session, table_stake, bankroll_delta)
 	table["last_result"] = _blackjack_last_result_payload(message, hand_results, side_results, main_delta, side_delta, bankroll_delta, suspicion_delta, dealer_cards, hands, patron_hands, patron_action_events, cheat, presentation_msec)
@@ -2265,6 +2289,7 @@ func _resolve_blackjack_proposal_core(action_id: String, stake: int, run_state: 
 	result["blackjack_pit_boss_heat_bonus"] = int(cheat.get("pit_boss_heat_bonus", 0))
 	result["blackjack_running_count"] = int(table.get("running_count", 0))
 	result["blackjack_recorded_count"] = int(table.get("recorded_running_count", 0))
+	result["blackjack_counter_surveillance"] = _local_copy_dict(cheat.get("counter_surveillance", {}))
 	_apply_blackjack_authority_result(run_state, result, rng)
 	return result
 
@@ -2533,7 +2558,17 @@ func _resolve_cheat_only(action_id: String, run_state: RunState, environment: Di
 			_finalize_count_challenge(session, run_state, result_msec)
 		_persist_tutorial_count_lesson_result(table, session, run_state, environment)
 		_update_environment_table(environment, table)
-	var cheat: Dictionary = _cheat_detection_for_hand(session, table, run_state, environment, rng, _session_stake(maxi(1, int(ui_state.get("selected_stake", 1))), session))
+	# Locking the player's answer is an input boundary, not an observable casino
+	# verdict. Assess it once when the hand settles, alongside the wager and play
+	# decisions; doing it here as well used to charge the same count twice.
+	var cheat: Dictionary = {
+		"suspicion_delta": 0,
+		"caught": false,
+		"message": "The count is recorded; the hand still has to play out.",
+		"used_peek": false,
+		"used_count": action_id == "count_cards",
+		"counter_surveillance": {},
+	} if action_id == "count_cards" else _cheat_detection_for_hand(session, table, run_state, environment, rng, _session_stake(maxi(1, int(ui_state.get("selected_stake", 1))), session))
 	var cufflinks_broke := _coolers_cufflinks_absorbed_failed_peek(action_id, cheat, run_state)
 	var raw_suspicion_delta: int = maxi(1, int(cheat.get("suspicion_delta", 0))) if action_id == "peek_hole_card" else maxi(0, int(cheat.get("suspicion_delta", 0)))
 	if cufflinks_broke:
@@ -4300,6 +4335,11 @@ func _normalize_table_state(table: Dictionary) -> Dictionary:
 	normalized["running_count"] = int(normalized.get("running_count", 0))
 	normalized["recorded_running_count"] = int(normalized.get("recorded_running_count", 0))
 	normalized["counting_enabled"] = bool(normalized.get("counting_enabled", false))
+	normalized["counter_observation_hands"] = maxi(0, int(normalized.get("counter_observation_hands", 0)))
+	normalized["counter_observation_samples"] = _counter_observation_samples(normalized.get("counter_observation_samples", []))
+	normalized["counter_evidence_points"] = clampi(int(normalized.get("counter_evidence_points", 0)), 0, 100)
+	normalized["counter_miss_streak"] = maxi(0, int(normalized.get("counter_miss_streak", 0)))
+	normalized["counter_last_assessment"] = _local_copy_dict(normalized.get("counter_last_assessment", {}))
 	normalized["barred"] = bool(normalized.get("barred", false))
 	normalized["barred_reason"] = str(normalized.get("barred_reason", ""))
 	normalized["strategy_deviation_strikes"] = maxi(0, int(normalized.get("strategy_deviation_strikes", 0)))
@@ -5436,6 +5476,154 @@ func _side_bet_result(bet: Dictionary, player_cards: Array, dealer_cards: Array,
 	}
 
 
+func _counter_observation_samples(value: Variant) -> Array:
+	var samples: Array = []
+	if typeof(value) != TYPE_ARRAY:
+		return samples
+	for sample_value in value as Array:
+		if typeof(sample_value) != TYPE_DICTIONARY:
+			continue
+		var sample := sample_value as Dictionary
+		var bet := maxi(1, int(sample.get("bet", 1)))
+		samples.append({
+			"count": clampi(int(sample.get("count", 0)), -52, 52),
+			"bet": bet,
+		})
+	while samples.size() > COUNTER_SURVEILLANCE_SAMPLE_LIMIT:
+		samples.pop_front()
+	return samples
+
+
+func _counter_bet_count_correlation(samples: Array) -> float:
+	if samples.size() < 3:
+		return 0.0
+	var count_mean := 0.0
+	var bet_mean := 0.0
+	for sample_value in samples:
+		var sample: Dictionary = sample_value
+		count_mean += float(sample.get("count", 0))
+		bet_mean += float(sample.get("bet", 1))
+	count_mean /= float(samples.size())
+	bet_mean /= float(samples.size())
+	var covariance := 0.0
+	var count_variance := 0.0
+	var bet_variance := 0.0
+	for sample_value in samples:
+		var sample: Dictionary = sample_value
+		var count_offset := float(sample.get("count", 0)) - count_mean
+		var bet_offset := float(sample.get("bet", 1)) - bet_mean
+		covariance += count_offset * bet_offset
+		count_variance += count_offset * count_offset
+		bet_variance += bet_offset * bet_offset
+	if count_variance <= 0.0001 or bet_variance <= 0.0001:
+		return 0.0
+	return clampf(covariance / sqrt(count_variance * bet_variance), -1.0, 1.0)
+
+
+# Casinos cannot see a mental running count. They can see wagers and decisions,
+# then compare those observations with the shoe over time. This assessment keeps
+# that distinction explicit: accurate flat betting is invisible; a count-shaped
+# wager ramp, a sustained bet/count correlation, or repeated visible misses adds
+# evidence. The bounded window is long enough to cover many hands without making
+# save size or assessment cost grow with session length.
+func _counter_surveillance_for_hand(session: Dictionary, table: Dictionary, stake: int) -> Dictionary:
+	var challenge: Dictionary = _local_copy_dict(session.get("count_challenge", {}))
+	var missed_count := (_string_array(challenge.get("missed_icons", []))).size()
+	var bad_hits := maxi(0, int(challenge.get("bad_hits", 0)))
+	var target_delta := int(challenge.get("target_delta", 0))
+	var declared_delta := int(session.get("count_delta", challenge.get("recorded_delta", 0)))
+	var count_distance: int = absi(target_delta - declared_delta)
+	var error_units := clampi(maxi(missed_count + bad_hits, count_distance), 0, 8)
+	if not bool(session.get("count_correct", false)) and error_units == 0:
+		error_units = 1
+
+	var samples := _counter_observation_samples(table.get("counter_observation_samples", []))
+	var previous: Dictionary = samples[-1] if not samples.is_empty() else {}
+	var true_count := clampi(int(table.get("running_count", 0)), -52, 52)
+	var wager := maxi(1, stake)
+	samples.append({"count": true_count, "bet": wager})
+	while samples.size() > COUNTER_SURVEILLANCE_SAMPLE_LIMIT:
+		samples.pop_front()
+	var observed_hands := maxi(0, int(table.get("counter_observation_hands", 0))) + 1
+	var previous_bet := maxi(1, int(previous.get("bet", wager)))
+	var previous_count := int(previous.get("count", true_count))
+	var bet_delta := wager - previous_bet
+	var bet_signal_heat := 0
+	var signal_reasons: Array[String] = []
+	if not previous.is_empty():
+		var meaningful_increase := bet_delta >= maxi(2, int(ceil(float(previous_bet) * 0.50)))
+		var meaningful_decrease := -bet_delta >= maxi(2, int(ceil(float(previous_bet) * 0.40)))
+		if true_count >= 2 and meaningful_increase:
+			bet_signal_heat = 2 + mini(2, int(floor(float(true_count) / 2.0)))
+			if wager >= previous_bet * 2:
+				bet_signal_heat += 1
+			signal_reasons.append("the wager rose with a favorable shoe")
+		elif previous_count >= 2 and true_count <= 0 and meaningful_decrease:
+			bet_signal_heat = 2
+			signal_reasons.append("the wager fell as the shoe cooled")
+		elif true_count - previous_count >= 2 and meaningful_increase:
+			bet_signal_heat = 1
+			signal_reasons.append("the wager tracked a rising count")
+
+	var min_bet := wager
+	var max_bet := wager
+	for sample_value in samples:
+		var sample: Dictionary = sample_value
+		var sample_bet := maxi(1, int(sample.get("bet", 1)))
+		min_bet = mini(min_bet, sample_bet)
+		max_bet = maxi(max_bet, sample_bet)
+	var bet_spread := float(max_bet) / float(maxi(1, min_bet))
+	var correlation := _counter_bet_count_correlation(samples)
+	var correlation_heat := 0
+	if bet_delta != 0 and observed_hands >= COUNTER_SURVEILLANCE_MIN_HANDS and samples.size() >= COUNTER_SURVEILLANCE_MIN_HANDS and bet_spread >= 2.0:
+		if correlation >= COUNTER_SURVEILLANCE_STRONG_CORRELATION and bet_spread >= 3.0:
+			correlation_heat = 3
+			signal_reasons.append("surveillance confirms a strong count-to-bet pattern")
+		elif correlation >= COUNTER_SURVEILLANCE_CORRELATION_THRESHOLD:
+			correlation_heat = 1
+			signal_reasons.append("surveillance sees a developing count-to-bet pattern")
+
+	var prior_miss_streak := maxi(0, int(table.get("counter_miss_streak", 0)))
+	var miss_streak := prior_miss_streak + 1 if error_units > 0 else 0
+	var miss_heat := 0
+	if error_units > 0:
+		miss_heat = mini(COUNTER_SURVEILLANCE_MAX_MISS_HEAT, 1 + maxi(0, error_units - 1) * 2 + mini(2, prior_miss_streak))
+		signal_reasons.append("visible count errors draw dealer attention")
+
+	var evidence_add := bet_signal_heat + correlation_heat + (2 if miss_streak >= 2 else 1 if error_units > 0 else 0)
+	var evidence_points := clampi(int(table.get("counter_evidence_points", 0)) + evidence_add, 0, 100)
+	var significant_pattern := bet_signal_heat >= 3 or correlation_heat >= 3 or (miss_streak >= 2 and miss_heat >= 3)
+	var catch_chance := 0
+	if observed_hands >= COUNTER_SURVEILLANCE_MIN_HANDS and (bet_signal_heat > 0 or correlation_heat > 0):
+		catch_chance = clampi(4 + evidence_points / 2 + bet_signal_heat * 3 + correlation_heat * 4, 0, 58)
+	elif miss_streak >= 3:
+		catch_chance = clampi(3 + evidence_points / 3, 0, 24)
+	var heat := clampi(bet_signal_heat + correlation_heat + miss_heat, 0, 10)
+	return {
+		"observed_hands": observed_hands,
+		"samples": samples,
+		"true_count_at_bet": true_count,
+		"current_bet": wager,
+		"previous_bet": previous_bet,
+		"bet_delta": bet_delta,
+		"bet_spread": bet_spread,
+		"correlation": correlation,
+		"bet_signal_heat": bet_signal_heat,
+		"correlation_heat": correlation_heat,
+		"miss_heat": miss_heat,
+		"error_units": error_units,
+		"missed_icons": missed_count,
+		"bad_hits": bad_hits,
+		"miss_streak": miss_streak,
+		"evidence_add": evidence_add,
+		"evidence_points": evidence_points,
+		"heat": heat,
+		"catch_chance": catch_chance,
+		"significant_pattern": significant_pattern,
+		"signal_reasons": signal_reasons,
+	}
+
+
 func _cheat_detection_for_hand(session: Dictionary, table: Dictionary, run_state: RunState, environment: Dictionary, rng: RngStream, stake: int) -> Dictionary:
 	var cheats: Dictionary = _local_copy_dict(session.get("cheats_used", {}))
 	var used_peek: bool = bool(cheats.get("peek_hole_card", false))
@@ -5446,10 +5634,10 @@ func _cheat_detection_for_hand(session: Dictionary, table: Dictionary, run_state
 		return {"suspicion_delta": 0, "caught": false, "message": ""}
 	var base_heat := 0
 	var catch_chance := 0
-	var dirty_count := false
 	var ordinary_strategy_count := 0
 	var count_advantage_score := 0
 	var hole_card_advantage_score := 0
+	var counter_surveillance: Dictionary = {}
 	for event_value in strategy_events:
 		var event: Dictionary = event_value
 		var information_source := str(event.get("information_source", "ordinary"))
@@ -5479,27 +5667,10 @@ func _cheat_detection_for_hand(session: Dictionary, table: Dictionary, run_state
 			base_heat += int(ceil(float(snitch_risk) / 12.0))
 			catch_chance += int(ceil(float(snitch_risk) / 4.0))
 	if used_count:
-		var challenge: Dictionary = _local_copy_dict(session.get("count_challenge", {}))
-		var missed_count := (_string_array(challenge.get("missed_icons", []))).size()
-		var bad_hits := int(challenge.get("bad_hits", 0))
-		dirty_count = not bool(session.get("count_correct", false)) or missed_count > 0 or bad_hits > 0
-		# Accurate counting is observation, not detectable behavior. If the player
-		# also follows an ordinary-looking line, the house has nothing to react to.
-		if not dirty_count and not used_peek and not used_strategy:
-			return {
-				"suspicion_delta": 0,
-				"caught": false,
-				"catch_chance": 0,
-				"message": "The live count stays clean.",
-				"used_peek": false,
-				"used_count": true,
-			}
-		if dirty_count:
-			var count_errors := clampi(missed_count + bad_hits, 1, 8)
-			base_heat += DIRTY_COUNT_BASE_HEAT + count_errors * DIRTY_COUNT_ERROR_HEAT
-			catch_chance = maxi(catch_chance, int(table.get("dealer_catch_base", 10)))
-			catch_chance += 14 + missed_count * 7 + bad_hits * 9
-			catch_chance += int(float(int(challenge.get("dealer_attention_risk", 0))) / 8.0)
+		counter_surveillance = _counter_surveillance_for_hand(session, table, stake)
+		base_heat += int(counter_surveillance.get("heat", 0))
+		catch_chance = maxi(catch_chance, int(counter_surveillance.get("catch_chance", 0)))
+		if int(counter_surveillance.get("heat", 0)) > 0:
 			base_heat += _item_effect_total("blackjack_count_heat_delta", run_state)
 	if used_strategy:
 		var profile: Dictionary = _local_copy_dict(table.get("dealer_profile", {}))
@@ -5524,7 +5695,8 @@ func _cheat_detection_for_hand(session: Dictionary, table: Dictionary, run_state
 		if bool(session.get("strategy_confronted", false)):
 			base_heat += clampi(int(session.get("strategy_confrontation_heat", 0)), 0, STRATEGY_DEVIATION_MAX_HEAT)
 			catch_chance += 20 if advantage_strategy_score > 0 else 4
-	var blatant_advantage_play := used_peek or dirty_count or advantage_strategy_score > 0
+	var count_pattern_exposed := bool(counter_surveillance.get("significant_pattern", false))
+	var blatant_advantage_play := used_peek or count_pattern_exposed or advantage_strategy_score > 0
 	if blatant_advantage_play:
 		base_heat += run_state.security_risk_bonus("cheat")
 		catch_chance += run_state.security_risk_bonus("cheat") * 2
@@ -5545,12 +5717,16 @@ func _cheat_detection_for_hand(session: Dictionary, table: Dictionary, run_state
 	var heat := maxi(0, base_heat)
 	if caught:
 		var catch_heat_bonus := maxi(6, int(table.get("catch_heat", 18)))
+		if used_count and not used_peek and hole_card_advantage_score <= 0:
+			catch_heat_bonus = COUNTER_SURVEILLANCE_CAUGHT_BONUS + mini(3, int(counter_surveillance.get("evidence_points", 0)) / 20)
 		if not blatant_advantage_play:
 			catch_heat_bonus = 1
 		heat += catch_heat_bonus
 	heat = run_state.crew_play_adjust_suspicion(heat, get_id(), environment)
 	var message := "The dealer confronts the off-book line." if strategy_confronted else "The dealer clocks the move." if caught else "The risky move slides by."
-	if used_count and bool(session.get("count_correct", false)) and advantage_strategy_score > 0:
+	if used_count and not caught and int(counter_surveillance.get("heat", 0)) == 0 and advantage_strategy_score == 0 and not used_peek:
+		message = "The count stays mental; the dealer sees an ordinary wager."
+	elif used_count and bool(session.get("count_correct", false)) and advantage_strategy_score > 0:
 		message = "%s The count lands clean, but the information-driven play gives it away." % message
 	elif used_count and bool(session.get("count_correct", false)):
 		message = "%s The count lands clean." % message
@@ -5572,6 +5748,7 @@ func _cheat_detection_for_hand(session: Dictionary, table: Dictionary, run_state
 		"advantage_play": blatant_advantage_play,
 		"strategy_confronted": strategy_confronted,
 		"strategy_deviation_events": strategy_events,
+		"counter_surveillance": counter_surveillance,
 		"pit_boss_watched": bool(pit_boss.get("watched", false)),
 		"pit_boss_heat_bonus": pit_boss_heat_bonus,
 		"stake": stake,
@@ -5606,13 +5783,40 @@ func _blackjack_item_adjustment(main_delta: int, side_delta: int, session: Dicti
 	}
 
 
-func _update_table_after_hand(table: Dictionary, session: Dictionary, dealer_cards: Array, actual_count_delta: int, count_record_delta: int, rng: RngStream, result_msec: int = 0) -> void:
+func _persist_counter_surveillance(table: Dictionary, cheat: Dictionary) -> void:
+	var assessment_value: Variant = cheat.get("counter_surveillance", {})
+	if typeof(assessment_value) != TYPE_DICTIONARY or (assessment_value as Dictionary).is_empty():
+		return
+	var assessment := assessment_value as Dictionary
+	table["counter_observation_hands"] = maxi(0, int(assessment.get("observed_hands", table.get("counter_observation_hands", 0))))
+	table["counter_observation_samples"] = _counter_observation_samples(assessment.get("samples", []))
+	table["counter_evidence_points"] = clampi(int(assessment.get("evidence_points", table.get("counter_evidence_points", 0))), 0, 100)
+	table["counter_miss_streak"] = maxi(0, int(assessment.get("miss_streak", 0)))
+	# Keep the diagnostic payload compact and save-safe. The full sample window is
+	# already stored separately; last assessment is for UI/test explainability.
+	table["counter_last_assessment"] = {
+		"true_count_at_bet": int(assessment.get("true_count_at_bet", 0)),
+		"current_bet": int(assessment.get("current_bet", 0)),
+		"previous_bet": int(assessment.get("previous_bet", 0)),
+		"bet_delta": int(assessment.get("bet_delta", 0)),
+		"bet_spread": float(assessment.get("bet_spread", 1.0)),
+		"correlation": float(assessment.get("correlation", 0.0)),
+		"error_units": int(assessment.get("error_units", 0)),
+		"heat": int(assessment.get("heat", 0)),
+		"catch_chance": int(assessment.get("catch_chance", 0)),
+		"evidence_points": int(assessment.get("evidence_points", 0)),
+		"significant_pattern": bool(assessment.get("significant_pattern", false)),
+	}
+
+
+func _update_table_after_hand(table: Dictionary, session: Dictionary, dealer_cards: Array, actual_count_delta: int, count_record_delta: int, rng: RngStream, result_msec: int = 0, cheat: Dictionary = {}) -> void:
 	var deck_count := int(table.get("deck_count", 6))
 	var cut_card_remaining := int(table.get("cut_card_remaining", CardShoeScript.cut_card_remaining(deck_count)))
 	var remaining_shoe: Array = _remaining_shoe_after_session(table, session)
 	table["hands_played"] = int(table.get("hands_played", 0)) + 1
 	GameModule.reset_table_round_timer(table)
 	table["running_count"] = int(table.get("running_count", 0)) + actual_count_delta
+	_persist_counter_surveillance(table, cheat)
 	if bool(session.get("count_answered", false)):
 		table["recorded_running_count"] = int(table.get("recorded_running_count", 0)) + count_record_delta
 	if bool(session.get("count_correct", false)):
@@ -6807,11 +7011,20 @@ func _hit_count_icon(index: int, ui_state: Dictionary, table: Dictionary, _run_s
 	ui_state["count_delta"] = delta
 	ui_state["count_declared_delta"] = delta
 	ui_state["count_challenge"] = challenge
-	return _message_command(ui_state, "Count pulse %+d locked. Hand delta %+d; shoe count %+d." % [
+	var command := _message_command(ui_state, "Count pulse %+d locked. Hand delta %+d; shoe count %+d." % [
 		int(icon.get("count_value", 0)),
 		delta,
 		int(table.get("recorded_running_count", 0)) + delta,
 	])
+	# The host has already staged the complete sealed session. Patch the rendered
+	# pulse state directly so a hover claim does not rebuild the entire Foundation
+	# screen before drawing the fade/count change.
+	command["surface_state_patch"] = {
+		"count_challenge": challenge.duplicate(true),
+		"count_delta": delta,
+		"count_declared_delta": delta,
+	}
+	return command
 
 
 func _refresh_count_challenge_misses(challenge: Dictionary, now_msec: int) -> Dictionary:
@@ -6972,8 +7185,7 @@ func _update_live_count_state(ui_state: Dictionary, _table: Dictionary, run_stat
 		ui_state.erase("count_live_notice")
 		return ""
 	var new_misses: int = missed_after - missed_before
-	ui_state["count_miss_suspicion"] = int(ui_state.get("count_miss_suspicion", 0)) + new_misses * 2
-	var notice := "A count symbol slips by. Dealer suspicion rises." if new_misses == 1 else "%d count symbols slip by. Dealer suspicion rises." % new_misses
+	var notice := "A count symbol slips by. Dealer attention rises." if new_misses == 1 else "%d count symbols slip by. Dealer attention rises." % new_misses
 	if announce:
 		ui_state["count_live_notice"] = notice
 		ui_state["table_notice"] = notice
