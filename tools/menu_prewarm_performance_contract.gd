@@ -23,7 +23,6 @@ func _run() -> void:
 		_fail("Main scene could not load.")
 		return
 	var app := main_scene.instantiate() as Control
-	app.set("force_deferred_startup_for_test", true)
 	app.set("autosave_slot_id", TEST_SAVE_SLOT)
 	root.add_child(app)
 	await process_frame
@@ -58,6 +57,12 @@ func _run() -> void:
 	if app.get("run_state") == null or str(app.get("current_screen")) != "ENVIRONMENT":
 		_fail("Prewarmed Play did not enter a live environment.")
 		return
+	var prewarmed_run: RunState = app.get("run_state")
+	if str(prewarmed_run.challenge_config.get("mode", "")) != "standard" \
+			or prewarmed_run.challenge_modifiers().has("content_groups"):
+		_fail("Prewarmed Play derived a custom content-group run from the partial menu catalog.")
+		return
+	prewarmed_run = null
 	print("MENU_PREWARM_PERFORMANCE status=PASS prewarm_msec=%d frames=%d worst_menu_frame_msec=%.3f prewarmed_play_msec=%d" % [
 		Time.get_ticks_msec() - started_msec,
 		frame_count,

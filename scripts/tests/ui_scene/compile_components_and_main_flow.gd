@@ -3778,8 +3778,8 @@ func _run() -> void:
 		quit(1)
 		return
 	var game_library_button: Button = app.get("game_library_button")
-	var game_library_page: Control = app.get("game_test_menu")
-	if game_library_button == null or game_library_page == null or not game_library_button.visible or game_library_button.disabled:
+	var game_library_page: Control
+	if game_library_button == null or not game_library_button.visible or game_library_button.disabled:
 		push_error("Main menu did not expose the Games page.")
 		quit(1)
 		return
@@ -3788,6 +3788,10 @@ func _run() -> void:
 		push_error("Release main menu did not expose the Daily Challenge button.")
 		quit(1)
 		return
+	# Run configuration is a release-startup lazy panel. Open it through its
+	# production route before asserting the challenge controls it owns.
+	app.call("open_run_configuration")
+	await process_frame
 	var challenge_select_button: Button = app.get("challenge_select_button")
 	var challenge_new_run_button: Button = app.get("run_config_start_button")
 	var challenge_seed_input: LineEdit = app.get("seed_input")
@@ -3913,7 +3917,8 @@ func _run() -> void:
 		return
 	game_library_button.emit_signal("pressed")
 	await process_frame
-	if not game_library_page.visible or start_menu_controls.visible:
+	game_library_page = app.get("game_test_menu")
+	if game_library_page == null or not game_library_page.visible or start_menu_controls.visible:
 		push_error("Games button did not open the main-menu Games page.")
 		quit(1)
 		return

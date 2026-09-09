@@ -1,7 +1,7 @@
 extends SceneTree
 
-# Release startup contract: the menu must become interactive before full content
-# validation and run-overlay construction, while an immediate Play remains safe.
+# Runtime startup contract: the default menu must become interactive before full
+# content validation and run-overlay construction, while immediate Play remains safe.
 
 const MAIN_SCENE_PATH := "res://scenes/main.tscn"
 const MAX_READY_TO_MENU_MSEC := 1000
@@ -20,7 +20,6 @@ func _run() -> void:
 		_fail("Main scene could not load.")
 		return
 	var app := main_scene.instantiate() as Control
-	app.set("force_deferred_startup_for_test", true)
 	app.set("autosave_slot_id", TEST_SAVE_SLOT)
 	root.add_child(app)
 	await process_frame
@@ -43,6 +42,12 @@ func _run() -> void:
 	if app.get("run_state") == null or str(app.get("current_screen")) != "ENVIRONMENT":
 		_fail("Immediate Play did not enter a live environment.")
 		return
+	var immediate_run: RunState = app.get("run_state")
+	if str(immediate_run.challenge_config.get("mode", "")) != "standard" \
+			or immediate_run.challenge_modifiers().has("content_groups"):
+		_fail("Immediate Play derived a custom content-group run from the partial menu catalog.")
+		return
+	immediate_run = null
 	var immediate_play_msec := Time.get_ticks_msec() - play_started
 	cleanup_save_service = app.get("save_service")
 	if cleanup_save_service == null or int(cleanup_save_service.call("save_run", app.get("run_state"), TEST_SAVE_SLOT)) != OK:
@@ -51,7 +56,6 @@ func _run() -> void:
 	app.queue_free()
 	await process_frame
 	var continue_app := main_scene.instantiate() as Control
-	continue_app.set("force_deferred_startup_for_test", true)
 	continue_app.set("autosave_slot_id", TEST_SAVE_SLOT)
 	root.add_child(continue_app)
 	await process_frame

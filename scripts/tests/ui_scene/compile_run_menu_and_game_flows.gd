@@ -131,6 +131,11 @@ func _check_embedded_refresh_deferred_coach(_app: Control) -> bool:
 	var probe: Control = CoachLifecycleProbeHost.new()
 	probe.set("continuous_environment_clock_enabled", false)
 	root.add_child(probe)
+	if not bool(probe.call("_ensure_run_ui_built")):
+		push_error("Embedded coach probe could not synchronously complete its staged test UI.")
+		probe.queue_free()
+		return false
+	probe.call("_ensure_full_content_library_loaded")
 	await process_frame
 	await process_frame
 	if not bool(probe.call("uses_foundation_runtime")):
@@ -291,6 +296,7 @@ func _normal_coach_lifecycle_probe(reject_delivery: bool, existing_probe: Contro
 	(probe.get("lifecycle_refresh_copies") as Array).clear()
 	(probe.get("lifecycle_refresh_tweens") as Array).clear()
 	(probe.get("lifecycle_refresh_parent_indexes") as Array).clear()
+	probe.call("_ensure_full_content_library_loaded")
 	var library: ContentLibrary = probe.get("library")
 	var run := CoachLifecycleDeliveryRun.new()
 	run.reject_delivery = reject_delivery
@@ -393,6 +399,10 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 	# Disable it again before the first frame so no automatic realtime advance can
 	# race the fixture, while child layout and viewport drawing continue normally.
 	probe.set_process(false)
+	if not bool(probe.call("_ensure_run_ui_built")):
+		push_error("Coin Pusher draw-frame probe could not synchronously complete its staged test UI.")
+		probe.queue_free()
+		return false
 	await process_frame
 	await process_frame
 	probe.call("start_game_test_session", "coin_pusher")
@@ -1549,7 +1559,7 @@ func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 				starter_card_in_run_inventory = true
 				break
 	if run_state == null or run_state.is_tutorial_run() or not bool(run_state.challenge_modifiers().get("grand_casino_prestige", false)) or not starter_card_in_run_inventory or str(coach_snapshot.get("lesson_id", "")).begins_with("tip_first_"):
-		push_error("First normal run after the tutorial did not carry the Players Card/prestige state or repeated an ambient tip.")
+		push_error("First normal run after the tutorial did not carry the Players Card/prestige state or repeated an ambient tip: tutorial=%s prestige=%s card=%s coach=%s modifiers=%s inventory=%s." % [str(run_state.is_tutorial_run() if run_state != null else null), str(run_state.challenge_modifiers().get("grand_casino_prestige", false) if run_state != null else null), str(starter_card_in_run_inventory), str(coach_snapshot.get("lesson_id", "")), str(run_state.challenge_modifiers() if run_state != null else {}), str(run_state.inventory if run_state != null else [])])
 		return false
 	run_state.current_environment = {"id": "normal_grand_host_ui", "archetype_id": RunState.GRAND_CASINO_ARCHETYPE_ID}
 	app.call("_queue_normal_grand_host_greeting", {"id": "normal_previous_room", "archetype_id": "bar"})

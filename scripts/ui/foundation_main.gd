@@ -611,7 +611,6 @@ var run_layout_last_screen_size := Vector2(-1.0, -1.0)
 var accessibility_tree_transform_active := false
 var web_audio_unlock_refresh_scheduled := false
 var web_audio_unlock_refresh_count := 0
-var force_deferred_startup_for_test := false
 
 const WEB_AUDIO_UNLOCK_REFRESH_ATTEMPTS := 4
 const WEB_AUDIO_UNLOCK_REFRESH_DELAY_SECONDS := 0.20
@@ -7922,7 +7921,7 @@ func _build_ui() -> void:
 	screen_stack_root.add_child(start_screen)
 	_build_start_screen()
 
-	# Distribution builds only need the start screen for their first interactive
+	# Player-facing launches only need the start screen for their first interactive
 	# frame. Build the much larger run shell one bounded stage per frame behind
 	# the menu. An immediate New Run still completes any remaining stages
 	# synchronously, so staging cannot expose a partially usable game screen.
@@ -8131,11 +8130,11 @@ func _ensure_main_menu_background_built() -> void:
 
 func _defer_start_menu_secondary_panels() -> bool:
 	# Content validation alone crossed 17 seconds on the 0.6 production catalog.
-	# Release exports use the already-supported start-menu-only content load and
-	# validate scenario definitions lazily at their trusted runtime boundary.
-	return force_deferred_startup_for_test \
-		or OS.has_feature("distribution_build") \
-		or PerfTelemetryOverlayScript.runtime_enabled()
+	# Every runtime launch uses the start-menu-only load and validates scenario
+	# definitions lazily at their trusted boundary. Standalone project validation
+	# remains the eager authoring/preflight gate; a DEBUG playtest must not make the
+	# player wait on that gate before the menu either.
+	return true
 
 
 func _ensure_start_menu_config_panels_built() -> void:
@@ -8711,6 +8710,12 @@ func _content_group_challenge_for_seed(seed_text: String) -> Dictionary:
 
 
 func _new_run_challenge_for_seed(seed_text: String) -> Dictionary:
+	# The first menu frame intentionally owns only the light catalog. Resolve the
+	# complete catalog before deriving defaults, otherwise an immediate Play can
+	# mistake the not-yet-loaded group list for an explicit empty custom run and
+	# silently skip standard-run meta loadout modifiers.
+	_ensure_full_content_library_loaded()
+	_ensure_menu_content_groups_initialized()
 	var config: Dictionary
 	if _challenge_pack_loaded() and not selected_challenge_id.is_empty():
 		config = library.challenge_config_for(selected_challenge_id, seed_text)
