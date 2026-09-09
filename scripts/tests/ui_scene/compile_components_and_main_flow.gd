@@ -2497,11 +2497,15 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 	# unchanged and the delivery subsystem remains fully inactive. refine06_1's
 	# strict collision-safe scenario placement changes only the generated room
 	# layout and the world-map record embedding that room; the route, RNG, story,
-	# money, Heat, clock, and travel-count values remain byte-identical.
+	# money, Heat, clock, and travel-count values remain byte-identical. The
+	# unified-room-plane change at db60e0b1 adds the stable Numbers fixtures to the
+	# occupied plane and reflows scenario objects around every authored object.
+	# A detached bf398237 replay and two exact-candidate replays confirmed that
+	# only the layout-derived environment/world-map records changed.
 	const EXPECTED := {
 		"bankroll_delta": -4,
 		"clock_delta": 42,
-		"current_environment_sha256": "3ee855ba721e36b28cc5e0ca6d773ce1aab1673031d71225a4b15df064e8345d",
+		"current_environment_sha256": "5174d7b67fd4608517ef514d4f5e10e70f334c2af64b445b5894a1d2db5fb4ce",
 		"current_world_node_id": "bar",
 		"heat_delta": 0,
 		"provenance_commit": "9cff9b2309d70c6c93ab34cc60cc18f79f56201b",
@@ -2512,7 +2516,7 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 		"town_action_index": 0,
 		"travel_count_delta": 1,
 		"travel_story_sha256": "0257877551b37226fd62316ee2af5e047a27387fbb87d5acfa0273d1366a0e81",
-		"world_map_sha256": "e3a3045e4756fa85facb7a3f4a1c84b40759926b1971ac1e2de74c828c1d8ecd",
+		"world_map_sha256": "7c9bf8053b63ea69b5edebcb223b61a2b675127bf98ef259bfb328a9e9de7299",
 	}
 	app.call("start_foundation_run", "DELIVERY-ORDINARY-BASELINE", {}, false)
 	for _start_frame in range(3):
