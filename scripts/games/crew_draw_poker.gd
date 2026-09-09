@@ -268,6 +268,8 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"button_index": int(state.get("button_index", 0)),
 		"current_bet": int(state.get("current_bet", 0)),
 		"amount_to_call": maxi(0, int(state.get("current_bet", 0)) - _actor_round_contribution(state, PLAYER_ID)),
+		"round_contributions": _poker_dict(state.get("round_contributions", {})),
+		"chip_layout": _chip_layout(state),
 		"raise_count": int(state.get("raise_count", 0)),
 		"raise_cap": MAX_RAISES_PER_ROUND,
 		"player_stack": int(state.get("player_stack", 0)),
@@ -410,13 +412,14 @@ func _ordered_legal_actions(state: Dictionary) -> Array:
 	if phase in ["preflop", "flop", "turn", "river"]:
 		var due := maxi(0, int(state.get("current_bet", 0)) - _actor_round_contribution(state, PLAYER_ID))
 		var stack := int(state.get("player_stack", 0))
+		var raise_unit := int(CrewPokerModelScript.config().get("raise_unit", 2))
 		var actions: Array = []
 		if due == 0 or stack >= due:
 			actions.append(_poker_action("call", "Call $%d" % due if due > 0 else "Check", "Match exactly the live amount or check for zero."))
-		if int(state.get("raise_count", 0)) < _night_raise_cap(state) and stack >= due + int(CrewPokerModelScript.config().get("raise_unit", 2)):
-			actions.insert(1, _poker_action("raise", "Raise", "Call and add one table-sized raise."))
+		if int(state.get("raise_count", 0)) < _night_raise_cap(state) and stack >= due + raise_unit:
+			actions.insert(1, _poker_action("raise", "Raise to $%d" % (int(state.get("current_bet", 0)) + raise_unit), "Call and add one table-sized raise."))
 		if stack > 0:
-			actions.append(_poker_action("all_in", "All In", "Commit your remaining table stack."))
+			actions.append(_poker_action("all_in", "All In $%d" % stack, "Commit your remaining table stack."))
 		if str(state.get("player_fake_tell_used_street", "")) != phase:
 			actions.append(_poker_action("fake_tell", "Fake Tell", "Project strength or weakness without ending your turn."))
 		actions.append(_poker_action("fold", "Fold", "Release the hand; hidden cards teach nothing."))
@@ -1114,7 +1117,7 @@ func draw_surface(surface, state: Dictionary, _render_context: Dictionary = {}) 
 	_draw_room(surface, state)
 	_draw_seats(surface, state)
 	_draw_shared_board(surface, state)
-	_draw_chip_pot(surface, int(state.get("pot", 0)))
+	_draw_betting_chips(surface, state)
 	_draw_player(surface, state)
 	_draw_observation(surface, state)
 	_draw_controls(surface, state)
@@ -1936,8 +1939,8 @@ func _speaker_matches_member(speaker_value: Variant, member_id: String) -> bool:
 
 func _draw_room(surface, state: Dictionary) -> void:
 	var shared_state := state.duplicate(false)
-	shared_state["room_note"] = "STACK $%d | HAND %d/%d" % [int(state.get("player_stack", 0)), int(state.get("hand_number", 0)) + 1, int(state.get("hand_cap", 5))] if str(state.get("phase", "idle")) == "idle" else "%s | $%d | CALL $%d" % [str(state.get("phase", "idle")).to_upper(), int(state.get("player_stack", 0)), int(state.get("amount_to_call", 0))]
-	TableGameVisualsScript.draw_room(surface, shared_state, "Back-Room", "TEXAS HOLD'EM | $1 / $2")
+	shared_state["room_note"] = "STACK $%d | HAND %d/%d" % [int(state.get("player_stack", 0)), int(state.get("hand_number", 0)) + 1, int(state.get("hand_cap", 5))] if str(state.get("phase", "idle")) == "idle" else "%s | STK $%d | CALL $%d" % [str(state.get("phase", "idle")).to_upper(), int(state.get("player_stack", 0)), int(state.get("amount_to_call", 0))]
+	TableGameVisualsScript.draw_room(surface, shared_state, "Back-Room", "TEXAS HOLD'EM | $1 / $2 LIMIT")
 	TableGameVisualsScript.draw_table(surface)
 
 
@@ -1977,7 +1980,9 @@ func _draw_seats(surface, state: Dictionary) -> void:
 		var action_text := str(seat.get("last_action", "")).replace("_", " ").capitalize()
 		if bool(seat.get("all_in", false)):
 			action_text = "ALL IN"
-		surface.surface_label_centered(action_text, Rect2(pos.x, pos.y + 69, 142, 16), 10, C_YELLOW)
+		var action_rect := Rect2(pos.x + 127.0, pos.y + 53.0, 128, 16) if index == 1 else Rect2(pos.x, pos.y + 69.0, 142, 16)
+		var presented_action := "%s: %s" % [name, action_text] if index == 1 and not action_text.is_empty() else action_text
+		surface.surface_label_centered(presented_action, action_rect, 9 if index == 1 else 10, C_YELLOW)
 		if str(state.get("dealer_actor", "")) == str(seat.get("member_id", "")):
 			_draw_button_marker(surface, pos + Vector2(137, 58))
 
@@ -1999,18 +2004,69 @@ func _draw_shared_board(surface, state: Dictionary) -> void:
 			surface.draw_rect(rect, Color(C_TEAL.r, C_TEAL.g, C_TEAL.b, 0.32), false, 1.0)
 
 
-func _draw_chip_pot(surface, amount: int) -> void:
-	if amount <= 0:
+func _chip_layout(state: Dictionary) -> Array:
+	var layout: Array = []
+	var rounds := _poker_dict(state.get("round_contributions", {}))
+	var player_amount := maxi(0, int(rounds.get(PLAYER_ID, 0)))
+	var current_round_total := player_amount
+	var seat_centers := [Vector2(270, 190), Vector2(390, 145), Vector2(630, 190)]
+	var seats := _dict_array(state.get("seats", []))
+	for index in range(mini(seats.size(), seat_centers.size())):
+		var seat: Dictionary = seats[index]
+		var member_id := str(seat.get("member_id", ""))
+		var amount := maxi(0, int(seat.get("round_contribution", 0)))
+		current_round_total += amount
+		if amount > 0:
+			layout.append(_chip_layout_entry(member_id, amount, seat_centers[index], 2))
+	if player_amount > 0:
+		layout.append(_chip_layout_entry(PLAYER_ID, player_amount, Vector2(350, 280), 2))
+	var swept_pot := maxi(0, int(state.get("pot", 0)) - current_round_total)
+	if swept_pot > 0:
+		layout.push_front(_chip_layout_entry("pot", swept_pot, Vector2(590, 270), 6))
+	return layout
+
+
+func _chip_layout_entry(owner_id: String, amount: int, center: Vector2, max_stacks: int) -> Dictionary:
+	return {
+		"owner_id": owner_id,
+		"amount": amount,
+		"center": center,
+		"max_stacks": max_stacks,
+		"bounds": _chip_cluster_bounds(amount, center, max_stacks),
+	}
+
+
+func _chip_cluster_bounds(amount: int, center: Vector2, max_stacks: int) -> Rect2:
+	if amount <= 0 or max_stacks <= 0:
+		return Rect2()
+	var visible_chips := mini(clampi(amount, 1, 42), max_stacks * 8)
+	var stack_count := mini(max_stacks, ceili(float(visible_chips) / 8.0))
+	var tallest_stack := mini(8, visible_chips)
+	var half_span := float(stack_count - 1) * 9.0
+	var minimum := Vector2(center.x - half_span - 7.0, center.y - float(tallest_stack - 1) * 3.0 - 7.0)
+	var maximum := Vector2(center.x + half_span + 7.0, center.y + 7.0)
+	return Rect2(minimum, maximum - minimum)
+
+
+func _draw_betting_chips(surface, state: Dictionary) -> void:
+	var layout := _draw_array_view(state.get("chip_layout", []))
+	for entry_value in layout:
+		var entry: Dictionary = entry_value
+		_draw_chip_cluster(surface, int(entry.get("amount", 0)), entry.get("center", Vector2.ZERO), int(entry.get("max_stacks", 1)))
+
+
+func _draw_chip_cluster(surface, amount: int, center: Vector2, max_stacks: int) -> void:
+	if amount <= 0 or max_stacks <= 0:
 		return
-	var visible_chips := clampi(4 + amount / 2, 4, 42)
-	var stack_count := clampi(1 + amount / 10, 1, 6)
+	var visible_chips := clampi(amount, 1, 42)
+	var stack_count := mini(max_stacks, ceili(float(visible_chips) / 8.0))
 	var colors := [C_PINK, C_CYAN, C_YELLOW, C_WHITE]
 	for stack_index in range(stack_count):
-		var in_stack := mini(8, maxi(1, visible_chips - stack_index * 7))
-		var x := 450.0 + (float(stack_index) - float(stack_count - 1) * 0.5) * 18.0
+		var in_stack := mini(8, maxi(1, visible_chips - stack_index * 8))
+		var x := center.x + (float(stack_index) - float(stack_count - 1) * 0.5) * 18.0
+		var chip_color: Color = colors[stack_index % colors.size()]
 		for chip_index in range(in_stack):
-			var y := 258.0 - float(chip_index) * 3.0
-			var chip_color: Color = colors[(stack_index + chip_index) % colors.size()]
+			var y := center.y - float(chip_index) * 3.0
 			surface.draw_circle(Vector2(x, y), 7.0, Color("#090b10"))
 			surface.draw_circle(Vector2(x, y - 1), 5.5, chip_color)
 
