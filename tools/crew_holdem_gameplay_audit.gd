@@ -29,6 +29,7 @@ func _init() -> void:
 	_check_best_of_seven(failures)
 	_check_hand_categories(failures)
 	_check_side_pot(game, failures)
+	_check_no_limit_raise_rules(game, failures)
 	_check_table_talk(game, library, failures)
 	var performance := _check_performance(game, failures)
 	var accepted := {}
@@ -71,6 +72,8 @@ func _init() -> void:
 	var raised_hand := _play_hand(game, library, 7201, false, true)
 	if not bool(raised_hand.get("complete", false)) or not bool(raised_hand.get("raise_committed", false)):
 		failures.append("The public raise route did not resolve through a complete hand.")
+	if not bool(raised_hand.get("custom_raise_exact", false)):
+		failures.append("The public raise route did not commit the exact custom whole-dollar total.")
 	var report := {
 		"passed": failures.is_empty(),
 		"failures": failures,
@@ -181,6 +184,28 @@ func _check_side_pot(game: GameModule, failures: Array[String]) -> void:
 		failures.append("Main-pot and side-pot settlement was incorrect: %s" % JSON.stringify(awards))
 
 
+func _check_no_limit_raise_rules(game: GameModule, failures: Array[String]) -> void:
+	var state := {
+		"phase": "turn",
+		"turn_owner": "player",
+		"current_bet": 12,
+		"last_raise_size": 5,
+		"round_contributions": {"player": 7},
+		"player_stack": 53,
+		"player_fake_tell_used_street": "",
+		"raise_count": 99,
+	}
+	var action_ids: Array = []
+	for action_value in game.call("_ordered_legal_actions", state):
+		action_ids.append(str((action_value as Dictionary).get("id", "")))
+	if not action_ids.has("raise"):
+		failures.append("A no-limit street incorrectly stopped offering raises after earlier action.")
+	if int(game.call("_minimum_raise_to", state)) != 17:
+		failures.append("The minimum raise did not preserve the previous full raise size.")
+	if int(game.call("_maximum_raise_to", state)) != 60:
+		failures.append("The maximum raise did not include every remaining player chip.")
+
+
 func _play_hand(game: GameModule, library, seed: int, force_all_in: bool = false, force_raise: bool = false) -> Dictionary:
 	var run_state := RunStateScript.new()
 	run_state.start_new("CREW-HOLDEM-%d" % seed)
@@ -212,6 +237,7 @@ func _play_hand(game: GameModule, library, seed: int, force_all_in: bool = false
 	var fake_tell_kept_turn := false
 	var all_in_committed := false
 	var raise_committed := false
+	var custom_raise_exact := false
 	var player_action_set: Array = []
 	var steps := 1
 	while steps < 80:
@@ -252,6 +278,12 @@ func _play_hand(game: GameModule, library, seed: int, force_all_in: bool = false
 				action_id = "fold"
 			else:
 				return {"seed": seed, "complete": false, "failure": "no legal progression", "streets": streets}
+		var pot_before_action := int(table.get("pot", 0))
+		var expected_raise_cost := 0
+		if action_id == "raise":
+			var selected_raise_to := int(surface.get("minimum_raise_to", 0)) + 1
+			ui["poker_raise_to"] = selected_raise_to
+			expected_raise_cost = selected_raise_to - int((surface.get("round_contributions", {}) as Dictionary).get("player", 0))
 		var result := _apply(game, run_state, action_id, ui, seed + steps)
 		if not bool(result.get("ok", false)):
 			return {"seed": seed, "complete": false, "failure": action_id, "streets": streets}
@@ -259,6 +291,8 @@ func _play_hand(game: GameModule, library, seed: int, force_all_in: bool = false
 			all_in_committed = true
 		elif action_id == "raise":
 			raise_committed = true
+			var after_raise: Dictionary = run_state.current_environment.get("game_states", {}).get("crew_draw_poker", {})
+			custom_raise_exact = int(after_raise.get("pot", 0)) == pot_before_action + expected_raise_cost
 		steps += 1
 	var final_table: Dictionary = run_state.current_environment.get("game_states", {}).get("crew_draw_poker", {})
 	return {
@@ -271,6 +305,7 @@ func _play_hand(game: GameModule, library, seed: int, force_all_in: bool = false
 		"fake_tell_kept_turn": fake_tell_kept_turn,
 		"all_in_committed": all_in_committed,
 		"raise_committed": raise_committed,
+		"custom_raise_exact": custom_raise_exact,
 		"player_action_set": player_action_set,
 		"steps": steps,
 		"burn_card_count": (final_table.get("burn_cards", []) as Array).size(),

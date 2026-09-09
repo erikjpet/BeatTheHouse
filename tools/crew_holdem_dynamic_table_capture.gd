@@ -7,6 +7,7 @@ const MainScene := preload("res://scenes/main.tscn")
 const OUTPUT_DIR := "res://review_artifacts/holdem_dynamic_table"
 const CAPTURE_SIZE := Vector2i(1280, 720)
 const COMPACT_CAPTURE_SIZE := Vector2i(960, 540)
+const MISSING_ACTION_INDEX := -999
 
 
 func _init() -> void:
@@ -56,9 +57,34 @@ func _run() -> void:
 		return
 	root.size = CAPTURE_SIZE
 	await _settle(6)
-	var raise_index := _surface_action_index(canvas, "poker_raise")
-	if raise_index < 0 or not bool(app.call("_handle_module_surface_action", "poker_raise", raise_index, true)):
-		push_error("The visible Raise control could not be selected.")
+	var raise_open_index := _surface_action_index(canvas, "poker_raise_open")
+	if raise_open_index == MISSING_ACTION_INDEX or not bool(app.call("_handle_module_surface_action", "poker_raise_open", raise_open_index, true)):
+		push_error("The visible raise chooser could not be opened.")
+		quit(1)
+		return
+	await _settle(4)
+	if not await _capture("08_raise_selection_open.png"):
+		quit(1)
+		return
+	var plus_one_index := _surface_action_index(canvas, "poker_raise_plus_one")
+	if plus_one_index == MISSING_ACTION_INDEX or not bool(app.call("_handle_module_surface_action", "poker_raise_plus_one", plus_one_index, true)):
+		push_error("The raise chooser could not select a custom whole-dollar amount. hits=%s" % JSON.stringify((canvas.call("current_view_snapshot") as Dictionary).get("surface_hit_actions", [])))
+		quit(1)
+		return
+	await _settle(4)
+	if not await _capture("09_custom_raise_selection.png"):
+		quit(1)
+		return
+	root.size = COMPACT_CAPTURE_SIZE
+	await _settle(6)
+	if not await _capture("10_compact_custom_raise_selection.png", COMPACT_CAPTURE_SIZE):
+		quit(1)
+		return
+	root.size = CAPTURE_SIZE
+	await _settle(6)
+	var confirm_index := _surface_action_index(canvas, "poker_raise_confirm")
+	if confirm_index == MISSING_ACTION_INDEX or not bool(app.call("_handle_module_surface_action", "poker_raise_confirm", confirm_index, true)):
+		push_error("The selected custom raise could not be confirmed.")
 		quit(1)
 		return
 	await _settle(6)
@@ -124,7 +150,7 @@ func _advance_to_player(app: Control, canvas: Control) -> bool:
 		if str(state.get("turn_owner", "")) == "player":
 			return true
 		var observe_index := _surface_action_index(canvas, "poker_observe")
-		if observe_index < 0 or not bool(app.call("_handle_module_surface_action", "poker_observe", observe_index, true)):
+		if observe_index == MISSING_ACTION_INDEX or not bool(app.call("_handle_module_surface_action", "poker_observe", observe_index, true)):
 			return false
 		await _settle(4)
 	return false
@@ -137,11 +163,11 @@ func _advance_to_board_street(app: Control, canvas: Control) -> bool:
 		if str(state.get("phase", "")) in ["flop", "turn", "river"] and not (state.get("community_cards", []) as Array).is_empty():
 			return true
 		var observe_index := _surface_action_index(canvas, "poker_observe")
-		if observe_index >= 0:
+		if observe_index != MISSING_ACTION_INDEX:
 			app.call("_handle_module_surface_action", "poker_observe", observe_index, true)
 		else:
 			var call_index := _surface_action_index(canvas, "poker_call")
-			if call_index < 0:
+			if call_index == MISSING_ACTION_INDEX:
 				return false
 			app.call("_handle_module_surface_action", "poker_call", call_index, true)
 		await _settle(4)
@@ -163,7 +189,7 @@ func _surface_action_index(canvas: Control, action: String) -> int:
 	for hit_value in snapshot.get("surface_hit_actions", []):
 		if typeof(hit_value) == TYPE_DICTIONARY and str((hit_value as Dictionary).get("action", "")) == action:
 			return int((hit_value as Dictionary).get("index", -1))
-	return -1
+	return MISSING_ACTION_INDEX
 
 
 func _capture(file_name: String, expected_size: Vector2i = CAPTURE_SIZE) -> bool:
