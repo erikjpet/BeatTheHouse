@@ -4127,6 +4127,26 @@ func _check_crew_lender_lifecycle(library: ContentLibrary, failures: Array) -> v
 		failures.append("The Crew cash conversion did not write exactly one hidden favor_converted_unpaid grievance.")
 
 
+func _crew_favor_event_fixture(library: ContentLibrary, seed: String, rook_trust: int, failures: Array) -> RunState:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new(seed)
+	RunGeneratorScript.new(library).next_environment(run_state)
+	if run_state.current_environment.is_empty() or not run_state.has_world_map():
+		failures.append("Crew favor fixture did not generate a production room and world map for %s." % seed)
+	run_state.narrative_flags["crew_favor_pending"] = true
+	if rook_trust != 0:
+		run_state.crew_add_trust("crew_rook", rook_trust, "fixture")
+	var queued := run_state.enqueue_triggered_event(
+		"crew_favor_delivery",
+		"foundation_fixture",
+		{"trigger": "action", "type": "action", "source": "game_action"},
+		{"presentation": "talk"}
+	)
+	if not queued or run_state.pending_talk_event("crew_favor_delivery").is_empty():
+		failures.append("Crew favor fixture did not enter the production talk-event queue for %s." % seed)
+	return run_state
+
+
 func _check_crew_trust_core(library: ContentLibrary, failures: Array) -> void:
 	for content_failure in CrewStateModelScript.validate_content():
 		failures.append("Crew content: %s" % str(content_failure))
@@ -4181,52 +4201,58 @@ func _check_crew_trust_core(library: ContentLibrary, failures: Array) -> void:
 	if not job_run.job_accept("forged").is_empty() or not job_run.job_activate("forged").is_empty() or not job_run.job_resolve("forged", "success").is_empty():
 		failures.append("Caller-authored Crew lifecycle transition crossed the host-only boundary.")
 
-	var event_run: RunState = RunStateScript.new()
-	event_run.start_new("CREW-FAVOR-EVENT-REGRESSION")
-	RunGeneratorScript.new(library).next_environment(event_run)
-	event_run.current_environment = {"id": event_run.current_world_node_id(), "archetype_id": event_run.current_world_node_id(), "world_node_id": event_run.current_world_node_id(), "kind": "casino", "tier": 1, "turns": 0, "resolved_event_ids": []}
-	event_run.narrative_flags["crew_favor_pending"] = true
+	var event_run := _crew_favor_event_fixture(library, "CREW-FAVOR-EVENT-REGRESSION", 0, failures)
 	var event_module: EventModule = EventModuleScript.new()
 	event_module.setup(library.event("crew_favor_delivery"), library)
 	var favor_bankroll_before := event_run.bankroll
 	var favor_heat_before := event_run.suspicion_level()
 	var event_result := event_module.resolve(event_run, event_run.current_environment, "run_package")
+	event_run.complete_talk_event_resolution("crew_favor_delivery")
 	if not bool(event_result.get("delivery_started", false)) or not event_run.delivery_has_active_run():
 		failures.append("Crew favor delivery did not start a real-map package run.")
 	if event_run.bankroll != favor_bankroll_before or event_run.suspicion_level() != favor_heat_before or bool(event_run.narrative_flags.get("crew_favor_completed", false)):
 		failures.append("Starting the Crew favor applied its reward before the in-room handoff: bankroll=%d heat=%d flags=%s." % [event_run.bankroll, event_run.suspicion_level(), JSON.stringify(event_run.narrative_flags)])
-	if not _delivery_complete_all_targets(event_run, failures) or event_run.bankroll != favor_bankroll_before + 22 or event_run.suspicion_level() != favor_heat_before + 4 \
+	var favor_target := _delivery_first_target(event_run)
+	var favor_arrival := _delivery_enter_node(event_run, favor_target, failures, library)
+	var favor_bankroll_before_handoff := event_run.bankroll
+	var favor_heat_before_handoff := event_run.suspicion_level()
+	var favor_completed_before_handoff := bool(event_run.narrative_flags.get("crew_favor_completed", false))
+	var favor_handoff := event_run.delivery_complete_handoff(favor_target)
+	if favor_target.is_empty() or not bool(favor_arrival.get("handoff_ready", false)) or not bool(favor_handoff.get("ok", false)) \
+		or favor_bankroll_before_handoff != favor_bankroll_before or favor_completed_before_handoff \
+		or event_run.bankroll != favor_bankroll_before_handoff + 22 or event_run.suspicion_level() != favor_heat_before_handoff + 4 \
 		or event_run.crew_trust("crew_rook") != 5 or not bool(event_run.narrative_flags.get("crew_favor_completed", false)) \
 		or bool(event_run.narrative_flags.get("crew_favor_pending", true)):
-		failures.append("Crew favor success did not preserve exact +22 cash, +4 heat, and job trust after handoff: bankroll=%d heat=%d trust=%d snapshot=%s." % [event_run.bankroll, event_run.suspicion_level(), event_run.crew_trust("crew_rook"), JSON.stringify(event_run.delivery_snapshot())])
+		failures.append("Crew favor success did not preserve exact +22 cash, +4 heat, and job trust at the real-room handoff: bankroll=%d pre_handoff_bankroll=%d heat=%d pre_handoff_heat=%d trust=%d arrival=%s handoff=%s snapshot=%s." % [event_run.bankroll, favor_bankroll_before_handoff, event_run.suspicion_level(), favor_heat_before_handoff, event_run.crew_trust("crew_rook"), JSON.stringify(favor_arrival), JSON.stringify(favor_handoff), JSON.stringify(event_run.delivery_snapshot())])
 
-	var caught_run: RunState = RunStateScript.new()
-	caught_run.start_new("CREW-FAVOR-CAUGHT-REGRESSION")
-	RunGeneratorScript.new(library).next_environment(caught_run)
-	caught_run.current_environment = {"id": caught_run.current_world_node_id(), "archetype_id": caught_run.current_world_node_id(), "world_node_id": caught_run.current_world_node_id(), "kind": "casino", "tier": 1, "turns": 0, "resolved_event_ids": []}
-	caught_run.narrative_flags["crew_favor_pending"] = true
-	caught_run.crew_add_trust("crew_rook", 5, "fixture")
-	var caught_bankroll_before := caught_run.bankroll
-	var caught_heat_before := caught_run.suspicion_level()
-	event_module.resolve(caught_run, caught_run.current_environment, "run_package")
-	caught_run.delivery_abandon("caught")
-	if caught_run.delivery_has_active_run() or caught_run.bankroll != caught_bankroll_before or caught_run.suspicion_level() != caught_heat_before + 9 \
-		or caught_run.crew_trust("crew_rook") != 0 or not bool(caught_run.narrative_flags.get("crew_favor_failed", false)):
-		failures.append("Crew favor failure did not preserve exact +9 heat and job trust failure.")
+	var failed_run := _crew_favor_event_fixture(library, "CREW-FAVOR-DEADLINE-REGRESSION", 5, failures)
+	var failed_bankroll_before := failed_run.bankroll
+	var failed_heat_before := failed_run.suspicion_level()
+	var failed_start := event_module.resolve(failed_run, failed_run.current_environment, "run_package")
+	failed_run.complete_talk_event_resolution("crew_favor_delivery")
+	if failed_run.delivery_has_active_run():
+		failed_run.active_delivery_run["deadline_remaining"] = 1
+	var failed_boundary := failed_run.advance_environment_turns(1)
+	var failed_resolution: Dictionary = failed_run.delivery_snapshot().get("resolution", {}) if typeof(failed_run.delivery_snapshot().get("resolution", {})) == TYPE_DICTIONARY else {}
+	var failed_heat_cue: Dictionary = {}
+	for cue_value in failed_run.suspicion.get("cues", []):
+		if typeof(cue_value) == TYPE_DICTIONARY and str((cue_value as Dictionary).get("id", "")) == "delivery:deadline":
+			failed_heat_cue = (cue_value as Dictionary).duplicate(true)
+	if failed_run.delivery_has_active_run() or failed_run.bankroll != failed_bankroll_before or failed_run.suspicion_level() <= failed_heat_before \
+		or int(failed_heat_cue.get("base_amount", 0)) != 9 or int(failed_heat_cue.get("amount", 0)) != 9 \
+		or failed_run.crew_trust("crew_rook") != 0 or not bool(failed_run.narrative_flags.get("crew_favor_failed", false)) \
+		or str(failed_resolution.get("reason", "")) != "deadline" or not bool(failed_boundary.get("ok", false)):
+		failures.append("Crew favor failure did not preserve exact +9 authored heat and job trust at a production deadline: bankroll=%d heat=%d trust=%d heat_cue=%s flags=%s start=%s boundary=%s snapshot=%s." % [failed_run.bankroll, failed_run.suspicion_level(), failed_run.crew_trust("crew_rook"), JSON.stringify(failed_heat_cue), JSON.stringify(failed_run.narrative_flags), JSON.stringify(failed_start), JSON.stringify(failed_boundary), JSON.stringify(failed_run.delivery_snapshot())])
 
-	var refused_run: RunState = RunStateScript.new()
-	refused_run.start_new("CREW-FAVOR-REFUSE-REGRESSION")
-	RunGeneratorScript.new(library).next_environment(refused_run)
-	refused_run.current_environment = {"id": refused_run.current_world_node_id(), "archetype_id": refused_run.current_world_node_id(), "world_node_id": refused_run.current_world_node_id(), "kind": "casino", "tier": 1, "turns": 0, "resolved_event_ids": []}
-	refused_run.narrative_flags["crew_favor_pending"] = true
-	refused_run.crew_add_trust("crew_rook", 5, "fixture")
+	var refused_run := _crew_favor_event_fixture(library, "CREW-FAVOR-REFUSE-REGRESSION", 5, failures)
 	var refused_bankroll_before := refused_run.bankroll
 	var refused_heat_before := refused_run.suspicion_level()
 	var refused := event_module.resolve(refused_run, refused_run.current_environment, "refuse")
+	refused_run.complete_talk_event_resolution("crew_favor_delivery")
 	if refused_run.delivery_has_active_run() or refused_run.bankroll != refused_bankroll_before or refused_run.suspicion_level() != refused_heat_before + 9 \
 		or refused_run.crew_trust("crew_rook") != 0 or not bool(refused_run.narrative_flags.get("crew_favor_refused", false)) \
 		or str(refused.get("message", "")) != "The night stays quiet. Quieter, even.":
-		failures.append("Refusing the Crew favor changed its shipped immediate consequence.")
+		failures.append("Refusing the Crew favor changed its shipped immediate consequence: bankroll=%d heat=%d trust=%d flags=%s result=%s." % [refused_run.bankroll, refused_run.suspicion_level(), refused_run.crew_trust("crew_rook"), JSON.stringify(refused_run.narrative_flags), JSON.stringify(refused)])
 
 	var round_trip_source := job_run.to_dict()
 	var round_trip: RunState = RunStateScript.new()

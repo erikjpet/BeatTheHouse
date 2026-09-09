@@ -444,10 +444,11 @@ func _delivery_first_target(run_state: RunState) -> String:
 	return str((targets[0] as Dictionary).get("node_id", "")) if not targets.is_empty() else ""
 
 
-func _delivery_enter_node(run_state: RunState, node_id: String, failures: Array) -> Dictionary:
+func _delivery_enter_node(run_state: RunState, node_id: String, failures: Array, library_override: ContentLibrary = null) -> Dictionary:
 	_delivery_pickup_if_needed(run_state)
-	var generator := RunGeneratorScript.new(delivery_test_library)
-	var arrived := HarnessProductionFidelityScript.travel_and_finalize(generator, run_state, node_id, true, delivery_test_library, failures, "delivery property arrival %s" % node_id)
+	var active_library := library_override if library_override != null else delivery_test_library
+	var generator := RunGeneratorScript.new(active_library)
+	var arrived := HarnessProductionFidelityScript.travel_and_finalize(generator, run_state, node_id, true, active_library, failures, "delivery property arrival %s" % node_id)
 	if not bool(arrived.get("ok", false)):
 		return arrived
 	return run_state.delivery_resolve_travel_arrival({"target_node_id": node_id}, {})
@@ -470,14 +471,14 @@ func _delivery_pickup_if_needed(run_state: RunState) -> void:
 		run_state.delivery_apply_physical_action("pickup", "foundation:pickup:%s" % str(run_state.active_delivery_run.get("run_id", "delivery")))
 
 
-func _delivery_complete_all_targets(run_state: RunState, failures: Array) -> bool:
+func _delivery_complete_all_targets(run_state: RunState, failures: Array, library_override: ContentLibrary = null) -> bool:
 	var target_ids: Array = []
 	for target_value in run_state.delivery_snapshot().get("targets", []):
 		if typeof(target_value) == TYPE_DICTIONARY:
 			target_ids.append(str((target_value as Dictionary).get("node_id", "")))
 	for node_id_value in target_ids:
 		var node_id := str(node_id_value)
-		var arrival := _delivery_enter_node(run_state, node_id, failures)
+		var arrival := _delivery_enter_node(run_state, node_id, failures, library_override)
 		if not bool(arrival.get("handoff_ready", false)) or run_state.delivery_arrival_interaction().is_empty():
 			return false
 		if not bool(run_state.delivery_complete_handoff(node_id).get("ok", false)):
