@@ -1537,7 +1537,10 @@ func _sealed_action_host_surface_intent(surface_action: String, index: int, conf
 	var session: Dictionary = (ledger.get("session", {}) as Dictionary).duplicate(true)
 	var recovery_session := session.duplicate(true)
 	if surface_time_msec >= 0:
-		session["surface_time_msec"] = surface_time_msec
+		# Sealed sessions retain UI state between actions. Refresh the complete
+		# surface clock tuple together so games cannot observe a new raw timestamp
+		# alongside an older slowed/presentation timestamp.
+		session = _apply_game_surface_time_fields(session, surface_time_msec)
 	if current_game.has_method("_has_dealt_hand") and not current_game.call("_has_dealt_hand", session) and _current_selected_stake() > 0:
 		session["selected_stake"] = _current_selected_stake()
 	var command: Dictionary = current_game.surface_action_command(surface_action, index, confirm_requested, session, candidate, candidate.current_environment)
@@ -1599,7 +1602,10 @@ func _sealed_action_host_needs_auto_tick(surface_time_msec: int) -> bool:
 	var predicate_method := StringName(action_authority_contract.get("host_auto_tick_method", &""))
 	if run_state == null or current_game == null or predicate_method.is_empty() or not current_game.has_method(predicate_method):
 		return false
-	return bool(current_game.call(predicate_method, surface_time_msec, run_state, run_state.current_environment))
+	var predicate_time_msec := surface_time_msec
+	if bool(action_authority_contract.get("host_auto_tick_uses_drunk_scaled_time", false)):
+		predicate_time_msec = _drunk_scaled_surface_time_msec(surface_time_msec, _current_drunk_time_scale())
+	return bool(current_game.call(predicate_method, predicate_time_msec, run_state, run_state.current_environment))
 
 
 func _sealed_action_host_auto_intent(surface_time_msec: int) -> Dictionary:
@@ -1611,7 +1617,10 @@ func _sealed_action_host_auto_intent(surface_time_msec: int) -> Dictionary:
 		return {}
 	var session: Dictionary = (ledger.get("session", {}) as Dictionary).duplicate(true)
 	var recovery_session := session.duplicate(true)
-	session["surface_time_msec"] = surface_time_msec
+	# Automatic actions are a new presentation boundary, not a continuation of
+	# the retained session's prior frame. Rebase raw and slowed clocks atomically;
+	# Slot uses the latter to schedule both base and Buffalo feature reels.
+	session = _apply_game_surface_time_fields(session, surface_time_msec)
 	var command := current_game.surface_auto_action_command(session, candidate, candidate.current_environment, {})
 	if bool(command.get("handled", false)):
 		var next_session: Dictionary = command.get("ui_state", session) if typeof(command.get("ui_state", session)) == TYPE_DICTIONARY else session

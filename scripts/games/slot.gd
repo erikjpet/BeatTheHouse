@@ -61,6 +61,10 @@ func sealed_action_authority_contract() -> Dictionary:
 		# autoplay spin validate and copy stale presentation payloads.
 		"active_replay_limit": 2,
 		"host_auto_tick_method": &"_machine_game_host_needs_auto_tick",
+		# Slot deadlines live on the slowed presentation clock. Foundation keeps
+		# every other sealed game on its existing raw-clock contract and converts
+		# only this provider's cheap due predicate into the same timing domain.
+		"host_auto_tick_uses_drunk_scaled_time": true,
 		"surface_intent_key": "",
 		"surface_intent_index_key": "",
 		"retry_surface_actions": ["slot_retry_pending", "slot_spin", "spin"],
@@ -1071,6 +1075,26 @@ func surface_auto_action_command(ui_state: Dictionary, _run_state: RunState, env
 			"environment_changed": true,
 			"message": "Autoplay paused for %s bonus." % paused_family.capitalize(),
 		})
+	# The host predicate is a performance fast path, not authority to skip the
+	# machine's own deadline. Recheck the ordinary timer here just as Buffalo does
+	# above so a mismatched/stale caller can never resolve hundreds of spins in one
+	# presentation interval.
+	if not bool(machine.get("slot_autoplay_active", false)):
+		return {"handled": false}
+	if surface_time <= 0:
+		surface_time = Time.get_ticks_msec()
+	var autoplay_next_msec := int(machine.get("slot_autoplay_next_msec", 0))
+	if autoplay_next_msec <= 0:
+		machine = _read_machine(environment)
+		machine["slot_autoplay_next_msec"] = surface_time + _slot_autoplay_delay_msec(machine)
+		_write_owned_machine(environment, machine)
+		return GameModule.surface_command({
+			"handled": true,
+			"environment_changed": true,
+			"message": "Autoplay reels are winding up.",
+		})
+	if surface_time < autoplay_next_msec:
+		return {"handled": false}
 	return GameModule.surface_command({
 		"handled": true,
 		"action_id": "spin",
