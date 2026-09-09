@@ -3519,13 +3519,13 @@
     "asset_path": "res://assets/art/games/poker.png",
     "scene_asset_path": "res://assets/art/game_scenes/poker.png",
     "environment_prop": "card_table",
-    "intro": "The back-room table keeps the stakes small and the cards honest.",
-    "description": "Friendly five-card draw: bet, draw, bet, showdown.",
+    "intro": "The crew circles a live hold'em table under one low lamp.",
+    "description": "Texas Hold'em with live tells and visible chips.",
     "legal_actions": [
       {
         "id": "deal",
-        "label": "Ante & Deal",
-        "summary": "Ante cash, deal five, bet once, draw once, and bet once more.",
+        "label": "Deal Hold'em",
+        "summary": "Move the button, post blinds, deal two hole cards, and play through the river.",
         "win_chance": 0,
         "payout_mult": 0
       }

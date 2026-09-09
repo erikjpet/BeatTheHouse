@@ -1258,7 +1258,7 @@ func _check_crew_poker_state_machine(game: GameModule, tie_cards: Array, failure
 	var harness := SurfaceHarness.new()
 	harness.setup(idle_surface)
 	game.draw_surface(harness, idle_surface, {"contract_harness": true, "viewport_size": Vector2(1280, 720)})
-	if not harness.labels.has("BACK-ROOM DRAW") or not _surface_harness_has_action(harness, "poker_deal") or not _surface_harness_has_action(harness, "poker_cash_out"):
+	if not harness.labels.has("BACK-ROOM HOLD'EM") or not _surface_harness_has_action(harness, "poker_deal") or not _surface_harness_has_action(harness, "poker_cash_out"):
 		failures.append("Crew poker 1280x720 renderer lost its title or idle action hit regions.")
 	var board := Rect2(Vector2.ZERO, Vector2(ArtContractsScript.GAME_BOARD_SIZE))
 	for hit_value in harness.hit_regions:
@@ -1447,7 +1447,9 @@ func _poker_install_table(game: GameModule, run_state: RunState, rng_scope: Stri
 
 
 func _poker_environment(residents: Array) -> Dictionary:
-	return {"id": "crew_poker_test", "archetype_id": "small_underground_casino", "kind": "crew", "layer_id": "back_room", "resident_member_ids": residents.duplicate(), "game_ids": ["crew_draw_poker"], "game_states": {}}
+	# Retain the shipped draw engine as an explicit save-compatibility fixture;
+	# production/default environments are audited by crew_holdem_gameplay_audit.
+	return {"id": "crew_poker_test", "archetype_id": "small_underground_casino", "kind": "crew", "layer_id": "back_room", "crew_poker_turn_engine": "legacy_v1", "resident_member_ids": residents.duplicate(), "game_ids": ["crew_draw_poker"], "game_states": {}}
 
 
 func _poker_apply_action(game: GameModule, run_state: RunState, action_id: String, ui_state: Dictionary, rng_scope: String) -> Dictionary:

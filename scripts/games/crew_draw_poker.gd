@@ -1,8 +1,8 @@
 class_name CrewDrawPokerGame
 extends GameModule
 
-# Friendly, honest five-card draw. All random deck/policy/presentation choices
-# consume the injected run RNG; the module never inspects undealt cards to act.
+# Friendly, honest Texas Hold'em. All deck, policy, and presentation choices
+# consume the injected run RNG; opponents never inspect undealt or rival cards.
 
 const CardShoeScript := preload("res://scripts/core/card_shoe.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
@@ -11,7 +11,7 @@ const PlayingCardRendererScript := preload("res://scripts/games/playing_card_ren
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 
 const STATE_SCHEMA := "crew_draw_table"
-const STATE_VERSION := 2
+const STATE_VERSION := 3
 const PLAYER_ID := "player"
 const C_DARK := VisualStyleScript.DARK
 const C_DARK_2 := VisualStyleScript.DARK_2
@@ -42,17 +42,19 @@ func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
 	elif bool(state.get("session_settled", false)):
 		result["message"] = "The last night is settled. A fresh visit can open a newly seeded table."
 	else:
-		result["message"] = "The back-room table plays five-card draw: ante, ordered bets, one draw, ordered bets, showdown. Cash stays friendly."
+		result["message"] = "The crew is seated for Texas Hold'em: blinds, four betting streets, a shared board, and honest cards. Watch what they show—and choose what you show back."
 	return result
 
 
 func generate_environment_state(run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
 	var tuning := CrewPokerModelScript.config()
 	var candidates := _string_array(environment.get("resident_member_ids", []))
-	if candidates.size() < 2:
-		candidates = CrewStateModelScript.MEMBER_IDS.duplicate()
+	if candidates.size() < 3:
+		for member_id in CrewStateModelScript.MEMBER_IDS:
+			if not candidates.has(member_id):
+				candidates.append(member_id)
 	var bounds: Array = tuning.get("opponent_count", [2, 3]) if typeof(tuning.get("opponent_count", [2, 3])) == TYPE_ARRAY else [2, 3]
-	var minimum := clampi(int(bounds[0]) if not bounds.is_empty() else 2, 2, 3)
+	var minimum := clampi(int(bounds[0]) if not bounds.is_empty() else 3, 2, 3)
 	var maximum := clampi(int(bounds[1]) if bounds.size() > 1 else minimum, minimum, 3)
 	var count := clampi(rng.randi_range(minimum, maximum), 2, mini(3, candidates.size()))
 	var members := rng.pick_many(candidates, count)
@@ -86,6 +88,17 @@ func generate_environment_state(run_state: RunState, environment: Dictionary, rn
 		"session_memory": {},
 		"public_memory_receipt_id": "",
 		"player_folded_hidden": false,
+		"community_cards": [],
+		"burn_cards": [],
+		"dealer_actor": "",
+		"small_blind_actor": "",
+		"big_blind_actor": "",
+		"player_all_in": false,
+		"player_signal": {},
+		"player_signal_history": [],
+		"player_fake_tell_used_street": "",
+		"tell_reputation": 50,
+		"npc_stacks": {},
 		"pot": 0,
 		"shoe": [],
 		"player_cards": [],
@@ -126,6 +139,17 @@ func cheat_actions(_run_state: RunState, _environment: Dictionary) -> Array:
 func wager_cost_for_context(action_id: String, _stake: int, _run_state: RunState, environment: Dictionary, _ui_state: Dictionary = {}) -> int:
 	var state := _table_state(environment)
 	var tuning := CrewPokerModelScript.config()
+	if _ordered_engine(environment):
+		match action_id:
+			"deal":
+				return _player_forced_blind(state)
+			"call":
+				return mini(maxi(0, int(state.get("current_bet", 0)) - _actor_round_contribution(state, PLAYER_ID)), int(state.get("player_stack", 0)))
+			"raise":
+				return mini(maxi(0, int(state.get("current_bet", 0)) - _actor_round_contribution(state, PLAYER_ID)) + int(tuning.get("raise_unit", 2)), int(state.get("player_stack", 0)))
+			"all_in":
+				return int(state.get("player_stack", 0))
+		return 0
 	match action_id:
 		"deal":
 			var ante := int(tuning.get("ante", 2))
@@ -142,7 +166,7 @@ func wager_cost_for_context(action_id: String, _stake: int, _run_state: RunState
 
 
 func wager_activity_incomplete(_run_state: RunState, environment: Dictionary, _ui_state: Dictionary = {}) -> bool:
-	return ["before", "draw", "after"].has(str(_table_state(environment).get("phase", "idle")))
+	return ["before", "draw", "after", "preflop", "flop", "turn", "river"].has(str(_table_state(environment).get("phase", "idle")))
 
 
 func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
@@ -156,7 +180,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		var member_id := str(seat.get("member_id", ""))
 		seat["name"] = str(MEMBER_NAMES.get(member_id, member_id))
 		if phase != "showdown" and not bool(seat.get("revealed", false)):
-			seat["cards"] = _hidden_cards(5)
+			seat["cards"] = _hidden_cards(2 if str(state.get("turn_engine", "legacy_v1")) == ORDERED_ENGINE else 5)
 		seat.erase("policy")
 		seats.append(seat)
 	var beat := _poker_dict(state.get("beat", {}))
@@ -201,6 +225,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"members": members,
 		"seats": seats,
 		"player_cards": _card_array(state.get("player_cards", [])),
+		"community_cards": _card_array(state.get("community_cards", [])),
 		"held": held,
 		"pot": int(state.get("pot", 0)),
 		"to_call": int(state.get("to_call", 0)),
@@ -212,6 +237,13 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"raise_count": int(state.get("raise_count", 0)),
 		"raise_cap": MAX_RAISES_PER_ROUND,
 		"player_stack": int(state.get("player_stack", 0)),
+		"player_all_in": bool(state.get("player_all_in", false)),
+		"dealer_actor": str(state.get("dealer_actor", "")),
+		"small_blind_actor": str(state.get("small_blind_actor", "")),
+		"big_blind_actor": str(state.get("big_blind_actor", "")),
+		"tell_style": str(ui_state.get("poker_tell_style", "strong")),
+		"player_signal": _poker_dict(state.get("player_signal", {})),
+		"tell_reputation": int(state.get("tell_reputation", 50)),
 		"player_contribution": int(state.get("player_contribution", 0)),
 		"action_history": _dict_array(state.get("action_history", [])),
 		"night_scene": _night_scene_state(state),
@@ -232,12 +264,15 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"legal_actions": actions_now,
 		"cheat_actions": [],
 		"native_selected_surface_actions": [],
-		"surface_audio": GameModule.surface_audio_spec({"profile_id": "crew_cards", "selection_seed": run_state.seed_value if run_state != null else 1, "action_cues": {"poker_deal": "card_deal", "poker_draw": "card_draw", "poker_call": "chips_place", "poker_raise": "chips_place", "poker_fold": "card_fold"}}),
+		"surface_audio": GameModule.surface_audio_spec({"profile_id": "crew_cards", "selection_seed": run_state.seed_value if run_state != null else 1, "action_cues": {"poker_deal": "card_deal", "poker_call": "chips_place", "poker_raise": "chips_place", "poker_all_in": "chips_place", "poker_fake_tell": "card_check", "poker_fold": "card_fold"}}),
 	})
 
 
 func surface_action_command(surface_action: String, index: int, _confirm_requested: bool, ui_state: Dictionary, _run_state: RunState, _environment: Dictionary) -> Dictionary:
 	var next := ui_state.duplicate(true)
+	if surface_action == "poker_tell_style":
+		next["poker_tell_style"] = "weak" if index == 1 else "strong"
+		return GameModule.surface_command({"handled": true, "ui_state": next, "preserve_surface_ui_state": true, "message": "You prepare a %s signal." % str(next["poker_tell_style"])})
 	if surface_action == "poker_card":
 		var held := _index_array(next.get("poker_held", []))
 		if held.has(index):
@@ -258,7 +293,7 @@ func surface_action_command(surface_action: String, index: int, _confirm_request
 		"action_id": action_id,
 		"action_kind": "legal",
 		"resolve": true,
-		"preserve_surface_ui_state": action_id == "draw",
+		"preserve_surface_ui_state": action_id in ["draw", "fake_tell"],
 		"selected_index": index,
 		"message": "The table acts.",
 	})
@@ -332,18 +367,25 @@ func _ordered_legal_actions(state: Dictionary) -> Array:
 		var night_actions := _night_required_actions(state)
 		if not night_actions.is_empty():
 			return night_actions
-		return [_poker_action("deal", "Ante & Deal", "Post the ante and deal in button order."), _poker_action("cash_out", "Leave Table", "Settle once between hands.")]
+		return [_poker_action("deal", "Deal Hold'em", "Move the button, post blinds, and deal two cards to every occupied chair."), _poker_action("cash_out", "Leave Table", "Settle once between hands.")]
 	var owner := str(state.get("turn_owner", ""))
 	if owner.is_empty():
 		return []
 	if owner != PLAYER_ID:
 		return [_poker_action("observe", "Watch %s" % MEMBER_NAMES.get(owner, owner), "Advance exactly one visible Crew decision.")]
-	if phase == "draw":
-		return [_poker_action("draw", "Draw", "Keep selected cards and replace the rest."), _poker_action("fold", "Fold", "Release the hand; hidden cards teach nothing.")]
-	if phase in ["before", "after"]:
-		var actions := [_poker_action("call", "Check / Call", "Match exactly the live amount or check for zero."), _poker_action("fold", "Fold", "Release the hand; hidden cards teach nothing.")]
-		if int(state.get("raise_count", 0)) < _night_raise_cap(state):
-			actions.insert(1, _poker_action("raise", "Raise", "Call and add one bounded friendly raise."))
+	if phase in ["preflop", "flop", "turn", "river"]:
+		var due := maxi(0, int(state.get("current_bet", 0)) - _actor_round_contribution(state, PLAYER_ID))
+		var stack := int(state.get("player_stack", 0))
+		var actions: Array = []
+		if due == 0 or stack >= due:
+			actions.append(_poker_action("call", "Call $%d" % due if due > 0 else "Check", "Match exactly the live amount or check for zero."))
+		if int(state.get("raise_count", 0)) < _night_raise_cap(state) and stack >= due + int(CrewPokerModelScript.config().get("raise_unit", 2)):
+			actions.insert(1, _poker_action("raise", "Raise", "Call and add one table-sized raise."))
+		if stack > 0:
+			actions.append(_poker_action("all_in", "All In", "Commit your remaining table stack."))
+		if str(state.get("player_fake_tell_used_street", "")) != phase:
+			actions.append(_poker_action("fake_tell", "Fake Tell", "Project strength or weakness without ending your turn."))
+		actions.append(_poker_action("fold", "Fold", "Release the hand; hidden cards teach nothing."))
 		return actions
 	return []
 
@@ -370,8 +412,10 @@ func _resolve_ordered(action_id: String, run_state: RunState, environment: Dicti
 			outcome = _ordered_npc_turn(state, rng, run_state)
 		"call", "raise":
 			outcome = _ordered_player_bet(state, action_id == "raise", run_state, rng)
-		"draw":
-			outcome = _ordered_player_draw(state, _index_array(ui_state.get("poker_held", [])), rng)
+		"all_in":
+			outcome = _ordered_player_all_in(state, run_state, rng)
+		"fake_tell":
+			outcome = _ordered_player_fake_tell(state, str(ui_state.get("poker_tell_style", "strong")))
 		"fold":
 			outcome = _ordered_player_fold(state, run_state, rng)
 		"cash_out":
@@ -386,8 +430,8 @@ func _resolve_ordered(action_id: String, run_state: RunState, environment: Dicti
 	state["action_ordinal"] = int(state.get("action_ordinal", 0)) + 1
 	_update_environment_state(environment, state)
 	var result := _result(action_id, environment, int(outcome.get("delta", 0)), str(outcome.get("message", "The table acts.")), true)
-	result["ui_state"] = {} if action_id != "draw" else {"poker_held": []}
-	result["preserve_surface_ui_state"] = action_id == "draw"
+	result["ui_state"] = ui_state.duplicate(true) if action_id == "fake_tell" else {}
+	result["preserve_surface_ui_state"] = action_id == "fake_tell"
 	result["crew_poker_turn_receipt"] = "crew-poker:%d:%d" % [int(state.get("session_index", 0)), int(state.get("action_ordinal", 0))]
 	result["crew_poker_public_facts"] = _ordered_public_facts(state, action_id)
 	if typeof(outcome.get("authority_gaps")) == TYPE_ARRAY and not (outcome.get("authority_gaps") as Array).is_empty():
@@ -401,62 +445,94 @@ func _deal_hand_ordered(run_state: RunState, state: Dictionary, rng: RngStream) 
 	if str(state.get("phase", "idle")) != "idle" or bool(state.get("session_settled", false)):
 		return {"ok": false, "delta": 0, "message": "Finish the live hand first."}
 	var tuning := CrewPokerModelScript.config()
-	var ante := int(tuning.get("ante", 2))
-	if _loss_room(state, ante) != ante or run_state.bankroll < ante:
-		return {"ok": false, "delta": 0, "message": "The friendly ante is beyond this session's remaining cash."}
+	var forced_blind := _player_forced_blind(state)
+	if run_state.bankroll <= 0 or _loss_room(state, forced_blind) != forced_blind or run_state.bankroll < forced_blind:
+		return {"ok": false, "delta": 0, "message": "The blind is beyond this session's remaining cash."}
 	var deck := CardShoeScript.build_shoe(1, rng)
-	var draw := CardShoeScript.draw_cards(deck, 5)
-	state["player_cards"] = draw.get("cards", [])
-	deck = draw.get("shoe", [])
-	var cap := int(tuning.get("session_swing_cap", 60))
+	var cap := int(tuning.get("buy_in", tuning.get("session_swing_cap", 60)))
+	var stack_memory: Dictionary = state.get("npc_stacks", {}) if typeof(state.get("npc_stacks", {})) == TYPE_DICTIONARY else {}
 	var seats: Array = []
 	for member_id in _string_array(state.get("members", [])):
-		draw = CardShoeScript.draw_cards(deck, 5)
-		deck = draw.get("shoe", [])
-		seats.append({"member_id": member_id, "cards": draw.get("cards", []), "active": true, "revealed": false, "contribution": ante, "round_contribution": 0, "stack": cap - ante, "draw_count": -1, "last_action": "ante"})
-	state["shoe"] = deck
+		var remembered_stack := int(stack_memory.get(member_id, cap))
+		if remembered_stack < int(tuning.get("big_blind", 2)):
+			remembered_stack = cap
+		seats.append({"member_id": member_id, "cards": [], "active": true, "all_in": false, "revealed": false, "contribution": 0, "round_contribution": 0, "stack": remembered_stack, "draw_count": -1, "last_action": "waiting"})
+	# Deal one card at a time around the table, twice, so the button order is real
+	# while the deck remains wholly owned by the injected deterministic RNG.
 	state["seats"] = seats
-	state["pot"] = ante * (seats.size() + 1)
-	state["player_contribution"] = ante
-	state["player_stack"] = maxi(0, int(state.get("player_stack", cap)) - ante)
+	state["player_cards"] = []
+	for _round in range(2):
+		for actor in _all_actor_ids(state):
+			var draw := CardShoeScript.draw_cards(deck, 1)
+			deck = _card_array(draw.get("shoe", []))
+			var dealt := _card_array(draw.get("cards", []))
+			if actor == PLAYER_ID:
+				var player_cards := _card_array(state.get("player_cards", []))
+				player_cards.append_array(dealt)
+				state["player_cards"] = player_cards
+			else:
+				var seat_index := _seat_index(state, str(actor))
+				var live_seats: Array = state.get("seats", [])
+				var seat: Dictionary = live_seats[seat_index]
+				var hole := _card_array(seat.get("cards", []))
+				hole.append_array(dealt)
+				seat["cards"] = hole
+				live_seats[seat_index] = seat
+				state["seats"] = live_seats
+	state["shoe"] = deck
+	state["community_cards"] = []
+	state["burn_cards"] = []
+	state["pot"] = 0
+	state["current_bet"] = 0
+	state["round_contributions"] = {}
+	state["player_contribution"] = 0
+	state["player_stack"] = mini(int(state.get("player_stack", cap)), run_state.bankroll)
 	state["player_active"] = true
-	state["session_swing"] = int(state.get("session_swing", 0)) - ante
+	state["player_all_in"] = false
+	state["player_signal"] = {}
+	state["player_fake_tell_used_street"] = ""
 	state["x"] = []
 	state["beat"] = {}
-	_start_ordered_round(state, "before")
-	return {"ok": true, "delta": -ante, "message": "Five each. %s owns the first decision before the draw." % _actor_name(str(state.get("turn_owner", "")))}
+	var actors := _all_actor_ids(state)
+	var button := int(state.get("button_index", 0)) % maxi(1, actors.size())
+	state["dealer_actor"] = str(actors[button])
+	state["small_blind_actor"] = str(actors[(button + 1) % actors.size()])
+	state["big_blind_actor"] = str(actors[(button + 2) % actors.size()])
+	var player_paid := 0
+	player_paid += _commit_actor_chips(state, str(state.get("small_blind_actor", "")), int(tuning.get("small_blind", 1)))
+	player_paid += _commit_actor_chips(state, str(state.get("big_blind_actor", "")), int(tuning.get("big_blind", 2)))
+	state["session_swing"] = int(state.get("session_swing", 0)) - player_paid
+	_start_holdem_round(state, "preflop")
+	return {"ok": true, "delta": -player_paid, "message": "Two cards each. %s has the button; %s opens pre-flop." % [_actor_name(str(state.get("dealer_actor", ""))), _actor_name(str(state.get("turn_owner", "")))]}
 
 
-func _start_ordered_round(state: Dictionary, phase: String) -> void:
+func _start_holdem_round(state: Dictionary, phase: String) -> void:
 	state["phase"] = phase
-	var actors: Array = _active_actor_ids(state)
+	var actors: Array = _all_actor_ids(state)
 	if actors.is_empty():
 		state["turn_owner"] = ""
 		return
-	var button := int(state.get("button_index", 0)) % actors.size()
+	var starting_actor := str(state.get("big_blind_actor", "")) if phase == "preflop" else str(state.get("dealer_actor", ""))
+	var starting_index := actors.find(starting_actor)
 	var order: Array = []
 	for offset in range(1, actors.size() + 1):
-		order.append(actors[(button + offset) % actors.size()])
+		var actor := str(actors[(starting_index + offset) % actors.size()])
+		if _actor_active(state, actor):
+			order.append(actor)
 	state["turn_order"] = order
 	state["turn_cursor"] = 0
-	state["turn_owner"] = str(order[0])
-	state["current_bet"] = 0
-	state["round_contributions"] = {}
+	state["turn_owner"] = _first_actor_who_can_act(state, order)
+	if phase != "preflop":
+		state["current_bet"] = 0
+		state["round_contributions"] = {}
+		for index in range((state.get("seats", []) as Array).size()):
+			var seat: Dictionary = (state.get("seats", []) as Array)[index]
+			seat["round_contribution"] = 0
+			(state.get("seats", []) as Array)[index] = seat
 	state["acted_since_raise"] = []
 	state["raise_count"] = 0
-	for index in range((state.get("seats", []) as Array).size()):
-		var seat: Dictionary = (state.get("seats", []) as Array)[index]
-		seat["round_contribution"] = 0
-		(state.get("seats", []) as Array)[index] = seat
-
-
-func _start_ordered_draw(state: Dictionary) -> void:
-	state["phase"] = "draw"
-	var order := _active_actor_ids(state)
-	state["turn_order"] = order
-	state["turn_cursor"] = 0
-	state["turn_owner"] = str(order[0]) if not order.is_empty() else ""
-	state["acted_since_raise"] = []
+	state["player_fake_tell_used_street"] = ""
+	state["player_signal"] = {}
 
 
 func _ordered_npc_turn(state: Dictionary, rng: RngStream, run_state: RunState) -> Dictionary:
@@ -469,22 +545,9 @@ func _ordered_npc_turn(state: Dictionary, rng: RngStream, run_state: RunState) -
 	var seats: Array = state.get("seats", [])
 	var seat: Dictionary = seats[seat_index]
 	var phase := str(state.get("phase", ""))
-	if phase == "draw":
-		_ordered_draw_npc(state, seat_index, rng)
-		_record_ordered_action(state, actor, "draw", int((state.get("seats", []) as Array)[seat_index].get("draw_count", 0)), false)
-		_advance_ordered_turn(state, rng, run_state)
-		return {"ok": true, "delta": 0, "message": "%s draws %d." % [_actor_name(actor), int((state.get("seats", []) as Array)[seat_index].get("draw_count", 0))]}
 	var due := maxi(0, int(state.get("current_bet", 0)) - int(seat.get("round_contribution", 0)))
-	var authenticated := _authenticated_public_session_memory(state, run_state)
-	var authority_gaps: Array = []
-	var action := ""
-	if bool(authenticated.get("ok", false)):
-		action = _adaptive_npc_action(actor, _card_array(seat.get("cards", [])), phase, due > 0, authenticated.get("memory", {}), rng)
-	else:
-		# Restored/caller-authored memory is ignored. The ordinary authored policy
-		# remains playable while adaptive authority is dependency-held.
-		authority_gaps.append("host_poker_memory_authority_unavailable")
-		action = CrewPokerModelScript.npc_action(actor, _card_array(seat.get("cards", [])), phase, due > 0, rng)
+	var can_raise := int(state.get("raise_count", 0)) < _night_raise_cap(state) and int(seat.get("stack", 0)) > due
+	var action := CrewPokerModelScript.holdem_action(actor, _card_array(seat.get("cards", [])), _card_array(state.get("community_cards", [])), phase, due, int(state.get("pot", 0)), can_raise, _poker_dict(state.get("player_signal", {})), int(state.get("tell_reputation", 50)), rng)
 	if action == "raise" and int(state.get("raise_count", 0)) >= _night_raise_cap(state):
 		action = "call"
 	if action == "fold":
@@ -495,24 +558,30 @@ func _ordered_npc_turn(state: Dictionary, rng: RngStream, run_state: RunState) -
 		_record_ordered_action(state, actor, "fold", 0, false)
 	else:
 		var raise_amount := int(CrewPokerModelScript.config().get("raise_unit", 2)) if action == "raise" else 0
-		var amount := mini(due + raise_amount, int(seat.get("stack", 0)))
+		var target := int(state.get("current_bet", 0)) + raise_amount
+		var amount := mini(maxi(due, target - int(seat.get("round_contribution", 0))) if action == "raise" else due, int(seat.get("stack", 0)))
 		seat["stack"] = int(seat.get("stack", 0)) - amount
 		seat["contribution"] = int(seat.get("contribution", 0)) + amount
 		seat["round_contribution"] = int(seat.get("round_contribution", 0)) + amount
-		seat["last_action"] = "raise" if raise_amount > 0 else "call" if due > 0 else "check"
+		seat["all_in"] = int(seat.get("stack", 0)) == 0
+		var completed_raise := action == "raise" and int(seat.get("round_contribution", 0)) >= target
+		seat["last_action"] = "all_in" if bool(seat.get("all_in", false)) else "raise" if completed_raise else "call" if due > 0 else "check"
 		seats[seat_index] = seat
 		state["seats"] = seats
 		state["pot"] = int(state.get("pot", 0)) + amount
-		if raise_amount > 0:
+		if completed_raise:
 			state["current_bet"] = int(seat.get("round_contribution", 0))
 			state["raise_count"] = int(state.get("raise_count", 0)) + 1
-		_record_ordered_action(state, actor, str(seat.get("last_action", "call")), amount, raise_amount > 0)
-		if phase == "after":
-			_maybe_surface(state, seat, str(seat.get("last_action", "call")), rng)
+		_record_ordered_action(state, actor, str(seat.get("last_action", "call")), amount, completed_raise)
+		var tell_seat := seat.duplicate(true)
+		var tell_cards := _card_array(seat.get("cards", []))
+		tell_cards.append_array(_card_array(state.get("community_cards", [])))
+		tell_seat["cards"] = tell_cards
+		_maybe_surface(state, tell_seat, "raise" if completed_raise else "call" if due > 0 else "check", rng)
 	var advance := _advance_ordered_turn(state, rng, run_state)
 	if not str(advance.get("message", "")).is_empty():
-		return {"ok": true, "delta": int(advance.get("payout", 0)), "authority_gaps": authority_gaps + (advance.get("authority_gaps", []) as Array), "dependency_reason": str(advance.get("dependency_reason", "host_poker_memory_authority_unavailable")), "message": str(advance.get("message", ""))}
-	return {"ok": true, "delta": 0, "authority_gaps": authority_gaps, "dependency_reason": "host_poker_memory_authority_unavailable", "message": "%s %s." % [_actor_name(actor), str(seat.get("last_action", action)).capitalize()]}
+		return {"ok": true, "delta": int(advance.get("payout", 0)), "authority_gaps": (advance.get("authority_gaps", []) as Array), "dependency_reason": str(advance.get("dependency_reason", "")), "message": str(advance.get("message", ""))}
+	return {"ok": true, "delta": 0, "message": "%s %s. %s is next." % [_actor_name(actor), str(seat.get("last_action", action)).replace("_", " ").capitalize(), _actor_name(str(state.get("turn_owner", "")))]}
 
 
 func _ordered_player_bet(state: Dictionary, raising: bool, run_state: RunState, rng: RngStream) -> Dictionary:
@@ -522,7 +591,7 @@ func _ordered_player_bet(state: Dictionary, raising: bool, run_state: RunState, 
 	var due := maxi(0, int(state.get("current_bet", 0)) - int(rounds.get(PLAYER_ID, 0)))
 	var raise_amount := int(CrewPokerModelScript.config().get("raise_unit", 2)) if raising else 0
 	if raising and int(state.get("raise_count", 0)) >= _night_raise_cap(state):
-		return {"ok": false, "delta": 0, "message": "The friendly raise cap is reached."}
+		return {"ok": false, "delta": 0, "message": "The table raise cap is reached for this street."}
 	var cost := due + raise_amount
 	if cost > run_state.bankroll or cost > int(state.get("player_stack", 0)) or _loss_room(state, cost) != cost:
 		return {"ok": false, "delta": 0, "message": "That action exceeds the friendly session ledger."}
@@ -530,6 +599,7 @@ func _ordered_player_bet(state: Dictionary, raising: bool, run_state: RunState, 
 	state["round_contributions"] = rounds
 	state["player_contribution"] = int(state.get("player_contribution", 0)) + cost
 	state["player_stack"] = int(state.get("player_stack", 0)) - cost
+	state["player_all_in"] = int(state.get("player_stack", 0)) == 0
 	state["pot"] = int(state.get("pot", 0)) + cost
 	state["session_swing"] = int(state.get("session_swing", 0)) - cost
 	if raising:
@@ -538,6 +608,48 @@ func _ordered_player_bet(state: Dictionary, raising: bool, run_state: RunState, 
 	_record_ordered_action(state, PLAYER_ID, "raise" if raising else "call" if due > 0 else "check", cost, raising)
 	var advance := _advance_ordered_turn(state, rng, run_state)
 	return {"ok": true, "delta": -cost + int(advance.get("payout", 0)), "authority_gaps": (advance.get("authority_gaps", []) as Array).duplicate(), "dependency_reason": str(advance.get("dependency_reason", "")), "message": str(advance.get("message", "Raised." if raising else "Called."))}
+
+
+func _ordered_player_all_in(state: Dictionary, run_state: RunState, rng: RngStream) -> Dictionary:
+	if str(state.get("turn_owner", "")) != PLAYER_ID:
+		return {"ok": false, "delta": 0, "message": "It is not your turn."}
+	var cost := int(state.get("player_stack", 0))
+	if cost <= 0 or cost > run_state.bankroll or _loss_room(state, cost) != cost:
+		return {"ok": false, "delta": 0, "message": "There are no more table chips to commit."}
+	var rounds: Dictionary = state.get("round_contributions", {}) if typeof(state.get("round_contributions", {})) == TYPE_DICTIONARY else {}
+	var prior_bet := int(state.get("current_bet", 0))
+	rounds[PLAYER_ID] = int(rounds.get(PLAYER_ID, 0)) + cost
+	state["round_contributions"] = rounds
+	state["player_contribution"] = int(state.get("player_contribution", 0)) + cost
+	state["player_stack"] = 0
+	state["player_all_in"] = true
+	state["pot"] = int(state.get("pot", 0)) + cost
+	state["session_swing"] = int(state.get("session_swing", 0)) - cost
+	var raised := int(rounds.get(PLAYER_ID, 0)) >= prior_bet + int(CrewPokerModelScript.config().get("raise_unit", 2))
+	if raised:
+		state["current_bet"] = int(rounds.get(PLAYER_ID, 0))
+		state["raise_count"] = int(state.get("raise_count", 0)) + 1
+	_record_ordered_action(state, PLAYER_ID, "all_in", cost, raised)
+	var advance := _advance_ordered_turn(state, rng, run_state)
+	return {"ok": true, "delta": -cost + int(advance.get("payout", 0)), "authority_gaps": (advance.get("authority_gaps", []) as Array).duplicate(), "dependency_reason": str(advance.get("dependency_reason", "")), "message": str(advance.get("message", "You move all your chips forward."))}
+
+
+func _ordered_player_fake_tell(state: Dictionary, style: String) -> Dictionary:
+	var phase := str(state.get("phase", ""))
+	if str(state.get("turn_owner", "")) != PLAYER_ID or not phase in ["preflop", "flop", "turn", "river"]:
+		return {"ok": false, "delta": 0, "message": "You can only shape a tell on your turn."}
+	if str(state.get("player_fake_tell_used_street", "")) == phase:
+		return {"ok": false, "delta": 0, "message": "They have already seen your performance this street."}
+	style = "weak" if style == "weak" else "strong"
+	state["player_signal"] = {"style": style, "street": phase, "ordinal": int(state.get("action_ordinal", 0))}
+	var signals := _dict_array(state.get("player_signal_history", []))
+	signals.append((state.get("player_signal", {}) as Dictionary).duplicate(true))
+	state["player_signal_history"] = signals
+	state["player_fake_tell_used_street"] = phase
+	var history := _dict_array(state.get("action_history", []))
+	history.append({"ordinal": int(state.get("action_ordinal", 0)), "phase": phase, "actor": PLAYER_ID, "action": "signal_%s" % style, "amount": 0, "pot_after": int(state.get("pot", 0)), "current_bet": int(state.get("current_bet", 0))})
+	state["action_history"] = history
+	return {"ok": true, "delta": 0, "message": "You project %s. The table notices; your betting turn remains open." % ("confidence" if style == "strong" else "uncertainty")}
 
 
 func _ordered_player_draw(state: Dictionary, held: Array, rng: RngStream) -> Dictionary:
@@ -591,26 +703,19 @@ func _advance_ordered_turn(state: Dictionary, rng: RngStream, run_state: RunStat
 		if bool(state.get("player_active", false)):
 			var payout := int(state.get("pot", 0))
 			state["session_swing"] = int(state.get("session_swing", 0)) + payout
+			state["player_stack"] = int(state.get("player_stack", 0)) + payout
 			_finish_hand(state, run_state, {"winners": [PLAYER_ID], "payout": payout, "message": "The table folds to you. You take $%d." % payout})
 			return {"payout": payout, "message": "The table folds to you. You take $%d." % payout}
 		var remaining := _active_actor_ids(state)
 		var winners: Array = [str(remaining[0])] if not remaining.is_empty() else []
+		if not winners.is_empty():
+			_award_npc_stack(state, str(winners[0]), int(state.get("pot", 0)))
 		var message := "%s gathers the pot. Your folded cards stay hidden." % _winner_names(winners)
 		_finish_hand(state, run_state, {"winners": winners, "payout": 0, "message": message})
 		return {"payout": 0, "message": message}
 	var phase := str(state.get("phase", ""))
-	if phase == "draw":
-		if _advance_cursor(state):
-			_start_ordered_round(state, "after")
-		return {}
 	if _ordered_round_closed(state):
-		if phase == "before":
-			_start_ordered_draw(state)
-			return {"message": "Betting closes. Discards proceed in order."}
-		if run_state != null:
-			var showdown := _showdown(state, run_state)
-			state["turn_owner"] = ""
-			return showdown
+		return _advance_holdem_street(state, rng, run_state)
 	_advance_cursor(state)
 	return {}
 
@@ -624,7 +729,7 @@ func _advance_cursor(state: Dictionary) -> bool:
 	for offset in range(1, order.size() + 1):
 		var next := (cursor + offset) % order.size()
 		var actor := str(order[next])
-		if _actor_active(state, actor):
+		if _actor_can_act(state, actor):
 			state["turn_cursor"] = next
 			state["turn_owner"] = actor
 			return next <= cursor
@@ -633,12 +738,134 @@ func _advance_cursor(state: Dictionary) -> bool:
 
 
 func _ordered_round_closed(state: Dictionary) -> bool:
-	var active := _active_actor_ids(state)
+	var active := _actors_who_can_act(state)
+	if active.size() <= 1:
+		if active.is_empty():
+			return true
+		var lone := str(active[0])
+		return _actor_round_contribution(state, lone) >= int(state.get("current_bet", 0)) or _active_actor_ids(state).size() <= 1
 	var acted := _string_array(state.get("acted_since_raise", []))
 	for actor in active:
 		if not acted.has(str(actor)) or _actor_round_contribution(state, str(actor)) != int(state.get("current_bet", 0)):
 			return false
 	return true
+
+
+func _advance_holdem_street(state: Dictionary, rng: RngStream, run_state: RunState) -> Dictionary:
+	var phase := str(state.get("phase", "preflop"))
+	if phase == "river":
+		return _showdown(state, run_state)
+	var next_phase := "flop" if phase == "preflop" else "turn" if phase == "flop" else "river"
+	_burn_and_deal_board(state, 3 if next_phase == "flop" else 1)
+	_start_holdem_round(state, next_phase)
+	if _actors_who_can_act(state).size() <= 1:
+		# When every remaining player is all-in, the board runs out immediately;
+		# there are no fake decisions or observe clicks between deterministic cards.
+		while str(state.get("phase", "")) != "river":
+			var automatic_next := "turn" if str(state.get("phase", "")) == "flop" else "river"
+			_burn_and_deal_board(state, 1)
+			_start_holdem_round(state, automatic_next)
+		return _showdown(state, run_state)
+	return {"message": "The %s lands. %s acts first." % [next_phase, _actor_name(str(state.get("turn_owner", "")))]}
+
+
+func _burn_and_deal_board(state: Dictionary, count: int) -> void:
+	var shoe := _card_array(state.get("shoe", []))
+	var burn := CardShoeScript.draw_cards(shoe, 1)
+	shoe = _card_array(burn.get("shoe", []))
+	var burns := _card_array(state.get("burn_cards", []))
+	burns.append_array(_card_array(burn.get("cards", [])))
+	var draw := CardShoeScript.draw_cards(shoe, count)
+	var board := _card_array(state.get("community_cards", []))
+	board.append_array(_card_array(draw.get("cards", [])))
+	state["burn_cards"] = burns
+	state["community_cards"] = board
+	state["shoe"] = _card_array(draw.get("shoe", []))
+
+
+func _all_actor_ids(state: Dictionary) -> Array:
+	var result: Array = [PLAYER_ID]
+	for member_id in _string_array(state.get("members", [])):
+		result.append(member_id)
+	return result
+
+
+func _actors_who_can_act(state: Dictionary) -> Array:
+	var result: Array = []
+	for actor in _active_actor_ids(state):
+		if _actor_can_act(state, str(actor)):
+			result.append(str(actor))
+	return result
+
+
+func _actor_can_act(state: Dictionary, actor: String) -> bool:
+	if not _actor_active(state, actor):
+		return false
+	if actor == PLAYER_ID:
+		return not bool(state.get("player_all_in", false)) and int(state.get("player_stack", 0)) > 0
+	var index := _seat_index(state, actor)
+	return index >= 0 and not bool((state.get("seats", []) as Array)[index].get("all_in", false)) and int((state.get("seats", []) as Array)[index].get("stack", 0)) > 0
+
+
+func _first_actor_who_can_act(state: Dictionary, order: Array) -> String:
+	for actor in order:
+		if _actor_can_act(state, str(actor)):
+			return str(actor)
+	return ""
+
+
+func _commit_actor_chips(state: Dictionary, actor: String, wanted: int) -> int:
+	if actor == PLAYER_ID:
+		var amount := mini(maxi(0, wanted), int(state.get("player_stack", 0)))
+		var rounds: Dictionary = state.get("round_contributions", {}) if typeof(state.get("round_contributions", {})) == TYPE_DICTIONARY else {}
+		rounds[PLAYER_ID] = int(rounds.get(PLAYER_ID, 0)) + amount
+		state["round_contributions"] = rounds
+		state["player_stack"] = int(state.get("player_stack", 0)) - amount
+		state["player_contribution"] = int(state.get("player_contribution", 0)) + amount
+		state["player_all_in"] = int(state.get("player_stack", 0)) == 0
+		state["pot"] = int(state.get("pot", 0)) + amount
+		state["current_bet"] = maxi(int(state.get("current_bet", 0)), int(rounds.get(PLAYER_ID, 0)))
+		return amount
+	var index := _seat_index(state, actor)
+	if index < 0:
+		return 0
+	var seats: Array = state.get("seats", [])
+	var seat: Dictionary = seats[index]
+	var npc_amount := mini(maxi(0, wanted), int(seat.get("stack", 0)))
+	seat["stack"] = int(seat.get("stack", 0)) - npc_amount
+	seat["contribution"] = int(seat.get("contribution", 0)) + npc_amount
+	seat["round_contribution"] = int(seat.get("round_contribution", 0)) + npc_amount
+	seat["all_in"] = int(seat.get("stack", 0)) == 0
+	seat["last_action"] = "big blind" if wanted == int(CrewPokerModelScript.config().get("big_blind", 2)) else "small blind"
+	seats[index] = seat
+	state["seats"] = seats
+	state["pot"] = int(state.get("pot", 0)) + npc_amount
+	state["current_bet"] = maxi(int(state.get("current_bet", 0)), int(seat.get("round_contribution", 0)))
+	return 0
+
+
+func _award_npc_stack(state: Dictionary, actor: String, amount: int) -> void:
+	var index := _seat_index(state, actor)
+	if index < 0:
+		return
+	var seats: Array = state.get("seats", [])
+	var seat: Dictionary = seats[index]
+	seat["stack"] = int(seat.get("stack", 0)) + maxi(0, amount)
+	seats[index] = seat
+	state["seats"] = seats
+
+
+func _player_forced_blind(state: Dictionary) -> int:
+	var actors := _all_actor_ids(state)
+	if actors.size() < 2:
+		return 0
+	var button := int(state.get("button_index", 0)) % actors.size()
+	var tuning := CrewPokerModelScript.config()
+	if str(actors[(button + 1) % actors.size()]) == PLAYER_ID:
+		return int(tuning.get("small_blind", 1))
+	if str(actors[(button + 2) % actors.size()]) == PLAYER_ID:
+		return int(tuning.get("big_blind", 2))
+	return 0
 
 
 func _record_ordered_action(state: Dictionary, actor: String, action: String, amount: int, raised: bool) -> void:
@@ -783,12 +1010,15 @@ func draw_surface(surface, state: Dictionary, _render_context: Dictionary = {}) 
 		return false
 	surface.surface_begin_design_space(surface.surface_board_size())
 	_draw_room(surface)
-	surface.surface_title("BACK-ROOM DRAW", Vector2(330, 30), C_YELLOW)
+	surface.surface_title("BACK-ROOM HOLD'EM", Vector2(314, 28), C_YELLOW)
 	if str(state.get("turn_engine", "legacy_v1")) == ORDERED_ENGINE:
-		surface.surface_label("POT $%d   STACK $%d   CALL $%d   TURN %s" % [int(state.get("pot", 0)), int(state.get("player_stack", 0)), int(state.get("amount_to_call", 0)), str(state.get("turn_owner_name", "TABLE")).to_upper()], Vector2(220, 54), 13, C_SOFT)
+		var status_line := "BETWEEN HANDS   •   STACK $%d   •   HAND %d / %d" % [int(state.get("player_stack", 0)), int(state.get("hand_number", 0)) + 1, int(state.get("hand_cap", 5))] if str(state.get("phase", "idle")) == "idle" else "%s   •   STACK $%d   •   TO CALL $%d   •   %s TO ACT" % [str(state.get("phase", "idle")).to_upper(), int(state.get("player_stack", 0)), int(state.get("amount_to_call", 0)), str(state.get("turn_owner_name", "TABLE")).to_upper()]
+		surface.surface_label_centered(status_line, Rect2(150, 46, 600, 22), 12, C_SOFT)
 	else:
 		surface.surface_label("POT $%d   SESSION %s / %d" % [int(state.get("pot", 0)), _signed_cash(int(state.get("session_swing", 0))), int(state.get("swing_cap", 60))], Vector2(312, 54), 14, C_SOFT)
 	_draw_seats(surface, state)
+	_draw_shared_board(surface, state)
+	_draw_chip_pot(surface, int(state.get("pot", 0)))
 	_draw_player(surface, state)
 	_draw_observation(surface, state)
 	_draw_controls(surface, state)
@@ -808,7 +1038,7 @@ func surface_motion_signature(surface, state: Dictionary) -> Dictionary:
 
 
 func environment_object_state(_run_state: RunState, _environment: Dictionary) -> Dictionary:
-	return {"prop": "card_table", "label": "Back-Room Poker", "status": "A friendly five-card draw is running."}
+	return {"prop": "card_table", "label": "Back-Room Hold'em", "status": "The crew is seated around a live Texas Hold'em table."}
 
 
 func interrupt_for_room_scenario(_run_state: RunState, environment: Dictionary, disposition: String, reason: String) -> Dictionary:
@@ -817,7 +1047,7 @@ func interrupt_for_room_scenario(_run_state: RunState, environment: Dictionary, 
 	# the exact replacement table/account effects; pause/resume remain held until
 	# that host integration supplies a real command source.
 	var state := _table_state(environment)
-	var live := ["before", "draw", "after", "paused"].has(str(state.get("phase", "idle")))
+	var live := ["before", "draw", "after", "preflop", "flop", "turn", "river", "paused"].has(str(state.get("phase", "idle")))
 	if not live or not ["pause", "resume", "abort"].has(disposition):
 		return {"ok": false, "authoritative": false, "proposal_only": true, "bankroll_delta": 0, "message": "That interruption boundary is not legal now."}
 	return {
@@ -848,11 +1078,17 @@ static func scripted_session(seed: int, member_id: String, force_showdown: bool 
 	var rng := RngStream.new()
 	rng.configure(seed)
 	var deck := CardShoeScript.build_shoe(1, rng)
-	var first := CardShoeScript.draw_cards(deck, 10)
-	var player: Array = (first.get("cards", []) as Array).slice(0, 5)
-	var npc: Array = (first.get("cards", []) as Array).slice(5, 10)
-	var action := CrewPokerModelScript.npc_action(member_id, npc, "after", false, rng)
-	return {"player": player, "npc": npc, "action": action, "showdown": force_showdown, "winner": CrewPokerModelScript.compare_hands(player, npc)}
+	var first := CardShoeScript.draw_cards(deck, 9)
+	var dealt: Array = first.get("cards", [])
+	var player: Array = dealt.slice(0, 2)
+	var npc: Array = dealt.slice(2, 4)
+	var board: Array = dealt.slice(4, 9)
+	var action := CrewPokerModelScript.holdem_action(member_id, npc, board.slice(0, 3), "flop", 2, 8, true, {}, 50, rng)
+	var player_seven := player.duplicate(true)
+	player_seven.append_array(board)
+	var npc_seven := npc.duplicate(true)
+	npc_seven.append_array(board)
+	return {"player": player, "npc": npc, "board": board, "action": action, "showdown": force_showdown, "winner": CrewPokerModelScript.compare_holdem(player_seven, npc_seven)}
 
 
 func _deal_hand(run_state: RunState, state: Dictionary, rng: RngStream) -> Dictionary:
@@ -1042,30 +1278,38 @@ func _maybe_surface(state: Dictionary, seat: Dictionary, action: String, rng: Rn
 
 func _showdown(state: Dictionary, run_state: RunState) -> Dictionary:
 	var contenders: Array = []
+	var board := _card_array(state.get("community_cards", []))
 	if bool(state.get("player_active", true)):
-		contenders.append({"id": PLAYER_ID, "cards": _card_array(state.get("player_cards", []))})
+		var player_seven := _card_array(state.get("player_cards", []))
+		player_seven.append_array(board)
+		contenders.append({"id": PLAYER_ID, "cards": player_seven})
 	var seats: Array = state.get("seats", [])
 	for index in range(seats.size()):
 		var seat: Dictionary = seats[index]
 		if bool(seat.get("active", false)):
 			seat["revealed"] = true
-			contenders.append({"id": str(seat.get("member_id", "")), "cards": _card_array(seat.get("cards", []))})
+			var seven := _card_array(seat.get("cards", []))
+			seven.append_array(board)
+			contenders.append({"id": str(seat.get("member_id", "")), "cards": seven})
 		seats[index] = seat
 	state["seats"] = seats
-	var winners: Array = []
-	var best_cards: Array = []
-	for contender_value in contenders:
-		var contender: Dictionary = contender_value
-		var cards := _card_array(contender.get("cards", []))
-		if winners.is_empty() or CrewPokerModelScript.compare_hands(cards, best_cards) > 0:
-			winners = [str(contender.get("id", ""))]
-			best_cards = cards
-		elif CrewPokerModelScript.compare_hands(cards, best_cards) == 0:
-			winners.append(str(contender.get("id", "")))
-	var shares := CrewPokerModelScript.split_pot(int(state.get("pot", 0)), winners)
-	var raw_payout := int(shares.get(PLAYER_ID, 0))
+	var settlement := _settle_holdem_pots(state, contenders)
+	var winners := _string_array(settlement.get("winners", []))
+	var awards: Dictionary = settlement.get("awards", {}) if typeof(settlement.get("awards", {})) == TYPE_DICTIONARY else {}
+	var raw_payout := int(awards.get(PLAYER_ID, 0))
 	var payout := mini(raw_payout, _win_room(state, raw_payout))
 	state["session_swing"] = int(state.get("session_swing", 0)) + payout
+	state["player_stack"] = int(state.get("player_stack", 0)) + payout
+	for actor in awards.keys():
+		if str(actor) == PLAYER_ID:
+			continue
+		var award_index := _seat_index(state, str(actor))
+		if award_index >= 0:
+			var award_seats: Array = state.get("seats", [])
+			var award_seat: Dictionary = award_seats[award_index]
+			award_seat["stack"] = int(award_seat.get("stack", 0)) + int(awards.get(actor, 0))
+			award_seats[award_index] = award_seat
+			state["seats"] = award_seats
 	if str(state.get("turn_engine", "legacy_v1")) != ORDERED_ENGINE:
 		for shown_value in _dict_array(state.get("x", [])):
 			var legacy_shown: Dictionary = shown_value
@@ -1095,11 +1339,79 @@ func _showdown(state: Dictionary, run_state: RunState) -> Dictionary:
 	state["verified_observation_receipts"] = verified_receipts
 	if not queue.is_empty() and not bool(state.get("player_folded_hidden", false)):
 		authority_gaps.append("host_tell_observation_authority_unavailable")
-	var player_score := CrewPokerModelScript.evaluate_hand(state.get("player_cards", [])) if bool(state.get("player_active", true)) else {}
+	var player_cards := _card_array(state.get("player_cards", []))
+	player_cards.append_array(board)
+	var player_score := CrewPokerModelScript.evaluate_best_hand(player_cards) if bool(state.get("player_active", true)) else {}
+	_update_player_tell_reputation(state, int(player_score.get("category", 0)), winners.has(PLAYER_ID))
 	var hand_label := str(player_score.get("label", "Hand")) if bool(state.get("player_active", true)) else "Your folded cards stay hidden"
 	var message := "%s. %s" % [hand_label, "You take $%d." % payout if raw_payout > 0 else "%s takes it." % _winner_names(winners)]
 	_finish_hand(state, run_state, {"winners": winners, "payout": payout, "message": message})
 	return {"payout": payout, "authority_gaps": authority_gaps, "dependency_reason": "host_tell_observation_authority_unavailable" if not authority_gaps.is_empty() else "", "message": message}
+
+
+func _settle_holdem_pots(state: Dictionary, contenders: Array) -> Dictionary:
+	var eligible := {}
+	for contender_value in contenders:
+		var contender: Dictionary = contender_value
+		eligible[str(contender.get("id", ""))] = _card_array(contender.get("cards", []))
+	var contributions := {}
+	if int(state.get("player_contribution", 0)) > 0:
+		contributions[PLAYER_ID] = int(state.get("player_contribution", 0))
+	for seat_value in _dict_array(state.get("seats", [])):
+		var seat: Dictionary = seat_value
+		if int(seat.get("contribution", 0)) > 0:
+			contributions[str(seat.get("member_id", ""))] = int(seat.get("contribution", 0))
+	var levels: Array = []
+	for value in contributions.values():
+		if int(value) > 0 and not levels.has(int(value)):
+			levels.append(int(value))
+	levels.sort()
+	var awards := {}
+	var all_winners: Array = []
+	var prior := 0
+	for level_value in levels:
+		var level := int(level_value)
+		var contributors: Array = []
+		var layer_eligible: Array = []
+		for actor in contributions.keys():
+			if int(contributions.get(actor, 0)) >= level:
+				contributors.append(str(actor))
+				if eligible.has(actor):
+					layer_eligible.append(str(actor))
+		var layer_pot := (level - prior) * contributors.size()
+		prior = level
+		if layer_pot <= 0 or layer_eligible.is_empty():
+			continue
+		var layer_winners: Array = []
+		var best_cards: Array = []
+		for actor in layer_eligible:
+			var cards := _card_array(eligible.get(actor, []))
+			if layer_winners.is_empty() or CrewPokerModelScript.compare_holdem(cards, best_cards) > 0:
+				layer_winners = [actor]
+				best_cards = cards
+			elif CrewPokerModelScript.compare_holdem(cards, best_cards) == 0:
+				layer_winners.append(actor)
+		var shares := CrewPokerModelScript.split_pot(layer_pot, layer_winners)
+		for actor in shares.keys():
+			awards[actor] = int(awards.get(actor, 0)) + int(shares.get(actor, 0))
+			if not all_winners.has(str(actor)):
+				all_winners.append(str(actor))
+	return {"awards": awards, "winners": all_winners}
+
+
+func _update_player_tell_reputation(state: Dictionary, category: int, player_won: bool) -> void:
+	var signals := _dict_array(state.get("player_signal_history", []))
+	if signals.is_empty():
+		return
+	var actually_strong := category >= 2
+	var delta := 0
+	for signal_value in signals:
+		var claimed_strong := str((signal_value as Dictionary).get("style", "")) == "strong"
+		var credible := claimed_strong == actually_strong
+		delta += 2 if credible else -3
+		if not credible and player_won:
+			delta += 1
+	state["tell_reputation"] = clampi(int(state.get("tell_reputation", 50)) + clampi(delta, -8, 6), 10, 90)
 
 
 func _source_action_record(state: Dictionary, member_id: String, action: String, ordinal: int) -> Dictionary:
@@ -1136,7 +1448,10 @@ func _observation_provenance_valid(state: Dictionary, seats: Array, observation:
 	if seat_index < 0:
 		return false
 	var seat: Dictionary = seats[seat_index]
-	if not CrewPokerModelScript.condition_matches(str(authored.get("condition", "")), _card_array(seat.get("cards", [])), action, int(seat.get("draw_count", -1))):
+	var evidence_cards := _card_array(seat.get("cards", []))
+	if str(state.get("turn_engine", "legacy_v1")) == ORDERED_ENGINE:
+		evidence_cards.append_array(_card_array(state.get("community_cards", [])))
+	if not CrewPokerModelScript.condition_matches(str(authored.get("condition", "")), evidence_cards, action, int(seat.get("draw_count", -1))):
 		return false
 	return _host_observation_applied(run_state, state, observation, str(authored.get("state_key", "")))
 
@@ -1160,6 +1475,11 @@ func _finish_fold(state: Dictionary, run_state: RunState) -> String:
 
 
 func _finish_hand(state: Dictionary, run_state: RunState, last: Dictionary) -> void:
+	var stack_memory := {}
+	for seat_value in _dict_array(state.get("seats", [])):
+		var stack_seat: Dictionary = seat_value
+		stack_memory[str(stack_seat.get("member_id", ""))] = int(stack_seat.get("stack", 0))
+	state["npc_stacks"] = stack_memory
 	state["hand_number"] = int(state.get("hand_number", 0)) + 1
 	state["last_result"] = last
 	state["phase"] = "idle"
@@ -1172,7 +1492,14 @@ func _finish_hand(state: Dictionary, run_state: RunState, last: Dictionary) -> v
 	state["turn_owner"] = ""
 	state["turn_order"] = []
 	state["acted_since_raise"] = []
+	state["player_all_in"] = false
+	state["player_signal"] = {}
+	state["player_signal_history"] = []
+	state["player_fake_tell_used_street"] = ""
 	state["button_index"] = int(state.get("button_index", 0)) + 1
+	if bool(state.get("migrate_to_holdem_after_hand", false)):
+		state["turn_engine"] = ORDERED_ENGINE
+		state.erase("migrate_to_holdem_after_hand")
 	if int(state.get("hand_number", 0)) >= int(CrewPokerModelScript.config().get("session_hand_cap", 5)):
 		_settle_session(state, run_state)
 
@@ -1217,6 +1544,17 @@ func _start_new_session(state: Dictionary, environment: Dictionary) -> void:
 	state["session_memory"] = {}
 	state["public_memory_receipt_id"] = ""
 	state["player_folded_hidden"] = false
+	state["community_cards"] = []
+	state["burn_cards"] = []
+	state["dealer_actor"] = ""
+	state["small_blind_actor"] = ""
+	state["big_blind_actor"] = ""
+	state["player_all_in"] = false
+	state["player_signal"] = {}
+	state["player_signal_history"] = []
+	state["player_fake_tell_used_street"] = ""
+	state["tell_reputation"] = 50
+	state["npc_stacks"] = {}
 	state["night_task_receipt"] = ""
 	state["night_aftermath"] = ""
 
@@ -1245,6 +1583,7 @@ func _table_state(environment: Dictionary) -> Dictionary:
 	var value: Variant = states.get(get_id(), {})
 	if typeof(value) == TYPE_DICTIONARY and str((value as Dictionary).get("schema", "")) == STATE_SCHEMA:
 		var migrated := (value as Dictionary).duplicate(true)
+		var source_version := int(migrated.get("version", 1))
 		migrated["version"] = STATE_VERSION
 		if not migrated.has("session_index"):
 			migrated["session_index"] = 0
@@ -1277,8 +1616,30 @@ func _table_state(environment: Dictionary) -> Dictionary:
 			migrated["public_memory_receipt_id"] = ""
 		if not migrated.has("player_folded_hidden"):
 			migrated["player_folded_hidden"] = false
+		for array_key in ["community_cards", "burn_cards"]:
+			if not migrated.has(array_key):
+				migrated[array_key] = []
+		for text_key in ["dealer_actor", "small_blind_actor", "big_blind_actor", "player_fake_tell_used_street"]:
+			if not migrated.has(text_key):
+				migrated[text_key] = ""
+		if not migrated.has("player_all_in"):
+			migrated["player_all_in"] = false
+		if not migrated.has("player_signal"):
+			migrated["player_signal"] = {}
+		if not migrated.has("player_signal_history"):
+			migrated["player_signal_history"] = []
+		if not migrated.has("tell_reputation"):
+			migrated["tell_reputation"] = 50
+		if not migrated.has("npc_stacks"):
+			migrated["npc_stacks"] = {}
+		# Version-two ordered saves contain a live five-card draw hand. Let that
+		# exact hand finish under its original rules, then switch at the safe hand
+		# boundary; this preserves every already-paid chip and hidden card.
+		if source_version < STATE_VERSION and str(migrated.get("turn_engine", "")) == ORDERED_ENGINE and str(migrated.get("phase", "idle")) != "idle":
+			migrated["turn_engine"] = "legacy_v1"
+			migrated["migrate_to_holdem_after_hand"] = true
 		return migrated
-	return {"schema": STATE_SCHEMA, "version": STATE_VERSION, "producer_id": "poker", "game_id": get_id(), "members": [], "phase": "idle", "hand_number": 0, "session_swing": 0, "session_settled": false, "session_index": 0, "night_id": _night_id(environment), "action_ordinal": 0, "observation_queue": [], "verified_observation_receipts": [], "pot": 0, "shoe": [], "player_cards": [], "seats": [], "x": [], "beat": {}, "last_result": {}, "action_history": [], "session_memory": {}, "public_memory_receipt_id": "", "player_folded_hidden": false}
+	return {"schema": STATE_SCHEMA, "version": STATE_VERSION, "producer_id": "poker", "game_id": get_id(), "members": [], "phase": "idle", "hand_number": 0, "session_swing": 0, "session_settled": false, "session_index": 0, "night_id": _night_id(environment), "action_ordinal": 0, "observation_queue": [], "verified_observation_receipts": [], "pot": 0, "shoe": [], "player_cards": [], "community_cards": [], "burn_cards": [], "seats": [], "x": [], "beat": {}, "last_result": {}, "action_history": [], "session_memory": {}, "public_memory_receipt_id": "", "player_folded_hidden": false, "turn_engine": ORDERED_ENGINE if _ordered_engine(environment) else "legacy_v1", "button_index": 0, "turn_owner": "", "turn_order": [], "turn_cursor": 0, "current_bet": 0, "round_contributions": {}, "acted_since_raise": [], "raise_count": 0, "player_active": true, "player_all_in": false, "player_stack": int(CrewPokerModelScript.config().get("buy_in", 60)), "player_contribution": 0, "dealer_actor": "", "small_blind_actor": "", "big_blind_actor": "", "player_signal": {}, "player_signal_history": [], "player_fake_tell_used_street": "", "tell_reputation": 50, "npc_stacks": {}}
 
 
 func _update_environment_state(environment: Dictionary, state: Dictionary) -> void:
@@ -1291,7 +1652,7 @@ func _update_environment_state(environment: Dictionary, state: Dictionary) -> vo
 func _result(action_id: String, environment: Dictionary, delta: int, message: String, ok: bool) -> Dictionary:
 	var result := GameModule.build_action_result({"ok": ok, "source_id": get_id(), "game_id": get_id(), "action_id": action_id, "action_kind": "legal", "environment_id": str(environment.get("id", "")), "environment_archetype_id": str(environment.get("archetype_id", "")), "bankroll_delta": delta, "won": delta > 0, "message": message})
 	result["host_apply_result"] = ok
-	result["surface_audio_cue"] = "card_showdown" if action_id == "call" or action_id == "raise" else ""
+	result["surface_audio_cue"] = "card_deal" if action_id == "deal" else "card_fold" if action_id == "fold" else "card_check" if action_id == "fake_tell" else "chips_place" if action_id in ["call", "raise", "all_in"] else ""
 	return result
 
 
@@ -1325,7 +1686,13 @@ func _night_id(environment: Dictionary) -> String:
 
 func _ordered_engine(environment: Dictionary) -> bool:
 	var authoring: Dictionary = environment.get("sequence_authoring", {}) if typeof(environment.get("sequence_authoring", {})) == TYPE_DICTIONARY else {}
-	return str(environment.get("crew_poker_turn_engine", authoring.get("crew_poker_turn_engine", ""))) == ORDERED_ENGINE
+	var states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	var stored: Dictionary = states.get(get_id(), {}) if typeof(states.get(get_id(), {})) == TYPE_DICTIONARY else {}
+	if str(stored.get("turn_engine", "")) == "legacy_v1":
+		return false
+	if int(stored.get("version", STATE_VERSION)) < STATE_VERSION and str(stored.get("turn_engine", "")) == ORDERED_ENGINE and str(stored.get("phase", "idle")) != "idle":
+		return false
+	return str(environment.get("crew_poker_turn_engine", authoring.get("crew_poker_turn_engine", ORDERED_ENGINE))) != "legacy_v1"
 
 
 func _night_raise_cap(state: Dictionary) -> int:
@@ -1384,7 +1751,7 @@ func _ordered_ritual_actors(state: Dictionary) -> Array:
 	var seats := _dict_array(state.get("seats", []))
 	for index in range(seats.size()):
 		var seat: Dictionary = seats[index]
-		actors.append({"id": str(seat.get("member_id", "")), "anchor": "seat_%d" % index, "behavior": str(seat.get("last_action", "watching")), "bounds": positions[index] if index < positions.size() else Rect2(), "attention": str(state.get("turn_owner", "")), "present": bool(seat.get("active", false))})
+		actors.append({"id": str(seat.get("member_id", "")), "anchor": "seat_%d" % index, "behavior": str(seat.get("last_action", "watching")), "bounds": positions[index] if index < positions.size() else Rect2(), "attention": str(state.get("turn_owner", "")), "present": true, "in_hand": bool(seat.get("active", false))})
 	return actors
 
 
@@ -1393,7 +1760,7 @@ func _ordered_ritual_objects(state: Dictionary) -> Array:
 	return [
 		{"id": "poker_table", "state": str(state.get("phase", "idle")), "bounds": Rect2(118, 104, 664, 224), "functional_state": "live" if str(state.get("phase", "idle")) != "idle" else "ready", "z_order": 3},
 		{"id": "pot", "state": "occupied" if int(state.get("pot", 0)) > 0 else "clear", "bounds": Rect2(410, 158, 80, 48), "amount": int(state.get("pot", 0)), "z_order": 7},
-		{"id": "discard_pile", "state": "used" if str(state.get("phase", "")) in ["after", "idle"] and int(state.get("hand_number", 0)) > 0 else "clear", "bounds": Rect2(620, 182, 72, 52), "z_order": 6},
+		{"id": "community_board", "state": str(state.get("phase", "idle")), "bounds": Rect2(305, 158, 286, 70), "card_count": _card_array(state.get("community_cards", [])).size(), "z_order": 6},
 		{"id": "room_lamp", "state": str(scene.get("lamp", "warm_table")), "bounds": Rect2(424, 42, 52, 52), "functional_state": "lit", "z_order": 9},
 		{"id": "private_door", "state": str(scene.get("door", "private_open")), "bounds": Rect2(802, 84, 56, 176), "functional_state": "available" if str(scene.get("door", "")) != "barred" else "blocked", "z_order": 2},
 	]
@@ -1446,42 +1813,105 @@ func _banter_for_state(state: Dictionary) -> String:
 
 
 func _draw_room(surface) -> void:
-	surface.draw_rect(Rect2(20, 20, 860, 380), Color("#08090d"))
+	surface.draw_rect(Rect2(20, 18, 860, 406), Color("#08090d"))
 	var lamp := 0.50 + sin(surface.surface_flicker() * 1.7) * 0.08
-	surface.draw_circle(Vector2(450, 70), 18.0, Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, lamp))
-	surface.draw_rect(Rect2(54, 82, 792, 238), Color("#17131d"))
-	surface.draw_rect(Rect2(118, 104, 664, 224), Color("#173a35"))
-	surface.draw_rect(Rect2(118, 104, 664, 224), Color(C_TEAL.r, C_TEAL.g, C_TEAL.b, 0.35), false, 2)
+	surface.draw_circle(Vector2(450, 66), 20.0, Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, lamp))
+	surface.draw_line(Vector2(450, 18), Vector2(450, 47), Color("#5e4d45"), 3.0)
+	surface.draw_rect(Rect2(52, 78, 796, 258), Color("#17131d"))
+	# Perspective rail and felt turn the game into a room-scale table rather than
+	# a card tray. All public cards, chips, actors, and controls share this plane.
+	var rail := PackedVector2Array([Vector2(132, 128), Vector2(768, 128), Vector2(838, 264), Vector2(758, 326), Vector2(142, 326), Vector2(62, 264)])
+	var felt := PackedVector2Array([Vector2(154, 143), Vector2(746, 143), Vector2(808, 257), Vector2(738, 306), Vector2(162, 306), Vector2(92, 257)])
+	surface.surface_filled_polygon(rail, Color("#3a211c"))
+	surface.surface_filled_polygon(felt, Color("#123c35"))
+	surface.draw_polyline(PackedVector2Array([Vector2(154, 143), Vector2(746, 143), Vector2(808, 257), Vector2(738, 306), Vector2(162, 306), Vector2(92, 257), Vector2(154, 143)]), Color(C_TEAL.r, C_TEAL.g, C_TEAL.b, 0.55), 2.0)
 
 
 func _draw_seats(surface, state: Dictionary) -> void:
 	var seats: Array = state.get("seats", []) if typeof(state.get("seats", [])) == TYPE_ARRAY else []
 	var members: Array = state.get("members", []) if typeof(state.get("members", [])) == TYPE_ARRAY else []
 	for index in range(mini(3, maxi(seats.size(), members.size()))):
-		var seat: Dictionary = seats[index] if index < seats.size() else {"member_id": members[index], "cards": _hidden_cards(5), "active": true}
-		var pos := SEAT_LEFT_POSITION if index == 0 else SEAT_CENTER_POSITION if index == 1 else SEAT_RIGHT_POSITION
+		var seat: Dictionary = seats[index] if index < seats.size() else {"member_id": members[index], "cards": _hidden_cards(2), "active": true}
+		var pos := Vector2(86, 100) if index == 0 else Vector2(374, 77) if index == 1 else Vector2(704, 100)
 		var name := str(MEMBER_NAMES.get(str(seat.get("member_id", "")), "Crew"))
 		var color := C_SOFT if bool(seat.get("active", true)) else Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.4)
-		surface.surface_label(name.to_upper(), pos, 14, color)
+		_draw_table_actor(surface, pos + Vector2(42, 12), color, str(seat.get("portrait_variant", "")), bool(seat.get("active", true)))
+		surface.surface_label_centered(name.to_upper(), Rect2(pos.x, pos.y + 44, 86, 18), 12, color)
 		var portrait_variant := str(seat.get("portrait_variant", ""))
-		if not portrait_variant.is_empty():
-			_draw_portrait_beat(surface, pos + Vector2(98, 6), portrait_variant, color)
 		var cards := _draw_array_view(seat.get("cards", []))
-		for card_index in range(cards.size()):
-			PlayingCardRendererScript.draw_card(surface, cards[card_index], Rect2(pos + Vector2(card_index * 20, 10), Vector2(18, 27)))
-		surface.surface_label(str(seat.get("last_action", "")).capitalize(), pos + Vector2(0, 52), 11, C_YELLOW)
+		for card_index in range(mini(2, cards.size())):
+			PlayingCardRendererScript.draw_card(surface, cards[card_index], Rect2(pos + Vector2(91 + card_index * 27, 14), Vector2(24, 35)))
+		var action_text := str(seat.get("last_action", "")).replace("_", " ").capitalize()
+		if bool(seat.get("all_in", false)):
+			action_text = "ALL IN"
+		surface.surface_label_centered(action_text, Rect2(pos.x, pos.y + 60, 142, 16), 10, C_YELLOW)
+		if str(state.get("dealer_actor", "")) == str(seat.get("member_id", "")):
+			_draw_button_marker(surface, pos + Vector2(137, 58))
+
+
+func _draw_table_actor(surface, center: Vector2, color: Color, variant: String, active: bool) -> void:
+	var body_color := Color(color.r, color.g, color.b, 0.30 if active else 0.12)
+	surface.draw_circle(center, 15.0, Color("#2b2430") if active else Color("#17141a"))
+	surface.draw_rect(Rect2(center + Vector2(-22, 15), Vector2(44, 25)), body_color)
+	var phase := absi(variant.hash()) % 5 if not variant.is_empty() else 2
+	surface.draw_circle(center + Vector2(-5 + phase, -2), 1.5, color)
+	surface.draw_circle(center + Vector2(5 + phase * 0.25, -2), 1.5, color)
+	surface.draw_line(center + Vector2(-8, 35 - phase), center + Vector2(8, 31 + phase), Color(color.r, color.g, color.b, 0.55), 1.0)
+
+
+func _draw_button_marker(surface, center: Vector2) -> void:
+	surface.draw_circle(center, 9.0, C_WHITE)
+	surface.surface_label_centered("D", Rect2(center - Vector2(8, 8), Vector2(16, 16)), 9, C_DARK)
+
+
+func _draw_shared_board(surface, state: Dictionary) -> void:
+	var board := _draw_array_view(state.get("community_cards", []))
+	var start := Vector2(305, 158)
+	for index in range(5):
+		var rect := Rect2(start + Vector2(index * 59, 0), Vector2(50, 70))
+		if index < board.size():
+			PlayingCardRendererScript.draw_card(surface, board[index], rect)
+		else:
+			surface.draw_rect(rect, Color(0.02, 0.08, 0.07, 0.55))
+			surface.draw_rect(rect, Color(C_TEAL.r, C_TEAL.g, C_TEAL.b, 0.32), false, 1.0)
+
+
+func _draw_chip_pot(surface, amount: int) -> void:
+	if amount <= 0:
+		return
+	var visible_chips := clampi(4 + amount / 2, 4, 42)
+	var stack_count := clampi(1 + amount / 10, 1, 6)
+	var colors := [C_PINK, C_CYAN, C_YELLOW, C_WHITE]
+	for stack_index in range(stack_count):
+		var in_stack := mini(8, maxi(1, visible_chips - stack_index * 7))
+		var x := 450.0 + (float(stack_index) - float(stack_count - 1) * 0.5) * 18.0
+		for chip_index in range(in_stack):
+			var y := 258.0 - float(chip_index) * 3.0
+			var chip_color: Color = colors[(stack_index + chip_index) % colors.size()]
+			surface.draw_circle(Vector2(x, y), 7.0, Color("#090b10"))
+			surface.draw_circle(Vector2(x, y - 1), 5.5, chip_color)
 
 
 func _draw_player(surface, state: Dictionary) -> void:
 	var cards := _draw_array_view(state.get("player_cards", []))
-	var held := _draw_array_view(state.get("held", []))
-	var start := Vector2(294, 232)
-	for index in range(cards.size()):
-		var rect := Rect2(start + Vector2(index * 64, 0), Vector2(52, 74))
-		PlayingCardRendererScript.draw_card(surface, cards[index], rect, {"held": held.has(index)})
-		if str(state.get("phase", "")) == "draw":
-			surface.surface_add_hit(rect.grow(4), "poker_card", index)
-			surface.surface_label("KEEP" if held.has(index) else "DRAW", rect.position + Vector2(7, 88), 10, C_TEAL if held.has(index) else C_PINK)
+	if str(state.get("turn_engine", "legacy_v1")) != ORDERED_ENGINE:
+		var held := _draw_array_view(state.get("held", []))
+		var legacy_start := Vector2(294, 232)
+		for legacy_index in range(cards.size()):
+			var legacy_rect := Rect2(legacy_start + Vector2(legacy_index * 64, 0), Vector2(52, 74))
+			PlayingCardRendererScript.draw_card(surface, cards[legacy_index], legacy_rect, {"held": held.has(legacy_index)})
+			if str(state.get("phase", "")) == "draw":
+				surface.surface_add_hit(legacy_rect.grow(4), "poker_card", legacy_index)
+				surface.surface_label("KEEP" if held.has(legacy_index) else "DRAW", legacy_rect.position + Vector2(7, 88), 10, C_TEAL if held.has(legacy_index) else C_PINK)
+		return
+	var start := Vector2(385, 245)
+	for index in range(mini(2, cards.size())):
+		var rect := Rect2(start + Vector2(index * 68, 0), Vector2(58, 81))
+		PlayingCardRendererScript.draw_card(surface, cards[index], rect)
+	if str(state.get("dealer_actor", "")) == PLAYER_ID:
+		_draw_button_marker(surface, Vector2(522, 292))
+	if bool(state.get("player_all_in", false)):
+		surface.surface_label("ALL IN", Vector2(535, 286), 11, C_YELLOW)
 
 
 func _draw_observation(surface, state: Dictionary) -> void:
@@ -1507,8 +1937,8 @@ func _draw_observation(surface, state: Dictionary) -> void:
 			text = str(observation.get("quirk", observation.get("line", "")))
 	if text.is_empty():
 		text = str(state.get("banter", "The room keeps its own time."))
-	surface.draw_rect(Rect2(172, 325, 556, 38), Color(0.03, 0.03, 0.05, 0.88))
-	surface.surface_label(text.left(76), Vector2(188, 349), 12, C_SOFT)
+	surface.draw_rect(Rect2(138, 337, 548, 35), Color(0.03, 0.03, 0.05, 0.92))
+	surface.surface_label(text.left(76), Vector2(152, 359), 11, C_SOFT)
 
 
 func _draw_portrait_beat(surface, pos: Vector2, variant: String, color: Color) -> void:
@@ -1525,15 +1955,34 @@ func _draw_portrait_beat(surface, pos: Vector2, variant: String, color: Color) -
 
 func _draw_controls(surface, state: Dictionary) -> void:
 	var actions := _draw_array_view(state.get("legal_actions", []))
-	var x := 168.0
+	var has_fake_tell := false
+	for action_value in actions:
+		if str((action_value as Dictionary).get("id", "")) == "fake_tell":
+			has_fake_tell = true
+	if has_fake_tell:
+		var tell_style := str(state.get("tell_style", "strong"))
+		surface.surface_label("YOUR SIGNAL", Vector2(700, 346), 9, C_SOFT)
+		for style_index in range(2):
+			var style := "strong" if style_index == 0 else "weak"
+			var style_rect := Rect2(697 + style_index * 78, 353, 72, 20)
+			surface.draw_rect(style_rect, Color("#38233d") if tell_style == style else Color("#16131d"))
+			surface.draw_rect(style_rect, C_PINK if tell_style == style else C_SOFT, false, 1.0)
+			surface.surface_label_centered(style.to_upper(), style_rect, 9, C_WHITE)
+			surface.surface_add_hit(style_rect, "poker_tell_style", style_index)
+	var count := maxi(1, actions.size())
+	var gap := 10.0
+	var width := minf(150.0, (760.0 - gap * float(count - 1)) / float(count))
+	var total := width * float(count) + gap * float(count - 1)
+	var x := 450.0 - total * 0.5
 	for index in range(actions.size()):
 		var action: Dictionary = actions[index]
-		var rect := Rect2(x, 370, 150, 38)
+		var rect := Rect2(x, 382, width, 34)
 		surface.draw_rect(rect, Color("#241b32"))
-		surface.draw_rect(rect, C_CYAN, false, 1)
-		surface.surface_label_centered(str(action.get("label", "ACT")).to_upper(), rect, 12, C_WHITE)
+		var border := C_PINK if str(action.get("id", "")) == "fake_tell" else C_CYAN
+		surface.draw_rect(rect, border, false, 1)
+		surface.surface_label_centered(str(action.get("label", "ACT")).to_upper(), rect, 10 if actions.size() >= 5 else 12, C_WHITE)
 		surface.surface_add_hit(rect, "poker_%s" % str(action.get("id", "")), index)
-		x += 164.0
+		x += width + gap
 	if not bool(state.get("buy_in_open", false)):
 		surface.surface_label_centered("ASSOCIATE VOUCH REQUIRED", Rect2(240, 372, 420, 34), 14, C_PINK)
 

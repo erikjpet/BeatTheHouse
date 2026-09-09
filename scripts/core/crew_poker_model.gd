@@ -1,8 +1,8 @@
 class_name CrewPokerModel
 extends RefCounted
 
-# Pure rules/content model for the Crew's honest five-card draw table. Runtime
-# presentation never receives the hidden observation counters.
+# Pure rules/content model for the Crew's honest Texas Hold'em table. Runtime
+# presentation never receives an opponent's hole cards or hidden observation counters.
 
 const POKER_PATH := "res://data/crew/poker.json"
 const PATTERNS_PATH := "res://data/crew/tells.json"
@@ -211,6 +211,106 @@ static func compare_hands(a: Variant, b: Variant) -> int:
 	return 0
 
 
+static func evaluate_best_hand(cards_value: Variant) -> Dictionary:
+	var cards := _card_array(cards_value)
+	if cards.size() < 5 or cards.size() > 7:
+		return {"category": -1, "label": "Invalid", "signature": [-1], "cards": []}
+	var best := {"category": -1, "label": "Invalid", "signature": [-1], "cards": []}
+	for a in range(cards.size() - 4):
+		for b in range(a + 1, cards.size() - 3):
+			for c in range(b + 1, cards.size() - 2):
+				for d in range(c + 1, cards.size() - 1):
+					for e in range(d + 1, cards.size()):
+						var candidate := [cards[a], cards[b], cards[c], cards[d], cards[e]]
+						var score := evaluate_hand(candidate)
+						if _compare_signatures(score.get("signature", [-1]), best.get("signature", [-1])) > 0:
+							best = score.duplicate(true)
+							best["cards"] = candidate.duplicate(true)
+	return best
+
+
+static func compare_holdem(a: Variant, b: Variant) -> int:
+	return _compare_signatures(evaluate_best_hand(a).get("signature", [-1]), evaluate_best_hand(b).get("signature", [-1]))
+
+
+static func holdem_strength(hole_value: Variant, board_value: Variant) -> int:
+	# A compact 0..100 decision score. It intentionally uses only this player's
+	# hole cards and the public board; no Monte Carlo pass can leak folded cards.
+	var hole := _card_array(hole_value)
+	var board := _card_array(board_value)
+	if hole.size() != 2:
+		return 0
+	var high := maxi(int((hole[0] as Dictionary).get("rank", 0)), int((hole[1] as Dictionary).get("rank", 0)))
+	var low := mini(int((hole[0] as Dictionary).get("rank", 0)), int((hole[1] as Dictionary).get("rank", 0)))
+	var suited := int((hole[0] as Dictionary).get("suit", -1)) == int((hole[1] as Dictionary).get("suit", -2))
+	if board.is_empty():
+		var preflop := 18 + maxi(0, high - 8) * 4
+		if high == low:
+			preflop += 30 + high
+		if suited:
+			preflop += 6
+		if high - low <= 2:
+			preflop += 5
+		return clampi(preflop, 5, 96)
+	var combined := hole.duplicate(true)
+	combined.append_array(board)
+	var score := evaluate_best_hand(combined)
+	var category := int(score.get("category", 0))
+	var strength := 12 + category * 12 + maxi(0, int(score.get("high", 0)) - 8) * 2
+	# Reward live four-card flush/straight shapes without pretending they are made.
+	var suits := {}
+	var ranks: Array = []
+	for card_value in combined:
+		var card: Dictionary = card_value
+		var suit := int(card.get("suit", -1))
+		suits[suit] = int(suits.get(suit, 0)) + 1
+		var rank := int(card.get("rank", 0))
+		if not ranks.has(rank):
+			ranks.append(rank)
+	if suits.values().has(4):
+		strength += 8
+	ranks.sort()
+	if ranks.has(14):
+		ranks.push_front(1)
+	var run := 1
+	var best_run := 1
+	for index in range(1, ranks.size()):
+		if int(ranks[index]) == int(ranks[index - 1]) + 1:
+			run += 1
+			best_run = maxi(best_run, run)
+		else:
+			run = 1
+	if best_run >= 4:
+		strength += 7
+	return clampi(strength, 4, 100)
+
+
+static func holdem_action(member_id: String, hole: Array, board: Array, street: String, amount_to_call: int, pot: int, can_raise: bool, player_signal: Dictionary, signal_credibility: int, rng: RngStream) -> String:
+	var profile := policy(member_id)
+	var strength := holdem_strength(hole, board)
+	var tightness := int(profile.get("tightness", 50))
+	var aggression := int(profile.get("aggression", 50))
+	var bluff := int(profile.get("bluff", 20))
+	var pressure := clampi(int(round(float(amount_to_call) * 100.0 / float(maxi(1, pot + amount_to_call)))), 0, 70)
+	var signal_delta := 0
+	if str(player_signal.get("street", "")) == street:
+		var claimed := str(player_signal.get("style", ""))
+		var trust := clampi(signal_credibility - 50, -35, 35)
+		if claimed == "strong":
+			signal_delta = 8 + int(float(trust) * 0.28)
+		elif claimed == "weak":
+			signal_delta = -6 - int(float(trust) * 0.20)
+	var continue_score := strength - int(float(tightness - 50) * 0.25) - pressure + rng.randi_range(-13, 13) - signal_delta
+	if amount_to_call > 0 and continue_score < 16:
+		return "fold"
+	var raise_score := strength + int(float(aggression - 50) * 0.35) + int(float(bluff) * 0.18) + rng.randi_range(-18, 18)
+	if str(player_signal.get("street", "")) == street and str(player_signal.get("style", "")) == "weak":
+		raise_score += 10
+	if can_raise and raise_score >= (73 if street == "preflop" else 68):
+		return "raise"
+	return "call"
+
+
 static func split_pot(pot: int, winner_ids: Array) -> Dictionary:
 	var result := {}
 	if pot <= 0 or winner_ids.is_empty():
@@ -276,16 +376,17 @@ static func npc_action(member_id: String, cards: Array, phase: String, facing_ra
 
 
 static func condition_matches(condition: String, cards: Array, action: String, draw_count: int) -> bool:
-	var category := int(evaluate_hand(cards).get("category", 0))
+	var score := evaluate_best_hand(cards) if cards.size() >= 5 else evaluate_hand(cards)
+	var category := int(score.get("category", 0))
 	match condition:
 		"strong":
-			return category >= 2 and action != "draw"
+			return category >= 2 and action in ["call", "raise", "check", "all_in"]
 		"weak_aggression":
 			return category == 0 and action == "raise"
 		"one_pair":
-			return category == 1 and action == "draw"
+			return category == 1 and action in ["call", "check", "draw"]
 		"made_straight":
-			return category >= 4 and action == "draw"
+			return category >= 4 and action in ["call", "raise", "check", "all_in", "draw"]
 	return false
 
 
@@ -347,6 +448,17 @@ static func _group_ranks(groups: Array) -> Array:
 	for group_value in groups:
 		result.append(int((group_value as Dictionary).get("rank", 0)))
 	return result
+
+
+static func _compare_signatures(left_value: Variant, right_value: Variant) -> int:
+	var left: Array = left_value if typeof(left_value) == TYPE_ARRAY else [-1]
+	var right: Array = right_value if typeof(right_value) == TYPE_ARRAY else [-1]
+	for index in range(maxi(left.size(), right.size())):
+		var av := int(left[index]) if index < left.size() else 0
+		var bv := int(right[index]) if index < right.size() else 0
+		if av != bv:
+			return 1 if av > bv else -1
+	return 0
 
 
 static func _card_array(value: Variant) -> Array:

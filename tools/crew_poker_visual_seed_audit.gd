@@ -2,8 +2,8 @@ extends RefCounted
 
 # Pure production-model proof for the pinned visual capture seed. The seed
 # traverses the same RunState + initial RunGenerator path as the capture. Its
-# untouched action RNG is then proven against both possible seat orders. No live
-# table beat, cards, or RNG state is ever written.
+# untouched action RNG is then proven across resident orderings through the
+# first Hold'em flop. No beat, card, or RNG state is injected by the audit.
 
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
@@ -15,8 +15,8 @@ const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 const FIXTURE_SEED := "CREW-POKER-PUNCHLINE-VISUAL-00"
 const TABLE_GAME_RNG_KEY := "environment_layer_games::back_room"
 const TABLE_STATE_RNG_KEY := "environment_game_state:small_underground_casino_001:crew_draw_poker"
-const RESIDENTS: Array[String] = ["crew_mags", "crew_rook"]
-const INPUT_SEQUENCE: Array[String] = ["poker_deal", "poker_call"]
+const RESIDENTS: Array[String] = ["crew_mags", "crew_rook", "crew_lucky"]
+const INPUT_SEQUENCE: Array[String] = ["poker_deal", "ordered_observe_or_call_until_flop"]
 
 
 static func audit_pinned_seed(library: ContentLibrary) -> Dictionary:
@@ -78,26 +78,42 @@ static func _audit_order(library: ContentLibrary, seed_text: String, action_rng:
 	environment["game_states"] = {"crew_draw_poker": generated}
 	audit_run.current_environment = environment
 	var deal := _resolve_action(game, audit_run, "deal")
-	var call := _resolve_action(game, audit_run, "call") if bool(deal.get("ok", false)) else {"ok": false}
+	var progressed := bool(deal.get("ok", false))
+	var actions: Array = ["deal"]
+	for _step in range(16):
+		var table: Dictionary = audit_run.current_environment.get("game_states", {}).get("crew_draw_poker", {})
+		if str(table.get("phase", "")) == "flop" or str(table.get("phase", "")) == "idle":
+			break
+		var legal_ids: Array = []
+		for action_value in game.legal_actions(audit_run, audit_run.current_environment):
+			legal_ids.append(str((action_value as Dictionary).get("id", "")))
+		var next_action := "observe" if legal_ids.has("observe") else "call" if legal_ids.has("call") else ""
+		if next_action.is_empty():
+			progressed = false
+			break
+		var step_result := _resolve_action(game, audit_run, next_action)
+		actions.append(next_action)
+		progressed = progressed and bool(step_result.get("ok", false))
+		if not progressed:
+			break
 	var surface := game.surface_state(audit_run, audit_run.current_environment, {})
-	var observation: Dictionary = surface.get("observation", {}) if typeof(surface.get("observation", {})) == TYPE_DICTIONARY else {}
 	var generated_members: Array = generated.get("members", []) if typeof(generated.get("members", [])) == TYPE_ARRAY else []
 	var order_passed := bool(deal.get("ok", false)) \
-		and bool(call.get("ok", false)) \
-		and str(surface.get("phase", "")) == "draw" \
+		and progressed \
+		and str(surface.get("phase", "")) in ["flop", "idle"] \
 		and int(surface.get("hand_number", -1)) == 0 \
-		and ["line", "portrait", "timing"].has(str(observation.get("channel", ""))) \
-		and generated_members.has(str(observation.get("member_id", "")))
+		and generated_members.size() == 3 \
+		and (surface.get("community_cards", []) as Array).size() in [0, 3]
 	return {
 		"passed": order_passed,
 		"resident_input": resident_order.duplicate(),
 		"generated_members": generated_members.duplicate(),
 		"deal_ok": bool(deal.get("ok", false)),
-		"call_ok": bool(call.get("ok", false)),
+		"progressed": progressed,
+		"actions": actions,
 		"phase": str(surface.get("phase", "")),
 		"hand_number": int(surface.get("hand_number", -1)),
-		"observation_member_id": str(observation.get("member_id", "")),
-		"observation_channel": str(observation.get("channel", "")),
+		"community_card_count": (surface.get("community_cards", []) as Array).size(),
 	}
 
 

@@ -122,8 +122,8 @@ foreach ($requiredAuditControl in @(
     "source_run.start_new(seed_text)",
     "RunGeneratorScript.new(library)",
     "generator.next_environment(source_run)",
-    'RESIDENTS: Array[String] = ["crew_mags", "crew_rook"]',
-    'INPUT_SEQUENCE: Array[String] = ["poker_deal", "poker_call"]'
+    'RESIDENTS: Array[String] = ["crew_mags", "crew_rook", "crew_lucky"]',
+    'INPUT_SEQUENCE: Array[String] = ["poker_deal", "ordered_observe_or_call_until_flop"]'
 )) {
     if (-not $seedAuditSource.Contains($requiredAuditControl)) {
         throw "Crew poker pure seed audit is missing production-authentic control: $requiredAuditControl"

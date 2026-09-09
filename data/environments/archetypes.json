@@ -1921,7 +1921,8 @@
           "asset_path": "res://assets/art/environments/punchline_back_room.png",
           "description": "A shut door. A friendly card table. Nobody else listening."
         },
-        "objective_hint": "The cards are honest and the money stays friendly.",
+        "objective_hint": "Read the table, shape what they read in you, and play the board through the river.",
+        "crew_poker_turn_engine": "ordered_v1",
         "randomized_spot_fields": [],
         "layout": {
           "game_spots": [[450, 218]],
