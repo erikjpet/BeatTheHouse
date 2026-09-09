@@ -96,6 +96,13 @@ static func interactable_object_view_list(host: Variant) -> Array:
 	var layout_context: Dictionary = {}
 	if host.environment_canvas != null and host.environment_canvas.has_method("scenario_layout_context"):
 		layout_context = _dict(host.environment_canvas.call("scenario_layout_context"))
+	# The sealed scenario inventory deliberately excludes runtime-only controls
+	# such as Numbers, delivery handoffs, Crew arrivals, and live game clerks.
+	# Their geometry is nevertheless part of the room the player sees. Feed a
+	# bounded, read-only reservation list into layout resolution so scenario props
+	# are placed around the complete production plane instead of composing a late
+	# collision-prone layer. These records authorize no scenario behavior.
+	layout_context["base_occupied_records"] = _base_layout_reservations(trusted_base_result)
 	if not bool(preparation.get("ok", false)):
 		var preparation_failure := projection_failure_result(result, _array(preparation.get("errors", [])))
 		var committed_preparation_failure := committed_projection_status_result(host.run_state, preparation_failure, trusted_base_result)
@@ -143,6 +150,46 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		host.run_state.current_environment.erase("scenario_layout_audit")
 		host.run_state.current_environment.erase("scenario_layout_authority_digest")
 	return result
+
+
+static func _base_layout_reservations(records: Array) -> Array:
+	var by_id: Dictionary = {}
+	for value in records:
+		var record := _dict(value)
+		var object_id := str(record.get("object_id", "")).strip_edges()
+		if object_id.is_empty() or by_id.has(object_id) or not bool(record.get("visible", true)) \
+				or not _runtime_layout_reservation_id(object_id):
+			continue
+		var label := str(record.get("label", "")).strip_edges()
+		if label.length() > 64:
+			label = label.substr(0, 64)
+		by_id[object_id] = {
+			"object_id": object_id,
+			"focus_rect": _duplicate_variant(record.get("focus_rect", record.get("normalized_rect", {}))),
+			"label": label,
+		}
+	var ids := by_id.keys()
+	ids.sort()
+	var result: Array = []
+	for object_id_value in ids:
+		result.append(by_id.get(object_id_value))
+	return result
+
+
+# Static games/events/services/routes are already supplied as sealed base
+# geometry. Only UI/runtime families omitted from that authority need a second
+# read-only occupancy record; including the whole live list double-counts base
+# controls and can over-constrain a scenario refresh.
+static func _runtime_layout_reservation_id(object_id: String) -> bool:
+	for prefix in [
+		"numbers:", "delivery:", "crew_presence:", "game_hook:", "dialogue:",
+		"item:", "cage_gift_item:", "shopkeeper:", "casino_fixture:",
+		"home_tenure:", "home_sleep:", "home_storage:", "home_container:",
+		"environment_layer:",
+	]:
+		if object_id.begins_with(prefix):
+			return true
+	return false
 
 
 # Scenario authority seals identity, geometry, and any fields it explicitly
@@ -1025,8 +1072,7 @@ static func numbers_interactable_objects(host: Variant) -> Array:
 		var object_id := "event:numbers_desk" if at_desk else "numbers:book"
 		# The production desk replaces the event card but owns its dedicated
 		# Numbers fixture spot, which must not drift with encounter-card layout.
-		var focus_rect: Rect2 = host._authored_interaction_rect(host.CONTEXT_MODE_NUMBERS, 0) if at_desk \
-			else host._interaction_rect_for_object(object_id, host.CONTEXT_MODE_NUMBERS, 0)
+		var focus_rect: Rect2 = host._interaction_rect_for_object(object_id, host.CONTEXT_MODE_NUMBERS, 0)
 		objects.append(host._make_interactable_object({
 			"object_id": object_id,
 			"object_type": host.CONTEXT_MODE_NUMBERS,

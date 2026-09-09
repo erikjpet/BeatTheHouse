@@ -1976,11 +1976,28 @@ func _scenario_cached_definition_matches_source(cached: Dictionary, source: Dict
 	var source_sequence_value: Variant = source.get("sequence", {})
 	var cached_signature := str((cached_sequence_value as Dictionary).get("sequence_signature", "")) if typeof(cached_sequence_value) == TYPE_DICTIONARY else ""
 	var source_signature := str((source_sequence_value as Dictionary).get("sequence_signature", "")) if typeof(source_sequence_value) == TYPE_DICTIONARY else ""
+	if cached_signature.is_empty() and source_signature.is_empty():
+		return bool(cached.get(ScenarioEngineScript.RESOLVED_SEQUENCE_CATALOG_MARKER, false)) \
+			and not ScenarioSequenceSchemaScript.is_sequence(source)
 	return not cached_signature.is_empty() and cached_signature == source_signature
 
 
 func scenario_definition_cache_snapshot() -> Dictionary:
 	return _scenario_sequence_definition_cache.duplicate(true)
+
+
+func cache_runtime_scenario_definition(definition: Dictionary) -> bool:
+	var definition_id := str(definition.get("id", definition.get("scenario_id", ""))).strip_edges()
+	if definition_id.is_empty():
+		return false
+	var validated_sequence := bool(definition.get(ScenarioEngineScript.VALIDATED_SEQUENCE_MARKER, false)) \
+		and ScenarioSequenceSchemaScript.is_sequence(definition)
+	var resolved_without_sequence := bool(definition.get(ScenarioEngineScript.RESOLVED_SEQUENCE_CATALOG_MARKER, false)) \
+		and not ScenarioSequenceSchemaScript.is_sequence(definition)
+	if not validated_sequence and not resolved_without_sequence:
+		return false
+	_scenario_sequence_definition_cache[definition_id] = definition.duplicate(true)
+	return true
 
 
 func restore_scenario_definition_cache(snapshot: Dictionary) -> void:

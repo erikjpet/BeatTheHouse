@@ -3,6 +3,8 @@ extends SceneTree
 const Catalog := preload("res://scripts/core/scenario_sequence_catalog.gd")
 const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
 const Registry := preload("res://scripts/core/scenario_operation_registry.gd")
+const RunStateScript := preload("res://scripts/core/run_state.gd")
+const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
 const Schema := preload("res://scripts/core/scenario_sequence_schema.gd")
 
 # Integrated environment/scenario work after ENV-06.7 legitimately expanded
@@ -42,6 +44,7 @@ func _init() -> void:
 	var load_stats := Schema._successful_validation_memo_stats_for_tests()
 	if int(load_stats.get("entries", 0)) <= 0 or int(load_stats.get("entries", 0)) > Schema.SUCCESSFUL_VALIDATION_MEMO_MAX_ENTRIES or int(load_stats.get("hits", 0)) < 55:
 		failures.append("Production load did not exercise the bounded positive-result memo: %s" % JSON.stringify(load_stats))
+	_check_process_local_catalog_receipt(failures)
 
 	var fixture := _first_sequence_fixture(library)
 	var definition: Dictionary = fixture.get("definition", {})
@@ -126,6 +129,39 @@ func _init() -> void:
 	for failure in failures:
 		push_error(failure)
 	quit(1)
+
+
+func _check_process_local_catalog_receipt(failures: Array[String]) -> void:
+	var run_state = RunStateScript.new()
+	run_state.start_new("SCENARIO-NEGATIVE-RECEIPT")
+	var definition := {
+		"id": "memo_no_sequence",
+		"archetype_id": "corner_store",
+		ScenarioEngineScript.RESOLVED_SEQUENCE_CATALOG_MARKER: true,
+	}
+	if not run_state.cache_runtime_scenario_definition(definition):
+		failures.append("A trusted no-sequence catalog receipt did not enter the process-local RunState cache.")
+	if not run_state.seed_scenario_for_node("corner_store", definition):
+		failures.append("The no-sequence catalog receipt fixture could not seed its living-world identity.")
+	var persistent_definition := run_state.seeded_scenario_definition_for_node("corner_store")
+	if persistent_definition.has(ScenarioEngineScript.RESOLVED_SEQUENCE_CATALOG_MARKER):
+		failures.append("A process-local catalog receipt leaked into the persistent living-world scenario seed.")
+	run_state.current_environment = {
+		"id": "corner_store",
+		"archetype_id": "corner_store",
+		"world_node_id": "corner_store",
+		"scenario_id": "memo_no_sequence",
+		"scenario_state": {"id": "memo_no_sequence"},
+	}
+	var resolved: Dictionary = run_state._scenario_sequence_definition_readonly()
+	if not bool(resolved.get(ScenarioEngineScript.RESOLVED_SEQUENCE_CATALOG_MARKER, false)) or Schema.is_sequence(resolved):
+		failures.append("A persistent marker-free seed did not reuse its process-local negative catalog receipt.")
+	var save_town: Dictionary = run_state.to_dict().get("town_state", {})
+	var save_world: Dictionary = save_town.get("living_world", {})
+	var save_definitions: Dictionary = save_world.get("seeded_scenario_definitions_by_node", {})
+	var saved_definition: Dictionary = save_definitions.get("corner_store", {})
+	if saved_definition.has(ScenarioEngineScript.RESOLVED_SEQUENCE_CATALOG_MARKER):
+		failures.append("A process-local catalog receipt leaked into serialized RunState bytes.")
 
 
 func _first_sequence_fixture(library: Variant) -> Dictionary:

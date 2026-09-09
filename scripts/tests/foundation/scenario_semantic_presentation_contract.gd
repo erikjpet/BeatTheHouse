@@ -969,6 +969,41 @@ static func _check_single_environment_plane(failures: Array) -> void:
 		failures.append("A read-only exploratory room detail was not selectable on the unified environment plane.")
 	if not _object(objects, "scenario::renderer_only").is_empty() or not _object(objects, "scenario:stage:floating_banner").is_empty():
 		failures.append("Canvas appended a second scenario-renderer layer after receiving the unified environment catalog.")
+	# Runtime-only controls are intentionally outside scenario mutation authority,
+	# but their real geometry still belongs to the same placement plane. Prove a
+	# scenario-owned prop moves around that read-only reservation without changing
+	# the runtime control or admitting it into semantic authority.
+	var runtime_projection := projection.duplicate(true)
+	runtime_projection["semantic_state"]["scene_objects"]["scenario::runtime_neighbor"] = {
+		"owner_namespace": "scenario", "stable_object_id": "runtime_neighbor", "present": true,
+		"label": "Runtime neighbor", "role": "prop", "anchor_id": "scenario_corner",
+		"bounds": {"w": 72.0, "h": 56.0}, "visible": true, "enabled": true,
+	}
+	var runtime_rect := Rect2(Vector2(784.0, 52.0) / BOARD_SIZE, Vector2(72.0, 56.0) / BOARD_SIZE)
+	var runtime_environment := environment.duplicate(true)
+	runtime_environment["_scenario_layout_context"] = {
+		"base_occupied_records": [{
+			"object_id": "numbers:book",
+			"focus_rect": runtime_rect,
+			"label": "Numbers Book",
+		}],
+	}
+	var runtime_resolved := ScenarioLayoutResolverScript.resolve([machine, merchandise], runtime_projection, runtime_environment)
+	var runtime_authority := _dict(runtime_resolved.get("layout_authority", {}))
+	var neighbor_rect := _snapshot_rect(_dict(runtime_authority.get("scenario::runtime_neighbor", {})).get("normalized_hit_rect", {}))
+	var runtime_audit := _dict(runtime_resolved.get("layout_audit", {}))
+	if not bool(runtime_resolved.get("ok", false)) \
+			or int(runtime_audit.get("context_base_occupied_count", 0)) != 1 \
+			or runtime_authority.has("runtime_base::numbers:book") \
+			or (Rect2(neighbor_rect.position * BOARD_SIZE, neighbor_rect.size * BOARD_SIZE)).intersects(Rect2(runtime_rect.position * BOARD_SIZE, runtime_rect.size * BOARD_SIZE)):
+		failures.append("Runtime-only room controls did not reserve collision-free space on the unified environment plane.")
+	var controller_reservations := EnvironmentInteractionControllerScript._base_layout_reservations([
+		{"object_id": "game:slot", "visible": true, "focus_rect": Rect2(0.1, 0.1, 0.1, 0.1)},
+		{"object_id": "event:chain06_cass_first_contact", "visible": true, "focus_rect": Rect2(0.2, 0.1, 0.1, 0.1)},
+		{"object_id": "numbers:book", "visible": true, "focus_rect": runtime_rect},
+	])
+	if controller_reservations.size() != 1 or str(_dict(controller_reservations[0]).get("object_id", "")) != "numbers:book":
+		failures.append("Runtime occupancy filtering double-counted sealed game/event geometry during scenario refresh.")
 	canvas.free()
 
 

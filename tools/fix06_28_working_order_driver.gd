@@ -175,6 +175,7 @@ func _verify_seed(seed: String) -> void:
 		return
 	var initial_node_id := _current_visible_node_id(app)
 	var object_manifest: Array = _array(canvas.call("current_view_snapshot").get("objects", [])).duplicate(true)
+	_verify_single_environment_plane(canvas, seed)
 	if object_manifest.is_empty():
 		_fail("%s generated a room with no rendered objects." % seed)
 	for value in object_manifest:
@@ -907,6 +908,7 @@ func _verify_depart_arrive_revisit(app: Control, seed: String, seed_record: Dict
 			travel["errors"].append("blocking dialogue resolution did not restore room %s" % target_id)
 			break
 		var arrived_objects := _array(arrived_canvas.call("current_view_snapshot").get("objects", [])).duplicate(true)
+		_verify_single_environment_plane(arrived_canvas, "%s travel%d" % [seed, leg])
 		for value in arrived_objects:
 			var data := _dict(value)
 			if _object_id(data).is_empty() or not bool(data.get("visible", true)):
@@ -1060,6 +1062,37 @@ func _verify_action_isolated(seed: String, semantic_id: String, action_index: in
 	var routed := Fidelity.push_exact_canvas_mouse_click(app.get_viewport(), canvas, semantic_id, local_failures, "fix06_28 %s action focus" % seed)
 	await _settle()
 	await create_timer(0.25).timeout
+	var focus_view := _dict(canvas.call("current_view_snapshot")) if canvas != null and canvas.has_method("current_view_snapshot") else {}
+	var visible_object_ids: Array = []
+	var visible_object_layouts: Array = []
+	var target_object: Dictionary = {}
+	for value in _array(focus_view.get("objects", [])):
+		var visible_object := _dict(value)
+		var visible_id := _object_id(visible_object)
+		if not visible_id.is_empty():
+			visible_object_ids.append(visible_id)
+			visible_object_layouts.append({
+				"id": visible_id,
+				"position": visible_object.get("position", Vector2.ZERO),
+				"size": visible_object.get("size", Vector2.ZERO),
+				"scenario_layout_resolved": bool(visible_object.get("scenario_layout_resolved", false)),
+			})
+			if visible_id == semantic_id:
+				target_object = visible_object.duplicate(true)
+	action_record["focus_probe"] = {
+		"current_node_id": _current_visible_node_id(app),
+		"routed_ok": bool(routed.get("ok", false)),
+		"routed_stage": str(routed.get("stage", "")),
+		"route_errors": local_failures.duplicate(true),
+		"visible_object_ids": visible_object_ids,
+		"visible_object_layouts": visible_object_layouts,
+		"target_object": target_object,
+		"object_layout": _dict(focus_view.get("object_layout", {})),
+		"scenario_layout_audit": _dict(focus_view.get("scenario_layout_audit", {})),
+		"canvas_selected_object_id": str(focus_view.get("selected_object_id", "")),
+		"host_selected_object_id": str(_dict(app.call("current_spatial_interaction_snapshot")).get("selected_object_id", "")),
+		"screen": str(_dict(app.call("current_screen_snapshot")).get("screen", "")),
+	}
 	if not bool(routed.get("ok", false)) or not Fidelity.exact_selection_matches(app, semantic_id):
 		_fail("%s/%s action %d could not focus exact rendered target." % [seed, semantic_id, action_index])
 		await _dispose_app(app)
@@ -1100,6 +1133,16 @@ func _verify_action_isolated(seed: String, semantic_id: String, action_index: in
 	}, true)
 	await _dispose_app(app)
 	return action_record
+
+
+func _verify_single_environment_plane(canvas: Control, context: String) -> void:
+	if canvas == null or not canvas.has_method("current_view_snapshot"):
+		_fail("%s has no environment canvas for single-plane verification." % context)
+		return
+	var layout := _dict(_dict(canvas.call("current_view_snapshot")).get("object_layout", {}))
+	var overlap_count := maxi(0, int(layout.get("overlap_count", 0)))
+	if overlap_count > 0:
+		_fail("%s rendered %d overlapping room objects on the environment plane: %s" % [context, overlap_count, JSON.stringify(layout.get("overlaps", []))])
 
 
 func _await_observable_action_evidence(app: Control, before: Dictionary, semantic_id: String) -> Dictionary:

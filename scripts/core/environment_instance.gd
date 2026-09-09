@@ -537,6 +537,7 @@ static func ensure_generated_layout(environment_data: Dictionary) -> Dictionary:
 	_assign_string_object_rects(object_rects, layout, "service", _copy_array(environment_data.get("service_ids", [])), "service_spots", active_object_ids)
 	_assign_string_object_rects(object_rects, layout, "lender", _copy_array(environment_data.get("lender_hooks", [])), "lender_spots", active_object_ids)
 	_assign_object_layout_entries(object_rects, layout, _filter_unique_object_layout_entries(_game_hook_layout_entries(environment_data)), active_object_ids)
+	_assign_object_layout_entries(object_rects, layout, _numbers_layout_entries(environment_data), active_object_ids)
 	_assign_single_object_rect(object_rects, layout, "home_tenure:status", "home_tenure", 0, "home_tenure_spots", _home_tenure_should_exist(environment_data), active_object_ids)
 	_assign_single_object_rect(object_rects, layout, "home_sleep:bed", "home_sleep", 0, "home_sleep_spots", _home_sleep_should_exist(environment_data), active_object_ids)
 	_assign_single_object_rect(object_rects, layout, "home_storage:place", "home_storage", 0, "home_storage_spots", _home_storage_should_exist(environment_data), active_object_ids)
@@ -952,6 +953,9 @@ static func _fallback_object_rect(object_type: String, index: int) -> Rect2:
 			var lender_columns := 5
 			center = Vector2(0.22 + float(index % lender_columns) * 0.15, 0.70 + float(index / lender_columns) * 0.12)
 			size = Vector2(102.0 / ENVIRONMENT_BOARD_SIZE.x, 58.0 / ENVIRONMENT_BOARD_SIZE.y)
+		"numbers", "numbers_silas":
+			center = Vector2(0.42 + float(index % 2) * 0.24, 0.68)
+			size = Vector2(106.0 / ENVIRONMENT_BOARD_SIZE.x, 62.0 / ENVIRONMENT_BOARD_SIZE.y)
 		"environment_layer":
 			center = Vector2(0.80, 0.26 + float(index % 3) * 0.24)
 			size = Vector2(118.0 / ENVIRONMENT_BOARD_SIZE.x, 72.0 / ENVIRONMENT_BOARD_SIZE.y)
@@ -1172,6 +1176,7 @@ static func _active_object_layout_entries(environment_data: Dictionary) -> Array
 	_append_string_layout_entries(entries, "service", _copy_array(environment_data.get("service_ids", [])), "service_spots")
 	_append_string_layout_entries(entries, "lender", _copy_array(environment_data.get("lender_hooks", [])), "lender_spots")
 	entries.append_array(_game_hook_layout_entries(environment_data))
+	entries.append_array(_numbers_layout_entries(environment_data))
 	if _home_tenure_should_exist(environment_data):
 		entries.append({"object_id": "home_tenure:status", "object_type": "home_tenure", "index": 0, "spot_field": "home_tenure_spots"})
 	if _home_sleep_should_exist(environment_data):
@@ -1198,6 +1203,34 @@ static func _environment_layer_layout_entries(environment_data: Dictionary) -> A
 			continue
 		entries.append({"object_id": "environment_layer:%s" % target_id, "object_type": "environment_layer", "index": index, "spot_field": "layer_spots"})
 		index += 1
+	return entries
+
+
+# Numbers fixtures are runtime-backed, but they are still physical room objects.
+# Reserve their stable authored positions in the same generated layout as games,
+# events, services, and doors so the UI never composes a second placement layer.
+static func _numbers_layout_entries(environment_data: Dictionary) -> Array:
+	var layout := _copy_dict(environment_data.get("layout", {}))
+	if _layout_spot_count(layout, "numbers_spots") <= 0:
+		return []
+	# The Crew back-room desk is already the authored event:numbers_desk fixture.
+	# All other Numbers venues expose the shared book plus an optional Silas spot.
+	if str(environment_data.get("archetype_id", "")) == "small_underground_casino" \
+			and str(environment_data.get("current_layer_id", "")) == "back_room":
+		return []
+	var entries: Array = [{
+		"object_id": "numbers:book",
+		"object_type": "numbers",
+		"index": 0,
+		"spot_field": "numbers_spots",
+	}]
+	if _layout_spot_count(layout, "numbers_silas_spots") > 0:
+		entries.append({
+			"object_id": "numbers:silas",
+			"object_type": "numbers_silas",
+			"index": 0,
+			"spot_field": "numbers_silas_spots",
+		})
 	return entries
 
 
@@ -1312,7 +1345,7 @@ static func _prune_inactive_object_rects(object_rects: Dictionary, active_object
 
 
 static func _is_managed_object_id(object_id: String) -> bool:
-	for prefix in ["game:", "event:", "item:", "shopkeeper:", "travel:", "service:", "lender:", "game_hook:", "dialogue:", "casino_fixture:", "home_tenure:", "home_sleep:", "home_storage:", "home_container:", "environment_layer:"]:
+	for prefix in ["game:", "event:", "item:", "shopkeeper:", "travel:", "service:", "lender:", "game_hook:", "dialogue:", "casino_fixture:", "home_tenure:", "home_sleep:", "home_storage:", "home_container:", "environment_layer:", "numbers:"]:
 		if object_id.begins_with(prefix):
 			return true
 	return false

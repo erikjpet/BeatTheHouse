@@ -48,6 +48,11 @@ func _install_environment_with_rollback(run_state: RunState, environment_data: D
 	if not bool(trusted.get("ok", false)):
 		_restore_travel_snapshot(run_state, rollback)
 		return {"ok": false, "applied": false, "errors": _copy_array(trusted.get("errors", []))}
+	var trusted_definition_value: Variant = trusted.get("scenario_definition", {})
+	if typeof(trusted_definition_value) == TYPE_DICTIONARY:
+		# Keep validation/catalog receipts in RunState's process-local cache. The
+		# living-world seed intentionally remains persistent authored data only.
+		run_state.cache_runtime_scenario_definition(trusted_definition_value as Dictionary)
 	var install_data: Dictionary = _copy_dict(trusted.get("environment", {}))
 	if _world_environment_timing_enabled:
 		_world_environment_install_stages_usec["trusted_copy"] = Time.get_ticks_usec() - perf_stage_started_usec
@@ -106,7 +111,7 @@ func _trusted_scenario_install_data(run_state: RunState, environment_data: Dicti
 	# Do not embed the same large sequence payload into every environment copy.
 	if (ScenarioSequenceSchemaScript.is_sequence(definition) or trusted_suppression) and map_seeded_definition.is_empty():
 		install_data["scenario_sequence_definition"] = definition.duplicate(true)
-	return {"ok": true, "environment": install_data, "errors": []}
+	return {"ok": true, "environment": install_data, "scenario_definition": definition, "errors": []}
 
 
 # Production travel facade. Legacy generation still returns EnvironmentInstance,

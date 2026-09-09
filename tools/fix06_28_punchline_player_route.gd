@@ -445,28 +445,39 @@ func _save_continue_same_layer(app: Control, layer_id: String) -> bool:
 func _record_layer(app: Control, label: String) -> void:
 	var canvas := app.get("environment_canvas") as Control
 	var snapshot := _dict(canvas.call("current_view_snapshot"))
-	report["layers"].append({
+	var environment: Dictionary = (app.get("run_state") as RunState).current_environment
+	var layer_report := {
 		"label": label,
 		"layer_id": _current_layer(app),
 		"art_key": str(snapshot.get("art_key", snapshot.get("environment_id", ""))),
 		"object_count": _array(snapshot.get("objects", [])).size(),
-		"scenario_semantic_ready": bool((app.get("run_state") as RunState).current_environment.get("scenario_semantic_ready", false)),
-	})
+		"scenario_semantic_ready": bool(environment.get("scenario_semantic_ready", false)),
+		"scenario_lifecycle_errors": _array(environment.get("scenario_sequence_lifecycle_errors", [])).duplicate(true),
+		"scenario_layout_audit": _dict(environment.get("scenario_layout_audit", {})),
+	}
+	if not _array(layer_report.get("scenario_lifecycle_errors", [])).is_empty():
+		layer_report["object_layout_entries"] = _array(_dict(snapshot.get("object_layout", {})).get("objects", [])).duplicate(true)
+	report["layers"].append(layer_report)
 
 
 func _audit_visible_layer_objects(app: Control, label: String) -> bool:
 	var canvas := app.get("environment_canvas") as Control
 	var initial_snapshot := _dict(canvas.call("current_view_snapshot"))
+	var object_layout := _dict(initial_snapshot.get("object_layout", {}))
+	var overlap_count := maxi(0, int(object_layout.get("overlap_count", 0)))
 	var object_ids: Array[String] = []
 	var action_expected: Dictionary = {}
 	var visible_count := 0
 	var unavailable_count := 0
 	var deferred_gate_count := 0
+	var presentation_failure_errors: Array = []
 	for value in _array(initial_snapshot.get("objects", [])):
 		var object_data := _dict(value)
 		var object_id := str(object_data.get("id", object_data.get("object_id", ""))).strip_edges()
 		if object_id.is_empty() or not bool(object_data.get("visible", true)):
 			continue
+		if object_id == "scenario::presentation_failure":
+			presentation_failure_errors = _array(object_data.get("scenario_projection_errors", [])).duplicate(true)
 		visible_count += 1
 		if label == "casino" and object_id == "environment_layer:back_room":
 			# This target is intentionally reserved for the separately recorded L3
@@ -482,6 +493,8 @@ func _audit_visible_layer_objects(app: Control, label: String) -> bool:
 	var populated_panel_count := 0
 	var action_panel_count := 0
 	var audit_failures: Array[String] = []
+	if overlap_count > 0:
+		audit_failures.append("environment_plane_overlap:%d" % overlap_count)
 	for object_id in object_ids:
 		# Close the prior canvas-drawn info card before resolving the next exact
 		# target; otherwise its action region can physically cover that target.
@@ -518,6 +531,9 @@ func _audit_visible_layer_objects(app: Control, label: String) -> bool:
 		"selected": selected_count,
 		"populated_panels": populated_panel_count,
 		"action_panels": action_panel_count,
+		"environment_plane_overlap_count": overlap_count,
+		"environment_plane_overlaps": _array(object_layout.get("overlaps", [])).duplicate(true),
+		"presentation_failure_errors": presentation_failure_errors,
 		"failures": audit_failures.duplicate(),
 	})
 	if not audit_failures.is_empty():

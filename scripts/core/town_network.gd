@@ -132,7 +132,13 @@ func seed_scenario_for_node(node_id: String, scenario: Dictionary) -> bool:
 	# Cache the canonical selector output, not a later content-library lookup.
 	# Challenge pins can preserve identity while intentionally suppressing the
 	# authored mutation/phase payload for controlled tutorial rooms.
-	seeded_scenario_definitions_by_node[clean_node] = scenario.duplicate(true)
+	var persistent_definition := scenario.duplicate(true)
+	# Catalog-resolution receipts are process-local cache authority, not authored
+	# scenario data. Keeping them in the living-world seed needlessly grows every
+	# save and makes identical gameplay serialize differently depending on whether
+	# ContentLibrary validation happened eagerly or in Web stages.
+	persistent_definition.erase("__scenario_sequence_catalog_resolved")
+	seeded_scenario_definitions_by_node[clean_node] = persistent_definition
 	return register_rumor_fact(RUMOR_CLASS_SCENARIO, "scenario:%s" % clean_node, {
 		"target_node_id": clean_node,
 		"source_id": scenario_id,

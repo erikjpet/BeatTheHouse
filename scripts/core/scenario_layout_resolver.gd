@@ -13,6 +13,7 @@ const DEFAULT_SCENE_SIZE := Vector2(48.0, 48.0)
 const DEFAULT_ACTOR_SIZE := Vector2(72.0, 80.0)
 const COLLISION_RATIO := 0.65
 const VISUAL_LAYOUT_GAP := 8.0
+const FINE_CANDIDATE_CACHE_MAX_ENTRIES := 8
 const LABEL_MAX_LENGTH := 64
 const PROMPT_MAX_LENGTH := 240
 const LABEL_HEIGHT := 15.0
@@ -41,6 +42,9 @@ const LAYOUT_SPOT_FIELDS := {
 	"shopkeeper": "shopkeeper_spots",
 	"game_hook": "game_hook_spots",
 }
+
+static var _fine_candidate_cache: Dictionary = {}
+static var _fine_candidate_cache_order: Array[Rect2] = []
 
 
 # Compatibility projection used by the renderer-extension seam. Production
@@ -314,9 +318,11 @@ static func resolve(base_records: Array, projection: Dictionary, environment: Di
 
 	var errors: Array = []
 	var warnings: Array = []
-	var occupied := _base_occupied_records(base_records)
-	var base_by_identity := _base_records_by_identity(base_records)
 	var context := _layout_context(environment)
+	var occupied := _base_occupied_records(base_records)
+	var context_base_occupied := _context_base_occupied_records(context, base_records, errors)
+	occupied.append_array(context_base_occupied)
+	var base_by_identity := _base_records_by_identity(base_records)
 	var reserved_overlay := _context_overlay_rect(context)
 	if reserved_overlay.has_area():
 		# The TalkDock reservation is live production geometry, not merely a
@@ -419,6 +425,7 @@ static func resolve(base_records: Array, projection: Dictionary, environment: Di
 		"small_screen_mode": context.get("small_screen_mode", false) if typeof(context.get("small_screen_mode", false)) == TYPE_BOOL else false,
 		"reduce_motion": context.get("reduce_motion", false) if typeof(context.get("reduce_motion", false)) == TYPE_BOOL else false,
 		"authority_count": authority.size(),
+		"context_base_occupied_count": context_base_occupied.size(),
 		"authority_digest": authority_digest,
 		"reachable_interaction_ids": interaction_audit.get("reachable_interaction_ids", []),
 		"safe_exit_ids": interaction_audit.get("safe_exit_ids", []),
@@ -1169,6 +1176,19 @@ static func _collision_safe_rect(identity: String, authored: Rect2, occupied: Ar
 				and not _label_overlaps(identity, small_candidate, label, occupied, true) \
 				and not _forbidden_overlap(small_candidate, forbidden_rect):
 			return {"rect": candidate, "adjusted": not candidate.position.is_equal_approx(authored.position), "colliding": false}
+	# Dense rooms can leave a valid gap between the legacy 16-pixel sample points.
+	# Run the finer 8-pixel grid only after every cheap candidate failed, keeping
+	# ordinary refreshes unchanged while avoiding a false fail-closed projection.
+	var fine_candidates := _fine_collision_candidates(authored)
+	for candidate_value in fine_candidates:
+		var candidate := candidate_value as Rect2
+		var small_candidate := _expanded_rect(candidate, SMALL_SCREEN_TARGET)
+		if not _normal_hit_overlaps(identity, candidate, occupied) \
+				and not _expanded_overlaps(identity, small_candidate, occupied) \
+				and not _label_overlaps(identity, candidate, label, occupied, false) \
+				and not _label_overlaps(identity, small_candidate, label, occupied, true) \
+				and not _forbidden_overlap(small_candidate, forbidden_rect):
+			return {"rect": candidate, "adjusted": not candidate.position.is_equal_approx(authored.position), "colliding": false}
 	# Preserve the original exact-hitbox fallback for authored raw collisions when
 	# a crowded room cannot also provide the preferred extra visual gap.
 	if authored_raw_collision:
@@ -1183,6 +1203,15 @@ static func _collision_safe_rect(identity: String, authored: Rect2, occupied: Ar
 					and not _forbidden_overlap(small_candidate, forbidden_rect):
 				return {"rect": candidate, "adjusted": not offset.is_zero_approx(), "colliding": false}
 		for candidate_value in bounded_candidates:
+			var candidate := candidate_value as Rect2
+			var small_candidate := _expanded_rect(candidate, SMALL_SCREEN_TARGET)
+			if not _raw_hit_overlaps(identity, candidate, occupied) \
+					and not _expanded_overlaps(identity, small_candidate, occupied) \
+					and not _label_overlaps(identity, candidate, label, occupied, false) \
+					and not _label_overlaps(identity, small_candidate, label, occupied, true) \
+					and not _forbidden_overlap(small_candidate, forbidden_rect):
+				return {"rect": candidate, "adjusted": not candidate.position.is_equal_approx(authored.position), "colliding": false}
+		for candidate_value in fine_candidates:
 			var candidate := candidate_value as Rect2
 			var small_candidate := _expanded_rect(candidate, SMALL_SCREEN_TARGET)
 			if not _raw_hit_overlaps(identity, candidate, occupied) \
@@ -1223,12 +1252,15 @@ static func _label_overlaps(identity: String, rect: Rect2, label: String, occupi
 	return false
 
 
-static func _bounded_collision_candidates(authored: Rect2) -> Array:
+static func _bounded_collision_candidates(authored: Rect2, grid_step: int = 16, excluded_grid_step: int = 0) -> Array:
 	var candidates: Array = []
 	var maximum_x := maxi(0, floori(BOARD_SIZE.x - authored.size.x))
 	var maximum_y := maxi(0, floori(BOARD_SIZE.y - authored.size.y))
-	for y in range(0, maximum_y + 1, 16):
-		for x in range(0, maximum_x + 1, 16):
+	var step := maxi(1, grid_step)
+	for y in range(0, maximum_y + 1, step):
+		for x in range(0, maximum_x + 1, step):
+			if excluded_grid_step > 0 and x % excluded_grid_step == 0 and y % excluded_grid_step == 0:
+				continue
 			candidates.append(Rect2(Vector2(x, y), authored.size))
 	candidates.sort_custom(func(left: Rect2, right: Rect2) -> bool:
 		var left_distance := left.position.distance_squared_to(authored.position)
@@ -1237,6 +1269,23 @@ static func _bounded_collision_candidates(authored: Rect2) -> Array:
 			return left_distance < right_distance
 		return left.position.y < right.position.y if not is_equal_approx(left.position.y, right.position.y) else left.position.x < right.position.x
 	)
+	return candidates
+
+
+static func _fine_collision_candidates(authored: Rect2) -> Array:
+	# Only dense layouts reach this path. Their authored geometry is stable across
+	# presentation refreshes, so retain a small LRU of the expensive distance-sort
+	# instead of rebuilding thousands of Rect2 candidates on every UI update.
+	var cache_key := authored
+	if _fine_candidate_cache.has(cache_key):
+		_fine_candidate_cache_order.erase(cache_key)
+		_fine_candidate_cache_order.append(cache_key)
+		return _fine_candidate_cache.get(cache_key, []) as Array
+	var candidates := _bounded_collision_candidates(authored, 8, 16)
+	_fine_candidate_cache[cache_key] = candidates
+	_fine_candidate_cache_order.append(cache_key)
+	while _fine_candidate_cache_order.size() > FINE_CANDIDATE_CACHE_MAX_ENTRIES:
+		_fine_candidate_cache.erase(_fine_candidate_cache_order.pop_front())
 	return candidates
 
 
@@ -1327,6 +1376,48 @@ static func _validate_layout_context(context: Dictionary, errors: Array) -> void
 		var raw_overlay := _dict(context.get("reserved_overlay_board_rect", {}))
 		if not raw_overlay.is_empty() and (float(raw_overlay.get("w", 0.0)) > 0.0 or float(raw_overlay.get("h", 0.0)) > 0.0):
 			errors.append("Scenario production reserved-overlay geometry must be finite and board-bounded.")
+
+
+static func _context_base_occupied_records(context: Dictionary, base_records: Array, errors: Array = []) -> Array:
+	var value: Variant = context.get("base_occupied_records", [])
+	if typeof(value) != TYPE_ARRAY:
+		errors.append("Scenario production base occupancy must be an array.")
+		return []
+	if (value as Array).size() > 256:
+		errors.append("Scenario production base occupancy exceeds the 256-record bound.")
+		return []
+	var sealed_presentation_ids: Dictionary = {}
+	for base_value in base_records:
+		var base := _dict(base_value)
+		var presentation_id := str(base.get("object_id", "")).strip_edges()
+		if not presentation_id.is_empty():
+			sealed_presentation_ids[presentation_id] = true
+	var seen: Dictionary = {}
+	var result: Array = []
+	for index in range((value as Array).size()):
+		var source := _dict((value as Array)[index])
+		var object_id := str(source.get("object_id", "")).strip_edges()
+		var label := str(source.get("label", "")).strip_edges()
+		var rect := _normalized_or_pixel_rect(source.get("focus_rect", {}))
+		if source.is_empty() or object_id.is_empty() or seen.has(object_id):
+			errors.append("Scenario production base occupancy record %d has an empty or duplicate identity." % index)
+			continue
+		seen[object_id] = true
+		if label.length() > LABEL_MAX_LENGTH or not label.is_empty() and not _readable_text(label, LABEL_MAX_LENGTH):
+			errors.append("Scenario production base occupancy record %s has an invalid label." % object_id)
+			continue
+		if not rect.has_area() or not Rect2(Vector2.ZERO, BOARD_SIZE).encloses(rect):
+			errors.append("Scenario production base occupancy record %s has invalid room geometry." % object_id)
+			continue
+		if sealed_presentation_ids.has(object_id):
+			continue
+		result.append({
+			"identity": "runtime_base::%s" % object_id,
+			"rect": rect,
+			"small_rect": _expanded_rect(rect, SMALL_SCREEN_TARGET),
+			"label": label,
+		})
+	return result
 
 
 static func _context_overlay_rect(context: Dictionary) -> Rect2:

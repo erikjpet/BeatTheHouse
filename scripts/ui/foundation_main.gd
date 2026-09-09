@@ -7237,6 +7237,13 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	# The destination is still behind the travel/result handoff. Rendering it here
 	# was invisible and the normal refresh below rebuilt the same canvas again.
 	clear_interaction_focus(false, false)
+	# The canvas keeps its own presentation-only focus so it can animate without
+	# rebuilding the host model. `travel:leave` exists in both rooms; leaving that
+	# id selected here made the destination inherit the source room's zoom and
+	# info card even though host focus was already clear. Snap the existing canvas
+	# back to the whole-room view without rendering the destination early.
+	if environment_canvas != null:
+		environment_canvas.set_selected_object("", true)
 	var destination_name := str(run_state.current_environment.get("display_name", target_label))
 	var travel_result := _travel_result(target_id, destination_name, route, previous_environment, run_state.current_environment, travel_decay, route_risk)
 	if not local_casino_room_move:
