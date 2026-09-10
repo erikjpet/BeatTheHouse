@@ -2,7 +2,21 @@
 
 ## Status
 
-IN_PROGRESS — owner opened 2026-09-09; `/root` claimed the row.
+DONE — completed 2026-09-10 on implementation `3f31bf10`.
+
+## Execution Record
+
+- Implemented a production-host route driver that earns made Crew standing
+  through 11 ordinary visible favors, then exercises Save/Continue, exact
+  Punchline travel, L3 entry, furnished room actions, same-room restore,
+  revisit and departure through rendered semantic objects and real viewport
+  input.
+- Corrected the underlying single-environment-plane, mutable interaction-source,
+  delivery/heist composition and persistence seams exposed by the natural path.
+- Verification: `tools/fix06_29_punchline_natural_l3_route.gd` completed
+  warning-free with `FIX06_29_PUNCHLINE_NATURAL_L3 PASS favors=11`.
+- Supporting proofs: the world-sequence delivery proof and manual-count
+  Blackjack settlement probe both passed warning-free.
 
 ## Exact scope
 
