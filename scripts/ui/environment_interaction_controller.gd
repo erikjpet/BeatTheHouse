@@ -3,6 +3,8 @@ extends RefCounted
 const EnvironmentBaseSemanticRecordsScript := preload("res://scripts/core/environment_base_semantic_records.gd")
 const ScenarioSequenceSchemaScript := preload("res://scripts/core/scenario_sequence_schema.gd")
 const ScenarioSemanticViewModelScript := preload("res://scripts/ui/scenario_semantic_view_model.gd")
+const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
+const DELIVERY_LAYOUT_GAP_PIXELS := 8.0
 
 
 static func interactable_object_view_list(host: Variant) -> Array:
@@ -42,14 +44,6 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		after_travel_objects.append(room_return_object)
 	after_travel_objects.append_array(host._hook_interactable_objects(host.CONTEXT_MODE_SERVICE, host._service_hook_view_list()))
 	after_travel_objects.append_array(host._hook_interactable_objects(host.CONTEXT_MODE_LENDER, host._lender_hook_view_list()))
-	var travel_choices = host._travel_choice_view_list()
-	var delivery_occupied := before_travel_objects + after_travel_objects
-	for travel_index in range(travel_choices.size()):
-		var travel_choice: Dictionary = travel_choices[travel_index] if typeof(travel_choices[travel_index]) == TYPE_DICTIONARY else {}
-		delivery_occupied.append({
-			"focus_rect": host._interaction_rect_for_object("travel:%s" % str(travel_choice.get("id", "")), host.CONTEXT_MODE_TRAVEL, travel_index),
-		})
-	before_travel_objects.append_array(delivery_interactable_objects(host, delivery_occupied))
 	var event_options: Array = []
 	var contact_event_ids: Array = []
 	for presence_value in host._copy_array(host.run_state.current_environment.get("crew_presence", [])):
@@ -63,6 +57,49 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		var event_id := str((event_value as Dictionary).get("id", ""))
 		if event_id != "numbers_desk" and not contact_event_ids.has(event_id):
 			event_options.append(event_value)
+	var travel_choices = host._travel_choice_view_list()
+	var delivery_occupied := before_travel_objects + after_travel_objects
+	var layout: Dictionary = host._current_environment_layout()
+	var game_fixture_counts := _dict(layout.get("game_fixture_counts", {}))
+	var game_layout_index := 0
+	for game_source_value in game_sources:
+		var game_source: Dictionary = game_source_value
+		var game_id := str(game_source.get("id", ""))
+		var fixture_count := maxi(1, int(game_fixture_counts.get(game_id, 1)))
+		for fixture_index in range(fixture_count):
+			var game_object_id := "game:%s" % game_id if fixture_index == 0 else "game:%s:%d" % [game_id, fixture_index + 1]
+			delivery_occupied.append({"focus_rect": host._interaction_rect_for_object(game_object_id, host.CONTEXT_MODE_GAME, game_layout_index)})
+			game_layout_index += 1
+	var event_layout_index := 0
+	for event_value in event_options:
+		if typeof(event_value) != TYPE_DICTIONARY:
+			continue
+		var event_id := str((event_value as Dictionary).get("id", ""))
+		if event_id.is_empty():
+			continue
+		delivery_occupied.append({"focus_rect": host._interaction_rect_for_object("event:%s" % event_id, host.CONTEXT_MODE_EVENT, event_layout_index)})
+		event_layout_index += 1
+	var item_offers: Array = host._item_offer_view_list()
+	var item_layout_index := 0
+	for offer_value in item_offers:
+		if typeof(offer_value) != TYPE_DICTIONARY:
+			continue
+		var offer: Dictionary = offer_value
+		var item_id := str(offer.get("id", ""))
+		if item_id.is_empty():
+			continue
+		var item_object_id := str(offer.get("object_id", "item:%s" % item_id))
+		var resolved_item_index := int(offer.get("layout_index", item_layout_index))
+		delivery_occupied.append({"focus_rect": host._interaction_rect_for_object(item_object_id, host.CONTEXT_MODE_ITEM, resolved_item_index)})
+		item_layout_index += 1
+	if host._shopkeeper_should_draw():
+		delivery_occupied.append({"focus_rect": host._interaction_rect_for_object("shopkeeper:merchant", host.CONTEXT_MODE_SHOPKEEPER, 0)})
+	for travel_index in range(travel_choices.size()):
+		var travel_choice: Dictionary = travel_choices[travel_index] if typeof(travel_choices[travel_index]) == TYPE_DICTIONARY else {}
+		delivery_occupied.append({
+			"focus_rect": host._interaction_rect_for_object("travel:%s" % str(travel_choice.get("id", "")), host.CONTEXT_MODE_TRAVEL, travel_index),
+		})
+	before_travel_objects.append_array(delivery_interactable_objects(host, delivery_occupied))
 	var result: Array = _array(host.EnvironmentInteractionViewModelScript.interactable_object_view_list(host.run_state, host.library, {
 		"run_failed_without_recovery": failed,
 		"failed_reason": failed_reason,
@@ -77,7 +114,7 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		"event_options": event_options,
 		"event_choice_summary": Callable(host, "_event_choice_list_summary"),
 		"event_inline_actions": Callable(host, "_event_inline_response_actions"),
-		"item_offers": host._item_offer_view_list(),
+		"item_offers": item_offers,
 		"shopkeeper_should_draw": host._shopkeeper_should_draw(),
 		"shopkeeper_available": host._shopkeeper_available(),
 		"shopkeeper_label": host._shopkeeper_label(),
@@ -97,12 +134,14 @@ static func interactable_object_view_list(host: Variant) -> Array:
 	if host.environment_canvas != null and host.environment_canvas.has_method("scenario_layout_context"):
 		layout_context = _dict(host.environment_canvas.call("scenario_layout_context"))
 	# The sealed scenario inventory deliberately excludes runtime-only controls
-	# such as Numbers, delivery handoffs, Crew arrivals, and live game clerks.
+	# such as Numbers, Crew arrivals, and live game clerks. Delivery controls are
+	# placed around the already sealed scenario authority instead of moving that
+	# authority when cargo state changes.
 	# Their geometry is nevertheless part of the room the player sees. Feed a
 	# bounded, read-only reservation list into layout resolution so scenario props
 	# are placed around the complete production plane instead of composing a late
 	# collision-prone layer. These records authorize no scenario behavior.
-	layout_context["base_occupied_records"] = _base_layout_reservations(trusted_base_result)
+	layout_context["base_occupied_records"] = _base_layout_reservations(trusted_base_result, layout)
 	if not bool(preparation.get("ok", false)):
 		var preparation_failure := projection_failure_result(result, _array(preparation.get("errors", [])))
 		var committed_preparation_failure := committed_projection_status_result(host.run_state, preparation_failure, trusted_base_result)
@@ -149,10 +188,10 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		host.run_state.current_environment.erase("scenario_sequence_lifecycle_errors")
 		host.run_state.current_environment.erase("scenario_layout_audit")
 		host.run_state.current_environment.erase("scenario_layout_authority_digest")
-	return result
+	return _reflow_delivery_records(host, result)
 
 
-static func _base_layout_reservations(records: Array) -> Array:
+static func _base_layout_reservations(records: Array, layout: Dictionary = {}) -> Array:
 	var by_id: Dictionary = {}
 	for value in records:
 		var record := _dict(value)
@@ -168,6 +207,20 @@ static func _base_layout_reservations(records: Array) -> Array:
 			"focus_rect": _duplicate_variant(record.get("focus_rect", record.get("normalized_rect", {}))),
 			"label": label,
 		}
+	# Generated slots remain part of the ordinary environment plane while their
+	# events are dormant. Reserve those authored positions so a scenario prop can
+	# never occupy a chain-event slot that becomes live later in the same visit.
+	var object_rects: Variant = layout.get("object_rects", {})
+	if typeof(object_rects) == TYPE_DICTIONARY:
+		for object_id_value in (object_rects as Dictionary).keys():
+			var object_id := str(object_id_value).strip_edges()
+			if object_id.is_empty() or by_id.has(object_id):
+				continue
+			by_id[object_id] = {
+				"object_id": object_id,
+				"focus_rect": _duplicate_variant((object_rects as Dictionary).get(object_id_value, {})),
+				"label": "",
+			}
 	var ids := by_id.keys()
 	ids.sort()
 	var result: Array = []
@@ -179,10 +232,12 @@ static func _base_layout_reservations(records: Array) -> Array:
 # Static games/events/services/routes are already supplied as sealed base
 # geometry. Only UI/runtime families omitted from that authority need a second
 # read-only occupancy record; including the whole live list double-counts base
-# controls and can over-constrain a scenario refresh.
+# controls and can over-constrain a scenario refresh. Delivery is deliberately
+# excluded: its placement pass consumes the sealed scenario plane, so it must
+# not feed back and relocate that plane on every cargo-state refresh.
 static func _runtime_layout_reservation_id(object_id: String) -> bool:
 	for prefix in [
-		"numbers:", "delivery:", "crew_presence:", "game_hook:", "dialogue:",
+		"numbers:", "crew_presence:", "game_hook:", "dialogue:",
 		"item:", "cage_gift_item:", "shopkeeper:", "casino_fixture:",
 		"home_tenure:", "home_sleep:", "home_storage:", "home_container:",
 		"environment_layer:",
@@ -973,10 +1028,13 @@ static func delivery_interactable_objects(host: Variant, occupied_objects: Array
 	if host.run_state == null:
 		return []
 	var result: Array = []
+	var occupied_rects := _delivery_occupied_rects(host, occupied_objects)
 	var physical_interactions: Array = host.run_state.delivery_physical_interactions() if host.run_state.has_method("delivery_physical_interactions") else []
 	for physical_index in range(physical_interactions.size()):
 		var interaction: Dictionary = physical_interactions[physical_index]
 		var verb := str(interaction.get("verb", ""))
+		var focus_rect := _delivery_available_rect(host, occupied_rects, physical_index)
+		occupied_rects.append(focus_rect)
 		result.append(host._make_interactable_object({
 			"object_id": str(interaction.get("object_id", "delivery:%s" % verb)),
 			"object_type": host.CONTEXT_MODE_DELIVERY,
@@ -994,7 +1052,7 @@ static func delivery_interactable_objects(host: Variant, occupied_objects: Array
 			"icon_key": "item" if verb in ["pickup", "stash", "retrieve", "ditch"] else "travel",
 			"available_actions": [{"id": "delivery_physical_action", "label": str(interaction.get("label", "Act"))}],
 			"confirm_action_id": "delivery_physical_action",
-			"focus_rect": host._interaction_rect_for_object("", host.CONTEXT_MODE_DELIVERY, physical_index),
+			"focus_rect": focus_rect,
 		}))
 	var handoff: Dictionary = host.run_state.delivery_arrival_interaction()
 	if handoff.is_empty():
@@ -1005,33 +1063,7 @@ static func delivery_interactable_objects(host: Variant, occupied_objects: Array
 	if not host.run_state.world_sequence_mounted_owner_for_channel("delivery_handoff", node_id).is_empty():
 		return result
 	var object_id := "delivery:handoff:%s" % node_id
-	var occupied_rects: Array[Rect2] = []
-	var layout: Dictionary = host._current_environment_layout()
-	var object_rects: Variant = layout.get("object_rects", {})
-	if typeof(object_rects) == TYPE_DICTIONARY:
-		for rect_value in (object_rects as Dictionary).values():
-			var rect: Rect2 = host.EnvironmentInteractionViewModelScript.rect_from_dict(rect_value)
-			if rect.size.x > 0.0 and rect.size.y > 0.0:
-				occupied_rects.append(rect)
-	for occupied_value in occupied_objects:
-		if typeof(occupied_value) != TYPE_DICTIONARY:
-			continue
-		var occupied: Dictionary = occupied_value
-		var rect_value: Variant = occupied.get("focus_rect", Rect2())
-		if typeof(rect_value) == TYPE_RECT2 and (rect_value as Rect2).size.x > 0.0 and (rect_value as Rect2).size.y > 0.0:
-			occupied_rects.append(rect_value as Rect2)
-	var focus_rect: Rect2 = host._interaction_rect_for_object("", host.CONTEXT_MODE_DELIVERY, 0)
-	var best_overlap := INF
-	for candidate_index in range(8):
-		var candidate: Rect2 = host._interaction_rect_for_object("", host.CONTEXT_MODE_DELIVERY, candidate_index)
-		var overlap := 0.0
-		for occupied_rect in occupied_rects:
-			overlap += candidate.intersection(occupied_rect).get_area()
-		if overlap < best_overlap:
-			best_overlap = overlap
-			focus_rect = candidate
-		if is_zero_approx(overlap):
-			break
+	var focus_rect := _delivery_available_rect(host, occupied_rects, physical_interactions.size())
 	result.append(host._make_interactable_object({
 		"object_id": object_id,
 		"object_type": host.CONTEXT_MODE_DELIVERY,
@@ -1055,6 +1087,115 @@ static func delivery_interactable_objects(host: Variant, occupied_objects: Array
 	return result
 
 
+static func _delivery_occupied_rects(host: Variant, occupied_objects: Array, include_generated_layout: bool = true, include_scenario_authority: bool = true) -> Array[Rect2]:
+	var result: Array[Rect2] = []
+	var layout: Dictionary = host._current_environment_layout()
+	var object_rects: Variant = layout.get("object_rects", {})
+	if include_generated_layout and typeof(object_rects) == TYPE_DICTIONARY:
+		for rect_value in (object_rects as Dictionary).values():
+			var rect: Rect2 = host.EnvironmentInteractionViewModelScript.rect_from_dict(rect_value)
+			if rect.size.x > 0.0 and rect.size.y > 0.0:
+				result.append(rect)
+	# Scenario visuals are resolved after the ordinary environment layout and do
+	# not live in layout.object_rects. Their sealed authority is still part of the
+	# same visible room plane, so runtime delivery controls must reserve it too.
+	var scenario_authority: Variant = host.run_state.current_environment.get("scenario_layout_authority", {})
+	if include_scenario_authority and typeof(scenario_authority) == TYPE_DICTIONARY:
+		for authority_value in (scenario_authority as Dictionary).values():
+			if typeof(authority_value) != TYPE_DICTIONARY or not bool((authority_value as Dictionary).get("presentation_visible", true)):
+				continue
+			var authority_rect: Rect2 = host.EnvironmentInteractionViewModelScript.rect_from_dict((authority_value as Dictionary).get("normalized_hit_rect", {}))
+			if authority_rect.size.x > 0.0 and authority_rect.size.y > 0.0:
+				result.append(authority_rect)
+	for occupied_value in occupied_objects:
+		if typeof(occupied_value) != TYPE_DICTIONARY:
+			continue
+		var occupied: Dictionary = occupied_value
+		var rect_value: Variant = occupied.get("focus_rect", Rect2())
+		var rect: Rect2 = host.EnvironmentInteractionViewModelScript.rect_from_dict(rect_value)
+		if rect.size.x > 0.0 and rect.size.y > 0.0:
+			result.append(rect)
+	return result
+
+
+static func _reflow_delivery_records(host: Variant, records: Array) -> Array:
+	var occupied_records: Array = []
+	for value in records:
+		if typeof(value) != TYPE_DICTIONARY:
+			continue
+		var record := value as Dictionary
+		if not str(record.get("object_id", "")).begins_with("delivery:"):
+			occupied_records.append(record)
+	var occupied_rects := _delivery_occupied_rects(host, occupied_records)
+	var result := records.duplicate(true)
+	var delivery_index := 0
+	for index in range(result.size()):
+		if typeof(result[index]) != TYPE_DICTIONARY:
+			continue
+		var record := result[index] as Dictionary
+		if not str(record.get("object_id", "")).begins_with("delivery:"):
+			continue
+		var focus_rect := _delivery_available_rect(host, occupied_rects, delivery_index)
+		record["focus_rect"] = focus_rect
+		result[index] = record
+		occupied_rects.append(focus_rect)
+		delivery_index += 1
+	return result
+
+
+static func _delivery_available_rect(host: Variant, occupied_rects: Array[Rect2], preferred_index: int) -> Rect2:
+	var focus_rect: Rect2 = host._interaction_rect_for_object("", host.CONTEXT_MODE_DELIVERY, preferred_index)
+	# Delivery verbs can coexist with a fully composed scenario room. Keep their
+	# hit areas at the renderer's accessible 72x48 minimum rather than consuming
+	# the old 100x70 card footprint for each of four simultaneous choices.
+	var board_size := Vector2(VisualStyleScript.ENVIRONMENT_BOARD_SIZE)
+	var compact_size := Vector2(72.0 / board_size.x, 48.0 / board_size.y)
+	focus_rect = Rect2(focus_rect.get_center() - compact_size * 0.5, compact_size)
+	var best_overlap := INF
+	var candidates: Array[Rect2] = []
+	for offset in range(8):
+		var preferred: Rect2 = host._interaction_rect_for_object("", host.CONTEXT_MODE_DELIVERY, preferred_index + offset)
+		preferred = Rect2(preferred.get_center() - compact_size * 0.5, compact_size)
+		candidates.append(_delivery_board_bounded_rect(preferred))
+	# The legacy delivery vocabulary owns eight preferred positions. Generated
+	# scenario rooms can fill all eight, so continue through a deterministic,
+	# bounded pixel scan instead of wrapping those positions and accepting
+	# overlap. A 16px stride finds the narrow gaps in dense rooms while keeping
+	# this active-delivery-only pass small.
+	var tile_size := focus_rect.size
+	var tile_pixels := tile_size * board_size
+	var first_position := Vector2(ceilf(board_size.x * 0.02), ceilf(board_size.y * 0.04))
+	var last_position := board_size - tile_pixels
+	for pixel_y in range(int(first_position.y), int(last_position.y) + 1, 16):
+		for pixel_x in range(int(first_position.x), int(last_position.x) + 1, 16):
+			candidates.append(Rect2(Vector2(float(pixel_x), float(pixel_y)) / board_size, tile_size))
+	candidates.append(Rect2(last_position / board_size, tile_size))
+	for candidate in candidates:
+		var overlap := 0.0
+		var gap := Vector2(DELIVERY_LAYOUT_GAP_PIXELS / board_size.x, DELIVERY_LAYOUT_GAP_PIXELS / board_size.y)
+		var candidate_footprint := Rect2(candidate.position - gap, candidate.size + gap * 2.0)
+		for occupied_rect in occupied_rects:
+			var occupied_footprint := Rect2(occupied_rect.position - gap, occupied_rect.size + gap * 2.0)
+			overlap += candidate_footprint.intersection(occupied_footprint).get_area()
+		if overlap < best_overlap:
+			best_overlap = overlap
+			focus_rect = candidate
+		if is_zero_approx(overlap):
+			break
+	return focus_rect
+
+
+static func _delivery_board_bounded_rect(rect: Rect2) -> Rect2:
+	var bounded_size := Vector2(minf(rect.size.x, 1.0), minf(rect.size.y, 1.0))
+	return Rect2(
+		Vector2(
+			clampf(rect.position.x, 0.0, 1.0 - bounded_size.x),
+			clampf(rect.position.y, 0.0, 1.0 - bounded_size.y)
+		),
+		bounded_size
+	)
+
+
 static func numbers_interactable_objects(host: Variant) -> Array:
 	var objects: Array = []
 	if host.run_state == null:
@@ -1073,7 +1214,12 @@ static func numbers_interactable_objects(host: Variant) -> Array:
 		var object_id := "event:numbers_desk" if at_desk else "numbers:book"
 		# The production desk replaces the event card but owns its dedicated
 		# Numbers fixture spot, which must not drift with encounter-card layout.
-		var focus_rect: Rect2 = host._interaction_rect_for_object(object_id, host.CONTEXT_MODE_NUMBERS, 0)
+		# numbers_desk also exists in event_ids so generated object_rects carries an
+		# event-card position under the same presentation id. The production desk
+		# owns the layer's dedicated numbers_spots geometry and must win that alias.
+		var focus_rect: Rect2 = host.EnvironmentInteractionViewModelScript.authored_interaction_rect(host.CONTEXT_MODE_NUMBERS, 0, host._current_environment_layout())
+		if focus_rect.size.x <= 0.0 or focus_rect.size.y <= 0.0:
+			focus_rect = host._interaction_rect_for_object(object_id, host.CONTEXT_MODE_NUMBERS, 0)
 		objects.append(host._make_interactable_object({
 			"object_id": object_id,
 			"object_type": host.CONTEXT_MODE_NUMBERS,

@@ -4593,6 +4593,14 @@ func _refresh_talk_dock() -> void:
 		talk_dock.clear_entry()
 		item_found_talk_dock_suspended = false
 		return
+	# A triggered/unavoidable event owns the response surface. Keeping a queued
+	# conversation visible behind it made the TalkDock look actionable while its
+	# choices were input-blocked, and confirmation clicks could loop forever.
+	# Preserve the queued entry in RunState and reveal it on the refresh after the
+	# blocking event resolves.
+	if _blocking_decision_popup_is_visible():
+		talk_dock.visible = false
+		return
 	if not suppress_completed_tutorial_acknowledgement_clear:
 		_clear_completed_tutorial_action_acknowledgements()
 	var entry := run_state.next_pending_talk_event()
@@ -12262,6 +12270,7 @@ func _overlay_state_contract_violations(snapshot: Dictionary = {}) -> Array:
 			"screen": current_screen,
 			"event_choice_popup_visible": _event_choice_popup_is_visible(),
 			"event_choice_popup_type": str(pending_event_choice_popup_snapshot.get("popup_type", "")),
+			"talk_dock_visible": talk_dock != null and talk_dock.visible,
 			"world_map_visible": _world_map_overlay_is_visible(),
 			"run_inventory_visible": _run_inventory_popup_is_visible(),
 			"run_journal_visible": _run_journal_popup_is_visible(),
@@ -12282,7 +12291,7 @@ func _overlay_state_contract_violations(snapshot: Dictionary = {}) -> Array:
 			if bool(snapshot.get(label, false)):
 				violations.append("travel_transition overlaps %s" % label)
 	if event_visible:
-		for label in ["world_map_visible", "run_inventory_visible", "run_journal_visible", "run_menu_visible", "settings_visible"]:
+		for label in ["talk_dock_visible", "world_map_visible", "run_inventory_visible", "run_journal_visible", "run_menu_visible", "settings_visible"]:
 			if bool(snapshot.get(label, false)):
 				violations.append("decision_popup overlaps %s" % label)
 	if world_map_visible:

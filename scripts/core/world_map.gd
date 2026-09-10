@@ -652,10 +652,16 @@ static func travel_target_ids(map_data: Dictionary, node_id: String = "", max_ne
 	# survive the small travel-card cap. Otherwise cheaper familiar stops can
 	# crowd the newly earned progression route out of the actual player UI.
 	var tier_two_priority_id := _first_priority_node_id(priority_candidates, node_lookup, TIER_TWO_CASINO_IDS)
+	# An explicit event lead is an equally strong player promise. In particular,
+	# Parking Lot Tip unlocks The Punchline from across town; if ordinary nearby
+	# stops and a newly revealed Tier-2 casino consume all three cards, the player
+	# is forced through hours of incidental travel and can reach the venue only
+	# after it closes. Keep one event-unlocked destination on the visible list.
+	var event_priority_id := _first_event_unlocked_priority_node_id(priority_candidates, node_lookup)
 	# Preserve the invited Grand Casino at the same time when both progression
-	# targets are live; independently replacing the last card makes them evict
-	# one another under the three-card cap.
-	result = _ensure_priority_targets(result, priority_candidates, [GRAND_CASINO_ID, tier_two_priority_id], total_limit)
+	# targets are live; independently replacing the last card makes priority
+	# destinations evict one another under the three-card cap.
+	result = _ensure_priority_targets(result, priority_candidates, [GRAND_CASINO_ID, event_priority_id, tier_two_priority_id], total_limit)
 	return result
 
 
@@ -1724,6 +1730,20 @@ static func _first_priority_node_id(candidates: Array, node_lookup: Dictionary, 
 			continue
 		var node: Dictionary = node_lookup.get(candidate_id, {})
 		if int(node.get("tier", 0)) == 2 and str(node.get("kind", "")).strip_edges().to_lower() == "casino":
+			return candidate_id
+	return ""
+
+
+static func _first_event_unlocked_priority_node_id(candidates: Array, node_lookup: Dictionary) -> String:
+	for candidate_value in candidates:
+		if typeof(candidate_value) != TYPE_DICTIONARY:
+			continue
+		var candidate: Dictionary = candidate_value
+		if not bool(candidate.get("enabled_hint", true)):
+			continue
+		var candidate_id := str(candidate.get("id", ""))
+		var node: Dictionary = node_lookup.get(candidate_id, {})
+		if bool(node.get("unlocked", false)) and str(node.get("discovery_source", "")) == DISCOVERY_SOURCE_EVENT:
 			return candidate_id
 	return ""
 

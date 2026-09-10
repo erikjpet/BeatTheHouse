@@ -16,8 +16,8 @@
 	],
 	"failures": [],
 	"metrics": {
-		"rule_settlements_100000_msec": 6438.38,
-		"surface_state_1000_msec": 1707.54
+		"rule_settlements_100000_msec": 6497.48,
+		"surface_state_1000_msec": 1718.47
 	},
 	"passed": true,
 	"suite": "craps_extensive_playtest"

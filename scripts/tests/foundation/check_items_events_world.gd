@@ -2170,7 +2170,11 @@ func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> vo
 		if not WorldMapScript.visible_node_ids(tip_run.world_map).has(underground_id):
 			failures.append("Parking lot tip did not reveal the underground casino for seed %02d." % tip_seed_index)
 			break
-		var tipped_targets := WorldMapScript.travel_target_ids(tip_run.world_map, tip_run.current_world_node_id(), WorldMapScript.TRAVEL_NEW_TARGET_LIMIT, WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT, [underground_id])
+		# Use the complete production eligibility set. Supplying only the newly
+		# unlocked id cannot catch the three-card crowd-out that occurs when normal
+		# nearby and Tier-2 routes are eligible at the same time.
+		var tipped_enabled_ids := _enabled_world_route_ids_for_run(library, tip_run, tip_run.current_world_node_id())
+		var tipped_targets := WorldMapScript.travel_target_ids(tip_run.world_map, tip_run.current_world_node_id(), WorldMapScript.TRAVEL_NEW_TARGET_LIMIT, WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT, tipped_enabled_ids)
 		if not tipped_targets.has(underground_id):
 			failures.append("Parking lot tip did not make the underground casino a selectable map target for seed %02d." % tip_seed_index)
 			break

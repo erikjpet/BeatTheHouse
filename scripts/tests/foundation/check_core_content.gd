@@ -5494,6 +5494,10 @@ func _check_table_environment_entry_contracts(library: ContentLibrary, failures:
 		failures.append("Table environment entry contract requires FoundationMain runtime nodes.")
 		call("_sb4_dispose_app", app)
 		return
+	# Headless startup intentionally loads only the light main-menu catalog. A real
+	# run expands it before room entry; this fixture injects a RunState directly,
+	# so it must cross that same content boundary before testing game activation.
+	app.call("_ensure_full_content_library_loaded")
 
 	for game_id in ["roulette", "blackjack", "baccarat", "craps", "bar_dice"]:
 		_check_single_table_environment_entry_contract(library, app, str(game_id), failures)
@@ -5543,14 +5547,14 @@ func _check_single_table_environment_entry_contract(library: ContentLibrary, app
 	app.call("_set_current_screen", "ENVIRONMENT")
 	app.call("_refresh")
 	var before_enter := JSON.stringify(run_state.to_dict())
-	app.call("enter_game", game_id)
+	var entered := bool(app.call("enter_game", game_id))
 	var after_enter := JSON.stringify(run_state.to_dict())
 	if before_enter != after_enter:
 		failures.append("Table environment entry mutated RunState before player action for %s." % game_id)
 
 	var screen_value: Variant = app.get("current_screen")
 	if str(screen_value) != "GAME":
-		failures.append("Table environment entry did not switch to game screen for %s." % game_id)
+		failures.append("Table environment entry did not switch to game screen for %s (entered=%s, screen=%s, blocker=%s)." % [game_id, str(entered), str(screen_value), str(app.call("_blocking_modal_message"))])
 	var active_game_value: Variant = app.get("current_game")
 	if not active_game_value is GameModule:
 		failures.append("Table environment entry did not keep an active GameModule for %s." % game_id)
