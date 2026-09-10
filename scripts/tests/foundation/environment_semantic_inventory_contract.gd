@@ -146,6 +146,9 @@ static func _check_exclusive_catalog_and_generation(library: ContentLibrary, fai
 	var generated := _generated_environment(library, "back_alley", definition, 7102)
 	if not _array(generated.get("event_ids", [])).has("scenario_street_craps_circle") or not _array(generated.get("game_ids", [])).has("craps"):
 		failures.append("Scenario-exclusive event/game did not materialize in EnvironmentInstance generation.")
+	if str(_dict(generated.get("scenario_game_modifiers", {})).get("game_hook", "")) != "street_craps" \
+			or not _dict(_dict(generated.get("layout", {})).get("object_rects", {})).has("game:craps"):
+		failures.append("Street Craps scenario did not bind its street rules to the reserved Back Alley game fixture.")
 
 
 static func _check_exclusive_pool_and_choices(library: ContentLibrary, failures: Array) -> void:
@@ -1056,7 +1059,6 @@ static func _check_diagnostic_messages(library: ContentLibrary, failures: Array)
 
 static func _check_static_golden_examples(library: ContentLibrary, failures: Array) -> void:
 	var examples := {
-		"back_alley": {"guaranteed": ["game::craps"], "possible": []},
 		"bar": {"guaranteed": ["game::pull_tabs"], "possible": ["game::slot"]},
 		"gas_station_casino": {"guaranteed": ["game::pull_tabs", "game::scratch_tickets"], "possible": ["game::slot"]},
 		"kitty_cat_lounge": {"guaranteed": ["game::roulette"], "possible": ["game::slot"]},
@@ -1078,11 +1080,8 @@ static func _check_static_golden_examples(library: ContentLibrary, failures: Arr
 	var alley_game_spots := _array(_dict(alley_instance.get("layout", {})).get("game_spots", []))
 	var alley_game_spot := _array(alley_game_spots[0]) if alley_game_spots.size() == 1 else []
 	var alley_game_spot_is_authored := alley_game_spot.size() == 2 and is_equal_approx(float(alley_game_spot[0]), 180.0) and is_equal_approx(float(alley_game_spot[1]), 185.0)
-	if _array(alley_instance.get("game_ids", [])) != ["craps"] \
-			or str(_dict(alley_instance.get("scenario_game_modifiers", {})).get("game_hook", "")) != "street_craps" \
-			or not alley_game_spot_is_authored \
-			or not _dict(_dict(alley_instance.get("layout", {})).get("object_rects", {})).has("game:craps"):
-		failures.append("A scenario-free Back Alley instance did not preserve its playable Street Craps fixture.")
+	if not _array(alley_instance.get("game_ids", [])).is_empty() or not alley_game_spot_is_authored or _dict(_dict(alley_instance.get("layout", {})).get("object_rects", {})).has("game:craps"):
+		failures.append("A scenario-free Back Alley instance exposed Street Craps instead of only reserving its scenario placement.")
 	var grand_instance := _generated_environment(library, "grand_casino", {}, 7481)
 	if not _array(grand_instance.get("game_ids", [])).has("craps") or not _dict(_dict(grand_instance.get("layout", {})).get("object_rects", {})).has("game:craps"):
 		failures.append("A generated Grand Casino instance did not expose its playable Craps fixture.")

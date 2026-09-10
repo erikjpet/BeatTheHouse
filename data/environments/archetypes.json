@@ -640,23 +640,12 @@
     "economic_profile": {
       "price_tone": "shady",
       "stake_floor": 0,
-      "stake_ceiling": 0,
-      "game_stake_floor_overrides": {
-        "craps": 2
-      },
-      "game_stake_ceiling_overrides": {
-        "craps": 20
-      }
+      "stake_ceiling": 0
     },
-    "game_pool": [
-      "craps"
-    ],
-    "required_game_ids": [
-      "craps"
-    ],
+    "game_pool": [],
     "game_count": [
-      1,
-      1
+      0,
+      0
     ],
     "item_pool": [
       "cheap_sunglasses",
@@ -711,12 +700,7 @@
       "small_underground_casino"
     ],
     "local_narrative_flags": {
-      "shady_market": true,
-      "craps_variant": "street_craps"
-    },
-    "scenario_game_modifiers": {
-      "game_hook": "street_craps",
-      "table_tone": "street"
+      "shady_market": true
     },
     "moods": [
       "wet",
