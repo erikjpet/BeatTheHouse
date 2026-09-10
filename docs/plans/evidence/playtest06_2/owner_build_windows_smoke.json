@@ -1,0 +1,10 @@
+﻿{
+    "schema":  "beat_the_house.playtest06_owner_build_smoke/v1",
+    "candidate_commit":  "4aba1829521c32951d14b264b074baa95956a358",
+    "candidate_tree":  "eefc98702f36f9634e24b3a2160a1eb8b29534aa",
+    "platform":  "WINDOWS_NATIVE",
+    "executable":  "builds/windows/BeatTheHouse.exe",
+    "stayed_alive_seconds":  8,
+    "passed":  true,
+    "export_identity_sha256":  "86dc57a5c6b4b2c8da37955f8e3d70544fc717564b98b0cdd115fe0c17ad4a7e"
+}
