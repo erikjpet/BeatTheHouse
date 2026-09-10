@@ -37,6 +37,14 @@ func _run() -> void:
 	module.setup(definition, library)
 	if not shortlisted or not module.can_trigger(run_state, run_state.current_environment, context):
 		failures.append("Crew favor is absent from the shipped home/action candidate path.")
+	run_state.current_environment["resolved_event_ids"] = ["crew_favor_delivery"]
+	var rearmed_shortlist := false
+	for candidate_value in library.action_trigger_event_candidates_for_context_readonly("game_action", context, run_state.current_environment):
+		if typeof(candidate_value) == TYPE_DICTIONARY and str((candidate_value as Dictionary).get("id", "")) == "crew_favor_delivery":
+			rearmed_shortlist = true
+			break
+	if not bool(definition.get("repeatable", false)) or not rearmed_shortlist or not module.can_trigger(run_state, run_state.current_environment, context):
+		failures.append("A newly due Crew favor cannot rearm after an earlier favor was resolved.")
 	if not run_state.event_cadence_allows_world_event("crew_favor_delivery", "random", "game_action", definition):
 		failures.append("Crew favor is rejected by the shipped cadence gate after its debt becomes due.")
 	if failures.is_empty():

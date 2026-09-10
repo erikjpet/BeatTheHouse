@@ -76,7 +76,7 @@ static func _ritual_vector(value: Variant) -> Vector2:
 	return Vector2.ZERO
 
 
-static func draw_room(surface, state: Dictionary, title: String, info: String = "") -> void:
+static func draw_room(surface, state: Dictionary, title: String, info: String = "", room_note: String = "") -> void:
 	var clock := _surface_clock(surface)
 	var low_detail := _surface_low_detail_idle(surface)
 	var board_size: Vector2 = surface.surface_board_size()
@@ -100,8 +100,9 @@ static func draw_room(surface, state: Dictionary, title: String, info: String = 
 	surface.surface_title(title.to_upper().left(18), Vector2(36, 42), C_CYAN)
 	if not info.is_empty():
 		surface.surface_label(info.left(42), Vector2(42, 62), 10, C_SOFT)
-	if not str(state.get("room_note", "")).is_empty():
-		surface.surface_label(str(state.get("room_note", "")).left(28), Vector2(344, 48), 12, C_SOFT)
+	var resolved_room_note := room_note if not room_note.is_empty() else str(state.get("room_note", ""))
+	if not resolved_room_note.is_empty():
+		surface.surface_label(resolved_room_note.left(28), Vector2(344, 48), 12, C_SOFT)
 
 
 static func draw_table(surface) -> void:

@@ -154,6 +154,156 @@ $script:FoundationGamesShardPlan = [ordered]@{
     )
 }
 
+$script:FoundationContractsCheckIds = @(
+    "content",
+    "content_scenario_engine",
+    "punchline_layer_contract",
+    "tier2_scenario_contract",
+    "scenario_backlog_contract",
+    "scenario_sequence_contract",
+    "scenario_semantic_presentation_contract",
+    "scenario_semantic_restore_contract",
+    "scenario_semantic_hidden_contract_0",
+    "scenario_semantic_hidden_contract_1",
+    "scenario_semantic_hidden_contract_2",
+    "scenario_semantic_hidden_contract_3",
+    "environment_semantic_inventory_contract",
+    "content_arrival_contract",
+    "crew_recruitment_contract",
+    "crew_layer3_jobs_contract",
+    "crew_plays_contract",
+    "crew_heist_contract",
+    "crew_turn_contract",
+    "character_chains_contract",
+    "content_depth_contract",
+    "coach_engine_foundation",
+    "foundation_contracts",
+    "bar_dice_contract",
+    "crew_poker_contract",
+    "video_poker_contract",
+    "coin_pusher_contract",
+    "slot_contract_smoke",
+    "all_game_module_contracts",
+    "cross_game_integration_matrix",
+    "run_action_service_boundary",
+    "item_effect_foundation",
+    "item_build_interaction_foundation",
+    "event_module_foundation",
+    "event_system_state_foundation",
+    "save_service_foundation_round_trip",
+    "platform_services_foundation",
+    "economy_pressure_foundation",
+    "travel_route_foundation",
+    "service_hook_foundation",
+    "lender_debt_foundation",
+    "suspicion_security_foundation",
+    "run_report_foundation",
+    "m2_system_interaction_scenario",
+    "demo_boss_objective_foundation",
+    "recovery_loss_pressure_foundation",
+    "profile_inventory_boundary",
+    "fixture_rng",
+    "card_shoe_core_primitives",
+    "run_state_source_of_truth",
+    "locked_logic_rate_foundation",
+    "fixture_contracts"
+)
+
+# The old monolithic contracts process repeated every expensive check serially
+# and could spend nearly the whole ceiling in `content` before a later parse or
+# lifecycle error was observable. Each check still runs exactly once and the
+# aggregate preserves the canonical registration order.
+$script:FoundationContractsShardPlan = [ordered]@{
+    "contracts_content_core" = @(
+        "content"
+    )
+    "contracts_scenario_engine" = @(
+        "content_scenario_engine"
+    )
+    "contracts_punchline" = @(
+        "punchline_layer_contract"
+    )
+    "contracts_tier2" = @(
+        "tier2_scenario_contract"
+    )
+    "contracts_content_scenarios" = @(
+        "scenario_backlog_contract",
+        "scenario_sequence_contract",
+        "environment_semantic_inventory_contract",
+        "content_arrival_contract"
+    )
+    "contracts_content_semantics" = @(
+        "scenario_semantic_presentation_contract",
+        "scenario_semantic_restore_contract"
+    )
+    "contracts_content_hidden_0" = @(
+        "scenario_semantic_hidden_contract_0"
+    )
+    "contracts_content_hidden_1" = @(
+        "scenario_semantic_hidden_contract_1"
+    )
+    "contracts_content_hidden_2" = @(
+        "scenario_semantic_hidden_contract_2"
+    )
+    "contracts_content_hidden_3" = @(
+        "scenario_semantic_hidden_contract_3"
+    )
+    "contracts_crew" = @(
+        "crew_recruitment_contract",
+        "crew_layer3_jobs_contract",
+        "crew_plays_contract",
+        "crew_heist_contract",
+        "crew_turn_contract",
+        "character_chains_contract",
+        "content_depth_contract"
+    )
+    "contracts_games" = @(
+        "bar_dice_contract",
+        "crew_poker_contract",
+        "video_poker_contract",
+        "slot_contract_smoke",
+        "all_game_module_contracts",
+        "cross_game_integration_matrix"
+    )
+    "contracts_coin_pusher" = @(
+        "coin_pusher_contract"
+    )
+    "contracts_runtime_core" = @(
+        "coach_engine_foundation",
+        "foundation_contracts",
+        "run_action_service_boundary",
+        "item_effect_foundation",
+        "item_build_interaction_foundation"
+    )
+    "contracts_runtime_events" = @(
+        "event_module_foundation",
+        "event_system_state_foundation",
+        "save_service_foundation_round_trip",
+        "platform_services_foundation"
+    )
+    "contracts_runtime_economy" = @(
+        "economy_pressure_foundation",
+        "travel_route_foundation",
+        "service_hook_foundation",
+        "lender_debt_foundation",
+        "suspicion_security_foundation",
+        "run_report_foundation"
+    )
+    "contracts_runtime_scenarios" = @(
+        "m2_system_interaction_scenario",
+        "demo_boss_objective_foundation",
+        "recovery_loss_pressure_foundation"
+    )
+    "contracts_runtime_primitives" = @(
+        "profile_inventory_boundary",
+        "fixture_rng",
+        "card_shoe_core_primitives",
+        "run_state_source_of_truth",
+        "locked_logic_rate_foundation",
+        "fixture_contracts"
+    )
+}
+
 $script:FoundationSystemsUserPathOwners = [ordered]@{
     "user://foundation_tutorial_meta_store.json" = "onboarding_tutorial_arc"
     "user://foundation_profile_inventory_check.json" = "profile_inventory_boundary"
@@ -192,6 +342,14 @@ function Get-FoundationGamesCheckIds {
 
 function Get-FoundationGamesShardPlan {
     return $script:FoundationGamesShardPlan
+}
+
+function Get-FoundationContractsCheckIds {
+    return @($script:FoundationContractsCheckIds)
+}
+
+function Get-FoundationContractsShardPlan {
+    return $script:FoundationContractsShardPlan
 }
 
 function Get-FoundationSystemsUserPathOwners {

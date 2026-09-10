@@ -1619,7 +1619,8 @@ func _event_definition_has_universal_scope(event_definition: Dictionary) -> bool
 func _action_trigger_candidate_matches_boundary(event_definition: Dictionary, source: String, context: Dictionary, environment: Dictionary) -> bool:
 	var event_id := str(event_definition.get("id", ""))
 	var resolved_value: Variant = environment.get("resolved_event_ids", [])
-	if typeof(resolved_value) == TYPE_ARRAY and (resolved_value as Array).has(event_id):
+	if typeof(resolved_value) == TYPE_ARRAY and (resolved_value as Array).has(event_id) \
+			and not bool(event_definition.get("repeatable", false)):
 		return false
 	if int(environment.get("tier", 1)) < int(event_definition.get("tier_min", 1)):
 		return false

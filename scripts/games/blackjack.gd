@@ -26,6 +26,7 @@ const C_SOFT := VisualStyleScript.SOFT
 
 const RANK_ACE := 14
 const DEAL_ANIMATION_CHANNEL := "blackjack_deal"
+const BLACKJACK_SETTLE_ACTION := "blackjack_settle"
 const ATTENTION_ANIMATION_CHANNEL := "blackjack_attention"
 const COUNT_ANIMATION_CHANNEL := "blackjack_count_rhythm"
 const PAYOUT_ANIMATION_CHANNEL := "blackjack_payout"
@@ -165,7 +166,7 @@ func blackjack_ritual_contract() -> Dictionary:
 	var action_ids := [
 		"blackjack_chip", "blackjack_correct_bet", "blackjack_remove_chip", "blackjack_undo_bet",
 		"blackjack_clear_bet", "blackjack_max_bet", "blackjack_repeat_bet",
-		"blackjack_rebet", "blackjack_side_bet", "blackjack_deal", BLACKJACK_CHARGED_DEAL_ACTION,
+		"blackjack_rebet", "blackjack_side_bet", "blackjack_deal", BLACKJACK_SETTLE_ACTION, BLACKJACK_CHARGED_DEAL_ACTION,
 		"blackjack_hit", "blackjack_stand", "blackjack_double",
 		"blackjack_split", "blackjack_surrender", "play_basic",
 	]
@@ -181,7 +182,7 @@ func blackjack_ritual_contract() -> Dictionary:
 			_blackjack_ritual_phase("initial_deal", [], [{"id": "deal_to_player", "condition": {"kind": "public_state_equals", "key": "deal_staged", "value": true}, "next_phase": "player_turn", "operations": []}]),
 			_blackjack_ritual_phase("player_turn", ["blackjack_hit", "blackjack_stand", "blackjack_double", "blackjack_split", "blackjack_surrender"], [{"id": "player_to_dealer", "condition": {"kind": "public_state_equals", "key": "hand_complete", "value": true}, "next_phase": "dealer_procedure", "operations": []}]),
 			_blackjack_ritual_phase("dealer_procedure", ["play_basic"], [{"id": "dealer_to_settlement", "condition": {"kind": "authoritative_result_present"}, "next_phase": "settlement", "operations": []}]),
-			_blackjack_ritual_phase("settlement", [], [{"id": "settlement_to_wagering", "condition": {"kind": "public_state_equals", "key": "payout_staged", "value": true}, "next_phase": "wagering", "operations": []}]),
+			_blackjack_ritual_phase("settlement", [BLACKJACK_SETTLE_ACTION], [{"id": "settlement_to_wagering", "condition": {"kind": "public_state_equals", "key": "payout_staged", "value": true}, "next_phase": "wagering", "operations": []}]),
 		],
 		"action_declarations": action_declarations,
 		"staged_commitment": {
@@ -743,7 +744,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_ui_protected_regions": _blackjack_ui_protected_regions(count_challenge),
 		"surface_ui_preference_keys": ["blackjack_side_bets"],
 		"surface_action_blocks": [{
-			"actions": ["blackjack_deal", "blackjack_hit", "blackjack_stand", "blackjack_double", "blackjack_split", "blackjack_surrender"],
+			"actions": ["blackjack_deal", BLACKJACK_SETTLE_ACTION, "blackjack_hit", "blackjack_stand", "blackjack_double", "blackjack_split", "blackjack_surrender"],
 			"while_animation": DEAL_ANIMATION_CHANNEL,
 			"reason": "Let the cards finish moving before choosing the next play.",
 		}],
@@ -902,6 +903,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 				"surface_stake_down": "blackjack_chip",
 				"surface_stake_max": "blackjack_chip",
 				"blackjack_deal": "blackjack_deal",
+				BLACKJACK_SETTLE_ACTION: "blackjack_deal",
 				"blackjack_hit": "blackjack_hit",
 				"blackjack_stand": "blackjack_stand",
 				"blackjack_double": "blackjack_double",
@@ -1192,6 +1194,7 @@ func _blackjack_ritual_boundary_id(phase_id: String, session: Dictionary, last_r
 func _blackjack_ritual_action_states(spec: Dictionary, phase_id: String) -> Dictionary:
 	return {
 		"blackjack_deal": _blackjack_ritual_action_state(bool(spec.get("can_deal", false)) and phase_id == "wagering", "Deal is available only after legal chips are staged."),
+		BLACKJACK_SETTLE_ACTION: _blackjack_ritual_action_state(bool(spec.get("settle_available", false)), "Settle is available only after the hand is complete."),
 		"blackjack_hit": _blackjack_ritual_action_state(bool(spec.get("can_hit", false)) and phase_id == "player_turn", "Hit is available only on the active unfinished hand."),
 		"blackjack_stand": _blackjack_ritual_action_state(bool(spec.get("can_stand", false)) and phase_id == "player_turn", "Stand is available only on the active unfinished hand."),
 		"blackjack_double": _blackjack_ritual_action_state(bool(spec.get("can_double", false)) and phase_id == "player_turn", "Double requires an eligible two-card hand and enough funds."),
@@ -1812,6 +1815,12 @@ func _blackjack_surface_action_command(surface_action: String, index: int, confi
 			command["direct_resolve"] = true
 			command["preserve_surface_ui_state"] = true
 			return GameModule.surface_command(command)
+		BLACKJACK_SETTLE_ACTION:
+			if not _has_dealt_hand(next_state):
+				return _message_command(next_state, "There is no active hand to settle.")
+			if not _all_hands_complete(next_state) and not _dealer_has_blackjack(_card_array(next_state.get("dealer_cards", []))):
+				return _message_command(next_state, "Finish the active hand before settlement.")
+			return _settle_completed_round_command(next_state, index, _terminal_round_message(next_state), table, run_state)
 		"blackjack_distraction":
 			return _start_distraction_command(index, next_state, table, run_state)
 		"blackjack_patron_cover":
@@ -1948,6 +1957,13 @@ func _rourke_duel_surface_action_command(surface_action: String, index: int, con
 				var deal_time_msec := int(next_state.get("surface_time_msec", run_state.grand_casino_duel_action_time_msec()))
 				_start_initial_hand(next_state, table, ante, run_state, deal_time_msec)
 				command = _opening_deal_command(next_state, index, str(run_state.grand_casino_duel_status().get("last_bark", "Rourke deals.")))
+		BLACKJACK_SETTLE_ACTION:
+			if not _has_dealt_hand(next_state):
+				command = _message_command(next_state, "There is no active hand to settle.")
+			elif not _all_hands_complete(next_state) and not _dealer_has_blackjack(_card_array(next_state.get("dealer_cards", []))):
+				command = _message_command(next_state, "Finish the active hand before settlement.")
+			else:
+				command = _settle_completed_round_command(next_state, index, "Rourke turns the hole card and settles the hand.", table, run_state)
 		"blackjack_boss_callout":
 			if not _has_dealt_hand(next_state):
 				command = _message_command(next_state, "See the cards before you call Rourke's move.")
@@ -2201,6 +2217,9 @@ func _resolve_blackjack_proposal_core(action_id: String, stake: int, run_state: 
 	# never author the persisted count (or inject an arbitrary declared delta).
 	var count_record_delta: int = actual_count_delta if bool(session.get("count_answered", false)) else 0
 	var message := _blackjack_result_message(hand_results, side_results, main_delta, side_delta, cheat, item_adjustment, security_message)
+	if suspicion_delta > 0 and run_state.is_grand_casino_environment(environment) and bool(cheat.get("pit_boss_watched", false)) \
+			and message.find("Rourke") == -1 and message.find("Security") == -1 and message.find("staff") == -1:
+		message = "%s Rourke's floor staff marks the play." % message
 	if cufflinks_broke:
 		message = "%s Cooler's Cufflinks absorb the peek heat and break." % message
 	if sit_out:
@@ -3325,7 +3344,7 @@ func _draw_table_actions(surface, surface_state: Dictionary) -> void:
 		var peek_dangerous := peek_available and not bool(focus.get("peek_window_open", false)) and not bool(surface_state.get("dealer_hole_visible", false))
 		_draw_table_button(surface, Rect2(panel.position.x + 104, panel.position.y + 54, 84, 22), "PEEK", "blackjack_peek", 0, C_PINK if peek_dangerous else C_TEAL, peek_available, surface.surface_native_action_selected("blackjack_peek"))
 		if bool(surface_state.get("settle_available", false)):
-			_draw_table_button(surface, Rect2(panel.position.x + 196, panel.position.y + 54, 72, 22), "SETTLE", "blackjack_deal", 0, C_YELLOW, true, surface.surface_native_action_selected("blackjack_deal"))
+			_draw_table_button(surface, Rect2(panel.position.x + 196, panel.position.y + 54, 72, 22), "SETTLE", BLACKJACK_SETTLE_ACTION, 0, C_YELLOW, true, surface.surface_native_action_selected(BLACKJACK_SETTLE_ACTION))
 		elif bool(surface_state.get("can_surrender", false)):
 			_draw_table_button(surface, Rect2(panel.position.x + 196, panel.position.y + 54, 72, 22), "SURRENDER", "blackjack_surrender", 0, C_ORANGE, bool(surface_state.get("can_surrender", false)))
 	var distractions: Array = _draw_array_view(surface_state.get("distractions", []))
@@ -3397,7 +3416,7 @@ func _draw_rourke_duel_actions(surface, surface_state: Dictionary, panel: Rect2)
 		_draw_table_button(surface, Rect2(panel.position.x + 140, panel.position.y + 28, 62, 24), "DOUBLE", "blackjack_double", 0, C_YELLOW, bool(surface_state.get("can_double", false)))
 		_draw_table_button(surface, Rect2(panel.position.x + 206, panel.position.y + 28, 70, 24), "PEEK", "blackjack_peek", 0, C_PINK, bool(surface_state.get("peek_available", false)))
 		if bool(surface_state.get("settle_available", false)):
-			_draw_table_button(surface, Rect2(panel.position.x + 206, panel.position.y + 54, 70, 18), "SETTLE", "blackjack_deal", 0, C_YELLOW, true)
+			_draw_table_button(surface, Rect2(panel.position.x + 206, panel.position.y + 54, 70, 18), "SETTLE", BLACKJACK_SETTLE_ACTION, 0, C_YELLOW, true)
 	var callouts_value: Variant = surface_state.get("boss_callouts", [])
 	var callouts: Array = callouts_value as Array if typeof(callouts_value) == TYPE_ARRAY else []
 	for i in range(mini(callouts.size(), 2)):
@@ -5706,7 +5725,11 @@ func _cheat_detection_for_hand(session: Dictionary, table: Dictionary, run_state
 		pit_boss_heat_bonus = int(pit_boss.get("cheat_heat_bonus", 0))
 		catch_chance += pit_boss_heat_bonus
 		base_heat += pit_boss_heat_bonus
-	if blatant_advantage_play:
+	# Universal concealment gear reduces visible heat from any risky blackjack
+	# behavior. Keep an accurate, flat-bet mental count at zero, but do not skip
+	# the modifier merely because a first visible count error has not yet grown
+	# into a sustained surveillance pattern.
+	if base_heat > 0:
 		base_heat += _item_effect_total("cheat_suspicion_delta", run_state)
 	if used_peek:
 		base_heat += _item_effect_total("blackjack_peek_heat_delta", run_state)

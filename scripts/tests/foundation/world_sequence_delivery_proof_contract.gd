@@ -232,6 +232,28 @@ func _check_production_schedule(failures: Array) -> void:
 			or JSON.stringify(restored.delivery_snapshot()) != JSON.stringify(delivery_snapshot):
 		failures.append("Scheduled Crew favor sequence and delivery authority did not survive save/load together.")
 	_check_target_handoff(run_state, library, token, target_node_id, bankroll_before, heat_before, failures)
+	var cleaned_projection := run_state.world_sequence_composed_projection()
+	var cleaned_semantic := _dict(cleaned_projection.get("semantic_state", {}))
+	for collection_id in ["scene_objects", "interactions", "actors"]:
+		for identity_value in _dict(cleaned_semantic.get(collection_id, {})).keys():
+			if str(identity_value).begins_with("crew::package_handoff"):
+				failures.append("A cleaned delivery receipt remained on the live room plane at %s/%s." % [collection_id, str(identity_value)])
+	var reusable_entry := _first_definition(_first_package(_load_json_array(PACKAGE_PATH, failures), failures), failures)
+	if not reusable_entry.is_empty():
+		var second_instance := "sequential_delivery_contract"
+		var second_mount := CrewWorldSequenceAdapterScript.mount(
+			run_state.current_environment,
+			_dict(reusable_entry.get("source", {})),
+			second_instance,
+			{"node_id": target_node_id, "zone_id": "center"},
+			_dict(reusable_entry.get("definition", {})),
+			_dict(reusable_entry.get("outcome_channels", {})),
+			_array(reusable_entry.get("ownership_claims", [])),
+			["delivery_handoff"],
+			"world_sequence:%s" % second_instance
+		)
+		if not bool(second_mount.get("ok", false)):
+			failures.append("A cleaned delivery tombstone retained temporary scene ownership and blocked the next Crew favor at the same room: %s." % JSON.stringify(second_mount))
 
 	var refused_run := _production_run(library, "WORLD-SEQUENCE-PROOF-REFUSAL")
 	refused_run.narrative_flags["crew_favor_pending"] = true

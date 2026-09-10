@@ -1458,7 +1458,7 @@ func _showdown(state: Dictionary, run_state: RunState) -> Dictionary:
 			contenders.append({"id": str(seat.get("member_id", "")), "cards": seven})
 		seats[index] = seat
 	state["seats"] = seats
-	var settlement := _settle_holdem_pots(state, contenders)
+	var settlement := _settle_holdem_pots(state, contenders) if str(state.get("turn_engine", "legacy_v1")) == ORDERED_ENGINE else _settle_legacy_pot(state, contenders)
 	var winners := _string_array(settlement.get("winners", []))
 	var awards: Dictionary = settlement.get("awards", {}) if typeof(settlement.get("awards", {})) == TYPE_DICTIONARY else {}
 	var raw_payout := int(awards.get(PLAYER_ID, 0))
@@ -1512,6 +1512,24 @@ func _showdown(state: Dictionary, run_state: RunState) -> Dictionary:
 	var message := "%s. %s" % [hand_label, "You take $%d." % payout if raw_payout > 0 else "%s takes it." % _winner_names(winners)]
 	_finish_hand(state, run_state, {"winners": winners, "payout": payout, "message": message})
 	return {"payout": payout, "authority_gaps": authority_gaps, "dependency_reason": "host_tell_observation_authority_unavailable" if not authority_gaps.is_empty() else "", "message": message}
+
+
+func _settle_legacy_pot(state: Dictionary, contenders: Array) -> Dictionary:
+	var winners: Array = []
+	var best_cards: Array = []
+	for contender_value in contenders:
+		var contender: Dictionary = contender_value
+		var actor := str(contender.get("id", ""))
+		var cards := _card_array(contender.get("cards", []))
+		if actor.is_empty() or cards.size() != 5:
+			continue
+		if winners.is_empty() or CrewPokerModelScript.compare_hands(cards, best_cards) > 0:
+			winners = [actor]
+			best_cards = cards
+		elif CrewPokerModelScript.compare_hands(cards, best_cards) == 0:
+			winners.append(actor)
+	var awards := CrewPokerModelScript.split_pot(maxi(0, int(state.get("pot", 0))), winners)
+	return {"awards": awards, "winners": winners}
 
 
 func _settle_holdem_pots(state: Dictionary, contenders: Array) -> Dictionary:
@@ -2003,9 +2021,8 @@ func _speaker_matches_member(speaker_value: Variant, member_id: String) -> bool:
 
 
 func _draw_room(surface, state: Dictionary) -> void:
-	var shared_state := state.duplicate(false)
-	shared_state["room_note"] = "STACK $%d | HAND %d/%d" % [int(state.get("player_stack", 0)), int(state.get("hand_number", 0)) + 1, int(state.get("hand_cap", 5))] if str(state.get("phase", "idle")) == "idle" else "%s | STK $%d | CALL $%d" % [str(state.get("phase", "idle")).to_upper(), int(state.get("player_stack", 0)), int(state.get("amount_to_call", 0))]
-	TableGameVisualsScript.draw_room(surface, shared_state, "Back-Room", "NO-LIMIT HOLD'EM | $1 / $2")
+	var room_note := "STACK $%d | HAND %d/%d" % [int(state.get("player_stack", 0)), int(state.get("hand_number", 0)) + 1, int(state.get("hand_cap", 5))] if str(state.get("phase", "idle")) == "idle" else "%s | STK $%d | CALL $%d" % [str(state.get("phase", "idle")).to_upper(), int(state.get("player_stack", 0)), int(state.get("amount_to_call", 0))]
+	TableGameVisualsScript.draw_room(surface, state, "Back-Room", "NO-LIMIT HOLD'EM | $1 / $2", room_note)
 	TableGameVisualsScript.draw_table(surface)
 
 
@@ -2024,8 +2041,12 @@ func _draw_seats(surface, state: Dictionary) -> void:
 		var talking := bool(seat.get("conversation_active", false))
 		var last_action := str(seat.get("last_action", "waiting"))
 		var pose := "covered" if not active else "snitch" if talking or last_action in ["raise", "all_in"] else "watching" if str(state.get("turn_owner", "")) == str(seat.get("member_id", "")) else "idle"
+		var portrait_variant := str(seat.get("portrait_variant", ""))
+		if not portrait_variant.is_empty() and active and not talking:
+			pose = _portrait_variant_pose(portrait_variant)
 		var accent := Color(str(model.get("accent_color", "#d5d8e6"))) if active else color
 		var animation_offset := float(absi(str(seat.get("member_id", "")).hash()) % 2200) / 1000.0
+		var portrait_scale := 1.0 + float((absi(portrait_variant.hash()) % 5) - 2) * 0.012 if not portrait_variant.is_empty() else 1.0
 		TableGameVisualsScript._draw_table_character(surface, {
 			"name": name,
 			"skin": Color(str(model.get("skin_color", "#c49371"))),
@@ -2034,11 +2055,11 @@ func _draw_seats(surface, state: Dictionary) -> void:
 			"accent": accent,
 			"role": "crew",
 			"pose": pose,
-			"eye_offset": 2.0 if talking or pose == "watching" else 0.0,
+			"eye_offset": _portrait_variant_eye_offset(portrait_variant) if not portrait_variant.is_empty() else 2.0 if talking or pose == "watching" else 0.0,
 			"blink": fposmod(surface.surface_flicker() + animation_offset, 3.1) > 2.94,
 			"holding_card": active and not str(state.get("phase", "idle")) in ["idle", "showdown"],
 			"silhouette": str(model.get("silhouette", "coat")),
-		}, pos + Vector2(42, 53), clampf(float(model.get("scale", 1.0)) * 0.72, 0.66, 0.84), surface.surface_flicker() + animation_offset)
+		}, pos + Vector2(42, 53), clampf(float(model.get("scale", 1.0)) * 0.72 * portrait_scale, 0.66, 0.84), surface.surface_flicker() + animation_offset)
 		var cards := _draw_array_view(seat.get("cards", []))
 		for card_index in range(mini(2, cards.size())):
 			PlayingCardRendererScript.draw_card(surface, cards[card_index], Rect2(pos + Vector2(91 + card_index * 27, 14), Vector2(24, 35)))
@@ -2050,6 +2071,24 @@ func _draw_seats(surface, state: Dictionary) -> void:
 		surface.surface_label_centered(presented_action, action_rect, 9 if index == 1 else 10, C_YELLOW)
 		if str(state.get("dealer_actor", "")) == str(seat.get("member_id", "")):
 			_draw_button_marker(surface, pos + Vector2(137, 58))
+
+
+func _portrait_variant_pose(variant: String) -> String:
+	var normalized := variant.to_lower()
+	if normalized.contains("eyes") or normalized.contains("glasses") or normalized.contains("brow"):
+		return "watching"
+	if normalized.contains("still") or normalized.contains("flat") or normalized.contains("down") or normalized.contains("settled"):
+		return "covered"
+	return "snitch"
+
+
+func _portrait_variant_eye_offset(variant: String) -> float:
+	var normalized := variant.to_lower()
+	if normalized.contains("left") or normalized.contains("door"):
+		return -3.0
+	if normalized.contains("glasses") or normalized.contains("brow") or normalized.contains("chin"):
+		return 1.0
+	return 2.0
 
 
 func _draw_button_marker(surface, center: Vector2) -> void:

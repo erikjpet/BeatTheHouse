@@ -141,7 +141,10 @@ func can_trigger(run_state: RunState, environment: Dictionary, context: Dictiona
 	if get_interaction_mode() != "triggered" and not event_ids.is_empty() and not event_ids.has(get_id()):
 		return false
 	var resolved := _readonly_array(environment.get("resolved_event_ids", []))
-	if resolved.has(get_id()):
+	# Most room events are one-shot. Authored recurring obligations may rearm
+	# after their condition becomes true again; their prior resolution remains
+	# valid visit history but must not permanently suppress the new obligation.
+	if resolved.has(get_id()) and not bool(definition.get("repeatable", false)):
 		return false
 	var scopes := _readonly_array(definition.get("scopes", []))
 	if not scopes.is_empty() and not scopes.has("any") and not scopes.has(str(environment.get("kind", ""))):

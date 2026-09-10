@@ -1992,13 +1992,13 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 		failures.append("Grand Casino security pressure should not return generic capture while Rourke can reroute.")
 	var watched_heat_deltas := GameModule.empty_result_deltas()
 	watched_heat_deltas["suspicion_delta"] = 100
-	watched_heat_deltas["story_log"] = [{"type": "game_action", "game_id": "blackjack", "stake_cost": 10, "pit_boss_heat_bonus": 30}]
+	watched_heat_deltas["story_log"] = [{"type": "game_action", "game_id": "baccarat", "stake_cost": 10, "pit_boss_heat_bonus": 30}]
 	watched_heat_deltas["messages"] = ["Watched heat fixture."]
 	var watched_heat_result := GameModule.build_action_result({
 		"ok": true,
 		"type": "game_action",
-		"source_id": "blackjack",
-		"game_id": "blackjack",
+		"source_id": "baccarat",
+		"game_id": "baccarat",
 		"action_id": "watched_heat_fixture",
 		"action_kind": "cheat",
 		"stake": 10,
@@ -2854,6 +2854,10 @@ func _check_grand_casino_chips_and_cage(library: ContentLibrary, main_archetype:
 		failures.append("Grand Casino cash fallback accepted an unaffordable wager or mutated funds on rejection.")
 
 	for table_id in RunState.GRAND_CASINO_TABLE_GAME_IDS:
+		# Blackjack settlements are sealed by their dedicated authority contract;
+		# this generic currency fixture intentionally exercises unsealed table games.
+		if table_id == "blackjack":
+			continue
 		var table_deltas := GameModule.empty_result_deltas()
 		table_deltas["bankroll_delta"] = -2
 		var table_result := GameModule.build_action_result({
@@ -2923,8 +2927,8 @@ func _check_grand_casino_chips_and_cage(library: ContentLibrary, main_archetype:
 	var outside_result := GameModule.build_action_result({
 		"ok": true,
 		"type": "game_action",
-		"source_id": "blackjack",
-		"game_id": "blackjack",
+		"source_id": "baccarat",
+		"game_id": "baccarat",
 		"action_id": "outside_cash_fixture",
 		"action_kind": "legal",
 		"stake": 3,
@@ -2936,7 +2940,7 @@ func _check_grand_casino_chips_and_cage(library: ContentLibrary, main_archetype:
 	var outside_chips_before := run_state.grand_casino_chips
 	GameModule.apply_result(run_state, outside_result)
 	if run_state.bankroll != outside_cash_before - 3 or run_state.grand_casino_chips != outside_chips_before or outside_result.has("chips_delta"):
-		failures.append("Blackjack outside the Grand Casino did not remain cash-only.")
+		failures.append("Table play outside the Grand Casino did not remain cash-only.")
 	var outside_machine_deltas := GameModule.empty_result_deltas()
 	outside_machine_deltas["bankroll_delta"] = 4
 	var outside_machine_result := GameModule.build_action_result({
@@ -3066,10 +3070,15 @@ func _check_grand_casino_living_floor(library: ContentLibrary, main_archetype: D
 		var cameo_run: RunState = RunStateScript.new()
 		cameo_run.start_new("GC-ROURKE-CAMEO")
 		var cameo_environment := EnvironmentInstance.from_archetype(delta, 2, cameo_run.create_rng("gc_cameo_environment"), library).to_dict()
+		cameo_environment["event_ids"] = ["rourke_scouting_cameo"]
+		cameo_environment["resolved_event_ids"] = []
 		cameo_run.set_environment(cameo_environment)
+		if not cameo_run.enqueue_triggered_event("rourke_scouting_cameo", "demo_boss_objective_foundation", {}):
+			failures.append("Rare Rourke scouting talk could not enter the triggered-event queue.")
+			return
 		var cameo_module: EventModule = EventModule.new()
 		cameo_module.setup(cameo, library)
-		var cameo_result := cameo_module.resolve(cameo_run, cameo_environment, "read_his_route")
+		var cameo_result := cameo_module.resolve(cameo_run, cameo_run.current_environment, "read_his_route")
 		if not bool(cameo_result.get("ok", false)) or not bool(cameo_run.narrative_flags.get("grand_casino_event_pit_boss_sweep_lay_low", false)):
 			failures.append("Rourke scouting choice did not feed an existing prior-boss modifier flag.")
 
@@ -3268,7 +3277,12 @@ func _blackjack_authority_resolve_for_test(game: GameModule, action_id: String, 
 	host.set("game_module_cache", {"blackjack": game})
 	host.set("run_state", run_state)
 	host.set("selected_stake", stake)
-	return host.call("_sealed_action_host_resolve_intent", action_id, stake)
+	var result: Dictionary = host.call("_sealed_action_host_resolve_intent", action_id, stake)
+	# This detached authority host never enters the scene tree, so the fixture
+	# owns its lifetime. Free it synchronously after copying the returned value;
+	# otherwise every call retains a Control RID and its script/resource graph.
+	host.free()
+	return result
 
 
 func _check_grand_casino_memory_entry_lines(main_environment: Dictionary, outside_environment: Dictionary, failures: Array) -> void:
@@ -3713,7 +3727,9 @@ func _check_broke_pull_tab_deferred_terminal_boundary(library: ContentLibrary, f
 		"archetype_id": "fixture_room",
 		"kind": "casino",
 		"economic_profile": {"stake_floor": 1, "stake_ceiling": 1},
-		"game_ids": ["pull_tabs"],
+		# Pull-tabs owns the zero-cash defer state, while bar dice supplies a normal
+		# funded wager so the setup refresh is not itself a stranded boundary.
+		"game_ids": ["pull_tabs", "bar_dice"],
 		"event_ids": [],
 		"item_offers": [],
 		"travel_hooks": [],
@@ -4076,6 +4092,20 @@ func _embedded_refresh_fixture_app(library: ContentLibrary, run_state: RunState,
 		failures.append("%s fixture requires FoundationMain runtime nodes." % label.capitalize())
 		_sb4_dispose_app(app)
 		return null
+	# FoundationMain intentionally loads its Play helpers over staged menu frames.
+	# This focused fixture jumps straight into an embedded game, so complete those
+	# same registered lifecycle stages explicitly before invoking Play methods.
+	# A missing or unloadable helper now fails at fixture construction instead of
+	# becoming a late Nil call that an aggregate runner could accidentally mask.
+	for stage_index in range(11):
+		if not bool(app.call("_ensure_run_ui_stage_scripts", stage_index)):
+			failures.append("%s fixture could not load FoundationMain helper stage %d." % [label.capitalize(), stage_index])
+			_sb4_dispose_app(app)
+			return null
+	if not bool(app.call("_ensure_run_ui_built")):
+		failures.append("%s fixture could not construct FoundationMain's staged run interface." % label.capitalize())
+		_sb4_dispose_app(app)
+		return null
 	app.set("library", library)
 	app.set("generator", RunGeneratorScript.new(library))
 	app.set("dev_game_test_mode", dev_mode)
@@ -4154,6 +4184,15 @@ func _check_broke_idle_terminal_evaluator_not_per_frame(library: ContentLibrary,
 		failures.append("Broke-idle terminal evaluator fixture requires FoundationMain runtime nodes.")
 		_sb4_dispose_app(app)
 		return
+	for stage_index in range(11):
+		if not bool(app.call("_ensure_run_ui_stage_scripts", stage_index)):
+			failures.append("Broke-idle terminal evaluator fixture could not load FoundationMain helper stage %d." % stage_index)
+			_sb4_dispose_app(app)
+			return
+	if not bool(app.call("_ensure_run_ui_built")):
+		failures.append("Broke-idle terminal evaluator fixture could not construct FoundationMain's staged run interface.")
+		_sb4_dispose_app(app)
+		return
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("BROKE-IDLE-NO-POLL")
 	var environment := {
@@ -4173,15 +4212,14 @@ func _check_broke_idle_terminal_evaluator_not_per_frame(library: ContentLibrary,
 	machine["tray_stack"] = [{"symbols": ["A", "B", "C"], "payout": 0}]
 	environment["game_states"] = {"pull_tabs": machine}
 	run_state.set_environment(environment)
-	run_state.change_bankroll(-run_state.bankroll, true)
 	app.set("run_state", run_state)
 	app.set("current_game", null)
 	app.call("_set_current_screen", "ENVIRONMENT")
-	app.call("_refresh")
-	if run_state.run_status == RunState.RUN_STATUS_FAILED:
-		failures.append("Broke-idle deferred fixture failed before idle frame sampling.")
-		_sb4_dispose_app(app)
-		return
+	# Becoming broke is deliberately introduced without crossing an explicit
+	# refresh/action boundary. The assertion below then isolates idle-frame
+	# behavior: polling the UI must not turn a state mutation into an implicit
+	# terminal evaluation.
+	run_state.change_bankroll(-run_state.bankroll, true)
 	app.set("terminal_evaluator_call_count", 0)
 	for _frame_index in range(12):
 		app.call("_process", 1.0 / 60.0)
@@ -4762,6 +4800,15 @@ func _check_grand_casino_locked_route_ui(library: ContentLibrary, delta: Diction
 		app.call("_ready")
 	if not bool(app.call("uses_foundation_runtime")):
 		failures.append("Grand Casino locked route UI fixture requires FoundationMain runtime nodes.")
+		_sb4_dispose_app(app)
+		return
+	for stage_index in range(11):
+		if not bool(app.call("_ensure_run_ui_stage_scripts", stage_index)):
+			failures.append("Grand Casino locked route UI fixture could not load FoundationMain helper stage %d." % stage_index)
+			_sb4_dispose_app(app)
+			return
+	if not bool(app.call("_ensure_run_ui_built")):
+		failures.append("Grand Casino locked route UI fixture could not construct FoundationMain's staged run interface.")
 		_sb4_dispose_app(app)
 		return
 	var ui_run: RunState = RunStateScript.new()

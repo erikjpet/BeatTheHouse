@@ -2240,6 +2240,7 @@
     "display_name": "Crew Favor",
     "type": "debt",
     "interaction_mode": "triggered",
+    "repeatable": true,
     "presentation": "talk",
     "speaker": {
       "role": "lender",
@@ -4716,7 +4717,7 @@
     "payload": {"summary": "Dave watches the road arrive before the bus.", "choices": [{"id": "wait_for_one_line", "label": "Wait for one line", "text": "The room he left is still doing what he said it would.", "consequences": {"story_flags_set": {"chain06_dave_last_stop": true}, "resolve_event": true}}]}
   },
   {
-    "id": "heist_live_table", "display_name": "The Live Table", "type": "crew", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["casino"],
+    "id": "heist_live_table", "display_name": "The Live Table", "type": "crew", "interaction_mode": "interactable", "presentation": "talk", "scopes": ["any"],
     "speaker": {"role": "staff", "name": "The Crew", "character_pool_id": "crew_regulars", "character_identity_key": "the_crew", "voice_line_key": "favor_due", "silhouette": "vest", "portrait_count": 3, "face_layers": [], "bind": "none"},
     "asset_path": "res://assets/art/events/suspicious_patron.png", "icon_key": "crew", "environment_prop": "card_table", "start_summary": "The crew beat waits inside the live session.", "trigger": {"type": "manual"},
     "conditions": {"requires_story_flags": {"heist_live_table_active": true}}, "payload": {"kind": "heist_live_table", "summary": "The crew beat waits inside the live session.", "choices": []}

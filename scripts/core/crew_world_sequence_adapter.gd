@@ -406,19 +406,36 @@ static func acknowledge_outcome(environment: Dictionary, token: String, receipt_
 
 
 static func composed_projection(environment: Dictionary, definitions: Dictionary, environment_projection: Dictionary = {}) -> Dictionary:
+	var container := _container(environment)
+	var tokens := container.keys()
+	tokens.sort()
+	var live_tokens: Array = []
+	for token_value in tokens:
+		var token := str(token_value)
+		var entry := _dict(container.get(token, {}))
+		if str(entry.get("lifecycle", "")) == LIFECYCLE_CLEANED:
+			continue
+		if SequenceSchemaScript.is_sequence(_dict(definitions.get(token, {}))):
+			live_tokens.append(token)
+	# Preserve the scenario engine's exact projection bytes when no mounted owner
+	# contributes to this room. Besides avoiding needless deep copies on ordinary
+	# rooms, this keeps Crew-ignoring runs a true serialization no-op.
+	if live_tokens.is_empty():
+		return environment_projection
 	var result := environment_projection.duplicate(true)
 	var semantic := _dict(result.get("semantic_state", {}))
 	for collection in PROJECTION_COLLECTIONS:
 		semantic[collection] = _dict(semantic.get(collection, {}))
 	var errors: Array = []
-	var tokens := _container(environment).keys()
-	tokens.sort()
-	for token_value in tokens:
+	for token_value in live_tokens:
 		var token := str(token_value)
-		var entry := _dict(_container(environment).get(token, {}))
-		var definition := _dict(definitions.get(token, {}))
-		if not SequenceSchemaScript.is_sequence(definition):
+		var entry := _dict(container.get(token, {}))
+		# Cleaned entries are durable receipts, not live room projections. Keeping
+		# their aftermath semantics in composition made the host scenario's next
+		# seal fail and blocked every subsequent travel action.
+		if str(entry.get("lifecycle", "")) == LIFECYCLE_CLEANED:
 			continue
+		var definition := _dict(definitions.get(token, {}))
 		var creation_owners := _array(_dict(_dict(entry.get("state", {})).get("semantic_state", {})).get("creation_owner_namespaces", []))
 		var owner_projection := projection(environment, token, definition)
 		var owner_semantic := _dict(owner_projection.get("semantic_state", {}))
@@ -592,7 +609,13 @@ static func _ownership_conflicts(token: String, claims: Array, container: Dictio
 	for other_token_value in container.keys():
 		if str(other_token_value) == token:
 			continue
-		occupied.append_array(_array(_dict(container.get(other_token_value, {})).get("ownership_claims", [])))
+		var other_entry := _dict(container.get(other_token_value, {}))
+		# A cleaned entry is a durable receipt/tombstone. Its runtime cleanup has
+		# removed every owned semantic object, so it must not continue reserving the
+		# temporary identity against a later instance of the same reusable package.
+		if str(other_entry.get("lifecycle", "")) == LIFECYCLE_CLEANED:
+			continue
+		occupied.append_array(_array(other_entry.get("ownership_claims", [])))
 	for claim_value in claims:
 		var claim := _dict(claim_value)
 		for occupied_value in occupied:

@@ -476,7 +476,7 @@ func _wait_for_coin_pusher_collection(app: Control, canvas: Control) -> Dictiona
 	var local_position: Vector2 = canvas.call("local_position_for_surface_action", "coin_pusher_collect", int(collect_binding.get("index", 0)))
 	if local_position.x < 0.0:
 		return {"attempted": false, "resolved": false, "settlement": settlement}
-	await _push_click(app.get_viewport(), canvas.get_global_rect().position + local_position)
+	await _push_click(app.get_viewport(), canvas.get_global_transform_with_canvas() * local_position)
 	var resolution := await _wait_for_surface_public_resolution(app, canvas, before_result, before_outcome)
 	var public_result := _dict(resolution.get("public_result", {}))
 	var resolved := bool(resolution.get("resolved", false)) and str(public_result.get("action_id", "")) == "coin_pusher_collect"
@@ -738,6 +738,7 @@ func _activate_exact_room_action(app: Control, semantic_id: String, action_index
 		result["event_popup"] = _visible_event_popup_snapshot(app)
 		return result
 	var panel := _dict(_dict(canvas.call("current_view_snapshot")).get("selected_info", {}))
+	result["selected_panel"] = panel.duplicate(true)
 	var actions := _array(panel.get("actions", []))
 	if action_index < 0 or action_index >= actions.size():
 		result["route_errors"].append("selected panel exposed %d actions" % actions.size())
@@ -748,7 +749,7 @@ func _activate_exact_room_action(app: Control, semantic_id: String, action_index
 	if local_position.x < 0.0:
 		result["route_errors"].append("selected action has no production hit position")
 		return result
-	await _push_click(app.get_viewport(), canvas.get_global_rect().position + local_position)
+	await _push_click(app.get_viewport(), canvas.get_global_transform_with_canvas() * local_position)
 	await _settle(8)
 	result["ok"] = true
 	result["visible_message"] = _observable_visible_message(app)
@@ -813,6 +814,7 @@ func _open_map_and_visible_delivery_target(app: Control) -> String:
 	var local_failures: Array = []
 	var opened := Fidelity.push_exact_canvas_mouse_click(app.get_viewport(), canvas, "travel:leave", local_failures, "fix06_28 delivery map", true)
 	await _settle(8)
+	await create_timer(0.3).timeout
 	if not bool(opened.get("ok", false)):
 		return ""
 	var map := _dict(_dict(app.call("current_screen_snapshot")).get("world_map", {}))
@@ -820,15 +822,20 @@ func _open_map_and_visible_delivery_target(app: Control) -> String:
 		var node := _dict(value)
 		if bool(node.get("delivery_target", false)) and str(node.get("delivery_target_status", "pending")) != "delivered":
 			return str(node.get("id", ""))
+	await _close_visible_world_map(app)
 	return ""
 
 
 func _confirm_open_map_target(app: Control, target_id: String) -> bool:
+	# The map's opening animation owns pointer routing for its first few frames.
+	# A human cannot click the destination before it is visibly settled.
+	await create_timer(0.2).timeout
 	var node_button := _find_world_map_node_button(app, target_id)
 	if node_button == null:
 		return false
 	await _push_click(app.get_viewport(), node_button.get_global_rect().get_center())
 	await _settle(4)
+	await create_timer(0.2).timeout
 	var confirm := app.get("world_map_confirm_button") as Button
 	if confirm == null or not confirm.is_visible_in_tree() or confirm.disabled:
 		return false
@@ -941,9 +948,14 @@ func _verify_save_continue(app: Control, seed: String) -> Dictionary:
 		_fail("%s save/Continue could not open the visible run menu." % seed)
 		return result
 	await _push_click(app.get_viewport(), menu.get_global_rect().get_center())
+	await create_timer(0.35).timeout
 	await _settle(3)
 	var save := app.get("run_menu_save_button") as Button
 	var main_menu := app.get("run_menu_main_menu_button") as Button
+	if save != null and main_menu != null and (not save.is_visible_in_tree() or not main_menu.is_visible_in_tree()):
+		await _push_click(app.get_viewport(), menu.get_global_rect().get_center())
+		await create_timer(0.35).timeout
+		await _settle(3)
 	if save == null or not save.is_visible_in_tree() or save.disabled or main_menu == null or not main_menu.is_visible_in_tree():
 		result["errors"].append("Save/Main Menu controls unavailable")
 		_fail("%s save/Continue menu did not expose Save and Main Menu." % seed)
@@ -1119,7 +1131,7 @@ func _verify_action_isolated(seed: String, semantic_id: String, action_index: in
 		await _dispose_app(app)
 		return action_record
 	var before := Fidelity.observable_host_snapshot(app)
-	await _push_click(app.get_viewport(), canvas.get_global_rect().position + local_action_position)
+	await _push_click(app.get_viewport(), canvas.get_global_transform_with_canvas() * local_action_position)
 	var evidence := await _await_observable_action_evidence(app, before, semantic_id)
 	var ok := bool(evidence.get("ok", false))
 	if not ok:
@@ -1169,18 +1181,34 @@ func _travel_one_exact_leg(app: Control, seed: String, target_id: String) -> boo
 	await create_timer(0.3).timeout
 	if not bool(departure.get("ok", false)) or not bool(_dict(app.call("current_screen_snapshot")).get("world_map_overlay_visible", false)):
 		return false
-	var node_button := _find_world_map_node_button(app, target_id)
-	if node_button == null:
+	# Map cards finish their entrance layout after the overlay becomes visible.
+	# Resolve and click the live target rect only after that layout settles, then
+	# require the public selected-node snapshot to name the exact requested node.
+	await create_timer(0.8).timeout
+	var selected_exact := false
+	for _selection_attempt in range(2):
+		var node_button := _find_world_map_node_button(app, target_id)
+		if node_button == null:
+			return false
+		await _push_click(app.get_viewport(), node_button.get_global_rect().get_center())
+		await _settle(4)
+		if str(_dict(app.call("current_screen_snapshot")).get("selected_world_map_node_id", "")) == target_id:
+			selected_exact = true
+			break
+		await create_timer(0.5).timeout
+	if not selected_exact:
 		return false
-	await _push_click(app.get_viewport(), node_button.get_global_rect().get_center())
-	await _settle(4)
+	# The detail sheet reflows after selection. Wait for its Travel button only
+	# after that visible motion completes so the click cannot land on its old rect.
+	await create_timer(0.8).timeout
 	var confirm := app.get("world_map_confirm_button") as Button
 	if confirm == null or not confirm.is_visible_in_tree() or confirm.disabled:
 		return false
 	await _push_click(app.get_viewport(), confirm.get_global_rect().get_center())
 	await _settle(24)
 	await create_timer(0.4).timeout
-	return not bool(_dict(app.call("current_screen_snapshot")).get("world_map_overlay_visible", false)) and app.get("environment_canvas") != null
+	var after := _dict(app.call("current_screen_snapshot"))
+	return not bool(after.get("world_map_overlay_visible", false)) and app.get("environment_canvas") != null
 
 
 func _travel_until_exact_node(app: Control, seed: String, target_id: String, preserve_event_id: String = "") -> bool:
@@ -1261,13 +1289,14 @@ func _push_click(viewport: Viewport, global_position: Vector2) -> void:
 	var press := InputEventMouseButton.new()
 	press.button_index = MOUSE_BUTTON_LEFT
 	press.pressed = true
+	press.button_mask = MOUSE_BUTTON_MASK_LEFT
 	press.position = global_position
 	press.global_position = global_position
 	viewport.push_input(press, true)
-	await process_frame
 	var release := InputEventMouseButton.new()
 	release.button_index = MOUSE_BUTTON_LEFT
 	release.pressed = false
+	release.button_mask = 0
 	release.position = global_position
 	release.global_position = global_position
 	viewport.push_input(release, true)

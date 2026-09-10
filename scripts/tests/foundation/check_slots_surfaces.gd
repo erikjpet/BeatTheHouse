@@ -2733,8 +2733,12 @@ func _xgame_blackjack_win_metric(game: GameModule, luck: int, item_id: String) -
 
 func _xgame_blackjack_heat_metric(game: GameModule, seed: String, drunk: bool, watched: bool, item_id: String) -> int:
 	var run_state: RunState = _xgame_blackjack_run(game, seed, 0, drunk, watched, item_id)
-	var result: Dictionary = SlotsBlackjackAuthorityDriver.resolve(game, "count_cards", 10, run_state, run_state.current_environment, run_state.create_rng("xgame_blackjack_heat"), _xgame_blackjack_dirty_count_ui())
-	return int(result.get("suspicion_delta", 0))
+	var recorded: Dictionary = SlotsBlackjackAuthorityDriver.resolve(game, "count_cards", 10, run_state, run_state.current_environment, run_state.create_rng("xgame_blackjack_count"), _xgame_blackjack_dirty_count_ui())
+	var settlement_ui: Dictionary = recorded.get("blackjack_surface_ui_state", {}) if typeof(recorded.get("blackjack_surface_ui_state", {})) == TYPE_DICTIONARY else {}
+	if settlement_ui.is_empty():
+		return 0
+	var settled: Dictionary = SlotsBlackjackAuthorityDriver.resolve(game, "play_basic", 10, run_state, run_state.current_environment, run_state.create_rng("xgame_blackjack_heat"), settlement_ui)
+	return int(settled.get("suspicion_delta", 0))
 
 
 func _xgame_pull_tabs_run(game: GameModule, seed: String, luck: int, drunk: bool, watched: bool, item_id: String) -> RunState:

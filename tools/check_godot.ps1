@@ -223,12 +223,17 @@ function Convert-ProjectResourcePath {
 function New-SplitTestRunner {
     param(
         [string]$Name,
-        [string[]]$SourceRelativePaths
+        [string[]]$SourceRelativePaths,
+        [string[]]$RequiredSymbols = @()
     )
     $generatedRoot = Join-Path $root ".tmp\generated_tests"
     New-Item -ItemType Directory -Force -Path $generatedRoot | Out-Null
     $destination = Join-Path $generatedRoot $Name
     $lines = @(Get-SplitTestRunnerLines -ProjectRoot $root -SourceRelativePaths $SourceRelativePaths)
+    $composition = Test-SplitTestRunnerComposition -Lines $lines -RequiredSymbols $RequiredSymbols
+    if (-not $composition.valid) {
+        throw "Split test runner composition failed: $(@($composition.errors) -join ' | ')"
+    }
     [System.IO.File]::WriteAllLines($destination, $lines)
     return Convert-ProjectResourcePath $destination
 }
@@ -244,6 +249,43 @@ function Get-FoundationSplitRunnerPath {
         "scripts/tests/foundation/check_scratch_tickets.gd",
         "scripts/tests/foundation/check_cage_environment_rework.gd",
         "scripts/tests/foundation/check_coin_pusher.gd"
+    ) -RequiredSymbols @(
+        "_foundation_run_suite",
+        "_foundation_run_contract_suite",
+        "_foundation_run_system_suite",
+        "_check_content",
+        "_check_content_core",
+        "_check_content_scenario_engine",
+        "_check_punchline_layer_contract",
+        "_check_tier2_scenario_contract",
+        "_check_scenario_backlog_contract",
+        "_check_scenario_sequence_contract",
+        "_check_scenario_semantic_presentation_contract",
+        "_check_scenario_semantic_static_contract",
+        "_check_scenario_semantic_restore_contract",
+        "_check_scenario_semantic_hidden_contract_0",
+        "_check_scenario_semantic_hidden_contract_1",
+        "_check_scenario_semantic_hidden_contract_2",
+        "_check_scenario_semantic_hidden_contract_3",
+        "_check_environment_semantic_inventory_contract",
+        "_check_content_arrival_contract",
+        "_check_contracts",
+        "_check_game_surface_contracts",
+        "_check_game_surface_contracts_core",
+        "_check_all_game_module_contracts",
+        "_check_selected_starter_game_port",
+        "_check_delivery_framework",
+        "_check_crew_lender_lifecycle",
+        "_check_scratch_tickets_surface_contract",
+        "_check_cage_environment_rework",
+        "_check_coin_pusher_contract",
+        "_check_foundation_contract_core",
+        "_check_foundation_contract_games",
+        "_check_foundation_contract_systems",
+        "_embedded_refresh_fixture_app",
+        "_harness_arrive",
+        "_copy_dict",
+        "_copy_array"
     )
 }
 
@@ -843,7 +885,7 @@ function New-FoundationShardProjectRoot {
 function Invoke-FoundationSystemsSharded {
     param(
         [int]$StageTimeoutSec = 0,
-        [ValidateSet("systems", "games")]
+        [ValidateSet("systems", "games", "contracts")]
         [string]$FoundationSuite = "systems"
     )
     $name = "foundation_$FoundationSuite"
@@ -853,8 +895,16 @@ function Invoke-FoundationSystemsSharded {
     $startedMsec = [Environment]::TickCount64
     $wall = [System.Diagnostics.Stopwatch]::StartNew()
     try {
-    $expectedIds = if ($FoundationSuite -eq "games") { Get-FoundationGamesCheckIds } else { Get-FoundationSystemsCheckIds }
-    $plan = if ($FoundationSuite -eq "games") { Get-FoundationGamesShardPlan } else { Get-FoundationSystemsShardPlan }
+    $expectedIds = switch ($FoundationSuite) {
+        "games" { Get-FoundationGamesCheckIds }
+        "contracts" { Get-FoundationContractsCheckIds }
+        default { Get-FoundationSystemsCheckIds }
+    }
+    $plan = switch ($FoundationSuite) {
+        "games" { Get-FoundationGamesShardPlan }
+        "contracts" { Get-FoundationContractsShardPlan }
+        default { Get-FoundationSystemsShardPlan }
+    }
     $planCheck = Test-FoundationSystemsShardPlan -ExpectedIds $expectedIds -Shards $plan
     if (-not $planCheck.valid) {
         throw "Invalid foundation systems shard plan: $(@($planCheck.errors) -join ' | ')"
@@ -880,7 +930,9 @@ function Invoke-FoundationSystemsSharded {
         $logPath = Join-Path $script:ReportRoot ("$name.$safeShardId.godot.log")
         $userRoot = Join-Path $script:ReportRoot ("user_data\$safeShardId")
         $checkIds = @($plan[$shardId])
-        $needsNativePlugin = $FoundationSuite -eq "games" -and @($checkIds | Where-Object { $_ -in @("content", "game_activation_class_guard", "coin_pusher_contract") }).Count -gt 0
+		$needsNativePlugin = @($checkIds | Where-Object { $_ -eq "coin_pusher_contract" }).Count -gt 0 -or (
+			$FoundationSuite -eq "games" -and @($checkIds | Where-Object { $_ -in @("content", "game_activation_class_guard") }).Count -gt 0
+		)
         $shardProjectRoot = New-FoundationShardProjectRoot -ShardId $shardId -IncludeAddons:$needsNativePlugin
         try {
         $shardRunnerPath = Join-Path $shardProjectRoot ($runnerRelativePath.Replace("/", "\"))
@@ -1214,7 +1266,7 @@ if (-not [string]::IsNullOrWhiteSpace($foundationSuiteKey)) {
         Invoke-GodotScript -Name "inventory_spatial_main_integration" -ScriptPath "res://scripts/tests/inventory_spatial_main_integration_check.gd" -StageTimeoutSec 180
         Invoke-GodotScript -Name "ui05_design_system" -ScriptPath "res://scripts/tests/ui05_design_system_check.gd" -StageTimeoutSec 120
     }
-    elseif ($foundationSuiteKey -eq "systems" -or $foundationSuiteKey -eq "games") {
+    elseif ($foundationSuiteKey -eq "systems" -or $foundationSuiteKey -eq "games" -or $foundationSuiteKey -eq "contracts") {
         Invoke-FoundationSystemsSharded -FoundationSuite $foundationSuiteKey -StageTimeoutSec (Get-StageTimeout ("foundation_{0}" -f $foundationSuiteKey)) | Out-Null
     }
     else {

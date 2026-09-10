@@ -520,8 +520,10 @@ func _check_event_module_foundation(library: ContentLibrary, failures: Array) ->
 	var event_context := _first_triggerable_event_context(library, run_a, environment_a)
 	if event_context.is_empty():
 		for target_id in ["corner_store", "back_alley", "motel", "bar", "gas_station_casino", "small_underground_casino", "jazz_club"]:
-			environment_a = _harness_arrive(generator_a, run_a, failures, "event-module twin A arrival %s" % target_id, target_id).to_dict()
-			environment_b = _harness_arrive(generator_b, run_b, failures, "event-module twin B arrival %s" % target_id, target_id).to_dict()
+			# This scan validates event content across authored rooms; it is not a
+			# player route test. Mark the fixture-selected destination prevalidated.
+			environment_a = _harness_arrive(generator_a, run_a, failures, "event-module twin A arrival %s" % target_id, target_id, true).to_dict()
+			environment_b = _harness_arrive(generator_b, run_b, failures, "event-module twin B arrival %s" % target_id, target_id, true).to_dict()
 			event_context = _first_triggerable_event_context(library, run_a, environment_a)
 			if not event_context.is_empty():
 				break
@@ -4217,13 +4219,29 @@ func _check_crew_trust_core(library: ContentLibrary, failures: Array) -> void:
 	var favor_bankroll_before_handoff := event_run.bankroll
 	var favor_heat_before_handoff := event_run.suspicion_level()
 	var favor_completed_before_handoff := bool(event_run.narrative_flags.get("crew_favor_completed", false))
+	var favor_owner_token := str(event_result.get("world_sequence_owner_token", ""))
+	var favor_projection := _copy_dict(event_run.world_sequence_projection(favor_owner_token))
+	var favor_semantic := _copy_dict(favor_projection.get("semantic_state", {}))
+	var favor_interactions := _copy_dict(favor_semantic.get("interactions", {}))
+	var favor_interaction := _copy_dict(favor_interactions.get("crew::package_handoff", {}))
+	var favor_actions := _copy_array(favor_interaction.get("available_actions", []))
+	var favor_action := _copy_dict(favor_actions[0]) if not favor_actions.is_empty() else {}
+	var favor_command := event_run.world_sequence_command(
+		favor_owner_token, "make_handoff", "foundation:crew_favor:handoff", {}, "crew", "package_handoff",
+		{"crew::package_handoff": true},
+		str(favor_action.get("action_origin_owner_namespace", "")),
+		str(favor_action.get("action_origin_stable_object_id", "")),
+		str(favor_action.get("action_origin_receipt_key", "")),
+		str(favor_action.get("action_origin_boundary_id", "")),
+		str(favor_action.get("action_origin_fingerprint", ""))
+	)
 	var favor_handoff := event_run.delivery_complete_handoff(favor_target)
-	if favor_target.is_empty() or not bool(favor_arrival.get("handoff_ready", false)) or not bool(favor_handoff.get("ok", false)) \
+	if favor_target.is_empty() or not bool(favor_arrival.get("handoff_ready", false)) or not bool(favor_command.get("ok", false)) or not bool(favor_handoff.get("ok", false)) \
 		or favor_bankroll_before_handoff != favor_bankroll_before or favor_completed_before_handoff \
 		or event_run.bankroll != favor_bankroll_before_handoff + 22 or event_run.suspicion_level() != favor_heat_before_handoff + 4 \
 		or event_run.crew_trust("crew_rook") != 5 or not bool(event_run.narrative_flags.get("crew_favor_completed", false)) \
 		or bool(event_run.narrative_flags.get("crew_favor_pending", true)):
-		failures.append("Crew favor success did not preserve exact +22 cash, +4 heat, and job trust at the real-room handoff: bankroll=%d pre_handoff_bankroll=%d heat=%d pre_handoff_heat=%d trust=%d arrival=%s handoff=%s snapshot=%s." % [event_run.bankroll, favor_bankroll_before_handoff, event_run.suspicion_level(), favor_heat_before_handoff, event_run.crew_trust("crew_rook"), JSON.stringify(favor_arrival), JSON.stringify(favor_handoff), JSON.stringify(event_run.delivery_snapshot())])
+		failures.append("Crew favor success did not preserve exact +22 cash, +4 heat, and job trust at the real-room handoff: bankroll=%d pre_handoff_bankroll=%d heat=%d pre_handoff_heat=%d trust=%d arrival=%s command=%s handoff=%s snapshot=%s." % [event_run.bankroll, favor_bankroll_before_handoff, event_run.suspicion_level(), favor_heat_before_handoff, event_run.crew_trust("crew_rook"), JSON.stringify(favor_arrival), JSON.stringify(favor_command), JSON.stringify(favor_handoff), JSON.stringify(event_run.delivery_snapshot())])
 
 	var failed_run := _crew_favor_event_fixture(library, "CREW-FAVOR-DEADLINE-REGRESSION", 5, failures)
 	var failed_bankroll_before := failed_run.bankroll

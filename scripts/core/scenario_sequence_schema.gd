@@ -134,12 +134,13 @@ static func validate_definition(definition: Dictionary, operation_registry: Vari
 		return errors
 	_validate_declared_targets(label, authored.get("declared_targets", {}), target_inventory, errors)
 	_validate_local_state_schema(label, _dict(authored.get("local_state_schema", {})), errors)
-	_validate_phase_graph(label, authored, _dict(authored.get("phase_graph", {})), operation_registry, errors)
+	var owner_exception_rows := _owner_exception_rows(authored.get("owner_exceptions", []))
+	_validate_phase_graph(label, authored, _dict(authored.get("phase_graph", {})), operation_registry, owner_exception_rows, errors)
 	_validate_objectives(label, _array(authored.get("objectives", [])), errors)
 	_validate_reentry_expiry_cleanup(label, authored, operation_registry, errors)
 	var reachable_outcomes := _reachable_outcomes(_dict(authored.get("phase_graph", {})))
 	_validate_cross_references(label, authored, reachable_outcomes, operation_registry, target_inventory, errors)
-	_validate_aftermath(label, authored, _dict(authored.get("aftermath", {})), reachable_outcomes, operation_registry, target_inventory, errors)
+	_validate_aftermath(label, authored, _dict(authored.get("aftermath", {})), reachable_outcomes, operation_registry, target_inventory, owner_exception_rows, errors)
 	_validate_fact_subscriptions(label, _array(authored.get("fact_subscriptions", [])), operation_registry, errors)
 	_validate_event_bridge_authorizers(label, authored, errors)
 	_validate_tags_and_exceptions(label, authored, errors)
@@ -622,7 +623,7 @@ static func _validate_local_state_schema(label: String, fields: Dictionary, erro
 			errors.append("%s local field %s has invalid bounds." % [label, field_id])
 
 
-static func _validate_phase_graph(label: String, authored: Dictionary, graph: Dictionary, operation_registry: Variant, errors: Array) -> void:
+static func _validate_phase_graph(label: String, authored: Dictionary, graph: Dictionary, operation_registry: Variant, owner_exception_rows: Dictionary, errors: Array) -> void:
 	_append_unknown_keys("%s phase_graph" % label, graph, ["initial_phase", "phases"], errors)
 	var phases := _array(graph.get("phases", []))
 	if phases.is_empty():
@@ -708,7 +709,7 @@ static func _validate_phase_graph(label: String, authored: Dictionary, graph: Di
 	_validate_reachability(label, initial_id, phases, ids, errors)
 	_validate_termination(label, initial_id, phases, ids, errors)
 	var outcomes := _reachable_outcomes(graph)
-	if outcomes.size() < 3:
+	if outcomes.size() < 3 and not owner_exception_rows.has("choice_or_failure"):
 		errors.append("%s requires at least three reachable terminal outcomes." % label)
 
 
@@ -947,8 +948,8 @@ static func _has_persistent_initial_safe_exit(authored: Dictionary) -> bool:
 	return not safe_identities.is_empty()
 
 
-static func _validate_aftermath(label: String, authored: Dictionary, aftermaths: Dictionary, reachable_outcomes: Array, operation_registry: Variant, target_inventory: Dictionary, errors: Array) -> void:
-	if aftermaths.size() < 3:
+static func _validate_aftermath(label: String, authored: Dictionary, aftermaths: Dictionary, reachable_outcomes: Array, operation_registry: Variant, target_inventory: Dictionary, owner_exception_rows: Dictionary, errors: Array) -> void:
+	if aftermaths.size() < 3 and not owner_exception_rows.has("material_outcomes"):
 		errors.append("%s aftermath must define at least three material outcomes." % label)
 	if aftermaths.size() > MAX_AFTERMATHS:
 		errors.append("%s aftermath exceeds %d outcomes." % [label, MAX_AFTERMATHS])
@@ -999,7 +1000,7 @@ static func _validate_aftermath(label: String, authored: Dictionary, aftermaths:
 			errors.append("%s aftermath %s duplicates the normalized material effect of %s." % [label, outcome_id, str(effect_signatures.get(effect_signature, ""))])
 		else:
 			effect_signatures[effect_signature] = outcome_id
-	if material_axes.size() < 2:
+	if material_axes.size() < 2 and not owner_exception_rows.has("material_outcomes"):
 		errors.append("%s aftermath requires at least two independent material axes." % label)
 
 

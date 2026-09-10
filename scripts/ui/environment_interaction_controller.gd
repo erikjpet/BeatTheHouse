@@ -616,9 +616,10 @@ static func _merge_projected_scene_object(base: Dictionary, semantic: Dictionary
 	result["state_label"] = str(semantic.get("state", semantic.get("appearance", result.get("state_label", "Present"))))
 	result["enabled"] = bool(semantic.get("enabled", result.get("enabled", true)))
 	result["visible"] = bool(semantic.get("visible", result.get("visible", true)))
-	# Decorative scenario records are still selectable. `interactive` means the
-	# information panel can be opened; an empty action list remains read-only.
-	result["interactive"] = true
+	# Scenario decorations are authored investigation targets even without a
+	# command. A world-sequence aftermath prop can explicitly seal as inert once
+	# its correlated action has gone away.
+	result["interactive"] = bool(authority.get("presentation_interactive", owner == "scenario"))
 	result["scenario_sequence_actions"] = _array(result.get("scenario_sequence_actions", []))
 	result["anchor_id"] = str(semantic.get("anchor_id", result.get("anchor_id", "")))
 	result["zone_id"] = str(semantic.get("zone_id", result.get("zone_id", "")))

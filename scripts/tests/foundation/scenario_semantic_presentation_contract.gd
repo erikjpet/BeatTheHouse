@@ -42,10 +42,42 @@ static func check(library: Variant, failures: Array) -> void:
 	_check_atomic_projection_failures(failures)
 
 
+static func check_static_and_geometry(library: Variant, failures: Array) -> void:
+	# The canonical contracts runner executes the exhaustive hidden-state matrix
+	# in independent partitions. This entry retains every static, projection,
+	# geometry, and runtime-commit assertion from check().
+	Env068EnvironmentReadabilityContractScript.check_static(library, failures)
+	_check_ordinary_interaction_coexistence(failures)
+	_check_single_environment_plane(failures)
+	_check_public_removal_tombstones(failures)
+	_check_finalized_canvas_authority(library, failures)
+	_check_atomic_finalization_layout(library, failures)
+	_check_mutable_event_and_route_source_authority(library, failures)
+	_check_persisted_inventory_dynamic_refresh_guard(failures)
+	_check_atomic_post_operation_layout(library, failures)
+	_check_passive_atomic_commits(library, failures)
+	_check_collision_adjusted_renderer_authority(failures)
+	_check_finalized_accessibility(library, failures)
+	_check_finalized_actor_route(library, failures)
+	_check_route_endpoint_alias_contract(failures)
+	_check_sealed_semantic_collection_membership(library, failures)
+	_check_committed_projection_mismatch(library, failures)
+	_check_atomic_projection_failures(failures)
+
+
+static func check_partial_restore(library: Variant, failures: Array) -> void:
+	Env068EnvironmentReadabilityContractScript.check_partial_restore(library, failures)
+
+
+static func check_hidden_partition(library: Variant, failures: Array, partition_index: int) -> void:
+	Env068EnvironmentReadabilityContractScript.check_hidden_state_partition(library, failures, partition_index, 4)
+
+
 static func _check_persisted_inventory_dynamic_refresh_guard(failures: Array) -> void:
 	var run_state := RunStateScript.new()
-	var prior_source := {"event_ids": ["sealed_event"], "base_interaction_authority": []}
+	var prior_source := {"event_ids": ["sealed_event"], "layout_object_rects": {}, "base_interaction_authority": []}
 	var delivery_source := prior_source.duplicate(true)
+	delivery_source["layout_object_rects"] = {"delivery:handoff:back_alley": {"x": 0.2, "y": 0.3, "w": 0.1, "h": 0.1}}
 	delivery_source["base_interaction_authority"] = [{
 		"presentation_object_id": "delivery:handoff:back_alley",
 		"source_field": "active_delivery_run.handoff_pending_node_id",

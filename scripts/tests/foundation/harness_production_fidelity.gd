@@ -182,7 +182,7 @@ static func push_exact_canvas_mouse_click(
 	if viewport == null:
 		return _fail(failures, "%s has no production viewport for %s." % [context, semantic_id], "input")
 	var local_position: Vector2 = resolved.get("local_hit_position", Vector2(-1.0, -1.0))
-	var global_position := canvas.get_global_rect().position + local_position
+	var global_position := canvas.get_global_transform_with_canvas() * local_position
 	var motion := InputEventMouseMotion.new()
 	motion.position = global_position
 	motion.global_position = global_position
@@ -190,6 +190,7 @@ static func push_exact_canvas_mouse_click(
 	var press := InputEventMouseButton.new()
 	press.button_index = MOUSE_BUTTON_LEFT
 	press.pressed = true
+	press.button_mask = MOUSE_BUTTON_MASK_LEFT
 	press.double_click = double_click
 	press.position = global_position
 	press.global_position = global_position
@@ -197,6 +198,7 @@ static func push_exact_canvas_mouse_click(
 	var release := InputEventMouseButton.new()
 	release.button_index = MOUSE_BUTTON_LEFT
 	release.pressed = false
+	release.button_mask = 0
 	release.double_click = double_click
 	release.position = global_position
 	release.global_position = global_position

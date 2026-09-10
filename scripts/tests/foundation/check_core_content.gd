@@ -457,6 +457,12 @@ func _foundation_init_after_tree_ready() -> void:
 	report["failures"] = failures.duplicate()
 	report["passed"] = failures.is_empty()
 	_foundation_write_report(str(options.get("report", FOUNDATION_DEFAULT_REPORT_PATH)), report)
+	# Production UI boundaries legitimately use queued and deferred teardown.
+	# Flush two real tree frames before shutdown diagnostics so zero-reference
+	# objects are released, while live references and true leaks remain visible
+	# to the runner's fail-closed stderr check.
+	await process_frame
+	await process_frame
 
 	if failures.is_empty():
 		print("Foundation Godot checks passed. suite=%s checks=%d report=%s" % [
@@ -591,7 +597,20 @@ func _foundation_run_suite(suite: String, content_library: ContentLibrary, fixtu
 
 
 func _foundation_run_contract_suite(content_library: ContentLibrary, fixture_library: ContentLibrary, failures: Array, report: Dictionary) -> void:
-	_foundation_run_check(report, failures, "content", Callable(self, "_check_content"), [content_library])
+	_foundation_run_check(report, failures, "content", Callable(self, "_check_content_core"), [content_library])
+	_foundation_run_check(report, failures, "content_scenario_engine", Callable(self, "_check_content_scenario_engine"), [content_library])
+	_foundation_run_check(report, failures, "punchline_layer_contract", Callable(self, "_check_punchline_layer_contract"), [content_library])
+	_foundation_run_check(report, failures, "tier2_scenario_contract", Callable(self, "_check_tier2_scenario_contract"), [content_library])
+	_foundation_run_check(report, failures, "scenario_backlog_contract", Callable(self, "_check_scenario_backlog_contract"), [content_library])
+	_foundation_run_check(report, failures, "scenario_sequence_contract", Callable(self, "_check_scenario_sequence_contract"), [content_library])
+	_foundation_run_check(report, failures, "scenario_semantic_presentation_contract", Callable(self, "_check_scenario_semantic_static_contract"), [content_library])
+	_foundation_run_check(report, failures, "scenario_semantic_restore_contract", Callable(self, "_check_scenario_semantic_restore_contract"), [content_library])
+	_foundation_run_check(report, failures, "scenario_semantic_hidden_contract_0", Callable(self, "_check_scenario_semantic_hidden_contract_0"), [content_library])
+	_foundation_run_check(report, failures, "scenario_semantic_hidden_contract_1", Callable(self, "_check_scenario_semantic_hidden_contract_1"), [content_library])
+	_foundation_run_check(report, failures, "scenario_semantic_hidden_contract_2", Callable(self, "_check_scenario_semantic_hidden_contract_2"), [content_library])
+	_foundation_run_check(report, failures, "scenario_semantic_hidden_contract_3", Callable(self, "_check_scenario_semantic_hidden_contract_3"), [content_library])
+	_foundation_run_check(report, failures, "environment_semantic_inventory_contract", Callable(self, "_check_environment_semantic_inventory_contract"), [content_library])
+	_foundation_run_check(report, failures, "content_arrival_contract", Callable(self, "_check_content_arrival_contract"), [content_library])
 	_foundation_run_check(report, failures, "crew_recruitment_contract", Callable(CrewRecruitmentContractScript, "check"), [content_library])
 	_foundation_run_check(report, failures, "crew_layer3_jobs_contract", Callable(CrewLayer3JobsContractScript, "check"), [content_library])
 	_foundation_run_check(report, failures, "crew_plays_contract", Callable(CrewPlaysContractScript, "check"), [content_library])
@@ -600,7 +619,33 @@ func _foundation_run_contract_suite(content_library: ContentLibrary, fixture_lib
 	_foundation_run_check(report, failures, "character_chains_contract", Callable(CharacterChainsContractScript, "check"), [content_library])
 	_foundation_run_check(report, failures, "content_depth_contract", Callable(ContentDepthContractScript, "check"), [content_library])
 	_foundation_run_check(report, failures, "coach_engine_foundation", Callable(self, "_check_coach_engine_foundation"), [content_library])
-	_foundation_run_check(report, failures, "foundation_contracts", Callable(self, "_check_foundation_contract_smoke_for_suite"), [content_library])
+	# Keep the established parent id for the core assertions. Independent game and
+	# system contracts are registered separately so every failure remains visible
+	# even when a neighboring component approaches its process ceiling.
+	_foundation_run_check(report, failures, "foundation_contracts", Callable(self, "_check_foundation_contract_core_for_suite"), [content_library])
+	_foundation_run_check(report, failures, "bar_dice_contract", Callable(self, "_check_bar_dice_contract"), [content_library])
+	_foundation_run_check(report, failures, "crew_poker_contract", Callable(self, "_check_crew_poker_contract"), [content_library])
+	_foundation_run_check(report, failures, "video_poker_contract", Callable(self, "_check_video_poker_contract"), [content_library])
+	_foundation_run_check(report, failures, "coin_pusher_contract", Callable(self, "_check_coin_pusher_contract"), [content_library])
+	_foundation_run_check(report, failures, "slot_contract_smoke", Callable(self, "_check_slot_contract_smoke"), [content_library])
+	_foundation_run_check(report, failures, "all_game_module_contracts", Callable(self, "_check_all_game_module_contracts"), [content_library])
+	_foundation_run_check(report, failures, "cross_game_integration_matrix", Callable(self, "_check_cross_game_integration_matrix"), [content_library])
+	_foundation_run_check(report, failures, "run_action_service_boundary", Callable(self, "_check_run_action_service_boundary"), [content_library])
+	_foundation_run_check(report, failures, "item_effect_foundation", Callable(self, "_check_item_effect_foundation"), [content_library])
+	_foundation_run_check(report, failures, "item_build_interaction_foundation", Callable(self, "_check_item_build_interaction_foundation"), [content_library])
+	_foundation_run_check(report, failures, "event_module_foundation", Callable(self, "_check_event_module_foundation"), [content_library])
+	_foundation_run_check(report, failures, "event_system_state_foundation", Callable(self, "_check_event_system_state_foundation"), [content_library])
+	_foundation_run_check(report, failures, "save_service_foundation_round_trip", Callable(self, "_check_save_service_foundation_round_trip"), [content_library])
+	_foundation_run_check(report, failures, "platform_services_foundation", Callable(self, "_check_platform_services_foundation"), [])
+	_foundation_run_check(report, failures, "economy_pressure_foundation", Callable(self, "_check_economy_pressure_foundation"), [content_library])
+	_foundation_run_check(report, failures, "travel_route_foundation", Callable(self, "_check_travel_route_foundation"), [content_library])
+	_foundation_run_check(report, failures, "service_hook_foundation", Callable(self, "_check_service_hook_foundation"), [content_library])
+	_foundation_run_check(report, failures, "lender_debt_foundation", Callable(self, "_check_lender_debt_foundation"), [content_library])
+	_foundation_run_check(report, failures, "suspicion_security_foundation", Callable(self, "_check_suspicion_security_foundation"), [])
+	_foundation_run_check(report, failures, "run_report_foundation", Callable(self, "_check_run_report_foundation"), [])
+	_foundation_run_check(report, failures, "m2_system_interaction_scenario", Callable(self, "_check_m2_system_interaction_scenario"), [content_library])
+	_foundation_run_check(report, failures, "demo_boss_objective_foundation", Callable(self, "_check_demo_boss_objective_foundation"), [content_library])
+	_foundation_run_check(report, failures, "recovery_loss_pressure_foundation", Callable(self, "_check_recovery_loss_pressure_foundation"), [content_library])
 	_foundation_run_check(report, failures, "profile_inventory_boundary", Callable(self, "_check_profile_inventory_boundary"), [])
 	_foundation_run_check(report, failures, "fixture_rng", Callable(self, "_check_rng"), [fixture_library])
 	_foundation_run_check(report, failures, "card_shoe_core_primitives", Callable(self, "_check_card_shoe_core_primitives"), [])
@@ -772,8 +817,32 @@ func _check_foundation_contract_smoke_for_suite(library: ContentLibrary, failure
 	_check_foundation_contract_smoke(library, failures, _foundation_active_suite)
 
 
+func _check_foundation_contract_core_for_suite(library: ContentLibrary, failures: Array) -> void:
+	_check_foundation_contract_core(library, failures)
+
+
+func _check_foundation_contract_games_for_suite(library: ContentLibrary, failures: Array) -> void:
+	_check_foundation_contract_games(library, failures, _foundation_active_suite)
+
+
+func _check_foundation_contract_systems_for_suite(library: ContentLibrary, failures: Array) -> void:
+	_check_foundation_contract_systems(library, failures)
+
+
 # Checks the first production content path.
 func _check_content(library: ContentLibrary, failures: Array) -> void:
+	_check_content_core(library, failures)
+	_check_content_scenario_engine(library, failures)
+	_check_punchline_layer_contract(library, failures)
+	_check_tier2_scenario_contract(library, failures)
+	_check_scenario_backlog_contract(library, failures)
+	_check_scenario_sequence_contract(library, failures)
+	_check_scenario_semantic_presentation_contract(library, failures)
+	_check_environment_semantic_inventory_contract(library, failures)
+	_check_content_arrival_contract(library, failures)
+
+
+func _check_content_core(library: ContentLibrary, failures: Array) -> void:
 	call("_check_canonical_pack_paths", failures)
 	for error in library.validation_errors:
 		failures.append("ContentLibrary validation failed: %s" % error)
@@ -808,14 +877,61 @@ func _check_content(library: ContentLibrary, failures: Array) -> void:
 	_check_challenge_pack_content(library, failures)
 	_check_s0_2_baseline_regression_fixtures(library, failures)
 	_check_sa_2_per_frame_contracts(failures)
+
+
+func _check_content_scenario_engine(library: ContentLibrary, failures: Array) -> void:
 	_check_scenario_engine_foundation(library, failures)
+
+
+func _check_punchline_layer_contract(library: ContentLibrary, failures: Array) -> void:
 	PunchlineLayerContractScript.check(library, failures)
+
+
+func _check_tier2_scenario_contract(library: ContentLibrary, failures: Array) -> void:
 	Tier2ScenarioContractScript.check(library, failures)
+
+
+func _check_scenario_backlog_contract(library: ContentLibrary, failures: Array) -> void:
 	ScenarioBacklogContractScript.check(library, failures)
+
+
+func _check_scenario_sequence_contract(library: ContentLibrary, failures: Array) -> void:
 	ScenarioSequenceContractScript.check(library, failures, self)
+
+
+func _check_scenario_semantic_presentation_contract(library: ContentLibrary, failures: Array) -> void:
 	ScenarioSemanticPresentationContractScript.check(library, failures)
+
+
+func _check_scenario_semantic_static_contract(library: ContentLibrary, failures: Array) -> void:
+	ScenarioSemanticPresentationContractScript.check_static_and_geometry(library, failures)
+
+
+func _check_scenario_semantic_restore_contract(library: ContentLibrary, failures: Array) -> void:
+	ScenarioSemanticPresentationContractScript.check_partial_restore(library, failures)
+
+
+func _check_scenario_semantic_hidden_contract_0(library: ContentLibrary, failures: Array) -> void:
+	ScenarioSemanticPresentationContractScript.check_hidden_partition(library, failures, 0)
+
+
+func _check_scenario_semantic_hidden_contract_1(library: ContentLibrary, failures: Array) -> void:
+	ScenarioSemanticPresentationContractScript.check_hidden_partition(library, failures, 1)
+
+
+func _check_scenario_semantic_hidden_contract_2(library: ContentLibrary, failures: Array) -> void:
+	ScenarioSemanticPresentationContractScript.check_hidden_partition(library, failures, 2)
+
+
+func _check_scenario_semantic_hidden_contract_3(library: ContentLibrary, failures: Array) -> void:
+	ScenarioSemanticPresentationContractScript.check_hidden_partition(library, failures, 3)
+
+
+func _check_environment_semantic_inventory_contract(library: ContentLibrary, failures: Array) -> void:
 	EnvironmentSemanticInventoryContractScript.check(library, failures)
 
+
+func _check_content_arrival_contract(library: ContentLibrary, failures: Array) -> void:
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("CONTENT-CHECK")
 	var generator: RunGenerator = RunGeneratorScript.new(library)
@@ -3951,6 +4067,16 @@ func _check_lottery_redemption_clerk_merge(failures: Array) -> void:
 
 
 func _check_foundation_contract_smoke(library: ContentLibrary, failures: Array, suite: String = "all") -> void:
+	_check_foundation_contract_core(library, failures)
+	if suite == "smoke":
+		_check_slot_contract_smoke(library, failures)
+		call("_check_all_game_module_contracts", library, failures)
+		return
+	_check_foundation_contract_games(library, failures, suite)
+	_check_foundation_contract_systems(library, failures)
+
+
+func _check_foundation_contract_core(library: ContentLibrary, failures: Array) -> void:
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("FOUNDATION-SMOKE")
 	var snapshot := run_state.to_dict()
@@ -3981,11 +4107,10 @@ func _check_foundation_contract_smoke(library: ContentLibrary, failures: Array, 
 		_check_production_game_module_load(library, run_state, second_environment, failures)
 	_check_foundation_shell_no_game_specific_code(failures)
 	call("_check_selected_starter_game_port", library, failures)
-	_check_game_surface_contracts(library, failures)
-	if suite == "smoke":
-		_check_slot_contract_smoke(library, failures)
-		call("_check_all_game_module_contracts", library, failures)
-		return
+	_check_game_surface_contracts_core(library, failures)
+
+
+func _check_foundation_contract_games(library: ContentLibrary, failures: Array, suite: String = "all") -> void:
 	call("_check_bar_dice_contract", library, failures)
 	call("_check_crew_poker_contract", library, failures)
 	call("_check_video_poker_contract", library, failures)
@@ -3996,6 +4121,9 @@ func _check_foundation_contract_smoke(library: ContentLibrary, failures: Array, 
 		_check_slot_contract_smoke(library, failures)
 	call("_check_all_game_module_contracts", library, failures)
 	call("_check_cross_game_integration_matrix", library, failures)
+
+
+func _check_foundation_contract_systems(library: ContentLibrary, failures: Array) -> void:
 	call("_check_run_action_service_boundary", library, failures)
 	call("_check_item_effect_foundation", library, failures)
 	call("_check_item_build_interaction_foundation", library, failures)
@@ -5197,6 +5325,11 @@ func _check_production_game_module_load(library: ContentLibrary, run_state: RunS
 # Checks that specific game surfaces can expose interactive UI-local state without
 # bypassing the shared GameModule/RunState result path.
 func _check_game_surface_contracts(library: ContentLibrary, failures: Array) -> void:
+	_check_game_surface_contracts_core(library, failures)
+	call("_check_crew_poker_contract", library, failures)
+
+
+func _check_game_surface_contracts_core(library: ContentLibrary, failures: Array) -> void:
 	var blackjack: GameModule = _load_surface_contract_game(library, "blackjack", failures)
 	if blackjack != null:
 		call("_check_blackjack_surface_contract", blackjack, failures)
@@ -5221,7 +5354,6 @@ func _check_game_surface_contracts(library: ContentLibrary, failures: Array) -> 
 	var bar_dice: GameModule = _load_surface_contract_game(library, "bar_dice", failures)
 	if bar_dice != null:
 		call("_check_bar_dice_surface_contract", bar_dice, failures)
-	call("_check_crew_poker_contract", library, failures)
 	_check_process_fanout_guards(library, failures)
 
 

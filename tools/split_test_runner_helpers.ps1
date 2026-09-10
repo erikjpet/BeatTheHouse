@@ -84,3 +84,46 @@ function Get-SplitTestRunnerLines {
     }
     return $lines.ToArray()
 }
+
+function Test-SplitTestRunnerComposition {
+    param(
+        [AllowEmptyCollection()]
+        [string[]]$Lines,
+        [AllowEmptyCollection()]
+        [string[]]$RequiredSymbols = @()
+    )
+
+    $errors = New-Object System.Collections.Generic.List[string]
+    $extendsLines = @($Lines | Where-Object { $_ -match '^extends\s+' })
+    if ($extendsLines.Count -ne 1) {
+        $errors.Add("Generated split runner must contain exactly one top-level extends declaration; found $($extendsLines.Count).")
+    }
+
+    $definitions = @{}
+    foreach ($line in $Lines) {
+        if ($line -notmatch '^(?:static\s+)?func\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(') {
+            continue
+        }
+        $symbol = [string]$matches[1]
+        if (-not $definitions.ContainsKey($symbol)) {
+            $definitions[$symbol] = 0
+        }
+        $definitions[$symbol] = [int]$definitions[$symbol] + 1
+    }
+    foreach ($symbol in $definitions.Keys) {
+        if ([int]$definitions[$symbol] -gt 1) {
+            $errors.Add("Generated split runner defines top-level helper '$symbol' $($definitions[$symbol]) times.")
+        }
+    }
+    foreach ($symbolValue in $RequiredSymbols) {
+        $symbol = [string]$symbolValue
+        if ([string]::IsNullOrWhiteSpace($symbol) -or -not $definitions.ContainsKey($symbol)) {
+            $errors.Add("Generated split runner is missing required helper '$symbol'.")
+        }
+    }
+    return [pscustomobject]@{
+        valid = ($errors.Count -eq 0)
+        errors = @($errors)
+        definitions = $definitions
+    }
+}

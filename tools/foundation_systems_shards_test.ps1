@@ -14,6 +14,8 @@ $productionPlan = Test-FoundationSystemsShardPlan -ExpectedIds (Get-FoundationSy
 Assert-True $productionPlan.valid ("Production systems shard plan is invalid: " + (@($productionPlan.errors) -join " | "))
 $gamesPlan = Test-FoundationSystemsShardPlan -ExpectedIds (Get-FoundationGamesCheckIds) -Shards (Get-FoundationGamesShardPlan)
 Assert-True $gamesPlan.valid ("Production games shard plan is invalid: " + (@($gamesPlan.errors) -join " | "))
+$contractsPlan = Test-FoundationSystemsShardPlan -ExpectedIds (Get-FoundationContractsCheckIds) -Shards (Get-FoundationContractsShardPlan)
+Assert-True $contractsPlan.valid ("Production contracts shard plan is invalid: " + (@($contractsPlan.errors) -join " | "))
 
 $runnerSource = Get-Content -LiteralPath (Join-Path (Split-Path -Parent $PSScriptRoot) "scripts/tests/foundation/check_core_content.gd") -Raw
 $systemsMatch = [regex]::Match($runnerSource, '(?s)func _foundation_run_system_suite\(.*?(?=\nfunc _foundation_run_all_suite\()')
@@ -24,6 +26,24 @@ $gamesMatch = [regex]::Match($runnerSource, '(?s)\t\t"games":(.*?)(?=\n\t\t"syst
 Assert-True $gamesMatch.Success "Could not locate the games registration in the foundation runner source."
 $registeredGamesIds = @([regex]::Matches($gamesMatch.Value, '_foundation_run_check\(report, failures, "([^"]+)"') | ForEach-Object { $_.Groups[1].Value })
 Assert-True (($registeredGamesIds -join "|") -eq ((Get-FoundationGamesCheckIds) -join "|")) "Shard manifest diverged from the games registration or changed its canonical order."
+$contractsMatch = [regex]::Match($runnerSource, '(?s)func _foundation_run_contract_suite\(.*?(?=\nfunc _foundation_run_system_suite\()')
+Assert-True $contractsMatch.Success "Could not locate the contracts registration in the foundation runner source."
+$registeredContractsIds = @([regex]::Matches($contractsMatch.Value, '_foundation_run_check\(report, failures, "([^"]+)"') | ForEach-Object { $_.Groups[1].Value })
+Assert-True (($registeredContractsIds -join "|") -eq ((Get-FoundationContractsCheckIds) -join "|")) "Shard manifest diverged from the contracts registration or changed its canonical order."
+
+. (Join-Path $PSScriptRoot "split_test_runner_helpers.ps1")
+$compositionFixture = @(
+    "extends SceneTree",
+    "func _required_helper() -> void:",
+    "`tpass"
+)
+$validComposition = Test-SplitTestRunnerComposition -Lines $compositionFixture -RequiredSymbols @("_required_helper")
+Assert-True $validComposition.valid "Valid split-runner composition was rejected."
+$missingHelperComposition = Test-SplitTestRunnerComposition -Lines $compositionFixture -RequiredSymbols @("_required_helper", "_missing_helper")
+Assert-True (-not $missingHelperComposition.valid) "Hostile split runner missing a required helper was accepted."
+Assert-True ((@($missingHelperComposition.errors) -join " | ").Contains("_missing_helper")) "Missing-helper composition diagnostic lost the exact helper name."
+$duplicateComposition = Test-SplitTestRunnerComposition -Lines @($compositionFixture + @("func _required_helper() -> void:", "`tpass")) -RequiredSymbols @("_required_helper")
+Assert-True (-not $duplicateComposition.valid) "Hostile split runner with a duplicate helper was accepted."
 
 $missingPlan = [ordered]@{ first = @("alpha"); second = @() }
 $missingResult = Test-FoundationSystemsShardPlan -ExpectedIds @("alpha", "beta") -Shards $missingPlan
@@ -78,6 +98,12 @@ $noReport = Merge-FoundationSystemsShardReports -ExpectedIds @("alpha") -ShardRe
 )
 Assert-True (-not $noReport.passed) "Missing child report was accepted."
 Assert-True ($noReport.report.last_started_check -eq "alpha") "Missing-report aggregate dropped stdout-derived last-started evidence."
+
+$scriptErrorReport = Merge-FoundationSystemsShardReports -ExpectedIds @("alpha") -ShardResults @(
+    [pscustomobject]@{ shard_id = "script_error"; expected_check_ids = @("alpha"); exit_code = 127; raw_exit_code = 0; timed_out = $false; duration_msec = 1; report = $null; report_path = "script-error.json"; stdout_path = "script-error.out"; stderr_path = "script-error.err"; stderr_issues = @("SCRIPT ERROR: Parse Error: hostile missing helper"); last_started_check = "" }
+)
+Assert-True (-not $scriptErrorReport.passed -and $scriptErrorReport.exit_code -ne 0) "Parse/script error was allowed to produce PASS or exit zero."
+Assert-True ((@($scriptErrorReport.report.failures) -join " | ").Contains("emitted 1 error/warning")) "Script-error aggregate dropped the fail-closed stderr diagnostic."
 
 $orderDriftReport = [pscustomobject]@{
     tool = "foundation_check"; suite = "systems"; passed = $true; failure_count = 0; failures = @();

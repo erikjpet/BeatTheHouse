@@ -13451,9 +13451,8 @@ func _complete_delivery_handoff(node_id: String) -> bool:
 			var actions := _copy_array(object_data.get("scenario_sequence_actions", []))
 			if actions.is_empty() or typeof(actions[0]) != TYPE_DICTIONARY: continue
 			return _activate_world_sequence_action(owner_token, object_data, actions[0] as Dictionary)
-		_show_message("The mounted handoff action is not currently available.")
-		_refresh()
-		return false
+		# A cleaned sequence leaves an audited owner tombstone. If no live owned
+		# action remains, the canonical delivery object must still complete.
 	var result := run_state.delivery_complete_handoff(node_id)
 	if not bool(result.get("ok", false)):
 		_show_message(str(result.get("message", "This is not the marked handoff.")))

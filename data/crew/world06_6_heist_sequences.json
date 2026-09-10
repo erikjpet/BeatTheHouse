@@ -19,7 +19,7 @@
             "mode": "exclusive"
           },
           {
-            "target": "crew::heist_count_setup_status",
+            "target": "crew::heist_count_setup",
             "property": "interaction_ops",
             "mode": "exclusive"
           },
@@ -83,10 +83,10 @@
                       "op": "add",
                       "receipt_id": "mount_heist_count_setup_status",
                       "owner_namespace": "crew",
-                      "stable_object_id": "heist_count_setup_status",
+                      "stable_object_id": "heist_count_setup",
                       "interaction": {
                         "owner_namespace": "crew",
-                        "stable_object_id": "heist_count_setup_status",
+                      "stable_object_id": "heist_count_setup",
                         "label": "Read the Count setup",
                         "state_label": "Host staged",
                         "prompt": "The cage schedule and swap-cart route sit under separate lamps.",
@@ -202,7 +202,7 @@
                   "op": "remove",
                   "receipt_id": "cleanup_heist_count_setup_status",
                   "owner_namespace": "crew",
-                  "stable_object_id": "heist_count_setup_status"
+                  "stable_object_id": "heist_count_setup"
                 }
               ]
             },
@@ -252,7 +252,7 @@
               "environment_composition",
               "privacy_safe"
             ],
-            "sequence_signature": "17eb8197e3962f6cc2e27f64d7b71c0eec62db786d986967c33c483b774c1c5e",
+            "sequence_signature": "c3177ac3df451d487839b1622a1c88487222575c684bc1f38836cd5e1bf51928",
             "owner_exceptions": [
               {
                 "row": "world_connection",
@@ -263,6 +263,36 @@
               {
                 "row": "primary_verb",
                 "reason": "The production Event, Game, cage, and Delivery hosts retain all heist verbs; this package only materializes their public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "scenario_interaction",
+                "reason": "The production heist host owns scenario interaction; this overlay only materializes its public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "action_boundaries",
+                "reason": "The production heist host owns action boundaries; this overlay only materializes its public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "choice_or_failure",
+                "reason": "The production heist host owns choices and failures; this overlay only materializes their public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "material_outcomes",
+                "reason": "The production heist host owns material outcomes; this overlay only materializes their public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "feedback_and_exit",
+                "reason": "The production room owns feedback and exits; this overlay only materializes their public evidence.",
                 "owner": "finish06_0",
                 "approved_on": "2026-08-28"
               }
@@ -310,7 +340,7 @@
             "mode": "exclusive"
           },
           {
-            "target": "crew::heist_count_play_status",
+            "target": "crew::heist_count_play",
             "property": "interaction_ops",
             "mode": "exclusive"
           },
@@ -374,10 +404,10 @@
                       "op": "add",
                       "receipt_id": "mount_heist_count_play_status",
                       "owner_namespace": "crew",
-                      "stable_object_id": "heist_count_play_status",
+                      "stable_object_id": "heist_count_play",
                       "interaction": {
                         "owner_namespace": "crew",
-                        "stable_object_id": "heist_count_play_status",
+                        "stable_object_id": "heist_count_play",
                         "label": "Read the live Count",
                         "state_label": "Host staged",
                         "prompt": "A deliberately ordinary blackjack table holds Bishop's three live decisions.",
@@ -493,7 +523,7 @@
                   "op": "remove",
                   "receipt_id": "cleanup_heist_count_play_status",
                   "owner_namespace": "crew",
-                  "stable_object_id": "heist_count_play_status"
+                  "stable_object_id": "heist_count_play"
                 }
               ]
             },
@@ -543,7 +573,7 @@
               "environment_composition",
               "privacy_safe"
             ],
-            "sequence_signature": "f8cdaa9426c2f3c00f803a46e3a922a5d2672e5312fd403ba5416a2aeff080a7",
+            "sequence_signature": "e12b313cda0fa6ae34f9ad67320661f85355d74e2096a86832ad11fa82a59e48",
             "owner_exceptions": [
               {
                 "row": "world_connection",
@@ -554,6 +584,36 @@
               {
                 "row": "primary_verb",
                 "reason": "The production Event, Game, cage, and Delivery hosts retain all heist verbs; this package only materializes their public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "scenario_interaction",
+                "reason": "The production heist host owns scenario interaction; this overlay only materializes its public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "action_boundaries",
+                "reason": "The production heist host owns action boundaries; this overlay only materializes its public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "choice_or_failure",
+                "reason": "The production heist host owns choices and failures; this overlay only materializes their public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "material_outcomes",
+                "reason": "The production heist host owns material outcomes; this overlay only materializes their public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "feedback_and_exit",
+                "reason": "The production room owns feedback and exits; this overlay only materializes their public evidence.",
                 "owner": "finish06_0",
                 "approved_on": "2026-08-28"
               }
@@ -601,7 +661,7 @@
             "mode": "exclusive"
           },
           {
-            "target": "crew::heist_count_getaway_status",
+            "target": "crew::heist_count_getaway",
             "property": "interaction_ops",
             "mode": "exclusive"
           },
@@ -665,10 +725,10 @@
                       "op": "add",
                       "receipt_id": "mount_heist_count_getaway_status",
                       "owner_namespace": "crew",
-                      "stable_object_id": "heist_count_getaway_status",
+                      "stable_object_id": "heist_count_getaway",
                       "interaction": {
                         "owner_namespace": "crew",
-                        "stable_object_id": "heist_count_getaway_status",
+                        "stable_object_id": "heist_count_getaway",
                         "label": "Read the marked exits",
                         "state_label": "Host staged",
                         "prompt": "Dock paint and the earned service-corridor marker stay physically distinct.",
@@ -784,7 +844,7 @@
                   "op": "remove",
                   "receipt_id": "cleanup_heist_count_getaway_status",
                   "owner_namespace": "crew",
-                  "stable_object_id": "heist_count_getaway_status"
+                  "stable_object_id": "heist_count_getaway"
                 }
               ]
             },
@@ -834,7 +894,7 @@
               "environment_composition",
               "privacy_safe"
             ],
-            "sequence_signature": "7c2ac5f141c6f8459d97b1c76dad2b652569e3740eb810d55d6594d3e188a78d",
+            "sequence_signature": "61fdfae6a2d40bf24e8e65fbdf97c99bb6706385376189bdd333f6bc7b43818e",
             "owner_exceptions": [
               {
                 "row": "world_connection",
@@ -845,6 +905,36 @@
               {
                 "row": "primary_verb",
                 "reason": "The production Event, Game, cage, and Delivery hosts retain all heist verbs; this package only materializes their public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "scenario_interaction",
+                "reason": "The production heist host owns scenario interaction; this overlay only materializes its public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "action_boundaries",
+                "reason": "The production heist host owns action boundaries; this overlay only materializes its public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "choice_or_failure",
+                "reason": "The production heist host owns choices and failures; this overlay only materializes their public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "material_outcomes",
+                "reason": "The production heist host owns material outcomes; this overlay only materializes their public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "feedback_and_exit",
+                "reason": "The production room owns feedback and exits; this overlay only materializes their public evidence.",
                 "owner": "finish06_0",
                 "approved_on": "2026-08-28"
               }
@@ -892,7 +982,7 @@
             "mode": "exclusive"
           },
           {
-            "target": "crew::heist_whale_setup_status",
+            "target": "crew::heist_whale_setup",
             "property": "interaction_ops",
             "mode": "exclusive"
           },
@@ -956,10 +1046,10 @@
                       "op": "add",
                       "receipt_id": "mount_heist_whale_setup_status",
                       "owner_namespace": "crew",
-                      "stable_object_id": "heist_whale_setup_status",
+                      "stable_object_id": "heist_whale_setup",
                       "interaction": {
                         "owner_namespace": "crew",
-                        "stable_object_id": "heist_whale_setup_status",
+                        "stable_object_id": "heist_whale_setup",
                         "label": "Read the Whale setup",
                         "state_label": "Host staged",
                         "prompt": "The vouch, the setting rig, and the borrowed name occupy three public stations.",
@@ -1075,7 +1165,7 @@
                   "op": "remove",
                   "receipt_id": "cleanup_heist_whale_setup_status",
                   "owner_namespace": "crew",
-                  "stable_object_id": "heist_whale_setup_status"
+                  "stable_object_id": "heist_whale_setup"
                 }
               ]
             },
@@ -1125,7 +1215,7 @@
               "environment_composition",
               "privacy_safe"
             ],
-            "sequence_signature": "122e2f2bd52136d9911522cca53c2a95e8f18a537b85db5ccff0a7232a271044",
+            "sequence_signature": "4ea82138b3e284b280f442de90f6c0e2e9ffa270f8f6829282ecf3d72db4ee87",
             "owner_exceptions": [
               {
                 "row": "world_connection",
@@ -1136,6 +1226,36 @@
               {
                 "row": "primary_verb",
                 "reason": "The production Event, Game, cage, and Delivery hosts retain all heist verbs; this package only materializes their public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "scenario_interaction",
+                "reason": "The production heist host owns scenario interaction; this overlay only materializes its public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "action_boundaries",
+                "reason": "The production heist host owns action boundaries; this overlay only materializes its public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "choice_or_failure",
+                "reason": "The production heist host owns choices and failures; this overlay only materializes their public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "material_outcomes",
+                "reason": "The production heist host owns material outcomes; this overlay only materializes their public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "feedback_and_exit",
+                "reason": "The production room owns feedback and exits; this overlay only materializes their public evidence.",
                 "owner": "finish06_0",
                 "approved_on": "2026-08-28"
               }
@@ -1183,7 +1303,7 @@
             "mode": "exclusive"
           },
           {
-            "target": "crew::heist_whale_play_status",
+            "target": "crew::heist_whale_play",
             "property": "interaction_ops",
             "mode": "exclusive"
           },
@@ -1247,10 +1367,10 @@
                       "op": "add",
                       "receipt_id": "mount_heist_whale_play_status",
                       "owner_namespace": "crew",
-                      "stable_object_id": "heist_whale_play_status",
+                      "stable_object_id": "heist_whale_play",
                       "interaction": {
                         "owner_namespace": "crew",
-                        "stable_object_id": "heist_whale_play_status",
+                        "stable_object_id": "heist_whale_play",
                         "label": "Read the invitational",
                         "state_label": "Host staged",
                         "prompt": "The three-game invitational advances around one visible pot under Rourke's attention.",
@@ -1366,7 +1486,7 @@
                   "op": "remove",
                   "receipt_id": "cleanup_heist_whale_play_status",
                   "owner_namespace": "crew",
-                  "stable_object_id": "heist_whale_play_status"
+                  "stable_object_id": "heist_whale_play"
                 }
               ]
             },
@@ -1416,7 +1536,7 @@
               "environment_composition",
               "privacy_safe"
             ],
-            "sequence_signature": "5bccf8827a6f989be788925e32ee9b10d7884174db0a5470069b10bcfa434ccd",
+            "sequence_signature": "1cbc31d708a401431cfe72a5f644e7f575d165717a337ccfaf7c1ff48f22571f",
             "owner_exceptions": [
               {
                 "row": "world_connection",
@@ -1427,6 +1547,36 @@
               {
                 "row": "primary_verb",
                 "reason": "The production Event, Game, cage, and Delivery hosts retain all heist verbs; this package only materializes their public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "scenario_interaction",
+                "reason": "The production heist host owns scenario interaction; this overlay only materializes its public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "action_boundaries",
+                "reason": "The production heist host owns action boundaries; this overlay only materializes its public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "choice_or_failure",
+                "reason": "The production heist host owns choices and failures; this overlay only materializes their public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "material_outcomes",
+                "reason": "The production heist host owns material outcomes; this overlay only materializes their public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "feedback_and_exit",
+                "reason": "The production room owns feedback and exits; this overlay only materializes their public evidence.",
                 "owner": "finish06_0",
                 "approved_on": "2026-08-28"
               }
@@ -1474,7 +1624,7 @@
             "mode": "exclusive"
           },
           {
-            "target": "crew::heist_whale_interview_status",
+            "target": "crew::heist_whale_interview",
             "property": "interaction_ops",
             "mode": "exclusive"
           },
@@ -1538,10 +1688,10 @@
                       "op": "add",
                       "receipt_id": "mount_heist_whale_interview_status",
                       "owner_namespace": "crew",
-                      "stable_object_id": "heist_whale_interview_status",
+                      "stable_object_id": "heist_whale_interview",
                       "interaction": {
                         "owner_namespace": "crew",
-                        "stable_object_id": "heist_whale_interview_status",
+                        "stable_object_id": "heist_whale_interview",
                         "label": "Read the cage interview",
                         "state_label": "Host staged",
                         "prompt": "The cage window holds the pot and a checkable receipt while Rourke waits.",
@@ -1657,7 +1807,7 @@
                   "op": "remove",
                   "receipt_id": "cleanup_heist_whale_interview_status",
                   "owner_namespace": "crew",
-                  "stable_object_id": "heist_whale_interview_status"
+                  "stable_object_id": "heist_whale_interview"
                 }
               ]
             },
@@ -1707,7 +1857,7 @@
               "environment_composition",
               "privacy_safe"
             ],
-            "sequence_signature": "e8e2930d37f58c34e2d6ee3d62b972447284ee07b2b0d170cb76a8b1ac9950e1",
+            "sequence_signature": "11c6cd5a1071c2d865e66432b3c0045c9e2f8baa2ef1b035752cfc9cbb37ff6b",
             "owner_exceptions": [
               {
                 "row": "world_connection",
@@ -1718,6 +1868,36 @@
               {
                 "row": "primary_verb",
                 "reason": "The production Event, Game, cage, and Delivery hosts retain all heist verbs; this package only materializes their public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "scenario_interaction",
+                "reason": "The production heist host owns scenario interaction; this overlay only materializes its public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "action_boundaries",
+                "reason": "The production heist host owns action boundaries; this overlay only materializes its public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "choice_or_failure",
+                "reason": "The production heist host owns choices and failures; this overlay only materializes their public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "material_outcomes",
+                "reason": "The production heist host owns material outcomes; this overlay only materializes their public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "feedback_and_exit",
+                "reason": "The production room owns feedback and exits; this overlay only materializes their public evidence.",
                 "owner": "finish06_0",
                 "approved_on": "2026-08-28"
               }
@@ -1765,7 +1945,7 @@
             "mode": "exclusive"
           },
           {
-            "target": "crew::heist_whale_getaway_status",
+            "target": "crew::heist_whale_getaway",
             "property": "interaction_ops",
             "mode": "exclusive"
           },
@@ -1829,10 +2009,10 @@
                       "op": "add",
                       "receipt_id": "mount_heist_whale_getaway_status",
                       "owner_namespace": "crew",
-                      "stable_object_id": "heist_whale_getaway_status",
+                      "stable_object_id": "heist_whale_getaway",
                       "interaction": {
                         "owner_namespace": "crew",
-                        "stable_object_id": "heist_whale_getaway_status",
+                        "stable_object_id": "heist_whale_getaway",
                         "label": "Read the Whale exit",
                         "state_label": "Host staged",
                         "prompt": "The front door remains clean unless the settled table and interview made the exit hot.",
@@ -1948,7 +2128,7 @@
                   "op": "remove",
                   "receipt_id": "cleanup_heist_whale_getaway_status",
                   "owner_namespace": "crew",
-                  "stable_object_id": "heist_whale_getaway_status"
+                  "stable_object_id": "heist_whale_getaway"
                 }
               ]
             },
@@ -1998,7 +2178,7 @@
               "environment_composition",
               "privacy_safe"
             ],
-            "sequence_signature": "5b38b667f92c2d56288bc5eb6043426ab4a470204c89d1cd7c02a4924e5cc6cb",
+            "sequence_signature": "eb264f33a6d91efdcb3d145abdcb84f7a5ec675ef0d46e7e40935faa197bb97b",
             "owner_exceptions": [
               {
                 "row": "world_connection",
@@ -2009,6 +2189,36 @@
               {
                 "row": "primary_verb",
                 "reason": "The production Event, Game, cage, and Delivery hosts retain all heist verbs; this package only materializes their public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "scenario_interaction",
+                "reason": "The production heist host owns scenario interaction; this overlay only materializes its public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "action_boundaries",
+                "reason": "The production heist host owns action boundaries; this overlay only materializes its public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "choice_or_failure",
+                "reason": "The production heist host owns choices and failures; this overlay only materializes their public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "material_outcomes",
+                "reason": "The production heist host owns material outcomes; this overlay only materializes their public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "feedback_and_exit",
+                "reason": "The production room owns feedback and exits; this overlay only materializes their public evidence.",
                 "owner": "finish06_0",
                 "approved_on": "2026-08-28"
               }
@@ -2056,7 +2266,7 @@
             "mode": "exclusive"
           },
           {
-            "target": "crew::heist_quiet_clue_status",
+            "target": "crew::heist_quiet_clue",
             "property": "interaction_ops",
             "mode": "exclusive"
           },
@@ -2120,10 +2330,10 @@
                       "op": "add",
                       "receipt_id": "mount_heist_quiet_clue_status",
                       "owner_namespace": "crew",
-                      "stable_object_id": "heist_quiet_clue_status",
+                      "stable_object_id": "heist_quiet_clue",
                       "interaction": {
                         "owner_namespace": "crew",
-                        "stable_object_id": "heist_quiet_clue_status",
+                        "stable_object_id": "heist_quiet_clue",
                         "label": "Read the public clue",
                         "state_label": "Host staged",
                         "prompt": "A neutral Crew voice leaves one public, checkable contradiction without naming its source.",
@@ -2239,7 +2449,7 @@
                   "op": "remove",
                   "receipt_id": "cleanup_heist_quiet_clue_status",
                   "owner_namespace": "crew",
-                  "stable_object_id": "heist_quiet_clue_status"
+                  "stable_object_id": "heist_quiet_clue"
                 }
               ]
             },
@@ -2289,7 +2499,7 @@
               "environment_composition",
               "privacy_safe"
             ],
-            "sequence_signature": "2193cb69dbdfd91b358beec61ba946db8a05ba3c5b7970aaa669868cab35796f",
+            "sequence_signature": "2007686079141ca8deaca98de2aa8f42640d93f30bfe2e9210ebfde76fc85f12",
             "owner_exceptions": [
               {
                 "row": "world_connection",
@@ -2300,6 +2510,36 @@
               {
                 "row": "primary_verb",
                 "reason": "The production Event, Game, cage, and Delivery hosts retain all heist verbs; this package only materializes their public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "scenario_interaction",
+                "reason": "The production heist host owns scenario interaction; this overlay only materializes its public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "action_boundaries",
+                "reason": "The production heist host owns action boundaries; this overlay only materializes its public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "choice_or_failure",
+                "reason": "The production heist host owns choices and failures; this overlay only materializes their public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "material_outcomes",
+                "reason": "The production heist host owns material outcomes; this overlay only materializes their public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "feedback_and_exit",
+                "reason": "The production room owns feedback and exits; this overlay only materializes their public evidence.",
                 "owner": "finish06_0",
                 "approved_on": "2026-08-28"
               }
@@ -2347,7 +2587,7 @@
             "mode": "exclusive"
           },
           {
-            "target": "crew::heist_closed_door_status",
+            "target": "crew::heist_closed_door",
             "property": "interaction_ops",
             "mode": "exclusive"
           },
@@ -2411,10 +2651,10 @@
                       "op": "add",
                       "receipt_id": "mount_heist_closed_door_status",
                       "owner_namespace": "crew",
-                      "stable_object_id": "heist_closed_door_status",
+                      "stable_object_id": "heist_closed_door",
                       "interaction": {
                         "owner_namespace": "crew",
-                        "stable_object_id": "heist_closed_door_status",
+                        "stable_object_id": "heist_closed_door",
                         "label": "Read the confrontation",
                         "state_label": "Host staged",
                         "prompt": "One closed chair and a neutral Crew voice stage the confrontation without exposing private terms.",
@@ -2530,7 +2770,7 @@
                   "op": "remove",
                   "receipt_id": "cleanup_heist_closed_door_status",
                   "owner_namespace": "crew",
-                  "stable_object_id": "heist_closed_door_status"
+                  "stable_object_id": "heist_closed_door"
                 }
               ]
             },
@@ -2580,7 +2820,7 @@
               "environment_composition",
               "privacy_safe"
             ],
-            "sequence_signature": "71cd8d3c622431b8790a02d20f822b99a8bead2683263d7f2e0953ea0a32824c",
+            "sequence_signature": "7b69e50fb4c2246d4ab0b5684147420c98f3d632fb8dc6dbcfb2011a242d8ed7",
             "owner_exceptions": [
               {
                 "row": "world_connection",
@@ -2591,6 +2831,36 @@
               {
                 "row": "primary_verb",
                 "reason": "The production Event, Game, cage, and Delivery hosts retain all heist verbs; this package only materializes their public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "scenario_interaction",
+                "reason": "The production heist host owns scenario interaction; this overlay only materializes its public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "action_boundaries",
+                "reason": "The production heist host owns action boundaries; this overlay only materializes its public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "choice_or_failure",
+                "reason": "The production heist host owns choices and failures; this overlay only materializes their public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "material_outcomes",
+                "reason": "The production heist host owns material outcomes; this overlay only materializes their public evidence.",
+                "owner": "finish06_0",
+                "approved_on": "2026-08-28"
+              },
+              {
+                "row": "feedback_and_exit",
+                "reason": "The production room owns feedback and exits; this overlay only materializes their public evidence.",
                 "owner": "finish06_0",
                 "approved_on": "2026-08-28"
               }

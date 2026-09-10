@@ -84,13 +84,43 @@ static func check_static(library: Variant, failures: Array) -> void:
 	_check(library, failures, false)
 
 
-static func _check(library: Variant, failures: Array, include_hidden_state_matrix: bool) -> void:
+static func check_partial_restore(library: Variant, failures: Array) -> void:
+	var definitions := _scenario_definitions(library)
+	if definitions.size() != EXPECTED_SCENARIOS:
+		failures.append("env06_8 partial restore expected %d scenario definitions, got %d." % [EXPECTED_SCENARIOS, definitions.size()])
+		return
+	_check_partial_scenario_save_restore(library, definitions, failures)
+
+
+static func check_hidden_state_partition(library: Variant, failures: Array, partition_index: int, partition_count: int) -> void:
+	var definitions := _scenario_definitions(library)
+	if definitions.size() != EXPECTED_SCENARIOS:
+		failures.append("env06_8 hidden-state partition expected %d scenario definitions, got %d." % [EXPECTED_SCENARIOS, definitions.size()])
+		return
+	if partition_count <= 0 or partition_index < 0 or partition_index >= partition_count:
+		failures.append("env06_8 hidden-state partition has invalid bounds %d/%d." % [partition_index, partition_count])
+		return
+	var selected: Array = []
+	for definition_index in range(definitions.size()):
+		if definition_index % partition_count == partition_index:
+			selected.append(definitions[definition_index])
+	_check_hidden_state_neutrality(library, selected, failures)
+
+
+static func _scenario_definitions(library: Variant) -> Array:
 	var definitions: Array = []
 	for pool_value in library.environment_scenarios.values():
 		for definition_value in _array(pool_value):
-			if typeof(definition_value) != TYPE_DICTIONARY: continue
+			if typeof(definition_value) != TYPE_DICTIONARY:
+				continue
 			var definition := SequenceCatalogScript.apply_overlay(definition_value as Dictionary, library.scenario_sequence_catalog)
-			if not _dict(definition.get("sequence", {})).is_empty(): definitions.append(definition)
+			if not _dict(definition.get("sequence", {})).is_empty():
+				definitions.append(definition)
+	return definitions
+
+
+static func _check(library: Variant, failures: Array, include_hidden_state_matrix: bool) -> void:
+	var definitions := _scenario_definitions(library)
 	if definitions.size() != EXPECTED_SCENARIOS:
 		failures.append("env06_8 expected %d scenario definitions, got %d." % [EXPECTED_SCENARIOS, definitions.size()])
 		return

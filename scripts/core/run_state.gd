@@ -44,6 +44,7 @@ const SCENARIO_UNCONSUMED_DYNAMIC_INTERACTION_SOURCES := [
 	"numbers_state.venue_status",
 	"numbers_state.silas_presence",
 	"active_delivery_run.handoff_pending_node_id",
+	"event_ids",
 ]
 const SCENARIO_DERIVED_NONCAUSAL_ENVIRONMENT_FIELDS := [
 	"scenario_sequence_projection",
@@ -352,10 +353,10 @@ var crew_grievance_ledger: Array = []
 var crew_jobs: Dictionary = {}
 var crew_grievance_sequence: int = 0
 var crew_job_sequence: int = 0
-var _crew_job_host_capability: RefCounted
-var _crew_recruitment_host_capability: RefCounted
-var _world1_host_capability: RefCounted
-var _crew_heist_host_capability: RefCounted
+var _crew_job_host_capability: RefCounted = RefCounted.new()
+var _crew_recruitment_host_capability: RefCounted = RefCounted.new()
+var _world1_host_capability: RefCounted = RefCounted.new()
+var _crew_heist_host_capability: RefCounted = RefCounted.new()
 var _crew_heist_private_capsule := ""
 var _crew_heist_private_fingerprint := ""
 # A RunState can be populated by small host/test fixtures before start_new().
@@ -1682,6 +1683,7 @@ func set_environment(environment_data: Dictionary, debug_timing: Dictionary = {}
 		debug_timing["source_persist"] = Time.get_ticks_usec() - perf_stage_started_usec
 		perf_stage_started_usec = Time.get_ticks_usec()
 	current_environment = _normalize_environment(environment_data)
+	_retain_world_sequences_bound_to_environment(current_environment)
 	if perf_timing_enabled:
 		debug_timing["destination_normalize"] = Time.get_ticks_usec() - perf_stage_started_usec
 		perf_stage_started_usec = Time.get_ticks_usec()
@@ -1734,6 +1736,11 @@ func set_environment(environment_data: Dictionary, debug_timing: Dictionary = {}
 	if perf_timing_enabled:
 		debug_timing["character_chain"] = Time.get_ticks_usec() - perf_stage_started_usec
 		perf_stage_started_usec = Time.get_ticks_usec()
+	# Heist table presence is location-derived presentation, so synchronize it at
+	# installation time. Waiting for the next action boundary left the first frame
+	# at the designated table without its live event and made immediate selection
+	# fail even though the heist state was already in PLAY.
+	_crew_heist_sync_live_table_event(CrewHeistModelScript.normalize_state(crew_heist_state))
 	# The Punchline's posted board is a physical source. Arriving after the post
 	# reveals only the current published handle; it does not grant solo-route lore.
 	if numbers_state != null and str(current_environment.get("archetype_id", "")) == "small_underground_casino":
@@ -1784,6 +1791,24 @@ func set_environment(environment_data: Dictionary, debug_timing: Dictionary = {}
 	if perf_timing_enabled:
 		debug_timing["destination_models"] = Time.get_ticks_usec() - perf_stage_started_usec
 	return {"ok": true, "applied": true, "errors": []}
+
+
+func _retain_world_sequences_bound_to_environment(environment: Dictionary) -> void:
+	if not environment.has(CrewWorldSequenceAdapterScript.CONTAINER_KEY):
+		return
+	var destination_node := str(environment.get("world_node_id", environment.get("archetype_id", environment.get("id", "")))).strip_edges()
+	var container := _copy_dict(environment.get(CrewWorldSequenceAdapterScript.CONTAINER_KEY, {}))
+	var retained: Dictionary = {}
+	for token_value in container.keys():
+		var token := str(token_value)
+		var entry := _copy_dict(container.get(token_value, {}))
+		var selector := _copy_dict(entry.get("mount_selector", {}))
+		if str(selector.get("node_id", "")).strip_edges() == destination_node:
+			retained[token] = entry
+	if retained.is_empty():
+		environment.erase(CrewWorldSequenceAdapterScript.CONTAINER_KEY)
+	else:
+		environment[CrewWorldSequenceAdapterScript.CONTAINER_KEY] = retained
 
 
 func set_world_map(map_data: Dictionary) -> void:
@@ -2053,6 +2078,8 @@ func world_sequence_schedule_heist_mount(action: String, host_capability: Varian
 	if package_id.is_empty(): return {"ok": true, "inactive": true, "errors": []}
 	var entry := WorldSequencePackageCatalogScript.entry(package_id)
 	var node_id := current_world_node_id().strip_edges()
+	if action == "begin_play":
+		node_id = GRAND_CASINO_ARCHETYPE_ID if plan_id == CrewHeistModelScript.PLAN_COUNT else str(_copy_dict(CrewHeistModelScript.plan(plan_id).get("play", {})).get("venue_archetype", GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID))
 	var public_instance := "heist_scene:%d:%d:%s" % [int(state.get("locked_action", 0)), _crew_action_index(), package_id]
 	var token := CrewWorldSequenceAdapterScript.owner_token(_copy_dict(entry.get("source", {})), public_instance)
 	if entry.is_empty() or node_id.is_empty(): return {"ok": false, "errors": ["live heist sequence package or node is unavailable"]}
@@ -2111,7 +2138,11 @@ func world_sequence_activate_current_mounts() -> Dictionary:
 	if world_sequence_registrations.is_empty(): return {"ok": true, "inactive": true, "mounted": [], "errors": []}
 	if not bool(current_environment.get("scenario_semantic_ready", false)):
 		return {"ok": true, "pending": true, "mounted": [], "errors": []}
-	var node_id := current_world_node_id()
+	# Environment installation is atomic: the destination plane becomes current
+	# before the world-map cursor is committed. Mount against that physical plane,
+	# not the briefly stale cursor, or a source-room sequence can be projected onto
+	# the destination and reject otherwise valid travel.
+	var node_id := str(current_environment.get("world_node_id", current_environment.get("archetype_id", current_environment.get("id", "")))).strip_edges()
 	var mounted: Array = []
 	var errors: Array = []
 	var tokens := world_sequence_registrations.keys()
@@ -2536,6 +2567,18 @@ func _scenario_authoritative_environment_for_finalization(definition: Dictionary
 	if not sealed_source.is_empty():
 		result["event_ids"] = _copy_array(sealed_source.get("event_ids", result.get("event_ids", [])))
 		result["resolved_event_ids"] = []
+	else:
+		# Persistent EnvironmentInstance snapshots intentionally retain only the
+		# inventory version/digest, not the large derived inventory body. Restore
+		# the immutable pre-consumption event source from the causal resolved-event
+		# journal before rebuilding and authenticating that inventory.
+		var restored_event_ids := _copy_array(result.get("event_ids", []))
+		for resolved_event_id_value in _copy_array(result.get("resolved_event_ids", [])):
+			var resolved_event_id := str(resolved_event_id_value).strip_edges()
+			if not resolved_event_id.is_empty() and not restored_event_ids.has(resolved_event_id):
+				restored_event_ids.append(resolved_event_id)
+		result["event_ids"] = restored_event_ids
+		result["resolved_event_ids"] = []
 	var baseline_fields := {
 		"scenario_sequence_base_game_ids": "game_ids",
 		"scenario_sequence_base_service_ids": "service_ids",
@@ -2600,7 +2643,15 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 			or current_environment.has("scenario_semantic_digest")
 	if library == null: return _scenario_semantic_finalization_failure(["Scenario semantic finalization requires ContentLibrary."], refresh_attempt)
 	var producer_context := _scenario_base_producer_context()
-	var stamped := EnvironmentBaseSemanticRecordsScript.stamp_interactable_records(trusted_records, current_environment, library, producer_context)
+	# Trusted records are produced from the immutable pre-sequence baseline. A
+	# resolved ordinary event is intentionally absent from the live room, but it
+	# remains part of that baseline seal. Authenticate the records against the
+	# same authoritative environment that produced them; checking the consumed
+	# live event list instead made an otherwise valid departure fail closed.
+	var semantic_environment := _scenario_authoritative_environment_for_finalization(definition)
+	semantic_environment["scenario_base_producer_context"] = producer_context.duplicate(true)
+	var stamping_environment := semantic_environment if refresh_attempt else current_environment
+	var stamped := EnvironmentBaseSemanticRecordsScript.stamp_interactable_records(trusted_records, stamping_environment, library, producer_context)
 	if not bool(stamped.get("ok", false)): return _scenario_semantic_finalization_failure(_copy_array(stamped.get("errors", [])), refresh_attempt)
 	var stamped_records := _copy_array(stamped.get("records", []))
 	var produced := EnvironmentBaseSemanticRecordsScript.from_interactable_records(stamped_records)
@@ -2615,10 +2666,8 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 	actors.append_array(_copy_array(dynamic_actors.get("records", [])))
 	actors = _scenario_declared_base_records(actors, definition, ["actors"])
 	var action_digest := ScenarioSequenceRuntimeScript.base_interaction_action_authority_digest(interactions)
-	var semantic_environment := _scenario_authoritative_environment_for_finalization(definition)
-	semantic_environment["scenario_base_producer_context"] = producer_context.duplicate(true)
 	var sealed := EnvironmentSemanticInventoryScript.for_instance(semantic_environment, library, interactions, actors)
-	var prior_sealed := _copy_dict(current_environment.get("scenario_semantic_inventory", {}))
+	var prior_sealed := _scenario_prior_sealed_inventory_for_current_layer(sealed, semantic_environment, library, interactions, actors)
 	var valid_prior_identity := refresh_attempt and EnvironmentSemanticInventoryScript.validate(prior_sealed).is_empty() \
 			and str(prior_sealed.get("environment_id", "")) == str(sealed.get("environment_id", "")) \
 			and str(prior_sealed.get("layer_id", "")) == str(sealed.get("layer_id", ""))
@@ -2628,8 +2677,8 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 	# immutable inventory. During non-terminal refreshes, require exact source
 	# provenance equality before doing the same.
 	var terminal_refresh := refresh_attempt and _scenario_terminal_semantic_refresh(definition)
-	if valid_prior_identity and (terminal_refresh \
-			or _scenario_refresh_source_matches_prior(_copy_dict(prior_sealed.get("source_provenance", {})), _copy_dict(sealed.get("source_provenance", {})))):
+	var refresh_source_match := _scenario_refresh_source_matches_prior(_copy_dict(prior_sealed.get("source_provenance", {})), _copy_dict(sealed.get("source_provenance", {}))) if valid_prior_identity else false
+	if valid_prior_identity and (terminal_refresh or refresh_source_match):
 		sealed = prior_sealed
 	var inventory_errors := EnvironmentSemanticInventoryScript.validate(sealed)
 	if not inventory_errors.is_empty(): return _scenario_semantic_finalization_failure(inventory_errors, refresh_attempt)
@@ -2743,12 +2792,61 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 	return _finalized_scenario_layout_result(false, next_digest, _copy_dict(reentry.get("state", {})), stamped_records, candidate_layout)
 
 
+func _scenario_prior_sealed_inventory_for_current_layer(newly_sealed: Dictionary, semantic_environment: Dictionary, library: ContentLibrary, interactions: Array, actors: Array) -> Dictionary:
+	var top_level := _copy_dict(current_environment.get("scenario_semantic_inventory", {}))
+	if not top_level.is_empty():
+		return top_level
+	var expected_version_value: Variant = current_environment.get("scenario_semantic_inventory_version", 0)
+	var expected_digest_value: Variant = current_environment.get("scenario_semantic_digest", "")
+	if typeof(expected_version_value) != TYPE_INT or typeof(expected_digest_value) != TYPE_STRING:
+		return {}
+	var expected_version := int(expected_version_value)
+	var expected_digest := str(expected_digest_value)
+	if expected_version <= 0 or expected_digest.is_empty():
+		return {}
+	if int(newly_sealed.get("schema_version", 0)) == expected_version and str(newly_sealed.get("digest", "")) == expected_digest:
+		return newly_sealed
+	# A save-shaped restore may coincide with an authorized delivery/Numbers
+	# producer becoming visible. Rebuild the prior immutable seal by excluding
+	# only those explicitly enumerated unconsumed producers and their paired hit
+	# geometry, then accept it solely when its cryptographic reference is exactly
+	# the persisted version/digest. No derived inventory bytes need to enter saves.
+	var prior_interactions: Array = []
+	var excluded_presentation_ids: Array[String] = []
+	var resolved_event_ids := _copy_array(current_environment.get("resolved_event_ids", []))
+	for record_value in interactions:
+		var record := _copy_dict(record_value)
+		var source_field := str(record.get("source_field", ""))
+		var exclude := SCENARIO_UNCONSUMED_DYNAMIC_INTERACTION_SOURCES.has(source_field)
+		if source_field == "event_ids" and resolved_event_ids.has(str(record.get("source_record_id", ""))):
+			exclude = false
+		if exclude:
+			excluded_presentation_ids.append(str(record.get("presentation_object_id", "")))
+		else:
+			prior_interactions.append(record)
+	var prior_environment := semantic_environment.duplicate(false)
+	var prior_layout := _copy_dict(prior_environment.get("layout", {}))
+	var prior_rects := _copy_dict(prior_layout.get("object_rects", {}))
+	for presentation_id in excluded_presentation_ids:
+		if not presentation_id.is_empty():
+			prior_rects.erase(presentation_id)
+	prior_layout["object_rects"] = prior_rects
+	prior_environment["layout"] = prior_layout
+	var reconstructed := EnvironmentSemanticInventoryScript.for_instance(prior_environment, library, prior_interactions, actors)
+	if EnvironmentSemanticInventoryScript.validate(reconstructed).is_empty() \
+			and int(reconstructed.get("schema_version", 0)) == expected_version \
+			and str(reconstructed.get("digest", "")) == expected_digest:
+		return reconstructed
+	return {}
+
+
 func _scenario_refresh_source_matches_prior(prior_source: Dictionary, next_source: Dictionary) -> bool:
 	if JSON.stringify(prior_source) == JSON.stringify(next_source):
 		return true
 	var comparable_next := next_source.duplicate(true)
 	var prior_authority := _copy_array(prior_source.get("base_interaction_authority", []))
 	var next_authority: Array = []
+	var unconsumed_dynamic_presentation_ids: Array[String] = []
 	for record_value in _copy_array(next_source.get("base_interaction_authority", [])):
 		var record := _copy_dict(record_value)
 		# These records are accepted only after their closed producer has passed
@@ -2756,9 +2854,19 @@ func _scenario_refresh_source_matches_prior(prior_source: Dictionary, next_sourc
 		# unrelated runtime UI, so it cannot rewrite an existing scenario seal.
 		if SCENARIO_UNCONSUMED_DYNAMIC_INTERACTION_SOURCES.has(str(record.get("source_field", ""))) \
 				and not prior_authority.has(record):
+			unconsumed_dynamic_presentation_ids.append(str(record.get("presentation_object_id", "")))
 			continue
 		next_authority.append(record)
 	comparable_next["base_interaction_authority"] = next_authority
+	# The validated producer adds its hit rectangle at the same time as its
+	# interaction record. Excluding only the record left that paired geometry in
+	# source provenance, so a legitimate delivery handoff on a revisited layer
+	# looked like an attempt to rewrite the immutable room seal.
+	var comparable_rects := _copy_dict(comparable_next.get("layout_object_rects", {}))
+	for presentation_id in unconsumed_dynamic_presentation_ids:
+		if not presentation_id.is_empty():
+			comparable_rects.erase(presentation_id)
+	comparable_next["layout_object_rects"] = comparable_rects
 	return JSON.stringify(prior_source) == JSON.stringify(comparable_next)
 
 
@@ -2797,6 +2905,13 @@ func _scenario_canonical_base_interaction_geometry(records: Array) -> Array:
 
 func _resolve_scenario_layout_candidate(candidate: Dictionary, stamped_records: Array, definition: Dictionary, layout_context: Dictionary) -> Dictionary:
 	var projection := ScenarioEngineScript.sequence_projection(candidate, definition)
+	# A room scenario and a mounted Crew sequence occupy one authored environment
+	# plane. Compose both owner-scoped projections before layout sealing; otherwise
+	# the room scenario silently displaced a live delivery handoff even though the
+	# delivery owner still held the public channel.
+	projection = CrewWorldSequenceAdapterScript.composed_projection(candidate, _world_sequence_definition_cache, projection)
+	if not bool(projection.get("ok", true)):
+		return {"ok": false, "errors": _copy_array(projection.get("errors", ["Room and Crew sequence projection composition failed closed."]))}
 	# ScenarioLayoutResolver deep-owns every nested value it consumes and never
 	# mutates the environment argument. Only the private context field differs.
 	var layout_environment := candidate.duplicate(false)
@@ -10180,6 +10295,10 @@ func _crew_heist_sync_live_table_event(state: Dictionary) -> void:
 	if not event_ids.has("heist_live_table"):
 		event_ids.append("heist_live_table")
 		current_environment["event_ids"] = event_ids
+		# This event is a real object on the current environment plane. Give the
+		# newly appended object the same generated layout authority as every other
+		# environment event before semantic presentation is sealed.
+		current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(current_environment)
 	narrative_flags["heist_live_table_registered"] = true
 
 
@@ -11398,8 +11517,8 @@ func delivery_complete_handoff(node_id: String = "") -> Dictionary:
 func _delivery_pending_target_at(node_id: String) -> Dictionary:
 	for target_value in _copy_array(delivery_snapshot().get("targets", [])):
 		var target := _copy_dict(target_value)
-		if str(target.get("status", "pending")) == "pending":
-			return target if str(target.get("node_id", "")) == node_id else {}
+		if str(target.get("status", "pending")) == "pending" and str(target.get("node_id", "")) == node_id:
+			return target
 	return {}
 
 
