@@ -3052,7 +3052,21 @@
       {
         "id": "roll_craps",
         "label": "Roll Dice",
-        "summary": "Place line, Come, Odds, Place, or Field wagers before the throw.",
+        "summary": "Choose line, number, proposition, or true-odds wagers, then throw or call the roll.",
+        "win_chance": 0,
+        "payout_mult": 0
+      },
+      {
+        "id": "take_down_craps_bet",
+        "label": "Take Down Wager",
+        "summary": "Return a removable working wager before the next throw.",
+        "win_chance": 0,
+        "payout_mult": 0
+      },
+      {
+        "id": "pass_craps_dice",
+        "label": "Pass Dice",
+        "summary": "Pass an unstarted come-out turn clockwise to the next shooter.",
         "win_chance": 0,
         "payout_mult": 0
       }
@@ -3076,7 +3090,7 @@
       }
     ],
     "craps_config": {
-      "state_version": 1,
+      "state_version": 2,
       "minimum_stake": 5,
       "maximum_stake": 1000,
       "chip_denominations": [
@@ -3127,6 +3141,9 @@
         "max_odds_multiple": 3,
         "odds_work_on_come_out": false,
         "place_bets_work_on_come_out": false,
+        "hardways_work_on_come_out": false,
+        "proposition_minimum": 1,
+        "commission_percent": 5,
         "even_money_payout": {
           "numerator": 1,
           "denominator": 1
@@ -3156,6 +3173,20 @@
             "numerator": 2,
             "denominator": 1
           }
+        },
+        "lay_odds_payouts": {
+          "4": {"numerator": 1, "denominator": 2},
+          "5": {"numerator": 2, "denominator": 3},
+          "6": {"numerator": 5, "denominator": 6},
+          "8": {"numerator": 5, "denominator": 6},
+          "9": {"numerator": 2, "denominator": 3},
+          "10": {"numerator": 1, "denominator": 2}
+        },
+        "hardway_payouts": {
+          "4": {"numerator": 7, "denominator": 1},
+          "6": {"numerator": 9, "denominator": 1},
+          "8": {"numerator": 9, "denominator": 1},
+          "10": {"numerator": 7, "denominator": 1}
         },
         "place_payouts": {
           "4": {
@@ -3231,6 +3262,16 @@
           "The table leans toward the shooter without losing its manners.",
           "Even the quiet patrons have begun to count the points aloud."
         ]
+      },
+      "table_group": {
+        "casino_names": ["Mara", "Doyle", "Kit", "Len", "Nia", "Sol"],
+        "street_names": ["June", "Lowell", "Teeth", "Mina", "Patch", "Cal"],
+        "patron_count": 5,
+        "street_patron_count": 6,
+        "chatter_cooldown_rolls": 2,
+        "chatter_history_limit": 12,
+        "bet_ladder": [5, 10, 15, 25, 50],
+        "street_bet_ladder": [2, 4, 5, 10, 20]
       },
       "house_edge_documentation": {
         "pass_line": {
@@ -3412,7 +3453,18 @@
           "currency": "cash",
           "allowed_bets": [
             "pass_line",
-            "dont_pass"
+            "dont_pass",
+            "come",
+            "dont_come",
+            "field",
+            "pass_odds",
+            "dont_pass_odds",
+            "place_4", "place_5", "place_6", "place_8", "place_9", "place_10",
+            "buy_4", "buy_5", "buy_6", "buy_8", "buy_9", "buy_10",
+            "lay_4", "lay_5", "lay_6", "lay_8", "lay_9", "lay_10",
+            "big_6", "big_8",
+            "hard_4", "hard_6", "hard_8", "hard_10",
+            "any_seven", "any_craps", "horn", "ce", "world", "snake_eyes", "ace_deuce", "yo", "boxcars"
           ],
           "minimum_stake": 2,
           "maximum_stake": 20,

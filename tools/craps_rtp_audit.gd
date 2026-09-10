@@ -210,7 +210,19 @@ func _audit_street_pass_parity(rolls: int, run_state: RunState) -> Dictionary:
 	var variants := _dict(config.get("variants", {}))
 	var street := _dict(variants.get("street_craps", {}))
 	var allowed: Array = street.get("allowed_bets", []) if typeof(street.get("allowed_bets", [])) == TYPE_ARRAY else []
-	var structural_match := str(street.get("scenario_hook_value", "")) == "street_craps" and allowed == ["pass_line", "dont_pass"]
+	var required_full_table_bets := [
+		"pass_line", "dont_pass", "come", "dont_come", "field", "pass_odds", "dont_pass_odds",
+		"place_4", "place_5", "place_6", "place_8", "place_9", "place_10",
+		"buy_4", "buy_5", "buy_6", "buy_8", "buy_9", "buy_10",
+		"lay_4", "lay_5", "lay_6", "lay_8", "lay_9", "lay_10",
+		"big_6", "big_8", "hard_4", "hard_6", "hard_8", "hard_10",
+		"any_seven", "any_craps", "horn", "ce", "world", "snake_eyes", "ace_deuce", "yo", "boxcars",
+	]
+	var structural_match := str(street.get("scenario_hook_value", "")) == "street_craps"
+	for bet_id in required_full_table_bets:
+		if not allowed.has(bet_id):
+			structural_match = false
+			break
 	var core_row := _audit_line("core_pass_parity", "pass_line", false, rolls, run_state.create_rng("rtp:street_pass_parity"))
 	var street_row := _audit_line("street_pass_parity", "pass_line", false, rolls, run_state.create_rng("rtp:street_pass_parity"))
 	var exact := structural_match \

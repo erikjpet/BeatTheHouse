@@ -4807,6 +4807,52 @@ func _enqueue_crew_poker_table_talk(request: Dictionary) -> bool:
 	return queued
 
 
+func _enqueue_craps_table_talk(request: Dictionary) -> bool:
+	var request_game_id := str(request.get("game_id", "")).strip_edges()
+	if run_state == null or library == null or current_game == null or request_game_id.is_empty() or current_game.get_id() != request_game_id:
+		return false
+	var event_id := str(request.get("event_id", "")).strip_edges()
+	var node_id := str(request.get("node_id", "number")).strip_edges()
+	var patron_id := str(request.get("patron_id", "")).strip_edges()
+	var voice_line := str(request.get("voice_line", "")).strip_edges()
+	if event_id.is_empty() or patron_id.is_empty() or voice_line.is_empty() or not run_state.pending_talk_event(event_id).is_empty():
+		return false
+	if library.dialogue("craps_table_talk").is_empty():
+		return false
+	var speaker := _normalized_talk_speaker({
+		"role": "patron",
+		"name": str(request.get("patron_name", "Table player")),
+		"character_identity_key": patron_id,
+		"voice_line": voice_line,
+		"mood": str(request.get("mood", request.get("reaction", "animated"))),
+		"behavior": "reacting at a live craps table",
+		"silhouette": str(request.get("silhouette", "coat")),
+		"tell": str(request.get("tell", "watches the dice")),
+		"bind": "none",
+		"patron_index": int(request.get("seat_index", -1)),
+		"environment_actor": false,
+	})
+	var context := {
+		"trigger": "game_action",
+		"type": "dialogue",
+		"dialogue_id": "craps_table_talk",
+		"source": "craps_table_talk",
+		"source_object_id": "game:%s" % request_game_id,
+		"environment_snapshot": RunState.environment_context_snapshot(run_state.current_environment),
+		"ignore_penalty_heat": 0,
+		"speaker_seat_index": int(request.get("seat_index", -1)),
+		"craps_variant_id": str(request.get("variant_id", "casino_craps")),
+		"reaction": str(request.get("reaction", "number")),
+		"roll_total": int(request.get("roll_total", 0)),
+		"shooter_id": str(request.get("shooter_id", "")),
+		"address": str(request.get("address", "table")),
+	}
+	var queued := run_state.enqueue_dialogue("craps_table_talk", event_id, speaker, node_id, "game_action", context)
+	if queued:
+		_refresh_talk_dock()
+	return queued
+
+
 func _start_event_dialogue(event_id: String) -> bool:
 	if library == null:
 		return false
@@ -11719,6 +11765,9 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 	var poker_table_talk_request := _copy_dict(result.get("crew_poker_table_talk_request", {}))
 	if bool(result.get("ok", false)) and not poker_table_talk_request.is_empty():
 		_enqueue_crew_poker_table_talk(poker_table_talk_request)
+	var craps_table_talk_request := _copy_dict(result.get("craps_table_talk_request", {}))
+	if bool(result.get("ok", false)) and not craps_table_talk_request.is_empty():
+		_enqueue_craps_table_talk(craps_table_talk_request)
 	var embeds_result_feedback := _current_game_embeds_result_feedback()
 	if bool(result.get("ok", false)) and embeds_result_feedback and not runtime_tick_in_progress:
 		_begin_presented_bankroll_hold(result, bankroll_before_result, wager_cost)
@@ -19685,12 +19734,28 @@ func _sync_talk_dock_coach_avoid_rect() -> void:
 	var poker_table_talk := current_screen == SCREEN_GAME \
 		and current_game != null \
 		and str(talk_context.get("source", "")) == "crew_poker_table_talk"
+	var craps_table_talk := current_screen == SCREEN_GAME \
+		and current_game != null \
+		and str(talk_context.get("source", "")) == "craps_table_talk"
 	if poker_table_talk and game_surface_canvas != null and game_surface_canvas.visible and game_surface_canvas.has_method("global_rect_for_design_rect"):
 		var poker_seat_index := clampi(int(talk_context.get("speaker_seat_index", 0)), 0, 2)
 		var poker_seat_rects := [Rect2(82, 86, 166, 114), Rect2(398, 62, 166, 114), Rect2(654, 86, 166, 114)]
 		anchor_rect = game_surface_canvas.call("global_rect_for_design_rect", poker_seat_rects[poker_seat_index])
 		focus_x_hint = anchor_rect.get_center().x
 		focus_boundary_id = "crew_poker_seat:%d" % poker_seat_index
+	if craps_table_talk and game_surface_canvas != null and game_surface_canvas.visible and game_surface_canvas.has_method("global_rect_for_design_rect"):
+		var craps_is_street := str(talk_context.get("craps_variant_id", "")) == "street_craps"
+		var craps_seat_rects := [
+			Rect2(40, 106, 52, 90), Rect2(132, 54, 52, 90), Rect2(244, 34, 52, 90),
+			Rect2(364, 34, 52, 90), Rect2(480, 54, 52, 90), Rect2(576, 112, 52, 90),
+		] if craps_is_street else [
+			Rect2(68, 52, 52, 90), Rect2(202, 42, 52, 90), Rect2(424, 38, 52, 90),
+			Rect2(604, 42, 52, 90), Rect2(724, 52, 52, 90),
+		]
+		var craps_seat_index := clampi(int(talk_context.get("speaker_seat_index", 0)), 0, craps_seat_rects.size() - 1)
+		anchor_rect = game_surface_canvas.call("global_rect_for_design_rect", craps_seat_rects[craps_seat_index])
+		focus_x_hint = anchor_rect.get_center().x
+		focus_boundary_id = "craps_seat:%d" % craps_seat_index
 	# The player is free to open the map before Pal asks for travel. In that
 	# case the authored room/surface anchor is behind the modal and cannot keep
 	# selectable map nodes clear. Prefer any live map node currently covered by
@@ -19719,7 +19784,7 @@ func _sync_talk_dock_coach_avoid_rect() -> void:
 	var event_id := str(talk_dock.entry.get("event_id", ""))
 	var boundary_key := "%s|%s|%s" % [event_id, focus_boundary_id if not focus_boundary_id.is_empty() else "none", current_screen]
 	var protected_rects := _scenario_talk_dock_protected_rects()
-	if poker_table_talk:
+	if poker_table_talk or craps_table_talk:
 		protected_rects.append_array(_game_surface_talk_protected_rects())
 	talk_dock_avoid_sync_active = true
 	talk_dock.set_avoid_global_rect(anchor_rect, boundary_key, focus_x_hint, protected_rects)

@@ -1434,5 +1434,31 @@
         ]
       }
     }
+  },
+  {
+    "id": "craps_table_talk",
+    "display_name": "Craps Table Talk",
+    "speaker": {
+      "role": "patron",
+      "name": "Table player",
+      "character_pool_id": "crew_regulars",
+      "voice_line_key": "poker_big_pot",
+      "mood": "animated",
+      "behavior": "reacting at a live craps table",
+      "silhouette": "coat",
+      "bind": "none",
+      "environment_actor": false
+    },
+    "start": "number",
+    "nodes": {
+      "seven_out_player": {"text": "The rail turns toward you as the seven clears the layout.", "choices": [{"id": "take_the_heat", "label": "Take the heat", "effects": {}, "end": true}, {"id": "pass_the_dice", "label": "Pass the dice", "effects": {}, "end": true}]},
+      "seven_out_table": {"text": "The table groans, then opens a lane for the next shooter.", "choices": [{"id": "reset_with_them", "label": "Reset with them", "effects": {}, "end": true}]},
+      "point_made": {"text": "The point lands and the whole rail answers at once.", "choices": [{"id": "celebrate_point", "label": "Celebrate with them", "effects": {}, "end": true}, {"id": "stay_on_bets", "label": "Watch the bets", "effects": {}, "end": true}]},
+      "natural": {"text": "The come-out winner sends a cheer around the table.", "choices": [{"id": "ride_natural", "label": "Ride the noise", "effects": {}, "end": true}]},
+      "craps": {"text": "The line players groan, but nobody leaves the rail.", "choices": [{"id": "shake_off_craps", "label": "Shake it off", "effects": {}, "end": true}]},
+      "point_set": {"text": "The caller marks the point and every player leans toward the layout.", "choices": [{"id": "find_a_number", "label": "Find your number", "effects": {}, "end": true}, {"id": "back_the_shooter", "label": "Back the shooter", "effects": {}, "end": true}]},
+      "hardway": {"text": "A hardway hits and the center action erupts.", "choices": [{"id": "cheer_hardway", "label": "Cheer with the rail", "effects": {}, "end": true}]},
+      "number": {"text": "Players call their bets as the dealer moves chips across the layout.", "choices": [{"id": "keep_the_rhythm", "label": "Keep the rhythm", "effects": {}, "end": true}]}
+    }
   }
 ]

@@ -36,19 +36,39 @@ func _check_craps_surface_contract(game: GameModule, failures: Array, library: C
 		failures.append("Craps surface did not expose native controls and idle liveness.")
 	if bool(surface.get("surface_realtime_state_refresh", false)):
 		failures.append("Craps idle betting surface requested full per-frame snapshot rebuilds.")
+	if bool(surface.get("can_roll", true)) or not bool(surface.get("can_pass_dice", false)):
+		failures.append("Craps let the player shoot a come-out without a line bet or hid the zero-cost pass-dice choice.")
 	var default_chip := int(surface.get("selected_chip", 0))
 	var table_minimum := int(surface.get("table_minimum", table.get("table_minimum", 0)))
 	if default_chip < table_minimum or not _craps_array(surface.get("chip_denominations", [])).has(default_chip):
 		failures.append("Craps default chip was not a playable denomination at or above the table minimum.")
-	for target_id in ["pass_line", "dont_pass", "field", "place_4", "place_5", "place_6", "place_8", "place_9", "place_10"]:
+	for target_id in [
+		"pass_line", "dont_pass", "come", "dont_come", "field",
+		"place_4", "place_5", "place_6", "place_8", "place_9", "place_10",
+		"buy_4", "buy_5", "buy_6", "buy_8", "buy_9", "buy_10",
+		"lay_4", "lay_5", "lay_6", "lay_8", "lay_9", "lay_10",
+		"big_6", "big_8", "hard_4", "hard_6", "hard_8", "hard_10",
+		"any_seven", "any_craps", "horn", "ce", "world", "snake_eyes", "ace_deuce", "yo", "boxcars",
+	]:
 		if _craps_target_index(surface.get("bet_targets", []), target_id) < 0:
 			failures.append("Craps readable betting layout is missing %s." % target_id)
+	if str(surface.get("surface_template", "")) != "shared_table_game_v1" or _craps_array(surface.get("patrons", [])).size() < 5 or _craps_array(surface.get("ritual_actors", [])).size() < 10:
+		failures.append("Craps did not expose the shared living-table template, full rail, and staff cast.")
 	var harness := SurfaceHarness.new()
 	harness.setup(surface)
 	if not game.draw_surface(harness, surface, {"contract_harness": true}):
 		failures.append("Craps draw_surface returned false.")
-	if _surface_hit_count(harness, "craps_bet") < 9:
-		failures.append("Craps renderer did not register the core readable bet targets.")
+	_check_craps_hit_regions_do_not_overlap(harness, "casino line page", failures)
+	if _surface_hit_count(harness, "craps_bet") < 3 or _surface_hit_count(harness, "craps_bet_page") != 4:
+		failures.append("Craps renderer did not register its visible line bets and all four wager pages.")
+	for page in ["numbers", "props"]:
+		var page_surface := game.surface_state(run_state, environment, {"craps_bet_page": page})
+		var page_harness := SurfaceHarness.new()
+		page_harness.setup(page_surface)
+		game.draw_surface(page_harness, page_surface, {"contract_harness": true})
+		_check_craps_hit_regions_do_not_overlap(page_harness, "casino %s page" % page, failures)
+		if _surface_hit_count(page_harness, "craps_bet") < (18 if page == "numbers" else 12):
+			failures.append("Craps %s page did not make every displayed wager selectable." % page)
 	var reduced_surface := game.surface_state(run_state, environment, {"reduce_motion": true})
 	_check_craps_idle_motion(game, surface, reduced_surface, failures)
 	var pass_index := _craps_target_index(surface.get("bet_targets", []), "pass_line")
@@ -56,11 +76,21 @@ func _check_craps_surface_contract(game: GameModule, failures: Array, library: C
 	var bet_ui: Dictionary = bet_command.get("ui_state", {})
 	if int(_craps_dict(bet_ui.get("craps_pending_bets", {})).get("pass_line", 0)) != 5:
 		failures.append("Craps Pass Line placement did not stage exactly one selected chip.")
+	var raised_line_command := game.surface_action_command("craps_bet", pass_index, false, bet_ui, run_state, environment)
+	if int(_craps_dict(_craps_dict(raised_line_command.get("ui_state", {})).get("craps_pending_bets", {})).get("pass_line", 0)) != 10:
+		failures.append("Craps Pass Line could not accept additional chips before the come-out roll.")
 	if game.wager_cost_for_context("roll_craps", 0, run_state, environment, bet_ui) != 5:
 		failures.append("Craps wager cost did not reflect newly staged bets only.")
 	var roll_command := game.surface_action_command("craps_roll", 0, false, bet_ui, run_state, environment)
 	if not bool(roll_command.get("resolve", false)) or str(roll_command.get("action_id", "")) != "roll_craps":
 		failures.append("Craps Roll did not resolve through the normal legal action boundary.")
+	var pass_environment := _surface_contract_environment()
+	pass_environment["archetype_id"] = RunState.GRAND_CASINO_ARCHETYPE_ID
+	pass_environment["game_states"] = {"craps": game.generate_environment_state(run_state, pass_environment, run_state.create_rng("craps_pass_contract"))}
+	var pass_command := game.surface_action_command("craps_pass_dice", 0, false, {}, run_state, pass_environment)
+	var pass_result := game.resolve_with_context("pass_craps_dice", 0, run_state, pass_environment, run_state.create_rng("craps_pass_contract_resolve"), _craps_dict(pass_command.get("ui_state", {})))
+	if not bool(pass_result.get("ok", false)) or str(_craps_dict(pass_result.get("craps_shooter", {})).get("id", "player")) == "player" or game.wager_cost_for_context("pass_craps_dice", 99, run_state, pass_environment, {}) != 0:
+		failures.append("Craps pass-dice action did not rotate clockwise through the zero-cost legal boundary.")
 
 	_check_craps_rule_matrix(game, table, failures)
 	_check_craps_save_restore(game, run_state, environment, failures)
@@ -68,6 +98,7 @@ func _check_craps_surface_contract(game: GameModule, failures: Array, library: C
 	_check_craps_cheat_contract(game, failures)
 	_check_craps_luck_contract(game, failures)
 	_check_craps_energy_projection(game, table, failures)
+	_check_craps_living_table_and_take_down(game, failures)
 	_check_craps_street_variant(game, library, failures)
 	_check_craps_casino_activation_invariant(game, failures)
 	_check_craps_currency_routing(library, failures)
@@ -115,15 +146,19 @@ func _check_craps_street_variant(game: GameModule, library: ContentLibrary, fail
 		failures.append("Street Craps info-card selection mutated a JSON-round-tripped serialized RunState before an action boundary.")
 	_check_craps_open_then_play_determinism(game, run_state, {"craps_pending_bets": {"pass_line": 2}}, 2, "Street Craps", failures)
 	var surface := game.surface_state(run_state, run_state.current_environment, {})
+	var street_harness := SurfaceHarness.new()
+	street_harness.setup(surface)
+	game.draw_surface(street_harness, surface, {"contract_harness": true})
+	_check_craps_hit_regions_do_not_overlap(street_harness, "street line page", failures)
 	var target_ids: Array = []
 	for target_value in _craps_array(surface.get("bet_targets", [])):
 		if typeof(target_value) == TYPE_DICTIONARY:
 			target_ids.append(str((target_value as Dictionary).get("id", "")))
-	if target_ids != ["pass_line", "dont_pass"] or str(surface.get("surface_cast", "")) != "circle_of_players" or str(surface.get("currency", "")) != "cash":
-		failures.append("Street Craps surface is not the cash-only, Pass/Don't Pass circle presentation.")
-	var invalid := game.resolve_with_context("roll_craps", 2, run_state, run_state.current_environment, run_state.create_rng("street_invalid"), {"craps_pending_bets": {"field": 2}})
+	if not target_ids.has("pass_line") or not target_ids.has("field") or not target_ids.has("hard_8") or not target_ids.has("any_seven") or str(surface.get("surface_cast", "")) != "circle_of_players" or str(surface.get("currency", "")) != "cash":
+		failures.append("Street Craps surface is not the full-rules, cash-only circle presentation.")
+	var invalid := game.resolve_with_context("roll_craps", 2, run_state, run_state.current_environment, run_state.create_rng("street_invalid"), {"craps_pending_bets": {"fire_bet": 2}})
 	if bool(invalid.get("ok", false)) or bool(run_state.narrative_flags.get("street_craps_guidance_seen", false)):
-		failures.append("Street Craps accepted a Field wager outside its two-line surface or consumed guidance before a successful action.")
+		failures.append("Street Craps accepted an unauthored wager or consumed guidance before a successful action.")
 	var before_chips := run_state.grand_casino_chips
 	var cash_result := game.resolve_with_context("roll_craps", 2, run_state, run_state.current_environment, run_state.create_rng("street_cash"), {"craps_pending_bets": {"pass_line": 2}})
 	if not bool(cash_result.get("ok", false)) or str(cash_result.get("currency", "")) != "cash" or run_state.grand_casino_chips != before_chips:
@@ -145,6 +180,58 @@ func _check_craps_street_variant(game: GameModule, library: ContentLibrary, fail
 	var core_surface := game.surface_state(run_state, core_environment, {})
 	if core_table.has("variant_id") or core_surface.has("craps_variant"):
 		failures.append("An environment without Street Craps retained variant traces.")
+
+
+func _check_craps_living_table_and_take_down(game: GameModule, failures: Array) -> void:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("CRAPS-LIVING-TABLE")
+	run_state.bankroll = 500
+	run_state.grand_casino_chips = 500
+	var environment := _surface_contract_environment()
+	environment["id"] = "grand_casino_craps_living_table"
+	environment["archetype_id"] = RunState.GRAND_CASINO_ARCHETYPE_ID
+	environment["kind"] = "boss"
+	environment["game_ids"] = ["craps"]
+	var table := game.generate_environment_state(run_state, environment, run_state.create_rng("craps_living_table_state"))
+	table["point"] = 6
+	table["shooter_index"] = 0
+	environment["game_states"] = {"craps": table}
+	run_state.current_environment = environment
+	var seven_result := game.resolve_with_context("roll_craps", 0, run_state, run_state.current_environment, _craps_rng_for_total(_craps_dict(table.get("rules", {})), 7), {})
+	var chatter := _craps_dict(seven_result.get("craps_table_talk_request", {}))
+	var next_shooter := _craps_dict(seven_result.get("craps_shooter", {}))
+	if str(chatter.get("reaction", "")) != "seven_out_player" or str(chatter.get("address", "")) != "player":
+		failures.append("Craps did not address the player through table talk after their seven-out.")
+	if str(next_shooter.get("id", "player")) == "player" or _craps_array(seven_result.get("craps_npc_bets", [])).size() < 5:
+		failures.append("Craps did not rotate the dice clockwise to an NPC shooter while preserving the visible group wagers.")
+	var npc_surface := game.surface_state(run_state, run_state.current_environment, {})
+	if bool(npc_surface.get("player_is_shooter", true)) or str(npc_surface.get("shooter_name", "")) == "You":
+		failures.append("Craps surface did not distinguish an NPC shooter from the player's tactile throw turn.")
+
+	var states := _craps_dict(run_state.current_environment.get("game_states", {}))
+	var live_table := _craps_dict(states.get("craps", {}))
+	live_table["point"] = 6
+	var working := _craps_dict(live_table.get("working_bets", {}))
+	working["place"] = {"6": 12}
+	live_table["working_bets"] = working
+	states["craps"] = live_table
+	run_state.current_environment["game_states"] = states
+	var settled_ui := {"surface_time_msec": run_state.simulation_time_msec() + 5000}
+	var selected_command := game.surface_action_command("craps_working_select", 0, false, settled_ui, run_state, run_state.current_environment)
+	var selected_ui := _craps_dict(selected_command.get("ui_state", {}))
+	if str(selected_ui.get("craps_selected_working_id", "")) != "place_6":
+		failures.append("Craps working-bet row did not select the Place 6 wager.")
+	var take_command := game.surface_action_command("craps_take_down", 0, false, selected_ui, run_state, run_state.current_environment)
+	if str(take_command.get("action_id", "")) != "take_down_craps_bet" or game.wager_cost_for_context("take_down_craps_bet", 99, run_state, run_state.current_environment, _craps_dict(take_command.get("ui_state", {}))) != 0:
+		failures.append("Craps TAKE DOWN did not use its zero-cost legal action boundary.")
+	var chips_before := run_state.grand_casino_chips
+	var cash_before := run_state.bankroll
+	var take_result := game.resolve_with_context("take_down_craps_bet", 0, run_state, run_state.current_environment, run_state.create_rng("craps_take_down"), _craps_dict(take_command.get("ui_state", {})))
+	var table_after := _craps_dict(_craps_dict(run_state.current_environment.get("game_states", {})).get("craps", {}))
+	if not bool(take_result.get("ok", false)) or str(take_result.get("currency", "")) != "chips" or run_state.grand_casino_chips != chips_before + 12 or run_state.bankroll != cash_before:
+		failures.append("Craps TAKE DOWN did not return the working casino wager to chips without touching cash.")
+	if not _craps_dict(_craps_dict(table_after.get("working_bets", {})).get("place", {})).is_empty():
+		failures.append("Craps TAKE DOWN returned funds without removing the selected working wager.")
 
 
 func _check_craps_casino_activation_invariant(game: GameModule, failures: Array) -> void:
@@ -372,6 +459,45 @@ func _check_craps_rule_matrix(game: GameModule, base_table: Dictionary, failures
 	var off_place := CrapsRulesScript.settle_roll(off_place_table, {}, _craps_roll(6), rules)
 	if int(off_place.get("bankroll_delta", -1)) != 0 or int(_craps_dict(_craps_dict(off_place_table.get("working_bets", {})).get("place", {})).get("6", 0)) != 6:
 		failures.append("Craps Place wager did not remain off and working through a come-out roll.")
+	var dont_odds_table := _craps_rule_table(base_table, 4, {"dont_pass": 10, "dont_pass_odds": 20})
+	var dont_odds := CrapsRulesScript.settle_roll(dont_odds_table, {}, _craps_roll(7), rules)
+	if int(dont_odds.get("bankroll_delta", 0)) != 50:
+		failures.append("Craps Don't Pass lay odds did not pay the inverse true odds with the line wager.")
+	var dont_come_odds_table := _craps_rule_table(base_table, 6, {"dont_come": {"5": 10}, "dont_come_odds": {"5": 15}})
+	var dont_come_odds := CrapsRulesScript.settle_roll(dont_come_odds_table, {}, _craps_roll(7), rules)
+	if int(dont_come_odds.get("bankroll_delta", 0)) != 45:
+		failures.append("Craps traveled Don't Come odds did not pay and clear on seven.")
+	var buy_table := _craps_rule_table(base_table, 5, {"buy": {"4": 10}})
+	if int(CrapsRulesScript.settle_roll(buy_table, {}, _craps_roll(4), rules).get("bankroll_delta", 0)) != 19:
+		failures.append("Craps Buy 4 did not pay true odds less the authored five-percent win commission.")
+	var buy_five_table := _craps_rule_table(base_table, 6, {"buy": {"5": 20}})
+	if int(CrapsRulesScript.settle_roll(buy_five_table, {}, _craps_roll(5), rules).get("bankroll_delta", 0)) != 29:
+		failures.append("Craps Buy commission was not based on the amount wagered.")
+	var lay_table := _craps_rule_table(base_table, 5, {"lay": {"4": 10}})
+	if int(CrapsRulesScript.settle_roll(lay_table, {}, _craps_roll(7), rules).get("bankroll_delta", 0)) != 4:
+		failures.append("Craps Lay 4 did not pay inverse odds less the authored five-percent win commission.")
+	var hardway_table := _craps_rule_table(base_table, 5, {"hardways": {"6": 5}})
+	var hardway_roll := {"dice": [3, 3], "total": 6, "initial_total": 6, "setting_bias_applied": false}
+	if int(CrapsRulesScript.settle_roll(hardway_table, {}, hardway_roll, rules).get("bankroll_delta", 0)) != 45:
+		failures.append("Craps Hard 6 did not pay 9:1 and remain working after the pair.")
+	var proposition_table := _craps_rule_table(base_table, 6, {})
+	if int(CrapsRulesScript.settle_roll(proposition_table, {"any_seven": 5}, _craps_roll(7), rules).get("bankroll_delta", 0)) != 20:
+		failures.append("Craps one-roll Any Seven proposition did not pay 4:1.")
+	var horn_table := _craps_rule_table(base_table, 6, {})
+	if int(CrapsRulesScript.settle_roll(horn_table, {"horn": 4}, _craps_roll(12), rules).get("bankroll_delta", 0)) != 27:
+		failures.append("Craps four-way Horn wager did not allocate and net correctly on boxcars.")
+	var ce_table := _craps_rule_table(base_table, 6, {})
+	if int(CrapsRulesScript.settle_roll(ce_table, {"ce": 5}, _craps_roll(11), rules).get("bankroll_delta", 0)) != 35:
+		failures.append("Craps C & E did not pay its posted whole-wager return on eleven.")
+	var world_table := _craps_rule_table(base_table, 6, {})
+	if int(CrapsRulesScript.settle_roll(world_table, {"world": 5}, _craps_roll(7), rules).get("bankroll_delta", -1)) != 0:
+		failures.append("Craps World wager did not push when its Any Seven component covered the horn losses.")
+	var removable_table := _craps_rule_table(base_table, 6, {"pass_line": 10, "dont_pass": 10, "place": {"6": 12}})
+	if bool(CrapsRulesScript.take_down_bet(removable_table, "pass_line").get("ok", false)):
+		failures.append("Craps allowed a Pass Line contract bet to be taken down after the point.")
+	var removal := CrapsRulesScript.take_down_bet(removable_table, "place_6")
+	if not bool(removal.get("ok", false)) or int(removal.get("refund", 0)) != 12 or not _craps_dict(_craps_dict(removable_table.get("working_bets", {})).get("place", {})).is_empty():
+		failures.append("Craps did not return and remove a selected working Place wager.")
 	var minimum := int(base_table.get("table_minimum", 1))
 	var maximum := int(base_table.get("table_maximum", minimum))
 	if bool(CrapsRulesScript.can_place_bet("pass_line", minimum - 1, base_table, {}, rules).get("ok", false)):
@@ -815,6 +941,21 @@ func _craps_target_index(targets_value: Variant, target_id: String) -> int:
 		if typeof(targets[index]) == TYPE_DICTIONARY and str((targets[index] as Dictionary).get("id", "")) == target_id:
 			return index
 	return -1
+
+
+func _check_craps_hit_regions_do_not_overlap(harness: SurfaceHarness, label: String, failures: Array) -> void:
+	for first_index in range(harness.hit_regions.size()):
+		var first: Dictionary = harness.hit_regions[first_index]
+		var first_rect: Rect2 = first.get("rect", Rect2())
+		if not first_rect.has_area():
+			continue
+		for second_index in range(first_index + 1, harness.hit_regions.size()):
+			var second: Dictionary = harness.hit_regions[second_index]
+			var second_rect: Rect2 = second.get("rect", Rect2())
+			if not second_rect.has_area() or not first_rect.intersection(second_rect).has_area():
+				continue
+			failures.append("Craps %s has overlapping selectable regions: %s and %s." % [label, str(first.get("action", "unknown")), str(second.get("action", "unknown"))])
+			return
 
 
 func _craps_dict(value: Variant) -> Dictionary:
