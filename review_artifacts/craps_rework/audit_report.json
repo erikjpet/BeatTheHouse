@@ -1,0 +1,24 @@
+{
+	"checks": 204,
+	"coverage": [
+		"casino and Chalk Alley surfaces",
+		"all four wager pages",
+		"all enabled wager targets",
+		"chip denominations",
+		"pending wager correction",
+		"working wager pagination",
+		"roll and dialogue locks",
+		"line, Come, odds, number, hardway, Field, proposition rules",
+		"shooter rotation and chatter",
+		"cash/chip isolation",
+		"rendered hit-region overlap",
+		"performance"
+	],
+	"failures": [],
+	"metrics": {
+		"rule_settlements_100000_msec": 6438.38,
+		"surface_state_1000_msec": 1707.54
+	},
+	"passed": true,
+	"suite": "craps_extensive_playtest"
+}

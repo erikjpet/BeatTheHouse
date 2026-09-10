@@ -141,6 +141,11 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		if typeof(patron_value) == TYPE_DICTIONARY and bool((patron_value as Dictionary).get("tell_active", false)):
 			table_talk_active = true
 			break
+	if roll_active or table_talk_active:
+		for target_value in targets:
+			if typeof(target_value) == TYPE_DICTIONARY:
+				(target_value as Dictionary)["enabled"] = false
+				(target_value as Dictionary)["disabled_reason"] = "The dice are in motion." if roll_active else "Answer the table before placing another wager."
 	var shooter := _current_shooter(table)
 	var selected_working_id := str(ui_state.get("craps_selected_working_id", ""))
 	var take_down_validation := CrapsRulesScript.can_take_down_bet(table, selected_working_id) if not selected_working_id.is_empty() else {"ok": false}
@@ -159,6 +164,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_stake_controls_required": true,
 		"surface_embeds_outcomes": true,
 		"surface_suppresses_game_result_burst": true,
+		"interaction_locked": roll_active or table_talk_active,
 		"surface_animates_idle": true,
 		"surface_realtime_state_refresh": setting_active or switching_active,
 		"surface_dynamic_overlay_channels": [ROLL_CHANNEL],
@@ -200,7 +206,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"working_bet_page": working_page,
 		"working_bet_page_count": working_page_count,
 		"selected_working_id": selected_working_id,
-		"can_take_down": bool(take_down_validation.get("ok", false)) and not roll_active and not dispersed and not warning,
+		"can_take_down": bool(take_down_validation.get("ok", false)) and not roll_active and not table_talk_active and not dispersed and not warning,
 		"take_down_reason": str(take_down_validation.get("message", "Select a removable working wager.")),
 		"selected_chip": selected_chip,
 		"selected_stake": selected_chip,
@@ -216,13 +222,13 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"last_net": int(last_result.get("bankroll_delta", 0)),
 		"table_minimum": int(table.get("table_minimum", 0)),
 		"table_maximum": int(table.get("table_maximum", 0)),
-		"can_roll": (warning or _can_roll(table, pending)) and not roll_active and not dispersed,
-		"can_pass_dice": str(shooter.get("id", "player")) == "player" and int(table.get("point", 0)) == 0 and not roll_active and not dispersed and not warning,
-		"can_clear": not pending.is_empty() and not roll_active and not dispersed and not warning,
-		"can_undo": not _dictionary_array(ui_state.get("craps_pending_history", [])).is_empty() and not roll_active and not dispersed and not warning,
-		"can_remove": not pending.is_empty() and not roll_active and not dispersed and not warning,
-		"can_repeat": not _dict(table.get("last_committed_bets", {})).is_empty() and pending.is_empty() and not roll_active and not dispersed and not warning,
-		"can_rebet": not _dict(table.get("last_resolved_bets", {})).is_empty() and pending.is_empty() and not roll_active and not dispersed and not warning,
+		"can_roll": (warning or _can_roll(table, pending)) and not roll_active and not table_talk_active and not dispersed,
+		"can_pass_dice": str(shooter.get("id", "player")) == "player" and int(table.get("point", 0)) == 0 and not roll_active and not table_talk_active and not dispersed and not warning,
+		"can_clear": not pending.is_empty() and not roll_active and not table_talk_active and not dispersed and not warning,
+		"can_undo": not _dictionary_array(ui_state.get("craps_pending_history", [])).is_empty() and not roll_active and not table_talk_active and not dispersed and not warning,
+		"can_remove": not pending.is_empty() and not roll_active and not table_talk_active and not dispersed and not warning,
+		"can_repeat": not _dict(table.get("last_committed_bets", {})).is_empty() and pending.is_empty() and not roll_active and not table_talk_active and not dispersed and not warning,
+		"can_rebet": not _dict(table.get("last_resolved_bets", {})).is_empty() and pending.is_empty() and not roll_active and not table_talk_active and not dispersed and not warning,
 		"last_roll": last_roll.duplicate(true),
 		"last_result": last_result.duplicate(true),
 		"roll_history": CrapsSurfaceViewModelScript.roll_history_rows(table.get("roll_history", []), int(_config().get("visible_history_limit", 0))),
@@ -279,7 +285,7 @@ func draw_surface(surface, state: Dictionary, _render_context: Dictionary = {}) 
 		return _draw_street_surface(surface, state)
 	var board := Vector2(900, 474)
 	surface.surface_begin_design_space(board)
-	var room_note := "POINT %s | %s SHOOTS" % ["OFF" if int(state.get("point", 0)) == 0 else str(state.get("point", 0)), str(_dict(state.get("shooter", {})).get("name", "PLAYER")).to_upper()]
+	var room_note := "POINT %s" % ("OFF" if int(state.get("point", 0)) == 0 else str(state.get("point", 0)))
 	TableGameVisualsScript.draw_room(surface, state, str(state.get("table_name", "CRAPS")), "FULL TABLE CRAPS", room_note)
 	TableGameVisualsScript.draw_table(surface)
 	_draw_idle_rail_motion(surface)
@@ -309,6 +315,8 @@ func surface_action_command(surface_action: String, index: int, _confirm_request
 	var street := _is_street_table(table, environment)
 	if street and bool(table.get("street_dispersed", false)):
 		return _message_command(session, "The chalk ring is empty for the rest of tonight.")
+	if not _dict(ui_state.get("focused_talk_speaker", {})).is_empty():
+		return _message_command(session, "Answer the table before returning to the felt.")
 	var pending := _pending_bets(session.get("craps_pending_bets", {}))
 	var last_roll := _dict(table.get("last_roll", {}))
 	var now_msec := GameModule.deterministic_time_msec(run_state, session)
@@ -1271,7 +1279,9 @@ func _throw_trajectory(vector_value: Variant) -> Dictionary:
 	var start := Vector2(426, 278)
 	var wall := Vector2(426 + lateral, THROW_REGION.position.y + 8.0)
 	var rebound := Vector2(426 + lateral * 0.55, 176)
-	var rest := Vector2(650 + lateral * 0.18, 152)
+	# Rest beyond the wager grid and before the history rail. This keeps the
+	# resolved dice readable without covering Place/Buy/Lay 10.
+	var rest := Vector2(706 + lateral * 0.18, 170)
 	return {
 		"source": "gesture_projection",
 		"authoritative_outcome_source": false,
@@ -1613,7 +1623,8 @@ func _react_table_to_roll(table: Dictionary, roll: Dictionary, settlement: Dicti
 	table["last_chatter_roll"] = roll_count
 	var history := _dictionary_array(table.get("table_chatter_history", []))
 	history.append(request.duplicate(true))
-	while history.size() > 16:
+	var history_limit := maxi(1, int(_dict(_config().get("table_group", {})).get("chatter_history_limit", 12)))
+	while history.size() > history_limit:
 		history.pop_front()
 	table["table_chatter_history"] = history
 	return request
@@ -1804,11 +1815,11 @@ func _draw_street_surface(surface, state: Dictionary) -> bool:
 		var offset := 22.0 if int(y / 42) % 2 == 0 else 62.0
 		for x in range(int(offset), 880, 84):
 			surface.draw_line(Vector2(x, y - 40), Vector2(x, y), Color(0.24, 0.20, 0.19, 0.34), 1.0)
-	surface.surface_title(str(state.get("table_name", "THE CHALK RING")).to_upper(), Vector2(58, 38), Color("#f0d3a1"))
 	var circle_center := Vector2(358, 220)
 	surface.draw_circle(circle_center, 254.0, Color(0.09, 0.10, 0.10, 0.72))
 	surface.draw_arc(circle_center, 254.0, 0.0, TAU, 96, Color("#d9c5a4"), 3.0)
 	surface.draw_arc(circle_center, 240.0, 0.0, TAU, 96, Color(0.76, 0.70, 0.60, 0.30), 1.0)
+	surface.surface_title(str(state.get("table_name", "THE CHALK RING")).to_upper(), Vector2(58, 38), Color("#f0d3a1"))
 	_draw_street_group(surface, state)
 	if bool(state.get("street_dispersed", false)):
 		surface.surface_label_centered("THE CIRCLE SCATTERED", Rect2(170, 176, 436, 34), 18, Color("#e5b07b"))
@@ -1826,10 +1837,10 @@ func _draw_street_surface(surface, state: Dictionary) -> bool:
 
 func _draw_street_point(surface, state: Dictionary) -> void:
 	var point := int(state.get("point", 0))
-	var center := Vector2(388, 180)
-	surface.draw_circle(center, 28.0, Color("#d8c8a9") if point != 0 else Color("#262626"))
-	surface.draw_circle(center, 28.0, Color("#efe1c4"), false, 2.0)
-	surface.surface_label_centered("OPEN" if point == 0 else "POINT %d" % point, Rect2(center - Vector2(42, 9), Vector2(84, 18)), 11, Color("#171717") if point != 0 else Color("#efe1c4"))
+	var center := Vector2(635, 148)
+	surface.draw_circle(center, 13.0, Color("#d8c8a9") if point != 0 else Color("#262626"))
+	surface.draw_circle(center, 13.0, Color("#efe1c4"), false, 1.5)
+	surface.surface_label_centered("OFF" if point == 0 else "P%d" % point, Rect2(center - Vector2(14, 6), Vector2(28, 12)), 8, Color("#171717") if point != 0 else Color("#efe1c4"))
 
 
 func _draw_street_dice(surface, state: Dictionary) -> void:
@@ -1839,14 +1850,17 @@ func _draw_street_dice(surface, state: Dictionary) -> void:
 	var progress: float = float(surface.surface_animation_progress(ROLL_CHANNEL)) if surface.surface_animation_active(ROLL_CHANNEL) else 1.0
 	if bool(state.get("reduce_motion", false)):
 		progress = 1.0
-	var trajectory := _dict(_dict(state.get("last_roll", {})).get("throw_trajectory", {}))
 	for index in range(2):
-		var fallback := Vector2(372 + index * 56, 146)
-		var center := _trajectory_position(trajectory, "die_a" if index == 0 else "die_b", progress, fallback)
-		var rect := Rect2(center - Vector2(22, 22), Vector2(44, 44))
+		var fallback := Vector2(635, 188 + index * 36)
+		# The casino trajectory uses the wide felt. Project the street throw into
+		# the chalk ring's narrow dice lane so its resting state never enters the
+		# wager grid or the cash/history rail.
+		var start := Vector2(430 + index * 18, 342 + index * 8)
+		var center := fallback if progress >= 1.0 else start.lerp(fallback, progress) + Vector2(0, -sin(progress * PI) * (72.0 + index * 9.0))
+		var rect := Rect2(center - Vector2(14, 14), Vector2(28, 28))
 		surface.draw_rect(rect, Color("#d7c9ad"))
 		surface.draw_rect(rect, Color("#4a4034"), false, 2.0)
-		surface.surface_label_centered(str(dice[index]), rect, 20, Color("#171717"))
+		surface.surface_label_centered(str(dice[index]), rect, 14, Color("#171717"))
 
 
 func _draw_street_side_panel(surface, state: Dictionary) -> void:
@@ -1860,7 +1874,7 @@ func _draw_street_side_panel(surface, state: Dictionary) -> void:
 	surface.surface_label_centered("<", Rect2(660, 104, 24, 18), 11, Color("#f0d3a1"))
 	surface.surface_label_centered("WORKING %d/%d" % [page + 1, page_count], Rect2(684, 104, 152, 18), 9, Color("#d8c8a9"))
 	surface.surface_label_centered(">", Rect2(836, 104, 24, 18), 11, Color("#f0d3a1"))
-	if page_count > 1:
+	if page_count > 1 and not bool(state.get("interaction_locked", false)):
 		surface.surface_add_exact_hit(Rect2(658, 102, 28, 22), "craps_working_page", 0)
 		surface.surface_add_exact_hit(Rect2(834, 102, 28, 22), "craps_working_page", 1)
 	var selected := str(state.get("selected_working_id", ""))
@@ -1874,7 +1888,8 @@ func _draw_street_side_panel(surface, state: Dictionary) -> void:
 		if active:
 			surface.draw_rect(row_rect, Color(0.35, 0.29, 0.20, 0.84))
 		surface.surface_label_centered("%s  $%d" % [str(row.get("label", "")).to_upper().left(20), int(row.get("stake", 0))], row_rect, 8, Color("#fff0d0") if active else Color("#c5b8a5"))
-		surface.surface_add_exact_hit(row_rect, "craps_working_select", index)
+		if not bool(state.get("interaction_locked", false)):
+			surface.surface_add_exact_hit(row_rect, "craps_working_select", index)
 	if working_rows.is_empty():
 		surface.surface_label_centered("NO WORKING WAGERS", Rect2(666, 142, 188, 18), 9, Color("#8d877d"))
 	surface.surface_label_centered("LAST THROWS", Rect2(658, 214, 204, 18), 10, Color("#f0d3a1"))
@@ -1893,7 +1908,7 @@ func _draw_street_controls(surface, state: Dictionary) -> void:
 	_draw_denomination_controls(surface, state, 42.0, 386.0, true)
 	var throw_label := "THROW" if bool(state.get("player_is_shooter", false)) else "CALL ROLL"
 	var actions := [
-		{"id": "craps_working_toggle", "label": "WORKING" if bool(state.get("working_on_come_out", false)) else "WORK OFF", "rect": Rect2(322, 386, 82, 28), "enabled": true},
+		{"id": "craps_working_toggle", "label": "WORKING" if bool(state.get("working_on_come_out", false)) else "WORK OFF", "rect": Rect2(322, 386, 82, 28), "enabled": not bool(state.get("interaction_locked", false))},
 		{"id": "craps_take_down", "label": "TAKE DOWN", "rect": Rect2(410, 386, 100, 28), "enabled": bool(state.get("can_take_down", false))},
 		{"id": "craps_remove", "label": "REMOVE", "rect": Rect2(42, 428, 82, 32), "enabled": bool(state.get("can_remove", false))},
 		{"id": "craps_undo", "label": "UNDO", "rect": Rect2(130, 428, 72, 32), "enabled": bool(state.get("can_undo", false))},
@@ -1945,7 +1960,8 @@ func _draw_bet_page_tabs(surface, state: Dictionary) -> void:
 		surface.draw_rect(rect, Color("#9a6d2a") if active else Color("#172e29"))
 		surface.draw_rect(rect, Color("#fff0bd") if active else Color("#6f9588"), false, 1.0)
 		surface.surface_label_centered(page.to_upper(), rect, 10, Color("#fff5d2"))
-		surface.surface_add_exact_hit(rect, "craps_bet_page", index)
+		if not bool(state.get("interaction_locked", false)):
+			surface.surface_add_exact_hit(rect, "craps_bet_page", index)
 
 
 func _draw_npc_bet_chips(surface, state: Dictionary, targets: Array, page: String) -> void:
@@ -2000,7 +2016,7 @@ func _draw_idle_rail_motion(surface) -> void:
 func _draw_casino_ritual_cast(surface, state: Dictionary) -> void:
 	var positions := _casino_patron_positions()
 	_draw_group_characters(surface, state, positions, false)
-	_draw_staff_marker(surface, Vector2(704, 112), str(state.get("dealer_name", "Stickperson")), "STICK")
+	_draw_staff_marker(surface, Vector2(58, 332), str(state.get("dealer_name", "Stickperson")), "STICK")
 	_draw_staff_marker(surface, Vector2(44, 232), "BASE", "PAY")
 	_draw_staff_marker(surface, Vector2(716, 232), "BASE", "COLLECT")
 
@@ -2051,10 +2067,10 @@ func _draw_staff_marker(surface, center: Vector2, name: String, role: String) ->
 
 func _draw_point_puck(surface, state: Dictionary) -> void:
 	var point := int(state.get("point", 0))
-	var center := Vector2(704, 72)
-	surface.draw_circle(center, 24.0, Color("#f3eee0") if point != 0 else Color("#222a28"))
-	surface.draw_circle(center, 24.0, Color("#d6af4b"), false, 2)
-	surface.surface_label_centered("OFF" if point == 0 else str(point), Rect2(center - Vector2(22, 8), Vector2(44, 16)), 12, Color("#071713") if point != 0 else Color("#f3eee0"))
+	var center := Vector2(726, 112)
+	surface.draw_circle(center, 18.0, Color("#f3eee0") if point != 0 else Color("#222a28"))
+	surface.draw_circle(center, 18.0, Color("#d6af4b"), false, 2)
+	surface.surface_label_centered("OFF" if point == 0 else str(point), Rect2(center - Vector2(18, 7), Vector2(36, 14)), 10, Color("#071713") if point != 0 else Color("#f3eee0"))
 
 
 func _draw_dice(surface, state: Dictionary) -> void:
@@ -2067,12 +2083,12 @@ func _draw_dice(surface, state: Dictionary) -> void:
 		progress = 1.0
 	var trajectory := _dict(roll.get("throw_trajectory", {}))
 	for index in range(2):
-		var fallback := Vector2(659 + index * 54, 161)
+		var fallback := Vector2(680 + index * 50, 174)
 		var center := _trajectory_position(trajectory, "die_a" if index == 0 else "die_b", progress, fallback)
-		var rect := Rect2(center - Vector2(21, 21), Vector2(42, 42))
+		var rect := Rect2(center - Vector2(18, 18), Vector2(36, 36))
 		surface.draw_rect(rect, Color("#eee7d2"))
 		surface.draw_rect(rect, Color("#9a7735"), false, 2)
-		surface.surface_label_centered(str(dice[index]), rect, 20, Color("#171b19"))
+		surface.surface_label_centered(str(dice[index]), rect, 16, Color("#171b19"))
 
 
 func _draw_history(surface, state: Dictionary) -> void:
@@ -2096,7 +2112,7 @@ func _draw_working_bets(surface, state: Dictionary) -> void:
 	var page := clampi(int(state.get("working_bet_page", 0)), 0, maxi(0, int(state.get("working_bet_page_count", 1)) - 1))
 	var page_count := maxi(1, int(state.get("working_bet_page_count", 1)))
 	surface.surface_label_centered("WORK %d/%d" % [page + 1, page_count], Rect2(792, 276, 76, 16), 9, Color("#f5e6a8"))
-	if page_count > 1:
+	if page_count > 1 and not bool(state.get("interaction_locked", false)):
 		surface.surface_label_centered("<", Rect2(778, 276, 14, 16), 10, Color("#66c8de"))
 		surface.surface_label_centered(">", Rect2(868, 276, 14, 16), 10, Color("#66c8de"))
 		surface.surface_add_exact_hit(Rect2(776, 274, 18, 20), "craps_working_page", 0)
@@ -2113,7 +2129,8 @@ func _draw_working_bets(surface, state: Dictionary) -> void:
 		if active:
 			surface.draw_rect(row_rect, Color(0.22, 0.45, 0.40, 0.72))
 		surface.surface_label_centered("%s  %d" % [str(row.get("label", "")).left(12), int(row.get("stake", 0))], row_rect, 7, Color("#fff0bd") if active else Color("#d1dfd7"))
-		surface.surface_add_exact_hit(row_rect, "craps_working_select", index)
+		if not bool(state.get("interaction_locked", false)):
+			surface.surface_add_exact_hit(row_rect, "craps_working_select", index)
 
 
 func _draw_controls(surface, state: Dictionary) -> void:
@@ -2129,9 +2146,9 @@ func _draw_controls(surface, state: Dictionary) -> void:
 		{"id": "craps_repeat", "label": "REPEAT", "rect": Rect2(504, 392, 66, 28), "enabled": bool(state.get("can_repeat", false))},
 		{"id": "craps_rebet", "label": "RE-BET", "rect": Rect2(576, 392, 66, 28), "enabled": bool(state.get("can_rebet", false))},
 		{"id": "craps_take_down", "label": "TAKE DOWN", "rect": Rect2(648, 392, 110, 28), "enabled": bool(state.get("can_take_down", false))},
-		{"id": "craps_working_toggle", "label": "WORKING" if bool(state.get("working_on_come_out", false)) else "WORK OFF", "rect": Rect2(300, 430, 78, 30), "enabled": true},
-		{"id": "craps_setting", "label": "SET DICE", "rect": Rect2(384, 430, 88, 30), "enabled": bool(state.get("craps_setting_available", false))},
-		{"id": "craps_switch", "label": "SWITCH", "rect": Rect2(478, 430, 78, 30), "enabled": bool(state.get("craps_switching_available", false))},
+		{"id": "craps_working_toggle", "label": "WORKING" if bool(state.get("working_on_come_out", false)) else "WORK OFF", "rect": Rect2(300, 430, 78, 30), "enabled": not bool(state.get("interaction_locked", false))},
+		{"id": "craps_setting", "label": "SET DICE", "rect": Rect2(384, 430, 88, 30), "enabled": bool(state.get("craps_setting_available", false)) and not bool(state.get("interaction_locked", false))},
+		{"id": "craps_switch", "label": "SWITCH", "rect": Rect2(478, 430, 78, 30), "enabled": bool(state.get("craps_switching_available", false)) and not bool(state.get("interaction_locked", false))},
 		{"id": "craps_pass_dice", "label": "PASS", "rect": Rect2(562, 428, 76, 34), "enabled": bool(state.get("can_pass_dice", false))},
 		{"id": "craps_throw", "label": throw_label, "rect": Rect2(644, 428, 114, 34), "enabled": bool(state.get("can_roll", false))},
 	]
@@ -2149,16 +2166,18 @@ func _draw_controls(surface, state: Dictionary) -> void:
 func _draw_denomination_controls(surface, state: Dictionary, start_x: float, y: float, street: bool) -> void:
 	var denominations := _array(state.get("chip_denominations", []))
 	var selected := int(state.get("selected_chip", 0))
+	var enabled := not bool(state.get("interaction_locked", false))
 	var spacing := 46.0 if street else 39.0
 	var width := 42.0 if street else 36.0
 	for index in range(mini(denominations.size(), 6)):
 		var amount := int(denominations[index])
 		var rect := Rect2(start_x + float(index) * spacing, y, width, 28)
 		var active := amount == selected
-		surface.draw_rect(rect, Color("#9c7138") if active else Color("#3b493f"))
-		surface.draw_rect(rect, Color("#fff0d0") if active else Color("#7c9388"), false, 1.0)
-		surface.surface_label_centered(("$" if street else "") + str(amount), rect, 10, Color("#fff5d2"))
-		surface.surface_add_exact_hit(rect, "craps_chip", index)
+		surface.draw_rect(rect, Color("#9c7138") if active and enabled else Color("#3b493f"))
+		surface.draw_rect(rect, Color("#fff0d0") if active and enabled else Color("#64776f"), false, 1.0)
+		surface.surface_label_centered(("$" if street else "") + str(amount), rect, 10, Color("#fff5d2") if enabled else Color("#80978f"))
+		if enabled:
+			surface.surface_add_exact_hit(rect, "craps_chip", index)
 
 
 func _empty_result(action_id: String, stake: int, environment: Dictionary, text: String) -> Dictionary:
