@@ -1056,10 +1056,12 @@ static func _check_diagnostic_messages(library: ContentLibrary, failures: Array)
 
 static func _check_static_golden_examples(library: ContentLibrary, failures: Array) -> void:
 	var examples := {
+		"back_alley": {"guaranteed": ["game::craps"], "possible": []},
 		"bar": {"guaranteed": ["game::pull_tabs"], "possible": ["game::slot"]},
 		"gas_station_casino": {"guaranteed": ["game::pull_tabs", "game::scratch_tickets"], "possible": ["game::slot"]},
 		"kitty_cat_lounge": {"guaranteed": ["game::roulette"], "possible": ["game::slot"]},
 		"delta_queen": {"guaranteed": ["game::blackjack", "game::roulette", "game::video_poker"], "possible": []},
+		"grand_casino": {"guaranteed": ["game::craps"], "possible": []},
 	}
 	for archetype_id_value in examples.keys():
 		var archetype_id := str(archetype_id_value)
@@ -1072,11 +1074,28 @@ static func _check_static_golden_examples(library: ContentLibrary, failures: Arr
 		for identity in _array(_dict(examples.get(archetype_id, {})).get("possible", [])):
 			if not _array(possible.get("games", [])).has(identity):
 				failures.append("Static golden census for %s lost possible target %s." % [archetype_id, identity])
+	var alley_instance := _generated_environment(library, "back_alley", {}, 7480)
+	var alley_game_spots := _array(_dict(alley_instance.get("layout", {})).get("game_spots", []))
+	var alley_game_spot := _array(alley_game_spots[0]) if alley_game_spots.size() == 1 else []
+	var alley_game_spot_is_authored := alley_game_spot.size() == 2 and is_equal_approx(float(alley_game_spot[0]), 180.0) and is_equal_approx(float(alley_game_spot[1]), 185.0)
+	if _array(alley_instance.get("game_ids", [])) != ["craps"] \
+			or str(_dict(alley_instance.get("scenario_game_modifiers", {})).get("game_hook", "")) != "street_craps" \
+			or not alley_game_spot_is_authored \
+			or not _dict(_dict(alley_instance.get("layout", {})).get("object_rects", {})).has("game:craps"):
+		failures.append("A scenario-free Back Alley instance did not preserve its playable Street Craps fixture.")
+	var grand_instance := _generated_environment(library, "grand_casino", {}, 7481)
+	if not _array(grand_instance.get("game_ids", [])).has("craps") or not _dict(_dict(grand_instance.get("layout", {})).get("object_rects", {})).has("game:craps"):
+		failures.append("A generated Grand Casino instance did not expose its playable Craps fixture.")
 	var punchline := library.environment_archetype("small_underground_casino")
 	for layer_id in ["club", "casino", "back_room"]:
 		var layer_inventory := EnvironmentSemanticInventoryScript.for_archetype(punchline, library, layer_id)
 		if not EnvironmentSemanticInventoryScript.validate(layer_inventory).is_empty() or str(layer_inventory.get("layer_id", "")) != layer_id:
 			failures.append("Punchline semantic catalog did not preserve valid exact layer %s scope." % layer_id)
+		if layer_id == "back_room" and not _array(EnvironmentSemanticInventoryScript.guaranteed_collections(layer_inventory).get("games", [])).has("game::crew_draw_poker"):
+			failures.append("Punchline back-room semantic catalog lost its guaranteed Hold'em table.")
+	var back_room_instance := _generated_from_archetype_layer(punchline, "back_room", library, 7482)
+	if _array(back_room_instance.get("game_ids", [])) != ["crew_draw_poker"] or not _dict(_dict(back_room_instance.get("layout", {})).get("object_rects", {})).has("game:crew_draw_poker"):
+		failures.append("A generated Punchline back room did not expose its playable Hold'em fixture.")
 
 
 static func _check_exact_optional_absence(library: ContentLibrary, failures: Array) -> void:

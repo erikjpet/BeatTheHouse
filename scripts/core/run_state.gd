@@ -4197,8 +4197,10 @@ func enter_world_node(node_id: String, environment_data: Dictionary) -> void:
 
 # Tier-2 casino routes are intentionally hidden at spawn. Open their spawn gates
 # once the player has either found the Underground or visited two distinct
-# Tier-1 casinos. The nodes remain hidden until normal neighbor discovery finds
-# each one; this milestone must not reveal both venues immediately.
+# Tier-1 casinos. Because this reconciliation runs after arrival discovery (and
+# during legacy save repair), immediately replay bounded discovery from every
+# qualifying visited venue when the gates change. Otherwise the milestone can
+# be earned without exposing a connected Tier-2 route until an unrelated trip.
 func _reconcile_tier_two_casino_spawn_eligibility() -> void:
 	if world_map.is_empty():
 		return
@@ -4232,6 +4234,12 @@ func _reconcile_tier_two_casino_spawn_eligibility() -> void:
 		return
 	if not every_tier_two_casino_spawn_enabled:
 		world_map = WorldMap.enable_node_spawns(world_map, tier_two_casino_ids)
+	var qualifying_visited_ids := visited_tier_one_casino_ids.duplicate()
+	if underground_visited and not qualifying_visited_ids.has(TIER_TWO_UNDERGROUND_SOURCE_ID):
+		qualifying_visited_ids.append(TIER_TWO_UNDERGROUND_SOURCE_ID)
+	# Run even when the gates were already open: affected older saves can contain
+	# spawn-open but still hidden Tier-2 nodes from the pre-discovery ordering bug.
+	world_map = WorldMap.discover_spawn_open_neighbors(world_map, qualifying_visited_ids, tier_two_casino_ids)
 	narrative_flags[TIER_TWO_LOCATION_SPAWN_FLAG] = true
 	narrative_flags[TIER_TWO_LOCATION_SPAWN_REASON_FLAG] = "underground_visit" if underground_visited else "two_tier_one_casinos"
 	narrative_flags[TIER_TWO_LOCATION_SPAWN_VISITS_FLAG] = visited_tier_one_casino_ids.duplicate()

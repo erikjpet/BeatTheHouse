@@ -1648,7 +1648,14 @@ func _is_street_variant(environment: Dictionary) -> bool:
 		return false
 	var modifiers := _dict(environment.get("scenario_game_modifiers", {}))
 	var hook_key := str(variant.get("scenario_hook_key", "game_hook"))
-	return str(modifiers.get(hook_key, "")) == str(variant.get("scenario_hook_value", "street_craps"))
+	var street_value := str(variant.get("scenario_hook_value", "street_craps"))
+	if str(modifiers.get(hook_key, "")) == street_value:
+		return true
+	# Permanent venue variants belong to the environment even when its randomly
+	# selected scenario is something else. Keep the scenario hook compatible,
+	# while allowing the Back Alley fixture to remain Street Craps every visit.
+	var local_flags := _dict(environment.get("local_narrative_flags", {}))
+	return str(local_flags.get("craps_variant", "")) == street_value
 
 
 func _is_street_table(table: Dictionary, environment: Dictionary) -> bool:

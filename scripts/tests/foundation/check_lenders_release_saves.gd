@@ -4518,6 +4518,7 @@ func _check_tier_two_world_spawn_thresholds(library: ContentLibrary, failures: A
 
 	var two_casino_run: RunState = RunStateScript.new()
 	two_casino_run.start_new("TIER2-TWO-CASINOS")
+	two_casino_run.environment_history_archive_count = 2
 	two_casino_run.set_world_map(WorldMapScript.new(library).build(two_casino_run, two_casino_run.create_rng("map")))
 	two_casino_run.enter_world_node("bar", {})
 	two_casino_run.enter_world_node("gas_station_casino", {})
@@ -4525,31 +4526,32 @@ func _check_tier_two_world_spawn_thresholds(library: ContentLibrary, failures: A
 		var eligible_node := WorldMapScript.node_by_id(two_casino_run.world_map, tier_two_id)
 		if not bool(eligible_node.get("route_spawn_open", false)):
 			failures.append("Two distinct Tier-1 casino visits did not enable spawning for %s." % tier_two_id)
-		if bool(eligible_node.get("unlocked", false)) or str(eligible_node.get("state", "")) != WorldMapScript.STATE_HIDDEN or bool(eligible_node.get("seen", false)):
-			failures.append("Tier-2 casino %s was revealed instead of only becoming spawn-eligible." % tier_two_id)
+	_assert_tier_two_travel_option(two_casino_run, library, "two distinct Tier-1 casino visits", failures)
 	if str(two_casino_run.narrative_flags.get(RunState.TIER_TWO_LOCATION_SPAWN_REASON_FLAG, "")) != "two_tier_one_casinos":
 		failures.append("Two-casino Tier-2 spawn gate did not record its progression reason.")
 
 	var underground_run: RunState = RunStateScript.new()
 	underground_run.start_new("TIER2-UNDERGROUND")
+	underground_run.environment_history_archive_count = 1
 	underground_run.set_world_map(WorldMapScript.new(library).build(underground_run, underground_run.create_rng("map")))
 	underground_run.enter_world_node("small_underground_casino", {})
 	for tier_two_id in ["kitty_cat_lounge", "delta_queen"]:
 		var eligible_node := WorldMapScript.node_by_id(underground_run.world_map, tier_two_id)
 		if not bool(eligible_node.get("route_spawn_open", false)):
 			failures.append("Underground Casino visit did not enable spawning for %s." % tier_two_id)
-		if bool(eligible_node.get("unlocked", false)) or str(eligible_node.get("state", "")) != WorldMapScript.STATE_HIDDEN:
-			failures.append("Underground Casino visit revealed %s instead of only enabling its spawn." % tier_two_id)
+	_assert_tier_two_travel_option(underground_run, library, "the Underground Casino visit", failures)
 	if str(underground_run.narrative_flags.get(RunState.TIER_TWO_LOCATION_SPAWN_REASON_FLAG, "")) != "underground_visit":
 		failures.append("Underground Tier-2 spawn gate did not record its progression reason.")
 
-	# A pre-fix save can already contain the qualifying visits while both Tier-2
-	# nodes remain hidden. Loading it must reconcile that state automatically.
+	# A pre-fix save can already contain qualifying visits and open spawn gates
+	# while both Tier-2 nodes remain hidden. Loading must reconcile that state.
 	var legacy_run: RunState = RunStateScript.new()
 	legacy_run.start_new("TIER2-LEGACY-SAVE")
+	legacy_run.environment_history_archive_count = 2
 	var legacy_map := WorldMapScript.new(library).build(legacy_run, legacy_run.create_rng("map"))
 	legacy_map = WorldMapScript.enter_node(legacy_map, "bar", {})
 	legacy_map = WorldMapScript.enter_node(legacy_map, "gas_station_casino", {})
+	legacy_map = WorldMapScript.enable_node_spawns(legacy_map, ["kitty_cat_lounge", "delta_queen"])
 	legacy_run.set_world_map(legacy_map)
 	var loaded_legacy_run: RunState = RunStateScript.new()
 	loaded_legacy_run.from_dict(legacy_run.to_dict())
@@ -4557,8 +4559,24 @@ func _check_tier_two_world_spawn_thresholds(library: ContentLibrary, failures: A
 		var repaired_node := WorldMapScript.node_by_id(loaded_legacy_run.world_map, tier_two_id)
 		if not bool(repaired_node.get("route_spawn_open", false)):
 			failures.append("Qualifying legacy save did not repair Tier-2 casino spawn eligibility for %s on load." % tier_two_id)
-		if bool(repaired_node.get("unlocked", false)) or str(repaired_node.get("state", "")) != WorldMapScript.STATE_HIDDEN:
-			failures.append("Legacy save repair revealed Tier-2 casino %s instead of only enabling its spawn." % tier_two_id)
+	_assert_tier_two_travel_option(loaded_legacy_run, library, "legacy save repair", failures)
+
+
+func _assert_tier_two_travel_option(run_state: RunState, library: ContentLibrary, context: String, failures: Array) -> void:
+	var revealed_tier_two_ids: Array = []
+	for tier_two_id in ["kitty_cat_lounge", "delta_queen"]:
+		var node := WorldMapScript.node_by_id(run_state.world_map, tier_two_id)
+		if bool(node.get("seen", false)) and str(node.get("state", "")) != WorldMapScript.STATE_HIDDEN:
+			revealed_tier_two_ids.append(tier_two_id)
+	if revealed_tier_two_ids.is_empty():
+		failures.append("%s opened Tier-2 spawn gates without revealing a connected casino route." % context.capitalize())
+		return
+	var generator: RunGenerator = RunGeneratorScript.new(library)
+	var production_targets := generator._world_travel_target_ids(run_state, run_state.world_map, run_state.current_world_node_id())
+	for tier_two_id in revealed_tier_two_ids:
+		if production_targets.has(tier_two_id):
+			return
+	failures.append("%s revealed Tier-2 casinos, but none became a production travel option: revealed=%s targets=%s." % [context.capitalize(), JSON.stringify(revealed_tier_two_ids), JSON.stringify(production_targets)])
 
 
 func _check_tier_two_route_gates(library: ContentLibrary, delta: Dictionary, delta_route: Dictionary, failures: Array) -> void:

@@ -7,6 +7,7 @@ const VERSION := 3
 const GRAND_CASINO_ID := "grand_casino"
 const JAZZ_CLUB_ID := "jazz_club"
 const UNDERGROUND_SHORTCUT_ID := "small_underground_casino"
+const TIER_TWO_CASINO_IDS := ["kitty_cat_lounge", "delta_queen"]
 const BEACH_ID := "beach"
 const BEACH_GATEWAY_ID := "delta_queen"
 const STATE_HIDDEN := "hidden"
@@ -647,7 +648,14 @@ static func travel_target_ids(map_data: Dictionary, node_id: String = "", max_ne
 		result = _ensure_visible_neighbor_target(result, source_id, BEACH_ID, total_limit, visible_lookup, edge_lookup, node_lookup)
 	elif source_id == BEACH_ID:
 		result = _ensure_visible_neighbor_target(result, source_id, BEACH_GATEWAY_ID, total_limit, visible_lookup, edge_lookup, node_lookup)
-	result = _ensure_priority_target(result, priority_candidates, GRAND_CASINO_ID, total_limit)
+	# Once a Tier-2 casino has been revealed and passes its route gates, it must
+	# survive the small travel-card cap. Otherwise cheaper familiar stops can
+	# crowd the newly earned progression route out of the actual player UI.
+	var tier_two_priority_id := _first_priority_node_id(priority_candidates, node_lookup, TIER_TWO_CASINO_IDS)
+	# Preserve the invited Grand Casino at the same time when both progression
+	# targets are live; independently replacing the last card makes them evict
+	# one another under the three-card cap.
+	result = _ensure_priority_targets(result, priority_candidates, [GRAND_CASINO_ID, tier_two_priority_id], total_limit)
 	return result
 
 
@@ -799,6 +807,46 @@ static func enable_node_spawns(map_data: Dictionary, node_ids: Array) -> Diction
 		if not spawn_ids.has(str(node.get("id", ""))) or bool(node.get("route_spawn_open", false)):
 			continue
 		node["route_spawn_open"] = true
+		nodes[index] = node
+		changed = true
+	if not changed:
+		return normalized
+	normalized["nodes"] = nodes
+	return _bump_revision(normalized)
+
+
+# Replays only the neighbor-discovery portion of a visit for a bounded set of
+# already visited sources and newly opened targets. This repairs progression
+# gates without changing the current node, visit path, or stored environments.
+static func discover_spawn_open_neighbors(map_data: Dictionary, source_node_ids: Array, target_node_ids: Array) -> Dictionary:
+	var normalized := normalize(map_data)
+	var source_ids := _string_array(source_node_ids)
+	var target_ids := _string_array(target_node_ids)
+	if source_ids.is_empty() or target_ids.is_empty():
+		return normalized
+	var nodes: Array = normalized.get("nodes", [])
+	var changed := false
+	for index in range(nodes.size()):
+		if typeof(nodes[index]) != TYPE_DICTIONARY:
+			continue
+		var node: Dictionary = nodes[index]
+		var candidate_id := str(node.get("id", ""))
+		if not target_ids.has(candidate_id) or str(node.get("state", STATE_HIDDEN)) != STATE_HIDDEN:
+			continue
+		if not bool(node.get("route_spawn_open", true)) and not bool(node.get("unlocked", false)):
+			continue
+		var connected_to_visited_source := false
+		for source_id in source_ids:
+			var source_node := node_by_id(normalized, str(source_id))
+			if str(source_node.get("state", STATE_HIDDEN)) == STATE_VISITED and are_neighbors(normalized, str(source_id), candidate_id):
+				connected_to_visited_source = true
+				break
+		if not connected_to_visited_source:
+			continue
+		node["state"] = STATE_REVEALED
+		node["seen"] = true
+		node["discovery_source"] = DISCOVERY_SOURCE_TRAVEL
+		node["discovered_by_travel"] = true
 		nodes[index] = node
 		changed = true
 	if not changed:
@@ -1067,6 +1115,13 @@ func _build_edges(ids: Array, archetypes_by_id: Dictionary, positions: Dictionar
 		_add_edge(edges_by_id, "beach", "delta_queen", positions)
 	if archetypes_by_id.has(UNDERGROUND_SHORTCUT_ID) and archetypes_by_id.has(GRAND_CASINO_ID):
 		_add_edge(edges_by_id, UNDERGROUND_SHORTCUT_ID, GRAND_CASINO_ID, positions)
+	# Punchline is the alternate Tier-2 progression milestone, so its authored
+	# casino routes cannot be left to the degree-limited heuristic. Guarantee
+	# both edges; the route availability layer still decides which card is open.
+	if archetypes_by_id.has(UNDERGROUND_SHORTCUT_ID):
+		for tier_two_id in TIER_TWO_CASINO_IDS:
+			if archetypes_by_id.has(tier_two_id):
+				_add_edge(edges_by_id, UNDERGROUND_SHORTCUT_ID, tier_two_id, positions)
 	_connect_components(edges_by_id, ids, positions)
 	var edge_ids := _sorted_keys(edges_by_id)
 	var edges: Array = []
@@ -1632,25 +1687,45 @@ static func _filter_candidates_by_enabled(candidates: Array, enabled: bool) -> A
 	return result
 
 
-static func _ensure_priority_target(result: Array, candidates: Array, target_id: String, total_limit: int) -> Array:
+static func _ensure_priority_targets(result: Array, candidates: Array, target_ids: Array, total_limit: int) -> Array:
 	var normalized_result := result.duplicate(true)
-	if total_limit <= 0 or target_id.is_empty() or normalized_result.has(target_id):
+	if total_limit <= 0:
 		return normalized_result
-	var found := false
+	var eligible_ids: Array = []
 	for candidate_value in candidates:
 		if typeof(candidate_value) != TYPE_DICTIONARY:
 			continue
 		var candidate: Dictionary = candidate_value
-		if str(candidate.get("id", "")) == target_id and bool(candidate.get("enabled_hint", true)):
-			found = true
-			break
-	if not found:
-		return normalized_result
-	if normalized_result.size() < total_limit:
-		normalized_result.append(target_id)
-	elif not normalized_result.is_empty():
-		normalized_result[normalized_result.size() - 1] = target_id
+		var candidate_id := str(candidate.get("id", ""))
+		if target_ids.has(candidate_id) and not candidate_id.is_empty() and bool(candidate.get("enabled_hint", true)) and not eligible_ids.has(candidate_id):
+			eligible_ids.append(candidate_id)
+	for target_id in eligible_ids:
+		if normalized_result.has(target_id):
+			continue
+		if normalized_result.size() < total_limit:
+			normalized_result.append(target_id)
+			continue
+		for index in range(normalized_result.size() - 1, -1, -1):
+			if not eligible_ids.has(str(normalized_result[index])):
+				normalized_result[index] = target_id
+				break
 	return normalized_result
+
+
+static func _first_priority_node_id(candidates: Array, node_lookup: Dictionary, allowed_ids: Array) -> String:
+	for candidate_value in candidates:
+		if typeof(candidate_value) != TYPE_DICTIONARY:
+			continue
+		var candidate: Dictionary = candidate_value
+		if not bool(candidate.get("enabled_hint", true)):
+			continue
+		var candidate_id := str(candidate.get("id", ""))
+		if not allowed_ids.has(candidate_id):
+			continue
+		var node: Dictionary = node_lookup.get(candidate_id, {})
+		if int(node.get("tier", 0)) == 2 and str(node.get("kind", "")).strip_edges().to_lower() == "casino":
+			return candidate_id
+	return ""
 
 
 static func _ensure_visible_neighbor_target(result: Array, source_id: String, target_id: String, total_limit: int, visible_lookup: Dictionary, edge_lookup: Dictionary, node_lookup: Dictionary) -> Array:

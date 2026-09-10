@@ -313,6 +313,13 @@ func to_dict() -> Dictionary:
 		"travel_locked_actions": travel_locked_actions,
 		"travel_lock_remaining": travel_lock_remaining,
 	}
+	# Venue-level game variants are durable room identity, even when no random
+	# scenario was selected. Scenario projection may overlay this same field, but
+	# omitting a non-empty base value turns permanent fixtures (for example Street
+	# Craps in the Back Alley) back into their generic casino variant after the
+	# EnvironmentInstance is flattened or saved.
+	if not scenario_game_modifiers.is_empty():
+		result["scenario_game_modifiers"] = scenario_game_modifiers.duplicate(true)
 	if not scenario_state.is_empty():
 		result["scenario_state"] = scenario_state.duplicate(true)
 		result["scenario_id"] = str(scenario_state.get("id", ""))
@@ -320,7 +327,6 @@ func to_dict() -> Dictionary:
 		result["scenario_phase_action_counter"] = int(scenario_state.get("phase_action_counter", 0))
 		result["scenario_patron_ids"] = scenario_patron_ids.duplicate(true)
 		result["scenario_staff_ids"] = scenario_staff_ids.duplicate(true)
-		result["scenario_game_modifiers"] = scenario_game_modifiers.duplicate(true)
 		result["scenario_presentation"] = scenario_presentation.duplicate(true)
 		result["scenario_exclusive_opportunity"] = scenario_exclusive_opportunity.duplicate(true)
 		result["scenario_hook_flags"] = scenario_hook_flags.duplicate(true)
