@@ -724,7 +724,7 @@ static func _ground_active_object_rects(object_rects: Dictionary, layout: Dictio
 			placement_surfaces = _copy_dict(solved.get("surfaces", {}))
 		if not all_solved:
 			var archetype_id := str(environment_data.get("archetype_id", environment_data.get("id", "")))
-			var search_budget := 25000 if archetype_id in ["delta_queen", "grand_casino"] else (5000 if archetype_id == "jazz_club" else 500)
+			var search_budget := 25000 if archetype_id in ["delta_queen", "grand_casino"] else (5000 if archetype_id in ["jazz_club", "gas_station_casino"] else 500)
 			var global_solution := _solve_grounded_object_layout(authored_object_rects, environment_data, active_entries, [], {}, search_budget)
 			if bool(global_solution.get("ok", false)):
 				placed = _copy_dict(global_solution.get("rects", {}))

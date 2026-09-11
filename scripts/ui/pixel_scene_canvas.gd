@@ -1309,6 +1309,11 @@ func _draw_gas_station() -> void:
 	draw_rect(Rect2(720, 70, 38, 24), C_SHADOW)
 	draw_line(Vector2(739, 94), Vector2(782, 126), C_CYAN, 2)
 	draw_rect(Rect2(780, 124, 20, 16), Color("#05050b"))
+	# Low utility rail for scenario controls (cooler locks, monitor, shutters).
+	draw_rect(Rect2(100, 244, 700, 10), Color("#202838"))
+	draw_line(Vector2(108, 254), Vector2(792, 254), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.30), 2)
+	for post_x in [116, 450, 784]:
+		draw_rect(Rect2(post_x, 254, 4, 72), C_SOFT.darkened(0.48))
 	draw_rect(Rect2(100, 400, 700, 8), Color("#343447"))
 	draw_line(Vector2(110, 408), Vector2(790, 408), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.24), 2)
 	_floor_reflections()

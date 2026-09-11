@@ -1601,6 +1601,12 @@ static func _scenario_reserved_candidates(identity: String, candidates: Array, p
 					return true
 			return false
 		)
+		# Reservations are the first-choice capacity, not a semantic prison. If a
+		# particular generated roster crowds a reserved fixture, retain the other
+		# class-valid room supports as deterministic overflow candidates.
+		for candidate_value in candidates:
+			if candidate_value not in supported:
+				supported.append(candidate_value)
 		return supported
 	if not reserved_rect_key.is_empty():
 		var reserved_rects: Array = []
@@ -1620,6 +1626,9 @@ static func _scenario_reserved_candidates(identity: String, candidates: Array, p
 						return true
 				return false
 			)
+			for candidate_value in candidates:
+				if candidate_value not in supported:
+					supported.append(candidate_value)
 			return supported
 	return candidates
 

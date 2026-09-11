@@ -107,6 +107,7 @@ foreach ($map in @(Get-Values $surfaceRoot.maps)) {
     Test-RectArray "surface map $mapId wall.bounds" $map.wall.bounds $boardWidth $boardHeight
     Test-RectArray "surface map $mapId ceiling.bounds" $map.ceiling.bounds $boardWidth $boardHeight
     foreach ($entry in @(Get-Values $map.wall.exclusions)) { Test-RectArray "surface map $mapId wall exclusion $($entry.id)" $entry.bounds $boardWidth $boardHeight }
+    foreach ($entry in @(Get-Values $map.wall.mounts)) { Test-RectArray "surface map $mapId wall mount $($entry.id)" $entry.bounds $boardWidth $boardHeight }
     foreach ($entry in @(Get-Values $map.doorways)) { Test-RectArray "surface map $mapId doorway $($entry.id)" $entry.bounds $boardWidth $boardHeight }
     foreach ($entry in @(Get-Values $map.void)) { Test-RectArray "surface map $mapId void $($entry.id)" $entry.bounds $boardWidth $boardHeight }
 

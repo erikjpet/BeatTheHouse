@@ -207,6 +207,18 @@ static func candidate_rects(environment: Dictionary, placement_class: String, au
 				var candidate := Rect2(Vector2(center_x, center_y) - authored.size * 0.5, authored.size)
 				if not _intersects_named_rects(candidate, _array(_dict(surfaces.get("wall", {})).get("exclusions", []))):
 					_append_candidate(result, candidate, "wall", placement_class, constraint)
+		for mount_value in _array(_dict(surfaces.get("wall", {})).get("mounts", [])):
+			var mount := _dict(mount_value)
+			var mount_bounds := _rect_array(mount.get("bounds", []))
+			var mount_min_x := mount_bounds.position.x + authored.size.x * 0.5
+			var mount_max_x := mount_bounds.end.x - authored.size.x * 0.5
+			var mount_min_y := mount_bounds.position.y + authored.size.y * 0.5
+			var mount_max_y := mount_bounds.end.y - authored.size.y * 0.5
+			if mount_max_x < mount_min_x or mount_max_y < mount_min_y:
+				continue
+			for center_y in _ordered_values(clampf(authored.get_center().y, mount_min_y, mount_max_y), mount_min_y, mount_max_y, vertical_step):
+				for center_x in _ordered_values(clampf(authored.get_center().x, mount_min_x, mount_max_x), mount_min_x, mount_max_x, horizontal_step):
+					_append_candidate(result, Rect2(Vector2(center_x, center_y) - authored.size * 0.5, authored.size), str(mount.get("id", "wall_mount")), placement_class, constraint)
 	elif placement_class == "hanging":
 		var ceiling := _rect_array(_dict(surfaces.get("ceiling", {})).get("bounds", []))
 		var center := Vector2(clampf(authored.get_center().x, ceiling.position.x + authored.size.x * 0.5, ceiling.end.x - authored.size.x * 0.5), clampf(authored.get_center().y, ceiling.position.y + authored.size.y * 0.5, ceiling.end.y - authored.size.y * 0.5))
