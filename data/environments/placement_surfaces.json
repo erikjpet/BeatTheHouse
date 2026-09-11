@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "board_size": [900, 430],
+  "maps": [
+    {
+      "id": "corner_store", "archetype_id": "corner_store", "art_key": "shop",
+      "floor": {"bands": [[16, 245, 868, 133]], "contact_y": [254, 358]},
+      "counters": [{"id": "register", "x0": 338, "x1": 584, "top_y": 206, "front_y": 254}, {"id": "coolers", "x0": 642, "x1": 834, "top_y": 220, "front_y": 252}, {"id": "shelves", "x0": 58, "x1": 286, "top_y": 192, "front_y": 212}],
+      "seats": [], "wall": {"bounds": [0, 0, 900, 245], "exclusions": [{"id": "clerk_window", "bounds": [338, 92, 246, 114]}]},
+      "ceiling": {"bounds": [0, 0, 900, 38]}, "doorways": [{"id": "left_exit", "bounds": [0, 238, 82, 176]}, {"id": "right_exit", "bounds": [818, 238, 82, 176]}], "void": []
+    },
+    {
+      "id": "back_alley", "archetype_id": "back_alley", "art_key": "shop",
+      "floor": {"bands": [[16, 236, 868, 142]], "contact_y": [246, 358]},
+      "counters": [{"id": "folding_table", "x0": 282, "x1": 618, "top_y": 192, "front_y": 216}],
+      "seats": [], "wall": {"bounds": [0, 0, 900, 236], "exclusions": []}, "ceiling": {"bounds": [0, 0, 900, 36]},
+      "doorways": [{"id": "left_alley", "bounds": [0, 220, 88, 194]}, {"id": "right_alley", "bounds": [812, 220, 88, 194]}], "void": []
+    },
+    {
+      "id": "motel", "archetype_id": "motel", "art_key": "shop",
+      "floor": {"bands": [[16, 246, 868, 132]], "contact_y": [256, 358]},
+      "counters": [{"id": "bedspread", "x0": 96, "x1": 548, "top_y": 224, "front_y": 296}, {"id": "card_table", "x0": 370, "x1": 628, "top_y": 176, "front_y": 228}, {"id": "television", "x0": 664, "x1": 810, "top_y": 218, "front_y": 224}],
+      "seats": [], "wall": {"bounds": [0, 0, 900, 246], "exclusions": [{"id": "motel_window", "bounds": [42, 56, 242, 168]}, {"id": "curtain", "bounds": [288, 44, 324, 192]}]},
+      "ceiling": {"bounds": [0, 0, 900, 42]}, "doorways": [{"id": "left_door", "bounds": [0, 216, 82, 198]}, {"id": "right_door", "bounds": [818, 216, 82, 198]}], "void": []
+    },
+    {
+      "id": "bar", "archetype_id": "bar", "art_key": "bar",
+      "floor": {"bands": [[16, 244, 868, 134]], "contact_y": [252, 358]},
+      "counters": [{"id": "bar_counter", "x0": 38, "x1": 586, "top_y": 178, "front_y": 234}, {"id": "pool_table", "x0": 598, "x1": 822, "top_y": 188, "front_y": 264}],
+      "seats": [{"id": "stool_1", "point": [127, 242]}, {"id": "stool_2", "point": [207, 242]}, {"id": "stool_3", "point": [287, 242]}, {"id": "stool_4", "point": [367, 242]}, {"id": "stool_5", "point": [447, 242]}, {"id": "stool_6", "point": [527, 242]}],
+      "wall": {"bounds": [0, 0, 900, 244], "exclusions": [{"id": "bottle_mirror", "bounds": [54, 52, 498, 130]}, {"id": "video_poker", "bounds": [768, 144, 86, 112]}]},
+      "ceiling": {"bounds": [0, 0, 900, 40]}, "doorways": [{"id": "left_exit", "bounds": [0, 230, 76, 184]}, {"id": "right_exit", "bounds": [824, 230, 76, 184]}], "void": []
+    },
+    {
+      "id": "gas_station_casino", "archetype_id": "gas_station_casino", "art_key": "gas_station_casino",
+      "floor": {"bands": [[16, 248, 868, 130]], "contact_y": [256, 358]},
+      "counters": [{"id": "cage", "x0": 660, "x1": 826, "top_y": 104, "front_y": 224}],
+      "seats": [], "wall": {"bounds": [0, 0, 900, 248], "exclusions": [{"id": "highway_window", "bounds": [50, 96, 258, 96]}, {"id": "slot_row", "bounds": [338, 114, 286, 134]}]},
+      "ceiling": {"bounds": [0, 0, 900, 78]}, "doorways": [{"id": "forecourt_left", "bounds": [0, 224, 82, 190]}, {"id": "forecourt_right", "bounds": [818, 224, 82, 190]}], "void": []
+    },
+    {
+      "id": "small_underground_casino", "archetype_id": "small_underground_casino", "layer_id": "", "art_key": "comedy_club",
+      "floor": {"bands": [[16, 245, 868, 133]], "contact_y": [252, 358]},
+      "counters": [{"id": "stage", "x0": 264, "x1": 636, "top_y": 202, "front_y": 252}, {"id": "left_table", "x0": 74, "x1": 230, "top_y": 194, "front_y": 232}, {"id": "right_table", "x0": 670, "x1": 826, "top_y": 194, "front_y": 232}],
+      "seats": [{"id": "left_audience", "point": [122, 210]}, {"id": "right_audience", "point": [716, 210]}], "wall": {"bounds": [0, 0, 900, 245], "exclusions": [{"id": "stage_backdrop", "bounds": [248, 62, 404, 192]}]},
+      "ceiling": {"bounds": [0, 0, 900, 38]}, "doorways": [{"id": "side_door", "bounds": [814, 78, 64, 164]}, {"id": "left_exit", "bounds": [0, 230, 72, 184]}], "void": []
+    },
+    {
+      "id": "small_underground_casino:club", "archetype_id": "small_underground_casino", "layer_id": "club", "art_key": "comedy_club",
+      "floor": {"bands": [[16, 245, 868, 133]], "contact_y": [252, 358]}, "counters": [{"id": "stage", "x0": 264, "x1": 636, "top_y": 202, "front_y": 252}, {"id": "left_table", "x0": 74, "x1": 230, "top_y": 194, "front_y": 232}, {"id": "right_table", "x0": 670, "x1": 826, "top_y": 194, "front_y": 232}],
+      "seats": [{"id": "left_audience", "point": [122, 210]}, {"id": "right_audience", "point": [716, 210]}], "wall": {"bounds": [0, 0, 900, 245], "exclusions": [{"id": "stage_backdrop", "bounds": [248, 62, 404, 192]}]}, "ceiling": {"bounds": [0, 0, 900, 38]}, "doorways": [{"id": "side_door", "bounds": [814, 78, 64, 164]}, {"id": "left_exit", "bounds": [0, 230, 72, 184]}], "void": []
+    },
+    {
+      "id": "small_underground_casino:casino", "archetype_id": "small_underground_casino", "layer_id": "casino", "art_key": "underground",
+      "floor": {"bands": [[16, 245, 868, 133]], "contact_y": [252, 358]}, "counters": [{"id": "left_table", "x0": 100, "x1": 342, "top_y": 154, "front_y": 240}, {"id": "right_table", "x0": 438, "x1": 696, "top_y": 142, "front_y": 240}, {"id": "bar_cart", "x0": 40, "x1": 110, "top_y": 168, "front_y": 270}],
+      "seats": [{"id": "left_card_seat", "point": [220, 246]}, {"id": "right_card_seat", "point": [566, 246]}], "wall": {"bounds": [0, 0, 900, 245], "exclusions": [{"id": "guard_door", "bounds": [744, 88, 108, 178]}]}, "ceiling": {"bounds": [0, 0, 900, 108]}, "doorways": [{"id": "guarded_exit", "bounds": [744, 88, 108, 178]}, {"id": "left_exit", "bounds": [0, 228, 72, 186]}], "void": []
+    },
+    {
+      "id": "small_underground_casino:back_room", "archetype_id": "small_underground_casino", "layer_id": "back_room", "art_key": "crew_back_room",
+      "floor": {"bands": [[16, 245, 868, 133]], "contact_y": [252, 358]}, "counters": [{"id": "job_board", "x0": 42, "x1": 212, "top_y": 54, "front_y": 158}, {"id": "planning_table", "x0": 264, "x1": 636, "top_y": 151, "front_y": 225}, {"id": "numbers_desk", "x0": 42, "x1": 212, "top_y": 184, "front_y": 236}, {"id": "mags_bench", "x0": 680, "x1": 834, "top_y": 62, "front_y": 108}],
+      "seats": [{"id": "planning_left", "point": [278, 240]}, {"id": "planning_right", "point": [622, 240]}], "wall": {"bounds": [0, 0, 900, 245], "exclusions": [{"id": "job_board", "bounds": [42, 54, 170, 104]}, {"id": "exit", "bounds": [790, 70, 80, 174]}]}, "ceiling": {"bounds": [0, 0, 900, 36]}, "doorways": [{"id": "rook_exit", "bounds": [790, 70, 80, 174]}, {"id": "left_exit", "bounds": [0, 228, 72, 186]}], "void": []
+    },
+    {
+      "id": "jazz_club", "archetype_id": "jazz_club", "art_key": "jazz_club",
+      "floor": {"bands": [[16, 246, 868, 132]], "contact_y": [252, 358], "stage_bands": [[66, 208, 476, 34]]}, "counters": [{"id": "stage", "x0": 66, "x1": 542, "top_y": 208, "front_y": 242}, {"id": "bar", "x0": 590, "x1": 874, "top_y": 188, "front_y": 236}, {"id": "table_left", "x0": 74, "x1": 150, "top_y": 304, "front_y": 318}, {"id": "table_mid", "x0": 206, "x1": 282, "top_y": 304, "front_y": 318}, {"id": "table_right", "x0": 574, "x1": 650, "top_y": 304, "front_y": 318}],
+      "seats": [{"id": "audience_left", "point": [112, 322]}, {"id": "audience_mid", "point": [244, 322]}, {"id": "audience_right", "point": [612, 322]}], "wall": {"bounds": [0, 0, 900, 246], "exclusions": [{"id": "stage_back", "bounds": [48, 58, 510, 190]}, {"id": "bar_back", "bounds": [600, 72, 254, 122]}]}, "ceiling": {"bounds": [0, 0, 900, 36]}, "doorways": [{"id": "left_exit", "bounds": [0, 230, 72, 184]}, {"id": "right_exit", "bounds": [828, 230, 72, 184]}], "void": []
+    },
+    {
+      "id": "kitty_cat_lounge", "archetype_id": "kitty_cat_lounge", "art_key": "kitty_cat_lounge",
+      "floor": {"bands": [[16, 246, 868, 132]], "contact_y": [252, 358], "stage_bands": [[94, 196, 406, 38]]}, "counters": [{"id": "stage", "x0": 94, "x1": 500, "top_y": 196, "front_y": 234}, {"id": "champagne_bar", "x0": 584, "x1": 852, "top_y": 190, "front_y": 238}, {"id": "table_left", "x0": 88, "x1": 172, "top_y": 308, "front_y": 322}, {"id": "table_mid", "x0": 258, "x1": 342, "top_y": 308, "front_y": 322}, {"id": "table_right", "x0": 430, "x1": 514, "top_y": 308, "front_y": 322}],
+      "seats": [{"id": "stage_left", "point": [142, 234]}, {"id": "stage_mid", "point": [250, 234]}, {"id": "stage_right", "point": [358, 234]}], "wall": {"bounds": [0, 0, 900, 246], "exclusions": [{"id": "stage_back", "bounds": [62, 58, 470, 184]}, {"id": "bar_back", "bounds": [584, 72, 260, 124]}]}, "ceiling": {"bounds": [0, 0, 900, 38]}, "doorways": [{"id": "left_exit", "bounds": [0, 230, 72, 184]}, {"id": "right_exit", "bounds": [828, 230, 72, 184]}], "void": []
+    },
+    {
+      "id": "delta_queen", "archetype_id": "delta_queen", "art_key": "delta_queen",
+      "floor": {"bands": [[16, 246, 868, 32]], "contact_y": [254, 274]}, "counters": [{"id": "left_table", "x0": 64, "x1": 302, "top_y": 178, "front_y": 262}, {"id": "right_table", "x0": 360, "x1": 572, "top_y": 170, "front_y": 262}],
+      "seats": [{"id": "left_table", "point": [184, 270]}, {"id": "right_table", "point": [466, 270]}], "wall": {"bounds": [0, 0, 900, 246], "exclusions": [{"id": "river_windows", "bounds": [42, 54, 804, 112]}, {"id": "slots", "bounds": [626, 132, 174, 124]}]}, "ceiling": {"bounds": [0, 0, 900, 42]}, "doorways": [{"id": "gangway_left", "bounds": [0, 238, 72, 90]}, {"id": "gangway_right", "bounds": [828, 238, 72, 90]}], "void": [{"id": "brass_rail", "bounds": [0, 278, 900, 50]}, {"id": "river", "bounds": [0, 328, 900, 102]}]
+    },
+    {
+      "id": "beach", "archetype_id": "beach", "art_key": "beach",
+      "floor": {"bands": [[16, 180, 868, 120]], "contact_y": [198, 292], "stage_bands": [[16, 238, 868, 78]]}, "counters": [{"id": "towel", "x0": 76, "x1": 246, "top_y": 198, "front_y": 234}, {"id": "kiosk", "x0": 668, "x1": 812, "top_y": 92, "front_y": 238}],
+      "seats": [], "wall": {"bounds": [0, 0, 900, 78], "exclusions": []}, "ceiling": {"bounds": [0, 0, 900, 50]}, "doorways": [{"id": "boardwalk_left", "bounds": [0, 238, 72, 176]}, {"id": "boardwalk_right", "bounds": [828, 238, 72, 176]}], "void": [{"id": "sky", "bounds": [0, 0, 900, 78]}, {"id": "surf", "bounds": [0, 78, 900, 102]}]
+    },
+    {
+      "id": "pawn_shop", "archetype_id": "pawn_shop", "art_key": "pawn_shop",
+      "floor": {"bands": [[16, 246, 868, 132]], "contact_y": [254, 358]}, "counters": [{"id": "display_shelves", "x0": 72, "x1": 258, "top_y": 182, "front_y": 216}, {"id": "pawn_counter", "x0": 316, "x1": 584, "top_y": 224, "front_y": 278}, {"id": "right_case", "x0": 630, "x1": 818, "top_y": 170, "front_y": 200}],
+      "seats": [], "wall": {"bounds": [0, 0, 900, 246], "exclusions": [{"id": "left_case", "bounds": [56, 70, 218, 146]}, {"id": "cage", "bounds": [316, 92, 268, 132]}, {"id": "right_case", "bounds": [612, 72, 224, 150]}]}, "ceiling": {"bounds": [0, 0, 900, 38]}, "doorways": [{"id": "left_exit", "bounds": [0, 230, 72, 184]}, {"id": "right_exit", "bounds": [828, 230, 72, 184]}], "void": []
+    },
+    {
+      "id": "grand_casino", "archetype_id": "grand_casino", "art_key": "boss",
+      "floor": {"bands": [[16, 246, 868, 132]], "contact_y": [258, 358]}, "counters": [{"id": "left_table", "x0": 82, "x1": 340, "top_y": 184, "front_y": 266}, {"id": "right_table", "x0": 562, "x1": 820, "top_y": 184, "front_y": 266}], "seats": [{"id": "left_table", "point": [210, 274]}, {"id": "right_table", "point": [690, 274]}],
+      "wall": {"bounds": [0, 0, 900, 246], "exclusions": [{"id": "slot_wall", "bounds": [32, 118, 788, 128]}, {"id": "pit_door", "bounds": [392, 132, 116, 152]}]}, "ceiling": {"bounds": [0, 0, 900, 40]}, "doorways": [{"id": "pit_door", "bounds": [392, 132, 116, 152]}, {"id": "left_exit", "bounds": [0, 238, 72, 176]}, {"id": "right_exit", "bounds": [828, 238, 72, 176]}], "void": []
+    },
+    {
+      "id": "grand_casino_high_limit", "archetype_id": "grand_casino_high_limit", "art_key": "boss",
+      "floor": {"bands": [[16, 246, 868, 132]], "contact_y": [258, 358]}, "counters": [{"id": "left_table", "x0": 82, "x1": 340, "top_y": 184, "front_y": 266}, {"id": "right_table", "x0": 562, "x1": 820, "top_y": 184, "front_y": 266}], "seats": [{"id": "left_table", "point": [210, 274]}, {"id": "right_table", "point": [690, 274]}, {"id": "high_limit", "point": [450, 292]}],
+      "wall": {"bounds": [0, 0, 900, 246], "exclusions": [{"id": "slot_wall", "bounds": [32, 118, 788, 128]}, {"id": "pit_door", "bounds": [392, 132, 116, 152]}]}, "ceiling": {"bounds": [0, 0, 900, 40]}, "doorways": [{"id": "pit_door", "bounds": [392, 132, 116, 152]}, {"id": "left_exit", "bounds": [0, 238, 72, 176]}, {"id": "right_exit", "bounds": [828, 238, 72, 176]}], "void": []
+    },
+    {
+      "id": "grand_casino_back_room", "archetype_id": "grand_casino_back_room", "art_key": "boss",
+      "floor": {"bands": [[16, 246, 868, 132]], "contact_y": [258, 358]}, "counters": [{"id": "left_table", "x0": 82, "x1": 340, "top_y": 184, "front_y": 266}, {"id": "right_table", "x0": 562, "x1": 820, "top_y": 184, "front_y": 266}], "seats": [{"id": "left_table", "point": [210, 274]}, {"id": "right_table", "point": [690, 274]}],
+      "wall": {"bounds": [0, 0, 900, 246], "exclusions": [{"id": "slot_wall", "bounds": [32, 118, 788, 128]}, {"id": "pit_door", "bounds": [392, 132, 116, 152]}]}, "ceiling": {"bounds": [0, 0, 900, 40]}, "doorways": [{"id": "pit_door", "bounds": [392, 132, 116, 152]}, {"id": "left_exit", "bounds": [0, 238, 72, 176]}, {"id": "right_exit", "bounds": [828, 238, 72, 176]}], "void": []
+    },
+    {
+      "id": "grand_casino_cage", "archetype_id": "grand_casino_cage", "art_key": "grand_casino_cage",
+      "floor": {"bands": [[16, 250, 868, 128]], "contact_y": [266, 358]}, "counters": [{"id": "gift_case", "x0": 54, "x1": 244, "top_y": 124, "front_y": 274}, {"id": "teller_counter", "x0": 260, "x1": 648, "top_y": 260, "front_y": 316}, {"id": "atm", "x0": 668, "x1": 772, "top_y": 116, "front_y": 290}],
+      "seats": [], "wall": {"bounds": [0, 0, 900, 250], "exclusions": [{"id": "gift_case", "bounds": [54, 124, 190, 150]}, {"id": "teller_windows", "bounds": [274, 112, 356, 168]}, {"id": "atm", "bounds": [668, 116, 104, 174]}]}, "ceiling": {"bounds": [0, 0, 900, 40]}, "doorways": [{"id": "floor_door", "bounds": [812, 118, 70, 206]}, {"id": "left_exit", "bounds": [0, 242, 72, 172]}], "void": []
+    },
+    {
+      "id": "motel_room", "archetype_id": "motel_room", "art_key": "motel_room",
+      "floor": {"bands": [[16, 246, 868, 132]], "contact_y": [254, 358]}, "counters": [{"id": "bedspread", "x0": 352, "x1": 638, "top_y": 114, "front_y": 218}, {"id": "nightstand", "x0": 744, "x1": 826, "top_y": 188, "front_y": 234}, {"id": "rug", "x0": 204, "x1": 718, "top_y": 236, "front_y": 294}],
+      "seats": [], "wall": {"bounds": [0, 0, 900, 246], "exclusions": [{"id": "window", "bounds": [52, 54, 260, 168]}, {"id": "television", "bounds": [650, 84, 116, 148]}]}, "ceiling": {"bounds": [0, 0, 900, 42]}, "doorways": [{"id": "left_exit", "bounds": [0, 226, 72, 188]}, {"id": "right_exit", "bounds": [828, 226, 72, 188]}], "void": []
+    },
+    {
+      "id": "apartment", "archetype_id": "apartment", "art_key": "apartment",
+      "floor": {"bands": [[16, 246, 868, 132]], "contact_y": [254, 358]}, "counters": [{"id": "sofa", "x0": 296, "x1": 564, "top_y": 118, "front_y": 222}, {"id": "kitchen_counter", "x0": 632, "x1": 774, "top_y": 132, "front_y": 214}, {"id": "rug", "x0": 260, "x1": 634, "top_y": 246, "front_y": 304}],
+      "seats": [{"id": "sofa_left", "point": [370, 210]}, {"id": "sofa_right", "point": [488, 210]}], "wall": {"bounds": [0, 0, 900, 246], "exclusions": [{"id": "window", "bounds": [42, 42, 230, 152]}, {"id": "framed_print", "bounds": [354, 48, 146, 64]}, {"id": "kitchen", "bounds": [626, 48, 224, 178]}]}, "ceiling": {"bounds": [0, 0, 900, 38]}, "doorways": [{"id": "left_exit", "bounds": [0, 226, 72, 188]}, {"id": "right_exit", "bounds": [828, 226, 72, 188]}], "void": []
+    },
+    {
+      "id": "house", "archetype_id": "house", "art_key": "house",
+      "floor": {"bands": [[16, 246, 868, 132]], "contact_y": [254, 358]}, "counters": [{"id": "sofa", "x0": 122, "x1": 366, "top_y": 150, "front_y": 224}, {"id": "coffee_table", "x0": 354, "x1": 462, "top_y": 166, "front_y": 222}, {"id": "dining_table", "x0": 616, "x1": 766, "top_y": 132, "front_y": 238}, {"id": "rug", "x0": 218, "x1": 828, "top_y": 234, "front_y": 296}],
+      "seats": [{"id": "sofa_left", "point": [196, 218]}, {"id": "sofa_right", "point": [300, 218]}, {"id": "dining_left", "point": [636, 240]}, {"id": "dining_right", "point": [744, 240]}], "wall": {"bounds": [0, 0, 900, 246], "exclusions": [{"id": "window", "bounds": [76, 72, 132, 94]}, {"id": "television", "bounds": [250, 82, 170, 78]}, {"id": "kitchen", "bounds": [554, 46, 298, 190]}]}, "ceiling": {"bounds": [0, 0, 900, 42]}, "doorways": [{"id": "left_exit", "bounds": [0, 226, 72, 188]}, {"id": "right_exit", "bounds": [828, 226, 72, 188]}], "void": []
+    }
+  ]
+}

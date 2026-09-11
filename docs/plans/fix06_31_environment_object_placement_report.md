@@ -1,8 +1,8 @@
 # Fix 06.31 — Environment Object Placement and Grounding
 
-Status: **BEFORE AUDIT COMPLETE / IMPLEMENTATION PENDING**  
-Baseline product head: `c570f2ce6fafa4212292f8b129ca08f2e9e1e954`  
-Claim commit: `e56f00b8`  
+Status: **BEFORE AUDIT + SURFACE MAPS COMPLETE / IMPLEMENTATION PENDING**
+Baseline product head: `c570f2ce6fafa4212292f8b129ca08f2e9e1e954`
+Claim commit: `e56f00b8`
 Audit date: 2026-09-10
 
 ## Player-visible finding
@@ -124,11 +124,27 @@ the broader set so no state can inherit a bad physical relationship; the frozen
 These provisional judgements are used only to identify the before defect. Phase
 C moves them into authored per-room surface maps checked against clean captures.
 
+## Phase C — authored surface maps
+
+`data/environments/placement_surfaces.json` now contains 21 unique maps: every
+one of the 18 archetypes plus the Punchline's public club, hidden casino and
+back-room layers. Every map explicitly contains floor bands/contact range,
+counters or support lines, seats, wall bounds/exclusions, ceiling, doorways and
+voids. The schema remains additive and does not change saved-run data.
+
+The complete checked overlay set is committed under
+`docs/plans/evidence/fix06_31/surface_maps/`. Green outlines show standable
+floor/stage bands, blue lines show support surfaces, purple outlines show
+doorways, red outlines show voids, yellow outlines show live object rects and
+pink dots mark their current contact point. The Delta Queen overlay visibly
+separates the narrow deck from the brass rail and river; the Beach overlay
+separates surf from sand/boardwalk.
+
 ## Before capture index
 
 Every scenario has a matching pair:
 
-`D:\Projects\Beat-The-House\.tmp\fix06_31\before\states\<scenario>_arrival_clean.png`  
+`D:\Projects\Beat-The-House\.tmp\fix06_31\before\states\<scenario>_arrival_clean.png`
 `D:\Projects\Beat-The-House\.tmp\fix06_31\before\states\<scenario>_arrival_annotated.png`
 
 Every baseline room/layer has a matching pair under

@@ -36,6 +36,7 @@ var report := {}
 var meta_home_review := false
 var punchline_layer_review := false
 var fix06_31_audit := false
+var fix06_31_surface_maps: Dictionary = {}
 
 
 func _init() -> void:
@@ -311,6 +312,7 @@ func _canvas_object_layout() -> Dictionary:
 
 func _run_fix06_31_audit(library: Variant) -> void:
 	var failures: Array = []
+	fix06_31_surface_maps = _load_fix06_31_surface_maps(failures)
 	var baseline_report: Dictionary = {}
 	var audit_records: Array = []
 	var floating_roots: Dictionary = {}
@@ -338,7 +340,7 @@ func _run_fix06_31_audit(library: Variant) -> void:
 				await _capture_archetype_layer(archetype, archetype_id, layer_id, run_state, library)
 				out_dir = prior_out
 				baseline_report[layer_key] = report.get(layer_key, {}).duplicate(true)
-				_fix06_31_save_base_annotation(prior_out, layer_key, archetype_id)
+				_fix06_31_save_base_annotation(prior_out, layer_key, "%s:%s" % [archetype_id, layer_id])
 	var definitions := _fix06_31_scenario_definitions(library)
 	for definition_value in definitions:
 		var definition := _dict(definition_value)
@@ -487,6 +489,19 @@ func _fix06_31_annotated_image(source: Image, archetype_id: String) -> Image:
 	var left := transform * Vector2(0.0, floor_y)
 	var right := transform * Vector2(900.0, floor_y)
 	_fix06_31_image_line(result, left, right, Color("#00ff88"), 3)
+	var surface_map := _dict(fix06_31_surface_maps.get(archetype_id, {}))
+	for band_value in _array(_dict(surface_map.get("floor", {})).get("bands", [])):
+		var band := _rect_from_array(band_value)
+		_fix06_31_image_rect(result, Rect2(transform * band.position, transform * band.end - transform * band.position), Color("#00aa66"), 2)
+	for counter_value in _array(surface_map.get("counters", [])):
+		var counter := _dict(counter_value)
+		_fix06_31_image_line(result, transform * Vector2(float(counter.get("x0", 0.0)), float(counter.get("top_y", 0.0))), transform * Vector2(float(counter.get("x1", 0.0)), float(counter.get("top_y", 0.0))), Color("#33aaff"), 3)
+	for doorway_value in _array(surface_map.get("doorways", [])):
+		var doorway := _rect_from_array(_dict(doorway_value).get("bounds", []))
+		_fix06_31_image_rect(result, Rect2(transform * doorway.position, transform * doorway.end - transform * doorway.position), Color("#aa66ff"), 2)
+	for void_value in _array(surface_map.get("void", [])):
+		var void_rect := _rect_from_array(_dict(void_value).get("bounds", []))
+		_fix06_31_image_rect(result, Rect2(transform * void_rect.position, transform * void_rect.end - transform * void_rect.position), Color("#ff3344"), 3)
 	var object_layout := _canvas_object_layout()
 	for object_value in _array(object_layout.get("objects", [])):
 		var object_data := _dict(object_value)
@@ -644,7 +659,32 @@ func _fix06_31_has_token(text: String, tokens: Array) -> bool:
 
 
 func _fix06_31_floor_y(archetype_id: String) -> float:
+	var surface_map := _dict(fix06_31_surface_maps.get(archetype_id, {}))
+	var bands := _array(_dict(surface_map.get("floor", {})).get("bands", []))
+	if not bands.is_empty():
+		return _rect_from_array(bands[0]).position.y
 	return float(FIX06_31_FLOOR_Y.get(archetype_id, 246.0))
+
+
+func _load_fix06_31_surface_maps(failures: Array) -> Dictionary:
+	var file := FileAccess.open("res://data/environments/placement_surfaces.json", FileAccess.READ)
+	if file == null:
+		failures.append("Placement surface map data could not be opened.")
+		return {}
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	file.close()
+	if typeof(parsed) != TYPE_DICTIONARY:
+		failures.append("Placement surface map data is not a dictionary.")
+		return {}
+	var index: Dictionary = {}
+	for map_value in _array(_dict(parsed).get("maps", [])):
+		var surface_map := _dict(map_value)
+		var map_id := str(surface_map.get("id", ""))
+		if map_id.is_empty() or index.has(map_id):
+			failures.append("Placement surface map id is empty or duplicated: %s." % map_id)
+			continue
+		index[map_id] = surface_map
+	return index
 
 
 func _fix06_31_node_for_archetype(run_state: Variant, archetype_id: String) -> String:
@@ -688,6 +728,13 @@ func _rect(value: Variant) -> Rect2:
 		return value
 	var data := _dict(value)
 	return Rect2(float(data.get("x", 0.0)), float(data.get("y", 0.0)), float(data.get("w", 0.0)), float(data.get("h", 0.0)))
+
+
+func _rect_from_array(value: Variant) -> Rect2:
+	var values := _array(value)
+	if values.size() < 4:
+		return Rect2()
+	return Rect2(float(values[0]), float(values[1]), float(values[2]), float(values[3]))
 
 
 func _survey_home_containers(profile: Dictionary) -> Array:
