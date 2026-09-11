@@ -11,6 +11,7 @@ const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const SequenceCatalogScript := preload("res://scripts/core/scenario_sequence_catalog.gd")
 const ScenarioLayoutResolverScript := preload("res://scripts/core/scenario_layout_resolver.gd")
+const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
 const HarnessProductionFidelityScript := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
 const SEED_TEXT := "LAYOUT-SURVEY-QA"
 const FIX06_31_SEED := "FIX06-31-AUDIT-BEFORE"
@@ -21,14 +22,6 @@ const FIX06_31_FLOOR_Y := {
 	"gas_station_casino": 248.0,
 	"small_underground_casino": 245.0,
 }
-const FIX06_31_PERSON_TOKENS := ["actor", "bartender", "bouncer", "cashier", "captain", "clerk", "crew", "dealer", "driver", "guard", "host", "landlord", "mate", "observer", "patron", "person", "regular", "runner", "shopkeeper", "teller", "vendor"]
-const FIX06_31_COUNTER_TOKENS := ["bartender", "cashier", "clerk", "dealer", "shopkeeper", "teller", "vendor"]
-const FIX06_31_SEATED_TOKENS := ["audience", "booth", "chair", "seated", "stool"]
-const FIX06_31_GROUP_TOKENS := ["crowd", "drivers", "group", "sheltering", "the crew"]
-const FIX06_31_WALL_TOKENS := ["calendar", "camera", "clock", "menu", "notice", "poster", "scoreboard", "screen", "sign"]
-const FIX06_31_SURFACE_TOKENS := ["card", "drink", "glass", "ledger", "note", "ticket", "tray", "watch"]
-const FIX06_31_GROUND_TOKENS := ["chalk", "mark", "spill", "tape"]
-const FIX06_31_DOOR_TOKENS := ["door", "exit", "gangway", "leave", "route"]
 
 var app: Control
 var out_dir := "user://layout_survey"
@@ -587,7 +580,7 @@ func _audit_fix06_31_placement(environment: Dictionary, archetype_id: String, pl
 	var bounds := _dict(payload.get("bounds", {}))
 	var size := Vector2(float(bounds.get("w", default_size.x)), float(bounds.get("h", default_size.y)))
 	var rect := ScenarioLayoutResolverScript._clamp_inside_board(Rect2(center - size * 0.5, size))
-	var placement_class := _baseline_fix06_31_class(family, operation, payload)
+	var placement_class := EnvironmentPlacementScript.classify(payload.merged(operation, true), "actor" if family == "actor_ops" else "scene_object", str(operation.get("stable_object_id", "")), str(payload.get("prop", payload.get("icon_key", ""))))
 	var floor_y := _fix06_31_floor_y(archetype_id)
 	var verdict := _baseline_fix06_31_verdict(placement_class, rect, floor_y)
 	return {
@@ -611,30 +604,6 @@ func _audit_fix06_31_placement(environment: Dictionary, archetype_id: String, pl
 	}
 
 
-func _baseline_fix06_31_class(family: String, operation: Dictionary, payload: Dictionary) -> String:
-	var text := "%s %s %s %s %s" % [str(operation.get("stable_object_id", "")), str(payload.get("label", "")), str(payload.get("role", "")), str(payload.get("description", "")), str(payload.get("icon_key", ""))]
-	text = text.to_lower()
-	if family == "actor_ops" or _fix06_31_has_token(text, FIX06_31_PERSON_TOKENS):
-		if _fix06_31_has_token(text, FIX06_31_COUNTER_TOKENS):
-			return "behind_counter_person"
-		if _fix06_31_has_token(text, FIX06_31_SEATED_TOKENS):
-			return "seated_person"
-		if _fix06_31_has_token(text, FIX06_31_GROUP_TOKENS):
-			return "group"
-		return "standing_person"
-	if _fix06_31_has_token(text, FIX06_31_WALL_TOKENS):
-		return "wall_mounted"
-	if text.contains("banner") or text.contains("string light") or text.contains("speaker rig"):
-		return "hanging"
-	if _fix06_31_has_token(text, FIX06_31_DOOR_TOKENS):
-		return "doorway"
-	if _fix06_31_has_token(text, FIX06_31_GROUND_TOKENS):
-		return "ground_marker"
-	if _fix06_31_has_token(text, FIX06_31_SURFACE_TOKENS):
-		return "surface_item"
-	return "floor_fixture"
-
-
 func _baseline_fix06_31_verdict(placement_class: String, rect: Rect2, floor_y: float) -> String:
 	if placement_class in ["standing_person", "group"]:
 		return "FLOATING" if rect.end.y < floor_y else "OK"
@@ -649,13 +618,6 @@ func _baseline_fix06_31_verdict(placement_class: String, rect: Rect2, floor_y: f
 	if placement_class == "doorway":
 		return "SEMANTIC_MISMATCH" if rect.get_center().x > 180.0 and rect.get_center().x < 720.0 else "OK"
 	return "OK"
-
-
-func _fix06_31_has_token(text: String, tokens: Array) -> bool:
-	for token_value in tokens:
-		if text.contains(str(token_value)):
-			return true
-	return false
 
 
 func _fix06_31_floor_y(archetype_id: String) -> float:

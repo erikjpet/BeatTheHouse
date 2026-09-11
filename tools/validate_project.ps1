@@ -50,6 +50,7 @@ $requiredFiles = @(
     "scenes/main.tscn",
     "scripts/core/run_state.gd",
     "scripts/core/environment_instance.gd",
+    "scripts/core/environment_placement.gd",
     "scripts/core/game_module.gd",
     "scripts/core/item_effect.gd",
     "scripts/core/event_module.gd",
@@ -94,6 +95,7 @@ $requiredFiles = @(
     "tools/foundation_visual_qa.gd",
     "tools/scenario_sequence_audit.ps1",
     "tools/scenario_sequence_audit.gd",
+    "tools/environment_grounding_static_check.ps1",
     "tools/scenario_room_multiseed_finalization.gd",
     "tools/scenario_sequence_probe_support.gd",
     "tools/scenario_sequence_probe_main.gd",
@@ -104,6 +106,7 @@ $requiredFiles = @(
     "data/art/art_manifest.json",
     "data/art/attribute_glyphs.json",
     "data/environments/archetypes.json",
+    "data/environments/placement_surfaces.json",
     "data/environments/scenario_sequences/env06_7_shops_streets.json",
     "data/items/items.json",
     "data/events/events.json",
@@ -419,6 +422,7 @@ $objectJsonFiles = @(
     "data/games/showdown_duel_ritual_v1.json",
     "data/games/scratch_ticket_regions.json",
     "data/environments/scenarios.json",
+    "data/environments/placement_surfaces.json",
     "data/story/character_chains.json"
 )
 $objectJsonDirectories = @(
@@ -1595,6 +1599,13 @@ foreach ($searchRoot in $simulationSearchRoots) {
             $failures.Add("Foundation simulation must use RngStream instead of engine-global randomness: $relativeScript")
         }
     }
+}
+
+try {
+    & (Join-Path $root "tools/environment_grounding_static_check.ps1") -Root $root | Out-Null
+}
+catch {
+    $failures.Add("Environment grounding static check failed: $($_.Exception.Message)")
 }
 
 try {
