@@ -10,6 +10,7 @@ const ScenarioSequenceRuntimeScript := preload("res://scripts/core/scenario_sequ
 const CrewWorldSequenceAdapterScript := preload("res://scripts/core/crew_world_sequence_adapter.gd")
 const EnvironmentSemanticInventoryScript := preload("res://scripts/core/environment_semantic_inventory.gd")
 const EnvironmentEventResolverScript := preload("res://scripts/core/environment_event_resolver.gd")
+const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
 
 const ENVIRONMENT_BOARD_SIZE := Vector2(ArtContractsScript.ENVIRONMENT_BOARD_SIZE)
 const GENERATED_LAYOUT_VERSION := 11
@@ -133,6 +134,9 @@ static func from_archetype(archetype: Dictionary, p_depth: int, rng: RngStream, 
 	environment.game_ids = _pick_ids_with_required(game_pool, archetype.get("game_count", 1), required_games, rng)
 	environment.game_states = {}
 	environment.event_ids = _pick_events(archetype, rng.fork("events:%s" % environment.id), library)
+	var event_placement_hints := _event_placement_hints(environment.event_ids, library, environment.to_dict())
+	if not event_placement_hints.is_empty():
+		environment.layout["object_placement_hints"] = event_placement_hints
 	if not selected_state.is_empty() and ScenarioEngineScript.SequenceSchemaScript.is_sequence(selected_scenario):
 		environment.scenario_event_choices = EnvironmentSemanticInventoryScript.event_choice_index(environment.event_ids, library)
 	environment.item_offers = _build_offers(archetype, rng, library, challenge_config)
@@ -514,14 +518,29 @@ static func _is_layered_archetype(archetype: Dictionary) -> bool:
 
 
 # Ensures a generated environment owns stable object placement keyed by object id.
-static func ensure_generated_layout(environment_data: Dictionary) -> Dictionary:
+static func ensure_generated_layout(environment_data: Dictionary, library: ContentLibrary = null) -> Dictionary:
 	var layout := _copy_dict(environment_data.get("layout", {}))
+	if library != null:
+		var refreshed_hints := _event_placement_hints(_copy_array(environment_data.get("event_ids", [])), library, environment_data)
+		if not refreshed_hints.is_empty():
+			layout["object_placement_hints"] = refreshed_hints
 	var object_rects := _copy_dict(layout.get("object_rects", {}))
 	if int(layout.get("generated_object_rect_version", 0)) != GENERATED_LAYOUT_VERSION:
 		object_rects = {}
 	var include_route_travel_rects := not bool(environment_data.get("world_map_travel", false))
-	var active_entries := _active_object_layout_entries(environment_data)
+	# Town/scenario modifiers can add events after the EnvironmentInstance was
+	# first built. Classify those late additions from the refreshed hints above,
+	# rather than the stale hints still held by the serialized input dictionary.
+	var placement_environment := environment_data.duplicate(true)
+	placement_environment["layout"] = layout
+	var active_entries := _active_object_layout_entries(placement_environment)
 	var active_object_ids := _active_object_ids_from_entries(active_entries)
+	var grounding_signature := _grounding_signature(environment_data, layout, active_entries, include_route_travel_rects)
+	if int(layout.get("generated_object_rect_version", 0)) == GENERATED_LAYOUT_VERSION \
+			and str(layout.get("grounding_signature", "")) == grounding_signature \
+			and _copy_array(layout.get("placement_errors", [])).is_empty() \
+			and _copy_array(layout.get("placement_fallback_ids", [])).is_empty():
+		return layout
 	var prioritize_services := bool(layout.get("prioritize_service_spots", false))
 	_prune_inactive_object_rects(object_rects, active_object_ids)
 	_assign_object_layout_entries(object_rects, layout, _game_layout_entries(environment_data), active_object_ids)
@@ -544,15 +563,200 @@ static func ensure_generated_layout(environment_data: Dictionary) -> Dictionary:
 	_assign_string_object_rects(object_rects, layout, "home_container", _home_container_ids(environment_data), "home_container_spots", active_object_ids)
 	if prioritize_services:
 		_assign_item_offer_rects(object_rects, layout, _copy_array(environment_data.get("item_offers", [])), active_object_ids)
-	_resolve_active_object_rect_collisions(object_rects, layout, active_entries)
+	var placement_entries := active_entries.duplicate(true)
 	if include_route_travel_rects:
 		var route_active_ids := active_object_ids.duplicate(true)
 		for target_id in _travel_target_ids(environment_data):
 			route_active_ids["travel:%s" % target_id] = true
 		_assign_string_object_rects(object_rects, layout, "travel", _travel_target_ids(environment_data), "travel_spots", route_active_ids)
+		var route_index := 0
+		for target_id in _travel_target_ids(environment_data):
+			placement_entries.append({"object_id": "travel:%s" % target_id, "object_type": "travel", "index": route_index, "spot_field": "travel_spots"})
+			route_index += 1
+	_ground_active_object_rects(object_rects, layout, environment_data, placement_entries)
 	layout["object_rects"] = object_rects
 	layout["generated_object_rect_version"] = GENERATED_LAYOUT_VERSION
+	layout["grounding_signature"] = grounding_signature
 	return layout
+
+
+static func _grounding_signature(environment_data: Dictionary, layout: Dictionary, active_entries: Array, include_route_travel_rects: bool) -> String:
+	var layout_source := layout.duplicate(true)
+	for generated_key in ["object_rects", "placement_classes", "placement_surfaces", "placement_errors", "placement_fallback_ids", "grounding_signature", "generated_object_rect_version"]:
+		layout_source.erase(generated_key)
+	var signature_source := {
+		"version": GENERATED_LAYOUT_VERSION,
+		"archetype_id": str(environment_data.get("archetype_id", environment_data.get("id", ""))),
+		"layer_id": str(environment_data.get("current_layer_id", environment_data.get("layer_id", ""))),
+		"surface_map": EnvironmentPlacementScript.surface_map(environment_data),
+		"active_entries": active_entries,
+		"travel_targets": _travel_target_ids(environment_data) if include_route_travel_rects else [],
+		"layout_source": layout_source,
+	}
+	return JSON.stringify(signature_source).sha256_text()
+
+
+# Applies the same class/surface authority used by scenario projection. Existing
+# saved rects are inputs, not authority: restores therefore receive the current
+# grounded placement without a save-schema change or a new RNG draw.
+static func _ground_active_object_rects(object_rects: Dictionary, layout: Dictionary, environment_data: Dictionary, active_entries: Array) -> void:
+	var placed: Dictionary = {}
+	var placement_classes: Dictionary = {}
+	var placement_surfaces: Dictionary = {}
+	var placement_errors: Array = []
+	var fallback_ids: Array = []
+	var ordered_entries := active_entries.duplicate(true)
+	ordered_entries.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
+		var left := _copy_dict(left_value)
+		var right := _copy_dict(right_value)
+		var left_class := EnvironmentPlacementScript.classify(left, str(left.get("object_type", "")), str(left.get("object_id", "")))
+		var right_class := EnvironmentPlacementScript.classify(right, str(right.get("object_type", "")), str(right.get("object_id", "")))
+		var left_priority := _placement_class_priority(left_class)
+		var right_priority := _placement_class_priority(right_class)
+		if left_priority != right_priority:
+			return left_priority < right_priority
+		var left_area := _fallback_object_rect(str(left.get("object_type", "")), int(left.get("index", 0))).size.x * _fallback_object_rect(str(left.get("object_type", "")), int(left.get("index", 0))).size.y
+		var right_area := _fallback_object_rect(str(right.get("object_type", "")), int(right.get("index", 0))).size.x * _fallback_object_rect(str(right.get("object_type", "")), int(right.get("index", 0))).size.y
+		if not is_equal_approx(left_area, right_area):
+			return left_area > right_area
+		var left_object_priority := _placement_object_priority(left_class, str(left.get("object_type", "")))
+		var right_object_priority := _placement_object_priority(right_class, str(right.get("object_type", "")))
+		return str(left.get("object_id", "")) < str(right.get("object_id", "")) if left_object_priority == right_object_priority else left_object_priority < right_object_priority
+	)
+	for entry_value in ordered_entries:
+		var entry := _copy_dict(entry_value)
+		var object_id := str(entry.get("object_id", ""))
+		if object_id.is_empty() or placed.has(object_id):
+			continue
+		var object_type := str(entry.get("object_type", ""))
+		var placement_class := EnvironmentPlacementScript.classify(entry, object_type, object_id)
+		placement_classes[object_id] = placement_class
+		var authored_normalized := _rect_from_dict(object_rects.get(object_id, {}))
+		var authored := Rect2(authored_normalized.position * ENVIRONMENT_BOARD_SIZE, authored_normalized.size * ENVIRONMENT_BOARD_SIZE)
+		var grounded := EnvironmentPlacementScript.grounded_rect(environment_data, placement_class, authored)
+		if not bool(grounded.get("ok", false)):
+			placement_errors.append("%s (%s): %s" % [object_id, placement_class, str(grounded.get("error", "no surface"))])
+			continue
+		var selected := Rect2()
+		var selected_surface := ""
+		var candidates := EnvironmentPlacementScript.candidate_rects(environment_data, placement_class, grounded.get("rect", authored))
+		var surface_map := EnvironmentPlacementScript.surface_map(environment_data)
+		var authored_is_valid := EnvironmentPlacementScript.valid_rect(environment_data, placement_class, authored) \
+			and not bool(surface_map.get("pack_all", false)) \
+			and not (placement_class == "doorway" and bool(surface_map.get("pack_doorways", false))) \
+			and not (bool(surface_map.get("pack_dynamic_grounded", false)) and object_type == "event" and placement_class in EnvironmentPlacementScript.GROUNDED_CLASSES) \
+			and not (placement_class == "surface_item" and bool(surface_map.get("pack_surface_items", false)))
+		if not authored_is_valid:
+			_sort_placement_candidates_for_capacity(candidates, placement_class, object_type, object_id)
+		for candidate_value in candidates:
+			var candidate_data := _copy_dict(candidate_value)
+			var candidate_pixel: Rect2 = candidate_data.get("rect", Rect2())
+			var candidate := Rect2(candidate_pixel.position / ENVIRONMENT_BOARD_SIZE, candidate_pixel.size / ENVIRONMENT_BOARD_SIZE)
+			if not _object_rect_collides_with_any(placed, candidate):
+				selected = candidate
+				selected_surface = str(candidate_data.get("surface_id", ""))
+				break
+		if not selected.has_area():
+			var fine_candidates := EnvironmentPlacementScript.candidate_rects(environment_data, placement_class, grounded.get("rect", authored), Rect2(), true)
+			if not authored_is_valid:
+				_sort_placement_candidates_for_capacity(fine_candidates, placement_class, object_type, object_id)
+			for candidate_value in fine_candidates:
+				var candidate_data := _copy_dict(candidate_value)
+				var candidate_pixel: Rect2 = candidate_data.get("rect", Rect2())
+				var candidate := Rect2(candidate_pixel.position / ENVIRONMENT_BOARD_SIZE, candidate_pixel.size / ENVIRONMENT_BOARD_SIZE)
+				if not _object_rect_collides_with_any(placed, candidate):
+					selected = candidate
+					selected_surface = str(candidate_data.get("surface_id", ""))
+					break
+		if not selected.has_area():
+			placement_errors.append("%s (%s): no collision-free surface candidate" % [object_id, placement_class])
+			fallback_ids.append(object_id)
+			continue
+		object_rects[object_id] = _rect_to_dict(selected)
+		placed[object_id] = _rect_to_dict(selected)
+		placement_surfaces[object_id] = selected_surface
+	layout["placement_classes"] = placement_classes
+	layout["placement_surfaces"] = placement_surfaces
+	layout["placement_errors"] = placement_errors
+	layout["placement_fallback_ids"] = fallback_ids
+
+
+static func _sort_placement_candidates_for_capacity(candidates: Array, placement_class: String, object_type: String, object_id: String) -> void:
+	candidates.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
+		var left := _copy_dict(left_value)
+		var right := _copy_dict(right_value)
+		var left_rect: Rect2 = left.get("rect", Rect2())
+		var right_rect: Rect2 = right.get("rect", Rect2())
+		if placement_class in EnvironmentPlacementScript.GROUNDED_CLASSES:
+			var left_ground_affinity := _ground_surface_affinity(object_type, object_id, str(left.get("surface_id", "")))
+			var right_ground_affinity := _ground_surface_affinity(object_type, object_id, str(right.get("surface_id", "")))
+			if left_ground_affinity != right_ground_affinity:
+				return left_ground_affinity < right_ground_affinity
+			return left_rect.end.y > right_rect.end.y if not is_equal_approx(left_rect.end.y, right_rect.end.y) else left_rect.position.x < right_rect.position.x
+		var left_surface := str(left.get("surface_id", ""))
+		var right_surface := str(right.get("surface_id", ""))
+		var left_affinity := _surface_affinity(object_type, object_id, left_surface)
+		var right_affinity := _surface_affinity(object_type, object_id, right_surface)
+		if left_affinity != right_affinity:
+			return left_affinity < right_affinity
+		if not is_equal_approx(left_rect.end.y, right_rect.end.y):
+			return left_rect.end.y < right_rect.end.y
+		if left_surface != right_surface:
+			return left_surface < right_surface
+		return left_rect.position.x < right_rect.position.x
+	)
+
+
+static func _ground_surface_affinity(object_type: String, object_id: String, surface_id: String) -> int:
+	var source := "%s %s" % [object_type.to_lower(), object_id.to_lower()]
+	if _text_has_any(source, ["jazz_sax_round", "jazz_cello_round", "jazz_drummer_round", "burlesque_show", "floor_show", "stage_show"]):
+		return 0 if surface_id == "stage" else 1
+	return 0
+
+
+static func _surface_affinity(object_type: String, object_id: String, surface_id: String) -> int:
+	var source := "%s %s" % [object_type.to_lower(), object_id.to_lower()]
+	var surface := surface_id.to_lower()
+	if object_type == "item":
+		return 0 if _text_has_any(surface, ["case", "merchandise", "shelf_row"]) else 1
+	if object_type == "numbers":
+		return 0 if _text_has_any(surface, ["counter", "desk", "register", "table"]) else 1
+	if object_type in ["game", "game_hook"]:
+		return 0 if _text_has_any(surface, ["console", "machine", "stage", "table"]) else 1
+	if object_type == "service":
+		if _text_has_any(source, ["drink", "refreshment"]):
+			return 0 if _text_has_any(surface, ["bar", "bottle", "cooler", "refreshment", "service"]) else 1
+		return 0 if _text_has_any(surface, ["counter", "desk", "register", "service", "table"]) else 1
+	return 0
+
+
+static func _text_has_any(text: String, tokens: Array) -> bool:
+	for token_value in tokens:
+		if text.contains(str(token_value)):
+			return true
+	return false
+
+
+static func _placement_class_priority(placement_class: String) -> int:
+	match placement_class:
+		"doorway", "wall_mounted", "hanging": return 0
+		"behind_counter_person", "seated_person": return 1
+		"floor_fixture": return 2
+		"surface_item": return 3
+		"ground_marker", "standing_person", "group": return 4
+		_: return 5
+
+
+static func _placement_object_priority(placement_class: String, object_type: String) -> int:
+	if placement_class != "surface_item":
+		return 0
+	match object_type:
+		"game", "game_hook": return 0
+		"service": return 1
+		"item": return 2
+		"numbers": return 3
+		"event": return 4
+		_: return 5
 
 
 # Creates a generated display name from archetype name parts.
@@ -743,6 +947,38 @@ static func _pick_events(archetype: Dictionary, rng: RngStream, library: Content
 	return EnvironmentEventResolverScript.select_ids(archetype, definitions, rng)
 
 
+static func _event_placement_hints(event_ids: Array, library: ContentLibrary, environment_data: Dictionary = {}) -> Dictionary:
+	var result: Dictionary = {}
+	if library == null:
+		return result
+	var surfaces := EnvironmentPlacementScript.surface_map(environment_data)
+	var has_counters := not _copy_array(surfaces.get("counters", [])).is_empty()
+	var has_seats := not _copy_array(surfaces.get("seats", [])).is_empty()
+	for event_id in _string_array(event_ids):
+		var definition := library.event(event_id)
+		if definition.is_empty():
+			continue
+		var speaker := _copy_dict(definition.get("speaker", {}))
+		var visual_prop := str(definition.get("environment_prop", ""))
+		var speaker_role := str(speaker.get("role", ""))
+		var hint := {
+			"visual_prop": visual_prop,
+			"icon_key": str(definition.get("icon_key", "")),
+			"role": speaker_role,
+		}
+		var counter_staff: bool = visual_prop in ["clerk_counter", "host_station"] \
+				or event_id == "town_rumor_staff" and str(environment_data.get("archetype_id", "")) == "bar"
+		if has_counters and counter_staff and speaker_role in ["staff", "clerk", "cashier", "dealer", "vendor"]:
+			hint["placement_class"] = "behind_counter_person"
+		elif has_seats and str(environment_data.get("archetype_id", "")) == "bar" \
+				and visual_prop in ["bar_patron", "patron", "patron_talk", "rowdy_patron"]:
+			hint["placement_class"] = "seated_person"
+		elif not str(speaker.get("character_id", "")).strip_edges().is_empty():
+			hint["placement_class"] = "standing_person"
+		result["event:%s" % event_id] = hint
+	return result
+
+
 # Picks a fixed or ranged number of unique ids from a pool.
 static func _pick_ids(pool: Array, requested_count: Variant, rng: RngStream) -> Array:
 	var count := _count(requested_count, rng)
@@ -843,11 +1079,10 @@ static func _assign_item_offer_rects(object_rects: Dictionary, layout: Dictionar
 
 
 # Assigns one object rect without disturbing an existing generated rect.
-static func _assign_single_object_rect(object_rects: Dictionary, layout: Dictionary, object_id: String, object_type: String, index: int, spot_field: String, should_assign: bool, active_object_ids: Dictionary) -> void:
+static func _assign_single_object_rect(object_rects: Dictionary, layout: Dictionary, object_id: String, object_type: String, index: int, spot_field: String, should_assign: bool, _active_object_ids: Dictionary) -> void:
 	if not should_assign or object_id.is_empty() or object_rects.has(object_id):
 		return
 	var rect := _object_rect_from_layout(layout, object_type, index, spot_field)
-	rect = _first_available_object_rect(object_rects, active_object_ids, object_id, layout, object_type, index, spot_field, rect)
 	object_rects[object_id] = _rect_to_dict(rect)
 
 
@@ -1186,7 +1421,21 @@ static func _active_object_layout_entries(environment_data: Dictionary) -> Array
 	_append_string_layout_entries(entries, "home_container", _home_container_ids(environment_data), "home_container_spots")
 	if prioritize_services:
 		_append_item_offer_layout_entries(entries, _copy_array(environment_data.get("item_offers", [])))
-	return _filter_unique_object_layout_entries(entries)
+	var filtered := _filter_unique_object_layout_entries(entries)
+	var placement_hints := _copy_dict(_copy_dict(environment_data.get("layout", {})).get("object_placement_hints", {}))
+	var class_overrides := _copy_dict(EnvironmentPlacementScript.surface_map(environment_data).get("class_overrides", {}))
+	for entry_value in filtered:
+		if typeof(entry_value) != TYPE_DICTIONARY:
+			continue
+		var entry: Dictionary = entry_value
+		var hint := _copy_dict(placement_hints.get(str(entry.get("object_id", "")), {}))
+		for key in hint.keys():
+			entry[key] = hint[key]
+		var object_id := str(entry.get("object_id", ""))
+		var class_override := str(class_overrides.get(object_id, ""))
+		if class_override in EnvironmentPlacementScript.CLASSES:
+			entry["placement_class"] = class_override
+	return filtered
 
 
 static func _environment_layer_layout_entries(environment_data: Dictionary) -> Array:

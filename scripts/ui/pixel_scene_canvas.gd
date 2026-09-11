@@ -15,6 +15,7 @@ const AttributeBadgeRowScript := preload("res://scripts/ui/attribute_badge_row.g
 const DrunkDistortionOverlayScript := preload("res://scripts/ui/drunk_distortion_overlay.gd")
 const HeatFeedbackVisualsScript := preload("res://scripts/ui/heat_feedback_visuals.gd")
 const TableGameVisualsScript := preload("res://scripts/games/table_game_visuals.gd")
+const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
 
 const C_DARK := VisualStyleScript.DARK
 const C_DARK_2 := VisualStyleScript.DARK_2
@@ -99,7 +100,7 @@ const SCENE_SPARKLES_DELTA_QUEEN := [Vector2(128, 96), Vector2(448, 96), Vector2
 const SCENE_SPARKLES_UNDERGROUND := [Vector2(154, 134), Vector2(505, 136), Vector2(772, 142)]
 const SCENE_SPARKLES_GRAND_CASINO := [Vector2(132, 118), Vector2(728, 118), Vector2(444, 154)]
 const SCENE_SPARKLES_PAWN_SHOP := [Vector2(150, 84), Vector2(414, 118), Vector2(690, 154)]
-const LINDA_CAGE_FEET := [Vector2(330, 252), Vector2(420, 252), Vector2(512, 252), Vector2(590, 252)]
+const LINDA_CAGE_FEET := [Vector2(330, 260), Vector2(420, 260), Vector2(512, 260), Vector2(590, 260)]
 const SCENARIO_CROWD_POINTS := [Vector2(82, 254), Vector2(219, 271), Vector2(356, 288), Vector2(493, 271), Vector2(630, 254), Vector2(767, 271), Vector2(164, 288), Vector2(301, 254), Vector2(438, 288), Vector2(575, 271)]
 const SCENARIO_CROWD_COLOR := Color(0.02, 0.025, 0.05, 0.56)
 
@@ -728,6 +729,8 @@ func _draw_scenario_palette() -> void:
 func _draw_scenario_crowd() -> void:
 	for index in range(scenario_crowd_count):
 		var point: Vector2 = SCENARIO_CROWD_POINTS[index]
+		if environment_id == "delta_queen":
+			point.y = 246.0
 		var scale := 0.72 + float(index % 3) * 0.08
 		draw_circle(Vector2(point.x, point.y - 12.0 * scale), 6.0 * scale, SCENARIO_CROWD_COLOR)
 		draw_rect(Rect2(point.x - 7.0 * scale, point.y - 6.0 * scale, 14.0 * scale, 24.0 * scale), SCENARIO_CROWD_COLOR)
@@ -1092,9 +1095,9 @@ func _draw_jazz_club() -> void:
 	_draw_light_cone(Vector2(470, 34), Vector2(54, 194), C_AMBER, 0.12)
 	_neon_text("AFTER HOURS", Vector2(126, 62), 18, C_CYAN)
 	_neon_text("JAZZ", Vector2(374, 62), 24, C_YELLOW)
-	_draw_jazz_player(Vector2(178, 202), 0.72, "sax")
-	_draw_jazz_player(Vector2(322, 206), 0.76, "cello")
-	_draw_jazz_player(Vector2(466, 202), 0.70, "drums")
+	_draw_jazz_player(Vector2(178, 208), 0.72, "sax")
+	_draw_jazz_player(Vector2(322, 208), 0.76, "cello")
+	_draw_jazz_player(Vector2(466, 208), 0.70, "drums")
 	draw_rect(Rect2(600, 72, 254, 122), Color("#17101a"))
 	draw_rect(Rect2(618, 88, 218, 62), Color("#241622"))
 	for x in range(630, 826, 28):
@@ -1634,33 +1637,33 @@ func _draw_familiar_characters() -> void:
 	# Recurring venue characters provide social pressure and make rooms readable.
 	match environment_id:
 		"corner_store":
-			_draw_named_character("mara", Vector2(465, 198), 0.78, "clerk")
+			_draw_named_character("mara", Vector2(465, 206), 0.78, "clerk")
 		"back_alley":
-			_draw_named_character("vince", Vector2(110, 240), 0.88, "watcher")
-			_draw_named_character("lena", Vector2(780, 242), 0.82, "dealer")
+			_draw_named_character("vince", Vector2(110, 254), 0.88, "watcher")
+			_draw_named_character("lena", Vector2(780, 254), 0.82, "dealer")
 		"motel":
-			_draw_named_character("june", Vector2(610, 214), 0.82, "dealer")
-			_draw_named_character("marco", Vector2(748, 222), 0.72, "fixer")
+			_draw_named_character("june", Vector2(610, 176), 0.82, "dealer")
+			_draw_named_character("marco", Vector2(748, 270), 0.72, "fixer")
 		"bar":
-			_draw_named_character("rafi", Vector2(188, 184), 0.76, "bartender")
-			_draw_named_character("dot", Vector2(500, 184), 0.70, "regular")
+			_draw_named_character("rafi", Vector2(188, 178), 0.76, "bartender")
+			_draw_named_character("dot", Vector2(500, 178), 0.70, "regular")
 		"jazz_club":
-			_draw_named_character("rafi", Vector2(824, 206), 0.66, "bartender")
-			_draw_named_character("dot", Vector2(614, 248), 0.52, "regular")
+			_draw_named_character("rafi", Vector2(824, 188), 0.66, "bartender")
+			_draw_named_character("dot", Vector2(614, 270), 0.52, "regular")
 		"kitty_cat_lounge":
-			_draw_named_character("iris", Vector2(618, 204), 0.70, "host")
-			_draw_named_character("dot", Vector2(304, 236), 0.58, "regular")
+			_draw_named_character("iris", Vector2(618, 190), 0.70, "host")
+			_draw_named_character("dot", Vector2(304, 234), 0.58, "regular")
 		"delta_queen":
-			_draw_named_character("sable", Vector2(436, 176), 0.70, "dealer")
-			_draw_named_character("ox", Vector2(790, 210), 0.86, "deck_boss")
+			_draw_named_character("sable", Vector2(436, 170), 0.70, "dealer")
+			_draw_named_character("ox", Vector2(790, 268), 0.86, "deck_boss")
 		"gas_station_casino":
-			_draw_named_character("nell", Vector2(746, 190), 0.76, "attendant")
+			_draw_named_character("nell", Vector2(746, 104), 0.76, "attendant")
 			_draw_watch_camera(Vector2(744, 72), C_PINK)
 		"small_underground_casino":
 			_draw_named_character("sable", Vector2(505, 155), 0.72, "dealer")
-			_draw_named_character("ox", Vector2(794, 205), 1.02, "bouncer")
+			_draw_named_character("ox", Vector2(794, 266), 1.02, "bouncer")
 		"pawn_shop":
-			_draw_named_character("sal", Vector2(450, 210), 0.74, "clerk")
+			_draw_named_character("sal", Vector2(450, 224), 0.74, "clerk")
 		"grand_casino":
 			_draw_named_character("iris", Vector2(632, 180), 0.76, "host")
 			var bartender := _grand_casino_staff_member("bartender")
@@ -1745,8 +1748,8 @@ func _draw_grand_casino_living_characters() -> void:
 	if not escort.is_empty():
 		var progress := clampf(float(escort.get("progress", 0.0)), 0.0, 1.0)
 		var escort_x := lerpf(170.0, 760.0, progress)
-		_draw_named_character("rourke", Vector2(escort_x, 226), 1.04, "pit_boss", "right")
-		_draw_rival_cheater_tell(str(escort.get("tell", "heel_tap")), 0, Vector2(escort_x - 54.0, 226))
+		_draw_named_character("rourke", Vector2(escort_x, 274), 1.04, "pit_boss", "right")
+		_draw_rival_cheater_tell(str(escort.get("tell", "heel_tap")), 0, Vector2(escort_x - 54.0, 274))
 		_neon_text("TO THE BACK ROOM", Vector2(330, 326), 14, C_PINK)
 		return
 	var rourke: Dictionary = living_floor.get("rourke", {}) if typeof(living_floor.get("rourke", {})) == TYPE_DICTIONARY else {}
@@ -1802,29 +1805,29 @@ func _draw_rival_cheater_tell(tell: String, idle_phase: int, foot: Vector2) -> v
 func _rourke_scene_foot(spot: String) -> Vector2:
 	match spot:
 		"main_left":
-			return Vector2(210, 224)
+			return Vector2(210, 274)
 		"main_cage":
-			return Vector2(700, 222)
+			return Vector2(700, 274)
 		"high_rail":
-			return Vector2(220, 222)
+			return Vector2(220, 274)
 		"high_door":
-			return Vector2(730, 222)
+			return Vector2(730, 274)
 		"back_table":
-			return Vector2(390, 220)
+			return Vector2(390, 274)
 		"back_door":
-			return Vector2(700, 220)
+			return Vector2(700, 274)
 		_:
-			return Vector2(450, 222)
+			return Vector2(450, 274)
 
 
 func _rival_scene_foot(spot_index: int) -> Vector2:
 	match spot_index:
 		0:
-			return Vector2(250, 226)
+			return Vector2(250, 274)
 		1:
-			return Vector2(510, 224)
+			return Vector2(510, 274)
 		_:
-			return Vector2(752, 228)
+			return Vector2(752, 274)
 
 
 func _character_style(id: String) -> Dictionary:
@@ -1952,7 +1955,7 @@ func _draw_scene_objects() -> void:
 		var selected := object_id == selected_object_id
 		var hovered := object_id == hovered_object_id
 		var disabled := bool(object_data.get("disabled", false))
-		_draw_object_shadow(rect, selected or hovered)
+		_draw_object_shadow(rect, selected or hovered, str(object_data.get("shadow_kind", "base")))
 		match object_type:
 			"game":
 				_draw_game_prop(rect, object_data, selected or hovered)
@@ -1970,6 +1973,8 @@ func _draw_scene_objects() -> void:
 				_draw_drink_prop(rect, selected or hovered)
 			_:
 				_draw_item_prop(rect, object_data, selected or hovered, str(object_data.get("surface", "counter")))
+		if str(object_data.get("placement_class", "")) == "behind_counter_person":
+			_draw_counter_person_occlusion(rect, selected or hovered)
 		if disabled:
 			_draw_disabled_scene_mark(rect)
 		if disabled and (selected or hovered):
@@ -2434,6 +2439,8 @@ func _objects_from_interactable_records(records: Array) -> Array:
 			"z_order": int(record.get("z_order", 0)),
 			"z_order_explicit": bool(record.get("z_order_explicit", record.has("z_order"))),
 			"focus_order": maxi(0, int(record.get("focus_order", 0))),
+			"placement_class": str(record.get("placement_class", "")),
+			"contact": str(record.get("contact", "")),
 		}
 		objects.append(_apply_draw_hints(scene_object, object_type, index))
 	return objects
@@ -2598,6 +2605,11 @@ func _apply_draw_hints(object_data: Dictionary, object_type: String, index: int)
 		_:
 			if not object_data.has("surface"):
 				object_data["surface"] = "counter"
+	var placement_class := str(object_data.get("placement_class", ""))
+	if placement_class.is_empty():
+		placement_class = EnvironmentPlacementScript.classify(object_data, object_type, str(object_data.get("id", "")), str(object_data.get("prop", object_data.get("icon_key", ""))))
+	object_data["placement_class"] = placement_class
+	object_data["shadow_kind"] = EnvironmentPlacementScript.shadow_kind(placement_class)
 	return object_data
 
 
@@ -4120,12 +4132,23 @@ func _vector2_from_dict(value: Variant, fallback: Vector2 = Vector2.ZERO) -> Vec
 	return Vector2(float(data.get("x", fallback.x)), float(data.get("y", fallback.y)))
 
 
-func _draw_object_shadow(rect: Rect2, selected: bool) -> void:
+func _draw_object_shadow(rect: Rect2, selected: bool, shadow_kind: String) -> void:
+	if shadow_kind == "none":
+		return
 	var glow := C_YELLOW if selected else C_CYAN
-	draw_rect(Rect2(rect.position + Vector2(rect.size.x * 0.15, rect.size.y * 0.78), Vector2(rect.size.x * 0.7, 7)), Color(0.0, 0.0, 0.0, 0.42))
-	draw_rect(Rect2(rect.position + Vector2(rect.size.x * 0.22, rect.size.y * 0.84), Vector2(rect.size.x * 0.56, 3)), Color(glow.r, glow.g, glow.b, 0.18))
+	var shadow_y := rect.end.y - (3.0 if shadow_kind in ["feet", "contact"] else 7.0)
+	var shadow_height := 3.0 if shadow_kind == "contact" else 6.0
+	draw_rect(Rect2(Vector2(rect.position.x + rect.size.x * 0.15, shadow_y), Vector2(rect.size.x * 0.7, shadow_height)), Color(0.0, 0.0, 0.0, 0.42))
+	draw_rect(Rect2(Vector2(rect.position.x + rect.size.x * 0.22, shadow_y + shadow_height), Vector2(rect.size.x * 0.56, 2)), Color(glow.r, glow.g, glow.b, 0.18))
 	if selected:
-		draw_rect(Rect2(rect.position + Vector2(rect.size.x * 0.08, rect.size.y * 0.72), Vector2(rect.size.x * 0.84, 5)), Color(glow.r, glow.g, glow.b, 0.32))
+		draw_rect(Rect2(Vector2(rect.position.x + rect.size.x * 0.08, shadow_y - 4.0), Vector2(rect.size.x * 0.84, 4)), Color(glow.r, glow.g, glow.b, 0.32))
+
+
+func _draw_counter_person_occlusion(rect: Rect2, selected: bool) -> void:
+	var front := Color(C_DARK_2.r, C_DARK_2.g, C_DARK_2.b, 0.94)
+	draw_rect(Rect2(Vector2(rect.position.x - 3.0, rect.end.y - 4.0), Vector2(rect.size.x + 6.0, 8.0)), front)
+	if selected:
+		draw_line(Vector2(rect.position.x - 3.0, rect.end.y - 4.0), Vector2(rect.end.x + 3.0, rect.end.y - 4.0), C_YELLOW, 2.0)
 
 
 func _draw_hotspot_hint(rect: Rect2, object_type: String) -> void:

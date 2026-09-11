@@ -4,6 +4,7 @@ const EnvironmentBaseSemanticRecordsScript := preload("res://scripts/core/enviro
 const ScenarioSequenceSchemaScript := preload("res://scripts/core/scenario_sequence_schema.gd")
 const ScenarioSemanticViewModelScript := preload("res://scripts/ui/scenario_semantic_view_model.gd")
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
+const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
 const DELIVERY_LAYOUT_GAP_PIXELS := 8.0
 
 
@@ -1033,7 +1034,8 @@ static func delivery_interactable_objects(host: Variant, occupied_objects: Array
 	for physical_index in range(physical_interactions.size()):
 		var interaction: Dictionary = physical_interactions[physical_index]
 		var verb := str(interaction.get("verb", ""))
-		var focus_rect := _delivery_available_rect(host, occupied_rects, physical_index)
+		var delivery_class := EnvironmentPlacementScript.classify(interaction, "actor" if verb == "pickup" else "scene_object", str(interaction.get("object_id", "delivery:%s" % verb)), "patron_talk" if verb == "pickup" else "crate")
+		var focus_rect := _delivery_available_rect(host, occupied_rects, physical_index, delivery_class)
 		occupied_rects.append(focus_rect)
 		result.append(host._make_interactable_object({
 			"object_id": str(interaction.get("object_id", "delivery:%s" % verb)),
@@ -1053,6 +1055,7 @@ static func delivery_interactable_objects(host: Variant, occupied_objects: Array
 			"available_actions": [{"id": "delivery_physical_action", "label": str(interaction.get("label", "Act"))}],
 			"confirm_action_id": "delivery_physical_action",
 			"focus_rect": focus_rect,
+			"placement_class": delivery_class,
 		}))
 	var handoff: Dictionary = host.run_state.delivery_arrival_interaction()
 	if handoff.is_empty():
@@ -1063,7 +1066,7 @@ static func delivery_interactable_objects(host: Variant, occupied_objects: Array
 	if not host.run_state.world_sequence_mounted_owner_for_channel("delivery_handoff", node_id).is_empty():
 		return result
 	var object_id := "delivery:handoff:%s" % node_id
-	var focus_rect := _delivery_available_rect(host, occupied_rects, physical_interactions.size())
+	var focus_rect := _delivery_available_rect(host, occupied_rects, physical_interactions.size(), "standing_person")
 	result.append(host._make_interactable_object({
 		"object_id": object_id,
 		"object_type": host.CONTEXT_MODE_DELIVERY,
@@ -1083,6 +1086,7 @@ static func delivery_interactable_objects(host: Variant, occupied_objects: Array
 		"available_actions": [{"id": "complete_delivery_handoff", "label": "Hand Over"}],
 		"confirm_action_id": "complete_delivery_handoff",
 		"focus_rect": focus_rect,
+		"placement_class": "standing_person",
 	}))
 	return result
 
@@ -1135,15 +1139,17 @@ static func _reflow_delivery_records(host: Variant, records: Array) -> Array:
 		var record := result[index] as Dictionary
 		if not str(record.get("object_id", "")).begins_with("delivery:"):
 			continue
-		var focus_rect := _delivery_available_rect(host, occupied_rects, delivery_index)
+		var placement_class := EnvironmentPlacementScript.classify(record, "actor" if str(record.get("visual_type", "")) == "character" else "scene_object", str(record.get("object_id", "")), str(record.get("prop", record.get("icon_key", ""))))
+		var focus_rect := _delivery_available_rect(host, occupied_rects, delivery_index, placement_class)
 		record["focus_rect"] = focus_rect
+		record["placement_class"] = placement_class
 		result[index] = record
 		occupied_rects.append(focus_rect)
 		delivery_index += 1
 	return result
 
 
-static func _delivery_available_rect(host: Variant, occupied_rects: Array[Rect2], preferred_index: int) -> Rect2:
+static func _delivery_available_rect(host: Variant, occupied_rects: Array[Rect2], preferred_index: int, placement_class: String = "standing_person") -> Rect2:
 	var focus_rect: Rect2 = host._interaction_rect_for_object("", host.CONTEXT_MODE_DELIVERY, preferred_index)
 	# Delivery verbs can coexist with a fully composed scenario room. Keep their
 	# hit areas at the renderer's accessible 72x48 minimum rather than consuming
@@ -1153,23 +1159,14 @@ static func _delivery_available_rect(host: Variant, occupied_rects: Array[Rect2]
 	focus_rect = Rect2(focus_rect.get_center() - compact_size * 0.5, compact_size)
 	var best_overlap := INF
 	var candidates: Array[Rect2] = []
-	for offset in range(8):
-		var preferred: Rect2 = host._interaction_rect_for_object("", host.CONTEXT_MODE_DELIVERY, preferred_index + offset)
-		preferred = Rect2(preferred.get_center() - compact_size * 0.5, compact_size)
-		candidates.append(_delivery_board_bounded_rect(preferred))
-	# The legacy delivery vocabulary owns eight preferred positions. Generated
-	# scenario rooms can fill all eight, so continue through a deterministic,
-	# bounded pixel scan instead of wrapping those positions and accepting
-	# overlap. A 16px stride finds the narrow gaps in dense rooms while keeping
-	# this active-delivery-only pass small.
-	var tile_size := focus_rect.size
-	var tile_pixels := tile_size * board_size
-	var first_position := Vector2(ceilf(board_size.x * 0.02), ceilf(board_size.y * 0.04))
-	var last_position := board_size - tile_pixels
-	for pixel_y in range(int(first_position.y), int(last_position.y) + 1, 16):
-		for pixel_x in range(int(first_position.x), int(last_position.x) + 1, 16):
-			candidates.append(Rect2(Vector2(float(pixel_x), float(pixel_y)) / board_size, tile_size))
-	candidates.append(Rect2(last_position / board_size, tile_size))
+	var environment: Dictionary = host.run_state.current_environment if host.run_state != null and typeof(host.run_state.current_environment) == TYPE_DICTIONARY else {}
+	var authored_pixel := Rect2(focus_rect.position * board_size, focus_rect.size * board_size)
+	for candidate_value in EnvironmentPlacementScript.candidate_rects(environment, placement_class, authored_pixel):
+		var candidate_data: Dictionary = candidate_value if typeof(candidate_value) == TYPE_DICTIONARY else {}
+		var candidate_pixel: Rect2 = candidate_data.get("rect", Rect2())
+		candidates.append(Rect2(candidate_pixel.position / board_size, candidate_pixel.size / board_size))
+	if candidates.is_empty():
+		return Rect2()
 	for candidate in candidates:
 		var overlap := 0.0
 		var gap := Vector2(DELIVERY_LAYOUT_GAP_PIXELS / board_size.x, DELIVERY_LAYOUT_GAP_PIXELS / board_size.y)
