@@ -57,14 +57,20 @@ static func classify(object_data: Dictionary, object_type: String = "", object_i
 		if _has_token(person_semantics, GROUP_TOKENS):
 			return "group"
 		return "standing_person"
+	if role == "exit" and _has_token(text, ["marked_lane", "clear exit", "public aisle"]):
+		return "ground_marker"
 	if role in ["exit", "doorway"]:
 		return "doorway"
 	if role == "task_zone":
 		return "ground_marker"
+	if role == "decision_route":
+		return "surface_item"
 	if role in ["task_station", "display", "notice", "sign", "wall"] or clean_prop in WALL_PRESENTATION_PROPS:
 		return "wall_mounted"
 	if role in ["route_marker", "ground_marker"] or clean_prop == "room_route" and role != "task_station":
 		return "ground_marker"
+	if role == "barrier" and text.contains("bulkhead"):
+		return "wall_mounted"
 	# The tutorial's dirty parking-lot note is discovered on the pavement, not
 	# stocked as merchandise on an indoor shelf.
 	if object_id == "event:parking_lot_tip":
@@ -85,6 +91,8 @@ static func classify(object_data: Dictionary, object_type: String = "", object_i
 		return "wall_mounted"
 	if clean_prop in SURFACE_EVENT_PROPS or _has_token(text, SURFACE_TOKENS):
 		return "surface_item"
+	if role == "arrangement" and object_id.to_lower().contains("floor_prop"):
+		return "ground_marker"
 	if role in ["arrangement", "evidence", "refreshment"] or clean_prop in ["room_refreshment", "paper_note"]:
 		return "surface_item"
 	if clean_prop in GROUND_EVENT_PROPS:
