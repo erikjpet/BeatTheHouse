@@ -15,10 +15,11 @@ func _run() -> void:
 	_check_zone_person(failures)
 	_check_content_aware_classes(failures)
 	_check_hidden_state_neutrality(failures)
+	_check_scenario_reservation_lifecycle(failures)
 	_check_scenario_surface_overrides(failures)
 	_check_alternative_enumeration(failures)
 	if failures.is_empty():
-		print("ENVIRONMENT_GROUNDING_CONTRACT_OK floor_collision=grounded zone_person=feet person_event=floor wall_sign=wall hidden_state=neutral scenario_overrides=bound class_clearance=scoped hanging=multiple alternatives=independent")
+		print("ENVIRONMENT_GROUNDING_CONTRACT_OK floor_collision=grounded zone_person=feet person_event=floor wall_sign=wall hidden_state=neutral scenario_reservations=active_only scenario_overrides=bound class_clearance=scoped hanging=multiple alternatives=independent")
 		quit(0)
 		return
 	for failure_value in failures:
@@ -125,6 +126,17 @@ func _check_hidden_state_neutrality(failures: Array) -> void:
 	var hidden_candidates := EnvironmentPlacementScript.candidate_rects(hidden, "standing_person", authored, Rect2(), true)
 	if JSON.stringify(_candidate_snapshot(clean_candidates)) != JSON.stringify(_candidate_snapshot(hidden_candidates)):
 		failures.append("Hidden state changed deterministic placement candidates.")
+
+
+func _check_scenario_reservation_lifecycle(failures: Array) -> void:
+	var base_map := EnvironmentPlacementScript.surface_map({"archetype_id": "delta_queen"})
+	var active_map := EnvironmentPlacementScript.surface_map({"archetype_id": "delta_queen", "scenario_id": "delta_queen_engine_trouble"})
+	if base_map.has("scenario_reserved_surfaces") or base_map.has("scenario_reserved_clear_rects"):
+		failures.append("Scenario-only capacity remained blocked before a scenario was active.")
+	var reserved_surfaces: Array = active_map.get("scenario_reserved_surfaces", [])
+	var reserved_clear_rects: Array = active_map.get("scenario_reserved_clear_rects", [])
+	if not reserved_surfaces.has("scenario_table") or reserved_clear_rects.is_empty():
+		failures.append("Active scenario did not restore its authored surface reservations.")
 
 
 func _check_scenario_surface_overrides(failures: Array) -> void:

@@ -158,6 +158,7 @@ func can_trigger(run_state: RunState, environment: Dictionary, context: Dictiona
 
 # Applies simple event consequences to the run.
 func resolve(run_state: RunState, environment: Dictionary, choice_id: String = "") -> Dictionary:
+	var fix0631_resolve_started := Time.get_ticks_msec() if get_id() == "grand_casino_invite" else 0
 	# Resolution is an authority boundary, not merely a UI convenience. A stale
 	# module reference or copied pre-resolution environment must not replay an
 	# event. Triggered/talk events are authorized by the host queue; ordinary
@@ -286,6 +287,7 @@ func resolve(run_state: RunState, environment: Dictionary, choice_id: String = "
 		apply_event_result(run_state, result)
 		return result
 	apply_event_result(run_state, result)
+	if get_id() == "grand_casino_invite": print("FIX0631_INVITE_RESOLVE apply=%d" % (Time.get_ticks_msec() - fix0631_resolve_started))
 	if get_id() == "crew_favor_delivery":
 		run_state.resolve_crew_favor_delivery_job(choice_key, {"success": consequences})
 	return result
@@ -318,6 +320,7 @@ func _schedule_choice_world_sequence(run_state: RunState, selected_choice: Dicti
 func apply_event_result(run_state: RunState, result: Dictionary) -> void:
 	if run_state == null or not bool(result.get("ok", false)):
 		return
+	var fix0631_apply_started := Time.get_ticks_msec() if get_id() == "grand_casino_invite" else 0
 	var rollback_run := run_state.to_dict()
 	var rollback_environment := run_state.current_environment.duplicate(true)
 	var rollback_world_map := run_state.world_map.duplicate(true)
@@ -374,6 +377,7 @@ func apply_event_result(run_state: RunState, result: Dictionary) -> void:
 				for public_key in ["cost", "forced", "run_ended"]:
 					if service_result.has(public_key): result[public_key] = service_result.get(public_key)
 	var advance_result := run_state.advance_environment_turns(1)
+	if get_id() == "grand_casino_invite": print("FIX0631_INVITE_APPLY advance=%d" % (Time.get_ticks_msec() - fix0631_apply_started))
 	if not bool(advance_result.get("ok", false)):
 		run_state.from_dict(rollback_run)
 		run_state.current_environment = rollback_environment
@@ -385,6 +389,7 @@ func apply_event_result(run_state: RunState, result: Dictionary) -> void:
 		result["errors"] = advance_errors.duplicate(true)
 		return
 	GameModule.apply_result(run_state, result)
+	if get_id() == "grand_casino_invite": print("FIX0631_INVITE_APPLY result=%d" % (Time.get_ticks_msec() - fix0631_apply_started))
 	# Recruitment aftermath is committed from this exact resolved event result,
 	# before resolve_event removes the live placement. The host derives member,
 	# path and outcome; consequence payloads never write Crew state directly.
@@ -414,11 +419,13 @@ func apply_event_result(run_state: RunState, result: Dictionary) -> void:
 			"crew_switch_reveal", "crew_lucky_collection", "crew_knuckles_stash", "crew_knuckles_retrieve", "crew_job_accept", "crew_practice_rig", "crew_stake_loss_choice", "crew_collection_choice", "crew_rook_ride", "crew_heist":
 				pass
 	CharacterChainModelScript.apply_to_environment(run_state, run_state.current_environment)
+	if get_id() == "grand_casino_invite": print("FIX0631_INVITE_APPLY character=%d" % (Time.get_ticks_msec() - fix0631_apply_started))
 	run_state.scenario_publish_event_result(result)
 	# The event action already advanced the authoritative world boundary above.
 	# Consume its correlated scenario fact on that same boundary so an accepted
 	# choice cannot leave sequence aftermath pending until another player action.
 	run_state.scenario_flush_facts()
+	if get_id() == "grand_casino_invite": print("FIX0631_INVITE_APPLY flush=%d" % (Time.get_ticks_msec() - fix0631_apply_started))
 
 
 # Returns a no-op event result for invalid choices.

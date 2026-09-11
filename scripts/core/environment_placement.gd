@@ -24,8 +24,15 @@ const DOOR_EVENT_PROPS := ["motel_door", "side_door"]
 const SURFACE_EVENT_PROPS := ["card_table", "paper_note", "room_refreshment", "table"]
 const GROUND_EVENT_PROPS := ["room_barrier", "room_fixture", "room_hazard", "room_route", "room_seating", "room_storage", "room_trace", "room_vehicle", "street_sign"]
 const WALL_PRESENTATION_PROPS := ["room_display", "room_signal"]
+const SCENARIO_RESERVATION_FIELDS := [
+	"scenario_reserved_surfaces", "scenario_reserved_behind_counter_surfaces",
+	"scenario_reserved_rects", "scenario_reserved_surface_rects",
+	"scenario_reserved_wall_rects", "scenario_reserved_clear_rects",
+	"scenario_reserved_clear_rects_by_class",
+]
 
 static var _surface_maps: Dictionary = {}
+static var _effective_surface_maps: Dictionary = {}
 static var _surface_maps_loaded := false
 
 
@@ -129,21 +136,33 @@ static func surface_map(environment: Dictionary) -> Dictionary:
 	var archetype_id := str(environment.get("archetype_id", environment.get("id", ""))).strip_edges()
 	var layer_id := str(environment.get("current_layer_id", environment.get("layer_id", ""))).strip_edges()
 	var layered_key := "%s:%s" % [archetype_id, layer_id]
-	var result: Dictionary
-	if not layer_id.is_empty() and _surface_maps.has(layered_key):
-		result = _dict(_surface_maps.get(layered_key, {})).duplicate(true)
-	else:
-		result = _dict(_surface_maps.get(archetype_id, {})).duplicate(true)
+	var map_key := layered_key if not layer_id.is_empty() and _surface_maps.has(layered_key) else archetype_id
+	var base_map := _dict(_surface_maps.get(map_key, {}))
 	var scenario_state := _dict(environment.get("scenario_state", {}))
 	var scenario_id := str(scenario_state.get("id", environment.get("scenario_id", ""))).strip_edges()
-	var scenario_overrides := _dict(result.get("scenario_overrides", {}))
-	if not scenario_id.is_empty() and scenario_overrides.has(scenario_id):
-		var scenario_override := _dict(scenario_overrides.get(scenario_id, {}))
-		var base_class_overrides := _dict(result.get("class_overrides", {})).duplicate(true)
-		result.merge(scenario_override, true)
-		if scenario_override.has("class_overrides"):
-			base_class_overrides.merge(_dict(scenario_override.get("class_overrides", {})), true)
-			result["class_overrides"] = base_class_overrides
+	var scenario_overrides := _dict(base_map.get("scenario_overrides", {}))
+	if scenario_id.is_empty():
+		var base_key := "%s::base" % map_key
+		if _effective_surface_maps.has(base_key):
+			return _dict(_effective_surface_maps.get(base_key, {}))
+		var unreserved_map := base_map.duplicate(false)
+		for field_value in SCENARIO_RESERVATION_FIELDS:
+			unreserved_map.erase(str(field_value))
+		_effective_surface_maps[base_key] = unreserved_map
+		return unreserved_map
+	if not scenario_overrides.has(scenario_id):
+		return base_map
+	var effective_key := "%s::%s" % [map_key, scenario_id]
+	if _effective_surface_maps.has(effective_key):
+		return _dict(_effective_surface_maps.get(effective_key, {}))
+	var result := base_map.duplicate(false)
+	var scenario_override := _dict(scenario_overrides.get(scenario_id, {}))
+	var base_class_overrides := _dict(base_map.get("class_overrides", {})).duplicate(true)
+	result.merge(scenario_override, true)
+	if scenario_override.has("class_overrides"):
+		base_class_overrides.merge(_dict(scenario_override.get("class_overrides", {})), true)
+		result["class_overrides"] = base_class_overrides
+	_effective_surface_maps[effective_key] = result
 	return result
 
 
@@ -281,6 +300,7 @@ static func _ensure_surface_maps() -> void:
 	if _surface_maps_loaded:
 		return
 	_surface_maps_loaded = true
+	_effective_surface_maps.clear()
 	var file := FileAccess.open(SURFACE_MAP_PATH, FileAccess.READ)
 	if file == null:
 		return

@@ -5935,6 +5935,7 @@ func _is_grand_casino_invitation_table_win_environment(environment: Dictionary) 
 
 
 func _set_environment_event_presence(environment: Dictionary, event_id: String, present: bool) -> bool:
+	var fix0631_presence_started := Time.get_ticks_msec() if event_id == GRAND_CASINO_INVITATION_EVENT_ID else 0
 	var event_ids := _copy_array(environment.get("event_ids", []))
 	var changed := false
 	if present:
@@ -5952,6 +5953,8 @@ func _set_environment_event_presence(environment: Dictionary, event_id: String, 
 	if changed:
 		environment["event_ids"] = event_ids
 		environment["layout"] = EnvironmentInstance.ensure_generated_layout(environment)
+		if event_id == GRAND_CASINO_INVITATION_EVENT_ID:
+			print("FIX0631_INVITE_PRESENCE room=%s present=%s ms=%d fallbacks=%s" % [str(environment.get("archetype_id", environment.get("id", ""))), str(present), Time.get_ticks_msec() - fix0631_presence_started, str((environment.get("layout", {}) as Dictionary).get("placement_fallback_ids", []))])
 	return changed
 
 
@@ -14953,6 +14956,7 @@ func clear_pending_bag_markers() -> void:
 
 # Adds travel targets to the current environment.
 func add_next_archetypes(archetype_ids: Array) -> void:
+	var fix0631_add_started := Time.get_ticks_msec() if archetype_ids.has("grand_casino") else 0
 	if current_environment.is_empty():
 		return
 	var clean_ids := _string_array(archetype_ids)
@@ -14964,8 +14968,11 @@ func add_next_archetypes(archetype_ids: Array) -> void:
 	unlocked_travel = _unique_strings(unlocked_travel + clean_ids)
 	if has_world_map():
 		world_map = WorldMap.unlock_nodes(world_map, clean_ids, WorldMap.DISCOVERY_SOURCE_EVENT)
+		if archetype_ids.has("grand_casino"): print("FIX0631_ADD_TRAVEL unlock=%d" % (Time.get_ticks_msec() - fix0631_add_started))
 		world_map = WorldMap.refresh_shop_node_environments(world_map, clean_ids)
+		if archetype_ids.has("grand_casino"): print("FIX0631_ADD_TRAVEL refresh=%d" % (Time.get_ticks_msec() - fix0631_add_started))
 	current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(current_environment)
+	if archetype_ids.has("grand_casino"): print("FIX0631_ADD_TRAVEL layout=%d fallbacks=%s" % [Time.get_ticks_msec() - fix0631_add_started, str((current_environment.get("layout", {}) as Dictionary).get("placement_fallback_ids", []))])
 
 
 # Replaces current environment travel targets.
