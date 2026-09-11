@@ -83,8 +83,10 @@ func _run() -> void:
 			return
 		verified += 1
 	print("integ06_1 %s migration matrix passed fixtures=%d provenance=verified source=FoundationMain round_trip=stable" % [fixture_class, verified])
-	app.queue_free()
-	await process_frame
+	app.free()
+	app = null
+	for _frame in range(8):
+		await process_frame
 	quit(0)
 
 
@@ -153,6 +155,9 @@ func _verify_fixture(app: Control, save_service: Variant, capture_case: Dictiona
 	if int(save_service.call("clear_run", SLOT_ID)) != OK:
 		_fail("%s could not clear isolated migration slot after PASS" % fixture_id)
 		return false
+	reloaded = null
+	run_state = null
+	await process_frame
 	print("INTEG06_1_MIGRATION_PASS=%s archetype=%s game=%s" % [fixture_id, expected_archetype, expected_game if not expected_game.is_empty() else "none"])
 	return true
 

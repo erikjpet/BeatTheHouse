@@ -390,8 +390,7 @@ func _run_fix06_31_audit(library: Variant) -> void:
 		"failures": failures,
 	})
 	print("FIX06_31_ENVIRONMENT_AUDIT %s scenarios=%d records=%d floating_roots=%d failures=%d out=%s" % [fix06_31_audit_phase.to_upper(), definitions.size(), audit_records.size(), roots.size(), failures.size(), out_dir])
-	app.queue_free()
-	await process_frame
+	app.free()
 	app = null
 	await _settle(8)
 	quit(0 if failures.is_empty() else 1)
