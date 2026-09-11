@@ -656,9 +656,10 @@ static func _ground_active_object_rects(object_rects: Dictionary, layout: Dictio
 		var selected_surface := ""
 		var candidates := EnvironmentPlacementScript.candidate_rects(environment_data, placement_class, grounded.get("rect", authored))
 		var authored_normalized_slot := Rect2(authored.position / ENVIRONMENT_BOARD_SIZE, authored.size / ENVIRONMENT_BOARD_SIZE)
-		if has_object_slot and EnvironmentPlacementScript.valid_rect(environment_data, placement_class, authored) and _base_candidate_allowed({"rect": authored, "surface_id": "object_slot"}, placement_class, surface_map) and not _object_rect_collides_with_any(placed, authored_normalized_slot):
+		var slot_surface_id := "scenario_object_slot" if object_id.begins_with("event:scenario_") else "object_slot"
+		if has_object_slot and EnvironmentPlacementScript.valid_rect(environment_data, placement_class, authored) and _base_candidate_allowed({"rect": authored, "surface_id": slot_surface_id}, placement_class, surface_map) and not _object_rect_collides_with_any(placed, authored_normalized_slot):
 			selected = Rect2(authored.position / ENVIRONMENT_BOARD_SIZE, authored.size / ENVIRONMENT_BOARD_SIZE)
-			selected_surface = "object_slot"
+			selected_surface = slot_surface_id
 		var authored_is_valid := EnvironmentPlacementScript.valid_rect(environment_data, placement_class, authored) \
 			and not bool(surface_map.get("pack_all", false)) \
 			and not (placement_class == "doorway" and bool(surface_map.get("pack_doorways", false))) \
@@ -767,8 +768,9 @@ static func _solve_grounded_object_layout(authored_object_rects: Dictionary, env
 			return {"ok": false}
 		var candidates := EnvironmentPlacementScript.candidate_rects(environment_data, placement_class, grounded.get("rect", authored))
 		candidates = candidates.filter(func(candidate: Variant) -> bool: return _base_candidate_allowed(_copy_dict(candidate), placement_class, surface_map))
-		if slot_values.size() >= 2 and EnvironmentPlacementScript.valid_rect(environment_data, placement_class, authored) and _base_candidate_allowed({"rect": authored, "surface_id": "object_slot"}, placement_class, surface_map):
-			candidates.push_front({"rect": authored, "surface_id": "object_slot"})
+		var slot_surface_id := "scenario_object_slot" if object_id.begins_with("event:scenario_") else "object_slot"
+		if slot_values.size() >= 2 and EnvironmentPlacementScript.valid_rect(environment_data, placement_class, authored) and _base_candidate_allowed({"rect": authored, "surface_id": slot_surface_id}, placement_class, surface_map):
+			candidates.push_front({"rect": authored, "surface_id": slot_surface_id})
 		var authored_is_valid := EnvironmentPlacementScript.valid_rect(environment_data, placement_class, authored) \
 			and not bool(surface_map.get("pack_all", false)) \
 			and not (placement_class == "doorway" and bool(surface_map.get("pack_doorways", false))) \
@@ -825,6 +827,7 @@ static func _solve_grounded_object_layout(authored_object_rects: Dictionary, env
 
 static func _base_candidate_allowed(candidate: Dictionary, placement_class: String, surface_map: Dictionary) -> bool:
 	var candidate_rect: Rect2 = candidate.get("rect", Rect2())
+	var scenario_object_slot := str(candidate.get("surface_id", "")) == "scenario_object_slot"
 	for reserved_value in _copy_array(surface_map.get("scenario_reserved_clear_rects", [])):
 		var clear_values := _copy_array(reserved_value)
 		if clear_values.size() < 4:
@@ -836,7 +839,7 @@ static func _base_candidate_allowed(candidate: Dictionary, placement_class: Stri
 		return false
 	if placement_class == "behind_counter_person" and str(candidate.get("surface_id", "")) in _copy_array(surface_map.get("scenario_reserved_behind_counter_surfaces", [])):
 		return false
-	var reservation_key := "scenario_reserved_rects" if placement_class in ["standing_person", "seated_person", "group", "floor_fixture", "ground_marker"] else ("scenario_reserved_surface_rects" if placement_class == "surface_item" else ("scenario_reserved_wall_rects" if placement_class == "wall_mounted" else ""))
+	var reservation_key := "" if scenario_object_slot else ("scenario_reserved_rects" if placement_class in ["standing_person", "seated_person", "group", "floor_fixture", "ground_marker"] else ("scenario_reserved_surface_rects" if placement_class == "surface_item" else ("scenario_reserved_wall_rects" if placement_class == "wall_mounted" else "")))
 	if reservation_key.is_empty():
 		return true
 	for reserved_value in _copy_array(surface_map.get(reservation_key, [])):
