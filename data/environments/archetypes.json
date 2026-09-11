@@ -594,7 +594,8 @@
       "alley_foreground_event": {"position": [508, 360], "zone_id": "foreground"},
       "alley_left_station": {"position": [104, 258], "zone_id": "left"},
       "alley_right_station": {"position": [790, 258], "zone_id": "right"},
-      "alley_service_counter": {"position": [674, 184], "zone_id": "service_lane"}
+      "alley_service_counter": {"position": [674, 184], "zone_id": "service_lane"},
+      "bar": {"position": [100, 350], "zone_id": "foreground"}
     },
     "security_profile": {
       "strictness": "uneven",

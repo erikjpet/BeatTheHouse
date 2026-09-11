@@ -8096,10 +8096,14 @@
         },
         "declared_targets": {
           "actors": [],
-          "anchors": [],
+          "anchors": [
+            "base::anchor:bar"
+          ],
           "games": [],
           "interactions": [],
-          "routes": [],
+          "routes": [
+            "base::world:bar"
+          ],
           "scene_objects": [],
           "services": [],
           "zones": [
@@ -8221,8 +8225,10 @@
                       "scanning_doorway": "The officer's attention is fixed on the doorway, briefly leaving the far wall unwatched.",
                       "center": "The officer has entered the alley center and made the open ground unsafe."
                     },
+                    "anchor_id": "bar",
                     "label": "Patrol Officer",
                     "pose": "observing",
+                    "route_id": "base::world:bar",
                     "zone_id": "background"
                   },
                   "family": "actor_ops",
@@ -8836,7 +8842,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "a34a7d5238342383af708caffddc1640e6fc436e5f2ae48aa32d01ed60bf6250"
+        "sequence_signature": "014cd92a6740475828138110a9aaf96e890445647a3ac9bbb068cc37d57e2dc5"
       }
     },
     {
@@ -10421,10 +10427,14 @@
         },
         "declared_targets": {
           "actors": [],
-          "anchors": [],
+          "anchors": [
+            "base::anchor:bar"
+          ],
           "games": [],
           "interactions": [],
-          "routes": [],
+          "routes": [
+            "base::world:bar"
+          ],
           "scene_objects": [],
           "services": [],
           "zones": [
@@ -10545,8 +10555,10 @@
                       "flee": "The regular bolts after seeing where the matched trail leads.",
                       "pointing_to_exit": "While retreating, the regular points out the clear wall-side exit."
                     },
+                    "anchor_id": "bar",
                     "label": "Returning Regular",
                     "pose": "observing",
+                    "route_id": "base::world:bar",
                     "zone_id": "background"
                   },
                   "family": "actor_ops",
@@ -11154,7 +11166,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "776597612fc570a014992fd0f3796fa0a4146efad6ded758bb0675c61dae3a0c"
+        "sequence_signature": "3a1b195a2c5b2a3b4aafdade897f84e29935c527c07c9030fba27447c973cd70"
       }
     },
     {

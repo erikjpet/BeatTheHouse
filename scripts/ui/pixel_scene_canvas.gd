@@ -1090,6 +1090,8 @@ func _draw_jazz_club() -> void:
 		draw_rect(Rect2(x + 5, 76, 5, 132), Color("#3a1b2a"))
 	draw_rect(Rect2(66, 208, 476, 34), Color("#3a2114"))
 	draw_rect(Rect2(82, 216, 444, 8), Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.36))
+	draw_rect(Rect2(66, 146, 476, 8), Color("#3a2114"))
+	draw_line(Vector2(78, 146), Vector2(530, 146), Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.30), 2)
 	_draw_light_cone(Vector2(190, 34), Vector2(-54, 194), C_AMBER, 0.12)
 	_draw_light_cone(Vector2(330, 34), Vector2(0, 194), C_AMBER, 0.10)
 	_draw_light_cone(Vector2(470, 34), Vector2(54, 194), C_AMBER, 0.12)
@@ -1120,6 +1122,8 @@ func _draw_jazz_club() -> void:
 		draw_rect(Rect2(x, 246, 45, 184), Color("#130b0d") if int(x / 45) % 2 == 0 else Color("#1a0f10"))
 	for y in range(270, 416, 28):
 		draw_line(Vector2(0, y), Vector2(900, y + 34), Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.045), 1)
+	draw_rect(Rect2(40, 400, 820, 8), Color("#3a2114"))
+	draw_line(Vector2(50, 408), Vector2(850, 408), Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.26), 2)
 	_floor_reflections()
 
 
@@ -1160,6 +1164,8 @@ func _draw_kitty_cat_lounge() -> void:
 	draw_rect(Rect2(62, 58, 470, 184), Color("#24101a"))
 	draw_rect(Rect2(82, 78, 430, 126), Color("#10080e"))
 	draw_rect(Rect2(94, 196, 406, 38), Color("#3a1818"))
+	draw_rect(Rect2(94, 146, 406, 8), Color("#3a1818"))
+	draw_line(Vector2(106, 146), Vector2(488, 146), Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.30), 2)
 	_draw_light_cone(Vector2(180, 34), Vector2(-42, 190), C_PINK, 0.12)
 	_draw_light_cone(Vector2(318, 34), Vector2(0, 190), C_AMBER, 0.10)
 	_draw_light_cone(Vector2(456, 34), Vector2(42, 190), C_CYAN, 0.11)
@@ -1168,6 +1174,9 @@ func _draw_kitty_cat_lounge() -> void:
 	for x in [142, 250, 358]:
 		_silhouette(Vector2(x, 205), 0.72, Color("#05050a"))
 		draw_rect(Rect2(x - 14, 164, 28, 5), C_AMBER)
+	draw_rect(Rect2(516, 154, 64, 80), Color("#10080e"))
+	draw_rect(Rect2(522, 204, 56, 30), Color("#3a181f"))
+	draw_line(Vector2(522, 204), Vector2(578, 204), C_AMBER.darkened(0.25), 3)
 	draw_rect(Rect2(584, 72, 260, 124), Color("#170b12"))
 	draw_rect(Rect2(602, 88, 222, 64), Color("#2a1118"))
 	for x in range(620, 808, 28):
@@ -1199,6 +1208,10 @@ func _draw_delta_queen() -> void:
 		draw_rect(Rect2(x + 6, 62, 46, 86), Color("#132b3a"))
 		draw_line(Vector2(x + 4, 132), Vector2(x + 54, 104), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.28), 2)
 	_neon_text("DELTA QUEEN", Vector2(266, 62), 28, C_YELLOW)
+	draw_rect(Rect2(42, 46, 816, 8), Color("#493116"))
+	draw_line(Vector2(52, 54), Vector2(848, 54), Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.34), 2)
+	draw_rect(Rect2(42, 146, 816, 8), Color("#493116"))
+	draw_line(Vector2(52, 146), Vector2(848, 146), Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.42), 2)
 	draw_rect(Rect2(64, 178, 238, 84), Color("#123f30"))
 	draw_rect(Rect2(84, 194, 198, 46), Color("#1a7755"))
 	draw_rect(Rect2(360, 170, 212, 92), Color("#143b31"))
@@ -1212,6 +1225,8 @@ func _draw_delta_queen() -> void:
 		draw_line(Vector2(x, 278), Vector2(x + 28, 328), C_AMBER, 3)
 	draw_line(Vector2(0, 278), Vector2(900, 278), C_AMBER, 4)
 	draw_line(Vector2(0, 328), Vector2(900, 328), C_AMBER, 3)
+	draw_rect(Rect2(100, 346, 550, 6), Color("#493116"))
+	draw_rect(Rect2(700, 346, 150, 6), Color("#493116"))
 	for i in range(7):
 		var y := 352 + i * 9 + int(sin(flicker * 1.4 + i) * 3.0)
 		draw_line(Vector2(0, y), Vector2(900, y + 10), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.13), 2)
@@ -1267,6 +1282,12 @@ func _draw_gas_station() -> void:
 	draw_rect(Rect2(0, 0, 900, 248), Color("#101122"))
 	draw_rect(Rect2(0, 34, 900, 36), Color("#1f1f31"))
 	draw_rect(Rect2(0, 70, 900, 8), C_CYAN_2)
+	# Two raised merchandise/service ledges support the compact back rows used by
+	# crowded gas-casino compositions; they are physical fixtures, not UI lanes.
+	draw_rect(Rect2(16, 78, 868, 6), Color("#343447"))
+	draw_line(Vector2(24, 84), Vector2(876, 84), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.24), 2)
+	draw_rect(Rect2(16, 166, 868, 6), Color("#343447"))
+	draw_line(Vector2(24, 172), Vector2(876, 172), Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.20), 2)
 	for x in [90, 412, 770]:
 		draw_rect(Rect2(x, 0, 22, 212), Color("#25253a"))
 	draw_rect(Rect2(50, 96, 258, 96), Color("#060611"))
@@ -1275,6 +1296,12 @@ func _draw_gas_station() -> void:
 	_neon_text("HIGHWAY", Vector2(82, 116), 18, C_CYAN)
 	for x in [348, 444, 540]:
 		_slot_machine(Rect2(x, 122, 74, 120), _cycle_color(x))
+	# Authored counter contacts for the drink, ticket, and staff stations.
+	for shelf in [Rect2(320, 76, 104, 8), Rect2(532, 76, 104, 8), Rect2(660, 76, 104, 8), Rect2(788, 76, 96, 8)]:
+		draw_rect(shelf, Color("#493116"))
+		draw_line(Vector2(shelf.position.x, shelf.end.y), Vector2(shelf.end.x, shelf.end.y), C_AMBER.darkened(0.22), 2)
+	draw_rect(Rect2(408, 192, 104, 8), Color("#493116"))
+	draw_line(Vector2(408, 200), Vector2(512, 200), C_AMBER.darkened(0.22), 2)
 	draw_rect(Rect2(660, 104, 166, 120), Color("#171726"))
 	for x in range(672, 810, 18):
 		draw_line(Vector2(x, 106), Vector2(x, 222), C_SOFT.darkened(0.2), 1)
@@ -1282,6 +1309,8 @@ func _draw_gas_station() -> void:
 	draw_rect(Rect2(720, 70, 38, 24), C_SHADOW)
 	draw_line(Vector2(739, 94), Vector2(782, 126), C_CYAN, 2)
 	draw_rect(Rect2(780, 124, 20, 16), Color("#05050b"))
+	draw_rect(Rect2(100, 400, 700, 8), Color("#343447"))
+	draw_line(Vector2(110, 408), Vector2(790, 408), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.24), 2)
 	_floor_reflections()
 
 
@@ -1398,6 +1427,12 @@ func _draw_grand_casino() -> void:
 	draw_rect(Rect2(0, 34, 900, 6), C_PINK)
 	_neon_text("GRAND", Vector2(340, 62), 42, C_YELLOW)
 	_neon_text("NO CUTE MOVES", Vector2(300, 104), 20, C_CYAN)
+	draw_rect(Rect2(170, 88, 560, 8), Color("#34234b"))
+	draw_line(Vector2(180, 96), Vector2(720, 96), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.24), 2)
+	draw_rect(Rect2(740, 96, 120, 8), Color("#34234b"))
+	draw_line(Vector2(748, 104), Vector2(852, 104), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.22), 2)
+	draw_rect(Rect2(170, 160, 560, 8), Color("#291b35"))
+	draw_line(Vector2(180, 168), Vector2(720, 168), Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.18), 2)
 	for x in [96, 208, 692, 804]:
 		draw_rect(Rect2(x, 46, 64, 118), Color("#120b24"))
 		draw_rect(Rect2(x + 8, 56, 48, 74), Color("#251044"))
@@ -1425,6 +1460,16 @@ func _draw_grand_casino() -> void:
 	for x in range(36, 864, 72):
 		draw_rect(Rect2(x, 286 + int(sin(flicker * 2.2 + x) * 3.0), 42, 4), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.32))
 		draw_rect(Rect2(x + 10, 302, 76, 2), Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.22))
+	if environment_id == "grand_casino":
+		draw_rect(Rect2(344, 300, 212, 10), C_AMBER.darkened(0.25))
+		draw_rect(Rect2(356, 310, 188, 34), Color("#171225"))
+		draw_line(Vector2(370, 344), Vector2(364, 356), C_SOFT.darkened(0.45), 3)
+		draw_line(Vector2(530, 344), Vector2(536, 356), C_SOFT.darkened(0.45), 3)
+		draw_rect(Rect2(452, 340, 96, 8), C_AMBER.darkened(0.32))
+		draw_rect(Rect2(40, 326, 820, 8), Color("#2d2037"))
+		draw_line(Vector2(50, 334), Vector2(850, 334), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.18), 2)
+		draw_rect(Rect2(100, 346, 700, 8), C_AMBER.darkened(0.35))
+		draw_line(Vector2(110, 354), Vector2(790, 354), Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.32), 2)
 
 
 func _draw_grand_casino_cage() -> void:
