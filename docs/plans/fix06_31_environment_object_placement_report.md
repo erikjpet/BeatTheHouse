@@ -1,6 +1,6 @@
 # Fix 06.31 — Environment Object Placement and Grounding
 
-Status: **BEFORE AUDIT + SURFACE MAPS COMPLETE / IMPLEMENTATION PENDING**
+Status: **IMPLEMENTED / FINAL EXACT-HEAD GATES IN PROGRESS**
 Baseline product head: `c570f2ce6fafa4212292f8b129ca08f2e9e1e954`
 Claim commit: `e56f00b8`
 Audit date: 2026-09-10
@@ -153,3 +153,79 @@ instances are under `D:\Projects\Beat-The-House\.tmp\fix06_31\before\floating_pe
 
 The after audit and side-by-side closure index will be appended only after the
 engine/data pass and all permanent gates are green.
+
+## Implemented placement authority
+
+Every live object now receives one of the ten placement classes through
+`EnvironmentPlacement.classify()`. Base composition, scenario composition,
+delivery handoffs, rendering and audit code use that same classifier and the
+same 21 cached room/layer surface maps. Grounded candidates are generated from
+physical supports rather than board-wide free space: feet and fixture bases use
+walkable bands; clerks use counters; seated people use seats; items use support
+lines; signs use wall bands; hanging props use ceiling bands; and travel uses
+drawn doorways.
+
+Collision recovery now searches only class-valid candidates and fails closed
+with the room, identity and class when capacity is impossible. Base layouts are
+re-derived when their grounding signature changes, including restored saves,
+without a save-schema change or RNG draw. Content-aware class overrides prevent
+person events from taking wall slots and wall fixtures from taking floor slots.
+The renderer uses class-aware contact shadows and counter occlusion metadata;
+wall-mounted and hanging objects no longer receive floor shadows.
+
+## Capacity cases and decisions
+
+- **Gas Station Casino:** the window/canopy remains non-walkable. The cage is a
+  counter support, and the drawn lower lottery desk is separately mapped so a
+  scenario night clerk and rotating staff can coexist without placing either
+  in the highway window. The machine row remains a machine/item support, not a
+  place for people to stand.
+- **Kitty Cat Lounge:** the stage, champagne bar, table tops and far-right booth
+  are distinct supports. Audience/group actors use the floor or stage; booth
+  actors use the booth; paper/signage uses the wall. This resolves the amateur
+  and slow-night arrival capacities without hiding content.
+- **Grand Casino:** machine controls attach to the machine/wall bank; table
+  games use rail/felt supports; rotating hosts use the physical
+  floor; travel is biased to the correct pit, cage and high-limit openings; and
+  the drawn cocktail-service point carries `Buy a Drink`. The deeper floor
+  contact range keeps the host desk clear of table controls. Audit, convention
+  and gala arrivals all fit in normal and expanded layouts.
+- **Jazz Club:** the waiting audience is a grounded group rather than a single
+  floating person, while music services retain stage affinity.
+- **Motel wedding overflow:** the room-key tray uses the authored service lane
+  instead of the foreground walk lane. The signed package was re-sealed after
+  this placement-only edit.
+- **Corner Store:** the owner-approved July base composition was not changed.
+
+No object, action, route, reward or scenario branch was removed to create
+capacity. The scenario census remains 1,108 objects / 673 actions and the
+barrier census remains 25 objects / 39 placements.
+
+## Permanent proofs added
+
+- The static grounding checker validates all 21 maps, 18 archetypes, ten
+  classes, support geometry, class overrides and authored placement-class
+  values, and rejects RNG or wall-clock use in the classifier.
+- The focused grounding contract forces a floor collision, resolves a
+  zone-only person, proves person-event and wall-sign slot separation, and
+  compares hidden-state placement candidates byte-for-byte.
+- The production multiseed harness now walks reachable phases and branches via
+  real sequence commands/facts, checks aftermath, reentry and cleanup states,
+  validates normal/expanded geometry, and checks route start, endpoint and
+  reduced-motion endpoint grounding. Geometry-equivalent public states share a
+  cached proof; every path remains counted.
+- Historical Continue coverage now requires a current grounding signature with
+  no placement errors or fallback slots. All 37 `v0_5_1` fixtures and all three
+  `mid_0_6` fixtures pass current FoundationMain load/save/load.
+- The stale draw-poker determinism driver was updated to authorize the current
+  Hold'em table and follow only live legal actions. Its paired one-seed proof is
+  green at 66 checkpoints with hash `3363762939`.
+
+## After evidence
+
+The production-host after run writes the same clean/annotated room and scenario
+arrival pairs under `.tmp/fix06_31/after/`, plus
+`grounding_audit_after.json` and `floating_people_inventory_after.json`. The
+reachable-state pass/fail matrix is emitted by the permanent multiseed gate and
+is the authority for phases that do not need a distinct screenshot because
+their physical geometry is unchanged.

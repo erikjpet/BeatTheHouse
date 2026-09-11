@@ -129,9 +129,22 @@ static func surface_map(environment: Dictionary) -> Dictionary:
 	var archetype_id := str(environment.get("archetype_id", environment.get("id", ""))).strip_edges()
 	var layer_id := str(environment.get("current_layer_id", environment.get("layer_id", ""))).strip_edges()
 	var layered_key := "%s:%s" % [archetype_id, layer_id]
+	var result: Dictionary
 	if not layer_id.is_empty() and _surface_maps.has(layered_key):
-		return _dict(_surface_maps.get(layered_key, {}))
-	return _dict(_surface_maps.get(archetype_id, {}))
+		result = _dict(_surface_maps.get(layered_key, {})).duplicate(true)
+	else:
+		result = _dict(_surface_maps.get(archetype_id, {})).duplicate(true)
+	var scenario_state := _dict(environment.get("scenario_state", {}))
+	var scenario_id := str(scenario_state.get("id", environment.get("scenario_id", ""))).strip_edges()
+	var scenario_overrides := _dict(result.get("scenario_overrides", {}))
+	if not scenario_id.is_empty() and scenario_overrides.has(scenario_id):
+		var scenario_override := _dict(scenario_overrides.get(scenario_id, {}))
+		var base_class_overrides := _dict(result.get("class_overrides", {})).duplicate(true)
+		result.merge(scenario_override, true)
+		if scenario_override.has("class_overrides"):
+			base_class_overrides.merge(_dict(scenario_override.get("class_overrides", {})), true)
+			result["class_overrides"] = base_class_overrides
+	return result
 
 
 static func surface_map_by_id(archetype_id: String, layer_id: String = "") -> Dictionary:
@@ -221,8 +234,14 @@ static func candidate_rects(environment: Dictionary, placement_class: String, au
 					_append_candidate(result, Rect2(Vector2(center_x, center_y) - authored.size * 0.5, authored.size), str(mount.get("id", "wall_mount")), placement_class, constraint)
 	elif placement_class == "hanging":
 		var ceiling := _rect_array(_dict(surfaces.get("ceiling", {})).get("bounds", []))
-		var center := Vector2(clampf(authored.get_center().x, ceiling.position.x + authored.size.x * 0.5, ceiling.end.x - authored.size.x * 0.5), clampf(authored.get_center().y, ceiling.position.y + authored.size.y * 0.5, ceiling.end.y - authored.size.y * 0.5))
-		_append_candidate(result, Rect2(center - authored.size * 0.5, authored.size), "ceiling", placement_class, constraint)
+		var min_x := ceiling.position.x + authored.size.x * 0.5
+		var max_x := ceiling.end.x - authored.size.x * 0.5
+		var min_y := ceiling.position.y + authored.size.y * 0.5
+		var max_y := ceiling.end.y - authored.size.y * 0.5
+		if max_x >= min_x and max_y >= min_y:
+			for center_y in _ordered_values(clampf(authored.get_center().y, min_y, max_y), min_y, max_y, vertical_step):
+				for center_x in _ordered_values(clampf(authored.get_center().x, min_x, max_x), min_x, max_x, horizontal_step):
+					_append_candidate(result, Rect2(Vector2(center_x, center_y) - authored.size * 0.5, authored.size), "ceiling", placement_class, constraint)
 	elif placement_class == "doorway":
 		for doorway_value in _array(surfaces.get("doorways", [])):
 			var doorway := _dict(doorway_value)

@@ -30,6 +30,8 @@ var meta_home_review := false
 var punchline_layer_review := false
 var fix06_31_audit := false
 var fix06_31_audit_phase := "before"
+var fix06_31_scenario_filter := ""
+var fix06_31_skip_base := false
 var fix06_31_surface_maps: Dictionary = {}
 
 
@@ -46,6 +48,10 @@ func _init() -> void:
 		elif argument == "--fix06-31-after":
 			fix06_31_audit = true
 			fix06_31_audit_phase = "after"
+		elif argument.begins_with("--fix06-31-scenario="):
+			fix06_31_scenario_filter = argument.trim_prefix("--fix06-31-scenario=")
+		elif argument == "--fix06-31-skip-base":
+			fix06_31_skip_base = true
 	call_deferred("_run")
 
 
@@ -317,7 +323,7 @@ func _run_fix06_31_audit(library: Variant) -> void:
 	DirAccess.make_dir_recursive_absolute("%s/states" % out_dir)
 	DirAccess.make_dir_recursive_absolute("%s/floating_people" % out_dir)
 	var run_state: Variant = app.get("run_state")
-	for archetype_value in library.environment_archetypes:
+	for archetype_value in ([] if fix06_31_skip_base else library.environment_archetypes):
 		if typeof(archetype_value) != TYPE_DICTIONARY:
 			continue
 		var archetype: Dictionary = archetype_value
@@ -342,6 +348,8 @@ func _run_fix06_31_audit(library: Variant) -> void:
 	for definition_value in definitions:
 		var definition := _dict(definition_value)
 		var scenario_id := str(definition.get("id", ""))
+		if not fix06_31_scenario_filter.is_empty() and scenario_id not in fix06_31_scenario_filter.split(",", false):
+			continue
 		var archetype_id := str(definition.get("archetype_id", ""))
 		if fix06_31_audit_phase == "before":
 			var environment := _dict(library.environment_archetype(archetype_id))
@@ -384,7 +392,8 @@ func _run_fix06_31_audit(library: Variant) -> void:
 	print("FIX06_31_ENVIRONMENT_AUDIT %s scenarios=%d records=%d floating_roots=%d failures=%d out=%s" % [fix06_31_audit_phase.to_upper(), definitions.size(), audit_records.size(), roots.size(), failures.size(), out_dir])
 	app.queue_free()
 	await process_frame
-	await process_frame
+	app = null
+	await _settle(8)
 	quit(0 if failures.is_empty() else 1)
 
 
@@ -406,6 +415,13 @@ func _capture_fix06_31_scenario_arrival(library: Variant, definition: Dictionary
 		failures.append_array(local_failures)
 		library.environment_scenarios[archetype_id] = original_pool
 		return
+	# The capture is a room-layout audit, not a run-loss test. Long graph routes can
+	# legitimately consume the starter bankroll before the production canvas is
+	# attached; keep that unrelated terminal screen from replacing the room under
+	# inspection after arrival has already finalized successfully.
+	run_state.bankroll = maxi(run_state.bankroll, 10000)
+	run_state.run_failure_reason = ""
+	run_state.run_failure_message = ""
 	app.set("run_state", run_state)
 	app.set("generator", generator)
 	app.call("_clear_selected_game_action")
@@ -428,10 +444,24 @@ func _collect_fix06_31_live_records(environment: Dictionary, scenario_id: String
 	var snapshot: Dictionary = canvas.call("current_view_snapshot") if canvas != null else {}
 	var object_layout := _dict(snapshot.get("object_layout", {}))
 	var rects_by_id: Dictionary = {}
-	for layout_value in _array(object_layout.get("entries", [])):
+	var rect_sources: Dictionary = {}
+	for layout_value in _array(object_layout.get("objects", [])):
 		var layout_entry := _dict(layout_value)
-		rects_by_id[str(layout_entry.get("id", ""))] = _rect(layout_entry.get("rect", {}))
+		var layout_id := str(layout_entry.get("id", ""))
+		rects_by_id[layout_id] = _rect(layout_entry.get("rect", {}))
+		rect_sources[layout_id] = "production_canvas"
 	var generated_layout := _dict(environment.get("layout", {}))
+	var placement_classes := _dict(generated_layout.get("placement_classes", {}))
+	for object_id_value in _dict(generated_layout.get("object_rects", {})).keys():
+		var object_id := str(object_id_value)
+		rects_by_id[object_id] = _fix06_31_pixel_rect(_dict(generated_layout.get("object_rects", {})).get(object_id, {}))
+		rect_sources[object_id] = "generated_layout"
+	for authority_value in _dict(environment.get("scenario_layout_authority", {})).values():
+		var authority := _dict(authority_value)
+		var presentation_id := str(authority.get("presentation_object_id", authority.get("identity", "")))
+		if not presentation_id.is_empty():
+			rects_by_id[presentation_id] = _fix06_31_pixel_rect(authority.get("normalized_hit_rect", {}))
+			rect_sources[presentation_id] = "sealed_scenario_authority"
 	for error_value in _array(generated_layout.get("placement_errors", [])):
 		failures.append("%s base placement error: %s" % [scenario_id, str(error_value)])
 	for fallback_value in _array(generated_layout.get("placement_fallback_ids", [])):
@@ -442,7 +472,11 @@ func _collect_fix06_31_live_records(environment: Dictionary, scenario_id: String
 			continue
 		var object_id := str(object_data.get("id", ""))
 		var object_type := str(object_data.get("object_type", object_data.get("type", "")))
+		if object_id == "scenario::presentation_failure":
+			failures.append("%s production presentation fallback: %s" % [scenario_id, str(object_data.get("description", object_data.get("disabled_reason", "unknown presentation failure")))])
 		var placement_class := str(object_data.get("placement_class", ""))
+		if placement_classes.has(object_id):
+			placement_class = str(placement_classes.get(object_id, ""))
 		if placement_class not in EnvironmentPlacementScript.CLASSES:
 			placement_class = EnvironmentPlacementScript.classify(object_data, object_type, object_id, str(object_data.get("prop", object_data.get("icon_key", ""))))
 		var rect: Rect2 = rects_by_id.get(object_id, Rect2())
@@ -457,8 +491,17 @@ func _collect_fix06_31_live_records(environment: Dictionary, scenario_id: String
 			"scenario_id": scenario_id, "archetype_id": archetype_id, "state_path": "arrival",
 			"stable_object_id": object_id, "label": str(object_data.get("label", "")),
 			"placement_class": placement_class, "rect": {"x": rect.position.x, "y": rect.position.y, "w": rect.size.x, "h": rect.size.y},
-			"contact_y": rect.end.y, "collision_displaced": bool(object_data.get("collision_adjusted", false)), "verdict": verdict,
+			"rect_source": str(rect_sources.get(object_id, "missing")), "contact_y": rect.end.y,
+			"surface_id": str(_dict(generated_layout.get("placement_surfaces", {})).get(object_id, "")),
+			"collision_displaced": bool(object_data.get("collision_adjusted", false)), "verdict": verdict,
 		})
+
+
+func _fix06_31_pixel_rect(value: Variant) -> Rect2:
+	var rect := _rect(value)
+	if rect.end.x <= 1.5 and rect.end.y <= 1.5:
+		return Rect2(rect.position * Vector2(900.0, 430.0), rect.size * Vector2(900.0, 430.0))
+	return rect
 
 
 func _record_fix06_31_floating_root(floating_roots: Dictionary, audited: Dictionary, scenario_id: String) -> void:

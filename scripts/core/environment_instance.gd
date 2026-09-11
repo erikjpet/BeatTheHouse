@@ -725,7 +725,7 @@ static func _ground_active_object_rects(object_rects: Dictionary, layout: Dictio
 			placement_surfaces = _copy_dict(solved.get("surfaces", {}))
 		if not all_solved:
 			var archetype_id := str(environment_data.get("archetype_id", environment_data.get("id", "")))
-			var search_budget := 25000 if archetype_id in ["delta_queen", "grand_casino"] else (5000 if archetype_id in ["jazz_club", "gas_station_casino"] else 500)
+			var search_budget := 25000 if archetype_id in ["delta_queen", "grand_casino", "pawn_shop"] else (5000 if archetype_id in ["bar", "corner_store", "gas_station_casino", "jazz_club", "kitty_cat_lounge", "motel", "small_underground_casino"] else 500)
 			var global_solution := _solve_grounded_object_layout(authored_object_rects, environment_data, active_entries, [], {}, search_budget)
 			if bool(global_solution.get("ok", false)):
 				placed = _copy_dict(global_solution.get("rects", {}))
@@ -828,7 +828,9 @@ static func _solve_grounded_object_layout(authored_object_rects: Dictionary, env
 static func _base_candidate_allowed(candidate: Dictionary, placement_class: String, surface_map: Dictionary) -> bool:
 	var candidate_rect: Rect2 = candidate.get("rect", Rect2())
 	var scenario_object_slot := str(candidate.get("surface_id", "")) == "scenario_object_slot"
-	for reserved_value in _copy_array(surface_map.get("scenario_reserved_clear_rects", [])):
+	var clear_rects := _copy_array(surface_map.get("scenario_reserved_clear_rects", []))
+	clear_rects.append_array(_copy_array(_copy_dict(surface_map.get("scenario_reserved_clear_rects_by_class", {})).get(placement_class, [])))
+	for reserved_value in clear_rects:
 		var clear_values := _copy_array(reserved_value)
 		if clear_values.size() < 4:
 			continue
@@ -847,7 +849,8 @@ static func _base_candidate_allowed(candidate: Dictionary, placement_class: Stri
 		if values.size() < 4:
 			continue
 		var reserved := Rect2(float(values[0]), float(values[1]), float(values[2]), float(values[3]))
-		if reserved.has_area() and candidate_rect.intersects(reserved):
+		var contact_point := candidate_rect.get_center() if placement_class == "wall_mounted" else Vector2(candidate_rect.get_center().x, candidate_rect.end.y)
+		if reserved.has_area() and reserved.has_point(contact_point):
 			return false
 	return true
 
@@ -972,8 +975,8 @@ static func _text_has_any(text: String, tokens: Array) -> bool:
 
 static func _placement_class_priority(placement_class: String) -> int:
 	match placement_class:
-		"doorway", "wall_mounted", "hanging": return 0
-		"behind_counter_person", "seated_person": return 1
+		"behind_counter_person", "seated_person": return 0
+		"doorway", "wall_mounted", "hanging": return 1
 		"floor_fixture": return 2
 		"surface_item": return 3
 		"ground_marker", "standing_person", "group": return 4

@@ -194,6 +194,7 @@ static func interactable_object_view_list(host: Variant) -> Array:
 
 static func _base_layout_reservations(records: Array, layout: Dictionary = {}) -> Array:
 	var by_id: Dictionary = {}
+	var object_rects := _dict(layout.get("object_rects", {}))
 	for value in records:
 		var record := _dict(value)
 		var object_id := str(record.get("object_id", "")).strip_edges()
@@ -203,23 +204,23 @@ static func _base_layout_reservations(records: Array, layout: Dictionary = {}) -
 		var label := str(record.get("label", "")).strip_edges()
 		if label.length() > 64:
 			label = label.substr(0, 64)
+		var authoritative_rect: Variant = object_rects.get(object_id, record.get("focus_rect", record.get("normalized_rect", {})))
 		by_id[object_id] = {
 			"object_id": object_id,
-			"focus_rect": _duplicate_variant(record.get("focus_rect", record.get("normalized_rect", {}))),
+			"focus_rect": _duplicate_variant(authoritative_rect),
 			"label": label,
 		}
 	# Generated slots remain part of the ordinary environment plane while their
 	# events are dormant. Reserve those authored positions so a scenario prop can
 	# never occupy a chain-event slot that becomes live later in the same visit.
-	var object_rects: Variant = layout.get("object_rects", {})
-	if typeof(object_rects) == TYPE_DICTIONARY:
-		for object_id_value in (object_rects as Dictionary).keys():
+	if not object_rects.is_empty():
+		for object_id_value in object_rects.keys():
 			var object_id := str(object_id_value).strip_edges()
 			if object_id.is_empty() or by_id.has(object_id):
 				continue
 			by_id[object_id] = {
 				"object_id": object_id,
-				"focus_rect": _duplicate_variant((object_rects as Dictionary).get(object_id_value, {})),
+				"focus_rect": _duplicate_variant(object_rects.get(object_id_value, {})),
 				"label": "",
 			}
 	var ids := by_id.keys()
@@ -754,6 +755,8 @@ static func _apply_layout_authority(record: Dictionary, authority: Dictionary, a
 	result["actor_route_points"] = _array(authority.get("actor_route_points", []))
 	result["actor_route_stage"] = _dict(authority.get("actor_route_stage", {}))
 	result["scenario_z_order"] = int(authority.get("z_order", 0))
+	result["placement_class"] = str(authority.get("placement_class", result.get("placement_class", "")))
+	result["contact"] = str(authority.get("contact", result.get("contact", "")))
 	result["scenario_layout_resolved"] = true
 	result["scenario_layout_authority_identity"] = str(authority.get("identity", ""))
 	result["scenario_layout_authority_digest"] = authority_digest

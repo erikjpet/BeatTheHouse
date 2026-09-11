@@ -1033,9 +1033,13 @@ static func _check_single_environment_plane(failures: Array) -> void:
 		{"object_id": "game:slot", "visible": true, "focus_rect": Rect2(0.1, 0.1, 0.1, 0.1)},
 		{"object_id": "event:chain06_cass_first_contact", "visible": true, "focus_rect": Rect2(0.2, 0.1, 0.1, 0.1)},
 		{"object_id": "numbers:book", "visible": true, "focus_rect": runtime_rect},
-	])
+	], {"object_rects": {"numbers:book": {"x": 0.62, "y": 0.12, "w": 0.08, "h": 0.09}}})
 	if controller_reservations.size() != 1 or str(_dict(controller_reservations[0]).get("object_id", "")) != "numbers:book":
 		failures.append("Runtime occupancy filtering double-counted sealed game/event geometry during scenario refresh.")
+	else:
+		var reserved_rect := _snapshot_rect(_dict(controller_reservations[0]).get("focus_rect", {}))
+		if not reserved_rect.is_equal_approx(Rect2(0.62, 0.12, 0.08, 0.09)):
+			failures.append("Runtime occupancy preferred stale UI fallback geometry over the grounded generated-layout authority.")
 	canvas.free()
 
 

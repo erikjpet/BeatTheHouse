@@ -16,7 +16,7 @@ const COLLISION_RATIO := 0.65
 const VISUAL_LAYOUT_GAP := 8.0
 const FINE_CANDIDATE_CACHE_MAX_ENTRIES := 32
 const SCENARIO_SEARCH_MAX_NODES := 1000
-const SCENARIO_SEARCH_MAX_OPTIONS := 96
+const SCENARIO_SEARCH_MAX_OPTIONS := 32
 const LABEL_MAX_LENGTH := 64
 const PROMPT_MAX_LENGTH := 240
 const LABEL_HEIGHT := 15.0
@@ -254,6 +254,7 @@ static func sealed_renderer_snapshot(layout_result: Dictionary) -> Dictionary:
 				"stable_object_id": str(semantic.get("stable_object_id", "")),
 				"semantic_identity": identity,
 				"role": str(semantic.get("role", "actor" if actor else "prop")),
+				"placement_class": str(semantic.get("placement_class", "")),
 				"state": str(semantic.get("state", "")),
 				"appearance": str(semantic.get("appearance", "")),
 				"pose": str(semantic.get("pose", "idle")),
@@ -318,6 +319,13 @@ static func resolve(base_records: Array, projection: Dictionary, environment: Di
 		}
 	if environment.is_empty():
 		return _failed_result(resolved_projection, ["An active scenario presentation requires the current validated room layout."], [], passive_audit)
+	# Runtime refresh and composed world-sequence callers can legitimately pass a
+	# room snapshot before its scenario fields have been reattached. The active
+	# projection is the authoritative scenario identity for placement overrides.
+	environment = environment.duplicate(false)
+	var projected_scenario_id := str(projection.get("scenario_id", "")).strip_edges()
+	if not projected_scenario_id.is_empty():
+		environment["scenario_id"] = projected_scenario_id
 
 	var errors: Array = []
 	var warnings: Array = []
@@ -337,7 +345,7 @@ static func resolve(base_records: Array, projection: Dictionary, environment: Di
 			"rect": reserved_overlay,
 			"small_rect": reserved_overlay,
 		})
-	var authority := _base_layout_authority(base_records, errors)
+	var authority := _base_layout_authority(base_records, errors, environment)
 	var collision_adjustments := 0
 	var visual_count := 0
 	var resolved_scenes: Dictionary = {}
@@ -475,7 +483,8 @@ static func _resolve_visual(
 	base_record: Dictionary,
 	occupied: Array,
 	placement_label: String,
-	errors: Array
+	errors: Array,
+	excluded_rect_keys: Dictionary = {}
 ) -> Dictionary:
 	var result := semantic.duplicate(true)
 	var base_rect := _record_pixel_rect(base_record)
@@ -528,7 +537,7 @@ static func _resolve_visual(
 		# The zone selects the preferred physical surface. Collision displacement
 		# may use another surface of the same class (for example the other counter
 		# or doorway), but can never leave the class-valid candidate set.
-		placement = _collision_safe_rect(identity, authored_rect, occupied, placement_label, forbidden_lane, environment, placement_class)
+		placement = _collision_safe_rect(identity, authored_rect, occupied, placement_label, forbidden_lane, environment, placement_class, Rect2(), excluded_rect_keys)
 		if bool(placement.get("colliding", true)):
 			errors.append("Scenario visual %s class %s cannot resolve both normal and expanded small-screen geometry on a valid room surface: %s." % [identity, placement_class, str(placement.get("error", "all class-valid candidates collide"))])
 			return {}
@@ -691,7 +700,7 @@ static func _solve_visual_queue(queue: Array, environment: Dictionary, semantic_
 		if options.is_empty():
 			return {"ok": false, "errors": preparation_errors}
 		entries.append({"identity": identity, "actor": actor, "label": placement_label, "options": options})
-	var search_state := {"nodes": 0}
+	var search_state := {"nodes": 0, "max_nodes": int(EnvironmentPlacementScript.surface_map(environment).get("scenario_search_max_nodes", SCENARIO_SEARCH_MAX_NODES))}
 	var solution: Dictionary = {}
 	if not _search_visual_queue(entries, {}, solution, search_state):
 		return {"ok": false, "errors": preparation_errors}
@@ -731,27 +740,23 @@ static func _solve_visual_queue(queue: Array, environment: Dictionary, semantic_
 
 static func _visual_placement_options(identity: String, semantic: Dictionary, actor: bool, environment: Dictionary, semantic_state: Dictionary, base_record: Dictionary, initial_occupied: Array, placement_label: String, errors: Array) -> Array:
 	var options: Array = []
-	var exclusions: Array = []
 	var seen: Dictionary = {}
 	var first_errors: Array = []
 	var placement_class := EnvironmentPlacementScript.classify(semantic, "actor" if actor else "scene_object", identity, str(semantic.get("prop", semantic.get("icon_key", ""))))
-	var option_limit := 32 if _scenario_has_reservation(identity, placement_class, EnvironmentPlacementScript.surface_map(environment)) else SCENARIO_SEARCH_MAX_OPTIONS
+	var option_limit := 24 if _scenario_has_reservation(identity, placement_class, EnvironmentPlacementScript.surface_map(environment)) else SCENARIO_SEARCH_MAX_OPTIONS
 	for option_index in range(option_limit):
-		var occupied := initial_occupied.duplicate(true)
-		occupied.append_array(exclusions)
 		var option_errors: Array = []
-		var resolved := _resolve_visual(identity, semantic, actor, environment, semantic_state, base_record, occupied, placement_label, option_errors)
+		var resolved := _resolve_visual(identity, semantic, actor, environment, semantic_state, base_record, initial_occupied, placement_label, option_errors, seen)
 		if resolved.is_empty():
 			if option_index == 0:
 				first_errors = option_errors
 			break
 		var rect := _pixel_rect(_dict(resolved.get("normalized_hit_rect", {})))
-		var key := "%.3f:%.3f:%.3f:%.3f" % [rect.position.x, rect.position.y, rect.size.x, rect.size.y]
+		var key := _placement_rect_key(rect)
 		if seen.has(key):
 			break
 		seen[key] = true
 		options.append(resolved)
-		exclusions.append(_resolved_occupied_record("system::search_option_%d" % option_index, resolved, placement_label))
 	if options.is_empty():
 		errors.append_array(first_errors)
 	return options
@@ -759,7 +764,7 @@ static func _visual_placement_options(identity: String, semantic: Dictionary, ac
 
 static func _search_visual_queue(entries: Array, assignment: Dictionary, solution: Dictionary, search_state: Dictionary) -> bool:
 	search_state["nodes"] = int(search_state.get("nodes", 0)) + 1
-	if int(search_state.get("nodes", 0)) > SCENARIO_SEARCH_MAX_NODES:
+	if int(search_state.get("nodes", 0)) > int(search_state.get("max_nodes", SCENARIO_SEARCH_MAX_NODES)):
 		return false
 	if assignment.size() >= entries.size():
 		solution.merge(assignment, true)
@@ -1109,7 +1114,7 @@ static func _add_visual_authority(authority: Dictionary, collection: Dictionary,
 			z_order = int(existing.get("z_order", 0))
 			authority_kind = str(existing.get("visual_kind", "base_record"))
 			authority_source = "sealed_base_record"
-		authority[identity] = _authority_record(
+		var sealed_record := _authority_record(
 			identity,
 			presentation_object_id,
 			normal,
@@ -1123,10 +1128,15 @@ static func _add_visual_authority(authority: Dictionary, collection: Dictionary,
 			presentation_visible,
 			presentation_interactive
 		)
+		var placement_class := str(semantic.get("placement_class", existing.get("placement_class", "")))
+		sealed_record["placement_class"] = placement_class
+		sealed_record["contact"] = str(semantic.get("contact", existing.get("contact", _placement_contact(placement_class))))
+		authority[identity] = sealed_record
 
 
-static func _base_layout_authority(base_records: Array, errors: Array = []) -> Dictionary:
+static func _base_layout_authority(base_records: Array, errors: Array = [], environment: Dictionary = {}) -> Dictionary:
 	var result: Dictionary = {}
+	var class_overrides := _dict(EnvironmentPlacementScript.surface_map(environment).get("class_overrides", {}))
 	for value in base_records:
 		var record := _dict(value)
 		var identity := _record_identity(record)
@@ -1136,9 +1146,15 @@ static func _base_layout_authority(base_records: Array, errors: Array = []) -> D
 		if result.has(identity):
 			errors.append("Base layout authority contains duplicate semantic identity %s." % identity)
 			continue
-		result[identity] = _authority_record(
+		var classified_record := record.duplicate(true)
+		var object_id := str(record.get("object_id", ""))
+		var class_override := str(class_overrides.get(object_id, ""))
+		if class_override in EnvironmentPlacementScript.CLASSES:
+			classified_record["placement_class"] = class_override
+		var placement_class := EnvironmentPlacementScript.classify(classified_record, str(record.get("object_type", "")), object_id, str(record.get("prop", record.get("icon_key", ""))))
+		var sealed_record := _authority_record(
 			identity,
-			str(record.get("object_id", "")).strip_edges(),
+			object_id.strip_edges(),
 			_normalized_rect(rect),
 			_normalized_rect(_expanded_rect(rect, SMALL_SCREEN_TARGET)),
 			int(record.get("scenario_z_order", record.get("z_order", 0))),
@@ -1150,7 +1166,22 @@ static func _base_layout_authority(base_records: Array, errors: Array = []) -> D
 			bool(record.get("visible", true)),
 			bool(record.get("interactive", true))
 		)
+		sealed_record["placement_class"] = placement_class
+		sealed_record["contact"] = _placement_contact(placement_class)
+		result[identity] = sealed_record
 	return result
+
+
+static func _placement_contact(placement_class: String) -> String:
+	if EnvironmentPlacementScript.is_person_class(placement_class):
+		return "feet"
+	if placement_class in ["floor_fixture", "ground_marker"]:
+		return "base"
+	if placement_class == "surface_item":
+		return "surface"
+	if placement_class in ["wall_mounted", "hanging"]:
+		return "mount"
+	return "edge"
 
 
 static func _seal_projection_coverage(authority: Dictionary, semantic_state: Dictionary, errors: Array) -> void:
@@ -1228,7 +1259,7 @@ static func _seal_projection_coverage(authority: Dictionary, semantic_state: Dic
 
 
 static func _validate_authority(authority: Dictionary, errors: Array) -> void:
-	var expected_keys := ["actor_route_points", "actor_route_stage", "identity", "normalized_hit_rect", "presentation_interactive", "presentation_object_id", "presentation_required", "presentation_visible", "semantic_actor_member", "semantic_interaction_member", "semantic_scene_object_member", "small_screen_rect", "source", "visual_kind", "z_order"]
+	var expected_keys := ["actor_route_points", "actor_route_stage", "contact", "identity", "normalized_hit_rect", "placement_class", "presentation_interactive", "presentation_object_id", "presentation_required", "presentation_visible", "semantic_actor_member", "semantic_interaction_member", "semantic_scene_object_member", "small_screen_rect", "source", "visual_kind", "z_order"]
 	expected_keys.sort()
 	var presentation_identities: Dictionary = {}
 	var identities := authority.keys()
@@ -1312,8 +1343,10 @@ static func _authority_record(identity: String, presentation_object_id: String, 
 	return {
 		"actor_route_points": actor_route_points.duplicate(true),
 		"actor_route_stage": actor_route_stage.duplicate(true),
+		"contact": "",
 		"identity": identity,
 		"normalized_hit_rect": normal,
+		"placement_class": "",
 		"presentation_interactive": presentation_interactive,
 		"presentation_object_id": presentation_object_id,
 		"presentation_required": presentation_required,
@@ -1444,7 +1477,7 @@ static func _point_clear(point: Vector2, obstacles: Array, ignored_identity: Str
 	return true
 
 
-static func _collision_safe_rect(identity: String, authored: Rect2, occupied: Array, label: String = "", forbidden_rect: Rect2 = Rect2(), environment: Dictionary = {}, placement_class: String = "", constraint: Rect2 = Rect2()) -> Dictionary:
+static func _collision_safe_rect(identity: String, authored: Rect2, occupied: Array, label: String = "", forbidden_rect: Rect2 = Rect2(), environment: Dictionary = {}, placement_class: String = "", constraint: Rect2 = Rect2(), excluded_rect_keys: Dictionary = {}) -> Dictionary:
 	# A normal-layout collision may be deterministically displaced. Expanded-only
 	# contact must retain authored placement so the later small-screen hit, label,
 	# lane, and reachability validators can reject the exact authored conflict
@@ -1454,7 +1487,7 @@ static func _collision_safe_rect(identity: String, authored: Rect2, occupied: Ar
 		var authored_small := _expanded_rect(authored, SMALL_SCREEN_TARGET)
 		var room_surface_map := EnvironmentPlacementScript.surface_map(environment)
 		var has_scenario_reservation := _scenario_has_reservation(identity, placement_class, room_surface_map)
-		if not has_scenario_reservation and EnvironmentPlacementScript.valid_rect(environment, placement_class, authored, constraint) \
+		if not excluded_rect_keys.has(_placement_rect_key(authored)) and not has_scenario_reservation and EnvironmentPlacementScript.valid_rect(environment, placement_class, authored, constraint) \
 				and not _normal_hit_overlaps(identity, authored, occupied) \
 				and not _expanded_overlaps(identity, authored_small, occupied) \
 				and not _label_overlaps(identity, authored, label, occupied, false) \
@@ -1468,6 +1501,8 @@ static func _collision_safe_rect(identity: String, authored: Rect2, occupied: Ar
 		var fine_candidates: Array = []
 		for candidate_value in class_candidates:
 			var candidate: Rect2 = _dict(candidate_value).get("rect", authored)
+			if excluded_rect_keys.has(_placement_rect_key(candidate)):
+				continue
 			var small_candidate := _expanded_rect(candidate, SMALL_SCREEN_TARGET)
 			if not _normal_hit_overlaps(identity, candidate, occupied) \
 					and not _expanded_overlaps(identity, small_candidate, occupied) \
@@ -1481,6 +1516,8 @@ static func _collision_safe_rect(identity: String, authored: Rect2, occupied: Ar
 			_sort_grounded_candidates_for_capacity(fine_candidates, authored, identity, placement_class)
 		for candidate_value in fine_candidates:
 			var candidate: Rect2 = _dict(candidate_value).get("rect", authored)
+			if excluded_rect_keys.has(_placement_rect_key(candidate)):
+				continue
 			var small_candidate := _expanded_rect(candidate, SMALL_SCREEN_TARGET)
 			if not _normal_hit_overlaps(identity, candidate, occupied) \
 					and not _expanded_overlaps(identity, small_candidate, occupied) \
@@ -1574,6 +1611,31 @@ static func _collision_safe_rect(identity: String, authored: Rect2, occupied: Ar
 static func _scenario_reserved_candidates(identity: String, candidates: Array, placement_class: String, surface_map: Dictionary) -> Array:
 	if not identity.begins_with("scenario::") or candidates.is_empty():
 		return candidates
+	var stable_identity := identity.trim_prefix("scenario::")
+	var object_region := _dict(_dict(surface_map.get("scenario_object_regions", {})).get(stable_identity, {}))
+	if not object_region.is_empty():
+		var object_surface_ids := _array(object_region.get("surface_ids", []))
+		var object_rects: Array = []
+		for rect_value in _array(object_region.get("rects", [])):
+			var values := _array(rect_value)
+			if values.size() >= 4:
+				var region := Rect2(float(values[0]), float(values[1]), float(values[2]), float(values[3]))
+				if region.has_area():
+					object_rects.append(region)
+		var object_candidates := candidates.filter(func(candidate_value: Variant) -> bool:
+			var candidate_data := _dict(candidate_value)
+			if not object_surface_ids.is_empty() and str(candidate_data.get("surface_id", "")) not in object_surface_ids:
+				return false
+			if object_rects.is_empty():
+				return true
+			var candidate: Rect2 = candidate_data.get("rect", Rect2())
+			var support_point := candidate.get_center() if placement_class in ["wall_mounted", "hanging"] else Vector2(candidate.get_center().x, candidate.end.y)
+			for region_value in object_rects:
+				if (region_value as Rect2).has_point(support_point):
+					return true
+			return false
+		)
+		return object_candidates
 	var reserved_surface_ids: Array = []
 	var reserved_rect_key := ""
 	match placement_class:
@@ -1636,6 +1698,9 @@ static func _scenario_reserved_candidates(identity: String, candidates: Array, p
 static func _scenario_has_reservation(identity: String, placement_class: String, surface_map: Dictionary) -> bool:
 	if not identity.begins_with("scenario::"):
 		return false
+	var stable_identity := identity.trim_prefix("scenario::")
+	if _dict(surface_map.get("scenario_object_regions", {})).has(stable_identity):
+		return true
 	match placement_class:
 		"surface_item":
 			return not _array(surface_map.get("scenario_reserved_surfaces", [])).is_empty()
@@ -1669,8 +1734,8 @@ static func _sort_grounded_candidates_for_capacity(candidates: Array, authored: 
 
 static func _placement_class_priority(placement_class: String) -> int:
 	match placement_class:
-		"doorway", "wall_mounted", "hanging": return 0
-		"behind_counter_person", "seated_person": return 1
+		"behind_counter_person", "seated_person": return 0
+		"doorway", "wall_mounted", "hanging": return 1
 		"floor_fixture": return 2
 		"surface_item": return 3
 		"ground_marker", "standing_person", "group": return 4
@@ -1683,6 +1748,10 @@ static func _semantic_visual_area(semantic: Dictionary, actor: bool) -> float:
 	var width := float(bounds.get("w", fallback.x))
 	var height := float(bounds.get("h", fallback.y))
 	return maxf(width, MIN_SCENE_SIZE.x) * maxf(height, MIN_SCENE_SIZE.y)
+
+
+static func _placement_rect_key(rect: Rect2) -> String:
+	return "%.3f:%.3f:%.3f:%.3f" % [rect.position.x, rect.position.y, rect.size.x, rect.size.y]
 
 
 static func _forbidden_overlap(rect: Rect2, forbidden_rect: Rect2) -> bool:
