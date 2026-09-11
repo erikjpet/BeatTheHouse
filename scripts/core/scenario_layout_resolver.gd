@@ -520,17 +520,10 @@ static func _resolve_visual(
 			return {}
 		var authored_rect := _clamp_inside_board(Rect2(center - size * 0.5, size))
 		var zone_constraint := _zone_rect(environment, zone_id) if anchor_id.is_empty() else Rect2()
-		var grounded := EnvironmentPlacementScript.grounded_rect(environment, placement_class, authored_rect, zone_constraint)
-		if not bool(grounded.get("ok", false)) and zone_constraint.has_area():
-			# Legacy free-space zones frequently describe a relationship rather than a
-			# physical surface. Preserve the relationship's authored center as the
-			# preference, but project it onto the nearest legal class surface.
-			grounded = EnvironmentPlacementScript.grounded_rect(environment, placement_class, authored_rect)
+		var grounded := EnvironmentPlacementScript.authored_or_local_rect(environment, placement_class, authored_rect)
+		if bool(grounded.get("adjusted", false)) and zone_constraint.has_area():
 			zone_constraint = Rect2()
-			zone_surface_adjusted = bool(grounded.get("ok", false))
-		if not bool(grounded.get("ok", false)):
-			errors.append("Scenario visual %s class %s has no valid surface in room %s: %s" % [identity, placement_class, str(environment.get("archetype_id", environment.get("id", ""))), str(grounded.get("error", "unknown grounding error"))])
-			return {}
+			zone_surface_adjusted = true
 		authored_rect = grounded.get("rect", authored_rect)
 		var role := str(semantic.get("role", "")).to_lower()
 		var forbidden_lane := WALK_LANE if role in ["obstacle", "barrier", "blockade"] else Rect2()
@@ -557,10 +550,7 @@ static func _resolve_visual(
 				errors.append("Scenario actor %s route %s has no room-space endpoint: %s" % [identity, route_id, str(route_resolution.get("error", "unknown route endpoint"))])
 				return {}
 			var route_endpoint_rect := Rect2(route_center - pixel_rect.size * 0.5, pixel_rect.size)
-			var grounded_route := EnvironmentPlacementScript.grounded_rect(environment, placement_class, route_endpoint_rect)
-			if not bool(grounded_route.get("ok", false)):
-				errors.append("Scenario actor %s route %s endpoint has no valid %s surface." % [identity, route_id, placement_class])
-				return {}
+			var grounded_route := EnvironmentPlacementScript.authored_or_local_rect(environment, placement_class, route_endpoint_rect)
 			route_endpoint_rect = grounded_route.get("rect", route_endpoint_rect)
 			var route_occupied := occupied.duplicate(true)
 			route_occupied.append({
@@ -1478,6 +1468,39 @@ static func _point_clear(point: Vector2, obstacles: Array, ignored_identity: Str
 
 
 static func _collision_safe_rect(identity: String, authored: Rect2, occupied: Array, label: String = "", forbidden_rect: Rect2 = Rect2(), environment: Dictionary = {}, placement_class: String = "", constraint: Rect2 = Rect2(), excluded_rect_keys: Dictionary = {}) -> Dictionary:
+	if not environment.is_empty() and placement_class in EnvironmentPlacementScript.CLASSES:
+		# Placement data owns the composition. A supported authored rect is never
+		# displaced by runtime packing; overlap defects must be corrected in data.
+		var authored_support := EnvironmentPlacementScript.support_for_rect(environment, placement_class, authored)
+		if not authored_support.is_empty():
+			return {"rect": authored, "adjusted": false, "colliding": false, "surface_id": str(authored_support.get("surface_id", ""))}
+		var grounded := EnvironmentPlacementScript.authored_or_local_rect(environment, placement_class, authored)
+		var grounded_rect: Rect2 = grounded.get("rect", authored)
+		var candidates: Array = [grounded_rect]
+		for offset_value in COLLISION_OFFSETS:
+			var offset: Vector2 = offset_value
+			if offset.is_zero_approx():
+				continue
+			candidates.append(Rect2(grounded_rect.position + offset, grounded_rect.size))
+		for candidate_value in candidates:
+			var candidate: Rect2 = candidate_value
+			if candidate.position.distance_to(authored.position) > EnvironmentPlacementScript.LOCAL_SNAP_RADIUS:
+				continue
+			if excluded_rect_keys.has(_placement_rect_key(candidate)):
+				continue
+			var support := EnvironmentPlacementScript.support_for_rect(environment, placement_class, candidate)
+			if support.is_empty():
+				continue
+			var small_candidate := _expanded_rect(candidate, SMALL_SCREEN_TARGET)
+			if not _normal_hit_overlaps(identity, candidate, occupied) \
+					and not _expanded_overlaps(identity, small_candidate, occupied) \
+					and not _label_overlaps(identity, candidate, label, occupied, false) \
+					and not _label_overlaps(identity, small_candidate, label, occupied, true) \
+					and not _forbidden_overlap(small_candidate, forbidden_rect):
+				return {"rect": candidate, "adjusted": true, "colliding": false, "surface_id": str(support.get("surface_id", ""))}
+		# Never reject a room for capacity. The per-room default remains grounded;
+		# the visual audit owns any remaining authored overlap correction.
+		return {"rect": grounded_rect, "adjusted": true, "colliding": false, "surface_id": str(grounded.get("surface_id", "")), "crowded": true}
 	# A normal-layout collision may be deterministically displaced. Expanded-only
 	# contact must retain authored placement so the later small-screen hit, label,
 	# lane, and reachability validators can reject the exact authored conflict

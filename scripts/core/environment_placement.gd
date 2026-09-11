@@ -30,6 +30,18 @@ const SCENARIO_RESERVATION_FIELDS := [
 	"scenario_reserved_wall_rects", "scenario_reserved_clear_rects",
 	"scenario_reserved_clear_rects_by_class",
 ]
+const LOCAL_SNAP_OFFSETS := [
+	Vector2.ZERO,
+	Vector2(56.0, 0.0), Vector2(-56.0, 0.0),
+	Vector2(0.0, 52.0), Vector2(0.0, -52.0),
+	Vector2(112.0, 0.0), Vector2(-112.0, 0.0),
+	Vector2(0.0, 104.0), Vector2(0.0, -104.0),
+	Vector2(112.0, 52.0), Vector2(-112.0, 52.0),
+	Vector2(112.0, -52.0), Vector2(-112.0, -52.0),
+	Vector2(168.0, 0.0), Vector2(-168.0, 0.0),
+	Vector2(168.0, 104.0), Vector2(-168.0, 104.0),
+]
+const LOCAL_SNAP_RADIUS := 198.0
 
 static var _surface_maps: Dictionary = {}
 static var _effective_surface_maps: Dictionary = {}
@@ -50,6 +62,22 @@ static func classify(object_data: Dictionary, object_type: String = "", object_i
 	]
 	person_semantics = person_semantics.to_lower()
 	var role := str(object_data.get("role", "")).strip_edges().to_lower()
+	var person_roles := ["bartender", "casino_host", "clerk", "dealer", "guard", "host", "lender", "merchant", "musician", "patron", "person", "pit_boss", "shopkeeper", "staff", "teller", "vendor"]
+	var named_person := not str(object_data.get("actor_id", object_data.get("character_id", object_data.get("npc_id", object_data.get("speaker_id", ""))))).strip_edges().is_empty()
+	var person_object := clean_type in ["actor", "character", "lender", "merchant", "npc", "scenario_actor", "shopkeeper", "numbers_silas"] \
+		or role in person_roles \
+		or clean_prop in PERSON_EVENT_PROPS \
+		or named_person
+	if person_object:
+		if role in ["bartender", "clerk", "dealer", "merchant", "shopkeeper", "teller", "vendor"] \
+				or clean_prop in ["clerk_counter", "host_station"] \
+				or _has_token(person_semantics, COUNTER_PERSON_TOKENS):
+			return "behind_counter_person"
+		if _has_token(person_semantics, SEATED_TOKENS):
+			return "seated_person"
+		if _has_token(person_semantics, GROUP_TOKENS):
+			return "group"
+		return "standing_person"
 	var text := "%s %s %s %s %s %s" % [
 		object_id, clean_type, clean_prop, str(object_data.get("label", "")),
 		str(object_data.get("role", "")),
@@ -168,6 +196,180 @@ static func surface_map(environment: Dictionary) -> Dictionary:
 
 static func surface_map_by_id(archetype_id: String, layer_id: String = "") -> Dictionary:
 	return surface_map({"archetype_id": archetype_id, "current_layer_id": layer_id})
+
+
+# Preserves authored geometry whenever its class contact already rests on a
+# physical room support. Recovery is deliberately local and bounded; the
+# content pass owns composition, while this is only a malformed-slot safety net.
+static func authored_or_local_rect(environment: Dictionary, placement_class: String, authored: Rect2) -> Dictionary:
+	var authored_support := support_for_rect(environment, placement_class, authored)
+	if not authored_support.is_empty():
+		return {"ok": true, "rect": authored, "surface_id": str(authored_support.get("surface_id", "")), "adjusted": false, "defaulted": false}
+	var local_candidates := _local_support_candidates(environment, placement_class, authored)
+	for candidate_value in local_candidates:
+		var candidate := _dict(candidate_value)
+		var rect: Rect2 = candidate.get("rect", Rect2())
+		if rect.position.distance_to(authored.position) <= LOCAL_SNAP_RADIUS:
+			return {"ok": true, "rect": rect, "surface_id": str(candidate.get("surface_id", "")), "adjusted": true, "defaulted": false}
+	var fallback := class_default_rect(environment, placement_class, authored.size)
+	return {"ok": true, "rect": fallback.get("rect", authored), "surface_id": str(fallback.get("surface_id", "class_default")), "adjusted": true, "defaulted": true}
+
+
+# Returns the physical support occupied by rect, or an empty dictionary.
+static func support_for_rect(environment: Dictionary, placement_class: String, rect: Rect2) -> Dictionary:
+	var board := Rect2(0.0, 0.0, 900.0, 430.0)
+	if rect.size.x <= 0.0 or rect.size.y <= 0.0 or not board.encloses(rect):
+		return {}
+	var surfaces := surface_map(environment)
+	var contact := _contact_point(rect, placement_class)
+	if placement_class in GROUNDED_CLASSES:
+		var floor_data := _dict(surfaces.get("floor", {}))
+		var contact_range := _number_pair(floor_data.get("contact_y", []))
+		for band_key in ["bands", "stage_bands"]:
+			for band_value in _array(floor_data.get(str(band_key), [])):
+				var band := _rect_array(band_value)
+				if band.has_point(contact) and contact.y >= contact_range.x - 0.5 and contact.y <= contact_range.y + 0.5:
+					return {"surface_id": "stage" if str(band_key) == "stage_bands" else "floor"}
+	elif placement_class in ["behind_counter_person", "surface_item"]:
+		for counter_value in _array(surfaces.get("counters", [])):
+			var counter := _dict(counter_value)
+			var allowed_classes := _array(counter.get("classes", []))
+			if not allowed_classes.is_empty() and placement_class not in allowed_classes:
+				continue
+			if absf(contact.y - float(counter.get("top_y", -1000.0))) <= 0.5 \
+					and rect.position.x >= float(counter.get("x0", 0.0)) - 0.5 \
+					and rect.end.x <= float(counter.get("x1", 0.0)) + 0.5:
+				return {"surface_id": str(counter.get("id", "counter"))}
+	elif placement_class == "seated_person":
+		for seat_value in _array(surfaces.get("seats", [])):
+			var seat := _dict(seat_value)
+			if contact.distance_to(_vector(seat.get("point", []))) <= 0.75:
+				return {"surface_id": str(seat.get("id", "seat"))}
+	elif placement_class == "wall_mounted":
+		for mount_value in _array(_dict(surfaces.get("wall", {})).get("mounts", [])):
+			var mount := _dict(mount_value)
+			if _rect_array(mount.get("bounds", [])).encloses(rect):
+				return {"surface_id": str(mount.get("id", "wall_mount"))}
+		var wall_data := _dict(surfaces.get("wall", {}))
+		if _rect_array(wall_data.get("bounds", [])).encloses(rect) and not _intersects_named_rects(rect, _array(wall_data.get("exclusions", []))):
+			return {"surface_id": "wall"}
+	elif placement_class == "hanging":
+		if _rect_array(_dict(surfaces.get("ceiling", {})).get("bounds", [])).encloses(rect):
+			return {"surface_id": "ceiling"}
+	elif placement_class == "doorway":
+		for doorway_value in _array(surfaces.get("doorways", [])):
+			var doorway := _dict(doorway_value)
+			if _rect_array(doorway.get("bounds", [])).has_point(contact):
+				return {"surface_id": str(doorway.get("id", "doorway"))}
+	return {}
+
+
+static func class_default_rect(environment: Dictionary, placement_class: String, size: Vector2) -> Dictionary:
+	var surfaces := surface_map(environment)
+	var authored_defaults := _dict(surfaces.get("class_default_contacts", {}))
+	var default_values := _array(authored_defaults.get(placement_class, []))
+	var contact := _vector(default_values)
+	var surface_id := "class_default"
+	if default_values.size() < 2:
+		var centered := Rect2(Vector2(450.0, 215.0) - size * 0.5, size)
+		var candidates := _local_support_candidates(environment, placement_class, centered)
+		if not candidates.is_empty():
+			var selected := _dict(candidates[0])
+			return {"rect": selected.get("rect", centered), "surface_id": str(selected.get("surface_id", surface_id))}
+		contact = Vector2(450.0, 414.0)
+	var rect := _rect_at_contact(contact, size, placement_class)
+	var support := support_for_rect(environment, placement_class, rect)
+	if not support.is_empty():
+		surface_id = str(support.get("surface_id", surface_id))
+	return {"rect": rect, "surface_id": surface_id}
+
+
+static func _local_support_candidates(environment: Dictionary, placement_class: String, authored: Rect2) -> Array:
+	var result: Array = []
+	var seen: Dictionary = {}
+	for offset_value in LOCAL_SNAP_OFFSETS:
+		var offset: Vector2 = offset_value
+		_append_supported_candidate(result, seen, environment, placement_class, Rect2(authored.position + offset, authored.size))
+	var surfaces := surface_map(environment)
+	if placement_class in GROUNDED_CLASSES:
+		var floor_data := _dict(surfaces.get("floor", {}))
+		var contact_range := _number_pair(floor_data.get("contact_y", []))
+		for band_key in ["bands", "stage_bands"]:
+			for band_value in _array(floor_data.get(str(band_key), [])):
+				var band := _rect_array(band_value)
+				var min_x := band.position.x + authored.size.x * 0.5
+				var max_x := band.end.x - authored.size.x * 0.5
+				var min_y := maxf(band.position.y, contact_range.x)
+				var max_y := minf(band.end.y, contact_range.y)
+				if max_x >= min_x and max_y >= min_y:
+					var contact := Vector2(clampf(authored.get_center().x, min_x, max_x), clampf(authored.end.y, min_y, max_y))
+					_append_supported_candidate(result, seen, environment, placement_class, _rect_at_contact(contact, authored.size, placement_class))
+	elif placement_class in ["behind_counter_person", "surface_item"]:
+		for counter_value in _array(surfaces.get("counters", [])):
+			var counter := _dict(counter_value)
+			var allowed_classes := _array(counter.get("classes", []))
+			if not allowed_classes.is_empty() and placement_class not in allowed_classes:
+				continue
+			var min_x := float(counter.get("x0", 0.0)) + authored.size.x * 0.5
+			var max_x := float(counter.get("x1", 0.0)) - authored.size.x * 0.5
+			if max_x >= min_x:
+				var contact := Vector2(clampf(authored.get_center().x, min_x, max_x), float(counter.get("top_y", 0.0)))
+				_append_supported_candidate(result, seen, environment, placement_class, _rect_at_contact(contact, authored.size, placement_class))
+	elif placement_class == "seated_person":
+		for seat_value in _array(surfaces.get("seats", [])):
+			var seat := _dict(seat_value)
+			_append_supported_candidate(result, seen, environment, placement_class, _rect_at_contact(_vector(seat.get("point", [])), authored.size, placement_class))
+	elif placement_class == "wall_mounted":
+		var wall_data := _dict(surfaces.get("wall", {}))
+		var wall_regions: Array = _array(wall_data.get("mounts", [])).duplicate(true)
+		wall_regions.append({"id": "wall", "bounds": wall_data.get("bounds", [])})
+		for region_value in wall_regions:
+			var region := _dict(region_value)
+			var bounds := _rect_array(region.get("bounds", []))
+			var center := Vector2(
+				clampf(authored.get_center().x, bounds.position.x + authored.size.x * 0.5, bounds.end.x - authored.size.x * 0.5),
+				clampf(authored.get_center().y, bounds.position.y + authored.size.y * 0.5, bounds.end.y - authored.size.y * 0.5)
+			)
+			_append_supported_candidate(result, seen, environment, placement_class, _rect_at_contact(center, authored.size, placement_class))
+	elif placement_class == "hanging":
+		var bounds := _rect_array(_dict(surfaces.get("ceiling", {})).get("bounds", []))
+		var center := Vector2(
+			clampf(authored.get_center().x, bounds.position.x + authored.size.x * 0.5, bounds.end.x - authored.size.x * 0.5),
+			clampf(authored.get_center().y, bounds.position.y + authored.size.y * 0.5, bounds.end.y - authored.size.y * 0.5)
+		)
+		_append_supported_candidate(result, seen, environment, placement_class, _rect_at_contact(center, authored.size, placement_class))
+	elif placement_class == "doorway":
+		for doorway_value in _array(surfaces.get("doorways", [])):
+			var doorway := _dict(doorway_value)
+			var bounds := _rect_array(doorway.get("bounds", []))
+			var center := Vector2(
+				clampf(authored.get_center().x, maxf(bounds.position.x, authored.size.x * 0.5), minf(bounds.end.x, 900.0 - authored.size.x * 0.5)),
+				clampf(authored.get_center().y, maxf(bounds.position.y, authored.size.y * 0.5), minf(bounds.end.y, 430.0 - authored.size.y * 0.5))
+			)
+			_append_supported_candidate(result, seen, environment, placement_class, _rect_at_contact(center, authored.size, placement_class))
+	result.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
+		var left: Rect2 = _dict(left_value).get("rect", Rect2())
+		var right: Rect2 = _dict(right_value).get("rect", Rect2())
+		return left.position.distance_squared_to(authored.position) < right.position.distance_squared_to(authored.position)
+	)
+	return result
+
+
+static func _append_supported_candidate(result: Array, seen: Dictionary, environment: Dictionary, placement_class: String, rect: Rect2) -> void:
+	var support := support_for_rect(environment, placement_class, rect)
+	if support.is_empty():
+		return
+	var key := "%.2f:%.2f:%.2f:%.2f" % [rect.position.x, rect.position.y, rect.size.x, rect.size.y]
+	if seen.has(key):
+		return
+	seen[key] = true
+	result.append({"rect": rect, "surface_id": str(support.get("surface_id", ""))})
+
+
+static func _rect_at_contact(contact: Vector2, size: Vector2, placement_class: String) -> Rect2:
+	if placement_class in ["wall_mounted", "hanging", "doorway"]:
+		return Rect2(contact - size * 0.5, size)
+	return Rect2(Vector2(contact.x - size.x * 0.5, contact.y - size.y), size)
 
 
 static func grounded_rect(environment: Dictionary, placement_class: String, authored: Rect2, constraint: Rect2 = Rect2()) -> Dictionary:

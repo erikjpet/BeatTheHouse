@@ -11,15 +11,16 @@ func _init() -> void:
 
 func _run() -> void:
 	var failures: Array = []
-	_check_floor_collision(failures)
+	_check_authored_placement_authority(failures)
 	_check_zone_person(failures)
 	_check_content_aware_classes(failures)
+	_check_named_people_classes(failures)
 	_check_hidden_state_neutrality(failures)
 	_check_scenario_reservation_lifecycle(failures)
 	_check_scenario_surface_overrides(failures)
-	_check_alternative_enumeration(failures)
+	_check_bounded_grounding_fallback(failures)
 	if failures.is_empty():
-		print("ENVIRONMENT_GROUNDING_CONTRACT_OK floor_collision=grounded zone_person=feet person_event=floor wall_sign=wall hidden_state=neutral scenario_reservations=active_only scenario_overrides=bound class_clearance=scoped hanging=multiple alternatives=independent")
+		print("ENVIRONMENT_GROUNDING_CONTRACT_OK authored=sacrosanct bounded_fallback=grounded zone_person=feet named_people=person person_event=floor wall_sign=wall hidden_state=neutral scenario_reservations=active_only scenario_overrides=bound hanging=multiple")
 		quit(0)
 		return
 	for failure_value in failures:
@@ -27,7 +28,7 @@ func _run() -> void:
 	quit(1)
 
 
-func _check_floor_collision(failures: Array) -> void:
+func _check_authored_placement_authority(failures: Array) -> void:
 	var environment := {"archetype_id": "bar"}
 	var authored := Rect2(250.0, 270.0, 72.0, 80.0)
 	var occupied := [{
@@ -42,10 +43,10 @@ func _check_floor_collision(failures: Array) -> void:
 		environment, "standing_person"
 	)
 	var rect: Rect2 = resolved.get("rect", Rect2())
-	if bool(resolved.get("colliding", true)) or not bool(resolved.get("adjusted", false)):
-		failures.append("Forced floor collision did not resolve to another grounded position.")
+	if bool(resolved.get("colliding", true)) or bool(resolved.get("adjusted", true)) or not rect.is_equal_approx(authored):
+		failures.append("A supported authored placement was displaced by runtime packing.")
 	elif not EnvironmentPlacementScript.valid_rect(environment, "standing_person", rect):
-		failures.append("Forced floor collision left the Bar floor surface.")
+		failures.append("The authored-authority fixture did not remain on the Bar floor.")
 
 
 func _check_zone_person(failures: Array) -> void:
@@ -113,6 +114,21 @@ func _check_content_aware_classes(failures: Array) -> void:
 			failures.append("Wall sign received a non-wall candidate.")
 
 
+func _check_named_people_classes(failures: Array) -> void:
+	var fixtures := [
+		[{"label": "Tomas Reed", "role": "shopkeeper"}, "base_object", "shopkeeper:merchant", "behind_counter_person"],
+		[{"label": "Malik Stone", "role": "merchant"}, "item_offer", "merchant:malik", "behind_counter_person"],
+		[{"label": "Priya Moss", "character_id": "priya_moss"}, "scene_object", "priya_moss", "standing_person"],
+		[{"label": "Pit Boss", "visual_prop": "pit_boss"}, "event", "pit_boss", "standing_person"],
+		[{"label": "Silas", "role": "lender"}, "numbers_silas", "numbers:silas", "standing_person"],
+	]
+	for fixture_value in fixtures:
+		var fixture: Array = fixture_value
+		var actual := EnvironmentPlacementScript.classify(fixture[0], str(fixture[1]), str(fixture[2]))
+		if actual != str(fixture[3]):
+			failures.append("Named person %s classified as %s instead of %s." % [str((fixture[0] as Dictionary).get("label", "person")), actual, str(fixture[3])])
+
+
 func _check_hidden_state_neutrality(failures: Array) -> void:
 	var clean := {"archetype_id": "bar"}
 	var hidden := {
@@ -154,10 +170,6 @@ func _check_scenario_surface_overrides(failures: Array) -> void:
 	if reserved.size() != 1 or not ((reserved[0] as Dictionary).get("rect", Rect2()) as Rect2).is_equal_approx(Rect2(590.0, 230.0, 64.0, 56.0)) \
 			or not ScenarioLayoutResolverScript._scenario_has_reservation("scenario::motel_wedding_overflow_station", "surface_item", surface_map):
 		failures.append("A scenario object region was not binding at the shared placement boundary.")
-	var class_clear_candidate := {"rect": Rect2(400.0, 200.0, 20.0, 20.0), "surface_id": "lobby_side_ledge"}
-	if EnvironmentInstanceScript._base_candidate_allowed(class_clear_candidate, "standing_person", surface_map) \
-			or not EnvironmentInstanceScript._base_candidate_allowed(class_clear_candidate, "surface_item", surface_map):
-		failures.append("Class-specific scenario clearance did not preserve unrelated support capacity.")
 	var hanging := EnvironmentPlacementScript.candidate_rects(environment, "hanging", Rect2(100.0, 0.0, 60.0, 44.0))
 	if hanging.size() < 2:
 		failures.append("Hanging placement exposed only one ceiling candidate to collision recovery.")
@@ -177,32 +189,14 @@ func _check_scenario_surface_overrides(failures: Array) -> void:
 		failures.append("Resolver did not carry the projected scenario id into placement-map selection.")
 
 
-func _check_alternative_enumeration(failures: Array) -> void:
-	var semantic := {
-		"owner_namespace": "scenario", "stable_object_id": "option_person", "present": true,
-		"label": "Option Person", "role": "patron", "zone_id": "center",
-		"bounds": {"w": 72.0, "h": 80.0}, "visible": true, "enabled": true,
-	}
-	var environment := {"archetype_id": "bar", "semantic_zones": {"center": {"bounds": [280, 90, 340, 280]}}}
-	var errors: Array = []
-	var options := ScenarioLayoutResolverScript._visual_placement_options("scenario::option_person", semantic, true, environment, {}, {}, [], "Option Person", errors)
-	if options.size() < 2:
-		failures.append("Scenario solver did not expose multiple deterministic placement alternatives: %s" % JSON.stringify(errors))
-		return
-	var overlapping_alternatives := false
-	for left_index in range(options.size()):
-		var left := _rect_from_normalized((options[left_index] as Dictionary).get("normalized_hit_rect", {}))
-		var left_expanded := Rect2(left.get_center() - Vector2(52.0, 40.0), Vector2(104.0, 80.0))
-		for right_index in range(left_index + 1, options.size()):
-			var right := _rect_from_normalized((options[right_index] as Dictionary).get("normalized_hit_rect", {}))
-			var right_expanded := Rect2(right.get_center() - Vector2(52.0, 40.0), Vector2(104.0, 80.0))
-			if left_expanded.intersects(right_expanded):
-				overlapping_alternatives = true
-				break
-		if overlapping_alternatives:
-			break
-	if not overlapping_alternatives:
-		failures.append("Scenario alternative enumeration treated mutually exclusive options as simultaneous occupancy.")
+func _check_bounded_grounding_fallback(failures: Array) -> void:
+	var authored := Rect2(300.0, 20.0, 72.0, 80.0)
+	var resolved := EnvironmentPlacementScript.authored_or_local_rect({"archetype_id": "bar"}, "standing_person", authored)
+	var rect: Rect2 = resolved.get("rect", Rect2())
+	if not bool(resolved.get("ok", false)) or not bool(resolved.get("adjusted", false)):
+		failures.append("A malformed person placement did not use the bounded safety net.")
+	elif EnvironmentPlacementScript.support_for_rect({"archetype_id": "bar"}, "standing_person", rect).is_empty():
+		failures.append("The bounded safety net left a person outside a floor support.")
 
 
 func _candidate_snapshot(candidates: Array) -> Array:

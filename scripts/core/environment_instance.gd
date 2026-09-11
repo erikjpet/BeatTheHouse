@@ -573,7 +573,7 @@ static func ensure_generated_layout(environment_data: Dictionary, library: Conte
 		for target_id in _travel_target_ids(environment_data):
 			placement_entries.append({"object_id": "travel:%s" % target_id, "object_type": "travel", "index": route_index, "spot_field": "travel_spots"})
 			route_index += 1
-	_ground_active_object_rects(object_rects, layout, environment_data, placement_entries)
+	_ground_authored_object_rects(object_rects, layout, environment_data, placement_entries)
 	layout["object_rects"] = object_rects
 	layout["generated_object_rect_version"] = GENERATED_LAYOUT_VERSION
 	layout["grounding_signature"] = grounding_signature
@@ -599,6 +599,58 @@ static func _grounding_signature(environment_data: Dictionary, layout: Dictionar
 # Applies the same class/surface authority used by scenario projection. Existing
 # saved rects are inputs, not authority: restores therefore receive the current
 # grounded placement without a save-schema change or a new RNG draw.
+static func _ground_authored_object_rects(object_rects: Dictionary, layout: Dictionary, environment_data: Dictionary, active_entries: Array) -> void:
+	var placed: Dictionary = {}
+	var placement_classes: Dictionary = {}
+	var placement_surfaces: Dictionary = {}
+	var preferred_slots := _copy_dict(EnvironmentPlacementScript.surface_map(environment_data).get("object_slot_positions", {}))
+	var ordered_entries := active_entries.duplicate(true)
+	ordered_entries.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
+		var left := _copy_dict(left_value)
+		var right := _copy_dict(right_value)
+		var left_id := str(left.get("object_id", ""))
+		var right_id := str(right.get("object_id", ""))
+		var left_has_slot := preferred_slots.has(left_id)
+		var right_has_slot := preferred_slots.has(right_id)
+		return left_has_slot if left_has_slot != right_has_slot else left_id < right_id
+	)
+	for entry_value in ordered_entries:
+		var entry := _copy_dict(entry_value)
+		var object_id := str(entry.get("object_id", ""))
+		if object_id.is_empty() or placed.has(object_id):
+			continue
+		var object_type := str(entry.get("object_type", ""))
+		var placement_class := EnvironmentPlacementScript.classify(entry, object_type, object_id)
+		placement_classes[object_id] = placement_class
+		var authored_normalized := _rect_from_dict(object_rects.get(object_id, {}))
+		var authored := Rect2(authored_normalized.position * ENVIRONMENT_BOARD_SIZE, authored_normalized.size * ENVIRONMENT_BOARD_SIZE)
+		var slot_values := _copy_array(preferred_slots.get(object_id, []))
+		if slot_values.size() >= 2:
+			authored.position = Vector2(float(slot_values[0]), float(slot_values[1]))
+		var resolved := EnvironmentPlacementScript.authored_or_local_rect(environment_data, placement_class, authored)
+		var selected: Rect2 = resolved.get("rect", authored)
+		var selected_surface := str(resolved.get("surface_id", ""))
+		if bool(resolved.get("adjusted", false)) and _object_rect_collides_with_any(placed, Rect2(selected.position / ENVIRONMENT_BOARD_SIZE, selected.size / ENVIRONMENT_BOARD_SIZE)):
+			for offset_value in EnvironmentPlacementScript.LOCAL_SNAP_OFFSETS:
+				var offset: Vector2 = offset_value
+				var local_rect := Rect2(selected.position + offset, selected.size)
+				var support := EnvironmentPlacementScript.support_for_rect(environment_data, placement_class, local_rect)
+				var normalized_local := Rect2(local_rect.position / ENVIRONMENT_BOARD_SIZE, local_rect.size / ENVIRONMENT_BOARD_SIZE)
+				if not support.is_empty() and not _object_rect_collides_with_any(placed, normalized_local):
+					selected = local_rect
+					selected_surface = str(support.get("surface_id", selected_surface))
+					break
+		var normalized_selected := Rect2(selected.position / ENVIRONMENT_BOARD_SIZE, selected.size / ENVIRONMENT_BOARD_SIZE)
+		object_rects[object_id] = _rect_to_dict(normalized_selected)
+		placed[object_id] = _rect_to_dict(normalized_selected)
+		placement_surfaces[object_id] = selected_surface
+	layout["placement_classes"] = placement_classes
+	layout["placement_surfaces"] = placement_surfaces
+	layout["placement_errors"] = []
+	layout["placement_fallback_ids"] = []
+
+
+# Superseded whole-room search retained only in the WIP checkpoint commit.
 static func _ground_active_object_rects(object_rects: Dictionary, layout: Dictionary, environment_data: Dictionary, active_entries: Array) -> void:
 	var authored_object_rects := object_rects.duplicate(true)
 	var placed: Dictionary = {}
