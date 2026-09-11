@@ -354,9 +354,14 @@ func _expected_playable_state(run_state: Variant, expected_seed: String, expecte
 		return false
 	var environment: Dictionary = run_state.get("current_environment")
 	var world_map: Dictionary = run_state.get("world_map")
+	var layout: Dictionary = environment.get("layout", {}) if typeof(environment.get("layout", {})) == TYPE_DICTIONARY else {}
+	var object_rects: Dictionary = layout.get("object_rects", {}) if typeof(layout.get("object_rects", {})) == TYPE_DICTIONARY else {}
 	return str(run_state.get("seed_text")) == expected_seed \
 		and str(run_state.get("run_status")) == "active" \
 		and str(environment.get("archetype_id", "")) == expected_archetype \
+		and (layout.get("placement_errors", []) as Array).is_empty() \
+		and (layout.get("placement_fallback_ids", []) as Array).is_empty() \
+		and (object_rects.is_empty() or not str(layout.get("grounding_signature", "")).is_empty()) \
 		and not world_map.is_empty()
 
 

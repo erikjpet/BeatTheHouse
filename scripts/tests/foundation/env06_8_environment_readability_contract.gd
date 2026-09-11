@@ -828,6 +828,71 @@ static func _runtime_description_trace(definition: Dictionary, initial_state: Di
 	return result
 
 
+# Shared by the permanent room grounding sweep. Branches advance only through
+# the production sequence command/fact APIs; reentry and expiry use their real
+# action boundaries as well.
+static func reachable_public_states(definition: Dictionary, initial_state: Dictionary, scenario_id: String) -> Dictionary:
+	var states: Array = []
+	var errors: Array = []
+	var pending: Array = [{"state": initial_state, "path": "arrival"}]
+	var visited: Dictionary = {}
+	var serial := 0
+	while not pending.is_empty() and serial < MAX_PUBLIC_TRACE_STATES:
+		var item := _dict(pending.pop_front())
+		var state := _dict(item.get("state", {}))
+		var path := str(item.get("path", "state"))
+		var state_key := ScenarioSequenceRuntimeScript.content_fingerprint(ScenarioSequenceRuntimeScript.public_projection(state, definition))
+		if visited.has(state_key):
+			continue
+		visited[state_key] = true
+		states.append({"state": state, "path": path})
+		var reentry := ScenarioSequenceRuntimeScript.apply_reentry(state, definition, "grounding_%s_%d" % [scenario_id, serial])
+		if bool(reentry.get("ok", false)):
+			var reentry_state := _dict(reentry.get("state", {}))
+			var reentry_key := ScenarioSequenceRuntimeScript.content_fingerprint(ScenarioSequenceRuntimeScript.public_projection(reentry_state, definition))
+			if reentry_key != state_key:
+				states.append({"state": reentry_state, "path": "%s|reentry" % path})
+		else:
+			errors.append("%s/%s reentry failed: %s" % [scenario_id, path, JSON.stringify(reentry.get("errors", []))])
+		if str(state.get("status", "")) != ScenarioSequenceRuntimeScript.STATUS_ACTIVE:
+			var expiry := _dict(_dict(definition.get("sequence", {})).get("expiry", {}))
+			var boundary := str(expiry.get("boundary", "night_end"))
+			var boundary_serial := int(state.get("boundary_serial", 0)) + maxi(1, int(expiry.get("after", 1))) + 1
+			var expired := ScenarioSequenceRuntimeScript.apply_expiry(state, definition, boundary, boundary_serial)
+			if bool(expired.get("ok", false)) and bool(expired.get("expired", false)):
+				states.append({"state": _dict(expired.get("state", {})), "path": "%s|cleanup" % path})
+			serial += 1
+			continue
+		var phase := ScenarioSequenceSchemaScript.phase(definition, str(state.get("phase_id", "")))
+		var branch_index := 0
+		for branch_value in _array(phase.get("branches", [])):
+			var branch := _dict(branch_value)
+			var condition := _dict(branch.get("condition", {}))
+			var applied: Dictionary = {}
+			if str(condition.get("type", "")) == "command":
+				var command_id := str(condition.get("command_id", ""))
+				var origin := _find_action_origin(state, command_id)
+				var descriptor := ScenarioSequenceRuntimeScript._command_descriptor(state, definition, str(origin.get("owner_namespace", "")), str(origin.get("stable_object_id", "")), command_id, {})
+				var command := ScenarioSequenceRuntimeScript.command(
+					command_id, str(state.get("node_id", "")), str(state.get("phase_id", "")), "grounding:%s:%d:%d" % [scenario_id, serial, branch_index], {},
+					str(origin.get("owner_namespace", "")), str(origin.get("stable_object_id", "")),
+					str(descriptor.get("action_origin_owner_namespace", "")), str(descriptor.get("action_origin_stable_object_id", "")),
+					str(descriptor.get("action_origin_receipt_key", "")), str(descriptor.get("action_origin_boundary_id", "")), str(descriptor.get("action_origin_fingerprint", ""))
+				)
+				applied = ScenarioSequenceRuntimeScript.apply_command(state, definition, command, {"available_funds": 100000})
+			else:
+				applied = _apply_trace_fact(state, definition, condition, scenario_id, serial, branch_index)
+			if bool(applied.get("ok", false)):
+				pending.append({"state": _dict(applied.get("state", {})), "path": "%s>%s" % [path, str(branch.get("id", branch_index))]})
+			elif str(condition.get("type", "")) in ["command", "fact"]:
+				errors.append("%s/%s branch failed: %s" % [scenario_id, str(branch.get("id", branch_index)), JSON.stringify(applied.get("errors", []))])
+			branch_index += 1
+		serial += 1
+	if serial >= MAX_PUBLIC_TRACE_STATES:
+		errors.append("%s exceeded the bounded reachable-state trace." % scenario_id)
+	return {"states": states, "errors": errors}
+
+
 static func _check_runtime_icon_resolution(state: Dictionary, scenario_id: String, path: String, canvas: Variant, icon_by_identity: Dictionary, failures: Array) -> void:
 	var allowed := [
 		"paper_note", "room_seating", "room_barrier", "room_signal", "room_refreshment",

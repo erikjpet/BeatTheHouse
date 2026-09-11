@@ -1310,6 +1310,7 @@ switch ($suiteKey) {
         Invoke-GodotScript -Name "roulette_audio_audit" -ScriptPath "res://tools/roulette_audio_audit.gd" -StageTimeoutSec 120
     }
     "audit" {
+		Invoke-GodotScript -Name "environment_grounding_contract" -ScriptPath "res://tools/environment_grounding_contract.gd" -StageTimeoutSec 120
         Invoke-GodotScript -Name "scenario_room_multiseed_finalization" -ScriptPath "res://tools/scenario_room_multiseed_finalization.gd" -StageTimeoutSec 1200
         Invoke-GodotScript -Name "slot_pinball_physics_audit" -ScriptPath "res://tools/slot_pinball_physics_audit.gd" -UserArgs @("48") -StageTimeoutSec 240
         Invoke-GodotScript -Name "slot_machine_deep_audit" -ScriptPath "res://tools/slot_machine_deep_audit.gd" -UserArgs @("10000") -StageTimeoutSec 900
@@ -1324,6 +1325,7 @@ switch ($suiteKey) {
         Invoke-GodotScript -Name "tutorial_guardrail_stress" -ScriptPath "res://scripts/tests/tutorial_guardrail_recovery_stress_check.gd" -StageTimeoutSec 180
         Invoke-GodotScript -Name "tutorial_guided_run_audit" -ScriptPath "res://tools/tutorial_seed_audit.gd" -StageTimeoutSec 180
         Invoke-FoundationPerfSmoke
+		Invoke-GodotScript -Name "environment_grounding_contract" -ScriptPath "res://tools/environment_grounding_contract.gd" -StageTimeoutSec 120
         Invoke-GodotScript -Name "scenario_room_multiseed_finalization" -ScriptPath "res://tools/scenario_room_multiseed_finalization.gd" -StageTimeoutSec 1200
         Invoke-GodotScript -Name "slot_pinball_physics_audit" -ScriptPath "res://tools/slot_pinball_physics_audit.gd" -UserArgs @("48") -StageTimeoutSec 240
         Invoke-GodotScript -Name "slot_machine_deep_audit" -ScriptPath "res://tools/slot_machine_deep_audit.gd" -UserArgs @("10000") -StageTimeoutSec 900

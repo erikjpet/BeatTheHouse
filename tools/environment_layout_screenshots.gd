@@ -29,6 +29,7 @@ var report := {}
 var meta_home_review := false
 var punchline_layer_review := false
 var fix06_31_audit := false
+var fix06_31_audit_phase := "before"
 var fix06_31_surface_maps: Dictionary = {}
 
 
@@ -42,6 +43,9 @@ func _init() -> void:
 			punchline_layer_review = true
 		elif argument == "--fix06-31-audit":
 			fix06_31_audit = true
+		elif argument == "--fix06-31-after":
+			fix06_31_audit = true
+			fix06_31_audit_phase = "after"
 	call_deferred("_run")
 
 
@@ -339,35 +343,15 @@ func _run_fix06_31_audit(library: Variant) -> void:
 		var definition := _dict(definition_value)
 		var scenario_id := str(definition.get("id", ""))
 		var archetype_id := str(definition.get("archetype_id", ""))
-		var environment := _dict(library.environment_archetype(archetype_id))
-		var placements: Array = []
-		_collect_fix06_31_placements(_dict(definition.get("sequence", {})), scenario_id, "sequence", placements)
-		for placement_value in placements:
-			var placement := _dict(placement_value)
-			var audited := _audit_fix06_31_placement(environment, archetype_id, placement)
-			audit_records.append(audited)
-			var placement_class := str(audited.get("placement_class", ""))
-			var verdict := str(audited.get("verdict", ""))
-			if placement_class in ["standing_person", "behind_counter_person", "seated_person", "group"] and verdict in ["FLOATING", "WRONG_SURFACE"]:
-				var root_key: String = "%s|%s|%s" % [archetype_id, str(audited.get("source_kind", "")), str(audited.get("source_id", ""))]
-				if not floating_roots.has(root_key):
-					floating_roots[root_key] = {
-						"root_key": root_key,
-						"archetype_id": archetype_id,
-						"source_kind": str(audited.get("source_kind", "")),
-						"source_id": str(audited.get("source_id", "")),
-						"placement_class": placement_class,
-						"verdict": verdict,
-						"contact_y": float(audited.get("contact_y", 0.0)),
-						"floor_y": float(audited.get("floor_y", 0.0)),
-						"instances": [],
-					}
-				var root := _dict(floating_roots[root_key])
-				var instances := _array(root.get("instances", []))
-				instances.append({"scenario_id": scenario_id, "state_path": str(audited.get("state_path", "")), "stable_object_id": str(audited.get("stable_object_id", "")), "label": str(audited.get("label", ""))})
-				root["instances"] = instances
-				floating_roots[root_key] = root
-		await _capture_fix06_31_scenario_arrival(library, definition, failures)
+		if fix06_31_audit_phase == "before":
+			var environment := _dict(library.environment_archetype(archetype_id))
+			var placements: Array = []
+			_collect_fix06_31_placements(_dict(definition.get("sequence", {})), scenario_id, "sequence", placements)
+			for placement_value in placements:
+				var audited := _audit_fix06_31_placement(environment, archetype_id, _dict(placement_value))
+				audit_records.append(audited)
+				_record_fix06_31_floating_root(floating_roots, audited, scenario_id)
+		await _capture_fix06_31_scenario_arrival(library, definition, failures, audit_records)
 	var roots: Array = floating_roots.values()
 	roots.sort_custom(func(a: Variant, b: Variant) -> bool: return str(_dict(a).get("root_key", "")) < str(_dict(b).get("root_key", "")))
 	var verdict_counts: Dictionary = {}
@@ -383,10 +367,10 @@ func _run_fix06_31_audit(library: Variant) -> void:
 		var room := _dict(room_counts.get(room_id, {}))
 		room[verdict] = int(room.get(verdict, 0)) + 1
 		room_counts[room_id] = room
-	_write_fix06_31_json("%s/floating_people_inventory_before.json" % out_dir, {"schema": "fix06_31_floating_people_inventory/v1", "root_count": roots.size(), "roots": roots})
-	_write_fix06_31_json("%s/grounding_audit_before.json" % out_dir, {
+	_write_fix06_31_json("%s/floating_people_inventory_%s.json" % [out_dir, fix06_31_audit_phase], {"schema": "fix06_31_floating_people_inventory/v1", "root_count": roots.size(), "roots": roots})
+	_write_fix06_31_json("%s/grounding_audit_%s.json" % [out_dir, fix06_31_audit_phase], {
 		"schema": "fix06_31_environment_object_audit/v1",
-		"phase": "before",
+		"phase": fix06_31_audit_phase,
 		"production_scene": "res://scenes/main.tscn",
 		"scenario_count": definitions.size(),
 		"record_count": audit_records.size(),
@@ -397,14 +381,14 @@ func _run_fix06_31_audit(library: Variant) -> void:
 		"records": audit_records,
 		"failures": failures,
 	})
-	print("FIX06_31_ENVIRONMENT_AUDIT BEFORE scenarios=%d records=%d floating_roots=%d failures=%d out=%s" % [definitions.size(), audit_records.size(), roots.size(), failures.size(), out_dir])
+	print("FIX06_31_ENVIRONMENT_AUDIT %s scenarios=%d records=%d floating_roots=%d failures=%d out=%s" % [fix06_31_audit_phase.to_upper(), definitions.size(), audit_records.size(), roots.size(), failures.size(), out_dir])
 	app.queue_free()
 	await process_frame
 	await process_frame
 	quit(0 if failures.is_empty() else 1)
 
 
-func _capture_fix06_31_scenario_arrival(library: Variant, definition: Dictionary, failures: Array) -> void:
+func _capture_fix06_31_scenario_arrival(library: Variant, definition: Dictionary, failures: Array, audit_records: Array) -> void:
 	var scenario_id := str(definition.get("id", ""))
 	var archetype_id := str(definition.get("archetype_id", ""))
 	var original_pool: Array = _array(library.environment_scenarios.get(archetype_id, [])).duplicate(true)
@@ -434,7 +418,67 @@ func _capture_fix06_31_scenario_arrival(library: Variant, definition: Dictionary
 	var annotated := _fix06_31_annotated_image(image, archetype_id)
 	annotated.save_png("%s/states/%s_arrival_annotated.png" % [out_dir, scenario_id])
 	_fix06_31_save_live_floating_crops(image, scenario_id, archetype_id)
+	if fix06_31_audit_phase == "after":
+		_collect_fix06_31_live_records(run_state.current_environment, scenario_id, archetype_id, audit_records, failures)
 	library.environment_scenarios[archetype_id] = original_pool
+
+
+func _collect_fix06_31_live_records(environment: Dictionary, scenario_id: String, archetype_id: String, output: Array, failures: Array) -> void:
+	var canvas: Variant = app.get("environment_canvas")
+	var snapshot: Dictionary = canvas.call("current_view_snapshot") if canvas != null else {}
+	var object_layout := _dict(snapshot.get("object_layout", {}))
+	var rects_by_id: Dictionary = {}
+	for layout_value in _array(object_layout.get("entries", [])):
+		var layout_entry := _dict(layout_value)
+		rects_by_id[str(layout_entry.get("id", ""))] = _rect(layout_entry.get("rect", {}))
+	var generated_layout := _dict(environment.get("layout", {}))
+	for error_value in _array(generated_layout.get("placement_errors", [])):
+		failures.append("%s base placement error: %s" % [scenario_id, str(error_value)])
+	for fallback_value in _array(generated_layout.get("placement_fallback_ids", [])):
+		failures.append("%s base fallback placement: %s" % [scenario_id, str(fallback_value)])
+	for object_value in _array(snapshot.get("objects", [])):
+		var object_data := _dict(object_value)
+		if not bool(object_data.get("visible", true)):
+			continue
+		var object_id := str(object_data.get("id", ""))
+		var object_type := str(object_data.get("object_type", object_data.get("type", "")))
+		var placement_class := str(object_data.get("placement_class", ""))
+		if placement_class not in EnvironmentPlacementScript.CLASSES:
+			placement_class = EnvironmentPlacementScript.classify(object_data, object_type, object_id, str(object_data.get("prop", object_data.get("icon_key", ""))))
+		var rect: Rect2 = rects_by_id.get(object_id, Rect2())
+		var valid := EnvironmentPlacementScript.valid_rect(environment, placement_class, rect)
+		var verdict := "OK" if valid else "WRONG_SURFACE"
+		if not valid and placement_class in ["standing_person", "behind_counter_person", "seated_person", "group"]:
+			verdict = "FLOATING"
+			failures.append("%s live person %s is not on a valid %s surface." % [scenario_id, object_id, placement_class])
+		elif not valid:
+			failures.append("%s live object %s is not on a valid %s surface." % [scenario_id, object_id, placement_class])
+		output.append({
+			"scenario_id": scenario_id, "archetype_id": archetype_id, "state_path": "arrival",
+			"stable_object_id": object_id, "label": str(object_data.get("label", "")),
+			"placement_class": placement_class, "rect": {"x": rect.position.x, "y": rect.position.y, "w": rect.size.x, "h": rect.size.y},
+			"contact_y": rect.end.y, "collision_displaced": bool(object_data.get("collision_adjusted", false)), "verdict": verdict,
+		})
+
+
+func _record_fix06_31_floating_root(floating_roots: Dictionary, audited: Dictionary, scenario_id: String) -> void:
+	var placement_class := str(audited.get("placement_class", ""))
+	var verdict := str(audited.get("verdict", ""))
+	if placement_class not in ["standing_person", "behind_counter_person", "seated_person", "group"] or verdict not in ["FLOATING", "WRONG_SURFACE"]:
+		return
+	var root_key: String = "%s|%s|%s" % [str(audited.get("archetype_id", "")), str(audited.get("source_kind", "")), str(audited.get("source_id", ""))]
+	if not floating_roots.has(root_key):
+		floating_roots[root_key] = {
+			"root_key": root_key, "archetype_id": str(audited.get("archetype_id", "")),
+			"source_kind": str(audited.get("source_kind", "")), "source_id": str(audited.get("source_id", "")),
+			"placement_class": placement_class, "verdict": verdict,
+			"contact_y": float(audited.get("contact_y", 0.0)), "floor_y": float(audited.get("floor_y", 0.0)), "instances": [],
+		}
+	var root := _dict(floating_roots[root_key])
+	var instances := _array(root.get("instances", []))
+	instances.append({"scenario_id": scenario_id, "state_path": str(audited.get("state_path", "")), "stable_object_id": str(audited.get("stable_object_id", "")), "label": str(audited.get("label", ""))})
+	root["instances"] = instances
+	floating_roots[root_key] = root
 
 
 func _fix06_31_save_base_annotation(root_dir: String, file_id: String, archetype_id: String) -> void:
