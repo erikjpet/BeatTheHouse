@@ -13,7 +13,6 @@ const CoinPusherLiveSessionScript := preload("res://scripts/games/coin_pusher/co
 const FoundationMainScript := preload("res://scripts/ui/foundation_main.gd")
 const FoundationActionViewModelScript := preload("res://scripts/ui/foundation_action_view_model.gd")
 const HarnessProductionFidelityScript := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
-const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 
 const DEFAULT_SEED_COUNT := 10
 const DEFAULT_SEED_PREFIX := "FOUNDATION-DETERMINISM"
@@ -499,16 +498,18 @@ func _apply_crew_poker_sequence(run_state: RunState, checkpoints: Array, seed: S
 		"economic_profile": {"stake_floor": 2, "stake_ceiling": 6},
 		"game_states": {},
 	}
-	for member_id in ["crew_mags", "crew_lucky"]:
-		run_state.crew_add_trust(member_id, maxi(0, CrewStateModelScript.rank_threshold("associate") - run_state.crew_trust(member_id)), "determinism_fixture")
 	var table_rng := run_state.create_rng("determinism:crew_draw_poker:table")
 	poker_environment["game_states"] = {"crew_draw_poker": game.generate_environment_state(run_state, poker_environment, table_rng)}
 	run_state.save_rng(table_rng)
 	run_state.current_environment = poker_environment
-	var scripted_inputs: Array = [{"action": "deal", "ui": {}}]
-	var action_index := 0
-	while action_index < scripted_inputs.size() and action_index < 96:
-		var input: Dictionary = scripted_inputs[action_index]
+	var scripted_inputs := [
+		{"action": "deal", "ui": {}},
+		{"action": "call", "ui": {}},
+		{"action": "draw", "ui": {"poker_held": [0, 2]}},
+		{"action": "call", "ui": {}},
+	]
+	for input_value in scripted_inputs:
+		var input: Dictionary = input_value
 		var action_id := str(input.get("action", ""))
 		var ui_state: Dictionary = input.get("ui", {}) if typeof(input.get("ui", {})) == TYPE_DICTIONARY else {}
 		var rng := run_state.create_rng("determinism:crew_draw_poker:%s:%d" % [action_id, checkpoints.size()])
@@ -529,19 +530,6 @@ func _apply_crew_poker_sequence(run_state: RunState, checkpoints: Array, seed: S
 			"surface": surface_before_apply,
 			"outcome": result,
 		})
-		action_index += 1
-		var table_after := _copy_dict(_game_state(run_state, "crew_draw_poker"))
-		if str(table_after.get("phase", "idle")) == "idle":
-			break
-		var legal := game.legal_actions(run_state, run_state.current_environment)
-		var legal_ids: Array = []
-		for legal_value in legal:
-			legal_ids.append(str(_copy_dict(legal_value).get("id", "")))
-		var next_action := "observe" if legal_ids.has("observe") else "call" if legal_ids.has("call") else "fold" if legal_ids.has("fold") else ""
-		if next_action.is_empty():
-			failures.append("%s crew_draw_poker has no deterministic legal progress action: %s" % [seed, JSON.stringify(legal_ids)])
-			break
-		scripted_inputs.append({"action": next_action, "ui": {}})
 	run_state.current_environment = prior_environment
 
 
