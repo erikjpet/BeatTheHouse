@@ -346,7 +346,7 @@ func _enter_grand_casino_room(run_state: RunState, target_archetype_id: String, 
 	# placement only after that identity is present, and reapply it for restored
 	# rooms so itinerary rotation happens at the same revisit boundary as town.
 	CrewRecruitmentModelScript.apply_to_environment(run_state, environment_data)
-	environment_data["layout"] = EnvironmentInstance.ensure_generated_layout(environment_data)
+	environment_data["layout"] = EnvironmentInstance.ensure_generated_layout(environment_data, library)
 	var installed := _install_environment_with_rollback(run_state, environment_data, rollback)
 	if not bool(installed.get("ok", false)):
 		_restore_travel_snapshot(run_state, rollback)
@@ -407,7 +407,7 @@ func enter_environment_layer(run_state: RunState, target_layer_id: String, advan
 		layer_state["game_states"] = _generated_game_states(run_state, layer_state, game_rng)
 	if run_state.has_world_map():
 		_apply_world_travel_targets(layer_state, run_state, run_state.world_map, run_state.current_world_node_id())
-	layer_state["layout"] = EnvironmentInstance.ensure_generated_layout(layer_state)
+	layer_state["layout"] = EnvironmentInstance.ensure_generated_layout(layer_state, library)
 	if source_layer_id != target_id:
 		var departed := _commit_travel_departure(run_state, source_layer_id, target_id, "layer")
 		if not bool(departed.get("ok", false)):
@@ -604,7 +604,7 @@ func _apply_tutorial_authored_travel_targets(run_state: RunState, environment_id
 				targets.append(target_id)
 	run_state.set_next_archetypes(targets)
 	run_state.current_environment["travel_hooks"] = targets.duplicate()
-	run_state.current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(run_state.current_environment)
+	run_state.current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(run_state.current_environment, library)
 	if run_state.has_world_map():
 		run_state.store_current_world_node_environment()
 
@@ -673,7 +673,7 @@ func _legacy_next_environment(run_state: RunState, target_archetype_id: String, 
 	run_state.apply_town_generation_modifiers(environment_data, rng)
 	CrewRecruitmentModelScript.apply_to_environment(run_state, environment_data)
 	environment_data["game_states"] = _generated_game_states(run_state, environment_data, rng)
-	environment_data["layout"] = EnvironmentInstance.ensure_generated_layout(environment_data)
+	environment_data["layout"] = EnvironmentInstance.ensure_generated_layout(environment_data, library)
 	if had_source:
 		var departure := _commit_travel_departure(run_state, source_id, destination_id, "legacy")
 		if not bool(departure.get("ok", false)):
@@ -705,7 +705,7 @@ func _world_environment_data_for_node(run_state: RunState, map_data: Dictionary,
 		var restored_definition := _apply_scenario_pin_suppression(run_state, node_id, run_state._seeded_scenario_definition_for_node_readonly(node_id))
 		_apply_scenario_sequence_travel_targets(restored, restored_definition)
 		ScenarioEngineScript.ensure_sequence_state(restored, restored_definition)
-		restored["layout"] = EnvironmentInstance.ensure_generated_layout(restored)
+		restored["layout"] = EnvironmentInstance.ensure_generated_layout(restored, library)
 		return restored
 	var depth := run_state.environment_travel_count()
 	if not run_state.current_environment.is_empty():
@@ -742,7 +742,7 @@ func _world_environment_data_for_node(run_state: RunState, map_data: Dictionary,
 		_apply_home_profile(run_state, environment_data, archetype, node_id, rng.fork("home_profile:%s" % node_id))
 	_apply_world_travel_targets(environment_data, run_state, map_data, node_id)
 	_apply_scenario_sequence_travel_targets(environment_data, scenario)
-	environment_data["layout"] = EnvironmentInstance.ensure_generated_layout(environment_data)
+	environment_data["layout"] = EnvironmentInstance.ensure_generated_layout(environment_data, library)
 	if _world_environment_timing_enabled:
 		_world_environment_build_stages_usec["targets_and_layout"] = Time.get_ticks_usec() - perf_stage_started_usec
 	return environment_data

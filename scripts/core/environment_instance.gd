@@ -600,6 +600,7 @@ static func _grounding_signature(environment_data: Dictionary, layout: Dictionar
 # saved rects are inputs, not authority: restores therefore receive the current
 # grounded placement without a save-schema change or a new RNG draw.
 static func _ground_active_object_rects(object_rects: Dictionary, layout: Dictionary, environment_data: Dictionary, active_entries: Array) -> void:
+	var authored_object_rects := object_rects.duplicate(true)
 	var placed: Dictionary = {}
 	var placement_classes: Dictionary = {}
 	var placement_surfaces: Dictionary = {}
@@ -644,7 +645,7 @@ static func _ground_active_object_rects(object_rects: Dictionary, layout: Dictio
 		var authored_is_valid := EnvironmentPlacementScript.valid_rect(environment_data, placement_class, authored) \
 			and not bool(surface_map.get("pack_all", false)) \
 			and not (placement_class == "doorway" and bool(surface_map.get("pack_doorways", false))) \
-			and not (bool(surface_map.get("pack_dynamic_grounded", false)) and object_type == "event" and placement_class in EnvironmentPlacementScript.GROUNDED_CLASSES) \
+			and not (bool(surface_map.get("pack_dynamic_grounded", false)) and object_type == "event" and placement_class in EnvironmentPlacementScript.PERSON_CLASSES + EnvironmentPlacementScript.GROUNDED_CLASSES) \
 			and not (placement_class == "surface_item" and bool(surface_map.get("pack_surface_items", false)))
 		if not authored_is_valid:
 			_sort_placement_candidates_for_capacity(candidates, placement_class, object_type, object_id)
@@ -675,10 +676,173 @@ static func _ground_active_object_rects(object_rects: Dictionary, layout: Dictio
 		object_rects[object_id] = _rect_to_dict(selected)
 		placed[object_id] = _rect_to_dict(selected)
 		placement_surfaces[object_id] = selected_surface
+	if not fallback_ids.is_empty() and fallback_ids.size() == placement_errors.size():
+		var failed_classes: Array = []
+		for failed_id_value in fallback_ids:
+			var failed_class := str(placement_classes.get(str(failed_id_value), ""))
+			if not failed_class.is_empty() and failed_class not in failed_classes:
+				failed_classes.append(failed_class)
+		var all_solved := true
+		for failed_class_value in failed_classes:
+			var failed_class := str(failed_class_value)
+			var fixed_assignment: Dictionary = {}
+			for placed_id_value in placed.keys():
+				var placed_id := str(placed_id_value)
+				if str(placement_classes.get(placed_id, "")) == failed_class:
+					continue
+				var fixed_record := _copy_dict(placed.get(placed_id, {}))
+				fixed_record["placement_class"] = str(placement_classes.get(placed_id, ""))
+				fixed_record["surface_id"] = str(placement_surfaces.get(placed_id, ""))
+				fixed_assignment[placed_id] = fixed_record
+			var solved := _solve_grounded_object_layout(authored_object_rects, environment_data, active_entries, [failed_class], fixed_assignment)
+			if not bool(solved.get("ok", false)):
+				all_solved = false
+				break
+			placed = _copy_dict(solved.get("rects", {}))
+			placement_classes = _copy_dict(solved.get("classes", {}))
+			placement_surfaces = _copy_dict(solved.get("surfaces", {}))
+		if not all_solved:
+			var global_solution := _solve_grounded_object_layout(authored_object_rects, environment_data, active_entries, [], {}, 500)
+			if bool(global_solution.get("ok", false)):
+				placed = _copy_dict(global_solution.get("rects", {}))
+				placement_classes = _copy_dict(global_solution.get("classes", {}))
+				placement_surfaces = _copy_dict(global_solution.get("surfaces", {}))
+				all_solved = true
+		if all_solved:
+			placement_errors.clear()
+			fallback_ids.clear()
+			for object_id_value in placed.keys():
+				object_rects[str(object_id_value)] = _copy_dict(placed.get(object_id_value, {}))
 	layout["placement_classes"] = placement_classes
 	layout["placement_surfaces"] = placement_surfaces
 	layout["placement_errors"] = placement_errors
 	layout["placement_fallback_ids"] = fallback_ids
+
+
+static func _solve_grounded_object_layout(authored_object_rects: Dictionary, environment_data: Dictionary, active_entries: Array, target_classes: Array = [], fixed_assignment: Dictionary = {}, max_nodes: int = 500) -> Dictionary:
+	var surface_map := EnvironmentPlacementScript.surface_map(environment_data)
+	var seen_ids: Dictionary = {}
+	var solver_entries: Array = []
+	for entry_value in active_entries:
+		var entry := _copy_dict(entry_value)
+		var object_id := str(entry.get("object_id", ""))
+		if object_id.is_empty() or seen_ids.has(object_id):
+			continue
+		seen_ids[object_id] = true
+		var object_type := str(entry.get("object_type", ""))
+		var placement_class := EnvironmentPlacementScript.classify(entry, object_type, object_id)
+		if not target_classes.is_empty() and placement_class not in target_classes:
+			continue
+		var authored_normalized := _rect_from_dict(authored_object_rects.get(object_id, {}))
+		var authored := Rect2(authored_normalized.position * ENVIRONMENT_BOARD_SIZE, authored_normalized.size * ENVIRONMENT_BOARD_SIZE)
+		var grounded := EnvironmentPlacementScript.grounded_rect(environment_data, placement_class, authored)
+		if not bool(grounded.get("ok", false)):
+			return {"ok": false}
+		var candidates := EnvironmentPlacementScript.candidate_rects(environment_data, placement_class, grounded.get("rect", authored))
+		var authored_is_valid := EnvironmentPlacementScript.valid_rect(environment_data, placement_class, authored) \
+			and not bool(surface_map.get("pack_all", false)) \
+			and not (placement_class == "doorway" and bool(surface_map.get("pack_doorways", false))) \
+			and not (bool(surface_map.get("pack_dynamic_grounded", false)) and object_type == "event" and placement_class in EnvironmentPlacementScript.PERSON_CLASSES + EnvironmentPlacementScript.GROUNDED_CLASSES) \
+			and not (placement_class == "surface_item" and bool(surface_map.get("pack_surface_items", false)))
+		if not authored_is_valid:
+			_sort_placement_candidates_for_capacity(candidates, placement_class, object_type, object_id)
+		if not target_classes.is_empty():
+			candidates.append_array(EnvironmentPlacementScript.candidate_rects(environment_data, placement_class, grounded.get("rect", authored), Rect2(), true))
+			_sort_placement_candidates_for_capacity(candidates, placement_class, object_type, object_id)
+		var candidate_records := _normalized_unique_candidates(candidates)
+		if candidate_records.is_empty():
+			return {"ok": false}
+		solver_entries.append({
+			"object_id": object_id,
+			"placement_class": placement_class,
+			"candidates": candidate_records,
+			"priority": _placement_class_priority(placement_class),
+			"area": authored.size.x * authored.size.y,
+		})
+	solver_entries.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
+		var left := _copy_dict(left_value)
+		var right := _copy_dict(right_value)
+		var left_count := _copy_array(left.get("candidates", [])).size()
+		var right_count := _copy_array(right.get("candidates", [])).size()
+		if left_count != right_count:
+			return left_count < right_count
+		var left_priority := int(left.get("priority", 0))
+		var right_priority := int(right.get("priority", 0))
+		if left_priority != right_priority:
+			return left_priority < right_priority
+		var left_area := float(left.get("area", 0.0))
+		var right_area := float(right.get("area", 0.0))
+		return str(left.get("object_id", "")) < str(right.get("object_id", "")) if is_equal_approx(left_area, right_area) else left_area > right_area
+	)
+	var assignment := fixed_assignment.duplicate(true)
+	var solution: Dictionary = {}
+	var search_state := {"nodes": 0, "max_nodes": max_nodes}
+	var expected_count := assignment.size() + solver_entries.size()
+	if not _search_grounded_object_layout(solver_entries, assignment, solution, search_state, expected_count):
+		return {"ok": false}
+	var rects: Dictionary = {}
+	var classes: Dictionary = {}
+	var surfaces: Dictionary = {}
+	for object_id_value in solution.keys():
+		var object_id := str(object_id_value)
+		var selected := _copy_dict(solution.get(object_id, {}))
+		rects[object_id] = _rect_to_dict(_rect_from_dict(selected))
+		classes[object_id] = str(selected.get("placement_class", ""))
+		surfaces[object_id] = str(selected.get("surface_id", ""))
+	return {"ok": true, "rects": rects, "classes": classes, "surfaces": surfaces}
+
+
+static func _normalized_unique_candidates(candidates: Array) -> Array:
+	var result: Array = []
+	var seen: Dictionary = {}
+	for candidate_value in candidates:
+		var candidate_data := _copy_dict(candidate_value)
+		var candidate_pixel: Rect2 = candidate_data.get("rect", Rect2())
+		var candidate := Rect2(candidate_pixel.position / ENVIRONMENT_BOARD_SIZE, candidate_pixel.size / ENVIRONMENT_BOARD_SIZE)
+		var key := "%.5f:%.5f:%.5f:%.5f" % [candidate.position.x, candidate.position.y, candidate.size.x, candidate.size.y]
+		if seen.has(key):
+			continue
+		seen[key] = true
+		var normalized := _rect_to_dict(candidate)
+		normalized["surface_id"] = str(candidate_data.get("surface_id", ""))
+		result.append(normalized)
+	return result
+
+
+static func _search_grounded_object_layout(entries: Array, assignment: Dictionary, solution: Dictionary, search_state: Dictionary, expected_count: int) -> bool:
+	search_state["nodes"] = int(search_state.get("nodes", 0)) + 1
+	if int(search_state.get("nodes", 0)) > int(search_state.get("max_nodes", 0)):
+		return false
+	if assignment.size() >= expected_count:
+		solution.merge(assignment, true)
+		return true
+	var entry: Dictionary = {}
+	var viable_candidates: Array = []
+	for entry_value in entries:
+		var candidate_entry := _copy_dict(entry_value)
+		var candidate_id := str(candidate_entry.get("object_id", ""))
+		if assignment.has(candidate_id):
+			continue
+		var currently_viable: Array = []
+		for candidate_value in _copy_array(candidate_entry.get("candidates", [])):
+			var candidate_data := _copy_dict(candidate_value)
+			if not _object_rect_collides_with_any(assignment, _rect_from_dict(candidate_data)):
+				currently_viable.append(candidate_data)
+		if currently_viable.is_empty():
+			return false
+		if entry.is_empty() or currently_viable.size() < viable_candidates.size():
+			entry = candidate_entry
+			viable_candidates = currently_viable
+	var object_id := str(entry.get("object_id", ""))
+	for candidate_value in viable_candidates:
+		var candidate_data := _copy_dict(candidate_value)
+		var selected := candidate_data.duplicate(true)
+		selected["placement_class"] = str(entry.get("placement_class", ""))
+		assignment[object_id] = selected
+		if _search_grounded_object_layout(entries, assignment, solution, search_state, expected_count):
+			return true
+		assignment.erase(object_id)
+	return false
 
 
 static func _sort_placement_candidates_for_capacity(candidates: Array, placement_class: String, object_type: String, object_id: String) -> void:
@@ -717,12 +881,21 @@ static func _ground_surface_affinity(object_type: String, object_id: String, sur
 static func _surface_affinity(object_type: String, object_id: String, surface_id: String) -> int:
 	var source := "%s %s" % [object_type.to_lower(), object_id.to_lower()]
 	var surface := surface_id.to_lower()
+	if object_type in ["travel", "layer", "casino_door"]:
+		if source.contains("back_room"):
+			return 0 if surface.contains("pit_door") else 1
+		if source.contains("high_limit"):
+			return 0 if surface.contains("right_exit") else 1
+		if source.contains("cage") or source.contains("leave"):
+			return 0 if surface.contains("left_exit") else 1
+	if object_type == "event" and source.contains("rowdy_regular"):
+		return 0 if surface.contains("table") else 1
 	if object_type == "item":
 		return 0 if _text_has_any(surface, ["case", "merchandise", "shelf_row"]) else 1
 	if object_type == "numbers":
 		return 0 if _text_has_any(surface, ["counter", "desk", "register", "table"]) else 1
 	if object_type in ["game", "game_hook"]:
-		return 0 if _text_has_any(surface, ["console", "machine", "stage", "table"]) else 1
+		return 0 if _text_has_any(surface, ["console", "machine", "table"]) else 1
 	if object_type == "service":
 		if _text_has_any(source, ["drink", "refreshment"]):
 			return 0 if _text_has_any(surface, ["bar", "bottle", "cooler", "refreshment", "service"]) else 1
