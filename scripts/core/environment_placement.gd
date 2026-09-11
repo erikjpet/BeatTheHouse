@@ -84,6 +84,10 @@ static func classify(object_data: Dictionary, object_type: String = "", object_i
 		str(object_data.get("icon_key", object_data.get("appearance", ""))),
 	]
 	text = text.to_lower()
+	# Scenario escape controls keep doorway authority after their live-object
+	# payload is reduced to a task-zone visual during composition.
+	if object_id.to_lower().ends_with("_safe_exit"):
+		return "doorway"
 	if clean_type in ["scenario_actor", "actor"]:
 		if _has_token(person_semantics, COUNTER_PERSON_TOKENS) or clean_prop in ["clerk_counter", "host_station"]:
 			return "behind_counter_person"
@@ -479,11 +483,9 @@ static func candidate_rects(environment: Dictionary, placement_class: String, au
 
 
 static func valid_rect(environment: Dictionary, placement_class: String, rect: Rect2, constraint: Rect2 = Rect2()) -> bool:
-	for candidate_value in candidate_rects(environment, placement_class, rect, constraint):
-		var candidate := _dict(candidate_value).get("rect", Rect2()) as Rect2
-		if candidate.position.distance_squared_to(rect.position) <= 0.25:
-			return true
-	return false
+	if not constraint.is_equal_approx(Rect2()) and not constraint.encloses(rect):
+		return false
+	return not support_for_rect(environment, placement_class, rect).is_empty()
 
 
 static func is_person_class(placement_class: String) -> bool:

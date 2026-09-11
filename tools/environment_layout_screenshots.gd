@@ -31,6 +31,7 @@ var punchline_layer_review := false
 var fix06_31_audit := false
 var fix06_31_audit_phase := "before"
 var fix06_31_scenario_filter := ""
+var fix06_31_room_filter := ""
 var fix06_31_skip_base := false
 var fix06_31_surface_maps: Dictionary = {}
 
@@ -50,6 +51,8 @@ func _init() -> void:
 			fix06_31_audit_phase = "after"
 		elif argument.begins_with("--fix06-31-scenario="):
 			fix06_31_scenario_filter = argument.trim_prefix("--fix06-31-scenario=")
+		elif argument.begins_with("--fix06-31-room="):
+			fix06_31_room_filter = argument.trim_prefix("--fix06-31-room=")
 		elif argument == "--fix06-31-skip-base":
 			fix06_31_skip_base = true
 	call_deferred("_run")
@@ -351,6 +354,8 @@ func _run_fix06_31_audit(library: Variant) -> void:
 		if not fix06_31_scenario_filter.is_empty() and scenario_id not in fix06_31_scenario_filter.split(",", false):
 			continue
 		var archetype_id := str(definition.get("archetype_id", ""))
+		if not fix06_31_room_filter.is_empty() and archetype_id != fix06_31_room_filter:
+			continue
 		if fix06_31_audit_phase == "before":
 			var environment := _dict(library.environment_archetype(archetype_id))
 			var placements: Array = []

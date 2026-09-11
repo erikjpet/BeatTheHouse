@@ -519,6 +519,12 @@ static func _resolve_visual(
 			errors.append("Scenario visual %s has out-of-bounds semantic dimensions." % identity)
 			return {}
 		var authored_rect := _clamp_inside_board(Rect2(center - size * 0.5, size))
+		var surface_map := EnvironmentPlacementScript.surface_map(environment)
+		var scenario_slots := _dict(surface_map.get("scenario_object_slot_positions", {}))
+		var stable_identity := identity.trim_prefix("scenario::")
+		var slot_values := _array(scenario_slots.get(stable_identity, scenario_slots.get(identity, [])))
+		if slot_values.size() >= 2:
+			authored_rect.position = Vector2(float(slot_values[0]), float(slot_values[1]))
 		var zone_constraint := _zone_rect(environment, zone_id) if anchor_id.is_empty() else Rect2()
 		var grounded := EnvironmentPlacementScript.authored_or_local_rect(environment, placement_class, authored_rect)
 		if bool(grounded.get("adjusted", false)) and zone_constraint.has_area():
