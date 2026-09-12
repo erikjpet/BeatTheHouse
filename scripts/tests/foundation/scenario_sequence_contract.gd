@@ -3828,6 +3828,18 @@ static func _check_completion_evidence(failures: Array) -> void:
 	unsigned["sequence"]["owner_exceptions"][0].erase("approved_on")
 	if not _contains_text(SequenceSchemaScript.validate_definition(unsigned, OperationRegistryScript), "owner exception"):
 		failures.append("Unsigned hard-10 owner exception was accepted.")
+	var shallow_choice := definition.duplicate(true)
+	shallow_choice["sequence"]["phase_graph"]["phases"][2]["branches"].remove_at(0)
+	shallow_choice["sequence"]["owner_exceptions"] = [{"row": "choice_or_failure", "reason": "Hostile fixture", "owner": "owner", "approved_on": "2026-09-11"}]
+	shallow_choice["sequence"]["sequence_signature"] = SequenceSchemaScript.calculated_signature_hash(shallow_choice)
+	if not _contains_text(SequenceSchemaScript.validate_definition(shallow_choice, OperationRegistryScript, _fixture_target_inventory(shallow_choice)), "at least three reachable terminal outcomes"):
+		failures.append("A signed choice_or_failure exception bypassed the absolute three-outcome depth gate.")
+	var shallow_aftermath := definition.duplicate(true)
+	shallow_aftermath["sequence"]["aftermath"].erase("refused")
+	shallow_aftermath["sequence"]["owner_exceptions"] = [{"row": "material_outcomes", "reason": "Hostile fixture", "owner": "owner", "approved_on": "2026-09-11"}]
+	shallow_aftermath["sequence"]["sequence_signature"] = SequenceSchemaScript.calculated_signature_hash(shallow_aftermath)
+	if not _contains_text(SequenceSchemaScript.validate_definition(shallow_aftermath, OperationRegistryScript, _fixture_target_inventory(shallow_aftermath)), "aftermath must define at least three material outcomes"):
+		failures.append("A signed material_outcomes exception bypassed the absolute three-aftermath depth gate.")
 
 
 static func _check_extension_dispatch(failures: Array) -> void:

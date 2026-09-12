@@ -5,8 +5,17 @@ contains the historical Discovery & Decision Log moved verbatim by
 `board06_1`. Future scope discoveries, deviations and decisions append
 here; task state, protocol and owner questions remain on the active board.
 
-Preserved entries: **174**; current entries: **182**. Use the exact find token
+Preserved entries: **174**; current entries: **183**. Use the exact find token
 below to jump to a row's history.
+
+* 2026-09-11 - `[fix06_32]` UNUSED DEPTH-EXCEPTION DISPOSITION: recursive
+  shipped-content inspection found no `choice_or_failure` or
+  `material_outcomes` owner-exception consumer and no owner approval for either
+  waiver. The two validator bypasses introduced by `3f31bf10` are therefore
+  reverted; the three-terminal-outcome, three-aftermath and two-material-axis
+  requirements remain absolute. Signed exceptions still serve their
+  pre-existing completion-contract bookkeeping, but cannot reduce authored
+  scenario depth.
 
 ## Row/tag index
 
