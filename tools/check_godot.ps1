@@ -1210,6 +1210,7 @@ function Invoke-Perf06ContractChecks {
         quiescence = "perf06_quiescence_contract_test.ps1"
         binding_preflight = "perf06_binding_preflight_contract_test.ps1"
         allocation_copy = "perf06_allocation_contract_test.ps1"
+        terminal_soak_launcher = "integ06_1_terminal_soak_launcher_contract_test.ps1"
         web_idle_liveness = "web_perf_idle_liveness_contract_test.ps1"
         coin_pusher_clock = "web_perf_coin_pusher_clock_contract_test.ps1"
         web_prestage = "web_perf_prestage_contract_test.ps1"
