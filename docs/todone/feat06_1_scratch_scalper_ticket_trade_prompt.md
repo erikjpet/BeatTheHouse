@@ -1,4 +1,4 @@
-Status: TODO — owner-directed new mechanic; claimable now
+Status: DONE — owner-directed mechanic shipped and verified
 Priority: P2 — additive content, not a defect; must not destabilize the playtest build
 Board row: `feat06_1` in `docs/todo/README_0_6_board.md` (Defects table, marked as an owner-directed addition)
 Opened: 2026-09-11 from owner direction
@@ -13,7 +13,19 @@ Owner's words, verbatim:
 
 ## Execution Record
 
-_Fill in on completion: date, commit hashes, gate results, deviations._
+Completed 2026-09-12. Claim `600a0fba`; implementation `ddf7c4dc` and
+`b7edb89b`. Shipped an 8-point current-location heat reduction, declared 33%
+within-run reward chance (3,280/10,000 seeded draws = 32.8%), 20% deterministic
+restock-arrival chance, one gift per persisted encounter token, and generic
+doorway/floor-band arrival and departure presentation.
+
+Gates: project validation and 338-script load green; row-local Scratch check
+green (1 check, 0 failures, 2.650 s); 440/440 room finalizations green across 8
+seed families × 55 scenarios; paired ten-seed determinism green at 642
+checkpoints and identical hash `1742659726`; idle/active transit averages
+0.674/0.715 ms with idle liveness 13. Full evidence and the canonical-wrapper
+composition deviation are recorded in
+`docs/plans/feat06_1_scratch_scalper_trade_closeout.md`.
 
 # Agent Prompt — feat06_1: Give the Scratch Scalper a Ticket
 
