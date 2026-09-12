@@ -42,6 +42,7 @@ foreach ($needle in @("build_native_solver.ps1", "-Platform Windows", "-Target t
 foreach ($needle in @("perf06_native_runtime_matrix.ps1", 'foreach ($nativePlan in @("l02", "grand_casino", "coin_pusher"))', "perf06_build_surface_report.ps1", "-Profile low_end", "allocation_call_root_audit.json", "compositionOutRelative", "terminalOutRelative", "-SeedCount `$CompositionSeedCount", "-ShardCount `$CompositionShardCount", "-ShardCount `$TerminalShardCount", "perf06_matrix_contract.ps1", "-RequiredProfiles low_end", "matrix_contract.json")) {
     if (-not $lowEndLauncher.Contains($needle)) { throw "Low-end launcher lost complete report production seam '$needle'." }
 }
+if ($lowEndLauncher.Contains('-RequireGodot:$RequireGodot')) { throw "Low-end launcher must not serialize SwitchParameter objects into child-process arguments." }
 foreach ($needle in @("distribution_fresh_start", "native_runtime_distribution_fresh_start", 'surface=$false')) {
     if (-not $lowEndLauncher.Contains($needle)) { throw "Low-end launcher lost exported fresh-start coverage '$needle'." }
 }
