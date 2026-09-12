@@ -6,6 +6,7 @@ extends Control
 
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 const CrewTurnModelScript := preload("res://scripts/core/crew_turn_model.gd")
+const CrewRecruitmentModelScript := preload("res://scripts/core/crew_recruitment_model.gd")
 const TutorialFlowScript := preload("res://scripts/core/tutorial_flow.gd")
 const WebAudioBridgeScript := preload("res://scripts/ui/web_audio_bridge.gd")
 
@@ -839,10 +840,17 @@ func _install_generated_grand_casino_fixture(run_state: RunState) -> Dictionary:
 		var generated := EnvironmentInstance.from_archetype(archetype, 1, candidate_rng, library, run_state.challenge_config, scenario)
 		var environment := generated.to_dict()
 		environment["world_node_id"] = RunState.GRAND_CASINO_ARCHETYPE_ID
+		environment["world_map_travel"] = true
 		run_state.apply_town_generation_modifiers(environment, candidate_rng)
 		var generated_states: Variant = generator.call("_generated_game_states", run_state, environment, candidate_rng)
 		if typeof(generated_states) == TYPE_DICTIONARY:
 			environment["game_states"] = generated_states
+		# Match the production Grand Casino room-install boundary before semantic
+		# sealing. Omitting routed travel and Crew inputs makes a nominally valid
+		# fixture lose its proof on the first refresh, so every downstream phase is
+		# correctly rejected as unobserved.
+		generator.call("_apply_world_travel_targets", environment, run_state, run_state.world_map, RunState.GRAND_CASINO_ARCHETYPE_ID)
+		CrewRecruitmentModelScript.apply_to_environment(run_state, environment)
 		environment["layout"] = EnvironmentInstance.ensure_generated_layout(environment)
 		var rollback_value: Variant = generator.call("_travel_rollback_snapshot", run_state)
 		var rollback: Dictionary = rollback_value if typeof(rollback_value) == TYPE_DICTIONARY else {}

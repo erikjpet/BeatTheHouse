@@ -107,7 +107,9 @@ foreach ($token in @(
     'and str(prepared_evidence.get("bonus_family", "")) == "pinball"',
     'func _scripted_memory_travel(visited_targets: Dictionary) -> Dictionary:',
     '"durable_progress_count": durable_progress_count',
-    'and (story_after > story_before or travels_after > travels_before)'
+    'and (story_after > story_before or travels_after > travels_before)',
+    'CrewRecruitmentModelScript.apply_to_environment(run_state, environment)',
+    'generator.call("_apply_world_travel_targets", environment, run_state, run_state.world_map, RunState.GRAND_CASINO_ARCHETYPE_ID)'
 )) {
     if (-not $overlay.Contains($token)) { throw "Performance producer lost retained real-progress evidence '$token'." }
 }
