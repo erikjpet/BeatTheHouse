@@ -1,9 +1,9 @@
 # Fix 06.31 — Environment Object Placement and Grounding
 
-Status: **IMPLEMENTED / FINAL EXACT-HEAD GATES IN PROGRESS**
+Status: **COMPLETE / EXACT-HEAD GATES GREEN**
 Baseline product head: `c570f2ce6fafa4212292f8b129ca08f2e9e1e954`
 Claim commit: `e56f00b8`
-Audit date: 2026-09-10
+Audit dates: 2026-09-10 through 2026-09-11
 
 ## Player-visible finding
 
@@ -217,15 +217,68 @@ barrier census remains 25 objects / 39 placements.
 - Historical Continue coverage now requires a current grounding signature with
   no placement errors or fallback slots. All 37 `v0_5_1` fixtures and all three
   `mid_0_6` fixtures pass current FoundationMain load/save/load.
-- The stale draw-poker determinism driver was updated to authorize the current
-  Hold'em table and follow only live legal actions. Its paired one-seed proof is
-  green at 66 checkpoints with hash `3363762939`.
+- The stale draw-poker determinism driver was updated in isolated commits to
+  authorize a three-resident current Hold'em table and follow only live legal
+  actions. The old probe could not reach a valid deal because its two-resident
+  fixture triggered production candidate expansion and could randomly seat no
+  associate. The final paired ten-seed reports are byte-identical at 642
+  checkpoints with combined hash `871972474` and report SHA-256
+  `742D1BAB7DFC7E28F749190B43B50180419530A1C94EAB56FDD9727D6619BF41`.
 
-## After evidence
+## Owner correction and final implementation
 
-The production-host after run writes the same clean/annotated room and scenario
-arrival pairs under `.tmp/fix06_31/after/`, plus
-`grounding_audit_after.json` and `floating_people_inventory_after.json`. The
-reachable-state pass/fail matrix is emitted by the permanent multiseed gate and
-is the authority for phases that do not need a distinct screenshot because
-their physical geometry is unchanged.
+The owner's correction rejected the first generic constraint-solver direction.
+That solver was preserved at `ff1e5e0f` and then removed from the shipping path.
+The final engine keeps authored placements unchanged when they are valid, uses
+only bounded local offsets as a safety net, and falls back to authored per-class
+room slots. There is no board-wide placement search, capacity reservation pass,
+or capacity-impossible hard failure.
+
+The corrected classifier reclassified shopkeepers, merchants, lenders, named
+characters, Silas and person-prop vocabulary as people. On that corrected
+authority the initial after attempt honestly reported 39 `FLOATING` and 183
+`WRONG_SURFACE` records out of 932; those findings drove the deliberate
+room-by-room data pass. No test was weakened, no golden was refreshed, and no
+object was deleted or hidden to create room.
+
+The one permitted composition comparison was recorded before the owner stopped
+profiling: the Phase A full multiseed run was 253.6 seconds, while the corrected
+authored capture's composition measurement was approximately 77.1 seconds.
+No further profiling or performance run was started.
+
+## Final after evidence
+
+The final windowed production-host run is under
+`.tmp/fix06_31/final_after/`. Its machine-readable audit records 1,022 rendered
+objects: 1,022 `OK`, zero `FLOATING`, zero `WRONG_SURFACE`, zero floating-person
+roots and zero capture failures. It covers all 55 scenario arrivals and 21 base
+rooms/layers. All thirteen committed contact sheets were visually inspected;
+characters meet their floor, counter, seat or stage supports, props rest on
+physical surfaces, mounted objects remain on walls, and exits remain readable.
+
+The side-by-side clean and annotated index is committed at
+`docs/plans/evidence/fix06_31/contact_sheets/manifest.json`. It contains 13
+sheets, 21 base-room rows and 55 scenario rows. The before capture remains under
+`.tmp/fix06_31/before/`; generated machine output is intentionally not staged.
+
+## Final exact-head gates
+
+| Gate | Final result |
+| --- | --- |
+| Static project and grounding validation | PASS; 21 maps, 18 archetypes, 10 classes |
+| Focused grounding contract | PASS; authored-first bounded fallback, person classification, class slots and hidden-state neutrality |
+| Runtime multiseed finalization | PASS; 8 families × 55 scenarios = 440/440 |
+| Reachable state/layout census | PASS; 17,984 reachable states, 3,768 distinct layouts |
+| Normal/expanded controls, routes and census | PASS; labels, hit authority, walk lanes, route/reduced-motion endpoints and object census preserved |
+| Production-host visual audit | PASS; 1,022/1,022 `OK`, zero floating/wrong-surface/failures |
+| Scenario content census | unchanged: 1,108 object ops, 673 actions |
+| Barrier census | unchanged: 25 objects, 39 placements |
+| Historical Continue fixtures | PASS; 37 v0.5.1 and 3 mid-0.6 fixtures re-derive current grounded layouts without a schema bump |
+| Determinism | PASS; paired 10-seed, 642-checkpoint reports byte-identical; RNG assertions unchanged |
+| `tools/check_godot.ps1 -Suite Audit` | PASS; all stages, including the 440-case gate and deep game audits |
+| `tools/validate_project.ps1` | PASS on the exact branch head |
+
+There were no changes to money, RNG, RTP, payouts, odds, save schema, migration,
+game mechanics or apparent game behavior. Corner Store's approved base
+composition remains unchanged; only audited scenario placement data was
+corrected where necessary.

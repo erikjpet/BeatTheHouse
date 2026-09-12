@@ -1,0 +1,89 @@
+{
+    "schema":  "fix06_31_contact_sheets/v1",
+    "columns":  [
+                    "before_clean",
+                    "after_clean",
+                    "before_annotated",
+                    "after_annotated"
+                ],
+    "sheets":  [
+                   {
+                       "id":  "base_rooms",
+                       "rows":  21,
+                       "file":  "base_rooms_before_after.png",
+                       "sha256":  "b67945b4bb0ac6bcb4bd198fcdadcf26ef3d35618d5651d9a40f4d19fe3d854f"
+                   },
+                   {
+                       "id":  "back_alley",
+                       "rows":  4,
+                       "file":  "back_alley_states_before_after.png",
+                       "sha256":  "e8ba7b6e1412260e1b55862bae1c3bf264141937da6f8aebb00d339d3f029378"
+                   },
+                   {
+                       "id":  "bar",
+                       "rows":  7,
+                       "file":  "bar_states_before_after.png",
+                       "sha256":  "430f93edfb3988edc07207778613a002f6abeccb634f3a92bad17e047b2cded8"
+                   },
+                   {
+                       "id":  "beach",
+                       "rows":  3,
+                       "file":  "beach_states_before_after.png",
+                       "sha256":  "9ed91ab444ce14fddc7e7e2494b5745073dde1743257cf8299ca4b3c93370129"
+                   },
+                   {
+                       "id":  "corner_store",
+                       "rows":  5,
+                       "file":  "corner_store_states_before_after.png",
+                       "sha256":  "37c76d55db9d2ac56f695cd35a7d90f37fd7764751383d17d0e6b52d682ed3d5"
+                   },
+                   {
+                       "id":  "delta_queen",
+                       "rows":  5,
+                       "file":  "delta_queen_states_before_after.png",
+                       "sha256":  "c1d67c53af6590f9c9bb1e5155cc1acf9bd8d75dd8488d2a226608cd5e9914fe"
+                   },
+                   {
+                       "id":  "gas_station_casino",
+                       "rows":  5,
+                       "file":  "gas_station_casino_states_before_after.png",
+                       "sha256":  "242347ea826ac0e393a1cee6cc6450aee15cb4fec9c88ae4cdd0e323efbe14ba"
+                   },
+                   {
+                       "id":  "grand_casino",
+                       "rows":  3,
+                       "file":  "grand_casino_states_before_after.png",
+                       "sha256":  "5512f78ff3ec2faebbf7f7c3225a804c1010259c65790b9616049025221fcc63"
+                   },
+                   {
+                       "id":  "jazz_club",
+                       "rows":  4,
+                       "file":  "jazz_club_states_before_after.png",
+                       "sha256":  "f46ecd859fce1425e50723fc71f7f3a085d291b7edd7f0c8fe7c41f8ed2023db"
+                   },
+                   {
+                       "id":  "kitty_cat_lounge",
+                       "rows":  4,
+                       "file":  "kitty_cat_lounge_states_before_after.png",
+                       "sha256":  "c5a5c12ade48e5996a8e08ea32fd5576dd3944ddcddeeec375a24673e22fce79"
+                   },
+                   {
+                       "id":  "motel",
+                       "rows":  4,
+                       "file":  "motel_states_before_after.png",
+                       "sha256":  "5cc5f752315b6736d515c36b429f6a341178dfeab429a52cf9fa5f8b5487b475"
+                   },
+                   {
+                       "id":  "pawn_shop",
+                       "rows":  3,
+                       "file":  "pawn_shop_states_before_after.png",
+                       "sha256":  "8e86c62c8646cac65a435f01950a0a492a37b5b23efd81182a5163e151eda689"
+                   },
+                   {
+                       "id":  "small_underground_casino",
+                       "rows":  8,
+                       "file":  "small_underground_casino_states_before_after.png",
+                       "sha256":  "9ecbdfa459e3ac8c61caa3e63f72568fd1664c8f66a8d925de3f98f3b5c6dcf9"
+                   }
+               ]
+}

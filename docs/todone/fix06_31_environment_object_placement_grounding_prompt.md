@@ -5,7 +5,25 @@ Opened: 2026-09-10 from owner direction; evidence measured by the PM on `main` a
 
 ## Execution Record
 
-_Fill in on completion: date, commit hashes, gate results, deviations._
+- Completed: 2026-09-11 by `/root` from baseline `c570f2ce`.
+- Key commits: claim/audit `e56f00b8`..`d799d4c7`; surface maps
+  `2c73f41d`; classifier `bd3a16ae`; engine/gates `d7f11a3e`..`93cb2366`;
+  authored room pass `afa8da29`..`2104c773`; superseded solver removal
+  `2721cf6a`; isolated Hold'em probe drivers `0df41a6b` and `837e4a1e`;
+  base-layout diagnostic `a2e316d0`.
+- Final runtime gate: PASS, 8 seed families × 55 scenarios = 440/440,
+  17,984 reachable states and 3,768 distinct layouts; normal/expanded controls,
+  routes and object census preserved.
+- Final production-host capture: PASS, 1,022/1,022 records `OK`, zero
+  `FLOATING`, zero `WRONG_SURFACE`, zero floating roots and zero failures;
+  all 13 contact sheets visually reviewed.
+- Determinism: PASS, paired ten-seed reports byte-identical across 642
+  checkpoints, combined hash `871972474`.
+- Exact-head `tools/validate_project.ps1` and `tools/check_godot.ps1 -Suite
+  Audit -RequireGodot -KeepGoing -VerboseStages`: PASS.
+- Deviation: the initial generic solver was preserved at `ff1e5e0f` and
+  superseded per owner direction. Shipping placement is authored-first with a
+  bounded local safety net only. No later profiling run was performed.
 
 # Agent Prompt — fix06_31: Environment Object Placement — Ground Every Person, Put Every Object Where It Belongs
 
