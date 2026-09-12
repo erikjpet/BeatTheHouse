@@ -604,7 +604,10 @@ static func _ground_authored_object_rects(object_rects: Dictionary, layout: Dict
 	var placed: Dictionary = {}
 	var placement_classes: Dictionary = {}
 	var placement_surfaces: Dictionary = {}
-	var preferred_slots := _copy_dict(EnvironmentPlacementScript.surface_map(environment_data).get("object_slot_positions", {}))
+	var placement_map := EnvironmentPlacementScript.surface_map(environment_data)
+	var preferred_slots := _copy_dict(placement_map.get("object_slot_positions", {}))
+	var developer_object_slots := _copy_dict(placement_map.get("developer_object_slot_positions", {}))
+	var developer_category_slots := _copy_dict(placement_map.get("developer_category_slot_positions", {}))
 	var ordered_entries := active_entries.duplicate(true)
 	ordered_entries.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
 		var left := _copy_dict(left_value)
@@ -628,7 +631,16 @@ static func _ground_authored_object_rects(object_rects: Dictionary, layout: Dict
 		var slot_values := _copy_array(preferred_slots.get(object_id, []))
 		if slot_values.size() >= 2:
 			authored.position = Vector2(float(slot_values[0]), float(slot_values[1]))
-		var resolved := EnvironmentPlacementScript.authored_or_local_rect(environment_data, placement_class, authored)
+		var category_key := "%s:%d" % [str(entry.get("spot_field", "")), int(entry.get("index", 0))]
+		var category_slot_values := _copy_array(developer_category_slots.get(category_key, []))
+		var developer_slot_values := _copy_array(developer_object_slots.get(object_id, []))
+		var manual_values := category_slot_values if category_slot_values.size() >= 2 else developer_slot_values
+		var manually_placed := manual_values.size() >= 2
+		if manually_placed:
+			authored.position = Vector2(float(manual_values[0]), float(manual_values[1]))
+			authored.position.x = clampf(authored.position.x, 0.0, maxf(0.0, ENVIRONMENT_BOARD_SIZE.x - authored.size.x))
+			authored.position.y = clampf(authored.position.y, 0.0, maxf(0.0, ENVIRONMENT_BOARD_SIZE.y - authored.size.y))
+		var resolved := {"rect": authored, "surface_id": "developer_free", "adjusted": false} if manually_placed else EnvironmentPlacementScript.authored_or_local_rect(environment_data, placement_class, authored)
 		var selected: Rect2 = resolved.get("rect", authored)
 		var selected_surface := str(resolved.get("surface_id", ""))
 		if bool(resolved.get("adjusted", false)) and _object_rect_collides_with_any(placed, Rect2(selected.position / ENVIRONMENT_BOARD_SIZE, selected.size / ENVIRONMENT_BOARD_SIZE)):

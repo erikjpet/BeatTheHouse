@@ -83,8 +83,32 @@ func _check_store_scope_and_promotion(user_path: String, project_path: String) -
 	var spawned_layout := EnvironmentInstanceScript.ensure_generated_layout(spawned_environment)
 	var spawned_rect: Dictionary = (spawned_layout.get("object_rects", {}) as Dictionary).get("game:slot", {})
 	_check(is_equal_approx(float(spawned_rect.get("x", -1.0)), 410.0 / 900.0) and is_equal_approx(float(spawned_rect.get("y", -1.0)), 294.0 / 430.0), "Every spawn must consume the locked board-space position.")
+	DeveloperPlacementStoreScript.save_position(bar, "object_slot_positions", "game:slot", Vector2(8.0, 8.0))
+	var free_layout := EnvironmentInstanceScript.ensure_generated_layout({"archetype_id": "bar", "game_ids": ["slot"], "layout": {}})
+	var free_rect: Dictionary = (free_layout.get("object_rects", {}) as Dictionary).get("game:slot", {})
+	_check(is_equal_approx(float(free_rect.get("x", -1.0)), 8.0 / 900.0) and is_equal_approx(float(free_rect.get("y", -1.0)), 8.0 / 430.0), "A manual placement must spawn exactly where authored even without a matching physical surface.")
+	DeveloperPlacementStoreScript.save_position(bar, "object_slot_positions", "game:slot", Vector2(410.0, 294.0))
 	var corner_slots: Dictionary = EnvironmentPlacementScript.surface_map(corner).get("object_slot_positions", {})
 	_check(corner_slots.get("game:slot", []) != [410.0, 294.0], "An override must not leak to another environment.")
+	var category_saved := DeveloperPlacementStoreScript.save_position(corner, "category_slot_positions", "item_spots:0", Vector2(612.0, 18.0))
+	_check(bool(category_saved.get("ok", false)), "A reusable category slot must save.")
+	for future_item_id in ["future_shop_item_a", "future_shop_item_b"]:
+		var future_layout := EnvironmentInstanceScript.ensure_generated_layout({
+			"archetype_id": "corner_store",
+			"item_offers": [{"id": future_item_id}],
+			"layout": {},
+		})
+		var future_rect: Dictionary = (future_layout.get("object_rects", {}) as Dictionary).get("item:%s" % future_item_id, {})
+		_check(is_equal_approx(float(future_rect.get("x", -1.0)), 612.0 / 900.0) and is_equal_approx(float(future_rect.get("y", -1.0)), 18.0 / 430.0), "Category slots must place future objects independently of their item id.")
+	DeveloperPlacementStoreScript.save_position(bar, "category_slot_positions", "event_spots:0", Vector2(700.0, 18.0))
+	for future_event_id in ["future_event_a", "future_event_b"]:
+		var future_event_layout := EnvironmentInstanceScript.ensure_generated_layout({
+			"archetype_id": "bar",
+			"event_ids": [future_event_id],
+			"layout": {},
+		})
+		var future_event_rect: Dictionary = (future_event_layout.get("object_rects", {}) as Dictionary).get("event:%s" % future_event_id, {})
+		_check(is_equal_approx(float(future_event_rect.get("x", -1.0)), 700.0 / 900.0) and is_equal_approx(float(future_event_rect.get("y", -1.0)), 18.0 / 430.0), "Event category slots must place future events independently of their event id.")
 	var house := {"archetype_id": "house"}
 	DeveloperPlacementStoreScript.save_position(house, "object_slot_positions", "home_sleep:bed", Vector2(42.0, 210.0))
 	var spawned_house := {"archetype_id": "house", "kind": "home", "layout": {}}
@@ -143,6 +167,8 @@ func _check_canvas_authoring_contract() -> void:
 	canvas.set_developer_placement_mode(true)
 	canvas.set_selected_object("game:slot", false)
 	_check(str(canvas.call("_developer_object_id_at_local_position", Vector2(459.0, 330.0))) == "game:slot", "Every rendered object must be directly selectable in developer mode.")
+	canvas.call("_update_developer_placement_preview", Vector2(8.0, 8.0))
+	_check(bool(canvas.developer_placement_snapshot().get("valid", false)), "Every in-bounds location must be saveable even when it has no classified physical surface.")
 	canvas.call("_update_developer_placement_preview", Vector2(410.0, 294.0))
 	var snapshot: Dictionary = canvas.developer_placement_snapshot()
 	_check(bool(snapshot.get("enabled", false)) and bool(snapshot.get("pending", false)), "Canvas must expose a live developer placement preview.")
@@ -155,6 +181,20 @@ func _check_canvas_authoring_contract() -> void:
 		"stable_object_id": "bar_darts_league_night_league_captain",
 	})
 	_check(str(scenario_identity.get("field", "")) == "scenario_object_slot_positions" and str(scenario_identity.get("slot_id", "")) == "bar_darts_league_night_league_captain", "Scenario additions must retain their owner-scoped stable identity.")
+	var item_category_identity: Dictionary = canvas.call("_developer_placement_identity", {
+		"id": "item:any_future_stock",
+		"interaction_type": "item",
+		"layout_spot_field": "item_spots",
+		"layout_index": 2,
+	})
+	_check(str(item_category_identity.get("field", "")) == "category_slot_positions" and str(item_category_identity.get("slot_id", "")) == "item_spots:2", "Item placement must author its reusable room-category slot rather than a single item id.")
+	var event_category_identity: Dictionary = canvas.call("_developer_placement_identity", {
+		"id": "event:any_future_event",
+		"interaction_type": "event",
+		"layout_spot_field": "event_spots",
+		"layout_index": 1,
+	})
+	_check(str(event_category_identity.get("field", "")) == "category_slot_positions" and str(event_category_identity.get("slot_id", "")) == "event_spots:1", "Event placement must author its reusable room-category slot rather than a single event id.")
 	canvas.call("_lock_developer_placement")
 	_check(locked_request.get("position", Vector2.ZERO) == Vector2(410.0, 294.0), "Lock must emit the exact board-space position.")
 	var locked_live_rect: Rect2 = canvas.call("_developer_edit_rect_for_object", canvas.call("_scene_object", "game:slot"))

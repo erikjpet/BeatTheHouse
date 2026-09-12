@@ -32,6 +32,62 @@
         ]
       }
     },
+    "corner_store": {
+      "category_slot_positions": {
+        "event_spots:0": [
+          493.0,
+          67.0
+        ],
+        "event_spots:1": [
+          485.0,
+          140.0
+        ],
+        "event_spots:2": [
+          332.0,
+          144.0
+        ],
+        "event_spots:3": [
+          648.0,
+          329.0
+        ],
+        "item_spots:1": [
+          189.0,
+          144.0
+        ],
+        "item_spots:2": [
+          190.0,
+          78.0
+        ]
+      },
+      "object_slot_positions": {
+        "game:coin_pusher": [
+          25.0,
+          223.0
+        ],
+        "lender:the_crew": [
+          37.0,
+          342.0
+        ],
+        "numbers:book": [
+          766.0,
+          226.0
+        ],
+        "service:house_drink": [
+          641.0,
+          145.0
+        ],
+        "shopkeeper:merchant": [
+          413.0,
+          137.0
+        ]
+      },
+      "scenario_object_slot_positions": {
+        "corner_store_dead_shift_exit": [
+          690.0,
+          330.0
+        ]
+      }
+    },
     "house": {
       "object_slot_positions": {
         "home_container:trunk_01": [
@@ -45,6 +101,44 @@
         "home_storage:place": [
           320.0,
           293.0
+        ]
+      }
+    },
+    "motel": {
+      "object_slot_positions": {
+        "event:parking_lot_tip": [
+          33.0,
+          345.0
+        ],
+        "event:scenario_weekly_rates_soft_terms": [
+          330.0,
+          347.0
+        ],
+        "event:town_rumor_staff": [
+          211.0,
+          341.0
+        ],
+        "lender:brother_in_law": [
+          628.0,
+          281.0
+        ],
+        "lender:motel_friend": [
+          115.0,
+          357.0
+        ],
+        "shopkeeper:merchant": [
+          336.0,
+          349.0
+        ],
+        "travel:leave": [
+          793.0,
+          273.0
+        ]
+      },
+      "scenario_object_slot_positions": {
+        "motel_weekly_rates_landlord": [
+          30.0,
+          328.0
         ]
       }
     }

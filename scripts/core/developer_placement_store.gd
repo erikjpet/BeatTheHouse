@@ -11,6 +11,11 @@ const USER_PATH := "user://developer_environment_placements.json"
 const USER_PATH_ENV := "BTH_DEVELOPER_PLACEMENT_PATH"
 const PROJECT_PATH_ENV := "BTH_PROJECT_PLACEMENT_PATH"
 const PersistencePathsScript := preload("res://scripts/core/persistence_paths.gd")
+const POSITION_FIELDS := [
+	"object_slot_positions",
+	"scenario_object_slot_positions",
+	"category_slot_positions",
+]
 
 static var _loaded := false
 static var _project_rooms: Dictionary = {}
@@ -32,7 +37,7 @@ static func slot_overrides(environment: Dictionary, field: String) -> Dictionary
 
 
 static func save_position(environment: Dictionary, field: String, object_id: String, position: Vector2) -> Dictionary:
-	if field not in ["object_slot_positions", "scenario_object_slot_positions"]:
+	if field not in POSITION_FIELDS:
 		return {"ok": false, "error": "Unsupported placement collection."}
 	var key := room_key(environment)
 	var clean_id := object_id.strip_edges()
@@ -81,7 +86,7 @@ static func promote_user_overrides() -> Dictionary:
 		var key := str(key_value)
 		var room := _dict(merged.get(key, {})).duplicate(true)
 		var authored_room := _dict(_user_rooms.get(key, {}))
-		for field in ["object_slot_positions", "scenario_object_slot_positions"]:
+		for field in POSITION_FIELDS:
 			var slots := _dict(room.get(field, {})).duplicate(true)
 			slots.merge(_dict(authored_room.get(field, {})), true)
 			if not slots.is_empty():

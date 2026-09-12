@@ -501,6 +501,8 @@ static func make_interactable_object(source: Dictionary, selection: Dictionary) 
 		"non_color_state": str(source.get("non_color_state", "")),
 		"safe_exit": bool(source.get("safe_exit", false)),
 		"focus_order": maxi(0, int(source.get("focus_order", 0))),
+		"layout_index": maxi(0, int(source.get("layout_index", 0))),
+		"layout_spot_field": str(source.get("layout_spot_field", "")),
 		"role": str(source.get("role", "")),
 		"state": str(source.get("state", "")),
 		"appearance": str(source.get("appearance", "")),
@@ -760,6 +762,8 @@ static func vector2_from_dict(value: Variant, fallback: Vector2 = Vector2.ZERO) 
 
 static func _object_with_rect(source: Dictionary, selection: Dictionary, layout: Dictionary, index: int) -> Dictionary:
 	var object_data := source.duplicate(false)
+	object_data["layout_index"] = index
+	object_data["layout_spot_field"] = layout_spot_field_name(str(object_data.get("object_type", "")))
 	object_data["focus_rect"] = interaction_rect_for_object(
 		str(object_data.get("object_id", "")),
 		str(object_data.get("object_type", "")),

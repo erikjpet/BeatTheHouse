@@ -209,7 +209,8 @@ static func surface_map_by_id(archetype_id: String, layer_id: String = "") -> Di
 static func _with_developer_slots(environment: Dictionary, surface_data: Dictionary) -> Dictionary:
 	var base_overrides := DeveloperPlacementStoreScript.slot_overrides(environment, "object_slot_positions")
 	var scenario_overrides := DeveloperPlacementStoreScript.slot_overrides(environment, "scenario_object_slot_positions")
-	if base_overrides.is_empty() and scenario_overrides.is_empty():
+	var category_overrides := DeveloperPlacementStoreScript.slot_overrides(environment, "category_slot_positions")
+	if base_overrides.is_empty() and scenario_overrides.is_empty() and category_overrides.is_empty():
 		return surface_data
 	var result := surface_data.duplicate(true)
 	for field in ["object_slot_positions", "scenario_object_slot_positions"]:
@@ -219,6 +220,12 @@ static func _with_developer_slots(environment: Dictionary, surface_data: Diction
 		var slots := _dict(result.get(field, {})).duplicate(true)
 		slots.merge(overrides, true)
 		result[field] = slots
+	# These parallel maps retain provenance. The generated-layout pass uses them
+	# to distinguish deliberate free placement from legacy authored coordinates
+	# that still need physical-surface recovery.
+	result["developer_object_slot_positions"] = base_overrides.duplicate(true)
+	result["developer_scenario_object_slot_positions"] = scenario_overrides.duplicate(true)
+	result["developer_category_slot_positions"] = category_overrides.duplicate(true)
 	return result
 
 

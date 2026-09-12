@@ -19,6 +19,7 @@ const DrunkDistortionOverlayScript := preload("res://scripts/ui/drunk_distortion
 const HeatFeedbackVisualsScript := preload("res://scripts/ui/heat_feedback_visuals.gd")
 const TableGameVisualsScript := preload("res://scripts/games/table_game_visuals.gd")
 const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
+const CATEGORY_AUTHORED_TYPES := ["event", "item"]
 
 const C_DARK := VisualStyleScript.DARK
 const C_DARK_2 := VisualStyleScript.DARK_2
@@ -252,7 +253,7 @@ func _ensure_developer_placement_panel() -> void:
 	stack.add_child(actions)
 	developer_placement_lock_button = Button.new()
 	developer_placement_lock_button.text = "Lock"
-	developer_placement_lock_button.tooltip_text = "Save this exact room/object position."
+	developer_placement_lock_button.tooltip_text = "Save this room position. Items and events author reusable category slots."
 	developer_placement_lock_button.pressed.connect(_lock_developer_placement)
 	actions.add_child(developer_placement_lock_button)
 	var cancel_button := Button.new()
@@ -288,16 +289,19 @@ func _update_developer_placement_panel() -> void:
 	var identity := _developer_placement_identity(object_data)
 	var status_text := "unchanged"
 	if developer_placement_pending_rect.has_area():
-		status_text = "valid on %s" % developer_placement_surface_id if developer_placement_valid else "invalid surface"
+		status_text = "on %s" % developer_placement_surface_id if not developer_placement_surface_id.is_empty() else "free placement"
 		if not developer_placement_overlap_ids.is_empty():
 			var shown_overlaps := developer_placement_overlap_ids.slice(0, mini(3, developer_placement_overlap_ids.size()))
 			status_text += "; overlaps %s" % ", ".join(shown_overlaps)
 			if developer_placement_overlap_ids.size() > shown_overlaps.size():
 				status_text += " +%d" % (developer_placement_overlap_ids.size() - shown_overlaps.size())
+	var target_label := str(identity.get("slot_id", selected_object_id))
+	if not str(identity.get("category", "")).is_empty():
+		target_label = "%s category slot %d" % [str(identity.get("category", "")).capitalize(), int(identity.get("category_index", 0)) + 1]
 	developer_placement_label.text = "%s | %s\n%s | %s" % [
 		str(foundation_snapshot.get("archetype_id", environment_id)),
 		str(foundation_snapshot.get("current_layer_id", foundation_snapshot.get("layer_id", "main"))),
-		str(identity.get("slot_id", selected_object_id)),
+		target_label,
 		status_text,
 	]
 	developer_placement_lock_button.disabled = not developer_placement_pending_rect.has_area() or not developer_placement_valid
@@ -306,6 +310,18 @@ func _update_developer_placement_panel() -> void:
 
 func _developer_placement_identity(object_data: Dictionary) -> Dictionary:
 	var object_id := str(object_data.get("id", "")).strip_edges()
+	var interaction_type := str(object_data.get("interaction_type", object_data.get("type", ""))).strip_edges()
+	var category_spot_field := str(object_data.get("layout_spot_field", "")).strip_edges()
+	if interaction_type in CATEGORY_AUTHORED_TYPES and not category_spot_field.is_empty():
+		var category_index := maxi(0, int(object_data.get("layout_index", 0)))
+		return {
+			"field": "category_slot_positions",
+			"slot_id": "%s:%d" % [category_spot_field, category_index],
+			"owner_namespace": "category",
+			"stable_object_id": interaction_type,
+			"category": interaction_type,
+			"category_index": category_index,
+		}
 	var owner_namespace := str(object_data.get("owner_namespace", "")).strip_edges()
 	var stable_object_id := str(object_data.get("stable_object_id", "")).strip_edges()
 	var dynamic_object := object_id.contains("::")
@@ -343,6 +359,8 @@ func _developer_placement_request() -> Dictionary:
 		"size": _developer_edit_rect_for_object(object_data).size,
 		"placement_class": placement_class,
 		"surface_id": developer_placement_surface_id,
+		"category": str(identity.get("category", "")),
+		"category_index": int(identity.get("category_index", -1)),
 	}
 
 
@@ -873,7 +891,10 @@ func _validate_developer_placement_preview() -> void:
 		placement_class = EnvironmentPlacementScript.classify(object_data, str(object_data.get("interaction_type", object_data.get("type", ""))), selected_object_id, str(object_data.get("prop", object_data.get("icon_key", ""))))
 	var environment := _copy_dictionary(foundation_snapshot)
 	var support := EnvironmentPlacementScript.support_for_rect(environment, placement_class, developer_placement_pending_rect)
-	developer_placement_valid = not support.is_empty()
+	# Developer placement is direct composition authoring. Physical surfaces and
+	# overlaps remain useful diagnostics, but they never veto an intentional
+	# in-bounds coordinate selected by the owner.
+	developer_placement_valid = Rect2(Vector2.ZERO, Vector2(BOARD_SIZE)).encloses(developer_placement_pending_rect)
 	developer_placement_surface_id = str(support.get("surface_id", ""))
 	for other_value in _active_scene_objects():
 		var other := _copy_dictionary(other_value)
@@ -2899,6 +2920,8 @@ func _objects_from_interactable_records(records: Array) -> Array:
 			"z_order": int(record.get("z_order", 0)),
 			"z_order_explicit": bool(record.get("z_order_explicit", record.has("z_order"))),
 			"focus_order": maxi(0, int(record.get("focus_order", 0))),
+			"layout_index": maxi(0, int(record.get("layout_index", 0))),
+			"layout_spot_field": str(record.get("layout_spot_field", "")),
 			"placement_class": str(record.get("placement_class", "")),
 			"contact": str(record.get("contact", "")),
 		}

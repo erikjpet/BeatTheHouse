@@ -499,12 +499,14 @@ static func _resolve_visual(
 		var authored_rect := _clamp_inside_board(Rect2(center - size * 0.5, size))
 		var surface_map := EnvironmentPlacementScript.surface_map(environment)
 		var scenario_slots := _dict(surface_map.get("scenario_object_slot_positions", {}))
+		var developer_scenario_slots := _dict(surface_map.get("developer_scenario_object_slot_positions", {}))
 		var stable_identity := identity.trim_prefix("scenario::")
 		var slot_values := _array(scenario_slots.get(stable_identity, scenario_slots.get(identity, [])))
 		if slot_values.size() >= 2:
 			authored_rect.position = Vector2(float(slot_values[0]), float(slot_values[1]))
+		var manually_placed := developer_scenario_slots.has(stable_identity) or developer_scenario_slots.has(identity)
 		var zone_constraint := _zone_rect(environment, zone_id) if anchor_id.is_empty() else Rect2()
-		var grounded := EnvironmentPlacementScript.authored_or_local_rect(environment, placement_class, authored_rect)
+		var grounded := {"rect": _clamp_inside_board(authored_rect), "surface_id": "developer_free", "adjusted": false} if manually_placed else EnvironmentPlacementScript.authored_or_local_rect(environment, placement_class, authored_rect)
 		if bool(grounded.get("adjusted", false)) and zone_constraint.has_area():
 			zone_constraint = Rect2()
 			zone_surface_adjusted = true
@@ -514,7 +516,7 @@ static func _resolve_visual(
 		# The zone selects the preferred physical surface. Collision displacement
 		# may use another surface of the same class (for example the other counter
 		# or doorway), but can never leave the class-valid candidate set.
-		placement = _collision_safe_rect(identity, authored_rect, occupied, placement_label, forbidden_lane, environment, placement_class, Rect2(), excluded_rect_keys)
+		placement = {"rect": authored_rect, "adjusted": false, "colliding": false} if manually_placed else _collision_safe_rect(identity, authored_rect, occupied, placement_label, forbidden_lane, environment, placement_class, Rect2(), excluded_rect_keys)
 		if bool(placement.get("colliding", true)):
 			errors.append("Scenario visual %s class %s cannot resolve both normal and expanded small-screen geometry on a valid room surface: %s." % [identity, placement_class, str(placement.get("error", "all class-valid candidates collide"))])
 			return {}

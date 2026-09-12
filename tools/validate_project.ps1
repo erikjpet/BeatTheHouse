@@ -51,6 +51,7 @@ $requiredFiles = @(
     "scripts/core/run_state.gd",
     "scripts/core/environment_instance.gd",
     "scripts/core/environment_placement.gd",
+    "scripts/core/developer_placement_store.gd",
     "scripts/core/game_module.gd",
     "scripts/core/item_effect.gd",
     "scripts/core/event_module.gd",
@@ -86,6 +87,7 @@ $requiredFiles = @(
     "scripts/tests/foundation/crew_ignored_golden_probe.gd",
     "scripts/tests/fixtures/crew06_5_ignored_run_baseline.json",
     "scripts/tests/foundation/check_scratch_tickets.gd",
+    "scripts/tests/developer_placement_mode_check.gd",
     "scripts/tests/ui_scene/compile_run_menu_and_game_flows.gd",
     "tools/check_godot.ps1",
     "tools/split_test_runner_helpers.ps1",
@@ -109,6 +111,7 @@ $requiredFiles = @(
     "data/art/attribute_glyphs.json",
     "data/environments/archetypes.json",
     "data/environments/placement_surfaces.json",
+    "data/environments/developer_placement_overrides.json",
     "data/environments/scenario_sequences/env06_7_shops_streets.json",
     "data/items/items.json",
     "data/events/events.json",
@@ -425,6 +428,7 @@ $objectJsonFiles = @(
     "data/games/scratch_ticket_regions.json",
     "data/environments/scenarios.json",
     "data/environments/placement_surfaces.json",
+    "data/environments/developer_placement_overrides.json",
     "data/story/character_chains.json"
 )
 $objectJsonDirectories = @(
@@ -460,6 +464,45 @@ foreach ($jsonFile in $jsonFiles) {
     catch {
         $failures.Add("Invalid JSON in $($jsonFile.FullName): $($_.Exception.Message)")
     }
+}
+
+$placementOverridePath = Join-Path $root "data/environments/developer_placement_overrides.json"
+try {
+    $placementOverrides = Get-Content -LiteralPath $placementOverridePath -Raw | ConvertFrom-Json
+    if (-not (Test-JsonObjectRoot $placementOverrides) -or [int]$placementOverrides.schema_version -ne 1 -or -not (Test-JsonObjectRoot $placementOverrides.rooms)) {
+        $failures.Add("Developer placement overrides require schema_version 1 and an object-valued rooms collection.")
+    }
+    else {
+        $allowedPlacementFields = @("object_slot_positions", "scenario_object_slot_positions", "category_slot_positions")
+        foreach ($roomProperty in $placementOverrides.rooms.PSObject.Properties) {
+            if (-not (Test-JsonObjectRoot $roomProperty.Value)) {
+                $failures.Add("Developer placement room must be an object: $($roomProperty.Name)")
+                continue
+            }
+            foreach ($fieldProperty in $roomProperty.Value.PSObject.Properties) {
+                if ($allowedPlacementFields -notcontains $fieldProperty.Name -or -not (Test-JsonObjectRoot $fieldProperty.Value)) {
+                    $failures.Add("Developer placement room $($roomProperty.Name) has an unsupported placement collection: $($fieldProperty.Name)")
+                    continue
+                }
+                foreach ($slotProperty in $fieldProperty.Value.PSObject.Properties) {
+                    $coordinates = @($slotProperty.Value)
+                    if ($coordinates.Count -ne 2) {
+                        $failures.Add("Developer placement $($roomProperty.Name)/$($fieldProperty.Name)/$($slotProperty.Name) must contain exactly two coordinates.")
+                        continue
+                    }
+                    foreach ($coordinate in $coordinates) {
+                        $number = 0.0
+                        if (-not [double]::TryParse([string]$coordinate, [ref]$number) -or [double]::IsNaN($number) -or [double]::IsInfinity($number)) {
+                            $failures.Add("Developer placement $($roomProperty.Name)/$($fieldProperty.Name)/$($slotProperty.Name) contains a non-finite coordinate.")
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+catch {
+    $failures.Add("Developer placement override schema validation failed: $($_.Exception.Message)")
 }
 
 $readme = Get-Content -LiteralPath (Join-Path $root "README.md") -Raw
