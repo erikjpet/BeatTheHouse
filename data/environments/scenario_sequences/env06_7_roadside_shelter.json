@@ -11168,7 +11168,7 @@
 
                     },
                     "enabled": true,
-                    "label": "Road barricade stack",
+                    "label": "Barricade stack",
                     "role": "obstacle",
                     "state": "arrival",
                     "visible": true,
@@ -11894,7 +11894,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "ba6f3c2c16c387c5eb6a89829d426ecd3d5557c5e742cbab87acb578ea5cb348"
+        "sequence_signature": "cd1b1902cb63817abe994e9f59daa0f20854252b85c33c0d9e22b996e7c7f2a5"
       }
     },
     {
