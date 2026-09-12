@@ -7,7 +7,7 @@ function Assert-Contains([string]$Needle, [string]$Message) {
 
 Assert-Contains '$candidateAddon = Join-Path $root "addons\coin_pusher_native"' "Terminal soak must source host libraries from the exact candidate worktree."
 Assert-Contains 'coin_pusher_native.gdextension.template' "Terminal soak must derive versioned host-library names from the candidate descriptor."
-Assert-Contains "^windows\." "Terminal soak must select both Windows descriptor entries."
+Assert-Contains "^windows\.(debug|release)\." "Terminal soak must select the descriptor's Windows debug and release keys."
 Assert-Contains '$requiredHostLibraries.Count -ne 2' "Terminal soak must fail closed on incomplete or ambiguous Windows library declarations."
 if ($launcher.Contains('"bin\coin_pusher_native.windows.template_debug.x86_64.nothreads.dll"') -or $launcher.Contains('"bin\coin_pusher_native.windows.template_release.x86_64.nothreads.dll"')) {
     throw "Terminal soak must not hardcode obsolete unversioned host-library names."
