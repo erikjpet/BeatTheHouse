@@ -903,19 +903,43 @@ func _lock_developer_placement() -> void:
 	var request := _developer_placement_request()
 	clear_developer_placement_preview()
 	developer_placement_lock_requested.emit(request)
+	# Lock handlers rebuild the authoritative room synchronously. Keep the exact
+	# position the owner just accepted visible even if that rebuild had a stale
+	# interaction projection cached before the placement was written.
+	_apply_saved_developer_placement(request)
 
 
 func _save_developer_placement_to_project() -> void:
 	# This is intentionally one gesture. Previously this button promoted only an
 	# older locked value, so a newly dragged preview disappeared on the next room
 	# refresh even though the player had just asked to save it to the project.
+	var saved_request: Dictionary = {}
 	if developer_placement_pending_rect.has_area():
 		if not developer_placement_valid:
 			return
-		var request := _developer_placement_request()
+		saved_request = _developer_placement_request()
 		clear_developer_placement_preview()
-		developer_placement_lock_requested.emit(request)
+		developer_placement_lock_requested.emit(saved_request)
+		_apply_saved_developer_placement(saved_request)
 	developer_placement_promote_requested.emit()
+
+
+func _apply_saved_developer_placement(request: Dictionary) -> void:
+	var object_id := str(request.get("object_id", "")).strip_edges()
+	if object_id.is_empty() or object_id != selected_object_id:
+		return
+	var object_data := _scene_object(object_id)
+	if object_data.is_empty():
+		return
+	var position_value: Variant = request.get("position", Vector2.ZERO)
+	if typeof(position_value) != TYPE_VECTOR2:
+		return
+	var size_value: Variant = request.get("size", Vector2.ZERO)
+	var size: Vector2 = size_value if typeof(size_value) == TYPE_VECTOR2 else Vector2.ZERO
+	if size.x <= 0.0 or size.y <= 0.0:
+		size = _developer_edit_rect_for_object(object_data).size
+	_set_developer_preview_object_rect(Rect2(position_value as Vector2, size))
+	queue_redraw()
 
 
 func _reset_developer_placement() -> void:

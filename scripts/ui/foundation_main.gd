@@ -14481,6 +14481,7 @@ func _interactable_environment_cache_token(environment: Dictionary) -> String:
 		environment.has("scenario_sequence_projection"),
 		str(environment.get("current_layer_id", "")),
 		str(environment.get("kind", "")),
+		_copy_dict(environment.get("layout", {})).get("object_rects", {}),
 		environment.get("game_ids", []),
 		environment.get("event_ids", []),
 		environment.get("resolved_event_ids", []),
@@ -15750,6 +15751,11 @@ func _on_developer_placement_promote_requested() -> void:
 
 
 func _refresh_developer_authored_environment() -> Dictionary:
+	# Placement is interaction geometry. Discard the projection cached for the
+	# pre-save layout before rebuilding or the canvas receives its old rect until
+	# an unrelated run-state change invalidates the cache.
+	interactable_object_view_cache_valid = false
+	interactable_object_view_cache_key = ""
 	if run_state == null or run_state.current_environment.is_empty():
 		_render_foundation_snapshots()
 		return {"ok": true}

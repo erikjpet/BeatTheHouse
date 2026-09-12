@@ -1,14 +1,50 @@
 {
   "rooms": {
+    "apartment": {
+      "object_slot_positions": {
+        "home_container:meta_bag_01": [
+          350.0,
+          298.0
+        ],
+        "home_container:meta_trunk_02": [
+          448.0,
+          297.0
+        ],
+        "home_sleep:bed": [
+          70.0,
+          222.0
+        ],
+        "item:cheap_sunglasses": [
+          328.0,
+          192.0
+        ],
+        "item:lucky_keychain": [
+          333.0,
+          192.0
+        ],
+        "item:payment_calendar": [
+          442.0,
+          192.0
+        ],
+        "item:scratch_pad": [
+          441.0,
+          192.0
+        ]
+      }
+    },
     "house": {
       "object_slot_positions": {
         "home_container:trunk_01": [
-          153.0,
-          293.0
+          231.0,
+          297.0
         ],
         "home_sleep:bed": [
           42.0,
           210.0
+        ],
+        "home_storage:place": [
+          320.0,
+          293.0
         ]
       }
     }

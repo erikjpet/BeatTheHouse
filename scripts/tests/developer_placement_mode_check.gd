@@ -125,6 +125,7 @@ func _check_canvas_authoring_contract() -> void:
 	await process_frame
 	canvas.developer_placement_lock_requested.connect(_capture_lock_request)
 	canvas.developer_placement_lock_requested.connect(_persist_canvas_lock_request)
+	canvas.developer_placement_lock_requested.connect(_simulate_stale_placement_refresh.bind(canvas))
 	canvas.developer_placement_promote_requested.connect(_promote_canvas_locks)
 	canvas.render_environment_snapshot({
 		"archetype_id": "bar",
@@ -156,6 +157,8 @@ func _check_canvas_authoring_contract() -> void:
 	_check(str(scenario_identity.get("field", "")) == "scenario_object_slot_positions" and str(scenario_identity.get("slot_id", "")) == "bar_darts_league_night_league_captain", "Scenario additions must retain their owner-scoped stable identity.")
 	canvas.call("_lock_developer_placement")
 	_check(locked_request.get("position", Vector2.ZERO) == Vector2(410.0, 294.0), "Lock must emit the exact board-space position.")
+	var locked_live_rect: Rect2 = canvas.call("_developer_edit_rect_for_object", canvas.call("_scene_object", "game:slot"))
+	_check(locked_live_rect.position.is_equal_approx(Vector2(410.0, 294.0)), "Lock must keep the accepted position visible across its synchronous room refresh (got %s)." % locked_live_rect.position)
 	persist_canvas_locks = true
 	canvas.call("_update_developer_placement_preview", Vector2(420.0, 294.0))
 	canvas.call("_save_developer_placement_to_project")
@@ -164,6 +167,8 @@ func _check_canvas_authoring_contract() -> void:
 	var project_bar: Dictionary = project_rooms.get("bar", {})
 	var project_slots: Dictionary = project_bar.get("object_slot_positions", {})
 	_check(project_slots.get("game:slot", []) == [420.0, 294.0], "Save to Project must lock the current pending position before promotion.")
+	var saved_live_rect: Rect2 = canvas.call("_developer_edit_rect_for_object", canvas.call("_scene_object", "game:slot"))
+	_check(saved_live_rect.position.is_equal_approx(Vector2(420.0, 294.0)), "Save to Project must leave the object at its newly saved position without a game reset (got %s)." % saved_live_rect.position)
 	persist_canvas_locks = false
 	canvas.set_developer_placement_mode(false)
 	_check(not bool(canvas.developer_placement_snapshot().get("enabled", true)), "Disabling developer mode must restore normal input mode.")
@@ -188,6 +193,24 @@ func _persist_canvas_lock_request(request: Dictionary) -> void:
 
 func _promote_canvas_locks() -> void:
 	DeveloperPlacementStoreScript.promote_user_overrides()
+
+
+func _simulate_stale_placement_refresh(_request: Dictionary, canvas: PixelSceneCanvas) -> void:
+	# Reproduce the original host failure: saving synchronously refreshed a cached
+	# pre-drag projection and made the object visibly snap back.
+	canvas.render_environment_snapshot({
+		"archetype_id": "bar",
+		"display_name": "Bar",
+		"interactable_objects": [{
+			"object_id": "game:slot",
+			"object_type": "game",
+			"label": "Slot Machine",
+			"owner_namespace": "game",
+			"stable_object_id": "game:slot",
+			"placement_class": "floor_fixture",
+			"normalized_rect": {"x": 400.0 / 900.0, "y": 294.0 / 430.0, "w": 118.0 / 900.0, "h": 72.0 / 430.0},
+		}],
+	})
 
 
 func _check(condition: bool, message: String) -> void:
