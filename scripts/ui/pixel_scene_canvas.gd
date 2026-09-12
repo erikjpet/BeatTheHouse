@@ -270,8 +270,8 @@ func _ensure_developer_placement_panel() -> void:
 	var promote_button := Button.new()
 	promote_button.text = "Save to Project"
 	promote_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	promote_button.tooltip_text = "Promote all locally locked positions into the placement file shipped by future builds."
-	promote_button.pressed.connect(developer_placement_promote_requested.emit)
+	promote_button.tooltip_text = "Lock the pending position and promote all locked positions into future builds."
+	promote_button.pressed.connect(_save_developer_placement_to_project)
 	project_actions.add_child(promote_button)
 	_update_developer_placement_panel()
 
@@ -903,6 +903,19 @@ func _lock_developer_placement() -> void:
 	var request := _developer_placement_request()
 	clear_developer_placement_preview()
 	developer_placement_lock_requested.emit(request)
+
+
+func _save_developer_placement_to_project() -> void:
+	# This is intentionally one gesture. Previously this button promoted only an
+	# older locked value, so a newly dragged preview disappeared on the next room
+	# refresh even though the player had just asked to save it to the project.
+	if developer_placement_pending_rect.has_area():
+		if not developer_placement_valid:
+			return
+		var request := _developer_placement_request()
+		clear_developer_placement_preview()
+		developer_placement_lock_requested.emit(request)
+	developer_placement_promote_requested.emit()
 
 
 func _reset_developer_placement() -> void:

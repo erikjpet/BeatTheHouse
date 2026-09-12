@@ -9,6 +9,7 @@ const UserSettingsScript := preload("res://scripts/core/user_settings.gd")
 
 var failures: Array[String] = []
 var locked_request: Dictionary = {}
+var persist_canvas_locks := false
 
 
 func _init() -> void:
@@ -84,6 +85,12 @@ func _check_store_scope_and_promotion(user_path: String, project_path: String) -
 	_check(is_equal_approx(float(spawned_rect.get("x", -1.0)), 410.0 / 900.0) and is_equal_approx(float(spawned_rect.get("y", -1.0)), 294.0 / 430.0), "Every spawn must consume the locked board-space position.")
 	var corner_slots: Dictionary = EnvironmentPlacementScript.surface_map(corner).get("object_slot_positions", {})
 	_check(corner_slots.get("game:slot", []) != [410.0, 294.0], "An override must not leak to another environment.")
+	var house := {"archetype_id": "house"}
+	DeveloperPlacementStoreScript.save_position(house, "object_slot_positions", "home_sleep:bed", Vector2(42.0, 210.0))
+	var spawned_house := {"archetype_id": "house", "kind": "home", "layout": {}}
+	var house_layout := EnvironmentInstanceScript.ensure_generated_layout(spawned_house)
+	var bed_rect: Dictionary = (house_layout.get("object_rects", {}) as Dictionary).get("home_sleep:bed", {})
+	_check(is_equal_approx(float(bed_rect.get("x", -1.0)), 42.0 / 900.0) and is_equal_approx(float(bed_rect.get("y", -1.0)), 210.0 / 430.0), "Home objects must respawn at their exact locked position.")
 	var club_layer := {"archetype_id": "small_underground_casino", "current_layer_id": "club"}
 	var casino_layer := {"archetype_id": "small_underground_casino", "current_layer_id": "casino"}
 	DeveloperPlacementStoreScript.save_position(club_layer, "object_slot_positions", "travel:leave", Vector2(12.0, 300.0))
@@ -117,6 +124,8 @@ func _check_canvas_authoring_contract() -> void:
 	root.add_child(canvas)
 	await process_frame
 	canvas.developer_placement_lock_requested.connect(_capture_lock_request)
+	canvas.developer_placement_lock_requested.connect(_persist_canvas_lock_request)
+	canvas.developer_placement_promote_requested.connect(_promote_canvas_locks)
 	canvas.render_environment_snapshot({
 		"archetype_id": "bar",
 		"display_name": "Bar",
@@ -147,6 +156,15 @@ func _check_canvas_authoring_contract() -> void:
 	_check(str(scenario_identity.get("field", "")) == "scenario_object_slot_positions" and str(scenario_identity.get("slot_id", "")) == "bar_darts_league_night_league_captain", "Scenario additions must retain their owner-scoped stable identity.")
 	canvas.call("_lock_developer_placement")
 	_check(locked_request.get("position", Vector2.ZERO) == Vector2(410.0, 294.0), "Lock must emit the exact board-space position.")
+	persist_canvas_locks = true
+	canvas.call("_update_developer_placement_preview", Vector2(420.0, 294.0))
+	canvas.call("_save_developer_placement_to_project")
+	var project_data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(DeveloperPlacementStoreScript.project_path()))
+	var project_rooms: Dictionary = project_data.get("rooms", {})
+	var project_bar: Dictionary = project_rooms.get("bar", {})
+	var project_slots: Dictionary = project_bar.get("object_slot_positions", {})
+	_check(project_slots.get("game:slot", []) == [420.0, 294.0], "Save to Project must lock the current pending position before promotion.")
+	persist_canvas_locks = false
 	canvas.set_developer_placement_mode(false)
 	_check(not bool(canvas.developer_placement_snapshot().get("enabled", true)), "Disabling developer mode must restore normal input mode.")
 	canvas.queue_free()
@@ -155,6 +173,21 @@ func _check_canvas_authoring_contract() -> void:
 
 func _capture_lock_request(request: Dictionary) -> void:
 	locked_request = request.duplicate(true)
+
+
+func _persist_canvas_lock_request(request: Dictionary) -> void:
+	if not persist_canvas_locks:
+		return
+	DeveloperPlacementStoreScript.save_position(
+		request.get("environment", {}),
+		str(request.get("field", "object_slot_positions")),
+		str(request.get("slot_id", "")),
+		request.get("position", Vector2.ZERO)
+	)
+
+
+func _promote_canvas_locks() -> void:
+	DeveloperPlacementStoreScript.promote_user_overrides()
 
 
 func _check(condition: bool, message: String) -> void:

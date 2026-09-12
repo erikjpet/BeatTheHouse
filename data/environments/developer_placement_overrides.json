@@ -1,4 +1,17 @@
 {
-  "schema_version": 1,
-  "rooms": {}
+  "rooms": {
+    "house": {
+      "object_slot_positions": {
+        "home_container:trunk_01": [
+          153.0,
+          293.0
+        ],
+        "home_sleep:bed": [
+          42.0,
+          210.0
+        ]
+      }
+    }
+  },
+  "schema_version": 1
 }
