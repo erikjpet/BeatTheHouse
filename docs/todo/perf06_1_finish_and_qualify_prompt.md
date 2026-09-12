@@ -306,9 +306,3 @@ low-end, and what is closest to the line.
 Your terminal condition is a committed report that answers "is 0.6 fast enough to
 ship, on every platform we ship to", backed by a green three-profile matrix and
 gates that will catch the next regression without a human noticing it first.
-
-
-
-
-
-

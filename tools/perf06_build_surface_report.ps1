@@ -109,7 +109,9 @@ foreach ($scenario in @($runtime.scenarios)) {
     foreach ($property in $scenario.allocation_copy_counters.PSObject.Properties) { $allocation[$property.Name] = $property.Value }
     $allocation.static_call_root_audit_path = $auditFile
     $allocation.static_call_root_audit_sha256 = $auditHash
-    $passed = $frameMetric.count -gt 0 -and $drawMetric.count -gt 0 -and [bool]$progressEvaluation.passed -and [bool]$livenessEvaluation.passed -and [bool]$budgetEvaluation.passed -and [int64]$allocation.deep_copies -eq 0
+    $idleTimingLivenessAssertion = Get-Perf06IdleTimingLivenessAssertion -Frame $frameMetric -Draw $drawMetric -Liveness $livenessEvaluation -IsIdle (Test-Perf06IdlePhase $surfaceId $phaseId)
+    $allocationCopyAssertion = Get-Perf06AllocationCopyAssertion -Counters $allocation -FrameCount $frameMetric.count -SteadyStateDeepCopiesMaximum ([int64]$budgetTable.policy.steady_state_deep_copies_max)
+    $passed = $frameMetric.count -gt 0 -and $drawMetric.count -gt 0 -and [bool]$progressEvaluation.passed -and [bool]$budgetEvaluation.passed -and [bool]$idleTimingLivenessAssertion.passed -and [bool]$allocationCopyAssertion.passed
     if (-not $passed) { $failures.Add("Phase did not produce complete live evidence: $surfaceId/$phaseId/$Profile") }
     $rows.Add([pscustomobject][ordered]@{
         surface_id = $surfaceId
@@ -121,9 +123,11 @@ foreach ($scenario in @($runtime.scenarios)) {
         frame = $frameMetric
         draw = $drawMetric
         liveness = $livenessEvaluation
+        idle_timing_liveness_assertion = $idleTimingLivenessAssertion
         budget_evaluation = $budgetEvaluation
         progress_evaluation = $progressEvaluation
         allocation_copy_counters = $allocation
+        allocation_copy_assertion = $allocationCopyAssertion
         retained_counters = [ordered]@{ static_memory=$scenario.static_memory_bytes; objects=$scenario.object_count; nodes=$scenario.node_count; orphans=$scenario.orphan_node_count }
         action_evidence = $(if (Has-Property $tags "action_evidence") { $tags.action_evidence } else { $null })
         phase_evidence = $(if (Has-Property $tags "phase_evidence") { $tags.phase_evidence } else { $null })

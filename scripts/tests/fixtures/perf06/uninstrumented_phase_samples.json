@@ -17,5 +17,63 @@
         "audited_call_roots": ["foundation_snapshot"]
       }
     }
+  ],
+  "assertion_rows": [
+    {
+      "id": "good_zero_copy",
+      "frame_count": 120,
+      "expected_pass": true,
+      "allocation_copy_counters": {
+        "allocations": 12,
+        "shallow_copies": 2,
+        "deep_copies": 0,
+        "bytes": 4096,
+        "source": "explicit_instrumented_probe",
+        "scope": "steady_state_frame",
+        "evidence_kind": "explicit_counter"
+      }
+    },
+    {
+      "id": "recurring_deep_copy",
+      "frame_count": 120,
+      "expected_pass": false,
+      "allocation_copy_counters": {
+        "allocations": 120,
+        "shallow_copies": 0,
+        "deep_copies": 120,
+        "bytes": 3912,
+        "source": "slot_bonus_watchdog",
+        "scope": "steady_state_frame",
+        "evidence_kind": "explicit_counter"
+      }
+    },
+    {
+      "id": "negative_allocation_counter",
+      "frame_count": 120,
+      "expected_pass": false,
+      "allocation_copy_counters": {
+        "allocations": -1,
+        "shallow_copies": 0,
+        "deep_copies": 0,
+        "bytes": 0,
+        "source": "hostile_fixture",
+        "scope": "steady_state_frame",
+        "evidence_kind": "explicit_counter"
+      }
+    },
+    {
+      "id": "warmup_scope_masquerading_as_steady",
+      "frame_count": 120,
+      "expected_pass": false,
+      "allocation_copy_counters": {
+        "allocations": 1,
+        "shallow_copies": 0,
+        "deep_copies": 0,
+        "bytes": 64,
+        "source": "hostile_fixture",
+        "scope": "warmup",
+        "evidence_kind": "explicit_counter"
+      }
+    }
   ]
 }

@@ -115,6 +115,10 @@ function Test-PhaseRow($Row) {
         $failures.Add("$label did not meet its published liveness floor: measured=$($Row.liveness.measured) floor=$($Row.liveness.floor).")
     }
     $isIdle = Test-Perf06IdlePhase ([string]$Row.surface_id) ([string]$Row.phase_id)
+    $idlePair = Get-Perf06IdleTimingLivenessAssertion -Frame $Row.frame -Draw $Row.draw -Liveness $Row.liveness -IsIdle $isIdle
+    if (-not [bool]$idlePair.passed) {
+        $failures.Add("$label idle timing and liveness did not pass their inseparable assertion.")
+    }
     if ($isIdle -and ([int]$Row.liveness.floor -le 0 -or -not [string]::IsNullOrWhiteSpace([string]$Row.liveness.zero_reason))) {
         $failures.Add("$label idle phase did not retain the contract-owned positive liveness floor.")
     }
@@ -180,6 +184,10 @@ function Test-PhaseRow($Row) {
         [void](Require-Property $Row.allocation_copy_counters $field "$label allocation_copy_counters")
     }
     $allocation = $Row.allocation_copy_counters
+    $allocationAssertion = Get-Perf06AllocationCopyAssertion -Counters $allocation -FrameCount ([int]$Row.frame.count) -SteadyStateDeepCopiesMaximum ([int64]$budgetTable.policy.steady_state_deep_copies_max)
+    if (-not [bool]$allocationAssertion.passed) {
+        $failures.Add("$label allocation/copy assertion is absent, stale, or failed.")
+    }
     if (-not [bool]$allocation.coverage_complete -or @($allocation.audited_call_roots).Count -eq 0) {
         $failures.Add("$label has empty or incomplete allocation/copy instrumentation coverage.")
     }

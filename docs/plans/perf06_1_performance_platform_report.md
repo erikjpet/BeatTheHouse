@@ -20,7 +20,14 @@ All runbook section 2 gates passed on `c570f2ce` on 2026-09-11. This includes Go
 
 ## Enforcement wiring
 
-Pending Phase 2.
+Completed on 2026-09-11 without changing any product code or published budget. `tools/check_godot.ps1` now runs 13 cheap performance contract stages in both Audit and Full. Smoke and Contract are unchanged. `tools/validate_project.ps1` pins the stage function, both suite registrations, the structural idle timing/liveness contract, and the allocation/copy contract so the wiring cannot disappear silently.
+
+The shared phase assertion rejects idle rows unless sampled frame and draw mean/p95/max values are positive and the same assertion also contains a passing, positive, contract-owned liveness counter and floor. A 0.000 idle draw fixture and a below-floor liveness fixture both fail. The shared allocation/copy assertion records allocation, shallow-copy and deep-copy rates per steady-state frame, rejects invalid counters or non-steady scope, and enforces the unchanged zero steady-state deep-copy policy. Its hostile fixtures reject recurring deep copies, negative counters, and warm-up evidence presented as steady state.
+
+Verification:
+
+- `powershell -ExecutionPolicy Bypass -File tools/validate_project.ps1` — PASS.
+- `powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -Suite Audit -RequireGodot` — PASS in 731.7 seconds, including all 13 new `perf06_audit_*` stages, the permanent 8×55 room finalization gate, Slot Pinball, the 10,000-case Slot deep audit, and Roulette audits. Structured diagnostic report: `.tmp/test_reports/20260911_192001_audit/summary.json`.
 
 ## Reduced-sample dry run
 
