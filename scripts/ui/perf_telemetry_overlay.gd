@@ -754,11 +754,14 @@ func _run_grand_casino_plan() -> void:
 		return
 	run_state.bankroll = maxi(run_state.bankroll, 5000)
 	run_state.narrative_flags["grand_casino_invite"] = true
-	var grand_installed := _install_generated_grand_casino_fixture(run_state)
-	mark_event("grand_casino_fixture_install", grand_installed)
 	run_state.add_suspicion("web_grand_casino_late_probe", 85, "behavior")
 	run_state.narrative_flags["grand_casino_high_limit_access"] = true
 	run_state.narrative_flags["grand_casino_high_limit_access_method"] = "performance_probe"
+	# Suspicion changes late-run Crew standing, which is an input to scenario
+	# semantic placement. Establish all late-run inputs before sealing the room;
+	# mutating them afterward correctly invalidates the proof on refresh.
+	var grand_installed := _install_generated_grand_casino_fixture(run_state)
+	mark_event("grand_casino_fixture_install", grand_installed)
 	app.call("_refresh")
 	_begin_scenario("grand_casino_late_settle", {"surface": "grand_casino", "mode": "late_run_entry"})
 	await _wait_frames(maxi(scenario_frames, 360))
@@ -880,6 +883,11 @@ func _install_generated_grand_casino_fixture(run_state: RunState) -> Dictionary:
 		"installed": installed,
 		"environment_id": str(run_state.current_environment.get("archetype_id", "")),
 		"scenario_id": str(run_state.current_environment.get("scenario_id", "")),
+		"semantic_ready": bool(run_state.current_environment.get("scenario_semantic_ready", false)),
+		"render_snapshot_present": not (run_state.current_environment.get("scenario_render_snapshot", {}) as Dictionary).is_empty() \
+			if typeof(run_state.current_environment.get("scenario_render_snapshot", {})) == TYPE_DICTIONARY else false,
+		"projection_present": not run_state.scenario_sequence_projection().is_empty(),
+		"lifecycle_errors": run_state.current_environment.get("scenario_sequence_lifecycle_errors", []),
 		"selected_scenario_id": str(installed_scenario.get("id", "")),
 		"attempts": attempts,
 	}
