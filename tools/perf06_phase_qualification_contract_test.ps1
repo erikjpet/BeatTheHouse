@@ -100,4 +100,15 @@ foreach ($token in @('liveness.measured -lt [int]$Row.liveness.floor', 'observed
     if (-not $consumer.Contains($token)) { throw "Final consumer lost fail-closed check '$token'." }
 }
 
+$overlay = Get-Content -LiteralPath (Join-Path $root "scripts/ui/perf_telemetry_overlay.gd") -Raw
+foreach ($token in @(
+    'func _slot_perf06_phase_evidence() -> Dictionary:',
+    '"observed": bool(enabled.get("autoplay_active", false))',
+    'and str(prepared_evidence.get("bonus_family", "")) == "pinball"',
+    '"durable_action_count": durable_action_count',
+    'and story_after > story_before'
+)) {
+    if (-not $overlay.Contains($token)) { throw "Performance producer lost retained real-progress evidence '$token'." }
+}
+
 Write-Host "PERF06 PHASE QUALIFICATION CONTRACT PASS native_liveness_floor=$($goodLive.floor) pusher_checks=$(@($goodPusherBudget.checks).Count) zero_idle=rejected"
