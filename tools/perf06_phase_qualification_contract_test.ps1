@@ -36,6 +36,14 @@ $goodLive = Get-Perf06PhaseLivenessEvaluation -Scenario $goodIdle -Platform nati
 if (-not $goodLive.passed -or $goodLive.floor -ne 8 -or $goodLive.measured -ne 8) { throw "Published native 8-per-120 liveness floor did not pass exactly." }
 $frozenIdle = New-Scenario -Redraws 7
 if ((Get-Perf06PhaseLivenessEvaluation -Scenario $frozenIdle -Platform native -BudgetTable $budget).passed) { throw "Below-floor native idle liveness was accepted." }
+$goodIdleFrame = [pscustomobject]@{ count=120; mean_ms=8.0; p95_ms=10.0; max_ms=12.0 }
+$goodIdleDraw = [pscustomobject]@{ count=120; mean_ms=2.0; p95_ms=4.0; max_ms=5.0 }
+$goodIdlePair = Get-Perf06IdleTimingLivenessAssertion -Frame $goodIdleFrame -Draw $goodIdleDraw -Liveness $goodLive -IsIdle $true
+if (-not $goodIdlePair.passed -or -not $goodIdlePair.timing_positive -or -not $goodIdlePair.liveness_positive) { throw "Positive idle timing and liveness did not pass together." }
+$zeroIdleDraw = [pscustomobject]@{ count=120; mean_ms=0.0; p95_ms=0.0; max_ms=0.0 }
+if ((Get-Perf06IdleTimingLivenessAssertion -Frame $goodIdleFrame -Draw $zeroIdleDraw -Liveness $goodLive -IsIdle $true).passed) { throw "A 0.000 idle draw figure passed despite the structural timing/liveness assertion." }
+$frozenLive = Get-Perf06PhaseLivenessEvaluation -Scenario $frozenIdle -Platform native -BudgetTable $budget
+if ((Get-Perf06IdleTimingLivenessAssertion -Frame $goodIdleFrame -Draw $goodIdleDraw -Liveness $frozenLive -IsIdle $true).passed) { throw "Positive idle timing passed with a below-floor liveness counter." }
 $forgedStaticIdle = New-Scenario -Surface slot -Phase idle -Redraws 0 -DrawP95 1.4
 $forgedStaticIdle.tags | Add-Member -NotePropertyName accepted_zero_liveness_reason -NotePropertyValue "No authored idle animation." -Force
 $forgedStaticLive = Get-Perf06PhaseLivenessEvaluation -Scenario $forgedStaticIdle -Platform native -BudgetTable $budget
@@ -80,13 +88,13 @@ if ($nativeLauncher.Contains('passed = $true')) { throw "Native launcher still h
 
 $builder = Get-Content -LiteralPath (Join-Path $PSScriptRoot "perf06_build_surface_report.ps1") -Raw
 if ($builder.Contains('floor=if ($measured -gt 0) { 1 } else { 0 }')) { throw "Surface builder still replaces published liveness floors with one tick." }
-foreach ($token in @("budget_evaluation =", "progress_evaluation =", "liveness = `$livenessEvaluation", "Get-Perf06PhaseBudgetEvaluation", "Get-Perf06PhaseProgressEvaluation")) {
+foreach ($token in @("budget_evaluation =", "progress_evaluation =", "liveness = `$livenessEvaluation", "idle_timing_liveness_assertion = `$idleTimingLivenessAssertion", "Get-Perf06PhaseBudgetEvaluation", "Get-Perf06PhaseProgressEvaluation", "Get-Perf06IdleTimingLivenessAssertion")) {
     if (-not $builder.Contains($token)) { throw "Surface builder lost qualification evidence '$token'." }
 }
 
 $consumer = Get-Content -LiteralPath (Join-Path $PSScriptRoot "perf06_matrix_contract.ps1") -Raw
-foreach ($token in @('liveness.measured -lt [int]$Row.liveness.floor', 'observed -gt [double]$check.maximum', 'budget_evaluation', 'progress_evaluation', 'active phase has no passing retained progress evidence')) {
+foreach ($token in @('liveness.measured -lt [int]$Row.liveness.floor', 'observed -gt [double]$check.maximum', 'budget_evaluation', 'progress_evaluation', 'active phase has no passing retained progress evidence', 'Get-Perf06IdleTimingLivenessAssertion', 'idle timing and liveness did not pass their inseparable assertion')) {
     if (-not $consumer.Contains($token)) { throw "Final consumer lost fail-closed check '$token'." }
 }
 
-Write-Host "PERF06 PHASE QUALIFICATION CONTRACT PASS native_liveness_floor=$($goodLive.floor) pusher_checks=$(@($goodPusherBudget.checks).Count)"
+Write-Host "PERF06 PHASE QUALIFICATION CONTRACT PASS native_liveness_floor=$($goodLive.floor) pusher_checks=$(@($goodPusherBudget.checks).Count) zero_idle=rejected"
