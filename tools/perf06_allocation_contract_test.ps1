@@ -24,6 +24,8 @@ foreach ($row in @($fixture.assertion_rows)) {
     if ([bool]$evaluation.passed -ne [bool]$row.expected_pass) { throw "Allocation assertion fixture '$($row.id)' expected pass=$($row.expected_pass), got pass=$($evaluation.passed)." }
     if ([bool]$row.expected_pass -and ([double]$evaluation.allocations_per_frame -ne 0.1 -or [double]$evaluation.deep_copies_per_frame -ne 0.0)) { throw "Allocation assertion did not retain per-frame rates." }
 }
+$orderedCounters = [ordered]@{ allocations=12; shallow_copies=2; deep_copies=0; bytes=4096; source="explicit_instrumented_probe"; scope="steady_state_frame"; evidence_kind="explicit_counter" }
+if (-not (Get-Perf06AllocationCopyAssertion -Counters $orderedCounters -FrameCount 120).passed) { throw "Real producer ordered-dictionary allocation counters did not pass." }
 foreach ($needle in @("audited_call_roots", "required allocation roots", "static_call_root_audit_sha256", "coverage_complete")) {
     if (-not $validatorText.Contains($needle)) { throw "Matrix validator lost fail-closed allocation check '$needle'." }
 }

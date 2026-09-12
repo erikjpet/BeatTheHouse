@@ -1,5 +1,8 @@
 function Test-Perf06ValueProperty {
     param([object]$Value, [string]$Name)
+    if ($Value -is [Collections.IDictionary]) {
+        return $Value.Contains($Name) -and $null -ne $Value[$Name]
+    }
     return $null -ne $Value -and $null -ne $Value.PSObject.Properties[$Name] -and $null -ne $Value.PSObject.Properties[$Name].Value
 }
 
