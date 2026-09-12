@@ -586,6 +586,7 @@ static func _grounding_signature(environment_data: Dictionary, layout: Dictionar
 		layout_source.erase(generated_key)
 	var signature_source := {
 		"version": GENERATED_LAYOUT_VERSION,
+		"placement_authority_version": 2,
 		"archetype_id": str(environment_data.get("archetype_id", environment_data.get("id", ""))),
 		"layer_id": str(environment_data.get("current_layer_id", environment_data.get("layer_id", ""))),
 		"surface_map": EnvironmentPlacementScript.surface_map(environment_data),
@@ -1748,20 +1749,27 @@ static func _environment_layer_layout_entries(environment_data: Dictionary) -> A
 # events, services, and doors so the UI never composes a second placement layer.
 static func _numbers_layout_entries(environment_data: Dictionary) -> Array:
 	var layout := _copy_dict(environment_data.get("layout", {}))
-	if _layout_spot_count(layout, "numbers_spots") <= 0:
+	var numbers_count := _layout_spot_count(layout, "numbers_spots")
+	var silas_count := _layout_spot_count(layout, "numbers_silas_spots")
+	if numbers_count <= 0 and silas_count <= 0:
 		return []
 	# The Crew back-room desk is already the authored event:numbers_desk fixture.
 	# All other Numbers venues expose the shared book plus an optional Silas spot.
 	if str(environment_data.get("archetype_id", "")) == "small_underground_casino" \
 			and str(environment_data.get("current_layer_id", "")) == "back_room":
 		return []
-	var entries: Array = [{
-		"object_id": "numbers:book",
-		"object_type": "numbers",
-		"index": 0,
-		"spot_field": "numbers_spots",
-	}]
-	if _layout_spot_count(layout, "numbers_silas_spots") > 0:
+	var entries: Array = []
+	if numbers_count > 0:
+		entries.append({
+			"object_id": "numbers:book",
+			"object_type": "numbers",
+			"index": 0,
+			"spot_field": "numbers_spots",
+		})
+	# Silas can rotate into any active Numbers venue. Reserve his physical rect
+	# even while he is absent so the interaction layer never invents a second,
+	# ungrounded fallback position when town state brings him in later.
+	if silas_count > 0:
 		entries.append({
 			"object_id": "numbers:silas",
 			"object_type": "numbers_silas",

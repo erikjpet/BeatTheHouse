@@ -67,7 +67,8 @@ static func classify(object_data: Dictionary, object_type: String = "", object_i
 	var person_object := clean_type in ["actor", "character", "lender", "merchant", "npc", "scenario_actor", "shopkeeper", "numbers_silas"] \
 		or role in person_roles \
 		or clean_prop in PERSON_EVENT_PROPS \
-		or named_person
+		or named_person \
+		or object_id.to_lower() == "numbers:silas"
 	if person_object:
 		if role in ["bartender", "clerk", "dealer", "merchant", "shopkeeper", "teller", "vendor"] \
 				or clean_prop in ["clerk_counter", "host_station"] \
