@@ -2,6 +2,7 @@ class_name EnvironmentPlacement
 extends RefCounted
 
 const SURFACE_MAP_PATH := "res://data/environments/placement_surfaces.json"
+const DeveloperPlacementStoreScript := preload("res://scripts/core/developer_placement_store.gd")
 const CLASSES := [
 	"standing_person", "behind_counter_person", "seated_person", "group",
 	"floor_fixture", "ground_marker", "surface_item", "wall_mounted",
@@ -177,17 +178,17 @@ static func surface_map(environment: Dictionary) -> Dictionary:
 	if scenario_id.is_empty():
 		var base_key := "%s::base" % map_key
 		if _effective_surface_maps.has(base_key):
-			return _dict(_effective_surface_maps.get(base_key, {}))
+			return _with_developer_slots(environment, _dict(_effective_surface_maps.get(base_key, {})))
 		var unreserved_map := base_map.duplicate(false)
 		for field_value in SCENARIO_RESERVATION_FIELDS:
 			unreserved_map.erase(str(field_value))
 		_effective_surface_maps[base_key] = unreserved_map
-		return unreserved_map
+		return _with_developer_slots(environment, unreserved_map)
 	if not scenario_overrides.has(scenario_id):
-		return base_map
+		return _with_developer_slots(environment, base_map)
 	var effective_key := "%s::%s" % [map_key, scenario_id]
 	if _effective_surface_maps.has(effective_key):
-		return _dict(_effective_surface_maps.get(effective_key, {}))
+		return _with_developer_slots(environment, _dict(_effective_surface_maps.get(effective_key, {})))
 	var result := base_map.duplicate(false)
 	var scenario_override := _dict(scenario_overrides.get(scenario_id, {}))
 	var base_class_overrides := _dict(base_map.get("class_overrides", {})).duplicate(true)
@@ -196,11 +197,29 @@ static func surface_map(environment: Dictionary) -> Dictionary:
 		base_class_overrides.merge(_dict(scenario_override.get("class_overrides", {})), true)
 		result["class_overrides"] = base_class_overrides
 	_effective_surface_maps[effective_key] = result
-	return result
+	return _with_developer_slots(environment, result)
 
 
 static func surface_map_by_id(archetype_id: String, layer_id: String = "") -> Dictionary:
 	return surface_map({"archetype_id": archetype_id, "current_layer_id": layer_id})
+
+
+# Applies developer-authored positions as the final authored slot layer. This
+# changes placement inputs only; it never touches run state, visibility, or RNG.
+static func _with_developer_slots(environment: Dictionary, surface_data: Dictionary) -> Dictionary:
+	var base_overrides := DeveloperPlacementStoreScript.slot_overrides(environment, "object_slot_positions")
+	var scenario_overrides := DeveloperPlacementStoreScript.slot_overrides(environment, "scenario_object_slot_positions")
+	if base_overrides.is_empty() and scenario_overrides.is_empty():
+		return surface_data
+	var result := surface_data.duplicate(true)
+	for field in ["object_slot_positions", "scenario_object_slot_positions"]:
+		var overrides := base_overrides if field == "object_slot_positions" else scenario_overrides
+		if overrides.is_empty():
+			continue
+		var slots := _dict(result.get(field, {})).duplicate(true)
+		slots.merge(overrides, true)
+		result[field] = slots
+	return result
 
 
 # Preserves authored geometry whenever its class contact already rests on a

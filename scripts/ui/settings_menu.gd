@@ -45,6 +45,7 @@ var coach_tips: CheckBox
 var reset_tips: Button
 var haptics_note: Label
 var game_library: Button
+var developer_placement_mode: CheckBox
 
 
 # Stores the settings object and builds the view.
@@ -136,6 +137,9 @@ func _build() -> void:
 	haptics_note = _note(box, "Haptics are not used by this demo's input stack.")
 
 	_section(box, "Developer")
+	developer_placement_mode = _check(box, "Environment placement mode")
+	developer_placement_mode.tooltip_text = "Select, drag, and lock stable room-object positions while playing."
+	developer_placement_mode.toggled.connect(_on_developer_placement_mode)
 	game_library = _button("Game Library (Debug)")
 	game_library.tooltip_text = "Open the internal table-game practice library."
 	game_library.pressed.connect(game_library_requested.emit)
@@ -265,6 +269,7 @@ func _sync() -> void:
 	high_contrast.button_pressed = draft.high_contrast
 	drunk_effect.select(draft.drunk_effect_index())
 	reduce_motion.button_pressed = draft.reduce_motion
+	developer_placement_mode.button_pressed = draft.developer_placement_mode
 	_labels()
 	_apply_accessibility_settings()
 
@@ -381,6 +386,10 @@ func _on_reduce_motion(enabled: bool) -> void:
 	draft.reduce_motion = enabled
 
 
+func _on_developer_placement_mode(enabled: bool) -> void:
+	draft.developer_placement_mode = enabled
+
+
 func current_settings_snapshot() -> Dictionary:
 	var active_settings: UserSettings = draft if visible and draft != null else settings
 	if active_settings == null:
@@ -396,6 +405,7 @@ func current_settings_snapshot() -> Dictionary:
 		"high_contrast": bool(active_settings.high_contrast),
 		"play_on_small_screen": bool(active_settings.play_on_small_screen),
 		"coach_tips_enabled": bool(active_settings.coach_tips_enabled),
+		"developer_placement_mode": bool(active_settings.developer_placement_mode),
 		"reset_tips_available": reset_tips != null and not reset_tips.disabled,
 		"haptics_supported": false,
 		"haptics_cut_reason": UserSettingsScript.HAPTICS_CUT_REASON,

@@ -121,6 +121,7 @@ const SEALED_ACTION_HOST_SKIP_ENVIRONMENT_TURN_ALLOWLIST := {
 	"slot": ["slot_handpay_acknowledge"],
 }
 const UserSettingsScript := preload("res://scripts/core/user_settings.gd")
+const DeveloperPlacementStoreScript := preload("res://scripts/core/developer_placement_store.gd")
 const ProfileInventoryScript := preload("res://scripts/core/profile_inventory.gd")
 const TutorialFlowScript := preload("res://scripts/core/tutorial_flow.gd")
 const MetaCollectionServiceScript := preload("res://scripts/core/meta_collection_service.gd")
@@ -15707,6 +15708,69 @@ func _on_settings_game_library_requested() -> void:
 	open_game_test_menu()
 
 
+func _on_developer_placement_lock_requested(request: Dictionary) -> void:
+	var environment := _copy_dict(request.get("environment", {}))
+	var result := DeveloperPlacementStoreScript.save_position(
+		environment,
+		str(request.get("field", "object_slot_positions")),
+		str(request.get("slot_id", "")),
+		request.get("position", Vector2.ZERO)
+	)
+	if not bool(result.get("ok", false)):
+		_show_message(str(result.get("error", "Could not lock that placement.")))
+		_render_foundation_snapshots()
+		return
+	var refresh_result := _refresh_developer_authored_environment()
+	if not bool(refresh_result.get("ok", false)):
+		_show_message(str(refresh_result.get("error", "The placement was saved, but this room could not refresh it yet.")))
+		return
+	_show_message("Placement locked for %s in %s." % [str(request.get("slot_id", "object")), DeveloperPlacementStoreScript.room_key(environment)])
+
+
+func _on_developer_placement_reset_requested(request: Dictionary) -> void:
+	var environment := _copy_dict(request.get("environment", {}))
+	var result := DeveloperPlacementStoreScript.clear_position(
+		environment,
+		str(request.get("field", "object_slot_positions")),
+		str(request.get("slot_id", ""))
+	)
+	if not bool(result.get("ok", false)):
+		_show_message(str(result.get("error", "Could not reset that placement.")))
+		return
+	var refresh_result := _refresh_developer_authored_environment()
+	if not bool(refresh_result.get("ok", false)):
+		_show_message(str(refresh_result.get("error", "The placement reset was saved, but this room could not refresh it yet.")))
+		return
+	_show_message("Placement reset to authored data.")
+
+
+func _on_developer_placement_promote_requested() -> void:
+	var result := DeveloperPlacementStoreScript.promote_user_overrides()
+	_show_message("Locked placements saved to %s." % str(result.get("path", "project data")) if bool(result.get("ok", false)) else str(result.get("error", "Could not save placements to the project.")))
+
+
+func _refresh_developer_authored_environment() -> Dictionary:
+	if run_state == null or run_state.current_environment.is_empty():
+		_render_foundation_snapshots()
+		return {"ok": true}
+	var layout := _copy_dict(run_state.current_environment.get("layout", {}))
+	layout.erase("generated_object_rect_version")
+	layout.erase("grounding_signature")
+	run_state.current_environment["layout"] = layout
+	run_state.current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(run_state.current_environment, library)
+	if run_state.scenario_sequence_present():
+		var finalized := run_state.scenario_finalize_installed_environment(
+			library,
+			_copy_dict(run_state.current_environment.get("scenario_layout_context", {}))
+		)
+		if not bool(finalized.get("ok", false)):
+			var errors := _copy_array(finalized.get("errors", []))
+			_render_foundation_snapshots()
+			return {"ok": false, "error": str(errors[0]) if not errors.is_empty() else "The room placement could not be finalized."}
+	_render_foundation_snapshots()
+	return {"ok": true}
+
+
 func _on_reset_coach_tips_requested() -> void:
 	if profile_inventory == null:
 		return
@@ -20071,6 +20135,7 @@ func _apply_accessibility_settings() -> void:
 		heat_gain_feedback_overlay.set_reduce_motion(bool(user_settings.reduce_motion) if user_settings != null else false)
 	if environment_canvas != null:
 		environment_canvas.set_small_screen_mode(small_screen_enabled)
+		environment_canvas.set_developer_placement_mode(bool(user_settings.developer_placement_mode) if user_settings != null else false)
 	if game_surface_canvas != null:
 		game_surface_canvas.set_small_screen_mode(small_screen_enabled)
 	if run_inventory_screen != null:

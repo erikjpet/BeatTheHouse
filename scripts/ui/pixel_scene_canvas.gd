@@ -7,6 +7,9 @@ signal object_hovered(object_id: String)
 signal object_focused(object_id: String)
 signal object_activated(object_id: String)
 signal view_geometry_changed
+signal developer_placement_lock_requested(request: Dictionary)
+signal developer_placement_reset_requested(request: Dictionary)
+signal developer_placement_promote_requested
 
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.gd")
@@ -165,6 +168,18 @@ var _scenario_route_arrow_points := PackedVector2Array([Vector2.ZERO, Vector2.ZE
 var _scenario_vehicle_canopy_points := PackedVector2Array([Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO])
 var _scenario_hazard_fill_points := PackedVector2Array([Vector2.ZERO, Vector2.ZERO, Vector2.ZERO])
 var _scenario_hazard_outline_points := PackedVector2Array([Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO])
+var developer_placement_mode := false
+var developer_placement_dragging := false
+var developer_placement_drag_offset := Vector2.ZERO
+var developer_placement_original_rect := Rect2()
+var developer_placement_pending_rect := Rect2()
+var developer_placement_valid := false
+var developer_placement_surface_id := ""
+var developer_placement_overlap_ids: Array[String] = []
+var developer_placement_panel: PanelContainer
+var developer_placement_label: Label
+var developer_placement_lock_button: Button
+var developer_placement_reset_button: Button
 
 
 func _ready() -> void:
@@ -172,6 +187,163 @@ func _ready() -> void:
 	focus_mode = Control.FOCUS_ALL
 	clip_contents = true
 	_ensure_drunk_distortion_overlay()
+	_ensure_developer_placement_panel()
+
+
+func set_developer_placement_mode(enabled: bool) -> void:
+	if developer_placement_mode == enabled:
+		return
+	if not enabled:
+		_cancel_developer_placement_preview()
+	developer_placement_mode = enabled
+	_ensure_developer_placement_panel()
+	developer_placement_panel.visible = enabled
+	_update_developer_placement_panel()
+	queue_redraw()
+
+
+func developer_placement_snapshot() -> Dictionary:
+	return {
+		"enabled": developer_placement_mode,
+		"selected_object_id": selected_object_id,
+		"dragging": developer_placement_dragging,
+		"pending": developer_placement_pending_rect.has_area(),
+		"valid": developer_placement_valid,
+		"surface_id": developer_placement_surface_id,
+		"overlap_ids": developer_placement_overlap_ids.duplicate(),
+		"request": _developer_placement_request(),
+	}
+
+
+func clear_developer_placement_preview() -> void:
+	developer_placement_dragging = false
+	developer_placement_original_rect = Rect2()
+	developer_placement_pending_rect = Rect2()
+	developer_placement_valid = false
+	developer_placement_surface_id = ""
+	developer_placement_overlap_ids.clear()
+	_update_developer_placement_panel()
+	queue_redraw()
+
+
+func _ensure_developer_placement_panel() -> void:
+	if developer_placement_panel != null:
+		return
+	developer_placement_panel = PanelContainer.new()
+	developer_placement_panel.name = "DeveloperPlacementPanel"
+	developer_placement_panel.position = Vector2(8.0, 8.0)
+	developer_placement_panel.custom_minimum_size = Vector2(320.0, 0.0)
+	developer_placement_panel.mouse_filter = Control.MOUSE_FILTER_PASS
+	developer_placement_panel.visible = developer_placement_mode
+	add_child(developer_placement_panel)
+
+	var stack := VBoxContainer.new()
+	stack.mouse_filter = Control.MOUSE_FILTER_PASS
+	stack.add_theme_constant_override("separation", 5)
+	developer_placement_panel.add_child(stack)
+	developer_placement_label = Label.new()
+	developer_placement_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	developer_placement_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	developer_placement_label.text = "Placement mode: click an object to move it."
+	stack.add_child(developer_placement_label)
+
+	var actions := HBoxContainer.new()
+	actions.add_theme_constant_override("separation", 5)
+	stack.add_child(actions)
+	developer_placement_lock_button = Button.new()
+	developer_placement_lock_button.text = "Lock"
+	developer_placement_lock_button.tooltip_text = "Save this exact room/object position."
+	developer_placement_lock_button.pressed.connect(_lock_developer_placement)
+	actions.add_child(developer_placement_lock_button)
+	var cancel_button := Button.new()
+	cancel_button.text = "Cancel"
+	cancel_button.pressed.connect(_cancel_developer_placement_preview)
+	actions.add_child(cancel_button)
+	developer_placement_reset_button = Button.new()
+	developer_placement_reset_button.text = "Reset"
+	developer_placement_reset_button.tooltip_text = "Remove the local override for this room/object pair."
+	developer_placement_reset_button.pressed.connect(_reset_developer_placement)
+	actions.add_child(developer_placement_reset_button)
+	var project_actions := HBoxContainer.new()
+	project_actions.mouse_filter = Control.MOUSE_FILTER_PASS
+	stack.add_child(project_actions)
+	var promote_button := Button.new()
+	promote_button.text = "Save to Project"
+	promote_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	promote_button.tooltip_text = "Promote all locally locked positions into the placement file shipped by future builds."
+	promote_button.pressed.connect(developer_placement_promote_requested.emit)
+	project_actions.add_child(promote_button)
+	_update_developer_placement_panel()
+
+
+func _update_developer_placement_panel() -> void:
+	if developer_placement_panel == null or developer_placement_label == null:
+		return
+	var object_data := _scene_object(selected_object_id)
+	if object_data.is_empty():
+		developer_placement_label.text = "Placement mode: click an object to move it. Drag or use arrow keys. F2 hides this panel."
+		developer_placement_lock_button.disabled = true
+		developer_placement_reset_button.disabled = true
+		return
+	var identity := _developer_placement_identity(object_data)
+	var status_text := "unchanged"
+	if developer_placement_pending_rect.has_area():
+		status_text = "valid on %s" % developer_placement_surface_id if developer_placement_valid else "invalid surface"
+		if not developer_placement_overlap_ids.is_empty():
+			var shown_overlaps := developer_placement_overlap_ids.slice(0, mini(3, developer_placement_overlap_ids.size()))
+			status_text += "; overlaps %s" % ", ".join(shown_overlaps)
+			if developer_placement_overlap_ids.size() > shown_overlaps.size():
+				status_text += " +%d" % (developer_placement_overlap_ids.size() - shown_overlaps.size())
+	developer_placement_label.text = "%s | %s\n%s | %s" % [
+		str(foundation_snapshot.get("archetype_id", environment_id)),
+		str(foundation_snapshot.get("current_layer_id", foundation_snapshot.get("layer_id", "main"))),
+		str(identity.get("slot_id", selected_object_id)),
+		status_text,
+	]
+	developer_placement_lock_button.disabled = not developer_placement_pending_rect.has_area() or not developer_placement_valid
+	developer_placement_reset_button.disabled = false
+
+
+func _developer_placement_identity(object_data: Dictionary) -> Dictionary:
+	var object_id := str(object_data.get("id", "")).strip_edges()
+	var owner_namespace := str(object_data.get("owner_namespace", "")).strip_edges()
+	var stable_object_id := str(object_data.get("stable_object_id", "")).strip_edges()
+	var dynamic_object := object_id.contains("::")
+	var slot_id := object_id
+	if dynamic_object:
+		slot_id = stable_object_id if owner_namespace == "scenario" and not stable_object_id.is_empty() else object_id
+	return {
+		"field": "scenario_object_slot_positions" if dynamic_object else "object_slot_positions",
+		"slot_id": slot_id,
+		"owner_namespace": owner_namespace,
+		"stable_object_id": stable_object_id,
+	}
+
+
+func _developer_placement_request() -> Dictionary:
+	var object_data := _scene_object(selected_object_id)
+	if object_data.is_empty():
+		return {}
+	var identity := _developer_placement_identity(object_data)
+	var placement_class := str(object_data.get("placement_class", "")).strip_edges()
+	if placement_class.is_empty():
+		placement_class = EnvironmentPlacementScript.classify(object_data, str(object_data.get("interaction_type", object_data.get("type", ""))), selected_object_id, str(object_data.get("prop", object_data.get("icon_key", ""))))
+	return {
+		"environment": {
+			"archetype_id": str(foundation_snapshot.get("archetype_id", foundation_snapshot.get("id", environment_id))),
+			"current_layer_id": str(foundation_snapshot.get("current_layer_id", foundation_snapshot.get("layer_id", ""))),
+			"scenario_id": str(foundation_snapshot.get("scenario_id", "")),
+		},
+		"object_id": selected_object_id,
+		"owner_namespace": str(identity.get("owner_namespace", "")),
+		"stable_object_id": str(identity.get("stable_object_id", "")),
+		"field": str(identity.get("field", "object_slot_positions")),
+		"slot_id": str(identity.get("slot_id", selected_object_id)),
+		"position": developer_placement_pending_rect.position if developer_placement_pending_rect.has_area() else _developer_edit_rect_for_object(object_data).position,
+		"size": _developer_edit_rect_for_object(object_data).size,
+		"placement_class": placement_class,
+		"surface_id": developer_placement_surface_id,
+	}
 
 
 func set_environment_activity_paused(paused: bool) -> void:
@@ -225,6 +397,10 @@ func render_environment_snapshot(snapshot: Dictionary) -> void:
 		selected_object_id = ""
 	if not hovered_object_id.is_empty() and _scene_object(hovered_object_id).is_empty():
 		hovered_object_id = ""
+	# A normal view refresh must not commit or reinterpret an in-progress authoring
+	# gesture. The last locked data will already be present in this fresh snapshot.
+	clear_developer_placement_preview()
+	_update_developer_placement_panel()
 	_invalidate_camera_target()
 	_update_camera_target_if_needed()
 	queue_redraw()
@@ -442,6 +618,7 @@ func current_view_snapshot() -> Dictionary:
 		"grand_casino_staffing": _grand_casino_staffing_snapshot(),
 		"grand_casino_entry_cue": foundation_snapshot.get("grand_casino_entry_cue", {}) if uses_foundation_snapshot else {},
 		"reduce_motion": reduce_motion,
+		"developer_placement": developer_placement_snapshot(),
 	}
 
 
@@ -472,6 +649,9 @@ func local_position_for_selected_info_action_button(action_index: int = 0) -> Ve
 
 
 func _gui_input(event: InputEvent) -> void:
+	if developer_placement_mode and _handle_developer_placement_input(event):
+		accept_event()
+		return
 	# Authored action bindings own their declared input. Navigation is the
 	# fallback only when the selected interaction does not consume the event.
 	if _activate_selected_info_action_for_authored_input(event):
@@ -554,6 +734,183 @@ func _gui_input(event: InputEvent) -> void:
 		return
 	if event is InputEventScreenDrag:
 		_set_hovered_object(object_id_at_local_position((event as InputEventScreenDrag).position))
+
+
+func _handle_developer_placement_input(event: InputEvent) -> bool:
+	if event is InputEventKey and (event as InputEventKey).pressed and not (event as InputEventKey).echo and (event as InputEventKey).keycode == KEY_F2:
+		developer_placement_panel.visible = not developer_placement_panel.visible
+		return true
+	if event is InputEventMouseMotion:
+		var motion := event as InputEventMouseMotion
+		if developer_placement_dragging:
+			_update_developer_placement_preview(_local_to_board_position(motion.position) - developer_placement_drag_offset)
+		else:
+			_set_hovered_object(_developer_object_id_at_local_position(motion.position))
+		return true
+	if event is InputEventMouseButton:
+		var mouse_event := event as InputEventMouseButton
+		if mouse_event.button_index == MOUSE_BUTTON_LEFT:
+			if mouse_event.pressed:
+				_begin_developer_placement_drag(mouse_event.position)
+			else:
+				developer_placement_dragging = false
+				_update_developer_placement_panel()
+			return true
+		if mouse_event.button_index == MOUSE_BUTTON_RIGHT and mouse_event.pressed:
+			_cancel_developer_placement_preview()
+			return true
+	if event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		if touch.pressed:
+			_begin_developer_placement_drag(touch.position)
+		else:
+			developer_placement_dragging = false
+			_update_developer_placement_panel()
+		return true
+	if event is InputEventScreenDrag:
+		if developer_placement_dragging:
+			var drag := event as InputEventScreenDrag
+			_update_developer_placement_preview(_local_to_board_position(drag.position) - developer_placement_drag_offset)
+		return true
+	if event.is_action_pressed("ui_cancel"):
+		_cancel_developer_placement_preview()
+		return true
+	if event.is_action_pressed("ui_accept") and developer_placement_pending_rect.has_area():
+		_lock_developer_placement()
+		return true
+	var nudge := Vector2.ZERO
+	if event.is_action_pressed("ui_left"):
+		nudge.x = -1.0
+	elif event.is_action_pressed("ui_right"):
+		nudge.x = 1.0
+	elif event.is_action_pressed("ui_up"):
+		nudge.y = -1.0
+	elif event.is_action_pressed("ui_down"):
+		nudge.y = 1.0
+	if not nudge.is_zero_approx() and not selected_object_id.is_empty():
+		if event is InputEventKey and (event as InputEventKey).shift_pressed:
+			nudge *= 10.0
+		var object_data := _scene_object(selected_object_id)
+		if not object_data.is_empty():
+			if not developer_placement_original_rect.has_area():
+				developer_placement_original_rect = _developer_edit_rect_for_object(object_data)
+			var current_rect := developer_placement_pending_rect if developer_placement_pending_rect.has_area() else _developer_edit_rect_for_object(object_data)
+			_update_developer_placement_preview(current_rect.position + nudge)
+		return true
+	return false
+
+
+func _developer_object_id_at_local_position(local_position: Vector2) -> String:
+	var board_position := _local_to_board_position(local_position)
+	var objects := _active_scene_objects()
+	for index in range(objects.size() - 1, -1, -1):
+		var object_data := _copy_dictionary(objects[index])
+		if _developer_edit_rect_for_object(object_data).has_point(board_position):
+			return str(object_data.get("id", ""))
+	return ""
+
+
+func _begin_developer_placement_drag(local_position: Vector2) -> void:
+	var object_id := _developer_object_id_at_local_position(local_position)
+	if object_id.is_empty():
+		_cancel_developer_placement_preview()
+		set_selected_object("")
+		_update_developer_placement_panel()
+		return
+	if object_id != selected_object_id:
+		_cancel_developer_placement_preview()
+		set_selected_object(object_id, false)
+	var object_data := _scene_object(object_id)
+	if object_data.is_empty():
+		return
+	var rect := developer_placement_pending_rect if developer_placement_pending_rect.has_area() else _developer_edit_rect_for_object(object_data)
+	if not developer_placement_original_rect.has_area():
+		developer_placement_original_rect = rect
+	developer_placement_pending_rect = rect
+	developer_placement_drag_offset = _local_to_board_position(local_position) - rect.position
+	developer_placement_dragging = true
+	_validate_developer_placement_preview()
+
+
+func _update_developer_placement_preview(top_left: Vector2) -> void:
+	var object_data := _scene_object(selected_object_id)
+	if object_data.is_empty():
+		return
+	var size_value := developer_placement_pending_rect.size if developer_placement_pending_rect.has_area() else _developer_edit_rect_for_object(object_data).size
+	var bounded := Vector2(
+		clampf(top_left.x, 0.0, maxf(0.0, BOARD_SIZE.x - size_value.x)),
+		clampf(top_left.y, 0.0, maxf(0.0, BOARD_SIZE.y - size_value.y))
+	)
+	developer_placement_pending_rect = Rect2(bounded.round(), size_value)
+	_set_developer_preview_object_rect(developer_placement_pending_rect)
+	_validate_developer_placement_preview()
+	queue_redraw()
+
+
+func _set_developer_preview_object_rect(rect: Rect2) -> void:
+	for index in range(foundation_scene_objects.size()):
+		var object_data := _copy_dictionary(foundation_scene_objects[index])
+		if str(object_data.get("id", "")) != selected_object_id:
+			continue
+		object_data["position"] = rect.get_center() / Vector2(BOARD_SIZE)
+		foundation_scene_objects[index] = object_data
+		break
+	_rebuild_scene_object_cache()
+	_invalidate_camera_target()
+	_update_camera_target_if_needed()
+
+
+func _validate_developer_placement_preview() -> void:
+	developer_placement_valid = false
+	developer_placement_surface_id = ""
+	developer_placement_overlap_ids.clear()
+	var object_data := _scene_object(selected_object_id)
+	if object_data.is_empty() or not developer_placement_pending_rect.has_area():
+		_update_developer_placement_panel()
+		return
+	var placement_class := str(object_data.get("placement_class", "")).strip_edges()
+	if placement_class.is_empty():
+		placement_class = EnvironmentPlacementScript.classify(object_data, str(object_data.get("interaction_type", object_data.get("type", ""))), selected_object_id, str(object_data.get("prop", object_data.get("icon_key", ""))))
+	var environment := _copy_dictionary(foundation_snapshot)
+	var support := EnvironmentPlacementScript.support_for_rect(environment, placement_class, developer_placement_pending_rect)
+	developer_placement_valid = not support.is_empty()
+	developer_placement_surface_id = str(support.get("surface_id", ""))
+	for other_value in _active_scene_objects():
+		var other := _copy_dictionary(other_value)
+		var other_id := str(other.get("id", ""))
+		if other_id.is_empty() or other_id == selected_object_id:
+			continue
+		if developer_placement_pending_rect.intersects(_developer_edit_rect_for_object(other)):
+			developer_placement_overlap_ids.append(other_id)
+	_update_developer_placement_panel()
+
+
+func _cancel_developer_placement_preview() -> void:
+	if developer_placement_original_rect.has_area() and not selected_object_id.is_empty():
+		_set_developer_preview_object_rect(developer_placement_original_rect)
+	clear_developer_placement_preview()
+
+
+func _developer_edit_rect_for_object(object_data: Dictionary) -> Rect2:
+	# Small-screen expansion and actor-route animation are presentation
+	# derivatives. Author only the canonical 900x430 placement rectangle.
+	return _board_rect_for_object_at_position(object_data, object_data.get("position", Vector2(0.5, 0.5)))
+
+
+func _lock_developer_placement() -> void:
+	if not developer_placement_valid or not developer_placement_pending_rect.has_area():
+		return
+	var request := _developer_placement_request()
+	clear_developer_placement_preview()
+	developer_placement_lock_requested.emit(request)
+
+
+func _reset_developer_placement() -> void:
+	var request := _developer_placement_request()
+	if request.is_empty():
+		return
+	clear_developer_placement_preview()
+	developer_placement_reset_requested.emit(request)
 
 
 func _remember_mouse_press(position: Vector2) -> void:
@@ -716,8 +1073,23 @@ func _draw() -> void:
 	_draw_scene_outcome_highlight()
 	_draw_pressure_overlay()
 	_draw_drunk_overlay()
+	_draw_developer_placement_outline()
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	_update_drunk_distortion_protected_rects()
+
+
+func _draw_developer_placement_outline() -> void:
+	if not developer_placement_mode or selected_object_id.is_empty():
+		return
+	var object_data := _scene_object(selected_object_id)
+	if object_data.is_empty():
+		return
+	var rect := developer_placement_pending_rect if developer_placement_pending_rect.has_area() else _developer_edit_rect_for_object(object_data)
+	var color := C_CYAN
+	if developer_placement_pending_rect.has_area():
+		color = C_TEAL if developer_placement_valid else C_HOT
+	draw_rect(rect.grow(3.0), color, false, 3.0)
+	draw_circle(rect.position, 4.0, color)
 
 
 func _draw_scenario_palette() -> void:
@@ -2038,7 +2410,8 @@ func _draw_scene_objects() -> void:
 		elif should_draw_hotspot_hint(object_data, low_detail):
 			_draw_hotspot_hint(rect, object_type)
 		_draw_object_label(rect, str(object_data.get("label", "")), object_type, disabled, selected or hovered)
-	_draw_selected_object_info()
+	if not developer_placement_mode:
+		_draw_selected_object_info()
 
 
 func _draw_scenario_prop(rect: Rect2, object_data: Dictionary, active: bool) -> void:
@@ -3632,6 +4005,12 @@ func _camera_lerp_weight(delta: float, speed: float) -> float:
 func _update_camera_target() -> void:
 	camera_target_dirty = false
 	camera_target_refresh_count += 1
+	if developer_placement_mode:
+		camera_focus_active = false
+		camera_focus_point = Vector2(0.5, 0.5)
+		target_camera_zoom = 1.0
+		target_camera_offset = Vector2.ZERO
+		return
 	var object_data := _scene_object(selected_object_id) if not selected_object_id.is_empty() else {}
 	if object_data.is_empty():
 		camera_focus_active = false

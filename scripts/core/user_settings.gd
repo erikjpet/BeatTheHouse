@@ -34,6 +34,7 @@ var high_contrast: bool = false
 var play_on_small_screen: bool = false
 var coach_tips_enabled: bool = true
 var selected_home_type_id: String = "random"
+var developer_placement_mode: bool = false
 
 
 # Restores default preference values.
@@ -53,6 +54,7 @@ func reset() -> void:
 	play_on_small_screen = false
 	coach_tips_enabled = true
 	selected_home_type_id = "random"
+	developer_placement_mode = false
 
 
 # Loads preferences from disk or defaults.
@@ -105,6 +107,7 @@ func to_dict() -> Dictionary:
 		"play_on_small_screen": play_on_small_screen,
 		"coach_tips_enabled": coach_tips_enabled,
 		"selected_home_type_id": selected_home_type_id,
+		"developer_placement_mode": developer_placement_mode,
 	}
 
 
@@ -136,6 +139,7 @@ func from_dict(data: Dictionary) -> void:
 	play_on_small_screen = bool(data.get("play_on_small_screen", play_on_small_screen))
 	coach_tips_enabled = bool(data.get("coach_tips_enabled", coach_tips_enabled))
 	selected_home_type_id = str(data.get("selected_home_type_id", selected_home_type_id)).strip_edges()
+	developer_placement_mode = bool(data.get("developer_placement_mode", developer_placement_mode))
 	if selected_home_type_id.is_empty():
 		selected_home_type_id = "random"
 
