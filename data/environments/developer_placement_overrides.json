@@ -29,6 +29,40 @@
         "item:scratch_pad": [
           441.0,
           192.0
+        ],
+        "travel:leave": [
+          774.0,
+          308.0
+        ]
+      }
+    },
+    "bar": {
+      "object_slot_positions": {
+        "event:town_rumor_staff": [
+          89.0,
+          350.0
+        ],
+        "game:bar_dice": [
+          65.0,
+          146.0
+        ],
+        "travel:leave": [
+          783.0,
+          354.0
+        ]
+      },
+      "scenario_object_slot_positions": {
+        "bar_darts_league_night_darts_scorer": [
+          102.0,
+          335.0
+        ],
+        "bar_darts_league_night_league_captain": [
+          26.0,
+          285.0
+        ],
+        "bar_darts_league_night_safe_exit": [
+          783.0,
+          142.0
         ]
       }
     },
@@ -90,9 +124,17 @@
     },
     "gas_station_casino": {
       "category_slot_positions": {
+        "event_spots:0": [
+          693.0,
+          344.0
+        ],
         "event_spots:1": [
           792.0,
           345.0
+        ],
+        "event_spots:2": [
+          508.0,
+          243.0
         ],
         "event_spots:3": [
           130.0,
@@ -108,6 +150,14 @@
           601.0,
           228.0
         ],
+        "event:side_door": [
+          611.0,
+          346.0
+        ],
+        "event:town_rumor_staff": [
+          80.0,
+          331.0
+        ],
         "game:pull_tabs": [
           430.0,
           126.0
@@ -116,9 +166,13 @@
           526.0,
           127.0
         ],
+        "game_hook:scratch_tickets:scratch_ticket_clerk": [
+          691.0,
+          149.0
+        ],
         "numbers:book": [
-          129.0,
-          189.0
+          71.0,
+          183.0
         ],
         "service:house_drink": [
           170.0,
@@ -127,6 +181,36 @@
         "travel:leave": [
           796.0,
           262.0
+        ]
+      },
+      "scenario_object_slot_positions": {
+        "gas_station_road_crew_payday_barricade_stack": [
+          372.0,
+          247.0
+        ],
+        "gas_station_road_crew_payday_machine_player": [
+          113.0,
+          240.0
+        ],
+        "gas_station_road_crew_payday_safe_exit": [
+          9.0,
+          354.0
+        ],
+        "gas_station_road_crew_payday_stake_keeper": [
+          23.0,
+          240.0
+        ],
+        "gas_station_road_crew_payday_station": [
+          578.0,
+          327.0
+        ],
+        "gas_station_road_crew_payday_work_order_board": [
+          297.0,
+          247.0
+        ],
+        "scenario::presentation_failure": [
+          294.0,
+          9.0
         ]
       }
     },

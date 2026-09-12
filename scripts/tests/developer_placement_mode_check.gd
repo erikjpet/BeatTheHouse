@@ -213,8 +213,58 @@ func _check_canvas_authoring_contract() -> void:
 	persist_canvas_locks = false
 	canvas.set_developer_placement_mode(false)
 	_check(not bool(canvas.developer_placement_snapshot().get("enabled", true)), "Disabling developer mode must restore normal input mode.")
+	await _check_overlapping_play_selection(canvas)
 	canvas.queue_free()
 	await process_frame
+
+
+func _check_overlapping_play_selection(canvas: PixelSceneCanvas) -> void:
+	canvas.render_environment_snapshot({
+		"archetype_id": "bar",
+		"display_name": "Bar",
+		"interactable_objects": [
+			{
+				"object_id": "event:town_rumor_staff",
+				"object_type": "event",
+				"label": "Staff Rumor",
+				"normalized_rect": {"x": 80.0 / 900.0, "y": 320.0 / 430.0, "w": 110.0 / 900.0, "h": 70.0 / 430.0},
+			},
+			{
+				"object_id": "scenario::darts_scorer",
+				"object_type": "scenario",
+				"label": "Darts Scorer",
+				"normalized_rect": {"x": 90.0 / 900.0, "y": 330.0 / 430.0, "w": 110.0 / 900.0, "h": 70.0 / 430.0},
+			},
+			{
+				"object_id": "travel:leave",
+				"object_type": "travel",
+				"label": "Leave",
+				"normalized_rect": {"x": 100.0 / 900.0, "y": 340.0 / 430.0, "w": 110.0 / 900.0, "h": 70.0 / 430.0},
+			},
+		],
+	})
+	await process_frame
+	var overlap_position := Vector2(120.0, 350.0)
+	var hit_ids: Array = canvas.call("_object_ids_at_local_position", overlap_position)
+	_check(hit_ids.size() == 3 and hit_ids.has("event:town_rumor_staff") and hit_ids.has("scenario::darts_scorer") and hit_ids.has("travel:leave"), "Normal play hit testing must retain event, scenario, and travel controls at an authored overlap.")
+	canvas.call("_focus_object_at_local_position", overlap_position)
+	var first_selected := canvas.selected_object_id
+	canvas.call("_focus_object_at_local_position", overlap_position)
+	var second_selected := canvas.selected_object_id
+	canvas.call("_focus_object_at_local_position", overlap_position)
+	var third_selected := canvas.selected_object_id
+	var selected_ids: Dictionary = {}
+	selected_ids[first_selected] = true
+	selected_ids[second_selected] = true
+	selected_ids[third_selected] = true
+	_check(
+		selected_ids.size() == 3 and not selected_ids.has(""),
+		"Repeated clicks must cycle through every overlapping play object instead of trapping input on the top object."
+	)
+	var activated_ids: Array[String] = []
+	canvas.object_activated.connect(func(object_id: String) -> void: activated_ids.append(object_id), CONNECT_ONE_SHOT)
+	canvas.call("_activate_object_at_local_position", overlap_position)
+	_check(activated_ids == [third_selected], "Activation must use the visibly selected overlapping object instead of silently reverting to the top object.")
 
 
 func _capture_lock_request(request: Dictionary) -> void:

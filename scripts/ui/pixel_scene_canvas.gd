@@ -561,15 +561,26 @@ func select_object_at(index: int) -> void:
 
 # Returns the rendered object id under a local canvas coordinate.
 func object_id_at_local_position(local_position: Vector2) -> String:
+	var object_ids := _object_ids_at_local_position(local_position)
+	return object_ids[0] if not object_ids.is_empty() else ""
+
+
+# Returns every interactive object under a point from front to back. Developer
+# placement intentionally permits overlap, so play input needs a way to reach
+# objects below the topmost rendered object.
+func _object_ids_at_local_position(local_position: Vector2) -> Array[String]:
 	var board_position := _local_to_board_position(local_position)
 	var objects := _active_scene_objects()
+	var object_ids: Array[String] = []
 	for index in range(objects.size() - 1, -1, -1):
 		var object_data: Dictionary = objects[index]
 		if not bool(object_data.get("interactive", true)):
 			continue
 		if _interaction_rect_for_object(object_data).has_point(board_position):
-			return str(object_data.get("id", ""))
-	return ""
+			var object_id := str(object_data.get("id", ""))
+			if not object_id.is_empty() and not object_ids.has(object_id):
+				object_ids.append(object_id)
+	return object_ids
 
 
 # Returns canvas-owned view data only; this is not a simulation source.
@@ -4312,7 +4323,13 @@ func _set_hovered_object(object_id: String) -> void:
 
 
 func _focus_object_at_local_position(local_position: Vector2) -> void:
-	var object_id := object_id_at_local_position(local_position)
+	var object_ids := _object_ids_at_local_position(local_position)
+	var object_id := ""
+	if not object_ids.is_empty():
+		object_id = object_ids[0]
+		var selected_hit_index := object_ids.find(selected_object_id)
+		if selected_hit_index >= 0 and object_ids.size() > 1:
+			object_id = object_ids[(selected_hit_index + 1) % object_ids.size()]
 	if object_id.is_empty():
 		_set_hovered_object("")
 		set_selected_object("", false)
@@ -4323,7 +4340,10 @@ func _focus_object_at_local_position(local_position: Vector2) -> void:
 
 
 func _activate_object_at_local_position(local_position: Vector2) -> void:
-	var object_id := object_id_at_local_position(local_position)
+	var object_ids := _object_ids_at_local_position(local_position)
+	var object_id := selected_object_id if object_ids.has(selected_object_id) else ""
+	if object_id.is_empty() and not object_ids.is_empty():
+		object_id = object_ids[0]
 	if object_id.is_empty():
 		_set_hovered_object("")
 		set_selected_object("", false)

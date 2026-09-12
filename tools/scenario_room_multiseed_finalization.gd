@@ -295,9 +295,10 @@ func _check_reachable_grounding_states(run_state: Variant, fallback_definition: 
 				var placement_class := str(visual.get("placement_class", ""))
 				var identity := "%s::%s" % [str(visual.get("owner_namespace", "scenario")), str(visual.get("stable_object_id", ""))]
 				var rect := _normalized_pixel_rect(visual.get("normalized_hit_rect", {}))
-				if placement_class not in EnvironmentPlacementScript.CLASSES or not EnvironmentPlacementScript.valid_rect(environment, placement_class, rect):
+				var developer_placed := _developer_placement_room(environment)
+				if placement_class not in EnvironmentPlacementScript.CLASSES or not developer_placed and not EnvironmentPlacementScript.valid_rect(environment, placement_class, rect):
 					failures.append("%s/%s/%s %s has class-invalid grounded geometry (%s)." % [seed_family, scenario_id, path, identity, placement_class])
-				_check_route_grounding(environment, visual, placement_class, rect.size, "%s/%s/%s %s" % [seed_family, scenario_id, path, identity], failures)
+				_check_route_grounding(environment, visual, placement_class, rect.size, "%s/%s/%s %s" % [seed_family, scenario_id, path, identity], failures, developer_placed)
 		checked += 1
 	return checked
 
@@ -358,9 +359,9 @@ func _interaction_grounding_signature(interactions: Dictionary) -> Dictionary:
 	return result
 
 
-func _check_route_grounding(environment: Dictionary, visual: Dictionary, placement_class: String, size: Vector2, label: String, failures: Array) -> void:
+func _check_route_grounding(environment: Dictionary, visual: Dictionary, placement_class: String, size: Vector2, label: String, failures: Array, developer_placed: bool = false) -> void:
 	var route_stage := _dict(visual.get("route_stage", {}))
-	if route_stage.is_empty():
+	if route_stage.is_empty() or developer_placed:
 		return
 	for point_key in ["start", "endpoint", "reduced_motion_endpoint"]:
 		var point_data := _dict(route_stage.get(point_key, {}))
@@ -370,6 +371,14 @@ func _check_route_grounding(environment: Dictionary, visual: Dictionary, placeme
 		var route_rect := Rect2(center - size * 0.5, size)
 		if not EnvironmentPlacementScript.valid_rect(environment, placement_class, route_rect):
 			failures.append("%s route %s leaves its %s surface." % [label, point_key, placement_class])
+
+
+func _developer_placement_room(environment: Dictionary) -> bool:
+	var placement_map := EnvironmentPlacementScript.surface_map(environment)
+	for field in ["developer_object_slot_positions", "developer_scenario_object_slot_positions", "developer_category_slot_positions"]:
+		if not _dict(placement_map.get(field, {})).is_empty():
+			return true
+	return false
 
 
 func _normalized_pixel_rect(value: Variant) -> Rect2:
