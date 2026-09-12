@@ -40,6 +40,9 @@ $goodIdleFrame = [pscustomobject]@{ count=120; mean_ms=8.0; p95_ms=10.0; max_ms=
 $goodIdleDraw = [pscustomobject]@{ count=120; mean_ms=2.0; p95_ms=4.0; max_ms=5.0 }
 $goodIdlePair = Get-Perf06IdleTimingLivenessAssertion -Frame $goodIdleFrame -Draw $goodIdleDraw -Liveness $goodLive -IsIdle $true
 if (-not $goodIdlePair.passed -or -not $goodIdlePair.timing_positive -or -not $goodIdlePair.liveness_positive) { throw "Positive idle timing and liveness did not pass together." }
+$orderedIdleFrame = [ordered]@{ count=120; mean_ms=8.0; p95_ms=10.0; max_ms=12.0 }
+$orderedIdleDraw = [ordered]@{ count=120; mean_ms=2.0; p95_ms=4.0; max_ms=5.0 }
+if (-not (Get-Perf06IdleTimingLivenessAssertion -Frame $orderedIdleFrame -Draw $orderedIdleDraw -Liveness $goodLive -IsIdle $true).passed) { throw "Real producer ordered-dictionary idle metrics did not pass the structural assertion." }
 $zeroIdleDraw = [pscustomobject]@{ count=120; mean_ms=0.0; p95_ms=0.0; max_ms=0.0 }
 if ((Get-Perf06IdleTimingLivenessAssertion -Frame $goodIdleFrame -Draw $zeroIdleDraw -Liveness $goodLive -IsIdle $true).passed) { throw "A 0.000 idle draw figure passed despite the structural timing/liveness assertion." }
 $frozenLive = Get-Perf06PhaseLivenessEvaluation -Scenario $frozenIdle -Platform native -BudgetTable $budget
