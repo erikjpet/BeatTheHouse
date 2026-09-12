@@ -107,7 +107,7 @@ func _career_model() -> Dictionary:
 				"rows": [
 					{"label": "Craps", "value": "18"},
 					{"label": "Quarter Falls", "value": "31"},
-					{"label": "Back-Room Poker", "value": "7"},
+					{"label": "Back-Room Hold'em", "value": "7"},
 				],
 			},
 			{

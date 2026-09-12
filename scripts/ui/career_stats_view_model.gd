@@ -4,7 +4,7 @@ extends RefCounted
 const REQUIRED_GAME_DEFINITIONS := [
 	{"id": "craps", "label": "Craps"},
 	{"id": "coin_pusher", "label": "Quarter Falls"},
-	{"id": "crew_draw_poker", "label": "Back-Room Poker"},
+	{"id": "crew_draw_poker", "label": "Back-Room Hold'em"},
 ]
 
 

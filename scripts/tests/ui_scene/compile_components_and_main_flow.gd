@@ -61,7 +61,7 @@ const EXPECTED_GAME_LIBRARY_LAUNCHERS := [
 	{"id": "baccarat", "label": "Baccarat"},
 	{"id": "craps", "label": "Craps"},
 	{"id": "roulette", "label": "Roulette"},
-	{"id": "crew_draw_poker", "label": "Back-Room Poker"},
+	{"id": "crew_draw_poker", "label": "Back-Room Hold'em"},
 	{"id": "video_poker", "label": "Video Poker"},
 	{"id": "coin_pusher", "label": "Quarter Falls"},
 ]
@@ -595,7 +595,7 @@ func _check_career_stats_screen_component() -> bool:
 			{"id": "crew", "title": "Crew", "rows": [{"label": "Highest standing", "value": "Inner Circle"}, {"label": "Members met", "value": "7"}, {"label": "Jobs", "value": "9 completed / 2 abandoned"}]},
 			{"id": "world", "title": "World", "rows": [{"label": "Scenarios experienced", "value": "14"}, {"label": "Rumors proved true", "value": "5"}]},
 			{"id": "numbers", "title": "Numbers", "rows": [{"label": "Slips placed", "value": "11"}, {"label": "Hits", "value": "3"}, {"label": "Rig routes used", "value": "1"}]},
-			{"id": "games", "title": "Games", "rows": [{"label": "Craps", "value": "7"}, {"label": "Quarter Falls", "value": "4"}, {"label": "Back-Room Poker", "value": "5"}]},
+			{"id": "games", "title": "Games", "rows": [{"label": "Craps", "value": "7"}, {"label": "Quarter Falls", "value": "4"}, {"label": "Back-Room Hold'em", "value": "5"}]},
 			{"id": "deliveries", "title": "Deliveries", "rows": [{"label": "Runs completed", "value": "6"}, {"label": "Packages lost", "value": "2"}]},
 		],
 		"challenges": [],
@@ -608,7 +608,7 @@ func _check_career_stats_screen_component() -> bool:
 		push_error("Career ledger did not render all three victory routes and five 0.6 sections: %s." % JSON.stringify(snapshot))
 		return false
 	var ledger_text := str(snapshot.get("visible_ledger_text", ""))
-	for required in ["Inner Circle", "Members met 7", "Scenarios experienced 14", "Craps 7", "Quarter Falls 4", "Back-Room Poker 5", "Packages lost 2"]:
+	for required in ["Inner Circle", "Members met 7", "Scenarios experienced 14", "Craps 7", "Quarter Falls 4", "Back-Room Hold'em 5", "Packages lost 2"]:
 		if ledger_text.find(required) == -1:
 			push_error("Career ledger truncated or omitted an essential value '%s': %s." % [required, ledger_text])
 			return false
@@ -759,7 +759,7 @@ func _check_run_report_screen_component() -> bool:
 			"World | 2 nights | 3 scenarios | 2 aftermath | 1 sweep | 2 true rumors",
 			"Numbers | 4 slips | 1 hit | rig used",
 			"Deliveries | 2 complete | 1 lost",
-			"Games | Craps 3 | Quarter Falls 2 | Back-Room Poker 4",
+			"Games | Craps 3 | Quarter Falls 2 | Back-Room Hold'em 4",
 			"The Turn | The Turn broke the score.",
 		]},
 		"timeline": timeline,
@@ -805,7 +805,7 @@ func _check_run_report_screen_component() -> bool:
 		push_error("Run report did not precompute/install its shared timeline exactly once.")
 		return false
 	var release_ledger_text := str(snapshot.get("release_ledger_text", ""))
-	if int(snapshot.get("release_ledger_line_count", 0)) != 6 or release_ledger_text.find("path walked") == -1 or release_ledger_text.find("2 aftermath") == -1 or release_ledger_text.find("Quarter Falls 2") == -1 or release_ledger_text.find("Back-Room Poker 4") == -1 or release_ledger_text.find("The Turn broke the score") == -1:
+	if int(snapshot.get("release_ledger_line_count", 0)) != 6 or release_ledger_text.find("path walked") == -1 or release_ledger_text.find("2 aftermath") == -1 or release_ledger_text.find("Quarter Falls 2") == -1 or release_ledger_text.find("Back-Room Hold'em 4") == -1 or release_ledger_text.find("The Turn broke the score") == -1:
 		push_error("Run report omitted or truncated an essential 0.6 ledger value: %s." % release_ledger_text)
 		return false
 	var result_panel_rect: Rect2 = snapshot.get("result_panel_rect", Rect2())

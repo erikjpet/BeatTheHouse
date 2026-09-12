@@ -984,7 +984,7 @@ func _craps_int_array(value: Variant) -> Array:
 func _check_crew_poker_contract(library: ContentLibrary, failures: Array) -> void:
 	var definition := library.game("crew_draw_poker")
 	if definition.is_empty():
-		failures.append("Crew draw poker is missing from production game content.")
+		failures.append("Back-Room Hold'em is missing from production game content.")
 		return
 	var poker_archetype := library.environment_archetype("small_underground_casino")
 	var poker_layers: Dictionary = poker_archetype.get("layers", {}) if typeof(poker_archetype.get("layers", {})) == TYPE_DICTIONARY else {}

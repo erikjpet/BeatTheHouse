@@ -14,7 +14,7 @@ const EXPECTED_LAUNCHERS := [
 	{"id": "baccarat", "label": "Baccarat"},
 	{"id": "craps", "label": "Craps"},
 	{"id": "roulette", "label": "Roulette"},
-	{"id": "crew_draw_poker", "label": "Back-Room Poker"},
+	{"id": "crew_draw_poker", "label": "Back-Room Hold'em"},
 	{"id": "video_poker", "label": "Video Poker"},
 	{"id": "coin_pusher", "label": "Quarter Falls"},
 ]

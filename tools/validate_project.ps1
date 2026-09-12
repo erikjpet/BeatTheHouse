@@ -1020,6 +1020,7 @@ Require-Text "tools/check_godot.ps1" 'craps_extensive_playtest.gd' "Game rework 
 Require-Text "tools/check_godot.ps1" 'craps_rtp_audit.gd' "Game rework verification must retain the million-roll Craps RTP gate."
 Require-Text "tools/check_godot.ps1" 'crew_holdem_gameplay_audit.gd' "Game rework verification must retain the Hold'em gameplay gate."
 Require-Text "tools/check_godot.ps1" 'crew_holdem_dynamic_table_audit.gd' "Game rework verification must retain the Hold'em production-table gate."
+Require-Text "tools/check_godot.ps1" 'crew_holdem_production_host_audit.gd' "Game rework verification must retain the Hold'em save, replay, arithmetic, and all-streets production-host gate."
 Require-Text "tools/check_godot.ps1" 'slot_autoplay_cadence_probe.gd' "Game rework verification must retain the slot autoplay cadence gate."
 Require-Text "tools/check_godot.ps1" 'slot_foreground_autoplay_performance_probe.gd' "Game rework verification must retain the foreground autoplay performance gate."
 Require-Text "tools/check_godot.ps1" 'blackjack_counter_surveillance_probe.gd' "Game rework verification must retain the blackjack surveillance gate."

@@ -334,7 +334,7 @@ func _verify_surface_families_via_visible_library() -> void:
 		{"family": "wheel", "game_id": "roulette", "label": "Roulette"},
 		{"family": "coin_pusher", "game_id": "coin_pusher", "label": "Quarter Falls"},
 		{"family": "craps", "game_id": "craps", "label": "Craps"},
-		{"family": "crew_poker", "game_id": "crew_draw_poker", "label": "Back-Room Poker"},
+		{"family": "crew_poker", "game_id": "crew_draw_poker", "label": "Back-Room Hold'em"},
 	]
 	var records: Array = []
 	for representative_value in representatives:

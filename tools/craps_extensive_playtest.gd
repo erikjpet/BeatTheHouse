@@ -5,7 +5,7 @@ const CrapsRulesScript := preload("res://scripts/games/craps/craps_rules.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const GameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.gd")
 
-const REPORT_PATH := "res://review_artifacts/craps_rework/audit_report.json"
+const REPORT_PATH := "res://.tmp/craps/extensive_playtest.json"
 const PAGES := ["line", "numbers", "props", "odds"]
 
 var failures: Array[String] = []

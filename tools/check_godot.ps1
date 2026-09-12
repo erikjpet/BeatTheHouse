@@ -793,6 +793,7 @@ function Invoke-GameReworkVerificationGates {
     Invoke-GodotScript -Name "craps_rtp_audit" -ScriptPath "res://tools/craps_rtp_audit.gd" -StageTimeoutSec 600
     Invoke-GodotScript -Name "crew_holdem_gameplay_audit" -ScriptPath "res://tools/crew_holdem_gameplay_audit.gd" -StageTimeoutSec 180
     Invoke-GodotScript -Name "crew_holdem_dynamic_table_audit" -ScriptPath "res://tools/crew_holdem_dynamic_table_audit.gd" -StageTimeoutSec 180
+    Invoke-GodotScript -Name "crew_holdem_production_host_audit" -ScriptPath "res://tools/crew_holdem_production_host_audit.gd" -StageTimeoutSec 240
     Invoke-GodotScript -Name "slot_autoplay_cadence_probe" -ScriptPath "res://tools/slot_autoplay_cadence_probe.gd" -StageTimeoutSec 120
     Invoke-GodotScript -Name "slot_foreground_autoplay_performance_probe" -ScriptPath "res://tools/slot_foreground_autoplay_performance_probe.gd" -StageTimeoutSec 180
     Invoke-GodotScript -Name "blackjack_counter_surveillance_probe" -ScriptPath "res://tools/blackjack_counter_surveillance_probe.gd" -StageTimeoutSec 120

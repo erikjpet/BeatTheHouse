@@ -3756,7 +3756,7 @@
   },
   {
     "id": "crew_draw_poker",
-    "display_name": "Back-Room Poker",
+    "display_name": "Back-Room Hold'em",
     "family": "cards",
     "content_groups": [
       "crew_poker_pack"

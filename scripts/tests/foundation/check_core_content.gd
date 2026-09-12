@@ -5109,7 +5109,7 @@ func _check_profile_inventory_boundary(failures: Array) -> void:
 		failures.append("ProfileInventory normalization lost an unknown existing lifetime counter.")
 	var career_model := CareerStatsViewModelScript.build(restored)
 	var career_routes: Array = career_model.get("routes", []) if typeof(career_model.get("routes", [])) == TYPE_ARRAY else []
-	if CareerStatsViewModelScript.route_definition_ids() != ["players_card_cashout", "showdown", "crew_heist"] or career_routes.size() < 3 or JSON.stringify(career_routes).find("crew_heist") == -1 or JSON.stringify(career_model).find("Back-Room Poker") == -1:
+	if CareerStatsViewModelScript.route_definition_ids() != ["players_card_cashout", "showdown", "crew_heist"] or career_routes.size() < 3 or JSON.stringify(career_routes).find("crew_heist") == -1 or JSON.stringify(career_model).find("Back-Room Hold'em") == -1:
 		failures.append("Career ledger did not render all producible victory routes and generic 0.6 game tallies.")
 	var historical_profile := ProfileInventoryScript.new()
 	historical_profile.from_dict({"schema_version": 5, "lifetime_stats": {"total_runs": 4, "victories_per_route": {"crew_heist": 4}, "future_counter": 33}})

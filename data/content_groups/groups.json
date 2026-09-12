@@ -118,7 +118,7 @@
 	{
 		"id": "crew_poker_pack",
 		"display_name": "Crew Poker Pack",
-		"description": "Friendly back-room draw poker and the Crew's table habits.",
+		"description": "Friendly back-room Hold'em and the Crew's table habits.",
 		"default_enabled": true,
 		"game_ids": ["crew_draw_poker"],
 		"item_ids": []

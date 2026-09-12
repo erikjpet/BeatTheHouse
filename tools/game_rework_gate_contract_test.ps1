@@ -37,6 +37,12 @@ $cases = @(
         Replace = 'app.call("start_game_test_session", "broken_holdem_fixture")'
     },
     @{
+        Name = "crew_holdem_production_host_audit"
+        Source = "tools\crew_holdem_production_host_audit.gd"
+        Find = 'const GAME_ID := "crew_draw_poker"'
+        Replace = 'const GAME_ID := "broken_holdem_fixture"'
+    },
+    @{
         Name = "slot_autoplay_cadence_probe"
         Source = "tools\slot_autoplay_cadence_probe.gd"
         Find = 'machine["slot_autoplay_active"] = true'
