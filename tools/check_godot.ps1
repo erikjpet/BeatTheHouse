@@ -785,6 +785,19 @@ function Invoke-GodotScript {
     Invoke-ProcessStage -Name $Name -FilePath $script:Godot -Arguments $args -StageTimeoutSec $StageTimeoutSec | Out-Null
 }
 
+function Invoke-GameReworkVerificationGates {
+    # These deterministic probes cover the 2026-09-09/10 game rework. Keep
+    # them out of Smoke/Contract: the million-roll RTP stage is intentionally
+    # an Audit/Full cost.
+    Invoke-GodotScript -Name "craps_extensive_playtest" -ScriptPath "res://tools/craps_extensive_playtest.gd" -StageTimeoutSec 180
+    Invoke-GodotScript -Name "craps_rtp_audit" -ScriptPath "res://tools/craps_rtp_audit.gd" -StageTimeoutSec 600
+    Invoke-GodotScript -Name "crew_holdem_gameplay_audit" -ScriptPath "res://tools/crew_holdem_gameplay_audit.gd" -StageTimeoutSec 180
+    Invoke-GodotScript -Name "crew_holdem_dynamic_table_audit" -ScriptPath "res://tools/crew_holdem_dynamic_table_audit.gd" -StageTimeoutSec 180
+    Invoke-GodotScript -Name "slot_autoplay_cadence_probe" -ScriptPath "res://tools/slot_autoplay_cadence_probe.gd" -StageTimeoutSec 120
+    Invoke-GodotScript -Name "slot_foreground_autoplay_performance_probe" -ScriptPath "res://tools/slot_foreground_autoplay_performance_probe.gd" -StageTimeoutSec 180
+    Invoke-GodotScript -Name "blackjack_counter_surveillance_probe" -ScriptPath "res://tools/blackjack_counter_surveillance_probe.gd" -StageTimeoutSec 120
+}
+
 function Invoke-GodotImport {
     Invoke-ProcessStage -Name "godot_import" -FilePath $script:Godot -Arguments @("--headless", "--path", $root, "--import") -StageTimeoutSec 180 | Out-Null
 }
@@ -1310,6 +1323,7 @@ switch ($suiteKey) {
         Invoke-GodotScript -Name "roulette_audio_audit" -ScriptPath "res://tools/roulette_audio_audit.gd" -StageTimeoutSec 120
     }
     "audit" {
+		Invoke-GameReworkVerificationGates
 		Invoke-GodotScript -Name "environment_grounding_contract" -ScriptPath "res://tools/environment_grounding_contract.gd" -StageTimeoutSec 120
         Invoke-GodotScript -Name "scenario_room_multiseed_finalization" -ScriptPath "res://tools/scenario_room_multiseed_finalization.gd" -StageTimeoutSec 1200
         Invoke-GodotScript -Name "slot_pinball_physics_audit" -ScriptPath "res://tools/slot_pinball_physics_audit.gd" -UserArgs @("48") -StageTimeoutSec 240
@@ -1325,6 +1339,7 @@ switch ($suiteKey) {
         Invoke-GodotScript -Name "tutorial_guardrail_stress" -ScriptPath "res://scripts/tests/tutorial_guardrail_recovery_stress_check.gd" -StageTimeoutSec 180
         Invoke-GodotScript -Name "tutorial_guided_run_audit" -ScriptPath "res://tools/tutorial_seed_audit.gd" -StageTimeoutSec 180
         Invoke-FoundationPerfSmoke
+		Invoke-GameReworkVerificationGates
 		Invoke-GodotScript -Name "environment_grounding_contract" -ScriptPath "res://tools/environment_grounding_contract.gd" -StageTimeoutSec 120
         Invoke-GodotScript -Name "scenario_room_multiseed_finalization" -ScriptPath "res://tools/scenario_room_multiseed_finalization.gd" -StageTimeoutSec 1200
         Invoke-GodotScript -Name "slot_pinball_physics_audit" -ScriptPath "res://tools/slot_pinball_physics_audit.gd" -UserArgs @("48") -StageTimeoutSec 240
