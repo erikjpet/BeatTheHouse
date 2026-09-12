@@ -22,9 +22,71 @@ const C_TEAL := VisualStyleScript.TEAL
 const C_YELLOW := VisualStyleScript.YELLOW
 const C_WHITE := VisualStyleScript.WHITE
 const C_SOFT := VisualStyleScript.SOFT
-const SEAT_LEFT_POSITION := Vector2(92, 104)
-const SEAT_CENTER_POSITION := Vector2(408, 78)
-const SEAT_RIGHT_POSITION := Vector2(664, 104)
+const SEAT_LAYOUT := [
+	{
+		"block_origin": Vector2(18, 176),
+		"character_foot": Vector2(60, 229),
+		"hole_card_origin": Vector2(109, 190),
+		"action_label_rect": Rect2(18, 245, 142, 16),
+		"action_font_size": 10,
+		"action_carries_name": false,
+		"dealer_button_center": Vector2(174, 214),
+		"bet_chip_center": Vector2(232, 256),
+		"focus_rect": Rect2(18, 155, 166, 110),
+	},
+	{
+		"block_origin": Vector2(150, 96),
+		"character_foot": Vector2(192, 149),
+		"hole_card_origin": Vector2(241, 110),
+		"action_label_rect": Rect2(150, 165, 80, 16),
+		"action_font_size": 10,
+		"action_carries_name": false,
+		"dealer_button_center": Vector2(310, 130),
+		"bet_chip_center": Vector2(272, 188),
+		"focus_rect": Rect2(145, 82, 174, 114),
+	},
+	{
+		"block_origin": Vector2(408, 95),
+		"character_foot": Vector2(450, 148),
+		"hole_card_origin": Vector2(499, 106),
+		"action_label_rect": Rect2(502, 142, 96, 16),
+		"action_font_size": 8,
+		"action_carries_name": true,
+		"dealer_button_center": Vector2(590, 130),
+		"bet_chip_center": Vector2(390, 145),
+		"focus_rect": Rect2(404, 82, 196, 78),
+	},
+	{
+		"block_origin": Vector2(604, 96),
+		"character_foot": Vector2(646, 149),
+		"hole_card_origin": Vector2(695, 110),
+		"action_label_rect": Rect2(666, 165, 70, 16),
+		"action_font_size": 10,
+		"action_carries_name": false,
+		"dealer_button_center": Vector2(758, 130),
+		"bet_chip_center": Vector2(630, 188),
+		"focus_rect": Rect2(599, 82, 174, 114),
+	},
+	{
+		"block_origin": Vector2(736, 176),
+		"character_foot": Vector2(778, 229),
+		"hole_card_origin": Vector2(827, 190),
+		"action_label_rect": Rect2(736, 245, 142, 16),
+		"action_font_size": 10,
+		"action_carries_name": false,
+		"dealer_button_center": Vector2(726, 214),
+		"bet_chip_center": Vector2(700, 256),
+		"focus_rect": Rect2(716, 155, 166, 110),
+	},
+]
+const MAX_OPPONENT_SEATS := 5
+const SEAT_LAYOUT_INDICES := {
+	1: [2],
+	2: [0, 4],
+	3: [0, 2, 4],
+	4: [0, 1, 3, 4],
+	5: [0, 1, 2, 3, 4],
+}
 const MEMBER_NAMES := {
 	"crew_rook": "Rook", "crew_velvet": "Velvet", "crew_knuckles": "Knuckles",
 	"crew_switch": "Switch", "crew_mags": "Mags", "crew_bishop": "Bishop", "crew_lucky": "Lucky",
@@ -48,16 +110,22 @@ func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
 
 func generate_environment_state(run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
 	var tuning := CrewPokerModelScript.config()
-	var candidates := _string_array(environment.get("resident_member_ids", []))
-	if candidates.size() < 3:
+	var residents: Array = []
+	for resident_id in _string_array(environment.get("resident_member_ids", [])):
+		if CrewStateModelScript.MEMBER_IDS.has(resident_id) and not residents.has(resident_id):
+			residents.append(resident_id)
+	var bounds: Array = tuning.get("opponent_count", [2, MAX_OPPONENT_SEATS]) if typeof(tuning.get("opponent_count", [2, MAX_OPPONENT_SEATS])) == TYPE_ARRAY else [2, MAX_OPPONENT_SEATS]
+	var available_count := CrewStateModelScript.MEMBER_IDS.size()
+	var minimum := clampi(int(bounds[0]) if not bounds.is_empty() else MAX_OPPONENT_SEATS, 2, mini(MAX_OPPONENT_SEATS, available_count))
+	var maximum := clampi(int(bounds[1]) if bounds.size() > 1 else minimum, minimum, mini(MAX_OPPONENT_SEATS, available_count))
+	var count := rng.randi_range(minimum, maximum)
+	var members: Array = residents.duplicate() if residents.size() <= count else rng.pick_many(residents, count)
+	if members.size() < count:
+		var remaining: Array = []
 		for member_id in CrewStateModelScript.MEMBER_IDS:
-			if not candidates.has(member_id):
-				candidates.append(member_id)
-	var bounds: Array = tuning.get("opponent_count", [2, 3]) if typeof(tuning.get("opponent_count", [2, 3])) == TYPE_ARRAY else [2, 3]
-	var minimum := clampi(int(bounds[0]) if not bounds.is_empty() else 3, 2, 3)
-	var maximum := clampi(int(bounds[1]) if bounds.size() > 1 else minimum, minimum, 3)
-	var count := clampi(rng.randi_range(minimum, maximum), 2, mini(3, candidates.size()))
-	var members := rng.pick_many(candidates, count)
+			if not residents.has(member_id):
+				remaining.append(member_id)
+		members.append_array(rng.pick_many(remaining, count - members.size()))
 	return {
 		"schema": STATE_SCHEMA,
 		"version": STATE_VERSION,
@@ -732,6 +800,7 @@ func _maybe_table_talk_request(state: Dictionary, member_id: String, action: Str
 		"pot": pot,
 		"heads_up": heads_up,
 		"hand_number": int(state.get("hand_number", 0)),
+		"seat_count": _string_array(state.get("members", [])).size(),
 	}
 	spoken_members.append(member_id)
 	state["table_talk_members_this_hand"] = spoken_members
@@ -871,11 +940,12 @@ func _ordered_draw_npc(state: Dictionary, seat_index: int, rng: RngStream) -> vo
 func _advance_ordered_turn(state: Dictionary, rng: RngStream, run_state: RunState = null) -> Dictionary:
 	if _active_actor_ids(state).size() <= 1:
 		if bool(state.get("player_active", false)):
-			var payout := int(state.get("pot", 0))
+			var raw_payout := int(state.get("pot", 0))
+			var payout := mini(raw_payout, _win_room(state, raw_payout))
 			state["session_swing"] = int(state.get("session_swing", 0)) + payout
-			state["player_stack"] = int(state.get("player_stack", 0)) + payout
-			_finish_hand(state, run_state, {"winners": [PLAYER_ID], "payout": payout, "message": "The table folds to you. You take $%d." % payout})
-			return {"payout": payout, "message": "The table folds to you. You take $%d." % payout}
+			state["player_stack"] = int(state.get("player_stack", 0)) + raw_payout
+			_finish_hand(state, run_state, {"winners": [PLAYER_ID], "payout": payout, "table_payout": raw_payout, "message": "The table folds to you. You take $%d." % raw_payout})
+			return {"payout": payout, "message": "The table folds to you. You take $%d." % raw_payout}
 		var remaining := _active_actor_ids(state)
 		var winners: Array = [str(remaining[0])] if not remaining.is_empty() else []
 		if not winners.is_empty():
@@ -1464,7 +1534,7 @@ func _showdown(state: Dictionary, run_state: RunState) -> Dictionary:
 	var raw_payout := int(awards.get(PLAYER_ID, 0))
 	var payout := mini(raw_payout, _win_room(state, raw_payout))
 	state["session_swing"] = int(state.get("session_swing", 0)) + payout
-	state["player_stack"] = int(state.get("player_stack", 0)) + payout
+	state["player_stack"] = int(state.get("player_stack", 0)) + raw_payout
 	for actor in awards.keys():
 		if str(actor) == PLAYER_ID:
 			continue
@@ -1941,11 +2011,13 @@ func _night_scene_state(state: Dictionary) -> Dictionary:
 
 func _ordered_ritual_actors(state: Dictionary) -> Array:
 	var actors: Array = [{"id": PLAYER_ID, "anchor": "seat_south", "behavior": "acting" if str(state.get("turn_owner", "")) == PLAYER_ID else "watching", "bounds": Rect2(294, 220, 308, 94), "attention": str(state.get("turn_owner", ""))}]
-	var positions := [Rect2(78, 92, 190, 92), Rect2(396, 66, 190, 92), Rect2(650, 92, 190, 92)]
 	var seats := _dict_array(state.get("seats", []))
-	for index in range(seats.size()):
+	var seat_count := mini(MAX_OPPONENT_SEATS, seats.size())
+	var layout_indices := _seat_layout_indices(seat_count)
+	for index in range(seat_count):
 		var seat: Dictionary = seats[index]
-		actors.append({"id": str(seat.get("member_id", "")), "anchor": "seat_%d" % index, "behavior": str(seat.get("last_action", "watching")), "bounds": positions[index] if index < positions.size() else Rect2(), "attention": str(state.get("turn_owner", "")), "present": true, "in_hand": bool(seat.get("active", false))})
+		var layout: Dictionary = SEAT_LAYOUT[int(layout_indices[index])]
+		actors.append({"id": str(seat.get("member_id", "")), "anchor": "seat_%d" % index, "behavior": str(seat.get("last_action", "watching")), "bounds": layout.get("focus_rect", Rect2()), "attention": str(state.get("turn_owner", "")), "present": true, "in_hand": bool(seat.get("active", false))})
 	return actors
 
 
@@ -2029,9 +2101,11 @@ func _draw_room(surface, state: Dictionary) -> void:
 func _draw_seats(surface, state: Dictionary) -> void:
 	var seats: Array = state.get("seats", []) if typeof(state.get("seats", [])) == TYPE_ARRAY else []
 	var members: Array = state.get("members", []) if typeof(state.get("members", [])) == TYPE_ARRAY else []
-	for index in range(mini(3, maxi(seats.size(), members.size()))):
+	var seat_count := mini(MAX_OPPONENT_SEATS, maxi(seats.size(), members.size()))
+	var layout_indices := _seat_layout_indices(seat_count)
+	for index in range(seat_count):
 		var seat: Dictionary = seats[index] if index < seats.size() else {"member_id": members[index], "cards": _hidden_cards(2), "active": true}
-		var pos := SEAT_LEFT_POSITION if index == 0 else SEAT_CENTER_POSITION if index == 1 else SEAT_RIGHT_POSITION
+		var layout: Dictionary = SEAT_LAYOUT[int(layout_indices[index])]
 		var name := str(MEMBER_NAMES.get(str(seat.get("member_id", "")), "Crew"))
 		var color := C_SOFT if bool(seat.get("active", true)) else Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.4)
 		var model := _poker_dict(seat.get("character_model", {}))
@@ -2048,7 +2122,7 @@ func _draw_seats(surface, state: Dictionary) -> void:
 		var animation_offset := float(absi(str(seat.get("member_id", "")).hash()) % 2200) / 1000.0
 		var portrait_scale := 1.0 + float((absi(portrait_variant.hash()) % 5) - 2) * 0.012 if not portrait_variant.is_empty() else 1.0
 		TableGameVisualsScript._draw_table_character(surface, {
-			"name": name,
+			"name": "" if bool(layout.get("action_carries_name", false)) else name,
 			"skin": Color(str(model.get("skin_color", "#c49371"))),
 			"hair": Color(str(model.get("hair_color", "#171022"))),
 			"jacket": Color(str(model.get("jacket_color", "#1d2030"))),
@@ -2059,18 +2133,17 @@ func _draw_seats(surface, state: Dictionary) -> void:
 			"blink": fposmod(surface.surface_flicker() + animation_offset, 3.1) > 2.94,
 			"holding_card": active and not str(state.get("phase", "idle")) in ["idle", "showdown"],
 			"silhouette": str(model.get("silhouette", "coat")),
-		}, pos + Vector2(42, 53), clampf(float(model.get("scale", 1.0)) * 0.72 * portrait_scale, 0.66, 0.84), surface.surface_flicker() + animation_offset)
+		}, layout.get("character_foot", Vector2.ZERO), clampf(float(model.get("scale", 1.0)) * 0.72 * portrait_scale, 0.66, 0.84), surface.surface_flicker() + animation_offset)
 		var cards := _draw_array_view(seat.get("cards", []))
 		for card_index in range(mini(2, cards.size())):
-			PlayingCardRendererScript.draw_card(surface, cards[card_index], Rect2(pos + Vector2(91 + card_index * 27, 14), Vector2(24, 35)))
+			PlayingCardRendererScript.draw_card(surface, cards[card_index], Rect2((layout.get("hole_card_origin", Vector2.ZERO) as Vector2) + Vector2(card_index * 27, 0), Vector2(24, 35)))
 		var action_text := str(seat.get("last_action", "")).replace("_", " ").capitalize()
 		if bool(seat.get("all_in", false)):
 			action_text = "ALL IN"
-		var action_rect := Rect2(pos.x + 127.0, pos.y + 53.0, 128, 16) if index == 1 else Rect2(pos.x, pos.y + 69.0, 142, 16)
-		var presented_action := "%s: %s" % [name, action_text] if index == 1 and not action_text.is_empty() else action_text
-		surface.surface_label_centered(presented_action, action_rect, 9 if index == 1 else 10, C_YELLOW)
+		var presented_action := "%s: %s" % [name, action_text] if bool(layout.get("action_carries_name", false)) and not action_text.is_empty() else action_text
+		surface.surface_label_centered(presented_action, layout.get("action_label_rect", Rect2()), int(layout.get("action_font_size", 10)), C_YELLOW)
 		if str(state.get("dealer_actor", "")) == str(seat.get("member_id", "")):
-			_draw_button_marker(surface, pos + Vector2(137, 58))
+			_draw_button_marker(surface, layout.get("dealer_button_center", Vector2.ZERO))
 
 
 func _portrait_variant_pose(variant: String) -> String:
@@ -2113,21 +2186,35 @@ func _chip_layout(state: Dictionary) -> Array:
 	var rounds := _poker_dict(state.get("round_contributions", {}))
 	var player_amount := maxi(0, int(rounds.get(PLAYER_ID, 0)))
 	var current_round_total := player_amount
-	var seat_centers := [Vector2(270, 190), Vector2(390, 145), Vector2(630, 190)]
 	var seats := _dict_array(state.get("seats", []))
-	for index in range(mini(seats.size(), seat_centers.size())):
+	var seat_count := mini(MAX_OPPONENT_SEATS, seats.size())
+	var layout_indices := _seat_layout_indices(seat_count)
+	for index in range(seat_count):
 		var seat: Dictionary = seats[index]
 		var member_id := str(seat.get("member_id", ""))
 		var amount := maxi(0, int(seat.get("round_contribution", 0)))
 		current_round_total += amount
 		if amount > 0:
-			layout.append(_chip_layout_entry(member_id, amount, seat_centers[index], 2))
+			var seat_layout: Dictionary = SEAT_LAYOUT[int(layout_indices[index])]
+			layout.append(_chip_layout_entry(member_id, amount, seat_layout.get("bet_chip_center", Vector2.ZERO), 2))
 	if player_amount > 0:
 		layout.append(_chip_layout_entry(PLAYER_ID, player_amount, Vector2(350, 280), 2))
 	var swept_pot := maxi(0, int(state.get("pot", 0)) - current_round_total)
 	if swept_pot > 0:
 		layout.push_front(_chip_layout_entry("pot", swept_pot, Vector2(590, 270), 6))
 	return layout
+
+
+func seat_focus_rect(opponent_count: int, seat_index: int) -> Rect2:
+	var count := clampi(opponent_count, 1, MAX_OPPONENT_SEATS)
+	var layout_indices := _seat_layout_indices(count)
+	var clamped_index := clampi(seat_index, 0, count - 1)
+	var layout: Dictionary = SEAT_LAYOUT[int(layout_indices[clamped_index])]
+	return layout.get("focus_rect", Rect2())
+
+
+func _seat_layout_indices(opponent_count: int) -> Array:
+	return SEAT_LAYOUT_INDICES.get(clampi(opponent_count, 1, MAX_OPPONENT_SEATS), SEAT_LAYOUT_INDICES[MAX_OPPONENT_SEATS])
 
 
 func _chip_layout_entry(owner_id: String, amount: int, center: Vector2, max_stacks: int) -> Dictionary:

@@ -4804,6 +4804,7 @@ func _enqueue_crew_poker_table_talk(request: Dictionary) -> bool:
 		"environment_snapshot": RunState.environment_context_snapshot(run_state.current_environment),
 		"ignore_penalty_heat": 0,
 		"speaker_seat_index": int(request.get("seat_index", -1)),
+		"speaker_seat_count": int(request.get("seat_count", 3)),
 		"phase": str(request.get("phase", "")),
 		"action": str(request.get("action", "")),
 		"pot": int(request.get("pot", 0)),
@@ -19896,9 +19897,12 @@ func _sync_talk_dock_coach_avoid_rect() -> void:
 		and current_game != null \
 		and str(talk_context.get("source", "")) == "craps_table_talk"
 	if poker_table_talk and game_surface_canvas != null and game_surface_canvas.visible and game_surface_canvas.has_method("global_rect_for_design_rect"):
-		var poker_seat_index := clampi(int(talk_context.get("speaker_seat_index", 0)), 0, 2)
-		var poker_seat_rects := [Rect2(82, 86, 166, 114), Rect2(398, 62, 166, 114), Rect2(654, 86, 166, 114)]
-		anchor_rect = game_surface_canvas.call("global_rect_for_design_rect", poker_seat_rects[poker_seat_index])
+		var poker_seat_count := int(talk_context.get("speaker_seat_count", 3))
+		var poker_seat_index := clampi(int(talk_context.get("speaker_seat_index", 0)), 0, maxi(0, poker_seat_count - 1))
+		var poker_seat_rect := Rect2()
+		if current_game.has_method("seat_focus_rect"):
+			poker_seat_rect = current_game.call("seat_focus_rect", poker_seat_count, poker_seat_index)
+		anchor_rect = game_surface_canvas.call("global_rect_for_design_rect", poker_seat_rect)
 		focus_x_hint = anchor_rect.get_center().x
 		focus_boundary_id = "crew_poker_seat:%d" % poker_seat_index
 	if craps_table_talk and game_surface_canvas != null and game_surface_canvas.visible and game_surface_canvas.has_method("global_rect_for_design_rect"):

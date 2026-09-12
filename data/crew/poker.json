@@ -14,7 +14,7 @@
     "hustle_threshold": 12,
     "hustle_sessions_required": 2,
     "hustle_respect_bonus": 1,
-    "opponent_count": [3, 3],
+    "opponent_count": [5, 5],
     "learned_exposures": 3,
     "table_talk_heads_up_pot": 10,
     "table_talk_multiway_pot": 18,

@@ -317,6 +317,7 @@ static func split_pot(pot: int, winner_ids: Array) -> Dictionary:
 		return result
 	var share := floori(float(pot) / float(winner_ids.size()))
 	var remainder := pot % winner_ids.size()
+	# Contender order is stable table order; odd chips go to its earliest winners.
 	for index in range(winner_ids.size()):
 		result[str(winner_ids[index])] = share + (1 if index < remainder else 0)
 	return result
