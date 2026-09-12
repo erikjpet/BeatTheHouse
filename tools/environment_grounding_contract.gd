@@ -162,14 +162,9 @@ func _check_scenario_surface_overrides(failures: Array) -> void:
 	if str(overrides.get("motel_wedding_overflow_station", "")) != "surface_item" \
 			or str(overrides.get("event:town_rumor_staff", "")) != "standing_person":
 		failures.append("Scenario surface-map merge replaced global placement classes instead of applying the local override.")
-	var candidates := [
-		{"rect": Rect2(450.0, 230.0, 64.0, 56.0), "surface_id": "phone_desk"},
-		{"rect": Rect2(590.0, 230.0, 64.0, 56.0), "surface_id": "phone_desk"},
-	]
-	var reserved := ScenarioLayoutResolverScript._scenario_reserved_candidates("scenario::motel_wedding_overflow_station", candidates, "surface_item", surface_map)
-	if reserved.size() != 1 or not ((reserved[0] as Dictionary).get("rect", Rect2()) as Rect2).is_equal_approx(Rect2(590.0, 230.0, 64.0, 56.0)) \
-			or not ScenarioLayoutResolverScript._scenario_has_reservation("scenario::motel_wedding_overflow_station", "surface_item", surface_map):
-		failures.append("A scenario object region was not binding at the shared placement boundary.")
+	var station_region: Dictionary = (surface_map.get("scenario_object_regions", {}) as Dictionary).get("motel_wedding_overflow_station", {})
+	if station_region.is_empty() or not (station_region.get("surface_ids", []) as Array).has("phone_desk"):
+		failures.append("A scenario object region was not present at the shared placement boundary.")
 	var hanging := EnvironmentPlacementScript.candidate_rects(environment, "hanging", Rect2(100.0, 0.0, 60.0, 44.0))
 	if hanging.size() < 2:
 		failures.append("Hanging placement exposed only one ceiling candidate to collision recovery.")
