@@ -195,7 +195,7 @@ func set_developer_placement_mode(enabled: bool) -> void:
 	if developer_placement_mode == enabled:
 		return
 	if not enabled:
-		_cancel_developer_placement_preview()
+		_finish_developer_placement_edit()
 	developer_placement_mode = enabled
 	_ensure_developer_placement_panel()
 	developer_placement_panel.visible = enabled
@@ -245,7 +245,7 @@ func _ensure_developer_placement_panel() -> void:
 	developer_placement_label = Label.new()
 	developer_placement_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	developer_placement_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	developer_placement_label.text = "Placement mode: click an object to move it."
+	developer_placement_label.text = "Placement mode: drag an object; release to keep its room position."
 	stack.add_child(developer_placement_label)
 
 	var actions := HBoxContainer.new()
@@ -282,7 +282,7 @@ func _update_developer_placement_panel() -> void:
 		return
 	var object_data := _scene_object(selected_object_id)
 	if object_data.is_empty():
-		developer_placement_label.text = "Placement mode: click an object to move it. Drag or use arrow keys. F2 hides this panel."
+		developer_placement_label.text = "Placement mode: drag an object; release to keep it. Right-click or Escape cancels. F2 hides this panel."
 		developer_placement_lock_button.disabled = true
 		developer_placement_reset_button.disabled = true
 		return
@@ -771,8 +771,7 @@ func _handle_developer_placement_input(event: InputEvent) -> bool:
 			if mouse_event.pressed:
 				_begin_developer_placement_drag(mouse_event.position)
 			else:
-				developer_placement_dragging = false
-				_update_developer_placement_panel()
+				_finish_developer_placement_edit()
 			return true
 		if mouse_event.button_index == MOUSE_BUTTON_RIGHT and mouse_event.pressed:
 			_cancel_developer_placement_preview()
@@ -782,8 +781,7 @@ func _handle_developer_placement_input(event: InputEvent) -> bool:
 		if touch.pressed:
 			_begin_developer_placement_drag(touch.position)
 		else:
-			developer_placement_dragging = false
-			_update_developer_placement_panel()
+			_finish_developer_placement_edit()
 		return true
 	if event is InputEventScreenDrag:
 		if developer_placement_dragging:
@@ -831,12 +829,12 @@ func _developer_object_id_at_local_position(local_position: Vector2) -> String:
 func _begin_developer_placement_drag(local_position: Vector2) -> void:
 	var object_id := _developer_object_id_at_local_position(local_position)
 	if object_id.is_empty():
-		_cancel_developer_placement_preview()
+		_finish_developer_placement_edit()
 		set_selected_object("")
 		_update_developer_placement_panel()
 		return
 	if object_id != selected_object_id:
-		_cancel_developer_placement_preview()
+		_finish_developer_placement_edit()
 		set_selected_object(object_id, false)
 	var object_data := _scene_object(object_id)
 	if object_data.is_empty():
@@ -909,6 +907,20 @@ func _validate_developer_placement_preview() -> void:
 func _cancel_developer_placement_preview() -> void:
 	if developer_placement_original_rect.has_area() and not selected_object_id.is_empty():
 		_set_developer_preview_object_rect(developer_placement_original_rect)
+	clear_developer_placement_preview()
+
+
+func _finish_developer_placement_edit() -> void:
+	developer_placement_dragging = false
+	if not developer_placement_pending_rect.has_area():
+		_update_developer_placement_panel()
+		return
+	var changed := not developer_placement_original_rect.has_area() \
+			or not developer_placement_pending_rect.position.is_equal_approx(developer_placement_original_rect.position) \
+			or not developer_placement_pending_rect.size.is_equal_approx(developer_placement_original_rect.size)
+	if changed and developer_placement_valid:
+		_lock_developer_placement()
+		return
 	clear_developer_placement_preview()
 
 

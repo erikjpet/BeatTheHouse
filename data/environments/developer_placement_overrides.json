@@ -88,6 +88,48 @@
         ]
       }
     },
+    "gas_station_casino": {
+      "category_slot_positions": {
+        "event_spots:1": [
+          792.0,
+          345.0
+        ],
+        "event_spots:3": [
+          130.0,
+          325.0
+        ],
+        "event_spots:4": [
+          24.0,
+          283.0
+        ]
+      },
+      "object_slot_positions": {
+        "dialogue:scratch_ticket_scalper": [
+          601.0,
+          228.0
+        ],
+        "game:pull_tabs": [
+          430.0,
+          126.0
+        ],
+        "game:scratch_tickets": [
+          526.0,
+          127.0
+        ],
+        "numbers:book": [
+          129.0,
+          189.0
+        ],
+        "service:house_drink": [
+          170.0,
+          186.0
+        ],
+        "travel:leave": [
+          796.0,
+          262.0
+        ]
+      }
+    },
     "house": {
       "object_slot_positions": {
         "home_container:trunk_01": [

@@ -195,8 +195,9 @@ func _check_canvas_authoring_contract() -> void:
 		"layout_index": 1,
 	})
 	_check(str(event_category_identity.get("field", "")) == "category_slot_positions" and str(event_category_identity.get("slot_id", "")) == "event_spots:1", "Event placement must author its reusable room-category slot rather than a single event id.")
-	canvas.call("_lock_developer_placement")
-	_check(locked_request.get("position", Vector2.ZERO) == Vector2(410.0, 294.0), "Lock must emit the exact board-space position.")
+	canvas.call("_finish_developer_placement_edit")
+	_check(locked_request.get("position", Vector2.ZERO) == Vector2(410.0, 294.0), "Finishing a drag must auto-lock the exact board-space position.")
+	_check(not bool(canvas.developer_placement_snapshot().get("pending", true)), "A finished drag must become a retained room edit instead of a cancellable preview.")
 	var locked_live_rect: Rect2 = canvas.call("_developer_edit_rect_for_object", canvas.call("_scene_object", "game:slot"))
 	_check(locked_live_rect.position.is_equal_approx(Vector2(410.0, 294.0)), "Lock must keep the accepted position visible across its synchronous room refresh (got %s)." % locked_live_rect.position)
 	persist_canvas_locks = true
