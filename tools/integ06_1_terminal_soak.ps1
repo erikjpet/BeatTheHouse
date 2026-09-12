@@ -130,7 +130,7 @@ if (-not (Test-Path -LiteralPath $candidateAddon -PathType Container)) { throw "
 if (-not (Test-Path -LiteralPath $extensionTemplate -PathType Leaf)) { throw "Candidate GDExtension descriptor is missing: $extensionTemplate" }
 $requiredHostLibraries = @(
     Get-Content -LiteralPath $extensionTemplate |
-        Where-Object { $_ -match '^windows\.(template_debug|template_release)' } |
+        Where-Object { $_ -match '^windows\.(debug|release)\.' } |
         ForEach-Object {
             if ($_ -notmatch '"res://addons/coin_pusher_native/(?<relative>[^"]+)"') { throw "Windows GDExtension entry has an invalid candidate-relative path: $_" }
             $Matches.relative.Replace('/', [IO.Path]::DirectorySeparatorChar)
