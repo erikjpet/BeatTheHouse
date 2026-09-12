@@ -26,23 +26,35 @@ func _init() -> void:
 func _run() -> void:
 	root.size = Vector2i(1280, 720)
 	var rows: Array = []
-	for seed_text in SEEDS:
-		var primary := await _play_seed(str(seed_text), true, str(seed_text) == str(SEEDS[0]))
-		var replay := await _play_seed(str(seed_text), false, str(seed_text) == str(SEEDS[0]))
-		if not bool(primary.get("passed", false)) or not bool(replay.get("passed", false)):
-			failures.append("Production-host Hold'em seed %s did not complete both deterministic runs." % seed_text)
-		if str(primary.get("signature_hash", "")) != str(replay.get("signature_hash", "")):
-			failures.append("Production-host Hold'em seed %s changed across deterministic replay." % seed_text)
-		rows.append({
-			"seed": seed_text,
-			"signature_hash": primary.get("signature_hash", ""),
-			"streets": primary.get("streets", []),
-			"saved_mid_hand": primary.get("saved_mid_hand", false),
-			"saved_mid_session": primary.get("saved_mid_session", false),
-			"custom_raise_to": primary.get("custom_raise_to", 0),
-			"hand": primary.get("hand", {}),
-			"button_movement": primary.get("button_movement", {}),
-		})
+	# Reuse one real host across the seed matrix. Repeatedly constructing the full
+	# MainScene in one short-lived process leaves a deferred RefCounted dependency
+	# at engine shutdown on Windows even after every Node has been freed.
+	var app := MainScene.instantiate()
+	app.set("show_game_library_launcher", true)
+	root.add_child(app)
+	await _settle(8)
+	if not bool(app.call("_ensure_run_ui_built")):
+		failures.append("Production host could not build the run UI for Hold'em.")
+	else:
+		app.call("_ensure_game_test_menu_built")
+		for seed_text in SEEDS:
+			var primary := await _play_seed(app, str(seed_text), true, str(seed_text) == str(SEEDS[0]))
+			var replay := await _play_seed(app, str(seed_text), false, str(seed_text) == str(SEEDS[0]))
+			if not bool(primary.get("passed", false)) or not bool(replay.get("passed", false)):
+				failures.append("Production-host Hold'em seed %s did not complete both deterministic runs." % seed_text)
+			if str(primary.get("signature_hash", "")) != str(replay.get("signature_hash", "")):
+				failures.append("Production-host Hold'em seed %s changed across deterministic replay." % seed_text)
+			rows.append({
+				"seed": seed_text,
+				"signature_hash": primary.get("signature_hash", ""),
+				"streets": primary.get("streets", []),
+				"saved_mid_hand": primary.get("saved_mid_hand", false),
+				"saved_mid_session": primary.get("saved_mid_session", false),
+				"custom_raise_to": primary.get("custom_raise_to", 0),
+				"hand": primary.get("hand", {}),
+				"button_movement": primary.get("button_movement", {}),
+			})
+	await _finish_app(app, {})
 	var report := {"tool": "crew_holdem_production_host_audit", "passed": failures.is_empty(), "failures": failures, "rows": rows}
 	var path := "res://.tmp/crew_holdem/production_host_audit.json"
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(path.get_base_dir()))
@@ -50,29 +62,25 @@ func _run() -> void:
 	if file != null:
 		file.store_string(JSON.stringify(report, "\t"))
 		file.close()
+		file = null
 	print(JSON.stringify(report))
+	# Let the final freed host release its deferred RefCounted dependencies before
+	# the suite inspects stderr during engine shutdown.
+	await _settle(3)
 	quit(0 if failures.is_empty() else 1)
 
 
-func _play_seed(seed_text: String, exercise_saves: bool, play_second_hand: bool) -> Dictionary:
-	var app := MainScene.instantiate()
-	app.set("show_game_library_launcher", true)
+func _play_seed(app: Control, seed_text: String, exercise_saves: bool, play_second_hand: bool) -> Dictionary:
 	app.set("autosave_slot_id", "fix06_32_holdem_%s_%s" % [seed_text.to_lower(), "save" if exercise_saves else "replay"])
-	root.add_child(app)
-	await _settle(8)
-	if not bool(app.call("_ensure_run_ui_built")):
-		failures.append("Production host could not build the run UI for Hold'em seed %s." % seed_text)
-		return await _finish_app(app, {})
-	app.call("_ensure_game_test_menu_built")
 	var seed_input := app.get("game_test_seed_input") as LineEdit
 	if seed_input == null:
 		failures.append("Production host did not expose its authored practice seed input.")
-		return await _finish_app(app, {})
+		return {}
 	seed_input.text = seed_text
 	var start: Dictionary = app.call("start_game_test_session", GAME_ID)
 	if not bool(start.get("ok", false)):
 		failures.append("Production host rejected Hold'em seed %s." % seed_text)
-		return await _finish_app(app, {})
+		return {}
 	await _settle(8)
 	var first := await _play_hand(app, exercise_saves, true)
 	var saved_mid_session := false
@@ -113,7 +121,7 @@ func _play_seed(seed_text: String, exercise_saves: bool, play_second_hand: bool)
 		"hand": first.get("arithmetic", {}),
 		"button_movement": button_movement,
 	}
-	return await _finish_app(app, result)
+	return result
 
 
 func _play_hand(app: Control, exercise_save: bool, exercise_raise: bool) -> Dictionary:
@@ -336,9 +344,12 @@ func _canonical(value: Variant) -> String:
 
 
 func _finish_app(app: Control, result: Dictionary) -> Dictionary:
-	if app != null:
-		app.queue_free()
-		await process_frame
+	if app != null and is_instance_valid(app):
+		# This audit creates six complete production hosts in one process. Free each
+		# host synchronously so none of its save/content services survives until the
+		# SceneTree shutdown boundary and trips the suite's leak detector.
+		app.free()
+		await _settle(3)
 	return result
 
 

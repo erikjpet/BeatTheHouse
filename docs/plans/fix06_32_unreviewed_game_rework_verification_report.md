@@ -1,8 +1,11 @@
 # fix06_32 — Unreviewed game-rework verification
 
-Date: 2026-09-11  
-Base: `origin/main` `c570f2ce`  
-Verification branch: `codex/fix06_32`  
+Date: 2026-09-11
+
+Base: `origin/main` `c570f2ce`
+
+Verification branch: `codex/fix06_32`
+
 Result: VERIFIED, with the missing native Coin Pusher runtime called out below. No payout, RTP, odds, wager, economy, or release value changed.
 
 ## 1. Craps wager table
@@ -97,7 +100,7 @@ Hand arithmetic checked by hand for seed C: $3 opening blinds plus action contri
 
 Save/Continue was exercised both mid-hand and between hands. The migration runner freshly loaded and round-tripped all 37 v0.5.1 fixtures and all 3 mid-0.6 fixtures through FoundationMain. `crew_draw_poker.gd` is the live Hold'em module with a compatibility-stable historical ID/path, not dead code or a shim. Player-facing career and run-report labels now say `Back-Room Hold'em`; persisted identifiers remain unchanged for custody.
 
-Primary evidence: `.tmp/crew_holdem/production_host_audit.json` plus `.tmp/fix06_32_v051_migration_stdout.txt` and `.tmp/fix06_32_mid06_migration_stdout.txt`; final hashes are recorded in the validation section.
+Primary evidence: `.tmp/crew_holdem/production_host_audit.json` (SHA-256 `FB325C4E4824AB1404CCA5CDDD97108B18ADFE79423EDF1ADBB49B289A73C270`), `.tmp/fix06_32_v051_migration_stdout.txt` (`F208F3067379E9425922344DE586B1131B5E1A2AC91222E7BCDB3F32FF24268A`), and `.tmp/fix06_32_mid06_migration_stdout.txt` (`84134E513298A4DC1518FCA6D1275BDF928F3A35F4240954F98C084B699FDA40`).
 
 ## 4. Scenario exception decision
 
@@ -110,7 +113,7 @@ The recursive content scan found ten non-empty shipped `owner_exceptions` arrays
 - Slot: the production slot surface reported `animation_liveness_active=true`, 49 `surface_animation_redraw_count` ticks in 120 idle frames against the maintained floor of 8, 73 draw samples, 3.134 ms draw p95 against the 5 ms animated-idle budget, and zero full-snapshot rebuilds. A 0.000/frozen result would fail.
 - Venue placement: `28568d12` added an authored game spot and Street Craps identity in `data/environments/archetypes.json`, and made base `scenario_game_modifiers` durable in `scripts/core/environment_instance.gd`. Those are exactly fix06_31-owned surfaces. This row made no change to either file. fix06_31 must preserve the Back Alley game spot and the durable base Street Craps modifier while replacing placement/grounding behavior.
 
-Focused evidence: `.tmp/fix06_32_coin_pusher.json` (the native-backend limitation report), `.tmp/fix06_32_surface_regression.json` (shipped cap and slot liveness), and the permanent suite probes.
+Focused evidence: `.tmp/fix06_32_coin_pusher.json` (the native-backend limitation report, SHA-256 `09C9389730689351AA68D855CC6BB081793444261DFCC643A34B8852FAEFF81D`), `.tmp/fix06_32_surface_regression.json` (shipped cap and slot liveness, `329C655F5590DF35306F4A066BD136BEC8044BFD2FEDBFCF8936C13D990241BE`), and the permanent suite probes.
 
 ## 6. Routed onward
 

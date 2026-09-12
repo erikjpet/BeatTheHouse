@@ -492,7 +492,7 @@ func _probe_practice_game_surface_coverage() -> void:
 			failures.append("Practice performance probe could not enter %s: %s" % [game_id, JSON.stringify(session_result.get("errors", []))])
 			continue
 		if game_id == "crew_draw_poker" and not bool(PerformanceFixtureSetupScript.install_actor_present_crew_draw_poker(app).get("ok", false)):
-			failures.append("Practice performance probe could not install the actor-present Crew Draw Poker fixture.")
+			failures.append("Practice performance probe could not install the actor-present Back-Room Hold'em fixture.")
 			continue
 		var environment_snapshot: Dictionary = app.call("current_environment_view_snapshot")
 		var environment_id := str(environment_snapshot.get("id", "practice_%s" % game_id))
@@ -929,7 +929,7 @@ func _probe_game_resolve_budgets() -> void:
 			failures.append("Resolve performance probe could not enter %s: %s" % [game_id, JSON.stringify(session_result.get("errors", []))])
 			continue
 		if game_id == "crew_draw_poker" and not bool(PerformanceFixtureSetupScript.install_actor_present_crew_draw_poker(app).get("ok", false)):
-			failures.append("Resolve performance probe could not install the actor-present Crew Draw Poker fixture.")
+			failures.append("Resolve performance probe could not install the actor-present Back-Room Hold'em fixture.")
 			continue
 		var run_state: RunState = app.get("run_state")
 		var game: GameModule = app.get("current_game") as GameModule

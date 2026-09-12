@@ -14,7 +14,7 @@ func _init() -> void:
 	var library := ContentLibrary.new()
 	var load_report := library.load(false)
 	if not bool(load_report.get("ok", false)) and library.game("crew_draw_poker").is_empty():
-		failures.append("Content library could not load Crew Draw Poker.")
+		failures.append("Content library could not load Back-Room Hold'em.")
 	else:
 		_check_executable_nights(library)
 		_check_profile_mechanics(library)
