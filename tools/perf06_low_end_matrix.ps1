@@ -127,7 +127,7 @@ try {
     & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "perf06_deferred_validation_contract.ps1") -GodotPath $GodotPath
     if ($LASTEXITCODE -ne 0) { throw "Deferred runtime validation contract failed." }
 
-    & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "foundation_performance_probe.ps1") -RunCount $RunCount -FramesPerSurface $Frames -ResolveSampleCount $ResolveSampleCount -SeedPrefix $SeedPrefix -Out (Join-Path $out "native_surface_probe.json") -CandidateCommit $head -ProfileManifestSha256 $profileHash -EvidenceProfile "low_end:$($profile.profile_id)" -RequireGodot:$RequireGodot
+    & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "foundation_performance_probe.ps1") -RunCount $RunCount -FramesPerSurface $Frames -ResolveSampleCount $ResolveSampleCount -SeedPrefix $SeedPrefix -Out (Join-Path $out "native_surface_probe.json") -CandidateCommit $head -ProfileManifestSha256 $profileHash -EvidenceProfile "low_end:$($profile.profile_id)" -RequireGodot
     if ($LASTEXITCODE -ne 0) { throw "Native low-end surface matrix failed." }
 
     $staticAudit = Join-Path $out "allocation_call_root_audit.json"
@@ -180,7 +180,7 @@ try {
     $compositionPath = Join-Path $PSScriptRoot $compositionName
     $compositionOut = Join-Path $out "integ06_1_composition_matrix"
     $compositionOutRelative = $compositionOut.Substring($root.Length).TrimStart([char[]]@('\', '/'))
-    & powershell -NoProfile -ExecutionPolicy Bypass -File $compositionPath -CandidateCommit $head -ProfilePath $profileFileRelative -EvidenceProfile "low_end:$($profile.profile_id)" -OutDir $compositionOutRelative -GodotPath $GodotPath -SeedCount $CompositionSeedCount -ShardCount $CompositionShardCount -RequireGodot:$RequireGodot
+    & powershell -NoProfile -ExecutionPolicy Bypass -File $compositionPath -CandidateCommit $head -ProfilePath $profileFileRelative -EvidenceProfile "low_end:$($profile.profile_id)" -OutDir $compositionOutRelative -GodotPath $GodotPath -SeedCount $CompositionSeedCount -ShardCount $CompositionShardCount -RequireGodot
     if ($LASTEXITCODE -ne 0) { throw "Integration low-end producer failed: $compositionName" }
     $integrationManifests[$compositionName] = Join-Path $compositionOut "manifest.json"
 
@@ -188,7 +188,7 @@ try {
     $terminalPath = Join-Path $PSScriptRoot $terminalName
     $terminalOut = Join-Path $out "integ06_1_terminal_soak"
     $terminalOutRelative = $terminalOut.Substring($root.Length).TrimStart([char[]]@('\', '/'))
-    & powershell -NoProfile -ExecutionPolicy Bypass -File $terminalPath -CandidateCommit $head -ProfilePath $profileFileRelative -EvidenceProfile "low_end:$($profile.profile_id)" -OutDir $terminalOutRelative -GodotPath $GodotPath -ShardCount $TerminalShardCount -Cpu ([int]$profile.web_cpu_throttle_rate) -RequireGodot:$RequireGodot
+    & powershell -NoProfile -ExecutionPolicy Bypass -File $terminalPath -CandidateCommit $head -ProfilePath $profileFileRelative -EvidenceProfile "low_end:$($profile.profile_id)" -OutDir $terminalOutRelative -GodotPath $GodotPath -ShardCount $TerminalShardCount -Cpu ([int]$profile.web_cpu_throttle_rate) -RequireGodot
     if ($LASTEXITCODE -ne 0) { throw "Integration low-end producer failed: $terminalName" }
     $integrationManifests[$terminalName] = Join-Path $terminalOut "manifest.json"
 
