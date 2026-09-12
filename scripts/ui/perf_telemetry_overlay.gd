@@ -2325,9 +2325,20 @@ func _measure_slot_autoplay() -> void:
 		return
 	app.start_game_test_session("slot")
 	await _wait_frames(12)
+	var before := _slot_perf06_phase_evidence()
 	_begin_scenario("slot_autoplay_active", {"surface": "slot", "mode": "autoplay", "perf06_surface_id": "slot", "perf06_phase_id": "autoplay"})
 	_emit_surface_action("slot_auto_toggle", 0, false)
+	await _wait_frames(2)
+	var enabled := _slot_perf06_phase_evidence()
+	current_tags["phase_evidence"] = {
+		"observed": bool(enabled.get("autoplay_active", false)),
+		"before": before,
+		"enabled": enabled,
+	}
 	await _wait_frames(maxi(active_frames, scenario_frames))
+	var phase_evidence: Dictionary = current_tags.get("phase_evidence", {})
+	phase_evidence["after"] = _slot_perf06_phase_evidence()
+	current_tags["phase_evidence"] = phase_evidence
 	_end_scenario()
 	app.back_to_environment()
 	await _wait_frames(8)
@@ -2339,17 +2350,39 @@ func _measure_pinball_feature() -> void:
 	app.start_game_test_session("slot")
 	await _wait_frames(12)
 	var prepared := _force_pinball_feature()
-	_begin_scenario("pinball_feature_session", {"surface": "slot", "mode": "pinball_feature", "prepared": prepared, "perf06_surface_id": "slot", "perf06_phase_id": "bonus"})
+	var prepared_evidence := _slot_perf06_phase_evidence()
+	_begin_scenario("pinball_feature_session", {
+		"surface": "slot",
+		"mode": "pinball_feature",
+		"prepared": prepared,
+		"perf06_surface_id": "slot",
+		"perf06_phase_id": "bonus",
+		"phase_evidence": {
+			"observed": prepared \
+				and bool(prepared_evidence.get("bonus_active", false)) \
+				and str(prepared_evidence.get("bonus_family", "")) == "pinball",
+			"before": prepared_evidence,
+		},
+	})
+	var action_attempt_count := 0
 	for frame in range(maxi(active_frames * 2, 480)):
 		if frame % 45 == 0:
 			_emit_surface_action("slot_bonus_launch", 0, false)
+			action_attempt_count += 1
 		elif frame % 45 == 12:
 			_emit_surface_action("slot_bonus_left", 0, false)
+			action_attempt_count += 1
 		elif frame % 45 == 24:
 			_emit_surface_action("slot_bonus_right", 0, false)
+			action_attempt_count += 1
 		elif frame % 45 == 36:
 			_emit_surface_action("slot_bonus_power_up", 0, false)
+			action_attempt_count += 1
 		await get_tree().process_frame
+	var phase_evidence: Dictionary = current_tags.get("phase_evidence", {})
+	phase_evidence["after"] = _slot_perf06_phase_evidence()
+	phase_evidence["action_attempt_count"] = action_attempt_count
+	current_tags["phase_evidence"] = phase_evidence
 	_end_scenario()
 	app.back_to_environment()
 	await _wait_frames(8)
@@ -2379,13 +2412,30 @@ func _measure_scripted_memory() -> void:
 	app.start_foundation_run("L02-MEMORY")
 	await _wait_frames(20)
 	_begin_scenario("scripted_play_memory_10m", {"surface": "full_run", "mode": "scripted_play", "target_seconds": memory_seconds, "perf06_surface_id": "run_trajectory", "perf06_phase_id": "mid_run"})
+	var run_state: RunState = app.get("run_state") as RunState
+	var story_before := run_state.story_log_entry_count() if run_state != null else -1
 	var frame := 0
+	var scripted_step_count := 0
+	var durable_action_count := 0
 	var end_msec := Time.get_ticks_msec() + memory_seconds * 1000
 	while Time.get_ticks_msec() < end_msec:
 		if frame % 240 == 0:
-			_scripted_memory_step(frame / 240)
+			var step_evidence := _scripted_memory_step(frame / 240)
+			scripted_step_count += 1
+			if bool(step_evidence.get("durable_progress", false)):
+				durable_action_count += 1
 		frame += 1
 		await get_tree().process_frame
+	var story_after := run_state.story_log_entry_count() if run_state != null else -1
+	current_tags["phase_evidence"] = {
+		"observed": scripted_step_count > 0 \
+			and durable_action_count > 0 \
+			and story_after > story_before,
+		"scripted_step_count": scripted_step_count,
+		"durable_action_count": durable_action_count,
+		"story_entries_before": story_before,
+		"story_entries_after": story_after,
+	}
 	_end_scenario()
 
 
@@ -3228,20 +3278,38 @@ func _force_pinball_feature() -> bool:
 	return true
 
 
-func _scripted_memory_step(step_index: int) -> void:
+func _slot_perf06_phase_evidence() -> Dictionary:
+	var snapshot := _current_game_phase_snapshot()
+	var active_bonus: Dictionary = snapshot.get("slot_active_bonus", {}) \
+		if typeof(snapshot.get("slot_active_bonus", {})) == TYPE_DICTIONARY else {}
+	return {
+		"spin_count": int(snapshot.get("slot_spin_count", snapshot.get("spin_count", 0))),
+		"autoplay_active": bool(snapshot.get("slot_autoplay_active", false)),
+		"bonus_active": bool(snapshot.get("slot_active_bonus_active", false)),
+		"bonus_family": str(active_bonus.get("family", "")),
+		"bonus_mode": str(active_bonus.get("mode", "")),
+		"bonus_step_index": int(active_bonus.get("step_index", 0)),
+		"bonus_complete": bool(active_bonus.get("complete", false)),
+	}
+
+
+func _scripted_memory_step(step_index: int) -> Dictionary:
 	if app == null or app.get("run_state") == null:
-		return
+		return {"accepted": false, "durable_progress": false, "reason": "missing_run"}
 	var current_game: GameModule = app.get("current_game") as GameModule
 	if current_game != null:
-		_trigger_active_game_action(current_game.get_id())
+		var action_evidence := _trigger_active_game_action(current_game.get_id())
 		if step_index % 2 == 0:
 			app.back_to_environment()
-		return
+		action_evidence["durable_progress"] = bool(action_evidence.get("progressed", false))
+		return action_evidence
 	if step_index % 5 == 0:
-		if app.open_world_map():
+		var opened := app.open_world_map()
+		if opened:
 			app.close_world_map()
-		return
+		return {"accepted": opened, "durable_progress": false, "kind": "world_map"}
 	app.enter_first_available_game()
+	return {"accepted": app.get("current_game") != null, "durable_progress": false, "kind": "enter_game"}
 
 
 func _wait_frames(frames: int) -> void:
