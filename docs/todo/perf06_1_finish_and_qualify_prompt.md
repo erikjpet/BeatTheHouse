@@ -6,7 +6,7 @@ Supersedes the open items of: `docs/todo/perf06_1_performance_platform_pass_prom
 
 ## Execution Record
 
-_Fill in on completion: date, commit hashes, gate results, deviations._
+2026-09-11: Phases 1-3 completed on `codex/perf06-finish`; Phase 4 did not start because `fix06_31` remains unlanded, `origin/main` remains `c570f2ce`, the host is not quiescent, and no director witness was supplied. Recovery `f8b494a4`; permanent enforcement `5e7bd77d`; reduced-run parameterization and harness corrections `7efd6e8d`, `4c4a8968`, `362e2ba9`, `1d554967`, `a7952863`, `39d1837a`, `38580344`, `a840777d`, `10eee85a`, `a69943d8`. All 18 section-2 gates passed, Audit passed, and the current project validator plus new hostile contracts pass. Reduced producers retained red timing, semantic-placement, terminal-resource/progression, and low-end evidence without waivers or overwritten directories. Full ledger and 8-12 hour binding estimate: `docs/plans/perf06_1_performance_platform_report.md`.
 
 # Agent Prompt — perf06_1: Finish the Performance and Platform Pass
 
