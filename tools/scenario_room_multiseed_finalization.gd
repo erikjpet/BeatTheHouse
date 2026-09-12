@@ -243,7 +243,7 @@ func _check_reachable_grounding_states(run_state: Variant, fallback_definition: 
 			continue
 		var resolved := ScenarioLayoutResolverScript.resolve(base_records, projection, environment)
 		if not bool(resolved.get("ok", false)):
-			failures.append("%s/%s/%s grounding failed: %s" % [seed_family, scenario_id, path, JSON.stringify(resolved.get("errors", []))])
+			failures.append("%s/%s/%s grounding failed: %s geometry=%s" % [seed_family, scenario_id, path, JSON.stringify(resolved.get("errors", [])), JSON.stringify(_failure_geometry(resolved))])
 			continue
 		resolved_signatures[signature] = true
 		_reachable_layout_checks += 1
@@ -265,6 +265,23 @@ func _check_reachable_grounding_states(run_state: Variant, fallback_definition: 
 				_check_route_grounding(environment, visual, placement_class, rect.size, "%s/%s/%s %s" % [seed_family, scenario_id, path, identity], failures)
 		checked += 1
 	return checked
+
+
+func _failure_geometry(resolved: Dictionary) -> Dictionary:
+	var geometry: Dictionary = {}
+	var semantic := _dict(_dict(resolved.get("projection", {})).get("semantic_state", {}))
+	for collection_key in ["scene_objects", "actors"]:
+		for identity_value in _dict(semantic.get(collection_key, {})).keys():
+			var visual := _dict(_dict(semantic.get(collection_key, {})).get(identity_value, {}))
+			if not bool(visual.get("present", true)):
+				continue
+			var rect := _normalized_pixel_rect(visual.get("normalized_hit_rect", {}))
+			geometry[str(identity_value)] = {
+				"label": str(visual.get("label", "")),
+				"class": str(visual.get("placement_class", "")),
+				"rect": [snappedf(rect.position.x, 0.01), snappedf(rect.position.y, 0.01), snappedf(rect.size.x, 0.01), snappedf(rect.size.y, 0.01)],
+			}
+	return geometry
 
 
 func _grounding_projection_signature(projection: Dictionary) -> String:
