@@ -494,12 +494,12 @@ func _apply_crew_poker_sequence(run_state: RunState, checkpoints: Array, seed: S
 		"archetype_id": "small_underground_casino",
 		"kind": "crew",
 		"layer_id": "back_room",
-		"resident_member_ids": ["crew_mags", "crew_lucky"],
+		"resident_member_ids": ["crew_mags", "crew_lucky", "crew_rook"],
 		"game_ids": ["crew_draw_poker"],
 		"economic_profile": {"stake_floor": 2, "stake_ceiling": 6},
 		"game_states": {},
 	}
-	for member_id in ["crew_mags", "crew_lucky"]:
+	for member_id in _string_array(poker_environment.get("resident_member_ids", [])):
 		run_state.crew_add_trust(member_id, maxi(0, CrewStateModelScript.rank_threshold("associate") - run_state.crew_trust(member_id)), "determinism_fixture")
 	var table_rng := run_state.create_rng("determinism:crew_draw_poker:table")
 	poker_environment["game_states"] = {"crew_draw_poker": game.generate_environment_state(run_state, poker_environment, table_rng)}
