@@ -3,11 +3,17 @@ extends "res://scripts/tests/foundation/check_lenders_release_saves.gd"
 const ScratchSfxPlayerScript := preload("res://scripts/ui/sfx_player.gd")
 const ScratchRngStreamScript := preload("res://scripts/core/rng_stream.gd")
 const ScratchRegionModelScript := preload("res://scripts/games/scratch_ticket_region_model.gd")
+const ScratchPixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd")
 const SCRATCH_IDS := ["two_fer", "lucky_7s", "tic_tac_gold", "crossword_corner", "bonus_bingo", "high_roller_holdem", "golden_vault"]
 const ACTIVE_SCRATCH_IDS := ["two_fer", "lucky_7s", "tic_tac_gold", "crossword_corner", "bonus_bingo", "high_roller_holdem", "golden_vault"]
 const SCRATCH_PRICES := [2, 5, 10, 15, 20, 50, 100]
 const SCRATCH_MECHANICS := ["match_two_of_three", "key_number_match", "tic_tac_toe", "crossword", "bingo", "beat_dealer_poker", "multi_game_vault"]
 const SCRATCH_SECTION_COUNTS := [1, 2, 2, 2, 5, 3, 4]
+const SCALPER_LOW_TIER_ITEM_IDS := [
+	"card_counters_notes", "cheap_sunglasses", "creased_luck_card", "freds_poker_hat",
+	"ledger_pencil", "lucky_bar_napkin", "lucky_keychain", "payment_calendar",
+	"payout_pamphlet", "pocket_watch", "roadside_map", "scratch_pad", "side_bet_chart",
+]
 
 
 func _check_scratch_tickets_surface_contract(game: GameModule, failures: Array) -> void:
@@ -95,6 +101,9 @@ func _check_scratch_tickets_surface_contract(game: GameModule, failures: Array) 
 	_check_scratch_stock(game, failures)
 	_check_scratch_restock(game, failures)
 	_check_scratch_scalper(game, failures)
+	_check_scratch_scalper_gift(game, failures)
+	_check_scratch_scalper_restock_arrival(game, failures)
+	_check_environment_person_transits(failures)
 	_check_scratch_practice_inventory(game, failures)
 	_check_scratch_collection_completion(game, failures)
 	_check_scratch_single_remaining_purchase(game, failures)
@@ -1165,6 +1174,320 @@ func _check_scratch_scalper(game: GameModule, failures: Array) -> void:
 	var tutorial_hooks := game.environment_interactable_objects(tutorial_run, tutorial_environment)
 	if not _scratch_hook(tutorial_hooks, "scratch_ticket_scalper").is_empty():
 		failures.append("Scratch scalper intruded on the guided tutorial run.")
+
+
+func _check_scratch_scalper_gift(game: GameModule, failures: Array) -> void:
+	var reward_count := 0
+	for roll in range(100):
+		reward_count += 1 if bool(game.call("scalper_gift_reward_for_roll", roll)) else 0
+	if reward_count != 33:
+		failures.append("Scratch scalper gift odds drifted from the declared 33%% reward chance.")
+	var seeded_reward_rng := _scratch_rng("scalper-gift-rate-sample")
+	var seeded_reward_count := 0
+	for _sample in range(10000):
+		seeded_reward_count += 1 if bool(game.call("scalper_gift_reward_for_roll", seeded_reward_rng.randi_range(0, 99))) else 0
+	if seeded_reward_count < 3200 or seeded_reward_count > 3400:
+		failures.append("Scratch scalper seeded reward sample escaped its declared 33%% rate: %d/10000." % seeded_reward_count)
+	var low_tier_pool: Array = game.call("scalper_low_tier_item_pool", null)
+	if low_tier_pool != SCALPER_LOW_TIER_ITEM_IDS:
+		failures.append("Scratch scalper low-tier pool no longer matches the sorted ordinary-item sale-price rule: %s." % str(low_tier_pool))
+	var library: ContentLibrary = ContentLibraryScript.new()
+	library.load()
+	var paired_choices: Array = []
+	for dialogue_id in ["scratch_ticket_scalper_knows", "scratch_ticket_scalper_oblivious"]:
+		var dialogue := library.dialogue(dialogue_id)
+		var nodes: Dictionary = dialogue.get("nodes", {}) if typeof(dialogue.get("nodes", {})) == TYPE_DICTIONARY else {}
+		var node_id := str(dialogue.get("start", ""))
+		var node: Dictionary = nodes.get(node_id, {}) if typeof(nodes.get(node_id, {})) == TYPE_DICTIONARY else {}
+		var gift_choice := {}
+		for choice_value in node.get("choices", []):
+			if typeof(choice_value) == TYPE_DICTIONARY and str((choice_value as Dictionary).get("id", "")) == "give_unscratched_ticket":
+				gift_choice = (choice_value as Dictionary).duplicate(true)
+				break
+		paired_choices.append(gift_choice)
+	if paired_choices.size() != 2 or (paired_choices[0] as Dictionary).is_empty() or paired_choices[0] != paired_choices[1]:
+		failures.append("Scratch scalper informed/oblivious dialogues do not expose byte-identical gift wording and terms.")
+	elif not str((paired_choices[0] as Dictionary).get("text", "")).contains("might have been a winner") or not bool((paired_choices[0] as Dictionary).get("hide_when_unmet", false)):
+		failures.append("Scratch scalper gift choice does not disclose the untouched ticket's opportunity cost before confirmation.")
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("SCRATCH-SCALPER-GIFT")
+	var environment := _scratch_environment("scratch_scalper_gift")
+	environment["entered_game_clock_minutes"] = run_state.game_clock_minutes
+	run_state.current_environment = environment
+	run_state.add_suspicion("scratch-scalper-gift-fixture", 50)
+	var machine: Dictionary = game.call("_generate_machine_state", run_state, environment, _scratch_rng("scalper-gift-stock"))
+	machine["scalper_present"] = true
+	machine["scalper_knows_schedule"] = true
+	machine["scalper_visit_token"] = game.call("_scratch_visit_token", run_state, environment)
+	var active_ticket: Dictionary = game.call("_roll_ticket", game.call("_ticket_type", "two_fer"), _scratch_rng("scalper-gift-active"), 0, "scalper-gift-active", false)
+	var queued_ticket: Dictionary = game.call("_roll_ticket", game.call("_ticket_type", "lucky_7s"), _scratch_rng("scalper-gift-queued"), 0, "scalper-gift-queued", false)
+	machine["active_ticket"] = active_ticket
+	machine["pending_queue"] = [queued_ticket]
+	environment["game_states"] = {"scratch_tickets": machine}
+	var available: Dictionary = game.call("scalper_gift_status", run_state, environment)
+	if not bool(available.get("available", false)) or str(available.get("source", "")) != "pending_queue" or str(available.get("ticket_id", "")) != str(queued_ticket.get("id", "")):
+		failures.append("Scratch scalper gift did not prefer the untouched queued ticket over the ticket on the table.")
+	var suppressed_environment := environment.duplicate(true)
+	suppressed_environment["local_narrative_flags"] = {"practice_session": true}
+	if bool((game.call("scalper_gift_status", run_state, suppressed_environment) as Dictionary).get("available", false)):
+		failures.append("Scratch scalper gift appeared in a practice environment.")
+	var tutorial_run: RunState = RunStateScript.new()
+	tutorial_run.from_dict(run_state.to_dict())
+	tutorial_run.challenge_config = {"tutorial": true}
+	if bool((game.call("scalper_gift_status", tutorial_run, tutorial_run.current_environment) as Dictionary).get("available", false)):
+		failures.append("Scratch scalper gift appeared in a tutorial run.")
+	var observer_base := run_state.to_dict()
+	var observer_surfaces: Array = []
+	for knows_schedule in [true, false]:
+		var observer: RunState = RunStateScript.new()
+		observer.from_dict(observer_base)
+		var observer_machine: Dictionary = (observer.current_environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {})
+		observer_machine["scalper_knows_schedule"] = knows_schedule
+		var observer_status: Dictionary = game.call("scalper_gift_status", observer, observer.current_environment)
+		var observer_result: Dictionary = game.call("resolve_scalper_gift", observer, observer.current_environment, _scratch_rng("scalper-gift-paired-observer"))
+		observer_surfaces.append({
+			"status": observer_status,
+			"message": str(observer_result.get("message", "")),
+			"ticket_id": str(observer_result.get("scalper_gift_ticket_id", "")),
+			"reward_item_id": str(observer_result.get("scalper_gift_reward_item_id", "")),
+			"deltas": observer_result.get("deltas", {}),
+		})
+	if observer_surfaces.size() != 2 or observer_surfaces[0] != observer_surfaces[1]:
+		failures.append("Scratch scalper gift surface leaked the hidden restock-knowledge branch.")
+	var heat_before := run_state.suspicion_level()
+	var gift_rng := _scratch_rng("scalper-gift-action")
+	var gift_result: Dictionary = game.call("resolve_scalper_gift", run_state, environment, gift_rng)
+	GameModule.apply_result(run_state, gift_result, gift_rng)
+	var after_machine: Dictionary = (environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {})
+	if not bool(gift_result.get("ok", false)) or run_state.suspicion_level() != heat_before - 8:
+		failures.append("Scratch scalper gift did not apply exactly one 8-point heat reduction through the shared result path.")
+	if not (after_machine.get("pending_queue", []) as Array).is_empty() or str(((after_machine.get("active_ticket", {}) as Dictionary).get("id", ""))) != str(active_ticket.get("id", "")):
+		failures.append("Scratch scalper gift did not consume the queued ticket while preserving the table ticket.")
+	if str(after_machine.get("scalper_gift_visit_token", "")) != str(after_machine.get("scalper_visit_token", "")):
+		failures.append("Scratch scalper gift did not persist its encounter-scoped exploit bound.")
+	var inventory_after := run_state.inventory.duplicate(true)
+	var heat_after := run_state.suspicion_level()
+	var second_result: Dictionary = game.call("resolve_scalper_gift", run_state, environment, _scratch_rng("scalper-gift-repeat"))
+	if bool(second_result.get("ok", false)) or run_state.suspicion_level() != heat_after or run_state.inventory != inventory_after:
+		failures.append("Scratch scalper allowed heat, item, or ticket consequences to fire twice in one encounter.")
+	var active_only_run: RunState = RunStateScript.new()
+	active_only_run.from_dict(observer_base)
+	var active_only_environment := active_only_run.current_environment
+	var active_only_machine: Dictionary = (active_only_environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {})
+	active_only_machine["pending_queue"] = []
+	active_only_machine["scalper_gift_visit_token"] = ""
+	var active_only_rng := _scratch_rng("scalper-gift-active-only")
+	var active_only_result: Dictionary = game.call("resolve_scalper_gift", active_only_run, active_only_environment, active_only_rng)
+	GameModule.apply_result(active_only_run, active_only_result, active_only_rng)
+	if not bool(active_only_result.get("ok", false)) or not (active_only_machine.get("active_ticket", {}) as Dictionary).is_empty():
+		failures.append("Scratch scalper gift did not consume an eligible untouched table ticket when no queued ticket existed.")
+	var loaded: RunState = RunStateScript.new()
+	loaded.from_dict(run_state.to_dict())
+	var loaded_status: Dictionary = game.call("scalper_gift_status", loaded, loaded.current_environment)
+	var loaded_machine: Dictionary = ((loaded.current_environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {}) as Dictionary)
+	if bool(loaded_status.get("available", false)) or not (loaded_machine.get("pending_queue", []) as Array).is_empty() or str(loaded_machine.get("scalper_gift_visit_token", "")) != str(loaded_machine.get("scalper_visit_token", "")):
+		failures.append("Scratch scalper gift ticket or encounter bound returned after save/reload.")
+	var partial_machine := after_machine.duplicate(true)
+	partial_machine["scalper_gift_visit_token"] = ""
+	var partial_ticket := active_ticket.duplicate(true)
+	partial_ticket["mask_revision"] = 1
+	partial_machine["active_ticket"] = partial_ticket
+	partial_machine["pending_queue"] = []
+	environment["game_states"] = {"scratch_tickets": partial_machine}
+	if bool((game.call("scalper_gift_status", run_state, environment) as Dictionary).get("available", false)):
+		failures.append("Scratch scalper accepted a ticket after any scratching had begun.")
+	partial_machine["active_ticket"] = {}
+	if bool((game.call("scalper_gift_status", run_state, environment) as Dictionary).get("available", false)):
+		failures.append("Scratch scalper gift remained available without an untouched ticket.")
+	var old_machine := partial_machine.duplicate(true)
+	for field in ["scalper_gift_visit_token", "scalper_restock_arrival_count", "scalper_last_restock_arrival_boundary"]:
+		old_machine.erase(field)
+	game.call("_normalize_machine_state", old_machine, run_state)
+	if not old_machine.has("scalper_gift_visit_token") or not old_machine.has("scalper_restock_arrival_count"):
+		failures.append("Scratch scalper state did not default safely for a pre-feature save without a schema bump.")
+	var main_source := FileAccess.get_file_as_string("res://scripts/ui/foundation_main.gd")
+	if not main_source.contains("_scratch_scalper_gift_status()") or not main_source.contains("_resolve_scratch_scalper_gift(entry)"):
+		failures.append("Foundation dialogue host no longer delegates scalper gift availability and resolution to the scratch module.")
+
+
+func _check_scratch_scalper_restock_arrival(game: GameModule, failures: Array) -> void:
+	var arrival_count := 0
+	for roll in range(100):
+		arrival_count += 1 if bool(game.call("scalper_restock_arrives_for_roll", roll)) else 0
+	if arrival_count != 20:
+		failures.append("Scratch restock-arrival odds drifted from the declared 20%% scalper chance.")
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("SCRATCH-RESTOCK-ARRIVAL")
+	run_state.game_clock_minutes = 180
+	var environment := {}
+	var scheduled_at_arrival := 0
+	var scheduled_after_arrival := 0
+	for suffix in range(1000):
+		var candidate := _scratch_environment("scratch_restock_arrival_%d" % suffix)
+		candidate["entered_game_clock_minutes"] = 0
+		var identity := str(game.call("_machine_identity", candidate))
+		var first_rng := run_state.create_rng("scratch-restock:%s:180" % identity)
+		var first_count := int(game.call("restock_count_for_roll", first_rng.randi_range(0, 99)))
+		var arrival_rng := run_state.create_rng("scratch-restock-scalper-arrival:%s:180" % identity)
+		var next_rng := run_state.create_rng("scratch-restock:%s:360" % identity)
+		var next_count := int(game.call("restock_count_for_roll", next_rng.randi_range(0, 99)))
+		if first_count > 0 and next_count > 0 and bool(game.call("scalper_restock_arrives_for_roll", arrival_rng.randi_range(0, 99))):
+			environment = candidate
+			scheduled_at_arrival = first_count
+			scheduled_after_arrival = next_count
+			break
+	if environment.is_empty():
+		failures.append("Scratch restock-arrival test could not find its deterministic fixture.")
+		return
+	var machine: Dictionary = game.call("_generate_machine_state", run_state, environment, _scratch_rng("restock-arrival-stock"))
+	var stock := _dict_array(machine.get("stock", []))
+	for slot_value in stock:
+		var slot: Dictionary = slot_value
+		slot["remaining"] = 0
+		slot["capacity"] = 5
+	machine["stock"] = stock
+	machine["restock_phase_minute"] = 0
+	machine["restock_cursor_absolute_minute"] = 0
+	machine["next_restock_absolute_minute"] = 180
+	machine["scalper_present"] = false
+	machine["scalper_intercepted_restock_count"] = 0
+	var baseline_machine := machine.duplicate(true)
+	game.call("_advance_restock_schedule", run_state, environment, machine)
+	if not bool(machine.get("scalper_present", false)) or int(machine.get("last_restock_stocked_count", 0)) != scheduled_at_arrival or int(machine.get("scalper_intercepted_restock_count", 0)) != 0:
+		failures.append("A scalper arriving at a restock boundary prevented that same restock from landing.")
+	var arrival_machine := machine.duplicate(true)
+	run_state.game_clock_minutes = 360
+	game.call("_advance_restock_schedule", run_state, environment, machine)
+	if int(machine.get("scalper_intercepted_restock_count", 0)) != scheduled_after_arrival:
+		failures.append("A restock-arrival scalper did not begin intercepting at the following boundary.")
+	var tutorial_run: RunState = RunStateScript.new()
+	tutorial_run.start_new("SCRATCH-RESTOCK-ARRIVAL")
+	tutorial_run.challenge_config = {"tutorial": true}
+	tutorial_run.game_clock_minutes = 180
+	var tutorial_machine := baseline_machine.duplicate(true)
+	game.call("_advance_restock_schedule", tutorial_run, environment, tutorial_machine)
+	if bool(tutorial_machine.get("scalper_present", false)):
+		failures.append("A restock-arrival scalper intruded on a tutorial run.")
+	var practice_run: RunState = RunStateScript.new()
+	practice_run.start_new("SCRATCH-RESTOCK-ARRIVAL")
+	practice_run.game_clock_minutes = 180
+	var practice_environment := environment.duplicate(true)
+	practice_environment["local_narrative_flags"] = {"practice_session": true}
+	var practice_machine := baseline_machine.duplicate(true)
+	game.call("_advance_restock_schedule", practice_run, practice_environment, practice_machine)
+	if bool(practice_machine.get("scalper_present", false)):
+		failures.append("A restock-arrival scalper intruded on a practice environment.")
+	var replay_run: RunState = RunStateScript.new()
+	replay_run.start_new("SCRATCH-RESTOCK-ARRIVAL")
+	replay_run.game_clock_minutes = 180
+	var replay_machine := baseline_machine.duplicate(true)
+	game.call("_advance_restock_schedule", replay_run, environment, replay_machine)
+	var deterministic_fields := ["stock", "scalper_present", "scalper_knows_schedule", "scalper_last_restock_arrival_boundary", "last_restock_stocked_count"]
+	for field in deterministic_fields:
+		if replay_machine.get(field) != arrival_machine.get(field):
+			failures.append("Scratch restock-arrival replay diverged for %s." % field)
+
+
+func _check_environment_person_transits(failures: Array) -> void:
+	var canvas: Control = ScratchPixelSceneCanvasScript.new()
+	var settled_person := _person_transit_record("dialogue:scratch_ticket_scalper", 0.46)
+	var room := _person_transit_room("person-transit-visit", [_person_transit_record("shopkeeper:clerk", 0.30)])
+	canvas.call("render_environment_snapshot", room)
+	var changed_room := room.duplicate(true)
+	changed_room["interactable_objects"] = [room["interactable_objects"][0], settled_person]
+	var sealed_input := JSON.stringify(changed_room.get("interactable_objects", []))
+	canvas.call("render_environment_snapshot", changed_room)
+	if JSON.stringify(changed_room.get("interactable_objects", [])) != sealed_input:
+		failures.append("Person arrival transit mutated the settled interaction geometry source.")
+	var arrival := _canvas_object(canvas, "dialogue:scratch_ticket_scalper")
+	if not bool(arrival.get("person_transit_active", false)) or str(arrival.get("person_transit_kind", "")) != "arrival":
+		failures.append("A person added mid-visit did not begin at the authored doorway transit.")
+	elif bool(arrival.get("interactive", true)) or (canvas.call("_interaction_rect_for_object", arrival) as Rect2).has_area():
+		failures.append("An arriving person remained a moving click target.")
+	else:
+		var points: Array = arrival.get("actor_route_points", [])
+		if points.size() != 3:
+			failures.append("Person arrival did not use the bounded doorway/floor/settled route.")
+		else:
+			var doorway_point := Vector2(float((points[0] as Dictionary).get("x", -1.0)), float((points[0] as Dictionary).get("y", -1.0))) * Vector2(900, 430)
+			if doorway_point.x > 90.0:
+				failures.append("Person arrival did not choose the nearest authored gas-station doorway.")
+	canvas.set("actor_route_time", 20.0)
+	canvas.call("_advance_person_transits")
+	var arrived := _canvas_object(canvas, "dialogue:scratch_ticket_scalper")
+	if bool(arrived.get("person_transit_active", false)) or not bool(arrived.get("interactive", false)):
+		failures.append("An arriving person did not become interactive exactly after settling.")
+	canvas.call("render_environment_snapshot", room)
+	var departure := _canvas_object(canvas, "dialogue:scratch_ticket_scalper")
+	if not bool(departure.get("person_transit_active", false)) or str(departure.get("person_transit_kind", "")) != "departure" or bool(departure.get("interactive", true)):
+		failures.append("A person removed mid-visit did not walk out as a non-interactive departure.")
+	canvas.set("actor_route_time", 40.0)
+	canvas.call("_advance_person_transits")
+	if not _canvas_object(canvas, "dialogue:scratch_ticket_scalper").is_empty():
+		failures.append("A departing person remained visible after reaching the doorway.")
+	var reduced_canvas: Control = ScratchPixelSceneCanvasScript.new()
+	reduced_canvas.call("render_environment_snapshot", _person_transit_room("reduced-visit", []))
+	var reduced_room := _person_transit_room("reduced-visit", [settled_person])
+	reduced_room["reduce_motion"] = true
+	reduced_canvas.call("render_environment_snapshot", reduced_room)
+	if int(reduced_canvas.get("person_transit_ids").size()) != 0 or bool(_canvas_object(reduced_canvas, "dialogue:scratch_ticket_scalper").get("person_transit_active", false)):
+		failures.append("Reduced motion did not settle a person arrival immediately.")
+	var entry_canvas: Control = ScratchPixelSceneCanvasScript.new()
+	entry_canvas.call("render_environment_snapshot", _person_transit_room("entry-before", []))
+	entry_canvas.call("render_environment_snapshot", _person_transit_room("entry-after", [settled_person]))
+	if int(entry_canvas.get("person_transit_ids").size()) != 0:
+		failures.append("People already present paraded in when the player entered a room.")
+	var cap_canvas: Control = ScratchPixelSceneCanvasScript.new()
+	cap_canvas.call("render_environment_snapshot", _person_transit_room("cap-visit", []))
+	var crowd: Array = []
+	for index in range(10):
+		crowd.append(_person_transit_record("person:cap_%02d" % index, 0.12 + float(index) * 0.075))
+	cap_canvas.call("render_environment_snapshot", _person_transit_room("cap-visit", crowd))
+	if int(cap_canvas.get("person_transit_ids").size()) != 8 or (cap_canvas.get("foundation_scene_objects") as Array).size() != 10:
+		failures.append("Person transit cap did not animate the deterministic first eight and settle overflow immediately.")
+	cap_canvas.call("settle_person_transits")
+	if int(cap_canvas.get("person_transit_ids").size()) != 0:
+		failures.append("Save/reload transit settlement left presentation motion alive.")
+	canvas.queue_free()
+	reduced_canvas.queue_free()
+	entry_canvas.queue_free()
+	cap_canvas.queue_free()
+
+
+func _person_transit_room(visit_id: String, objects: Array) -> Dictionary:
+	return {
+		"id": "scratch_person_transit_room",
+		"world_node_id": "gas_station_casino",
+		"archetype_id": "gas_station_casino",
+		"environment_visit_id": visit_id,
+		"entered_game_clock_minutes": 720,
+		"interactable_objects": objects,
+		"reduce_motion": false,
+	}
+
+
+func _person_transit_record(object_id: String, center_x: float) -> Dictionary:
+	return {
+		"object_id": object_id,
+		"object_type": "dialogue",
+		"visual_type": "character",
+		"label": "Vince" if object_id.contains("scalper") else "Person",
+		"short_description": "A person in the room.",
+		"visible": true,
+		"interactive": true,
+		"enabled": true,
+		"placement_class": "standing_person",
+		"scenario_layout_resolved": true,
+		"normalized_rect": {"x": center_x - 0.04, "y": 0.55, "w": 0.08, "h": 0.20},
+		"small_screen_rect": {"x": center_x - 0.05, "y": 0.53, "w": 0.10, "h": 0.24},
+	}
+
+
+func _canvas_object(canvas: Control, object_id: String) -> Dictionary:
+	for value in canvas.get("foundation_scene_objects") as Array:
+		if typeof(value) == TYPE_DICTIONARY and str((value as Dictionary).get("id", "")) == object_id:
+			return value as Dictionary
+	return {}
 
 
 func _check_scratch_practice_inventory(game: GameModule, failures: Array) -> void:

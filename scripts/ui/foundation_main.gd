@@ -4975,6 +4975,12 @@ func _dialogue_choice_views(dialogue_id: String, node: Dictionary) -> Array:
 		if choice_id.is_empty():
 			continue
 		var requirement := _dialogue_choice_requirement(choice)
+		if dialogue_id in ["scratch_ticket_scalper_knows", "scratch_ticket_scalper_oblivious"] and choice_id == "give_unscratched_ticket":
+			var gift_status := _scratch_scalper_gift_status()
+			requirement = {
+				"enabled": bool(gift_status.get("available", false)),
+				"reason": str(gift_status.get("reason", "That ticket trade is unavailable.")),
+			}
 		if not bool(requirement.get("enabled", true)) and bool(choice.get("hide_when_unmet", false)):
 			continue
 		var effects := _dialogue_choice_effects(choice)
@@ -5057,6 +5063,9 @@ func _resolve_dialogue_choice(entry: Dictionary, choice_id: String) -> void:
 	if str(entry.get("dialogue_id", "")) == "sal_starter_offer" and choice_id in ["sal_starter_sell_back", "sal_starter_keep"]:
 		_resolve_sal_starter_dialogue_choice(entry, choice_id)
 		return
+	if str(entry.get("dialogue_id", "")) in ["scratch_ticket_scalper_knows", "scratch_ticket_scalper_oblivious"] and choice_id == "give_unscratched_ticket":
+		_resolve_scratch_scalper_gift(entry)
+		return
 	var option := _dialogue_option_for_entry(entry)
 	var option_choice := _event_choice(option, choice_id)
 	if option_choice.is_empty():
@@ -5123,6 +5132,74 @@ func _resolve_dialogue_choice(entry: Dictionary, choice_id: String) -> void:
 	_autosave_foundation_run("Autosaved.")
 	_refresh_talk_dock()
 	if bool(result.get("ok", false)) and _apply_post_action_environment_interrupt("dialogue"):
+		_refresh()
+		return
+	_refresh()
+
+
+func _scratch_scalper_gift_status() -> Dictionary:
+	if run_state == null:
+		return {"available": false, "reason": "No active run."}
+	var game := _scratch_scalper_game_module()
+	if game == null or not game.has_method("scalper_gift_status"):
+		return {"available": false, "reason": "That ticket trade is unavailable."}
+	return game.call("scalper_gift_status", run_state, run_state.current_environment)
+
+
+func _scratch_scalper_game_module() -> GameModule:
+	if library == null:
+		return null
+	for definition_value in library.games:
+		if typeof(definition_value) != TYPE_DICTIONARY:
+			continue
+		var game_definition: Dictionary = definition_value
+		if str(game_definition.get("module_path", "")).ends_with("/scratch_tickets.gd"):
+			return _game_module_for_id(str(game_definition.get("id", "")))
+	return null
+
+
+func _resolve_scratch_scalper_gift(entry: Dictionary) -> void:
+	if run_state == null:
+		_show_message("No active run.")
+		return
+	var game := _scratch_scalper_game_module()
+	var gift_status := _scratch_scalper_gift_status()
+	if game == null or not game.has_method("resolve_scalper_gift") or not bool(gift_status.get("available", false)):
+		_show_message(str(gift_status.get("reason", "That ticket trade is unavailable.")))
+		_refresh_talk_dock()
+		_refresh()
+		return
+	var rollback_run := run_state.to_dict()
+	var rollback_environment := run_state.current_environment.duplicate(true)
+	var inventory_before := _run_inventory_id_set()
+	var rng := run_state.create_rng()
+	var result: Dictionary = game.call("resolve_scalper_gift", run_state, run_state.current_environment, rng)
+	if not bool(result.get("ok", false)):
+		_show_message(str(result.get("message", "That ticket trade is unavailable.")))
+		_refresh_talk_dock()
+		_refresh()
+		return
+	if not _advance_environment_turns_checked(1):
+		run_state.from_dict(rollback_run)
+		run_state.current_environment = rollback_environment
+		_refresh_talk_dock()
+		_refresh()
+		return
+	GameModule.apply_result(run_state, result, rng)
+	last_hook_result = result.duplicate(true)
+	last_game_result = {}
+	_show_item_found_popups(result, inventory_before)
+	_start_conclusion_animation(result, _talk_dock_panel_rect())
+	var context: Dictionary = entry.get("context", {}) if typeof(entry.get("context", {})) == TYPE_DICTIONARY else {}
+	var source_event_id := str(context.get("source_event_id", "")).strip_edges()
+	if not source_event_id.is_empty():
+		run_state.resolve_event(source_event_id)
+	run_state.complete_talk_event_resolution(str(entry.get("event_id", "")))
+	_show_message(str(result.get("message", "")))
+	_advance_alcohol_absorption()
+	_autosave_foundation_run("Autosaved.")
+	_refresh_talk_dock()
+	if _apply_post_action_environment_interrupt("dialogue"):
 		_refresh()
 		return
 	_refresh()
@@ -6473,6 +6550,8 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 		procedural_music_player.sync_music_choreography_state(run_state.music_choreography_state)
 	_show_message("%s: %s." % ["Recovered run from backup" if loaded_from_backup else "Run loaded", str(run_state.current_environment.get("display_name", "Environment"))])
 	_hide_run_menu()
+	if environment_canvas != null:
+		environment_canvas.settle_person_transits()
 	_refresh()
 	if run_state.grand_casino_duel_active(run_state.current_environment):
 		if _enter_grand_casino_duel_surface():

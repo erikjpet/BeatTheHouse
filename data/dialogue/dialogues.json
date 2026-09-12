@@ -1364,7 +1364,18 @@
     "nodes": {
       "restock": {
         "text": "I keep the clerk's schedule. This machine resets every three hours; I'll give you the exact times.",
-        "choices": [{"id": "continue", "label": "Leave him to it", "effects": {}, "end": true}]
+        "choices": [
+          {
+            "id": "give_unscratched_ticket",
+            "label": "Give him an untouched ticket",
+            "text": "Hand over one untouched scratch ticket. It might have been a winner.",
+            "effects": {},
+            "effects_hidden": true,
+            "hide_when_unmet": true,
+            "end": true
+          },
+          {"id": "continue", "label": "Leave him to it", "effects": {}, "end": true}
+        ]
       }
     }
   },
@@ -1385,7 +1396,18 @@
     "nodes": {
       "denial": {
         "text": "Restock time? Never heard of it. I just like standing here.",
-        "choices": [{"id": "continue", "label": "Sure you do", "effects": {}, "end": true}]
+        "choices": [
+          {
+            "id": "give_unscratched_ticket",
+            "label": "Give him an untouched ticket",
+            "text": "Hand over one untouched scratch ticket. It might have been a winner.",
+            "effects": {},
+            "effects_hidden": true,
+            "hide_when_unmet": true,
+            "end": true
+          },
+          {"id": "continue", "label": "Sure you do", "effects": {}, "end": true}
+        ]
       }
     }
   },

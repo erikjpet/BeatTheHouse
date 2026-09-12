@@ -41,6 +41,13 @@ const RESTOCK_ONE_PERCENT := 40
 const RESTOCK_TWO_PERCENT := 10
 const SCALPER_VISIT_CHANCE_PERCENT := 30
 const SCALPER_KNOWS_CHANCE_PERCENT := 50
+const SCALPER_RESTOCK_ARRIVAL_CHANCE_PERCENT := 20
+const SCALPER_GIFT_REWARD_CHANCE_PERCENT := 33
+const SCALPER_GIFT_HEAT_REDUCTION := 8
+const SCALPER_GIFT_ACTION_ID := "give_unscratched_ticket"
+const SCALPER_GIFT_DIALOGUE_IDS := [SCALPER_DIALOGUE_KNOWS_ID, SCALPER_DIALOGUE_OBLIVIOUS_ID]
+const SCALPER_LOW_TIER_MAX_SALE_PRICE := 8
+const SCALPER_LOW_TIER_ITEM_CLASSES := ["permanent", "temporary"]
 const PRACTICE_STOCK_COUNT := 100
 const MACHINE_RECT := Rect2(18, 13, 278, 404)
 const PLAY_SURFACE_RECT := Rect2(306, 48, 586, 370)
@@ -602,6 +609,124 @@ func environment_action_command(hook_id: String, action_id: String, run_state: R
 	return {"handled": true, "result": _resolve_redemption(run_state, environment, rng)}
 
 
+func scalper_gift_status(run_state: RunState, environment: Dictionary) -> Dictionary:
+	if run_state == null:
+		return {"available": false, "reason": "No active run."}
+	var machine := _ensure_machine_state(run_state, environment, false)
+	if _is_practice_environment(environment) or run_state.is_tutorial_run():
+		return {"available": false, "reason": "Vince does not trade during practice."}
+	if not bool(machine.get("scalper_present", false)):
+		return {"available": false, "reason": "Vince is not here."}
+	var visit_token := str(machine.get("scalper_visit_token", ""))
+	if visit_token.is_empty():
+		return {"available": false, "reason": "This encounter is not ready."}
+	if str(machine.get("scalper_gift_visit_token", "")) == visit_token:
+		return {"available": false, "reason": "Vince already took one ticket this visit.", "used": true}
+	var eligible := _eligible_scalper_gift_ticket(machine)
+	if eligible.is_empty():
+		return {"available": false, "reason": "You have no untouched scratch ticket."}
+	return {
+		"available": true,
+		"reason": "",
+		"ticket_id": str(eligible.get("ticket_id", "")),
+		"ticket_name": str(eligible.get("ticket_name", "Scratch Ticket")),
+		"source": str(eligible.get("source", "")),
+	}
+
+
+func resolve_scalper_gift(run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
+	var status := scalper_gift_status(run_state, environment)
+	if not bool(status.get("available", false)) or rng == null:
+		return _scratch_empty_result(SCALPER_GIFT_ACTION_ID, environment, str(status.get("reason", "That ticket trade is unavailable.")))
+	var machine := _ensure_machine_state(run_state, environment, true)
+	var eligible := _eligible_scalper_gift_ticket(machine)
+	if eligible.is_empty() or str(machine.get("scalper_gift_visit_token", "")) == str(machine.get("scalper_visit_token", "")):
+		return _scratch_empty_result(SCALPER_GIFT_ACTION_ID, environment, "That ticket trade is no longer available.")
+	var consumed := _consume_scalper_gift_ticket(machine, eligible)
+	if consumed.is_empty():
+		return _scratch_empty_result(SCALPER_GIFT_ACTION_ID, environment, "Vince cannot take that ticket.")
+	var reward_item_id := ""
+	var reward_item_name := ""
+	if scalper_gift_reward_for_roll(rng.randi_range(0, 99)):
+		var reward_pool := scalper_low_tier_item_pool(run_state)
+		if not reward_pool.is_empty():
+			reward_item_id = str(reward_pool[rng.randi_range(0, reward_pool.size() - 1)])
+			var reward_definition := library.item(reward_item_id) if library != null else {}
+			reward_item_name = str(reward_definition.get("display_name", reward_item_id.replace("_", " ").capitalize()))
+	var visit_token := str(machine.get("scalper_visit_token", ""))
+	machine["scalper_gift_visit_token"] = visit_token
+	machine["scalper_gift_count"] = int(machine.get("scalper_gift_count", 0)) + 1
+	machine["scalper_last_gift_ticket_id"] = str(consumed.get("id", ""))
+	machine["scalper_last_gift_reward_item_id"] = reward_item_id
+	_write_machine_state(environment, machine, run_state, false)
+	var ticket_name := str(consumed.get("display_name", "scratch ticket"))
+	var message := "Vince pockets your untouched %s. Heat drops by %d." % [ticket_name, SCALPER_GIFT_HEAT_REDUCTION]
+	if reward_item_id.is_empty():
+		message += " He gives you nothing back."
+	else:
+		message += " He palms you %s in return." % reward_item_name
+	var deltas := GameModule.empty_result_deltas()
+	deltas["suspicion_delta"] = -SCALPER_GIFT_HEAT_REDUCTION
+	deltas["inventory_add"] = [] if reward_item_id.is_empty() else [reward_item_id]
+	deltas["messages"] = [message]
+	deltas["story_log"] = [{
+		"type": "scratch_scalper_ticket_gift",
+		"game_id": get_id(),
+		"action_id": SCALPER_GIFT_ACTION_ID,
+		"ticket_id": str(consumed.get("id", "")),
+		"ticket_type": str(consumed.get("type_id", "")),
+		"reward_item_id": reward_item_id,
+		"rewarded": not reward_item_id.is_empty(),
+		"heat_reduction_points": SCALPER_GIFT_HEAT_REDUCTION,
+		"scalper_visit_token": visit_token,
+		"environment_id": str(environment.get("id", "")),
+		"message": message,
+	}]
+	var result := GameModule.build_action_result({
+		"ok": true,
+		"type": "game_action",
+		"source_id": SCALPER_HOOK_ID,
+		"game_id": get_id(),
+		"action_id": SCALPER_GIFT_ACTION_ID,
+		"action_kind": "social",
+		"environment_id": str(environment.get("id", "")),
+		"environment_archetype_id": str(environment.get("archetype_id", "")),
+		"message": message,
+		"deltas": deltas,
+	})
+	result["scalper_gift"] = true
+	result["scalper_gift_visit_token"] = visit_token
+	result["scalper_gift_ticket_id"] = str(consumed.get("id", ""))
+	result["scalper_gift_reward_item_id"] = reward_item_id
+	result["scalper_gift_rewarded"] = not reward_item_id.is_empty()
+	result["host_apply_result"] = true
+	return result
+
+
+func scalper_low_tier_item_pool(run_state: RunState = null) -> Array[String]:
+	var result: Array[String] = []
+	if library == null:
+		return result
+	for item_value in library.items:
+		if typeof(item_value) != TYPE_DICTIONARY:
+			continue
+		var item: Dictionary = item_value
+		var item_id := str(item.get("id", "")).strip_edges()
+		var item_class := str(item.get("class", "")).strip_edges().to_lower()
+		if item_id.is_empty() or not bool(item.get("sellable", false)) or item_class not in SCALPER_LOW_TIER_ITEM_CLASSES:
+			continue
+		var sale_price := int(item.get("sale_price", 0))
+		if sale_price <= 0 or sale_price > SCALPER_LOW_TIER_MAX_SALE_PRICE or int(item.get("price_min", 0)) <= 0 or int(item.get("price_max", 0)) <= 0:
+			continue
+		if run_state != null and not library.item_enabled_for_challenge(item_id, run_state.challenge_config):
+			continue
+		if run_state != null and run_state.inventory.has(item_id):
+			continue
+		result.append(item_id)
+	result.sort()
+	return result
+
+
 func environment_runtime_state(run_state: RunState, environment: Dictionary) -> Dictionary:
 	var machine := _ensure_machine_state(run_state, environment, false)
 	var active := _dict_ref(machine.get("active_ticket", {}))
@@ -1060,11 +1185,19 @@ func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: 
 		"last_restock_stocked_count": 0,
 		"restock_event_count": 0,
 		"scalper_visit_chance_percent": SCALPER_VISIT_CHANCE_PERCENT,
+		"scalper_restock_arrival_chance_percent": SCALPER_RESTOCK_ARRIVAL_CHANCE_PERCENT,
+		"scalper_gift_reward_chance_percent": SCALPER_GIFT_REWARD_CHANCE_PERCENT,
 		# A machine generated with no sellable tickets always has a scalper already
 		# camping it. Stocked machines keep the normal seeded visit chance below.
 		"scalper_present": initial_scalper_present,
 		"scalper_knows_schedule": initial_scalper_knows,
 		"scalper_visit_token": initial_visit_token,
+		"scalper_gift_visit_token": "",
+		"scalper_gift_count": 0,
+		"scalper_last_gift_ticket_id": "",
+		"scalper_last_gift_reward_item_id": "",
+		"scalper_restock_arrival_count": 0,
+		"scalper_last_restock_arrival_boundary": -1,
 		"scalper_cleared_count": 0,
 		"scalper_intercepted_restock_count": 0,
 		"stock": stock,
@@ -2084,6 +2217,14 @@ static func scalper_knows_for_roll(roll: int) -> bool:
 	return posmod(roll, 100) < SCALPER_KNOWS_CHANCE_PERCENT
 
 
+static func scalper_restock_arrives_for_roll(roll: int) -> bool:
+	return posmod(roll, 100) < SCALPER_RESTOCK_ARRIVAL_CHANCE_PERCENT
+
+
+static func scalper_gift_reward_for_roll(roll: int) -> bool:
+	return posmod(roll, 100) < SCALPER_GIFT_REWARD_CHANCE_PERCENT
+
+
 static func _next_restock_after(absolute_minute: int, phase_minute: int) -> int:
 	var cursor := maxi(0, absolute_minute)
 	var phase := clampi(phase_minute, 0, RESTOCK_INTERVAL_MINUTES - 1)
@@ -2106,10 +2247,20 @@ func _advance_restock_schedule(run_state: RunState, environment: Dictionary, mac
 		var rng := run_state.create_rng("scratch-restock:%s:%d" % [_machine_identity(environment), next_boundary])
 		var scheduled_count := restock_count_for_roll(rng.randi_range(0, 99))
 		var stocked_count := 0
-		if bool(machine.get("scalper_present", false)):
+		var scalper_was_present := bool(machine.get("scalper_present", false))
+		if scalper_was_present:
 			machine["scalper_intercepted_restock_count"] = int(machine.get("scalper_intercepted_restock_count", 0)) + scheduled_count
 		else:
 			stocked_count = _add_restock_tickets(machine, scheduled_count, rng)
+			if not _is_practice_environment(environment) and not run_state.is_tutorial_run():
+				var arrival_rng := run_state.create_rng("scratch-restock-scalper-arrival:%s:%d" % [_machine_identity(environment), next_boundary])
+				if scalper_restock_arrives_for_roll(arrival_rng.randi_range(0, 99)):
+					machine["scalper_present"] = true
+					machine["scalper_knows_schedule"] = scalper_knows_for_roll(arrival_rng.randi_range(0, 99))
+					machine["scalper_visit_token"] = _scratch_visit_token(run_state, environment)
+					machine["scalper_cleared_count"] = 0
+					machine["scalper_restock_arrival_count"] = int(machine.get("scalper_restock_arrival_count", 0)) + 1
+					machine["scalper_last_restock_arrival_boundary"] = next_boundary
 		machine["last_restock_scheduled_count"] = scheduled_count
 		machine["last_restock_stocked_count"] = stocked_count
 		machine["restock_event_count"] = int(machine.get("restock_event_count", 0)) + 1
@@ -2203,6 +2354,65 @@ func _clear_machine_stock(machine: Dictionary) -> int:
 	return cleared
 
 
+func _eligible_scalper_gift_ticket(machine: Dictionary) -> Dictionary:
+	var queue := _dictionary_array(machine.get("pending_queue", []))
+	for index in range(queue.size()):
+		var ticket: Dictionary = queue[index]
+		if _ticket_is_unscratched(ticket):
+			return {
+				"source": "pending_queue",
+				"index": index,
+				"ticket_id": str(ticket.get("id", "")),
+				"ticket_name": str(ticket.get("display_name", "Scratch Ticket")),
+			}
+	var active := _dict_ref(machine.get("active_ticket", {}))
+	if _ticket_is_unscratched(active):
+		return {
+			"source": "active_ticket",
+			"index": -1,
+			"ticket_id": str(active.get("id", "")),
+			"ticket_name": str(active.get("display_name", "Scratch Ticket")),
+		}
+	return {}
+
+
+func _consume_scalper_gift_ticket(machine: Dictionary, eligible: Dictionary) -> Dictionary:
+	var source := str(eligible.get("source", ""))
+	if source == "pending_queue":
+		var queue := _dictionary_array(machine.get("pending_queue", []))
+		var index := int(eligible.get("index", -1))
+		if index < 0 or index >= queue.size() or not _ticket_is_unscratched(queue[index] as Dictionary):
+			return {}
+		var consumed: Dictionary = queue[index]
+		queue.remove_at(index)
+		machine["pending_queue"] = queue
+		return consumed
+	if source == "active_ticket":
+		var active := _dict_ref(machine.get("active_ticket", {}))
+		if not _ticket_is_unscratched(active):
+			return {}
+		machine["active_ticket"] = {}
+		machine["penalty_shields_remaining"] = 0
+		return active
+	return {}
+
+
+static func _ticket_is_unscratched(ticket: Dictionary) -> bool:
+	if ticket.is_empty() or bool(ticket.get("result_ready", false)) or int(ticket.get("mask_revision", 0)) > 0:
+		return false
+	var regions_value: Variant = ticket.get("scratch_regions", [])
+	if typeof(regions_value) == TYPE_ARRAY:
+		for region_value in regions_value as Array:
+			if typeof(region_value) != TYPE_DICTIONARY:
+				continue
+			var region: Dictionary = region_value
+			var sample_total := maxi(0, int(region.get("sample_total", 0)))
+			var remaining_units := maxi(0, int(region.get("mask_remaining_units", sample_total * 255)))
+			if bool(region.get("revealed", false)) or float(region.get("coverage", 0.0)) > 0.0 or remaining_units < sample_total * 255:
+				return false
+	return true
+
+
 func _stock_total(machine: Dictionary) -> int:
 	return _stock_total_from_rows(_dictionary_array(machine.get("stock", [])))
 
@@ -2227,14 +2437,17 @@ func _machine_identity(environment: Dictionary) -> String:
 
 
 func _scalper_dialogue_summary(machine: Dictionary, knows_schedule: bool) -> String:
+	var gift_used := str(machine.get("scalper_gift_visit_token", "")) == str(machine.get("scalper_visit_token", "")) \
+		and not str(machine.get("scalper_visit_token", "")).is_empty()
+	var gift_note := " He already took the one ticket he will accept this visit." if gift_used else ""
 	if knows_schedule:
 		var next_restock := int(machine.get("next_restock_absolute_minute", 0))
-		return "I keep the clerk's schedule. This machine resets every three hours: %s, then %s, then %s. Be here before the clerk wheels past." % [
+		return ("I keep the clerk's schedule. This machine resets every three hours: %s, then %s, then %s. Be here before the clerk wheels past." % [
 			_clock_text_at_absolute_minute(next_restock),
 			_clock_text_at_absolute_minute(next_restock + RESTOCK_INTERVAL_MINUTES),
 			_clock_text_at_absolute_minute(next_restock + RESTOCK_INTERVAL_MINUTES * 2),
-		]
-	return "Restock time? Never heard of one. I am just standing beside an empty machine because I like the carpet."
+		]) + gift_note
+	return "Restock time? Never heard of one. I am just standing beside an empty machine because I like the carpet." + gift_note
 
 
 static func _clock_text_at_absolute_minute(absolute_minute: int) -> String:
@@ -2316,11 +2529,19 @@ func _normalize_machine_state(machine: Dictionary, run_state: RunState = null) -
 	machine["last_restock_stocked_count"] = clampi(int(machine.get("last_restock_stocked_count", 0)), 0, 2)
 	machine["restock_event_count"] = maxi(0, int(machine.get("restock_event_count", 0)))
 	machine["scalper_visit_chance_percent"] = SCALPER_VISIT_CHANCE_PERCENT
+	machine["scalper_restock_arrival_chance_percent"] = SCALPER_RESTOCK_ARRIVAL_CHANCE_PERCENT
+	machine["scalper_gift_reward_chance_percent"] = SCALPER_GIFT_REWARD_CHANCE_PERCENT
 	machine["scalper_present"] = bool(machine.get("scalper_present", false))
 	machine["scalper_knows_schedule"] = bool(machine.get("scalper_knows_schedule", false))
 	machine["scalper_visit_token"] = str(machine.get("scalper_visit_token", ""))
+	machine["scalper_gift_visit_token"] = str(machine.get("scalper_gift_visit_token", ""))
+	machine["scalper_gift_count"] = maxi(0, int(machine.get("scalper_gift_count", 0)))
+	machine["scalper_last_gift_ticket_id"] = str(machine.get("scalper_last_gift_ticket_id", ""))
+	machine["scalper_last_gift_reward_item_id"] = str(machine.get("scalper_last_gift_reward_item_id", ""))
 	machine["scalper_cleared_count"] = maxi(0, int(machine.get("scalper_cleared_count", 0)))
 	machine["scalper_intercepted_restock_count"] = maxi(0, int(machine.get("scalper_intercepted_restock_count", 0)))
+	machine["scalper_restock_arrival_count"] = maxi(0, int(machine.get("scalper_restock_arrival_count", 0)))
+	machine["scalper_last_restock_arrival_boundary"] = int(machine.get("scalper_last_restock_arrival_boundary", -1))
 	machine["version"] = maxi(MACHINE_STATE_VERSION, int(machine.get("version", 1)))
 
 
@@ -2345,7 +2566,8 @@ func _machine_state_is_current(machine: Dictionary) -> bool:
 	var active: Dictionary = machine.get("active_ticket", {}) as Dictionary
 	if _ticket_region_upgrade_needed(active):
 		return false
-	return machine.has("restock_phase_minute") and machine.has("restock_cursor_absolute_minute") and machine.has("next_restock_absolute_minute")
+	return machine.has("restock_phase_minute") and machine.has("restock_cursor_absolute_minute") and machine.has("next_restock_absolute_minute") \
+		and machine.has("scalper_gift_visit_token") and machine.has("scalper_restock_arrival_count")
 
 
 func _ticket_region_upgrade_needed(ticket: Dictionary) -> bool:

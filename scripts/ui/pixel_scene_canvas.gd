@@ -93,6 +93,10 @@ const SCENE_IDLE_ANIMATION_INTERVAL_SEC := 1.0 / SCENE_IDLE_ANIMATION_FPS
 const WEB_SCENE_IDLE_ANIMATION_FPS := 30.0
 const WEB_GRAND_CASINO_IDLE_ANIMATION_FPS := 15.0
 const ITEM_ICON_TEXTURE_CACHE_LIMIT := 32
+const MAX_CONCURRENT_PERSON_TRANSITS := 8
+const PERSON_TRANSIT_SPEED_PIXELS_PER_SEC := 82.0
+const PERSON_TRANSIT_MIN_DURATION_SEC := 0.75
+const PERSON_TRANSIT_MAX_DURATION_SEC := 8.0
 const SCENE_SPARKLES_CORNER_STORE := [Vector2(384, 220), Vector2(478, 224), Vector2(668, 138), Vector2(746, 144)]
 const SCENE_PUDDLES_BACK_ALLEY := [Vector2(180, 304), Vector2(420, 292), Vector2(710, 312)]
 const SCENE_SPARKLES_BACK_ALLEY := [Vector2(112, 172), Vector2(792, 174)]
@@ -139,6 +143,10 @@ var fit_draw_text_cache: Dictionary = {}
 var object_animation_phase_cache: Dictionary = {}
 var actor_route_started_at_cache: Dictionary = {}
 var actor_route_time := 0.0
+var person_transits: Dictionary = {}
+var person_transit_ids: Array[String] = []
+var settled_person_objects_cache: Dictionary = {}
+var person_transit_room_key := ""
 var drunk_distortion_overlay: DrunkDistortionOverlay
 var drunk_effect_mode: String = "distortion"
 var last_mouse_press_msec: int = -100000
@@ -405,6 +413,7 @@ func render_environment_snapshot(snapshot: Dictionary) -> void:
 	drunk_effect_mode = _normalized_drunk_effect_mode(str(foundation_snapshot.get("drunk_effect_mode", drunk_effect_mode)))
 	_update_drunk_distortion_overlay()
 	foundation_scene_objects = _objects_from_foundation_snapshot(foundation_snapshot)
+	_sync_person_transits()
 	_sync_actor_route_starts()
 	overlay_repositioned_object_ids.clear()
 	_clear_draw_text_caches()
@@ -423,6 +432,32 @@ func render_environment_snapshot(snapshot: Dictionary) -> void:
 	_update_camera_target_if_needed()
 	queue_redraw()
 	view_geometry_changed.emit()
+
+
+func settle_person_transits() -> void:
+	for object_id in person_transit_ids:
+		var transit_value: Variant = person_transits.get(object_id, {})
+		if typeof(transit_value) != TYPE_DICTIONARY:
+			continue
+		var transit := transit_value as Dictionary
+		if str(transit.get("kind", "")) == "arrival":
+			_restore_arrived_person(object_id, _copy_dictionary(transit.get("settled_object", {})))
+		else:
+			_remove_scene_object(object_id)
+	person_transits.clear()
+	person_transit_ids.clear()
+	actor_route_started_at_cache.clear()
+	person_transit_room_key = "__settled_reload__"
+	settled_person_objects_cache = _settled_person_objects(foundation_scene_objects)
+	for value in foundation_scene_objects:
+		if typeof(value) != TYPE_DICTIONARY:
+			continue
+		var object_data := value as Dictionary
+		object_data.erase("person_transit_active")
+		object_data.erase("person_transit_kind")
+		object_data.erase("person_transit_settled_position")
+	_rebuild_scene_object_cache()
+	queue_redraw()
 
 
 func set_small_screen_mode(enabled: bool) -> void:
@@ -482,6 +517,9 @@ func debug_soak_snapshot() -> Dictionary:
 		"actor_route_time": actor_route_time,
 		"background_texture_loaded": background_texture != null,
 		"scene_idle_animation_redraw_count": scene_idle_animation_redraw_count,
+		"person_transit_count": person_transit_ids.size(),
+		"person_transit_cap": MAX_CONCURRENT_PERSON_TRANSITS,
+		"person_transit_ids": person_transit_ids.duplicate(),
 		"reserved_overlay_global_rect": reserved_overlay_global_rect,
 		"overlay_repositioned_object_ids": overlay_repositioned_object_ids.duplicate(),
 	}
@@ -1025,6 +1063,7 @@ func _process(delta: float) -> void:
 	var previous_zoom := camera_zoom
 	var previous_offset := camera_offset
 	var was_info_animating := info_card_animating
+	var person_transit_changed := _advance_person_transits()
 	if reduce_motion:
 		flicker = 0.0
 		_update_camera_target_if_needed()
@@ -1032,7 +1071,7 @@ func _process(delta: float) -> void:
 		camera_offset = target_camera_offset
 		_snap_info_card_to_target()
 		var snapped_camera_changed := absf(previous_zoom - camera_zoom) > CAMERA_ZOOM_SNAP_EPSILON or previous_offset.distance_squared_to(camera_offset) > CAMERA_OFFSET_SNAP_EPSILON * CAMERA_OFFSET_SNAP_EPSILON
-		if snapped_camera_changed or was_info_animating:
+		if snapped_camera_changed or was_info_animating or person_transit_changed:
 			queue_redraw()
 		if snapped_camera_changed:
 			view_geometry_changed.emit()
@@ -1053,7 +1092,7 @@ func _process(delta: float) -> void:
 	if camera_offset.distance_squared_to(target_camera_offset) <= CAMERA_OFFSET_SNAP_EPSILON * CAMERA_OFFSET_SNAP_EPSILON:
 		camera_offset = target_camera_offset
 	var camera_changed := absf(previous_zoom - camera_zoom) > CAMERA_ZOOM_SNAP_EPSILON or previous_offset.distance_squared_to(camera_offset) > CAMERA_OFFSET_SNAP_EPSILON * CAMERA_OFFSET_SNAP_EPSILON
-	if camera_changed or info_card_animating or was_info_animating or _scene_idle_animation_redraw_due(scaled_delta):
+	if camera_changed or info_card_animating or was_info_animating or person_transit_changed or _scene_idle_animation_redraw_due(scaled_delta):
 		queue_redraw()
 	if camera_changed:
 		view_geometry_changed.emit()
@@ -2952,6 +2991,236 @@ func _objects_from_interactable_records(records: Array) -> Array:
 	return objects
 
 
+func _sync_person_transits() -> void:
+	var room_key := _person_transit_snapshot_key(foundation_snapshot)
+	var current_settled := _settled_person_objects(foundation_scene_objects)
+	if room_key != person_transit_room_key or reduce_motion:
+		person_transit_room_key = room_key
+		person_transits.clear()
+		person_transit_ids.clear()
+		actor_route_started_at_cache.clear()
+		settled_person_objects_cache = current_settled
+		return
+	var arrivals: Array[String] = []
+	var departures: Array[String] = []
+	for id_value in current_settled.keys():
+		var object_id := str(id_value)
+		if not settled_person_objects_cache.has(object_id) and not person_transits.has(object_id):
+			arrivals.append(object_id)
+	for id_value in settled_person_objects_cache.keys():
+		var object_id := str(id_value)
+		if not current_settled.has(object_id) and not person_transits.has(object_id):
+			departures.append(object_id)
+	arrivals.sort()
+	departures.sort()
+	for object_id in arrivals:
+		if person_transit_ids.size() >= MAX_CONCURRENT_PERSON_TRANSITS:
+			break
+		_start_person_transit(object_id, current_settled.get(object_id, {}), "arrival")
+	for object_id in departures:
+		if person_transit_ids.size() >= MAX_CONCURRENT_PERSON_TRANSITS:
+			break
+		_start_person_transit(object_id, settled_person_objects_cache.get(object_id, {}), "departure")
+	settled_person_objects_cache = current_settled
+	for object_id in person_transit_ids:
+		var transit_value: Variant = person_transits.get(object_id, {})
+		if typeof(transit_value) != TYPE_DICTIONARY:
+			continue
+		var transit := transit_value as Dictionary
+		if str(transit.get("kind", "")) == "arrival" and current_settled.has(object_id):
+			transit["settled_object"] = (current_settled.get(object_id, {}) as Dictionary).duplicate(true)
+			_apply_person_transit_to_scene_object(object_id, transit)
+		elif str(transit.get("kind", "")) == "departure":
+			var departing := _copy_dictionary(transit.get("settled_object", {}))
+			_apply_person_transit_fields(departing, transit)
+			foundation_scene_objects.append(departing)
+
+
+func _person_transit_snapshot_key(snapshot: Dictionary) -> String:
+	return "%s|%s|%s|%s" % [
+		str(snapshot.get("id", "")),
+		str(snapshot.get("world_node_id", "")),
+		str(snapshot.get("environment_visit_id", snapshot.get("entered_game_clock_minutes", ""))),
+		str(snapshot.get("current_layer_id", "")),
+	]
+
+
+func _settled_person_objects(objects: Array) -> Dictionary:
+	var result: Dictionary = {}
+	for value in objects:
+		if typeof(value) != TYPE_DICTIONARY:
+			continue
+		var object_data := value as Dictionary
+		var object_id := str(object_data.get("id", "")).strip_edges()
+		if object_id.is_empty() or not EnvironmentPlacementScript.is_person_class(str(object_data.get("placement_class", ""))):
+			continue
+		var settled := object_data.duplicate(true)
+		settled.erase("person_transit_active")
+		settled.erase("person_transit_kind")
+		settled.erase("person_transit_settled_position")
+		result[object_id] = settled
+	return result
+
+
+func _start_person_transit(object_id: String, settled_value: Variant, kind: String) -> void:
+	if typeof(settled_value) != TYPE_DICTIONARY or kind not in ["arrival", "departure"]:
+		return
+	var settled := (settled_value as Dictionary).duplicate(true)
+	var route := _person_transit_route(settled, kind)
+	if route.is_empty():
+		return
+	var stage: Dictionary = route.get("stage", {})
+	var transit := {
+		"kind": kind,
+		"settled_object": settled,
+		"route_points": route.get("points", []),
+		"route_stage": stage,
+		"ends_at": actor_route_time + float(stage.get("duration_sec", PERSON_TRANSIT_MIN_DURATION_SEC)),
+	}
+	person_transits[object_id] = transit
+	person_transit_ids.append(object_id)
+	if kind == "arrival":
+		_apply_person_transit_to_scene_object(object_id, transit)
+
+
+func _person_transit_route(settled: Dictionary, kind: String) -> Dictionary:
+	var surfaces := EnvironmentPlacementScript.surface_map(foundation_snapshot)
+	var doorway_values: Variant = surfaces.get("doorways", [])
+	var floor_data: Dictionary = surfaces.get("floor", {}) if typeof(surfaces.get("floor", {})) == TYPE_DICTIONARY else {}
+	var band_values: Variant = floor_data.get("bands", [])
+	if typeof(doorway_values) != TYPE_ARRAY or (doorway_values as Array).is_empty() or typeof(band_values) != TYPE_ARRAY or (band_values as Array).is_empty():
+		return {}
+	var settled_position: Vector2 = settled.get("position", Vector2(0.5, 0.5))
+	var settled_center := settled_position * Vector2(BOARD_SIZE)
+	var object_size: Vector2 = settled.get("size", Vector2(64.0, 96.0))
+	var settled_contact := Vector2(settled_center.x, settled_center.y + object_size.y * 0.5)
+	var doorway_center := Vector2(-1.0, -1.0)
+	var doorway_distance := INF
+	for doorway_value in doorway_values as Array:
+		if typeof(doorway_value) != TYPE_DICTIONARY:
+			continue
+		var doorway_rect := _pixel_bounds_rect((doorway_value as Dictionary).get("bounds", []))
+		if not doorway_rect.has_area():
+			continue
+		var candidate := doorway_rect.get_center()
+		var distance := candidate.distance_squared_to(settled_contact)
+		if distance < doorway_distance:
+			doorway_distance = distance
+			doorway_center = candidate
+	if doorway_center.x < 0.0:
+		return {}
+	var floor_band := Rect2()
+	var band_distance := INF
+	for band_value in band_values as Array:
+		var candidate_band := _pixel_bounds_rect(band_value)
+		if not candidate_band.has_area():
+			continue
+		var candidate_contact := Vector2(
+			clampf(settled_contact.x, candidate_band.position.x, candidate_band.end.x),
+			clampf(settled_contact.y, candidate_band.position.y, candidate_band.end.y)
+		)
+		var distance := candidate_contact.distance_squared_to(settled_contact)
+		if distance < band_distance:
+			band_distance = distance
+			floor_band = candidate_band
+	if not floor_band.has_area():
+		return {}
+	var lane_contact_y := clampf(settled_contact.y, floor_band.position.y + 2.0, floor_band.end.y - 2.0)
+	var doorway_x := clampf(doorway_center.x, floor_band.position.x + 2.0, floor_band.end.x - 2.0)
+	var lane_y := lane_contact_y - object_size.y * 0.5
+	var doorway_position := Vector2(doorway_x, lane_y)
+	var lane_position := Vector2(clampf(settled_center.x, floor_band.position.x + 2.0, floor_band.end.x - 2.0), lane_y)
+	var pixel_points := [doorway_position, lane_position, settled_center]
+	if kind == "departure":
+		pixel_points.reverse()
+	var points: Array = []
+	var distance := 0.0
+	for index in range(pixel_points.size()):
+		points.append(_person_transit_normalized_point(pixel_points[index]))
+		if index > 0:
+			distance += (pixel_points[index - 1] as Vector2).distance_to(pixel_points[index] as Vector2)
+	var endpoint: Vector2 = pixel_points.back()
+	var small_rect := _rect_from_dict(settled.get("small_screen_rect", {}))
+	var small_endpoint := small_rect.get_center() if small_rect.has_area() else endpoint / Vector2(BOARD_SIZE)
+	if kind == "departure":
+		small_endpoint = doorway_position / Vector2(BOARD_SIZE)
+	var stage := {
+		"mode": "to_endpoint",
+		"duration_sec": clampf(distance / PERSON_TRANSIT_SPEED_PIXELS_PER_SEC, PERSON_TRANSIT_MIN_DURATION_SEC, PERSON_TRANSIT_MAX_DURATION_SEC),
+		"reduced_motion_endpoint": _person_transit_normalized_point(endpoint),
+		"start": points[0],
+		"endpoint": points.back(),
+		"small_screen_start": points[0],
+		"small_screen_endpoint": {"x": small_endpoint.x, "y": small_endpoint.y},
+	}
+	return {"points": points, "stage": stage}
+
+
+func _apply_person_transit_to_scene_object(object_id: String, transit: Dictionary) -> void:
+	for value in foundation_scene_objects:
+		if typeof(value) == TYPE_DICTIONARY and str((value as Dictionary).get("id", "")) == object_id:
+			_apply_person_transit_fields(value as Dictionary, transit)
+			return
+
+
+func _apply_person_transit_fields(object_data: Dictionary, transit: Dictionary) -> void:
+	object_data["person_transit_active"] = true
+	object_data["person_transit_kind"] = str(transit.get("kind", ""))
+	object_data["person_transit_settled_position"] = object_data.get("position", Vector2(0.5, 0.5))
+	object_data["interactive"] = false
+	object_data["disabled"] = false
+	object_data["actor_route_points"] = _copy_array(transit.get("route_points", []))
+	object_data["actor_route_stage"] = _copy_dictionary(transit.get("route_stage", {}))
+
+
+func _advance_person_transits() -> bool:
+	var changed := false
+	for index in range(person_transit_ids.size() - 1, -1, -1):
+		var object_id := person_transit_ids[index]
+		var transit_value: Variant = person_transits.get(object_id, {})
+		if typeof(transit_value) != TYPE_DICTIONARY or actor_route_time < float((transit_value as Dictionary).get("ends_at", INF)):
+			continue
+		var transit := transit_value as Dictionary
+		if str(transit.get("kind", "")) == "arrival":
+			_restore_arrived_person(object_id, _copy_dictionary(transit.get("settled_object", {})))
+		else:
+			_remove_scene_object(object_id)
+		person_transits.erase(object_id)
+		person_transit_ids.remove_at(index)
+		changed = true
+	if changed:
+		_sync_actor_route_starts()
+		_rebuild_scene_object_cache()
+	return changed
+
+
+func _restore_arrived_person(object_id: String, settled: Dictionary) -> void:
+	for index in range(foundation_scene_objects.size()):
+		var value: Variant = foundation_scene_objects[index]
+		if typeof(value) == TYPE_DICTIONARY and str((value as Dictionary).get("id", "")) == object_id:
+			foundation_scene_objects[index] = settled
+			return
+
+
+func _remove_scene_object(object_id: String) -> void:
+	for index in range(foundation_scene_objects.size() - 1, -1, -1):
+		var value: Variant = foundation_scene_objects[index]
+		if typeof(value) == TYPE_DICTIONARY and str((value as Dictionary).get("id", "")) == object_id:
+			foundation_scene_objects.remove_at(index)
+			return
+
+
+static func _person_transit_normalized_point(point: Vector2) -> Dictionary:
+	return {"x": point.x / BOARD_SIZE.x, "y": point.y / BOARD_SIZE.y}
+
+
+static func _pixel_bounds_rect(value: Variant) -> Rect2:
+	if typeof(value) != TYPE_ARRAY or (value as Array).size() < 4:
+		return Rect2()
+	var bounds := value as Array
+	return Rect2(float(bounds[0]), float(bounds[1]), float(bounds[2]), float(bounds[3]))
+
+
 static func _sort_composed_scene_objects(a: Dictionary, b: Dictionary) -> bool:
 	var az := _composed_z_order(a)
 	var bz := _composed_z_order(b)
@@ -4478,6 +4747,8 @@ func _board_rect_for_object(object_data: Dictionary) -> Rect2:
 
 
 func _interaction_rect_for_object(object_data: Dictionary) -> Rect2:
+	if bool(object_data.get("person_transit_active", false)):
+		return Rect2()
 	var rect := _board_rect_for_object(object_data)
 	if not small_screen_mode or bool(object_data.get("scenario_layout_resolved", false)):
 		return rect
@@ -4493,31 +4764,61 @@ func _interaction_rect_for_object(object_data: Dictionary) -> Rect2:
 
 
 func _actor_route_position(object_data: Dictionary) -> Vector2:
-	var stage := _copy_dictionary(object_data.get("actor_route_stage", {}))
-	var points := _copy_array(object_data.get("actor_route_points", []))
-	if stage.is_empty() or points.size() != 2:
+	var stage_value: Variant = object_data.get("actor_route_stage", {})
+	var points_value: Variant = object_data.get("actor_route_points", [])
+	if typeof(stage_value) != TYPE_DICTIONARY or typeof(points_value) != TYPE_ARRAY:
 		return Vector2(-1.0, -1.0)
-	var start := _vector2_from_dict(points[0], Vector2(-1.0, -1.0))
-	var endpoint := _vector2_from_dict(points[1], Vector2(-1.0, -1.0))
-	if small_screen_mode and bool(object_data.get("scenario_layout_resolved", false)):
-		start = _vector2_from_dict(stage.get("small_screen_start", points[0]), start)
-		endpoint = _vector2_from_dict(stage.get("small_screen_endpoint", points[1]), endpoint)
+	var stage := stage_value as Dictionary
+	var points := points_value as Array
+	if stage.is_empty() or points.size() < 2:
+		return Vector2(-1.0, -1.0)
+	var start := _actor_route_point(points, 0, stage, object_data)
+	var endpoint := _actor_route_point(points, points.size() - 1, stage, object_data)
 	if start.x < 0.0 or endpoint.x < 0.0:
 		return Vector2(-1.0, -1.0)
 	if reduce_motion:
-		if small_screen_mode and bool(object_data.get("scenario_layout_resolved", false)):
+		if small_screen_mode:
 			return endpoint
-		return _vector2_from_dict(stage.get("reduced_motion_endpoint", points[1]), endpoint)
+		return _vector2_from_dict(stage.get("reduced_motion_endpoint", points.back()), endpoint)
 	var route_key := _actor_route_cache_key(object_data)
 	var started_at := float(actor_route_started_at_cache.get(route_key, actor_route_time))
 	var duration := maxf(0.001, float(stage.get("duration_sec", 1.0)))
 	var progress := clampf((actor_route_time - started_at) / duration, 0.0, 1.0)
 	if str(stage.get("mode", "to_endpoint")) == "ping_pong":
 		progress = 1.0 - absf(fposmod((actor_route_time - started_at) / duration, 2.0) - 1.0)
-	return start.lerp(endpoint, progress)
+	if points.size() == 2:
+		return start.lerp(endpoint, progress)
+	var total_distance := 0.0
+	for index in range(1, points.size()):
+		total_distance += _actor_route_point(points, index - 1, stage, object_data).distance_to(_actor_route_point(points, index, stage, object_data))
+	if total_distance <= 0.001:
+		return endpoint
+	var target_distance := total_distance * progress
+	var traversed := 0.0
+	for index in range(1, points.size()):
+		var segment_start := _actor_route_point(points, index - 1, stage, object_data)
+		var segment_end := _actor_route_point(points, index, stage, object_data)
+		var segment_distance := segment_start.distance_to(segment_end)
+		if target_distance <= traversed + segment_distance or index == points.size() - 1:
+			return segment_start.lerp(segment_end, clampf((target_distance - traversed) / maxf(0.001, segment_distance), 0.0, 1.0))
+		traversed += segment_distance
+	return endpoint
+
+
+func _actor_route_point(points: Array, index: int, stage: Dictionary, object_data: Dictionary) -> Vector2:
+	var point := _vector2_from_dict(points[index], Vector2(-1.0, -1.0))
+	if not small_screen_mode:
+		return point
+	if index == 0:
+		return _vector2_from_dict(stage.get("small_screen_start", points[index]), point)
+	if index == points.size() - 1:
+		return _vector2_from_dict(stage.get("small_screen_endpoint", points[index]), point)
+	return point
 
 
 func _actor_route_cache_key(object_data: Dictionary) -> String:
+	if bool(object_data.get("person_transit_active", false)):
+		return "person-transit:%s:%s" % [str(object_data.get("id", "")), str(object_data.get("person_transit_kind", ""))]
 	var route_identity := str(object_data.get("id", ""))
 	if bool(object_data.get("scenario_layout_resolved", false)):
 		route_identity = str(object_data.get("scenario_layout_authority_identity", ""))
