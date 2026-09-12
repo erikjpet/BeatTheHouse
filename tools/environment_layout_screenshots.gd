@@ -424,12 +424,17 @@ func _capture_fix06_31_scenario_arrival(library: Variant, definition: Dictionary
 	# attached; keep that unrelated terminal screen from replacing the room under
 	# inspection after arrival has already finalized successfully.
 	run_state.bankroll = maxi(run_state.bankroll, 10000)
+	run_state.run_status = RunStateScript.RUN_STATUS_ACTIVE
 	run_state.run_failure_reason = ""
 	run_state.run_failure_message = ""
 	app.set("run_state", run_state)
 	app.set("generator", generator)
+	app.call("_set_current_screen", "ENVIRONMENT")
 	app.call("_clear_selected_game_action")
-	app.call("_refresh")
+	# Arrival was already generated and finalized above. Render that exact room
+	# directly so this visual audit does not run an unrelated stranded-state
+	# evaluation before the screenshot is taken.
+	app.call("_render_environment_screen")
 	await _settle(3)
 	await RenderingServer.frame_post_draw
 	var image := root.get_viewport().get_texture().get_image()
