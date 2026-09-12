@@ -6,6 +6,7 @@ extends SceneTree
 
 const MainScene := preload("res://scenes/main.tscn")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
+const CrewPokerGameScript := preload("res://scripts/games/crew_draw_poker.gd")
 
 var failures: Array[String] = []
 const MISSING_ACTION_INDEX := -999
@@ -39,8 +40,8 @@ func _run() -> void:
 	if str(surface.get("surface_template", "")) != "shared_table_game_v1":
 		failures.append("Hold'em did not declare the shared table-game room template.")
 	var seats: Array = surface.get("seats", []) if typeof(surface.get("seats", [])) == TYPE_ARRAY else []
-	if seats.size() != 3 or int(surface.get("animated_crew_count", 0)) != 3:
-		failures.append("The room did not project all three Crew opponents as animated seats.")
+	if seats.size() != 5 or int(surface.get("animated_crew_count", 0)) != 5:
+		failures.append("The room did not project all five Crew opponents as animated seats.")
 	for seat_value in seats:
 		var seat: Dictionary = seat_value
 		var model: Dictionary = seat.get("character_model", {}) if typeof(seat.get("character_model", {})) == TYPE_DICTIONARY else {}
@@ -70,6 +71,7 @@ func _run() -> void:
 		"pot": 24,
 		"heads_up": true,
 		"hand_number": 1,
+		"seat_count": seats.size(),
 	}
 	if not bool(app.call("_enqueue_crew_poker_table_talk", request)):
 		failures.append("The production host rejected a valid high-wager Crew conversation request.")
@@ -121,8 +123,26 @@ func _run() -> void:
 		failures.append("Dismissing friendly table talk incorrectly generated Heat.")
 	app.call("_refresh")
 	await _settle(3)
+	var right_member_id := str((seats[4] as Dictionary).get("member_id", "")) if seats.size() > 4 else ""
+	var right_request := request.duplicate(true)
+	right_request["event_id"] = "crew-poker-talk:audit-right:%s" % right_member_id
+	right_request["member_id"] = right_member_id
+	right_request["member_name"] = str((seats[4] as Dictionary).get("name", "Crew")) if seats.size() > 4 else "Crew"
+	right_request["seat_index"] = 4
+	if not bool(app.call("_enqueue_crew_poker_table_talk", right_request)):
+		failures.append("The far-right Crew seat could not open table talk.")
+	app.call("_refresh")
+	await _settle(3)
+	var right_talk: Dictionary = app.call("current_talk_dock_snapshot")
+	if not bool(right_talk.get("visible", false)) or not bool(right_talk.get("anchored_bottom", false)) or not bool(right_talk.get("anchored_bottom_left", false)) or str(right_talk.get("speaking_character_id", "")) != right_member_id:
+		failures.append("A far-right speaker did not anchor table talk to the opposite bottom-left side.")
+	if bool(right_talk.get("visible", false)):
+		var right_choices: Array = right_talk.get("choice_ids", []) if typeof(right_talk.get("choice_ids", [])) == TYPE_ARRAY else []
+		if not right_choices.is_empty():
+			app.call("_on_talk_dock_choice_requested", str(right_request.get("event_id", "")), str(right_choices[0]))
+			await _settle(3)
 	var betting_evidence := await _exercise_betting_ui(app, canvas, run_state)
-	await _finish(app, {"surface_template": surface.get("surface_template", ""), "animated_crew_count": surface.get("animated_crew_count", 0), "speaker": talk.get("speaker", ""), "choice_count": talk.get("choice_count", 0), "anchored_bottom": talk.get("anchored_bottom", false), "anchored_bottom_left": talk.get("anchored_bottom_left", true), "betting": betting_evidence})
+	await _finish(app, {"surface_template": surface.get("surface_template", ""), "animated_crew_count": surface.get("animated_crew_count", 0), "speaker": talk.get("speaker", ""), "choice_count": talk.get("choice_count", 0), "anchored_bottom": talk.get("anchored_bottom", false), "anchored_bottom_left": talk.get("anchored_bottom_left", true), "right_anchor_bottom_left": right_talk.get("anchored_bottom_left", false), "betting": betting_evidence})
 
 
 func _settle(frames: int) -> void:
@@ -260,10 +280,15 @@ func _check_chip_layout(state: Dictionary, phase_label: String) -> void:
 		Rect2(138, 337, 548, 35),
 		Rect2(697, 346, 150, 27),
 		Rect2(70, 382, 760, 34),
-		Rect2(92, 173, 142, 16),
-		Rect2(535, 131, 128, 16),
-		Rect2(664, 173, 142, 16),
 	]
+	for layout_value in CrewPokerGameScript.SEAT_LAYOUT:
+		var layout: Dictionary = layout_value
+		var hole_origin: Vector2 = layout.get("hole_card_origin", Vector2.ZERO)
+		protected.append(Rect2(hole_origin, Vector2(24, 35)))
+		protected.append(Rect2(hole_origin + Vector2(27, 0), Vector2(24, 35)))
+		protected.append(layout.get("action_label_rect", Rect2()))
+		var button_center: Vector2 = layout.get("dealer_button_center", Vector2.ZERO)
+		protected.append(Rect2(button_center - Vector2(9, 9), Vector2(18, 18)))
 	for index in range(chips.size()):
 		var chip: Dictionary = chips[index]
 		represented_amount += int(chip.get("amount", 0))
@@ -298,11 +323,17 @@ func _advance_to_player(app: Control, canvas: Control) -> bool:
 
 
 func _advance_to_board_street(app: Control, canvas: Control) -> bool:
-	for _step in range(40):
+	for _step in range(80):
 		await _answer_visible_talk(app)
 		var state: Dictionary = canvas.call("realtime_surface_state")
 		if str(state.get("phase", "")) in ["flop", "turn", "river"] and not (state.get("community_cards", []) as Array).is_empty():
 			return true
+		if str(state.get("phase", "")) == "idle":
+			var deal_index := _surface_action_index(canvas, "poker_deal")
+			if deal_index == MISSING_ACTION_INDEX or not bool(app.call("_handle_module_surface_action", "poker_deal", deal_index, true)):
+				return false
+			await _settle(3)
+			continue
 		var observe_index := _surface_action_index(canvas, "poker_observe")
 		if observe_index != MISSING_ACTION_INDEX:
 			app.call("_handle_module_surface_action", "poker_observe", observe_index, true)

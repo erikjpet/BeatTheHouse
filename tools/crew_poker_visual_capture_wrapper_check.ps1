@@ -40,7 +40,7 @@ foreach ($requiredCaptureControl in @(
     '"capture_output_flush_complete"',
     "queued_capture_outputs",
     "CAPTURE_OUTPUT_BUDGET_MSEC",
-    'const DRAW_ACTIONS: Array[String] = ["poker_draw", "poker_fold"]',
+    '_first_visible_action(["poker_observe", "poker_call", "poker_check"])',
     "per-state capture reused a viewport Image",
     'var authored_tell_channel: String = ""',
     'var authored_tell_member_id: String = ""',
@@ -69,14 +69,14 @@ if ($captureSource.Contains("_has_authored_observation")) {
     throw "Crew poker natural-tell assertion must remain inline in the async capture sequence without a nested helper return."
 }
 if ($captureSource.Contains("tell_expected_actions")) {
-    throw "Crew poker draw captures must use the immutable draw-action constant without a mutable typed-array assignment."
+    throw "Crew poker captures must avoid a mutable typed-array action assignment."
 }
 $naturalTellAssertionIndex = $captureSource.IndexOf('_stage("natural_tell_first_hand_assertion"')
-$activeDrawCaptureIndex = $captureSource.IndexOf('_stage("capture_active_draw"')
+$activeHoldemCaptureIndex = $captureSource.IndexOf('_stage("capture_blinds_posted"')
 if ($naturalTellAssertionIndex -lt 0 -or
-        $activeDrawCaptureIndex -lt 0 -or
-        $naturalTellAssertionIndex -gt $activeDrawCaptureIndex) {
-    throw "Crew poker inline natural-tell assertion must run before capture 02 active-draw image collection."
+        $activeHoldemCaptureIndex -lt 0 -or
+        $naturalTellAssertionIndex -lt $activeHoldemCaptureIndex) {
+    throw "Crew poker inline natural-tell assertion must run after capture 02 blind-post image collection."
 }
 if ($captureSource.Contains("authored_tell_proof") -or $captureSource.Contains("var tell_proof")) {
     throw "Crew poker post-image authored-tell checks must use typed primitives without a dictionary alias."
@@ -122,7 +122,7 @@ foreach ($requiredAuditControl in @(
     "source_run.start_new(seed_text)",
     "RunGeneratorScript.new(library)",
     "generator.next_environment(source_run)",
-    'RESIDENTS: Array[String] = ["crew_mags", "crew_rook", "crew_lucky"]',
+    'RESIDENTS: Array[String] = ["crew_mags", "crew_rook", "crew_lucky", "crew_velvet", "crew_switch"]',
     'INPUT_SEQUENCE: Array[String] = ["poker_deal", "ordered_observe_or_call_until_flop"]'
 )) {
     if (-not $seedAuditSource.Contains($requiredAuditControl)) {

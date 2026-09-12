@@ -31,8 +31,8 @@ func _run() -> void:
 	await _settle(8)
 	var canvas := app.get("game_surface_canvas") as Control
 	var idle: Dictionary = canvas.call("realtime_surface_state")
-	if str(idle.get("surface_template", "")) != "shared_table_game_v1" or int(idle.get("animated_crew_count", 0)) != 3:
-		push_error("Hold'em did not render the shared room with three animated Crew seats.")
+	if str(idle.get("surface_template", "")) != "shared_table_game_v1" or int(idle.get("animated_crew_count", 0)) != 5:
+		push_error("Hold'em did not render the shared room with five animated Crew seats.")
 		quit(1)
 		return
 	if not await _capture("01_shared_room_idle.png"):
@@ -98,6 +98,9 @@ func _run() -> void:
 	if not await _capture("06_board_and_swept_pot.png"):
 		quit(1)
 		return
+	if not await _capture_visual_fixtures(app, canvas):
+		quit(1)
+		return
 	var live: Dictionary = canvas.call("realtime_surface_state")
 	var seats: Array = live.get("seats", []) if typeof(live.get("seats", [])) == TYPE_ARRAY else []
 	var member_id := str((seats[0] as Dictionary).get("member_id", "")) if not seats.is_empty() else ""
@@ -115,6 +118,7 @@ func _run() -> void:
 		"pot": 24,
 		"heads_up": true,
 		"hand_number": 1,
+		"seat_count": seats.size(),
 	}
 	if not bool(app.call("_enqueue_crew_poker_table_talk", request)):
 		push_error("Could not open the high-wager Crew conversation.")
@@ -138,6 +142,76 @@ func _run() -> void:
 	quit(0)
 
 
+func _capture_visual_fixtures(app: Control, canvas: Control) -> bool:
+	var game := app.get("current_game") as GameModule
+	var live: Dictionary = canvas.call("realtime_surface_state")
+	var contributing := live.duplicate(true)
+	var contributing_seats: Array = contributing.get("seats", [])
+	for index in range(contributing_seats.size()):
+		var seat: Dictionary = contributing_seats[index]
+		seat["active"] = true
+		seat["all_in"] = false
+		seat["last_action"] = "raise" if index == 0 else "call"
+		seat["round_contribution"] = 8
+		contributing_seats[index] = seat
+	contributing["seats"] = contributing_seats
+	contributing["phase"] = "turn"
+	contributing["pot"] = 48
+	contributing["round_contributions"] = {"player": 8}
+	contributing["chip_layout"] = game.call("_chip_layout", contributing)
+	canvas.call("render_game_snapshot", contributing)
+	await _settle(4)
+	if not await _capture("11_six_way_contributions.png"):
+		return false
+	var tell_fold := contributing.duplicate(true)
+	var tell_seats: Array = tell_fold.get("seats", [])
+	var all_in_seat: Dictionary = tell_seats[0]
+	all_in_seat["all_in"] = true
+	all_in_seat["last_action"] = "all_in"
+	tell_seats[0] = all_in_seat
+	var portrait_seat: Dictionary = tell_seats[2]
+	portrait_seat["portrait_variant"] = "eyes_left"
+	portrait_seat["last_action"] = "watching"
+	tell_seats[2] = portrait_seat
+	var folded_seat: Dictionary = tell_seats[4]
+	folded_seat["active"] = false
+	folded_seat["last_action"] = "fold"
+	tell_seats[4] = folded_seat
+	tell_fold["seats"] = tell_seats
+	tell_fold["observation"] = {"channel": "portrait", "member_id": str(portrait_seat.get("member_id", "")), "portrait_variant": "eyes_left", "quirk": "Their eyes cut left before the chips land."}
+	canvas.call("render_game_snapshot", tell_fold)
+	await _settle(4)
+	if not await _capture("12_outer_all_in_fold_portrait_tell.png"):
+		return false
+	var showdown := tell_fold.duplicate(true)
+	showdown["phase"] = "showdown"
+	showdown["community_cards"] = [_card(3, 0), _card(7, 1), _card(9, 2), _card(11, 3), _card(13, 0)]
+	showdown["player_cards"] = [_card(14, 0), _card(14, 1)]
+	showdown["observation"] = {}
+	showdown["chip_layout"] = []
+	var showdown_seats: Array = showdown.get("seats", [])
+	for index in range(showdown_seats.size()):
+		var seat: Dictionary = showdown_seats[index]
+		seat["active"] = true
+		seat["all_in"] = false
+		seat["revealed"] = true
+		seat["last_action"] = "showdown"
+		seat["cards"] = [_card(2 + index, index % 4), _card(8 + index, (index + 1) % 4)]
+		showdown_seats[index] = seat
+	showdown["seats"] = showdown_seats
+	canvas.call("render_game_snapshot", showdown)
+	await _settle(4)
+	if not await _capture("13_five_hand_showdown.png"):
+		return false
+	app.call("_refresh")
+	await _settle(4)
+	return true
+
+
+func _card(rank: int, suit: int) -> Dictionary:
+	return {"rank": rank, "suit": suit, "deck": 0}
+
+
 func _settle(frames: int) -> void:
 	for _index in range(frames):
 		await process_frame
@@ -157,11 +231,17 @@ func _advance_to_player(app: Control, canvas: Control) -> bool:
 
 
 func _advance_to_board_street(app: Control, canvas: Control) -> bool:
-	for _step in range(40):
+	for _step in range(80):
 		await _answer_visible_talk(app)
 		var state: Dictionary = canvas.call("realtime_surface_state")
 		if str(state.get("phase", "")) in ["flop", "turn", "river"] and not (state.get("community_cards", []) as Array).is_empty():
 			return true
+		if str(state.get("phase", "")) == "idle":
+			var deal_index := _surface_action_index(canvas, "poker_deal")
+			if deal_index == MISSING_ACTION_INDEX or not bool(app.call("_handle_module_surface_action", "poker_deal", deal_index, true)):
+				return false
+			await _settle(4)
+			continue
 		var observe_index := _surface_action_index(canvas, "poker_observe")
 		if observe_index != MISSING_ACTION_INDEX:
 			app.call("_handle_module_surface_action", "poker_observe", observe_index, true)

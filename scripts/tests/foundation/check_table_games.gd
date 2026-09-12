@@ -4,6 +4,7 @@ const CrapsRulesScript := preload("res://scripts/games/craps/craps_rules.gd")
 const GameRitualRuntimeContractScript := preload("res://scripts/tests/foundation/game_ritual_runtime_contract.gd")
 const BlackjackActionAuthorityScript := preload("res://scripts/core/blackjack_action_authority.gd")
 const FoundationMainScript := preload("res://scripts/ui/foundation_main.gd")
+const CrewPokerGameScript := preload("res://scripts/games/crew_draw_poker.gd")
 
 
 func _check_craps_surface_contract(game: GameModule, failures: Array, library: ContentLibrary = null) -> void:
@@ -1068,6 +1069,7 @@ func _check_crew_poker_contract(library: ContentLibrary, failures: Array) -> voi
 				failures.append("Crew poker authored observation frequency drifted for %s: got %d/1000, expected %d/1000." % [member_id, shown, expected])
 
 	_check_crew_poker_rotation_and_gate(game, failures)
+	_check_crew_poker_seat_layout(game, failures)
 	var production_evidence := _check_crew_poker_state_machine(game, one_pair, failures)
 	_check_crew_poker_signed_cash(game, failures)
 	var public_surfaces: Array = production_evidence.get("surfaces", [])
@@ -1251,11 +1253,13 @@ func _check_crew_poker_rotation_and_gate(game: GameModule, failures: Array) -> v
 		if JSON.stringify(first.get("members", [])) != JSON.stringify(second.get("members", [])):
 			failures.append("Crew poker resident rotation was not deterministic for seed %d." % seed)
 		var members: Array = first.get("members", [])
-		if members.size() < 2 or members.size() > 3:
-			failures.append("Crew poker rotation did not seat two or three residents.")
-		for member_id in members:
-			if not residents.has(str(member_id)):
-				failures.append("Crew poker ignored the L3 resident seam and seated %s." % str(member_id))
+		if members.size() != CrewPokerGameScript.MAX_OPPONENT_SEATS:
+			failures.append("Crew poker rotation did not fill all five opponent seats.")
+		if members.slice(0, residents.size()) != residents:
+			failures.append("Crew poker did not preserve L3 residents first in stable seat order: %s." % JSON.stringify(members))
+		for member_id in members.slice(residents.size()):
+			if residents.has(str(member_id)):
+				failures.append("Crew poker duplicated resident %s while filling open chairs." % str(member_id))
 		rotations[JSON.stringify(members)] = true
 	if rotations.size() < 2:
 		failures.append("Crew poker seeded rotation did not produce distinct resident tables.")
@@ -1268,8 +1272,17 @@ func _check_crew_poker_rotation_and_gate(game: GameModule, failures: Array) -> v
 	var fallback_a := game.generate_environment_state(fallback_run, _poker_environment(["crew_mags"]), fallback_rng_a)
 	var fallback_b := game.generate_environment_state(fallback_run, _poker_environment(["crew_mags"]), fallback_rng_b)
 	var fallback_members: Array = fallback_a.get("members", [])
-	if fallback_members.size() < 2 or fallback_members.size() > 3 or JSON.stringify(fallback_members) != JSON.stringify(fallback_b.get("members", [])):
-		failures.append("Crew poker seeded all-Crew fallback did not deterministically seat two or three members.")
+	if fallback_members.size() != CrewPokerGameScript.MAX_OPPONENT_SEATS or fallback_members[0] != "crew_mags" or JSON.stringify(fallback_members) != JSON.stringify(fallback_b.get("members", [])):
+		failures.append("Crew poker seeded all-Crew fallback did not deterministically fill five seats after the resident.")
+	var crowded_residents := CrewPokerCrewStateScript.MEMBER_IDS.duplicate()
+	var crowded_rng_a := RngStream.new()
+	crowded_rng_a.configure(8128)
+	var crowded_rng_b := RngStream.new()
+	crowded_rng_b.configure(8128)
+	var crowded_a := game.generate_environment_state(fallback_run, _poker_environment(crowded_residents), crowded_rng_a)
+	var crowded_b := game.generate_environment_state(fallback_run, _poker_environment(crowded_residents), crowded_rng_b)
+	if (crowded_a.get("members", []) as Array).size() != CrewPokerGameScript.MAX_OPPONENT_SEATS or JSON.stringify(crowded_a.get("members", [])) != JSON.stringify(crowded_b.get("members", [])):
+		failures.append("Crew poker did not seed-pick a stable five-seat subset from an oversized resident roster.")
 
 	var gate_run: RunState = RunStateScript.new()
 	gate_run.start_new("CREW-POKER-GATE")
@@ -1280,6 +1293,52 @@ func _check_crew_poker_rotation_and_gate(game: GameModule, failures: Array) -> v
 	gate_run.crew_add_trust("crew_lucky", CrewPokerCrewStateScript.rank_threshold("associate"), "present_fixture")
 	if game.legal_actions(gate_run, gate_run.current_environment).is_empty():
 		failures.append("Crew poker did not accept an associate who was present at the table.")
+
+
+func _check_crew_poker_seat_layout(game: GameModule, failures: Array) -> void:
+	var protected := [
+		{"name": "community board", "rect": Rect2(305, 158, 286, 70)},
+		{"name": "player cards", "rect": Rect2(385, 245, 126, 81)},
+		{"name": "player chips", "rect": game.call("_chip_cluster_bounds", 60, Vector2(350, 280), 2)},
+		{"name": "player button", "rect": Rect2(513, 283, 18, 18)},
+		{"name": "pot", "rect": game.call("_chip_cluster_bounds", 360, Vector2(590, 270), 6)},
+		{"name": "observation strip", "rect": Rect2(138, 337, 548, 35)},
+		{"name": "console", "rect": Rect2(0, 342, 900, 88)},
+	]
+	var playable := Rect2(0, 82, 900, 260)
+	for seat_count in [CrewPokerGameScript.MAX_OPPONENT_SEATS, 3]:
+		var layout_indices: Array = game.call("_seat_layout_indices", seat_count)
+		var seat_elements: Array = []
+		for seat_index in range(seat_count):
+			var layout: Dictionary = CrewPokerGameScript.SEAT_LAYOUT[int(layout_indices[seat_index])]
+			var foot: Vector2 = layout.get("character_foot", Vector2.ZERO)
+			var character_bottom := foot.y if bool(layout.get("action_carries_name", false)) else foot.y + 16.0
+			var elements := [
+				{"name": "character", "rect": Rect2(foot.x - 41.0, foot.y - 66.0, 82.0, character_bottom - (foot.y - 66.0))},
+				{"name": "left card", "rect": Rect2(layout.get("hole_card_origin", Vector2.ZERO), Vector2(24, 35))},
+				{"name": "right card", "rect": Rect2((layout.get("hole_card_origin", Vector2.ZERO) as Vector2) + Vector2(27, 0), Vector2(24, 35))},
+				{"name": "action label", "rect": layout.get("action_label_rect", Rect2())},
+				{"name": "dealer button", "rect": Rect2((layout.get("dealer_button_center", Vector2.ZERO) as Vector2) - Vector2(9, 9), Vector2(18, 18))},
+				{"name": "bet chips", "rect": game.call("_chip_cluster_bounds", 60, layout.get("bet_chip_center", Vector2.ZERO), 2)},
+			]
+			seat_elements.append(elements)
+			for element_value in elements:
+				var element: Dictionary = element_value
+				var rect: Rect2 = element.get("rect", Rect2())
+				if not rect.has_area() or not playable.encloses(rect):
+					failures.append("Crew poker %d-seat layout put seat %d %s outside the playable board: %s." % [seat_count, seat_index, str(element.get("name", "element")), str(rect)])
+				for protected_value in protected:
+					var protected_element: Dictionary = protected_value
+					if rect.intersects(protected_element.get("rect", Rect2())):
+						failures.append("Crew poker %d-seat layout put seat %d %s over the %s." % [seat_count, seat_index, str(element.get("name", "element")), str(protected_element.get("name", "protected region"))])
+		for seat_index in range(seat_elements.size()):
+			for other_index in range(seat_index):
+				for element_value in seat_elements[seat_index]:
+					var element: Dictionary = element_value
+					for other_value in seat_elements[other_index]:
+						var other: Dictionary = other_value
+						if (element.get("rect", Rect2()) as Rect2).intersects(other.get("rect", Rect2())):
+							failures.append("Crew poker %d-seat layout overlaps seat %d %s with seat %d %s." % [seat_count, seat_index, str(element.get("name", "element")), other_index, str(other.get("name", "element"))])
 
 
 func _check_crew_poker_state_machine(game: GameModule, tie_cards: Array, failures: Array) -> Dictionary:

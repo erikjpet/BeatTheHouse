@@ -38,7 +38,7 @@ if (-not $ManifestOnly) {
     # never leave later captures (especially 03/04) looking current.
     foreach ($captureFileName in @(
         "01_entry_idle_1280x720.png",
-        "02_active_draw_1280x720.png",
+        "02_blinds_posted_1280x720.png",
         "03_authored_subtle_tell_1280x720.png",
         "04_reduced_motion_static_1280x720.png"
     )) {

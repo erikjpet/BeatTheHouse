@@ -31,7 +31,21 @@ func _init() -> void:
 	_check_side_pot(game, failures)
 	_check_no_limit_raise_rules(game, failures)
 	_check_table_talk(game, library, failures)
+	_check_six_hand_rotation_and_shoe(game, failures)
+	_check_raise_round_closure(game, failures)
+	_check_multiway_split(failures)
+	_check_night_rituals(game, failures)
+	_check_three_member_save(game, failures)
+	var end_to_end := _check_two_hand_session_reload(game, failures)
 	var performance := _check_performance(game, failures)
+	var distributions := {
+		"three_opponents": _distribution_metrics(game, library, 3, 8000),
+		"five_opponents": _distribution_metrics(game, library, 5, 9000),
+	}
+	for distribution_value in distributions.values():
+		var distribution: Dictionary = distribution_value
+		if int(distribution.get("completed_hands", 0)) == 0 or not bool(distribution.get("chip_conservation_passed", false)):
+			failures.append("The %d-opponent distribution audit produced no conserving completed hands." % int(distribution.get("opponents", 0)))
 	var accepted := {}
 	for seed in range(7001, 7065):
 		var attempt := _play_hand(game, library, seed)
@@ -41,8 +55,8 @@ func _init() -> void:
 	if accepted.is_empty():
 		failures.append("No audited seed completed all four Hold'em streets.")
 	else:
-		if int(accepted.get("member_count", 0)) != 3:
-			failures.append("The live table did not seat three opponents.")
+		if int(accepted.get("member_count", 0)) != CrewPokerGameScript.MAX_OPPONENT_SEATS:
+			failures.append("The live table did not seat five opponents.")
 		if not bool(accepted.get("fake_tell_kept_turn", false)):
 			failures.append("Fake Tell consumed or displaced the player's betting turn.")
 		if not bool(accepted.get("hidden_hole_cards", false)):
@@ -53,7 +67,9 @@ func _init() -> void:
 			failures.append("The completed hand did not burn exactly one card per board street.")
 		if int(accepted.get("history_count", 0)) > 40:
 			failures.append("The bounded public action history exceeded 40 records.")
-		if int(accepted.get("steps", 999)) > 80:
+		if not bool(accepted.get("chip_conservation", false)):
+			failures.append("Six-handed play did not conserve stacks plus pot after every action.")
+		if int(accepted.get("steps", 999)) > 160:
 			failures.append("A single hand exceeded the bounded interaction budget.")
 		for action_id in ["call", "raise", "all_in", "fake_tell", "fold"]:
 			if not (accepted.get("player_action_set", []) as Array).has(action_id):
@@ -80,7 +96,9 @@ func _init() -> void:
 		"accepted_hand": accepted,
 		"all_in_hand": all_in_hand,
 		"raised_hand": raised_hand,
+		"end_to_end": end_to_end,
 		"performance": performance,
+		"distributions": distributions,
 	}
 	print(JSON.stringify(report))
 	quit(0 if failures.is_empty() else 1)
@@ -133,12 +151,20 @@ func _check_table_talk(game: GameModule, library, failures: Array[String]) -> vo
 		for line_key in line_keys:
 			if typeof(lines.get(line_key, [])) != TYPE_ARRAY or (lines.get(line_key, []) as Array).size() < 2:
 				failures.append("%s has no authored %s pressure lines." % [member_id, line_key])
+		var companions: Array = []
+		for candidate_value in CrewStateModelScript.MEMBER_IDS:
+			var candidate := str(candidate_value)
+			if candidate != member_id and companions.size() < 4:
+				companions.append(candidate)
+		var state_members: Array = [member_id]
+		state_members.append_array(companions)
+		var state_seats: Array = [{"member_id": member_id, "active": true, "all_in": false}]
+		for companion in companions:
+			state_seats.append({"member_id": companion, "active": false, "all_in": false})
 		var state := {
-			"members": [member_id, "crew_rook" if member_id != "crew_rook" else "crew_mags", "crew_lucky" if member_id != "crew_lucky" else "crew_switch"],
+			"members": state_members,
 			"seats": [
-				{"member_id": member_id, "active": true, "all_in": false},
-				{"member_id": "crew_rook" if member_id != "crew_rook" else "crew_mags", "active": false, "all_in": false},
-				{"member_id": "crew_lucky" if member_id != "crew_lucky" else "crew_switch", "active": false, "all_in": false},
+				state_seats[0], state_seats[1], state_seats[2], state_seats[3], state_seats[4],
 			],
 			"player_active": true,
 			"player_all_in": false,
@@ -155,8 +181,26 @@ func _check_table_talk(game: GameModule, library, failures: Array[String]) -> vo
 		var request: Dictionary = game.call("_maybe_table_talk_request", state, member_id, "call")
 		if str(request.get("member_id", "")) != member_id or str(request.get("line_key", "")) != "poker_heads_up":
 			failures.append("%s did not produce the expected heads-up conversation request." % member_id)
+		if int(request.get("seat_count", 0)) != CrewPokerGameScript.MAX_OPPONENT_SEATS:
+			failures.append("%s table talk did not retain the five-seat anchor context." % member_id)
 		if not (game.call("_maybe_table_talk_request", state, member_id, "call") as Dictionary).is_empty():
 			failures.append("%s could spam a second conversation inside the cooldown." % member_id)
+	var queue_state := {"action_ordinal": 20, "observation_queue": []}
+	for index in range(CrewPokerGameScript.MAX_OPPONENT_SEATS):
+		(queue_state["observation_queue"] as Array).append({"id": "visible-%d" % index, "m": str(CrewStateModelScript.MEMBER_IDS[index]), "source_action": "raise", "start_ordinal": 20, "duration_actions": 3, "channel": "portrait"})
+	var public_queue: Array = game.call("_public_observation_queue", queue_state)
+	if public_queue.size() != CrewPokerGameScript.MAX_OPPONENT_SEATS:
+		failures.append("Five simultaneous Crew observations did not remain distinct in the visible queue.")
+	var cap_members: Array = CrewStateModelScript.MEMBER_IDS.slice(0, CrewPokerGameScript.MAX_OPPONENT_SEATS)
+	var cap_seats: Array = []
+	for cap_member in cap_members:
+		cap_seats.append({"member_id": cap_member, "active": true, "all_in": false})
+	var cap_state := {"members": cap_members, "seats": cap_seats, "player_active": true, "player_all_in": false, "phase": "turn", "pot": 40, "action_ordinal": 30, "session_index": 2, "hand_number": 1, "table_talk_hand_count": 0, "table_talk_last_ordinal": -999, "table_talk_members_this_hand": [], "table_talk_history": []}
+	for index in range(3):
+		cap_state["action_ordinal"] = 30 + index * int(CrewPokerModelScript.config().get("table_talk_cooldown_actions", 3))
+		game.call("_maybe_table_talk_request", cap_state, str(cap_members[index]), "raise")
+	if int(cap_state.get("table_talk_hand_count", 0)) != int(CrewPokerModelScript.config().get("table_talk_max_per_hand", 2)) or (cap_state.get("table_talk_history", []) as Array).size() != 2:
+		failures.append("Five-speaker table talk did not enforce its per-hand cap and cooldown.")
 
 
 func _check_performance(game: GameModule, failures: Array[String]) -> Dictionary:
@@ -206,7 +250,217 @@ func _check_no_limit_raise_rules(game: GameModule, failures: Array[String]) -> v
 		failures.append("The maximum raise did not include every remaining player chip.")
 
 
-func _play_hand(game: GameModule, library, seed: int, force_all_in: bool = false, force_raise: bool = false) -> Dictionary:
+func _check_six_hand_rotation_and_shoe(game: GameModule, failures: Array[String]) -> void:
+	var members: Array = CrewStateModelScript.MEMBER_IDS.slice(0, CrewPokerGameScript.MAX_OPPONENT_SEATS)
+	var expected_actors: Array = ["player"]
+	expected_actors.append_array(members)
+	var signatures: Array = []
+	for button_index in range(expected_actors.size()):
+		var run_state := RunStateScript.new()
+		run_state.start_new("CREW-HOLDEM-ROTATION-%d" % button_index)
+		run_state.bankroll = 500
+		var state := {
+			"members": members.duplicate(), "seats": [], "phase": "idle", "session_settled": false,
+			"button_index": button_index, "player_stack": 60, "npc_stacks": {}, "session_swing": 0,
+			"hand_number": 0, "action_ordinal": 0, "observation_queue": [], "verified_observation_receipts": [],
+			"turn_engine": "ordered_v1", "action_history": [], "session_memory": {}, "player_signal_history": [],
+		}
+		var rng := RngStreamScript.new()
+		rng.configure(12000 + button_index)
+		var deal: Dictionary = game.call("_deal_hand_ordered", run_state, state, rng)
+		if not bool(deal.get("ok", false)):
+			failures.append("Six-hand rotation fixture could not deal button position %d." % button_index)
+			continue
+		if str(state.get("dealer_actor", "")) != str(expected_actors[button_index]) \
+				or str(state.get("small_blind_actor", "")) != str(expected_actors[(button_index + 1) % expected_actors.size()]) \
+				or str(state.get("big_blind_actor", "")) != str(expected_actors[(button_index + 2) % expected_actors.size()]) \
+				or str(state.get("turn_owner", "")) != str(expected_actors[(button_index + 3) % expected_actors.size()]):
+			failures.append("Button/blind/pre-flop rotation was wrong at six-hand button position %d." % button_index)
+		game.call("_start_holdem_round", state, "flop")
+		if str(state.get("turn_owner", "")) != str(expected_actors[(button_index + 1) % expected_actors.size()]):
+			failures.append("Post-flop first action did not start left of the button at position %d." % button_index)
+		if (state.get("shoe", []) as Array).size() != 40:
+			failures.append("Six-handed hole cards did not leave exactly 40 cards in the shoe.")
+		game.call("_burn_and_deal_board", state, 3)
+		game.call("_burn_and_deal_board", state, 1)
+		game.call("_burn_and_deal_board", state, 1)
+		if (state.get("community_cards", []) as Array).size() != 5 or (state.get("burn_cards", []) as Array).size() != 3 or (state.get("shoe", []) as Array).size() != 32:
+			failures.append("Six-handed board dealing over-drew or miscounted the 52-card shoe.")
+		signatures.append({"button": button_index, "player": state.get("player_cards", []), "board": state.get("community_cards", []), "shoe": state.get("shoe", [])})
+	var repeat_signatures: Array = []
+	for button_index in range(expected_actors.size()):
+		var repeat_run := RunStateScript.new()
+		repeat_run.start_new("CREW-HOLDEM-ROTATION-%d" % button_index)
+		repeat_run.bankroll = 500
+		var repeat_state := {"members": members.duplicate(), "seats": [], "phase": "idle", "session_settled": false, "button_index": button_index, "player_stack": 60, "npc_stacks": {}, "session_swing": 0, "hand_number": 0, "action_ordinal": 0, "observation_queue": [], "verified_observation_receipts": [], "turn_engine": "ordered_v1", "action_history": [], "session_memory": {}, "player_signal_history": []}
+		var repeat_rng := RngStreamScript.new()
+		repeat_rng.configure(12000 + button_index)
+		game.call("_deal_hand_ordered", repeat_run, repeat_state, repeat_rng)
+		game.call("_burn_and_deal_board", repeat_state, 3)
+		game.call("_burn_and_deal_board", repeat_state, 1)
+		game.call("_burn_and_deal_board", repeat_state, 1)
+		repeat_signatures.append({"button": button_index, "player": repeat_state.get("player_cards", []), "board": repeat_state.get("community_cards", []), "shoe": repeat_state.get("shoe", [])})
+	if JSON.stringify(signatures) != JSON.stringify(repeat_signatures):
+		failures.append("Six-handed hole/board/shoe order was not deterministic per seed.")
+
+
+func _check_raise_round_closure(game: GameModule, failures: Array[String]) -> void:
+	var members: Array = CrewStateModelScript.MEMBER_IDS.slice(0, CrewPokerGameScript.MAX_OPPONENT_SEATS)
+	var seats: Array = []
+	for member_id in members:
+		seats.append({"member_id": member_id, "active": true, "all_in": false, "stack": 50, "round_contribution": 14})
+	var actors: Array = ["player"]
+	actors.append_array(members)
+	var state := {"members": members, "seats": seats, "player_active": true, "player_all_in": false, "player_stack": 50, "current_bet": 14, "round_contributions": {"player": 14}, "acted_since_raise": [str(members[0])], "turn_order": actors, "turn_cursor": 1, "phase": "turn"}
+	var missing_one := actors.slice(0, actors.size() - 1)
+	state["acted_since_raise"] = missing_one
+	if bool(game.call("_ordered_round_closed", state)):
+		failures.append("A six-handed round closed before every active seat answered the raise.")
+	state["acted_since_raise"] = actors.duplicate()
+	if not bool(game.call("_ordered_round_closed", state)):
+		failures.append("A six-handed round did not close after every active seat matched and acted.")
+
+
+func _check_multiway_split(failures: Array[String]) -> void:
+	var winners := ["player", "crew_rook", "crew_mags", "crew_lucky"]
+	var awards: Dictionary = CrewPokerModelScript.split_pot(17, winners)
+	if int(awards.get("player", 0)) != 5 or int(awards.get("crew_rook", 0)) != 4 or int(awards.get("crew_mags", 0)) != 4 or int(awards.get("crew_lucky", 0)) != 4:
+		failures.append("A four-way odd-pot tie did not award deterministic seat-order remainder chips: %s." % JSON.stringify(awards))
+
+
+func _check_night_rituals(game: GameModule, failures: Array[String]) -> void:
+	var members: Array = CrewStateModelScript.MEMBER_IDS.slice(0, CrewPokerGameScript.MAX_OPPONENT_SEATS)
+	var seats: Array = []
+	for member_id in members:
+		seats.append({"member_id": member_id, "active": true, "last_action": "waiting"})
+	for night_id in CrewPokerGameScript.NIGHT_IDS:
+		var state := {"night_id": night_id, "members": members, "seats": seats, "turn_owner": "player", "phase": "idle", "pot": 0, "community_cards": []}
+		var actors: Array = game.call("_ordered_ritual_actors", state)
+		var actor_ids: Array = []
+		for actor_value in actors:
+			actor_ids.append(str((actor_value as Dictionary).get("id", "")))
+		var scene: Dictionary = game.call("_night_scene_state", state)
+		if actors.size() != CrewPokerGameScript.MAX_OPPONENT_SEATS + 1 or str(scene.get("task", "")).is_empty():
+			failures.append("Authored poker night %s did not resolve a player plus five occupied chairs." % night_id)
+		for member_id in members:
+			if not actor_ids.has(str(member_id)):
+				failures.append("Authored poker night %s lost seated actor %s." % [night_id, str(member_id)])
+
+
+func _check_three_member_save(game: GameModule, failures: Array[String]) -> void:
+	var run_state := RunStateScript.new()
+	run_state.start_new("CREW-HOLDEM-LEGACY-THREE-SAVE")
+	run_state.bankroll = 500
+	for member_id in CrewStateModelScript.MEMBER_IDS:
+		run_state.crew_add_trust(str(member_id), CrewStateModelScript.rank_threshold("made"), "legacy_three_save")
+	var environment := {"id": "crew_holdem_legacy_three", "archetype_id": "small_underground_casino", "kind": "crew", "layer_id": "back_room", "crew_poker_turn_engine": "ordered_v1", "resident_member_ids": CrewStateModelScript.MEMBER_IDS.slice(0, 3), "game_ids": ["crew_draw_poker"], "game_states": {}}
+	var setup_rng := RngStreamScript.new()
+	setup_rng.configure(13131)
+	var generated: Dictionary = game.generate_environment_state(run_state, environment, setup_rng)
+	generated["members"] = (generated.get("members", []) as Array).slice(0, 3)
+	environment["game_states"] = {"crew_draw_poker": generated}
+	run_state.current_environment = environment
+	_apply(game, run_state, "deal", {}, 13132)
+	var before_save: Dictionary = run_state.current_environment.get("game_states", {}).get("crew_draw_poker", {}).duplicate(true)
+	var restored := RunStateScript.new()
+	restored.from_dict(run_state.to_dict())
+	var restored_table: Dictionary = restored.current_environment.get("game_states", {}).get("crew_draw_poker", {})
+	for key in ["members", "seats", "shoe", "player_cards", "pot", "turn_owner", "turn_order", "button_index"]:
+		if JSON.stringify(before_save.get(key)) != JSON.stringify(restored_table.get(key)):
+			failures.append("Three-member mid-hand save changed %s during reload." % key)
+	var steps := 0
+	while str(restored_table.get("phase", "idle")) != "idle" and steps < 120:
+		if (restored_table.get("members", []) as Array).size() != 3 or (restored_table.get("seats", []) as Array).size() != 3:
+			failures.append("Reloaded three-member table re-seated opponents mid-hand.")
+			break
+		var legal_ids: Array = []
+		for action_value in game.legal_actions(restored, restored.current_environment):
+			legal_ids.append(str((action_value as Dictionary).get("id", "")))
+		var action_id := "observe" if legal_ids.has("observe") else "call" if legal_ids.has("call") else "check" if legal_ids.has("check") else "fold" if legal_ids.has("fold") else ""
+		if action_id.is_empty() or not bool(_apply(game, restored, action_id, {}, 13200 + steps).get("ok", false)):
+			failures.append("Reloaded three-member table could not play its saved hand to completion.")
+			break
+		restored_table = restored.current_environment.get("game_states", {}).get("crew_draw_poker", {})
+		steps += 1
+	if str(restored_table.get("phase", "")) != "idle" or (restored_table.get("members", []) as Array).size() != 3:
+		failures.append("Reloaded three-member table did not finish with its original roster intact.")
+
+
+func _check_two_hand_session_reload(game: GameModule, failures: Array[String]) -> Dictionary:
+	for seed in range(15000, 15064):
+		var attempt := _two_hand_session_attempt(game, seed)
+		if bool(attempt.get("passed", false)):
+			return attempt
+	failures.append("No five-opponent production session completed two showdowns with a stable mid-hand reload.")
+	return {"passed": false}
+
+
+func _two_hand_session_attempt(game: GameModule, seed: int) -> Dictionary:
+	var run_state := RunStateScript.new()
+	run_state.start_new("CREW-HOLDEM-TWO-HAND-%d" % seed)
+	run_state.bankroll = 500
+	for member_id in CrewStateModelScript.MEMBER_IDS:
+		run_state.crew_add_trust(str(member_id), CrewStateModelScript.rank_threshold("made"), "two_hand_reload")
+	var environment := {
+		"id": "crew_holdem_two_hand",
+		"archetype_id": "small_underground_casino",
+		"kind": "crew",
+		"layer_id": "back_room",
+		"crew_poker_turn_engine": "ordered_v1",
+		"resident_member_ids": CrewStateModelScript.MEMBER_IDS.slice(0, CrewPokerGameScript.MAX_OPPONENT_SEATS),
+		"game_ids": ["crew_draw_poker"],
+		"game_states": {},
+	}
+	var setup_rng := RngStreamScript.new()
+	setup_rng.configure(seed)
+	var generated: Dictionary = game.generate_environment_state(run_state, environment, setup_rng)
+	environment["game_states"] = {"crew_draw_poker": generated}
+	run_state.current_environment = environment
+	var current_run: RunState = run_state
+	var showdown_count := 0
+	var reload_preserved := false
+	var hand_signatures: Array = []
+	for hand_index in range(2):
+		if not bool(_apply(game, current_run, "deal", {}, seed + hand_index * 1000).get("ok", false)):
+			return {"passed": false, "seed": seed, "failure": "deal_%d" % hand_index}
+		if hand_index == 1:
+			var before: Dictionary = current_run.current_environment.get("game_states", {}).get("crew_draw_poker", {}).duplicate(true)
+			var restored := RunStateScript.new()
+			restored.from_dict(current_run.to_dict())
+			var after: Dictionary = restored.current_environment.get("game_states", {}).get("crew_draw_poker", {})
+			reload_preserved = true
+			for key in ["members", "seats", "shoe", "player_cards", "pot", "turn_owner", "turn_order", "button_index"]:
+				reload_preserved = reload_preserved and JSON.stringify(before.get(key)) == JSON.stringify(after.get(key))
+			current_run = restored
+		var steps := 0
+		while steps < 160:
+			var table: Dictionary = current_run.current_environment.get("game_states", {}).get("crew_draw_poker", {})
+			if str(table.get("phase", "idle")) == "idle":
+				break
+			var legal_ids: Array = []
+			for action_value in game.legal_actions(current_run, current_run.current_environment):
+				legal_ids.append(str((action_value as Dictionary).get("id", "")))
+			var action_id := "observe" if legal_ids.has("observe") else "call" if legal_ids.has("call") else "check" if legal_ids.has("check") else "all_in" if legal_ids.has("all_in") else ""
+			if action_id.is_empty() or not bool(_apply(game, current_run, action_id, {}, seed + hand_index * 1000 + steps + 1).get("ok", false)):
+				return {"passed": false, "seed": seed, "failure": "progress_%d" % hand_index}
+			steps += 1
+		var final_table: Dictionary = current_run.current_environment.get("game_states", {}).get("crew_draw_poker", {})
+		if str(final_table.get("phase", "")) != "idle":
+			return {"passed": false, "seed": seed, "failure": "step_limit_%d" % hand_index}
+		var reached_showdown := (final_table.get("community_cards", []) as Array).size() == 5 and (final_table.get("burn_cards", []) as Array).size() == 3
+		showdown_count += 1 if reached_showdown else 0
+		hand_signatures.append({"hand_number": final_table.get("hand_number", 0), "showdown": reached_showdown, "result": final_table.get("last_result", {})})
+	return {
+		"passed": showdown_count == 2 and reload_preserved and (generated.get("members", []) as Array).size() == CrewPokerGameScript.MAX_OPPONENT_SEATS,
+		"seed": seed,
+		"showdown_count": showdown_count,
+		"reload_preserved": reload_preserved,
+		"member_count": (generated.get("members", []) as Array).size(),
+		"hands": hand_signatures,
+	}
+
+
+func _play_hand(game: GameModule, library, seed: int, force_all_in: bool = false, force_raise: bool = false, opponent_count: int = CrewPokerGameScript.MAX_OPPONENT_SEATS) -> Dictionary:
 	var run_state := RunStateScript.new()
 	run_state.start_new("CREW-HOLDEM-%d" % seed)
 	run_state.bankroll = 500
@@ -218,13 +472,14 @@ func _play_hand(game: GameModule, library, seed: int, force_all_in: bool = false
 		"kind": "crew",
 		"layer_id": "back_room",
 		"crew_poker_turn_engine": "ordered_v1",
-		"resident_member_ids": ["crew_mags", "crew_rook", "crew_lucky"],
+		"resident_member_ids": CrewStateModelScript.MEMBER_IDS.slice(0, CrewPokerGameScript.MAX_OPPONENT_SEATS),
 		"game_ids": ["crew_draw_poker"],
 		"game_states": {},
 	}
 	var setup_rng := RngStreamScript.new()
 	setup_rng.configure(seed)
 	var generated := game.generate_environment_state(run_state, environment, setup_rng)
+	generated["members"] = (generated.get("members", []) as Array).slice(0, clampi(opponent_count, 2, CrewPokerGameScript.MAX_OPPONENT_SEATS))
 	environment["game_states"] = {"crew_draw_poker": generated}
 	run_state.current_environment = environment
 	var first := _apply(game, run_state, "deal", {}, seed)
@@ -240,8 +495,14 @@ func _play_hand(game: GameModule, library, seed: int, force_all_in: bool = false
 	var custom_raise_exact := false
 	var player_action_set: Array = []
 	var steps := 1
-	while steps < 80:
+	var dealt_table: Dictionary = run_state.current_environment.get("game_states", {}).get("crew_draw_poker", {})
+	var expected_chip_total := _table_chip_total(dealt_table)
+	var chip_conservation := expected_chip_total > 0
+	var max_pot := int(dealt_table.get("pot", 0))
+	while steps < 160:
 		var table: Dictionary = run_state.current_environment.get("game_states", {}).get("crew_draw_poker", {})
+		max_pot = maxi(max_pot, int(table.get("pot", 0)))
+		chip_conservation = chip_conservation and _table_chip_total(table) == expected_chip_total
 		var phase := str(table.get("phase", "idle"))
 		if phase == "idle":
 			break
@@ -295,6 +556,8 @@ func _play_hand(game: GameModule, library, seed: int, force_all_in: bool = false
 			custom_raise_exact = int(after_raise.get("pot", 0)) == pot_before_action + expected_raise_cost
 		steps += 1
 	var final_table: Dictionary = run_state.current_environment.get("game_states", {}).get("crew_draw_poker", {})
+	max_pot = maxi(max_pot, int(final_table.get("pot", 0)))
+	chip_conservation = chip_conservation and _table_chip_total(final_table) == expected_chip_total
 	return {
 		"seed": seed,
 		"complete": str(final_table.get("phase", "")) == "idle",
@@ -310,8 +573,48 @@ func _play_hand(game: GameModule, library, seed: int, force_all_in: bool = false
 		"steps": steps,
 		"burn_card_count": (final_table.get("burn_cards", []) as Array).size(),
 		"history_count": (final_table.get("action_history", []) as Array).size(),
+		"chip_conservation": chip_conservation,
+		"max_pot": max_pot,
+		"session_swing": int(final_table.get("session_swing", 0)),
 		"signature": {"last_result": final_table.get("last_result", {}), "history": final_table.get("action_history", []), "board": final_table.get("community_cards", []), "bankroll": run_state.bankroll},
 	}
+
+
+func _table_chip_total(state: Dictionary) -> int:
+	var total := int(state.get("pot", 0)) + int(state.get("player_stack", 0))
+	for seat_value in state.get("seats", []):
+		total += int((seat_value as Dictionary).get("stack", 0))
+	return total
+
+
+func _distribution_metrics(game: GameModule, library, opponent_count: int, seed_base: int) -> Dictionary:
+	var pots: Array[int] = []
+	var swings: Array[int] = []
+	var conservation_passed := true
+	for offset in range(24):
+		var hand := _play_hand(game, library, seed_base + offset, false, false, opponent_count)
+		if not bool(hand.get("complete", false)):
+			continue
+		pots.append(int(hand.get("max_pot", 0)))
+		swings.append(int(hand.get("session_swing", 0)))
+		conservation_passed = conservation_passed and bool(hand.get("chip_conservation", false))
+	pots.sort()
+	swings.sort()
+	return {
+		"opponents": opponent_count,
+		"completed_hands": pots.size(),
+		"pot": _distribution_summary(pots),
+		"session_swing": _distribution_summary(swings),
+		"chip_conservation_passed": conservation_passed and not pots.is_empty(),
+	}
+
+
+func _distribution_summary(values: Array[int]) -> Dictionary:
+	if values.is_empty():
+		return {"min": 0, "median": 0, "p95": 0, "max": 0}
+	var median_index := floori(float(values.size() - 1) / 2.0)
+	var p95_index := mini(values.size() - 1, ceili(float(values.size()) * 0.95) - 1)
+	return {"min": values[0], "median": values[median_index], "p95": values[p95_index], "max": values[values.size() - 1]}
 
 
 func _apply(game: GameModule, run_state: RunState, action_id: String, ui: Dictionary, seed: int) -> Dictionary:

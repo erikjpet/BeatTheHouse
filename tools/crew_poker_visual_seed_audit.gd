@@ -15,7 +15,7 @@ const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 const FIXTURE_SEED := "CREW-POKER-PUNCHLINE-VISUAL-00"
 const TABLE_GAME_RNG_KEY := "environment_layer_games::back_room"
 const TABLE_STATE_RNG_KEY := "environment_game_state:small_underground_casino_001:crew_draw_poker"
-const RESIDENTS: Array[String] = ["crew_mags", "crew_rook", "crew_lucky"]
+const RESIDENTS: Array[String] = ["crew_mags", "crew_rook", "crew_lucky", "crew_velvet", "crew_switch"]
 const INPUT_SEQUENCE: Array[String] = ["poker_deal", "ordered_observe_or_call_until_flop"]
 
 
@@ -102,12 +102,13 @@ static func _audit_order(library: ContentLibrary, seed_text: String, action_rng:
 		and progressed \
 		and str(surface.get("phase", "")) in ["flop", "idle"] \
 		and int(surface.get("hand_number", -1)) == 0 \
-		and generated_members.size() == 3 \
+		and generated_members.size() == CrewDrawPokerGameScript.MAX_OPPONENT_SEATS \
 		and (surface.get("community_cards", []) as Array).size() in [0, 3]
 	return {
 		"passed": order_passed,
 		"resident_input": resident_order.duplicate(),
 		"generated_members": generated_members.duplicate(),
+		"deal_result": deal.duplicate(true),
 		"deal_ok": bool(deal.get("ok", false)),
 		"progressed": progressed,
 		"actions": actions,
