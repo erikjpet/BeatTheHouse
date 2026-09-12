@@ -109,7 +109,9 @@ foreach ($token in @(
     '"durable_progress_count": durable_progress_count',
     'and (story_after > story_before or travels_after > travels_before)',
     'CrewRecruitmentModelScript.apply_to_environment(run_state, environment)',
-    'generator.call("_apply_world_travel_targets", environment, run_state, run_state.world_map, RunState.GRAND_CASINO_ARCHETYPE_ID)'
+    'generator.call("_apply_world_travel_targets", environment, run_state, run_state.world_map, RunState.GRAND_CASINO_ARCHETYPE_ID)',
+    '"semantic_ready": bool(run_state.current_environment.get("scenario_semantic_ready", false))',
+    'Suspicion changes late-run Crew standing'
 )) {
     if (-not $overlay.Contains($token)) { throw "Performance producer lost retained real-progress evidence '$token'." }
 }
