@@ -1216,6 +1216,10 @@ function Invoke-FoundationPerfSmoke {
     }
 }
 
+function Invoke-TerminalSoakLauncherContract {
+    Invoke-ProcessStage -Name "integ06_terminal_soak_launcher_contract" -FilePath $powerShellExe -Arguments @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", (Join-Path $PSScriptRoot "integ06_1_terminal_soak_launcher_contract_test.ps1")) -StageTimeoutSec 30 | Out-Null
+}
+
 function Invoke-ExhaustiveParse {
     $scripts = @(Get-ChildItem -LiteralPath (Join-Path $root "scripts") -Filter "*.gd" -Recurse -File) + @(Get-ChildItem -LiteralPath (Join-Path $root "tools") -Filter "*.gd" -Recurse -File)
     foreach ($script in $scripts) {
@@ -1327,6 +1331,7 @@ switch ($suiteKey) {
     "audit" {
 		Invoke-GameReworkVerificationGates
 		Invoke-GodotScript -Name "environment_grounding_contract" -ScriptPath "res://tools/environment_grounding_contract.gd" -StageTimeoutSec 120
+        Invoke-TerminalSoakLauncherContract
         Invoke-GodotScript -Name "scenario_room_multiseed_finalization" -ScriptPath "res://tools/scenario_room_multiseed_finalization.gd" -StageTimeoutSec 1200
         Invoke-GodotScript -Name "slot_pinball_physics_audit" -ScriptPath "res://tools/slot_pinball_physics_audit.gd" -UserArgs @("48") -StageTimeoutSec 240
         Invoke-GodotScript -Name "slot_machine_deep_audit" -ScriptPath "res://tools/slot_machine_deep_audit.gd" -UserArgs @("10000") -StageTimeoutSec 900
@@ -1343,6 +1348,7 @@ switch ($suiteKey) {
         Invoke-FoundationPerfSmoke
 		Invoke-GameReworkVerificationGates
 		Invoke-GodotScript -Name "environment_grounding_contract" -ScriptPath "res://tools/environment_grounding_contract.gd" -StageTimeoutSec 120
+        Invoke-TerminalSoakLauncherContract
         Invoke-GodotScript -Name "scenario_room_multiseed_finalization" -ScriptPath "res://tools/scenario_room_multiseed_finalization.gd" -StageTimeoutSec 1200
         Invoke-GodotScript -Name "slot_pinball_physics_audit" -ScriptPath "res://tools/slot_pinball_physics_audit.gd" -UserArgs @("48") -StageTimeoutSec 240
         Invoke-GodotScript -Name "slot_machine_deep_audit" -ScriptPath "res://tools/slot_machine_deep_audit.gd" -UserArgs @("10000") -StageTimeoutSec 900
