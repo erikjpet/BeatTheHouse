@@ -2398,7 +2398,7 @@ func _consume_scalper_gift_ticket(machine: Dictionary, eligible: Dictionary) -> 
 
 
 static func _ticket_is_unscratched(ticket: Dictionary) -> bool:
-	if ticket.is_empty() or bool(ticket.get("result_ready", false)) or int(ticket.get("mask_revision", 0)) > 0:
+	if ticket.is_empty() or bool(ticket.get("result_ready", false)):
 		return false
 	var regions_value: Variant = ticket.get("scratch_regions", [])
 	if typeof(regions_value) == TYPE_ARRAY:

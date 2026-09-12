@@ -1275,12 +1275,15 @@ func _check_scratch_scalper_gift(game: GameModule, failures: Array) -> void:
 	var active_only_environment := active_only_run.current_environment
 	var active_only_machine: Dictionary = (active_only_environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {})
 	active_only_machine["pending_queue"] = []
+	active_only_machine["active_ticket"] = active_ticket.duplicate(true)
 	active_only_machine["scalper_gift_visit_token"] = ""
+	game.call("_write_machine_state", active_only_environment, active_only_machine, active_only_run, false)
 	var active_only_rng := _scratch_rng("scalper-gift-active-only")
 	var active_only_result: Dictionary = game.call("resolve_scalper_gift", active_only_run, active_only_environment, active_only_rng)
 	GameModule.apply_result(active_only_run, active_only_result, active_only_rng)
-	if not bool(active_only_result.get("ok", false)) or not (active_only_machine.get("active_ticket", {}) as Dictionary).is_empty():
-		failures.append("Scratch scalper gift did not consume an eligible untouched table ticket when no queued ticket existed.")
+	var active_only_after: Dictionary = (active_only_environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {})
+	if not bool(active_only_result.get("ok", false)) or not (active_only_after.get("active_ticket", {}) as Dictionary).is_empty():
+		failures.append("Scratch scalper gift did not consume an eligible untouched table ticket when no queued ticket existed: result=%s active=%s." % [str(active_only_result), str(active_only_after.get("active_ticket", {}))])
 	var loaded: RunState = RunStateScript.new()
 	loaded.from_dict(run_state.to_dict())
 	var loaded_status: Dictionary = game.call("scalper_gift_status", loaded, loaded.current_environment)
@@ -1290,13 +1293,18 @@ func _check_scratch_scalper_gift(game: GameModule, failures: Array) -> void:
 	var partial_machine := after_machine.duplicate(true)
 	partial_machine["scalper_gift_visit_token"] = ""
 	var partial_ticket := active_ticket.duplicate(true)
-	partial_ticket["mask_revision"] = 1
+	game.call("_ensure_ticket_regions", partial_ticket)
+	var partial_regions: Array = partial_ticket.get("scratch_regions", [])
+	if not partial_regions.is_empty():
+		(partial_regions[0] as Dictionary)["coverage"] = 0.01
+	partial_ticket["scratch_regions"] = partial_regions
 	partial_machine["active_ticket"] = partial_ticket
 	partial_machine["pending_queue"] = []
-	environment["game_states"] = {"scratch_tickets": partial_machine}
+	game.call("_write_machine_state", environment, partial_machine, run_state, false)
 	if bool((game.call("scalper_gift_status", run_state, environment) as Dictionary).get("available", false)):
 		failures.append("Scratch scalper accepted a ticket after any scratching had begun.")
 	partial_machine["active_ticket"] = {}
+	game.call("_write_machine_state", environment, partial_machine, run_state, false)
 	if bool((game.call("scalper_gift_status", run_state, environment) as Dictionary).get("available", false)):
 		failures.append("Scratch scalper gift remained available without an untouched ticket.")
 	var old_machine := partial_machine.duplicate(true)
