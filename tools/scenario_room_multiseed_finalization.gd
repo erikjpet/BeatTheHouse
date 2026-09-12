@@ -36,6 +36,8 @@ var _fixture_map_visible := false
 var _fixture_serialized_state := {"bankroll": 50, "current_node_id": "motel"}
 var _requested_scenario := ""
 var _requested_seed_family := ""
+var _base_dump_path := ""
+var _base_dump_records: Array = []
 var _reachable_state_checks := 0
 var _reachable_layout_checks := 0
 
@@ -70,6 +72,8 @@ func _init() -> void:
 			_requested_scenario = argument.trim_prefix("--scenario=")
 		elif argument.begins_with("--seed-family="):
 			_requested_seed_family = argument.trim_prefix("--seed-family=")
+		elif argument.begins_with("--base-dump="):
+			_base_dump_path = argument.trim_prefix("--base-dump=")
 	call_deferred("_run")
 
 
@@ -125,6 +129,7 @@ func _run() -> void:
 			if bool(arrival.get("ok", false)):
 				var finalized := _dict(arrival.get("finalization", {}))
 				var audit := _dict(finalized.get("layout_audit", {}))
+				_record_base_layout(run_state.current_environment, scenario_id)
 				if str(run_state.current_environment.get("scenario_id", "")) != scenario_id:
 					case_failures.append("%s/%s arrived with scenario %s." % [seed_family, scenario_id, str(run_state.current_environment.get("scenario_id", ""))])
 				if not bool(run_state.current_environment.get("scenario_semantic_ready", false)):
@@ -210,6 +215,7 @@ func _parse_worker_summary(output: String) -> Dictionary:
 
 
 func _finish(failures: Array, completed: int, scenario_count: int = EXPECTED_SCENARIOS, seed_count: int = SEED_FAMILIES.size()) -> void:
+	_write_base_dump()
 	var expected := seed_count * scenario_count
 	if failures.is_empty() and completed == expected:
 		print("SCENARIO_ROOM_MULTISEED_FINALIZATION PASS families=%d scenarios=%d finalizations=%d reachable_states=%d distinct_layouts=%d normal_and_small=validated routes=validated object_census=preserved" % [seed_count, scenario_count, completed, _reachable_state_checks, _reachable_layout_checks])
@@ -219,6 +225,35 @@ func _finish(failures: Array, completed: int, scenario_count: int = EXPECTED_SCE
 		printerr("SCENARIO_ROOM_MULTISEED_FINALIZATION FAIL %s" % str(failure))
 	printerr("SCENARIO_ROOM_MULTISEED_FINALIZATION FAIL completed=%d expected=%d failures=%d" % [completed, expected, failures.size()])
 	quit(1)
+
+
+func _record_base_layout(environment: Dictionary, scenario_id: String) -> void:
+	if _base_dump_path.is_empty():
+		return
+	for record_value in _array(environment.get("scenario_layout_base_records", [])):
+		var record := _dict(record_value)
+		var rect := _normalized_pixel_rect(record.get("focus_rect", record.get("normalized_rect", {})))
+		_base_dump_records.append({
+			"archetype_id": str(environment.get("archetype_id", "")),
+			"scenario_id": scenario_id,
+			"stable_id": str(record.get("stable_object_id", "")),
+			"label": str(record.get("label", "")),
+			"object_type": str(record.get("object_type", "")),
+			"x": snappedf(rect.position.x, 0.01),
+			"y": snappedf(rect.position.y, 0.01),
+		})
+
+
+func _write_base_dump() -> void:
+	if _base_dump_path.is_empty():
+		return
+	var absolute_path := ProjectSettings.globalize_path(_base_dump_path)
+	DirAccess.make_dir_recursive_absolute(absolute_path.get_base_dir())
+	var output := FileAccess.open(absolute_path, FileAccess.WRITE)
+	if output == null:
+		printerr("Could not write base-layout dump: %s" % absolute_path)
+		return
+	output.store_string(JSON.stringify(_base_dump_records, "  "))
 
 
 func _check_reachable_grounding_states(run_state: Variant, fallback_definition: Dictionary, seed_family: String, failures: Array) -> int:
