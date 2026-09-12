@@ -105,8 +105,9 @@ foreach ($token in @(
     'func _slot_perf06_phase_evidence() -> Dictionary:',
     '"observed": bool(enabled.get("autoplay_active", false))',
     'and str(prepared_evidence.get("bonus_family", "")) == "pinball"',
-    '"durable_action_count": durable_action_count',
-    'and story_after > story_before'
+    'func _scripted_memory_travel(visited_targets: Dictionary) -> Dictionary:',
+    '"durable_progress_count": durable_progress_count',
+    'and (story_after > story_before or travels_after > travels_before)'
 )) {
     if (-not $overlay.Contains($token)) { throw "Performance producer lost retained real-progress evidence '$token'." }
 }

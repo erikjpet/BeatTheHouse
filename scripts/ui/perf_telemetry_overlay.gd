@@ -2414,27 +2414,34 @@ func _measure_scripted_memory() -> void:
 	_begin_scenario("scripted_play_memory_10m", {"surface": "full_run", "mode": "scripted_play", "target_seconds": memory_seconds, "perf06_surface_id": "run_trajectory", "perf06_phase_id": "mid_run"})
 	var run_state: RunState = app.get("run_state") as RunState
 	var story_before := run_state.story_log_entry_count() if run_state != null else -1
+	var travels_before := run_state.environment_travel_count() if run_state != null else -1
 	var frame := 0
 	var scripted_step_count := 0
-	var durable_action_count := 0
+	var durable_progress_count := 0
+	var visited_targets := {}
+	if run_state != null:
+		visited_targets[run_state.current_world_node_id()] = true
 	var end_msec := Time.get_ticks_msec() + memory_seconds * 1000
 	while Time.get_ticks_msec() < end_msec:
 		if frame % 240 == 0:
-			var step_evidence := _scripted_memory_step(frame / 240)
+			var step_evidence := _scripted_memory_step(frame / 240, visited_targets)
 			scripted_step_count += 1
 			if bool(step_evidence.get("durable_progress", false)):
-				durable_action_count += 1
+				durable_progress_count += 1
 		frame += 1
 		await get_tree().process_frame
 	var story_after := run_state.story_log_entry_count() if run_state != null else -1
+	var travels_after := run_state.environment_travel_count() if run_state != null else -1
 	current_tags["phase_evidence"] = {
 		"observed": scripted_step_count > 0 \
-			and durable_action_count > 0 \
-			and story_after > story_before,
+			and durable_progress_count > 0 \
+			and (story_after > story_before or travels_after > travels_before),
 		"scripted_step_count": scripted_step_count,
-		"durable_action_count": durable_action_count,
+		"durable_progress_count": durable_progress_count,
 		"story_entries_before": story_before,
 		"story_entries_after": story_after,
+		"environment_travels_before": travels_before,
+		"environment_travels_after": travels_after,
 	}
 	_end_scenario()
 
@@ -3293,7 +3300,7 @@ func _slot_perf06_phase_evidence() -> Dictionary:
 	}
 
 
-func _scripted_memory_step(step_index: int) -> Dictionary:
+func _scripted_memory_step(step_index: int, visited_targets: Dictionary) -> Dictionary:
 	if app == null or app.get("run_state") == null:
 		return {"accepted": false, "durable_progress": false, "reason": "missing_run"}
 	var current_game: GameModule = app.get("current_game") as GameModule
@@ -3303,6 +3310,11 @@ func _scripted_memory_step(step_index: int) -> Dictionary:
 			app.back_to_environment()
 		action_evidence["durable_progress"] = bool(action_evidence.get("progressed", false))
 		return action_evidence
+	var environment_snapshot: Dictionary = app.current_environment_view_snapshot()
+	var game_ids: Array = environment_snapshot.get("game_ids", []) \
+		if typeof(environment_snapshot.get("game_ids", [])) == TYPE_ARRAY else []
+	if game_ids.is_empty():
+		return _scripted_memory_travel(visited_targets)
 	if step_index % 5 == 0:
 		var opened := app.open_world_map()
 		if opened:
@@ -3310,6 +3322,70 @@ func _scripted_memory_step(step_index: int) -> Dictionary:
 		return {"accepted": opened, "durable_progress": false, "kind": "world_map"}
 	app.enter_first_available_game()
 	return {"accepted": app.get("current_game") != null, "durable_progress": false, "kind": "enter_game"}
+
+
+func _scripted_memory_travel(visited_targets: Dictionary) -> Dictionary:
+	var run_state: RunState = app.get("run_state") as RunState
+	if run_state == null:
+		return {"accepted": false, "durable_progress": false, "reason": "missing_run"}
+	var environment_snapshot: Dictionary = app.current_environment_view_snapshot()
+	var choices: Array = environment_snapshot.get("travel_choices", []) \
+		if typeof(environment_snapshot.get("travel_choices", [])) == TYPE_ARRAY else []
+	var selected_choice: Dictionary = {}
+	for choice_value in choices:
+		if typeof(choice_value) != TYPE_DICTIONARY:
+			continue
+		var game_choice: Dictionary = choice_value
+		var game_target_id := str(game_choice.get("id", ""))
+		if not game_target_id.is_empty() \
+				and bool(game_choice.get("enabled", true)) \
+				and _perf06_archetype_has_games(game_target_id):
+			selected_choice = game_choice
+			break
+	if selected_choice.is_empty():
+		for choice_value in choices:
+			if typeof(choice_value) != TYPE_DICTIONARY:
+				continue
+			var waypoint_choice: Dictionary = choice_value
+			var waypoint_id := str(waypoint_choice.get("id", ""))
+			if waypoint_id.is_empty() \
+					or not bool(waypoint_choice.get("enabled", true)) \
+					or bool(visited_targets.get(waypoint_id, false)):
+				continue
+			selected_choice = waypoint_choice
+			break
+	if selected_choice.is_empty():
+		return {"accepted": false, "durable_progress": false, "reason": "no_unvisited_route"}
+	var target_id := str(selected_choice.get("id", ""))
+	var before_node := run_state.current_world_node_id()
+	visited_targets[target_id] = true
+	var selected := app.select_travel_option(target_id)
+	var confirmed := selected and app.confirm_selected_travel(true)
+	var after_node := run_state.current_world_node_id()
+	return {
+		"accepted": confirmed,
+		"durable_progress": confirmed and after_node != before_node,
+		"kind": "travel",
+		"target_id": target_id,
+		"world_node_before": before_node,
+		"world_node_after": after_node,
+	}
+
+
+func _perf06_archetype_has_games(archetype_id: String) -> bool:
+	var content_library: ContentLibrary = app.get("library") as ContentLibrary if app != null else null
+	if content_library == null:
+		return false
+	for archetype_value in content_library.environment_archetypes:
+		if typeof(archetype_value) != TYPE_DICTIONARY:
+			continue
+		var archetype: Dictionary = archetype_value
+		if str(archetype.get("id", "")) != archetype_id:
+			continue
+		var game_pool: Array = archetype.get("game_pool", []) \
+			if typeof(archetype.get("game_pool", [])) == TYPE_ARRAY else []
+		return not game_pool.is_empty()
+	return false
 
 
 func _wait_frames(frames: int) -> void:
