@@ -211,8 +211,13 @@ func _run() -> void:
 	if not failed:
 		_stage("capture_reduced_motion", {"state_source": "precomputed_action_projection"})
 		_stage("reduced_motion_render_snapshot", {"state_source": "precomputed_action_projection"})
+		# Freeze the production host while this harness renders its synthetic
+		# reduced-motion projection. Otherwise the host's live refresh can replace
+		# the projection during the settle frames and turn this into a timing race.
+		app.set_process(false)
 		canvas.call("render_game_snapshot", reduced_motion_render_state)
 		await _settle(3)
+		canvas.call("render_game_snapshot", reduced_motion_render_state)
 		_capture_reduced_motion_stability()
 		await _capture_surface(
 			"04_reduced_motion_static_1280x720.png",
@@ -221,6 +226,7 @@ func _run() -> void:
 			0,
 			reduced_motion_capture_state
 		)
+		app.set_process(true)
 
 	if not failed:
 		_stage("session_exit_to_l3", {"kind": "l3_session_exit", "attempt": 1, "limit": 1})
