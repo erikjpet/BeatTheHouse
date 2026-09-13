@@ -34,7 +34,7 @@ func _init() -> void:
 	_check_six_hand_rotation_and_shoe(game, failures)
 	_check_raise_round_closure(game, failures)
 	_check_multiway_split(failures)
-	_check_night_rituals(game, failures)
+	_check_night_rituals(game, library, failures)
 	_check_three_member_save(game, failures)
 	_check_dealer_migration_and_roles(game, failures)
 	var end_to_end := _check_two_hand_session_reload(game, failures)
@@ -47,14 +47,14 @@ func _init() -> void:
 		var distribution: Dictionary = distribution_value
 		if int(distribution.get("completed_hands", 0)) == 0 or not bool(distribution.get("chip_conservation_passed", false)):
 			failures.append("The %d-opponent distribution audit produced no conserving completed hands." % int(distribution.get("opponents", 0)))
-	var accepted := {}
+	var accepted := _play_hand(game, library, 7001)
+	var four_street_seed_count := 0
 	for seed in range(7001, 7065):
 		var attempt := _play_hand(game, library, seed)
 		if bool(attempt.get("complete", false)) and (attempt.get("streets", []) as Array).size() == 4:
-			accepted = attempt
-			break
-	if accepted.is_empty():
-		failures.append("No audited seed completed all four Hold'em streets.")
+			four_street_seed_count += 1
+	if not bool(accepted.get("complete", false)) or (accepted.get("streets", []) as Array).size() != 4:
+		failures.append("The first audited seed did not complete all four Hold'em streets.")
 	else:
 		if int(accepted.get("member_count", 0)) != CrewPokerGameScript.MAX_OPPONENT_SEATS:
 			failures.append("The live table did not seat five opponents.")
@@ -105,6 +105,8 @@ func _init() -> void:
 		"end_to_end": end_to_end,
 		"performance": performance,
 		"distributions": distributions,
+		"four_street_seed_count": four_street_seed_count,
+		"four_street_seed_total": 64,
 	}
 	print(JSON.stringify(report))
 	quit(0 if failures.is_empty() else 1)
@@ -334,12 +336,13 @@ func _check_multiway_split(failures: Array[String]) -> void:
 		failures.append("A four-way odd-pot tie did not award deterministic seat-order remainder chips: %s." % JSON.stringify(awards))
 
 
-func _check_night_rituals(game: GameModule, failures: Array[String]) -> void:
+func _check_night_rituals(game: GameModule, library, failures: Array[String]) -> void:
 	var members: Array = CrewStateModelScript.MEMBER_IDS.slice(0, CrewPokerGameScript.MAX_OPPONENT_SEATS)
 	var seats: Array = []
 	for member_id in members:
 		seats.append({"member_id": member_id, "active": true, "last_action": "waiting"})
-	for night_id in CrewPokerGameScript.NIGHT_IDS:
+	for night_index in range(CrewPokerGameScript.NIGHT_IDS.size()):
+		var night_id := str(CrewPokerGameScript.NIGHT_IDS[night_index])
 		var state := {"night_id": night_id, "members": members, "seats": seats, "turn_owner": "player", "phase": "idle", "pot": 0, "community_cards": []}
 		var actors: Array = game.call("_ordered_ritual_actors", state)
 		var actor_ids: Array = []
@@ -351,6 +354,9 @@ func _check_night_rituals(game: GameModule, failures: Array[String]) -> void:
 		for member_id in members:
 			if not actor_ids.has(str(member_id)):
 				failures.append("Authored poker night %s lost seated actor %s." % [night_id, str(member_id)])
+		var completed := _play_hand(game, library, 7601 + night_index * 19, false, false, CrewPokerGameScript.MAX_OPPONENT_SEATS, night_id)
+		if not bool(completed.get("complete", false)):
+			failures.append("Authored poker night %s did not run a full hand to completion." % night_id)
 
 
 func _check_three_member_save(game: GameModule, failures: Array[String]) -> void:
@@ -494,7 +500,7 @@ func _two_hand_session_attempt(game: GameModule, seed: int) -> Dictionary:
 	}
 
 
-func _play_hand(game: GameModule, library, seed: int, force_all_in: bool = false, force_raise: bool = false, opponent_count: int = CrewPokerGameScript.MAX_OPPONENT_SEATS) -> Dictionary:
+func _play_hand(game: GameModule, library, seed: int, force_all_in: bool = false, force_raise: bool = false, opponent_count: int = CrewPokerGameScript.MAX_OPPONENT_SEATS, night_id: String = "") -> Dictionary:
 	var run_state := RunStateScript.new()
 	run_state.start_new("CREW-HOLDEM-%d" % seed)
 	run_state.bankroll = 500
@@ -510,12 +516,27 @@ func _play_hand(game: GameModule, library, seed: int, force_all_in: bool = false
 		"game_ids": ["crew_draw_poker"],
 		"game_states": {},
 	}
+	if not night_id.is_empty():
+		environment["crew_poker_night_id"] = night_id
 	var setup_rng := RngStreamScript.new()
 	setup_rng.configure(seed)
 	var generated := game.generate_environment_state(run_state, environment, setup_rng)
 	generated["members"] = (generated.get("members", []) as Array).slice(0, clampi(opponent_count, 2, CrewPokerGameScript.MAX_OPPONENT_SEATS))
 	environment["game_states"] = {"crew_draw_poker": generated}
 	run_state.current_environment = environment
+	for task_step in range(4):
+		var predeal_legal: Array[String] = []
+		for action_value in game.legal_actions(run_state, run_state.current_environment):
+			predeal_legal.append(str((action_value as Dictionary).get("id", "")))
+		if predeal_legal.has("deal"):
+			break
+		var task_action := ""
+		for candidate in ["answer_duty", "choose_company", "hide_table", "resume_table"]:
+			if predeal_legal.has(candidate):
+				task_action = candidate
+				break
+		if task_action.is_empty() or not bool(_apply(game, run_state, task_action, {}, seed - 10 + task_step).get("ok", false)):
+			return {"seed": seed, "complete": false, "failure": "night_task"}
 	var first := _apply(game, run_state, "deal", {"surface_time_msec": 1000, "surface_presentation_time_msec": 1000}, seed)
 	if not bool(first.get("ok", false)):
 		return {"seed": seed, "complete": false, "failure": "deal"}
@@ -600,6 +621,13 @@ func _play_hand(game: GameModule, library, seed: int, force_all_in: bool = false
 		steps += 1
 	var final_table: Dictionary = run_state.current_environment.get("game_states", {}).get("crew_draw_poker", {})
 	max_pot = maxi(max_pot, int(final_table.get("pot", 0)))
+	max_board = maxi(max_board, (final_table.get("community_cards", []) as Array).size())
+	if max_board >= 3 and not streets.has("flop"):
+		streets.append("flop")
+	if max_board >= 4 and not streets.has("turn"):
+		streets.append("turn")
+	if max_board >= 5 and not streets.has("river"):
+		streets.append("river")
 	chip_conservation = chip_conservation and _table_chip_total(final_table) == expected_chip_total
 	return {
 		"seed": seed,

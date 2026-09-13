@@ -314,7 +314,7 @@ func _player_bot_action(bot: String, game: GameModule, run_state: RunState, seed
 
 
 func _empty_aggregate() -> Dictionary:
-	return {"hands": 0, "incomplete": 0, "preflop_uncontested": 0, "flop_multiway": 0, "showdown_multiway": 0, "folds_only": 0, "actions": 0, "conservation_failures": 0, "player_ev": 0, "early_swing_caps": 0, "members": {}}
+	return {"hands": 0, "incomplete": 0, "preflop_uncontested": 0, "flop_reached": 0, "turn_reached": 0, "river_reached": 0, "flop_multiway": 0, "showdown_multiway": 0, "folds_only": 0, "actions": 0, "conservation_failures": 0, "player_ev": 0, "early_swing_caps": 0, "members": {}}
 
 
 func _accumulate_hand(total: Dictionary, hand: Dictionary) -> void:
@@ -324,6 +324,9 @@ func _accumulate_hand(total: Dictionary, hand: Dictionary) -> void:
 	total["hands"] = int(total.get("hands", 0)) + 1
 	var board := int(hand.get("max_board", 0))
 	total["preflop_uncontested"] = int(total.get("preflop_uncontested", 0)) + (1 if board == 0 else 0)
+	total["flop_reached"] = int(total.get("flop_reached", 0)) + (1 if board >= 3 else 0)
+	total["turn_reached"] = int(total.get("turn_reached", 0)) + (1 if board >= 4 else 0)
+	total["river_reached"] = int(total.get("river_reached", 0)) + (1 if board >= 5 else 0)
 	total["flop_multiway"] = int(total.get("flop_multiway", 0)) + (1 if int(hand.get("flop_players", 0)) >= 2 else 0)
 	total["showdown_multiway"] = int(total.get("showdown_multiway", 0)) + (1 if int(hand.get("showdown_players", 0)) >= 2 else 0)
 	total["folds_only"] = int(total.get("folds_only", 0)) + (1 if bool(hand.get("folds_only", false)) else 0)
@@ -404,6 +407,9 @@ func _finish_aggregate(total: Dictionary) -> Dictionary:
 		"incomplete": int(total.get("incomplete", 0)),
 		"flow": {
 			"preflop_uncontested_pct": _pct(int(total.get("preflop_uncontested", 0)), hands),
+			"flop_reached_pct": _pct(int(total.get("flop_reached", 0)), hands),
+			"turn_reached_pct": _pct(int(total.get("turn_reached", 0)), hands),
+			"river_reached_pct": _pct(int(total.get("river_reached", 0)), hands),
 			"flop_multiway_pct": _pct(int(total.get("flop_multiway", 0)), hands),
 			"showdown_multiway_pct": _pct(int(total.get("showdown_multiway", 0)), hands),
 			"folds_only_pct": _pct(int(total.get("folds_only", 0)), hands),
@@ -609,7 +615,7 @@ func _markdown(report: Dictionary) -> String:
 		var flow: Dictionary = section.get("flow", {})
 		lines.append("## %s" % str(bot))
 		lines.append("")
-		lines.append("Preflop uncontested %.1f%%; multiway flop %.1f%%; multiway showdown %.1f%%; folds-only %.1f%%; %.2f actions/hand; player EV/100 %.2f." % [float(flow.get("preflop_uncontested_pct", 0.0)), float(flow.get("flop_multiway_pct", 0.0)), float(flow.get("showdown_multiway_pct", 0.0)), float(flow.get("folds_only_pct", 0.0)), float(flow.get("average_actions", 0.0)), float(section.get("player_ev_per_100", 0.0))])
+		lines.append("Preflop uncontested %.1f%%; reached flop/turn/river %.1f%%/%.1f%%/%.1f%%; multiway flop %.1f%%; multiway showdown %.1f%%; folds-only %.1f%%; %.2f actions/hand; player EV/100 %.2f." % [float(flow.get("preflop_uncontested_pct", 0.0)), float(flow.get("flop_reached_pct", 0.0)), float(flow.get("turn_reached_pct", 0.0)), float(flow.get("river_reached_pct", 0.0)), float(flow.get("flop_multiway_pct", 0.0)), float(flow.get("showdown_multiway_pct", 0.0)), float(flow.get("folds_only_pct", 0.0)), float(flow.get("average_actions", 0.0)), float(section.get("player_ev_per_100", 0.0))])
 		lines.append("")
 		lines.append("| Member | VPIP | PFR | AF | WTSD | Bluff bets | Bet/pot |")
 		lines.append("|---|---:|---:|---:|---:|---:|---:|")
@@ -617,6 +623,12 @@ func _markdown(report: Dictionary) -> String:
 			var stat: Dictionary = (section.get("members", {}) as Dictionary).get(member_id, {})
 			lines.append("| %s | %.1f%% | %.1f%% | %.2f | %.1f%% | %.1f%% | %.2f |" % [str(member_id).trim_prefix("crew_").capitalize(), float(stat.get("vpip", 0.0)), float(stat.get("pfr", 0.0)), float(stat.get("af", 0.0)), float(stat.get("wtsd", 0.0)), float(stat.get("bluff_share", 0.0)), float(stat.get("bet_size", 0.0))])
 		lines.append("")
+	lines.append("Distinctness: %s" % ("PASS" if bool((report.get("distinctness", {}) as Dictionary).get("passed", false)) else "FAIL"))
+	lines.append("Character across bots: %s" % ("PASS" if bool((report.get("character_across_bots", {}) as Dictionary).get("passed", false)) else "FAIL"))
+	lines.append("Exploit health: %s" % JSON.stringify(report.get("exploit_health", {})))
+	lines.append("Tilt probe: %s" % JSON.stringify(report.get("tilt_probe", {})))
+	lines.append("Swing-cap study: %s" % JSON.stringify(report.get("swing_cap_study", {})))
+	lines.append("")
 	lines.append("Decision timing: %s" % JSON.stringify(report.get("decision_performance", {})))
 	lines.append("")
 	lines.append("Failures: %s" % JSON.stringify(report.get("failures", [])))

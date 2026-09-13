@@ -152,7 +152,8 @@ func _run() -> void:
 			app.call("_on_talk_dock_choice_requested", str(right_request.get("event_id", "")), str(right_choices[0]))
 			await _settle(3)
 	var betting_evidence := await _exercise_betting_ui(app, canvas, run_state)
-	await _finish(app, {"surface_template": surface.get("surface_template", ""), "animated_crew_count": surface.get("animated_crew_count", 0), "dealer_member_id": dealer_id, "dealer_unseated": not seated_ids.has(dealer_id), "speaker": talk.get("speaker", ""), "choice_count": talk.get("choice_count", 0), "anchored_bottom": talk.get("anchored_bottom", false), "anchored_bottom_left": talk.get("anchored_bottom_left", true), "right_anchor_bottom_left": right_talk.get("anchored_bottom_left", false), "betting": betting_evidence})
+	var eight_hand_evidence := await _exercise_eight_visible_hands(app, canvas)
+	await _finish(app, {"surface_template": surface.get("surface_template", ""), "animated_crew_count": surface.get("animated_crew_count", 0), "dealer_member_id": dealer_id, "dealer_unseated": not seated_ids.has(dealer_id), "speaker": talk.get("speaker", ""), "choice_count": talk.get("choice_count", 0), "anchored_bottom": talk.get("anchored_bottom", false), "anchored_bottom_left": talk.get("anchored_bottom_left", true), "right_anchor_bottom_left": right_talk.get("anchored_bottom_left", false), "betting": betting_evidence, "eight_hand_e2e": eight_hand_evidence})
 
 
 func _settle(frames: int) -> void:
@@ -335,6 +336,182 @@ func _check_chip_layout(state: Dictionary, phase_label: String) -> void:
 		failures.append("The %s chip groups represented $%d of a $%d pot." % [phase_label, represented_amount, int(state.get("pot", 0))])
 
 
+func _exercise_eight_visible_hands(app: Control, canvas: Control) -> Dictionary:
+	var e2e_ui: Dictionary = (app.get("game_surface_ui_state") as Dictionary).duplicate(true)
+	e2e_ui["reduce_motion"] = true
+	app.set("game_surface_ui_state", e2e_ui)
+	app.call("_refresh")
+	await _settle(3)
+	var hands: Array = []
+	var hand_streets: Array[String] = []
+	var hand_actions: Array[String] = []
+	var hand_intents: Array[String] = []
+	var seen_action_ordinals := {}
+	var saw_bluff_showdown := false
+	var saw_trap_or_check_raise := false
+	var save_reload_passed := false
+	var save_reload_mismatches: Array[String] = []
+	var direct_save_mismatches: Array[String] = []
+	var save_debug := {}
+	var save_attempted := false
+	var active_hand := str((canvas.call("realtime_surface_state") as Dictionary).get("phase", "idle")) != "idle"
+	var steps := 0
+	while (hands.size() < 8 or not saw_bluff_showdown or not saw_trap_or_check_raise) and hands.size() < 24 and steps < 3600:
+		await _answer_visible_talk(app)
+		var state: Dictionary = canvas.call("realtime_surface_state")
+		var phase := str(state.get("phase", "idle"))
+		if phase == "idle":
+			if active_hand:
+				var authoritative: Dictionary = (app.get("run_state") as RunState).current_environment.get("game_states", {}).get("crew_draw_poker", {})
+				var showdown := false
+				for seat_value in authoritative.get("seats", []):
+					showdown = showdown or bool((seat_value as Dictionary).get("revealed", false))
+				var bluff_at_showdown := showdown and (hand_intents.has("bluff") or hand_intents.has("semi_bluff"))
+				saw_bluff_showdown = saw_bluff_showdown or bluff_at_showdown
+				saw_trap_or_check_raise = saw_trap_or_check_raise or hand_intents.has("trap") or hand_actions.has("check_raise")
+				hands.append({"hand": hands.size() + 1, "streets": hand_streets.duplicate(), "actions": hand_actions.duplicate(), "intents_observed_by_audit": hand_intents.duplicate(), "showdown": showdown, "bluff_or_semi_bluff_at_showdown": bluff_at_showdown, "trap_or_check_raise": hand_intents.has("trap") or hand_actions.has("check_raise")})
+				hand_streets.clear()
+				hand_actions.clear()
+				hand_intents.clear()
+				active_hand = false
+				if hands.size() >= 8:
+					break
+			var new_session_index := _surface_action_index(canvas, "poker_new_session")
+			if new_session_index != MISSING_ACTION_INDEX:
+				if not bool(app.call("_handle_module_surface_action", "poker_new_session", new_session_index, true)):
+					failures.append("The visible eight-hand run could not start a new capped session.")
+					break
+				await _settle(3)
+			var deal_index := _surface_action_index(canvas, "poker_deal")
+			if deal_index == MISSING_ACTION_INDEX or not bool(app.call("_handle_module_surface_action", "poker_deal", deal_index, true)):
+				failures.append("The visible eight-hand run could not deal hand %d." % (hands.size() + 1))
+				break
+			active_hand = true
+			await _settle(4)
+			steps += 1
+			continue
+		if phase in ["preflop", "flop", "turn", "river"] and not hand_streets.has(phase):
+			hand_streets.append(phase)
+		var run_state := app.get("run_state") as RunState
+		var authoritative: Dictionary = run_state.current_environment.get("game_states", {}).get("crew_draw_poker", {})
+		for row_value in authoritative.get("action_history", []):
+			var row: Dictionary = row_value
+			var ordinal_key := str(int(row.get("ordinal", -1)))
+			if seen_action_ordinals.has(ordinal_key):
+				continue
+			seen_action_ordinals[ordinal_key] = true
+			var action_signature := "%s:%s:%s:$%d" % [str(row.get("phase", "")), str(row.get("actor", "")), str(row.get("action", "")), int(row.get("amount", 0))]
+			if not hand_actions.has(action_signature):
+				hand_actions.append(action_signature)
+			var intent := str(row.get("intent", ""))
+			if not intent.is_empty() and not hand_intents.has(intent):
+				hand_intents.append(intent)
+		if not save_attempted and hands.size() >= 1 and phase in ["flop", "turn"]:
+			save_attempted = true
+			app.call("_prepare_foundation_run_save")
+			# Sealed surface actions replace the host RunState with an accepted copy,
+			# so re-read the live binding instead of comparing against the stale
+			# setup reference retained by this audit.
+			var active_run := app.get("run_state") as RunState
+			authoritative = active_run.current_environment.get("game_states", {}).get("crew_draw_poker", {})
+			var before_reload: Dictionary = authoritative.duplicate(true)
+			var save_written := bool(app.call("_write_foundation_run_save", "Poker E2E save.", true))
+			if not save_written:
+				failures.append("The visible eight-hand run could not save mid-hand.")
+			else:
+				var save_service := app.get("save_service") as SaveService
+				var directly_loaded := save_service.load_run(str(app.get("autosave_slot_id"))) as RunState
+				var direct_state: Dictionary = directly_loaded.current_environment.get("game_states", {}).get("crew_draw_poker", {}) if directly_loaded != null else {}
+				direct_save_mismatches = _poker_save_state_mismatches(before_reload, direct_state)
+				save_debug = {
+					"before": _poker_save_summary(before_reload),
+					"direct": _poker_save_summary(direct_state),
+					"load_result": save_service.last_load_result(),
+				}
+			if not save_written:
+				pass
+			elif not bool(app.call("load_foundation_run")):
+				failures.append("The visible eight-hand run could not reload its mid-hand save.")
+			elif not bool(app.call("enter_game", "crew_draw_poker")):
+				failures.append("The visible eight-hand run could not re-enter the saved poker table.")
+			else:
+				await _settle(6)
+				canvas = app.get("game_surface_canvas") as Control
+				var restored_ui: Dictionary = (app.get("game_surface_ui_state") as Dictionary).duplicate(true)
+				restored_ui["reduce_motion"] = true
+				app.set("game_surface_ui_state", restored_ui)
+				app.call("_refresh")
+				await _settle(3)
+				var restored_run := app.get("run_state") as RunState
+				var restored: Dictionary = restored_run.current_environment.get("game_states", {}).get("crew_draw_poker", {})
+				save_reload_mismatches = _poker_save_state_mismatches(before_reload, restored)
+				save_reload_passed = save_reload_mismatches.is_empty()
+				if not save_reload_passed:
+					failures.append("The visible mid-hand save/reload changed the authoritative poker state.")
+			steps += 1
+			continue
+		var action_id := "poker_observe" if str(state.get("turn_owner", "")) != "player" else "poker_call"
+		var action_index := _surface_action_index(canvas, action_id)
+		if action_index == MISSING_ACTION_INDEX and action_id == "poker_call":
+			action_id = "poker_check"
+			action_index = _surface_action_index(canvas, action_id)
+		if action_index == MISSING_ACTION_INDEX or not bool(app.call("_handle_module_surface_action", action_id, action_index, true)):
+			failures.append("The visible eight-hand run could not select %s during hand %d." % [action_id, hands.size() + 1])
+			break
+		await _settle(3)
+		steps += 1
+	if hands.size() < 8:
+		failures.append("The production table completed only %d of eight visible-input hands." % hands.size())
+	if not save_reload_passed:
+		failures.append("The eight-hand visible run did not prove a mid-hand save/reload continuation.")
+	if not saw_bluff_showdown:
+		failures.append("The eight-hand visible run did not show a bluff or semi-bluff reaching showdown.")
+	if not saw_trap_or_check_raise:
+		failures.append("The eight-hand visible run did not show a trap or check-raise.")
+	return {"hands": hands, "completed_hands": hands.size(), "steps": steps, "mid_hand_save_reload": save_reload_passed, "save_reload_mismatches": save_reload_mismatches, "direct_save_mismatches": direct_save_mismatches, "save_debug": save_debug, "bluff_or_semi_bluff_showdown": saw_bluff_showdown, "trap_or_check_raise": saw_trap_or_check_raise}
+
+
+func _poker_save_state_mismatches(before: Dictionary, after: Dictionary) -> Array[String]:
+	var mismatches: Array[String] = []
+	for key in ["version", "phase", "hand_number", "pot", "turn_owner", "community_cards", "player_cards", "seats", "shoe", "current_bet", "round_contributions", "seat_temperament", "player_reads", "hand_lines"]:
+		# JSON restores whole-number fields as floats, including numbers nested in
+		# cards, seats, and memory. Canonicalize only numeric representation while
+		# retaining every key, value, and array position for the comparison.
+		if JSON.stringify(_poker_save_canonical(before.get(key))) != JSON.stringify(_poker_save_canonical(after.get(key))):
+			mismatches.append(str(key))
+	return mismatches
+
+
+func _poker_save_canonical(value: Variant) -> Variant:
+	if typeof(value) == TYPE_INT:
+		return float(value)
+	if typeof(value) == TYPE_ARRAY:
+		var result: Array = []
+		for entry in value as Array:
+			result.append(_poker_save_canonical(entry))
+		return result
+	if typeof(value) == TYPE_DICTIONARY:
+		var result := {}
+		for key in (value as Dictionary).keys():
+			result[key] = _poker_save_canonical((value as Dictionary).get(key))
+		return result
+	return value
+
+
+func _poker_save_summary(state: Dictionary) -> Dictionary:
+	return {
+		"version": state.get("version"),
+		"phase": state.get("phase"),
+		"hand_number": state.get("hand_number"),
+		"pot": state.get("pot"),
+		"turn_owner": state.get("turn_owner"),
+		"community_count": (state.get("community_cards", []) as Array).size(),
+		"player_card_count": (state.get("player_cards", []) as Array).size(),
+		"seat_count": (state.get("seats", []) as Array).size(),
+		"shoe_count": (state.get("shoe", []) as Array).size(),
+	}
+
+
 func _advance_to_player(app: Control, canvas: Control) -> bool:
 	for _step in range(12):
 		await _answer_visible_talk(app)
@@ -392,6 +569,10 @@ func _surface_action_index(canvas: Control, action: String) -> int:
 func _finish(app: Control, evidence: Dictionary) -> void:
 	print(JSON.stringify({"passed": failures.is_empty(), "failures": failures, "evidence": evidence}))
 	if app != null:
+		var save_service: SaveService = app.get("save_service") as SaveService
+		if save_service != null:
+			save_service.wait_for_async_save()
+			save_service.clear_run(str(app.get("autosave_slot_id")))
 		app.queue_free()
 		await process_frame
 	quit(0 if failures.is_empty() else 1)
