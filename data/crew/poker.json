@@ -15,6 +15,19 @@
     "hustle_sessions_required": 2,
     "hustle_respect_bonus": 1,
     "opponent_count": [5, 5],
+    "animation": {
+      "card_flight_msec": 260,
+      "per_card_stagger_msec": 110,
+      "board_flip_msec": 180,
+      "chip_slide_msec": 260,
+      "pot_sweep_msec": 360,
+      "payout_msec": 620,
+      "shuffle_msec": 240,
+      "collect_msec": 220,
+      "fold_msec": 300,
+      "showdown_flip_msec": 180,
+      "showdown_stagger_msec": 100
+    },
     "learned_exposures": 3,
     "table_talk_heads_up_pot": 10,
     "table_talk_multiway_pot": 18,
@@ -37,6 +50,15 @@
       "crew_mags": ["Mags squares the deck. 'Two down. Five shared. No creative accounting.'", "'The pot is correct,' Mags says. 'Try to keep it that way.'"],
       "crew_bishop": ["Bishop antes precisely. 'Let the record show optimism.'", "'A call is an answer,' Bishop says. 'Not always a good one.'"],
       "crew_lucky": ["Lucky splashes in the ante. 'Tiny money, enormous biography.'", "'I had a plan,' Lucky says. 'Then the cards got interesting.'"]
+    },
+    "dealer_banter": {
+      "crew_rook": ["Rook squares the deck. 'Clean route. No shortcuts through the muck.'", "'Cards move clockwise,' Rook says. 'Trouble usually does too.'"],
+      "crew_velvet": ["Velvet fans the deck. 'A graceful deal leaves everyone equally disappointed.'", "'Hands where I can admire them, darling,' Velvet says."],
+      "crew_knuckles": ["Knuckles knocks the deck square. 'Cards out. Speeches later.'", "'Muck is right here,' Knuckles says. 'Use it decisively.'"],
+      "crew_switch": ["Switch riffles once. 'Window open. Cards moving.'", "'Keep up,' Switch says, already reaching for the burn."],
+      "crew_mags": ["Mags aligns the deck. 'Fifty-two accounted for. Begin.'", "'The pot and muck are separate systems,' Mags says. 'Respect both.'"],
+      "crew_bishop": ["Bishop cuts the deck. 'The house enters the deal into evidence.'", "'The button governs action,' Bishop says. 'I govern the cards.'"],
+      "crew_lucky": ["Lucky shuffles with a grin. 'Every card is about to become somebody's problem.'", "'Dealer never loses a hand,' Lucky says. 'Dealer never gets one.'"]
     }
   }
 ]

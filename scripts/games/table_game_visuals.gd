@@ -430,6 +430,22 @@ static func _draw_status_meter(surface, rect: Rect2, value: int, label: String, 
 	surface.surface_label(label.left(26), rect.position + Vector2(0, -4), 9, accent)
 
 
+static func flight_progress(elapsed_msec: float, delay_msec: float, duration_msec: float) -> float:
+	return clampf((elapsed_msec - delay_msec) / maxf(1.0, duration_msec), 0.0, 1.0)
+
+
+static func flight_position(from_position: Vector2, to_position: Vector2, progress: float, arc_height: float = 18.0) -> Vector2:
+	var eased := 1.0 - pow(1.0 - clampf(progress, 0.0, 1.0), 3.0)
+	return from_position.lerp(to_position, eased) + Vector2(0, -arc_height * sin(progress * PI))
+
+
+static func card_flip_width_scale(progress: float, flip_start: float = 0.72) -> float:
+	if progress <= flip_start:
+		return 1.0
+	var local := clampf((progress - flip_start) / maxf(0.01, 1.0 - flip_start), 0.0, 1.0)
+	return maxf(0.08, absf(cos(local * PI)))
+
+
 static func _draw_table_character(surface, style: Dictionary, foot: Vector2, scale_value: float, clock: float) -> void:
 	var accent := _style_accent(style)
 	var skin: Color = style.get("skin", Color("#c49371")) if typeof(style.get("skin", Color("#c49371"))) == TYPE_COLOR else Color("#c49371")

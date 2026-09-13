@@ -87,6 +87,19 @@ const SEAT_LAYOUT_INDICES := {
 	4: [0, 1, 3, 4],
 	5: [0, 1, 2, 3, 4],
 }
+const DEALER_STATION_LAYOUT := {
+	"character_foot": Vector2(690, 330),
+	"character_scale": 0.64,
+	"deck_card_rect": Rect2(638, 292, 24, 35),
+	"muck_rect": Rect2(718, 302, 28, 18),
+	"pot_center": Vector2(590, 270),
+	"name_label_rect": Rect2(720, 325, 58, 11),
+	"station_bounds": Rect2(544, 238, 234, 99),
+}
+const CARD_ANIMATION_CHANNEL := "crew_poker_cards"
+const CHIP_ANIMATION_CHANNEL := "crew_poker_chips"
+const PAYOUT_ANIMATION_CHANNEL := "crew_poker_payout"
+const HIDDEN_CARD := {"hidden": true}
 const MEMBER_NAMES := {
 	"crew_rook": "Rook", "crew_velvet": "Velvet", "crew_knuckles": "Knuckles",
 	"crew_switch": "Switch", "crew_mags": "Mags", "crew_bishop": "Bishop", "crew_lucky": "Lucky",
@@ -94,6 +107,11 @@ const MEMBER_NAMES := {
 const NIGHT_IDS := ["friendly_teaching", "hustle_test", "debt_court", "after_job", "raid_jitters"]
 const OBSERVATION_DURATION_ACTIONS := 3
 const ORDERED_ENGINE := "ordered_v1"
+
+var draw_card_events_cache_id := ""
+var draw_card_events_cache: Array = []
+var draw_chip_events_cache_id := ""
+var draw_chip_events_cache: Array = []
 
 
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
@@ -115,23 +133,15 @@ func generate_environment_state(run_state: RunState, environment: Dictionary, rn
 		if CrewStateModelScript.MEMBER_IDS.has(resident_id) and not residents.has(resident_id):
 			residents.append(resident_id)
 	var bounds: Array = tuning.get("opponent_count", [2, MAX_OPPONENT_SEATS]) if typeof(tuning.get("opponent_count", [2, MAX_OPPONENT_SEATS])) == TYPE_ARRAY else [2, MAX_OPPONENT_SEATS]
-	var available_count := CrewStateModelScript.MEMBER_IDS.size()
-	var minimum := clampi(int(bounds[0]) if not bounds.is_empty() else MAX_OPPONENT_SEATS, 2, mini(MAX_OPPONENT_SEATS, available_count))
-	var maximum := clampi(int(bounds[1]) if bounds.size() > 1 else minimum, minimum, mini(MAX_OPPONENT_SEATS, available_count))
-	var count := rng.randi_range(minimum, maximum)
-	var members: Array = residents.duplicate() if residents.size() <= count else rng.pick_many(residents, count)
-	if members.size() < count:
-		var remaining: Array = []
-		for member_id in CrewStateModelScript.MEMBER_IDS:
-			if not residents.has(member_id):
-				remaining.append(member_id)
-		members.append_array(rng.pick_many(remaining, count - members.size()))
+	var crew_selection := _select_table_crew(CrewStateModelScript.MEMBER_IDS, residents, bounds, rng)
+	var members: Array = crew_selection.get("members", [])
 	return {
 		"schema": STATE_SCHEMA,
 		"version": STATE_VERSION,
 		"producer_id": "poker",
 		"game_id": get_id(),
 		"members": members,
+		"dealer_member_id": str(crew_selection.get("dealer_member_id", "")),
 		"phase": "idle",
 		"hand_number": 0,
 		"session_swing": 0,
@@ -180,6 +190,35 @@ func generate_environment_state(run_state: RunState, environment: Dictionary, rn
 		"beat": {},
 		"last_result": {},
 	}
+
+
+func _select_table_crew(available_value: Array, residents_value: Array, bounds: Array, rng: RngStream) -> Dictionary:
+	var available: Array = []
+	for member_id in available_value:
+		if CrewStateModelScript.MEMBER_IDS.has(str(member_id)) and not available.has(str(member_id)):
+			available.append(str(member_id))
+	var residents: Array = []
+	for member_id in residents_value:
+		if available.has(str(member_id)) and not residents.has(str(member_id)):
+			residents.append(str(member_id))
+	# The house dealer is reserved before chairs are counted. Reduced-roster
+	# fixtures therefore lose opponents first, while retaining at least two.
+	var maximum_with_dealer := mini(MAX_OPPONENT_SEATS, maxi(2, available.size() - 1))
+	var minimum := clampi(int(bounds[0]) if not bounds.is_empty() else maximum_with_dealer, 2, maximum_with_dealer)
+	var maximum := clampi(int(bounds[1]) if bounds.size() > 1 else minimum, minimum, maximum_with_dealer)
+	var count := rng.randi_range(minimum, maximum)
+	var members: Array = residents.duplicate() if residents.size() <= count else rng.pick_many(residents, count)
+	if members.size() < count:
+		var fill: Array = []
+		for member_id in available:
+			if not members.has(member_id):
+				fill.append(member_id)
+		members.append_array(rng.pick_many(fill, count - members.size()))
+	var unseated: Array = []
+	for member_id in available:
+		if not members.has(member_id):
+			unseated.append(member_id)
+	return {"members": members, "dealer_member_id": str(rng.pick(unseated, ""))}
 
 
 func legal_actions(run_state: RunState, environment: Dictionary) -> Array:
@@ -317,6 +356,10 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var maximum_raise_to := _maximum_raise_to(state)
 	var selected_raise_to := clampi(int(ui_state.get("poker_raise_to", minimum_raise_to)), minimum_raise_to, maxi(minimum_raise_to, maximum_raise_to))
 	var raise_panel_open := bool(ui_state.get("poker_raise_panel_open", false)) and maximum_raise_to >= minimum_raise_to
+	var animation: Dictionary = ui_state.get("poker_animation", {}) if typeof(ui_state.get("poker_animation", {})) == TYPE_DICTIONARY else {}
+	var presentation_msec := int(ui_state.get("surface_presentation_time_msec", ui_state.get("surface_time_msec", 0)))
+	var reduce_motion := bool(ui_state.get("reduce_motion", false))
+	var animation_channels := _surface_animation_channels(animation)
 	return GameModule.surface_spec({
 		"surface_renderer": "crew_draw_poker",
 		"surface_life": "crew_table",
@@ -326,15 +369,28 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_embeds_outcomes": true,
 		"surface_suppresses_game_result_burst": true,
 		"surface_animates_idle": true,
-		"surface_realtime_state_refresh": false,
+		"surface_realtime_state_refresh": _animation_bundle_live(animation, presentation_msec, reduce_motion),
 		"surface_template": "shared_table_game_v1",
-		"animated_crew_count": seats.size(),
+		"animated_crew_count": seats.size() + (1 if not str(state.get("dealer_member_id", "")).is_empty() else 0),
 		"table_talk_active": table_talk_active,
-		"reduce_motion": bool(ui_state.get("reduce_motion", false)),
+		"reduce_motion": reduce_motion,
+		"surface_animation_channels": animation_channels,
 		"display_name": get_display_name(),
 		"phase": phase,
 		"turn_engine": str(state.get("turn_engine", "legacy_v1")),
 		"members": members,
+		"dealer_member_id": str(state.get("dealer_member_id", "")),
+		"dealer_name": _actor_name(str(state.get("dealer_member_id", ""))),
+		"dealer_character_model": _crew_character_model(str(state.get("dealer_member_id", ""))),
+		"dealer_station_layout": DEALER_STATION_LAYOUT,
+		"poker_animation_kind": str(animation.get("kind", "")),
+		"poker_animation_showdown": bool(animation.get("showdown", false)),
+		"card_animation_id": str(animation.get("card_id", "")),
+		"card_animation_events": animation.get("card_events", []),
+		"chip_animation_id": str(animation.get("chip_id", "")),
+		"chip_animation_events": animation.get("chip_events", []),
+		"payout_animation_id": str(animation.get("payout_id", "")),
+		"payout_animation_events": animation.get("payout_events", []),
 		"seats": seats,
 		"player_cards": _card_array(state.get("player_cards", [])),
 		"community_cards": _card_array(state.get("community_cards", [])),
@@ -387,8 +443,34 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	})
 
 
+func _surface_animation_channels(animation: Dictionary) -> Array:
+	var started := int(animation.get("started_msec", 0))
+	var channels: Array = []
+	for row in [
+		{"channel": CARD_ANIMATION_CHANNEL, "id": str(animation.get("card_id", "")), "duration": int(animation.get("card_duration_msec", 0))},
+		{"channel": CHIP_ANIMATION_CHANNEL, "id": str(animation.get("chip_id", "")), "duration": int(animation.get("chip_duration_msec", 0))},
+		{"channel": PAYOUT_ANIMATION_CHANNEL, "id": str(animation.get("payout_id", "")), "duration": int(animation.get("payout_duration_msec", 0))},
+	]:
+		if not str(row.get("id", "")).is_empty():
+			channels.append(GameModule.surface_animation_channel(str(row.get("channel", "")), str(row.get("id", "")), int(row.get("duration", 0)), started, {"clock_source": "presentation"}))
+	return channels
+
+
+func _animation_bundle_live(animation: Dictionary, now_msec: int, reduce_motion: bool) -> bool:
+	if animation.is_empty() or reduce_motion:
+		return false
+	var started := int(animation.get("started_msec", 0))
+	if started <= 0:
+		return true
+	var longest := maxi(int(animation.get("card_duration_msec", 0)), maxi(int(animation.get("chip_duration_msec", 0)), int(animation.get("payout_duration_msec", 0))))
+	return now_msec < started + longest
+
+
 func surface_action_command(surface_action: String, index: int, _confirm_requested: bool, ui_state: Dictionary, _run_state: RunState, environment: Dictionary) -> Dictionary:
 	var next := ui_state.duplicate(true)
+	# A click always accepts the authoritative landing state before the requested
+	# command is resolved; the old channel disappears and the command runs once.
+	next.erase("poker_animation")
 	var table := _table_state(environment)
 	var minimum_raise_to := _minimum_raise_to(table)
 	var maximum_raise_to := _maximum_raise_to(table)
@@ -557,6 +639,8 @@ func _resolve_ordered(action_id: String, run_state: RunState, environment: Dicti
 		legal_ids.append(str((action as Dictionary).get("id", "")))
 	if not legal_ids.has(action_id):
 		return _result(action_id, environment, 0, "That action is outside the current ordered turn.", false)
+	var builds_presentation := ui_state.has("surface_presentation_time_msec") or ui_state.has("surface_time_msec")
+	var before_state := _presentation_state_snapshot(state) if builds_presentation else {}
 	var outcome := {"ok": true, "delta": 0, "message": "The table acts."}
 	match action_id:
 		"new_session":
@@ -586,10 +670,23 @@ func _resolve_ordered(action_id: String, run_state: RunState, environment: Dicti
 	if not bool(outcome.get("ok", false)):
 		return _result(action_id, environment, 0, str(outcome.get("message", "The action is rejected without mutation.")), false)
 	state["action_ordinal"] = int(state.get("action_ordinal", 0)) + 1
+	# Pure simulations do not carry a presentation clock, so they skip allocating
+	# visual events. The production surface and capture/test paths always do.
+	var animation := _build_presentation_animation(before_state, state, action_id, ui_state) if builds_presentation else {}
 	_update_environment_state(environment, state)
 	var result := _result(action_id, environment, int(outcome.get("delta", 0)), str(outcome.get("message", "The table acts.")), true)
-	result["ui_state"] = ui_state.duplicate(true) if action_id == "fake_tell" else {}
-	result["preserve_surface_ui_state"] = action_id == "fake_tell"
+	var next_ui := ui_state.duplicate(true)
+	if action_id == "draw":
+		next_ui["poker_held"] = []
+	if animation.is_empty():
+		next_ui.erase("poker_animation")
+	else:
+		next_ui["poker_animation"] = animation
+	result["ui_state"] = next_ui
+	result["preserve_surface_ui_state"] = true
+	if not animation.is_empty():
+		var animation_kind := str(animation.get("kind", ""))
+		result["surface_audio_cue"] = "card_fold" if animation_kind == "fold" else "card_deal" if not (animation.get("card_events", []) as Array).is_empty() else "chips_place"
 	result["crew_poker_turn_receipt"] = "crew-poker:%d:%d" % [int(state.get("session_index", 0)), int(state.get("action_ordinal", 0))]
 	result["crew_poker_public_facts"] = _ordered_public_facts(state, action_id)
 	if typeof(outcome.get("table_talk_request")) == TYPE_DICTIONARY and not (outcome.get("table_talk_request") as Dictionary).is_empty():
@@ -944,14 +1041,14 @@ func _advance_ordered_turn(state: Dictionary, rng: RngStream, run_state: RunStat
 			var payout := mini(raw_payout, _win_room(state, raw_payout))
 			state["session_swing"] = int(state.get("session_swing", 0)) + payout
 			state["player_stack"] = int(state.get("player_stack", 0)) + raw_payout
-			_finish_hand(state, run_state, {"winners": [PLAYER_ID], "payout": payout, "table_payout": raw_payout, "message": "The table folds to you. You take $%d." % raw_payout})
+			_finish_hand(state, run_state, {"winners": [PLAYER_ID], "awards": {PLAYER_ID: raw_payout}, "payout": payout, "table_payout": raw_payout, "message": "The table folds to you. You take $%d." % raw_payout})
 			return {"payout": payout, "message": "The table folds to you. You take $%d." % raw_payout}
 		var remaining := _active_actor_ids(state)
 		var winners: Array = [str(remaining[0])] if not remaining.is_empty() else []
 		if not winners.is_empty():
 			_award_npc_stack(state, str(winners[0]), int(state.get("pot", 0)))
 		var message := "%s gathers the pot. Your folded cards stay hidden." % _winner_names(winners)
-		_finish_hand(state, run_state, {"winners": winners, "payout": 0, "message": message})
+		_finish_hand(state, run_state, {"winners": winners, "awards": {str(winners[0]): int(state.get("pot", 0))} if not winners.is_empty() else {}, "payout": 0, "message": message})
 		return {"payout": 0, "message": message}
 	var phase := str(state.get("phase", ""))
 	if _ordered_round_closed(state):
@@ -1245,15 +1342,269 @@ func _canonical_ritual_json(value: Variant) -> String:
 	return JSON.stringify(value)
 
 
+func _build_presentation_animation(before: Dictionary, after: Dictionary, action_id: String, ui_state: Dictionary) -> Dictionary:
+	if str(after.get("turn_engine", "legacy_v1")) != ORDERED_ENGINE:
+		return {}
+	var timing := _animation_tuning()
+	var cards: Array = []
+	var chips: Array = []
+	var payout: Array = []
+	var card_end := 0
+	var chip_end := 0
+	var payout_end := 0
+	var before_phase := str(before.get("phase", "idle"))
+	var after_phase := str(after.get("phase", "idle"))
+	var card_flight := int(timing.get("card_flight_msec", 260))
+	var stagger := int(timing.get("per_card_stagger_msec", 110))
+	var deck_rect: Rect2 = DEALER_STATION_LAYOUT.get("deck_card_rect", Rect2())
+	var muck_rect: Rect2 = DEALER_STATION_LAYOUT.get("muck_rect", Rect2())
+	var collect_end := 0
+	if action_id == "deal":
+		var collect_duration := int(timing.get("collect_msec", 220))
+		_append_collection_events(cards, before, deck_rect.position, collect_duration)
+		collect_end = collect_duration + int(timing.get("shuffle_msec", 240))
+		var actors := _all_actor_ids(after)
+		var first_actor := str(after.get("small_blind_actor", ""))
+		var first_index := actors.find(first_actor)
+		for pass_index in range(2):
+			for offset in range(actors.size()):
+				var actor := str(actors[(first_index + offset) % actors.size()])
+				var card_index := pass_index
+				var card: Dictionary = HIDDEN_CARD
+				if actor == PLAYER_ID:
+					var player_cards := _card_array(after.get("player_cards", []))
+					if card_index < player_cards.size():
+						card = player_cards[card_index]
+				var target := _actor_card_rect(after, actor, card_index)
+				var delay := collect_end + (pass_index * actors.size() + offset) * stagger
+				cards.append(_card_flight_event("deal", actor, card_index, card, deck_rect.position, target.position, deck_rect.size, target.size, delay, card_flight, actor == PLAYER_ID))
+				card_end = maxi(card_end, delay + card_flight)
+		for blind_actor in [str(after.get("small_blind_actor", "")), str(after.get("big_blind_actor", ""))]:
+			var amount := _actor_round_contribution(after, blind_actor)
+			if amount > 0:
+				chips.append(_chip_flight_event("place", blind_actor, amount, _actor_chip_source(after, blind_actor), _actor_bet_center(after, blind_actor), collect_duration / 2, int(timing.get("chip_slide_msec", 260))))
+				chip_end = maxi(chip_end, collect_duration / 2 + int(timing.get("chip_slide_msec", 260)))
+	else:
+		_append_fold_events(cards, before, after, muck_rect.position, timing)
+		for card_event in cards:
+			card_end = maxi(card_end, int((card_event as Dictionary).get("delay_msec", 0)) + int((card_event as Dictionary).get("duration_msec", 0)))
+		_append_placed_chip_events(chips, before, after, timing)
+		for chip_event in chips:
+			chip_end = maxi(chip_end, int((chip_event as Dictionary).get("delay_msec", 0)) + int((chip_event as Dictionary).get("duration_msec", 0)))
+		var street_changed := before_phase in ["preflop", "flop", "turn", "river"] and after_phase != before_phase
+		var board_delay := 0
+		if street_changed:
+			var sweep_duration := int(timing.get("pot_sweep_msec", 360))
+			_append_sweep_events(chips, before, sweep_duration)
+			chip_end = maxi(chip_end, sweep_duration)
+			board_delay = mini(sweep_duration, 150)
+		var before_board := _card_array(before.get("community_cards", []))
+		var after_board := _card_array(after.get("community_cards", []))
+		for board_index in range(before_board.size(), after_board.size()):
+			if board_index in [0, 3, 4]:
+				cards.append(_card_flight_event("burn", "muck", board_index, HIDDEN_CARD, deck_rect.position, muck_rect.position, deck_rect.size, Vector2(24, 35), board_delay, card_flight, false))
+				board_delay += stagger
+			var board_target := _board_card_rect(board_index)
+			cards.append(_card_flight_event("board", "board", board_index, after_board[board_index], deck_rect.position, board_target.position, deck_rect.size, board_target.size, board_delay, card_flight + int(timing.get("board_flip_msec", 180)), true))
+			card_end = maxi(card_end, board_delay + card_flight + int(timing.get("board_flip_msec", 180)))
+			board_delay += stagger
+		var last: Dictionary = after.get("last_result", {}) if typeof(after.get("last_result", {})) == TYPE_DICTIONARY else {}
+		var settlement := after_phase == "idle" and not last.is_empty() and int(after.get("hand_number", 0)) > int(before.get("hand_number", 0))
+		if settlement:
+			var flip_delay := card_end
+			var showdown_stagger := int(timing.get("showdown_stagger_msec", 100))
+			var flip_duration := int(timing.get("showdown_flip_msec", 180))
+			for seat_value in _dict_array(after.get("seats", [])):
+				var seat: Dictionary = seat_value
+				if not bool(seat.get("revealed", false)):
+					continue
+				var actor := str(seat.get("member_id", ""))
+				var hole := _card_array(seat.get("cards", []))
+				for card_index in range(mini(2, hole.size())):
+					var target := _actor_card_rect(after, actor, card_index)
+					cards.append(_card_flight_event("showdown_flip", actor, card_index, hole[card_index], target.position, target.position, target.size, target.size, flip_delay, flip_duration, true))
+					flip_delay += showdown_stagger
+			card_end = maxi(card_end, flip_delay + flip_duration)
+			var awards: Dictionary = last.get("awards", {}) if typeof(last.get("awards", {})) == TYPE_DICTIONARY else {}
+			var payout_delay := card_end
+			for winner_value in _string_array(last.get("winners", [])):
+				var winner := str(winner_value)
+				var amount := int(awards.get(winner, int(last.get("table_payout", 0)) if winner == PLAYER_ID else 0))
+				if amount > 0:
+					payout.append(_chip_flight_event("payout", winner, amount, DEALER_STATION_LAYOUT.get("pot_center", Vector2.ZERO), _actor_chip_source(after, winner), payout_delay, int(timing.get("payout_msec", 620))))
+					payout_end = maxi(payout_end, payout_delay + int(timing.get("payout_msec", 620)))
+	if cards.is_empty() and chips.is_empty() and payout.is_empty() and action_id != "deal":
+		return {}
+	var started := int(ui_state.get("surface_presentation_time_msec", ui_state.get("surface_time_msec", 0)))
+	var session := int(after.get("session_index", 0))
+	var hand := int(before.get("hand_number", after.get("hand_number", 0)))
+	var ordinal := int(after.get("action_ordinal", 0))
+	var identity := "%d:%d:%d" % [session, hand, ordinal]
+	return {
+		"kind": action_id,
+		"started_msec": started,
+		"card_id": "crew_poker_cards:%s" % identity if not cards.is_empty() or action_id == "deal" else "",
+		"card_duration_msec": maxi(card_end, collect_end if action_id == "deal" else 0),
+		"card_events": cards,
+		"chip_id": "crew_poker_chips:%s" % identity if not chips.is_empty() else "",
+		"chip_duration_msec": chip_end,
+		"chip_events": chips,
+		"payout_id": "crew_poker_payout:%s" % identity if not payout.is_empty() else "",
+		"payout_duration_msec": payout_end,
+		"payout_events": payout,
+		"showdown": after_phase == "idle" and int(after.get("hand_number", 0)) > int(before.get("hand_number", 0)),
+	}
+
+
+func _presentation_state_snapshot(state: Dictionary) -> Dictionary:
+	# Animation comparisons need a small immutable ledger, not the authoritative
+	# shoe, history, observations, ritual memory, or other live-hand payloads.
+	var seats: Array = []
+	for seat_value in _dict_array(state.get("seats", [])):
+		var seat: Dictionary = seat_value
+		seats.append({
+			"member_id": str(seat.get("member_id", "")),
+			"cards": _card_array(seat.get("cards", [])),
+			"active": bool(seat.get("active", false)),
+			"revealed": bool(seat.get("revealed", false)),
+			"stack": int(seat.get("stack", 0)),
+			"contribution": int(seat.get("contribution", 0)),
+			"round_contribution": int(seat.get("round_contribution", 0)),
+			"all_in": bool(seat.get("all_in", false)),
+		})
+	return {
+		"turn_engine": str(state.get("turn_engine", "legacy_v1")),
+		"phase": str(state.get("phase", "idle")),
+		"session_index": int(state.get("session_index", 0)),
+		"hand_number": int(state.get("hand_number", 0)),
+		"action_ordinal": int(state.get("action_ordinal", 0)),
+		"members": _string_array(state.get("members", [])),
+		"small_blind_actor": str(state.get("small_blind_actor", "")),
+		"big_blind_actor": str(state.get("big_blind_actor", "")),
+		"player_active": bool(state.get("player_active", true)),
+		"player_cards": _card_array(state.get("player_cards", [])),
+		"community_cards": _card_array(state.get("community_cards", [])),
+		"round_contributions": _poker_dict(state.get("round_contributions", {})),
+		"seats": seats,
+	}
+
+
+func _animation_tuning() -> Dictionary:
+	var value: Variant = CrewPokerModelScript.config().get("animation", {})
+	return value as Dictionary if typeof(value) == TYPE_DICTIONARY else {}
+
+
+func _append_collection_events(events: Array, state: Dictionary, deck_position: Vector2, duration_msec: int) -> void:
+	var player_cards := _card_array(state.get("player_cards", []))
+	for index in range(player_cards.size()):
+		var source := _actor_card_rect(state, PLAYER_ID, index)
+		events.append(_card_flight_event("collect", PLAYER_ID, index, player_cards[index], source.position, deck_position, source.size, Vector2(24, 35), 0, duration_msec, false))
+	for seat_value in _dict_array(state.get("seats", [])):
+		var seat: Dictionary = seat_value
+		var actor := str(seat.get("member_id", ""))
+		var hole := _card_array(seat.get("cards", []))
+		for index in range(mini(2, hole.size())):
+			var source := _actor_card_rect(state, actor, index)
+			events.append(_card_flight_event("collect", actor, index, HIDDEN_CARD, source.position, deck_position, source.size, Vector2(24, 35), 0, duration_msec, false))
+	var board := _card_array(state.get("community_cards", []))
+	for index in range(board.size()):
+		var source := _board_card_rect(index)
+		events.append(_card_flight_event("collect", "board", index, board[index], source.position, deck_position, source.size, Vector2(24, 35), 0, duration_msec, false))
+
+
+func _append_fold_events(events: Array, before: Dictionary, after: Dictionary, muck_position: Vector2, timing: Dictionary) -> void:
+	var duration := int(timing.get("fold_msec", 300))
+	if bool(before.get("player_active", true)) and not bool(after.get("player_active", true)):
+		for index in range(mini(2, _card_array(before.get("player_cards", [])).size())):
+			var source := _actor_card_rect(before, PLAYER_ID, index)
+			events.append(_card_flight_event("fold", PLAYER_ID, index, HIDDEN_CARD, source.position, muck_position, source.size, Vector2(24, 35), index * 45, duration, false))
+	var before_seats := _dict_array(before.get("seats", []))
+	for before_seat_value in before_seats:
+		var before_seat: Dictionary = before_seat_value
+		var actor := str(before_seat.get("member_id", ""))
+		var after_index := _seat_index(after, actor)
+		if after_index < 0 or not bool(before_seat.get("active", false)) or bool((after.get("seats", []) as Array)[after_index].get("active", false)):
+			continue
+		for index in range(mini(2, _card_array(before_seat.get("cards", [])).size())):
+			var source := _actor_card_rect(before, actor, index)
+			events.append(_card_flight_event("fold", actor, index, HIDDEN_CARD, source.position, muck_position, source.size, Vector2(24, 35), index * 45, duration, false))
+
+
+func _append_placed_chip_events(events: Array, before: Dictionary, after: Dictionary, timing: Dictionary) -> void:
+	var duration := int(timing.get("chip_slide_msec", 260))
+	for actor_value in _all_actor_ids(after):
+		var actor := str(actor_value)
+		var delta := _actor_round_contribution(after, actor) - _actor_round_contribution(before, actor)
+		if delta > 0:
+			events.append(_chip_flight_event("place", actor, delta, _actor_chip_source(after, actor), _actor_bet_center(after, actor), 0, duration))
+
+
+func _append_sweep_events(events: Array, before: Dictionary, duration_msec: int) -> void:
+	for actor_value in _all_actor_ids(before):
+		var actor := str(actor_value)
+		var amount := _actor_round_contribution(before, actor)
+		if amount > 0:
+			events.append(_chip_flight_event("sweep", actor, amount, _actor_bet_center(before, actor), DEALER_STATION_LAYOUT.get("pot_center", Vector2.ZERO), 0, duration_msec))
+
+
+func _card_flight_event(kind: String, actor: String, card_index: int, card_value: Variant, from_position: Vector2, to_position: Vector2, from_size: Vector2, to_size: Vector2, delay_msec: int, duration_msec: int, reveal_on_land: bool) -> Dictionary:
+	var card: Dictionary = (card_value as Dictionary).duplicate(true) if typeof(card_value) == TYPE_DICTIONARY else HIDDEN_CARD.duplicate()
+	return {"kind": kind, "actor": actor, "card_index": card_index, "card": card, "from": [from_position.x, from_position.y], "to": [to_position.x, to_position.y], "from_size": [from_size.x, from_size.y], "to_size": [to_size.x, to_size.y], "delay_msec": maxi(0, delay_msec), "duration_msec": maxi(1, duration_msec), "reveal_on_land": reveal_on_land}
+
+
+func _chip_flight_event(kind: String, actor: String, amount: int, from_position: Vector2, to_position: Vector2, delay_msec: int, duration_msec: int) -> Dictionary:
+	return {"kind": kind, "actor": actor, "amount": maxi(0, amount), "from": [from_position.x, from_position.y], "to": [to_position.x, to_position.y], "delay_msec": maxi(0, delay_msec), "duration_msec": maxi(1, duration_msec)}
+
+
+func _actor_card_rect(state: Dictionary, actor: String, card_index: int) -> Rect2:
+	if actor == PLAYER_ID:
+		return Rect2(Vector2(385, 245) + Vector2(card_index * 68, 0), Vector2(58, 81))
+	var seat_index := _seat_index(state, actor)
+	var count := mini(MAX_OPPONENT_SEATS, maxi(_dict_array(state.get("seats", [])).size(), _string_array(state.get("members", [])).size()))
+	var indices := _seat_layout_indices(maxi(1, count))
+	var layout: Dictionary = SEAT_LAYOUT[int(indices[clampi(seat_index, 0, indices.size() - 1)])]
+	return Rect2((layout.get("hole_card_origin", Vector2.ZERO) as Vector2) + Vector2(card_index * 27, 0), Vector2(24, 35))
+
+
+func _board_card_rect(card_index: int) -> Rect2:
+	return Rect2(Vector2(305, 158) + Vector2(card_index * 59, 0), Vector2(50, 70))
+
+
+func _actor_bet_center(state: Dictionary, actor: String) -> Vector2:
+	if actor == PLAYER_ID:
+		return Vector2(350, 280)
+	var seat_index := _seat_index(state, actor)
+	var indices := _seat_layout_indices(maxi(1, mini(MAX_OPPONENT_SEATS, _dict_array(state.get("seats", [])).size())))
+	return SEAT_LAYOUT[int(indices[clampi(seat_index, 0, indices.size() - 1)])].get("bet_chip_center", Vector2.ZERO)
+
+
+func _actor_chip_source(state: Dictionary, actor: String) -> Vector2:
+	if actor == PLAYER_ID:
+		return Vector2(326, 318)
+	var seat_index := _seat_index(state, actor)
+	var indices := _seat_layout_indices(maxi(1, mini(MAX_OPPONENT_SEATS, _dict_array(state.get("seats", [])).size())))
+	return SEAT_LAYOUT[int(indices[clampi(seat_index, 0, indices.size() - 1)])].get("character_foot", Vector2.ZERO)
+
+
+func _event_vector(value: Variant, fallback: Vector2 = Vector2.ZERO) -> Vector2:
+	if typeof(value) == TYPE_ARRAY and (value as Array).size() >= 2:
+		return Vector2(float((value as Array)[0]), float((value as Array)[1]))
+	return fallback
+
+
 func draw_surface(surface, state: Dictionary, _render_context: Dictionary = {}) -> bool:
 	if str(state.get("surface_renderer", "")) != "crew_draw_poker":
 		return false
 	surface.surface_begin_design_space(surface.surface_board_size())
+	_prepare_animation_draw_cache(state)
 	_draw_room(surface, state)
+	_draw_dealer_station(surface, state)
 	_draw_seats(surface, state)
 	_draw_shared_board(surface, state)
 	_draw_betting_chips(surface, state)
 	_draw_player(surface, state)
+	_draw_card_flights(surface, state)
+	_draw_chip_flights(surface, state)
 	if not bool(state.get("raise_panel_open", false)):
 		_draw_observation(surface, state)
 	_draw_controls(surface, state)
@@ -1266,10 +1617,27 @@ func surface_motion_signature(surface, state: Dictionary) -> Dictionary:
 	# the shared liveness probe verify the renderer itself moves, and that the
 	# accessibility freeze is not merely stopping redraw scheduling.
 	var phase := float(surface.surface_flicker()) if surface != null and surface.has_method("surface_flicker") else 0.0
+	var dealer_phase := sin(phase * 1.13 + float(str(state.get("dealer_member_id", "")).hash() % 17))
 	return {
 		"renderer": str(state.get("surface_renderer", "")),
 		"lamp_alpha_milli": int(round((0.50 + sin(phase * 1.7) * 0.08) * 1000.0)),
+		"dealer_shuffle_milli": int(round(dealer_phase * 1000.0)),
 	}
+
+
+func _prepare_animation_draw_cache(state: Dictionary) -> void:
+	var card_id := str(state.get("card_animation_id", ""))
+	if card_id != draw_card_events_cache_id:
+		draw_card_events_cache_id = card_id
+		draw_card_events_cache = state.get("card_animation_events", []) if typeof(state.get("card_animation_events", [])) == TYPE_ARRAY else []
+	var chip_identity := "%s|%s" % [str(state.get("chip_animation_id", "")), str(state.get("payout_animation_id", ""))]
+	if chip_identity != draw_chip_events_cache_id:
+		draw_chip_events_cache_id = chip_identity
+		draw_chip_events_cache = []
+		if typeof(state.get("chip_animation_events", [])) == TYPE_ARRAY:
+			draw_chip_events_cache.append_array(state.get("chip_animation_events", []))
+		if typeof(state.get("payout_animation_events", [])) == TYPE_ARRAY:
+			draw_chip_events_cache.append_array(state.get("payout_animation_events", []))
 
 
 func environment_object_state(_run_state: RunState, _environment: Dictionary) -> Dictionary:
@@ -1580,7 +1948,7 @@ func _showdown(state: Dictionary, run_state: RunState) -> Dictionary:
 	_update_player_tell_reputation(state, int(player_score.get("category", 0)), winners.has(PLAYER_ID))
 	var hand_label := str(player_score.get("label", "Hand")) if bool(state.get("player_active", true)) else "Your folded cards stay hidden"
 	var message := "%s. %s" % [hand_label, "You take $%d." % payout if raw_payout > 0 else "%s takes it." % _winner_names(winners)]
-	_finish_hand(state, run_state, {"winners": winners, "payout": payout, "message": message})
+	_finish_hand(state, run_state, {"winners": winners, "awards": awards, "payout": payout, "table_payout": raw_payout, "message": message})
 	return {"payout": payout, "authority_gaps": authority_gaps, "dependency_reason": "host_tell_observation_authority_unavailable" if not authority_gaps.is_empty() else "", "message": message}
 
 
@@ -1774,6 +2142,7 @@ func _start_new_session(state: Dictionary, environment: Dictionary) -> void:
 	state["session_swing"] = 0
 	state["session_settled"] = false
 	state["phase"] = "idle"
+	state["dealer_member_id"] = _derived_dealer_member_id(state, environment)
 	state["pot"] = 0
 	state["shoe"] = []
 	state["player_cards"] = []
@@ -1900,6 +2269,9 @@ func _table_state(environment: Dictionary) -> Dictionary:
 			migrated["table_talk_members_this_hand"] = []
 		if not migrated.has("npc_stacks"):
 			migrated["npc_stacks"] = {}
+		var migrated_dealer := str(migrated.get("dealer_member_id", ""))
+		if migrated_dealer.is_empty() or _string_array(migrated.get("members", [])).has(migrated_dealer):
+			migrated["dealer_member_id"] = _derived_dealer_member_id(migrated, environment)
 		# Version-two ordered saves contain a live five-card draw hand. Let that
 		# exact hand finish under its original rules, then switch at the safe hand
 		# boundary; this preserves every already-paid chip and hidden card.
@@ -1907,7 +2279,22 @@ func _table_state(environment: Dictionary) -> Dictionary:
 			migrated["turn_engine"] = "legacy_v1"
 			migrated["migrate_to_holdem_after_hand"] = true
 		return migrated
-	return {"schema": STATE_SCHEMA, "version": STATE_VERSION, "producer_id": "poker", "game_id": get_id(), "members": [], "phase": "idle", "hand_number": 0, "session_swing": 0, "session_settled": false, "session_index": 0, "night_id": _night_id(environment), "action_ordinal": 0, "observation_queue": [], "verified_observation_receipts": [], "pot": 0, "shoe": [], "player_cards": [], "community_cards": [], "burn_cards": [], "seats": [], "x": [], "beat": {}, "last_result": {}, "action_history": [], "session_memory": {}, "public_memory_receipt_id": "", "player_folded_hidden": false, "turn_engine": ORDERED_ENGINE if _ordered_engine(environment) else "legacy_v1", "button_index": 0, "turn_owner": "", "turn_order": [], "turn_cursor": 0, "current_bet": 0, "last_raise_size": int(CrewPokerModelScript.config().get("big_blind", CrewPokerModelScript.config().get("raise_unit", 2))), "round_contributions": {}, "acted_since_raise": [], "raise_count": 0, "player_active": true, "player_all_in": false, "player_stack": int(CrewPokerModelScript.config().get("buy_in", 60)), "player_contribution": 0, "dealer_actor": "", "small_blind_actor": "", "big_blind_actor": "", "player_signal": {}, "player_signal_history": [], "player_fake_tell_used_street": "", "tell_reputation": 50, "table_talk_history": [], "table_talk_hand_count": 0, "table_talk_last_ordinal": -999, "table_talk_members_this_hand": [], "npc_stacks": {}}
+	var empty_state := {"schema": STATE_SCHEMA, "version": STATE_VERSION, "producer_id": "poker", "game_id": get_id(), "members": [], "phase": "idle", "hand_number": 0, "session_swing": 0, "session_settled": false, "session_index": 0, "night_id": _night_id(environment), "action_ordinal": 0, "observation_queue": [], "verified_observation_receipts": [], "pot": 0, "shoe": [], "player_cards": [], "community_cards": [], "burn_cards": [], "seats": [], "x": [], "beat": {}, "last_result": {}, "action_history": [], "session_memory": {}, "public_memory_receipt_id": "", "player_folded_hidden": false, "turn_engine": ORDERED_ENGINE if _ordered_engine(environment) else "legacy_v1", "button_index": 0, "turn_owner": "", "turn_order": [], "turn_cursor": 0, "current_bet": 0, "last_raise_size": int(CrewPokerModelScript.config().get("big_blind", CrewPokerModelScript.config().get("raise_unit", 2))), "round_contributions": {}, "acted_since_raise": [], "raise_count": 0, "player_active": true, "player_all_in": false, "player_stack": int(CrewPokerModelScript.config().get("buy_in", 60)), "player_contribution": 0, "dealer_actor": "", "dealer_member_id": "", "small_blind_actor": "", "big_blind_actor": "", "player_signal": {}, "player_signal_history": [], "player_fake_tell_used_street": "", "tell_reputation": 50, "table_talk_history": [], "table_talk_hand_count": 0, "table_talk_last_ordinal": -999, "table_talk_members_this_hand": [], "npc_stacks": {}}
+	empty_state["dealer_member_id"] = _derived_dealer_member_id(empty_state, environment)
+	return empty_state
+
+
+func _derived_dealer_member_id(state: Dictionary, environment: Dictionary) -> String:
+	var members := _string_array(state.get("members", []))
+	var candidates: Array = []
+	for member_id in CrewStateModelScript.MEMBER_IDS:
+		if not members.has(str(member_id)):
+			candidates.append(str(member_id))
+	if candidates.is_empty():
+		return ""
+	var identity := "%s|%d|%s" % [str(environment.get("id", "crew_poker")), int(state.get("session_index", 0)), ",".join(members)]
+	var index := RngStream.derive_seed(1, 1, "crew_poker_dealer|%s" % identity) % candidates.size()
+	return str(candidates[index])
 
 
 func _update_environment_state(environment: Dictionary, state: Dictionary) -> void:
@@ -2072,10 +2459,16 @@ func _banter_for_state(state: Dictionary) -> String:
 	var members := _string_array(state.get("members", []))
 	if members.is_empty():
 		return "The bare table waits."
+	var hand_number := int(state.get("hand_number", 0))
+	var dealer_id := str(state.get("dealer_member_id", ""))
+	var dealer_lines: Dictionary = CrewPokerModelScript.config().get("dealer_banter", {}) if typeof(CrewPokerModelScript.config().get("dealer_banter", {})) == TYPE_DICTIONARY else {}
+	var dealer_options: Array = dealer_lines.get(dealer_id, []) if typeof(dealer_lines.get(dealer_id, [])) == TYPE_ARRAY else []
+	if str(state.get("phase", "idle")) == "idle" and not dealer_options.is_empty():
+		return str(dealer_options[hand_number % dealer_options.size()])
 	var lines: Dictionary = CrewPokerModelScript.config().get("banter", {}) if typeof(CrewPokerModelScript.config().get("banter", {})) == TYPE_DICTIONARY else {}
-	var member_id := str(members[int(state.get("hand_number", 0)) % members.size()])
+	var member_id := str(members[hand_number % members.size()])
 	var options: Array = lines.get(member_id, []) if typeof(lines.get(member_id, [])) == TYPE_ARRAY else []
-	return str(options[int(state.get("hand_number", 0)) % options.size()]) if not options.is_empty() else "%s cuts the deck." % MEMBER_NAMES.get(member_id, member_id)
+	return str(options[hand_number % options.size()]) if not options.is_empty() else "%s cuts the deck." % MEMBER_NAMES.get(member_id, member_id)
 
 
 func _crew_character_model(member_id: String) -> Dictionary:
@@ -2098,6 +2491,46 @@ func _draw_room(surface, state: Dictionary) -> void:
 	TableGameVisualsScript.draw_table(surface)
 
 
+func _draw_dealer_station(surface, state: Dictionary) -> void:
+	var dealer_id := str(state.get("dealer_member_id", ""))
+	if dealer_id.is_empty():
+		return
+	var model := _draw_dict_view(state.get("dealer_character_model", {}))
+	var foot: Vector2 = DEALER_STATION_LAYOUT.get("character_foot", Vector2.ZERO)
+	var scale := float(DEALER_STATION_LAYOUT.get("character_scale", 0.64))
+	var clock: float = float(surface.surface_flicker()) + float(absi(dealer_id.hash()) % 1900) / 1000.0
+	var dealing: bool = bool(surface.surface_animation_active(CARD_ANIMATION_CHANNEL))
+	var accent := Color(str(model.get("accent_color", "#d5d8e6")))
+	TableGameVisualsScript._draw_table_character(surface, {
+		"name": "",
+		"skin": Color(str(model.get("skin_color", "#c49371"))),
+		"hair": Color(str(model.get("hair_color", "#171022"))),
+		"jacket": Color(str(model.get("jacket_color", "#1d2030"))),
+		"accent": accent,
+		"pose": "snitch" if dealing else "idle",
+		"eye_offset": 1.0,
+		"blink": fposmod(clock, 3.2) > 3.02,
+		"holding_card": dealing,
+		"silhouette": str(model.get("silhouette", "coat")),
+	}, foot, scale, clock)
+	# Visor, sleeve bars, and apron make the stationary house dealer distinct
+	# from the rotating player button without changing shared character poses.
+	surface.draw_rect(Rect2(foot + Vector2(-10, -51) * scale, Vector2(20, 4) * scale), accent)
+	surface.draw_rect(Rect2(foot + Vector2(-20, -34) * scale, Vector2(40, 24) * scale), Color(accent.r, accent.g, accent.b, 0.24))
+	surface.draw_line(foot + Vector2(-27, -34) * scale, foot + Vector2(-34, -18) * scale, accent, 2.0)
+	surface.draw_line(foot + Vector2(27, -34) * scale, foot + Vector2(34, -18) * scale, accent, 2.0)
+	var deck_rect: Rect2 = DEALER_STATION_LAYOUT.get("deck_card_rect", Rect2())
+	if not dealing:
+		deck_rect.position += Vector2(sin(clock * 1.6) * 1.5, 0)
+	for offset in range(3):
+		PlayingCardRendererScript.draw_card_back(surface, Rect2(deck_rect.position + Vector2(offset * 2, -offset), deck_rect.size))
+	var muck_rect: Rect2 = DEALER_STATION_LAYOUT.get("muck_rect", Rect2())
+	for offset in range(2):
+		PlayingCardRendererScript.draw_card_back(surface, Rect2(muck_rect.position + Vector2(offset * 3, -offset), muck_rect.size))
+	surface.surface_label_centered("%s · DEALER" % str(state.get("dealer_name", "Crew")), DEALER_STATION_LAYOUT.get("name_label_rect", Rect2()), 8, accent)
+	surface.surface_label_centered("POT", Rect2(Vector2(565, 282), Vector2(50, 10)), 8, C_SOFT)
+
+
 func _draw_seats(surface, state: Dictionary) -> void:
 	var seats: Array = state.get("seats", []) if typeof(state.get("seats", [])) == TYPE_ARRAY else []
 	var members: Array = state.get("members", []) if typeof(state.get("members", [])) == TYPE_ARRAY else []
@@ -2111,7 +2544,7 @@ func _draw_seats(surface, state: Dictionary) -> void:
 		var model := _poker_dict(seat.get("character_model", {}))
 		if model.is_empty():
 			model = _crew_character_model(str(seat.get("member_id", "")))
-		var active := bool(seat.get("active", true))
+		var active := bool(seat.get("active", true)) or _fold_landing_waiting(surface, str(seat.get("member_id", "")))
 		var talking := bool(seat.get("conversation_active", false))
 		var last_action := str(seat.get("last_action", "waiting"))
 		var pose := "covered" if not active else "snitch" if talking or last_action in ["raise", "all_in"] else "watching" if str(state.get("turn_owner", "")) == str(seat.get("member_id", "")) else "idle"
@@ -2136,7 +2569,8 @@ func _draw_seats(surface, state: Dictionary) -> void:
 		}, layout.get("character_foot", Vector2.ZERO), clampf(float(model.get("scale", 1.0)) * 0.72 * portrait_scale, 0.66, 0.84), surface.surface_flicker() + animation_offset)
 		var cards := _draw_array_view(seat.get("cards", []))
 		for card_index in range(mini(2, cards.size())):
-			PlayingCardRendererScript.draw_card(surface, cards[card_index], Rect2((layout.get("hole_card_origin", Vector2.ZERO) as Vector2) + Vector2(card_index * 27, 0), Vector2(24, 35)))
+			if not _card_landing_waiting(surface, str(seat.get("member_id", "")), card_index):
+				PlayingCardRendererScript.draw_card(surface, cards[card_index], Rect2((layout.get("hole_card_origin", Vector2.ZERO) as Vector2) + Vector2(card_index * 27, 0), Vector2(24, 35)))
 		var action_text := str(seat.get("last_action", "")).replace("_", " ").capitalize()
 		if bool(seat.get("all_in", false)):
 			action_text = "ALL IN"
@@ -2166,7 +2600,7 @@ func _portrait_variant_eye_offset(variant: String) -> float:
 
 func _draw_button_marker(surface, center: Vector2) -> void:
 	surface.draw_circle(center, 9.0, C_WHITE)
-	surface.surface_label_centered("D", Rect2(center - Vector2(8, 8), Vector2(16, 16)), 9, C_DARK)
+	surface.surface_label_centered("B", Rect2(center - Vector2(8, 8), Vector2(16, 16)), 9, C_DARK)
 
 
 func _draw_shared_board(surface, state: Dictionary) -> void:
@@ -2175,7 +2609,8 @@ func _draw_shared_board(surface, state: Dictionary) -> void:
 	for index in range(5):
 		var rect := Rect2(start + Vector2(index * 59, 0), Vector2(50, 70))
 		if index < board.size():
-			PlayingCardRendererScript.draw_card(surface, board[index], rect)
+			if not _card_landing_waiting(surface, "board", index):
+				PlayingCardRendererScript.draw_card(surface, board[index], rect)
 		else:
 			surface.draw_rect(rect, Color(0.02, 0.08, 0.07, 0.55))
 			surface.draw_rect(rect, Color(C_TEAL.r, C_TEAL.g, C_TEAL.b, 0.32), false, 1.0)
@@ -2201,7 +2636,7 @@ func _chip_layout(state: Dictionary) -> Array:
 		layout.append(_chip_layout_entry(PLAYER_ID, player_amount, Vector2(350, 280), 2))
 	var swept_pot := maxi(0, int(state.get("pot", 0)) - current_round_total)
 	if swept_pot > 0:
-		layout.push_front(_chip_layout_entry("pot", swept_pot, Vector2(590, 270), 6))
+		layout.push_front(_chip_layout_entry("pot", swept_pot, DEALER_STATION_LAYOUT.get("pot_center", Vector2.ZERO), 6))
 	return layout
 
 
@@ -2243,7 +2678,7 @@ func _draw_betting_chips(surface, state: Dictionary) -> void:
 	var layout := _draw_array_view(state.get("chip_layout", []))
 	for entry_value in layout:
 		var entry: Dictionary = entry_value
-		_draw_chip_cluster(surface, int(entry.get("amount", 0)), entry.get("center", Vector2.ZERO), int(entry.get("max_stacks", 1)))
+		_draw_chip_cluster(surface, _resting_chip_amount(surface, entry), entry.get("center", Vector2.ZERO), int(entry.get("max_stacks", 1)))
 
 
 func _draw_chip_cluster(surface, amount: int, center: Vector2, max_stacks: int) -> void:
@@ -2277,11 +2712,99 @@ func _draw_player(surface, state: Dictionary) -> void:
 	var start := Vector2(385, 245)
 	for index in range(mini(2, cards.size())):
 		var rect := Rect2(start + Vector2(index * 68, 0), Vector2(58, 81))
-		PlayingCardRendererScript.draw_card(surface, cards[index], rect)
+		if not _card_landing_waiting(surface, PLAYER_ID, index):
+			PlayingCardRendererScript.draw_card(surface, cards[index], rect)
 	if str(state.get("dealer_actor", "")) == PLAYER_ID:
 		_draw_button_marker(surface, Vector2(522, 292))
 	if bool(state.get("player_all_in", false)):
 		surface.surface_label("ALL IN", Vector2(535, 286), 11, C_YELLOW)
+
+
+func _draw_card_flights(surface, _state: Dictionary) -> void:
+	if not surface.surface_animation_active(CARD_ANIMATION_CHANNEL):
+		return
+	var elapsed_msec := float(surface.surface_elapsed(CARD_ANIMATION_CHANNEL)) * 1000.0
+	for event_value in draw_card_events_cache:
+		var event: Dictionary = event_value
+		var delay := float(event.get("delay_msec", 0))
+		var duration := maxf(1.0, float(event.get("duration_msec", 1)))
+		if elapsed_msec < delay or elapsed_msec > delay + duration:
+			continue
+		var progress := TableGameVisualsScript.flight_progress(elapsed_msec, delay, duration)
+		var from_position := _event_vector(event.get("from", []))
+		var to_position := _event_vector(event.get("to", []))
+		var from_size := _event_vector(event.get("from_size", []), Vector2(24, 35))
+		var to_size := _event_vector(event.get("to_size", []), Vector2(24, 35))
+		var size := from_size.lerp(to_size, progress)
+		var position := TableGameVisualsScript.flight_position(from_position, to_position, progress, 16.0 if str(event.get("kind", "")) != "collect" else 9.0)
+		var reveal := bool(event.get("reveal_on_land", false))
+		var width_scale := TableGameVisualsScript.card_flip_width_scale(progress) if reveal else 1.0
+		var draw_size := Vector2(size.x * width_scale, size.y)
+		var rect := Rect2(position + Vector2((size.x - draw_size.x) * 0.5, 0), draw_size)
+		surface.draw_rect(Rect2(rect.position + Vector2(4, 5), rect.size), Color(0, 0, 0, 0.24))
+		var card: Variant = event.get("card", HIDDEN_CARD)
+		if reveal and progress < 0.82:
+			card = HIDDEN_CARD
+		PlayingCardRendererScript.draw_card(surface, card, rect)
+
+
+func _draw_chip_flights(surface, _state: Dictionary) -> void:
+	for event_value in draw_chip_events_cache:
+		var event: Dictionary = event_value
+		var channel := PAYOUT_ANIMATION_CHANNEL if str(event.get("kind", "")) == "payout" else CHIP_ANIMATION_CHANNEL
+		if not surface.surface_animation_active(channel):
+			continue
+		var elapsed_msec := float(surface.surface_elapsed(channel)) * 1000.0
+		var delay := float(event.get("delay_msec", 0))
+		var duration := maxf(1.0, float(event.get("duration_msec", 1)))
+		if elapsed_msec < delay or elapsed_msec > delay + duration:
+			continue
+		var progress := TableGameVisualsScript.flight_progress(elapsed_msec, delay, duration)
+		var center := TableGameVisualsScript.flight_position(_event_vector(event.get("from", [])), _event_vector(event.get("to", [])), progress, 10.0)
+		_draw_chip_cluster(surface, mini(8, maxi(1, int(event.get("amount", 1)))), center, 1)
+
+
+func _card_landing_waiting(surface, actor: String, card_index: int) -> bool:
+	if not surface.surface_animation_active(CARD_ANIMATION_CHANNEL):
+		return false
+	var elapsed_msec := float(surface.surface_elapsed(CARD_ANIMATION_CHANNEL)) * 1000.0
+	var latest_end := 0.0
+	for event_value in draw_card_events_cache:
+		var event: Dictionary = event_value
+		if str(event.get("actor", "")) == actor and int(event.get("card_index", -1)) == card_index and str(event.get("kind", "")) in ["deal", "board", "fold", "showdown_flip"]:
+			latest_end = maxf(latest_end, float(event.get("delay_msec", 0)) + float(event.get("duration_msec", 0)))
+	return latest_end > 0.0 and elapsed_msec < latest_end
+
+
+func _fold_landing_waiting(surface, actor: String) -> bool:
+	if not surface.surface_animation_active(CARD_ANIMATION_CHANNEL):
+		return false
+	var elapsed_msec := float(surface.surface_elapsed(CARD_ANIMATION_CHANNEL)) * 1000.0
+	for event_value in draw_card_events_cache:
+		var event: Dictionary = event_value
+		if str(event.get("kind", "")) == "fold" and str(event.get("actor", "")) == actor and elapsed_msec < float(event.get("delay_msec", 0)) + float(event.get("duration_msec", 0)):
+			return true
+	return false
+
+
+func _resting_chip_amount(surface, entry: Dictionary) -> int:
+	var amount := int(entry.get("amount", 0))
+	if not surface.surface_animation_active(CHIP_ANIMATION_CHANNEL):
+		return amount
+	var owner := str(entry.get("owner_id", ""))
+	var elapsed_msec := float(surface.surface_elapsed(CHIP_ANIMATION_CHANNEL)) * 1000.0
+	for event_value in draw_chip_events_cache:
+		var event: Dictionary = event_value
+		if str(event.get("kind", "")) == "payout":
+			continue
+		var end := float(event.get("delay_msec", 0)) + float(event.get("duration_msec", 0))
+		if elapsed_msec >= end:
+			continue
+		if str(event.get("kind", "")) == "place" and str(event.get("actor", "")) == owner:
+			amount -= int(event.get("amount", 0))
+		elif str(event.get("kind", "")) == "sweep" and owner == "pot":
+			amount -= int(event.get("amount", 0))
+	return maxi(0, amount)
 
 
 func _draw_observation(surface, state: Dictionary) -> void:
