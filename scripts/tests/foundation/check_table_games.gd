@@ -1020,6 +1020,7 @@ func _check_crew_poker_contract(library: ContentLibrary, failures: Array) -> voi
 	if int(split.get("a", 0)) != 4 or int(split.get("b", 0)) != 4 or int(split.get("c", 0)) != 3:
 		failures.append("Crew poker split-pot remainder math was not deterministic: %s." % JSON.stringify(split))
 	_check_crew_poker_save_compat(failures)
+	_check_crew_poker_personality_engine(game, failures)
 	var property_rng := RngStream.new()
 	property_rng.configure(8062)
 	for sample in range(300):
@@ -1236,6 +1237,186 @@ func _check_crew_poker_save_compat(failures: Array) -> void:
 
 func _poker_card(rank: int, suit: int) -> Dictionary:
 	return {"rank": rank, "suit": suit, "deck": 0}
+
+
+func _check_crew_poker_personality_engine(game: GameModule, failures: Array) -> void:
+	for failure_value in CrewPokerModelScript.validate_content(CrewPokerCrewStateScript.MEMBER_IDS):
+		failures.append("Crew poker personality schema: %s" % str(failure_value))
+	var preflop_cells := 0
+	for row_value in CrewPokerModelScript.PREFLOP_STRENGTH:
+		if typeof(row_value) == TYPE_ARRAY:
+			preflop_cells += (row_value as Array).size()
+	if preflop_cells != 169:
+		failures.append("Crew poker preflop table must contain exactly 169 deterministic hand classes.")
+	var deterministic_context := _poker_personality_scenario("aggression")
+	var deterministic_a := RngStream.new()
+	var deterministic_b := RngStream.new()
+	deterministic_a.configure(441177)
+	deterministic_b.configure(441177)
+	var decision_a := CrewPokerModelScript.holdem_decision("crew_switch", deterministic_context.get("hole", []), deterministic_context.get("board", []), deterministic_context.get("context", {}), deterministic_a)
+	var decision_b := CrewPokerModelScript.holdem_decision("crew_switch", deterministic_context.get("hole", []), deterministic_context.get("board", []), deterministic_context.get("context", {}), deterministic_b)
+	if JSON.stringify(decision_a) != JSON.stringify(decision_b) or JSON.stringify(deterministic_a.snapshot()) != JSON.stringify(deterministic_b.snapshot()) or int(decision_a.get("rng_draws", 0)) != CrewPokerModelScript.DECISION_RNG_DRAWS:
+		failures.append("Crew poker personality decision did not preserve its fixed five-draw deterministic RNG contract.")
+	var expectations := {
+		"looseness": ["continues", 1], "preflop_raise": ["aggressive", 1], "reraise": ["aggressive", 1], "limp": ["calls", 1], "position_awareness": ["continues", 1],
+		"aggression": ["aggressive", 1], "continuation_bet": ["aggressive", 1], "bluff": ["aggressive", 1], "semi_bluff": ["aggressive", 1], "stickiness": ["continues", 1],
+		"fold_to_pressure": ["folds", 1], "draw_chasing": ["continues", 1], "trap": ["traps", 1], "check_raise": ["aggressive", 1], "river_bluff": ["aggressive", 1],
+		"bet_size": ["target_mean", 1], "size_variance": ["target_range", 1], "overbet_shove": ["all_ins", 1], "tilt": ["aggressive", 1], "momentum": ["aggressive", 1],
+		"short_stack_gamble": ["all_ins", 1], "adapt_to_player": ["aggressive", 1], "signal_belief": ["folds", 1], "multiway_caution": ["folds", 1], "tell_leak": ["aggressive", -1],
+	}
+	for attribute in expectations.keys():
+		var low := _poker_personality_attribute_stats(str(attribute), 0)
+		var high := _poker_personality_attribute_stats(str(attribute), 100)
+		var expectation: Array = expectations.get(attribute, [])
+		var metric := str(expectation[0])
+		var direction := int(expectation[1])
+		var delta := float(high.get(metric, 0.0)) - float(low.get(metric, 0.0))
+		if delta * float(direction) <= 0.0:
+			failures.append("Crew poker personality attribute %s did not move %s in its defined direction: low=%s high=%s." % [attribute, metric, str(low.get(metric)), str(high.get(metric))])
+	var low_draw := CrewPokerModelScript.draw_indices([_poker_card(13, 0), _poker_card(9, 1), _poker_card(7, 2), _poker_card(4, 3), _poker_card(2, 0)], {"draw_caution": 0})
+	var high_draw := CrewPokerModelScript.draw_indices([_poker_card(13, 0), _poker_card(9, 1), _poker_card(7, 2), _poker_card(4, 3), _poker_card(2, 0)], {"draw_caution": 100})
+	if high_draw.size() >= low_draw.size():
+		failures.append("Crew poker legacy draw_caution did not retain the high card.")
+	var low_tells := 0
+	var high_tells := 0
+	for sample in range(400):
+		var low_rng := RngStream.new()
+		var high_rng := RngStream.new()
+		low_rng.configure(77100 + sample)
+		high_rng.configure(77100 + sample)
+		low_tells += 0 if CrewPokerModelScript.surface_pattern("crew_lucky", [_poker_card(14, 0), _poker_card(10, 1), _poker_card(8, 2), _poker_card(6, 3), _poker_card(3, 0)], "bet", -1, low_rng, "bluff", 0).is_empty() else 1
+		high_tells += 0 if CrewPokerModelScript.surface_pattern("crew_lucky", [_poker_card(14, 0), _poker_card(10, 1), _poker_card(8, 2), _poker_card(6, 3), _poker_card(3, 0)], "bet", -1, high_rng, "bluff", 100).is_empty() else 1
+	if high_tells <= low_tells:
+		failures.append("Crew poker tell_leak did not increase truthful bluff-tell frequency.")
+	_check_crew_poker_v3_personality_migration(game, failures)
+
+
+func _poker_personality_attribute_stats(attribute: String, value: int) -> Dictionary:
+	var profile := {}
+	for profile_attribute in CrewPokerModelScript.PROFILE_ATTRIBUTES:
+		profile[profile_attribute] = 50
+	profile[attribute] = value
+	var scenario := _poker_personality_scenario(attribute)
+	var result := {"continues": 0, "aggressive": 0, "calls": 0, "folds": 0, "traps": 0, "all_ins": 0, "target_sum": 0.0, "target_count": 0, "target_min": 9999, "target_max": -1}
+	for sample in range(240):
+		var rng := RngStream.new()
+		rng.configure(880000 + sample * 31)
+		var decision: Dictionary = CrewPokerModelScript.holdem_decision("crew_switch", scenario.get("hole", []), scenario.get("board", []), scenario.get("context", {}), rng, profile)
+		var action := str(decision.get("action", ""))
+		result["continues"] = int(result.get("continues", 0)) + (0 if action == "fold" else 1)
+		result["aggressive"] = int(result.get("aggressive", 0)) + (1 if action in ["bet", "raise", "all_in"] else 0)
+		result["calls"] = int(result.get("calls", 0)) + (1 if action == "call" else 0)
+		result["folds"] = int(result.get("folds", 0)) + (1 if action == "fold" else 0)
+		result["traps"] = int(result.get("traps", 0)) + (1 if str(decision.get("intent", "")) == "trap" else 0)
+		result["all_ins"] = int(result.get("all_ins", 0)) + (1 if action == "all_in" else 0)
+		if action in ["bet", "raise", "all_in"]:
+			var target := int(decision.get("target", 0))
+			result["target_sum"] = float(result.get("target_sum", 0.0)) + float(target)
+			result["target_count"] = int(result.get("target_count", 0)) + 1
+			result["target_min"] = mini(int(result.get("target_min", 9999)), target)
+			result["target_max"] = maxi(int(result.get("target_max", -1)), target)
+	result["target_mean"] = float(result.get("target_sum", 0.0)) / float(maxi(1, int(result.get("target_count", 0))))
+	result["target_range"] = maxi(0, int(result.get("target_max", 0)) - int(result.get("target_min", 0)))
+	return result
+
+
+func _poker_personality_scenario(attribute: String) -> Dictionary:
+	var preflop_context := {"street": "preflop", "amount_to_call": 2, "pot": 3, "stack": 60, "current_bet": 2, "current_contribution": 0, "minimum_raise_to": 4, "maximum_raise_to": 60, "can_raise": true, "raise_count": 0, "position": 50, "active_opponents": 3, "stack_big_blinds": 30.0, "player_reads": {"fold_rate": 0.35, "raise_rate": 0.2, "shown_bluff_rate": 0.0}, "observed_fold_rate": 0.3, "player_signal": {}, "signal_credibility": 50}
+	var postflop_context := {"street": "flop", "amount_to_call": 0, "pot": 18, "stack": 60, "current_bet": 0, "current_contribution": 0, "minimum_raise_to": 2, "maximum_raise_to": 60, "can_raise": true, "raise_count": 0, "position": 60, "active_opponents": 2, "stack_big_blinds": 30.0, "player_reads": {"fold_rate": 0.35, "raise_rate": 0.2, "shown_bluff_rate": 0.0}, "observed_fold_rate": 0.3, "player_signal": {}, "signal_credibility": 50}
+	var scenario := {"hole": [_poker_card(7, 0), _poker_card(3, 1)], "board": [], "context": preflop_context}
+	if attribute in ["preflop_raise", "reraise", "limp"]:
+		scenario["hole"] = [_poker_card(14, 0), _poker_card(13, 0)] if attribute != "limp" else [_poker_card(11, 0), _poker_card(8, 1)]
+	if attribute == "reraise":
+		preflop_context["raise_count"] = 1
+		preflop_context["current_bet"] = 6
+		preflop_context["amount_to_call"] = 6
+		preflop_context["pot"] = 12
+		preflop_context["minimum_raise_to"] = 10
+	if attribute == "position_awareness":
+		preflop_context["position"] = 100
+	if attribute in ["aggression", "continuation_bet", "bluff", "semi_bluff", "stickiness", "fold_to_pressure", "draw_chasing", "trap", "check_raise", "river_bluff", "bet_size", "size_variance", "overbet_shove", "adapt_to_player", "tell_leak"]:
+		scenario = {"hole": [_poker_card(14, 0), _poker_card(7, 1)], "board": [_poker_card(2, 0), _poker_card(9, 1), _poker_card(11, 2)], "context": postflop_context}
+	if attribute == "continuation_bet":
+		postflop_context["was_preflop_aggressor"] = true
+	if attribute in ["semi_bluff", "draw_chasing"]:
+		scenario["hole"] = [_poker_card(14, 0), _poker_card(13, 0)]
+		scenario["board"] = [_poker_card(12, 0), _poker_card(7, 0), _poker_card(2, 1)]
+	if attribute in ["stickiness", "fold_to_pressure", "draw_chasing"]:
+		postflop_context["amount_to_call"] = 7 if attribute == "stickiness" else 12 if attribute == "fold_to_pressure" else 35
+		postflop_context["current_bet"] = int(postflop_context["amount_to_call"])
+		postflop_context["pot"] = 18 if attribute == "stickiness" else 12 if attribute == "fold_to_pressure" else 15
+		postflop_context["minimum_raise_to"] = int(postflop_context["current_bet"]) + 2
+	if attribute == "fold_to_pressure":
+		scenario["hole"] = [_poker_card(9, 0), _poker_card(8, 1)]
+	if attribute == "draw_chasing":
+		scenario["hole"] = [_poker_card(14, 0), _poker_card(5, 0)]
+		scenario["board"] = [_poker_card(13, 0), _poker_card(7, 0), _poker_card(2, 1)]
+	if attribute in ["trap", "check_raise", "bet_size", "size_variance", "overbet_shove"]:
+		scenario["hole"] = [_poker_card(11, 0), _poker_card(11, 1)]
+		scenario["board"] = [_poker_card(11, 2), _poker_card(7, 0), _poker_card(2, 1)]
+	if attribute == "check_raise":
+		postflop_context["checked_this_street"] = true
+		postflop_context["amount_to_call"] = 6
+		postflop_context["current_bet"] = 6
+		postflop_context["minimum_raise_to"] = 8
+	if attribute == "river_bluff":
+		postflop_context["street"] = "river"
+		scenario["board"] = [_poker_card(2, 0), _poker_card(9, 1), _poker_card(11, 2), _poker_card(4, 3), _poker_card(12, 0)]
+	if attribute in ["tilt", "momentum", "short_stack_gamble"]:
+		scenario["hole"] = [_poker_card(11, 0), _poker_card(8, 1)] if attribute != "short_stack_gamble" else [_poker_card(14, 0), _poker_card(13, 0)]
+		preflop_context["tilt_level"] = 100 if attribute == "tilt" else 0
+		preflop_context["win_streak"] = 5 if attribute == "momentum" else 0
+		preflop_context["stack_big_blinds"] = 4.0 if attribute == "short_stack_gamble" else 30.0
+	if attribute == "adapt_to_player":
+		postflop_context["player_reads"] = {"fold_rate": 0.9, "raise_rate": 0.0, "shown_bluff_rate": 0.0}
+		postflop_context["observed_fold_rate"] = 0.85
+	if attribute == "signal_belief":
+		scenario["hole"] = [_poker_card(10, 0), _poker_card(6, 1)]
+		preflop_context["player_signal"] = {"street": "preflop", "style": "strong"}
+		preflop_context["signal_credibility"] = 90
+	if attribute == "multiway_caution":
+		scenario["hole"] = [_poker_card(10, 0), _poker_card(6, 1)]
+		preflop_context["active_opponents"] = 5
+	return scenario
+
+
+func _check_crew_poker_v3_personality_migration(game: GameModule, failures: Array) -> void:
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://scripts/tests/fixtures/crew_poker_v3_midhand.json"))
+	if typeof(parsed) != TYPE_DICTIONARY:
+		failures.append("Crew poker v3 personality migration fixture is unreadable.")
+		return
+	var fixture: Dictionary = parsed
+	var environment := {"id": "crew_poker_v3_migration", "archetype_id": "small_underground_casino", "kind": "crew", "layer_id": "back_room", "crew_poker_turn_engine": "ordered_v1", "game_ids": ["crew_draw_poker"], "game_states": {"crew_draw_poker": fixture.duplicate(true)}}
+	var migrated: Dictionary = game.call("_table_state", environment)
+	for key in ["members", "seats", "player_cards", "community_cards", "pot", "turn_owner", "turn_order", "current_bet"]:
+		if JSON.stringify(migrated.get(key)) != JSON.stringify(fixture.get(key)):
+			failures.append("Crew poker v3 personality migration changed live %s." % key)
+	if int(migrated.get("version", 0)) != CrewDrawPokerGameScript.STATE_VERSION or not (migrated.get("seat_temperament", {}) as Dictionary).has("crew_rook") or not (migrated.get("player_reads", {}) as Dictionary).has("actions") or not str((migrated.get("hand_lines", {}) as Dictionary).get("preflop_aggressor", "")).is_empty():
+		failures.append("Crew poker v3 personality migration did not add neutral temperament, reads, and line state.")
+	var final_a := _play_crew_poker_v3_fixture(game, fixture)
+	var final_b := _play_crew_poker_v3_fixture(game, fixture)
+	if str(final_a.get("phase", "")) != "idle" or JSON.stringify(final_a.get("last_result", {})) != JSON.stringify(final_b.get("last_result", {})) or JSON.stringify(final_a.get("action_history", [])) != JSON.stringify(final_b.get("action_history", [])):
+		failures.append("Crew poker v3 mid-hand fixture did not finish deterministically after migration.")
+
+
+func _play_crew_poker_v3_fixture(game: GameModule, fixture: Dictionary) -> Dictionary:
+	var run_state := RunState.new()
+	run_state.start_new("CREW-POKER-V3-PERSONALITY-MIGRATION")
+	run_state.bankroll = 500
+	for member_id in CrewPokerCrewStateScript.MEMBER_IDS:
+		run_state.crew_add_trust(str(member_id), CrewPokerCrewStateScript.rank_threshold("made"), "v3_personality_migration")
+	run_state.current_environment = {"id": "crew_poker_v3_migration", "archetype_id": "small_underground_casino", "kind": "crew", "layer_id": "back_room", "crew_poker_turn_engine": "ordered_v1", "game_ids": ["crew_draw_poker"], "game_states": {"crew_draw_poker": fixture.duplicate(true)}}
+	for step in range(80):
+		var table := _poker_table(run_state)
+		if str(table.get("phase", "")) == "idle":
+			break
+		var legal_ids: Array = []
+		for action_value in game.legal_actions(run_state, run_state.current_environment):
+			legal_ids.append(str((action_value as Dictionary).get("id", "")))
+		var action_id := "observe" if legal_ids.has("observe") else "call" if legal_ids.has("call") else "fold" if legal_ids.has("fold") else ""
+		if action_id.is_empty() or not bool(_poker_apply_action(game, run_state, action_id, {}, "v3_personality_%d" % step).get("ok", false)):
+			break
+	return _poker_table(run_state)
 
 
 func _check_crew_poker_rotation_and_gate(game: GameModule, failures: Array) -> void:
@@ -1815,6 +1996,7 @@ func _check_crew_poker_presentation_channels(game: GameModule, failures: Array) 
 
 func _check_crew_poker_hidden_leaks(run_state: RunState, save_projection: Variant, surfaces: Array, results: Array, failures: Array) -> void:
 	var forbidden: Array = ["state_key", "condition", "frequency_percent", "learned_exposures", "tell_learned"]
+	var private_personality_tokens: Array = ["policy", "profile_version", "seat_temperament", "tilt_level", "tilt_hands", "player_reads", "hand_lines", "decision_intent", "intent", "equity", "draw_outs"]
 	for member_id in CrewPokerCrewStateScript.MEMBER_IDS:
 		for pattern_value in CrewPokerModelScript.patterns(member_id):
 			var pattern: Dictionary = pattern_value
@@ -1838,6 +2020,12 @@ func _check_crew_poker_hidden_leaks(run_state: RunState, save_projection: Varian
 			# deliberately opaque short ids as substrings without exposing them.
 			if public_text.contains(JSON.stringify(token)):
 				failures.append("Crew poker hidden authored token '%s' leaked through the public %s projection." % [token, str(projection_name)])
+	for projection_name in ["surface", "action result", "story/log"]:
+		var public_text := JSON.stringify(projections[projection_name])
+		for token_value in private_personality_tokens:
+			var token := str(token_value)
+			if public_text.contains(JSON.stringify(token)):
+				failures.append("Crew poker private personality token '%s' leaked through the public %s projection." % [token, str(projection_name)])
 
 
 func _poker_install_table(game: GameModule, run_state: RunState, rng_scope: String, residents: Array) -> Dictionary:
