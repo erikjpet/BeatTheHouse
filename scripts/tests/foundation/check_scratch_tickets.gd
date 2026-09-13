@@ -31,6 +31,13 @@ func _check_scratch_tickets_surface_contract(game: GameModule, failures: Array) 
 	machine["scalper_present"] = false
 	environment["game_states"] = {"scratch_tickets": machine}
 	run_state.current_environment = environment
+	var room_object_state := game.environment_object_state(run_state, environment)
+	var room_visual: Dictionary = room_object_state.get("visual_state", {}) if typeof(room_object_state.get("visual_state", {})) == TYPE_DICTIONARY else {}
+	var room_rows: Array = room_visual.get("stock_rows", []) if typeof(room_visual.get("stock_rows", [])) == TYPE_ARRAY else []
+	if room_rows.size() != SCRATCH_IDS.size() or int(room_visual.get("stock_total", -1)) != int(game.call("_stock_total_from_rows", game.call("_stock_view", machine))):
+		failures.append("Scratch Tickets room prop did not publish the public stock rows and total.")
+	if JSON.stringify(room_object_state).contains("outcome") or JSON.stringify(room_object_state).contains("regions") or JSON.stringify(room_object_state).contains("active_ticket"):
+		failures.append("Scratch Tickets room prop leaked hidden ticket outcome or scratch-region state.")
 	if str(machine.get("schema", "")) != "scratch_ticket_machine_state" or _dict_array(machine.get("stock", [])).size() != SCRATCH_IDS.size():
 		failures.append("Scratch Tickets did not generate its scarce seven-ticket machine state.")
 	var surface := game.surface_state(run_state, environment, {})

@@ -1239,21 +1239,33 @@ static func numbers_interactable_objects(host: Variant) -> Array:
 		}))
 	var silas_here: bool = host.run_state.numbers_silas_is_here()
 	if silas_here:
+		var silas_dialogue_id := "silas_crow_numbers"
+		var silas_dialogue: Dictionary = host.library.dialogue(silas_dialogue_id)
+		var silas_speaker_source: Dictionary = silas_dialogue.get("speaker", {}) if typeof(silas_dialogue.get("speaker", {})) == TYPE_DICTIONARY else {}
+		var silas_actor: Dictionary = host._resolve_character_speaker(
+			host._normalized_talk_speaker(silas_speaker_source),
+			silas_dialogue_id,
+			str(silas_speaker_source.get("voice_line_key", "snitch"))
+		)
 		objects.append(host._make_interactable_object({
 			"object_id": "numbers:silas",
-			"object_type": host.CONTEXT_MODE_NUMBERS,
-			"source_id": "silas",
+			"object_type": host.CONTEXT_MODE_DIALOGUE,
+			"visual_type": "character",
+			"source_id": silas_dialogue_id,
 			"label": "Silas Crow",
-			"short_description": "Silas has something quiet to sell.",
+			"short_description": "A sharp-eyed floor informant selling routes, numbers, and expensive discretion.",
+			"identity_summary": host.EnvironmentInteractionViewModelScript.character_identity_summary(silas_actor),
+			"status_summary": "Silas smiles at both exits. He treats every fact as inventory and every conversation as a sale.",
 			"presence": "character",
 			"interactive": true,
 			"enabled": true,
-			"action_summary": "Talk business.",
+			"action_summary": "Start a quiet conversation.",
 			"visual_key": "character",
 			"prop": "patron_talk",
-			"icon_key": "dialogue",
-			"available_actions": [{"id": "open_numbers", "label": "Talk Business"}],
-			"confirm_action_id": "open_numbers",
+			"icon_key": "silas_crow",
+			"character_actor": silas_actor,
+			"available_actions": [{"id": "start_dialogue", "label": "Talk"}],
+			"confirm_action_id": "start_dialogue",
 			"focus_rect": host._interaction_rect_for_object("numbers:silas", "numbers_silas", 0),
 		}))
 	return objects

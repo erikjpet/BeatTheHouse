@@ -234,11 +234,52 @@ func environment_state_generated(run_state: RunState, environment: Dictionary, g
 
 func environment_object_state(run_state: RunState, environment: Dictionary) -> Dictionary:
 	var machine := _read_machine_state(run_state, environment)
+	var variation_id := str(machine.get("variation_id", "quarter_falls"))
+	var cabinet := _resolved_cabinet(variation_id)
+	var colors: Dictionary = cabinet.get("colors", {}) if typeof(cabinet.get("colors", {})) == TYPE_DICTIONARY else {}
+	var backglass: Dictionary = cabinet.get("backglass_display", {}) if typeof(cabinet.get("backglass_display", {})) == TYPE_DICTIONARY else {}
+	var simulation: Dictionary = machine.get("simulation", {}) if typeof(machine.get("simulation", {})) == TYPE_DICTIONARY else {}
+	var bodies: Array = simulation.get("bodies", []) if typeof(simulation.get("bodies", [])) == TYPE_ARRAY else []
+	var tray: Array = simulation.get("tray_ledger", []) if typeof(simulation.get("tray_ledger", [])) == TYPE_ARRAY else []
+	var feature_kind := "rider" if variation_id == "quarter_falls" else "puck" if variation_id == "jackpot_ridge" else "fragment"
+	var feature_count := 0
+	for body_value in bodies:
+		if typeof(body_value) == TYPE_DICTIONARY and str((body_value as Dictionary).get("kind", "coin")) == feature_kind:
+			feature_count += 1
+	var busy := _machine_busy(environment)
+	var locked := bool(machine.get("locked_down", false))
+	var variation_state: Dictionary = machine.get("variation_state", {}) if typeof(machine.get("variation_state", {})) == TYPE_DICTIONARY else {}
 	return {
-		"coin_pusher_locked": bool(machine.get("locked_down", false)) or _machine_busy(environment),
-		"coin_pusher_busy": _machine_busy(environment),
+		"display_name": _variation_display_name(variation_id),
+		"coin_pusher_locked": locked or busy,
+		"coin_pusher_busy": busy,
 		"staff_watch": bool(machine.get("staff_watch_memory", false)),
-		"status_line": "Machine occupied by the convoy." if _machine_busy(environment) else "Attendant keeps eyes on this cabinet." if bool(machine.get("staff_watch_memory", false)) else "%s waits under a live pile." % _variation_display_name(str(machine.get("variation_id", "quarter_falls"))),
+		"runtime_state": {
+			"active": locked or busy,
+			"status_label": "LOCKED" if locked else "OCCUPIED" if busy else "",
+		},
+		"visual_state": {
+			"identity": str(cabinet.get("identity", variation_id)),
+			"marquee": str(cabinet.get("marquee", _variation_display_name(variation_id))).to_upper(),
+			"palette": str(cabinet.get("palette", "carnival_brass_red")),
+			"topper_style": str(cabinet.get("topper_style", "crown_lights")),
+			"backglass_style": str(backglass.get("style", "prize_showcase")),
+			"body_color": Color(str(colors.get("body", "#6f2028"))),
+			"side_color": Color(str(colors.get("side", "#3c111b"))),
+			"trim_color": Color(str(colors.get("trim", "#e7b84f"))),
+			"light_color": Color(str(colors.get("light", "#fff0a6"))),
+			"glass_color": Color(str(colors.get("glass", "#82c9d8"))),
+			"deck_color": Color(str(colors.get("deck", "#173b42"))),
+			"platform_color": Color(str(colors.get("platform", "#d49c42"))),
+			"backglass_color": Color(str(colors.get("backglass", "#46131c"))),
+			"pile_count": bodies.size(),
+			"feature_count": feature_count,
+			"tray_count": tray.size(),
+			"ridge_multiplier": JackpotRidgeScript.payout_multiplier(variation_state) if variation_id == "jackpot_ridge" else 1,
+			"vault_meter": int(variation_state.get("meter_value", 0)) if variation_id == "vault_drop" else 0,
+			"vault_fragments": int(variation_state.get("banked_fragments", 0)) if variation_id == "vault_drop" else 0,
+		},
+		"status_line": "Machine occupied by the convoy." if busy else "Attendant keeps eyes on this cabinet." if bool(machine.get("staff_watch_memory", false)) else "%s waits under a live pile." % _variation_display_name(variation_id),
 	}
 
 

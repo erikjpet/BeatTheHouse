@@ -174,7 +174,7 @@ static func interactable_object_view_list(run_state: RunState, library: ContentL
 			var runtime_status := str(fixture_runtime_state.get("status_label", "")).strip_edges()
 			if not runtime_status.is_empty():
 				description = "%s Status: %s." % [description, runtime_status]
-			var label := str(definition.get("display_name", _label_from_id(game_id)))
+			var label := str(fixture_object_state.get("display_name", definition.get("display_name", _label_from_id(game_id))))
 			if fixture_count > 1:
 				label = "%s %d" % [label, fixture_index + 1]
 			objects.append(_object_with_rect({

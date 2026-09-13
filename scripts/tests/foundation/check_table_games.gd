@@ -30,6 +30,10 @@ func _check_craps_surface_contract(game: GameModule, failures: Array, library: C
 	run_state.grand_casino_chips = 10000
 	environment = run_state.current_environment
 	var surface := game.surface_state(run_state, environment, {})
+	var casino_room_state := game.environment_object_state(run_state, environment)
+	var casino_room_visual: Dictionary = casino_room_state.get("visual_state", {}) if typeof(casino_room_state.get("visual_state", {})) == TYPE_DICTIONARY else {}
+	if str(casino_room_visual.get("variant", "")) != "casino" or not casino_room_visual.has("last_die_a") or not casino_room_visual.has("last_die_b"):
+		failures.append("Casino Craps room prop did not publish its public table variant, point, and dice.")
 	if str(surface.get("surface_renderer", "")) != "craps":
 		failures.append("Craps surface did not route to its module-owned renderer.")
 	_check_idle_animation_liveness_contract(surface, "Craps betting surface", failures)
@@ -147,6 +151,10 @@ func _check_craps_street_variant(game: GameModule, library: ContentLibrary, fail
 		failures.append("Street Craps info-card selection mutated a JSON-round-tripped serialized RunState before an action boundary.")
 	_check_craps_open_then_play_determinism(game, run_state, {"craps_pending_bets": {"pass_line": 2}}, 2, "Street Craps", failures)
 	var surface := game.surface_state(run_state, run_state.current_environment, {})
+	var street_room_state := game.environment_object_state(run_state, run_state.current_environment)
+	var street_room_visual: Dictionary = street_room_state.get("visual_state", {}) if typeof(street_room_state.get("visual_state", {})) == TYPE_DICTIONARY else {}
+	if str(street_room_visual.get("variant", "")) != "street_craps" or not street_room_visual.has("dispersed"):
+		failures.append("Street Craps room prop did not publish the chalk-circle variant and dispersed state.")
 	var street_harness := SurfaceHarness.new()
 	street_harness.setup(surface)
 	game.draw_surface(street_harness, surface, {"contract_harness": true})
@@ -7335,6 +7343,10 @@ func _check_bar_dice_surface_contract(game: GameModule, failures: Array) -> void
 	if generated_state.is_empty():
 		failures.append("Bar Dice did not generate table identity state.")
 	environment["game_states"] = {"bar_dice": generated_state}
+	var room_state := game.environment_object_state(run_state, environment)
+	var room_visual: Dictionary = room_state.get("visual_state", {}) if typeof(room_state.get("visual_state", {})) == TYPE_DICTIONARY else {}
+	if str(room_visual.get("variant", "")) != "bar_dice" or not room_visual.has_all(["die_0", "die_1", "die_2", "die_3", "die_4", "pot"]):
+		failures.append("Bar Dice room prop did not publish its public cup, dice, and carryover-pot state.")
 	var surface := game.surface_state(run_state, environment, {})
 	if str(surface.get("surface_renderer", "")) != "dice_table":
 		failures.append("Bar Dice surface did not route to the dice-table renderer.")

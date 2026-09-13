@@ -19,6 +19,10 @@ const DrunkDistortionOverlayScript := preload("res://scripts/ui/drunk_distortion
 const HeatFeedbackVisualsScript := preload("res://scripts/ui/heat_feedback_visuals.gd")
 const TableGameVisualsScript := preload("res://scripts/games/table_game_visuals.gd")
 const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
+const CoinPusherRoomPropScript := preload("res://scripts/ui/game_props/coin_pusher_room_prop.gd")
+const ScratchTicketRoomPropScript := preload("res://scripts/ui/game_props/scratch_ticket_room_prop.gd")
+const CrapsRoomPropScript := preload("res://scripts/ui/game_props/craps_room_prop.gd")
+const BarDiceRoomPropScript := preload("res://scripts/ui/game_props/bar_dice_room_prop.gd")
 const CATEGORY_AUTHORED_TYPES := ["event", "item"]
 
 const C_DARK := VisualStyleScript.DARK
@@ -3395,12 +3399,18 @@ func _production_game_prop(object_data: Dictionary) -> String:
 	# Coin Pusher was authored with the historical slot_machine alias, which the
 	# room renderer did not implement and therefore drew as a card table.
 	if source_id == "coin_pusher" or family == "coin_pusher":
-		return "coin_pusher_machine"
+		return "coin_pusher_room"
+	if source_id == "scratch_tickets":
+		return "scratch_ticket_room"
+	if source_id == "craps":
+		return "craps_room"
+	if source_id == "bar_dice":
+		return "bar_dice_room"
 	if source_id == "video_poker" or authored == "video_poker_machine":
 		return "video_poker_machine"
 	if source_id == "roulette" or family == "wheel" or authored == "roulette_table":
 		return "roulette_table"
-	if source_id in ["slot", "pull_tabs", "scratch_tickets"] or family in ["slots", "novelty"]:
+	if source_id in ["slot", "pull_tabs"] or family in ["slots", "novelty"]:
 		return "machine"
 	if not authored.is_empty():
 		return authored
@@ -5430,12 +5440,16 @@ func _draw_game_prop(rect: Rect2, object_data: Dictionary, selected: bool) -> vo
 		var game_key := str(object_data.get("source_id", object_data.get("icon_key", "")))
 		if game_key == "pull_tabs":
 			_draw_pull_tab_machine_prop(rect, object_data, accent, selected, disabled)
-		elif game_key == "scratch_tickets":
-			_draw_scratch_ticket_machine_prop(rect, object_data, accent, selected, disabled)
 		else:
 			_draw_slot_cabinet_prop(rect, object_data, accent, selected, disabled)
-	elif prop == "coin_pusher_machine":
-		_draw_coin_pusher_room_prop(rect, object_data, accent, selected, disabled)
+	elif prop == "coin_pusher_room":
+		CoinPusherRoomPropScript.draw(self, rect, object_data, accent, selected, disabled, flicker)
+	elif prop == "scratch_ticket_room":
+		ScratchTicketRoomPropScript.draw(self, rect, object_data, accent, selected, disabled, flicker)
+	elif prop == "craps_room":
+		CrapsRoomPropScript.draw(self, rect, object_data, accent, selected, disabled, flicker)
+	elif prop == "bar_dice_room":
+		BarDiceRoomPropScript.draw(self, rect, object_data, accent, selected, disabled, flicker)
 	elif prop == "video_poker_machine":
 		_draw_video_poker_machine_prop(rect, object_data, accent, selected, disabled)
 	elif prop == "baccarat_table":
@@ -5459,7 +5473,19 @@ func _draw_low_detail_game_prop(rect: Rect2, object_data: Dictionary, accent: Co
 	var source_id := str(object_data.get("source_id", object_data.get("icon_key", "")))
 	var base_alpha := 0.18 if disabled else 0.30
 	draw_rect(Rect2(rect.position + Vector2(rect.size.x * 0.12, rect.size.y * 0.82), Vector2(rect.size.x * 0.76, 4)), Color(accent.r, accent.g, accent.b, base_alpha))
-	if prop in ["machine", "video_poker_machine", "coin_pusher_machine"]:
+	if prop == "coin_pusher_room":
+		CoinPusherRoomPropScript.draw_low_detail(self, rect, object_data, accent, disabled, flicker)
+		return
+	if prop == "scratch_ticket_room":
+		ScratchTicketRoomPropScript.draw_low_detail(self, rect, object_data, accent, disabled, flicker)
+		return
+	if prop == "craps_room":
+		CrapsRoomPropScript.draw_low_detail(self, rect, object_data, accent, disabled, flicker)
+		return
+	if prop == "bar_dice_room":
+		BarDiceRoomPropScript.draw_low_detail(self, rect, object_data, accent, disabled, flicker)
+		return
+	if prop in ["machine", "video_poker_machine"]:
 		var cabinet := Rect2(rect.position + Vector2(rect.size.x * 0.24, rect.size.y * 0.18), Vector2(rect.size.x * 0.52, rect.size.y * 0.58))
 		draw_rect(cabinet, Color("#090a14"))
 		draw_rect(cabinet, Color(accent.r, accent.g, accent.b, 0.18), false, 1)
@@ -5470,7 +5496,7 @@ func _draw_low_detail_game_prop(rect: Rect2, object_data: Dictionary, accent: Co
 		for i in range(3):
 			var reel := Rect2(screen.position + Vector2(3.0 + float(i) * screen.size.x * 0.30, 3.0), Vector2(screen.size.x * 0.18, maxf(5.0, screen.size.y - 6.0)))
 			draw_rect(reel, _cycle_color(i * 23 + int(rect.position.x)).darkened(0.10))
-		var label := "PUSH" if prop == "coin_pusher_machine" else "SLOT" if source_id == "slot" else "TIX" if source_id in ["pull_tabs", "scratch_tickets"] else "POKER"
+		var label := "SLOT" if source_id == "slot" else "TIX" if source_id == "pull_tabs" else "POKER"
 		var font := get_theme_default_font()
 		draw_string(font, cabinet.position + Vector2(2.0, cabinet.size.y * 0.82), _fit_draw_text(label, font, 7, cabinet.size.x - 4.0), HORIZONTAL_ALIGNMENT_CENTER, cabinet.size.x - 4.0, 7, C_YELLOW)
 	else:
@@ -6111,48 +6137,6 @@ func _silhouette(pos: Vector2, scale_value: float, color: Color) -> void:
 
 func _slot_machine(rect: Rect2, accent: Color) -> void:
 	_draw_slot_cabinet_prop(rect, {"label": "SLOT", "source_id": "ambient_slot"}, accent, false, false)
-
-
-func _draw_scratch_ticket_machine_prop(rect: Rect2, object_data: Dictionary, accent: Color, selected: bool, disabled: bool = false) -> void:
-	var cabinet := Rect2(rect.position + Vector2(rect.size.x * 0.18, rect.size.y * 0.10), Vector2(rect.size.x * 0.64, rect.size.y * 0.74))
-	draw_rect(cabinet, Color("#171019"))
-	draw_rect(cabinet, accent, false, 2.0)
-	var display := Rect2(cabinet.position + Vector2(cabinet.size.x * 0.12, cabinet.size.y * 0.10), Vector2(cabinet.size.x * 0.76, cabinet.size.y * 0.26))
-	draw_rect(display, Color("#f0d9a8"))
-	for row in range(2):
-		for column in range(3):
-			var ticket := Rect2(display.position + Vector2(3.0 + column * display.size.x * 0.32, 3.0 + row * display.size.y * 0.48), Vector2(display.size.x * 0.26, display.size.y * 0.36))
-			draw_rect(ticket, _cycle_color(row * 31 + column * 17))
-			draw_line(ticket.position + Vector2(2.0, ticket.size.y * 0.5), ticket.end - Vector2(2.0, ticket.size.y * 0.5), C_WHITE, 1.0)
-	var tray := Rect2(cabinet.position + Vector2(cabinet.size.x * 0.18, cabinet.size.y * 0.62), Vector2(cabinet.size.x * 0.64, cabinet.size.y * 0.12))
-	draw_rect(tray, Color("#07070c"))
-	draw_rect(tray, C_YELLOW, false, 1.0)
-	_neon_text("SCRATCH", cabinet.position + Vector2(cabinet.size.x * 0.12, cabinet.size.y * 0.52), 8, C_YELLOW)
-	_draw_game_object_icon(object_data, _centered_icon_rect(rect, 22.0, Vector2(rect.size.x * 0.28, -rect.size.y * 0.22)), accent, selected, disabled)
-	if selected: draw_rect(cabinet.grow(3.0), C_WHITE, false, 2.0)
-	if disabled: draw_rect(cabinet, Color(0.0, 0.0, 0.0, 0.48))
-
-
-func _draw_coin_pusher_room_prop(rect: Rect2, object_data: Dictionary, accent: Color, selected: bool, disabled: bool = false) -> void:
-	var cabinet := Rect2(rect.position + Vector2(rect.size.x * 0.10, rect.size.y * 0.08), Vector2(rect.size.x * 0.80, rect.size.y * 0.78))
-	draw_rect(cabinet, Color("#10111a"))
-	draw_rect(cabinet, accent, false, 2.0)
-	var glass := Rect2(cabinet.position + Vector2(cabinet.size.x * 0.10, cabinet.size.y * 0.12), Vector2(cabinet.size.x * 0.80, cabinet.size.y * 0.50))
-	draw_rect(glass, Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.16))
-	draw_rect(glass, C_CYAN, false, 1.0)
-	var shelf_y := glass.position.y + glass.size.y * 0.64
-	draw_rect(Rect2(glass.position + Vector2(3.0, glass.size.y * 0.56), Vector2(glass.size.x - 6.0, 5.0)), Color("#57515c"))
-	for index in range(8):
-		var coin_x := glass.position.x + 6.0 + float(index % 4) * maxf(6.0, (glass.size.x - 12.0) / 4.0)
-		var coin_y := shelf_y - float(index / 4) * 7.0
-		draw_circle(Vector2(coin_x, coin_y), 3.0, C_YELLOW)
-	var chute := Rect2(cabinet.position + Vector2(cabinet.size.x * 0.22, cabinet.size.y * 0.70), Vector2(cabinet.size.x * 0.56, cabinet.size.y * 0.12))
-	draw_rect(chute, Color("#050509"))
-	draw_rect(chute, C_PINK, false, 1.0)
-	_neon_text("PUSH", cabinet.position + Vector2(cabinet.size.x * 0.28, cabinet.size.y * 0.10), 8, C_YELLOW)
-	_draw_game_object_icon(object_data, _centered_icon_rect(rect, 22.0, Vector2(rect.size.x * 0.30, -rect.size.y * 0.24)), accent, selected, disabled)
-	if selected: draw_rect(cabinet.grow(3.0), C_WHITE, false, 2.0)
-	if disabled: draw_rect(cabinet, Color(0.0, 0.0, 0.0, 0.48))
 
 
 func _draw_roulette_room_prop(rect: Rect2, object_data: Dictionary, accent: Color, selected: bool, disabled: bool = false) -> void:

@@ -116,14 +116,15 @@ static func _check_observable_action_consequence(failures: Array) -> void:
 	if str(canvas.call("_fallback_event_prop", "scenario_scene", "", "opened exit")) != "side_door":
 		failures.append("Fallback prop selection does not consume public scene-object state.")
 	var expected_game_props := {
-		"scratch_tickets": ["novelty", "machine"],
+		"scratch_tickets": ["novelty", "scratch_ticket_room"],
 		"pull_tabs": ["novelty", "machine"],
 		"slot": ["slots", "machine"],
-		"bar_dice": ["dice", "dice_table"],
+		"bar_dice": ["dice", "bar_dice_room"],
+		"craps": ["dice", "craps_room"],
 		"blackjack": ["cards", "card_table"],
 		"roulette": ["wheel", "roulette_table"],
 		"video_poker": ["cards", "video_poker_machine"],
-		"coin_pusher": ["coin_pusher", "coin_pusher_machine"],
+		"coin_pusher": ["coin_pusher", "coin_pusher_room"],
 	}
 	for source_value in expected_game_props.keys():
 		var source_id := str(source_value)
