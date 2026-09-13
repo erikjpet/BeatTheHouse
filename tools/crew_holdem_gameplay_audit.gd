@@ -36,6 +36,7 @@ func _init() -> void:
 	_check_multiway_split(failures)
 	_check_night_rituals(game, failures)
 	_check_three_member_save(game, failures)
+	_check_dealer_migration_and_roles(game, failures)
 	var end_to_end := _check_two_hand_session_reload(game, failures)
 	var performance := _check_performance(game, failures)
 	var distributions := {
@@ -61,6 +62,11 @@ func _init() -> void:
 			failures.append("Fake Tell consumed or displaced the player's betting turn.")
 		if not bool(accepted.get("hidden_hole_cards", false)):
 			failures.append("An opponent hole-card projection leaked before showdown.")
+		if not bool(accepted.get("animation_hidden_information", false)):
+			failures.append("A card-flight event leaked an opponent hole card or burn card.")
+		for animation_kind in ["deal", "place", "sweep", "burn", "board", "showdown_flip", "payout"]:
+			if not (accepted.get("animation_event_kinds", []) as Array).has(animation_kind):
+				failures.append("The complete Hold'em hand did not emit %s presentation evidence." % animation_kind)
 		if int(accepted.get("max_board_cards", 0)) != 5:
 			failures.append("The shared board did not reach five visible cards.")
 		if int(accepted.get("burn_card_count", 0)) != 3:
@@ -386,12 +392,34 @@ func _check_three_member_save(game: GameModule, failures: Array[String]) -> void
 		failures.append("Reloaded three-member table did not finish with its original roster intact.")
 
 
+func _check_dealer_migration_and_roles(game: GameModule, failures: Array[String]) -> void:
+	for opponent_count in [5, 3]:
+		var members: Array = CrewStateModelScript.MEMBER_IDS.slice(0, opponent_count)
+		var old_state := {"schema": CrewPokerGameScript.STATE_SCHEMA, "version": CrewPokerGameScript.STATE_VERSION, "members": members, "phase": "preflop", "session_index": 3, "hand_number": 1, "pot": 19, "turn_owner": str(members[0]), "seats": [], "player_cards": [_card(14, 0), _card(13, 1)], "shoe": []}
+		var environment := {"id": "crew_poker_dealer_migration_%d" % opponent_count, "crew_poker_turn_engine": "ordered_v1", "game_states": {"crew_draw_poker": old_state}}
+		var migrated := game.call("_table_state", environment) as Dictionary
+		var dealer_id := str(migrated.get("dealer_member_id", ""))
+		if dealer_id.is_empty() or members.has(dealer_id) or dealer_id != str((game.call("_table_state", environment) as Dictionary).get("dealer_member_id", "")):
+			failures.append("The %d-opponent pre-dealer save did not migrate to one stable unseated dealer." % opponent_count)
+		if int(migrated.get("pot", 0)) != 19 or str(migrated.get("turn_owner", "")) != str(members[0]) or JSON.stringify(migrated.get("player_cards", [])) != JSON.stringify(old_state.get("player_cards", [])):
+			failures.append("Dealer migration changed authoritative live-hand state for %d opponents." % opponent_count)
+		var seats: Array = []
+		for member_id in members:
+			seats.append({"member_id": member_id, "active": true, "last_action": "waiting"})
+		migrated["seats"] = seats
+		var ritual_ids: Array = []
+		for actor_value in game.call("_ordered_ritual_actors", migrated):
+			ritual_ids.append(str((actor_value as Dictionary).get("id", "")))
+		if ritual_ids.has(dealer_id):
+			failures.append("The house dealer entered an opponent ritual group in the %d-seat migration." % opponent_count)
+
+
 func _check_two_hand_session_reload(game: GameModule, failures: Array[String]) -> Dictionary:
 	for seed in range(15000, 15064):
 		var attempt := _two_hand_session_attempt(game, seed)
 		if bool(attempt.get("passed", false)):
 			return attempt
-	failures.append("No five-opponent production session completed two showdowns with a stable mid-hand reload.")
+	failures.append("No five-opponent production session completed three showdowns with a stable mid-animation reload.")
 	return {"passed": false}
 
 
@@ -419,18 +447,23 @@ func _two_hand_session_attempt(game: GameModule, seed: int) -> Dictionary:
 	var current_run: RunState = run_state
 	var showdown_count := 0
 	var reload_preserved := false
+	var mid_animation_no_replay := false
 	var hand_signatures: Array = []
-	for hand_index in range(2):
-		if not bool(_apply(game, current_run, "deal", {}, seed + hand_index * 1000).get("ok", false)):
+	for hand_index in range(3):
+		var deal_result := _apply(game, current_run, "deal", {"surface_time_msec": 1000, "surface_presentation_time_msec": 1000}, seed + hand_index * 1000)
+		if not bool(deal_result.get("ok", false)):
 			return {"passed": false, "seed": seed, "failure": "deal_%d" % hand_index}
 		if hand_index == 1:
 			var before: Dictionary = current_run.current_environment.get("game_states", {}).get("crew_draw_poker", {}).duplicate(true)
+			var serialized := JSON.stringify(current_run.to_dict())
 			var restored := RunStateScript.new()
 			restored.from_dict(current_run.to_dict())
 			var after: Dictionary = restored.current_environment.get("game_states", {}).get("crew_draw_poker", {})
 			reload_preserved = true
 			for key in ["members", "seats", "shoe", "player_cards", "pot", "turn_owner", "turn_order", "button_index"]:
 				reload_preserved = reload_preserved and JSON.stringify(before.get(key)) == JSON.stringify(after.get(key))
+			var restored_surface := game.surface_state(restored, restored.current_environment, {})
+			mid_animation_no_replay = not serialized.contains("poker_animation") and (restored_surface.get("surface_animation_channels", []) as Array).is_empty()
 			current_run = restored
 		var steps := 0
 		while steps < 160:
@@ -451,10 +484,11 @@ func _two_hand_session_attempt(game: GameModule, seed: int) -> Dictionary:
 		showdown_count += 1 if reached_showdown else 0
 		hand_signatures.append({"hand_number": final_table.get("hand_number", 0), "showdown": reached_showdown, "result": final_table.get("last_result", {})})
 	return {
-		"passed": showdown_count == 2 and reload_preserved and (generated.get("members", []) as Array).size() == CrewPokerGameScript.MAX_OPPONENT_SEATS,
+		"passed": showdown_count == 3 and reload_preserved and mid_animation_no_replay and (generated.get("members", []) as Array).size() == CrewPokerGameScript.MAX_OPPONENT_SEATS,
 		"seed": seed,
 		"showdown_count": showdown_count,
 		"reload_preserved": reload_preserved,
+		"mid_animation_no_replay": mid_animation_no_replay,
 		"member_count": (generated.get("members", []) as Array).size(),
 		"hands": hand_signatures,
 	}
@@ -482,11 +516,14 @@ func _play_hand(game: GameModule, library, seed: int, force_all_in: bool = false
 	generated["members"] = (generated.get("members", []) as Array).slice(0, clampi(opponent_count, 2, CrewPokerGameScript.MAX_OPPONENT_SEATS))
 	environment["game_states"] = {"crew_draw_poker": generated}
 	run_state.current_environment = environment
-	var first := _apply(game, run_state, "deal", {}, seed)
+	var first := _apply(game, run_state, "deal", {"surface_time_msec": 1000, "surface_presentation_time_msec": 1000}, seed)
 	if not bool(first.get("ok", false)):
 		return {"seed": seed, "complete": false, "failure": "deal"}
 	var streets: Array = []
 	var hidden_ok := true
+	var animation_hidden_ok := _animation_result_is_public(game, run_state, first)
+	var animation_event_kinds: Array = []
+	_collect_animation_event_kinds(first, animation_event_kinds)
 	var max_board := 0
 	var fake_tell_done := false
 	var fake_tell_kept_turn := false
@@ -523,10 +560,14 @@ func _play_hand(game: GameModule, library, seed: int, force_all_in: bool = false
 		if legal_ids.has("fake_tell") and player_action_set.is_empty():
 			player_action_set = legal_ids.duplicate()
 		var action_id := "observe" if legal_ids.has("observe") else "all_in" if force_all_in and not all_in_committed and legal_ids.has("all_in") else "raise" if force_raise and not raise_committed and legal_ids.has("raise") else "call"
-		var ui := {}
+		var ui := {"surface_time_msec": 1000 + steps * 2500, "surface_presentation_time_msec": 1000 + steps * 2500}
 		if legal_ids.has("fake_tell") and not fake_tell_done:
 			var owner_before := str(table.get("turn_owner", ""))
-			var fake := _apply(game, run_state, "fake_tell", {"poker_tell_style": "strong"}, seed + steps)
+			var fake_ui := ui.duplicate()
+			fake_ui["poker_tell_style"] = "strong"
+			var fake := _apply(game, run_state, "fake_tell", fake_ui, seed + steps)
+			animation_hidden_ok = animation_hidden_ok and _animation_result_is_public(game, run_state, fake)
+			_collect_animation_event_kinds(fake, animation_event_kinds)
 			var after_fake: Dictionary = run_state.current_environment.get("game_states", {}).get("crew_draw_poker", {})
 			fake_tell_kept_turn = bool(fake.get("ok", false)) and str(after_fake.get("turn_owner", "")) == owner_before and str(after_fake.get("player_signal", {}).get("style", "")) == "strong"
 			fake_tell_done = true
@@ -548,6 +589,8 @@ func _play_hand(game: GameModule, library, seed: int, force_all_in: bool = false
 		var result := _apply(game, run_state, action_id, ui, seed + steps)
 		if not bool(result.get("ok", false)):
 			return {"seed": seed, "complete": false, "failure": action_id, "streets": streets}
+		animation_hidden_ok = animation_hidden_ok and _animation_result_is_public(game, run_state, result)
+		_collect_animation_event_kinds(result, animation_event_kinds)
 		if action_id == "all_in":
 			all_in_committed = true
 		elif action_id == "raise":
@@ -565,6 +608,8 @@ func _play_hand(game: GameModule, library, seed: int, force_all_in: bool = false
 		"streets": streets,
 		"max_board_cards": max_board,
 		"hidden_hole_cards": hidden_ok,
+		"animation_hidden_information": animation_hidden_ok and not JSON.stringify(run_state.to_dict()).contains("crew_poker_cards:"),
+		"animation_event_kinds": animation_event_kinds,
 		"fake_tell_kept_turn": fake_tell_kept_turn,
 		"all_in_committed": all_in_committed,
 		"raise_committed": raise_committed,
@@ -585,6 +630,38 @@ func _table_chip_total(state: Dictionary) -> int:
 	for seat_value in state.get("seats", []):
 		total += int((seat_value as Dictionary).get("stack", 0))
 	return total
+
+
+func _collect_animation_event_kinds(result: Dictionary, kinds: Array) -> void:
+	var ui_state: Dictionary = result.get("ui_state", {}) if typeof(result.get("ui_state", {})) == TYPE_DICTIONARY else {}
+	var animation: Dictionary = ui_state.get("poker_animation", {}) if typeof(ui_state.get("poker_animation", {})) == TYPE_DICTIONARY else {}
+	for event_key in ["card_events", "chip_events", "payout_events"]:
+		for event_value in animation.get(event_key, []):
+			var kind := str((event_value as Dictionary).get("kind", ""))
+			if not kind.is_empty() and not kinds.has(kind):
+				kinds.append(kind)
+
+
+func _animation_result_is_public(game: GameModule, run_state: RunState, result: Dictionary) -> bool:
+	var ui_state: Dictionary = result.get("ui_state", {}) if typeof(result.get("ui_state", {})) == TYPE_DICTIONARY else {}
+	var animation: Dictionary = ui_state.get("poker_animation", {}) if typeof(ui_state.get("poker_animation", {})) == TYPE_DICTIONARY else {}
+	if animation.is_empty():
+		return true
+	var table: Dictionary = run_state.current_environment.get("game_states", {}).get("crew_draw_poker", {})
+	var dealer_id := str(table.get("dealer_member_id", ""))
+	if dealer_id.is_empty() or (table.get("members", []) as Array).has(dealer_id):
+		return false
+	for event_value in animation.get("card_events", []):
+		var event: Dictionary = event_value
+		var kind := str(event.get("kind", ""))
+		var actor_id := str(event.get("actor", ""))
+		var card: Dictionary = event.get("card", {}) if typeof(event.get("card", {})) == TYPE_DICTIONARY else {}
+		if kind == "burn" or kind in ["deal", "fold"] and actor_id != "player":
+			if not bool(card.get("hidden", false)) or card.has("rank") or card.has("suit"):
+				return false
+		if kind == "showdown_flip" and not bool(animation.get("showdown", false)):
+			return false
+	return true
 
 
 func _distribution_metrics(game: GameModule, library, opponent_count: int, seed_base: int) -> Dictionary:

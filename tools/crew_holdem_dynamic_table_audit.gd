@@ -40,8 +40,18 @@ func _run() -> void:
 	if str(surface.get("surface_template", "")) != "shared_table_game_v1":
 		failures.append("Hold'em did not declare the shared table-game room template.")
 	var seats: Array = surface.get("seats", []) if typeof(surface.get("seats", [])) == TYPE_ARRAY else []
-	if seats.size() != 5 or int(surface.get("animated_crew_count", 0)) != 5:
-		failures.append("The room did not project all five Crew opponents as animated seats.")
+	if seats.size() != 5 or int(surface.get("animated_crew_count", 0)) != 6:
+		failures.append("The room did not project five Crew opponents plus the house dealer.")
+	var dealer_id := str(surface.get("dealer_member_id", ""))
+	var seated_ids: Array = []
+	for seat_value in seats:
+		seated_ids.append(str((seat_value as Dictionary).get("member_id", "")))
+	if dealer_id.is_empty() or seated_ids.has(dealer_id):
+		failures.append("The production room did not reserve one unseated Crew member as house dealer.")
+	var dealer_model: Dictionary = surface.get("dealer_character_model", {}) if typeof(surface.get("dealer_character_model", {})) == TYPE_DICTIONARY else {}
+	for key in ["skin_color", "hair_color", "jacket_color", "accent_color", "silhouette", "scale"]:
+		if not dealer_model.has(key):
+			failures.append("The house dealer is missing animated character model field %s." % key)
 	for seat_value in seats:
 		var seat: Dictionary = seat_value
 		var model: Dictionary = seat.get("character_model", {}) if typeof(seat.get("character_model", {})) == TYPE_DICTIONARY else {}
@@ -142,7 +152,7 @@ func _run() -> void:
 			app.call("_on_talk_dock_choice_requested", str(right_request.get("event_id", "")), str(right_choices[0]))
 			await _settle(3)
 	var betting_evidence := await _exercise_betting_ui(app, canvas, run_state)
-	await _finish(app, {"surface_template": surface.get("surface_template", ""), "animated_crew_count": surface.get("animated_crew_count", 0), "speaker": talk.get("speaker", ""), "choice_count": talk.get("choice_count", 0), "anchored_bottom": talk.get("anchored_bottom", false), "anchored_bottom_left": talk.get("anchored_bottom_left", true), "right_anchor_bottom_left": right_talk.get("anchored_bottom_left", false), "betting": betting_evidence})
+	await _finish(app, {"surface_template": surface.get("surface_template", ""), "animated_crew_count": surface.get("animated_crew_count", 0), "dealer_member_id": dealer_id, "dealer_unseated": not seated_ids.has(dealer_id), "speaker": talk.get("speaker", ""), "choice_count": talk.get("choice_count", 0), "anchored_bottom": talk.get("anchored_bottom", false), "anchored_bottom_left": talk.get("anchored_bottom_left", true), "right_anchor_bottom_left": right_talk.get("anchored_bottom_left", false), "betting": betting_evidence})
 
 
 func _settle(frames: int) -> void:
@@ -156,7 +166,23 @@ func _exercise_betting_ui(app: Control, canvas: Control, run_state: RunState) ->
 		failures.append("The visible Deal Hold'em control could not start a hand.")
 		return {}
 	await _settle(5)
-	_check_chip_layout(canvas.call("realtime_surface_state"), "posted blinds")
+	var deal_surface: Dictionary = canvas.call("realtime_surface_state")
+	_check_chip_layout(deal_surface, "posted blinds")
+	var animation_channels: Array = deal_surface.get("surface_animation_channels", []) if typeof(deal_surface.get("surface_animation_channels", [])) == TYPE_ARRAY else []
+	if animation_channels.size() < 2 or not bool(deal_surface.get("surface_realtime_state_refresh", false)):
+		failures.append("The production Deal action did not start presentation-clock card and chip channels.")
+	for event_value in deal_surface.get("card_animation_events", []):
+		var event: Dictionary = event_value
+		if str(event.get("actor", "")) != "player":
+			var card: Dictionary = event.get("card", {}) if typeof(event.get("card", {})) == TYPE_DICTIONARY else {}
+			if not bool(card.get("hidden", false)) or card.has("rank") or card.has("suit"):
+				failures.append("A production deal animation exposed an opponent's hole card.")
+				break
+	var reduce_motion_ui: Dictionary = (app.get("game_surface_ui_state") as Dictionary).duplicate(true)
+	reduce_motion_ui["reduce_motion"] = true
+	var reduced_surface := (app.get("current_game") as GameModule).surface_state(run_state, run_state.current_environment, reduce_motion_ui)
+	if bool(reduced_surface.get("surface_realtime_state_refresh", false)):
+		failures.append("Reduced-motion Hold'em still requested animation refreshes.")
 	if not await _advance_to_player(app, canvas):
 		failures.append("Visible Crew decisions did not advance to the player's betting turn.")
 		return {}
@@ -267,7 +293,7 @@ func _exercise_betting_ui(app: Control, canvas: Control, run_state: RunState) ->
 		failures.append("A normal check/call path could not reach the community-card streets.")
 	else:
 		_check_chip_layout(canvas.call("realtime_surface_state"), "community-card street")
-	return {"action_labels": action_labels, "minimum_raise_to": minimum_raise_to, "maximum_raise_to": maximum_raise_to, "selected_raise_to": selected_raise_to, "reached_board": reached_board, "raise_pot_before": int(before_raise.get("pot", 0)), "raise_pot_after": int(after_raise.get("pot", 0))}
+	return {"action_labels": action_labels, "animation_channel_count": animation_channels.size(), "reduce_motion_instant": not bool(reduced_surface.get("surface_realtime_state_refresh", false)), "minimum_raise_to": minimum_raise_to, "maximum_raise_to": maximum_raise_to, "selected_raise_to": selected_raise_to, "reached_board": reached_board, "raise_pot_before": int(before_raise.get("pot", 0)), "raise_pot_after": int(after_raise.get("pot", 0))}
 
 
 func _check_chip_layout(state: Dictionary, phase_label: String) -> void:

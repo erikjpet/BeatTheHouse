@@ -1070,6 +1070,7 @@ func _check_crew_poker_contract(library: ContentLibrary, failures: Array) -> voi
 
 	_check_crew_poker_rotation_and_gate(game, failures)
 	_check_crew_poker_seat_layout(game, failures)
+	_check_crew_poker_dealer_and_animation_contract(game, failures)
 	var production_evidence := _check_crew_poker_state_machine(game, one_pair, failures)
 	_check_crew_poker_signed_cash(game, failures)
 	var public_surfaces: Array = production_evidence.get("surfaces", [])
@@ -1339,6 +1340,200 @@ func _check_crew_poker_seat_layout(game: GameModule, failures: Array) -> void:
 						var other: Dictionary = other_value
 						if (element.get("rect", Rect2()) as Rect2).intersects(other.get("rect", Rect2())):
 							failures.append("Crew poker %d-seat layout overlaps seat %d %s with seat %d %s." % [seat_count, seat_index, str(element.get("name", "element")), other_index, str(other.get("name", "element"))])
+		var station: Dictionary = CrewPokerGameScript.DEALER_STATION_LAYOUT
+		var dealer_foot: Vector2 = station.get("character_foot", Vector2.ZERO)
+		var dealer_scale := float(station.get("character_scale", 0.64))
+		var dealer_elements := [
+			{"name": "dealer character", "rect": Rect2(dealer_foot + Vector2(-42, -80) * dealer_scale, Vector2(84, 80) * dealer_scale)},
+			{"name": "dealer deck", "rect": station.get("deck_card_rect", Rect2())},
+			{"name": "dealer muck", "rect": station.get("muck_rect", Rect2())},
+			{"name": "dealer label", "rect": station.get("name_label_rect", Rect2())},
+		]
+		for dealer_element_value in dealer_elements:
+			var dealer_element: Dictionary = dealer_element_value
+			var dealer_rect: Rect2 = dealer_element.get("rect", Rect2())
+			if not dealer_rect.has_area() or not playable.encloses(dealer_rect):
+				failures.append("Crew poker %d-seat dealer station put %s outside the playable board: %s." % [seat_count, str(dealer_element.get("name", "element")), str(dealer_rect)])
+			for protected_value in protected:
+				var protected_element: Dictionary = protected_value
+				if dealer_rect.intersects(protected_element.get("rect", Rect2())):
+					failures.append("Crew poker %d-seat dealer station put %s over the %s." % [seat_count, str(dealer_element.get("name", "element")), str(protected_element.get("name", "protected region"))])
+			for seat_group in seat_elements:
+				for seat_element_value in seat_group:
+					var seat_element: Dictionary = seat_element_value
+					if dealer_rect.intersects(seat_element.get("rect", Rect2())):
+						failures.append("Crew poker %d-seat dealer station %s overlaps a seat %s." % [seat_count, str(dealer_element.get("name", "element")), str(seat_element.get("name", "element"))])
+
+
+func _check_crew_poker_dealer_and_animation_contract(game: GameModule, failures: Array) -> void:
+	var seed_a := RngStream.new()
+	var seed_b := RngStream.new()
+	seed_a.configure(92017)
+	seed_b.configure(92017)
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("CREW-POKER-DEALER-ANIMATION")
+	run_state.bankroll = 500
+	var environment := {"id": "crew_poker_dealer_animation", "archetype_id": "small_underground_casino", "kind": "crew", "layer_id": "back_room", "resident_member_ids": ["crew_mags", "crew_rook"], "game_ids": ["crew_draw_poker"], "game_states": {}}
+	var first := game.generate_environment_state(run_state, environment, seed_a)
+	var second := game.generate_environment_state(run_state, environment, seed_b)
+	var members := _string_array(first.get("members", []))
+	var dealer_id := str(first.get("dealer_member_id", ""))
+	if dealer_id.is_empty() or members.has(dealer_id) or dealer_id != str(second.get("dealer_member_id", "")) or JSON.stringify(members) != JSON.stringify(second.get("members", [])):
+		failures.append("Crew poker house-dealer selection was not deterministic and disjoint from the five playing seats.")
+	var reduced_rng := RngStream.new()
+	reduced_rng.configure(4471)
+	var reduced := game.call("_select_table_crew", CrewPokerCrewStateScript.MEMBER_IDS.slice(0, 5), CrewPokerCrewStateScript.MEMBER_IDS.slice(0, 3), [5, 5], reduced_rng) as Dictionary
+	if (reduced.get("members", []) as Array).size() != 4 or str(reduced.get("dealer_member_id", "")).is_empty() or (reduced.get("members", []) as Array).has(str(reduced.get("dealer_member_id", ""))):
+		failures.append("Crew poker did not shrink reduced-roster opponents before sacrificing the house dealer.")
+	for legacy_count in [5, 3]:
+		var saved := first.duplicate(true)
+		saved["members"] = members.slice(0, legacy_count)
+		saved.erase("dealer_member_id")
+		saved["phase"] = "preflop"
+		saved["pot"] = 17
+		saved["turn_owner"] = str(saved["members"][0])
+		var migration_environment := environment.duplicate(true)
+		migration_environment["id"] = "crew_poker_migration_%d" % legacy_count
+		migration_environment["game_states"] = {"crew_draw_poker": saved}
+		var migrated := game.call("_table_state", migration_environment) as Dictionary
+		var migrated_again := game.call("_table_state", migration_environment) as Dictionary
+		if str(migrated.get("dealer_member_id", "")).is_empty() or (migrated.get("members", []) as Array).has(str(migrated.get("dealer_member_id", ""))) or str(migrated.get("dealer_member_id", "")) != str(migrated_again.get("dealer_member_id", "")):
+			failures.append("Crew poker %d-opponent save did not derive one stable unseated house dealer." % legacy_count)
+		for preserved_key in ["members", "phase", "pot", "turn_owner", "seats", "player_cards", "shoe"]:
+			if JSON.stringify(migrated.get(preserved_key)) != JSON.stringify(saved.get(preserved_key)):
+				failures.append("Crew poker dealer migration changed saved %s for the %d-opponent table." % [preserved_key, legacy_count])
+	first["turn_engine"] = CrewPokerGameScript.ORDERED_ENGINE
+	environment["game_states"] = {"crew_draw_poker": first}
+	run_state.current_environment = environment.duplicate(true)
+	for member_id in members:
+		run_state.crew_add_trust(str(member_id), CrewPokerCrewStateScript.rank_threshold("associate"), "dealer_animation_fixture")
+	var deal_result := _poker_apply_action(game, run_state, "deal", {"surface_time_msec": 1000, "surface_presentation_time_msec": 1000}, "dealer_animation_deal")
+	var animation: Dictionary = (deal_result.get("ui_state", {}) as Dictionary).get("poker_animation", {}) if typeof(deal_result.get("ui_state", {})) == TYPE_DICTIONARY else {}
+	var card_events: Array = animation.get("card_events", []) if typeof(animation.get("card_events", [])) == TYPE_ARRAY else []
+	var deal_events: Array = []
+	for event_value in card_events:
+		var event: Dictionary = event_value
+		if str(event.get("kind", "")) == "deal":
+			deal_events.append(event)
+		if str(event.get("actor", "")) != CrewPokerGameScript.PLAYER_ID and str(event.get("kind", "")) in ["deal", "burn", "fold"]:
+			var card: Dictionary = event.get("card", {}) if typeof(event.get("card", {})) == TYPE_DICTIONARY else {}
+			if not bool(card.get("hidden", false)) or card.has("rank") or card.has("suit"):
+				failures.append("Crew poker animation leaked an opponent or burn card through presentation events.")
+	var dealt_table := _poker_table(run_state)
+	var actor_order: Array = game.call("_all_actor_ids", dealt_table)
+	var small_blind := str(dealt_table.get("small_blind_actor", ""))
+	var small_blind_index := actor_order.find(small_blind)
+	if deal_events.size() != (members.size() + 1) * 2:
+		failures.append("Crew poker preflop animation did not contain exactly two clockwise passes.")
+	else:
+		for event_index in range(deal_events.size()):
+			var expected_actor := str(actor_order[(small_blind_index + event_index % actor_order.size()) % actor_order.size()])
+			if str((deal_events[event_index] as Dictionary).get("actor", "")) != expected_actor or int((deal_events[event_index] as Dictionary).get("card_index", -1)) != event_index / actor_order.size():
+				failures.append("Crew poker preflop animation order diverged from the blind/button rotation at event %d." % event_index)
+				break
+	if int(animation.get("card_duration_msec", 99999)) > 2200:
+		failures.append("Crew poker full preflop animation exceeded the 2.2 second budget.")
+	var deal_ui: Dictionary = deal_result.get("ui_state", {}) if typeof(deal_result.get("ui_state", {})) == TYPE_DICTIONARY else {}
+	var surface := game.surface_state(run_state, run_state.current_environment, deal_ui)
+	if int(surface.get("animated_crew_count", 0)) != members.size() + 1 or str(surface.get("dealer_member_id", "")) != dealer_id or not bool(surface.get("surface_realtime_state_refresh", false)):
+		failures.append("Crew poker surface did not expose six animated Crew, the house dealer, and a live presentation refresh.")
+	var ritual_ids: Array = []
+	for actor_value in surface.get("ritual_actors", []):
+		ritual_ids.append(str((actor_value as Dictionary).get("id", "")))
+	if ritual_ids.has(dealer_id):
+		failures.append("Crew poker house dealer leaked into an opponent ritual role.")
+	var reduced_ui := deal_ui.duplicate(true)
+	reduced_ui["reduce_motion"] = true
+	var reduced_surface := game.surface_state(run_state, run_state.current_environment, reduced_ui)
+	if bool(reduced_surface.get("surface_realtime_state_refresh", true)):
+		failures.append("Crew poker reduce-motion presentation did not land immediately.")
+	var command := game.surface_action_command("poker_observe", 0, false, deal_ui, run_state, run_state.current_environment)
+	var command_ui: Dictionary = command.get("ui_state", {}) if typeof(command.get("ui_state", {})) == TYPE_DICTIONARY else {}
+	if command_ui.has("poker_animation") or not bool(command.get("resolve", false)):
+		failures.append("Crew poker input did not fast-forward the active animation before resolving exactly one command.")
+	for button_offset in range(actor_order.size()):
+		var rotation_fixture := dealt_table.duplicate(true)
+		rotation_fixture["button_index"] = button_offset
+		rotation_fixture["small_blind_actor"] = str(actor_order[(button_offset + 1) % actor_order.size()])
+		var rotation_animation := game.call("_build_presentation_animation", {}, rotation_fixture, "deal", {"surface_presentation_time_msec": 1000}) as Dictionary
+		var rotation_deals: Array = []
+		for event_value in rotation_animation.get("card_events", []):
+			if str((event_value as Dictionary).get("kind", "")) == "deal":
+				rotation_deals.append(event_value)
+		if rotation_deals.size() != actor_order.size() * 2:
+			failures.append("Crew poker button position %d did not deal two complete passes." % button_offset)
+			continue
+		for event_index in range(rotation_deals.size()):
+			var expected_actor := str(actor_order[(button_offset + 1 + event_index % actor_order.size()) % actor_order.size()])
+			if str((rotation_deals[event_index] as Dictionary).get("actor", "")) != expected_actor:
+				failures.append("Crew poker button position %d did not begin clockwise at the small blind." % button_offset)
+				break
+	var street_before := dealt_table.duplicate(true)
+	street_before["phase"] = "preflop"
+	street_before["community_cards"] = []
+	street_before["burn_cards"] = []
+	var street_after := street_before.duplicate(true)
+	street_after["phase"] = "flop"
+	street_after["community_cards"] = [{"rank": 3, "suit": 0, "deck": 0}, {"rank": 7, "suit": 1, "deck": 0}, {"rank": 11, "suit": 2, "deck": 0}]
+	street_after["burn_cards"] = [{"rank": 4, "suit": 3, "deck": 0}]
+	street_after["action_ordinal"] = int(street_before.get("action_ordinal", 0)) + 1
+	var street_animation := game.call("_build_presentation_animation", street_before, street_after, "check", {"surface_presentation_time_msec": 2000}) as Dictionary
+	var street_cards: Array = street_animation.get("card_events", [])
+	if street_cards.size() != 4 or str((street_cards[0] as Dictionary).get("kind", "")) != "burn":
+		failures.append("Crew poker flop animation did not burn before its three-card fan.")
+	else:
+		for board_offset in range(3):
+			var board_event: Dictionary = street_cards[board_offset + 1]
+			var expected_rect: Rect2 = game.call("_board_card_rect", board_offset)
+			var target: Array = board_event.get("to", []) if typeof(board_event.get("to", [])) == TYPE_ARRAY else []
+			if str(board_event.get("kind", "")) != "board" or target.size() != 2 or Vector2(float(target[0]), float(target[1])) != expected_rect.position:
+				failures.append("Crew poker flop card %d did not land on its board slot." % board_offset)
+				break
+	var fold_before := dealt_table.duplicate(true)
+	var fold_after := fold_before.duplicate(true)
+	var fold_seats: Array = fold_after.get("seats", [])
+	if not fold_seats.is_empty():
+		var folded: Dictionary = fold_seats[0]
+		folded["active"] = false
+		fold_seats[0] = folded
+		fold_after["seats"] = fold_seats
+	var fold_animation := game.call("_build_presentation_animation", fold_before, fold_after, "observe", {"surface_presentation_time_msec": 3000}) as Dictionary
+	var fold_count := 0
+	for event_value in fold_animation.get("card_events", []):
+		if str((event_value as Dictionary).get("kind", "")) == "fold":
+			fold_count += 1
+	if fold_count != 2:
+		failures.append("Crew poker fold animation did not send both hidden cards to the muck.")
+	var showdown_before := street_after.duplicate(true)
+	showdown_before["phase"] = "river"
+	showdown_before["community_cards"] = [{"rank": 3, "suit": 0, "deck": 0}, {"rank": 7, "suit": 1, "deck": 0}, {"rank": 11, "suit": 2, "deck": 0}, {"rank": 12, "suit": 3, "deck": 0}, {"rank": 14, "suit": 0, "deck": 0}]
+	var showdown_after := showdown_before.duplicate(true)
+	showdown_after["phase"] = "idle"
+	showdown_after["hand_number"] = int(showdown_before.get("hand_number", 0)) + 1
+	var showdown_seats: Array = showdown_after.get("seats", [])
+	var winners: Array = []
+	var awards := {}
+	for winner_index in range(mini(2, showdown_seats.size())):
+		var winner_seat: Dictionary = showdown_seats[winner_index]
+		winner_seat["active"] = true
+		winner_seat["revealed"] = true
+		winner_seat["cards"] = [{"rank": 8 + winner_index, "suit": winner_index, "deck": 0}, {"rank": 9 + winner_index, "suit": winner_index + 1, "deck": 0}]
+		showdown_seats[winner_index] = winner_seat
+		var winner_id := str(winner_seat.get("member_id", ""))
+		winners.append(winner_id)
+		awards[winner_id] = 5 + winner_index
+	showdown_after["seats"] = showdown_seats
+	showdown_after["last_result"] = {"winners": winners, "awards": awards, "table_payout": 11, "payout": 0, "message": "Split pot."}
+	var showdown_animation := game.call("_build_presentation_animation", showdown_before, showdown_after, "check", {"surface_presentation_time_msec": 4000}) as Dictionary
+	var flip_count := 0
+	for event_value in showdown_animation.get("card_events", []):
+		if str((event_value as Dictionary).get("kind", "")) == "showdown_flip":
+			flip_count += 1
+	var payout_total := 0
+	for event_value in showdown_animation.get("payout_events", []):
+		payout_total += int((event_value as Dictionary).get("amount", 0))
+	if not bool(showdown_animation.get("showdown", false)) or flip_count != winners.size() * 2 or payout_total != 11:
+		failures.append("Crew poker showdown/split-pot animation did not preserve flips and award conservation.")
 
 
 func _check_crew_poker_state_machine(game: GameModule, tie_cards: Array, failures: Array) -> Dictionary:

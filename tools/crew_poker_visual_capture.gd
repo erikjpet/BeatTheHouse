@@ -14,6 +14,10 @@ const FIXTURE_SEED := CrewPokerVisualSeedAuditScript.FIXTURE_SEED
 const CAPTURE_FILE_NAMES: Array[String] = [
 	"01_entry_idle_1280x720.png",
 	"02_blinds_posted_1280x720.png",
+	"05_deal_25_percent_1280x720.png",
+	"06_deal_50_percent_1280x720.png",
+	"07_deal_90_percent_1280x720.png",
+	"08_player_flip_1280x720.png",
 	"03_authored_subtle_tell_1280x720.png",
 	"04_reduced_motion_static_1280x720.png",
 ]
@@ -151,6 +155,13 @@ func _run() -> void:
 			[],
 			0
 		)
+		await _settle(20)
+		await _capture_surface("05_deal_25_percent_1280x720.png", "deal_25_percent", [], 0)
+		await _settle(30)
+		await _capture_surface("06_deal_50_percent_1280x720.png", "deal_50_percent", [], 0)
+		await _settle(35)
+		await _capture_surface("07_deal_90_percent_1280x720.png", "deal_90_percent", [], 0)
+		await _capture_surface("08_player_flip_1280x720.png", "player_flip", [], 0)
 	var production_ordinal := 2
 	while not failed and not authored_tell_beat_present and production_ordinal <= PRODUCTION_ACTION_LIMIT:
 		await _settle(3)
@@ -854,9 +865,9 @@ func _write_checkpoint_manifest() -> void:
 
 
 func _write_manifest() -> bool:
-	var files_passed := captures.size() == 4
-	var layout_and_targets_passed := captures.size() == 4
-	var hidden_labels_passed := captures.size() == 4
+	var files_passed := captures.size() == CAPTURE_FILE_NAMES.size()
+	var layout_and_targets_passed := captures.size() == CAPTURE_FILE_NAMES.size()
+	var hidden_labels_passed := captures.size() == CAPTURE_FILE_NAMES.size()
 	for capture in captures:
 		files_passed = files_passed and bool(capture.get("saved", false))
 		layout_and_targets_passed = layout_and_targets_passed and bool((capture.get("hit_targets", {}) as Dictionary).get("passed", false))
