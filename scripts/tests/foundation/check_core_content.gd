@@ -2995,7 +2995,7 @@ func _check_environment_open_hours(library: ContentLibrary, failures: Array) -> 
 
 
 func _check_dialogue_system_content(library: ContentLibrary, failures: Array) -> void:
-	for dialogue_id in ["pull_tab_clerk", "late_shift_discount", "chatty_clerk"]:
+	for dialogue_id in ["pull_tab_clerk", "late_shift_discount", "chatty_clerk", "silas_crow_numbers"]:
 		var dialogue := library.dialogue(dialogue_id)
 		if dialogue.is_empty():
 			failures.append("Dialogue pack is missing %s." % dialogue_id)
@@ -3008,6 +3008,19 @@ func _check_dialogue_system_content(library: ContentLibrary, failures: Array) ->
 	var chatty_event := library.event("chatty_clerk")
 	if str(chatty_event.get("dialogue_id", "")) != "chatty_clerk":
 		failures.append("chatty_clerk event did not migrate to a dialogue_id.")
+	var silas_dialogue := library.dialogue("silas_crow_numbers")
+	var silas_speaker: Dictionary = silas_dialogue.get("speaker", {}) if typeof(silas_dialogue.get("speaker", {})) == TYPE_DICTIONARY else {}
+	if str(silas_speaker.get("character_id", "")) != "silas_snitch":
+		failures.append("Silas's Numbers conversation is not bound to his authored character model.")
+	var silas_nodes: Dictionary = silas_dialogue.get("nodes", {}) if typeof(silas_dialogue.get("nodes", {})) == TYPE_DICTIONARY else {}
+	var silas_greeting: Dictionary = silas_nodes.get("greeting", {}) if typeof(silas_nodes.get("greeting", {})) == TYPE_DICTIONARY else {}
+	var silas_choice_ids: Array[String] = []
+	for choice_value in silas_greeting.get("choices", []):
+		if typeof(choice_value) == TYPE_DICTIONARY:
+			silas_choice_ids.append(str((choice_value as Dictionary).get("id", "")))
+	for required_choice_id in ["silas_buy_route_tip", "silas_buy_today_handle", "ask_about_silas", "leave_silas"]:
+		if required_choice_id not in silas_choice_ids:
+			failures.append("Silas's Numbers conversation is missing %s." % required_choice_id)
 	var bad_library: ContentLibrary = ContentLibraryScript.new()
 	bad_library.dialogues = [{
 		"id": "bad_goto_fixture",

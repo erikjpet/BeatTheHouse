@@ -1482,5 +1482,38 @@
       "hardway": {"text": "A hardway hits and the center action erupts.", "choices": [{"id": "cheer_hardway", "label": "Cheer with the rail", "effects": {}, "end": true}]},
       "number": {"text": "Players call their bets as the dealer moves chips across the layout.", "choices": [{"id": "keep_the_rhythm", "label": "Keep the rhythm", "effects": {}, "end": true}]}
     }
+  },
+  {
+    "id": "silas_crow_numbers",
+    "display_name": "Silas Crow",
+    "speaker": {
+      "role": "patron",
+      "name": "Silas Crow",
+      "character_id": "silas_snitch",
+      "voice_line_key": "snitch",
+      "mood": "smug",
+      "behavior": "watching both exits",
+      "silhouette": "coat",
+      "bind": "none"
+    },
+    "start": "greeting",
+    "nodes": {
+      "greeting": {
+        "text": "Silas folds a scrap of paper between two fingers. \"Routes, handles, names. Depends what your pocket wants to know.\"",
+        "choices": [
+          {"id": "silas_buy_route_tip", "label": "Buy a quiet route tip - $12", "effects": {}, "goto": "greeting"},
+          {"id": "silas_buy_today_handle", "label": "Buy today's handle - $24", "effects": {}, "goto": "greeting"},
+          {"id": "ask_about_silas", "label": "Ask who he works for", "effects": {}, "goto": "bio"},
+          {"id": "leave_silas", "label": "Leave him to his drink", "effects": {}, "end": true}
+        ]
+      },
+      "bio": {
+        "text": "\"I work for the person who pays before asking twice.\" His smile never reaches his eyes; one stays on you and the other on the nearest door.",
+        "choices": [
+          {"id": "back_to_business", "label": "Talk business", "effects": {}, "goto": "greeting"},
+          {"id": "leave_silas", "label": "Leave him to his drink", "effects": {}, "end": true}
+        ]
+      }
+    }
   }
 ]

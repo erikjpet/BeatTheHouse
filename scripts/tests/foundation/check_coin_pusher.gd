@@ -13,6 +13,7 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 		return
 	var machine_definition: Dictionary = game_definition.get("coin_pusher_machine", {}) if typeof(game_definition.get("coin_pusher_machine", {})) == TYPE_DICTIONARY else {}
 	_check_pusher_v3_machine_data(machine_definition, failures)
+	_check_pusher_room_prop_state(library, game_definition, failures)
 	_check_pusher_v3_10_idle_queue_cups_and_stack(library, game_definition, machine_definition, failures)
 	_check_pusher_v3_10_hold_inputs(library, game_definition, failures)
 	_check_pusher_v3_terminal_settlement_receipt(library, game_definition, failures)
@@ -52,6 +53,30 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 	_check_pusher_v3_items_alarm_and_rumor(library, failures)
 	_check_pusher_v3_generated_rider_production(library, failures)
 	_check_pusher_v3_solver_performance(machine_definition, failures)
+
+
+func _check_pusher_room_prop_state(library: ContentLibrary, game_definition: Dictionary, failures: Array) -> void:
+	var identities: Array = []
+	for variation_id in ["quarter_falls", "jackpot_ridge", "vault_drop"]:
+		var game: GameModule = load(str(game_definition.get("module_path", ""))).new()
+		game.setup(game_definition, library)
+		var run_state: RunState = RunStateScript.new()
+		run_state.start_new("PUSHER-ROOM-PROP-%s" % variation_id)
+		var environment := {"id": "pusher_room_%s" % variation_id, "world_node_id": "pusher_room_%s" % variation_id, "scenario_game_modifiers": {"coin_pusher": {"variation_id": variation_id}}, "game_states": {}}
+		var machine := game.generate_environment_state(run_state, environment, run_state.create_rng("pusher_room_prop"))
+		environment["game_states"] = {"coin_pusher": machine}
+		var object_state := game.environment_object_state(run_state, environment)
+		var visual: Dictionary = object_state.get("visual_state", {}) if typeof(object_state.get("visual_state", {})) == TYPE_DICTIONARY else {}
+		identities.append(str(visual.get("identity", "")))
+		if str(object_state.get("display_name", "")) != str(game.call("_variation_display_name", variation_id)):
+			failures.append("Coin Pusher %s room prop did not expose its live cabinet name." % variation_id)
+		for key in ["body_color", "side_color", "trim_color", "light_color", "glass_color", "deck_color", "platform_color", "backglass_color"]:
+			if typeof(visual.get(key)) != TYPE_COLOR:
+				failures.append("Coin Pusher %s room prop is missing precomputed %s." % [variation_id, key])
+		if visual.has("bodies") or visual.has("body_views") or visual.has("settled_state"):
+			failures.append("Coin Pusher %s room prop exposed solver positions instead of public room state." % variation_id)
+	if identities != ["quarter_falls", "jackpot_ridge", "vault_drop"]:
+		failures.append("Coin Pusher room prop identities are not distinct and stable: %s." % JSON.stringify(identities))
 
 
 func _check_pusher_v3_terminal_settlement_receipt(library: ContentLibrary, game_definition: Dictionary, failures: Array) -> void:

@@ -152,6 +152,45 @@ func generate_environment_state(run_state: RunState, environment: Dictionary, rn
 	return _generate_machine_state(run_state, environment, rng)
 
 
+func environment_object_state(run_state: RunState, environment: Dictionary) -> Dictionary:
+	var machine := _ensure_machine_state(run_state, environment, false)
+	var rows := _stock_view(machine)
+	var public_rows: Array = []
+	var stock_total := 0
+	var sold_out_count := 0
+	for row_value in rows:
+		if typeof(row_value) != TYPE_DICTIONARY:
+			continue
+		var row: Dictionary = row_value
+		var remaining := maxi(0, int(row.get("remaining", 0)))
+		var palette: Dictionary = row.get("palette", {}) if typeof(row.get("palette", {})) == TYPE_DICTIONARY else {}
+		stock_total += remaining
+		if remaining <= 0:
+			sold_out_count += 1
+		public_rows.append({
+			"type_id": str(row.get("type_id", "ticket")),
+			"remaining": remaining,
+			"capacity": maxi(1, int(row.get("capacity", 1))),
+			"paper_color": Color(str(palette.get("paper", "#fff2c7"))),
+			"accent_color": Color(str(palette.get("accent", "#ef3156"))),
+			"ink_color": Color(str(palette.get("ink", "#35152e"))),
+		})
+	return {
+		"runtime_state": {
+			"active": stock_total <= 0,
+			"status_label": "SOLD OUT" if stock_total <= 0 else "",
+		},
+		"visual_state": {
+			"machine_name": str(machine.get("machine_name", "Highway Scratch Center")),
+			"stock_rows": public_rows,
+			"stock_total": stock_total,
+			"sold_out_count": sold_out_count,
+		},
+		"status_summary": "Scratch center sold out." if stock_total <= 0 else "%d tickets across %d active rows." % [stock_total, rows.size() - sold_out_count],
+		"state_badge": "OUT" if stock_total <= 0 else "TIX",
+	}
+
+
 func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
 	var machine := _ensure_machine_state(run_state, environment, false)
 	var active_ticket := _dict_ref(machine.get("active_ticket", {}))

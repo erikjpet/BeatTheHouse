@@ -1085,6 +1085,7 @@ func _resolve_bar_dice_proposal_core(action_id: String, stake: int, run_state: R
 func environment_object_state(run_state: RunState, environment: Dictionary) -> Dictionary:
 	var state := _dice_state_preview(run_state, environment)
 	var last_result := _copy_dict(state.get("last_result", {}))
+	var public_dice := _int_dice(last_result.get("player_dice", []))
 	var badge := "DICE"
 	if not last_result.is_empty():
 		badge = str(last_result.get("outcome", "dice")).to_upper().left(5)
@@ -1096,9 +1097,16 @@ func environment_object_state(run_state: RunState, environment: Dictionary) -> D
 			"carryover_pot": int(state.get("carryover_pot", 0)),
 		},
 		"visual_state": {
+			"variant": "bar_dice",
 			"house": str(state.get("dealer_name", "Bartender")),
 			"ruleset": str(state.get("ruleset_label", "Ship, Captain, Crew")),
 			"bonus": "Pot carries on tied cargo.",
+			"pot": int(state.get("carryover_pot", 0)),
+			"die_0": int(public_dice[0]) if public_dice.size() > 0 else 6,
+			"die_1": int(public_dice[1]) if public_dice.size() > 1 else 5,
+			"die_2": int(public_dice[2]) if public_dice.size() > 2 else 4,
+			"die_3": int(public_dice[3]) if public_dice.size() > 3 else 3,
+			"die_4": int(public_dice[4]) if public_dice.size() > 4 else 2,
 		},
 		"status_summary": "%s runs Ship, Captain, Crew at the %s." % [str(state.get("dealer_name", "The bartender")), str(state.get("bar_name", "bar"))],
 		"effect_summary": "High cargo wins the pot; ties carry forward.",

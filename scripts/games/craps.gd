@@ -927,6 +927,10 @@ func _project_table_energy(environment: Dictionary, table: Dictionary) -> Dictio
 
 func environment_object_state(run_state: RunState, environment: Dictionary) -> Dictionary:
 	var table := _table_state_preview(run_state, environment)
+	var last_roll: Dictionary = table.get("last_roll", {}) if typeof(table.get("last_roll", {})) == TYPE_DICTIONARY else {}
+	var dice: Array = last_roll.get("dice", []) if typeof(last_roll.get("dice", [])) == TYPE_ARRAY else []
+	var die_a := clampi(int(dice[0]) if dice.size() > 0 else 3, 1, 6)
+	var die_b := clampi(int(dice[1]) if dice.size() > 1 else 4, 1, 6)
 	if _is_street_table(table, environment):
 		var dispersed := bool(table.get("street_dispersed", false))
 		var status_label := "CHALK RING OPEN"
@@ -938,11 +942,29 @@ func environment_object_state(run_state: RunState, environment: Dictionary) -> D
 			"status_label": status_label,
 			"status_detail": "Cash returned; gone for tonight" if dispersed else "$%d-$%d · Pass / Don't Pass" % [int(table.get("table_minimum", 0)), int(table.get("table_maximum", 0))],
 			"active": not dispersed,
+			"runtime_state": {
+				"active": dispersed,
+				"status_label": "SCATTERED" if dispersed else "",
+			},
+			"visual_state": {
+				"variant": "street_craps",
+				"point": int(table.get("point", 0)),
+				"last_die_a": die_a,
+				"last_die_b": die_b,
+				"dispersed": dispersed,
+			},
 		}
 	return {
 		"status_label": "POINT %d" % int(table.get("point", 0)) if int(table.get("point", 0)) != 0 else "COME-OUT",
 		"status_detail": "Table energy %d" % int(table.get("table_energy", 0)),
 		"active": true,
+		"visual_state": {
+			"variant": "casino",
+			"point": int(table.get("point", 0)),
+			"last_die_a": die_a,
+			"last_die_b": die_b,
+			"table_energy": int(table.get("table_energy", 0)),
+		},
 	}
 
 

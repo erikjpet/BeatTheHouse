@@ -4981,6 +4981,8 @@ func _dialogue_choice_views(dialogue_id: String, node: Dictionary) -> Array:
 				"enabled": bool(gift_status.get("available", false)),
 				"reason": str(gift_status.get("reason", "That ticket trade is unavailable.")),
 			}
+		elif dialogue_id == "silas_crow_numbers" and choice_id in ["silas_buy_route_tip", "silas_buy_today_handle"]:
+			requirement = _silas_dialogue_choice_status(choice_id == "silas_buy_today_handle")
 		if not bool(requirement.get("enabled", true)) and bool(choice.get("hide_when_unmet", false)):
 			continue
 		var effects := _dialogue_choice_effects(choice)
@@ -5010,9 +5012,22 @@ func _dialogue_choice_views(dialogue_id: String, node: Dictionary) -> Array:
 			option_choice["consequence_summary"] = "Exact one-time buyback"
 		elif dialogue_id == "sal_starter_offer" and choice_id == "sal_starter_keep":
 			option_choice["consequence_summary"] = "Keep the exact item"
+		elif dialogue_id == "silas_crow_numbers" and choice_id in ["silas_buy_route_tip", "silas_buy_today_handle"]:
+			option_choice["consequence_summary"] = "Spend $24 for today's handle" if choice_id == "silas_buy_today_handle" else "Spend $12 for a route tip"
 		option_choice["attribute_badges"] = [] if bool(choice.get("effects_hidden", false)) else AttributeBadgesScript.for_event_choice(option_choice)
 		result.append(option_choice)
 	return result
+
+
+func _silas_dialogue_choice_status(today_number: bool) -> Dictionary:
+	if run_state == null or not run_state.numbers_silas_is_here():
+		return {"enabled": false, "reason": "Silas is drinking somewhere else."}
+	if today_number and not bool(run_state.numbers_silas_status().get("handle_available", false)):
+		return {"enabled": false, "reason": "Silas has no handle for you."}
+	var price := 24 if today_number else 12
+	if run_state.bankroll < price:
+		return {"enabled": false, "reason": "Silas does not extend credit."}
+	return {"enabled": true, "reason": ""}
 
 
 func _dialogue_choice_requirement(choice: Dictionary) -> Dictionary:
@@ -5065,6 +5080,9 @@ func _resolve_dialogue_choice(entry: Dictionary, choice_id: String) -> void:
 		return
 	if str(entry.get("dialogue_id", "")) in ["scratch_ticket_scalper_knows", "scratch_ticket_scalper_oblivious"] and choice_id == "give_unscratched_ticket":
 		_resolve_scratch_scalper_gift(entry)
+		return
+	if str(entry.get("dialogue_id", "")) == "silas_crow_numbers" and choice_id in ["silas_buy_route_tip", "silas_buy_today_handle"]:
+		_resolve_silas_numbers_dialogue_choice(choice_id == "silas_buy_today_handle")
 		return
 	var option := _dialogue_option_for_entry(entry)
 	var option_choice := _event_choice(option, choice_id)
@@ -5134,6 +5152,22 @@ func _resolve_dialogue_choice(entry: Dictionary, choice_id: String) -> void:
 	if bool(result.get("ok", false)) and _apply_post_action_environment_interrupt("dialogue"):
 		_refresh()
 		return
+	_refresh()
+
+
+func _resolve_silas_numbers_dialogue_choice(today_number: bool) -> void:
+	if run_state == null:
+		_show_message("Silas is not here.")
+		return
+	var result: Dictionary = run_state.numbers_buy_silas_tip(today_number)
+	if bool(result.get("ok", false)):
+		_autosave_foundation_run("Silas exchange saved.")
+		_refresh_world_header()
+	var message := str(result.get("message", "Silas folds the paper away."))
+	if bool(result.get("ok", false)) and today_number and not str(result.get("number", "")).is_empty():
+		message = "%s Today's handle: %s." % [message, str(result.get("number", ""))]
+	_show_message(message)
+	_refresh_talk_dock()
 	_refresh()
 
 
@@ -11090,11 +11124,13 @@ func _render_selected_object_context(object_data: Dictionary) -> void:
 	var object_type := str(object_data.get("object_type", "info"))
 	var title := str(object_data.get("label", "Something here"))
 	var enabled := bool(object_data.get("enabled", true))
+	var character_actor: Dictionary = object_data.get("character_actor", {}) if typeof(object_data.get("character_actor", {})) == TYPE_DICTIONARY else {}
+	var is_character := not character_actor.is_empty()
 	var card := _begin_action_card(title, _context_border_color(object_type, enabled))
-	_add_detail_row(card, "Type", _context_type_label(object_type))
+	_add_detail_row(card, "Type", "Character" if is_character else _context_type_label(object_type))
 	var description := str(object_data.get("short_description", ""))
 	if not description.is_empty():
-		_add_detail_row(card, "Does", description)
+		_add_detail_row(card, "Description" if is_character else "Does", description)
 	_add_attribute_badge_row(card, object_data.get("attribute_badges", []), 16)
 	var cost := str(object_data.get("cost_summary", ""))
 	if not cost.is_empty() and object_type != CONTEXT_MODE_TRAVEL:
@@ -11112,7 +11148,7 @@ func _render_selected_object_context(object_data: Dictionary) -> void:
 			_add_detail_row(card, "Unlock", "; ".join(unlock_lines.slice(0, 2)), true)
 	var status := str(object_data.get("status_summary", ""))
 	if not status.is_empty():
-		_add_detail_row(card, "Status", status, true)
+		_add_detail_row(card, "Bio" if is_character else "Status", status, true)
 	if object_type == CONTEXT_MODE_GAME:
 		_add_game_object_context_details(card, str(object_data.get("source_id", "")))
 	var action_summary := str(object_data.get("action_summary", ""))
