@@ -10,6 +10,7 @@ const GameModuleScript := preload("res://scripts/core/game_module.gd")
 const CrewPokerGameScript := preload("res://scripts/games/crew_draw_poker.gd")
 const CrewPokerModelScript := preload("res://scripts/core/crew_poker_model.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
+const DECISION_TIMING_SAMPLE_LIMIT := 10000
 
 const OUTPUT_ROOT := "res://.tmp/backroom_poker_tweaks/personality_sim"
 const PLAYER_BOTS: Array[String] = ["passive_caller", "tight_folder", "aggro_raiser", "random_legal", "balanced"]
@@ -29,6 +30,7 @@ var _selected_bots: Array[String] = PLAYER_BOTS.duplicate()
 var _fail_on_targets := true
 var _verbose := false
 var _compile_only := false
+var _cap_study_only := false
 
 
 func _init() -> void:
@@ -44,6 +46,11 @@ func _init() -> void:
 	if _compile_only:
 		print("CREW_HOLDEM_PERSONALITY_SIM_COMPILE_PASS")
 		quit(0)
+		return
+	if _cap_study_only:
+		var cap_report := _session_cap_study(game)
+		print("CREW_HOLDEM_CAP_STUDY %s" % JSON.stringify(cap_report))
+		quit(0 if int(cap_report.get("incomplete_sessions", 0)) == 0 else 1)
 		return
 	var started_usec := Time.get_ticks_usec()
 	var report := _run_simulation(game)
@@ -71,6 +78,8 @@ func _parse_args() -> void:
 			_verbose = true
 		elif value == "--compile-only":
 			_compile_only = true
+		elif value == "--cap-study-only":
+			_cap_study_only = true
 	if _selected_bots.is_empty():
 		_selected_bots = ["balanced"]
 
@@ -234,7 +243,7 @@ func _play_hand(game: GameModule, lineup: Array, bot: String, seed: int, decisio
 		var before_phase := phase
 		var actor := str(table.get("turn_owner", ""))
 		var result := _apply(game, run_state, action_id, ui, rng)
-		if action_id == "observe":
+		if action_id == "observe" and decision_times.size() < DECISION_TIMING_SAMPLE_LIMIT:
 			decision_times.append(float(int(game.get("last_npc_decision_usec"))) / 1000.0)
 		if not bool(result.get("ok", false)):
 			return {"complete": false, "failure": action_id, "members": lineup}
@@ -471,7 +480,7 @@ func _character_report(by_bot: Dictionary) -> Dictionary:
 			"knuckles_looser_than_rook": float(knuckles.get("vpip", 0.0)) >= float(rook.get("vpip", 0.0)) + 15.0,
 			"lucky_looser_than_mags": float(lucky.get("vpip", 0.0)) >= float(mags.get("vpip", 0.0)) + 20.0,
 			"knuckles_more_aggressive_than_lucky": float(knuckles.get("af", 0.0)) >= float(lucky.get("af", 0.0)) + 0.75,
-			"rook_bluffs_less_than_switch": float(rook.get("bluff_share", 0.0)) + 4.0 <= float(switch.get("bluff_share", 0.0)),
+			"rook_bluffs_less_than_switch": float(rook.get("bluff_share", 0.0)) * 2.0 <= float(switch.get("bluff_share", 0.0)),
 			"knuckles_bets_larger_than_switch": float(knuckles.get("bet_size", 0.0)) >= float(switch.get("bet_size", 0.0)) + 0.15,
 		}
 		checks[bot] = bot_checks
@@ -530,6 +539,8 @@ func _session_cap_study(game: GameModule) -> Dictionary:
 	var sessions_per_table := 80
 	var result := {}
 	var incomplete := 0
+	var incomplete_reasons := {}
+	var incomplete_examples: Array = []
 	for opponent_count in [3, 5]:
 		var early := 0
 		var completed := 0
@@ -538,12 +549,21 @@ func _session_cap_study(game: GameModule) -> Dictionary:
 			var session := _play_session_for_cap(game, opponent_count, 990000 + opponent_count * 10000 + session_index * 101)
 			if not bool(session.get("complete", false)):
 				incomplete += 1
+				var reason := str(session.get("failure", "unknown"))
+				incomplete_reasons[reason] = int(incomplete_reasons.get(reason, 0)) + 1
+				if incomplete_examples.size() < 8:
+					var example := session.duplicate(true)
+					example["opponents"] = opponent_count
+					example["seed"] = 990000 + opponent_count * 10000 + session_index * 101
+					incomplete_examples.append(example)
 				continue
 			completed += 1
 			hand_total += int(session.get("hands", 0))
 			early += 1 if bool(session.get("ended_early", false)) else 0
 		result["%d_opponents" % opponent_count] = {"sessions": completed, "early_swing_caps": early, "early_swing_cap_pct": _pct(early, completed), "average_hands": _rounded(float(hand_total) / float(maxi(1, completed)))}
 	result["incomplete_sessions"] = incomplete
+	result["incomplete_reasons"] = incomplete_reasons
+	result["incomplete_examples"] = incomplete_examples
 	return result
 
 
@@ -567,14 +587,19 @@ func _play_session_for_cap(game: GameModule, opponent_count: int, seed: int) -> 
 	run_state.current_environment = environment
 	var cap := int(CrewPokerModelScript.config().get("session_hand_cap", 5))
 	for hand_index in range(cap):
-		if not bool(_apply(game, run_state, "deal", {}, rng).get("ok", false)):
-			return {"complete": false, "failure": "deal"}
+		var deal_result := _apply(game, run_state, "deal", {}, rng)
+		if not bool(deal_result.get("ok", false)):
+			return {"complete": false, "failure": "deal", "hand_index": hand_index, "legal": _legal_ids(game, run_state), "message": deal_result.get("message", ""), "table": _cap_debug_table(_table(run_state))}
 		var steps := 0
 		while str(_table(run_state).get("phase", "idle")) != "idle" and steps < 220:
 			var legal := _legal_ids(game, run_state)
 			var choice := {"action": "observe", "ui": {}} if legal.has("observe") else _player_bot_action("balanced", game, run_state, seed, steps + hand_index * 223, legal)
-			if str(choice.get("action", "")).is_empty() or not bool(_apply(game, run_state, str(choice.get("action", "")), choice.get("ui", {}), rng).get("ok", false)):
-				return {"complete": false, "failure": "progress"}
+			var choice_action := str(choice.get("action", ""))
+			if choice_action.is_empty():
+				return {"complete": false, "failure": "progress", "hand_index": hand_index, "step": steps, "action": choice_action, "legal": legal, "message": "No scripted action.", "table": _cap_debug_table(_table(run_state))}
+			var choice_result := _apply(game, run_state, choice_action, choice.get("ui", {}), rng)
+			if not bool(choice_result.get("ok", false)):
+				return {"complete": false, "failure": "progress", "hand_index": hand_index, "step": steps, "action": choice_action, "legal": legal, "message": choice_result.get("message", ""), "table": _cap_debug_table(_table(run_state))}
 			steps += 1
 		if str(_table(run_state).get("phase", "")) != "idle":
 			return {"complete": false, "failure": "step_limit"}
@@ -582,6 +607,10 @@ func _play_session_for_cap(game: GameModule, opponent_count: int, seed: int) -> 
 		if bool(_table(run_state).get("session_settled", false)):
 			return {"complete": true, "hands": hands, "ended_early": hands < cap}
 	return {"complete": true, "hands": cap, "ended_early": false}
+
+
+func _cap_debug_table(table: Dictionary) -> Dictionary:
+	return {"phase": table.get("phase"), "hand_number": table.get("hand_number"), "session_settled": table.get("session_settled"), "session_swing": table.get("session_swing"), "turn_owner": table.get("turn_owner"), "player_stack": table.get("player_stack"), "members": table.get("members")}
 
 
 func _timing_summary(values: Array[float]) -> Dictionary:

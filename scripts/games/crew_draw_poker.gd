@@ -616,12 +616,13 @@ func _ordered_legal_actions(state: Dictionary) -> Array:
 	if phase in ["preflop", "flop", "turn", "river"]:
 		var due := maxi(0, int(state.get("current_bet", 0)) - _actor_round_contribution(state, PLAYER_ID))
 		var stack := int(state.get("player_stack", 0))
+		var loss_room := _loss_room(state, stack)
 		var actions: Array = []
-		if due == 0 or stack >= due:
+		if due == 0 or (stack >= due and loss_room >= due):
 			actions.append(_poker_action("call", "Call $%d" % due if due > 0 else "Check", "Match exactly the live amount or check for zero."))
 		if _maximum_raise_to(state) >= _minimum_raise_to(state):
 			actions.insert(1, _poker_action("raise", "Choose Raise", "Choose any legal whole-dollar raise up to your full stack."))
-		if stack > 0:
+		if stack > 0 and loss_room == stack:
 			actions.append(_poker_action("all_in", "All In $%d" % stack, "Commit your remaining table stack."))
 		if str(state.get("player_fake_tell_used_street", "")) != phase:
 			actions.append(_poker_action("fake_tell", "Fake Tell", "Project strength or weakness without ending your turn."))
@@ -635,7 +636,8 @@ func _minimum_raise_to(state: Dictionary) -> int:
 
 
 func _maximum_raise_to(state: Dictionary) -> int:
-	return _actor_round_contribution(state, PLAYER_ID) + maxi(0, int(state.get("player_stack", 0)))
+	var stack := maxi(0, int(state.get("player_stack", 0)))
+	return _actor_round_contribution(state, PLAYER_ID) + _loss_room(state, stack)
 
 
 func _resolve_ordered(action_id: String, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary) -> Dictionary:
@@ -2317,7 +2319,11 @@ func _finish_hand(state: Dictionary, run_state: RunState, last: Dictionary) -> v
 	if bool(state.get("migrate_to_holdem_after_hand", false)):
 		state["turn_engine"] = ORDERED_ENGINE
 		state.erase("migrate_to_holdem_after_hand")
-	if int(state.get("hand_number", 0)) >= int(CrewPokerModelScript.config().get("session_hand_cap", 5)):
+	var tuning := CrewPokerModelScript.config()
+	var next_player_blind := _player_forced_blind(state)
+	if int(state.get("hand_number", 0)) >= int(tuning.get("session_hand_cap", 5)) \
+			or absi(int(state.get("session_swing", 0))) >= int(tuning.get("session_swing_cap", 60)) \
+			or (next_player_blind > 0 and (_loss_room(state, next_player_blind) != next_player_blind or int(state.get("player_stack", 0)) < next_player_blind)):
 		_settle_session(state, run_state)
 
 

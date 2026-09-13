@@ -1288,6 +1288,18 @@ func _check_crew_poker_personality_engine(game: GameModule, failures: Array) -> 
 		high_tells += 0 if CrewPokerModelScript.surface_pattern("crew_lucky", [_poker_card(14, 0), _poker_card(10, 1), _poker_card(8, 2), _poker_card(6, 3), _poker_card(3, 0)], "bet", -1, high_rng, "bluff", 100).is_empty() else 1
 	if high_tells <= low_tells:
 		failures.append("Crew poker tell_leak did not increase truthful bluff-tell frequency.")
+	var cap_state := {"phase": "preflop", "turn_owner": "player", "current_bet": 8, "round_contributions": {"player": 0}, "player_stack": 20, "session_swing": -57, "last_raise_size": 2, "player_fake_tell_used_street": ""}
+	var cap_legal: Array[String] = []
+	for action_value in game.call("_ordered_legal_actions", cap_state):
+		cap_legal.append(str((action_value as Dictionary).get("id", "")))
+	if cap_legal.has("call") or cap_legal.has("raise") or cap_legal.has("all_in") or not cap_legal.has("fold"):
+		failures.append("Crew poker exposed a wager beyond the remaining session-loss ledger.")
+	var cap_run := RunState.new()
+	cap_run.start_new("CREW-POKER-SWING-CAP")
+	var settled_state := {"members": [], "seats": [], "hand_number": 1, "session_swing": -60, "session_settled": false, "phase": "river"}
+	game.call("_finish_hand", settled_state, cap_run, {})
+	if not bool(settled_state.get("session_settled", false)) or int(settled_state.get("hand_number", 0)) != 2:
+		failures.append("Crew poker did not settle early when the authored swing cap was reached.")
 	_check_crew_poker_v3_personality_migration(game, failures)
 
 
