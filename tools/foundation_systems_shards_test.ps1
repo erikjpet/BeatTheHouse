@@ -304,10 +304,12 @@ Assert-True ($exceptionStage.name -eq "foundation_systems" -and $exceptionStage.
 Assert-True ($checkGodotSource.Contains('New-FoundationHarnessExceptionStage')) "Shard exception path does not consume the validated failure-stage contract."
 $cleanupFailureReport = [pscustomobject]@{ passed = $true; failure_count = 0; failures = @() }
 $cleanupClock = [System.Diagnostics.Stopwatch]::StartNew()
-$cleanupCompletion = Complete-FoundationTimedCleanup -Records @() -AllowedProjectRoot $allowedProjects -Stopwatch $cleanupClock -Report $cleanupFailureReport -CleanupAction { Start-Sleep -Milliseconds 75; @("hostile cleanup failure") }
+$cleanupFinished = [System.Threading.ManualResetEventSlim]::new($false)
+$cleanupCompletion = Complete-FoundationTimedCleanup -Records @() -AllowedProjectRoot $allowedProjects -Stopwatch $cleanupClock -Report $cleanupFailureReport -CleanupAction { Start-Sleep -Milliseconds 75; $cleanupFinished.Set(); @("hostile cleanup failure") }
 $cleanupFailureReport = $cleanupCompletion.report
 Assert-True (-not $cleanupFailureReport.passed -and $cleanupFailureReport.failure_count -eq 1 -and $cleanupFailureReport.failures[0] -eq "hostile cleanup failure") "Cleanup failure did not deterministically fail the aggregate report."
-Assert-True (-not $cleanupClock.IsRunning -and $cleanupClock.ElapsedMilliseconds -ge 70) "Timed cleanup stopped its stage clock before the cleanup action completed."
+Assert-True (-not $cleanupClock.IsRunning -and $cleanupFinished.IsSet) "Timed cleanup stopped its stage clock before the cleanup action completed."
+$cleanupFinished.Dispose()
 $cleanupFailureExit = Resolve-FoundationSystemsExitCode -ShardResults @([pscustomobject]@{ exit_code = 0; raw_exit_code = 0; timed_out = $false }) -AggregatePassed ([bool]$cleanupFailureReport.passed) -BudgetExceeded $false
 Assert-True ($cleanupFailureExit -eq 1) "Cleanup failure report did not force a nonzero systems stage exit."
 
