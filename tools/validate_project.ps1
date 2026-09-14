@@ -505,7 +505,7 @@ catch {
     $failures.Add("Developer placement override schema validation failed: $($_.Exception.Message)")
 }
 
-$readme = Get-Content -LiteralPath (Join-Path $root "README.md") -Raw
+$readme = Get-Content -LiteralPath (Join-Path $root "README.md") -Raw -Encoding UTF8
 $mojibakeMarkers = @(
     [string][char]0x00E2,
     [string][char]0xFFFD,
