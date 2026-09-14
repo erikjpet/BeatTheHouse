@@ -64,6 +64,7 @@ consolidated into the sole WIP branch.
 | `agent-playtest` | Two untracked session-harness files | Identical functionality already integrated on main; deleted |
 | `playtest06-final-custody` | Two evidence-transaction tools | Contract passed; committed and retained on consolidated WIP |
 | Owner build candidate | Temporary copied source, generated builds/tools and three untracked evidence documents | Temporary candidate was obsolete; registration and residual directory deleted |
+| Unregistered checkout remnants | `main-closeout06-land`, `audio-final-closeout`, and a broken `playtest-fixes` junction | None was a registered worktree or carried an active branch; the first two were duplicate historical checkouts and the last pointed to an already-missing checkout. All three were deleted after exact-path validation |
 
 The pre-existing external safety archive at
 `D:\Projects\Beat-The-House-cleanup-archive` remains outside Git. It is not an
