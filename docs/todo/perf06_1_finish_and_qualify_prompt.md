@@ -1,6 +1,6 @@
-Status: TODO — execution prompt that finishes the stalled `perf06_1` row
-Priority: P1 — `perf06_1` is the only row blocking `playtest06_2`, which produces the owner's next build
-Board row: `perf06_1` in `docs/todo/README_0_6_board.md` (currently `IN_PROGRESS`, stale since 2026-09-04)
+Status: PARKED — Phases 1–3 preserved on `codex/wip-0.6-consolidated`; binding Phase 4 waits for placement
+Priority: P1 after an accepted placement redesign and quiesced candidate
+Board row: `perf06_1` in `docs/todo/README_0_6_board.md`
 Opened: 2026-09-11 by PM audit of the row's real state
 Supersedes the open items of: `docs/todo/perf06_1_performance_platform_pass_prompt.md` (still binding for intent; this file is the plan)
 
@@ -12,9 +12,10 @@ parameterization and harness corrections `7efd6e8d`, `4c4a8968`, `362e2ba9`,
 `1d554967`, `a7952863`, `39d1837a`, `38580344`, `a840777d`, `10eee85a`, and
 `a69943d8`. All 18 non-binding gates and the focused hostile contracts passed;
 reduced producers retained their red timing, placement, progression, and
-low-end evidence without waivers. The owner parked the binding Phase 4 run on
-2026-09-14 until the placement redesign is accepted and the candidate host is
-quiescent. Full ledger: `docs/plans/perf06_1_performance_platform_report.md`.
+low-end evidence without waivers. On 2026-09-14 the work was consolidated into
+`codex/wip-0.6-consolidated`; the owner parked the binding Phase 4 run until the
+placement redesign is accepted and the candidate host is quiescent. Full
+ledger: `docs/plans/perf06_1_performance_platform_report.md`.
 
 # Agent Prompt — perf06_1: Finish the Performance and Platform Pass
 
@@ -32,10 +33,10 @@ that condition is stated in section 2. Respect it.
 The board says `perf06_1` is `IN_PROGRESS` with agent `/root/perf_closeout`,
 started 2026-09-03. In reality:
 
-- **The row is stalled, not progressing.** Its branch `codex/perf06-final-run`
-  has not moved since 2026-09-04.
+- **The row is parked, not progressing.** All deferred implementation now lives
+  on `codex/wip-0.6-consolidated`; the former task branches were deleted.
 - **Its harness work is already on `main`, byte-identical.** `git log
-  main..codex/perf06-final-run` lists 4 commits, but that is a hash artifact:
+  historical branch comparisons listed 4 commits, but that was a hash artifact:
   the same content was rebased onto `main` under different hashes
   (`618d0033`, `92bb16f5`, `6a3485c7`, `33128713`). Verified byte-identical on
   both sides: `docs/plans/perf06_1_final_runtime_runbook.md`,
@@ -124,7 +125,7 @@ Commit at the end of each phase. Keep `main` green.
 1. `git fetch --all`. Branch from **current `origin/main`**. The harness is
    already there; confirm that for yourself before assuming anything else in
    this section — compare `docs/plans/perf06_1_final_runtime_runbook.md` and the
-   `tools/perf06_*` set on `main` against `codex/perf06-final-run`. They were
+   `tools/perf06_*` set on `main` against the historical final-run tree. They were
    byte-identical when this prompt was written. **Do not cherry-pick or merge
    the stale branch**, and do not delete it.
 2. **Review the landed `[UNREVIEWED]` work properly.** `92bb16f5` and `618d0033`
@@ -285,7 +286,8 @@ Only after every gate is green and the report is written:
   findings.
 - **No release activity:** no version bump, tag, packaging, upload or publish.
 - **Delete nothing:** no branch, worktree, stash or evidence directory. No `gc`,
-  `reset --hard` or `clean`. `codex/perf06-final-run` stays where it is.
+  `reset --hard` or `clean`. Continue only on
+  `codex/wip-0.6-consolidated`.
 - **Never stage owner property:** `.tmp/`, `.tools/`, `review_artifacts/`,
   `builds/`. All evidence lives under `.tmp/` and is referenced by path and hash
   in the report, never committed.
