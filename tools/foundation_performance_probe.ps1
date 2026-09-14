@@ -64,6 +64,11 @@ if ($LASTEXITCODE -ne 0) { throw "Locked Windows debug native solver build faile
 $nativePlugin = Join-Path $root "addons\coin_pusher_native\bin\coin_pusher_native_v3_10.windows.template_debug.x86_64.nothreads.dll"
 if (-not (Test-Path -LiteralPath $nativePlugin -PathType Leaf)) { throw "Locked Windows debug native solver is missing after build: $nativePlugin" }
 $nativePluginHash = (Get-FileHash -LiteralPath $nativePlugin -Algorithm SHA256).Hash.ToLowerInvariant()
+$consoleGodot = Use-ConsoleGodot $godot
+# A fresh worktree can import the descriptor before its ignored binary exists.
+# Refresh extension discovery after the build so the probe cannot fall back.
+& $consoleGodot --headless --path $root --editor --quit
+if ($LASTEXITCODE -ne 0) { throw "Godot failed to refresh the built debug native solver." }
 
 $oldRuns = $env:BTH_PERF_RUNS
 $oldFrames = $env:BTH_PERF_FRAMES
@@ -89,7 +94,6 @@ try {
     $env:BTH_PERF_PROFILE_MANIFEST_SHA256 = $ProfileManifestSha256
     if ($EvidenceProfile) { $env:BTH_PERF_EVIDENCE_PROFILE = $EvidenceProfile }
     $env:BTH_PERF_NATIVE_PLUGIN_SHA256 = $nativePluginHash
-    $consoleGodot = Use-ConsoleGodot $godot
     & $consoleGodot --headless --path $root --script "res://tools/foundation_performance_probe.gd"
     exit $LASTEXITCODE
 }

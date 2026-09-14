@@ -1,5 +1,8 @@
 function Test-Perf06ValueProperty {
     param([object]$Value, [string]$Name)
+    if ($Value -is [Collections.IDictionary]) {
+        return $Value.Contains($Name) -and $null -ne $Value[$Name]
+    }
     return $null -ne $Value -and $null -ne $Value.PSObject.Properties[$Name] -and $null -ne $Value.PSObject.Properties[$Name].Value
 }
 
@@ -187,5 +190,87 @@ function Get-Perf06PhaseBudgetEvaluation {
         applicable = $checks.Count -gt 0
         checks = @($checks)
         passed = @($checks | Where-Object { -not [bool]$_.passed }).Count -eq 0
+    }
+}
+
+function Get-Perf06IdleTimingLivenessAssertion {
+    param(
+        [Parameter(Mandatory = $true)][object]$Frame,
+        [Parameter(Mandatory = $true)][object]$Draw,
+        [Parameter(Mandatory = $true)][object]$Liveness,
+        [Parameter(Mandatory = $true)][bool]$IsIdle
+    )
+    if (-not $IsIdle) {
+        return [pscustomobject][ordered]@{
+            applicable = $false
+            timing_positive = $true
+            liveness_positive = $true
+            failures = @()
+            passed = $true
+        }
+    }
+
+    $assertionFailures = [Collections.Generic.List[string]]::new()
+    foreach ($metricName in @("frame", "draw")) {
+        $metric = if ($metricName -ceq "frame") { $Frame } else { $Draw }
+        foreach ($field in @("count", "mean_ms", "p95_ms", "max_ms")) {
+            if (-not (Test-Perf06ValueProperty $metric $field)) {
+                $assertionFailures.Add("Idle $metricName metric is missing '$field'.")
+            }
+        }
+    }
+    $timingPositive = [int]$Frame.count -gt 0 -and [double]$Frame.mean_ms -gt 0.0 -and [double]$Frame.p95_ms -gt 0.0 -and [double]$Frame.max_ms -gt 0.0 -and [int]$Draw.count -gt 0 -and [double]$Draw.mean_ms -gt 0.0 -and [double]$Draw.p95_ms -gt 0.0 -and [double]$Draw.max_ms -gt 0.0
+    if (-not $timingPositive) {
+        $assertionFailures.Add("Idle timing must contain positive sampled frame and draw figures; 0.000 is not qualifying evidence.")
+    }
+    foreach ($field in @("counter", "floor", "measured", "zero_reason", "source", "passed")) {
+        if (-not (Test-Perf06ValueProperty $Liveness $field)) {
+            $assertionFailures.Add("Idle liveness is missing '$field'.")
+        }
+    }
+    $livenessPositive = [bool]$Liveness.passed -and -not [string]::IsNullOrWhiteSpace([string]$Liveness.counter) -and [int]$Liveness.floor -gt 0 -and [int]$Liveness.measured -ge [int]$Liveness.floor -and [string]::IsNullOrWhiteSpace([string]$Liveness.zero_reason)
+    if (-not $livenessPositive) {
+        $assertionFailures.Add("Idle timing requires its positive contract-owned liveness counter and floor in the same assertion.")
+    }
+    return [pscustomobject][ordered]@{
+        applicable = $true
+        timing_positive = $timingPositive
+        liveness_positive = $livenessPositive
+        failures = @($assertionFailures)
+        passed = $assertionFailures.Count -eq 0
+    }
+}
+
+function Get-Perf06AllocationCopyAssertion {
+    param(
+        [Parameter(Mandatory = $true)][object]$Counters,
+        [Parameter(Mandatory = $true)][int]$FrameCount,
+        [ValidateRange(0, 0)][int64]$SteadyStateDeepCopiesMaximum = 0
+    )
+    $assertionFailures = [Collections.Generic.List[string]]::new()
+    foreach ($field in @("allocations", "shallow_copies", "deep_copies", "bytes", "source", "scope", "evidence_kind")) {
+        if (-not (Test-Perf06ValueProperty $Counters $field)) {
+            $assertionFailures.Add("Allocation/copy counters are missing '$field'.")
+        }
+    }
+    if ($FrameCount -le 0) { $assertionFailures.Add("Allocation/copy assertion requires a positive steady-state frame count.") }
+    if ([string]$Counters.scope -cne "steady_state_frame") { $assertionFailures.Add("Allocation/copy assertion is not scoped to steady-state frames.") }
+    if ([string]$Counters.evidence_kind -notin @("explicit_counter", "static_call_graph")) { $assertionFailures.Add("Allocation/copy assertion has unsupported evidence kind '$($Counters.evidence_kind)'.") }
+    if ([string]::IsNullOrWhiteSpace([string]$Counters.source)) { $assertionFailures.Add("Allocation/copy assertion has no evidence source.") }
+    foreach ($field in @("allocations", "shallow_copies", "deep_copies", "bytes")) {
+        if ([int64]$Counters.$field -lt 0) { $assertionFailures.Add("Allocation/copy counter '$field' cannot be negative.") }
+    }
+    if ([int64]$Counters.deep_copies -gt $SteadyStateDeepCopiesMaximum) {
+        $assertionFailures.Add("Steady-state deep copies exceeded the zero-copy policy: observed=$($Counters.deep_copies) maximum=$SteadyStateDeepCopiesMaximum.")
+    }
+    $divisor = [Math]::Max(1, $FrameCount)
+    return [pscustomobject][ordered]@{
+        sample_frames = $FrameCount
+        allocations_per_frame = [double]$Counters.allocations / $divisor
+        shallow_copies_per_frame = [double]$Counters.shallow_copies / $divisor
+        deep_copies_per_frame = [double]$Counters.deep_copies / $divisor
+        steady_state_deep_copies_maximum = $SteadyStateDeepCopiesMaximum
+        failures = @($assertionFailures)
+        passed = $assertionFailures.Count -eq 0
     }
 }

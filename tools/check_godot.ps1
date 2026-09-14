@@ -1216,6 +1216,29 @@ function Invoke-FoundationPerfSmoke {
     }
 }
 
+function Invoke-Perf06ContractChecks {
+    param([Parameter(Mandatory = $true)][ValidateSet("audit", "full")][string]$SuiteLabel)
+    $contracts = [ordered]@{
+        required_matrix = "perf06_required_matrix_contract_test.ps1"
+        budget = "perf06_budget_contract_test.ps1"
+        phase_qualification = "perf06_phase_qualification_contract_test.ps1"
+        quiescence = "perf06_quiescence_contract_test.ps1"
+        binding_preflight = "perf06_binding_preflight_contract_test.ps1"
+        allocation_copy = "perf06_allocation_contract_test.ps1"
+        terminal_soak_launcher = "integ06_1_terminal_soak_launcher_contract_test.ps1"
+        web_idle_liveness = "web_perf_idle_liveness_contract_test.ps1"
+        coin_pusher_clock = "web_perf_coin_pusher_clock_contract_test.ps1"
+        web_prestage = "web_perf_prestage_contract_test.ps1"
+        coin_pusher_action = "perf06_coin_pusher_action_diagnostic_contract.ps1"
+        web_complementary_startup = "perf06_web_complementary_startup_contract.ps1"
+        web_run_ui_deferral = "perf06_web_run_ui_deferral_contract.ps1"
+        coin_pusher_backglass = "coin_pusher_backglass_readability_contract.ps1"
+    }
+    foreach ($contract in $contracts.GetEnumerator()) {
+        Invoke-ProcessStage -Name ("perf06_{0}_{1}" -f $SuiteLabel, $contract.Key) -FilePath $powerShellExe -Arguments @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", (Join-Path $PSScriptRoot $contract.Value)) -StageTimeoutSec 30 | Out-Null
+    }
+}
+
 function Invoke-ExhaustiveParse {
     $scripts = @(Get-ChildItem -LiteralPath (Join-Path $root "scripts") -Filter "*.gd" -Recurse -File) + @(Get-ChildItem -LiteralPath (Join-Path $root "tools") -Filter "*.gd" -Recurse -File)
     foreach ($script in $scripts) {
@@ -1325,8 +1348,9 @@ switch ($suiteKey) {
         Invoke-GodotScript -Name "roulette_audio_audit" -ScriptPath "res://tools/roulette_audio_audit.gd" -StageTimeoutSec 120
     }
     "audit" {
-		Invoke-GameReworkVerificationGates
-		Invoke-GodotScript -Name "environment_grounding_contract" -ScriptPath "res://tools/environment_grounding_contract.gd" -StageTimeoutSec 120
+        Invoke-GameReworkVerificationGates
+        Invoke-GodotScript -Name "environment_grounding_contract" -ScriptPath "res://tools/environment_grounding_contract.gd" -StageTimeoutSec 120
+        Invoke-Perf06ContractChecks -SuiteLabel "audit"
         Invoke-GodotScript -Name "scenario_room_multiseed_finalization" -ScriptPath "res://tools/scenario_room_multiseed_finalization.gd" -StageTimeoutSec 1200
         Invoke-GodotScript -Name "slot_pinball_physics_audit" -ScriptPath "res://tools/slot_pinball_physics_audit.gd" -UserArgs @("48") -StageTimeoutSec 240
         Invoke-GodotScript -Name "slot_machine_deep_audit" -ScriptPath "res://tools/slot_machine_deep_audit.gd" -UserArgs @("10000") -StageTimeoutSec 900
@@ -1334,6 +1358,7 @@ switch ($suiteKey) {
         Invoke-GodotScript -Name "roulette_audio_audit" -ScriptPath "res://tools/roulette_audio_audit.gd" -StageTimeoutSec 120
     }
     "full" {
+        Invoke-Perf06ContractChecks -SuiteLabel "full"
         Invoke-FoundationSuite -FoundationSuite "all" -StageTimeoutSec (Get-StageTimeout "foundation_all")
         Invoke-GodotScript -Name "ui_scene_compile" -ScriptPath (Get-UiSceneSplitRunnerPath) -StageTimeoutSec 300
         Invoke-GodotScript -Name "game_library_launchers" -ScriptPath "res://scripts/tests/ui_scene/check_game_library_launchers.gd" -StageTimeoutSec 180

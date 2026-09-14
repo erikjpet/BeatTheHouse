@@ -6,7 +6,15 @@ Supersedes the open items of: `docs/todo/perf06_1_performance_platform_pass_prom
 
 ## Execution Record
 
-_Fill in on completion: date, commit hashes, gate results, deviations._
+2026-09-11: Phases 1-3 completed on the former `codex/perf06-finish`
+branch. Recovery `f8b494a4`; permanent enforcement `5e7bd77d`; reduced-run
+parameterization and harness corrections `7efd6e8d`, `4c4a8968`, `362e2ba9`,
+`1d554967`, `a7952863`, `39d1837a`, `38580344`, `a840777d`, `10eee85a`, and
+`a69943d8`. All 18 non-binding gates and the focused hostile contracts passed;
+reduced producers retained their red timing, placement, progression, and
+low-end evidence without waivers. The owner parked the binding Phase 4 run on
+2026-09-14 until the placement redesign is accepted and the candidate host is
+quiescent. Full ledger: `docs/plans/perf06_1_performance_platform_report.md`.
 
 # Agent Prompt — perf06_1: Finish the Performance and Platform Pass
 
@@ -306,7 +314,3 @@ low-end, and what is closest to the line.
 Your terminal condition is a committed report that answers "is 0.6 fast enough to
 ship, on every platform we ship to", backed by a green three-profile matrix and
 gates that will catch the next regression without a human noticing it first.
-
-
-
-

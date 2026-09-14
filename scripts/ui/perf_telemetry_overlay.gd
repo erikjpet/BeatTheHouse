@@ -6,6 +6,7 @@ extends Control
 
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 const CrewTurnModelScript := preload("res://scripts/core/crew_turn_model.gd")
+const CrewRecruitmentModelScript := preload("res://scripts/core/crew_recruitment_model.gd")
 const TutorialFlowScript := preload("res://scripts/core/tutorial_flow.gd")
 const WebAudioBridgeScript := preload("res://scripts/ui/web_audio_bridge.gd")
 
@@ -753,11 +754,14 @@ func _run_grand_casino_plan() -> void:
 		return
 	run_state.bankroll = maxi(run_state.bankroll, 5000)
 	run_state.narrative_flags["grand_casino_invite"] = true
-	var grand_installed := _install_generated_grand_casino_fixture(run_state)
-	mark_event("grand_casino_fixture_install", grand_installed)
 	run_state.add_suspicion("web_grand_casino_late_probe", 85, "behavior")
 	run_state.narrative_flags["grand_casino_high_limit_access"] = true
 	run_state.narrative_flags["grand_casino_high_limit_access_method"] = "performance_probe"
+	# Suspicion changes late-run Crew standing, which is an input to scenario
+	# semantic placement. Establish all late-run inputs before sealing the room;
+	# mutating them afterward correctly invalidates the proof on refresh.
+	var grand_installed := _install_generated_grand_casino_fixture(run_state)
+	mark_event("grand_casino_fixture_install", grand_installed)
 	app.call("_refresh")
 	_begin_scenario("grand_casino_late_settle", {"surface": "grand_casino", "mode": "late_run_entry"})
 	await _wait_frames(maxi(scenario_frames, 360))
@@ -839,10 +843,17 @@ func _install_generated_grand_casino_fixture(run_state: RunState) -> Dictionary:
 		var generated := EnvironmentInstance.from_archetype(archetype, 1, candidate_rng, library, run_state.challenge_config, scenario)
 		var environment := generated.to_dict()
 		environment["world_node_id"] = RunState.GRAND_CASINO_ARCHETYPE_ID
+		environment["world_map_travel"] = true
 		run_state.apply_town_generation_modifiers(environment, candidate_rng)
 		var generated_states: Variant = generator.call("_generated_game_states", run_state, environment, candidate_rng)
 		if typeof(generated_states) == TYPE_DICTIONARY:
 			environment["game_states"] = generated_states
+		# Match the production Grand Casino room-install boundary before semantic
+		# sealing. Omitting routed travel and Crew inputs makes a nominally valid
+		# fixture lose its proof on the first refresh, so every downstream phase is
+		# correctly rejected as unobserved.
+		generator.call("_apply_world_travel_targets", environment, run_state, run_state.world_map, RunState.GRAND_CASINO_ARCHETYPE_ID)
+		CrewRecruitmentModelScript.apply_to_environment(run_state, environment)
 		environment["layout"] = EnvironmentInstance.ensure_generated_layout(environment)
 		var rollback_value: Variant = generator.call("_travel_rollback_snapshot", run_state)
 		var rollback: Dictionary = rollback_value if typeof(rollback_value) == TYPE_DICTIONARY else {}
@@ -872,6 +883,11 @@ func _install_generated_grand_casino_fixture(run_state: RunState) -> Dictionary:
 		"installed": installed,
 		"environment_id": str(run_state.current_environment.get("archetype_id", "")),
 		"scenario_id": str(run_state.current_environment.get("scenario_id", "")),
+		"semantic_ready": bool(run_state.current_environment.get("scenario_semantic_ready", false)),
+		"render_snapshot_present": not (run_state.current_environment.get("scenario_render_snapshot", {}) as Dictionary).is_empty() \
+			if typeof(run_state.current_environment.get("scenario_render_snapshot", {})) == TYPE_DICTIONARY else false,
+		"projection_present": not run_state.scenario_sequence_projection().is_empty(),
+		"lifecycle_errors": run_state.current_environment.get("scenario_sequence_lifecycle_errors", []),
 		"selected_scenario_id": str(installed_scenario.get("id", "")),
 		"attempts": attempts,
 	}
@@ -2325,9 +2341,20 @@ func _measure_slot_autoplay() -> void:
 		return
 	app.start_game_test_session("slot")
 	await _wait_frames(12)
+	var before := _slot_perf06_phase_evidence()
 	_begin_scenario("slot_autoplay_active", {"surface": "slot", "mode": "autoplay", "perf06_surface_id": "slot", "perf06_phase_id": "autoplay"})
 	_emit_surface_action("slot_auto_toggle", 0, false)
+	await _wait_frames(2)
+	var enabled := _slot_perf06_phase_evidence()
+	current_tags["phase_evidence"] = {
+		"observed": bool(enabled.get("autoplay_active", false)),
+		"before": before,
+		"enabled": enabled,
+	}
 	await _wait_frames(maxi(active_frames, scenario_frames))
+	var phase_evidence: Dictionary = current_tags.get("phase_evidence", {})
+	phase_evidence["after"] = _slot_perf06_phase_evidence()
+	current_tags["phase_evidence"] = phase_evidence
 	_end_scenario()
 	app.back_to_environment()
 	await _wait_frames(8)
@@ -2339,17 +2366,39 @@ func _measure_pinball_feature() -> void:
 	app.start_game_test_session("slot")
 	await _wait_frames(12)
 	var prepared := _force_pinball_feature()
-	_begin_scenario("pinball_feature_session", {"surface": "slot", "mode": "pinball_feature", "prepared": prepared, "perf06_surface_id": "slot", "perf06_phase_id": "bonus"})
+	var prepared_evidence := _slot_perf06_phase_evidence()
+	_begin_scenario("pinball_feature_session", {
+		"surface": "slot",
+		"mode": "pinball_feature",
+		"prepared": prepared,
+		"perf06_surface_id": "slot",
+		"perf06_phase_id": "bonus",
+		"phase_evidence": {
+			"observed": prepared \
+				and bool(prepared_evidence.get("bonus_active", false)) \
+				and str(prepared_evidence.get("bonus_family", "")) == "pinball",
+			"before": prepared_evidence,
+		},
+	})
+	var action_attempt_count := 0
 	for frame in range(maxi(active_frames * 2, 480)):
 		if frame % 45 == 0:
 			_emit_surface_action("slot_bonus_launch", 0, false)
+			action_attempt_count += 1
 		elif frame % 45 == 12:
 			_emit_surface_action("slot_bonus_left", 0, false)
+			action_attempt_count += 1
 		elif frame % 45 == 24:
 			_emit_surface_action("slot_bonus_right", 0, false)
+			action_attempt_count += 1
 		elif frame % 45 == 36:
 			_emit_surface_action("slot_bonus_power_up", 0, false)
+			action_attempt_count += 1
 		await get_tree().process_frame
+	var phase_evidence: Dictionary = current_tags.get("phase_evidence", {})
+	phase_evidence["after"] = _slot_perf06_phase_evidence()
+	phase_evidence["action_attempt_count"] = action_attempt_count
+	current_tags["phase_evidence"] = phase_evidence
 	_end_scenario()
 	app.back_to_environment()
 	await _wait_frames(8)
@@ -2379,13 +2428,37 @@ func _measure_scripted_memory() -> void:
 	app.start_foundation_run("L02-MEMORY")
 	await _wait_frames(20)
 	_begin_scenario("scripted_play_memory_10m", {"surface": "full_run", "mode": "scripted_play", "target_seconds": memory_seconds, "perf06_surface_id": "run_trajectory", "perf06_phase_id": "mid_run"})
+	var run_state: RunState = app.get("run_state") as RunState
+	var story_before := run_state.story_log_entry_count() if run_state != null else -1
+	var travels_before := run_state.environment_travel_count() if run_state != null else -1
 	var frame := 0
+	var scripted_step_count := 0
+	var durable_progress_count := 0
+	var visited_targets := {}
+	if run_state != null:
+		visited_targets[run_state.current_world_node_id()] = true
 	var end_msec := Time.get_ticks_msec() + memory_seconds * 1000
 	while Time.get_ticks_msec() < end_msec:
 		if frame % 240 == 0:
-			_scripted_memory_step(frame / 240)
+			var step_evidence := _scripted_memory_step(frame / 240, visited_targets)
+			scripted_step_count += 1
+			if bool(step_evidence.get("durable_progress", false)):
+				durable_progress_count += 1
 		frame += 1
 		await get_tree().process_frame
+	var story_after := run_state.story_log_entry_count() if run_state != null else -1
+	var travels_after := run_state.environment_travel_count() if run_state != null else -1
+	current_tags["phase_evidence"] = {
+		"observed": scripted_step_count > 0 \
+			and durable_progress_count > 0 \
+			and (story_after > story_before or travels_after > travels_before),
+		"scripted_step_count": scripted_step_count,
+		"durable_progress_count": durable_progress_count,
+		"story_entries_before": story_before,
+		"story_entries_after": story_after,
+		"environment_travels_before": travels_before,
+		"environment_travels_after": travels_after,
+	}
 	_end_scenario()
 
 
@@ -3228,20 +3301,107 @@ func _force_pinball_feature() -> bool:
 	return true
 
 
-func _scripted_memory_step(step_index: int) -> void:
+func _slot_perf06_phase_evidence() -> Dictionary:
+	var snapshot := _current_game_phase_snapshot()
+	var active_bonus: Dictionary = snapshot.get("slot_active_bonus", {}) \
+		if typeof(snapshot.get("slot_active_bonus", {})) == TYPE_DICTIONARY else {}
+	return {
+		"spin_count": int(snapshot.get("slot_spin_count", snapshot.get("spin_count", 0))),
+		"autoplay_active": bool(snapshot.get("slot_autoplay_active", false)),
+		"bonus_active": bool(snapshot.get("slot_active_bonus_active", false)),
+		"bonus_family": str(active_bonus.get("family", "")),
+		"bonus_mode": str(active_bonus.get("mode", "")),
+		"bonus_step_index": int(active_bonus.get("step_index", 0)),
+		"bonus_complete": bool(active_bonus.get("complete", false)),
+	}
+
+
+func _scripted_memory_step(step_index: int, visited_targets: Dictionary) -> Dictionary:
 	if app == null or app.get("run_state") == null:
-		return
+		return {"accepted": false, "durable_progress": false, "reason": "missing_run"}
 	var current_game: GameModule = app.get("current_game") as GameModule
 	if current_game != null:
-		_trigger_active_game_action(current_game.get_id())
+		var action_evidence := _trigger_active_game_action(current_game.get_id())
 		if step_index % 2 == 0:
 			app.back_to_environment()
-		return
+		action_evidence["durable_progress"] = bool(action_evidence.get("progressed", false))
+		return action_evidence
+	var environment_snapshot: Dictionary = app.current_environment_view_snapshot()
+	var game_ids: Array = environment_snapshot.get("game_ids", []) \
+		if typeof(environment_snapshot.get("game_ids", [])) == TYPE_ARRAY else []
+	if game_ids.is_empty():
+		return _scripted_memory_travel(visited_targets)
 	if step_index % 5 == 0:
-		if app.open_world_map():
+		var opened := app.open_world_map()
+		if opened:
 			app.close_world_map()
-		return
+		return {"accepted": opened, "durable_progress": false, "kind": "world_map"}
 	app.enter_first_available_game()
+	return {"accepted": app.get("current_game") != null, "durable_progress": false, "kind": "enter_game"}
+
+
+func _scripted_memory_travel(visited_targets: Dictionary) -> Dictionary:
+	var run_state: RunState = app.get("run_state") as RunState
+	if run_state == null:
+		return {"accepted": false, "durable_progress": false, "reason": "missing_run"}
+	var environment_snapshot: Dictionary = app.current_environment_view_snapshot()
+	var choices: Array = environment_snapshot.get("travel_choices", []) \
+		if typeof(environment_snapshot.get("travel_choices", [])) == TYPE_ARRAY else []
+	var selected_choice: Dictionary = {}
+	for choice_value in choices:
+		if typeof(choice_value) != TYPE_DICTIONARY:
+			continue
+		var game_choice: Dictionary = choice_value
+		var game_target_id := str(game_choice.get("id", ""))
+		if not game_target_id.is_empty() \
+				and bool(game_choice.get("enabled", true)) \
+				and _perf06_archetype_has_games(game_target_id):
+			selected_choice = game_choice
+			break
+	if selected_choice.is_empty():
+		for choice_value in choices:
+			if typeof(choice_value) != TYPE_DICTIONARY:
+				continue
+			var waypoint_choice: Dictionary = choice_value
+			var waypoint_id := str(waypoint_choice.get("id", ""))
+			if waypoint_id.is_empty() \
+					or not bool(waypoint_choice.get("enabled", true)) \
+					or bool(visited_targets.get(waypoint_id, false)):
+				continue
+			selected_choice = waypoint_choice
+			break
+	if selected_choice.is_empty():
+		return {"accepted": false, "durable_progress": false, "reason": "no_unvisited_route"}
+	var target_id := str(selected_choice.get("id", ""))
+	var before_node := run_state.current_world_node_id()
+	visited_targets[target_id] = true
+	var selected := app.select_travel_option(target_id)
+	var confirmed := selected and app.confirm_selected_travel(true)
+	var after_node := run_state.current_world_node_id()
+	return {
+		"accepted": confirmed,
+		"durable_progress": confirmed and after_node != before_node,
+		"kind": "travel",
+		"target_id": target_id,
+		"world_node_before": before_node,
+		"world_node_after": after_node,
+	}
+
+
+func _perf06_archetype_has_games(archetype_id: String) -> bool:
+	var content_library: ContentLibrary = app.get("library") as ContentLibrary if app != null else null
+	if content_library == null:
+		return false
+	for archetype_value in content_library.environment_archetypes:
+		if typeof(archetype_value) != TYPE_DICTIONARY:
+			continue
+		var archetype: Dictionary = archetype_value
+		if str(archetype.get("id", "")) != archetype_id:
+			continue
+		var game_pool: Array = archetype.get("game_pool", []) \
+			if typeof(archetype.get("game_pool", [])) == TYPE_ARRAY else []
+		return not game_pool.is_empty()
+	return false
 
 
 func _wait_frames(frames: int) -> void:

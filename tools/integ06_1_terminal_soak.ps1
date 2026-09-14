@@ -124,24 +124,32 @@ foreach ($directoryName in @("assets", "data", "scenes", "scripts", "tools", "na
     if (-not (Test-Path -LiteralPath $source -PathType Container)) { throw "Transient project source is missing: $source" }
     Copy-Item -LiteralPath $source -Destination $project -Recurse
 }
-$common = (& git -C $root rev-parse --path-format=absolute --git-common-dir).Trim()
-$canonicalRepoRoot = Split-Path -Parent $common
-$canonicalAddon = Join-Path $canonicalRepoRoot "addons\coin_pusher_native"
+$candidateAddon = Join-Path $root "addons\coin_pusher_native"
+$extensionTemplate = Join-Path $root "native\coin_pusher\coin_pusher_native.gdextension.template"
+if (-not (Test-Path -LiteralPath $candidateAddon -PathType Container)) { throw "Candidate native addon prerequisite is missing: $candidateAddon" }
+if (-not (Test-Path -LiteralPath $extensionTemplate -PathType Leaf)) { throw "Candidate GDExtension descriptor is missing: $extensionTemplate" }
 $requiredHostLibraries = @(
-    "bin\coin_pusher_native.windows.template_debug.x86_64.nothreads.dll",
-    "bin\coin_pusher_native.windows.template_release.x86_64.nothreads.dll"
+    Get-Content -LiteralPath $extensionTemplate |
+        Where-Object { $_ -match '^windows\.(debug|release)\.' } |
+        ForEach-Object {
+            if ($_ -notmatch '"res://addons/coin_pusher_native/(?<relative>[^"]+)"') { throw "Windows GDExtension entry has an invalid candidate-relative path: $_" }
+            $Matches.relative.Replace('/', [IO.Path]::DirectorySeparatorChar)
+        }
 )
-if (-not (Test-Path -LiteralPath $canonicalAddon -PathType Container)) { throw "Canonical read-only native addon prerequisite is missing: $canonicalAddon" }
+if ($requiredHostLibraries.Count -ne 2) { throw "Candidate GDExtension descriptor must declare exactly two Windows host libraries." }
 foreach ($relativeHostLibrary in $requiredHostLibraries) {
-    if (-not (Test-Path -LiteralPath (Join-Path $canonicalAddon $relativeHostLibrary) -PathType Leaf)) { throw "Required Windows host library is unavailable: $relativeHostLibrary" }
+    if (-not (Test-Path -LiteralPath (Join-Path $candidateAddon $relativeHostLibrary) -PathType Leaf)) { throw "Required candidate Windows host library is unavailable: $relativeHostLibrary" }
 }
 New-Item -ItemType Directory -Path (Join-Path $project "addons") | Out-Null
-Copy-Item -LiteralPath $canonicalAddon -Destination (Join-Path $project "addons") -Recurse
+Copy-Item -LiteralPath $candidateAddon -Destination (Join-Path $project "addons") -Recurse
 $transientSource = Join-Path $project "native\coin_pusher"
 $transientAddon = Join-Path $project "addons\coin_pusher_native"
 Copy-Item -LiteralPath (Join-Path $transientSource "coin_pusher_native.gdextension.template") -Destination (Join-Path $transientAddon "coin_pusher_native.gdextension") -Force
 
-$toolRoot = if ($ToolRoot) { [IO.Path]::GetFullPath($ToolRoot) } else { Join-Path $canonicalRepoRoot ".tools\native_solver" }
+$toolRoot = if ($ToolRoot) { [IO.Path]::GetFullPath($ToolRoot) } else {
+    $common = (& git -C $root rev-parse --path-format=absolute --git-common-dir).Trim()
+    Join-Path (Split-Path -Parent $common) ".tools\native_solver"
+}
 $python = Join-Path $toolRoot "python\python.exe"
 $wheel = Join-Path $toolRoot "downloads\scons-4.10.1-py3-none-any.whl"
 $godotCpp = Join-Path $toolRoot "godot-cpp"

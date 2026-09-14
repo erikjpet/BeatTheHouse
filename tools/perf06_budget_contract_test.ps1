@@ -59,6 +59,10 @@ foreach ($token in @("-Target template_debug", "BTH_PERF_NATIVE_PLUGIN_SHA256", 
     $probeWrapper = Get-Content -LiteralPath (Join-Path $PSScriptRoot "foundation_performance_probe.ps1") -Raw
     if (-not $probeWrapper.Contains($token)) { throw "Native source-run probe lost '$token'." }
 }
+foreach ($token in @('--editor', 'Refresh extension discovery after the build', 'Godot failed to refresh the built debug native solver')) {
+    $probeWrapper = Get-Content -LiteralPath (Join-Path $PSScriptRoot "foundation_performance_probe.ps1") -Raw
+    if (-not $probeWrapper.Contains($token)) { throw "Native source-run probe lost fresh-worktree GDExtension discovery guard '$token'." }
+}
 if (-not $nativeText.Contains('str(stats.get("solver_backend", "")) == "native_v3"')) {
     throw "Native performance gate no longer requires the locked native_v3 solver."
 }
