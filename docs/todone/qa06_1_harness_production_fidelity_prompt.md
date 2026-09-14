@@ -17,7 +17,7 @@ wrong. In two cases the false evidence reached official reports and the board.
 | 2 | `scripts/tests/foundation/world_sequence_delivery_proof_contract.gd` | Contract FAIL: "P1 travel/revisit return remained at back_alley" | `_travel_away_and_revisit` never finalized the *away* room, so the return leg was refused | Fixed `4ed1d1d6` |
 | 3 | `tools/wave_b_composition_probe.gd` (rumor venue, rumor target) | Composition matrix FAIL, misattributed to `env06_8` as a "Jazz Club scenario finalization" defect in `docs/plans/integ06_1_composition_migration_soak_report.md` | Two arrival sites never finalized | Fixed `4ed1d1d6` |
 | 4 | `tools/wave_b_composition_probe.gd` (Punchline L1) | Four failures — L2 transition refused, L3 "no door that way", save/load L3, revisit L3 — recorded in the `integ06_1` report **and the board** as "pre-existing production defects owned by the Punchline/Crew rows" | The L1 club room was never finalized before the layer transition; the other three were cascades | Fixed; landed on `main` |
-| 5 | `tools/foundation_visual_qa.gd` | "Opening the world map should not mutate serialized RunState"; "Double-clicking Leave did not open the world map overlay"; plus 20 cascading failures | `_try_travel_object_flow()` reacquires its target with `_first_clickable_canvas_object_type_enabled(canvas, "travel", true)`, which returns `travel:motel_room` ("Room Door") by render order instead of `travel:leave` | **Not yet fixed** — root-caused in `docs/todo/playtest06_current_source_bug_investigation_2026-09-07.md` |
+| 5 | `tools/foundation_visual_qa.gd` | "Opening the world map should not mutate serialized RunState"; "Double-clicking Leave did not open the world map overlay"; plus 20 cascading failures | `_try_travel_object_flow()` reacquires its target with `_first_clickable_canvas_object_type_enabled(canvas, "travel", true)`, which returns `travel:motel_room` ("Room Door") by render order instead of `travel:leave` | **Historical pre-fix finding** — root-caused in `docs/todone/playtest06_current_source_bug_investigation_2026-09-07.md` and subsequently fixed by this completed row |
 
 **Incident 4 is the one that shows the real cost.** It very nearly caused the
 flagship three-layer Punchline venue to be declared broken. Adding one
@@ -56,7 +56,7 @@ becoming defective later.
 ## 3. Required work
 
 1. **Fix incident 5** exactly as specified in
-   `docs/todo/playtest06_current_source_bug_investigation_2026-09-07.md`:
+   `docs/todone/playtest06_current_source_bug_investigation_2026-09-07.md`:
    reacquire `travel:leave` by exact id, verify it is enabled/visible/hittable
    before activating, include the selected object id/label and serialized-diff
    summary in any failure message, and add a regression case for a parent venue

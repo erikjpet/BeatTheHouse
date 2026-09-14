@@ -111,14 +111,14 @@ It was a point fix. At least one more room has the same problem.
 - **Hidden state is absolute.** A leak is an automatic P0.
 - **Any harness that travels between rooms must finalize on arrival** exactly as
   the production host does. Five recorded false-failure incidents in this
-  program — see `docs/todo/playtest06_current_source_bug_investigation_2026-09-07.md`
+  program — see `docs/todone/playtest06_current_source_bug_investigation_2026-09-07.md`
   for the most recent, a wrong-target click in `tools/foundation_visual_qa.gd`.
 - Delete nothing; leave no diagnostics in the tree.
 - No release activity: no version bump, tag, packaging, or publish.
 
 ## 6. Related, separately tracked
 
-- `docs/todo/playtest06_current_source_bug_investigation_2026-09-07.md` — the
+- `docs/todone/playtest06_current_source_bug_investigation_2026-09-07.md` — the
   `foundation_visual_qa.gd` wrong-target defect (test infrastructure, already
   root-caused, fix specified, not yet applied).
 - `docs/todone/env06_9_visual_consequence_and_object_identity_prompt.md` — absorbed and completed by `fix06_28`

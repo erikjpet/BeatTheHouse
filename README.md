@@ -35,8 +35,8 @@ the repository.
 | Main scene | `res://scenes/main.tscn` |
 | Main UI shell | `res://scripts/ui/foundation_main.gd` |
 | Prior release line | 0.3.3 public source release; 0.4.0 unpublished Act 1 candidate |
-| Active planning target | 0.6 integration and stabilization on `main` |
-| Current release readiness | Playable integration candidate; not release-ready until room construction/placement is redesigned and the deferred performance/release gates are rerun |
+| Active planning target | Redesign room construction/placement, then resume the parked 0.6 qualification sequence |
+| Current release readiness | Accepted work is integrated on `main` and playable; not release-ready until placement is redesigned and the deferred performance, playtest, polish, and release gates are rerun |
 | Viewport | 1280x720, non-resizable, canvas stretch with kept aspect |
 | Renderer | Godot mobile renderer by default; Windows uses Godot compatibility/OpenGL to avoid the native Vulkan/OBS crash path seen in local WER reports |
 | Input model | Single pointer interaction with mouse/touch parity |
@@ -376,7 +376,7 @@ powershell -ExecutionPolicy Bypass -File tools\ui05_asset_pipeline_check.ps1
 
 Current integration evidence and remaining work:
 
-- The 2026-09-14 integration candidate includes the latest game-prop art,
+- Current `main` includes the latest game-prop art,
   back-room poker tweaks, the complete `fix06_32` game-verification stack, and
   playtest repairs BUG-01 through BUG-36 except the placement-owned findings
   deliberately held for the room-construction redesign.

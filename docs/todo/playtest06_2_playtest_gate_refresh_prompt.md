@@ -1,4 +1,4 @@
-Status: TODO — intake prestage landed; seed verification and gate refresh have not run
+Status: PARKED — intake prestage landed; the full seed verification and gate refresh wait for accepted placement and the binding performance pass
 Board row: `playtest06_2` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — 0.6 playtest06_2: Playtest Gate Refresh
@@ -9,7 +9,7 @@ Copy everything below this line into the agent.
 
 You are working in `D:\Projects\Beat-The-House`. This row repairs the handoff
 that ends the entire 0.6 board. Read
-`docs/todo/playtest06_1_playtest_readiness_prompt.md` in full, the board's
+`docs/todone/playtest06_1_playtest_readiness_prompt.md` in full, the board's
 terminus section, `docs/plans/0.6_remaining_work_program.md`, and the reports
 from `balance06_1`, `integ06_1`, `perf06_1` and `pusherv3_11`.
 

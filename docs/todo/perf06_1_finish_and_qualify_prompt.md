@@ -236,7 +236,7 @@ Write `docs/plans/perf06_1_performance_platform_report.md` containing:
 4. The published budget table with its mandatory liveness pairings.
 5. Every optimization with before and after numbers.
 6. Every routed finding with severity and destination.
-7. **Honest comparator handling.** `perf06_1_measurement_prestage.md` section
+7. **Honest comparator handling.** `docs/plans/perf06_1_measurement_prestage.md` section
    "Missing 0.5 comparators" lists what has no like-for-like 0.5 record: Coin
    Pusher, the dynamic scenario runtime with a full sequence staged, crew
    sequences at current actor counts, the environment expansions at maximal
@@ -312,6 +312,5 @@ low-end, and what is closest to the line.
 Your terminal condition is a committed report that answers "is 0.6 fast enough to
 ship, on every platform we ship to", backed by a green three-profile matrix and
 gates that will catch the next regression without a human noticing it first.
-
 
 
