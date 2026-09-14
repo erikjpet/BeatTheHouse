@@ -1,4 +1,4 @@
-Status: DONE — fixes uncommitted in shared fix worktree, awaiting independent re-audit
+Status: DONE — fixes merged to `main` in `429079bb`; regression group and merged player path pass on 2026-09-14
 Source report: `docs/plans/agent_playtest/agent_playtest_postfix_06_claim_audit_2026-09-13.md` (9 failed fixes, 1 unverified, BUG-32 … BUG-37)
 Predecessors: `docs/todo/playtest_fixes01_agent_sweep_2026-09-12_prompt.md`, `docs/todo/playtest_fixes02_continuation_2026-09-12_prompt.md` (both DONE, uncommitted)
 

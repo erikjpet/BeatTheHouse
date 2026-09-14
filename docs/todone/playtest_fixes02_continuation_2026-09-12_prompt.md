@@ -1,4 +1,4 @@
-Status: DONE — continuation fixes uncommitted in shared fix worktree, awaiting owner review
+Status: DONE — fixes merged to `main` in `429079bb`; regression group passes on 2026-09-14
 Source report: `docs/plans/agent_playtest/agent_playtest_report_2026-09-12.md` (continuation findings BUG-24 … BUG-31)
 Predecessor task: `docs/todo/playtest_fixes01_agent_sweep_2026-09-12_prompt.md` (BUG-01 … BUG-23)
 

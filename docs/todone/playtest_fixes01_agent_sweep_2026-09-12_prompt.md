@@ -1,4 +1,4 @@
-Status: DONE — fixes uncommitted in worktree, awaiting owner review
+Status: DONE — fixes merged to `main` in `429079bb`; regression group passes on 2026-09-14
 Source report: `docs/plans/agent_playtest/agent_playtest_report_2026-09-12.md` (23 findings, BUG-01 … BUG-23)
 
 # Agent Prompt — Playtest Fixes 01: Validate and Fix the 2026-09-12 Agent Sweep

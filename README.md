@@ -3,20 +3,23 @@
 Beat the House is a single-player Godot casino roguelike about surviving a
 debt-and-heat spiral across low-stakes rooms and the Grand Casino. Build a
 seeded run, buy risky items, take loans and services, travel between venues, and
-play full simulations of Scratch Tickets, Pull Tabs, Slots, Bar Dice,
-Blackjack, Baccarat, Roulette, and Video Poker. Every win, cheat, drink, loan,
-and bad exit pushes the run state forward.
+play full simulations of Scratch Tickets, Pull Tabs, Slots, Coin Pusher,
+Bar Dice, Craps, Blackjack, Baccarat, Roulette, Video Poker, and the Crew's
+back-room Hold'em game. Every win, cheat, drink, loan, and bad exit pushes the
+run state forward.
 
 Versions 0.2.0 through 0.3.3 are historical source releases; 0.4.0 was an Act 1
 candidate tag that was not published before development continued. Version
-0.5.1 is the current source-complete GitHub integration line. It keeps the Act
-1 foundation and reworks the Grand Casino into a three-room endgame with a living
+0.5.1 is the latest published release line. Current `main` is the active 0.6
+integration line: it keeps the Act 1 foundation, adds the Living Town and Crew
+systems, and reworks the Grand Casino into a three-room endgame with a living
 Rourke, a chips-and-Cage economy, Linda's Bronze/Silver/Gold Players Card
 ladder, a four-phase back-room showdown, a playable heads-up blackjack duel,
 and persistent card/chip meta rewards. Narration/audio, inventory cards,
-meaningful destination tradeoffs, trustworthy release gates, automated
-tutorial coverage, native/Web performance, soak/storage, strict-input,
-visual, and exact-source Full gates are green on the technical baseline.
+meaningful destination tradeoffs, automated tutorial coverage, and broad
+strict-input and deterministic regression coverage. The 0.6 source is playable,
+but room construction/finalization must be redesigned before release: the
+current full contract suite exposes placement, route, and layout-snapshot debt.
 The owner approved the tested baseline for public release on 2026-08-12. The
 `v0.5.1` tag and GitHub Release identify the final corrected 0.5 playtest baseline;
 `v0.5.0` remains the immutable original release boundary.
@@ -32,8 +35,8 @@ the repository.
 | Main scene | `res://scenes/main.tscn` |
 | Main UI shell | `res://scripts/ui/foundation_main.gd` |
 | Prior release line | 0.3.3 public source release; 0.4.0 unpublished Act 1 candidate |
-| Active planning target | 0.5.1 final 0.5 patch; 0.6 work begins after this tag |
-| Current release readiness | Final 0.5 tutorial-recovery patch; see `docs/plans/0.5.1_release_checklist.md` and the `v0.5.1` release |
+| Active planning target | 0.6 integration and stabilization on `main` |
+| Current release readiness | Playable integration candidate; not release-ready until room construction/placement is redesigned and the deferred performance/release gates are rerun |
 | Viewport | 1280x720, non-resizable, canvas stretch with kept aspect |
 | Renderer | Godot mobile renderer by default; Windows uses Godot compatibility/OpenGL to avoid the native Vulkan/OBS crash path seen in local WER reports |
 | Input model | Single pointer interaction with mouse/touch parity |
@@ -69,18 +72,18 @@ Production content is JSON under `data/`.
 | Pack | Count | Path | Notes |
 | --- | ---: | --- | --- |
 | Environments | 18 | `data/environments/archetypes.json` | Shops, homes, tier-1 casinos, tier-2 venues, jazz club, beach, pawn shop, and the Grand Casino's connected rooms plus Cage |
-| Games | 8 | `data/games/games.json` | All current games are full-simulation modules |
-| Items | 69 | `data/items/items.json` | Permanent, temporary, consumable, contraband, active, game, security, travel, slot, pinball, container, time, and build-synergy effects |
-| Content groups | 10 | `data/content_groups/groups.json` | Modular run packs that enable/disable games and their related item pools |
-| Events | 49 | `data/events/events.json` | Scoped room events with choices and consequences, including unavoidable pressure events, triggered follow-ups, and the boss-floor `the_house_calls` and `high_roller_cashout` |
-| Services | 14 | `data/services/services.json` | `cashier_tip`, `house_drink`, `call_brother_in_law`, jazz-club round/tip/show services, and tier-2 lounge/riverboat services |
+| Games | 11 | `data/games/games.json` | Full-simulation games, including Coin Pusher, Craps, and Crew Hold'em |
+| Items | 88 | `data/items/items.json` | Permanent, temporary, consumable, contraband, active, game, security, travel, slot, pinball, container, time, and build-synergy effects |
+| Content groups | 16 | `data/content_groups/groups.json` | Modular run packs that enable/disable games and their related item pools |
+| Events | 159 | `data/events/events.json` | Scoped room and scenario events with choices, follow-ups, character chains, Crew/world sequences, and boss-floor consequences |
+| Services | 18 | `data/services/services.json` | Shop, drink, information, music, security, and venue-specific services |
 | Lenders | 5 | `data/debt/lenders.json` | `street_lender`, `motel_friend`, `the_crew`, `brother_in_law`, `sals_pawn_counter` |
 | Travel route templates | 12 | `data/travel/routes.json` | Destination templates for shops, casinos, tier-2 venues, the jazz club, beach, the underground casino, and the Grand Casino; `WorldMap` turns them into seeded graph paths with costs, unlocks, scouting previews, travel locks, and route-risk events |
 | Challenges | 8 | `data/challenges/challenges.json` | Act 1 authored challenge runs with profile completion flags |
-| Dialogues | 29 | `data/dialogue/dialogues.json` | TalkDock dialogue content for current Act 1, the guided first night, and 0.5 routes |
+| Dialogues | 32 | `data/dialogue/dialogues.json` | TalkDock dialogue content for Act 1, the guided first night, Living Town, and Crew routes |
 | Collection schemas | 1 collection | `data/collections/collections.json` | Local meta collection bags/items, housing data, and pawn-shop sale values |
 | Music tracks | 3 | `data/audio/music_manifest.json` | Authored music manifest used by the procedural music player |
-| Tutorial lessons | 56 | `data/tutorial/lessons.json` | Dialogue-guided tutorial sequence definitions, highlights, pacing, and gating contracts |
+| Tutorial lessons | 66 | `data/tutorial/lessons.json` | Dialogue-guided and contextual tutorial definitions, highlights, pacing, and gating contracts |
 
 `data/art/art_manifest.json` maps art identities used by environments, events,
 items, games, and the UI. Asset files live under `assets/`.
@@ -163,6 +166,9 @@ rendering details.
 | Baccarat | cards | `scripts/games/baccarat.gd` | `read_baccarat_shoe`, `edge_sort` | Mini-baccarat with Player/Banker/Tie/pair bets, commission, shoe state, read-shoe, and edge-sort play |
 | Roulette | wheel | `scripts/games/roulette.gd` | `read_wheel_bias`, `past_post` | Full roulette layout with inside/outside bets, chip placement, wheel spin, payout animation, wheel-read, and past-post timing |
 | Video Poker | cards | `scripts/games/video_poker.gd` | `mark_holds` | Multi-game video poker with bet, hold, draw, double-up, and mark-hold cheat action |
+| Coin Pusher | novelty | `scripts/games/coin_pusher.gd` | machine-specific advantage actions | Three deterministic physics-backed cabinets with live trays, cabinet goals, persistence, and native/Web parity coverage |
+| Craps | dice | `scripts/games/craps.gd` | table-specific advantage actions | Full-table and street variants with 40 reachable wager types, derived house edges, and million-roll verification |
+| Crew Hold'em | cards | `scripts/games/crew_draw_poker.gd` | read/bluff actions | Six-handed no-limit Hold'em with a Crew dealer, animated dealing/chips, distinct persistent opponent personalities, and hidden-card authority |
 
 Shared table-game visuals live in `scripts/games/table_game_visuals.gd`.
 
@@ -339,17 +345,19 @@ The wrappers resolve Godot in this order:
 
 ## Validation
 
-The current release readiness ledger is
-`docs/plans/0.5_release_checklist.md`. Earlier 0.2-0.4 ledgers are retained
-as historical evidence only. The current final battery and package evidence
-must be recorded before publishing. The primary headless commands are:
+The canonical 0.6 execution state is
+`docs/todo/README_0_6_board.md`; the exact current integration verdict is
+`docs/plans/main_integration_audit_2026-09-14.md`. Release ledgers through 0.5.1 are historical
+evidence for published source boundaries; they are not evidence that current
+0.6 `main` is ready to ship. The primary headless commands are:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File tools\validate_project.ps1
-powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -FoundationSuite all -TimeoutSec 300
+powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -Suite Smoke
+powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -Suite Contract -FoundationSuite contracts
 ```
 
-Current 0.5 supplemental probes:
+Current supplemental probes:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File tools\foundation_performance_probe.ps1 -RequireGodot
@@ -366,22 +374,22 @@ powershell -ExecutionPolicy Bypass -File tools\ui05_popup_fit_check.ps1
 powershell -ExecutionPolicy Bypass -File tools\ui05_asset_pipeline_check.ps1
 ```
 
-Current source-completion evidence and remaining publication results:
+Current integration evidence and remaining work:
 
-- The integrated tutorial source has passed validation, every FoundationSuite,
-  both scripted and real-pointer tutorial routes, the 100-seed traversal and
-  stuck-state sweeps, 10-seed determinism, strict rendered mouse input, and
-  visual QA. The native performance/liveness battery, 180-minute/504-action
-  soak, Scratch Ticket RTP audit, and Grand Casino Web runtime budgets are also
-  green; see the current tutorial and performance reports below.
-- The integrated Web baseline passes the unchanged 4x-throttled cold-ready
-  and broad L0.2 budgets with high-fidelity audio active: interactive ready is
-  17.557 seconds against 20 seconds and slot autoplay is 88.312 ms against
-  100 ms. Later playtest fixes add targeted validation and exported-browser
-  evidence; the exact package verification still cannot be replaced by source
-  tests.
-- Only fresh reports linked by `docs/plans/0.5_release_checklist.md` are final
-  0.5 release evidence; older candidate reports remain historical baselines.
+- The 2026-09-14 integration candidate includes the latest game-prop art,
+  back-room poker tweaks, the complete `fix06_32` game-verification stack, and
+  playtest repairs BUG-01 through BUG-36 except the placement-owned findings
+  deliberately held for the room-construction redesign.
+- Static architecture validation, the dedicated playtest-fix regression groups,
+  game contracts, the game-rework gate wiring contract, and a visible-input
+  start → inventory → travel → merchant → lender → second venue → game path pass.
+  The reusable player-session harness is `tools/agent_playtest_session.ps1`.
+- The broad Contract suite is intentionally still red at the room-generation
+  boundary: generated overlaps, route/finalization rejection, Grand Casino slot
+  placement, and stale placement-dependent golden snapshots remain open. Those
+  failures are not waived and block release readiness.
+- Performance, platform, packaging, versioning, tagging, and publication must be
+  rerun only after the placement redesign is accepted and merged.
 
 Other targeted wrappers live in `tools/`: slot cabinet visual QA, environment
 generation audit, performance probe, mouse playtests, and game seed audits.
@@ -490,6 +498,13 @@ before store submission.
 
 ## Known Release Limitations
 
+- Current 0.6 `main` is not release-ready. Room construction does not reliably
+  accommodate the expanded object inventory; the rejected placement experiment
+  is parked on `codex/reusable-environment-slots` and is not part of `main`.
+- Tutorial pointer overlays can partially cover the center of the action they
+  describe. The merged player path remains operable through the exposed part of
+  the target, but the composition should be corrected during the room/UI
+  placement redesign.
 - The Web export is intentionally single-threaded. Procedural music is generated
   deterministically at build time into compact Web beds, so browser startup and
   playback no longer depend on PThreads or main-thread synthesis. Cross-origin

@@ -1,4 +1,4 @@
-Status: DONE — uncommitted in worktree, awaiting owner review
+Status: DONE — merged to `main` in `d2594eb3`; retained by the 2026-09-14 integration audit
 
 # Agent Prompt — Game Props 01: Room Object Art for Coin Pushers, Scratch Tickets, Craps, and Bar Dice
 

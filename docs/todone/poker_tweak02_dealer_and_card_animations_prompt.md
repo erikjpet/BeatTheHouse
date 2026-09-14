@@ -1,4 +1,4 @@
-Status: DONE (on codex/backroom-poker-tweaks, not merged)
+Status: DONE — merged to `main` before `d2594eb3`; retained by the 2026-09-14 integration audit
 Series: Back-room poker tweaks (tweak02; stacks on tweak01 on the same branch)
 
 # Agent Prompt — Back-Room Poker Tweak 02: Crew Dealer and Card Animations

@@ -1,4 +1,4 @@
-Status: DONE — report awaiting owner review
+Status: DONE — report preserved and repair series merged to `main` on 2026-09-14
 Series: Agent playtest sweeps (01 — reusable; rerun any time by resetting Status to READY)
 
 # Agent Prompt — Four-Agent Playtest Bug Sweep

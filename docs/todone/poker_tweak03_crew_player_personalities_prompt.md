@@ -1,4 +1,4 @@
-Status: DONE (merged to main)
+Status: DONE — merged to `main` before `d2594eb3`; retained by the 2026-09-14 integration audit
 Series: Back-room poker tweaks (tweak03; stacks on tweak01–02 on the same branch)
 
 # Agent Prompt — Back-Room Poker Tweak 03: Crew Player Personalities
