@@ -3201,9 +3201,14 @@ func _cheat_action_def() -> Dictionary:
 # --- Surface command helpers -------------------------------------------------
 
 func _bet_command(ui_state: Dictionary, set_stake: int, message: String) -> Dictionary:
+	var wager_ui_state := ui_state.duplicate(false)
+	for transient_key in ["hand_active", "holds", "marked_holds", "selected_action_id", "selected_action_kind", "deal_cards", "draw_cards"]:
+		wager_ui_state.erase(transient_key)
+	wager_ui_state["hand_active"] = false
+	wager_ui_state["holds"] = []
 	return GameModule.surface_command({
 		"handled": true,
-		"ui_state": ui_state,
+		"ui_state": wager_ui_state,
 		"preserve_surface_ui_state": true,
 		"set_stake": set_stake,
 		"message": message,

@@ -4692,6 +4692,12 @@ func grand_casino_players_card_comp_result(comp_id: String) -> Dictionary:
 
 func route_grand_casino_game_currency(result: Dictionary, deltas: Dictionary) -> Dictionary:
 	var routed := deltas
+	if bool(result.get("currency_deltas_final", false)):
+		result["bankroll_delta"] = int(routed.get("bankroll_delta", result.get("bankroll_delta", 0)))
+		result["chips_delta"] = int(routed.get("chips_delta", result.get("chips_delta", 0)))
+		result["currency"] = "mixed" if int(result.get("bankroll_delta", 0)) != 0 and int(result.get("chips_delta", 0)) != 0 else "cash" if int(result.get("bankroll_delta", 0)) != 0 else "chips"
+		result["deltas"] = routed
+		return routed
 	var game_id := str(result.get("game_id", result.get("source_id", ""))).strip_edges()
 	var result_environment := {
 		"id": str(result.get("environment_id", "")),
@@ -11046,6 +11052,7 @@ func numbers_silas_status() -> Dictionary:
 			late_book_open = true
 			break
 	return {
+		"tip_available": not bool(numbers_state.knowledge.get("silas_tip", false)),
 		"handle_available": bool(numbers_state.knowledge.get("assembled", false))
 			and bool(public_status.get("posted", false))
 			and late_book_open
@@ -11078,6 +11085,8 @@ func numbers_buy_slip(digits: String, stake: int, play_type: String) -> Dictiona
 	if not bool(result.get("ok", false)):
 		return result
 	change_bankroll(-stake)
+	result["bankroll_delta"] = -stake
+	result["deltas"] = {"bankroll_delta": -stake}
 	_sync_numbers_inventory_marker()
 	return result
 
@@ -11094,9 +11103,13 @@ func numbers_buy_silas_tip(today_number: bool = false) -> Dictionary:
 	var price := int(tuning.get("silas_today_number_price", 24)) if today_number else int(tuning.get("silas_tip_price", 12))
 	if bankroll < price:
 		return {"ok": false, "message": "Silas does not extend credit."}
-	change_bankroll(-price)
 	var result := numbers_state.buy_silas_tip(today_number)
+	if not bool(result.get("ok", false)):
+		return result
+	change_bankroll(-price)
 	result["price"] = price
+	result["bankroll_delta"] = -price
+	result["deltas"] = {"bankroll_delta": -price}
 	result["message"] = "Silas sells a time and a place, not an apology."
 	return result
 

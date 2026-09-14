@@ -793,6 +793,7 @@ static func eligible_event_option_with_context(host: Variant, event_id: String, 
 			"text": str(choice_data.get("text", "")),
 			"event_type": event_module.get_event_type(),
 			"consequences": host._copy_dict(choice_data.get("consequences", {})),
+			"loan_terms": host._copy_dict(choice_data.get("loan_terms", {})),
 			"check": host._copy_dict(choice_data.get("check", {})),
 			"consequence_summary": consequence_summary,
 			"requires_confirm": host._event_choice_requires_confirmation(choice_data),
@@ -887,6 +888,8 @@ static func event_choice_consequence_summary(host: Variant, choice_data: Diction
 
 
 static func event_choice_requires_confirmation(host: Variant, choice_data: Dictionary) -> bool:
+	if bool(choice_data.get("requires_confirm", false)):
+		return true
 	var consequences: Dictionary = choice_data.get("consequences", {}) if typeof(choice_data.get("consequences", {})) == TYPE_DICTIONARY else {}
 	if int(consequences.get("bankroll_delta", 0)) < 0 or int(consequences.get("suspicion_delta", 0)) > 0:
 		return true

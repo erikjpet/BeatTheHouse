@@ -22,7 +22,7 @@ const REQUIRED_CLASSES := {
 	"scratch_ticket_machine": ["ticket_dispenser", "scratch", "ticket_peel", "redemption", "refusal"],
 	"bar_dice_table": ["cup_shake", "cup_slam", "cup_lift", "dice_reveal", "cash_bar"],
 	"crew_cards": ["chips_place", "card_deal", "card_draw", "public_tell_beat"],
-	"crew_world": ["door", "handoff", "package", "stash", "duck", "pursuit", "sweep_proximity", "book_close", "slip_written", "draw_called", "confrontation"],
+	"crew_world": ["door", "handoff", "package", "stash", "duck", "pursuit", "sweep_proximity", "book_close", "slip_written", "draw_called", "confrontation", "phone_call", "phone_out_of_service"],
 }
 
 var failures: Array[String] = []
@@ -72,6 +72,9 @@ func _run() -> void:
 		_check(source.contains("\"profile_id\": \"%s" % declared_profile), "%s does not declare expected profile %s" % [source_path, declared_profile])
 		var resolved_id := declared_profile + "audit" if declared_profile.ends_with(":") else declared_profile
 		_check(not ManifestScript.resolve_profile(resolved_id, entries).is_empty(), "%s declares an unresolved profile %s" % [source_path, resolved_id])
+		_check_literal_surface_cues(source, source_path, resolved_id, entries)
+	_check_data_audio_cues("res://data/events/events.json", "crew_world", entries)
+	_check_data_audio_cues("res://data/services/services.json", "crew_world", entries)
 
 	print("AUDIO06_1 audit: deterministic native/Web and hidden-state traces")
 	# The same pure selector is used before both native and Web playback. Ten seed
@@ -148,6 +151,27 @@ func _run() -> void:
 func _check(condition: bool, failure: String) -> void:
 	if not condition:
 		failures.append(failure)
+
+
+func _check_literal_surface_cues(source: String, source_path: String, profile_id: String, entries: Array) -> void:
+	var expression := RegEx.new()
+	expression.compile("\\\"surface_audio_cue\\\"\\s*:\\s*\\\"([^\\\"]+)\\\"")
+	var profile := ManifestScript.resolve_profile(profile_id, entries)
+	var classes: Dictionary = _dict(profile.get("event_classes", {}))
+	for match_value in expression.search_all(source):
+		var cue_id := str(match_value.get_string(1))
+		_check(classes.has(cue_id), "%s emits undeclared %s cue %s" % [source_path, profile_id, cue_id])
+
+
+func _check_data_audio_cues(path: String, profile_id: String, entries: Array) -> void:
+	var source := FileAccess.get_file_as_string(path)
+	var expression := RegEx.new()
+	expression.compile("\\\"(?:audio_cue|failure_audio_cue)\\\"\\s*:\\s*\\\"([^\\\"]+)\\\"")
+	var profile := ManifestScript.resolve_profile(profile_id, entries)
+	var classes: Dictionary = _dict(profile.get("event_classes", {}))
+	for match_value in expression.search_all(source):
+		var cue_id := str(match_value.get_string(1))
+		_check(classes.has(cue_id), "%s emits undeclared %s cue %s" % [path, profile_id, cue_id])
 
 
 func _run_negative_manifest_cases(entries: Array) -> bool:

@@ -80,6 +80,8 @@ const OBJECT_INFO_ACTION_HEIGHT := 16.0
 const OBJECT_INFO_ACTION_GAP := 5.0
 const OBJECT_INFO_INLINE_ACTION_HEIGHT := 19.0
 const OBJECT_INFO_INLINE_ACTION_DETAIL_HEIGHT := 11.0
+const OBJECT_INFO_INLINE_ACTION_DETAIL_LINE_HEIGHT := 10.0
+const OBJECT_INFO_INLINE_ACTION_DETAIL_MAX_LINES := 4
 const OBJECT_INFO_INLINE_ACTION_GAP := 5.0
 const OBJECT_INFO_INLINE_ACTION_MAX := 8
 const OBJECT_INFO_BOTTOM_PADDING := 8.0
@@ -2610,7 +2612,7 @@ func _draw_selected_object_info() -> void:
 		var row_rect := AttributeBadgeRowScript.draw_canvas(self, badges, Vector2(card.position.x + OBJECT_INFO_PADDING_X, y - OBJECT_INFO_BADGE_RAISE), card.size.x - OBJECT_INFO_PADDING_X * 2.0, 16)
 		selected_info_badge_hit_entries = badge_entries
 		y += row_rect.size.y + 4.0
-	var action_area_height := _selected_info_action_area_height(object_data)
+	var action_area_height := _selected_info_action_area_height(object_data, card.size.x - OBJECT_INFO_PADDING_X * 2.0)
 	var body_bottom := card.end.y - OBJECT_INFO_BOTTOM_PADDING
 	if action_area_height > 0.0:
 		body_bottom -= OBJECT_INFO_ACTION_GAP + action_area_height
@@ -2640,7 +2642,7 @@ func _draw_selected_object_info() -> void:
 			draw_string(font, button_rect.position + Vector2(0.0, label_baseline), _fit_draw_text(str(entry.get("label", "")), font, label_font_size, button_rect.size.x - 8.0), HORIZONTAL_ALIGNMENT_CENTER, button_rect.size.x, label_font_size, C_WHITE)
 			var detail := str(entry.get("detail", "")).strip_edges()
 			if not detail.is_empty() and detail_rect.size.x > 0.0 and detail_rect.size.y > 0.0:
-				draw_string(font, detail_rect.position + Vector2(0.0, 9.0), _fit_draw_text(detail, font, 8, detail_rect.size.x), HORIZONTAL_ALIGNMENT_CENTER, detail_rect.size.x, 8, Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.86))
+				draw_multiline_string(font, detail_rect.position + Vector2(0.0, 9.0), detail, HORIZONTAL_ALIGNMENT_CENTER, detail_rect.size.x, 8, OBJECT_INFO_INLINE_ACTION_DETAIL_MAX_LINES, Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.86), TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
 	_draw_selected_info_badge_hover_text(font)
 
 
@@ -3803,7 +3805,7 @@ func _selected_info_inline_actions(object_data: Dictionary) -> Array:
 	return result
 
 
-func _selected_info_action_area_height(object_data: Dictionary) -> float:
+func _selected_info_action_area_height(object_data: Dictionary, content_width: float = OBJECT_INFO_WIDTH - OBJECT_INFO_PADDING_X * 2.0) -> float:
 	var inline_actions := _selected_info_inline_actions(object_data)
 	if not inline_actions.is_empty():
 		var height := 0.0
@@ -3813,12 +3815,23 @@ func _selected_info_action_area_height(object_data: Dictionary) -> float:
 			if height > 0.0:
 				height += OBJECT_INFO_INLINE_ACTION_GAP
 			height += _selected_info_inline_action_height()
-			if not _selected_info_inline_action_detail(action_value as Dictionary).is_empty():
-				height += OBJECT_INFO_INLINE_ACTION_DETAIL_HEIGHT
+			height += _selected_info_inline_action_detail_height(action_value as Dictionary, content_width)
 		return height
 	if _selected_info_has_single_action_button(object_data):
 		return _selected_info_action_height()
 	return 0.0
+
+
+func _selected_info_inline_action_detail_height(action_data: Dictionary, content_width: float) -> float:
+	var detail := _selected_info_inline_action_detail(action_data)
+	if detail.is_empty() or content_width <= 0.0:
+		return 0.0
+	var font := get_theme_default_font()
+	if font == null:
+		var approximate_chars_per_line := maxi(1, int(floor(content_width / 4.7)))
+		return float(clampi(int(ceil(float(detail.length()) / float(approximate_chars_per_line))), 1, OBJECT_INFO_INLINE_ACTION_DETAIL_MAX_LINES)) * OBJECT_INFO_INLINE_ACTION_DETAIL_LINE_HEIGHT
+	var measured := font.get_multiline_string_size(detail, HORIZONTAL_ALIGNMENT_CENTER, content_width, 8, OBJECT_INFO_INLINE_ACTION_DETAIL_MAX_LINES, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
+	return maxf(OBJECT_INFO_INLINE_ACTION_DETAIL_HEIGHT, ceilf(measured.y))
 
 
 func _selected_info_action_height() -> float:
@@ -3916,7 +3929,7 @@ func _selected_info_action_entries_for_rect(info: Dictionary, card: Rect2) -> Ar
 	var entries: Array = []
 	var inline_actions := _selected_info_inline_actions(object_data)
 	if not inline_actions.is_empty():
-		var area_height := _selected_info_action_area_height(object_data)
+		var area_height := _selected_info_action_area_height(object_data, width)
 		var y := card.end.y - OBJECT_INFO_BOTTOM_PADDING - area_height
 		for action in inline_actions:
 			if typeof(action) != TYPE_DICTIONARY:
@@ -3925,7 +3938,7 @@ func _selected_info_action_entries_for_rect(info: Dictionary, card: Rect2) -> Ar
 			var button_height := _selected_info_inline_action_height()
 			var button_rect := Rect2(Vector2(left, y), Vector2(width, button_height))
 			var detail := _selected_info_inline_action_detail(action_data)
-			var detail_height := OBJECT_INFO_INLINE_ACTION_DETAIL_HEIGHT if not detail.is_empty() else 0.0
+			var detail_height := _selected_info_inline_action_detail_height(action_data, width)
 			var detail_rect := Rect2(Vector2(left, button_rect.end.y), Vector2(width, detail_height))
 			entries.append({
 				"inline": true,
@@ -4258,7 +4271,7 @@ func _object_info_size(title: String, lines: Array, object_type: String, visible
 	var width := clampf(ceilf(content_width), min_width, max_width)
 	var line_count := maxi(1, lines.size())
 	var height := maxf(OBJECT_INFO_MIN_HEIGHT, OBJECT_INFO_BODY_Y + badge_height + float(line_count) * OBJECT_INFO_LINE_HEIGHT + OBJECT_INFO_BOTTOM_PADDING)
-	var action_area_height := _selected_info_action_area_height(object_data)
+	var action_area_height := _selected_info_action_area_height(object_data, width - OBJECT_INFO_PADDING_X * 2.0)
 	if action_area_height > 0.0:
 		height += OBJECT_INFO_ACTION_GAP + action_area_height
 	height = minf(ceilf(height), visible_rect.size.y)

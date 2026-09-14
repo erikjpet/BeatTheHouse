@@ -929,7 +929,7 @@ func advance_chunked_exit_settle(run_state: RunState, environment: Dictionary, t
 	if bool(result.get("done", false)) and bool(consumed.get("shim_recovered", false)) and int(result.get("total_ticks", 0)) < CoinPusherLiveSessionScript.MAX_SETTLE_TICKS:
 		result["done"] = false
 	if bool(result.get("done", false)):
-		CoinPusherLiveSessionScript.freeze_after_chunked_settle(machine, int(result.get("total_ticks", 0)))
+		CoinPusherLiveSessionScript.freeze_after_chunked_settle(machine, int(result.get("settle_ticks", result.get("total_ticks", 0))))
 	# The final chunk has already replaced the live simulation with its settled
 	# snapshot. Project that snapshot too so the player sees the actual final
 	# arrangement before the surface is dismissed.
@@ -2443,6 +2443,12 @@ func _sync_physical_features(machine: Dictionary) -> void:
 		feature.erase("cell")
 		feature.erase("spawn_lane")
 		feature.erase("spawn_depth_slot")
+	# Feature reconciliation edits the authoritative body array directly. The
+	# native live cache keeps its own compact body vector, so reload it before the
+	# next tick instead of letting a replenished rider exist in only one copy.
+	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
+	if not session.is_empty():
+		session["native_cache_reset"] = true
 
 
 func _opening_feature_support(simulation: Dictionary, requested_x: int, requested_y: int, feature_radius: int, feature_height: int) -> Dictionary:

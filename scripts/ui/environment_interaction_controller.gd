@@ -110,7 +110,6 @@ static func interactable_object_view_list(host: Variant) -> Array:
 			"selected_object_id": host.selected_object_id,
 		},
 		"layout": host._current_environment_layout(),
-		"risk_cue": host._risk_cue_text(),
 		"game_sources": game_sources,
 		"event_options": event_options,
 		"event_choice_summary": Callable(host, "_event_choice_list_summary"),

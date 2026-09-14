@@ -2456,11 +2456,11 @@ func _check_roulette_surface_contract(game: GameModule, failures: Array, library
 			continue
 		var label_rect: Rect2 = label_record.get("rect", Rect2())
 		var distance := label_rect.get_center().distance_to(wheel_label_center)
-		if distance < 112.0 or distance > 138.0:
+		if distance < 84.0 or distance > 108.0:
 			continue
 		wheel_label_numbers[text] = true
 	if wheel_label_numbers.size() < wheel_sequence.size():
-		failures.append("Roulette post-spin wheel must keep pocket numbers attached to every wheel section; saw %d of %d." % [wheel_label_numbers.size(), wheel_sequence.size()])
+		failures.append("Roulette post-spin wheel must keep every pocket number inside and attached to its wheel section; saw %d of %d." % [wheel_label_numbers.size(), wheel_sequence.size()])
 	var recent_numbers: Array = _baccarat_dictionary_array(result_surface.get("recent_numbers", []))
 	if recent_numbers.is_empty() or str((recent_numbers[0] as Dictionary).get("number", "")) != str(result.get("roulette_winning_number", "")):
 		failures.append("Roulette recent-number strip did not record the latest spin.")
@@ -6451,6 +6451,20 @@ func _check_pull_tabs_surface_contract(game: GameModule, failures: Array) -> voi
 		failures.append("Pull Tabs buy button did not map to the legal ticket purchase action.")
 	if not bool(buy_click.get("direct_resolve", false)) or not bool(buy_click.get("resolve", false)):
 		failures.append("Pull Tabs buy button should purchase on the first click without requiring confirm.")
+	var prepaid_run: RunState = RunStateScript.new()
+	prepaid_run.start_new("PULL-TABS-PREPAID-CONSERVATION")
+	prepaid_run.bankroll = 500
+	var prepaid_environment: Dictionary = environment.duplicate(true)
+	prepaid_environment["id"] = "practice_pull_tabs"
+	prepaid_environment["archetype_id"] = RunState.GRAND_CASINO_ARCHETYPE_ID
+	prepaid_run.current_environment = prepaid_environment
+	var prepaid_cost := int(buy_click.get("set_stake", 1))
+	var prepaid_funding := prepaid_run.fund_grand_casino_wager("pull_tabs", prepaid_cost, prepaid_environment)
+	var prepaid_result := game.resolve_with_context("buy_tab", prepaid_cost, prepaid_run, prepaid_environment, prepaid_run.create_rng("pull_tab_prepaid"), buy_click.get("ui_state", {}))
+	if not bool(prepaid_funding.get("ok", false)) or int(prepaid_funding.get("cash_used", 0)) != prepaid_cost \
+			or prepaid_run.bankroll != 500 - prepaid_cost or prepaid_run.grand_casino_chips != 0 \
+			or int(prepaid_result.get("cash_equivalent_delta", 0)) != -prepaid_cost or int(prepaid_result.get("pull_tab_cost", 0)) != prepaid_cost:
+		failures.append("Pull Tabs pre-funded wager did not conserve displayed cost and winnings exactly once.")
 	var scan_click := _check_surface_command_non_mutating(game, "pull_tab_detector_scan", 0, false, {}, run_state, environment, "pull-tab peek", failures)
 	if str(scan_click.get("action_kind", "")) != "cheat" or str(scan_click.get("action_id", "")) != "tab_detector_scan":
 		failures.append("Pull Tabs PEEK button did not map to the shared peek/scan action.")

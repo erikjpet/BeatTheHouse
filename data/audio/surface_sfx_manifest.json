@@ -243,12 +243,14 @@
       "event_classes": {
         "door": "shop_bell", "handoff": "paper_peel", "package": "crate_latch", "stash": "shutter_scrape",
         "duck": "blackjack_felt", "pursuit": "police_radio", "sweep_proximity": "police_radio",
-        "book_close": "lotto_counter", "slip_written": "ticket_rattle", "draw_called": "dealer_call", "confrontation": "crowd_drop"
+        "book_close": "lotto_counter", "slip_written": "ticket_rattle", "draw_called": "dealer_call", "confrontation": "crowd_drop",
+        "phone_call": "phone_call", "phone_out_of_service": "phone_out_of_service"
       },
       "visual_counterparts": {
         "door": "world.door_transition", "handoff": "world.handoff_object", "package": "world.package_state", "stash": "world.stash_state",
         "duck": "world.actor_duck", "pursuit": "world.pursuit_actor", "sweep_proximity": "world.sweep_indicator",
-        "book_close": "numbers.book_state", "slip_written": "numbers.slip_state", "draw_called": "numbers.public_draw", "confrontation": "world.confrontation_stage"
+        "book_close": "numbers.book_state", "slip_written": "numbers.slip_state", "draw_called": "numbers.public_draw", "confrontation": "world.confrontation_stage",
+        "phone_call": "world.phone_call", "phone_out_of_service": "world.phone_out_of_service"
       }
     }
   },

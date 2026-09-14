@@ -514,17 +514,17 @@ func inventory_item_detail(item_id: String, selected_id_override: String = "__AU
 
 
 func _inventory_behavior_summary(item_class: String, is_active: bool, selected: bool) -> String:
-	if is_active:
-		return "Active item — equipped in the one active-item slot." if selected else "Active item — select Equip to place it in the one active-item slot."
-	match item_class.strip_edges().to_lower():
-		"consumable":
-			return "Consumable — its effect is spent when used."
-		"permanent":
-			return "Permanent passive — works while carried and does not use the active-item slot."
-		"container":
-			return "Storage — place it at home to add inventory spaces."
-		_:
-			return "Passive — works while carried and does not use the active-item slot."
+	if not is_active:
+		match item_class.strip_edges().to_lower():
+			"permanent":
+				return "Permanent passive — works while carried and does not use the active-item slot."
+			"container":
+				return "Storage — place it at home to add inventory spaces."
+			_:
+				return "Passive — works while carried and does not use the active-item slot."
+	if item_class.strip_edges().to_lower() == "consumable":
+		return "Active consumable — its effect is spent when used."
+	return "Active item — equipped in the one active-item slot." if selected else "Active item — select Equip to place it in the one active-item slot."
 
 
 func portable_ticket_cash_options(lender_id: String = SALS_PAWN_COUNTER_ID) -> Array:
@@ -882,6 +882,10 @@ func hook_option(kind: String, hook_id: String, selected_hook_id: String = "") -
 	var summary := str(definition.get("description", definition.get("summary", ""))) if not definition.is_empty() else ""
 	var hook_status := hook_run_status(kind, definition)
 	var deltas := hook_result_deltas(definition, kind, hook_status)
+	var loan_terms := lender_loan_terms(definition, deltas) if kind == "lender" else {}
+	var terms_summary := str(loan_terms.get("summary", ""))
+	if not terms_summary.is_empty():
+		summary = "%s %s" % [summary.strip_edges(), terms_summary] if not summary.strip_edges().is_empty() else terms_summary
 	var supported := not definition.is_empty() and (result_deltas_have_mutation(deltas) or (kind == "service" and _is_jazz_custom_service(hook_id)) or (kind == "lender" and _lender_has_dynamic_contract(definition)))
 	var availability_class := _hook_availability_class(kind, hook_id, definition, hook_status, supported)
 	var enabled := supported and bool(hook_status.get("available", true))
@@ -910,6 +914,8 @@ func hook_option(kind: String, hook_id: String, selected_hook_id: String = "") -
 		"cost": int(hook_status.get("cost", definition.get("cost", 0))),
 		"duration_minutes": maxi(0, int(definition.get("duration_minutes", 0))),
 		"delta_summary": delta_summary(deltas) if supported else "",
+		"loan_terms": loan_terms,
+		"terms_summary": terms_summary,
 		"icon_key": str(definition.get("icon_key", kind)),
 		"environment_prop": str(definition.get("environment_prop", "")),
 		"surface": str(definition.get("surface", "")),
@@ -1392,9 +1398,12 @@ func _dynamic_lender_result(lender_id: String, definition: Dictionary, status: D
 	if not result_deltas_have_mutation(deltas):
 		return {}
 	var display_name := hook_display_name("lender", lender_id, definition)
-	var message := str(definition.get("message", "Borrowed from %s." % display_name))
+	var authored_message := str(definition.get("message", "Borrowed from %s." % display_name)).strip_edges()
+	var loan_terms := lender_loan_terms(definition, deltas)
+	var terms_summary := str(loan_terms.get("summary", "")).strip_edges()
+	var message := "%s %s" % [authored_message, terms_summary] if not terms_summary.is_empty() else authored_message
 	var messages := _copy_array(deltas.get("messages", []))
-	if messages.is_empty():
+	if messages.is_empty() or not terms_summary.is_empty():
 		messages.append(message)
 	deltas["messages"] = messages
 	var story_log := _copy_array(deltas.get("story_log", []))
@@ -1422,9 +1431,45 @@ func _dynamic_lender_result(lender_id: String, definition: Dictionary, status: D
 		"deltas": deltas,
 		"message": message,
 	})
+	result["loan_terms"] = loan_terms
+	result["terms_summary"] = terms_summary
 	if int(deltas.get("bankroll_delta", 0)) > 0:
 		result["conclusion_animation"] = "bankroll_transfer"
 	return result
+
+
+# Derives player-facing loan terms from the exact debt delta that acceptance
+# will apply. This keeps repeat-loan scaling, ceil rounding, favors, and pawn
+# fees synchronized with the owning debt model.
+func lender_loan_terms(definition: Dictionary, deltas: Dictionary) -> Dictionary:
+	var debt_changes := _copy_array(deltas.get("debt_changes", []))
+	if debt_changes.is_empty() or typeof(debt_changes[0]) != TYPE_DICTIONARY:
+		return {}
+	var debt: Dictionary = debt_changes[0]
+	var principal := maxi(0, int(debt.get("principal", deltas.get("bankroll_delta", 0))))
+	var repayment_total := maxi(0, int(debt.get("balance", principal)))
+	var deadline_turns := maxi(0, int(debt.get("deadline_turns", debt.get("turns_remaining", 0))))
+	var debt_kind := str(debt.get("debt_kind", "cash"))
+	var rate := maxf(0.0, float(debt.get("redemption_fee_rate", debt.get("interest_rate", 0.0))))
+	var interest_percent := maxi(0, int(round(rate * 100.0)))
+	var deadline_label := "%d turn%s" % [deadline_turns, "" if deadline_turns == 1 else "s"]
+	var summary := ""
+	if debt_kind == "favor":
+		summary = "Borrow $%d. Repay %d favor%s (0%% cash interest) in %s." % [principal, repayment_total, "" if repayment_total == 1 else "s", deadline_label]
+	elif debt_kind == "pawn":
+		summary = "Borrow $%d. Redeem collateral for $%d (%d%% fee) in %s." % [principal, repayment_total, interest_percent, deadline_label]
+	else:
+		summary = "Borrow $%d. Repay $%d (%d%% interest) in %s." % [principal, repayment_total, interest_percent, deadline_label]
+	return {
+		"lender_id": str(debt.get("lender_id", definition.get("id", ""))),
+		"debt_kind": debt_kind,
+		"principal": principal,
+		"repayment_total": repayment_total,
+		"interest_rate": rate,
+		"interest_percent": interest_percent,
+		"deadline_turns": deadline_turns,
+		"summary": summary,
+	}
 
 
 func _dynamic_lender_status(definition: Dictionary, base_status: Dictionary) -> Dictionary:

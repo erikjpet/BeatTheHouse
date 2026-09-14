@@ -82,6 +82,7 @@ var attention_tween: Tween
 var lifecycle_protected_attention_tweens: Array[Tween] = []
 var lifecycle_attention_checkpoints: Dictionary = {}
 var lifecycle_attention_checkpoint_counter := 0
+var tutorial_input_owner: Control
 
 
 func _ready() -> void:
@@ -363,6 +364,7 @@ func notify_dialogue_completed(lesson_id: String) -> bool:
 	active_dialogue_acknowledged = true
 	var completion := _dict(active_lesson.get("completion", {}))
 	if str(completion.get("type", "")) != "explicit_ok":
+		_render_active(false)
 		return true
 	_finish_active()
 	return true
@@ -410,6 +412,53 @@ func suspend() -> void:
 
 func input_allowed(action_id: String) -> bool:
 	return CoachViewModelScript.input_allowed(prepared_snapshot, action_id)
+
+
+func set_tutorial_input_owner(owner: Control) -> void:
+	tutorial_input_owner = owner
+
+
+func _input(event: InputEvent) -> void:
+	if _consume_blocked_pointer_input(event):
+		get_viewport().set_input_as_handled()
+
+
+func _consume_blocked_pointer_input(event: InputEvent) -> bool:
+	if not visible or active_lesson.is_empty() or str(active_lesson.get("scope", "")) != "tutorial_run":
+		return false
+	if not (event is InputEventMouseButton) or not (event as InputEventMouseButton).pressed:
+		return false
+	var point := (event as InputEventMouseButton).position
+	if _tutorial_input_owner_has_point(point):
+		return false
+	if panel != null and panel.visible and panel.get_global_rect().has_point(point):
+		return false
+	var anchor := active_anchor_rect()
+	if anchor.has_area() and anchor.has_point(point):
+		return false
+	for rect_value in prepared_snapshot.get("additional_anchor_rects", []):
+		var additional := CoachViewModelScript._rect(rect_value)
+		if additional.has_area() and additional.has_point(point):
+			return false
+	return true
+
+
+func _tutorial_input_owner_has_point(point: Vector2) -> bool:
+	if tutorial_input_owner == null or not is_instance_valid(tutorial_input_owner) or not tutorial_input_owner.visible:
+		return false
+	return _interactive_control_has_point(tutorial_input_owner, point)
+
+
+func _interactive_control_has_point(control: Control, point: Vector2) -> bool:
+	if not control.visible:
+		return false
+	# Inspect descendants first because the registered owner can be a full-screen,
+	# mouse-ignoring presentation root such as TalkDock. Only its real GUI controls
+	# punch through the tutorial shield, so empty dock space cannot activate the room.
+	for child_value in control.get_children():
+		if child_value is Control and _interactive_control_has_point(child_value as Control, point):
+			return true
+	return control.mouse_filter != Control.MOUSE_FILTER_IGNORE and control.get_global_rect().has_point(point)
 
 
 func current_snapshot() -> Dictionary:
@@ -603,13 +652,17 @@ func _render_active(play_motion: bool) -> void:
 	panel.size = bubble_rect.size
 	focus_layer.set_snapshot(prepared_snapshot)
 	focus_layer.visible = focus_visual_enabled
-	var dialogue_delivery := str(prepared_snapshot.get("delivery", "coach")) == "dialogue"
+	var dialogue_delivery := str(prepared_snapshot.get("delivery", "coach")) == "dialogue" and not _dialogue_acknowledged_instruction()
 	panel.visible = not dialogue_delivery
 	visible = true
 	move_to_front()
 	_request_active_dialogue_once()
 	if play_motion:
 		_play_attention_motion()
+
+
+func _dialogue_acknowledged_instruction() -> bool:
+	return active_dialogue_acknowledged and str(prepared_snapshot.get("delivery", "coach")) == "dialogue"
 
 
 func _finish_active() -> void:
@@ -728,8 +781,14 @@ func _queue_frontier_guardrail(context: Dictionary) -> void:
 		return
 	for lesson_value in frontier:
 		var lesson: Dictionary = lesson_value
-		if _trigger_surface_matches(lesson, context):
+		if CoachViewModelScript.trigger_matches(lesson, context, seen, tips_enabled):
 			_queue_lesson(lesson, context)
+			return
+		# A skipped pointer can satisfy dependency order without satisfying the
+		# gameplay outcome that unlocks the next lesson. While the player is
+		# already on that lesson's surface, wait for its authored predicates
+		# instead of fabricating the lesson (or a recovery step) early.
+		if _trigger_surface_matches(lesson, context):
 			return
 	var recovery := _recovery_lesson(frontier[0], context)
 	if not recovery.is_empty():

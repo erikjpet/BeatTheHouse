@@ -3109,26 +3109,29 @@ func _draw_raise_selector(surface, state: Dictionary) -> void:
 	var selected := int(state.get("selected_raise_to", state.get("minimum_raise_to", 0)))
 	var minimum := int(state.get("minimum_raise_to", selected))
 	var maximum := int(state.get("maximum_raise_to", selected))
+	var raise_decrement_enabled := selected > minimum
+	var raise_increment_enabled := selected < maximum
 	surface.draw_rect(Rect2(120, 334, 660, 43), Color("#080a12"))
 	surface.draw_rect(Rect2(120, 334, 660, 43), C_PINK, false, 1.0)
 	surface.surface_label("CHOOSE ANY WHOLE-DOLLAR TOTAL", Vector2(134, 348), 9, C_SOFT)
 	var selector_buttons := [
-		{"action": "poker_raise_min", "label": "MIN $%d" % minimum, "rect": Rect2(310, 342, 76, 26)},
-		{"action": "poker_raise_minus_five", "label": "-5", "rect": Rect2(392, 342, 45, 26)},
-		{"action": "poker_raise_minus_one", "label": "-1", "rect": Rect2(443, 342, 45, 26)},
+		{"action": "poker_raise_min", "label": "MIN $%d" % minimum, "rect": Rect2(310, 342, 76, 26), "enabled": raise_decrement_enabled},
+		{"action": "poker_raise_minus_five", "label": "-5", "rect": Rect2(392, 342, 45, 26), "enabled": raise_decrement_enabled},
+		{"action": "poker_raise_minus_one", "label": "-1", "rect": Rect2(443, 342, 45, 26), "enabled": raise_decrement_enabled},
 		{"action": "", "label": "$%d" % selected, "rect": Rect2(494, 342, 62, 26)},
-		{"action": "poker_raise_plus_one", "label": "+1", "rect": Rect2(562, 342, 45, 26)},
-		{"action": "poker_raise_plus_five", "label": "+5", "rect": Rect2(613, 342, 45, 26)},
-		{"action": "poker_raise_max", "label": "MAX $%d" % maximum, "rect": Rect2(664, 342, 102, 26)},
+		{"action": "poker_raise_plus_one", "label": "+1", "rect": Rect2(562, 342, 45, 26), "enabled": raise_increment_enabled},
+		{"action": "poker_raise_plus_five", "label": "+5", "rect": Rect2(613, 342, 45, 26), "enabled": raise_increment_enabled},
+		{"action": "poker_raise_max", "label": "MAX $%d" % maximum, "rect": Rect2(664, 342, 102, 26), "enabled": raise_increment_enabled},
 	]
 	for button_value in selector_buttons:
 		var button: Dictionary = button_value
 		var rect: Rect2 = button.get("rect", Rect2())
 		var action := str(button.get("action", ""))
-		surface.draw_rect(rect, Color("#241b32") if not action.is_empty() else Color("#101826"))
-		surface.draw_rect(rect, C_CYAN if not action.is_empty() else C_YELLOW, false, 1.0)
-		surface.surface_label_centered(str(button.get("label", "")), rect, 8, C_WHITE)
-		if not action.is_empty():
+		var enabled := bool(button.get("enabled", true))
+		surface.draw_rect(rect, Color("#241b32") if not action.is_empty() and enabled else Color("#101826"))
+		surface.draw_rect(rect, C_CYAN if not action.is_empty() and enabled else C_SOFT, false, 1.0)
+		surface.surface_label_centered(str(button.get("label", "")), rect, 8, C_WHITE if enabled else C_SOFT)
+		if not action.is_empty() and enabled:
 			surface.surface_add_hit(rect, action)
 	var confirm_rect := Rect2(246, 382, 270, 34)
 	var cancel_rect := Rect2(526, 382, 128, 34)

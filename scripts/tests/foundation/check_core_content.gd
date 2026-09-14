@@ -45,6 +45,8 @@ const CrewHeistContractScript := preload("res://scripts/tests/foundation/crew_he
 const CrewTurnContractScript := preload("res://scripts/tests/foundation/crew_turn_contract.gd")
 const CharacterChainsContractScript := preload("res://scripts/tests/foundation/character_chains_contract.gd")
 const ContentDepthContractScript := preload("res://scripts/tests/foundation/content_depth_contract.gd")
+const PlaytestFixes02ContractScript := preload("res://scripts/tests/foundation/playtest_fixes02_contract.gd")
+const PlaytestFixes03ContractScript := preload("res://scripts/tests/foundation/playtest_fixes03_contract.gd")
 const ProceduralMusicPlayerScript := preload("res://scripts/ui/procedural_music_player.gd")
 const MusicArrangementSelectorScript := preload("res://scripts/ui/music_arrangement_selector.gd")
 const SfxPlayerScript := preload("res://scripts/ui/sfx_player.gd")
@@ -618,6 +620,9 @@ func _foundation_run_contract_suite(content_library: ContentLibrary, fixture_lib
 	_foundation_run_check(report, failures, "crew_turn_contract", Callable(CrewTurnContractScript, "check"), [content_library])
 	_foundation_run_check(report, failures, "character_chains_contract", Callable(CharacterChainsContractScript, "check"), [content_library])
 	_foundation_run_check(report, failures, "content_depth_contract", Callable(ContentDepthContractScript, "check"), [content_library])
+	_foundation_run_check(report, failures, "playtest_fixes01_regressions", Callable(self, "_check_playtest_fixes01_regressions"), [content_library])
+	_foundation_run_check(report, failures, "playtest_fixes02_regressions", Callable(PlaytestFixes02ContractScript, "check"), [content_library])
+	_foundation_run_check(report, failures, "playtest_fixes03_regressions", Callable(PlaytestFixes03ContractScript, "check"), [content_library])
 	_foundation_run_check(report, failures, "coach_engine_foundation", Callable(self, "_check_coach_engine_foundation"), [content_library])
 	# Keep the established parent id for the core assertions. Independent game and
 	# system contracts are registered separately so every failure remains visible
@@ -627,6 +632,7 @@ func _foundation_run_contract_suite(content_library: ContentLibrary, fixture_lib
 	_foundation_run_check(report, failures, "crew_poker_contract", Callable(self, "_check_crew_poker_contract"), [content_library])
 	_foundation_run_check(report, failures, "video_poker_contract", Callable(self, "_check_video_poker_contract"), [content_library])
 	_foundation_run_check(report, failures, "coin_pusher_contract", Callable(self, "_check_coin_pusher_contract"), [content_library])
+	_foundation_run_check(report, failures, "coin_pusher_exit_settle_bound", Callable(self, "_check_pusher_v3_exit_settle_absolute_bound"), [content_library, content_library.game("coin_pusher")])
 	_foundation_run_check(report, failures, "slot_contract_smoke", Callable(self, "_check_slot_contract_smoke"), [content_library])
 	_foundation_run_check(report, failures, "all_game_module_contracts", Callable(self, "_check_all_game_module_contracts"), [content_library])
 	_foundation_run_check(report, failures, "cross_game_integration_matrix", Callable(self, "_check_cross_game_integration_matrix"), [content_library])
@@ -877,6 +883,142 @@ func _check_content_core(library: ContentLibrary, failures: Array) -> void:
 	_check_challenge_pack_content(library, failures)
 	_check_s0_2_baseline_regression_fixtures(library, failures)
 	_check_sa_2_per_frame_contracts(failures)
+
+
+func _check_playtest_fixes01_regressions(library: ContentLibrary, failures: Array) -> void:
+	var main_source := FileAccess.get_file_as_string("res://scripts/ui/foundation_main.gd")
+	var coach_source := FileAccess.get_file_as_string("res://scripts/ui/coach_overlay.gd")
+	var interaction_source := FileAccess.get_file_as_string("res://scripts/ui/environment_interaction_view_model.gd")
+	var craps_source := FileAccess.get_file_as_string("res://scripts/games/craps.gd")
+	var pusher_session_source := FileAccess.get_file_as_string("res://scripts/games/coin_pusher/coin_pusher_live_session.gd")
+	var pull_tabs_source := FileAccess.get_file_as_string("res://scripts/games/pull_tabs.gd")
+	var poker_source := FileAccess.get_file_as_string("res://scripts/games/video_poker.gd")
+	var roulette_source := FileAccess.get_file_as_string("res://scripts/games/roulette.gd")
+	var crew_poker_source := FileAccess.get_file_as_string("res://scripts/games/crew_draw_poker.gd")
+	var action_source := FileAccess.get_file_as_string("res://scripts/core/run_action_service.gd")
+	var event_module_source := FileAccess.get_file_as_string("res://scripts/core/event_module.gd")
+	var settings_source := FileAccess.get_file_as_string("res://scripts/ui/settings_menu.gd")
+	if not main_source.contains("_recover_unplayable_environment") or not main_source.contains("_environment_is_playable"):
+		failures.append("BUG-01 regression: new/continued runs do not guard and recover empty or exitless environments.")
+	else:
+		var broken_fixture := _read_json_dictionary("res://scripts/tests/fixtures/playtest_empty_environment_save.json")
+		var recovery_seed := str(broken_fixture.get("seed_text", ""))
+		var expected_run: RunState = RunStateScript.new()
+		expected_run.start_new(recovery_seed)
+		var expected_generator := RunGeneratorScript.new(library)
+		expected_generator.next_environment(expected_run)
+		var expected_environment_id := str(expected_run.current_environment.get("id", ""))
+		var broken_run: RunState = RunStateScript.new()
+		broken_run.from_dict(expected_run.to_dict())
+		broken_run.current_environment = _read_json_dictionary("res://scripts/tests/fixtures/playtest_empty_environment_save.json").get("current_environment", {})
+		var recovery_host = preload("res://scripts/ui/foundation_main.gd").new()
+		recovery_host.library = library
+		recovery_host.generator = RunGeneratorScript.new(library)
+		recovery_host.run_state = broken_run
+		var recovered := bool(recovery_host.call("_recover_unplayable_environment"))
+		if not recovered or str(broken_run.current_environment.get("id", "")) != expected_environment_id or not bool(recovery_host.call("_environment_is_playable", broken_run)):
+			failures.append("BUG-01 regression: the broken-save fixture did not recover to the deterministic playable first room (recovered=%s expected=%s actual=%s node=%s)." % [recovered, expected_environment_id, str(broken_run.current_environment.get("id", "")), broken_run.current_world_node_id()])
+		recovery_host.free()
+	if not pusher_session_source.contains("exit_work_ticks") or not main_source.contains("Leaving..."):
+		failures.append("BUG-02 regression: Coin Pusher exit work is not absolutely bounded and visibly projected.")
+	if not pull_tabs_source.contains("\"environment_archetype_id\": str(environment.get(\"archetype_id\""):
+		failures.append("BUG-03 regression: Pull Tabs results omit the room identity required by the shared wager-currency router.")
+	if craps_source.contains("surface_audio_cue\": \"blackjack_chip") or craps_source.contains("surface_audio_cue\": \"roulette_chip_sweep"):
+		failures.append("BUG-04 regression: Craps emits event classes owned by other surface profiles.")
+	if not main_source.contains("_tutorial_talk_suspended_by_modal"):
+		failures.append("BUG-05 regression: modal ownership does not suspend and restore the tutorial Talk dock.")
+	if not coach_source.contains("_dialogue_acknowledged_instruction"):
+		failures.append("BUG-06 regression: acknowledged tutorial dialogue does not retain its active instruction.")
+	if not coach_source.contains("_consume_blocked_pointer_input"):
+		failures.append("BUG-07 regression: the Coach overlay has no explicit underlying-control input shield.")
+	if not main_source.contains("_publish_numbers_result"):
+		failures.append("BUG-08 regression: Numbers purchases bypass the canonical recent-result pipeline.")
+	var numbers_run: RunState = RunStateScript.new()
+	numbers_run.start_new("PLAYTEST-FIXES01-NUMBERS")
+	var silas_node := numbers_run.traveler_node("silas_snitch")
+	numbers_run.current_environment = {"id": silas_node, "archetype_id": silas_node, "world_node_id": silas_node, "turns": 0}
+	var first_tip: Dictionary = numbers_run.numbers_buy_silas_tip(false)
+	var after_first_tip := numbers_run.bankroll
+	var second_tip: Dictionary = numbers_run.numbers_buy_silas_tip(false)
+	if not bool(first_tip.get("ok", false)) or bool(second_tip.get("ok", false)) or numbers_run.bankroll != after_first_tip:
+		failures.append("BUG-09 regression: Silas's one-time route tip can charge more than once.")
+	var bet_start := poker_source.find("func _bet_command")
+	var bet_end := poker_source.find("\nfunc ", bet_start + 8)
+	var bet_source := poker_source.substr(bet_start, bet_end - bet_start) if bet_start >= 0 and bet_end > bet_start else ""
+	if not bet_source.contains("holds") or not bet_source.contains("hand_active"):
+		failures.append("BUG-11 regression: Video Poker wager changes can carry holds into a newly dealt hand.")
+	var purchase_start := main_source.find("func _apply_item_offer_after_input_guard")
+	var purchase_end := main_source.find("\nfunc ", purchase_start + 8)
+	var purchase_source := main_source.substr(purchase_start, purchase_end - purchase_start) if purchase_start >= 0 and purchase_end > purchase_start else ""
+	var purchase_result_start := main_source.find("func _present_item_purchase_result")
+	var purchase_result_end := main_source.find("\nfunc ", purchase_result_start + 8)
+	var purchase_result_source := main_source.substr(purchase_result_start, purchase_result_end - purchase_result_start) if purchase_result_start >= 0 and purchase_result_end > purchase_result_start else ""
+	if purchase_source.contains("_focus_post_purchase_affinity(result)") \
+			or not purchase_result_source.contains("clear_interaction_focus(false, false)") \
+			or not purchase_result_source.contains("pending_post_purchase_affinity_result"):
+		failures.append("BUG-12 regression: purchased-item result projection occurs after affinity refocus.")
+	var practice_start := main_source.find("func _start_game_test_session_with_lifecycle_snapshot")
+	var practice_end := main_source.find("\nfunc ", practice_start + 8)
+	var practice_source := main_source.substr(practice_start, practice_end - practice_start) if practice_start >= 0 and practice_end > practice_start else ""
+	if not practice_source.contains("reset_wallet_delta"):
+		failures.append("BUG-13 regression: practice launches retain the previous wallet delta.")
+	if not event_module_source.contains("definition.get(\"payload\"") or not event_module_source.contains("get(\"summary\""):
+		failures.append("BUG-14 regression: first-stop traveler copy has no placeholder-free authored fallback.")
+	else:
+		var dave_run := RunStateScript.new()
+		dave_run.start_new("PLAYTEST-FIXES01-DAVE-FIRST-STOP")
+		RunGeneratorScript.new(library).next_environment(dave_run)
+		var dave_event := EventModuleScript.new()
+		dave_event.setup(library.event("dave_bus_warning"), library)
+		var dave_choices := dave_event.choices(dave_run, dave_run.current_environment)
+		var dave_context := str((dave_choices[0] as Dictionary).get("traveler_context_line", "")) if not dave_choices.is_empty() else ""
+		if dave_context.is_empty() or dave_context.contains("{") or dave_context.contains(" ."):
+			failures.append("BUG-14 regression: Dave's first-stop player path still renders an empty or placeholder-bearing location reference.")
+	var sfx_manifest_source := FileAccess.get_file_as_string("res://data/audio/surface_sfx_manifest.json")
+	if not sfx_manifest_source.contains("\"phone_call\": \"phone_call\""):
+		failures.append("BUG-15 regression: crew_world does not declare its emitted phone_call cue.")
+	var event_start := main_source.find("func resolve_event_choice")
+	var event_end := main_source.find("\nfunc ", event_start + 8)
+	var event_source := main_source.substr(event_start, event_end - event_start) if event_start >= 0 and event_end > event_start else ""
+	if not event_source.contains("last_hook_result"):
+		failures.append("BUG-16 regression: event choices bypass the canonical recent-result pipeline.")
+	if not interaction_source.contains("game_risk_summary"):
+		failures.append("BUG-17 regression: game cards reuse a global travel-risk string.")
+	var feedback_start := main_source.find("func _refresh_environment_result_feedback")
+	var feedback_end := main_source.find("\nfunc _environment_result_feedback_accent", feedback_start)
+	var feedback_source := main_source.substr(feedback_start, feedback_end - feedback_start) if feedback_start >= 0 and feedback_end > feedback_start else ""
+	if feedback_source.contains(".left(RESULT_FEEDBACK_MAX_CHARS)") or not feedback_source.contains("environment_result_body_label.autowrap_mode"):
+		failures.append("BUG-18 regression: environment result feedback is clipped instead of wrapped.")
+	if not main_source.contains("_mandatory_tutorial_seed_locked"):
+		failures.append("BUG-19 regression: mandatory tutorial setup presents an editable seed that is ignored.")
+	if roulette_source.contains("WHEEL_RADIUS + 17.0"):
+		failures.append("BUG-20 regression: Roulette rim labels are positioned outside the wheel region.")
+	if not crew_poker_source.contains("raise_decrement_enabled") or not crew_poker_source.contains("raise_increment_enabled"):
+		failures.append("BUG-21 regression: Back-Room Poker registers active raise controls at their bounds.")
+	if not action_source.contains("if not is_active:"):
+		failures.append("BUG-22 regression: passive consumables are described as spent when used.")
+	if not settings_source.contains("_trap_focus_navigation") or not settings_source.contains("_restore_previous_focus"):
+		failures.append("BUG-23 regression: Settings does not trap focus or restore the previous owner.")
+	if library.item("instant_coffee").is_empty():
+		failures.append("BUG-22 fixture error: Instant Coffee is missing from production content.")
+	else:
+		var item_run: RunState = RunStateScript.new()
+		item_run.start_new("PLAYTEST-FIXES01-ITEM-COPY")
+		var item_service := RunActionServiceScript.new()
+		item_service.setup(library, item_run)
+		for item_value in library.items:
+			if typeof(item_value) != TYPE_DICTIONARY:
+				continue
+			var item_id := str((item_value as Dictionary).get("id", ""))
+			var item_detail: Dictionary = item_service.inventory_item_detail(item_id, "")
+			var behavior := str(item_detail.get("behavior_summary", ""))
+			if not bool(item_detail.get("active_item", false)) and behavior.to_lower().contains("spent when used"):
+				failures.append("BUG-22 regression: passive item %s still uses active-consumable behavior copy." % item_id)
+
+
+func _read_json_dictionary(path: String) -> Dictionary:
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
+	return parsed as Dictionary if typeof(parsed) == TYPE_DICTIONARY else {}
 
 
 func _check_content_scenario_engine(library: ContentLibrary, failures: Array) -> void:
@@ -1819,10 +1961,12 @@ func _check_connected_town_foundation(library: ContentLibrary, failures: Array) 
 	var dave_event := EventModuleScript.new()
 	dave_event.setup(library.event("dave_bus_warning"), library)
 	var dave_choices := dave_event.choices(run_state, run_state.current_environment)
-	if dave_choices.is_empty() or str((dave_choices[0] as Dictionary).get("traveler_context_line", "")).is_empty() \
-		or not str((dave_choices[0] as Dictionary).get("text", "")).contains("Dave") \
-		or not str((dave_choices[0] as Dictionary).get("text", "")).contains(str(scenario_rumor.get("line", ""))):
-		failures.append("Dave's existing bus delivery did not gain a data-driven where-he's-been reference.")
+	var dave_context_line := str((dave_choices[0] as Dictionary).get("traveler_context_line", "")) if not dave_choices.is_empty() else ""
+	if dave_choices.is_empty() or dave_context_line.is_empty() \
+			or dave_context_line.contains("{") or dave_context_line.contains(" .") or dave_context_line.contains("  ,") \
+			or not str((dave_choices[0] as Dictionary).get("text", "")).contains("Dave") \
+			or not str((dave_choices[0] as Dictionary).get("text", "")).contains(str(scenario_rumor.get("line", ""))):
+		failures.append("Dave's existing bus delivery did not render a placeholder-free data-driven where-he's-been reference.")
 	var rumor_result := rumor_event.resolve(run_state, run_state.current_environment, "listen")
 	var heard := run_state.heard_rumor_for_node("bar")
 	if not bool(rumor_result.get("ok", false)):
@@ -7652,13 +7796,9 @@ func _check_slot_pinball_pending_animation_watchdog(game: GameModule, definition
 	PinballFeatureScript.clear_runtime_session_cache()
 	if game.surface_needs_auto_tick({"surface_time_msec": 1200, "drunk_scaled_surface_time_msec": 1200}, run_state, environment):
 		failures.append("Slot pinball watchdog fired while a bonus award animation was still pending.")
-	var seeded: Dictionary = game.surface_auto_action_command({"surface_time_msec": 3200, "drunk_scaled_surface_time_msec": 3200}, run_state, environment, {})
-	if not bool(seeded.get("environment_changed", false)):
-		failures.append("Slot pinball watchdog did not arm after the pending award animation ended.")
-	var due_time := 5600
-	var command: Dictionary = game.surface_auto_action_command({"surface_time_msec": due_time, "drunk_scaled_surface_time_msec": due_time}, run_state, environment, {})
+	var command: Dictionary = game.surface_auto_action_command({"surface_time_msec": 3200, "drunk_scaled_surface_time_msec": 3200}, run_state, environment, {})
 	if str(command.get("action_id", "")) != "slot_bonus_watchdog":
-		failures.append("Slot pinball watchdog did not route through the watchdog bonus action after the grace window.")
+		failures.append("Slot pinball watchdog did not settle immediately after the pending award animation ended.")
 	else:
 		var rng: RngStream = run_state.create_rng("r8_pinball_pending_watchdog")
 		var result: Dictionary = game.resolve_with_context(str(command.get("action_id", "")), 0, run_state, environment, rng, _slot_dict(command.get("ui_state", {})))
@@ -7704,14 +7844,10 @@ func _check_slot_pinball_save_load_watchdog(game: GameModule, definition: Dictio
 	restored.current_environment = restored_environment
 	var seed_time := 5000
 	if not game.surface_needs_auto_tick({"surface_time_msec": seed_time, "drunk_scaled_surface_time_msec": seed_time}, restored, restored_environment):
-		failures.append("Slot pinball save/load fixture did not request a watchdog seed after losing its runtime session.")
-	var seed_command: Dictionary = game.surface_auto_action_command({"surface_time_msec": seed_time, "drunk_scaled_surface_time_msec": seed_time}, restored, restored_environment, {})
-	if not bool(seed_command.get("environment_changed", false)):
-		failures.append("Slot pinball save/load watchdog seed did not update the restored machine.")
-	var due_time := 7600
-	var command: Dictionary = game.surface_auto_action_command({"surface_time_msec": due_time, "drunk_scaled_surface_time_msec": due_time}, restored, restored_environment, {})
+		failures.append("Slot pinball save/load fixture did not request an immediate recovery tick after losing its runtime session.")
+	var command: Dictionary = game.surface_auto_action_command({"surface_time_msec": seed_time, "drunk_scaled_surface_time_msec": seed_time}, restored, restored_environment, {})
 	if str(command.get("action_id", "")) != "slot_bonus_watchdog":
-		failures.append("Slot pinball save/load fixture did not route the stale feature through the watchdog.")
+		failures.append("Slot pinball save/load fixture did not settle the stale feature on its first recovery tick.")
 	else:
 		var rng: RngStream = restored.create_rng("r8_pinball_save_watchdog")
 		var result: Dictionary = game.resolve_with_context(str(command.get("action_id", "")), 0, restored, restored_environment, rng, _slot_dict(command.get("ui_state", {})))

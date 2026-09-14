@@ -219,6 +219,17 @@ func _check_scratch_purchase_and_input(game: GameModule, run_state: RunState, en
 		failures.append("Scratch purchase contract generated no stocked ticket rows.")
 		return
 	var buy_command := game.surface_action_command("scratch_buy", buy_index, false, {}, run_state, environment)
+	var prepaid_run: RunState = RunStateScript.new()
+	prepaid_run.start_new("SCRATCH-PREPAID-CONSERVATION")
+	prepaid_run.bankroll = 500000
+	var prepaid_environment: Dictionary = environment.duplicate(true)
+	prepaid_run.current_environment = prepaid_environment
+	var prepaid_cost := int(buy_command.get("set_stake", 0))
+	var prepaid_funding := prepaid_run.fund_grand_casino_wager("scratch_tickets", prepaid_cost, prepaid_environment)
+	var prepaid_result := game.resolve_with_context("buy_scratch_ticket", prepaid_cost, prepaid_run, prepaid_environment, prepaid_run.create_rng("scratch_prepaid"), buy_command.get("ui_state", {}))
+	if not bool(prepaid_funding.get("ok", false)) or int(prepaid_funding.get("cash_used", -1)) != 0 \
+			or prepaid_run.bankroll != 500000 + int(prepaid_result.get("bankroll_delta", 0)):
+		failures.append("Scratch Tickets pre-funded wager did not conserve displayed cost and winnings exactly once.")
 	var before := run_state.bankroll
 	var purchase := game.resolve_with_context("buy_scratch_ticket", int(buy_command.get("set_stake", 0)), run_state, environment, run_state.create_rng("scratch_purchase"), buy_command.get("ui_state", {}))
 	if not bool(purchase.get("scratch_outcome_fixed_at_purchase", false)) or run_state.bankroll != before - int(purchase.get("stake", 0)):

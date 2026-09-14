@@ -46,6 +46,8 @@ var reset_tips: Button
 var haptics_note: Label
 var game_library: Button
 var developer_placement_mode: CheckBox
+var focus_controls: Array[Control] = []
+var previous_focus_owner: Control
 
 
 # Stores the settings object and builds the view.
@@ -57,10 +59,12 @@ func setup(p_settings: UserSettings) -> void:
 
 # Opens the menu with a fresh draft.
 func open() -> void:
+	previous_focus_owner = get_viewport().gui_get_focus_owner()
 	draft.from_dict(settings.to_dict())
 	status.text = ""
 	_sync()
 	visible = true
+	call_deferred("_focus_first_setting")
 
 
 # Creates all settings controls.
@@ -77,6 +81,7 @@ func _build() -> void:
 	var scroll := ScrollContainer.new()
 	scroll.custom_minimum_size = Vector2(0, 300)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.follow_focus = true
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	add_child(scroll)
@@ -165,7 +170,53 @@ func _build() -> void:
 	var apply := _button("Apply")
 	apply.pressed.connect(_on_apply)
 	actions.add_child(apply)
+	_cache_focus_controls()
+	visibility_changed.connect(_on_visibility_changed)
 	_apply_accessibility_settings()
+
+
+func _input(event: InputEvent) -> void:
+	if visible and _trap_focus_navigation(event):
+		get_viewport().set_input_as_handled()
+
+
+func _trap_focus_navigation(event: InputEvent) -> bool:
+	if not (event is InputEventKey) or not (event as InputEventKey).pressed or (event as InputEventKey).echo or (event as InputEventKey).keycode != KEY_TAB:
+		return false
+	var available: Array[Control] = []
+	for control in focus_controls:
+		if is_instance_valid(control) and control.is_visible_in_tree() and control.focus_mode != Control.FOCUS_NONE and (not control is BaseButton or not (control as BaseButton).disabled):
+			available.append(control)
+	if available.is_empty():
+		return true
+	var current := get_viewport().gui_get_focus_owner()
+	var index := available.find(current)
+	var direction := -1 if (event as InputEventKey).shift_pressed else 1
+	available[posmod(index + direction, available.size())].grab_focus()
+	return true
+
+
+func _cache_focus_controls() -> void:
+	focus_controls.clear()
+	for node in find_children("*", "Control", true, false):
+		if node is Control and (node as Control).focus_mode != Control.FOCUS_NONE:
+			focus_controls.append(node as Control)
+
+
+func _focus_first_setting() -> void:
+	if visible and not focus_controls.is_empty() and is_instance_valid(focus_controls[0]):
+		focus_controls[0].grab_focus()
+
+
+func _on_visibility_changed() -> void:
+	if not visible:
+		call_deferred("_restore_previous_focus")
+
+
+func _restore_previous_focus() -> void:
+	if is_instance_valid(previous_focus_owner) and previous_focus_owner.is_visible_in_tree():
+		previous_focus_owner.grab_focus()
+	previous_focus_owner = null
 
 
 # Adds a visual section heading.

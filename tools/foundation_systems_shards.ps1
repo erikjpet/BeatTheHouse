@@ -176,12 +176,16 @@ $script:FoundationContractsCheckIds = @(
     "crew_turn_contract",
     "character_chains_contract",
     "content_depth_contract",
+    "playtest_fixes01_regressions",
+    "playtest_fixes02_regressions",
+    "playtest_fixes03_regressions",
     "coach_engine_foundation",
     "foundation_contracts",
     "bar_dice_contract",
     "crew_poker_contract",
     "video_poker_contract",
     "coin_pusher_contract",
+    "coin_pusher_exit_settle_bound",
     "slot_contract_smoke",
     "all_game_module_contracts",
     "cross_game_integration_matrix",
@@ -255,7 +259,10 @@ $script:FoundationContractsShardPlan = [ordered]@{
         "crew_heist_contract",
         "crew_turn_contract",
         "character_chains_contract",
-        "content_depth_contract"
+        "content_depth_contract",
+        "playtest_fixes01_regressions",
+        "playtest_fixes02_regressions",
+        "playtest_fixes03_regressions"
     )
     "contracts_games" = @(
         "bar_dice_contract",
@@ -266,7 +273,8 @@ $script:FoundationContractsShardPlan = [ordered]@{
         "cross_game_integration_matrix"
     )
     "contracts_coin_pusher" = @(
-        "coin_pusher_contract"
+        "coin_pusher_contract",
+        "coin_pusher_exit_settle_bound"
     )
     "contracts_runtime_core" = @(
         "coach_engine_foundation",

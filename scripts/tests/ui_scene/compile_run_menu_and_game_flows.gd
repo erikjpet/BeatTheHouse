@@ -1231,7 +1231,11 @@ func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 	if str(coach_snapshot.get("lesson_id", "")) != "tutorial_inspect_coffee" or not run_state.inventory.has("ledger_pencil"):
 		push_error("Buying Pencil early did not preserve Coffee as the active instruction: coach=%s inventory=%s." % [str(coach_snapshot), str(run_state.inventory)])
 		return false
-	if not bool(app.call("focus_interactable_object", "item:instant_coffee")):
+	# Use the real canvas-focus callback. A player click dismisses the completed
+	# purchase result before selecting the next shelf item; tutorial refocus does
+	# not own that transition.
+	app.call("_on_environment_object_focused", "item:instant_coffee")
+	if str(app.get("selected_object_id")) != "item:instant_coffee":
 		push_error("The remaining Instant Coffee could not be inspected after buying Pencil first.")
 		return false
 	for _shop_transition_frame in range(4):

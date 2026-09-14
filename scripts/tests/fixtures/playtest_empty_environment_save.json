@@ -1,0 +1,7 @@
+{
+  "schema": "beat_the_house.playtest_broken_save_fixture",
+  "version": 1,
+  "seed_text": "PLAYTEST-EMPTY-ROOM-RECOVERY",
+  "current_environment": {},
+  "expected_recovery": "deterministic_current_world_node"
+}

@@ -92,7 +92,7 @@ const TUTORIAL_META_HOME_CONTAINER_ANCHOR_ID := "tutorial:meta_home_card_contain
 const ENVIRONMENT_RUNTIME_STATE_KEY_CACHE_LIMIT := 64
 const RUN_ITEM_ICON_TEXTURE_CACHE_LIMIT := 64
 const RESULT_FEEDBACK_WIDTH := 340.0
-const RESULT_FEEDBACK_HEIGHT := 46.0
+const RESULT_FEEDBACK_HEIGHT := 72.0
 const RESULT_FEEDBACK_MAX_CHARS := 64
 const MAIN_MENU_COLLAPSED_SIZE := Vector2(1200, 680)
 const MAIN_MENU_EXPANDED_SIZE := Vector2(1100, 620)
@@ -282,6 +282,7 @@ var scenario_sequence_action_pending := false
 var selected_lender_hook_id: String = ""
 var selected_lender_hook_label: String = ""
 var last_hook_result: Dictionary = {}
+var pending_post_purchase_affinity_result: Dictionary = {}
 var save_status_message: String = ""
 var selected_action_category: String = ACTION_CATEGORY_GAMES
 var current_screen: String = SCREEN_START
@@ -457,6 +458,7 @@ var challenge_buttons: Dictionary = {}
 var selected_challenge_id: String = ""
 var start_menu_action_controls: Array[Control] = []
 var start_status_label: Label
+var seed_status_label: Label
 var content_validation_status_message: String = ""
 var content_validation_error_count := 0
 var new_run_button: Button
@@ -824,6 +826,9 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	var resolved_challenge_config := _challenge_with_meta_home_for_run(resolved_seed, challenge_config) if include_meta_home_modifiers else RunState.normalize_challenge(resolved_seed, challenge_config)
 	run_state = RunState.new()
 	run_state.start_new(resolved_seed, resolved_challenge_config)
+	# A generator may retain failed-install diagnostics from a previous run. New
+	# run generation owns a fresh generator just as it owns a fresh RunState.
+	generator = RunGenerator.new(library)
 	_bind_run_state_presentation_signals()
 	_configure_coach_for_run()
 	_sync_scratch_ticket_discovery_to_run()
@@ -832,11 +837,19 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	run_state.begin_act(1)
 	dev_game_test_mode = false
 	generator.next_environment(run_state)
+	if not _environment_is_playable(run_state):
+		var failed_seed := resolved_seed
+		run_state = null
+		_set_current_screen(SCREEN_START)
+		_show_message("Could not create a playable first room for seed %s. Choose another seed and try again." % failed_seed)
+		_refresh_start_screen()
+		return false
 	_refresh_run_action_service()
 	current_game = null
 	last_game_result = {}
 	last_item_result = {}
 	last_hook_result = {}
+	pending_post_purchase_affinity_result = {}
 	save_status_message = "Run not saved yet."
 	selected_action_category = ACTION_CATEGORY_GAMES
 	_set_current_screen(SCREEN_ENVIRONMENT)
@@ -1037,6 +1050,7 @@ func back_to_environment() -> void:
 		# into that exit-only presentation window.
 		_invalidate_deferred_embedded_action_refresh()
 		game_exit_settle_active = true
+		_show_message("Leaving...")
 		last_game_exit_final_projection_rendered = false
 		var begin := current_game.begin_chunked_exit_settle(run_state, run_state.current_environment)
 		if not bool(begin.get("done", false)):
@@ -1094,8 +1108,34 @@ func _complete_back_to_environment() -> void:
 	_clear_selected_game_action()
 	_clear_selected_stake()
 	clear_interaction_focus()
+	if not pending_post_purchase_affinity_result.is_empty():
+		_focus_post_purchase_affinity(pending_post_purchase_affinity_result)
+		pending_post_purchase_affinity_result = {}
 	_show_message("Choose a game, answer trouble, buy gear, or move on.")
 	_refresh()
+
+
+func _environment_is_playable(candidate: RunState) -> bool:
+	if candidate == null or candidate.current_environment.is_empty():
+		return false
+	var environment_id := str(candidate.current_environment.get("id", candidate.current_environment.get("archetype_id", ""))).strip_edges()
+	if environment_id.is_empty():
+		return false
+	if not candidate.has_world_map():
+		return true
+	var current_node_id := candidate.current_world_node_id()
+	return not current_node_id.is_empty() and not WorldMapScript.neighbor_ids(candidate.world_map, current_node_id).is_empty()
+
+
+func _recover_unplayable_environment() -> bool:
+	if _environment_is_playable(run_state):
+		return true
+	if run_state == null or not run_state.has_world_map():
+		return false
+	generator = RunGenerator.new(library)
+	var target_node_id := run_state.current_world_node_id()
+	generator.next_environment(run_state, target_node_id, true)
+	return _environment_is_playable(run_state)
 
 
 func _clear_recent_result_feedback() -> void:
@@ -3770,6 +3810,10 @@ func resolve_event_choice(event_id: String, choice_id: String) -> Dictionary:
 			_show_message(room_error)
 			_refresh()
 			return {"ok": false, "errors": [room_error]}
+	if bool(result.get("ok", false)):
+		last_game_result = {}
+		last_item_result = {}
+		last_hook_result = result.duplicate(true)
 	var showdown_continues := (
 		event_id == RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID
 		and run_state != null
@@ -4599,7 +4643,7 @@ func _refresh_talk_dock() -> void:
 	# choices were input-blocked, and confirmation clicks could loop forever.
 	# Preserve the queued entry in RunState and reveal it on the refresh after the
 	# blocking event resolves.
-	if _blocking_decision_popup_is_visible():
+	if _blocking_decision_popup_is_visible() or _tutorial_talk_suspended_by_modal():
 		talk_dock.visible = false
 		return
 	if not suppress_completed_tutorial_acknowledgement_clear:
@@ -4637,7 +4681,10 @@ func _refresh_talk_dock() -> void:
 		var voice_name := str(entry_speaker.get("speaking_character_name", "")).strip_edges()
 		var spoken_summary := "%s: \"%s\"" % [voice_name, voice_line] if not voice_name.is_empty() else voice_line
 		var precise_summary := str(option.get("summary", "")).strip_edges()
-		if dialogue_id == "sal_starter_offer" and not precise_summary.is_empty():
+		var obligation_summary := _talk_option_obligation_summary(option)
+		if not obligation_summary.is_empty() and not precise_summary.contains(obligation_summary):
+			precise_summary = "%s\n%s" % [precise_summary, obligation_summary] if not precise_summary.is_empty() else obligation_summary
+		if not precise_summary.is_empty() and (dialogue_id == "sal_starter_offer" or not obligation_summary.is_empty()):
 			option["summary"] = "%s\n%s" % [spoken_summary, precise_summary]
 		else:
 			option["summary"] = spoken_summary
@@ -4653,6 +4700,24 @@ func _refresh_talk_dock() -> void:
 		# opened. Keep the visible conversation last in GUI input order as well as
 		# above it visually so its buttons remain selectable.
 		talk_dock.move_to_front()
+
+
+func _talk_option_obligation_summary(option: Dictionary) -> String:
+	for choice_value in _copy_array(option.get("choices", [])):
+		if typeof(choice_value) != TYPE_DICTIONARY:
+			continue
+		var choice: Dictionary = choice_value
+		var terms: Dictionary = choice.get("loan_terms", {}) if typeof(choice.get("loan_terms", {})) == TYPE_DICTIONARY else {}
+		var summary := str(terms.get("summary", "")).strip_edges()
+		if not summary.is_empty():
+			return summary
+	return ""
+
+
+func _tutorial_talk_suspended_by_modal() -> bool:
+	return _run_menu_is_visible() \
+		or settings_overlay != null and settings_overlay.visible \
+		or _run_inventory_popup_is_visible()
 
 
 # Player actions can open their own natural modal in the same input frame that
@@ -5575,14 +5640,7 @@ func _apply_item_offer_after_input_guard(item_id: String) -> bool:
 		_show_message(str(resolved.get("message", "Item offer is not available.")))
 		return false
 	var result: Dictionary = resolved.get("result", {})
-	last_item_result = result.duplicate(true)
-	_play_result_drink_audio_cue(result)
-	last_game_result = {}
-	last_hook_result = {}
-	_clear_selected_item_offer()
-	_focus_post_purchase_affinity(result)
-	_set_current_screen(SCREEN_RESULT)
-	_show_message(str(result.get("message", "")))
+	_present_item_purchase_result(result)
 	_advance_alcohol_absorption()
 	_autosave_foundation_run("Autosaved.")
 	if _apply_post_action_environment_interrupt("item_purchase"):
@@ -5590,6 +5648,21 @@ func _apply_item_offer_after_input_guard(item_id: String) -> bool:
 		return true
 	_refresh()
 	return true
+
+
+func _present_item_purchase_result(result: Dictionary) -> void:
+	last_item_result = result.duplicate(true)
+	_play_result_drink_audio_cue(result)
+	last_game_result = {}
+	last_hook_result = {}
+	_clear_selected_item_offer()
+	# A room double-click selects the offer before it resolves. Once the offer is
+	# sold, that focus must not keep projecting an actionable card for an object
+	# that no longer exists in the room catalog.
+	clear_interaction_focus(false, false)
+	pending_post_purchase_affinity_result = result.duplicate(false)
+	_set_current_screen(SCREEN_RESULT)
+	_show_message(str(result.get("message", "")))
 
 
 func _focus_post_purchase_affinity(result: Dictionary) -> void:
@@ -5743,6 +5816,7 @@ func open_run_inventory() -> void:
 	_hide_run_journal_popup()
 	_open_run_inventory_popup("inspect")
 	_sync_coach_focus_visibility()
+	_refresh_talk_dock()
 
 
 func close_run_inventory() -> void:
@@ -6550,7 +6624,12 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 	environment_runtime_active_keys_scratch.clear()
 	environment_runtime_scheduler.clear()
 	run_state = loaded
-	_set_active_game_binding()
+	var recovered_broken_environment := not _environment_is_playable(run_state)
+	var broken_environment_requires_map := recovered_broken_environment and not _recover_unplayable_environment()
+	if broken_environment_requires_map:
+		current_game = null
+	else:
+		_set_active_game_binding()
 	_bind_run_state_presentation_signals()
 	_configure_coach_for_run()
 	_sync_presented_bankroll_to_actual()
@@ -6560,6 +6639,7 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 	last_game_result = _game_result_from_story_log(run_state.story_log)
 	last_item_result = {}
 	last_hook_result = {}
+	pending_post_purchase_affinity_result = {}
 	if item_found_popup != null:
 		item_found_popup.clear_all()
 	_hide_event_choice_popup()
@@ -6578,13 +6658,21 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 	var loaded_from_backup := str(load_result.get("outcome", "")) == SaveService.LOAD_OUTCOME_BACKUP
 	autosave_loadable_available = true
 	save_status_message = "Loaded backup save." if loaded_from_backup else "Loaded run."
-	_set_current_screen(SCREEN_ENVIRONMENT)
+	_set_current_screen(SCREEN_TRAVEL if broken_environment_requires_map else SCREEN_ENVIRONMENT)
 	if procedural_music_player != null:
 		procedural_music_player.sync_authored_arrangement_state(run_state.music_arrangement_state)
 		procedural_music_player.sync_adaptive_tempo_state(run_state.music_tempo_state)
 		procedural_music_player.sync_music_choreography_state(run_state.music_choreography_state)
-	_show_message("%s: %s." % ["Recovered run from backup" if loaded_from_backup else "Run loaded", str(run_state.current_environment.get("display_name", "Environment"))])
+	if broken_environment_requires_map:
+		_show_message("That saved room was incomplete. Choose a safe destination on the map.")
+	else:
+		_show_message("Recovered an incomplete saved room: %s." % str(run_state.current_environment.get("display_name", "Environment")) if recovered_broken_environment else "%s: %s." % ["Recovered run from backup" if loaded_from_backup else "Run loaded", str(run_state.current_environment.get("display_name", "Environment"))])
+	if recovered_broken_environment and not broken_environment_requires_map:
+		_autosave_foundation_run("Recovered room autosaved.")
 	_hide_run_menu()
+	if broken_environment_requires_map:
+		open_world_map(true)
+		return true
 	if environment_canvas != null:
 		environment_canvas.settle_person_transits()
 	_refresh()
@@ -6599,6 +6687,9 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 func open_run_menu() -> void:
 	if run_menu_overlay == null or current_screen == SCREEN_START:
 		return
+	if game_exit_settle_active:
+		_show_message("Leaving...")
+		return
 	if _guard_blocking_decision_or_transition():
 		return
 	if _world_map_overlay_is_visible() or _run_inventory_popup_is_visible() or _run_journal_popup_is_visible():
@@ -6610,6 +6701,7 @@ func open_run_menu() -> void:
 	run_menu_overlay.visible = true
 	run_menu_overlay.move_to_front()
 	_sync_coach_focus_visibility()
+	_refresh_talk_dock()
 
 
 func close_run_menu() -> void:
@@ -9336,6 +9428,7 @@ func _build_coach_overlay() -> void:
 	coach_overlay.lesson_completed.connect(Callable(self, "_on_coach_lesson_completed"))
 	coach_overlay.dialogue_requested.connect(Callable(self, "_on_coach_dialogue_requested"))
 	add_child(coach_overlay)
+	coach_overlay.set_tutorial_input_owner(talk_dock)
 	coach_overlay.set_lessons(library.tutorial_lessons if library != null else [])
 	coach_overlay.restore_seen(profile_inventory.tips_seen if profile_inventory != null else {})
 	coach_overlay.set_tips_enabled(user_settings == null or user_settings.coach_tips_enabled)
@@ -11803,6 +11896,8 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 			_show_message(str(wager_funding.get("message", "You do not have enough cash or chips for that wager.")))
 			_refresh()
 			return
+		action_surface_ui_state = action_surface_ui_state.duplicate(false)
+		action_surface_ui_state["_host_wager_funding"] = wager_funding.duplicate(false)
 		bankroll_before_result = run_state.bankroll
 		rng = run_state.create_rng()
 		result = current_game.resolve_with_context(action_id, stake, run_state, run_state.current_environment, rng, action_surface_ui_state)
@@ -13793,6 +13888,7 @@ func _lender_conversation_option(entry: Dictionary) -> Dictionary:
 	var summary := str(definition.get("description", "They want to discuss a loan."))
 	var accept_label := "Accept Offer"
 	var consequence_summary := "Take the offered loan and its debt."
+	var loan_terms := {}
 	var enabled := true
 	var disabled_reason := ""
 	if mode == "repay":
@@ -13813,11 +13909,10 @@ func _lender_conversation_option(entry: Dictionary) -> Dictionary:
 		var lender_option := _lender_hook(lender_id)
 		if lender_option.is_empty():
 			return {}
-		var delta_summary := str(lender_option.get("delta_summary", "")).strip_edges()
-		summary = "%s %s" % [
-			str(definition.get("description", "They make a loan offer.")).strip_edges(),
-			delta_summary if not delta_summary.is_empty() else "Accepting creates an active obligation.",
-		]
+		var terms_summary := str(lender_option.get("terms_summary", "")).strip_edges()
+		loan_terms = _copy_dict(lender_option.get("loan_terms", {}))
+		summary = str(lender_option.get("summary", definition.get("description", "They make a loan offer."))).strip_edges()
+		consequence_summary = terms_summary if not terms_summary.is_empty() else "Accepting creates an active obligation."
 		enabled = bool(lender_option.get("enabled", true))
 		disabled_reason = str(lender_option.get("disabled_reason", "This offer is not available right now."))
 	return {
@@ -13832,6 +13927,7 @@ func _lender_conversation_option(entry: Dictionary) -> Dictionary:
 				"label": accept_label,
 				"text": summary.strip_edges(),
 				"consequence_summary": consequence_summary,
+				"loan_terms": loan_terms,
 				"enabled": enabled,
 				"disabled_reason": "" if enabled else disabled_reason,
 				"requires_confirm": mode == "borrow",
@@ -14334,6 +14430,13 @@ func _on_environment_object_hovered(object_id: String) -> void:
 
 
 func _on_environment_object_focused(object_id: String) -> void:
+	# A completed purchase owns the result beat until the player deliberately
+	# chooses another room object. Tutorial/programmatic focus uses
+	# focus_interactable_object() directly and therefore cannot erase the result.
+	if not pending_post_purchase_affinity_result.is_empty():
+		pending_post_purchase_affinity_result = {}
+		if current_screen == SCREEN_RESULT:
+			_set_current_screen(SCREEN_ENVIRONMENT)
 	if not focus_interactable_object(object_id):
 		return
 	_sync_coach_environment_anchor_geometry()
@@ -14549,7 +14652,9 @@ func _interactable_object_view_list() -> Array:
 	var cache_key := _interactable_object_cache_key()
 	if interactable_object_view_cache_valid and interactable_object_view_cache_key == cache_key:
 		return interactable_object_view_cache
-	interactable_object_view_cache = EnvironmentInteractionControllerScript.interactable_object_view_list(self)
+	interactable_object_view_cache = EnvironmentInteractionViewModelScript.deduplicated_scenario_instruction_records(
+		EnvironmentInteractionControllerScript.interactable_object_view_list(self)
+	)
 	interactable_object_view_cache_valid = true
 	interactable_object_view_cache_key = cache_key
 	return interactable_object_view_cache
@@ -15048,7 +15153,8 @@ func _refresh_environment_result_feedback() -> void:
 		environment_result_title_label.text = str(view.get("title", "Result")).left(28)
 		_set_control_font_color(environment_result_title_label, accent)
 	if environment_result_body_label != null:
-		environment_result_body_label.text = str(view.get("text", "")).left(RESULT_FEEDBACK_MAX_CHARS)
+		environment_result_body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		environment_result_body_label.text = str(view.get("text", ""))
 		_set_control_font_color(environment_result_body_label, VisualStyle.SOFT)
 
 
@@ -15059,7 +15165,7 @@ func _environment_result_feedback_view() -> Dictionary:
 		return {"visible": false}
 	var result := {} if not immediate_environment_acknowledgement.is_empty() else _recent_result_snapshot()
 	var deltas: Dictionary = result.get("deltas", {})
-	var bankroll_delta := int(result.get("bankroll_delta", deltas.get("bankroll_delta", 0)))
+	var bankroll_delta := int(result.get("outcome_bankroll_delta", result.get("bankroll_delta", deltas.get("bankroll_delta", 0))))
 	var suspicion_delta := int(result.get("suspicion_delta", deltas.get("suspicion_delta", 0)))
 	var message := immediate_environment_acknowledgement if not immediate_environment_acknowledgement.is_empty() else _outcome_message(result)
 	if message.is_empty() and message_label != null:
@@ -15092,10 +15198,9 @@ func _environment_result_feedback_text(message: String, bankroll_delta: int, sus
 	if suspicion_delta != 0:
 		delta_parts.append("Heat %+d" % suspicion_delta)
 	if delta_parts.is_empty():
-		return base.left(RESULT_FEEDBACK_MAX_CHARS)
+		return base
 	var suffix := "  %s" % " / ".join(delta_parts)
-	var base_limit: int = maxi(12, RESULT_FEEDBACK_MAX_CHARS - suffix.length())
-	return ("%s%s" % [base.left(base_limit), suffix]).left(RESULT_FEEDBACK_MAX_CHARS)
+	return "%s%s" % [base, suffix]
 
 
 func _environment_result_feedback_accent(result: Dictionary, bankroll_delta: int, suspicion_delta: int) -> Color:
@@ -15487,7 +15592,7 @@ func _style_hud_for_recent_consequence() -> void:
 	# once for color and again for text during the same embedded refresh.
 	var result := _recent_result_readonly()
 	var deltas: Dictionary = result.get("deltas", {})
-	var bankroll_delta := int(result.get("bankroll_delta", deltas.get("bankroll_delta", 0)))
+	var bankroll_delta := int(result.get("outcome_bankroll_delta", result.get("bankroll_delta", deltas.get("bankroll_delta", 0))))
 	var suspicion_delta := int(result.get("suspicion_delta", deltas.get("suspicion_delta", 0)))
 	var color := VisualStyle.SOFT
 	var pressure_state := str(_run_pressure_view().get("state", ""))
@@ -15671,6 +15776,8 @@ func _challenge_with_meta_home_for_run(seed_text: String, config: Dictionary) ->
 	var modifiers := _copy_dict(normalized.get("modifiers", {}))
 	var meta_modifiers: Dictionary = meta_collection_service.normal_run_start_modifiers()
 	for key in meta_modifiers.keys():
+		if str(key) == "home_archetype_id" and not str(modifiers.get("home_archetype_id", "")).strip_edges().is_empty():
+			continue
 		modifiers[str(key)] = meta_modifiers[key]
 	normalized["modifiers"] = modifiers
 	return normalized
@@ -15790,6 +15897,7 @@ func open_settings_menu() -> void:
 	settings_overlay.move_to_front()
 	_sync_coach_focus_visibility()
 	settings_menu.open()
+	_refresh_talk_dock()
 
 
 func close_settings_menu() -> void:
@@ -15806,6 +15914,7 @@ func close_settings_menu() -> void:
 		_refresh_start_screen()
 	else:
 		_refresh_run_menu()
+	_refresh_talk_dock()
 
 
 func _on_settings_applied() -> void:
@@ -16877,6 +16986,8 @@ func _start_game_test_session_with_lifecycle_snapshot(game_id: String, game: Gam
 	run_state = RunState.new()
 	run_state.start_new(_game_test_seed(game_id))
 	run_state.bankroll = _game_test_bankroll()
+	if structured_hud != null:
+		structured_hud.reset_wallet_delta()
 	dev_game_test_mode = true
 	var environment := _game_test_environment(game_id, game)
 	_prepare_game_test_prerequisites(game_id, environment)
@@ -17019,10 +17130,23 @@ func _refresh_start_screen() -> void:
 		_apply_main_menu_button_styles(new_run_button)
 	if delete_saved_run_button != null:
 		delete_saved_run_button.disabled = not bool(save_slot_status.get("primary_exists", false)) and not bool(save_slot_status.get("backup_exists", false))
+	var tutorial_seed_locked := _mandatory_tutorial_seed_locked()
+	if seed_input != null:
+		seed_input.editable = not tutorial_seed_locked
+		seed_input.tooltip_text = "The mandatory First Night lesson uses its fixed teaching seed." if tutorial_seed_locked else "Set a deterministic seed for the next new run."
+	if seed_status_label != null:
+		seed_status_label.visible = tutorial_seed_locked
+		seed_status_label.text = "First Night uses a fixed lesson seed; later runs use your seed." if tutorial_seed_locked else ""
+	if tutorial_seed_locked and start_status_label != null and not has_save:
+		start_status_label.text = "Your first run is the First Night lesson, so its teaching seed is fixed."
 	_refresh_content_group_controls()
 	_refresh_challenge_controls()
 	if not run_ui_build_failure_reason.is_empty():
 		_present_run_ui_unavailable()
+
+
+func _mandatory_tutorial_seed_locked() -> bool:
+	return selected_challenge_id.is_empty() and _fresh_profile_needs_tutorial()
 
 
 func _release_version_text() -> String:
@@ -18503,7 +18627,7 @@ func _build_numbers_slip_controls(venue: Dictionary) -> void:
 
 
 func _build_numbers_silas_controls(silas: Dictionary) -> void:
-	var tip_button := _add_card_button(event_choice_popup_choices_list, "Buy a quiet route tip — $12", Callable(self, "_buy_numbers_silas_tip").bind(false), run_state.bankroll < 12, true)
+	var tip_button := _add_card_button(event_choice_popup_choices_list, "Buy a quiet route tip — $12", Callable(self, "_buy_numbers_silas_tip").bind(false), run_state.bankroll < 12 or not bool(silas.get("tip_available", true)), true)
 	tip_button.name = "NumbersSilasTip"
 	if bool(silas.get("handle_available", false)):
 		var handle_button := _add_card_button(event_choice_popup_choices_list, "Buy today's handle — $24", Callable(self, "_buy_numbers_silas_tip").bind(true), run_state.bankroll < 24)
@@ -18576,6 +18700,7 @@ func _confirm_numbers_slip() -> void:
 			digits += str((option_value as OptionButton).get_selected_id())
 	var play_type := numbers_play_type_option.get_item_text(numbers_play_type_option.selected).to_lower()
 	var result := run_state.numbers_buy_slip(digits, int(numbers_stake_input.value), play_type)
+	_publish_numbers_result(result, "buy_slip", "numbers_book")
 	if bool(result.get("ok", false)):
 		_autosave_foundation_run("Numbers slip saved.")
 		_refresh_world_header()
@@ -18586,6 +18711,7 @@ func _buy_numbers_silas_tip(today_number: bool) -> void:
 	if run_state == null:
 		return
 	var result := run_state.numbers_buy_silas_tip(today_number)
+	_publish_numbers_result(result, "buy_today_handle" if today_number else "buy_route_tip", "silas")
 	if bool(result.get("ok", false)):
 		_autosave_foundation_run("Silas exchange saved.")
 		_refresh_world_header()
@@ -18593,6 +18719,23 @@ func _buy_numbers_silas_tip(today_number: bool) -> void:
 	if bool(result.get("ok", false)) and today_number and not str(result.get("number", "")).is_empty():
 		message = "%s Today's handle: %s." % [message, str(result.get("number", ""))]
 	_render_numbers_surface(message)
+
+
+func _publish_numbers_result(result: Dictionary, action_id: String, source_id: String) -> void:
+	var canonical := result.duplicate(true)
+	canonical["type"] = "game_hook"
+	canonical["source_id"] = source_id
+	canonical["action_id"] = action_id
+	var deltas_value: Variant = canonical.get("deltas", {})
+	var deltas: Dictionary = deltas_value as Dictionary if typeof(deltas_value) == TYPE_DICTIONARY else {}
+	canonical["bankroll_delta"] = int(canonical.get("bankroll_delta", deltas.get("bankroll_delta", 0)))
+	canonical["deltas"] = deltas
+	last_game_result = {}
+	last_item_result = {}
+	last_hook_result = canonical
+	_show_message(str(canonical.get("message", "The Numbers exchange is recorded.")))
+	_refresh_environment_result_feedback()
+	_refresh_embedded_action_hud()
 
 
 func _start_numbers_collection() -> void:
@@ -19764,7 +19907,8 @@ func _focus_tutorial_meta_home_card_lesson() -> void:
 func _focus_tutorial_corner_store_purchase_lesson() -> void:
 	if coach_overlay == null \
 			or not TUTORIAL_CORNER_STORE_PURCHASE_LESSON_IDS.has(coach_overlay.active_lesson_id()) \
-			or _coach_visible_surface_screen() != SCREEN_ENVIRONMENT:
+			or _coach_visible_surface_screen() != SCREEN_ENVIRONMENT \
+			or _item_purchase_result_owns_room_focus():
 		return
 	var lesson := library.tutorial_lesson(coach_overlay.active_lesson_id()) if library != null else {}
 	var anchor: Dictionary = CoachViewModelScript.resolved_anchor(lesson, _coach_context_snapshot())
@@ -19777,6 +19921,11 @@ func _focus_tutorial_corner_store_purchase_lesson() -> void:
 	# been inspected, select the purchase target automatically so the camera,
 	# action card, tutorial ring, and Pal avoidance all transition together.
 	focus_interactable_object(target_object_id)
+
+
+func _item_purchase_result_owns_room_focus() -> bool:
+	return current_screen == SCREEN_RESULT \
+			and not pending_post_purchase_affinity_result.is_empty()
 
 
 func _record_tutorial_action_if_authored(action_id: String) -> void:

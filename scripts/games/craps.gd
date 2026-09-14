@@ -59,6 +59,8 @@ func generate_environment_state(_run_state: RunState, environment: Dictionary, r
 		"rules": rules,
 		"point": 0,
 		"working_bets": _empty_working_bets(),
+		"working_bet_funding_version": 1,
+		"working_bet_funding": {},
 		"roll_count": 0,
 		"roll_history": [],
 		"last_roll": {},
@@ -372,7 +374,7 @@ func surface_action_command(surface_action: String, index: int, _confirm_request
 				"skip_stake_validation": true,
 				"resolve": true,
 				"preserve_surface_ui_state": true,
-				"surface_audio_cue": "roulette_chip_sweep",
+				"surface_audio_cue": "chip_collect",
 			})
 		"craps_pass_dice":
 			if str(_current_shooter(table).get("id", "player")) != "player" or int(table.get("point", 0)) != 0:
@@ -405,7 +407,7 @@ func surface_action_command(surface_action: String, index: int, _confirm_request
 			pending[bet_id] = int(pending.get(bet_id, 0)) + chip
 			session["craps_pending_bets"] = pending
 			session["craps_last_pending_id"] = bet_id
-			return GameModule.surface_command({"ui_state": session, "surface_audio_cue": "blackjack_chip"})
+			return GameModule.surface_command({"ui_state": session, "surface_audio_cue": "chip_place"})
 		"craps_chip":
 			var chips := _chip_denominations(table)
 			if chips.is_empty():
@@ -416,11 +418,11 @@ func surface_action_command(surface_action: String, index: int, _confirm_request
 				var current := int(session.get("selected_chip", chips[0]))
 				var chip_index := chips.find(current)
 				session["selected_chip"] = int(chips[(chip_index + 1) % chips.size()])
-			return GameModule.surface_command({"ui_state": session, "set_stake": int(session["selected_chip"]), "surface_audio_cue": "blackjack_chip"})
+			return GameModule.surface_command({"ui_state": session, "set_stake": int(session["selected_chip"]), "surface_audio_cue": "chip_place"})
 		"craps_clear":
 			_push_pending_history(session, pending)
 			session["craps_pending_bets"] = {}
-			return GameModule.surface_command({"ui_state": session, "surface_audio_cue": "roulette_chip_sweep"})
+			return GameModule.surface_command({"ui_state": session, "surface_audio_cue": "chip_collect"})
 		"craps_remove":
 			if pending.is_empty():
 				return _message_command(session, "There is no pending wager to correct.")
@@ -431,14 +433,14 @@ func surface_action_command(surface_action: String, index: int, _confirm_request
 			if int(pending.get(remove_id, 0)) <= 0:
 				pending.erase(remove_id)
 			session["craps_pending_bets"] = pending
-			return GameModule.surface_command({"ui_state": session, "surface_audio_cue": "roulette_chip_sweep", "message": "%d returned from %s." % [remove_amount, remove_id.replace("_", " ").capitalize()]})
+			return GameModule.surface_command({"ui_state": session, "surface_audio_cue": "chip_collect", "message": "%d returned from %s." % [remove_amount, remove_id.replace("_", " ").capitalize()]})
 		"craps_undo":
 			var history := _dictionary_array(session.get("craps_pending_history", []))
 			if history.is_empty():
 				return _message_command(session, "There is no pending change to undo.")
 			session["craps_pending_bets"] = history.pop_back()
 			session["craps_pending_history"] = history
-			return GameModule.surface_command({"ui_state": session, "surface_audio_cue": "roulette_chip_sweep", "message": "The last pending change is undone."})
+			return GameModule.surface_command({"ui_state": session, "surface_audio_cue": "chip_collect", "message": "The last pending change is undone."})
 		"craps_repeat", "craps_rebet":
 			var source_key := "last_committed_bets" if surface_action == "craps_repeat" else "last_resolved_bets"
 			var repeated := _pending_bets(table.get(source_key, {}))
@@ -451,7 +453,7 @@ func surface_action_command(surface_action: String, index: int, _confirm_request
 				return _message_command(session, "That wager set exceeds the funds available now.")
 			_push_pending_history(session, pending)
 			session["craps_pending_bets"] = repeated
-			return GameModule.surface_command({"ui_state": session, "surface_audio_cue": "blackjack_chip", "message": "The eligible wager set is staged again."})
+			return GameModule.surface_command({"ui_state": session, "surface_audio_cue": "chip_place", "message": "The eligible wager set is staged again."})
 		"craps_roll":
 			# The established legal action remains the keyboard/controller and
 			# reduced-motion equivalent. It resolves through the normal boundary;
@@ -590,7 +592,9 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	var shooter_before := _current_shooter(table)
 	table["last_shooter"] = shooter_before.duplicate(true)
 	var roll := CrapsRulesScript.roll_dice(rng, _dict(table.get("rules", {})), int(cheat.get("bias_permille", 0)))
+	var funding_by_pending := _pending_wager_funding(run_state, environment, pending, street, _dict(ui_state.get("_host_wager_funding", {})))
 	var settlement := CrapsRulesScript.settle_roll(table, pending, roll, _dict(table.get("rules", {})))
+	_reconcile_working_bet_funding(table, pending, funding_by_pending, int(roll.get("total", 0)))
 	var chatter_request := _react_table_to_roll(table, roll, settlement, shooter_before)
 	table["last_committed_bets"] = pending.duplicate(true)
 	table["last_resolved_bets"] = _resolved_rebet_set(pending, settlement)
@@ -756,20 +760,37 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 
 
 func _resolve_take_down(run_state: RunState, environment: Dictionary, table: Dictionary, bet_id: String, rng: RngStream, street: bool) -> Dictionary:
+	var refund_funding := _working_bet_refund_funding(table, bet_id, street, environment)
 	var removal := CrapsRulesScript.take_down_bet(table, bet_id)
 	if not bool(removal.get("ok", false)):
 		return _empty_result("take_down_craps_bet", 0, environment, str(removal.get("message", "That wager cannot be removed.")))
 	var refund := int(removal.get("refund", 0))
+	var cash_refund := int(refund_funding.get("cash", 0))
+	var chip_refund := int(refund_funding.get("chips", 0))
+	var funding_stake := int(refund_funding.get("stake", 0))
+	if funding_stake <= 0:
+		cash_refund = refund if street or not _uses_casino_chips(environment) else 0
+		chip_refund = refund if not street and _uses_casino_chips(environment) else 0
+	elif funding_stake != refund:
+		# Legacy or malformed provenance must never mint value. Scale the saved
+		# wallet split to the stake actually removed.
+		chip_refund = mini(refund, chip_refund)
+		cash_refund = maxi(0, refund - chip_refund)
+	var funding_map := _dict(table.get("working_bet_funding", {})).duplicate(true)
+	funding_map.erase(bet_id)
+	table["working_bet_funding"] = funding_map
 	var message := str(removal.get("message", "%d returned." % refund))
 	table["last_result"] = {
 		"message": message,
-		"bankroll_delta": refund,
+		"bankroll_delta": cash_refund,
+		"chips_delta": chip_refund,
 		"bet_results": [{"label": bet_id.replace("_", " ").capitalize(), "stake": refund, "profit": 0, "outcome": "refund"}],
 		"action_id": "take_down_craps_bet",
 	}
 	_update_environment_table(environment, table)
 	var deltas := GameModule.empty_result_deltas()
-	deltas["bankroll_delta"] = refund
+	deltas["bankroll_delta"] = cash_refund
+	deltas["chips_delta"] = chip_refund
 	deltas["messages"] = [message]
 	deltas["story_log"] = [{
 		"type": "game_action",
@@ -777,7 +798,8 @@ func _resolve_take_down(run_state: RunState, environment: Dictionary, table: Dic
 		"action_id": "take_down_craps_bet",
 		"action_kind": "legal",
 		"stake": 0,
-		"bankroll_delta": refund,
+		"bankroll_delta": cash_refund,
+		"chips_delta": chip_refund,
 		"working_bet_id": bet_id,
 		"environment_id": environment.get("id", ""),
 		"environment_archetype_id": environment.get("archetype_id", ""),
@@ -791,7 +813,9 @@ func _resolve_take_down(run_state: RunState, environment: Dictionary, table: Dic
 		"action_kind": "legal",
 		"stake": 0,
 		"craps_total_wager": 0,
-		"bankroll_delta": refund,
+		"bankroll_delta": cash_refund,
+		"chips_delta": chip_refund,
+		"currency_deltas_final": true,
 		"deltas": deltas,
 		"won": false,
 		"environment_id": environment.get("id", ""),
@@ -805,6 +829,9 @@ func _resolve_take_down(run_state: RunState, environment: Dictionary, table: Dic
 	result["craps_working_bets"] = _dict(table.get("working_bets", {})).duplicate(true)
 	result["craps_taken_down_bet"] = bet_id
 	result["craps_take_down_refund"] = refund
+	result["bankroll_delta"] = cash_refund
+	result["chips_delta"] = chip_refund
+	result["currency_deltas_final"] = true
 	if street:
 		result["craps_variant"] = "street_craps"
 		result["currency"] = "cash"
@@ -1181,6 +1208,8 @@ func _normalize_table_state(value: Variant, environment: Dictionary) -> Dictiona
 		return {}
 	table["point"] = int(table.get("point", 0))
 	table["working_bets"] = _normalized_working(table.get("working_bets", {}))
+	table["working_bet_funding_version"] = 1
+	table["working_bet_funding"] = _normalized_working_bet_funding(table.get("working_bet_funding", {}))
 	table["roll_history"] = _dictionary_array(table.get("roll_history", []))
 	table["last_roll"] = _dict(table.get("last_roll", {})).duplicate(true)
 	table["last_result"] = _dict(table.get("last_result", {})).duplicate(true)
@@ -1222,6 +1251,123 @@ func _normalized_working(value: Variant) -> Dictionary:
 		result[key] = normalized
 	result["working_on_come_out"] = bool(source.get("working_on_come_out", false))
 	return result
+
+
+func _normalized_working_bet_funding(value: Variant) -> Dictionary:
+	var result := {}
+	if typeof(value) != TYPE_DICTIONARY:
+		return result
+	for bet_id_value in (value as Dictionary).keys():
+		var source := _dict((value as Dictionary).get(bet_id_value, {}))
+		var cash := maxi(0, int(source.get("cash", 0)))
+		var chips := maxi(0, int(source.get("chips", 0)))
+		var stake := maxi(0, int(source.get("stake", cash + chips)))
+		if stake > 0:
+			result[str(bet_id_value)] = {"cash": cash, "chips": chips, "stake": stake}
+	return result
+
+
+func _pending_wager_funding(run_state: RunState, environment: Dictionary, pending: Dictionary, street: bool, host_funding: Dictionary = {}) -> Dictionary:
+	var total := CrapsRulesScript.pending_wager_total(pending)
+	var cash_stake := total
+	var cash_cost := total
+	var chip_stake := 0
+	if not street and _uses_casino_chips(environment) and not host_funding.is_empty():
+		chip_stake = maxi(0, int(host_funding.get("existing_chips_used", 0)))
+		cash_stake = maxi(0, total - chip_stake)
+		cash_cost = maxi(0, int(host_funding.get("cash_used", cash_stake)))
+	elif not street and _uses_casino_chips(environment) and run_state != null:
+		# Direct module callers do not have the host receipt. Preview remains a
+		# deterministic compatibility path for tests and non-UI integrations.
+		var preview := run_state.preview_grand_casino_wager_funding(get_id(), total, environment)
+		chip_stake = maxi(0, int(preview.get("existing_chips_used", 0)))
+		cash_stake = maxi(0, total - chip_stake)
+		cash_cost = maxi(0, int(preview.get("cash_used", cash_stake)))
+	var remaining_chips := chip_stake
+	var remaining_cash_stake := cash_stake
+	var remaining_cash_cost := cash_cost
+	var result := {}
+	var ids := _string_array(pending.keys())
+	ids.sort()
+	for bet_id in ids:
+		var stake := maxi(0, int(pending.get(bet_id, 0)))
+		var chips := mini(stake, remaining_chips)
+		remaining_chips -= chips
+		var bet_cash_stake := mini(stake - chips, remaining_cash_stake)
+		var cash := remaining_cash_cost if bet_cash_stake == remaining_cash_stake else bet_cash_stake
+		remaining_cash_stake -= bet_cash_stake
+		remaining_cash_cost -= cash
+		result[bet_id] = {"cash": cash, "chips": chips, "stake": stake}
+	return result
+
+
+func _reconcile_working_bet_funding(table: Dictionary, pending: Dictionary, pending_funding: Dictionary, roll_total: int) -> void:
+	var working := _dict(table.get("working_bets", {}))
+	var previous := _normalized_working_bet_funding(table.get("working_bet_funding", {}))
+	var active := _working_bet_stakes(working)
+	var result := {}
+	for bet_id_value in active.keys():
+		var bet_id := str(bet_id_value)
+		var active_stake := int(active.get(bet_id, 0))
+		if previous.has(bet_id):
+			var saved := _dict(previous.get(bet_id, {})).duplicate(true)
+			saved["stake"] = mini(active_stake, int(saved.get("stake", 0)))
+			result[bet_id] = saved
+	var pending_ids := _string_array(pending.keys())
+	pending_ids.sort()
+	for pending_id in pending_ids:
+		var working_id := _working_id_for_pending(pending_id, roll_total, active)
+		if working_id.is_empty():
+			continue
+		var saved := _dict(result.get(working_id, {})).duplicate(true)
+		var addition := mini(int(pending.get(pending_id, 0)), int(active.get(working_id, 0)) - int(saved.get("stake", 0)))
+		if addition <= 0:
+			continue
+		var source := _dict(pending_funding.get(pending_id, {}))
+		var source_stake := maxi(1, int(source.get("stake", addition)))
+		var add_chips := mini(addition, int(source.get("chips", 0)))
+		var add_cash := int(round(float(int(source.get("cash", 0))) * float(addition - add_chips) / float(maxi(1, source_stake - int(source.get("chips", 0))))))
+		saved["cash"] = int(saved.get("cash", 0)) + maxi(0, add_cash)
+		saved["chips"] = int(saved.get("chips", 0)) + add_chips
+		saved["stake"] = int(saved.get("stake", 0)) + addition
+		result[working_id] = saved
+	table["working_bet_funding_version"] = 1
+	table["working_bet_funding"] = result
+
+
+func _working_bet_stakes(working: Dictionary) -> Dictionary:
+	var result := {}
+	for key in ["pass_line", "dont_pass", "pass_odds", "dont_pass_odds"]:
+		if int(working.get(key, 0)) > 0:
+			result[key] = int(working.get(key, 0))
+	for group_key in ["come", "dont_come", "come_odds", "dont_come_odds", "place", "buy", "lay", "hardways", "big"]:
+		for number_value in _dict(working.get(group_key, {})).keys():
+			var prefix := "hard" if group_key == "hardways" else str(group_key)
+			var bet_id := "%s_%s" % [prefix, str(number_value)]
+			result[bet_id] = int(_dict(working.get(group_key, {})).get(number_value, 0))
+	return result
+
+
+func _working_id_for_pending(pending_id: String, roll_total: int, active: Dictionary) -> String:
+	if active.has(pending_id):
+		return pending_id
+	if pending_id in ["come", "dont_come"]:
+		var traveled := "%s_%d" % [pending_id, roll_total]
+		return traveled if active.has(traveled) else ""
+	return ""
+
+
+func _working_bet_refund_funding(table: Dictionary, bet_id: String, street: bool, environment: Dictionary) -> Dictionary:
+	var funding := _normalized_working_bet_funding(table.get("working_bet_funding", {}))
+	if funding.has(bet_id):
+		return _dict(funding.get(bet_id, {})).duplicate(true)
+	var validation := CrapsRulesScript.can_take_down_bet(table, bet_id)
+	var stake := maxi(0, int(validation.get("refund", 0)))
+	return {"cash": stake if street or not _uses_casino_chips(environment) else 0, "chips": stake if not street and _uses_casino_chips(environment) else 0, "stake": stake}
+
+
+func _uses_casino_chips(environment: Dictionary) -> bool:
+	return ["grand_casino", "grand_casino_high_limit", "grand_casino_back_room", "grand_casino_cage"].has(str(environment.get("archetype_id", "")))
 
 
 func _empty_working_bets() -> Dictionary:

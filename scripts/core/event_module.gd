@@ -5,6 +5,7 @@ extends RefCounted
 
 const CrewRecruitmentModelScript := preload("res://scripts/core/crew_recruitment_model.gd")
 const CharacterChainModelScript := preload("res://scripts/core/character_chain_model.gd")
+const CharacterRosterScript := preload("res://scripts/core/character_roster.gd")
 
 var definition: Dictionary = {}
 var content_library: ContentLibrary = null
@@ -83,8 +84,29 @@ func choices(run_state: RunState = null, environment: Dictionary = {}) -> Array:
 			choice_data = _traveler_context_choice(choice_data, run_state)
 			choice_data = _reputation_context_choice(choice_data, environment)
 			choice_data = CharacterChainModelScript.contextualize_choice(get_id(), choice_data, run_state)
+			choice_data = _lender_terms_choice(choice_data, run_state)
 			result.append(choice_data)
 	return result
+
+
+func _lender_terms_choice(choice_data: Dictionary, run_state: RunState) -> Dictionary:
+	var consequences := _copy_dict(choice_data.get("consequences", {}))
+	var lender_id := str(consequences.get("lender_hook", "")).strip_edges()
+	if lender_id.is_empty() or run_state == null or content_library == null:
+		return choice_data
+	var resolver := RunActionService.new()
+	resolver.setup(content_library, run_state)
+	var option := resolver.hook_option("lender", lender_id)
+	var terms_summary := str(option.get("terms_summary", "")).strip_edges()
+	if terms_summary.is_empty():
+		return choice_data
+	var resolved := choice_data.duplicate(true)
+	var authored_text := str(resolved.get("text", "")).strip_edges()
+	resolved["text"] = "%s %s" % [authored_text, terms_summary] if not authored_text.is_empty() else terms_summary
+	resolved["consequence_summary"] = terms_summary
+	resolved["loan_terms"] = _copy_dict(option.get("loan_terms", {}))
+	resolved["requires_confirm"] = true
+	return resolved
 
 
 # Finds one event choice by id.
@@ -513,10 +535,11 @@ func _consequence_deltas(consequences: Dictionary, story_entry: Dictionary, mess
 		var target_event_id := str(trigger_event.get("event_id", "")).strip_edges()
 		var target_event := content_library.event(target_event_id) if content_library != null and not target_event_id.is_empty() else {}
 		if not target_event.is_empty():
-			trigger_event["entry_overrides"] = {
+			var target_defaults := {
 				"presentation": str(target_event.get("presentation", "modal")),
 				"speaker": _copy_dict(target_event.get("speaker", {})),
 			}
+			trigger_event["entry_overrides"] = _merge_triggered_entry_overrides(target_defaults, _copy_dict(trigger_event.get("entry_overrides", {})))
 		deltas["event_hooks"].append(trigger_event)
 	var hear_rumor_id := str(consequences.get("hear_rumor_id", "")).strip_edges()
 	if not hear_rumor_id.is_empty():
@@ -565,7 +588,7 @@ func _resolved_lender_hook_consequences(run_state: RunState, consequences: Dicti
 
 
 # Applies a chain hook after the source event result has already mutated the run.
-static func _apply_trigger_event_hook(run_state: RunState, source_result: Dictionary, hook_data: Dictionary) -> void:
+func _apply_trigger_event_hook(run_state: RunState, source_result: Dictionary, hook_data: Dictionary) -> void:
 	var target_id := str(hook_data.get("event_id", "")).strip_edges()
 	if run_state == null or target_id.is_empty():
 		return
@@ -593,7 +616,7 @@ static func _apply_trigger_event_hook(run_state: RunState, source_result: Dictio
 		context["source_choice_id"] = str(hook_data.get("source_choice_id", source_result.get("choice_id", "")))
 		context["chance"] = chance
 		context["roll"] = roll
-		run_state.enqueue_triggered_event(target_id, "event_chain", context, _copy_dict(hook_data.get("entry_overrides", {})))
+		run_state.enqueue_triggered_event(target_id, "event_chain", context, _triggered_event_entry_overrides(target_id, run_state, hook_data))
 	else:
 		var failure_audio_cue := str(hook_data.get("failure_audio_cue", "")).strip_edges()
 		if not failure_audio_cue.is_empty():
@@ -612,6 +635,50 @@ static func _apply_trigger_event_hook(run_state: RunState, source_result: Dictio
 			"roll": roll,
 			"message": failure_message,
 		})
+
+
+func _triggered_event_entry_overrides(target_id: String, run_state: RunState, hook_data: Dictionary) -> Dictionary:
+	var target_event := content_library.event(target_id) if content_library != null else {}
+	var defaults := {}
+	if not target_event.is_empty():
+		defaults = {
+			"presentation": str(target_event.get("presentation", "modal")),
+			"speaker": _copy_dict(target_event.get("speaker", {})),
+			"timing": _triggered_event_timing(_copy_dict(target_event.get("payload", {}))),
+		}
+	var overrides := _merge_triggered_entry_overrides(defaults, _copy_dict(hook_data.get("entry_overrides", {})))
+	var speaker := _copy_dict(overrides.get("speaker", {}))
+	if not speaker.is_empty():
+		speaker = CharacterRosterScript.resolve_speaker(speaker, content_library, run_state, target_id, str(speaker.get("voice_line_key", "")))
+		overrides["speaker"] = speaker
+	return overrides
+
+
+static func _merge_triggered_entry_overrides(defaults: Dictionary, authored: Dictionary) -> Dictionary:
+	var merged := defaults.duplicate(true)
+	for key_value in authored.keys():
+		var key := str(key_value)
+		if key == "speaker" and typeof(authored.get(key, {})) == TYPE_DICTIONARY:
+			var speaker := _copy_dict(merged.get("speaker", {}))
+			for speaker_key in (authored.get(key, {}) as Dictionary).keys():
+				speaker[str(speaker_key)] = (authored.get(key, {}) as Dictionary)[speaker_key]
+			merged["speaker"] = speaker
+		else:
+			merged[key] = authored[key_value]
+	return merged
+
+
+static func _triggered_event_timing(payload: Dictionary) -> Dictionary:
+	var timing := _copy_dict(payload.get("timing", {}))
+	var duration_actions := maxi(0, int(timing.get("duration_actions", 0)))
+	var timeout_choice_id := str(timing.get("timeout_choice_id", "")).strip_edges()
+	var expires := bool(timing.get("expires", false)) and duration_actions > 0 and not timeout_choice_id.is_empty()
+	return {
+		"expires": expires,
+		"duration_actions": duration_actions if expires else 0,
+		"remaining_actions": duration_actions if expires else 0,
+		"timeout_choice_id": timeout_choice_id if expires else "",
+	}
 
 
 static func _apply_trigger_hook_flags(run_state: RunState, flags: Dictionary) -> void:
@@ -873,6 +940,10 @@ func _traveler_context_choice(choice_data: Dictionary, run_state: RunState) -> D
 	if run_state == null or character_id != "dave_bus_regular" or run_state.town_state == null:
 		return choice_data
 	var context_line := run_state.town_state.traveler_context_line(character_id)
+	if context_line.contains("{") or context_line.contains(" ."):
+		context_line = ""
+	if context_line.is_empty():
+		context_line = str(_copy_dict(definition.get("payload", {})).get("summary", "")).strip_edges()
 	if context_line.is_empty():
 		return choice_data
 	var resolved := choice_data.duplicate(true)

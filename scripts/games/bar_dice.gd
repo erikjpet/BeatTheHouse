@@ -54,6 +54,7 @@ const CONSOLE_ROLL_BUTTON_WIDTHS := [108.0, 124.0, 116.0]
 const RULES_PANEL_RECT := Rect2(556, 218, 300, 58)
 const PAYTABLE_PANEL_RECT := Rect2(556, 282, 190, 50)
 const ROUND_TIMER_RECT := Rect2(752, 282, 116, 50)
+const BAR_DICE_GUIDANCE_RECT := Rect2(452, CONSOLE_Y + 61, 432, 20)
 const RULES_PANEL_LINE_LIMIT := 47
 const BAR_DICE_RITUAL_PHASES := ["agree_wager", "cover", "shake", "throw", "reveal", "call", "settle"]
 const BAR_DICE_PROPOSAL_REQUIRES_APPLY_KEY := "bar_dice_proposal_requires_apply"
@@ -3316,10 +3317,10 @@ func _draw_console(surface, state: Dictionary) -> void:
 		var delta := int(state.get("result_bankroll_delta", 0))
 		var heat := int(state.get("result_suspicion_delta", 0))
 		var color := C_TEAL if delta > 0 else C_YELLOW if delta == 0 else C_ORANGE
-		surface.surface_label("Bankroll %+d  Heat %+d" % [delta, heat], Vector2(452, CONSOLE_Y + 74), 11, color)
+		surface.surface_label_centered("Bankroll %+d  Heat %+d" % [delta, heat], BAR_DICE_GUIDANCE_RECT, 11, color)
 	else:
 		var prompt := str(guide.get("shake_hint", "Roll, mark dice, shake, then settle."))
-		surface.surface_label(prompt.left(74), Vector2(452, CONSOLE_Y + 74), 9, C_SOFT)
+		surface.surface_label_centered(prompt, BAR_DICE_GUIDANCE_RECT, 9, C_SOFT)
 
 
 func _draw_chip_ladder(surface, state: Dictionary, phase: String) -> void:
@@ -3378,6 +3379,7 @@ func _bar_dice_layout_snapshot() -> Dictionary:
 		"rules_panel": _rect_payload(RULES_PANEL_RECT),
 		"paytable_panel": _rect_payload(PAYTABLE_PANEL_RECT),
 		"round_timer": _rect_payload(ROUND_TIMER_RECT),
+		"guidance_rect": BAR_DICE_GUIDANCE_RECT,
 		"text_panel_rects": _bar_dice_text_panel_regions(),
 		"patron_safe_rects": _bar_dice_patron_safe_rects(),
 	}
@@ -3388,6 +3390,7 @@ func _bar_dice_text_panel_regions() -> Array:
 		_rect_payload(RULES_PANEL_RECT, "rules"),
 		_rect_payload(PAYTABLE_PANEL_RECT, "paytable"),
 		_rect_payload(ROUND_TIMER_RECT, "round_timer"),
+		_rect_payload(BAR_DICE_GUIDANCE_RECT, "console_guidance"),
 	]
 
 

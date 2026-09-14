@@ -446,6 +446,10 @@ func hear_staggered_close_rumor(rumor_id: String) -> Dictionary:
 
 
 func buy_silas_tip(today_number: bool = false) -> Dictionary:
+	if not today_number and bool(knowledge.get("silas_tip", false)):
+		return {"ok": false, "message": "Silas already sold you that route."}
+	if today_number and not known_number().is_empty():
+		return {"ok": false, "message": "You already have today's handle."}
 	knowledge["silas_tip"] = true
 	_refresh_knowledge()
 	var result := {"ok": true, "knowledge": knowledge.duplicate(true)}

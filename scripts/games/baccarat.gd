@@ -48,6 +48,8 @@ const BANKER_CARD_BASE := Vector2(526, 166)
 const CARD_SIZE := Vector2(42, 60)
 const CONSOLE_Y := 344.0
 const BACCARAT_SQUEEZE_REGION := Rect2(382, 190, 136, 34)
+const BACCARAT_EXPLAINER_RECT := Rect2(684, 14, 192, 58)
+const BACCARAT_SURFACE_BACK_RECT := Rect2(590, 22, 86, 34)
 const DRAW_CHIP_STACK_CACHE_LIMIT := 128
 
 const BET_TARGETS := [
@@ -338,6 +340,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"shoe_read_item_modifiers": shoe_read_item_modifiers,
 		"shoe_read_heat_preview": int(shoe_read_challenge.get("base_heat", _shoe_read_base_heat(run_state))),
 		"result_message": str(last_result.get("summary", "")) if not deal_active else "",
+		"surface_back_rect": {"x": BACCARAT_SURFACE_BACK_RECT.position.x, "y": BACCARAT_SURFACE_BACK_RECT.position.y, "w": BACCARAT_SURFACE_BACK_RECT.size.x, "h": BACCARAT_SURFACE_BACK_RECT.size.y},
 		"table_notice": table_notice,
 		"table_round_timer": round_timer,
 		"native_selected_surface_actions": _selected_surface_actions(bets, session),
@@ -3267,7 +3270,7 @@ func _draw_hand_explainer(surface, state: Dictionary) -> void:
 	var explainer := _draw_dict_view(state.get("baccarat_explainer", {}))
 	if explainer.is_empty():
 		return
-	var rect := Rect2(684, 14, 192, 58)
+	var rect := BACCARAT_EXPLAINER_RECT
 	var winner := str(explainer.get("winner", ""))
 	var accent := _target_color(winner) if not winner.is_empty() else C_YELLOW
 	_draw_neon_panel(surface, rect, accent, 0.15)
@@ -3276,6 +3279,13 @@ func _draw_hand_explainer(surface, state: Dictionary) -> void:
 	surface.surface_label_centered(str(explainer.get("primary", "")).left(38), Rect2(rect.position + Vector2(8, 22), Vector2(rect.size.x - 16, 12)), 8, C_WHITE)
 	surface.surface_label_centered(str(explainer.get("secondary", "")).left(44), Rect2(rect.position + Vector2(8, 36), Vector2(rect.size.x - 16, 10)), 7, C_SOFT)
 	surface.surface_label_centered(str(explainer.get("bet_summary", "")).left(44), Rect2(rect.position + Vector2(8, 47), Vector2(rect.size.x - 16, 8)), 6, C_YELLOW)
+
+
+func baccarat_overlay_layout_snapshot() -> Dictionary:
+	return {
+		"explainer_rect": BACCARAT_EXPLAINER_RECT,
+		"surface_back_rect": BACCARAT_SURFACE_BACK_RECT,
+	}
 
 
 func _draw_table_patrons(surface, state: Dictionary) -> void:

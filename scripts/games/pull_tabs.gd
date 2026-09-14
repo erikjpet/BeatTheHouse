@@ -958,6 +958,7 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 		"deltas": deltas,
 		"won": false,
 		"environment_id": str(environment.get("id", "")),
+		"environment_archetype_id": str(environment.get("archetype_id", "")),
 		"message": message,
 	})
 	_add_ticket_result_fields(result, ticket, deal, payout, price)
@@ -969,7 +970,6 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 	_advance_action_rng(rng)
 	GameModule.apply_result(run_state, result, rng)
 	return result
-
 
 func _resolve_ticket_set_purchase(run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary) -> Dictionary:
 	var machine := _ensure_machine_state(run_state, environment, true)
@@ -1097,6 +1097,7 @@ func _resolve_ticket_set_purchase(run_state: RunState, environment: Dictionary, 
 		"deltas": deltas,
 		"won": false,
 		"environment_id": str(environment.get("id", "")),
+		"environment_archetype_id": str(environment.get("archetype_id", "")),
 		"message": message,
 	})
 	_add_ticket_result_fields(result, tickets[0], ticket_deals[0], int((tickets[0] as Dictionary).get("payout", 0)), total_price)

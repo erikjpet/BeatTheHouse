@@ -17,6 +17,7 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 	_check_pusher_v3_10_idle_queue_cups_and_stack(library, game_definition, machine_definition, failures)
 	_check_pusher_v3_10_hold_inputs(library, game_definition, failures)
 	_check_pusher_v3_terminal_settlement_receipt(library, game_definition, failures)
+	_check_pusher_v3_exit_settle_absolute_bound(library, game_definition, failures)
 	_check_pusher_v3_opening_template_cache(machine_definition, failures)
 	_check_pusher_v3_10_opening_generation_guard(machine_definition, failures)
 	_check_pusher_v3_10_stack_support_matrix(machine_definition, failures)
@@ -95,6 +96,24 @@ func _check_pusher_v3_terminal_settlement_receipt(library: ContentLibrary, game_
 			or int(losing_session.get("pending_settlement_drop_count", -1)) != 0 \
 			or int(game.call("_consume_pending_empty_settlement", losing_session, [])) != 0:
 		failures.append("Coin Pusher empty settlement did not emit exactly once for the explicit pending batch.")
+
+
+func _check_pusher_v3_exit_settle_absolute_bound(library: ContentLibrary, game_definition: Dictionary, failures: Array) -> void:
+	var game: GameModule = load(str(game_definition.get("module_path", "res://scripts/games/coin_pusher.gd"))).new()
+	game.setup(game_definition, library)
+	for variation_id in ["quarter_falls", "jackpot_ridge", "vault_drop"]:
+		var definition: Dictionary = game.call("_machine_definition", variation_id)
+		var rng := RngStream.new()
+		rng.configure(RunState.text_to_seed("PLAYTEST-EXIT-%s" % variation_id))
+		var machine := {"simulation": CoinPusherSolverScript.create_machine(rng, definition, 12), "variation_id": variation_id, "drop_queue": []}
+		CoinPusherLiveSessionScript.begin(machine, definition, RunState.text_to_seed("PLAYTEST-LIVE-%s" % variation_id))
+		var session: Dictionary = machine.get("live_session", {})
+		session["accumulator_units"] = (CoinPusherLiveSessionScript.MAX_SETTLE_TICKS + 240) * 1000
+		CoinPusherLiveSessionScript.begin_chunked_settle(machine)
+		session["exit_work_ticks"] = CoinPusherLiveSessionScript.MAX_SETTLE_TICKS - 4
+		var result := CoinPusherLiveSessionScript.advance_chunked_settle(machine, 64)
+		if not bool(result.get("done", false)) or int(result.get("total_ticks", CoinPusherLiveSessionScript.MAX_SETTLE_TICKS + 1)) > CoinPusherLiveSessionScript.MAX_SETTLE_TICKS:
+			failures.append("Coin Pusher %s exit settlement exceeded the absolute work bound." % variation_id)
 
 
 func _check_pusher_v3_realtime_redraw_ownership(failures: Array) -> void:

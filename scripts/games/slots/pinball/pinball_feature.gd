@@ -349,7 +349,10 @@ static func live_status(active: Dictionary) -> Dictionary:
 	var remaining_steps := maxi(0, int(active.get("remaining_steps", balls_remaining)))
 	if sim != null:
 		active_count = sim.active_ball_count()
-		remaining_steps = maxi(0, int(active.get("remaining_steps", balls_remaining + active_count)))
+		var total_steps := maxi(1, int(active.get("total_steps", 1)))
+		var launched := clampi(int(sim.balls_launched), 0, total_steps)
+		balls_remaining = maxi(0, total_steps - launched)
+		remaining_steps = balls_remaining + active_count
 		runtime_tick = int(sim.tick)
 	else:
 		var summary: Dictionary = _dict_static(active.get("pinball_summary", {}))

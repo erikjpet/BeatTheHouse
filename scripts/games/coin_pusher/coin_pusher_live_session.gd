@@ -207,6 +207,7 @@ static func begin_chunked_settle(machine: Dictionary) -> Dictionary:
 	session["settling_out"] = true
 	session["settle_ticks"] = 0
 	session["backlog_drain_ticks"] = 0
+	session["exit_work_ticks"] = 0
 	# Inputs are authored at the current solver tick. Drain that complete boundary
 	# before imposing the exit-only motor release, otherwise a pending engaged=true
 	# skill-stop event can be replayed after the release and freeze settlement.
@@ -220,6 +221,7 @@ static func begin_chunked_settle(machine: Dictionary) -> Dictionary:
 		var accumulator_units := int(session.get("accumulator_units", 0))
 		session["accumulator_units"] = maxi(0, accumulator_units - mini(1000, accumulator_units))
 		session["backlog_drain_ticks"] = 1
+		session["exit_work_ticks"] = 1
 	CoinPusherSolverScript.set_skill_stop(machine.get("simulation", {}), false)
 	sync_native_body_state(machine)
 	return {
@@ -237,6 +239,11 @@ static func advance_chunked_settle(machine: Dictionary, tick_budget: int = 8) ->
 	if session.is_empty() or simulation.is_empty():
 		return {"done": true, "ticks": 0}
 	var budget := maxi(1, tick_budget)
+	var exit_work_ticks := int(session.get("exit_work_ticks", 0))
+	var remaining_work := maxi(0, MAX_SETTLE_TICKS - exit_work_ticks)
+	if remaining_work <= 0:
+		return {"done": true, "ticks": 0, "total_ticks": exit_work_ticks, "settle_ticks": int(session.get("settle_ticks", 0)), "bounded": true, "events": []}
+	budget = mini(budget, remaining_work)
 	var accumulator_units := int(session.get("accumulator_units", 0))
 	var trace: Array = session.get("input_trace", []) if typeof(session.get("input_trace", [])) == TYPE_ARRAY else []
 	var has_pending_input := int(session.get("input_cursor", 0)) < trace.size()
@@ -246,17 +253,21 @@ static func advance_chunked_settle(machine: Dictionary, tick_budget: int = 8) ->
 		var stepped := _step_traced_ticks(machine, drain_ticks)
 		session["accumulator_units"] = maxi(0, accumulator_units - mini(backlog_ticks, drain_ticks) * 1000)
 		session["backlog_drain_ticks"] = int(session.get("backlog_drain_ticks", 0)) + drain_ticks
-		return {"done": false, "ticks": drain_ticks, "total_ticks": int(session.get("settle_ticks", 0)), "backlog_ticks": int(session.get("accumulator_units", 0)) / 1000, "draining_backlog": true, "bounded": true, "events": stepped.get("events", [])}
+		exit_work_ticks += drain_ticks
+		session["exit_work_ticks"] = exit_work_ticks
+		return {"done": exit_work_ticks >= MAX_SETTLE_TICKS, "ticks": drain_ticks, "total_ticks": exit_work_ticks, "settle_ticks": int(session.get("settle_ticks", 0)), "backlog_ticks": int(session.get("accumulator_units", 0)) / 1000, "draining_backlog": true, "bounded": true, "events": stepped.get("events", [])}
 	var used := int(session.get("settle_ticks", 0))
-	var ticks := mini(budget, MAX_SETTLE_TICKS - used)
+	var ticks := budget
 	var events: Array = []
 	if ticks > 0 and not CoinPusherSolverScript.all_steady(simulation, not bool(machine.get("locked_down", false))):
 		var step_result := CoinPusherSolverScript.step_ticks(simulation, {"motor_enabled": not bool(machine.get("locked_down", false))}, ticks)
 		events = step_result.get("events", []) if typeof(step_result.get("events", [])) == TYPE_ARRAY else []
 		used += ticks
 		session["settle_ticks"] = used
-	var done := CoinPusherSolverScript.all_steady(simulation, not bool(machine.get("locked_down", false))) or used >= MAX_SETTLE_TICKS
-	return {"done": done, "ticks": ticks, "total_ticks": used, "bounded": used <= MAX_SETTLE_TICKS, "events": events}
+	exit_work_ticks += ticks
+	session["exit_work_ticks"] = exit_work_ticks
+	var done := CoinPusherSolverScript.all_steady(simulation, not bool(machine.get("locked_down", false))) or exit_work_ticks >= MAX_SETTLE_TICKS
+	return {"done": done, "ticks": ticks, "total_ticks": exit_work_ticks, "settle_ticks": used, "bounded": exit_work_ticks <= MAX_SETTLE_TICKS, "events": events}
 
 
 static func freeze_after_chunked_settle(machine: Dictionary, settle_ticks: int) -> Dictionary:

@@ -1048,7 +1048,7 @@ func _blackjack_ritual_projection(run_state: RunState, environment: Dictionary, 
 			"at_risk_total": at_risk_total,
 			"returned_stake": int(settlement_totals.get("returned_stake", 0)),
 			"payout": int(settlement_totals.get("payout", 0)),
-			"net_change": int(last_result.get("bankroll_delta", 0)),
+			"net_change": int(last_result.get("round_net_delta", last_result.get("bankroll_delta", 0))),
 		},
 		"actors": actors,
 		"scene_objects": [
@@ -2208,6 +2208,7 @@ func _resolve_blackjack_proposal_core(action_id: String, stake: int, run_state: 
 	var debited_wager_total := 0 if sit_out else _session_debited_wager(session)
 	var settlement_return_delta := main_delta + side_delta + debited_wager_total
 	var bankroll_delta: int = settlement_return_delta + security_bankroll_delta
+	var round_net_delta := main_delta + side_delta + security_bankroll_delta
 
 	var used_cards: Array = _cards_used_for_counting(hands, dealer_cards, patron_hands)
 	var patron_action_events: Array = _patron_action_event_array(session.get("patron_action_events", []))
@@ -2231,8 +2232,8 @@ func _resolve_blackjack_proposal_core(action_id: String, stake: int, run_state: 
 		result_action_kind = "risky"
 	_update_table_after_hand(table, session, dealer_cards, actual_count_delta, count_record_delta, rng, presentation_msec, cheat)
 	if not sit_out:
-		_apply_patron_rapport_after_blackjack(table, session, table_stake, bankroll_delta)
-	table["last_result"] = _blackjack_last_result_payload(message, hand_results, side_results, main_delta, side_delta, bankroll_delta, suspicion_delta, dealer_cards, hands, patron_hands, patron_action_events, cheat, presentation_msec)
+		_apply_patron_rapport_after_blackjack(table, session, table_stake, round_net_delta)
+	table["last_result"] = _blackjack_last_result_payload(message, hand_results, side_results, main_delta, side_delta, bankroll_delta, suspicion_delta, dealer_cards, hands, patron_hands, patron_action_events, cheat, presentation_msec, round_net_delta)
 	(table["last_result"] as Dictionary)["main_stake"] = table_stake
 	(table["last_result"] as Dictionary)["side_bet_ids"] = _string_array(session.get("blackjack_side_bets", []))
 	(table["last_result"] as Dictionary)["total_wager"] = total_wager
@@ -2249,6 +2250,8 @@ func _resolve_blackjack_proposal_core(action_id: String, stake: int, run_state: 
 		"settlement_return_delta": settlement_return_delta,
 		"sat_out": sit_out,
 		"bankroll_delta": bankroll_delta,
+		"round_net_delta": round_net_delta,
+		"outcome_bankroll_delta": round_net_delta,
 		"main_delta": main_delta,
 		"side_delta": side_delta,
 		"suspicion_delta": suspicion_delta,
@@ -2284,7 +2287,7 @@ func _resolve_blackjack_proposal_core(action_id: String, stake: int, run_state: 
 		"bankroll_delta": bankroll_delta,
 		"suspicion_delta": suspicion_delta,
 		"deltas": deltas,
-		"won": bankroll_delta > 0,
+		"won": round_net_delta > 0,
 		"environment_id": environment.get("id", ""),
 		"environment_archetype_id": environment.get("archetype_id", ""),
 		"message": message,
@@ -2299,6 +2302,8 @@ func _resolve_blackjack_proposal_core(action_id: String, stake: int, run_state: 
 	result["blackjack_side_bet_delta"] = side_delta
 	result["blackjack_wager_debited"] = debited_wager_total
 	result["blackjack_settlement_return_delta"] = settlement_return_delta
+	result["blackjack_round_net_delta"] = round_net_delta
+	result["outcome_bankroll_delta"] = round_net_delta
 	result["blackjack_sat_out"] = sit_out
 	result["blackjack_cheat_caught"] = bool(cheat.get("caught", false))
 	result["blackjack_coolers_cufflinks_broke"] = cufflinks_broke
@@ -2372,7 +2377,7 @@ func _resolve_rourke_duel_hand(action_id: String, run_state: RunState, environme
 	var used_cards := _cards_used_for_counting(hands, dealer_cards, [])
 	var actual_count_delta := _count_cards_delta(used_cards)
 	_update_table_after_hand(table, session, dealer_cards, actual_count_delta, actual_count_delta if bool(session.get("count_answered", false)) else 0, settlement_rng, presentation_msec)
-	table["last_result"] = _blackjack_last_result_payload(message, hand_results, [], transfer, 0, transfer - caught_penalty, 0, dealer_cards, hands, [], [], {"caught": caught}, presentation_msec)
+	table["last_result"] = _blackjack_last_result_payload(message, hand_results, [], transfer, 0, transfer - caught_penalty, 0, dealer_cards, hands, [], [], {"caught": caught}, presentation_msec, transfer - caught_penalty)
 	_update_environment_table(environment, table)
 	var applied := run_state.apply_grand_casino_duel_hand({
 		"transfer": transfer,
@@ -3484,7 +3489,8 @@ func _draw_chip_payout_animation(surface, surface_state: Dictionary) -> void:
 	var elapsed_msec := float(surface.surface_elapsed(PAYOUT_ANIMATION_CHANNEL)) * 1000.0
 	var t := clampf(elapsed_msec / float(PAYOUT_ANIMATION_DURATION_MSEC), 0.0, 1.0)
 	var eased := 1.0 - pow(1.0 - t, 3.0)
-	var delta := int(result.get("bankroll_delta", 0))
+	var settlement_delta := int(result.get("bankroll_delta", 0))
+	var delta := int(result.get("round_net_delta", settlement_delta))
 	var main_delta := int(result.get("main_delta", delta))
 	var side_delta := int(result.get("side_delta", 0))
 	var source := Vector2(622, 116)
@@ -3527,6 +3533,8 @@ func _draw_chip_payout_animation(surface, surface_state: Dictionary) -> void:
 		label += " / SIDE %+d" % side_delta
 	elif main_delta != delta:
 		label += " / MAIN %+d" % main_delta
+	if settlement_delta != delta:
+		label += " / RETURN %+d" % settlement_delta
 	surface.surface_label_centered(label.left(42), label_rect.grow(-5), 12, accent)
 
 
@@ -3831,7 +3839,7 @@ func _draw_blackjack_result_board(surface, surface_state: Dictionary) -> void:
 		surface.surface_label("cards still moving", rect.position + Vector2(10, 38), 9, C_SOFT)
 		surface.surface_label("settlement follows", rect.position + Vector2(10, 58), 8, C_SOFT)
 		return
-	var delta := int(result.get("bankroll_delta", 0))
+	var delta := int(result.get("round_net_delta", result.get("bankroll_delta", 0)))
 	var heat := int(result.get("suspicion_delta", 0))
 	var accent := C_TEAL if delta > 0 else C_ORANGE if delta < 0 else C_YELLOW
 	if bool(result.get("caught", false)):
@@ -6896,16 +6904,18 @@ func _start_count_challenge(ui_state: Dictionary, table: Dictionary, run_state: 
 	var now := _surface_time_for_count(ui_state, now_msec)
 	var icon_duration := _count_icon_duration_msec(run_state)
 	var challenge_id := "%s:count:%d" % [get_id(), now]
+	var icon_serial := 0
 	for i in range(cards.size()):
 		var card_value: Variant = cards[i]
 		var card: Dictionary = card_value
+		card["_count_tracking_key"] = _count_icon_card_key(card)
 		var count_value := _count_value_for_card(card)
 		if count_value == 0:
 			continue
 		var seed: int = abs(_stable_hash("%s:%s:%d" % [challenge_id, _count_icon_card_key(card), i]))
 		var icon_pos := _count_icon_position_for_card(card, seed)
 		icons.append({
-			"id": "%s:%d" % [challenge_id, i],
+			"id": "%s:%d" % [challenge_id, icon_serial],
 			"card": card.duplicate(true),
 			"count_value": count_value,
 			"spawn_msec": now + 420 + icons.size() * COUNT_ICON_STAGGER_MSEC,
@@ -6913,6 +6923,7 @@ func _start_count_challenge(ui_state: Dictionary, table: Dictionary, run_state: 
 			"x": icon_pos.x,
 			"y": icon_pos.y,
 		})
+		icon_serial += 1
 	var target_delta: int = _count_cards_delta(cards)
 	var tracked_keys: Array = []
 	for tracked_card_value in cards:
@@ -6923,7 +6934,7 @@ func _start_count_challenge(ui_state: Dictionary, table: Dictionary, run_state: 
 		"cards": cards,
 		"icons": icons,
 		"tracked_card_keys": tracked_keys,
-		"icon_serial": icons.size(),
+		"icon_serial": icon_serial,
 		"clicked_icons": [],
 		"missed_icons": [],
 		"resolved_icon_msec": {},
@@ -7125,20 +7136,51 @@ func _sync_count_challenge_icons(ui_state: Dictionary, run_state: RunState, now_
 	var cards: Array = _dictionary_array(challenge.get("cards", []))
 	var icons: Array = _dictionary_array(challenge.get("icons", []))
 	var tracked_keys: Array = _string_array(challenge.get("tracked_card_keys", []))
-	if tracked_keys.is_empty():
-		for card_value in cards:
-			if typeof(card_value) == TYPE_DICTIONARY:
-				tracked_keys.append(_count_icon_card_key(card_value as Dictionary))
+	var available_keys_by_identity: Dictionary = {}
+	for card_value in cards:
+		if typeof(card_value) != TYPE_DICTIONARY:
+			continue
+		var tracked_card: Dictionary = card_value as Dictionary
+		var tracked_key := _count_icon_card_key(tracked_card)
+		if not tracked_keys.has(tracked_key):
+			tracked_keys.append(tracked_key)
+		var identity_key := _count_icon_identity_key(tracked_card)
+		var identity_keys: Array = available_keys_by_identity.get(identity_key, [])
+		identity_keys.append(tracked_key)
+		available_keys_by_identity[identity_key] = identity_keys
 	now_msec = _surface_time_for_count(ui_state, now_msec)
 	var icon_duration := _count_icon_duration_msec(run_state)
 	var challenge_id := str(challenge.get("challenge_id", "%s:count:%d" % [get_id(), now_msec]))
 	var serial := int(challenge.get("icon_serial", icons.size()))
 	var added := 0
+	var claimed_existing_keys: Dictionary = {}
 	for card_value in _visible_count_challenge_cards(ui_state):
 		if typeof(card_value) != TYPE_DICTIONARY:
 			continue
 		var card: Dictionary = (card_value as Dictionary).duplicate(true)
-		var key := _count_icon_card_key(card)
+		var source_key := str(card.get("_count_source_key", _count_icon_card_key(card)))
+		var key := ""
+		var identity_keys: Array = available_keys_by_identity.get(_count_icon_identity_key(card), [])
+		for candidate_value in identity_keys:
+			var candidate := str(candidate_value)
+			if candidate == source_key and not claimed_existing_keys.has(candidate):
+				key = candidate
+				break
+		if key.is_empty():
+			for candidate_value in identity_keys:
+				var candidate := str(candidate_value)
+				if not claimed_existing_keys.has(candidate):
+					key = candidate
+					break
+		if not key.is_empty():
+			claimed_existing_keys[key] = true
+		else:
+			key = source_key
+			var disambiguator := 2
+			while tracked_keys.has(key):
+				key = "%s#%d" % [source_key, disambiguator]
+				disambiguator += 1
+		card["_count_tracking_key"] = key
 		if tracked_keys.has(key):
 			continue
 		tracked_keys.append(key)
@@ -7146,6 +7188,8 @@ func _sync_count_challenge_icons(ui_state: Dictionary, run_state: RunState, now_
 		var count_value := _count_value_for_card(card)
 		if count_value == 0:
 			continue
+		while _count_icon_id_is_used(icons, "%s:%d" % [challenge_id, serial]):
+			serial += 1
 		var seed: int = abs(_stable_hash("%s:%s:%d" % [challenge_id, key, serial]))
 		var icon_pos := _count_icon_position_for_card(card, seed)
 		icons.append({
@@ -7281,13 +7325,27 @@ func _blackjack_presentation_time_msec(ui_state: Dictionary, fallback_msec: int 
 
 
 func _count_icon_card_key(card: Dictionary) -> String:
-	var identity_key := str(card.get("_count_identity_key", ""))
-	if not identity_key.is_empty():
-		return identity_key
+	var tracking_key := str(card.get("_count_tracking_key", ""))
+	if not tracking_key.is_empty():
+		return tracking_key
 	var source_key := str(card.get("_count_source_key", ""))
 	if not source_key.is_empty():
 		return source_key
+	return _count_icon_identity_key(card)
+
+
+func _count_icon_identity_key(card: Dictionary) -> String:
+	var identity_key := str(card.get("_count_identity_key", ""))
+	if not identity_key.is_empty():
+		return identity_key
 	return _raw_count_icon_card_key(card)
+
+
+func _count_icon_id_is_used(icons: Array, icon_id: String) -> bool:
+	for icon_value in icons:
+		if typeof(icon_value) == TYPE_DICTIONARY and str((icon_value as Dictionary).get("id", "")) == icon_id:
+			return true
+	return false
 
 
 func _count_icon_position_for_card(card: Dictionary, seed: int) -> Vector2:
@@ -8043,12 +8101,13 @@ func _blackjack_side_result_detail(side: Dictionary) -> String:
 	return "%s %s %+d" % [label, detail, delta]
 
 
-func _blackjack_last_result_payload(message: String, hand_results: Array, side_results: Array, main_delta: int, side_delta: int, bankroll_delta: int, suspicion_delta: int, dealer_cards: Array, player_hands: Array, patron_hands: Array, patron_action_events: Array, cheat: Dictionary, result_msec: int = 0) -> Dictionary:
+func _blackjack_last_result_payload(message: String, hand_results: Array, side_results: Array, main_delta: int, side_delta: int, bankroll_delta: int, suspicion_delta: int, dealer_cards: Array, player_hands: Array, patron_hands: Array, patron_action_events: Array, cheat: Dictionary, result_msec: int = 0, round_net_delta_value: Variant = null) -> Dictionary:
 	var resolved_at := maxi(0, result_msec)
+	var round_net_delta := main_delta + side_delta if round_net_delta_value == null else int(round_net_delta_value)
 	var headline := "PUSH"
-	if bankroll_delta > 0:
+	if round_net_delta > 0:
 		headline = "PLAYER PAID"
-	elif bankroll_delta < 0:
+	elif round_net_delta < 0:
 		headline = "HOUSE TAKES"
 	if bool(cheat.get("caught", false)):
 		headline = "HEAT SPIKE"
@@ -8066,6 +8125,7 @@ func _blackjack_last_result_payload(message: String, hand_results: Array, side_r
 		"main_delta": main_delta,
 		"side_delta": side_delta,
 		"bankroll_delta": bankroll_delta,
+		"round_net_delta": round_net_delta,
 		"suspicion_delta": suspicion_delta,
 		"dealer_total": int(_hand_total_info(dealer_cards).get("total", 0)),
 		"dealer_cards": _card_array(dealer_cards),
@@ -8082,7 +8142,7 @@ func _blackjack_last_result_payload(message: String, hand_results: Array, side_r
 		"strategy_deviation_events": _dictionary_array(cheat.get("strategy_deviation_events", [])),
 		"resolved_at_msec": resolved_at,
 		"timestamp_msec": resolved_at,
-		"payout_animation_id": "%s:payout:%d:%d" % [get_id(), resolved_at, bankroll_delta],
+		"payout_animation_id": "%s:payout:%d:%d" % [get_id(), resolved_at, round_net_delta],
 	}
 
 

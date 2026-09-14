@@ -1859,6 +1859,13 @@ func _slot_bonus_watchdog_status(machine: Dictionary, ui_state: Dictionary) -> D
 	if _slot_bonus_completion_animation_pending(machine, ui_state):
 		return status
 	status["eligible"] = true
+	# Pinball's realtime simulation can drain the final ball between player
+	# actions. The zero-copy live-status check above is authoritative, so settle
+	# on the next host tick instead of arming the generic stalled-bonus grace timer.
+	if str(active.get("family", "")) == "pinball":
+		status["due"] = true
+		status["needs_tick"] = true
+		return status
 	var surface_time := _surface_timing_msec(ui_state)
 	var since_msec := maxi(0, int(machine.get("slot_bonus_watchdog_since_msec", 0)))
 	if surface_time <= 0 or since_msec <= 0 or surface_time < since_msec:

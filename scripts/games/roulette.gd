@@ -354,7 +354,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"bet_targets": bet_targets,
 		"roulette_bets": bets,
 		"roulette_focused_stack_id": str(session.get("roulette_focused_stack_id", "")),
-		"roulette_rebet": _bet_array(session.get("roulette_rebet", table.get("last_bets", []))),
+		"roulette_rebet": _roulette_rebet_layout(session, table),
 		"selected_chip": selected_chip,
 		"selected_stake": selected_chip,
 		"chip_denominations": chip_denoms,
@@ -366,7 +366,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"can_undo": not barred and not roulette_wheel_locked and not (_array(session.get("roulette_undo_stack", [])).is_empty()),
 		"can_clear": not barred and not roulette_wheel_locked and not bets.is_empty(),
 		"can_remove": not barred and not roulette_wheel_locked and not bets.is_empty(),
-		"can_rebet": not barred and not roulette_wheel_locked and not _bet_array(session.get("roulette_rebet", table.get("last_bets", []))).is_empty(),
+		"can_rebet": not barred and not roulette_wheel_locked and not _roulette_rebet_layout(session, table).is_empty(),
 		"bankroll": visible_bankroll,
 		"last_result": last_result,
 		"last_results": visible_last_results,
@@ -507,7 +507,7 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 		"can_undo": not barred and not roulette_wheel_locked and not (_array(session.get("roulette_undo_stack", [])).is_empty()),
 		"can_clear": not barred and not roulette_wheel_locked and not bets.is_empty(),
 		"can_remove": not barred and not roulette_wheel_locked and not bets.is_empty(),
-		"can_rebet": not barred and not roulette_wheel_locked and not _bet_array(session.get("roulette_rebet", table.get("last_bets", []))).is_empty(),
+		"can_rebet": not barred and not roulette_wheel_locked and not _roulette_rebet_layout(session, table).is_empty(),
 		"bankroll": _roulette_visible_bankroll(run_state, environment, last_result_source, result_settled_for_display),
 		"last_result": last_result,
 		"last_results": visible_last_results,
@@ -2281,7 +2281,7 @@ func _undo_bets_command(state: Dictionary) -> Dictionary:
 
 
 func _rebet_command(state: Dictionary, table: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
-	var rebet := _bet_array(state.get("roulette_rebet", table.get("last_bets", [])))
+	var rebet := _roulette_rebet_layout(state, table)
 	if rebet.is_empty():
 		return _message_command(state, "No previous roulette bet to repeat.")
 	var validation := _validate_roulette_bets(rebet, table, run_state, environment)
@@ -2709,7 +2709,7 @@ func _draw_roulette_wheel(surface, surface_state: Dictionary, low_detail: bool =
 			var label_number := str(sequence[i])
 			var pocket_color := _pocket_color(label_number)
 			var label_size := Vector2(19, 10) if label_number.length() > 1 else Vector2(15, 10)
-			var label_pos := WHEEL_CENTER + Vector2(cos(label_mid), sin(label_mid)) * (WHEEL_RADIUS + 17.0)
+			var label_pos := WHEEL_CENTER + Vector2(cos(label_mid), sin(label_mid)) * (WHEEL_RADIUS - 13.0)
 			var label_rect := Rect2(label_pos - label_size * 0.5, label_size)
 			surface.draw_rect(label_rect.grow(1.0), Color(0.01, 0.02, 0.04, 0.86))
 			surface.draw_rect(label_rect.grow(1.0), Color(pocket_color.r, pocket_color.g, pocket_color.b, 0.92), false, 1)
@@ -2724,7 +2724,7 @@ func _draw_roulette_wheel(surface, surface_state: Dictionary, low_detail: bool =
 		var win_dir := Vector2(cos(win_mid), sin(win_mid))
 		var marker_start := WHEEL_CENTER + win_dir * 48.0
 		var result_label := str(last_result.get("winning_number", sequence[winning_index]))
-		var result_pos := WHEEL_CENTER + win_dir * (WHEEL_RADIUS + 17.0)
+		var result_pos := WHEEL_CENTER + win_dir * (WHEEL_RADIUS - 13.0)
 		var result_rect := Rect2(result_pos - Vector2(14, 8), Vector2(28, 16))
 		var label_edge_radius := absf(win_dir.x) * result_rect.size.x * 0.5 + absf(win_dir.y) * result_rect.size.y * 0.5
 		var marker_end := result_pos - win_dir * (label_edge_radius + 3.0)
@@ -3467,7 +3467,7 @@ func _normalized_session(_run_state: RunState, _environment: Dictionary, ui_stat
 	session["selected_chip"] = selected_chip
 	session["selected_stake"] = selected_chip
 	session["roulette_bets"] = _bet_array(session.get("roulette_bets", []))
-	session["roulette_rebet"] = _bet_array(session.get("roulette_rebet", table.get("last_bets", [])))
+	session["roulette_rebet"] = _roulette_rebet_layout(session, table)
 	session["locked_bets"] = _bet_array(session.get("locked_bets", []))
 	if typeof(session.get("roulette_undo_stack", [])) != TYPE_ARRAY:
 		session["roulette_undo_stack"] = []
@@ -3492,6 +3492,15 @@ func _normalized_session(_run_state: RunState, _environment: Dictionary, ui_stat
 	else:
 		session["wheel_read_challenge"] = wheel_read_challenge
 	return session
+
+
+func _roulette_rebet_layout(session: Dictionary, table: Dictionary) -> Array:
+	# The table owns the last settled wager layout. A transient empty UI array is
+	# common after CLEAR and must not erase that authoritative rebet source.
+	var table_bets := _bet_array(table.get("last_bets", []))
+	if not table_bets.is_empty():
+		return table_bets
+	return _bet_array(session.get("roulette_rebet", []))
 
 
 func _update_table_after_spin(table: Dictionary, bets: Array, bet_results: Array, spin: Dictionary, bankroll_delta: int, suspicion_delta: int, rng: RngStream, result_msec: int = 0) -> void:
