@@ -3,6 +3,8 @@ extends SceneTree
 const RITUAL_PROJECTION_PATH := "res://scripts/core/grand_casino_duel_ritual_projection.gd"
 const DUEL_MODEL_PATH := "res://scripts/core/grand_casino_duel_model.gd"
 const RNG_STREAM_PATH := "res://scripts/core/rng_stream.gd"
+const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
+const RunStateScript := preload("res://scripts/core/run_state.gd")
 const CONTRACT_PATH := "res://data/games/showdown_duel_game_ritual_v1.json"
 const DESIGN_PATH := "res://data/games/showdown_duel_ritual_v1.json"
 const EVENTS_PATH := "res://data/events/events.json"
@@ -18,6 +20,7 @@ const REQUIRED_COVERAGE := {
 	"phase_machine": 1,
 	"privacy": 1,
 	"product_adapter": 1,
+	"product_save_revisit": 1,
 	"liveness_iterations": 1000,
 }
 
@@ -48,6 +51,7 @@ func _initialize() -> void:
 	_check_phase_machine(failures)
 	_check_projection_privacy(failures)
 	_check_product_surface_adapter(failures)
+	_check_product_save_revisit(failures)
 	_check_liveness_performance(failures)
 	_finish(failures)
 
@@ -313,6 +317,52 @@ func _check_product_surface_adapter(failures: Array) -> void:
 	if terminal.is_empty(): failures.append("Terminal product projection returned empty/null output.")
 	if str(terminal.get("phase_id", "")) != "outcome_staging" or str(terminal.get("selected_ending", "")) != "shown_the_door": failures.append("Terminal duel authority did not produce its distinct outcome staging.")
 	if not commitment.is_empty() and not reveal.is_empty() and not terminal.is_empty(): _mark_coverage("product_adapter")
+
+
+func _check_product_save_revisit(failures: Array) -> void:
+	var library: ContentLibrary = ContentLibraryScript.new()
+	library.load()
+	var definition := library.game("blackjack")
+	var module_script: Script = load(str(definition.get("module_path", "")))
+	var game: GameModule = module_script.new() if module_script != null else null
+	if game == null:
+		failures.append("Rourke save/revisit could not load the shipped Blackjack module.")
+		return
+	game.setup(definition, library)
+	var run: RunState = RunStateScript.new()
+	run.start_new("GAME06_7-SAVE-REVISIT")
+	run.narrative_flags["grand_casino_showdown_active"] = true
+	run.narrative_flags["grand_casino_showdown_step"] = "duel"
+	run.narrative_flags["grand_casino_duel_terms"] = _duel_terms()
+	var duel_rng: Variant = _rng_stream_script.new()
+	duel_rng.call("configure", 607)
+	run.narrative_flags["grand_casino_duel_state"] = _dict(_duel_model.call("initialize", run.grand_casino_duel_terms(), duel_rng))
+	var environment := {
+		"id": "game06_7_back_room",
+		"archetype_id": RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID,
+		"kind": "boss",
+		"local_narrative_flags": {"blackjack_boss_variant": "rourke_duel"},
+		"economic_profile": {"stake_floor": 1, "stake_ceiling": 100},
+		"game_states": {},
+	}
+	run.current_environment = environment
+	environment["game_states"] = {"blackjack": game.generate_environment_state(run, environment, run.create_rng("game06_7_table"))}
+	run.current_environment = environment
+	var command := game.surface_action_command("blackjack_deal", 0, false, {"surface_time_msec": 5000, "drunk_scaled_surface_time_msec": 5000}, run, run.current_environment)
+	var dealt_ui := _dict(command.get("ui_state", {}))
+	if not bool(command.get("handled", false)) or _array(dealt_ui.get("player_hands", [])).is_empty():
+		failures.append("Rourke save/revisit fixture did not deal a playable hand.")
+		return
+	if _array(run.grand_casino_duel_session().get("player_hands", [])).is_empty():
+		failures.append("Rourke surface action did not persist the dealt hand into duel authority.")
+		return
+	var restored: RunState = RunStateScript.new()
+	restored.from_dict(run.to_save_snapshot())
+	var restored_surface := game.surface_state(restored, restored.current_environment, {})
+	if _array(restored_surface.get("player_hands", [])).is_empty() or _array(restored_surface.get("dealer_cards", [])).size() != 2:
+		failures.append("Rourke save/revisit did not reopen the exact dealt cards on the boss surface.")
+		return
+	_mark_coverage("product_save_revisit")
 
 
 func _check_liveness_performance(failures: Array) -> void:

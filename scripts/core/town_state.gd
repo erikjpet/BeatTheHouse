@@ -399,7 +399,7 @@ func status_line() -> String:
 	return "%s outside · %s" % [_display_name(_weather_id), _display_name(_day_type_id)]
 
 
-func snapshot() -> Dictionary:
+func snapshot(deep_copy_seeded_definitions: bool = true) -> Dictionary:
 	return {
 		"schema_version": SCHEMA_VERSION,
 		"seed_value": seed_value,
@@ -410,7 +410,7 @@ func snapshot() -> Dictionary:
 		"calendar_offset_actions": calendar_offset_actions,
 		"happenings": happenings.duplicate(true),
 		"progressive_meters": progressive_meters.duplicate(true),
-		"living_world": living_world.snapshot() if living_world != null else {},
+		"living_world": living_world.snapshot(deep_copy_seeded_definitions) if living_world != null else {},
 		"police_sweep": police_sweep.snapshot() if police_sweep != null else {},
 	}
 

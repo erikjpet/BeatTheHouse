@@ -3,9 +3,13 @@ extends SceneTree
 const Catalog := preload("res://scripts/core/scenario_sequence_catalog.gd")
 const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
 const Registry := preload("res://scripts/core/scenario_operation_registry.gd")
+const RunStateScript := preload("res://scripts/core/run_state.gd")
+const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
 const Schema := preload("res://scripts/core/scenario_sequence_schema.gd")
 
-const PRODUCTION_AUTHORITY_SHA256 := "d97b3dd830bc58b9b4d72b06a55bb9e1d67fdb1fc3299d473d7a4e11f4a4ce2c"
+# Integrated environment/scenario work after ENV-06.7 legitimately expanded
+# the authored signatures and eliminated the remaining similarity warnings.
+const PRODUCTION_AUTHORITY_SHA256 := "72da67b4adb39cc4f19f09f891e306bc90c5c15e8c94b87037197805dcbe4698"
 
 
 class RejectingRegistry:
@@ -40,6 +44,7 @@ func _init() -> void:
 	var load_stats := Schema._successful_validation_memo_stats_for_tests()
 	if int(load_stats.get("entries", 0)) <= 0 or int(load_stats.get("entries", 0)) > Schema.SUCCESSFUL_VALIDATION_MEMO_MAX_ENTRIES or int(load_stats.get("hits", 0)) < 55:
 		failures.append("Production load did not exercise the bounded positive-result memo: %s" % JSON.stringify(load_stats))
+	_check_process_local_catalog_receipt(failures)
 
 	var fixture := _first_sequence_fixture(library)
 	var definition: Dictionary = fixture.get("definition", {})
@@ -53,6 +58,37 @@ func _init() -> void:
 		var exact_stats := Schema._successful_validation_memo_stats_for_tests()
 		if not first_errors.is_empty() or JSON.stringify(first_errors) != JSON.stringify(second_errors) or int(exact_stats.get("full_runs", -1)) != 1 or int(exact_stats.get("hits", -1)) != 1 or int(exact_stats.get("entries", -1)) != 1:
 			failures.append("Exact repeated validation did not reuse one successful full result: %s" % JSON.stringify(exact_stats))
+
+		# Random room population can add unrelated objects and event choices, but
+		# those cannot change this sequence's declared authority. They must reuse the
+		# same static validation proof while a missing declared target still misses
+		# the memo and fails closed.
+		var unrelated_target := target_inventory.duplicate(true)
+		var unrelated_events: Dictionary = unrelated_target.get("event_choices", {}).duplicate(true) if typeof(unrelated_target.get("event_choices", {})) == TYPE_DICTIONARY else {}
+		unrelated_events["memo_unrelated_event"] = ["memo_unrelated_choice"]
+		unrelated_target["event_choices"] = unrelated_events
+		var unrelated_errors := Schema.validate_definition(definition, Registry, unrelated_target)
+		var unrelated_stats := Schema._successful_validation_memo_stats_for_tests()
+		if not unrelated_errors.is_empty() or int(unrelated_stats.get("full_runs", -1)) != 1 or int(unrelated_stats.get("hits", -1)) != 2:
+			failures.append("Unrelated room population invalidated the scenario authority memo: %s" % JSON.stringify(unrelated_stats))
+
+		var missing_declared_target := target_inventory.duplicate(true)
+		var removed_declared_identity := false
+		var authored: Dictionary = definition.get("sequence", {}) if typeof(definition.get("sequence", {})) == TYPE_DICTIONARY else {}
+		var declared: Dictionary = authored.get("declared_targets", {}) if typeof(authored.get("declared_targets", {})) == TYPE_DICTIONARY else {}
+		for collection_key in ["scene_objects", "interactions", "actors", "services", "games", "routes", "anchors", "zones"]:
+			var declared_values: Array = declared.get(collection_key, []) if typeof(declared.get(collection_key, [])) == TYPE_ARRAY else []
+			var available_values: Array = missing_declared_target.get(collection_key, []).duplicate(true) if typeof(missing_declared_target.get(collection_key, [])) == TYPE_ARRAY else []
+			if declared_values.is_empty() or not available_values.has(str(declared_values[0])):
+				continue
+			available_values.erase(str(declared_values[0]))
+			missing_declared_target[collection_key] = available_values
+			removed_declared_identity = true
+			break
+		var missing_errors_a := Schema.validate_definition(definition, Registry, missing_declared_target)
+		var missing_errors_b := Schema.validate_definition(definition, Registry, missing_declared_target)
+		if not removed_declared_identity or missing_errors_a.is_empty() or JSON.stringify(missing_errors_a) != JSON.stringify(missing_errors_b):
+			failures.append("Declared-target authority mutation did not miss the memo and reject deterministically.")
 
 		var hostile_definition := definition.duplicate(true)
 		var hostile_sequence: Dictionary = hostile_definition.get("sequence", {})
@@ -75,7 +111,7 @@ func _init() -> void:
 		if registry_errors_a.is_empty() or JSON.stringify(registry_errors_a) != JSON.stringify(registry_errors_b):
 			failures.append("Registry substitution did not revalidate and reject deterministically.")
 		var hostile_stats := Schema._successful_validation_memo_stats_for_tests()
-		if int(hostile_stats.get("full_runs", -1)) != 7 or int(hostile_stats.get("hits", -1)) != 1 or int(hostile_stats.get("entries", -1)) != 1:
+		if int(hostile_stats.get("full_runs", -1)) != 9 or int(hostile_stats.get("hits", -1)) != 2 or int(hostile_stats.get("entries", -1)) != 1:
 			failures.append("Invalid or mutated validation inputs entered the positive-result memo: %s" % JSON.stringify(hostile_stats))
 
 	Schema._clear_successful_validation_memo_for_tests()
@@ -93,6 +129,39 @@ func _init() -> void:
 	for failure in failures:
 		push_error(failure)
 	quit(1)
+
+
+func _check_process_local_catalog_receipt(failures: Array[String]) -> void:
+	var run_state = RunStateScript.new()
+	run_state.start_new("SCENARIO-NEGATIVE-RECEIPT")
+	var definition := {
+		"id": "memo_no_sequence",
+		"archetype_id": "corner_store",
+		ScenarioEngineScript.RESOLVED_SEQUENCE_CATALOG_MARKER: true,
+	}
+	if not run_state.cache_runtime_scenario_definition(definition):
+		failures.append("A trusted no-sequence catalog receipt did not enter the process-local RunState cache.")
+	if not run_state.seed_scenario_for_node("corner_store", definition):
+		failures.append("The no-sequence catalog receipt fixture could not seed its living-world identity.")
+	var persistent_definition := run_state.seeded_scenario_definition_for_node("corner_store")
+	if persistent_definition.has(ScenarioEngineScript.RESOLVED_SEQUENCE_CATALOG_MARKER):
+		failures.append("A process-local catalog receipt leaked into the persistent living-world scenario seed.")
+	run_state.current_environment = {
+		"id": "corner_store",
+		"archetype_id": "corner_store",
+		"world_node_id": "corner_store",
+		"scenario_id": "memo_no_sequence",
+		"scenario_state": {"id": "memo_no_sequence"},
+	}
+	var resolved: Dictionary = run_state._scenario_sequence_definition_readonly()
+	if not bool(resolved.get(ScenarioEngineScript.RESOLVED_SEQUENCE_CATALOG_MARKER, false)) or Schema.is_sequence(resolved):
+		failures.append("A persistent marker-free seed did not reuse its process-local negative catalog receipt.")
+	var save_town: Dictionary = run_state.to_dict().get("town_state", {})
+	var save_world: Dictionary = save_town.get("living_world", {})
+	var save_definitions: Dictionary = save_world.get("seeded_scenario_definitions_by_node", {})
+	var saved_definition: Dictionary = save_definitions.get("corner_store", {})
+	if saved_definition.has(ScenarioEngineScript.RESOLVED_SEQUENCE_CATALOG_MARKER):
+		failures.append("A process-local catalog receipt leaked into serialized RunState bytes.")
 
 
 func _first_sequence_fixture(library: Variant) -> Dictionary:

@@ -12,6 +12,7 @@ const PullTabsScript := preload("res://scripts/games/pull_tabs.gd")
 const BlackjackAuthorityTestDriverScript := preload("res://scripts/tests/foundation/blackjack_authority_test_driver.gd")
 
 const DEFAULT_OUTPUT_DIR := "res://.tmp/tutorial_rework"
+const AUDIT_DURATION_BUDGET_MSEC := 180000.0
 
 var library
 var failures: Array = []
@@ -26,16 +27,34 @@ func _init() -> void:
 
 
 func _run() -> void:
+	var audit_started_usec := Time.get_ticks_usec()
+	var phase_started_usec := _timing_start("library", audit_started_usec)
 	library = ContentLibraryScript.new()
 	library.load()
+	_timing_done("library", phase_started_usec, audit_started_usec)
 	for error_value in library.validation_errors:
 		failures.append("Content validation: %s" % str(error_value))
+	phase_started_usec = _timing_start("authored_contract", audit_started_usec)
 	var authored_contract := _verify_authored_contract()
+	_timing_done("authored_contract", phase_started_usec, audit_started_usec)
+	phase_started_usec = _timing_start("path_a", audit_started_usec)
 	var path_a := await _run_route("path_a")
+	_timing_done("path_a", phase_started_usec, audit_started_usec)
+	phase_started_usec = _timing_start("path_b_skip", audit_started_usec)
 	var path_b := await _run_route("path_b_skip")
+	_timing_done("path_b_skip", phase_started_usec, audit_started_usec)
+	phase_started_usec = _timing_start("normal_isolation", audit_started_usec)
 	var isolation := _normal_run_isolation()
+	_timing_done("normal_isolation", phase_started_usec, audit_started_usec)
+	phase_started_usec = _timing_start("tutorial_stuck_sweep_100", audit_started_usec)
 	var stuck_sweep := _tutorial_stuck_sweep(100)
+	_timing_done("tutorial_stuck_sweep_100", phase_started_usec, audit_started_usec)
+	phase_started_usec = _timing_start("lesson_boundary_save_load", audit_started_usec)
 	var lesson_boundary_save_load := _tutorial_lesson_boundary_save_load()
+	_timing_done("lesson_boundary_save_load", phase_started_usec, audit_started_usec)
+	_check(bool(lesson_boundary_save_load.get("passed", false)), "Tutorial lesson-boundary save/load sub-audit failed: %s" % JSON.stringify(lesson_boundary_save_load), failures)
+	var duration_msec := _elapsed_msec(audit_started_usec)
+	_check(duration_msec <= AUDIT_DURATION_BUDGET_MSEC, "Tutorial audit exceeded its frozen %.0f ms duration budget: %.3f ms." % [AUDIT_DURATION_BUDGET_MSEC, duration_msec], failures)
 	var report := {
 		"challenge_id": "tutorial_first_card",
 		"fixed_seed": str(library.challenge_config_for("tutorial_first_card", "ignored").get("seed_text", "")),
@@ -44,6 +63,9 @@ func _run() -> void:
 		"normal_run_isolation": isolation,
 		"tutorial_stuck_sweep": stuck_sweep,
 		"lesson_boundary_save_load": lesson_boundary_save_load,
+		"duration_msec": duration_msec,
+		"duration_budget_msec": AUDIT_DURATION_BUDGET_MSEC,
+		"duration_within_budget": duration_msec <= AUDIT_DURATION_BUDGET_MSEC,
 		"failures": failures.duplicate(),
 		"passed": failures.is_empty(),
 	}
@@ -68,14 +90,16 @@ func _verify_authored_contract() -> Dictionary:
 		var lesson_id := str(lesson.get("id", ""))
 		if lesson_id.begins_with("tip_first_") or lesson_id == "tip_starter_card_home":
 			ambient_ids.append(lesson_id)
-		if str(lesson.get("scope", "")) == "tutorial_run":
-			if ["dialogue", "coach"].has(str(lesson.get("delivery", ""))) and not str(lesson.get("dialogue_id", "")).is_empty() and not str(lesson.get("dialogue_node", "")).is_empty():
-				authored_delivery_count += 1
-			var anchor: Dictionary = lesson.get("anchor", {}) if typeof(lesson.get("anchor", {})) == TYPE_DICTIONARY else {}
-			if str(anchor.get("kind", "none")) != "none" and not str(anchor.get("id", "")).is_empty():
-				highlighted_count += 1
+		var dialogue_id := str(lesson.get("dialogue_id", "")).strip_edges()
+		var dialogue_node := str(lesson.get("dialogue_node", "")).strip_edges()
+		var dialogue_nodes := _dict(library.dialogue(dialogue_id).get("nodes", {}))
+		if ["dialogue", "coach"].has(str(lesson.get("delivery", ""))) and not dialogue_id.is_empty() and not dialogue_node.is_empty() and dialogue_nodes.has(dialogue_node):
+			authored_delivery_count += 1
+		var anchor: Dictionary = lesson.get("anchor", {}) if typeof(lesson.get("anchor", {})) == TYPE_DICTIONARY else {}
+		if str(anchor.get("kind", "none")) != "none" and not str(anchor.get("id", "")).is_empty():
+			highlighted_count += 1
 	_check(ambient_ids.is_empty(), "Removed ambient tutorial tips still exist: %s" % JSON.stringify(ambient_ids), failures)
-	_check(authored_delivery_count == library.tutorial_lessons.size(), "Not every shipped tutorial lesson uses an authored dialogue or coach delivery.", failures)
+	_check(authored_delivery_count == library.tutorial_lessons.size(), "Not every shipped tutorial lesson resolves to an authored dialogue or coach node.", failures)
 	_check(highlighted_count == library.tutorial_lessons.size(), "Not every shipped tutorial lesson owns a highlight anchor.", failures)
 
 	var pal: Dictionary = library.character("pal_tutorial_guide")
@@ -143,34 +167,81 @@ func _verify_authored_contract() -> Dictionary:
 
 func _tutorial_stuck_sweep(seed_count: int) -> Dictionary:
 	var stuck: Array = []
+	var sweep_started_usec := Time.get_ticks_usec()
+	var phase_usec := {
+		"challenge_config": 0,
+		"start_new": 0,
+		"initial_environment": 0,
+		"corner_environment": 0,
+		"parking_tip": 0,
+		"gas_environment": 0,
+		"underground_environment": 0,
+		"drink_lesson_boundary": 0,
+		"grand_invitation": 0,
+		"grand_environment": 0,
+	}
 	for seed_index in range(seed_count):
 		var route_id := "path_a" if seed_index % 2 == 0 else "path_b_skip"
+		var phase_started_usec := Time.get_ticks_usec()
 		var config: Dictionary = library.challenge_config_for("tutorial_first_card", "TUTORIAL-SWEEP-%03d" % seed_index)
+		_add_elapsed_usec(phase_usec, "challenge_config", phase_started_usec)
 		var run_state: RunState = RunStateScript.new()
+		phase_started_usec = Time.get_ticks_usec()
 		run_state.start_new(str(config.get("seed_text", "")), config)
+		_add_elapsed_usec(phase_usec, "start_new", phase_started_usec)
 		run_state.begin_act(1)
 		var generator := RunGeneratorScript.new(library)
+		phase_started_usec = Time.get_ticks_usec()
 		generator.next_environment(run_state)
+		_add_elapsed_usec(phase_usec, "initial_environment", phase_started_usec)
 		var ok := str(run_state.current_environment.get("archetype_id", "")) == "apartment"
 		ok = ok and _string_array(run_state.current_environment.get("next_archetypes", [])) == ["corner_store"]
 		if ok:
+			phase_started_usec = Time.get_ticks_usec()
 			generator.next_environment(run_state, "corner_store", true)
+			_add_elapsed_usec(phase_usec, "corner_environment", phase_started_usec)
+			phase_started_usec = Time.get_ticks_usec()
 			var tip := _resolve_event(run_state, "parking_lot_tip", "follow_tip")
+			_add_elapsed_usec(phase_usec, "parking_tip", phase_started_usec)
 			ok = bool(tip.get("ok", false))
 		if ok and route_id == "path_a":
+			phase_started_usec = Time.get_ticks_usec()
 			generator.next_environment(run_state, "gas_station_casino", true)
+			_add_elapsed_usec(phase_usec, "gas_environment", phase_started_usec)
 			ok = str(run_state.current_environment.get("archetype_id", "")) == "gas_station_casino"
 		if ok:
+			phase_started_usec = Time.get_ticks_usec()
 			generator.next_environment(run_state, "small_underground_casino", true)
+			_add_elapsed_usec(phase_usec, "underground_environment", phase_started_usec)
 			ok = str(run_state.current_environment.get("archetype_id", "")) == "small_underground_casino"
 		if ok:
+			phase_started_usec = Time.get_ticks_usec()
+			ok = _record_completed_tutorial_lesson_boundary(run_state, "tutorial_drink_intro")
+			_add_elapsed_usec(phase_usec, "drink_lesson_boundary", phase_started_usec)
+		if ok:
+			phase_started_usec = Time.get_ticks_usec()
 			var invite := _resolve_event(run_state, "tutorial_grand_casino_invitation", "accept_first_invitation")
+			_add_elapsed_usec(phase_usec, "grand_invitation", phase_started_usec)
 			ok = bool(invite.get("ok", false)) and bool(run_state.narrative_flags.get("grand_casino_invite", false))
 		if ok:
+			phase_started_usec = Time.get_ticks_usec()
 			generator.next_environment(run_state, "grand_casino", true)
+			_add_elapsed_usec(phase_usec, "grand_environment", phase_started_usec)
 			ok = str(run_state.current_environment.get("archetype_id", "")) == RunState.GRAND_CASINO_ARCHETYPE_ID
 		if not ok:
 			stuck.append({"index": seed_index, "route": route_id, "environment": str(run_state.current_environment.get("archetype_id", ""))})
+		if (seed_index + 1) % 10 == 0 or seed_index + 1 == seed_count:
+			print("TUTORIAL_AUDIT_SWEEP_PROGRESS completed=%d total=%d elapsed_msec=%.3f phase_msec=%s" % [
+				seed_index + 1,
+				seed_count,
+				_elapsed_msec(sweep_started_usec),
+				JSON.stringify(_phase_msec(phase_usec)),
+			])
+	print("TUTORIAL_AUDIT_SWEEP_TIMING iterations=%d elapsed_msec=%.3f phase_msec=%s" % [
+		seed_count,
+		_elapsed_msec(sweep_started_usec),
+		JSON.stringify(_phase_msec(phase_usec)),
+	])
 	_check(stuck.is_empty(), "Tutorial route stuck-state sweep failed: %s" % JSON.stringify(stuck), failures)
 	return {"iterations": seed_count, "path_a": int(ceil(float(seed_count) / 2.0)), "path_b_skip": int(floor(float(seed_count) / 2.0)), "stuck": stuck.size(), "fixed_seed": "FIRST-NIGHT-ACE-17"}
 
@@ -184,11 +255,13 @@ func _tutorial_lesson_boundary_save_load() -> Dictionary:
 	RunGeneratorScript.new(library).next_environment(current)
 	var completed: Dictionary = {}
 	var checked_ids: Array = []
+	var contextual_profile_lesson_ids: Array = []
 	for lesson_value in library.tutorial_lessons:
 		if typeof(lesson_value) != TYPE_DICTIONARY:
 			continue
 		var lesson: Dictionary = lesson_value
 		if str(lesson.get("scope", "")) != "tutorial_run":
+			contextual_profile_lesson_ids.append(str(lesson.get("id", "")).strip_edges())
 			continue
 		var lesson_id := str(lesson.get("id", "")).strip_edges()
 		var dialogue_id := str(lesson.get("dialogue_id", "")).strip_edges()
@@ -222,13 +295,16 @@ func _tutorial_lesson_boundary_save_load() -> Dictionary:
 		current = RunStateScript.new()
 		current.from_dict(restored.to_dict())
 		checked_ids.append(lesson_id)
+	_check(checked_ids.size() + contextual_profile_lesson_ids.size() == library.tutorial_lessons.size(), "Tutorial lesson scope accounting omitted a shipped lesson.", boundary_failures)
 	for failure in boundary_failures:
 		failures.append(failure)
 	return {
 		"boundaries_checked": checked_ids.size(),
+		"guided_boundaries_expected": library.tutorial_lessons.size() - contextual_profile_lesson_ids.size(),
 		"lesson_ids": checked_ids,
+		"contextual_profile_lessons": contextual_profile_lesson_ids,
 		"failures": boundary_failures,
-		"passed": boundary_failures.is_empty() and checked_ids.size() == library.tutorial_lessons.size(),
+		"passed": boundary_failures.is_empty() and checked_ids.size() + contextual_profile_lesson_ids.size() == library.tutorial_lessons.size(),
 	}
 
 
@@ -289,6 +365,7 @@ func _run_route(route_id: String) -> Dictionary:
 		generator.next_environment(run_state, "small_underground_casino", true)
 	_check(str(run_state.current_environment.get("archetype_id", "")) == "small_underground_casino", "%s did not reach Path B." % route_id, route_failures)
 	var blackjack_proof := await _play_tutorial_blackjack(run_state, route_failures)
+	_check(_record_completed_tutorial_lesson_boundary(run_state, "tutorial_drink_intro"), "%s did not cross the authored drink-intro lesson boundary." % route_id, route_failures)
 	var invite_result := _resolve_event(run_state, "tutorial_grand_casino_invitation", "accept_first_invitation")
 	_check(bool(invite_result.get("ok", false)) and bool(run_state.narrative_flags.get("grand_casino_invite", false)), "%s could not accept the real high-roller invitation." % route_id, route_failures)
 
@@ -544,9 +621,51 @@ func _resolve_event(run_state: RunState, event_id: String, choice_id: String) ->
 	return event_module.resolve(run_state, run_state.current_environment, choice_id)
 
 
+func _record_completed_tutorial_lesson_boundary(run_state: RunState, lesson_id: String) -> bool:
+	if run_state == null:
+		return false
+	var lesson: Dictionary = library.tutorial_lesson(lesson_id)
+	if lesson.is_empty() or str(lesson.get("scope", "")).strip_edges() != "tutorial_run":
+		return false
+	var completed: Dictionary = run_state.narrative_flags.get("tutorial_lessons_completed", {}) if typeof(run_state.narrative_flags.get("tutorial_lessons_completed", {})) == TYPE_DICTIONARY else {}
+	completed = completed.duplicate(true)
+	completed[lesson_id] = true
+	run_state.narrative_flags["tutorial_lessons_completed"] = completed
+	return bool(_dict(run_state.narrative_flags.get("tutorial_lessons_completed", {})).get(lesson_id, false))
+
+
 func _check(condition: bool, message: String, target_failures: Array) -> void:
 	if not condition and not message.is_empty():
 		target_failures.append(message)
+
+
+func _timing_start(phase: String, audit_started_usec: int) -> int:
+	print("TUTORIAL_AUDIT_TIMING_START phase=%s total_msec=%.3f" % [phase, _elapsed_msec(audit_started_usec)])
+	return Time.get_ticks_usec()
+
+
+func _timing_done(phase: String, phase_started_usec: int, audit_started_usec: int) -> void:
+	print("TUTORIAL_AUDIT_TIMING_DONE phase=%s elapsed_msec=%.3f total_msec=%.3f" % [
+		phase,
+		_elapsed_msec(phase_started_usec),
+		_elapsed_msec(audit_started_usec),
+	])
+
+
+func _add_elapsed_usec(phase_usec: Dictionary, phase: String, started_usec: int) -> void:
+	phase_usec[phase] = int(phase_usec.get(phase, 0)) + maxi(0, Time.get_ticks_usec() - started_usec)
+
+
+func _phase_msec(phase_usec: Dictionary) -> Dictionary:
+	var result: Dictionary = {}
+	for phase_value in phase_usec.keys():
+		var phase := str(phase_value)
+		result[phase] = float(phase_usec.get(phase_value, 0)) / 1000.0
+	return result
+
+
+func _elapsed_msec(started_usec: int) -> float:
+	return float(maxi(0, Time.get_ticks_usec() - started_usec)) / 1000.0
 
 
 func _dict(value: Variant) -> Dictionary:

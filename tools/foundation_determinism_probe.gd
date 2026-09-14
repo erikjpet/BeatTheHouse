@@ -11,6 +11,9 @@ const WorldMapScript := preload("res://scripts/core/world_map.gd")
 const CoinPusherSolverScript := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
 const CoinPusherLiveSessionScript := preload("res://scripts/games/coin_pusher/coin_pusher_live_session.gd")
 const FoundationMainScript := preload("res://scripts/ui/foundation_main.gd")
+const FoundationActionViewModelScript := preload("res://scripts/ui/foundation_action_view_model.gd")
+const HarnessProductionFidelityScript := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
+const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 
 const DEFAULT_SEED_COUNT := 10
 const DEFAULT_SEED_PREFIX := "FOUNDATION-DETERMINISM"
@@ -122,7 +125,10 @@ func _simulate_seed(seed: String, seed_index: int) -> Dictionary:
 	run_state.bankroll = 20000
 	var checkpoints: Array = []
 
-	generator.next_environment(run_state)
+	if not bool(HarnessProductionFidelityScript.generate_and_finalize(
+		generator, run_state, failures, "determinism initial arrival for %s" % seed
+	).get("ok", false)):
+		return {"seed": seed, "checkpoint_count": 0, "final_hash": "", "checkpoints": []}
 	_checkpoint(run_state, checkpoints, seed, "world_map_generation")
 	_apply_alcohol_timing(run_state, checkpoints, seed)
 	_apply_world_travel(run_state, checkpoints, seed)
@@ -170,9 +176,15 @@ func _apply_numbers_sequence(run_state: RunState, checkpoints: Array, seed: Stri
 	_checkpoint(run_state, checkpoints, seed, "numbers_punchline_post")
 	run_state.set_environment({"id": "corner_store", "archetype_id": "corner_store", "world_node_id": "corner_store", "turns": 0})
 	run_state.advance_numbers_past_post_travel_actions(8)
+	# This is a deterministic route fixture, not an economy-pressure assertion.
+	# Earlier seeded encounters can legitimately leave less than the fixed $10
+	# late-book stake, so fund only the missing fixture amount before exercising
+	# the Numbers state transition (the camouflage fixture below does the same).
+	if run_state.bankroll < 10:
+		run_state.change_bankroll(10 - run_state.bankroll)
 	var past_post := run_state.numbers_buy_slip(handle, 10, "straight")
 	if not bool(past_post.get("ok", false)):
-		failures.append("%s could not write the deterministic late-book Numbers slip." % seed)
+		failures.append("%s could not write the deterministic late-book Numbers slip: %s" % [seed, JSON.stringify(past_post)])
 		return
 	_checkpoint(run_state, checkpoints, seed, "numbers_past_post_detection")
 	run_state.advance_environment_turns(run_state.numbers_state.settlement_action(day) - int(run_state.numbers_state.action_index))
@@ -286,7 +298,11 @@ func _apply_world_travel(run_state: RunState, checkpoints: Array, seed: String) 
 	var previous_environment := run_state.current_environment.duplicate(true)
 	var route_risk := run_state.travel_route_risk(route, target_id)
 	var travel_heat := run_state.begin_travel_suspicion_decay(route, target_id)
-	generator.next_environment(run_state, target_id)
+	if not bool(HarnessProductionFidelityScript.travel_and_finalize(
+		generator, run_state, target_id, false, library, failures,
+		"%s determinism travel to %s" % [seed, target_id]
+	).get("ok", false)):
+		return
 	var travel_decay := run_state.finish_travel_suspicion_decay(travel_heat)
 	var result := _travel_result(target_id, previous_environment, run_state.current_environment, route, travel_decay, route_risk)
 	GameModule.apply_result(run_state, result)
@@ -478,23 +494,21 @@ func _apply_crew_poker_sequence(run_state: RunState, checkpoints: Array, seed: S
 		"archetype_id": "small_underground_casino",
 		"kind": "crew",
 		"layer_id": "back_room",
-		"resident_member_ids": ["crew_mags", "crew_lucky"],
+		"resident_member_ids": ["crew_mags", "crew_lucky", "crew_rook"],
 		"game_ids": ["crew_draw_poker"],
 		"economic_profile": {"stake_floor": 2, "stake_ceiling": 6},
 		"game_states": {},
 	}
+	for member_id in _string_array(poker_environment.get("resident_member_ids", [])):
+		run_state.crew_add_trust(member_id, maxi(0, CrewStateModelScript.rank_threshold("associate") - run_state.crew_trust(member_id)), "determinism_fixture")
 	var table_rng := run_state.create_rng("determinism:crew_draw_poker:table")
 	poker_environment["game_states"] = {"crew_draw_poker": game.generate_environment_state(run_state, poker_environment, table_rng)}
 	run_state.save_rng(table_rng)
 	run_state.current_environment = poker_environment
-	var scripted_inputs := [
-		{"action": "deal", "ui": {}},
-		{"action": "call", "ui": {}},
-		{"action": "draw", "ui": {"poker_held": [0, 2]}},
-		{"action": "call", "ui": {}},
-	]
-	for input_value in scripted_inputs:
-		var input: Dictionary = input_value
+	var scripted_inputs: Array = [{"action": "deal", "ui": {}}]
+	var action_index := 0
+	while action_index < scripted_inputs.size() and action_index < 96:
+		var input: Dictionary = scripted_inputs[action_index]
 		var action_id := str(input.get("action", ""))
 		var ui_state: Dictionary = input.get("ui", {}) if typeof(input.get("ui", {})) == TYPE_DICTIONARY else {}
 		var rng := run_state.create_rng("determinism:crew_draw_poker:%s:%d" % [action_id, checkpoints.size()])
@@ -515,6 +529,19 @@ func _apply_crew_poker_sequence(run_state: RunState, checkpoints: Array, seed: S
 			"surface": surface_before_apply,
 			"outcome": result,
 		})
+		action_index += 1
+		var table_after := _copy_dict(_game_state(run_state, "crew_draw_poker"))
+		if str(table_after.get("phase", "idle")) == "idle":
+			break
+		var legal := game.legal_actions(run_state, run_state.current_environment)
+		var legal_ids: Array = []
+		for legal_value in legal:
+			legal_ids.append(str(_copy_dict(legal_value).get("id", "")))
+		var next_action := "observe" if legal_ids.has("observe") else "call" if legal_ids.has("call") else "fold" if legal_ids.has("fold") else ""
+		if next_action.is_empty():
+			failures.append("%s crew_draw_poker has no deterministic legal progress action: %s" % [seed, JSON.stringify(legal_ids)])
+			break
+		scripted_inputs.append({"action": next_action, "ui": {}})
 	run_state.current_environment = prior_environment
 
 
@@ -723,6 +750,10 @@ func _resolve_bar_dice_host_round(run_state: RunState, action_id: String, stake:
 	host.set("current_game", game)
 	host.set("game_module_cache", {"bar_dice": game})
 	host.set("run_state", run_state)
+	# FoundationMain loads this run-UI dependency lazily during its normal scene
+	# build. This headless host seam is intentionally never mounted, so provide
+	# the same script explicitly before stake validation reaches the view model.
+	host.set("FoundationActionViewModelScript", FoundationActionViewModelScript)
 	var stake_index := _bar_dice_stake_index(run_state, stake)
 	var table := _game_state(run_state, "bar_dice")
 	var ladder: Array = table.get("stake_ladder", []) if typeof(table.get("stake_ladder", [])) == TYPE_ARRAY else []
@@ -844,7 +875,7 @@ func _apply_game_result(run_state: RunState, result: Dictionary, rng: RngStream)
 
 
 func _checkpoint(run_state: RunState, checkpoints: Array, seed: String, label: String) -> void:
-	var canonical := _canonical_text(run_state.to_dict())
+	var canonical := _canonical_text(_deterministic_run_projection(run_state))
 	checkpoints.append({
 		"seed": seed,
 		"index": checkpoints.size(),
@@ -855,7 +886,7 @@ func _checkpoint(run_state: RunState, checkpoints: Array, seed: String, label: S
 
 
 func _checkpoint_with_evidence(run_state: RunState, checkpoints: Array, seed: String, label: String, evidence: Dictionary) -> void:
-	var canonical := _canonical_text({"run": run_state.to_dict(), "evidence": evidence})
+	var canonical := _canonical_text({"run": _deterministic_run_projection(run_state), "evidence": evidence})
 	checkpoints.append({
 		"seed": seed,
 		"index": checkpoints.size(),
@@ -864,6 +895,28 @@ func _checkpoint_with_evidence(run_state: RunState, checkpoints: Array, seed: St
 		"bytes": canonical.length(),
 		"evidence_hash": _stable_hash_text(_canonical_text(evidence)),
 	})
+
+
+# Every run now carries a freshly generated, authenticated Crew private-save
+# envelope. Its authority id/ciphertext must differ across processes, so the
+# cross-process hash cannot compare those bytes. Preserve coverage of the
+# gameplay semantics inside that envelope by hashing a harness-only projection
+# of the live Turn/grievance payload. The values never enter the report.
+func _deterministic_run_projection(run_state: RunState) -> Dictionary:
+	var result := run_state.to_dict()
+	var crew: Dictionary = result.get("crew_state", {}) if typeof(result.get("crew_state", {})) == TYPE_DICTIONARY else {}
+	crew = crew.duplicate(true)
+	crew.erase("a")
+	crew.erase("z")
+	result["crew_state"] = crew
+	var heist: Dictionary = run_state.crew_heist_state.duplicate(true)
+	var private_heist: Dictionary = heist.get("x", {}) if typeof(heist.get("x", {})) == TYPE_DICTIONARY else {}
+	result["_determinism_private_semantics"] = {
+		"x": private_heist.duplicate(true),
+		"g": run_state.crew_grievance_ledger.duplicate(true),
+		"q": run_state.crew_grievance_sequence,
+	}
+	return result
 
 
 func _timed_ui(run_state: RunState, key: String, extras: Dictionary = {}) -> Dictionary:

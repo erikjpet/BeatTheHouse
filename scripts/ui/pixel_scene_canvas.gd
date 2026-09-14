@@ -7,6 +7,9 @@ signal object_hovered(object_id: String)
 signal object_focused(object_id: String)
 signal object_activated(object_id: String)
 signal view_geometry_changed
+signal developer_placement_lock_requested(request: Dictionary)
+signal developer_placement_reset_requested(request: Dictionary)
+signal developer_placement_promote_requested
 
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.gd")
@@ -15,6 +18,12 @@ const AttributeBadgeRowScript := preload("res://scripts/ui/attribute_badge_row.g
 const DrunkDistortionOverlayScript := preload("res://scripts/ui/drunk_distortion_overlay.gd")
 const HeatFeedbackVisualsScript := preload("res://scripts/ui/heat_feedback_visuals.gd")
 const TableGameVisualsScript := preload("res://scripts/games/table_game_visuals.gd")
+const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
+const CoinPusherRoomPropScript := preload("res://scripts/ui/game_props/coin_pusher_room_prop.gd")
+const ScratchTicketRoomPropScript := preload("res://scripts/ui/game_props/scratch_ticket_room_prop.gd")
+const CrapsRoomPropScript := preload("res://scripts/ui/game_props/craps_room_prop.gd")
+const BarDiceRoomPropScript := preload("res://scripts/ui/game_props/bar_dice_room_prop.gd")
+const CATEGORY_AUTHORED_TYPES := ["event", "item"]
 
 const C_DARK := VisualStyleScript.DARK
 const C_DARK_2 := VisualStyleScript.DARK_2
@@ -71,6 +80,8 @@ const OBJECT_INFO_ACTION_HEIGHT := 16.0
 const OBJECT_INFO_ACTION_GAP := 5.0
 const OBJECT_INFO_INLINE_ACTION_HEIGHT := 19.0
 const OBJECT_INFO_INLINE_ACTION_DETAIL_HEIGHT := 11.0
+const OBJECT_INFO_INLINE_ACTION_DETAIL_LINE_HEIGHT := 10.0
+const OBJECT_INFO_INLINE_ACTION_DETAIL_MAX_LINES := 4
 const OBJECT_INFO_INLINE_ACTION_GAP := 5.0
 const OBJECT_INFO_INLINE_ACTION_MAX := 8
 const OBJECT_INFO_BOTTOM_PADDING := 8.0
@@ -88,6 +99,10 @@ const SCENE_IDLE_ANIMATION_INTERVAL_SEC := 1.0 / SCENE_IDLE_ANIMATION_FPS
 const WEB_SCENE_IDLE_ANIMATION_FPS := 30.0
 const WEB_GRAND_CASINO_IDLE_ANIMATION_FPS := 15.0
 const ITEM_ICON_TEXTURE_CACHE_LIMIT := 32
+const MAX_CONCURRENT_PERSON_TRANSITS := 8
+const PERSON_TRANSIT_SPEED_PIXELS_PER_SEC := 82.0
+const PERSON_TRANSIT_MIN_DURATION_SEC := 0.75
+const PERSON_TRANSIT_MAX_DURATION_SEC := 8.0
 const SCENE_SPARKLES_CORNER_STORE := [Vector2(384, 220), Vector2(478, 224), Vector2(668, 138), Vector2(746, 144)]
 const SCENE_PUDDLES_BACK_ALLEY := [Vector2(180, 304), Vector2(420, 292), Vector2(710, 312)]
 const SCENE_SPARKLES_BACK_ALLEY := [Vector2(112, 172), Vector2(792, 174)]
@@ -99,7 +114,7 @@ const SCENE_SPARKLES_DELTA_QUEEN := [Vector2(128, 96), Vector2(448, 96), Vector2
 const SCENE_SPARKLES_UNDERGROUND := [Vector2(154, 134), Vector2(505, 136), Vector2(772, 142)]
 const SCENE_SPARKLES_GRAND_CASINO := [Vector2(132, 118), Vector2(728, 118), Vector2(444, 154)]
 const SCENE_SPARKLES_PAWN_SHOP := [Vector2(150, 84), Vector2(414, 118), Vector2(690, 154)]
-const LINDA_CAGE_FEET := [Vector2(330, 252), Vector2(420, 252), Vector2(512, 252), Vector2(590, 252)]
+const LINDA_CAGE_FEET := [Vector2(330, 260), Vector2(420, 260), Vector2(512, 260), Vector2(590, 260)]
 const SCENARIO_CROWD_POINTS := [Vector2(82, 254), Vector2(219, 271), Vector2(356, 288), Vector2(493, 271), Vector2(630, 254), Vector2(767, 271), Vector2(164, 288), Vector2(301, 254), Vector2(438, 288), Vector2(575, 271)]
 const SCENARIO_CROWD_COLOR := Color(0.02, 0.025, 0.05, 0.56)
 
@@ -134,6 +149,10 @@ var fit_draw_text_cache: Dictionary = {}
 var object_animation_phase_cache: Dictionary = {}
 var actor_route_started_at_cache: Dictionary = {}
 var actor_route_time := 0.0
+var person_transits: Dictionary = {}
+var person_transit_ids: Array[String] = []
+var settled_person_objects_cache: Dictionary = {}
+var person_transit_room_key := ""
 var drunk_distortion_overlay: DrunkDistortionOverlay
 var drunk_effect_mode: String = "distortion"
 var last_mouse_press_msec: int = -100000
@@ -158,6 +177,24 @@ var scenario_palette_overlay := Color.TRANSPARENT
 var scenario_crowd_count := 0
 var scenario_signage := ""
 var selected_info_action_index := 0
+# Mutable draw geometry is allocated once per canvas and rewritten in place.
+# Building PackedVector2Array values inside _draw_* ran at idle animation rate.
+var _scenario_route_arrow_points := PackedVector2Array([Vector2.ZERO, Vector2.ZERO, Vector2.ZERO])
+var _scenario_vehicle_canopy_points := PackedVector2Array([Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO])
+var _scenario_hazard_fill_points := PackedVector2Array([Vector2.ZERO, Vector2.ZERO, Vector2.ZERO])
+var _scenario_hazard_outline_points := PackedVector2Array([Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO])
+var developer_placement_mode := false
+var developer_placement_dragging := false
+var developer_placement_drag_offset := Vector2.ZERO
+var developer_placement_original_rect := Rect2()
+var developer_placement_pending_rect := Rect2()
+var developer_placement_valid := false
+var developer_placement_surface_id := ""
+var developer_placement_overlap_ids: Array[String] = []
+var developer_placement_panel: PanelContainer
+var developer_placement_label: Label
+var developer_placement_lock_button: Button
+var developer_placement_reset_button: Button
 
 
 func _ready() -> void:
@@ -165,6 +202,180 @@ func _ready() -> void:
 	focus_mode = Control.FOCUS_ALL
 	clip_contents = true
 	_ensure_drunk_distortion_overlay()
+	_ensure_developer_placement_panel()
+
+
+func set_developer_placement_mode(enabled: bool) -> void:
+	if developer_placement_mode == enabled:
+		return
+	if not enabled:
+		_finish_developer_placement_edit()
+	developer_placement_mode = enabled
+	_ensure_developer_placement_panel()
+	developer_placement_panel.visible = enabled
+	_update_developer_placement_panel()
+	queue_redraw()
+
+
+func developer_placement_snapshot() -> Dictionary:
+	return {
+		"enabled": developer_placement_mode,
+		"selected_object_id": selected_object_id,
+		"dragging": developer_placement_dragging,
+		"pending": developer_placement_pending_rect.has_area(),
+		"valid": developer_placement_valid,
+		"surface_id": developer_placement_surface_id,
+		"overlap_ids": developer_placement_overlap_ids.duplicate(),
+		"request": _developer_placement_request(),
+	}
+
+
+func clear_developer_placement_preview() -> void:
+	developer_placement_dragging = false
+	developer_placement_original_rect = Rect2()
+	developer_placement_pending_rect = Rect2()
+	developer_placement_valid = false
+	developer_placement_surface_id = ""
+	developer_placement_overlap_ids.clear()
+	_update_developer_placement_panel()
+	queue_redraw()
+
+
+func _ensure_developer_placement_panel() -> void:
+	if developer_placement_panel != null:
+		return
+	developer_placement_panel = PanelContainer.new()
+	developer_placement_panel.name = "DeveloperPlacementPanel"
+	developer_placement_panel.position = Vector2(8.0, 8.0)
+	developer_placement_panel.custom_minimum_size = Vector2(320.0, 0.0)
+	developer_placement_panel.mouse_filter = Control.MOUSE_FILTER_PASS
+	developer_placement_panel.visible = developer_placement_mode
+	add_child(developer_placement_panel)
+
+	var stack := VBoxContainer.new()
+	stack.mouse_filter = Control.MOUSE_FILTER_PASS
+	stack.add_theme_constant_override("separation", 5)
+	developer_placement_panel.add_child(stack)
+	developer_placement_label = Label.new()
+	developer_placement_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	developer_placement_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	developer_placement_label.text = "Placement mode: drag an object; release to keep its room position."
+	stack.add_child(developer_placement_label)
+
+	var actions := HBoxContainer.new()
+	actions.add_theme_constant_override("separation", 5)
+	stack.add_child(actions)
+	developer_placement_lock_button = Button.new()
+	developer_placement_lock_button.text = "Lock"
+	developer_placement_lock_button.tooltip_text = "Save this room position. Items and events author reusable category slots."
+	developer_placement_lock_button.pressed.connect(_lock_developer_placement)
+	actions.add_child(developer_placement_lock_button)
+	var cancel_button := Button.new()
+	cancel_button.text = "Cancel"
+	cancel_button.pressed.connect(_cancel_developer_placement_preview)
+	actions.add_child(cancel_button)
+	developer_placement_reset_button = Button.new()
+	developer_placement_reset_button.text = "Reset"
+	developer_placement_reset_button.tooltip_text = "Remove the local override for this room/object pair."
+	developer_placement_reset_button.pressed.connect(_reset_developer_placement)
+	actions.add_child(developer_placement_reset_button)
+	var project_actions := HBoxContainer.new()
+	project_actions.mouse_filter = Control.MOUSE_FILTER_PASS
+	stack.add_child(project_actions)
+	var promote_button := Button.new()
+	promote_button.text = "Save to Project"
+	promote_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	promote_button.tooltip_text = "Lock the pending position and promote all locked positions into future builds."
+	promote_button.pressed.connect(_save_developer_placement_to_project)
+	project_actions.add_child(promote_button)
+	_update_developer_placement_panel()
+
+
+func _update_developer_placement_panel() -> void:
+	if developer_placement_panel == null or developer_placement_label == null:
+		return
+	var object_data := _scene_object(selected_object_id)
+	if object_data.is_empty():
+		developer_placement_label.text = "Placement mode: drag an object; release to keep it. Right-click or Escape cancels. F2 hides this panel."
+		developer_placement_lock_button.disabled = true
+		developer_placement_reset_button.disabled = true
+		return
+	var identity := _developer_placement_identity(object_data)
+	var status_text := "unchanged"
+	if developer_placement_pending_rect.has_area():
+		status_text = "on %s" % developer_placement_surface_id if not developer_placement_surface_id.is_empty() else "free placement"
+		if not developer_placement_overlap_ids.is_empty():
+			var shown_overlaps := developer_placement_overlap_ids.slice(0, mini(3, developer_placement_overlap_ids.size()))
+			status_text += "; overlaps %s" % ", ".join(shown_overlaps)
+			if developer_placement_overlap_ids.size() > shown_overlaps.size():
+				status_text += " +%d" % (developer_placement_overlap_ids.size() - shown_overlaps.size())
+	var target_label := str(identity.get("slot_id", selected_object_id))
+	if not str(identity.get("category", "")).is_empty():
+		target_label = "%s category slot %d" % [str(identity.get("category", "")).capitalize(), int(identity.get("category_index", 0)) + 1]
+	developer_placement_label.text = "%s | %s\n%s | %s" % [
+		str(foundation_snapshot.get("archetype_id", environment_id)),
+		str(foundation_snapshot.get("current_layer_id", foundation_snapshot.get("layer_id", "main"))),
+		target_label,
+		status_text,
+	]
+	developer_placement_lock_button.disabled = not developer_placement_pending_rect.has_area() or not developer_placement_valid
+	developer_placement_reset_button.disabled = false
+
+
+func _developer_placement_identity(object_data: Dictionary) -> Dictionary:
+	var object_id := str(object_data.get("id", "")).strip_edges()
+	var interaction_type := str(object_data.get("interaction_type", object_data.get("type", ""))).strip_edges()
+	var category_spot_field := str(object_data.get("layout_spot_field", "")).strip_edges()
+	if interaction_type in CATEGORY_AUTHORED_TYPES and not category_spot_field.is_empty():
+		var category_index := maxi(0, int(object_data.get("layout_index", 0)))
+		return {
+			"field": "category_slot_positions",
+			"slot_id": "%s:%d" % [category_spot_field, category_index],
+			"owner_namespace": "category",
+			"stable_object_id": interaction_type,
+			"category": interaction_type,
+			"category_index": category_index,
+		}
+	var owner_namespace := str(object_data.get("owner_namespace", "")).strip_edges()
+	var stable_object_id := str(object_data.get("stable_object_id", "")).strip_edges()
+	var dynamic_object := object_id.contains("::")
+	var slot_id := object_id
+	if dynamic_object:
+		slot_id = stable_object_id if owner_namespace == "scenario" and not stable_object_id.is_empty() else object_id
+	return {
+		"field": "scenario_object_slot_positions" if dynamic_object else "object_slot_positions",
+		"slot_id": slot_id,
+		"owner_namespace": owner_namespace,
+		"stable_object_id": stable_object_id,
+	}
+
+
+func _developer_placement_request() -> Dictionary:
+	var object_data := _scene_object(selected_object_id)
+	if object_data.is_empty():
+		return {}
+	var identity := _developer_placement_identity(object_data)
+	var placement_class := str(object_data.get("placement_class", "")).strip_edges()
+	if placement_class.is_empty():
+		placement_class = EnvironmentPlacementScript.classify(object_data, str(object_data.get("interaction_type", object_data.get("type", ""))), selected_object_id, str(object_data.get("prop", object_data.get("icon_key", ""))))
+	return {
+		"environment": {
+			"archetype_id": str(foundation_snapshot.get("archetype_id", foundation_snapshot.get("id", environment_id))),
+			"current_layer_id": str(foundation_snapshot.get("current_layer_id", foundation_snapshot.get("layer_id", ""))),
+			"scenario_id": str(foundation_snapshot.get("scenario_id", "")),
+		},
+		"object_id": selected_object_id,
+		"owner_namespace": str(identity.get("owner_namespace", "")),
+		"stable_object_id": str(identity.get("stable_object_id", "")),
+		"field": str(identity.get("field", "object_slot_positions")),
+		"slot_id": str(identity.get("slot_id", selected_object_id)),
+		"position": developer_placement_pending_rect.position if developer_placement_pending_rect.has_area() else _developer_edit_rect_for_object(object_data).position,
+		"size": _developer_edit_rect_for_object(object_data).size,
+		"placement_class": placement_class,
+		"surface_id": developer_placement_surface_id,
+		"category": str(identity.get("category", "")),
+		"category_index": int(identity.get("category_index", -1)),
+	}
 
 
 func set_environment_activity_paused(paused: bool) -> void:
@@ -208,6 +419,7 @@ func render_environment_snapshot(snapshot: Dictionary) -> void:
 	drunk_effect_mode = _normalized_drunk_effect_mode(str(foundation_snapshot.get("drunk_effect_mode", drunk_effect_mode)))
 	_update_drunk_distortion_overlay()
 	foundation_scene_objects = _objects_from_foundation_snapshot(foundation_snapshot)
+	_sync_person_transits()
 	_sync_actor_route_starts()
 	overlay_repositioned_object_ids.clear()
 	_clear_draw_text_caches()
@@ -218,10 +430,40 @@ func render_environment_snapshot(snapshot: Dictionary) -> void:
 		selected_object_id = ""
 	if not hovered_object_id.is_empty() and _scene_object(hovered_object_id).is_empty():
 		hovered_object_id = ""
+	# A normal view refresh must not commit or reinterpret an in-progress authoring
+	# gesture. The last locked data will already be present in this fresh snapshot.
+	clear_developer_placement_preview()
+	_update_developer_placement_panel()
 	_invalidate_camera_target()
 	_update_camera_target_if_needed()
 	queue_redraw()
 	view_geometry_changed.emit()
+
+
+func settle_person_transits() -> void:
+	for object_id in person_transit_ids:
+		var transit_value: Variant = person_transits.get(object_id, {})
+		if typeof(transit_value) != TYPE_DICTIONARY:
+			continue
+		var transit := transit_value as Dictionary
+		if str(transit.get("kind", "")) == "arrival":
+			_restore_arrived_person(object_id, _copy_dictionary(transit.get("settled_object", {})))
+		else:
+			_remove_scene_object(object_id)
+	person_transits.clear()
+	person_transit_ids.clear()
+	actor_route_started_at_cache.clear()
+	person_transit_room_key = "__settled_reload__"
+	settled_person_objects_cache = _settled_person_objects(foundation_scene_objects)
+	for value in foundation_scene_objects:
+		if typeof(value) != TYPE_DICTIONARY:
+			continue
+		var object_data := value as Dictionary
+		object_data.erase("person_transit_active")
+		object_data.erase("person_transit_kind")
+		object_data.erase("person_transit_settled_position")
+	_rebuild_scene_object_cache()
+	queue_redraw()
 
 
 func set_small_screen_mode(enabled: bool) -> void:
@@ -281,6 +523,9 @@ func debug_soak_snapshot() -> Dictionary:
 		"actor_route_time": actor_route_time,
 		"background_texture_loaded": background_texture != null,
 		"scene_idle_animation_redraw_count": scene_idle_animation_redraw_count,
+		"person_transit_count": person_transit_ids.size(),
+		"person_transit_cap": MAX_CONCURRENT_PERSON_TRANSITS,
+		"person_transit_ids": person_transit_ids.duplicate(),
 		"reserved_overlay_global_rect": reserved_overlay_global_rect,
 		"overlay_repositioned_object_ids": overlay_repositioned_object_ids.duplicate(),
 	}
@@ -360,15 +605,26 @@ func select_object_at(index: int) -> void:
 
 # Returns the rendered object id under a local canvas coordinate.
 func object_id_at_local_position(local_position: Vector2) -> String:
+	var object_ids := _object_ids_at_local_position(local_position)
+	return object_ids[0] if not object_ids.is_empty() else ""
+
+
+# Returns every interactive object under a point from front to back. Developer
+# placement intentionally permits overlap, so play input needs a way to reach
+# objects below the topmost rendered object.
+func _object_ids_at_local_position(local_position: Vector2) -> Array[String]:
 	var board_position := _local_to_board_position(local_position)
 	var objects := _active_scene_objects()
+	var object_ids: Array[String] = []
 	for index in range(objects.size() - 1, -1, -1):
 		var object_data: Dictionary = objects[index]
 		if not bool(object_data.get("interactive", true)):
 			continue
 		if _interaction_rect_for_object(object_data).has_point(board_position):
-			return str(object_data.get("id", ""))
-	return ""
+			var object_id := str(object_data.get("id", ""))
+			if not object_id.is_empty() and not object_ids.has(object_id):
+				object_ids.append(object_id)
+	return object_ids
 
 
 # Returns canvas-owned view data only; this is not a simulation source.
@@ -435,6 +691,7 @@ func current_view_snapshot() -> Dictionary:
 		"grand_casino_staffing": _grand_casino_staffing_snapshot(),
 		"grand_casino_entry_cue": foundation_snapshot.get("grand_casino_entry_cue", {}) if uses_foundation_snapshot else {},
 		"reduce_motion": reduce_motion,
+		"developer_placement": developer_placement_snapshot(),
 	}
 
 
@@ -451,14 +708,23 @@ func focus_runtime_status() -> Dictionary:
 	}
 
 
-func local_position_for_selected_info_action_button() -> Vector2:
-	var button_rect := _selected_info_action_button_rect()
+func local_position_for_selected_info_action_button(action_index: int = 0) -> Vector2:
+	var info := _selected_object_info()
+	if info.is_empty():
+		return Vector2(-1.0, -1.0)
+	var entries := _selected_info_action_entries_for_rect(info, _animated_info_card_rect(info))
+	if action_index < 0 or action_index >= entries.size() or typeof(entries[action_index]) != TYPE_DICTIONARY:
+		return Vector2(-1.0, -1.0)
+	var button_rect: Rect2 = (entries[action_index] as Dictionary).get("button_rect", Rect2())
 	if button_rect.size.x <= 0.0 or button_rect.size.y <= 0.0:
 		return Vector2(-1.0, -1.0)
 	return _board_to_local_position(button_rect.get_center())
 
 
 func _gui_input(event: InputEvent) -> void:
+	if developer_placement_mode and _handle_developer_placement_input(event):
+		accept_event()
+		return
 	# Authored action bindings own their declared input. Navigation is the
 	# fallback only when the selected interaction does not consume the event.
 	if _activate_selected_info_action_for_authored_input(event):
@@ -543,6 +809,235 @@ func _gui_input(event: InputEvent) -> void:
 		_set_hovered_object(object_id_at_local_position((event as InputEventScreenDrag).position))
 
 
+func _handle_developer_placement_input(event: InputEvent) -> bool:
+	if event is InputEventKey and (event as InputEventKey).pressed and not (event as InputEventKey).echo and (event as InputEventKey).keycode == KEY_F2:
+		developer_placement_panel.visible = not developer_placement_panel.visible
+		return true
+	if event is InputEventMouseMotion:
+		var motion := event as InputEventMouseMotion
+		if developer_placement_dragging:
+			_update_developer_placement_preview(_local_to_board_position(motion.position) - developer_placement_drag_offset)
+		else:
+			_set_hovered_object(_developer_object_id_at_local_position(motion.position))
+		return true
+	if event is InputEventMouseButton:
+		var mouse_event := event as InputEventMouseButton
+		if mouse_event.button_index == MOUSE_BUTTON_LEFT:
+			if mouse_event.pressed:
+				_begin_developer_placement_drag(mouse_event.position)
+			else:
+				_finish_developer_placement_edit()
+			return true
+		if mouse_event.button_index == MOUSE_BUTTON_RIGHT and mouse_event.pressed:
+			_cancel_developer_placement_preview()
+			return true
+	if event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		if touch.pressed:
+			_begin_developer_placement_drag(touch.position)
+		else:
+			_finish_developer_placement_edit()
+		return true
+	if event is InputEventScreenDrag:
+		if developer_placement_dragging:
+			var drag := event as InputEventScreenDrag
+			_update_developer_placement_preview(_local_to_board_position(drag.position) - developer_placement_drag_offset)
+		return true
+	if event.is_action_pressed("ui_cancel"):
+		_cancel_developer_placement_preview()
+		return true
+	if event.is_action_pressed("ui_accept") and developer_placement_pending_rect.has_area():
+		_lock_developer_placement()
+		return true
+	var nudge := Vector2.ZERO
+	if event.is_action_pressed("ui_left"):
+		nudge.x = -1.0
+	elif event.is_action_pressed("ui_right"):
+		nudge.x = 1.0
+	elif event.is_action_pressed("ui_up"):
+		nudge.y = -1.0
+	elif event.is_action_pressed("ui_down"):
+		nudge.y = 1.0
+	if not nudge.is_zero_approx() and not selected_object_id.is_empty():
+		if event is InputEventKey and (event as InputEventKey).shift_pressed:
+			nudge *= 10.0
+		var object_data := _scene_object(selected_object_id)
+		if not object_data.is_empty():
+			if not developer_placement_original_rect.has_area():
+				developer_placement_original_rect = _developer_edit_rect_for_object(object_data)
+			var current_rect := developer_placement_pending_rect if developer_placement_pending_rect.has_area() else _developer_edit_rect_for_object(object_data)
+			_update_developer_placement_preview(current_rect.position + nudge)
+		return true
+	return false
+
+
+func _developer_object_id_at_local_position(local_position: Vector2) -> String:
+	var board_position := _local_to_board_position(local_position)
+	var objects := _active_scene_objects()
+	for index in range(objects.size() - 1, -1, -1):
+		var object_data := _copy_dictionary(objects[index])
+		if _developer_edit_rect_for_object(object_data).has_point(board_position):
+			return str(object_data.get("id", ""))
+	return ""
+
+
+func _begin_developer_placement_drag(local_position: Vector2) -> void:
+	var object_id := _developer_object_id_at_local_position(local_position)
+	if object_id.is_empty():
+		_finish_developer_placement_edit()
+		set_selected_object("")
+		_update_developer_placement_panel()
+		return
+	if object_id != selected_object_id:
+		_finish_developer_placement_edit()
+		set_selected_object(object_id, false)
+	var object_data := _scene_object(object_id)
+	if object_data.is_empty():
+		return
+	var rect := developer_placement_pending_rect if developer_placement_pending_rect.has_area() else _developer_edit_rect_for_object(object_data)
+	if not developer_placement_original_rect.has_area():
+		developer_placement_original_rect = rect
+	developer_placement_pending_rect = rect
+	developer_placement_drag_offset = _local_to_board_position(local_position) - rect.position
+	developer_placement_dragging = true
+	_validate_developer_placement_preview()
+
+
+func _update_developer_placement_preview(top_left: Vector2) -> void:
+	var object_data := _scene_object(selected_object_id)
+	if object_data.is_empty():
+		return
+	var size_value := developer_placement_pending_rect.size if developer_placement_pending_rect.has_area() else _developer_edit_rect_for_object(object_data).size
+	var bounded := Vector2(
+		clampf(top_left.x, 0.0, maxf(0.0, BOARD_SIZE.x - size_value.x)),
+		clampf(top_left.y, 0.0, maxf(0.0, BOARD_SIZE.y - size_value.y))
+	)
+	developer_placement_pending_rect = Rect2(bounded.round(), size_value)
+	_set_developer_preview_object_rect(developer_placement_pending_rect)
+	_validate_developer_placement_preview()
+	queue_redraw()
+
+
+func _set_developer_preview_object_rect(rect: Rect2) -> void:
+	for index in range(foundation_scene_objects.size()):
+		var object_data := _copy_dictionary(foundation_scene_objects[index])
+		if str(object_data.get("id", "")) != selected_object_id:
+			continue
+		object_data["position"] = rect.get_center() / Vector2(BOARD_SIZE)
+		foundation_scene_objects[index] = object_data
+		break
+	_rebuild_scene_object_cache()
+	_invalidate_camera_target()
+	_update_camera_target_if_needed()
+
+
+func _validate_developer_placement_preview() -> void:
+	developer_placement_valid = false
+	developer_placement_surface_id = ""
+	developer_placement_overlap_ids.clear()
+	var object_data := _scene_object(selected_object_id)
+	if object_data.is_empty() or not developer_placement_pending_rect.has_area():
+		_update_developer_placement_panel()
+		return
+	var placement_class := str(object_data.get("placement_class", "")).strip_edges()
+	if placement_class.is_empty():
+		placement_class = EnvironmentPlacementScript.classify(object_data, str(object_data.get("interaction_type", object_data.get("type", ""))), selected_object_id, str(object_data.get("prop", object_data.get("icon_key", ""))))
+	var environment := _copy_dictionary(foundation_snapshot)
+	var support := EnvironmentPlacementScript.support_for_rect(environment, placement_class, developer_placement_pending_rect)
+	# Developer placement is direct composition authoring. Physical surfaces and
+	# overlaps remain useful diagnostics, but they never veto an intentional
+	# in-bounds coordinate selected by the owner.
+	developer_placement_valid = Rect2(Vector2.ZERO, Vector2(BOARD_SIZE)).encloses(developer_placement_pending_rect)
+	developer_placement_surface_id = str(support.get("surface_id", ""))
+	for other_value in _active_scene_objects():
+		var other := _copy_dictionary(other_value)
+		var other_id := str(other.get("id", ""))
+		if other_id.is_empty() or other_id == selected_object_id:
+			continue
+		if developer_placement_pending_rect.intersects(_developer_edit_rect_for_object(other)):
+			developer_placement_overlap_ids.append(other_id)
+	_update_developer_placement_panel()
+
+
+func _cancel_developer_placement_preview() -> void:
+	if developer_placement_original_rect.has_area() and not selected_object_id.is_empty():
+		_set_developer_preview_object_rect(developer_placement_original_rect)
+	clear_developer_placement_preview()
+
+
+func _finish_developer_placement_edit() -> void:
+	developer_placement_dragging = false
+	if not developer_placement_pending_rect.has_area():
+		_update_developer_placement_panel()
+		return
+	var changed := not developer_placement_original_rect.has_area() \
+			or not developer_placement_pending_rect.position.is_equal_approx(developer_placement_original_rect.position) \
+			or not developer_placement_pending_rect.size.is_equal_approx(developer_placement_original_rect.size)
+	if changed and developer_placement_valid:
+		_lock_developer_placement()
+		return
+	clear_developer_placement_preview()
+
+
+func _developer_edit_rect_for_object(object_data: Dictionary) -> Rect2:
+	# Small-screen expansion and actor-route animation are presentation
+	# derivatives. Author only the canonical 900x430 placement rectangle.
+	return _board_rect_for_object_at_position(object_data, object_data.get("position", Vector2(0.5, 0.5)))
+
+
+func _lock_developer_placement() -> void:
+	if not developer_placement_valid or not developer_placement_pending_rect.has_area():
+		return
+	var request := _developer_placement_request()
+	clear_developer_placement_preview()
+	developer_placement_lock_requested.emit(request)
+	# Lock handlers rebuild the authoritative room synchronously. Keep the exact
+	# position the owner just accepted visible even if that rebuild had a stale
+	# interaction projection cached before the placement was written.
+	_apply_saved_developer_placement(request)
+
+
+func _save_developer_placement_to_project() -> void:
+	# This is intentionally one gesture. Previously this button promoted only an
+	# older locked value, so a newly dragged preview disappeared on the next room
+	# refresh even though the player had just asked to save it to the project.
+	var saved_request: Dictionary = {}
+	if developer_placement_pending_rect.has_area():
+		if not developer_placement_valid:
+			return
+		saved_request = _developer_placement_request()
+		clear_developer_placement_preview()
+		developer_placement_lock_requested.emit(saved_request)
+		_apply_saved_developer_placement(saved_request)
+	developer_placement_promote_requested.emit()
+
+
+func _apply_saved_developer_placement(request: Dictionary) -> void:
+	var object_id := str(request.get("object_id", "")).strip_edges()
+	if object_id.is_empty() or object_id != selected_object_id:
+		return
+	var object_data := _scene_object(object_id)
+	if object_data.is_empty():
+		return
+	var position_value: Variant = request.get("position", Vector2.ZERO)
+	if typeof(position_value) != TYPE_VECTOR2:
+		return
+	var size_value: Variant = request.get("size", Vector2.ZERO)
+	var size: Vector2 = size_value if typeof(size_value) == TYPE_VECTOR2 else Vector2.ZERO
+	if size.x <= 0.0 or size.y <= 0.0:
+		size = _developer_edit_rect_for_object(object_data).size
+	_set_developer_preview_object_rect(Rect2(position_value as Vector2, size))
+	queue_redraw()
+
+
+func _reset_developer_placement() -> void:
+	var request := _developer_placement_request()
+	if request.is_empty():
+		return
+	clear_developer_placement_preview()
+	developer_placement_reset_requested.emit(request)
+
+
 func _remember_mouse_press(position: Vector2) -> void:
 	last_mouse_press_msec = Time.get_ticks_msec()
 	last_mouse_press_position = position
@@ -574,6 +1069,7 @@ func _process(delta: float) -> void:
 	var previous_zoom := camera_zoom
 	var previous_offset := camera_offset
 	var was_info_animating := info_card_animating
+	var person_transit_changed := _advance_person_transits()
 	if reduce_motion:
 		flicker = 0.0
 		_update_camera_target_if_needed()
@@ -581,7 +1077,7 @@ func _process(delta: float) -> void:
 		camera_offset = target_camera_offset
 		_snap_info_card_to_target()
 		var snapped_camera_changed := absf(previous_zoom - camera_zoom) > CAMERA_ZOOM_SNAP_EPSILON or previous_offset.distance_squared_to(camera_offset) > CAMERA_OFFSET_SNAP_EPSILON * CAMERA_OFFSET_SNAP_EPSILON
-		if snapped_camera_changed or was_info_animating:
+		if snapped_camera_changed or was_info_animating or person_transit_changed:
 			queue_redraw()
 		if snapped_camera_changed:
 			view_geometry_changed.emit()
@@ -602,7 +1098,7 @@ func _process(delta: float) -> void:
 	if camera_offset.distance_squared_to(target_camera_offset) <= CAMERA_OFFSET_SNAP_EPSILON * CAMERA_OFFSET_SNAP_EPSILON:
 		camera_offset = target_camera_offset
 	var camera_changed := absf(previous_zoom - camera_zoom) > CAMERA_ZOOM_SNAP_EPSILON or previous_offset.distance_squared_to(camera_offset) > CAMERA_OFFSET_SNAP_EPSILON * CAMERA_OFFSET_SNAP_EPSILON
-	if camera_changed or info_card_animating or was_info_animating or _scene_idle_animation_redraw_due(scaled_delta):
+	if camera_changed or info_card_animating or was_info_animating or person_transit_changed or _scene_idle_animation_redraw_due(scaled_delta):
 		queue_redraw()
 	if camera_changed:
 		view_geometry_changed.emit()
@@ -703,8 +1199,23 @@ func _draw() -> void:
 	_draw_scene_outcome_highlight()
 	_draw_pressure_overlay()
 	_draw_drunk_overlay()
+	_draw_developer_placement_outline()
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	_update_drunk_distortion_protected_rects()
+
+
+func _draw_developer_placement_outline() -> void:
+	if not developer_placement_mode or selected_object_id.is_empty():
+		return
+	var object_data := _scene_object(selected_object_id)
+	if object_data.is_empty():
+		return
+	var rect := developer_placement_pending_rect if developer_placement_pending_rect.has_area() else _developer_edit_rect_for_object(object_data)
+	var color := C_CYAN
+	if developer_placement_pending_rect.has_area():
+		color = C_TEAL if developer_placement_valid else C_HOT
+	draw_rect(rect.grow(3.0), color, false, 3.0)
+	draw_circle(rect.position, 4.0, color)
 
 
 func _draw_scenario_palette() -> void:
@@ -716,6 +1227,8 @@ func _draw_scenario_palette() -> void:
 func _draw_scenario_crowd() -> void:
 	for index in range(scenario_crowd_count):
 		var point: Vector2 = SCENARIO_CROWD_POINTS[index]
+		if environment_id == "delta_queen":
+			point.y = 246.0
 		var scale := 0.72 + float(index % 3) * 0.08
 		draw_circle(Vector2(point.x, point.y - 12.0 * scale), 6.0 * scale, SCENARIO_CROWD_COLOR)
 		draw_rect(Rect2(point.x - 7.0 * scale, point.y - 6.0 * scale, 14.0 * scale, 24.0 * scale), SCENARIO_CROWD_COLOR)
@@ -1075,14 +1588,16 @@ func _draw_jazz_club() -> void:
 		draw_rect(Rect2(x + 5, 76, 5, 132), Color("#3a1b2a"))
 	draw_rect(Rect2(66, 208, 476, 34), Color("#3a2114"))
 	draw_rect(Rect2(82, 216, 444, 8), Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.36))
+	draw_rect(Rect2(66, 146, 476, 8), Color("#3a2114"))
+	draw_line(Vector2(78, 146), Vector2(530, 146), Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.30), 2)
 	_draw_light_cone(Vector2(190, 34), Vector2(-54, 194), C_AMBER, 0.12)
 	_draw_light_cone(Vector2(330, 34), Vector2(0, 194), C_AMBER, 0.10)
 	_draw_light_cone(Vector2(470, 34), Vector2(54, 194), C_AMBER, 0.12)
 	_neon_text("AFTER HOURS", Vector2(126, 62), 18, C_CYAN)
 	_neon_text("JAZZ", Vector2(374, 62), 24, C_YELLOW)
-	_draw_jazz_player(Vector2(178, 202), 0.72, "sax")
-	_draw_jazz_player(Vector2(322, 206), 0.76, "cello")
-	_draw_jazz_player(Vector2(466, 202), 0.70, "drums")
+	_draw_jazz_player(Vector2(178, 208), 0.72, "sax")
+	_draw_jazz_player(Vector2(322, 208), 0.76, "cello")
+	_draw_jazz_player(Vector2(466, 208), 0.70, "drums")
 	draw_rect(Rect2(600, 72, 254, 122), Color("#17101a"))
 	draw_rect(Rect2(618, 88, 218, 62), Color("#241622"))
 	for x in range(630, 826, 28):
@@ -1105,6 +1620,8 @@ func _draw_jazz_club() -> void:
 		draw_rect(Rect2(x, 246, 45, 184), Color("#130b0d") if int(x / 45) % 2 == 0 else Color("#1a0f10"))
 	for y in range(270, 416, 28):
 		draw_line(Vector2(0, y), Vector2(900, y + 34), Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.045), 1)
+	draw_rect(Rect2(40, 400, 820, 8), Color("#3a2114"))
+	draw_line(Vector2(50, 408), Vector2(850, 408), Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.26), 2)
 	_floor_reflections()
 
 
@@ -1145,6 +1662,8 @@ func _draw_kitty_cat_lounge() -> void:
 	draw_rect(Rect2(62, 58, 470, 184), Color("#24101a"))
 	draw_rect(Rect2(82, 78, 430, 126), Color("#10080e"))
 	draw_rect(Rect2(94, 196, 406, 38), Color("#3a1818"))
+	draw_rect(Rect2(94, 146, 406, 8), Color("#3a1818"))
+	draw_line(Vector2(106, 146), Vector2(488, 146), Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.30), 2)
 	_draw_light_cone(Vector2(180, 34), Vector2(-42, 190), C_PINK, 0.12)
 	_draw_light_cone(Vector2(318, 34), Vector2(0, 190), C_AMBER, 0.10)
 	_draw_light_cone(Vector2(456, 34), Vector2(42, 190), C_CYAN, 0.11)
@@ -1153,6 +1672,9 @@ func _draw_kitty_cat_lounge() -> void:
 	for x in [142, 250, 358]:
 		_silhouette(Vector2(x, 205), 0.72, Color("#05050a"))
 		draw_rect(Rect2(x - 14, 164, 28, 5), C_AMBER)
+	draw_rect(Rect2(516, 154, 64, 80), Color("#10080e"))
+	draw_rect(Rect2(522, 204, 56, 30), Color("#3a181f"))
+	draw_line(Vector2(522, 204), Vector2(578, 204), C_AMBER.darkened(0.25), 3)
 	draw_rect(Rect2(584, 72, 260, 124), Color("#170b12"))
 	draw_rect(Rect2(602, 88, 222, 64), Color("#2a1118"))
 	for x in range(620, 808, 28):
@@ -1184,6 +1706,10 @@ func _draw_delta_queen() -> void:
 		draw_rect(Rect2(x + 6, 62, 46, 86), Color("#132b3a"))
 		draw_line(Vector2(x + 4, 132), Vector2(x + 54, 104), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.28), 2)
 	_neon_text("DELTA QUEEN", Vector2(266, 62), 28, C_YELLOW)
+	draw_rect(Rect2(42, 46, 816, 8), Color("#493116"))
+	draw_line(Vector2(52, 54), Vector2(848, 54), Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.34), 2)
+	draw_rect(Rect2(42, 146, 816, 8), Color("#493116"))
+	draw_line(Vector2(52, 146), Vector2(848, 146), Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.42), 2)
 	draw_rect(Rect2(64, 178, 238, 84), Color("#123f30"))
 	draw_rect(Rect2(84, 194, 198, 46), Color("#1a7755"))
 	draw_rect(Rect2(360, 170, 212, 92), Color("#143b31"))
@@ -1197,6 +1723,8 @@ func _draw_delta_queen() -> void:
 		draw_line(Vector2(x, 278), Vector2(x + 28, 328), C_AMBER, 3)
 	draw_line(Vector2(0, 278), Vector2(900, 278), C_AMBER, 4)
 	draw_line(Vector2(0, 328), Vector2(900, 328), C_AMBER, 3)
+	draw_rect(Rect2(100, 346, 550, 6), Color("#493116"))
+	draw_rect(Rect2(700, 346, 150, 6), Color("#493116"))
 	for i in range(7):
 		var y := 352 + i * 9 + int(sin(flicker * 1.4 + i) * 3.0)
 		draw_line(Vector2(0, y), Vector2(900, y + 10), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.13), 2)
@@ -1252,6 +1780,12 @@ func _draw_gas_station() -> void:
 	draw_rect(Rect2(0, 0, 900, 248), Color("#101122"))
 	draw_rect(Rect2(0, 34, 900, 36), Color("#1f1f31"))
 	draw_rect(Rect2(0, 70, 900, 8), C_CYAN_2)
+	# Two raised merchandise/service ledges support the compact back rows used by
+	# crowded gas-casino compositions; they are physical fixtures, not UI lanes.
+	draw_rect(Rect2(16, 78, 868, 6), Color("#343447"))
+	draw_line(Vector2(24, 84), Vector2(876, 84), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.24), 2)
+	draw_rect(Rect2(16, 166, 868, 6), Color("#343447"))
+	draw_line(Vector2(24, 172), Vector2(876, 172), Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.20), 2)
 	for x in [90, 412, 770]:
 		draw_rect(Rect2(x, 0, 22, 212), Color("#25253a"))
 	draw_rect(Rect2(50, 96, 258, 96), Color("#060611"))
@@ -1260,6 +1794,12 @@ func _draw_gas_station() -> void:
 	_neon_text("HIGHWAY", Vector2(82, 116), 18, C_CYAN)
 	for x in [348, 444, 540]:
 		_slot_machine(Rect2(x, 122, 74, 120), _cycle_color(x))
+	# Authored counter contacts for the drink, ticket, and staff stations.
+	for shelf in [Rect2(320, 76, 104, 8), Rect2(532, 76, 104, 8), Rect2(660, 76, 104, 8), Rect2(788, 76, 96, 8)]:
+		draw_rect(shelf, Color("#493116"))
+		draw_line(Vector2(shelf.position.x, shelf.end.y), Vector2(shelf.end.x, shelf.end.y), C_AMBER.darkened(0.22), 2)
+	draw_rect(Rect2(408, 192, 104, 8), Color("#493116"))
+	draw_line(Vector2(408, 200), Vector2(512, 200), C_AMBER.darkened(0.22), 2)
 	draw_rect(Rect2(660, 104, 166, 120), Color("#171726"))
 	for x in range(672, 810, 18):
 		draw_line(Vector2(x, 106), Vector2(x, 222), C_SOFT.darkened(0.2), 1)
@@ -1267,6 +1807,13 @@ func _draw_gas_station() -> void:
 	draw_rect(Rect2(720, 70, 38, 24), C_SHADOW)
 	draw_line(Vector2(739, 94), Vector2(782, 126), C_CYAN, 2)
 	draw_rect(Rect2(780, 124, 20, 16), Color("#05050b"))
+	# Low utility rail for scenario controls (cooler locks, monitor, shutters).
+	draw_rect(Rect2(100, 244, 700, 10), Color("#202838"))
+	draw_line(Vector2(108, 254), Vector2(792, 254), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.30), 2)
+	for post_x in [116, 450, 784]:
+		draw_rect(Rect2(post_x, 254, 4, 72), C_SOFT.darkened(0.48))
+	draw_rect(Rect2(100, 400, 700, 8), Color("#343447"))
+	draw_line(Vector2(110, 408), Vector2(790, 408), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.24), 2)
 	_floor_reflections()
 
 
@@ -1383,6 +1930,12 @@ func _draw_grand_casino() -> void:
 	draw_rect(Rect2(0, 34, 900, 6), C_PINK)
 	_neon_text("GRAND", Vector2(340, 62), 42, C_YELLOW)
 	_neon_text("NO CUTE MOVES", Vector2(300, 104), 20, C_CYAN)
+	draw_rect(Rect2(170, 88, 560, 8), Color("#34234b"))
+	draw_line(Vector2(180, 96), Vector2(720, 96), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.24), 2)
+	draw_rect(Rect2(740, 96, 120, 8), Color("#34234b"))
+	draw_line(Vector2(748, 104), Vector2(852, 104), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.22), 2)
+	draw_rect(Rect2(170, 160, 560, 8), Color("#291b35"))
+	draw_line(Vector2(180, 168), Vector2(720, 168), Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.18), 2)
 	for x in [96, 208, 692, 804]:
 		draw_rect(Rect2(x, 46, 64, 118), Color("#120b24"))
 		draw_rect(Rect2(x + 8, 56, 48, 74), Color("#251044"))
@@ -1410,6 +1963,16 @@ func _draw_grand_casino() -> void:
 	for x in range(36, 864, 72):
 		draw_rect(Rect2(x, 286 + int(sin(flicker * 2.2 + x) * 3.0), 42, 4), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.32))
 		draw_rect(Rect2(x + 10, 302, 76, 2), Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.22))
+	if environment_id == "grand_casino":
+		draw_rect(Rect2(344, 300, 212, 10), C_AMBER.darkened(0.25))
+		draw_rect(Rect2(356, 310, 188, 34), Color("#171225"))
+		draw_line(Vector2(370, 344), Vector2(364, 356), C_SOFT.darkened(0.45), 3)
+		draw_line(Vector2(530, 344), Vector2(536, 356), C_SOFT.darkened(0.45), 3)
+		draw_rect(Rect2(452, 340, 96, 8), C_AMBER.darkened(0.32))
+		draw_rect(Rect2(40, 326, 820, 8), Color("#2d2037"))
+		draw_line(Vector2(50, 334), Vector2(850, 334), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.18), 2)
+		draw_rect(Rect2(100, 346, 700, 8), C_AMBER.darkened(0.35))
+		draw_line(Vector2(110, 354), Vector2(790, 354), Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.32), 2)
 
 
 func _draw_grand_casino_cage() -> void:
@@ -1622,33 +2185,33 @@ func _draw_familiar_characters() -> void:
 	# Recurring venue characters provide social pressure and make rooms readable.
 	match environment_id:
 		"corner_store":
-			_draw_named_character("mara", Vector2(465, 198), 0.78, "clerk")
+			_draw_named_character("mara", Vector2(465, 206), 0.78, "clerk")
 		"back_alley":
-			_draw_named_character("vince", Vector2(110, 240), 0.88, "watcher")
-			_draw_named_character("lena", Vector2(780, 242), 0.82, "dealer")
+			_draw_named_character("vince", Vector2(110, 254), 0.88, "watcher")
+			_draw_named_character("lena", Vector2(780, 254), 0.82, "dealer")
 		"motel":
-			_draw_named_character("june", Vector2(610, 214), 0.82, "dealer")
-			_draw_named_character("marco", Vector2(748, 222), 0.72, "fixer")
+			_draw_named_character("june", Vector2(610, 176), 0.82, "dealer")
+			_draw_named_character("marco", Vector2(748, 270), 0.72, "fixer")
 		"bar":
-			_draw_named_character("rafi", Vector2(188, 184), 0.76, "bartender")
-			_draw_named_character("dot", Vector2(500, 184), 0.70, "regular")
+			_draw_named_character("rafi", Vector2(188, 178), 0.76, "bartender")
+			_draw_named_character("dot", Vector2(500, 178), 0.70, "regular")
 		"jazz_club":
-			_draw_named_character("rafi", Vector2(824, 206), 0.66, "bartender")
-			_draw_named_character("dot", Vector2(614, 248), 0.52, "regular")
+			_draw_named_character("rafi", Vector2(824, 188), 0.66, "bartender")
+			_draw_named_character("dot", Vector2(614, 270), 0.52, "regular")
 		"kitty_cat_lounge":
-			_draw_named_character("iris", Vector2(618, 204), 0.70, "host")
-			_draw_named_character("dot", Vector2(304, 236), 0.58, "regular")
+			_draw_named_character("iris", Vector2(618, 190), 0.70, "host")
+			_draw_named_character("dot", Vector2(304, 234), 0.58, "regular")
 		"delta_queen":
-			_draw_named_character("sable", Vector2(436, 176), 0.70, "dealer")
-			_draw_named_character("ox", Vector2(790, 210), 0.86, "deck_boss")
+			_draw_named_character("sable", Vector2(436, 170), 0.70, "dealer")
+			_draw_named_character("ox", Vector2(790, 268), 0.86, "deck_boss")
 		"gas_station_casino":
-			_draw_named_character("nell", Vector2(746, 190), 0.76, "attendant")
+			_draw_named_character("nell", Vector2(746, 104), 0.76, "attendant")
 			_draw_watch_camera(Vector2(744, 72), C_PINK)
 		"small_underground_casino":
 			_draw_named_character("sable", Vector2(505, 155), 0.72, "dealer")
-			_draw_named_character("ox", Vector2(794, 205), 1.02, "bouncer")
+			_draw_named_character("ox", Vector2(794, 266), 1.02, "bouncer")
 		"pawn_shop":
-			_draw_named_character("sal", Vector2(450, 210), 0.74, "clerk")
+			_draw_named_character("sal", Vector2(450, 224), 0.74, "clerk")
 		"grand_casino":
 			_draw_named_character("iris", Vector2(632, 180), 0.76, "host")
 			var bartender := _grand_casino_staff_member("bartender")
@@ -1733,8 +2296,8 @@ func _draw_grand_casino_living_characters() -> void:
 	if not escort.is_empty():
 		var progress := clampf(float(escort.get("progress", 0.0)), 0.0, 1.0)
 		var escort_x := lerpf(170.0, 760.0, progress)
-		_draw_named_character("rourke", Vector2(escort_x, 226), 1.04, "pit_boss", "right")
-		_draw_rival_cheater_tell(str(escort.get("tell", "heel_tap")), 0, Vector2(escort_x - 54.0, 226))
+		_draw_named_character("rourke", Vector2(escort_x, 274), 1.04, "pit_boss", "right")
+		_draw_rival_cheater_tell(str(escort.get("tell", "heel_tap")), 0, Vector2(escort_x - 54.0, 274))
 		_neon_text("TO THE BACK ROOM", Vector2(330, 326), 14, C_PINK)
 		return
 	var rourke: Dictionary = living_floor.get("rourke", {}) if typeof(living_floor.get("rourke", {})) == TYPE_DICTIONARY else {}
@@ -1790,29 +2353,29 @@ func _draw_rival_cheater_tell(tell: String, idle_phase: int, foot: Vector2) -> v
 func _rourke_scene_foot(spot: String) -> Vector2:
 	match spot:
 		"main_left":
-			return Vector2(210, 224)
+			return Vector2(210, 274)
 		"main_cage":
-			return Vector2(700, 222)
+			return Vector2(700, 274)
 		"high_rail":
-			return Vector2(220, 222)
+			return Vector2(220, 274)
 		"high_door":
-			return Vector2(730, 222)
+			return Vector2(730, 274)
 		"back_table":
-			return Vector2(390, 220)
+			return Vector2(390, 274)
 		"back_door":
-			return Vector2(700, 220)
+			return Vector2(700, 274)
 		_:
-			return Vector2(450, 222)
+			return Vector2(450, 274)
 
 
 func _rival_scene_foot(spot_index: int) -> Vector2:
 	match spot_index:
 		0:
-			return Vector2(250, 226)
+			return Vector2(250, 274)
 		1:
-			return Vector2(510, 224)
+			return Vector2(510, 274)
 		_:
-			return Vector2(752, 228)
+			return Vector2(752, 274)
 
 
 func _character_style(id: String) -> Dictionary:
@@ -1940,7 +2503,7 @@ func _draw_scene_objects() -> void:
 		var selected := object_id == selected_object_id
 		var hovered := object_id == hovered_object_id
 		var disabled := bool(object_data.get("disabled", false))
-		_draw_object_shadow(rect, selected or hovered)
+		_draw_object_shadow(rect, selected or hovered, str(object_data.get("shadow_kind", "base")))
 		match object_type:
 			"game":
 				_draw_game_prop(rect, object_data, selected or hovered)
@@ -1958,6 +2521,8 @@ func _draw_scene_objects() -> void:
 				_draw_drink_prop(rect, selected or hovered)
 			_:
 				_draw_item_prop(rect, object_data, selected or hovered, str(object_data.get("surface", "counter")))
+		if str(object_data.get("placement_class", "")) == "behind_counter_person":
+			_draw_counter_person_occlusion(rect, selected or hovered)
 		if disabled:
 			_draw_disabled_scene_mark(rect)
 		if disabled and (selected or hovered):
@@ -1971,20 +2536,24 @@ func _draw_scene_objects() -> void:
 		elif should_draw_hotspot_hint(object_data, low_detail):
 			_draw_hotspot_hint(rect, object_type)
 		_draw_object_label(rect, str(object_data.get("label", "")), object_type, disabled, selected or hovered)
-	_draw_selected_object_info()
+	if not developer_placement_mode:
+		_draw_selected_object_info()
 
 
 func _draw_scenario_prop(rect: Rect2, object_data: Dictionary, active: bool) -> void:
 	var role := str(object_data.get("role", "prop"))
-	var appearance := str(object_data.get("appearance", ""))
 	var accent := C_ORANGE if role == "obstacle" else C_PURPLE_2 if role == "exit" else C_CYAN_2
-	var fill := C_SHADOW.lightened(0.10) if appearance.is_empty() else accent.darkened(0.66)
-	draw_rect(rect, fill)
-	draw_rect(rect, accent.lightened(0.16) if active else accent, false, 3.0)
-	var mark := "!" if role == "obstacle" else ">" if role == "exit" else "#"
-	_neon_text(mark, rect.get_center() + Vector2(-4.0, 5.0), 14, C_WHITE)
+	# Scenario props use the same concrete icon vocabulary as ordinary event
+	# props. The semantic icon key chooses paper, furniture, barriers, lights,
+	# refreshments, machinery, doors, or a neutral fixture silhouette.
+	_draw_event_prop(rect, object_data, active)
+	draw_rect(rect, accent.lightened(0.16) if active else accent, false, 2.0)
+	if role in ["obstacle", "exit"]:
+		var mark := "!" if role == "obstacle" else ">"
+		_neon_text(mark, rect.position + Vector2(5.0, 14.0), 12, C_WHITE)
 	if not str(object_data.get("state", "")).is_empty():
 		draw_line(rect.position + Vector2(8.0, rect.size.y - 9.0), rect.end - Vector2(8.0, 9.0), accent, 3.0)
+		_draw_public_prop_state_marker(rect, object_data, accent)
 
 
 func _draw_scenario_actor(rect: Rect2, object_data: Dictionary, active: bool) -> void:
@@ -2043,7 +2612,7 @@ func _draw_selected_object_info() -> void:
 		var row_rect := AttributeBadgeRowScript.draw_canvas(self, badges, Vector2(card.position.x + OBJECT_INFO_PADDING_X, y - OBJECT_INFO_BADGE_RAISE), card.size.x - OBJECT_INFO_PADDING_X * 2.0, 16)
 		selected_info_badge_hit_entries = badge_entries
 		y += row_rect.size.y + 4.0
-	var action_area_height := _selected_info_action_area_height(object_data)
+	var action_area_height := _selected_info_action_area_height(object_data, card.size.x - OBJECT_INFO_PADDING_X * 2.0)
 	var body_bottom := card.end.y - OBJECT_INFO_BOTTOM_PADDING
 	if action_area_height > 0.0:
 		body_bottom -= OBJECT_INFO_ACTION_GAP + action_area_height
@@ -2073,7 +2642,7 @@ func _draw_selected_object_info() -> void:
 			draw_string(font, button_rect.position + Vector2(0.0, label_baseline), _fit_draw_text(str(entry.get("label", "")), font, label_font_size, button_rect.size.x - 8.0), HORIZONTAL_ALIGNMENT_CENTER, button_rect.size.x, label_font_size, C_WHITE)
 			var detail := str(entry.get("detail", "")).strip_edges()
 			if not detail.is_empty() and detail_rect.size.x > 0.0 and detail_rect.size.y > 0.0:
-				draw_string(font, detail_rect.position + Vector2(0.0, 9.0), _fit_draw_text(detail, font, 8, detail_rect.size.x), HORIZONTAL_ALIGNMENT_CENTER, detail_rect.size.x, 8, Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.86))
+				draw_multiline_string(font, detail_rect.position + Vector2(0.0, 9.0), detail, HORIZONTAL_ALIGNMENT_CENTER, detail_rect.size.x, 8, OBJECT_INFO_INLINE_ACTION_DETAIL_MAX_LINES, Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.86), TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
 	_draw_selected_info_badge_hover_text(font)
 
 
@@ -2249,7 +2818,11 @@ func _objects_from_foundation_snapshot(snapshot: Dictionary) -> Array:
 	var objects: Array = []
 	if not interactable_objects.is_empty():
 		objects = _objects_from_interactable_records(interactable_objects)
-		objects = _reflow_unsealed_objects_around_scenario_authority(objects)
+		# The composed interaction catalog is the room. It already contains ordinary
+		# environment records and scenario additions with their final shared-plane
+		# geometry, so no renderer-only layer may relocate or supplement it.
+		objects.sort_custom(Callable(PixelSceneCanvas, "_sort_composed_scene_objects"))
+		return objects
 	else:
 		var games := _string_array(snapshot.get("game_ids", []))
 		for index in range(games.size()):
@@ -2325,129 +2898,6 @@ func _objects_from_foundation_snapshot(snapshot: Dictionary) -> Array:
 		ids[object_id] = true
 	objects.sort_custom(Callable(PixelSceneCanvas, "_sort_composed_scene_objects"))
 	return objects
-
-
-# Scenario records carry exact, digested geometry. Runtime-only controls such as
-# game hooks, dialogue actors, Numbers, and Crew presence are intentionally not
-# sealed into that authority because their producers can change independently.
-# Place those late controls around the immutable scenario footprint so the
-# production canvas and hit testing share one collision-free composition. A
-# delivery-only room uses the same bounded packing pass for its ordinary base
-# controls because the courier can add several physical verbs at once.
-func _reflow_unsealed_objects_around_scenario_authority(objects: Array) -> Array:
-	var has_scenario_authority := false
-	var has_live_delivery_control := false
-	var occupied: Array[Rect2] = []
-	for value in objects:
-		if typeof(value) != TYPE_DICTIONARY:
-			continue
-		var object_data := value as Dictionary
-		if str(object_data.get("id", "")).begins_with("delivery:"):
-			has_live_delivery_control = true
-		if not bool(object_data.get("scenario_layout_resolved", false)):
-			continue
-		has_scenario_authority = true
-		occupied.append(_object_layout_footprint(object_data, object_data.get("position", Vector2(0.5, 0.5))))
-	if not has_scenario_authority and not has_live_delivery_control:
-		return objects
-	var result := objects.duplicate(true)
-	var pending_indices: Array = []
-	for index in range(result.size()):
-		if typeof(result[index]) == TYPE_DICTIONARY and not bool((result[index] as Dictionary).get("scenario_layout_resolved", false)):
-			pending_indices.append(index)
-	pending_indices.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
-		var left := result[int(left_value)] as Dictionary
-		var right := result[int(right_value)] as Dictionary
-		var left_size: Vector2 = left.get("size", Vector2.ZERO)
-		var right_size: Vector2 = right.get("size", Vector2.ZERO)
-		var left_area := left_size.x * left_size.y
-		var right_area := right_size.x * right_size.y
-		return left_area > right_area if not is_equal_approx(left_area, right_area) else str(left.get("id", "")) < str(right.get("id", ""))
-	)
-	for index_value in pending_indices:
-		var index := int(index_value)
-		var object_data := result[index] as Dictionary
-		var original_rect := _board_rect_for_object_at_position(object_data, object_data.get("position", Vector2(0.5, 0.5)))
-		var placed_rect := _late_control_collision_safe_rect(original_rect, occupied)
-		object_data["position"] = placed_rect.get_center() / Vector2(BOARD_SIZE)
-		object_data["size"] = placed_rect.size
-		occupied.append(_clamp_board_rect(placed_rect.grow(OBJECT_LAYOUT_GAP)))
-		result[index] = object_data
-	return result
-
-
-func _late_control_collision_safe_rect(authored: Rect2, occupied: Array[Rect2]) -> Rect2:
-	var bounds := Rect2(
-		Vector2(OBJECT_LAYOUT_MARGIN, OBJECT_LAYOUT_MARGIN),
-		Vector2(BOARD_SIZE) - Vector2(OBJECT_LAYOUT_MARGIN * 2.0, OBJECT_LAYOUT_MARGIN * 2.0)
-	)
-	var authored_clamped := Rect2(
-		Vector2(
-			clampf(authored.position.x, bounds.position.x, bounds.end.x - authored.size.x),
-			clampf(authored.position.y, bounds.position.y, bounds.end.y - authored.size.y)
-		),
-		authored.size
-	)
-	if not _late_control_footprint_overlaps(authored_clamped, occupied):
-		return authored_clamped
-	var candidates: Array[Rect2] = []
-	for offset in [
-		Vector2(56.0, 0.0), Vector2(-56.0, 0.0), Vector2(0.0, 52.0), Vector2(0.0, -52.0),
-		Vector2(112.0, 0.0), Vector2(-112.0, 0.0), Vector2(0.0, 104.0), Vector2(0.0, -104.0),
-		Vector2(112.0, 52.0), Vector2(-112.0, 52.0), Vector2(112.0, -52.0), Vector2(-112.0, -52.0),
-	]:
-		var position := authored_clamped.position + (offset as Vector2)
-		candidates.append(Rect2(Vector2(
-			clampf(position.x, bounds.position.x, bounds.end.x - authored.size.x),
-			clampf(position.y, bounds.position.y, bounds.end.y - authored.size.y)
-		), authored.size))
-	var maximum_x := maxi(int(bounds.position.x), floori(bounds.end.x - authored.size.x))
-	var maximum_y := maxi(int(bounds.position.y), floori(bounds.end.y - authored.size.y))
-	for y in range(int(bounds.position.y), maximum_y + 1, 8):
-		for x in range(int(bounds.position.x), maximum_x + 1, 8):
-			candidates.append(Rect2(Vector2(x, y), authored.size))
-	candidates.sort_custom(func(left: Rect2, right: Rect2) -> bool:
-		var left_distance := left.position.distance_squared_to(authored_clamped.position)
-		var right_distance := right.position.distance_squared_to(authored_clamped.position)
-		if not is_equal_approx(left_distance, right_distance):
-			return left_distance < right_distance
-		return left.position.y < right.position.y if not is_equal_approx(left.position.y, right.position.y) else left.position.x < right.position.x
-	)
-	for candidate in candidates:
-		if not _late_control_footprint_overlaps(candidate, occupied):
-			return candidate
-	# A live producer can add several controls after immutable scenario geometry
-	# has already filled the room. Keep every action physically distinct, but use
-	# the shipped 44px accessibility target as the final compact visual size.
-	var compact_size := Vector2(44.0, 44.0)
-	var compact_authored := Rect2(authored_clamped.get_center() - compact_size * 0.5, compact_size)
-	var compact_maximum_x := maxi(int(bounds.position.x), floori(bounds.end.x - compact_size.x))
-	var compact_maximum_y := maxi(int(bounds.position.y), floori(bounds.end.y - compact_size.y))
-	var compact_candidates: Array[Rect2] = []
-	for y in range(int(bounds.position.y), compact_maximum_y + 1, 8):
-		for x in range(int(bounds.position.x), compact_maximum_x + 1, 8):
-			compact_candidates.append(Rect2(Vector2(x, y), compact_size))
-	compact_candidates.sort_custom(func(left: Rect2, right: Rect2) -> bool:
-		var left_distance := left.position.distance_squared_to(compact_authored.position)
-		var right_distance := right.position.distance_squared_to(compact_authored.position)
-		if not is_equal_approx(left_distance, right_distance):
-			return left_distance < right_distance
-		return left.position.y < right.position.y if not is_equal_approx(left.position.y, right.position.y) else left.position.x < right.position.x
-	)
-	for candidate in compact_candidates:
-		if not _late_control_footprint_overlaps(candidate, occupied):
-			return candidate
-	return authored_clamped
-
-
-func _late_control_footprint_overlaps(rect: Rect2, occupied: Array[Rect2]) -> bool:
-	var footprint := _clamp_board_rect(rect.grow(OBJECT_LAYOUT_GAP))
-	for other in occupied:
-		if footprint.intersects(other) and footprint.intersection(other).get_area() > OBJECT_LAYOUT_MAX_OVERLAP_AREA:
-			return true
-	return false
-
-
 func _objects_from_interactable_records(records: Array) -> Array:
 	var objects: Array = []
 	for index in range(records.size()):
@@ -2538,9 +2988,243 @@ func _objects_from_interactable_records(records: Array) -> Array:
 			"z_order": int(record.get("z_order", 0)),
 			"z_order_explicit": bool(record.get("z_order_explicit", record.has("z_order"))),
 			"focus_order": maxi(0, int(record.get("focus_order", 0))),
+			"layout_index": maxi(0, int(record.get("layout_index", 0))),
+			"layout_spot_field": str(record.get("layout_spot_field", "")),
+			"placement_class": str(record.get("placement_class", "")),
+			"contact": str(record.get("contact", "")),
 		}
 		objects.append(_apply_draw_hints(scene_object, object_type, index))
 	return objects
+
+
+func _sync_person_transits() -> void:
+	var room_key := _person_transit_snapshot_key(foundation_snapshot)
+	var current_settled := _settled_person_objects(foundation_scene_objects)
+	if room_key != person_transit_room_key or reduce_motion:
+		person_transit_room_key = room_key
+		person_transits.clear()
+		person_transit_ids.clear()
+		actor_route_started_at_cache.clear()
+		settled_person_objects_cache = current_settled
+		return
+	var arrivals: Array[String] = []
+	var departures: Array[String] = []
+	for id_value in current_settled.keys():
+		var object_id := str(id_value)
+		if not settled_person_objects_cache.has(object_id) and not person_transits.has(object_id):
+			arrivals.append(object_id)
+	for id_value in settled_person_objects_cache.keys():
+		var object_id := str(id_value)
+		if not current_settled.has(object_id) and not person_transits.has(object_id):
+			departures.append(object_id)
+	arrivals.sort()
+	departures.sort()
+	for object_id in arrivals:
+		if person_transit_ids.size() >= MAX_CONCURRENT_PERSON_TRANSITS:
+			break
+		_start_person_transit(object_id, current_settled.get(object_id, {}), "arrival")
+	for object_id in departures:
+		if person_transit_ids.size() >= MAX_CONCURRENT_PERSON_TRANSITS:
+			break
+		_start_person_transit(object_id, settled_person_objects_cache.get(object_id, {}), "departure")
+	settled_person_objects_cache = current_settled
+	for object_id in person_transit_ids:
+		var transit_value: Variant = person_transits.get(object_id, {})
+		if typeof(transit_value) != TYPE_DICTIONARY:
+			continue
+		var transit := transit_value as Dictionary
+		if str(transit.get("kind", "")) == "arrival" and current_settled.has(object_id):
+			transit["settled_object"] = (current_settled.get(object_id, {}) as Dictionary).duplicate(true)
+			_apply_person_transit_to_scene_object(object_id, transit)
+		elif str(transit.get("kind", "")) == "departure":
+			var departing := _copy_dictionary(transit.get("settled_object", {}))
+			_apply_person_transit_fields(departing, transit)
+			foundation_scene_objects.append(departing)
+
+
+func _person_transit_snapshot_key(snapshot: Dictionary) -> String:
+	return "%s|%s|%s|%s" % [
+		str(snapshot.get("id", "")),
+		str(snapshot.get("world_node_id", "")),
+		str(snapshot.get("environment_visit_id", snapshot.get("entered_game_clock_minutes", ""))),
+		str(snapshot.get("current_layer_id", "")),
+	]
+
+
+func _settled_person_objects(objects: Array) -> Dictionary:
+	var result: Dictionary = {}
+	for value in objects:
+		if typeof(value) != TYPE_DICTIONARY:
+			continue
+		var object_data := value as Dictionary
+		var object_id := str(object_data.get("id", "")).strip_edges()
+		if object_id.is_empty() or not EnvironmentPlacementScript.is_person_class(str(object_data.get("placement_class", ""))):
+			continue
+		var settled := object_data.duplicate(true)
+		settled.erase("person_transit_active")
+		settled.erase("person_transit_kind")
+		settled.erase("person_transit_settled_position")
+		result[object_id] = settled
+	return result
+
+
+func _start_person_transit(object_id: String, settled_value: Variant, kind: String) -> void:
+	if typeof(settled_value) != TYPE_DICTIONARY or kind not in ["arrival", "departure"]:
+		return
+	var settled := (settled_value as Dictionary).duplicate(true)
+	var route := _person_transit_route(settled, kind)
+	if route.is_empty():
+		return
+	var stage: Dictionary = route.get("stage", {})
+	var transit := {
+		"kind": kind,
+		"settled_object": settled,
+		"route_points": route.get("points", []),
+		"route_stage": stage,
+		"ends_at": actor_route_time + float(stage.get("duration_sec", PERSON_TRANSIT_MIN_DURATION_SEC)),
+	}
+	person_transits[object_id] = transit
+	person_transit_ids.append(object_id)
+	if kind == "arrival":
+		_apply_person_transit_to_scene_object(object_id, transit)
+
+
+func _person_transit_route(settled: Dictionary, kind: String) -> Dictionary:
+	var surfaces := EnvironmentPlacementScript.surface_map(foundation_snapshot)
+	var doorway_values: Variant = surfaces.get("doorways", [])
+	var floor_data: Dictionary = surfaces.get("floor", {}) if typeof(surfaces.get("floor", {})) == TYPE_DICTIONARY else {}
+	var band_values: Variant = floor_data.get("bands", [])
+	if typeof(doorway_values) != TYPE_ARRAY or (doorway_values as Array).is_empty() or typeof(band_values) != TYPE_ARRAY or (band_values as Array).is_empty():
+		return {}
+	var settled_position: Vector2 = settled.get("position", Vector2(0.5, 0.5))
+	var settled_center := settled_position * Vector2(BOARD_SIZE)
+	var object_size: Vector2 = settled.get("size", Vector2(64.0, 96.0))
+	var settled_contact := Vector2(settled_center.x, settled_center.y + object_size.y * 0.5)
+	var doorway_center := Vector2(-1.0, -1.0)
+	var doorway_distance := INF
+	for doorway_value in doorway_values as Array:
+		if typeof(doorway_value) != TYPE_DICTIONARY:
+			continue
+		var doorway_rect := _pixel_bounds_rect((doorway_value as Dictionary).get("bounds", []))
+		if not doorway_rect.has_area():
+			continue
+		var candidate := doorway_rect.get_center()
+		var distance := candidate.distance_squared_to(settled_contact)
+		if distance < doorway_distance:
+			doorway_distance = distance
+			doorway_center = candidate
+	if doorway_center.x < 0.0:
+		return {}
+	var floor_band := Rect2()
+	var band_distance := INF
+	for band_value in band_values as Array:
+		var candidate_band := _pixel_bounds_rect(band_value)
+		if not candidate_band.has_area():
+			continue
+		var candidate_contact := Vector2(
+			clampf(settled_contact.x, candidate_band.position.x, candidate_band.end.x),
+			clampf(settled_contact.y, candidate_band.position.y, candidate_band.end.y)
+		)
+		var distance := candidate_contact.distance_squared_to(settled_contact)
+		if distance < band_distance:
+			band_distance = distance
+			floor_band = candidate_band
+	if not floor_band.has_area():
+		return {}
+	var lane_contact_y := clampf(settled_contact.y, floor_band.position.y + 2.0, floor_band.end.y - 2.0)
+	var doorway_x := clampf(doorway_center.x, floor_band.position.x + 2.0, floor_band.end.x - 2.0)
+	var lane_y := lane_contact_y - object_size.y * 0.5
+	var doorway_position := Vector2(doorway_x, lane_y)
+	var lane_position := Vector2(clampf(settled_center.x, floor_band.position.x + 2.0, floor_band.end.x - 2.0), lane_y)
+	var pixel_points := [doorway_position, lane_position, settled_center]
+	if kind == "departure":
+		pixel_points.reverse()
+	var points: Array = []
+	var distance := 0.0
+	for index in range(pixel_points.size()):
+		points.append(_person_transit_normalized_point(pixel_points[index]))
+		if index > 0:
+			distance += (pixel_points[index - 1] as Vector2).distance_to(pixel_points[index] as Vector2)
+	var endpoint: Vector2 = pixel_points.back()
+	var small_rect := _rect_from_dict(settled.get("small_screen_rect", {}))
+	var small_endpoint := small_rect.get_center() if small_rect.has_area() else endpoint / Vector2(BOARD_SIZE)
+	if kind == "departure":
+		small_endpoint = doorway_position / Vector2(BOARD_SIZE)
+	var stage := {
+		"mode": "to_endpoint",
+		"duration_sec": clampf(distance / PERSON_TRANSIT_SPEED_PIXELS_PER_SEC, PERSON_TRANSIT_MIN_DURATION_SEC, PERSON_TRANSIT_MAX_DURATION_SEC),
+		"reduced_motion_endpoint": _person_transit_normalized_point(endpoint),
+		"start": points[0],
+		"endpoint": points.back(),
+		"small_screen_start": points[0],
+		"small_screen_endpoint": {"x": small_endpoint.x, "y": small_endpoint.y},
+	}
+	return {"points": points, "stage": stage}
+
+
+func _apply_person_transit_to_scene_object(object_id: String, transit: Dictionary) -> void:
+	for value in foundation_scene_objects:
+		if typeof(value) == TYPE_DICTIONARY and str((value as Dictionary).get("id", "")) == object_id:
+			_apply_person_transit_fields(value as Dictionary, transit)
+			return
+
+
+func _apply_person_transit_fields(object_data: Dictionary, transit: Dictionary) -> void:
+	object_data["person_transit_active"] = true
+	object_data["person_transit_kind"] = str(transit.get("kind", ""))
+	object_data["person_transit_settled_position"] = object_data.get("position", Vector2(0.5, 0.5))
+	object_data["interactive"] = false
+	object_data["disabled"] = false
+	object_data["actor_route_points"] = _copy_array(transit.get("route_points", []))
+	object_data["actor_route_stage"] = _copy_dictionary(transit.get("route_stage", {}))
+
+
+func _advance_person_transits() -> bool:
+	var changed := false
+	for index in range(person_transit_ids.size() - 1, -1, -1):
+		var object_id := person_transit_ids[index]
+		var transit_value: Variant = person_transits.get(object_id, {})
+		if typeof(transit_value) != TYPE_DICTIONARY or actor_route_time < float((transit_value as Dictionary).get("ends_at", INF)):
+			continue
+		var transit := transit_value as Dictionary
+		if str(transit.get("kind", "")) == "arrival":
+			_restore_arrived_person(object_id, _copy_dictionary(transit.get("settled_object", {})))
+		else:
+			_remove_scene_object(object_id)
+		person_transits.erase(object_id)
+		person_transit_ids.remove_at(index)
+		changed = true
+	if changed:
+		_sync_actor_route_starts()
+		_rebuild_scene_object_cache()
+	return changed
+
+
+func _restore_arrived_person(object_id: String, settled: Dictionary) -> void:
+	for index in range(foundation_scene_objects.size()):
+		var value: Variant = foundation_scene_objects[index]
+		if typeof(value) == TYPE_DICTIONARY and str((value as Dictionary).get("id", "")) == object_id:
+			foundation_scene_objects[index] = settled
+			return
+
+
+func _remove_scene_object(object_id: String) -> void:
+	for index in range(foundation_scene_objects.size() - 1, -1, -1):
+		var value: Variant = foundation_scene_objects[index]
+		if typeof(value) == TYPE_DICTIONARY and str((value as Dictionary).get("id", "")) == object_id:
+			foundation_scene_objects.remove_at(index)
+			return
+
+
+static func _person_transit_normalized_point(point: Vector2) -> Dictionary:
+	return {"x": point.x / BOARD_SIZE.x, "y": point.y / BOARD_SIZE.y}
+
+
+static func _pixel_bounds_rect(value: Variant) -> Rect2:
+	if typeof(value) != TYPE_ARRAY or (value as Array).size() < 4:
+		return Rect2()
+	var bounds := value as Array
+	return Rect2(float(bounds[0]), float(bounds[1]), float(bounds[2]), float(bounds[3]))
 
 
 static func _sort_composed_scene_objects(a: Dictionary, b: Dictionary) -> bool:
@@ -2642,14 +3326,29 @@ func _scene_object_layout_snapshot(objects: Array) -> Dictionary:
 func _apply_draw_hints(object_data: Dictionary, object_type: String, index: int) -> Dictionary:
 	match object_type:
 		"game":
-			if not str(object_data.get("prop", "")).strip_edges().is_empty():
-				return object_data
-			object_data["prop"] = "card_table"
+			object_data["prop"] = _production_game_prop(object_data)
 		"travel":
 			object_data["prop"] = "door" if index == 0 else "arrow"
 		"event":
 			if str(object_data.get("prop", "")).strip_edges().is_empty():
-				object_data["prop"] = _fallback_event_prop(str(object_data.get("visual_key", "")), str(object_data.get("icon_key", "")))
+				object_data["prop"] = _fallback_event_prop(str(object_data.get("visual_key", "")), str(object_data.get("icon_key", "")), str(object_data.get("state", "")))
+		"scenario_object":
+			if str(object_data.get("prop", "")).strip_edges().is_empty():
+				var scenario_prop := _fallback_event_prop(str(object_data.get("visual_key", "")), str(object_data.get("icon_key", "")), str(object_data.get("state", "")))
+				# A scenario-authored object with no more specific icon still needs a
+				# physical fixture silhouette. Ordinary events retain their 0.5-era
+				# conversational fallback below.
+				var icon_hint := str(object_data.get("icon_key", "")).strip_edges().to_lower()
+				var authored_patron := icon_hint == "patron_talk" or icon_hint.begins_with("scenario_scene ")
+				object_data["prop"] = "room_fixture" if scenario_prop == "patron_talk" and not authored_patron else scenario_prop
+			var public_state := str(object_data.get("state", ""))
+			var state_variant := _public_prop_state_variant(public_state)
+			object_data["prop_state_variant"] = state_variant
+			object_data["prop_state_pattern"] = state_variant.trim_prefix("public_")
+			object_data["prop_state_label"] = _public_prop_state_label(public_state)
+			var first_code := str(object_data["prop_state_pattern"]).unicode_at(0) if not str(object_data["prop_state_pattern"]).is_empty() else 48
+			var first_nibble := first_code - 48 if first_code <= 57 else first_code - 87
+			object_data["prop_state_color_index"] = first_nibble % 4
 		"service":
 			if str(object_data.get("surface", "")).strip_edges().is_empty():
 				object_data["surface"] = "counter_case"
@@ -2687,7 +3386,39 @@ func _apply_draw_hints(object_data: Dictionary, object_type: String, index: int)
 		_:
 			if not object_data.has("surface"):
 				object_data["surface"] = "counter"
+	var placement_class := str(object_data.get("placement_class", ""))
+	if placement_class.is_empty():
+		placement_class = EnvironmentPlacementScript.classify(object_data, object_type, str(object_data.get("id", "")), str(object_data.get("prop", object_data.get("icon_key", ""))))
+	object_data["placement_class"] = placement_class
+	object_data["shadow_kind"] = EnvironmentPlacementScript.shadow_kind(placement_class)
 	return object_data
+
+
+func _production_game_prop(object_data: Dictionary) -> String:
+	var source_id := str(object_data.get("source_id", object_data.get("icon_key", ""))).strip_edges().to_lower()
+	var family := str(object_data.get("visual_key", "")).strip_edges().to_lower()
+	var authored := str(object_data.get("prop", "")).strip_edges().to_lower()
+	# Coin Pusher was authored with the historical slot_machine alias, which the
+	# room renderer did not implement and therefore drew as a card table.
+	if source_id == "coin_pusher" or family == "coin_pusher":
+		return "coin_pusher_room"
+	if source_id == "scratch_tickets":
+		return "scratch_ticket_room"
+	if source_id == "craps":
+		return "craps_room"
+	if source_id == "bar_dice":
+		return "bar_dice_room"
+	if source_id == "video_poker" or authored == "video_poker_machine":
+		return "video_poker_machine"
+	if source_id == "roulette" or family == "wheel" or authored == "roulette_table":
+		return "roulette_table"
+	if source_id in ["slot", "pull_tabs"] or family in ["slots", "novelty"]:
+		return "machine"
+	if not authored.is_empty():
+		return authored
+	if family == "dice":
+		return "dice_table"
+	return "card_table"
 
 
 func _normalized_rect_from_record(record: Dictionary) -> Rect2:
@@ -3074,7 +3805,7 @@ func _selected_info_inline_actions(object_data: Dictionary) -> Array:
 	return result
 
 
-func _selected_info_action_area_height(object_data: Dictionary) -> float:
+func _selected_info_action_area_height(object_data: Dictionary, content_width: float = OBJECT_INFO_WIDTH - OBJECT_INFO_PADDING_X * 2.0) -> float:
 	var inline_actions := _selected_info_inline_actions(object_data)
 	if not inline_actions.is_empty():
 		var height := 0.0
@@ -3084,12 +3815,23 @@ func _selected_info_action_area_height(object_data: Dictionary) -> float:
 			if height > 0.0:
 				height += OBJECT_INFO_INLINE_ACTION_GAP
 			height += _selected_info_inline_action_height()
-			if not _selected_info_inline_action_detail(action_value as Dictionary).is_empty():
-				height += OBJECT_INFO_INLINE_ACTION_DETAIL_HEIGHT
+			height += _selected_info_inline_action_detail_height(action_value as Dictionary, content_width)
 		return height
 	if _selected_info_has_single_action_button(object_data):
 		return _selected_info_action_height()
 	return 0.0
+
+
+func _selected_info_inline_action_detail_height(action_data: Dictionary, content_width: float) -> float:
+	var detail := _selected_info_inline_action_detail(action_data)
+	if detail.is_empty() or content_width <= 0.0:
+		return 0.0
+	var font := get_theme_default_font()
+	if font == null:
+		var approximate_chars_per_line := maxi(1, int(floor(content_width / 4.7)))
+		return float(clampi(int(ceil(float(detail.length()) / float(approximate_chars_per_line))), 1, OBJECT_INFO_INLINE_ACTION_DETAIL_MAX_LINES)) * OBJECT_INFO_INLINE_ACTION_DETAIL_LINE_HEIGHT
+	var measured := font.get_multiline_string_size(detail, HORIZONTAL_ALIGNMENT_CENTER, content_width, 8, OBJECT_INFO_INLINE_ACTION_DETAIL_MAX_LINES, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
+	return maxf(OBJECT_INFO_INLINE_ACTION_DETAIL_HEIGHT, ceilf(measured.y))
 
 
 func _selected_info_action_height() -> float:
@@ -3187,7 +3929,7 @@ func _selected_info_action_entries_for_rect(info: Dictionary, card: Rect2) -> Ar
 	var entries: Array = []
 	var inline_actions := _selected_info_inline_actions(object_data)
 	if not inline_actions.is_empty():
-		var area_height := _selected_info_action_area_height(object_data)
+		var area_height := _selected_info_action_area_height(object_data, width)
 		var y := card.end.y - OBJECT_INFO_BOTTOM_PADDING - area_height
 		for action in inline_actions:
 			if typeof(action) != TYPE_DICTIONARY:
@@ -3196,7 +3938,7 @@ func _selected_info_action_entries_for_rect(info: Dictionary, card: Rect2) -> Ar
 			var button_height := _selected_info_inline_action_height()
 			var button_rect := Rect2(Vector2(left, y), Vector2(width, button_height))
 			var detail := _selected_info_inline_action_detail(action_data)
-			var detail_height := OBJECT_INFO_INLINE_ACTION_DETAIL_HEIGHT if not detail.is_empty() else 0.0
+			var detail_height := _selected_info_inline_action_detail_height(action_data, width)
 			var detail_rect := Rect2(Vector2(left, button_rect.end.y), Vector2(width, detail_height))
 			entries.append({
 				"inline": true,
@@ -3529,7 +4271,7 @@ func _object_info_size(title: String, lines: Array, object_type: String, visible
 	var width := clampf(ceilf(content_width), min_width, max_width)
 	var line_count := maxi(1, lines.size())
 	var height := maxf(OBJECT_INFO_MIN_HEIGHT, OBJECT_INFO_BODY_Y + badge_height + float(line_count) * OBJECT_INFO_LINE_HEIGHT + OBJECT_INFO_BOTTOM_PADDING)
-	var action_area_height := _selected_info_action_area_height(object_data)
+	var action_area_height := _selected_info_action_area_height(object_data, width - OBJECT_INFO_PADDING_X * 2.0)
 	if action_area_height > 0.0:
 		height += OBJECT_INFO_ACTION_GAP + action_area_height
 	height = minf(ceilf(height), visible_rect.size.y)
@@ -3638,6 +4380,12 @@ func _camera_lerp_weight(delta: float, speed: float) -> float:
 func _update_camera_target() -> void:
 	camera_target_dirty = false
 	camera_target_refresh_count += 1
+	if developer_placement_mode:
+		camera_focus_active = false
+		camera_focus_point = Vector2(0.5, 0.5)
+		target_camera_zoom = 1.0
+		target_camera_offset = Vector2.ZERO
+		return
 	var object_data := _scene_object(selected_object_id) if not selected_object_id.is_empty() else {}
 	if object_data.is_empty():
 		camera_focus_active = false
@@ -3867,7 +4615,13 @@ func _set_hovered_object(object_id: String) -> void:
 
 
 func _focus_object_at_local_position(local_position: Vector2) -> void:
-	var object_id := object_id_at_local_position(local_position)
+	var object_ids := _object_ids_at_local_position(local_position)
+	var object_id := ""
+	if not object_ids.is_empty():
+		object_id = object_ids[0]
+		var selected_hit_index := object_ids.find(selected_object_id)
+		if selected_hit_index >= 0 and object_ids.size() > 1:
+			object_id = object_ids[(selected_hit_index + 1) % object_ids.size()]
 	if object_id.is_empty():
 		_set_hovered_object("")
 		set_selected_object("", false)
@@ -3878,7 +4632,10 @@ func _focus_object_at_local_position(local_position: Vector2) -> void:
 
 
 func _activate_object_at_local_position(local_position: Vector2) -> void:
-	var object_id := object_id_at_local_position(local_position)
+	var object_ids := _object_ids_at_local_position(local_position)
+	var object_id := selected_object_id if object_ids.has(selected_object_id) else ""
+	if object_id.is_empty() and not object_ids.is_empty():
+		object_id = object_ids[0]
 	if object_id.is_empty():
 		_set_hovered_object("")
 		set_selected_object("", false)
@@ -4013,6 +4770,8 @@ func _board_rect_for_object(object_data: Dictionary) -> Rect2:
 
 
 func _interaction_rect_for_object(object_data: Dictionary) -> Rect2:
+	if bool(object_data.get("person_transit_active", false)):
+		return Rect2()
 	var rect := _board_rect_for_object(object_data)
 	if not small_screen_mode or bool(object_data.get("scenario_layout_resolved", false)):
 		return rect
@@ -4028,31 +4787,61 @@ func _interaction_rect_for_object(object_data: Dictionary) -> Rect2:
 
 
 func _actor_route_position(object_data: Dictionary) -> Vector2:
-	var stage := _copy_dictionary(object_data.get("actor_route_stage", {}))
-	var points := _copy_array(object_data.get("actor_route_points", []))
-	if stage.is_empty() or points.size() != 2:
+	var stage_value: Variant = object_data.get("actor_route_stage", {})
+	var points_value: Variant = object_data.get("actor_route_points", [])
+	if typeof(stage_value) != TYPE_DICTIONARY or typeof(points_value) != TYPE_ARRAY:
 		return Vector2(-1.0, -1.0)
-	var start := _vector2_from_dict(points[0], Vector2(-1.0, -1.0))
-	var endpoint := _vector2_from_dict(points[1], Vector2(-1.0, -1.0))
-	if small_screen_mode and bool(object_data.get("scenario_layout_resolved", false)):
-		start = _vector2_from_dict(stage.get("small_screen_start", points[0]), start)
-		endpoint = _vector2_from_dict(stage.get("small_screen_endpoint", points[1]), endpoint)
+	var stage := stage_value as Dictionary
+	var points := points_value as Array
+	if stage.is_empty() or points.size() < 2:
+		return Vector2(-1.0, -1.0)
+	var start := _actor_route_point(points, 0, stage, object_data)
+	var endpoint := _actor_route_point(points, points.size() - 1, stage, object_data)
 	if start.x < 0.0 or endpoint.x < 0.0:
 		return Vector2(-1.0, -1.0)
 	if reduce_motion:
-		if small_screen_mode and bool(object_data.get("scenario_layout_resolved", false)):
+		if small_screen_mode:
 			return endpoint
-		return _vector2_from_dict(stage.get("reduced_motion_endpoint", points[1]), endpoint)
+		return _vector2_from_dict(stage.get("reduced_motion_endpoint", points.back()), endpoint)
 	var route_key := _actor_route_cache_key(object_data)
 	var started_at := float(actor_route_started_at_cache.get(route_key, actor_route_time))
 	var duration := maxf(0.001, float(stage.get("duration_sec", 1.0)))
 	var progress := clampf((actor_route_time - started_at) / duration, 0.0, 1.0)
 	if str(stage.get("mode", "to_endpoint")) == "ping_pong":
 		progress = 1.0 - absf(fposmod((actor_route_time - started_at) / duration, 2.0) - 1.0)
-	return start.lerp(endpoint, progress)
+	if points.size() == 2:
+		return start.lerp(endpoint, progress)
+	var total_distance := 0.0
+	for index in range(1, points.size()):
+		total_distance += _actor_route_point(points, index - 1, stage, object_data).distance_to(_actor_route_point(points, index, stage, object_data))
+	if total_distance <= 0.001:
+		return endpoint
+	var target_distance := total_distance * progress
+	var traversed := 0.0
+	for index in range(1, points.size()):
+		var segment_start := _actor_route_point(points, index - 1, stage, object_data)
+		var segment_end := _actor_route_point(points, index, stage, object_data)
+		var segment_distance := segment_start.distance_to(segment_end)
+		if target_distance <= traversed + segment_distance or index == points.size() - 1:
+			return segment_start.lerp(segment_end, clampf((target_distance - traversed) / maxf(0.001, segment_distance), 0.0, 1.0))
+		traversed += segment_distance
+	return endpoint
+
+
+func _actor_route_point(points: Array, index: int, stage: Dictionary, object_data: Dictionary) -> Vector2:
+	var point := _vector2_from_dict(points[index], Vector2(-1.0, -1.0))
+	if not small_screen_mode:
+		return point
+	if index == 0:
+		return _vector2_from_dict(stage.get("small_screen_start", points[index]), point)
+	if index == points.size() - 1:
+		return _vector2_from_dict(stage.get("small_screen_endpoint", points[index]), point)
+	return point
 
 
 func _actor_route_cache_key(object_data: Dictionary) -> String:
+	if bool(object_data.get("person_transit_active", false)):
+		return "person-transit:%s:%s" % [str(object_data.get("id", "")), str(object_data.get("person_transit_kind", ""))]
 	var route_identity := str(object_data.get("id", ""))
 	if bool(object_data.get("scenario_layout_resolved", false)):
 		route_identity = str(object_data.get("scenario_layout_authority_identity", ""))
@@ -4188,12 +4977,23 @@ func _vector2_from_dict(value: Variant, fallback: Vector2 = Vector2.ZERO) -> Vec
 	return Vector2(float(data.get("x", fallback.x)), float(data.get("y", fallback.y)))
 
 
-func _draw_object_shadow(rect: Rect2, selected: bool) -> void:
+func _draw_object_shadow(rect: Rect2, selected: bool, shadow_kind: String) -> void:
+	if shadow_kind == "none":
+		return
 	var glow := C_YELLOW if selected else C_CYAN
-	draw_rect(Rect2(rect.position + Vector2(rect.size.x * 0.15, rect.size.y * 0.78), Vector2(rect.size.x * 0.7, 7)), Color(0.0, 0.0, 0.0, 0.42))
-	draw_rect(Rect2(rect.position + Vector2(rect.size.x * 0.22, rect.size.y * 0.84), Vector2(rect.size.x * 0.56, 3)), Color(glow.r, glow.g, glow.b, 0.18))
+	var shadow_y := rect.end.y - (3.0 if shadow_kind in ["feet", "contact"] else 7.0)
+	var shadow_height := 3.0 if shadow_kind == "contact" else 6.0
+	draw_rect(Rect2(Vector2(rect.position.x + rect.size.x * 0.15, shadow_y), Vector2(rect.size.x * 0.7, shadow_height)), Color(0.0, 0.0, 0.0, 0.42))
+	draw_rect(Rect2(Vector2(rect.position.x + rect.size.x * 0.22, shadow_y + shadow_height), Vector2(rect.size.x * 0.56, 2)), Color(glow.r, glow.g, glow.b, 0.18))
 	if selected:
-		draw_rect(Rect2(rect.position + Vector2(rect.size.x * 0.08, rect.size.y * 0.72), Vector2(rect.size.x * 0.84, 5)), Color(glow.r, glow.g, glow.b, 0.32))
+		draw_rect(Rect2(Vector2(rect.position.x + rect.size.x * 0.08, shadow_y - 4.0), Vector2(rect.size.x * 0.84, 4)), Color(glow.r, glow.g, glow.b, 0.32))
+
+
+func _draw_counter_person_occlusion(rect: Rect2, selected: bool) -> void:
+	var front := Color(C_DARK_2.r, C_DARK_2.g, C_DARK_2.b, 0.94)
+	draw_rect(Rect2(Vector2(rect.position.x - 3.0, rect.end.y - 4.0), Vector2(rect.size.x + 6.0, 8.0)), front)
+	if selected:
+		draw_line(Vector2(rect.position.x - 3.0, rect.end.y - 4.0), Vector2(rect.end.x + 3.0, rect.end.y - 4.0), C_YELLOW, 2.0)
 
 
 func _draw_hotspot_hint(rect: Rect2, object_type: String) -> void:
@@ -4465,6 +5265,13 @@ func _draw_character_actor(rect: Rect2, object_data: Dictionary) -> void:
 		base_scale * _character_actor_scale(lead_member),
 		animation_clock
 	)
+	# Talk events keep their person in the room while the authored event badge
+	# identifies why that person is selectable (rumor, offer, warning, and so on).
+	var event_icon := _texture_for_asset_path(str(object_data.get("asset_path", "")))
+	if event_icon != null:
+		var icon_size := clampf(minf(rect.size.x, rect.size.y) * 0.30, 22.0, 32.0)
+		var icon_rect := Rect2(rect.end - Vector2(icon_size + 3.0, icon_size + 3.0), Vector2(icon_size, icon_size))
+		_draw_live_texture_icon(event_icon, icon_rect, object_data, C_CYAN_2, str(object_data.get("id", "")) == selected_object_id, bool(object_data.get("disabled", false)))
 
 
 func _character_actor_style(member: Dictionary, actor: Dictionary, faceless: bool, clock: float) -> Dictionary:
@@ -4648,10 +5455,20 @@ func _draw_game_prop(rect: Rect2, object_data: Dictionary, selected: bool) -> vo
 			_draw_pull_tab_machine_prop(rect, object_data, accent, selected, disabled)
 		else:
 			_draw_slot_cabinet_prop(rect, object_data, accent, selected, disabled)
+	elif prop == "coin_pusher_room":
+		CoinPusherRoomPropScript.draw(self, rect, object_data, accent, selected, disabled, flicker)
+	elif prop == "scratch_ticket_room":
+		ScratchTicketRoomPropScript.draw(self, rect, object_data, accent, selected, disabled, flicker)
+	elif prop == "craps_room":
+		CrapsRoomPropScript.draw(self, rect, object_data, accent, selected, disabled, flicker)
+	elif prop == "bar_dice_room":
+		BarDiceRoomPropScript.draw(self, rect, object_data, accent, selected, disabled, flicker)
 	elif prop == "video_poker_machine":
 		_draw_video_poker_machine_prop(rect, object_data, accent, selected, disabled)
 	elif prop == "baccarat_table":
 		_draw_baccarat_table_prop(rect, object_data, accent, selected, disabled)
+	elif prop == "roulette_table":
+		_draw_roulette_room_prop(rect, object_data, accent, selected, disabled)
 	else:
 		draw_rect(Rect2(rect.position + Vector2(0, rect.size.y * 0.36), Vector2(rect.size.x, rect.size.y * 0.42)), Color("#12503a"))
 		draw_rect(Rect2(rect.position + Vector2(10, rect.size.y * 0.44), Vector2(rect.size.x - 20, rect.size.y * 0.20)), Color("#1c8a62"))
@@ -4669,7 +5486,19 @@ func _draw_low_detail_game_prop(rect: Rect2, object_data: Dictionary, accent: Co
 	var source_id := str(object_data.get("source_id", object_data.get("icon_key", "")))
 	var base_alpha := 0.18 if disabled else 0.30
 	draw_rect(Rect2(rect.position + Vector2(rect.size.x * 0.12, rect.size.y * 0.82), Vector2(rect.size.x * 0.76, 4)), Color(accent.r, accent.g, accent.b, base_alpha))
-	if prop == "machine" or prop == "video_poker_machine":
+	if prop == "coin_pusher_room":
+		CoinPusherRoomPropScript.draw_low_detail(self, rect, object_data, accent, disabled, flicker)
+		return
+	if prop == "scratch_ticket_room":
+		ScratchTicketRoomPropScript.draw_low_detail(self, rect, object_data, accent, disabled, flicker)
+		return
+	if prop == "craps_room":
+		CrapsRoomPropScript.draw_low_detail(self, rect, object_data, accent, disabled, flicker)
+		return
+	if prop == "bar_dice_room":
+		BarDiceRoomPropScript.draw_low_detail(self, rect, object_data, accent, disabled, flicker)
+		return
+	if prop in ["machine", "video_poker_machine"]:
 		var cabinet := Rect2(rect.position + Vector2(rect.size.x * 0.24, rect.size.y * 0.18), Vector2(rect.size.x * 0.52, rect.size.y * 0.58))
 		draw_rect(cabinet, Color("#090a14"))
 		draw_rect(cabinet, Color(accent.r, accent.g, accent.b, 0.18), false, 1)
@@ -4680,7 +5509,7 @@ func _draw_low_detail_game_prop(rect: Rect2, object_data: Dictionary, accent: Co
 		for i in range(3):
 			var reel := Rect2(screen.position + Vector2(3.0 + float(i) * screen.size.x * 0.30, 3.0), Vector2(screen.size.x * 0.18, maxf(5.0, screen.size.y - 6.0)))
 			draw_rect(reel, _cycle_color(i * 23 + int(rect.position.x)).darkened(0.10))
-		var label := "SLOT" if source_id == "slot" or prop == "machine" else "POKER"
+		var label := "SLOT" if source_id == "slot" else "TIX" if source_id == "pull_tabs" else "POKER"
 		var font := get_theme_default_font()
 		draw_string(font, cabinet.position + Vector2(2.0, cabinet.size.y * 0.82), _fit_draw_text(label, font, 7, cabinet.size.x - 4.0), HORIZONTAL_ALIGNMENT_CENTER, cabinet.size.x - 4.0, 7, C_YELLOW)
 	else:
@@ -4791,27 +5620,174 @@ func _draw_travel_arrow(rect: Rect2, accent: Color) -> void:
 	draw_line(base + Vector2(-26, 2), base + Vector2(20, -10), C_CYAN, 3)
 
 
-func _fallback_event_prop(visual_key: String, icon_key: String) -> String:
-	var key := ("%s %s" % [visual_key, icon_key]).to_lower()
+func _fallback_event_prop(visual_key: String, icon_key: String, public_state: String = "") -> String:
+	var explicit_icon := icon_key.strip_edges().to_lower()
+	if explicit_icon in [
+		"paper_note", "room_seating", "room_barrier", "room_signal", "room_refreshment",
+		"room_surface", "room_storage", "room_display", "room_vehicle", "room_hazard",
+		"payphone", "security_camera", "security_exit", "side_door", "room_route",
+		"trunk_offer", "jammed_machine", "clerk_counter", "clerk_talk", "patron_talk",
+		"room_trace", "room_fixture", "motel_door",
+	]:
+		return explicit_icon
+	if explicit_icon.begins_with("scenario_scene ") or explicit_icon.begins_with("scenario_actor "):
+		return _fallback_scenario_semantic_prop(explicit_icon)
+	# Public semantic state participates in fallback selection. Authored physical
+	# icons remain authoritative, while an un-authored changed object can now use
+	# its visible state to select a concrete prop. Private local_state never
+	# reaches this renderer.
+	var key := ("%s %s %s" % [visual_key, icon_key, public_state]).to_lower()
+	if key.find("manifest") != -1 or key.find("paper") != -1 or key.find("label") != -1 or key.find("evidence") != -1:
+		return "paper_note"
+	if key.find("ledger") != -1 or key.find("record") != -1 or key.find("ticket") != -1 or key.find("badge") != -1 or key.find("clipboard") != -1 or key.find("entry card") != -1:
+		return "paper_note"
+	if key.find("crate") != -1 or key.find("carton") != -1 or key.find("stock") != -1 or key.find("goods") != -1 or key.find("case") != -1 or key.find("luggage") != -1 or key.find("trunk") != -1:
+		return "trunk_offer"
+	if key.find("rope") != -1 or key.find("rail") != -1 or key.find("barrier") != -1 or key.find("barricade") != -1 or key.find("fence") != -1 or key.find("picket") != -1 or key.find("windbreak") != -1 or key.find("cage") != -1:
+		return "room_barrier"
+	if key.find("chair") != -1 or key.find("seat") != -1 or key.find("booth") != -1 or key.find("bench") != -1:
+		return "room_seating"
+	if key.find("light") != -1 or key.find("lamp") != -1 or key.find("sign") != -1 or key.find("signal") != -1 or key.find("beacon") != -1:
+		return "room_signal"
+	if key.find("bottle") != -1 or key.find("drink") != -1 or key.find("glass") != -1 or key.find("keg") != -1 or key.find("food") != -1:
+		return "room_refreshment"
+	if key.find("table") != -1 or key.find("counter") != -1 or key.find("desk") != -1 or key.find("stage") != -1 or key.find("platform") != -1 or key.find("surface") != -1 or key.find("stand") != -1 or key.find("stall") != -1:
+		return "room_surface"
+	if key.find("machine") != -1 or key.find("workstation") != -1 or key.find("terminal") != -1 or key.find("engine") != -1 or key.find("pump") != -1 or key.find("repair") != -1 or key.find("tool") != -1 or key.find("speaker") != -1 or key.find("equipment") != -1 or key.find("panel") != -1 or key.find("job") != -1:
+		return "jammed_machine"
+	if key.find("bed") != -1 or key.find("furniture") != -1 or key.find("rack") != -1 or key.find("shelf") != -1 or key.find("cart") != -1 or key.find("tray") != -1 or key.find("trolley") != -1:
+		return "room_storage"
+	if key.find("gauge") != -1 or key.find("instrument") != -1 or key.find("board") != -1 or key.find("score") != -1 or key.find("bracket") != -1 or key.find("display") != -1:
+		return "room_display"
+	if key.find("vehicle") != -1 or key.find("rig") != -1 or key.find("cruiser") != -1 or key.find("bus") != -1 or key.find("dolly") != -1:
+		return "room_vehicle"
+	if key.find("fire") != -1 or key.find("smoke") != -1 or key.find("fog") != -1 or key.find("storm") != -1 or key.find("flood") != -1 or key.find("leak") != -1:
+		return "room_hazard"
 	if key.find("phone") != -1:
 		return "payphone"
 	if key.find("camera") != -1 or key.find("sky") != -1:
 		return "security_camera"
 	if key.find("security") != -1 or key.find("heat") != -1:
 		return "security_exit"
-	if key.find("progression") != -1 or key.find("door") != -1:
+	if key.find("progression") != -1 or key.find("door") != -1 or key.find("exit") != -1 or key.find("lane") != -1:
 		return "side_door"
+	if key.find("route") != -1 or key.find("marker") != -1 or key.find("path") != -1 or key.find("corridor") != -1 or key.find("hallway") != -1 or key.find("gangway") != -1 or key.find("ring") != -1 or key.find("zone") != -1:
+		return "room_route"
 	if key.find("note") != -1 or key.find("tip") != -1:
 		return "paper_note"
 	if key.find("offer") != -1:
 		return "trunk_offer"
+	if key.find("clerk") != -1 or key.find("server") != -1 or key.find("staff") != -1 or key.find("worker") != -1:
+		return "clerk_talk"
+	if key.find("actor") != -1 or key.find("person") != -1 or key.find("patron") != -1 or key.find("guest") != -1 or key.find("witness") != -1 or key.find("crowd") != -1 or key.find("audience") != -1:
+		return "patron_talk"
+	# Lifecycle words are useful only when the author supplied no physical noun.
+	# Keep them last so an aftermath tray remains a tray and an interrupted row
+	# of chairs remains seating in the unlabeled room.
+	if key.find("trace") != -1 or key.find("aftermath") != -1 or key.find("debris") != -1 or key.find("abandoned") != -1 or key.find("interrupted") != -1:
+		return "room_trace"
 	return "patron_talk"
+
+
+func _public_prop_state_variant(public_state: String) -> String:
+	var normalized := public_state.strip_edges().to_lower()
+	if normalized.is_empty():
+		return ""
+	# The input is the validated public scene-object DTO, never scenario
+	# local_state. Persist only a presentation fingerprint in the canvas object;
+	# the authored state string is not republished under a new field.
+	return "public_%s" % normalized.sha256_text().left(10)
+
+
+func _public_prop_state_label(public_state: String) -> String:
+	var normalized := public_state.strip_edges().to_lower()
+	for prefix in ["changed_by_", "acted_", "state_"]:
+		if normalized.begins_with(prefix):
+			normalized = normalized.trim_prefix(prefix)
+			break
+	var tokens := normalized.split("_", false)
+	for preferred in ["opened", "open", "closed", "cleared", "released", "ready", "lit", "fixed", "repaired", "moved", "failed", "fail", "refused", "refuse", "complete", "completed"]:
+		if tokens.has(preferred):
+			return preferred.to_upper().substr(0, 9)
+	if tokens.is_empty():
+		return ""
+	# Never turn arbitrary state tokens into player-facing text. The explicit
+	# vocabulary above is presentation-safe; every other public state gets a
+	# generic non-color acknowledgement.
+	return "CHANGED"
+
+
+func _draw_public_prop_state_marker(rect: Rect2, object_data: Dictionary, accent: Color) -> void:
+	var variant := str(object_data.get("prop_state_variant", ""))
+	if variant.is_empty():
+		return
+	var fingerprint := str(object_data.get("prop_state_pattern", ""))
+	var marker_color := C_CYAN
+	match int(object_data.get("prop_state_color_index", 0)):
+		1: marker_color = C_YELLOW
+		2: marker_color = C_PINK
+		3: marker_color = C_TEAL
+	# Keep the state cue inside the object's lower edge. The previous boxed badge
+	# covered nearby machines and read like a second generic icon in dense rooms.
+	var rail := Rect2(rect.position + Vector2(5.0, rect.size.y - 7.0), Vector2(maxf(1.0, rect.size.x - 10.0), 3.0))
+	draw_rect(rail, Color(0.02, 0.02, 0.05, 0.72))
+	# Ten hexadecimal cells expose forty deterministic non-color bits. Actual
+	# authored states remain collision-audited by the presentation gate.
+	for column in range(mini(10, fingerprint.length())):
+		var code := fingerprint.unicode_at(column)
+		var nibble := code - 48 if code <= 57 else code - 87
+		for bit in range(4):
+			var bit_rect := Rect2(rail.position + Vector2(2.0 + float(column) * 4.5, float(bit) * 0.75), Vector2(3.0, 0.65))
+			if (nibble & (1 << bit)) != 0:
+				draw_rect(bit_rect, marker_color)
+			else:
+				draw_rect(bit_rect, Color(marker_color.r, marker_color.g, marker_color.b, 0.18), false, 1.0)
+	draw_line(rect.position + Vector2(3.0, rect.size.y - 10.0), rect.position + Vector2(3.0, rect.size.y - 2.0), marker_color, 2.0)
+	draw_line(rect.end - Vector2(3.0, 10.0), rect.end - Vector2(3.0, 2.0), marker_color, 2.0)
+	draw_rect(rect.grow(1.0), Color(accent.r, accent.g, accent.b, 0.58), false, 1.0)
+
+
+func _fallback_scenario_semantic_prop(value: String) -> String:
+	var tokens: Dictionary = {}
+	var normalized := value.to_lower()
+	for separator in ["_", "-", "/", "\\", ".", ",", ":", ";", "!", "?", "'", "(", ")"]:
+		normalized = normalized.replace(separator, " ")
+	for token_value in normalized.split(" ", false): tokens[str(token_value)] = true
+	if normalized.begins_with("scenario actor "):
+		return "clerk_talk" if _tokens_have(tokens, ["clerk", "server", "worker"]) else "patron_talk"
+	if _tokens_have(tokens, ["exit", "door", "doorway", "gangway"]): return "side_door"
+	if _tokens_have(tokens, ["route", "lane", "corridor", "path", "aisle", "trail", "ring"]): return "room_route"
+	if _tokens_have(tokens, ["manifest", "paper", "label", "evidence", "ledger", "record", "ticket", "badge", "clipboard", "note", "card", "cards", "tag", "sheet", "slip", "receipt", "pencil", "placard", "placards"]): return "paper_note"
+	if _tokens_have(tokens, ["crate", "carton", "stock", "goods", "case", "luggage", "trunk", "pallet", "box", "boxes", "pouch"]): return "trunk_offer"
+	if _tokens_have(tokens, ["rope", "rail", "barrier", "barricade", "fence", "picket", "windbreak", "cage", "cordon", "gate", "gates", "shutter", "shutters"]): return "room_barrier"
+	if _tokens_have(tokens, ["chair", "chairs", "seat", "seats", "booth", "bench", "benches", "stool"]): return "room_seating"
+	if _tokens_have(tokens, ["light", "lights", "flashlight", "lamp", "sign", "signal", "beacon", "marker"]): return "room_signal"
+	if _tokens_have(tokens, ["bottle", "drink", "glass", "keg", "food", "cup", "coffee"]): return "room_refreshment"
+	if _tokens_have(tokens, ["table", "tables", "counter", "desk", "lectern", "stage", "platform", "surface", "stand", "stall", "station"]): return "room_surface"
+	if _tokens_have(tokens, ["machine", "workstation", "terminal", "engine", "generator", "pump", "repair", "tool", "tools", "speaker", "equipment", "panel", "microphone", "cable", "circuit", "cooler", "sink", "job", "jobs"]): return "jammed_machine"
+	if _tokens_have(tokens, ["bed", "furniture", "rack", "shelf", "cart", "tray", "trolley", "stack", "dock", "coat"]): return "room_storage"
+	if _tokens_have(tokens, ["gauge", "instrument", "board", "score", "scoreboard", "bracket", "display", "slate", "tally"]): return "room_display"
+	if _tokens_have(tokens, ["vehicle", "rig", "cruiser", "bus", "dolly", "patrol", "car"]): return "room_vehicle"
+	if _tokens_have(tokens, ["fire", "smoke", "fog", "storm", "flood", "leak", "hazard"]): return "room_hazard"
+	if _tokens_have(tokens, ["phone", "payphone"]): return "payphone"
+	if _tokens_have(tokens, ["camera"]): return "security_camera"
+	if _tokens_have(tokens, ["security", "heat"]): return "security_exit"
+	if _tokens_have(tokens, ["clerk", "server", "worker"]): return "clerk_talk"
+	if _tokens_have(tokens, ["actor", "person", "patron", "guest", "witness", "crowd", "audience", "queue", "staff", "brawler", "passenger", "bartender", "judges"]): return "patron_talk"
+	if _tokens_have(tokens, ["trace", "traces", "clue", "clues", "aftermath", "debris", "abandoned", "interrupted"]): return "room_trace"
+	return "room_fixture"
+
+
+func _tokens_have(tokens: Dictionary, candidates: Array) -> bool:
+	for candidate_value in candidates:
+		if tokens.has(str(candidate_value)): return true
+	return false
 
 
 func _draw_event_prop(rect: Rect2, object_data: Dictionary, selected: bool) -> void:
 	var prop := str(object_data.get("prop", "")).strip_edges()
 	if prop.is_empty():
-		prop = _fallback_event_prop(str(object_data.get("visual_key", "")), str(object_data.get("icon_key", "")))
+		prop = _fallback_event_prop(str(object_data.get("visual_key", "")), str(object_data.get("icon_key", "")), str(object_data.get("state", "")))
 	var accent := _event_prop_accent(prop, selected)
 	_draw_interactable_light(rect, accent, selected)
 	match prop:
@@ -4837,6 +5813,30 @@ func _draw_event_prop(rect: Rect2, object_data: Dictionary, selected: bool) -> v
 			_draw_event_patron_prop(rect, accent, 0.64, false, true)
 		"payphone", "counter_phone":
 			_draw_travel_payphone(rect, accent)
+		"room_barrier":
+			_draw_scenario_barrier_prop(rect, accent)
+		"room_seating":
+			_draw_scenario_seating_prop(rect, accent)
+		"room_signal":
+			_draw_scenario_signal_prop(rect, accent)
+		"room_refreshment":
+			_draw_scenario_refreshment_prop(rect, accent)
+		"room_surface":
+			_draw_scenario_surface_prop(rect, accent)
+		"room_fixture":
+			_draw_scenario_fixture_prop(rect, accent)
+		"room_trace":
+			_draw_scenario_trace_prop(rect, accent)
+		"room_route":
+			_draw_scenario_route_prop(rect, accent)
+		"room_storage":
+			_draw_scenario_storage_prop(rect, accent)
+		"room_display":
+			_draw_scenario_display_prop(rect, accent)
+		"room_vehicle":
+			_draw_scenario_vehicle_prop(rect, accent)
+		"room_hazard":
+			_draw_scenario_hazard_prop(rect, accent)
 		_:
 			_draw_event_patron_prop(rect, accent)
 	var icon_texture := _texture_for_asset_path(str(object_data.get("asset_path", "")))
@@ -4867,6 +5867,121 @@ func _event_icon_rect(rect: Rect2, prop: String) -> Rect2:
 		"payphone", "counter_phone":
 			return _centered_icon_rect(rect, 26.0, Vector2(24, -10))
 	return _centered_icon_rect(rect, 34.0, Vector2(24, -18))
+
+
+func _draw_scenario_barrier_prop(rect: Rect2, accent: Color) -> void:
+	var floor_y := rect.position.y + rect.size.y * 0.78
+	for x_ratio in [0.22, 0.78]:
+		var x: float = rect.position.x + rect.size.x * float(x_ratio)
+		draw_line(Vector2(x, floor_y), Vector2(x, rect.position.y + rect.size.y * 0.30), C_SHADOW, 5)
+		draw_circle(Vector2(x, rect.position.y + rect.size.y * 0.27), 4, accent)
+	draw_line(rect.position + Vector2(rect.size.x * 0.22, rect.size.y * 0.44), rect.position + Vector2(rect.size.x * 0.78, rect.size.y * 0.58), accent, 4)
+	draw_line(rect.position + Vector2(rect.size.x * 0.16, floor_y), rect.position + Vector2(rect.size.x * 0.84, floor_y), Color(accent.r, accent.g, accent.b, 0.28), 3)
+
+
+func _draw_scenario_seating_prop(rect: Rect2, accent: Color) -> void:
+	for x_ratio in [0.28, 0.62]:
+		var chair: Rect2 = Rect2(rect.position + Vector2(rect.size.x * float(x_ratio), rect.size.y * 0.34), Vector2(rect.size.x * 0.22, rect.size.y * 0.30))
+		draw_rect(chair, Color("#281a31"))
+		draw_rect(chair, accent, false, 2)
+		draw_line(chair.position + Vector2(2, chair.size.y), chair.position + Vector2(0, chair.size.y + rect.size.y * 0.20), C_SHADOW, 3)
+		draw_line(chair.end - Vector2(2, 0), chair.end + Vector2(0, rect.size.y * 0.20), C_SHADOW, 3)
+
+
+func _draw_scenario_signal_prop(rect: Rect2, accent: Color) -> void:
+	var center := rect.get_center()
+	draw_line(center + Vector2(0, rect.size.y * 0.35), center - Vector2(0, rect.size.y * 0.12), C_SHADOW, 5)
+	draw_circle(center - Vector2(0, rect.size.y * 0.22), minf(rect.size.x, rect.size.y) * 0.16, accent)
+	for radius in [0.25, 0.34]:
+		draw_arc(center - Vector2(0, rect.size.y * 0.22), minf(rect.size.x, rect.size.y) * radius, PI * 1.12, PI * 1.88, 12, Color(accent.r, accent.g, accent.b, 0.42), 2)
+
+
+func _draw_scenario_refreshment_prop(rect: Rect2, accent: Color) -> void:
+	draw_rect(Rect2(rect.position + Vector2(rect.size.x * 0.12, rect.size.y * 0.70), Vector2(rect.size.x * 0.76, 5)), C_SHADOW)
+	for index in range(3):
+		var bottle := Rect2(rect.position + Vector2(rect.size.x * (0.25 + index * 0.20), rect.size.y * (0.30 + (index % 2) * 0.08)), Vector2(8, rect.size.y * 0.34))
+		draw_rect(bottle, accent.darkened(float(index) * 0.10))
+		draw_rect(Rect2(bottle.position + Vector2(2, -5), Vector2(4, 6)), C_YELLOW)
+
+
+func _draw_scenario_surface_prop(rect: Rect2, accent: Color) -> void:
+	var top := Rect2(rect.position + Vector2(rect.size.x * 0.08, rect.size.y * 0.50), Vector2(rect.size.x * 0.84, rect.size.y * 0.18))
+	draw_rect(top, Color("#34213a"))
+	draw_rect(top, accent, false, 2)
+	draw_line(top.position + Vector2(top.size.x * 0.16, top.size.y), top.position + Vector2(top.size.x * 0.12, rect.size.y * 0.42), C_SHADOW, 4)
+	draw_line(top.position + Vector2(top.size.x * 0.84, top.size.y), top.position + Vector2(top.size.x * 0.88, rect.size.y * 0.42), C_SHADOW, 4)
+
+
+func _draw_scenario_fixture_prop(rect: Rect2, accent: Color) -> void:
+	var fixture := Rect2(rect.position + Vector2(rect.size.x * 0.22, rect.size.y * 0.28), Vector2(rect.size.x * 0.56, rect.size.y * 0.46))
+	draw_rect(fixture, Color("#19172b"))
+	draw_rect(fixture, accent, false, 2)
+	draw_line(fixture.position + Vector2(5, fixture.size.y * 0.34), fixture.end - Vector2(5, fixture.size.y * 0.66), Color(accent.r, accent.g, accent.b, 0.45), 2)
+	draw_line(fixture.position + Vector2(5, fixture.size.y * 0.66), fixture.end - Vector2(5, fixture.size.y * 0.34), Color(accent.r, accent.g, accent.b, 0.45), 2)
+
+
+func _draw_scenario_trace_prop(rect: Rect2, accent: Color) -> void:
+	var baseline := rect.position.y + rect.size.y * 0.72
+	draw_line(Vector2(rect.position.x + rect.size.x * 0.12, baseline), Vector2(rect.end.x - rect.size.x * 0.12, baseline), Color(accent.r, accent.g, accent.b, 0.35), 2)
+	for index in range(4):
+		var center := rect.position + Vector2(rect.size.x * (0.20 + float(index) * 0.19), rect.size.y * (0.38 + float(index % 2) * 0.16))
+		draw_circle(center, 4.0 + float(index % 2), accent.darkened(float(index) * 0.08))
+		draw_line(center + Vector2(-5, 7), center + Vector2(6, 10), C_SHADOW, 2)
+
+
+func _draw_scenario_route_prop(rect: Rect2, accent: Color) -> void:
+	var start := rect.position + Vector2(rect.size.x * 0.14, rect.size.y * 0.68)
+	var finish := rect.position + Vector2(rect.size.x * 0.78, rect.size.y * 0.32)
+	draw_dashed_line(start, finish, accent, 3.0, 7.0, true)
+	_scenario_route_arrow_points[0] = finish
+	_scenario_route_arrow_points[1] = finish + Vector2(-10, -1)
+	_scenario_route_arrow_points[2] = finish + Vector2(-3, 9)
+	draw_colored_polygon(_scenario_route_arrow_points, accent)
+
+
+func _draw_scenario_storage_prop(rect: Rect2, accent: Color) -> void:
+	var frame := Rect2(rect.position + Vector2(rect.size.x * 0.14, rect.size.y * 0.24), Vector2(rect.size.x * 0.72, rect.size.y * 0.54))
+	draw_rect(frame, Color("#21182d"))
+	draw_rect(frame, accent, false, 2)
+	for y_ratio in [0.34, 0.66]:
+		draw_line(Vector2(frame.position.x + 3, frame.position.y + frame.size.y * float(y_ratio)), Vector2(frame.end.x - 3, frame.position.y + frame.size.y * float(y_ratio)), accent.darkened(0.22), 2)
+
+
+func _draw_scenario_display_prop(rect: Rect2, accent: Color) -> void:
+	var board := Rect2(rect.position + Vector2(rect.size.x * 0.12, rect.size.y * 0.18), Vector2(rect.size.x * 0.76, rect.size.y * 0.55))
+	draw_rect(board, Color("#161b2d"))
+	draw_rect(board, accent, false, 2)
+	for index in range(3):
+		var y := board.position.y + board.size.y * (0.25 + float(index) * 0.23)
+		draw_line(Vector2(board.position.x + 7, y), Vector2(board.end.x - 7 - index * 5, y), accent.lightened(0.10), 2)
+	draw_line(board.get_center() + Vector2(0, board.size.y * 0.50), board.get_center() + Vector2(0, board.size.y * 0.72), C_SHADOW, 4)
+
+
+func _draw_scenario_vehicle_prop(rect: Rect2, accent: Color) -> void:
+	var body := Rect2(rect.position + Vector2(rect.size.x * 0.10, rect.size.y * 0.40), Vector2(rect.size.x * 0.80, rect.size.y * 0.30))
+	draw_rect(body, accent.darkened(0.50))
+	draw_rect(body, accent, false, 2)
+	_scenario_vehicle_canopy_points[0] = body.position + Vector2(body.size.x * 0.22, 0)
+	_scenario_vehicle_canopy_points[1] = body.position + Vector2(body.size.x * 0.38, -rect.size.y * 0.18)
+	_scenario_vehicle_canopy_points[2] = body.position + Vector2(body.size.x * 0.68, -rect.size.y * 0.18)
+	_scenario_vehicle_canopy_points[3] = body.position + Vector2(body.size.x * 0.82, 0)
+	draw_colored_polygon(_scenario_vehicle_canopy_points, accent.darkened(0.36))
+	draw_circle(body.position + Vector2(body.size.x * 0.24, body.size.y), 5, C_SHADOW)
+	draw_circle(body.position + Vector2(body.size.x * 0.76, body.size.y), 5, C_SHADOW)
+
+
+func _draw_scenario_hazard_prop(rect: Rect2, accent: Color) -> void:
+	var center := rect.get_center()
+	_scenario_hazard_fill_points[0] = center + Vector2(0, -rect.size.y * 0.32)
+	_scenario_hazard_fill_points[1] = center + Vector2(rect.size.x * 0.34, rect.size.y * 0.28)
+	_scenario_hazard_fill_points[2] = center + Vector2(-rect.size.x * 0.34, rect.size.y * 0.28)
+	_scenario_hazard_outline_points[0] = _scenario_hazard_fill_points[0]
+	_scenario_hazard_outline_points[1] = _scenario_hazard_fill_points[1]
+	_scenario_hazard_outline_points[2] = _scenario_hazard_fill_points[2]
+	_scenario_hazard_outline_points[3] = _scenario_hazard_fill_points[0]
+	draw_colored_polygon(_scenario_hazard_fill_points, accent.darkened(0.42))
+	draw_polyline(_scenario_hazard_outline_points, accent, 2)
+	_neon_text("!", center + Vector2(-4, 8), 16, C_WHITE)
 
 
 func _draw_event_clerk_prop(rect: Rect2, accent: Color, talking: bool) -> void:
@@ -5035,6 +6150,26 @@ func _silhouette(pos: Vector2, scale_value: float, color: Color) -> void:
 
 func _slot_machine(rect: Rect2, accent: Color) -> void:
 	_draw_slot_cabinet_prop(rect, {"label": "SLOT", "source_id": "ambient_slot"}, accent, false, false)
+
+
+func _draw_roulette_room_prop(rect: Rect2, object_data: Dictionary, accent: Color, selected: bool, disabled: bool = false) -> void:
+	var table := Rect2(rect.position + Vector2(rect.size.x * 0.06, rect.size.y * 0.48), Vector2(rect.size.x * 0.88, rect.size.y * 0.30))
+	draw_rect(table, Color("#14503c"))
+	draw_rect(table, accent, false, 2.0)
+	var wheel_center := rect.position + Vector2(rect.size.x * 0.30, rect.size.y * 0.38)
+	var wheel_radius := minf(rect.size.x, rect.size.y) * 0.20
+	draw_circle(wheel_center, wheel_radius, Color("#351322"))
+	draw_circle(wheel_center, wheel_radius * 0.78, C_AMBER)
+	for index in range(8):
+		var angle := float(index) * TAU / 8.0
+		draw_line(wheel_center, wheel_center + Vector2(cos(angle), sin(angle)) * wheel_radius, C_SHADOW, 1.0)
+	draw_circle(wheel_center, maxf(2.0, wheel_radius * 0.12), C_YELLOW)
+	for column in range(4):
+		var cell := Rect2(table.position + Vector2(table.size.x * (0.52 + float(column) * 0.10), table.size.y * 0.18), Vector2(table.size.x * 0.08, table.size.y * 0.56))
+		draw_rect(cell, C_PINK if column % 2 == 0 else C_DARK)
+	_draw_game_object_icon(object_data, _centered_icon_rect(rect, 22.0, Vector2(rect.size.x * 0.32, -rect.size.y * 0.25)), accent, selected, disabled)
+	if selected: draw_rect(table.grow(3.0), C_WHITE, false, 2.0)
+	if disabled: draw_rect(rect.grow(-2.0), Color(0.0, 0.0, 0.0, 0.48))
 
 
 func _draw_pull_tab_machine_prop(rect: Rect2, object_data: Dictionary, accent: Color, selected: bool, disabled: bool = false) -> void:

@@ -16,7 +16,7 @@ static func resolve(game: GameModule, action_id: String, stake: int, run_state: 
 		return {"ok": false, "error_code": "invalid_fixture"}
 	run_state.current_environment = environment
 	_seed_session(game, run_state, environment, ui_state)
-	var host: Control = FoundationMainScript.new()
+	var host := _new_production_host()
 	host.set("current_game", game)
 	host.set("game_module_cache", {"blackjack": game})
 	host.set("run_state", run_state)
@@ -44,7 +44,7 @@ static func surface_intent(game: GameModule, surface_action: String, stake: int,
 	if game == null or run_state == null:
 		return {"handled": false, "error_code": "invalid_fixture"}
 	run_state.current_environment = environment
-	var host: Control = FoundationMainScript.new()
+	var host := _new_production_host()
 	host.set("current_game", game)
 	host.set("game_module_cache", {"blackjack": game})
 	host.set("run_state", run_state)
@@ -70,7 +70,7 @@ static func resolve_surface_command(game: GameModule, command: Dictionary, _stak
 			or explicit_stake != command_stake:
 		return {"ok": false, "error_code": "receipt_content_conflict", "message": "The surface command did not match its sealed Blackjack delivery."}
 	run_state.current_environment = environment
-	var host: Control = FoundationMainScript.new()
+	var host := _new_production_host()
 	host.set("current_game", game)
 	host.set("game_module_cache", {"blackjack": game})
 	host.set("run_state", run_state)
@@ -88,7 +88,7 @@ static func advance_terminal_presentation(game: GameModule, stake: int, run_stat
 	if session.is_empty() or not bool(game.call("_has_dealt_hand", session)):
 		return {"ok": true, "terminal_cleared": true, "surface_time_msec": 0}
 	var surface_time_msec := _terminal_presentation_end_msec(game, session)
-	var host: Control = FoundationMainScript.new()
+	var host := _new_production_host()
 	host.set("current_game", game)
 	host.set("game_module_cache", {"blackjack": game})
 	host.set("run_state", run_state)
@@ -176,3 +176,15 @@ static func _seed_session(game: GameModule, run_state: RunState, environment: Di
 	table[BlackjackActionAuthorityScript.LEDGER_KEY] = BlackjackActionAuthorityScript.stage_session(ledger, ui_state)
 	game.call("_update_environment_table", environment, table)
 	run_state.current_environment = environment
+
+
+static func _new_production_host() -> Control:
+	var host: Control = FoundationMainScript.new()
+	# FoundationMain loads its UI collaborators in staged _ready() work. These
+	# focused authority probes intentionally do not add the host to a tree, so
+	# establish the same collaborator stages before invoking production seams.
+	for stage_index in [0, 4, 10, 12]:
+		if not bool(host.call("_ensure_run_ui_stage_scripts", stage_index)):
+			host.free()
+			return null
+	return host

@@ -38,9 +38,17 @@ static func validate_frozen_event_module_inventory(event_catalog: Array, event_m
 	var actual_hooks: Array = []
 	for line in event_module_source.split("\n"):
 		var trimmed := str(line).strip_edges()
-		if not trimmed.begins_with('"crew_') or not trimmed.ends_with('":') or trimmed.count('"') != 2: continue
-		var hook_id := trimmed.trim_prefix('"').trim_suffix('":')
-		if not actual_hooks.has(hook_id): actual_hooks.append(hook_id)
+		if not trimmed.begins_with('"crew_') or not trimmed.ends_with(":"): continue
+		# GDScript match arms may group semantically identical hooks on one line,
+		# for example `"crew_recruit", "crew_meet":`. Inventory validation must
+		# still account for each literal instead of treating the grouped syntax as
+		# a removed production route.
+		var arm := trimmed.trim_suffix(":")
+		for hook_literal_value in arm.split(","):
+			var hook_literal := str(hook_literal_value).strip_edges()
+			if not hook_literal.begins_with('"crew_') or not hook_literal.ends_with('"') or hook_literal.count('"') != 2: continue
+			var hook_id := hook_literal.trim_prefix('"').trim_suffix('"')
+			if not actual_hooks.has(hook_id): actual_hooks.append(hook_id)
 	var diagnostics: Array = []
 	_append_inventory_difference(diagnostics, "event_catalog", actual_events, _array(frozen_inventory.get("event_catalog", [])))
 	_append_inventory_difference(diagnostics, "dynamic_kind", actual_kinds, _array(frozen_inventory.get("dynamic_kind", [])))
@@ -398,19 +406,36 @@ static func acknowledge_outcome(environment: Dictionary, token: String, receipt_
 
 
 static func composed_projection(environment: Dictionary, definitions: Dictionary, environment_projection: Dictionary = {}) -> Dictionary:
+	var container := _container(environment)
+	var tokens := container.keys()
+	tokens.sort()
+	var live_tokens: Array = []
+	for token_value in tokens:
+		var token := str(token_value)
+		var entry := _dict(container.get(token, {}))
+		if str(entry.get("lifecycle", "")) == LIFECYCLE_CLEANED:
+			continue
+		if SequenceSchemaScript.is_sequence(_dict(definitions.get(token, {}))):
+			live_tokens.append(token)
+	# Preserve the scenario engine's exact projection bytes when no mounted owner
+	# contributes to this room. Besides avoiding needless deep copies on ordinary
+	# rooms, this keeps Crew-ignoring runs a true serialization no-op.
+	if live_tokens.is_empty():
+		return environment_projection
 	var result := environment_projection.duplicate(true)
 	var semantic := _dict(result.get("semantic_state", {}))
 	for collection in PROJECTION_COLLECTIONS:
 		semantic[collection] = _dict(semantic.get(collection, {}))
 	var errors: Array = []
-	var tokens := _container(environment).keys()
-	tokens.sort()
-	for token_value in tokens:
+	for token_value in live_tokens:
 		var token := str(token_value)
-		var entry := _dict(_container(environment).get(token, {}))
-		var definition := _dict(definitions.get(token, {}))
-		if not SequenceSchemaScript.is_sequence(definition):
+		var entry := _dict(container.get(token, {}))
+		# Cleaned entries are durable receipts, not live room projections. Keeping
+		# their aftermath semantics in composition made the host scenario's next
+		# seal fail and blocked every subsequent travel action.
+		if str(entry.get("lifecycle", "")) == LIFECYCLE_CLEANED:
 			continue
+		var definition := _dict(definitions.get(token, {}))
 		var creation_owners := _array(_dict(_dict(entry.get("state", {})).get("semantic_state", {})).get("creation_owner_namespaces", []))
 		var owner_projection := projection(environment, token, definition)
 		var owner_semantic := _dict(owner_projection.get("semantic_state", {}))
@@ -584,7 +609,13 @@ static func _ownership_conflicts(token: String, claims: Array, container: Dictio
 	for other_token_value in container.keys():
 		if str(other_token_value) == token:
 			continue
-		occupied.append_array(_array(_dict(container.get(other_token_value, {})).get("ownership_claims", [])))
+		var other_entry := _dict(container.get(other_token_value, {}))
+		# A cleaned entry is a durable receipt/tombstone. Its runtime cleanup has
+		# removed every owned semantic object, so it must not continue reserving the
+		# temporary identity against a later instance of the same reusable package.
+		if str(other_entry.get("lifecycle", "")) == LIFECYCLE_CLEANED:
+			continue
+		occupied.append_array(_array(other_entry.get("ownership_claims", [])))
 	for claim_value in claims:
 		var claim := _dict(claim_value)
 		for occupied_value in occupied:
@@ -650,7 +681,13 @@ static func _durable_state(value: Variant) -> Dictionary:
 		return {}
 	var state := (value as Dictionary).duplicate(true)
 	var semantic := _dict(state.get("semantic_state", {}))
-	for key in ["target_inventory", "declared_targets", "base_interactions", "event_choices", "scene_objects", "interactions", "actors", "services", "games", "routes", "transition_queue", "tombstones"]:
+	# Host interactions, choices, and transient transition queues are rebuilt at
+	# the ordinary presentation boundary. The public target inventory and declared
+	# zones must survive with owner-created scene/interaction/actor state: cleanup
+	# and aftermath operations validate against those mounted targets after a
+	# fresh-process load. These bounded public collections contain no private Crew
+	# authority.
+	for key in ["base_interactions", "event_choices", "transition_queue"]:
 		semantic.erase(key)
 	state["semantic_state"] = semantic
 	state.erase("resolved_branches")

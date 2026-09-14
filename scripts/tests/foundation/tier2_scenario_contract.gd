@@ -167,7 +167,7 @@ static func _check_debt_court(library: ContentLibrary, failures: Array) -> void:
 	run_state.start_new("DEBT-COURT")
 	run_state.bankroll = 500
 	run_state.add_debt({"id": "debt_court_fixture", "lender_id": "street_lender", "debt_kind": "cash", "status": "active", "balance": 100, "principal": 100, "deadline_turns": 4, "turns_remaining": 4})
-	run_state.set_environment(EnvironmentInstanceScript.from_archetype_layer(archetype, "casino", 2, run_state.create_rng("court"), library, {}, definition).to_dict())
+	run_state.set_environment(EnvironmentInstanceScript.from_archetype_layer(archetype, str(definition.get("layer_id", "club")), 2, run_state.create_rng("court"), library, {}, definition).to_dict())
 	var module := EventModuleScript.new()
 	module.setup(library.event("scenario_debt_court_office_hours"), library)
 	var result := module.resolve(run_state, run_state.current_environment, "settle_the_marker")
@@ -175,7 +175,7 @@ static func _check_debt_court(library: ContentLibrary, failures: Array) -> void:
 		failures.append("Debt Court did not settle the $100 marker for the configured $75 payment.")
 	var witness := RunStateScript.new()
 	witness.start_new("DEBT-COURT-WITNESS")
-	witness.set_environment(EnvironmentInstanceScript.from_archetype_layer(archetype, "casino", 2, witness.create_rng("court"), library, {}, definition).to_dict())
+	witness.set_environment(EnvironmentInstanceScript.from_archetype_layer(archetype, str(definition.get("layer_id", "club")), 2, witness.create_rng("court"), library, {}, definition).to_dict())
 	var witness_result := module.resolve(witness, witness.current_environment, "watch_the_next_name")
 	if not bool(witness_result.get("ok", false)) or not bool(witness.narrative_flags.get("debt_court_witness_beat", false)):
 		failures.append("Debt Court did not deliver its no-debt witness beat.")
@@ -363,6 +363,7 @@ static func _check_showdown_route(library: ContentLibrary, scenario_id: String, 
 		failures.append("Grand scenario %s failed its trusted showdown install/finalization: %s" % [scenario_id, JSON.stringify(installed.get("errors", []))])
 		return
 	run_state.narrative_flags["grand_casino_showdown_pending"] = true
+	run_state.narrative_flags["the_house_calls_pending"] = true
 	var module := EventModuleScript.new()
 	module.setup(library.event(RunStateScript.GRAND_CASINO_SHOWDOWN_EVENT_ID), library)
 	if not bool(module.resolve(run_state, run_state.current_environment, "enter_back_room").get("ok", false)):

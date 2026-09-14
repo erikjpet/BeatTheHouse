@@ -54,7 +54,7 @@ func _run() -> void:
 	var command_equivalence: Dictionary = renderer.call("debug_static_cache_command_equivalence_for_test")
 	observations["command_equivalence"] = command_equivalence
 	_check(bool(command_equivalence.get("exact_order_match", false)), "expanded_command_order_exact")
-	_check(command_equivalence.get("live_commands", []) == ["backglass", "platform", "bodies", "apron", "glass", "hardware"], "dynamic_commands_remain_live")
+	_check(command_equivalence.get("live_commands", []) == ["platform", "bodies", "apron", "glass", "hardware"], "dynamic_commands_remain_live")
 	# Desktop evidence opts into the shipped-Web cache while retaining the exact
 	# production game module, surface state, canvas and draw dispatch.
 	production_canvas.call("apply_surface_state_patch", {"coin_pusher_static_cache_test": true})
@@ -64,11 +64,76 @@ func _run() -> void:
 	var initial := _cache_state(renderer)
 	observations["initial"] = initial
 	_check(bool(initial.get("active", false)), "production_cache_active")
-	_check(int(initial.get("viewport_count", 0)) == 3, "production_cache_layer_count")
+	_check(int(initial.get("viewport_count", 0)) == 4, "production_cache_layer_count")
 	_check(int(initial.get("host_instance_id", 0)) == production_canvas.get_instance_id(), "production_cache_host")
 	_check(int(initial.get("viewport_parent_instance_id", 0)) == production_canvas.get_instance_id(), "production_cache_parent")
 
 	var snapshot: Dictionary = production_canvas.call("realtime_surface_state")
+	var expected_shell_protected_rects: Array = renderer.call("debug_static_cache_text_protected_rects_for_test", 0)
+	var expected_backglass_protected_rects: Array = renderer.call("debug_static_cache_text_protected_rects_for_test", 3)
+	var live_protected_rects: Array = production_canvas.get("surface_text_protected_rects")
+	var protected_rect_cap := DrunkDistortionOverlay.MAX_UI_PROTECTED_RECTS
+	var backglass_live_offset := mini(expected_shell_protected_rects.size(), protected_rect_cap)
+	var expected_live_backglass_count := mini(expected_backglass_protected_rects.size(), maxi(0, protected_rect_cap - backglass_live_offset))
+	_check(not expected_backglass_protected_rects.is_empty(), "backglass_fixture_contains_readable_text")
+	_check(expected_live_backglass_count > 0, "backglass_fixture_has_live_readability_capacity")
+	_check(live_protected_rects.size() >= backglass_live_offset + expected_live_backglass_count, "cached_backglass_live_readability_count")
+	_check(live_protected_rects.size() <= protected_rect_cap, "cached_surface_text_protection_respects_cap")
+	for rect_index in range(expected_live_backglass_count):
+		var live_index := backglass_live_offset + rect_index
+		_check(live_index < live_protected_rects.size() and live_protected_rects[live_index] == expected_backglass_protected_rects[rect_index], "cached_backglass_registers_live_readability_rect_%d" % rect_index)
+	observations["cached_backglass_readability"] = {
+		"preceding_shell_rect_count": expected_shell_protected_rects.size(),
+		"live_offset": backglass_live_offset,
+		"expected_rects": expected_backglass_protected_rects,
+		"expected_live_rect_count": expected_live_backglass_count,
+		"live_rect_count": live_protected_rects.size(),
+		"protected_rect_cap": protected_rect_cap,
+	}
+	var backglass_signature := str(renderer.call("debug_backglass_cache_signature_for_test", snapshot))
+	var backglass_dynamic_mutations := {
+		"presentation_serial": {"coin_pusher_presentation_view_serial": int(snapshot.get("coin_pusher_presentation_view_serial", 0)) + 1},
+		"platform_face": {"coin_pusher_face_position_y": int(snapshot.get("coin_pusher_face_position_y", 0)) + 1},
+		"carriage": {"coin_pusher_carriage_x": int(snapshot.get("coin_pusher_carriage_x", 0)) + 1},
+		"tray": {"coin_pusher_tray_count": int(snapshot.get("coin_pusher_tray_count", 0)) + 1},
+	}
+	for mutation_id in backglass_dynamic_mutations:
+		var mutated := snapshot.duplicate(true)
+		mutated.merge(backglass_dynamic_mutations[mutation_id], true)
+		_check(str(renderer.call("debug_backglass_cache_signature_for_test", mutated)) == backglass_signature, "backglass_cache_ignores_%s" % mutation_id)
+	var goal: Dictionary = (snapshot.get("coin_pusher_goal", {}) as Dictionary).duplicate(true) if typeof(snapshot.get("coin_pusher_goal", {})) == TYPE_DICTIONARY else {}
+	for field_name in ["id", "title", "instruction", "target", "progress", "bonus_tokens", "active"]:
+		var mutated := snapshot.duplicate(true)
+		var mutated_goal := goal.duplicate(true)
+		match field_name:
+			"id", "title", "instruction":
+				mutated_goal[field_name] = str(mutated_goal.get(field_name, "")) + ":changed"
+			"active":
+				mutated_goal[field_name] = not bool(mutated_goal.get(field_name, false))
+			"progress":
+				mutated_goal[field_name] = 0 if int(mutated_goal.get(field_name, 0)) > 0 else maxi(1, int(mutated_goal.get("target", 1)))
+			_:
+				mutated_goal[field_name] = int(mutated_goal.get(field_name, 0)) + 1
+		mutated["coin_pusher_goal"] = mutated_goal
+		_check(str(renderer.call("debug_backglass_cache_signature_for_test", mutated)) != backglass_signature, "backglass_cache_invalidates_goal_%s" % field_name)
+	var display_state := snapshot.duplicate(true)
+	display_state["coin_pusher_goal"] = {}
+	var display_cabinet: Dictionary = (snapshot.get("coin_pusher_cabinet", {}) as Dictionary).duplicate(true) if typeof(snapshot.get("coin_pusher_cabinet", {})) == TYPE_DICTIONARY else {}
+	display_cabinet["backglass_display"] = {"style": "dual_value_dial", "primary_state_key": "contract_primary", "secondary_state_key": "contract_secondary", "label_template": "%d %d"}
+	display_state["coin_pusher_cabinet"] = display_cabinet
+	display_state["contract_primary"] = 1
+	display_state["contract_secondary"] = 2
+	var display_signature := str(renderer.call("debug_backglass_cache_signature_for_test", display_state))
+	for value_key in ["contract_primary", "contract_secondary"]:
+		var mutated := display_state.duplicate(true)
+		mutated[value_key] = int(display_state.get(value_key, 0)) + 1
+		_check(str(renderer.call("debug_backglass_cache_signature_for_test", mutated)) != display_signature, "backglass_cache_invalidates_%s" % value_key)
+	observations["backglass_signature_contract"] = {
+		"base": backglass_signature,
+		"ignored_dynamic_count": backglass_dynamic_mutations.size(),
+		"goal_invalidation_count": 7,
+		"display_invalidation_count": 2,
+	}
 	var hardware_signature := str(renderer.call("debug_hardware_cache_signature_for_test", snapshot))
 	var serial_only := snapshot.duplicate(true)
 	serial_only["coin_pusher_presentation_view_serial"] = int(snapshot.get("coin_pusher_presentation_view_serial", 0)) + 1
@@ -173,6 +238,16 @@ func _run() -> void:
 	observations["dynamic"] = dynamic
 	_check(str(dynamic.get("key", "")) == static_key, "dynamic_state_preserves_static_key")
 	_check(int(dynamic.get("rebuild_serial", 0)) == static_serial, "dynamic_state_does_not_rebuild_static_layer")
+
+	var goal_before := _cache_state(renderer)
+	var changed_goal := goal.duplicate(true)
+	changed_goal["progress"] = 0 if int(changed_goal.get("progress", 0)) > 0 else maxi(1, int(changed_goal.get("target", 1)))
+	reentry_canvas.call("apply_surface_state_patch", {"coin_pusher_goal": changed_goal})
+	await _frames(5)
+	var goal_after := _cache_state(renderer)
+	observations["goal_after"] = goal_after
+	_check(str(goal_after.get("backglass_key", "")) != str(goal_before.get("backglass_key", "")), "goal_progress_invalidates_backglass_key")
+	_check(int(goal_after.get("rebuild_serial", 0)) > int(goal_before.get("rebuild_serial", 0)), "goal_progress_rebuilt_backglass_layer")
 
 	var content_before := _cache_state(renderer)
 	reentry_canvas.call("apply_surface_state_patch", {"coin_pusher_static_content_key": str(snapshot.get("coin_pusher_static_content_key", "")) + ":contract_mutation"})
@@ -367,7 +442,7 @@ func _frames(count: int) -> void:
 func _finish() -> void:
 	var report := {
 		"tool": "coin_pusher_static_cache_contract",
-		"schema": "coin_pusher_static_cache_contract_v2",
+		"schema": "coin_pusher_static_cache_contract_v3",
 		"source_head": source_head,
 		"source_tree": source_tree,
 		"build_identity": build_identity,

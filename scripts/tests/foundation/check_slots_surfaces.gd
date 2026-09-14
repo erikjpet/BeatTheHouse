@@ -4,6 +4,25 @@ const SlotsBlackjackAuthorityDriver := preload("res://scripts/tests/foundation/b
 const BarDiceFoundationMainScript := preload("res://scripts/ui/foundation_main.gd")
 
 
+# Direct slot-shard execution needs a narrow suite surface. The composed
+# foundation runner owns these functions itself, so omit this override when the
+# shard sources are concatenated.
+# SPLIT_RUNNER_OMIT_BEGIN
+func _foundation_default_suite() -> String:
+	return "slot" if get_script().resource_path == "res://scripts/tests/foundation/check_slots_surfaces.gd" else super._foundation_default_suite()
+
+
+func _foundation_runner_supported_suites() -> Array:
+	return ["slot", "slots", "slot_acceptance", "audit"] if get_script().resource_path == "res://scripts/tests/foundation/check_slots_surfaces.gd" else super._foundation_runner_supported_suites()
+
+
+func _check_slot_content(library: ContentLibrary, failures: Array) -> void:
+	super._check_slot_content(library, failures)
+	if get_script().resource_path == "res://scripts/tests/foundation/check_slots_surfaces.gd" and (_foundation_default_suite() != "slot" or _foundation_runner_supported_suites().has("smoke")):
+		failures.append("Slot split runner suite scope regressed; it must default to slot and reject broad inherited suites.")
+# SPLIT_RUNNER_OMIT_END
+
+
 class MotionSymbolHarness:
 	extends RefCounted
 
@@ -1878,7 +1897,11 @@ func _bar_dice_controlled_roll_item_fixture(game: GameModule, item_id: String) -
 	environment["game_states"] = {"bar_dice": state}
 	run_state.set_environment(environment)
 	var ui := {"surface_time_msec": 14000}
-	var load_command: Dictionary = game.surface_action_command("bar_dice_load", 0, false, ui, run_state, run_state.current_environment)
+	var roll_command: Dictionary = game.surface_action_command("bar_dice_roll", 0, false, ui, run_state, run_state.current_environment)
+	var roll_ui: Dictionary = roll_command.get("ui_state", ui)
+	var cover_command: Dictionary = game.surface_action_command("bar_dice_ack_cover", 0, false, roll_ui, run_state, run_state.current_environment)
+	var cover_ui: Dictionary = cover_command.get("ui_state", roll_ui)
+	var load_command: Dictionary = game.surface_action_command("bar_dice_load", 0, false, cover_ui, run_state, run_state.current_environment)
 	var load_ui: Dictionary = load_command.get("ui_state", ui)
 	var challenge: Dictionary = load_ui.get("controlled_roll", {}) if typeof(load_ui.get("controlled_roll", {})) == TYPE_DICTIONARY else {}
 	return {
@@ -2398,6 +2421,21 @@ func _resolve_and_apply_table_game_surface_contract(game: GameModule, action_id:
 	var result := _resolve_table_game_surface_contract(game, action_id, stake, run_state, environment, rng, ui_state)
 	if bool(result.get("ok", false)):
 		GameModule.apply_result(run_state, result, rng)
+		# This helper has already consumed the proposal. Clear the host flag so a
+		# fixture returning the result cannot accidentally apply its deltas twice.
+		result["host_apply_result"] = false
+	return result
+
+
+# Shared Slot/Table consumer checks exercise the deterministic Roulette and
+# Baccarat proposal cores directly. Live gameplay reaches these same cores only
+# through the sealed Foundation host; public compatibility resolvers remain
+# read-only and are covered by their dedicated authority contracts.
+func _resolve_table_game_surface_contract(game: GameModule, action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
+	var method := "_resolve_roulette_proposal_core" if game.get_id() == "roulette" else "_resolve_baccarat_proposal_core"
+	var result: Dictionary = game.call(method, action_id, stake, run_state, environment, rng, ui_state)
+	if bool(result.get("ok", false)):
+		result["host_apply_result"] = true
 	return result
 
 
@@ -2695,8 +2733,12 @@ func _xgame_blackjack_win_metric(game: GameModule, luck: int, item_id: String) -
 
 func _xgame_blackjack_heat_metric(game: GameModule, seed: String, drunk: bool, watched: bool, item_id: String) -> int:
 	var run_state: RunState = _xgame_blackjack_run(game, seed, 0, drunk, watched, item_id)
-	var result: Dictionary = SlotsBlackjackAuthorityDriver.resolve(game, "count_cards", 10, run_state, run_state.current_environment, run_state.create_rng("xgame_blackjack_heat"), _xgame_blackjack_dirty_count_ui())
-	return int(result.get("suspicion_delta", 0))
+	var recorded: Dictionary = SlotsBlackjackAuthorityDriver.resolve(game, "count_cards", 10, run_state, run_state.current_environment, run_state.create_rng("xgame_blackjack_count"), _xgame_blackjack_dirty_count_ui())
+	var settlement_ui: Dictionary = recorded.get("blackjack_surface_ui_state", {}) if typeof(recorded.get("blackjack_surface_ui_state", {})) == TYPE_DICTIONARY else {}
+	if settlement_ui.is_empty():
+		return 0
+	var settled: Dictionary = SlotsBlackjackAuthorityDriver.resolve(game, "play_basic", 10, run_state, run_state.current_environment, run_state.create_rng("xgame_blackjack_heat"), settlement_ui)
+	return int(settled.get("suspicion_delta", 0))
 
 
 func _xgame_pull_tabs_run(game: GameModule, seed: String, luck: int, drunk: bool, watched: bool, item_id: String) -> RunState:
@@ -3029,6 +3071,9 @@ func _sb4_check_blackjack_stale_stake_all_in(library: ContentLibrary, app: Contr
 	app.set("library", library)
 	app.set("run_state", run_state)
 	app.set("current_game", blackjack)
+	var game_cache: Dictionary = app.get("game_module_cache")
+	game_cache["blackjack"] = blackjack
+	app.set("game_module_cache", game_cache)
 	app.set("game_surface_ui_state", {})
 	# Reproduce a previous $60 selection after the bankroll has fallen to $20.
 	app.set("selected_stake", 60)
@@ -3140,6 +3185,10 @@ func _sb4_open_triggered_event_popup(library: ContentLibrary, app: Control, seed
 	var event_modal_environment := {
 		"id": "sb4_event_modal_casino",
 		"archetype_id": "delta_queen",
+		"world_node_id": "delta_queen",
+		"environment_visit_id": "visit_sb4_event_modal_casino_2",
+		"night_instance_id": "night_2",
+		"context_instance_id": "context_visit_sb4_event_modal_casino_2",
 		"display_name": "SB4 Event Modal Casino",
 		"kind": "casino",
 		"tier": 2,
@@ -3709,7 +3758,7 @@ func _check_challenge_pack_foundation(library: ContentLibrary, failures: Array) 
 		run_a.start_new("IGNORED-A", config)
 		var run_b: RunState = RunStateScript.new()
 		run_b.start_new("IGNORED-B", library.challenge_config_for(challenge_id, "CHALLENGE-PACK-SEED"))
-		if run_a.seed_value != run_b.seed_value or JSON.stringify(run_a.to_dict()) != JSON.stringify(run_b.to_dict()):
+		if run_a.seed_value != run_b.seed_value or JSON.stringify(_deterministic_run_projection(run_a)) != JSON.stringify(_deterministic_run_projection(run_b)):
 			failures.append("Challenge %s did not start deterministically from the same packed config." % challenge_id)
 		var restored: RunState = RunStateScript.new()
 		restored.from_dict(run_a.to_dict())

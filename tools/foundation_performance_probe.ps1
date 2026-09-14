@@ -3,6 +3,10 @@ param(
     [int]$FramesPerSurface = 120,
     [int]$ResolveSampleCount = 48,
     [string]$SeedPrefix = "FOUNDATION-PERF",
+    [string]$Out = "",
+    [string]$CandidateCommit = "",
+    [string]$ProfileManifestSha256 = "",
+    [string]$EvidenceProfile = "",
     [switch]$RequireGodot
 )
 
@@ -51,15 +55,40 @@ if (-not $godot) {
     exit 0
 }
 
+# The source-run probe executes under the editor/debug feature set, so a release
+# export DLL cannot satisfy its GDExtension selector. Build the locked debug
+# solver explicitly and bind its hash into the report; otherwise a Web-first
+# matrix can silently benchmark the slow GDScript fallback.
+& (Join-Path $PSScriptRoot "build_native_solver.ps1") -Platform Windows -Target template_debug -GodotPath $godot
+if ($LASTEXITCODE -ne 0) { throw "Locked Windows debug native solver build failed." }
+$nativePlugin = Join-Path $root "addons\coin_pusher_native\bin\coin_pusher_native_v3_10.windows.template_debug.x86_64.nothreads.dll"
+if (-not (Test-Path -LiteralPath $nativePlugin -PathType Leaf)) { throw "Locked Windows debug native solver is missing after build: $nativePlugin" }
+$nativePluginHash = (Get-FileHash -LiteralPath $nativePlugin -Algorithm SHA256).Hash.ToLowerInvariant()
+
 $oldRuns = $env:BTH_PERF_RUNS
 $oldFrames = $env:BTH_PERF_FRAMES
 $oldResolveSamples = $env:BTH_PERF_RESOLVE_SAMPLES
 $oldSeedPrefix = $env:BTH_PERF_SEED_PREFIX
+$oldReportPath = $env:BTH_PERF_REPORT_PATH
+$oldCandidateCommit = $env:BTH_PERF_CANDIDATE_COMMIT
+$oldProfileManifestSha256 = $env:BTH_PERF_PROFILE_MANIFEST_SHA256
+$oldEvidenceProfile = $env:BTH_PERF_EVIDENCE_PROFILE
+$oldNativePluginSha256 = $env:BTH_PERF_NATIVE_PLUGIN_SHA256
 try {
     $env:BTH_PERF_RUNS = [string]$RunCount
     $env:BTH_PERF_FRAMES = [string]$FramesPerSurface
     $env:BTH_PERF_RESOLVE_SAMPLES = [string]$ResolveSampleCount
     $env:BTH_PERF_SEED_PREFIX = $SeedPrefix
+    if ($Out) {
+        $reportPath = if ([IO.Path]::IsPathRooted($Out)) { [IO.Path]::GetFullPath($Out) } else { [IO.Path]::GetFullPath((Join-Path $root $Out)) }
+        $reportDirectory = Split-Path -Parent $reportPath
+        if (-not (Test-Path -LiteralPath $reportDirectory -PathType Container)) { New-Item -ItemType Directory -Force -Path $reportDirectory | Out-Null }
+        $env:BTH_PERF_REPORT_PATH = $reportPath
+    }
+    $env:BTH_PERF_CANDIDATE_COMMIT = $CandidateCommit
+    $env:BTH_PERF_PROFILE_MANIFEST_SHA256 = $ProfileManifestSha256
+    if ($EvidenceProfile) { $env:BTH_PERF_EVIDENCE_PROFILE = $EvidenceProfile }
+    $env:BTH_PERF_NATIVE_PLUGIN_SHA256 = $nativePluginHash
     $consoleGodot = Use-ConsoleGodot $godot
     & $consoleGodot --headless --path $root --script "res://tools/foundation_performance_probe.gd"
     exit $LASTEXITCODE
@@ -69,4 +98,9 @@ finally {
     $env:BTH_PERF_FRAMES = $oldFrames
     $env:BTH_PERF_RESOLVE_SAMPLES = $oldResolveSamples
     $env:BTH_PERF_SEED_PREFIX = $oldSeedPrefix
+    $env:BTH_PERF_REPORT_PATH = $oldReportPath
+    $env:BTH_PERF_CANDIDATE_COMMIT = $oldCandidateCommit
+    $env:BTH_PERF_PROFILE_MANIFEST_SHA256 = $oldProfileManifestSha256
+    $env:BTH_PERF_EVIDENCE_PROFILE = $oldEvidenceProfile
+    $env:BTH_PERF_NATIVE_PLUGIN_SHA256 = $oldNativePluginSha256
 }

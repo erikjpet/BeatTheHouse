@@ -4,6 +4,7 @@ const MainScene := preload("res://scenes/main.tscn")
 const UserSettingsScript := preload("res://scripts/core/user_settings.gd")
 const MetaCollectionServiceScript := preload("res://scripts/core/meta_collection_service.gd")
 const ProfileInventoryScript := preload("res://scripts/core/profile_inventory.gd")
+const HarnessProductionFidelityScript := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
 
 const TEST_SETTINGS_PATH := "user://tutorial_corner_shop_settings.json"
 const TEST_META_PATH := "user://tutorial_corner_shop_meta.json"
@@ -38,7 +39,14 @@ func _run() -> void:
 	var coach_overlay: Control = app.get("coach_overlay")
 	coach_overlay.call("begin_tutorial_run", completed)
 	var generator: RunGenerator = app.get("generator")
-	generator.next_environment(run_state, "corner_store", true)
+	var arrival_failures: Array = []
+	var arrival := HarnessProductionFidelityScript.travel_and_finalize(
+		generator, run_state, "corner_store", true, generator.library, arrival_failures,
+		"tutorial Corner Store setup"
+	)
+	if not bool(arrival.get("ok", false)):
+		_fail(str(arrival_failures.back()))
+		return
 	app.call("_set_current_screen", "ENVIRONMENT")
 	app.call("_refresh")
 	await process_frame

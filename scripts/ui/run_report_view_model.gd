@@ -32,7 +32,7 @@ const CREW_MEMBER_LABELS := {
 const GAME_LABELS := {
 	"craps": "Craps",
 	"coin_pusher": "Quarter Falls",
-	"crew_draw_poker": "Back-Room Poker",
+	"crew_draw_poker": "Back-Room Hold'em",
 }
 
 

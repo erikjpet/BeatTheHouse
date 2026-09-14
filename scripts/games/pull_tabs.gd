@@ -229,6 +229,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		],
 		"surface_audio": GameModule.surface_audio_spec({
 			"profile_id": "pull_tab_dispenser",
+			"selection_seed": run_state.seed_value if run_state != null else 1,
 			"action_cues": {
 				"pull_tab_buy": "ticket_dispenser",
 				"pull_tab_buy_all": "ticket_dispenser",
@@ -764,6 +765,10 @@ func surface_uses_auto_tick() -> bool:
 	return true
 
 
+func surface_auto_tick_may_be_active(retained_ui_state: Dictionary) -> bool:
+	return bool(retained_ui_state.get("pull_tab_auto_open_active", false))
+
+
 func surface_needs_auto_tick(ui_state: Dictionary, _run_state: RunState, _environment: Dictionary) -> bool:
 	if not bool(ui_state.get("pull_tab_auto_open_active", false)):
 		return false
@@ -953,6 +958,7 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 		"deltas": deltas,
 		"won": false,
 		"environment_id": str(environment.get("id", "")),
+		"environment_archetype_id": str(environment.get("archetype_id", "")),
 		"message": message,
 	})
 	_add_ticket_result_fields(result, ticket, deal, payout, price)
@@ -964,7 +970,6 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 	_advance_action_rng(rng)
 	GameModule.apply_result(run_state, result, rng)
 	return result
-
 
 func _resolve_ticket_set_purchase(run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary) -> Dictionary:
 	var machine := _ensure_machine_state(run_state, environment, true)
@@ -1092,6 +1097,7 @@ func _resolve_ticket_set_purchase(run_state: RunState, environment: Dictionary, 
 		"deltas": deltas,
 		"won": false,
 		"environment_id": str(environment.get("id", "")),
+		"environment_archetype_id": str(environment.get("archetype_id", "")),
 		"message": message,
 	})
 	_add_ticket_result_fields(result, tickets[0], ticket_deals[0], int((tickets[0] as Dictionary).get("payout", 0)), total_price)
@@ -3441,7 +3447,7 @@ func _draw_pull_tab_column_stack(surface, rect: Rect2, deal: Dictionary, index: 
 	var top := Rect2(stack_rect.position + Vector2(4, -2), Vector2(stack_rect.size.x - 8, 10))
 	surface.draw_rect(top, paper)
 	surface.draw_rect(top, accent, false, 1)
-	var xray_target := _pt_copy_dict(deal.get("xray_target", {}))
+	var xray_target := deal.get("xray_target", {}) as Dictionary if typeof(deal.get("xray_target", {})) == TYPE_DICTIONARY else {}
 	if not xray_target.is_empty():
 		var offset := clampi(int(xray_target.get("offset", 0)), 0, maxi(0, remaining - 1))
 		var depth_ratio := clampf((float(offset) + 0.5) / float(maxi(1, remaining)), 0.0, 1.0)
@@ -4181,7 +4187,7 @@ func _draw_pull_tab_pile_ticket(surface, ticket: Dictionary, rect: Rect2, index:
 func _draw_pull_tab_file_animation(surface, surface_state: Dictionary, source_rect: Rect2, piles_rect: Rect2) -> void:
 	if not bool(surface.surface_animation_active(PULL_TAB_FILE_CHANNEL)):
 		return
-	var ticket := _pt_copy_dict(surface_state.get("pull_tab_file_animation_ticket", {}))
+	var ticket := surface_state.get("pull_tab_file_animation_ticket", {}) as Dictionary if typeof(surface_state.get("pull_tab_file_animation_ticket", {})) == TYPE_DICTIONARY else {}
 	if ticket.is_empty():
 		return
 	var pile_name := str(surface_state.get("pull_tab_file_animation_pile", "loser_pile"))

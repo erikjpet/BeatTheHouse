@@ -2,7 +2,7 @@
   "assembly_evidence_needed": [
     "scenario punchline_headliner_night vs punchline_greased_week: 0.670 (warning). Missing receipt-bound masked visual evidence.",
     "scenario punchline_headliner_night vs kitty_cat_lounge_buyout: 0.710 (warning). Missing receipt-bound masked visual evidence.",
-    "scenario punchline_high_stakes_night vs punchline_debt_court: 0.642 (warning). Missing receipt-bound masked visual evidence.",
+    "scenario punchline_high_stakes_night vs punchline_debt_court: 0.643 (warning). Missing receipt-bound masked visual evidence.",
     "scenario punchline_greased_week vs kitty_cat_lounge_buyout: 0.656 (warning). Missing receipt-bound masked visual evidence.",
     "scenario punchline_new_muscle vs kitty_cat_lounge_amateur_night: 0.623 (warning). Missing receipt-bound masked visual evidence."
   ],
@@ -262,13 +262,15 @@
         "terminal": "aftermath"
       },
       "sealed_routes": [],
-      "sequence_signature": "031a56c740f40c79c5c5000b820a5a6233ea421c4d51ea8717aeef1fea072dff",
+      "sequence_signature": "e67e6fdeee69c3d9f8a269a326c8c698773fe6effe928f320e456c7482741ae0",
       "spatial_anchors": [
         "base::anchor:punchline_high_stakes_protected_table",
         "base::anchor:punchline_high_stakes_floor_runner",
+        "base::anchor:punchline_high_stakes_chair_stack",
+        "base::anchor:punchline_high_stakes_guard",
         "base::anchor:punchline_high_stakes_task",
         "base::anchor:punchline_high_stakes_runner_work_2",
-        "base::anchor:punchline_headliner_door_guard"
+        "base::anchor:punchline_high_stakes_safe_exit"
       ],
       "spatial_layer": "casino",
       "terminal_outcomes": [
@@ -1001,7 +1003,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_high_stakes_night",
-      "similarity": 0.44874715261959,
+      "similarity": 0.454960091220068,
       "status": "pass"
     },
     {
@@ -1277,7 +1279,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_high_stakes_night",
-      "similarity": 0.275443510737628,
+      "similarity": 0.273234200743494,
       "status": "pass"
     },
     {
@@ -1313,7 +1315,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_amateur_night",
-      "similarity": 0.426485922836288,
+      "similarity": 0.423236514522822,
       "status": "pass"
     },
     {
@@ -1325,7 +1327,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_bachelorette_storm",
-      "similarity": 0.264199655765921,
+      "similarity": 0.264377682403433,
       "status": "pass"
     },
     {
@@ -1337,7 +1339,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_buyout",
-      "similarity": 0.274253731343284,
+      "similarity": 0.273234200743494,
       "status": "pass"
     },
     {
@@ -1349,7 +1351,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "kitty_cat_lounge_slow_night",
-      "similarity": 0.578686493184635,
+      "similarity": 0.58364312267658,
       "status": "pass"
     },
     {
@@ -1361,7 +1363,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_debt_court",
-      "similarity": 0.642118863049096,
+      "similarity": 0.643041237113402,
       "status": "warning"
     },
     {
@@ -1373,7 +1375,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_greased_week",
-      "similarity": 0.286522148916117,
+      "similarity": 0.285446009389671,
       "status": "pass"
     },
     {
@@ -1385,7 +1387,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_new_muscle",
-      "similarity": 0.41407867494824,
+      "similarity": 0.412371134020619,
       "status": "pass"
     },
     {
@@ -1397,7 +1399,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_raid_jitters",
-      "similarity": 0.310940499040307,
+      "similarity": 0.308500477554919,
       "status": "pass"
     },
     {
@@ -1565,7 +1567,7 @@
       },
       "masked_visual_evidence_valid": false,
       "right_id": "punchline_high_stakes_night",
-      "similarity": 0.483644859813084,
+      "similarity": 0.454337899543379,
       "status": "pass"
     },
     {
@@ -6223,8 +6225,8 @@
       "authored_signature": "c8802101f47e45eb55a6a17b86387321de6b558c295b4a1c4763a3395b1c7bd4",
       "calculated_signature": "c8802101f47e45eb55a6a17b86387321de6b558c295b4a1c4763a3395b1c7bd4",
       "id": "kitty_cat_lounge_slow_night",
-      "nearest_id": "punchline_debt_court",
-      "nearest_similarity": 0.581885856079404,
+      "nearest_id": "punchline_high_stakes_night",
+      "nearest_similarity": 0.58364312267658,
       "signature": {
         "aftermath": [
           {
@@ -8762,7 +8764,7 @@
       "calculated_signature": "855a260ce98e8a240b6ac4a798b992a48b7224eeaccb13962f0afa56ededb63b",
       "id": "punchline_debt_court",
       "nearest_id": "punchline_high_stakes_night",
-      "nearest_similarity": 0.642118863049096,
+      "nearest_similarity": 0.643041237113402,
       "signature": {
         "aftermath": [
           {
@@ -12940,11 +12942,11 @@
       }
     },
     {
-      "authored_signature": "031a56c740f40c79c5c5000b820a5a6233ea421c4d51ea8717aeef1fea072dff",
-      "calculated_signature": "031a56c740f40c79c5c5000b820a5a6233ea421c4d51ea8717aeef1fea072dff",
+      "authored_signature": "e67e6fdeee69c3d9f8a269a326c8c698773fe6effe928f320e456c7482741ae0",
+      "calculated_signature": "e67e6fdeee69c3d9f8a269a326c8c698773fe6effe928f320e456c7482741ae0",
       "id": "punchline_high_stakes_night",
       "nearest_id": "punchline_debt_court",
-      "nearest_similarity": 0.642118863049096,
+      "nearest_similarity": 0.643041237113402,
       "signature": {
         "aftermath": [
           {
@@ -13178,7 +13180,7 @@
         ],
         "declared_target_counts": {
           "actors": 0,
-          "anchors": 5,
+          "anchors": 7,
           "games": 0,
           "interactions": 0,
           "routes": 0,
@@ -13825,6 +13827,7 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_floor_runner",
+                    "anchor_id": "punchline_high_stakes_floor_runner",
                     "behavior": "work",
                     "label": "Floor service runner",
                     "pose": "arrival",
@@ -13839,6 +13842,7 @@
                 "effect": {
                   "actor": {
                     "actor_id": "actor_high_stakes_guard",
+                    "anchor_id": "punchline_high_stakes_guard",
                     "behavior": "guard",
                     "label": "High-stakes guard",
                     "pose": "arrival",
@@ -13946,7 +13950,49 @@
               {
                 "effect": {
                   "object": {
-                    "anchor_id": "punchline_headliner_door_guard",
+                    "anchor_id": "punchline_high_stakes_chair_stack",
+                    "appearance": "stacked",
+                    "bounds": {
+                      "h": 58.0,
+                      "w": 68.0
+                    },
+                    "enabled": true,
+                    "label": "Displaced ordinary chairs",
+                    "role": "furniture",
+                    "state": "stacked",
+                    "visible": true,
+                    "zone_id": "left"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                },
+                "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "object": {
+                    "anchor_id": "punchline_high_stakes_protected_table",
+                    "appearance": "reserved",
+                    "bounds": {
+                      "h": 46.0,
+                      "w": 52.0
+                    },
+                    "enabled": true,
+                    "label": "Protected high-stakes table",
+                    "role": "game_fixture",
+                    "state": "reserved",
+                    "visible": true,
+                    "zone_id": "center"
+                  },
+                  "op": "spawn",
+                  "owner_namespace": "scenario"
+                },
+                "family": "scene_ops"
+              },
+              {
+                "effect": {
+                  "object": {
+                    "anchor_id": "punchline_high_stakes_safe_exit",
                     "appearance": "marked_lane",
                     "bounds": {
                       "h": 56.0,
@@ -13998,46 +14044,6 @@
                     "state": "closed",
                     "visible": true,
                     "zone_id": "right"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                },
-                "family": "scene_ops"
-              },
-              {
-                "effect": {
-                  "object": {
-                    "appearance": "reserved",
-                    "bounds": {
-                      "h": 46.0,
-                      "w": 52.0
-                    },
-                    "enabled": true,
-                    "label": "Protected high-stakes table",
-                    "role": "game_fixture",
-                    "state": "reserved",
-                    "visible": true,
-                    "zone_id": "center"
-                  },
-                  "op": "spawn",
-                  "owner_namespace": "scenario"
-                },
-                "family": "scene_ops"
-              },
-              {
-                "effect": {
-                  "object": {
-                    "appearance": "stacked",
-                    "bounds": {
-                      "h": 58.0,
-                      "w": 68.0
-                    },
-                    "enabled": true,
-                    "label": "Displaced ordinary chairs",
-                    "role": "furniture",
-                    "state": "stacked",
-                    "visible": true,
-                    "zone_id": "left"
                   },
                   "op": "spawn",
                   "owner_namespace": "scenario"

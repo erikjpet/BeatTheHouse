@@ -12,6 +12,7 @@ const ScenarioExtensionDispatchScript := preload("res://scripts/core/scenario_ex
 const ScenarioSequenceAuditScript := preload("res://tools/scenario_sequence_audit.gd")
 const ScenarioSequenceProbeSupportScript := preload("res://tools/scenario_sequence_probe_support.gd")
 const ScenarioPresentationContractScript := preload("res://scripts/tests/foundation/scenario_presentation_contract.gd")
+const HarnessProductionFidelityScript := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const SaveServiceScript := preload("res://scripts/core/save_service.gd")
 const EventModuleScript := preload("res://scripts/core/event_module.gd")
@@ -125,6 +126,20 @@ class LifecycleCallerProbe:
 	var capture_transaction_attention := false
 	var failed_talk_dock_attention_tween: Tween
 	var environment_hover_signal_log: Array[String] = []
+
+	func _init() -> void:
+		# These probes intentionally bypass FoundationMain._ready() and the staged
+		# run-shell builder. Load the same script stages that their public caller
+		# paths require so a harness shortcut cannot turn production collaborators
+		# into Nil and manufacture lifecycle failures.
+		assert(_ensure_run_ui_stage_scripts(0))
+		assert(_ensure_run_ui_stage_scripts(4))
+		assert(_ensure_run_ui_stage_scripts(10))
+		assert(_ensure_run_ui_stage_scripts(12))
+		# The fixture installs only the concrete controls each transaction owns;
+		# mark that synthetic shell as complete so public caller guards do not try
+		# to build unrelated screens against a deliberately absent root container.
+		run_ui_built = true
 
 	func _show_message(text: String) -> void:
 		message_log.append(text)
@@ -273,10 +288,33 @@ static func check(library: ContentLibrary, failures: Array, scene_tree: SceneTre
 	_check_transition_and_event_delivery(failures)
 	_check_rollout_growth_contract(library, failures)
 	_check_delivery_day_production_package(library, failures)
+	_check_delivery_day_world_map_route_install(library, failures)
 	_check_executable_evidence_contract(failures)
 	_check_material_projection(failures)
 	ScenarioPresentationContractScript.check(failures)
 	_check_host_transaction_seam(failures)
+
+
+static func _check_delivery_day_world_map_route_install(library: ContentLibrary, failures: Array) -> void:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("WAVE-B-COMPOSITION-08")
+	var generator: RunGenerator = RunGeneratorScript.new(library)
+	var initial_arrival := HarnessProductionFidelityScript.generate_and_finalize(
+		generator, run_state, failures, "delivery-day world-map initial arrival"
+	)
+	if not bool(initial_arrival.get("ok", false)):
+		return
+	var result := HarnessProductionFidelityScript.travel_and_finalize(
+		generator, run_state, "corner_store", true, library, failures,
+		"delivery-day world-map route install"
+	)
+	if not bool(result.get("ok", false)):
+		return
+	var routes := _array(run_state.current_environment.get("travel_hooks", []))
+	var semantic := _dict(run_state.current_environment.get("scenario_semantic_inventory", {}))
+	var exact := EnvironmentSemanticInventoryScript.exact_collections(semantic)
+	if not routes.has("bar") or not _array(exact.get("routes", [])).has("base::world:bar"):
+		failures.append("Delivery-day world-map install did not retain the declared bar route through semantic inventory sealing.")
 
 
 static func _check_lifecycle_caller_failure_contract(library: ContentLibrary, failures: Array, scene_tree: SceneTree) -> void:
@@ -298,7 +336,7 @@ static func _check_lifecycle_caller_failure_contract(library: ContentLibrary, fa
 			and layer_probe.hover_target_id == "event:side_door" and layer_probe.environment_canvas.hovered_object_id == "event:side_door" \
 			and layer_probe.environment_canvas.mouse_default_cursor_shape == Control.CURSOR_POINTING_HAND
 	var layer_before := _public_caller_probe_state(layer_probe)
-	var layer_preexisting_talk_tweens := layer_probe.talk_dock.attention_tween_lifecycle_snapshot()
+	var layer_preexisting_talk_tweens: Array = layer_probe.talk_dock.attention_tween_lifecycle_snapshot()
 	var layer_preexisting_coach_tween: Variant = layer_probe.coach_overlay.attention_tween_lifecycle_snapshot().get("tween", null)
 	var layer_message_start := layer_probe.message_log.size()
 	layer_probe.capture_transaction_attention = true
@@ -312,18 +350,18 @@ static func _check_lifecycle_caller_failure_contract(library: ContentLibrary, fa
 	layer_probe._on_talk_dock_occupied_rect_changed(layer_probe.talk_dock.occupied_global_rect())
 	var unrelated_tween_advanced := layer_generator.unrelated_boundary_tween != null and layer_generator.unrelated_boundary_tween.custom_step(0.5)
 	var layer_stale_work_ignored := _public_caller_probe_state(layer_probe) == layer_before
-	var talk_alpha_before_step := layer_probe.talk_dock.panel.modulate.a
+	var talk_alpha_before_step: float = layer_probe.talk_dock.panel.modulate.a
 	var preexisting_talk_tween_advanced := false
 	if not layer_preexisting_talk_tweens.is_empty() and layer_preexisting_talk_tweens[0] is Tween:
 		preexisting_talk_tween_advanced = (layer_preexisting_talk_tweens[0] as Tween).custom_step(0.05)
-	var preexisting_talk_tween_progressed := layer_probe.talk_dock.panel.modulate.a > talk_alpha_before_step
-	var coach_alpha_before_step := layer_probe.coach_overlay.panel.modulate.a
+	var preexisting_talk_tween_progressed: bool = layer_probe.talk_dock.panel.modulate.a > talk_alpha_before_step
+	var coach_alpha_before_step: float = layer_probe.coach_overlay.panel.modulate.a
 	var preexisting_coach_tween_advanced := false
 	if layer_preexisting_coach_tween is Tween:
 		preexisting_coach_tween_advanced = (layer_preexisting_coach_tween as Tween).custom_step(0.05)
-	var preexisting_coach_tween_progressed := layer_probe.coach_overlay.panel.modulate.a > coach_alpha_before_step
+	var preexisting_coach_tween_progressed: bool = layer_probe.coach_overlay.panel.modulate.a > coach_alpha_before_step
 	var layer_preexisting_coach_survived := layer_preexisting_coach_tween is Tween and (layer_preexisting_coach_tween as Tween).is_valid()
-	var layer_rollback_checkpoint_clean := layer_probe.coach_overlay.lifecycle_protected_attention_tweens.is_empty()
+	var layer_rollback_checkpoint_clean: bool = layer_probe.coach_overlay.lifecycle_protected_attention_tweens.is_empty()
 	var layer_hover_rollback_exact := layer_probe.environment_hover_signal_log.size() == layer_hover_signal_count \
 			and layer_probe.selected_object_id.is_empty() and layer_probe.environment_canvas.selected_object_id.is_empty() \
 			and layer_probe.hover_target_id == "event:side_door" and layer_probe.environment_canvas.hovered_object_id == "event:side_door" \
@@ -346,7 +384,7 @@ static func _check_lifecycle_caller_failure_contract(library: ContentLibrary, fa
 	_install_real_world_map_popup(map_probe, "motel", "Motel")
 	_install_active_tutorial_presentation(map_probe, "tutorial_travel_corner", "travel:motel", "map_destination", scene_tree)
 	var map_before := _public_caller_probe_state(map_probe)
-	var map_preexisting_talk_tweens := map_probe.talk_dock.attention_tween_lifecycle_snapshot()
+	var map_preexisting_talk_tweens: Array = map_probe.talk_dock.attention_tween_lifecycle_snapshot()
 	var map_preexisting_coach_tween: Variant = map_probe.coach_overlay.attention_tween_lifecycle_snapshot().get("tween", null)
 	var map_message_start := map_probe.message_log.size()
 	map_probe.capture_transaction_attention = true
@@ -1028,6 +1066,8 @@ static func _check_base_semantic_producer(library: ContentLibrary, failures: Arr
 
 static func _check_lifecycle_finalization(library: ContentLibrary, failures: Array) -> void:
 	var definition := finalization_fixture_definition()
+	definition["sequence"]["expiry"] = {"boundary": "night_end", "after": 1, "policy": "cleanup"}
+	definition["sequence"]["sequence_signature"] = SequenceSchemaScript.calculated_signature_hash(definition)
 	var run_state := RunStateScript.new()
 	run_state.current_environment = {
 		"id": "bar_001", "archetype_id": "bar", "world_node_id": "bar_node", "environment_visit_id": "visit_1",
@@ -1054,6 +1094,29 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 	var replay_receipts := _array(_dict(run_state.current_environment.get("scenario_sequence_state", {})).get("visit_receipts", [])).size()
 	if not bool(finalized.get("ok", false)) or bool(finalized.get("replayed", true)) or not bool(replayed.get("replayed", false)) or first_receipts != 1 or replay_receipts != 1 or not bool(run_state.current_environment.get("scenario_semantic_ready", false)):
 		failures.append("Semantic finalization was not atomic/idempotent with exactly-once reentry: %s" % JSON.stringify(finalized))
+	# Leaving an unresolved expiring room deliberately persists a clean, terminal
+	# sequence state. Reinstalling that visited room must run its authored expired
+	# reentry policy; it is not a failed initialization merely because its status
+	# is already cleaned.
+	var expiring_source := RunStateScript.new()
+	expiring_source.current_environment = run_state.current_environment.duplicate(true)
+	var expiry := expiring_source.scenario_sequence_apply_expiry_boundary("night_end", 1)
+	var cleaned_state := _dict(expiring_source.current_environment.get("scenario_sequence_state", {}))
+	var revisit_host := RunStateScript.new()
+	var installed_revisit := revisit_host.set_environment(expiring_source.current_environment.duplicate(true))
+	revisit_host.current_environment["scenario_sequence_pending_visit_id"] = "visit_2"
+	var revisit_finalized := revisit_host.scenario_finalize_base_semantics([presentation], library)
+	var revisited_state := _dict(revisit_host.current_environment.get("scenario_sequence_state", {}))
+	if not bool(expiry.get("ok", false)) \
+			or str(cleaned_state.get("status", "")) != SequenceRuntimeScript.STATUS_CLEANED \
+			or not _array(cleaned_state.get("errors", [])).is_empty() \
+			or not bool(installed_revisit.get("ok", false)) \
+			or not bool(revisit_finalized.get("ok", false)) \
+			or str(revisited_state.get("status", "")) != SequenceRuntimeScript.STATUS_CLEANED \
+			or _array(revisited_state.get("visit_receipts", [])).size() != _array(cleaned_state.get("visit_receipts", [])).size() + 1 \
+			or _array(revisited_state.get("cleanup_receipts", [])).size() != _array(cleaned_state.get("cleanup_receipts", [])).size() \
+			or not bool(revisit_host.current_environment.get("scenario_semantic_ready", false)):
+		failures.append("A valid cleaned scenario room could not be persisted, reinstalled, and reentered through its expired policy: %s" % JSON.stringify(revisit_finalized))
 	var installed_definition := run_state.scenario_sequence_definition()
 	if not SequenceSchemaScript.is_sequence(installed_definition) or not bool(installed_definition.get(ScenarioEngineScript.VALIDATED_SEQUENCE_MARKER, false)) or str(installed_definition.get("sequence_signature", "")) != str(definition.get("sequence_signature", "")):
 		failures.append("Semantic finalization did not retain the exact catalog-validated installed sequence definition.")
@@ -1478,7 +1541,7 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 		if str((projected_value as Dictionary).get("object_id", "")) == "scenario::fixture_100": projected_scene = projected_value as Dictionary
 	if not bool(production_projection.get("ok", false)) or projected_console.is_empty() or str(projected_console.get("object_type", "")) != "scenario_sequence" or typeof(projected_console.get("focus_rect")) != TYPE_RECT2 or projected_console.get("focus_rect", Rect2()) == Rect2(0.1, 0.1, 0.12, 0.18) or _array(projected_console.get("scenario_sequence_actions", [])).size() != 2 or str(projected_console.get("scenario_layout_authority_identity", "")) != "scenario::command_console" or str(production_projection.get("layout_authority_digest", "")).length() != 64:
 		failures.append("Final semantic interaction projection did not materialize the scenario command surface in the room UI.")
-	if projected_scene.is_empty() or str(projected_scene.get("object_type", "")) != "scenario_scene_object" or bool(projected_scene.get("interactive", true)):
+	if projected_scene.is_empty() or str(projected_scene.get("object_type", "")) != "scenario_scene_object" or not bool(projected_scene.get("interactive", false)) or not _array(projected_scene.get("scenario_sequence_actions", [])).is_empty():
 		failures.append("Final semantic projection did not materialize scenario scene objects alongside interactions.")
 	var missing_layout_projection := EnvironmentInteractionControllerScript.project_sequence_interaction_result(_array(finalized.get("records", [])), run_state.scenario_sequence_projection())
 	var missing_layout_records := _array(missing_layout_projection.get("records", []))
@@ -3445,7 +3508,11 @@ static func _check_depth_remediation_contracts(failures: Array) -> void:
 		failures.append("Source-room expiry/cleanup receipts were not persisted with the room snapshot.")
 	var reentered := SequenceRuntimeScript.apply_reentry(restored_expired, definition, "expired_return")
 	var reentered_state := _dict(reentered.get("state", {}))
-	if not bool(reentered.get("ok", false)) or str(reentered.get("policy", "")) != "expired" or not _array(reentered_state.get("visit_receipts", [])).has("visit:expired_return"):
+	if not bool(reentered.get("ok", false)) \
+			or str(reentered.get("policy", "")) != "expired" \
+			or not _array(reentered_state.get("visit_receipts", [])).has("visit:expired_return") \
+			or JSON.stringify(reentered_state.get("cleanup_receipts", [])) != JSON.stringify(restored_expired.get("cleanup_receipts", [])) \
+			or JSON.stringify(reentered_state.get("cleanup_receipt_records", [])) != JSON.stringify(restored_expired.get("cleanup_receipt_records", [])):
 		failures.append("Expired source-room state did not apply and receipt deterministic reentry.")
 	var reentry_snapshot := EnvironmentInstanceScript.from_dict({
 		"id": "bar_001", "archetype_id": "bar", "world_node_id": "bar_node",
@@ -3761,6 +3828,18 @@ static func _check_completion_evidence(failures: Array) -> void:
 	unsigned["sequence"]["owner_exceptions"][0].erase("approved_on")
 	if not _contains_text(SequenceSchemaScript.validate_definition(unsigned, OperationRegistryScript), "owner exception"):
 		failures.append("Unsigned hard-10 owner exception was accepted.")
+	var shallow_choice := definition.duplicate(true)
+	shallow_choice["sequence"]["phase_graph"]["phases"][2]["branches"].remove_at(0)
+	shallow_choice["sequence"]["owner_exceptions"] = [{"row": "choice_or_failure", "reason": "Hostile fixture", "owner": "owner", "approved_on": "2026-09-11"}]
+	shallow_choice["sequence"]["sequence_signature"] = SequenceSchemaScript.calculated_signature_hash(shallow_choice)
+	if not _contains_text(SequenceSchemaScript.validate_definition(shallow_choice, OperationRegistryScript, _fixture_target_inventory(shallow_choice)), "at least three reachable terminal outcomes"):
+		failures.append("A signed choice_or_failure exception bypassed the absolute three-outcome depth gate.")
+	var shallow_aftermath := definition.duplicate(true)
+	shallow_aftermath["sequence"]["aftermath"].erase("refused")
+	shallow_aftermath["sequence"]["owner_exceptions"] = [{"row": "material_outcomes", "reason": "Hostile fixture", "owner": "owner", "approved_on": "2026-09-11"}]
+	shallow_aftermath["sequence"]["sequence_signature"] = SequenceSchemaScript.calculated_signature_hash(shallow_aftermath)
+	if not _contains_text(SequenceSchemaScript.validate_definition(shallow_aftermath, OperationRegistryScript, _fixture_target_inventory(shallow_aftermath)), "aftermath must define at least three material outcomes"):
+		failures.append("A signed material_outcomes exception bypassed the absolute three-aftermath depth gate.")
 
 
 static func _check_extension_dispatch(failures: Array) -> void:
@@ -4162,7 +4241,10 @@ static func _check_rollout_growth_contract(library: ContentLibrary, failures: Ar
 
 static func _check_delivery_day_production_package(library: ContentLibrary, failures: Array) -> void:
 	var raw_package: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/environments/scenario_sequences/env06_7_shops_streets.json"))
-	if typeof(raw_package) != TYPE_DICTIONARY or int(_dict(raw_package).get("schema_version", 0)) != 1 or _dict(raw_package).keys() != ["schema_version", "package_id", "handler_pack", "renderer_id", "scenarios"]:
+	var raw_package_dict := _dict(raw_package)
+	var envelope_keys := raw_package_dict.keys()
+	envelope_keys.sort()
+	if typeof(raw_package) != TYPE_DICTIONARY or int(raw_package_dict.get("schema_version", 0)) != 1 or envelope_keys != ["handler_pack", "package_id", "renderer_id", "scenarios", "schema_version"]:
 		failures.append("Delivery-day JSON is not the exact schema-v1 object envelope.")
 		return
 	var catalog := SequenceCatalogScript.load_catalog()
@@ -4372,6 +4454,15 @@ static func _check_delivery_day_production_package(library: ContentLibrary, fail
 			failures.append("Delivery-day %s terminal reentry was not idempotent." % outcome)
 	if not bool(expired_result.get("ok", false)) or str(expired.get("status", "")) != SequenceRuntimeScript.STATUS_CLEANED or not _has_delivery_overlay(expired, "delivery_event_terminal_gate") or not _array(expired.get("resolved_outcomes", [])).is_empty() or not _array(expired.get("event_request_queue", [])).is_empty():
 		failures.append("Delivery-day ignore expiry did not clean with durable suppression and no legacy consequences.")
+	var causal_expired_result := SequenceRuntimeScript.apply_expiry_boundary(arrival, definition, "night_end")
+	var causal_expired := _dict(causal_expired_result.get("state", {}))
+	var causal_saved := _without_transition_queue(causal_expired)
+	var causal_rebuild := ScenarioEngineScript._rebuild_receipted_semantic_mutations(causal_saved, definition, delivery_host_semantics)
+	if not bool(causal_expired_result.get("ok", false)) \
+			or str(causal_expired.get("status", "")) != SequenceRuntimeScript.STATUS_CLEANED \
+			or not bool(causal_rebuild.get("ok", false)) \
+			or SequenceRuntimeScript.content_fingerprint(causal_rebuild.get("state", {})) != SequenceRuntimeScript.content_fingerprint(causal_saved):
+		failures.append("Delivery-day causal ignore expiry did not clean through an exactly replayable journal: %s" % JSON.stringify(causal_rebuild.get("errors", [])))
 	var expiry_replay := SequenceRuntimeScript.apply_expiry(expired, definition, "night_end", 1)
 	if not bool(expiry_replay.get("ok", false)) or JSON.stringify(expiry_replay.get("state", {})) != JSON.stringify(expired):
 		failures.append("Delivery-day expiry cleanup was not idempotent.")

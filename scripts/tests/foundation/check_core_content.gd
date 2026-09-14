@@ -5,6 +5,7 @@ extends SceneTree
 const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
+const HarnessProductionFidelityScript := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
 const SaveServiceScript := preload("res://scripts/core/save_service.gd")
 const PlatformServicesScript := preload("res://scripts/core/platform_services.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
@@ -44,6 +45,8 @@ const CrewHeistContractScript := preload("res://scripts/tests/foundation/crew_he
 const CrewTurnContractScript := preload("res://scripts/tests/foundation/crew_turn_contract.gd")
 const CharacterChainsContractScript := preload("res://scripts/tests/foundation/character_chains_contract.gd")
 const ContentDepthContractScript := preload("res://scripts/tests/foundation/content_depth_contract.gd")
+const PlaytestFixes02ContractScript := preload("res://scripts/tests/foundation/playtest_fixes02_contract.gd")
+const PlaytestFixes03ContractScript := preload("res://scripts/tests/foundation/playtest_fixes03_contract.gd")
 const ProceduralMusicPlayerScript := preload("res://scripts/ui/procedural_music_player.gd")
 const MusicArrangementSelectorScript := preload("res://scripts/ui/music_arrangement_selector.gd")
 const SfxPlayerScript := preload("res://scripts/ui/sfx_player.gd")
@@ -268,6 +271,9 @@ class SurfaceHarness:
 		labels.append(text)
 		label_records.append({"text": text, "rect": rect, "font_size": font_size})
 
+	func surface_register_text_protected_rect(_rect: Rect2) -> void:
+		pass
+
 	func surface_reel_symbol_label(text: String, rect: Rect2, font_size: int, _color: Color) -> void:
 		labels.append(text)
 		label_records.append({"text": text, "rect": rect, "font_size": font_size, "reel_motion": true})
@@ -439,7 +445,11 @@ func _foundation_init_after_tree_ready() -> void:
 	_foundation_fixture_library_ref = fixture_library
 	_foundation_content_library_fingerprint = _foundation_library_fingerprint(content_library)
 	_foundation_fixture_library_fingerprint = _foundation_library_fingerprint(fixture_library)
-	_foundation_run_suite(_foundation_active_suite, content_library, fixture_library, failures, report)
+	var supported_suites := _foundation_runner_supported_suites()
+	if not supported_suites.has(_foundation_active_suite):
+		failures.append("Foundation runner %s does not support suite '%s'; supported suites: %s." % [get_script().resource_path, _foundation_active_suite, ", ".join(supported_suites)])
+	else:
+		_foundation_run_suite(_foundation_active_suite, content_library, fixture_library, failures, report)
 	var registered_check_ids: Array = report.get("registered_check_ids", [])
 	for check_id_value in requested_check_ids:
 		if not registered_check_ids.has(str(check_id_value)):
@@ -449,6 +459,12 @@ func _foundation_init_after_tree_ready() -> void:
 	report["failures"] = failures.duplicate()
 	report["passed"] = failures.is_empty()
 	_foundation_write_report(str(options.get("report", FOUNDATION_DEFAULT_REPORT_PATH)), report)
+	# Production UI boundaries legitimately use queued and deferred teardown.
+	# Flush two real tree frames before shutdown diagnostics so zero-reference
+	# objects are released, while live references and true leaks remain visible
+	# to the runner's fail-closed stderr check.
+	await process_frame
+	await process_frame
 
 	if failures.is_empty():
 		print("Foundation Godot checks passed. suite=%s checks=%d report=%s" % [
@@ -465,7 +481,7 @@ func _foundation_init_after_tree_ready() -> void:
 
 func _foundation_options() -> Dictionary:
 	var options := {
-		"suite": "contracts",
+		"suite": _foundation_default_suite(),
 		"report": FOUNDATION_DEFAULT_REPORT_PATH,
 		"list": false,
 		"check_ids": [],
@@ -488,6 +504,17 @@ func _foundation_options() -> Dictionary:
 	return options
 
 
+func _foundation_default_suite() -> String:
+	# This file is an inheritance shard, not a complete runner: several checks
+	# intentionally live in later shards. Direct execution must fail closed
+	# instead of printing PASS after a missing dynamic call.
+	return "abstract" if get_script().resource_path == "res://scripts/tests/foundation/check_core_content.gd" else "contracts"
+
+
+func _foundation_runner_supported_suites() -> Array:
+	return [] if get_script().resource_path == "res://scripts/tests/foundation/check_core_content.gd" else FOUNDATION_SUITES.duplicate()
+
+
 func _foundation_normalized_suite(raw_suite: String) -> String:
 	var suite := raw_suite.strip_edges().to_lower()
 	if FOUNDATION_SUITE_ALIASES.has(suite):
@@ -501,8 +528,8 @@ func _foundation_normalized_suite(raw_suite: String) -> String:
 func _foundation_print_suite_list() -> void:
 	print(JSON.stringify({
 		"tool": "foundation_check",
-		"suites": FOUNDATION_SUITES,
-		"default_suite": "contracts",
+		"suites": _foundation_runner_supported_suites(),
+		"default_suite": _foundation_default_suite(),
 		"reports": true,
 	}))
 
@@ -551,13 +578,13 @@ func _foundation_run_suite(suite: String, content_library: ContentLibrary, fixtu
 		"systems":
 			_foundation_run_system_suite(content_library, fixture_library, failures, report)
 		"slot", "slots":
-			_foundation_run_check(report, failures, "content", Callable(self, "_check_content"), [content_library])
+			_foundation_run_check(report, failures, "slot_content", Callable(self, "_check_slot_content"), [content_library])
 			_foundation_run_check(report, failures, "slot_contract_smoke", Callable(self, "_check_slot_contract_smoke"), [content_library])
 		"slot_acceptance":
-			_foundation_run_check(report, failures, "content", Callable(self, "_check_content"), [content_library])
+			_foundation_run_check(report, failures, "slot_content", Callable(self, "_check_slot_content"), [content_library])
 			_foundation_run_check(report, failures, "slot_acceptance_deep", Callable(self, "_check_slot_acceptance"), [content_library])
 		"audit":
-			_foundation_run_check(report, failures, "content", Callable(self, "_check_content"), [content_library])
+			_foundation_run_check(report, failures, "slot_content", Callable(self, "_check_slot_content"), [content_library])
 			_foundation_run_check(report, failures, "slot_acceptance_deep", Callable(self, "_check_slot_acceptance"), [content_library])
 		"coin_pusher":
 			_foundation_run_check(report, failures, "coin_pusher_contract", Callable(self, "_check_coin_pusher_contract"), [content_library])
@@ -572,7 +599,20 @@ func _foundation_run_suite(suite: String, content_library: ContentLibrary, fixtu
 
 
 func _foundation_run_contract_suite(content_library: ContentLibrary, fixture_library: ContentLibrary, failures: Array, report: Dictionary) -> void:
-	_foundation_run_check(report, failures, "content", Callable(self, "_check_content"), [content_library])
+	_foundation_run_check(report, failures, "content", Callable(self, "_check_content_core"), [content_library])
+	_foundation_run_check(report, failures, "content_scenario_engine", Callable(self, "_check_content_scenario_engine"), [content_library])
+	_foundation_run_check(report, failures, "punchline_layer_contract", Callable(self, "_check_punchline_layer_contract"), [content_library])
+	_foundation_run_check(report, failures, "tier2_scenario_contract", Callable(self, "_check_tier2_scenario_contract"), [content_library])
+	_foundation_run_check(report, failures, "scenario_backlog_contract", Callable(self, "_check_scenario_backlog_contract"), [content_library])
+	_foundation_run_check(report, failures, "scenario_sequence_contract", Callable(self, "_check_scenario_sequence_contract"), [content_library])
+	_foundation_run_check(report, failures, "scenario_semantic_presentation_contract", Callable(self, "_check_scenario_semantic_static_contract"), [content_library])
+	_foundation_run_check(report, failures, "scenario_semantic_restore_contract", Callable(self, "_check_scenario_semantic_restore_contract"), [content_library])
+	_foundation_run_check(report, failures, "scenario_semantic_hidden_contract_0", Callable(self, "_check_scenario_semantic_hidden_contract_0"), [content_library])
+	_foundation_run_check(report, failures, "scenario_semantic_hidden_contract_1", Callable(self, "_check_scenario_semantic_hidden_contract_1"), [content_library])
+	_foundation_run_check(report, failures, "scenario_semantic_hidden_contract_2", Callable(self, "_check_scenario_semantic_hidden_contract_2"), [content_library])
+	_foundation_run_check(report, failures, "scenario_semantic_hidden_contract_3", Callable(self, "_check_scenario_semantic_hidden_contract_3"), [content_library])
+	_foundation_run_check(report, failures, "environment_semantic_inventory_contract", Callable(self, "_check_environment_semantic_inventory_contract"), [content_library])
+	_foundation_run_check(report, failures, "content_arrival_contract", Callable(self, "_check_content_arrival_contract"), [content_library])
 	_foundation_run_check(report, failures, "crew_recruitment_contract", Callable(CrewRecruitmentContractScript, "check"), [content_library])
 	_foundation_run_check(report, failures, "crew_layer3_jobs_contract", Callable(CrewLayer3JobsContractScript, "check"), [content_library])
 	_foundation_run_check(report, failures, "crew_plays_contract", Callable(CrewPlaysContractScript, "check"), [content_library])
@@ -580,8 +620,38 @@ func _foundation_run_contract_suite(content_library: ContentLibrary, fixture_lib
 	_foundation_run_check(report, failures, "crew_turn_contract", Callable(CrewTurnContractScript, "check"), [content_library])
 	_foundation_run_check(report, failures, "character_chains_contract", Callable(CharacterChainsContractScript, "check"), [content_library])
 	_foundation_run_check(report, failures, "content_depth_contract", Callable(ContentDepthContractScript, "check"), [content_library])
+	_foundation_run_check(report, failures, "playtest_fixes01_regressions", Callable(self, "_check_playtest_fixes01_regressions"), [content_library])
+	_foundation_run_check(report, failures, "playtest_fixes02_regressions", Callable(PlaytestFixes02ContractScript, "check"), [content_library])
+	_foundation_run_check(report, failures, "playtest_fixes03_regressions", Callable(PlaytestFixes03ContractScript, "check"), [content_library])
 	_foundation_run_check(report, failures, "coach_engine_foundation", Callable(self, "_check_coach_engine_foundation"), [content_library])
-	_foundation_run_check(report, failures, "foundation_contracts", Callable(self, "_check_foundation_contract_smoke_for_suite"), [content_library])
+	# Keep the established parent id for the core assertions. Independent game and
+	# system contracts are registered separately so every failure remains visible
+	# even when a neighboring component approaches its process ceiling.
+	_foundation_run_check(report, failures, "foundation_contracts", Callable(self, "_check_foundation_contract_core_for_suite"), [content_library])
+	_foundation_run_check(report, failures, "bar_dice_contract", Callable(self, "_check_bar_dice_contract"), [content_library])
+	_foundation_run_check(report, failures, "crew_poker_contract", Callable(self, "_check_crew_poker_contract"), [content_library])
+	_foundation_run_check(report, failures, "video_poker_contract", Callable(self, "_check_video_poker_contract"), [content_library])
+	_foundation_run_check(report, failures, "coin_pusher_contract", Callable(self, "_check_coin_pusher_contract"), [content_library])
+	_foundation_run_check(report, failures, "coin_pusher_exit_settle_bound", Callable(self, "_check_pusher_v3_exit_settle_absolute_bound"), [content_library, content_library.game("coin_pusher")])
+	_foundation_run_check(report, failures, "slot_contract_smoke", Callable(self, "_check_slot_contract_smoke"), [content_library])
+	_foundation_run_check(report, failures, "all_game_module_contracts", Callable(self, "_check_all_game_module_contracts"), [content_library])
+	_foundation_run_check(report, failures, "cross_game_integration_matrix", Callable(self, "_check_cross_game_integration_matrix"), [content_library])
+	_foundation_run_check(report, failures, "run_action_service_boundary", Callable(self, "_check_run_action_service_boundary"), [content_library])
+	_foundation_run_check(report, failures, "item_effect_foundation", Callable(self, "_check_item_effect_foundation"), [content_library])
+	_foundation_run_check(report, failures, "item_build_interaction_foundation", Callable(self, "_check_item_build_interaction_foundation"), [content_library])
+	_foundation_run_check(report, failures, "event_module_foundation", Callable(self, "_check_event_module_foundation"), [content_library])
+	_foundation_run_check(report, failures, "event_system_state_foundation", Callable(self, "_check_event_system_state_foundation"), [content_library])
+	_foundation_run_check(report, failures, "save_service_foundation_round_trip", Callable(self, "_check_save_service_foundation_round_trip"), [content_library])
+	_foundation_run_check(report, failures, "platform_services_foundation", Callable(self, "_check_platform_services_foundation"), [])
+	_foundation_run_check(report, failures, "economy_pressure_foundation", Callable(self, "_check_economy_pressure_foundation"), [content_library])
+	_foundation_run_check(report, failures, "travel_route_foundation", Callable(self, "_check_travel_route_foundation"), [content_library])
+	_foundation_run_check(report, failures, "service_hook_foundation", Callable(self, "_check_service_hook_foundation"), [content_library])
+	_foundation_run_check(report, failures, "lender_debt_foundation", Callable(self, "_check_lender_debt_foundation"), [content_library])
+	_foundation_run_check(report, failures, "suspicion_security_foundation", Callable(self, "_check_suspicion_security_foundation"), [])
+	_foundation_run_check(report, failures, "run_report_foundation", Callable(self, "_check_run_report_foundation"), [])
+	_foundation_run_check(report, failures, "m2_system_interaction_scenario", Callable(self, "_check_m2_system_interaction_scenario"), [content_library])
+	_foundation_run_check(report, failures, "demo_boss_objective_foundation", Callable(self, "_check_demo_boss_objective_foundation"), [content_library])
+	_foundation_run_check(report, failures, "recovery_loss_pressure_foundation", Callable(self, "_check_recovery_loss_pressure_foundation"), [content_library])
 	_foundation_run_check(report, failures, "profile_inventory_boundary", Callable(self, "_check_profile_inventory_boundary"), [])
 	_foundation_run_check(report, failures, "fixture_rng", Callable(self, "_check_rng"), [fixture_library])
 	_foundation_run_check(report, failures, "card_shoe_core_primitives", Callable(self, "_check_card_shoe_core_primitives"), [])
@@ -753,8 +823,32 @@ func _check_foundation_contract_smoke_for_suite(library: ContentLibrary, failure
 	_check_foundation_contract_smoke(library, failures, _foundation_active_suite)
 
 
+func _check_foundation_contract_core_for_suite(library: ContentLibrary, failures: Array) -> void:
+	_check_foundation_contract_core(library, failures)
+
+
+func _check_foundation_contract_games_for_suite(library: ContentLibrary, failures: Array) -> void:
+	_check_foundation_contract_games(library, failures, _foundation_active_suite)
+
+
+func _check_foundation_contract_systems_for_suite(library: ContentLibrary, failures: Array) -> void:
+	_check_foundation_contract_systems(library, failures)
+
+
 # Checks the first production content path.
 func _check_content(library: ContentLibrary, failures: Array) -> void:
+	_check_content_core(library, failures)
+	_check_content_scenario_engine(library, failures)
+	_check_punchline_layer_contract(library, failures)
+	_check_tier2_scenario_contract(library, failures)
+	_check_scenario_backlog_contract(library, failures)
+	_check_scenario_sequence_contract(library, failures)
+	_check_scenario_semantic_presentation_contract(library, failures)
+	_check_environment_semantic_inventory_contract(library, failures)
+	_check_content_arrival_contract(library, failures)
+
+
+func _check_content_core(library: ContentLibrary, failures: Array) -> void:
 	call("_check_canonical_pack_paths", failures)
 	for error in library.validation_errors:
 		failures.append("ContentLibrary validation failed: %s" % error)
@@ -789,18 +883,201 @@ func _check_content(library: ContentLibrary, failures: Array) -> void:
 	_check_challenge_pack_content(library, failures)
 	_check_s0_2_baseline_regression_fixtures(library, failures)
 	_check_sa_2_per_frame_contracts(failures)
+
+
+func _check_playtest_fixes01_regressions(library: ContentLibrary, failures: Array) -> void:
+	var main_source := FileAccess.get_file_as_string("res://scripts/ui/foundation_main.gd")
+	var coach_source := FileAccess.get_file_as_string("res://scripts/ui/coach_overlay.gd")
+	var interaction_source := FileAccess.get_file_as_string("res://scripts/ui/environment_interaction_view_model.gd")
+	var craps_source := FileAccess.get_file_as_string("res://scripts/games/craps.gd")
+	var pusher_session_source := FileAccess.get_file_as_string("res://scripts/games/coin_pusher/coin_pusher_live_session.gd")
+	var pull_tabs_source := FileAccess.get_file_as_string("res://scripts/games/pull_tabs.gd")
+	var poker_source := FileAccess.get_file_as_string("res://scripts/games/video_poker.gd")
+	var roulette_source := FileAccess.get_file_as_string("res://scripts/games/roulette.gd")
+	var crew_poker_source := FileAccess.get_file_as_string("res://scripts/games/crew_draw_poker.gd")
+	var action_source := FileAccess.get_file_as_string("res://scripts/core/run_action_service.gd")
+	var event_module_source := FileAccess.get_file_as_string("res://scripts/core/event_module.gd")
+	var settings_source := FileAccess.get_file_as_string("res://scripts/ui/settings_menu.gd")
+	if not main_source.contains("_recover_unplayable_environment") or not main_source.contains("_environment_is_playable"):
+		failures.append("BUG-01 regression: new/continued runs do not guard and recover empty or exitless environments.")
+	else:
+		var broken_fixture := _read_json_dictionary("res://scripts/tests/fixtures/playtest_empty_environment_save.json")
+		var recovery_seed := str(broken_fixture.get("seed_text", ""))
+		var expected_run: RunState = RunStateScript.new()
+		expected_run.start_new(recovery_seed)
+		var expected_generator := RunGeneratorScript.new(library)
+		expected_generator.next_environment(expected_run)
+		var expected_environment_id := str(expected_run.current_environment.get("id", ""))
+		var broken_run: RunState = RunStateScript.new()
+		broken_run.from_dict(expected_run.to_dict())
+		broken_run.current_environment = _read_json_dictionary("res://scripts/tests/fixtures/playtest_empty_environment_save.json").get("current_environment", {})
+		var recovery_host = preload("res://scripts/ui/foundation_main.gd").new()
+		recovery_host.library = library
+		recovery_host.generator = RunGeneratorScript.new(library)
+		recovery_host.run_state = broken_run
+		var recovered := bool(recovery_host.call("_recover_unplayable_environment"))
+		if not recovered or str(broken_run.current_environment.get("id", "")) != expected_environment_id or not bool(recovery_host.call("_environment_is_playable", broken_run)):
+			failures.append("BUG-01 regression: the broken-save fixture did not recover to the deterministic playable first room (recovered=%s expected=%s actual=%s node=%s)." % [recovered, expected_environment_id, str(broken_run.current_environment.get("id", "")), broken_run.current_world_node_id()])
+		recovery_host.free()
+	if not pusher_session_source.contains("exit_work_ticks") or not main_source.contains("Leaving..."):
+		failures.append("BUG-02 regression: Coin Pusher exit work is not absolutely bounded and visibly projected.")
+	if not pull_tabs_source.contains("\"environment_archetype_id\": str(environment.get(\"archetype_id\""):
+		failures.append("BUG-03 regression: Pull Tabs results omit the room identity required by the shared wager-currency router.")
+	if craps_source.contains("surface_audio_cue\": \"blackjack_chip") or craps_source.contains("surface_audio_cue\": \"roulette_chip_sweep"):
+		failures.append("BUG-04 regression: Craps emits event classes owned by other surface profiles.")
+	if not main_source.contains("_tutorial_talk_suspended_by_modal"):
+		failures.append("BUG-05 regression: modal ownership does not suspend and restore the tutorial Talk dock.")
+	if not coach_source.contains("_dialogue_acknowledged_instruction"):
+		failures.append("BUG-06 regression: acknowledged tutorial dialogue does not retain its active instruction.")
+	if not coach_source.contains("_consume_blocked_pointer_input"):
+		failures.append("BUG-07 regression: the Coach overlay has no explicit underlying-control input shield.")
+	if not main_source.contains("_publish_numbers_result"):
+		failures.append("BUG-08 regression: Numbers purchases bypass the canonical recent-result pipeline.")
+	var numbers_run: RunState = RunStateScript.new()
+	numbers_run.start_new("PLAYTEST-FIXES01-NUMBERS")
+	var silas_node := numbers_run.traveler_node("silas_snitch")
+	numbers_run.current_environment = {"id": silas_node, "archetype_id": silas_node, "world_node_id": silas_node, "turns": 0}
+	var first_tip: Dictionary = numbers_run.numbers_buy_silas_tip(false)
+	var after_first_tip := numbers_run.bankroll
+	var second_tip: Dictionary = numbers_run.numbers_buy_silas_tip(false)
+	if not bool(first_tip.get("ok", false)) or bool(second_tip.get("ok", false)) or numbers_run.bankroll != after_first_tip:
+		failures.append("BUG-09 regression: Silas's one-time route tip can charge more than once.")
+	var bet_start := poker_source.find("func _bet_command")
+	var bet_end := poker_source.find("\nfunc ", bet_start + 8)
+	var bet_source := poker_source.substr(bet_start, bet_end - bet_start) if bet_start >= 0 and bet_end > bet_start else ""
+	if not bet_source.contains("holds") or not bet_source.contains("hand_active"):
+		failures.append("BUG-11 regression: Video Poker wager changes can carry holds into a newly dealt hand.")
+	var purchase_start := main_source.find("func _apply_item_offer_after_input_guard")
+	var purchase_end := main_source.find("\nfunc ", purchase_start + 8)
+	var purchase_source := main_source.substr(purchase_start, purchase_end - purchase_start) if purchase_start >= 0 and purchase_end > purchase_start else ""
+	var purchase_result_start := main_source.find("func _present_item_purchase_result")
+	var purchase_result_end := main_source.find("\nfunc ", purchase_result_start + 8)
+	var purchase_result_source := main_source.substr(purchase_result_start, purchase_result_end - purchase_result_start) if purchase_result_start >= 0 and purchase_result_end > purchase_result_start else ""
+	if purchase_source.contains("_focus_post_purchase_affinity(result)") \
+			or not purchase_result_source.contains("clear_interaction_focus(false, false)") \
+			or not purchase_result_source.contains("pending_post_purchase_affinity_result"):
+		failures.append("BUG-12 regression: purchased-item result projection occurs after affinity refocus.")
+	var practice_start := main_source.find("func _start_game_test_session_with_lifecycle_snapshot")
+	var practice_end := main_source.find("\nfunc ", practice_start + 8)
+	var practice_source := main_source.substr(practice_start, practice_end - practice_start) if practice_start >= 0 and practice_end > practice_start else ""
+	if not practice_source.contains("reset_wallet_delta"):
+		failures.append("BUG-13 regression: practice launches retain the previous wallet delta.")
+	if not event_module_source.contains("definition.get(\"payload\"") or not event_module_source.contains("get(\"summary\""):
+		failures.append("BUG-14 regression: first-stop traveler copy has no placeholder-free authored fallback.")
+	else:
+		var dave_run := RunStateScript.new()
+		dave_run.start_new("PLAYTEST-FIXES01-DAVE-FIRST-STOP")
+		RunGeneratorScript.new(library).next_environment(dave_run)
+		var dave_event := EventModuleScript.new()
+		dave_event.setup(library.event("dave_bus_warning"), library)
+		var dave_choices := dave_event.choices(dave_run, dave_run.current_environment)
+		var dave_context := str((dave_choices[0] as Dictionary).get("traveler_context_line", "")) if not dave_choices.is_empty() else ""
+		if dave_context.is_empty() or dave_context.contains("{") or dave_context.contains(" ."):
+			failures.append("BUG-14 regression: Dave's first-stop player path still renders an empty or placeholder-bearing location reference.")
+	var sfx_manifest_source := FileAccess.get_file_as_string("res://data/audio/surface_sfx_manifest.json")
+	if not sfx_manifest_source.contains("\"phone_call\": \"phone_call\""):
+		failures.append("BUG-15 regression: crew_world does not declare its emitted phone_call cue.")
+	var event_start := main_source.find("func resolve_event_choice")
+	var event_end := main_source.find("\nfunc ", event_start + 8)
+	var event_source := main_source.substr(event_start, event_end - event_start) if event_start >= 0 and event_end > event_start else ""
+	if not event_source.contains("last_hook_result"):
+		failures.append("BUG-16 regression: event choices bypass the canonical recent-result pipeline.")
+	if not interaction_source.contains("game_risk_summary"):
+		failures.append("BUG-17 regression: game cards reuse a global travel-risk string.")
+	var feedback_start := main_source.find("func _refresh_environment_result_feedback")
+	var feedback_end := main_source.find("\nfunc _environment_result_feedback_accent", feedback_start)
+	var feedback_source := main_source.substr(feedback_start, feedback_end - feedback_start) if feedback_start >= 0 and feedback_end > feedback_start else ""
+	if feedback_source.contains(".left(RESULT_FEEDBACK_MAX_CHARS)") or not feedback_source.contains("environment_result_body_label.autowrap_mode"):
+		failures.append("BUG-18 regression: environment result feedback is clipped instead of wrapped.")
+	if not main_source.contains("_mandatory_tutorial_seed_locked"):
+		failures.append("BUG-19 regression: mandatory tutorial setup presents an editable seed that is ignored.")
+	if roulette_source.contains("WHEEL_RADIUS + 17.0"):
+		failures.append("BUG-20 regression: Roulette rim labels are positioned outside the wheel region.")
+	if not crew_poker_source.contains("raise_decrement_enabled") or not crew_poker_source.contains("raise_increment_enabled"):
+		failures.append("BUG-21 regression: Back-Room Poker registers active raise controls at their bounds.")
+	if not action_source.contains("if not is_active:"):
+		failures.append("BUG-22 regression: passive consumables are described as spent when used.")
+	if not settings_source.contains("_trap_focus_navigation") or not settings_source.contains("_restore_previous_focus"):
+		failures.append("BUG-23 regression: Settings does not trap focus or restore the previous owner.")
+	if library.item("instant_coffee").is_empty():
+		failures.append("BUG-22 fixture error: Instant Coffee is missing from production content.")
+	else:
+		var item_run: RunState = RunStateScript.new()
+		item_run.start_new("PLAYTEST-FIXES01-ITEM-COPY")
+		var item_service := RunActionServiceScript.new()
+		item_service.setup(library, item_run)
+		for item_value in library.items:
+			if typeof(item_value) != TYPE_DICTIONARY:
+				continue
+			var item_id := str((item_value as Dictionary).get("id", ""))
+			var item_detail: Dictionary = item_service.inventory_item_detail(item_id, "")
+			var behavior := str(item_detail.get("behavior_summary", ""))
+			if not bool(item_detail.get("active_item", false)) and behavior.to_lower().contains("spent when used"):
+				failures.append("BUG-22 regression: passive item %s still uses active-consumable behavior copy." % item_id)
+
+
+func _read_json_dictionary(path: String) -> Dictionary:
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
+	return parsed as Dictionary if typeof(parsed) == TYPE_DICTIONARY else {}
+
+
+func _check_content_scenario_engine(library: ContentLibrary, failures: Array) -> void:
 	_check_scenario_engine_foundation(library, failures)
+
+
+func _check_punchline_layer_contract(library: ContentLibrary, failures: Array) -> void:
 	PunchlineLayerContractScript.check(library, failures)
+
+
+func _check_tier2_scenario_contract(library: ContentLibrary, failures: Array) -> void:
 	Tier2ScenarioContractScript.check(library, failures)
+
+
+func _check_scenario_backlog_contract(library: ContentLibrary, failures: Array) -> void:
 	ScenarioBacklogContractScript.check(library, failures)
+
+
+func _check_scenario_sequence_contract(library: ContentLibrary, failures: Array) -> void:
 	ScenarioSequenceContractScript.check(library, failures, self)
+
+
+func _check_scenario_semantic_presentation_contract(library: ContentLibrary, failures: Array) -> void:
 	ScenarioSemanticPresentationContractScript.check(library, failures)
+
+
+func _check_scenario_semantic_static_contract(library: ContentLibrary, failures: Array) -> void:
+	ScenarioSemanticPresentationContractScript.check_static_and_geometry(library, failures)
+
+
+func _check_scenario_semantic_restore_contract(library: ContentLibrary, failures: Array) -> void:
+	ScenarioSemanticPresentationContractScript.check_partial_restore(library, failures)
+
+
+func _check_scenario_semantic_hidden_contract_0(library: ContentLibrary, failures: Array) -> void:
+	ScenarioSemanticPresentationContractScript.check_hidden_partition(library, failures, 0)
+
+
+func _check_scenario_semantic_hidden_contract_1(library: ContentLibrary, failures: Array) -> void:
+	ScenarioSemanticPresentationContractScript.check_hidden_partition(library, failures, 1)
+
+
+func _check_scenario_semantic_hidden_contract_2(library: ContentLibrary, failures: Array) -> void:
+	ScenarioSemanticPresentationContractScript.check_hidden_partition(library, failures, 2)
+
+
+func _check_scenario_semantic_hidden_contract_3(library: ContentLibrary, failures: Array) -> void:
+	ScenarioSemanticPresentationContractScript.check_hidden_partition(library, failures, 3)
+
+
+func _check_environment_semantic_inventory_contract(library: ContentLibrary, failures: Array) -> void:
 	EnvironmentSemanticInventoryContractScript.check(library, failures)
 
+
+func _check_content_arrival_contract(library: ContentLibrary, failures: Array) -> void:
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("CONTENT-CHECK")
 	var generator: RunGenerator = RunGeneratorScript.new(library)
-	var first_environment: EnvironmentInstance = generator.next_environment(run_state)
+	var first_environment := _harness_arrive(generator, run_state, failures, "content check initial arrival")
 	call("_check_environment_instance_shape", first_environment, false, failures)
 	_check_start_home_environment(run_state, first_environment, failures)
 	if first_environment.kind != "home":
@@ -811,10 +1088,62 @@ func _check_content(library: ContentLibrary, failures: Array) -> void:
 			failures.append("Generated environment references unknown activity: %s." % game_id)
 
 	var target: String = str(first_environment.next_archetypes[0]) if not first_environment.next_archetypes.is_empty() else ""
-	var second_environment: EnvironmentInstance = generator.next_environment(run_state, target)
+	var second_environment := _harness_arrive(generator, run_state, failures, "content check second-room arrival", target)
 	call("_check_environment_instance_shape", second_environment, false, failures)
 	if second_environment.id == first_environment.id:
 		failures.append("Travel did not generate a distinct second environment.")
+
+
+# Slot-only runners deliberately stop at the slot boundary in the split test
+# inheritance chain. This preflight preserves the content requirements relevant
+# to a playable slot room without calling helpers owned by later, unrelated
+# lender/release/save shards. Full suites continue to run _check_content above.
+func _check_slot_content(library: ContentLibrary, failures: Array) -> void:
+	_check_canonical_pack_paths(failures)
+	for error in library.validation_errors:
+		failures.append("ContentLibrary validation failed: %s" % error)
+	var definition := library.game("slot")
+	if definition.is_empty():
+		failures.append("Slot content definition is missing.")
+		return
+	if str(definition.get("environment_prop", "")).strip_edges() != "machine":
+		failures.append("Slot content must render as a machine environment prop.")
+	for asset_key in ["asset_path", "scene_asset_path"]:
+		var asset_path := str(definition.get(asset_key, "")).strip_edges()
+		if asset_path.is_empty() or not FileAccess.file_exists(asset_path):
+			failures.append("Slot content is missing its loadable %s." % asset_key)
+	var room_count := 0
+	for archetype_value in library.environment_archetypes:
+		if typeof(archetype_value) != TYPE_DICTIONARY:
+			continue
+		var game_pool: Array = (archetype_value as Dictionary).get("game_pool", []) if typeof((archetype_value as Dictionary).get("game_pool", [])) == TYPE_ARRAY else []
+		if game_pool.has("slot"):
+			room_count += 1
+	if room_count < 1:
+		failures.append("No production environment exposes a slot-machine fixture.")
+
+
+# Checks that every split suite can validate the canonical pack roots without
+# depending on methods defined in a later inheritance shard.
+func _check_canonical_pack_paths(failures: Array) -> void:
+	var required_paths := ContentLibraryScript.required_pack_paths()
+	for pack_name in required_paths.keys():
+		var path := str(required_paths[pack_name])
+		_check_foundation_pack_path(path, failures)
+		var exists := DirAccess.dir_exists_absolute(ProjectSettings.globalize_path(path)) if path.get_extension().is_empty() else FileAccess.file_exists(path)
+		if not exists:
+			failures.append("Missing required foundation pack %s at %s." % [pack_name, path])
+
+	var future_paths := ContentLibraryScript.future_pack_paths()
+	for path in future_paths.values():
+		_check_foundation_pack_path(str(path), failures)
+
+
+func _check_foundation_pack_path(path: String, failures: Array) -> void:
+	if not path.begins_with("res://data/"):
+		failures.append("Foundation pack path must live under res://data/: %s." % path)
+	if path.begins_with("res://data/runtime/"):
+		failures.append("Foundation pack path must not point at demo runtime data: %s." % path)
 
 
 func _check_action_trigger_candidate_index(failures: Array) -> void:
@@ -995,23 +1324,23 @@ func _check_scenario_engine_foundation(library: ContentLibrary, failures: Array)
 	if int(mid_phase.current_environment.get("scenario_phase_index", -1)) != 2 or int(mid_phase.current_environment.get("scenario_phase_action_counter", -1)) != 0 or str(_copy_dict(mid_phase.current_environment.get("scenario_presentation", {})).get("signage_line", "")) != "THE TAPE GETS SWEPT UP.":
 		failures.append("Fight Night did not advance from bout to aftermath on its fourth bout action boundary.")
 
-	var deterministic_a := _scenario_full_generation("SCENARIO-DETERMINISM", library)
-	var deterministic_b := _scenario_full_generation("SCENARIO-DETERMINISM", library)
+	var deterministic_a := _scenario_full_generation("SCENARIO-DETERMINISM", library, failures)
+	var deterministic_b := _scenario_full_generation("SCENARIO-DETERMINISM", library, failures)
 	_assert_json_equal(deterministic_a, deterministic_b, "Same-seed scenario assignments or phase schedule diverged.", failures)
 	var revisit_run := RunStateScript.new()
 	revisit_run.start_new("SCENARIO-REVISIT")
 	var revisit_generator := RunGeneratorScript.new(library)
-	revisit_generator.next_environment(revisit_run)
-	revisit_generator.next_environment(revisit_run, "bar", true)
+	_harness_arrive(revisit_generator, revisit_run, failures, "scenario revisit initial arrival")
+	_harness_arrive(revisit_generator, revisit_run, failures, "scenario revisit Bar arrival", "bar", true)
 	var before_revisit := revisit_run.scenario_for_node("bar")
 	revisit_run.advance_environment_turns(2)
 	before_revisit = revisit_run.scenario_for_node("bar")
-	revisit_generator.next_environment(revisit_run, "motel", true)
+	_harness_arrive(revisit_generator, revisit_run, failures, "scenario revisit away-room arrival", "motel", true)
 	var rng_before_read := revisit_run.rng_state
 	var stored_read := revisit_run.scenario_for_node("bar")
 	if revisit_run.rng_state != rng_before_read or JSON.stringify(stored_read) != JSON.stringify(before_revisit):
 		failures.append("Scenario read API regenerated state or node persistence changed the stored scenario.")
-	revisit_generator.next_environment(revisit_run, "bar", true)
+	_harness_arrive(revisit_generator, revisit_run, failures, "scenario revisit return arrival", "bar", true)
 	if JSON.stringify(revisit_run.scenario_for_node("bar")) != JSON.stringify(before_revisit):
 		failures.append("World-node revisit did not restore the stored scenario unchanged.")
 
@@ -1310,12 +1639,44 @@ func _check_tier1_scenario_content(library: ContentLibrary, failures: Array) -> 
 	var stored_run := RunStateScript.new()
 	stored_run.start_new("TIER1-TUTORIAL-STORED", tutorial_config)
 	var stored_generator := RunGeneratorScript.new(library)
-	stored_generator.next_environment(stored_run)
+	_harness_arrive(stored_generator, stored_run, failures, "tutorial stored initial arrival")
 	var tutorial_seeded_before_entry := stored_run.seeded_scenario_definition_for_node("corner_store")
 	var tutorial_seeded_bytes := JSON.stringify(tutorial_seeded_before_entry)
 	if tutorial_seeded_bytes != JSON.stringify(tutorial_pin):
 		failures.append("Tutorial pre-seed did not cache the canonical mutation-suppressed Delivery Day selection byte-for-byte.")
-	stored_generator.next_environment(stored_run, "corner_store", true)
+	var default_snapshot_probe := RunStateScript.new()
+	default_snapshot_probe.from_dict(stored_run.to_dict())
+	var default_save_snapshot := default_snapshot_probe.to_save_snapshot()
+	var default_snapshot_town: Dictionary = default_save_snapshot.get("town_state", {})
+	var default_snapshot_world: Dictionary = default_snapshot_town.get("living_world", {})
+	var default_snapshot_definitions: Dictionary = default_snapshot_world.get("seeded_scenario_definitions_by_node", {})
+	var default_snapshot_corner: Dictionary = default_snapshot_definitions.get("corner_store", {})
+	var default_live_corner: Dictionary = default_snapshot_probe.town_state.living_world.seeded_scenario_definitions_by_node.get("corner_store", {})
+	default_live_corner["default_deep_snapshot_probe"] = true
+	if default_snapshot_corner.has("default_deep_snapshot_probe"):
+		failures.append("The default save snapshot stopped deeply isolating seeded scenario definitions.")
+	var rollback_probe := RunStateScript.new()
+	rollback_probe.from_dict(stored_run.to_dict())
+	var rollback_snapshot: Dictionary = stored_generator.call("_travel_rollback_snapshot", rollback_probe)
+	var rollback_run: Dictionary = rollback_snapshot.get("run", {})
+	var rollback_run_bytes := var_to_bytes(rollback_run)
+	var rollback_town: Dictionary = rollback_run.get("town_state", {})
+	var rollback_world: Dictionary = rollback_town.get("living_world", {})
+	var rollback_definitions: Dictionary = rollback_world.get("seeded_scenario_definitions_by_node", {})
+	rollback_probe.town_state.living_world.seeded_scenario_definitions_by_node["rollback_outer_map_probe"] = {"id": "rollback_outer_map_probe"}
+	rollback_probe.current_environment["rollback_environment_probe"] = true
+	rollback_probe.world_map["rollback_world_map_probe"] = true
+	rollback_probe.grand_casino_room_states["rollback_room_states_probe"] = true
+	if rollback_definitions.has("rollback_outer_map_probe"):
+		failures.append("The travel rollback snapshot did not isolate the seeded-definition outer map.")
+	stored_generator.call("_restore_travel_snapshot", rollback_probe, rollback_snapshot)
+	if var_to_bytes(rollback_probe.to_save_snapshot(false)) != rollback_run_bytes \
+		or rollback_probe.current_environment.has("rollback_environment_probe") \
+		or rollback_probe.world_map.has("rollback_world_map_probe") \
+		or rollback_probe.grand_casino_room_states.has("rollback_room_states_probe") \
+		or rollback_probe.town_state.living_world.seeded_scenario_definitions_by_node.has("rollback_outer_map_probe"):
+		failures.append("Travel rollback did not restore its worker-safe snapshot byte-identically.")
+	_harness_arrive(stored_generator, stored_run, failures, "tutorial stored Corner Store arrival", "corner_store", true)
 	if str(stored_run.scenario_for_node("corner_store").get("id", "")) != "corner_store_delivery_day" or not _copy_dict(stored_run.current_environment.get("scenario_exclusive_opportunity", {})).is_empty() or not _copy_dict(stored_run.current_environment.get("scenario_hook_flags", {})).is_empty():
 		failures.append("Tutorial neutral pin did not store scenario identity without opportunity or hook leakage.")
 	if JSON.stringify(stored_run.seeded_scenario_definition_for_node("corner_store")) != tutorial_seeded_bytes \
@@ -1330,10 +1691,10 @@ func _check_tier1_scenario_content(library: ContentLibrary, failures: Array) -> 
 	var ordinary_run := RunStateScript.new()
 	ordinary_run.start_new("TIER1-ORDINARY-STORED", ordinary_config)
 	var ordinary_generator := RunGeneratorScript.new(library)
-	ordinary_generator.next_environment(ordinary_run)
+	_harness_arrive(ordinary_generator, ordinary_run, failures, "ordinary stored initial arrival")
 	var ordinary_seeded := ordinary_run.seeded_scenario_definition_for_node("corner_store")
 	var ordinary_seeded_bytes := JSON.stringify(ordinary_seeded)
-	ordinary_generator.next_environment(ordinary_run, "corner_store", true)
+	_harness_arrive(ordinary_generator, ordinary_run, failures, "ordinary stored Corner Store arrival", "corner_store", true)
 	if _copy_dict(ordinary_seeded.get("mutations", {})).is_empty() \
 		or bool(ordinary_seeded.get(ScenarioEngineScript.SEQUENCE_SUPPRESSION_KEY, false)) \
 		or ordinary_seeded.has("sequence") != authored_delivery.has("sequence") \
@@ -1343,11 +1704,11 @@ func _check_tier1_scenario_content(library: ContentLibrary, failures: Array) -> 
 		failures.append("Ordinary pre-seeded Delivery Day did not preserve and apply its full authored mutations on entry.")
 
 
-func _scenario_full_generation(seed: String, library: ContentLibrary) -> Dictionary:
+func _scenario_full_generation(seed: String, library: ContentLibrary, failures: Array) -> Dictionary:
 	var run_state := RunStateScript.new()
 	run_state.start_new(seed)
 	var generator := RunGeneratorScript.new(library)
-	generator.next_environment(run_state)
+	_harness_arrive(generator, run_state, failures, "%s initial scenario-catalog arrival" % seed)
 	var node_ids: Array = []
 	for node_value in run_state.world_map.get("nodes", []):
 		if typeof(node_value) == TYPE_DICTIONARY:
@@ -1356,7 +1717,7 @@ func _scenario_full_generation(seed: String, library: ContentLibrary) -> Diction
 	for node_id_value in node_ids:
 		var node_id := str(node_id_value)
 		if node_id != run_state.current_world_node_id():
-			generator.next_environment(run_state, node_id, true)
+			_harness_arrive(generator, run_state, failures, "%s scenario-catalog arrival %s" % [seed, node_id], node_id, true)
 		if not run_state.scenario_for_node(node_id).is_empty():
 			run_state.advance_environment_turns(4)
 	var assignments: Dictionary = {}
@@ -1564,11 +1925,19 @@ func _check_connected_town_foundation(library: ContentLibrary, failures: Array) 
 	if scenario_rumor.is_empty() or not run_state.town_state.rumor_trace_is_live(scenario_rumor):
 		failures.append("Scenario rumor did not carry a truth_trace resolving to live seeded state.")
 		return
-	run_state.current_environment["town_rumors"] = [scenario_rumor.duplicate(true)]
-	var event_ids := _string_array(run_state.current_environment.get("event_ids", []))
-	if not event_ids.has("town_rumor_staff"):
-		event_ids.append("town_rumor_staff")
-	run_state.current_environment["event_ids"] = event_ids
+	# Exercise the events in a dedicated base-room host. Adding fixture events to
+	# the generated active scenario would correctly invalidate its sealed semantic
+	# inventory and turn this town-network check into an authority failure.
+	var rumor_host_node := run_state.current_world_node_id()
+	run_state.current_environment = {
+		"id": "connected_town_rumor_host",
+		"archetype_id": rumor_host_node,
+		"world_node_id": rumor_host_node,
+		"turns": 0,
+		"event_ids": ["town_rumor_staff", "staff_shift_tip", "dave_bus_warning"],
+		"resolved_event_ids": [],
+		"town_rumors": [scenario_rumor.duplicate(true)],
+	}
 	var rumor_event := EventModuleScript.new()
 	rumor_event.setup(library.event("town_rumor_staff"), library)
 	var rumor_choices := rumor_event.choices(run_state, run_state.current_environment)
@@ -1581,6 +1950,7 @@ func _check_connected_town_foundation(library: ContentLibrary, failures: Array) 
 		failures.append("An existing natural staff event did not weave in the available rumor line.")
 	var woven_run := RunStateScript.new()
 	woven_run.from_dict(run_state.to_dict())
+	woven_run.enqueue_triggered_event("staff_shift_tip", "connected_town_fixture", {})
 	var woven_delivery := EventModuleScript.new()
 	woven_delivery.setup(library.event("staff_shift_tip"), library)
 	var woven_result := woven_delivery.resolve(woven_run, woven_run.current_environment, "tip_dealer")
@@ -1591,10 +1961,12 @@ func _check_connected_town_foundation(library: ContentLibrary, failures: Array) 
 	var dave_event := EventModuleScript.new()
 	dave_event.setup(library.event("dave_bus_warning"), library)
 	var dave_choices := dave_event.choices(run_state, run_state.current_environment)
-	if dave_choices.is_empty() or str((dave_choices[0] as Dictionary).get("traveler_context_line", "")).is_empty() \
-		or not str((dave_choices[0] as Dictionary).get("text", "")).contains("Dave") \
-		or not str((dave_choices[0] as Dictionary).get("text", "")).contains(str(scenario_rumor.get("line", ""))):
-		failures.append("Dave's existing bus delivery did not gain a data-driven where-he's-been reference.")
+	var dave_context_line := str((dave_choices[0] as Dictionary).get("traveler_context_line", "")) if not dave_choices.is_empty() else ""
+	if dave_choices.is_empty() or dave_context_line.is_empty() \
+			or dave_context_line.contains("{") or dave_context_line.contains(" .") or dave_context_line.contains("  ,") \
+			or not str((dave_choices[0] as Dictionary).get("text", "")).contains("Dave") \
+			or not str((dave_choices[0] as Dictionary).get("text", "")).contains(str(scenario_rumor.get("line", ""))):
+		failures.append("Dave's existing bus delivery did not render a placeholder-free data-driven where-he's-been reference.")
 	var rumor_result := rumor_event.resolve(run_state, run_state.current_environment, "listen")
 	var heard := run_state.heard_rumor_for_node("bar")
 	if not bool(rumor_result.get("ok", false)):
@@ -1612,7 +1984,7 @@ func _check_connected_town_foundation(library: ContentLibrary, failures: Array) 
 	if JSON.stringify(restored_before_entry.heard_rumor_for_node("bar")) != JSON.stringify(heard):
 		failures.append("Heard-tier map state did not survive save/load.")
 	var rng_before_entry := restored_before_entry.rng_state
-	generator.next_environment(restored_before_entry, "bar", true)
+	_harness_arrive(generator, restored_before_entry, failures, "connected-town rumor target arrival", "bar", true)
 	if str(restored_before_entry.scenario_for_node("bar").get("id", "")) != before_entry_seed \
 		or str(restored_before_entry.scenario_for_node("bar").get("id", "")) != str(heard.get("source_id", "")):
 		failures.append("The later entered node did not consume the exact scenario named by its heard rumor.")
@@ -1787,7 +2159,7 @@ func _check_connected_town_foundation(library: ContentLibrary, failures: Array) 
 	var writer_node := writer_run.current_world_node_id()
 	GameModule.apply_result(writer_run, {
 		"ok": true,
-		"source_id": "blackjack",
+		"source_id": "big_public_win_fixture",
 		"action_id": "stand",
 		"stake": 10,
 		"deltas": {"bankroll_delta": 50},
@@ -2767,7 +3139,7 @@ func _check_environment_open_hours(library: ContentLibrary, failures: Array) -> 
 
 
 func _check_dialogue_system_content(library: ContentLibrary, failures: Array) -> void:
-	for dialogue_id in ["pull_tab_clerk", "late_shift_discount", "chatty_clerk"]:
+	for dialogue_id in ["pull_tab_clerk", "late_shift_discount", "chatty_clerk", "silas_crow_numbers"]:
 		var dialogue := library.dialogue(dialogue_id)
 		if dialogue.is_empty():
 			failures.append("Dialogue pack is missing %s." % dialogue_id)
@@ -2780,6 +3152,19 @@ func _check_dialogue_system_content(library: ContentLibrary, failures: Array) ->
 	var chatty_event := library.event("chatty_clerk")
 	if str(chatty_event.get("dialogue_id", "")) != "chatty_clerk":
 		failures.append("chatty_clerk event did not migrate to a dialogue_id.")
+	var silas_dialogue := library.dialogue("silas_crow_numbers")
+	var silas_speaker: Dictionary = silas_dialogue.get("speaker", {}) if typeof(silas_dialogue.get("speaker", {})) == TYPE_DICTIONARY else {}
+	if str(silas_speaker.get("character_id", "")) != "silas_snitch":
+		failures.append("Silas's Numbers conversation is not bound to his authored character model.")
+	var silas_nodes: Dictionary = silas_dialogue.get("nodes", {}) if typeof(silas_dialogue.get("nodes", {})) == TYPE_DICTIONARY else {}
+	var silas_greeting: Dictionary = silas_nodes.get("greeting", {}) if typeof(silas_nodes.get("greeting", {})) == TYPE_DICTIONARY else {}
+	var silas_choice_ids: Array[String] = []
+	for choice_value in silas_greeting.get("choices", []):
+		if typeof(choice_value) == TYPE_DICTIONARY:
+			silas_choice_ids.append(str((choice_value as Dictionary).get("id", "")))
+	for required_choice_id in ["silas_buy_route_tip", "silas_buy_today_handle", "ask_about_silas", "leave_silas"]:
+		if required_choice_id not in silas_choice_ids:
+			failures.append("Silas's Numbers conversation is missing %s." % required_choice_id)
 	var bad_library: ContentLibrary = ContentLibraryScript.new()
 	bad_library.dialogues = [{
 		"id": "bad_goto_fixture",
@@ -2956,6 +3341,8 @@ func _check_talk_content_resolve_delta(library: ContentLibrary, event_id: String
 		run_state.add_suspicion("talk_parity_start", 20, "behavior")
 	var event_module := EventModule.new()
 	event_module.setup(event, library)
+	if event_module.get_interaction_mode() == "triggered":
+		run_state.enqueue_triggered_event(event_id, "talk_content_parity")
 	var result: Dictionary = event_module.resolve(run_state, run_state.current_environment, choice_id)
 	var deltas: Dictionary = result.get("deltas", {}) if typeof(result.get("deltas", {})) == TYPE_DICTIONARY else {}
 	if int(result.get("bankroll_delta", deltas.get("bankroll_delta", 0))) != expected_bankroll_delta:
@@ -3144,6 +3531,7 @@ func _check_t4_3_event_chains_and_checks(library: ContentLibrary, failures: Arra
 	rival_run.set_environment(_t4_3_fixture_environment("delta_queen", "casino", 2, ["blackjack"], ["rival_counter", "counter_payoff"], ["grand_casino"]))
 	var rival_event := EventModule.new()
 	rival_event.setup(library.event("rival_counter"))
+	rival_run.enqueue_triggered_event("rival_counter", "t4_3_event_chain", action_context)
 	var rival_result := rival_event.resolve(rival_run, rival_run.current_environment, "tip_off")
 	call("_check_event_result_delta_shape", rival_result, failures)
 	if not bool(rival_run.narrative_flags.get("rival_counter_owes_you", false)):
@@ -3168,6 +3556,8 @@ func _check_t4_3_event_chains_and_checks(library: ContentLibrary, failures: Arra
 	var collector_b := EventModule.new()
 	collector_a.setup(library.event("the_collector"))
 	collector_b.setup(library.event("the_collector"))
+	collector_run_a.enqueue_triggered_event("the_collector", "t4_3_event_check", action_context)
+	collector_run_b.enqueue_triggered_event("the_collector", "t4_3_event_check", action_context)
 	var result_a := collector_a.resolve(collector_run_a, collector_run_a.current_environment, "stand_ground")
 	var result_b := collector_b.resolve(collector_run_b, collector_run_b.current_environment, "stand_ground")
 	call("_check_event_result_delta_shape", result_a, failures)
@@ -3834,6 +4224,16 @@ func _check_lottery_redemption_clerk_merge(failures: Array) -> void:
 
 
 func _check_foundation_contract_smoke(library: ContentLibrary, failures: Array, suite: String = "all") -> void:
+	_check_foundation_contract_core(library, failures)
+	if suite == "smoke":
+		_check_slot_contract_smoke(library, failures)
+		call("_check_all_game_module_contracts", library, failures)
+		return
+	_check_foundation_contract_games(library, failures, suite)
+	_check_foundation_contract_systems(library, failures)
+
+
+func _check_foundation_contract_core(library: ContentLibrary, failures: Array) -> void:
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("FOUNDATION-SMOKE")
 	var snapshot := run_state.to_dict()
@@ -3850,10 +4250,11 @@ func _check_foundation_contract_smoke(library: ContentLibrary, failures: Array, 
 		failures.append("RngStream did not produce deterministic smoke output.")
 
 	var generator: RunGenerator = RunGeneratorScript.new(library)
-	var first_environment: EnvironmentInstance = generator.next_environment(run_state)
+	var first_environment := _harness_arrive(generator, run_state, failures, "foundation smoke initial arrival")
 	call("_check_environment_instance_shape", first_environment, false, failures)
 	_check_start_home_environment(run_state, first_environment, failures)
-	var second_environment: EnvironmentInstance = generator.next_environment(run_state, first_environment.next_archetypes[0] if not first_environment.next_archetypes.is_empty() else "")
+	var smoke_target := str(first_environment.next_archetypes[0]) if not first_environment.next_archetypes.is_empty() else ""
+	var second_environment := _harness_arrive(generator, run_state, failures, "foundation smoke second-room arrival", smoke_target)
 	call("_check_environment_instance_shape", second_environment, false, failures)
 	if second_environment.kind == "home":
 		failures.append("Second foundation EnvironmentInstance should leave home into the world.")
@@ -3863,11 +4264,10 @@ func _check_foundation_contract_smoke(library: ContentLibrary, failures: Array, 
 		_check_production_game_module_load(library, run_state, second_environment, failures)
 	_check_foundation_shell_no_game_specific_code(failures)
 	call("_check_selected_starter_game_port", library, failures)
-	_check_game_surface_contracts(library, failures)
-	if suite == "smoke":
-		_check_slot_contract_smoke(library, failures)
-		call("_check_all_game_module_contracts", library, failures)
-		return
+	_check_game_surface_contracts_core(library, failures)
+
+
+func _check_foundation_contract_games(library: ContentLibrary, failures: Array, suite: String = "all") -> void:
 	call("_check_bar_dice_contract", library, failures)
 	call("_check_crew_poker_contract", library, failures)
 	call("_check_video_poker_contract", library, failures)
@@ -3878,6 +4278,9 @@ func _check_foundation_contract_smoke(library: ContentLibrary, failures: Array, 
 		_check_slot_contract_smoke(library, failures)
 	call("_check_all_game_module_contracts", library, failures)
 	call("_check_cross_game_integration_matrix", library, failures)
+
+
+func _check_foundation_contract_systems(library: ContentLibrary, failures: Array) -> void:
 	call("_check_run_action_service_boundary", library, failures)
 	call("_check_item_effect_foundation", library, failures)
 	call("_check_item_build_interaction_foundation", library, failures)
@@ -4285,13 +4688,13 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 	run_a.start_new("IGNORED", config_a)
 	run_a.begin_act(1)
 	var generator_a := RunGeneratorScript.new(library)
-	generator_a.next_environment(run_a)
+	_harness_arrive(generator_a, run_a, failures, "tutorial path A initial arrival")
 	var run_b := RunStateScript.new()
 	run_b.start_new("ALSO-IGNORED", config_b)
 	run_b.begin_act(1)
 	var generator_b := RunGeneratorScript.new(library)
-	generator_b.next_environment(run_b)
-	if JSON.stringify(run_a.to_dict()) != JSON.stringify(run_b.to_dict()):
+	_harness_arrive(generator_b, run_b, failures, "tutorial deterministic twin initial arrival")
+	if JSON.stringify(_deterministic_run_projection(run_a)) != JSON.stringify(_deterministic_run_projection(run_b)):
 		failures.append("Tutorial fixed seed generated divergent initial runs.")
 	if not run_a.is_tutorial_run() or not run_a.excludes_profile_stats():
 		failures.append("Tutorial run did not exclude profile and challenge statistics.")
@@ -4324,7 +4727,7 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 	var glasses_detail := item_service.inventory_item_detail("xray_glasses")
 	if not str(glasses_detail.get("effect_summary", "")).contains("3") or not str(glasses_detail.get("effect_summary", "")).contains("6") or not str(glasses_detail.get("behavior_summary", "")).contains("Permanent passive") or bool(glasses_detail.get("active_item", true)):
 		failures.append("Tutorial X-ray inventory detail did not expose its real passive effect, Heat cost, and active-slot behavior.")
-	generator_a.next_environment(run_a, "corner_store", true)
+	_harness_arrive(generator_a, run_a, failures, "tutorial Corner Store arrival", "corner_store", true)
 	if TutorialFlowScript.travel_target_ids(run_a, noisy_tutorial_targets) != ["gas_station_casino"]:
 		failures.append("Tutorial Corner Store exposed a route other than Gas Casino before the parking tip.")
 	item_service.setup(library, run_a)
@@ -4376,15 +4779,15 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 	gas_run.start_new("PATH-A", config_a)
 	gas_run.begin_act(1)
 	var gas_generator := RunGeneratorScript.new(library)
-	gas_generator.next_environment(gas_run)
+	_harness_arrive(gas_generator, gas_run, failures, "tutorial gas path initial arrival")
 	var gas_items := RunActionServiceScript.new()
 	gas_items.setup(library, gas_run)
 	gas_items.buy_item_offer("xray_glasses")
-	gas_generator.next_environment(gas_run, "corner_store", true)
+	_harness_arrive(gas_generator, gas_run, failures, "tutorial gas path Corner Store arrival", "corner_store", true)
 	var gas_tip := EventModuleScript.new()
 	gas_tip.setup(library.event("parking_lot_tip"), library)
 	gas_tip.resolve(gas_run, gas_run.current_environment, "follow_tip")
-	gas_generator.next_environment(gas_run, "gas_station_casino", true)
+	_harness_arrive(gas_generator, gas_run, failures, "tutorial Gas Casino arrival", "gas_station_casino", true)
 	var pull_tabs: GameModule = PullTabsGameScript.new()
 	pull_tabs.setup(library.game("pull_tabs"), library)
 	pull_tabs.enter(gas_run, gas_run.current_environment)
@@ -4393,7 +4796,7 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 	var xray_target: Dictionary = xray_item_state.get("xray_target", {}) if typeof(xray_item_state.get("xray_target", {})) == TYPE_DICTIONARY else {}
 	if int(xray_target.get("offset", -1)) != 2 or int(xray_target.get("payout", 0)) <= 0:
 		failures.append("Path A did not script an X-ray-visible winner near the stack bottom.")
-	generator_a.next_environment(run_a, "small_underground_casino", true)
+	_harness_arrive(generator_a, run_a, failures, "tutorial Underground Casino arrival", "small_underground_casino", true)
 	if run_a.current_environment.get("game_ids", []) != ["blackjack"]:
 		failures.append("Tutorial end-to-end arc did not reach its real blackjack table.")
 	var invite_event := EventModuleScript.new()
@@ -4429,7 +4832,7 @@ func _check_onboarding_tutorial_arc(library: ContentLibrary, failures: Array) ->
 	if int(unaffordable_grand_casino_status.get("cost", -1)) != 5 or bool(unaffordable_grand_casino_status.get("available", true)):
 		failures.append("Tutorial Grand Casino route did not enforce its exact $5 affordability threshold.")
 	run_a.bankroll = 5
-	generator_a.next_environment(run_a, "grand_casino", true)
+	_harness_arrive(generator_a, run_a, failures, "tutorial Grand Casino arrival", "grand_casino", true)
 	if str(run_a.current_environment.get("archetype_id", "")) != RunState.GRAND_CASINO_ARCHETYPE_ID or run_a.current_environment.get("game_ids", []) != ["blackjack"]:
 		failures.append("Tutorial finale did not generate exactly one Main Floor table game.")
 	var tutorial_status := run_a.demo_objective_status()
@@ -4706,7 +5109,7 @@ func _check_profile_inventory_boundary(failures: Array) -> void:
 		failures.append("ProfileInventory normalization lost an unknown existing lifetime counter.")
 	var career_model := CareerStatsViewModelScript.build(restored)
 	var career_routes: Array = career_model.get("routes", []) if typeof(career_model.get("routes", [])) == TYPE_ARRAY else []
-	if CareerStatsViewModelScript.route_definition_ids() != ["players_card_cashout", "showdown", "crew_heist"] or career_routes.size() < 3 or JSON.stringify(career_routes).find("crew_heist") == -1 or JSON.stringify(career_model).find("Back-Room Poker") == -1:
+	if CareerStatsViewModelScript.route_definition_ids() != ["players_card_cashout", "showdown", "crew_heist"] or career_routes.size() < 3 or JSON.stringify(career_routes).find("crew_heist") == -1 or JSON.stringify(career_model).find("Back-Room Hold'em") == -1:
 		failures.append("Career ledger did not render all producible victory routes and generic 0.6 game tallies.")
 	var historical_profile := ProfileInventoryScript.new()
 	historical_profile.from_dict({"schema_version": 5, "lifetime_stats": {"total_runs": 4, "victories_per_route": {"crew_heist": 4}, "future_counter": 33}})
@@ -5079,6 +5482,11 @@ func _check_production_game_module_load(library: ContentLibrary, run_state: RunS
 # Checks that specific game surfaces can expose interactive UI-local state without
 # bypassing the shared GameModule/RunState result path.
 func _check_game_surface_contracts(library: ContentLibrary, failures: Array) -> void:
+	_check_game_surface_contracts_core(library, failures)
+	call("_check_crew_poker_contract", library, failures)
+
+
+func _check_game_surface_contracts_core(library: ContentLibrary, failures: Array) -> void:
 	var blackjack: GameModule = _load_surface_contract_game(library, "blackjack", failures)
 	if blackjack != null:
 		call("_check_blackjack_surface_contract", blackjack, failures)
@@ -5103,7 +5511,6 @@ func _check_game_surface_contracts(library: ContentLibrary, failures: Array) -> 
 	var bar_dice: GameModule = _load_surface_contract_game(library, "bar_dice", failures)
 	if bar_dice != null:
 		call("_check_bar_dice_surface_contract", bar_dice, failures)
-	call("_check_crew_poker_contract", library, failures)
 	_check_process_fanout_guards(library, failures)
 
 
@@ -5178,6 +5585,7 @@ func _check_idle_animation_liveness_contract(surface: Dictionary, label: String,
 	var after_snapshot: Dictionary = canvas.call("surface_runtime_status")
 	var after_redraw_count := int(after_snapshot.get("surface_animation_redraw_count", 0))
 	var performance_counters: Dictionary = canvas.call("performance_counters") if canvas.has_method("performance_counters") else {}
+	var live_status: Dictionary = canvas.call("performance_live_status") if canvas.has_method("performance_live_status") else {}
 	var second_sample := _idle_animation_sample_from_canvas(canvas)
 	if after_redraw_count <= before_redraw_count:
 		failures.append("%s idle animation did not schedule redraws with zero input." % label)
@@ -5185,6 +5593,14 @@ func _check_idle_animation_liveness_contract(surface: Dictionary, label: String,
 		failures.append("%s idle animation sample did not advance over simulated time." % label)
 	if int(performance_counters.get("surface_animation_scheduler_elapsed_msec", -1)) != 200:
 		failures.append("%s idle animation scheduler evidence did not record the exact 200ms production-path interval." % label)
+	if not is_equal_approx(float(performance_counters.get("surface_idle_animation_fps", 0.0)), 60.0):
+		failures.append("%s idle animation counters did not publish the native production cadence." % label)
+	if int(after_snapshot.get("surface_animation_scheduler_elapsed_msec", -1)) != 200 \
+			or not is_equal_approx(float(after_snapshot.get("surface_idle_animation_fps", 0.0)), 60.0):
+		failures.append("%s runtime status omitted the scheduler elapsed/cadence evidence." % label)
+	if int(live_status.get("surface_animation_scheduler_elapsed_msec", -1)) != 200 \
+			or not is_equal_approx(float(live_status.get("surface_idle_animation_fps", 0.0)), 60.0):
+		failures.append("%s lightweight live status omitted the scheduler elapsed/cadence evidence." % label)
 	if canvas.has_method("reset_performance_counters"):
 		canvas.call("reset_performance_counters")
 		var reset_counters: Dictionary = canvas.call("performance_counters") if canvas.has_method("performance_counters") else {}
@@ -5235,6 +5651,10 @@ func _check_table_environment_entry_contracts(library: ContentLibrary, failures:
 		failures.append("Table environment entry contract requires FoundationMain runtime nodes.")
 		call("_sb4_dispose_app", app)
 		return
+	# Headless startup intentionally loads only the light main-menu catalog. A real
+	# run expands it before room entry; this fixture injects a RunState directly,
+	# so it must cross that same content boundary before testing game activation.
+	app.call("_ensure_full_content_library_loaded")
 
 	for game_id in ["roulette", "blackjack", "baccarat", "craps", "bar_dice"]:
 		_check_single_table_environment_entry_contract(library, app, str(game_id), failures)
@@ -5284,14 +5704,14 @@ func _check_single_table_environment_entry_contract(library: ContentLibrary, app
 	app.call("_set_current_screen", "ENVIRONMENT")
 	app.call("_refresh")
 	var before_enter := JSON.stringify(run_state.to_dict())
-	app.call("enter_game", game_id)
+	var entered := bool(app.call("enter_game", game_id))
 	var after_enter := JSON.stringify(run_state.to_dict())
 	if before_enter != after_enter:
 		failures.append("Table environment entry mutated RunState before player action for %s." % game_id)
 
 	var screen_value: Variant = app.get("current_screen")
 	if str(screen_value) != "GAME":
-		failures.append("Table environment entry did not switch to game screen for %s." % game_id)
+		failures.append("Table environment entry did not switch to game screen for %s (entered=%s, screen=%s, blocker=%s)." % [game_id, str(entered), str(screen_value), str(app.call("_blocking_modal_message"))])
 	var active_game_value: Variant = app.get("current_game")
 	if not active_game_value is GameModule:
 		failures.append("Table environment entry did not keep an active GameModule for %s." % game_id)
@@ -5605,20 +6025,27 @@ func _check_slot_gold_buffalo_collection(library: ContentLibrary, definition: Di
 	if game == null:
 		return
 	var run_state: RunState = _slot_run_state("SLOT-GOLD-BUFFALO", 10000000)
-	var environment: Dictionary = _slot_environment()
 	var machine: Dictionary = _slot_machine(definition, run_state, "buffalo", "line_5x3", "standard", "plain")
-	_slot_store_machine(run_state, environment, machine)
-	var rng: RngStream = run_state.create_rng("slot_gold_buffalo_collection")
-	for _spin_index in range(10000):
-		var result: Dictionary = game.resolve_with_context("spin", 10, run_state, environment, rng, {})
-		if bool(result.get("ok", false)):
-			GameModule.apply_result(run_state, result, rng)
-		_slot_complete_active_bonus(game, run_state, environment, rng)
-	var final_machine: Dictionary = SlotMachineStateScript.read_machine(environment, "slot")
-	var bonus_state: Dictionary = _slot_dict(final_machine.get("bonus_state", {}))
-	var total_collected := int(bonus_state.get("gold_buffalo_total_collected", 0))
-	if total_collected <= 0:
-		failures.append("Gold Buffalo collection did not advance over 10,000 paid base spins.")
+	var buffalo = SlotFamilyBuffaloScript.new()
+	var animal_cells: Array = [
+		{"reel": 0, "row": 0},
+		{"reel": 1, "row": 0},
+		{"reel": 2, "row": 0},
+		{"reel": 3, "row": 0},
+	]
+	var grid: Array = [
+		["EAGLE", "A", "BLANK"],
+		["WOLF", "K", "BLANK"],
+		["HORSE", "Q", "BLANK"],
+		["ELK", "J", "BLANK"],
+		["10", "A", "BLANK"],
+	]
+	var entry := {"id": "gold_buffalo_collection_fixture", "classification": "true_win", "forced_placement": {"kind": "line", "symbol": "EAGLE", "cells": animal_cells}}
+	var side_effects: Dictionary = buffalo.apply_grid_side_effects(machine, grid, 10, entry, definition)
+	var bonus_state: Dictionary = _slot_dict(machine.get("bonus_state", {}))
+	var bet_bucket: Dictionary = _slot_dict(_slot_dict(bonus_state.get("per_bet", {})).get("bet_10", {}))
+	if int(side_effects.get("animal_count", 0)) != 4 or int(bonus_state.get("gold_buffalo_total_collected", 0)) != 4 or int(bet_bucket.get("gold_buffalo_heads", 0)) != 4:
+		failures.append("Gold Buffalo collection did not advance exactly from a settled four-animal base grid.")
 	if not _slot_gold_buffalo_conversion_fixture(definition):
 		failures.append("Gold Buffalo conversion fixture did not convert a ready collection meter.")
 
@@ -5892,6 +6319,8 @@ func _slot_check_metrics(definition: Dictionary, family_id: String, key: String,
 	var feature_target := float(targets.get("feature_frequency", 0.0))
 	var feature_tolerance := float(targets.get("feature_tolerance", 0.0))
 	_slot_assert_between(feature, feature_target - feature_tolerance, feature_target + feature_tolerance, "%s feature frequency" % key, failures)
+	if family_id == "buffalo" and int(metrics.get("conversion_count", 0)) <= 0:
+		failures.append("%s completed no Gold Buffalo collection conversions in the 10,000-spin RTP sample." % key)
 
 
 func _check_slot_determinism(library: ContentLibrary, definition: Dictionary, failures: Array) -> void:
@@ -6894,7 +7323,8 @@ func _check_slot_bonus_trigger_reveal_order(definition: Dictionary, failures: Ar
 		var trigger_grid: Array = _slot_array(result.get("slot_grid", []))
 		if _slot_symbol_count(trigger_grid, str(fixture.get("trigger_symbol", ""))) < 3:
 			failures.append("%s did not produce a visible three-symbol trigger grid." % str(fixture.get("label", "Slot trigger")))
-		var before_surface: Dictionary = presentation.surface_state(machine, run_state, definition, _slot_surface_ui_at_spin_msec(before_reveal_msec))
+		var animation_id := str(machine.get("slot_animation_id", ""))
+		var before_surface: Dictionary = presentation.surface_state(machine, run_state, definition, _slot_surface_ui_at_spin_msec(before_reveal_msec, animation_id))
 		var before_scene: Dictionary = _slot_dict(before_surface.get("slot_feature_scene", {}))
 		var before_manifest: Dictionary = renderer.render_signature(before_surface, definition, before_reveal_msec, "")
 		if not bool(before_surface.get("slot_bonus_trigger_reveal_pending", false)):
@@ -6905,7 +7335,7 @@ func _check_slot_bonus_trigger_reveal_order(definition: Dictionary, failures: Ar
 			failures.append("%s render signature left spin mode before reveal." % str(fixture.get("label", "Slot trigger")))
 		if JSON.stringify(_slot_array(before_surface.get("slot_grid", []))) != JSON.stringify(trigger_grid):
 			failures.append("%s did not keep the trigger grid visible during the pre-feature reveal." % str(fixture.get("label", "Slot trigger")))
-		var after_surface: Dictionary = presentation.surface_state(machine, run_state, definition, _slot_surface_ui_at_spin_msec(after_reveal_msec))
+		var after_surface: Dictionary = presentation.surface_state(machine, run_state, definition, _slot_surface_ui_at_spin_msec(after_reveal_msec, animation_id))
 		var after_scene: Dictionary = _slot_dict(after_surface.get("slot_feature_scene", {}))
 		var after_manifest: Dictionary = renderer.render_signature(after_surface, definition, after_reveal_msec, "")
 		if bool(after_surface.get("slot_bonus_trigger_reveal_pending", true)):
@@ -7366,13 +7796,9 @@ func _check_slot_pinball_pending_animation_watchdog(game: GameModule, definition
 	PinballFeatureScript.clear_runtime_session_cache()
 	if game.surface_needs_auto_tick({"surface_time_msec": 1200, "drunk_scaled_surface_time_msec": 1200}, run_state, environment):
 		failures.append("Slot pinball watchdog fired while a bonus award animation was still pending.")
-	var seeded: Dictionary = game.surface_auto_action_command({"surface_time_msec": 3200, "drunk_scaled_surface_time_msec": 3200}, run_state, environment, {})
-	if not bool(seeded.get("environment_changed", false)):
-		failures.append("Slot pinball watchdog did not arm after the pending award animation ended.")
-	var due_time := 5600
-	var command: Dictionary = game.surface_auto_action_command({"surface_time_msec": due_time, "drunk_scaled_surface_time_msec": due_time}, run_state, environment, {})
+	var command: Dictionary = game.surface_auto_action_command({"surface_time_msec": 3200, "drunk_scaled_surface_time_msec": 3200}, run_state, environment, {})
 	if str(command.get("action_id", "")) != "slot_bonus_watchdog":
-		failures.append("Slot pinball watchdog did not route through the watchdog bonus action after the grace window.")
+		failures.append("Slot pinball watchdog did not settle immediately after the pending award animation ended.")
 	else:
 		var rng: RngStream = run_state.create_rng("r8_pinball_pending_watchdog")
 		var result: Dictionary = game.resolve_with_context(str(command.get("action_id", "")), 0, run_state, environment, rng, _slot_dict(command.get("ui_state", {})))
@@ -7418,14 +7844,10 @@ func _check_slot_pinball_save_load_watchdog(game: GameModule, definition: Dictio
 	restored.current_environment = restored_environment
 	var seed_time := 5000
 	if not game.surface_needs_auto_tick({"surface_time_msec": seed_time, "drunk_scaled_surface_time_msec": seed_time}, restored, restored_environment):
-		failures.append("Slot pinball save/load fixture did not request a watchdog seed after losing its runtime session.")
-	var seed_command: Dictionary = game.surface_auto_action_command({"surface_time_msec": seed_time, "drunk_scaled_surface_time_msec": seed_time}, restored, restored_environment, {})
-	if not bool(seed_command.get("environment_changed", false)):
-		failures.append("Slot pinball save/load watchdog seed did not update the restored machine.")
-	var due_time := 7600
-	var command: Dictionary = game.surface_auto_action_command({"surface_time_msec": due_time, "drunk_scaled_surface_time_msec": due_time}, restored, restored_environment, {})
+		failures.append("Slot pinball save/load fixture did not request an immediate recovery tick after losing its runtime session.")
+	var command: Dictionary = game.surface_auto_action_command({"surface_time_msec": seed_time, "drunk_scaled_surface_time_msec": seed_time}, restored, restored_environment, {})
 	if str(command.get("action_id", "")) != "slot_bonus_watchdog":
-		failures.append("Slot pinball save/load fixture did not route the stale feature through the watchdog.")
+		failures.append("Slot pinball save/load fixture did not settle the stale feature on its first recovery tick.")
 	else:
 		var rng: RngStream = restored.create_rng("r8_pinball_save_watchdog")
 		var result: Dictionary = game.resolve_with_context(str(command.get("action_id", "")), 0, restored, restored_environment, rng, _slot_dict(command.get("ui_state", {})))
@@ -7684,6 +8106,18 @@ func _archetype_by_id(library: ContentLibrary, archetype_id: String) -> Dictiona
 func _assert_json_equal(actual: Variant, expected: Variant, message: String, failures: Array) -> void:
 	if JSON.stringify(actual) != JSON.stringify(expected):
 		failures.append(message)
+
+
+# Independent runs intentionally carry distinct random Crew save authority and
+# ciphertext. Determinism checks compare gameplay state while preserving exact
+# byte comparisons for save/restore and same-run transaction tests.
+func _deterministic_run_projection(run_state: RunState) -> Dictionary:
+	var result := run_state.to_dict()
+	var crew := _copy_dict(result.get("crew_state", {}))
+	crew.erase("a")
+	crew.erase("z")
+	result["crew_state"] = crew
+	return result
 
 
 # Checks core contracts with fixture content.
@@ -8165,7 +8599,7 @@ func _slot_surface_channel_duration(surface_state: Dictionary, channel_id: Strin
 			return maxi(0, int(channel.get("duration_msec", 0)))
 	return 0
 
-func _slot_surface_ui_at_spin_msec(spin_msec: int) -> Dictionary:
+func _slot_surface_ui_at_spin_msec(spin_msec: int, active_id: String) -> Dictionary:
 	var elapsed_sec := float(maxi(0, spin_msec)) / 1000.0
 	return {
 		"surface_time_msec": maxi(0, spin_msec),
@@ -8174,6 +8608,7 @@ func _slot_surface_ui_at_spin_msec(spin_msec: int) -> Dictionary:
 			"surface_animations": {
 				"slot_spin": {
 					"id": "slot_spin",
+					"active_id": active_id,
 					"active": true,
 					"elapsed": elapsed_sec,
 				},
@@ -8461,3 +8896,12 @@ func _assert_equal(actual: Variant, expected: Variant, message: String, failures
 
 
 # Compares dictionaries and arrays in foundation checks.
+func _harness_arrive(generator: RunGenerator, run_state: RunState, failures: Array, context: String, target_id: String = "", target_prevalidated: bool = false) -> EnvironmentInstance:
+	var result: Dictionary
+	if run_state.current_environment.is_empty() or target_id.strip_edges().is_empty():
+		result = HarnessProductionFidelityScript.generate_and_finalize(generator, run_state, failures, context, target_id, target_prevalidated)
+	else:
+		result = HarnessProductionFidelityScript.travel_and_finalize(generator, run_state, target_id, target_prevalidated, generator.library, failures, context)
+	var environment_value: Variant = result.get("environment", run_state.current_environment)
+	var environment: Dictionary = environment_value if typeof(environment_value) == TYPE_DICTIONARY else run_state.current_environment
+	return EnvironmentInstance.from_dict(environment)

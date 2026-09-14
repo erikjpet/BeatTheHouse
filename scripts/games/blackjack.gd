@@ -26,6 +26,7 @@ const C_SOFT := VisualStyleScript.SOFT
 
 const RANK_ACE := 14
 const DEAL_ANIMATION_CHANNEL := "blackjack_deal"
+const BLACKJACK_SETTLE_ACTION := "blackjack_settle"
 const ATTENTION_ANIMATION_CHANNEL := "blackjack_attention"
 const COUNT_ANIMATION_CHANNEL := "blackjack_count_rhythm"
 const PAYOUT_ANIMATION_CHANNEL := "blackjack_payout"
@@ -48,15 +49,20 @@ const BLACKJACK_PAYOUT_LABEL := "3:2"
 const STRATEGY_DEVIATION_MAX_HEAT := 24
 const STRATEGY_DEVIATION_MAX_WATCH := 45
 const ORDINARY_STRATEGY_HEAT_MAX := 2
-const DIRTY_COUNT_BASE_HEAT := 10
-const DIRTY_COUNT_ERROR_HEAT := 4
 const COUNT_ADVANTAGE_BASE_HEAT := 8
 const HOLE_CARD_ADVANTAGE_BASE_HEAT := 12
+const COUNTER_SURVEILLANCE_SAMPLE_LIMIT := 24
+const COUNTER_SURVEILLANCE_MIN_HANDS := 6
+const COUNTER_SURVEILLANCE_CORRELATION_THRESHOLD := 0.58
+const COUNTER_SURVEILLANCE_STRONG_CORRELATION := 0.76
+const COUNTER_SURVEILLANCE_MAX_MISS_HEAT := 6
+const COUNTER_SURVEILLANCE_CAUGHT_BONUS := 6
 const COOLERS_CUFFLINKS_ITEM_ID := "coolers_cufflinks"
 const BROKEN_CUFFLINKS_ITEM_ID := "broken_cufflinks"
 const PLAYER_CARD_SCALE := 0.84
 const DEALER_CARD_SCALE := 0.78
 const PATRON_CARD_SCALE := 0.43
+const PATRON_SEAT_POSITIONS := [Vector2(128, 176), Vector2(272, 130), Vector2(628, 130), Vector2(772, 176)]
 const COMPACT_CARD_RANK_PATTERNS := {
 	2: ["111", "001", "111", "100", "111"],
 	3: ["111", "001", "111", "001", "111"],
@@ -134,6 +140,8 @@ func sealed_action_authority_contract() -> Dictionary:
 	return {
 		"resolve_proposal_method": ActionAuthorityScript.RESOLVE_PROPOSAL_METHOD,
 		"wager_cost_proposal_method": ActionAuthorityScript.WAGER_COST_PROPOSAL_METHOD,
+		"trusted_candidate_resolve_method": &"_blackjack_resolve_candidate",
+		"trusted_candidate_wager_method": &"_blackjack_wager_cost_candidate",
 		"host_auto_tick_method": ActionAuthorityScript.HOST_AUTO_TICK_METHOD,
 		"surface_intent_key": ActionAuthorityScript.SURFACE_INTENT_KEY,
 		"surface_intent_index_key": ActionAuthorityScript.SURFACE_INTENT_INDEX_KEY,
@@ -143,6 +151,12 @@ func sealed_action_authority_contract() -> Dictionary:
 		"authoritative_result_marker": "",
 		"place_bet_action": ActionAuthorityScript.PLACE_BET_ACTION,
 		"host_pointer_intent": false,
+		# Count pulses are session-only observations. They never spend funds, advance
+		# the room, or issue a settlement delivery, so the host can stage them without
+		# cloning a late run's world graph for every mouse-over.
+		"in_place_session_intents": ["blackjack_count_icon"],
+		"in_place_session_intent_method": &"_blackjack_in_place_session_intent_command",
+		"skip_environment_turn_actions": ["count_cards"],
 	}
 
 
@@ -152,7 +166,7 @@ func blackjack_ritual_contract() -> Dictionary:
 	var action_ids := [
 		"blackjack_chip", "blackjack_correct_bet", "blackjack_remove_chip", "blackjack_undo_bet",
 		"blackjack_clear_bet", "blackjack_max_bet", "blackjack_repeat_bet",
-		"blackjack_rebet", "blackjack_side_bet", "blackjack_deal", BLACKJACK_CHARGED_DEAL_ACTION,
+		"blackjack_rebet", "blackjack_side_bet", "blackjack_deal", BLACKJACK_SETTLE_ACTION, BLACKJACK_CHARGED_DEAL_ACTION,
 		"blackjack_hit", "blackjack_stand", "blackjack_double",
 		"blackjack_split", "blackjack_surrender", "play_basic",
 	]
@@ -168,7 +182,7 @@ func blackjack_ritual_contract() -> Dictionary:
 			_blackjack_ritual_phase("initial_deal", [], [{"id": "deal_to_player", "condition": {"kind": "public_state_equals", "key": "deal_staged", "value": true}, "next_phase": "player_turn", "operations": []}]),
 			_blackjack_ritual_phase("player_turn", ["blackjack_hit", "blackjack_stand", "blackjack_double", "blackjack_split", "blackjack_surrender"], [{"id": "player_to_dealer", "condition": {"kind": "public_state_equals", "key": "hand_complete", "value": true}, "next_phase": "dealer_procedure", "operations": []}]),
 			_blackjack_ritual_phase("dealer_procedure", ["play_basic"], [{"id": "dealer_to_settlement", "condition": {"kind": "authoritative_result_present"}, "next_phase": "settlement", "operations": []}]),
-			_blackjack_ritual_phase("settlement", [], [{"id": "settlement_to_wagering", "condition": {"kind": "public_state_equals", "key": "payout_staged", "value": true}, "next_phase": "wagering", "operations": []}]),
+			_blackjack_ritual_phase("settlement", [BLACKJACK_SETTLE_ACTION], [{"id": "settlement_to_wagering", "condition": {"kind": "public_state_equals", "key": "payout_staged", "value": true}, "next_phase": "wagering", "operations": []}]),
 		],
 		"action_declarations": action_declarations,
 		"staged_commitment": {
@@ -517,6 +531,11 @@ func generate_environment_state(run_state: RunState, environment: Dictionary, rn
 		"running_count": 0,
 		"recorded_running_count": 0,
 		"count_accuracy_streak": 0,
+		"counter_observation_hands": 0,
+		"counter_observation_samples": [],
+		"counter_evidence_points": 0,
+		"counter_miss_streak": 0,
+		"counter_last_assessment": {},
 		"rules": rules,
 		"side_bets": side_bets,
 		"dealer_profile": dealer_profile,
@@ -725,7 +744,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_ui_protected_regions": _blackjack_ui_protected_regions(count_challenge),
 		"surface_ui_preference_keys": ["blackjack_side_bets"],
 		"surface_action_blocks": [{
-			"actions": ["blackjack_deal", "blackjack_hit", "blackjack_stand", "blackjack_double", "blackjack_split", "blackjack_surrender"],
+			"actions": ["blackjack_deal", BLACKJACK_SETTLE_ACTION, "blackjack_hit", "blackjack_stand", "blackjack_double", "blackjack_split", "blackjack_surrender"],
 			"while_animation": DEAL_ANIMATION_CHANNEL,
 			"reason": "Let the cards finish moving before choosing the next play.",
 		}],
@@ -869,6 +888,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		},
 		"surface_audio": GameModule.surface_audio_spec({
 			"profile_id": "blackjack_table",
+			"selection_seed": run_state.seed_value if run_state != null else 1,
 			"action_cues": {
 				"blackjack_chip": "blackjack_chip",
 				"blackjack_correct_bet": "blackjack_chip",
@@ -883,6 +903,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 				"surface_stake_down": "blackjack_chip",
 				"surface_stake_max": "blackjack_chip",
 				"blackjack_deal": "blackjack_deal",
+				BLACKJACK_SETTLE_ACTION: "blackjack_deal",
 				"blackjack_hit": "blackjack_hit",
 				"blackjack_stand": "blackjack_stand",
 				"blackjack_double": "blackjack_double",
@@ -1027,7 +1048,7 @@ func _blackjack_ritual_projection(run_state: RunState, environment: Dictionary, 
 			"at_risk_total": at_risk_total,
 			"returned_stake": int(settlement_totals.get("returned_stake", 0)),
 			"payout": int(settlement_totals.get("payout", 0)),
-			"net_change": int(last_result.get("bankroll_delta", 0)),
+			"net_change": int(last_result.get("round_net_delta", last_result.get("bankroll_delta", 0))),
 		},
 		"actors": actors,
 		"scene_objects": [
@@ -1173,6 +1194,7 @@ func _blackjack_ritual_boundary_id(phase_id: String, session: Dictionary, last_r
 func _blackjack_ritual_action_states(spec: Dictionary, phase_id: String) -> Dictionary:
 	return {
 		"blackjack_deal": _blackjack_ritual_action_state(bool(spec.get("can_deal", false)) and phase_id == "wagering", "Deal is available only after legal chips are staged."),
+		BLACKJACK_SETTLE_ACTION: _blackjack_ritual_action_state(bool(spec.get("settle_available", false)), "Settle is available only after the hand is complete."),
 		"blackjack_hit": _blackjack_ritual_action_state(bool(spec.get("can_hit", false)) and phase_id == "player_turn", "Hit is available only on the active unfinished hand."),
 		"blackjack_stand": _blackjack_ritual_action_state(bool(spec.get("can_stand", false)) and phase_id == "player_turn", "Stand is available only on the active unfinished hand."),
 		"blackjack_double": _blackjack_ritual_action_state(bool(spec.get("can_double", false)) and phase_id == "player_turn", "Double requires an eligible two-card hand and enough funds."),
@@ -1339,12 +1361,12 @@ func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionar
 
 
 func _draw_blackjack_ritual_layer(surface, surface_state: Dictionary) -> void:
-	var projection := _local_copy_dict(surface_state.get("ritual_projection", {}))
+	var projection := _draw_dict_view(surface_state.get("ritual_projection", {}))
 	if projection.is_empty():
 		return
 	var phase_id := str(projection.get("phase_id", "wagering"))
 	var energy_tier := str(projection.get("energy_tier", "quiet"))
-	var totals := _local_copy_dict(projection.get("readable_totals", {}))
+	var totals := _draw_dict_view(projection.get("readable_totals", {}))
 	var accent := C_PINK if energy_tier == "hot" else C_YELLOW if energy_tier == "watched" else C_TEAL if energy_tier == "engaged" else C_CYAN
 	var phase_rect := Rect2(28, 120, 164, 20)
 	_draw_neon_panel(surface, phase_rect, accent, 0.13)
@@ -1360,7 +1382,7 @@ func _draw_blackjack_ritual_layer(surface, surface_state: Dictionary) -> void:
 		int(totals.get("payout", 0)),
 	], money_rect, 6, C_WHITE)
 	var pit_actor: Dictionary = {}
-	for actor_value in _dictionary_array(projection.get("actors", [])):
+	for actor_value in _draw_array_view(projection.get("actors", [])):
 		var actor: Dictionary = actor_value
 		if str(actor.get("id", "")) == "pit.primary":
 			pit_actor = actor
@@ -1370,7 +1392,7 @@ func _draw_blackjack_ritual_layer(surface, surface_state: Dictionary) -> void:
 		_draw_static_table_character(surface, pit_pos, 0.70, accent, Color("#261827"), "PIT", -2.0, false)
 		surface.draw_line(Vector2(790, 230), Vector2(858, 230), Color(accent.r, accent.g, accent.b, 0.48), 3.0)
 	var discard_state := "empty"
-	for object_value in _dictionary_array(projection.get("scene_objects", [])):
+	for object_value in _draw_array_view(projection.get("scene_objects", [])):
 		var object_state: Dictionary = object_value
 		if str(object_state.get("id", "")) == "discard_rack.primary":
 			discard_state = str(object_state.get("visual", "empty"))
@@ -1380,12 +1402,6 @@ func _draw_blackjack_ritual_layer(surface, surface_state: Dictionary) -> void:
 	surface.draw_rect(discard_rect, Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.42), false, 1)
 	surface.surface_label_centered("DISCARD %s" % discard_state.to_upper(), discard_rect, 7, C_SOFT)
 	if phase_id == "wagering":
-		var chips: Array = surface_state.get("chip_denominations", []) if typeof(surface_state.get("chip_denominations", [])) == TYPE_ARRAY else []
-		var chip_origin := Vector2(45, BJ_CONSOLE_Y + 56.0)
-		var chip_spacing := 20.0 if chips.size() > 4 else 30.0
-		for chip_index in range(chips.size()):
-			var chip_center := chip_origin + Vector2(float(chip_index) * chip_spacing, 0)
-			surface.surface_add_drag_hit(Rect2(chip_center - Vector2(13, 13), Vector2(26, 26)), BLACKJACK_WAGER_PLACE_GESTURE, chip_index)
 		surface.surface_add_hold_hit(Rect2(686, 92, 92, 92), BLACKJACK_CUT_GESTURE, 0)
 		surface.surface_label("DRAG CHIP TO YOU / HOLD SHOE TO CUT", Vector2(622, 246), 7, C_SOFT)
 	elif phase_id == "player_turn":
@@ -1641,7 +1657,10 @@ func surface_pointer_command(surface_action: String, index: int, pointer_phase: 
 	var invalid_message := "Incomplete gesture; nothing changed."
 	match surface_action:
 		BLACKJACK_WAGER_PLACE_GESTURE:
-			valid = phase_id == "wagering" and origin.distance_to(board_position) >= 22.0 and Rect2(414, 276, 76, 62).has_point(board_position)
+			var travel_distance := origin.distance_to(board_position)
+			var tapped_chip := travel_distance <= 12.0
+			var dragged_to_wager := travel_distance >= 22.0 and Rect2(414, 276, 76, 62).has_point(board_position)
+			valid = phase_id == "wagering" and (tapped_chip or dragged_to_wager)
 			semantic_action = "blackjack_chip"
 			invalid_message = "Return the chip to the rail or place it inside your wager circle."
 		BLACKJACK_CUT_GESTURE:
@@ -1765,7 +1784,7 @@ func _blackjack_surface_action_command(surface_action: String, index: int, confi
 					if str(next_state.get("selected_action_id", "")) == "play_basic" and str(next_state.get("selected_action_kind", "")) == "legal":
 						_stand_all_hands(next_state)
 						return _settle_completed_round_command(next_state, index, "You wave off the hand. Dealer reveals and settles.", table, run_state)
-					return _action_command("play_basic", "legal", false, next_state, index, "Basic play selected. Click again to stand and settle, or use the live hand buttons.", true)
+					return _action_command("play_basic", "legal", confirm_requested, next_state, index, "Basic play selected. Click again to stand and settle, or use the live hand buttons.", true)
 				return _settle_completed_round_command(next_state, index, _terminal_round_message(next_state), table, run_state)
 			var ritual_envelope := blackjack_ritual_deal_envelope(next_state, environment)
 			if not blackjack_ritual_deal_envelope_authorized(ritual_envelope, "wagering"):
@@ -1796,6 +1815,12 @@ func _blackjack_surface_action_command(surface_action: String, index: int, confi
 			command["direct_resolve"] = true
 			command["preserve_surface_ui_state"] = true
 			return GameModule.surface_command(command)
+		BLACKJACK_SETTLE_ACTION:
+			if not _has_dealt_hand(next_state):
+				return _message_command(next_state, "There is no active hand to settle.")
+			if not _all_hands_complete(next_state) and not _dealer_has_blackjack(_card_array(next_state.get("dealer_cards", []))):
+				return _message_command(next_state, "Finish the active hand before settlement.")
+			return _settle_completed_round_command(next_state, index, _terminal_round_message(next_state), table, run_state)
 		"blackjack_distraction":
 			return _start_distraction_command(index, next_state, table, run_state)
 		"blackjack_patron_cover":
@@ -1904,6 +1929,15 @@ func _blackjack_surface_action_command(surface_action: String, index: int, confi
 	return {"handled": false}
 
 
+func _blackjack_in_place_session_intent_command(surface_action: String, index: int, _confirm_requested: bool, session: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
+	if surface_action != "blackjack_count_icon":
+		return {"handled": false}
+	var table := _peek_table_state(environment)
+	if table.is_empty():
+		return _message_command(session, "The count pulse is no longer available.")
+	return _hit_count_icon(index, session, table, run_state)
+
+
 func _rourke_duel_surface_action_command(surface_action: String, index: int, confirm_requested: bool, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
 	var table := _table_state(run_state, environment)
 	var next_state := _normalized_session(run_state, environment, ui_state, table)
@@ -1923,6 +1957,13 @@ func _rourke_duel_surface_action_command(surface_action: String, index: int, con
 				var deal_time_msec := int(next_state.get("surface_time_msec", run_state.grand_casino_duel_action_time_msec()))
 				_start_initial_hand(next_state, table, ante, run_state, deal_time_msec)
 				command = _opening_deal_command(next_state, index, str(run_state.grand_casino_duel_status().get("last_bark", "Rourke deals.")))
+		BLACKJACK_SETTLE_ACTION:
+			if not _has_dealt_hand(next_state):
+				command = _message_command(next_state, "There is no active hand to settle.")
+			elif not _all_hands_complete(next_state) and not _dealer_has_blackjack(_card_array(next_state.get("dealer_cards", []))):
+				command = _message_command(next_state, "Finish the active hand before settlement.")
+			else:
+				command = _settle_completed_round_command(next_state, index, "Rourke turns the hole card and settles the hand.", table, run_state)
 		"blackjack_boss_callout":
 			if not _has_dealt_hand(next_state):
 				command = _message_command(next_state, "See the cards before you call Rourke's move.")
@@ -1950,6 +1991,13 @@ func _rourke_duel_surface_action_command(surface_action: String, index: int, con
 				command = _message_command(next_state, "You steal a look. Rourke watches your hands.")
 		_:
 			command = _blackjack_surface_action_command(surface_action, index, confirm_requested, next_state, run_state, environment)
+	# The Rourke hand is owned by the serialized duel rather than the ordinary
+	# table host ledger. Keep every dealt intermediate state durable at the same
+	# surface-action boundary that produced it so save/exit/revisit can reopen the
+	# exact cards, pending animation, edge call, and settlement state.
+	var command_ui: Dictionary = _local_copy_dict(command.get("ui_state", {}))
+	if bool(command.get("handled", false)) and _has_dealt_hand(command_ui):
+		run_state.persist_grand_casino_duel_session(command_ui)
 	return command
 
 
@@ -2010,18 +2058,10 @@ func _blackjack_resolve_proposal(action_id: String, stake: int, run_snapshot: Di
 	}
 	var input_fingerprint := RuntimeScript.canonical_fingerprint(proposal_input)
 	var candidate := RunState.new()
-	candidate.from_dict(run_snapshot.duplicate(true))
+	candidate.from_dict(run_snapshot)
 	var rng := RngStream.new()
-	rng.restore(rng_snapshot.duplicate(true))
-	# Proposal replay may never consult wall time. A normal rendered surface owns
-	# this clock explicitly; headless, restored, and direct host settlements can
-	# legitimately omit it. Bind that missing transient value to the sealed
-	# candidate's simulation clock, which is already covered by run_snapshot and
-	# therefore produces the same proposal on fail-closed replay.
-	var resolution_ui_state := ui_state.duplicate(true)
-	if not resolution_ui_state.has("surface_time_msec"):
-		resolution_ui_state["surface_time_msec"] = GameModule.deterministic_time_msec(candidate, {})
-	var result := _resolve_blackjack_proposal_core(action_id, stake, candidate, candidate.current_environment, rng, resolution_ui_state)
+	rng.restore(rng_snapshot)
+	var result := _blackjack_resolve_candidate(action_id, stake, candidate, rng, ui_state)
 	var proposal := {
 		"ok": bool(result.get("ok", false)),
 		"input_fingerprint": input_fingerprint,
@@ -2031,6 +2071,63 @@ func _blackjack_resolve_proposal(action_id: String, stake: int, run_snapshot: Di
 	}
 	proposal["output_fingerprint"] = RuntimeScript.canonical_fingerprint(proposal)
 	return proposal
+
+
+func foreground_blocks_environment_runtime(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> bool:
+	var session: Dictionary = ui_state
+	if _is_rourke_duel(run_state, environment):
+		session = run_state.grand_casino_duel_session_readonly()
+	else:
+		var states_value: Variant = environment.get("game_states", {})
+		if typeof(states_value) == TYPE_DICTIONARY:
+			var table_value: Variant = (states_value as Dictionary).get(get_id(), {})
+			if typeof(table_value) == TYPE_DICTIONARY:
+				var ledger_value: Variant = (table_value as Dictionary).get(BLACKJACK_HOST_LEDGER_KEY, {})
+				if typeof(ledger_value) == TYPE_DICTIONARY and bool((ledger_value as Dictionary).get("initialized", false)):
+					var session_value: Variant = (ledger_value as Dictionary).get("session", {})
+					if typeof(session_value) == TYPE_DICTIONARY:
+						session = session_value as Dictionary
+	var hands_value: Variant = session.get("player_hands", [])
+	var dealer_value: Variant = session.get("dealer_cards", [])
+	if typeof(hands_value) != TYPE_ARRAY or (hands_value as Array).is_empty() \
+			or typeof(dealer_value) != TYPE_ARRAY or (dealer_value as Array).is_empty():
+		return false
+	return not _all_hands_complete(session)
+
+
+func _blackjack_resolve_candidate(action_id: String, stake: int, candidate: RunState, rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
+	# Proposal replay may never consult wall time. A normal rendered surface owns
+	# this clock explicitly; headless, restored, and direct host settlements can
+	# legitimately omit it. Bind that missing transient value to the sealed
+	# candidate's simulation clock, which is already covered by run_snapshot and
+	# therefore produces the same proposal on fail-closed replay.
+	var resolution_ui_state := ui_state.duplicate(true)
+	if not resolution_ui_state.has("surface_time_msec"):
+		resolution_ui_state["surface_time_msec"] = GameModule.deterministic_time_msec(candidate, {})
+	var result := _resolve_blackjack_proposal_core(action_id, stake, candidate, candidate.current_environment, rng, resolution_ui_state)
+	if bool(result.get("ok", false)) and action_id.begins_with("crew_play:"):
+		_rebind_pending_authority_checkpoint(candidate)
+	return result
+
+
+# Crew plays are the only Blackjack proposals that apply their visible fee and
+# Crew state directly to the detached candidate. Keep the already sealed pending
+# delivery intact while rebinding its restore checkpoint to those canonical
+# balances; otherwise the proposal's own save/load validation discards the
+# ledger before the host can verify and commit it.
+func _rebind_pending_authority_checkpoint(run_state: RunState) -> void:
+	if run_state == null:
+		return
+	var environment := run_state.current_environment
+	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	var table: Dictionary = game_states.get(get_id(), {}) if typeof(game_states.get(get_id(), {})) == TYPE_DICTIONARY else {}
+	var binding := "%s:%s:%s" % [get_id(), str(environment.get("id", "unknown")), str(environment.get("archetype_id", "unknown"))]
+	var ledger := ActionAuthorityScript.validate_persisted_ledger(table.get(BLACKJACK_HOST_LEDGER_KEY, {}), binding)
+	if ledger.is_empty() or (ledger.get("pending_delivery", {}) as Dictionary).is_empty():
+		return
+	ledger["checkpoint_fingerprint"] = run_state.action_authority_checkpoint_fingerprint()
+	table[BLACKJACK_HOST_LEDGER_KEY] = ledger
+	_update_environment_table(environment, table)
 
 
 func _resolve_blackjack_proposal_core(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary = {}, read_only_run_state: bool = false) -> Dictionary:
@@ -2111,6 +2208,7 @@ func _resolve_blackjack_proposal_core(action_id: String, stake: int, run_state: 
 	var debited_wager_total := 0 if sit_out else _session_debited_wager(session)
 	var settlement_return_delta := main_delta + side_delta + debited_wager_total
 	var bankroll_delta: int = settlement_return_delta + security_bankroll_delta
+	var round_net_delta := main_delta + side_delta + security_bankroll_delta
 
 	var used_cards: Array = _cards_used_for_counting(hands, dealer_cards, patron_hands)
 	var patron_action_events: Array = _patron_action_event_array(session.get("patron_action_events", []))
@@ -2120,6 +2218,9 @@ func _resolve_blackjack_proposal_core(action_id: String, stake: int, run_state: 
 	# never author the persisted count (or inject an arbitrary declared delta).
 	var count_record_delta: int = actual_count_delta if bool(session.get("count_answered", false)) else 0
 	var message := _blackjack_result_message(hand_results, side_results, main_delta, side_delta, cheat, item_adjustment, security_message)
+	if suspicion_delta > 0 and run_state.is_grand_casino_environment(environment) and bool(cheat.get("pit_boss_watched", false)) \
+			and message.find("Rourke") == -1 and message.find("Security") == -1 and message.find("staff") == -1:
+		message = "%s Rourke's floor staff marks the play." % message
 	if cufflinks_broke:
 		message = "%s Cooler's Cufflinks absorb the peek heat and break." % message
 	if sit_out:
@@ -2129,10 +2230,10 @@ func _resolve_blackjack_proposal_core(action_id: String, stake: int, run_state: 
 		result_action_kind = "cheat"
 	elif bool(cheat.get("advantage_play", false)):
 		result_action_kind = "risky"
-	_update_table_after_hand(table, session, dealer_cards, actual_count_delta, count_record_delta, rng, presentation_msec)
+	_update_table_after_hand(table, session, dealer_cards, actual_count_delta, count_record_delta, rng, presentation_msec, cheat)
 	if not sit_out:
-		_apply_patron_rapport_after_blackjack(table, session, table_stake, bankroll_delta)
-	table["last_result"] = _blackjack_last_result_payload(message, hand_results, side_results, main_delta, side_delta, bankroll_delta, suspicion_delta, dealer_cards, hands, patron_hands, patron_action_events, cheat, presentation_msec)
+		_apply_patron_rapport_after_blackjack(table, session, table_stake, round_net_delta)
+	table["last_result"] = _blackjack_last_result_payload(message, hand_results, side_results, main_delta, side_delta, bankroll_delta, suspicion_delta, dealer_cards, hands, patron_hands, patron_action_events, cheat, presentation_msec, round_net_delta)
 	(table["last_result"] as Dictionary)["main_stake"] = table_stake
 	(table["last_result"] as Dictionary)["side_bet_ids"] = _string_array(session.get("blackjack_side_bets", []))
 	(table["last_result"] as Dictionary)["total_wager"] = total_wager
@@ -2149,6 +2250,8 @@ func _resolve_blackjack_proposal_core(action_id: String, stake: int, run_state: 
 		"settlement_return_delta": settlement_return_delta,
 		"sat_out": sit_out,
 		"bankroll_delta": bankroll_delta,
+		"round_net_delta": round_net_delta,
+		"outcome_bankroll_delta": round_net_delta,
 		"main_delta": main_delta,
 		"side_delta": side_delta,
 		"suspicion_delta": suspicion_delta,
@@ -2184,7 +2287,7 @@ func _resolve_blackjack_proposal_core(action_id: String, stake: int, run_state: 
 		"bankroll_delta": bankroll_delta,
 		"suspicion_delta": suspicion_delta,
 		"deltas": deltas,
-		"won": bankroll_delta > 0,
+		"won": round_net_delta > 0,
 		"environment_id": environment.get("id", ""),
 		"environment_archetype_id": environment.get("archetype_id", ""),
 		"message": message,
@@ -2199,6 +2302,8 @@ func _resolve_blackjack_proposal_core(action_id: String, stake: int, run_state: 
 	result["blackjack_side_bet_delta"] = side_delta
 	result["blackjack_wager_debited"] = debited_wager_total
 	result["blackjack_settlement_return_delta"] = settlement_return_delta
+	result["blackjack_round_net_delta"] = round_net_delta
+	result["outcome_bankroll_delta"] = round_net_delta
 	result["blackjack_sat_out"] = sit_out
 	result["blackjack_cheat_caught"] = bool(cheat.get("caught", false))
 	result["blackjack_coolers_cufflinks_broke"] = cufflinks_broke
@@ -2208,6 +2313,7 @@ func _resolve_blackjack_proposal_core(action_id: String, stake: int, run_state: 
 	result["blackjack_pit_boss_heat_bonus"] = int(cheat.get("pit_boss_heat_bonus", 0))
 	result["blackjack_running_count"] = int(table.get("running_count", 0))
 	result["blackjack_recorded_count"] = int(table.get("recorded_running_count", 0))
+	result["blackjack_counter_surveillance"] = _local_copy_dict(cheat.get("counter_surveillance", {}))
 	_apply_blackjack_authority_result(run_state, result, rng)
 	return result
 
@@ -2271,7 +2377,7 @@ func _resolve_rourke_duel_hand(action_id: String, run_state: RunState, environme
 	var used_cards := _cards_used_for_counting(hands, dealer_cards, [])
 	var actual_count_delta := _count_cards_delta(used_cards)
 	_update_table_after_hand(table, session, dealer_cards, actual_count_delta, actual_count_delta if bool(session.get("count_answered", false)) else 0, settlement_rng, presentation_msec)
-	table["last_result"] = _blackjack_last_result_payload(message, hand_results, [], transfer, 0, transfer - caught_penalty, 0, dealer_cards, hands, [], [], {"caught": caught}, presentation_msec)
+	table["last_result"] = _blackjack_last_result_payload(message, hand_results, [], transfer, 0, transfer - caught_penalty, 0, dealer_cards, hands, [], [], {"caught": caught}, presentation_msec, transfer - caught_penalty)
 	_update_environment_table(environment, table)
 	var applied := run_state.apply_grand_casino_duel_hand({
 		"transfer": transfer,
@@ -2323,26 +2429,31 @@ func wager_cost_for_context(action_id: String, stake: int, run_state: RunState, 
 
 func _blackjack_wager_cost_proposal(action_id: String, stake: int, run_snapshot: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
 	var candidate := RunState.new()
-	candidate.from_dict(run_snapshot.duplicate(true))
+	candidate.from_dict(run_snapshot)
+	var cost := _blackjack_wager_cost_candidate(action_id, stake, candidate, ui_state)
+	return {
+		"cost": cost,
+		"input_fingerprint": RuntimeScript.canonical_fingerprint({"action_id": action_id, "stake": stake, "run_snapshot": run_snapshot, "ui_state": ui_state}),
+	}
+
+
+func _blackjack_wager_cost_candidate(action_id: String, stake: int, candidate: RunState, ui_state: Dictionary = {}) -> int:
 	var environment := candidate.current_environment
 	if action_id != "play_basic" and action_id != "blackjack_place_bet":
-		return {"cost": 0, "input_fingerprint": RuntimeScript.canonical_fingerprint({"action_id": action_id, "stake": stake, "run_snapshot": run_snapshot, "ui_state": ui_state})}
+		return 0
 	# Rourke's fixed ante belongs to the duel's internal player/Rourke stacks.
 	# Charging the normal cash/chip wager again at hand settlement can reject a
 	# completed hand and leave the player trapped behind the SETTLE control.
 	if _is_rourke_duel(candidate, environment):
-		return {"cost": 0, "input_fingerprint": RuntimeScript.canonical_fingerprint({"action_id": action_id, "stake": stake, "run_snapshot": run_snapshot, "ui_state": ui_state})}
+		return 0
 	var table: Dictionary = _table_state_preview(candidate, environment)
 	if bool(table.get("barred", false)):
-		return {"cost": 0, "input_fingerprint": RuntimeScript.canonical_fingerprint({"action_id": action_id, "stake": stake, "run_snapshot": run_snapshot, "ui_state": ui_state})}
+		return 0
 	var session: Dictionary = _normalized_session(candidate, environment, ui_state, table)
 	if bool(session.get("blackjack_sit_out", false)):
-		return {"cost": 0, "input_fingerprint": RuntimeScript.canonical_fingerprint({"action_id": action_id, "stake": stake, "run_snapshot": run_snapshot, "ui_state": ui_state})}
+		return 0
 	var total_wager := _wager_cost_from_session(_session_stake(stake, session), session, table, candidate)
-	return {
-		"cost": maxi(0, total_wager - _session_debited_wager(session)),
-		"input_fingerprint": RuntimeScript.canonical_fingerprint({"action_id": action_id, "stake": stake, "run_snapshot": run_snapshot, "ui_state": ui_state}),
-	}
+	return maxi(0, total_wager - _session_debited_wager(session))
 
 
 func _resolve_place_bet(stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary, read_only_run_state: bool = false) -> Dictionary:
@@ -2471,7 +2582,17 @@ func _resolve_cheat_only(action_id: String, run_state: RunState, environment: Di
 			_finalize_count_challenge(session, run_state, result_msec)
 		_persist_tutorial_count_lesson_result(table, session, run_state, environment)
 		_update_environment_table(environment, table)
-	var cheat: Dictionary = _cheat_detection_for_hand(session, table, run_state, environment, rng, _session_stake(maxi(1, int(ui_state.get("selected_stake", 1))), session))
+	# Locking the player's answer is an input boundary, not an observable casino
+	# verdict. Assess it once when the hand settles, alongside the wager and play
+	# decisions; doing it here as well used to charge the same count twice.
+	var cheat: Dictionary = {
+		"suspicion_delta": 0,
+		"caught": false,
+		"message": "The count is recorded; the hand still has to play out.",
+		"used_peek": false,
+		"used_count": action_id == "count_cards",
+		"counter_surveillance": {},
+	} if action_id == "count_cards" else _cheat_detection_for_hand(session, table, run_state, environment, rng, _session_stake(maxi(1, int(ui_state.get("selected_stake", 1))), session))
 	var cufflinks_broke := _coolers_cufflinks_absorbed_failed_peek(action_id, cheat, run_state)
 	var raw_suspicion_delta: int = maxi(1, int(cheat.get("suspicion_delta", 0))) if action_id == "peek_hole_card" else maxi(0, int(cheat.get("suspicion_delta", 0)))
 	if cufflinks_broke:
@@ -2791,7 +2912,7 @@ func _draw_dealer_station(surface, surface_state: Dictionary) -> void:
 		surface.surface_label_centered(peek_label, Rect2(570, 134, 114, 14), 11, C_TEAL)
 	else:
 		surface.surface_label(str(focus.get("body_language", focus.get("tell", ""))).left(26), Vector2(566, 142), 9, C_SOFT)
-	_draw_card_row_for_table(surface, surface_state, _card_array(surface_state.get("dealer", [])), Vector2(386, 158), "dealer", 0, DEALER_CARD_SCALE)
+	_draw_card_row_for_table(surface, surface_state, _draw_array_view(surface_state.get("dealer", [])), Vector2(386, 158), "dealer", 0, DEALER_CARD_SCALE)
 	_draw_shoe(surface, Vector2(706, 112), int(surface_state.get("shoe_remaining", 0)))
 
 
@@ -2880,7 +3001,7 @@ func _surface_low_detail_idle(surface) -> bool:
 
 
 func _draw_patron_hand(surface, surface_state: Dictionary, patron: Dictionary, patron_index: int) -> void:
-	var patron_cards: Array = _card_array(patron.get("cards", []))
+	var patron_cards: Array = _draw_array_view(patron.get("cards", []))
 	if patron_cards.is_empty():
 		return
 	var action_event := _patron_active_action_event(surface, surface_state, patron_index)
@@ -2981,19 +3102,19 @@ func _draw_patron_move_badge(surface, pos: Vector2, patron: Dictionary, active_e
 
 
 func _draw_player_station(surface, surface_state: Dictionary, include_betting_chrome: bool = true) -> void:
-	var hands: Array = _hand_array(surface_state.get("player_hands", []))
-	var result: Dictionary = _local_copy_dict(surface_state.get("last_result", {}))
-	var showdown_hands: Array = _hand_array(result.get("player_hands", []))
+	var hands: Array = _draw_array_view(surface_state.get("player_hands", []))
+	var result: Dictionary = _draw_dict_view(surface_state.get("last_result", {}))
+	var showdown_hands: Array = _draw_array_view(result.get("player_hands", []))
 	var display_hands: Array = hands if not hands.is_empty() else showdown_hands
 	var showing_showdown := hands.is_empty() and not showdown_hands.is_empty()
 	var active_index: int = int(surface_state.get("active_hand_index", 0))
 	_draw_player_forearms(surface, surface_state)
-	var result_hands: Array = _dictionary_array(result.get("hand_results", []))
+	var result_hands: Array = _draw_array_view(result.get("hand_results", []))
 	for i in range(display_hands.size()):
 		var hand: Dictionary = display_hands[i]
 		var pos: Vector2 = _player_hand_base_position(i)
 		var active := i == active_index and not showing_showdown
-		var cards: Array = _card_array(hand.get("cards", []))
+		var cards: Array = _draw_array_view(hand.get("cards", []))
 		var cards_revealed := _hand_cards_revealed_for_deal(surface, surface_state, "player", i, cards)
 		_draw_card_row_for_table(surface, surface_state, cards, pos, "player", i, PLAYER_CARD_SCALE)
 		var hand_label := "H%d" % [i + 1]
@@ -3023,7 +3144,7 @@ func _draw_player_wager_chips(surface, surface_state: Dictionary) -> void:
 
 
 func _draw_hand_state_badge(surface, pos: Vector2, hand: Dictionary, active: bool) -> void:
-	var cards: Array = _card_array(hand.get("cards", []))
+	var cards: Array = _draw_array_view(hand.get("cards", []))
 	if cards.is_empty():
 		return
 	var total := _hand_total(cards)
@@ -3113,9 +3234,9 @@ func _draw_hand_result_badge(surface, pos: Vector2, result: Dictionary) -> void:
 
 
 func _draw_side_bet_felt(surface, surface_state: Dictionary) -> void:
-	var side_bets: Array = _dictionary_array(surface_state.get("side_bets_available", []))
-	var active: Array = _string_array(surface_state.get("side_bets_active", []))
-	var stakes: Dictionary = _local_copy_dict(surface_state.get("side_bet_stakes", {}))
+	var side_bets: Array = _draw_array_view(surface_state.get("side_bets_available", []))
+	var active: Array = _draw_array_view(surface_state.get("side_bets_active", []))
+	var stakes: Dictionary = _draw_dict_view(surface_state.get("side_bet_stakes", {}))
 	var panel := Rect2(272, BJ_CONSOLE_Y + 8.0, 302, BJ_CONSOLE_H - 16.0)
 	_draw_neon_panel(surface, panel, C_PINK_2, 0.08)
 	surface.surface_label("SIDE BETS", panel.position + Vector2(10, 15), 10, C_SOFT)
@@ -3140,7 +3261,7 @@ func _draw_side_bet_felt(surface, surface_state: Dictionary) -> void:
 
 
 func _draw_side_bet_rule_overlay(surface, surface_state: Dictionary) -> void:
-	var side_bets: Array = _dictionary_array(surface_state.get("side_bets_available", []))
+	var side_bets: Array = _draw_array_view(surface_state.get("side_bets_available", []))
 	if side_bets.is_empty():
 		return
 	var target_index := -1
@@ -3152,7 +3273,7 @@ func _draw_side_bet_rule_overlay(surface, surface_state: Dictionary) -> void:
 		return
 	var target: Dictionary = side_bets[target_index]
 	var bet_id := str(target.get("id", ""))
-	var active: Array = _string_array(surface_state.get("side_bets_active", []))
+	var active: Array = _draw_array_view(surface_state.get("side_bets_active", []))
 	var selected := active.has(bet_id)
 	var accent := C_YELLOW if selected else C_PINK_2
 	var rect := Rect2(236, 202, 428, 108)
@@ -3161,8 +3282,8 @@ func _draw_side_bet_rule_overlay(surface, surface_state: Dictionary) -> void:
 	surface.surface_label("SIDE BET RULES", rect.position + Vector2(12, 15), 9, C_SOFT)
 	surface.surface_label(str(target.get("label", bet_id)).to_upper().left(28), rect.position + Vector2(12, 31), 14, accent)
 	surface.surface_label(str(target.get("summary", "")).left(54), rect.position + Vector2(12, 47), 8, C_SOFT)
-	var rules: Array = _string_array(target.get("rules", _side_bet_definition(bet_id).get("rules", [])))
-	var payouts: Array = _string_array(target.get("payouts", _side_bet_definition(bet_id).get("payouts", [])))
+	var rules: Array = _draw_array_view(target.get("rules", _side_bet_definition(bet_id).get("rules", [])))
+	var payouts: Array = _draw_array_view(target.get("payouts", _side_bet_definition(bet_id).get("payouts", [])))
 	var y := rect.position.y + 64.0
 	for i in range(mini(rules.size(), 2)):
 		surface.surface_label("- %s" % str(rules[i]).left(58), Vector2(rect.position.x + 14.0, y), 8, C_WHITE)
@@ -3179,16 +3300,14 @@ func _draw_chip_rack(surface, surface_state: Dictionary) -> void:
 	surface.surface_label("CHIP RAIL", rack.position + Vector2(12, 15), 10, C_SOFT)
 	surface.surface_label("BET $%d" % int(surface_state.get("selected_stake", 1)), rack.position + Vector2(112, 15), 12, C_YELLOW)
 	var chips: Array = surface_state.get("chip_denominations", []) if typeof(surface_state.get("chip_denominations", [])) == TYPE_ARRAY else []
-	var chip_origin := rack.position + Vector2(27.0, 48.0)
-	var chip_spacing := 20.0 if chips.size() > 4 else 30.0
+	var chip_origin := rack.position + Vector2(22.0, 34.0)
+	var chip_spacing := 22.0
 	for i in range(chips.size()):
 		var chip_center := chip_origin + Vector2(float(i) * chip_spacing, 0.0)
-		if i == 0:
-			surface.surface_add_exact_invisible_hit(Rect2(chip_center - Vector2(12, 12), Vector2(24, 24)), "surface_stake_up")
-		_draw_chip_button(surface, chip_center, int(chips[i]), "blackjack_chip", i)
-		var remove_rect := Rect2(chip_center.x - 8, chip_center.y + 12, 16, 12)
+		_draw_chip_button(surface, chip_center, int(chips[i]), BLACKJACK_WAGER_PLACE_GESTURE, i)
+		var remove_rect := Rect2(chip_center.x - 7, chip_center.y + 10, 14, 10)
 		_draw_table_button(surface, remove_rect, "", "blackjack_remove_chip", i, C_SOFT, true)
-		surface.draw_line(remove_rect.position + Vector2(4, 6), remove_rect.end - Vector2(4, 6), C_SOFT, 1.0)
+		surface.draw_line(remove_rect.position + Vector2(3, 5), remove_rect.end - Vector2(3, 5), C_SOFT, 1.0)
 	_draw_table_button(surface, Rect2(rack.position.x + 154, rack.position.y + 25, 40, 16), "CLR", "blackjack_clear_bet", 0, C_SOFT, true)
 	_draw_table_button(surface, Rect2(rack.position.x + 200, rack.position.y + 25, 36, 16), "MAX", "blackjack_max_bet", 0, C_YELLOW, true)
 	_draw_table_button(surface, Rect2(rack.position.x + 154, rack.position.y + 47, 26, 16), "UNDO", "blackjack_undo_bet", 0, C_CYAN, true)
@@ -3230,10 +3349,10 @@ func _draw_table_actions(surface, surface_state: Dictionary) -> void:
 		var peek_dangerous := peek_available and not bool(focus.get("peek_window_open", false)) and not bool(surface_state.get("dealer_hole_visible", false))
 		_draw_table_button(surface, Rect2(panel.position.x + 104, panel.position.y + 54, 84, 22), "PEEK", "blackjack_peek", 0, C_PINK if peek_dangerous else C_TEAL, peek_available, surface.surface_native_action_selected("blackjack_peek"))
 		if bool(surface_state.get("settle_available", false)):
-			_draw_table_button(surface, Rect2(panel.position.x + 196, panel.position.y + 54, 72, 22), "SETTLE", "blackjack_deal", 0, C_YELLOW, true, surface.surface_native_action_selected("blackjack_deal"))
+			_draw_table_button(surface, Rect2(panel.position.x + 196, panel.position.y + 54, 72, 22), "SETTLE", BLACKJACK_SETTLE_ACTION, 0, C_YELLOW, true, surface.surface_native_action_selected(BLACKJACK_SETTLE_ACTION))
 		elif bool(surface_state.get("can_surrender", false)):
 			_draw_table_button(surface, Rect2(panel.position.x + 196, panel.position.y + 54, 72, 22), "SURRENDER", "blackjack_surrender", 0, C_ORANGE, bool(surface_state.get("can_surrender", false)))
-	var distractions: Array = _dictionary_array(surface_state.get("distractions", []))
+	var distractions: Array = _draw_array_view(surface_state.get("distractions", []))
 	var strip := Rect2(692, 294, 168, 34)
 	_draw_neon_panel(surface, strip, C_TEAL, 0.08)
 	surface.surface_label("LOOKAWAY", strip.position + Vector2(8, 14), 8, C_SOFT)
@@ -3246,7 +3365,7 @@ func _draw_table_actions(surface, surface_state: Dictionary) -> void:
 func _draw_rourke_duel_hud(surface, surface_state: Dictionary) -> void:
 	var hud := Rect2(18, 12, 860, 62)
 	_draw_neon_panel(surface, hud, C_YELLOW, 0.12)
-	var projection := _local_copy_dict(surface_state.get("showdown_duel_projection", {}))
+	var projection := _draw_dict_view(surface_state.get("showdown_duel_projection", {}))
 	if projection.is_empty():
 		surface.surface_label("ROURKE'S TABLE", hud.position + Vector2(14, 18), 13, C_YELLOW)
 		surface.surface_label("HAND %d / %d" % [int(surface_state.get("boss_hand_number", 1)), int(surface_state.get("boss_hand_limit", 5))], hud.position + Vector2(14, 40), 10, C_SOFT)
@@ -3255,8 +3374,8 @@ func _draw_rourke_duel_hud(surface, surface_state: Dictionary) -> void:
 		surface.surface_label(str(surface_state.get("boss_bark", "Rourke waits.")).left(42), hud.position + Vector2(510, 22), 10, C_WHITE)
 		surface.surface_label(str(surface_state.get("boss_tell", "")).left(48), hud.position + Vector2(510, 42), 9, C_SOFT)
 		return
-	var actor := _local_copy_dict(projection.get("rourke_actor", {}))
-	var room := _local_copy_dict(projection.get("room_state", {}))
+	var actor := _draw_dict_view(projection.get("rourke_actor", {}))
+	var room := _draw_dict_view(projection.get("room_state", {}))
 	var phase_id := str(projection.get("phase_id", "commitment"))
 	var actor_state := str(actor.get("behavior_state", "arrival"))
 	surface.surface_label("ROURKE'S TABLE", hud.position + Vector2(14, 18), 13, C_YELLOW)
@@ -3269,9 +3388,9 @@ func _draw_rourke_duel_hud(surface, surface_state: Dictionary) -> void:
 
 
 func _draw_showdown_duel_room_staging(surface, surface_state: Dictionary) -> void:
-	var projection := _local_copy_dict(surface_state.get("showdown_duel_projection", {}))
+	var projection := _draw_dict_view(surface_state.get("showdown_duel_projection", {}))
 	if projection.is_empty(): return
-	var room := _local_copy_dict(projection.get("room_state", {}))
+	var room := _draw_dict_view(projection.get("room_state", {}))
 	var crowd_state := str(room.get("crowd_state", "full"))
 	var crowd_count := 8 if crowd_state == "full" else 5 if crowd_state == "thinning" else 7 if crowd_state in ["celebrating", "hostile"] else 0
 	var crowd_color := C_ORANGE if crowd_state == "hostile" else C_YELLOW if crowd_state == "celebrating" else C_SOFT
@@ -3302,7 +3421,7 @@ func _draw_rourke_duel_actions(surface, surface_state: Dictionary, panel: Rect2)
 		_draw_table_button(surface, Rect2(panel.position.x + 140, panel.position.y + 28, 62, 24), "DOUBLE", "blackjack_double", 0, C_YELLOW, bool(surface_state.get("can_double", false)))
 		_draw_table_button(surface, Rect2(panel.position.x + 206, panel.position.y + 28, 70, 24), "PEEK", "blackjack_peek", 0, C_PINK, bool(surface_state.get("peek_available", false)))
 		if bool(surface_state.get("settle_available", false)):
-			_draw_table_button(surface, Rect2(panel.position.x + 206, panel.position.y + 54, 70, 18), "SETTLE", "blackjack_deal", 0, C_YELLOW, true)
+			_draw_table_button(surface, Rect2(panel.position.x + 206, panel.position.y + 54, 70, 18), "SETTLE", BLACKJACK_SETTLE_ACTION, 0, C_YELLOW, true)
 	var callouts_value: Variant = surface_state.get("boss_callouts", [])
 	var callouts: Array = callouts_value as Array if typeof(callouts_value) == TYPE_ARRAY else []
 	for i in range(mini(callouts.size(), 2)):
@@ -3314,7 +3433,7 @@ func _draw_rourke_duel_actions(surface, surface_state: Dictionary, panel: Rect2)
 
 
 func _draw_basic_strategy_advice(surface, surface_state: Dictionary) -> void:
-	var advice: Dictionary = _local_copy_dict(surface_state.get("basic_strategy_advice", {}))
+	var advice: Dictionary = _draw_dict_view(surface_state.get("basic_strategy_advice", {}))
 	if not bool(advice.get("visible", false)):
 		return
 	var rect := Rect2(662, 88, 198, 44)
@@ -3356,11 +3475,11 @@ func _draw_deal_animation(surface, surface_state: Dictionary) -> void:
 		if str(event.get("zone", "")) == "patron" and _surface_low_detail_idle(surface):
 			_draw_compact_patron_card(surface, event.get("card", {}), pos, scale)
 		else:
-			_draw_card(surface, _local_copy_dict(event.get("card", {})), pos, scale)
+			_draw_card(surface, event.get("card", {}), pos, scale)
 
 
 func _draw_chip_payout_animation(surface, surface_state: Dictionary) -> void:
-	var result: Dictionary = _local_copy_dict(surface_state.get("last_result", {}))
+	var result: Dictionary = _draw_dict_view(surface_state.get("last_result", {}))
 	if result.is_empty():
 		return
 	if _settlement_reveal_waiting(surface, surface_state):
@@ -3370,7 +3489,8 @@ func _draw_chip_payout_animation(surface, surface_state: Dictionary) -> void:
 	var elapsed_msec := float(surface.surface_elapsed(PAYOUT_ANIMATION_CHANNEL)) * 1000.0
 	var t := clampf(elapsed_msec / float(PAYOUT_ANIMATION_DURATION_MSEC), 0.0, 1.0)
 	var eased := 1.0 - pow(1.0 - t, 3.0)
-	var delta := int(result.get("bankroll_delta", 0))
+	var settlement_delta := int(result.get("bankroll_delta", 0))
+	var delta := int(result.get("round_net_delta", settlement_delta))
 	var main_delta := int(result.get("main_delta", delta))
 	var side_delta := int(result.get("side_delta", 0))
 	var source := Vector2(622, 116)
@@ -3413,6 +3533,8 @@ func _draw_chip_payout_animation(surface, surface_state: Dictionary) -> void:
 		label += " / SIDE %+d" % side_delta
 	elif main_delta != delta:
 		label += " / MAIN %+d" % main_delta
+	if settlement_delta != delta:
+		label += " / RETURN %+d" % settlement_delta
 	surface.surface_label_centered(label.left(42), label_rect.grow(-5), 12, accent)
 
 
@@ -3437,7 +3559,7 @@ func _hand_cards_revealed_for_deal(surface, surface_state: Dictionary, zone: Str
 
 
 func _settlement_reveal_waiting(surface, surface_state: Dictionary) -> bool:
-	if _local_copy_dict(surface_state.get("last_result", {})).is_empty():
+	if _draw_dict_view(surface_state.get("last_result", {})).is_empty():
 		return false
 	if not surface.surface_animation_active(DEAL_ANIMATION_CHANNEL):
 		return false
@@ -3704,7 +3826,7 @@ func _patron_jacket_color(patron: Dictionary) -> Color:
 
 
 func _draw_blackjack_result_board(surface, surface_state: Dictionary) -> void:
-	var result: Dictionary = _local_copy_dict(surface_state.get("last_result", {}))
+	var result: Dictionary = _draw_dict_view(surface_state.get("last_result", {}))
 	var rect := Rect2(18, 12, 232, 74)
 	if result.is_empty():
 		_draw_neon_panel(surface, rect, C_CYAN, 0.10)
@@ -3717,7 +3839,7 @@ func _draw_blackjack_result_board(surface, surface_state: Dictionary) -> void:
 		surface.surface_label("cards still moving", rect.position + Vector2(10, 38), 9, C_SOFT)
 		surface.surface_label("settlement follows", rect.position + Vector2(10, 58), 8, C_SOFT)
 		return
-	var delta := int(result.get("bankroll_delta", 0))
+	var delta := int(result.get("round_net_delta", result.get("bankroll_delta", 0)))
 	var heat := int(result.get("suspicion_delta", 0))
 	var accent := C_TEAL if delta > 0 else C_ORANGE if delta < 0 else C_YELLOW
 	if bool(result.get("caught", false)):
@@ -3727,7 +3849,7 @@ func _draw_blackjack_result_board(surface, surface_state: Dictionary) -> void:
 	surface.surface_label("$%+d" % delta, rect.position + Vector2(10, 38), 12, C_TEAL if delta >= 0 else C_ORANGE)
 	surface.surface_label("heat %+d" % heat, rect.position + Vector2(128, 38), 9, C_PINK if heat > 0 else C_SOFT)
 	var dealer_total := int(result.get("dealer_total", 0))
-	var hand_results: Array = _dictionary_array(result.get("hand_results", []))
+	var hand_results: Array = _draw_array_view(result.get("hand_results", []))
 	var hand_bits: Array = []
 	for i in range(mini(hand_results.size(), 4)):
 		var hand_result: Dictionary = hand_results[i]
@@ -3735,7 +3857,7 @@ func _draw_blackjack_result_board(surface, surface_state: Dictionary) -> void:
 	var compare := "Dealer %d" % dealer_total
 	if not hand_bits.is_empty():
 		compare += " vs %s" % " / ".join(hand_bits)
-	var side_line := _side_bet_result_line(_dictionary_array(result.get("side_bet_results", [])))
+	var side_line := _side_bet_result_line(_draw_array_view(result.get("side_bet_results", [])))
 	if not side_line.is_empty():
 		compare = side_line
 	surface.surface_label(compare.left(38), rect.position + Vector2(10, 58), 8, C_SOFT)
@@ -3786,8 +3908,8 @@ func _draw_table_button(surface, rect: Rect2, label: String, action: String, ind
 
 func _draw_chip_button(surface, center: Vector2, value: int, action: String, index: int) -> void:
 	var hovered := bool(surface.surface_region_hovered(action, index))
-	_draw_casino_chip(surface, center, value, 11.0, 1.0, hovered)
-	surface.surface_add_exact_hit(Rect2(center - Vector2(12, 12), Vector2(24, 24)), action, index)
+	_draw_casino_chip(surface, center, value, 9.0, 1.0, hovered)
+	surface.surface_add_drag_hit(Rect2(center - Vector2(10, 10), Vector2(20, 20)), action, index)
 
 
 func _draw_chip_stack(surface, pos: Vector2, stack_value: Variant, scale: float = 1.0) -> void:
@@ -3835,8 +3957,7 @@ func _chip_color(value: int) -> Color:
 
 
 func _patron_seat_position(index: int) -> Vector2:
-	var positions: Array = [Vector2(128, 176), Vector2(272, 130), Vector2(628, 130), Vector2(772, 176)]
-	return positions[clampi(index, 0, positions.size() - 1)]
+	return PATRON_SEAT_POSITIONS[clampi(index, 0, PATRON_SEAT_POSITIONS.size() - 1)]
 
 
 func _draw_count_challenge(surface, surface_state: Dictionary) -> void:
@@ -3952,7 +4073,7 @@ func _table_state(run_state: RunState, environment: Dictionary, observational: b
 func _table_state_preview(run_state: RunState, environment: Dictionary) -> Dictionary:
 	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
 	var stored: Variant = game_states.get(get_id(), {})
-	var table: Dictionary = (stored as Dictionary).duplicate(true) if typeof(stored) == TYPE_DICTIONARY and not (stored as Dictionary).is_empty() else _fallback_table_state(run_state, environment)
+	var table: Dictionary = _duplicate_table_with_immutable_authority(stored as Dictionary) if typeof(stored) == TYPE_DICTIONARY and not (stored as Dictionary).is_empty() else _fallback_table_state(run_state, environment)
 	_apply_grand_casino_dealer_assignment(table, run_state, environment, true)
 	var normalized := _normalize_table_state(table)
 	# Tutorial repair is also a projection here. Action boundaries persist it via
@@ -4200,7 +4321,7 @@ func _chip_denominations(table: Dictionary) -> Array:
 
 
 func _normalize_table_state(table: Dictionary) -> Dictionary:
-	var normalized := table.duplicate(true)
+	var normalized := _duplicate_table_with_immutable_authority(table)
 	normalized["schema"] = str(normalized.get("schema", "blackjack_table_state"))
 	normalized["version"] = maxi(2, int(normalized.get("version", 2)))
 	normalized["deck_count"] = clampi(int(normalized.get("deck_count", 6)), 1, 8)
@@ -4241,6 +4362,11 @@ func _normalize_table_state(table: Dictionary) -> Dictionary:
 	normalized["running_count"] = int(normalized.get("running_count", 0))
 	normalized["recorded_running_count"] = int(normalized.get("recorded_running_count", 0))
 	normalized["counting_enabled"] = bool(normalized.get("counting_enabled", false))
+	normalized["counter_observation_hands"] = maxi(0, int(normalized.get("counter_observation_hands", 0)))
+	normalized["counter_observation_samples"] = _counter_observation_samples(normalized.get("counter_observation_samples", []))
+	normalized["counter_evidence_points"] = clampi(int(normalized.get("counter_evidence_points", 0)), 0, 100)
+	normalized["counter_miss_streak"] = maxi(0, int(normalized.get("counter_miss_streak", 0)))
+	normalized["counter_last_assessment"] = _local_copy_dict(normalized.get("counter_last_assessment", {}))
 	normalized["barred"] = bool(normalized.get("barred", false))
 	normalized["barred_reason"] = str(normalized.get("barred_reason", ""))
 	normalized["strategy_deviation_strikes"] = maxi(0, int(normalized.get("strategy_deviation_strikes", 0)))
@@ -5377,6 +5503,154 @@ func _side_bet_result(bet: Dictionary, player_cards: Array, dealer_cards: Array,
 	}
 
 
+func _counter_observation_samples(value: Variant) -> Array:
+	var samples: Array = []
+	if typeof(value) != TYPE_ARRAY:
+		return samples
+	for sample_value in value as Array:
+		if typeof(sample_value) != TYPE_DICTIONARY:
+			continue
+		var sample := sample_value as Dictionary
+		var bet := maxi(1, int(sample.get("bet", 1)))
+		samples.append({
+			"count": clampi(int(sample.get("count", 0)), -52, 52),
+			"bet": bet,
+		})
+	while samples.size() > COUNTER_SURVEILLANCE_SAMPLE_LIMIT:
+		samples.pop_front()
+	return samples
+
+
+func _counter_bet_count_correlation(samples: Array) -> float:
+	if samples.size() < 3:
+		return 0.0
+	var count_mean := 0.0
+	var bet_mean := 0.0
+	for sample_value in samples:
+		var sample: Dictionary = sample_value
+		count_mean += float(sample.get("count", 0))
+		bet_mean += float(sample.get("bet", 1))
+	count_mean /= float(samples.size())
+	bet_mean /= float(samples.size())
+	var covariance := 0.0
+	var count_variance := 0.0
+	var bet_variance := 0.0
+	for sample_value in samples:
+		var sample: Dictionary = sample_value
+		var count_offset := float(sample.get("count", 0)) - count_mean
+		var bet_offset := float(sample.get("bet", 1)) - bet_mean
+		covariance += count_offset * bet_offset
+		count_variance += count_offset * count_offset
+		bet_variance += bet_offset * bet_offset
+	if count_variance <= 0.0001 or bet_variance <= 0.0001:
+		return 0.0
+	return clampf(covariance / sqrt(count_variance * bet_variance), -1.0, 1.0)
+
+
+# Casinos cannot see a mental running count. They can see wagers and decisions,
+# then compare those observations with the shoe over time. This assessment keeps
+# that distinction explicit: accurate flat betting is invisible; a count-shaped
+# wager ramp, a sustained bet/count correlation, or repeated visible misses adds
+# evidence. The bounded window is long enough to cover many hands without making
+# save size or assessment cost grow with session length.
+func _counter_surveillance_for_hand(session: Dictionary, table: Dictionary, stake: int) -> Dictionary:
+	var challenge: Dictionary = _local_copy_dict(session.get("count_challenge", {}))
+	var missed_count := (_string_array(challenge.get("missed_icons", []))).size()
+	var bad_hits := maxi(0, int(challenge.get("bad_hits", 0)))
+	var target_delta := int(challenge.get("target_delta", 0))
+	var declared_delta := int(session.get("count_delta", challenge.get("recorded_delta", 0)))
+	var count_distance: int = absi(target_delta - declared_delta)
+	var error_units := clampi(maxi(missed_count + bad_hits, count_distance), 0, 8)
+	if not bool(session.get("count_correct", false)) and error_units == 0:
+		error_units = 1
+
+	var samples := _counter_observation_samples(table.get("counter_observation_samples", []))
+	var previous: Dictionary = samples[-1] if not samples.is_empty() else {}
+	var true_count := clampi(int(table.get("running_count", 0)), -52, 52)
+	var wager := maxi(1, stake)
+	samples.append({"count": true_count, "bet": wager})
+	while samples.size() > COUNTER_SURVEILLANCE_SAMPLE_LIMIT:
+		samples.pop_front()
+	var observed_hands := maxi(0, int(table.get("counter_observation_hands", 0))) + 1
+	var previous_bet := maxi(1, int(previous.get("bet", wager)))
+	var previous_count := int(previous.get("count", true_count))
+	var bet_delta := wager - previous_bet
+	var bet_signal_heat := 0
+	var signal_reasons: Array[String] = []
+	if not previous.is_empty():
+		var meaningful_increase := bet_delta >= maxi(2, int(ceil(float(previous_bet) * 0.50)))
+		var meaningful_decrease := -bet_delta >= maxi(2, int(ceil(float(previous_bet) * 0.40)))
+		if true_count >= 2 and meaningful_increase:
+			bet_signal_heat = 2 + mini(2, int(floor(float(true_count) / 2.0)))
+			if wager >= previous_bet * 2:
+				bet_signal_heat += 1
+			signal_reasons.append("the wager rose with a favorable shoe")
+		elif previous_count >= 2 and true_count <= 0 and meaningful_decrease:
+			bet_signal_heat = 2
+			signal_reasons.append("the wager fell as the shoe cooled")
+		elif true_count - previous_count >= 2 and meaningful_increase:
+			bet_signal_heat = 1
+			signal_reasons.append("the wager tracked a rising count")
+
+	var min_bet := wager
+	var max_bet := wager
+	for sample_value in samples:
+		var sample: Dictionary = sample_value
+		var sample_bet := maxi(1, int(sample.get("bet", 1)))
+		min_bet = mini(min_bet, sample_bet)
+		max_bet = maxi(max_bet, sample_bet)
+	var bet_spread := float(max_bet) / float(maxi(1, min_bet))
+	var correlation := _counter_bet_count_correlation(samples)
+	var correlation_heat := 0
+	if bet_delta != 0 and observed_hands >= COUNTER_SURVEILLANCE_MIN_HANDS and samples.size() >= COUNTER_SURVEILLANCE_MIN_HANDS and bet_spread >= 2.0:
+		if correlation >= COUNTER_SURVEILLANCE_STRONG_CORRELATION and bet_spread >= 3.0:
+			correlation_heat = 3
+			signal_reasons.append("surveillance confirms a strong count-to-bet pattern")
+		elif correlation >= COUNTER_SURVEILLANCE_CORRELATION_THRESHOLD:
+			correlation_heat = 1
+			signal_reasons.append("surveillance sees a developing count-to-bet pattern")
+
+	var prior_miss_streak := maxi(0, int(table.get("counter_miss_streak", 0)))
+	var miss_streak := prior_miss_streak + 1 if error_units > 0 else 0
+	var miss_heat := 0
+	if error_units > 0:
+		miss_heat = mini(COUNTER_SURVEILLANCE_MAX_MISS_HEAT, 1 + maxi(0, error_units - 1) * 2 + mini(2, prior_miss_streak))
+		signal_reasons.append("visible count errors draw dealer attention")
+
+	var evidence_add := bet_signal_heat + correlation_heat + (2 if miss_streak >= 2 else 1 if error_units > 0 else 0)
+	var evidence_points := clampi(int(table.get("counter_evidence_points", 0)) + evidence_add, 0, 100)
+	var significant_pattern := bet_signal_heat >= 3 or correlation_heat >= 3 or (miss_streak >= 2 and miss_heat >= 3)
+	var catch_chance := 0
+	if observed_hands >= COUNTER_SURVEILLANCE_MIN_HANDS and (bet_signal_heat > 0 or correlation_heat > 0):
+		catch_chance = clampi(4 + evidence_points / 2 + bet_signal_heat * 3 + correlation_heat * 4, 0, 58)
+	elif miss_streak >= 3:
+		catch_chance = clampi(3 + evidence_points / 3, 0, 24)
+	var heat := clampi(bet_signal_heat + correlation_heat + miss_heat, 0, 10)
+	return {
+		"observed_hands": observed_hands,
+		"samples": samples,
+		"true_count_at_bet": true_count,
+		"current_bet": wager,
+		"previous_bet": previous_bet,
+		"bet_delta": bet_delta,
+		"bet_spread": bet_spread,
+		"correlation": correlation,
+		"bet_signal_heat": bet_signal_heat,
+		"correlation_heat": correlation_heat,
+		"miss_heat": miss_heat,
+		"error_units": error_units,
+		"missed_icons": missed_count,
+		"bad_hits": bad_hits,
+		"miss_streak": miss_streak,
+		"evidence_add": evidence_add,
+		"evidence_points": evidence_points,
+		"heat": heat,
+		"catch_chance": catch_chance,
+		"significant_pattern": significant_pattern,
+		"signal_reasons": signal_reasons,
+	}
+
+
 func _cheat_detection_for_hand(session: Dictionary, table: Dictionary, run_state: RunState, environment: Dictionary, rng: RngStream, stake: int) -> Dictionary:
 	var cheats: Dictionary = _local_copy_dict(session.get("cheats_used", {}))
 	var used_peek: bool = bool(cheats.get("peek_hole_card", false))
@@ -5387,10 +5661,10 @@ func _cheat_detection_for_hand(session: Dictionary, table: Dictionary, run_state
 		return {"suspicion_delta": 0, "caught": false, "message": ""}
 	var base_heat := 0
 	var catch_chance := 0
-	var dirty_count := false
 	var ordinary_strategy_count := 0
 	var count_advantage_score := 0
 	var hole_card_advantage_score := 0
+	var counter_surveillance: Dictionary = {}
 	for event_value in strategy_events:
 		var event: Dictionary = event_value
 		var information_source := str(event.get("information_source", "ordinary"))
@@ -5420,27 +5694,10 @@ func _cheat_detection_for_hand(session: Dictionary, table: Dictionary, run_state
 			base_heat += int(ceil(float(snitch_risk) / 12.0))
 			catch_chance += int(ceil(float(snitch_risk) / 4.0))
 	if used_count:
-		var challenge: Dictionary = _local_copy_dict(session.get("count_challenge", {}))
-		var missed_count := (_string_array(challenge.get("missed_icons", []))).size()
-		var bad_hits := int(challenge.get("bad_hits", 0))
-		dirty_count = not bool(session.get("count_correct", false)) or missed_count > 0 or bad_hits > 0
-		# Accurate counting is observation, not detectable behavior. If the player
-		# also follows an ordinary-looking line, the house has nothing to react to.
-		if not dirty_count and not used_peek and not used_strategy:
-			return {
-				"suspicion_delta": 0,
-				"caught": false,
-				"catch_chance": 0,
-				"message": "The live count stays clean.",
-				"used_peek": false,
-				"used_count": true,
-			}
-		if dirty_count:
-			var count_errors := clampi(missed_count + bad_hits, 1, 8)
-			base_heat += DIRTY_COUNT_BASE_HEAT + count_errors * DIRTY_COUNT_ERROR_HEAT
-			catch_chance = maxi(catch_chance, int(table.get("dealer_catch_base", 10)))
-			catch_chance += 14 + missed_count * 7 + bad_hits * 9
-			catch_chance += int(float(int(challenge.get("dealer_attention_risk", 0))) / 8.0)
+		counter_surveillance = _counter_surveillance_for_hand(session, table, stake)
+		base_heat += int(counter_surveillance.get("heat", 0))
+		catch_chance = maxi(catch_chance, int(counter_surveillance.get("catch_chance", 0)))
+		if int(counter_surveillance.get("heat", 0)) > 0:
 			base_heat += _item_effect_total("blackjack_count_heat_delta", run_state)
 	if used_strategy:
 		var profile: Dictionary = _local_copy_dict(table.get("dealer_profile", {}))
@@ -5465,7 +5722,8 @@ func _cheat_detection_for_hand(session: Dictionary, table: Dictionary, run_state
 		if bool(session.get("strategy_confronted", false)):
 			base_heat += clampi(int(session.get("strategy_confrontation_heat", 0)), 0, STRATEGY_DEVIATION_MAX_HEAT)
 			catch_chance += 20 if advantage_strategy_score > 0 else 4
-	var blatant_advantage_play := used_peek or dirty_count or advantage_strategy_score > 0
+	var count_pattern_exposed := bool(counter_surveillance.get("significant_pattern", false))
+	var blatant_advantage_play := used_peek or count_pattern_exposed or advantage_strategy_score > 0
 	if blatant_advantage_play:
 		base_heat += run_state.security_risk_bonus("cheat")
 		catch_chance += run_state.security_risk_bonus("cheat") * 2
@@ -5475,7 +5733,11 @@ func _cheat_detection_for_hand(session: Dictionary, table: Dictionary, run_state
 		pit_boss_heat_bonus = int(pit_boss.get("cheat_heat_bonus", 0))
 		catch_chance += pit_boss_heat_bonus
 		base_heat += pit_boss_heat_bonus
-	if blatant_advantage_play:
+	# Universal concealment gear reduces visible heat from any risky blackjack
+	# behavior. Keep an accurate, flat-bet mental count at zero, but do not skip
+	# the modifier merely because a first visible count error has not yet grown
+	# into a sustained surveillance pattern.
+	if base_heat > 0:
 		base_heat += _item_effect_total("cheat_suspicion_delta", run_state)
 	if used_peek:
 		base_heat += _item_effect_total("blackjack_peek_heat_delta", run_state)
@@ -5486,12 +5748,16 @@ func _cheat_detection_for_hand(session: Dictionary, table: Dictionary, run_state
 	var heat := maxi(0, base_heat)
 	if caught:
 		var catch_heat_bonus := maxi(6, int(table.get("catch_heat", 18)))
+		if used_count and not used_peek and hole_card_advantage_score <= 0:
+			catch_heat_bonus = COUNTER_SURVEILLANCE_CAUGHT_BONUS + mini(3, int(counter_surveillance.get("evidence_points", 0)) / 20)
 		if not blatant_advantage_play:
 			catch_heat_bonus = 1
 		heat += catch_heat_bonus
 	heat = run_state.crew_play_adjust_suspicion(heat, get_id(), environment)
 	var message := "The dealer confronts the off-book line." if strategy_confronted else "The dealer clocks the move." if caught else "The risky move slides by."
-	if used_count and bool(session.get("count_correct", false)) and advantage_strategy_score > 0:
+	if used_count and not caught and int(counter_surveillance.get("heat", 0)) == 0 and advantage_strategy_score == 0 and not used_peek:
+		message = "The count stays mental; the dealer sees an ordinary wager."
+	elif used_count and bool(session.get("count_correct", false)) and advantage_strategy_score > 0:
 		message = "%s The count lands clean, but the information-driven play gives it away." % message
 	elif used_count and bool(session.get("count_correct", false)):
 		message = "%s The count lands clean." % message
@@ -5513,6 +5779,7 @@ func _cheat_detection_for_hand(session: Dictionary, table: Dictionary, run_state
 		"advantage_play": blatant_advantage_play,
 		"strategy_confronted": strategy_confronted,
 		"strategy_deviation_events": strategy_events,
+		"counter_surveillance": counter_surveillance,
 		"pit_boss_watched": bool(pit_boss.get("watched", false)),
 		"pit_boss_heat_bonus": pit_boss_heat_bonus,
 		"stake": stake,
@@ -5547,13 +5814,40 @@ func _blackjack_item_adjustment(main_delta: int, side_delta: int, session: Dicti
 	}
 
 
-func _update_table_after_hand(table: Dictionary, session: Dictionary, dealer_cards: Array, actual_count_delta: int, count_record_delta: int, rng: RngStream, result_msec: int = 0) -> void:
+func _persist_counter_surveillance(table: Dictionary, cheat: Dictionary) -> void:
+	var assessment_value: Variant = cheat.get("counter_surveillance", {})
+	if typeof(assessment_value) != TYPE_DICTIONARY or (assessment_value as Dictionary).is_empty():
+		return
+	var assessment := assessment_value as Dictionary
+	table["counter_observation_hands"] = maxi(0, int(assessment.get("observed_hands", table.get("counter_observation_hands", 0))))
+	table["counter_observation_samples"] = _counter_observation_samples(assessment.get("samples", []))
+	table["counter_evidence_points"] = clampi(int(assessment.get("evidence_points", table.get("counter_evidence_points", 0))), 0, 100)
+	table["counter_miss_streak"] = maxi(0, int(assessment.get("miss_streak", 0)))
+	# Keep the diagnostic payload compact and save-safe. The full sample window is
+	# already stored separately; last assessment is for UI/test explainability.
+	table["counter_last_assessment"] = {
+		"true_count_at_bet": int(assessment.get("true_count_at_bet", 0)),
+		"current_bet": int(assessment.get("current_bet", 0)),
+		"previous_bet": int(assessment.get("previous_bet", 0)),
+		"bet_delta": int(assessment.get("bet_delta", 0)),
+		"bet_spread": float(assessment.get("bet_spread", 1.0)),
+		"correlation": float(assessment.get("correlation", 0.0)),
+		"error_units": int(assessment.get("error_units", 0)),
+		"heat": int(assessment.get("heat", 0)),
+		"catch_chance": int(assessment.get("catch_chance", 0)),
+		"evidence_points": int(assessment.get("evidence_points", 0)),
+		"significant_pattern": bool(assessment.get("significant_pattern", false)),
+	}
+
+
+func _update_table_after_hand(table: Dictionary, session: Dictionary, dealer_cards: Array, actual_count_delta: int, count_record_delta: int, rng: RngStream, result_msec: int = 0, cheat: Dictionary = {}) -> void:
 	var deck_count := int(table.get("deck_count", 6))
 	var cut_card_remaining := int(table.get("cut_card_remaining", CardShoeScript.cut_card_remaining(deck_count)))
 	var remaining_shoe: Array = _remaining_shoe_after_session(table, session)
 	table["hands_played"] = int(table.get("hands_played", 0)) + 1
 	GameModule.reset_table_round_timer(table)
 	table["running_count"] = int(table.get("running_count", 0)) + actual_count_delta
+	_persist_counter_surveillance(table, cheat)
 	if bool(session.get("count_answered", false)):
 		table["recorded_running_count"] = int(table.get("recorded_running_count", 0)) + count_record_delta
 	if bool(session.get("count_correct", false)):
@@ -5611,8 +5905,22 @@ func _update_table_after_hand(table: Dictionary, session: Dictionary, dealer_car
 
 func _update_environment_table(environment: Dictionary, table: Dictionary) -> void:
 	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
-	game_states[get_id()] = table.duplicate(true)
+	game_states[get_id()] = _duplicate_table_with_immutable_authority(table)
 	environment["game_states"] = game_states
+
+
+# Authority operations use copy-on-write containers and never mutate cached
+# response or journal values in place. Preserve those immutable values across
+# the table's otherwise defensive deep copy so repeated play does not clone the
+# complete replay window every time the table is normalized or stored.
+func _duplicate_table_with_immutable_authority(table: Dictionary) -> Dictionary:
+	var source := table.duplicate(false)
+	var authority_value: Variant = source.get(BLACKJACK_HOST_LEDGER_KEY, null)
+	source.erase(BLACKJACK_HOST_LEDGER_KEY)
+	var copy := source.duplicate(true)
+	if typeof(authority_value) == TYPE_DICTIONARY:
+		copy[BLACKJACK_HOST_LEDGER_KEY] = (authority_value as Dictionary).duplicate(false)
+	return copy
 
 
 func _action_command(action_id: String, action_kind: String, confirm_requested: bool, ui_state: Dictionary, index: int, message: String, resolve_when_selected: bool, preserve_surface_ui_state: bool = false, force_resolve: bool = false) -> Dictionary:
@@ -6596,16 +6904,18 @@ func _start_count_challenge(ui_state: Dictionary, table: Dictionary, run_state: 
 	var now := _surface_time_for_count(ui_state, now_msec)
 	var icon_duration := _count_icon_duration_msec(run_state)
 	var challenge_id := "%s:count:%d" % [get_id(), now]
+	var icon_serial := 0
 	for i in range(cards.size()):
 		var card_value: Variant = cards[i]
 		var card: Dictionary = card_value
+		card["_count_tracking_key"] = _count_icon_card_key(card)
 		var count_value := _count_value_for_card(card)
 		if count_value == 0:
 			continue
 		var seed: int = abs(_stable_hash("%s:%s:%d" % [challenge_id, _count_icon_card_key(card), i]))
 		var icon_pos := _count_icon_position_for_card(card, seed)
 		icons.append({
-			"id": "%s:%d" % [challenge_id, i],
+			"id": "%s:%d" % [challenge_id, icon_serial],
 			"card": card.duplicate(true),
 			"count_value": count_value,
 			"spawn_msec": now + 420 + icons.size() * COUNT_ICON_STAGGER_MSEC,
@@ -6613,6 +6923,7 @@ func _start_count_challenge(ui_state: Dictionary, table: Dictionary, run_state: 
 			"x": icon_pos.x,
 			"y": icon_pos.y,
 		})
+		icon_serial += 1
 	var target_delta: int = _count_cards_delta(cards)
 	var tracked_keys: Array = []
 	for tracked_card_value in cards:
@@ -6623,7 +6934,7 @@ func _start_count_challenge(ui_state: Dictionary, table: Dictionary, run_state: 
 		"cards": cards,
 		"icons": icons,
 		"tracked_card_keys": tracked_keys,
-		"icon_serial": icons.size(),
+		"icon_serial": icon_serial,
 		"clicked_icons": [],
 		"missed_icons": [],
 		"resolved_icon_msec": {},
@@ -6734,11 +7045,20 @@ func _hit_count_icon(index: int, ui_state: Dictionary, table: Dictionary, _run_s
 	ui_state["count_delta"] = delta
 	ui_state["count_declared_delta"] = delta
 	ui_state["count_challenge"] = challenge
-	return _message_command(ui_state, "Count pulse %+d locked. Hand delta %+d; shoe count %+d." % [
+	var command := _message_command(ui_state, "Count pulse %+d locked. Hand delta %+d; shoe count %+d." % [
 		int(icon.get("count_value", 0)),
 		delta,
 		int(table.get("recorded_running_count", 0)) + delta,
 	])
+	# The host has already staged the complete sealed session. Patch the rendered
+	# pulse state directly so a hover claim does not rebuild the entire Foundation
+	# screen before drawing the fade/count change.
+	command["surface_state_patch"] = {
+		"count_challenge": challenge.duplicate(true),
+		"count_delta": delta,
+		"count_declared_delta": delta,
+	}
+	return command
 
 
 func _refresh_count_challenge_misses(challenge: Dictionary, now_msec: int) -> Dictionary:
@@ -6816,20 +7136,51 @@ func _sync_count_challenge_icons(ui_state: Dictionary, run_state: RunState, now_
 	var cards: Array = _dictionary_array(challenge.get("cards", []))
 	var icons: Array = _dictionary_array(challenge.get("icons", []))
 	var tracked_keys: Array = _string_array(challenge.get("tracked_card_keys", []))
-	if tracked_keys.is_empty():
-		for card_value in cards:
-			if typeof(card_value) == TYPE_DICTIONARY:
-				tracked_keys.append(_count_icon_card_key(card_value as Dictionary))
+	var available_keys_by_identity: Dictionary = {}
+	for card_value in cards:
+		if typeof(card_value) != TYPE_DICTIONARY:
+			continue
+		var tracked_card: Dictionary = card_value as Dictionary
+		var tracked_key := _count_icon_card_key(tracked_card)
+		if not tracked_keys.has(tracked_key):
+			tracked_keys.append(tracked_key)
+		var identity_key := _count_icon_identity_key(tracked_card)
+		var identity_keys: Array = available_keys_by_identity.get(identity_key, [])
+		identity_keys.append(tracked_key)
+		available_keys_by_identity[identity_key] = identity_keys
 	now_msec = _surface_time_for_count(ui_state, now_msec)
 	var icon_duration := _count_icon_duration_msec(run_state)
 	var challenge_id := str(challenge.get("challenge_id", "%s:count:%d" % [get_id(), now_msec]))
 	var serial := int(challenge.get("icon_serial", icons.size()))
 	var added := 0
+	var claimed_existing_keys: Dictionary = {}
 	for card_value in _visible_count_challenge_cards(ui_state):
 		if typeof(card_value) != TYPE_DICTIONARY:
 			continue
 		var card: Dictionary = (card_value as Dictionary).duplicate(true)
-		var key := _count_icon_card_key(card)
+		var source_key := str(card.get("_count_source_key", _count_icon_card_key(card)))
+		var key := ""
+		var identity_keys: Array = available_keys_by_identity.get(_count_icon_identity_key(card), [])
+		for candidate_value in identity_keys:
+			var candidate := str(candidate_value)
+			if candidate == source_key and not claimed_existing_keys.has(candidate):
+				key = candidate
+				break
+		if key.is_empty():
+			for candidate_value in identity_keys:
+				var candidate := str(candidate_value)
+				if not claimed_existing_keys.has(candidate):
+					key = candidate
+					break
+		if not key.is_empty():
+			claimed_existing_keys[key] = true
+		else:
+			key = source_key
+			var disambiguator := 2
+			while tracked_keys.has(key):
+				key = "%s#%d" % [source_key, disambiguator]
+				disambiguator += 1
+		card["_count_tracking_key"] = key
 		if tracked_keys.has(key):
 			continue
 		tracked_keys.append(key)
@@ -6837,6 +7188,8 @@ func _sync_count_challenge_icons(ui_state: Dictionary, run_state: RunState, now_
 		var count_value := _count_value_for_card(card)
 		if count_value == 0:
 			continue
+		while _count_icon_id_is_used(icons, "%s:%d" % [challenge_id, serial]):
+			serial += 1
 		var seed: int = abs(_stable_hash("%s:%s:%d" % [challenge_id, key, serial]))
 		var icon_pos := _count_icon_position_for_card(card, seed)
 		icons.append({
@@ -6899,8 +7252,7 @@ func _update_live_count_state(ui_state: Dictionary, _table: Dictionary, run_stat
 		ui_state.erase("count_live_notice")
 		return ""
 	var new_misses: int = missed_after - missed_before
-	ui_state["count_miss_suspicion"] = int(ui_state.get("count_miss_suspicion", 0)) + new_misses * 2
-	var notice := "A count symbol slips by. Dealer suspicion rises." if new_misses == 1 else "%d count symbols slip by. Dealer suspicion rises." % new_misses
+	var notice := "A count symbol slips by. Dealer attention rises." if new_misses == 1 else "%d count symbols slip by. Dealer attention rises." % new_misses
 	if announce:
 		ui_state["count_live_notice"] = notice
 		ui_state["table_notice"] = notice
@@ -6973,13 +7325,27 @@ func _blackjack_presentation_time_msec(ui_state: Dictionary, fallback_msec: int 
 
 
 func _count_icon_card_key(card: Dictionary) -> String:
-	var identity_key := str(card.get("_count_identity_key", ""))
-	if not identity_key.is_empty():
-		return identity_key
+	var tracking_key := str(card.get("_count_tracking_key", ""))
+	if not tracking_key.is_empty():
+		return tracking_key
 	var source_key := str(card.get("_count_source_key", ""))
 	if not source_key.is_empty():
 		return source_key
+	return _count_icon_identity_key(card)
+
+
+func _count_icon_identity_key(card: Dictionary) -> String:
+	var identity_key := str(card.get("_count_identity_key", ""))
+	if not identity_key.is_empty():
+		return identity_key
 	return _raw_count_icon_card_key(card)
+
+
+func _count_icon_id_is_used(icons: Array, icon_id: String) -> bool:
+	for icon_value in icons:
+		if typeof(icon_value) == TYPE_DICTIONARY and str((icon_value as Dictionary).get("id", "")) == icon_id:
+			return true
+	return false
 
 
 func _count_icon_position_for_card(card: Dictionary, seed: int) -> Vector2:
@@ -7648,7 +8014,7 @@ func _count_hint(run_state: RunState, table: Dictionary, session: Dictionary) ->
 
 
 func _draw_crew_play_status(surface, state: Dictionary) -> void:
-	var statuses := _dictionary_array(state.get("crew_play_status", []))
+	var statuses := _draw_array_view(state.get("crew_play_status", []))
 	if statuses.is_empty():
 		return
 	var labels: Array = []
@@ -7735,12 +8101,13 @@ func _blackjack_side_result_detail(side: Dictionary) -> String:
 	return "%s %s %+d" % [label, detail, delta]
 
 
-func _blackjack_last_result_payload(message: String, hand_results: Array, side_results: Array, main_delta: int, side_delta: int, bankroll_delta: int, suspicion_delta: int, dealer_cards: Array, player_hands: Array, patron_hands: Array, patron_action_events: Array, cheat: Dictionary, result_msec: int = 0) -> Dictionary:
+func _blackjack_last_result_payload(message: String, hand_results: Array, side_results: Array, main_delta: int, side_delta: int, bankroll_delta: int, suspicion_delta: int, dealer_cards: Array, player_hands: Array, patron_hands: Array, patron_action_events: Array, cheat: Dictionary, result_msec: int = 0, round_net_delta_value: Variant = null) -> Dictionary:
 	var resolved_at := maxi(0, result_msec)
+	var round_net_delta := main_delta + side_delta if round_net_delta_value == null else int(round_net_delta_value)
 	var headline := "PUSH"
-	if bankroll_delta > 0:
+	if round_net_delta > 0:
 		headline = "PLAYER PAID"
-	elif bankroll_delta < 0:
+	elif round_net_delta < 0:
 		headline = "HOUSE TAKES"
 	if bool(cheat.get("caught", false)):
 		headline = "HEAT SPIKE"
@@ -7758,6 +8125,7 @@ func _blackjack_last_result_payload(message: String, hand_results: Array, side_r
 		"main_delta": main_delta,
 		"side_delta": side_delta,
 		"bankroll_delta": bankroll_delta,
+		"round_net_delta": round_net_delta,
 		"suspicion_delta": suspicion_delta,
 		"dealer_total": int(_hand_total_info(dealer_cards).get("total", 0)),
 		"dealer_cards": _card_array(dealer_cards),
@@ -7774,7 +8142,7 @@ func _blackjack_last_result_payload(message: String, hand_results: Array, side_r
 		"strategy_deviation_events": _dictionary_array(cheat.get("strategy_deviation_events", [])),
 		"resolved_at_msec": resolved_at,
 		"timestamp_msec": resolved_at,
-		"payout_animation_id": "%s:payout:%d:%d" % [get_id(), resolved_at, bankroll_delta],
+		"payout_animation_id": "%s:payout:%d:%d" % [get_id(), resolved_at, round_net_delta],
 	}
 
 
@@ -8086,6 +8454,17 @@ func _local_copy_dict(value: Variant) -> Dictionary:
 	if typeof(value) != TYPE_DICTIONARY:
 		return {}
 	return (value as Dictionary).duplicate(true)
+
+
+# Surface-state collections are immutable for the duration of a draw. These
+# zero-copy views keep animated hands, actors, side bets, and settlement records
+# off the allocator without changing any renderer output.
+static func _draw_dict_view(value: Variant) -> Dictionary:
+	return value as Dictionary if typeof(value) == TYPE_DICTIONARY else {}
+
+
+static func _draw_array_view(value: Variant) -> Array:
+	return value as Array if typeof(value) == TYPE_ARRAY else []
 
 
 func _stable_hash(text: String) -> int:

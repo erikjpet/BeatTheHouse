@@ -14,6 +14,9 @@ func _ready() -> void:
 
 
 func _draw() -> void:
+	# The retained metadata must describe this render only. The production
+	# surface replays it beside the cached pixels on every live draw.
+	surface_text_protected_rects.clear()
 	if static_renderer != null and static_renderer.has_method("draw_static_cache_layer"):
 		static_renderer.call("draw_static_cache_layer", self, static_state, static_layer_index)
 	static_cache_drawn.emit()

@@ -156,9 +156,15 @@ static func embedded_action_view_patch(host: Variant, current_state: Dictionary)
 		return {}
 	var result := current_game_result_snapshot(host, true)
 	var module_patch_value: Variant = result.get("surface_action_view_patch", {})
-	if typeof(module_patch_value) != TYPE_DICTIONARY or (module_patch_value as Dictionary).is_empty():
-		return {}
 	if str(current_state.get("game_id", "")) != host.current_game.get_id():
+		return {}
+	if typeof(module_patch_value) != TYPE_DICTIONARY or (module_patch_value as Dictionary).is_empty():
+		module_patch_value = host.current_game.embedded_action_view_patch(
+			host.run_state,
+			host.run_state.current_environment,
+			current_game_surface_ui_state(host)
+		)
+	if typeof(module_patch_value) != TYPE_DICTIONARY or (module_patch_value as Dictionary).is_empty():
 		return {}
 	var module_patch: Dictionary = module_patch_value
 	var debug_timing: Dictionary = result.get("coin_pusher_debug_host_timing_usec", {}) if typeof(result.get("coin_pusher_debug_host_timing_usec", {})) == TYPE_DICTIONARY else {}
@@ -342,7 +348,7 @@ static func current_game_result_snapshot(host: Variant, read_only_render_result:
 	if result_game_id.is_empty() or result_game_id == host.current_game.get_id():
 		# Only the internal canvas render may share Coin Pusher's immutable dense
 		# presentation trace. Public semantic snapshots remain deeply isolated.
-		if read_only_render_result and result_game_id == "coin_pusher":
+		if read_only_render_result and result_game_id in ["coin_pusher", "slot"]:
 			return host.last_game_result.duplicate(false)
 		return host.last_game_result.duplicate(true)
 	return {}
@@ -350,6 +356,11 @@ static func current_game_result_snapshot(host: Variant, read_only_render_result:
 
 static func stored_game_result_snapshot(result: Dictionary) -> Dictionary:
 	var result_game_id := str(result.get("game_id", result.get("source_id", "")))
+	if result_game_id == "slot":
+		# Sealed Slot results are complete immutable values by this boundary. Keep a
+		# distinct top-level dictionary for host annotations while transferring the
+		# action-owned reel/presentation arrays without another recursive copy.
+		return result.duplicate(false)
 	var patch_value: Variant = result.get("surface_presentation_snapshot_patch", {})
 	if result_game_id != "coin_pusher" or typeof(patch_value) != TYPE_DICTIONARY:
 		return result.duplicate(true)
@@ -782,6 +793,7 @@ static func eligible_event_option_with_context(host: Variant, event_id: String, 
 			"text": str(choice_data.get("text", "")),
 			"event_type": event_module.get_event_type(),
 			"consequences": host._copy_dict(choice_data.get("consequences", {})),
+			"loan_terms": host._copy_dict(choice_data.get("loan_terms", {})),
 			"check": host._copy_dict(choice_data.get("check", {})),
 			"consequence_summary": consequence_summary,
 			"requires_confirm": host._event_choice_requires_confirmation(choice_data),
@@ -876,6 +888,8 @@ static func event_choice_consequence_summary(host: Variant, choice_data: Diction
 
 
 static func event_choice_requires_confirmation(host: Variant, choice_data: Dictionary) -> bool:
+	if bool(choice_data.get("requires_confirm", false)):
+		return true
 	var consequences: Dictionary = choice_data.get("consequences", {}) if typeof(choice_data.get("consequences", {})) == TYPE_DICTIONARY else {}
 	if int(consequences.get("bankroll_delta", 0)) < 0 or int(consequences.get("suspicion_delta", 0)) > 0:
 		return true

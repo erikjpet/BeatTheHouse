@@ -170,6 +170,13 @@ func surface_state(_run_state: RunState, _environment: Dictionary, _ui_state: Di
 	return {}
 
 
+# Optional complete action-boundary patch for an embedded surface. Unlike a
+# result-carried patch, this is derived after the sealed candidate has published
+# and therefore does not enlarge replay receipts with presentation-only state.
+func embedded_action_view_patch(_run_state: RunState, _environment: Dictionary, _ui_state: Dictionary = {}) -> Dictionary:
+	return {}
+
+
 # Most embedded game actions refresh their complete presentation before the
 # input callback returns. Solver-heavy modules may opt into the same next-frame
 # presentation handoff used by autoplay after their authoritative result and
@@ -293,6 +300,14 @@ func surface_uses_auto_tick() -> bool:
 	return false
 
 
+# Optional allocation-free guard for surfaces whose automatic action loop is
+# normally dormant. FoundationMain calls this before constructing timestamps,
+# stake data, or a tick snapshot. Returning false must mean that no automatic
+# command can become due until a player command changes the retained UI state.
+func surface_auto_tick_may_be_active(_retained_ui_state: Dictionary) -> bool:
+	return true
+
+
 func surface_needs_auto_tick(_ui_state: Dictionary, _run_state: RunState, _environment: Dictionary) -> bool:
 	return false
 
@@ -322,6 +337,14 @@ func surface_realtime_ui_state_keys() -> Array:
 # selection, or accessibility host state may retain those existing surface
 # fields until the next normal action/refresh boundary.
 func surface_realtime_patch_preserves_host_state() -> bool:
+	return false
+
+
+# Foreground games can suspend background machine/runtime ticks while a player
+# decision is unresolved. The default is intentionally a zero-allocation false;
+# modules that need the gate can inspect their authoritative retained state
+# directly instead of asking FoundationMain to construct a complete surface.
+func foreground_blocks_environment_runtime(_run_state: RunState, _environment: Dictionary, _ui_state: Dictionary = {}) -> bool:
 	return false
 
 
@@ -484,6 +507,7 @@ static func surface_animation_channel(channel_id: String, active_id: String = ""
 static func surface_audio_spec(payload: Dictionary = {}) -> Dictionary:
 	var spec := payload.duplicate(true)
 	spec["profile_id"] = str(spec.get("profile_id", "default"))
+	spec["selection_seed"] = maxi(1, int(spec.get("selection_seed", 1)))
 	spec["action_cues"] = _copy_dict(spec.get("action_cues", {}))
 	spec["state_sync"] = _copy_dict(spec.get("state_sync", {}))
 	return spec

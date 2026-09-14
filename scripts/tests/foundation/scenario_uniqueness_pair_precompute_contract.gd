@@ -6,8 +6,10 @@ const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
 const Registry := preload("res://scripts/core/scenario_operation_registry.gd")
 const Schema := preload("res://scripts/core/scenario_sequence_schema.gd")
 
-const PRODUCTION_AUTHORITY_SHA256 := "d125295258aa94a2315281e7cdf7877b3b107f7e4328df85f81aca6688273f4a"
-const PRODUCTION_AUTHORITY_BYTES := 1400483
+# Refreshed after the accepted integrated environment/scenario passes expanded
+# the exact signatures and removed all previously recorded similarity warnings.
+const PRODUCTION_AUTHORITY_SHA256 := "72da67b4adb39cc4f19f09f891e306bc90c5c15e8c94b87037197805dcbe4698"
+const PRODUCTION_AUTHORITY_BYTES := 1765130
 
 
 func _init() -> void:
@@ -20,7 +22,7 @@ func _init() -> void:
 	var authority_json := JSON.stringify(authority)
 	if authority_json.sha256_text() != PRODUCTION_AUTHORITY_SHA256 or authority_json.to_utf8_buffer().size() != PRODUCTION_AUTHORITY_BYTES:
 		failures.append("Optimized production authority JSON differs from the exact accepted ENV-06.7 baseline: sha256=%s bytes=%d expected_sha256=%s expected_bytes=%d." % [authority_json.sha256_text(), authority_json.to_utf8_buffer().size(), PRODUCTION_AUTHORITY_SHA256, PRODUCTION_AUTHORITY_BYTES])
-	if (authority.get("pairs", []) as Array).size() != 1485 or not (authority.get("failures", []) as Array).is_empty() or (authority.get("warnings", []) as Array).size() != 27:
+	if (authority.get("pairs", []) as Array).size() != 1485 or not (authority.get("failures", []) as Array).is_empty() or not (authority.get("warnings", []) as Array).is_empty():
 		failures.append("Optimized production authority shape/findings differ from the exact accepted ENV-06.7 baseline.")
 	var audit_inputs := _production_audit_inputs(library)
 	var definitions: Array = audit_inputs.get("definitions", [])
@@ -99,7 +101,7 @@ func _init() -> void:
 	if JSON.stringify(old_report) != JSON.stringify(new_report):
 		failures.append("Precomputed signature pair report differs from the legacy per-pair report: old=%s new=%s" % [JSON.stringify(old_report), JSON.stringify(new_report)])
 	if failures.is_empty():
-		print("SCENARIO_UNIQUENESS_PAIR_PRECOMPUTE PASS production_pairs=1485 production_failures=0 production_warnings=27 representative_pairs=6 receipt_load_ms=%.1f full_audit_ms=%.1f" % [elapsed_ms, full_elapsed_ms])
+		print("SCENARIO_UNIQUENESS_PAIR_PRECOMPUTE PASS production_pairs=1485 production_failures=0 production_warnings=0 representative_pairs=6 receipt_load_ms=%.1f full_audit_ms=%.1f" % [elapsed_ms, full_elapsed_ms])
 		quit(0)
 		return
 	for failure in failures:

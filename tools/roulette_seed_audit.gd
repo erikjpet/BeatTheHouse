@@ -2,6 +2,8 @@ extends SceneTree
 
 const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
+const FoundationMainScript := preload("res://scripts/ui/foundation_main.gd")
+const ActionAuthorityScript := preload("res://scripts/core/blackjack_action_authority.gd")
 
 var failures: Array = []
 var warnings: Array = []
@@ -209,8 +211,10 @@ func _run_generated_seed(game: GameModule, index: int) -> void:
 	_audit_generated_table(table, index)
 	var surface := game.surface_state(run_state, environment, {})
 	_audit_surface(game, surface, index)
-	_audit_read_wheel(game, run_state, environment, index)
-	_audit_spin(game, run_state, environment, surface, index)
+	var host = _host(game, run_state, 1)
+	_audit_read_wheel(host, run_state, environment, index)
+	_audit_spin(game, host, run_state, environment, surface, index)
+	host.free()
 
 
 func _audit_environment(index: int) -> Dictionary:
@@ -282,76 +286,87 @@ func _audit_surface(game: GameModule, surface: Dictionary, index: int) -> void:
 			failures.append("Seed %d roulette renderer omitted hit action %s." % [index, action_id])
 
 
-func _audit_read_wheel(game: GameModule, run_state: RunState, environment: Dictionary, index: int) -> void:
-	var command: Dictionary = game.surface_action_command("roulette_read_wheel", 0, false, {}, run_state, environment)
+func _audit_read_wheel(host, run_state: RunState, environment: Dictionary, index: int) -> void:
+	var live_environment: Dictionary = run_state.current_environment
+	var command: Dictionary = _host_surface_intent(host, run_state, "roulette_read_wheel", 0, false)
 	if not bool(command.get("handled", false)) or str(command.get("action_id", "")) != "read_wheel_bias":
 		failures.append("Seed %d read-wheel command was not staged as roulette cheat context." % index)
 		return
-	var result: Dictionary = game.resolve_with_context("read_wheel_bias", 0, run_state, environment, run_state.create_rng("roulette_read_%03d" % index), command.get("ui_state", {}))
-	if not bool(result.get("ok", false)):
+	var suspicion_before := run_state.suspicion_level_for_environment_id(str(live_environment.get("id", "")))
+	var result: Dictionary = _host_resolve(host, "read_wheel_bias", 0, _dict(command.get("_sealed_action_host_delivery", {})))
+	if not _is_committed_host_result(result):
 		failures.append("Seed %d read-wheel resolve failed." % index)
 	elif int(result.get("suspicion_delta", 0)) <= 0:
 		failures.append("Seed %d read-wheel resolve did not add heat." % index)
+	elif run_state.suspicion_level_for_environment_id(str(run_state.current_environment.get("id", ""))) != suspicion_before + int(result.get("suspicion_delta", 0)):
+		failures.append("Seed %d read-wheel heat was not applied exactly once by the sealed host." % index)
 	stats["read_wheel_checks"] = int(stats.get("read_wheel_checks", 0)) + 1
 
 
-func _audit_spin(game: GameModule, run_state: RunState, environment: Dictionary, surface: Dictionary, index: int) -> void:
+func _audit_spin(game: GameModule, host, run_state: RunState, environment: Dictionary, surface: Dictionary, index: int) -> void:
 	var targets := _dictionary_array(surface.get("bet_targets", []))
-	var ui: Dictionary = {}
+	var chip_denominations: Array = surface.get("chip_denominations", []) if typeof(surface.get("chip_denominations", [])) == TYPE_ARRAY else []
 	var placements := [
-		{"type": "straight", "chip": 2 + (index % 3)},
-		{"type": "split", "chip": 1 + (index % 2)},
-		{"type": "corner", "chip": 1},
-		{"type": "red" if index % 2 == 0 else "black", "chip": 2},
-		{"type": "column", "chip": 2},
+		{"type": "straight"},
+		{"type": "split"},
+		{"type": "corner"},
+		{"type": "red" if index % 2 == 0 else "black"},
+		{"type": "column"},
 	]
-	for placement_value in placements:
-		var placement: Dictionary = placement_value
+	for placement_index in range(placements.size()):
+		var placement: Dictionary = placements[placement_index]
 		var target_index := _target_index(targets, str(placement.get("type", "")), index)
 		if target_index < 0:
 			failures.append("Seed %d could not find roulette target %s." % [index, str(placement.get("type", ""))])
 			continue
-		ui["selected_chip"] = int(placement.get("chip", 1))
+		if chip_denominations.is_empty():
+			failures.append("Seed %d exposed no roulette chip denominations." % index)
+			continue
+		var chip_index := (index + placement_index) % chip_denominations.size()
+		var chip_command := _host_surface_intent(host, run_state, "roulette_chip", chip_index, false)
+		if not bool(chip_command.get("handled", false)):
+			failures.append("Seed %d roulette chip selection failed for %s." % [index, str(placement.get("type", ""))])
+			continue
 		var before_command := Time.get_ticks_usec()
-		var command: Dictionary = game.surface_action_command("roulette_bet", target_index, false, ui, run_state, environment)
+		var command: Dictionary = _host_surface_intent(host, run_state, "roulette_bet", target_index, false)
 		var command_ms := float(Time.get_ticks_usec() - before_command) / 1000.0
 		command_ms_samples.append(command_ms)
 		stats["max_command_ms"] = maxf(float(stats.get("max_command_ms", 0.0)), command_ms)
 		if not bool(command.get("handled", false)):
 			failures.append("Seed %d roulette bet command failed for %s." % [index, str(placement.get("type", ""))])
 			continue
-		ui = command.get("ui_state", {})
-	var ready_surface := game.surface_state(run_state, environment, ui)
+	var ready_surface := game.surface_state(run_state, run_state.current_environment, {})
 	var ready_harness := SurfaceHarness.new()
 	ready_harness.setup(ready_surface)
 	game.draw_surface(ready_harness, ready_surface, {"contract_harness": true})
 	for action_id in ["roulette_spin", "roulette_clear"]:
 		if not _has_hit(ready_harness, action_id):
 			failures.append("Seed %d roulette ready renderer omitted hit action %s." % [index, action_id])
-	var arm_command: Dictionary = game.surface_action_command("roulette_spin", 0, false, ui, run_state, environment)
+	var arm_command: Dictionary = _host_surface_intent(host, run_state, "roulette_spin", 0, false)
 	if not bool(arm_command.get("handled", false)) or str(arm_command.get("action_id", "")) != "spin_roulette":
 		failures.append("Seed %d roulette spin command was not handled." % index)
 		return
 	var spin_command := arm_command.duplicate(true)
 	if not bool(spin_command.get("resolve", false)):
-		var armed_ui: Dictionary = _dict(spin_command.get("ui_state", ui))
+		var armed_ui: Dictionary = _dict(spin_command.get("ui_state", {}))
 		if not bool(armed_ui.get("roulette_spin_armed", false)):
 			failures.append("Seed %d roulette spin command did not arm confirmation." % index)
 			return
-		spin_command = game.surface_action_command("roulette_spin", 0, true, armed_ui, run_state, environment)
+		spin_command = _host_surface_intent(host, run_state, "roulette_spin", 0, true)
 	if not bool(spin_command.get("resolve", false)) or str(spin_command.get("action_id", "")) != "spin_roulette":
 		failures.append("Seed %d roulette spin command did not request legal resolution." % index)
 		return
-	var bankroll_before := run_state.bankroll
+	var money_before := run_state.grand_casino_total_money()
 	var before_resolve := Time.get_ticks_usec()
-	var result: Dictionary = game.resolve_with_context("spin_roulette", int(spin_command.get("set_stake", 1)), run_state, environment, run_state.create_rng("roulette_spin_%03d" % index), spin_command.get("ui_state", {}))
+	var result: Dictionary = _host_resolve(host, "spin_roulette", int(spin_command.get("set_stake", host.get("selected_stake"))), _dict(spin_command.get("_sealed_action_host_delivery", {})))
 	var resolve_ms := float(Time.get_ticks_usec() - before_resolve) / 1000.0
 	resolve_ms_samples.append(resolve_ms)
 	stats["max_resolve_ms"] = maxf(float(stats.get("max_resolve_ms", 0.0)), resolve_ms)
-	if not bool(result.get("ok", false)):
+	if not _is_committed_host_result(result):
 		failures.append("Seed %d roulette spin resolve failed: %s." % [index, str(result.get("message", ""))])
 		return
-	if run_state.bankroll != bankroll_before + int(result.get("bankroll_delta", 0)):
+	var money_delta := int(result.get("chips_delta", result.get("cash_equivalent_delta", result.get("bankroll_delta", 0))))
+	if run_state.grand_casino_total_money() != money_before + money_delta:
 		failures.append("Seed %d roulette result was not applied exactly once to bankroll." % index)
 	var trajectory_size := (result.get("roulette_spin_trajectory", []) as Array).size()
 	stats["min_trajectory_frames"] = mini(int(stats.get("min_trajectory_frames", 999999)), trajectory_size)
@@ -363,14 +378,14 @@ func _audit_spin(game: GameModule, run_state: RunState, environment: Dictionary,
 		if not spin_physics.has(key):
 			failures.append("Seed %d spin physics missing %s." % [index, key])
 	_count_key("outcomes", str(result.get("roulette_winning_number", "")))
-	var result_surface := game.surface_state(run_state, environment, {"surface_time_msec": Time.get_ticks_msec() + 8000})
+	var result_surface := game.surface_state(run_state, run_state.current_environment, {"surface_time_msec": Time.get_ticks_msec() + 8000})
 	var recent := _dictionary_array(result_surface.get("recent_numbers", []))
 	if recent.is_empty() or str((recent[0] as Dictionary).get("number", "")) != str(result.get("roulette_winning_number", "")):
 		failures.append("Seed %d roulette recent numbers did not record the resolved spin." % index)
-	var rebet_command: Dictionary = game.surface_action_command("roulette_rebet", 0, false, {}, run_state, environment)
+	var rebet_command: Dictionary = game.surface_action_command("roulette_rebet", 0, false, {}, run_state, run_state.current_environment)
 	var rebet_state: Dictionary = _dict(rebet_command.get("ui_state", {}))
 	var rebet_bets: Array = _array(rebet_state.get("roulette_bets", []))
-	var table: Dictionary = ((environment.get("game_states", {}) as Dictionary).get("roulette", {}) as Dictionary)
+	var table: Dictionary = ((run_state.current_environment.get("game_states", {}) as Dictionary).get("roulette", {}) as Dictionary)
 	if JSON.stringify(rebet_bets) != JSON.stringify(_array(table.get("last_bets", []))):
 		failures.append("Seed %d roulette rebet did not restore the previous layout." % index)
 	stats["spin_resolves"] = int(stats.get("spin_resolves", 0)) + 1
@@ -531,6 +546,37 @@ func _has_hit(harness: SurfaceHarness, action_id: String) -> bool:
 		if typeof(hit_value) == TYPE_DICTIONARY and str((hit_value as Dictionary).get("action", "")) == action_id:
 			return true
 	return false
+
+
+func _is_committed_host_result(result: Dictionary) -> bool:
+	return bool(result.get("ok", false)) \
+		and bool(result.get(ActionAuthorityScript.HOST_COMMITTED_KEY, false)) \
+		and result.has("table_game_authoritative") \
+		and typeof(result.get("table_game_authoritative")) == TYPE_BOOL \
+		and result.get("table_game_authoritative") == true
+
+
+func _host_surface_intent(host, run_state: RunState, surface_action: String, index: int, confirm_requested: bool) -> Dictionary:
+	var command: Dictionary = host.call("_sealed_action_host_surface_intent", surface_action, index, confirm_requested, run_state.simulation_time_msec())
+	if command.has("set_stake") and not bool(command.get("direct_resolve", false)):
+		host.set("selected_stake", int(command.get("set_stake", host.get("selected_stake"))))
+	return command
+
+
+func _host_resolve(host, action_id: String, stake: int, delivery: Dictionary = {}) -> Dictionary:
+	var result: Dictionary = host.call("_sealed_action_host_resolve_intent", action_id, stake, delivery)
+	return result
+
+
+func _host(game: GameModule, run_state: RunState, stake: int):
+	var host = FoundationMainScript.new()
+	host.set("current_game", game)
+	var cache := {}
+	cache[game.get_id()] = game
+	host.set("game_module_cache", cache)
+	host.set("run_state", run_state)
+	host.set("selected_stake", stake)
+	return host
 
 
 func _write_report(output_path: String, seed_count: int) -> void:

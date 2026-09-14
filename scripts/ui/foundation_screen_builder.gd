@@ -338,6 +338,11 @@ static func _build_redesigned_start_screen(host: Variant) -> void:
 	host.seed_input.add_theme_stylebox_override("normal", VisualStyle.pixel_box(Color("#090b1b", 0.98), VisualStyle.CYAN_2, 2))
 	host.seed_input.add_theme_stylebox_override("focus", VisualStyle.pixel_box(Color("#15102a", 0.98), VisualStyle.YELLOW, 2))
 	seed_row.add_child(host.seed_input)
+	host.seed_status_label = host._label("", VisualStyle.TYPE_SMALL)
+	host.seed_status_label.visible = false
+	host.seed_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	host._set_control_font_color(host.seed_status_label, VisualStyle.YELLOW)
+	host.run_config_content_stack.add_child(host.seed_status_label)
 	var config_actions := HBoxContainer.new()
 	config_actions.add_theme_constant_override("separation", 10)
 	host.run_config_content_stack.add_child(config_actions)
@@ -481,8 +486,10 @@ static func build_run_screen(host: Variant) -> void:
 	host.environment_result_title_label.clip_text = true
 	result_feedback_stack.add_child(host.environment_result_title_label)
 	host.environment_result_body_label = host._label("", VisualStyle.TYPE_SMALL)
-	host.environment_result_body_label.autowrap_mode = TextServer.AUTOWRAP_OFF
-	host.environment_result_body_label.clip_text = true
+	host.environment_result_body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	host.environment_result_body_label.max_lines_visible = 3
+	host.environment_result_body_label.clip_text = false
+	host.environment_result_body_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	result_feedback_stack.add_child(host.environment_result_body_label)
 
 	host.objective_label = host._label("", VisualStyle.TYPE_BODY)
@@ -529,8 +536,13 @@ static func build_run_screen(host: Variant) -> void:
 	host.environment_canvas.object_focused.connect(host._on_environment_object_focused)
 	host.environment_canvas.object_activated.connect(host._on_environment_object_activated)
 	host.environment_canvas.view_geometry_changed.connect(host._on_environment_view_geometry_changed)
+	host.environment_canvas.developer_placement_lock_requested.connect(host._on_developer_placement_lock_requested)
+	host.environment_canvas.developer_placement_reset_requested.connect(host._on_developer_placement_reset_requested)
+	host.environment_canvas.developer_placement_promote_requested.connect(host._on_developer_placement_promote_requested)
 	visual_stack.add_child(host.environment_canvas)
 	host.game_surface_canvas = host.GameSurfaceCanvasScript.new()
+	if host.game_surface_canvas.has_method("bind_surface_audio_authority"):
+		host.game_surface_canvas.call("bind_surface_audio_authority", host._game_surface_audio_authority)
 	host.game_surface_canvas.custom_minimum_size = host.GAME_SURFACE_PREVIEW_MIN_SIZE
 	host.game_surface_canvas.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	host.game_surface_canvas.size_flags_vertical = Control.SIZE_EXPAND_FILL

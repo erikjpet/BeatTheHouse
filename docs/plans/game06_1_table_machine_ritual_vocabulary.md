@@ -1,6 +1,6 @@
 # game06_1 Table and Machine Ritual Vocabulary
 
-Status: contract candidate; product implementation is forbidden until independent acceptance
+Status: COMPLETE — accepted vocabulary and landed product runtime; see `game06_1_final_closeout.md`
 Contract version: `game_ritual/1`  
 Checklist: `docs/plans/game06_1_ritual_contract_acceptance_checklist.md`
 Normative shared-vocabulary source: `749390ce`,

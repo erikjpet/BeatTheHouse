@@ -1,0 +1,354 @@
+extends SceneTree
+
+# Windowed production-host captures for the shared Hold'em room and its
+# character-specific high-wager conversation overlay.
+
+const MainScene := preload("res://scenes/main.tscn")
+const OUTPUT_DIR := "res://review_artifacts/holdem_dynamic_table"
+const CAPTURE_SIZE := Vector2i(1280, 720)
+const COMPACT_CAPTURE_SIZE := Vector2i(960, 540)
+const MISSING_ACTION_INDEX := -999
+
+
+func _init() -> void:
+	call_deferred("_run")
+
+
+func _run() -> void:
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUTPUT_DIR))
+	root.size = CAPTURE_SIZE
+	RenderingServer.set_default_clear_color(Color("#05060a"))
+	var app := MainScene.instantiate()
+	app.set("show_game_library_launcher", true)
+	app.set("autosave_slot_id", "crew_holdem_dynamic_table_capture")
+	root.add_child(app)
+	await _settle(8)
+	var start: Dictionary = app.call("start_game_test_session", "crew_draw_poker")
+	if not bool(start.get("ok", false)):
+		push_error("Could not open Back-Room Hold'em through the game launcher.")
+		quit(1)
+		return
+	await _settle(8)
+	var canvas := app.get("game_surface_canvas") as Control
+	var idle: Dictionary = canvas.call("realtime_surface_state")
+	if str(idle.get("surface_template", "")) != "shared_table_game_v1" or int(idle.get("animated_crew_count", 0)) != 6:
+		push_error("Hold'em did not render five playing Crew plus the animated house dealer.")
+		quit(1)
+		return
+	if not await _capture("01_shared_room_idle.png"):
+		quit(1)
+		return
+	app.call("_handle_module_surface_action", "poker_deal", 0, true)
+	await _settle(8)
+	if not await _capture("02_live_holdem_hand.png"):
+		quit(1)
+		return
+	await _settle(24)
+	if not await _capture("14_deal_25_percent.png"):
+		quit(1)
+		return
+	await _settle(30)
+	if not await _capture("15_deal_50_percent.png"):
+		quit(1)
+		return
+	await _settle(42)
+	if not await _capture("16_deal_90_percent_player_flip.png"):
+		quit(1)
+		return
+	if not await _advance_to_player(app, canvas):
+		push_error("Could not reach the player's first betting decision.")
+		quit(1)
+		return
+	if not await _capture("04_player_betting_choices.png"):
+		quit(1)
+		return
+	root.size = COMPACT_CAPTURE_SIZE
+	await _settle(6)
+	if not await _capture("07_compact_player_betting_choices.png", COMPACT_CAPTURE_SIZE):
+		quit(1)
+		return
+	root.size = CAPTURE_SIZE
+	await _settle(6)
+	var raise_open_index := _surface_action_index(canvas, "poker_raise_open")
+	if raise_open_index == MISSING_ACTION_INDEX or not bool(app.call("_handle_module_surface_action", "poker_raise_open", raise_open_index, true)):
+		push_error("The visible raise chooser could not be opened.")
+		quit(1)
+		return
+	await _settle(4)
+	if not await _capture("08_raise_selection_open.png"):
+		quit(1)
+		return
+	var plus_one_index := _surface_action_index(canvas, "poker_raise_plus_one")
+	if plus_one_index == MISSING_ACTION_INDEX or not bool(app.call("_handle_module_surface_action", "poker_raise_plus_one", plus_one_index, true)):
+		push_error("The raise chooser could not select a custom whole-dollar amount. hits=%s" % JSON.stringify((canvas.call("current_view_snapshot") as Dictionary).get("surface_hit_actions", [])))
+		quit(1)
+		return
+	await _settle(4)
+	if not await _capture("09_custom_raise_selection.png"):
+		quit(1)
+		return
+	root.size = COMPACT_CAPTURE_SIZE
+	await _settle(6)
+	if not await _capture("10_compact_custom_raise_selection.png", COMPACT_CAPTURE_SIZE):
+		quit(1)
+		return
+	root.size = CAPTURE_SIZE
+	await _settle(6)
+	var confirm_index := _surface_action_index(canvas, "poker_raise_confirm")
+	if confirm_index == MISSING_ACTION_INDEX or not bool(app.call("_handle_module_surface_action", "poker_raise_confirm", confirm_index, true)):
+		push_error("The selected custom raise could not be confirmed.")
+		quit(1)
+		return
+	await _settle(6)
+	if not await _capture("05_raise_chips_placed.png"):
+		quit(1)
+		return
+	if not await _advance_to_board_street(app, canvas):
+		push_error("Could not reach a community-card street through visible controls.")
+		quit(1)
+		return
+	if not await _capture("06_board_and_swept_pot.png"):
+		quit(1)
+		return
+	if not await _capture("17_burn_flop_fan_and_pot_sweep.png"):
+		quit(1)
+		return
+	await _settle(15)
+	if not await _capture("18_flop_fan_midflight.png"):
+		quit(1)
+		return
+	if not await _capture_visual_fixtures(app, canvas):
+		quit(1)
+		return
+	var live: Dictionary = canvas.call("realtime_surface_state")
+	var seats: Array = live.get("seats", []) if typeof(live.get("seats", [])) == TYPE_ARRAY else []
+	var member_id := str((seats[0] as Dictionary).get("member_id", "")) if not seats.is_empty() else ""
+	var member_name := str((seats[0] as Dictionary).get("name", "Crew")) if not seats.is_empty() else "Crew"
+	var request := {
+		"event_id": "crew-poker-talk:visual:%s" % member_id,
+		"game_id": str(app.get("current_game").call("get_id")),
+		"member_id": member_id,
+		"member_name": member_name,
+		"seat_index": 0,
+		"line_key": "poker_raise",
+		"node_id": "raise_pressure",
+		"phase": "turn",
+		"action": "raise",
+		"pot": 24,
+		"heads_up": true,
+		"hand_number": 1,
+		"seat_count": seats.size(),
+	}
+	if not bool(app.call("_enqueue_crew_poker_table_talk", request)):
+		push_error("Could not open the high-wager Crew conversation.")
+		quit(1)
+		return
+	app.call("_refresh")
+	await _settle(8)
+	var talk_dock := app.get("talk_dock") as Control
+	if talk_dock != null:
+		talk_dock.call("_complete_body_reveal")
+	await _settle(2)
+	if not await _capture("03_high_wager_table_talk.png"):
+		quit(1)
+		return
+	var talk: Dictionary = app.call("current_talk_dock_snapshot")
+	if not bool(talk.get("visible", false)) or not bool(talk.get("anchored_bottom", false)) or bool(talk.get("anchored_bottom_left", true)) or str(talk.get("speaking_character_id", "")) != member_id:
+		push_error("The high-wager conversation was not visibly anchored away from the controls.")
+		quit(1)
+		return
+	print("CREW_HOLDEM_DYNAMIC_TABLE_CAPTURE_PASS dir=%s" % ProjectSettings.globalize_path(OUTPUT_DIR))
+	quit(0)
+
+
+func _capture_visual_fixtures(app: Control, canvas: Control) -> bool:
+	var game := app.get("current_game") as GameModule
+	var live: Dictionary = canvas.call("realtime_surface_state")
+	var contributing := live.duplicate(true)
+	var contributing_seats: Array = contributing.get("seats", [])
+	for index in range(contributing_seats.size()):
+		var seat: Dictionary = contributing_seats[index]
+		seat["active"] = true
+		seat["all_in"] = false
+		seat["last_action"] = "raise" if index == 0 else "call"
+		seat["round_contribution"] = 8
+		contributing_seats[index] = seat
+	contributing["seats"] = contributing_seats
+	contributing["phase"] = "turn"
+	contributing["pot"] = 48
+	contributing["round_contributions"] = {"player": 8}
+	contributing["chip_layout"] = game.call("_chip_layout", contributing)
+	canvas.call("render_game_snapshot", contributing)
+	await _settle(4)
+	if not await _capture("11_six_way_contributions.png"):
+		return false
+	var tell_fold := contributing.duplicate(true)
+	var tell_seats: Array = tell_fold.get("seats", [])
+	var all_in_seat: Dictionary = tell_seats[0]
+	all_in_seat["all_in"] = true
+	all_in_seat["last_action"] = "all_in"
+	tell_seats[0] = all_in_seat
+	var portrait_seat: Dictionary = tell_seats[2]
+	portrait_seat["portrait_variant"] = "eyes_left"
+	portrait_seat["last_action"] = "watching"
+	tell_seats[2] = portrait_seat
+	var folded_seat: Dictionary = tell_seats[4]
+	folded_seat["active"] = false
+	folded_seat["last_action"] = "fold"
+	tell_seats[4] = folded_seat
+	tell_fold["seats"] = tell_seats
+	tell_fold["observation"] = {"channel": "portrait", "member_id": str(portrait_seat.get("member_id", "")), "portrait_variant": "eyes_left", "quirk": "Their eyes cut left before the chips land."}
+	var fold_events: Array = []
+	for card_index in range(2):
+		var fold_rect: Rect2 = game.call("_actor_card_rect", contributing, str(folded_seat.get("member_id", "")), card_index)
+		fold_events.append(game.call("_card_flight_event", "fold", str(folded_seat.get("member_id", "")), card_index, {"hidden": true}, fold_rect.position, Vector2(718, 302), fold_rect.size, Vector2(24, 35), card_index * 45, 300, false))
+	tell_fold["card_animation_id"] = "capture_fold_to_muck"
+	tell_fold["card_animation_events"] = fold_events
+	tell_fold["surface_animation_channels"] = [GameModule.surface_animation_channel("crew_poker_cards", "capture_fold_to_muck", 345, 0, {"clock_source": "presentation"})]
+	tell_fold["surface_realtime_state_refresh"] = true
+	canvas.call("render_game_snapshot", tell_fold)
+	await _settle(4)
+	if not await _capture("12_outer_all_in_fold_portrait_tell.png"):
+		return false
+	if not await _capture("19_opponent_fold_to_muck.png"):
+		return false
+	var showdown := tell_fold.duplicate(true)
+	showdown["phase"] = "showdown"
+	showdown["community_cards"] = [_card(3, 0), _card(7, 1), _card(9, 2), _card(11, 3), _card(13, 0)]
+	showdown["player_cards"] = [_card(14, 0), _card(14, 1)]
+	showdown["observation"] = {}
+	showdown["chip_layout"] = []
+	var showdown_seats: Array = showdown.get("seats", [])
+	for index in range(showdown_seats.size()):
+		var seat: Dictionary = showdown_seats[index]
+		seat["active"] = true
+		seat["all_in"] = false
+		seat["revealed"] = true
+		seat["last_action"] = "showdown"
+		seat["cards"] = [_card(2 + index, index % 4), _card(8 + index, (index + 1) % 4)]
+		showdown_seats[index] = seat
+	showdown["seats"] = showdown_seats
+	var flip_events: Array = []
+	for seat_index in range(mini(2, showdown_seats.size())):
+		var flip_seat: Dictionary = showdown_seats[seat_index]
+		for card_index in range(2):
+			var flip_rect: Rect2 = game.call("_actor_card_rect", showdown, str(flip_seat.get("member_id", "")), card_index)
+			flip_events.append(game.call("_card_flight_event", "showdown_flip", str(flip_seat.get("member_id", "")), card_index, (flip_seat.get("cards", []) as Array)[card_index], flip_rect.position, flip_rect.position, flip_rect.size, flip_rect.size, (seat_index * 2 + card_index) * 100, 180, true))
+	showdown["card_animation_id"] = "capture_showdown_flips"
+	showdown["card_animation_events"] = flip_events
+	showdown["poker_animation_showdown"] = true
+	showdown["surface_animation_channels"] = [GameModule.surface_animation_channel("crew_poker_cards", "capture_showdown_flips", 580, 0, {"clock_source": "presentation"})]
+	showdown["surface_realtime_state_refresh"] = true
+	canvas.call("render_game_snapshot", showdown)
+	await _settle(4)
+	if not await _capture("13_five_hand_showdown.png"):
+		return false
+	if not await _capture("20_showdown_flips.png"):
+		return false
+	var split_payout := showdown.duplicate(true)
+	split_payout["card_animation_id"] = ""
+	split_payout["card_animation_events"] = []
+	var payout_events: Array = []
+	for winner_index in range(2):
+		var winner_id := str((showdown_seats[winner_index] as Dictionary).get("member_id", ""))
+		payout_events.append(game.call("_chip_flight_event", "payout", winner_id, 12 + winner_index, Vector2(590, 270), game.call("_actor_chip_source", showdown, winner_id), 0, 620))
+	split_payout["payout_animation_id"] = "capture_split_payout"
+	split_payout["payout_animation_events"] = payout_events
+	split_payout["surface_animation_channels"] = [GameModule.surface_animation_channel("crew_poker_payout", "capture_split_payout", 620, 0, {"clock_source": "presentation"})]
+	canvas.call("render_game_snapshot", split_payout)
+	await _settle(8)
+	if not await _capture("21_split_pot_payout.png"):
+		return false
+	var reduced_motion := split_payout.duplicate(true)
+	reduced_motion["reduce_motion"] = true
+	reduced_motion["surface_realtime_state_refresh"] = false
+	canvas.call("render_game_snapshot", reduced_motion)
+	await _settle(3)
+	if not await _capture("22_reduce_motion_final.png"):
+		return false
+	app.call("_refresh")
+	await _settle(4)
+	return true
+
+
+func _card(rank: int, suit: int) -> Dictionary:
+	return {"rank": rank, "suit": suit, "deck": 0}
+
+
+func _settle(frames: int) -> void:
+	for _index in range(frames):
+		await process_frame
+
+
+func _advance_to_player(app: Control, canvas: Control) -> bool:
+	for _step in range(12):
+		await _answer_visible_talk(app)
+		var state: Dictionary = canvas.call("realtime_surface_state")
+		if str(state.get("turn_owner", "")) == "player":
+			return true
+		var observe_index := _surface_action_index(canvas, "poker_observe")
+		if observe_index == MISSING_ACTION_INDEX or not bool(app.call("_handle_module_surface_action", "poker_observe", observe_index, true)):
+			return false
+		await _settle(4)
+	return false
+
+
+func _advance_to_board_street(app: Control, canvas: Control) -> bool:
+	for _step in range(80):
+		await _answer_visible_talk(app)
+		var state: Dictionary = canvas.call("realtime_surface_state")
+		if str(state.get("phase", "")) in ["flop", "turn", "river"] and not (state.get("community_cards", []) as Array).is_empty():
+			return true
+		if str(state.get("phase", "")) == "idle":
+			var deal_index := _surface_action_index(canvas, "poker_deal")
+			if deal_index == MISSING_ACTION_INDEX or not bool(app.call("_handle_module_surface_action", "poker_deal", deal_index, true)):
+				return false
+			await _settle(4)
+			continue
+		var observe_index := _surface_action_index(canvas, "poker_observe")
+		if observe_index != MISSING_ACTION_INDEX:
+			app.call("_handle_module_surface_action", "poker_observe", observe_index, true)
+		else:
+			var call_index := _surface_action_index(canvas, "poker_call")
+			if call_index == MISSING_ACTION_INDEX:
+				return false
+			app.call("_handle_module_surface_action", "poker_call", call_index, true)
+		await _settle(4)
+	return false
+
+
+func _answer_visible_talk(app: Control) -> void:
+	var talk: Dictionary = app.call("current_talk_dock_snapshot")
+	if not bool(talk.get("visible", false)):
+		return
+	var choice_ids: Array = talk.get("choice_ids", []) if typeof(talk.get("choice_ids", [])) == TYPE_ARRAY else []
+	if not choice_ids.is_empty():
+		app.call("_on_talk_dock_choice_requested", str(talk.get("event_id", "")), str(choice_ids[0]))
+		await _settle(3)
+
+
+func _surface_action_index(canvas: Control, action: String) -> int:
+	var snapshot: Dictionary = canvas.call("current_view_snapshot")
+	for hit_value in snapshot.get("surface_hit_actions", []):
+		if typeof(hit_value) == TYPE_DICTIONARY and str((hit_value as Dictionary).get("action", "")) == action:
+			return int((hit_value as Dictionary).get("index", -1))
+	return MISSING_ACTION_INDEX
+
+
+func _capture(file_name: String, expected_size: Vector2i = CAPTURE_SIZE) -> bool:
+	await process_frame
+	var texture := root.get_viewport().get_texture()
+	if texture == null:
+		push_error("Could not capture %s because the active renderer has no viewport texture." % file_name)
+		return false
+	var image := texture.get_image()
+	if image == null or image.is_empty():
+		push_error("Could not capture %s because the viewport returned no image." % file_name)
+		return false
+	if image.get_size() != expected_size:
+		image.resize(expected_size.x, expected_size.y, Image.INTERPOLATE_NEAREST)
+	var error := image.save_png("%s/%s" % [OUTPUT_DIR, file_name])
+	if error != OK:
+		push_error("Could not save %s." % file_name)
+		return false
+	return true

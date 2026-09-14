@@ -1,0 +1,578 @@
+extends SceneTree
+
+# Production-host audit for the Hold'em room, animated Crew projections, and
+# high-wager conversation handoff. It intentionally uses the game-library
+# launcher so the same canvas and TalkDock boundaries as a player are exercised.
+
+const MainScene := preload("res://scenes/main.tscn")
+const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
+const CrewPokerGameScript := preload("res://scripts/games/crew_draw_poker.gd")
+
+var failures: Array[String] = []
+const MISSING_ACTION_INDEX := -999
+
+
+func _init() -> void:
+	call_deferred("_run")
+
+
+func _run() -> void:
+	root.size = Vector2i(1280, 720)
+	var app := MainScene.instantiate()
+	app.set("show_game_library_launcher", true)
+	app.set("autosave_slot_id", "crew_holdem_dynamic_table_audit")
+	root.add_child(app)
+	await _settle(8)
+	var start: Dictionary = app.call("start_game_test_session", "crew_draw_poker")
+	if not bool(start.get("ok", false)):
+		failures.append("The production game launcher could not enter Back-Room Hold'em.")
+		await _finish(app, {})
+		return
+	await _settle(8)
+	var library := app.get("library") as ContentLibrary
+	var canvas := app.get("game_surface_canvas") as Control
+	var run_state := app.get("run_state") as RunState
+	if library == null or canvas == null or run_state == null:
+		failures.append("The production host did not expose the Hold'em content, canvas, and run state.")
+		await _finish(app, {})
+		return
+	var surface: Dictionary = canvas.call("realtime_surface_state")
+	if str(surface.get("surface_template", "")) != "shared_table_game_v1":
+		failures.append("Hold'em did not declare the shared table-game room template.")
+	var seats: Array = surface.get("seats", []) if typeof(surface.get("seats", [])) == TYPE_ARRAY else []
+	if seats.size() != 5 or int(surface.get("animated_crew_count", 0)) != 6:
+		failures.append("The room did not project five Crew opponents plus the house dealer.")
+	var dealer_id := str(surface.get("dealer_member_id", ""))
+	var seated_ids: Array = []
+	for seat_value in seats:
+		seated_ids.append(str((seat_value as Dictionary).get("member_id", "")))
+	if dealer_id.is_empty() or seated_ids.has(dealer_id):
+		failures.append("The production room did not reserve one unseated Crew member as house dealer.")
+	var dealer_model: Dictionary = surface.get("dealer_character_model", {}) if typeof(surface.get("dealer_character_model", {})) == TYPE_DICTIONARY else {}
+	for key in ["skin_color", "hair_color", "jacket_color", "accent_color", "silhouette", "scale"]:
+		if not dealer_model.has(key):
+			failures.append("The house dealer is missing animated character model field %s." % key)
+	for seat_value in seats:
+		var seat: Dictionary = seat_value
+		var model: Dictionary = seat.get("character_model", {}) if typeof(seat.get("character_model", {})) == TYPE_DICTIONARY else {}
+		for key in ["skin_color", "hair_color", "jacket_color", "accent_color", "silhouette", "scale"]:
+			if not model.has(key):
+				failures.append("%s is missing animated character model field %s." % [str(seat.get("name", "Crew")), key])
+	var line_keys := ["poker_heads_up", "poker_raise", "poker_river", "poker_big_pot"]
+	for member_value in CrewStateModelScript.MEMBER_IDS:
+		var member_id := str(member_value)
+		var character := library.character(member_id)
+		var voice: Dictionary = character.get("voice", {}) if typeof(character.get("voice", {})) == TYPE_DICTIONARY else {}
+		var lines: Dictionary = voice.get("lines", {}) if typeof(voice.get("lines", {})) == TYPE_DICTIONARY else {}
+		for line_key in line_keys:
+			if typeof(lines.get(line_key, [])) != TYPE_ARRAY or (lines.get(line_key, []) as Array).size() < 2:
+				failures.append("%s is missing authored %s table talk." % [member_id, line_key])
+	var member_id := str((seats[0] as Dictionary).get("member_id", "")) if not seats.is_empty() else ""
+	var request := {
+		"event_id": "crew-poker-talk:audit:%s" % member_id,
+		"game_id": str(app.get("current_game").call("get_id")),
+		"member_id": member_id,
+		"member_name": str((seats[0] as Dictionary).get("name", "Crew")) if not seats.is_empty() else "Crew",
+		"seat_index": 0,
+		"line_key": "poker_heads_up",
+		"node_id": "heads_up",
+		"phase": "river",
+		"action": "raise",
+		"pot": 24,
+		"heads_up": true,
+		"hand_number": 1,
+		"seat_count": seats.size(),
+	}
+	if not bool(app.call("_enqueue_crew_poker_table_talk", request)):
+		failures.append("The production host rejected a valid high-wager Crew conversation request.")
+	app.call("_refresh")
+	await _settle(5)
+	var talk: Dictionary = app.call("current_talk_dock_snapshot")
+	if not bool(talk.get("visible", false)) or str(talk.get("speaking_character_id", "")) != member_id:
+		failures.append("The high-wager speaker did not open in the existing conversation system.")
+	if str(talk.get("voice_line_key", "")) != "poker_heads_up" or str(talk.get("voice_line", "")).is_empty():
+		failures.append("The conversation did not resolve the seated character's authored voice.")
+	if int(talk.get("choice_count", 0)) != 2 or int(talk.get("ignore_penalty_heat", -1)) != 0:
+		failures.append("Friendly table talk choices or consequence-free dismissal were not preserved.")
+	if not bool(talk.get("anchored_bottom", false)) or bool(talk.get("anchored_bottom_left", true)):
+		failures.append("A left-seat speaker did not place table talk at the established opposite bottom side.")
+	var focused_surface: Dictionary = canvas.call("realtime_surface_state")
+	var focused := false
+	for seat_value in focused_surface.get("seats", []):
+		var seat: Dictionary = seat_value
+		if str(seat.get("member_id", "")) == member_id:
+			focused = bool(seat.get("conversation_active", false))
+	if not focused:
+		failures.append("The speaking Crew model did not animate as the active conversational focus.")
+	var canvas_snapshot: Dictionary = canvas.call("current_view_snapshot")
+	for hit_value in canvas_snapshot.get("surface_hit_actions", []):
+		if typeof(hit_value) == TYPE_DICTIONARY and str((hit_value as Dictionary).get("action", "")).begins_with("poker_"):
+			failures.append("A covered Hold'em action remained selectable behind the open conversation.")
+			break
+	app.call("_on_talk_dock_choice_requested", str(request.get("event_id", "")), "heads_up_hold_nerve")
+	await _settle(5)
+	if bool((app.call("current_talk_dock_snapshot") as Dictionary).get("visible", false)):
+		failures.append("A valid table-talk response did not close the conversation.")
+	var restored_actions := false
+	for hit_value in (canvas.call("current_view_snapshot") as Dictionary).get("surface_hit_actions", []):
+		if typeof(hit_value) == TYPE_DICTIONARY and str((hit_value as Dictionary).get("action", "")) == "poker_deal":
+			restored_actions = true
+	if not restored_actions:
+		failures.append("Hold'em actions did not return after answering table talk.")
+	request["event_id"] = "crew-poker-talk:audit-ignore:%s" % member_id
+	request["line_key"] = "poker_big_pot"
+	request["node_id"] = "big_pot"
+	if not bool(app.call("_enqueue_crew_poker_table_talk", request)):
+		failures.append("A second independent table-talk boundary could not be queued.")
+	app.call("_refresh")
+	await _settle(3)
+	var heat_before := run_state.suspicion_level()
+	if not bool(app.call("_ignore_talk_event", str(request.get("event_id", "")), "dismiss")):
+		failures.append("The table talk could not be dismissed through the normal conversation route.")
+	if run_state.suspicion_level() != heat_before:
+		failures.append("Dismissing friendly table talk incorrectly generated Heat.")
+	app.call("_refresh")
+	await _settle(3)
+	var right_member_id := str((seats[4] as Dictionary).get("member_id", "")) if seats.size() > 4 else ""
+	var right_request := request.duplicate(true)
+	right_request["event_id"] = "crew-poker-talk:audit-right:%s" % right_member_id
+	right_request["member_id"] = right_member_id
+	right_request["member_name"] = str((seats[4] as Dictionary).get("name", "Crew")) if seats.size() > 4 else "Crew"
+	right_request["seat_index"] = 4
+	if not bool(app.call("_enqueue_crew_poker_table_talk", right_request)):
+		failures.append("The far-right Crew seat could not open table talk.")
+	app.call("_refresh")
+	await _settle(3)
+	var right_talk: Dictionary = app.call("current_talk_dock_snapshot")
+	if not bool(right_talk.get("visible", false)) or not bool(right_talk.get("anchored_bottom", false)) or not bool(right_talk.get("anchored_bottom_left", false)) or str(right_talk.get("speaking_character_id", "")) != right_member_id:
+		failures.append("A far-right speaker did not anchor table talk to the opposite bottom-left side.")
+	if bool(right_talk.get("visible", false)):
+		var right_choices: Array = right_talk.get("choice_ids", []) if typeof(right_talk.get("choice_ids", [])) == TYPE_ARRAY else []
+		if not right_choices.is_empty():
+			app.call("_on_talk_dock_choice_requested", str(right_request.get("event_id", "")), str(right_choices[0]))
+			await _settle(3)
+	var betting_evidence := await _exercise_betting_ui(app, canvas, run_state)
+	var eight_hand_evidence := await _exercise_eight_visible_hands(app, canvas)
+	await _finish(app, {"surface_template": surface.get("surface_template", ""), "animated_crew_count": surface.get("animated_crew_count", 0), "dealer_member_id": dealer_id, "dealer_unseated": not seated_ids.has(dealer_id), "speaker": talk.get("speaker", ""), "choice_count": talk.get("choice_count", 0), "anchored_bottom": talk.get("anchored_bottom", false), "anchored_bottom_left": talk.get("anchored_bottom_left", true), "right_anchor_bottom_left": right_talk.get("anchored_bottom_left", false), "betting": betting_evidence, "eight_hand_e2e": eight_hand_evidence})
+
+
+func _settle(frames: int) -> void:
+	for _index in range(frames):
+		await process_frame
+
+
+func _exercise_betting_ui(app: Control, canvas: Control, run_state: RunState) -> Dictionary:
+	var deal_index := _surface_action_index(canvas, "poker_deal")
+	if deal_index == MISSING_ACTION_INDEX or not bool(app.call("_handle_module_surface_action", "poker_deal", deal_index, true)):
+		failures.append("The visible Deal Hold'em control could not start a hand.")
+		return {}
+	await _settle(5)
+	var deal_surface: Dictionary = canvas.call("realtime_surface_state")
+	_check_chip_layout(deal_surface, "posted blinds")
+	var animation_channels: Array = deal_surface.get("surface_animation_channels", []) if typeof(deal_surface.get("surface_animation_channels", [])) == TYPE_ARRAY else []
+	if animation_channels.size() < 2 or not bool(deal_surface.get("surface_realtime_state_refresh", false)):
+		failures.append("The production Deal action did not start presentation-clock card and chip channels.")
+	for event_value in deal_surface.get("card_animation_events", []):
+		var event: Dictionary = event_value
+		if str(event.get("actor", "")) != "player":
+			var card: Dictionary = event.get("card", {}) if typeof(event.get("card", {})) == TYPE_DICTIONARY else {}
+			if not bool(card.get("hidden", false)) or card.has("rank") or card.has("suit"):
+				failures.append("A production deal animation exposed an opponent's hole card.")
+				break
+	var reduce_motion_ui: Dictionary = (app.get("game_surface_ui_state") as Dictionary).duplicate(true)
+	reduce_motion_ui["reduce_motion"] = true
+	var reduced_surface := (app.get("current_game") as GameModule).surface_state(run_state, run_state.current_environment, reduce_motion_ui)
+	if bool(reduced_surface.get("surface_realtime_state_refresh", false)):
+		failures.append("Reduced-motion Hold'em still requested animation refreshes.")
+	if not await _advance_to_player(app, canvas):
+		failures.append("Visible Crew decisions did not advance to the player's betting turn.")
+		return {}
+	var player_state: Dictionary = canvas.call("realtime_surface_state")
+	var action_labels: Array = []
+	var current_game := app.get("current_game") as GameModule
+	for action_value in player_state.get("legal_actions", []):
+		var action: Dictionary = action_value
+		var action_id := str(action.get("id", ""))
+		var label := str(action.get("label", ""))
+		action_labels.append(label)
+		var surface_action := "poker_raise_open" if action_id == "raise" else "poker_%s" % action_id
+		var action_index := _surface_action_index(canvas, surface_action)
+		if action_index == MISSING_ACTION_INDEX:
+			failures.append("The visible %s option had no selectable hit target." % label)
+			continue
+		var command: Dictionary = current_game.surface_action_command(surface_action, action_index, true, app.get("game_surface_ui_state"), run_state, run_state.current_environment)
+		var command_maps := bool(command.get("handled", false)) and (action_id == "raise" or bool(command.get("resolve", false)) and str(command.get("action_id", "")) == action_id)
+		if not command_maps:
+			failures.append("Selecting %s did not map to its advertised poker action." % label)
+		if action_id in ["call", "all_in"] and not label.contains("$"):
+			failures.append("The %s betting option did not state its exact chip amount." % action_id)
+	if _surface_action_index(canvas, "poker_tell_style") == MISSING_ACTION_INDEX:
+		failures.append("The fake-tell strength selector was not selectable on the player's turn.")
+	elif not bool(app.call("_handle_module_surface_action", "poker_tell_style", 1, true)):
+		failures.append("The Weak fake-tell option rejected a valid selection.")
+	elif str((app.get("game_surface_ui_state") as Dictionary).get("poker_tell_style", "")) != "weak":
+		failures.append("Selecting Weak did not update the visible fake-tell choice.")
+	var fake_tell_index := _surface_action_index(canvas, "poker_fake_tell")
+	if fake_tell_index == MISSING_ACTION_INDEX or not bool(app.call("_handle_module_surface_action", "poker_fake_tell", fake_tell_index, true)):
+		failures.append("The visible Fake Tell control could not be selected.")
+	await _settle(4)
+	if str((canvas.call("realtime_surface_state") as Dictionary).get("turn_owner", "")) != "player":
+		failures.append("Fake Tell incorrectly consumed the player's betting turn.")
+	var before_raise: Dictionary = canvas.call("realtime_surface_state")
+	var raise_open_index := _surface_action_index(canvas, "poker_raise_open")
+	if raise_open_index == MISSING_ACTION_INDEX or not bool(app.call("_handle_module_surface_action", "poker_raise_open", raise_open_index, true)):
+		failures.append("The visible raise chooser could not be opened.")
+		return {"action_labels": action_labels}
+	await _settle(3)
+	var chooser: Dictionary = canvas.call("realtime_surface_state")
+	if not bool(chooser.get("raise_panel_open", false)):
+		failures.append("The raise chooser did not remain open after selection (ui=%s)." % JSON.stringify(app.get("game_surface_ui_state")))
+	var minimum_raise_to := int(chooser.get("minimum_raise_to", 0))
+	var maximum_raise_to := int(chooser.get("maximum_raise_to", 0))
+	for selector_action in ["poker_raise_min", "poker_raise_minus_five", "poker_raise_minus_one", "poker_raise_plus_one", "poker_raise_plus_five", "poker_raise_max", "poker_raise_confirm", "poker_raise_cancel"]:
+		if _surface_action_index(canvas, selector_action) == MISSING_ACTION_INDEX:
+			failures.append("The raise chooser is missing selectable control %s." % selector_action)
+	if maximum_raise_to <= minimum_raise_to:
+		failures.append("A full-stack raise range was not available to the player.")
+	var cancel_index := _surface_action_index(canvas, "poker_raise_cancel")
+	if cancel_index == MISSING_ACTION_INDEX or not bool(app.call("_handle_module_surface_action", "poker_raise_cancel", cancel_index, true)):
+		failures.append("The raise chooser could not be cancelled.")
+	await _settle(3)
+	if bool((canvas.call("realtime_surface_state") as Dictionary).get("raise_panel_open", true)):
+		failures.append("Cancelling the raise chooser did not restore the normal betting controls.")
+	raise_open_index = _surface_action_index(canvas, "poker_raise_open")
+	if raise_open_index == MISSING_ACTION_INDEX or not bool(app.call("_handle_module_surface_action", "poker_raise_open", raise_open_index, true)):
+		failures.append("The raise chooser could not be reopened after cancellation.")
+		return {"action_labels": action_labels}
+	await _settle(3)
+	var max_index := _surface_action_index(canvas, "poker_raise_max")
+	if max_index == MISSING_ACTION_INDEX or not bool(app.call("_handle_module_surface_action", "poker_raise_max", max_index, true)):
+		failures.append("The raise chooser could not select the player's full stack.")
+	await _settle(2)
+	if int((canvas.call("realtime_surface_state") as Dictionary).get("selected_raise_to", 0)) != maximum_raise_to:
+		failures.append("Max did not select the exact all-in raise total.")
+	for selector_action in ["poker_raise_minus_five", "poker_raise_minus_one"]:
+		var selector_index := _surface_action_index(canvas, selector_action)
+		if selector_index == MISSING_ACTION_INDEX or not bool(app.call("_handle_module_surface_action", selector_action, selector_index, true)):
+			failures.append("The %s control could not adjust the selected raise." % selector_action)
+		await _settle(2)
+	var expected_below_max := maxi(minimum_raise_to, maximum_raise_to - 6)
+	if int((canvas.call("realtime_surface_state") as Dictionary).get("selected_raise_to", 0)) != expected_below_max:
+		failures.append("The -$5/-$1 controls did not preserve their exact custom total.")
+	var min_index := _surface_action_index(canvas, "poker_raise_min")
+	if min_index == MISSING_ACTION_INDEX or not bool(app.call("_handle_module_surface_action", "poker_raise_min", min_index, true)):
+		failures.append("The raise chooser could not return to the legal minimum.")
+	await _settle(2)
+	if int((canvas.call("realtime_surface_state") as Dictionary).get("selected_raise_to", 0)) != minimum_raise_to:
+		failures.append("Min did not select the exact minimum full raise.")
+	var plus_one_index := _surface_action_index(canvas, "poker_raise_plus_one")
+	if plus_one_index == MISSING_ACTION_INDEX or not bool(app.call("_handle_module_surface_action", "poker_raise_plus_one", plus_one_index, true)):
+		failures.append("The raise chooser could not select an arbitrary dollar above minimum.")
+	await _settle(3)
+	var selected_raise_to := int((canvas.call("realtime_surface_state") as Dictionary).get("selected_raise_to", 0))
+	if selected_raise_to != minimum_raise_to + 1:
+		failures.append("The +$1 raise control did not preserve the exact chosen total.")
+	var raise_confirm_index := _surface_action_index(canvas, "poker_raise_confirm")
+	if raise_confirm_index == MISSING_ACTION_INDEX or not bool(app.call("_handle_module_surface_action", "poker_raise_confirm", raise_confirm_index, true)):
+		failures.append("The selected custom raise could not be confirmed.")
+		return {"action_labels": action_labels, "minimum_raise_to": minimum_raise_to, "maximum_raise_to": maximum_raise_to}
+	await _settle(5)
+	var after_raise: Dictionary = canvas.call("realtime_surface_state")
+	_check_chip_layout(after_raise, "player raise")
+	var player_round_before := int((before_raise.get("round_contributions", {}) as Dictionary).get("player", 0))
+	var expected_raise_cost := selected_raise_to - player_round_before
+	if int(after_raise.get("pot", 0)) != int(before_raise.get("pot", 0)) + expected_raise_cost:
+		failures.append("The custom raise did not add exactly $%d to the pot ledger." % expected_raise_cost)
+	var player_chips_visible := false
+	for chip_value in after_raise.get("chip_layout", []):
+		if typeof(chip_value) == TYPE_DICTIONARY and str((chip_value as Dictionary).get("owner_id", "")) == "player" and int((chip_value as Dictionary).get("amount", 0)) > 0:
+			player_chips_visible = true
+	if not player_chips_visible:
+		failures.append("The player's selected raise did not appear in front of their seat.")
+	var reached_board := await _advance_to_board_street(app, canvas)
+	if not reached_board:
+		failures.append("A normal check/call path could not reach the community-card streets.")
+	else:
+		_check_chip_layout(canvas.call("realtime_surface_state"), "community-card street")
+	return {"action_labels": action_labels, "animation_channel_count": animation_channels.size(), "reduce_motion_instant": not bool(reduced_surface.get("surface_realtime_state_refresh", false)), "minimum_raise_to": minimum_raise_to, "maximum_raise_to": maximum_raise_to, "selected_raise_to": selected_raise_to, "reached_board": reached_board, "raise_pot_before": int(before_raise.get("pot", 0)), "raise_pot_after": int(after_raise.get("pot", 0))}
+
+
+func _check_chip_layout(state: Dictionary, phase_label: String) -> void:
+	var chips: Array = state.get("chip_layout", []) if typeof(state.get("chip_layout", [])) == TYPE_ARRAY else []
+	var represented_amount := 0
+	var protected := [
+		Rect2(305, 158, 286, 70),
+		Rect2(385, 245, 126, 81),
+		Rect2(513, 283, 18, 18),
+		Rect2(138, 337, 548, 35),
+		Rect2(697, 346, 150, 27),
+		Rect2(70, 382, 760, 34),
+	]
+	for layout_value in CrewPokerGameScript.SEAT_LAYOUT:
+		var layout: Dictionary = layout_value
+		var hole_origin: Vector2 = layout.get("hole_card_origin", Vector2.ZERO)
+		protected.append(Rect2(hole_origin, Vector2(24, 35)))
+		protected.append(Rect2(hole_origin + Vector2(27, 0), Vector2(24, 35)))
+		protected.append(layout.get("action_label_rect", Rect2()))
+		var button_center: Vector2 = layout.get("dealer_button_center", Vector2.ZERO)
+		protected.append(Rect2(button_center - Vector2(9, 9), Vector2(18, 18)))
+	for index in range(chips.size()):
+		var chip: Dictionary = chips[index]
+		represented_amount += int(chip.get("amount", 0))
+		var bounds: Rect2 = chip.get("bounds", Rect2()) if typeof(chip.get("bounds", Rect2())) == TYPE_RECT2 else Rect2()
+		if not bounds.has_area():
+			failures.append("The %s chip group had no measurable placement bounds." % phase_label)
+			continue
+		for protected_rect in protected:
+			if bounds.intersects(protected_rect):
+				failures.append("A %s chip group overlapped cards, labels, or controls." % phase_label)
+				break
+		for other_index in range(index):
+			var other: Dictionary = chips[other_index]
+			var other_bounds: Rect2 = other.get("bounds", Rect2()) if typeof(other.get("bounds", Rect2())) == TYPE_RECT2 else Rect2()
+			if bounds.intersects(other_bounds):
+				failures.append("Two independently owned %s chip groups overlapped." % phase_label)
+	if represented_amount != int(state.get("pot", 0)):
+		failures.append("The %s chip groups represented $%d of a $%d pot." % [phase_label, represented_amount, int(state.get("pot", 0))])
+
+
+func _exercise_eight_visible_hands(app: Control, canvas: Control) -> Dictionary:
+	var e2e_ui: Dictionary = (app.get("game_surface_ui_state") as Dictionary).duplicate(true)
+	e2e_ui["reduce_motion"] = true
+	app.set("game_surface_ui_state", e2e_ui)
+	app.call("_refresh")
+	await _settle(3)
+	var hands: Array = []
+	var hand_streets: Array[String] = []
+	var hand_actions: Array[String] = []
+	var hand_intents: Array[String] = []
+	var seen_action_ordinals := {}
+	var saw_bluff_showdown := false
+	var saw_trap_or_check_raise := false
+	var save_reload_passed := false
+	var save_reload_mismatches: Array[String] = []
+	var direct_save_mismatches: Array[String] = []
+	var save_debug := {}
+	var save_attempted := false
+	var active_hand := str((canvas.call("realtime_surface_state") as Dictionary).get("phase", "idle")) != "idle"
+	var steps := 0
+	while (hands.size() < 8 or not saw_bluff_showdown or not saw_trap_or_check_raise) and hands.size() < 24 and steps < 3600:
+		await _answer_visible_talk(app)
+		var state: Dictionary = canvas.call("realtime_surface_state")
+		var phase := str(state.get("phase", "idle"))
+		if phase == "idle":
+			if active_hand:
+				var authoritative: Dictionary = (app.get("run_state") as RunState).current_environment.get("game_states", {}).get("crew_draw_poker", {})
+				var showdown := false
+				for seat_value in authoritative.get("seats", []):
+					showdown = showdown or bool((seat_value as Dictionary).get("revealed", false))
+				var bluff_at_showdown := showdown and (hand_intents.has("bluff") or hand_intents.has("semi_bluff"))
+				saw_bluff_showdown = saw_bluff_showdown or bluff_at_showdown
+				saw_trap_or_check_raise = saw_trap_or_check_raise or hand_intents.has("trap") or hand_actions.has("check_raise")
+				hands.append({"hand": hands.size() + 1, "streets": hand_streets.duplicate(), "actions": hand_actions.duplicate(), "intents_observed_by_audit": hand_intents.duplicate(), "showdown": showdown, "bluff_or_semi_bluff_at_showdown": bluff_at_showdown, "trap_or_check_raise": hand_intents.has("trap") or hand_actions.has("check_raise")})
+				hand_streets.clear()
+				hand_actions.clear()
+				hand_intents.clear()
+				active_hand = false
+				if hands.size() >= 8:
+					break
+			var new_session_index := _surface_action_index(canvas, "poker_new_session")
+			if new_session_index != MISSING_ACTION_INDEX:
+				if not bool(app.call("_handle_module_surface_action", "poker_new_session", new_session_index, true)):
+					failures.append("The visible eight-hand run could not start a new capped session.")
+					break
+				await _settle(3)
+			var deal_index := _surface_action_index(canvas, "poker_deal")
+			if deal_index == MISSING_ACTION_INDEX or not bool(app.call("_handle_module_surface_action", "poker_deal", deal_index, true)):
+				failures.append("The visible eight-hand run could not deal hand %d." % (hands.size() + 1))
+				break
+			active_hand = true
+			await _settle(4)
+			steps += 1
+			continue
+		if phase in ["preflop", "flop", "turn", "river"] and not hand_streets.has(phase):
+			hand_streets.append(phase)
+		var run_state := app.get("run_state") as RunState
+		var authoritative: Dictionary = run_state.current_environment.get("game_states", {}).get("crew_draw_poker", {})
+		for row_value in authoritative.get("action_history", []):
+			var row: Dictionary = row_value
+			var ordinal_key := str(int(row.get("ordinal", -1)))
+			if seen_action_ordinals.has(ordinal_key):
+				continue
+			seen_action_ordinals[ordinal_key] = true
+			var action_signature := "%s:%s:%s:$%d" % [str(row.get("phase", "")), str(row.get("actor", "")), str(row.get("action", "")), int(row.get("amount", 0))]
+			if not hand_actions.has(action_signature):
+				hand_actions.append(action_signature)
+			var intent := str(row.get("intent", ""))
+			if not intent.is_empty() and not hand_intents.has(intent):
+				hand_intents.append(intent)
+		if not save_attempted and hands.size() >= 1 and phase in ["flop", "turn"]:
+			save_attempted = true
+			app.call("_prepare_foundation_run_save")
+			# Sealed surface actions replace the host RunState with an accepted copy,
+			# so re-read the live binding instead of comparing against the stale
+			# setup reference retained by this audit.
+			var active_run := app.get("run_state") as RunState
+			authoritative = active_run.current_environment.get("game_states", {}).get("crew_draw_poker", {})
+			var before_reload: Dictionary = authoritative.duplicate(true)
+			var save_written := bool(app.call("_write_foundation_run_save", "Poker E2E save.", true))
+			if not save_written:
+				failures.append("The visible eight-hand run could not save mid-hand.")
+			else:
+				var save_service := app.get("save_service") as SaveService
+				var directly_loaded := save_service.load_run(str(app.get("autosave_slot_id"))) as RunState
+				var direct_state: Dictionary = directly_loaded.current_environment.get("game_states", {}).get("crew_draw_poker", {}) if directly_loaded != null else {}
+				direct_save_mismatches = _poker_save_state_mismatches(before_reload, direct_state)
+				save_debug = {
+					"before": _poker_save_summary(before_reload),
+					"direct": _poker_save_summary(direct_state),
+					"load_result": save_service.last_load_result(),
+				}
+			if not save_written:
+				pass
+			elif not bool(app.call("load_foundation_run")):
+				failures.append("The visible eight-hand run could not reload its mid-hand save.")
+			elif not bool(app.call("enter_game", "crew_draw_poker")):
+				failures.append("The visible eight-hand run could not re-enter the saved poker table.")
+			else:
+				await _settle(6)
+				canvas = app.get("game_surface_canvas") as Control
+				var restored_ui: Dictionary = (app.get("game_surface_ui_state") as Dictionary).duplicate(true)
+				restored_ui["reduce_motion"] = true
+				app.set("game_surface_ui_state", restored_ui)
+				app.call("_refresh")
+				await _settle(3)
+				var restored_run := app.get("run_state") as RunState
+				var restored: Dictionary = restored_run.current_environment.get("game_states", {}).get("crew_draw_poker", {})
+				save_reload_mismatches = _poker_save_state_mismatches(before_reload, restored)
+				save_reload_passed = save_reload_mismatches.is_empty()
+				if not save_reload_passed:
+					failures.append("The visible mid-hand save/reload changed the authoritative poker state.")
+			steps += 1
+			continue
+		var action_id := "poker_observe" if str(state.get("turn_owner", "")) != "player" else "poker_call"
+		var action_index := _surface_action_index(canvas, action_id)
+		if action_index == MISSING_ACTION_INDEX and action_id == "poker_call":
+			action_id = "poker_check"
+			action_index = _surface_action_index(canvas, action_id)
+		if action_index == MISSING_ACTION_INDEX or not bool(app.call("_handle_module_surface_action", action_id, action_index, true)):
+			failures.append("The visible eight-hand run could not select %s during hand %d." % [action_id, hands.size() + 1])
+			break
+		await _settle(3)
+		steps += 1
+	if hands.size() < 8:
+		failures.append("The production table completed only %d of eight visible-input hands." % hands.size())
+	if not save_reload_passed:
+		failures.append("The eight-hand visible run did not prove a mid-hand save/reload continuation.")
+	if not saw_bluff_showdown:
+		failures.append("The eight-hand visible run did not show a bluff or semi-bluff reaching showdown.")
+	if not saw_trap_or_check_raise:
+		failures.append("The eight-hand visible run did not show a trap or check-raise.")
+	return {"hands": hands, "completed_hands": hands.size(), "steps": steps, "mid_hand_save_reload": save_reload_passed, "save_reload_mismatches": save_reload_mismatches, "direct_save_mismatches": direct_save_mismatches, "save_debug": save_debug, "bluff_or_semi_bluff_showdown": saw_bluff_showdown, "trap_or_check_raise": saw_trap_or_check_raise}
+
+
+func _poker_save_state_mismatches(before: Dictionary, after: Dictionary) -> Array[String]:
+	var mismatches: Array[String] = []
+	for key in ["version", "phase", "hand_number", "pot", "turn_owner", "community_cards", "player_cards", "seats", "shoe", "current_bet", "round_contributions", "seat_temperament", "player_reads", "hand_lines"]:
+		# JSON restores whole-number fields as floats, including numbers nested in
+		# cards, seats, and memory. Canonicalize only numeric representation while
+		# retaining every key, value, and array position for the comparison.
+		if JSON.stringify(_poker_save_canonical(before.get(key))) != JSON.stringify(_poker_save_canonical(after.get(key))):
+			mismatches.append(str(key))
+	return mismatches
+
+
+func _poker_save_canonical(value: Variant) -> Variant:
+	if typeof(value) == TYPE_INT:
+		return float(value)
+	if typeof(value) == TYPE_ARRAY:
+		var result: Array = []
+		for entry in value as Array:
+			result.append(_poker_save_canonical(entry))
+		return result
+	if typeof(value) == TYPE_DICTIONARY:
+		var result := {}
+		for key in (value as Dictionary).keys():
+			result[key] = _poker_save_canonical((value as Dictionary).get(key))
+		return result
+	return value
+
+
+func _poker_save_summary(state: Dictionary) -> Dictionary:
+	return {
+		"version": state.get("version"),
+		"phase": state.get("phase"),
+		"hand_number": state.get("hand_number"),
+		"pot": state.get("pot"),
+		"turn_owner": state.get("turn_owner"),
+		"community_count": (state.get("community_cards", []) as Array).size(),
+		"player_card_count": (state.get("player_cards", []) as Array).size(),
+		"seat_count": (state.get("seats", []) as Array).size(),
+		"shoe_count": (state.get("shoe", []) as Array).size(),
+	}
+
+
+func _advance_to_player(app: Control, canvas: Control) -> bool:
+	for _step in range(12):
+		await _answer_visible_talk(app)
+		var state: Dictionary = canvas.call("realtime_surface_state")
+		if str(state.get("turn_owner", "")) == "player":
+			return true
+		var observe_index := _surface_action_index(canvas, "poker_observe")
+		if observe_index == MISSING_ACTION_INDEX or not bool(app.call("_handle_module_surface_action", "poker_observe", observe_index, true)):
+			return false
+		await _settle(3)
+	return false
+
+
+func _advance_to_board_street(app: Control, canvas: Control) -> bool:
+	for _step in range(80):
+		await _answer_visible_talk(app)
+		var state: Dictionary = canvas.call("realtime_surface_state")
+		if str(state.get("phase", "")) in ["flop", "turn", "river"] and not (state.get("community_cards", []) as Array).is_empty():
+			return true
+		if str(state.get("phase", "")) == "idle":
+			var deal_index := _surface_action_index(canvas, "poker_deal")
+			if deal_index == MISSING_ACTION_INDEX or not bool(app.call("_handle_module_surface_action", "poker_deal", deal_index, true)):
+				return false
+			await _settle(3)
+			continue
+		var observe_index := _surface_action_index(canvas, "poker_observe")
+		if observe_index != MISSING_ACTION_INDEX:
+			app.call("_handle_module_surface_action", "poker_observe", observe_index, true)
+		else:
+			var call_index := _surface_action_index(canvas, "poker_call")
+			if call_index == MISSING_ACTION_INDEX:
+				return false
+			app.call("_handle_module_surface_action", "poker_call", call_index, true)
+		await _settle(3)
+	return false
+
+
+func _answer_visible_talk(app: Control) -> void:
+	var talk: Dictionary = app.call("current_talk_dock_snapshot")
+	if not bool(talk.get("visible", false)):
+		return
+	var choice_ids: Array = talk.get("choice_ids", []) if typeof(talk.get("choice_ids", [])) == TYPE_ARRAY else []
+	if not choice_ids.is_empty():
+		app.call("_on_talk_dock_choice_requested", str(talk.get("event_id", "")), str(choice_ids[0]))
+		await _settle(2)
+
+
+func _surface_action_index(canvas: Control, action: String) -> int:
+	for hit_value in (canvas.call("current_view_snapshot") as Dictionary).get("surface_hit_actions", []):
+		if typeof(hit_value) == TYPE_DICTIONARY and str((hit_value as Dictionary).get("action", "")) == action:
+			return int((hit_value as Dictionary).get("index", -1))
+	return MISSING_ACTION_INDEX
+
+
+func _finish(app: Control, evidence: Dictionary) -> void:
+	print(JSON.stringify({"passed": failures.is_empty(), "failures": failures, "evidence": evidence}))
+	if app != null:
+		var save_service: SaveService = app.get("save_service") as SaveService
+		if save_service != null:
+			save_service.wait_for_async_save()
+			save_service.clear_run(str(app.get("autosave_slot_id")))
+		app.queue_free()
+		await process_frame
+	quit(0 if failures.is_empty() else 1)

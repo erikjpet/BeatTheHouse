@@ -323,29 +323,29 @@ func _apply_energy_tier(tier_id: String, request_key: String) -> Dictionary:
 
 
 static func canonical_json(value: Variant) -> String:
+	return JSON.stringify(_canonical_json_value(value))
+
+
+static func _canonical_json_value(value: Variant) -> Variant:
 	match typeof(value):
-		TYPE_NIL:
-			return "null"
-		TYPE_BOOL:
-			return "true" if bool(value) else "false"
-		TYPE_INT, TYPE_FLOAT, TYPE_STRING:
-			return JSON.stringify(value)
+		TYPE_NIL, TYPE_BOOL, TYPE_INT, TYPE_FLOAT, TYPE_STRING:
+			return value
 		TYPE_ARRAY:
-			var items: Array[String] = []
+			var items: Array = []
 			for item in value:
-				items.append(canonical_json(item))
-			return "[%s]" % ",".join(items)
+				items.append(_canonical_json_value(item))
+			return items
 		TYPE_DICTIONARY:
 			var source: Dictionary = value
 			var keys: Array[String] = []
 			for key in source.keys():
 				keys.append(str(key))
 			keys.sort()
-			var members: Array[String] = []
+			var members: Dictionary = {}
 			for key in keys:
-				members.append("%s:%s" % [JSON.stringify(key), canonical_json(source.get(key))])
-			return "{%s}" % ",".join(members)
-	return ""
+				members[key] = _canonical_json_value(source.get(key))
+			return members
+	return null
 
 
 static func canonical_fingerprint(value: Variant) -> String:

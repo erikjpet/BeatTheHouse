@@ -33,6 +33,8 @@ class FakeSurface:
 	var draw_calls := 0
 	var label_calls := 0
 	var hit_calls := 0
+	var labels: Array[String] = []
+	var hit_actions: Array[String] = []
 
 	func reset(time_msec: int) -> void:
 		var seconds := float(time_msec) / 1000.0
@@ -40,6 +42,8 @@ class FakeSurface:
 		draw_calls = 0
 		label_calls = 0
 		hit_calls = 0
+		labels.clear()
+		hit_actions.clear()
 
 	func surface_begin_design_space_inset(_size: Vector2, _offset: Vector2) -> void:
 		pass
@@ -50,14 +54,25 @@ class FakeSurface:
 	func surface_region_hovered(_action: String, _index: int = 0) -> bool:
 		return false
 
-	func surface_add_hit(_rect: Rect2, _action: String, _index: int = 0) -> void:
+	func surface_add_hit(_rect: Rect2, action: String, _index: int = 0) -> void:
 		hit_calls += 1
+		hit_actions.append(action)
 
-	func surface_label(_text: String, _pos: Vector2, _font_size: int, _color: Color) -> void:
-		label_calls += 1
+	func surface_add_exact_hit(_rect: Rect2, action: String, _index: int = -1) -> void:
+		hit_calls += 1
+		hit_actions.append(action)
 
-	func surface_label_centered(_text: String, _rect: Rect2, _font_size: int, _color: Color) -> void:
+	func surface_label(label: String, _pos: Vector2, _font_size: int, _color: Color) -> void:
 		label_calls += 1
+		labels.append(label)
+
+	func surface_label_centered(label: String, _rect: Rect2, _font_size: int, _color: Color) -> void:
+		label_calls += 1
+		labels.append(label)
+
+	func surface_reel_symbol_label(label: String, _rect: Rect2, _font_size: int, _color: Color) -> void:
+		label_calls += 1
+		labels.append(label)
 
 	func draw_rect(_rect: Rect2, _color: Color, _filled: bool = true, _width: float = -1.0, _antialiased: bool = false) -> void:
 		draw_calls += 1
@@ -82,6 +97,7 @@ func _init() -> void:
 		frames = maxi(30, int(args[0]))
 	var failures: Array = []
 	_run_sim_tick_perf(failures)
+	_run_slot_surface_control_contract(failures)
 	_run_visual_perf(frames, failures)
 	if failures.is_empty():
 		print("PINBALL_PERF_OVERALL status=PASS failures=0")
@@ -89,6 +105,49 @@ func _init() -> void:
 		return
 	print("PINBALL_PERF_OVERALL status=FAIL failures=%d details=%s" % [failures.size(), JSON.stringify(failures)])
 	quit(1)
+
+
+func _run_slot_surface_control_contract(failures: Array) -> void:
+	var library: ContentLibrary = ContentLibraryScript.new()
+	library.load()
+	var definition: Dictionary = library.game("slot")
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("SLOT-SURFACE-CONTROL-CONTRACT")
+	var generator = GeneratorScript.new()
+	var machine: Dictionary = generator.build_machine_from_ids(definition, {
+		"format_id": "classic_3_reel",
+		"type_id": "buffalo",
+		"math_variant_id": "standard",
+		"bonus_variant_id": "plain",
+		"cabinet_variant_id": "neon_magenta",
+	}, run_state.create_rng("machine"))
+	machine = StateScript.set_selected_bet(machine, "bet_10")
+	var presentation = PresentationScript.new()
+	var renderer = RendererScript.new()
+	var surface_state: Dictionary = presentation.surface_state(machine, run_state, definition, {"surface_time_msec": 1000})
+	var fake_surface := FakeSurface.new()
+	fake_surface.reset(1000)
+	renderer.draw(fake_surface, surface_state, definition)
+	var forbidden_labels: Array[String] = []
+	for label_value in fake_surface.labels:
+		var label := str(label_value)
+		var normalized := label.strip_edges().to_upper()
+		if normalized == "OFF" or normalized.begins_with("CASH $") or normalized.begins_with("DENOM "):
+			forbidden_labels.append(label)
+	if not forbidden_labels.is_empty():
+		failures.append("slot surface retained overlapping ritual labels: %s" % JSON.stringify(forbidden_labels))
+	if fake_surface.hit_actions.has("slot_handle_pull_gesture"):
+		failures.append("slot surface retained the duplicate ritual handle hit target")
+	if not fake_surface.hit_actions.has("slot_spin"):
+		failures.append("slot surface lost its primary Spin hit target")
+	print("SLOT_SURFACE_CONTROL_CONTRACT forbidden_labels=%s duplicate_handle=%s spin_hit=%s labels=%d hits=%d status=%s" % [
+		JSON.stringify(forbidden_labels),
+		str(fake_surface.hit_actions.has("slot_handle_pull_gesture")),
+		str(fake_surface.hit_actions.has("slot_spin")),
+		fake_surface.labels.size(),
+		fake_surface.hit_actions.size(),
+		"PASS" if forbidden_labels.is_empty() and not fake_surface.hit_actions.has("slot_handle_pull_gesture") and fake_surface.hit_actions.has("slot_spin") else "FAIL",
+	])
 
 
 func _run_visual_perf(frames: int, failures: Array) -> void:

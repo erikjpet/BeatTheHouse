@@ -13,11 +13,13 @@ const CrewTurnModelScript := preload("res://scripts/core/crew_turn_model.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 const CrewHeistModelScript := preload("res://scripts/core/crew_heist_model.gd")
 const CrewWorldSequenceAdapterScript := preload("res://scripts/core/crew_world_sequence_adapter.gd")
+const SaveServiceScript := preload("res://scripts/core/save_service.gd")
 
 const PACKAGE_PATH := "res://data/crew/world06_1_crew_favor_delivery_sequence.json"
 const EVENTS_PATH := "res://data/events/events.json"
 const EVENT_MODULE_PATH := "res://scripts/core/event_module.gd"
 const ADAPTER_PATH := "res://scripts/core/crew_world_sequence_adapter.gd"
+const SAVE_LOAD_SLOT := "world_sequence_delivery_mid_active_contract"
 
 const EXPECTED_SOURCE := {
 	"domain": "crew",
@@ -45,6 +47,7 @@ func _initialize() -> void:
 	_check_production_event_contract(failures)
 	_check_generic_integration_surface(failures)
 	_check_production_schedule(failures)
+	_check_mid_active_save_load_abandon(failures)
 	_check_hidden_observer_equivalence(failures)
 	_check_delivery_failure_injection_matrix(failures)
 	if failures.is_empty():
@@ -229,6 +232,28 @@ func _check_production_schedule(failures: Array) -> void:
 			or JSON.stringify(restored.delivery_snapshot()) != JSON.stringify(delivery_snapshot):
 		failures.append("Scheduled Crew favor sequence and delivery authority did not survive save/load together.")
 	_check_target_handoff(run_state, library, token, target_node_id, bankroll_before, heat_before, failures)
+	var cleaned_projection := run_state.world_sequence_composed_projection()
+	var cleaned_semantic := _dict(cleaned_projection.get("semantic_state", {}))
+	for collection_id in ["scene_objects", "interactions", "actors"]:
+		for identity_value in _dict(cleaned_semantic.get(collection_id, {})).keys():
+			if str(identity_value).begins_with("crew::package_handoff"):
+				failures.append("A cleaned delivery receipt remained on the live room plane at %s/%s." % [collection_id, str(identity_value)])
+	var reusable_entry := _first_definition(_first_package(_load_json_array(PACKAGE_PATH, failures), failures), failures)
+	if not reusable_entry.is_empty():
+		var second_instance := "sequential_delivery_contract"
+		var second_mount := CrewWorldSequenceAdapterScript.mount(
+			run_state.current_environment,
+			_dict(reusable_entry.get("source", {})),
+			second_instance,
+			{"node_id": target_node_id, "zone_id": "center"},
+			_dict(reusable_entry.get("definition", {})),
+			_dict(reusable_entry.get("outcome_channels", {})),
+			_array(reusable_entry.get("ownership_claims", [])),
+			["delivery_handoff"],
+			"world_sequence:%s" % second_instance
+		)
+		if not bool(second_mount.get("ok", false)):
+			failures.append("A cleaned delivery tombstone retained temporary scene ownership and blocked the next Crew favor at the same room: %s." % JSON.stringify(second_mount))
 
 	var refused_run := _production_run(library, "WORLD-SEQUENCE-PROOF-REFUSAL")
 	refused_run.narrative_flags["crew_favor_pending"] = true
@@ -241,6 +266,50 @@ func _check_production_schedule(failures: Array) -> void:
 			or refused_run.crew_trust("crew_rook") != 0 or not bool(refused_run.narrative_flags.get("crew_favor_refused", false)) \
 			or str(refused.get("message", "")) != "The night stays quiet. Quieter, even.":
 		failures.append("Production Crew favor refusal no longer stays on its unchanged unmounted dialogue path.")
+
+
+func _check_mid_active_save_load_abandon(failures: Array) -> void:
+	var library := ContentLibraryScript.new()
+	library.load(false)
+	var fixture := _prepared_delivery_outcome(library, "WORLD-SEQUENCE-MID-ACTIVE-SAVE", failures, false)
+	if fixture.is_empty(): return
+	var run_state: RunState = fixture.get("run_state")
+	var token := str(fixture.get("token", ""))
+	var target_node_id := str(fixture.get("target_node_id", ""))
+	var durable := CrewWorldSequenceAdapterScript.durable_container(run_state.current_environment.get(CrewWorldSequenceAdapterScript.CONTAINER_KEY, {}))
+	for entry_value in durable.values():
+		if not SequenceRuntimeScript._persisted_collections_within_limits(_dict(entry_value).get("state", {})):
+			failures.append("P1 mounted delivery durable state exceeded the shared bounded collection limits.")
+	var durable_text := JSON.stringify(durable).to_lower()
+	for forbidden in FORBIDDEN_PACKAGE_TERMS:
+		if durable_text.contains(forbidden):
+			failures.append("P1 mounted delivery durable state leaked owner-private term: %s." % forbidden)
+	if _contains_key_named(durable, "a") or _contains_key_named(durable, "z"):
+		failures.append("P1 mounted delivery durable state leaked a private Crew envelope key.")
+	var service: SaveService = SaveServiceScript.new()
+	service.clear_run(SAVE_LOAD_SLOT)
+	var save_error := service.save_run(run_state, SAVE_LOAD_SLOT)
+	var loaded_value: Variant = service.load_run(SAVE_LOAD_SLOT) if save_error == OK else null
+	service.clear_run(SAVE_LOAD_SLOT)
+	if save_error != OK or not loaded_value is RunState:
+		failures.append("P1 active mounted delivery did not survive the real SaveService JSON boundary.")
+		return
+	run_state = loaded_value as RunState
+	var finalized := _finalize_delivery_target(run_state, library)
+	var projection := run_state.world_sequence_projection(token)
+	var interactions := _dict(_dict(projection.get("semantic_state", {})).get("interactions", {}))
+	if not run_state.delivery_has_active_run() or not bool(finalized.get("ok", false)) \
+			or run_state.world_sequence_mounted_owner_for_channel("delivery_handoff", target_node_id) != token \
+			or not interactions.has("crew::package_handoff"):
+		failures.append("P1 SaveService restore did not recover the active delivery and its mounted public handoff: %s." % JSON.stringify(finalized))
+		return
+	var abandoned := run_state.delivery_abandon("world_sequence_mid_active_contract")
+	var registration := _dict(run_state.world_sequence_registrations.get(token, {}))
+	if not bool(abandoned.get("ok", false)) or run_state.delivery_has_active_run() \
+			or not run_state.world_sequence_mounted_owner_for_channel("delivery_handoff", target_node_id).is_empty() \
+			or str(registration.get("lifecycle", "")) != "cleaned" \
+			or not _array(registration.get("pending_outcomes", [])).is_empty():
+		failures.append("P1 mid-active SaveService restore did not abandon and clean exactly once: %s." % JSON.stringify(abandoned))
 
 
 func _check_hidden_observer_equivalence(failures: Array) -> void:
@@ -271,11 +340,11 @@ func _hidden_observer_fixture(library: ContentLibrary, alternate_private_case: b
 		failures.append("Differential observer fixture could not schedule its public sequence.")
 		return {}
 	_pickup_delivery(run_state, "observer")
-	RunGeneratorScript.new(library).next_environment(run_state, target_node_id, true)
+	var travel := RunGeneratorScript.new(library).travel_environment_result(run_state, target_node_id, true)
 	var arrival := run_state.delivery_resolve_travel_arrival({}, {})
-	var finalized := run_state.world_sequence_finalize_base_semantics([], library, {"viewport_size": {"x": 1280, "y": 720}})
+	var finalized := _finalize_delivery_target(run_state, library)
 	if not bool(arrival.get("ok", false)) or not bool(finalized.get("ok", false)):
-		failures.append("Differential observer fixture could not mount its public sequence.")
+		failures.append("Differential observer fixture could not mount its public sequence: travel=%s arrival=%s finalized=%s." % [JSON.stringify(travel), JSON.stringify(arrival), JSON.stringify(finalized)])
 		return {}
 	# Reassert only model-private bytes immediately before the complete public
 	# observer capture. Adapter evidence intentionally excludes that owner envelope.
@@ -319,15 +388,15 @@ func _check_target_handoff(run_state: RunState, library: ContentLibrary, token: 
 		failures.append("Production delivery did not expose a public target for the proof conversion.")
 		return
 	_pickup_delivery(run_state, "target_handoff")
-	RunGeneratorScript.new(library).next_environment(run_state, target_node_id, true)
+	var travel := RunGeneratorScript.new(library).travel_environment_result(run_state, target_node_id, true)
 	if run_state.current_world_node_id() != target_node_id:
-		failures.append("Production world generation did not install the exact public Crew favor target.")
+		failures.append("Production world generation did not install the exact public Crew favor target: %s." % JSON.stringify(travel))
 		return
 	var arrival := run_state.delivery_resolve_travel_arrival({}, {})
 	if not bool(arrival.get("ok", false)) or not bool(arrival.get("handoff_ready", false)):
 		failures.append("Production delivery did not reach its real public handoff boundary: %s." % JSON.stringify(arrival))
 		return
-	var finalized := run_state.world_sequence_finalize_base_semantics([], library, {"viewport_size": {"x": 1280, "y": 720}})
+	var finalized := _finalize_delivery_target(run_state, library)
 	if not bool(finalized.get("ok", false)):
 		failures.append("Crew favor sequence did not mount after exact-target semantic finalization: %s." % JSON.stringify(finalized))
 		return
@@ -480,11 +549,11 @@ func _prepared_delivery_outcome(library: ContentLibrary, seed: String, failures:
 		failures.append("P1 injection fixture could not schedule a public delivery owner.")
 		return {}
 	_pickup_delivery(run_state, "checkpoint")
-	RunGeneratorScript.new(library).next_environment(run_state, target_node_id, true)
+	var travel := RunGeneratorScript.new(library).travel_environment_result(run_state, target_node_id, true)
 	var arrival := run_state.delivery_resolve_travel_arrival({}, {})
-	var finalized := run_state.world_sequence_finalize_base_semantics([], library, {"viewport_size": {"x": 1280, "y": 720}})
+	var finalized := _finalize_delivery_target(run_state, library)
 	if run_state.current_world_node_id() != target_node_id or not bool(arrival.get("ok", false)) or not bool(finalized.get("ok", false)):
-		failures.append("P1 injection fixture could not mount at the delivery target: current=%s target=%s arrival=%s finalized=%s." % [run_state.current_world_node_id(), target_node_id, JSON.stringify(arrival), JSON.stringify(finalized)])
+		failures.append("P1 injection fixture could not mount at the delivery target: current=%s target=%s travel=%s arrival=%s finalized=%s." % [run_state.current_world_node_id(), target_node_id, JSON.stringify(travel), JSON.stringify(arrival), JSON.stringify(finalized)])
 		return {}
 	var interactions := _dict(_dict(_dict(finalized.get("projection", {})).get("semantic_state", {})).get("interactions", {}))
 	var handoff := _dict(interactions.get("crew::package_handoff", {}))
@@ -760,6 +829,10 @@ func _travel_away_and_revisit(run_state: RunState, library: ContentLibrary, targ
 	if run_state.current_world_node_id() != away_id:
 		push_warning("P1 travel/revisit departure remained at %s instead of %s; registration=%s" % [run_state.current_world_node_id(), away_id, JSON.stringify(run_state.world_sequence_registrations)])
 		return false
+	# Departure is fail-closed until the arrived room's semantic records are
+	# finalized, exactly as the production host finalizes on arrival. Without
+	# this the return leg is refused for the away room, not the target.
+	run_state.scenario_finalize_installed_environment(library, _dict(run_state.current_environment.get("scenario_layout_context", {})))
 	generator.next_environment(run_state, target_node_id, true)
 	if run_state.current_world_node_id() != target_node_id:
 		push_warning("P1 travel/revisit return remained at %s instead of %s; registration=%s" % [run_state.current_world_node_id(), target_node_id, JSON.stringify(run_state.world_sequence_registrations)])
@@ -785,7 +858,18 @@ func _production_run(library: ContentLibrary, seed: String) -> RunState:
 		"turns": 0,
 		"resolved_event_ids": [],
 	}
+	# `crew_favor_delivery` is a triggered event in production. Exercise the
+	# real host queue instead of relying on the pre-authority fixture shortcut
+	# where the narrative flag alone made a copied EventModule resolvable.
+	run_state.enqueue_triggered_event("crew_favor_delivery", "world06_1_contract")
 	return run_state
+
+
+func _finalize_delivery_target(run_state: RunState, library: ContentLibrary) -> Dictionary:
+	var layout_context := {"viewport_size": {"x": 1280, "y": 720}}
+	if SequenceSchemaScript.is_sequence(run_state.scenario_sequence_definition()):
+		return run_state.scenario_finalize_installed_environment(library, layout_context)
+	return run_state.world_sequence_finalize_base_semantics([], library, layout_context)
 
 
 func _load_json_array(path: String, failures: Array) -> Array:
@@ -834,3 +918,13 @@ static func _dict(value: Variant) -> Dictionary:
 
 static func _array(value: Variant) -> Array:
 	return (value as Array).duplicate(true) if typeof(value) == TYPE_ARRAY else []
+
+
+static func _contains_key_named(value: Variant, target: String) -> bool:
+	if typeof(value) == TYPE_DICTIONARY:
+		for key in (value as Dictionary).keys():
+			if str(key) == target or _contains_key_named((value as Dictionary).get(key), target): return true
+	elif typeof(value) == TYPE_ARRAY:
+		for entry in value as Array:
+			if _contains_key_named(entry, target): return true
+	return false

@@ -3,6 +3,7 @@ extends RefCounted
 const EnvironmentInstanceScript := preload("res://scripts/core/environment_instance.gd")
 const EventModuleScript := preload("res://scripts/core/event_module.gd")
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
+const HarnessProductionFidelityScript := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
@@ -26,11 +27,31 @@ static func check(library: ContentLibrary, failures: Array) -> void:
 	_check_public_identity(library, archetype, failures)
 	_check_l2_baseline(layers, failures)
 	_check_generation_and_tutorial(library, archetype, failures)
+	_check_production_scenario_layer_entry(library, failures)
 	_check_discovery_and_save(library, archetype, failures)
 	_check_back_room_access(library, archetype, failures)
 	_check_legacy_migration(library, archetype, failures)
 	_check_shortcut_edge(library, failures)
 	_check_scenario_layer_scope(failures)
+
+
+static func _check_production_scenario_layer_entry(library: ContentLibrary, failures: Array) -> void:
+	var run_state := RunStateScript.new()
+	run_state.start_new("WAVE-B-COMPOSITION-08")
+	var generator := RunGeneratorScript.new(library)
+	var initial_arrival := HarnessProductionFidelityScript.generate_and_finalize(generator, run_state, failures, "Punchline contract initial arrival")
+	if not bool(initial_arrival.get("ok", false)):
+		return
+	var travel := HarnessProductionFidelityScript.travel_and_finalize(generator, run_state, PUNCHLINE_ID, true, library, failures, "Punchline L1 arrival")
+	if not bool(travel.get("ok", false)) or str(run_state.current_environment.get("scenario_id", "")) != "punchline_high_stakes_night":
+		failures.append("Production Punchline high-stakes scenario could not install on L1: %s." % JSON.stringify(travel.get("errors", [])))
+		return
+	var side_door := EventModuleScript.new()
+	side_door.setup(library.event("side_door"), library)
+	var discovery := side_door.resolve(run_state, run_state.current_environment, "punchline_password")
+	var entered := generator.enter_environment_layer(run_state, "casino", false)
+	if not bool(discovery.get("ok", false)) or not bool(entered.get("ok", false)) or str(run_state.current_environment.get("current_layer_id", "")) != "casino":
+		failures.append("Production Punchline high-stakes scenario could not cross its L1-to-L2 semantic layout boundary: %s." % JSON.stringify(entered))
 
 
 static func _check_public_identity(library: ContentLibrary, archetype: Dictionary, failures: Array) -> void:
@@ -76,6 +97,8 @@ static func _check_generation_and_tutorial(library: ContentLibrary, archetype: D
 	var object_rects := _dict(_dict(normal.get("layout", {})).get("object_rects", {}))
 	if not object_rects.has("environment_layer:ambient") or not object_rects.has("environment_layer:casino"):
 		failures.append("Punchline layer fixtures were not assigned stable transition-time layout surfaces.")
+	if not object_rects.has("numbers:book") or _layout_overlap_count(object_rects) != 0:
+		failures.append("Punchline club did not place the Numbers book on its single collision-free generated layout plane.")
 	normal_run.set_environment(normal)
 	var ambient_before := str(normal_run.current_environment.get("layer_ambient_line", ""))
 	normal_run.advance_environment_turns(1)
@@ -90,6 +113,10 @@ static func _check_generation_and_tutorial(library: ContentLibrary, archetype: D
 	normal_run.discover_environment_layer("casino", "fixture")
 	if not bool(RunGeneratorScript.new(library).enter_environment_layer(normal_run, "casino", true).get("ok", false)) or normal_run.environment_history.size() != history_before or normal_run.bankroll != bankroll_before or normal_run.game_clock_minutes != clock_before:
 		failures.append("Punchline interior navigation behaved like world travel or charged the run.")
+	var casino_object_rects := _dict(_dict(normal_run.current_environment.get("layout", {})).get("object_rects", {}))
+	if not casino_object_rects.has("numbers:book") or not casino_object_rects.has("game:video_poker") \
+			or _layout_overlap_count(casino_object_rects) != 0:
+		failures.append("Punchline casino did not compose Numbers and all three games on one collision-free layout plane.")
 	var tutorial_config := library.challenge_config_for("tutorial_first_card", "IGNORED")
 	var tutorial_run := RunStateScript.new()
 	tutorial_run.start_new("PUNCHLINE-TUTORIAL", tutorial_config)
@@ -258,3 +285,26 @@ static func _story_type_count(story_log: Array, type_id: String) -> int:
 		if typeof(entry_value) == TYPE_DICTIONARY and str((entry_value as Dictionary).get("type", "")) == type_id:
 			result += 1
 	return result
+
+
+static func _layout_overlap_count(object_rects: Dictionary) -> int:
+	var ids := object_rects.keys()
+	ids.sort()
+	var count := 0
+	for left_index in range(ids.size()):
+		var left := _layout_rect(object_rects.get(ids[left_index], {}))
+		if not left.has_area():
+			continue
+		for right_index in range(left_index + 1, ids.size()):
+			var right := _layout_rect(object_rects.get(ids[right_index], {}))
+			if right.has_area() and left.intersects(right):
+				count += 1
+	return count
+
+
+static func _layout_rect(value: Variant) -> Rect2:
+	var data := _dict(value)
+	return Rect2(
+		float(data.get("x", 0.0)), float(data.get("y", 0.0)),
+		float(data.get("w", 0.0)), float(data.get("h", 0.0))
+	)

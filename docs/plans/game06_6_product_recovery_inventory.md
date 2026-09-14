@@ -50,3 +50,14 @@ the frozen contract proof and cannot mutate product state.
 This is the precise dependency gap authorized by the row prompt's “file the
 finding with evidence” clause. It is not resolved by caller claims, direct
 calls to Craps private helpers, or copying the rules.
+
+## Final closeout — 2026-09-02
+
+This recovery inventory's earlier “candidate evidence; no acceptance verdict”
+status is superseded. The recovered product was completed on `main` at
+`d98de5440bec7685f4bb26eace77f2dbb1627f53` and has passed final row-owned
+functional, economy, lifecycle, determinism, native/Web, performance,
+accessibility, and visual gates. The Craps seam limitation above remains the
+accepted prompt-authorized finding and remains fail-closed. See
+`docs/plans/game06_6_final_closeout.md` for the exact evidence ledger and
+retained non-green attempts.

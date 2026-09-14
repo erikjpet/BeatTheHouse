@@ -56,10 +56,13 @@ const SUPPORT_MARGIN := 800
 const SKILL_STOP_RAMP_TICKS := 24
 const NATIVE_BACKEND_ID := "coin_pusher_native_integer_v3"
 const NATIVE_ABI_VERSION := 3
+const OPENING_TEMPLATE_CACHE_CAPACITY := 16
 
 static var _native_backend: Object = null
 static var _native_backend_checked := false
 static var _last_step_backend := "gdscript_v3"
+static var _opening_template_cache: Dictionary = {}
+static var _opening_template_cache_order: Array = []
 
 # Compile-time integer cosine table. Outcome state never evaluates a float.
 const COS_TABLE := [
@@ -138,6 +141,14 @@ static var _scratch_grid: SpatialHash2D = SpatialHash2D.new()
 
 
 static func create_machine(seed_rng: RngStream, machine_definition: Dictionary, opening_bodies: int = 0, capture_opening_report: bool = false) -> Dictionary:
+	var cache_key := ""
+	if opening_bodies > 0 and opening_bodies <= 180:
+		cache_key = _opening_template_cache_key(seed_rng, machine_definition, opening_bodies, capture_opening_report)
+		var cached_value: Variant = _opening_template_cache.get(cache_key)
+		if typeof(cached_value) == TYPE_DICTIONARY:
+			var cached: Dictionary = cached_value
+			seed_rng.restore(cached.get("post_rng", {}))
+			return (cached.get("state", {}) as Dictionary).duplicate(true)
 	var definition := machine_definition.duplicate(true)
 	var geometry := _geometry(definition)
 	var stroke := _stroke(definition)
@@ -208,7 +219,45 @@ static func create_machine(seed_rng: RngStream, machine_definition: Dictionary, 
 			state["last_invariants"] = _invariant_report(state, true)
 	else:
 		state["opening_body_count"] = 0
+	if not cache_key.is_empty():
+		_store_opening_template(cache_key, state, seed_rng.snapshot())
 	return state
+
+
+static func _opening_template_cache_key(seed_rng: RngStream, machine_definition: Dictionary, opening_bodies: int, capture_opening_report: bool) -> String:
+	return "%d|%d|%d|%d|%s" % [
+		seed_rng.seed_value,
+		seed_rng.state_value,
+		opening_bodies,
+		1 if capture_opening_report else 0,
+		Marshalls.raw_to_base64(var_to_bytes(machine_definition)),
+	]
+
+
+static func _store_opening_template(cache_key: String, state: Dictionary, post_rng: Dictionary) -> void:
+	if _opening_template_cache.has(cache_key):
+		return
+	while _opening_template_cache_order.size() >= OPENING_TEMPLATE_CACHE_CAPACITY:
+		var evicted_key := str(_opening_template_cache_order.pop_front())
+		_opening_template_cache.erase(evicted_key)
+	_opening_template_cache[cache_key] = {
+		"state": state.duplicate(true),
+		"post_rng": post_rng.duplicate(true),
+	}
+	_opening_template_cache_order.append(cache_key)
+
+
+static func clear_opening_template_cache_for_test() -> void:
+	_opening_template_cache = {}
+	_opening_template_cache_order = []
+
+
+static func opening_template_cache_snapshot_for_test() -> Dictionary:
+	return {
+		"capacity": OPENING_TEMPLATE_CACHE_CAPACITY,
+		"size": _opening_template_cache.size(),
+		"keys": _opening_template_cache_order.duplicate(),
+	}
 
 
 static func public_contract() -> Dictionary:
@@ -742,6 +791,7 @@ static func _step_one_tick(state: Dictionary, config: Dictionary) -> Dictionary:
 		events.append({"kind": "stroke_cycle", "stroke_cycle": int(state.get("stroke_cycle_serial", 0)), "phase_fp": int(state.get("phase_fp", 0)), "tick": int(state.get("tick", 0))})
 	var new_face := int(state.get("face_y", old_face))
 	var face_delta := new_face - old_face
+	_refresh_platform_support_roots(bodies, geometry, old_face)
 	_apply_platform_carry_and_plate(bodies, geometry, old_face, new_face, face_delta)
 	_apply_full_height_face(bodies, geometry, old_face, new_face, face_delta)
 	var platform_work := maxi(0, _kinetic_energy(bodies) - before_energy)
@@ -861,6 +911,54 @@ static func _update_motor(state: Dictionary, motor_enabled: bool) -> bool:
 		state["stroke_cycle_serial"] = int(state.get("stroke_cycle_serial", 0)) + 1
 	state["face_y"] = face_y_for_phase(definition, _divi(int(state.get("phase_fp", 0)), FP))
 	return completed
+
+
+static func _refresh_platform_support_roots(bodies: Array, geometry: Dictionary, old_face: int) -> void:
+	# `carried_sleep` is a cached property of the whole support graph, not just
+	# the immediately supporting body. Rebuild it before platform motion so an
+	# upper layer cannot miss a stroke because bodies were restored/reordered or
+	# because a sleeping intermediate support skipped contact resolution.
+	var by_id := {}
+	for body_value in bodies:
+		if typeof(body_value) == TYPE_DICTIONARY:
+			var indexed: Dictionary = body_value
+			by_id[str(indexed.get("id", ""))] = indexed
+	var memo := {}
+	var visiting := {}
+	var platform_top := int(geometry.get("platform_top_z", PLATFORM_TOP_Z))
+	for body_value in bodies:
+		if typeof(body_value) != TYPE_DICTIONARY:
+			continue
+		var body: Dictionary = body_value
+		body["carried_sleep"] = _body_has_platform_root(body, by_id, memo, visiting, platform_top, old_face)
+
+
+static func _body_has_platform_root(body: Dictionary, by_id: Dictionary, memo: Dictionary, visiting: Dictionary, platform_top: int, old_face: int) -> bool:
+	if _is_terminal_body(body):
+		return false
+	var body_id := str(body.get("id", ""))
+	if memo.has(body_id):
+		return bool(memo[body_id])
+	if bool(visiting.get(body_id, false)):
+		return false
+	var support_kind := str(body.get("support_kind", ""))
+	if support_kind == "platform" or (absi(int(body.get("z", 0)) - platform_top) <= SUPPORT_VERTICAL_TOLERANCE and int(body.get("y", 0)) >= old_face):
+		memo[body_id] = true
+		return true
+	if support_kind != "body":
+		memo[body_id] = false
+		return false
+	visiting[body_id] = true
+	var rooted := false
+	var support_ids: Array = body.get("support_ids", []) if typeof(body.get("support_ids", [])) == TYPE_ARRAY else []
+	for support_id_value in support_ids:
+		var support_value: Variant = by_id.get(str(support_id_value), null)
+		if typeof(support_value) == TYPE_DICTIONARY and _body_has_platform_root(support_value as Dictionary, by_id, memo, visiting, platform_top, old_face):
+			rooted = true
+			break
+	visiting.erase(body_id)
+	memo[body_id] = rooted
+	return rooted
 
 
 static func _apply_platform_carry_and_plate(bodies: Array, geometry: Dictionary, old_face: int, new_face: int, face_delta: int) -> void:

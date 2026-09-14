@@ -37,9 +37,15 @@ var selected_travel_label: String = ""
 var snapshot_cache_key: String = ""
 var canvas_snapshot_key: String = ""
 var small_screen_mode := false
+var node_activation_serial := 0
+var pressed_node_id: String = ""
+var pressed_node_activation_serial := 0
+var confirm_button_press_active := false
 
 
 func clear_selection() -> void:
+	_clear_pressed_node()
+	confirm_button_press_active = false
 	selected_node_id = ""
 	selected_travel_target_id = ""
 	selected_travel_label = ""
@@ -49,6 +55,7 @@ func clear_selection() -> void:
 
 
 func configure_nodes(overlay_node: Control, holder_node: Control, nodes_layer_node: Control, title_node: Label, detail_popup_node: PanelContainer, detail_node: Label, badge_slot_node: VBoxContainer, confirm_node: Button) -> void:
+	_clear_pressed_node()
 	overlay = overlay_node
 	holder = holder_node
 	nodes_layer = nodes_layer_node
@@ -57,6 +64,13 @@ func configure_nodes(overlay_node: Control, holder_node: Control, nodes_layer_no
 	detail_label = detail_node
 	badge_slot = badge_slot_node
 	confirm_button = confirm_node
+	if confirm_button != null:
+		var down_callback := Callable(self, "_on_confirm_button_down")
+		var up_callback := Callable(self, "_on_confirm_button_up")
+		if not confirm_button.button_down.is_connected(down_callback):
+			confirm_button.button_down.connect(down_callback)
+		if not confirm_button.button_up.is_connected(up_callback):
+			confirm_button.button_up.connect(up_callback)
 	if holder != null:
 		holder.mouse_default_cursor_shape = Control.CURSOR_ARROW
 		holder.tooltip_text = "Scroll to zoom. Drag to move. Click empty space to reset."
@@ -83,6 +97,8 @@ func show_overlay() -> void:
 
 
 func hide_overlay() -> void:
+	_clear_pressed_node()
+	confirm_button_press_active = false
 	if overlay != null:
 		overlay.visible = false
 
@@ -202,6 +218,11 @@ func global_visual_rect_for_node(node_id: String) -> Rect2:
 
 func position_detail_popup(snapshot: Dictionary) -> void:
 	if detail_popup == null or holder == null:
+		return
+	# The selected-location camera moves the popup while it eases into focus.
+	# Freeze that popup for the duration of a Travel-button press so the control
+	# cannot slide away and have Godot cancel an otherwise stationary click.
+	if confirm_button_press_active:
 		return
 	var node_id := selected_node_id.strip_edges()
 	if node_id.is_empty() or not node_ids(snapshot).has(node_id):
@@ -746,6 +767,8 @@ func _ensure_node_button_pool() -> void:
 		button.disabled = true
 		button.set_meta("pool_index", index)
 		button.set_meta("node_id", "")
+		button.button_down.connect(Callable(self, "_on_pool_button_down").bind(index))
+		button.button_up.connect(Callable(self, "_on_pool_button_up").bind(index))
 		nodes_layer.add_child(button)
 
 
@@ -765,11 +788,70 @@ func _on_pool_button_pressed(index: int) -> void:
 	var node_id := str(button.get_meta("node_id", "")).strip_edges()
 	if node_id.is_empty():
 		return
+	_emit_node_pressed(node_id)
+
+
+func _on_pool_button_down(index: int) -> void:
+	var button := _pool_button(index)
+	if button == null:
+		return
+	var node_id := str(button.get_meta("node_id", "")).strip_edges()
+	if not node_id.is_empty():
+		_capture_pressed_node(node_id)
+
+
+func _on_pool_button_up(_index: int) -> void:
+	if pressed_node_id.is_empty():
+		return
+	# BaseButton emits button_up before pressed. Defer the recovery until pressed
+	# has had its normal chance to fire; the activation serial then suppresses a
+	# duplicate, while a canceled moving-button click is completed exactly once.
+	call_deferred("_finish_pressed_node")
+
+
+func _emit_node_pressed(node_id: String) -> void:
+	node_activation_serial += 1
 	node_pressed.emit(node_id)
 	# The selection callback refreshes the canvas snapshot synchronously. Release
 	# any user camera override afterwards so the refreshed selected stop becomes
 	# the authored focus target again.
 	_reset_to_authored_map_view()
+
+
+func _capture_pressed_node(node_id: String) -> void:
+	pressed_node_id = node_id
+	pressed_node_activation_serial = node_activation_serial
+
+
+func _finish_pressed_node() -> bool:
+	if pressed_node_id.is_empty():
+		return false
+	var node_id := pressed_node_id
+	var activation_serial := pressed_node_activation_serial
+	_clear_pressed_node()
+	# Button.pressed normally fires before the event reaches the holder. During
+	# the map's camera animation, however, the invisible button can move between
+	# pointer press and release, causing Godot to cancel that signal. Complete the
+	# captured press here only when the button did not already activate it.
+	if node_activation_serial != activation_serial:
+		return false
+	if not button_ids.has(node_id):
+		return false
+	_emit_node_pressed(node_id)
+	return true
+
+
+func _clear_pressed_node() -> void:
+	pressed_node_id = ""
+	pressed_node_activation_serial = node_activation_serial
+
+
+func _on_confirm_button_down() -> void:
+	confirm_button_press_active = true
+
+
+func _on_confirm_button_up() -> void:
+	confirm_button_press_active = false
 
 
 func _detail_popup_contains_local_position(local_position: Vector2) -> bool:

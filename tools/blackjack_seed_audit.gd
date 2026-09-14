@@ -6,6 +6,10 @@ const BlackjackAuthorityTestDriverScript := preload("res://scripts/tests/foundat
 const PAYOUT_DRIFT_HANDS := 1000
 const PAYOUT_DRIFT_MIN_EDGE := -0.35
 const PAYOUT_DRIFT_MAX_EDGE := 0.20
+# A hand can contain four split hands.  Sixty-four public surface boundaries
+# leaves room for every hand to reach the deck-bounded card limit plus the
+# selection/confirmation pair without turning a malformed loop into a hang.
+const MAX_HAND_SURFACE_ACTIONS := 64
 
 var failures: Array = []
 var warnings: Array = []
@@ -13,6 +17,7 @@ var stats: Dictionary = {}
 var resolve_ms_samples: Array = []
 var action_command_ms_samples: Array = []
 var surface_state_ms_samples: Array = []
+var last_play_failure: Dictionary = {}
 
 
 func _init() -> void:
@@ -21,11 +26,14 @@ func _init() -> void:
 
 func _run() -> void:
 	var seed_count := 120
+	var payout_drift_hands := PAYOUT_DRIFT_HANDS
 	var output_path := "res://.tmp/blackjack_seed_audit/report.json"
 	for arg in OS.get_cmdline_user_args():
 		var text := str(arg)
 		if text.begins_with("--seed-count="):
 			seed_count = maxi(1, int(text.trim_prefix("--seed-count=")))
+		elif text.begins_with("--payout-hands="):
+			payout_drift_hands = maxi(1, int(text.trim_prefix("--payout-hands=")))
 		elif text.begins_with("--output="):
 			output_path = text.trim_prefix("--output=")
 
@@ -63,7 +71,9 @@ func _run() -> void:
 		"double_fixture_passes": 0,
 		"surrender_fixture_passes": 0,
 		"natural_fixture_passes": 0,
+		"selection_confirmation_fixture_passes": 0,
 		"payout_drift_hands": 0,
+		"payout_drift_hand_target": payout_drift_hands,
 		"payout_drift_total_wager": 0,
 		"payout_drift_main_delta": 0,
 		"payout_drift_edge": 0.0,
@@ -92,8 +102,9 @@ func _run() -> void:
 
 	_audit_surface_state_timing(game)
 	_run_forced_rule_fixtures(game)
+	_run_selection_confirmation_fixture(game)
 	_run_cheat_fixtures(game)
-	_run_payout_drift_probe(game)
+	_run_payout_drift_probe(game, payout_drift_hands)
 	_finalize_timing_stats()
 	_write_report(output_path, seed_count)
 	_print_summary()
@@ -228,7 +239,20 @@ func _audit_clean_hand(game: GameModule, run_state: RunState, environment: Dicti
 	ui = deal.get("ui_state", {})
 	_audit_compact_ui_state(ui, "seed %d deal" % index)
 	stats["clean_hands"] = int(stats.get("clean_hands", 0)) + 1
-	var result := _play_to_resolve(game, run_state, environment, ui, "clean_%03d" % index)
+	var placement := BlackjackAuthorityTestDriverScript.resolve(
+		game,
+		str(deal.get("action_id", "blackjack_place_bet")),
+		int(deal.get("set_stake", ui.get("selected_stake", 5))),
+		run_state,
+		environment,
+		run_state.create_rng("clean_place_%03d" % index),
+		ui
+	)
+	if not bool(placement.get("ok", false)):
+		failures.append("Seed %d clean hand placement did not resolve: %s" % [index, JSON.stringify(placement)])
+		return
+	environment = run_state.current_environment
+	var result := _play_to_resolve(game, run_state, environment, {}, "clean_%03d" % index)
 	if result.is_empty():
 		failures.append("Seed %d clean hand did not resolve." % index)
 		return
@@ -300,30 +324,86 @@ func _audit_count_challenge(challenge: Dictionary, label: String) -> void:
 
 
 func _play_to_resolve(game: GameModule, run_state: RunState, environment: Dictionary, ui: Dictionary, rng_key: String) -> Dictionary:
+	last_play_failure = {}
 	var rng := run_state.create_rng(rng_key)
-	for _i in range(16):
-		var surface := game.surface_state(run_state, environment, ui)
+	var pending_confirmation_action := ""
+	for iteration in range(MAX_HAND_SURFACE_ACTIONS):
+		environment = run_state.current_environment
+		var surface := game.surface_state(run_state, environment, {})
+		var resolve_error_code := ""
+		var resolve_message := ""
+		var action := "blackjack_deal"
+		var confirm_requested := false
 		if bool(surface.get("settle_available", false)) or bool(surface.get("round_complete", false)):
-			var settle_start_usec := Time.get_ticks_usec()
-			var settle := game.surface_action_command("blackjack_deal", 0, true, ui, run_state, environment)
-			_record_action_command_time(settle_start_usec)
-			ui = settle.get("ui_state", {})
-			_audit_compact_ui_state(ui, "settle command")
-			if bool(settle.get("resolve", false)):
-				return _resolve_and_record(game, str(settle.get("action_id", "play_basic")), int(ui.get("locked_stake", ui.get("selected_stake", 5))), run_state, environment, rng, ui)
-			continue
-		var action := _choose_clean_action(surface, rng)
+			confirm_requested = true
+		else:
+			action = _choose_clean_action(surface, rng)
+			confirm_requested = action == pending_confirmation_action
 		var command_start_usec := Time.get_ticks_usec()
-		var command := game.surface_action_command(action, 0, false, ui, run_state, environment)
+		var command := BlackjackAuthorityTestDriverScript.surface_intent(game, action, 5, run_state, environment, 0, confirm_requested)
+		var issued_action := action
 		_record_action_command_time(command_start_usec)
-		if not bool(command.get("handled", false)):
+		if not bool(command.get("handled", false)) and action != "blackjack_stand":
+			issued_action = "blackjack_stand"
 			var fallback_start_usec := Time.get_ticks_usec()
-			command = game.surface_action_command("blackjack_stand", 0, false, ui, run_state, environment)
+			command = BlackjackAuthorityTestDriverScript.surface_intent(game, issued_action, 5, run_state, run_state.current_environment, 0, issued_action == pending_confirmation_action)
 			_record_action_command_time(fallback_start_usec)
-		ui = command.get("ui_state", {})
-		_audit_compact_ui_state(ui, "hand command %s" % action)
-		if bool(command.get("resolve", false)):
-			return _resolve_and_record(game, str(command.get("action_id", "play_basic")), int(ui.get("locked_stake", ui.get("selected_stake", 5))), run_state, environment, rng, ui)
+		var command_ui: Dictionary = command.get("ui_state", {}) if typeof(command.get("ui_state", {})) == TYPE_DICTIONARY else {}
+		_audit_compact_ui_state(command_ui, "hand command %s" % action)
+		var command_requests_resolution := bool(command.get("resolve", false)) or bool(command.get("direct_resolve", false))
+		if not str(command.get("action_id", "")).is_empty() and command_requests_resolution:
+			# Confirmation is consumed by this one resolving public command, even
+			# when its authoritative result advances to another nonterminal hand.
+			pending_confirmation_action = ""
+			if typeof(command.get("_sealed_action_host_delivery", null)) != TYPE_DICTIONARY:
+				last_play_failure = {
+					"iteration": iteration,
+					"phase": str(surface.get("surface_phase", surface.get("phase", ""))),
+					"chosen_action": action,
+					"issued_action": issued_action,
+					"command_handled": bool(command.get("handled", false)),
+					"command_resolve": true,
+					"command_action_id": str(command.get("action_id", "")),
+					"resolve_error_code": "missing_sealed_delivery",
+				}
+				return {}
+			var started := Time.get_ticks_usec()
+			var result := BlackjackAuthorityTestDriverScript.resolve_surface_command(game, command, 5, run_state, run_state.current_environment)
+			var elapsed_ms := float(Time.get_ticks_usec() - started) / 1000.0
+			resolve_ms_samples.append(elapsed_ms)
+			stats["resolve_samples"] = resolve_ms_samples.size()
+			stats["max_resolve_ms"] = maxf(float(stats.get("max_resolve_ms", 0.0)), elapsed_ms)
+			if bool(result.get("ok", false)) and not (result.get("blackjack_hand_results", []) as Array).is_empty():
+				return result
+			if bool(result.get("ok", false)):
+				continue
+			resolve_error_code = str(result.get("error_code", ""))
+			resolve_message = str(result.get("message", ""))
+		elif bool(command.get("handled", false)) and not command_requests_resolution:
+			# Selection-only surface commands are real public interaction steps, but
+			# they deliberately carry no sealed delivery yet.  Re-read the canonical
+			# surface and issue the same public action with the explicit confirmation
+			# flag instead of presenting the selection command to the authority
+			# resolver as if it were a delivery.  The headless adapter intentionally
+			# does not retain FoundationMain's UI-local selected-action fields.
+			pending_confirmation_action = issued_action
+			continue
+		pending_confirmation_action = ""
+		last_play_failure = {
+			"iteration": iteration,
+			"phase": str(surface.get("surface_phase", surface.get("phase", ""))),
+			"chosen_action": action,
+			"issued_action": issued_action,
+			"command_handled": bool(command.get("handled", false)),
+			"command_resolve": bool(command.get("resolve", false)),
+			"command_action_id": str(command.get("action_id", "")),
+			"command_error_code": str(command.get("error_code", "")),
+			"command_message": str(command.get("message", "")),
+			"round_complete": bool(surface.get("round_complete", false)),
+			"settle_available": bool(surface.get("settle_available", false)),
+			"resolve_error_code": resolve_error_code,
+			"resolve_message": resolve_message,
+		}
 	return {}
 
 
@@ -435,6 +515,55 @@ func _run_forced_rule_fixtures(game: GameModule) -> void:
 	_force_surrender(game)
 
 
+func _run_selection_confirmation_fixture(game: GameModule) -> void:
+	var data := _fixture_env("selection_confirmation")
+	var table: Dictionary = data.table
+	table["patrons"] = []
+	table["side_bets"] = []
+	table["rules"] = {"dealer_hits_soft_17": false, "double_after_split": true, "split_aces_one_card": true, "max_split_hands": 4, "late_surrender": true}
+	table["shoe"] = [
+		{"rank": 10, "suit": 0}, {"rank": 9, "suit": 2}, {"rank": 7, "suit": 1}, {"rank": 7, "suit": 3},
+		{"rank": 5, "suit": 0}, {"rank": 8, "suit": 1}, {"rank": 4, "suit": 2}, {"rank": 3, "suit": 3}
+	]
+	data.environment["game_states"] = {"blackjack": table}
+	data.run_state.current_environment = data.environment
+	var deal := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_deal", 5, data.run_state, data.environment)
+	var placement := BlackjackAuthorityTestDriverScript.resolve_surface_command(game, deal, 5, data.run_state, data.run_state.current_environment)
+	if not bool(placement.get("ok", false)):
+		failures.append("Selection-confirmation fixture could not commit its opening wager.")
+		return
+	var environment: Dictionary = data.run_state.current_environment
+	var selection := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_deal", 5, data.run_state, environment)
+	var selection_requests_resolution := bool(selection.get("resolve", false)) or bool(selection.get("direct_resolve", false))
+	if not bool(selection.get("handled", false)) \
+			or str(selection.get("action_id", "")) != "play_basic" \
+			or selection_requests_resolution \
+			or typeof(selection.get("_sealed_action_host_delivery", null)) == TYPE_DICTIONARY:
+		failures.append("Selection-confirmation fixture did not produce a public selection-only first click.")
+		return
+	var confirmation := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_deal", 5, data.run_state, data.run_state.current_environment, 0, true)
+	var confirmation_requests_resolution := bool(confirmation.get("resolve", false)) or bool(confirmation.get("direct_resolve", false))
+	if not bool(confirmation.get("handled", false)) \
+			or str(confirmation.get("action_id", "")) != "play_basic" \
+			or not confirmation_requests_resolution \
+			or typeof(confirmation.get("_sealed_action_host_delivery", null)) != TYPE_DICTIONARY:
+		failures.append("Selection-confirmation fixture did not seal the confirming public click: %s" % JSON.stringify({
+			"handled": bool(confirmation.get("handled", false)),
+			"action_id": str(confirmation.get("action_id", "")),
+			"resolve": bool(confirmation.get("resolve", false)),
+			"direct_resolve": bool(confirmation.get("direct_resolve", false)),
+			"error_code": str(confirmation.get("error_code", "")),
+			"message": str(confirmation.get("message", "")),
+			"has_delivery": typeof(confirmation.get("_sealed_action_host_delivery", null)) == TYPE_DICTIONARY,
+		}))
+		return
+	var result := BlackjackAuthorityTestDriverScript.resolve_surface_command(game, confirmation, 5, data.run_state, data.run_state.current_environment)
+	if not bool(result.get("ok", false)) or (result.get("blackjack_hand_results", []) as Array).is_empty():
+		failures.append("Selection-confirmation fixture did not settle through the sealed confirming click.")
+		return
+	stats["selection_confirmation_fixture_passes"] = int(stats.get("selection_confirmation_fixture_passes", 0)) + 1
+
+
 func _force_natural(game: GameModule) -> void:
 	var data := _fixture_env("natural")
 	var table: Dictionary = data.table
@@ -514,11 +643,11 @@ func _run_cheat_fixtures(game: GameModule) -> void:
 	_force_patron_peek_adjustment(game)
 
 
-func _run_payout_drift_probe(game: GameModule) -> void:
+func _run_payout_drift_probe(game: GameModule, hand_target: int) -> void:
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("BLACKJACK-AUDIT-PAYOUT-DRIFT")
 	run_state.bankroll = 100000
-	var environment := _audit_environment(30000)
+	var environment: Dictionary = _audit_environment(30000)
 	var table: Dictionary = game.generate_environment_state(run_state, environment, run_state.create_rng("payout_drift_table"))
 	table["side_bets"] = []
 	table["patrons"] = []
@@ -528,7 +657,7 @@ func _run_payout_drift_probe(game: GameModule) -> void:
 	var total_wager := 0
 	var main_delta := 0
 	var resolved := 0
-	for i in range(PAYOUT_DRIFT_HANDS):
+	for i in range(hand_target):
 		# This fixture measures payout math across one continuous shoe, not the
 		# run-level Heat economy. Clear only a prior threshold backoff so the new
 		# persistent location guardrail does not truncate the 1,000-hand sample.
@@ -541,14 +670,31 @@ func _run_payout_drift_probe(game: GameModule) -> void:
 				payout_table.erase(key)
 			payout_states["blackjack"] = payout_table
 			environment["game_states"] = payout_states
-		var deal := game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 5}, run_state, environment)
+		run_state.current_environment = environment
+		var deal := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_deal", 5, run_state, environment)
 		if not bool(deal.get("handled", false)):
-			failures.append("Payout drift probe could not deal hand %d." % i)
+			failures.append("Payout drift probe could not deal hand %d: %s." % [i, JSON.stringify({
+				"error_code": str(deal.get("error_code", "")),
+				"message": str(deal.get("message", "")),
+				"phase": str(deal.get("surface_phase", deal.get("phase", ""))),
+			})])
 			break
-		var result := _play_to_resolve(game, run_state, environment, deal.get("ui_state", {}), "payout_drift_%04d" % i)
+		if str(deal.get("action_id", "")).is_empty():
+			failures.append("Payout drift probe deal hand %d did not issue a sealed placement delivery." % i)
+			break
+		var placement := BlackjackAuthorityTestDriverScript.resolve_surface_command(game, deal, 5, run_state, run_state.current_environment)
+		if not bool(placement.get("ok", false)):
+			failures.append("Payout drift probe could not commit hand %d placement: %s." % [i, JSON.stringify({
+				"error_code": str(placement.get("error_code", "")),
+				"message": str(placement.get("message", "")),
+			})])
+			break
+		environment = run_state.current_environment
+		var result := _play_to_resolve(game, run_state, environment, {}, "payout_drift_%04d" % i)
 		if result.is_empty():
-			failures.append("Payout drift probe could not resolve hand %d." % i)
+			failures.append("Payout drift probe could not resolve hand %d: %s." % [i, JSON.stringify(last_play_failure)])
 			break
+		environment = run_state.current_environment
 		var hand_wager := 0
 		for hand_value in result.get("blackjack_hand_results", []) as Array:
 			if typeof(hand_value) != TYPE_DICTIONARY:
@@ -559,6 +705,11 @@ func _run_payout_drift_probe(game: GameModule) -> void:
 		total_wager += maxi(1, hand_wager)
 		main_delta += int(result.get("blackjack_main_delta", 0))
 		resolved += 1
+		var terminal := BlackjackAuthorityTestDriverScript.advance_terminal_presentation(game, 5, run_state, environment)
+		if not bool(terminal.get("ok", false)):
+			failures.append("Payout drift probe could not clear terminal presentation after hand %d: %s." % [i, JSON.stringify(terminal)])
+			break
+		environment = run_state.current_environment
 	stats["payout_drift_hands"] = resolved
 	stats["payout_drift_total_wager"] = total_wager
 	stats["payout_drift_main_delta"] = main_delta
@@ -566,10 +717,10 @@ func _run_payout_drift_probe(game: GameModule) -> void:
 	if total_wager > 0:
 		edge = float(main_delta) / float(total_wager)
 	stats["payout_drift_edge"] = edge
-	if resolved != PAYOUT_DRIFT_HANDS:
-		failures.append("Payout drift probe resolved %d/%d hands." % [resolved, PAYOUT_DRIFT_HANDS])
+	if resolved != hand_target:
+		failures.append("Payout drift probe resolved %d/%d hands." % [resolved, hand_target])
 	elif edge < PAYOUT_DRIFT_MIN_EDGE or edge > PAYOUT_DRIFT_MAX_EDGE:
-		failures.append("Payout drift edge %.4f is outside the sanity range %.2f..%.2f over %d hands." % [edge, PAYOUT_DRIFT_MIN_EDGE, PAYOUT_DRIFT_MAX_EDGE, PAYOUT_DRIFT_HANDS])
+		failures.append("Payout drift edge %.4f is outside the sanity range %.2f..%.2f over %d hands." % [edge, PAYOUT_DRIFT_MIN_EDGE, PAYOUT_DRIFT_MAX_EDGE, hand_target])
 
 
 func _force_safe_peek(game: GameModule) -> void:

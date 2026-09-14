@@ -52,11 +52,17 @@ func _run() -> void:
 	var live_snapshot: Dictionary = canvas.call("current_view_snapshot")
 	var live_state: Dictionary = live_snapshot.get("state", {})
 	var target_ids := _target_ids(live_state.get("bet_targets", []))
-	if target_ids != ["pass_line", "dont_pass"] or str(live_state.get("surface_cast", "")) != "circle_of_players":
-		_fail("Street Craps capture did not render the two-line circle surface.")
+	if not target_ids.has("pass_line") or not target_ids.has("field") or not target_ids.has("hard_8") or not target_ids.has("any_seven") or str(live_state.get("surface_cast", "")) != "circle_of_players":
+		_fail("Street Craps capture did not render the full-rules circle surface.")
 		return
-	if not await _capture("01_street_circle.png"):
+	if not await _capture("01_street_line_bets.png"):
 		return
+	for page in ["numbers", "props", "odds"]:
+		app.set("game_surface_ui_state", {"selected_chip": 2, "craps_bet_page": page, "surface_time_msec": 40000})
+		app.call("_refresh")
+		await _settle(2)
+		if not await _capture("01_street_%s_bets.png" % page):
+			return
 
 	var states: Dictionary = run_state.current_environment.get("game_states", {})
 	table = states.get("craps", {})
@@ -65,6 +71,7 @@ func _run() -> void:
 	table["roll_history"] = [table["last_roll"]]
 	states["craps"] = table
 	run_state.current_environment["game_states"] = states
+	app.set("game_surface_ui_state", {"selected_chip": 2, "craps_bet_page": "line", "surface_time_msec": dice_start})
 	app.call("_refresh")
 	await _settle(3)
 	if str((canvas.call("current_view_snapshot") as Dictionary).get("state", {}).get("phase", "")) != "rolling":

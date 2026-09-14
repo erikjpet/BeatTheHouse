@@ -124,6 +124,20 @@ static func environment_snapshot(run_state: RunState, data: Dictionary) -> Dicti
 	return snapshot
 
 
+# A scenario action is not complete from the player's perspective until the
+# same interaction surface acknowledges it. Keep this presentation-only and
+# derive it exclusively from the label that was already visible on the button;
+# local/runtime state must never become part of the acknowledgement.
+static func accepted_scenario_action_acknowledgement(object_data: Dictionary, action: Dictionary) -> String:
+	var action_label := str(action.get("label", action.get("id", "Action"))).strip_edges()
+	if action_label.is_empty():
+		action_label = "Action"
+	var object_label := str(object_data.get("label", "")).strip_edges()
+	if object_label.is_empty():
+		return "Done: %s." % action_label.trim_suffix(".")
+	return "Done at %s: %s." % [object_label.trim_suffix("."), action_label.trim_suffix(".")]
+
+
 static func interactable_object_view_list(run_state: RunState, library: ContentLibrary, data: Dictionary) -> Array:
 	if run_state == null or library == null:
 		return []
@@ -133,7 +147,6 @@ static func interactable_object_view_list(run_state: RunState, library: ContentL
 	var selection: Dictionary = data.get("selection", {})
 	var layout: Dictionary = data.get("layout", {})
 	var game_fixture_counts := _copy_dict(layout.get("game_fixture_counts", {}))
-	var risk_cue := str(data.get("risk_cue", ""))
 	var game_layout_index := 0
 	for source_value in data.get("game_sources", []):
 		if typeof(source_value) != TYPE_DICTIONARY:
@@ -160,7 +173,7 @@ static func interactable_object_view_list(run_state: RunState, library: ContentL
 			var runtime_status := str(fixture_runtime_state.get("status_label", "")).strip_edges()
 			if not runtime_status.is_empty():
 				description = "%s Status: %s." % [description, runtime_status]
-			var label := str(definition.get("display_name", _label_from_id(game_id)))
+			var label := str(fixture_object_state.get("display_name", definition.get("display_name", _label_from_id(game_id))))
 			if fixture_count > 1:
 				label = "%s %d" % [label, fixture_index + 1]
 			objects.append(_object_with_rect({
@@ -177,7 +190,7 @@ static func interactable_object_view_list(run_state: RunState, library: ContentL
 				"effect_summary": str(fixture_object_state.get("effect_summary", "")),
 				"impact_summary": str(fixture_object_state.get("impact_summary", "")),
 				"state_badge": str(fixture_object_state.get("state_badge", "")),
-				"risk_summary": risk_cue,
+				"risk_summary": game_risk_summary(definition),
 				"runtime_state": fixture_runtime_state,
 				"visual_state": _copy_dict(fixture_object_state.get("visual_state", {})),
 				"visual_key": str(definition.get("family", definition.get("type", "game"))),
@@ -354,6 +367,27 @@ static func interactable_object_view_list(run_state: RunState, library: ContentL
 	return filter_unique_objects(objects)
 
 
+static func game_risk_summary(definition: Dictionary) -> String:
+	var summaries: Array[String] = []
+	var highest_heat := 0
+	var cheat_actions_value: Variant = definition.get("cheat_actions", [])
+	if typeof(cheat_actions_value) == TYPE_ARRAY:
+		for action_value in cheat_actions_value as Array:
+			if typeof(action_value) != TYPE_DICTIONARY:
+				continue
+			var action: Dictionary = action_value
+			var summary := str(action.get("summary", "")).strip_edges()
+			if not summary.is_empty() and not summaries.has(summary):
+				summaries.append(summary)
+			highest_heat = maxi(highest_heat, int(action.get("suspicion_delta", 0)))
+	if summaries.is_empty():
+		return "No cheat action is offered at this game."
+	var result := str(summaries[0])
+	if highest_heat > 0:
+		result = "%s Heat can rise by as much as %d." % [result, highest_heat]
+	return result
+
+
 static func filter_unique_objects(objects: Array) -> Array:
 	var result: Array = []
 	var class_indexes: Dictionary = {}
@@ -468,7 +502,7 @@ static func make_interactable_object(source: Dictionary, selection: Dictionary) 
 		"normalized_rect": rect_to_dict(focus_rect),
 		"focus_rect": rect_to_dict(focus_rect),
 		"focus_point": vector2_to_dict(focus_point),
-		"action_summary": str(source.get("action_summary", "")),
+		"action_summary": _deduplicated_scenario_action_summary(source),
 		"status_summary": str(source.get("status_summary", "")),
 		"effect_summary": str(source.get("effect_summary", "")),
 		"impact_summary": str(source.get("impact_summary", "")),
@@ -487,6 +521,8 @@ static func make_interactable_object(source: Dictionary, selection: Dictionary) 
 		"non_color_state": str(source.get("non_color_state", "")),
 		"safe_exit": bool(source.get("safe_exit", false)),
 		"focus_order": maxi(0, int(source.get("focus_order", 0))),
+		"layout_index": maxi(0, int(source.get("layout_index", 0))),
+		"layout_spot_field": str(source.get("layout_spot_field", "")),
 		"role": str(source.get("role", "")),
 		"state": str(source.get("state", "")),
 		"appearance": str(source.get("appearance", "")),
@@ -514,6 +550,42 @@ static func make_interactable_object(source: Dictionary, selection: Dictionary) 
 		"selected": object_id == str(selection.get("selected_object_id", "")),
 	}
 	return result
+
+
+static func _deduplicated_scenario_action_summary(source: Dictionary) -> String:
+	var action_summary := str(source.get("action_summary", "")).strip_edges()
+	if action_summary.is_empty():
+		return ""
+	var is_scenario := str(source.get("object_type", "")).strip_edges().begins_with("scenario") \
+		or str(source.get("owner_namespace", "")).strip_edges() == "scenario" \
+		or not str(source.get("scenario_owner_namespace", "")).strip_edges().is_empty() \
+		or str(source.get("presence", "")).strip_edges().begins_with("scenario")
+	if not is_scenario:
+		return action_summary
+	var description := str(source.get("short_description", "")).strip_edges()
+	return "" if _normalized_instruction_copy(description) == _normalized_instruction_copy(action_summary) else action_summary
+
+
+static func deduplicated_scenario_instruction_records(records: Array) -> Array:
+	var result := records.duplicate(false)
+	for index in range(result.size()):
+		if typeof(result[index]) != TYPE_DICTIONARY:
+			continue
+		var record: Dictionary = result[index]
+		var action_summary := _deduplicated_scenario_action_summary(record)
+		if action_summary == str(record.get("action_summary", "")):
+			continue
+		var corrected := record.duplicate(false)
+		corrected["action_summary"] = action_summary
+		result[index] = corrected
+	return result
+
+
+static func _normalized_instruction_copy(value: String) -> String:
+	var normalized := value.strip_edges().to_lower().replace("\n", " ").replace("\t", " ")
+	while normalized.contains("  "):
+		normalized = normalized.replace("  ", " ")
+	return normalized
 
 
 static func character_identity_summary(speaker: Dictionary) -> String:
@@ -746,6 +818,8 @@ static func vector2_from_dict(value: Variant, fallback: Vector2 = Vector2.ZERO) 
 
 static func _object_with_rect(source: Dictionary, selection: Dictionary, layout: Dictionary, index: int) -> Dictionary:
 	var object_data := source.duplicate(false)
+	object_data["layout_index"] = index
+	object_data["layout_spot_field"] = layout_spot_field_name(str(object_data.get("object_type", "")))
 	object_data["focus_rect"] = interaction_rect_for_object(
 		str(object_data.get("object_id", "")),
 		str(object_data.get("object_type", "")),

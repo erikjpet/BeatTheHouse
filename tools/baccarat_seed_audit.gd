@@ -2,10 +2,13 @@ extends SceneTree
 
 const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
+const FoundationMainScript := preload("res://scripts/ui/foundation_main.gd")
+const ActionAuthorityScript := preload("res://scripts/core/blackjack_action_authority.gd")
 
 var failures: Array = []
 var stats: Dictionary = {}
 var resolve_ms_samples: Array = []
+var host_commit_ms_samples: Array = []
 
 
 class SurfaceHarness:
@@ -121,9 +124,13 @@ func _run() -> void:
 		"surface_checks": 0,
 		"draw_checks": 0,
 		"resolved_hands": 0,
+		"authoritative_host_checks": 0,
 		"avg_resolve_ms": 0.0,
 		"p95_resolve_ms": 0.0,
 		"max_resolve_ms": 0.0,
+		"host_commit_avg_ms": 0.0,
+		"host_commit_p95_ms": 0.0,
+		"host_commit_max_ms": 0.0,
 		"surface_state_calls": 0,
 		"surface_state_avg_ms": 0.0,
 		"surface_state_p95_ms": 0.0,
@@ -161,8 +168,14 @@ func _run() -> void:
 	_audit_surface(game, run_state, environment)
 	_audit_surface_state_timing(game, run_state, environment)
 
+	var proposal_chain := {
+		"run_snapshot": run_state.to_save_snapshot(),
+		"rng_snapshot": run_state.create_rng().snapshot(),
+	}
 	for i in range(hands):
-		_run_hand(game, run_state, environment, i)
+		_run_hand(game, proposal_chain, i)
+	for i in range(mini(10, hands)):
+		_audit_authoritative_host_commit(game, seed_text, i)
 
 	_finalize_rates()
 	_write_report(output_path)
@@ -255,23 +268,39 @@ func _audit_surface(game: GameModule, run_state: RunState, environment: Dictiona
 		failures.append("Baccarat renderer omitted the bead-plate label.")
 
 
-func _run_hand(game: GameModule, run_state: RunState, environment: Dictionary, index: int) -> void:
-	var before_reshuffle := int(((environment.get("game_states", {}) as Dictionary).get("baccarat", {}) as Dictionary).get("reshuffle_count", 0))
+func _run_hand(game: GameModule, proposal_chain: Dictionary, index: int) -> void:
+	var before_run: RunState = RunStateScript.new()
+	before_run.from_dict(_dict(proposal_chain.get("run_snapshot", {})).duplicate(true))
+	var before_environment: Dictionary = before_run.current_environment
+	var before_reshuffle := int(((before_environment.get("game_states", {}) as Dictionary).get("baccarat", {}) as Dictionary).get("reshuffle_count", 0))
+	var proposal_input := {
+		"action_id": "deal_baccarat",
+		"stake": 20,
+		"run_snapshot": _dict(proposal_chain.get("run_snapshot", {})).duplicate(true),
+		"rng_snapshot": _dict(proposal_chain.get("rng_snapshot", {})).duplicate(true),
+		"ui_state": {"selected_chip": 20, "baccarat_bets": {"banker": 20}},
+	}
 	var started := Time.get_ticks_usec()
-	var result: Dictionary = game.resolve_with_context(
-		"deal_baccarat",
-		20,
-		run_state,
-		environment,
-		run_state.create_rng("baccarat_audit_hand_%05d" % index),
-		{"selected_chip": 20, "baccarat_bets": {"banker": 20}}
+	var proposal: Dictionary = game.call(
+		"_table_game_resolve_proposal",
+		proposal_input.get("action_id", ""),
+		proposal_input.get("stake", 0),
+		proposal_input.get("run_snapshot", {}),
+		proposal_input.get("rng_snapshot", {}),
+		proposal_input.get("ui_state", {})
 	)
 	var elapsed_ms := float(Time.get_ticks_usec() - started) / 1000.0
 	resolve_ms_samples.append(elapsed_ms)
 	stats["max_resolve_ms"] = maxf(float(stats.get("max_resolve_ms", 0.0)), elapsed_ms)
-	if not bool(result.get("ok", false)):
+	var result: Dictionary = _dict(proposal.get("result", {}))
+	if not bool(proposal.get("ok", false)) or not bool(result.get("ok", false)):
 		failures.append("Hand %d failed to resolve: %s" % [index, str(result.get("message", ""))])
 		return
+	proposal_chain["run_snapshot"] = _dict(proposal.get("run_snapshot", {})).duplicate(true)
+	proposal_chain["rng_snapshot"] = _dict(proposal.get("rng_snapshot", {})).duplicate(true)
+	var resolved_run: RunState = RunStateScript.new()
+	resolved_run.from_dict(_dict(proposal_chain.get("run_snapshot", {})).duplicate(true))
+	var environment: Dictionary = resolved_run.current_environment
 	stats["resolved_hands"] = int(stats.get("resolved_hands", 0)) + 1
 	var hand: Dictionary = _dict(result.get("baccarat_hand", {}))
 	var winner := str(hand.get("winner", ""))
@@ -291,7 +320,7 @@ func _run_hand(game: GameModule, run_state: RunState, environment: Dictionary, i
 	var table: Dictionary = ((environment.get("game_states", {}) as Dictionary).get("baccarat", {}) as Dictionary)
 	if int(table.get("shoe_remaining", 0)) < 0:
 		failures.append("Hand %d produced negative shoe remaining." % index)
-	var road := _dict(game.surface_state(run_state, environment, {"surface_time_msec": Time.get_ticks_msec() + 7000}).get("baccarat_road", {}))
+	var road := _dict(game.surface_state(resolved_run, environment, {"surface_time_msec": resolved_run.simulation_time_msec() + 7000}).get("baccarat_road", {}))
 	if int(road.get("visible_count", 0)) <= 0:
 		failures.append("Hand %d did not publish road history after settlement." % index)
 	var after_reshuffle := int(table.get("reshuffle_count", 0))
@@ -309,6 +338,35 @@ func _run_hand(game: GameModule, run_state: RunState, environment: Dictionary, i
 			"bankroll_delta": int(result.get("bankroll_delta", 0)),
 		})
 	stats["hands_log"] = log
+
+
+func _audit_authoritative_host_commit(game: GameModule, seed_text: String, index: int) -> void:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new("%s-HOST-%02d" % [seed_text, index])
+	run_state.bankroll = 1000
+	var environment := _audit_environment()
+	environment["id"] = "baccarat_host_audit_%02d" % index
+	var table: Dictionary = game.generate_environment_state(run_state, environment, run_state.create_rng("baccarat_host_table"))
+	environment["game_states"] = {"baccarat": table}
+	run_state.current_environment = environment.duplicate(true)
+	_seed_host_session(game, run_state, {"selected_chip": 20, "baccarat_bets": {"banker": 20}})
+	var money_before := run_state.grand_casino_total_money()
+	var started := Time.get_ticks_usec()
+	var result: Dictionary = _host_resolve(game, run_state, "deal_baccarat", 20)
+	var elapsed_ms := float(Time.get_ticks_usec() - started) / 1000.0
+	host_commit_ms_samples.append(elapsed_ms)
+	if not _is_committed_host_result(result):
+		failures.append("Authoritative host check %d failed: %s" % [index, str(result.get("message", ""))])
+		return
+	var money_delta := int(result.get("chips_delta", result.get("cash_equivalent_delta", result.get("bankroll_delta", 0))))
+	if run_state.grand_casino_total_money() != money_before + money_delta:
+		failures.append("Authoritative host check %d did not apply player funds exactly once." % index)
+		return
+	var road := _dict(game.surface_state(run_state, run_state.current_environment, {"surface_time_msec": run_state.simulation_time_msec() + 7000}).get("baccarat_road", {}))
+	if int(road.get("visible_count", 0)) != 1:
+		failures.append("Authoritative host check %d did not publish exactly one road result." % index)
+		return
+	stats["authoritative_host_checks"] = int(stats.get("authoritative_host_checks", 0)) + 1
 
 
 func _check_hand_cards_unique(hand: Dictionary, index: int) -> void:
@@ -371,6 +429,9 @@ func _finalize_rates() -> void:
 	var hands := maxi(1, int(stats.get("resolved_hands", 0)))
 	stats["avg_resolve_ms"] = _average(resolve_ms_samples)
 	stats["p95_resolve_ms"] = _percentile(resolve_ms_samples, 0.95)
+	stats["host_commit_avg_ms"] = _average(host_commit_ms_samples)
+	stats["host_commit_p95_ms"] = _percentile(host_commit_ms_samples, 0.95)
+	stats["host_commit_max_ms"] = _max_value(host_commit_ms_samples)
 	var outcomes: Dictionary = stats.get("outcomes", {})
 	stats["rates"] = {
 		"player": float(outcomes.get("player", 0)) / float(hands),
@@ -471,6 +532,12 @@ func _print_summary() -> void:
 		float(stats.get("surface_state_max_ms", 0.0)),
 		int(stats.get("surface_state_calls", 0)),
 	])
+	print("Authoritative host commits: %d, avg/p95/max %.3f/%.3f/%.3f ms." % [
+		int(stats.get("authoritative_host_checks", 0)),
+		float(stats.get("host_commit_avg_ms", 0.0)),
+		float(stats.get("host_commit_p95_ms", 0.0)),
+		float(stats.get("host_commit_max_ms", 0.0)),
+	])
 	var rates: Dictionary = stats.get("rates", {})
 	if not rates.is_empty():
 		print("Rates: Banker %.3f Player %.3f Tie %.3f. Flat banker delta %+d." % [
@@ -520,3 +587,34 @@ func _has_hit(harness: SurfaceHarness, action_id: String) -> bool:
 		if typeof(hit_value) == TYPE_DICTIONARY and str((hit_value as Dictionary).get("action", "")) == action_id:
 			return true
 	return false
+
+
+func _is_committed_host_result(result: Dictionary) -> bool:
+	return bool(result.get("ok", false)) \
+		and bool(result.get(ActionAuthorityScript.HOST_COMMITTED_KEY, false)) \
+		and result.has("table_game_authoritative") \
+		and typeof(result.get("table_game_authoritative")) == TYPE_BOOL \
+		and result.get("table_game_authoritative") == true
+
+
+func _host_resolve(game: GameModule, run_state: RunState, action_id: String, stake: int) -> Dictionary:
+	var host = FoundationMainScript.new()
+	host.set("current_game", game)
+	var cache := {}
+	cache[game.get_id()] = game
+	host.set("game_module_cache", cache)
+	host.set("run_state", run_state)
+	host.set("selected_stake", stake)
+	var result: Dictionary = host.call("_sealed_action_host_resolve_intent", action_id, stake, {})
+	host.free()
+	return result
+
+
+func _seed_host_session(game: GameModule, run_state: RunState, session: Dictionary) -> void:
+	var table: Dictionary = game.call("_table_state", run_state, run_state.current_environment)
+	var binding := "%s:%s:%s" % [game.get_id(), str(run_state.current_environment.get("id", "unknown")), str(run_state.current_environment.get("archetype_id", "unknown"))]
+	var ledger := ActionAuthorityScript.validate_persisted_ledger(table.get(ActionAuthorityScript.LEDGER_KEY, {}), binding, run_state.action_authority_checkpoint_fingerprint())
+	if ledger.is_empty():
+		ledger = ActionAuthorityScript.default_ledger(binding, run_state.action_authority_checkpoint_fingerprint())
+	table[ActionAuthorityScript.LEDGER_KEY] = ActionAuthorityScript.stage_session(ledger, session)
+	game.call("_update_environment_table", run_state.current_environment, table)

@@ -3052,7 +3052,21 @@
       {
         "id": "roll_craps",
         "label": "Roll Dice",
-        "summary": "Place line, Come, Odds, Place, or Field wagers before the throw.",
+        "summary": "Choose line, number, proposition, or true-odds wagers, then throw or call the roll.",
+        "win_chance": 0,
+        "payout_mult": 0
+      },
+      {
+        "id": "take_down_craps_bet",
+        "label": "Take Down Wager",
+        "summary": "Return a removable working wager before the next throw.",
+        "win_chance": 0,
+        "payout_mult": 0
+      },
+      {
+        "id": "pass_craps_dice",
+        "label": "Pass Dice",
+        "summary": "Pass an unstarted come-out turn clockwise to the next shooter.",
         "win_chance": 0,
         "payout_mult": 0
       }
@@ -3076,7 +3090,7 @@
       }
     ],
     "craps_config": {
-      "state_version": 1,
+      "state_version": 2,
       "minimum_stake": 5,
       "maximum_stake": 1000,
       "chip_denominations": [
@@ -3127,6 +3141,9 @@
         "max_odds_multiple": 3,
         "odds_work_on_come_out": false,
         "place_bets_work_on_come_out": false,
+        "hardways_work_on_come_out": false,
+        "proposition_minimum": 1,
+        "commission_percent": 5,
         "even_money_payout": {
           "numerator": 1,
           "denominator": 1
@@ -3156,6 +3173,20 @@
             "numerator": 2,
             "denominator": 1
           }
+        },
+        "lay_odds_payouts": {
+          "4": {"numerator": 1, "denominator": 2},
+          "5": {"numerator": 2, "denominator": 3},
+          "6": {"numerator": 5, "denominator": 6},
+          "8": {"numerator": 5, "denominator": 6},
+          "9": {"numerator": 2, "denominator": 3},
+          "10": {"numerator": 1, "denominator": 2}
+        },
+        "hardway_payouts": {
+          "4": {"numerator": 7, "denominator": 1},
+          "6": {"numerator": 9, "denominator": 1},
+          "8": {"numerator": 9, "denominator": 1},
+          "10": {"numerator": 7, "denominator": 1}
         },
         "place_payouts": {
           "4": {
@@ -3232,51 +3263,256 @@
           "Even the quiet patrons have begun to count the points aloud."
         ]
       },
+      "table_group": {
+        "casino_names": ["Mara", "Doyle", "Kit", "Len", "Nia", "Sol"],
+        "street_names": ["June", "Lowell", "Teeth", "Mina", "Patch", "Cal"],
+        "patron_count": 5,
+        "street_patron_count": 6,
+        "chatter_cooldown_rolls": 2,
+        "chatter_history_limit": 12,
+        "bet_ladder": [5, 10, 15, 25, 50],
+        "street_bet_ladder": [2, 4, 5, 10, 20]
+      },
       "house_edge_documentation": {
         "pass_line": {
+          "audit_stake": 10,
           "house_edge_percent": 1.414,
           "rtp_percent": 98.586,
-          "note": "Come-out naturals and craps, then point before seven."
+          "note": "Even money: 8 immediate wins, 4 immediate losses, then each point races seven; exact return 488/495 = 98.586%."
         },
         "dont_pass": {
+          "audit_stake": 10,
           "house_edge_percent": 1.364,
           "rtp_percent": 98.636,
-          "note": "Twelve pushes; otherwise the inverse line wager."
+          "note": "Even money inverse line with 12 pushing; exact return 1953/1980 = 98.636%."
         },
         "come": {
+          "audit_stake": 10,
           "house_edge_percent": 1.414,
           "rtp_percent": 98.586,
-          "note": "Pass-line rules beginning after a point is on."
+          "note": "Same 8 wins/4 losses then point-versus-seven race as Pass; documented to the maintained simulation target."
         },
         "dont_come": {
+          "audit_stake": 10,
           "house_edge_percent": 1.364,
           "rtp_percent": 98.636,
-          "note": "Don't-pass rules beginning after a point is on."
-        },
-        "odds": {
-          "house_edge_percent": 0.0,
-          "rtp_percent": 100.0,
-          "note": "Free odds pay exact mathematical odds with no house edge."
-        },
-        "place_4_10": {
-          "house_edge_percent": 6.667,
-          "rtp_percent": 93.333,
-          "note": "Nine-to-five profit; the wager remains working after a hit."
-        },
-        "place_5_9": {
-          "house_edge_percent": 4.0,
-          "rtp_percent": 96.0,
-          "note": "Seven-to-five profit; the wager remains working after a hit."
-        },
-        "place_6_8": {
-          "house_edge_percent": 1.515,
-          "rtp_percent": 98.485,
-          "note": "Seven-to-six profit; the wager remains working after a hit."
+          "note": "Same inverse line and 12 push as Don't Pass; documented to the maintained simulation target."
         },
         "field": {
+          "audit_stake": 10,
           "house_edge_percent": 2.778,
           "rtp_percent": 97.222,
-          "note": "Single roll; two pays double and twelve pays triple."
+          "note": "One roll: returns 30 on 2, 40 on 12, 20 on 3/4/9/10/11; weighted return 350/(36*10)."
+        },
+        "pass_odds": {
+          "audit_stake": 30,
+          "house_edge_percent": 0.0,
+          "rtp_percent": 100.0,
+          "note": "Each point pays exact 2:1, 3:2, or 6:5 odds against seven; every point-specific expected return is 100%."
+        },
+        "dont_pass_odds": {
+          "audit_stake": 30,
+          "house_edge_percent": 0.0,
+          "rtp_percent": 100.0,
+          "note": "Each point lays exact 1:2, 2:3, or 5:6 odds on seven; every point-specific expected return is 100%."
+        },
+        "place_4": {
+          "audit_stake": 30,
+          "house_edge_percent": 6.667,
+          "rtp_percent": 93.333,
+          "note": "4 has 3 ways versus 6 sevens; 9:5 profit returns 84 on a 30 stake, so RTP=(3/9)*(84/30)."
+        },
+        "place_5": {
+          "audit_stake": 30,
+          "house_edge_percent": 4.0,
+          "rtp_percent": 96.0,
+          "note": "5 has 4 ways versus 6 sevens; 7:5 profit returns 72 on 30, so RTP=(4/10)*(72/30)."
+        },
+        "place_6": {
+          "audit_stake": 30,
+          "house_edge_percent": 1.515,
+          "rtp_percent": 98.485,
+          "note": "6 has 5 ways versus 6 sevens; 7:6 profit returns 65 on 30, so RTP=(5/11)*(65/30)."
+        },
+        "place_8": {
+          "audit_stake": 30,
+          "house_edge_percent": 1.515,
+          "rtp_percent": 98.485,
+          "note": "8 has 5 ways versus 6 sevens; 7:6 profit returns 65 on 30, so RTP=(5/11)*(65/30)."
+        },
+        "place_9": {
+          "audit_stake": 30,
+          "house_edge_percent": 4.0,
+          "rtp_percent": 96.0,
+          "note": "9 has 4 ways versus 6 sevens; 7:5 profit returns 72 on 30, so RTP=(4/10)*(72/30)."
+        },
+        "place_10": {
+          "audit_stake": 30,
+          "house_edge_percent": 6.667,
+          "rtp_percent": 93.333,
+          "note": "10 has 3 ways versus 6 sevens; 9:5 profit returns 84 on 30, so RTP=(3/9)*(84/30)."
+        },
+        "buy_4": {
+          "audit_stake": 20,
+          "house_edge_percent": 1.667,
+          "rtp_percent": 98.333,
+          "note": "Win-only vig: 2:1 gross profit 40 minus ceil(5%*20)=1; RTP=(3/9)*(59/20)."
+        },
+        "buy_5": {
+          "audit_stake": 20,
+          "house_edge_percent": 2.0,
+          "rtp_percent": 98.0,
+          "note": "Win-only vig: 3:2 gross profit 30 minus ceil(5%*20)=1; RTP=(4/10)*(49/20)."
+        },
+        "buy_6": {
+          "audit_stake": 20,
+          "house_edge_percent": 2.273,
+          "rtp_percent": 97.727,
+          "note": "Win-only vig: 6:5 gross profit 24 minus ceil(5%*20)=1; RTP=(5/11)*(43/20)."
+        },
+        "buy_8": {
+          "audit_stake": 20,
+          "house_edge_percent": 2.273,
+          "rtp_percent": 97.727,
+          "note": "Win-only vig: 6:5 gross profit 24 minus ceil(5%*20)=1; RTP=(5/11)*(43/20)."
+        },
+        "buy_9": {
+          "audit_stake": 20,
+          "house_edge_percent": 2.0,
+          "rtp_percent": 98.0,
+          "note": "Win-only vig: 3:2 gross profit 30 minus ceil(5%*20)=1; RTP=(4/10)*(49/20)."
+        },
+        "buy_10": {
+          "audit_stake": 20,
+          "house_edge_percent": 1.667,
+          "rtp_percent": 98.333,
+          "note": "Win-only vig: 2:1 gross profit 40 minus ceil(5%*20)=1; RTP=(3/9)*(59/20)."
+        },
+        "lay_4": {
+          "audit_stake": 20,
+          "house_edge_percent": 3.333,
+          "rtp_percent": 96.667,
+          "note": "Seven has 6 ways versus 3 fours; 1:2 gross 10 minus ceil(5%*10)=1; RTP=(6/9)*(29/20)."
+        },
+        "lay_5": {
+          "audit_stake": 20,
+          "house_edge_percent": 4.0,
+          "rtp_percent": 96.0,
+          "note": "Seven has 6 ways versus 4 fives; floor(2:3 gross)=13 less ceil(5%*13)=1; RTP=(6/10)*(32/20)."
+        },
+        "lay_6": {
+          "audit_stake": 20,
+          "house_edge_percent": 4.545,
+          "rtp_percent": 95.455,
+          "note": "Seven has 6 ways versus 5 sixes; floor(5:6 gross)=16 less ceil(5%*16)=1; RTP=(6/11)*(35/20)."
+        },
+        "lay_8": {
+          "audit_stake": 20,
+          "house_edge_percent": 4.545,
+          "rtp_percent": 95.455,
+          "note": "Seven has 6 ways versus 5 eights; floor(5:6 gross)=16 less ceil(5%*16)=1; RTP=(6/11)*(35/20)."
+        },
+        "lay_9": {
+          "audit_stake": 20,
+          "house_edge_percent": 4.0,
+          "rtp_percent": 96.0,
+          "note": "Seven has 6 ways versus 4 nines; floor(2:3 gross)=13 less ceil(5%*13)=1; RTP=(6/10)*(32/20)."
+        },
+        "lay_10": {
+          "audit_stake": 20,
+          "house_edge_percent": 3.333,
+          "rtp_percent": 96.667,
+          "note": "Seven has 6 ways versus 3 tens; 1:2 gross 10 minus ceil(5%*10)=1; RTP=(6/9)*(29/20)."
+        },
+        "big_6": {
+          "audit_stake": 10,
+          "house_edge_percent": 9.091,
+          "rtp_percent": 90.909,
+          "note": "6 has 5 ways versus 6 sevens and pays even money; RTP=(5/11)*(20/10)."
+        },
+        "big_8": {
+          "audit_stake": 10,
+          "house_edge_percent": 9.091,
+          "rtp_percent": 90.909,
+          "note": "8 has 5 ways versus 6 sevens and pays even money; RTP=(5/11)*(20/10)."
+        },
+        "hard_4": {
+          "audit_stake": 10,
+          "house_edge_percent": 11.111,
+          "rtp_percent": 88.889,
+          "note": "One hard 4 wins versus 2 easy 4s and 6 sevens; 7:1 profit returns 80, so RTP=(1/9)*(80/10)."
+        },
+        "hard_6": {
+          "audit_stake": 10,
+          "house_edge_percent": 9.091,
+          "rtp_percent": 90.909,
+          "note": "One hard 6 wins versus 4 easy 6s and 6 sevens; 9:1 profit returns 100, so RTP=(1/11)*(100/10)."
+        },
+        "hard_8": {
+          "audit_stake": 10,
+          "house_edge_percent": 9.091,
+          "rtp_percent": 90.909,
+          "note": "One hard 8 wins versus 4 easy 8s and 6 sevens; 9:1 profit returns 100, so RTP=(1/11)*(100/10)."
+        },
+        "hard_10": {
+          "audit_stake": 10,
+          "house_edge_percent": 11.111,
+          "rtp_percent": 88.889,
+          "note": "One hard 10 wins versus 2 easy 10s and 6 sevens; 7:1 profit returns 80, so RTP=(1/9)*(80/10)."
+        },
+        "any_seven": {
+          "audit_stake": 10,
+          "house_edge_percent": 16.667,
+          "rtp_percent": 83.333,
+          "note": "Six winning combinations pay 4:1 profit; RTP=(6/36)*(50/10)."
+        },
+        "any_craps": {
+          "audit_stake": 10,
+          "house_edge_percent": 11.111,
+          "rtp_percent": 88.889,
+          "note": "Four combinations total 2/3/12 and pay 7:1 profit; RTP=(4/36)*(80/10)."
+        },
+        "horn": {
+          "audit_stake": 10,
+          "house_edge_percent": 12.778,
+          "rtp_percent": 87.222,
+          "note": "Horn High 12 allocates 2/2/2/4; weighted returns are 62+64+64+124=314, so RTP=314/(36*10)."
+        },
+        "ce": {
+          "audit_stake": 10,
+          "house_edge_percent": 11.111,
+          "rtp_percent": 88.889,
+          "note": "Eleven returns 80 on 2 combinations and craps returns 40 on 4; RTP=(160+160)/(36*10)."
+        },
+        "world": {
+          "audit_stake": 10,
+          "house_edge_percent": 13.333,
+          "rtp_percent": 86.667,
+          "note": "2/12 return 62, 3/11 return 32, and 7 pushes 10; weighted return 312/(36*10)."
+        },
+        "snake_eyes": {
+          "audit_stake": 10,
+          "house_edge_percent": 13.889,
+          "rtp_percent": 86.111,
+          "note": "One combination pays 30:1 profit and returns 310; RTP=310/(36*10)."
+        },
+        "ace_deuce": {
+          "audit_stake": 10,
+          "house_edge_percent": 11.111,
+          "rtp_percent": 88.889,
+          "note": "Two combinations pay 15:1 profit and return 160; RTP=(2*160)/(36*10)."
+        },
+        "yo": {
+          "audit_stake": 10,
+          "house_edge_percent": 11.111,
+          "rtp_percent": 88.889,
+          "note": "Two combinations pay 15:1 profit and return 160; RTP=(2*160)/(36*10)."
+        },
+        "boxcars": {
+          "audit_stake": 10,
+          "house_edge_percent": 13.889,
+          "rtp_percent": 86.111,
+          "note": "One combination pays 30:1 profit and returns 310; RTP=310/(36*10)."
         }
       },
       "rtp_audit": {
@@ -3412,7 +3648,18 @@
           "currency": "cash",
           "allowed_bets": [
             "pass_line",
-            "dont_pass"
+            "dont_pass",
+            "come",
+            "dont_come",
+            "field",
+            "pass_odds",
+            "dont_pass_odds",
+            "place_4", "place_5", "place_6", "place_8", "place_9", "place_10",
+            "buy_4", "buy_5", "buy_6", "buy_8", "buy_9", "buy_10",
+            "lay_4", "lay_5", "lay_6", "lay_8", "lay_9", "lay_10",
+            "big_6", "big_8",
+            "hard_4", "hard_6", "hard_8", "hard_10",
+            "any_seven", "any_craps", "horn", "ce", "world", "snake_eyes", "ace_deuce", "yo", "boxcars"
           ],
           "minimum_stake": 2,
           "maximum_stake": 20,
@@ -3509,7 +3756,7 @@
   },
   {
     "id": "crew_draw_poker",
-    "display_name": "Back-Room Poker",
+    "display_name": "Back-Room Hold'em",
     "family": "cards",
     "content_groups": [
       "crew_poker_pack"
@@ -3519,13 +3766,13 @@
     "asset_path": "res://assets/art/games/poker.png",
     "scene_asset_path": "res://assets/art/game_scenes/poker.png",
     "environment_prop": "card_table",
-    "intro": "The back-room table keeps the stakes small and the cards honest.",
-    "description": "Friendly five-card draw: bet, draw, bet, showdown.",
+    "intro": "The crew circles a live hold'em table under one low lamp.",
+    "description": "Texas Hold'em with live tells and visible chips.",
     "legal_actions": [
       {
         "id": "deal",
-        "label": "Ante & Deal",
-        "summary": "Ante cash, deal five, bet once, draw once, and bet once more.",
+        "label": "Deal Hold'em",
+        "summary": "Move the button, post blinds, deal two hole cards, and play through the river.",
         "win_chance": 0,
         "payout_mult": 0
       }
@@ -3638,7 +3885,7 @@
           {"id": "quarter_tokens_left", "label": "+3", "x": 25000, "z": 24500, "mouth_radius": 1200, "cup_depth": 5200, "cooldown_ticks": 90, "render_style": "quarter_bonus_cup", "reward": {"kind": "drop_multiplier", "count": 3}},
           {"id": "quarter_tokens_right", "label": "+5", "x": 85000, "z": 24500, "mouth_radius": 900, "cup_depth": 5600, "cooldown_ticks": 120, "render_style": "quarter_bonus_cup", "reward": {"kind": "drop_multiplier", "count": 5}}
         ],
-        "release_interval_ticks": 6,
+        "release_interval_ticks": 20,
         "chain_depth_cap": 3,
         "chain_coin_cap": 60,
         "release_jitter": 650,
@@ -3750,7 +3997,7 @@
               {"x": 12000, "z": 8000, "r": 750}, {"x": 25000, "z": 8000, "r": 750}, {"x": 38000, "z": 8000, "r": 750}, {"x": 51000, "z": 8000, "r": 750}, {"x": 64000, "z": 8000, "r": 750}, {"x": 77000, "z": 8000, "r": 750}, {"x": 90000, "z": 8000, "r": 750}
             ],
             "targets": [{"id": "ridge_tokens_left", "label": "+5", "x": 7500, "z": 11500, "mouth_radius": 1750, "cup_depth": 5600, "cooldown_ticks": 90, "render_style": "ridge_bonus_cup", "reward": {"kind": "drop_multiplier", "count": 5}}, {"id": "ridge_tokens_right", "label": "+3", "x": 88000, "z": 19500, "mouth_radius": 2200, "cup_depth": 5200, "cooldown_ticks": 180, "render_style": "ridge_bonus_cup", "reward": {"kind": "drop_multiplier", "count": 3}}],
-            "release_interval_ticks": 6,
+            "release_interval_ticks": 20,
             "chain_depth_cap": 3,
             "chain_coin_cap": 60,
             "release_jitter": 850,
@@ -3798,7 +4045,7 @@
               {"x": 10000, "z": 6000, "r": 800}, {"x": 22000, "z": 6000, "r": 800}, {"x": 34000, "z": 6000, "r": 800}, {"x": 46000, "z": 6000, "r": 800}, {"x": 58000, "z": 6000, "r": 800}, {"x": 70000, "z": 6000, "r": 800}, {"x": 82000, "z": 6000, "r": 800}, {"x": 94000, "z": 6000, "r": 800}
             ],
             "targets": [{"id": "vault_tokens_left", "label": "+5", "x": 6800, "z": 15500, "mouth_radius": 900, "cup_depth": 5600, "cooldown_ticks": 90, "render_style": "vault_bonus_cup", "reward": {"kind": "drop_multiplier", "count": 5}}, {"id": "vault_tokens_right", "label": "+4", "x": 92000, "z": 28500, "mouth_radius": 1800, "cup_depth": 5400, "cooldown_ticks": 180, "render_style": "vault_bonus_cup", "reward": {"kind": "drop_multiplier", "count": 4}}],
-            "release_interval_ticks": 6,
+            "release_interval_ticks": 20,
             "chain_depth_cap": 3,
             "chain_coin_cap": 60,
             "release_jitter": 700,

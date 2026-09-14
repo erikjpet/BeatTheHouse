@@ -153,15 +153,17 @@ static func _check_detection_determinism(library: ContentLibrary, failures: Arra
 	if burned_seed.is_empty():
 		failures.append("Spotter's seeded watched-pit burn path was unreachable across 79 seeds.")
 		return
-	var hashes: Array = []
+	var projections: Array = []
 	for repeat in range(2):
 		var replay := _watched_run(burned_seed)
 		_make_made(replay, ["crew_switch"])
 		var blackjack := _module(BlackjackScript, library, "blackjack")
 		BlackjackAuthorityTestDriverScript.resolve(blackjack, "crew_play:spotter", 5, replay, replay.current_environment, replay.create_rng(), {})
-		hashes.append(JSON.stringify(replay.to_dict()).sha256_text())
-	if hashes[0] != hashes[1]:
-		failures.append("Spotter watched-pit detection replay diverged for the same seed.")
+		projections.append(_deterministic_projection(replay))
+	if JSON.stringify(projections[0]) != JSON.stringify(projections[1]):
+		var changed_paths: Array = []
+		_collect_changed_paths(projections[0], projections[1], "run", changed_paths)
+		failures.append("Spotter watched-pit detection replay diverged for the same seed: %s" % ", ".join(changed_paths.slice(0, 12)))
 
 
 static func _check_save_load_mid_window(library: ContentLibrary, failures: Array) -> void:
@@ -253,6 +255,39 @@ static func _status(run: RunState, play_id: String) -> Dictionary:
 static func _table(environment: Dictionary, game_id: String) -> Dictionary:
 	var states := _dict(environment.get("game_states", {}))
 	return _dict(states.get(game_id, {}))
+
+
+static func _deterministic_projection(run_state: RunState) -> Dictionary:
+	var snapshot := run_state.to_dict()
+	var crew_state: Dictionary = _dict(snapshot.get("crew_state", {})).duplicate(true)
+	# Each run owns a fresh opaque Crew save authority. It is intentionally not
+	# seeded gameplay state and must not enter same-seed outcome comparisons.
+	crew_state.erase("a")
+	crew_state.erase("z")
+	snapshot["crew_state"] = crew_state
+	return snapshot
+
+
+static func _collect_changed_paths(left: Variant, right: Variant, path: String, result: Array) -> void:
+	if result.size() >= 16 or typeof(left) != typeof(right):
+		if JSON.stringify(left) != JSON.stringify(right): result.append(path)
+		return
+	if typeof(left) == TYPE_DICTIONARY:
+		var keys: Array = (left as Dictionary).keys()
+		for key in (right as Dictionary).keys():
+			if not keys.has(key): keys.append(key)
+		for key in keys:
+			_collect_changed_paths((left as Dictionary).get(key), (right as Dictionary).get(key), "%s.%s" % [path, str(key)], result)
+		return
+	if typeof(left) == TYPE_ARRAY:
+		if (left as Array).size() != (right as Array).size():
+			result.append("%s.size" % path)
+			return
+		for index in range((left as Array).size()):
+			_collect_changed_paths((left as Array)[index], (right as Array)[index], "%s[%d]" % [path, index], result)
+		return
+	if left != right:
+		result.append(path)
 
 
 static func _action_ids(actions: Array) -> Array:

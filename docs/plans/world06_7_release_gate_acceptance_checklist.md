@@ -1,12 +1,16 @@
 # world06_7 Crew and World Depth — Release-Gate Acceptance Checklist
 
-Status: independent blocking closure checklist  
+Status: COMPLETE — accepted on remediation `57b01ed40cf9fdabf2de016d9df6ef2e8db42019`
 Scope: release-gate audit of landed `world06_1` through `world06_6`; this
 document performs no release activity and changes no product/runtime/value or
 budget.  
-Authority: `docs/todo/world06_7_crew_world_depth_release_gate_prompt.md`, each
+Authority: `docs/todone/world06_7_crew_world_depth_release_gate_prompt.md`, each
 `world06_1`–`world06_6` prompt and accepted contract, the accepted `env06_6`
 sealed-authority vocabulary, and the preimplementation acceptance checklists.
+
+Final item-by-item disposition and exact evidence are recorded in
+`docs/plans/world06_7_final_closeout.md`. The unchecked boxes below are retained
+as the original pre-run audit form, not as current open work.
 
 ## Blocking closure rule
 

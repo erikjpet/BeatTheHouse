@@ -13,6 +13,7 @@ const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd"
 const PerfTelemetryOverlayScript := preload("res://scripts/ui/perf_telemetry_overlay.gd")
 const PerformanceLivenessGuardScript := preload("res://scripts/ui/performance_liveness_guard.gd")
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
+const PerformanceFixtureSetupScript := preload("res://scripts/ui/performance_fixture_setup.gd")
 const SlotMachineStateScript := preload("res://scripts/games/slots/slot_machine_state.gd")
 const CoinPusherSolverScript := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
 const CoinPusherLiveSessionScript := preload("res://scripts/games/coin_pusher/coin_pusher_live_session.gd")
@@ -37,14 +38,16 @@ const IDLE_SURFACE_DRAW_WAIVERS := {}
 const ANIMATED_IDLE_SURFACE_DRAW_BUDGETS := {
 	"roulette": 7.0,
 	"scratch_tickets": 5.0,
+	"slot": 5.0,
 	"video_poker": 5.0,
 }
 const GAME_IDLE_LIVENESS := {
 	"pull_tabs": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
 	"scratch_tickets": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
-	"slot": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 0, "zero_reason": "The idle slot cabinet is static until autoplay or a spin animation starts."},
+	"slot": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
 	"bar_dice": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
 	"craps": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
+	"crew_draw_poker": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
 	"blackjack": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
 	"baccarat": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
 	"roulette": {"counter": "surface_animation_redraw_count", "minimum_per_120_frames": 8},
@@ -65,7 +68,9 @@ const FOCUS_PROBE_FRAMES := 18
 const MAX_FOCUS_OBJECTS_PER_SEED := 4
 const GRAND_CASINO_LIVING_FLOOR_FRAME_P95_BUDGET_MS := 16.0
 const NEW_SURFACE_SAMPLE_FRAMES := 120
-const COIN_PUSHER_PERFORMANCE_BODY_COUNT := 300
+const LENDER_CONVERSATION_CONTEXT_MAX_CHARS := 512
+const COIN_PUSHER_SHIPPED_BODY_COUNT := 160
+const COIN_PUSHER_SOLVER_STRESS_BODY_COUNT := 300
 const COIN_PUSHER_SOLVER_SAMPLE_COUNT := 60
 const COIN_PUSHER_SOLVER_TICK_P95_BUDGET_MS := 12.0
 const COIN_PUSHER_ACTIVE_SAMPLE_FRAMES := 60
@@ -90,9 +95,11 @@ const REQUIRED_GAME_IDS := [
 	"scratch_tickets",
 	"slot",
 	"bar_dice",
+	"craps",
 	"blackjack",
 	"baccarat",
 	"roulette",
+	"crew_draw_poker",
 	"video_poker",
 	"coin_pusher",
 ]
@@ -101,9 +108,11 @@ const REQUIRED_RESOLVE_GAME_IDS := [
 	"scratch_tickets",
 	"slot",
 	"bar_dice",
+	"craps",
 	"blackjack",
 	"baccarat",
 	"roulette",
+	"crew_draw_poker",
 	"video_poker",
 ]
 const RESOLVE_PROBE_CONFIGS := {
@@ -111,9 +120,11 @@ const RESOLVE_PROBE_CONFIGS := {
 	"scratch_tickets": {"action_id": "buy_scratch_ticket", "stake": 2},
 	"slot": {"action_id": "spin", "stake": 10},
 	"bar_dice": {"action_id": "roll", "stake": 10},
+	"craps": {"action_id": "roll_craps", "stake": 10},
 	"blackjack": {"action_id": "play_basic", "stake": 10},
 	"baccarat": {"action_id": "deal_baccarat", "stake": 20},
 	"roulette": {"action_id": "spin_roulette", "stake": 10},
+	"crew_draw_poker": {"action_id": "deal", "stake": 5},
 	"video_poker": {"action_id": "draw", "stake": 5},
 }
 const RESOLVE_BUDGETS := {
@@ -121,9 +132,14 @@ const RESOLVE_BUDGETS := {
 	"scratch_tickets": {"avg_ms": 3.0, "p95_ms": 5.0, "max_ms": 6.0},
 	"slot": {"avg_ms": 6.0, "p95_ms": 8.0, "max_ms": 10.0},
 	"bar_dice": {"avg_ms": 1.5, "p95_ms": 3.0, "max_ms": 4.0},
+	# Pre-measurement guardrails deliberately match the nearest existing dice and
+	# card-family envelopes. The retained final-candidate samples, not these
+	# initial caps, determine whether a tighter maintained baseline is justified.
+	"craps": {"avg_ms": 4.5, "p95_ms": 5.5, "max_ms": 7.0},
 	"blackjack": {"avg_ms": 4.5, "p95_ms": 5.5, "max_ms": 7.0},
 	"baccarat": {"avg_ms": 1.25, "p95_ms": 1.75, "max_ms": 3.0},
 	"roulette": {"avg_ms": 2.0, "p95_ms": 3.0, "max_ms": 4.0},
+	"crew_draw_poker": {"avg_ms": 4.5, "p95_ms": 5.5, "max_ms": 7.0},
 	"video_poker": {"avg_ms": 2.5, "p95_ms": 4.5, "max_ms": 5.0},
 }
 const LOW_END_HEADROOM_WAIVERS := {
@@ -470,8 +486,14 @@ func _probe_practice_game_surface_coverage() -> void:
 		var game_id := str(game_id_value)
 		if game_id == "coin_pusher":
 			continue
-		app.call("start_game_test_session", game_id)
+		var session_result: Dictionary = app.call("start_game_test_session", game_id)
 		await _settle(4)
+		if not bool(session_result.get("ok", false)):
+			failures.append("Practice performance probe could not enter %s: %s" % [game_id, JSON.stringify(session_result.get("errors", []))])
+			continue
+		if game_id == "crew_draw_poker" and not bool(PerformanceFixtureSetupScript.install_actor_present_crew_draw_poker(app).get("ok", false)):
+			failures.append("Practice performance probe could not install the actor-present Back-Room Hold'em fixture.")
+			continue
 		var environment_snapshot: Dictionary = app.call("current_environment_view_snapshot")
 		var environment_id := str(environment_snapshot.get("id", "practice_%s" % game_id))
 		if not _string_array(environment_snapshot.get("game_ids", [])).has(game_id):
@@ -489,21 +511,25 @@ func _probe_coin_pusher_full_cap_performance() -> void:
 		failures.append("Full-cap Coin Pusher performance probe could not build its practice session.")
 		return
 	var environment_id := str(run_state.current_environment.get("id", "practice_coin_pusher"))
-	_install_coin_pusher_fixture(run_state, game, COIN_PUSHER_PERFORMANCE_BODY_COUNT)
+	_install_coin_pusher_fixture(run_state, game, COIN_PUSHER_SHIPPED_BODY_COUNT)
 	var machine := game.call("_ensure_machine_state", run_state, run_state.current_environment, false) as Dictionary
 	var simulation := CoinPusherLiveSessionScript.restore_snapshot(machine.get("settled_state", {}), _coin_pusher_machine_definition(game))
 	var machine_definition := _coin_pusher_machine_definition(game)
 	var loaded_coin_count := CoinPusherSolverScript.coin_count(simulation)
 	var machine_ceiling := int(machine_definition.get("ceiling", 0))
-	coin_pusher_full_cap_checked = loaded_coin_count == COIN_PUSHER_PERFORMANCE_BODY_COUNT \
-		and machine_ceiling >= COIN_PUSHER_PERFORMANCE_BODY_COUNT \
+	var shipped_coin_cap := int(game.call("_coin_cap"))
+	coin_pusher_full_cap_checked = loaded_coin_count == COIN_PUSHER_SHIPPED_BODY_COUNT \
+		and shipped_coin_cap == COIN_PUSHER_SHIPPED_BODY_COUNT \
+		and machine_ceiling >= COIN_PUSHER_SHIPPED_BODY_COUNT \
 		and int(simulation.get("fixed_hz", 0)) == CoinPusherSolverScript.FIXED_HZ
 	coin_pusher_performance_status["loaded_coin_count"] = loaded_coin_count
-	coin_pusher_performance_status["performance_body_count"] = COIN_PUSHER_PERFORMANCE_BODY_COUNT
+	coin_pusher_performance_status["shipped_live_body_count"] = COIN_PUSHER_SHIPPED_BODY_COUNT
+	coin_pusher_performance_status["raw_solver_stress_body_count"] = COIN_PUSHER_SOLVER_STRESS_BODY_COUNT
+	coin_pusher_performance_status["reported_shipped_coin_cap"] = shipped_coin_cap
 	coin_pusher_performance_status["machine_ceiling"] = machine_ceiling
 	coin_pusher_performance_status["solver_fixed_hz"] = int(simulation.get("fixed_hz", 0))
 	if not coin_pusher_full_cap_checked:
-		failures.append("Coin Pusher V3 performance fixture loaded %d/%d bodies at %d Hz with authored ceiling %d; expected 300 bodies at 60 Hz." % [loaded_coin_count, COIN_PUSHER_PERFORMANCE_BODY_COUNT, int(simulation.get("fixed_hz", 0)), machine_ceiling])
+		failures.append("Coin Pusher V3 shipped-cap fixture loaded %d/%d bodies at %d Hz with reported cap %d and authored ceiling %d; expected the 160-body shipped cap at 60 Hz." % [loaded_coin_count, COIN_PUSHER_SHIPPED_BODY_COUNT, int(simulation.get("fixed_hz", 0)), shipped_coin_cap, machine_ceiling])
 	await _probe_game("practice:coin_pusher_full_cap", -1, environment_id, "coin_pusher")
 	_probe_coin_pusher_raw_solver_timing(run_state, game)
 	await _wait_for_coin_pusher_exit("idle full-cap sample")
@@ -540,7 +566,7 @@ func _probe_coin_pusher_raw_solver_timing(run_state: RunState, game: GameModule)
 	var opening_rng := run_state.create_rng("performance_coin_pusher_raw_solver").fork("opening")
 	var machine_definition := _coin_pusher_machine_definition(game)
 	var machine_ceiling := int(machine_definition.get("ceiling", 0))
-	var state := CoinPusherSolverScript.create_machine(opening_rng, machine_definition, COIN_PUSHER_PERFORMANCE_BODY_COUNT)
+	var state := CoinPusherSolverScript.create_machine(opening_rng, machine_definition, COIN_PUSHER_SOLVER_STRESS_BODY_COUNT)
 	var initial_body_count := CoinPusherSolverScript.coin_count(state)
 	var bodies: Array = state.get("bodies", []) if typeof(state.get("bodies", [])) == TYPE_ARRAY else []
 	for body_index in range(mini(80, bodies.size())):
@@ -562,16 +588,17 @@ func _probe_coin_pusher_raw_solver_timing(run_state: RunState, game: GameModule)
 		if int(metrics.get("body_count", machine_ceiling + 1)) <= machine_ceiling:
 			capped_samples += 1
 	var stats := _timing_stats(samples)
-	stats["seed"] = "practice:coin_pusher_full_cap"
+	stats["seed"] = "practice:coin_pusher_solver_stress"
 	stats["run_index"] = -1
 	stats["game_id"] = "coin_pusher"
 	stats["action_id"] = "continuous_tick"
-	stats["mode"] = "coin_pusher_solver_tick_300_body"
+	stats["mode"] = "coin_pusher_solver_tick_300_body_stress"
 	stats["sample_count"] = samples.size()
 	stats["fixed_tick_samples"] = fixed_tick_samples
 	stats["capped_samples"] = capped_samples
 	stats["initial_body_count"] = initial_body_count
 	stats["final_body_count"] = CoinPusherSolverScript.coin_count(state)
+	stats["stress_body_count"] = COIN_PUSHER_SOLVER_STRESS_BODY_COUNT
 	stats["machine_ceiling"] = machine_ceiling
 	stats["solver_fixed_hz"] = int(state.get("fixed_hz", 0))
 	stats["solver_backend"] = CoinPusherSolverScript.last_step_backend_for_test()
@@ -581,10 +608,13 @@ func _probe_coin_pusher_raw_solver_timing(run_state: RunState, game: GameModule)
 	coin_pusher_solver_timing_checked = samples.size() == COIN_PUSHER_SOLVER_SAMPLE_COUNT \
 		and fixed_tick_samples == samples.size() \
 		and capped_samples == samples.size() \
+		and str(stats.get("solver_backend", "")) == "native_v3" \
 		and int(state.get("fixed_hz", 0)) == 60 \
-		and int(stats.get("initial_body_count", 0)) == COIN_PUSHER_PERFORMANCE_BODY_COUNT \
+		and int(stats.get("initial_body_count", 0)) == COIN_PUSHER_SOLVER_STRESS_BODY_COUNT \
 		and float(stats.get("p95_ms", 0.0)) <= COIN_PUSHER_SOLVER_TICK_P95_BUDGET_MS
 	if not coin_pusher_solver_timing_checked:
+		if str(stats.get("solver_backend", "")) != "native_v3":
+			failures.append("Coin Pusher V3 timing used %s instead of the locked native_v3 solver." % str(stats.get("solver_backend", "missing")))
 		if samples.size() != COIN_PUSHER_SOLVER_SAMPLE_COUNT or fixed_tick_samples != samples.size() or capped_samples != samples.size():
 			failures.append("Coin Pusher V3 timing did not preserve all %d one-tick, authored-ceiling samples." % COIN_PUSHER_SOLVER_SAMPLE_COUNT)
 		if int(state.get("fixed_hz", 0)) != 60:
@@ -601,7 +631,7 @@ func _probe_coin_pusher_active_sequence(run_state: RunState, game: GameModule, e
 	run_state.current_environment["resolved_event_ids"] = []
 	run_state.pending_triggered_events = []
 	run_state.active_triggered_event = {}
-	_install_coin_pusher_fixture(run_state, game, COIN_PUSHER_PERFORMANCE_BODY_COUNT)
+	_install_coin_pusher_fixture(run_state, game, COIN_PUSHER_SHIPPED_BODY_COUNT)
 	if not bool(app.call("enter_game", "coin_pusher")):
 		failures.append("Coin Pusher active performance fixture could not enter the production surface.")
 		return
@@ -893,8 +923,14 @@ func _probe_game_resolve_budgets() -> void:
 		if action_id.is_empty():
 			failures.append("Resolve performance probe has no action configured for %s." % game_id)
 			continue
-		app.call("start_game_test_session", game_id)
+		var session_result: Dictionary = app.call("start_game_test_session", game_id)
 		await _settle(4)
+		if not bool(session_result.get("ok", false)):
+			failures.append("Resolve performance probe could not enter %s: %s" % [game_id, JSON.stringify(session_result.get("errors", []))])
+			continue
+		if game_id == "crew_draw_poker" and not bool(PerformanceFixtureSetupScript.install_actor_present_crew_draw_poker(app).get("ok", false)):
+			failures.append("Resolve performance probe could not install the actor-present Back-Room Hold'em fixture.")
+			continue
 		var run_state: RunState = app.get("run_state")
 		var game: GameModule = app.get("current_game") as GameModule
 		if run_state == null or game == null:
@@ -905,8 +941,16 @@ func _probe_game_resolve_budgets() -> void:
 		var baseline_rng_seed := int(run_state.rng_seed)
 		var baseline_rng_state := int(run_state.rng_state)
 		var baseline_suspicion: Dictionary = run_state.suspicion.duplicate(true)
+		var legal_action_ids: Array = []
+		for action_value in game.legal_actions(run_state, run_state.current_environment):
+			if typeof(action_value) == TYPE_DICTIONARY:
+				legal_action_ids.append(str((action_value as Dictionary).get("id", "")))
+		if not legal_action_ids.has(action_id):
+			failures.append("Resolve performance fixture for %s did not expose required legal action %s." % [game_id, action_id])
+			continue
 		var samples: Array = []
 		var ok_count := 0
+		var progress_count := 0
 		var failure_messages: Array = []
 		for sample_index in range(resolve_sample_count):
 			_prepare_run_for_resolve_probe(run_state, game_id, baseline_environment, baseline_rng_seed, baseline_rng_state, baseline_suspicion)
@@ -927,6 +971,8 @@ func _probe_game_resolve_budgets() -> void:
 			samples.append(float(elapsed_usec) / 1000.0)
 			if bool(result.get("ok", false)):
 				ok_count += 1
+				if game_id != "crew_draw_poker" or PerformanceFixtureSetupScript.crew_draw_poker_progressed(run_state.current_environment):
+					progress_count += 1
 			elif failure_messages.size() < 3:
 				var failure_message := str(result.get("message", "Resolve returned ok=false.")).strip_edges()
 				if not failure_messages.has(failure_message):
@@ -940,6 +986,7 @@ func _probe_game_resolve_budgets() -> void:
 		stats["mode"] = "resolve_path"
 		stats["sample_count"] = samples.size()
 		stats["ok_count"] = ok_count
+		stats["progress_count"] = progress_count
 		stats["failure_messages"] = failure_messages
 		stats["budget"] = budget
 		resolve_observations.append(stats)
@@ -949,6 +996,8 @@ func _probe_game_resolve_budgets() -> void:
 			failures.append("Resolve performance probe did not get a successful %s result: %s" % [game_id, "; ".join(failure_messages)])
 		elif ok_count < samples.size():
 			failures.append("Resolve performance probe only got %d/%d successful %s results." % [ok_count, samples.size(), game_id])
+		elif progress_count < samples.size():
+			failures.append("Resolve performance probe only observed %d/%d progressing %s actions." % [progress_count, samples.size(), game_id])
 		_assert_resolve_budget(game_id, stats, budget)
 
 
@@ -1447,6 +1496,10 @@ func _probe_late_run_crew_dialogue_budget() -> void:
 	var queued_context: Dictionary = _dict(queued_entry.get("context", {}))
 	var queued_environment: Dictionary = _dict(queued_context.get("environment_snapshot", {}))
 	var queued_environment_chars := JSON.stringify(queued_environment).length()
+	var queued_context_json := JSON.stringify(queued_context)
+	var queued_context_chars := queued_context_json.length()
+	var queued_authority_payload_present := queued_context_json.find("\"scenario_") >= 0 \
+		or queued_context_json.find("\"game_states\"") >= 0
 	var talk_snapshot: Dictionary = app.call("current_talk_dock_snapshot")
 	var budget := _dict(NEW_SURFACE_BUDGETS.get("late_run_crew_dialogue_open", {}))
 	observations.append({
@@ -1470,13 +1523,19 @@ func _probe_late_run_crew_dialogue_budget() -> void:
 		"legacy_build_serialize_ms": legacy_build_serialize_ms,
 		"compacted_build_serialize_ms": compact_build_serialize_ms,
 		"queued_environment_chars": queued_environment_chars,
+		"queued_context_chars": queued_context_chars,
+		"queued_authority_payload_present": queued_authority_payload_present,
 		"budget": budget,
 	})
 	new_surface_coverage["late_run_crew_dialogue_open"] = int(new_surface_coverage.get("late_run_crew_dialogue_open", 0)) + 1
 	if not opened or not bool(talk_snapshot.get("visible", false)):
 		failures.append("Late-run Crew dialogue performance probe did not open the conversation.")
-	if queued_environment.has("game_states"):
-		failures.append("Late-run Crew dialogue copied live game-machine state into its presentation context.")
+	if queued_context.has("environment_snapshot"):
+		failures.append("Late-run Crew dialogue copied an unconsumed environment snapshot into its lender context.")
+	if queued_authority_payload_present:
+		failures.append("Late-run Crew dialogue copied scenario or game-state authority into its lender context.")
+	if queued_context_chars > LENDER_CONVERSATION_CONTEXT_MAX_CHARS:
+		failures.append("Late-run Crew dialogue queued %d context characters; bounded lender context allows at most %d." % [queued_context_chars, LENDER_CONVERSATION_CONTEXT_MAX_CHARS])
 	var call_budget := float(budget.get("call_ms", 0.0))
 	if call_budget > 0.0 and (select_ms > call_budget or open_ms > call_budget):
 		failures.append("Late-run Crew interaction took %.3f ms to select and %.3f ms to open; budget is %.3f ms per call." % [select_ms, open_ms, call_budget])
@@ -1687,9 +1746,9 @@ func _assert_required_game_surface_coverage() -> void:
 	if not coin_pusher_full_cap_checked:
 		failures.append("Performance probe did not build and verify the shipped full-cap Coin Pusher fixture.")
 	if not coin_pusher_active_sequence_checked:
-		failures.append("Performance probe did not exercise the 300-body Coin Pusher DROP/carriage/skill-stop/collect live sequence.")
+		failures.append("Performance probe did not exercise the shipped 160-body Coin Pusher DROP/carriage/skill-stop/collect live sequence.")
 	if not coin_pusher_solver_timing_checked:
-		failures.append("Performance probe did not report raw full-cap Coin Pusher solver timing.")
+		failures.append("Performance probe did not report raw 300-body Coin Pusher solver stress timing.")
 	if not coin_pusher_ceiling_refusal_checked:
 		failures.append("Performance probe did not verify authored-ceiling Coin Pusher DROP refusal.")
 
@@ -2001,6 +2060,10 @@ func _percentile(sorted_samples: Array, percentile: float) -> float:
 func _write_report() -> void:
 	var report := {
 		"tool": "foundation_performance_probe",
+		"candidate_commit": OS.get_environment("BTH_PERF_CANDIDATE_COMMIT"),
+		"profile_manifest_sha256": OS.get_environment("BTH_PERF_PROFILE_MANIFEST_SHA256"),
+		"native_plugin_sha256": OS.get_environment("BTH_PERF_NATIVE_PLUGIN_SHA256"),
+		"evidence_profile": OS.get_environment("BTH_PERF_EVIDENCE_PROFILE"),
 		"run_count": run_count,
 		"frames_per_surface": frames_per_surface,
 		"seed_prefix": seed_prefix,
@@ -2034,14 +2097,16 @@ func _write_report() -> void:
 		"warnings": warnings,
 		"failures": failures,
 	}
-	var file := FileAccess.open(REPORT_PATH, FileAccess.WRITE)
+	var requested_report_path := OS.get_environment("BTH_PERF_REPORT_PATH").strip_edges()
+	var output_path := requested_report_path if not requested_report_path.is_empty() else REPORT_PATH
+	var file := FileAccess.open(output_path, FileAccess.WRITE)
 	if file == null:
 		push_error("Could not write performance probe report.")
 		return
 	file.store_string(JSON.stringify(report, "\t"))
 	file.close()
 	print(JSON.stringify(report, "\t"))
-	print("Foundation performance probe report written to %s" % ProjectSettings.globalize_path(REPORT_PATH))
+	print("Foundation performance probe report written to %s" % ProjectSettings.globalize_path(output_path))
 
 
 func _print_summary() -> void:

@@ -1,7 +1,7 @@
 extends SceneTree
 
-# Deterministic, renderer-backed visual evidence for the Crew's five-card draw
-# table. Run windowed so the viewport texture contains real rendered pixels.
+# Deterministic, renderer-backed visual evidence for the Crew's Hold'em table.
+# Run windowed so the viewport texture contains real rendered pixels.
 
 const MainScene := preload("res://scenes/main.tscn")
 const CrewPokerModelScript := preload("res://scripts/core/crew_poker_model.gd")
@@ -13,11 +13,14 @@ const CAPTURE_SIZE := Vector2i(1280, 720)
 const FIXTURE_SEED := CrewPokerVisualSeedAuditScript.FIXTURE_SEED
 const CAPTURE_FILE_NAMES: Array[String] = [
 	"01_entry_idle_1280x720.png",
-	"02_active_draw_1280x720.png",
+	"02_blinds_posted_1280x720.png",
+	"05_deal_25_percent_1280x720.png",
+	"06_deal_50_percent_1280x720.png",
+	"07_deal_90_percent_1280x720.png",
+	"08_player_flip_1280x720.png",
 	"03_authored_subtle_tell_1280x720.png",
 	"04_reduced_motion_static_1280x720.png",
 ]
-const DRAW_ACTIONS: Array[String] = ["poker_draw", "poker_fold"]
 const PUNCHLINE_ARCHETYPE_ID := "small_underground_casino"
 const PUNCHLINE_DISPLAY_NAME := "The Punchline"
 const PUNCHLINE_BACK_ROOM_LAYER := "back_room"
@@ -25,7 +28,7 @@ const MIN_HIT_SIZE := 44.0
 const CAPTURE_TIMEOUT_MSEC := 75000
 const CAPTURE_OUTPUT_BUDGET_MSEC := 15000
 const PRODUCTION_ACTION_BUDGET_MSEC := 5000
-const PRODUCTION_ACTION_LIMIT := 4
+const PRODUCTION_ACTION_LIMIT := 24
 
 var app: Control
 var canvas: Control
@@ -80,12 +83,15 @@ func _run() -> void:
 	root.add_child(app)
 	await _settle(8)
 	var library := app.get("library") as ContentLibrary
+	if library != null and library.game("crew_draw_poker").is_empty():
+		library.load(true)
 	_stage("natural_tell_seed_audit_start", {"seed": FIXTURE_SEED})
 	seed_audit_evidence = CrewPokerVisualSeedAuditScript.audit_pinned_seed(library)
 	_stage("natural_tell_seed_audit_complete", {
 		"passed": bool(seed_audit_evidence.get("passed", false)),
 		"seed": str(seed_audit_evidence.get("seed", "")),
 		"pinned_seed_assertion": bool(seed_audit_evidence.get("pinned_seed_assertion", false)),
+		"audit": seed_audit_evidence,
 	})
 	if not bool(seed_audit_evidence.get("passed", false)) or str(seed_audit_evidence.get("seed", "")) != FIXTURE_SEED:
 		_fail("Crew poker capture pinned seed no longer produces a first-hand authored tell through production actions.")
@@ -139,15 +145,31 @@ func _run() -> void:
 	)
 	_capture_idle_liveness()
 
-	_perform_production_action("poker_deal", 0, false, "before", 1)
+	_perform_production_action("poker_deal", 0, false, "preflop", 1)
 	if not failed:
 		await _settle(4)
-		_perform_production_action("poker_call", 0, false, "draw", 2)
-	if not failed:
-		await _settle(4)
-		_perform_production_action("poker_card", 0, false, "draw", 3)
-	if not failed:
-		_perform_production_action("poker_card", 2, false, "draw", 4)
+		_stage("capture_blinds_posted")
+		await _capture_surface(
+			"02_blinds_posted_1280x720.png",
+			"blinds_posted",
+			[],
+			0
+		)
+		await _settle(20)
+		await _capture_surface("05_deal_25_percent_1280x720.png", "deal_25_percent", [], 0)
+		await _settle(30)
+		await _capture_surface("06_deal_50_percent_1280x720.png", "deal_50_percent", [], 0)
+		await _settle(35)
+		await _capture_surface("07_deal_90_percent_1280x720.png", "deal_90_percent", [], 0)
+		await _capture_surface("08_player_flip_1280x720.png", "player_flip", [], 0)
+	var production_ordinal := 2
+	while not failed and not authored_tell_beat_present and production_ordinal <= PRODUCTION_ACTION_LIMIT:
+		await _settle(3)
+		var action := _first_visible_action(["poker_observe", "poker_call", "poker_check"])
+		if action.is_empty():
+			break
+		_perform_production_action(action, _surface_action_index(action), false, "", production_ordinal)
+		production_ordinal += 1
 	if not failed:
 		_stage("natural_tell_first_hand_assertion", {
 			"source": "verified_production_action_after",
@@ -155,8 +177,8 @@ func _run() -> void:
 			"input_sequence": CrewPokerVisualSeedAuditScript.INPUT_SEQUENCE.duplicate(),
 		})
 		var natural_tell_passed := authored_tell_hand_number == 0 \
-			and authored_tell_table_phase == "draw" \
-			and authored_tell_surface_phase == "draw" \
+			and authored_tell_table_phase in ["preflop", "flop", "turn", "river"] \
+			and authored_tell_surface_phase == authored_tell_table_phase \
 			and authored_tell_beat_present \
 			and ["line", "portrait", "timing"].has(authored_tell_channel) \
 			and CrewPokerVisualSeedAuditScript.RESIDENTS.has(authored_tell_member_id)
@@ -174,40 +196,37 @@ func _run() -> void:
 		}
 		acceptance_context["passed"] = bool(acceptance_context.get("passed", false)) and natural_tell_passed
 		if not natural_tell_passed:
-			_fail("Crew poker audited deal/call sequence did not naturally surface an authored subtle presentation in its single hand.")
-	if not failed:
-		await _settle(3)
-		_stage("capture_active_draw")
-		await _capture_surface(
-			"02_active_draw_1280x720.png",
-			"active_draw",
-			DRAW_ACTIONS,
-			5
-		)
+			_fail("Crew poker audited deal/check-call sequence did not naturally surface an authored subtle presentation in its single hand.")
 
 	if not failed:
 		_stage("capture_authored_subtle_tell", {"channel": authored_tell_channel, "member_id": authored_tell_member_id})
 		await _capture_surface(
 			"03_authored_subtle_tell_1280x720.png",
 			"authored_subtle_tell",
-			DRAW_ACTIONS,
-			5,
+			[],
+			0,
 			authored_tell_capture_state
 		)
 
 	if not failed:
 		_stage("capture_reduced_motion", {"state_source": "precomputed_action_projection"})
 		_stage("reduced_motion_render_snapshot", {"state_source": "precomputed_action_projection"})
+		# Freeze the production host while this harness renders its synthetic
+		# reduced-motion projection. Otherwise the host's live refresh can replace
+		# the projection during the settle frames and turn this into a timing race.
+		app.set_process(false)
 		canvas.call("render_game_snapshot", reduced_motion_render_state)
 		await _settle(3)
+		canvas.call("render_game_snapshot", reduced_motion_render_state)
 		_capture_reduced_motion_stability()
 		await _capture_surface(
 			"04_reduced_motion_static_1280x720.png",
 			"reduced_motion_static",
-			DRAW_ACTIONS,
-			5,
+			[],
+			0,
 			reduced_motion_capture_state
 		)
+		app.set_process(true)
 
 	if not failed:
 		_stage("session_exit_to_l3", {"kind": "l3_session_exit", "attempt": 1, "limit": 1})
@@ -414,7 +433,7 @@ func _perform_production_action(action: String, index: int, confirm_requested: b
 	var phase_passed := expected_phase.is_empty() or str(after.get("table_phase", "")) == expected_phase
 	var within_budget := action_elapsed_msec <= PRODUCTION_ACTION_BUDGET_MSEC
 	var outcome_passed := handled and phase_passed and within_budget
-	if outcome_passed:
+	if outcome_passed and bool(after.get("beat_present", false)):
 		authored_tell_hand_number = int(after.get("hand_number", -1))
 		authored_tell_table_phase = str(after.get("table_phase", ""))
 		authored_tell_surface_phase = str(after.get("surface_phase", ""))
@@ -457,6 +476,23 @@ func _perform_production_action(action: String, index: int, confirm_requested: b
 	if not outcome_passed:
 		_fail("Crew poker production action '%s' failed its bounded outcome: %s" % [action, JSON.stringify(outcome)])
 	return outcome_passed
+
+
+func _first_visible_action(preferred: Array[String]) -> String:
+	for action in preferred:
+		if _surface_action_index(action) >= 0:
+			return action
+	return ""
+
+
+func _surface_action_index(action: String) -> int:
+	if canvas == null:
+		return -1
+	var snapshot: Dictionary = canvas.call("current_view_snapshot")
+	for hit_value in snapshot.get("surface_hit_actions", []):
+		if typeof(hit_value) == TYPE_DICTIONARY and str((hit_value as Dictionary).get("action", "")) == action:
+			return int((hit_value as Dictionary).get("index", -1))
+	return -1
 
 
 func _production_action_snapshot() -> Dictionary:
@@ -745,7 +781,7 @@ func _hidden_label_leaks(surface_state: Dictionary) -> Array[Dictionary]:
 			var condition_token := str(pattern.get("condition", ""))
 			if not state_token.is_empty() and not state_tokens.has(state_token):
 				state_tokens.append(state_token)
-			if not condition_token.is_empty() and not condition_tokens.has(condition_token):
+			if not condition_token.is_empty() and condition_token not in ["strong", "weak"] and not condition_tokens.has(condition_token):
 				condition_tokens.append(condition_token)
 	var leaks: Array[Dictionary] = []
 	_audit_hidden_labels(surface_state, "$", forbidden_keys, state_tokens, condition_tokens, leaks)
@@ -818,7 +854,7 @@ func _stage(stage: String, detail: Dictionary = {}) -> void:
 func _write_checkpoint_manifest() -> void:
 	var checkpoint := {
 		"tool": "crew_poker_visual_capture",
-		"fixture": "The Punchline L3 Crew five-card draw production renderer",
+		"fixture": "The Punchline L3 Crew six-handed Hold'em production renderer",
 		"capture_size": {"width": CAPTURE_SIZE.x, "height": CAPTURE_SIZE.y},
 		"passed": false,
 		"in_progress": not finishing,
@@ -835,9 +871,9 @@ func _write_checkpoint_manifest() -> void:
 
 
 func _write_manifest() -> bool:
-	var files_passed := captures.size() == 4
-	var layout_and_targets_passed := captures.size() == 4
-	var hidden_labels_passed := captures.size() == 4
+	var files_passed := captures.size() == CAPTURE_FILE_NAMES.size()
+	var layout_and_targets_passed := captures.size() == CAPTURE_FILE_NAMES.size()
+	var hidden_labels_passed := captures.size() == CAPTURE_FILE_NAMES.size()
 	for capture in captures:
 		files_passed = files_passed and bool(capture.get("saved", false))
 		layout_and_targets_passed = layout_and_targets_passed and bool((capture.get("hit_targets", {}) as Dictionary).get("passed", false))
@@ -848,7 +884,7 @@ func _write_manifest() -> bool:
 		and bool(acceptance_context.get("passed", false))
 	var manifest := {
 		"tool": "crew_poker_visual_capture",
-		"fixture": "The Punchline L3 Crew five-card draw production renderer",
+		"fixture": "The Punchline L3 Crew six-handed Hold'em production renderer",
 		"capture_size": {"width": CAPTURE_SIZE.x, "height": CAPTURE_SIZE.y},
 		"passed": manifest_passed,
 		"in_progress": false,

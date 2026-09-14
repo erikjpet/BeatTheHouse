@@ -45,6 +45,9 @@ var coach_tips: CheckBox
 var reset_tips: Button
 var haptics_note: Label
 var game_library: Button
+var developer_placement_mode: CheckBox
+var focus_controls: Array[Control] = []
+var previous_focus_owner: Control
 
 
 # Stores the settings object and builds the view.
@@ -56,10 +59,12 @@ func setup(p_settings: UserSettings) -> void:
 
 # Opens the menu with a fresh draft.
 func open() -> void:
+	previous_focus_owner = get_viewport().gui_get_focus_owner()
 	draft.from_dict(settings.to_dict())
 	status.text = ""
 	_sync()
 	visible = true
+	call_deferred("_focus_first_setting")
 
 
 # Creates all settings controls.
@@ -76,6 +81,7 @@ func _build() -> void:
 	var scroll := ScrollContainer.new()
 	scroll.custom_minimum_size = Vector2(0, 300)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.follow_focus = true
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	add_child(scroll)
@@ -136,6 +142,9 @@ func _build() -> void:
 	haptics_note = _note(box, "Haptics are not used by this demo's input stack.")
 
 	_section(box, "Developer")
+	developer_placement_mode = _check(box, "Environment placement mode")
+	developer_placement_mode.tooltip_text = "Select, drag, and lock stable room-object positions while playing."
+	developer_placement_mode.toggled.connect(_on_developer_placement_mode)
 	game_library = _button("Game Library (Debug)")
 	game_library.tooltip_text = "Open the internal table-game practice library."
 	game_library.pressed.connect(game_library_requested.emit)
@@ -161,7 +170,53 @@ func _build() -> void:
 	var apply := _button("Apply")
 	apply.pressed.connect(_on_apply)
 	actions.add_child(apply)
+	_cache_focus_controls()
+	visibility_changed.connect(_on_visibility_changed)
 	_apply_accessibility_settings()
+
+
+func _input(event: InputEvent) -> void:
+	if visible and _trap_focus_navigation(event):
+		get_viewport().set_input_as_handled()
+
+
+func _trap_focus_navigation(event: InputEvent) -> bool:
+	if not (event is InputEventKey) or not (event as InputEventKey).pressed or (event as InputEventKey).echo or (event as InputEventKey).keycode != KEY_TAB:
+		return false
+	var available: Array[Control] = []
+	for control in focus_controls:
+		if is_instance_valid(control) and control.is_visible_in_tree() and control.focus_mode != Control.FOCUS_NONE and (not control is BaseButton or not (control as BaseButton).disabled):
+			available.append(control)
+	if available.is_empty():
+		return true
+	var current := get_viewport().gui_get_focus_owner()
+	var index := available.find(current)
+	var direction := -1 if (event as InputEventKey).shift_pressed else 1
+	available[posmod(index + direction, available.size())].grab_focus()
+	return true
+
+
+func _cache_focus_controls() -> void:
+	focus_controls.clear()
+	for node in find_children("*", "Control", true, false):
+		if node is Control and (node as Control).focus_mode != Control.FOCUS_NONE:
+			focus_controls.append(node as Control)
+
+
+func _focus_first_setting() -> void:
+	if visible and not focus_controls.is_empty() and is_instance_valid(focus_controls[0]):
+		focus_controls[0].grab_focus()
+
+
+func _on_visibility_changed() -> void:
+	if not visible:
+		call_deferred("_restore_previous_focus")
+
+
+func _restore_previous_focus() -> void:
+	if is_instance_valid(previous_focus_owner) and previous_focus_owner.is_visible_in_tree():
+		previous_focus_owner.grab_focus()
+	previous_focus_owner = null
 
 
 # Adds a visual section heading.
@@ -265,6 +320,7 @@ func _sync() -> void:
 	high_contrast.button_pressed = draft.high_contrast
 	drunk_effect.select(draft.drunk_effect_index())
 	reduce_motion.button_pressed = draft.reduce_motion
+	developer_placement_mode.button_pressed = draft.developer_placement_mode
 	_labels()
 	_apply_accessibility_settings()
 
@@ -381,6 +437,10 @@ func _on_reduce_motion(enabled: bool) -> void:
 	draft.reduce_motion = enabled
 
 
+func _on_developer_placement_mode(enabled: bool) -> void:
+	draft.developer_placement_mode = enabled
+
+
 func current_settings_snapshot() -> Dictionary:
 	var active_settings: UserSettings = draft if visible and draft != null else settings
 	if active_settings == null:
@@ -396,6 +456,7 @@ func current_settings_snapshot() -> Dictionary:
 		"high_contrast": bool(active_settings.high_contrast),
 		"play_on_small_screen": bool(active_settings.play_on_small_screen),
 		"coach_tips_enabled": bool(active_settings.coach_tips_enabled),
+		"developer_placement_mode": bool(active_settings.developer_placement_mode),
 		"reset_tips_available": reset_tips != null and not reset_tips.disabled,
 		"haptics_supported": false,
 		"haptics_cut_reason": UserSettingsScript.HAPTICS_CUT_REASON,

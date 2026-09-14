@@ -226,8 +226,40 @@ static func _check_prefix_and_save_properties(library: ContentLibrary, failures:
 
 
 static func _resolve(library: ContentLibrary, run_state: RunState, event_id: String, choice_id: String) -> Dictionary:
+	var definition := library.event(event_id)
+	var conditions := _dict(definition.get("conditions", {}))
+	var environment := run_state.current_environment.duplicate(true)
+	var allowed_archetypes := _strings(conditions.get("archetype_ids", []))
+	var archetype_id := str(environment.get("archetype_id", ""))
+	if not allowed_archetypes.is_empty() and not allowed_archetypes.has(archetype_id):
+		archetype_id = str(allowed_archetypes[0])
+	if archetype_id.is_empty():
+		var scopes := _strings(definition.get("scopes", []))
+		archetype_id = "pawn_shop" if scopes.has("shop") else ("jazz_club" if scopes.has("club") else ("grand_casino" if scopes.has("boss") else "bar"))
+	var node_id := str(environment.get("world_node_id", environment.get("id", archetype_id))).strip_edges()
+	if node_id.is_empty() or str(environment.get("archetype_id", "")) != archetype_id:
+		node_id = archetype_id
+	var scenario_ids := _strings(conditions.get("scenario_ids", []))
+	var scenario_id := str(environment.get("scenario_id", ""))
+	if not scenario_ids.is_empty() and not scenario_ids.has(scenario_id):
+		scenario_id = str(scenario_ids[0])
+	environment["id"] = node_id
+	environment["world_node_id"] = node_id
+	environment["archetype_id"] = archetype_id
+	environment["kind"] = "shop" if archetype_id in ["pawn_shop", "motel"] else ("club" if archetype_id in ["jazz_club", "kitty_cat_lounge"] else ("boss" if archetype_id == "grand_casino" else "casino"))
+	environment["scenario_id"] = scenario_id
+	environment["scenario_state"] = {"id": scenario_id}
+	var event_ids := _strings(environment.get("event_ids", []))
+	if not event_ids.has(event_id):
+		event_ids.append(event_id)
+	environment["event_ids"] = event_ids
+	if not environment.has("resolved_event_ids"):
+		environment["resolved_event_ids"] = []
+	run_state.current_environment = environment
+	for character_id in _strings(conditions.get("requires_traveler_here", [])):
+		_set_traveler(run_state, character_id, node_id)
 	var module := EventModuleScript.new()
-	module.setup(library.event(event_id), library)
+	module.setup(definition, library)
 	return module.resolve(run_state, run_state.current_environment, choice_id)
 
 

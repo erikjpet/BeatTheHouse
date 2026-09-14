@@ -12,6 +12,7 @@ const EventModuleScript := preload("res://scripts/core/event_module.gd")
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const RunTerminalEvaluatorScript := preload("res://scripts/core/run_terminal_evaluator.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
+const FoundationMainScript := preload("res://scripts/ui/foundation_main.gd")
 
 const WATCHDOG_GRACE_MSEC := 2200
 const GENERAL_GAME_IDS := ["slot", "pull_tabs", "blackjack", "baccarat", "roulette", "video_poker", "bar_dice"]
@@ -166,8 +167,8 @@ func _run_baccarat_edge_sort_wait(game_modules: Dictionary, seed_index: int) -> 
 	if not bool(started.get("ok", false)):
 		return _scenario_fail("baccarat_edge_sort_memory", label, str(started.get("failure", "edge-sort start failed")))
 	for hand_index in range(4):
-		context["ui_state"] = {"baccarat_sit_out": true, "surface_time_msec": 1000 + hand_index * 7000}
-		var hand := _resolve_context_action(context, "deal_baccarat", label, false)
+		context["ui_state"] = {"surface_time_msec": 1000 + hand_index * 7000}
+		var hand := _surface_action(context, "baccarat_deal", 0, false, label)
 		if not bool(hand.get("ok", false)):
 			return _scenario_fail("baccarat_edge_sort_memory", label, str(hand.get("failure", "observation hand failed")))
 	var table: Dictionary = _game_state_from_context(context, "baccarat")
@@ -175,12 +176,18 @@ func _run_baccarat_edge_sort_wait(game_modules: Dictionary, seed_index: int) -> 
 	if challenge.is_empty() or not bool(challenge.get("ready", false)):
 		return _scenario_fail("baccarat_edge_sort_memory", label, "edge-sort challenge never became ready")
 	var last_result: Dictionary = _dict(table.get("last_result", {}))
-	context["ui_state"] = {
-		"edge_sort_challenge": challenge,
-		"edge_sort_answer_mode": "perfect",
-		"surface_time_msec": int(last_result.get("resolved_at_msec", 0)) + 7000,
-	}
+	context["ui_state"] = {"surface_time_msec": int(last_result.get("resolved_at_msec", 0)) + 7000}
+	var answer_options := ["high", "low", "neutral"]
+	for answer_value in _array(challenge.get("hidden_answer", [])):
+		var answer_index := answer_options.find(str(answer_value))
+		if answer_index < 0:
+			return _scenario_fail("baccarat_edge_sort_memory", label, "edge-sort challenge exposed an invalid answer")
+		var answered := _surface_action(context, "baccarat_edge_sort_answer", answer_index, false, label)
+		if not bool(answered.get("ok", false)):
+			return _scenario_fail("baccarat_edge_sort_memory", label, str(answered.get("failure", "edge-sort answer failed")))
 	_restore_context(context)
+	context["ui_state"] = _dict(context.get("ui_state", {}))
+	context["ui_state"]["surface_time_msec"] = int(last_result.get("resolved_at_msec", 0)) + 7000
 	var committed := _surface_action(context, "baccarat_edge_sort", 0, false, label)
 	if not bool(committed.get("ok", false)):
 		return _scenario_fail("baccarat_edge_sort_memory", label, str(committed.get("failure", "edge-sort commit failed")))
@@ -195,8 +202,21 @@ func _run_roulette_past_post_wait(game_modules: Dictionary, seed_index: int) -> 
 	var context := _fixture_context(game_modules, "roulette", label)
 	if not bool(context.get("ok", false)):
 		return _scenario_fail("roulette_past_post_window", label, str(context.get("failure", "fixture failed")))
-	context["ui_state"] = {"roulette_bets": [_roulette_bet(10)], "surface_time_msec": 1000}
-	var spin := _resolve_context_action(context, "spin_roulette", label, false)
+	context["stake"] = 10
+	context["ui_state"] = {"surface_time_msec": 1000}
+	var table_before := _game_state_from_context(context, "roulette")
+	var chip_index := _array(table_before.get("chip_denominations", [])).find(10)
+	if chip_index >= 0:
+		var chip := _surface_action(context, "roulette_chip", chip_index, false, label)
+		if not bool(chip.get("ok", false)):
+			return _scenario_fail("roulette_past_post_window", label, str(chip.get("failure", "chip selection failed")))
+	var bet := _surface_action(context, "roulette_bet", 0, false, label)
+	if not bool(bet.get("ok", false)):
+		return _scenario_fail("roulette_past_post_window", label, str(bet.get("failure", "bet placement failed")))
+	var armed_spin := _surface_action(context, "roulette_spin", 0, false, label)
+	if not bool(armed_spin.get("ok", false)):
+		return _scenario_fail("roulette_past_post_window", label, str(armed_spin.get("failure", "spin arm failed")))
+	var spin := _surface_action(context, "roulette_spin", 0, false, label)
 	if not bool(spin.get("ok", false)):
 		return _scenario_fail("roulette_past_post_window", label, str(spin.get("failure", "spin failed")))
 	var table: Dictionary = _game_state_from_context(context, "roulette")
@@ -268,6 +288,9 @@ func _run_bar_dice_controlled_roll_wait(game_modules: Dictionary, seed_index: in
 	var rolled := _surface_action(context, "bar_dice_roll", 0, false, label)
 	if not bool(rolled.get("ok", false)):
 		return _scenario_fail("bar_dice_controlled_roll", label, str(rolled.get("failure", "opening roll failed")))
+	var covered := _surface_action(context, "bar_dice_ack_cover", 0, false, label)
+	if not bool(covered.get("ok", false)):
+		return _scenario_fail("bar_dice_controlled_roll", label, str(covered.get("failure", "cover acknowledgement failed")))
 	var loaded := _surface_action(context, "bar_dice_load", 0, false, label)
 	if not bool(loaded.get("ok", false)):
 		return _scenario_fail("bar_dice_controlled_roll", label, str(loaded.get("failure", "controlled roll arm failed")))
@@ -279,6 +302,10 @@ func _run_bar_dice_controlled_roll_wait(game_modules: Dictionary, seed_index: in
 	var released := _surface_action(context, "bar_dice_release", 0, false, label)
 	if not bool(released.get("ok", false)):
 		return _scenario_fail("bar_dice_controlled_roll", label, str(released.get("failure", "controlled roll release failed")))
+	for ritual_action in ["bar_dice_throw", "bar_dice_reveal", "bar_dice_ack_call"]:
+		var ritual_step := _surface_action(context, str(ritual_action), 0, false, label)
+		if not bool(ritual_step.get("ok", false)):
+			return _scenario_fail("bar_dice_controlled_roll", label, str(ritual_step.get("failure", "%s failed" % ritual_action)))
 	var after_state := _game_state_from_context(context, "bar_dice")
 	if _dict(after_state.get("last_result", {})).is_empty():
 		return _scenario_fail("bar_dice_controlled_roll", label, "controlled roll did not settle a bar dice result")
@@ -687,7 +714,23 @@ func _surface_action(context: Dictionary, action: String, index: int, confirm_re
 	var run_state: RunState = context.get("run_state", null) as RunState
 	if game == null or run_state == null:
 		return {"ok": false, "failure": "%s missing game/run for %s" % [label, action]}
-	var command: Dictionary = game.surface_action_command(action, index, confirm_requested, _context_ui(context), run_state, run_state.current_environment)
+	var command: Dictionary
+	if game.get_id() in ["baccarat", "roulette", "bar_dice"] and not game.sealed_action_authority_contract().is_empty():
+		var host: Control = FoundationMainScript.new()
+		host.set("current_game", game)
+		host.set("game_module_cache", {game.get_id(): game})
+		host.set("run_state", run_state)
+		host.set("selected_stake", maxi(0, int(context.get("stake", 10))))
+		command = host.call(
+			"_sealed_action_host_surface_intent",
+			action,
+			index,
+			confirm_requested,
+			int(_context_ui(context).get("surface_time_msec", -1))
+		)
+		host.free()
+	else:
+		command = game.surface_action_command(action, index, confirm_requested, _context_ui(context), run_state, run_state.current_environment)
 	if command.is_empty() or not bool(command.get("handled", false)):
 		return {"ok": false, "failure": "%s command %s was not handled" % [label, action]}
 	return _apply_surface_command(context, command, label)
@@ -707,19 +750,36 @@ func _apply_surface_command(context: Dictionary, command: Dictionary, label: Str
 			context["selected_action_id"] = action_id
 			context["selected_action_kind"] = action_kind
 		if bool(command.get("resolve", false)) or already_selected:
-			return _resolve_context_action(context, action_id, label, bool(command.get("preserve_surface_ui_state", false)))
+			return _resolve_context_action(context, action_id, label, bool(command.get("preserve_surface_ui_state", false)), _dict(command.get("_sealed_action_host_delivery", {})))
 	if direct_resolve:
-		return _resolve_context_action(context, action_id, label, bool(command.get("preserve_surface_ui_state", false)))
+		return _resolve_context_action(context, action_id, label, bool(command.get("preserve_surface_ui_state", false)), _dict(command.get("_sealed_action_host_delivery", {})))
 	return {"ok": true}
 
 
-func _resolve_context_action(context: Dictionary, action_id: String, label: String, preserve_surface_ui_state: bool) -> Dictionary:
+func _resolve_context_action(context: Dictionary, action_id: String, label: String, preserve_surface_ui_state: bool, delivery_claim: Dictionary = {}) -> Dictionary:
 	var game: GameModule = context.get("game", null) as GameModule
 	var run_state: RunState = context.get("run_state", null) as RunState
 	if game == null or run_state == null:
 		return {"ok": false, "failure": "%s missing game/run for resolve %s" % [label, action_id]}
 	var serial := int(context.get("action_serial", 0)) + 1
 	context["action_serial"] = serial
+	if game.get_id() in ["baccarat", "roulette", "bar_dice"] and not game.sealed_action_authority_contract().is_empty():
+		var host: Control = FoundationMainScript.new()
+		host.set("current_game", game)
+		host.set("game_module_cache", {game.get_id(): game})
+		host.set("run_state", run_state)
+		host.set("selected_stake", maxi(0, int(context.get("stake", 10))))
+		var authoritative_result: Dictionary = host.call("_sealed_action_host_resolve_intent", action_id, maxi(0, int(context.get("stake", 10))), delivery_claim)
+		host.free()
+		if not bool(authoritative_result.get("ok", false)):
+			return {"ok": false, "failure": "%s resolve %s failed: %s" % [label, action_id, str(authoritative_result.get("message", "no message"))]}
+		if authoritative_result.has("ui_state") and typeof(authoritative_result.get("ui_state")) == TYPE_DICTIONARY:
+			context["ui_state"] = _dict(authoritative_result.get("ui_state", {}))
+		if not preserve_surface_ui_state:
+			context["ui_state"] = {}
+		context["selected_action_id"] = ""
+		context["selected_action_kind"] = ""
+		return {"ok": true, "result": authoritative_result}
 	var rng: RngStream = run_state.create_rng("sb6_wait_%s_%03d" % [action_id, serial])
 	var result: Dictionary = game.resolve_with_context(action_id, maxi(0, int(context.get("stake", 10))), run_state, run_state.current_environment, rng, _context_ui(context))
 	if result.has("ui_state") and typeof(result.get("ui_state")) == TYPE_DICTIONARY:

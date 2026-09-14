@@ -20,8 +20,9 @@ const BLACKJACK_FIXTURE_CHALLENGE := {
 		"starting_bankroll": 80,
 	},
 }
-const BLACKJACK_FIXTURE_BASELINE_SHA256 := "ac06c95526b41c4c63d99cd7953dea2f22775d39ab94fe4236b0feff6b79066a"
-const BLACKJACK_GAMES_SOURCE_SHA256 := "552bb6acdfdfb2a73e52d9f8cdaf383ebc0bbdd01a7a0e9319e65faad2541b04"
+const BLACKJACK_FIXTURE_BASELINE_SHA256 := "e3e82af65d31d22658612772fe4c0296c85f0d7ad920850bc2501c90a118a922"
+const BLACKJACK_GAMES_SOURCE_SHA256 := "fe2b3233163564742cfb7f53a61de955d056476a44959febb38a5bc32b85fa72"
+const NORMALIZED_CREW_AUTHORITY_ID := "0000000000000000000000000000000000000000000000000000000000000000"
 
 
 func _init() -> void:
@@ -416,7 +417,7 @@ func _blackjack_count_fixture_baseline() -> Dictionary:
 	var normalized := RunState.new()
 	normalized.from_dict(JSON.parse_string(JSON.stringify(run_state.to_dict())))
 	var bytes := JSON.stringify(normalized.to_dict())
-	var fingerprint := bytes.sha256_text()
+	var fingerprint := JSON.stringify(_normalize_fixture_private_capsules(normalized.to_dict())).sha256_text()
 	return {
 		"bytes": bytes,
 		"fingerprint": fingerprint,
@@ -440,7 +441,7 @@ func _restore_blackjack_count_fixture(baseline: Dictionary) -> Dictionary:
 		"run_state": run_state,
 		"game": game,
 		"library": library,
-		"fingerprint": JSON.stringify(run_state.to_dict()).sha256_text(),
+		"fingerprint": JSON.stringify(_normalize_fixture_private_capsules(run_state.to_dict())).sha256_text(),
 		"heat": run_state.suspicion_level(),
 	}
 
@@ -466,6 +467,30 @@ func _blackjack_fixture_library() -> ContentLibrary:
 			or GameRitualRuntime.canonical_fingerprint(loaded_definition) != GameRitualRuntime.canonical_fingerprint(source_definition):
 		return null
 	return library
+
+
+func _normalize_fixture_private_capsules(value: Variant) -> Variant:
+	if typeof(value) == TYPE_ARRAY:
+		var normalized_array: Array = []
+		for child in value as Array:
+			normalized_array.append(_normalize_fixture_private_capsules(child))
+		return normalized_array
+	if typeof(value) != TYPE_DICTIONARY:
+		return value
+	var normalized: Dictionary = (value as Dictionary).duplicate(false)
+	for key_value in normalized.keys():
+		normalized[key_value] = _normalize_fixture_private_capsules(normalized.get(key_value))
+	if not normalized.has("crew_state") or typeof(normalized.get("crew_state")) != TYPE_DICTIONARY:
+		return normalized
+	var crew_state: Dictionary = normalized.get("crew_state")
+	var authority_id := str(crew_state.get("a", ""))
+	var capsule_text := str(crew_state.get("z", ""))
+	if CrewTurnModel.valid_authority_id(authority_id) \
+			and Marshalls.base64_to_raw(capsule_text).size() == CrewTurnModel.PRIVATE_SAVE_BYTES:
+		crew_state["a"] = NORMALIZED_CREW_AUTHORITY_ID
+		crew_state["z"] = "A".repeat(capsule_text.length())
+		normalized["crew_state"] = crew_state
+	return normalized
 
 
 func _blackjack_fixture_matches_baseline(fixture: Dictionary, baseline: Dictionary) -> bool:

@@ -1,0 +1,21 @@
+{
+  "schema": "beat_the_house.perf06_allocation_negative_fixture/v1",
+  "rows": [
+    {
+      "id": "empty",
+      "surface_id": "coin_pusher",
+      "allocation_copy_counters": {
+        "coverage_complete": true,
+        "audited_call_roots": []
+      }
+    },
+    {
+      "id": "partial",
+      "surface_id": "coin_pusher",
+      "allocation_copy_counters": {
+        "coverage_complete": true,
+        "audited_call_roots": ["foundation_snapshot"]
+      }
+    }
+  ]
+}

@@ -573,11 +573,11 @@ static func apply_host_action(state_value: Variant, verb: String, receipt_key: S
 			if abandon_reason.is_empty(): abandon_reason = "abandoned"
 			state = _resolve(state, "failed", abandon_reason, false)
 		"handoff":
-			var next_target_index := _next_pending_target_index(state)
-			if next_target_index < 0:
+			var handoff_target_index := _pending_target_index(state, node_id)
+			if handoff_target_index < 0:
 				return state
-			var next_target := _copy_dict(_copy_array(state.get("targets", []))[next_target_index])
-			if target_id.is_empty() or target_id != str(next_target.get("id", "")) or node_id != str(next_target.get("node_id", "")):
+			var handoff_target := _copy_dict(_copy_array(state.get("targets", []))[handoff_target_index])
+			if target_id.is_empty() or target_id != str(handoff_target.get("id", "")):
 				return state
 			var handed := complete_handoff(state, node_id)
 			if JSON.stringify(handed) == JSON.stringify(state):

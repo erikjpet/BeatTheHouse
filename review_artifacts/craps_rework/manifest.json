@@ -1,0 +1,21 @@
+{
+	"capture_size": {
+		"height": 720,
+		"width": 1280
+	},
+	"files": [
+		"casino_line.png",
+		"casino_numbers.png",
+		"casino_props.png",
+		"casino_odds.png",
+		"casino_dice_in_motion.png",
+		"street_line.png",
+		"street_numbers.png",
+		"street_props.png",
+		"street_odds.png",
+		"street_dice_in_motion.png"
+	],
+	"passed": true,
+	"renderer": "production GameSurfaceCanvas + craps.gd",
+	"tool": "craps_review_capture"
+}

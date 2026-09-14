@@ -2,6 +2,7 @@ extends "res://scripts/tests/foundation/check_table_games.gd"
 
 const CharacterRosterScript := preload("res://scripts/core/character_roster.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
+const RunSaveCodecScript := preload("res://scripts/core/run_save_codec.gd")
 
 func _check_selected_starter_game_port(library: ContentLibrary, failures: Array) -> void:
 	var definition := library.game("pull_tabs")
@@ -28,15 +29,15 @@ func _check_selected_starter_game_port(library: ContentLibrary, failures: Array)
 	run_b.start_new("PULL-TABS-PORT")
 	var generator_a: RunGenerator = RunGeneratorScript.new(library)
 	var generator_b: RunGenerator = RunGeneratorScript.new(library)
-	var start_environment_a: EnvironmentInstance = generator_a.next_environment(run_a)
-	var start_environment_b: EnvironmentInstance = generator_b.next_environment(run_b)
+	var start_environment_a := _harness_arrive(generator_a, run_a, failures, "starter-game twin A initial arrival")
+	var start_environment_b := _harness_arrive(generator_b, run_b, failures, "starter-game twin B initial arrival")
 	var gambling_path_a := _first_reachable_target_path_with_game(library, start_environment_a.next_archetypes, "pull_tabs")
 	var gambling_path_b := _first_reachable_target_path_with_game(library, start_environment_b.next_archetypes, "pull_tabs")
 	if gambling_path_a.is_empty() or gambling_path_b.is_empty():
 		failures.append("Selected starter route did not expose a reachable pull-tabs gambling environment.")
 		return
-	var environment_a := _generate_path_target_environment(generator_a, run_a, gambling_path_a)
-	var environment_b := _generate_path_target_environment(generator_b, run_b, gambling_path_b)
+	var environment_a := _generate_path_target_environment(generator_a, run_a, gambling_path_a, failures, "starter-game twin A")
+	var environment_b := _generate_path_target_environment(generator_b, run_b, gambling_path_b, failures, "starter-game twin B")
 	if not (environment_a.get("game_ids", []) as Array).has("pull_tabs"):
 		failures.append("Selected starter pull-tabs route did not generate a pull-tabs gambling environment.")
 		return
@@ -66,7 +67,7 @@ func _check_selected_starter_game_port(library: ContentLibrary, failures: Array)
 	_check_pull_tab_result_details(legal_result_a, failures)
 	if JSON.stringify(legal_result_a) != JSON.stringify(legal_result_b):
 		failures.append("Selected starter legal action was not deterministic.")
-	if JSON.stringify(run_a.to_dict()) != JSON.stringify(run_b.to_dict()):
+	if JSON.stringify(_deterministic_run_projection(run_a)) != JSON.stringify(_deterministic_run_projection(run_b)):
 		failures.append("Selected starter legal action did not leave deterministic RunState snapshots.")
 
 
@@ -107,10 +108,10 @@ func _first_reachable_target_path_with_game(library: ContentLibrary, target_ids:
 	return []
 
 
-func _generate_path_target_environment(generator: RunGenerator, run_state: RunState, target_path: Array) -> Dictionary:
+func _generate_path_target_environment(generator: RunGenerator, run_state: RunState, target_path: Array, failures: Array, context: String) -> Dictionary:
 	var environment := run_state.current_environment.duplicate(true)
 	for target_id_value in target_path:
-		environment = generator.next_environment(run_state, str(target_id_value)).to_dict()
+		environment = _harness_arrive(generator, run_state, failures, "%s arrival %s" % [context, str(target_id_value)], str(target_id_value)).to_dict()
 	return environment
 
 
@@ -232,7 +233,7 @@ func _check_item_effect_foundation(library: ContentLibrary, failures: Array) -> 
 		failures.append("Production item effect did not contribute an item hook.")
 	if JSON.stringify(result_a) != JSON.stringify(result_b):
 		failures.append("Production item effect result was not deterministic.")
-	if JSON.stringify(run_a.to_dict()) != JSON.stringify(run_b.to_dict()):
+	if JSON.stringify(_deterministic_run_projection(run_a)) != JSON.stringify(_deterministic_run_projection(run_b)):
 		failures.append("Production item effect did not leave deterministic RunState snapshots.")
 	if JSON.parse_string(JSON.stringify(result_a)) == null:
 		failures.append("Production item effect result was not serializable.")
@@ -514,13 +515,15 @@ func _check_event_module_foundation(library: ContentLibrary, failures: Array) ->
 	run_b.start_new("EVENT-MODULE-SEED")
 	var generator_a: RunGenerator = RunGeneratorScript.new(library)
 	var generator_b: RunGenerator = RunGeneratorScript.new(library)
-	var environment_a := generator_a.next_environment(run_a).to_dict()
-	var environment_b := generator_b.next_environment(run_b).to_dict()
+	var environment_a := _harness_arrive(generator_a, run_a, failures, "event-module twin A initial arrival").to_dict()
+	var environment_b := _harness_arrive(generator_b, run_b, failures, "event-module twin B initial arrival").to_dict()
 	var event_context := _first_triggerable_event_context(library, run_a, environment_a)
 	if event_context.is_empty():
 		for target_id in ["corner_store", "back_alley", "motel", "bar", "gas_station_casino", "small_underground_casino", "jazz_club"]:
-			environment_a = generator_a.next_environment(run_a, target_id).to_dict()
-			environment_b = generator_b.next_environment(run_b, target_id).to_dict()
+			# This scan validates event content across authored rooms; it is not a
+			# player route test. Mark the fixture-selected destination prevalidated.
+			environment_a = _harness_arrive(generator_a, run_a, failures, "event-module twin A arrival %s" % target_id, target_id, true).to_dict()
+			environment_b = _harness_arrive(generator_b, run_b, failures, "event-module twin B arrival %s" % target_id, target_id, true).to_dict()
 			event_context = _first_triggerable_event_context(library, run_a, environment_a)
 			if not event_context.is_empty():
 				break
@@ -554,7 +557,7 @@ func _check_event_module_foundation(library: ContentLibrary, failures: Array) ->
 	_check_event_result_applied(before, run_a, result_a, "production event result", failures)
 	if JSON.stringify(result_a) != JSON.stringify(result_b):
 		failures.append("Production event resolution was not deterministic.")
-	if JSON.stringify(run_a.to_dict()) != JSON.stringify(run_b.to_dict()):
+	if JSON.stringify(_deterministic_run_projection(run_a)) != JSON.stringify(_deterministic_run_projection(run_b)):
 		failures.append("Production event resolution did not leave deterministic RunState snapshots.")
 	if JSON.parse_string(JSON.stringify(run_a.to_dict())) == null:
 		failures.append("Production event RunState result was not serializable.")
@@ -672,6 +675,8 @@ func _check_event_system_state_foundation(library: ContentLibrary, failures: Arr
 		failures.append("Event system fixture did not enter volatile economy state.")
 	if not debt_event.can_trigger(strained_run, strained_run.current_environment, {"turns": 1}):
 		failures.append("Economy-gated event did not trigger from strained economy state.")
+	elif not strained_run.enqueue_triggered_event("motel_knock", "event_system_state_foundation", {"turns": 1}):
+		failures.append("Economy-gated event could not enter the authoritative triggered-event queue.")
 	var debt_before := _run_state_result_snapshot(strained_run)
 	var debt_result := debt_event.resolve(strained_run, strained_run.current_environment, "borrow")
 	_check_event_result_delta_shape(debt_result, failures)
@@ -1527,9 +1532,9 @@ func _check_save_service_foundation_round_trip(library: ContentLibrary, failures
 	run_state.start_new("SAVE-SERVICE-SEED", RunState.custom_challenge("save_service_round_trip", "SAVE-SERVICE-SEED", {"fixture": true}))
 	run_state.game_clock_minutes = 20 * 60
 	var generator: RunGenerator = RunGeneratorScript.new(library)
-	var start_environment: EnvironmentInstance = generator.next_environment(run_state)
+	var start_environment := _harness_arrive(generator, run_state, failures, "save-service initial arrival")
 	var environment_target := _first_target_with_game(library, _unique_strings(start_environment.next_archetypes, start_environment.travel_hooks), "")
-	var environment: EnvironmentInstance = generator.next_environment(run_state, environment_target)
+	var environment := _harness_arrive(generator, run_state, failures, "save-service destination arrival", environment_target)
 	call("_resolve_first_save_test_action", library, run_state, environment, failures)
 	if not library.items.is_empty():
 		run_state.add_item(str((library.items[0] as Dictionary).get("id", "")))
@@ -1671,7 +1676,7 @@ func _check_platform_services_foundation(failures: Array) -> void:
 	daily_run_a.start_new("IGNORED", daily_challenge)
 	daily_run_b.start_new("OTHER-IGNORED", daily_b.get("challenge_config", {}))
 	daily_run_c.start_new("IGNORED", daily_c.get("challenge_config", {}))
-	if JSON.stringify(daily_run_a.to_dict()) != JSON.stringify(daily_run_b.to_dict()):
+	if JSON.stringify(_deterministic_run_projection(daily_run_a)) != JSON.stringify(_deterministic_run_projection(daily_run_b)):
 		failures.append("Daily challenge config did not seed RunState deterministically.")
 	if daily_run_a.seed_value == daily_run_c.seed_value:
 		failures.append("Different daily challenge payloads did not produce distinct RunState seeds.")
@@ -1681,7 +1686,7 @@ func _check_platform_services_foundation(failures: Array) -> void:
 	var custom_run_b: RunState = RunStateScript.new()
 	custom_run_a.start_new("IGNORED", custom_challenge)
 	custom_run_b.start_new("OTHER-IGNORED", RunState.custom_challenge("local_custom", "CUSTOM-SEED", {"pressure": "low"}))
-	if JSON.stringify(custom_run_a.to_dict()) != JSON.stringify(custom_run_b.to_dict()):
+	if JSON.stringify(_deterministic_run_projection(custom_run_a)) != JSON.stringify(_deterministic_run_projection(custom_run_b)):
 		failures.append("Custom challenge config did not seed RunState deterministically.")
 	var custom_run_c: RunState = RunStateScript.new()
 	custom_run_c.start_new("IGNORED", RunState.custom_challenge("local_custom", "CUSTOM-SEED", {"pressure": "high"}))
@@ -1950,7 +1955,7 @@ func _check_travel_route_foundation(library: ContentLibrary, failures: Array) ->
 		var predicted_environment := preview_generator.preview_environment(preview_run, "delta_queen")
 		var full_preview := preview_run.travel_route_preview(delta_route, delta_archetype, predicted_environment, true)
 		var travel_heat := preview_run.begin_travel_suspicion_decay(delta_route, "delta_queen")
-		var actual_environment := preview_generator.next_environment(preview_run, "delta_queen").to_dict()
+		var actual_environment := _harness_arrive(preview_generator, preview_run, failures, "scouted-preview Delta Queen arrival", "delta_queen").to_dict()
 		preview_run.finish_travel_suspicion_decay(travel_heat)
 		if _string_array(full_preview.get("game_ids", [])) != _string_array(actual_environment.get("game_ids", [])):
 			failures.append("Scouted route preview games did not match the generated destination.")
@@ -2109,7 +2114,7 @@ func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> vo
 	var topology_map_service := WorldMapScript.new(library)
 	var run_a: RunState = RunStateScript.new()
 	run_a.start_new("WORLD-MAP-SEED")
-	var start_environment := generator.next_environment(run_a)
+	var start_environment := _harness_arrive(generator, run_a, failures, "world-map initial arrival")
 	if not run_a.has_world_map():
 		failures.append("New runs should create a persistent world_map on first environment generation.")
 		return
@@ -2165,7 +2170,11 @@ func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> vo
 		if not WorldMapScript.visible_node_ids(tip_run.world_map).has(underground_id):
 			failures.append("Parking lot tip did not reveal the underground casino for seed %02d." % tip_seed_index)
 			break
-		var tipped_targets := WorldMapScript.travel_target_ids(tip_run.world_map, tip_run.current_world_node_id(), WorldMapScript.TRAVEL_NEW_TARGET_LIMIT, WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT, [underground_id])
+		# Use the complete production eligibility set. Supplying only the newly
+		# unlocked id cannot catch the three-card crowd-out that occurs when normal
+		# nearby and Tier-2 routes are eligible at the same time.
+		var tipped_enabled_ids := _enabled_world_route_ids_for_run(library, tip_run, tip_run.current_world_node_id())
+		var tipped_targets := WorldMapScript.travel_target_ids(tip_run.world_map, tip_run.current_world_node_id(), WorldMapScript.TRAVEL_NEW_TARGET_LIMIT, WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT, tipped_enabled_ids)
 		if not tipped_targets.has(underground_id):
 			failures.append("Parking lot tip did not make the underground casino a selectable map target for seed %02d." % tip_seed_index)
 			break
@@ -2305,7 +2314,7 @@ func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> vo
 	if first_route.is_empty() or not bool(first_route.get("generated_world_route", false)):
 		failures.append("World route should merge generated edge metadata for visible targets.")
 	var travel_heat := run_a.begin_travel_suspicion_decay(first_route, first_target)
-	generator.next_environment(run_a, first_target)
+	_harness_arrive(generator, run_a, failures, "world-map first destination arrival", first_target)
 	run_a.finish_travel_suspicion_decay(travel_heat)
 	var visited_node_id := run_a.current_world_node_id()
 	run_a.current_environment["game_states"] = _copy_dict(run_a.current_environment.get("game_states", {}))
@@ -2329,14 +2338,14 @@ func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> vo
 		failures.append("Generated non-walking return route did not charge a distance-based cost.")
 	var bankroll_before_return := run_a.bankroll
 	var return_heat := run_a.begin_travel_suspicion_decay(return_route, start_node_id)
-	generator.next_environment(run_a, start_node_id)
+	_harness_arrive(generator, run_a, failures, "world-map return arrival", start_node_id)
 	run_a.finish_travel_suspicion_decay(return_heat)
 	GameModule.apply_result(run_a, _world_map_travel_charge_result(start_node_id, return_cost))
 	if run_a.bankroll != bankroll_before_return - return_cost:
 		failures.append("Return world-map travel did not apply the effective route cost.")
 	var revisit_route := generator.world_route_for_target(run_a, visited_node_id)
 	var revisit_heat := run_a.begin_travel_suspicion_decay(revisit_route, visited_node_id)
-	generator.next_environment(run_a, visited_node_id)
+	_harness_arrive(generator, run_a, failures, "world-map revisit arrival", visited_node_id)
 	run_a.finish_travel_suspicion_decay(revisit_heat)
 	var restored_game_states: Dictionary = run_a.current_environment.get("game_states", {}) if typeof(run_a.current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
 	var fixture_state: Dictionary = restored_game_states.get("world_map_fixture", {}) if typeof(restored_game_states.get("world_map_fixture", {})) == TYPE_DICTIONARY else {}
@@ -2402,7 +2411,7 @@ func _check_closing_soon_world_travel(library: ContentLibrary, failures: Array) 
 	if str(locked_destination.archetype_id) == RunState.GRAND_CASINO_ARCHETYPE_ID or locked_run.current_world_node_id() != "corner_store":
 		failures.append("World generation entered the Grand Casino without its invitation flag.")
 	run_state.advance_game_clock_minutes(travel_minutes)
-	var destination := generator.next_environment(run_state, "bar", true)
+	var destination := _harness_arrive(generator, run_state, failures, "closing-soon Bar arrival", "bar", true)
 	if str(destination.archetype_id) != "bar" or run_state.current_world_node_id() != "bar":
 		failures.append("A bar route that is open at arrival did not preserve the player's selected destination.")
 
@@ -2417,7 +2426,7 @@ func _check_meta_home_run_boundary(library: ContentLibrary, failures: Array) -> 
 	if not run_state.meta_collection_enabled_for_run():
 		failures.append("Standard run with meta modifiers did not enable the meta collection boundary.")
 	var generator: RunGenerator = RunGeneratorScript.new(library)
-	generator.next_environment(run_state)
+	_harness_arrive(generator, run_state, failures, "meta-home default initial arrival")
 	if str(run_state.current_environment.get("archetype_id", run_state.current_environment.get("id", ""))) != MetaCollectionServiceScript.HOUSING_BACK_ALLEY:
 		failures.append("Default homeless meta run did not start in the back alley archetype.")
 	var previous_path := OS.get_environment(MetaCollectionServiceScript.STORE_PATH_ENV)
@@ -2455,7 +2464,7 @@ func _check_meta_home_run_boundary(library: ContentLibrary, failures: Array) -> 
 		if typeof(item_value) == TYPE_DICTIONARY:
 			linked_run.inventory.append((item_value as Dictionary).duplicate(true))
 	var linked_generator: RunGenerator = RunGeneratorScript.new(library)
-	linked_generator.next_environment(linked_run)
+	_harness_arrive(linked_generator, linked_run, failures, "meta-home linked Motel arrival")
 	var spawned_containers := linked_run.current_home_containers()
 	if str(linked_run.current_environment.get("archetype_id", "")) != MetaCollectionServiceScript.HOUSING_MOTEL_ROOM or spawned_containers.size() != 1:
 		failures.append("Motel run did not spawn the meta-home bag as its only linked container.")
@@ -4124,6 +4133,26 @@ func _check_crew_lender_lifecycle(library: ContentLibrary, failures: Array) -> v
 		failures.append("The Crew cash conversion did not write exactly one hidden favor_converted_unpaid grievance.")
 
 
+func _crew_favor_event_fixture(library: ContentLibrary, seed: String, rook_trust: int, failures: Array) -> RunState:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new(seed)
+	RunGeneratorScript.new(library).next_environment(run_state)
+	if run_state.current_environment.is_empty() or not run_state.has_world_map():
+		failures.append("Crew favor fixture did not generate a production room and world map for %s." % seed)
+	run_state.narrative_flags["crew_favor_pending"] = true
+	if rook_trust != 0:
+		run_state.crew_add_trust("crew_rook", rook_trust, "fixture")
+	var queued := run_state.enqueue_triggered_event(
+		"crew_favor_delivery",
+		"foundation_fixture",
+		{"trigger": "action", "type": "action", "source": "game_action"},
+		{"presentation": "talk"}
+	)
+	if not queued or run_state.pending_talk_event("crew_favor_delivery").is_empty():
+		failures.append("Crew favor fixture did not enter the production talk-event queue for %s." % seed)
+	return run_state
+
+
 func _check_crew_trust_core(library: ContentLibrary, failures: Array) -> void:
 	for content_failure in CrewStateModelScript.validate_content():
 		failures.append("Crew content: %s" % str(content_failure))
@@ -4178,52 +4207,74 @@ func _check_crew_trust_core(library: ContentLibrary, failures: Array) -> void:
 	if not job_run.job_accept("forged").is_empty() or not job_run.job_activate("forged").is_empty() or not job_run.job_resolve("forged", "success").is_empty():
 		failures.append("Caller-authored Crew lifecycle transition crossed the host-only boundary.")
 
-	var event_run: RunState = RunStateScript.new()
-	event_run.start_new("CREW-FAVOR-EVENT-REGRESSION")
-	RunGeneratorScript.new(library).next_environment(event_run)
-	event_run.current_environment = {"id": event_run.current_world_node_id(), "archetype_id": event_run.current_world_node_id(), "world_node_id": event_run.current_world_node_id(), "kind": "casino", "tier": 1, "turns": 0, "resolved_event_ids": []}
-	event_run.narrative_flags["crew_favor_pending"] = true
+	var event_run := _crew_favor_event_fixture(library, "CREW-FAVOR-EVENT-REGRESSION", 0, failures)
 	var event_module: EventModule = EventModuleScript.new()
 	event_module.setup(library.event("crew_favor_delivery"), library)
 	var favor_bankroll_before := event_run.bankroll
 	var favor_heat_before := event_run.suspicion_level()
 	var event_result := event_module.resolve(event_run, event_run.current_environment, "run_package")
+	event_run.complete_talk_event_resolution("crew_favor_delivery")
 	if not bool(event_result.get("delivery_started", false)) or not event_run.delivery_has_active_run():
 		failures.append("Crew favor delivery did not start a real-map package run.")
 	if event_run.bankroll != favor_bankroll_before or event_run.suspicion_level() != favor_heat_before or bool(event_run.narrative_flags.get("crew_favor_completed", false)):
 		failures.append("Starting the Crew favor applied its reward before the in-room handoff: bankroll=%d heat=%d flags=%s." % [event_run.bankroll, event_run.suspicion_level(), JSON.stringify(event_run.narrative_flags)])
-	if not _delivery_complete_all_targets(event_run) or event_run.bankroll != favor_bankroll_before + 22 or event_run.suspicion_level() != favor_heat_before + 4 \
+	var favor_target := _delivery_first_target(event_run)
+	var favor_arrival := _delivery_enter_node(event_run, favor_target, failures, library)
+	var favor_bankroll_before_handoff := event_run.bankroll
+	var favor_heat_before_handoff := event_run.suspicion_level()
+	var favor_completed_before_handoff := bool(event_run.narrative_flags.get("crew_favor_completed", false))
+	var favor_owner_token := str(event_result.get("world_sequence_owner_token", ""))
+	var favor_projection := _copy_dict(event_run.world_sequence_projection(favor_owner_token))
+	var favor_semantic := _copy_dict(favor_projection.get("semantic_state", {}))
+	var favor_interactions := _copy_dict(favor_semantic.get("interactions", {}))
+	var favor_interaction := _copy_dict(favor_interactions.get("crew::package_handoff", {}))
+	var favor_actions := _copy_array(favor_interaction.get("available_actions", []))
+	var favor_action := _copy_dict(favor_actions[0]) if not favor_actions.is_empty() else {}
+	var favor_command := event_run.world_sequence_command(
+		favor_owner_token, "make_handoff", "foundation:crew_favor:handoff", {}, "crew", "package_handoff",
+		{"crew::package_handoff": true},
+		str(favor_action.get("action_origin_owner_namespace", "")),
+		str(favor_action.get("action_origin_stable_object_id", "")),
+		str(favor_action.get("action_origin_receipt_key", "")),
+		str(favor_action.get("action_origin_boundary_id", "")),
+		str(favor_action.get("action_origin_fingerprint", ""))
+	)
+	var favor_handoff := event_run.delivery_complete_handoff(favor_target)
+	if favor_target.is_empty() or not bool(favor_arrival.get("handoff_ready", false)) or not bool(favor_command.get("ok", false)) or not bool(favor_handoff.get("ok", false)) \
+		or favor_bankroll_before_handoff != favor_bankroll_before or favor_completed_before_handoff \
+		or event_run.bankroll != favor_bankroll_before_handoff + 22 or event_run.suspicion_level() != favor_heat_before_handoff + 4 \
 		or event_run.crew_trust("crew_rook") != 5 or not bool(event_run.narrative_flags.get("crew_favor_completed", false)) \
 		or bool(event_run.narrative_flags.get("crew_favor_pending", true)):
-		failures.append("Crew favor success did not preserve exact +22 cash, +4 heat, and job trust after handoff: bankroll=%d heat=%d trust=%d snapshot=%s." % [event_run.bankroll, event_run.suspicion_level(), event_run.crew_trust("crew_rook"), JSON.stringify(event_run.delivery_snapshot())])
+		failures.append("Crew favor success did not preserve exact +22 cash, +4 heat, and job trust at the real-room handoff: bankroll=%d pre_handoff_bankroll=%d heat=%d pre_handoff_heat=%d trust=%d arrival=%s command=%s handoff=%s snapshot=%s." % [event_run.bankroll, favor_bankroll_before_handoff, event_run.suspicion_level(), favor_heat_before_handoff, event_run.crew_trust("crew_rook"), JSON.stringify(favor_arrival), JSON.stringify(favor_command), JSON.stringify(favor_handoff), JSON.stringify(event_run.delivery_snapshot())])
 
-	var caught_run: RunState = RunStateScript.new()
-	caught_run.start_new("CREW-FAVOR-CAUGHT-REGRESSION")
-	RunGeneratorScript.new(library).next_environment(caught_run)
-	caught_run.current_environment = {"id": caught_run.current_world_node_id(), "archetype_id": caught_run.current_world_node_id(), "world_node_id": caught_run.current_world_node_id(), "kind": "casino", "tier": 1, "turns": 0, "resolved_event_ids": []}
-	caught_run.narrative_flags["crew_favor_pending"] = true
-	caught_run.crew_add_trust("crew_rook", 5, "fixture")
-	var caught_bankroll_before := caught_run.bankroll
-	var caught_heat_before := caught_run.suspicion_level()
-	event_module.resolve(caught_run, caught_run.current_environment, "run_package")
-	caught_run.delivery_abandon("caught")
-	if caught_run.delivery_has_active_run() or caught_run.bankroll != caught_bankroll_before or caught_run.suspicion_level() != caught_heat_before + 9 \
-		or caught_run.crew_trust("crew_rook") != 0 or not bool(caught_run.narrative_flags.get("crew_favor_failed", false)):
-		failures.append("Crew favor failure did not preserve exact +9 heat and job trust failure.")
+	var failed_run := _crew_favor_event_fixture(library, "CREW-FAVOR-DEADLINE-REGRESSION", 5, failures)
+	var failed_bankroll_before := failed_run.bankroll
+	var failed_heat_before := failed_run.suspicion_level()
+	var failed_start := event_module.resolve(failed_run, failed_run.current_environment, "run_package")
+	failed_run.complete_talk_event_resolution("crew_favor_delivery")
+	if failed_run.delivery_has_active_run():
+		failed_run.active_delivery_run["deadline_remaining"] = 1
+	var failed_boundary := failed_run.advance_environment_turns(1)
+	var failed_resolution: Dictionary = failed_run.delivery_snapshot().get("resolution", {}) if typeof(failed_run.delivery_snapshot().get("resolution", {})) == TYPE_DICTIONARY else {}
+	var failed_heat_cue: Dictionary = {}
+	for cue_value in failed_run.suspicion.get("cues", []):
+		if typeof(cue_value) == TYPE_DICTIONARY and str((cue_value as Dictionary).get("id", "")) == "delivery:deadline":
+			failed_heat_cue = (cue_value as Dictionary).duplicate(true)
+	if failed_run.delivery_has_active_run() or failed_run.bankroll != failed_bankroll_before or failed_run.suspicion_level() <= failed_heat_before \
+		or int(failed_heat_cue.get("base_amount", 0)) != 9 or int(failed_heat_cue.get("amount", 0)) != 9 \
+		or failed_run.crew_trust("crew_rook") != 0 or not bool(failed_run.narrative_flags.get("crew_favor_failed", false)) \
+		or str(failed_resolution.get("reason", "")) != "deadline" or not bool(failed_boundary.get("ok", false)):
+		failures.append("Crew favor failure did not preserve exact +9 authored heat and job trust at a production deadline: bankroll=%d heat=%d trust=%d heat_cue=%s flags=%s start=%s boundary=%s snapshot=%s." % [failed_run.bankroll, failed_run.suspicion_level(), failed_run.crew_trust("crew_rook"), JSON.stringify(failed_heat_cue), JSON.stringify(failed_run.narrative_flags), JSON.stringify(failed_start), JSON.stringify(failed_boundary), JSON.stringify(failed_run.delivery_snapshot())])
 
-	var refused_run: RunState = RunStateScript.new()
-	refused_run.start_new("CREW-FAVOR-REFUSE-REGRESSION")
-	RunGeneratorScript.new(library).next_environment(refused_run)
-	refused_run.current_environment = {"id": refused_run.current_world_node_id(), "archetype_id": refused_run.current_world_node_id(), "world_node_id": refused_run.current_world_node_id(), "kind": "casino", "tier": 1, "turns": 0, "resolved_event_ids": []}
-	refused_run.narrative_flags["crew_favor_pending"] = true
-	refused_run.crew_add_trust("crew_rook", 5, "fixture")
+	var refused_run := _crew_favor_event_fixture(library, "CREW-FAVOR-REFUSE-REGRESSION", 5, failures)
 	var refused_bankroll_before := refused_run.bankroll
 	var refused_heat_before := refused_run.suspicion_level()
 	var refused := event_module.resolve(refused_run, refused_run.current_environment, "refuse")
+	refused_run.complete_talk_event_resolution("crew_favor_delivery")
 	if refused_run.delivery_has_active_run() or refused_run.bankroll != refused_bankroll_before or refused_run.suspicion_level() != refused_heat_before + 9 \
 		or refused_run.crew_trust("crew_rook") != 0 or not bool(refused_run.narrative_flags.get("crew_favor_refused", false)) \
 		or str(refused.get("message", "")) != "The night stays quiet. Quieter, even.":
-		failures.append("Refusing the Crew favor changed its shipped immediate consequence.")
+		failures.append("Refusing the Crew favor changed its shipped immediate consequence: bankroll=%d heat=%d trust=%d flags=%s result=%s." % [refused_run.bankroll, refused_run.suspicion_level(), refused_run.crew_trust("crew_rook"), JSON.stringify(refused_run.narrative_flags), JSON.stringify(refused)])
 
 	var round_trip_source := job_run.to_dict()
 	var round_trip: RunState = RunStateScript.new()
@@ -4593,11 +4644,16 @@ func _fixture_lender_result(run_state: RunState, lender: Dictionary, lender_id: 
 
 
 func _save_service_expected_snapshot(run_state: RunState) -> Dictionary:
-	var parsed: Variant = JSON.parse_string(JSON.stringify(run_state.to_dict()))
+	var save_service: SaveService = SaveServiceScript.new()
+	var payload: Variant = save_service.call("_save_payload", run_state, "expected_snapshot")
+	var parsed: Variant = JSON.parse_string(JSON.stringify(payload))
 	if typeof(parsed) != TYPE_DICTIONARY:
 		return run_state.to_dict()
+	var decoded: Variant = save_service.call("_run_data_from_payload", parsed as Dictionary)
+	if typeof(decoded) != TYPE_DICTIONARY:
+		return run_state.to_dict()
 	var normalized: RunState = RunStateScript.new()
-	normalized.from_dict(parsed as Dictionary)
+	normalized.from_dict(decoded as Dictionary)
 	return normalized.to_dict()
 
 func _unique_strings(first: Array, second: Array) -> Array:

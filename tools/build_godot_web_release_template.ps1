@@ -102,6 +102,10 @@ try {
         "module_freetype_enabled=yes",
         "module_text_server_fb_enabled=yes",
         "module_webp_enabled=yes",
+        # Crew private-state capsules use Godot's reviewed AESContext and
+        # HMACContext implementations. Keep mbedTLS in the thin template even
+        # though all modules are disabled by default above.
+        "module_mbedtls_enabled=yes",
         "disable_3d=yes",
         "disable_navigation_2d=yes",
         "disable_navigation_3d=yes",

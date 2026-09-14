@@ -7,6 +7,7 @@ const OperationRegistryScript := preload("res://scripts/core/scenario_operation_
 const RolloutManifestScript := preload("res://scripts/core/scenario_sequence_rollout_manifest.gd")
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
+const HarnessProductionFidelityScript := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
 const EnvironmentSemanticInventoryScript := preload("res://scripts/core/environment_semantic_inventory.gd")
 
 const LOCAL_ACTOR_SCENARIO_ID := "bar_fight_night"
@@ -263,7 +264,9 @@ static func _check_manifest_installed_finalization(library: Variant, failures: A
 		}))
 		run_state.begin_act(1)
 		var generator := ProductionInstallProbe.new(library)
-		generator.next_environment(run_state)
+		var arrival := HarnessProductionFidelityScript.generate_and_finalize(generator, run_state, failures, "env06_7 manifest arrival %s" % scenario_id)
+		if not bool(arrival.get("ok", false)):
+			continue
 		var result := generator.last_result
 		if str(result.get("scenario_id", "")) != scenario_id \
 				or str(result.get("archetype_id", "")) != archetype_id \

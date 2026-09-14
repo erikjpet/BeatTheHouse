@@ -754,6 +754,7 @@ static func _intel_projection_valid(value: Variant) -> bool:
 	var intel: Dictionary = value
 	if not bool(intel.get("available", false)):
 		return _exact_keys(intel, ["authority_gap", "available"]) and str(intel.get("authority_gap", "")) == INTEL_AUTHORITY_GAP \
+			or _exact_keys(intel, ["authority_gap", "available", "live", "observed"]) and str(intel.get("authority_gap", "")) == INTEL_AUTHORITY_GAP and not bool(intel.get("live", true)) \
 			or _exact_keys(intel, ["available", "live", "observed"]) and not bool(intel.get("live", true))
 	var live_status := _exact_keys(intel, ["active", "available", "current_node_id", "heading_node_id", "live", "moves_in_actions", "observed"]) \
 		and bool(intel.get("observed", false)) and not str(intel.get("current_node_id", "")).is_empty() and int(intel.get("moves_in_actions", -1)) >= 0

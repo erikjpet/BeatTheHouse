@@ -10,6 +10,7 @@ const ProfileInventoryScript := preload("res://scripts/core/profile_inventory.gd
 const SaveServiceScript := preload("res://scripts/core/save_service.gd")
 const CageCounterViewModelScript := preload("res://scripts/ui/cage_counter_view_model.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
+const HarnessProductionFidelityScript := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
 const REPORT_PATH := "user://foundation_visual_qa_report.json"
 const TEST_SETTINGS_PATH := "user://settings_foundation_visual_qa.json"
 const TEST_META_COLLECTION_PATH := "user://foundation_visual_qa_meta_collection.json"
@@ -25,6 +26,8 @@ var visual_qa_seed := DEFAULT_VISUAL_QA_SEED
 var app: Control
 var report := {
 	"tool": "foundation_visual_qa",
+	"production_acceptance_admissible": false,
+	"production_acceptance_exclusion": "This development visual-QA producer installs fixture environments and direct prepared RunState conditions; it cannot prove a naturally generated owner-playtest route.",
 	"active_scene": "res://scenes/main.tscn",
 	"active_script": "res://scripts/ui/foundation_main.gd",
 	"seed": DEFAULT_VISUAL_QA_SEED,
@@ -649,15 +652,32 @@ func _try_travel_object_flow(context_label: String, objective: Dictionary = {}) 
 		_require(canvas != null and canvas.visible and canvas.has_method("current_view_snapshot"), "Environment canvas was not restored after local door travel.")
 		if canvas == null:
 			return false
-		travel_object = _first_clickable_canvas_object_type_enabled(canvas, "travel", true)
-		_require(not travel_object.is_empty(), "Local door travel did not expose a world-map travel object.")
+		var exact_leave_failures: Array = []
+		var exact_leave := HarnessProductionFidelityScript.resolve_exact_canvas_object(canvas, "travel:leave", exact_leave_failures, "Foundation visual QA local-parent departure")
+		var observed_travel := _first_clickable_canvas_object_type_enabled(canvas, "travel", true)
+		var observed_id := _canvas_object_id(observed_travel)
+		var observed_label := str(observed_travel.get("label", ""))
+		_require(
+			bool(exact_leave.get("ok", false)),
+			"Local door travel did not expose enabled, visible, hittable travel:leave. selected_id=%s selected_label=%s errors=%s %s" % [observed_id, observed_label, JSON.stringify(exact_leave_failures), _serialized_diff_summary(serialized_before_travel_activation, _serialized_run_text())]
+		)
+		if not bool(exact_leave.get("ok", false)):
+			return false
+		travel_object = exact_leave.get("object", {})
+		var room_door := _canvas_object_by_id(canvas, "travel:motel_room")
+		_require(not room_door.is_empty(), "Local parent-venue regression fixture did not expose both travel:motel_room and travel:leave.")
+		var recorded_inputs: Array = report.get("input_events", []) if typeof(report.get("input_events", [])) == TYPE_ARRAY else []
+		var second_input_index := recorded_inputs.size()
 		serialized_before_travel_activation = _serialized_run_text()
 		travel_button = await _double_click_canvas_object_data(canvas, travel_object, "travel")
-		_require(not travel_button.is_empty(), "Could not double-click the world-map travel objective after local door travel.")
+		_require(not travel_button.is_empty(), "Could not double-click exact departure selected_id=%s selected_label=%s. %s" % [_canvas_object_id(travel_object), str(travel_object.get("label", "")), _serialized_diff_summary(serialized_before_travel_activation, _serialized_run_text())])
 		await _settle()
 		map_open_screen = app.call("current_screen_snapshot")
-	_require(serialized_before_travel_activation == _serialized_run_text(), "Opening the world map should not mutate serialized RunState before route confirmation.")
-	_require(bool(map_open_screen.get("world_map_overlay_visible", false)), "Double-clicking Leave did not open the world map overlay.")
+		var inputs_after_departure: Array = report.get("input_events", []) if typeof(report.get("input_events", [])) == TYPE_ARRAY else []
+		var second_input: Dictionary = inputs_after_departure[second_input_index] if second_input_index < inputs_after_departure.size() and typeof(inputs_after_departure[second_input_index]) == TYPE_DICTIONARY else {}
+		_require(str(second_input.get("object_id", "")) == "travel:leave", "Parent-venue second travel input selected_id=%s selected_label=%s instead of travel:leave. %s" % [str(second_input.get("object_id", "<missing>")), str(second_input.get("label", "")), _serialized_diff_summary(serialized_before_travel_activation, _serialized_run_text())])
+	_require(serialized_before_travel_activation == _serialized_run_text(), "Opening the world map through selected_id=%s selected_label=%s mutated serialized RunState before route confirmation. %s" % [_canvas_object_id(travel_object), str(travel_object.get("label", "")), _serialized_diff_summary(serialized_before_travel_activation, _serialized_run_text())])
+	_require(bool(map_open_screen.get("world_map_overlay_visible", false)), "Double-clicking exact departure selected_id=%s selected_label=%s did not open the world map overlay. %s" % [_canvas_object_id(travel_object), str(travel_object.get("label", "")), _serialized_diff_summary(serialized_before_travel_activation, _serialized_run_text())])
 	_cover("world_map_open")
 	var map_snapshot: Dictionary = map_open_screen.get("world_map", {}) if typeof(map_open_screen.get("world_map", {})) == TYPE_DICTIONARY else {}
 	var map_nodes: Array = map_snapshot.get("nodes", []) if typeof(map_snapshot.get("nodes", [])) == TYPE_ARRAY else []
@@ -1438,10 +1458,11 @@ func _run_street_craps_visual_qa() -> void:
 	var live_snapshot: Dictionary = canvas.call("current_view_snapshot")
 	var live_state: Dictionary = live_snapshot.get("state", {})
 	var target_ids := _craps_visual_target_ids(live_state.get("bet_targets", []))
-	_require(target_ids == ["pass_line", "dont_pass"], "Street Craps visual QA did not reduce the betting surface to Pass/Don't Pass.")
+	for required_target_id in ["pass_line", "dont_pass", "come", "dont_come", "field", "place_6", "buy_4", "lay_10", "hard_8", "horn", "ce", "world", "any_seven", "pass_odds"]:
+		_require(target_ids.has(required_target_id), "Street Craps visual QA omitted full-table wager %s." % required_target_id)
 	_require(str(live_state.get("surface_cast", "")) == "circle_of_players" and str(live_state.get("currency", "")) == "cash", "Street Craps visual QA did not expose its circle-of-players cash presentation.")
 	_require(int(live_state.get("table_minimum", 0)) == 2 and int(live_state.get("table_maximum", 0)) == 20, "Street Craps visual QA did not preserve gutter stake bounds.")
-	_record_craps_visual_state("street_craps_circle", "Street Craps presents a chalk circle, two line wagers, cash controls, point, dice, and surrounding players.", live_snapshot)
+	_record_craps_visual_state("street_craps_circle", "Street Craps presents a chalk circle, complete wager pages, cash controls, point, dice, and surrounding players.", live_snapshot)
 	_cover("street_craps_circle")
 
 	var states: Dictionary = fixture_run.current_environment.get("game_states", {})
@@ -1551,7 +1572,7 @@ func _verify_crew_poker_visual_qa_fixture() -> void:
 	var fixture_run := app.get("run_state") as RunState
 	var lucky_trust_before := fixture_run.crew_trust("crew_lucky") if fixture_run != null else 0
 	await _prepare_crew_poker_visual_qa_fixture()
-	_record_state("crew_poker_l3_room", "The singular back-room five-card draw table in its real L3 room fixture.")
+	_record_state("crew_poker_l3_room", "The singular back-room Texas Hold'em table in its real L3 room fixture.")
 	var entered_label := await _double_click_first_play_object_type("game")
 	_require(not entered_label.is_empty(), "Could not enter the L3 Crew poker table from its room object.")
 	await _settle()
@@ -1588,15 +1609,18 @@ func _verify_crew_poker_visual_qa_fixture() -> void:
 	_record_state("crew_poker_idle_surface", "Readable production poker renderer and native table controls at the 1280x720 target.")
 	_require(await _push_game_surface_action("poker_deal", 0), "Could not ante and deal from the L3 Crew poker surface.")
 	await _settle()
-	_require(_surface_action_available("poker_call", 0) and _surface_action_available("poker_raise", 1) and _surface_action_available("poker_fold", 2), "Crew poker first betting controls were not clickable after the deal.")
-	_require(await _push_game_surface_action("poker_call", 0), "Could not call the first Crew poker betting round.")
+	_require(await _advance_crew_poker_to_player_turn(), "Crew Hold'em did not advance the visible Crew decisions to the player's first turn.")
+	var call_binding := _current_surface_action_binding("poker_call")
+	var raise_binding := _current_surface_action_binding("poker_raise_open")
+	var fold_binding := _current_surface_action_binding("poker_fold")
+	_require(not call_binding.is_empty() and not raise_binding.is_empty() and not fold_binding.is_empty(), "Crew Hold'em first betting controls were not all clickable on the player's turn.")
+	var poker_action_before := int((canvas.call("realtime_surface_state") as Dictionary).get("action_ordinal", 0))
+	_require(await _push_game_surface_action(str(call_binding.get("action", "")), int(call_binding.get("index", 0))), "Could not check/call the first Crew Hold'em betting round.")
 	await _settle()
-	var draw_hits := 0
-	for index in range(5):
-		if _surface_action_available("poker_card", index):
-			draw_hits += 1
-	_require(draw_hits == 5 and _surface_action_available("poker_draw", 0) and _surface_action_available("poker_fold", 1), "Crew poker draw surface did not expose five card hit targets plus draw/fold controls.")
-	_record_state("crew_poker_draw_surface", "Production five-card draw state with five readable card targets and native controls.")
+	await _resolve_blocking_surface_interrupts()
+	var poker_after_call := canvas.call("realtime_surface_state") as Dictionary
+	_require(int(poker_after_call.get("action_ordinal", 0)) > poker_action_before and ["preflop", "flop", "turn", "river", "showdown", "idle"].has(str(poker_after_call.get("phase", ""))), "Crew Hold'em check/call did not advance its ordered hand.")
+	_record_state("crew_poker_holdem_betting_surface", "Production Hold'em state with hole cards, ordered Crew turns, custom raise entry, fold, and check/call controls.")
 	_return_to_room_view()
 	await _settle()
 	if fixture_run != null:
@@ -3001,7 +3025,8 @@ func _verify_delivery_surface() -> void:
 		var segment_choice: Dictionary = app.call("_travel_choice", segment_id)
 		_require(not segment_choice.is_empty() and bool(segment_choice.get("enabled", false)), "Visual delivery segment was not a normal open route.")
 		_require(bool(app.call("select_world_map_node", segment_id)), "Visual delivery segment could not be selected through the existing map.")
-		app.call("confirm_world_map_travel")
+		var segment_travel_result: Dictionary = app.call("confirm_world_map_travel")
+		_require(bool(segment_travel_result.get("ok", false)), "Visual delivery segment travel was rejected: %s." % JSON.stringify(segment_travel_result.get("errors", [])))
 		for _travel_frame in range(24):
 			await process_frame
 			if run_state.current_world_node_id() == segment_id and not bool(app.get("travel_transition_active")):
@@ -3010,6 +3035,14 @@ func _verify_delivery_surface() -> void:
 		_require(run_state.current_world_node_id() == segment_id, "Visual delivery did not arrive at its selected real-map segment.")
 		app.call("back_to_environment")
 		await _settle()
+		# Production travel may legitimately surface an arrival event before the
+		# destination room becomes interactive. Resolve that visible modal first,
+		# then enter the room; clicking the handoff behind it produced the historical
+		# false failure without exercising the action a player could actually reach.
+		await _resolve_blocking_surface_interrupts()
+		app.call("back_to_environment")
+		await _settle()
+		_require(str((app.call("current_screen_snapshot") as Dictionary).get("screen", "")) == "ENVIRONMENT", "Visual delivery segment did not return to its interactive room after arrival interrupts.")
 	var generated_environment: Dictionary = run_state.current_environment
 	_require(run_state.current_world_node_id() == target_id and run_state.environment_travel_count() == travel_count_before + delivery_path.size() - 1, "Visual delivery did not complete through normal map travel.")
 	_require(str(generated_environment.get("world_node_id", "")) == target_id and str(generated_environment.get("archetype_id", "")) == str(target_node.get("archetype_id", "")), "Visual delivery did not enter its real target node.")
@@ -4045,6 +4078,31 @@ func _resolve_visible_fixed_price_risky_action(serialized_before: String) -> boo
 
 func _surface_action_available(action: String, index: int = 0) -> bool:
 	return _surface_action_binding_available({"action": action, "index": index})
+
+
+func _current_surface_action_binding(action: String) -> Dictionary:
+	var surface_canvas := app.get("game_surface_canvas") as Control
+	if surface_canvas == null or not surface_canvas.visible or not surface_canvas.has_method("current_view_snapshot"):
+		return {}
+	var snapshot: Dictionary = surface_canvas.call("current_view_snapshot")
+	var hit_actions: Array = snapshot.get("surface_hit_actions", []) if typeof(snapshot.get("surface_hit_actions", [])) == TYPE_ARRAY else []
+	return _surface_hit_action_binding(hit_actions, action)
+
+
+func _advance_crew_poker_to_player_turn(max_actions: int = 12) -> bool:
+	var surface_canvas := app.get("game_surface_canvas") as Control
+	if surface_canvas == null:
+		return false
+	for _index in range(max_actions):
+		var state: Dictionary = surface_canvas.call("realtime_surface_state")
+		if str(state.get("turn_owner", "")) == "player":
+			return true
+		var observe_binding := _current_surface_action_binding("poker_observe")
+		if observe_binding.is_empty() or not await _push_game_surface_action(str(observe_binding.get("action", "")), int(observe_binding.get("index", 0))):
+			return false
+		await _settle()
+		await _resolve_blocking_surface_interrupts()
+	return str((surface_canvas.call("realtime_surface_state") as Dictionary).get("turn_owner", "")) == "player"
 
 
 func _click_game_surface_action(action: String, index: int) -> String:

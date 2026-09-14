@@ -45,8 +45,14 @@ func _run() -> void:
 		if not target_ids.has(expected_target):
 			_fail("Craps capture is missing bet target %s." % expected_target)
 			return
-	if not await _capture("01_full_bet_surface.png"):
+	if not await _capture("01_line_bets.png"):
 		return
+	for page in ["numbers", "props", "odds"]:
+		app.set("game_surface_ui_state", {"selected_chip": 5, "craps_bet_page": page, "surface_time_msec": 40000})
+		app.call("_refresh")
+		await _settle(2)
+		if not await _capture("01_%s_bets.png" % page):
+			return
 
 	var idle_before: Dictionary = canvas.call("debug_surface_motion_sample")
 	if not await _capture("02_idle_liveness_before.png"):
@@ -63,6 +69,7 @@ func _run() -> void:
 	var live_surface_ui_state: Dictionary = app.call("_current_game_surface_ui_state")
 	var live_dice_start_msec := int(live_surface_ui_state.get("surface_time_msec", 1))
 	_configure_table(run_state, live_dice_start_msec, [5, 2], 7, "craps:capture:dice")
+	app.set("game_surface_ui_state", {"selected_chip": 5, "craps_bet_page": "line", "surface_time_msec": live_dice_start_msec})
 	app.call("_refresh")
 	await _settle(3)
 	var dice_state: Dictionary = (canvas.call("current_view_snapshot") as Dictionary).get("state", {})

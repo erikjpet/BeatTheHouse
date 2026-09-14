@@ -34,7 +34,11 @@ static func _check_host_authority(failures: Array) -> void:
 	for definition_value in CrewStateModelScript.job_definitions():
 		var definition: Dictionary = definition_value
 		var run := _crew_run("L3-HOST-%s" % str(definition.get("id", "")))
-		run.current_environment["crew_presence"] = [{"member_id": str(definition.get("member_id", ""))}]
+		var member_id := str(definition.get("member_id", ""))
+		var required_trust := CrewStateModelScript.rank_threshold(str(definition.get("min_rank", "associate")))
+		if run.crew_trust(member_id) < required_trust:
+			run.crew_add_trust(member_id, required_trust - run.crew_trust(member_id), "layer3_host_fixture")
+		run.current_environment["crew_presence"] = [{"member_id": member_id}]
 		var started := run.crew_job_accept_definition(str(definition.get("id", "")))
 		if not bool(started.get("ok", false)) or str(_job_by_definition(run, str(definition.get("id", ""))).get("status", "")) != "active":
 			failures.append("Host-rooted surface did not activate shipped job %s." % str(definition.get("id", "")))

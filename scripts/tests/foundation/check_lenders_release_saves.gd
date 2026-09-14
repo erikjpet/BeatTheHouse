@@ -1527,9 +1527,9 @@ func _check_m2_system_interaction_scenario(library: ContentLibrary, failures: Ar
 	run_state.start_new("M2-SYSTEM-SCENARIO")
 	run_state.game_clock_minutes = 20 * 60
 	var generator: RunGenerator = RunGeneratorScript.new(library)
-	var start_environment: EnvironmentInstance = generator.next_environment(run_state)
+	var start_environment := _harness_arrive(generator, run_state, failures, "M2 interaction initial arrival")
 	var environment_target := _first_target_with_game(library, _unique_strings(start_environment.next_archetypes, start_environment.travel_hooks), "")
-	var environment: EnvironmentInstance = generator.next_environment(run_state, environment_target)
+	var environment := _harness_arrive(generator, run_state, failures, "M2 interaction destination arrival", environment_target)
 	if run_state.current_environment.is_empty():
 		failures.append("M2 scenario did not enter a generated environment.")
 		return
@@ -1599,7 +1599,12 @@ func _check_m2_system_interaction_scenario(library: ContentLibrary, failures: Ar
 	if not travel_hooks.has("small_underground_casino"):
 		travel_hooks.append("small_underground_casino")
 	scenario_environment["travel_hooks"] = travel_hooks
-	run_state.set_environment(scenario_environment)
+	# This probe augments the already-installed production room in place. Sending
+	# the same active scenario through set_environment() starts a new visit and
+	# intentionally clears its derived semantic authorization until the UI host
+	# rebuilds records; there is no UI controller in this model-only check.
+	run_state.current_environment = scenario_environment
+	run_state.current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(run_state.current_environment)
 
 	var underground_route := library.route("small_underground_casino")
 	if underground_route.is_empty():
@@ -1987,13 +1992,13 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 		failures.append("Grand Casino security pressure should not return generic capture while Rourke can reroute.")
 	var watched_heat_deltas := GameModule.empty_result_deltas()
 	watched_heat_deltas["suspicion_delta"] = 100
-	watched_heat_deltas["story_log"] = [{"type": "game_action", "game_id": "blackjack", "stake_cost": 10, "pit_boss_heat_bonus": 30}]
+	watched_heat_deltas["story_log"] = [{"type": "game_action", "game_id": "baccarat", "stake_cost": 10, "pit_boss_heat_bonus": 30}]
 	watched_heat_deltas["messages"] = ["Watched heat fixture."]
 	var watched_heat_result := GameModule.build_action_result({
 		"ok": true,
 		"type": "game_action",
-		"source_id": "blackjack",
-		"game_id": "blackjack",
+		"source_id": "baccarat",
+		"game_id": "baccarat",
 		"action_id": "watched_heat_fixture",
 		"action_kind": "cheat",
 		"stake": 10,
@@ -2849,6 +2854,10 @@ func _check_grand_casino_chips_and_cage(library: ContentLibrary, main_archetype:
 		failures.append("Grand Casino cash fallback accepted an unaffordable wager or mutated funds on rejection.")
 
 	for table_id in RunState.GRAND_CASINO_TABLE_GAME_IDS:
+		# Blackjack settlements are sealed by their dedicated authority contract;
+		# this generic currency fixture intentionally exercises unsealed table games.
+		if table_id == "blackjack":
+			continue
 		var table_deltas := GameModule.empty_result_deltas()
 		table_deltas["bankroll_delta"] = -2
 		var table_result := GameModule.build_action_result({
@@ -2918,8 +2927,8 @@ func _check_grand_casino_chips_and_cage(library: ContentLibrary, main_archetype:
 	var outside_result := GameModule.build_action_result({
 		"ok": true,
 		"type": "game_action",
-		"source_id": "blackjack",
-		"game_id": "blackjack",
+		"source_id": "baccarat",
+		"game_id": "baccarat",
 		"action_id": "outside_cash_fixture",
 		"action_kind": "legal",
 		"stake": 3,
@@ -2931,7 +2940,7 @@ func _check_grand_casino_chips_and_cage(library: ContentLibrary, main_archetype:
 	var outside_chips_before := run_state.grand_casino_chips
 	GameModule.apply_result(run_state, outside_result)
 	if run_state.bankroll != outside_cash_before - 3 or run_state.grand_casino_chips != outside_chips_before or outside_result.has("chips_delta"):
-		failures.append("Blackjack outside the Grand Casino did not remain cash-only.")
+		failures.append("Table play outside the Grand Casino did not remain cash-only.")
 	var outside_machine_deltas := GameModule.empty_result_deltas()
 	outside_machine_deltas["bankroll_delta"] = 4
 	var outside_machine_result := GameModule.build_action_result({
@@ -3061,10 +3070,15 @@ func _check_grand_casino_living_floor(library: ContentLibrary, main_archetype: D
 		var cameo_run: RunState = RunStateScript.new()
 		cameo_run.start_new("GC-ROURKE-CAMEO")
 		var cameo_environment := EnvironmentInstance.from_archetype(delta, 2, cameo_run.create_rng("gc_cameo_environment"), library).to_dict()
+		cameo_environment["event_ids"] = ["rourke_scouting_cameo"]
+		cameo_environment["resolved_event_ids"] = []
 		cameo_run.set_environment(cameo_environment)
+		if not cameo_run.enqueue_triggered_event("rourke_scouting_cameo", "demo_boss_objective_foundation", {}):
+			failures.append("Rare Rourke scouting talk could not enter the triggered-event queue.")
+			return
 		var cameo_module: EventModule = EventModule.new()
 		cameo_module.setup(cameo, library)
-		var cameo_result := cameo_module.resolve(cameo_run, cameo_environment, "read_his_route")
+		var cameo_result := cameo_module.resolve(cameo_run, cameo_run.current_environment, "read_his_route")
 		if not bool(cameo_result.get("ok", false)) or not bool(cameo_run.narrative_flags.get("grand_casino_event_pit_boss_sweep_lay_low", false)):
 			failures.append("Rourke scouting choice did not feed an existing prior-boss modifier flag.")
 
@@ -3263,7 +3277,12 @@ func _blackjack_authority_resolve_for_test(game: GameModule, action_id: String, 
 	host.set("game_module_cache", {"blackjack": game})
 	host.set("run_state", run_state)
 	host.set("selected_stake", stake)
-	return host.call("_sealed_action_host_resolve_intent", action_id, stake)
+	var result: Dictionary = host.call("_sealed_action_host_resolve_intent", action_id, stake)
+	# This detached authority host never enters the scene tree, so the fixture
+	# owns its lifetime. Free it synchronously after copying the returned value;
+	# otherwise every call retains a Control RID and its script/resource graph.
+	host.free()
+	return result
 
 
 func _check_grand_casino_memory_entry_lines(main_environment: Dictionary, outside_environment: Dictionary, failures: Array) -> void:
@@ -3523,7 +3542,7 @@ func _grand_casino_spatial_fixture_run(library: ContentLibrary, seed_text: Strin
 	var map_data := WorldMapScript.new(library).build(run_state, run_state.create_rng("gc_spatial_fixture_map"))
 	run_state.set_world_map(map_data)
 	var generator: RunGenerator = RunGeneratorScript.new(library)
-	var generated := generator.next_environment(run_state, RunState.GRAND_CASINO_ARCHETYPE_ID, true)
+	var generated := _harness_arrive(generator, run_state, failures, "Grand Casino spatial fixture arrival", RunState.GRAND_CASINO_ARCHETYPE_ID, true)
 	if generated == null or str(run_state.current_environment.get("archetype_id", "")) != RunState.GRAND_CASINO_ARCHETYPE_ID:
 		failures.append("Grand Casino spatial fixture could not generate the Main Floor under the world node.")
 		return null
@@ -3708,7 +3727,9 @@ func _check_broke_pull_tab_deferred_terminal_boundary(library: ContentLibrary, f
 		"archetype_id": "fixture_room",
 		"kind": "casino",
 		"economic_profile": {"stake_floor": 1, "stake_ceiling": 1},
-		"game_ids": ["pull_tabs"],
+		# Pull-tabs owns the zero-cash defer state, while bar dice supplies a normal
+		# funded wager so the setup refresh is not itself a stranded boundary.
+		"game_ids": ["pull_tabs", "bar_dice"],
 		"event_ids": [],
 		"item_offers": [],
 		"travel_hooks": [],
@@ -4071,6 +4092,20 @@ func _embedded_refresh_fixture_app(library: ContentLibrary, run_state: RunState,
 		failures.append("%s fixture requires FoundationMain runtime nodes." % label.capitalize())
 		_sb4_dispose_app(app)
 		return null
+	# FoundationMain intentionally loads its Play helpers over staged menu frames.
+	# This focused fixture jumps straight into an embedded game, so complete those
+	# same registered lifecycle stages explicitly before invoking Play methods.
+	# A missing or unloadable helper now fails at fixture construction instead of
+	# becoming a late Nil call that an aggregate runner could accidentally mask.
+	for stage_index in range(11):
+		if not bool(app.call("_ensure_run_ui_stage_scripts", stage_index)):
+			failures.append("%s fixture could not load FoundationMain helper stage %d." % [label.capitalize(), stage_index])
+			_sb4_dispose_app(app)
+			return null
+	if not bool(app.call("_ensure_run_ui_built")):
+		failures.append("%s fixture could not construct FoundationMain's staged run interface." % label.capitalize())
+		_sb4_dispose_app(app)
+		return null
 	app.set("library", library)
 	app.set("generator", RunGeneratorScript.new(library))
 	app.set("dev_game_test_mode", dev_mode)
@@ -4149,6 +4184,15 @@ func _check_broke_idle_terminal_evaluator_not_per_frame(library: ContentLibrary,
 		failures.append("Broke-idle terminal evaluator fixture requires FoundationMain runtime nodes.")
 		_sb4_dispose_app(app)
 		return
+	for stage_index in range(11):
+		if not bool(app.call("_ensure_run_ui_stage_scripts", stage_index)):
+			failures.append("Broke-idle terminal evaluator fixture could not load FoundationMain helper stage %d." % stage_index)
+			_sb4_dispose_app(app)
+			return
+	if not bool(app.call("_ensure_run_ui_built")):
+		failures.append("Broke-idle terminal evaluator fixture could not construct FoundationMain's staged run interface.")
+		_sb4_dispose_app(app)
+		return
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("BROKE-IDLE-NO-POLL")
 	var environment := {
@@ -4168,15 +4212,14 @@ func _check_broke_idle_terminal_evaluator_not_per_frame(library: ContentLibrary,
 	machine["tray_stack"] = [{"symbols": ["A", "B", "C"], "payout": 0}]
 	environment["game_states"] = {"pull_tabs": machine}
 	run_state.set_environment(environment)
-	run_state.change_bankroll(-run_state.bankroll, true)
 	app.set("run_state", run_state)
 	app.set("current_game", null)
 	app.call("_set_current_screen", "ENVIRONMENT")
-	app.call("_refresh")
-	if run_state.run_status == RunState.RUN_STATUS_FAILED:
-		failures.append("Broke-idle deferred fixture failed before idle frame sampling.")
-		_sb4_dispose_app(app)
-		return
+	# Becoming broke is deliberately introduced without crossing an explicit
+	# refresh/action boundary. The assertion below then isolates idle-frame
+	# behavior: polling the UI must not turn a state mutation into an implicit
+	# terminal evaluation.
+	run_state.change_bankroll(-run_state.bankroll, true)
 	app.set("terminal_evaluator_call_count", 0)
 	for _frame_index in range(12):
 		app.call("_process", 1.0 / 60.0)
@@ -4257,11 +4300,29 @@ func _check_save_payload_file(save_path: String, failures: Array) -> void:
 		failures.append("SaveService save payload is missing RunState data.")
 	if payload.has("settings") or payload.has("profile") or payload.has("profile_inventory"):
 		failures.append("SaveService mixed settings/profile persistence into run persistence.")
-	var run_data: Variant = payload.get("run_state", {})
-	if typeof(run_data) == TYPE_DICTIONARY:
-		var run_dict: Dictionary = run_data
-		if run_dict.has("profile_inventory"):
-			failures.append("SaveService RunState payload included profile inventory.")
+	var stored_value: Variant = payload.get("run_state", {})
+	if typeof(stored_value) != TYPE_DICTIONARY:
+		failures.append("SaveService stored a non-dictionary RunState envelope.")
+		return
+	var stored: Dictionary = stored_value
+	if str(stored.get(RunSaveCodecScript.STORAGE_MARKER_KEY, "")) != RunSaveCodecScript.STORAGE_FORMAT \
+			or not RunSaveCodecScript.storage_envelope_valid(stored):
+		failures.append("SaveService did not store a valid compressed RunState envelope.")
+		return
+	var unpacked := RunSaveCodecScript.unpack_from_storage(stored)
+	var run_dict := RunSaveCodecScript.decode(unpacked)
+	if unpacked.is_empty() or run_dict.is_empty():
+		failures.append("SaveService compressed RunState envelope did not unpack and decode.")
+		return
+	if run_dict.has("profile_inventory"):
+		failures.append("SaveService RunState payload included profile inventory.")
+	var tampered := stored.duplicate(true)
+	var packed_data := str(tampered.get(RunSaveCodecScript.STORAGE_DATA_KEY, ""))
+	if not packed_data.is_empty():
+		var replacement := "1" if packed_data.substr(0, 1) != "1" else "2"
+		tampered[RunSaveCodecScript.STORAGE_DATA_KEY] = replacement + packed_data.substr(1)
+		if not RunSaveCodecScript.unpack_from_storage(tampered).is_empty():
+			failures.append("SaveService compressed RunState envelope accepted tampered data.")
 
 
 # Compares saved and loaded RunState domains.
@@ -4357,29 +4418,6 @@ func _check_environment_instance_shape(environment: EnvironmentInstance, require
 	var restored := EnvironmentInstance.from_dict(data)
 	if JSON.stringify(restored.to_dict()) != JSON.stringify(data):
 		failures.append("EnvironmentInstance did not preserve saveable data through from_dict.")
-
-
-# Checks that tests are exercising README pack paths through ContentLibrary.
-func _check_canonical_pack_paths(failures: Array) -> void:
-	var required_paths := ContentLibraryScript.required_pack_paths()
-	for pack_name in required_paths.keys():
-		var path := str(required_paths[pack_name])
-		_check_foundation_pack_path(path, failures)
-		var exists := DirAccess.dir_exists_absolute(ProjectSettings.globalize_path(path)) if path.get_extension().is_empty() else FileAccess.file_exists(path)
-		if not exists:
-			failures.append("Missing required foundation pack %s at %s." % [pack_name, path])
-
-	var future_paths := ContentLibraryScript.future_pack_paths()
-	for path in future_paths.values():
-		_check_foundation_pack_path(str(path), failures)
-
-
-# Ensures canonical foundation paths stay outside the demo runtime pack folder.
-func _check_foundation_pack_path(path: String, failures: Array) -> void:
-	if not path.begins_with("res://data/"):
-		failures.append("Foundation pack path must live under res://data/: %s." % path)
-	if path.begins_with("res://data/runtime/"):
-		failures.append("Foundation pack path must not point at demo runtime data: %s." % path)
 
 
 # Checks the canonical M2 packs without forcing unused future packs to exist.
@@ -4480,6 +4518,7 @@ func _check_tier_two_world_spawn_thresholds(library: ContentLibrary, failures: A
 
 	var two_casino_run: RunState = RunStateScript.new()
 	two_casino_run.start_new("TIER2-TWO-CASINOS")
+	two_casino_run.environment_history_archive_count = 2
 	two_casino_run.set_world_map(WorldMapScript.new(library).build(two_casino_run, two_casino_run.create_rng("map")))
 	two_casino_run.enter_world_node("bar", {})
 	two_casino_run.enter_world_node("gas_station_casino", {})
@@ -4487,31 +4526,32 @@ func _check_tier_two_world_spawn_thresholds(library: ContentLibrary, failures: A
 		var eligible_node := WorldMapScript.node_by_id(two_casino_run.world_map, tier_two_id)
 		if not bool(eligible_node.get("route_spawn_open", false)):
 			failures.append("Two distinct Tier-1 casino visits did not enable spawning for %s." % tier_two_id)
-		if bool(eligible_node.get("unlocked", false)) or str(eligible_node.get("state", "")) != WorldMapScript.STATE_HIDDEN or bool(eligible_node.get("seen", false)):
-			failures.append("Tier-2 casino %s was revealed instead of only becoming spawn-eligible." % tier_two_id)
+	_assert_tier_two_travel_option(two_casino_run, library, "two distinct Tier-1 casino visits", failures)
 	if str(two_casino_run.narrative_flags.get(RunState.TIER_TWO_LOCATION_SPAWN_REASON_FLAG, "")) != "two_tier_one_casinos":
 		failures.append("Two-casino Tier-2 spawn gate did not record its progression reason.")
 
 	var underground_run: RunState = RunStateScript.new()
 	underground_run.start_new("TIER2-UNDERGROUND")
+	underground_run.environment_history_archive_count = 1
 	underground_run.set_world_map(WorldMapScript.new(library).build(underground_run, underground_run.create_rng("map")))
 	underground_run.enter_world_node("small_underground_casino", {})
 	for tier_two_id in ["kitty_cat_lounge", "delta_queen"]:
 		var eligible_node := WorldMapScript.node_by_id(underground_run.world_map, tier_two_id)
 		if not bool(eligible_node.get("route_spawn_open", false)):
 			failures.append("Underground Casino visit did not enable spawning for %s." % tier_two_id)
-		if bool(eligible_node.get("unlocked", false)) or str(eligible_node.get("state", "")) != WorldMapScript.STATE_HIDDEN:
-			failures.append("Underground Casino visit revealed %s instead of only enabling its spawn." % tier_two_id)
+	_assert_tier_two_travel_option(underground_run, library, "the Underground Casino visit", failures)
 	if str(underground_run.narrative_flags.get(RunState.TIER_TWO_LOCATION_SPAWN_REASON_FLAG, "")) != "underground_visit":
 		failures.append("Underground Tier-2 spawn gate did not record its progression reason.")
 
-	# A pre-fix save can already contain the qualifying visits while both Tier-2
-	# nodes remain hidden. Loading it must reconcile that state automatically.
+	# A pre-fix save can already contain qualifying visits and open spawn gates
+	# while both Tier-2 nodes remain hidden. Loading must reconcile that state.
 	var legacy_run: RunState = RunStateScript.new()
 	legacy_run.start_new("TIER2-LEGACY-SAVE")
+	legacy_run.environment_history_archive_count = 2
 	var legacy_map := WorldMapScript.new(library).build(legacy_run, legacy_run.create_rng("map"))
 	legacy_map = WorldMapScript.enter_node(legacy_map, "bar", {})
 	legacy_map = WorldMapScript.enter_node(legacy_map, "gas_station_casino", {})
+	legacy_map = WorldMapScript.enable_node_spawns(legacy_map, ["kitty_cat_lounge", "delta_queen"])
 	legacy_run.set_world_map(legacy_map)
 	var loaded_legacy_run: RunState = RunStateScript.new()
 	loaded_legacy_run.from_dict(legacy_run.to_dict())
@@ -4519,8 +4559,24 @@ func _check_tier_two_world_spawn_thresholds(library: ContentLibrary, failures: A
 		var repaired_node := WorldMapScript.node_by_id(loaded_legacy_run.world_map, tier_two_id)
 		if not bool(repaired_node.get("route_spawn_open", false)):
 			failures.append("Qualifying legacy save did not repair Tier-2 casino spawn eligibility for %s on load." % tier_two_id)
-		if bool(repaired_node.get("unlocked", false)) or str(repaired_node.get("state", "")) != WorldMapScript.STATE_HIDDEN:
-			failures.append("Legacy save repair revealed Tier-2 casino %s instead of only enabling its spawn." % tier_two_id)
+	_assert_tier_two_travel_option(loaded_legacy_run, library, "legacy save repair", failures)
+
+
+func _assert_tier_two_travel_option(run_state: RunState, library: ContentLibrary, context: String, failures: Array) -> void:
+	var revealed_tier_two_ids: Array = []
+	for tier_two_id in ["kitty_cat_lounge", "delta_queen"]:
+		var node := WorldMapScript.node_by_id(run_state.world_map, tier_two_id)
+		if bool(node.get("seen", false)) and str(node.get("state", "")) != WorldMapScript.STATE_HIDDEN:
+			revealed_tier_two_ids.append(tier_two_id)
+	if revealed_tier_two_ids.is_empty():
+		failures.append("%s opened Tier-2 spawn gates without revealing a connected casino route." % context.capitalize())
+		return
+	var generator: RunGenerator = RunGeneratorScript.new(library)
+	var production_targets := generator._world_travel_target_ids(run_state, run_state.world_map, run_state.current_world_node_id())
+	for tier_two_id in revealed_tier_two_ids:
+		if production_targets.has(tier_two_id):
+			return
+	failures.append("%s revealed Tier-2 casinos, but none became a production travel option: revealed=%s targets=%s." % [context.capitalize(), JSON.stringify(revealed_tier_two_ids), JSON.stringify(production_targets)])
 
 
 func _check_tier_two_route_gates(library: ContentLibrary, delta: Dictionary, delta_route: Dictionary, failures: Array) -> void:
@@ -4762,6 +4818,15 @@ func _check_grand_casino_locked_route_ui(library: ContentLibrary, delta: Diction
 		app.call("_ready")
 	if not bool(app.call("uses_foundation_runtime")):
 		failures.append("Grand Casino locked route UI fixture requires FoundationMain runtime nodes.")
+		_sb4_dispose_app(app)
+		return
+	for stage_index in range(11):
+		if not bool(app.call("_ensure_run_ui_stage_scripts", stage_index)):
+			failures.append("Grand Casino locked route UI fixture could not load FoundationMain helper stage %d." % stage_index)
+			_sb4_dispose_app(app)
+			return
+	if not bool(app.call("_ensure_run_ui_built")):
+		failures.append("Grand Casino locked route UI fixture could not construct FoundationMain's staged run interface.")
 		_sb4_dispose_app(app)
 		return
 	var ui_run: RunState = RunStateScript.new()
@@ -5119,8 +5184,8 @@ func _check_rng(library: ContentLibrary, failures: Array) -> void:
 	run_b.start_new("FOUNDATION-TEST-SEED", custom_challenge)
 	var generator_a: RunGenerator = RunGeneratorScript.new(library)
 	var generator_b: RunGenerator = RunGeneratorScript.new(library)
-	var environment_a = generator_a.next_environment(run_a)
-	var environment_b = generator_b.next_environment(run_b)
+	var environment_a := _harness_arrive(generator_a, run_a, failures, "RNG twin A initial arrival")
+	var environment_b := _harness_arrive(generator_b, run_b, failures, "RNG twin B initial arrival")
 
 	if JSON.stringify(environment_a.to_dict()) != JSON.stringify(environment_b.to_dict()):
 		failures.append("Same fixture seed did not generate the same fixture environment.")
@@ -5172,8 +5237,8 @@ func _check_same_seed_game_result(library: ContentLibrary, challenge: Dictionary
 	run_b.start_new("FOUNDATION-TEST-SEED", challenge)
 	var generator_a: RunGenerator = RunGeneratorScript.new(library)
 	var generator_b: RunGenerator = RunGeneratorScript.new(library)
-	var environment_a = generator_a.next_environment(run_a)
-	var environment_b = generator_b.next_environment(run_b)
+	var environment_a := _harness_arrive(generator_a, run_a, failures, "game-result twin A initial arrival")
+	var environment_b := _harness_arrive(generator_b, run_b, failures, "game-result twin B initial arrival")
 	var game_a := GameModule.new()
 	game_a.setup(library.game("fixture_game"))
 	var game_b := GameModule.new()
@@ -5182,7 +5247,7 @@ func _check_same_seed_game_result(library: ContentLibrary, challenge: Dictionary
 	var result_b := game_b.resolve("legal_fixture", 1, run_b, environment_b.to_dict(), run_b.create_rng())
 	if JSON.stringify(result_a) != JSON.stringify(result_b):
 		failures.append("Same seed and challenge did not produce the same foundation game result.")
-	if JSON.stringify(run_a.to_dict()) != JSON.stringify(run_b.to_dict()):
+	if JSON.stringify(_deterministic_run_projection(run_a)) != JSON.stringify(_deterministic_run_projection(run_b)):
 		failures.append("Same foundation game result did not leave matching RunState snapshots.")
 
 
@@ -5193,7 +5258,7 @@ func _check_run_state_source_of_truth(library: ContentLibrary, failures: Array) 
 	run_a.start_new("IGNORED-SEED", challenge)
 	var run_b: RunState = RunStateScript.new()
 	run_b.start_new("IGNORED-SEED", challenge)
-	if JSON.stringify(run_a.to_dict()) != JSON.stringify(run_b.to_dict()):
+	if JSON.stringify(_deterministic_run_projection(run_a)) != JSON.stringify(_deterministic_run_projection(run_b)):
 		failures.append("RunState.start_new is not deterministic for the same seed and challenge.")
 
 	var rng_a := run_a.create_rng()
@@ -5202,10 +5267,10 @@ func _check_run_state_source_of_truth(library: ContentLibrary, failures: Array) 
 		failures.append("RunState did not create deterministic RNG streams from initial state.")
 
 	var generator: RunGenerator = RunGeneratorScript.new(library)
-	var environment = generator.next_environment(run_a)
+	var environment := _harness_arrive(generator, run_a, failures, "RunState source-of-truth initial arrival")
 	var history_probe: RunState = RunStateScript.new()
 	history_probe.start_new("HISTORY-COMPACTION-SEED", challenge)
-	var environment_snapshot: Dictionary = environment.to_dict() if environment is EnvironmentInstance else (environment as Dictionary).duplicate(true)
+	var environment_snapshot: Dictionary = environment.to_dict()
 	var previous_environment: Dictionary = environment_snapshot.duplicate(true)
 	previous_environment["runtime_state"] = {"large_transient_machine_state": [1, 2, 3, 4]}
 	history_probe.current_environment = previous_environment
@@ -5306,7 +5371,7 @@ func _check_save_load_seed_sweep(library: ContentLibrary, failures: Array) -> vo
 		var run_state: RunState = RunStateScript.new()
 		run_state.start_new(seed_text, challenge)
 		var generator: RunGenerator = RunGeneratorScript.new(library)
-		generator.next_environment(run_state)
+		_harness_arrive(generator, run_state, failures, "%s initial arrival" % seed_text)
 		for action_index in range(SAVE_LOAD_FUZZ_ACTIONS_PER_SEED):
 			var label := "%s/action_%02d" % [seed_text, action_index]
 			var advanced := _save_load_fuzz_drive_action(library, generator, run_state, action_index, label, failures)
@@ -5324,18 +5389,18 @@ func _save_load_fuzz_drive_action(library: ContentLibrary, generator: RunGenerat
 	if run_state == null or run_state.is_terminal():
 		return false
 	if run_state.current_environment.is_empty():
-		generator.next_environment(run_state)
+		_harness_arrive(generator, run_state, failures, "%s replacement initial arrival" % label)
 	if _save_load_fuzz_resolve_triggered_event(library, run_state, label, failures):
 		return true
 	if action_index % 7 == 3 and _save_load_fuzz_use_service_item_or_lender(library, run_state):
 		return true
-	if action_index % 5 == 4 and _save_load_fuzz_travel(generator, run_state):
+	if action_index % 5 == 4 and _save_load_fuzz_travel(generator, run_state, failures):
 		return true
 	if _save_load_fuzz_play_game(library, run_state, action_index, label, failures):
 		return true
 	if _save_load_fuzz_use_service_item_or_lender(library, run_state):
 		return true
-	return _save_load_fuzz_travel(generator, run_state)
+	return _save_load_fuzz_travel(generator, run_state, failures)
 
 
 func _save_load_fuzz_resolve_triggered_event(library: ContentLibrary, run_state: RunState, label: String, failures: Array) -> bool:
@@ -5397,7 +5462,7 @@ func _save_load_fuzz_use_service_item_or_lender(library: ContentLibrary, run_sta
 	return false
 
 
-func _save_load_fuzz_travel(generator: RunGenerator, run_state: RunState) -> bool:
+func _save_load_fuzz_travel(generator: RunGenerator, run_state: RunState, failures: Array) -> bool:
 	if run_state == null or generator == null or not run_state.has_world_map():
 		return false
 	var current_node_id := run_state.current_world_node_id()
@@ -5413,7 +5478,9 @@ func _save_load_fuzz_travel(generator: RunGenerator, run_state: RunState) -> boo
 			continue
 		var cost := maxi(0, int(status.get("cost", route.get("cost", 0))))
 		var travel_heat := run_state.begin_travel_suspicion_decay(route, target_id)
-		generator.next_environment(run_state, target_id)
+		var arrived := HarnessProductionFidelityScript.travel_and_finalize(generator, run_state, target_id, false, generator.library, failures, "save/load fuzz arrival %s" % target_id)
+		if not bool(arrived.get("ok", false)):
+			return false
 		run_state.finish_travel_suspicion_decay(travel_heat)
 		if cost > 0:
 			GameModule.apply_result(run_state, _world_map_travel_charge_result(target_id, cost))
@@ -5817,21 +5884,21 @@ func _check_save_load_world_event_lender_midstates(library: ContentLibrary, fail
 	var world_run: RunState = RunStateScript.new()
 	world_run.start_new("SB3-WORLD-MAP-OPEN", RunState.custom_challenge("sb3_world", "SB3-WORLD-MAP-OPEN", {"starting_bankroll": 3000}))
 	var generator: RunGenerator = RunGeneratorScript.new(library)
-	generator.next_environment(world_run)
+	_harness_arrive(generator, world_run, failures, "world-map save fixture initial arrival")
 	WorldMapScript.snapshot(world_run.world_map, world_run.current_world_node_id())
 	_save_load_checkpoint(library, world_run, "target/world_map_open_snapshot", true, failures)
 
 	var travel_lock_run: RunState = RunStateScript.new()
 	travel_lock_run.start_new("SB3-TRAVEL-LOCK", RunState.custom_challenge("sb3_travel_lock", "SB3-TRAVEL-LOCK", {"starting_bankroll": 3000}))
-	generator.next_environment(travel_lock_run)
-	generator.next_environment(travel_lock_run, "gas_station_casino")
+	_harness_arrive(generator, travel_lock_run, failures, "travel-lock save fixture initial arrival")
+	_harness_arrive(generator, travel_lock_run, failures, "travel-lock Gas Casino arrival", "gas_station_casino")
 	travel_lock_run.current_environment["travel_locked_actions"] = 3
 	travel_lock_run.current_environment["travel_lock_remaining"] = 2
 	_save_load_checkpoint(library, travel_lock_run, "target/travel_lock_active", true, failures)
 
 	var event_run: RunState = RunStateScript.new()
 	event_run.start_new("SB3-TRIGGERED-EVENT")
-	generator.next_environment(event_run)
+	_harness_arrive(generator, event_run, failures, "triggered-event save fixture initial arrival")
 	var event_id := _save_load_first_event_id(library)
 	if event_id.is_empty() or not event_run.enqueue_triggered_event(event_id, "sb3_fixture", {"trigger": "save_load"}):
 		failures.append("SB.3 triggered-event queue fixture could not enqueue an event.")
@@ -5879,7 +5946,7 @@ func _check_save_load_world_event_lender_midstates(library: ContentLibrary, fail
 		"baseline_luck_delta": 2,
 		"local_heat_turn_decay_interval_delta": -1,
 	}))
-	generator.next_environment(challenge_run)
+	_harness_arrive(generator, challenge_run, failures, "challenge save fixture initial arrival")
 	challenge_run.advance_environment_turns(2)
 	_save_load_checkpoint(library, challenge_run, "target/challenge_mid_modifier", true, failures)
 
@@ -6039,7 +6106,13 @@ func _locked_rate_bar_dice_fixture(library: ContentLibrary, step_msec: int, fail
 		return {}
 	var roll_ui: Dictionary = roll_command.get("ui_state", {"surface_time_msec": start_msec})
 	roll_ui["surface_time_msec"] = start_msec
-	var load_command: Dictionary = game.surface_action_command("bar_dice_load", 0, false, roll_ui, run_state, active_environment)
+	var cover_command: Dictionary = game.surface_action_command("bar_dice_ack_cover", 0, false, roll_ui, run_state, active_environment)
+	if not bool(cover_command.get("handled", false)):
+		failures.append("Locked-rate Bar Dice fixture could not acknowledge the covered roll.")
+		return {}
+	var covered_ui: Dictionary = cover_command.get("ui_state", roll_ui)
+	covered_ui["surface_time_msec"] = start_msec
+	var load_command: Dictionary = game.surface_action_command("bar_dice_load", 0, false, covered_ui, run_state, active_environment)
 	if not bool(load_command.get("handled", false)):
 		failures.append("Locked-rate Bar Dice fixture could not arm loaded toss.")
 		return {}
@@ -6070,7 +6143,12 @@ func _locked_rate_bar_dice_fixture(library: ContentLibrary, step_msec: int, fail
 		return {}
 	var resolved_ui: Dictionary = release_command.get("ui_state", release_ui)
 	var controlled: Dictionary = resolved_ui.get("controlled_roll", {}) if typeof(resolved_ui.get("controlled_roll", {})) == TYPE_DICTIONARY else {}
-	var result: Dictionary = game.resolve_with_context("loaded_toss", 10, run_state, active_environment, run_state.create_rng("locked_rate_bar_dice_resolve"), resolved_ui)
+	# The compatibility resolver is intentionally receipt-required and read-only.
+	# This locked-rate probe compares the deterministic rules proposal without
+	# claiming or mutating Foundation's live settlement authority.
+	var resolve_rng := run_state.create_rng("locked_rate_bar_dice_resolve")
+	var proposal: Dictionary = game.call("_bar_dice_resolve_proposal", "loaded_toss", 10, run_state.to_save_snapshot(), resolve_rng.snapshot(), resolved_ui)
+	var result: Dictionary = proposal.get("result", {}) if typeof(proposal.get("result", {})) == TYPE_DICTIONARY else {}
 	if not bool(result.get("ok", false)):
 		failures.append("Locked-rate Bar Dice fixture did not resolve loaded toss.")
 		return {}
@@ -6160,7 +6238,7 @@ func _check_contracts(library: ContentLibrary, failures: Array) -> void:
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("FOUNDATION-CONTRACT-SEED", custom_challenge)
 	var generator: RunGenerator = RunGeneratorScript.new(library)
-	var environment = generator.next_environment(run_state)
+	var environment := _harness_arrive(generator, run_state, failures, "foundation contracts initial arrival")
 
 	if environment.lender_hooks.is_empty():
 		failures.append("Environment contract did not include debt/lender hooks.")

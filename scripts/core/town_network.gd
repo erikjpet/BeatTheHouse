@@ -96,7 +96,7 @@ func advance_to(next_action_index: int) -> void:
 	_prune_expired_incidents()
 
 
-func snapshot() -> Dictionary:
+func snapshot(deep_copy_seeded_definitions: bool = true) -> Dictionary:
 	return {
 		"schema_version": SCHEMA_VERSION,
 		"seed_value": seed_value,
@@ -107,7 +107,10 @@ func snapshot() -> Dictionary:
 		"rumor_registry": rumor_registry.duplicate(true),
 		"heard_by_node": heard_by_node.duplicate(true),
 		"seeded_scenarios_by_node": seeded_scenarios_by_node.duplicate(true),
-		"seeded_scenario_definitions_by_node": seeded_scenario_definitions_by_node.duplicate(true),
+		# Definitions are immutable after trusted seeding. Travel rollback can own
+		# the outer map without recursively copying every authored sequence on its
+		# success path; restore still deep-copies before installing the snapshot.
+		"seeded_scenario_definitions_by_node": seeded_scenario_definitions_by_node.duplicate(deep_copy_seeded_definitions),
 		"reputation_incidents": reputation_incidents.duplicate(true),
 		"reputation_type_registry": reputation_type_registry.duplicate(true),
 		"reputation_sequence": reputation_sequence,
@@ -129,7 +132,13 @@ func seed_scenario_for_node(node_id: String, scenario: Dictionary) -> bool:
 	# Cache the canonical selector output, not a later content-library lookup.
 	# Challenge pins can preserve identity while intentionally suppressing the
 	# authored mutation/phase payload for controlled tutorial rooms.
-	seeded_scenario_definitions_by_node[clean_node] = scenario.duplicate(true)
+	var persistent_definition := scenario.duplicate(true)
+	# Catalog-resolution receipts are process-local cache authority, not authored
+	# scenario data. Keeping them in the living-world seed needlessly grows every
+	# save and makes identical gameplay serialize differently depending on whether
+	# ContentLibrary validation happened eagerly or in Web stages.
+	persistent_definition.erase("__scenario_sequence_catalog_resolved")
+	seeded_scenario_definitions_by_node[clean_node] = persistent_definition
 	return register_rumor_fact(RUMOR_CLASS_SCENARIO, "scenario:%s" % clean_node, {
 		"target_node_id": clean_node,
 		"source_id": scenario_id,

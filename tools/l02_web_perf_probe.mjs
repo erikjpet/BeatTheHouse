@@ -180,6 +180,11 @@ try {
     browser: browserName,
     browser_version: browserVersion,
     user_agent: userAgent,
+    launch_options: {
+      headless: Boolean(launchOptions.headless),
+      executable_path: String(launchOptions.executablePath ?? ""),
+      args: Array.isArray(launchOptions.args) ? [...launchOptions.args] : [],
+    },
     cpu_throttle_rate: cpuRate,
     url,
     cold_cache: coldCache,

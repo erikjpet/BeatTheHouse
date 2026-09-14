@@ -6,6 +6,7 @@ const CoachOverlayScript := preload("res://scripts/ui/coach_overlay.gd")
 const CoachViewModelScript := preload("res://scripts/ui/coach_view_model.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const BlackjackScript := preload("res://scripts/games/blackjack.gd")
+const BlackjackAuthorityTestDriverScript := preload("res://scripts/tests/foundation/blackjack_authority_test_driver.gd")
 
 const TEST_META_PATH := "user://tutorial_guardrail_stress_meta.json"
 const TEST_PROFILE_PATH := "user://tutorial_guardrail_stress_profile.json"
@@ -193,6 +194,7 @@ func _exercise_generated_blackjack_peek_tables(library) -> void:
 		var game = BlackjackScript.new()
 		game.setup(library.game("blackjack"), library)
 		game.enter(run_state, run_state.current_environment)
+		var before_projection := JSON.stringify(run_state.current_environment)
 		var surface := game.surface_state(run_state, run_state.current_environment, {})
 		var distractions: Array = surface.get("distractions", []) if typeof(surface.get("distractions", [])) == TYPE_ARRAY else []
 		var ids: Array[String] = []
@@ -203,12 +205,20 @@ func _exercise_generated_blackjack_peek_tables(library) -> void:
 		if ids.size() < 2 or ids[0] != "drink_pass" or ids[1] != "chip_spill":
 			_fail("Generated tutorial Blackjack table %d omitted the mandatory Peek setup controls: %s." % [seed_index, JSON.stringify(ids)])
 			continue
-		var stored: Dictionary = run_state.current_environment.get("game_states", {}).get("blackjack", {})
-		var stored_distractions: Array = stored.get("distractions", []) if typeof(stored.get("distractions", [])) == TYPE_ARRAY else []
-		if stored_distractions.size() < 2 \
-				or str((stored_distractions[0] as Dictionary).get("id", "")) != "drink_pass" \
-				or str((stored_distractions[1] as Dictionary).get("id", "")) != "chip_spill":
-			_fail("Generated tutorial Blackjack table %d did not persist its mandatory Peek controls for reload." % seed_index)
+		if JSON.stringify(run_state.current_environment) != before_projection:
+			_fail("Generated tutorial Blackjack table %d mutated persisted state during passive projection." % seed_index)
+		# Passive entry/surface reads are observational after fix06_2. Prove the
+		# projected repair persists only when the player crosses a real sealed
+		# action boundary, without making all 500 generation seeds pay host cost.
+		if seed_index in [0, 499] and not _commit_blackjack_first_action(game, run_state):
+			_fail("Generated tutorial Blackjack table %d could not persist Peek controls at its first authorized action." % seed_index)
+		elif seed_index in [0, 499]:
+			var stored: Dictionary = run_state.current_environment.get("game_states", {}).get("blackjack", {})
+			var stored_distractions: Array = stored.get("distractions", []) if typeof(stored.get("distractions", [])) == TYPE_ARRAY else []
+			if stored_distractions.size() < 2 \
+					or str((stored_distractions[0] as Dictionary).get("id", "")) != "drink_pass" \
+					or str((stored_distractions[1] as Dictionary).get("id", "")) != "chip_spill":
+				_fail("Generated tutorial Blackjack table %d did not persist Peek controls at its first authorized action." % seed_index)
 
 	# Reproduce the reported boundary with a legacy/stuck table whose random roll
 	# omitted DRINK PASS. Reading the live table must repair the save in place.
@@ -234,6 +244,7 @@ func _exercise_generated_blackjack_peek_tables(library) -> void:
 	legacy_table.erase("tutorial_peek_distractions_repaired")
 	legacy_states["blackjack"] = legacy_table
 	legacy_run.current_environment["game_states"] = legacy_states
+	var legacy_before_projection := JSON.stringify(legacy_run.current_environment)
 	var repaired_surface := legacy_game.surface_state(legacy_run, legacy_run.current_environment, {})
 	var repaired_ids: Array[String] = []
 	for distraction_value in repaired_surface.get("distractions", []):
@@ -242,9 +253,13 @@ func _exercise_generated_blackjack_peek_tables(library) -> void:
 	boundary_count += 1
 	if repaired_ids.size() < 2 or repaired_ids[0] != "drink_pass" or repaired_ids[1] != "chip_spill":
 		_fail("An already-stuck tutorial Blackjack save did not regain the Heat-to-Peek controls: %s." % JSON.stringify(repaired_ids))
+	if JSON.stringify(legacy_run.current_environment) != legacy_before_projection:
+		_fail("An already-stuck tutorial Blackjack save mutated during passive repair projection.")
+	if not _commit_blackjack_first_action(legacy_game, legacy_run):
+		_fail("The already-stuck tutorial Blackjack repair could not cross its first authorized action boundary.")
 	var persisted_legacy: Dictionary = legacy_run.current_environment.get("game_states", {}).get("blackjack", {})
 	if not bool(persisted_legacy.get("tutorial_peek_distractions_repaired", false)):
-		_fail("The already-stuck tutorial Blackjack repair was not persisted to the active save.")
+		_fail("The already-stuck tutorial Blackjack repair was not persisted by its first authorized action.")
 
 	# The repair is deliberately tutorial-only. A normal underground table with
 	# the same random roll must retain its original distraction selection.
@@ -277,6 +292,14 @@ func _exercise_generated_blackjack_peek_tables(library) -> void:
 	boundary_count += 1
 	if normal_ids != ["payout_question", "pit_glance"]:
 		_fail("Tutorial Peek repair changed a normal Blackjack table: %s." % JSON.stringify(normal_ids))
+
+
+func _commit_blackjack_first_action(game: GameModule, run_state: RunState) -> bool:
+	var command := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_deal", 5, run_state, run_state.current_environment)
+	if not bool(command.get("handled", false)) or str(command.get("action_id", "")).is_empty():
+		return false
+	var result := BlackjackAuthorityTestDriverScript.resolve_surface_command(game, command, 5, run_state, run_state.current_environment)
+	return bool(result.get("ok", false))
 
 
 func _exercise_heat_to_peek_transition(library) -> void:

@@ -54,6 +54,7 @@ const CONSOLE_ROLL_BUTTON_WIDTHS := [108.0, 124.0, 116.0]
 const RULES_PANEL_RECT := Rect2(556, 218, 300, 58)
 const PAYTABLE_PANEL_RECT := Rect2(556, 282, 190, 50)
 const ROUND_TIMER_RECT := Rect2(752, 282, 116, 50)
+const BAR_DICE_GUIDANCE_RECT := Rect2(452, CONSOLE_Y + 61, 432, 20)
 const RULES_PANEL_LINE_LIMIT := 47
 const BAR_DICE_RITUAL_PHASES := ["agree_wager", "cover", "shake", "throw", "reveal", "call", "settle"]
 const BAR_DICE_PROPOSAL_REQUIRES_APPLY_KEY := "bar_dice_proposal_requires_apply"
@@ -77,6 +78,7 @@ const BAR_PATRON_POSITIONS := [
 	Vector2(660, 70),
 	Vector2(808, 84),
 ]
+const DICE_GOAL_LABELS := ["SHIP 6", "CAPTAIN 5", "CREW 4", "CARGO"]
 
 const RULESET_LABEL := {
 	"ship_captain_crew": "Ship, Captain, Crew",
@@ -501,6 +503,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		},
 		"surface_audio": GameModule.surface_audio_spec({
 			"profile_id": "bar_dice_table",
+			"selection_seed": run_state.seed_value if run_state != null else 1,
 			"action_cues": {
 				"bar_dice_roll": "machine_button",
 				"bar_dice_shake": "machine_button",
@@ -1083,6 +1086,7 @@ func _resolve_bar_dice_proposal_core(action_id: String, stake: int, run_state: R
 func environment_object_state(run_state: RunState, environment: Dictionary) -> Dictionary:
 	var state := _dice_state_preview(run_state, environment)
 	var last_result := _copy_dict(state.get("last_result", {}))
+	var public_dice := _int_dice(last_result.get("player_dice", []))
 	var badge := "DICE"
 	if not last_result.is_empty():
 		badge = str(last_result.get("outcome", "dice")).to_upper().left(5)
@@ -1094,9 +1098,16 @@ func environment_object_state(run_state: RunState, environment: Dictionary) -> D
 			"carryover_pot": int(state.get("carryover_pot", 0)),
 		},
 		"visual_state": {
+			"variant": "bar_dice",
 			"house": str(state.get("dealer_name", "Bartender")),
 			"ruleset": str(state.get("ruleset_label", "Ship, Captain, Crew")),
 			"bonus": "Pot carries on tied cargo.",
+			"pot": int(state.get("carryover_pot", 0)),
+			"die_0": int(public_dice[0]) if public_dice.size() > 0 else 6,
+			"die_1": int(public_dice[1]) if public_dice.size() > 1 else 5,
+			"die_2": int(public_dice[2]) if public_dice.size() > 2 else 4,
+			"die_3": int(public_dice[3]) if public_dice.size() > 3 else 3,
+			"die_4": int(public_dice[4]) if public_dice.size() > 4 else 2,
 		},
 		"status_summary": "%s runs Ship, Captain, Crew at the %s." % [str(state.get("dealer_name", "The bartender")), str(state.get("bar_name", "bar"))],
 		"effect_summary": "High cargo wins the pot; ties carry forward.",
@@ -3012,12 +3023,12 @@ func _draw_bar_top(surface, _state: Dictionary) -> void:
 
 func _draw_dice_rows(surface, state: Dictionary) -> void:
 	var phase := str(state.get("phase", "bet"))
-	var player := _int_dice(state.get("player", []))
-	var reroll := _index_array(state.get("reroll", []))
-	var suggested := _index_array(state.get("suggested_reroll", []))
-	var scoring := _index_array(state.get("scoring_indices", []))
-	var animated := _index_array(state.get("animated_dice_indices", []))
-	var guide := _copy_dict(state.get("bar_dice_turn_guide", {}))
+	var player := _draw_array_view(state.get("player", []))
+	var reroll := _draw_array_view(state.get("reroll", []))
+	var suggested := _draw_array_view(state.get("suggested_reroll", []))
+	var scoring := _draw_array_view(state.get("scoring_indices", []))
+	var animated := _draw_array_view(state.get("animated_dice_indices", []))
+	var guide := _draw_dict_view(state.get("bar_dice_turn_guide", {}))
 	_draw_opponent_dice_rows(surface, state)
 	surface.surface_label("YOUR CUP", Vector2(262, 204), 12, C_TEAL)
 	if phase == "select":
@@ -3059,8 +3070,8 @@ func _draw_controlled_roll_meter(surface, state: Dictionary, pos: Vector2) -> vo
 
 
 func _draw_palmed_swap_meter(surface, state: Dictionary, pos: Vector2) -> void:
-	var challenge := _copy_dict(state.get("palmed_swap_challenge", {}))
-	var meter := _copy_dict(state.get("palmed_swap_meter", {}))
+	var challenge := _draw_dict_view(state.get("palmed_swap_challenge", {}))
+	var meter := _draw_dict_view(state.get("palmed_swap_meter", {}))
 	if challenge.is_empty() or meter.is_empty():
 		return
 	var bar := Rect2(pos + Vector2(0, 12), Vector2(276, 10))
@@ -3081,7 +3092,7 @@ func _draw_palmed_swap_meter(surface, state: Dictionary, pos: Vector2) -> void:
 
 
 func _draw_opponent_dice_rows(surface, state: Dictionary) -> void:
-	var rows := _dictionary_array(state.get("opponent_rows", []))
+	var rows := _draw_array_view(state.get("opponent_rows", []))
 	if rows.is_empty():
 		return
 	surface.surface_label("RAIL CUPS", Vector2(76, 134), 9, C_PINK_2)
@@ -3096,14 +3107,14 @@ func _draw_opponent_dice_rows(surface, state: Dictionary) -> void:
 		surface.surface_label(str(row.get("blurb", "Cup ready")).left(18), origin + Vector2(88, -5), 7, C_SOFT)
 		if not str(row.get("banter", "")).is_empty():
 			surface.surface_label(str(row.get("banter", "")).left(28), origin + Vector2(0, 34), 6, C_AMBER)
-		_draw_dice_row(surface, _int_dice(row.get("dice", [])), origin + Vector2(0, 7), [], [], _index_array(row.get("scoring_indices", [])), false, OPPONENT_DIE_SIZE, OPPONENT_DIE_SPACING, [], false, true)
+		_draw_dice_row(surface, _draw_array_view(row.get("dice", [])), origin + Vector2(0, 7), [], [], _draw_array_view(row.get("scoring_indices", [])), false, OPPONENT_DIE_SIZE, OPPONENT_DIE_SPACING, [], false, true)
 
 
 func _draw_dice_row(surface, values: Array, start: Vector2, reroll: Array, suggested: Array, scoring: Array, hidden: bool, die_size: Vector2, die_spacing: float, rolling_indices: Array, show_keep_labels: bool, compact: bool) -> void:
 	var tumble_active := bool(surface.surface_animation_active(TUMBLE_CHANNEL))
 	var tumble_progress := float(surface.surface_animation_progress(TUMBLE_CHANNEL))
 	var flicker := float(surface.surface_flicker())
-	var rolling := _index_array(rolling_indices)
+	var rolling := rolling_indices
 	for i in range(values.size()):
 		var rect := Rect2(start + Vector2(float(i) * die_spacing, 0.0), die_size)
 		var die_rolling := tumble_active and tumble_progress < 0.98 and rolling.has(i) and not hidden
@@ -3173,22 +3184,15 @@ func _draw_die_motion_trail(surface, rect: Rect2, index: int, flicker: float) ->
 
 
 func _draw_dice_goal_strip(surface, state: Dictionary, pos: Vector2) -> void:
-	var score := _copy_dict(state.get("player_score", {}))
+	var score := _draw_dict_view(state.get("player_score", {}))
 	var stage := int(score.get("stage", 0))
-	var steps := [
-		{"label": "SHIP 6", "done": stage >= 1},
-		{"label": "CAPTAIN 5", "done": stage >= 2},
-		{"label": "CREW 4", "done": stage >= 3},
-		{"label": "CARGO", "done": bool(score.get("qualified", false))},
-	]
-	for i in range(steps.size()):
-		var step: Dictionary = steps[i]
+	for i in range(DICE_GOAL_LABELS.size()):
 		var rect := Rect2(pos + Vector2(float(i) * 68.0, 0), Vector2(62, 16))
-		var done := bool(step.get("done", false))
+		var done := bool(score.get("qualified", false)) if i == 3 else stage >= i + 1
 		var color := C_TEAL if done else C_AMBER if i == stage else C_SOFT
 		surface.draw_rect(rect, Color(color.r, color.g, color.b, 0.16 if done or i == stage else 0.06))
 		surface.draw_rect(rect, color, false, 1)
-		surface.surface_label_centered(str(step.get("label", "")), rect.grow(-2), 7, color)
+		surface.surface_label_centered(DICE_GOAL_LABELS[i], rect.grow(-2), 7, color)
 
 
 func _draw_die_cup(surface, rect: Rect2) -> void:
@@ -3235,8 +3239,8 @@ func _draw_die_pip(surface, rect: Rect2, x_ratio: float, y_ratio: float) -> void
 
 
 func _draw_explainer(surface, state: Dictionary) -> void:
-	var explainer := _copy_dict(state.get("bar_dice_explainer", {}))
-	var guide := _copy_dict(state.get("bar_dice_turn_guide", {}))
+	var explainer := _draw_dict_view(state.get("bar_dice_explainer", {}))
+	var guide := _draw_dict_view(state.get("bar_dice_turn_guide", {}))
 	var rect := RULES_PANEL_RECT
 	_draw_neon_panel(surface, rect, C_AMBER, 0.14)
 	var title := str(guide.get("title", explainer.get("title", "How to play"))).to_upper()
@@ -3285,12 +3289,12 @@ func _draw_console(surface, state: Dictionary) -> void:
 	var panel := Rect2(0, CONSOLE_Y, 900, 86)
 	surface.draw_rect(panel, Color(0.02, 0.02, 0.05, 0.86))
 	surface.draw_rect(panel, Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.18), false, 1)
-	var guide := _copy_dict(state.get("bar_dice_turn_guide", {}))
+	var guide := _draw_dict_view(state.get("bar_dice_turn_guide", {}))
 	_draw_chip_ladder(surface, state, phase)
 	surface.surface_label("ANTE $%d" % int(state.get("active_stake", 0)), Vector2(330, CONSOLE_Y + 24), 12, C_YELLOW)
 	surface.surface_label("POT $%d" % int(state.get("pot_meter", 0)), Vector2(330, CONSOLE_Y + 44), 12, C_TEAL)
 	surface.surface_label("CARRY $%d" % int(state.get("carryover_pot", 0)), Vector2(330, CONSOLE_Y + 64), 11, C_SOFT)
-	var buttons := _dictionary_array(state.get("bar_dice_action_buttons", []))
+	var buttons := _draw_array_view(state.get("bar_dice_action_buttons", []))
 	var widths := CONSOLE_SELECT_BUTTON_WIDTHS if phase == "select" else CONSOLE_ROLL_BUTTON_WIDTHS
 	var x := 428.0
 	for i in range(mini(buttons.size(), widths.size())):
@@ -3313,14 +3317,14 @@ func _draw_console(surface, state: Dictionary) -> void:
 		var delta := int(state.get("result_bankroll_delta", 0))
 		var heat := int(state.get("result_suspicion_delta", 0))
 		var color := C_TEAL if delta > 0 else C_YELLOW if delta == 0 else C_ORANGE
-		surface.surface_label("Bankroll %+d  Heat %+d" % [delta, heat], Vector2(452, CONSOLE_Y + 74), 11, color)
+		surface.surface_label_centered("Bankroll %+d  Heat %+d" % [delta, heat], BAR_DICE_GUIDANCE_RECT, 11, color)
 	else:
 		var prompt := str(guide.get("shake_hint", "Roll, mark dice, shake, then settle."))
-		surface.surface_label(prompt.left(74), Vector2(452, CONSOLE_Y + 74), 9, C_SOFT)
+		surface.surface_label_centered(prompt, BAR_DICE_GUIDANCE_RECT, 9, C_SOFT)
 
 
 func _draw_chip_ladder(surface, state: Dictionary, phase: String) -> void:
-	var ladder := _int_array(state.get("stake_ladder", []))
+	var ladder := _draw_array_view(state.get("stake_ladder", []))
 	var selected := int(state.get("selected_stake_index", 0))
 	for i in range(ladder.size()):
 		var rect := Rect2(28 + i * 54, CONSOLE_Y + 22, 46, 34)
@@ -3375,6 +3379,7 @@ func _bar_dice_layout_snapshot() -> Dictionary:
 		"rules_panel": _rect_payload(RULES_PANEL_RECT),
 		"paytable_panel": _rect_payload(PAYTABLE_PANEL_RECT),
 		"round_timer": _rect_payload(ROUND_TIMER_RECT),
+		"guidance_rect": BAR_DICE_GUIDANCE_RECT,
 		"text_panel_rects": _bar_dice_text_panel_regions(),
 		"patron_safe_rects": _bar_dice_patron_safe_rects(),
 	}
@@ -3385,6 +3390,7 @@ func _bar_dice_text_panel_regions() -> Array:
 		_rect_payload(RULES_PANEL_RECT, "rules"),
 		_rect_payload(PAYTABLE_PANEL_RECT, "paytable"),
 		_rect_payload(ROUND_TIMER_RECT, "round_timer"),
+		_rect_payload(BAR_DICE_GUIDANCE_RECT, "console_guidance"),
 	]
 
 
@@ -3578,6 +3584,16 @@ func _dictionary_array(value: Variant) -> Array:
 		if typeof(entry) == TYPE_DICTIONARY:
 			result.append((entry as Dictionary).duplicate(true))
 	return result
+
+
+# Surface-state collections are immutable for a draw. Renderer-only views avoid
+# rebuilding normalized dice and control data on every animation frame.
+static func _draw_dict_view(value: Variant) -> Dictionary:
+	return value as Dictionary if typeof(value) == TYPE_DICTIONARY else {}
+
+
+static func _draw_array_view(value: Variant) -> Array:
+	return value as Array if typeof(value) == TYPE_ARRAY else []
 
 
 func _color_name(name: String) -> Dictionary:

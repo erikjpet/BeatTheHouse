@@ -6,7 +6,9 @@ param(
     [ValidateRange(1, 16)]
     [int]$Throttle = 1,
     [string]$OutDir = "",
-    [switch]$AggregateOnly
+    [string]$ResumeFrom = "",
+    [switch]$AggregateOnly,
+    [switch]$SelfTest
 )
 
 $ErrorActionPreference = "Stop"
@@ -35,6 +37,12 @@ if (-not $OutDir) {
     $OutDir = Join-Path $projectRoot ".tmp\coin_pusher_ev_$stamp"
 }
 $OutDir = [System.IO.Path]::GetFullPath($OutDir)
+if ($ResumeFrom) {
+    if ($AggregateOnly) { throw "ResumeFrom and AggregateOnly are mutually exclusive." }
+    $ResumeFrom = [System.IO.Path]::GetFullPath($ResumeFrom)
+    if (-not (Test-Path -LiteralPath $ResumeFrom -PathType Container)) { throw "ResumeFrom does not exist: $ResumeFrom" }
+    if ($ResumeFrom -ceq $OutDir) { throw "ResumeFrom and OutDir must differ so prior evidence is never overwritten." }
+}
 $projectPrefix = [System.IO.Path]::GetFullPath($projectRoot)
 if (-not $projectPrefix.EndsWith([System.IO.Path]::DirectorySeparatorChar)) { $projectPrefix += [System.IO.Path]::DirectorySeparatorChar }
 if (-not $OutDir.StartsWith($projectPrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
@@ -198,6 +206,56 @@ function Read-EvShardReport([object]$Job) {
     return [pscustomobject]@{ Ok = $true; Report = $report; Kind = ""; Detail = "" }
 }
 
+function Get-ReusableEvShardReport([object]$Job, [string]$SourceDir, [object]$ExpectedRunnerProvenance) {
+    $stem = "$($Job.Machine)_shard_$('{0:D2}' -f $Job.Shard)"
+    $priorJson = Join-Path $SourceDir "$stem.json"
+    if (-not (Test-Path -LiteralPath $priorJson -PathType Leaf)) {
+        return [pscustomobject]@{ Reusable = $false; Reject = $false; Report = $null; Stem = $stem; Json = $priorJson; Kind = "missing"; Detail = "" }
+    }
+    $priorJob = [pscustomobject]@{ Machine = $Job.Machine; Shard = $Job.Shard; Accepted = $Job.Accepted; Json = $priorJson }
+    $parsed = Read-EvShardReport $priorJob
+    if (-not $parsed.Ok) {
+        return [pscustomobject]@{
+            Reusable = $false; Reject = $null -eq $parsed.FailureReport; Report = $null
+            Stem = $stem; Json = $priorJson; Kind = $parsed.Kind; Detail = $parsed.Detail
+        }
+    }
+    $priorEngine = $parsed.Report.runner_provenance.engine
+    if ([string]$priorEngine.configured_sha256 -cne [string]$ExpectedRunnerProvenance.engine.configured_sha256 -or
+        [string]$priorEngine.worker_sha256 -cne [string]$ExpectedRunnerProvenance.engine.worker_sha256 -or
+        [int64]$parsed.Report.accepted_player_inserts -ne [int64]$Job.Accepted -or -not [bool]$parsed.Report.passed) {
+        return [pscustomobject]@{ Reusable = $false; Reject = $true; Report = $null; Stem = $stem; Json = $priorJson; Kind = "resume_identity_mismatch"; Detail = "Engine/count/pass identity mismatch." }
+    }
+    return [pscustomobject]@{ Reusable = $true; Reject = $false; Report = $parsed.Report; Stem = $stem; Json = $priorJson; Kind = ""; Detail = "" }
+}
+
+if ($SelfTest) {
+    if ($AggregateOnly -or $ResumeFrom) { throw "SelfTest cannot be combined with AggregateOnly or ResumeFrom." }
+    if ($enginePreflightFailure) { throw "Self-test engine preflight failed: $enginePreflightFailure" }
+    $testRoot = Join-Path $projectRoot (".tmp\coin_pusher_ev_harness_selftest\" + [guid]::NewGuid().ToString("N"))
+    New-Item -ItemType Directory -Path $testRoot -Force | Out-Null
+    $testJob = [pscustomobject]@{ Machine = "quarter_falls"; Shard = 0; Accepted = 64 }
+    $hash = "a" * 64
+    $testReport = [ordered]@{
+        schema = "coin_pusher_v3_physical_ev_shard_v2"; machine_id = "quarter_falls"; shard_index = 0
+        accepted_player_inserts = 64; accounting = [ordered]@{}; assertions = [ordered]@{}
+        coverage = [ordered]@{}; economy = [ordered]@{}; geometry_sha256 = $hash; policy_sha256 = $hash
+        passed = $true; runner_provenance = $runnerProvenance
+    }
+    $testReport | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath (Join-Path $testRoot "quarter_falls_shard_00.json") -Encoding utf8
+    $valid = Get-ReusableEvShardReport $testJob $testRoot $runnerProvenance
+    if (-not $valid.Reusable -or $valid.Reject) { throw "Self-test rejected exact reusable shard." }
+    $wrongEngine = $runnerProvenance | ConvertTo-Json -Depth 8 | ConvertFrom-Json
+    $wrongEngine.engine.worker_sha256 = "b" * 64
+    $changedEngine = Get-ReusableEvShardReport $testJob $testRoot $wrongEngine
+    if ($changedEngine.Reusable -or -not $changedEngine.Reject) { throw "Self-test accepted a resume shard from a different engine." }
+    $wrongCountJob = [pscustomobject]@{ Machine = "quarter_falls"; Shard = 0; Accepted = 65 }
+    $changedCount = Get-ReusableEvShardReport $wrongCountJob $testRoot $runnerProvenance
+    if ($changedCount.Reusable -or -not $changedCount.Reject) { throw "Self-test accepted a resume shard with a different target count." }
+    Write-Host "COIN_PUSHER_EV_HARNESS_SELF_TEST_PASS exact_resume_accepted=true changed_engine_rejected=true changed_count_rejected=true evidence=$testRoot"
+    exit 0
+}
+
 if (-not $AggregateOnly) {
     $plannedOutputs = [System.Collections.Generic.List[string]]::new()
     foreach ($job in $jobs) {
@@ -250,7 +308,24 @@ elseif ($enginePreflightFailure) {
 }
 else {
     $pending = [System.Collections.Generic.Queue[object]]::new()
-    foreach ($job in $jobs) { $pending.Enqueue($job) }
+    $resumedJobs = [System.Collections.Generic.List[string]]::new()
+    if ($ResumeFrom) {
+        foreach ($job in $jobs) {
+            $resume = Get-ReusableEvShardReport $job $ResumeFrom $runnerProvenance
+            if ($resume.Reject) { throw "Resume shard is not valid reusable evidence ($($resume.Stem)): $($resume.Kind) $($resume.Detail)" }
+            if (-not $resume.Reusable) { continue }
+            Copy-Item -LiteralPath $resume.Json -Destination $job.Json
+            foreach ($suffix in @("stdout.txt", "stderr.txt")) {
+                $source = Join-Path $ResumeFrom "$($resume.Stem).$suffix"
+                $destination = if ($suffix -eq "stdout.txt") { $job.Stdout } else { $job.Stderr }
+                if (Test-Path -LiteralPath $source -PathType Leaf) { Copy-Item -LiteralPath $source -Destination $destination }
+                else { New-Item -ItemType File -Path $destination | Out-Null }
+            }
+            $job.ExitCode = 0; $job.Report = $resume.Report
+            $completed.Add($job); $resumedJobs.Add($resume.Stem)
+        }
+    }
+    foreach ($job in $jobs) { if ($null -eq $job.Report) { $pending.Enqueue($job) } }
     $running = [System.Collections.Generic.List[object]]::new()
     $launchStopped = $false
     $nextProgressAt = Get-Date
@@ -613,10 +688,13 @@ if ($AggregateOnly) {
         $manifestRunnerProvenance = [ordered]@{ schema = $runnerSchema; runner_version = ""; status = "incompatible_or_missing_aggregate_evidence"; source = "aggregate_reports"; guard = $null; engine = $null }
     }
 }
+$resumeCommandSuffix = if ($ResumeFrom) { " -ResumeFrom '$ResumeFrom'" } else { "" }
 $finalReport = [ordered]@{
     schema = "coin_pusher_v3_physical_ev_harness_v2"
     generated_at = (Get-Date).ToUniversalTime().ToString("o")
-    command = "tools/coin_pusher_ev_harness.ps1 -AcceptedPerMachine $AcceptedPerMachine -ShardsPerMachine $ShardsPerMachine -Throttle $Throttle"
+    command = "tools/coin_pusher_ev_harness.ps1 -AcceptedPerMachine $AcceptedPerMachine -ShardsPerMachine $ShardsPerMachine -Throttle $Throttle$resumeCommandSuffix"
+    resume_from = $ResumeFrom
+    resumed_shards = if ($null -ne $resumedJobs) { @($resumedJobs) } else { @() }
     methodology = [ordered]@{
         accepted_drop_minimum_per_machine = 200000
         production_machine_persistent_per_deterministic_shard = $true

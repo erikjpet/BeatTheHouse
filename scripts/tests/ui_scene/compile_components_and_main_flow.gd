@@ -52,6 +52,19 @@ const MusicLayerChoreographyScript := preload("res://scripts/ui/music_layer_chor
 const TEST_SETTINGS_PATH := "user://settings_ui_scene_compile_check.json"
 const TEST_META_COLLECTION_PATH := "user://ui_scene_compile_meta_collection.json"
 const TEST_PROFILE_INVENTORY_PATH := "user://ui_scene_compile_profile_inventory.json"
+const EXPECTED_GAME_LIBRARY_LAUNCHERS := [
+	{"id": "scratch_tickets", "label": "Scratch Tickets"},
+	{"id": "pull_tabs", "label": "Pull Tabs"},
+	{"id": "slot", "label": "Slot"},
+	{"id": "bar_dice", "label": "Bar Dice"},
+	{"id": "blackjack", "label": "Blackjack"},
+	{"id": "baccarat", "label": "Baccarat"},
+	{"id": "craps", "label": "Craps"},
+	{"id": "roulette", "label": "Roulette"},
+	{"id": "crew_draw_poker", "label": "Back-Room Hold'em"},
+	{"id": "video_poker", "label": "Video Poker"},
+	{"id": "coin_pusher", "label": "Quarter Falls"},
+]
 
 
 func _copy_array(value: Variant) -> Array:
@@ -127,6 +140,102 @@ func _click_visible_button(node: Node, text: String) -> bool:
 		if _click_visible_button(child, text):
 			return true
 	return false
+
+
+func _game_library_launch_buttons(node: Node) -> Array:
+	var result: Array = []
+	if node == null:
+		return result
+	if node is Button and node.has_meta("game_test_id"):
+		result.append(node)
+	for child in node.get_children():
+		result.append_array(_game_library_launch_buttons(child))
+	return result
+
+
+func _ancestor_scroll_container(control: Control) -> ScrollContainer:
+	var ancestor := control.get_parent()
+	while ancestor != null:
+		if ancestor is ScrollContainer:
+			return ancestor as ScrollContainer
+		ancestor = ancestor.get_parent()
+	return null
+
+
+# The production boot path intentionally loads only the lightweight start-menu
+# catalog. This probe must open Games before any run/tutorial helper can warm the
+# full catalog, otherwise the test can compare an empty page with the same empty
+# source and report a false green.
+func _check_cold_game_library_launchers() -> bool:
+	var probe: Control = MainScene.instantiate()
+	probe.set("continuous_environment_clock_enabled", false)
+	probe.set("autosave_slot_id", "foundation_ui_compile_game_library")
+	root.add_child(probe)
+	await process_frame
+	await process_frame
+	var library_button := probe.get("game_library_button") as Button
+	if library_button == null or not library_button.is_visible_in_tree() or library_button.disabled:
+		push_error("Cold main menu did not expose an enabled Games button.")
+		probe.queue_free()
+		await process_frame
+		return false
+	library_button.emit_signal("pressed")
+	await process_frame
+	var menu := probe.get("game_test_menu") as Control
+	var library := probe.get("library") as ContentLibrary
+	if menu == null or not menu.is_visible_in_tree() or library == null or not library.is_fully_loaded():
+		push_error("Opening Games from a cold start did not load and show the complete game catalog.")
+		probe.queue_free()
+		await process_frame
+		return false
+	var buttons := _game_library_launch_buttons(menu)
+	var buttons_by_id := {}
+	for button_value in buttons:
+		var button := button_value as Button
+		var game_id := str(button.get_meta("game_test_id", ""))
+		if game_id.is_empty() or buttons_by_id.has(game_id):
+			push_error("Games page exposed an empty or duplicate launcher id: %s." % game_id)
+			probe.queue_free()
+			await process_frame
+			return false
+		buttons_by_id[game_id] = button
+	if buttons.size() != EXPECTED_GAME_LIBRARY_LAUNCHERS.size():
+		push_error("Cold Games page exposed %d launch buttons instead of all %d: %s." % [buttons.size(), EXPECTED_GAME_LIBRARY_LAUNCHERS.size(), JSON.stringify(buttons_by_id.keys())])
+		probe.queue_free()
+		await process_frame
+		return false
+	for expected_value in EXPECTED_GAME_LIBRARY_LAUNCHERS:
+		var expected: Dictionary = expected_value
+		var game_id := str(expected.get("id", ""))
+		var button := buttons_by_id.get(game_id) as Button
+		if button == null or button.text != str(expected.get("label", "")):
+			push_error("Games page did not expose the exact %s launcher for %s." % [str(expected.get("label", "")), game_id])
+			probe.queue_free()
+			await process_frame
+			return false
+		var scroll := _ancestor_scroll_container(button)
+		if not button.is_visible_in_tree() or button.disabled or button.mouse_filter != Control.MOUSE_FILTER_STOP \
+				or button.get_signal_connection_list("pressed").is_empty() or not button.get_global_rect().has_area() \
+				or scroll == null or not scroll.get_global_rect().grow(1.0).encloses(button.get_global_rect()):
+			push_error("Games page launcher %s was hidden, disabled, disconnected, clipped, or unable to receive pointer input." % game_id)
+			probe.queue_free()
+			await process_frame
+			return false
+	if probe.get("run_state") != null or not _has_visible_text(menu, "%d games available" % EXPECTED_GAME_LIBRARY_LAUNCHERS.size()):
+		push_error("Opening the complete Games page mutated a run or did not report all 11 available games.")
+		probe.queue_free()
+		await process_frame
+		return false
+	probe.call("close_game_test_menu")
+	await process_frame
+	var menu_controls := probe.get("start_menu_controls") as Control
+	var closed_cleanly := not menu.visible and menu_controls != null and menu_controls.is_visible_in_tree()
+	probe.queue_free()
+	await process_frame
+	if not closed_cleanly:
+		push_error("Cold Games page did not return to the main menu cleanly.")
+		return false
+	return true
 
 
 # SPLIT_RUNNER_OMIT_BEGIN
@@ -486,7 +595,7 @@ func _check_career_stats_screen_component() -> bool:
 			{"id": "crew", "title": "Crew", "rows": [{"label": "Highest standing", "value": "Inner Circle"}, {"label": "Members met", "value": "7"}, {"label": "Jobs", "value": "9 completed / 2 abandoned"}]},
 			{"id": "world", "title": "World", "rows": [{"label": "Scenarios experienced", "value": "14"}, {"label": "Rumors proved true", "value": "5"}]},
 			{"id": "numbers", "title": "Numbers", "rows": [{"label": "Slips placed", "value": "11"}, {"label": "Hits", "value": "3"}, {"label": "Rig routes used", "value": "1"}]},
-			{"id": "games", "title": "Games", "rows": [{"label": "Craps", "value": "7"}, {"label": "Quarter Falls", "value": "4"}, {"label": "Back-Room Poker", "value": "5"}]},
+			{"id": "games", "title": "Games", "rows": [{"label": "Craps", "value": "7"}, {"label": "Quarter Falls", "value": "4"}, {"label": "Back-Room Hold'em", "value": "5"}]},
 			{"id": "deliveries", "title": "Deliveries", "rows": [{"label": "Runs completed", "value": "6"}, {"label": "Packages lost", "value": "2"}]},
 		],
 		"challenges": [],
@@ -499,7 +608,7 @@ func _check_career_stats_screen_component() -> bool:
 		push_error("Career ledger did not render all three victory routes and five 0.6 sections: %s." % JSON.stringify(snapshot))
 		return false
 	var ledger_text := str(snapshot.get("visible_ledger_text", ""))
-	for required in ["Inner Circle", "Members met 7", "Scenarios experienced 14", "Craps 7", "Quarter Falls 4", "Back-Room Poker 5", "Packages lost 2"]:
+	for required in ["Inner Circle", "Members met 7", "Scenarios experienced 14", "Craps 7", "Quarter Falls 4", "Back-Room Hold'em 5", "Packages lost 2"]:
 		if ledger_text.find(required) == -1:
 			push_error("Career ledger truncated or omitted an essential value '%s': %s." % [required, ledger_text])
 			return false
@@ -650,7 +759,7 @@ func _check_run_report_screen_component() -> bool:
 			"World | 2 nights | 3 scenarios | 2 aftermath | 1 sweep | 2 true rumors",
 			"Numbers | 4 slips | 1 hit | rig used",
 			"Deliveries | 2 complete | 1 lost",
-			"Games | Craps 3 | Quarter Falls 2 | Back-Room Poker 4",
+			"Games | Craps 3 | Quarter Falls 2 | Back-Room Hold'em 4",
 			"The Turn | The Turn broke the score.",
 		]},
 		"timeline": timeline,
@@ -696,7 +805,7 @@ func _check_run_report_screen_component() -> bool:
 		push_error("Run report did not precompute/install its shared timeline exactly once.")
 		return false
 	var release_ledger_text := str(snapshot.get("release_ledger_text", ""))
-	if int(snapshot.get("release_ledger_line_count", 0)) != 6 or release_ledger_text.find("path walked") == -1 or release_ledger_text.find("2 aftermath") == -1 or release_ledger_text.find("Quarter Falls 2") == -1 or release_ledger_text.find("Back-Room Poker 4") == -1 or release_ledger_text.find("The Turn broke the score") == -1:
+	if int(snapshot.get("release_ledger_line_count", 0)) != 6 or release_ledger_text.find("path walked") == -1 or release_ledger_text.find("2 aftermath") == -1 or release_ledger_text.find("Quarter Falls 2") == -1 or release_ledger_text.find("Back-Room Hold'em 4") == -1 or release_ledger_text.find("The Turn broke the score") == -1:
 		push_error("Run report omitted or truncated an essential 0.6 ledger value: %s." % release_ledger_text)
 		return false
 	var result_panel_rect: Rect2 = snapshot.get("result_panel_rect", Rect2())
@@ -1207,6 +1316,21 @@ func _check_talk_dock_component() -> bool:
 	if str(stable_snapshot.get("layout_side", "")) != "right" or int(stable_snapshot.get("layout_side_change_count", -2)) != stable_side_changes or int(stable_snapshot.get("layout_position_change_count", -2)) != stable_position_changes or not _snapshot_rect(stable_snapshot.get("occupied_rect", Rect2())).is_equal_approx(avoided_occupied):
 		parent.queue_free()
 		push_error("TalkDock changed side or position while the same focus boundary jittered: %s." % str(stable_snapshot))
+		return false
+	# Scenario-owned props can occupy the nominal dialogue corner, but the player
+	# has explicitly selected the actor on the left. The conversation must remain
+	# bottom-right; PixelSceneCanvas will reserve and reflow the room beneath it.
+	dock.set_avoid_global_rect(
+		Rect2(80, 520, 150, 110),
+		"fixture:left-focus-with-room-props",
+		155.0,
+		[Rect2(700, 380, 560, 320)]
+	)
+	await process_frame
+	var protected_focus_snapshot := dock.current_snapshot()
+	if str(protected_focus_snapshot.get("layout_side", "")) != "right" or str(protected_focus_snapshot.get("layout_vertical", "")) != "bottom" or not bool(protected_focus_snapshot.get("anchored_bottom", false)):
+		parent.queue_free()
+		push_error("TalkDock let unrelated room props move a selected left-side actor conversation away from bottom-right: %s." % str(protected_focus_snapshot))
 		return false
 	dock.set_avoid_global_rect(Rect2(1050, 520, 150, 110), "fixture:right-focus")
 	await process_frame
@@ -2473,25 +2597,35 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 	# remains disabled and each hash covers the full serialized value. env06_6
 	# canonically adds visit, night, and context instance identity to host state.
 	# The 0.6 sequence-authority integration also persists the complete sealed
-	# base interaction geometry/action records, so the two full-state hashes below
-	# intentionally include that now-authoritative schema while all scalar, route,
-	# RNG, and story results remain byte-identical. The final env06 rollout adds
-	# its canonical generated environment and world-map records to those hashes.
+	# base interaction geometry/action records. The final env06 rollout adds its
+	# canonical generated environment/world-map records and consumes the accepted
+	# generation RNG/story path, so those full-value hashes and RNG state move
+	# together while the scalar and selected-route contract remains unchanged.
+	# These hashes were refreshed on exact integrated candidate `039e3326` after
+	# the accepted environment/world rollout. The scalar route contract is
+	# unchanged and the delivery subsystem remains fully inactive. refine06_1's
+	# strict collision-safe scenario placement changes only the generated room
+	# layout and the world-map record embedding that room; the route, RNG, story,
+	# money, Heat, clock, and travel-count values remain byte-identical. The
+	# unified-room-plane change at db60e0b1 adds the stable Numbers fixtures to the
+	# occupied plane and reflows scenario objects around every authored object.
+	# A detached bf398237 replay and two exact-candidate replays confirmed that
+	# only the layout-derived environment/world-map records changed.
 	const EXPECTED := {
 		"bankroll_delta": -4,
 		"clock_delta": 42,
-		"current_environment_sha256": "1c6d579b8da9328bb0cf1cc6fbdf7c30c964dcd111cee98b1707f999cd221907",
+		"current_environment_sha256": "5174d7b67fd4608517ef514d4f5e10e70f334c2af64b445b5894a1d2db5fb4ce",
 		"current_world_node_id": "bar",
 		"heat_delta": 0,
 		"provenance_commit": "9cff9b2309d70c6c93ab34cc60cc18f79f56201b",
-		"rng_state": 70883311,
+		"rng_state": 953559834,
 		"route_choice_sha256": "3fd96381385eb4ba8868bddac39f233b6c62d586e0cd4b249f45e050cb10657b",
 		"seed": "DELIVERY-ORDINARY-BASELINE",
 		"target_id": "bar",
 		"town_action_index": 0,
 		"travel_count_delta": 1,
-		"travel_story_sha256": "0801d8c617e0ab15f304eae949a7c70fae01fc4031f24580d34f74e2dedd72ce",
-		"world_map_sha256": "fad264b0d615c347d139f31594fe0b2d8a05bf0a39282b9b7182f2f2bc7265a9",
+		"travel_story_sha256": "0257877551b37226fd62316ee2af5e047a27387fbb87d5acfa0273d1366a0e81",
+		"world_map_sha256": "7c9bf8053b63ea69b5edebcb223b61a2b675127bf98ef259bfb328a9e9de7299",
 	}
 	app.call("start_foundation_run", "DELIVERY-ORDINARY-BASELINE", {}, false)
 	for _start_frame in range(3):
@@ -3209,6 +3343,31 @@ func _check_performance_liveness_guard_component() -> bool:
 		await process_frame
 	var restored: Dictionary = canvas.call("performance_counters")
 	var restored_check := PerformanceLivenessGuardScript.evaluate("UI regression blackjack surface", counter, 1, int(restored.get(counter, 0)))
+	if int(restored.get("surface_animation_scheduler_elapsed_msec", 0)) <= 0 \
+			or not is_equal_approx(float(restored.get("surface_idle_animation_fps", 0.0)), 60.0) \
+			or int(restored.get("draw_sample_count", 0)) <= 0:
+		canvas.queue_free()
+		push_error("Restored idle-animation evidence omitted cadence, scheduler elapsed, or draw count.")
+		return false
+	# The timing buffer is intentionally bounded, but liveness uses a separate
+	# reset-scoped total so a long performance run cannot make its draw delta zero.
+	canvas.set_process(false)
+	canvas.call("reset_performance_counters")
+	for _sample_index in range(520):
+		canvas.call("_record_draw_performance", Time.get_ticks_usec())
+	var saturated: Dictionary = canvas.call("performance_counters")
+	if int(saturated.get("draw_sample_count", -1)) != 520 or int(saturated.get("draw_sample_buffer_count", -1)) != 512:
+		canvas.queue_free()
+		push_error("The monotonic draw count saturated with its bounded timing buffer.")
+		return false
+	canvas.call("reset_performance_counters")
+	var reset: Dictionary = canvas.call("performance_counters")
+	if int(reset.get("draw_sample_count", -1)) != 0 \
+			or int(reset.get("draw_sample_buffer_count", -1)) != 0 \
+			or int(reset.get("surface_animation_scheduler_elapsed_msec", -1)) != 0:
+		canvas.queue_free()
+		push_error("Performance counter reset retained draw or scheduler evidence.")
+		return false
 	canvas.queue_free()
 	await process_frame
 	if not bool(restored_check.get("passed", false)):
@@ -3570,6 +3729,9 @@ func _run() -> void:
 	if not await _check_performance_liveness_guard_component():
 		quit(1)
 		return
+	if not await _check_cold_game_library_launchers():
+		quit(1)
+		return
 
 	var app: Control = MainScene.instantiate()
 	# UI interaction fixtures advance their simulation state explicitly. The
@@ -3728,8 +3890,8 @@ func _run() -> void:
 		quit(1)
 		return
 	var game_library_button: Button = app.get("game_library_button")
-	var game_library_page: Control = app.get("game_test_menu")
-	if game_library_button == null or game_library_page == null or not game_library_button.visible or game_library_button.disabled:
+	var game_library_page: Control
+	if game_library_button == null or not game_library_button.visible or game_library_button.disabled:
 		push_error("Main menu did not expose the Games page.")
 		quit(1)
 		return
@@ -3738,6 +3900,10 @@ func _run() -> void:
 		push_error("Release main menu did not expose the Daily Challenge button.")
 		quit(1)
 		return
+	# Run configuration is a release-startup lazy panel. Open it through its
+	# production route before asserting the challenge controls it owns.
+	app.call("open_run_configuration")
+	await process_frame
 	var challenge_select_button: Button = app.get("challenge_select_button")
 	var challenge_new_run_button: Button = app.get("run_config_start_button")
 	var challenge_seed_input: LineEdit = app.get("seed_input")
@@ -3863,7 +4029,8 @@ func _run() -> void:
 		return
 	game_library_button.emit_signal("pressed")
 	await process_frame
-	if not game_library_page.visible or start_menu_controls.visible:
+	game_library_page = app.get("game_test_menu")
+	if game_library_page == null or not game_library_page.visible or start_menu_controls.visible:
 		push_error("Games button did not open the main-menu Games page.")
 		quit(1)
 		return
@@ -4714,7 +4881,6 @@ func _run() -> void:
 		push_error("M1.6B environment mode still showed the game surface as a competing preview.")
 		quit(1)
 		return
-	var layout_serialized_before := JSON.stringify(app.call("serialized_run_state"))
 	var spatial_snapshot: Dictionary = app.call("current_spatial_interaction_snapshot")
 	var spatial_objects: Array = spatial_snapshot.get("objects", [])
 	if spatial_objects.is_empty():
@@ -5081,7 +5247,9 @@ func _run() -> void:
 	if not await _check_onboarding_06_real_numbers_seam(app):
 		quit(1)
 		return
-	app.call("start_foundation_run", "UI-COMPILE-SEED")
+	# This is a fresh layout-only fixture. Do not race an earlier asynchronous
+	# autosave from another UI scenario and accidentally resume mutated state.
+	app.call("start_foundation_run", "UI-COMPILE-SEED", {}, false)
 	await process_frame
 	var category_snapshot: Dictionary = app.call("current_action_category_snapshot")
 	var categories: Array = category_snapshot.get("categories", [])
@@ -5132,7 +5300,7 @@ func _run() -> void:
 	if bool(game_focus_info.get("visible", false)) and not _selected_info_text_fits(app.get("environment_canvas"), "game object info"):
 		quit(1)
 		return
-	if layout_serialized_before != JSON.stringify(app.call("serialized_run_state")):
+	if serialized_before_category_clicks != JSON.stringify(app.call("serialized_run_state")):
 		push_error("M1.5 layout-only inspection mutated serialized RunState.")
 		quit(1)
 		return
@@ -6669,6 +6837,14 @@ func _run() -> void:
 		push_error("Resolved event was not recorded in RunState.")
 		quit(1)
 		return
+	var resolved_event_objects: Array = app.call("_interactable_object_view_list")
+	for resolved_event_value in resolved_events:
+		var resolved_object_id := "event:%s" % str(resolved_event_value)
+		for object_value in resolved_event_objects:
+			if typeof(object_value) == TYPE_DICTIONARY and str((object_value as Dictionary).get("object_id", "")) == resolved_object_id:
+				push_error("Resolved event remained in the room interaction catalog: %s." % resolved_object_id)
+				quit(1)
+				return
 	var event_story_log: Array = event_run_state.get("story_log", [])
 	if event_story_log.is_empty() or str((event_story_log[event_story_log.size() - 1] as Dictionary).get("type", "")) != "event":
 		push_error("Event resolution did not record an event story entry.")

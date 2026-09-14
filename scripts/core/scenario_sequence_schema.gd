@@ -78,7 +78,7 @@ const MAX_PHASES := 16
 const MAX_BRANCHES_PER_PHASE := 8
 const MAX_OBJECTIVES := 8
 const MAX_STEPS_PER_OBJECTIVE := 8
-const SUCCESSFUL_VALIDATION_MEMO_VERSION := 1
+const SUCCESSFUL_VALIDATION_MEMO_VERSION := 2
 const SUCCESSFUL_VALIDATION_MEMO_MAX_ENTRIES := 256
 
 static var _successful_validation_memo: Dictionary = {}
@@ -156,16 +156,61 @@ static func validate_definition(definition: Dictionary, operation_registry: Vari
 
 
 static func _successful_validation_memo_key(definition: Dictionary, target_inventory: Dictionary, operation_registry: Variant) -> String:
-	# Loaded JSON and generated overlays have deterministic insertion order. A raw
-	# content digest is deliberately conservative here: semantically equivalent
-	# key reordering produces a cache miss (and therefore another full validation)
-	# instead of spending the hot path recursively sorting the entire definition.
+	# Loaded JSON and generated overlays have deterministic insertion order. Keep
+	# the authored definition raw rather than recursively sorting it on this path.
+	# Runtime inventories also contain unrelated room objects. Validation can only
+	# observe whether this definition's declared targets and exact event-bridge
+	# choices are authorized, so key that small projection instead of forcing an
+	# identical static phase/aftermath proof for every random room population.
+	var memo_definition := definition.duplicate(false)
+	memo_definition.erase("__scenario_sequence_runtime_validated")
+	memo_definition.erase("__scenario_sequence_catalog_resolved")
 	return JSON.stringify({
 		"memo_version": SUCCESSFUL_VALIDATION_MEMO_VERSION,
-		"definition": definition,
-		"target_inventory": target_inventory,
+		"definition": memo_definition,
+		"target_inventory": _validation_authority_memo_projection(definition, target_inventory),
 		"operation_registry": _operation_registry_memo_identity(operation_registry),
 	}).sha256_text()
+
+
+static func _validation_authority_memo_projection(definition: Dictionary, target_inventory: Dictionary) -> Dictionary:
+	if target_inventory.is_empty():
+		return {}
+	var authored := sequence(definition)
+	var declared := _dict(authored.get("declared_targets", {}))
+	var result := {"inventory_provided": true}
+	for collection_key in ["scene_objects", "interactions", "actors", "services", "games", "routes", "anchors", "zones"]:
+		var available: Dictionary = {}
+		for identity_value in _string_array(target_inventory.get(collection_key, [])):
+			available[str(identity_value)] = true
+		var presence: Dictionary = {}
+		for identity_value in _string_array(declared.get(collection_key, [])):
+			var identity := str(identity_value)
+			presence[identity] = available.has(identity)
+		result[collection_key] = presence
+	var event_choices := _dict(target_inventory.get("event_choices", {}))
+	var bridge_authority: Dictionary = {}
+	var graph := _dict(authored.get("phase_graph", {}))
+	for phase_value in _array(graph.get("phases", [])):
+		var phase := _dict(phase_value)
+		for operation_value in _array(phase.get("interaction_ops", [])):
+			var operation := _dict(operation_value)
+			var interaction := _dict(operation.get("interaction", {}))
+			for action_value in _array(interaction.get("available_actions", operation.get("available_actions", []))):
+				_append_event_bridge_memo_authority(_dict(action_value), event_choices, bridge_authority)
+	for subscription_value in _array(authored.get("fact_subscriptions", [])):
+		_append_event_bridge_memo_authority(_dict(subscription_value), event_choices, bridge_authority)
+	result["event_bridge_authority"] = bridge_authority
+	return result
+
+
+static func _append_event_bridge_memo_authority(source: Dictionary, event_choices: Dictionary, authority: Dictionary) -> void:
+	if str(source.get("handler", "")) != "event_bridge":
+		return
+	var inputs := _dict(source.get("inputs", {}))
+	var event_id := str(inputs.get("event_id", ""))
+	var resolution_id := str(inputs.get("resolution_id", ""))
+	authority["%s::%s" % [event_id, resolution_id]] = _array(event_choices.get(event_id, [])).has(resolution_id)
 
 
 static func _operation_registry_memo_identity(operation_registry: Variant) -> Dictionary:

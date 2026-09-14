@@ -1,0 +1,83 @@
+﻿{
+    "schema":  "beat_the_house.integ06_1_historical_capture_plan",
+    "version":  1,
+    "capture_class":  "mid_0_6",
+    "historical_release":  "mid-0.6-development-boundary",
+    "cases":  [
+                  {
+                      "capture_milestone":  "pre_game_depth",
+                      "fixture_id":  "mid06_pre_game_depth_slot",
+                      "seed":  "INTEG06-1-MID06-PRE-GAME-009",
+                      "travel_path":  [
+                                          "gas_station_casino"
+                                      ],
+                      "expected_archetype":  "gas_station_casino",
+                      "enter_game":  "slot",
+                      "surface_steps":  [
+                                            {
+                                                "type":  "click",
+                                                "action":  "slot_spin",
+                                                "index":  0,
+                                                "confirm":  true,
+                                                "pre_wait_msec":  250,
+                                                "wait_msec":  50
+                                            }
+                                        ],
+                      "expected_surface_state":  "slot_after_spin"
+                  },
+                  {
+                      "capture_milestone":  "pre_environment_depth",
+                      "fixture_id":  "mid06_pre_environment_depth_bar_dice",
+                      "seed":  "INTEG06-1-MID06-PRE-ENV-001",
+                      "travel_path":  [
+                                          "motel",
+                                          "bar"
+                                      ],
+                      "expected_archetype":  "bar",
+                      "enter_game":  "bar_dice",
+                      "surface_steps":  [
+                                            {
+                                                "type":  "click",
+                                                "action":  "bar_dice_roll",
+                                                "index":  0,
+                                                "confirm":  true,
+                                                "wait_msec":  50
+                                            },
+                                            {
+                                                "type":  "click",
+                                                "action":  "bar_dice_resolve",
+                                                "index":  0,
+                                                "confirm":  true,
+                                                "wait_msec":  50
+                                            }
+                                        ],
+                      "expected_surface_state":  "bar_dice_after_round"
+                  },
+                  {
+                      "capture_milestone":  "pre_world_depth",
+                      "fixture_id":  "mid06_pre_world_depth_crew_debt",
+                      "seed":  "INTEG06-1-MID06-PRE-GAME-009",
+                      "steps":  [
+                                    {
+                                        "type":  "travel",
+                                        "target":  "gas_station_casino"
+                                    },
+                                    {
+                                        "type":  "event",
+                                        "event_id":  "parking_lot_tip",
+                                        "choice_id":  "follow_tip"
+                                    },
+                                    {
+                                        "type":  "travel",
+                                        "target":  "corner_store"
+                                    },
+                                    {
+                                        "type":  "lender",
+                                        "lender_id":  "the_crew"
+                                    }
+                                ],
+                      "expected_archetype":  "corner_store",
+                      "expected_lender_debt":  "the_crew"
+                  }
+              ]
+}

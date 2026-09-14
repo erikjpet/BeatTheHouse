@@ -1,0 +1,61 @@
+﻿{
+    "schema":  "beat_the_house.integ06_1_historical_fixture_provenance",
+    "version":  1,
+    "fixture_id":  "v051_underground_blackjack_mid_game",
+    "historical_release":  "v0.5.1",
+    "historical_commit":  "f1ce7ec814b5034c229f53dcc0db6e799aaaee0b",
+    "historical_tree":  "19c5ed82c0d2d2390dab2b9b6662c70d8aed5d0d",
+    "historical_main_scene_blob":  "4b0643365098308dadfaee909d35e51784905811",
+    "historical_foundation_main_blob":  "3bc98efec993b8bfdd9252687a0ba041ebba7f23",
+    "historical_save_service_blob":  "57a6526016123feb9bcf1ebeb50cc8f937f0b265",
+    "driver_path":  "scripts/tests/foundation/integ06_1_v051_fixture_driver.gd",
+    "driver_sha256":  "25E29653F4284C9AB6261432B3BCA98006C8CB37F1D1C87DDF859E25F741FAAF",
+    "capture":  {
+                    "action_index":  2,
+                    "archetype_id":  "small_underground_casino",
+                    "challenge_id":  "",
+                    "challenge_modifiers":  {
+
+                                            },
+                    "environment_id":  "small_underground_casino_006",
+                    "fixture_id":  "v051_underground_blackjack_mid_game",
+                    "game_clock_minutes":  954,
+                    "game_id":  "blackjack",
+                    "game_state_key":  "blackjack",
+                    "methods":  [
+                                    "FoundationMain.start_foundation_run",
+                                    "FoundationMain.select_travel_option:gas_station_casino",
+                                    "FoundationMain.confirm_selected_travel",
+                                    "FoundationMain.select_event_choice:parking_lot_tip:follow_tip",
+                                    "FoundationMain.confirm_selected_event_choice",
+                                    "FoundationMain.select_travel_option:corner_store",
+                                    "FoundationMain.confirm_selected_travel",
+                                    "FoundationMain.use_lender_hook:the_crew",
+                                    "FoundationMain.select_travel_option:gas_station_casino",
+                                    "FoundationMain.confirm_selected_travel",
+                                    "FoundationMain.select_travel_option:motel",
+                                    "FoundationMain.confirm_selected_travel",
+                                    "FoundationMain.select_travel_option:small_underground_casino",
+                                    "FoundationMain.confirm_selected_travel",
+                                    "FoundationMain.enter_game",
+                                    "FoundationMain.save_foundation_run",
+                                    "SaveService.wait_for_async_save"
+                                ],
+                    "project_version":  "0.5.1",
+                    "save_path":  "isolated_distribution_root/saves/v051_underground_blackjack_mid_game.json",
+                    "save_schema":  "beat_the_house.foundation_run",
+                    "save_version":  2,
+                    "screen":  "GAME",
+                    "seed":  "INTEG06-1-V051-SMOKE-001",
+                    "travel_path":  [
+                                        "gas_station_casino",
+                                        "corner_store",
+                                        "gas_station_casino",
+                                        "motel",
+                                        "small_underground_casino"
+                                    ]
+                },
+    "save_file":  "v051_underground_blackjack_mid_game.json",
+    "save_size_bytes":  66535,
+    "save_sha256":  "42C4882BB8FBF634AAB27A46CFA0361BCACF6CAB064C86ED24AD5C41AF0F1866"
+}

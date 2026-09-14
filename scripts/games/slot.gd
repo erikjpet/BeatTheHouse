@@ -45,7 +45,26 @@ func sealed_action_authority_contract() -> Dictionary:
 	return {
 		"resolve_proposal_method": &"_machine_game_resolve_proposal",
 		"wager_cost_proposal_method": &"_machine_game_wager_cost_proposal",
+		"trusted_candidate_resolve_method": &"_machine_game_resolve_candidate",
+		"trusted_candidate_wager_method": &"_machine_game_wager_cost_candidate",
+		"proposal_runtime_checkpoint_method": &"_machine_game_runtime_checkpoint",
+		"proposal_runtime_restore_method": &"_machine_game_runtime_restore",
+		# Slot actions read the run but mutate only their bound machine until the
+		# host applies the accepted result. This lets Foundation replay the proposal
+		# against a narrow detached candidate and fingerprint the exact Slot inputs
+		# instead of serializing unrelated late-run story/world history six times.
+		"compact_authority_evidence_method": &"_machine_game_authority_evidence",
+		"lightweight_resolution_candidate": true,
+		"in_place_nonrejecting_commit": true,
+		# One current response plus its immediate predecessor covers synchronous
+		# retry/save recovery. Larger Blackjack hand history only made each later
+		# autoplay spin validate and copy stale presentation payloads.
+		"active_replay_limit": 2,
 		"host_auto_tick_method": &"_machine_game_host_needs_auto_tick",
+		# Slot deadlines live on the slowed presentation clock. Foundation keeps
+		# every other sealed game on its existing raw-clock contract and converts
+		# only this provider's cheap due predicate into the same timing domain.
+		"host_auto_tick_uses_drunk_scaled_time": true,
 		"surface_intent_key": "",
 		"surface_intent_index_key": "",
 		"retry_surface_actions": ["slot_retry_pending", "slot_spin", "spin"],
@@ -347,6 +366,71 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	return surface
 
 
+func embedded_action_view_patch(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
+	var machine := _peek_machine(environment)
+	if machine.is_empty():
+		return {}
+	var patch := surface_state(run_state, environment, ui_state)
+	# This full Slot-owned surface replaces only the embedded canvas state. It is
+	# derived after commit, so dense reel timelines never enter sealed replay
+	# responses and Foundation need not rebuild the surrounding game/room model.
+	patch["surface_action_realtime_refresh_required"] = true
+	patch["surface_action_catalog_key"] = RuntimeScript.canonical_fingerprint({
+		"state_key": _machine_state_key(environment),
+		"challenge_cheats_disabled": run_state.challenge_cheat_actions_disabled() if run_state != null else false,
+		"security_risk_bonus": run_state.security_risk_bonus("cheat") if run_state != null else 0,
+		"security_pressure": run_state.security_pressure_label() if run_state != null else "",
+		"pit_boss_watch": run_state.pit_boss_watch_status(environment) if run_state != null else {},
+		"nudge_ready": not _slot_copy_dict(machine.get("last_nudge_offer", {})).is_empty(),
+		"crew_actions": run_state.crew_play_actions(get_id(), environment) if run_state != null else [],
+	})
+	var selected := StateScript.selected_bet(machine)
+	var ceiling := run_state.wager_stake_ceiling(maxi(20, run_state.wager_capacity_for_game(get_id(), environment))) if run_state != null else 20
+	patch["surface_action_stake_view"] = {
+		"stake_floor": 2,
+		"stake_ceiling": maxi(2, ceiling),
+		"base_stake_ceiling": maxi(2, ceiling),
+		"economy_stake_ceiling": maxi(2, ceiling),
+		"selected_stake": int(selected.get("total_credits", 2)),
+	}
+	return patch
+
+
+func host_action_rollback_snapshot(action_id: String, run_state: RunState, environment: Dictionary) -> Dictionary:
+	if _normalize_action(action_id) != "spin" or run_state == null:
+		return {}
+	var state_key := _machine_state_key(environment)
+	var states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	var machine_value: Variant = states.get(state_key, null)
+	return {
+		"supported": true,
+		"state_key": state_key,
+		"machine_present": typeof(machine_value) == TYPE_DICTIONARY,
+		"machine": (machine_value as Dictionary).duplicate(true) if typeof(machine_value) == TYPE_DICTIONARY else {},
+		"environment_runtime_revision_present": environment.has("environment_runtime_revision"),
+		"environment_runtime_revision": int(environment.get("environment_runtime_revision", 0)),
+	}
+
+
+func restore_host_action_rollback(snapshot: Dictionary, _run_state: RunState, environment: Dictionary) -> bool:
+	if not bool(snapshot.get("supported", false)):
+		return false
+	var state_key := str(snapshot.get("state_key", "")).strip_edges()
+	if state_key.is_empty():
+		return false
+	var states: Dictionary = (environment.get("game_states", {}) as Dictionary).duplicate(false) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	if bool(snapshot.get("machine_present", false)):
+		states[state_key] = (snapshot.get("machine", {}) as Dictionary).duplicate(true)
+	else:
+		states.erase(state_key)
+	environment["game_states"] = states
+	if bool(snapshot.get("environment_runtime_revision_present", false)):
+		environment["environment_runtime_revision"] = int(snapshot.get("environment_runtime_revision", 0))
+	else:
+		environment.erase("environment_runtime_revision")
+	return true
+
+
 func _slot_live_ritual_projection(machine: Dictionary, surface: Dictionary, run_state: RunState) -> Dictionary:
 	var animation_id := str(machine.get("slot_animation_id", ""))
 	var feature_active := StateScript.active_bonus_incomplete(machine)
@@ -526,9 +610,22 @@ func _machine_game_resolve_proposal(action_id: String, stake: int, run_snapshot:
 		"ui_state": ui_state,
 	}
 	var candidate := RunState.new()
-	candidate.from_dict(run_snapshot.duplicate(true))
+	candidate.from_dict(run_snapshot)
 	var proposal_rng := RngStream.new()
-	proposal_rng.restore(rng_snapshot.duplicate(true))
+	proposal_rng.restore(rng_snapshot)
+	var result := _machine_game_resolve_candidate(action_id, stake, candidate, proposal_rng, ui_state)
+	var proposal := {
+		"ok": bool(result.get("ok", false)),
+		"input_fingerprint": RuntimeScript.canonical_fingerprint(proposal_input),
+		"result": result.duplicate(true),
+		"run_snapshot": candidate.to_save_snapshot(),
+		"rng_snapshot": proposal_rng.snapshot(),
+	}
+	proposal["output_fingerprint"] = RuntimeScript.canonical_fingerprint(proposal)
+	return proposal
+
+
+func _machine_game_resolve_candidate(action_id: String, stake: int, candidate: RunState, proposal_rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
 	var result: Dictionary
 	if action_id == "slot_handpay_acknowledge":
 		var acknowledgement := _slot_handpay_acknowledgement_proposal(candidate.current_environment)
@@ -541,25 +638,95 @@ func _machine_game_resolve_proposal(action_id: String, stake: int, run_snapshot:
 		result = resolve_with_context(action_id, stake, candidate, candidate.current_environment, proposal_rng, ui_state.duplicate(true))
 		if bool(result.get("ok", false)) and bool(result.get("host_apply_result", false)):
 			result["machine_game_proposal_requires_apply"] = true
-	var proposal := {
-		"ok": bool(result.get("ok", false)),
-		"input_fingerprint": RuntimeScript.canonical_fingerprint(proposal_input),
-		"result": result.duplicate(true),
-		"run_snapshot": candidate.to_save_snapshot(),
-		"rng_snapshot": proposal_rng.snapshot(),
-	}
-	proposal["output_fingerprint"] = RuntimeScript.canonical_fingerprint(proposal)
-	return proposal
+	return result
 
 
 func _machine_game_wager_cost_proposal(action_id: String, stake: int, run_snapshot: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
 	var candidate := RunState.new()
-	candidate.from_dict(run_snapshot.duplicate(true))
-	var cost := wager_cost_for_context(action_id, stake, candidate, candidate.current_environment, ui_state.duplicate(true))
+	candidate.from_dict(run_snapshot)
+	var cost := _machine_game_wager_cost_candidate(action_id, stake, candidate, ui_state)
 	return {
 		"cost": maxi(0, cost),
 		"input_fingerprint": RuntimeScript.canonical_fingerprint({"action_id": action_id, "stake": stake, "run_snapshot": run_snapshot, "ui_state": ui_state}),
 	}
+
+
+func _machine_game_wager_cost_candidate(action_id: String, stake: int, candidate: RunState, ui_state: Dictionary = {}) -> int:
+	return wager_cost_for_context(action_id, stake, candidate, candidate.current_environment, ui_state.duplicate(true))
+
+
+func _machine_game_authority_evidence(candidate: RunState, action_id: String, stake: int, ui_state: Dictionary = {}) -> Dictionary:
+	if candidate == null:
+		return {}
+	var environment := candidate.current_environment
+	var machine := _peek_machine(environment).duplicate(false)
+	# Replay/cache metadata proves the transaction envelope, not Slot math. It is
+	# already validated independently by the host and must not recursively enlarge
+	# the next action's deterministic evidence.
+	machine.erase(ActionAuthorityScript.LEDGER_KEY)
+	machine.erase(ActionAuthorityScript.PENDING_APPLY_RECEIPT_KEY)
+	var environment_evidence := {
+		"id": str(environment.get("id", "")),
+		"archetype_id": str(environment.get("archetype_id", "")),
+		"kind": str(environment.get("kind", "")),
+		"tier": int(environment.get("tier", 0)),
+		"turns": int(environment.get("turns", 0)),
+		"economic_profile": _slot_copy_dict(environment.get("economic_profile", {})),
+		"security_profile": _slot_copy_dict(environment.get("security_profile", {})),
+		"local_narrative_flags": _slot_copy_dict(environment.get("local_narrative_flags", {})),
+		"scenario_sequence_state": _slot_copy_dict(environment.get("scenario_sequence_state", {})),
+	}
+	return {
+		"version": 1,
+		"game_id": get_id(),
+		"state_key": _machine_state_key(environment),
+		"action_id": action_id,
+		"stake": maxi(0, stake),
+		"account_checkpoint": candidate.action_authority_checkpoint_fingerprint(),
+		"bankroll": candidate.bankroll,
+		"grand_casino_chips": candidate.grand_casino_chips,
+		"rng_seed": candidate.rng_seed,
+		"rng_state": candidate.rng_state,
+		"simulation_msec": candidate.simulation_msec,
+		"game_clock_minutes": candidate.game_clock_minutes,
+		"challenge_modifiers": candidate.challenge_modifiers(),
+		"tutorial_run": candidate.is_tutorial_run(),
+		"challenge_cheats_disabled": candidate.challenge_cheat_actions_disabled(),
+		"suspicion": candidate.suspicion.duplicate(true),
+		"suspicion_level": candidate.suspicion_level(),
+		"drunk_level": candidate.drunk_level,
+		"alcoholic_level": candidate.alcoholic_level,
+		"baseline_luck": candidate.baseline_luck,
+		"effective_luck": candidate.effective_luck(),
+		"active_item_id": candidate.active_item_id,
+		"item_effects": _slot_cross_game_item_effects(candidate, machine, action_id == "nudge"),
+		"security_risk_bonus": candidate.security_risk_bonus("cheat"),
+		"pit_boss_watch": candidate.pit_boss_watch_status(environment),
+		"environment": environment_evidence,
+		"machine": machine,
+		"ui_state": ui_state,
+	}
+
+
+func _machine_game_runtime_checkpoint(candidate: RunState) -> Dictionary:
+	if candidate == null:
+		return {}
+	var machine := _peek_machine(candidate.current_environment)
+	var active: Dictionary = machine.get("active_bonus", {}) if typeof(machine.get("active_bonus", {})) == TYPE_DICTIONARY else {}
+	if str(active.get("family", "")) != "pinball":
+		return {}
+	return {
+		"active_bonus": active.duplicate(true),
+		"runtime": PinballFeatureScript.runtime_transaction_checkpoint(active),
+	}
+
+
+func _machine_game_runtime_restore(checkpoint: Dictionary) -> bool:
+	if checkpoint.is_empty():
+		return true
+	var active: Dictionary = checkpoint.get("active_bonus", {}) if typeof(checkpoint.get("active_bonus", {})) == TYPE_DICTIONARY else {}
+	var runtime_checkpoint: Dictionary = checkpoint.get("runtime", {}) if typeof(checkpoint.get("runtime", {})) == TYPE_DICTIONARY else {}
+	return PinballFeatureScript.restore_runtime_transaction_checkpoint(active, runtime_checkpoint)
 
 
 func _machine_game_host_needs_auto_tick(surface_time_msec: int, run_state: RunState, environment: Dictionary) -> bool:
@@ -908,6 +1075,26 @@ func surface_auto_action_command(ui_state: Dictionary, _run_state: RunState, env
 			"environment_changed": true,
 			"message": "Autoplay paused for %s bonus." % paused_family.capitalize(),
 		})
+	# The host predicate is a performance fast path, not authority to skip the
+	# machine's own deadline. Recheck the ordinary timer here just as Buffalo does
+	# above so a mismatched/stale caller can never resolve hundreds of spins in one
+	# presentation interval.
+	if not bool(machine.get("slot_autoplay_active", false)):
+		return {"handled": false}
+	if surface_time <= 0:
+		surface_time = Time.get_ticks_msec()
+	var autoplay_next_msec := int(machine.get("slot_autoplay_next_msec", 0))
+	if autoplay_next_msec <= 0:
+		machine = _read_machine(environment)
+		machine["slot_autoplay_next_msec"] = surface_time + _slot_autoplay_delay_msec(machine)
+		_write_owned_machine(environment, machine)
+		return GameModule.surface_command({
+			"handled": true,
+			"environment_changed": true,
+			"message": "Autoplay reels are winding up.",
+		})
+	if surface_time < autoplay_next_msec:
+		return {"handled": false}
 	return GameModule.surface_command({
 		"handled": true,
 		"action_id": "spin",
@@ -1672,6 +1859,13 @@ func _slot_bonus_watchdog_status(machine: Dictionary, ui_state: Dictionary) -> D
 	if _slot_bonus_completion_animation_pending(machine, ui_state):
 		return status
 	status["eligible"] = true
+	# Pinball's realtime simulation can drain the final ball between player
+	# actions. The zero-copy live-status check above is authoritative, so settle
+	# on the next host tick instead of arming the generic stalled-bonus grace timer.
+	if str(active.get("family", "")) == "pinball":
+		status["due"] = true
+		status["needs_tick"] = true
+		return status
 	var surface_time := _surface_timing_msec(ui_state)
 	var since_msec := maxi(0, int(machine.get("slot_bonus_watchdog_since_msec", 0)))
 	if surface_time <= 0 or since_msec <= 0 or surface_time < since_msec:

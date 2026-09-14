@@ -1,8 +1,11 @@
 [
   {
-    "id": "back_room_draw",
-    "schema_version": 1,
+    "id": "back_room_holdem",
+    "schema_version": 2,
     "ante": 2,
+    "small_blind": 1,
+    "big_blind": 2,
+    "buy_in": 60,
     "bet_unit": 2,
     "raise_unit": 2,
     "session_hand_cap": 5,
@@ -11,25 +14,51 @@
     "hustle_threshold": 12,
     "hustle_sessions_required": 2,
     "hustle_respect_bonus": 1,
-    "opponent_count": [2, 3],
+    "opponent_count": [5, 5],
+    "animation": {
+      "card_flight_msec": 260,
+      "per_card_stagger_msec": 110,
+      "board_flip_msec": 180,
+      "chip_slide_msec": 260,
+      "pot_sweep_msec": 360,
+      "payout_msec": 620,
+      "shuffle_msec": 240,
+      "collect_msec": 220,
+      "fold_msec": 300,
+      "showdown_flip_msec": 180,
+      "showdown_stagger_msec": 100
+    },
     "learned_exposures": 3,
+    "table_talk_heads_up_pot": 10,
+    "table_talk_multiway_pot": 18,
+    "table_talk_cooldown_actions": 3,
+    "table_talk_max_per_hand": 2,
     "policies": {
-      "crew_rook": {"style_summary": "Patient driver: medium-tight, rarely bluffs, releases weak hands early.", "tightness": 72, "aggression": 34, "bluff": 14, "draw_caution": 70},
-      "crew_velvet": {"style_summary": "Polished trap player: selective openings, persuasive raises, well-timed bluffs.", "tightness": 62, "aggression": 56, "bluff": 35, "draw_caution": 58},
-      "crew_knuckles": {"style_summary": "Direct pressure player: aggressive with any made hand and unwilling to be pushed off pairs.", "tightness": 38, "aggression": 84, "bluff": 24, "draw_caution": 30},
-      "crew_switch": {"style_summary": "Fast adaptive player: middling range, frequent small probes, escapes expensive traps.", "tightness": 50, "aggression": 62, "bluff": 31, "draw_caution": 46},
-      "crew_mags": {"style_summary": "Exacting and tight: protects strong ranges, almost never pays to chase, raises for value.", "tightness": 86, "aggression": 48, "bluff": 9, "draw_caution": 85},
-      "crew_bishop": {"style_summary": "Formal counterpuncher: conservative before the draw, more forceful when the record is clear.", "tightness": 76, "aggression": 54, "bluff": 17, "draw_caution": 74},
-      "crew_lucky": {"style_summary": "Joyfully loose: enters nearly every pot, bluffs often, and treats thin draws as invitations.", "tightness": 24, "aggression": 65, "bluff": 48, "draw_caution": 18}
+      "crew_rook": {"profile_version": 1, "style_summary": "Tight-passive rock: waits for real cards, checks modest strength, and leaves when the price gets loud.", "looseness": 24, "preflop_raise": 10, "reraise": 6, "limp": 35, "position_awareness": 55, "aggression": 12, "continuation_bet": 15, "bluff": 3, "semi_bluff": 10, "stickiness": 38, "fold_to_pressure": 80, "draw_chasing": 20, "trap": 25, "check_raise": 10, "river_bluff": 2, "bet_size": 35, "size_variance": 10, "overbet_shove": 0, "tilt": 20, "momentum": 25, "short_stack_gamble": 25, "adapt_to_player": 35, "signal_belief": 40, "multiway_caution": 75, "tell_leak": 35, "draw_caution": 70},
+      "crew_velvet": {"profile_version": 1, "style_summary": "Tight-aggressive trapper: selects a polished range, disguises monsters, and springs check-raises or river bluffs.", "looseness": 20, "preflop_raise": 50, "reraise": 45, "limp": 15, "position_awareness": 80, "aggression": 50, "continuation_bet": 50, "bluff": 30, "semi_bluff": 40, "stickiness": 48, "fold_to_pressure": 50, "draw_chasing": 50, "trap": 90, "check_raise": 80, "river_bluff": 65, "bet_size": 65, "size_variance": 35, "overbet_shove": 2, "tilt": 35, "momentum": 45, "short_stack_gamble": 45, "adapt_to_player": 70, "signal_belief": 65, "multiway_caution": 65, "tell_leak": 75, "draw_caution": 58},
+      "crew_knuckles": {"profile_version": 1, "style_summary": "Loose-aggressive maniac: attacks most pots, drives every draw hard, overbets, shoves, and tilts after a hit.", "looseness": 85, "preflop_raise": 85, "reraise": 82, "limp": 20, "position_awareness": 20, "aggression": 78, "continuation_bet": 75, "bluff": 60, "semi_bluff": 95, "stickiness": 70, "fold_to_pressure": 15, "draw_chasing": 85, "trap": 5, "check_raise": 40, "river_bluff": 65, "bet_size": 92, "size_variance": 80, "overbet_shove": 35, "tilt": 95, "momentum": 80, "short_stack_gamble": 95, "adapt_to_player": 25, "signal_belief": 20, "multiway_caution": 15, "tell_leak": 90, "draw_caution": 30},
+      "crew_switch": {"profile_version": 1, "style_summary": "Adaptive prober: opens a medium range, tests with small bets, reads the player quickly, and exits bad rivers.", "looseness": 72, "preflop_raise": 68, "reraise": 55, "limp": 30, "position_awareness": 90, "aggression": 65, "continuation_bet": 70, "bluff": 42, "semi_bluff": 55, "stickiness": 42, "fold_to_pressure": 63, "draw_chasing": 45, "trap": 35, "check_raise": 45, "river_bluff": 25, "bet_size": 25, "size_variance": 45, "overbet_shove": 0, "tilt": 25, "momentum": 55, "short_stack_gamble": 55, "adapt_to_player": 95, "signal_belief": 80, "multiway_caution": 65, "tell_leak": 65, "draw_caution": 46},
+      "crew_mags": {"profile_version": 1, "style_summary": "Tight value grinder: enters with quality, prices draws precisely, sizes steadily, and almost never bluffs.", "looseness": 44, "preflop_raise": 60, "reraise": 42, "limp": 10, "position_awareness": 65, "aggression": 40, "continuation_bet": 45, "bluff": 2, "semi_bluff": 25, "stickiness": 50, "fold_to_pressure": 55, "draw_chasing": 35, "trap": 25, "check_raise": 25, "river_bluff": 2, "bet_size": 52, "size_variance": 5, "overbet_shove": 0, "tilt": 15, "momentum": 20, "short_stack_gamble": 35, "adapt_to_player": 45, "signal_belief": 55, "multiway_caution": 70, "tell_leak": 25, "draw_caution": 85},
+      "crew_bishop": {"profile_version": 1, "style_summary": "Counterpuncher: guards a tight opening range, then prosecutes clear boards with forceful check-raises.", "looseness": 48, "preflop_raise": 44, "reraise": 52, "limp": 8, "position_awareness": 75, "aggression": 78, "continuation_bet": 42, "bluff": 15, "semi_bluff": 38, "stickiness": 45, "fold_to_pressure": 58, "draw_chasing": 35, "trap": 55, "check_raise": 90, "river_bluff": 15, "bet_size": 65, "size_variance": 20, "overbet_shove": 2, "tilt": 30, "momentum": 40, "short_stack_gamble": 50, "adapt_to_player": 65, "signal_belief": 55, "multiway_caution": 70, "tell_leak": 65, "draw_caution": 74},
+      "crew_lucky": {"profile_version": 1, "style_summary": "Loose-passive calling station: sees nearly every flop, chases thin draws, calls far too long, and sometimes gets wild.", "looseness": 78, "preflop_raise": 15, "reraise": 8, "limp": 95, "position_awareness": 10, "aggression": 10, "continuation_bet": 10, "bluff": 25, "semi_bluff": 30, "stickiness": 98, "fold_to_pressure": 5, "draw_chasing": 100, "trap": 10, "check_raise": 8, "river_bluff": 35, "bet_size": 55, "size_variance": 90, "overbet_shove": 2, "tilt": 70, "momentum": 90, "short_stack_gamble": 85, "adapt_to_player": 10, "signal_belief": 85, "multiway_caution": 0, "tell_leak": 100, "draw_caution": 18}
     },
     "banter": {
       "crew_rook": ["Rook cuts the deck. 'No hurry. That's how money gets ideas.'", "'Road rules,' Rook says. 'Leave yourself an exit.'"],
       "crew_velvet": ["Velvet smiles at the pot. 'Friendly money still deserves manners.'", "'Darling, if you must raise, at least make it graceful.'"],
       "crew_knuckles": ["Knuckles nudges the ante in. 'Cards first. Speeches lose.'", "'You can fold without apologizing,' Knuckles says. 'Please do.'"],
       "crew_switch": ["Switch is already dealing. 'Window's open. Keep up.'", "'Long think means bad news or bad acting,' Switch says."],
-      "crew_mags": ["Mags squares the deck. 'Five cards. One draw. No creative accounting.'", "'The pot is correct,' Mags says. 'Try to keep it that way.'"],
+      "crew_mags": ["Mags squares the deck. 'Two down. Five shared. No creative accounting.'", "'The pot is correct,' Mags says. 'Try to keep it that way.'"],
       "crew_bishop": ["Bishop antes precisely. 'Let the record show optimism.'", "'A call is an answer,' Bishop says. 'Not always a good one.'"],
       "crew_lucky": ["Lucky splashes in the ante. 'Tiny money, enormous biography.'", "'I had a plan,' Lucky says. 'Then the cards got interesting.'"]
+    },
+    "dealer_banter": {
+      "crew_rook": ["Rook squares the deck. 'Clean route. No shortcuts through the muck.'", "'Cards move clockwise,' Rook says. 'Trouble usually does too.'"],
+      "crew_velvet": ["Velvet fans the deck. 'A graceful deal leaves everyone equally disappointed.'", "'Hands where I can admire them, darling,' Velvet says."],
+      "crew_knuckles": ["Knuckles knocks the deck square. 'Cards out. Speeches later.'", "'Muck is right here,' Knuckles says. 'Use it decisively.'"],
+      "crew_switch": ["Switch riffles once. 'Window open. Cards moving.'", "'Keep up,' Switch says, already reaching for the burn."],
+      "crew_mags": ["Mags aligns the deck. 'Fifty-two accounted for. Begin.'", "'The pot and muck are separate systems,' Mags says. 'Respect both.'"],
+      "crew_bishop": ["Bishop cuts the deck. 'The house enters the deal into evidence.'", "'The button governs action,' Bishop says. 'I govern the cards.'"],
+      "crew_lucky": ["Lucky shuffles with a grin. 'Every card is about to become somebody's problem.'", "'Dealer never loses a hand,' Lucky says. 'Dealer never gets one.'"]
     }
   }
 ]

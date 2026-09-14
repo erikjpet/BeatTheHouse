@@ -76,7 +76,7 @@ static func _ritual_vector(value: Variant) -> Vector2:
 	return Vector2.ZERO
 
 
-static func draw_room(surface, state: Dictionary, title: String, info: String = "") -> void:
+static func draw_room(surface, state: Dictionary, title: String, info: String = "", room_note: String = "") -> void:
 	var clock := _surface_clock(surface)
 	var low_detail := _surface_low_detail_idle(surface)
 	var board_size: Vector2 = surface.surface_board_size()
@@ -100,8 +100,9 @@ static func draw_room(surface, state: Dictionary, title: String, info: String = 
 	surface.surface_title(title.to_upper().left(18), Vector2(36, 42), C_CYAN)
 	if not info.is_empty():
 		surface.surface_label(info.left(42), Vector2(42, 62), 10, C_SOFT)
-	if not str(state.get("room_note", "")).is_empty():
-		surface.surface_label(str(state.get("room_note", "")).left(28), Vector2(344, 48), 12, C_SOFT)
+	var resolved_room_note := room_note if not room_note.is_empty() else str(state.get("room_note", ""))
+	if not resolved_room_note.is_empty():
+		surface.surface_label(resolved_room_note.left(28), Vector2(344, 48), 12, C_SOFT)
 
 
 static func draw_table(surface) -> void:
@@ -427,6 +428,22 @@ static func _draw_status_meter(surface, rect: Rect2, value: int, label: String, 
 	surface.draw_rect(Rect2(rect.position, Vector2(rect.size.x * float(clamped) / 100.0, rect.size.y)), accent)
 	surface.draw_rect(rect, Color(accent.r, accent.g, accent.b, 0.22), false, 1)
 	surface.surface_label(label.left(26), rect.position + Vector2(0, -4), 9, accent)
+
+
+static func flight_progress(elapsed_msec: float, delay_msec: float, duration_msec: float) -> float:
+	return clampf((elapsed_msec - delay_msec) / maxf(1.0, duration_msec), 0.0, 1.0)
+
+
+static func flight_position(from_position: Vector2, to_position: Vector2, progress: float, arc_height: float = 18.0) -> Vector2:
+	var eased := 1.0 - pow(1.0 - clampf(progress, 0.0, 1.0), 3.0)
+	return from_position.lerp(to_position, eased) + Vector2(0, -arc_height * sin(progress * PI))
+
+
+static func card_flip_width_scale(progress: float, flip_start: float = 0.72) -> float:
+	if progress <= flip_start:
+		return 1.0
+	var local := clampf((progress - flip_start) / maxf(0.01, 1.0 - flip_start), 0.0, 1.0)
+	return maxf(0.08, absf(cos(local * PI)))
 
 
 static func _draw_table_character(surface, style: Dictionary, foot: Vector2, scale_value: float, clock: float) -> void:

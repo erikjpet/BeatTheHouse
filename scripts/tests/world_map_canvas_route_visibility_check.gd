@@ -101,8 +101,6 @@ func _check_overlay_routes_navigation_events() -> void:
 	canvas.set_map_snapshot(map_snapshot)
 	await process_frame
 	var controller: WorldMapOverlayController = WorldMapOverlayControllerScript.new()
-	controller.holder = holder
-	controller.nodes_layer = canvas
 	var click_events: Array = []
 	controller.node_pressed.connect(func(node_id: String) -> void:
 		click_events.append(node_id)
@@ -110,18 +108,27 @@ func _check_overlay_routes_navigation_events() -> void:
 		selected_snapshot["selected_node_id"] = node_id
 		canvas.set_map_snapshot(selected_snapshot)
 	)
-	controller.sync_node_buttons(map_snapshot)
 	var edge_popup := PanelContainer.new()
 	edge_popup.custom_minimum_size = Vector2(340.0, 110.0)
 	holder.add_child(edge_popup)
-	controller.detail_popup = edge_popup
+	var confirm_button := Button.new()
+	edge_popup.add_child(confirm_button)
+	controller.configure_nodes(null, holder, canvas, null, edge_popup, null, null, confirm_button)
+	controller.sync_node_buttons(map_snapshot)
 	controller.sync_from_host("east", "east", "East", "", "")
 	controller.position_detail_popup(map_snapshot)
 	await process_frame
-	var edge_icon_rect := controller.global_rect_for_node("east")
+	var edge_icon_rect := controller.global_visual_rect_for_node("east")
 	var edge_popup_rect := edge_popup.get_global_rect()
 	_check(holder.get_global_rect().encloses(edge_popup_rect), "Edge-location popup was cropped outside the map holder.")
 	_check(edge_icon_rect.has_area() and not edge_popup_rect.intersects(edge_icon_rect.grow(WorldMapOverlayController.WORLD_MAP_POPUP_ICON_GAP - 1.0)), "Edge-location popup covered the icon it represents or lost its visual gap instead of switching sides.")
+	confirm_button.button_down.emit()
+	edge_popup.position = Vector2(1.0, 1.0)
+	controller.position_detail_popup(map_snapshot)
+	_check(edge_popup.position == Vector2(1.0, 1.0), "Travel confirmation popup moved while its button was held down.")
+	confirm_button.button_up.emit()
+	controller.position_detail_popup(map_snapshot)
+	_check(edge_popup.position != Vector2(1.0, 1.0), "Travel confirmation popup stayed frozen after its button was released.")
 	var test_button: Button = null
 	for child in canvas.get_children():
 		if child is Button and (child as Button).visible and not (child as Button).disabled:
@@ -140,6 +147,22 @@ func _check_overlay_routes_navigation_events() -> void:
 		var selection_target: Dictionary = selection_view.get("target_map_bounds", {})
 		_check(_map_bounds_equal(selection_start, selection_current), "Clicking a map location snapped directly to its focused bounds instead of starting the zoom animation.")
 		_check(not _map_bounds_equal(selection_current, selection_target) and bool(selection_view.get("selected_focus_zoom_animating", false)), "Clicking a map location did not leave an active focus-zoom transition.")
+		# The map camera animates the invisible node buttons. A real pointer can
+		# therefore press a node and release at the same screen coordinate after
+		# the button has moved away. Button-up recovery must complete that click.
+		click_events.clear()
+		test_button.button_down.emit()
+		test_button.position += Vector2(test_button.size.x + 8.0, 0.0)
+		test_button.button_up.emit()
+		await process_frame
+		_check(click_events.size() == 1, "Travel-map button-up recovery did not complete a canceled moving-node click.")
+		controller.sync_node_buttons(map_snapshot)
+		click_events.clear()
+		test_button.button_down.emit()
+		test_button.button_up.emit()
+		test_button.pressed.emit()
+		await process_frame
+		_check(click_events.size() == 1, "Travel-map button-up recovery duplicated a normally completed node click.")
 	var before: Dictionary = canvas.current_view_snapshot().get("map_bounds", {})
 	var wheel := InputEventMouseButton.new()
 	wheel.button_index = MOUSE_BUTTON_WHEEL_UP

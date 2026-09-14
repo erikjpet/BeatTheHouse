@@ -31,6 +31,14 @@ static func create_machine(seed_rng: RngStream, machine_definition: Dictionary, 
 	return CoinPusherSolverScript.create_machine(seed_rng, machine_definition, opening_bodies, capture_opening_report)
 
 
+static func clear_opening_template_cache_for_test() -> void:
+	CoinPusherSolverScript.clear_opening_template_cache_for_test()
+
+
+static func opening_template_cache_snapshot_for_test() -> Dictionary:
+	return CoinPusherSolverScript.opening_template_cache_snapshot_for_test()
+
+
 static func add_coin(state: Dictionary, rng: RngStream, x: int, density: int = 1, provenance: Dictionary = {}, bonus_origin: bool = false) -> Dictionary:
 	return CoinPusherSolverScript.add_coin(state, rng, x, density, provenance, bonus_origin)
 

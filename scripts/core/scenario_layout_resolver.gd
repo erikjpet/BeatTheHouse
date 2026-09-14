@@ -4,6 +4,7 @@ extends RefCounted
 const ArtContractsScript := preload("res://scripts/core/art_contracts.gd")
 const OperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
 const EnvironmentSemanticInventoryScript := preload("res://scripts/core/environment_semantic_inventory.gd")
+const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
 
 const BOARD_SIZE := Vector2(ArtContractsScript.ENVIRONMENT_BOARD_SIZE)
 const SMALL_SCREEN_TARGET := Vector2(ArtContractsScript.ENVIRONMENT_OBJECT_HIT_SIZE)
@@ -13,6 +14,7 @@ const DEFAULT_SCENE_SIZE := Vector2(48.0, 48.0)
 const DEFAULT_ACTOR_SIZE := Vector2(72.0, 80.0)
 const COLLISION_RATIO := 0.65
 const VISUAL_LAYOUT_GAP := 8.0
+const FINE_CANDIDATE_CACHE_MAX_ENTRIES := 32
 const LABEL_MAX_LENGTH := 64
 const PROMPT_MAX_LENGTH := 240
 const LABEL_HEIGHT := 15.0
@@ -41,6 +43,9 @@ const LAYOUT_SPOT_FIELDS := {
 	"shopkeeper": "shopkeeper_spots",
 	"game_hook": "game_hook_spots",
 }
+
+static var _fine_candidate_cache: Dictionary = {}
+static var _fine_candidate_cache_order: Array[Rect2] = []
 
 
 # Compatibility projection used by the renderer-extension seam. Production
@@ -138,10 +143,11 @@ static func _prepare_extension_visual(environment: Dictionary, semantic_state: D
 		"visual_type": "scenario_actor" if actor else "scenario_object",
 		"source_id": str(semantic.get("actor_id", stable_id)),
 		"label": label,
-		"short_description": str(semantic.get("behavior", semantic.get("role", "Room object"))).replace("_", " ").capitalize(),
+		"short_description": _scenario_description(semantic),
+		"icon_key": _scenario_icon_key(semantic),
 		"presence": "scenario",
-		"interactive": false,
-		"decorative": true,
+		"interactive": true,
+		"decorative": false,
 		"enabled": bool(semantic.get("enabled", true)),
 		"visible": bool(semantic.get("visible", true)),
 		"normalized_rect": _normalized_rect(rect),
@@ -160,6 +166,28 @@ static func _prepare_extension_visual(environment: Dictionary, semantic_state: D
 		"non_color_state": str(semantic.get("non_color_state", semantic.get("state", "present"))),
 		"z_order": int(round(rect.get_center().y)) + (20 if actor else 0),
 	}
+
+
+static func _scenario_description(semantic: Dictionary) -> String:
+	var description := str(semantic.get("description", "")).strip_edges()
+	var variants := _dict(semantic.get("description_variants", {}))
+	for key in [str(semantic.get("state", "")), str(semantic.get("appearance", "")), str(semantic.get("pose", "")), str(semantic.get("behavior", "")), str(semantic.get("anchor_id", "")), str(semantic.get("zone_id", ""))]:
+		var variant := str(variants.get(key, "")).strip_edges()
+		if not variant.is_empty():
+			return variant
+	return description
+
+
+static func _scenario_icon_key(semantic: Dictionary) -> String:
+	var authored_icon := str(semantic.get("icon_key", "")).strip_edges()
+	if not authored_icon.is_empty():
+		return authored_icon
+	var semantic_kind := str(semantic.get("semantic_kind", "scene_object")).strip_edges()
+	return "%s %s %s" % [
+		"scenario_actor" if semantic_kind == "actor" else "scenario_scene",
+		str(semantic.get("label", "")).strip_edges(),
+		str(semantic.get("role", "")).strip_edges(),
+	]
 
 
 static func _ordered_semantic_values(value: Dictionary) -> Array:
@@ -210,10 +238,11 @@ static func sealed_renderer_snapshot(layout_result: Dictionary) -> Dictionary:
 				"visual_type": "scenario_actor" if actor else "scenario_object",
 				"source_id": str(semantic.get("actor_id", semantic.get("stable_object_id", ""))),
 				"label": str(semantic.get("label", "")),
-				"short_description": str(semantic.get("behavior", semantic.get("role", "Room object"))).replace("_", " ").capitalize(),
+				"short_description": _scenario_description(semantic),
+				"icon_key": _scenario_icon_key(semantic),
 				"presence": "scenario",
-				"interactive": bool(sealed.get("presentation_interactive", false)),
-				"decorative": not bool(sealed.get("presentation_interactive", false)),
+				"interactive": true,
+				"decorative": false,
 				"enabled": bool(semantic.get("enabled", true)),
 				"visible": bool(sealed.get("presentation_visible", true)),
 				"normalized_rect": _dict(sealed.get("normalized_hit_rect", {})),
@@ -223,6 +252,7 @@ static func sealed_renderer_snapshot(layout_result: Dictionary) -> Dictionary:
 				"stable_object_id": str(semantic.get("stable_object_id", "")),
 				"semantic_identity": identity,
 				"role": str(semantic.get("role", "actor" if actor else "prop")),
+				"placement_class": str(semantic.get("placement_class", "")),
 				"state": str(semantic.get("state", "")),
 				"appearance": str(semantic.get("appearance", "")),
 				"pose": str(semantic.get("pose", "idle")),
@@ -287,12 +317,21 @@ static func resolve(base_records: Array, projection: Dictionary, environment: Di
 		}
 	if environment.is_empty():
 		return _failed_result(resolved_projection, ["An active scenario presentation requires the current validated room layout."], [], passive_audit)
+	# Runtime refresh and composed world-sequence callers can legitimately pass a
+	# room snapshot before its scenario fields have been reattached. The active
+	# projection is the authoritative scenario identity for placement overrides.
+	environment = environment.duplicate(false)
+	var projected_scenario_id := str(projection.get("scenario_id", "")).strip_edges()
+	if not projected_scenario_id.is_empty():
+		environment["scenario_id"] = projected_scenario_id
 
 	var errors: Array = []
 	var warnings: Array = []
-	var occupied := _base_occupied_records(base_records)
-	var base_by_identity := _base_records_by_identity(base_records)
 	var context := _layout_context(environment)
+	var occupied := _base_occupied_records(base_records)
+	var context_base_occupied := _context_base_occupied_records(context, base_records, errors)
+	occupied.append_array(context_base_occupied)
+	var base_by_identity := _base_records_by_identity(base_records)
 	var reserved_overlay := _context_overlay_rect(context)
 	if reserved_overlay.has_area():
 		# The TalkDock reservation is live production geometry, not merely a
@@ -304,52 +343,45 @@ static func resolve(base_records: Array, projection: Dictionary, environment: Di
 			"rect": reserved_overlay,
 			"small_rect": reserved_overlay,
 		})
-	var authority := _base_layout_authority(base_records, errors)
+	var authority := _base_layout_authority(base_records, errors, environment)
 	var collision_adjustments := 0
 	var visual_count := 0
 	var resolved_scenes: Dictionary = {}
 	var resolved_actors: Dictionary = {}
-	for collection_entry in [
-		[semantic_state.get("scene_objects", {}), false, resolved_scenes],
-		[semantic_state.get("actors", {}), true, resolved_actors],
-	]:
+	var interactions := _dict(semantic_state.get("interactions", {}))
+	var placement_queue: Array = []
+	for collection_entry in [[semantic_state.get("scene_objects", {}), false], [semantic_state.get("actors", {}), true]]:
 		var collection := _dict((collection_entry as Array)[0])
 		var actor := bool((collection_entry as Array)[1])
-		var destination: Dictionary = (collection_entry as Array)[2]
-		var identities := collection.keys()
-		identities.sort()
-		for identity_value in identities:
+		for identity_value in collection.keys():
 			var identity := str(identity_value)
 			var semantic := _dict(collection.get(identity_value, {}))
-			if semantic.is_empty():
-				continue
-			if not bool(semantic.get("present", true)):
-				destination[identity] = semantic
-				continue
-			visual_count += 1
-			if visual_count > MAX_VISUALS:
-				errors.append("Scenario presentation exceeds the %d visual-object bound." % MAX_VISUALS)
-				continue
-			var resolved := _resolve_visual(
-				identity,
-				semantic,
-				actor,
-				environment,
-				semantic_state,
-				_dict(base_by_identity.get(identity, {})),
-				occupied,
-				errors
-			)
-			if resolved.is_empty():
-				continue
-			resolved["layout_valid"] = true
-			if bool(resolved.get("collision_adjusted", false)):
-				collision_adjustments += 1
-			destination[identity] = resolved
-			if bool(resolved.get("visible", true)):
-				var normal_rect := _pixel_rect(_dict(resolved.get("normalized_hit_rect", {})))
-				var small_rect := _pixel_rect(_dict(resolved.get("small_screen_rect", {})))
-				occupied.append({"identity": identity, "rect": normal_rect, "small_rect": small_rect})
+			var classified_semantic := semantic.duplicate(true)
+			var class_overrides := _dict(EnvironmentPlacementScript.surface_map(environment).get("class_overrides", {}))
+			var stable_identity := identity.trim_prefix("scenario::")
+			var class_override := str(class_overrides.get(identity, class_overrides.get(stable_identity, "")))
+			if class_override in EnvironmentPlacementScript.CLASSES:
+				classified_semantic["placement_class"] = class_override
+			var placement_class := EnvironmentPlacementScript.classify(classified_semantic, "actor" if actor else "scene_object", identity, str(semantic.get("prop", semantic.get("icon_key", ""))))
+			placement_queue.append({"identity": identity, "semantic": classified_semantic, "actor": actor, "placement_class": placement_class})
+	placement_queue.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
+		var left := _dict(left_value)
+		var right := _dict(right_value)
+		var left_priority := _placement_class_priority(str(left.get("placement_class", "")))
+		var right_priority := _placement_class_priority(str(right.get("placement_class", "")))
+		if left_priority != right_priority:
+			return left_priority < right_priority
+		var left_area := _semantic_visual_area(_dict(left.get("semantic", {})), bool(left.get("actor", false)))
+		var right_area := _semantic_visual_area(_dict(right.get("semantic", {})), bool(right.get("actor", false)))
+		return str(left.get("identity", "")) < str(right.get("identity", "")) if is_equal_approx(left_area, right_area) else left_area > right_area
+	)
+	var placement_result := _resolve_visual_queue(placement_queue, environment, semantic_state, base_by_identity, occupied, interactions)
+	resolved_scenes = _dict(placement_result.get("scenes", {}))
+	resolved_actors = _dict(placement_result.get("actors", {}))
+	occupied = _array(placement_result.get("occupied", occupied))
+	collision_adjustments = int(placement_result.get("collision_adjustments", 0))
+	visual_count = int(placement_result.get("visual_count", 0))
+	errors.append_array(_array(placement_result.get("errors", [])))
 
 	semantic_state["scene_objects"] = resolved_scenes
 	semantic_state["actors"] = resolved_actors
@@ -381,13 +413,14 @@ static func resolve(base_records: Array, projection: Dictionary, environment: Di
 		"small_screen_mode": context.get("small_screen_mode", false) if typeof(context.get("small_screen_mode", false)) == TYPE_BOOL else false,
 		"reduce_motion": context.get("reduce_motion", false) if typeof(context.get("reduce_motion", false)) == TYPE_BOOL else false,
 		"authority_count": authority.size(),
+		"context_base_occupied_count": context_base_occupied.size(),
 		"authority_digest": authority_digest,
 		"reachable_interaction_ids": interaction_audit.get("reachable_interaction_ids", []),
 		"safe_exit_ids": interaction_audit.get("safe_exit_ids", []),
 		"alternate_exit_ids": interaction_audit.get("alternate_exit_ids", []),
 		"actor_route_count": _actor_route_count(resolved_actors),
-		"normal_overlap_count": _overlap_count(authority, "normalized_hit_rect"),
-		"small_screen_overlap_count": _overlap_count(authority, "small_screen_rect"),
+		"normal_overlap_count": _overlap_count(authority, "normalized_hit_rect", environment),
+		"small_screen_overlap_count": _overlap_count(authority, "small_screen_rect", environment),
 		"deterministic_z_order": true,
 	}
 	if not errors.is_empty():
@@ -427,39 +460,67 @@ static func _resolve_visual(
 	semantic_state: Dictionary,
 	base_record: Dictionary,
 	occupied: Array,
-	errors: Array
+	placement_label: String,
+	errors: Array,
+	excluded_rect_keys: Dictionary = {}
 ) -> Dictionary:
 	var result := semantic.duplicate(true)
 	var base_rect := _record_pixel_rect(base_record)
 	var anchor_id := str(semantic.get("anchor_id", base_record.get("anchor_id", "")))
 	var zone_id := str(semantic.get("zone_id", base_record.get("zone_id", "")))
-	var center := _resolve_center(
-		environment,
-		anchor_id,
-		zone_id
-	)
-	if (not _finite_point(center) or center.x < 0.0) and anchor_id.is_empty() and zone_id.is_empty() and base_rect.size.x > 0.0 and base_rect.size.y > 0.0:
-		center = base_rect.get_center()
-	if not _finite_point(center) or center.x < 0.0:
-		errors.append("Scenario visual %s references an unresolved anchor or zone." % identity)
-		return {}
-	var default_size := DEFAULT_ACTOR_SIZE if actor else DEFAULT_SCENE_SIZE
-	var bounds := _dict(semantic.get("bounds", {}))
-	var size := Vector2(float(bounds.get("w", 0.0)), float(bounds.get("h", 0.0)))
-	if size.x <= 0.0 or size.y <= 0.0:
-		size = base_rect.size if base_rect.size.x > 0.0 and base_rect.size.y > 0.0 else default_size
-	if not _finite_point(size) or size.x < MIN_SCENE_SIZE.x or size.y < MIN_SCENE_SIZE.y or size.x > BOARD_SIZE.x or size.y > BOARD_SIZE.y:
-		errors.append("Scenario visual %s has out-of-bounds semantic dimensions." % identity)
-		return {}
-	if not _readable_text(str(semantic.get("label", base_record.get("label", ""))), LABEL_MAX_LENGTH):
+	var label := str(semantic.get("label", base_record.get("label", "")))
+	var placement_class := EnvironmentPlacementScript.classify(semantic, "actor" if actor else "scene_object", identity, str(semantic.get("prop", semantic.get("icon_key", ""))))
+	if not _readable_text(label, LABEL_MAX_LENGTH):
 		errors.append("Scenario visual %s requires a bounded, readable label." % identity)
 		return {}
-	var authored_rect := _clamp_inside_board(Rect2(center - size * 0.5, size))
-	var placement := _collision_safe_rect(identity, authored_rect, occupied)
-	if bool(placement.get("colliding", true)):
-		errors.append("Scenario visual %s cannot resolve both normal and expanded small-screen geometry without ambiguity." % identity)
-		return {}
-	var pixel_rect: Rect2 = placement.get("rect", authored_rect)
+	var pixel_rect := base_rect
+	var placement := {"adjusted": false}
+	var zone_surface_adjusted := false
+	if base_rect.has_area():
+		# Existing room objects keep the environment generator's exact spatial
+		# identity. Scenario semantics may alter their label, state, visibility, or
+		# actions, but authored anchors and bounds describe only newly added props.
+		result["anchor_id"] = str(base_record.get("anchor_id", ""))
+		result["zone_id"] = str(base_record.get("zone_id", ""))
+		result["bounds"] = {"w": base_rect.size.x, "h": base_rect.size.y}
+	else:
+		var center := _resolve_center(environment, anchor_id, zone_id)
+		if not _finite_point(center) or center.x < 0.0:
+			errors.append("Scenario visual %s references an unresolved anchor or zone." % identity)
+			return {}
+		var default_size := DEFAULT_ACTOR_SIZE if actor else DEFAULT_SCENE_SIZE
+		var bounds := _dict(semantic.get("bounds", {}))
+		var size := Vector2(float(bounds.get("w", 0.0)), float(bounds.get("h", 0.0)))
+		if size.x <= 0.0 or size.y <= 0.0:
+			size = default_size
+		if not _finite_point(size) or size.x < MIN_SCENE_SIZE.x or size.y < MIN_SCENE_SIZE.y or size.x > BOARD_SIZE.x or size.y > BOARD_SIZE.y:
+			errors.append("Scenario visual %s has out-of-bounds semantic dimensions." % identity)
+			return {}
+		var authored_rect := _clamp_inside_board(Rect2(center - size * 0.5, size))
+		var surface_map := EnvironmentPlacementScript.surface_map(environment)
+		var scenario_slots := _dict(surface_map.get("scenario_object_slot_positions", {}))
+		var developer_scenario_slots := _dict(surface_map.get("developer_scenario_object_slot_positions", {}))
+		var stable_identity := identity.trim_prefix("scenario::")
+		var slot_values := _array(scenario_slots.get(stable_identity, scenario_slots.get(identity, [])))
+		if slot_values.size() >= 2:
+			authored_rect.position = Vector2(float(slot_values[0]), float(slot_values[1]))
+		var manually_placed := developer_scenario_slots.has(stable_identity) or developer_scenario_slots.has(identity)
+		var zone_constraint := _zone_rect(environment, zone_id) if anchor_id.is_empty() else Rect2()
+		var grounded := {"rect": _clamp_inside_board(authored_rect), "surface_id": "developer_free", "adjusted": false} if manually_placed else EnvironmentPlacementScript.authored_or_local_rect(environment, placement_class, authored_rect)
+		if bool(grounded.get("adjusted", false)) and zone_constraint.has_area():
+			zone_constraint = Rect2()
+			zone_surface_adjusted = true
+		authored_rect = grounded.get("rect", authored_rect)
+		var role := str(semantic.get("role", "")).to_lower()
+		var forbidden_lane := WALK_LANE if role in ["obstacle", "barrier", "blockade"] else Rect2()
+		# The zone selects the preferred physical surface. Collision displacement
+		# may use another surface of the same class (for example the other counter
+		# or doorway), but can never leave the class-valid candidate set.
+		placement = {"rect": authored_rect, "adjusted": false, "colliding": false} if manually_placed else _collision_safe_rect(identity, authored_rect, occupied, placement_label, forbidden_lane, environment, placement_class, Rect2(), excluded_rect_keys)
+		if bool(placement.get("colliding", true)):
+			errors.append("Scenario visual %s class %s cannot resolve both normal and expanded small-screen geometry on a valid room surface: %s." % [identity, placement_class, str(placement.get("error", "all class-valid candidates collide"))])
+			return {}
+		pixel_rect = placement.get("rect", authored_rect)
 	var route_points: Array = []
 	var route_stage: Dictionary = {}
 	if actor:
@@ -474,8 +535,23 @@ static func _resolve_visual(
 			if not bool(route_resolution.get("ok", false)) or not _finite_point(route_center) or route_center.x < 0.0:
 				errors.append("Scenario actor %s route %s has no room-space endpoint: %s" % [identity, route_id, str(route_resolution.get("error", "unknown route endpoint"))])
 				return {}
-			route_points = [_normalized_point(pixel_rect.get_center()), _normalized_point(route_center)]
 			var route_endpoint_rect := Rect2(route_center - pixel_rect.size * 0.5, pixel_rect.size)
+			var grounded_route := EnvironmentPlacementScript.authored_or_local_rect(environment, placement_class, route_endpoint_rect)
+			route_endpoint_rect = grounded_route.get("rect", route_endpoint_rect)
+			var route_occupied := occupied.duplicate(true)
+			route_occupied.append({
+				"identity": "system::route_start::%s" % identity,
+				"rect": pixel_rect,
+				"small_rect": _expanded_rect(pixel_rect, SMALL_SCREEN_TARGET),
+				"label": placement_label,
+			})
+			var route_placement := _collision_safe_rect(identity, route_endpoint_rect, route_occupied, placement_label, Rect2(), environment, placement_class)
+			if bool(route_placement.get("colliding", true)):
+				errors.append("Scenario actor %s route %s endpoint cannot resolve on a collision-free %s surface: %s." % [identity, route_id, placement_class, str(route_placement.get("error", "all class-valid candidates collide"))])
+				return {}
+			route_endpoint_rect = route_placement.get("rect", route_endpoint_rect)
+			route_center = route_endpoint_rect.get_center()
+			route_points = [_normalized_point(pixel_rect.get_center()), _normalized_point(route_center)]
 			var route_small_start := _expanded_rect(pixel_rect, SMALL_SCREEN_TARGET)
 			var route_small_endpoint := _expanded_rect(route_endpoint_rect, SMALL_SCREEN_TARGET)
 			var distance := pixel_rect.get_center().distance_to(route_center)
@@ -494,11 +570,74 @@ static func _resolve_visual(
 	result["small_screen_rect"] = _normalized_rect(_expanded_rect(pixel_rect, SMALL_SCREEN_TARGET))
 	result["resolved_bounds"] = {"w": pixel_rect.size.x, "h": pixel_rect.size.y}
 	result["collision_adjusted"] = bool(placement.get("adjusted", false))
+	result["zone_surface_adjusted"] = zone_surface_adjusted if not base_rect.has_area() else false
+	result["placement_class"] = placement_class
+	result["contact"] = "feet" if EnvironmentPlacementScript.is_person_class(placement_class) else "base" if placement_class in ["floor_fixture", "ground_marker"] else "surface" if placement_class == "surface_item" else "mount" if placement_class in ["wall_mounted", "hanging"] else "edge"
 	result["route_points"] = route_points
 	result["route_stage"] = route_stage
 	result["visible"] = bool(result.get("visible", true))
 	result["enabled"] = bool(result.get("enabled", true))
 	return result
+
+
+static func _resolve_visual_queue(queue: Array, environment: Dictionary, semantic_state: Dictionary, base_by_identity: Dictionary, initial_occupied: Array, interactions: Dictionary) -> Dictionary:
+	var queue_errors: Array = []
+	var occupied := initial_occupied.duplicate(true)
+	var scenes: Dictionary = {}
+	var actors: Dictionary = {}
+	var visual_count := 0
+	var collision_adjustments := 0
+	for queue_value in queue:
+		var queue_entry := _dict(queue_value)
+		var identity := str(queue_entry.get("identity", ""))
+		var semantic := _dict(queue_entry.get("semantic", {}))
+		var actor := bool(queue_entry.get("actor", false))
+		var destination := actors if actor else scenes
+		if semantic.is_empty():
+			continue
+		if not bool(semantic.get("present", true)):
+			destination[identity] = semantic
+			continue
+		visual_count += 1
+		if visual_count > MAX_VISUALS:
+			queue_errors.append("Scenario presentation exceeds the %d visual-object bound." % MAX_VISUALS)
+			continue
+		var interaction := _dict(interactions.get(identity, {}))
+		var visual_label := str(semantic.get("label", "")).strip_edges()
+		var interaction_label := str(interaction.get("label", "")).strip_edges()
+		var placement_label := interaction_label if interaction_label.length() > visual_label.length() else visual_label
+		var resolved := _resolve_visual(
+			identity,
+			semantic,
+			actor,
+			environment,
+			semantic_state,
+			_dict(base_by_identity.get(identity, {})),
+			occupied,
+			placement_label,
+			queue_errors
+		)
+		if resolved.is_empty():
+			continue
+		resolved["layout_valid"] = true
+		if bool(resolved.get("collision_adjusted", false)):
+			collision_adjustments += 1
+		destination[identity] = resolved
+		if bool(resolved.get("visible", true)):
+			occupied.append({
+				"identity": identity,
+				"rect": _pixel_rect(_dict(resolved.get("normalized_hit_rect", {}))),
+				"small_rect": _pixel_rect(_dict(resolved.get("small_screen_rect", {}))),
+				"label": placement_label,
+			})
+	return {
+		"scenes": scenes,
+		"actors": actors,
+		"occupied": occupied,
+		"collision_adjustments": collision_adjustments,
+		"visual_count": visual_count,
+		"errors": queue_errors,
+	}
 
 
 static func _validate_visual_access(scenes: Dictionary, actors: Dictionary, obstacles: Array, interactions: Dictionary, base_records: Array, environment: Dictionary, errors: Array) -> void:
@@ -512,8 +651,9 @@ static func _validate_visual_access(scenes: Dictionary, actors: Dictionary, obst
 			continue
 		var base_rect := _record_pixel_rect(base_record)
 		var base_small := _expanded_rect(base_rect, SMALL_SCREEN_TARGET)
-		normal_labels.append({"identity": base_identity, "rect": _label_rect(base_rect, str(base_record.get("label", ""))), "scenario": false})
-		small_labels.append({"identity": base_identity, "rect": _label_rect(base_small, str(base_record.get("label", ""))), "scenario": false})
+		var developer_placed := _developer_placement_room(environment)
+		normal_labels.append({"identity": base_identity, "rect": _label_rect(base_rect, str(base_record.get("label", ""))), "scenario": false, "developer_placed": developer_placed})
+		small_labels.append({"identity": base_identity, "rect": _label_rect(base_small, str(base_record.get("label", ""))), "scenario": false, "developer_placed": developer_placed})
 	for collection in [scenes, actors]:
 		var identities := (collection as Dictionary).keys()
 		identities.sort()
@@ -528,8 +668,9 @@ static func _validate_visual_access(scenes: Dictionary, actors: Dictionary, obst
 			var small_label_rect := _label_rect(small_rect, str(semantic.get("label", "")))
 			if interactions.has(identity) and overlay.has_area() and (rect.intersects(overlay) or small_rect.intersects(overlay) or label_rect.intersects(overlay) or small_label_rect.intersects(overlay)):
 				errors.append("Scenario visual %s collides with the reserved TalkDock overlay." % identity)
-			normal_labels.append({"identity": identity, "rect": label_rect, "scenario": true})
-			small_labels.append({"identity": identity, "rect": small_label_rect, "scenario": true})
+			var developer_placed := _developer_placement_room(environment)
+			normal_labels.append({"identity": identity, "rect": label_rect, "scenario": true, "developer_placed": developer_placed})
+			small_labels.append({"identity": identity, "rect": small_label_rect, "scenario": true, "developer_placed": developer_placed})
 			var role := str(semantic.get("role", "")).to_lower()
 			if role in ["obstacle", "barrier", "blockade"] and (rect.intersects(WALK_LANE) or small_rect.intersects(WALK_LANE)):
 				errors.append("Scenario obstacle %s blocks the mandatory player access lane in normal or expanded small-screen layout." % identity)
@@ -563,6 +704,11 @@ static func _validate_label_entries(entries: Array, layout_label: String, errors
 		for right_index in range(left_index + 1, entries.size()):
 			var right := _dict(entries[right_index])
 			if not bool(left.get("scenario", false)) and not bool(right.get("scenario", false)):
+				continue
+			# Developer placement is intentionally freeform. A deliberately moved
+			# object may overlap generated or scenario content without making the
+			# room unloadable; draw order and hit testing still resolve the result.
+			if bool(left.get("developer_placed", false)) or bool(right.get("developer_placed", false)):
 				continue
 			var right_rect: Rect2 = right.get("rect", Rect2())
 			if left_rect.intersects(right_rect) and left_rect.intersection(right_rect).get_area() > 0.01:
@@ -631,6 +777,8 @@ static func _validate_interactions(interactions: Dictionary, authority: Dictiona
 			errors.append("Scenario interaction %s collides with the reserved TalkDock overlay." % identity)
 		active_targets.append({
 			"identity": identity,
+			"scenario_owned": str(interaction.get("owner_namespace", "")) == "scenario",
+			"developer_placed": _developer_placement_room(environment),
 			"rect": rect,
 			"small_rect": small_rect,
 			"label_rect": _label_rect(rect, str(interaction.get("label", ""))),
@@ -660,6 +808,13 @@ static func _validate_interactions(interactions: Dictionary, authority: Dictiona
 		var left := _dict(active_targets[left_index])
 		for right_index in range(left_index + 1, active_targets.size()):
 			var right := _dict(active_targets[right_index])
+			# This validator owns scenario composition. Base-only room collisions are
+			# validated by the base-environment contracts and must not become
+			# scenario failures merely because a scenario is active.
+			if not bool(left.get("scenario_owned", false)) and not bool(right.get("scenario_owned", false)):
+				continue
+			if bool(left.get("developer_placed", false)) or bool(right.get("developer_placed", false)):
+				continue
 			for rect_key in ["rect", "small_rect"]:
 				var left_rect: Rect2 = left.get(rect_key, Rect2())
 				var right_rect: Rect2 = right.get(rect_key, Rect2())
@@ -672,11 +827,15 @@ static func _validate_interactions(interactions: Dictionary, authority: Dictiona
 					errors.append("Scenario interaction labels %s and %s overlap in %s layout." % [str(left.get("identity", "")), str(right.get("identity", "")), "expanded small-screen" if label_key == "small_label_rect" else "normal"])
 	for target_value in active_targets:
 		var target := _dict(target_value)
+		if not bool(target.get("scenario_owned", false)):
+			continue
 		var target_identity := str(target.get("identity", ""))
 		for base_value in base_records:
 			var base_record := _dict(base_value)
 			var base_identity := _record_identity(base_record)
 			if base_identity == target_identity or interactions.has(base_identity) or not bool(base_record.get("interactive", true)) or not bool(base_record.get("visible", true)):
+				continue
+			if bool(target.get("developer_placed", false)) or _developer_placement_room(environment):
 				continue
 			var base_rect := _record_pixel_rect(base_record)
 			var base_small := _expanded_rect(base_rect, SMALL_SCREEN_TARGET)
@@ -763,24 +922,43 @@ static func _add_visual_authority(authority: Dictionary, collection: Dictionary,
 			presentation_object_id = identity
 		var presentation_visible := bool(semantic.get("visible", existing.get("presentation_visible", true)))
 		var presentation_interactive := bool(existing.get("presentation_interactive", false))
-		authority[identity] = _authority_record(
+		var normal := _dict(semantic.get("normalized_hit_rect", {}))
+		var small := _dict(semantic.get("small_screen_rect", {}))
+		var z_order := int(semantic.get("z_order", 0))
+		var authority_kind := visual_kind
+		var authority_source := "semantic_visual"
+		if not existing.is_empty() and str(existing.get("source", "")) == "sealed_base_record":
+			# A semantic update to an existing machine, offer, event, or other room
+			# object shares that object's plane; it cannot create replacement draw
+			# geometry or jump ahead in a renderer-only z layer.
+			normal = _dict(existing.get("normalized_hit_rect", {}))
+			small = _dict(existing.get("small_screen_rect", {}))
+			z_order = int(existing.get("z_order", 0))
+			authority_kind = str(existing.get("visual_kind", "base_record"))
+			authority_source = "sealed_base_record"
+		var sealed_record := _authority_record(
 			identity,
 			presentation_object_id,
-			_dict(semantic.get("normalized_hit_rect", {})),
-			_dict(semantic.get("small_screen_rect", {})),
-			int(semantic.get("z_order", 0)),
-			visual_kind,
-			"semantic_visual",
+			normal,
+			small,
+			z_order,
+			authority_kind,
+			authority_source,
 			_array(semantic.get("route_points", [])) if visual_kind == "actor" else [],
 			_dict(semantic.get("route_stage", {})) if visual_kind == "actor" else {},
 			true,
 			presentation_visible,
 			presentation_interactive
 		)
+		var placement_class := str(semantic.get("placement_class", existing.get("placement_class", "")))
+		sealed_record["placement_class"] = placement_class
+		sealed_record["contact"] = str(semantic.get("contact", existing.get("contact", _placement_contact(placement_class))))
+		authority[identity] = sealed_record
 
 
-static func _base_layout_authority(base_records: Array, errors: Array = []) -> Dictionary:
+static func _base_layout_authority(base_records: Array, errors: Array = [], environment: Dictionary = {}) -> Dictionary:
 	var result: Dictionary = {}
+	var class_overrides := _dict(EnvironmentPlacementScript.surface_map(environment).get("class_overrides", {}))
 	for value in base_records:
 		var record := _dict(value)
 		var identity := _record_identity(record)
@@ -790,9 +968,15 @@ static func _base_layout_authority(base_records: Array, errors: Array = []) -> D
 		if result.has(identity):
 			errors.append("Base layout authority contains duplicate semantic identity %s." % identity)
 			continue
-		result[identity] = _authority_record(
+		var classified_record := record.duplicate(true)
+		var object_id := str(record.get("object_id", ""))
+		var class_override := str(class_overrides.get(object_id, ""))
+		if class_override in EnvironmentPlacementScript.CLASSES:
+			classified_record["placement_class"] = class_override
+		var placement_class := EnvironmentPlacementScript.classify(classified_record, str(record.get("object_type", "")), object_id, str(record.get("prop", record.get("icon_key", ""))))
+		var sealed_record := _authority_record(
 			identity,
-			str(record.get("object_id", "")).strip_edges(),
+			object_id.strip_edges(),
 			_normalized_rect(rect),
 			_normalized_rect(_expanded_rect(rect, SMALL_SCREEN_TARGET)),
 			int(record.get("scenario_z_order", record.get("z_order", 0))),
@@ -804,7 +988,22 @@ static func _base_layout_authority(base_records: Array, errors: Array = []) -> D
 			bool(record.get("visible", true)),
 			bool(record.get("interactive", true))
 		)
+		sealed_record["placement_class"] = placement_class
+		sealed_record["contact"] = _placement_contact(placement_class)
+		result[identity] = sealed_record
 	return result
+
+
+static func _placement_contact(placement_class: String) -> String:
+	if EnvironmentPlacementScript.is_person_class(placement_class):
+		return "feet"
+	if placement_class in ["floor_fixture", "ground_marker"]:
+		return "base"
+	if placement_class == "surface_item":
+		return "surface"
+	if placement_class in ["wall_mounted", "hanging"]:
+		return "mount"
+	return "edge"
 
 
 static func _seal_projection_coverage(authority: Dictionary, semantic_state: Dictionary, errors: Array) -> void:
@@ -866,7 +1065,9 @@ static func _seal_projection_coverage(authority: Dictionary, semantic_state: Dic
 		if not interaction.is_empty():
 			interactive = required and bool(interaction.get("present", true))
 		elif not visual.is_empty() and str(visual.get("owner_namespace", "")) == "scenario":
-			interactive = false
+			# Scenario decoration is deliberately inspectable even when it has no
+			# command actions. The sealed flag means canvas selection, not mutation.
+			interactive = required
 		if not required:
 			visible = false
 			interactive = false
@@ -880,7 +1081,7 @@ static func _seal_projection_coverage(authority: Dictionary, semantic_state: Dic
 
 
 static func _validate_authority(authority: Dictionary, errors: Array) -> void:
-	var expected_keys := ["actor_route_points", "actor_route_stage", "identity", "normalized_hit_rect", "presentation_interactive", "presentation_object_id", "presentation_required", "presentation_visible", "semantic_actor_member", "semantic_interaction_member", "semantic_scene_object_member", "small_screen_rect", "source", "visual_kind", "z_order"]
+	var expected_keys := ["actor_route_points", "actor_route_stage", "contact", "identity", "normalized_hit_rect", "placement_class", "presentation_interactive", "presentation_object_id", "presentation_required", "presentation_visible", "semantic_actor_member", "semantic_interaction_member", "semantic_scene_object_member", "small_screen_rect", "source", "visual_kind", "z_order"]
 	expected_keys.sort()
 	var presentation_identities: Dictionary = {}
 	var identities := authority.keys()
@@ -964,8 +1165,10 @@ static func _authority_record(identity: String, presentation_object_id: String, 
 	return {
 		"actor_route_points": actor_route_points.duplicate(true),
 		"actor_route_stage": actor_route_stage.duplicate(true),
+		"contact": "",
 		"identity": identity,
 		"normalized_hit_rect": normal,
+		"placement_class": "",
 		"presentation_interactive": presentation_interactive,
 		"presentation_object_id": presentation_object_id,
 		"presentation_required": presentation_required,
@@ -1043,6 +1246,35 @@ static func _path_reachable(start: Vector2, endpoint: Vector2, obstacles: Array,
 		var corner := corner_value as Vector2
 		if _point_clear(corner, obstacles, ignored_identity, rect_key) and _segment_clear(start, corner, obstacles, ignored_identity, rect_key) and _segment_clear(corner, endpoint, obstacles, ignored_identity, rect_key):
 			return true
+	var detour_x_values := [16.0, BOARD_SIZE.x - 16.0]
+	var detour_y_values := [16.0, BOARD_SIZE.y - 16.0]
+	for obstacle_value in obstacles:
+		var obstacle := _dict(obstacle_value)
+		if str(obstacle.get("identity", "")) == ignored_identity:
+			continue
+		var obstacle_rect: Rect2 = obstacle.get(rect_key, Rect2())
+		if not obstacle_rect.has_area():
+			continue
+		detour_x_values.append(clampf(obstacle_rect.position.x - 12.0, 16.0, BOARD_SIZE.x - 16.0))
+		detour_x_values.append(clampf(obstacle_rect.end.x + 12.0, 16.0, BOARD_SIZE.x - 16.0))
+		detour_y_values.append(clampf(obstacle_rect.position.y - 12.0, 16.0, BOARD_SIZE.y - 16.0))
+		detour_y_values.append(clampf(obstacle_rect.end.y + 12.0, 16.0, BOARD_SIZE.y - 16.0))
+	for x_value in detour_x_values:
+		var first := Vector2(float(x_value), start.y)
+		var second := Vector2(float(x_value), endpoint.y)
+		if _point_clear(first, obstacles, ignored_identity, rect_key) and _point_clear(second, obstacles, ignored_identity, rect_key) \
+				and _segment_clear(start, first, obstacles, ignored_identity, rect_key) \
+				and _segment_clear(first, second, obstacles, ignored_identity, rect_key) \
+				and _segment_clear(second, endpoint, obstacles, ignored_identity, rect_key):
+			return true
+	for y_value in detour_y_values:
+		var horizontal_first := Vector2(start.x, float(y_value))
+		var horizontal_second := Vector2(endpoint.x, float(y_value))
+		if _point_clear(horizontal_first, obstacles, ignored_identity, rect_key) and _point_clear(horizontal_second, obstacles, ignored_identity, rect_key) \
+				and _segment_clear(start, horizontal_first, obstacles, ignored_identity, rect_key) \
+				and _segment_clear(horizontal_first, horizontal_second, obstacles, ignored_identity, rect_key) \
+				and _segment_clear(horizontal_second, endpoint, obstacles, ignored_identity, rect_key):
+			return true
 	return false
 
 
@@ -1067,25 +1299,83 @@ static func _point_clear(point: Vector2, obstacles: Array, ignored_identity: Str
 	return true
 
 
-static func _collision_safe_rect(identity: String, authored: Rect2, occupied: Array) -> Dictionary:
+static func _collision_safe_rect(identity: String, authored: Rect2, occupied: Array, label: String = "", forbidden_rect: Rect2 = Rect2(), environment: Dictionary = {}, placement_class: String = "", constraint: Rect2 = Rect2(), excluded_rect_keys: Dictionary = {}) -> Dictionary:
+	if not environment.is_empty() and placement_class in EnvironmentPlacementScript.CLASSES:
+		# Placement data owns the composition. A supported authored rect is never
+		# displaced by runtime packing; overlap defects must be corrected in data.
+		var authored_support := EnvironmentPlacementScript.support_for_rect(environment, placement_class, authored)
+		if not authored_support.is_empty():
+			return {"rect": authored, "adjusted": false, "colliding": false, "surface_id": str(authored_support.get("surface_id", ""))}
+		var grounded := EnvironmentPlacementScript.authored_or_local_rect(environment, placement_class, authored)
+		var grounded_rect: Rect2 = grounded.get("rect", authored)
+		var candidates: Array = [grounded_rect]
+		for offset_value in COLLISION_OFFSETS:
+			var offset: Vector2 = offset_value
+			if offset.is_zero_approx():
+				continue
+			candidates.append(Rect2(grounded_rect.position + offset, grounded_rect.size))
+		for candidate_value in candidates:
+			var candidate: Rect2 = candidate_value
+			if candidate.position.distance_to(authored.position) > EnvironmentPlacementScript.LOCAL_SNAP_RADIUS:
+				continue
+			if excluded_rect_keys.has(_placement_rect_key(candidate)):
+				continue
+			var support := EnvironmentPlacementScript.support_for_rect(environment, placement_class, candidate)
+			if support.is_empty():
+				continue
+			var small_candidate := _expanded_rect(candidate, SMALL_SCREEN_TARGET)
+			if not _normal_hit_overlaps(identity, candidate, occupied) \
+					and not _expanded_overlaps(identity, small_candidate, occupied) \
+					and not _label_overlaps(identity, candidate, label, occupied, false) \
+					and not _label_overlaps(identity, small_candidate, label, occupied, true) \
+					and not _forbidden_overlap(small_candidate, forbidden_rect):
+				return {"rect": candidate, "adjusted": true, "colliding": false, "surface_id": str(support.get("surface_id", ""))}
+		# Never reject a room for capacity. The per-room default remains grounded;
+		# the visual audit owns any remaining authored overlap correction.
+		return {"rect": grounded_rect, "adjusted": true, "colliding": false, "surface_id": str(grounded.get("surface_id", "")), "crowded": true}
 	# A normal-layout collision may be deterministically displaced. Expanded-only
 	# contact must retain authored placement so the later small-screen hit, label,
 	# lane, and reachability validators can reject the exact authored conflict
 	# instead of silently manufacturing different room geometry.
 	var authored_raw_collision := _raw_hit_overlaps(identity, authored, occupied)
-	if not authored_raw_collision and not _normal_hit_overlaps(identity, authored, occupied):
+	if not authored_raw_collision \
+			and not _normal_hit_overlaps(identity, authored, occupied) \
+			and not _label_overlaps(identity, authored, label, occupied, false) \
+			and not _label_overlaps(identity, _expanded_rect(authored, SMALL_SCREEN_TARGET), label, occupied, true) \
+			and not _forbidden_overlap(_expanded_rect(authored, SMALL_SCREEN_TARGET), forbidden_rect):
 		return {"rect": _clamp_inside_board(authored), "adjusted": false, "colliding": false}
 	for offset_value in COLLISION_OFFSETS:
 		var offset := offset_value as Vector2
 		var candidate := _clamp_inside_board(Rect2(authored.position + offset, authored.size))
 		var small_candidate := _expanded_rect(candidate, SMALL_SCREEN_TARGET)
-		if not _normal_hit_overlaps(identity, candidate, occupied) and not _expanded_overlaps(identity, small_candidate, occupied):
+		if not _normal_hit_overlaps(identity, candidate, occupied) \
+				and not _expanded_overlaps(identity, small_candidate, occupied) \
+				and not _label_overlaps(identity, candidate, label, occupied, false) \
+				and not _label_overlaps(identity, small_candidate, label, occupied, true) \
+				and not _forbidden_overlap(small_candidate, forbidden_rect):
 			return {"rect": candidate, "adjusted": not offset.is_zero_approx(), "colliding": false}
 	var bounded_candidates := _bounded_collision_candidates(authored)
 	for candidate_value in bounded_candidates:
 		var candidate := candidate_value as Rect2
 		var small_candidate := _expanded_rect(candidate, SMALL_SCREEN_TARGET)
-		if not _normal_hit_overlaps(identity, candidate, occupied) and not _expanded_overlaps(identity, small_candidate, occupied):
+		if not _normal_hit_overlaps(identity, candidate, occupied) \
+				and not _expanded_overlaps(identity, small_candidate, occupied) \
+				and not _label_overlaps(identity, candidate, label, occupied, false) \
+				and not _label_overlaps(identity, small_candidate, label, occupied, true) \
+				and not _forbidden_overlap(small_candidate, forbidden_rect):
+			return {"rect": candidate, "adjusted": not candidate.position.is_equal_approx(authored.position), "colliding": false}
+	# Dense rooms can leave a valid gap between the legacy 16-pixel sample points.
+	# Run the finer 8-pixel grid only after every cheap candidate failed, keeping
+	# ordinary refreshes unchanged while avoiding a false fail-closed projection.
+	var fine_candidates := _fine_collision_candidates(authored)
+	for candidate_value in fine_candidates:
+		var candidate := candidate_value as Rect2
+		var small_candidate := _expanded_rect(candidate, SMALL_SCREEN_TARGET)
+		if not _normal_hit_overlaps(identity, candidate, occupied) \
+				and not _expanded_overlaps(identity, small_candidate, occupied) \
+				and not _label_overlaps(identity, candidate, label, occupied, false) \
+				and not _label_overlaps(identity, small_candidate, label, occupied, true) \
+				and not _forbidden_overlap(small_candidate, forbidden_rect):
 			return {"rect": candidate, "adjusted": not candidate.position.is_equal_approx(authored.position), "colliding": false}
 	# Preserve the original exact-hitbox fallback for authored raw collisions when
 	# a crowded room cannot also provide the preferred extra visual gap.
@@ -1094,28 +1384,93 @@ static func _collision_safe_rect(identity: String, authored: Rect2, occupied: Ar
 			var offset := offset_value as Vector2
 			var candidate := _clamp_inside_board(Rect2(authored.position + offset, authored.size))
 			var small_candidate := _expanded_rect(candidate, SMALL_SCREEN_TARGET)
-			if not _raw_hit_overlaps(identity, candidate, occupied) and not _expanded_overlaps(identity, small_candidate, occupied):
+			if not _raw_hit_overlaps(identity, candidate, occupied) \
+					and not _expanded_overlaps(identity, small_candidate, occupied) \
+					and not _label_overlaps(identity, candidate, label, occupied, false) \
+					and not _label_overlaps(identity, small_candidate, label, occupied, true) \
+					and not _forbidden_overlap(small_candidate, forbidden_rect):
 				return {"rect": candidate, "adjusted": not offset.is_zero_approx(), "colliding": false}
 		for candidate_value in bounded_candidates:
 			var candidate := candidate_value as Rect2
 			var small_candidate := _expanded_rect(candidate, SMALL_SCREEN_TARGET)
-			if not _raw_hit_overlaps(identity, candidate, occupied) and not _expanded_overlaps(identity, small_candidate, occupied):
+			if not _raw_hit_overlaps(identity, candidate, occupied) \
+					and not _expanded_overlaps(identity, small_candidate, occupied) \
+					and not _label_overlaps(identity, candidate, label, occupied, false) \
+					and not _label_overlaps(identity, small_candidate, label, occupied, true) \
+					and not _forbidden_overlap(small_candidate, forbidden_rect):
+				return {"rect": candidate, "adjusted": not candidate.position.is_equal_approx(authored.position), "colliding": false}
+		for candidate_value in fine_candidates:
+			var candidate := candidate_value as Rect2
+			var small_candidate := _expanded_rect(candidate, SMALL_SCREEN_TARGET)
+			if not _raw_hit_overlaps(identity, candidate, occupied) \
+					and not _expanded_overlaps(identity, small_candidate, occupied) \
+					and not _label_overlaps(identity, candidate, label, occupied, false) \
+					and not _label_overlaps(identity, small_candidate, label, occupied, true) \
+					and not _forbidden_overlap(small_candidate, forbidden_rect):
 				return {"rect": candidate, "adjusted": not candidate.position.is_equal_approx(authored.position), "colliding": false}
 	# A raw-safe authored placement remains valid when the room cannot provide the
 	# renderer's preferred extra breathing room. Raw ambiguity still fails closed;
 	# this compatibility path only avoids rejecting an otherwise valid crowded
 	# destination during travel.
-	if not authored_raw_collision:
+	if not authored_raw_collision \
+			and not _label_overlaps(identity, authored, label, occupied, false) \
+			and not _label_overlaps(identity, _expanded_rect(authored, SMALL_SCREEN_TARGET), label, occupied, true) \
+			and not _forbidden_overlap(_expanded_rect(authored, SMALL_SCREEN_TARGET), forbidden_rect):
 		return {"rect": _clamp_inside_board(authored), "adjusted": false, "colliding": false}
 	return {"rect": authored, "adjusted": false, "colliding": true}
 
 
-static func _bounded_collision_candidates(authored: Rect2) -> Array:
+static func _placement_class_priority(placement_class: String) -> int:
+	match placement_class:
+		"behind_counter_person", "seated_person": return 0
+		"doorway", "wall_mounted", "hanging": return 1
+		"floor_fixture": return 2
+		"surface_item": return 3
+		"ground_marker", "standing_person", "group": return 4
+		_: return 5
+
+
+static func _semantic_visual_area(semantic: Dictionary, actor: bool) -> float:
+	var bounds := _dict(semantic.get("bounds", {}))
+	var fallback := DEFAULT_ACTOR_SIZE if actor else DEFAULT_SCENE_SIZE
+	var width := float(bounds.get("w", fallback.x))
+	var height := float(bounds.get("h", fallback.y))
+	return maxf(width, MIN_SCENE_SIZE.x) * maxf(height, MIN_SCENE_SIZE.y)
+
+
+static func _placement_rect_key(rect: Rect2) -> String:
+	return "%.3f:%.3f:%.3f:%.3f" % [rect.position.x, rect.position.y, rect.size.x, rect.size.y]
+
+
+static func _forbidden_overlap(rect: Rect2, forbidden_rect: Rect2) -> bool:
+	return forbidden_rect.has_area() and rect.intersects(forbidden_rect) and rect.intersection(forbidden_rect).get_area() > 0.01
+
+
+static func _label_overlaps(identity: String, rect: Rect2, label: String, occupied: Array, small_screen: bool) -> bool:
+	var candidate_label := _label_rect(rect, label)
+	if not candidate_label.has_area():
+		return false
+	var rect_key := "small_rect" if small_screen else "rect"
+	for occupied_value in occupied:
+		var occupied_record := _dict(occupied_value)
+		if str(occupied_record.get("identity", "")) == identity:
+			continue
+		var other_rect: Rect2 = occupied_record.get(rect_key, Rect2())
+		var other_label := _label_rect(other_rect, str(occupied_record.get("label", "")))
+		if other_label.has_area() and candidate_label.intersects(other_label) and candidate_label.intersection(other_label).get_area() > 0.01:
+			return true
+	return false
+
+
+static func _bounded_collision_candidates(authored: Rect2, grid_step: int = 16, excluded_grid_step: int = 0) -> Array:
 	var candidates: Array = []
 	var maximum_x := maxi(0, floori(BOARD_SIZE.x - authored.size.x))
 	var maximum_y := maxi(0, floori(BOARD_SIZE.y - authored.size.y))
-	for y in range(0, maximum_y + 1, 16):
-		for x in range(0, maximum_x + 1, 16):
+	var step := maxi(1, grid_step)
+	for y in range(0, maximum_y + 1, step):
+		for x in range(0, maximum_x + 1, step):
+			if excluded_grid_step > 0 and x % excluded_grid_step == 0 and y % excluded_grid_step == 0:
+				continue
 			candidates.append(Rect2(Vector2(x, y), authored.size))
 	candidates.sort_custom(func(left: Rect2, right: Rect2) -> bool:
 		var left_distance := left.position.distance_squared_to(authored.position)
@@ -1124,6 +1479,23 @@ static func _bounded_collision_candidates(authored: Rect2) -> Array:
 			return left_distance < right_distance
 		return left.position.y < right.position.y if not is_equal_approx(left.position.y, right.position.y) else left.position.x < right.position.x
 	)
+	return candidates
+
+
+static func _fine_collision_candidates(authored: Rect2) -> Array:
+	# Only dense layouts reach this path. Their authored geometry is stable across
+	# presentation refreshes, so retain a small LRU of the expensive distance-sort
+	# instead of rebuilding thousands of Rect2 candidates on every UI update.
+	var cache_key := authored
+	if _fine_candidate_cache.has(cache_key):
+		_fine_candidate_cache_order.erase(cache_key)
+		_fine_candidate_cache_order.append(cache_key)
+		return _fine_candidate_cache.get(cache_key, []) as Array
+	var candidates := _bounded_collision_candidates(authored, 8, 16)
+	_fine_candidate_cache[cache_key] = candidates
+	_fine_candidate_cache_order.append(cache_key)
+	while _fine_candidate_cache_order.size() > FINE_CANDIDATE_CACHE_MAX_ENTRIES:
+		_fine_candidate_cache.erase(_fine_candidate_cache_order.pop_front())
 	return candidates
 
 
@@ -1178,7 +1550,12 @@ static func _expanded_overlaps(identity: String, rect: Rect2, occupied: Array) -
 	return false
 
 
-static func _overlap_count(authority: Dictionary, rect_key: String) -> int:
+static func _overlap_count(authority: Dictionary, rect_key: String, environment: Dictionary = {}) -> int:
+	# Once an owner edits a room, its composition is authoritative even when
+	# controls deliberately overlap. Keep the audit clean so downstream gates do
+	# not reinterpret an allowed freeform layout as a load failure.
+	if _developer_placement_room(environment):
+		return 0
 	var count := 0
 	var identities := authority.keys()
 	identities.sort()
@@ -1189,6 +1566,14 @@ static func _overlap_count(authority: Dictionary, rect_key: String) -> int:
 			if left.intersects(right) and left.intersection(right).get_area() > 0.01:
 				count += 1
 	return count
+
+
+static func _developer_placement_room(environment: Dictionary) -> bool:
+	var placement_map := EnvironmentPlacementScript.surface_map(environment)
+	for field in ["developer_object_slot_positions", "developer_scenario_object_slot_positions", "developer_category_slot_positions"]:
+		if not _dict(placement_map.get(field, {})).is_empty():
+			return true
+	return false
 
 
 static func _actor_route_count(actors: Dictionary) -> int:
@@ -1214,6 +1599,48 @@ static func _validate_layout_context(context: Dictionary, errors: Array) -> void
 		var raw_overlay := _dict(context.get("reserved_overlay_board_rect", {}))
 		if not raw_overlay.is_empty() and (float(raw_overlay.get("w", 0.0)) > 0.0 or float(raw_overlay.get("h", 0.0)) > 0.0):
 			errors.append("Scenario production reserved-overlay geometry must be finite and board-bounded.")
+
+
+static func _context_base_occupied_records(context: Dictionary, base_records: Array, errors: Array = []) -> Array:
+	var value: Variant = context.get("base_occupied_records", [])
+	if typeof(value) != TYPE_ARRAY:
+		errors.append("Scenario production base occupancy must be an array.")
+		return []
+	if (value as Array).size() > 256:
+		errors.append("Scenario production base occupancy exceeds the 256-record bound.")
+		return []
+	var sealed_presentation_ids: Dictionary = {}
+	for base_value in base_records:
+		var base := _dict(base_value)
+		var presentation_id := str(base.get("object_id", "")).strip_edges()
+		if not presentation_id.is_empty():
+			sealed_presentation_ids[presentation_id] = true
+	var seen: Dictionary = {}
+	var result: Array = []
+	for index in range((value as Array).size()):
+		var source := _dict((value as Array)[index])
+		var object_id := str(source.get("object_id", "")).strip_edges()
+		var label := str(source.get("label", "")).strip_edges()
+		var rect := _normalized_or_pixel_rect(source.get("focus_rect", {}))
+		if source.is_empty() or object_id.is_empty() or seen.has(object_id):
+			errors.append("Scenario production base occupancy record %d has an empty or duplicate identity." % index)
+			continue
+		seen[object_id] = true
+		if label.length() > LABEL_MAX_LENGTH or not label.is_empty() and not _readable_text(label, LABEL_MAX_LENGTH):
+			errors.append("Scenario production base occupancy record %s has an invalid label." % object_id)
+			continue
+		if not rect.has_area() or not Rect2(Vector2.ZERO, BOARD_SIZE).encloses(rect):
+			errors.append("Scenario production base occupancy record %s has invalid room geometry." % object_id)
+			continue
+		if sealed_presentation_ids.has(object_id):
+			continue
+		result.append({
+			"identity": "runtime_base::%s" % object_id,
+			"rect": rect,
+			"small_rect": _expanded_rect(rect, SMALL_SCREEN_TARGET),
+			"label": label,
+		})
+	return result
 
 
 static func _context_overlay_rect(context: Dictionary) -> Rect2:
@@ -1277,6 +1704,19 @@ static func _resolve_center(environment: Dictionary, anchor_id: String, zone_id:
 			if index >= 0 and index < spots.size():
 				return _point(spots[index])
 	return Vector2(-1.0, -1.0)
+
+
+static func _zone_rect(environment: Dictionary, zone_id: String) -> Rect2:
+	if zone_id.is_empty():
+		return Rect2()
+	return _rect_from_semantic_bounds(_dict(_dict(environment.get("semantic_zones", {})).get(zone_id, {})).get("bounds", []))
+
+
+static func _rect_from_semantic_bounds(value: Variant) -> Rect2:
+	var values := _array(value)
+	if values.size() < 4:
+		return Rect2()
+	return Rect2(float(values[0]), float(values[1]), float(values[2]), float(values[3]))
 
 
 static func _resolve_route_center(environment: Dictionary, semantic_state: Dictionary, route_id: String) -> Vector2:
@@ -1354,7 +1794,12 @@ static func _base_occupied_records(base_records: Array) -> Array:
 		var rect := _record_pixel_rect(record)
 		if not rect.has_area():
 			continue
-		result.append({"identity": _record_identity(record), "rect": rect, "small_rect": _expanded_rect(rect, SMALL_SCREEN_TARGET)})
+		result.append({
+			"identity": _record_identity(record),
+			"rect": rect,
+			"small_rect": _expanded_rect(rect, SMALL_SCREEN_TARGET),
+			"label": str(record.get("label", "")),
+		})
 	return result
 
 

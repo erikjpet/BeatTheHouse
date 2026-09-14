@@ -3,6 +3,9 @@ extends RefCounted
 const EnvironmentBaseSemanticRecordsScript := preload("res://scripts/core/environment_base_semantic_records.gd")
 const ScenarioSequenceSchemaScript := preload("res://scripts/core/scenario_sequence_schema.gd")
 const ScenarioSemanticViewModelScript := preload("res://scripts/ui/scenario_semantic_view_model.gd")
+const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
+const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
+const DELIVERY_LAYOUT_GAP_PIXELS := 8.0
 
 
 static func interactable_object_view_list(host: Variant) -> Array:
@@ -42,14 +45,6 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		after_travel_objects.append(room_return_object)
 	after_travel_objects.append_array(host._hook_interactable_objects(host.CONTEXT_MODE_SERVICE, host._service_hook_view_list()))
 	after_travel_objects.append_array(host._hook_interactable_objects(host.CONTEXT_MODE_LENDER, host._lender_hook_view_list()))
-	var travel_choices = host._travel_choice_view_list()
-	var delivery_occupied := before_travel_objects + after_travel_objects
-	for travel_index in range(travel_choices.size()):
-		var travel_choice: Dictionary = travel_choices[travel_index] if typeof(travel_choices[travel_index]) == TYPE_DICTIONARY else {}
-		delivery_occupied.append({
-			"focus_rect": host._interaction_rect_for_object("travel:%s" % str(travel_choice.get("id", "")), host.CONTEXT_MODE_TRAVEL, travel_index),
-		})
-	before_travel_objects.append_array(delivery_interactable_objects(host, delivery_occupied))
 	var event_options: Array = []
 	var contact_event_ids: Array = []
 	for presence_value in host._copy_array(host.run_state.current_environment.get("crew_presence", [])):
@@ -63,6 +58,49 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		var event_id := str((event_value as Dictionary).get("id", ""))
 		if event_id != "numbers_desk" and not contact_event_ids.has(event_id):
 			event_options.append(event_value)
+	var travel_choices = host._travel_choice_view_list()
+	var delivery_occupied := before_travel_objects + after_travel_objects
+	var layout: Dictionary = host._current_environment_layout()
+	var game_fixture_counts := _dict(layout.get("game_fixture_counts", {}))
+	var game_layout_index := 0
+	for game_source_value in game_sources:
+		var game_source: Dictionary = game_source_value
+		var game_id := str(game_source.get("id", ""))
+		var fixture_count := maxi(1, int(game_fixture_counts.get(game_id, 1)))
+		for fixture_index in range(fixture_count):
+			var game_object_id := "game:%s" % game_id if fixture_index == 0 else "game:%s:%d" % [game_id, fixture_index + 1]
+			delivery_occupied.append({"focus_rect": host._interaction_rect_for_object(game_object_id, host.CONTEXT_MODE_GAME, game_layout_index)})
+			game_layout_index += 1
+	var event_layout_index := 0
+	for event_value in event_options:
+		if typeof(event_value) != TYPE_DICTIONARY:
+			continue
+		var event_id := str((event_value as Dictionary).get("id", ""))
+		if event_id.is_empty():
+			continue
+		delivery_occupied.append({"focus_rect": host._interaction_rect_for_object("event:%s" % event_id, host.CONTEXT_MODE_EVENT, event_layout_index)})
+		event_layout_index += 1
+	var item_offers: Array = host._item_offer_view_list()
+	var item_layout_index := 0
+	for offer_value in item_offers:
+		if typeof(offer_value) != TYPE_DICTIONARY:
+			continue
+		var offer: Dictionary = offer_value
+		var item_id := str(offer.get("id", ""))
+		if item_id.is_empty():
+			continue
+		var item_object_id := str(offer.get("object_id", "item:%s" % item_id))
+		var resolved_item_index := int(offer.get("layout_index", item_layout_index))
+		delivery_occupied.append({"focus_rect": host._interaction_rect_for_object(item_object_id, host.CONTEXT_MODE_ITEM, resolved_item_index)})
+		item_layout_index += 1
+	if host._shopkeeper_should_draw():
+		delivery_occupied.append({"focus_rect": host._interaction_rect_for_object("shopkeeper:merchant", host.CONTEXT_MODE_SHOPKEEPER, 0)})
+	for travel_index in range(travel_choices.size()):
+		var travel_choice: Dictionary = travel_choices[travel_index] if typeof(travel_choices[travel_index]) == TYPE_DICTIONARY else {}
+		delivery_occupied.append({
+			"focus_rect": host._interaction_rect_for_object("travel:%s" % str(travel_choice.get("id", "")), host.CONTEXT_MODE_TRAVEL, travel_index),
+		})
+	before_travel_objects.append_array(delivery_interactable_objects(host, delivery_occupied))
 	var result: Array = _array(host.EnvironmentInteractionViewModelScript.interactable_object_view_list(host.run_state, host.library, {
 		"run_failed_without_recovery": failed,
 		"failed_reason": failed_reason,
@@ -72,12 +110,11 @@ static func interactable_object_view_list(host: Variant) -> Array:
 			"selected_object_id": host.selected_object_id,
 		},
 		"layout": host._current_environment_layout(),
-		"risk_cue": host._risk_cue_text(),
 		"game_sources": game_sources,
 		"event_options": event_options,
 		"event_choice_summary": Callable(host, "_event_choice_list_summary"),
 		"event_inline_actions": Callable(host, "_event_inline_response_actions"),
-		"item_offers": host._item_offer_view_list(),
+		"item_offers": item_offers,
 		"shopkeeper_should_draw": host._shopkeeper_should_draw(),
 		"shopkeeper_available": host._shopkeeper_available(),
 		"shopkeeper_label": host._shopkeeper_label(),
@@ -96,6 +133,15 @@ static func interactable_object_view_list(host: Variant) -> Array:
 	var layout_context: Dictionary = {}
 	if host.environment_canvas != null and host.environment_canvas.has_method("scenario_layout_context"):
 		layout_context = _dict(host.environment_canvas.call("scenario_layout_context"))
+	# The sealed scenario inventory deliberately excludes runtime-only controls
+	# such as Numbers, Crew arrivals, and live game clerks. Delivery controls are
+	# placed around the already sealed scenario authority instead of moving that
+	# authority when cargo state changes.
+	# Their geometry is nevertheless part of the room the player sees. Feed a
+	# bounded, read-only reservation list into layout resolution so scenario props
+	# are placed around the complete production plane instead of composing a late
+	# collision-prone layer. These records authorize no scenario behavior.
+	layout_context["base_occupied_records"] = _base_layout_reservations(trusted_base_result, layout)
 	if not bool(preparation.get("ok", false)):
 		var preparation_failure := projection_failure_result(result, _array(preparation.get("errors", [])))
 		var committed_preparation_failure := committed_projection_status_result(host.run_state, preparation_failure, trusted_base_result)
@@ -116,6 +162,11 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		var committed_result := committed_projection_status_result(host.run_state, projection_result, trusted_base_result)
 		result = _array(committed_result.get("records", trusted_base_result))
 		if bool(committed_result.get("ok", false)):
+			result = restore_live_presentation_fields(
+				result,
+				trusted_base_result,
+				host._copy_array(host.run_state.current_environment.get("resolved_event_ids", []))
+			)
 			result = append_unsealed_live_records(result, trusted_base_result, sealed_base_records)
 	elif bool(world_preparation.get("active", false)):
 		var world_finalized: Dictionary = _dict(host.run_state.world_sequence_finalize_base_semantics(result, host.library, layout_context))
@@ -127,10 +178,115 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		var world_projection_result := project_finalized_sequence_interaction_result(result, world_finalized)
 		var committed_world_result := committed_projection_status_result(host.run_state, world_projection_result, trusted_base_result)
 		result = _array(committed_world_result.get("records", trusted_base_result))
+		if bool(committed_world_result.get("ok", false)):
+			result = restore_live_presentation_fields(
+				result,
+				trusted_base_result,
+				host._copy_array(host.run_state.current_environment.get("resolved_event_ids", []))
+			)
 	else:
 		host.run_state.current_environment.erase("scenario_sequence_lifecycle_errors")
 		host.run_state.current_environment.erase("scenario_layout_audit")
 		host.run_state.current_environment.erase("scenario_layout_authority_digest")
+	return _reflow_delivery_records(host, result)
+
+
+static func _base_layout_reservations(records: Array, layout: Dictionary = {}) -> Array:
+	var by_id: Dictionary = {}
+	var object_rects := _dict(layout.get("object_rects", {}))
+	for value in records:
+		var record := _dict(value)
+		var object_id := str(record.get("object_id", "")).strip_edges()
+		if object_id.is_empty() or by_id.has(object_id) or not bool(record.get("visible", true)) \
+				or not _runtime_layout_reservation_id(object_id):
+			continue
+		var label := str(record.get("label", "")).strip_edges()
+		if label.length() > 64:
+			label = label.substr(0, 64)
+		var authoritative_rect: Variant = object_rects.get(object_id, record.get("focus_rect", record.get("normalized_rect", {})))
+		by_id[object_id] = {
+			"object_id": object_id,
+			"focus_rect": _duplicate_variant(authoritative_rect),
+			"label": label,
+		}
+	# Generated slots remain part of the ordinary environment plane while their
+	# events are dormant. Reserve those authored positions so a scenario prop can
+	# never occupy a chain-event slot that becomes live later in the same visit.
+	if not object_rects.is_empty():
+		for object_id_value in object_rects.keys():
+			var object_id := str(object_id_value).strip_edges()
+			if object_id.is_empty() or by_id.has(object_id):
+				continue
+			by_id[object_id] = {
+				"object_id": object_id,
+				"focus_rect": _duplicate_variant(object_rects.get(object_id_value, {})),
+				"label": "",
+			}
+	var ids := by_id.keys()
+	ids.sort()
+	var result: Array = []
+	for object_id_value in ids:
+		result.append(by_id.get(object_id_value))
+	return result
+
+
+# Static games/events/services/routes are already supplied as sealed base
+# geometry. Only UI/runtime families omitted from that authority need a second
+# read-only occupancy record; including the whole live list double-counts base
+# controls and can over-constrain a scenario refresh. Delivery is deliberately
+# excluded: its placement pass consumes the sealed scenario plane, so it must
+# not feed back and relocate that plane on every cargo-state refresh.
+static func _runtime_layout_reservation_id(object_id: String) -> bool:
+	for prefix in [
+		"numbers:", "crew_presence:", "game_hook:", "dialogue:",
+		"item:", "cage_gift_item:", "shopkeeper:", "casino_fixture:",
+		"home_tenure:", "home_sleep:", "home_storage:", "home_container:",
+		"environment_layer:",
+	]:
+		if object_id.begins_with(prefix):
+			return true
+	return false
+
+
+# Scenario authority seals identity, geometry, and any fields it explicitly
+# changes. Its compact base inventory intentionally omits live presentation
+# data, so restore only absent fields from the already trusted UI projection.
+# Resolved base events remain in the immutable semantic seal for authorization,
+# but they no longer own a live room object and must be removed after the sealed
+# projection passes. Scenario-owned event records remain governed by their own
+# projection lifecycle. This keeps authored event art, character identity, and
+# direct response buttons visible without resurrecting a consumed event as a
+# generic fallback object.
+static func restore_live_presentation_fields(projected_records: Array, live_records: Array, resolved_event_ids: Array = []) -> Array:
+	var live_by_id: Dictionary = {}
+	for live_value in live_records:
+		var live := _dict(live_value)
+		var live_id := str(live.get("object_id", "")).strip_edges()
+		if not live_id.is_empty():
+			live_by_id[live_id] = live
+	var result: Array = []
+	var presentation_fields := [
+		"visual_type", "short_description", "identity_summary", "presence",
+		"status_summary", "effect_summary", "impact_summary", "risk_summary",
+		"cost_summary", "choice_summary", "classification_summary",
+		"attribute_badges", "visual_key", "prop", "surface", "icon_key",
+		"asset_path", "icon_sprite", "character_actor", "inline_actions",
+	]
+	for record_value in projected_records:
+		var record := _dict(record_value).duplicate(true)
+		var object_id := str(record.get("object_id", "")).strip_edges()
+		var live := _dict(live_by_id.get(object_id, {}))
+		var owner_namespace := str(record.get("owner_namespace", "base"))
+		var resolved_base_event := owner_namespace != "scenario" \
+			and str(record.get("object_type", "")) == "event" \
+			and resolved_event_ids.has(str(record.get("source_id", "")).strip_edges())
+		if resolved_base_event:
+			continue
+		if not live.is_empty() and owner_namespace != "scenario":
+			for field in presentation_fields:
+				if not record.has(field) and live.has(field):
+					record[field] = _duplicate_variant(live.get(field))
+		result.append(record)
 	return result
 
 
@@ -392,7 +548,9 @@ static func _compose_projected_records(base_records: Array, resolved_projection:
 			record = _merge_projected_visual(record, semantic_scene, _dict(authority.get(identity, {})), authority_digest)
 		if not semantic_interactions.has(identity):
 			if semantic_visuals.has(identity) and str(semantic_scene.get("owner_namespace", "")) == "scenario":
-				record["interactive"] = false
+				# Scenario-owned decoration is read-only, not inert: selecting it must
+				# still open its authored room-history description.
+				record["interactive"] = true
 				record["scenario_sequence_actions"] = []
 			projected.append(record)
 			used_presentation_ids[str(record.get("object_id", ""))] = true
@@ -457,6 +615,7 @@ static func _merge_projected_interaction(base: Dictionary, semantic: Dictionary,
 	result["object_type"] = "scenario_sequence" if scenario_owned else str(result.get("object_type", "info"))
 	result["visual_type"] = str(result.get("visual_type", "fixture"))
 	result["source_id"] = str(semantic.get("source_id", result.get("source_id", semantic.get("stable_object_id", ""))))
+	result["icon_key"] = _scenario_icon_key(semantic, result)
 	result["owner_namespace"] = str(semantic.get("owner_namespace", ""))
 	result["stable_object_id"] = str(semantic.get("stable_object_id", ""))
 	if not world_owner_token.is_empty(): result["world_sequence_owner_token"] = world_owner_token
@@ -496,25 +655,36 @@ static func _merge_projected_scene_object(base: Dictionary, semantic: Dictionary
 	var stable_id := str(semantic.get("stable_object_id", result.get("stable_object_id", "")))
 	var owned_identity := "%s::%s" % [owner, stable_id]
 	result["object_id"] = owned_identity if owner == "scenario" else str(result.get("object_id", semantic.get("presentation_object_id", owned_identity)))
-	result["object_type"] = str(result.get("object_type", "scenario_scene_object" if owner == "scenario" else "info"))
-	result["visual_type"] = str(result.get("visual_type", "fixture"))
+	var object_type := str(result.get("object_type", "scenario_scene_object" if owner == "scenario" else "info"))
+	if owner == "scenario" and object_type in ["", "scenario_object"]:
+		object_type = "scenario_scene_object"
+	result["object_type"] = object_type
+	result["visual_type"] = "scenario_object" if owner == "scenario" else str(result.get("visual_type", "fixture"))
 	result["source_id"] = str(result.get("source_id", stable_id))
+	result["icon_key"] = _scenario_icon_key(semantic, result)
 	result["owner_namespace"] = owner
 	result["stable_object_id"] = stable_id
 	var world_owner_token := str(semantic.get("world_sequence_owner_token", ""))
 	if not world_owner_token.is_empty(): result["world_sequence_owner_token"] = world_owner_token
 	result["label"] = str(semantic.get("label", result.get("label", stable_id)))
-	result["short_description"] = str(semantic.get("role", result.get("short_description", "Room fixture")))
+	result["short_description"] = _scenario_description(semantic, result, "Room fixture")
+	result["action_summary"] = str(result.get("action_summary", "Inspect the room detail."))
 	result["state_label"] = str(semantic.get("state", semantic.get("appearance", result.get("state_label", "Present"))))
 	result["enabled"] = bool(semantic.get("enabled", result.get("enabled", true)))
 	result["visible"] = bool(semantic.get("visible", result.get("visible", true)))
-	result["interactive"] = bool(result.get("interactive", false))
+	# Scenario decorations are authored investigation targets even without a
+	# command. A world-sequence aftermath prop can explicitly seal as inert once
+	# its correlated action has gone away.
+	result["interactive"] = bool(authority.get("presentation_interactive", owner == "scenario"))
 	result["scenario_sequence_actions"] = _array(result.get("scenario_sequence_actions", []))
 	result["anchor_id"] = str(semantic.get("anchor_id", result.get("anchor_id", "")))
 	result["zone_id"] = str(semantic.get("zone_id", result.get("zone_id", "")))
 	result["semantic_role"] = str(semantic.get("role", result.get("semantic_role", "prop")))
 	result["semantic_state"] = str(semantic.get("state", result.get("semantic_state", "")))
 	result["semantic_appearance"] = str(semantic.get("appearance", result.get("semantic_appearance", "")))
+	result["role"] = result["semantic_role"]
+	result["state"] = result["semantic_state"]
+	result["appearance"] = result["semantic_appearance"]
 	result["non_color_state"] = str(semantic.get("non_color_state", result.get("non_color_state", result.get("state_label", "Present"))))
 	result["visual_state"] = {
 		"role": result["semantic_role"],
@@ -531,19 +701,42 @@ static func _merge_projected_actor(base: Dictionary, semantic: Dictionary, autho
 		result["object_type"] = "scenario_actor" if owner == "scenario" else "character"
 	result["visual_type"] = "character"
 	result["presence"] = "character"
-	result["short_description"] = "%s; %s" % [
+	result["short_description"] = _scenario_description(semantic, result, "%s; %s" % [
 		str(semantic.get("behavior", "idle")).replace("_", " ").capitalize(),
 		str(semantic.get("pose", "idle")).replace("_", " ").capitalize(),
-	]
+	])
 	result["actor_id"] = str(semantic.get("actor_id", result.get("source_id", "")))
 	result["source_id"] = result["actor_id"]
 	result["actor_pose"] = str(semantic.get("pose", "idle"))
 	result["actor_behavior"] = str(semantic.get("behavior", "idle"))
+	result["pose"] = result["actor_pose"]
+	result["behavior"] = result["actor_behavior"]
 	result["actor_route_id"] = str(semantic.get("route_id", ""))
 	result["actor_route_points"] = _array(authority.get("actor_route_points", []))
 	result["actor_route_stage"] = _dict(authority.get("actor_route_stage", {}))
 	result["character_actor"] = ScenarioSemanticViewModelScript.actor_character_model(semantic)
 	return result
+
+
+static func _scenario_icon_key(semantic: Dictionary, base: Dictionary) -> String:
+	var authored_icon := str(semantic.get("icon_key", "")).strip_edges()
+	if not authored_icon.is_empty():
+		return authored_icon
+	var semantic_kind := str(semantic.get("semantic_kind", "scene_object")).strip_edges()
+	var label := str(semantic.get("label", base.get("label", ""))).strip_edges()
+	var role := str(semantic.get("role", base.get("semantic_role", base.get("role", "")))).strip_edges()
+	return "%s %s %s" % ["scenario_actor" if semantic_kind == "actor" else "scenario_scene", label, role]
+
+
+static func _scenario_description(semantic: Dictionary, base: Dictionary, fallback: String) -> String:
+	var description := str(semantic.get("description", base.get("short_description", ""))).strip_edges()
+	var variants := _dict(semantic.get("description_variants", {}))
+	for key in [str(semantic.get("state", "")), str(semantic.get("appearance", "")), str(semantic.get("pose", "")), str(semantic.get("behavior", "")), str(semantic.get("anchor_id", "")), str(semantic.get("zone_id", ""))]:
+		var variant := str(variants.get(key, "")).strip_edges()
+		if not variant.is_empty():
+			description = variant
+			break
+	return fallback if description.is_empty() else description
 
 
 static func _apply_layout_authority(record: Dictionary, authority: Dictionary, authority_digest: String) -> Dictionary:
@@ -561,6 +754,8 @@ static func _apply_layout_authority(record: Dictionary, authority: Dictionary, a
 	result["actor_route_points"] = _array(authority.get("actor_route_points", []))
 	result["actor_route_stage"] = _dict(authority.get("actor_route_stage", {}))
 	result["scenario_z_order"] = int(authority.get("z_order", 0))
+	result["placement_class"] = str(authority.get("placement_class", result.get("placement_class", "")))
+	result["contact"] = str(authority.get("contact", result.get("contact", "")))
 	result["scenario_layout_resolved"] = true
 	result["scenario_layout_authority_identity"] = str(authority.get("identity", ""))
 	result["scenario_layout_authority_digest"] = authority_digest
@@ -758,8 +953,8 @@ static func _semantic_projection_coverage_errors(projection: Dictionary, authori
 			var expected_interactive := required and bool(interaction.get("present", true))
 			if expected_interactive != bool(sealed.get("presentation_interactive", false)):
 				errors.append("Semantic interaction %s presence diverged from sealed canvas interactivity." % identity)
-		elif not visual.is_empty() and str(visual.get("owner_namespace", "")) == "scenario" and bool(sealed.get("presentation_interactive", true)):
-			errors.append("Scenario visual %s gained interactivity without a finalized interaction." % identity)
+		elif not visual.is_empty() and str(visual.get("owner_namespace", "")) == "scenario" and required and not bool(sealed.get("presentation_interactive", false)):
+			errors.append("Scenario visual %s lost its sealed read-only inspectability." % identity)
 	var sealed_identities := authority.keys()
 	sealed_identities.sort()
 	for identity_value in sealed_identities:
@@ -836,10 +1031,14 @@ static func delivery_interactable_objects(host: Variant, occupied_objects: Array
 	if host.run_state == null:
 		return []
 	var result: Array = []
+	var occupied_rects := _delivery_occupied_rects(host, occupied_objects)
 	var physical_interactions: Array = host.run_state.delivery_physical_interactions() if host.run_state.has_method("delivery_physical_interactions") else []
 	for physical_index in range(physical_interactions.size()):
 		var interaction: Dictionary = physical_interactions[physical_index]
 		var verb := str(interaction.get("verb", ""))
+		var delivery_class := EnvironmentPlacementScript.classify(interaction, "actor" if verb == "pickup" else "scene_object", str(interaction.get("object_id", "delivery:%s" % verb)), "patron_talk" if verb == "pickup" else "crate")
+		var focus_rect := _delivery_available_rect(host, occupied_rects, physical_index, delivery_class)
+		occupied_rects.append(focus_rect)
 		result.append(host._make_interactable_object({
 			"object_id": str(interaction.get("object_id", "delivery:%s" % verb)),
 			"object_type": host.CONTEXT_MODE_DELIVERY,
@@ -857,7 +1056,8 @@ static func delivery_interactable_objects(host: Variant, occupied_objects: Array
 			"icon_key": "item" if verb in ["pickup", "stash", "retrieve", "ditch"] else "travel",
 			"available_actions": [{"id": "delivery_physical_action", "label": str(interaction.get("label", "Act"))}],
 			"confirm_action_id": "delivery_physical_action",
-			"focus_rect": host._interaction_rect_for_object("", host.CONTEXT_MODE_DELIVERY, physical_index),
+			"focus_rect": focus_rect,
+			"placement_class": delivery_class,
 		}))
 	var handoff: Dictionary = host.run_state.delivery_arrival_interaction()
 	if handoff.is_empty():
@@ -868,33 +1068,7 @@ static func delivery_interactable_objects(host: Variant, occupied_objects: Array
 	if not host.run_state.world_sequence_mounted_owner_for_channel("delivery_handoff", node_id).is_empty():
 		return result
 	var object_id := "delivery:handoff:%s" % node_id
-	var occupied_rects: Array[Rect2] = []
-	var layout: Dictionary = host._current_environment_layout()
-	var object_rects: Variant = layout.get("object_rects", {})
-	if typeof(object_rects) == TYPE_DICTIONARY:
-		for rect_value in (object_rects as Dictionary).values():
-			var rect: Rect2 = host.EnvironmentInteractionViewModelScript.rect_from_dict(rect_value)
-			if rect.size.x > 0.0 and rect.size.y > 0.0:
-				occupied_rects.append(rect)
-	for occupied_value in occupied_objects:
-		if typeof(occupied_value) != TYPE_DICTIONARY:
-			continue
-		var occupied: Dictionary = occupied_value
-		var rect_value: Variant = occupied.get("focus_rect", Rect2())
-		if typeof(rect_value) == TYPE_RECT2 and (rect_value as Rect2).size.x > 0.0 and (rect_value as Rect2).size.y > 0.0:
-			occupied_rects.append(rect_value as Rect2)
-	var focus_rect: Rect2 = host._interaction_rect_for_object("", host.CONTEXT_MODE_DELIVERY, 0)
-	var best_overlap := INF
-	for candidate_index in range(8):
-		var candidate: Rect2 = host._interaction_rect_for_object("", host.CONTEXT_MODE_DELIVERY, candidate_index)
-		var overlap := 0.0
-		for occupied_rect in occupied_rects:
-			overlap += candidate.intersection(occupied_rect).get_area()
-		if overlap < best_overlap:
-			best_overlap = overlap
-			focus_rect = candidate
-		if is_zero_approx(overlap):
-			break
+	var focus_rect := _delivery_available_rect(host, occupied_rects, physical_interactions.size(), "standing_person")
 	result.append(host._make_interactable_object({
 		"object_id": object_id,
 		"object_type": host.CONTEXT_MODE_DELIVERY,
@@ -914,8 +1088,111 @@ static func delivery_interactable_objects(host: Variant, occupied_objects: Array
 		"available_actions": [{"id": "complete_delivery_handoff", "label": "Hand Over"}],
 		"confirm_action_id": "complete_delivery_handoff",
 		"focus_rect": focus_rect,
+		"placement_class": "standing_person",
 	}))
 	return result
+
+
+static func _delivery_occupied_rects(host: Variant, occupied_objects: Array, include_generated_layout: bool = true, include_scenario_authority: bool = true) -> Array[Rect2]:
+	var result: Array[Rect2] = []
+	var layout: Dictionary = host._current_environment_layout()
+	var object_rects: Variant = layout.get("object_rects", {})
+	if include_generated_layout and typeof(object_rects) == TYPE_DICTIONARY:
+		for rect_value in (object_rects as Dictionary).values():
+			var rect: Rect2 = host.EnvironmentInteractionViewModelScript.rect_from_dict(rect_value)
+			if rect.size.x > 0.0 and rect.size.y > 0.0:
+				result.append(rect)
+	# Scenario visuals are resolved after the ordinary environment layout and do
+	# not live in layout.object_rects. Their sealed authority is still part of the
+	# same visible room plane, so runtime delivery controls must reserve it too.
+	var scenario_authority: Variant = host.run_state.current_environment.get("scenario_layout_authority", {})
+	if include_scenario_authority and typeof(scenario_authority) == TYPE_DICTIONARY:
+		for authority_value in (scenario_authority as Dictionary).values():
+			if typeof(authority_value) != TYPE_DICTIONARY or not bool((authority_value as Dictionary).get("presentation_visible", true)):
+				continue
+			var authority_rect: Rect2 = host.EnvironmentInteractionViewModelScript.rect_from_dict((authority_value as Dictionary).get("normalized_hit_rect", {}))
+			if authority_rect.size.x > 0.0 and authority_rect.size.y > 0.0:
+				result.append(authority_rect)
+	for occupied_value in occupied_objects:
+		if typeof(occupied_value) != TYPE_DICTIONARY:
+			continue
+		var occupied: Dictionary = occupied_value
+		var rect_value: Variant = occupied.get("focus_rect", Rect2())
+		var rect: Rect2 = host.EnvironmentInteractionViewModelScript.rect_from_dict(rect_value)
+		if rect.size.x > 0.0 and rect.size.y > 0.0:
+			result.append(rect)
+	return result
+
+
+static func _reflow_delivery_records(host: Variant, records: Array) -> Array:
+	var occupied_records: Array = []
+	for value in records:
+		if typeof(value) != TYPE_DICTIONARY:
+			continue
+		var record := value as Dictionary
+		if not str(record.get("object_id", "")).begins_with("delivery:"):
+			occupied_records.append(record)
+	var occupied_rects := _delivery_occupied_rects(host, occupied_records)
+	var result := records.duplicate(true)
+	var delivery_index := 0
+	for index in range(result.size()):
+		if typeof(result[index]) != TYPE_DICTIONARY:
+			continue
+		var record := result[index] as Dictionary
+		if not str(record.get("object_id", "")).begins_with("delivery:"):
+			continue
+		var placement_class := EnvironmentPlacementScript.classify(record, "actor" if str(record.get("visual_type", "")) == "character" else "scene_object", str(record.get("object_id", "")), str(record.get("prop", record.get("icon_key", ""))))
+		var focus_rect := _delivery_available_rect(host, occupied_rects, delivery_index, placement_class)
+		record["focus_rect"] = focus_rect
+		record["placement_class"] = placement_class
+		result[index] = record
+		occupied_rects.append(focus_rect)
+		delivery_index += 1
+	return result
+
+
+static func _delivery_available_rect(host: Variant, occupied_rects: Array[Rect2], preferred_index: int, placement_class: String = "standing_person") -> Rect2:
+	var focus_rect: Rect2 = host._interaction_rect_for_object("", host.CONTEXT_MODE_DELIVERY, preferred_index)
+	# Delivery verbs can coexist with a fully composed scenario room. Keep their
+	# hit areas at the renderer's accessible 72x48 minimum rather than consuming
+	# the old 100x70 card footprint for each of four simultaneous choices.
+	var board_size := Vector2(VisualStyleScript.ENVIRONMENT_BOARD_SIZE)
+	var compact_size := Vector2(72.0 / board_size.x, 48.0 / board_size.y)
+	focus_rect = Rect2(focus_rect.get_center() - compact_size * 0.5, compact_size)
+	var best_overlap := INF
+	var candidates: Array[Rect2] = []
+	var environment: Dictionary = host.run_state.current_environment if host.run_state != null and typeof(host.run_state.current_environment) == TYPE_DICTIONARY else {}
+	var authored_pixel := Rect2(focus_rect.position * board_size, focus_rect.size * board_size)
+	for candidate_value in EnvironmentPlacementScript.candidate_rects(environment, placement_class, authored_pixel):
+		var candidate_data: Dictionary = candidate_value if typeof(candidate_value) == TYPE_DICTIONARY else {}
+		var candidate_pixel: Rect2 = candidate_data.get("rect", Rect2())
+		candidates.append(Rect2(candidate_pixel.position / board_size, candidate_pixel.size / board_size))
+	if candidates.is_empty():
+		return Rect2()
+	for candidate in candidates:
+		var overlap := 0.0
+		var gap := Vector2(DELIVERY_LAYOUT_GAP_PIXELS / board_size.x, DELIVERY_LAYOUT_GAP_PIXELS / board_size.y)
+		var candidate_footprint := Rect2(candidate.position - gap, candidate.size + gap * 2.0)
+		for occupied_rect in occupied_rects:
+			var occupied_footprint := Rect2(occupied_rect.position - gap, occupied_rect.size + gap * 2.0)
+			overlap += candidate_footprint.intersection(occupied_footprint).get_area()
+		if overlap < best_overlap:
+			best_overlap = overlap
+			focus_rect = candidate
+		if is_zero_approx(overlap):
+			break
+	return focus_rect
+
+
+static func _delivery_board_bounded_rect(rect: Rect2) -> Rect2:
+	var bounded_size := Vector2(minf(rect.size.x, 1.0), minf(rect.size.y, 1.0))
+	return Rect2(
+		Vector2(
+			clampf(rect.position.x, 0.0, 1.0 - bounded_size.x),
+			clampf(rect.position.y, 0.0, 1.0 - bounded_size.y)
+		),
+		bounded_size
+	)
 
 
 static func numbers_interactable_objects(host: Variant) -> Array:
@@ -936,8 +1213,12 @@ static func numbers_interactable_objects(host: Variant) -> Array:
 		var object_id := "event:numbers_desk" if at_desk else "numbers:book"
 		# The production desk replaces the event card but owns its dedicated
 		# Numbers fixture spot, which must not drift with encounter-card layout.
-		var focus_rect: Rect2 = host._authored_interaction_rect(host.CONTEXT_MODE_NUMBERS, 0) if at_desk \
-			else host._interaction_rect_for_object(object_id, host.CONTEXT_MODE_NUMBERS, 0)
+		# numbers_desk also exists in event_ids so generated object_rects carries an
+		# event-card position under the same presentation id. The production desk
+		# owns the layer's dedicated numbers_spots geometry and must win that alias.
+		var focus_rect: Rect2 = host.EnvironmentInteractionViewModelScript.authored_interaction_rect(host.CONTEXT_MODE_NUMBERS, 0, host._current_environment_layout())
+		if focus_rect.size.x <= 0.0 or focus_rect.size.y <= 0.0:
+			focus_rect = host._interaction_rect_for_object(object_id, host.CONTEXT_MODE_NUMBERS, 0)
 		objects.append(host._make_interactable_object({
 			"object_id": object_id,
 			"object_type": host.CONTEXT_MODE_NUMBERS,
@@ -957,21 +1238,33 @@ static func numbers_interactable_objects(host: Variant) -> Array:
 		}))
 	var silas_here: bool = host.run_state.numbers_silas_is_here()
 	if silas_here:
+		var silas_dialogue_id := "silas_crow_numbers"
+		var silas_dialogue: Dictionary = host.library.dialogue(silas_dialogue_id)
+		var silas_speaker_source: Dictionary = silas_dialogue.get("speaker", {}) if typeof(silas_dialogue.get("speaker", {})) == TYPE_DICTIONARY else {}
+		var silas_actor: Dictionary = host._resolve_character_speaker(
+			host._normalized_talk_speaker(silas_speaker_source),
+			silas_dialogue_id,
+			str(silas_speaker_source.get("voice_line_key", "snitch"))
+		)
 		objects.append(host._make_interactable_object({
 			"object_id": "numbers:silas",
-			"object_type": host.CONTEXT_MODE_NUMBERS,
-			"source_id": "silas",
+			"object_type": host.CONTEXT_MODE_DIALOGUE,
+			"visual_type": "character",
+			"source_id": silas_dialogue_id,
 			"label": "Silas Crow",
-			"short_description": "Silas has something quiet to sell.",
+			"short_description": "A sharp-eyed floor informant selling routes, numbers, and expensive discretion.",
+			"identity_summary": host.EnvironmentInteractionViewModelScript.character_identity_summary(silas_actor),
+			"status_summary": "Silas smiles at both exits. He treats every fact as inventory and every conversation as a sale.",
 			"presence": "character",
 			"interactive": true,
 			"enabled": true,
-			"action_summary": "Talk business.",
+			"action_summary": "Start a quiet conversation.",
 			"visual_key": "character",
 			"prop": "patron_talk",
-			"icon_key": "dialogue",
-			"available_actions": [{"id": "open_numbers", "label": "Talk Business"}],
-			"confirm_action_id": "open_numbers",
+			"icon_key": "silas_crow",
+			"character_actor": silas_actor,
+			"available_actions": [{"id": "start_dialogue", "label": "Talk"}],
+			"confirm_action_id": "start_dialogue",
 			"focus_rect": host._interaction_rect_for_object("numbers:silas", "numbers_silas", 0),
 		}))
 	return objects
@@ -979,6 +1272,14 @@ static func numbers_interactable_objects(host: Variant) -> Array:
 
 static func _dict(value: Variant) -> Dictionary:
 	return value as Dictionary if typeof(value) == TYPE_DICTIONARY else {}
+
+
+static func _duplicate_variant(value: Variant) -> Variant:
+	if typeof(value) == TYPE_DICTIONARY:
+		return (value as Dictionary).duplicate(true)
+	if typeof(value) == TYPE_ARRAY:
+		return (value as Array).duplicate(true)
+	return value
 
 
 static func _array(value: Variant) -> Array:

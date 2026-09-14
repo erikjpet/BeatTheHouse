@@ -15,6 +15,7 @@ var point_numbers: Array = []
 var come_out_naturals: Array = []
 var come_out_craps: Array = []
 var tolerance := 0.0035
+var minimum_rolls_required := MINIMUM_ROLLS_PER_BET
 
 
 func _init() -> void:
@@ -22,15 +23,23 @@ func _init() -> void:
 
 
 func _run() -> void:
-	var rolls_per_bet := MINIMUM_ROLLS_PER_BET
+	var fixture_path := OS.get_environment("BTH_CRAPS_RTP_FIXTURE_PATH").strip_edges()
+	var fixture_rolls := OS.get_environment("BTH_CRAPS_RTP_FIXTURE_ROLLS").strip_edges()
+	if fixture_path.is_empty() and not fixture_rolls.is_empty():
+		failures.append("Reduced Craps RTP rolls are allowed only with an explicit hostile fixture.")
+	if not fixture_path.is_empty():
+		minimum_rolls_required = maxi(10000, int(fixture_rolls))
+	var rolls_per_bet := minimum_rolls_required
 	var requested := OS.get_environment("BTH_CRAPS_RTP_ROLLS").strip_edges()
 	if not requested.is_empty():
-		rolls_per_bet = maxi(MINIMUM_ROLLS_PER_BET, int(requested))
+		rolls_per_bet = maxi(minimum_rolls_required, int(requested))
 	var library := ContentLibraryScript.new()
 	library.load()
 	for error_value in library.validation_errors:
 		failures.append("Content validation error: %s" % str(error_value))
 	var definition := library.game("craps")
+	if not fixture_path.is_empty():
+		definition = _load_fixture_definition(fixture_path)
 	config = definition.get("craps_config", {}) if typeof(definition.get("craps_config", {})) == TYPE_DICTIONARY else {}
 	rules = config.get("rules", {}) if typeof(config.get("rules", {})) == TYPE_DICTIONARY else {}
 	documentation = config.get("house_edge_documentation", {}) if typeof(config.get("house_edge_documentation", {})) == TYPE_DICTIONARY else {}
@@ -45,31 +54,29 @@ func _run() -> void:
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("CRAPS-RTP-AUDIT")
 	var rows: Array = []
-	rows.append(_audit_line("pass_line", "pass_line", false, rolls_per_bet, run_state.create_rng("rtp:pass_line")))
-	rows.append(_audit_line("dont_pass", "dont_pass", true, rolls_per_bet, run_state.create_rng("rtp:dont_pass")))
-	rows.append(_audit_line("come", "come", false, rolls_per_bet, run_state.create_rng("rtp:come")))
-	rows.append(_audit_line("dont_come", "dont_come", true, rolls_per_bet, run_state.create_rng("rtp:dont_come")))
-	rows.append(_audit_odds(rolls_per_bet, run_state.create_rng("rtp:odds")))
-	rows.append(_audit_place("place_4_10", 4, rolls_per_bet, run_state.create_rng("rtp:place_4_10")))
-	rows.append(_audit_place("place_5_9", 5, rolls_per_bet, run_state.create_rng("rtp:place_5_9")))
-	rows.append(_audit_place("place_6_8", 6, rolls_per_bet, run_state.create_rng("rtp:place_6_8")))
-	rows.append(_audit_field(rolls_per_bet, run_state.create_rng("rtp:field")))
+	var variant_coverage := _audit_variant_bets(rolls_per_bet, run_state, rows)
 	var street_parity := _audit_street_pass_parity(rolls_per_bet, run_state)
 	var setting_row := _audit_setting_bias(rolls_per_bet, audit, run_state)
+	var report_path := OS.get_environment("BTH_CRAPS_RTP_REPORT_PATH").strip_edges()
+	if report_path.is_empty():
+		report_path = REPORT_PATH
 
 	var report := {
 		"tool": "craps_rtp_audit",
 		"seed": "CRAPS-RTP-AUDIT",
 		"minimum_rolls_per_bet": MINIMUM_ROLLS_PER_BET,
+		"minimum_rolls_required": minimum_rolls_required,
 		"requested_rolls_per_bet": rolls_per_bet,
+		"fixture_mode": not fixture_path.is_empty(),
 		"tolerance": tolerance,
 		"rows": rows,
+		"variant_coverage": variant_coverage,
 		"street_pass_parity": street_parity,
 		"setting_bias": setting_row,
 		"failures": failures,
 		"passed": failures.is_empty(),
 	}
-	_write_json(REPORT_PATH, report)
+	_write_json(report_path, report)
 	for row_value in rows:
 		var row: Dictionary = row_value
 		print("CRAPS_RTP bet=%s rolls=%d decisions=%d rtp=%.6f target=%.6f passed=%s" % [
@@ -95,82 +102,200 @@ func _run() -> void:
 	quit(0 if failures.is_empty() else 1)
 
 
+func _audit_variant_bets(rolls_per_bet: int, run_state: RunState, rows: Array) -> Dictionary:
+	var variants := _dict(config.get("variants", {}))
+	var covered: Dictionary = {}
+	for variant_key in variants.keys():
+		var variant_id := str(variant_key)
+		var variant := _dict(variants.get(variant_key, {}))
+		var allowed: Array = variant.get("allowed_bets", []) if typeof(variant.get("allowed_bets", [])) == TYPE_ARRAY else []
+		var measured: Array[String] = []
+		for bet_value in allowed:
+			var bet_id := str(bet_value)
+			if covered.has(bet_id):
+				measured.append(bet_id)
+				continue
+			if not documentation.has(bet_id):
+				failures.append("Player-reachable %s bet %s has no house-edge documentation." % [variant_id, bet_id])
+				continue
+			var row := _audit_bet(bet_id, rolls_per_bet, run_state.create_rng("rtp:%s" % bet_id))
+			if row.is_empty():
+				failures.append("Player-reachable %s bet %s has no measured RTP implementation." % [variant_id, bet_id])
+				continue
+			rows.append(row)
+			covered[bet_id] = true
+			measured.append(bet_id)
+		covered["variant:%s" % variant_id] = measured
+	for documentation_key in documentation.keys():
+		if not covered.has(str(documentation_key)):
+			failures.append("House-edge documentation %s is not reachable in any variant." % str(documentation_key))
+	return covered
+
+
+func _audit_bet(bet_id: String, rolls_per_bet: int, rng: RngStream) -> Dictionary:
+	if bet_id in ["pass_line", "come"]:
+		return _audit_line(bet_id, bet_id, false, rolls_per_bet, rng)
+	if bet_id in ["dont_pass", "dont_come"]:
+		return _audit_line(bet_id, bet_id, true, rolls_per_bet, rng)
+	if bet_id == "pass_odds":
+		return _audit_odds(bet_id, false, rolls_per_bet, rng)
+	if bet_id == "dont_pass_odds":
+		return _audit_odds(bet_id, true, rolls_per_bet, rng)
+	if bet_id == "field":
+		return _audit_field(rolls_per_bet, rng)
+	if bet_id.begins_with("place_"):
+		return _audit_number_bet(bet_id, "place", int(bet_id.trim_prefix("place_")), rolls_per_bet, rng)
+	if bet_id.begins_with("buy_"):
+		return _audit_number_bet(bet_id, "buy", int(bet_id.trim_prefix("buy_")), rolls_per_bet, rng)
+	if bet_id.begins_with("lay_"):
+		return _audit_number_bet(bet_id, "lay", int(bet_id.trim_prefix("lay_")), rolls_per_bet, rng)
+	if bet_id.begins_with("big_"):
+		return _audit_number_bet(bet_id, "big", int(bet_id.trim_prefix("big_")), rolls_per_bet, rng)
+	if bet_id.begins_with("hard_"):
+		return _audit_hardway(bet_id, int(bet_id.trim_prefix("hard_")), rolls_per_bet, rng)
+	if bet_id in ["any_seven", "any_craps", "horn", "ce", "world", "snake_eyes", "ace_deuce", "yo", "boxcars"]:
+		return _audit_proposition(bet_id, rolls_per_bet, rng)
+	return {}
+
+
 func _audit_line(bet_id: String, documentation_key: String, lay_side: bool, minimum_rolls: int, rng: RngStream) -> Dictionary:
 	var point := 0
-	var staked := 10
+	var stake := _documented_stake(documentation_key)
+	var staked := 0
 	var returned := 0
 	var decisions := 0
 	for _roll_index in range(minimum_rolls):
 		var total := _roll_total(rng)
 		if point == 0:
 			if come_out_naturals.has(total):
-				returned += 0 if lay_side else 20
+				returned += 0 if lay_side else stake * 2
 				decisions += 1
-				staked += 10
+				staked += stake
 			elif come_out_craps.has(total):
 				if lay_side and total == int(rules.get("dont_pass_bar", 12)):
-					returned += 10
+					returned += stake
 				elif lay_side:
-					returned += 20
+					returned += stake * 2
 				decisions += 1
-				staked += 10
+				staked += stake
 			elif point_numbers.has(total):
 				point = total
 		elif total == point:
-			returned += 0 if lay_side else 20
+			returned += 0 if lay_side else stake * 2
 			decisions += 1
-			staked += 10
+			staked += stake
 			point = 0
 		elif total == int(rules.get("seven_total", 7)):
-			returned += 20 if lay_side else 0
+			returned += stake * 2 if lay_side else 0
 			decisions += 1
-			staked += 10
+			staked += stake
 			point = 0
-	return _rtp_row(bet_id, documentation_key, minimum_rolls, decisions, staked, returned)
+	return _rtp_row(bet_id, documentation_key, stake, minimum_rolls, decisions, staked, returned)
 
 
-func _audit_odds(samples: int, rng: RngStream) -> Dictionary:
-	var stake := 30
+func _audit_odds(bet_id: String, lay_side: bool, minimum_rolls: int, rng: RngStream) -> Dictionary:
+	var stake := _documented_stake(bet_id)
 	var returned := 0
+	var returned_squared_sum := 0.0
 	var rolls := 0
-	for sample_index in range(samples):
-		var point := int(point_numbers[sample_index % point_numbers.size()])
+	var decisions := 0
+	while rolls < minimum_rolls:
+		var point := int(point_numbers[decisions % point_numbers.size()])
+		var decision_return := 0
 		while true:
 			rolls += 1
 			var total := _roll_total(rng)
 			if total == point:
-				returned += stake + CrapsRulesScript.true_odds_profit(stake, point, rules)
+				if not lay_side:
+					decision_return = stake + CrapsRulesScript.true_odds_profit(stake, point, rules)
 				break
 			if total == int(rules.get("seven_total", 7)):
+				if lay_side:
+					decision_return = stake + CrapsRulesScript.lay_odds_profit(stake, point, rules)
 				break
-	return _rtp_row("odds", "odds", rolls, samples, stake * samples, returned)
+		returned += decision_return
+		returned_squared_sum += float(decision_return * decision_return)
+		decisions += 1
+	return _rtp_row(bet_id, bet_id, stake, rolls, decisions, stake * decisions, returned, returned_squared_sum)
 
 
-func _audit_place(documentation_key: String, point: int, samples: int, rng: RngStream) -> Dictionary:
-	var stake := 30
+func _audit_number_bet(bet_id: String, kind: String, point: int, minimum_rolls: int, rng: RngStream) -> Dictionary:
+	var stake := _documented_stake(bet_id)
 	var returned := 0
+	var returned_squared_sum := 0.0
 	var rolls := 0
-	for _sample_index in range(samples):
+	var decisions := 0
+	while rolls < minimum_rolls:
+		var decision_return := 0
 		while true:
 			rolls += 1
 			var total := _roll_total(rng)
 			if total == point:
-				returned += stake + _ratio_profit(stake, _dict(_dict(rules.get("place_payouts", {})).get(str(point), {})))
+				if kind != "lay":
+					var profit := stake if kind == "big" else CrapsRulesScript.buy_profit(stake, point, rules) if kind == "buy" else CrapsRulesScript.place_profit(stake, point, rules)
+					decision_return = stake + profit
+				break
+			if total == int(rules.get("seven_total", 7)):
+				if kind == "lay":
+					decision_return = stake + CrapsRulesScript.lay_profit(stake, point, rules)
+				break
+		returned += decision_return
+		returned_squared_sum += float(decision_return * decision_return)
+		decisions += 1
+	return _rtp_row(bet_id, bet_id, stake, rolls, decisions, stake * decisions, returned, returned_squared_sum)
+
+
+func _audit_hardway(bet_id: String, point: int, minimum_rolls: int, rng: RngStream) -> Dictionary:
+	var stake := _documented_stake(bet_id)
+	var returned := 0
+	var returned_squared_sum := 0.0
+	var rolls := 0
+	var decisions := 0
+	var payout := _dict(_dict(rules.get("hardway_payouts", {})).get(str(point), {}))
+	while rolls < minimum_rolls:
+		var decision_return := 0
+		while true:
+			rolls += 1
+			var die_a := rng.randi_range(1, 6)
+			var die_b := rng.randi_range(1, 6)
+			var total := die_a + die_b
+			if total == point:
+				if die_a == die_b:
+					decision_return = stake + _ratio_profit(stake, payout)
 				break
 			if total == int(rules.get("seven_total", 7)):
 				break
-	return _rtp_row(documentation_key, documentation_key, rolls, samples, stake * samples, returned)
+		returned += decision_return
+		returned_squared_sum += float(decision_return * decision_return)
+		decisions += 1
+	return _rtp_row(bet_id, bet_id, stake, rolls, decisions, stake * decisions, returned, returned_squared_sum)
+
+
+func _audit_proposition(bet_id: String, rolls: int, rng: RngStream) -> Dictionary:
+	var stake := _documented_stake(bet_id)
+	var returned := 0
+	var returned_squared_sum := 0.0
+	for _roll_index in range(rolls):
+		var total := _roll_total(rng)
+		var roll_return := int(CrapsRulesScript._settle_proposition_bets({bet_id: stake}, total, rules, []))
+		returned += roll_return
+		returned_squared_sum += float(roll_return * roll_return)
+	return _rtp_row(bet_id, bet_id, stake, rolls, rolls, stake * rolls, returned, returned_squared_sum)
 
 
 func _audit_field(rolls: int, rng: RngStream) -> Dictionary:
-	var stake := 10
+	var stake := _documented_stake("field")
 	var returned := 0
+	var returned_squared_sum := 0.0
 	var payouts := _dict(rules.get("field_payouts", {}))
 	for _roll_index in range(rolls):
 		var payout := _dict(payouts.get(str(_roll_total(rng)), {}))
+		var roll_return := 0
 		if not payout.is_empty():
-			returned += stake + _ratio_profit(stake, payout)
-	return _rtp_row("field", "field", rolls, rolls, stake * rolls, returned)
+			roll_return = stake + _ratio_profit(stake, payout)
+		returned += roll_return
+		returned_squared_sum += float(roll_return * roll_return)
+	return _rtp_row("field", "field", stake, rolls, rolls, stake * rolls, returned, returned_squared_sum)
 
 
 func _audit_setting_bias(rolls: int, audit: Dictionary, run_state: RunState) -> Dictionary:
@@ -210,7 +335,19 @@ func _audit_street_pass_parity(rolls: int, run_state: RunState) -> Dictionary:
 	var variants := _dict(config.get("variants", {}))
 	var street := _dict(variants.get("street_craps", {}))
 	var allowed: Array = street.get("allowed_bets", []) if typeof(street.get("allowed_bets", [])) == TYPE_ARRAY else []
-	var structural_match := str(street.get("scenario_hook_value", "")) == "street_craps" and allowed == ["pass_line", "dont_pass"]
+	var required_full_table_bets := [
+		"pass_line", "dont_pass", "come", "dont_come", "field", "pass_odds", "dont_pass_odds",
+		"place_4", "place_5", "place_6", "place_8", "place_9", "place_10",
+		"buy_4", "buy_5", "buy_6", "buy_8", "buy_9", "buy_10",
+		"lay_4", "lay_5", "lay_6", "lay_8", "lay_9", "lay_10",
+		"big_6", "big_8", "hard_4", "hard_6", "hard_8", "hard_10",
+		"any_seven", "any_craps", "horn", "ce", "world", "snake_eyes", "ace_deuce", "yo", "boxcars",
+	]
+	var structural_match := str(street.get("scenario_hook_value", "")) == "street_craps"
+	for bet_id in required_full_table_bets:
+		if not allowed.has(bet_id):
+			structural_match = false
+			break
 	var core_row := _audit_line("core_pass_parity", "pass_line", false, rolls, run_state.create_rng("rtp:street_pass_parity"))
 	var street_row := _audit_line("street_pass_parity", "pass_line", false, rolls, run_state.create_rng("rtp:street_pass_parity"))
 	var exact := structural_match \
@@ -228,23 +365,57 @@ func _audit_street_pass_parity(rolls: int, run_state: RunState) -> Dictionary:
 	}
 
 
-func _rtp_row(bet_id: String, documentation_key: String, rolls: int, decisions: int, staked: int, returned: int) -> Dictionary:
-	var documented := float(_dict(documentation.get(documentation_key, {})).get("rtp_percent", 0.0)) / 100.0
+func _rtp_row(bet_id: String, documentation_key: String, stake: int, rolls: int, decisions: int, staked: int, returned: int, returned_squared_sum: float = -1.0) -> Dictionary:
+	var documented_row := _dict(documentation.get(documentation_key, {}))
+	var documented := float(documented_row.get("rtp_percent", 0.0)) / 100.0
 	var rtp := float(returned) / float(maxi(1, staked))
-	var passed := rolls >= MINIMUM_ROLLS_PER_BET and absf(rtp - documented) <= tolerance
+	var standard_error := 0.0
+	if returned_squared_sum >= 0.0 and decisions > 1:
+		var mean_return := float(returned) / float(decisions)
+		var return_variance := maxf(0.0, returned_squared_sum / float(decisions) - mean_return * mean_return)
+		standard_error = sqrt(return_variance / float(decisions)) / float(stake)
+	var effective_tolerance := maxf(tolerance, 4.0 * standard_error)
+	var passed := rolls >= minimum_rolls_required and stake == int(documented_row.get("audit_stake", -1)) and absf(rtp - documented) <= effective_tolerance
 	if not passed:
-		failures.append("%s RTP %.6f missed documented %.6f +/- %.6f after %d rolls." % [bet_id, rtp, documented, tolerance, rolls])
+		failures.append("%s RTP %.6f missed documented %.6f +/- %.6f after %d rolls." % [bet_id, rtp, documented, effective_tolerance, rolls])
 	return {
 		"bet_id": bet_id,
+		"audit_stake": stake,
 		"rolls": rolls,
 		"decisions": decisions,
 		"total_staked": staked,
 		"total_returned": returned,
 		"rtp": rtp,
 		"documented_rtp": documented,
-		"tolerance": tolerance,
+		"base_tolerance": tolerance,
+		"standard_error": standard_error,
+		"effective_tolerance": effective_tolerance,
 		"passed": passed,
 	}
+
+
+func _documented_stake(bet_id: String) -> int:
+	var stake := int(_dict(documentation.get(bet_id, {})).get("audit_stake", 0))
+	if stake <= 0:
+		failures.append("%s house-edge documentation has no positive audit_stake." % bet_id)
+	return maxi(1, stake)
+
+
+func _load_fixture_definition(path: String) -> Dictionary:
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		failures.append("Could not open Craps RTP hostile fixture: %s" % path)
+		return {}
+	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	file.close()
+	if typeof(parsed) != TYPE_DICTIONARY:
+		failures.append("Craps RTP hostile fixture is not a dictionary: %s" % path)
+		return {}
+	var fixture := parsed as Dictionary
+	if not fixture.has("craps_config"):
+		failures.append("Craps RTP hostile fixture has no craps_config: %s" % path)
+		return {}
+	return fixture
 
 
 func _roll_total(rng: RngStream) -> int:

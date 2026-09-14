@@ -48,6 +48,9 @@ const BANKER_CARD_BASE := Vector2(526, 166)
 const CARD_SIZE := Vector2(42, 60)
 const CONSOLE_Y := 344.0
 const BACCARAT_SQUEEZE_REGION := Rect2(382, 190, 136, 34)
+const BACCARAT_EXPLAINER_RECT := Rect2(684, 14, 192, 58)
+const BACCARAT_SURFACE_BACK_RECT := Rect2(590, 22, 86, 34)
+const DRAW_CHIP_STACK_CACHE_LIMIT := 128
 
 const BET_TARGETS := [
 	{"id": "player_pair", "label": "PLAYER PAIR", "short": "P PAIR", "type": "pair", "family": "side", "payout_key": "player_pair_payout", "rect": Rect2(262, 168, 126, 48)},
@@ -80,6 +83,8 @@ const SHOE_READ_ITEM_EFFECT_KEYS := [
 	"baccarat_edge_sort_heat_delta",
 	"skill_cheat_drunk_memory_offset",
 ]
+
+var draw_chip_stack_cache: Dictionary = {}
 
 
 func sealed_action_authority_script() -> Script:
@@ -175,11 +180,31 @@ func environment_state_generated(run_state: RunState, environment: Dictionary, g
 	_apply_grand_casino_dealer_assignment(generated_state, run_state, environment)
 
 
+func surface_realtime_patch_preserves_host_state() -> bool:
+	# Realtime Baccarat patches only advance its visual ceremony fields. Every
+	# command that can alter stake, bankroll, pressure, intoxication, selection,
+	# or accessibility already crosses FoundationMain's full render boundary.
+	return true
+
+
+func surface_realtime_uses_lightweight_ui_state() -> bool:
+	return true
+
+
+func surface_realtime_ui_state_keys() -> Array:
+	# Realtime refresh is enabled only after an accepted sealed action has created
+	# the authoritative table session. Ceremony patches therefore need only the
+	# live presentation fields; wagers, skill state, and undo/rebet history come
+	# directly from that sealed session rather than the much larger retained UI.
+	return TABLE_GAME_HOST_TRANSIENT_UI_KEYS
+
+
 func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
 	var table := _table_state_preview(run_state, environment)
 	var session := _normalized_session(run_state, environment, ui_state, table)
 	var bets := _bet_dict(session.get("baccarat_bets", {}))
-	var selected_chip := int(session.get("selected_chip", _chip_denominations(table)[0]))
+	var chip_denominations := _chip_denominations(table)
+	var selected_chip := int(session.get("selected_chip", chip_denominations[0]))
 	var total_wager := _total_wager(bets)
 	var last_result := _copy_dict(table.get("last_result", {}))
 	var now_msec := GameModule.deterministic_time_msec(run_state, ui_state)
@@ -272,8 +297,8 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"baccarat_rebet": _bet_dict(session.get("baccarat_rebet", table.get("last_bets", {}))),
 		"selected_chip": selected_chip,
 		"selected_stake": selected_chip,
-		"chip_denominations": _chip_denominations(table),
-		"chip_stack": _chip_stack_for_stake(total_wager, _chip_denominations(table)),
+		"chip_denominations": chip_denominations,
+		"chip_stack": _chip_stack_for_stake(total_wager, chip_denominations),
 		"total_wager_cost": total_wager,
 		"table_minimum": int(table.get("table_minimum", 20)),
 		"table_maximum": int(table.get("table_maximum", 500)),
@@ -315,6 +340,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"shoe_read_item_modifiers": shoe_read_item_modifiers,
 		"shoe_read_heat_preview": int(shoe_read_challenge.get("base_heat", _shoe_read_base_heat(run_state))),
 		"result_message": str(last_result.get("summary", "")) if not deal_active else "",
+		"surface_back_rect": {"x": BACCARAT_SURFACE_BACK_RECT.position.x, "y": BACCARAT_SURFACE_BACK_RECT.position.y, "w": BACCARAT_SURFACE_BACK_RECT.size.x, "h": BACCARAT_SURFACE_BACK_RECT.size.y},
 		"table_notice": table_notice,
 		"table_round_timer": round_timer,
 		"native_selected_surface_actions": _selected_surface_actions(bets, session),
@@ -327,6 +353,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		},
 		"surface_audio": GameModule.surface_audio_spec({
 			"profile_id": "baccarat_table",
+			"selection_seed": run_state.seed_value if run_state != null else 1,
 			"action_cues": {
 				"baccarat_chip": "baccarat_chip",
 				"baccarat_bet": "baccarat_chip",
@@ -678,14 +705,17 @@ func _table_game_resolve_proposal(action_id: String, stake: int, run_snapshot: D
 		"ui_state": ui_state,
 	}
 	var candidate := RunState.new()
-	candidate.from_dict(run_snapshot.duplicate(true))
+	# RunState.from_dict is the isolation boundary and copies every persisted
+	# collection it accepts. Copying the complete save again here doubled the
+	# largest allocation in a live Baccarat deal, producing Web GC stalls.
+	candidate.from_dict(run_snapshot)
 	var proposal_rng := RngStream.new()
-	proposal_rng.restore(rng_snapshot.duplicate(true))
+	proposal_rng.restore(rng_snapshot)
 	var result := _resolve_baccarat_proposal_core(action_id, stake, candidate, candidate.current_environment, proposal_rng, ui_state.duplicate(true))
 	var proposal := {
 		"ok": bool(result.get("ok", false)),
 		"input_fingerprint": RuntimeScript.canonical_fingerprint(proposal_input),
-		"result": result.duplicate(true),
+		"result": result,
 		"run_snapshot": candidate.to_save_snapshot(),
 		"rng_snapshot": proposal_rng.snapshot(),
 	}
@@ -694,9 +724,9 @@ func _table_game_resolve_proposal(action_id: String, stake: int, run_snapshot: D
 
 
 func _table_game_wager_cost_proposal(action_id: String, stake: int, run_snapshot: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
-	var candidate := RunState.new()
-	candidate.from_dict(run_snapshot.duplicate(true))
-	var cost := wager_cost_for_context(action_id, stake, candidate, candidate.current_environment, ui_state.duplicate(true))
+	# Baccarat's canonical wager cost depends only on its sealed UI bet map. Do
+	# not reconstruct a complete run merely to add those already-sealed chips.
+	var cost := _total_wager(_bet_dict(ui_state.get("baccarat_bets", {}))) if action_id == "deal_baccarat" else 0
 	return {
 		"cost": maxi(0, cost),
 		"input_fingerprint": RuntimeScript.canonical_fingerprint({"action_id": action_id, "stake": stake, "run_snapshot": run_snapshot, "ui_state": ui_state}),
@@ -2985,7 +3015,11 @@ func _normalized_session(_run_state: RunState, _environment: Dictionary, ui_stat
 	# shell avoids cloning unrelated UI payload on every command/surface read.
 	var host_ledger: Dictionary = table.get("_blackjack_action_authority", {}) if typeof(table.get("_blackjack_action_authority", {})) == TYPE_DICTIONARY else {}
 	var host_session_initialized := bool(host_ledger.get("initialized", false))
-	var session: Dictionary = (host_ledger.get("session", {}) as Dictionary).duplicate(true) if host_session_initialized and typeof(host_ledger.get("session", {})) == TYPE_DICTIONARY else ui_state.duplicate(false)
+	# Every nested collection this normalizer or its command callers can mutate is
+	# replaced with a normalized copy below (bets, rebet, undo, answers, and skill
+	# challenges). Own only the session shell here instead of recursively cloning
+	# the complete retained ceremony on every 16 ms animation refresh.
+	var session: Dictionary = (host_ledger.get("session", {}) as Dictionary).duplicate(false) if host_session_initialized and typeof(host_ledger.get("session", {})) == TYPE_DICTIONARY else ui_state.duplicate(false)
 	if host_session_initialized:
 		for key in TABLE_GAME_HOST_TRANSIENT_UI_KEYS:
 			if ui_state.has(key):
@@ -3236,7 +3270,7 @@ func _draw_hand_explainer(surface, state: Dictionary) -> void:
 	var explainer := _draw_dict_view(state.get("baccarat_explainer", {}))
 	if explainer.is_empty():
 		return
-	var rect := Rect2(684, 14, 192, 58)
+	var rect := BACCARAT_EXPLAINER_RECT
 	var winner := str(explainer.get("winner", ""))
 	var accent := _target_color(winner) if not winner.is_empty() else C_YELLOW
 	_draw_neon_panel(surface, rect, accent, 0.15)
@@ -3245,6 +3279,13 @@ func _draw_hand_explainer(surface, state: Dictionary) -> void:
 	surface.surface_label_centered(str(explainer.get("primary", "")).left(38), Rect2(rect.position + Vector2(8, 22), Vector2(rect.size.x - 16, 12)), 8, C_WHITE)
 	surface.surface_label_centered(str(explainer.get("secondary", "")).left(44), Rect2(rect.position + Vector2(8, 36), Vector2(rect.size.x - 16, 10)), 7, C_SOFT)
 	surface.surface_label_centered(str(explainer.get("bet_summary", "")).left(44), Rect2(rect.position + Vector2(8, 47), Vector2(rect.size.x - 16, 8)), 6, C_YELLOW)
+
+
+func baccarat_overlay_layout_snapshot() -> Dictionary:
+	return {
+		"explainer_rect": BACCARAT_EXPLAINER_RECT,
+		"surface_back_rect": BACCARAT_SURFACE_BACK_RECT,
+	}
 
 
 func _draw_table_patrons(surface, state: Dictionary) -> void:
@@ -3401,7 +3442,7 @@ func _draw_bet_chips(surface, state: Dictionary) -> void:
 			continue
 		var rect: Rect2 = target.get("rect", Rect2())
 		var center := rect.get_center() + Vector2(0, 10)
-		_draw_chip_stack(surface, center, _chip_stack_for_stake(stake, denoms), 0.86)
+		_draw_chip_stack(surface, center, _draw_chip_stack_for_stake(stake, denoms), 0.86)
 		surface.draw_rect(Rect2(center - Vector2(21, 21), Vector2(42, 44)), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.70), false, 1)
 		surface.surface_label_centered("YOU", Rect2(center + Vector2(-18, 21), Vector2(36, 10)), 7, C_CYAN)
 
@@ -3825,6 +3866,26 @@ func _chip_stack_for_stake(stake: int, chip_values: Array) -> Array:
 	if remaining > 0:
 		result.append({"value": remaining, "count": 1})
 	return result
+
+
+func _draw_chip_stack_for_stake(stake: int, chip_values: Array) -> Array:
+	# Wagers usually remain unchanged across hundreds of animated frames. Cache the
+	# immutable presentation stack while keeping gameplay/state construction on the
+	# existing fresh-value helper above.
+	var cache_key := Vector2i(stake, int(hash(chip_values)))
+	var cached_value: Variant = draw_chip_stack_cache.get(cache_key)
+	if typeof(cached_value) == TYPE_DICTIONARY:
+		var cached: Dictionary = cached_value
+		if cached.get("denominations", []) == chip_values:
+			return _draw_array_view(cached.get("stack", []))
+	var stack := _chip_stack_for_stake(stake, chip_values)
+	if draw_chip_stack_cache.size() >= DRAW_CHIP_STACK_CACHE_LIMIT:
+		draw_chip_stack_cache.clear()
+	draw_chip_stack_cache[cache_key] = {
+		"denominations": chip_values,
+		"stack": stack,
+	}
+	return stack
 
 
 func _event_point(pos: Vector2) -> Array:

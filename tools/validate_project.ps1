@@ -50,6 +50,8 @@ $requiredFiles = @(
     "scenes/main.tscn",
     "scripts/core/run_state.gd",
     "scripts/core/environment_instance.gd",
+    "scripts/core/environment_placement.gd",
+    "scripts/core/developer_placement_store.gd",
     "scripts/core/game_module.gd",
     "scripts/core/item_effect.gd",
     "scripts/core/event_module.gd",
@@ -81,9 +83,11 @@ $requiredFiles = @(
     "scripts/tests/foundation/character_chains_contract.gd",
     "scripts/tests/foundation/content_depth_contract.gd",
     "scripts/tests/foundation/scenario_sequence_contract.gd",
+    "scripts/tests/foundation/harness_production_fidelity.gd",
     "scripts/tests/foundation/crew_ignored_golden_probe.gd",
     "scripts/tests/fixtures/crew06_5_ignored_run_baseline.json",
     "scripts/tests/foundation/check_scratch_tickets.gd",
+    "scripts/tests/developer_placement_mode_check.gd",
     "scripts/tests/ui_scene/compile_run_menu_and_game_flows.gd",
     "tools/check_godot.ps1",
     "tools/split_test_runner_helpers.ps1",
@@ -93,6 +97,10 @@ $requiredFiles = @(
     "tools/foundation_visual_qa.gd",
     "tools/scenario_sequence_audit.ps1",
     "tools/scenario_sequence_audit.gd",
+    "tools/environment_grounding_static_check.ps1",
+    "tools/environment_grounding_contract.gd",
+    "tools/fix06_31_contact_sheets.ps1",
+    "tools/scenario_room_multiseed_finalization.gd",
     "tools/scenario_sequence_probe_support.gd",
     "tools/scenario_sequence_probe_main.gd",
     "tools/scenario_sequence_probe_main.tscn",
@@ -102,6 +110,8 @@ $requiredFiles = @(
     "data/art/art_manifest.json",
     "data/art/attribute_glyphs.json",
     "data/environments/archetypes.json",
+    "data/environments/placement_surfaces.json",
+    "data/environments/developer_placement_overrides.json",
     "data/environments/scenario_sequences/env06_7_shops_streets.json",
     "data/items/items.json",
     "data/events/events.json",
@@ -417,6 +427,8 @@ $objectJsonFiles = @(
     "data/games/showdown_duel_ritual_v1.json",
     "data/games/scratch_ticket_regions.json",
     "data/environments/scenarios.json",
+    "data/environments/placement_surfaces.json",
+    "data/environments/developer_placement_overrides.json",
     "data/story/character_chains.json"
 )
 $objectJsonDirectories = @(
@@ -454,7 +466,46 @@ foreach ($jsonFile in $jsonFiles) {
     }
 }
 
-$readme = Get-Content -LiteralPath (Join-Path $root "README.md") -Raw
+$placementOverridePath = Join-Path $root "data/environments/developer_placement_overrides.json"
+try {
+    $placementOverrides = Get-Content -LiteralPath $placementOverridePath -Raw | ConvertFrom-Json
+    if (-not (Test-JsonObjectRoot $placementOverrides) -or [int]$placementOverrides.schema_version -ne 1 -or -not (Test-JsonObjectRoot $placementOverrides.rooms)) {
+        $failures.Add("Developer placement overrides require schema_version 1 and an object-valued rooms collection.")
+    }
+    else {
+        $allowedPlacementFields = @("object_slot_positions", "scenario_object_slot_positions", "category_slot_positions")
+        foreach ($roomProperty in $placementOverrides.rooms.PSObject.Properties) {
+            if (-not (Test-JsonObjectRoot $roomProperty.Value)) {
+                $failures.Add("Developer placement room must be an object: $($roomProperty.Name)")
+                continue
+            }
+            foreach ($fieldProperty in $roomProperty.Value.PSObject.Properties) {
+                if ($allowedPlacementFields -notcontains $fieldProperty.Name -or -not (Test-JsonObjectRoot $fieldProperty.Value)) {
+                    $failures.Add("Developer placement room $($roomProperty.Name) has an unsupported placement collection: $($fieldProperty.Name)")
+                    continue
+                }
+                foreach ($slotProperty in $fieldProperty.Value.PSObject.Properties) {
+                    $coordinates = @($slotProperty.Value)
+                    if ($coordinates.Count -ne 2) {
+                        $failures.Add("Developer placement $($roomProperty.Name)/$($fieldProperty.Name)/$($slotProperty.Name) must contain exactly two coordinates.")
+                        continue
+                    }
+                    foreach ($coordinate in $coordinates) {
+                        $number = 0.0
+                        if (-not [double]::TryParse([string]$coordinate, [ref]$number) -or [double]::IsNaN($number) -or [double]::IsInfinity($number)) {
+                            $failures.Add("Developer placement $($roomProperty.Name)/$($fieldProperty.Name)/$($slotProperty.Name) contains a non-finite coordinate.")
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+catch {
+    $failures.Add("Developer placement override schema validation failed: $($_.Exception.Message)")
+}
+
+$readme = Get-Content -LiteralPath (Join-Path $root "README.md") -Raw -Encoding UTF8
 $mojibakeMarkers = @(
     [string][char]0x00E2,
     [string][char]0xFFFD,
@@ -962,6 +1013,17 @@ Require-Text "tools/check_godot.ps1" 'ExpectedNativePluginSha256' "Post-land ver
 Require-Text "tools/check_godot.ps1" 'Get-GDExtensionWindowsDebugTarget' "Post-land verification must resolve the canonical Windows debug target from the native descriptor."
 Require-Text "tools/check_godot.ps1" 'Post-land verification cannot skip the required Godot import with NoImport.' "Post-land verification must reject and override import narrowing."
 Require-Text "tools/check_godot.ps1" 'native_coin_pusher_smoke.gd' "Post-land verification must prove the supplied Windows plugin executes as native_v3."
+Require-Text "tools/check_godot.ps1" 'scenario_room_multiseed_finalization.gd' "Godot audit/full suites must include the permanent 8x55 scenario room finalization gate."
+Require-Text "tools/check_godot.ps1" 'environment_grounding_contract.gd' "Godot audit/full suites must include the focused environment grounding mechanism contract."
+Require-Text "tools/check_godot.ps1" 'Invoke-GameReworkVerificationGates' "Godot audit/full suites must retain the game rework verification gate group."
+Require-Text "tools/check_godot.ps1" 'craps_extensive_playtest.gd' "Game rework verification must retain the extensive Craps settlement gate."
+Require-Text "tools/check_godot.ps1" 'craps_rtp_audit.gd' "Game rework verification must retain the million-roll Craps RTP gate."
+Require-Text "tools/check_godot.ps1" 'crew_holdem_gameplay_audit.gd' "Game rework verification must retain the Hold'em gameplay gate."
+Require-Text "tools/check_godot.ps1" 'crew_holdem_dynamic_table_audit.gd' "Game rework verification must retain the Hold'em production-table gate."
+Require-Text "tools/check_godot.ps1" 'crew_holdem_production_host_audit.gd' "Game rework verification must retain the Hold'em save, replay, arithmetic, and all-streets production-host gate."
+Require-Text "tools/check_godot.ps1" 'slot_autoplay_cadence_probe.gd' "Game rework verification must retain the slot autoplay cadence gate."
+Require-Text "tools/check_godot.ps1" 'slot_foreground_autoplay_performance_probe.gd' "Game rework verification must retain the foreground autoplay performance gate."
+Require-Text "tools/check_godot.ps1" 'blackjack_counter_surveillance_probe.gd' "Game rework verification must retain the blackjack surveillance gate."
 Require-Text "tools/check_godot.ps1" 'eligible_for_done' "Post-land reports must make DONE eligibility explicitly fail closed."
 Require-Text "tools/check_godot.ps1" 'gdscript_load_check.gd' "Godot check script must run the one-process GDScript load checker."
 Require-Text "tools/check_godot.ps1" 'Stop-NewGodotProcesses' "Godot check script must clean up timed-out Godot child processes."
@@ -1592,6 +1654,13 @@ foreach ($searchRoot in $simulationSearchRoots) {
             $failures.Add("Foundation simulation must use RngStream instead of engine-global randomness: $relativeScript")
         }
     }
+}
+
+try {
+    & (Join-Path $root "tools/environment_grounding_static_check.ps1") -Root $root | Out-Null
+}
+catch {
+    $failures.Add("Environment grounding static check failed: $($_.Exception.Message)")
 }
 
 try {

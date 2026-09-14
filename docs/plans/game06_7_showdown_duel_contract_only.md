@@ -114,3 +114,14 @@ throttled Chrome measured 1327.935 ms with 39.72 ms maximum idle.
 This park is deliberately **not** an accepted-ready head. The Integrator must
 receive a newly replayed immutable product head after both accepted dependency
 successors exist; this branch remains preserved as contract-only staging.
+
+## Final closeout reconciliation — 2026-09-02
+
+The status above is retained as historical prestage evidence and is superseded
+for current-row intake by `docs/plans/game06_7_final_closeout.md`. The complete
+product was subsequently recovered and landed at `a6e7be91`; accepted Game 1
+and Blackjack dependencies are ancestors. Remediation `45e87257` closes the
+only row-owned save/revisit defect found during exact-tree audit. Current
+contracts, native/Web parity, deterministic, performance, accessibility, and
+visual evidence verify game06_7 as DONE. This reconciliation does not rewrite
+or erase the earlier contract-only verdict.

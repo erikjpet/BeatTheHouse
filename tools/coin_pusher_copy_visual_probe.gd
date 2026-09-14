@@ -8,6 +8,7 @@ extends SceneTree
 const MainScene := preload("res://scenes/main.tscn")
 const FoundationActionViewModelScript := preload("res://scripts/ui/foundation_action_view_model.gd")
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
+const HarnessProductionFidelityScript := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
 const OUTPUT_DIR := "res://.tmp/coin_pusher_copy_visual_probe"
 const FIXTURE_SEED := "QUARTER-FALLS-COPY-PROOF"
 const FIXTURE_ID := "coin_pusher_copy_visual_probe"
@@ -300,13 +301,28 @@ func _write_full_golden_capture() -> void:
 		run_state.start_new(str(seed_value))
 		_set_golden_world(run_state)
 		var generator := RunGeneratorScript.new(library)
-		generator.next_environment(run_state, "bar", true)
+		var arrival_failures: Array = []
+		if not bool(HarnessProductionFidelityScript.generate_and_finalize(
+			generator, run_state, arrival_failures, "coin-pusher golden initial Bar arrival", "bar", true
+		).get("ok", false)):
+			_fail(str(arrival_failures.back()))
+			return
 		var checkpoints: Array = [_full_golden_checkpoint("initial_bar", run_state)]
 		run_state.advance_environment_turns(1)
 		checkpoints.append(_full_golden_checkpoint("bar_action_boundary", run_state))
-		generator.next_environment(run_state, "gas_station_casino", true)
+		if not bool(HarnessProductionFidelityScript.travel_and_finalize(
+			generator, run_state, "gas_station_casino", true, generator.library, arrival_failures,
+			"coin-pusher golden Gas Casino travel"
+		).get("ok", false)):
+			_fail(str(arrival_failures.back()))
+			return
 		checkpoints.append(_full_golden_checkpoint("ordinary_travel", run_state))
-		generator.next_environment(run_state, "bar", true)
+		if not bool(HarnessProductionFidelityScript.travel_and_finalize(
+			generator, run_state, "bar", true, generator.library, arrival_failures,
+			"coin-pusher golden Bar revisit"
+		).get("ok", false)):
+			_fail(str(arrival_failures.back()))
+			return
 		checkpoints.append(_full_golden_checkpoint("bar_revisit", run_state))
 		var restored := RunState.new()
 		restored.from_dict(run_state.to_dict())

@@ -1,6 +1,8 @@
 param(
     [ValidateRange(1, 512)]
     [int]$SeedsPerPlaystyle = 64,
+    [ValidateRange(1, 1000000)]
+    [int]$SeedStart = 1,
     [ValidateRange(8, 512)]
     [int]$MaxActions = 208,
     [string]$SeedPrefix = "BALANCE06-1",
@@ -35,6 +37,7 @@ function Invoke-Audit([string]$TargetOutput) {
         "--headless", "--path", $projectRoot,
         "--script", "res://tools/cross_economy_audit.gd", "--",
         "--seeds-per-style=$SeedsPerPlaystyle",
+		"--seed-start=$SeedStart",
         "--max-actions=$MaxActions",
         "--seed-prefix=$SeedPrefix",
         "--build-ref=$BuildRef",

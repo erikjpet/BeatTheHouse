@@ -268,3 +268,160 @@ reports from different product trees are incomparable.
    verdict and board/archive action. This prestage authorizes neither.
 
 Current overall verdict: **BLOCKED/UNVERIFIED**. No completion claim is made.
+
+## Superseding game06_3 reconciliation — 2026-09-02
+
+This section supersedes only the historical game06_3/D3 entries above; it does
+not change the manifest's overall game06_8 verdict or any other row.
+
+- D3 is resolved by the delivered state and the owner's direction to close the
+  row: full Roulette is preserved and full Baccarat is completed. No scope
+  reduction, exception, or `game06_3b` successor is used.
+- The implementation is on `main` through
+  `212475356cedb42056a2677b590e5b69ed0ac8aa`, plus sealed-authority corrections
+  `1354ae26` and `679b1d8a`.
+- Closeout audits `45239305` and `9c2e6b1a` passed the combined depth contract,
+  focused Foundation suites, all 157 Roulette wager targets, 400 Baccarat
+  hands, 10 sealed host commits per game path, byte-identical 10-seed/560-point
+  determinism, and fresh native/Web presentation parity with semantic hash
+  `ba2fa83da58c9865fb2801b6d561e7e98b2ecd26fcbc3fa0df6b5cfd6c010ab7`.
+- Row-local performance budgets and coverage passed for both games. Canonical
+  visual QA exited cleanly with no warnings. The aggregate probe's unrelated
+  Coin Pusher red remains recorded and unmodified.
+
+Accordingly, `game06_3` is **VERIFIED/DONE** for board and dependency purposes.
+game06_8 must use the final closeout in `docs/plans/game06_3_handoff.md` for this
+slice and must not revive the older D3 blocker unless a new regression is
+demonstrated on current `main`.
+
+## Superseding game06_6 reconciliation — 2026-09-02
+
+This section supersedes only the historical game06_6/D7/D8 entries above; it
+does not change the manifest's overall game06_8 verdict or any other row.
+
+- The complete recovered Bar Dice product is on `main` through
+  `d98de5440bec7685f4bb26eace77f2dbb1627f53`; Game 1 sealed-host integration
+  `5a2b1e1a` and Craps depth integration `7d230a63` are ancestors.
+- The intentionally Craps-owned environment adapter rejects foreign ownership.
+  The game06_6 prompt-authorized finding is accepted: Bar Dice remains
+  fail-closed, does not duplicate private Craps authority, and projects only a
+  future already-authoritative interruption fact. A generic street adapter is
+  outside this row.
+- The exact-tree seven-phase contract, focused shipped-game suite, live
+  Main-scene wager selection, sealed wager accounting, dependency contracts,
+  save/revisit lifecycle, two byte-identical ten-seed determinism passes,
+  fresh native/Web semantic parity, unchanged performance budgets, canonical
+  visual QA, and all 15 retained accessibility/presentation states passed.
+- The complete evidence ledger and retained non-green attempts are recorded in
+  `docs/plans/game06_6_final_closeout.md`; no timeout or rejected attempt is
+  relabeled as passing evidence.
+
+Accordingly, `game06_6` is **VERIFIED/DONE** for board and Family 1 dependency
+purposes. game06_8 must consume the final closeout for this slice and must not
+revive the earlier contract-only/product-missing blocker unless a new
+regression is demonstrated on current `main`.
+
+## Superseding game06_7 reconciliation — 2026-09-02
+
+This section supersedes only the historical game06_7/D9 entries above; it does
+not change the manifest's overall game06_8 verdict or any other row.
+
+- The complete recovered Showdown product is on `main` through
+  `a6e7be912e8ca9e979d5eb35edefbb4883b49889`; Game 1 runtime `5a2b1e1a` and
+  accepted Blackjack recovery `b091bc43` are ancestors.
+- Closeout remediation `45e87257584ff30fd4086f89d49cf1d5ee23bfbe`
+  persists dealt Rourke hands in the existing authoritative duel session so a
+  save/exit/revisit reopens the exact cards. It changes no rule, threshold,
+  stake, RNG, route, heat, or settlement contract.
+- The exact-tree nine-phase row proof, focused shipped Blackjack suite, ladder
+  boundaries and stack terminals, product save/revisit, privacy, route-specific
+  endings, two byte-identical ten-seed/560-point determinism passes, fresh
+  native/Web semantic parity, unchanged performance budgets, canonical visual
+  QA, and all 19 retained accessibility/presentation states passed.
+- The complete ladder table, evidence hashes, and retained non-green broad
+  findings are recorded in `docs/plans/game06_7_final_closeout.md`. The older
+  contract-only and replay-manifest verdicts remain historical evidence only.
+
+Accordingly, `game06_7` is **VERIFIED/DONE** for board and Family 1 dependency
+purposes. game06_8 must consume the final closeout for this slice and must not
+revive D9's obsolete product-missing blocker unless a new regression is
+demonstrated on current `main`.
+
+## Superseding game06_4 reconciliation — 2026-09-02
+
+This section supersedes only the historical game06_4/D4/D5 entries above; it
+does not change the manifest's overall game06_8 verdict or any other row.
+
+- The owner selected W0 + H0. Slot and Video Poker use sealed direct-bankroll
+  wager/settlement authority, expose no machine-credit or conversion ledger,
+  and Video Poker has no hand-pay flow. Slot's attendant acknowledgement is
+  sealed, receipted, replay-safe, and settlement-neutral.
+- The complete recovered machine product is on the accepted ancestry through
+  `e874d6bc1636ab8094bd88c0c304a5db29902535`; final gate and fairness
+  remediation is `bd77ac54da2c9a911587802968d66cd589a7a1c9`.
+- The exact-tree row contract and Blackjack dependency, full Slot and Video
+  Poker functional suites, all-family RTP/paytable coverage, rejected-input and
+  conservation cases, save/revisit/acknowledgement lifecycle, two byte-identical
+  ten-seed/560-checkpoint determinism passes, fresh native/Web machine outcome
+  and complete Pinball feature parity, unchanged performance budgets, mandatory
+  idle liveness, canonical accessibility QA, and real-renderer cabinet proofs
+  passed.
+- The complete evidence ledger, performance numbers, hashes, and retained
+  non-green attempts are recorded in
+  `docs/plans/game06_4_final_closeout.md`.
+
+Accordingly, `game06_4` is **VERIFIED/DONE** for board and Family 1 dependency
+purposes. game06_8 must consume the final closeout for this slice and must not
+revive D4/D5's obsolete unselected-authority blockers unless a new regression
+is demonstrated on current `main`.
+
+## Superseding game06_1/game06_2/depth06_1 reconciliation — 2026-09-03
+
+This section supersedes the historical D1, D2, D10, D11 and D12 blockers. It
+does not erase the rejected or prestage heads above.
+
+- The accepted shared `game_ritual/1` runtime is landed through
+  `5a2b1e1a6782a13308585e1a974adeeb86be0647`. Its exact-tree 132-negative
+  vocabulary suite, hostile runtime proof, ten deterministic traces and every
+  adopting row contract pass. Final mapping:
+  `docs/plans/game06_1_final_closeout.md`.
+- Blackjack depth is landed through `d47feee3` plus recovery `b091bc43`. The
+  exact row contract, sealed-host suite, authority/replay, accounting,
+  persistence, input equivalence, actors/energy, focused probes and retained
+  visual evidence pass. Final mapping:
+  `docs/plans/game06_2_final_closeout.md`.
+- `depth06_1` is DONE/ACCEPTED at
+  `b33a05843fb161cd1c2970b4af2a475473beac40`. Its 55-id/1,485-pair exact audit,
+  reproducible 24-scenario sample, child authority/RTP/visual checks and two
+  byte-identical 10-seed/560-checkpoint runs pass. Final mapping:
+  `docs/plans/depth06_1_final_closeout.md`.
+
+The assembled landed product base audited by game06_8 is
+`914e5ac822d8ee3127f210203dc688b182a19c65` / tree
+`82ea2d051fdef2926f02a390410369bc7bc31ae8`. The depth closeout commit adds
+acceptance records, not a different Family 1 product. Every product integration
+listed in the final game06_8 report is an ancestor of that frozen base.
+
+Accordingly, all Family 1 intake dependencies are **VERIFIED/DONE**. The final
+game06_8 verdict is governed by
+`docs/plans/game06_8_final_closeout.md`, not this historical prestage section.
+
+## Superseding final Family 1 closure — 2026-09-03
+
+This section supersedes every remaining pending aggregate, Blackjack, and Crew
+entry in this historical intake manifest.
+
+- Final exact integrated commit `af48b5311036793266d9e19e30699c98a0739d16`
+  passes project validation, import, script loading, and the four-shard
+  `FoundationSuite games` aggregate: 10/10 checks, zero failures, `197.329s`
+  inside the unchanged `220.425s` budget. Foundation report SHA-256:
+  `F85F24AA0F34584F5920D18C753733C8E7D419DCB368B99CA2178CBA9E00F89C`.
+- The exact Blackjack audit passes 120 generated-table cases and 1,000 hands
+  with zero failures/warnings and report SHA-256
+  `DCB214CDFFA5E4E17F427E3D679F9803D128EE0D3889E507D028C001227EACD0`.
+- The repaired Crew depth contract passes ten seeds and five profiles on the
+  same exact root; log SHA-256
+  `A86F4D7B4B3C10818080A49C09A9CB2C9DCDA93728B82C672C958E25ACDDB993`.
+
+Accordingly, `game06_2` and `game06_8` are **VERIFIED/DONE**. Only the program's
+owner/human playtest remains for taste, comprehension, pacing, and readability.

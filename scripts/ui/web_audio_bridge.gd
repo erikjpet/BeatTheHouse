@@ -14,7 +14,7 @@ static var _payload_bytes := 0
 static var _preencoded_payload_hits := 0
 static var _synchronous_payload_encodes := 0
 
-const WEB_AUDIO_VERSION := 8
+const WEB_AUDIO_VERSION := 9
 const WEB_AUDIO_MIN_BUFFER_SAMPLE_RATE := 3000
 const PCM_BASE64_META: StringName = &"_bth_web_pcm_base64"
 const WEB_MASTER_GAIN := 0.72
@@ -29,7 +29,7 @@ const WEB_MUSIC_STEM_ROLES := ["pad", "bass", "bass_dark", "lead", "drums_low", 
 
 const WEB_AUDIO_SCRIPT := """
 (function () {
-	var BRIDGE_VERSION = 8;
+	var BRIDGE_VERSION = 9;
 	if (window.BTHWebAudio && window.BTHWebAudio.version === BRIDGE_VERSION) {
 		return true;
 	}
@@ -175,6 +175,7 @@ const WEB_AUDIO_SCRIPT := """
 		musicBus: null,
 		pcmBuffers: {},
 		sfxLoops: {},
+		sfxOneShots: [],
 		musicGroups: {},
 		unlocked: false,
 		ensure: function () {
@@ -266,6 +267,35 @@ const WEB_AUDIO_SCRIPT := """
 			var gain = ctx.createGain();
 			var isLoop = !!payload.loop;
 			var loopId = String(payload.loop_id || "");
+			var profileId = String(payload.profile_id || "");
+			var maxVoices = Math.max(1, Math.min(10, Number(payload.max_voices || 10) | 0));
+			var globalMaxVoices = 10;
+			this.sfxOneShots = this.sfxOneShots.filter(function (candidate) {
+				return candidate && !candidate.ended;
+			});
+			if (!isLoop && profileId) {
+				var sameProfile = this.sfxOneShots.filter(function (candidate) {
+					return candidate.profileId === profileId;
+				});
+				if (sameProfile.length >= maxVoices) {
+					var stolen = sameProfile[0];
+					stolen.ended = true;
+					stopEntry(stolen);
+					this.sfxOneShots = this.sfxOneShots.filter(function (candidate) {
+						return candidate !== stolen;
+					});
+				}
+			}
+			// Match the native ten-player pool. Once the requesting surface is
+			// within its own cap, steal the oldest remaining global one-shot.
+			if (!isLoop && this.sfxOneShots.length >= globalMaxVoices) {
+				var oldestGlobal = this.sfxOneShots[0];
+				oldestGlobal.ended = true;
+				stopEntry(oldestGlobal);
+				this.sfxOneShots = this.sfxOneShots.filter(function (candidate) {
+					return candidate !== oldestGlobal;
+				});
+			}
 			source.buffer = buffer;
 			source.loop = isLoop;
 			source.playbackRate.value = clamp(Number(payload.pitch || 1), 0.35, 2.5);
@@ -281,8 +311,9 @@ const WEB_AUDIO_SCRIPT := """
 			if (loopId) {
 				this.stopLoop(loopId);
 			}
-			var entry = { source: source, gain: gain, key: key };
+			var entry = { source: source, gain: gain, key: key, profileId: profileId, ended: false };
 			source.onended = function () {
+				entry.ended = true;
 				try {
 					gain.disconnect();
 				} catch (_error) {
@@ -293,6 +324,8 @@ const WEB_AUDIO_SCRIPT := """
 			};
 			if (loopId) {
 				this.sfxLoops[loopId] = entry;
+			} else {
+				this.sfxOneShots.push(entry);
 			}
 			source.start(0);
 			return true;
@@ -425,6 +458,11 @@ const WEB_AUDIO_SCRIPT := """
 					this.stopLoop(loopId);
 				}
 			}
+			for (var index = 0; index < this.sfxOneShots.length; index += 1) {
+				this.sfxOneShots[index].ended = true;
+				stopEntry(this.sfxOneShots[index]);
+			}
+			this.sfxOneShots = [];
 			return true;
 		},
 		playMusic: function (_payload) {
@@ -474,7 +512,7 @@ static func unlock() -> void:
 	_sync_output_levels()
 
 
-static func play_stream(stream: AudioStream, stream_id: String, volume_db: float = 0.0, pitch: float = 1.0, loop_id: String = "", force_loop: bool = false) -> bool:
+static func play_stream(stream: AudioStream, stream_id: String, volume_db: float = 0.0, pitch: float = 1.0, loop_id: String = "", force_loop: bool = false, profile_id: String = "", max_voices: int = 10) -> bool:
 	if not available():
 		return false
 	if not _bridge_ready():
@@ -483,6 +521,8 @@ static func play_stream(stream: AudioStream, stream_id: String, volume_db: float
 	var payload := _stream_payload(stream, stream_id, volume_db, pitch, loop_id, force_loop)
 	if payload.is_empty():
 		return false
+	payload["profile_id"] = profile_id.strip_edges()
+	payload["max_voices"] = clampi(max_voices, 1, 10)
 	var payload_json := JSON.stringify(payload)
 	_record_bridge_call("play_pcm", payload_json.length())
 	if not bool(_bridge_interface.playPcm(payload_json)):
@@ -704,6 +744,8 @@ static func mix_contract_snapshot() -> Dictionary:
 		"script_has_music_stems": WEB_AUDIO_SCRIPT.find("playMusicStems") >= 0 and WEB_AUDIO_SCRIPT.find("setMusicMix") >= 0,
 		"script_syncs_user_bus_levels": WEB_AUDIO_SCRIPT.find("setBusLevels") >= 0 and WEB_AUDIO_SCRIPT.find("this.musicBus.gain.setTargetAtTime") >= 0 and WEB_AUDIO_SCRIPT.find("this.sfxBus.gain.setTargetAtTime") >= 0,
 		"script_has_loop_stop": WEB_AUDIO_SCRIPT.find("stopLoop") >= 0,
+		"script_has_global_sfx_cap": WEB_AUDIO_SCRIPT.find("var globalMaxVoices = 10") >= 0 \
+			and WEB_AUDIO_SCRIPT.find("this.sfxOneShots.length >= globalMaxVoices") >= 0,
 		"script_requires_explicit_one_shot_unlock": WEB_AUDIO_SCRIPT.find("(!this.unlocked && !payload.loop)") >= 0 \
 			and WEB_AUDIO_SCRIPT.find("if (!this.ensure() || (!this.unlocked && !payload.loop)") >= 0,
 		"script_has_oscillator_fallback": WEB_AUDIO_SCRIPT.find("createOscillator") >= 0,

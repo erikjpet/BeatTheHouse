@@ -40,6 +40,12 @@ const BlackjackActionAuthorityScript := preload("res://scripts/core/blackjack_ac
 const GameRitualRuntimeScript := preload("res://scripts/core/game_ritual_runtime.gd")
 
 const ENV06_6B_SEMANTIC_RESTORE_EQUIVALENCE_V1 := "ENV06_6B_SEMANTIC_RESTORE_EQUIVALENCE_V1"
+const SCENARIO_UNCONSUMED_DYNAMIC_INTERACTION_SOURCES := [
+	"numbers_state.venue_status",
+	"numbers_state.silas_presence",
+	"active_delivery_run.handoff_pending_node_id",
+	"event_ids",
+]
 const SCENARIO_DERIVED_NONCAUSAL_ENVIRONMENT_FIELDS := [
 	"scenario_sequence_projection",
 	"scenario_sequence_lifecycle_errors",
@@ -347,10 +353,16 @@ var crew_grievance_ledger: Array = []
 var crew_jobs: Dictionary = {}
 var crew_grievance_sequence: int = 0
 var crew_job_sequence: int = 0
-var _crew_job_host_capability: RefCounted
-var _crew_recruitment_host_capability: RefCounted
-var _world1_host_capability: RefCounted
-var _crew_heist_host_capability: RefCounted
+var _crew_job_host_capability: RefCounted = RefCounted.new()
+var _crew_recruitment_host_capability: RefCounted = RefCounted.new()
+var _world1_host_capability: RefCounted = RefCounted.new()
+var _crew_heist_host_capability: RefCounted = RefCounted.new()
+var _crew_heist_private_capsule := ""
+var _crew_heist_private_fingerprint := ""
+# A RunState can be populated by small host/test fixtures before start_new().
+# Give every instance a valid authority; start_new() remints it for each run and
+# from_dict() replaces it with the authenticated saved or migrated authority.
+var _crew_private_authority_id := CrewTurnModelScript.new_authority_id()
 var active_delivery_run: Dictionary = {}
 var crew_pattern_memory: Dictionary = {}
 var scenario_host_transaction_ledger: Dictionary = {}
@@ -400,6 +412,8 @@ const TURN_TRANSACTION_SCALAR_FIELDS := [
 	"game_clock_minutes", "grand_casino_atm_interest_boundary_index", "act_index",
 	"run_status", "run_failure_reason", "run_failure_message",
 	"run_spending_score", "defer_next_bankroll_zero_failure",
+	"_crew_private_authority_id", "_crew_heist_private_capsule",
+	"_crew_heist_private_fingerprint",
 	"_item_effects_loaded", "_item_definitions_loaded",
 	"_owned_item_lookup_cache_valid", "_turn_transaction_test_failure_stage",
 ]
@@ -421,6 +435,7 @@ const TURN_TRANSACTION_COLLECTION_FIELDS := [
 	"closing_time_state", "home_state", "_item_effects_by_id",
 	"_item_definitions_by_id", "_item_effect_total_cache",
 	"_owned_item_lookup_cache", "_scenario_sequence_definition_cache",
+	"world_sequence_registrations", "_world_sequence_definition_cache",
 ]
 const TURN_TRANSACTION_SHALLOW_CACHE_FIELDS := [
 	"_item_effects_by_id", "_item_definitions_by_id", "_item_effect_total_cache",
@@ -499,6 +514,12 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	_crew_recruitment_host_capability = RefCounted.new()
 	_world1_host_capability = RefCounted.new()
 	_crew_heist_host_capability = RefCounted.new()
+	_crew_heist_private_capsule = ""
+	_crew_heist_private_fingerprint = ""
+	# Mint the opaque save authority as part of run construction. Save projection
+	# must be observational: lazily creating this id inside to_dict() made the
+	# first read mutate a live run and invalidated transaction fingerprints.
+	_crew_private_authority_id = CrewTurnModelScript.new_authority_id()
 	active_delivery_run = {}
 	crew_pattern_memory = CrewPokerModelScript.default_observations()
 	scenario_host_transaction_ledger = {}
@@ -1562,7 +1583,7 @@ func scenario_preflight_environment_change(source_id: String = "", target_id: St
 	var definition := _scenario_sequence_definition_readonly()
 	var boundary := _scenario_environment_change_expiry_boundary()
 	if not travel_kind.is_empty() and ScenarioSequenceSchemaScript.is_sequence(definition):
-		if not _scenario_semantic_ready(): return {"ok": false, "errors": ["Dynamic room sequence semantic records are not finalized for departure."]}
+		if not _scenario_semantic_ready(): return {"ok": false, "errors": ["Dynamic room sequence semantic records are not finalized for departure; the arrived room was likely never finalized by its host or harness."]}
 		var state := ScenarioEngineScript.ensure_sequence_state(candidate, definition)
 		if state.is_empty(): return {"ok": false, "errors": ["Dynamic room sequence departure could not initialize its causal state."]}
 		var state_errors := _copy_array(state.get("errors", []))
@@ -1589,7 +1610,7 @@ func scenario_preflight_environment_change(source_id: String = "", target_id: St
 			if not bool(flushed.get("ok", false)):
 				return {"ok": false, "errors": _copy_array(flushed.get("errors", []))}
 	if boundary.is_empty(): return {"ok": true, "inactive": true, "errors": []}
-	if not _scenario_semantic_ready(): return {"ok": false, "errors": ["Dynamic room sequence semantic records are not finalized for departure."]}
+	if not _scenario_semantic_ready(): return {"ok": false, "errors": ["Dynamic room sequence semantic records are not finalized for departure; the arrived room was likely never finalized by its host or harness."]}
 	var result := ScenarioEngineScript.sequence_apply_expiry_boundary(candidate, definition, boundary)
 	return {"ok": bool(result.get("ok", false)), "inactive": false, "errors": _copy_array(result.get("errors", []))}
 
@@ -1608,7 +1629,9 @@ func _scenario_environment_change_expiry_boundary() -> String:
 
 
 # Sets the current environment and records the previous one.
-func set_environment(environment_data: Dictionary) -> Dictionary:
+func set_environment(environment_data: Dictionary, debug_timing: Dictionary = {}) -> Dictionary:
+	var perf_timing_enabled := not debug_timing.is_empty()
+	var perf_stage_started_usec := Time.get_ticks_usec() if perf_timing_enabled else 0
 	var previous_was_grand_casino := _is_grand_casino_environment(current_environment)
 	var destination_sequence_state := ScenarioSequenceRuntimeScript.normalize_state(environment_data.get("scenario_sequence_state", {}))
 	var destination_is_revisit := environment_data.has("departed_game_clock_minutes") or not destination_sequence_state.is_empty() and (
@@ -1619,6 +1642,9 @@ func set_environment(environment_data: Dictionary) -> Dictionary:
 		or not _copy_array(destination_sequence_state.get("visit_receipts", [])).is_empty()
 	)
 	var departure_check := scenario_preflight_environment_change()
+	if perf_timing_enabled:
+		debug_timing["initial_preflight"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stage_started_usec = Time.get_ticks_usec()
 	if not bool(departure_check.get("ok", false)):
 		return {"ok": false, "applied": false, "errors": _copy_array(departure_check.get("errors", []))}
 	var departure_boundary := _scenario_environment_change_expiry_boundary()
@@ -1653,25 +1679,68 @@ func set_environment(environment_data: Dictionary) -> Dictionary:
 		_store_current_local_suspicion()
 		environment_history.append(_environment_history_entry(current_environment))
 		_compact_environment_history()
+	if perf_timing_enabled:
+		debug_timing["source_persist"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stage_started_usec = Time.get_ticks_usec()
 	current_environment = _normalize_environment(environment_data)
-	ScenarioEngineScript.migrate_environment_sequence(
-		current_environment,
-		{},
-		"%d:set_environment:%s" % [seed_value, str(current_environment.get("world_node_id", current_environment.get("archetype_id", "")))]
-	)
-	var destination_definition := _scenario_sequence_definition_readonly()
-	if ScenarioSequenceSchemaScript.is_sequence(destination_definition):
-		_ensure_scenario_host_public_context()
+	_retain_world_sequences_bound_to_environment(current_environment)
+	if perf_timing_enabled:
+		debug_timing["destination_normalize"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stage_started_usec = Time.get_ticks_usec()
+	# Fresh generated rooms have no trusted semantic inventory yet; finalization
+	# initializes their sequence atomically below. Running legacy migration here
+	# only reloaded and revalidated the same package before returning `pending`.
+	if bool(current_environment.get("scenario_semantic_ready", false)) or current_environment.has("scenario_sequence_state") or current_environment.has("scenario_sequence_migration"):
+		ScenarioEngineScript.migrate_environment_sequence(
+			current_environment,
+			{},
+			"%d:set_environment:%s" % [seed_value, str(current_environment.get("world_node_id", current_environment.get("archetype_id", "")))]
+		)
+	if perf_timing_enabled:
+		debug_timing["sequence_migration"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stage_started_usec = Time.get_ticks_usec()
+	# The world-map cursor advances only after this installation succeeds. Resolve
+	# the destination's seed from its explicit node id, not the still-current
+	# source cursor, so first entry reuses the accepted package receipt.
+	var destination_node_id := str(current_environment.get("world_node_id", current_environment.get("archetype_id", ""))).strip_edges()
+	var destination_definition := _seeded_scenario_definition_for_node_readonly(destination_node_id)
+	if perf_timing_enabled:
+		debug_timing["sequence_definition_lookup"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stage_started_usec = Time.get_ticks_usec()
+	if destination_definition.is_empty():
+		destination_definition = _scenario_sequence_definition_readonly()
+	var destination_sequence_value: Variant = destination_definition.get("sequence", {})
+	if typeof(destination_sequence_value) == TYPE_DICTIONARY and not (destination_sequence_value as Dictionary).is_empty():
+		if perf_timing_enabled:
+			debug_timing["sequence_definition_presence"] = Time.get_ticks_usec() - perf_stage_started_usec
+			perf_stage_started_usec = Time.get_ticks_usec()
 		# V2 initialization/reentry is intentionally deferred until the controller's
 		# final pre-overlay interaction record set and ContentLibrary are sealed.
 		current_environment.erase("scenario_semantic_ready")
-		current_environment.erase("scenario_semantic_inventory")
+		# Persistent storage retains the immutable inventory and its source
+		# provenance. Keep a well-formed, exactly bound copy available to the
+		# mandatory rebuild; newly generated or malformed rooms still start empty.
+		if not _persisted_scenario_inventory_matches_environment(current_environment):
+			current_environment.erase("scenario_semantic_inventory")
 		current_environment.erase("scenario_base_interactions")
 		current_environment.erase("scenario_base_actors")
 		current_environment.erase("scenario_base_producer_context")
 		current_environment.erase("scenario_semantic_action_digest")
-		current_environment["scenario_sequence_pending_visit_id"] = str(current_environment.get("environment_visit_id", ""))
+		# Finalization creates the public visit identity and falls back to it when
+		# this optional persisted migration hint is absent.
+		current_environment.erase("scenario_sequence_pending_visit_id")
+	if perf_timing_enabled:
+		debug_timing["sequence_definition_prepare"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stage_started_usec = Time.get_ticks_usec()
 	CharacterChainModelScript.apply_to_environment(self, current_environment)
+	if perf_timing_enabled:
+		debug_timing["character_chain"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stage_started_usec = Time.get_ticks_usec()
+	# Heist table presence is location-derived presentation, so synchronize it at
+	# installation time. Waiting for the next action boundary left the first frame
+	# at the designated table without its live event and made immediate selection
+	# fail even though the heist state was already in PLAY.
+	_crew_heist_sync_live_table_event(CrewHeistModelScript.normalize_state(crew_heist_state))
 	# The Punchline's posted board is a physical source. Arriving after the post
 	# reveals only the current published handle; it does not grant solo-route lore.
 	if numbers_state != null and str(current_environment.get("archetype_id", "")) == "small_underground_casino":
@@ -1719,7 +1788,27 @@ func set_environment(environment_data: Dictionary) -> Dictionary:
 	_initialize_grand_casino_living_floor()
 	_queue_grand_casino_entry_cue(previous_was_grand_casino)
 	_evaluate_immediate_terminal_state()
+	if perf_timing_enabled:
+		debug_timing["destination_models"] = Time.get_ticks_usec() - perf_stage_started_usec
 	return {"ok": true, "applied": true, "errors": []}
+
+
+func _retain_world_sequences_bound_to_environment(environment: Dictionary) -> void:
+	if not environment.has(CrewWorldSequenceAdapterScript.CONTAINER_KEY):
+		return
+	var destination_node := str(environment.get("world_node_id", environment.get("archetype_id", environment.get("id", "")))).strip_edges()
+	var container := _copy_dict(environment.get(CrewWorldSequenceAdapterScript.CONTAINER_KEY, {}))
+	var retained: Dictionary = {}
+	for token_value in container.keys():
+		var token := str(token_value)
+		var entry := _copy_dict(container.get(token_value, {}))
+		var selector := _copy_dict(entry.get("mount_selector", {}))
+		if str(selector.get("node_id", "")).strip_edges() == destination_node:
+			retained[token] = entry
+	if retained.is_empty():
+		environment.erase(CrewWorldSequenceAdapterScript.CONTAINER_KEY)
+	else:
+		environment[CrewWorldSequenceAdapterScript.CONTAINER_KEY] = retained
 
 
 func set_world_map(map_data: Dictionary) -> void:
@@ -1816,7 +1905,8 @@ func has_world_map() -> bool:
 
 func current_world_node_id() -> String:
 	if world_map.is_empty():
-		return str(current_environment.get("world_node_id", current_environment.get("archetype_id", ""))).strip_edges()
+		var node_id := str(current_environment.get("world_node_id", "")).strip_edges()
+		return node_id if not node_id.is_empty() else str(current_environment.get("archetype_id", "")).strip_edges()
 	return WorldMap.current_node_id(world_map)
 
 
@@ -1825,7 +1915,9 @@ func scenario_for_node(node_id: String) -> Dictionary:
 	var wanted := node_id.strip_edges()
 	if wanted.is_empty():
 		return {}
-	var current_node := str(current_environment.get("world_node_id", current_environment.get("archetype_id", ""))).strip_edges()
+	var current_node := str(current_environment.get("world_node_id", "")).strip_edges()
+	if current_node.is_empty():
+		current_node = str(current_environment.get("archetype_id", "")).strip_edges()
 	if wanted == current_node or wanted == str(current_environment.get("id", "")):
 		var current_scenario := ScenarioEngineScript.public_snapshot(current_environment.get("scenario_state", {}))
 		return current_scenario if not current_scenario.is_empty() else seeded_scenario_for_node(wanted)
@@ -1857,7 +1949,13 @@ func scenario_sequence_definition() -> Dictionary:
 # Trusted RunState paths consume the immutable definition without cloning the
 # full authored sequence on every projection, fact, phase, and travel boundary.
 func _scenario_sequence_definition_readonly() -> Dictionary:
-	var node_id := current_world_node_id()
+	# Atomic travel installs the destination environment before moving the world-map
+	# cursor. Resolve the definition from that installed environment's explicit node
+	# identity so the destination uses its already-seeded catalog receipt instead of
+	# reparsing the legacy catalog through the still-current source node.
+	var node_id := str(current_environment.get("world_node_id", "")).strip_edges()
+	if node_id.is_empty():
+		node_id = current_world_node_id()
 	var scenario_state_value: Variant = current_environment.get("scenario_state", {})
 	var scenario_state: Dictionary = scenario_state_value as Dictionary if typeof(scenario_state_value) == TYPE_DICTIONARY else {}
 	var scenario_id := str(scenario_state.get("id", current_environment.get("scenario_id", ""))).strip_edges()
@@ -1885,7 +1983,8 @@ func _scenario_sequence_definition_readonly() -> Dictionary:
 	# against that exact inventory and stamps the runtime marker below.
 	if not ScenarioSequenceSchemaScript.is_sequence(resolved) and ScenarioSequenceSchemaScript.is_sequence(embedded_definition) and not bool(current_environment.get("scenario_semantic_ready", false)):
 		resolved = embedded_definition
-	if not scenario_id.is_empty() and bool(resolved.get(ScenarioEngineScript.VALIDATED_SEQUENCE_MARKER, false)):
+	if not scenario_id.is_empty() and (bool(resolved.get(ScenarioEngineScript.VALIDATED_SEQUENCE_MARKER, false)) \
+			or (bool(resolved.get(ScenarioEngineScript.RESOLVED_SEQUENCE_CATALOG_MARKER, false)) and not ScenarioSequenceSchemaScript.is_sequence(resolved))):
 		_scenario_sequence_definition_cache[scenario_id] = resolved.duplicate(true)
 	return resolved
 
@@ -1902,11 +2001,28 @@ func _scenario_cached_definition_matches_source(cached: Dictionary, source: Dict
 	var source_sequence_value: Variant = source.get("sequence", {})
 	var cached_signature := str((cached_sequence_value as Dictionary).get("sequence_signature", "")) if typeof(cached_sequence_value) == TYPE_DICTIONARY else ""
 	var source_signature := str((source_sequence_value as Dictionary).get("sequence_signature", "")) if typeof(source_sequence_value) == TYPE_DICTIONARY else ""
+	if cached_signature.is_empty() and source_signature.is_empty():
+		return bool(cached.get(ScenarioEngineScript.RESOLVED_SEQUENCE_CATALOG_MARKER, false)) \
+			and not ScenarioSequenceSchemaScript.is_sequence(source)
 	return not cached_signature.is_empty() and cached_signature == source_signature
 
 
 func scenario_definition_cache_snapshot() -> Dictionary:
 	return _scenario_sequence_definition_cache.duplicate(true)
+
+
+func cache_runtime_scenario_definition(definition: Dictionary) -> bool:
+	var definition_id := str(definition.get("id", definition.get("scenario_id", ""))).strip_edges()
+	if definition_id.is_empty():
+		return false
+	var validated_sequence := bool(definition.get(ScenarioEngineScript.VALIDATED_SEQUENCE_MARKER, false)) \
+		and ScenarioSequenceSchemaScript.is_sequence(definition)
+	var resolved_without_sequence := bool(definition.get(ScenarioEngineScript.RESOLVED_SEQUENCE_CATALOG_MARKER, false)) \
+		and not ScenarioSequenceSchemaScript.is_sequence(definition)
+	if not validated_sequence and not resolved_without_sequence:
+		return false
+	_scenario_sequence_definition_cache[definition_id] = definition.duplicate(true)
+	return true
 
 
 func restore_scenario_definition_cache(snapshot: Dictionary) -> void:
@@ -1962,6 +2078,8 @@ func world_sequence_schedule_heist_mount(action: String, host_capability: Varian
 	if package_id.is_empty(): return {"ok": true, "inactive": true, "errors": []}
 	var entry := WorldSequencePackageCatalogScript.entry(package_id)
 	var node_id := current_world_node_id().strip_edges()
+	if action == "begin_play":
+		node_id = GRAND_CASINO_ARCHETYPE_ID if plan_id == CrewHeistModelScript.PLAN_COUNT else str(_copy_dict(CrewHeistModelScript.plan(plan_id).get("play", {})).get("venue_archetype", GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID))
 	var public_instance := "heist_scene:%d:%d:%s" % [int(state.get("locked_action", 0)), _crew_action_index(), package_id]
 	var token := CrewWorldSequenceAdapterScript.owner_token(_copy_dict(entry.get("source", {})), public_instance)
 	if entry.is_empty() or node_id.is_empty(): return {"ok": false, "errors": ["live heist sequence package or node is unavailable"]}
@@ -2020,7 +2138,11 @@ func world_sequence_activate_current_mounts() -> Dictionary:
 	if world_sequence_registrations.is_empty(): return {"ok": true, "inactive": true, "mounted": [], "errors": []}
 	if not bool(current_environment.get("scenario_semantic_ready", false)):
 		return {"ok": true, "pending": true, "mounted": [], "errors": []}
-	var node_id := current_world_node_id()
+	# Environment installation is atomic: the destination plane becomes current
+	# before the world-map cursor is committed. Mount against that physical plane,
+	# not the briefly stale cursor, or a source-room sequence can be projected onto
+	# the destination and reject otherwise valid travel.
+	var node_id := str(current_environment.get("world_node_id", current_environment.get("archetype_id", current_environment.get("id", "")))).strip_edges()
 	var mounted: Array = []
 	var errors: Array = []
 	var tokens := world_sequence_registrations.keys()
@@ -2405,11 +2527,84 @@ func scenario_finalize_installed_environment(library: ContentLibrary, layout_con
 	var definition := _scenario_sequence_definition_readonly()
 	if not ScenarioSequenceSchemaScript.is_sequence(definition):
 		return {"ok": true, "inactive": true, "errors": []}
-	var authoritative_environment := _scenario_terminal_authoritative_environment(definition)
+	var authoritative_environment := _scenario_authoritative_environment_for_finalization(definition)
 	var authoritative := EnvironmentBaseSemanticRecordsScript.authoritative_interactable_records(authoritative_environment, library)
 	if not bool(authoritative.get("ok", false)):
 		return _scenario_semantic_finalization_failure(_copy_array(authoritative.get("errors", [])), bool(current_environment.get("scenario_semantic_ready", false)))
 	return _scenario_finalize_trusted_base_semantics(_copy_array(authoritative.get("records", [])), library, layout_context)
+
+
+func _scenario_event_choice_authority(definition: Dictionary, library: ContentLibrary, environment_override: Dictionary = {}) -> Dictionary:
+	var environment := environment_override if not environment_override.is_empty() else current_environment
+	# Once captured, only the immutable pre-sequence event set can seed choice
+	# authority. Live event_ids lose resolved events and may receive unrelated
+	# runtime additions; neither change may shrink or mint the sealed inventory.
+	var sealed_source := _copy_dict(_copy_dict(environment.get("scenario_semantic_inventory", {})).get("source_provenance", {}))
+	var event_ids := _copy_array(sealed_source.get("event_ids", environment.get("event_ids", [])))
+	# Sequence-authored event references are catalog-validated dependencies, even
+	# when the owning layered scenario is projected through another room layer.
+	# Include only those declared references; handler inputs cannot mint authority.
+	var authoring := _copy_dict(definition.get("sequence_authoring", {}))
+	var references := _copy_dict(authoring.get("references", {}))
+	for event_id_value in _copy_array(references.get("events", [])):
+		var event_id := str(event_id_value).strip_edges()
+		if not event_id.is_empty() and not event_ids.has(event_id):
+			event_ids.append(event_id)
+	return EnvironmentSemanticInventoryScript.event_choice_index(event_ids, library)
+
+
+func _scenario_authoritative_environment_for_finalization(definition: Dictionary) -> Dictionary:
+	var result := _scenario_terminal_authoritative_environment(definition)
+	# The pre-sequence host baseline is the only input to the immutable seal.
+	# Use it during the initial seal as well as restore so progressed scenario
+	# services, routes, games, and layout fixtures can never enter base authority.
+	# The existing inventory digest comparison below remains fail-closed.
+	# Every consumer below treats non-scenario room state as read-only, while each
+	# field we replace receives its own owned value. A shallow envelope preserves
+	# the atomic boundary without cloning unrelated machine simulations.
+	result = result.duplicate(false)
+	var sealed_source := _copy_dict(_copy_dict(current_environment.get("scenario_semantic_inventory", {})).get("source_provenance", {}))
+	if not sealed_source.is_empty():
+		result["event_ids"] = _copy_array(sealed_source.get("event_ids", result.get("event_ids", [])))
+		result["resolved_event_ids"] = []
+	else:
+		# Persistent EnvironmentInstance snapshots intentionally retain only the
+		# inventory version/digest, not the large derived inventory body. Restore
+		# the immutable pre-consumption event source from the causal resolved-event
+		# journal before rebuilding and authenticating that inventory.
+		var restored_event_ids := _copy_array(result.get("event_ids", []))
+		for resolved_event_id_value in _copy_array(result.get("resolved_event_ids", [])):
+			var resolved_event_id := str(resolved_event_id_value).strip_edges()
+			if not resolved_event_id.is_empty() and not restored_event_ids.has(resolved_event_id):
+				restored_event_ids.append(resolved_event_id)
+		result["event_ids"] = restored_event_ids
+		result["resolved_event_ids"] = []
+	var baseline_fields := {
+		"scenario_sequence_base_game_ids": "game_ids",
+		"scenario_sequence_base_service_ids": "service_ids",
+		"scenario_sequence_base_travel_hooks": "travel_hooks",
+		"scenario_sequence_base_game_modifiers": "scenario_game_modifiers",
+	}
+	for source_value in baseline_fields.keys():
+		var source := str(source_value)
+		if not current_environment.has(source): continue
+		var target := str(baseline_fields.get(source, ""))
+		var value: Variant = current_environment.get(source)
+		result[target] = value.duplicate(true) if typeof(value) in [TYPE_ARRAY, TYPE_DICTIONARY] else value
+	if current_environment.has("scenario_sequence_base_layout_object_rects"):
+		var layout := _copy_dict(result.get("layout", {}))
+		layout["object_rects"] = _copy_dict(current_environment.get("scenario_sequence_base_layout_object_rects", {}))
+		result["layout"] = layout
+	# Generated layouts originate in Vector2/Rect2 float32 components, while a
+	# JSON save restores scalar floats. Canonicalize through the actual persistent
+	# representation before deriving pixel hit bounds so a same-build rebuild is
+	# byte-identical instead of drifting at the final floating-point digit.
+	var canonical_layout := _copy_dict(result.get("layout", {}))
+	var canonical_rects_value: Variant = JSON.parse_string(JSON.stringify(_copy_dict(canonical_layout.get("object_rects", {}))))
+	if typeof(canonical_rects_value) == TYPE_DICTIONARY:
+		canonical_layout["object_rects"] = canonical_rects_value
+		result["layout"] = canonical_layout
+	return result
 
 
 func _scenario_terminal_authoritative_environment(definition: Dictionary) -> Dictionary:
@@ -2443,15 +2638,26 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 	_ensure_scenario_host_public_context()
 	var definition := _scenario_sequence_definition_readonly()
 	if not ScenarioSequenceSchemaScript.is_sequence(definition): return {"ok": true, "inactive": true, "errors": []}
-	var refresh_attempt := bool(current_environment.get("scenario_semantic_ready", false))
+	var refresh_attempt := bool(current_environment.get("scenario_semantic_ready", false)) \
+			or current_environment.has("scenario_semantic_inventory_version") \
+			or current_environment.has("scenario_semantic_digest")
 	if library == null: return _scenario_semantic_finalization_failure(["Scenario semantic finalization requires ContentLibrary."], refresh_attempt)
 	var producer_context := _scenario_base_producer_context()
-	var stamped := EnvironmentBaseSemanticRecordsScript.stamp_interactable_records(trusted_records, current_environment, library, producer_context)
+	# Trusted records are produced from the immutable pre-sequence baseline. A
+	# resolved ordinary event is intentionally absent from the live room, but it
+	# remains part of that baseline seal. Authenticate the records against the
+	# same authoritative environment that produced them; checking the consumed
+	# live event list instead made an otherwise valid departure fail closed.
+	var semantic_environment := _scenario_authoritative_environment_for_finalization(definition)
+	semantic_environment["scenario_base_producer_context"] = producer_context.duplicate(true)
+	var stamping_environment := semantic_environment if refresh_attempt else current_environment
+	var stamped := EnvironmentBaseSemanticRecordsScript.stamp_interactable_records(trusted_records, stamping_environment, library, producer_context)
 	if not bool(stamped.get("ok", false)): return _scenario_semantic_finalization_failure(_copy_array(stamped.get("errors", [])), refresh_attempt)
 	var stamped_records := _copy_array(stamped.get("records", []))
 	var produced := EnvironmentBaseSemanticRecordsScript.from_interactable_records(stamped_records)
 	if not bool(produced.get("ok", false)): return _scenario_semantic_finalization_failure(_copy_array(produced.get("errors", [])), refresh_attempt)
 	var interactions := _scenario_declared_base_records(_copy_array(produced.get("interactions", [])), definition, ["interactions", "scene_objects"])
+	interactions = _scenario_canonical_base_interaction_geometry(interactions)
 	interactions = _scenario_terminal_semantic_interactions(interactions, definition)
 	stamped_records = _scenario_terminal_layout_base_records(stamped_records, interactions, definition)
 	var dynamic_actors := EnvironmentBaseSemanticRecordsScript.authorized_dynamic_actor_records(current_environment, library)
@@ -2460,25 +2666,25 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 	actors.append_array(_copy_array(dynamic_actors.get("records", [])))
 	actors = _scenario_declared_base_records(actors, definition, ["actors"])
 	var action_digest := ScenarioSequenceRuntimeScript.base_interaction_action_authority_digest(interactions)
-	var semantic_environment := current_environment.duplicate(true)
-	semantic_environment["scenario_base_producer_context"] = producer_context.duplicate(true)
-	if current_environment.has("scenario_sequence_base_game_ids"):
-		semantic_environment["game_ids"] = _copy_array(current_environment.get("scenario_sequence_base_game_ids", []))
-	if current_environment.has("scenario_sequence_base_service_ids"):
-		semantic_environment["service_ids"] = _copy_array(current_environment.get("scenario_sequence_base_service_ids", []))
-	if current_environment.has("scenario_sequence_base_travel_hooks"):
-		semantic_environment["travel_hooks"] = _copy_array(current_environment.get("scenario_sequence_base_travel_hooks", []))
-	if current_environment.has("scenario_sequence_base_layout_object_rects"):
-		var semantic_layout := _copy_dict(semantic_environment.get("layout", {}))
-		semantic_layout["object_rects"] = _copy_dict(current_environment.get("scenario_sequence_base_layout_object_rects", {}))
-		semantic_environment["layout"] = semantic_layout
+	var sealed := EnvironmentSemanticInventoryScript.for_instance(semantic_environment, library, interactions, actors)
+	var prior_sealed := _scenario_prior_sealed_inventory_for_current_layer(sealed, semantic_environment, library, interactions, actors)
+	var valid_prior_identity := refresh_attempt and EnvironmentSemanticInventoryScript.validate(prior_sealed).is_empty() \
+			and str(prior_sealed.get("environment_id", "")) == str(sealed.get("environment_id", "")) \
+			and str(prior_sealed.get("layer_id", "")) == str(sealed.get("layer_id", ""))
+	# An authenticated terminal transition may consume or disable its declared
+	# interactions while flushing the departure fact. Those are consequences of
+	# the already-sealed sequence, not new semantic sources, so retain the prior
+	# immutable inventory. During non-terminal refreshes, require exact source
+	# provenance equality before doing the same.
 	var terminal_refresh := refresh_attempt and _scenario_terminal_semantic_refresh(definition)
-	var sealed := _copy_dict(current_environment.get("scenario_semantic_inventory", {})) if terminal_refresh else EnvironmentSemanticInventoryScript.for_instance(semantic_environment, library, interactions, actors)
+	var refresh_source_match := _scenario_refresh_source_matches_prior(_copy_dict(prior_sealed.get("source_provenance", {})), _copy_dict(sealed.get("source_provenance", {}))) if valid_prior_identity else false
+	if valid_prior_identity and (terminal_refresh or refresh_source_match):
+		sealed = prior_sealed
 	var inventory_errors := EnvironmentSemanticInventoryScript.validate(sealed)
 	if not inventory_errors.is_empty(): return _scenario_semantic_finalization_failure(inventory_errors, refresh_attempt)
 	if not bool(definition.get(ScenarioEngineScript.VALIDATED_SEQUENCE_MARKER, false)):
 		var validation_inventory := EnvironmentSemanticInventoryScript.exact_collections(sealed)
-		validation_inventory["event_choices"] = EnvironmentSemanticInventoryScript.event_choice_index(_copy_array(current_environment.get("event_ids", [])), library)
+		validation_inventory["event_choices"] = _scenario_event_choice_authority(definition, library)
 		var definition_errors := ScenarioSequenceSchemaScript.validate_definition(definition, ScenarioOperationRegistryScript, validation_inventory)
 		if not definition_errors.is_empty(): return _scenario_semantic_finalization_failure(definition_errors, refresh_attempt)
 		definition[ScenarioEngineScript.VALIDATED_SEQUENCE_MARKER] = true
@@ -2504,7 +2710,10 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 		# inputs and the projection on a detached copy without replaying reentry.
 		if _copy_dict(current_environment.get("scenario_sequence_state", {})).is_empty():
 			return _invalidate_scenario_semantic_proof("Scenario semantic refresh requires an initialized sequence state.")
-		var refresh_candidate := current_environment.duplicate(true)
+		# ScenarioEngine transactions replace owned top-level values and already use
+		# shallow detached envelopes internally. Keep unrelated game/runtime payloads
+		# read-only instead of cloning them during semantic proof refresh.
+		var refresh_candidate := current_environment.duplicate(false)
 		if str(refresh_candidate.get("scenario_id", "")).strip_edges().is_empty(): refresh_candidate["scenario_id"] = definition_id
 		refresh_candidate["scenario_base_interactions"] = interactions
 		refresh_candidate["scenario_base_actors"] = actors
@@ -2515,7 +2724,7 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 		refresh_candidate["scenario_semantic_digest"] = next_digest
 		refresh_candidate["scenario_semantic_ready"] = true
 		refresh_candidate["scenario_restore_contract"] = ENV06_6B_SEMANTIC_RESTORE_EQUIVALENCE_V1
-		refresh_candidate["scenario_event_choices"] = EnvironmentSemanticInventoryScript.event_choice_index(_copy_array(refresh_candidate.get("event_ids", [])), library)
+		refresh_candidate["scenario_event_choices"] = _scenario_event_choice_authority(definition, library, refresh_candidate)
 		refresh_candidate["scenario_layout_base_records"] = stamped_records.duplicate(true)
 		refresh_candidate["scenario_layout_context"] = layout_context.duplicate(true)
 		var refreshed_state := ScenarioEngineScript.ensure_sequence_state(refresh_candidate, definition)
@@ -2533,7 +2742,7 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 	# Build the proof and perform initialization/reentry against a detached
 	# environment. Readiness, authorization and runtime state become visible
 	# together only after the entire transition succeeds.
-	var candidate := current_environment.duplicate(true)
+	var candidate := current_environment.duplicate(false)
 	if str(candidate.get("scenario_id", "")).strip_edges().is_empty(): candidate["scenario_id"] = definition_id
 	candidate["scenario_base_interactions"] = interactions
 	candidate["scenario_base_actors"] = actors
@@ -2544,7 +2753,7 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 	candidate["scenario_semantic_digest"] = next_digest
 	candidate["scenario_semantic_ready"] = true
 	candidate["scenario_restore_contract"] = ENV06_6B_SEMANTIC_RESTORE_EQUIVALENCE_V1
-	candidate["scenario_event_choices"] = EnvironmentSemanticInventoryScript.event_choice_index(_copy_array(candidate.get("event_ids", [])), library)
+	candidate["scenario_event_choices"] = _scenario_event_choice_authority(definition, library, candidate)
 	candidate["scenario_layout_base_records"] = stamped_records.duplicate(true)
 	candidate["scenario_layout_context"] = layout_context.duplicate(true)
 	if _copy_dict(candidate.get("scenario_state", {})).is_empty():
@@ -2555,9 +2764,12 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 	var initialized_state := _copy_dict(candidate.get("scenario_sequence_state", {}))
 	if str(initialized_state.get("status", "")) == ScenarioSequenceRuntimeScript.STATUS_CLEANED:
 		var initialization_errors := _copy_array(initialized_state.get("errors", []))
-		if initialization_errors.is_empty():
-			initialization_errors = ["Scenario sequence could not initialize its sealed semantic state."]
-		return _scenario_semantic_finalization_failure(initialization_errors, refresh_attempt)
+		# A cleaned state without errors is a valid persisted lifecycle result: the
+		# room expired on departure and its authored `expired` reentry policy must be
+		# allowed to receipt the return visit. Cleaned states produced by failed
+		# initialization still carry errors and remain fail-closed here.
+		if not initialization_errors.is_empty():
+			return _scenario_semantic_finalization_failure(initialization_errors, refresh_attempt)
 	var visit_id := str(candidate.get("scenario_sequence_pending_visit_id", candidate.get("environment_visit_id", "")))
 	var reentry := ScenarioEngineScript.sequence_apply_reentry(candidate, definition, visit_id)
 	if not bool(reentry.get("ok", false)):
@@ -2580,9 +2792,129 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 	return _finalized_scenario_layout_result(false, next_digest, _copy_dict(reentry.get("state", {})), stamped_records, candidate_layout)
 
 
+func _scenario_prior_sealed_inventory_for_current_layer(newly_sealed: Dictionary, semantic_environment: Dictionary, library: ContentLibrary, interactions: Array, actors: Array) -> Dictionary:
+	var top_level := _copy_dict(current_environment.get("scenario_semantic_inventory", {}))
+	if not top_level.is_empty():
+		return top_level
+	var expected_version_value: Variant = current_environment.get("scenario_semantic_inventory_version", 0)
+	var expected_digest_value: Variant = current_environment.get("scenario_semantic_digest", "")
+	if typeof(expected_version_value) != TYPE_INT or typeof(expected_digest_value) != TYPE_STRING:
+		return {}
+	var expected_version := int(expected_version_value)
+	var expected_digest := str(expected_digest_value)
+	if expected_version <= 0 or expected_digest.is_empty():
+		return {}
+	if int(newly_sealed.get("schema_version", 0)) == expected_version and str(newly_sealed.get("digest", "")) == expected_digest:
+		return newly_sealed
+	# A save-shaped restore may coincide with an authorized delivery/Numbers
+	# producer becoming visible. Rebuild the prior immutable seal by excluding
+	# only those explicitly enumerated unconsumed producers and their paired hit
+	# geometry, then accept it solely when its cryptographic reference is exactly
+	# the persisted version/digest. No derived inventory bytes need to enter saves.
+	var prior_interactions: Array = []
+	var excluded_presentation_ids: Array[String] = []
+	var resolved_event_ids := _copy_array(current_environment.get("resolved_event_ids", []))
+	for record_value in interactions:
+		var record := _copy_dict(record_value)
+		var source_field := str(record.get("source_field", ""))
+		var exclude := SCENARIO_UNCONSUMED_DYNAMIC_INTERACTION_SOURCES.has(source_field)
+		if source_field == "event_ids" and resolved_event_ids.has(str(record.get("source_record_id", ""))):
+			exclude = false
+		if exclude:
+			excluded_presentation_ids.append(str(record.get("presentation_object_id", "")))
+		else:
+			prior_interactions.append(record)
+	var prior_environment := semantic_environment.duplicate(false)
+	var prior_layout := _copy_dict(prior_environment.get("layout", {}))
+	var prior_rects := _copy_dict(prior_layout.get("object_rects", {}))
+	for presentation_id in excluded_presentation_ids:
+		if not presentation_id.is_empty():
+			prior_rects.erase(presentation_id)
+	prior_layout["object_rects"] = prior_rects
+	prior_environment["layout"] = prior_layout
+	var reconstructed := EnvironmentSemanticInventoryScript.for_instance(prior_environment, library, prior_interactions, actors)
+	if EnvironmentSemanticInventoryScript.validate(reconstructed).is_empty() \
+			and int(reconstructed.get("schema_version", 0)) == expected_version \
+			and str(reconstructed.get("digest", "")) == expected_digest:
+		return reconstructed
+	return {}
+
+
+func _scenario_refresh_source_matches_prior(prior_source: Dictionary, next_source: Dictionary) -> bool:
+	if JSON.stringify(prior_source) == JSON.stringify(next_source):
+		return true
+	var comparable_next := next_source.duplicate(true)
+	var prior_authority := _copy_array(prior_source.get("base_interaction_authority", []))
+	var next_authority: Array = []
+	var unconsumed_dynamic_presentation_ids: Array[String] = []
+	for record_value in _copy_array(next_source.get("base_interaction_authority", [])):
+		var record := _copy_dict(record_value)
+		# These records are accepted only after their closed producer has passed
+		# EnvironmentBaseSemanticRecords validation. A newly appearing record is
+		# unrelated runtime UI, so it cannot rewrite an existing scenario seal.
+		if SCENARIO_UNCONSUMED_DYNAMIC_INTERACTION_SOURCES.has(str(record.get("source_field", ""))) \
+				and not prior_authority.has(record):
+			unconsumed_dynamic_presentation_ids.append(str(record.get("presentation_object_id", "")))
+			continue
+		next_authority.append(record)
+	comparable_next["base_interaction_authority"] = next_authority
+	# The validated producer adds its hit rectangle at the same time as its
+	# interaction record. Excluding only the record left that paired geometry in
+	# source provenance, so a legitimate delivery handoff on a revisited layer
+	# looked like an attempt to rewrite the immutable room seal.
+	var comparable_rects := _copy_dict(comparable_next.get("layout_object_rects", {}))
+	for presentation_id in unconsumed_dynamic_presentation_ids:
+		if not presentation_id.is_empty():
+			comparable_rects.erase(presentation_id)
+	comparable_next["layout_object_rects"] = comparable_rects
+	return JSON.stringify(prior_source) == JSON.stringify(comparable_next)
+
+
+func _persisted_scenario_inventory_matches_environment(environment: Dictionary) -> bool:
+	var inventory := _copy_dict(environment.get("scenario_semantic_inventory", {}))
+	if inventory.is_empty() or not EnvironmentSemanticInventoryScript.validate(inventory).is_empty():
+		return false
+	if typeof(environment.get("scenario_semantic_inventory_version")) != TYPE_INT \
+			or typeof(environment.get("scenario_semantic_digest")) != TYPE_STRING:
+		return false
+	var environment_id := str(environment.get("id", environment.get("world_node_id", environment.get("archetype_id", "")))).strip_edges()
+	return int(inventory.get("schema_version", 0)) == int(environment.get("scenario_semantic_inventory_version", 0)) \
+			and str(inventory.get("digest", "")) == str(environment.get("scenario_semantic_digest", "")) \
+			and str(inventory.get("environment_id", "")) == environment_id \
+			and str(inventory.get("layer_id", "")) == str(environment.get("current_layer_id", "")).strip_edges()
+
+
+func _scenario_canonical_base_interaction_geometry(records: Array) -> Array:
+	# Rect2-generated normalized coordinates and JSON-restored scalar coordinates
+	# can differ below a billionth of a pixel after board-size multiplication.
+	# Geometry remains validated at full precision before this point; snap only the
+	# sealed authority copy so equal room layouts have one persistent digest.
+	var result := records.duplicate(true)
+	for record_value in result:
+		if typeof(record_value) != TYPE_DICTIONARY: continue
+		var record := record_value as Dictionary
+		for field in ["normalized_hit_rect", "hit_bounds"]:
+			var geometry := _copy_dict(record.get(field, {}))
+			for key_value in geometry.keys():
+				var value: Variant = geometry.get(key_value)
+				if typeof(value) in [TYPE_FLOAT, TYPE_INT]:
+					geometry[key_value] = snappedf(float(value), 0.000000001)
+			record[field] = geometry
+	return result
+
+
 func _resolve_scenario_layout_candidate(candidate: Dictionary, stamped_records: Array, definition: Dictionary, layout_context: Dictionary) -> Dictionary:
 	var projection := ScenarioEngineScript.sequence_projection(candidate, definition)
-	var layout_environment := candidate.duplicate(true)
+	# A room scenario and a mounted Crew sequence occupy one authored environment
+	# plane. Compose both owner-scoped projections before layout sealing; otherwise
+	# the room scenario silently displaced a live delivery handoff even though the
+	# delivery owner still held the public channel.
+	projection = CrewWorldSequenceAdapterScript.composed_projection(candidate, _world_sequence_definition_cache, projection)
+	if not bool(projection.get("ok", true)):
+		return {"ok": false, "errors": _copy_array(projection.get("errors", ["Room and Crew sequence projection composition failed closed."]))}
+	# ScenarioLayoutResolver deep-owns every nested value it consumes and never
+	# mutates the environment argument. Only the private context field differs.
+	var layout_environment := candidate.duplicate(false)
 	if not layout_context.is_empty():
 		layout_environment["_scenario_layout_context"] = layout_context.duplicate(true)
 	var layout_result := ScenarioLayoutResolverScript.resolve(stamped_records, projection, layout_environment)
@@ -2607,7 +2939,7 @@ func _resolve_world_sequence_composed_layout(stamped_records: Array, layout_cont
 	var projection := world_sequence_composed_projection()
 	if not bool(projection.get("ok", true)):
 		return {"ok": false, "errors": _copy_array(projection.get("errors", ["World sequence projection composition failed closed."]))}
-	var layout_environment := current_environment.duplicate(true)
+	var layout_environment := current_environment.duplicate(false)
 	if not layout_context.is_empty(): layout_environment["_scenario_layout_context"] = layout_context.duplicate(true)
 	var layout_result := ScenarioLayoutResolverScript.resolve(stamped_records, projection, layout_environment)
 	if not bool(layout_result.get("ok", false)): return {"ok": false, "errors": _copy_array(layout_result.get("errors", ["World sequence layout resolution failed closed."])), "layout_audit": _copy_dict(layout_result.get("layout_audit", {}))}
@@ -3095,7 +3427,7 @@ func _ensure_scenario_host_public_context() -> void:
 		environment_visit_id = "visit_%s_%d" % [_scenario_host_safe_id(str(current_environment.get("id", node_id))), maxi(1, environment_travel_count() + 1)]
 	current_environment["environment_visit_id"] = environment_visit_id
 	var night_instance_id := _scenario_host_safe_id(str(current_environment.get("night_instance_id", "")))
-	if night_instance_id.is_empty(): night_instance_id = "night_%d" % maxi(1, act_index + 1)
+	if night_instance_id.is_empty(): night_instance_id = "night_%d" % act_marker()
 	current_environment["night_instance_id"] = night_instance_id
 	var context_instance_id := _scenario_host_safe_id(str(current_environment.get("context_instance_id", "")))
 	if context_instance_id.is_empty(): context_instance_id = "context_%s" % environment_visit_id
@@ -3708,6 +4040,7 @@ func store_current_environment_layer_state() -> void:
 	var states := _copy_dict(current_environment.get("layer_states", {}))
 	var body := current_environment.duplicate(true)
 	body.erase("layer_states")
+	body.erase("active_game_id")
 	_strip_scenario_semantic_ephemera(body)
 	states[current_id] = body
 	current_environment["layer_states"] = states
@@ -3736,7 +4069,7 @@ func install_environment_layer_state(layer_id: String, layer_state: Dictionary) 
 	target["world_map_travel"] = bool(source.get("world_map_travel", false))
 	target["display_name"] = str(source.get("display_name", target.get("display_name", "")))
 	target["turns"] = int(source.get("turns", target.get("turns", 0)))
-	for clock_key in ["entered_game_clock_minutes", "departed_game_clock_minutes"]:
+	for clock_key in ["entered_game_clock_minutes", "departed_game_clock_minutes", "environment_visit_id", "night_instance_id", "context_instance_id"]:
 		if source.has(clock_key):
 			target[clock_key] = source.get(clock_key)
 	var scenario_state := ScenarioEngineScript.normalize_state(source.get("scenario_state", {}))
@@ -3864,8 +4197,10 @@ func enter_world_node(node_id: String, environment_data: Dictionary) -> void:
 
 # Tier-2 casino routes are intentionally hidden at spawn. Open their spawn gates
 # once the player has either found the Underground or visited two distinct
-# Tier-1 casinos. The nodes remain hidden until normal neighbor discovery finds
-# each one; this milestone must not reveal both venues immediately.
+# Tier-1 casinos. Because this reconciliation runs after arrival discovery (and
+# during legacy save repair), immediately replay bounded discovery from every
+# qualifying visited venue when the gates change. Otherwise the milestone can
+# be earned without exposing a connected Tier-2 route until an unrelated trip.
 func _reconcile_tier_two_casino_spawn_eligibility() -> void:
 	if world_map.is_empty():
 		return
@@ -3899,6 +4234,12 @@ func _reconcile_tier_two_casino_spawn_eligibility() -> void:
 		return
 	if not every_tier_two_casino_spawn_enabled:
 		world_map = WorldMap.enable_node_spawns(world_map, tier_two_casino_ids)
+	var qualifying_visited_ids := visited_tier_one_casino_ids.duplicate()
+	if underground_visited and not qualifying_visited_ids.has(TIER_TWO_UNDERGROUND_SOURCE_ID):
+		qualifying_visited_ids.append(TIER_TWO_UNDERGROUND_SOURCE_ID)
+	# Run even when the gates were already open: affected older saves can contain
+	# spawn-open but still hidden Tier-2 nodes from the pre-discovery ordering bug.
+	world_map = WorldMap.discover_spawn_open_neighbors(world_map, qualifying_visited_ids, tier_two_casino_ids)
 	narrative_flags[TIER_TWO_LOCATION_SPAWN_FLAG] = true
 	narrative_flags[TIER_TWO_LOCATION_SPAWN_REASON_FLAG] = "underground_visit" if underground_visited else "two_tier_one_casinos"
 	narrative_flags[TIER_TWO_LOCATION_SPAWN_VISITS_FLAG] = visited_tier_one_casino_ids.duplicate()
@@ -4351,6 +4692,12 @@ func grand_casino_players_card_comp_result(comp_id: String) -> Dictionary:
 
 func route_grand_casino_game_currency(result: Dictionary, deltas: Dictionary) -> Dictionary:
 	var routed := deltas
+	if bool(result.get("currency_deltas_final", false)):
+		result["bankroll_delta"] = int(routed.get("bankroll_delta", result.get("bankroll_delta", 0)))
+		result["chips_delta"] = int(routed.get("chips_delta", result.get("chips_delta", 0)))
+		result["currency"] = "mixed" if int(result.get("bankroll_delta", 0)) != 0 and int(result.get("chips_delta", 0)) != 0 else "cash" if int(result.get("bankroll_delta", 0)) != 0 else "chips"
+		result["deltas"] = routed
+		return routed
 	var game_id := str(result.get("game_id", result.get("source_id", ""))).strip_edges()
 	var result_environment := {
 		"id": str(result.get("environment_id", "")),
@@ -4384,17 +4731,30 @@ func consume_blackjack_authority_result_receipt(result: Dictionary) -> bool:
 		return false
 	var receipt: Dictionary = result.get("blackjack_host_apply_receipt", {})
 	var game_states: Dictionary = current_environment.get("game_states", {}) if typeof(current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
-	if typeof(game_states.get(game_id, null)) != TYPE_DICTIONARY:
-		return false
-	var table: Dictionary = game_states.get(game_id, {})
-	var pending: Variant = table.get("_blackjack_pending_apply_receipt", null)
-	var binding := "%s:%s:%s" % [game_id, str(current_environment.get("id", "unknown")), str(current_environment.get("archetype_id", "unknown"))]
-	if not BlackjackActionAuthorityScript.valid_receipt(receipt, pending, result, binding):
+	# A room can contain several fixtures backed by one game module. Locate the
+	# exact pending receipt among that game's state keys instead of always reading
+	# the default table, and require a unique cryptographic match before mutation.
+	var matching_state_keys: Array = []
+	for state_key_value in game_states.keys():
+		var state_key := str(state_key_value)
+		if state_key != game_id and not state_key.begins_with("%s:" % game_id):
+			continue
+		var table_value: Variant = game_states.get(state_key_value)
+		if typeof(table_value) != TYPE_DICTIONARY:
+			continue
+		var candidate_table: Dictionary = table_value
+		var pending: Variant = candidate_table.get("_blackjack_pending_apply_receipt", null)
+		var binding := action_authority_table_binding(state_key, current_environment)
+		if BlackjackActionAuthorityScript.valid_receipt(receipt, pending, result, binding):
+			matching_state_keys.append(state_key)
+	if matching_state_keys.size() != 1:
 		return false
 	# Consume before applying any deltas. Foundation applies only to a detached
 	# candidate, so a later failure discards both this consumption and all effects.
+	var matched_state_key := str(matching_state_keys[0])
+	var table: Dictionary = game_states.get(matched_state_key, {})
 	table.erase("_blackjack_pending_apply_receipt")
-	game_states[game_id] = table
+	game_states[matched_state_key] = table
 	current_environment["game_states"] = game_states
 	return true
 
@@ -4428,7 +4788,7 @@ func _reconcile_blackjack_authority_restore() -> void:
 		var table: Dictionary = (game_states.get(game_id, {}) as Dictionary).duplicate(true)
 		if not table.has(BlackjackActionAuthorityScript.LEDGER_KEY):
 			continue
-		var binding := "%s:%s:%s" % [game_id, str(current_environment.get("id", "unknown")), str(current_environment.get("archetype_id", "unknown"))]
+		var binding := action_authority_table_binding(game_id, current_environment)
 		var ledger := BlackjackActionAuthorityScript.validate_persisted_ledger(
 			table.get(BlackjackActionAuthorityScript.LEDGER_KEY),
 			binding,
@@ -4627,7 +4987,7 @@ func add_suspicion(cue_id: String, amount: int, visibility: String = "behavior",
 				"member_id": str(distraction_liability.get("member_id", "")),
 				"kind": "distraction_heat_dumped",
 				"weight": 2,
-				"source_ref": str(distraction_liability.get("source_ref", "crew_play:distraction")),
+				"source_ref": _crew_distraction_grievance_source(distraction_liability),
 			})
 			crew_play_state = CrewPlayModelScript.mark_distraction_grievance_recorded(crew_play_state)
 	if tutorial_heat_intervention:
@@ -6385,11 +6745,13 @@ func _begin_grand_casino_duel(terms: Dictionary) -> Dictionary:
 
 func grand_casino_duel_active(environment: Dictionary = {}) -> bool:
 	var source := current_environment if environment.is_empty() else environment
+	var duel_state_value: Variant = narrative_flags.get("grand_casino_duel_state", {})
+	var duel_status := str((duel_state_value as Dictionary).get("status", "")) if typeof(duel_state_value) == TYPE_DICTIONARY else ""
 	return (
 		_is_grand_casino_environment(source)
 		and bool(narrative_flags.get("grand_casino_showdown_active", false))
 		and str(narrative_flags.get("grand_casino_showdown_step", "")) == GRAND_CASINO_SHOWDOWN_STEP_DUEL
-		and str(_copy_dict(narrative_flags.get("grand_casino_duel_state", {})).get("status", "")) == "active"
+		and duel_status == "active"
 	)
 
 
@@ -6406,6 +6768,17 @@ func grand_casino_duel_terms() -> Dictionary:
 
 func grand_casino_duel_session() -> Dictionary:
 	return _copy_dict(grand_casino_duel_status().get("blackjack_session", {}))
+
+
+# Read-only hot-path access for predicates that never retain or mutate the
+# authoritative duel session. State-changing callers continue to use the owned
+# copy returned by grand_casino_duel_session().
+func grand_casino_duel_session_readonly() -> Dictionary:
+	var state_value: Variant = narrative_flags.get("grand_casino_duel_state", {})
+	if typeof(state_value) != TYPE_DICTIONARY:
+		return {}
+	var session_value: Variant = (state_value as Dictionary).get("blackjack_session", {})
+	return session_value as Dictionary if typeof(session_value) == TYPE_DICTIONARY else {}
 
 
 func persist_grand_casino_duel_session(session: Dictionary) -> void:
@@ -8625,7 +8998,7 @@ func crew_recruitment_public_state(member_id: String) -> Dictionary:
 			break
 	var standing := crew_rank(member_id)
 	result["standing"] = standing
-	result["contact_state"] = "aggrieved" if not crew_grievances(member_id).is_empty() else ("job_out" if job_out else ("trusted" if standing in ["made", "inner_circle"] else "familiar"))
+	result["contact_state"] = "job_out" if job_out else ("trusted" if standing in ["made", "inner_circle"] else "familiar")
 	return result
 
 
@@ -9081,8 +9454,6 @@ func crew_heist_planning_status() -> Dictionary:
 
 func crew_heist_table_choices() -> Array:
 	var status := crew_heist_planning_status()
-	if not bool(status.get("visible", false)):
-		return [{"id": "leave", "label": "Leave the table clear", "text": "The center waits for somebody inside the circle.", "consequences": {}}]
 	if not crew_heist_state.is_empty():
 		var active_choices: Array = []
 		var phase := str(crew_heist_state.get("status", "setup"))
@@ -9107,6 +9478,8 @@ func crew_heist_table_choices() -> Array:
 			active_choices.append({"id": "live_table_direction", "label": "Return to the live table", "text": "The decisions happen inside the session, not over the planning map.", "disabled": true, "consequences": {}})
 		active_choices.append({"id": "leave", "label": "Leave the table", "text": "The map stays where it is.", "consequences": {}})
 		return active_choices
+	if not bool(status.get("visible", false)):
+		return [{"id": "leave", "label": "Leave the table clear", "text": "The center waits for somebody inside the circle.", "consequences": {}}]
 	var choices: Array = []
 	for row_value in _copy_array(status.get("plans", [])):
 		var row := _copy_dict(row_value)
@@ -9232,7 +9605,11 @@ func crew_heist_event_action(hook: Dictionary, host_capability: Variant = null) 
 		_apply_environment_turn_snapshot(rollback, false)
 		return {"ok": false, "message": "The heist scene could not be staged atomically.", "errors": _copy_array(sequence_result.get("errors", []))}
 	result["world_sequence_scheduled"] = not bool(sequence_result.get("inactive", false))
-	result["world_sequence_owner_token"] = str(sequence_result.get("owner_token", ""))
+	# Quiet-table actions schedule their scene internally, but the package/owner
+	# token names the private observation channel. It is never needed as a player
+	# command receipt, so do not echo it through the public action result.
+	if action not in ["observe_table", "confront", "hedge"]:
+		result["world_sequence_owner_token"] = str(sequence_result.get("owner_token", ""))
 	return result
 
 
@@ -9289,7 +9666,8 @@ func crew_heist_observe_table(host_capability: Variant = null) -> Dictionary:
 		crew_heist_state = state
 		if learned:
 			return {"ok": true, "message": "A familiar table tell surfaces in the quiet room. No cards are on the table."}
-		return {"ok": true, "message": "A neutral Crew voice checks the route and gives you nothing you have learned to read."}
+		# An unlearned tell must be observationally identical to a clean table.
+		return {"ok": true, "message": "The room talks through the route one more time."}
 	if not emitted.has(CrewTurnModelScript.SIGNAL_ROUTE):
 		var contradiction := _crew_heist_route_contradiction(member_id)
 		if not contradiction.is_empty():
@@ -9807,7 +10185,9 @@ func crew_heist_begin_getaway(host_capability: Variant = null) -> Dictionary:
 
 
 func crew_heist_snapshot() -> Dictionary:
-	return CrewHeistModelScript.normalize_state(crew_heist_state)
+	var public_state := CrewHeistModelScript.normalize_state(crew_heist_state)
+	public_state.erase("x")
+	return public_state
 
 
 func _crew_heist_whale_attention_active() -> bool:
@@ -9929,6 +10309,10 @@ func _crew_heist_sync_live_table_event(state: Dictionary) -> void:
 	if not event_ids.has("heist_live_table"):
 		event_ids.append("heist_live_table")
 		current_environment["event_ids"] = event_ids
+		# This event is a real object on the current environment plane. Give the
+		# newly appended object the same generated layout authority as every other
+		# environment event before semantic presentation is sealed.
+		current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(current_environment)
 	narrative_flags["heist_live_table_registered"] = true
 
 
@@ -10067,17 +10451,28 @@ func grievance_add(entry: Dictionary) -> Dictionary:
 	var kind := str(entry.get("kind", "")).strip_edges()
 	if not CrewStateModelScript.MEMBER_IDS.has(member_id) or not CrewStateModelScript.GRIEVANCE_KINDS.has(kind):
 		return {}
-	crew_grievance_sequence += 1
+	if crew_grievance_ledger.size() >= CrewTurnModelScript.PRIVATE_GRIEVANCE_LIMIT or crew_grievance_sequence >= CrewTurnModelScript.PRIVATE_SEQUENCE_LIMIT:
+		narrative_flags["crew_private_authority_error"] = "private_authority_capacity_exceeded"
+		return {"ok": false, "reason": "private_authority_capacity_exceeded"}
 	var grievance_id := str(entry.get("id", "")).strip_edges()
 	if grievance_id.is_empty():
-		grievance_id = "crew_grievance_%04d" % crew_grievance_sequence
+		grievance_id = "crew_grievance_%04d" % (crew_grievance_sequence + 1)
+	var source_ref := str(entry.get("source_ref", "")).strip_edges()
+	var weight := int(entry.get("weight", 1))
+	var turn_recorded := int(entry.get("turn_recorded", _crew_action_index()))
+	if grievance_id.to_utf8_buffer().size() > CrewTurnModelScript.PRIVATE_TEXT_BYTE_LIMIT or source_ref.to_utf8_buffer().size() > CrewTurnModelScript.PRIVATE_TEXT_BYTE_LIMIT \
+			or weight < 1 or weight > CrewTurnModelScript.PRIVATE_SEQUENCE_LIMIT \
+			or turn_recorded < 0 or turn_recorded > CrewTurnModelScript.PRIVATE_SEQUENCE_LIMIT:
+		narrative_flags["crew_private_authority_error"] = "private_authority_capacity_exceeded"
+		return {"ok": false, "reason": "private_authority_capacity_exceeded"}
+	crew_grievance_sequence += 1
 	var normalized := {
 		"id": grievance_id,
 		"member_id": member_id,
 		"kind": kind,
-		"weight": maxi(1, int(entry.get("weight", 1))),
-		"turn_recorded": maxi(0, int(entry.get("turn_recorded", _crew_action_index()))),
-		"source_ref": str(entry.get("source_ref", "")).strip_edges(),
+		"weight": weight,
+		"turn_recorded": turn_recorded,
+		"source_ref": source_ref,
 	}
 	crew_grievance_ledger.append(normalized)
 	return normalized.duplicate(true)
@@ -10148,7 +10543,7 @@ func job_offer(job_definition: Dictionary, host_capability: RefCounted = null) -
 	job["offered_action"] = action_index
 	job["expires_at_action"] = action_index + maxi(1, int(definition.get("expiry_in_actions", 1)))
 	crew_jobs[instance_id] = job
-	return job.duplicate(true)
+	return _crew_job_public_projection(job)
 
 
 # Accepts one offered job without consuming an action boundary.
@@ -10162,7 +10557,7 @@ func job_accept(job_id: String, host_capability: RefCounted = null) -> Dictionar
 	job["accepted_action"] = _crew_action_index()
 	crew_jobs[job_id] = job
 	_scenario_publish_crew_job(job)
-	return job.duplicate(true)
+	return _crew_job_public_projection(job)
 
 
 # Activates one accepted job; later gameplay slices own their active surface.
@@ -10176,7 +10571,7 @@ func job_activate(job_id: String, host_capability: RefCounted = null) -> Diction
 	job["active_action"] = _crew_action_index()
 	crew_jobs[job_id] = job
 	_scenario_publish_crew_job(job)
-	return job.duplicate(true)
+	return _crew_job_public_projection(job)
 
 
 # Resolves one accepted/active job and applies configured success or failure effects.
@@ -10217,7 +10612,7 @@ func job_resolve(job_id: String, outcome: String, host_capability: RefCounted = 
 	job["resolved_action"] = _crew_action_index()
 	crew_jobs[job_id] = job
 	_scenario_publish_crew_job(job)
-	return job.duplicate(true)
+	return _crew_job_public_projection(job)
 
 
 func _crew_heist_job_payment(member_id: String, posted_cash: int, job_id: String) -> Dictionary:
@@ -10359,7 +10754,7 @@ func crew_record_game_result(result: Dictionary, deltas: Dictionary) -> Dictiona
 			job["payload"] = payload
 			crew_jobs[job_id] = job
 			_crew_add_room_event("crew_stake_horse_loss")
-		return job.duplicate(true)
+		return _crew_job_public_projection(job)
 	return {}
 
 
@@ -10657,6 +11052,7 @@ func numbers_silas_status() -> Dictionary:
 			late_book_open = true
 			break
 	return {
+		"tip_available": not bool(numbers_state.knowledge.get("silas_tip", false)),
 		"handle_available": bool(numbers_state.knowledge.get("assembled", false))
 			and bool(public_status.get("posted", false))
 			and late_book_open
@@ -10689,6 +11085,8 @@ func numbers_buy_slip(digits: String, stake: int, play_type: String) -> Dictiona
 	if not bool(result.get("ok", false)):
 		return result
 	change_bankroll(-stake)
+	result["bankroll_delta"] = -stake
+	result["deltas"] = {"bankroll_delta": -stake}
 	_sync_numbers_inventory_marker()
 	return result
 
@@ -10705,9 +11103,13 @@ func numbers_buy_silas_tip(today_number: bool = false) -> Dictionary:
 	var price := int(tuning.get("silas_today_number_price", 24)) if today_number else int(tuning.get("silas_tip_price", 12))
 	if bankroll < price:
 		return {"ok": false, "message": "Silas does not extend credit."}
-	change_bankroll(-price)
 	var result := numbers_state.buy_silas_tip(today_number)
+	if not bool(result.get("ok", false)):
+		return result
+	change_bankroll(-price)
 	result["price"] = price
+	result["bankroll_delta"] = -price
+	result["deltas"] = {"bankroll_delta": -price}
 	result["message"] = "Silas sells a time and a place, not an apology."
 	return result
 
@@ -11136,8 +11538,8 @@ func delivery_complete_handoff(node_id: String = "") -> Dictionary:
 func _delivery_pending_target_at(node_id: String) -> Dictionary:
 	for target_value in _copy_array(delivery_snapshot().get("targets", [])):
 		var target := _copy_dict(target_value)
-		if str(target.get("status", "pending")) == "pending":
-			return target if str(target.get("node_id", "")) == node_id else {}
+		if str(target.get("status", "pending")) == "pending" and str(target.get("node_id", "")) == node_id:
+			return target
 	return {}
 
 
@@ -13105,7 +13507,9 @@ func advance_environment_turns(amount: int = 1, profile_stages: bool = false) ->
 # single graph-consistent tuple through _publish_environment_turn_candidate().
 func _advance_environment_turns_candidate(amount: int) -> Dictionary:
 	var safe_amount := maxi(0, amount)
-	var scenario_facts_active := scenario_sequence_present()
+	# A completed/cleaned sequence may remain installed as durable room history.
+	# It must not keep authoring new town or sweep facts on later ordinary turns.
+	var scenario_facts_active := scenario_sequence_present() and str(_copy_dict(current_environment.get("scenario_sequence_state", {})).get("status", "")) == ScenarioSequenceRuntimeScript.STATUS_ACTIVE
 	var uses_v2_expiry := safe_amount > 0 and _scenario_sequence_uses_expiry_boundary("town_action")
 	var turn_preflight := _scenario_preflight_environment_turn(safe_amount)
 	if not bool(turn_preflight.get("ok", false)):
@@ -13116,6 +13520,11 @@ func _advance_environment_turns_candidate(amount: int) -> Dictionary:
 		var expiry_result := scenario_sequence_apply_expiry_boundary("town_action", safe_amount)
 		if not bool(expiry_result.get("ok", false)):
 			return {"ok": false, "applied": false, "errors": _copy_array(expiry_result.get("errors", []))}
+		# Cleanup expiry is a valid terminal transition. Do not enqueue the later
+		# town/world facts into a sequence that this same boundary just cleaned.
+		# The pre-expiry value is retained only when the sequence remains active.
+		var post_expiry_state := _copy_dict(current_environment.get("scenario_sequence_state", {}))
+		scenario_facts_active = str(post_expiry_state.get("status", "")) == ScenarioSequenceRuntimeScript.STATUS_ACTIVE
 	forced_failure = _environment_turn_test_failure("expiry")
 	if not forced_failure.is_empty(): return forced_failure
 	# Town/sweep snapshots exist only to author scenario facts. Ordinary rooms have
@@ -13214,6 +13623,103 @@ func _detached_environment_turn_candidate() -> RunState:
 	var candidate := get_script().new() as RunState
 	candidate._apply_environment_turn_snapshot(_environment_turn_snapshot(), false)
 	return candidate
+
+
+# Sealed game actions begin from trusted live state, not hostile save bytes. Reuse
+# the environment-turn transaction graph so a late run does not spend seconds
+# re-running every migration and reconciliation step before each button press.
+# The turn clone deliberately shares opaque game_states; game actions do mutate
+# that subtree, so detach it once here while preserving the current-room alias.
+func detached_host_action_candidate(mutable_game_state_key: String = "") -> RunState:
+	var candidate := _detached_environment_turn_candidate()
+	var game_states_value: Variant = current_environment.get("game_states", {})
+	if typeof(game_states_value) == TYPE_DICTIONARY:
+		var source_states := game_states_value as Dictionary
+		var state_key := mutable_game_state_key.strip_edges()
+		if not state_key.is_empty() and typeof(source_states.get(state_key, null)) == TYPE_DICTIONARY:
+			# A sealed action can mutate only its host-bound machine. Detach that
+			# table and the game-state index while retaining every unrelated machine
+			# as an opaque read-only value; environment turns never inspect or mutate
+			# game_states. This keeps large Coin Pusher/slot simulations out of other
+			# games' replay clones without weakening proposal isolation.
+			var detached_states := source_states.duplicate(false)
+			detached_states[state_key] = (source_states.get(state_key, {}) as Dictionary).duplicate(true)
+			candidate.current_environment["game_states"] = detached_states
+		else:
+			candidate.current_environment["game_states"] = source_states.duplicate(true)
+	else:
+		candidate.current_environment["game_states"] = {}
+	# A generated/loaded room already carries the save-normalized shell. Small
+	# hand-authored hosts may omit that shell entirely; normalize them once so
+	# retry/control receipts retain the historical save-boundary identity.
+	if not candidate.current_environment.has("world_node_id") \
+			or not candidate.current_environment.has("visual_context") \
+			or not candidate.current_environment.has("travel_lock_remaining"):
+		var trusted_environment := candidate.current_environment
+		candidate.current_environment = _normalize_environment(candidate.current_environment)
+		candidate.restore_trusted_scenario_semantics(trusted_environment)
+	# Hand-authored/test rooms can enter the live host before their first save
+	# normalization. Preserve the old sealed boundary's two context-relevant
+	# defaults without replaying the full migration pipeline on every real click.
+	candidate.current_environment["economic_profile"] = _normalize_economic_profile(
+		_copy_dict(candidate.current_environment.get("economic_profile", {}))
+	)
+	candidate._activate_current_local_suspicion(true)
+	return candidate
+
+
+# Creates a proposal-only view for providers whose contract guarantees that
+# resolution mutates no RunState collection except one bound game-state table.
+# The host never publishes this candidate and never applies a result to it. All
+# broad run/world roots are therefore safe read-only aliases; only the room
+# shell, game-state index, requested machine, and mutable lookup-cache shells
+# are detached. This is the cheap second execution used to prove deterministic
+# Slot outcomes without cloning a late run's entire story/world graph again.
+func detached_host_resolution_candidate(mutable_game_state_key: String) -> RunState:
+	var candidate := get_script().new() as RunState
+	for field_name in TURN_TRANSACTION_SCALAR_FIELDS:
+		candidate.set(field_name, get(field_name))
+	for field_name in TURN_TRANSACTION_COLLECTION_FIELDS:
+		var value: Variant = get(field_name)
+		if field_name in TURN_TRANSACTION_SHALLOW_CACHE_FIELDS and typeof(value) in [TYPE_DICTIONARY, TYPE_ARRAY]:
+			candidate.set(field_name, value.duplicate(false))
+		else:
+			candidate.set(field_name, value)
+	var environment := current_environment.duplicate(false)
+	var source_states: Dictionary = current_environment.get("game_states", {}) if typeof(current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	var detached_states := source_states.duplicate(false)
+	var state_key := mutable_game_state_key.strip_edges()
+	if not state_key.is_empty() and typeof(source_states.get(state_key, null)) == TYPE_DICTIONARY:
+		detached_states[state_key] = (source_states.get(state_key, {}) as Dictionary).duplicate(true)
+	environment["game_states"] = detached_states
+	candidate.current_environment = environment
+	# Slot resolution never mutates these models, but its generic RunState helpers
+	# may inspect them. Retain the same read-only identities for proposal parity.
+	candidate.town_state = town_state
+	candidate.numbers_state = numbers_state
+	return candidate
+
+
+# The ordinary no-scenario turn path has a read-only preflight and no rejecting
+# operation. A sealed provider may use this predicate to publish its already
+# replay-validated result directly, avoiding two whole-run clone/publish passes.
+# Debug rejection fixtures and every authored scenario retain the conservative
+# detached transaction path.
+func host_action_in_place_commit_safe() -> bool:
+	return not current_environment.is_empty() \
+		and not is_terminal() \
+		and _turn_transaction_test_failure_stage.is_empty() \
+		and not scenario_sequence_present()
+
+
+# Publishes an already isolated, validated game-action candidate through the
+# same graph-consistent in-place boundary used by environment turns. External
+# references to RunState, the room, TownState, and NumbersModel stay valid.
+func publish_host_action_candidate(candidate: RunState) -> bool:
+	if candidate == null or candidate == self:
+		return false
+	_publish_environment_turn_candidate(candidate)
+	return true
 
 
 func _publish_environment_turn_candidate(candidate: RunState) -> void:
@@ -14179,6 +14685,20 @@ func resolve_event(event_id: String) -> void:
 	if not resolved.has(event_id):
 		resolved.append(event_id)
 	current_environment["resolved_event_ids"] = resolved
+	# Interior layers are durable views of one venue, not independent event
+	# instances. Copy the consumed identity into every stored layer so entering a
+	# destination layer (including one opened by this choice) cannot resurrect the
+	# same event from that layer's original generated snapshot.
+	if is_layered_environment():
+		var layer_states := _copy_dict(current_environment.get("layer_states", {}))
+		for layer_id_value in layer_states.keys():
+			var layer_state := _copy_dict(layer_states.get(layer_id_value, {}))
+			var layer_resolved := _copy_array(layer_state.get("resolved_event_ids", []))
+			if not layer_resolved.has(event_id):
+				layer_resolved.append(event_id)
+			layer_state["resolved_event_ids"] = layer_resolved
+			layer_states[layer_id_value] = layer_state
+		current_environment["layer_states"] = layer_states
 
 
 func set_story_flag(flag_id: String, value: Variant = true) -> void:
@@ -14917,8 +15437,8 @@ func to_dict() -> Dictionary:
 		"story_flags": story_flags.duplicate(true),
 		"story_log": _normalize_story_log(story_log),
 		"story_log_archive_count": story_log_archive_count,
-		# Runtime serialization remains the established public projection for
-		# compatibility/goldens. Persistent saves use to_save_snapshot().
+		# Every serialized projection is observer-safe. Hidden Turn authority and
+		# grievances live only in the authenticated fixed-size private capsule.
 		"crew_state": _crew_state_for_save(true, false),
 		"scenario_host_transaction_ledger": scenario_host_transaction_ledger.duplicate(true),
 		"active_delivery_run": active_delivery_run.duplicate(true),
@@ -15008,7 +15528,7 @@ func world_sequence_resume_delivery_checkpoint() -> Dictionary:
 # top-level maps, while this snapshot owns each mutable root container. The v2
 # codec is non-mutating and performs the final compact deep projection on the
 # worker.
-func to_save_snapshot() -> Dictionary:
+func to_save_snapshot(deep_copy_seeded_scenario_definitions: bool = true) -> Dictionary:
 	var result := {
 		"seed_text": seed_text,
 		"seed_value": seed_value,
@@ -15066,7 +15586,7 @@ func to_save_snapshot() -> Dictionary:
 		"active_delivery_run": active_delivery_run.duplicate(false),
 		"numbers_state": numbers_state.snapshot() if numbers_state != null else {},
 		"heat_history": heat_history.duplicate(false),
-		"town_state": town_state.snapshot() if town_state != null else {},
+		"town_state": town_state.snapshot(deep_copy_seeded_scenario_definitions) if town_state != null else {},
 		"simulation_msec": simulation_msec,
 		"game_clock_minutes": game_clock_minutes,
 		"grand_casino_atm_interest_boundary_index": grand_casino_atm_interest_boundary_index,
@@ -15502,12 +16022,13 @@ static func _environment_for_persistent_storage(environment: Dictionary, deep_co
 	var stored: Dictionary = {}
 	for key_value in environment.keys():
 		var key := str(key_value)
-		if key == "game_states" or key == ScenarioEngineScript.TRUSTED_STATE_REFERENCE_KEY or key == ScenarioEngineScript.TRUSTED_LAYOUT_INPUT_DIGEST_KEY:
+		if key == "game_states" or key == "active_game_id" or key == ScenarioEngineScript.TRUSTED_STATE_REFERENCE_KEY or key == ScenarioEngineScript.TRUSTED_LAYOUT_INPUT_DIGEST_KEY:
 			continue
 		stored[key] = _persistent_copy_value(environment.get(key_value)) if deep_copy else environment.get(key_value)
 	var states_value: Variant = environment.get("game_states", {})
 	if typeof(states_value) != TYPE_DICTIONARY:
 		_strip_scenario_semantic_ephemera(stored)
+		_strip_persistent_active_game_bindings(stored)
 		return stored
 	var stored_states: Dictionary = {}
 	for game_key_value in (states_value as Dictionary).keys():
@@ -15527,7 +16048,22 @@ static func _environment_for_persistent_storage(environment: Dictionary, deep_co
 			stored_states[game_key] = _persistent_copy_value(state_value) if deep_copy else state_value
 	stored["game_states"] = stored_states
 	_strip_scenario_semantic_ephemera(stored)
+	_strip_persistent_active_game_bindings(stored)
 	return stored
+
+
+static func _strip_persistent_active_game_bindings(environment: Dictionary) -> void:
+	# This Foundation-to-game capability exists only while its surface is live.
+	# Scrub nested venue-layer snapshots as well as the current room projection.
+	environment.erase("active_game_id")
+	var layer_states := _copy_dict(environment.get("layer_states", {}))
+	for layer_id_value in layer_states.keys():
+		var layer_body := _copy_dict(layer_states.get(layer_id_value, {}))
+		layer_body.erase("layer_states")
+		_strip_persistent_active_game_bindings(layer_body)
+		layer_states[layer_id_value] = layer_body
+	if not layer_states.is_empty():
+		environment["layer_states"] = layer_states
 
 
 static func _strip_scenario_semantic_ephemera(environment: Dictionary) -> void:
@@ -15647,20 +16183,24 @@ static func _world_map_for_save_snapshot(map_data: Dictionary) -> Dictionary:
 
 
 func _crew_pack_ledger() -> Array:
+	if crew_grievance_ledger.size() > CrewTurnModelScript.PRIVATE_GRIEVANCE_LIMIT:
+		return []
 	var result: Array = []
 	for entry_value in crew_grievance_ledger:
 		var entry := _copy_dict(entry_value)
 		var member_index := CrewStateModelScript.MEMBER_IDS.find(str(entry.get("member_id", "")))
 		var kind_index := CrewStateModelScript.GRIEVANCE_KINDS.find(str(entry.get("kind", "")))
-		if member_index >= 0 and kind_index >= 0:
-			result.append([
-				member_index,
-				kind_index,
-				maxi(1, int(entry.get("weight", 1))),
-				maxi(0, int(entry.get("turn_recorded", 0))),
-				str(entry.get("id", "")).to_utf8_buffer().hex_encode(),
-				str(entry.get("source_ref", "")).to_utf8_buffer().hex_encode(),
-			])
+		var entry_id := str(entry.get("id", ""))
+		var source_ref := str(entry.get("source_ref", ""))
+		var weight := int(entry.get("weight", 1))
+		var turn_recorded := int(entry.get("turn_recorded", 0))
+		if member_index < 0 or kind_index < 0 or entry_id.is_empty() \
+				or entry_id.to_utf8_buffer().size() > CrewTurnModelScript.PRIVATE_TEXT_BYTE_LIMIT \
+				or source_ref.to_utf8_buffer().size() > CrewTurnModelScript.PRIVATE_TEXT_BYTE_LIMIT \
+				or weight < 1 or weight > CrewTurnModelScript.PRIVATE_SEQUENCE_LIMIT \
+				or turn_recorded < 0 or turn_recorded > CrewTurnModelScript.PRIVATE_SEQUENCE_LIMIT:
+			return []
+		result.append([member_index, kind_index, weight, turn_recorded, entry_id.to_utf8_buffer().hex_encode(), source_ref.to_utf8_buffer().hex_encode()])
 	return result
 
 
@@ -15691,15 +16231,7 @@ func _crew_unpack_ledger(value: Variant) -> Array:
 func _crew_jobs_for_save(deep_copy: bool) -> Dictionary:
 	var result := crew_jobs.duplicate(deep_copy)
 	for job_id in result.keys():
-		var job := _copy_dict(result.get(job_id, {}))
-		var failure := _copy_dict(job.get("failure", {}))
-		var kind_index := CrewStateModelScript.GRIEVANCE_KINDS.find(str(failure.get("grievance_kind", "")))
-		failure.erase("grievance_kind")
-		failure.erase("grievance_weight")
-		if kind_index >= 0:
-			failure["g"] = [kind_index, maxi(1, int(_copy_dict(job.get("failure", {})).get("grievance_weight", 1)))]
-		job["failure"] = failure
-		result[job_id] = job
+		result[job_id] = _crew_job_public_projection(_copy_dict(result.get(job_id, {})))
 	return result
 
 
@@ -15708,18 +16240,35 @@ func _crew_jobs_from_save(value: Variant) -> Dictionary:
 	for job_id in result.keys():
 		var job := _copy_dict(result.get(job_id, {}))
 		var failure := _copy_dict(job.get("failure", {}))
+		# Legacy packed failure readers remain supported, but new public saves do
+		# not duplicate grievance authority outside the private capsule.
 		var packed := _copy_array(failure.get("g", []))
 		if packed.size() >= 2:
 			var kind_index := int(packed[0])
 			failure["grievance_kind"] = CrewStateModelScript.GRIEVANCE_KINDS[kind_index] if kind_index >= 0 and kind_index < CrewStateModelScript.GRIEVANCE_KINDS.size() else ""
 			failure["grievance_weight"] = maxi(1, int(packed[1]))
 			failure.erase("g")
+		else:
+			var definition := CrewStateModelScript.job_definition(str(job.get("definition_id", "")))
+			var authored_failure := _copy_dict(definition.get("failure", {}))
+			failure["grievance_kind"] = str(authored_failure.get("grievance_kind", ""))
+			failure["grievance_weight"] = maxi(1, int(authored_failure.get("grievance_weight", 1)))
 		job["failure"] = failure
 		result[job_id] = job
 	return result
 
 
-func _crew_state_for_save(deep_copy: bool, opaque_hidden: bool = false) -> Dictionary:
+func _crew_job_public_projection(job_value: Dictionary) -> Dictionary:
+	var job := job_value.duplicate(true)
+	var failure := _copy_dict(job.get("failure", {}))
+	failure.erase("grievance_kind")
+	failure.erase("grievance_weight")
+	failure.erase("g")
+	job["failure"] = failure
+	return job
+
+
+func _crew_state_for_save(deep_copy: bool, _opaque_hidden: bool = true) -> Dictionary:
 	var result := {
 		"schema_version": CrewStateModelScript.STATE_SCHEMA_VERSION,
 		"trust": crew_trust_by_member.duplicate(deep_copy),
@@ -15729,20 +16278,12 @@ func _crew_state_for_save(deep_copy: bool, opaque_hidden: bool = false) -> Dicti
 		"p": CrewPokerModelScript.pack_observations(crew_pattern_memory),
 		"m": crew_match_marks.duplicate(deep_copy),
 	}
-	# The runtime projection is byte-compatible with the established crew API.
-	# The actual persistent projection is opaque even when the ledger is empty.
-	if not opaque_hidden:
-		result["grievances"] = crew_grievance_ledger.duplicate(deep_copy)
-		result["grievance_sequence"] = crew_grievance_sequence
-	else:
-		result["g"] = _crew_pack_ledger()
-		result["q"] = crew_grievance_sequence
 	# Keep a crew-ignoring save byte-identical to the crew06_1 projection. The
 	# optional field carries its own addition version only after the stash is used.
 	if not crew_contraband_stash.is_empty():
 		result["recruitment_schema_version"] = CrewRecruitmentModelScript.SCHEMA_VERSION
 		result["stash"] = crew_contraband_stash.duplicate(deep_copy)
-	var recruitment_encounters := CrewRecruitmentModelScript.normalize_encounter_state(crew_recruitment_encounters)
+	var recruitment_encounters := _crew_recruitment_encounters_for_save()
 	if not recruitment_encounters.is_empty() and (not _copy_dict(recruitment_encounters.get("meetings", {})).is_empty() or not _copy_dict(recruitment_encounters.get("contacts", {})).is_empty()):
 		result["recruitment_schema_version"] = CrewRecruitmentModelScript.SCHEMA_VERSION
 		result["encounters"] = recruitment_encounters.duplicate(deep_copy)
@@ -15751,19 +16292,122 @@ func _crew_state_for_save(deep_copy: bool, opaque_hidden: bool = false) -> Dicti
 			or not (normalized_plays.get("active", []) as Array).is_empty() \
 			or not (normalized_plays.get("member_cooldowns", {}) as Dictionary).is_empty() \
 			or not (normalized_plays.get("tombstones", []) as Array).is_empty():
-		result["plays"] = normalized_plays.duplicate(deep_copy)
+		result["plays"] = _crew_plays_for_save(normalized_plays, deep_copy)
 	var normalized_heist := CrewHeistModelScript.normalize_state(crew_heist_state)
+	var private_heist := CrewTurnModelScript.empty_state()
 	if not normalized_heist.is_empty():
+		private_heist = _copy_dict(normalized_heist.get("x", CrewTurnModelScript.empty_state()))
+		normalized_heist.erase("x")
 		result["crew_heist_schema_version"] = CrewHeistModelScript.SCHEMA_VERSION
 		result["crew_heist"] = normalized_heist.duplicate(deep_copy)
+	# Every save carries the same fixed-size private authority envelope, including
+	# a pristine zero-grievance run. Omitting it (or writing public empty
+	# sentinels) made zero versus one grievance distinguishable by keys and size.
+	# `_opaque_hidden` remains in the signature for old callers only.
+	var _legacy_projection_ignored := _opaque_hidden
+	var packed_ledger := _crew_pack_ledger()
+	if packed_ledger.size() != crew_grievance_ledger.size() or crew_grievance_sequence < packed_ledger.size() \
+			or crew_grievance_sequence > CrewTurnModelScript.PRIVATE_SEQUENCE_LIMIT:
+		result["private_authority_error"] = "private_authority_capacity_exceeded"
+		return result
+	if not CrewTurnModelScript.valid_authority_id(_crew_private_authority_id):
+		result["private_authority_error"] = "private_authority_unavailable"
+		return result
+	var payload := {"x": private_heist, "g": packed_ledger, "q": crew_grievance_sequence}
+	var binding := _crew_private_save_binding(_crew_private_authority_id, normalized_heist)
+	var fingerprint := CrewTurnModelScript.private_save_fingerprint(payload, CrewStateModelScript.MEMBER_IDS, CrewStateModelScript.GRIEVANCE_KINDS, binding)
+	if binding.is_empty() or fingerprint.is_empty():
+		result["private_authority_error"] = "private_authority_capacity_exceeded"
+		return result
+	if _crew_heist_private_capsule.is_empty() or _crew_heist_private_fingerprint != fingerprint:
+		_crew_heist_private_capsule = CrewTurnModelScript.pack_private_save(payload, CrewStateModelScript.MEMBER_IDS, CrewStateModelScript.GRIEVANCE_KINDS, binding)
+		_crew_heist_private_fingerprint = fingerprint if not _crew_heist_private_capsule.is_empty() else ""
+	if _crew_heist_private_capsule.is_empty():
+		result["private_authority_error"] = "private_authority_unavailable"
+		return result
+	result["a"] = _crew_private_authority_id
+	result["z"] = _crew_heist_private_capsule
 	return result
+
+
+func _crew_private_save_binding(authority_id: String, public_heist: Dictionary) -> String:
+	return CrewTurnModelScript.private_save_binding(authority_id, seed_text, {
+		"challenge_config": challenge_config.duplicate(true),
+		"member_ids": CrewStateModelScript.MEMBER_IDS.duplicate(),
+		"trust": CrewStateModelScript.normalize_trust(crew_trust_by_member),
+		"jobs": _crew_jobs_for_save(true),
+		"heist": public_heist.duplicate(true),
+	})
+
+
+func _crew_plays_for_save(normalized_plays: Dictionary, deep_copy: bool) -> Dictionary:
+	var result := normalized_plays.duplicate(deep_copy)
+	var liability := _copy_dict(result.get("distraction_liability", {}))
+	if not liability.is_empty():
+		# The source is a hidden-ledger join key. It is reconstructed from the
+		# already-public play sequence after authentication, never serialized.
+		liability["source_ref"] = ""
+		result["distraction_liability"] = liability
+	return result
+
+
+func _crew_recruitment_encounters_for_save() -> Dictionary:
+	var result := CrewRecruitmentModelScript.normalize_encounter_state(crew_recruitment_encounters)
+	var contacts := _copy_dict(result.get("contacts", {}))
+	for member_id in contacts.keys():
+		var contact := _copy_dict(contacts.get(member_id, {}))
+		# `aggrieved` was a legacy public classifier derived from the private
+		# ledger. Preserve the durable meeting/contact receipt but project a
+		# neutral state based only on public standing and active-job facts.
+		if str(contact.get("contact_state", "")) == "aggrieved":
+			var standing := str(contact.get("standing", ""))
+			var job_out := false
+			for job_value in crew_jobs.values():
+				var job := _copy_dict(job_value)
+				if str(job.get("member_id", "")) == str(member_id) and str(job.get("status", "")) in ["offered", "accepted", "active"]:
+					job_out = true
+					break
+			contact["contact_state"] = "job_out" if job_out else ("trusted" if standing in ["made", "inner_circle"] else "familiar")
+		contacts[member_id] = contact
+	result["contacts"] = contacts
+	return result
+
+
+func _crew_plays_from_save(value: Variant) -> Dictionary:
+	var result := CrewPlayModelScript.restore_state(value)
+	return result
+
+
+func _crew_distraction_grievance_source(liability: Dictionary) -> String:
+	return CrewTurnModelScript.private_reference("crew_play", CrewTurnModelScript.canonical_json({
+		"seed": seed_text,
+		"member_id": str(liability.get("member_id", "")),
+		"until_action": maxi(0, int(liability.get("until_action", 0))),
+	}))
+
+
+func _crew_private_restore_failed(saved_heist: Dictionary) -> Dictionary:
+	crew_grievance_ledger = []
+	crew_grievance_sequence = 0
+	_crew_private_authority_id = ""
+	_crew_heist_private_capsule = ""
+	_crew_heist_private_fingerprint = ""
+	narrative_flags["crew_private_authority_error"] = "private_authority_unavailable"
+	# Preserve an active heist as an explicit terminal result. A missing capsule
+	# must never become a fresh attempt with erased hidden consequences.
+	if not saved_heist.is_empty():
+		saved_heist["x"] = CrewTurnModelScript.empty_state()
+		saved_heist["status"] = CrewHeistModelScript.STATUS_ABORTED
+		saved_heist["abort"] = {"reason": "private_authority_unavailable", "cost": 0, "action": _crew_action_index()}
+		narrative_flags["crew_heist_private_restore_error"] = "private_authority_unavailable"
+	return saved_heist
 
 
 func _restore_crew_state(saved: Dictionary, legacy: bool) -> void:
 	crew_trust_by_member = CrewStateModelScript.normalize_trust(saved.get("trust", {}))
-	crew_grievance_ledger = _crew_unpack_ledger(saved.get("g", saved.get("grievances", [])))
 	crew_jobs = CrewStateModelScript.normalize_jobs(_crew_jobs_from_save(saved.get("jobs", {})))
-	crew_grievance_sequence = maxi(int(saved.get("q", saved.get("grievance_sequence", crew_grievance_ledger.size()))), crew_grievance_ledger.size())
+	crew_grievance_ledger = []
+	crew_grievance_sequence = 0
 	crew_job_sequence = maxi(int(saved.get("job_sequence", crew_jobs.size())), crew_jobs.size())
 	crew_pattern_memory = CrewPokerModelScript.unpack_observations(saved.get("p", {}))
 	crew_match_marks = {}
@@ -15771,6 +16415,10 @@ func _restore_crew_state(saved: Dictionary, legacy: bool) -> void:
 	crew_recruitment_encounters = CrewRecruitmentModelScript.normalize_encounter_state(saved.get("encounters", CrewRecruitmentModelScript.new_encounter_state()))
 	if crew_recruitment_encounters.is_empty():
 		crew_recruitment_encounters = CrewRecruitmentModelScript.new_encounter_state()
+	else:
+		# Migrate legacy persisted `aggrieved` contact classifiers immediately so
+		# they cannot reappear through encounter_public_state before the next save.
+		crew_recruitment_encounters = _crew_recruitment_encounters_for_save()
 	if _crew_job_host_capability == null:
 		_crew_job_host_capability = RefCounted.new()
 	if _crew_recruitment_host_capability == null:
@@ -15779,8 +16427,52 @@ func _restore_crew_state(saved: Dictionary, legacy: bool) -> void:
 		_world1_host_capability = RefCounted.new()
 	if _crew_heist_host_capability == null:
 		_crew_heist_host_capability = RefCounted.new()
-	crew_play_state = CrewPlayModelScript.restore_state(saved.get("plays", {}))
-	crew_heist_state = CrewHeistModelScript.restore_state(saved.get("crew_heist", {}))
+	crew_play_state = _crew_plays_from_save(saved.get("plays", {}))
+	var saved_heist := _copy_dict(saved.get("crew_heist", {}))
+	_crew_heist_private_capsule = ""
+	_crew_heist_private_fingerprint = ""
+	_crew_private_authority_id = ""
+	var partial_private_authority := saved.has("a") != saved.has("z") \
+			or (not saved_heist.is_empty() and not saved.has("z") and not saved_heist.has("z") and not saved_heist.has("x"))
+	if not saved.has("z") and not saved.has("private_authority_error") and not partial_private_authority:
+		crew_grievance_ledger = _crew_unpack_ledger(saved.get("g", saved.get("grievances", [])))
+		crew_grievance_sequence = maxi(int(saved.get("q", saved.get("grievance_sequence", crew_grievance_ledger.size()))), crew_grievance_ledger.size())
+		# Historical saves predate the opaque envelope. Give the migrated run a
+		# fresh authority during restore so subsequent save reads remain pure.
+		_crew_private_authority_id = CrewTurnModelScript.new_authority_id()
+	if saved.has("private_authority_error") or partial_private_authority:
+		saved_heist = _crew_private_restore_failed(saved_heist)
+	elif saved.has("z"):
+		var capsule := str(saved.get("z", ""))
+		var authority_id := str(saved.get("a", ""))
+		var public_heist := saved_heist.duplicate(true)
+		public_heist.erase("x")
+		public_heist.erase("z")
+		var binding := _crew_private_save_binding(authority_id, public_heist)
+		var restored_payload := CrewTurnModelScript.unpack_private_save(capsule, CrewStateModelScript.MEMBER_IDS, CrewStateModelScript.GRIEVANCE_KINDS, binding)
+		var restored_ledger := _crew_unpack_ledger(restored_payload.get("g", [])) if not restored_payload.is_empty() else []
+		if restored_payload.is_empty() or restored_ledger.size() != _copy_array(restored_payload.get("g", [])).size():
+			saved_heist = _crew_private_restore_failed(saved_heist)
+		else:
+			crew_grievance_ledger = restored_ledger
+			crew_grievance_sequence = int(restored_payload.get("q", restored_ledger.size()))
+			if not saved_heist.is_empty(): saved_heist["x"] = _copy_dict(restored_payload.get("x", CrewTurnModelScript.empty_state()))
+			_crew_private_authority_id = authority_id
+			_crew_heist_private_capsule = capsule
+			_crew_heist_private_fingerprint = CrewTurnModelScript.private_save_fingerprint(restored_payload, CrewStateModelScript.MEMBER_IDS, CrewStateModelScript.GRIEVANCE_KINDS, binding)
+	elif saved_heist.has("z") and not saved_heist.has("x"):
+		# Migration reader for the shipped 512-byte heist-local x-only capsule.
+		var capsule := str(saved_heist.get("z", ""))
+		saved_heist.erase("z")
+		var binding := CrewTurnModelScript.legacy_private_save_binding(
+			seed_text, str(saved_heist.get("plan_id", "")), int(saved_heist.get("locked_action", 0))
+		)
+		var restored_private := CrewTurnModelScript.unpack_legacy_private_save(capsule, CrewStateModelScript.MEMBER_IDS, binding)
+		if restored_private.is_empty():
+			saved_heist = _crew_private_restore_failed(saved_heist)
+		else:
+			saved_heist["x"] = restored_private
+	crew_heist_state = CrewHeistModelScript.restore_state(saved_heist)
 	var saved_marks: Dictionary = saved.get("m", {}) if typeof(saved.get("m", {})) == TYPE_DICTIONARY else {}
 	for member_id in CrewStateModelScript.MEMBER_IDS:
 		# Keep an empty/sparse save projection sparse. Session recording already
@@ -16581,7 +17273,7 @@ static func _normalize_environment(data: Dictionary) -> Dictionary:
 		# Apply receipts are transaction-local and can never survive a save boundary.
 		blackjack_table.erase("_blackjack_pending_apply_receipt")
 		if blackjack_table.has(BlackjackActionAuthorityScript.LEDGER_KEY):
-			var binding := "%s:%s:%s" % [authority_game_id, str(environment.get("id", "unknown")), str(environment.get("archetype_id", "unknown"))]
+			var binding := action_authority_table_binding(authority_game_id, environment)
 			var ledger := BlackjackActionAuthorityScript.validate_persisted_ledger(blackjack_table.get(BlackjackActionAuthorityScript.LEDGER_KEY), binding)
 			if ledger.is_empty():
 				blackjack_table.erase(BlackjackActionAuthorityScript.LEDGER_KEY)
@@ -16977,6 +17669,19 @@ static func _normalize_home_state(data: Dictionary) -> Dictionary:
 		tenure = {}
 	normalized["tenure"] = tenure
 	return normalized
+
+
+# Returns the durable authority identity for either a game's default state or
+# one of its independently generated fixture states (for example slot:2).
+static func action_authority_table_binding(state_key: String, environment: Dictionary) -> String:
+	var clean_state_key := state_key.strip_edges()
+	var game_id := clean_state_key.get_slice(":", 0)
+	if game_id.is_empty():
+		game_id = "unknown"
+	var binding := "%s:%s:%s" % [game_id, str(environment.get("id", "unknown")), str(environment.get("archetype_id", "unknown"))]
+	if not clean_state_key.is_empty() and clean_state_key != game_id:
+		binding += ":%s" % clean_state_key
+	return binding
 
 
 # Normalizes per-environment gameplay state owned by GameModule instances.

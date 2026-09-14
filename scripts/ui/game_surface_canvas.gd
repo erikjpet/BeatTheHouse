@@ -72,6 +72,7 @@ var last_audio_profile_id: String = ""
 var perf_full_snapshot_calls := 0
 var perf_runtime_status_calls := 0
 var perf_draw_frame_usec_samples: Array = []
+var perf_draw_frame_total_count := 0
 var perf_patch_redraw_requests := 0
 var perf_reduced_motion_measurement_redraw_requests := 0
 var surface_label_fit_cache: Dictionary = {}
@@ -99,6 +100,17 @@ var transient_surface_loop_deadline_msec := 0
 var transient_surface_loop_id := ""
 var environment_activity_paused := false
 var surface_render_state_dirty := false
+var _surface_audio_authority := RefCounted.new()
+var _surface_audio_authority_bound := false
+
+
+func bind_surface_audio_authority(authority: RefCounted) -> void:
+	if authority == null or _surface_audio_authority_bound:
+		return
+	_surface_audio_authority = authority
+	_surface_audio_authority_bound = true
+	if surface_sfx_player != null and surface_sfx_player.has_method("bind_surface_audio_authority"):
+		surface_sfx_player.call("bind_surface_audio_authority", _surface_audio_authority)
 
 
 func set_game_module(game_module: GameModule) -> void:
@@ -144,6 +156,7 @@ func clear_runtime_state() -> void:
 	surface_label_fit_cache.clear()
 	hit_region_group_cache.clear()
 	perf_draw_frame_usec_samples = []
+	perf_draw_frame_total_count = 0
 	surface_animation_redraw_accumulator = 0.0
 	surface_animation_redraw_count = 0
 	perf_surface_animation_scheduler_elapsed_sec = 0.0
@@ -267,7 +280,9 @@ func current_view_snapshot() -> Dictionary:
 		"drunk_distortion_debug": drunk_distortion_overlay.debug_snapshot() if drunk_distortion_overlay != null else {},
 		"surface_animations": _surface_animation_status_snapshot(),
 		"surface_animation_target_fps": SURFACE_ANIMATION_FPS,
+		"surface_idle_animation_fps": surface_idle_animation_fps(),
 		"surface_animation_redraw_count": surface_animation_redraw_count,
+		"surface_animation_scheduler_elapsed_msec": maxi(0, int(round(perf_surface_animation_scheduler_elapsed_sec * 1000.0))),
 		"surface_continuous_redraw_active": _needs_continuous_redraw(),
 		"surface_animation_liveness_active": surface_animation_liveness_active(),
 		"surface_animation_handoff_active": _surface_animation_handoff_active(),
@@ -306,7 +321,9 @@ func surface_runtime_status() -> Dictionary:
 		"drunk_distortion_debug": drunk_distortion_overlay.debug_snapshot() if drunk_distortion_overlay != null else {},
 		"surface_animations": _surface_animation_status_snapshot(),
 		"surface_animation_target_fps": SURFACE_ANIMATION_FPS,
+		"surface_idle_animation_fps": surface_idle_animation_fps(),
 		"surface_animation_redraw_count": surface_animation_redraw_count,
+		"surface_animation_scheduler_elapsed_msec": maxi(0, int(round(perf_surface_animation_scheduler_elapsed_sec * 1000.0))),
 		"surface_continuous_redraw_active": _needs_continuous_redraw(),
 		"surface_animation_liveness_active": surface_animation_liveness_active(),
 		"surface_animation_handoff_active": _surface_animation_handoff_active(),
@@ -327,6 +344,16 @@ func surface_realtime_state_refresh_enabled() -> bool:
 
 func surface_animation_liveness_active() -> bool:
 	return _surface_animation_liveness_active()
+
+
+# This is the production idle cadence, not a test floor. Web intentionally
+# renders low-detail idle motion less often; native keeps the full cadence.
+func surface_idle_animation_fps() -> float:
+	if reduce_motion or not bool(state.get("surface_animates_idle", false)):
+		return 0.0
+	if not OS.has_feature("web"):
+		return SURFACE_ANIMATION_FPS
+	return _requested_web_idle_animation_fps()
 
 
 # A lightweight boundary query for UI owners that must wait until a finite
@@ -350,6 +377,7 @@ func reset_performance_counters() -> void:
 	perf_full_snapshot_calls = 0
 	perf_runtime_status_calls = 0
 	perf_draw_frame_usec_samples = []
+	perf_draw_frame_total_count = 0
 	perf_patch_redraw_requests = 0
 	perf_reduced_motion_measurement_redraw_requests = 0
 	surface_animation_redraw_count = 0
@@ -372,7 +400,10 @@ func performance_counters() -> Dictionary:
 		"reduced_motion_measurement_redraw_requests": perf_reduced_motion_measurement_redraw_requests,
 		"surface_animation_redraw_count": surface_animation_redraw_count,
 		"surface_animation_scheduler_elapsed_msec": maxi(0, int(round(perf_surface_animation_scheduler_elapsed_sec * 1000.0))),
+		"surface_idle_animation_fps": surface_idle_animation_fps(),
 		"surface_animation_liveness_active": surface_animation_liveness_active(),
+		"draw_sample_count": perf_draw_frame_total_count,
+		"draw_sample_buffer_count": perf_draw_frame_usec_samples.size(),
 		"draw_frame_usec_samples": perf_draw_frame_usec_samples.duplicate(),
 		"draw_avg_ms": _draw_average_ms(),
 		"draw_p95_ms": _draw_percentile_ms(0.95),
@@ -386,8 +417,11 @@ func performance_counters() -> Dictionary:
 func performance_live_status() -> Dictionary:
 	return {
 		"surface_animation_redraw_count": surface_animation_redraw_count,
+		"surface_animation_scheduler_elapsed_msec": maxi(0, int(round(perf_surface_animation_scheduler_elapsed_sec * 1000.0))),
+		"surface_idle_animation_fps": surface_idle_animation_fps(),
 		"surface_animation_liveness_active": surface_animation_liveness_active(),
-		"draw_sample_count": perf_draw_frame_usec_samples.size(),
+		"draw_sample_count": perf_draw_frame_total_count,
+		"draw_sample_buffer_count": perf_draw_frame_usec_samples.size(),
 		"draw_avg_ms": _draw_average_ms(),
 	}
 
@@ -425,13 +459,15 @@ func debug_soak_snapshot() -> Dictionary:
 		"surface_label_fit_cache_size": surface_label_fit_cache.size(),
 		"hit_region_group_cache_size": hit_region_group_cache.size(),
 		"hit_region_count": hit_regions.size(),
-		"draw_sample_count": perf_draw_frame_usec_samples.size(),
+		"draw_sample_count": perf_draw_frame_total_count,
+		"draw_sample_buffer_count": perf_draw_frame_usec_samples.size(),
 		"surface_sfx": surface_sfx_player.call("debug_soak_snapshot") if surface_sfx_player != null and surface_sfx_player.has_method("debug_soak_snapshot") else {},
 	}
 
 
 func _record_draw_performance(start_usec: int) -> void:
 	var elapsed := maxi(0, Time.get_ticks_usec() - start_usec)
+	perf_draw_frame_total_count += 1
 	perf_draw_frame_usec_samples.append(elapsed)
 	if perf_draw_frame_usec_samples.size() > PERF_DRAW_SAMPLE_LIMIT:
 		perf_draw_frame_usec_samples.pop_front()
@@ -489,6 +525,20 @@ func global_rect_for_surface_action(action: String, index: int = -1) -> Rect2:
 		return Rect2()
 	var board_scale := _board_scale()
 	var local_rect := Rect2(_board_to_screen(board_hit_rect.position), board_hit_rect.size * board_scale)
+	var transform := get_global_transform()
+	var corner_a := transform * local_rect.position
+	var corner_b := transform * Vector2(local_rect.end.x, local_rect.position.y)
+	var corner_c := transform * local_rect.end
+	var corner_d := transform * Vector2(local_rect.position.x, local_rect.end.y)
+	var minimum := Vector2(minf(minf(corner_a.x, corner_b.x), minf(corner_c.x, corner_d.x)), minf(minf(corner_a.y, corner_b.y), minf(corner_c.y, corner_d.y)))
+	var maximum := Vector2(maxf(maxf(corner_a.x, corner_b.x), maxf(corner_c.x, corner_d.x)), maxf(maxf(corner_a.y, corner_b.y), maxf(corner_c.y, corner_d.y)))
+	return Rect2(minimum, maximum - minimum)
+
+
+func global_rect_for_design_rect(design_rect: Rect2) -> Rect2:
+	if not design_rect.has_area():
+		return Rect2()
+	var local_rect := _board_rect_to_screen_rect(design_rect)
 	var transform := get_global_transform()
 	var corner_a := transform * local_rect.position
 	var corner_b := transform * Vector2(local_rect.end.x, local_rect.position.y)
@@ -708,15 +758,19 @@ func surface_animation_metadata(channel_id: String) -> Dictionary:
 	return _copy_dict(_surface_animation_channel(channel_id).get("metadata", {}))
 
 
-func surface_play_audio_cue(cue_id: String, context: Dictionary = {}) -> void:
+func surface_play_audio_cue(cue_id: String, context: Dictionary = {}, authority: Variant = null) -> void:
+	if authority != _surface_audio_authority:
+		return
 	var normalized_cue := cue_id.strip_edges()
 	if normalized_cue.is_empty():
 		return
 	_ensure_surface_sfx_player()
-	surface_sfx_player.play_surface_cue(normalized_cue, context, state)
+	surface_sfx_player.play_surface_cue(normalized_cue, context, state, _surface_audio_authority)
 
 
-func surface_start_audio_loop(cue_id: String, volume_db: float = -10.0, pitch: float = 1.0) -> void:
+func surface_start_audio_loop(cue_id: String, volume_db: float = -10.0, pitch: float = 1.0, authority: Variant = null) -> void:
+	if authority != _surface_audio_authority:
+		return
 	var normalized_cue := cue_id.strip_edges()
 	if normalized_cue.is_empty():
 		return
@@ -725,14 +779,16 @@ func surface_start_audio_loop(cue_id: String, volume_db: float = -10.0, pitch: f
 		transient_surface_loop_id = normalized_cue
 		transient_surface_loop_deadline_msec = Time.get_ticks_msec() + TRANSIENT_SURFACE_LOOP_HOLD_MSEC
 	if surface_sfx_player.has_method("start_surface_loop"):
-		surface_sfx_player.call("start_surface_loop", normalized_cue, volume_db, pitch)
+		surface_sfx_player.call("start_surface_loop", normalized_cue, volume_db, pitch, _surface_audio_authority)
 
 
-func surface_stop_audio_loop(cue_id: String = "") -> void:
+func surface_stop_audio_loop(cue_id: String = "", authority: Variant = null) -> void:
+	if authority != _surface_audio_authority:
+		return
 	transient_surface_loop_deadline_msec = 0
 	transient_surface_loop_id = ""
 	if surface_sfx_player != null and surface_sfx_player.has_method("stop_surface_loop"):
-		surface_sfx_player.call("stop_surface_loop", cue_id)
+		surface_sfx_player.call("stop_surface_loop", cue_id, _surface_audio_authority)
 
 
 func surface_add_hit(rect: Rect2, action: String, index: int = -1, expand_touch_hit: bool = true) -> void:
@@ -909,6 +965,13 @@ func _register_surface_text_panel_rect(rect: Rect2) -> void:
 	if surface_text_protected_rects.size() >= DrunkDistortionOverlay.MAX_UI_PROTECTED_RECTS:
 		return
 	surface_text_protected_rects.append(rect)
+
+
+func surface_register_text_protected_rect(rect: Rect2) -> void:
+	# Retained renderer layers still own live readability metadata. Route their
+	# exact design-space rectangles through the same cap and validation as text
+	# drawn directly on this production surface.
+	_register_surface_text_panel_rect(rect)
 
 
 func surface_title(text: String, pos: Vector2, color: Color) -> void:
@@ -1097,7 +1160,7 @@ func _activate_surface_at_position(position: Vector2, confirm_requested: bool) -
 				surface_play_audio_cue(audio_cue, {
 					"action": hovered_surface_action,
 					"index": hovered_surface_index,
-				})
+				}, _surface_audio_authority)
 			surface_action.emit(hovered_surface_action, hovered_surface_index, confirm_requested)
 			accept_event()
 			return
@@ -1203,7 +1266,7 @@ func _process(delta: float) -> void:
 		return
 	_flush_captured_pointer_move()
 	if transient_surface_loop_deadline_msec > 0 and Time.get_ticks_msec() >= transient_surface_loop_deadline_msec:
-		surface_stop_audio_loop(transient_surface_loop_id)
+		surface_stop_audio_loop(transient_surface_loop_id, _surface_audio_authority)
 	# Reduced motion freezes presentation clocks and redraws, not state-driven
 	# audio. Sync before the visual early return so completed actions still land
 	# their terminal cues without advancing any presentation state.
@@ -1292,6 +1355,8 @@ func _ensure_surface_sfx_player() -> void:
 	if surface_sfx_player != null:
 		return
 	surface_sfx_player = SfxPlayerScript.new()
+	if surface_sfx_player.has_method("bind_surface_audio_authority"):
+		surface_sfx_player.call("bind_surface_audio_authority", _surface_audio_authority)
 	if surface_sfx_player.has_signal("music_cue_requested"):
 		surface_sfx_player.music_cue_requested.connect(_on_surface_sfx_music_cue)
 	add_child(surface_sfx_player)
@@ -1409,8 +1474,8 @@ func _sync_surface_audio() -> void:
 		return
 	_ensure_surface_sfx_player()
 	if surface_sfx_player.has_method("prewarm_surface_profile"):
-		surface_sfx_player.call("prewarm_surface_profile", profile_id)
-	surface_sfx_player.sync_surface_state(state, sync_spec, _surface_audio_timing(sync_spec))
+		surface_sfx_player.call("prewarm_surface_profile", profile_id, _surface_audio_authority)
+	surface_sfx_player.sync_surface_state(state, sync_spec, _surface_audio_timing(sync_spec), _surface_audio_authority)
 
 
 func _surface_audio_timing(sync_spec: Dictionary) -> Dictionary:
@@ -1490,8 +1555,11 @@ func _surface_animation_redraw_due(delta: float) -> bool:
 
 
 func _web_idle_animation_interval() -> float:
-	var requested_fps := clampf(float(state.get("surface_web_idle_animation_fps", DEFAULT_WEB_IDLE_ANIMATION_FPS)), DEFAULT_WEB_IDLE_ANIMATION_FPS, SURFACE_ANIMATION_FPS)
-	return 1.0 / requested_fps
+	return 1.0 / _requested_web_idle_animation_fps()
+
+
+func _requested_web_idle_animation_fps() -> float:
+	return clampf(float(state.get("surface_web_idle_animation_fps", DEFAULT_WEB_IDLE_ANIMATION_FPS)), DEFAULT_WEB_IDLE_ANIMATION_FPS, SURFACE_ANIMATION_FPS)
 
 
 func _scale_canvas() -> void:
@@ -1692,7 +1760,7 @@ func _set_hovered_surface_region(local_position: Vector2) -> void:
 					return
 				var audio_cue := _surface_action_audio_cue(next_action)
 				if not audio_cue.is_empty():
-					surface_play_audio_cue(audio_cue, {"action": next_action, "index": next_index})
+					surface_play_audio_cue(audio_cue, {"action": next_action, "index": next_index}, _surface_audio_authority)
 				surface_action.emit(next_action, next_index, false)
 			return
 	if hovered_surface_action.is_empty():
@@ -1879,6 +1947,17 @@ func _draw_foundation_play_overlay() -> void:
 		var back_rect := Rect2(776, 22, 86, 34)
 		if _surface_renderer() == "card_machine":
 			back_rect = Rect2(806, 22, 86, 34)
+		var authored_back_rect: Variant = state.get("surface_back_rect", {})
+		if typeof(authored_back_rect) == TYPE_DICTIONARY:
+			var authored: Dictionary = authored_back_rect
+			var candidate := Rect2(
+				float(authored.get("x", back_rect.position.x)),
+				float(authored.get("y", back_rect.position.y)),
+				float(authored.get("w", back_rect.size.x)),
+				float(authored.get("h", back_rect.size.y))
+			)
+			if candidate.has_area():
+				back_rect = candidate
 		_draw_surface_back_control(back_rect)
 		if surface_game_module == null:
 			_draw_foundation_control_strip(Rect2(22, 248, 856, 72), true)

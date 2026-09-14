@@ -15,6 +15,27 @@ Assert-ClockContract -Condition (-not (Test-CoinPusherIdleSchedulerEvidence -Cou
 $missingSchedulerElapsed = [pscustomobject]@{ surface_animation_redraw_count = 16 }
 Assert-ClockContract -Condition (-not (Test-CoinPusherIdleSchedulerEvidence -Counters $missingSchedulerElapsed)) -Message "Missing production scheduler elapsed time was accepted."
 
+$eligibleDrawTags = [pscustomobject]@{ draw_sampling = [pscustomobject]@{ warmup_samples = 3; target_samples = 64; sample_frames = 946; sample_count = 64; complete = $true; p95_percentile = 0.95; p95_rank = 61; probe_interval_frames = 15 } }
+$eligibleDrawCounters = [pscustomobject]@{ draw_sample_count = 64; draw_sample_buffer_count = 64; draw_frame_usec_samples = @(1..64) }
+Assert-ClockContract -Condition (Test-CoinPusherDrawSamplingEvidence -ScenarioTags $eligibleDrawTags -Counters $eligibleDrawCounters) -Message "Eligible warmed fixed 64-draw percentile evidence was rejected."
+$sparseDrawCounters = $eligibleDrawCounters.PSObject.Copy()
+$sparseDrawCounters.draw_sample_count = 63
+$sparseDrawCounters.draw_sample_buffer_count = 63
+$sparseDrawCounters.draw_frame_usec_samples = @(1..63)
+Assert-ClockContract -Condition (-not (Test-CoinPusherDrawSamplingEvidence -ScenarioTags $eligibleDrawTags -Counters $sparseDrawCounters)) -Message "Incomplete 63-draw percentile evidence was accepted."
+$coldDrawTags = $eligibleDrawTags.PSObject.Copy()
+$coldDrawTags.draw_sampling = $eligibleDrawTags.draw_sampling.PSObject.Copy()
+$coldDrawTags.draw_sampling.warmup_samples = 2
+Assert-ClockContract -Condition (-not (Test-CoinPusherDrawSamplingEvidence -ScenarioTags $coldDrawTags -Counters $eligibleDrawCounters)) -Message "Under-warmed draw percentile evidence was accepted."
+$incompleteDrawTags = $eligibleDrawTags.PSObject.Copy()
+$incompleteDrawTags.draw_sampling = $eligibleDrawTags.draw_sampling.PSObject.Copy()
+$incompleteDrawTags.draw_sampling.complete = $false
+Assert-ClockContract -Condition (-not (Test-CoinPusherDrawSamplingEvidence -ScenarioTags $incompleteDrawTags -Counters $eligibleDrawCounters)) -Message "An explicitly incomplete fixed draw window was accepted."
+$wrongRankDrawTags = $eligibleDrawTags.PSObject.Copy()
+$wrongRankDrawTags.draw_sampling = $eligibleDrawTags.draw_sampling.PSObject.Copy()
+$wrongRankDrawTags.draw_sampling.p95_rank = 60
+Assert-ClockContract -Condition (-not (Test-CoinPusherDrawSamplingEvidence -ScenarioTags $wrongRankDrawTags -Counters $eligibleDrawCounters)) -Message "Incorrect p95 rank was accepted."
+
 $pathRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot ".."))
 $validEvidencePath = Resolve-WebPerfEvidencePath -Root $pathRoot -Out ".tmp/fix06_14_unique/report.json"
 Assert-ClockContract -Condition ($validEvidencePath -eq [System.IO.Path]::GetFullPath((Join-Path $pathRoot ".tmp/fix06_14_unique/report.json"))) -Message "Valid relative evidence path was not resolved beneath the repository root."
@@ -26,15 +47,15 @@ foreach ($invalidOut in @("", (Join-Path $pathRoot "absolute.json"), "../escaped
 }
 
 $validObservation = [pscustomobject]@{
-    boundary_body_count = 300
+    boundary_body_count = 160
     boundary_tray_count = 0
-    observed_body_count = 296
+    observed_body_count = 156
     observed_tray_count = 2
     liveness_before = 0
     liveness_after = 32
     conservation = [pscustomobject]@{
-        active = 296; tray = 2; gutter = 2; collected = 0; cup_consumed = 0
-        origin = 300; accounted = 300; conservation_ok = $true; solver_invariants_present = $true; solver_conservation_ok = $true
+        active = 156; tray = 2; gutter = 2; collected = 0; cup_consumed = 0
+        origin = 160; accounted = 160; conservation_ok = $true; solver_invariants_present = $true; solver_conservation_ok = $true
     }
 }
 Assert-ClockContract -Condition (Test-CoinPusherReinstallClockObservation -Observation $validObservation) -Message "Valid live reinstall observation was rejected."
@@ -44,15 +65,15 @@ Assert-ClockContract -Condition (-not (Test-CoinPusherReinstallClockObservation 
 $fabricatedObservation = $validObservation.PSObject.Copy()
 $fabricatedObservation.conservation = $validObservation.conservation.PSObject.Copy()
 $fabricatedObservation.conservation.tray = 3
-$fabricatedObservation.conservation.accounted = 301
+$fabricatedObservation.conservation.accounted = 161
 Assert-ClockContract -Condition (-not (Test-CoinPusherReinstallClockObservation -Observation $fabricatedObservation)) -Message "Fabricated reinstall body was accepted."
 $lostObservation = $validObservation.PSObject.Copy()
 $lostObservation.conservation = $validObservation.conservation.PSObject.Copy()
 $lostObservation.conservation.gutter = 1
-$lostObservation.conservation.accounted = 299
+$lostObservation.conservation.accounted = 159
 Assert-ClockContract -Condition (-not (Test-CoinPusherReinstallClockObservation -Observation $lostObservation)) -Message "Lost reinstall body was accepted."
 $mismatchedObservation = $validObservation.PSObject.Copy()
-$mismatchedObservation.observed_body_count = 295
+$mismatchedObservation.observed_body_count = 155
 Assert-ClockContract -Condition (-not (Test-CoinPusherReinstallClockObservation -Observation $mismatchedObservation)) -Message "Reinstall surface/conservation body mismatch was accepted."
 $missingInvariantObservation = $validObservation.PSObject.Copy()
 $missingInvariantObservation.conservation = $validObservation.conservation.PSObject.Copy()
@@ -71,12 +92,12 @@ $missingZeroBoundaryObservation = $validObservation.PSObject.Copy()
 $missingZeroBoundaryObservation.PSObject.Properties.Remove("boundary_tray_count")
 Assert-ClockContract -Condition (-not (Test-CoinPusherReinstallClockObservation -Observation $missingZeroBoundaryObservation)) -Message "Missing zero-valued reinstall boundary field was accepted."
 
-$reducedBoundary = [pscustomobject]@{ body_count = 296; tray_count = 2; liveness_ticks = 48; conservation = $validObservation.conservation }
-$reducedFixture = [pscustomobject]@{ body_count = 300 }
-$reducedScenario = [pscustomobject]@{ body_count_before = 296; tray_count_before = 2; solver_liveness_before = 48; conservation_before = $validObservation.conservation }
-Assert-ClockContract -Condition (Test-CoinPusherReducedSampleBoundary -Fixture $reducedFixture -Boundary $reducedBoundary -ScenarioTags $reducedScenario) -Message "Known 300-boundary/296-sample transition was rejected."
+$reducedBoundary = [pscustomobject]@{ body_count = 156; tray_count = 2; liveness_ticks = 48; conservation = $validObservation.conservation }
+$reducedFixture = [pscustomobject]@{ body_count = 160 }
+$reducedScenario = [pscustomobject]@{ body_count_before = 156; tray_count_before = 2; solver_liveness_before = 48; conservation_before = $validObservation.conservation }
+Assert-ClockContract -Condition (Test-CoinPusherReducedSampleBoundary -Fixture $reducedFixture -Boundary $reducedBoundary -ScenarioTags $reducedScenario) -Message "Known 160-boundary/156-sample transition was rejected."
 $reducedCountMismatch = $reducedScenario.PSObject.Copy()
-$reducedCountMismatch.body_count_before = 295
+$reducedCountMismatch.body_count_before = 155
 Assert-ClockContract -Condition (-not (Test-CoinPusherReducedSampleBoundary -Fixture $reducedFixture -Boundary $reducedBoundary -ScenarioTags $reducedCountMismatch)) -Message "Reduced sample body-count mismatch was accepted."
 $reducedTrayMismatch = $reducedScenario.PSObject.Copy()
 $reducedTrayMismatch.tray_count_before = 1
@@ -84,13 +105,13 @@ Assert-ClockContract -Condition (-not (Test-CoinPusherReducedSampleBoundary -Fix
 $reducedLivenessMismatch = $reducedScenario.PSObject.Copy()
 $reducedLivenessMismatch.solver_liveness_before = 49
 Assert-ClockContract -Condition (-not (Test-CoinPusherReducedSampleBoundary -Fixture $reducedFixture -Boundary $reducedBoundary -ScenarioTags $reducedLivenessMismatch)) -Message "Reduced sample liveness-boundary mismatch was accepted."
-$reducedAfterMismatch = [pscustomobject]@{ body_count_after = 295; tray_count_after = 2; conservation_after = $validObservation.conservation }
-Assert-ClockContract -Condition (-not (Test-CoinPusherSurfaceConservationBinding -BodyCount $reducedAfterMismatch.body_count_after -TrayCount $reducedAfterMismatch.tray_count_after -Snapshot $reducedAfterMismatch.conservation_after -ExpectedOrigin 300)) -Message "Reduced after-state surface/conservation mismatch was accepted."
+$reducedAfterMismatch = [pscustomobject]@{ body_count_after = 155; tray_count_after = 2; conservation_after = $validObservation.conservation }
+Assert-ClockContract -Condition (-not (Test-CoinPusherSurfaceConservationBinding -BodyCount $reducedAfterMismatch.body_count_after -TrayCount $reducedAfterMismatch.tray_count_after -Snapshot $reducedAfterMismatch.conservation_after -ExpectedOrigin $CoinPusherShippedBodyCount)) -Message "Reduced after-state surface/conservation mismatch was accepted."
 $validReducedEvidence = [pscustomobject]@{
     frame_time_ms = [pscustomobject]@{ count = 120 }
     tags = [pscustomobject]@{
         solver_liveness_delta = 480; solver_liveness_before = 48
-        body_count_before = 296; body_count_after = 290
+        body_count_before = 156; body_count_after = 150
         tray_count_before = 2; tray_count_after = 0
         conservation_before = $validObservation.conservation
         conservation_after = $validObservation.conservation
@@ -114,18 +135,18 @@ $missingReducedDraw.tags.canvas_after.PSObject.Properties.Remove("draw_sample_co
 Assert-ClockContract -Condition (-not (Test-CoinPusherReducedEvidenceSchema -Scenario $missingReducedDraw)) -Message "Missing reduced draw field was accepted."
 
 $validCollect = [pscustomobject]@{
-    body_count_at_accept = 299
-    body_count_after = 295
+    body_count_at_accept = 159
+    body_count_after = 155
     tray_count_at_accept = 0
     tray_count_after = 2
     tray_value_at_accept = 0
     conservation_at_accept = [pscustomobject]@{
-        active = 299; tray = 0; gutter = 0; collected = 1; cup_consumed = 0
-        origin = 300; accounted = 300; conservation_ok = $true; solver_invariants_present = $true; solver_conservation_ok = $true
+        active = 159; tray = 0; gutter = 0; collected = 1; cup_consumed = 0
+        origin = 160; accounted = 160; conservation_ok = $true; solver_invariants_present = $true; solver_conservation_ok = $true
     }
     conservation_after = [pscustomobject]@{
-        active = 295; tray = 2; gutter = 2; collected = 1; cup_consumed = 0
-        origin = 300; accounted = 300; conservation_ok = $true; solver_invariants_present = $true; solver_conservation_ok = $true
+        active = 155; tray = 2; gutter = 2; collected = 1; cup_consumed = 0
+        origin = 160; accounted = 160; conservation_ok = $true; solver_invariants_present = $true; solver_conservation_ok = $true
     }
 }
 Assert-ClockContract -Condition ([bool](Get-CoinPusherPostCollectAccounting -Tags $validCollect).valid) -Message "Legitimate post-COLLECT exits were rejected."
@@ -135,10 +156,10 @@ Assert-ClockContract -Condition (-not [bool](Get-CoinPusherPostCollectAccounting
 $droppedCollect = $validCollect.PSObject.Copy()
 $droppedCollect.conservation_after = $validCollect.conservation_after.PSObject.Copy()
 $droppedCollect.conservation_after.gutter = 1
-$droppedCollect.conservation_after.accounted = 299
+$droppedCollect.conservation_after.accounted = 159
 Assert-ClockContract -Condition (-not [bool](Get-CoinPusherPostCollectAccounting -Tags $droppedCollect).valid) -Message "Dropped post-COLLECT outcome channel was accepted."
 $collectAcceptMismatch = $validCollect.PSObject.Copy()
-$collectAcceptMismatch.body_count_at_accept = 298
+$collectAcceptMismatch.body_count_at_accept = 158
 Assert-ClockContract -Condition (-not [bool](Get-CoinPusherPostCollectAccounting -Tags $collectAcceptMismatch).valid) -Message "COLLECT acceptance surface/conservation mismatch was accepted."
 $collectAfterMismatch = $validCollect.PSObject.Copy()
 $collectAfterMismatch.tray_count_after = 1

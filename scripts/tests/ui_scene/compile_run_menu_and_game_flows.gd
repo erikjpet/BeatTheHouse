@@ -5,6 +5,8 @@ const CoachViewModelScript := preload("res://scripts/ui/coach_view_model.gd")
 const CoinPusherLiveSessionScript := preload("res://scripts/games/coin_pusher/coin_pusher_live_session.gd")
 const CoinPusherSolverScript := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
 const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
+const HarnessProductionFidelityScript := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
+const LENDER_CONVERSATION_CONTEXT_MAX_CHARS := 512
 
 
 class EmbeddedCoachFixtureGame:
@@ -129,6 +131,11 @@ func _check_embedded_refresh_deferred_coach(_app: Control) -> bool:
 	var probe: Control = CoachLifecycleProbeHost.new()
 	probe.set("continuous_environment_clock_enabled", false)
 	root.add_child(probe)
+	if not bool(probe.call("_ensure_run_ui_built")):
+		push_error("Embedded coach probe could not synchronously complete its staged test UI.")
+		probe.queue_free()
+		return false
+	probe.call("_ensure_full_content_library_loaded")
 	await process_frame
 	await process_frame
 	if not bool(probe.call("uses_foundation_runtime")):
@@ -194,9 +201,9 @@ func _check_embedded_refresh_deferred_coach(_app: Control) -> bool:
 
 func _check_normal_coach_lifecycle_rollback(existing_probe: Control = null) -> bool:
 	const OLD_TIP_ID := "tip06_tonight_changes_rooms"
-	const OLD_TIP_COPY := "Tonight changes a room. Listen before you settle in; a rumor here can sharpen another stop on the map."
+	const OLD_TIP_COPY := "Tonight's scenario changes this room. Read the objective: it says what can change and what ends the night."
 	const NEXT_TIP_ID := "tip06_delivery_route"
-	const NEXT_TIP_COPY := "That package is contraband. Every action spends the deadline. The map marks real stops; choose your route."
+	const NEXT_TIP_COPY := "Crew jobs have action deadlines. Packages follow stops; lookout holds stay until the watch ends. Contraband raises risk."
 	var failure_probe := await _normal_coach_lifecycle_probe(true, existing_probe)
 	if failure_probe == null:
 		return false
@@ -289,6 +296,7 @@ func _normal_coach_lifecycle_probe(reject_delivery: bool, existing_probe: Contro
 	(probe.get("lifecycle_refresh_copies") as Array).clear()
 	(probe.get("lifecycle_refresh_tweens") as Array).clear()
 	(probe.get("lifecycle_refresh_parent_indexes") as Array).clear()
+	probe.call("_ensure_full_content_library_loaded")
 	var library: ContentLibrary = probe.get("library")
 	var run := CoachLifecycleDeliveryRun.new()
 	run.reject_delivery = reject_delivery
@@ -391,6 +399,10 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 	# Disable it again before the first frame so no automatic realtime advance can
 	# race the fixture, while child layout and viewport drawing continue normally.
 	probe.set_process(false)
+	if not bool(probe.call("_ensure_run_ui_built")):
+		push_error("Coin Pusher draw-frame probe could not synchronously complete its staged test UI.")
+		probe.queue_free()
+		return false
 	await process_frame
 	await process_frame
 	probe.call("start_game_test_session", "coin_pusher")
@@ -513,9 +525,31 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 					and final_projection_applied and str(probe.get("current_screen")) == "ENVIRONMENT" and zero_work_after
 			if not chunked_exit_passed:
 				push_error("Coin Pusher exit did not drain same-tick SKILL STOP, settle visibly across locked motor-on frames, or freeze absent: started=%s released=%s locked=%s frames=%d final=%s screen=%s zero=%s live=%s current_key=%s durable=%s." % [exit_started_visible, immediate_stop_exit_released, input_locked, settle_frames, final_projection_applied, str(probe.get("current_screen")), zero_work_after, JSON.stringify((game.get("_live_machines") as Dictionary).keys()), game.call("_live_key", run_state, run_state.current_environment), JSON.stringify(durable_exit)])
+			var lifecycle_abort_passed := false
+			if chunked_exit_passed:
+				# Reuse the completed fixture to cover the lifecycle race without
+				# paying for a second full game-test-room generation. With no live
+				# machine, the deferred path reaches its final presentation yield on
+				# the next frame, which is the exact seam the lifecycle transition
+				# must be able to cancel safely.
+				probe.set("current_game", game)
+				probe.set("game_exit_settle_active", true)
+				probe.call_deferred("_finish_chunked_game_exit")
+				await process_frame
+				var lifecycle_exit_started := bool(probe.get("game_exit_settle_active"))
+				probe.call("return_to_main_menu")
+				for _frame in range(4):
+					await process_frame
+				lifecycle_abort_passed = lifecycle_exit_started \
+						and not bool(probe.get("game_exit_settle_active")) \
+						and probe.get("current_game") == null \
+						and probe.get("run_state") == null \
+						and str(probe.get("current_screen")) == "START"
+			if not lifecycle_abort_passed:
+				push_error("Coin Pusher deferred exit did not cancel cleanly when a lifecycle transition cleared its game session: active=%s game=%s run=%s screen=%s." % [bool(probe.get("game_exit_settle_active")), probe.get("current_game"), probe.get("run_state"), str(probe.get("current_screen"))])
 			probe.queue_free()
 			await process_frame
-			return live_loop_passed and chunked_exit_passed
+			return live_loop_passed and chunked_exit_passed and lifecycle_abort_passed
 		var placeholder_passed: bool = game != null and game.get_id() == "coin_pusher" \
 				and str(probe.get("current_screen")) == "GAME" \
 				and probe.get("game_surface_canvas") == canvas \
@@ -1160,7 +1194,14 @@ func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 	app.call("close_world_map")
 	await process_frame
 	var tutorial_generator: RunGenerator = app.get("generator")
-	tutorial_generator.next_environment(run_state, "corner_store", true)
+	var corner_arrival_failures: Array = []
+	var corner_arrival := HarnessProductionFidelityScript.travel_and_finalize(
+		tutorial_generator, run_state, "corner_store", true, tutorial_generator.library,
+		corner_arrival_failures, "compiled tutorial Corner Store arrival"
+	)
+	if not bool(corner_arrival.get("ok", false)):
+		push_error(str(corner_arrival_failures.back()))
+		return false
 	app.call("_refresh")
 	await process_frame
 	await process_frame
@@ -1190,7 +1231,11 @@ func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 	if str(coach_snapshot.get("lesson_id", "")) != "tutorial_inspect_coffee" or not run_state.inventory.has("ledger_pencil"):
 		push_error("Buying Pencil early did not preserve Coffee as the active instruction: coach=%s inventory=%s." % [str(coach_snapshot), str(run_state.inventory)])
 		return false
-	if not bool(app.call("focus_interactable_object", "item:instant_coffee")):
+	# Use the real canvas-focus callback. A player click dismisses the completed
+	# purchase result before selecting the next shelf item; tutorial refocus does
+	# not own that transition.
+	app.call("_on_environment_object_focused", "item:instant_coffee")
+	if str(app.get("selected_object_id")) != "item:instant_coffee":
 		push_error("The remaining Instant Coffee could not be inspected after buying Pencil first.")
 		return false
 	for _shop_transition_frame in range(4):
@@ -1339,7 +1384,14 @@ func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 	app.call("close_world_map")
 	await process_frame
 	coach_overlay.call("notify_action", "travel:gas_station_casino")
-	tutorial_generator.next_environment(run_state, "gas_station_casino", true)
+	var gas_arrival_failures: Array = []
+	var gas_arrival := HarnessProductionFidelityScript.travel_and_finalize(
+		tutorial_generator, run_state, "gas_station_casino", true, tutorial_generator.library,
+		gas_arrival_failures, "compiled tutorial Gas Casino arrival"
+	)
+	if not bool(gas_arrival.get("ok", false)):
+		push_error(str(gas_arrival_failures.back()))
+		return false
 	app.call("_refresh")
 	await process_frame
 	var gas_departure_targets: Array = app.call("_travel_target_ids")
@@ -1511,7 +1563,7 @@ func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 				starter_card_in_run_inventory = true
 				break
 	if run_state == null or run_state.is_tutorial_run() or not bool(run_state.challenge_modifiers().get("grand_casino_prestige", false)) or not starter_card_in_run_inventory or str(coach_snapshot.get("lesson_id", "")).begins_with("tip_first_"):
-		push_error("First normal run after the tutorial did not carry the Players Card/prestige state or repeated an ambient tip.")
+		push_error("First normal run after the tutorial did not carry the Players Card/prestige state or repeated an ambient tip: tutorial=%s prestige=%s card=%s coach=%s modifiers=%s inventory=%s." % [str(run_state.is_tutorial_run() if run_state != null else null), str(run_state.challenge_modifiers().get("grand_casino_prestige", false) if run_state != null else null), str(starter_card_in_run_inventory), str(coach_snapshot.get("lesson_id", "")), str(run_state.challenge_modifiers() if run_state != null else {}), str(run_state.inventory if run_state != null else [])])
 		return false
 	run_state.current_environment = {"id": "normal_grand_host_ui", "archetype_id": RunState.GRAND_CASINO_ARCHETYPE_ID}
 	app.call("_queue_normal_grand_host_greeting", {"id": "normal_previous_room", "archetype_id": "bar"})
@@ -4019,6 +4071,14 @@ func _check_lender_acceptance_does_not_open_motel_popup(app: Control) -> bool:
 		push_error("Crew lender did not resolve three visible unique identities with an authored lead voice: %s." % JSON.stringify(talk))
 		return false
 	var crew_entry: Dictionary = run_state.pending_talk_event(str(talk.get("event_id", "")))
+	var crew_context: Dictionary = crew_entry.get("context", {}) if typeof(crew_entry.get("context", {})) == TYPE_DICTIONARY else {}
+	var crew_context_json := JSON.stringify(crew_context)
+	if crew_context.has("environment_snapshot") \
+		or crew_context_json.length() > LENDER_CONVERSATION_CONTEXT_MAX_CHARS \
+		or crew_context_json.find("\"scenario_") >= 0 \
+		or crew_context_json.find("\"game_states\"") >= 0:
+		push_error("Crew lender queued an oversized environment/authority context: %s." % crew_context_json)
+		return false
 	var crew_speaker: Dictionary = crew_entry.get("speaker", {}) if typeof(crew_entry.get("speaker", {})) == TYPE_DICTIONARY else {}
 	var crew_members: Array = crew_speaker.get("members", []) if typeof(crew_speaker.get("members", [])) == TYPE_ARRAY else []
 	var unique_models := {}
@@ -4028,6 +4088,17 @@ func _check_lender_acceptance_does_not_open_motel_popup(app: Control) -> bool:
 	if unique_models.size() != 3:
 		push_error("Crew lender lineup did not preserve three distinct animated character models.")
 		return false
+	# A rejected environment-turn transaction must not consume the confirmed
+	# conversation. The player must be able to retry the same deal, and no partial
+	# cash or debt mutation may leak from the failed attempt.
+	run_state.set("_turn_transaction_test_failure_stage", "preflight")
+	app.call("_on_talk_dock_choice_requested", str(talk.get("event_id", "")), "accept")
+	await process_frame
+	var rejected_talk: Dictionary = app.call("current_talk_dock_snapshot")
+	if not bool(rejected_talk.get("visible", false)) or str(rejected_talk.get("event_id", "")) != str(talk.get("event_id", "")) or run_state.bankroll != 1 or not run_state.debt.is_empty():
+		push_error("Rejected lender acceptance consumed its retryable conversation or leaked a partial transaction: %s." % JSON.stringify(rejected_talk))
+		return false
+	run_state.set("_turn_transaction_test_failure_stage", "")
 	app.call("_on_talk_dock_choice_requested", str(talk.get("event_id", "")), "accept")
 	await process_frame
 	if bool((app.call("current_talk_dock_snapshot") as Dictionary).get("visible", false)):

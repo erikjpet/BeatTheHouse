@@ -201,7 +201,7 @@ static func _check_silas_availability_seam(failures: Array) -> void:
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("NUMBERS-SILAS-SURFACE")
 	var first_view: Dictionary = run_state.numbers_silas_status()
-	if bool(first_view.get("handle_available", true)) or first_view.keys() != ["handle_available"]:
+	if bool(first_view.get("handle_available", true)) or not bool(first_view.get("tip_available", false)) or first_view.keys() != ["tip_available", "handle_available"]:
 		failures.append("First Silas view advertised hidden handle knowledge or leaked extra discovery state.")
 	var silas_node := run_state.traveler_node("silas_snitch")
 	run_state.current_environment = {"id": silas_node, "archetype_id": silas_node, "world_node_id": silas_node, "turns": 0}
@@ -213,6 +213,9 @@ static func _check_silas_availability_seam(failures: Array) -> void:
 	var tip_result := run_state.numbers_buy_silas_tip(false)
 	if not bool(tip_result.get("ok", false)) or int(tip_result.get("price", 0)) != 12 or str(tip_result.get("message", "")).is_empty() or run_state.bankroll != bankroll_before - 12 or not bool(run_state.numbers_state.knowledge.get("silas_tip", false)):
 		failures.append("Visible Silas route-tip exchange did not charge $12 and save the authored hidden knowledge through production.")
+	var after_tip_bankroll := run_state.bankroll
+	if bool(run_state.numbers_buy_silas_tip(false).get("ok", false)) or run_state.bankroll != after_tip_bankroll or bool(run_state.numbers_silas_status().get("tip_available", true)):
+		failures.append("Silas route-tip exchange was not idempotent after the first purchase.")
 	run_state.numbers_state.hear_staggered_close_rumor("numbers_stagger:gas_late")
 	run_state.numbers_state.hear_staggered_close_rumor("numbers_stagger:corner_late")
 	if bool(run_state.numbers_silas_status().get("handle_available", true)):
@@ -453,6 +456,14 @@ static func _check_swept_collection_consequences(failures: Array) -> void:
 	if not bool(started.get("ok", false)):
 		failures.append("Complete swept-consequence fixture could not start Lucky's collection.")
 		return
+	var pickup := run_state.delivery_apply_physical_action("pickup", "numbers:sweep-pickup:%s" % str(run_state.active_delivery_run.get("run_id", "delivery")))
+	if not bool(pickup.get("ok", false)):
+		failures.append("Complete swept-consequence fixture could not pick up Lucky's collection cargo.")
+		return
+	# Beginning the route installs its authored pickup room. Move both the world
+	# cursor and room projection to the swept Bar before resolving that boundary.
+	run_state.world_map = NumbersWorldMapScript.enter_node(run_state.world_map, "bar", {})
+	run_state.current_environment = {"id": "bar", "archetype_id": "bar", "world_node_id": "bar", "turns": 0}
 	var trust_before := run_state.crew_trust("crew_lucky")
 	run_state.add_suspicion("fixture", 50, "test", false)
 	var heat_before := run_state.suspicion_level()
@@ -576,7 +587,7 @@ static func _check_midstate_save_load(failures: Array) -> void:
 		failures.append("RunState save/load changed active Lucky collection cargo or its real-map delivery state.")
 	var fix_run: RunState = RunStateScript.new()
 	fix_run.start_new("NUMBERS-SAVE-FIX")
-	fix_run.current_environment = {"id": "small_underground_casino", "archetype_id": "small_underground_casino", "world_node_id": "small_underground_casino", "turns": 0}
+	fix_run.set_environment({"id": "small_underground_casino", "archetype_id": "small_underground_casino", "world_node_id": "small_underground_casino", "turns": 0})
 	fix_run.numbers_state.fix_unlock(true)
 	fix_run.numbers_state.fix_begin_bribe()
 	fix_run.numbers_state.fix_record_bribe(true, {"clean": true, "fast": true})

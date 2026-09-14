@@ -9,6 +9,7 @@ const OperationRegistryScript := preload("res://scripts/core/scenario_operation_
 const ScenarioExtensionDispatchScript := preload("res://scripts/core/scenario_extension_dispatch.gd")
 const ScenarioLayoutResolverScript := preload("res://scripts/core/scenario_layout_resolver.gd")
 const VALIDATED_SEQUENCE_MARKER := "__scenario_sequence_runtime_validated"
+const RESOLVED_SEQUENCE_CATALOG_MARKER := "__scenario_sequence_catalog_resolved"
 const TRUSTED_STATE_REFERENCE_KEY := "_scenario_trusted_state_digest"
 const TRUSTED_LAYOUT_INPUT_DIGEST_KEY := "_scenario_trusted_layout_input_digest"
 const SEQUENCE_SUPPRESSION_KEY := "sequence_suppressed"
@@ -135,7 +136,8 @@ static func sequence_definition_for_environment(environment: Dictionary, preferr
 	# validation receipt so refresh/presentation reads never re-run the schema.
 	if not preferred.is_empty() \
 		and str(preferred.get("id", preferred.get("scenario_id", ""))).strip_edges() == scenario_id \
-		and bool(preferred.get(VALIDATED_SEQUENCE_MARKER, false)):
+		and (bool(preferred.get(VALIDATED_SEQUENCE_MARKER, false)) \
+			or (bool(preferred.get(RESOLVED_SEQUENCE_CATALOG_MARKER, false)) and not SequenceSchemaScript.is_sequence(preferred))):
 		return preferred
 	var candidate: Dictionary = {}
 	if not preferred.is_empty() and str(preferred.get("id", preferred.get("scenario_id", ""))).strip_edges() == scenario_id:
@@ -166,9 +168,9 @@ static func migrate_environment_sequence(environment: Dictionary, preferred: Dic
 		return {"ok": true, "changed": false, "active": false, "scenario_id": ""}
 	var scenario_id := str(legacy.get("id", ""))
 	if _sequence_is_suppressed(environment, preferred):
-		var suppressed_before := JSON.stringify(environment)
+		var suppressed_before := JSON.stringify(_sequence_migration_change_snapshot(environment))
 		_clear_environment_sequence(environment)
-		return {"ok": true, "changed": suppressed_before != JSON.stringify(environment), "active": false, "suppressed": true, "scenario_id": scenario_id, "definition": sequence_definition_for_environment(environment, preferred)}
+		return {"ok": true, "changed": suppressed_before != JSON.stringify(_sequence_migration_change_snapshot(environment)), "active": false, "suppressed": true, "scenario_id": scenario_id, "definition": sequence_definition_for_environment(environment, preferred)}
 	var definition := sequence_definition_for_environment(environment, preferred)
 	# A runtime installed before its content packages must leave legacy snapshots
 	# exactly alone. Once an overlay exists, migration is deterministic and in-place.
@@ -179,7 +181,11 @@ static func migrate_environment_sequence(environment: Dictionary, preferred: Dic
 	# phase/mutation fields remain the only active contract and stay byte-identical.
 	if not bool(environment.get("scenario_semantic_ready", false)):
 		return {"ok": true, "changed": false, "active": false, "pending": true, "scenario_id": scenario_id, "definition": definition}
-	var before := JSON.stringify(environment)
+	# Migration owns scenario-prefixed fields plus the four materialized gameplay
+	# catalogs below. Serializing the complete room here also serialized unrelated
+	# machine physics state twice (most visibly Coin Pusher) merely to populate the
+	# informational `changed` bit.
+	var before := JSON.stringify(_sequence_migration_change_snapshot(environment))
 	var migration := {
 		"schema_version": SequenceRuntimeScript.STATE_SCHEMA_VERSION,
 		"scenario_id": scenario_id,
@@ -188,7 +194,17 @@ static func migrate_environment_sequence(environment: Dictionary, preferred: Dic
 	}
 	environment["scenario_sequence_migration"] = migration
 	ensure_sequence_state(environment, definition, seed_token)
-	return {"ok": true, "changed": before != JSON.stringify(environment), "active": true, "scenario_id": scenario_id, "definition": definition}
+	return {"ok": true, "changed": before != JSON.stringify(_sequence_migration_change_snapshot(environment)), "active": true, "scenario_id": scenario_id, "definition": definition}
+
+
+static func _sequence_migration_change_snapshot(environment: Dictionary) -> Dictionary:
+	var snapshot: Dictionary = {}
+	for key_value in environment.keys():
+		var key := str(key_value)
+		if key.begins_with("scenario_") \
+				or key in [TRUSTED_STATE_REFERENCE_KEY, TRUSTED_LAYOUT_INPUT_DIGEST_KEY, "game_ids", "service_ids", "travel_hooks", "scenario_game_modifiers"]:
+			snapshot[key] = environment.get(key_value)
+	return snapshot
 
 
 static func ensure_sequence_state(environment: Dictionary, definition: Dictionary, seed_token: String = "") -> Dictionary:
@@ -1490,7 +1506,7 @@ static func _sequence_validation_receipts_match(definitions: Array, expected_cou
 
 static func _without_sequence_overlay(definition: Dictionary) -> Dictionary:
 	var result := definition.duplicate(true)
-	for key in ["sequence", "sequence_package_id", "sequence_handler_pack", "sequence_renderer_id", "sequence_authoring", VALIDATED_SEQUENCE_MARKER]:
+	for key in ["sequence", "sequence_package_id", "sequence_handler_pack", "sequence_renderer_id", "sequence_authoring", VALIDATED_SEQUENCE_MARKER, RESOLVED_SEQUENCE_CATALOG_MARKER]:
 		result.erase(key)
 	return result
 

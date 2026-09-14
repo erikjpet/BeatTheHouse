@@ -38,7 +38,7 @@ const SPATIAL_BINDINGS := {
 	"bar_fight_night":{"task_anchor":"fight_task","anchors":["fight_toppled_chair","fight_right_brawler"],"actor_anchors":{"right_brawler":"fight_right_brawler_arrival"},"object_anchors":{"door_buffer":"fight_door_buffer"}},
 	"bar_payday_rush":{"task_anchor":"payday_task","anchors":["payday_order_rail","payday_runner"]},
 	"bar_lock_in":{"task_anchor":"lockin_task","anchors":["lockin_shutters","lockin_regular"]},
-	"bar_darts_league_night":{"task_anchor":"darts_task","anchors":["darts_oche","darts_scorer"],"actor_anchors":{"darts_scorer":"darts_scorer"}},
+	"bar_darts_league_night":{"task_anchor":"darts_task","anchors":["darts_oche","darts_scorer"],"actor_anchors":{"league_captain":"darts_captain","darts_scorer":"darts_scorer"}},
 	"bar_live_band":{"task_anchor":"live_band_task","anchors":["live_band_speakers","live_band_runner"],"actor_anchors":{"band_leader":"live_band_leader_arrival"}},
 	"bar_dead_tuesday":{"task_anchor":"dead_tuesday_task","anchors":["dead_tuesday_bartender"],"object_anchors":{"booth_zone":"dead_tuesday_booth"},"actor_anchors":{"lone_patron":"dead_tuesday_lone_patron"}},
 	"jazz_club_guest_legend":{"task_anchor":"guest_legend_task","anchors":["guest_legend_table","guest_legend_stage_manager"],"actor_anchors":{"stage_manager":"guest_legend_manager_arrival"}},

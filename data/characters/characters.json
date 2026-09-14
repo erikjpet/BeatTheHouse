@@ -25,7 +25,11 @@
           "Engine is running. Take the package and keep us on schedule.",
           "Your marker is up. One clean delivery makes it smaller.",
           "No hero work. Address, package, goodbye."
-        ]
+        ],
+        "poker_heads_up": ["Just us now. Roads get simpler when the exits disappear.", "Take your time. Bad turns announce themselves."],
+        "poker_raise": ["That is a lot of road for two cards. You sure about the fuel?", "I raised. You can still take the clean exit."],
+        "poker_river": ["Last turn. Pick a lane.", "River is down. No more detours."],
+        "poker_big_pot": ["Pot is heavy. Leave yourself a way home.", "Big load in the middle. Drive steady."]
       }
     },
     "encounters": [
@@ -66,7 +70,11 @@
           "A small package needs a discreet new friend. Tonight, that's you.",
           "We kept our promise. Now make our delivery look effortless.",
           "Smile like it was your idea and move like nobody owns you."
-        ]
+        ],
+        "poker_heads_up": ["Only you and me, darling. Now the hand has manners.", "No audience left. You may stop performing whenever you like."],
+        "poker_raise": ["A graceful raise still asks an ugly question.", "You can call, sweetheart. I would admire the optimism."],
+        "poker_river": ["The river is so final. Try not to take it personally.", "Five cards shared, and somehow the mistake is still private."],
+        "poker_big_pot": ["Friendly money looks lovely in a serious pile.", "That pot deserves confidence. Real or otherwise."]
       }
     },
     "encounters": [
@@ -107,7 +115,11 @@
           "Package. Address. No detours. Then we can all stay friendly.",
           "Time to earn the part where we didn't charge interest.",
           "I wrote it down so nobody gets creative. Especially you."
-        ]
+        ],
+        "poker_heads_up": ["Just us. Good. Less waiting.", "Fold or fight. Either one moves things along."],
+        "poker_raise": ["I put chips in. You putting courage in?", "Big bet. Short speech. Your move."],
+        "poker_river": ["That is the river. Excuses are out of cards.", "Last card. Make the call or save us both time."],
+        "poker_big_pot": ["That pile is worth leaning on.", "Enough chips in there to make this interesting."]
       }
     },
     "encounters": [
@@ -148,7 +160,11 @@
           "Route is clean for six minutes. Grab the package and move.",
           "Eyes are looking elsewhere right now. That's your window.",
           "If you're still here when I blink twice, you missed it."
-        ]
+        ],
+        "poker_heads_up": ["Heads up. Window is closing.", "Everyone else bailed. Faster game now."],
+        "poker_raise": ["Raise is live. Decide before your face does.", "I moved. Keep up or get out."],
+        "poker_river": ["River. Clock is imaginary, pressure is not.", "Last card landed. Your window is now."],
+        "poker_big_pot": ["Pot got loud. Room got quiet.", "That stack in the middle is changing the tempo."]
       }
     },
     "encounters": [
@@ -189,7 +205,11 @@
           "The handoff has three steps. Follow them in order and nobody needs a fourth.",
           "Your delivery window is open. Missing it creates unnecessary variables.",
           "This favor is tidy. Try not to wrinkle it."
-        ]
+        ],
+        "poker_heads_up": ["One opponent remains. Your uncertainty is now measurable.", "Heads up simplifies the tree. It does not improve your branch."],
+        "poker_raise": ["The raise is proportionate. Your discomfort is not evidence.", "Price updated. Recalculate before you answer."],
+        "poker_river": ["The sample is complete. Commit to your conclusion.", "No future cards remain to rescue the estimate."],
+        "poker_big_pot": ["The pot is large enough to punish approximate thinking.", "More chips do not make a weak inference precise."]
       }
     },
     "encounters": [
@@ -230,7 +250,11 @@
           "The Crew is exercising one favor. Complete the delivery and the record changes.",
           "A promise is most valuable when collected at the proper hour.",
           "Tonight is the proper hour. The rest is presentation."
-        ]
+        ],
+        "poker_heads_up": ["Let the record show that only two claims remain.", "We may now dispense with testimony from the other chairs."],
+        "poker_raise": ["My raise is entered. Your response may amend the record.", "The table recognizes the motion. Do you?"],
+        "poker_river": ["The evidence is complete. Render your decision.", "No further exhibits. Call, fold, or concede the argument."],
+        "poker_big_pot": ["The amount in dispute is now material.", "A substantial pot has a way of clarifying weak positions."]
       }
     },
     "encounters": [
@@ -271,7 +295,11 @@
           "Good news: the package is small. Better news: they're watching somebody else.",
           "Your lucky favor just came in. Run it fast and we both look brilliant.",
           "Tiny errand, big suspense. Try not to make it literature."
-        ]
+        ],
+        "poker_heads_up": ["Just you and me! This is where the story gets expensive.", "Everybody else folded. Excellent taste, terrible timing."],
+        "poker_raise": ["I raised! It felt lucky before I counted it.", "More chips, more suspense. You are welcome."],
+        "poker_river": ["River card! Future us is about to have opinions.", "Last card. Let us make a memory or a mistake."],
+        "poker_big_pot": ["Look at that pile! It practically has a personality.", "The pot got enormous while nobody was supervising us."]
       }
     },
     "encounters": [

@@ -305,6 +305,13 @@ func resolve_bonus_action(machine: Dictionary, action_id: String, rng: RngStream
 	_apply_bonus_step_display(machine, family_id, active_before, step)
 	var complete := bool(step.get("complete", false))
 	var award := maxi(0, int(step.get("award", 0)))
+	# Pinball's live simulation accumulates a feature total between inputs. That
+	# total is presentation state until the feature completes; paying individual
+	# steps and then paying the full total at settlement credits the same hits
+	# twice. Publish exactly one award from the completion result.
+	if family_id == "pinball" and not complete:
+		award = 0
+		step["award"] = 0
 	if complete and award <= 0:
 		award = _bonus_completion_award_from_step(step)
 		if award > 0:

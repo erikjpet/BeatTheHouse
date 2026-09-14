@@ -20,7 +20,8 @@ quiesced baseline recorded by exact commit:
 - quiescence witnesses: `0814cec1` (worker) and `a41d9339` (director)
 - host precondition: zero Godot, compiler, or gate processes; three CPU samples
   of 8.620%, 18.961%, and 11.060%
-- exercised Coin Pusher fixture: 300 bodies
+- exercised Coin Pusher fixture: historical 300-body live stress workload,
+  not the current shipped cap
 - Coin Pusher active frame/draw/resolve milliseconds:
   - drop: 18.618 / 5.887 / 14.884
   - carriage: 13.950 / 5.307 / 11.828
@@ -126,7 +127,7 @@ mean/p95/max. Web startup rows record cold and warm cache separately.
 | Baccarat | betting idle; deal/reveal; cheat/skill surface; resolve/payout; staged ritual sequence |
 | Roulette | betting idle; spin; post-spin animation; cheat/skill surface; resolve/payout; staged ritual sequence |
 | Video Poker | idle; wager/draw/hold; double-up/feature; payout; staged ritual sequence |
-| Coin Pusher | shipped-cap idle; drop; carriage; skill stop; skill release; collect; raw solver; ceiling refusal; staged ritual sequence |
+| Coin Pusher | exact 160-body shipped-cap idle/drop/carriage/skill stop/skill release/collect; separate raw 300-body solver stress; ceiling refusal; staged ritual sequence |
 
 The final inventory must add every Family 1 or Family 2 game/surface that lands
 after this prestage; absence from this table is not an exemption.
