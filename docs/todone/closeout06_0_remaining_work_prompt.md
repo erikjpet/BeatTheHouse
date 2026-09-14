@@ -1,4 +1,4 @@
-Status: TODO — single worker agent, drives the remaining 0.6 todo list to the owner playtest
+Status: SUPERSEDED — historical closeout prompt archived during two-branch consolidation
 
 # Agent Prompt — closeout06_0: Finish the 0.6 Todo List
 

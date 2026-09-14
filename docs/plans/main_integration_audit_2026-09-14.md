@@ -31,10 +31,11 @@ that boundary remains an explicit blocker.
 
 ## Explicitly excluded
 
-The placement experiment is parked on `codex/reusable-environment-slots` at
-`b182b3c6`. It is not merged. The owner rejected this approach because adding
-many new objects requires a room-construction rethink rather than extending the
-current slot-placement model.
+The placement experiment at historical commit `b182b3c6` was not merged. The
+owner rejected this approach because adding many new objects requires a
+room-construction rethink rather than extending the current slot-placement
+model. Its branch and generated review artifacts were deleted during the
+two-branch custody cleanup.
 
 ## Verification on the integrated candidate
 

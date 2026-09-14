@@ -1,4 +1,4 @@
-Status: TODO — single worker agent; lands `env06_8` and drives the 0.6 board to the owner playtest
+Status: SUPERSEDED — historical closeout prompt archived during two-branch consolidation
 Board rows: `env06_8`, `integ06_1`, `perf06_1`, `playtest06_2`, `playtest06_1` in `docs/todo/README_0_6_board.md`
 Supersedes: `closeout06_0_remaining_work_prompt.md` (its ordering is still correct; this prompt replaces its starting state)
 

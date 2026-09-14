@@ -21,9 +21,10 @@ The build is playable but not release-ready. The full Contract suite still
 fails at the room-construction/finalization boundary: generated overlap and
 route rejection, Grand Casino slot-bank placement, and placement-dependent
 golden drift remain open. The attempted reusable spawn-slot placement approach
-is preserved on `codex/reusable-environment-slots` at `b182b3c6`, explicitly
-rejected for integration, and absent from `main`. Performance/platform and
-release work stays parked until an accepted placement redesign lands.
+was explicitly rejected, excluded from `main`, and deleted during the
+two-branch custody cleanup. Performance/platform and release work stays parked
+until an accepted placement redesign lands. Deferred code may exist only on
+`codex/wip-0.6-consolidated`.
 The exact integration inventory, verification matrix, playtest path, and failure
 census are recorded in `../plans/main_integration_audit_2026-09-14.md`.
 
@@ -270,7 +271,7 @@ the owner's playtest is expected to change.
 
 | ID | Prompt | Status | Depends on | Notes |
 | --- | --- | --- | --- | --- |
-| placement01 | parked branch `b182b3c6` | PARKED | owner-approved room-construction redesign | The spawn-slot/fixture experiment is preserved on `codex/reusable-environment-slots` but rejected for integration. Do not merge or continue it; rethink rooms for the expanded object inventory first. |
+| placement01 | rejected experiment deleted; replacement not started | PARKED | owner-approved room-construction redesign | The spawn-slot/fixture experiment was assessed, rejected, and removed without entering `main` or the consolidated WIP tree. Rethink rooms for the expanded object inventory before implementation. |
 | voice06_1 | `voice06_1_voice_pass_prompt.md` | PARKED | post-playtest final content | A full register pass must read final strings. Running it before the playtest burns effort on copy that is about to be rewritten. |
 | release06_1 | `release06_1_ship_prompt.md` | PARKED | post-polish | The only task that performs release activity (version, balance, packaging, tag, publish, owner gates). Unpark when the owner declares the polish pass complete. |
 
@@ -484,11 +485,12 @@ series. The current order is now binding:
   structural/playability bar and requires a fresh independent review.
 
 - **env06_8 — alternate stale-branch contract: ANSWERED; no port
-  (2026-09-06).** `codex/closeout06-final` retains a different 815-line
+  (2026-09-06).** The retired `codex/closeout06-final` history contained a different 815-line
   environment contract plus geometry, hidden-boundary and all-scenario capture
   tools that are absent from the clean candidate's 1,057-line contract. Should
-  any of those checks be ported? Owner decision: **no port**. Preserve the stale
-  branch unchanged and do not mix its contract into the playtest fast path.
+  any of those checks be ported? Owner decision: **no port**. Keep that stale
+  implementation out of the active trees and do not mix its contract into the
+  playtest fast path. The obsolete branch ref was deleted on 2026-09-14.
 
 ## Logs and history
 

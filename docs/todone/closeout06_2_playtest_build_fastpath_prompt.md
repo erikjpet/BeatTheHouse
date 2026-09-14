@@ -1,4 +1,4 @@
-Status: TODO — single worker agent; owner-directed re-sequencing to a playtestable build
+Status: SUPERSEDED — historical closeout prompt archived during two-branch consolidation
 Board rows: `env06_8` (re-scoped), `fix06_26` (new), `integ06_1`, `playtest06_1` in `docs/todo/README_0_6_board.md`
 Supersedes: `closeout06_1_env06_8_landing_and_board_completion_prompt.md`
 Owner decision date: 2026-09-06

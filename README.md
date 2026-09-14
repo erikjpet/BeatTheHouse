@@ -499,8 +499,9 @@ before store submission.
 ## Known Release Limitations
 
 - Current 0.6 `main` is not release-ready. Room construction does not reliably
-  accommodate the expanded object inventory; the rejected placement experiment
-  is parked on `codex/reusable-environment-slots` and is not part of `main`.
+  accommodate the expanded object inventory. The rejected reusable-slot
+  placement experiment was assessed and deleted during the two-branch custody
+  cleanup; it was never merged into `main`.
 - Tutorial pointer overlays can partially cover the center of the action they
   describe. The merged player path remains operable through the exposed part of
   the target, but the composition should be corrected during the room/UI
@@ -534,6 +535,11 @@ before store submission.
   mutation.
 
 ## Cleanup Policy
+
+The repository has exactly two durable branches: `main` for accepted work and
+`codex/wip-0.6-consolidated` for explicitly deferred work. Do not leave a task
+on its own durable branch; land it on `main`, consolidate it into the WIP
+branch, or delete it after review.
 
 Keep the repository focused on runnable source, current specs, source assets, and
 intentional documentation. Do not commit generated Godot caches, import products,
