@@ -1,4 +1,4 @@
-Status: TODO — owner-reported regression; blocking for playtest quality
+Status: SUPERSEDED — absorbed into the completed env06_8/fix06_28 work and the owner-directed replacement placement redesign
 Board row: `fix06_25` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — fix06_25: Environment Object Presentation and Consequence Feedback

@@ -215,7 +215,7 @@ for the owner.
   zero in section 0.
 - **Harness fidelity (`qa06_1`).** Five prior incidents where harnesses
   reimplemented the host instead of driving it, plus finding zero above.
-  `docs/todo/refine06_1_harness_fidelity_and_room_finalization_prompt.md` holds
+  `docs/todone/refine06_1_harness_fidelity_and_room_finalization_prompt.md` holds
   the full audit. **Pull its shared arrive/activate helpers forward into this
   row** — you cannot trust your own verification without them.
 
@@ -236,7 +236,7 @@ Two failure modes have repeatedly produced false results in this program:
   identity.** `tools/foundation_visual_qa.gd` clicks `travel:motel_room`
   ("Room Door") instead of `travel:leave` for this reason, producing a false
   "broken world map" plus twenty cascading failures. Root cause and fix are in
-  `docs/todo/playtest06_current_source_bug_investigation_2026-09-07.md`.
+  `docs/todone/playtest06_current_source_bug_investigation_2026-09-07.md`.
 
 ## 6. Acceptance
 

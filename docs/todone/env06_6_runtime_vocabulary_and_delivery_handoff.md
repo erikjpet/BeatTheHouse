@@ -1,6 +1,6 @@
 # env06_6 runtime vocabulary and delivery handoff
 
-Status: CONTRACT HANDOFF — implementation-independent; not a review verdict or landing authorization.
+Status: HISTORICAL / SUPERSEDED — env06_6 landed and closed; former custody branches and worktrees were deleted after the 2026-09-14 branch audit.
 
 ## 1. Custody, state, and provenance
 

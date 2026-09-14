@@ -1,4 +1,5 @@
-Status: TODO — measurement prestage and broad smoke data landed; the full platform pass has not run
+Status: PARKED — the current preparation is consolidated on `codex/wip-0.6-consolidated`; the binding platform pass waits for accepted placement
+Controlling continuation: `perf06_1_finish_and_qualify_prompt.md`
 Board row: `perf06_1` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — 0.6 perf06_1: Performance and Platform Pass

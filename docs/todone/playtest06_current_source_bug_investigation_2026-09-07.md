@@ -1,4 +1,4 @@
-Status: TODO — investigated and root-caused; implementation intentionally not started
+Status: DONE / SUPERSEDED — the exact-target harness correction landed through qa06_1/fix06_27 and is regression-covered on main
 Priority: P1 test-infrastructure defect because it blocks the required playability sweep and misreports working gameplay as broken
 Investigation date: 2026-09-07
 

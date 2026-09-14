@@ -79,6 +79,17 @@ integration, performance, playtest, tutorial, game, or closeout families above.
 After a prune, origin exposes only `origin/main` and
 `origin/codex/wip-0.6-consolidated`.
 
+## Documentation reconciliation
+
+The README and active 0.6 board now describe accepted work as landed on
+`main`, not as a pending integration candidate. The board records the rejected
+placement experiment as deleted, makes placement the next owner-directed work,
+and keeps performance, the refreshed playtest, balance, polish, and release
+parked behind it. Four completed or superseded execution documents (`env06_6`,
+`fix06_25`, the exact-travel investigation, and the combined `qa06_1`/
+`fix06_27` prompt) were moved from `docs/todo` to `docs/todone`. Active
+performance, playtest, and balance prompts now match their PARKED board state.
+
 ## Ongoing rule
 
 Do not leave future work on a durable task branch. A completed change lands on

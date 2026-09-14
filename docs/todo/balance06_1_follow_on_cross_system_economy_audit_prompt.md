@@ -1,8 +1,7 @@
-Status: **CONTRACT-READY / UNREVIEWED — do not claim until `game06_8`,
-`world06_7`, and `pusherv3_11` are accepted**
+Status: **PARKED — contract-ready, but do not claim until placement is accepted
+and the refreshed playtest supplies owner direction**
 
-Board row: `balance06_1-follow-on` (to be added or opened only by the board
-owner)
+Board row: `balance06_1-follow-on` in `docs/todo/README_0_6_board.md`
 
 # Agent Prompt — balance06_1-follow-on: Full Cross-System Economy Audit
 

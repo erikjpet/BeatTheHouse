@@ -118,7 +118,7 @@ start a seeded run, enter a room, click an object, open a game, play one round,
 save, quit, relaunch, Continue. Open the PNGs yourself. If the harness itself
 misbehaves, fix the *harness* (never the game) until this smoke passes. Past
 sweeps in this repo filed harness mistakes as game bugs (see
-`docs/todo/playtest06_current_source_bug_investigation_2026-09-07.md`: a
+`docs/todone/playtest06_current_source_bug_investigation_2026-09-07.md`: a
 selector picked `Room Door` instead of `Leave`) — a harness that clicks the wrong
 thing is worse than none.
 

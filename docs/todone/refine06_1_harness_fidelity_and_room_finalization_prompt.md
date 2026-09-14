@@ -1,4 +1,4 @@
-Status: TODO — single worker agent; first refinement-phase execution row
+Status: DONE — executed as qa06_1/fix06_27 and landed on main; retained as the historical combined prompt
 Board rows: `qa06_1` and `fix06_27` in `docs/todo/README_0_6_board.md`
 Opened: 2026-09-07 by owner decision
 Runs against: `main` at `152db3c7` or later
@@ -100,7 +100,7 @@ finalizes, the exact class that produced incident 4.
 
 ### Part A work
 
-1. **Fix incident 5** per `docs/todo/playtest06_current_source_bug_investigation_2026-09-07.md`:
+1. **Fix incident 5** per `docs/todone/playtest06_current_source_bug_investigation_2026-09-07.md`:
    reacquire `travel:leave` by exact id; verify it is enabled, visible and
    hittable before activating; include the selected object id/label and
    `_serialized_diff_summary()` in the failure message; add a regression case for
