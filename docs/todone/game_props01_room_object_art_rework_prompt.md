@@ -268,7 +268,7 @@ surfaces. If one fails, redesign it and repeat. Record each round's answers.
 - Pixel-art register: crisp rectangles and small circles like the references.
   No external image assets unless the references use them.
 - Don't touch other games' props, scenario objects/glyphs (owned by parked
-  `docs/todo/env06_9_visual_consequence_and_object_identity_prompt.md`), room
+  `docs/todone/env06_9_visual_consequence_and_object_identity_prompt.md`), room
   layouts, spawn slots, placement, or in-game surfaces (except adding read-only
   `visual_state`).
 - Reports and scratch go under `.tmp/` only, never committed.

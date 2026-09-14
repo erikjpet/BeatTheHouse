@@ -194,7 +194,7 @@ after playing. Recording a deferral is required; running one is out of scope.
 ## 6. env06_9 — parked, do not start
 
 The visual work from the second review is captured in
-`docs/todo/env06_9_visual_consequence_and_object_identity_prompt.md`. It is
+`docs/todone/env06_9_visual_consequence_and_object_identity_prompt.md`. It is
 **PARKED** pending the owner's acceptance bar, because the bar is a design
 decision the owner has not yet made:
 

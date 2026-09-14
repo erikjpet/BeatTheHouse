@@ -1,4 +1,4 @@
-Status: TODO — refinement-phase row; does not block owner playtesting
+Status: DONE — completed 2026-09-07; archived after main integration reconciliation
 Priority: P1 test-infrastructure defect class — five recorded incidents, each of which reported working gameplay as broken
 Board row: `qa06_1` in `docs/todo/README_0_6_board.md`
 Opened: 2026-09-07 by owner decision after the fifth incident

@@ -32,7 +32,7 @@ why, no green result from that suite is evidence of anything. Do not close this
 row by re-running the same harnesses and reporting that they pass.
 
 This is the sixth time in this program that a harness reported working software
-where reality differed, or vice versa. See `docs/todo/qa06_1_harness_production_fidelity_prompt.md`.
+where reality differed, or vice versa. See `docs/todone/qa06_1_harness_production_fidelity_prompt.md`.
 
 ## 1. Symptom one — actions produce no observable result
 
@@ -95,7 +95,7 @@ That is a **player-observable** bar. Use it. A handler existing is not a pass.
    can be missed if it is off-screen or subtle. Every accepted action should
    confirm itself at the point of interaction.
 
-`env06_9` (`docs/todo/env06_9_visual_consequence_and_object_identity_prompt.md`)
+`env06_9` (`docs/todone/env06_9_visual_consequence_and_object_identity_prompt.md`)
 is **hereby unparked and absorbed into this row.** The owner's playtest answered
 its first question: visible consequence must be apparent **in the room**, not
 only in the panel. Its remaining two questions — how much distinct per-object art
@@ -172,7 +172,7 @@ for the owner.
 - **Seed-dependent dead rooms (`fix06_27`).** Room finalization fails on a
   minority of seeds; each failure gives unpopulated panels **and** refused
   travel. Three reproducible cases with root causes are in
-  `docs/todo/fix06_27_seed_dependent_room_finalization_prompt.md`. This may be
+  `docs/todone/fix06_27_seed_dependent_room_finalization_prompt.md`. This may be
   part of what the owner experienced. Fix it here or confirm it is separate.
 - **65 confirmed failures in the Crew/world contracts on `main`.** Reproduced
   2026-09-07 by running

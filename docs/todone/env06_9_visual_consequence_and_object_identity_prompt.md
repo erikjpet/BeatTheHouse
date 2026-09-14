@@ -1,13 +1,13 @@
-Status: PARKED — do not claim until the owner sets the acceptance bar in section 3
+Status: DONE — absorbed and completed by `fix06_28` on 2026-09-07
 Board row: `env06_9` in `docs/todo/README_0_6_board.md`
 Origin: the two P1 findings from the `env06_8` second review (`REJECT 9c4196dd`, 2026-09-06)
 Owner decision: `env06_8` was split on 2026-09-06; its structural half lands separately, this is its visual half
 
 # Agent Prompt — 0.6 env06_9: Visual Consequence and Object Identifiability
 
-**This row is parked.** It carries real, independently verified findings, but its
-acceptance bar is a design decision the owner has not yet made. Do not start it,
-and do not guess the bar. Section 3 holds the three questions that unpark it.
+**Archive note:** This prompt preserves the original parked scope and decision
+questions. The owner later set the playability bar, and `fix06_28` absorbed and
+completed this row. The instructions below are historical and are not active.
 
 ---
 

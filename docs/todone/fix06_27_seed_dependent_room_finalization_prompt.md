@@ -1,4 +1,4 @@
-Status: TODO — refinement-phase defect; does not block owner playtesting
+Status: DONE — completed 2026-09-07; archived after main integration reconciliation
 Priority: P1 gameplay defect — reintroduces the original dead-room symptom on a minority of seeds
 Board row: `fix06_27` in `docs/todo/README_0_6_board.md`
 Found: 2026-09-07 by PM verification of the `playtest06_1` handoff claim
@@ -121,5 +121,5 @@ It was a point fix. At least one more room has the same problem.
 - `docs/todo/playtest06_current_source_bug_investigation_2026-09-07.md` — the
   `foundation_visual_qa.gd` wrong-target defect (test infrastructure, already
   root-caused, fix specified, not yet applied).
-- `docs/todo/env06_9_visual_consequence_and_object_identity_prompt.md` — parked
+- `docs/todone/env06_9_visual_consequence_and_object_identity_prompt.md` — absorbed and completed by `fix06_28`
   visual identity work.
