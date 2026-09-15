@@ -1,4 +1,4 @@
-Status: PARKED — Phases 1–3 preserved on `codex/wip-0.6-consolidated`; binding Phase 4 waits for placement
+Status: PARKED — Phases 1–3 tooling is on `main`; binding Phase 4 waits for accepted placement
 Priority: P1 after an accepted placement redesign and quiesced candidate
 Board row: `perf06_1` in `docs/todo/README_0_6_board.md`
 Opened: 2026-09-11 by PM audit of the row's real state
@@ -17,10 +17,13 @@ low-end evidence without waivers. On 2026-09-14 the work was consolidated into
 placement redesign is accepted and the candidate host is quiescent. Full
 ledger: `docs/plans/perf06_1_performance_platform_report.md`.
 
-2026-09-14: the placement-independent native-extension refresh (`4c4a8968`),
-exact-candidate terminal-soak library correction (`a840777d`/`10eee85a`), and
-their focused guards were ported to `main`. The remaining telemetry, matrix,
-allocation, low-end, and binding qualification work stays parked here.
+2026-09-14: the owner first approved the placement-independent native-extension
+refresh (`4c4a8968`), exact-candidate terminal-soak library correction
+(`a840777d`/`10eee85a`), and their focused guards for `main`, then approved the
+remaining Phase 1–3 telemetry, matrix, allocation, low-end, and permanent
+Audit/Full contract package. All completed qualification machinery is now on
+`main`. Only the binding post-placement run and any measurement-driven follow-up
+remain parked.
 
 # Agent Prompt — perf06_1: Finish the Performance and Platform Pass
 
@@ -35,13 +38,13 @@ that condition is stated in section 2. Respect it.
 
 ## 0. The true state of this row — verified, do not re-derive
 
-The board says `perf06_1` is `IN_PROGRESS` with agent `/root/perf_closeout`,
-started 2026-09-03. In reality:
+The board records `perf06_1` as PARKED pending an accepted placement redesign.
+Current reality:
 
-- **The row is parked, not progressing.** All deferred implementation now lives
-  on `codex/wip-0.6-consolidated`; the former task branches were deleted.
-- **Its harness work is already on `main`, byte-identical.** `git log
-  historical branch comparisons listed 4 commits, but that was a hash artifact:
+- **The row is parked, not progressing.** All completed harness implementation
+  is on `main`; the former task branches were deleted.
+- **Its earlier harness work is on `main`, byte-identical.** Historical branch
+  comparisons listed 4 commits, but that was a hash artifact:
   the same content was rebased onto `main` under different hashes
   (`618d0033`, `92bb16f5`, `6a3485c7`, `33128713`). Verified byte-identical on
   both sides: `docs/plans/perf06_1_final_runtime_runbook.md`,
@@ -49,8 +52,8 @@ started 2026-09-03. In reality:
   `tools/perf06_binding_preflight.ps1`,
   `tools/perf06_phase_qualification_contract.ps1`,
   `tools/perf06_capture_quiescence.ps1` and `tools/perf06_matrix_contract.ps1`.
-  **Do not cherry-pick the branch and do not merge it.** Treat it as a stale
-  duplicate, leave it alone, and work from `main`.
+  **Do not recreate, cherry-pick, or merge a retired task branch.** Work from
+  current `main`; use only the consolidated WIP branch for unfinished changes.
 - **Two of the landed commits are still labeled `[UNREVIEWED]`** in their
   subjects on `main`: `92bb16f5` "fix(perf): make final qualification fail
   closed" and `618d0033` "docs(perf): stage exact final qualification runbook".
@@ -101,25 +104,22 @@ throws if any `Godot_v4.6-stable_win64`, `Godot_v4.6-stable_win64_console`,
 `BeatTheHouse` or `chrome` process is alive, and the runbook repeats that check
 itself. It also requires `HEAD` to equal the pushed `origin/main` exactly.
 
-**Row `fix06_31` (environment object placement) is running on this machine right
-now and spawns Godot continuously.** It is also actively changing environment
-composition cost — it measured room compositions of 300-825 ms and a ~51 s
-content step during its own profiling. Therefore:
+The earlier `fix06_31` grounding work landed, but the owner rejected the later
+reusable-slot/fixture placement experiment. A replacement room-construction
+design has not yet been accepted. Therefore:
 
-- **Phases 1, 2 and 3 below are safe to run now**, alongside `fix06_31`. They do
-  not produce binding numbers and none of them needs a quiet host.
-- **Phase 4, the binding qualification, must not start until `fix06_31` has
-  merged to `origin/main` and no Godot or Chrome process is running.** A binding
-  matrix measured on a tree whose environment placement is about to change is
-  wasted machine-hours, and a matrix measured next to a competing Godot process
-  is invalid.
-- This ordering is a feature: your matrix becomes the proof that `fix06_31` did
-  not cost frame time. If it did, that is a finding you route back, not
-  something you fix here.
+- **Phases 1, 2 and 3 are complete and their machinery is on `main`.** Their
+  retained measurements remain explicitly non-binding.
+- **Phase 4, the binding qualification, must not start until an accepted
+  placement redesign is merged to pushed `origin/main` and no Godot or Chrome
+  process is running.** Measuring a tree whose placement is about to change
+  wastes machine-hours; measuring beside a competing process is invalid.
+- The final matrix must prove that the accepted placement redesign did not cost
+  frame time. Any regression is routed back to that implementation rather than
+  silently optimized or waived here.
 
-If `fix06_31` is still unlanded when Phases 1-3 are done, report that you are
-ready and waiting, with your time estimate from Phase 3, and stop. Do not idle
-in a polling loop, and do not start the binding run "just to see".
+Until accepted placement exists, report that Phase 4 is waiting and stop. Do
+not idle in a polling loop or start the binding run "just to see".
 
 ## 3. Phase plan
 
@@ -226,9 +226,10 @@ counts, all seven steps, three profiles (`native`, `web`, `low_end`).
 - Re-measure the affected cells after each optimization into a **new** evidence
   directory, and state clearly in the report which numbers came from which
   candidate.
-- Note for this cycle: `fix06_31` will have just rewritten environment
-  placement. If room composition or environment draw cost appears in your
-  ranking, route it to that row rather than optimizing its fresh code yourself.
+- Note for this cycle: the accepted replacement will have rewritten room
+  construction or placement. If room composition or environment draw cost
+  appears in the ranking, route it to that implementation rather than
+  optimizing its fresh code here.
 
 ### Phase 6 — Report and budgets
 

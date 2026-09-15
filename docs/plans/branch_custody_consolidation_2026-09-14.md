@@ -93,13 +93,15 @@ performance, playtest, and balance prompts now match their PARKED board state.
 
 ## Approved infrastructure ports
 
-After consolidation, the owner approved three completed, placement-independent
-infrastructure fixes for `main`: the atomic owner-evidence transaction and retry
-contract; exact-candidate native-library discovery for the terminal soak plus
-its permanent Audit/Full contract; and the fresh-worktree GDExtension discovery
-refresh plus budget guard. They were ported without the deferred telemetry,
-matrix, allocation, or low-end qualification package. All three focused
-contracts and full project validation passed before push.
+After consolidation, the owner first approved three completed,
+placement-independent infrastructure fixes for `main`: the atomic
+owner-evidence transaction and retry contract; exact-candidate native-library
+discovery for terminal soak plus its permanent Audit/Full contract; and
+fresh-worktree GDExtension discovery refresh plus budget guard. The owner then
+approved the remaining Phase 1–3 telemetry, matrix, allocation, low-end, and
+permanent 14-check Audit/Full package. The historical reduced-run report was
+retained as explicitly non-binding. Binding Phase 4 remains parked until an
+accepted replacement placement design exists.
 
 ## Ongoing rule
 

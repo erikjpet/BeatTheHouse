@@ -1,12 +1,12 @@
 # perf06_1 Performance and Platform Report
 
-Status: qualification not yet run; this report is the live execution ledger.
+Status: HISTORICAL NON-BINDING PHASE 3 LEDGER — tooling is on `main`; binding Phase 4 waits for accepted placement.
 
-Candidate custody begins from pushed `origin/main` commit `c570f2ce6fafa4212292f8b129ca08f2e9e1e954`. The binding candidate may change when the required `fix06_31` environment work lands; only the final exact pushed candidate may supply binding figures.
+The retained rehearsal began from pushed `origin/main` commit `c570f2ce6fafa4212292f8b129ca08f2e9e1e954`. `fix06_31` later landed, but the owner rejected the subsequent reusable-slot/fixture placement experiment. Only a future exact pushed candidate containing an accepted replacement placement design may supply binding figures.
 
 ## Harness recovery and review
 
-The six named harness artifacts on `origin/main` are byte-identical to `codex/perf06-final-run`: `docs/plans/perf06_1_final_runtime_runbook.md`, `docs/plans/perf06_1_static_harness_review.md`, `tools/perf06_binding_preflight.ps1`, `tools/perf06_phase_qualification_contract.ps1`, `tools/perf06_capture_quiescence.ps1`, and `tools/perf06_matrix_contract.ps1`. The stale branch was neither merged nor cherry-picked.
+The six named harness artifacts on `origin/main` were byte-identical to the historical `codex/perf06-final-run` tree: `docs/plans/perf06_1_final_runtime_runbook.md`, `docs/plans/perf06_1_static_harness_review.md`, `tools/perf06_binding_preflight.ps1`, `tools/perf06_phase_qualification_contract.ps1`, `tools/perf06_capture_quiescence.ps1`, and `tools/perf06_matrix_contract.ps1`. That retired task branch was later deleted during the two-branch custody cleanup.
 
 The historical `[UNREVIEWED]` changes `92bb16f5` and `618d0033` were read and verified on 2026-09-11. Their hostile-fixture suites pass and demonstrate rejection of nonignored untracked files, staged and unstaged changes, occupied ports, below-floor idle liveness, forged static-zero authority, missing active progress, published timing overruns, missing witness custody, wrong sequencing, and mutable evidence destinations:
 
@@ -52,7 +52,7 @@ The principal retained attempt is `.tmp/perf06-grand-order-check-20260911-211900
 | Low-end launcher preflight | PASS | 2.3 s on the declared one-CPU/BelowNormal whole-process profile. |
 | Low-end whole-matrix launcher | RED at first producer | 224.5 s; dialogue p95 31.528/16 ms, crew selection 36.037/16 ms, eviction transition 22.248/16 ms, Coin Pusher active-drop draw p95 16.07/7 ms, and the shipped 160-body live sequence did not complete. Report SHA-256 `b00e0f99bc63700bc3c508945266209b8107323ba33f31fe0f15f54f2e2aedc3`. |
 
-Grand Casino supplied the clearest deterministic product blocker on both platforms: `scenario::grand_casino_convention_crowd_convention_coordinator` cannot resolve both normal and expanded-small-screen geometry without ambiguity. Runtime timing can pass while `semantic_ready` remains false; the surface consumer correctly refuses to call that evidence live. This is in the active environment-placement scope and is routed to `fix06_31`, not masked here.
+Grand Casino supplied the clearest deterministic product blocker on both platforms: `scenario::grand_casino_convention_crowd_convention_coordinator` could not resolve both normal and expanded-small-screen geometry without ambiguity. Runtime timing could pass while `semantic_ready` remained false; the surface consumer correctly refused to call that evidence live. This historical finding must be re-evaluated against the accepted replacement placement design rather than masked here.
 
 Phase 3 also found and fixed these harness defects, each in a new candidate and with a permanent regression contract where applicable:
 
@@ -71,7 +71,7 @@ Reserve **12 uninterrupted hours**, with an optimistic lower bound of about **8 
 
 ## Binding measurement method and artifact index
 
-Pending the scheduling prerequisites and full seven-step runbook execution. As of the final 2026-09-11 check, `origin/main` is still `c570f2ce`, `fix06_31` exists only on its active local branches, Chrome processes are present, and both `BTH_PERF_WORKER_WITNESS` and `BTH_PERF_DIRECTOR_WITNESS` are unset. Phase 4 was therefore not started.
+Pending the scheduling prerequisites and full seven-step runbook execution. At the final 2026-09-11 rehearsal check, `origin/main` was `c570f2ce`, `fix06_31` had not landed, Chrome processes were present, and both witness variables were unset. Phase 4 was therefore not started. Today it remains parked because no replacement placement design has been accepted; host and witness state must be captured again for the eventual exact candidate.
 
 ## Native, Web, and low-end matrix
 
@@ -95,12 +95,12 @@ The missing like-for-like 0.5 comparators named in `docs/plans/perf06_1_measurem
 
 ## Routed findings
 
-- **P1 / `fix06_31`:** Grand Casino convention-coordinator geometry is ambiguous in normal plus expanded-small layouts; native and Web both remain semantically unready and lose 15 live matrix rows.
-- **P1 / integration follow-up after `fix06_31`:** one-shard terminal soak exceeded retained-resource growth (25/8), missed several terminal outcomes, and lacked exact active-system witnesses. Re-evaluate on the landed environment candidate before assigning product ownership.
+- **P1 / replacement placement design:** Grand Casino convention-coordinator geometry was ambiguous in normal plus expanded-small layouts; native and Web both remained semantically unready and lost 15 live matrix rows.
+- **P1 / integration follow-up after accepted placement:** one-shard terminal soak exceeded retained-resource growth (25/8), missed several terminal outcomes, and lacked exact active-system witnesses. Re-evaluate on the accepted environment candidate before assigning product ownership.
 - **P1 / `perf06_1` binding rerun:** normal Web cold/warm startup and several frame/draw rows were red on the busy host. These are provisional scheduling risks, not claimed regressions, until the required quiescent run.
-- **P1 / `perf06_1` low-end:** the declared one-CPU launcher failed its first producer on four timing rows and one real-progress sequence. Re-measure after `fix06_31`; do not waive or tune budgets from this dry run.
+- **P1 / `perf06_1` low-end:** the declared one-CPU launcher failed its first producer on four timing rows and one real-progress sequence. Re-measure after accepted placement; do not waive or tune budgets from this dry run.
 - **Harness / resolved here:** exact-candidate library discovery, low-end switch forwarding, native solver refresh, producer dictionary compatibility, and real progress capture defects listed above.
 
 ## Owner summary
 
-There is no ship verdict yet. The qualification machinery now fails closed and the dry run found real blockers before consuming machine-hours, but 0.6 cannot be called fast enough for Web or low-end until `fix06_31` lands, the host is quiescent, a distinct director witness is supplied, and one fresh 8-12 hour three-profile run is fully green.
+There is no ship verdict yet. The qualification machinery now fails closed and the dry run found real blockers before consuming machine-hours, but 0.6 cannot be called fast enough for Web or low-end until replacement placement is accepted, the host is quiescent, a distinct director witness is supplied, and one fresh 8-12 hour three-profile run is fully green.
