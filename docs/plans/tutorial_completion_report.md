@@ -4,7 +4,8 @@ Original 0.5 report: 2026-08-03
 
 Current addenda: 0.6 exact-root verification and teaching-pass-two closeout
 
-Candidate branch: `agent/v05-pre-human-playtest-rework`
+Original 0.5 candidate branch (historical; no longer retained):
+`agent/v05-pre-human-playtest-rework`
 
 Status: **CURRENT AUTOMATED COVERAGE RECORDED; TUT-N17 REMAINS HUMAN-ONLY.**
 

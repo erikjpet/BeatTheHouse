@@ -28,6 +28,8 @@ rewriting dated evidence.
 - `character_authoring.md` — reusable character and encounter authoring.
 - `plans/world_map_design.md` — seeded persistent travel graph contract.
 - `plans/grand_casino_endgame_design.md` — Act 1 Grand Casino ending contract.
+- `plans/coin_pusher_v3_machine_rework_plan.md` — implemented binding design
+  for the three deterministic Coin Pusher cabinets.
 - `plans/item_collection_meta_system_plan.md` — implemented local collection,
   housing, loadout, bag, trade-up, and pawn systems plus explicitly deferred
   external inventory work.
@@ -43,6 +45,8 @@ rewriting dated evidence.
   reference, and external delivery contract.
 - `plans/tutorial_completion_report.md` — original tutorial evidence with 0.6
   addenda and the remaining human-only gate.
+- `plans/perf06_1_performance_platform_report.md` — historical non-binding
+  Phase 3 ledger and current boundary for the parked binding Phase 4 run.
 
 ## Historical records
 
@@ -56,6 +60,11 @@ The following are intentionally not rewritten to match current `main`:
 
 Those files preserve what was known, tested, or approved at a particular time.
 Use their commit/tag/date boundaries when citing them.
+
+Some agent-playtest reports link to temporary worktree evidence that was valid
+during the recorded run but was deliberately removed after integration. Those
+absolute links are provenance, not portable repository resources; the reports'
+commit ids and accepted board rows remain the durable disposition record.
 
 ## Active work
 

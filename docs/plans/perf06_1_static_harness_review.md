@@ -1,6 +1,9 @@
 # perf06_1 Static Harness Review and Execution Matrix
 
-Status: **IN PROGRESS — static preparation only; no binding measurements yet**
+Status: **HISTORICAL PHASE 1–3 PREPARATION, NOW PRESENT ON `main`.** This review
+records the pre-execution harness state. The current non-binding ledger is
+`docs/plans/perf06_1_performance_platform_report.md`; binding Phase 4 remains
+parked until accepted placement work produces a qualifying candidate.
 
 Prepared from integrated source `ee9545fa` and refreshed onto closeout candidate
 base `c2db39c0` with platform harness tip `fee1c755` on 2026-09-03. The final

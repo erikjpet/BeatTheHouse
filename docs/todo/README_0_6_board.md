@@ -45,13 +45,15 @@ Use these distinctions when choosing work:
 - `PARKED` remains intentionally unavailable until its named owner/playtest
   dependency opens it.
 
-The complete file-by-file reconciliation and recommended execution order are
-in `docs/plans/0.6_todo_state_audit_2026-08-31.md`.
+The dated file-by-file reconciliation is preserved at
+`docs/plans/0.6_todo_state_audit_2026-08-31.md`; its September 3 addenda are
+historical inputs, not the current execution order. The current owner-directed
+sequence is maintained near the end of this board.
 
 ## Playtest findings intake
 
-The owner build and known limitations are recorded in
-`docs/plans/0.6_playtest_handoff.md`. Owner notes become scoped `fix06_*` rows
+The historical September 10 owner build and its then-known limitations are
+recorded in `docs/plans/0.6_playtest_handoff.md`. Owner notes become scoped `fix06_*` rows
 through the playtest intake process. Cosmetic, pacing and balance notes remain
 findings until the owner prioritizes them; direction changes are owner decisions
 recorded in the roadmap and are never guessed by an agent.

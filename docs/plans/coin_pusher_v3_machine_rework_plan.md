@@ -1,6 +1,11 @@
 # Coin Pusher V3 — The Real Machine (binding design contract)
 
-Status: **OWNER-APPROVED design, execution pending** (2026-08-17).
+Status: **OWNER-APPROVED, IMPLEMENTED BINDING DESIGN** (approved 2026-08-17).
+All three production cabinets, persistence, deterministic native/Web paths,
+goals, collection, conservation, and focused gates are present in current 0.6
+source. Final implementation acceptance is recorded in
+`docs/plans/coin_pusher_v3_program_closure_audit.md`; the design rulings below
+remain authoritative.
 **Amendment 6.2 (2026-08-18): rear-fed visible drop-board ruling.** The
 owner rejected the retraction-apex shortcut that allowed a newly inserted coin
 to land directly on the lower fixed deck. Every inserted coin now travels down

@@ -86,7 +86,7 @@ Production content is JSON under `data/`.
 | Challenges | 8 | `data/challenges/challenges.json` | Act 1 authored challenge runs with profile completion flags |
 | Dialogues | 32 | `data/dialogue/dialogues.json` | TalkDock dialogue content for Act 1, the guided first night, Living Town, and Crew routes |
 | Characters | 46 identities / 3 pools | `data/characters/characters.json`, `data/characters/pools.json` | Seven Crew regulars, the Blue Note trio, shop staff, casino staff, patrons, and recurring world characters |
-| Collection schemas | 1 collection | `data/collections/collections.json` | Local meta collection bags/items, housing data, and pawn-shop sale values |
+| Collections | 2 collections / 28 entries in 1 versioned definition pack | `data/collections/collections.json` | Local meta collection bags/items, housing data, and pawn-shop sale values |
 | Music tracks | 3 | `data/audio/music_manifest.json` | Authored music manifest used by the procedural music player |
 | Tutorial lessons | 66 | `data/tutorial/lessons.json` | Dialogue-guided and contextual tutorial definitions, highlights, pacing, and gating contracts |
 
@@ -550,9 +550,9 @@ before store submission.
 - The historical TUT-N17 plan requested five cold players, including two
   without Blackjack knowledge. Any remaining sample gap must be recorded as an
   accepted limitation or completed before the public package release.
-- The local collection schema still carries `draft: true`; Steam Inventory and
-  community-market integration remain deferred and are not part of the current
-  game runtime.
+- The local collection schema still carries `draft: true`. Its browser groups
+  entries and exposes tier/float detail, but dedicated sort/filter controls,
+  Steam Inventory, and community-market integration remain deferred.
 - itch.io publishing remains a user action: install/login with butler and push
   the Web and Windows packages from `tools/export_itch.ps1`, or upload through
   the itch.io dashboard.

@@ -40,7 +40,8 @@ Counts below come directly from the production JSON packs.
 | Character pools | 3 | `data/characters/pools.json` |
 | Tutorial lessons | 66 | `data/tutorial/lessons.json` |
 | Scenario sequences | 55 | `data/environments/scenario_sequences/*.json` |
-| Collection schemas | 1 | `data/collections/collections.json` |
+| Collection definition packs | 1 | `data/collections/collections.json` |
+| Collections / collectible entries | 2 / 28 | `data/collections/collections.json` |
 | Music manifest tracks | 3 | `data/audio/music_manifest.json` |
 
 ## Games
@@ -77,7 +78,9 @@ real surface interaction rather than placeholder result buttons.
   survives Rourke's walk, pat-down, interrogation, and five-hand duel.
 - Meta progression includes local collection bags/items, condition, housing,
   loadouts, trade-ups, pawn sale, run history/stats, and unique Gold Players
-  Cards. Steam Inventory/community-market integration is deferred.
+  Cards. The browser groups entries by collection and exposes tier/float detail;
+  dedicated player sort/filter controls and Steam Inventory/community-market
+  integration remain deferred.
 - The guided first night and contextual teaching catalog cover the current
   world and game systems. The five-person cold-player requirement remains a
   human-only acceptance gate.

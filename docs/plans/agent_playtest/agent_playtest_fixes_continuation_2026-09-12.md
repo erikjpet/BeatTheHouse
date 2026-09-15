@@ -4,6 +4,10 @@
 
 DONE - BUG-24 through BUG-31 are validated and fixed. All Fixes 01 and Fixes 02 changes remain uncommitted and unstaged in the shared fix worktree; nothing was pushed.
 
+Historical disposition: these fixes were subsequently accepted and integrated
+into `main`. Absolute worktree and `.tmp` links retain original provenance but
+no longer resolve because the temporary trees were deliberately removed.
+
 - Predecessor: Fixes 01 prompt `Status: DONE`; predecessor report read in full.
 - Fix worktree: `C:\Users\theep\.codex\worktrees\Beat-The-House-playtest-fixes` (logical path `D:\Projects\Beat-The-House-worktrees\playtest-fixes`).
 - Branch/HEAD: `codex/agent-playtest-fixes` at `56de66598a2bcdbc3f171f090b48c361daf35563`.

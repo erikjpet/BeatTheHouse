@@ -8,6 +8,11 @@
 **Inherited fingerprint:** `45add38e02d9de93e2ecae3f2092f32714ab5431`  
 **Final fingerprint:** `b9d78d8d0bc676de82be656dff15f4e07143e06b`
 
+**Historical disposition:** The fixes were subsequently accepted and
+integrated into `main`. Absolute worktree and `.tmp` links below preserve the
+recorded evidence locations but no longer resolve after deliberate temporary
+worktree cleanup.
+
 ## Baseline
 
 The inherited worktree contained the combined uncommitted Fixes 01+02 patch: 30 tracked files, +741/−107, plus the inherited fixture/harness files. No file was staged. The complete inherited diff was inspected before edits and preserved except where a failed player-visible fix was deliberately extended.

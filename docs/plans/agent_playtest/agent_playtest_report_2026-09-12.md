@@ -8,6 +8,11 @@
 **Actions played:** A 275 (`pt_a`–`pt_a4`); B 454 (`pt_b`–`pt_b9`); C 465 (`pt_c`–`pt_c9`, excluding one unprocessed command); D 402 (`pt_d`–`pt_d9`). Total: 1,596 completed actions across 31 isolated sessions.  
 **Seeds:** A — `AGENTPT-A-01`, `AGENTPT-A-02-FRESH`, `AGENTPT-A-03-FRESH`, `AGENTPT-A-04-FRESH`; B — `AGENTPT-B-01` through `AGENTPT-B-09` plus per-session fresh/game suffixes; C — `PLAYTEST06-1-FASTPATH-009`, then `PLAYTEST06-2-FRESH-021` through `PLAYTEST06-9-FRESH-109`; D — `AGENTPT-D-01` through `AGENTPT-D-09-FRESH` (the five-action `pt_d5` startup retry did not reach seed entry).
 
+**Evidence portability:** Absolute worktree and `.tmp` links below identify the
+original run evidence. Those temporary trees were deliberately removed after
+the accepted fixes landed and are not expected to resolve in the canonical
+checkout.
+
 ## Summary
 
 - **Game bugs:** 31 total: 2 Blocker, 12 Major, 17 Minor, 0 Polish.
@@ -19,7 +24,7 @@
 - **Look first — BUG-11:** Video Poker wager controls deal a new hand and carry held positions forward.
 - **Look first — BUG-27/31:** Blackjack labels a real loss as a push, and Vic's loan conceals the debt terms.
 
-No product code, game data, or tests were changed. The [BUG-01–23 fix prompt](D:/Projects/Beat-The-House/docs/todo/playtest_fixes01_agent_sweep_2026-09-12_prompt.md) covers the first sweep, and the [BUG-24–31 continuation prompt](D:/Projects/Beat-The-House/docs/todo/playtest_fixes02_continuation_2026-09-12_prompt.md) covers the added findings.
+No product code, game data, or tests were changed. The [BUG-01–23 fix prompt](D:/Projects/Beat-The-House/docs/todone/playtest_fixes01_agent_sweep_2026-09-12_prompt.md) covers the first sweep, and the [BUG-24–31 continuation prompt](D:/Projects/Beat-The-House/docs/todone/playtest_fixes02_continuation_2026-09-12_prompt.md) covers the added findings.
 
 An additional serialized pass (`pt_b9`, `pt_c9`, `pt_d9`) completed 75 visible-input actions without finding a distinct BUG-32. It added Scratch Ticket claim setup, merchant selling/keyboard reachability, Debt Spiral through day two, repeated sleep, Payment Calendar, lodging renewal double-click, and relaunch/Continue coverage; host memory pressure then ended two sessions without game errors, so those exits were classified as environment-only.
 
