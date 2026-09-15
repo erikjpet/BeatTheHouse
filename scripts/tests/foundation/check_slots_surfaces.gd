@@ -2321,10 +2321,6 @@ func _grand_casino_game_fixture_run(library: ContentLibrary, boss_archetype: Dic
 	return run_state
 
 
-func _grand_casino_game_cheat_result(game_id: String, game: GameModule, run_state: RunState) -> Dictionary:
-	return _grand_casino_game_cheat_result_for_action(game_id, "", game, run_state)
-
-
 func _grand_casino_game_cheat_result_for_action(game_id: String, action_id: String, game: GameModule, run_state: RunState) -> Dictionary:
 	var environment: Dictionary = run_state.current_environment
 	var rng := run_state.create_rng("c1_%s_heat_result" % game_id)
@@ -2437,17 +2433,6 @@ func _resolve_table_game_surface_contract(game: GameModule, action_id: String, s
 	if bool(result.get("ok", false)):
 		result["host_apply_result"] = true
 	return result
-
-
-func _skill_contract_bar_dice_palm_ui(game: GameModule, run_state: RunState, environment: Dictionary, base_ui: Dictionary) -> Dictionary:
-	var ui: Dictionary = base_ui.duplicate(true)
-	ui["surface_time_msec"] = int(ui.get("surface_time_msec", 18000))
-	var start_command: Dictionary = game.surface_action_command("bar_dice_palm", 0, false, ui, run_state, environment)
-	var palm_ui: Dictionary = start_command.get("ui_state", ui)
-	var challenge: Dictionary = palm_ui.get("palmed_swap_challenge", {}) if typeof(palm_ui.get("palmed_swap_challenge", {})) == TYPE_DICTIONARY else {}
-	palm_ui["surface_time_msec"] = int(challenge.get("target_msec", int(palm_ui.get("surface_time_msec", 18000))))
-	var lock_command: Dictionary = game.surface_action_command("bar_dice_palm", 0, false, palm_ui, run_state, environment)
-	return lock_command.get("ui_state", palm_ui)
 
 
 func _check_premium_grand_casino_table_contract(library: ContentLibrary, game_id: String, game: GameModule, failures: Array) -> void:
@@ -3943,13 +3928,6 @@ func _foundation_string_occurrence_count(text: String, needle: String) -> int:
 		count += 1
 		offset = found + needle.length()
 	return count
-
-
-func _dictionary_has_key_prefix(values: Dictionary, prefix: String) -> bool:
-	for key in values.keys():
-		if str(key).begins_with(prefix):
-			return true
-	return false
 
 
 func _surface_harness_has_action(harness, action_id: String) -> bool:

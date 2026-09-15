@@ -803,13 +803,6 @@ func advance_game_clock_minutes(amount: int) -> Dictionary:
 	return {"ok": true, "applied": true, "errors": []}
 
 
-func advance_action_clock(amount: int = 1) -> Dictionary:
-	var actions := maxi(0, amount)
-	if actions <= 0:
-		return {"ok": true, "applied": false, "errors": []}
-	return advance_game_clock_minutes(actions * ACTION_CLOCK_MINUTES)
-
-
 # True only during the discovered solo race between a published handle and the
 # last authored late-book close. This is an opt-in travel consumer; normal travel
 # never advances action boundaries.
@@ -853,10 +846,6 @@ func closing_time_active() -> bool:
 
 func closing_time_forced_travel_required() -> bool:
 	return str(closing_time_state.get("phase", "")) == CLOSING_TIME_PHASE_FORCED_TRAVEL
-
-
-func closing_time_environment_id() -> String:
-	return str(closing_time_state.get("environment_id", "")).strip_edges()
 
 
 func begin_closing_time(environment_data: Dictionary, current_minute: int, grace_actions: int = CLOSING_TIME_DEFAULT_GRACE_ACTIONS) -> Dictionary:
@@ -3268,20 +3257,6 @@ func scenario_sequence_projection() -> Dictionary:
 	return ScenarioEngineScript.sequence_projection(current_environment, _scenario_sequence_definition_readonly())
 
 
-func scenario_sequence_record_visit(visit_id: String = "") -> Dictionary:
-	var definition := _scenario_sequence_definition_readonly()
-	if definition.is_empty(): return {"ok": false, "errors": ["No dynamic room sequence is active."]}
-	if not _scenario_semantic_ready(): return {"ok": false, "errors": ["Dynamic room sequence semantic records are not finalized."]}
-	var environment_before := current_environment.duplicate(true)
-	_ensure_scenario_host_public_context()
-	var stable_visit_id := visit_id.strip_edges()
-	if stable_visit_id.is_empty(): stable_visit_id = str(current_environment.get("environment_visit_id", ""))
-	var result := ScenarioEngineScript.sequence_record_visit(current_environment, definition, stable_visit_id)
-	if not bool(result.get("ok", false)):
-		current_environment = environment_before
-	return result
-
-
 func scenario_sequence_apply_reentry(visit_id: String = "") -> Dictionary:
 	var definition := _scenario_sequence_definition_readonly()
 	if definition.is_empty(): return {"ok": false, "errors": ["No dynamic room sequence is active."]}
@@ -3354,10 +3329,6 @@ func acknowledge_prepared_game_unwound(request_id: String, replacement_table_sta
 
 func apply_prepared_game_request_runtime(request_id: String, receipt_id: String, expected_revision: int, expected_digest: String) -> Dictionary:
 	return _apply_scenario_host_result(ScenarioHostTransactionScript.apply_prepared_request_runtime(_scenario_host_bound_state(), request_id, receipt_id, expected_revision, expected_digest))
-
-
-func pre_travel_game_gate(command: Dictionary, request: Dictionary) -> Dictionary:
-	return ScenarioHostTransactionScript.pre_travel_hook(command, request)
 
 
 func _scenario_host_bound_state() -> Dictionary:
@@ -4247,10 +4218,6 @@ func _reconcile_tier_two_casino_spawn_eligibility() -> void:
 
 func environment_travel_count() -> int:
 	return maxi(0, environment_history_archive_count) + environment_history.size()
-
-
-func visited_environment_count() -> int:
-	return environment_travel_count() + (0 if current_environment.is_empty() else 1)
 
 
 func story_log_entry_count() -> int:
@@ -6714,17 +6681,6 @@ func resolve_grand_casino_showdown_interrogation(choice_id: String, config: Dict
 
 # Migrates a slice-6 boundary save into the playable duel without rolling an
 # outcome. No current event path calls this compatibility entry point.
-func resolve_grand_casino_showdown_pressure(choice_id: String, config: Dictionary = {}) -> Dictionary:
-	if not bool(narrative_flags.get("grand_casino_showdown_active", false)):
-		return {"ok": false, "message": "The showdown is not active."}
-	if str(narrative_flags.get("grand_casino_showdown_step", "")) != GRAND_CASINO_SHOWDOWN_STEP_LEGACY_CHECK or _copy_dict(narrative_flags.get("grand_casino_duel_terms", {})).is_empty():
-		return {"ok": false, "message": "Rourke still has questions before the game."}
-	if not choice_id.strip_edges().is_empty():
-		narrative_flags["grand_casino_showdown_pressure_choice"] = choice_id.strip_edges()
-	var duel := _begin_grand_casino_duel(_copy_dict(narrative_flags.get("grand_casino_duel_terms", {})))
-	return {"ok": true, "duel_ready": true, "message": str(duel.get("last_bark", "Rourke cuts the cards.")), "duel": duel}
-
-
 func _begin_grand_casino_duel(terms: Dictionary) -> Dictionary:
 	var existing := _copy_dict(narrative_flags.get("grand_casino_duel_state", {}))
 	if not existing.is_empty() and str(existing.get("status", "")) == "active":
@@ -9338,14 +9294,6 @@ func crew_knuckles_stash_inventory_entry(inventory_index: int, expected_item_id:
 	return {"ok": true, "item_id": clean_id, "status": crew_knuckles_stash_status()}
 
 
-func crew_knuckles_retrieve_item(item_id: String) -> Dictionary:
-	var clean_id := item_id.strip_edges()
-	for candidate_value in crew_knuckles_retrieve_candidates():
-		if typeof(candidate_value) == TYPE_DICTIONARY and str((candidate_value as Dictionary).get("item_id", "")) == clean_id:
-			return crew_knuckles_retrieve_stash_entry(int((candidate_value as Dictionary).get("stash_index", -1)), clean_id)
-	return {"ok": false, "item_id": clean_id}
-
-
 func crew_knuckles_retrieve_stash_entry(stash_index: int, expected_item_id: String) -> Dictionary:
 	var clean_id := expected_item_id.strip_edges()
 	if not crew_rank_perks("crew_knuckles").has("contraband_stash") or stash_index < 0 or stash_index >= crew_contraband_stash.size() \
@@ -9845,36 +9793,6 @@ func crew_heist_record_whale_vouch(session_loss: int, entourage_beat: bool = tru
 	state["setup"] = setup
 	crew_heist_state = state
 	return {"ok": true, "rounds": rounds, "loss": loss, "complete": bool(setup.get("vouch", false))}
-
-
-func crew_heist_record_whale_rig(_component_sourced: bool = false, _training_source: String = "", host_capability: Variant = null) -> Dictionary:
-	if host_capability == null or host_capability != _crew_heist_host_capability: return {"ok": false}
-	var state := CrewHeistModelScript.normalize_state(crew_heist_state)
-	if str(state.get("plan_id", "")) != CrewHeistModelScript.PLAN_WHALE or str(state.get("status", "")) != CrewHeistModelScript.STATUS_SETUP:
-		return {"ok": false}
-	var trained := bool(narrative_flags.get("craps_setting_trained", false))
-	var sourced := inventory.has("false_bottom_cup")
-	var setup := _copy_dict(state.get("setup", {}))
-	setup["rig"] = sourced and trained
-	setup["rig_source"] = "craps_setting_trained" if trained else ""
-	state["setup"] = setup
-	crew_heist_state = state
-	return {"ok": true, "component": sourced, "trained": trained, "complete": bool(setup.get("rig", false))}
-
-
-func crew_heist_record_whale_name(spend: int, seen_beat: bool, host_capability: Variant = null) -> Dictionary:
-	if host_capability == null or host_capability != _crew_heist_host_capability: return {"ok": false}
-	var state := CrewHeistModelScript.normalize_state(crew_heist_state)
-	if str(state.get("plan_id", "")) != CrewHeistModelScript.PLAN_WHALE or str(state.get("status", "")) != CrewHeistModelScript.STATUS_SETUP:
-		return {"ok": false}
-	var tuning := _copy_dict(_copy_dict(CrewHeistModelScript.plan(CrewHeistModelScript.PLAN_WHALE).get("setup", {})).get("name", {}))
-	var setup := _copy_dict(state.get("setup", {}))
-	setup["name_spend"] = int(setup.get("name_spend", 0)) + maxi(0, spend)
-	setup["name_seen"] = int(setup.get("name_seen", 0)) + (1 if seen_beat else 0)
-	setup["name"] = int(setup.get("name_spend", 0)) >= int(tuning.get("spend_required", 0)) and int(setup.get("name_seen", 0)) >= int(tuning.get("seen_required", 0))
-	state["setup"] = setup
-	crew_heist_state = state
-	return {"ok": true, "complete": bool(setup.get("name", false)), "spend": int(setup.get("name_spend", 0)), "seen": int(setup.get("name_seen", 0))}
 
 
 func _crew_heist_sync_whale_setup() -> void:
@@ -11767,16 +11685,6 @@ func _delivery_resolve_targets(spec: Dictionary) -> Dictionary:
 	return {"ok": true, "targets": targets, "world_map": offered_map}
 
 
-func _delivery_path_uses_real_edges(path: Array, map_value: Dictionary = {}) -> bool:
-	var source_map := world_map if map_value.is_empty() else map_value
-	if path.size() == 1:
-		return true
-	for index in range(path.size() - 1):
-		if WorldMap.edge_between(source_map, str(path[index]), str(path[index + 1])).is_empty():
-			return false
-	return path.size() >= 2
-
-
 func _delivery_scenario_law_pressure(node_ids: Array) -> int:
 	var total := 0
 	var seen := {}
@@ -12370,17 +12278,6 @@ func town_public_snapshot() -> Dictionary:
 	return town_state.public_snapshot() if town_state != null else {}
 
 
-func set_crew_capability(capability_id: String, enabled: bool = true) -> void:
-	var clean_id := capability_id.strip_edges().to_lower()
-	if clean_id.is_empty():
-		return
-	var key := "crew_capability:%s" % clean_id
-	if enabled:
-		narrative_flags[key] = true
-	else:
-		narrative_flags.erase(key)
-
-
 func crew_capability_active(capability_id: String) -> bool:
 	var clean_id := capability_id.strip_edges().to_lower()
 	if clean_id == "sweep_intel" and crew_rank_perks("crew_switch").has("sweep_intel"):
@@ -12413,23 +12310,6 @@ func swept_window(node_id: String = "") -> Dictionary:
 	if target.is_empty():
 		target = current_world_node_id()
 	return town_state.swept_window(target)
-
-
-func sweep_interplay_seams(node_id: String = "") -> Dictionary:
-	var target := node_id.strip_edges()
-	if target.is_empty():
-		target = current_world_node_id()
-	return {
-		"node_id": target,
-		"knuckles_stash_registered": true,
-		"knuckles_stash_active": crew_rank_perks("crew_knuckles").has("contraband_stash"),
-		"knuckles_stash_count": crew_contraband_stash.size(),
-		"numbers_pause_registered": true,
-		"numbers_pause_active": false,
-		"delivery_carrier_risk_registered": true,
-		"delivery_law_pressure_delta": _delivery_scenario_law_pressure([target]),
-		"swept_window": swept_window(target),
-	}
 
 
 func town_status_line() -> String:
@@ -14092,11 +13972,6 @@ func _check_police_sweep_boundary() -> Dictionary:
 			"node_id": node_id,
 		}, {"presentation": "talk"})
 		return {"outcome": "adjacent_sighting", "marker": marker}
-	return {}
-
-
-func resolve_police_sweep_encounter_for_test(claim: Dictionary) -> Dictionary:
-	var _ignored_claim := claim
 	return {}
 
 

@@ -126,22 +126,12 @@ func adopt_validated_state(source_state: Dictionary) -> Dictionary:
 	return result
 
 
-func validate_command_envelope(command: Dictionary) -> Dictionary:
-	return _validation_error("unsealed_authority", "Only the retained ritual host can bind a trusted action descriptor.")
-
-
 func preflight_command(command: Dictionary, trusted_action: Dictionary) -> Dictionary:
 	return _validate_command_envelope(command, trusted_action)
 
 
 func rejection_for_command(command: Dictionary, validation: Dictionary) -> Dictionary:
 	return _envelope_rejection(command, str(validation.get("error_code", "invalid_envelope")), str(validation.get("message", "Invalid ritual command.")), false, "none")
-
-
-func process_action(action_id: String, parameters: Dictionary, request_key: String, context: Dictionary = {}) -> Dictionary:
-	# Compatibility guard only. All authoritative actions must enter through the
-	# complete authenticated RitualCommand boundary above.
-	return _rejection("unsealed_authority", action_id, request_key, "Direct ritual action authority is sealed.")
 
 
 func _reduce_action(action_id: String, parameters: Dictionary, request_key: String, context: Dictionary) -> Dictionary:
@@ -289,37 +279,6 @@ func _prepared_projection(source_state: Dictionary) -> Dictionary:
 		"pointer_verbs": _pointer_projection(source_state),
 		"action_sequence": int(source_state.get("action_sequence", 0)),
 	}
-
-
-func set_energy_tier(tier_id: String, request_key: String) -> Dictionary:
-	return {"ok": false, "error_code": "unsealed_authority", "energy_tier": tier_id, "request_key": request_key}
-
-
-func _apply_energy_tier(tier_id: String, request_key: String) -> Dictionary:
-	var energy: Dictionary = definition.get("energy", {}) if typeof(definition.get("energy", {})) == TYPE_DICTIONARY else {}
-	for tier in _dictionary_array(energy.get("tiers", [])):
-		if str(tier.get("id", "")) != tier_id:
-			continue
-		var fingerprint := canonical_fingerprint({"tier_id": tier_id, "request_key": request_key})
-		var key := "energy:%s" % request_key
-		var cache: Dictionary = state.get("request_cache", {})
-		if cache.has(key):
-			return (cache[key].get("response", {}) as Dictionary).duplicate(true) if str(cache[key].get("command_fingerprint", "")) == fingerprint else {"ok": false, "error_code": "request_conflict"}
-		var candidate := state.duplicate(true)
-		var operations: Array = []
-		for operation_key in ["actor_operations", "object_operations", "interaction_operations"]:
-			operations.append_array(_dictionary_array(tier.get(operation_key, [])))
-		var error := _apply_operations(candidate, operations)
-		if not error.is_empty():
-			return {"ok": false, "error_code": "operation_rejected", "message": error}
-		candidate["energy_tier"] = tier_id
-		var response := {"ok": true, "energy_tier": tier_id, "operations": operations, "projection": {}}
-		cache = candidate.get("request_cache", {})
-		cache[key] = {"command_fingerprint": fingerprint, "response": response.duplicate(true)}
-		candidate["request_cache"] = cache
-		response["projection"] = _prepared_projection(candidate)
-		return {"ok": true, "response": response, "state": candidate}
-	return {"ok": false, "error_code": "unknown_energy_tier"}
 
 
 static func canonical_json(value: Variant) -> String:

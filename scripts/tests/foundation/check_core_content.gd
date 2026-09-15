@@ -830,14 +830,6 @@ func _check_foundation_contract_core_for_suite(library: ContentLibrary, failures
 	_check_foundation_contract_core(library, failures)
 
 
-func _check_foundation_contract_games_for_suite(library: ContentLibrary, failures: Array) -> void:
-	_check_foundation_contract_games(library, failures, _foundation_active_suite)
-
-
-func _check_foundation_contract_systems_for_suite(library: ContentLibrary, failures: Array) -> void:
-	_check_foundation_contract_systems(library, failures)
-
-
 # Checks the first production content path.
 func _check_content(library: ContentLibrary, failures: Array) -> void:
 	_check_content_core(library, failures)

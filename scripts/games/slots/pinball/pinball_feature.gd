@@ -1063,11 +1063,6 @@ func _session_cap(stake: int, mode: String, feature_scale: float) -> int:
 	return maxi(1, int(round(float(stake) * multiplier * maxf(0.35, feature_scale))))
 
 
-func _compile_modifiers(params: Dictionary) -> Dictionary:
-	var item_effects: Dictionary = _dict(params.get("item_effects", {}))
-	return ItemsScript.compile_modifiers(item_effects)
-
-
 func _input_bonus(inputs: Array, stake: int, mode: String) -> int:
 	var score := 0
 	for input_value in inputs:

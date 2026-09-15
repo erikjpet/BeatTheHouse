@@ -2765,12 +2765,6 @@ func _register_pile_rumor(run_state: RunState, environment: Dictionary, machine:
 	})
 
 
-func _staff_watch_suspicion_delta(run_state: RunState, machine: Dictionary) -> int:
-	if run_state == null or not bool(machine.get("staff_watch_memory", false)):
-		return 0
-	return maxi(0, int(machine.get("suspicion_floor", 0)) - run_state.suspicion_level())
-
-
 func _seed_prize_riders(environment: Dictionary, rng: RngStream) -> Array:
 	var tuning := _tuning()
 	var definitions: Array = tuning.get("prize_riders", []) if typeof(tuning.get("prize_riders", [])) == TYPE_ARRAY else []
@@ -2843,32 +2837,6 @@ func _weighted_prize(definitions: Array, rng: RngStream) -> Dictionary:
 		if roll <= 0:
 			return (value as Dictionary).duplicate(true)
 	return {}
-
-
-func _inventory_prizes(prizes: Array) -> Array:
-	var result: Array = []
-	for value in prizes:
-		if typeof(value) == TYPE_DICTIONARY:
-			var item_id := str((value as Dictionary).get("item_id", ""))
-			if not item_id.is_empty() and not result.has(item_id):
-				result.append(item_id)
-	return result
-
-
-func _prize_cash(prizes: Array) -> int:
-	var result := 0
-	for value in prizes:
-		if typeof(value) == TYPE_DICTIONARY:
-			result += maxi(0, int((value as Dictionary).get("cash_value", 0)))
-	return result
-
-
-func _prize_labels(prizes: Array) -> String:
-	var labels: Array = []
-	for value in prizes:
-		if typeof(value) == TYPE_DICTIONARY:
-			labels.append(str((value as Dictionary).get("label", (value as Dictionary).get("item_id", "prize"))))
-	return ", ".join(labels)
 
 
 func _story_entry(action_id: String, kind: String, environment: Dictionary, bankroll_delta: int, heat: int, context: Dictionary) -> Dictionary:

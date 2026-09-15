@@ -1251,10 +1251,6 @@ func _estimated_body_line_count(panel_width: float) -> int:
 	return clampi(ceili(float(full_body_text.length()) / float(characters_per_line)), 1, 10)
 
 
-func _preferred_layout_side() -> String:
-	return locked_layout_side
-
-
 func _compact_layout_enabled() -> bool:
 	return small_screen_mode or size.x <= 720.0
 

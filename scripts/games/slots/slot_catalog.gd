@@ -66,22 +66,6 @@ func all_skins(definition: Dictionary) -> Array:
 	return result
 
 
-func cabinet_identities(definition: Dictionary) -> Array:
-	var result: Array = []
-	for skin_value in all_skins(definition):
-		var skin: Dictionary = skin_value
-		result.append({
-			"id": str(skin.get("cabinet_identity", "")),
-			"family": str(skin.get("family", "")),
-			"format_id": str(skin.get("format_id", "")),
-			"title": str(skin.get("cabinet_title", "")),
-			"topper_style": str(skin.get("topper_style", "")),
-			"material": str(skin.get("material", "")),
-			"motion_style": str(skin.get("motion_style", "")),
-		})
-	return result
-
-
 func symbol_metadata(definition: Dictionary, family_id: String, symbol_id: String) -> Dictionary:
 	var config_key := "slot_%s_config" % family_id
 	var config: Dictionary = _copy_dict(definition.get(config_key, {}))

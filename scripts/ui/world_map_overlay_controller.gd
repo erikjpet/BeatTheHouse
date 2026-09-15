@@ -96,13 +96,6 @@ func show_overlay() -> void:
 	overlay.move_to_front()
 
 
-func hide_overlay() -> void:
-	_clear_pressed_node()
-	confirm_button_press_active = false
-	if overlay != null:
-		overlay.visible = false
-
-
 func reset_button_layout() -> void:
 	button_layout_size = Vector2(-1.0, -1.0)
 
@@ -110,18 +103,6 @@ func reset_button_layout() -> void:
 func apply_title(text: String) -> void:
 	if title_label != null:
 		title_label.text = text
-
-
-func apply_detail(text: String, badges: Array, confirm_enabled: bool) -> void:
-	if detail_label != null:
-		detail_label.text = text
-	set_confirm_enabled(confirm_enabled)
-	set_detail_badges(badges)
-
-
-func set_confirm_enabled(enabled: bool) -> void:
-	if confirm_button != null:
-		confirm_button.disabled = not enabled
 
 
 func sync_canvas_snapshot(snapshot: Dictionary, snapshot_key: String) -> void:

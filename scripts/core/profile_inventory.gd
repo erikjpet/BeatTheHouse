@@ -202,10 +202,6 @@ func discover_scratch_ticket_type(type_id: String) -> bool:
 	return true
 
 
-func has_discovered_scratch_ticket_type(type_id: String) -> bool:
-	return scratch_ticket_types_discovered.has(type_id.strip_edges())
-
-
 func scratch_ticket_discovery_count() -> int:
 	return scratch_ticket_types_discovered.size()
 

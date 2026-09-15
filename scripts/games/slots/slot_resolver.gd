@@ -587,16 +587,6 @@ func monte_carlo_metrics(source_machine: Dictionary, definition: Dictionary, spi
 	}
 
 
-func _metric_average_feature_award(source_machine: Dictionary, source_active: Dictionary, rng: RngStream, definition: Dictionary, samples: int) -> int:
-	var sample_count := maxi(1, samples)
-	var total := 0
-	for _index in range(sample_count):
-		var machine: Dictionary = source_machine.duplicate(true)
-		machine["active_bonus"] = source_active.duplicate(true)
-		total += complete_active_bonus_for_metrics(machine, rng, definition)
-	return maxi(0, int(round(float(total) / float(sample_count))))
-
-
 func _grid_payout_for_family(family, grid: Array, stake: int, stake_cost: int, machine: Dictionary, definition: Dictionary, entry: Dictionary) -> int:
 	# Slot family payout dispatch stays polymorphic by design: buffalo ways,
 	# pinball lines, and catalog fallback attribute wins differently.

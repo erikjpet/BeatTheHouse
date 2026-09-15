@@ -921,15 +921,6 @@ func _try_use_grand_casino_facility(run_state: RunState, run: Dictionary, policy
 	return true
 
 
-func _metrics_showdown_choice_id(choices: Array, prefix: String, fallback: String) -> String:
-	for choice_value in choices:
-		if typeof(choice_value) == TYPE_DICTIONARY:
-			var choice_id := str((choice_value as Dictionary).get("id", ""))
-			if choice_id.begins_with(prefix):
-				return choice_id
-	return fallback
-
-
 func _try_buy_helpful_item(run_state: RunState, run: Dictionary, policy: String) -> bool:
 	if run_state.current_environment.is_empty() or run_state.bankroll < 8:
 		return false
@@ -2408,11 +2399,6 @@ func _total_debt_balance(run_state: RunState) -> int:
 		if typeof(debt_value) == TYPE_DICTIONARY:
 			total += maxi(0, int((debt_value as Dictionary).get("balance", 0)))
 	return total
-
-
-func _metrics_showdown_roll(run: Dictionary) -> int:
-	var seed := "%s:%s:%s" % [str(run.get("seed", "")), str(run.get("policy", "")), str(run.get("scenario_id", ""))]
-	return int(_stable_hash(seed) % 90) + 1
 
 
 func _stable_hash(text: String) -> int:

@@ -780,23 +780,6 @@ func environment_runtime_state(run_state: RunState, environment: Dictionary) -> 
 	}
 
 
-func simulate_ticket_type(type_id: String, rng: RngStream, luck_modifier: int = 0) -> Dictionary:
-	var ticket_type := _ticket_type(type_id)
-	if ticket_type.is_empty() or rng == null:
-		return {}
-	var ticket := _roll_ticket(ticket_type, rng, luck_modifier, "simulation")
-	return {
-		"type_id": type_id,
-		"price": int(ticket_type.get("price", 0)),
-		"payout": int(ticket.get("payout", 0)),
-		"penalty": 0,
-		"net_return": int(ticket.get("payout", 0)),
-		"outcome_id": str(ticket.get("outcome_id", "")),
-		"mechanic_result": ticket.get("mechanic_result", {}),
-		"outcome_fixed_at_purchase": true,
-	}
-
-
 func measure_rtp(type_id: String, samples: int = 20000, seed_text: String = "SCRATCH-RTP") -> Dictionary:
 	var ticket_type := _ticket_type(type_id)
 	var table := _dictionary_array(ticket_type.get("prize_table", []))

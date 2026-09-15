@@ -3895,10 +3895,6 @@ func _selected_info_action_button_rect() -> Rect2:
 	return _selected_info_action_button_rect_from_entries(_selected_info_action_entries_for_rect(info, _animated_info_card_rect(info)))
 
 
-func _selected_info_action_button_rect_from_info(info: Dictionary) -> Rect2:
-	return _selected_info_action_button_rect_from_entries(_selected_info_action_entries_from_info(info))
-
-
 func _selected_info_action_button_rect_from_entries(entries: Array) -> Rect2:
 	if entries.is_empty() or typeof(entries[0]) != TYPE_DICTIONARY:
 		return Rect2()

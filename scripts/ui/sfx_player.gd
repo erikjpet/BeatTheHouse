@@ -1158,32 +1158,8 @@ func render_event_master_stream(event_id: String) -> AudioStreamWAV:
 	return _synthesized_event_stream(_normalized_event_id(event_id))
 
 
-func debug_slot_cue_markers(slot_state: Dictionary) -> Array:
-	var timing := _dict(slot_state.get("_surface_audio_timing", {}))
-	var scene := _dict(slot_state.get("slot_feature_scene", {}))
-	var active_id := _active_slot_audio_id(slot_state, scene, timing)
-	var result: Array = []
-	for cue in _slot_audio_cues(slot_state):
-		result.append(_cue_marker(active_id, cue))
-	for cue in _dictionary_array(scene.get("audio_cues", [])):
-		result.append(_cue_marker(active_id, cue))
-	return result
-
-
 func debug_normalized_event_id(event_id: String) -> String:
 	return _normalized_event_id(event_id)
-
-
-func debug_surface_sfx_profile(profile_id: String) -> Dictionary:
-	return _surface_sfx_profile(profile_id).duplicate(true)
-
-
-func debug_surface_selection_trace() -> Array:
-	return _surface_selection_trace.duplicate(true)
-
-
-func debug_select_surface_event(profile_id: String, event_class: String, selection_seed: int, occurrence: int, last_step: int = -1) -> Dictionary:
-	return SurfaceSfxManifestScript.select_event(profile_id, event_class, selection_seed, occurrence, last_step)
 
 
 func debug_coin_pusher_event_schedule(surface_state: Dictionary) -> Array:
@@ -1207,23 +1183,6 @@ func debug_coin_pusher_event_schedule(surface_state: Dictionary) -> Array:
 			"volume_db": float(mix.get("volume_db", -5.0)),
 			"pitch": float(mix.get("pitch", 1.0)),
 		})
-	return result
-
-
-func debug_coin_pusher_runtime_event_markers(surface_state: Dictionary, elapsed: float, animation_active: bool, active_id: String, reset_state: bool = true) -> Array:
-	if reset_state:
-		_coin_pusher_action_id = ""
-		_coin_pusher_action_observed_active = false
-		_coin_pusher_audio_baseline_initialized = false
-		_coin_pusher_silent_baseline_action_id = ""
-		_clear_markers_with_prefix("coin_pusher_event_")
-	sync_coin_pusher_state(surface_state, elapsed, animation_active, active_id, true)
-	var result: Array = []
-	for marker_value in _played_markers.keys():
-		var marker := str(marker_value)
-		if marker.begins_with("coin_pusher_event_"):
-			result.append(marker)
-	result.sort()
 	return result
 
 

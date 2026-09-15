@@ -267,15 +267,6 @@ func draw_occasion_status(day: int = -1) -> Dictionary:
 	return result
 
 
-func public_aftermath(venue_id: String = "") -> Variant:
-	if not venue_id.strip_edges().is_empty():
-		return _public_bookmaker_aftermath(_dictionary(bookmaker_aftermath.get(venue_id.strip_edges(), {})))
-	var result: Dictionary = {}
-	for key_value in bookmaker_aftermath.keys():
-		result[str(key_value)] = _public_bookmaker_aftermath(_dictionary(bookmaker_aftermath.get(key_value, {})))
-	return result
-
-
 func host_mark_draw_presence(capability: RefCounted, target_action: int, venue_id: String, host_context: Dictionary) -> bool:
 	if capability == null or capability != _host_capability or venue_id != "small_underground_casino":
 		return false
@@ -659,21 +650,6 @@ func resolve_collection(success: bool, reason: String, resolution: Dictionary = 
 	return collection_state.duplicate(true)
 
 
-func collection_next_node(visited_stop_ids: Array) -> String:
-	if str(collection_state.get("status", "")) != "active":
-		return ""
-	for stop in _dictionary_array(collection_state.get("stops", [])):
-		if not visited_stop_ids.has(str(stop.get("id", ""))):
-			return str(stop.get("node_id", ""))
-	return ""
-
-
-func _apply_depth_action(action: String, context: Dictionary) -> Dictionary:
-	# Retained as a private compatibility symbol for callers compiled against the
-	# rejected candidate. It is permanently fail-closed and cannot mutate state.
-	return {"ok": false, "proposed": true, "reason": "host_authority_unavailable", "action": action, "context": context.duplicate(true)}
-
-
 func _resolve_draw_occasion(day: int, boundary: int) -> void:
 	var occasion := _dictionary(draw_occasions.get(str(day), {})).duplicate(true)
 	if occasion.is_empty():
@@ -946,16 +922,6 @@ func _record_settlement_aftermath(slip: Dictionary, cause_sequence: int) -> void
 	var causes := _int_array(memory.get("_cause_sequences", []))
 	causes.append(cause_sequence)
 	memory["_cause_sequences"] = causes
-	bookmaker_aftermath[venue_id] = memory
-
-
-func _record_collection_aftermath(slip: Dictionary) -> void:
-	var venue_id := str(slip.get("venue_id", ""))
-	var memory := _dictionary(bookmaker_aftermath.get(venue_id, {})).duplicate(true)
-	memory["friendly"] = true
-	memory["collection_count"] = int(memory.get("collection_count", 0)) + 1
-	memory["last_public_event"] = "large_win" if int(slip.get("payout", 0)) >= _slip_payout({"stake": maxi(1, int(_dictionary(config.get("slips", {})).get("stake_max", 20))), "play_type": str(slip.get("play_type", ""))}) else "collected_win"
-	memory["last_day"] = int(slip.get("day", 0))
 	bookmaker_aftermath[venue_id] = memory
 
 

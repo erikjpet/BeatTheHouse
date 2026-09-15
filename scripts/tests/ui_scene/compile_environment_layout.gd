@@ -519,24 +519,6 @@ func _selected_info_text_fits(canvas_value: Variant, label: String, required_fra
 	return true
 
 
-func _badge_slot_icon_only_with_tooltips(root: Control, label: String) -> bool:
-	var badge_cells := _badge_cell_controls(root)
-	if badge_cells.is_empty():
-		push_error("%s did not expose any badge cells." % label)
-		return false
-	for cell_value in badge_cells:
-		var cell := cell_value as Control
-		if cell == null or not cell.visible:
-			continue
-		if cell.tooltip_text.strip_edges().is_empty():
-			push_error("%s badge cell did not expose hover details." % label)
-			return false
-		if _visible_badge_text_label_count(cell) > 0:
-			push_error("%s badge cell still rendered text next to the icon." % label)
-			return false
-	return true
-
-
 func _world_map_detail_popup_fits(screen_snapshot: Dictionary) -> bool:
 	if not bool(screen_snapshot.get("world_map_detail_popup_visible", false)):
 		push_error("World map detail should be shown as an overlay popup.")

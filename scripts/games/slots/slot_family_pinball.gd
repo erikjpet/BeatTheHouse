@@ -213,14 +213,6 @@ func _default_launch_power(mode: String, rng: RngStream) -> int:
 	return rng.randi_range(68, 82)
 
 
-func _layout_id_for_mode(mode: String) -> String:
-	if mode == "lane_multiball":
-		return "lane_multiball"
-	if mode == "video_feature":
-		return "video_feature"
-	return "em_bumper_drop"
-
-
 func _session_cap(stake: int, mode: String, feature_scale: float) -> int:
 	var multiplier := 11.5
 	if mode == "lane_multiball":

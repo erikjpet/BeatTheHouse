@@ -157,17 +157,6 @@ func force_outcome_symbols(machine: Dictionary, grid: Array, entry: Dictionary, 
 	return result
 
 
-func _ways_cells(reel_count: int, row_count: int, count: int, rng: RngStream) -> Array:
-	var cells: Array = []
-	var safe_reels := maxi(1, reel_count)
-	var target_count := mini(maxi(1, count), safe_reels)
-	var start_reel := rng.randi_range(0, maxi(0, safe_reels - target_count))
-	for offset in range(target_count):
-		var reel_index := start_reel + offset
-		cells.append({"reel": reel_index, "row": rng.randi_range(0, maxi(1, row_count) - 1)})
-	return cells
-
-
 func _full_payline_plan(reel_count: int, row_count: int, rng: RngStream) -> Dictionary:
 	var safe_reels := maxi(1, reel_count)
 	var safe_rows := maxi(1, row_count)
@@ -1751,26 +1740,6 @@ func _buffalo_profile_wild_symbol(profile: Dictionary, rng: RngStream) -> String
 	if not WILD_SYMBOLS.has(wild_symbol):
 		return "SUNSET_2X"
 	return wild_symbol
-
-
-func _stop_ways_extension(grid: Array, cells: Array, symbol: String) -> void:
-	if cells.is_empty() or grid.is_empty():
-		return
-	var min_reel := grid.size()
-	var max_reel := -1
-	for cell_value in cells:
-		var cell: Dictionary = _copy_dict(cell_value)
-		var reel_index := int(cell.get("reel", -1))
-		min_reel = mini(min_reel, reel_index)
-		max_reel = maxi(max_reel, reel_index)
-	for stop_reel in [min_reel - 1, max_reel + 1]:
-		if stop_reel < 0 or stop_reel >= grid.size():
-			continue
-		var column: Array = grid[stop_reel] if typeof(grid[stop_reel]) == TYPE_ARRAY else []
-		for row_index in range(column.size()):
-			if str(column[row_index]) == symbol or WILD_SYMBOLS.has(str(column[row_index])):
-				column[row_index] = _safe_buffalo_fill_symbol(stop_reel, row_index, symbol)
-		grid[stop_reel] = column
 
 
 func _trim_forced_reel_matches(grid: Array, cells: Array, symbol: String) -> void:

@@ -4346,13 +4346,6 @@ func _object_by_id(objects: Array, object_id: String) -> Dictionary:
 	return {}
 
 
-func _interactable_object_id_with_prefix(objects: Array, prefix: String) -> bool:
-	for object_data in objects:
-		if typeof(object_data) == TYPE_DICTIONARY and str((object_data as Dictionary).get("object_id", "")).begins_with(prefix):
-			return true
-	return false
-
-
 func _canvas_object_by_id(objects: Array, object_id: String) -> Dictionary:
 	for object_data in objects:
 		if typeof(object_data) == TYPE_DICTIONARY and str((object_data as Dictionary).get("id", "")) == object_id:
@@ -4425,37 +4418,6 @@ func _map_canvas_size_equal(a: Dictionary, b: Dictionary) -> bool:
 	return true
 
 
-func _map_marker_centers_equal(a: Dictionary, b: Dictionary) -> bool:
-	var a_centers := _map_marker_centers(a)
-	var b_centers := _map_marker_centers(b)
-	if a_centers.keys().size() != b_centers.keys().size():
-		return false
-	for marker_id_value in a_centers.keys():
-		var marker_id := str(marker_id_value)
-		if not b_centers.has(marker_id):
-			return false
-		var a_position: Vector2 = a_centers.get(marker_id, Vector2.ZERO)
-		var b_position: Vector2 = b_centers.get(marker_id, Vector2.INF)
-		if a_position.distance_to(b_position) > 0.25:
-			return false
-	return true
-
-
-func _map_marker_centers(view: Dictionary) -> Dictionary:
-	var result: Dictionary = {}
-	for marker_value in _copy_array(view.get("icon_markers", [])):
-		if typeof(marker_value) != TYPE_DICTIONARY:
-			continue
-		var marker: Dictionary = marker_value
-		var marker_id := str(marker.get("id", "")).strip_edges()
-		var center_value: Variant = marker.get("screen_center", {})
-		if marker_id.is_empty() or typeof(center_value) != TYPE_DICTIONARY:
-			continue
-		var center: Dictionary = center_value
-		result[marker_id] = Vector2(float(center.get("x", 0.0)), float(center.get("y", 0.0)))
-	return result
-
-
 func _map_icon_marker(markers: Array, node_id: String) -> Dictionary:
 	for marker_value in markers:
 		if typeof(marker_value) != TYPE_DICTIONARY:
@@ -4476,16 +4438,6 @@ func _event_choice_has_trigger_event(event_definition: Dictionary, choice_id: St
 			continue
 		var consequences: Dictionary = choice_data.get("consequences", {}) if typeof(choice_data.get("consequences", {})) == TYPE_DICTIONARY else {}
 		return consequences.has("trigger_event")
-	return false
-
-
-func _category_has_fragment(categories: Array, fragment: String) -> bool:
-	for category in categories:
-		if typeof(category) != TYPE_DICTIONARY:
-			continue
-		var category_data: Dictionary = category
-		if str(category_data.get("id", "")).findn(fragment) != -1 or str(category_data.get("title", "")).findn(fragment) != -1:
-			return true
 	return false
 
 

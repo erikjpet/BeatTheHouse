@@ -85,34 +85,6 @@ func build_machine_from_ids(definition: Dictionary, ids: Dictionary, rng: RngStr
 	return StateScript.normalize(machine)
 
 
-func all_behavior_keys(definition: Dictionary) -> Array:
-	var keys: Array = []
-	for format_value in _dictionary_array(definition.get("slot_formats", [])):
-		var format: Dictionary = format_value
-		for family_value in _dictionary_array(definition.get("slot_types", [])):
-			var family: Dictionary = family_value
-			for math_value in _dictionary_array(definition.get("slot_math_variants", [])):
-				var math_variant: Dictionary = math_value
-				for bonus_value in _dictionary_array(definition.get("slot_bonus_variants", [])):
-					var bonus: Dictionary = bonus_value
-					keys.append("%s:%s:%s:%s" % [
-						str(format.get("id", "")),
-						str(family.get("id", "")),
-						str(math_variant.get("id", "")),
-						str(bonus.get("id", "")),
-					])
-	return keys
-
-
-func all_visual_keys(definition: Dictionary) -> Array:
-	var keys: Array = []
-	for behavior_key in all_behavior_keys(definition):
-		for cabinet_value in _dictionary_array(definition.get("slot_cabinet_variants", [])):
-			var cabinet: Dictionary = cabinet_value
-			keys.append("%s:%s" % [behavior_key, str(cabinet.get("id", ""))])
-	return keys
-
-
 func _configured_strips(definition: Dictionary, family_id: String, format_id: String, reel_count: int) -> Array:
 	var config_key := "slot_%s_config" % family_id
 	var family_config: Dictionary = _copy_dict(definition.get(config_key, {}))

@@ -1193,13 +1193,6 @@ func environment_runtime_state(_run_state: RunState, environment: Dictionary) ->
 	return _slot_environment_runtime_state_for_machine(machine)
 
 
-func environment_runtime_state_for_state_key(_run_state: RunState, environment: Dictionary, state_key: String) -> Dictionary:
-	var machine: Dictionary = StateScript.read_machine(environment, _normalized_fixture_state_key(state_key))
-	if machine.is_empty():
-		return {}
-	return _slot_environment_runtime_state_for_machine(machine)
-
-
 func environment_object_state(_run_state: RunState, environment: Dictionary) -> Dictionary:
 	var machine: Dictionary = _read_machine(environment)
 	if machine.is_empty():

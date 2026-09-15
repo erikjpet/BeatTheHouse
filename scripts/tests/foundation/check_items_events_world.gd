@@ -489,24 +489,6 @@ func _check_item_result_delta_shape(result: Dictionary, failures: Array) -> void
 
 
 # Checks direct item deltas are applied through RunState domains.
-func _check_item_result_applied(before: Dictionary, run_state: RunState, result: Dictionary, label: String, failures: Array) -> void:
-	if not bool(result.get("ok", false)):
-		return
-	var deltas: Dictionary = result.get("deltas", {})
-	var expected_bankroll := int(before.get("bankroll", 0)) + int(deltas.get("bankroll_delta", 0))
-	if run_state.bankroll != expected_bankroll:
-		failures.append("RunState bankroll did not match %s." % label)
-	var expected_suspicion := clampi(int(before.get("suspicion", 0)) + int(deltas.get("suspicion_delta", 0)), 0, 100)
-	if int(run_state.suspicion.get("level", 0)) != expected_suspicion:
-		failures.append("RunState suspicion did not match %s." % label)
-	var story_delta: Array = deltas.get("story_log", [])
-	if run_state.story_log.size() != int(before.get("story_count", 0)) + story_delta.size():
-		failures.append("RunState story log did not match %s." % label)
-	var debt_delta: Array = deltas.get("debt_changes", [])
-	if run_state.debt.size() != int(before.get("debt_count", 0)) + debt_delta.size():
-		failures.append("RunState debt did not match %s." % label)
-
-
 # Checks production event triggering and resolution through EventModule.
 func _check_event_module_foundation(library: ContentLibrary, failures: Array) -> void:
 	var run_a: RunState = RunStateScript.new()

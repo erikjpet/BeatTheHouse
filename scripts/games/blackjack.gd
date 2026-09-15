@@ -6492,13 +6492,6 @@ func _all_player_hands_busted(session: Dictionary) -> bool:
 	return true
 
 
-func _hand_resolves_without_dealer_draw(hand: Dictionary) -> bool:
-	if bool(hand.get("surrendered", false)):
-		return true
-	var cards: Array = _card_array(hand.get("cards", []))
-	return _is_bust(cards) or _is_natural_blackjack(hand)
-
-
 func _chip_bet_command(index: int, ui_state: Dictionary, table: Dictionary, run_state: RunState, environment: Dictionary, selected_stake: int) -> Dictionary:
 	if _has_dealt_hand(ui_state):
 		return _message_command(ui_state, "Main bets are locked until the hand settles.")
@@ -7086,11 +7079,6 @@ func _refresh_count_challenge_misses(challenge: Dictionary, now_msec: int) -> Di
 		next_challenge["misses"] = int(next_challenge.get("misses", 0)) + added
 		next_challenge["dealer_attention_risk"] = clampi(int(next_challenge.get("dealer_attention_risk", 24)) + added_risk, 0, 100)
 	return next_challenge
-
-
-func _count_missed_icon_ids(challenge: Dictionary, now_msec: int) -> Array:
-	var snapshot: Dictionary = _refresh_count_challenge_misses(challenge, now_msec)
-	return _string_array(snapshot.get("missed_icons", []))
 
 
 func _mark_unresolved_count_icons_missed(challenge: Dictionary, now_msec: int) -> Dictionary:
@@ -8236,11 +8224,6 @@ func _dealer_view(dealer_cards: Array, reveal_hole: bool) -> Array:
 			card["hidden"] = true
 		dealer_view.append(card)
 	return dealer_view
-
-
-func _draw_card_row(surface, cards: Array, start: Vector2, _hand_index: int = 0, scale: float = 1.0) -> void:
-	for i in range(cards.size()):
-		_draw_card(surface, cards[i], start + Vector2(i * 54 * scale, 0), scale)
 
 
 func _draw_card(surface, card_value: Variant, pos: Vector2, scale: float = 1.0) -> void:

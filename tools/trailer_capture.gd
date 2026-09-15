@@ -553,39 +553,6 @@ func _cycle_world_map_destinations(dwell_seconds: float) -> void:
 				return
 
 
-func _focus_first_object_with_prefix(prefix: String) -> bool:
-	var snapshot: Dictionary = app.call("current_spatial_interaction_snapshot")
-	var objects: Array = snapshot.get("objects", [])
-	for object_value in objects:
-		if typeof(object_value) != TYPE_DICTIONARY:
-			continue
-		var object_data: Dictionary = object_value
-		var object_id := str(object_data.get("object_id", ""))
-		if object_id.begins_with(prefix):
-			app.call("focus_interactable_object", object_id)
-			await _settle_frames(4)
-			return true
-	return false
-
-
-func _select_first_world_map_destination() -> void:
-	var run_state: RunState = app.get("run_state")
-	if run_state == null:
-		return
-	var map_data: Dictionary = run_state.world_map
-	var current_id := str(map_data.get("current_node_id", ""))
-	var nodes: Array = map_data.get("nodes", [])
-	for node_value in nodes:
-		if typeof(node_value) != TYPE_DICTIONARY:
-			continue
-		var node: Dictionary = node_value
-		var node_id := str(node.get("id", ""))
-		if node_id.is_empty() or node_id == current_id or str(node.get("state", "hidden")) == "hidden":
-			continue
-		if bool(app.call("select_world_map_node", node_id)):
-			return
-
-
 func _mark(label: String) -> void:
 	timing_markers[label] = float(_movie_frame()) / float(CAPTURE_FPS)
 	print("TRAILER_MARKER segment=%s marker=%s frame=%d" % [segment, label, _movie_frame()])

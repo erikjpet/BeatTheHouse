@@ -2763,15 +2763,6 @@ func _dispense_animation_duration_msec(events: Array) -> int:
 	return last_start + PULL_TAB_DISPENSE_EVENT_DURATION_MSEC
 
 
-func _ripped_ticket_view_list(machine: Dictionary, _ui_state: Dictionary) -> Array:
-	var result: Array = []
-	result.append_array(_ticket_pile_view_list(machine, "winner_pile"))
-	result.append_array(_ticket_pile_view_list(machine, "loser_pile"))
-	if result.size() > 16:
-		return result.slice(0, 16)
-	return result
-
-
 func _ticket_pile_view_list(machine: Dictionary, pile_name: String) -> Array:
 	var tickets := _array_view(machine.get(pile_name, []))
 	var result: Array = []

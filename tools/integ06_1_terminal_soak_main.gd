@@ -316,20 +316,6 @@ func _profile_snapshot(run: Dictionary, case_index: int) -> Dictionary:
 	}
 
 
-func _observed_systems(rows: Array) -> Array:
-	var systems := {"run_state": true, "run_generator": true, "world_map": true, "save_load": true, "profile": true}
-	for row_value in rows:
-		var row := _dict(row_value)
-		if int(row.get("game_actions", 0)) > 0: systems["game"] = true
-		if int(row.get("event_actions", 0)) > 0: systems["event"] = true
-		if int(row.get("service_actions", 0)) > 0: systems["service"] = true
-		if int(row.get("lender_actions", 0)) > 0: systems["lender"] = true
-		if not _array(row.get("visited_archetypes", [])).is_empty(): systems["environment"] = true
-	var result: Array = systems.keys()
-	result.sort()
-	return result
-
-
 func _merge_system_witnesses(rows: Array) -> Dictionary:
 	var merged := {}
 	for row_value in rows:

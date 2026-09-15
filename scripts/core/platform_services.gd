@@ -56,26 +56,7 @@ func submit_daily_score(daily_id: String, score: int, challenge_config: Dictiona
 
 
 # Pretends to save cloud run data for future adapter parity.
-func save_cloud_run(slot_id: String, run_data: Dictionary) -> Dictionary:
-	return _local_payload({
-		"ok": true,
-		"slot_id": slot_id,
-		"bytes": JSON.stringify(run_data).length(),
-		"run_data": run_data.duplicate(true),
-		"saved": false,
-	})
-
-
 # Reports that no local cloud save exists.
-func load_cloud_run(slot_id: String) -> Dictionary:
-	return _local_payload({
-		"ok": false,
-		"slot_id": slot_id,
-		"run_data": {},
-		"loaded": false,
-	})
-
-
 # Accepts an achievement unlock without sending it anywhere.
 func unlock_achievement(achievement_id: String) -> Dictionary:
 	return _local_payload({

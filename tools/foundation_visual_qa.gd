@@ -2167,28 +2167,6 @@ func _record_coin_pusher_visual_capture(capture_key: String, surface_canvas: Con
 	report["coin_pusher_visual_status"] = captures
 
 
-func _record_coin_pusher_room_capture(capture_key: String, fixture_run: RunState, other_game_object: Dictionary) -> void:
-	var captures: Dictionary = report.get("coin_pusher_visual_status", {})
-	var machine: Dictionary = (fixture_run.current_environment.get("game_states", {}) as Dictionary).get("coin_pusher", {}) if fixture_run != null else {}
-	var viewport_size := root.get_viewport().get_visible_rect().size
-	captures[capture_key] = {
-		"viewport": {"width": int(round(viewport_size.x)), "height": int(round(viewport_size.y))},
-		"room_environment_id": str(fixture_run.current_environment.get("id", "")) if fixture_run != null else "",
-		"pusher_locked": bool(machine.get("locked_down", false)),
-		"other_game_id": str(other_game_object.get("source_id", "")),
-		"other_game_disabled": bool(other_game_object.get("disabled", true)),
-		"room_screen_active": str(app.call("current_screen_snapshot").get("screen", "")) == "ENVIRONMENT",
-	}
-	report["coin_pusher_visual_status"] = captures
-
-
-func _surface_hit_snapshot_has_action(hit_actions: Array, action_id: String) -> bool:
-	for hit_value in hit_actions:
-		if typeof(hit_value) == TYPE_DICTIONARY and str((hit_value as Dictionary).get("action", "")) == action_id:
-			return true
-	return false
-
-
 func _verify_demo_objective_visible() -> void:
 	var hud: Dictionary = app.call("current_objective_hud_snapshot") if app.has_method("current_objective_hud_snapshot") else {}
 	var goal := str(hud.get("goal", hud.get("text", ""))).to_lower()
@@ -4245,16 +4223,6 @@ func _double_click_first_canvas_object_type(object_type: String) -> String:
 	return await _double_click_canvas_object_data(canvas, object_data, object_type)
 
 
-func _double_click_first_enabled_canvas_object_type(object_type: String) -> String:
-	var canvas := app.get("environment_canvas") as Control
-	if canvas == null or not canvas.visible or not canvas.has_method("current_view_snapshot"):
-		return ""
-	var object_data := _first_clickable_canvas_object_type_enabled(canvas, object_type, true)
-	if object_data.is_empty():
-		return ""
-	return await _double_click_canvas_object_data(canvas, object_data, object_type)
-
-
 func _double_click_canvas_object_data(canvas: Control, object_data: Dictionary, object_type: String) -> String:
 	var object_id := _canvas_object_id(object_data)
 	# Callers may retain an object snapshot after single-click focus has moved the
@@ -4794,14 +4762,6 @@ func _has_visible_button_exact(text: String) -> bool:
 	for item in _visible_control_items(app):
 		var data := item as Dictionary
 		if str(data.get("kind", "")) == "button" and not bool(data.get("disabled", false)) and str(data.get("text", "")) == text:
-			return true
-	return false
-
-
-func _has_visible_button_contains(fragment: String) -> bool:
-	for item in _visible_control_items(app):
-		var data := item as Dictionary
-		if str(data.get("kind", "")) == "button" and not bool(data.get("disabled", false)) and str(data.get("text", "")).find(fragment) != -1:
 			return true
 	return false
 

@@ -227,45 +227,6 @@ func sal_shelf_rows() -> Array:
 	return rows
 
 
-func trade_up_candidates() -> Array:
-	var grouped: Dictionary = {}
-	if meta_collection_service == null:
-		return []
-	var resolver: Variant = _collection_resolver()
-	for instance_value in meta_collection_service.owned_instances():
-		if typeof(instance_value) != TYPE_DICTIONARY:
-			continue
-		var instance: Dictionary = instance_value
-		var definition: Dictionary = resolver.item_definition(int(instance.get("itemdef_id", -1)))
-		var collection_id := str(definition.get("collection_id", ""))
-		var tier := str(definition.get("tier", ""))
-		var next_tier := next_tier(tier)
-		if collection_id.is_empty() or tier.is_empty() or next_tier.is_empty():
-			continue
-		var key := "%s|%s" % [collection_id, tier]
-		var ids := _copy_array(grouped.get(key, []))
-		ids.append(int(instance.get("instance_id", 0)))
-		grouped[key] = ids
-	var candidates: Array = []
-	for key_value in grouped.keys():
-		var ids := _copy_array(grouped.get(key_value, []))
-		if ids.size() < 5:
-			continue
-		var key := str(key_value)
-		var parts := key.split("|", false)
-		if parts.size() < 2:
-			continue
-		var collection: Dictionary = resolver.collection_definition(str(parts[0]))
-		var tier := str(parts[1])
-		candidates.append({
-			"label": "%s %s" % [str(collection.get("display_name", "Collection")), tier.capitalize()],
-			"summary": "Creates one %s item." % next_tier(tier).capitalize(),
-			"eligible_instance_ids": ids,
-			"required_count": 5,
-		})
-	return candidates
-
-
 func next_tier(tier: String) -> String:
 	var order := ["blue", "purple", "pink", "red", "gold"]
 	var index := order.find(tier.strip_edges().to_lower())

@@ -6325,16 +6325,6 @@ func _check_video_poker_rtp_bands(game: GameModule, failures: Array) -> void:
 			failures.append("Video poker active cabinet %s/%s/%d-hand RTP %.4f fell outside the sampled sane band." % [variant_id, tier_id, hand_count, rtp])
 
 
-func _video_poker_tier_row_mult(game: GameModule, variant_id: String, tier_id: String, row_key: String) -> int:
-	var variant: Dictionary = game.call("_variant", {"variant_id": variant_id, "paytable_tier_id": tier_id})
-	var rows: Array = variant.get("rows", [])
-	for row_value in rows:
-		var row: Dictionary = row_value if typeof(row_value) == TYPE_DICTIONARY else {}
-		if str(row.get("key", "")) == row_key:
-			return int(row.get("mult", 0))
-	return 0
-
-
 func _video_poker_rtp(game: GameModule, variant_id: String, tier_id: String, action_id: String, seed_text: String, rounds: int, hand_count: int = 1) -> float:
 	var run_state: RunState = _vp_fresh(game, variant_id, seed_text, 100000000, tier_id, hand_count, 1)
 	var environment: Dictionary = run_state.current_environment

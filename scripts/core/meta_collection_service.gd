@@ -462,21 +462,6 @@ func normal_run_start_modifiers() -> Dictionary:
 	return result
 
 
-func players_card_carried_instance_ids() -> Array:
-	var resolver: Variant = _collection_resolver()
-	var carried_ids := carried_instance_ids()
-	var carried_lookup := {}
-	for carried_id in carried_ids:
-		carried_lookup[int(carried_id)] = true
-	var result: Array = []
-	for instance_value in owned_instances():
-		var instance := _copy_dict(instance_value)
-		var instance_id := int(instance.get("instance_id", 0))
-		if carried_lookup.has(instance_id) and resolver.is_players_card_instance(instance):
-			result.append(instance_id)
-	return result
-
-
 # Builds the one authoritative packed-container manifest used by both the
 # meta-home room and the generated run home.
 func carried_container_rows() -> Array:

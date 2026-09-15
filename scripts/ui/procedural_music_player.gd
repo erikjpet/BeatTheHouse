@@ -368,10 +368,6 @@ func debug_soak_snapshot() -> Dictionary:
 
 
 # Starts or updates the generated theme for the current environment.
-func play_for_environment(environment: Dictionary, heat_level: int) -> void:
-	play_for_environment_state(environment, heat_level, {})
-
-
 # A generated overture that moves through the sound vocabulary used by the
 # game's rooms while preserving a single memorable menu motif.
 func play_main_menu_theme() -> void:
@@ -996,11 +992,6 @@ func _consume_music_events(music_state: Dictionary, playback_position: float) ->
 		"result_time": music_state.get("result_time", 0),
 		"transport_beat": transport_beat,
 	})
-
-
-func _music_state_with_event_envelope(music_state: Dictionary, playback_position: float) -> Dictionary:
-	var transport_beat := maxf(0.0, playback_position) / maxf(0.001, _music_director_bar_seconds() / 4.0)
-	return _music_state_with_event_envelope_at_beat(music_state, transport_beat)
 
 
 func _music_state_with_event_envelope_at_beat(music_state: Dictionary, transport_beat: float) -> Dictionary:
@@ -3279,20 +3270,6 @@ func _procedural_stem_contract_from_context(profile: Dictionary, context: Dictio
 	return contract
 
 
-func _procedural_stem_set_from_context(profile: Dictionary, context: Dictionary, stage: String, token: int = -1) -> Dictionary:
-	var frames := int(context.get("frames", 0))
-	if frames <= 0:
-		return {}
-	var stem_data := _ambient_stem_pcm_data(context, token)
-	if stem_data.is_empty():
-		return {}
-	var stems := _streams_from_stem_data(stem_data, frames)
-	var contract := _stem_set_contract("procedural", stems, float(context.get("bpm", profile.get("bpm", 82.0))), int(context.get("bars", 1)), frames, str(profile.get("palette_id", "")), {}, stage)
-	contract["step_period"] = float(context.get("step_period", 0.36))
-	contract["profile"] = profile.duplicate(true)
-	return contract
-
-
 func _procedural_stem_pcm_contract_from_context(profile: Dictionary, context: Dictionary, stage: String, token: int = -1) -> Dictionary:
 	var frames := int(context.get("frames", 0))
 	if frames <= 0:
@@ -3693,13 +3670,6 @@ func _play_web_full_bed(profile: Dictionary, cache_key: String) -> void:
 	_play_stem_set(stem_set, 0.0, AMBIENT_STAGE_FULL)
 
 
-func _instant_bed_stream(profile: Dictionary) -> AudioStreamWAV:
-	var context := _ambient_generation_context(profile)
-	var frames := maxi(1, int(INSTANT_BED_SECONDS * float(SAMPLE_RATE)))
-	var data := _instant_bed_pcm_data(context, frames)
-	return _ambient_stream_from_data(data, frames)
-
-
 func _instant_bed_stem_set(profile: Dictionary) -> Dictionary:
 	var context := _ambient_generation_context(profile)
 	var frames := maxi(1, int(INSTANT_BED_SECONDS * float(SAMPLE_RATE)))
@@ -3877,80 +3847,6 @@ func _web_music_bed_pcm_data(context: Dictionary, frames: int, sample_rate: int,
 	return data
 
 
-func _web_music_mixdown_stem_set(profile: Dictionary, source_stem_set: Dictionary, token: int = -1) -> Dictionary:
-	if not _stem_set_contract_valid(source_stem_set):
-		return {}
-	var source_sample_rate := _stem_set_source_sample_rate(source_stem_set)
-	var source_loop_frames := int(source_stem_set.get("loop_frames", 0))
-	var source_seconds := float(source_loop_frames) / float(source_sample_rate)
-	if source_seconds <= 0.0:
-		return {}
-	var sample_rate := maxi(1, WEB_AUDIO_MUSIC_BED_SAMPLE_RATE)
-	var max_frames := maxi(1, int(WEB_AUDIO_MUSIC_STEM_MAX_PCM_BYTES / PCM_BYTES_PER_FRAME))
-	var target_seconds := clampf(source_seconds, 1.0, WEB_AUDIO_MUSIC_BED_SECONDS)
-	var frames := mini(max_frames, maxi(1, int(target_seconds * float(sample_rate))))
-	var data := _web_music_mixdown_pcm_data(source_stem_set, frames, sample_rate, token)
-	if data.is_empty():
-		return {}
-	var stems := {
-		"pad": _ambient_stream_from_data_with_rate(data, frames, sample_rate),
-	}
-	var bpm := float(source_stem_set.get("bpm", profile.get("bpm", 82.0)))
-	var step_period := _step_period_from_bpm(bpm)
-	var bars := maxi(1, int(ceil((float(frames) / float(sample_rate)) / maxf(step_period * float(STEPS_PER_BAR), 0.001))))
-	var contract := _stem_set_contract("web_mixdown", stems, bpm, bars, frames, str(source_stem_set.get("palette_id", profile.get("palette_id", ""))), {}, AMBIENT_STAGE_PRIMER)
-	contract["step_period"] = step_period
-	contract["profile"] = profile.duplicate(true)
-	contract["sample_rate"] = sample_rate
-	contract["track_id"] = "web_mixdown_%s_%s_%s" % [
-		str(profile.get("archetype_id", "environment")),
-		str(source_stem_set.get("source", "")),
-		str(source_stem_set.get("palette_id", profile.get("palette_id", ""))),
-	]
-	contract["web_bridge_bed"] = true
-	contract["web_bridge_mixdown"] = true
-	return contract
-
-
-func _web_music_mixdown_pcm_data(source_stem_set: Dictionary, frames: int, sample_rate: int, token: int = -1) -> PackedByteArray:
-	var data := _empty_pcm(frames)
-	var stems_value: Variant = source_stem_set.get("stems", {})
-	if typeof(stems_value) != TYPE_DICTIONARY:
-		return data
-	var stems: Dictionary = stems_value
-	var safe_rate := maxi(1, sample_rate)
-	var render_stride := maxi(1, WEB_AUDIO_RENDER_STRIDE_FRAMES)
-	var i := 0
-	while i < frames:
-		if token > 0 and i % GENERATION_CANCEL_CHECK_FRAMES == 0 and _generation_was_cancelled(token):
-			return PackedByteArray()
-		if token > 0 and i > 0 and i % WEB_AUDIO_WORKER_YIELD_SOURCE_FRAMES == 0:
-			OS.delay_usec(WEB_AUDIO_WORKER_YIELD_USEC)
-			if _generation_was_cancelled(token):
-				return PackedByteArray()
-		var t := float(i) / float(safe_rate)
-		var mixed := 0.0
-		var total_weight := 0.0
-		for role_value in MUSIC_STEM_PLAYBACK_ROLES:
-			var role := str(role_value)
-			var stream_value: Variant = stems.get(role, null)
-			if not (stream_value is AudioStreamWAV):
-				continue
-			var weight := float(WEB_MIXDOWN_ROLE_WEIGHTS.get(role, 0.0))
-			if weight <= 0.0:
-				continue
-			mixed += _wav_sample_mono_at_time(stream_value as AudioStreamWAV, t) * weight
-			total_weight += weight
-		if total_weight > 1.25:
-			mixed /= total_weight * 0.82
-		var sample := _soft_limit(mixed * 0.84)
-		var repeat_count := mini(render_stride, frames - i)
-		for repeat_index in range(repeat_count):
-			_write_i16(data, (i + repeat_index) * PCM_BYTES_PER_FRAME, sample)
-		i += render_stride
-	return data
-
-
 func _stem_set_source_sample_rate(stem_set: Dictionary) -> int:
 	var explicit_rate := int(stem_set.get("sample_rate", 0))
 	if explicit_rate > 0:
@@ -3963,81 +3859,6 @@ func _stem_set_source_sample_rate(stem_set: Dictionary) -> int:
 			if stream_value is AudioStreamWAV:
 				return maxi(1, (stream_value as AudioStreamWAV).mix_rate)
 	return SAMPLE_RATE
-
-
-func _wav_sample_mono_at_time(wav: AudioStreamWAV, time_seconds: float) -> float:
-	return _wav_sample_mono_at_frame(wav, maxf(0.0, time_seconds) * float(maxi(1, wav.mix_rate)))
-
-
-func _wav_sample_mono_at_frame(wav: AudioStreamWAV, frame_position: float) -> float:
-	var frame_count := _wav_frame_count(wav)
-	if frame_count <= 0:
-		return 0.0
-	var loop_begin := clampi(int(wav.loop_begin), 0, maxi(0, frame_count - 1))
-	var loop_end := int(wav.loop_end)
-	if loop_end <= loop_begin:
-		loop_end = frame_count
-	loop_end = clampi(loop_end, loop_begin + 1, frame_count)
-	var loop_length := maxi(1, loop_end - loop_begin)
-	var local_position := fposmod(frame_position - float(loop_begin), float(loop_length)) + float(loop_begin)
-	var frame_a := clampi(int(floor(local_position)), loop_begin, loop_end - 1)
-	var frame_b := frame_a + 1
-	if frame_b >= loop_end:
-		frame_b = loop_begin
-	var blend := clampf(local_position - floor(local_position), 0.0, 1.0)
-	return lerpf(_wav_frame_mono_sample(wav, frame_a), _wav_frame_mono_sample(wav, frame_b), blend)
-
-
-func _wav_frame_count(wav: AudioStreamWAV) -> int:
-	var channels := 2 if wav.stereo else 1
-	return int(wav.data.size() / maxi(1, channels * PCM_BYTES_PER_FRAME))
-
-
-func _wav_frame_mono_sample(wav: AudioStreamWAV, frame_index: int) -> float:
-	var channels := 2 if wav.stereo else 1
-	var byte_index := frame_index * channels * PCM_BYTES_PER_FRAME
-	var left := _read_i16_float(wav.data, byte_index)
-	if channels <= 1:
-		return left
-	var right := _read_i16_float(wav.data, byte_index + PCM_BYTES_PER_FRAME)
-	return (left + right) * 0.5
-
-
-func _read_i16_float(data: PackedByteArray, byte_index: int) -> float:
-	if byte_index < 0 or byte_index + 1 >= data.size():
-		return 0.0
-	var sample := int(data[byte_index]) | (int(data[byte_index + 1]) << 8)
-	if sample >= 32768:
-		sample -= 65536
-	return clampf(float(sample) / 32768.0, -1.0, 1.0)
-
-
-func _instant_bed_pcm_data(context: Dictionary, frames: int) -> PackedByteArray:
-	var root_midi := int(context.get("root_midi", 45))
-	var chord_roots: Array = context.get("chord_roots", [0])
-	var chord_voicings: Array = context.get("chord_voicings", [])
-	var palette: Dictionary = context.get("instrument_palette", {}) as Dictionary
-	var chord_root := root_midi
-	if not chord_roots.is_empty():
-		chord_root += int(chord_roots[0])
-	var chord_voicing: Array = []
-	if not chord_voicings.is_empty():
-		chord_voicing = chord_voicings[0] as Array
-	var volume := float(context.get("volume", 0.22)) * 0.82
-	var pad_gain := float(context.get("pad_gain", 0.38))
-	var texture_gain := float(context.get("texture_gain", 0.45)) * 0.72
-	var texture_kind := str(context.get("texture_kind", "fluorescent"))
-	var texture_rate := float(context.get("texture_rate", 0.33))
-	var texture_seed := int(context.get("texture_seed", 0))
-	var data := PackedByteArray()
-	data.resize(maxi(0, frames * PCM_BYTES_PER_FRAME))
-	for i in range(frames):
-		var t := float(i) / float(SAMPLE_RATE)
-		var loop_edge := _loop_edge_envelope(t, INSTANT_BED_SECONDS)
-		var pad := _music_pad_voiced(root_midi, chord_voicing, chord_root, t, palette) * pad_gain
-		var texture := _ambient_texture_sample(texture_kind, texture_rate, t, i, texture_seed) * texture_gain
-		_write_i16(data, i * PCM_BYTES_PER_FRAME, _soft_limit((pad + texture) * volume * loop_edge))
-	return data
 
 
 func _instant_bed_stem_pcm_data(context: Dictionary, frames: int) -> Dictionary:

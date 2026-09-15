@@ -376,23 +376,6 @@ func record_foundation_subsystem_usec(subsystem: String, elapsed_usec: int) -> v
 # never constructs this node, so explicit allocation/copy accounting has zero
 # default-game frame cost. `source` must name the instrumented operation rather
 # than inferring language allocations from memory deltas.
-func record_allocation_copy(kind: String, source: String, count: int = 1, bytes: int = 0) -> void:
-	var normalized_kind := kind.strip_edges().to_lower()
-	if normalized_kind not in ["allocation", "shallow_copy", "deep_copy"]:
-		return
-	var source_index := ALLOCATION_COPY_SOURCE_IDS.find(source.strip_edges())
-	if source_index < 0 or count <= 0 or bytes < 0:
-		return
-	explicit_allocation_audited_sources[source_index] = 1
-	if normalized_kind == "allocation":
-		explicit_allocation_counts[source_index] += count
-	elif normalized_kind == "shallow_copy":
-		explicit_shallow_copy_counts[source_index] += count
-	else:
-		explicit_deep_copy_counts[source_index] += count
-	explicit_allocation_copy_bytes[source_index] += bytes
-
-
 func mark_allocation_root_audited(source: String) -> void:
 	var source_index := ALLOCATION_COPY_SOURCE_IDS.find(source.strip_edges())
 	if source_index >= 0:
@@ -2979,18 +2962,6 @@ func _wait_for_game_phase(game_id: String, phase_id: String, max_frames: int) ->
 			return true
 		await get_tree().process_frame
 	mark_event("perf06_phase_wait_timeout", {"game_id": game_id, "phase_id": phase_id, "max_frames": max_frames})
-	return false
-
-
-func _wait_for_surface_animation_inactive(channel_id: String, max_frames: int) -> bool:
-	var canvas := app.get("game_surface_canvas") as Control if app != null else null
-	if canvas == null or not canvas.has_method("surface_animation_active"):
-		return false
-	for _frame_index in range(max_frames):
-		if not bool(canvas.call("surface_animation_active", channel_id)):
-			return true
-		await get_tree().process_frame
-	mark_event("perf06_animation_wait_timeout", {"channel_id": channel_id, "max_frames": max_frames})
 	return false
 
 

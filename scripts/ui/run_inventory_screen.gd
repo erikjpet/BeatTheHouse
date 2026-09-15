@@ -805,13 +805,6 @@ func _texture_for_item(item: Dictionary) -> Texture2D:
 	return _texture_provider.call(str(item.get("asset_path", ""))) as Texture2D
 
 
-func _grid_button_text(item: Dictionary) -> String:
-	var display_name := str(item.get("display_name", item.get("id", "Item")))
-	var source := str(item.get("storage_source", "carried"))
-	var prefix := "STORED\n" if source == "container" else "TICKET\n" if source == "pawn_ticket" else ""
-	return "%s%s" % [prefix, display_name.left(18)]
-
-
 func _selection_key_for_item(item_id: String, source: String) -> String:
 	for container_value in _model.get("containers", []):
 		if typeof(container_value) != TYPE_DICTIONARY:

@@ -147,14 +147,6 @@ func set_run_report_replay_progress(progress: float) -> void:
 	queue_redraw()
 
 
-func clear_run_report_replay() -> void:
-	replay_keyframes = []
-	replay_segments = []
-	replay_progress = 1.0
-	replay_reduce_motion = false
-	queue_redraw()
-
-
 func current_view_snapshot() -> Dictionary:
 	_ensure_layout_cache()
 	var view := snapshot.duplicate(true)
@@ -783,14 +775,6 @@ func _compute_map_view_bounds() -> Rect2:
 	return _navigation_or_authored_bounds(_selected_focus_bounds(base_bounds))
 
 
-func pan_map(direction: Vector2) -> void:
-	if direction == Vector2.ZERO:
-		return
-	_ensure_layout_cache()
-	var bounds := target_map_view_bounds_cache
-	_set_navigation_bounds(Rect2(bounds.position + direction * bounds.size * 0.18, bounds.size), false)
-
-
 func zoom_map(step: int, local_anchor: Vector2 = Vector2(-1.0, -1.0)) -> bool:
 	if step == 0:
 		return false
@@ -1081,10 +1065,6 @@ func _sorted_string_keys(values: Dictionary) -> Array[String]:
 func _point_in_view(point: Vector2, margin: float = 0.0) -> bool:
 	var layout_size := _current_or_default_layout_size()
 	return point.x >= -margin and point.y >= -margin and point.x <= layout_size.x + margin and point.y <= layout_size.y + margin
-
-
-func _segment_in_view(a: Vector2, b: Vector2) -> bool:
-	return not _clipped_segment_to_view(a, b).is_empty()
 
 
 func _clipped_segment_to_view(a: Vector2, b: Vector2, margin: float = 0.0) -> Array:

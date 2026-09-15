@@ -1047,25 +1047,6 @@ func _ordered_player_fake_tell(state: Dictionary, style: String) -> Dictionary:
 	return {"ok": true, "delta": 0, "message": "You project %s. The table notices; your betting turn remains open." % ("confidence" if style == "strong" else "uncertainty")}
 
 
-func _ordered_player_draw(state: Dictionary, held: Array, rng: RngStream) -> Dictionary:
-	if str(state.get("phase", "")) != "draw" or str(state.get("turn_owner", "")) != PLAYER_ID:
-		return {"ok": false, "delta": 0, "message": "It is not your draw."}
-	var cards := _card_array(state.get("player_cards", []))
-	var replace: Array = []
-	for index in range(cards.size()):
-		if not held.has(index):
-			replace.append(index)
-	var draw := CardShoeScript.draw_cards(_card_array(state.get("shoe", [])), replace.size())
-	var replacements := _card_array(draw.get("cards", []))
-	for index in range(replace.size()):
-		cards[int(replace[index])] = replacements[index]
-	state["player_cards"] = cards
-	state["shoe"] = draw.get("shoe", [])
-	_record_ordered_action(state, PLAYER_ID, "draw", replace.size(), false)
-	_advance_ordered_turn(state, rng)
-	return {"ok": true, "delta": 0, "message": "You draw %d. %s acts next." % [replace.size(), _actor_name(str(state.get("turn_owner", "")))]}
-
-
 func _ordered_player_fold(state: Dictionary, run_state: RunState, rng: RngStream = null) -> Dictionary:
 	state["player_active"] = false
 	_record_ordered_action(state, PLAYER_ID, "fold", 0, false)
@@ -1073,24 +1054,6 @@ func _ordered_player_fold(state: Dictionary, run_state: RunState, rng: RngStream
 	var advance := _advance_ordered_turn(state, rng, run_state)
 	var message := str(advance.get("message", "Your cards stay hidden. %s acts next." % _actor_name(str(state.get("turn_owner", "")))))
 	return {"ok": true, "delta": 0, "message": message}
-
-
-func _ordered_draw_npc(state: Dictionary, seat_index: int, rng: RngStream) -> void:
-	var seats: Array = state.get("seats", [])
-	var seat: Dictionary = seats[seat_index]
-	var cards := _card_array(seat.get("cards", []))
-	var replace := CrewPokerModelScript.draw_indices(cards, CrewPokerModelScript.policy(str(seat.get("member_id", ""))))
-	var draw := CardShoeScript.draw_cards(_card_array(state.get("shoe", [])), replace.size())
-	var replacements := _card_array(draw.get("cards", []))
-	for index in range(replace.size()):
-		cards[int(replace[index])] = replacements[index]
-	seat["cards"] = cards
-	seat["draw_count"] = replace.size()
-	seat["last_action"] = "draw"
-	seats[seat_index] = seat
-	state["seats"] = seats
-	state["shoe"] = draw.get("shoe", [])
-	_maybe_surface(state, seat, "draw", rng)
 
 
 func _advance_ordered_turn(state: Dictionary, rng: RngStream, run_state: RunState = null) -> Dictionary:
@@ -1433,13 +1396,6 @@ func _public_action_history(value: Variant) -> Array:
 			row.erase(private_key)
 		result.append(row)
 	return result
-
-
-func _authenticated_public_session_memory(state: Dictionary, run_state: RunState) -> Dictionary:
-	# The current generic host-command facade accepts caller-asserted producer
-	# identity, so neither its receipt dictionary nor a matching restored fact is
-	# an authentic poker producer root. Ignore both until a host-owned API exists.
-	return {"ok": false, "authority_gap": "host_poker_memory_authority_unavailable"}
 
 
 func _adaptive_npc_action(member_id: String, cards: Array, phase: String, facing_raise: bool, public_memory: Dictionary, rng: RngStream) -> String:
@@ -3046,18 +3002,6 @@ func _draw_observation(surface, state: Dictionary) -> void:
 		text = str(state.get("banter", "The room keeps its own time."))
 	surface.draw_rect(Rect2(138, 337, 548, 35), Color(0.03, 0.03, 0.05, 0.92))
 	surface.surface_label(text.left(76), Vector2(152, 359), 11, C_SOFT)
-
-
-func _draw_portrait_beat(surface, pos: Vector2, variant: String, color: Color) -> void:
-	# A tiny posture portrait carries the authored variant without spelling out
-	# what it means. Different variants shift the eyes and shoulder line.
-	var variant_phase := absi(variant.hash()) % 5
-	surface.draw_circle(pos, 7.0, Color(C_DARK_2.r, C_DARK_2.g, C_DARK_2.b, 0.94))
-	surface.draw_rect(Rect2(pos + Vector2(-8, 7), Vector2(16, 7)), Color(color.r, color.g, color.b, 0.35))
-	var eye_y := -2.0 + float(variant_phase % 3)
-	var eye_x := -2.0 + float(variant_phase - 2) * 0.45
-	surface.draw_circle(pos + Vector2(eye_x, eye_y), 1.3, color)
-	surface.draw_line(pos + Vector2(-7, 13 - variant_phase), pos + Vector2(7, 10 + variant_phase), Color(color.r, color.g, color.b, 0.62), 1.0)
 
 
 func _draw_controls(surface, state: Dictionary) -> void:

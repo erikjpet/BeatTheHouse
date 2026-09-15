@@ -57,10 +57,6 @@ func pending_state() -> Dictionary:
 	}
 
 
-func has_pending() -> bool:
-	return not pending_action_id.is_empty()
-
-
 func clear() -> void:
 	pending_action_id = ""
 	pending_skip_stake_validation = false

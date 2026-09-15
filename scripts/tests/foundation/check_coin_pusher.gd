@@ -2883,27 +2883,6 @@ func _pusher_v3_body(state: Dictionary, id: String) -> Dictionary:
 	return {}
 
 
-func _check_pusher_v3_impact_measurements(result: Dictionary, body_id: String, expected_support: String, failures: Array) -> void:
-	var impact := {}
-	for event_value in result.get("events", []):
-		var event: Dictionary = event_value
-		if str(event.get("kind", "")) == "impact" and str(event.get("body_id", "")) == body_id:
-			impact = event
-			break
-	if impact.is_empty():
-		failures.append("Coin Pusher V3 did not emit a physical impact event for the %s landing fixture." % expected_support)
-		return
-	if str(impact.get("support", "")) != expected_support \
-			or not impact.has("fall_height") \
-			or not impact.has("impact_speed") \
-			or not ["soft", "hard"].has(str(impact.get("impact_class", ""))) \
-			or not impact.has("stack_depth") \
-			or int(impact.get("fall_height", 0)) <= 0 \
-			or int(impact.get("impact_speed", 0)) <= 0 \
-			or int(impact.get("stack_depth", -1)) < 0:
-		failures.append("Coin Pusher V3 %s impact omitted valid height/speed/class/stack evidence: %s" % [expected_support, JSON.stringify(impact)])
-
-
 func _check_pusher_v3_real_weight_gravity(machine: Dictionary, failures: Array) -> void:
 	var gravity_machine := machine.duplicate(true)
 	var apparatus: Dictionary = gravity_machine.get("apparatus", {}) if typeof(gravity_machine.get("apparatus", {})) == TYPE_DICTIONARY else {}

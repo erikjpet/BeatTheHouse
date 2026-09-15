@@ -2056,21 +2056,6 @@ func _paytable_tier(state: Dictionary) -> Dictionary:
 	return tier
 
 
-func _pick_paytable_tier(rng: RngStream) -> String:
-	var total_weight := 0
-	for tier_id in PAYTABLE_TIERS.keys():
-		var tier: Dictionary = PAYTABLE_TIERS[tier_id]
-		total_weight += maxi(1, int(tier.get("weight", 1)))
-	var roll := rng.randi_range(1, maxi(1, total_weight))
-	var cursor := 0
-	for tier_id in PAYTABLE_TIERS.keys():
-		var tier: Dictionary = PAYTABLE_TIERS[tier_id]
-		cursor += maxi(1, int(tier.get("weight", 1)))
-		if roll <= cursor:
-			return str(tier_id)
-	return "standard"
-
-
 func _normalize_denominations(value: Variant) -> Array:
 	var result: Array = []
 	if typeof(value) == TYPE_ARRAY:
@@ -2128,25 +2113,6 @@ func _hand_count(state: Dictionary) -> int:
 	return _normalize_hand_count(int(state.get("multi_hand_count", 1)))
 
 
-func _next_lower_hand_count(count: int) -> int:
-	var lowered := 1
-	for option in MULTI_HAND_OPTIONS:
-		var option_count := int(option)
-		if option_count < count:
-			lowered = option_count
-	return lowered
-
-
-func _minimum_denomination_credits(denominations: Array) -> int:
-	var lowest := 999999
-	for entry_value in denominations:
-		if typeof(entry_value) != TYPE_DICTIONARY:
-			continue
-		var entry: Dictionary = entry_value
-		lowest = mini(lowest, maxi(1, int(entry.get("credits", 1))))
-	return 1 if lowest == 999999 else lowest
-
-
 func _playable_denomination_indices(denominations: Array, hand_count: int, wager_ceiling: int) -> Array:
 	var result: Array = []
 	for i in range(denominations.size()):
@@ -2157,16 +2123,6 @@ func _playable_denomination_indices(denominations: Array, hand_count: int, wager
 		# independently limits how many coins are affordable at the selected value.
 		var minimum_wager := maxi(1, int(entry.get("credits", 1))) * maxi(1, hand_count)
 		if minimum_wager <= wager_ceiling:
-			result.append(i)
-	return result
-
-
-func _full_ladder_denomination_indices(denominations: Array, hand_count: int, wager_ceiling: int) -> Array:
-	var result: Array = []
-	for i in range(denominations.size()):
-		var entry: Dictionary = denominations[i] if typeof(denominations[i]) == TYPE_DICTIONARY else {}
-		var max_wager := maxi(1, int(entry.get("credits", 1))) * maxi(1, hand_count) * _coin_count_for_level(MAX_BET_LEVEL)
-		if max_wager <= wager_ceiling:
 			result.append(i)
 	return result
 

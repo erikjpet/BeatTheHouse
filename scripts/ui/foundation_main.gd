@@ -1567,16 +1567,6 @@ func _sealed_action_host_restored_candidate(snapshot: Dictionary, layout_context
 	return candidate
 
 
-func _sealed_action_host_normalized_candidate(candidate: RunState) -> RunState:
-	if candidate == null:
-		return null
-	return _sealed_action_host_restored_candidate(
-		candidate.to_save_snapshot(),
-		_copy_dict(candidate.current_environment.get("scenario_layout_context", {})),
-		candidate.current_environment
-	)
-
-
 func _sealed_action_host_publish(candidate: RunState) -> bool:
 	if candidate == null or run_state == null:
 		return false
@@ -5802,12 +5792,6 @@ func _transfer_home_container_item_from_popup(from_container_id: String, to_cont
 	_refresh()
 
 
-func _close_home_storage_popup() -> void:
-	_hide_event_choice_popup()
-	_hide_run_inventory_popup()
-	_refresh()
-
-
 func open_run_inventory() -> void:
 	if run_state == null:
 		_show_message("No active run to inspect.")
@@ -8152,16 +8136,6 @@ func _hide_travel_transition() -> void:
 
 func _should_use_atomic_web_travel_transition() -> bool:
 	return travel_transition_force_web_runtime_for_test or OS.has_feature("web") or OS.get_name() == "Web"
-
-
-func _should_yield_for_travel_transition() -> bool:
-	# Browser tabs can suspend requestAnimationFrame while hidden or throttled.
-	# Holding the exclusive travel lock across a frame await can therefore strand
-	# the run even though destination generation already remains synchronous and
-	# bounded. Web travel stays atomic; desktop keeps the presentation frames.
-	if _should_use_atomic_web_travel_transition():
-		return false
-	return DisplayServer.get_name().to_lower() != "headless" and is_inside_tree()
 
 
 func _initialize_foundation() -> void:
@@ -14717,14 +14691,6 @@ func _interactable_environment_cache_token(environment: Dictionary) -> String:
 	])
 
 
-func _filter_unique_interactable_objects(objects: Array) -> Array:
-	return EnvironmentInteractionViewModelScript.filter_unique_objects(objects)
-
-
-func _objects_with_closing_time_lock(objects: Array) -> Array:
-	return EnvironmentInteractionViewModelScript.objects_with_closing_time_lock(objects, _closing_time_disabled_reason())
-
-
 func _game_hook_interactable_objects(apply_failure_lock: bool = true) -> Array:
 	return EnvironmentInteractionControllerScript.game_hook_interactable_objects(self, apply_failure_lock)
 
@@ -14808,20 +14774,6 @@ func _environment_game_fixture_object_states(game_id: String) -> Dictionary:
 	return result
 
 
-func _set_active_game_state_key(game_id: String, state_key: String) -> void:
-	if run_state == null:
-		return
-	var clean_game_id := game_id.strip_edges()
-	if clean_game_id.is_empty():
-		return
-	var clean_state_key := state_key.strip_edges()
-	if clean_state_key.is_empty():
-		clean_state_key = clean_game_id
-	var active_keys := _copy_dict(run_state.current_environment.get("active_game_state_keys", {}))
-	active_keys[clean_game_id] = clean_state_key
-	run_state.current_environment["active_game_state_keys"] = active_keys
-
-
 func _game_state_key_from_object_id(object_id: String, game_id: String) -> String:
 	if object_id.begins_with("game:"):
 		var key := object_id.substr("game:".length()).strip_edges()
@@ -14850,20 +14802,6 @@ func _generated_object_interaction_rect(object_id: String) -> Rect2:
 
 func _interaction_rect(object_type: String, index: int) -> Rect2:
 	return EnvironmentInteractionViewModelScript.interaction_rect_for_object("", object_type, index, _current_environment_layout())
-
-
-func _authored_interaction_rect(object_type: String, index: int) -> Rect2:
-	return EnvironmentInteractionViewModelScript.authored_interaction_rect(object_type, index, _current_environment_layout())
-
-
-func _layout_spot_for_object_type(object_type: String, index: int) -> Vector2:
-	var field_name: String = EnvironmentInteractionViewModelScript.layout_spot_field_name(object_type)
-	var spots: Variant = _current_environment_layout().get(field_name, [])
-	return EnvironmentInteractionViewModelScript.layout_spot_to_board_position((spots as Array)[index]) if not field_name.is_empty() and typeof(spots) == TYPE_ARRAY and index >= 0 and index < (spots as Array).size() else Vector2(-1.0, -1.0)
-
-
-func _layout_spot_field_name(object_type: String) -> String:
-	return EnvironmentInteractionViewModelScript.layout_spot_field_name(object_type)
 
 
 func _layout_spot_to_board_position(value: Variant) -> Vector2:
@@ -14993,57 +14931,6 @@ func _refresh_consequence_labels() -> void:
 		_clear(consequence_cards_list)
 
 
-func _refresh_consequence_cards(snapshot: Dictionary) -> void:
-	if consequence_cards_list == null:
-		return
-	_clear(consequence_cards_list)
-	var shown := 0
-	for card in snapshot.get("cards", []):
-		if typeof(card) == TYPE_DICTIONARY:
-			_add_consequence_card(card as Dictionary)
-			shown += 1
-		if shown >= 3:
-			break
-
-
-func _add_consequence_card(card: Dictionary) -> void:
-	var tone := str(card.get("tone", "neutral"))
-	var border := VisualStyle.CYAN_2
-	match tone:
-		"positive":
-			border = VisualStyle.TEAL
-		"risk":
-			border = VisualStyle.PINK
-		"cost":
-			border = VisualStyle.ORANGE
-		"story":
-			border = VisualStyle.AMBER
-		"next":
-			border = VisualStyle.PURPLE_2
-	var panel := _panel_container(VisualStyle.DARK_3, border)
-	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	panel.custom_minimum_size = Vector2(0, 54)
-	consequence_cards_list.add_child(panel)
-	var stack := VBoxContainer.new()
-	stack.add_theme_constant_override("separation", 2)
-	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	panel.add_child(stack)
-	var title := _label(str(card.get("title", "Outcome")), 12)
-	_set_control_font_color(title, border)
-	stack.add_child(title)
-	var line_count := 0
-	for line in card.get("lines", []):
-		var text := str(line)
-		if not text.strip_edges().is_empty():
-			var line_label := _label(text, 10)
-			line_label.max_lines_visible = 1
-			line_label.clip_text = true
-			stack.add_child(line_label)
-			line_count += 1
-		if line_count >= 2:
-			break
-
-
 func _run_report_outcome_snapshot() -> Dictionary:
 	if run_state == null:
 		return {}
@@ -15107,34 +14994,6 @@ func _consequence_view_snapshot() -> Dictionary:
 		"item_labeler": Callable(self, "_item_id_list_label"),
 		"travel_labeler": Callable(self, "_travel_id_list_label"),
 	})
-func _result_is_visible_consequence(result: Dictionary, recent_message: String = "") -> bool:
-	if result.is_empty():
-		return false
-	var result_type := str(result.get("type", ""))
-	if ["game_enter", "game_actions"].has(result_type):
-		return false
-	var deltas: Dictionary = result.get("deltas", {})
-	if int(result.get("bankroll_delta", deltas.get("bankroll_delta", 0))) != 0:
-		return true
-	if int(result.get("suspicion_delta", deltas.get("suspicion_delta", 0))) != 0:
-		return true
-	for key in ["alcohol_intake", "drunk_delta", "alcoholic_delta", "baseline_luck_delta"]:
-		if int(deltas.get(key, 0)) != 0:
-			return true
-	if bool(result.get("ended", deltas.get("ended", false))):
-		return true
-	for key in ["debt_changes", "inventory_add", "inventory_remove", "travel_hooks_add", "story_log", "messages", "item_hooks", "event_hooks"]:
-		if not _copy_array(deltas.get(key, [])).is_empty():
-			return true
-	for key in ["flags_set", "travel_changes"]:
-		var value: Variant = deltas.get(key, {})
-		if typeof(value) == TYPE_DICTIONARY and not (value as Dictionary).is_empty():
-			return true
-	if not recent_message.strip_edges().is_empty():
-		return true
-	return ["game_action", "game_action_summary", "item_effect", "item_sale", "event", "travel", "service_hook", "lender_hook", "game_hook", "story_summary"].has(result_type)
-
-
 func _refresh_environment_result_feedback() -> void:
 	if environment_result_panel == null:
 		return
@@ -15218,32 +15077,6 @@ func _environment_result_feedback_accent(result: Dictionary, bankroll_delta: int
 			return VisualStyle.CYAN_2
 
 
-func _outcome_card_title(result: Dictionary) -> String:
-	if result.is_empty():
-		return "Ready"
-	var type := str(result.get("type", ""))
-	var action_kind := str(result.get("action_kind", ""))
-	match type:
-		"game_action", "game_action_summary":
-			return "Risky play resolved" if action_kind == "cheat" else "Play resolved"
-		"item_effect":
-			return "Item gained"
-		"item_sale":
-			return "Item sold"
-		"event":
-			return "Event resolved"
-		"travel":
-			return "Travel complete"
-		"service_hook":
-			return "Service resolved"
-		"lender_hook":
-			return "Debt changed"
-		"game_hook":
-			return "Cashout resolved"
-		_:
-			return "Outcome"
-
-
 func _outcome_card_tone(_result: Dictionary, bankroll_delta: int, suspicion_delta: int) -> String:
 	if suspicion_delta > 0:
 		return "risk"
@@ -15252,46 +15085,6 @@ func _outcome_card_tone(_result: Dictionary, bankroll_delta: int, suspicion_delt
 	if bankroll_delta > 0:
 		return "positive"
 	return "neutral"
-
-
-func _should_show_pressure_card(pressure: Dictionary) -> bool:
-	return TerminalConsequenceViewModelScript.should_show_pressure_card(pressure)
-
-
-func _pressure_card_tone(pressure: Dictionary) -> String:
-	return TerminalConsequenceViewModelScript.pressure_card_tone(pressure)
-
-
-func _pressure_card_lines(pressure: Dictionary) -> Array:
-	return TerminalConsequenceViewModelScript.pressure_card_lines(pressure)
-
-
-func _risk_card_lines(suspicion_delta: int, suspicion_cues: Variant, security_cues: Variant) -> Array:
-	return TerminalConsequenceViewModelScript.risk_card_lines(run_state, suspicion_delta, _copy_array(suspicion_cues), _copy_array(security_cues))
-
-
-func _alcohol_card_lines(alcohol_intake: int, drunk_delta: int, alcoholic_delta: int, baseline_luck_delta: int) -> Array:
-	return TerminalConsequenceViewModelScript.alcohol_card_lines(run_state, alcohol_intake, drunk_delta, alcoholic_delta, baseline_luck_delta)
-
-
-func _debt_card_lines(debt_changes: Array, debt_items: Variant) -> Array:
-	return TerminalConsequenceViewModelScript.debt_card_lines(debt_changes, _copy_array(debt_items))
-
-
-func _inventory_card_lines(inventory_add: Array, inventory_remove: Array, inventory_items: Variant) -> Array:
-	return TerminalConsequenceViewModelScript.inventory_card_lines(inventory_add, inventory_remove, _copy_array(inventory_items), Callable(self, "_item_id_list_label"))
-
-
-func _travel_card_lines(travel_hooks: Array, travel_changes: Dictionary, travel_choices: Variant) -> Array:
-	return TerminalConsequenceViewModelScript.travel_card_lines(travel_hooks, travel_changes, _copy_array(travel_choices), Callable(self, "_travel_id_list_label"))
-
-
-func _story_card_lines(recent_message: String, story_messages: Array) -> Array:
-	return TerminalConsequenceViewModelScript.story_card_lines(recent_message, story_messages)
-
-
-func _next_action_lines(travel_choices: Variant) -> Array:
-	return TerminalConsequenceViewModelScript.next_action_lines(current_game != null, _copy_array(travel_choices))
 
 
 func _item_id_list_label(items: Array) -> String:
@@ -15511,44 +15304,6 @@ func _story_entry_label(entry: Dictionary) -> String:
 			return "Event: %s" % str(entry.get("event_id", entry.get("id", "event")))
 		_:
 			return _label_from_id(type)
-
-
-func _debt_summary(items: Array) -> String:
-	if items.is_empty():
-		return "none"
-	if items.size() == 1:
-		return str(items[0])
-	return "%d active debts" % items.size()
-
-
-func _inventory_summary(items: Array) -> String:
-	if items.is_empty():
-		return "empty"
-	if items.size() <= 3:
-		return ", ".join(items)
-	return "%s +%d" % [", ".join(items.slice(0, 3)), items.size() - 3]
-
-
-func _flag_summary(labels: Array) -> String:
-	if labels.is_empty():
-		return "none"
-	if labels.size() <= 3:
-		return ", ".join(labels)
-	return "%s +%d" % [", ".join(labels.slice(0, 3)), labels.size() - 3]
-
-
-func _travel_summary(choices: Array) -> String:
-	if choices.is_empty():
-		return "none"
-	var labels: Array = []
-	for choice in choices:
-		if typeof(choice) == TYPE_DICTIONARY:
-			labels.append(str((choice as Dictionary).get("label", (choice as Dictionary).get("id", ""))))
-	if labels.is_empty():
-		return "%d available" % choices.size()
-	if labels.size() <= 2:
-		return ", ".join(labels)
-	return "%s +%d" % [", ".join(labels.slice(0, 2)), labels.size() - 2]
 
 
 func _default_stake() -> int:
@@ -16357,98 +16112,14 @@ func _meta_environment_result(location_id: String) -> Dictionary:
 	return meta_session_controller.build_environment_result(location_id, run_state)
 
 
-func _build_meta_environment(location_id: String) -> Dictionary:
-	var result := _meta_environment_result(location_id)
-	if result.is_empty():
-		return {}
-	return (result.get("environment", {}) as Dictionary).duplicate(true) if typeof(result.get("environment", {})) == TYPE_DICTIONARY else {}
-
-
-func _build_meta_home_environment() -> Dictionary:
-	return _build_meta_environment(META_LOCATION_HOME)
-
-
-func _build_meta_pawn_environment() -> Dictionary:
-	return _build_meta_environment(_meta_pawn_location_id())
-
-
-func _meta_container_rows() -> Array:
-	_ensure_meta_session_controller()
-	var result := meta_session_controller.build_environment_result(META_LOCATION_HOME, run_state)
-	var environment: Dictionary = result.get("environment", {}) if typeof(result.get("environment", {})) == TYPE_DICTIONARY else {}
-	return _copy_array(environment.get("home_containers", []))
-
-
-func _meta_container_item_ids_for_index(container_index: int) -> Array:
-	_ensure_meta_session_controller()
-	var rows := _meta_container_rows()
-	if container_index < 0 or container_index >= rows.size() or typeof(rows[container_index]) != TYPE_DICTIONARY:
-		return []
-	return _copy_array((rows[container_index] as Dictionary).get("items", []))
-
-
-func _meta_container_label(item_id: String) -> String:
-	_ensure_meta_session_controller()
-	var rows := _meta_container_rows()
-	for row_value in rows:
-		if typeof(row_value) == TYPE_DICTIONARY and str((row_value as Dictionary).get("item_id", "")) == item_id:
-			return str((row_value as Dictionary).get("display_name", item_id.replace("_", " ").capitalize()))
-	return item_id.strip_edges().replace("_", " ").capitalize()
-
-
 func _meta_interactable_object_view_list() -> Array:
 	_ensure_meta_session_controller()
 	return meta_session_controller.interactable_object_view_list(meta_session_location_id, run_state, hover_target_id, focus_target_id, selected_object_id)
 
 
-func _meta_interactable_object_view_cache_key() -> String:
-	_ensure_meta_session_controller()
-	return meta_session_controller.interactable_object_view_cache_key
-
-
-func _meta_home_interactable_objects() -> Array:
-	_ensure_meta_session_controller()
-	return meta_session_controller.interactable_object_view_list(META_LOCATION_HOME, run_state, hover_target_id, focus_target_id, selected_object_id)
-
-
 func _meta_home_summary_view() -> Dictionary:
 	_ensure_meta_session_controller()
 	return meta_session_controller.home_summary_view()
-
-
-func _meta_snapshot_carried_instance_ids(owned_instances: Array, loadout: Array, housing_tier: String) -> Array:
-	var owned_ids: Array = []
-	for instance_value in owned_instances:
-		var instance := _copy_dict(instance_value)
-		var instance_id := int(instance.get("instance_id", 0))
-		if instance_id > 0 and not owned_ids.has(instance_id):
-			owned_ids.append(instance_id)
-	if housing_tier == MetaCollectionServiceScript.HOUSING_BACK_ALLEY:
-		return owned_ids
-	var carried: Array = []
-	for id_value in loadout:
-		var instance_id := int(id_value)
-		if instance_id > 0 and owned_ids.has(instance_id) and not carried.has(instance_id):
-			carried.append(instance_id)
-	return carried
-
-
-func _meta_snapshot_container_capacity(containers: Array) -> int:
-	var total := 0
-	for container_value in containers:
-		var container := _copy_dict(container_value)
-		total += maxi(0, int(container.get("capacity", 0)))
-	return total
-
-
-func _meta_unopened_bag_rows() -> Array:
-	_ensure_meta_session_controller()
-	return meta_session_controller.unopened_bag_rows()
-
-
-func _meta_pawn_interactable_objects() -> Array:
-	_ensure_meta_session_controller()
-	return meta_session_controller.interactable_object_view_list(_meta_pawn_location_id(), run_state, hover_target_id, focus_target_id, selected_object_id)
 
 
 func open_meta_container(container_id: String = "") -> void:
@@ -16849,39 +16520,13 @@ func _add_meta_action_card(title: String, text: String, impact: String, callback
 		button.text = button_text
 
 
-func _add_meta_popup_line(text: String) -> void:
-	if event_choice_popup_choices_list == null:
-		return
-	var label := _label(text, 13)
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_set_control_font_color(label, VisualStyle.SOFT)
-	event_choice_popup_choices_list.add_child(label)
-	if _event_choice_popup_is_visible():
-		call_deferred("_position_event_choice_popup")
-
-
 func _add_meta_close_card() -> void:
 	_add_meta_action_card("Back", "Return to the room.", "No change.", Callable(self, "_hide_event_choice_popup"), "Back", false)
-
-
-func _meta_owned_item_rows() -> Array:
-	_ensure_meta_session_controller()
-	return meta_session_controller.owned_item_rows()
 
 
 func _meta_sale_rows() -> Array:
 	_ensure_meta_session_controller()
 	return meta_session_controller.sale_rows()
-
-
-func _meta_trade_up_candidates() -> Array:
-	_ensure_meta_session_controller()
-	return meta_session_controller.trade_up_candidates()
-
-
-func _meta_next_tier(tier: String) -> String:
-	_ensure_meta_session_controller()
-	return meta_session_controller.next_tier(tier)
 
 
 func close_inventory_page() -> void:
@@ -17388,81 +17033,12 @@ func _apply_hud_mode_visibility() -> void:
 		active_item_button.visible = not meta_mode
 
 
-func _hud_goal_text(pressure: Dictionary, demo_objective: Dictionary = {}) -> String:
-	return FoundationHudViewModelScript.hud_goal_text(run_state, pressure, demo_objective, Callable(self, "_player_facing_text"))
-
-
-func _hud_debt_text(debt_items: Array) -> String:
-	return FoundationHudViewModelScript.hud_debt_text(debt_items, Callable(self, "_player_facing_text"))
-
-
-func _hud_inventory_text(inventory_items: Array) -> String:
-	return FoundationHudViewModelScript.hud_inventory_text(inventory_items, Callable(self, "_player_facing_text"))
-
-
-func _hud_home_text() -> String:
-	return FoundationHudViewModelScript.hud_home_text(run_state, Callable(self, "_player_facing_text"))
-
-
-func _hud_run_status_text(pressure: Dictionary) -> String:
-	return FoundationHudViewModelScript.hud_run_status_text(run_state, pressure)
-
-
-func _hud_save_text() -> String:
-	return FoundationHudViewModelScript.hud_save_text(_has_foundation_save(), save_status_message, Callable(self, "_player_facing_text"))
-
-
-func _hud_meter(value: int, maximum: int, width: int) -> String:
-	return FoundationHudViewModelScript.hud_meter(value, maximum, width)
-
-
-func _repeat_char(character: String, count: int) -> String:
-	return character.repeat(maxi(0, count))
-
-
-func _hud_short(text: String, max_length: int) -> String:
-	return FoundationHudViewModelScript.hud_short(text, max_length, Callable(self, "_player_facing_text"))
-
-
 func _objective_goal_text(pressure: Dictionary, demo_objective: Dictionary = {}) -> String:
 	return FoundationHudViewModelScript.objective_goal_text(run_state, pressure, demo_objective)
 
 
-func _boss_floor_objective_goal_text(demo_objective: Dictionary) -> String:
-	return FoundationHudViewModelScript.boss_floor_objective_goal_text(demo_objective)
-
-
 func _objective_presentation_state(pressure: Dictionary, demo_objective: Dictionary) -> String:
 	return FoundationHudViewModelScript.objective_presentation_state(pressure, demo_objective)
-
-
-func _objective_guidance_view(pressure: Dictionary, demo_objective: Dictionary) -> Dictionary:
-	var state: String = FoundationHudViewModelScript.objective_presentation_state(pressure, demo_objective)
-	return FoundationHudViewModelScript.objective_guidance_view(pressure, demo_objective, _next_objective_option_for_state(state, demo_objective))
-
-
-func _boss_floor_incomplete_guidance(demo_objective: Dictionary) -> String:
-	return FoundationHudViewModelScript.boss_floor_incomplete_guidance(demo_objective)
-
-
-func _boss_floor_high_roller_progress_close(demo_objective: Dictionary) -> bool:
-	return FoundationHudViewModelScript.boss_floor_progress_close(demo_objective)
-
-
-func _boss_floor_heat_pressure_close(demo_objective: Dictionary) -> bool:
-	return FoundationHudViewModelScript.boss_floor_heat_pressure_close(demo_objective)
-
-
-func _is_boss_floor_demo_objective(demo_objective: Dictionary) -> bool:
-	return FoundationHudViewModelScript.is_boss_floor_objective(demo_objective)
-
-
-func _boss_floor_status_key(suffix: String) -> String:
-	return FoundationHudViewModelScript.boss_floor_status_key(suffix)
-
-
-func _objective_pressure_text(pressure: Dictionary) -> String:
-	return FoundationHudViewModelScript.objective_pressure_text(pressure)
 
 
 func _demo_objective_status() -> Dictionary:
@@ -17475,10 +17051,6 @@ func _pit_boss_watch_status() -> Dictionary:
 	if run_state == null:
 		return {}
 	return run_state.pit_boss_watch_status(run_state.current_environment)
-
-
-func _pit_boss_hud_text(status: Dictionary) -> String:
-	return FoundationHudViewModelScript.pit_boss_hud_text(status)
 
 
 func _active_demo_objective_needs_play(objective: Dictionary = {}) -> bool:
@@ -18032,21 +17604,6 @@ func _pressure_status_text(pressure: Dictionary) -> String:
 	return TerminalConsequenceViewModelScript.pressure_status_text(pressure)
 
 
-func _supported_recovery_available() -> bool:
-	if run_state == null or library == null:
-		return false
-	for option in _lender_hook_view_list():
-		if typeof(option) != TYPE_DICTIONARY:
-			continue
-		var lender_option := option as Dictionary
-		if bool(lender_option.get("mutation_supported", false)) and bool(lender_option.get("enabled", false)):
-			return true
-	for object_data in _game_hook_interactable_objects(false):
-		if typeof(object_data) == TYPE_DICTIONARY and bool((object_data as Dictionary).get("enabled", false)):
-			return true
-	return false
-
-
 func _run_failed_without_recovery() -> bool:
 	if run_state == null:
 		return false
@@ -18085,10 +17642,6 @@ func _outcome_message(result: Dictionary) -> String:
 func _run_summary_text(state: RunState) -> String:
 	var pressure: Dictionary = _run_pressure_view() if state == run_state else state.recovery_pressure_status()
 	return TerminalConsequenceViewModelScript.run_summary_text(state, pressure)
-
-
-func _run_travel_target_count(state: RunState) -> int:
-	return TerminalConsequenceViewModelScript.run_travel_target_count(state)
 
 
 func _game_result_from_story_log(entries: Array) -> Dictionary:
@@ -18347,11 +17900,6 @@ func _selected_stake_for_range(range: Dictionary) -> int:
 	if selected_stake <= 0:
 		return int(range.get("default", 1))
 	return clampi(selected_stake, int(range.get("min", 1)), int(range.get("max", 1)))
-
-
-func _is_valid_stake(stake: int) -> bool:
-	var range := _stake_range()
-	return bool(range.get("has_valid", false)) and stake >= int(range.get("min", 1)) and stake <= int(range.get("max", 1))
 
 
 func _stake_range(action_view: Dictionary = {}) -> Dictionary:
@@ -19269,11 +18817,6 @@ func _item_offer(item_id: String) -> Dictionary:
 	return run_action_service.item_offer(item_id, selected_item_offer_id)
 
 
-func _effect_summary(effect: Dictionary) -> String:
-	_refresh_run_action_service()
-	return run_action_service.effect_summary(effect)
-
-
 func _label_from_id(id: String) -> String:
 	_refresh_run_action_service()
 	if run_action_service != null:
@@ -19502,15 +19045,6 @@ func _set_world_map_detail_badges(badges_value: Variant) -> void:
 	world_map_overlay_controller.set_detail_badges(badges_value)
 
 
-func _ensure_world_map_detail_badge_pool() -> void:
-	_ensure_world_map_overlay_controller()
-	world_map_overlay_controller.set_detail_badges([])
-
-
-func _update_world_map_detail_badge_cells(badges: Array) -> void:
-	_set_world_map_detail_badges(badges)
-
-
 func _world_map_detail_badge_prewarm_sample() -> Array:
 	_ensure_world_map_overlay_controller()
 	return world_map_overlay_controller.detail_badge_prewarm_sample()
@@ -19555,10 +19089,6 @@ func _world_map_travel_method_kind(choice: Dictionary) -> String:
 	return WorldMapScript.travel_method_kind(choice, str(choice.get("distance", "near")))
 
 
-func _world_map_travel_cost_line(choice: Dictionary) -> String:
-	return _world_map_travel_summary_line(choice)
-
-
 func _world_map_travel_summary_line(choice: Dictionary) -> String:
 	var method := _world_map_travel_method(choice)
 	var cost := 0 if _world_map_travel_method_kind(choice) == WorldMapScript.TRAVEL_METHOD_WALK else maxi(0, int(choice.get("cost", 0)))
@@ -19599,23 +19129,9 @@ func _meta_world_map_snapshot() -> Dictionary:
 	return meta_session_controller.world_map_snapshot(meta_session_location_id, selected_world_map_node_id)
 
 
-func _meta_world_map_node(node_id: String, position: Vector2, selected_id: String) -> Dictionary:
-	_ensure_meta_session_controller()
-	var snapshot := meta_session_controller.world_map_snapshot(meta_session_location_id, selected_id)
-	for node_value in _copy_array(snapshot.get("nodes", [])):
-		if typeof(node_value) == TYPE_DICTIONARY and str((node_value as Dictionary).get("id", "")) == node_id:
-			return (node_value as Dictionary).duplicate(true)
-	return {}
-
-
 func _meta_archetype_id_for_location(node_id: String) -> String:
 	_ensure_meta_session_controller()
 	return meta_session_controller.archetype_id_for_location(node_id)
-
-
-func _meta_map_icon_archetype_id(node_id: String) -> String:
-	_ensure_meta_session_controller()
-	return meta_session_controller.map_icon_archetype_id(node_id)
 
 
 func _refresh_meta_world_map_detail() -> void:

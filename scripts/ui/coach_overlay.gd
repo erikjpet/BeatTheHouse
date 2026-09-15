@@ -933,14 +933,6 @@ func _stop_attention_motion() -> void:
 		panel.modulate = Color.WHITE
 
 
-func _rebuild_queued_ids() -> void:
-	queued_ids.clear()
-	for entry_value in queued_lessons:
-		var entry := _dict(entry_value)
-		var lesson := _dict(entry.get("lesson", {}))
-		queued_ids[str(lesson.get("id", ""))] = true
-
-
 func _layout_key(lesson: Dictionary, context: Dictionary) -> int:
 	var anchor := CoachViewModelScript.resolved_anchor(lesson, context)
 	var kind := str(anchor.get("kind", "none"))

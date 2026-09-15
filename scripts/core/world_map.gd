@@ -1284,14 +1284,6 @@ func _position_distance_score(a: String, b: String, positions: Dictionary) -> fl
 	return Vector2(float(pa.get("x", 0.5)), float(pa.get("y", 0.5))).distance_to(Vector2(float(pb.get("x", 0.5)), float(pb.get("y", 0.5))))
 
 
-func _sort_ids_by_x(a: Variant, b: Variant, positions: Dictionary) -> bool:
-	var pa: Dictionary = positions.get(str(a), {"x": 0.5, "y": 0.5})
-	var pb: Dictionary = positions.get(str(b), {"x": 0.5, "y": 0.5})
-	if float(pa.get("x", 0.5)) == float(pb.get("x", 0.5)):
-		return str(a) < str(b)
-	return float(pa.get("x", 0.5)) < float(pb.get("x", 0.5))
-
-
 func _sort_score_entry(a: Variant, b: Variant) -> bool:
 	var entry_a: Dictionary = a
 	var entry_b: Dictionary = b
