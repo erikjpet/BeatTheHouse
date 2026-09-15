@@ -1,7 +1,7 @@
 # Pinball Feature Event — Complete Rework Plan
 
-Status: **IMPLEMENTED for the unreleased 0.4.0 candidate.** Section 1 describes
-the removed pre-rework dictionary runtime. The live feature is under
+Status: **IMPLEMENTED AND ACTIVE in the current 0.6 source.** Section 1
+describes the removed pre-rework dictionary runtime. The live feature is under
 `scripts/games/slots/pinball/`; `slot_pinball_table.gd` was deleted as planned.
 Date: 2026-07-01
 Reference feel target: **Ballionaire** (roguelike plinko) — fast drops, readable boards,
@@ -10,9 +10,9 @@ feature** structure (locks → multiball → jackpot ladder) and a **skill-shot 
 
 ---
 
-## 1. Why a clean rebuild (not a fix)
+## 1. Why a clean rebuild was required (historical pre-rework analysis)
 
-The current implementation (`scripts/games/slots/slot_family_pinball.gd` +
+The removed implementation (`scripts/games/slots/slot_family_pinball.gd` +
 `slot_pinball_table.gd`) is a dictionary-state physics sim pumped through the
 turn-based game-state pipeline. The game-wide slowdown during the feature is
 structural, not a tuning bug:

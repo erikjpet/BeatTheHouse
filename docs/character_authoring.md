@@ -8,8 +8,16 @@ Reusable identities live in two JSON packs:
 - `data/characters/pools.json` groups character IDs and declares how many
   unique members appear together.
 
-The Crew is the first implementation: `crew_regulars` contains seven identities
-and selects three for `the_crew`.
+The current catalog contains 46 identities and three reusable pools:
+
+- `crew_regulars` contains seven identities and selects three for `the_crew`;
+- `blue_note_trio` contains and selects its three musicians;
+- `shop_staff` contains four merchants and selects one where requested.
+
+Characters now appear across dialogue, 55 room scenarios, Crew jobs and
+deliveries, Numbers, coordinated plays, heists, the Turn, casino staff rotation,
+mid-visit transits, and game surfaces. The stable identity/pool rules below
+apply to all of those consumers.
 
 ## Add a character
 

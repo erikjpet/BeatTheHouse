@@ -1,11 +1,12 @@
 # Item Collection Meta System — Design Plan
 
 Date: 2026-07-06 (rev 2 — owner decisions incorporated)
-Status: **PARTIALLY IMPLEMENTED for the unreleased 0.4.0 candidate.** The local
+Status: **LOCAL SYSTEM IMPLEMENTED AND ACTIVE in the current 0.6 source.** The
 collection schema, bags, storage/loadouts, meta home, housing, trade-up, run-end
-drops, and pawn selling have landed. Steam Inventory/community-market work is
-still deferred. Proposed rent/upkeep and the removed `data/prestige/purchases.json`
-path are superseded by gold-purchased housing with no rent.
+drops, pawn selling, and Gold Players Card rewards have landed. Steam
+Inventory/community-market work remains explicitly deferred. Proposed
+rent/upkeep and the removed `data/prestige/purchases.json` path are superseded
+by gold-purchased housing with no rent.
 
 Owner reference model: Counter-Strike item system (collections, rarity
 tiers, float values, trade-up contracts), adapted to the game — and designed

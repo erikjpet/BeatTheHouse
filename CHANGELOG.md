@@ -2,6 +2,77 @@
 
 All notable public release changes for Beat the House are recorded here.
 
+## 0.6.0 - Unreleased development
+
+Status: **active development on `main`; playable, not release-cleared.** Project
+and export metadata intentionally remains `0.5.1` until the dedicated release
+task owns the version and package boundary.
+
+### Added
+
+- Adds 55 persistent Living Town scenarios with visible room objectives,
+  actors, props, phases, actions, aftermath, save/revisit state, and hidden-state
+  boundaries across five authored environment packages.
+- Adds the connected Crew campaign: trust and grievances, deliveries, Numbers,
+  recruitment and jobs, five coordinated table plays, Police Sweep responses,
+  two heist plans, and the Turn confrontation.
+- Expands the catalog to eleven full games with physical casino/street Craps,
+  deterministic three-cabinet Coin Pusher V3, and six-handed back-room no-limit
+  Hold'em alongside the existing Act 1 games.
+- Adds game-wide table/machine ritual vocabulary, per-game depth interactions,
+  stateful patrons and dealers, readable correction paths, and stronger
+  save/replay/hidden-information contracts.
+- Adds thirteen manifest-driven surface SFX profiles plus adaptive music fills,
+  phrase choreography, outcome accents, and native/Web delivery parity.
+- Expands the teaching catalog to 66 lessons covering current world, scenario,
+  Crew, Craps, Coin Pusher, poker, and Police Sweep systems.
+- Adds a Scratch Ticket scalper trade, deterministic mid-visit people, career
+  and run-report surfacing, and expanded room/game prop identities.
+
+### Changed
+
+- Reworks room grounding around 21 authored surface maps, ten placement
+  classes, authored scenario coordinates, and deterministic bounded fallbacks.
+- Deepens every game without changing established economic authority: Baccarat
+  and Roulette table rituals, Blackjack surveillance and sealed settlement,
+  Bar Dice patrons/pots, Video Poker machine rhythm, Scratch and Pull Tab
+  handling, Buffalo/Pinball features, Craps wagers, Crew Hold'em personalities,
+  and Coin Pusher physics goals.
+- Moves accepted performance telemetry, allocation guards, low-end launchers,
+  fail-closed aggregate runners, and owner-evidence custody tooling onto `main`.
+- Consolidates shared gameplay, renderer, slot-math, and audio helpers and
+  removes deprecated or unreachable runtime code while preserving behavior.
+
+### Fixed
+
+- Integrates the September playtest repair series across game entry/exit,
+  wagers and refunds, map/travel flow, dialogue, inventory, tutorial recovery,
+  room feedback, and deterministic test teardown.
+- Restores stable native Coin Pusher GDExtension discovery and exact runtime
+  identity checks after fresh builds/worktrees.
+- Fixes numerous environment grounding, object classification, route,
+  interaction, and visual-feedback defects found by production-host playtests.
+
+### Known development blockers
+
+- The broad Contract suite remains red at room/scenario composition. Expanded
+  inventories and small-screen layouts can still produce label/hit overlap,
+  colliding route endpoints, missing generated room objects, and
+  placement-dependent fixture failures.
+- Binding performance/platform qualification, the refreshed owner playtest,
+  final balance/voice/polish, version stamping, packaging, and publishing remain
+  parked until an accepted room-construction update closes that boundary.
+
+## 0.5.1 - Released (2026-08-13)
+
+Status: **latest published release.** This corrected the original 0.5.0
+playtest baseline without opening the 0.6 feature line.
+
+- Finalized the accumulated 0.5 playtest repairs and release assets.
+- Closed release-gate regressions and tutorial recovery issues.
+- Completed the 0.5.1 UI gate and recorded the exact release execution at the
+  annotated `v0.5.1` tag.
+
 ## 0.5.0 - Released (2026-08-12)
 
 Status: **official GitHub release.** The owner approved the accumulated 0.5

@@ -1,14 +1,15 @@
 # Beat the House Content Style Guide
 
-Status: active for the unreleased 0.5 release-path content.
+Status: **ACTIVE for the current 0.6 development line.**
 
 This guide defines the release voice and copy guardrails for player-facing text
 in `data/` and obvious release-path script constants. It complements the
 existing compact-copy validators under `scripts/tests/foundation/`.
 
-For 0.5 and later, `docs/plans/0.5_voice_bible.md` is the binding creative
-reference. This guide carries the compact UI limits and safety guardrails; the
-voice bible carries character voice, narration texture, and line-pool rules.
+The binding creative references are `docs/plans/0.5_voice_bible.md` for the
+base cast/world voice and `docs/plans/0.6_voice_bible_world_register.md` for
+period methodology, narration registers, and the measurable brevity rule. This
+guide carries the compact UI limits and safety guardrails.
 
 ## Release Voice
 
@@ -33,7 +34,7 @@ Avoid:
 - Exact stat spoilers in item descriptions when glyphs or structured UI already
   communicate the mechanical class.
 
-## 0.5 Voice Bible Rules
+## Voice Bible Rules (0.5 foundation, current in 0.6)
 
 The approved bible adds two hard copy rules:
 

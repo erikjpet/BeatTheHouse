@@ -1,7 +1,7 @@
 # Dynamic Music System Rework Plan
 
 Date: 2026-07-02
-Status: **IMPLEMENTED for the unreleased 0.4.0 candidate.** The original
+Status: **IMPLEMENTED AND ACTIVE in the current 0.6 source.** The original
 review describes the pre-rework player; the live implementation in
 `scripts/ui/procedural_music_player.gd` now includes synchronized stems,
 authored-manifest playback, music FX buses, feature stems/stingers, cache
@@ -11,9 +11,9 @@ music paths inside `scripts/ui/sfx_player.gd`, and the audio bus graph.
 
 ---
 
-## 1. Review of the current implementation
+## 1. Review of the removed pre-rework implementation
 
-### What it does today
+### What it did before the rework
 - **Composer (good bones):** real music theory — mode scales (minor, dorian,
   phrygian, harmonic minor), chord progressions with chord-tone gravity for
   the lead, motif-driven melodies, phrase energy arcs, per-theme BPM/root/

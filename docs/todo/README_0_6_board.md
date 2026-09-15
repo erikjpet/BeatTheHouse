@@ -7,25 +7,30 @@ The roadmap is the single source of truth for **design intent**. When
 code reality disagrees with either, code reality wins — record the
 disagreement in the linked Discovery & Decision Log companion.
 
-## Current-state audit — 2026-09-14
+## Current-state audit — 2026-09-15
 
 Current synchronized `main` contains the completed playtest-repair series, its
 reusable visible-input session harness, the completed eight-commit `fix06_32`
 verification stack, the newer back-room poker personalities and
-dealer/animation work, and the game-prop/Silas rework. Static validation, all
-three playtest-fix regression groups, game contracts, the game-rework gate
-wiring contract, and a merged player path pass.
+dealer/animation work, the game-prop/Silas rework, the accepted performance
+machinery, the September 15 smoke stabilization, and the dead/redundant-code
+cleanup and shared-runtime consolidation passes. The current product summary is
+`../current_game_state.md`.
 
-The build is playable but not release-ready. The full Contract suite still
-fails at the room-construction/finalization boundary: generated overlap and
-route rejection, Grand Casino slot-bank placement, and placement-dependent
-golden drift remain open. The attempted reusable spawn-slot placement approach
+The build is playable but not release-ready. On current source, static
+validation and exhaustive script loading pass; all nine Smoke stages, focused
+game/audio checks, performance smoke, and native Coin Pusher identity/parity
+pass. A fresh Contract run still fails at room/scenario composition: label and
+hit-authority overlap in normal or expanded small-screen layouts, colliding
+route endpoints, omitted generated inventory, and placement-dependent fixture
+expectations remain open. The attempted reusable spawn-slot placement approach
 was explicitly rejected, excluded from `main`, and deleted during the
-two-branch custody cleanup. Performance/platform and release work stays parked
-until an accepted placement redesign lands. Deferred code may exist only on
-`codex/wip-0.6-consolidated`.
-The exact integration inventory, verification matrix, playtest path, and failure
-census are recorded in `../plans/main_integration_audit_2026-09-14.md`.
+two-branch custody cleanup. Binding performance/platform and release work stays
+parked until an accepted placement redesign lands. Deferred code may exist only
+on `codex/wip-0.6-consolidated`.
+
+The September 14 integration inventory remains the custody snapshot that led to
+this state; it is no longer the latest verification verdict.
 
 Use these distinctions when choosing work:
 

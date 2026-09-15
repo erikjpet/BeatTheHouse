@@ -1,15 +1,16 @@
 # Skill-Based Cheating Methods Plan
 
-Status: **IMPLEMENTED DESIGN LOCK** for the unreleased 0.4.0 candidate.
+Status: **IMPLEMENTED DESIGN LOCK active in the current 0.6 source.**
 Symbol names and shared result contracts remain authoritative; numeric line
 references in the source-check section are historical and should not be used
 for navigation after later architecture work.
 Date: 2026-07-01
 
-This document defines the shared skill-cheat contract for Act 1. It is a
-design-only plan: no gameplay code changes are implied here. T2.2-T2.5 implement
-the four Phase 1 cheats against this contract, and T2.6 audits every existing
-cheat/advantage action for the same reporting shape.
+This document defines the implemented shared skill-cheat contract for Act 1.
+T2.2-T2.5 originally implemented the four Phase 1 cheats against this contract,
+and T2.6 audited every existing cheat/advantage action for the same reporting
+shape. Later 0.6 game-depth work extends the game-specific surfaces while
+retaining these authority and result fields.
 
 ## Source Check
 

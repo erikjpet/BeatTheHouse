@@ -10,19 +10,22 @@ run state forward.
 
 Versions 0.2.0 through 0.3.3 are historical source releases; 0.4.0 was an Act 1
 candidate tag that was not published before development continued. Version
-0.5.1 is the latest published release line. Current `main` is the active 0.6
-integration line: it keeps the Act 1 foundation, adds the Living Town and Crew
-systems, and reworks the Grand Casino into a three-room endgame with a living
-Rourke, a chips-and-Cage economy, Linda's Bronze/Silver/Gold Players Card
-ladder, a four-phase back-room showdown, a playable heads-up blackjack duel,
-and persistent card/chip meta rewards. Narration/audio, inventory cards,
-meaningful destination tradeoffs, automated tutorial coverage, and broad
-strict-input and deterministic regression coverage. The 0.6 source is playable,
-but room construction/finalization must be redesigned before release: the
-current full contract suite exposes placement, route, and layout-snapshot debt.
-The owner approved the tested baseline for public release on 2026-08-12. The
-`v0.5.1` tag and GitHub Release identify the final corrected 0.5 playtest baseline;
-`v0.5.0` remains the immutable original release boundary.
+0.5.1 is the latest published release. Current `main` is the active, unreleased
+0.6 development line. It keeps the Act 1 foundation and adds the Living Town,
+55 persistent room scenarios, the Crew campaign, eleven depth-complete game
+modules, expanded tutorial and audio coverage, and a reworked four-room Grand
+Casino endgame with a living Rourke, chips and Cage economy, Linda's
+Bronze/Silver/Gold Players Card ladder, four-phase showdown, heads-up Blackjack
+duel, and persistent card/chip meta rewards.
+
+The 0.6 source is playable and its Smoke, game, audio, performance-smoke, and
+native Coin Pusher gates pass. It is not release-cleared: the broad Contract
+suite still exposes room/scenario composition failures involving label and hit
+region overlap, route endpoints, generated inventory, and placement-dependent
+expectations. Release qualification, final balance, voice, version stamping,
+packaging, and publication remain parked behind an accepted room-construction
+update. The `v0.5.1` tag and GitHub Release identify the final corrected 0.5
+playtest baseline; `v0.5.0` remains the immutable original release boundary.
 Beat the House is not a real-money gambling product. It has no real-money
 wagering, cash prizes, gambling monetization, or store credentials checked into
 the repository.
@@ -34,9 +37,10 @@ the repository.
 | Engine | Godot 4.x project with Godot 4.6 project feature metadata |
 | Main scene | `res://scenes/main.tscn` |
 | Main UI shell | `res://scripts/ui/foundation_main.gd` |
-| Prior release line | 0.3.3 public source release; 0.4.0 unpublished Act 1 candidate |
-| Active planning target | Redesign room construction/placement, then resume the parked 0.6 qualification sequence |
-| Current release readiness | Accepted work is integrated on `main` and playable; not release-ready until placement is redesigned and the deferred performance, playtest, polish, and release gates are rerun |
+| Published release line | 0.5.1; 0.5.0 is the original release boundary and 0.4.0 is an unpublished Act 1 candidate |
+| Development version | Unreleased 0.6 source; project/export metadata intentionally remains 0.5.1 until the release task authorizes a version change |
+| Active planning target | Replace the rejected reusable-slot experiment with an accepted room-construction/placement design, then resume the parked 0.6 qualification sequence |
+| Current release readiness | Playable and Smoke-green; not release-ready because the broad Contract suite remains red at room/scenario composition and binding performance/playtest/release gates have not run on a final candidate |
 | Viewport | 1280x720, non-resizable, canvas stretch with kept aspect |
 | Renderer | Godot mobile renderer by default; Windows uses Godot compatibility/OpenGL to avoid the native Vulkan/OBS crash path seen in local WER reports |
 | Input model | Single pointer interaction with mouse/touch parity |
@@ -81,6 +85,7 @@ Production content is JSON under `data/`.
 | Travel route templates | 12 | `data/travel/routes.json` | Destination templates for shops, casinos, tier-2 venues, the jazz club, beach, the underground casino, and the Grand Casino; `WorldMap` turns them into seeded graph paths with costs, unlocks, scouting previews, travel locks, and route-risk events |
 | Challenges | 8 | `data/challenges/challenges.json` | Act 1 authored challenge runs with profile completion flags |
 | Dialogues | 32 | `data/dialogue/dialogues.json` | TalkDock dialogue content for Act 1, the guided first night, Living Town, and Crew routes |
+| Characters | 46 identities / 3 pools | `data/characters/characters.json`, `data/characters/pools.json` | Seven Crew regulars, the Blue Note trio, shop staff, casino staff, patrons, and recurring world characters |
 | Collection schemas | 1 collection | `data/collections/collections.json` | Local meta collection bags/items, housing data, and pawn-shop sale values |
 | Music tracks | 3 | `data/audio/music_manifest.json` | Authored music manifest used by the procedural music player |
 | Tutorial lessons | 66 | `data/tutorial/lessons.json` | Dialogue-guided and contextual tutorial definitions, highlights, pacing, and gating contracts |
@@ -149,6 +154,29 @@ apply heat decay and suspicion deltas, trigger route-risk consequences, and lock
 the player temporarily in venues such as `delta_queen`. The Grand Casino route
 requires the `grand_casino_invite` story flag and costs `$70` before any graph
 path modifiers.
+
+## Living Town, Scenarios, And The Crew
+
+The 0.6 world layer is built from 55 deterministic scenario sequences across
+five authored packages under `data/environments/scenario_sequences/`. A room's
+Tonight scenario can change its visible actors, props, objectives, available
+actions, routes, aftermath, and revisit state. Scenario consequences are
+designed to apply exactly once across travel, save/load, expiry, interruption,
+and return visits, while unrevealed outcomes remain outside public projections.
+
+The Crew route is a connected campaign rather than a single lender interaction.
+It includes persistent trust and relationship state, physical deliveries,
+Numbers play, recruitable specialists, five coordinated table plays, Police
+Sweep responses, two heist plans, and the Turn confrontation. The back-room
+Hold'em table supports five production nights and seven persistent opponents;
+Crew decisions and grievances carry through later jobs and endings. Ignoring
+the Crew remains a supported no-op route.
+
+Room construction uses authored environment surface maps, class-aware
+placement, scenario-specific coordinates, and deterministic bounded fallbacks.
+The grounding audit is green, but the larger composition problem is not closed:
+expanded inventories and small-screen layouts can still produce conflicting
+labels, hit authority, routes, or required objects in the broad Contract suite.
 
 ## Games
 
@@ -266,9 +294,10 @@ have agent-driven real-pointer evidence in
 `docs/plans/tutorial_completion_report.md`; the five-person cold-player gate
 TUT-N17 remains explicitly human-only.
 
-Native and Web audio now share the 22.05 kHz SFX synthesis contract. The Web
-export ships 80 pre-encoded SFX cues and authored music derivatives, decodes
-them off the main thread, preserves the stem mix, and follows the native
+Native and Web audio share the 22.05 kHz SFX synthesis contract. Thirteen
+surface profiles route bounded, manifest-declared game and scenario cues. The
+Web export uses pre-encoded SFX and authored music derivatives, decodes them off
+the main thread, preserves the stem mix, and follows the native
 Master/Music/SFX bus gains. The native authored masters remain unchanged.
 
 ## Save, Failure, And Victory
@@ -345,11 +374,12 @@ The wrappers resolve Godot in this order:
 
 ## Validation
 
-The canonical 0.6 execution state is
-`docs/todo/README_0_6_board.md`; the exact current integration verdict is
-`docs/plans/main_integration_audit_2026-09-14.md`. Release ledgers through 0.5.1 are historical
-evidence for published source boundaries; they are not evidence that current
-0.6 `main` is ready to ship. The primary headless commands are:
+The current product summary is `docs/current_game_state.md`; the canonical 0.6
+execution state is `docs/todo/README_0_6_board.md`. The September 14 integration
+audit is a dated custody snapshot, not the latest product verdict. Release
+ledgers through 0.5.1 are historical evidence for published source boundaries;
+they are not evidence that current 0.6 `main` is ready to ship. The primary
+headless commands are:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File tools\validate_project.ps1
@@ -374,20 +404,24 @@ powershell -ExecutionPolicy Bypass -File tools\ui05_popup_fit_check.ps1
 powershell -ExecutionPolicy Bypass -File tools\ui05_asset_pipeline_check.ps1
 ```
 
-Current integration evidence and remaining work:
+Current integration evidence and remaining work (verified 2026-09-15):
 
 - Current `main` includes the latest game-prop art,
   back-room poker tweaks, the complete `fix06_32` game-verification stack, and
   playtest repairs BUG-01 through BUG-36 except the placement-owned findings
   deliberately held for the room-construction redesign.
-- Static architecture validation, the dedicated playtest-fix regression groups,
-  game contracts, the game-rework gate wiring contract, and a visible-input
-  start → inventory → travel → merchant → lender → second venue → game path pass.
-  The reusable player-session harness is `tools/agent_playtest_session.ps1`.
-- The broad Contract suite is intentionally still red at the room-generation
-  boundary: generated overlaps, route/finalization rejection, Grand Casino slot
-  placement, and stale placement-dependent golden snapshots remain open. Those
-  failures are not waived and block release readiness.
+- Static architecture validation, exhaustive GDScript loading, the nine-stage
+  Smoke suite, dedicated playtest-fix regressions, focused game suites, audio
+  audits, the performance smoke probe, native Coin Pusher runtime/parity, and a
+  visible-input start → inventory → travel → merchant → lender → second venue
+  → game path pass. The reusable player-session harness is
+  `tools/agent_playtest_session.ps1`.
+- The broad Contract suite is still red at room/scenario composition. Current
+  failures include normal/small-screen label and hit-region overlap, colliding
+  route endpoints, required generated inventory being omitted, and stale
+  placement-dependent expectations. These failures are not waived and block
+  release readiness; they are distinct from the green game and native-runtime
+  gates.
 - Performance, platform, packaging, versioning, tagging, and publication must be
   rerun only after the placement redesign is accepted and merged.
 
@@ -418,24 +452,26 @@ historical context only. For Act 1 historical work, use
 
 ## Documentation
 
-The README is the current top-level implementation spec. The `docs/plans/`
-folder holds active planning documents, shipped-release ledgers, and historical
-context:
+The README is the public top-level implementation spec. `docs/README.md`
+explains document authority, and `docs/current_game_state.md` is the maintained
+internal product snapshot. The `docs/plans/` folder mixes active design locks,
+dated evidence, shipped-release ledgers, and historical context:
 
 - `CHANGELOG.md` - public release changelog for shipped releases and candidate
   notes.
-- `docs/plans/0.5_release_checklist.md` - current 0.5 source-prep and release
+- `docs/plans/0.5_release_checklist.md` - historical 0.5 source-prep and release
   readiness ledger.
-- `docs/plans/0.5_source_completion_record.md` - owner source-completion
-  decision, final playtest scope, current validation, and publication boundary.
+- `docs/plans/0.5_source_completion_record.md` - historical owner
+  source-completion decision, final playtest scope, validation, and publication
+  boundary for 0.5.
 - `docs/plans/0.5_publish_copy.md` - paste-ready itch.io and GitHub release
   copy for 0.5.0 after owner approval.
 - `docs/plans/0.5.0_devlog_post.md` - ready-to-post 0.5.0 devlog and social carousel plan.
 - `docs/plans/0.5_prerelease_playtest_report.md` - 0.5 prerelease playtest
   findings and closure evidence.
-- `docs/plans/tutorial_completion_report.md` - current pre-human tutorial
-  requirement table, real-interface route matrix, and explicit TUT-N17 handoff.
-- `docs/plans/0.5_performance_audit.md` - current native/Web performance,
+- `docs/plans/tutorial_completion_report.md` - tutorial requirement table,
+  real-interface route matrix, 0.6 addenda, and explicit TUT-N17 handoff.
+- `docs/plans/0.5_performance_audit.md` - historical 0.5 native/Web performance,
   liveness, memory-soak, Scratch Ticket compaction, and Web audio evidence.
 - `docs/plans/act_one_feature_complete_task_board.md` - the historical Act 1
   implementation board, retained for decisions and landing evidence.
@@ -444,13 +480,13 @@ context:
   contract and feel targets. Use these with the live slot stack when touching
   pinball or shared slot release work.
 - `docs/plans/grand_casino_endgame_design.md` - the authoritative Grand Casino
-  endgame design lock (three rooms, chips/Cage, Linda's card ladder, living
+  endgame design lock (four rooms, chips/Cage, Linda's card ladder, living
   Rourke, four-phase showdown, duel outcome ladder, meta rewards, and canonical
   ids).
 - `docs/plans/content_style_guide.md` - the active release voice and
   player-facing copy rules for Act 1 content.
-- `docs/plans/dead_code_audit_report.md` - the release cleanup audit and
-  protect list for code and tooling that looks dead but is live.
+- `docs/plans/dead_code_audit_report.md` - a historical July 2026 cleanup audit;
+  use current source/reference scans rather than its old line numbers.
 - `docs/plans/skill_based_cheating_methods_plan.md` - the shared
   skill-cheat design contract and cross-game method matrix.
 - `docs/plans/world_map_design.md` - the world-map route/progression design
@@ -489,19 +525,20 @@ historical release evidence.
 
 `tools/export_itch.ps1` packages the Web and Windows presets for itch.io upload
 after Godot export templates are installed. Project and export preset versions
-are currently stamped `0.5.1`. The tool supports `-Push -DryRun` for butler
-command verification and non-dry-run publishing after the user has installed
-butler and run `butler login` once. Fresh final 0.5 Web/Windows package hashes
-do not exist until the owner runs the final export packaging. Android
+remain stamped `0.5.1` while 0.6 is unreleased; only `release06_1` may change
+release identity. The tool supports `-Push -DryRun` for butler command
+verification and non-dry-run publishing after the user has installed butler
+and run `butler login` once. No final 0.6 package or hashes exist. Android
 signing and iOS team/signature values still require real project credentials
 before store submission.
 
 ## Known Release Limitations
 
-- Current 0.6 `main` is not release-ready. Room construction does not reliably
-  accommodate the expanded object inventory. The rejected reusable-slot
-  placement experiment was assessed and deleted during the two-branch custody
-  cleanup; it was never merged into `main`.
+- Current 0.6 `main` is not release-ready. The broad Contract suite still finds
+  scenario/room composition failures when expanded object inventories and
+  small-screen geometry combine. The rejected reusable-slot placement
+  experiment was assessed and deleted during the two-branch custody cleanup;
+  it was never merged into `main`.
 - Tutorial pointer overlays can partially cover the center of the action they
   describe. The merged player path remains operable through the exposed part of
   the target, but the composition should be corrected during the room/UI
@@ -513,7 +550,9 @@ before store submission.
 - The historical TUT-N17 plan requested five cold players, including two
   without Blackjack knowledge. Any remaining sample gap must be recorded as an
   accepted limitation or completed before the public package release.
-- The collection schema ships with `draft: true` as an accepted 0.5 limitation.
+- The local collection schema still carries `draft: true`; Steam Inventory and
+  community-market integration remain deferred and are not part of the current
+  game runtime.
 - itch.io publishing remains a user action: install/login with butler and push
   the Web and Windows packages from `tools/export_itch.ps1`, or upload through
   the itch.io dashboard.

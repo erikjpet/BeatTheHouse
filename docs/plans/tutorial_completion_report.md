@@ -1,10 +1,16 @@
-# 0.5 First-Time-Player Tutorial Completion Report
+# First-Time-Player Tutorial Completion Report
 
-Date: 2026-08-03
+Original 0.5 report: 2026-08-03
+
+Current addenda: 0.6 exact-root verification and teaching-pass-two closeout
 
 Candidate branch: `agent/v05-pre-human-playtest-rework`
 
-Scope: agent-verifiable pre-human completion; TUT-N17 remains human-only.
+Status: **CURRENT AUTOMATED COVERAGE RECORDED; TUT-N17 REMAINS HUMAN-ONLY.**
+
+Scope: the first sections preserve the original 0.5 evidence. The 0.6 addenda
+below supersede its automated candidate verdict for current source without
+rewriting the historical run.
 
 ## Verdict
 

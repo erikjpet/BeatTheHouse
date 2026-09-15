@@ -1,4 +1,4 @@
-Status: PARKED — the current preparation is consolidated on `codex/wip-0.6-consolidated`; the binding platform pass waits for accepted placement
+Status: PARKED — Phases 1–3 machinery is on `main`; the binding platform pass waits for accepted placement and a quiesced witnessed candidate
 Controlling continuation: `perf06_1_finish_and_qualify_prompt.md`
 Board row: `perf06_1` in `docs/todo/README_0_6_board.md`
 

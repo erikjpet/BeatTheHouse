@@ -1,7 +1,7 @@
 # Grand Casino Endgame Design Lock
 
-Status: **IMPLEMENTED for 0.5.0 (in development).** This document is the
-authoritative description of the shipped Grand Casino rework. The canonical
+Status: **IMPLEMENTED AND ACTIVE in the current 0.6 source.** This document is
+the authoritative description of the Grand Casino Act 1 endgame. The canonical
 ids and save-compatible state names below are binding. The earlier 0.4
 single-room and single-roll finale contracts are explicitly superseded at the
 end of this document.
@@ -22,7 +22,7 @@ and pat-down, answer three run-specific questions, and play a five-hand
 heads-up blackjack duel against him.
 
 Both routes are terminal Act 1 outcomes. A Gold-card victory records a door
-into Act 2, but 0.5 does not make Act 2 playable.
+into Act 2, but the current game does not make Act 2 playable.
 
 ## Canonical IDs
 
@@ -306,7 +306,7 @@ Only a Gold-card clean victory sets `act_two_seam_ready = true`. It logs one
 > The Gold card opens doors beyond this city.
 
 The run still ends as the Act 1 `high_roller_cashout` victory. The flag and
-copy do not promise a playable transition or new screen in 0.5.
+copy do not promise a playable transition or new screen in the current build.
 
 ## Persistence Contract
 
@@ -353,5 +353,5 @@ reintroduced:
   prestige carry-in.
 
 The canonical ids and broad state names from the 0.4 design remain binding;
-the shipped 0.5 mechanics in this document supersede the old implementation
+the current mechanics in this document supersede the old implementation
 instructions and formulas.
