@@ -68,7 +68,7 @@ func force_outcome_symbols(machine: Dictionary, grid: Array, entry: Dictionary, 
 	if not placement.is_empty():
 		entry["forced_placement"] = placement
 	if classification != "bonus":
-		_sanitize_pinball_grid(result, definition, _protected_cell_lookup(_copy_array(placement.get("cells", []))))
+		_sanitize_pinball_grid(result, definition, MathScript.protected_cell_lookup(_copy_array(placement.get("cells", []))))
 	return result
 
 
@@ -280,30 +280,7 @@ func _adjusted_table(table: Array, math_id: String) -> Array:
 				weight = int(round(float(weight) * 1.20))
 		entry["weight"] = maxi(0, weight)
 		result.append(entry)
-	return _normalize_table_total(result, 1000)
-
-
-func _normalize_table_total(table: Array, target_total: int) -> Array:
-	var total := 0
-	for entry_value in table:
-		total += maxi(0, int((entry_value as Dictionary).get("weight", 0)))
-	var delta := target_total - total
-	for i in range(table.size()):
-		var entry: Dictionary = table[i]
-		if str(entry.get("id", "")) == "zero_loss":
-			entry["weight"] = maxi(0, int(entry.get("weight", 0)) + delta)
-			table[i] = entry
-			break
-	return table
-
-
-func _bonus_step_result(complete: bool, award: int, message: String, active: Dictionary) -> Dictionary:
-	return {
-		"complete": complete,
-		"award": maxi(0, award),
-		"message": message,
-		"active_bonus": active.duplicate(true),
-	}
+	return MathScript.normalize_weight_table(result, 1000)
 
 
 func _fill_nonpaying_grid(grid: Array, rng: RngStream = null) -> void:
@@ -406,13 +383,13 @@ func _pinball_legacy_true_win_plan(reel_count: int, format_id: String, rng: RngS
 
 
 func _sanitize_pinball_grid(grid: Array, definition: Dictionary, protected_cells: Dictionary) -> void:
-	_limit_symbol_count(grid, "PINBALL", 2, protected_cells)
+	MathScript.limit_symbol_count(grid, "PINBALL", 2, protected_cells)
 	var guard := 0
 	while guard < 96:
 		var violation: Dictionary = _first_pinball_win_violation(grid, definition, protected_cells)
 		if violation.is_empty():
 			return
-		var break_cell: Dictionary = _first_unprotected_cell(_copy_array(violation.get("cells", [])), protected_cells)
+		var break_cell: Dictionary = MathScript.first_unprotected_cell(_copy_array(violation.get("cells", [])), protected_cells)
 		if break_cell.is_empty():
 			return
 		MathScript.set_cell(grid, int(break_cell.get("reel", 0)), int(break_cell.get("row", 0)), "BLANK")
@@ -439,52 +416,9 @@ func _first_pinball_win_violation(grid: Array, definition: Dictionary, protected
 						cells.append(cell)
 					else:
 						break
-				if cells.size() >= 3 and not _all_cells_protected(cells, protected_cells):
+				if cells.size() >= 3 and not MathScript.all_cells_protected(cells, protected_cells):
 					return {"cells": cells, "symbol": candidate, "line_index": line_index}
 	return {}
-
-
-func _limit_symbol_count(grid: Array, symbol_id: String, max_count: int, protected_cells: Dictionary) -> void:
-	var seen := 0
-	for reel_index in range(grid.size()):
-		if typeof(grid[reel_index]) != TYPE_ARRAY:
-			continue
-		var column: Array = grid[reel_index] as Array
-		for row_index in range(column.size()):
-			if str(column[row_index]) != symbol_id:
-				continue
-			seen += 1
-			if seen > max_count and not bool(protected_cells.get("%d:%d" % [reel_index, row_index], false)):
-				column[row_index] = "BLANK"
-		grid[reel_index] = column
-
-
-func _protected_cell_lookup(cells: Array) -> Dictionary:
-	var lookup := {}
-	for cell_value in cells:
-		var cell: Dictionary = _copy_dict(cell_value)
-		lookup["%d:%d" % [int(cell.get("reel", -1)), int(cell.get("row", -1))]] = true
-	return lookup
-
-
-func _first_unprotected_cell(cells: Array, protected_cells: Dictionary) -> Dictionary:
-	var index := cells.size() - 1
-	while index >= 0:
-		var cell: Dictionary = _copy_dict(cells[index])
-		if not bool(protected_cells.get("%d:%d" % [int(cell.get("reel", -1)), int(cell.get("row", -1))], false)):
-			return cell
-		index -= 1
-	return {}
-
-
-func _all_cells_protected(cells: Array, protected_cells: Dictionary) -> bool:
-	if cells.is_empty():
-		return false
-	for cell_value in cells:
-		var cell: Dictionary = _copy_dict(cell_value)
-		if not bool(protected_cells.get("%d:%d" % [int(cell.get("reel", -1)), int(cell.get("row", -1))], false)):
-			return false
-	return true
 
 
 func _random_payline(reel_count: int, row_count: int, count: int, rng: RngStream) -> Dictionary:

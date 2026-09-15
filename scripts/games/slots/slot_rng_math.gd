@@ -192,6 +192,63 @@ static func grid_to_string(grid: Array) -> String:
 	return "|".join(columns)
 
 
+static func normalize_weight_table(table: Array, target_total: int) -> Array:
+	var total := 0
+	for entry_value in table:
+		total += maxi(0, int((entry_value as Dictionary).get("weight", 0)))
+	var delta := target_total - total
+	for index in range(table.size()):
+		var entry: Dictionary = table[index]
+		if str(entry.get("id", "")) == "zero_loss":
+			entry["weight"] = maxi(0, int(entry.get("weight", 0)) + delta)
+			table[index] = entry
+			break
+	return table
+
+
+static func limit_symbol_count(grid: Array, symbol_id: String, max_count: int, protected_cells: Dictionary) -> void:
+	var seen := 0
+	for reel_index in range(grid.size()):
+		if typeof(grid[reel_index]) != TYPE_ARRAY:
+			continue
+		var column: Array = grid[reel_index]
+		for row_index in range(column.size()):
+			if str(column[row_index]) != symbol_id:
+				continue
+			seen += 1
+			if seen > max_count and not bool(protected_cells.get("%d:%d" % [reel_index, row_index], false)):
+				column[row_index] = "BLANK"
+		grid[reel_index] = column
+
+
+static func protected_cell_lookup(cells: Array) -> Dictionary:
+	var lookup := {}
+	for cell_value in cells:
+		var cell: Dictionary = cell_value if typeof(cell_value) == TYPE_DICTIONARY else {}
+		lookup["%d:%d" % [int(cell.get("reel", -1)), int(cell.get("row", -1))]] = true
+	return lookup
+
+
+static func first_unprotected_cell(cells: Array, protected_cells: Dictionary) -> Dictionary:
+	var index := cells.size() - 1
+	while index >= 0:
+		var cell: Dictionary = cells[index] if typeof(cells[index]) == TYPE_DICTIONARY else {}
+		if not bool(protected_cells.get("%d:%d" % [int(cell.get("reel", -1)), int(cell.get("row", -1))], false)):
+			return cell.duplicate(true)
+		index -= 1
+	return {}
+
+
+static func all_cells_protected(cells: Array, protected_cells: Dictionary) -> bool:
+	if cells.is_empty():
+		return false
+	for cell_value in cells:
+		var cell: Dictionary = cell_value if typeof(cell_value) == TYPE_DICTIONARY else {}
+		if not bool(protected_cells.get("%d:%d" % [int(cell.get("reel", -1)), int(cell.get("row", -1))], false)):
+			return false
+	return true
+
+
 static func _string_array(value: Variant) -> Array:
 	var result: Array = []
 	if typeof(value) != TYPE_ARRAY:

@@ -392,6 +392,11 @@ static func _draw_neon_panel(surface, rect: Rect2, accent: Color, alpha: float =
 	surface.draw_rect(Rect2(rect.position + Vector2(4, rect.size.y - 5), Vector2(maxf(0.0, rect.size.x - 8), 2)), Color(accent.r, accent.g, accent.b, alpha * 1.6))
 
 
+static func draw_flat_neon_panel(surface, rect: Rect2, accent: Color, alpha: float = 0.16) -> void:
+	surface.draw_rect(rect, Color(accent.r, accent.g, accent.b, alpha))
+	surface.draw_rect(rect, Color(accent.r, accent.g, accent.b, minf(0.95, alpha + 0.22)), false, 1)
+
+
 static func _draw_surface_scan_bands(surface, x0: int, x1: int, y0: int, y1: int, color: Color, alpha: float, speed: float) -> void:
 	var height := maxi(1, y1 - y0)
 	var band_y := y0 + int(fmod(_surface_clock(surface) * speed * 20.0, float(height)))
@@ -428,6 +433,36 @@ static func _draw_status_meter(surface, rect: Rect2, value: int, label: String, 
 	surface.draw_rect(Rect2(rect.position, Vector2(rect.size.x * float(clamped) / 100.0, rect.size.y)), accent)
 	surface.draw_rect(rect, Color(accent.r, accent.g, accent.b, 0.22), false, 1)
 	surface.surface_label(label.left(26), rect.position + Vector2(0, -4), 9, accent)
+
+
+static func closest_chip(value: int, denominations: Array) -> int:
+	var best := int(denominations[0])
+	var best_delta: int = abs(best - value)
+	for denomination in denominations:
+		var delta: int = abs(int(denomination) - value)
+		if delta < best_delta:
+			best = int(denomination)
+			best_delta = delta
+	return best
+
+
+static func chip_stack_for_stake(stake: int, chip_values: Array) -> Array:
+	var remaining := maxi(0, stake)
+	var sorted := chip_values.duplicate(true)
+	sorted.sort()
+	sorted.reverse()
+	var result: Array = []
+	for value in sorted:
+		var chip := int(value)
+		if chip <= 0:
+			continue
+		var count := int(remaining / chip)
+		if count > 0:
+			result.append({"value": chip, "count": count})
+			remaining -= count * chip
+	if remaining > 0:
+		result.append({"value": remaining, "count": 1})
+	return result
 
 
 static func flight_progress(elapsed_msec: float, delay_msec: float, duration_msec: float) -> float:

@@ -476,14 +476,16 @@ static func surface_spec(payload: Dictionary = {}) -> Dictionary:
 	spec["surface_realtime_state_refresh"] = bool(spec.get("surface_realtime_state_refresh", false))
 	spec["surface_embeds_outcomes"] = bool(spec.get("surface_embeds_outcomes", false))
 	spec["surface_suppresses_game_result_burst"] = bool(spec.get("surface_suppresses_game_result_burst", false))
-	spec["surface_action_bindings"] = _copy_dict(spec.get("surface_action_bindings", {}))
-	spec["native_selected_surface_actions"] = _copy_array(spec.get("native_selected_surface_actions", []))
-	spec["surface_animation_channels"] = _normalize_surface_animation_channels(spec.get("surface_animation_channels", []))
-	spec["surface_audio"] = _copy_dict(spec.get("surface_audio", {}))
-	spec["surface_action_blocks"] = _copy_array(spec.get("surface_action_blocks", []))
-	spec["surface_state_labels"] = _copy_array(spec.get("surface_state_labels", []))
-	spec["surface_result_display"] = _copy_dict(spec.get("surface_result_display", {}))
-	spec["surface_ui_preference_keys"] = _copy_array(spec.get("surface_ui_preference_keys", []))
+	# The full payload copy above already owns every nested container. Reusing
+	# those owned values avoids copying the largest renderer fields a second time.
+	spec["surface_action_bindings"] = _owned_dict(spec.get("surface_action_bindings", {}))
+	spec["native_selected_surface_actions"] = _owned_array(spec.get("native_selected_surface_actions", []))
+	spec["surface_animation_channels"] = _normalize_surface_animation_channels(spec.get("surface_animation_channels", []), true)
+	spec["surface_audio"] = _owned_dict(spec.get("surface_audio", {}))
+	spec["surface_action_blocks"] = _owned_array(spec.get("surface_action_blocks", []))
+	spec["surface_state_labels"] = _owned_array(spec.get("surface_state_labels", []))
+	spec["surface_result_display"] = _owned_dict(spec.get("surface_result_display", {}))
+	spec["surface_ui_preference_keys"] = _owned_array(spec.get("surface_ui_preference_keys", []))
 	return spec
 
 
@@ -508,8 +510,8 @@ static func surface_audio_spec(payload: Dictionary = {}) -> Dictionary:
 	var spec := payload.duplicate(true)
 	spec["profile_id"] = str(spec.get("profile_id", "default"))
 	spec["selection_seed"] = maxi(1, int(spec.get("selection_seed", 1)))
-	spec["action_cues"] = _copy_dict(spec.get("action_cues", {}))
-	spec["state_sync"] = _copy_dict(spec.get("state_sync", {}))
+	spec["action_cues"] = _owned_dict(spec.get("action_cues", {}))
+	spec["state_sync"] = _owned_dict(spec.get("state_sync", {}))
 	return spec
 
 
@@ -849,7 +851,8 @@ static func apply_result(run_state: RunState, result: Dictionary, rng: RngStream
 	if not bool(result.get("ok", false)):
 		run_state.clear_deferred_bankroll_zero_resolution()
 		return
-	if (str(result.get("game_id", result.get("source_id", ""))) == "blackjack" \
+	var result_game_id := str(result.get("game_id", result.get("source_id", "")))
+	if (result_game_id == "blackjack" \
 			or bool(result.get("table_game_authoritative", false)) \
 			or bool(result.get("sealed_action_authoritative", false))) \
 			and not run_state.consume_blackjack_authority_result_receipt(result):
@@ -868,8 +871,8 @@ static func apply_result(run_state: RunState, result: Dictionary, rng: RngStream
 	if chips_delta != 0:
 		run_state.change_grand_casino_chips(chips_delta, defer_bankroll_zero)
 	var suspicion_delta := int(deltas.get("suspicion_delta", 0))
-	var blackjack_heat_attempt := suspicion_delta > 0 and str(result.get("game_id", result.get("source_id", ""))) == "blackjack"
-	if suspicion_delta > 0 and str(result.get("game_id", result.get("source_id", ""))) == "blackjack":
+	var blackjack_heat_attempt := suspicion_delta > 0 and result_game_id == "blackjack"
+	if blackjack_heat_attempt:
 		var capped_blackjack_delta := run_state.blackjack_suspicion_delta_before_backoff(suspicion_delta)
 		if capped_blackjack_delta != suspicion_delta:
 			deltas["base_suspicion_delta"] = suspicion_delta
@@ -1256,6 +1259,37 @@ func _inventory_item_id(entry: Variant) -> String:
 	return str(entry)
 
 
+func _item_effect_total(key: String, run_state: RunState) -> int:
+	if run_state == null:
+		return 0
+	return run_state.item_effect_total(key, get_family()) if run_state.has_method("item_effect_total") else 0
+
+
+func _stable_hash(text: String) -> int:
+	var value := 216613626
+	for index in range(text.length()):
+		value = value ^ text.unicode_at(index)
+		value = int((value * 16777619) & 0x7fffffff)
+	return maxi(1, value)
+
+
+func _fallback_state(run_state: RunState, environment: Dictionary) -> Dictionary:
+	var rng := RngStream.new()
+	rng.configure(_stable_hash("%s:%s:%s" % [get_id(), str(run_state.seed_text if run_state != null else "fallback"), str(environment.get("id", ""))]))
+	return generate_environment_state(run_state, environment, rng)
+
+
+# Returns the stored game state for read-only, per-frame checks.
+func _peek_table_state(environment: Dictionary) -> Dictionary:
+	var states: Variant = environment.get("game_states", {})
+	if typeof(states) != TYPE_DICTIONARY:
+		return {}
+	var table: Variant = (states as Dictionary).get(get_id(), {})
+	if typeof(table) != TYPE_DICTIONARY or (table as Dictionary).is_empty():
+		return {}
+	return table as Dictionary
+
+
 # Safely duplicates array content.
 static func _copy_array(value: Variant) -> Array:
 	if typeof(value) != TYPE_ARRAY:
@@ -1278,12 +1312,12 @@ static func _owned_dict(value: Variant) -> Dictionary:
 	return value as Dictionary if typeof(value) == TYPE_DICTIONARY else {}
 
 
-static func _normalize_surface_animation_channels(value: Variant) -> Array:
+static func _normalize_surface_animation_channels(value: Variant, take_ownership: bool = false) -> Array:
 	var entries: Array = []
 	if typeof(value) == TYPE_DICTIONARY:
 		var channels: Dictionary = value
 		for key in channels.keys():
-			var channel := _copy_dict(channels.get(key, {}))
+			var channel := _owned_dict(channels.get(key, {})) if take_ownership else _copy_dict(channels.get(key, {}))
 			if channel.is_empty():
 				continue
 			if not channel.has("id"):
@@ -1292,7 +1326,7 @@ static func _normalize_surface_animation_channels(value: Variant) -> Array:
 	elif typeof(value) == TYPE_ARRAY:
 		for entry in value:
 			if typeof(entry) == TYPE_DICTIONARY:
-				entries.append((entry as Dictionary).duplicate(true))
+				entries.append(entry if take_ownership else (entry as Dictionary).duplicate(true))
 
 	var result: Array = []
 	for entry in entries:
@@ -1301,14 +1335,14 @@ static func _normalize_surface_animation_channels(value: Variant) -> Array:
 		if channel_id.is_empty():
 			continue
 		var active_id := str(channel.get("active_id", ""))
-		var normalized := channel.duplicate(true)
+		var normalized := channel
 		normalized["id"] = channel_id
 		normalized["active_id"] = active_id
 		normalized["started_msec"] = maxi(0, int(channel.get("started_msec", 0)))
 		normalized["duration_msec"] = maxi(0, int(channel.get("duration_msec", 0)))
 		normalized["active"] = bool(channel.get("active", not active_id.is_empty()))
 		normalized["restart_on_active_id_change"] = bool(channel.get("restart_on_active_id_change", true))
-		normalized["metadata"] = _copy_dict(channel.get("metadata", {}))
+		normalized["metadata"] = _owned_dict(channel.get("metadata", {}))
 		result.append(normalized)
 	return result
 

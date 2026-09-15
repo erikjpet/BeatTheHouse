@@ -1369,7 +1369,7 @@ func _draw_blackjack_ritual_layer(surface, surface_state: Dictionary) -> void:
 	var totals := _draw_dict_view(projection.get("readable_totals", {}))
 	var accent := C_PINK if energy_tier == "hot" else C_YELLOW if energy_tier == "watched" else C_TEAL if energy_tier == "engaged" else C_CYAN
 	var phase_rect := Rect2(28, 120, 164, 20)
-	_draw_neon_panel(surface, phase_rect, accent, 0.13)
+	TableVisualsScript._draw_neon_panel(surface, phase_rect, accent, 0.13)
 	surface.surface_label("RITUAL  %s" % phase_id.replace("_", " ").to_upper().left(16), phase_rect.position + Vector2(8, 13), 8, accent)
 	var money_rect := Rect2(246, 300, 408, 12)
 	surface.draw_rect(money_rect, Color("#071612"))
@@ -1505,18 +1505,6 @@ func surface_auto_tick_state_keys() -> Array:
 		"settlement_pending",
 		"presentation_timing_enforced",
 	]
-
-
-func _peek_table_state(environment: Dictionary) -> Dictionary:
-	# Zero-copy view of the stored table for read-mostly per-frame checks.
-	# Callers must not mutate it or hold it across writes.
-	var states: Variant = environment.get("game_states", {})
-	if typeof(states) != TYPE_DICTIONARY:
-		return {}
-	var table: Variant = (states as Dictionary).get(get_id(), {})
-	if typeof(table) != TYPE_DICTIONARY or (table as Dictionary).is_empty():
-		return {}
-	return table as Dictionary
 
 
 func surface_auto_action_command(ui_state: Dictionary, run_state: RunState, environment: Dictionary, _surface_status: Dictionary = {}) -> Dictionary:
@@ -2014,7 +2002,7 @@ func _blackjack_compatibility_simulation(action_id: String, stake: int, run_stat
 	# authority. It snapshots the caller inputs, resolves only detached copies,
 	# and returns a receipt-free result that GameModule.apply_result rejects.
 	if run_state == null or rng == null:
-		return _empty_blackjack_result(action_id, stake, environment, "Blackjack simulation requires serialized run and RNG inputs.")
+		return _empty_result(action_id, stake, environment, "Blackjack simulation requires serialized run and RNG inputs.")
 	# Standard compatibility actions use the proven read-only core against the
 	# live RunState and a detached environment graph. Crew and Rourke paths can
 	# author run-owned state, so they retain the full detached restore fallback.
@@ -2132,7 +2120,7 @@ func _rebind_pending_authority_checkpoint(run_state: RunState) -> void:
 
 func _resolve_blackjack_proposal_core(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary = {}, read_only_run_state: bool = false) -> Dictionary:
 	if read_only_run_state and (not _blackjack_compatibility_read_only_core_allowed(action_id, run_state) or _is_rourke_duel(run_state, environment)):
-		return _empty_blackjack_result(action_id, stake, environment, "That blackjack action requires a detached authoritative candidate.")
+		return _empty_result(action_id, stake, environment, "That blackjack action requires a detached authoritative candidate.")
 	if action_id.begins_with("crew_play:"):
 		return super.resolve_with_context(action_id, stake, run_state, environment, rng, ui_state)
 	if _is_rourke_duel(run_state, environment):
@@ -2142,12 +2130,12 @@ func _resolve_blackjack_proposal_core(action_id: String, stake: int, run_state: 
 	if action_id == "peek_hole_card" or action_id == "count_cards":
 		return _resolve_cheat_only(action_id, run_state, environment, rng, ui_state, read_only_run_state)
 	if action_id != "play_basic":
-		return _empty_blackjack_result(action_id, stake, environment, "That blackjack action is not available.")
+		return _empty_result(action_id, stake, environment, "That blackjack action is not available.")
 	var result_msec := GameModule.deterministic_time_msec(run_state, ui_state)
 	var presentation_msec := _blackjack_presentation_time_msec(ui_state, result_msec)
 	var table: Dictionary = _table_state(run_state, environment, read_only_run_state)
 	if bool(table.get("barred", false)):
-		return _empty_blackjack_result(action_id, stake, environment, str(table.get("barred_reason", "The dealer refuses to let you play this blackjack table.")))
+		return _empty_result(action_id, stake, environment, str(table.get("barred_reason", "The dealer refuses to let you play this blackjack table.")))
 	var session: Dictionary = _normalized_session(run_state, environment, ui_state, table)
 	var sit_out := bool(session.get("blackjack_sit_out", false))
 	if sit_out:
@@ -2161,7 +2149,7 @@ func _resolve_blackjack_proposal_core(action_id: String, stake: int, run_state: 
 	if total_wager > maxi(0, run_state.wager_balance_for_game(get_id(), environment)):
 		var debited_wager := _session_debited_wager(session)
 		if total_wager - debited_wager > maxi(0, run_state.wager_balance_for_game(get_id(), environment)):
-			return _empty_blackjack_result(action_id, stake, environment, "You do not have enough bankroll for that table action.")
+			return _empty_result(action_id, stake, environment, "You do not have enough bankroll for that table action.")
 
 	session["dealer_hole_visible"] = true
 	var dealer_cards: Array = _dealer_final_cards(session, table)
@@ -2320,12 +2308,12 @@ func _resolve_blackjack_proposal_core(action_id: String, stake: int, run_state: 
 
 func _resolve_rourke_duel_hand(action_id: String, run_state: RunState, environment: Dictionary, ui_state: Dictionary) -> Dictionary:
 	if action_id != "play_basic":
-		return _empty_blackjack_result(action_id, 0, environment, "Rourke is waiting for the hand to settle.")
+		return _empty_result(action_id, 0, environment, "Rourke is waiting for the hand to settle.")
 	var table := _table_state(run_state, environment)
 	var session := _normalized_session(run_state, environment, ui_state, table)
 	var presentation_msec := _blackjack_presentation_time_msec(ui_state, run_state.grand_casino_duel_action_time_msec())
 	if not _has_dealt_hand(session):
-		return _empty_blackjack_result(action_id, 0, environment, "Deal a hand before settling Rourke's table.")
+		return _empty_result(action_id, 0, environment, "Deal a hand before settling Rourke's table.")
 	if not _all_hands_complete(session):
 		_stand_all_hands(session)
 	session["dealer_hole_visible"] = true
@@ -2460,7 +2448,7 @@ func _resolve_place_bet(stake: int, run_state: RunState, environment: Dictionary
 	var result_msec := GameModule.deterministic_time_msec(run_state, ui_state)
 	var table: Dictionary = _table_state(run_state, environment, read_only_run_state)
 	if bool(table.get("barred", false)):
-		return _empty_blackjack_result("blackjack_place_bet", stake, environment, str(table.get("barred_reason", "The dealer refuses to let you play this blackjack table.")))
+		return _empty_result("blackjack_place_bet", stake, environment, str(table.get("barred_reason", "The dealer refuses to let you play this blackjack table.")))
 	var session: Dictionary = _normalized_session(run_state, environment, ui_state, table)
 	if not _has_dealt_hand(session):
 		_start_initial_hand(session, table, maxi(1, stake), run_state, result_msec)
@@ -2477,7 +2465,7 @@ func _resolve_place_bet(stake: int, run_state: RunState, environment: Dictionary
 		session["wager_debited"] = maxi(already_debited, total_wager)
 		return _place_bet_result(run_state, environment, rng, session, 0, "Blackjack wager is already on the felt.")
 	if debit > maxi(0, run_state.wager_balance_for_game(get_id(), environment) if run_state != null else debit):
-		return _empty_blackjack_result("blackjack_place_bet", stake, environment, "You do not have enough bankroll for that table action.")
+		return _empty_result("blackjack_place_bet", stake, environment, "You do not have enough bankroll for that table action.")
 	session["bankroll_wager_debited"] = true
 	session["wager_debited"] = already_debited + debit
 	var message := "Blackjack wager placed: $%d on the felt." % int(session.get("wager_debited", debit))
@@ -2564,7 +2552,7 @@ func environment_object_state(run_state: RunState, environment: Dictionary) -> D
 func _resolve_cheat_only(action_id: String, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary, read_only_run_state: bool = false) -> Dictionary:
 	var table: Dictionary = _table_state(run_state, environment, read_only_run_state)
 	if bool(table.get("barred", false)):
-		return _empty_blackjack_result(action_id, 0, environment, str(table.get("barred_reason", "The dealer refuses to let you play this blackjack table.")))
+		return _empty_result(action_id, 0, environment, str(table.get("barred_reason", "The dealer refuses to let you play this blackjack table.")))
 	var session: Dictionary = _normalized_session(run_state, environment, ui_state, table)
 	var result_msec := GameModule.deterministic_time_msec(run_state, ui_state)
 	if action_id == "peek_hole_card":
@@ -2816,8 +2804,8 @@ func _base_suspicion_for_applied_cap(desired_applied_heat: int, run_state: RunSt
 
 
 func _draw_blackjack_room(surface, surface_state: Dictionary) -> void:
-	var clock := _surface_clock(surface)
-	var low_detail := _surface_low_detail_idle(surface)
+	var clock := TableVisualsScript._surface_clock(surface)
+	var low_detail := TableVisualsScript._surface_low_detail_idle(surface)
 	var board_size: Vector2 = surface.surface_board_size()
 	surface.draw_rect(Rect2(Vector2.ZERO, board_size), Color("#05060a"))
 	surface.draw_rect(Rect2(0, 0, board_size.x, 82), Color("#101427"))
@@ -2826,13 +2814,13 @@ func _draw_blackjack_room(surface, surface_state: Dictionary) -> void:
 	surface.draw_rect(Rect2(0, 78, board_size.x, 3), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.62))
 	surface.draw_rect(Rect2(0, BJ_CONSOLE_Y - 3.0, board_size.x, 3), Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.42))
 	if not low_detail:
-		_draw_surface_light_cone(surface, Vector2(176, 78), Vector2(190, 238), C_CYAN, 0.065)
-		_draw_surface_light_cone(surface, Vector2(724, 78), Vector2(188, 238), C_PINK, 0.070)
-		_draw_surface_scan_bands(surface, 0, int(board_size.x), 0, 146, C_CYAN, 0.040, 1.6)
-		_draw_neon_panel(surface, Rect2(24, 14, 286, 58), C_CYAN, 0.16 + absf(sin(clock * 2.1)) * 0.04)
-		_draw_neon_panel(surface, Rect2(332, 18, 236, 48), C_PINK, 0.12 + absf(sin(clock * 1.7)) * 0.04)
-		_draw_security_mirror(surface, Rect2(606, 16, 68, 50), C_PINK)
-		_draw_watch_camera_surface(surface, Vector2(584, 42), C_PINK)
+		TableVisualsScript._draw_surface_light_cone(surface, Vector2(176, 78), Vector2(190, 238), C_CYAN, 0.065)
+		TableVisualsScript._draw_surface_light_cone(surface, Vector2(724, 78), Vector2(188, 238), C_PINK, 0.070)
+		TableVisualsScript._draw_surface_scan_bands(surface, 0, int(board_size.x), 0, 146, C_CYAN, 0.040, 1.6)
+		TableVisualsScript._draw_neon_panel(surface, Rect2(24, 14, 286, 58), C_CYAN, 0.16 + absf(sin(clock * 2.1)) * 0.04)
+		TableVisualsScript._draw_neon_panel(surface, Rect2(332, 18, 236, 48), C_PINK, 0.12 + absf(sin(clock * 1.7)) * 0.04)
+		TableVisualsScript._draw_security_mirror(surface, Rect2(606, 16, 68, 50), C_PINK)
+		TableVisualsScript._draw_watch_camera_surface(surface, Vector2(584, 42), C_PINK)
 	else:
 		surface.draw_rect(Rect2(24, 14, 286, 58), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.12), false, 1)
 		surface.draw_rect(Rect2(332, 18, 236, 48), Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.10), false, 1)
@@ -2848,8 +2836,8 @@ func _draw_blackjack_room(surface, surface_state: Dictionary) -> void:
 
 
 func _draw_blackjack_table(surface, surface_state: Dictionary) -> void:
-	var clock := _surface_clock(surface)
-	var low_detail := _surface_low_detail_idle(surface)
+	var clock := TableVisualsScript._surface_clock(surface)
+	var low_detail := TableVisualsScript._surface_low_detail_idle(surface)
 	surface.draw_polygon(BJ_RAIL_POINTS, BJ_RAIL_COLORS)
 	surface.draw_polygon(BJ_OUTER_FELT_POINTS, BJ_OUTER_FELT_COLORS)
 	surface.draw_polygon(BJ_FELT_POINTS, BJ_FELT_COLORS)
@@ -2875,21 +2863,21 @@ func _draw_blackjack_table(surface, surface_state: Dictionary) -> void:
 func _draw_dealer_station(surface, surface_state: Dictionary) -> void:
 	var focus: Dictionary = _dealer_focus_for_surface_state(surface, surface_state)
 	var profile: Dictionary = surface_state.get("dealer_profile", {}) if typeof(surface_state.get("dealer_profile", {})) == TYPE_DICTIONARY else {}
-	var low_detail := _surface_low_detail_idle(surface)
+	var low_detail := TableVisualsScript._surface_low_detail_idle(surface)
 	var looking_away := bool(focus.get("lookaway_active", false))
 	var peek_window := bool(focus.get("peek_window_open", looking_away))
 	var blink := bool(focus.get("blink", false))
 	var eye_offset := float(focus.get("eye_offset", 0.0))
-	var idle := _surface_clock(surface) + float(int(profile.get("blink_offset", 0))) / 1000.0
+	var idle := TableVisualsScript._surface_clock(surface) + float(int(profile.get("blink_offset", 0))) / 1000.0
 	var attention_color := C_PINK if int(focus.get("peek_danger", 0)) >= 70 else C_YELLOW if int(focus.get("peek_danger", 0)) >= 42 else C_TEAL
 	surface.draw_rect(Rect2(352, 54, 196, 104), Color("#0b0d16"))
 	surface.draw_rect(Rect2(352, 54, 196, 104), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.18), false, 1)
 	if low_detail:
 		var dealer_foot := Vector2(450, 156) + Vector2(sin(idle * 1.8) * 2.0, 0)
-		_draw_dealer_gaze(surface, focus, Vector2(450, 91))
+		TableVisualsScript._draw_dealer_gaze(surface, focus, Vector2(450, 91))
 		_draw_static_table_character(surface, dealer_foot, 1.06, attention_color, Color("#1b2230"), str(surface_state.get("dealer_name", "Dealer")), eye_offset, blink)
 	else:
-		_draw_dealer_gaze(surface, focus, Vector2(450, 91))
+		TableVisualsScript._draw_dealer_gaze(surface, focus, Vector2(450, 91))
 		draw_dealer_character_style.clear()
 		draw_dealer_character_style["name"] = str(surface_state.get("dealer_name", "Dealer"))
 		draw_dealer_character_style["skin"] = Color("#d8b18a")
@@ -2904,10 +2892,10 @@ func _draw_dealer_station(surface, surface_state: Dictionary) -> void:
 		draw_dealer_character_style["uniform_accent"] = str(profile.get("uniform_accent", ""))
 		_draw_table_character(surface, draw_dealer_character_style, Vector2(450, 156), 1.06, idle)
 	var meter := clampi(int(focus.get("attention_meter", 0)), 0, 100)
-	_draw_status_meter(surface, Rect2(566, 92, 118, 9), meter, "dealer %s" % str(focus.get("status", "watching")), C_PINK if meter >= 70 else C_YELLOW if meter >= 42 else C_TEAL)
-	_draw_status_meter(surface, Rect2(566, 116, 118, 6), int(focus.get("peek_danger", 0)), str(focus.get("gaze_phase", "read")).left(20), attention_color)
+	TableVisualsScript._draw_status_meter(surface, Rect2(566, 92, 118, 9), meter, "dealer %s" % str(focus.get("status", "watching")), C_PINK if meter >= 70 else C_YELLOW if meter >= 42 else C_TEAL)
+	TableVisualsScript._draw_status_meter(surface, Rect2(566, 116, 118, 6), int(focus.get("peek_danger", 0)), str(focus.get("gaze_phase", "read")).left(20), attention_color)
 	if peek_window:
-		_draw_neon_panel(surface, Rect2(566, 130, 122, 22), C_TEAL, 0.28)
+		TableVisualsScript._draw_neon_panel(surface, Rect2(566, 130, 122, 22), C_TEAL, 0.28)
 		var peek_label: String = "PEEK %.1fs" % (float(int(focus.get("lookaway_remaining_msec", 0))) / 1000.0) if looking_away else "PEEK WINDOW"
 		surface.surface_label_centered(peek_label, Rect2(570, 134, 114, 14), 11, C_TEAL)
 	else:
@@ -2918,8 +2906,8 @@ func _draw_dealer_station(surface, surface_state: Dictionary) -> void:
 
 func _draw_table_patrons(surface, surface_state: Dictionary) -> void:
 	var patrons: Array = surface_state.get("patrons", []) if typeof(surface_state.get("patrons", [])) == TYPE_ARRAY else []
-	var clock := _surface_clock(surface)
-	if _surface_low_detail_idle(surface):
+	var clock := TableVisualsScript._surface_clock(surface)
+	if TableVisualsScript._surface_low_detail_idle(surface):
 		for i in range(patrons.size()):
 			if typeof(patrons[i]) != TYPE_DICTIONARY:
 				continue
@@ -2934,7 +2922,7 @@ func _draw_table_patrons(surface, surface_state: Dictionary) -> void:
 			var covered := bool(patron.get("covered", false))
 			var risk := int(patron.get("active_snitch_risk", 0))
 			var accent := C_PINK if watching else C_TEAL if covered else C_SOFT
-			_draw_static_table_character(surface, pos + Vector2(0, 52), 0.86, accent, _patron_jacket_color(patron), str(patron.get("name", "Seat")), -2.0 if covered else 2.0 if watching else 0.0, phase > 0.92)
+			_draw_static_table_character(surface, pos + Vector2(0, 52), 0.86, accent, TableVisualsScript._patron_jacket_color(patron), str(patron.get("name", "Seat")), -2.0 if covered else 2.0 if watching else 0.0, phase > 0.92)
 			var risk_width := clampf(float(risk) / 60.0, 0.0, 1.0) * 46.0
 			surface.draw_rect(Rect2(pos.x - 28, pos.y + 61, 56, 5), Color("#070810"))
 			surface.draw_rect(Rect2(pos.x - 28, pos.y + 61, risk_width, 5), accent)
@@ -2964,8 +2952,8 @@ func _draw_table_patrons(surface, surface_state: Dictionary) -> void:
 		draw_patron_character_style.clear()
 		draw_patron_character_style["name"] = str(patron.get("name", "Seat"))
 		draw_patron_character_style["skin"] = Color("#c49371")
-		draw_patron_character_style["hair"] = _patron_hair_color(patron)
-		draw_patron_character_style["jacket"] = _patron_jacket_color(patron)
+		draw_patron_character_style["hair"] = TableVisualsScript._patron_hair_color(patron)
+		draw_patron_character_style["jacket"] = TableVisualsScript._patron_jacket_color(patron)
 		draw_patron_character_style["accent"] = accent
 		draw_patron_character_style["role"] = "patron"
 		draw_patron_character_style["pose"] = "covered" if covered else "snitch" if watching else "idle"
@@ -2975,7 +2963,7 @@ func _draw_table_patrons(surface, surface_state: Dictionary) -> void:
 		draw_patron_character_style["silhouette"] = str(patron.get("silhouette", "coat"))
 		_draw_table_character(surface, draw_patron_character_style, pos + Vector2(0, 52), 0.86, patron_clock)
 		if tell_active:
-			_draw_neon_panel(surface, Rect2(pos.x - 36, pos.y - 46, 72, 20), accent, 0.22)
+			TableVisualsScript._draw_neon_panel(surface, Rect2(pos.x - 36, pos.y - 46, 72, 20), accent, 0.22)
 			surface.surface_label(str(patron.get("tell", "watching")).left(11), pos + Vector2(-30, -32), 8, accent)
 			surface.draw_line(pos + Vector2(0, -24), Vector2(450, 284), Color(accent.r, accent.g, accent.b, 0.18), 1.0)
 		var risk_width := clampf(float(risk) / 60.0, 0.0, 1.0) * 46.0
@@ -2991,22 +2979,13 @@ func _draw_table_patrons(surface, surface_state: Dictionary) -> void:
 		surface.surface_add_invisible_hit(Rect2(pos.x - 34, pos.y - 24, 68, 94), "blackjack_patron_cover", i)
 
 
-func _surface_low_detail_idle(surface) -> bool:
-	# The articulated cast is the dominant blackjack draw cost under browser CPU
-	# throttling. The lightweight cast now retains gaze/bob motion and shares the
-	# same live card renderer, so it is safe during both idle and deal channels.
-	if OS.has_feature("web"):
-		return true
-	return bool(surface.surface_low_detail_idle()) if surface != null and surface.has_method("surface_low_detail_idle") else false
-
-
 func _draw_patron_hand(surface, surface_state: Dictionary, patron: Dictionary, patron_index: int) -> void:
 	var patron_cards: Array = _draw_array_view(patron.get("cards", []))
 	if patron_cards.is_empty():
 		return
 	var action_event := _patron_active_action_event(surface, surface_state, patron_index)
 	var card_start := _patron_hand_base_position(patron_index)
-	if _surface_low_detail_idle(surface):
+	if TableVisualsScript._surface_low_detail_idle(surface):
 		_draw_compact_patron_card_row(surface, surface_state, patron_cards, card_start, patron_index)
 	else:
 		_draw_card_row_for_table(surface, surface_state, patron_cards, card_start, "patron", patron_index, PATRON_CARD_SCALE)
@@ -3014,6 +2993,10 @@ func _draw_patron_hand(surface, surface_state: Dictionary, patron: Dictionary, p
 	var total_color := C_ORANGE if total > 21 else C_YELLOW if total == 21 else C_SOFT
 	surface.surface_label("%d" % total, card_start + Vector2(62, 29), 8, total_color)
 	_draw_patron_move_badge(surface, card_start + Vector2(-3, -23), patron, action_event)
+
+
+func _surface_low_detail_idle(surface) -> bool:
+	return TableVisualsScript._surface_low_detail_idle(surface)
 
 
 func _draw_compact_patron_card_row(surface, surface_state: Dictionary, cards: Array, start: Vector2, patron_index: int) -> void:
@@ -3092,10 +3075,10 @@ func _draw_patron_move_badge(surface, pos: Vector2, patron: Dictionary, active_e
 	var peek_informed := bool(active_event.get("peek_informed", patron.get("hand_peek_informed", false)))
 	var active := not active_event.is_empty()
 	var accent := C_YELLOW if peek_informed else C_TEAL if action == "hit" else C_CYAN
-	var pulse := 0.26 + absf(sin(_surface_clock(surface) * 5.2)) * 0.12 if active else 0.10
+	var pulse := 0.26 + absf(sin(TableVisualsScript._surface_clock(surface) * 5.2)) * 0.12 if active else 0.10
 	var rect_width := 76.0 if peek_informed else 58.0
 	var rect := Rect2(pos, Vector2(rect_width, 18))
-	_draw_neon_panel(surface, rect, accent, pulse)
+	TableVisualsScript._draw_neon_panel(surface, rect, accent, pulse)
 	surface.surface_label(label.left(10), rect.position + Vector2(6, 12), 8, accent)
 	if active and not reason.is_empty():
 		surface.surface_label(reason.left(17), rect.position + Vector2(4, -4), 7, C_SOFT)
@@ -3128,7 +3111,7 @@ func _draw_player_station(surface, surface_state: Dictionary, include_betting_ch
 	if showing_showdown:
 		surface.surface_label_centered("SHOWDOWN HELD ON FELT", Rect2(342, 226, 216, 16), 10, C_YELLOW)
 	if include_betting_chrome and display_hands.is_empty():
-		_draw_neon_panel(surface, Rect2(346, 236, 208, 36), C_CYAN, 0.12)
+		TableVisualsScript._draw_neon_panel(surface, Rect2(346, 236, 208, 36), C_CYAN, 0.12)
 		surface.surface_label_centered("slide chips, then deal", Rect2(358, 246, 184, 16), 13, C_SOFT)
 	if include_betting_chrome:
 		_draw_player_wager_chips(surface, surface_state)
@@ -3178,7 +3161,7 @@ func _draw_blackjack_table_notice(surface, surface_state: Dictionary) -> void:
 		return
 	var rect := Rect2(238, 314, 424, 26)
 	var accent := C_ORANGE if notice.to_lower().find("bust") >= 0 else C_YELLOW if notice.to_lower().find("blackjack") >= 0 else C_TEAL
-	_draw_neon_panel(surface, rect, accent, 0.18)
+	TableVisualsScript._draw_neon_panel(surface, rect, accent, 0.18)
 	surface.surface_label_centered(notice.left(78), Rect2(rect.position + Vector2(8, 5), rect.size - Vector2(16, 8)), 11, accent)
 
 
@@ -3201,13 +3184,13 @@ func _draw_blackjack_ambient_event(surface, surface_state: Dictionary) -> void:
 		"orange":
 			accent = C_ORANGE
 	var rect := Rect2(28, 88, 190, 26)
-	_draw_neon_panel(surface, rect, accent, 0.12 + float(event.get("intensity", 0.0)) * 0.10)
+	TableVisualsScript._draw_neon_panel(surface, rect, accent, 0.12 + float(event.get("intensity", 0.0)) * 0.10)
 	surface.surface_label(str(event.get("label", "table motion")).to_upper().left(18), rect.position + Vector2(8, 12), 8, accent)
 	surface.surface_label(str(event.get("detail", "")).left(24), rect.position + Vector2(8, 23), 7, C_SOFT)
 
 
 func _draw_player_forearms(surface, surface_state: Dictionary) -> void:
-	var clock := _surface_clock(surface)
+	var clock := TableVisualsScript._surface_clock(surface)
 	var active_index := int(surface_state.get("active_hand_index", 0))
 	var left_hand := _player_hand_base_position(active_index) + Vector2(-32, 48)
 	var right_hand := _player_hand_base_position(active_index) + Vector2(96, 50)
@@ -3228,7 +3211,7 @@ func _draw_hand_result_badge(surface, pos: Vector2, result: Dictionary) -> void:
 	var delta := int(result.get("bankroll_delta", 0))
 	var accent := C_TEAL if delta > 0 else C_ORANGE if delta < 0 else C_YELLOW
 	var rect := Rect2(pos, Vector2(72, 20))
-	_draw_neon_panel(surface, rect, accent, 0.16)
+	TableVisualsScript._draw_neon_panel(surface, rect, accent, 0.16)
 	surface.surface_label(outcome.left(10), rect.position + Vector2(6, 12), 8, accent)
 	surface.surface_label("%+d" % delta, rect.position + Vector2(44, 12), 8, accent)
 
@@ -3238,7 +3221,7 @@ func _draw_side_bet_felt(surface, surface_state: Dictionary) -> void:
 	var active: Array = _draw_array_view(surface_state.get("side_bets_active", []))
 	var stakes: Dictionary = _draw_dict_view(surface_state.get("side_bet_stakes", {}))
 	var panel := Rect2(272, BJ_CONSOLE_Y + 8.0, 302, BJ_CONSOLE_H - 16.0)
-	_draw_neon_panel(surface, panel, C_PINK_2, 0.08)
+	TableVisualsScript._draw_neon_panel(surface, panel, C_PINK_2, 0.08)
 	surface.surface_label("SIDE BETS", panel.position + Vector2(10, 15), 10, C_SOFT)
 	if side_bets.is_empty():
 		surface.surface_label_centered("none on this table", Rect2(panel.position + Vector2(12, 32), Vector2(panel.size.x - 24, 18)), 11, Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.58))
@@ -3277,7 +3260,7 @@ func _draw_side_bet_rule_overlay(surface, surface_state: Dictionary) -> void:
 	var selected := active.has(bet_id)
 	var accent := C_YELLOW if selected else C_PINK_2
 	var rect := Rect2(236, 202, 428, 108)
-	_draw_neon_panel(surface, rect, accent, 0.24)
+	TableVisualsScript._draw_neon_panel(surface, rect, accent, 0.24)
 	surface.draw_rect(rect.grow(1), Color(0.0, 0.0, 0.0, 0.22), false, 1)
 	surface.surface_label("SIDE BET RULES", rect.position + Vector2(12, 15), 9, C_SOFT)
 	surface.surface_label(str(target.get("label", bet_id)).to_upper().left(28), rect.position + Vector2(12, 31), 14, accent)
@@ -3317,7 +3300,7 @@ func _draw_chip_rack(surface, surface_state: Dictionary) -> void:
 
 func _draw_table_actions(surface, surface_state: Dictionary) -> void:
 	var panel := Rect2(586, BJ_CONSOLE_Y + 8.0, 292, BJ_CONSOLE_H - 16.0)
-	_draw_neon_panel(surface, panel, C_CYAN, 0.10)
+	TableVisualsScript._draw_neon_panel(surface, panel, C_CYAN, 0.10)
 	if bool(surface_state.get("blackjack_host_retry_available", false)):
 		surface.surface_label("SEALED ACTION", panel.position + Vector2(10, 15), 10, C_YELLOW)
 		_draw_table_button(surface, Rect2(panel.position.x + 14, panel.position.y + 28, 132, 38), "RETRY", "blackjack_retry_pending", 0, C_YELLOW, true, surface.surface_native_action_selected("blackjack_retry_pending"))
@@ -3354,7 +3337,7 @@ func _draw_table_actions(surface, surface_state: Dictionary) -> void:
 			_draw_table_button(surface, Rect2(panel.position.x + 196, panel.position.y + 54, 72, 22), "SURRENDER", "blackjack_surrender", 0, C_ORANGE, bool(surface_state.get("can_surrender", false)))
 	var distractions: Array = _draw_array_view(surface_state.get("distractions", []))
 	var strip := Rect2(692, 294, 168, 34)
-	_draw_neon_panel(surface, strip, C_TEAL, 0.08)
+	TableVisualsScript._draw_neon_panel(surface, strip, C_TEAL, 0.08)
 	surface.surface_label("LOOKAWAY", strip.position + Vector2(8, 14), 8, C_SOFT)
 	for i in range(mini(distractions.size(), 3)):
 		var distraction: Dictionary = distractions[i]
@@ -3364,7 +3347,7 @@ func _draw_table_actions(surface, surface_state: Dictionary) -> void:
 
 func _draw_rourke_duel_hud(surface, surface_state: Dictionary) -> void:
 	var hud := Rect2(18, 12, 860, 62)
-	_draw_neon_panel(surface, hud, C_YELLOW, 0.12)
+	TableVisualsScript._draw_neon_panel(surface, hud, C_YELLOW, 0.12)
 	var projection := _draw_dict_view(surface_state.get("showdown_duel_projection", {}))
 	if projection.is_empty():
 		surface.surface_label("ROURKE'S TABLE", hud.position + Vector2(14, 18), 13, C_YELLOW)
@@ -3438,7 +3421,7 @@ func _draw_basic_strategy_advice(surface, surface_state: Dictionary) -> void:
 		return
 	var rect := Rect2(662, 88, 198, 44)
 	var accent := C_YELLOW
-	_draw_neon_panel(surface, rect, accent, 0.18)
+	TableVisualsScript._draw_neon_panel(surface, rect, accent, 0.18)
 	surface.draw_rect(rect.grow(1.0), Color(accent.r, accent.g, accent.b, 0.34), false, 1)
 	surface.draw_circle(rect.position + Vector2(24, 22), 14, Color(accent.r, accent.g, accent.b, 0.24))
 	surface.draw_circle(rect.position + Vector2(24, 22), 14, accent, false, 2)
@@ -3472,7 +3455,7 @@ func _draw_deal_animation(surface, surface_state: Dictionary) -> void:
 		var pos := start.lerp(target, eased) + Vector2(wiggle, lift)
 		var scale := float(event.get("scale", 0.62))
 		surface.draw_rect(Rect2(pos + Vector2(4, 5) * scale, Vector2(42, 60) * scale), Color(0, 0, 0, 0.22))
-		if str(event.get("zone", "")) == "patron" and _surface_low_detail_idle(surface):
+		if str(event.get("zone", "")) == "patron" and TableVisualsScript._surface_low_detail_idle(surface):
 			_draw_compact_patron_card(surface, event.get("card", {}), pos, scale)
 		else:
 			_draw_card(surface, event.get("card", {}), pos, scale)
@@ -3523,7 +3506,7 @@ func _draw_chip_payout_animation(surface, surface_state: Dictionary) -> void:
 			break
 	var label_rect := Rect2(312, 290, 276, 34)
 	var accent := C_TEAL if delta > 0 else C_ORANGE if delta < 0 else C_YELLOW
-	_draw_neon_panel(surface, label_rect, accent, 0.18 * (1.0 - clampf(t - 0.68, 0.0, 1.0)))
+	TableVisualsScript._draw_neon_panel(surface, label_rect, accent, 0.18 * (1.0 - clampf(t - 0.68, 0.0, 1.0)))
 	var label := "PUSH: CHIPS RETURN"
 	if delta > 0:
 		label = "DEALER PAYS $%+d" % delta
@@ -3583,26 +3566,6 @@ func _card_waiting_for_deal_animation(surface, surface_state: Dictionary, zone: 
 	return false
 
 
-func _draw_dealer_gaze(surface, focus: Dictionary, eye_origin: Vector2) -> void:
-	if bool(focus.get("peek_window_open", bool(focus.get("lookaway_active", false)))):
-		surface.draw_line(eye_origin + Vector2(-6, 0), eye_origin + Vector2(-70, 22), Color(C_TEAL.r, C_TEAL.g, C_TEAL.b, 0.34), 2.0)
-		return
-	var danger := clampi(int(focus.get("peek_danger", 0)), 0, 100)
-	var alpha := 0.06 + float(danger) / 100.0 * 0.14
-	var target := Vector2(450 + float(focus.get("eye_offset", 0.0)) * 9.0, 292)
-	var color := C_PINK if danger >= 70 else C_YELLOW if danger >= 42 else C_TEAL
-	surface.draw_polygon([
-		eye_origin + Vector2(-12, 3),
-		eye_origin + Vector2(12, 3),
-		target + Vector2(88, 0),
-		target + Vector2(-88, 0),
-	], [Color(color.r, color.g, color.b, alpha)])
-
-
-func _surface_clock(surface) -> float:
-	return float(surface.surface_flicker()) if surface != null and surface.has_method("surface_flicker") else float(Time.get_ticks_msec()) / 1000.0
-
-
 func _dealer_focus_for_surface_state(surface, surface_state: Dictionary) -> Dictionary:
 	var runtime: Dictionary = surface_state.get("dealer_focus_runtime", {}) if typeof(surface_state.get("dealer_focus_runtime", {})) == TYPE_DICTIONARY else {}
 	if runtime.is_empty():
@@ -3660,7 +3623,7 @@ func _dealer_focus_for_surface_state(surface, surface_state: Dictionary) -> Dict
 func _ambient_table_event_for_surface(surface, surface_state: Dictionary) -> Dictionary:
 	if str(surface_state.get("phase", "")) == "betting":
 		return {}
-	var now_msec := int(_surface_clock(surface) * 1000.0)
+	var now_msec := int(TableVisualsScript._surface_clock(surface) * 1000.0)
 	var cycle_msec := 4200
 	var phase := float(now_msec % cycle_msec) / float(cycle_msec)
 	if phase > 0.42:
@@ -3681,43 +3644,6 @@ func _ambient_table_event_for_surface(surface, surface_state: Dictionary) -> Dic
 	return event
 
 
-func _draw_neon_panel(surface, rect: Rect2, accent: Color, alpha: float = 0.18) -> void:
-	surface.draw_rect(rect.grow(4), Color(accent.r, accent.g, accent.b, alpha * 0.22))
-	surface.draw_rect(rect, Color(0.01, 0.02, 0.05, 0.72))
-	surface.draw_rect(rect, Color(accent.r, accent.g, accent.b, alpha), false, 1)
-	surface.draw_rect(Rect2(rect.position + Vector2(4, rect.size.y - 5), Vector2(maxf(0.0, rect.size.x - 8), 2)), Color(accent.r, accent.g, accent.b, alpha * 1.6))
-
-
-func _draw_surface_scan_bands(surface, x0: int, x1: int, y0: int, y1: int, color: Color, alpha: float, speed: float) -> void:
-	var height := maxi(1, y1 - y0)
-	var band_y := y0 + int(fmod(_surface_clock(surface) * speed * 20.0, float(height)))
-	surface.draw_rect(Rect2(x0, band_y, x1 - x0, 2), Color(color.r, color.g, color.b, alpha))
-	surface.draw_rect(Rect2(x0, y0 + int(fmod(float(band_y - y0 + 19), float(height))), x1 - x0, 1), Color(color.r, color.g, color.b, alpha * 0.55))
-
-
-func _draw_surface_light_cone(surface, origin: Vector2, fall: Vector2, color: Color, alpha: float) -> void:
-	surface.draw_polygon([
-		origin + Vector2(-36, 0),
-		origin + Vector2(36, 0),
-		origin + Vector2(fall.x, fall.y),
-		origin + Vector2(-fall.x, fall.y),
-	], [Color(color.r, color.g, color.b, alpha)])
-
-
-func _draw_security_mirror(surface, rect: Rect2, accent: Color) -> void:
-	surface.draw_rect(rect, Color("#05060a"))
-	surface.draw_rect(Rect2(rect.position + Vector2(8, 8), rect.size - Vector2(16, 16)), Color("#111421"))
-	surface.draw_rect(Rect2(rect.position + Vector2(16, 15), Vector2(rect.size.x - 32, 3)), Color(accent.r, accent.g, accent.b, 0.42))
-	surface.draw_rect(rect, Color(accent.r, accent.g, accent.b, 0.28), false, 1)
-
-
-func _draw_watch_camera_surface(surface, pos: Vector2, accent: Color) -> void:
-	surface.draw_rect(Rect2(pos + Vector2(-20, -10), Vector2(40, 20)), Color("#05060a"))
-	surface.draw_rect(Rect2(pos + Vector2(-8, -5), Vector2(16, 10)), C_DARK_2)
-	surface.draw_rect(Rect2(pos + Vector2(-3, -3), Vector2(6, 6)), accent)
-	surface.draw_line(pos + Vector2(0, 8), Vector2(492, 190), Color(accent.r, accent.g, accent.b, 0.12), 1)
-
-
 func _draw_betting_arc(surface, center: Vector2, width: float, accent: Color) -> void:
 	for i in range(9):
 		var x := center.x - width * 0.5 + float(i) * width / 8.0
@@ -3728,14 +3654,6 @@ func _draw_betting_arc(surface, center: Vector2, width: float, accent: Color) ->
 func _draw_seat_marker(surface, pos: Vector2, label: String, active: bool) -> void:
 	var color := C_TEAL if active else Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.32)
 	surface.surface_label_centered(label, Rect2(pos + Vector2(-11, -25), Vector2(30, 12)), 8, color)
-
-
-func _draw_status_meter(surface, rect: Rect2, value: int, label: String, accent: Color) -> void:
-	var clamped := clampi(value, 0, 100)
-	surface.draw_rect(rect, Color("#080a12"))
-	surface.draw_rect(Rect2(rect.position, Vector2(rect.size.x * float(clamped) / 100.0, rect.size.y)), accent)
-	surface.draw_rect(rect, Color(accent.r, accent.g, accent.b, 0.22), false, 1)
-	surface.surface_label(label.left(26), rect.position + Vector2(0, -4), 9, accent)
 
 
 func _draw_table_character(surface, style: Dictionary, foot: Vector2, scale_value: float, clock: float) -> void:
@@ -3753,11 +3671,11 @@ func _draw_table_character(surface, style: Dictionary, foot: Vector2, scale_valu
 	surface.draw_rect(body, Color("#05060a"))
 	surface.draw_rect(Rect2(body.position + Vector2(4, 5) * scale_value, body.size - Vector2(8, 9) * scale_value), jacket)
 	surface.draw_rect(Rect2(pos + Vector2(-18, -56) * scale_value, Vector2(36, 6) * scale_value), accent)
-	_draw_character_arm(surface, pos, scale_value, accent, pose, true)
-	_draw_character_arm(surface, pos, scale_value, accent, pose, false)
+	TableVisualsScript._draw_character_arm(surface, pos, scale_value, accent, pose, true)
+	TableVisualsScript._draw_character_arm(surface, pos, scale_value, accent, pose, false)
 	surface.draw_rect(head, skin)
 	surface.draw_rect(Rect2(head.position, Vector2(head.size.x, 8 * scale_value)), hair)
-	_draw_character_face(surface, head, scale_value, float(style.get("eye_offset", 0.0)), bool(style.get("blink", false)), pose)
+	TableVisualsScript._draw_character_face(surface, head, scale_value, float(style.get("eye_offset", 0.0)), bool(style.get("blink", false)), pose)
 	if str(style.get("silhouette", "")) == "cap":
 		surface.draw_rect(Rect2(head.position + Vector2(-3, -3) * scale_value, Vector2(head.size.x + 8 * scale_value, 5 * scale_value)), hair)
 	elif str(style.get("silhouette", "")) == "glasses":
@@ -3772,69 +3690,16 @@ func _draw_table_character(surface, style: Dictionary, foot: Vector2, scale_valu
 		surface.surface_label(name.left(10), pos + Vector2(-26, 10) * scale_value, int(10 * scale_value), accent)
 
 
-func _draw_character_arm(surface, pos: Vector2, scale_value: float, accent: Color, pose: String, left: bool) -> void:
-	var side := -1.0 if left else 1.0
-	var shoulder := pos + Vector2(side * 24, -45) * scale_value
-	var hand := pos + Vector2(side * 42, -22) * scale_value
-	if pose == "snitch":
-		hand = pos + Vector2(side * 34, -58) * scale_value
-	elif pose == "covered":
-		hand = pos + Vector2(side * 22, -28) * scale_value
-	elif pose == "lookaway":
-		hand = pos + Vector2(side * 36, -30) * scale_value
-	elif pose == "watching" and left:
-		hand = pos + Vector2(side * 30, -18) * scale_value
-	surface.draw_line(shoulder, hand, Color("#05060a"), maxf(2.0, 6.0 * scale_value))
-	surface.draw_line(shoulder, hand, Color(accent.r, accent.g, accent.b, 0.42), maxf(1.0, 2.0 * scale_value))
-	surface.draw_rect(Rect2(hand + Vector2(-3, -2) * scale_value, Vector2(6, 6) * scale_value), Color("#c49371"))
-
-
-func _draw_character_face(surface, head: Rect2, scale_value: float, eye_offset: float, blink: bool, pose: String) -> void:
-	var eye_y := head.position.y + 12 * scale_value
-	var left_eye := head.position + Vector2(6 + eye_offset, 12) * scale_value
-	var right_eye := head.position + Vector2(16 + eye_offset, 12) * scale_value
-	if blink:
-		surface.draw_rect(Rect2(left_eye, Vector2(5, 1) * scale_value), Color("#05060a"))
-		surface.draw_rect(Rect2(right_eye, Vector2(5, 1) * scale_value), Color("#05060a"))
-	else:
-		surface.draw_rect(Rect2(left_eye, Vector2(4, 3) * scale_value), Color("#05060a"))
-		surface.draw_rect(Rect2(right_eye, Vector2(4, 3) * scale_value), Color("#05060a"))
-	var mouth_color := C_PINK if pose == "snitch" else Color("#3a1830")
-	surface.draw_rect(Rect2(head.position.x + 8 * scale_value, eye_y + 8 * scale_value, 8 * scale_value, 2 * scale_value), mouth_color)
-
-
-func _patron_hair_color(patron: Dictionary) -> Color:
-	match str(patron.get("silhouette", "coat")):
-		"cap":
-			return Color("#2d1a28")
-		"rings":
-			return Color("#513315")
-		"glasses":
-			return Color("#08090e")
-		_:
-			return Color("#2b1630")
-
-
-func _patron_jacket_color(patron: Dictionary) -> Color:
-	match str(patron.get("seat_style", "open")):
-		"vest":
-			return Color("#262033")
-		"jacket":
-			return Color("#27333b")
-		_:
-			return Color("#1d2030")
-
-
 func _draw_blackjack_result_board(surface, surface_state: Dictionary) -> void:
 	var result: Dictionary = _draw_dict_view(surface_state.get("last_result", {}))
 	var rect := Rect2(18, 12, 232, 74)
 	if result.is_empty():
-		_draw_neon_panel(surface, rect, C_CYAN, 0.10)
+		TableVisualsScript._draw_neon_panel(surface, rect, C_CYAN, 0.10)
 		surface.surface_label("TABLE READ", rect.position + Vector2(10, 18), 12, C_CYAN)
 		surface.surface_label("eyes + snitches", rect.position + Vector2(10, 36), 9, C_SOFT)
 		return
 	if _settlement_reveal_waiting(surface, surface_state):
-		_draw_neon_panel(surface, rect, C_YELLOW, 0.16)
+		TableVisualsScript._draw_neon_panel(surface, rect, C_YELLOW, 0.16)
 		surface.surface_label("DEALER REVEAL", rect.position + Vector2(10, 18), 12, C_YELLOW)
 		surface.surface_label("cards still moving", rect.position + Vector2(10, 38), 9, C_SOFT)
 		surface.surface_label("settlement follows", rect.position + Vector2(10, 58), 8, C_SOFT)
@@ -3844,7 +3709,7 @@ func _draw_blackjack_result_board(surface, surface_state: Dictionary) -> void:
 	var accent := C_TEAL if delta > 0 else C_ORANGE if delta < 0 else C_YELLOW
 	if bool(result.get("caught", false)):
 		accent = C_PINK
-	_draw_neon_panel(surface, rect, accent, 0.22)
+	TableVisualsScript._draw_neon_panel(surface, rect, accent, 0.22)
 	surface.surface_label(str(result.get("headline", "RESULT")).left(18), rect.position + Vector2(10, 18), 12, accent)
 	surface.surface_label("$%+d" % delta, rect.position + Vector2(10, 38), 12, C_TEAL if delta >= 0 else C_ORANGE)
 	surface.surface_label("heat %+d" % heat, rect.position + Vector2(128, 38), 9, C_PINK if heat > 0 else C_SOFT)
@@ -4055,7 +3920,7 @@ func _table_state(run_state: RunState, environment: Dictionary, observational: b
 	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
 	var table: Dictionary = game_states.get(get_id(), {}) if typeof(game_states.get(get_id(), {})) == TYPE_DICTIONARY else {}
 	if table.is_empty():
-		table = _fallback_table_state(run_state, environment)
+		table = _fallback_state(run_state, environment)
 		game_states[get_id()] = table
 		environment["game_states"] = game_states
 	_apply_grand_casino_dealer_assignment(table, run_state, environment, observational)
@@ -4073,7 +3938,7 @@ func _table_state(run_state: RunState, environment: Dictionary, observational: b
 func _table_state_preview(run_state: RunState, environment: Dictionary) -> Dictionary:
 	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
 	var stored: Variant = game_states.get(get_id(), {})
-	var table: Dictionary = _duplicate_table_with_immutable_authority(stored as Dictionary) if typeof(stored) == TYPE_DICTIONARY and not (stored as Dictionary).is_empty() else _fallback_table_state(run_state, environment)
+	var table: Dictionary = _duplicate_table_with_immutable_authority(stored as Dictionary) if typeof(stored) == TYPE_DICTIONARY and not (stored as Dictionary).is_empty() else _fallback_state(run_state, environment)
 	_apply_grand_casino_dealer_assignment(table, run_state, environment, true)
 	var normalized := _normalize_table_state(table)
 	# Tutorial repair is also a projection here. Action boundaries persist it via
@@ -4108,12 +3973,6 @@ func _apply_grand_casino_dealer_assignment(table: Dictionary, run_state: RunStat
 		table["strategy_deviation_strikes"] = 0
 		table["strategy_watch_pressure"] = 0
 		table["strategy_last_notice"] = ""
-
-
-func _fallback_table_state(run_state: RunState, environment: Dictionary) -> Dictionary:
-	var rng := RngStream.new()
-	rng.configure(_stable_hash("%s:%s:%s" % [get_id(), str(run_state.seed_text if run_state != null else "fallback"), str(environment.get("id", ""))]))
-	return generate_environment_state(run_state, environment, rng)
 
 
 func _generate_dealer_profile(rng: RngStream, catch_base: int) -> Dictionary:
@@ -8230,23 +8089,6 @@ func _draw_card(surface, card_value: Variant, pos: Vector2, scale: float = 1.0) 
 	PlayingCardRendererScript.draw_card(surface, card_value, Rect2(pos, Vector2(42, 60) * scale))
 
 
-func _draw_suit(surface, pos: Vector2, suit: int, color: Color, scale: float = 1.0) -> void:
-	match suit:
-		0:
-			surface.draw_rect(Rect2(pos.x - 4 * scale, pos.y - 10 * scale, 8 * scale, 17 * scale), color)
-			surface.draw_rect(Rect2(pos.x - 9 * scale, pos.y - 2 * scale, 18 * scale, 6 * scale), color)
-		1:
-			surface.draw_circle(pos + Vector2(-5, -3) * scale, 5 * scale, color)
-			surface.draw_circle(pos + Vector2(5, -3) * scale, 5 * scale, color)
-			surface.draw_polygon([pos + Vector2(-10, 0) * scale, pos + Vector2(10, 0) * scale, pos + Vector2(0, 13) * scale], [color])
-		2:
-			surface.draw_polygon([pos + Vector2(0, -12) * scale, pos + Vector2(10, 0) * scale, pos + Vector2(0, 13) * scale, pos + Vector2(-10, 0) * scale], [color])
-		_:
-			surface.draw_circle(pos + Vector2(-5, 0) * scale, 5 * scale, color)
-			surface.draw_circle(pos + Vector2(5, 0) * scale, 5 * scale, color)
-			surface.draw_circle(pos + Vector2(0, -7) * scale, 5 * scale, color)
-
-
 func _rank_text(rank: int) -> String:
 	match rank:
 		RANK_ACE:
@@ -8359,27 +8201,6 @@ func _coolers_cufflinks_absorbed_failed_peek(action_id: String, cheat: Dictionar
 	if not run_state.inventory.has(COOLERS_CUFFLINKS_ITEM_ID):
 		return false
 	return bool(cheat.get("used_peek", false)) and bool(cheat.get("caught", false))
-
-
-func _empty_blackjack_result(action_id: String, stake: int, environment: Dictionary, text: String) -> Dictionary:
-	return GameModule.build_action_result({
-		"ok": false,
-		"type": "game_action",
-		"source_id": get_id(),
-		"game_id": get_id(),
-		"action_id": action_id,
-		"action_kind": "unknown",
-		"stake": stake,
-		"won": false,
-		"environment_id": environment.get("id", ""),
-		"message": text,
-	})
-
-
-func _inventory_item_id(entry: Variant) -> String:
-	if typeof(entry) == TYPE_DICTIONARY:
-		return str((entry as Dictionary).get("id", ""))
-	return str(entry)
 
 
 func _hand_array(value: Variant) -> Array:

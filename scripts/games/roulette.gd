@@ -358,7 +358,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"selected_chip": selected_chip,
 		"selected_stake": selected_chip,
 		"chip_denominations": chip_denoms,
-		"chip_stack": _chip_stack_for_stake(total_wager, chip_denoms),
+		"chip_stack": TableVisualsScript.chip_stack_for_stake(total_wager, chip_denoms),
 		"total_wager_cost": total_wager,
 		"inside_wager_total": inside_total,
 		"outside_wager_total": outside_total,
@@ -613,18 +613,6 @@ func _table_game_host_needs_auto_tick(surface_time_msec: int, _run_state: RunSta
 	return true
 
 
-func _peek_table_state(environment: Dictionary) -> Dictionary:
-	# Zero-copy view of the stored table for read-mostly per-frame checks.
-	# Callers must not mutate it or hold it across writes.
-	var states: Variant = environment.get("game_states", {})
-	if typeof(states) != TYPE_DICTIONARY:
-		return {}
-	var table: Variant = (states as Dictionary).get(get_id(), {})
-	if typeof(table) != TYPE_DICTIONARY or (table as Dictionary).is_empty():
-		return {}
-	return table as Dictionary
-
-
 func surface_auto_action_command(ui_state: Dictionary, run_state: RunState, environment: Dictionary, _surface_status: Dictionary = {}) -> Dictionary:
 	var table := _table_state_preview(run_state, environment)
 	var session := _normalized_session(run_state, environment, ui_state, table)
@@ -707,7 +695,7 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 
 func _table_game_compatibility_simulation(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary) -> Dictionary:
 	if run_state == null or rng == null:
-		return _empty_roulette_result(action_id, stake, environment, "Roulette simulation requires serialized run and RNG inputs.")
+		return _empty_result(action_id, stake, environment, "Roulette simulation requires serialized run and RNG inputs.")
 	var simulation_environment := environment.duplicate(true)
 	var simulation_rng := RngStream.new()
 	simulation_rng.restore(rng.snapshot())
@@ -766,11 +754,11 @@ func _resolve_roulette_proposal_core(action_id: String, stake: int, run_state: R
 	if action_id == PAST_POST_ACTION_ID:
 		return _resolve_past_post(action_id, run_state, environment, rng, ui_state)
 	if action_id != "spin_roulette":
-		return _empty_roulette_result(action_id, stake, environment, "That roulette action is not available.")
+		return _empty_result(action_id, stake, environment, "That roulette action is not available.")
 	var result_msec := GameModule.deterministic_time_msec(run_state, ui_state)
 	var table := _table_state(run_state, environment)
 	if bool(table.get("table_barred", false)):
-		return _empty_roulette_result(action_id, stake, environment, str(table.get("barred_reason", "The croupier refuses more roulette action at this wheel.")))
+		return _empty_result(action_id, stake, environment, str(table.get("barred_reason", "The croupier refuses more roulette action at this wheel.")))
 	var session := _normalized_session(run_state, environment, ui_state, table)
 	var bets := _bet_array(session.get("roulette_bets", []))
 	var sit_out := bool(session.get("roulette_sit_out", false)) and bets.is_empty()
@@ -779,7 +767,7 @@ func _resolve_roulette_proposal_core(action_id: String, stake: int, run_state: R
 	if not sit_out:
 		var validation := _validate_roulette_bets(bets, table, run_state, environment)
 		if not bool(validation.get("ok", false)):
-			return _empty_roulette_result(action_id, stake, environment, str(validation.get("message", "Those roulette bets cannot be placed.")))
+			return _empty_result(action_id, stake, environment, str(validation.get("message", "Those roulette bets cannot be placed.")))
 	var effective_profile := _effective_physics_profile(table, run_state, environment, session, rng)
 	var spin := _apply_table_wheel_bias(_simulate_spin(table, effective_profile, rng), table, rng)
 	var cheat_context: Dictionary = _copy_dict(session.get("cheats_used", {}))
@@ -927,12 +915,12 @@ func _resolve_past_post(action_id: String, run_state: RunState, environment: Dic
 	var table := _table_state(run_state, environment)
 	var last_result := _copy_dict(table.get("last_result", {}))
 	if last_result.is_empty():
-		return _empty_roulette_result(action_id, 0, environment, "There is no settled roulette number to past-post.")
+		return _empty_result(action_id, 0, environment, "There is no settled roulette number to past-post.")
 	if bool(last_result.get("past_post_resolved", false)):
-		return _empty_roulette_result(action_id, 0, environment, "The croupier has already locked that payout.")
+		return _empty_result(action_id, 0, environment, "The croupier has already locked that payout.")
 	var challenge := _finalize_past_post_challenge(ui_state, run_state, table, environment, last_result)
 	if challenge.is_empty() or str(challenge.get("spin_id", "")) != str(last_result.get("spin_id", "")):
-		return _empty_roulette_result(action_id, 0, environment, "The late-chip window is gone.")
+		return _empty_result(action_id, 0, environment, "The late-chip window is gone.")
 	var grade := str(challenge.get("skill_grade", "miss"))
 	var applied := _past_post_grade_applies(grade)
 	var chip_value := maxi(1, int(challenge.get("chip_value", ui_state.get("selected_chip", 1))))
@@ -2828,7 +2816,7 @@ func _draw_static_table_patrons(surface, surface_state: Dictionary) -> void:
 		var accent := C_PINK if watching else C_TEAL if covered else C_SOFT
 		var selected := focused_index == i
 		if selected or bool(surface.surface_region_hovered("roulette_patron_focus", i)):
-			_draw_neon_panel(surface, rect.grow(3), accent, 0.14 if selected else 0.08)
+			TableVisualsScript.draw_flat_neon_panel(surface, rect.grow(3), accent, 0.14 if selected else 0.08)
 		surface.draw_rect(Rect2(foot.x - 22, foot.y - 58, 44, 54), Color("#05060a"))
 		surface.draw_rect(Rect2(foot.x - 16, foot.y - 48, 32, 42), Color("#172633" if covered else "#251930"))
 		surface.draw_rect(Rect2(foot.x - 12, foot.y - 66, 24, 22), Color("#c49371"))
@@ -2867,7 +2855,7 @@ func _draw_table_patrons(surface, surface_state: Dictionary) -> void:
 		var lean := float(patron.get("lean", 0.0))
 		var model_foot := foot + Vector2(lean, bob)
 		if selected or bool(surface.surface_region_hovered("roulette_patron_focus", i)):
-			_draw_neon_panel(surface, rect.grow(3), accent, 0.18 if selected else 0.10)
+			TableVisualsScript.draw_flat_neon_panel(surface, rect.grow(3), accent, 0.18 if selected else 0.10)
 		_draw_table_character(surface, {
 			"name": str(patron.get("name", "Seat")),
 			"accent": accent,
@@ -2915,7 +2903,7 @@ func _draw_focused_patron_panel(surface, surface_state: Dictionary, patrons: Arr
 		return
 	var rect := Rect2(710, 18, 176, 58)
 	var accent := C_PINK if bool(patron.get("watching_player", false)) else C_TEAL
-	_draw_neon_panel(surface, rect, accent, 0.15)
+	TableVisualsScript.draw_flat_neon_panel(surface, rect, accent, 0.15)
 	surface.surface_label(str(patron.get("name", "Patron")).to_upper().left(16), rect.position + Vector2(10, 14), 10, C_WHITE)
 	surface.surface_label(str(patron.get("behavior", str(patron.get("mood", "watching")))).left(22), rect.position + Vector2(10, 29), 8, accent)
 	_draw_table_button(surface, Rect2(rect.position.x + 84, rect.position.y + 10, 38, 20), "WITH", action, focused_index, C_TEAL, true)
@@ -2939,7 +2927,7 @@ func _draw_croupier_station(surface, surface_state: Dictionary) -> void:
 func _draw_recent_numbers(surface, surface_state: Dictionary) -> void:
 	var recent := _array_ref(surface_state.get("recent_numbers", surface_state.get("roulette_recent_numbers", [])))
 	var rect := RECENT_NUMBERS_RECT
-	_draw_neon_panel(surface, rect, C_CYAN, 0.08)
+	TableVisualsScript.draw_flat_neon_panel(surface, rect, C_CYAN, 0.08)
 	surface.surface_label("RECENT", rect.position + Vector2(8, 18), 8, C_SOFT)
 	if recent.is_empty():
 		surface.surface_label_centered_plain("NO SPINS YET", Rect2(rect.position + Vector2(78, 8), Vector2(120, 12)), 8, C_SOFT)
@@ -3087,7 +3075,7 @@ func _draw_table_notice(surface, surface_state: Dictionary) -> void:
 		return
 	var rect := TABLE_NOTICE_RECT
 	var accent := C_YELLOW if str(surface_state.get("phase", "")) == "spinning" else C_TEAL
-	_draw_neon_panel(surface, rect, accent, 0.18)
+	TableVisualsScript.draw_flat_neon_panel(surface, rect, accent, 0.18)
 	var lines := _roulette_notice_lines(notice)
 	for line_index in range(lines.size()):
 		var line_rect := Rect2(rect.position + Vector2(6, 5 + line_index * 13), Vector2(rect.size.x - 12, 11))
@@ -3142,7 +3130,7 @@ func _draw_chip_rack(surface, surface_state: Dictionary) -> void:
 
 func _draw_table_actions(surface, surface_state: Dictionary) -> void:
 	var panel := Rect2(274, CONSOLE_Y + 8, 352, CONSOLE_H - 16)
-	_draw_neon_panel(surface, panel, C_CYAN, 0.10)
+	TableVisualsScript.draw_flat_neon_panel(surface, panel, C_CYAN, 0.10)
 	if bool(surface_state.get("table_game_host_retry_available", false)):
 		surface.surface_label("SEALED ACTION", panel.position + Vector2(10, 14), 10, C_YELLOW)
 		_draw_table_button(surface, Rect2(panel.position.x + 16, panel.position.y + 26, 144, 38), "RETRY", "table_game_retry_pending", 0, C_YELLOW, true, true)
@@ -3209,7 +3197,7 @@ func _draw_spin_result(surface, surface_state: Dictionary) -> void:
 		surface.draw_rect(target_rect.grow(4), Color(color.r, color.g, color.b, 0.34))
 		surface.draw_rect(target_rect.grow(4), C_YELLOW, false, 2)
 	var board := Rect2(26, 286, 206, 42)
-	_draw_neon_panel(surface, board, C_YELLOW, 0.18)
+	TableVisualsScript.draw_flat_neon_panel(surface, board, C_YELLOW, 0.18)
 	surface.surface_label("WINNING NUMBER", board.position + Vector2(10, 14), 8, C_SOFT)
 	surface.surface_label(number, board.position + Vector2(118, 30), 26, C_YELLOW)
 	surface.surface_label(str(result.get("winning_color", "")).to_upper(), board.position + Vector2(10, 31), 10, color)
@@ -3317,7 +3305,7 @@ func _table_state(run_state: RunState, environment: Dictionary) -> Dictionary:
 	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
 	var table: Dictionary = game_states.get(get_id(), {}) if typeof(game_states.get(get_id(), {})) == TYPE_DICTIONARY else {}
 	if table.is_empty():
-		table = _fallback_table_state(run_state, environment)
+		table = _fallback_state(run_state, environment)
 		game_states[get_id()] = table
 		environment["game_states"] = game_states
 	_apply_grand_casino_dealer_assignment(table, run_state, environment)
@@ -3329,7 +3317,7 @@ func _table_state(run_state: RunState, environment: Dictionary) -> Dictionary:
 func _table_state_preview(run_state: RunState, environment: Dictionary) -> Dictionary:
 	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
 	var stored: Variant = game_states.get(get_id(), {})
-	var table: Dictionary = (stored as Dictionary).duplicate(true) if typeof(stored) == TYPE_DICTIONARY and not (stored as Dictionary).is_empty() else _fallback_table_state(run_state, environment)
+	var table: Dictionary = (stored as Dictionary).duplicate(true) if typeof(stored) == TYPE_DICTIONARY and not (stored as Dictionary).is_empty() else _fallback_state(run_state, environment)
 	_apply_grand_casino_dealer_assignment(table, run_state, environment, true)
 	return table if _table_state_is_current(table) else _normalize_table_state(table)
 
@@ -3354,12 +3342,6 @@ func _apply_grand_casino_dealer_assignment(table: Dictionary, run_state: RunStat
 	table["dealer_name"] = str(assignment.get("name", "Croupier"))
 	table["dealer_profile"] = profile
 	table["staff_assignment_id"] = assignment_id
-
-
-func _fallback_table_state(run_state: RunState, environment: Dictionary) -> Dictionary:
-	var rng := RngStream.new()
-	rng.configure(_stable_hash("%s:%s:%s" % [get_id(), str(run_state.seed_text if run_state != null else "fallback"), str(environment.get("id", ""))]))
-	return generate_environment_state(run_state, environment, rng)
 
 
 func _normalize_table_state(table: Dictionary) -> Dictionary:
@@ -3463,7 +3445,7 @@ func _normalized_session(_run_state: RunState, _environment: Dictionary, ui_stat
 	var denoms := _chip_denominations(table)
 	var selected_chip := int(session.get("selected_chip", session.get("selected_stake", denoms[0])))
 	if not denoms.has(selected_chip):
-		selected_chip = _closest_chip(selected_chip, denoms)
+		selected_chip = TableVisualsScript.closest_chip(selected_chip, denoms)
 	session["selected_chip"] = selected_chip
 	session["selected_stake"] = selected_chip
 	session["roulette_bets"] = _bet_array(session.get("roulette_bets", []))
@@ -3679,21 +3661,6 @@ func _roulette_pressure_message(table: Dictionary, pit_boss_status: Dictionary) 
 		if bool(patron.get("watching", false)):
 			return "A patron follows the stare and looks toward staff."
 	return ""
-
-
-func _empty_roulette_result(action_id: String, stake: int, environment: Dictionary, text: String) -> Dictionary:
-	return GameModule.build_action_result({
-		"ok": false,
-		"type": "game_action",
-		"source_id": get_id(),
-		"game_id": get_id(),
-		"action_id": action_id,
-		"action_kind": "unknown",
-		"stake": stake,
-		"won": false,
-		"environment_id": environment.get("id", ""),
-		"message": text,
-	})
 
 
 func _message_command(ui_state: Dictionary, message: String) -> Dictionary:
@@ -4313,36 +4280,6 @@ func _chip_denominations(table: Dictionary) -> Array:
 	return values
 
 
-func _closest_chip(value: int, denoms: Array) -> int:
-	var best := int(denoms[0])
-	var best_delta: int = abs(best - value)
-	for denom in denoms:
-		var delta: int = abs(int(denom) - value)
-		if delta < best_delta:
-			best = int(denom)
-			best_delta = delta
-	return best
-
-
-func _chip_stack_for_stake(stake: int, chip_values: Array) -> Array:
-	var remaining := maxi(0, stake)
-	var sorted := chip_values.duplicate(true)
-	sorted.sort()
-	sorted.reverse()
-	var result: Array = []
-	for value in sorted:
-		var chip := int(value)
-		if chip <= 0:
-			continue
-		var count := int(remaining / chip)
-		if count > 0:
-			result.append({"value": chip, "count": count})
-			remaining -= count * chip
-	if remaining > 0:
-		result.append({"value": remaining, "count": 1})
-	return result
-
-
 func _rng_float(rng: RngStream, min_value: float, max_value: float) -> float:
 	if max_value < min_value:
 		var old_min := min_value
@@ -4356,20 +4293,6 @@ func _default_table_rng(table: Dictionary, suffix: String) -> RngStream:
 	var rng := RngStream.new()
 	rng.configure(_stable_hash("%s:%s:%s" % [get_id(), str(table.get("table_name", "roulette")), suffix]))
 	return rng
-
-
-func _item_effect_total(key: String, run_state: RunState) -> int:
-	if run_state == null:
-		return 0
-	return run_state.item_effect_total(key, get_family()) if run_state.has_method("item_effect_total") else 0
-
-
-func _stable_hash(text: String) -> int:
-	var value := 216613626
-	for index in range(text.length()):
-		value = value ^ text.unicode_at(index)
-		value = int((value * 16777619) & 0x7fffffff)
-	return maxi(1, value)
 
 
 func _trajectory_keyframe(trajectory: Array, progress: float) -> Dictionary:
@@ -4397,11 +4320,6 @@ func _surface_clock(surface) -> float:
 	if surface != null and surface.has_method("surface_flicker"):
 		return float(surface.surface_flicker())
 	return float(Time.get_ticks_msec()) / 1000.0
-
-
-func _draw_neon_panel(surface, rect: Rect2, accent: Color, alpha: float = 0.16) -> void:
-	surface.draw_rect(rect, Color(accent.r, accent.g, accent.b, alpha))
-	surface.draw_rect(rect, Color(accent.r, accent.g, accent.b, minf(0.95, alpha + 0.22)), false, 1)
 
 
 func _draw_table_button(surface, rect: Rect2, label: String, action: String, index: int, accent: Color, enabled: bool = true, selected: bool = false) -> void:

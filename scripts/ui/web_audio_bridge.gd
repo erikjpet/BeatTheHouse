@@ -583,7 +583,7 @@ static func play_music_stems(group_id: String, stem_set_key: String, stem_set: D
 		if not (stream_value is AudioStream):
 			continue
 		var stream := stream_value as AudioStream
-		if stream is AudioStreamWAV and not _wav_has_signal(stream as AudioStreamWAV):
+		if stream is AudioStreamWAV and not wav_has_signal(stream as AudioStreamWAV):
 			continue
 		var payload := _stream_payload(stream, "%s:%s:%s" % [safe_group_id, safe_stem_key, role], float(role_volume_db.get(role, -80.0)), 1.0, "", true)
 		if payload.is_empty():
@@ -827,7 +827,7 @@ static func _mark_pcm_registered(payload: Dictionary) -> void:
 		_registered_pcm_keys[str(payload.get("key", ""))] = true
 
 
-static func _wav_has_signal(wav: AudioStreamWAV) -> bool:
+static func wav_has_signal(wav: AudioStreamWAV) -> bool:
 	var data := wav.data
 	var size := data.size()
 	if size <= 0:

@@ -1445,12 +1445,6 @@ func _apply_grand_casino_bartender_assignment(state: Dictionary, run_state: RunS
 	state["staff_assignment_id"] = assignment_id
 
 
-func _fallback_state(run_state: RunState, environment: Dictionary) -> Dictionary:
-	var rng := RngStream.new()
-	rng.configure(_stable_hash("%s:%s:%s" % [get_id(), str(run_state.seed_text if run_state != null else "fallback"), str(environment.get("id", ""))]))
-	return generate_environment_state(run_state, environment, rng)
-
-
 func _normalize_state(state: Dictionary) -> Dictionary:
 	var normalized := state.duplicate(true)
 	normalized["schema"] = STATE_SCHEMA
@@ -3453,21 +3447,6 @@ func _panel_string_lines(value: Variant) -> Array:
 	return result
 
 
-func _empty_result(action_id: String, stake: int, environment: Dictionary, text: String) -> Dictionary:
-	return GameModule.build_action_result({
-		"ok": false,
-		"type": "game_action",
-		"source_id": get_id(),
-		"game_id": get_id(),
-		"action_id": action_id,
-		"action_kind": "unknown",
-		"stake": stake,
-		"won": false,
-		"environment_id": environment.get("id", ""),
-		"message": text,
-	})
-
-
 func _action_def(action_id: String) -> Dictionary:
 	for action_value in definition.get("legal_actions", []):
 		if typeof(action_value) == TYPE_DICTIONARY and str((action_value as Dictionary).get("id", "")) == action_id:
@@ -3476,12 +3455,6 @@ func _action_def(action_id: String) -> Dictionary:
 		if typeof(action_value) == TYPE_DICTIONARY and str((action_value as Dictionary).get("id", "")) == action_id:
 			return (action_value as Dictionary).duplicate(true)
 	return {}
-
-
-func _item_effect_total(key: String, run_state: RunState) -> int:
-	if run_state == null:
-		return 0
-	return run_state.item_effect_total(key, get_family()) if run_state.has_method("item_effect_total") else 0
 
 
 func _patron_snitch_pressure(patrons: Array) -> int:

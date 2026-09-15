@@ -298,7 +298,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"selected_chip": selected_chip,
 		"selected_stake": selected_chip,
 		"chip_denominations": chip_denominations,
-		"chip_stack": _chip_stack_for_stake(total_wager, chip_denominations),
+		"chip_stack": TableVisualsScript.chip_stack_for_stake(total_wager, chip_denominations),
 		"total_wager_cost": total_wager,
 		"table_minimum": int(table.get("table_minimum", 20)),
 		"table_maximum": int(table.get("table_maximum", 500)),
@@ -3027,7 +3027,7 @@ func _normalized_session(_run_state: RunState, _environment: Dictionary, ui_stat
 	var denoms := _chip_denominations(table)
 	var selected_chip := int(session.get("selected_chip", session.get("selected_stake", denoms[0])))
 	if not denoms.has(selected_chip):
-		selected_chip = _closest_chip(selected_chip, denoms)
+		selected_chip = TableVisualsScript.closest_chip(selected_chip, denoms)
 	session["selected_chip"] = selected_chip
 	session["selected_stake"] = selected_chip
 	session["baccarat_bets"] = _bet_dict(session.get("baccarat_bets", {}))
@@ -3066,17 +3066,6 @@ func _chip_denominations(table: Dictionary) -> Array:
 		denoms = [5, 10, 20, 25, 50, 100]
 	denoms.sort()
 	return denoms
-
-
-func _closest_chip(value: int, denoms: Array) -> int:
-	var best := int(denoms[0])
-	var best_delta: int = abs(best - value)
-	for denom in denoms:
-		var delta: int = abs(int(denom) - value)
-		if delta < best_delta:
-			best = int(denom)
-			best_delta = delta
-	return best
 
 
 func _generate_dealer_profile(rng: RngStream, catch_base: int) -> Dictionary:
@@ -3238,20 +3227,6 @@ func _default_table_rng(table: Dictionary, suffix: String) -> RngStream:
 	return rng
 
 
-func _item_effect_total(key: String, run_state: RunState) -> int:
-	if run_state == null:
-		return 0
-	return run_state.item_effect_total(key, get_family()) if run_state.has_method("item_effect_total") else 0
-
-
-func _stable_hash(text: String) -> int:
-	var value := 216613626
-	for index in range(text.length()):
-		value = value ^ text.unicode_at(index)
-		value = int((value * 16777619) & 0x7fffffff)
-	return maxi(1, value)
-
-
 func _draw_baccarat_room(surface, state: Dictionary) -> void:
 	TableVisualsScript.draw_room(surface, state, str(state.get("table_name", "Baccarat")), _baccarat_room_info(state))
 
@@ -3273,7 +3248,7 @@ func _draw_hand_explainer(surface, state: Dictionary) -> void:
 	var rect := BACCARAT_EXPLAINER_RECT
 	var winner := str(explainer.get("winner", ""))
 	var accent := _target_color(winner) if not winner.is_empty() else C_YELLOW
-	_draw_neon_panel(surface, rect, accent, 0.15)
+	TableVisualsScript.draw_flat_neon_panel(surface, rect, accent, 0.15)
 	surface.draw_rect(rect, Color(accent.r, accent.g, accent.b, 0.52), false, 1)
 	surface.surface_label_centered(str(explainer.get("title", "BACCARAT")).left(24), Rect2(rect.position + Vector2(8, 5), Vector2(rect.size.x - 16, 13)), 11, accent)
 	surface.surface_label_centered(str(explainer.get("primary", "")).left(38), Rect2(rect.position + Vector2(8, 22), Vector2(rect.size.x - 16, 12)), 8, C_WHITE)
@@ -3378,7 +3353,7 @@ func _draw_squeeze_badge(surface, event: Dictionary, state: Dictionary) -> void:
 	var rect := BACCARAT_SQUEEZE_REGION
 	var accent := C_AMBER
 	var progress := clampf(float(state.get("baccarat_squeeze_progress", 0.0)), 0.0, 1.0)
-	_draw_neon_panel(surface, rect, accent, 0.24)
+	TableVisualsScript.draw_flat_neon_panel(surface, rect, accent, 0.24)
 	surface.draw_rect(Rect2(rect.position + Vector2(2, rect.size.y - 5), Vector2((rect.size.x - 4) * progress, 3)), C_YELLOW)
 	surface.surface_label_centered("SQUEEZE %d%%" % int(round(progress * 100.0)), Rect2(rect.position + Vector2(6, 4), Vector2(rect.size.x - 12, 12)), 12, C_WHITE)
 	surface.surface_label_centered("%s CARD - VALUE FIXED" % str(event.get("target_zone", "player")).to_upper(), Rect2(rect.position + Vector2(6, 18), Vector2(rect.size.x - 12, 10)), 7, C_YELLOW)
@@ -3457,7 +3432,7 @@ func _draw_patron_bet_chips(surface, state: Dictionary, targets: Array) -> void:
 			continue
 		var rect: Rect2 = target.get("rect", Rect2())
 		var center := rect.get_center() + Vector2(-34 + float(i % 4) * 18.0, -18 - float(i / 4) * 10.0)
-		var color := _patron_chip_color(str(patron.get("chip_color", "cyan")))
+		var color := TableVisualsScript._chip_color_name(str(patron.get("chip_color", "cyan")))
 		surface.draw_circle(center, 8.0, Color(C_DARK.r, C_DARK.g, C_DARK.b, 0.90))
 		surface.draw_circle(center, 6.4, color)
 		surface.draw_circle(center, 2.7, Color("#f8f4dc"))
@@ -3470,22 +3445,6 @@ func _baccarat_target_by_id(targets: Array, target_id: String) -> Dictionary:
 		if str(target.get("id", "")) == target_id:
 			return target
 	return {}
-
-
-func _patron_chip_color(name: String) -> Color:
-	match name:
-		"pink":
-			return C_PINK
-		"yellow":
-			return C_YELLOW
-		"teal":
-			return C_TEAL
-		"orange":
-			return C_ORANGE
-		"blue", "cyan":
-			return C_CYAN
-		_:
-			return C_SOFT
 
 
 func _draw_shoe_and_discard(surface, state: Dictionary) -> void:
@@ -3514,7 +3473,7 @@ func _draw_baccarat_road(surface, state: Dictionary) -> void:
 	if road.is_empty():
 		return
 	var rect := Rect2(18, 150, 146, 94)
-	_draw_neon_panel(surface, rect, C_CYAN, 0.10)
+	TableVisualsScript.draw_flat_neon_panel(surface, rect, C_CYAN, 0.10)
 	surface.surface_label("BEAD PLATE", rect.position + Vector2(8, 10), 9, C_CYAN)
 	surface.surface_label_centered(str(road.get("summary", "")).left(18), Rect2(rect.position + Vector2(70, 5), Vector2(66, 12)), 7, C_SOFT)
 	var rows := maxi(1, int(road.get("rows", BACCARAT_ROAD_ROWS)))
@@ -3566,7 +3525,7 @@ func _draw_edge_sort_panel(surface, state: Dictionary) -> void:
 	var accent := C_PINK_2 if bool(status.get("ready", false)) else C_TEAL
 	if not edge.is_empty():
 		accent = C_YELLOW
-	_draw_neon_panel(surface, rect, accent, 0.14)
+	TableVisualsScript.draw_flat_neon_panel(surface, rect, accent, 0.14)
 	var detail := ""
 	if not edge.is_empty():
 		detail = "%s %d%%  %d HANDS" % [_winner_display(str(edge.get("predicted_bet", ""))).to_upper(), int(edge.get("confidence", 0)), int(edge.get("hands_remaining", 0))]
@@ -3597,7 +3556,7 @@ func _draw_shoe_read_panel(surface, state: Dictionary) -> void:
 	if challenge.is_empty():
 		return
 	var rect := Rect2(202, 72, 492, 28)
-	_draw_neon_panel(surface, rect, C_PINK_2, 0.18)
+	TableVisualsScript.draw_flat_neon_panel(surface, rect, C_PINK_2, 0.18)
 	surface.surface_label("SHOE", rect.position + Vector2(8, 8), 10, C_PINK_2)
 	if bool(status.get("revealing", false)):
 		var cue_texts: Array = []
@@ -3629,7 +3588,7 @@ func _draw_table_notice(surface, state: Dictionary) -> void:
 	if notice.is_empty():
 		return
 	var rect := Rect2(238, 314, 424, 26)
-	_draw_neon_panel(surface, rect, C_TEAL, 0.18)
+	TableVisualsScript.draw_flat_neon_panel(surface, rect, C_TEAL, 0.18)
 	surface.surface_label_centered(notice.left(78), Rect2(rect.position + Vector2(8, 5), rect.size - Vector2(16, 8)), 11, C_TEAL)
 
 
@@ -3688,23 +3647,6 @@ func _draw_card_back(surface, pos: Vector2, scale: float = 1.0) -> void:
 	PlayingCardRendererScript.draw_card_back(surface, Rect2(pos, CARD_SIZE * scale))
 
 
-func _draw_suit(surface, pos: Vector2, suit: int, color: Color, scale: float = 1.0) -> void:
-	match suit:
-		0:
-			surface.draw_rect(Rect2(pos.x - 4 * scale, pos.y - 10 * scale, 8 * scale, 17 * scale), color)
-			surface.draw_rect(Rect2(pos.x - 9 * scale, pos.y - 2 * scale, 18 * scale, 6 * scale), color)
-		1:
-			surface.draw_circle(pos + Vector2(-5, -3) * scale, 5 * scale, color)
-			surface.draw_circle(pos + Vector2(5, -3) * scale, 5 * scale, color)
-			surface.draw_polygon([pos + Vector2(-10, 0) * scale, pos + Vector2(10, 0) * scale, pos + Vector2(0, 13) * scale], [color])
-		2:
-			surface.draw_polygon([pos + Vector2(0, -12) * scale, pos + Vector2(10, 0) * scale, pos + Vector2(0, 13) * scale, pos + Vector2(-10, 0) * scale], [color])
-		_:
-			surface.draw_circle(pos + Vector2(-5, 0) * scale, 5 * scale, color)
-			surface.draw_circle(pos + Vector2(5, 0) * scale, 5 * scale, color)
-			surface.draw_circle(pos + Vector2(0, -7) * scale, 5 * scale, color)
-
-
 func _rank_text(rank: int) -> String:
 	match rank:
 		14:
@@ -3717,11 +3659,6 @@ func _rank_text(rank: int) -> String:
 			return "J"
 		_:
 			return str(rank)
-
-
-func _draw_neon_panel(surface, rect: Rect2, accent: Color, alpha: float = 0.16) -> void:
-	surface.draw_rect(rect, Color(accent.r, accent.g, accent.b, alpha))
-	surface.draw_rect(rect, Color(accent.r, accent.g, accent.b, minf(0.95, alpha + 0.22)), false, 1)
 
 
 func _draw_table_button(surface, rect: Rect2, label: String, action: String, index: int, accent: Color, enabled: bool = true, selected: bool = false) -> void:
@@ -3849,25 +3786,6 @@ func _target_label(target_id: String) -> String:
 	return target_id.capitalize()
 
 
-func _chip_stack_for_stake(stake: int, chip_values: Array) -> Array:
-	var remaining := maxi(0, stake)
-	var sorted := chip_values.duplicate(true)
-	sorted.sort()
-	sorted.reverse()
-	var result: Array = []
-	for value in sorted:
-		var chip := int(value)
-		if chip <= 0:
-			continue
-		var count := int(remaining / chip)
-		if count > 0:
-			result.append({"value": chip, "count": count})
-			remaining -= count * chip
-	if remaining > 0:
-		result.append({"value": remaining, "count": 1})
-	return result
-
-
 func _draw_chip_stack_for_stake(stake: int, chip_values: Array) -> Array:
 	# Wagers usually remain unchanged across hundreds of animated frames. Cache the
 	# immutable presentation stack while keeping gameplay/state construction on the
@@ -3878,7 +3796,7 @@ func _draw_chip_stack_for_stake(stake: int, chip_values: Array) -> Array:
 		var cached: Dictionary = cached_value
 		if cached.get("denominations", []) == chip_values:
 			return _draw_array_view(cached.get("stack", []))
-	var stack := _chip_stack_for_stake(stake, chip_values)
+	var stack := TableVisualsScript.chip_stack_for_stake(stake, chip_values)
 	if draw_chip_stack_cache.size() >= DRAW_CHIP_STACK_CACHE_LIMIT:
 		draw_chip_stack_cache.clear()
 	draw_chip_stack_cache[cache_key] = {

@@ -1463,12 +1463,6 @@ func _cabinet_id_for_state(state: Dictionary) -> String:
 			return "jacks_or_better"
 
 
-func _fallback_state(run_state: RunState, environment: Dictionary) -> Dictionary:
-	var rng := RngStream.new()
-	rng.configure(_stable_hash("%s:%s:%s" % [get_id(), str(run_state.seed_text if run_state != null else "fallback"), str(environment.get("id", ""))]))
-	return generate_environment_state(run_state, environment, rng)
-
-
 func _normalize_state(state: Dictionary) -> Dictionary:
 	var normalized: Dictionary = state.duplicate(true)
 	normalized["schema"] = STATE_SCHEMA
@@ -3258,21 +3252,6 @@ func _build_result(action_id: String, action_kind: String, stake: int, bankroll_
 
 
 # --- Drawing -----------------------------------------------------------------
-
-func _empty_result(action_id: String, stake: int, environment: Dictionary, text: String) -> Dictionary:
-	return GameModule.build_action_result({
-		"ok": false,
-		"type": "game_action",
-		"source_id": get_id(),
-		"game_id": get_id(),
-		"action_id": action_id,
-		"action_kind": "unknown",
-		"stake": stake,
-		"won": false,
-		"environment_id": environment.get("id", ""),
-		"message": text,
-	})
-
 
 # --- Value helpers -----------------------------------------------------------
 

@@ -2369,14 +2369,6 @@ func _fallback_rng(environment: Dictionary) -> RngStream:
 	return rng
 
 
-func _stable_hash(text: String) -> int:
-	var value := 216613626
-	for index in range(text.length()):
-		value = value ^ text.unicode_at(index)
-		value = int((value * 16777619) & 0x7fffffff)
-	return maxi(1, value)
-
-
 func _dict(value: Variant) -> Dictionary:
 	return value if typeof(value) == TYPE_DICTIONARY else {}
 
