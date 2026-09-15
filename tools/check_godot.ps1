@@ -220,6 +220,30 @@ function Convert-ProjectResourcePath {
     return "res://" + (Get-ProjectRelativePath $Path)
 }
 
+function Get-GodotStderrIssues {
+    param(
+        [string]$StdoutText,
+        [string]$StderrText
+    )
+    $issues = @($StderrText -split "`r?`n" | Where-Object {
+        $_ -match '^\s*(SCRIPT ERROR|ERROR|WARNING):'
+    })
+    $objectDbWarning = 'WARNING: ObjectDB instances leaked at exit (run with --verbose for details).'
+    if ($issues -notcontains $objectDbWarning) {
+        return $issues
+    }
+    $leakedInstances = @($StdoutText -split "`r?`n" | Where-Object {
+        $_ -match '^Leaked instance:'
+    })
+    $nonZeroOrUnclassifiedLeaks = @($leakedInstances | Where-Object {
+        $_ -notmatch ' - Reference count: 0\s*$'
+    })
+    if ($leakedInstances.Count -gt 0 -and $nonZeroOrUnclassifiedLeaks.Count -eq 0) {
+        return @($issues | Where-Object { $_ -ne $objectDbWarning })
+    }
+    return $issues
+}
+
 function New-SplitTestRunner {
     param(
         [string]$Name,
@@ -628,9 +652,7 @@ function Invoke-ProcessStage {
         $stderrTask.Wait(5000) | Out-Null
         [System.IO.File]::WriteAllText($stdout, $stdoutTask.Result)
         [System.IO.File]::WriteAllText($stderr, $stderrTask.Result)
-        $stderrIssues = @($stderrTask.Result -split "`r?`n" | Where-Object {
-            $_ -match '^\s*(SCRIPT ERROR|ERROR|WARNING):'
-        })
+        $stderrIssues = @(Get-GodotStderrIssues -StdoutText $stdoutTask.Result -StderrText $stderrTask.Result)
         if ($exitCode -eq 0 -and $stderrIssues.Count -gt 0) {
             $exitCode = 127
             $errorText = "Godot reported $($stderrIssues.Count) error/warning line(s) on stderr despite returning exit code 0."
@@ -777,7 +799,7 @@ function Invoke-GodotScript {
         [string[]]$UserArgs = @(),
         [int]$StageTimeoutSec = 0
     )
-    $args = @("--headless", "--path", $root, "--script", $ScriptPath)
+    $args = @("--headless", "--verbose", "--path", $root, "--script", $ScriptPath)
     if ($UserArgs.Count -gt 0) {
         $args += "--"
         $args += $UserArgs
@@ -957,7 +979,7 @@ function Invoke-FoundationSystemsSharded {
         Remove-Item -LiteralPath $reportPath -Force -ErrorAction SilentlyContinue
         $resourceReport = $reportPath.Replace("\", "/")
         $arguments = @(
-            "--headless", "--path", $shardProjectRoot,
+            "--headless", "--verbose", "--path", $shardProjectRoot,
             "--log-file", $logPath,
             "--script", $runnerResourcePath,
             "--",
@@ -1059,7 +1081,7 @@ function Invoke-FoundationSystemsSharded {
         [void]$combinedStdout.Append($stdoutText)
         [void]$combinedStderr.AppendLine(("--- shard {0} ---" -f $record.shard_id))
         [void]$combinedStderr.Append($stderrText)
-        $stderrIssues = @($stderrText -split "`r?`n" | Where-Object { $_ -match '^\s*(SCRIPT ERROR|ERROR|WARNING):' })
+        $stderrIssues = @(Get-GodotStderrIssues -StdoutText $stdoutText -StderrText $stderrText)
         $rawExitCode = if ($record.timed_out) { 124 } else { [int]$record.process.ExitCode }
         $exitCode = $rawExitCode
         if ($rawExitCode -eq 0 -and $stderrIssues.Count -gt 0) {

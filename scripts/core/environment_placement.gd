@@ -246,6 +246,13 @@ static func authored_or_local_rect(environment: Dictionary, placement_class: Str
 	return {"ok": true, "rect": fallback.get("rect", authored), "surface_id": str(fallback.get("surface_id", "class_default")), "adjusted": true, "defaulted": true}
 
 
+# Enumerates every class-valid room placement in deterministic nearest-first
+# order. Composition owns collision checks; this supplies the complete physical
+# candidate set when a locally authored slot is already occupied.
+static func supported_rect_candidates(environment: Dictionary, placement_class: String, authored: Rect2) -> Array:
+	return candidate_rects(environment, placement_class, authored)
+
+
 # Returns the physical support occupied by rect, or an empty dictionary.
 static func support_for_rect(environment: Dictionary, placement_class: String, rect: Rect2) -> Dictionary:
 	var board := Rect2(0.0, 0.0, 900.0, 430.0)

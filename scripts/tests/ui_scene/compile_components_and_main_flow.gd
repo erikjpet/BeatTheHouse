@@ -2392,7 +2392,7 @@ func _check_family_loan_unknown_caller(app: Control) -> bool:
 func _check_crew_favor_conversation(app: Control) -> bool:
 	if not await _check_delivery_ordinary_travel_baseline(app, "before delivery lifecycle"):
 		return false
-	app.call("start_foundation_run", "UI-CREW-FAVOR-TALK")
+	app.call("start_foundation_run", "UI-CREW-FAVOR-TALK", {}, false)
 	await process_frame
 	var run_state: RunState = app.get("run_state")
 	var library: ContentLibrary = app.get("library")
@@ -2533,7 +2533,7 @@ func _check_crew_favor_conversation(app: Control) -> bool:
 
 
 func _check_delivery_closed_next_hop_nonblocking(app: Control) -> bool:
-	app.call("start_foundation_run", "UI-CREW-FAVOR-TALK")
+	app.call("start_foundation_run", "UI-CREW-FAVOR-TALK", {}, false)
 	await process_frame
 	var run_state: RunState = app.get("run_state")
 	var target_id := "jazz_club"
@@ -2610,11 +2610,14 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 	# unified-room-plane change at db60e0b1 adds the stable Numbers fixtures to the
 	# occupied plane and reflows scenario objects around every authored object.
 	# A detached bf398237 replay and two exact-candidate replays confirmed that
-	# only the layout-derived environment/world-map records changed.
+	# only the layout-derived environment/world-map records changed. The 0.6
+	# collision recovery pass now searches every valid physical surface candidate,
+	# so these two layout-derived hashes advance again while route semantics stay
+	# byte-identical.
 	const EXPECTED := {
 		"bankroll_delta": -4,
 		"clock_delta": 42,
-		"current_environment_sha256": "5174d7b67fd4608517ef514d4f5e10e70f334c2af64b445b5894a1d2db5fb4ce",
+		"current_environment_sha256": "0f355a44a91c372ba75df052173969b09545b38c9e882537941868385dde1f43",
 		"current_world_node_id": "bar",
 		"heat_delta": 0,
 		"provenance_commit": "9cff9b2309d70c6c93ab34cc60cc18f79f56201b",
@@ -2625,7 +2628,7 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 		"town_action_index": 0,
 		"travel_count_delta": 1,
 		"travel_story_sha256": "0257877551b37226fd62316ee2af5e047a27387fbb87d5acfa0273d1366a0e81",
-		"world_map_sha256": "7c9bf8053b63ea69b5edebcb223b61a2b675127bf98ef259bfb328a9e9de7299",
+		"world_map_sha256": "5af3c7810f3f4b1c440e10193a4ed359d2d6b514411a1bd4257abd1dd3a0b57d",
 	}
 	app.call("start_foundation_run", "DELIVERY-ORDINARY-BASELINE", {}, false)
 	for _start_frame in range(3):
@@ -7030,8 +7033,21 @@ func _run() -> void:
 		push_error("Foundation item-offer map does not define item_spots for authored placement.")
 		quit(1)
 		return
-	if not _canvas_object_position_matches_board_spot(item_canvas_object, item_spots[0]):
-		push_error("Environment item holder ignored the archetype item_spots authored placement.")
+	var item_spot_values: Array = item_spots[0] if typeof(item_spots[0]) == TYPE_ARRAY else []
+	var item_board_size := Vector2(VisualStyleScript.ENVIRONMENT_BOARD_SIZE)
+	var expected_item_position := Vector2(-1.0, -1.0)
+	if item_spot_values.size() >= 2:
+		expected_item_position = Vector2(float(item_spot_values[0]) / item_board_size.x, float(item_spot_values[1]) / item_board_size.y)
+	var actual_item_position: Variant = item_canvas_object.get("position", Vector2(-1.0, -1.0))
+	var item_placement_surfaces: Dictionary = generated_item_layout.get("placement_surfaces", {})
+	var item_local_snap_distance := INF
+	if typeof(actual_item_position) == TYPE_VECTOR2:
+		var item_position_delta: Vector2 = ((actual_item_position as Vector2) - expected_item_position) * item_board_size
+		item_local_snap_distance = item_position_delta.length()
+	if expected_item_position.x < 0.0 or typeof(actual_item_position) != TYPE_VECTOR2 \
+			or item_local_snap_distance > EnvironmentPlacement.LOCAL_SNAP_RADIUS \
+			or str(item_placement_surfaces.get("item:%s" % item_id, "")).is_empty():
+		push_error("Environment item holder did not keep the archetype item_spot within collision-safe local grounding.")
 		quit(1)
 		return
 	var serialized_before_item_category := JSON.stringify(app.call("serialized_run_state"))
@@ -8080,7 +8096,9 @@ func _run() -> void:
 			push_error("Run report did not distinguish failure reason %s with icon/where/how." % reason)
 			quit(1)
 			return
-	app.call("start_foundation_run", "UI-VICTORY-SEED")
+	var victory_start_config := RunStateScript.standard_challenge("UI-VICTORY-SEED")
+	victory_start_config["modifiers"] = {"home_archetype_id": "corner_store"}
+	app.call("start_foundation_run", "UI-VICTORY-SEED", victory_start_config)
 	await process_frame
 	# A scenario-exclusive game may now be valid in the seeded start room. This
 	# report fixture specifically exercises a real timed travel replay first.

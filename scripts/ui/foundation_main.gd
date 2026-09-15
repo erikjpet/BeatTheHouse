@@ -6,6 +6,7 @@ const ScenarioSemanticViewModelScript := preload("res://scripts/ui/scenario_sema
 # Thin UI shell for the README foundation runtime.
 
 const DEFAULT_SEED := "FOUNDATION-UI-SEED"
+const GENERATED_RUN_START_ATTEMPTS := 8
 const AUTOSAVE_SLOT := "foundation_ui_autosave"
 const RELEASE_MENU_FRAMING := "Fictional casino roguelike. Simulated gambling only; no real-money wagering or cash prizes."
 const ACTION_CATEGORY_GAMES := "games"
@@ -442,6 +443,7 @@ var profile_chip_texture: Texture2D
 var run_item_icon_texture_cache: Dictionary = {}
 var seed_input: LineEdit
 var main_menu_seed_counter: int = 0
+var generated_menu_seed_text := ""
 var content_group_config_button: Button
 var content_group_panel: PanelContainer
 var content_group_status_label: Label
@@ -15615,11 +15617,10 @@ func _on_start_pressed() -> bool:
 	if not _ensure_run_ui_built():
 		return false
 	var seed_text := seed_input.text.strip_edges()
-	if seed_text.is_empty():
-		seed_text = _generate_menu_seed_text()
-		seed_input.text = seed_text
 	if selected_challenge_id.is_empty() and _fresh_profile_needs_tutorial():
 		return start_tutorial_run()
+	if seed_text.is_empty() or seed_text == generated_menu_seed_text:
+		return start_generated_foundation_run()
 	return start_foundation_run(seed_text, _new_run_challenge_for_seed(seed_text))
 
 
@@ -15706,19 +15707,27 @@ func _confirm_skip_tutorial() -> void:
 func start_generated_foundation_run() -> bool:
 	if not _ensure_run_ui_built():
 		return false
-	var seed_text := _generate_menu_seed_text()
-	if seed_input != null:
-		seed_input.text = seed_text
-	return start_foundation_run(seed_text, _new_run_challenge_for_seed(seed_text))
+	for _attempt in range(GENERATED_RUN_START_ATTEMPTS):
+		var seed_text := _generate_menu_seed_text()
+		generated_menu_seed_text = seed_text
+		if seed_input != null:
+			seed_input.text = seed_text
+		if start_foundation_run(seed_text, _new_run_challenge_for_seed(seed_text)):
+			return true
+	return false
 
 
 func start_meta_quick_run() -> bool:
 	if not _ensure_run_ui_built():
 		return false
-	var seed_text := _generate_menu_seed_text()
-	if seed_input != null:
-		seed_input.text = seed_text
-	return start_foundation_run(seed_text, {}, false)
+	for _attempt in range(GENERATED_RUN_START_ATTEMPTS):
+		var seed_text := _generate_menu_seed_text()
+		generated_menu_seed_text = seed_text
+		if seed_input != null:
+			seed_input.text = seed_text
+		if start_foundation_run(seed_text, {}, false):
+			return true
+	return false
 
 
 func _on_run_report_new_run_requested() -> void:
@@ -17169,7 +17178,8 @@ func _generate_menu_seed_text() -> String:
 
 func _refresh_menu_seed_text() -> void:
 	if seed_input != null:
-		seed_input.text = _generate_menu_seed_text()
+		generated_menu_seed_text = _generate_menu_seed_text()
+		seed_input.text = generated_menu_seed_text
 
 
 func save_status_snapshot() -> Dictionary:

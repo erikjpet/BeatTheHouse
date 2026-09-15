@@ -268,6 +268,7 @@ var last_occupied_rect := Rect2()
 var avoid_global_rect := Rect2()
 var protected_global_rects: Array[Rect2] = []
 var reserved_body_line_count := 1
+var reserved_choice_grid_height := 0.0
 var locked_layout_side := "left"
 var locked_layout_vertical := "bottom"
 var layout_boundary_key := ""
@@ -878,6 +879,12 @@ func _render_choices() -> void:
 		button.tooltip_text = disabled_reason if not enabled else _response_icon_descriptions(icon_kinds)
 		response.add_child(button)
 		choice_list.add_child(response)
+	var reserve_width := SMALL_SCREEN_PANEL_WIDTH if _compact_layout_enabled() else EXPANDED_PANEL_WIDTH
+	var reserve_columns := 1 if _compact_layout_enabled() else 2
+	reserved_choice_grid_height = maxf(
+		reserved_choice_grid_height,
+		_estimated_choice_grid_height(reserve_width, reserve_columns, true)
+	)
 
 
 func _choice_column_count(choice_count: int) -> int:
@@ -1206,7 +1213,10 @@ func _expanded_layout_rects_for(side: String, vertical: String, reserve_maximum_
 	var panel_width := minf(desired_width, panel_available_width)
 	var choice_columns := (1 if compact_layout else 2) if reserve_maximum_capacity else _choice_column_count(choice_count)
 	var desired_height := EXPANDED_PANEL_BASE_HEIGHT
-	desired_height += maxf(0.0, _estimated_choice_grid_height(panel_width, choice_columns, reserve_maximum_capacity) - VisualStyle.TALK_CHOICE_HEIGHT)
+	var choice_grid_height := _estimated_choice_grid_height(panel_width, choice_columns, reserve_maximum_capacity)
+	if reserve_maximum_capacity:
+		choice_grid_height = maxf(choice_grid_height, reserved_choice_grid_height)
+	desired_height += maxf(0.0, choice_grid_height - VisualStyle.TALK_CHOICE_HEIGHT)
 	var body_line_count := reserved_body_line_count if reserve_maximum_capacity else _estimated_body_line_count(panel_width)
 	desired_height += float(maxi(0, body_line_count - 2)) * EXPANDED_PANEL_EXTRA_BODY_LINE_HEIGHT
 	var panel_size := Vector2(panel_width, minf(desired_height, available_size.y))

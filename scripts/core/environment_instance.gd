@@ -643,15 +643,18 @@ static func _ground_authored_object_rects(object_rects: Dictionary, layout: Dict
 		var resolved := {"rect": authored, "surface_id": "developer_free", "adjusted": false} if manually_placed else EnvironmentPlacementScript.authored_or_local_rect(environment_data, placement_class, authored)
 		var selected: Rect2 = resolved.get("rect", authored)
 		var selected_surface := str(resolved.get("surface_id", ""))
-		if bool(resolved.get("adjusted", false)) and _object_rect_collides_with_any(placed, Rect2(selected.position / ENVIRONMENT_BOARD_SIZE, selected.size / ENVIRONMENT_BOARD_SIZE)):
-			for offset_value in EnvironmentPlacementScript.LOCAL_SNAP_OFFSETS:
-				var offset: Vector2 = offset_value
-				var local_rect := Rect2(selected.position + offset, selected.size)
-				var support := EnvironmentPlacementScript.support_for_rect(environment_data, placement_class, local_rect)
-				var normalized_local := Rect2(local_rect.position / ENVIRONMENT_BOARD_SIZE, local_rect.size / ENVIRONMENT_BOARD_SIZE)
-				if not support.is_empty() and not _object_rect_collides_with_any(placed, normalized_local):
-					selected = local_rect
-					selected_surface = str(support.get("surface_id", selected_surface))
+		# Every legacy/authored slot still participates in collision recovery. The
+		# previous guard only searched alternatives after a support correction, so
+		# already-grounded slots could be moved directly on top of earlier objects.
+		# Explicit developer-free placements remain exact by design.
+		if not manually_placed and _object_rect_collides_with_any(placed, Rect2(selected.position / ENVIRONMENT_BOARD_SIZE, selected.size / ENVIRONMENT_BOARD_SIZE)):
+			for candidate_value in EnvironmentPlacementScript.supported_rect_candidates(environment_data, placement_class, selected):
+				var candidate: Dictionary = candidate_value
+				var candidate_rect: Rect2 = candidate.get("rect", Rect2())
+				var normalized_candidate := Rect2(candidate_rect.position / ENVIRONMENT_BOARD_SIZE, candidate_rect.size / ENVIRONMENT_BOARD_SIZE)
+				if candidate_rect.has_area() and not _object_rect_collides_with_any(placed, normalized_candidate):
+					selected = candidate_rect
+					selected_surface = str(candidate.get("surface_id", selected_surface))
 					break
 		var normalized_selected := Rect2(selected.position / ENVIRONMENT_BOARD_SIZE, selected.size / ENVIRONMENT_BOARD_SIZE)
 		object_rects[object_id] = _rect_to_dict(normalized_selected)

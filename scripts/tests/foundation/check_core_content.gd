@@ -555,7 +555,10 @@ func _foundation_report(suite: String) -> Dictionary:
 func _foundation_run_suite(suite: String, content_library: ContentLibrary, fixture_library: ContentLibrary, failures: Array, report: Dictionary) -> void:
 	match suite:
 		"smoke":
-			_foundation_run_check(report, failures, "content", Callable(self, "_check_content"), [content_library])
+			# Smoke validates the fast content boundary. Scenario/depth coverage is
+			# independently sharded by Contract; duplicating it here made the quick
+			# gate spend its entire timeout inside one opaque check.
+			_foundation_run_check(report, failures, "content", Callable(self, "_check_content_core"), [content_library])
 			_foundation_run_check(report, failures, "coach_engine_foundation", Callable(self, "_check_coach_engine_foundation"), [content_library])
 			_foundation_run_check(report, failures, "onboarding_tutorial_arc", Callable(self, "_check_onboarding_tutorial_arc"), [content_library])
 			_foundation_run_check(report, failures, "profile_inventory_boundary", Callable(self, "_check_profile_inventory_boundary"), [])

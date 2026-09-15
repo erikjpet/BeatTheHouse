@@ -2006,8 +2006,11 @@ func _travel_to_target_and_check_games(app: Control, target_id: String) -> bool:
 
 
 func _check_web_travel_cannot_strand_transition(app: Control) -> bool:
-	app.call("start_foundation_run", "UI-WEB-TRAVEL-CONTINUATION")
+	app.call("start_foundation_run", "UI-WEB-TRAVEL-CONTINUATION", {}, false)
 	await process_frame
+	if app.get("run_state") == null:
+		push_error("Web travel regression fixture could not start its standard run.")
+		return false
 	app.set("travel_transition_force_web_runtime_for_test", true)
 	for travel_index in range(2):
 		var run_state: RunState = app.get("run_state")
@@ -2745,7 +2748,7 @@ func _check_background_slot_all_in_confirmation(app: Control) -> bool:
 func _check_multi_slot_reentry_uses_selected_fixture(app: Control) -> bool:
 	var original_run_state: Variant = app.get("run_state")
 	var original_dev_game_test_mode := bool(app.get("dev_game_test_mode"))
-	app.call("start_foundation_run", "UI-MULTI-SLOT-REENTRY")
+	app.call("start_foundation_run", "UI-MULTI-SLOT-REENTRY", {}, false)
 	await process_frame
 	var run_state: RunState = app.get("run_state")
 	if run_state == null:
@@ -2812,7 +2815,7 @@ func _check_multi_slot_background_autoplay_budget(app: Control) -> bool:
 	if save_service == null or _remove_save_slot(save_service, checkpoint_slot) != OK:
 		push_error("Multi-slot autoplay fixture could not prepare its isolated checkpoint save.")
 		return false
-	app.call("start_foundation_run", "UI-MULTI-SLOT-AUTOPLAY")
+	app.call("start_foundation_run", "UI-MULTI-SLOT-AUTOPLAY", {}, false)
 	await process_frame
 	var run_state: RunState = app.get("run_state")
 	if run_state == null:

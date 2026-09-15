@@ -223,6 +223,11 @@ func _run() -> void:
 	_assert_low_end_budget_headroom()
 	_write_report()
 	_print_summary()
+	if app != null and is_instance_valid(app):
+		app.queue_free()
+		app = null
+		await process_frame
+		await process_frame
 	if not failures.is_empty():
 		for failure in failures:
 			push_error(str(failure))
@@ -1314,7 +1319,9 @@ func _probe_meta_home_surface_budget() -> void:
 
 
 func _probe_talk_dock_surface_budget() -> void:
-	app.call("start_foundation_run", "%s-talk-dock" % seed_prefix)
+	if not _start_synthetic_probe_run("talk-dock"):
+		failures.append("Talk dock performance probe could not create a playable foundation run.")
+		return
 	await _settle(4)
 	var run_state: RunState = app.get("run_state")
 	var library: ContentLibrary = app.get("library")
@@ -1365,7 +1372,9 @@ func _probe_talk_dock_surface_budget() -> void:
 
 
 func _probe_dialogue_surface_budget() -> void:
-	app.call("start_foundation_run", "%s-dialogue" % seed_prefix)
+	if not _start_synthetic_probe_run("dialogue"):
+		failures.append("Dialogue performance probe could not create a playable foundation run.")
+		return
 	await _settle(4)
 	var run_state: RunState = app.get("run_state")
 	if run_state == null:
@@ -1393,7 +1402,9 @@ func _probe_dialogue_surface_budget() -> void:
 
 
 func _probe_late_run_crew_dialogue_budget() -> void:
-	app.call("start_foundation_run", "%s-late-crew" % seed_prefix)
+	if not _start_synthetic_probe_run("late-crew"):
+		failures.append("Late-run Crew dialogue probe could not create a playable foundation run.")
+		return
 	await _settle(3)
 	var run_state: RunState = app.get("run_state")
 	if run_state == null:
@@ -1544,7 +1555,9 @@ func _probe_late_run_crew_dialogue_budget() -> void:
 
 
 func _probe_eviction_map_transition_budget() -> void:
-	app.call("start_foundation_run", "%s-eviction-map" % seed_prefix)
+	if not _start_synthetic_probe_run("eviction-map"):
+		failures.append("Eviction/map transition performance probe could not create a playable foundation run.")
+		return
 	await _settle(4)
 	var run_state: RunState = app.get("run_state")
 	if run_state == null:
@@ -1563,7 +1576,9 @@ func _probe_eviction_map_transition_budget() -> void:
 
 
 func _probe_run_report_replay_budget() -> void:
-	app.call("start_foundation_run", "%s-run-report" % seed_prefix)
+	if not _start_synthetic_probe_run("run-report"):
+		failures.append("Run report performance probe could not create a playable foundation run.")
+		return
 	await _settle(4)
 	var run_state: RunState = app.get("run_state")
 	if run_state == null:
@@ -1951,6 +1966,17 @@ func _open_fresh_app() -> void:
 	app.set("autosave_slot_id", PERF_SAVE_SLOT)
 	root.add_child(app)
 	await _settle(3)
+
+
+# Synthetic UI probes replace the generated room immediately. Retry a bounded
+# deterministic seed sequence so an intentionally rejected empty generation
+# does not erase unrelated surface-budget coverage.
+func _start_synthetic_probe_run(purpose: String) -> bool:
+	for attempt in range(8):
+		var suffix := "" if attempt == 0 else "-%02d" % attempt
+		if bool(app.call("start_foundation_run", "%s-%s%s" % [seed_prefix, purpose, suffix])):
+			return true
+	return false
 
 
 func _use_isolated_meta_collection_store(path: String) -> void:

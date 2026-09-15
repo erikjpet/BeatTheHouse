@@ -1698,11 +1698,14 @@ static func _ensure_priority_targets(result: Array, candidates: Array, target_id
 	if total_limit <= 0:
 		return normalized_result
 	var eligible_ids: Array = []
+	var visited_ids: Array = []
 	for candidate_value in candidates:
 		if typeof(candidate_value) != TYPE_DICTIONARY:
 			continue
 		var candidate: Dictionary = candidate_value
 		var candidate_id := str(candidate.get("id", ""))
+		if bool(candidate.get("visited", false)) and not candidate_id.is_empty() and not visited_ids.has(candidate_id):
+			visited_ids.append(candidate_id)
 		if target_ids.has(candidate_id) and not candidate_id.is_empty() and bool(candidate.get("enabled_hint", true)) and not eligible_ids.has(candidate_id):
 			eligible_ids.append(candidate_id)
 	for target_id in eligible_ids:
@@ -1712,7 +1715,11 @@ static func _ensure_priority_targets(result: Array, candidates: Array, target_id
 			normalized_result.append(target_id)
 			continue
 		for index in range(normalized_result.size() - 1, -1, -1):
-			if not eligible_ids.has(str(normalized_result[index])):
+			var existing_id := str(normalized_result[index])
+			# Revisit routes are intentionally additive to the new-destination cap.
+			# A progression priority must replace another new candidate, never erase
+			# a known way back to a previously visited stop.
+			if not eligible_ids.has(existing_id) and not visited_ids.has(existing_id):
 				normalized_result[index] = target_id
 				break
 	return normalized_result
