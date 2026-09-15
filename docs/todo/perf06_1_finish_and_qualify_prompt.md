@@ -17,6 +17,11 @@ low-end evidence without waivers. On 2026-09-14 the work was consolidated into
 placement redesign is accepted and the candidate host is quiescent. Full
 ledger: `docs/plans/perf06_1_performance_platform_report.md`.
 
+2026-09-14: the placement-independent native-extension refresh (`4c4a8968`),
+exact-candidate terminal-soak library correction (`a840777d`/`10eee85a`), and
+their focused guards were ported to `main`. The remaining telemetry, matrix,
+allocation, low-end, and binding qualification work stays parked here.
+
 # Agent Prompt — perf06_1: Finish the Performance and Platform Pass
 
 Copy everything below this line into one agent. It may spawn sub-agents freely.

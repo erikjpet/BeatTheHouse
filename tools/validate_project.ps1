@@ -1030,6 +1030,7 @@ Require-Text "tools/check_godot.ps1" 'Invoke-Perf06ContractChecks -SuiteLabel "f
 Require-Text "tools/check_godot.ps1" 'perf06_phase_qualification_contract_test.ps1' "Godot Audit/Full must enforce perf06 timing/liveness pairing."
 Require-Text "tools/check_godot.ps1" 'perf06_allocation_contract_test.ps1' "Godot Audit/Full must enforce perf06 per-frame allocation and zero-deep-copy assertions."
 Require-Text "tools/check_godot.ps1" 'integ06_1_terminal_soak_launcher_contract_test.ps1' "Godot Audit/Full must enforce exact-candidate terminal-soak host-library discovery."
+Require-Text "tools/integ06_1_terminal_soak_launcher_contract_test.ps1" '$candidateAddon = Join-Path $root "addons\coin_pusher_native"' "Terminal-soak contract must require host libraries from the exact candidate worktree."
 Require-Text "tools/check_godot.ps1" 'eligible_for_done' "Post-land reports must make DONE eligibility explicitly fail closed."
 Require-Text "tools/check_godot.ps1" 'gdscript_load_check.gd' "Godot check script must run the one-process GDScript load checker."
 Require-Text "tools/check_godot.ps1" 'Stop-NewGodotProcesses' "Godot check script must clean up timed-out Godot child processes."

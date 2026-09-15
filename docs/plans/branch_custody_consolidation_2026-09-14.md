@@ -91,6 +91,16 @@ parked behind it. Four completed or superseded execution documents (`env06_6`,
 `fix06_27` prompt) were moved from `docs/todo` to `docs/todone`. Active
 performance, playtest, and balance prompts now match their PARKED board state.
 
+## Approved infrastructure ports
+
+After consolidation, the owner approved three completed, placement-independent
+infrastructure fixes for `main`: the atomic owner-evidence transaction and retry
+contract; exact-candidate native-library discovery for the terminal soak plus
+its permanent Audit/Full contract; and the fresh-worktree GDExtension discovery
+refresh plus budget guard. They were ported without the deferred telemetry,
+matrix, allocation, or low-end qualification package. All three focused
+contracts and full project validation passed before push.
+
 ## Ongoing rule
 
 Do not leave future work on a durable task branch. A completed change lands on
