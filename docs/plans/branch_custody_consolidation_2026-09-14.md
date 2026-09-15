@@ -65,6 +65,7 @@ consolidated into the sole WIP branch.
 | `playtest06-final-custody` | Two evidence-transaction tools | Contract passed; committed and retained on consolidated WIP |
 | Owner build candidate | Temporary copied source, generated builds/tools and three untracked evidence documents | Temporary candidate was obsolete; registration and residual directory deleted |
 | Unregistered checkout remnants | `main-closeout06-land`, `audio-final-closeout`, and a broken `playtest-fixes` junction | None was a registered worktree or carried an active branch; the first two were duplicate historical checkouts and the last pointed to an already-missing checkout. All three were deleted after exact-path validation |
+| Git stash from `codex/integ06-1-fixtures` | One 97-addition/36-deletion patch to the historical v0.5.1 fixture driver | Superseded: current `main` contains its interaction, dialogue, game-entry, surface-action, and return-step support plus later readiness, confirmation, travel/event, and result-evidence hardening from `6875646b` and subsequent commits. The stash was dropped |
 
 The pre-existing external safety archive at
 `D:\Projects\Beat-The-House-cleanup-archive` remains outside Git. It is not an
