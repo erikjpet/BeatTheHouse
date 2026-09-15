@@ -1,12 +1,29 @@
-Status: TODO — execution prompt that finishes the stalled `perf06_1` row
-Priority: P1 — `perf06_1` is the only row blocking `playtest06_2`, which produces the owner's next build
-Board row: `perf06_1` in `docs/todo/README_0_6_board.md` (currently `IN_PROGRESS`, stale since 2026-09-04)
+Status: PARKED — Phases 1–3 tooling is on `main`; binding Phase 4 waits for accepted placement
+Priority: P1 after an accepted placement redesign and quiesced candidate
+Board row: `perf06_1` in `docs/todo/README_0_6_board.md`
 Opened: 2026-09-11 by PM audit of the row's real state
 Supersedes the open items of: `docs/todo/perf06_1_performance_platform_pass_prompt.md` (still binding for intent; this file is the plan)
 
 ## Execution Record
 
-2026-09-11: Phases 1-3 completed on `codex/perf06-finish`; Phase 4 did not start because `fix06_31` remains unlanded, `origin/main` remains `c570f2ce`, the host is not quiescent, and no director witness was supplied. Recovery `f8b494a4`; permanent enforcement `5e7bd77d`; reduced-run parameterization and harness corrections `7efd6e8d`, `4c4a8968`, `362e2ba9`, `1d554967`, `a7952863`, `39d1837a`, `38580344`, `a840777d`, `10eee85a`, `a69943d8`. All 18 section-2 gates passed, Audit passed, and the current project validator plus new hostile contracts pass. Reduced producers retained red timing, semantic-placement, terminal-resource/progression, and low-end evidence without waivers or overwritten directories. Full ledger and 8-12 hour binding estimate: `docs/plans/perf06_1_performance_platform_report.md`.
+2026-09-11: Phases 1-3 completed on the former `codex/perf06-finish`
+branch. Recovery `f8b494a4`; permanent enforcement `5e7bd77d`; reduced-run
+parameterization and harness corrections `7efd6e8d`, `4c4a8968`, `362e2ba9`,
+`1d554967`, `a7952863`, `39d1837a`, `38580344`, `a840777d`, `10eee85a`, and
+`a69943d8`. All 18 non-binding gates and the focused hostile contracts passed;
+reduced producers retained their red timing, placement, progression, and
+low-end evidence without waivers. On 2026-09-14 the work was consolidated into
+`codex/wip-0.6-consolidated`; the owner parked the binding Phase 4 run until the
+placement redesign is accepted and the candidate host is quiescent. Full
+ledger: `docs/plans/perf06_1_performance_platform_report.md`.
+
+2026-09-14: the owner first approved the placement-independent native-extension
+refresh (`4c4a8968`), exact-candidate terminal-soak library correction
+(`a840777d`/`10eee85a`), and their focused guards for `main`, then approved the
+remaining Phase 1–3 telemetry, matrix, allocation, low-end, and permanent
+Audit/Full contract package. All completed qualification machinery is now on
+`main`. Only the binding post-placement run and any measurement-driven follow-up
+remain parked.
 
 # Agent Prompt — perf06_1: Finish the Performance and Platform Pass
 
@@ -21,13 +38,13 @@ that condition is stated in section 2. Respect it.
 
 ## 0. The true state of this row — verified, do not re-derive
 
-The board says `perf06_1` is `IN_PROGRESS` with agent `/root/perf_closeout`,
-started 2026-09-03. In reality:
+The board records `perf06_1` as PARKED pending an accepted placement redesign.
+Current reality:
 
-- **The row is stalled, not progressing.** Its branch `codex/perf06-final-run`
-  has not moved since 2026-09-04.
-- **Its harness work is already on `main`, byte-identical.** `git log
-  main..codex/perf06-final-run` lists 4 commits, but that is a hash artifact:
+- **The row is parked, not progressing.** All completed harness implementation
+  is on `main`; the former task branches were deleted.
+- **Its earlier harness work is on `main`, byte-identical.** Historical branch
+  comparisons listed 4 commits, but that was a hash artifact:
   the same content was rebased onto `main` under different hashes
   (`618d0033`, `92bb16f5`, `6a3485c7`, `33128713`). Verified byte-identical on
   both sides: `docs/plans/perf06_1_final_runtime_runbook.md`,
@@ -35,8 +52,8 @@ started 2026-09-03. In reality:
   `tools/perf06_binding_preflight.ps1`,
   `tools/perf06_phase_qualification_contract.ps1`,
   `tools/perf06_capture_quiescence.ps1` and `tools/perf06_matrix_contract.ps1`.
-  **Do not cherry-pick the branch and do not merge it.** Treat it as a stale
-  duplicate, leave it alone, and work from `main`.
+  **Do not recreate, cherry-pick, or merge a retired task branch.** Work from
+  current `main`; use only the consolidated WIP branch for unfinished changes.
 - **Two of the landed commits are still labeled `[UNREVIEWED]`** in their
   subjects on `main`: `92bb16f5` "fix(perf): make final qualification fail
   closed" and `618d0033` "docs(perf): stage exact final qualification runbook".
@@ -87,25 +104,22 @@ throws if any `Godot_v4.6-stable_win64`, `Godot_v4.6-stable_win64_console`,
 `BeatTheHouse` or `chrome` process is alive, and the runbook repeats that check
 itself. It also requires `HEAD` to equal the pushed `origin/main` exactly.
 
-**Row `fix06_31` (environment object placement) is running on this machine right
-now and spawns Godot continuously.** It is also actively changing environment
-composition cost — it measured room compositions of 300-825 ms and a ~51 s
-content step during its own profiling. Therefore:
+The earlier `fix06_31` grounding work landed, but the owner rejected the later
+reusable-slot/fixture placement experiment. A replacement room-construction
+design has not yet been accepted. Therefore:
 
-- **Phases 1, 2 and 3 below are safe to run now**, alongside `fix06_31`. They do
-  not produce binding numbers and none of them needs a quiet host.
-- **Phase 4, the binding qualification, must not start until `fix06_31` has
-  merged to `origin/main` and no Godot or Chrome process is running.** A binding
-  matrix measured on a tree whose environment placement is about to change is
-  wasted machine-hours, and a matrix measured next to a competing Godot process
-  is invalid.
-- This ordering is a feature: your matrix becomes the proof that `fix06_31` did
-  not cost frame time. If it did, that is a finding you route back, not
-  something you fix here.
+- **Phases 1, 2 and 3 are complete and their machinery is on `main`.** Their
+  retained measurements remain explicitly non-binding.
+- **Phase 4, the binding qualification, must not start until an accepted
+  placement redesign is merged to pushed `origin/main` and no Godot or Chrome
+  process is running.** Measuring a tree whose placement is about to change
+  wastes machine-hours; measuring beside a competing process is invalid.
+- The final matrix must prove that the accepted placement redesign did not cost
+  frame time. Any regression is routed back to that implementation rather than
+  silently optimized or waived here.
 
-If `fix06_31` is still unlanded when Phases 1-3 are done, report that you are
-ready and waiting, with your time estimate from Phase 3, and stop. Do not idle
-in a polling loop, and do not start the binding run "just to see".
+Until accepted placement exists, report that Phase 4 is waiting and stop. Do
+not idle in a polling loop or start the binding run "just to see".
 
 ## 3. Phase plan
 
@@ -116,7 +130,7 @@ Commit at the end of each phase. Keep `main` green.
 1. `git fetch --all`. Branch from **current `origin/main`**. The harness is
    already there; confirm that for yourself before assuming anything else in
    this section — compare `docs/plans/perf06_1_final_runtime_runbook.md` and the
-   `tools/perf06_*` set on `main` against `codex/perf06-final-run`. They were
+   `tools/perf06_*` set on `main` against the historical final-run tree. They were
    byte-identical when this prompt was written. **Do not cherry-pick or merge
    the stale branch**, and do not delete it.
 2. **Review the landed `[UNREVIEWED]` work properly.** `92bb16f5` and `618d0033`
@@ -212,9 +226,10 @@ counts, all seven steps, three profiles (`native`, `web`, `low_end`).
 - Re-measure the affected cells after each optimization into a **new** evidence
   directory, and state clearly in the report which numbers came from which
   candidate.
-- Note for this cycle: `fix06_31` will have just rewritten environment
-  placement. If room composition or environment draw cost appears in your
-  ranking, route it to that row rather than optimizing its fresh code yourself.
+- Note for this cycle: the accepted replacement will have rewritten room
+  construction or placement. If room composition or environment draw cost
+  appears in the ranking, route it to that implementation rather than
+  optimizing its fresh code here.
 
 ### Phase 6 — Report and budgets
 
@@ -231,7 +246,7 @@ Write `docs/plans/perf06_1_performance_platform_report.md` containing:
 4. The published budget table with its mandatory liveness pairings.
 5. Every optimization with before and after numbers.
 6. Every routed finding with severity and destination.
-7. **Honest comparator handling.** `perf06_1_measurement_prestage.md` section
+7. **Honest comparator handling.** `docs/plans/perf06_1_measurement_prestage.md` section
    "Missing 0.5 comparators" lists what has no like-for-like 0.5 record: Coin
    Pusher, the dynamic scenario runtime with a full sequence staged, crew
    sequences at current actor counts, the environment expansions at maximal
@@ -277,7 +292,8 @@ Only after every gate is green and the report is written:
   findings.
 - **No release activity:** no version bump, tag, packaging, upload or publish.
 - **Delete nothing:** no branch, worktree, stash or evidence directory. No `gc`,
-  `reset --hard` or `clean`. `codex/perf06-final-run` stays where it is.
+  `reset --hard` or `clean`. Continue only on
+  `codex/wip-0.6-consolidated`.
 - **Never stage owner property:** `.tmp/`, `.tools/`, `review_artifacts/`,
   `builds/`. All evidence lives under `.tmp/` and is referenced by path and hash
   in the report, never committed.
