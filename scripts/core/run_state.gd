@@ -2747,7 +2747,10 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 	candidate["scenario_layout_context"] = layout_context.duplicate(true)
 	if _copy_dict(candidate.get("scenario_state", {})).is_empty():
 		candidate["scenario_state"] = ScenarioEngineScript.initial_state(definition)
-	var migration := ScenarioEngineScript.migrate_environment_sequence(candidate, definition, str(candidate.get("id", candidate.get("environment_visit_id", ""))))
+	# This atomic finalizer only consumes migration success and activity. Computing
+	# the public informational `changed` bit would serialize the complete scenario
+	# projection before and after migration, even though that evidence is discarded.
+	var migration := ScenarioEngineScript.migrate_environment_sequence(candidate, definition, str(candidate.get("id", candidate.get("environment_visit_id", ""))), false, true)
 	if not bool(migration.get("ok", false)) or not bool(migration.get("active", false)):
 		return _scenario_semantic_finalization_failure(_copy_array(migration.get("errors", ["Scenario sequence migration did not activate after semantic finalization."])), refresh_attempt)
 	var initialized_state := _copy_dict(candidate.get("scenario_sequence_state", {}))

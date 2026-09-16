@@ -176,7 +176,10 @@ static func _owned_count_for_collection(collection: Dictionary, owned_by_itemdef
 static func _service_snapshot(meta_service: Variant) -> Dictionary:
 	if meta_service == null:
 		return {}
-	return _copy_dict(meta_service.snapshot())
+	# The service already returns an owned deep snapshot. Re-copying the entire
+	# collection here doubled large-home projection cost before any rows existed.
+	var value: Variant = meta_service.snapshot()
+	return value as Dictionary if typeof(value) == TYPE_DICTIONARY else {}
 
 
 static func _float_summary(instance: Dictionary) -> String:
@@ -199,14 +202,15 @@ static func _tier_badge(tier: String) -> Dictionary:
 
 
 static func _copy_dict(value: Variant) -> Dictionary:
+	# Projection helpers never mutate their inputs. The service/resolver boundary
+	# already supplies owned values, so borrow nested dictionaries read-only while
+	# constructing fresh output rows.
 	if typeof(value) != TYPE_DICTIONARY:
 		return {}
-	var dictionary: Dictionary = value
-	return dictionary.duplicate(true)
+	return value as Dictionary
 
 
 static func _copy_array(value: Variant) -> Array:
 	if typeof(value) != TYPE_ARRAY:
 		return []
-	var array: Array = value
-	return array.duplicate(true)
+	return value as Array

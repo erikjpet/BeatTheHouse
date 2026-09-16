@@ -3239,7 +3239,12 @@ func _current_game_surface_realtime_ui_state(now_msec: int) -> Dictionary:
 		# so can visually pin a realtime table animation to one frame.
 		ui_state["selected_action_id"] = selected_action_id
 		ui_state["selected_action_kind"] = selected_action_kind
-		ui_state["selected_stake"] = _current_selected_stake()
+		# Resolving the generic stake range can rebuild action availability and is
+		# one of the most expensive host projections. Lightweight modules explicitly
+		# request it when their realtime patch consumes it; the current modules keep
+		# stake in their sealed session and do not need that work on every tick.
+		if requested_keys.has("selected_stake"):
+			ui_state["selected_stake"] = _current_selected_stake()
 		if requested_keys.has("surface_runtime_status"):
 			ui_state["surface_runtime_status"] = game_surface_canvas.surface_realtime_ui_status() if game_surface_canvas != null else {}
 		if requested_keys.has("focused_talk_speaker"):

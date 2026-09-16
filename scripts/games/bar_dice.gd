@@ -325,7 +325,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var animated_dice_indices := _index_array(tumble.get("indices", []))
 	if rolled and not str(tumble.get("id", "")).is_empty() and animated_dice_indices.is_empty():
 		animated_dice_indices = _all_die_indices()
-	var tumble_active := not str(tumble.get("id", "")).is_empty()
+	var tumble_active := _tumble_is_active(tumble, ui)
 	var surface_motion_active := tumble_active or controlled_roll_meter_active or palmed_swap_meter_active
 	var pit_boss := run_state.pit_boss_watch_status(environment) if run_state != null else {}
 	var press_offer := _copy_dict(last_result.get("press_offer", {}))
@@ -2987,6 +2987,16 @@ func _active_tumble(ui_state: Dictionary, last_result: Dictionary, rolled: bool)
 	if not rolled and not last_result.is_empty():
 		return {"id": str(last_result.get("tumble_id", "")), "started": int(last_result.get("resolved_at_msec", 0)), "indices": _index_array(last_result.get("tumble_indices", []))}
 	return {"id": "", "started": 0, "indices": []}
+
+
+func _tumble_is_active(tumble: Dictionary, ui_state: Dictionary) -> bool:
+	if str(tumble.get("id", "")).is_empty() or bool(ui_state.get("reduce_motion", false)):
+		return false
+	var started_msec := int(tumble.get("started", 0))
+	if started_msec <= 0:
+		return false
+	var elapsed_msec := maxi(0, _surface_time_msec(ui_state) - started_msec)
+	return elapsed_msec < TUMBLE_DURATION_MSEC
 
 
 func _set_tumble(ui_state: Dictionary, prefix: String, indices: Array = []) -> void:

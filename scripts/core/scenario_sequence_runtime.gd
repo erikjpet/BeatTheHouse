@@ -81,12 +81,14 @@ const MAX_RECEIPTS := 256
 const COMMAND_RESULT_KEYS := ["ok", "replayed", "receipt_id", "command_id", "phase_id", "status", "boundary_serial", "outcomes", "changed", "cost", "state"]
 
 
-static func initial_state(definition: Dictionary, node_id: String, seed_token: String = "", host_semantics: Dictionary = {}) -> Dictionary:
+static func initial_state(definition: Dictionary, node_id: String, seed_token: String = "", host_semantics: Dictionary = {}, definition_prevalidated: bool = false) -> Dictionary:
 	if not SequenceSchemaScript.is_sequence(definition):
 		return {}
 	var target_inventory := _dict(host_semantics.get("target_inventory", {}))
 	target_inventory["event_choices"] = _dict(host_semantics.get("event_choices", target_inventory.get("event_choices", {})))
-	var validation := SequenceSchemaScript.validate_definition(definition, OperationRegistryScript, target_inventory)
+	# Production finalization has already validated the exact definition against
+	# this sealed inventory. All default/public callers retain the full validation.
+	var validation: Array = [] if definition_prevalidated else SequenceSchemaScript.validate_definition(definition, OperationRegistryScript, target_inventory)
 	validation.append_array(_array(host_semantics.get("inventory_errors", [])))
 	if not validation.is_empty():
 		return {"schema_version": STATE_SCHEMA_VERSION, "status": STATUS_CLEANED, "errors": validation}

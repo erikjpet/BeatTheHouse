@@ -919,6 +919,13 @@ func _check_slot_pinball_feature_visual_manifest(definition: Dictionary, failure
 	}, takeover_patch)
 	if not bool(latched_patch.get("slot_active_bonus_active", false)) or bool(latched_patch.get("slot_bonus_trigger_reveal_pending", true)):
 		failures.append("Slot pinball reveal handoff regressed to reels after its spin timing channel was removed.")
+	if latched_patch.has("slot_skin") or latched_patch.has("surface_animation_channels") or latched_patch.has("slot_grid"):
+		failures.append("Slot pinball steady-state refresh rebuilt static takeover fields instead of returning a compact live patch.")
+	var latched_surface := takeover_patch.duplicate(true)
+	latched_surface.merge(latched_patch, true)
+	var latched_manifest: Dictionary = renderer.render_signature(latched_surface, definition, 1100, "feature")
+	if not bool(latched_manifest.get("pinball_takeover_active", false)) or not bool(latched_manifest.get("pinball_launch_control_visible", false)):
+		failures.append("Slot pinball compact live patch did not preserve the installed takeover surface.")
 	var angled_machine: Dictionary = _slot_machine(definition, prelaunch_run, "pinball", "video_feature", "standard", "plain")
 	angled_machine["active_bonus"] = pinball.open_feature(angled_machine, 10, prelaunch_run.create_rng("slot_pin_angle_open"), definition)
 	var angle_step: Dictionary = pinball.step_bonus(angled_machine, "slot_bonus_left", prelaunch_run.create_rng("slot_pin_angle_left"), definition)

@@ -12,6 +12,7 @@ const MODE_SALE := "meta_sale"
 const MODE_TRADE := "meta_trade"
 
 static var _badge_cache: Dictionary = {}
+static var _asset_path_cache: Dictionary = {}
 
 
 static func build(meta_service: Variant, mode: String, selected_key: String = "", trade_selected_ids: Array = []) -> Dictionary:
@@ -54,7 +55,7 @@ static func build(meta_service: Variant, mode: String, selected_key: String = ""
 	return {
 		"mode": mode,
 		"title": _title(mode),
-		"summary": _summary(meta_service, mode, all_items.size(), valid_trade_selected_ids),
+		"summary": _summary(mode, all_items.size(), valid_trade_selected_ids, int(snapshot.get("gold_balance", 0))),
 		"containers": containers,
 		"items": all_items,
 		"selected_key": resolved_key,
@@ -97,6 +98,14 @@ static func _valid_trade_selection(resolver: Variant, owned: Array, requested_id
 
 static func _owned_item_models(meta_service: Variant, resolver: Variant, owned: Array, carried_ids: Array, mode: String, trade_selected_ids: Array) -> Array:
 	var result: Array = []
+	# Large collections contain many instances of the same small definition set.
+	# Resolver access returns an owned deep copy, so cache one copy per definition
+	# and collection for this immutable projection instead of cloning it per item.
+	var definitions_by_id: Dictionary = {}
+	var collections_by_id: Dictionary = {}
+	var trade_position_by_id: Dictionary = {}
+	for trade_index in range(trade_selected_ids.size()):
+		trade_position_by_id[int(trade_selected_ids[trade_index])] = trade_index + 1
 	var carried_lookup := {}
 	for carried_id in carried_ids:
 		carried_lookup[int(carried_id)] = true
@@ -105,15 +114,15 @@ static func _owned_item_models(meta_service: Variant, resolver: Variant, owned: 
 		for instance_value in owned:
 			var candidate: Dictionary = instance_value
 			if int(candidate.get("instance_id", 0)) == int(trade_selected_ids[0]):
-				first_trade_definition = resolver.item_definition(int(candidate.get("itemdef_id", -1)))
+				first_trade_definition = _cached_item_definition(resolver, definitions_by_id, int(candidate.get("itemdef_id", -1)))
 				break
 	for instance_value in owned:
 		var instance: Dictionary = instance_value
 		var instance_id := int(instance.get("instance_id", 0))
-		var definition: Dictionary = resolver.item_definition(int(instance.get("itemdef_id", -1)))
+		var definition: Dictionary = _cached_item_definition(resolver, definitions_by_id, int(instance.get("itemdef_id", -1)))
 		if definition.is_empty():
 			continue
-		var collection: Dictionary = resolver.collection_definition(str(definition.get("collection_id", "")))
+		var collection: Dictionary = _cached_collection_definition(resolver, collections_by_id, str(definition.get("collection_id", "")))
 		var item_class := str(definition.get("item_class", CollectionItemResolverScript.ITEM_CLASS_COLLECTION))
 		var quote: Dictionary = meta_service.sale_quote(MetaCollectionServiceScript.SALE_KIND_ITEM, instance_id) if mode == MODE_SALE and meta_service != null and meta_service.has_method("sale_quote") else {}
 		var packed := carried_lookup.has(instance_id)
@@ -144,10 +153,6 @@ static func _owned_item_models(meta_service: Variant, resolver: Variant, owned: 
 				"disabled_reason": trade_reason if not trade_compatible else "Five items are already selected." if trade_selected_ids.size() >= 5 and selected_index < 0 else "",
 			})
 		var band: Dictionary = resolver.condition_band(definition, instance)
-		var badge_context := definition.duplicate(true)
-		badge_context["item_class"] = item_class
-		badge_context["domain"] = "meta"
-		badge_context["sale_price"] = int(quote.get("price", 0))
 		var item_disabled_reason := trade_reason
 		if mode == MODE_CONTAINER and not packable:
 			item_disabled_reason = "This meta-only item stays in home storage."
@@ -181,7 +186,7 @@ static func _owned_item_models(meta_service: Variant, resolver: Variant, owned: 
 				"resonance": clampf(float(instance.get("resonance", 0.0)), 0.0, 1.0),
 				"usage": clampf(float(instance.get("usage", 0.0)), 0.0, 1.0),
 			},
-			"attribute_badges": _cached_attribute_badges(badge_context, mode, int(instance.get("itemdef_id", -1))),
+			"attribute_badges": _cached_attribute_badges(definition, mode, int(instance.get("itemdef_id", -1)), item_class, int(quote.get("price", 0))),
 			"sale_eligible": bool(quote.get("ok", false)),
 			"sale_price": int(quote.get("price", 0)),
 			"sale_breakdown": quote.duplicate(true),
@@ -189,7 +194,7 @@ static func _owned_item_models(meta_service: Variant, resolver: Variant, owned: 
 			"trade_compatible": trade_compatible,
 			"disabled_reason": item_disabled_reason,
 			"actions": actions,
-			"state_marker": str(_int_array(trade_selected_ids).find(instance_id) + 1) if _int_array(trade_selected_ids).has(instance_id) else "",
+			"state_marker": str(trade_position_by_id.get(instance_id, "")),
 		})
 	return result
 
@@ -207,9 +212,6 @@ static func _bag_models(meta_service: Variant, resolver: Variant, bags: Array, m
 			actions.append({"id": "open_bag", "label": "Open", "payload": {"instance_id": instance_id}})
 		elif mode == MODE_SALE and bool(quote.get("ok", false)):
 			actions.append({"id": "arm_sale", "label": "Sell for %d gold" % int(quote.get("price", 0)), "payload": {"kind": MetaCollectionServiceScript.SALE_KIND_BAG, "instance_id": instance_id}, "permanent": true})
-		var bag_badge_context := definition.duplicate(true)
-		bag_badge_context["item_class"] = "unopened_bag"
-		bag_badge_context["domain"] = "meta"
 		result.append({
 			"id": str(definition.get("id", "collection_bag")),
 			"instance_id": instance_id,
@@ -232,7 +234,7 @@ static func _bag_models(meta_service: Variant, resolver: Variant, bags: Array, m
 			"sale_eligible": bool(quote.get("ok", false)),
 			"sale_price": int(quote.get("price", 0)),
 			"sale_breakdown": quote.duplicate(true),
-			"attribute_badges": _cached_attribute_badges(bag_badge_context, mode, -int(bag.get("bagdef_id", -1)) - 1),
+			"attribute_badges": _cached_attribute_badges(definition, mode, -int(bag.get("bagdef_id", -1)) - 1, "unopened_bag", int(quote.get("price", 0))),
 			"actions": actions,
 		})
 	return result
@@ -309,17 +311,16 @@ static func _flatten_container_items(containers: Array) -> Array:
 	return result
 
 
-static func _summary(meta_service: Variant, mode: String, item_count: int, trade_selected_ids: Array) -> String:
+static func _summary(mode: String, item_count: int, trade_selected_ids: Array, gold_balance: int) -> String:
 	match mode:
 		MODE_BAGS:
 			if item_count <= 0:
 				return "No unopened bags. Win a standard run to bring one home."
 			return "%d unopened bag%s. Select one to inspect before opening." % [item_count, "" if item_count == 1 else "s"]
 		MODE_SALE:
-			var gold := int(meta_service.snapshot().get("gold_balance", 0)) if meta_service != null and meta_service.has_method("snapshot") else 0
 			if item_count <= 0:
 				return "Nothing to sell yet. Sal's counter wakes up after your first haul."
-			return "%d sale option%s. Sal pays in gold; you have %d." % [item_count, "" if item_count == 1 else "s", gold]
+			return "%d sale option%s. Sal pays in gold; you have %d." % [item_count, "" if item_count == 1 else "s", gold_balance]
 		MODE_TRADE:
 			if item_count <= 0:
 				return "Trade-up needs five matching collection items. Win bags first."
@@ -350,20 +351,28 @@ static func _asset_path_for_icon(icon_key: String) -> String:
 	var clean_key := icon_key.strip_edges()
 	if clean_key.is_empty():
 		return ""
+	if _asset_path_cache.has(clean_key):
+		return str(_asset_path_cache.get(clean_key, ""))
 	var path := "res://assets/art/items/%s.png" % clean_key
-	return path if ResourceLoader.exists(path) else ""
+	var resolved := path if ResourceLoader.exists(path) else ""
+	_asset_path_cache[clean_key] = resolved
+	return resolved
 
 
-static func _cached_attribute_badges(context: Dictionary, mode: String, definition_key: int) -> Array:
+static func _cached_attribute_badges(definition: Dictionary, mode: String, definition_key: int, item_class: String, sale_price: int) -> Array:
 	# Sale badges include an instance-specific quote. Other modes share authored
-	# definition badges, so building them once prevents a large stack of the same
-	# item from repeating identical formatting work thousands of times.
-	if mode == MODE_SALE:
-		return AttributeBadgesScript.for_item(context)
+	# definition badges. Check that cache before creating a mutable badge context
+	# so a large stack does not clone the same definition thousands of times.
 	var cache_key := "%s|%d" % [mode, definition_key]
-	if _badge_cache.has(cache_key):
+	if mode != MODE_SALE and _badge_cache.has(cache_key):
 		return _badge_cache.get(cache_key, [])
+	var context := definition.duplicate(true)
+	context["item_class"] = item_class
+	context["domain"] = "meta"
+	context["sale_price"] = sale_price
 	var badges := AttributeBadgesScript.for_item(context)
+	if mode == MODE_SALE:
+		return badges
 	if _badge_cache.size() >= BADGE_CACHE_LIMIT:
 		_badge_cache.clear()
 	_badge_cache[cache_key] = badges
@@ -431,13 +440,28 @@ static func _container_key_for_selection(containers: Array, selection_key: Strin
 
 
 static func _dictionary_array(value: Variant) -> Array:
+	# Callers only inspect these dictionaries while constructing an owned model.
+	# Preserve the filtered array boundary without recursively cloning every item
+	# and nested payload each time the same slots are scanned.
 	var result: Array = []
 	if typeof(value) != TYPE_ARRAY:
 		return result
 	for entry in value as Array:
 		if typeof(entry) == TYPE_DICTIONARY:
-			result.append((entry as Dictionary).duplicate(true))
+			result.append(entry)
 	return result
+
+
+static func _cached_item_definition(resolver: Variant, cache: Dictionary, itemdef_id: int) -> Dictionary:
+	if not cache.has(itemdef_id):
+		cache[itemdef_id] = resolver.item_definition(itemdef_id)
+	return cache.get(itemdef_id, {}) as Dictionary
+
+
+static func _cached_collection_definition(resolver: Variant, cache: Dictionary, collection_id: String) -> Dictionary:
+	if not cache.has(collection_id):
+		cache[collection_id] = resolver.collection_definition(collection_id)
+	return cache.get(collection_id, {}) as Dictionary
 
 
 static func _int_array(value: Variant) -> Array:

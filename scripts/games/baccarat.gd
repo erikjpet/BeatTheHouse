@@ -400,10 +400,13 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 	var table := _peek_table_state(environment)
 	if table.is_empty():
 		return {}
-	var session := _normalized_session(run_state, environment, ui_state, table)
+	var session := _realtime_session_view(table, ui_state, current_surface_state)
 	var bets := _bet_dict(session.get("baccarat_bets", current_surface_state.get("baccarat_bets", {})))
 	var total_wager := _total_wager(bets)
-	var last_result := _copy_dict(table.get("last_result", current_surface_state.get("last_result", {})))
+	# Stored results are immutable between sealed actions. Borrow the result for
+	# this read-only ceremony projection instead of cloning its cards and event
+	# arrays every animation tick.
+	var last_result := _draw_dict_view(table.get("last_result", current_surface_state.get("last_result", {})))
 	var now_msec := GameModule.deterministic_time_msec(run_state, ui_state)
 	var elapsed_msec := now_msec - int(last_result.get("resolved_at_msec", 0))
 	var deal_active := not last_result.is_empty() and elapsed_msec >= 0 and elapsed_msec < DEAL_ANIMATION_DURATION_MSEC
@@ -454,6 +457,19 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 		"table_round_timer": round_timer,
 		"native_selected_surface_actions": _selected_surface_actions(bets, session),
 	}
+
+
+func _realtime_session_view(table: Dictionary, ui_state: Dictionary, current_surface_state: Dictionary) -> Dictionary:
+	# The sealed action boundary owns the normalized session. Realtime ceremony
+	# refreshes may borrow its nested collections read-only and copy only the
+	# envelope that receives transient clock/selection fields.
+	var host_ledger: Dictionary = table.get("_blackjack_action_authority", {}) if typeof(table.get("_blackjack_action_authority", {})) == TYPE_DICTIONARY else {}
+	var stored_value: Variant = host_ledger.get("session", {}) if bool(host_ledger.get("initialized", false)) else current_surface_state
+	var session: Dictionary = (stored_value as Dictionary).duplicate(false) if typeof(stored_value) == TYPE_DICTIONARY else current_surface_state.duplicate(false)
+	for key in TABLE_GAME_HOST_TRANSIENT_UI_KEYS:
+		if ui_state.has(key):
+			session[key] = ui_state[key]
+	return session
 
 
 func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionary = {}) -> bool:
@@ -1196,7 +1212,9 @@ func _hand_needs_squeeze(natural: bool, player_total: int, banker_total: int) ->
 
 
 func _baccarat_squeeze_state(last_result: Dictionary) -> Dictionary:
-	for event_value in _dictionary_array(last_result.get("animation_events", [])):
+	for event_value in _draw_array_view(last_result.get("animation_events", [])):
+		if typeof(event_value) != TYPE_DICTIONARY:
+			continue
 		var event: Dictionary = event_value
 		if str(event.get("type", "")) == "squeeze":
 			return {

@@ -237,7 +237,7 @@ func realtime_state_patch(machine: Dictionary, run_state: RunState, ui_state: Di
 	# complete takeover spec keeps the first pinball frame visual and interactive
 	# state atomic instead of leaving a pinball scene inside the old cabinet.
 	if str(stored_active_bonus.get("family", "")) == "pinball" and bool(stored_active_bonus.get("active", false)) and not bool(stored_active_bonus.get("complete", false)) and not trigger_reveal_pending:
-		return _pinball_active_surface_state(machine, stored_active_bonus, run_state, surface_time_msec, ui_state)
+		return _pinball_active_surface_state(machine, stored_active_bonus, run_state, surface_time_msec, ui_state, current_surface_state)
 	var active_bonus := _display_active_bonus(machine, stored_active_bonus, surface_time_msec, trigger_reveal_pending)
 	active_bonus = _with_pinball_alert_metadata(active_bonus, machine)
 	if str(active_bonus.get("family", "")) == "pinball" and bool(active_bonus.get("active", false)):
@@ -267,12 +267,15 @@ func realtime_state_patch(machine: Dictionary, run_state: RunState, ui_state: Di
 		"slot_active_bonus_active": feature_active,
 		"slot_autoplay_active": bool(machine.get("slot_autoplay_active", false)),
 		"slot_free_spins": int(machine.get("free_spins", 0)),
-		"bankroll": run_state.wager_capacity_for_game("slot") if run_state != null else int(current_surface_state.get("bankroll", 0)),
-		"suspicion_level": run_state.suspicion_level() if run_state != null else int(current_surface_state.get("suspicion_level", 0)),
+		# Host money and pressure cannot change inside this presentation-only tick;
+		# action boundaries replace them atomically. Reuse the canonical projection
+		# instead of rebuilding wager capacity and suspicion aggregation every 100 ms.
+		"bankroll": int(current_surface_state.get("bankroll", 0)),
+		"suspicion_level": int(current_surface_state.get("suspicion_level", 0)),
 	}
 
 
-func _pinball_active_surface_state(machine: Dictionary, active_bonus: Dictionary, run_state: RunState, surface_time_msec: int, ui_state: Dictionary) -> Dictionary:
+func _pinball_active_surface_state(machine: Dictionary, active_bonus: Dictionary, run_state: RunState, surface_time_msec: int, ui_state: Dictionary, current_surface_state: Dictionary = {}) -> Dictionary:
 	var live: Dictionary = PinballFeatureScript.surface_refresh(active_bonus, surface_time_msec)
 	live = _with_pinball_alert_metadata(live, machine)
 	live["pinball_launch_meter"] = _pinball_launch_meter(live, surface_time_msec)
@@ -281,6 +284,31 @@ func _pinball_active_surface_state(machine: Dictionary, active_bonus: Dictionary
 	var pinball_cues_value: Variant = pinball_scene.get("audio_cues", [])
 	if typeof(pinball_cues_value) == TYPE_ARRAY:
 		pinball_cues = pinball_cues_value as Array
+	# The first reveal must replace the reel cabinet atomically. Once that
+	# takeover is installed, subsequent ticks only replace live simulation and
+	# audio fields; rebuilding the static skin, bindings, and channel metadata is
+	# pure allocation churn and makes the feature's physics frames more uneven.
+	if str(current_surface_state.get("slot_cabinet_identity", "")) == "pinball":
+		var surface_audio: Dictionary = current_surface_state.get("surface_audio", {}) if typeof(current_surface_state.get("surface_audio", {})) == TYPE_DICTIONARY else {}
+		var realtime_audio := surface_audio.duplicate(false)
+		realtime_audio["feature_cues"] = pinball_cues
+		var realtime_message := "Bonus active: %s." % str(live.get("mode", "feature")).replace("_", " ").capitalize()
+		return {
+			"surface_realtime_state_refresh": true,
+			"slot_visual_time_msec": surface_time_msec,
+			"slot_bonus_trigger_reveal_pending": false,
+			"slot_bonus_trigger_revealed": true,
+			"slot_feature_scene": pinball_scene,
+			"slot_bonus_total": int(live.get("feature_total", live.get("pending_award", 0))),
+			"slot_active_bonus": live,
+			"slot_active_bonus_active": true,
+			"surface_audio": realtime_audio,
+			"result_message": realtime_message,
+			"outcome_message": realtime_message,
+			"has_recent_outcome": true,
+			"bankroll": int(current_surface_state.get("bankroll", 0)),
+			"suspicion_level": int(current_surface_state.get("suspicion_level", 0)),
+		}
 	var animation_id := str(machine.get("slot_animation_id", "pinball:live"))
 	var feature_channel := {
 		"id": "slot_feature",
@@ -504,9 +532,7 @@ func _trigger_bonus_reveal_msec(machine: Dictionary) -> int:
 func _surface_spin_elapsed_msec(ui_state: Dictionary, expected_active_id: String = "", missing_value: int = -1) -> int:
 	if int(ui_state.get("slot_tease_input_msec", -1)) >= 0:
 		return int(ui_state.get("slot_tease_input_msec", -1))
-	var runtime: Dictionary = _copy_dict(ui_state.get("surface_runtime_status", {}))
-	var animations: Dictionary = _copy_dict(runtime.get("surface_animations", {}))
-	var spin: Dictionary = _copy_dict(animations.get("slot_spin", {}))
+	var spin := _surface_animation_status_view(ui_state, "slot_spin")
 	if spin.is_empty():
 		return missing_value
 	# The action boundary snapshot is built before the canvas installs the new
@@ -571,9 +597,7 @@ func _nudge_chain_timing_state(offer: Dictionary, ui_state: Dictionary) -> Dicti
 func _surface_nudge_chain_elapsed_msec(ui_state: Dictionary) -> int:
 	if int(ui_state.get("slot_nudge_chain_input_msec", -1)) >= 0:
 		return int(ui_state.get("slot_nudge_chain_input_msec", -1))
-	var runtime: Dictionary = _copy_dict(ui_state.get("surface_runtime_status", {}))
-	var animations: Dictionary = _copy_dict(runtime.get("surface_animations", {}))
-	var chain: Dictionary = _copy_dict(animations.get("slot_nudge_chain", {}))
+	var chain := _surface_animation_status_view(ui_state, "slot_nudge_chain")
 	if not chain.is_empty():
 		return maxi(0, int(round(float(chain.get("elapsed", 0.0)) * 1000.0)))
 	if int(ui_state.get("slot_tease_input_msec", -1)) >= 0:
@@ -627,10 +651,21 @@ func _nudge_timing_state(offer: Dictionary, ui_state: Dictionary) -> Dictionary:
 
 
 func _surface_spin_active(ui_state: Dictionary) -> bool:
-	var runtime: Dictionary = _copy_dict(ui_state.get("surface_runtime_status", {}))
-	var animations: Dictionary = _copy_dict(runtime.get("surface_animations", {}))
-	var spin: Dictionary = _copy_dict(animations.get("slot_spin", {}))
+	var spin := _surface_animation_status_view(ui_state, "slot_spin")
 	return bool(spin.get("active", false))
+
+
+func _surface_animation_status_view(ui_state: Dictionary, channel_id: String) -> Dictionary:
+	# Realtime status is a host-owned snapshot used read-only by presentation.
+	# Borrow the requested channel instead of cloning the whole status tree.
+	var runtime_value: Variant = ui_state.get("surface_runtime_status", {})
+	if typeof(runtime_value) != TYPE_DICTIONARY:
+		return {}
+	var animations_value: Variant = (runtime_value as Dictionary).get("surface_animations", {})
+	if typeof(animations_value) != TYPE_DICTIONARY:
+		return {}
+	var channel_value: Variant = (animations_value as Dictionary).get(channel_id, {})
+	return channel_value if typeof(channel_value) == TYPE_DICTIONARY else {}
 
 
 func _bet_options(selected_bet: Dictionary) -> Array:

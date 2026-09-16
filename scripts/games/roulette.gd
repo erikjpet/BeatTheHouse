@@ -35,6 +35,10 @@ const TABLE_GAME_HOST_TRANSIENT_UI_KEYS := [
 	"selected_action_id", "selected_action_kind", "selected_index",
 	"focused_talk_speaker",
 ]
+const ROULETTE_REALTIME_UI_KEYS := [
+	"surface_time_msec", "drunk_scaled_surface_time_msec", "reduce_motion",
+	"selected_action_id", "selected_action_kind", "selected_index",
+]
 const WHEEL_CENTER := Vector2(150, 182)
 const WHEEL_RADIUS := 108.0
 const GRID_RECT := Rect2(332, 156, 360, 108)
@@ -220,6 +224,25 @@ func generate_environment_state(_run_state: RunState, environment: Dictionary, r
 
 func environment_state_generated(run_state: RunState, environment: Dictionary, generated_state: Dictionary) -> void:
 	_apply_grand_casino_dealer_assignment(generated_state, run_state, environment)
+
+
+func surface_realtime_patch_preserves_host_state() -> bool:
+	# Realtime Roulette patches advance only wheel/skill presentation. Bankroll,
+	# pressure, intoxication, selection, and accessibility changes all cross a
+	# sealed action boundary that performs a complete surface refresh.
+	return true
+
+
+func surface_realtime_uses_lightweight_ui_state() -> bool:
+	return true
+
+
+func surface_realtime_ui_state_keys() -> Array:
+	# The authoritative table session owns wagers, challenges, and undo/rebet
+	# history. A realtime tick needs only the transient host fields merged by
+	# _realtime_session_view, not the complete retained game UI dictionary. Talk
+	# focus changes cross a full render boundary and are not part of this patch.
+	return ROULETTE_REALTIME_UI_KEYS
 
 
 func _roulette_room_ceiling(environment: Dictionary, fallback_ceiling: int) -> int:
@@ -448,7 +471,7 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 	var table := _peek_table_state(environment)
 	if table.is_empty():
 		return {}
-	var session := _normalized_session(run_state, environment, ui_state, table)
+	var session := _realtime_session_view(table, ui_state, current_surface_state)
 	var bets: Array = _bet_array(session.get("roulette_bets", current_surface_state.get("roulette_bets", [])))
 	var last_result_source := _last_result_source(table)
 	var last_result := _surface_last_result(last_result_source)
@@ -525,9 +548,22 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 		"table_notice": table_notice,
 		"table_round_timer": round_timer,
 		"spin_elapsed_msec": int(phase_status.get("elapsed_msec", -1)),
-		"spin_trajectory": _dictionary_array(last_result_source.get("trajectory", [])),
 		"native_selected_surface_actions": _selected_surface_actions(session),
 	}
+
+
+func _realtime_session_view(table: Dictionary, ui_state: Dictionary, current_surface_state: Dictionary) -> Dictionary:
+	# Realtime refresh begins only after the sealed action boundary has installed a
+	# normalized authority session. Borrow its nested collections read-only and own
+	# only the shallow envelope needed for transient clock/selection fields. The
+	# full compatibility normalizer remains on entry, command, and save-load paths.
+	var host_ledger: Dictionary = table.get("_blackjack_action_authority", {}) if typeof(table.get("_blackjack_action_authority", {})) == TYPE_DICTIONARY else {}
+	var stored_value: Variant = host_ledger.get("session", {}) if bool(host_ledger.get("initialized", false)) else current_surface_state
+	var session: Dictionary = (stored_value as Dictionary).duplicate(false) if typeof(stored_value) == TYPE_DICTIONARY else current_surface_state.duplicate(false)
+	for key in ROULETTE_REALTIME_UI_KEYS:
+		if ui_state.has(key):
+			session[key] = ui_state[key]
+	return session
 
 
 func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionary = {}) -> bool:

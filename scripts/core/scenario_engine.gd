@@ -162,7 +162,7 @@ static func sequence_definition_for_environment(environment: Dictionary, preferr
 	return candidate
 
 
-static func migrate_environment_sequence(environment: Dictionary, preferred: Dictionary = {}, seed_token: String = "") -> Dictionary:
+static func migrate_environment_sequence(environment: Dictionary, preferred: Dictionary = {}, seed_token: String = "", compute_changed: bool = true, definition_prevalidated: bool = false) -> Dictionary:
 	var legacy := normalize_state(environment.get("scenario_state", {}))
 	if legacy.is_empty():
 		return {"ok": true, "changed": false, "active": false, "scenario_id": ""}
@@ -185,7 +185,7 @@ static func migrate_environment_sequence(environment: Dictionary, preferred: Dic
 	# catalogs below. Serializing the complete room here also serialized unrelated
 	# machine physics state twice (most visibly Coin Pusher) merely to populate the
 	# informational `changed` bit.
-	var before := JSON.stringify(_sequence_migration_change_snapshot(environment))
+	var before := JSON.stringify(_sequence_migration_change_snapshot(environment)) if compute_changed else ""
 	var migration := {
 		"schema_version": SequenceRuntimeScript.STATE_SCHEMA_VERSION,
 		"scenario_id": scenario_id,
@@ -193,8 +193,9 @@ static func migrate_environment_sequence(environment: Dictionary, preferred: Dic
 		"status": "sequence_active",
 	}
 	environment["scenario_sequence_migration"] = migration
-	ensure_sequence_state(environment, definition, seed_token)
-	return {"ok": true, "changed": before != JSON.stringify(_sequence_migration_change_snapshot(environment)), "active": true, "scenario_id": scenario_id, "definition": definition}
+	ensure_sequence_state(environment, definition, seed_token, definition_prevalidated)
+	var changed := before != JSON.stringify(_sequence_migration_change_snapshot(environment)) if compute_changed else true
+	return {"ok": true, "changed": changed, "active": true, "scenario_id": scenario_id, "definition": definition}
 
 
 static func _sequence_migration_change_snapshot(environment: Dictionary) -> Dictionary:
@@ -207,7 +208,7 @@ static func _sequence_migration_change_snapshot(environment: Dictionary) -> Dict
 	return snapshot
 
 
-static func ensure_sequence_state(environment: Dictionary, definition: Dictionary, seed_token: String = "") -> Dictionary:
+static func ensure_sequence_state(environment: Dictionary, definition: Dictionary, seed_token: String = "", definition_prevalidated: bool = false) -> Dictionary:
 	if _sequence_is_suppressed(environment, definition):
 		_clear_environment_sequence(environment)
 		return {}
@@ -247,7 +248,7 @@ static func ensure_sequence_state(environment: Dictionary, definition: Dictionar
 		return {}
 	if state.is_empty():
 		_capture_sequence_baseline(environment)
-		state = SequenceRuntimeScript.initial_state(definition, node_id, seed_token, host_semantics)
+		state = SequenceRuntimeScript.initial_state(definition, node_id, seed_token, host_semantics, definition_prevalidated)
 	else:
 		var node_binding_failed := false
 		if str(state.get("node_id", "")) != node_id:

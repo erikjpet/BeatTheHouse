@@ -3864,6 +3864,11 @@ static func _check_definition_validation_receipt(failures: Array) -> void:
 		failures.append("Scenario definition receipt fixture did not have exact target-catalog proof: %s" % JSON.stringify(definition_errors))
 		return
 	definition[ScenarioEngineScript.VALIDATED_SEQUENCE_MARKER] = true
+	var host_semantics := _fixture_host_semantics(definition)
+	var validated_state := SequenceRuntimeScript.initial_state(definition, "bar_node", "validated_fast_path", host_semantics)
+	var prevalidated_state := SequenceRuntimeScript.initial_state(definition, "bar_node", "validated_fast_path", host_semantics, true)
+	if SequenceRuntimeScript.content_fingerprint(prevalidated_state) != SequenceRuntimeScript.content_fingerprint(validated_state):
+		failures.append("Scenario prevalidated initialization did not produce the exact fully validated runtime state.")
 	var environment := {"id": "bar_001", "archetype_id": "bar", "world_node_id": "bar_node", "scenario_state": {"id": definition.get("id", "")}}
 	var resolved := ScenarioEngineScript.sequence_definition_for_environment(environment, definition)
 	if not bool(resolved.get("__scenario_sequence_runtime_validated", false)):

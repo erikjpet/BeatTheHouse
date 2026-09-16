@@ -349,6 +349,23 @@ func active_item_command(item_id: String, run_state: RunState, environment: Dict
 	return {"handled": false}
 
 
+func surface_realtime_patch_preserves_host_state() -> bool:
+	# Realtime presentation may commit the one-time reels-to-pinball reveal, but
+	# it cannot change Foundation bankroll, pressure, intoxication, or selection.
+	return true
+
+
+func surface_realtime_uses_lightweight_ui_state() -> bool:
+	return true
+
+
+func surface_realtime_ui_state_keys() -> Array:
+	# Slot timing reads the canvas channel status plus optional player timing
+	# inputs. Dense retained reels, history, and bonus data come from the owned
+	# machine, not from the host UI dictionary.
+	return ["surface_runtime_status", "slot_tease_input_msec", "slot_nudge_chain_input_msec"]
+
+
 func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
 	# Ordinary rendering is read-only. Once a machine exists, use its live stored
 	# snapshot instead of rewriting the environment on every rebuild. The sole

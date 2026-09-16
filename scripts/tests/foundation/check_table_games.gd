@@ -2365,6 +2365,18 @@ func _check_roulette_surface_contract(game: GameModule, failures: Array, library
 	var persisted_last_result: Dictionary = persisted_table.get("last_result", {}) if typeof(persisted_table.get("last_result", {})) == TYPE_DICTIONARY else {}
 	var resolved_at_msec := int(persisted_last_result.get("resolved_at_msec", 0))
 	var early_result_surface := game.surface_state(run_state, environment, {"surface_time_msec": resolved_at_msec + 100})
+	if not game.surface_realtime_patch_preserves_host_state() or not game.surface_realtime_uses_lightweight_ui_state():
+		failures.append("Roulette realtime animation did not preserve the compact host-state contract.")
+	if game.surface_realtime_ui_state_keys().has("selected_stake"):
+		failures.append("Roulette realtime animation requested the expensive generic stake projection.")
+	var early_realtime_patch: Dictionary = game.surface_realtime_state_patch(run_state, environment, {"surface_time_msec": resolved_at_msec + 200}, early_result_surface)
+	if early_realtime_patch.has("spin_trajectory"):
+		failures.append("Roulette realtime patch recopied the immutable spin trajectory.")
+	var merged_realtime_surface := early_result_surface.duplicate(false)
+	for patch_key in early_realtime_patch.keys():
+		merged_realtime_surface[patch_key] = early_realtime_patch[patch_key]
+	if JSON.stringify(merged_realtime_surface.get("spin_trajectory", [])) != JSON.stringify(early_result_surface.get("spin_trajectory", [])):
+		failures.append("Roulette compact realtime patch did not retain the exact initial spin trajectory.")
 	var early_channels: Array = early_result_surface.get("surface_animation_channels", []) if typeof(early_result_surface.get("surface_animation_channels", [])) == TYPE_ARRAY else []
 	var early_spin_channel: Dictionary = {}
 	for channel_value in early_channels:
@@ -3100,6 +3112,10 @@ func _check_baccarat_surface_contract(game: GameModule, failures: Array, library
 	var persisted_table: Dictionary = ((environment.get("game_states", {}) as Dictionary).get("baccarat", {}) as Dictionary)
 	if int(persisted_table.get("hands_played", 0)) <= 0 or (persisted_table.get("last_result", {}) as Dictionary).is_empty():
 		failures.append("Baccarat did not persist the resolved table hand state.")
+	var persisted_result_before := JSON.stringify(persisted_table.get("last_result", {}))
+	game.surface_realtime_state_patch(run_state, environment, {"surface_time_msec": int((persisted_table.get("last_result", {}) as Dictionary).get("resolved_at_msec", 0)) + 200}, ready_surface)
+	if JSON.stringify(persisted_table.get("last_result", {})) != persisted_result_before:
+		failures.append("Baccarat read-only realtime projection mutated the authoritative settled hand by alias.")
 	var settled_surface := game.surface_state(run_state, environment, {"surface_time_msec": Time.get_ticks_msec() + 7000})
 	var settled_explainer: Dictionary = settled_surface.get("baccarat_explainer", {}) if typeof(settled_surface.get("baccarat_explainer", {})) == TYPE_DICTIONARY else {}
 	if str(settled_explainer.get("winner", "")) != str(result.get("baccarat_winner", "")):

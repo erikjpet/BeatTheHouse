@@ -291,6 +291,30 @@ func wager_activity_incomplete(_run_state: RunState, environment: Dictionary, _u
 	return ["before", "draw", "after", "preflop", "flop", "turn", "river"].has(str(_table_state(environment).get("phase", "idle")))
 
 
+func surface_realtime_patch_preserves_host_state() -> bool:
+	# Card/chip/payout animation ticks cannot mutate any Foundation host state.
+	return true
+
+
+func surface_realtime_uses_lightweight_ui_state() -> bool:
+	return true
+
+
+func surface_realtime_ui_state_keys() -> Array:
+	return ["poker_animation", "reduce_motion"]
+
+
+func surface_realtime_state_patch(_run_state: RunState, _environment: Dictionary, ui_state: Dictionary, _current_surface_state: Dictionary = {}) -> Dictionary:
+	var animation: Dictionary = ui_state.get("poker_animation", {}) if typeof(ui_state.get("poker_animation", {})) == TYPE_DICTIONARY else {}
+	var presentation_msec := int(ui_state.get("surface_presentation_time_msec", ui_state.get("surface_time_msec", 0)))
+	var reduce_motion := bool(ui_state.get("reduce_motion", false))
+	return {
+		"surface_realtime_state_refresh": _animation_bundle_live(animation, presentation_msec, reduce_motion),
+		"surface_animation_channels": _surface_animation_channels(animation),
+		"reduce_motion": reduce_motion,
+	}
+
+
 func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
 	var state := _table_state(environment)
 	var phase := str(state.get("phase", "idle"))
