@@ -13,6 +13,7 @@ var library: ContentLibrary
 var _last_environment_install_errors: Array = []
 var _world_environment_timing_enabled := false
 var _last_world_environment_timing_usec: Dictionary = {}
+var _last_preview_environment_timing_usec: Dictionary = {}
 var _world_environment_build_stages_usec: Dictionary = {}
 var _world_environment_install_stages_usec: Dictionary = {}
 
@@ -25,6 +26,10 @@ func set_world_environment_timing_enabled(enabled: bool) -> void:
 
 func world_environment_timing_snapshot() -> Dictionary:
 	return _last_world_environment_timing_usec.duplicate(true)
+
+
+func preview_environment_timing_snapshot() -> Dictionary:
+	return _last_preview_environment_timing_usec.duplicate(true)
 
 
 # Stores the content library used for generation.
@@ -220,50 +225,103 @@ func next_environment(run_state: RunState, target_archetype_id: String = "", tar
 
 
 # Builds the next environment from a cloned run so route previews do not mutate state.
-func preview_environment(run_state: RunState, target_archetype_id: String = "") -> Dictionary:
+func preview_environment(run_state: RunState, target_archetype_id: String = "", target_prevalidated: bool = false) -> Dictionary:
+	var perf_total_started_usec := Time.get_ticks_usec() if _world_environment_timing_enabled else 0
+	var perf_stage_started_usec := perf_total_started_usec
+	var perf_stages: Dictionary = {}
 	if run_state == null:
 		return {}
 	var stored_preview := _stored_world_environment_preview(run_state, target_archetype_id)
 	if not stored_preview.is_empty():
 		return stored_preview
+	if _world_environment_timing_enabled:
+		perf_stages["stored_lookup"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stage_started_usec = Time.get_ticks_usec()
 	# Exact scouting only consumes the destination's public offers/hooks. Cloning
 	# the full run copied every portable ticket and every visited room for each
 	# route card. Build the deterministic preview from the same logical run fields
 	# with accumulated player-owned payloads and stored room bodies omitted.
 	var preview_state := RunState.new()
-	var preview_data := run_state.to_save_snapshot()
-	# Historical receipts and timeline samples are not generation inputs. Copying
-	# and normalizing them for each scouted route made preview cost grow with run
-	# age even though they cannot affect the destination. Progression remains in
-	# narrative/story flags, while environment_history is retained because its
-	# count participates in deterministic depth generation.
-	preview_data["story_log"] = []
-	preview_data["story_log_archive_count"] = run_state.story_log_entry_count()
-	# from_dict synthesizes a baseline when heat history is empty. Retain one
-	# compact sample so the preview clone remains read-only with respect to the
-	# authoritative current heat while avoiding the full timeline copy.
-	var preview_heat_sample: Dictionary = {}
-	if not run_state.heat_history.is_empty() and typeof(run_state.heat_history[run_state.heat_history.size() - 1]) == TYPE_DICTIONARY:
-		preview_heat_sample = (run_state.heat_history[run_state.heat_history.size() - 1] as Dictionary).duplicate(false)
-	else:
-		preview_heat_sample = {
-			"action_index": run_state.environment_travel_count(),
-			"game_clock_minutes": run_state.game_clock_minutes,
-			"heat_value": run_state.suspicion_level(),
-			"environment_id": str(run_state.current_environment.get("id", "")),
-		}
-	preview_data["heat_history"] = [preview_heat_sample]
-	preview_data["pending_triggered_events"] = []
-	preview_data["pending_bags"] = []
-	preview_data["active_triggered_event"] = {}
-	preview_data["grand_casino_atm_interest_notifications"] = []
-	preview_data["portable_ticket_piles"] = {}
-	preview_data["world_map"] = WorldMap.normalize_topology(run_state.world_map)
-	preview_data["current_environment"] = RunState.environment_context_snapshot(run_state.current_environment)
-	preview_data["grand_casino_room_states"] = {}
+	var preview_data := run_state.to_travel_preview_snapshot()
+	if _world_environment_timing_enabled:
+		perf_stages["snapshot"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stage_started_usec = Time.get_ticks_usec()
 	preview_state.from_dict(preview_data)
-	var environment := next_environment(preview_state, target_archetype_id)
-	return _travel_preview_environment_projection(environment.to_dict())
+	if _world_environment_timing_enabled:
+		perf_stages["restore"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stage_started_usec = Time.get_ticks_usec()
+	var environment_data: Dictionary
+	if preview_state.has_world_map():
+		environment_data = _preview_world_environment_data(preview_state, target_archetype_id, target_prevalidated)
+	else:
+		environment_data = next_environment(preview_state, target_archetype_id).to_dict()
+	if _world_environment_timing_enabled:
+		perf_stages["generate"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stage_started_usec = Time.get_ticks_usec()
+	var projection := _travel_preview_environment_projection(environment_data)
+	if _world_environment_timing_enabled:
+		perf_stages["projection"] = Time.get_ticks_usec() - perf_stage_started_usec
+		_last_preview_environment_timing_usec = {
+			"target_id": target_archetype_id,
+			"stages_usec": perf_stages,
+			"build_stages_usec": _world_environment_build_stages_usec.duplicate(true),
+			"total_usec": Time.get_ticks_usec() - perf_total_started_usec,
+		}
+	return projection
+
+
+# Exact route cards consume only the destination's public offer projection.
+# Building installable game machines, layouts, semantic receipts, and rollback
+# state here used to cold-load every game shown on the card, even though none of
+# that state is rendered or retained by scouting.
+func _preview_world_environment_data(run_state: RunState, target_archetype_id: String, target_prevalidated: bool) -> Dictionary:
+	var perf_stage_started_usec := Time.get_ticks_usec() if _world_environment_timing_enabled else 0
+	_world_environment_build_stages_usec = {}
+	var target_id := target_archetype_id.strip_edges()
+	var map_data := run_state.world_map
+	var current_node_id := run_state.current_world_node_id()
+	if target_id.is_empty() or not target_prevalidated and not _world_target_is_available(run_state, map_data, current_node_id, target_id):
+		return run_state.current_environment
+	var node := WorldMap.node_metadata_by_id(map_data, target_id)
+	if node.is_empty():
+		return run_state.current_environment
+	if _world_environment_timing_enabled:
+		_world_environment_build_stages_usec["target_lookup"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stage_started_usec = Time.get_ticks_usec()
+	run_state.configure_town_world(map_data)
+	if _world_environment_timing_enabled:
+		_world_environment_build_stages_usec["town_configure"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stage_started_usec = Time.get_ticks_usec()
+	if run_state.seeded_scenario_for_node(target_id).is_empty():
+		var scenario_seed_rng := run_state.create_rng("town_scenario_seed:%s" % target_id)
+		var seeded_scenario := _select_scenario(run_state, target_id, scenario_seed_rng, false)
+		if not seeded_scenario.is_empty():
+			run_state.seed_scenario_for_node(target_id, seeded_scenario)
+	if _world_environment_timing_enabled:
+		_world_environment_build_stages_usec["scenario_seed"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stage_started_usec = Time.get_ticks_usec()
+	var rng := run_state.create_rng()
+	var depth := run_state.environment_travel_count() + (0 if run_state.current_environment.is_empty() else 1)
+	var archetype := _archetype_by_id(target_id)
+	if archetype.is_empty():
+		archetype = _pick_archetype(run_state, depth, rng, target_id)
+	if _world_environment_timing_enabled:
+		_world_environment_build_stages_usec["archetype"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stage_started_usec = Time.get_ticks_usec()
+	var scenario := _select_scenario(run_state, str(archetype.get("id", target_id)), rng, false)
+	if _world_environment_timing_enabled:
+		_world_environment_build_stages_usec["scenario_select"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stage_started_usec = Time.get_ticks_usec()
+	var environment_data := EnvironmentInstance.travel_preview_from_archetype(archetype, depth, rng, library, run_state.challenge_config, scenario)
+	if _world_environment_timing_enabled:
+		_world_environment_build_stages_usec["environment_from_archetype"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stage_started_usec = Time.get_ticks_usec()
+	run_state.apply_town_generation_modifiers(environment_data, rng)
+	if str(archetype.get("kind", "")) == "home":
+		_apply_home_profile(run_state, environment_data, archetype, target_id, rng.fork("home_profile:%s" % target_id))
+	if _world_environment_timing_enabled:
+		_world_environment_build_stages_usec["town_and_home"] = Time.get_ticks_usec() - perf_stage_started_usec
+	return environment_data
 
 
 func _stored_world_environment_preview(run_state: RunState, target_archetype_id: String) -> Dictionary:

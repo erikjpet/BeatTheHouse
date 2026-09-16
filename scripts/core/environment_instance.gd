@@ -187,6 +187,78 @@ static func from_archetype(archetype: Dictionary, p_depth: int, rng: RngStream, 
 	return environment
 
 
+# Generates the exact fields shown by a travel scout while preserving the RNG
+# sequence used by full room generation. Presentation layout, events, semantic
+# inventories, and machine state are intentionally outside this projection.
+static func travel_preview_from_archetype(archetype: Dictionary, p_depth: int, rng: RngStream, library: ContentLibrary = null, challenge_config: Dictionary = {}, selected_scenario: Dictionary = {}) -> Dictionary:
+	if _is_layered_archetype(archetype):
+		var layers := _copy_dict(archetype.get("layers", {}))
+		var layer_ids := _string_array(layers.keys())
+		if layer_ids.is_empty():
+			return {}
+		var configured_default := str(archetype.get("default_layer_id", layer_ids[0])).strip_edges()
+		var modifiers := _copy_dict(challenge_config.get("modifiers", {}))
+		var overrides := _copy_dict(modifiers.get("environment_layer_overrides", {}))
+		var default_id := str(overrides.get(str(archetype.get("id", "")), configured_default)).strip_edges()
+		if not layer_ids.has(default_id):
+			default_id = configured_default if layer_ids.has(configured_default) else str(layer_ids[0])
+		var primary_id := str(archetype.get("compatibility_primary_layer_id", default_id)).strip_edges()
+		if not layer_ids.has(primary_id):
+			primary_id = default_id
+		# Full generation forks every non-primary floor before generating the
+		# primary one. A scout only renders the configured active floor, so select
+		# that same stream without materializing the other layer states.
+		var layer_rng := rng if default_id == primary_id else rng.fork("environment_layer:%s:%s" % [str(archetype.get("id", "")), default_id])
+		return travel_preview_from_archetype(_archetype_for_layer(archetype, default_id), p_depth, layer_rng, library, challenge_config, selected_scenario)
+	if library != null:
+		archetype = library.environment_archetype_for_challenge(archetype, challenge_config)
+	var selected_is_state := selected_scenario.has("phase_index") or selected_scenario.has("phase_action_counter")
+	var selected_state := ScenarioEngineScript.normalize_state(selected_scenario) if selected_is_state else ScenarioEngineScript.initial_state(selected_scenario)
+	if not selected_state.is_empty():
+		archetype = ScenarioEngineScript.apply_to_archetype(archetype, selected_state)
+	var environment := EnvironmentInstance.new()
+	environment.depth = p_depth
+	environment.tier = int(archetype.get("tier", 1))
+	environment.kind = str(archetype.get("kind", "unknown"))
+	environment.archetype_id = str(archetype.get("id", "unknown"))
+	environment.id = "%s_%03d" % [environment.archetype_id, p_depth + 1]
+	# Name and generated music precede games/offers on the authoritative stream.
+	# Compute them even though the route card does not render either value.
+	_build_name(archetype, rng)
+	_generated_music_profile(archetype, environment, rng)
+	var game_pool := _filtered_game_pool(archetype, library, challenge_config)
+	var required_games := _filtered_required_games(archetype, game_pool)
+	var game_ids := _pick_ids_with_required(game_pool, archetype.get("game_count", 1), required_games, rng)
+	# attach_to_environment materializes a scenario's exclusive game after base
+	# selection. Mirror that one player-visible delta without constructing the
+	# complete semantic environment.
+	var exclusive_opportunity := _copy_dict(archetype.get("scenario_exclusive_opportunity", {}))
+	var exclusive_game_id := str(exclusive_opportunity.get("game_id", "")).strip_edges()
+	if not exclusive_game_id.is_empty() and not game_ids.has(exclusive_game_id):
+		game_ids.append(exclusive_game_id)
+	var item_offers := _build_offers(archetype, rng, library, challenge_config)
+	for scenario_offer_value in _copy_array(archetype.get("scenario_item_offers", [])):
+		if typeof(scenario_offer_value) != TYPE_DICTIONARY:
+			continue
+		var scenario_offer := (scenario_offer_value as Dictionary).duplicate(true)
+		var scenario_item_id := str(scenario_offer.get("id", "")).strip_edges()
+		if scenario_item_id.is_empty():
+			continue
+		for offer_index in range(item_offers.size() - 1, -1, -1):
+			if typeof(item_offers[offer_index]) == TYPE_DICTIONARY and str((item_offers[offer_index] as Dictionary).get("id", "")) == scenario_item_id:
+				item_offers.remove_at(offer_index)
+		item_offers.append(scenario_offer)
+	return {
+		"tier": environment.tier,
+		"kind": environment.kind,
+		"game_ids": game_ids,
+		"service_ids": _copy_array(archetype.get("service_pool", [])),
+		"lender_hooks": _pick_lenders(archetype, rng.fork("lenders:%s" % environment.id)),
+		"item_offers": item_offers,
+		"travel_locked_actions": maxi(0, int(archetype.get("travel_locked_actions", 0))),
+	}
+
+
 # Restores a generated environment from saveable data.
 static func from_dict(data: Dictionary) -> EnvironmentInstance:
 	var environment := EnvironmentInstance.new()

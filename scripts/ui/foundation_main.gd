@@ -195,7 +195,6 @@ const RUN_UI_STAGE_SCRIPT_FIELDS := {
 	10: ["WorldMapCanvasScript", "WorldMapOverlayControllerScript", "FoundationTravelViewModelScript"],
 	11: ["ItemFoundPopupScript"],
 	12: ["CoachOverlayScript", "CoachViewModelScript"],
-	14: ["CoinPusherGameScript"],
 }
 const RUN_UI_UNAVAILABLE_MESSAGE := "The run interface is unavailable. Restart the game and try again."
 
@@ -229,7 +228,6 @@ var MetaItemInteractionViewModelScript: Script
 var BagOpenReelViewModelScript: Script
 var RunJournalViewModelScript: Script
 var FoundationTravelViewModelScript: Script
-var CoinPusherGameScript: Script
 
 var ActionAuthorityScript: Script:
 	get:
@@ -8484,14 +8482,29 @@ func _prewarm_run_ui_after_web_start() -> void:
 func _request_run_ui_script_prewarm() -> void:
 	if OS.has_feature("web"):
 		return
-	for script_path_value in RUN_UI_SCRIPT_PATHS.values():
-		var script_path := str(script_path_value)
+	# ResourceLoader serves these requests in queue order. Prioritize the scripts
+	# needed by the first playable room; optional overlays and game modules may
+	# continue warming after an immediate Play click instead of blocking it.
+	var ordered_fields: Array = []
+	for stage_index in range(15):
+		for field_name_value in RUN_UI_STAGE_SCRIPT_FIELDS.get(stage_index, []):
+			if not ordered_fields.has(field_name_value):
+				ordered_fields.append(field_name_value)
+	for field_name_value in RUN_UI_SCRIPT_PATHS.keys():
+		if str(field_name_value) == "CoinPusherGameScript":
+			continue
+		if not ordered_fields.has(field_name_value):
+			ordered_fields.append(field_name_value)
+	# The large optional game is still warmed while the menu is idle, but only
+	# after every first-room and overlay script has entered the worker queue.
+	ordered_fields.append("CoinPusherGameScript")
+	for field_name_value in ordered_fields:
+		var script_path := str(RUN_UI_SCRIPT_PATHS.get(str(field_name_value), ""))
 		if script_path.is_empty() or run_ui_script_prewarm_requests.has(script_path) or ResourceLoader.has_cached(script_path):
 			continue
 		var request_error := ResourceLoader.load_threaded_request(script_path)
 		if request_error == OK:
 			run_ui_script_prewarm_requests[script_path] = true
-
 
 func _run_ui_stage_scripts_ready(stage_index: int) -> bool:
 	var stage_fields: Array = RUN_UI_STAGE_SCRIPT_FIELDS.get(stage_index, [])
@@ -8598,14 +8611,6 @@ func _build_next_run_ui_stage() -> bool:
 			_build_item_found_popup()
 		12:
 			_build_coach_overlay()
-		13:
-			# The Web prewarmer advances two light stages per frame. This spacer
-			# keeps the following large resource graph off the coach-build frame.
-			pass
-		14:
-			# Loading happens in _ensure_run_ui_stage_scripts(). Holding the Script
-			# makes RunGenerator's ordinary load(module_path) a resource-cache hit.
-			pass
 		_:
 			run_ui_built = true
 			run_ui_build_in_progress = false

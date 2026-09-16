@@ -15407,6 +15407,31 @@ func world_sequence_resume_delivery_checkpoint() -> Dictionary:
 # codec is non-mutating and performs the final compact deep projection on the
 # worker.
 func to_save_snapshot(deep_copy_seeded_scenario_definitions: bool = true) -> Dictionary:
+	return _save_snapshot(deep_copy_seeded_scenario_definitions, false)
+
+
+# Produces the same logical input that RunGenerator historically obtained by
+# building a complete save snapshot and then replacing non-generation payloads.
+# Skipping those payloads at the source keeps an exact scout independent of
+# accumulated machine state, visited-room bodies, receipts, and history logs.
+func to_travel_preview_snapshot() -> Dictionary:
+	return _save_snapshot(false, true)
+
+
+func _save_snapshot(deep_copy_seeded_scenario_definitions: bool, travel_preview: bool) -> Dictionary:
+	var preview_heat_history: Array = []
+	if travel_preview:
+		var preview_heat_sample: Dictionary = {}
+		if not heat_history.is_empty() and typeof(heat_history[heat_history.size() - 1]) == TYPE_DICTIONARY:
+			preview_heat_sample = (heat_history[heat_history.size() - 1] as Dictionary).duplicate(false)
+		else:
+			preview_heat_sample = {
+				"action_index": environment_travel_count(),
+				"game_clock_minutes": game_clock_minutes,
+				"heat_value": suspicion_level(),
+				"environment_id": str(current_environment.get("id", "")),
+			}
+		preview_heat_history = [preview_heat_sample]
 	var result := {
 		"seed_text": seed_text,
 		"seed_value": seed_value,
@@ -15418,7 +15443,7 @@ func to_save_snapshot(deep_copy_seeded_scenario_definitions: bool = true) -> Dic
 		"grand_casino_atm_debt": grand_casino_atm_debt(),
 		"economic_state": economic_state,
 		"inventory": inventory.duplicate(false),
-		"portable_ticket_piles": portable_ticket_piles.duplicate(false),
+		"portable_ticket_piles": {} if travel_preview else portable_ticket_piles.duplicate(false),
 		"active_item_id": active_item_id,
 		"debt": debt.duplicate(false),
 		"sals_forfeited_item_ids": sals_forfeited_item_ids.duplicate(false),
@@ -15428,11 +15453,11 @@ func to_save_snapshot(deep_copy_seeded_scenario_definitions: bool = true) -> Dic
 		"alcoholic_level": alcoholic_level,
 		"pending_drunk_absorption": pending_drunk_absorption.duplicate(false),
 		"drunk_distortion_suppression_turns": drunk_distortion_suppression_turns,
-		"current_environment": _environment_for_persistent_storage(current_environment, false),
-		"world_map": _world_map_for_save_snapshot(world_map),
+		"current_environment": environment_context_snapshot(current_environment) if travel_preview else _environment_for_persistent_storage(current_environment, false),
+		"world_map": WorldMap.normalize_topology(world_map) if travel_preview else _world_map_for_save_snapshot(world_map),
 		"scenario_state_schema_version": ScenarioEngineScript.STATE_SCHEMA_VERSION,
 		"scenario_recent_by_archetype": scenario_recent_by_archetype.duplicate(false),
-		"grand_casino_room_states": _grand_casino_room_states_for_save(false),
+		"grand_casino_room_states": {} if travel_preview else _grand_casino_room_states_for_save(false),
 		"grand_casino_staffing": grand_casino_staffing.duplicate(false),
 		"rourke_current_room": rourke_current_room,
 		"rourke_current_spot": rourke_current_spot,
@@ -15445,9 +15470,9 @@ func to_save_snapshot(deep_copy_seeded_scenario_definitions: bool = true) -> Dic
 		"rival_cheaters": rival_cheaters.duplicate(false),
 		"rival_cheater_day": rival_cheater_day,
 		"rourke_escort_state": rourke_escort_state.duplicate(false),
-		"pending_triggered_events": pending_triggered_events.duplicate(true),
-		"pending_bags": pending_bags.duplicate(true),
-		"active_triggered_event": active_triggered_event.duplicate(true),
+		"pending_triggered_events": [] if travel_preview else pending_triggered_events.duplicate(true),
+		"pending_bags": [] if travel_preview else pending_bags.duplicate(true),
+		"active_triggered_event": {} if travel_preview else active_triggered_event.duplicate(true),
 		"event_cadence": event_cadence.duplicate(false),
 		"music_arrangement_state": music_arrangement_state.duplicate(false),
 		"music_tempo_state": music_tempo_state.duplicate(false),
@@ -15457,18 +15482,18 @@ func to_save_snapshot(deep_copy_seeded_scenario_definitions: bool = true) -> Dic
 		"unlocked_travel": unlocked_travel.duplicate(false),
 		"narrative_flags": narrative_flags.duplicate(false),
 		"story_flags": story_flags.duplicate(false),
-		"story_log": story_log.duplicate(false),
-		"story_log_archive_count": story_log_archive_count,
+		"story_log": [] if travel_preview else story_log.duplicate(false),
+		"story_log_archive_count": story_log_entry_count() if travel_preview else story_log_archive_count,
 		"crew_state": _crew_state_for_save(false, true),
 		"scenario_host_transaction_ledger": scenario_host_transaction_ledger.duplicate(true),
 		"active_delivery_run": active_delivery_run.duplicate(false),
 		"numbers_state": numbers_state.snapshot() if numbers_state != null else {},
-		"heat_history": heat_history.duplicate(false),
+		"heat_history": preview_heat_history if travel_preview else heat_history.duplicate(false),
 		"town_state": town_state.snapshot(deep_copy_seeded_scenario_definitions) if town_state != null else {},
 		"simulation_msec": simulation_msec,
 		"game_clock_minutes": game_clock_minutes,
 		"grand_casino_atm_interest_boundary_index": grand_casino_atm_interest_boundary_index,
-		"grand_casino_atm_interest_notifications": grand_casino_atm_interest_notifications.duplicate(false),
+		"grand_casino_atm_interest_notifications": [] if travel_preview else grand_casino_atm_interest_notifications.duplicate(false),
 		"closing_time_state": closing_time_state.duplicate(false),
 		"act": act_marker(),
 		"act_index": act_marker(),

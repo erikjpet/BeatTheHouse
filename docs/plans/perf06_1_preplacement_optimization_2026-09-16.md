@@ -258,3 +258,75 @@ fresh export above passed after this repair.
 This continuation still does not close `perf06_1`; it improves code that is
 shared with the eventual placement candidate and leaves the binding
 qualification requirements unchanged.
+
+## Late-run route-scout continuation
+
+A production-sized 589,891-character continuation fixture exposed a visible
+pause the first time the player selected an unvisited destination. The
+unchanged `40 ms` route-scout limit failed at `498.375 ms` averaged across one
+cold selection and three cache hits. Instrumentation showed the cold selection
+itself at `1,888.517 ms`; `1,311.815 ms` was spent cold-loading and generating
+Blackjack, Roulette, and Video Poker machine state that the route card never
+renders.
+
+The retained path now builds only the deterministic scout projection
+(`game_ids`, services, lenders, item offers, tier/kind, and travel lock). It
+preserves the authoritative RNG sequence for those fields, omits install-only
+machine/layout/semantic work, starts from a compact preview snapshot, and uses
+the already-validated UI target instead of repeating route discovery.
+
+| Late-run interaction | Before | After | Change |
+| --- | ---: | ---: | ---: |
+| Selected scout, 4-call average | 498.375 ms | 16.446 ms | -96.7% |
+| Selected scout, cold call | 1,888.517 ms | 65.472 ms | -96.5% |
+| Selected scout, cached call average | ~0.1 ms | 0.104 ms | unchanged |
+| Warm full refresh average | 18.929 ms | 16.487 ms | -12.9% |
+| Layered scout parity suite, 9 cases | 592.270 ms | 14.574 ms | -97.5% |
+
+No performance budget changed. The new projection parity probe compared all
+15 environment archetypes and all authored scenario overlays: 73 exact
+full-generation/scout projections passed. Deterministic replay passed twice
+across 3 seeds and 212 checkpoints with combined hash `76501950`. The
+extreme-state probe passed, and the full native performance probe completed 65
+observations with all game surfaces and resolve paths covered. Its launcher was
+also corrected to judge non-fatal Godot stderr diagnostics by process exit code,
+matching the native build wrappers.
+
+This remains reduced, non-binding pre-placement evidence. It does not close
+the existing Web/low-end red rows or replace the accepted placement candidate,
+quiescence, witness, and full-sample requirements.
+
+## Immediate New Run continuation
+
+The desktop startup contract exposed a separate player-visible pause after an
+immediate New Run click. The menu itself was already interactive in `86 ms`,
+but the click synchronously finished the run shell while its background loader
+was still processing optional overlay and game scripts. The measured baseline
+was `4,088 ms` to enter the first playable room.
+
+Native resource requests are now queued in run-build order so first-room
+scripts cannot sit behind optional inventory, journal, map, or meta overlays.
+Coin Pusher remains prewarmed for a later encounter, but its large script is
+queued last while the player is still on the menu and is no longer a required
+run-shell build stage. Two empty staging frames that existed only for that
+eager load were removed.
+
+| Desktop startup interaction | Before | After | Change |
+| --- | ---: | ---: | ---: |
+| Menu interactive | 86 ms | 86 ms | unchanged |
+| Immediate New Run | 4,088 ms | 3,886 ms | -4.9% |
+| Immediate Continue | 366 ms | 364 ms | effectively unchanged |
+
+An initially faster experiment requested Coin Pusher only after the first room
+became playable and reached `3,580 ms`, but it was rejected: the full matrix
+then observed a Blackjack idle draw p95 of `8.25 ms` against the unchanged
+`5.00 ms` limit while background compilation competed with live play. The
+retained menu-tail ordering removed that contention. The focused 47-observation
+matrix then measured Blackjack at `3.922 ms` p95, and the final full native
+matrix passed all 65 observations across 8 seeds. Native Coin Pusher input-trace
+parity also passed on the `native_v3` backend.
+
+No performance budget, simulation rule, RNG sequence, visual behavior, or
+native/Web gameplay path changed. Web retains its single-threaded staged loader;
+the request-order optimization is native-only because Web has no background
+resource worker.

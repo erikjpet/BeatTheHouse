@@ -39,22 +39,34 @@ func _run() -> void:
 		var warm_refresh_avg_ms := _average_ms(func(): host._refresh(), 8)
 		var target_ids: Array = host._travel_target_ids()
 		var selected_scout_avg_ms := 0.0
+		var selected_scout_cold_ms := 0.0
+		var selected_scout_warm_avg_ms := 0.0
+		var preview_environment_timing: Dictionary = {}
 		if not target_ids.is_empty():
 			host.selected_travel_target_id = str(target_ids[0])
 			host._invalidate_travel_view_cache()
-			selected_scout_avg_ms = _average_ms(func(): host._travel_choice_view_list(), 4)
+			host.generator.set_world_environment_timing_enabled(true)
+			var scout_started := Time.get_ticks_usec()
+			host._travel_choice_view_list()
+			selected_scout_cold_ms = float(Time.get_ticks_usec() - scout_started) / 1000.0
+			preview_environment_timing = host.generator.preview_environment_timing_snapshot()
+			selected_scout_warm_avg_ms = _average_ms(func(): host._travel_choice_view_list(), 3)
+			selected_scout_avg_ms = (selected_scout_cold_ms + selected_scout_warm_avg_ms * 3.0) / 4.0
 		if warm_refresh_avg_ms > MAX_WARM_FULL_REFRESH_AVG_MS:
 			failures.append("Warm late-run refresh averaged %.1f ms (limit %.1f ms)." % [warm_refresh_avg_ms, MAX_WARM_FULL_REFRESH_AVG_MS])
 		if selected_scout_avg_ms > MAX_SELECTED_SCOUT_PREVIEW_AVG_MS:
 			failures.append("Selected late-run scout preview averaged %.1f ms (limit %.1f ms)." % [selected_scout_avg_ms, MAX_SELECTED_SCOUT_PREVIEW_AVG_MS])
-		print("LATE_RUN_INTERACTION_PROBE refresh_avg_ms=%.3f selected_scout_avg_ms=%.3f save_chars=%d story=%d heat=%d failures=%d" % [
+		print("LATE_RUN_INTERACTION_PROBE refresh_avg_ms=%.3f selected_scout_avg_ms=%.3f selected_scout_cold_ms=%.3f selected_scout_warm_avg_ms=%.3f save_chars=%d story=%d heat=%d failures=%d" % [
 			warm_refresh_avg_ms,
 			selected_scout_avg_ms,
+			selected_scout_cold_ms,
+			selected_scout_warm_avg_ms,
 			JSON.stringify(host.run_state.to_save_snapshot()).length(),
 			host.run_state.story_log.size(),
 			host.run_state.heat_history.size(),
 			failures.size(),
 		])
+		print("LATE_RUN_INTERACTION_DETAIL target_count=%d preview_environment_timing=%s" % [target_ids.size(), JSON.stringify(preview_environment_timing)])
 	host.queue_free()
 	for failure in failures:
 		push_error(str(failure))

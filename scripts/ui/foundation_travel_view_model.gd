@@ -361,7 +361,8 @@ static func travel_choice(host: Variant, target_id: String, known_target_ids: Ar
 	var full_preview = host._travel_full_preview_enabled_for(target_id)
 	var preview_environment = {}
 	if full_preview and host.generator != null:
-		preview_environment = host.generator.preview_environment(host.run_state, target_id)
+		# target_id was checked against the authoritative travel target list above.
+		preview_environment = host.generator.preview_environment(host.run_state, target_id, true)
 	var preview = host.run_state.travel_route_preview(route, archetype, preview_environment, full_preview)
 	choice["preview"] = preview
 	choice["preview_level"] = str(preview.get("level", "partial"))
