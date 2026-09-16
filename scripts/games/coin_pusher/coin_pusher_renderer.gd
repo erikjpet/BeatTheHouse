@@ -76,6 +76,10 @@ var _entry_hardware_layout_carriage := -1
 var _entry_hardware_layout_cache: Dictionary = {}
 var _hardware_catalog_cache_key := ""
 var _hardware_catalog_cache: Array = []
+var _delivery_board_cache: Dictionary = {}
+var _delivery_board_cache_values := Vector4i()
+var _delivery_board_cache_x_max := 0
+var _delivery_board_cache_valid := false
 var _world_width := SCHEMA_DEFAULT_WIDTH
 var _world_back_y := SCHEMA_DEFAULT_BACK_Y
 var _coin_height := SCHEMA_DEFAULT_COIN_HEIGHT
@@ -1752,13 +1756,25 @@ func _delivery_board(apparatus: Dictionary, geometry: Dictionary) -> Dictionary:
 	var authored: Dictionary = authored_value if typeof(authored_value) == TYPE_DICTIONARY else {}
 	var width := int(geometry.get("width", SCHEMA_DEFAULT_WIDTH))
 	var platform_top := int(geometry.get("platform_top_z", 3600))
-	return {
-		"y": int(authored.get("y", geometry.get("drop_y", SCHEMA_DEFAULT_BACK_Y))),
-		"z_top": int(authored.get("z_top", geometry.get("drop_z", 24000))),
-		"z_bottom": int(authored.get("z_bottom", platform_top)),
-		"x_min": int(authored.get("x_min", 0)),
-		"x_max": int(authored.get("x_max", width)),
+	var y := int(authored.get("y", geometry.get("drop_y", SCHEMA_DEFAULT_BACK_Y)))
+	var z_top := int(authored.get("z_top", geometry.get("drop_z", 24000)))
+	var z_bottom := int(authored.get("z_bottom", platform_top))
+	var x_min := int(authored.get("x_min", 0))
+	var x_max := int(authored.get("x_max", width))
+	var values := Vector4i(y, z_top, z_bottom, x_min)
+	if _delivery_board_cache_valid and values == _delivery_board_cache_values and x_max == _delivery_board_cache_x_max:
+		return _delivery_board_cache
+	_delivery_board_cache_values = values
+	_delivery_board_cache_x_max = x_max
+	_delivery_board_cache_valid = true
+	_delivery_board_cache = {
+		"y": y,
+		"z_top": z_top,
+		"z_bottom": z_bottom,
+		"x_min": x_min,
+		"x_max": x_max,
 	}
+	return _delivery_board_cache
 
 
 func _project_delivery_board_point(board: Dictionary, x: float, z: float) -> Vector2:

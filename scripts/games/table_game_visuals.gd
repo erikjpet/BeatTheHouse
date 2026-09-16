@@ -138,7 +138,7 @@ static func draw_table(surface) -> void:
 
 static func draw_dealer_station(surface, state: Dictionary, label_override: String = "") -> void:
 	var focus := dealer_focus_for_state(state)
-	var profile := _copy_dict(state.get("dealer_profile", {}))
+	var profile := _dict_view(state.get("dealer_profile", {}))
 	var low_detail := _surface_low_detail_idle(surface)
 	var looking_away := bool(focus.get("lookaway_active", false))
 	var peek_window := bool(focus.get("peek_window_open", looking_away))
@@ -179,7 +179,7 @@ static func draw_dealer_station(surface, state: Dictionary, label_override: Stri
 
 
 static func draw_table_patrons(surface, state: Dictionary, positions: Array = []) -> void:
-	var patrons := _dictionary_array(state.get("patrons", []))
+	var patrons := _dictionary_array_view(state.get("patrons", []))
 	var seat_positions := positions if not positions.is_empty() else DEFAULT_PATRON_POSITIONS
 	if _surface_low_detail_idle(surface):
 		for i in range(patrons.size()):
@@ -263,7 +263,7 @@ static func _draw_static_character(surface, foot: Vector2, scale_value: float, a
 
 
 static func draw_patron_wager_badge(surface, state: Dictionary, patron: Dictionary, pos: Vector2, index: int) -> void:
-	var wager := _copy_dict(patron.get("visible_bet", patron.get("wager", {})))
+	var wager := _dict_view(patron.get("visible_bet", patron.get("wager", {})))
 	if wager.is_empty():
 		return
 	var action := str(state.get("patron_wager_action", ""))
@@ -326,8 +326,8 @@ static func draw_round_timer_panel(surface, timer_value: Variant, rect: Rect2, a
 
 
 static func dealer_focus_for_state(state: Dictionary) -> Dictionary:
-	var runtime := _copy_dict(state.get("dealer_focus_runtime", {}))
-	var profile := _copy_dict(state.get("dealer_profile", {}))
+	var runtime := _dict_view(state.get("dealer_focus_runtime", {}))
+	var profile := _dict_view(state.get("dealer_profile", {}))
 	var base_attention := int(profile.get("attention_base", 24))
 	var heat := int(state.get("suspicion_level", 0))
 	var started := int(runtime.get("dealer_lookaway_started_msec", 0))
@@ -632,17 +632,23 @@ static func _surface_clock(surface) -> float:
 	return float(surface.surface_flicker()) if surface != null and surface.has_method("surface_flicker") else float(Time.get_ticks_msec()) / 1000.0
 
 
-static func _dictionary_array(value: Variant) -> Array:
-	var result: Array = []
+static func _dictionary_array_view(value: Variant) -> Array:
 	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value:
+		return []
+	var source: Array = value
+	for entry in source:
 		if typeof(entry) == TYPE_DICTIONARY:
-			result.append((entry as Dictionary).duplicate(true))
-	return result
+			continue
+		# Canonical surface projections contain only dictionaries. Preserve the
+		# previous filtering behavior for malformed compatibility fixtures without
+		# allocating or cloning the production redraw path.
+		var filtered: Array = []
+		for candidate in source:
+			if typeof(candidate) == TYPE_DICTIONARY:
+				filtered.append(candidate)
+		return filtered
+	return source
 
 
-static func _copy_dict(value: Variant) -> Dictionary:
-	if typeof(value) != TYPE_DICTIONARY:
-		return {}
-	return (value as Dictionary).duplicate(true)
+static func _dict_view(value: Variant) -> Dictionary:
+	return value as Dictionary if typeof(value) == TYPE_DICTIONARY else {}
