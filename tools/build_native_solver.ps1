@@ -56,7 +56,12 @@ try {
         $env:PATH = (Join-Path $mingw "bin") + [System.IO.Path]::PathSeparator + $env:PATH
     }
     else {
-        . (Join-Path $toolRoot "emsdk/emsdk_env.ps1") | Out-Null
+        # emsdk's environment helper writes its normal "current shell only"
+        # notice to stderr. Under this script's Stop policy PowerShell promotes
+        # that informational line to a build failure, even though construct_env
+        # succeeded. Discard only the helper's diagnostic stream; its exit code
+        # and the compiler invocation below remain authoritative.
+        . (Join-Path $toolRoot "emsdk/emsdk_env.ps1") 2>$null | Out-Null
     }
     $arguments = @(
         "scons",
