@@ -1,5 +1,12 @@
 # perf06_1 Performance and Platform Report
 
+> 2026-09-16 update: a later reduced, non-binding pre-placement pass retained
+> two measured shared-renderer allocation reductions. Its before/after tables,
+> preserved red rows, and parity evidence are recorded in
+> `docs/plans/perf06_1_preplacement_optimization_2026-09-16.md`. It does not
+> change this report's historical Phase 3 status or supply binding Phase 4
+> evidence.
+
 Status: HISTORICAL NON-BINDING PHASE 3 LEDGER — tooling is on `main`; binding Phase 4 waits for accepted placement.
 
 The retained rehearsal began from pushed `origin/main` commit `c570f2ce6fafa4212292f8b129ca08f2e9e1e954`. `fix06_31` later landed, but the owner rejected the subsequent reusable-slot/fixture placement experiment. Only a future exact pushed candidate containing an accepted replacement placement design may supply binding figures.
@@ -87,7 +94,7 @@ The published table remains unchanged. Its structural contract and both native/W
 
 ## Optimizations
 
-None. No product code, behavior, RNG, economy, payout, feel, timing rule, budget, or liveness floor has been changed by this row. Phase 3 changes are evidence-harness fixes only.
+None were made by this historical Phase 3 row; its changes were evidence-harness fixes only. A later 2026-09-16 non-binding pass reduced common table-renderer deep copies and cached a five-scalar Coin Pusher render projection. That later work changed no behavior, RNG, economy, payout, feel, timing rule, budget, or liveness floor and is documented separately in `docs/plans/perf06_1_preplacement_optimization_2026-09-16.md`.
 
 ## Historical comparator handling
 
