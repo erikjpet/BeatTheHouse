@@ -3212,11 +3212,17 @@ func _current_game_surface_auto_tick_state() -> Dictionary:
 	var ui_state: Dictionary = {
 		"selected_action_id": selected_action_id,
 		"selected_action_kind": selected_action_kind,
-		"selected_stake": _current_selected_stake(),
 	}
 	# Read-only live references avoid the per-frame deep copy; action paths still
 	# rebuild the canonical ui_state before mutating or resolving anything.
 	var auto_tick_keys: Array = current_game.surface_auto_tick_state_keys() if current_game != null else []
+	# Resolving the generic stake range rebuilds action availability. Automatic
+	# predicates should pay that cost only when a module declares that its compact
+	# tick state consumes the selected stake. Due action boundaries still rebuild
+	# the complete canonical UI state for modules that did not opt into lightweight
+	# command handling.
+	if auto_tick_keys.has("selected_stake"):
+		ui_state["selected_stake"] = _current_selected_stake()
 	for key_value in auto_tick_keys:
 		var key := str(key_value)
 		if not key.is_empty() and game_surface_ui_state.has(key):
