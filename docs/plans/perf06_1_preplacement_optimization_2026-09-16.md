@@ -150,3 +150,111 @@ accepted placement candidate, a quiescent host, required witnesses, full
 sample sizes, cold/warm matrices, and the unchanged runbook gates. The current
 red low-end, liveness, startup-boundary, and Coin Pusher ceiling/carriage rows
 remain visible follow-up work; none was waived.
+
+## Continued shared-code pass
+
+This continuation started from `154286fd`, retained the game/runtime changes in
+`e4e24a20`, added the auto-tick host optimization in `08d61a90`, and repaired
+the pinned Web-native build wrapper in `b61f2595`. Local evidence is under
+`.tmp/perf_continue_20260916/`. It remains reduced, non-binding evidence.
+
+The continuation did not change a performance budget, game rule, payout,
+simulation step, RNG call, liveness requirement, or visual contract.
+
+### Retained runtime optimizations
+
+| Path | Before | After | Decision |
+| --- | ---: | ---: | --- |
+| Roulette active realtime p95 | 11,028 us | 285 us | Retained compact host-preserving projection. |
+| Roulette ritual realtime p95 | 9,888 us | 302 us | Retained. |
+| Bar Dice active realtime p95 | 4,764 us | 11 us | Retained; refresh cadence now follows its existing 900 ms tumble animation. |
+| Crew Draw Poker active realtime p95 | 1,913 us | 134 us | Retained compact projection. |
+| Baccarat active realtime p95 | 345 us | 253 us | Retained shallow result/session view. |
+| Baccarat active module p95 | 162 us | 79 us | Retained. |
+| Pinball realtime p95 | 508 us | 403 us | Retained compact steady-state patch after atomic takeover. |
+| Scenario validated finalization | 398.630 ms | 65.653 ms | Retained trusted prevalidated internal path after exact validation. |
+| Scenario core startup total | 505.790 ms | 169.642 ms | Retained. |
+| Scenario travel startup | 677.086 ms | 335.388 ms | Retained. |
+| Extreme-state meta interaction projection | 765.357 ms | 152.008 ms | Retained definition/icon/read-only caches. |
+| Extreme-state collection projection | 101.266 ms | 71.411 ms | Retained single-snapshot/read-only projection. |
+
+The same native reduced probe passed 46 observations with all 11 game surfaces
+and renderer families covered. A 30-minute native lifecycle soak reported
+`memory_growth=0`, `object_growth=0`, and `node_growth=0`; cache caps held.
+
+### Throttled Web results
+
+The first continuation report is
+`.tmp/perf_continue_20260916/web_l02_cpu4_after.json`. Compared with the prior
+renderer-only candidate, the important shared-path changes were:
+
+| Scenario | Prior Web result | Continued result |
+| --- | ---: | ---: |
+| Bar Dice active frame p95 | 59.330 ms | 17.398 ms |
+| Bar Dice active realtime p95 | 24.260 ms | 0.175 ms |
+| Baccarat active realtime p95 | 18.625 ms | 1.995 ms |
+| Baccarat ritual realtime p95 | 27.280 ms | 3.005 ms |
+| Roulette active realtime p95 | 40.465 ms | 2.165 ms |
+| Roulette ritual realtime p95 | 41.360 ms | 4.200 ms |
+| Crew Draw Poker active realtime p95 | 10.250 ms | 3.000 ms |
+| Slot active realtime p95 | 5.060 ms | 1.810 ms |
+| Pinball realtime p95 | 6.620 ms | 4.015 ms |
+
+The final fresh-export report is
+`.tmp/perf_continue_20260916/web_l02_cpu4_auto_tick_after_b61.json`. It binds
+source `b61f25954cf09f3f41583591ed6801706f8c5e7c` to export SHA-256
+`9ca173340bdc6206cbf38d6a0b18456353892d14a1a3efb69700a61f6f785723`.
+It completed all 61 scenarios with no page errors or request failures.
+
+Pull Tabs was still rebuilding the generic selected-stake/action projection on
+every active Auto Open frame even though its deadline and command consume only
+the auto-open flag and timestamp. Foundation now computes stake for a compact
+auto-tick state only when the module explicitly requests `selected_stake`.
+
+| Pull Tabs payout/redeem metric | Before | After | Change |
+| --- | ---: | ---: | ---: |
+| Automation average | 11.027 ms | 3.181 ms | -71.2% |
+| Automation p50 | 7.630 ms | 0.205 ms | -97.3% |
+| Automation p95 | 10.060 ms | 1.025 ms | -89.8% |
+| Whole-frame p95 | 33.333 ms | 26.772 ms | -19.7% |
+
+Slot did not show a causal improvement from that host edit, so no Slot win is
+claimed. Its autoplay p95 moved from 118.557 ms to 124.093 ms and remains red.
+The final Web wrapper is also red for four existing Corner Store timing-schema
+diagnostics, Baccarat active at 149.230 ms against 120 ms, and a noisy Slot
+idle sample at 50.000 ms against 45 ms. These failures remain visible and no
+budget was loosened.
+
+### Rejected experiment and build reliability
+
+Removing redundant-looking outer save/RNG copies from Bar Dice, Roulette, and
+Video Poker did not produce a repeatable native improvement in the identical
+3-run/60-frame/24-resolve probe. Bar Dice changed 0.632 -> 0.643 ms p95,
+Roulette 1.452 -> 1.441 ms, and Video Poker 1.060 -> 1.051 ms. The experiment
+was reverted rather than retained on code appearance alone.
+
+The pinned Web-native build was initially blocked because Windows PowerShell
+promoted normal Emscripten stderr diagnostics to terminating errors. The build
+helpers now judge native commands by exit code while keeping stdout isolated
+for exact pinned-version parsing. A locked Web `template_release` build and the
+fresh export above passed after this repair.
+
+### Continuation validation
+
+- final deterministic replay passed twice across 3 seeds and 216 checkpoints;
+  both runs produced combined hash `1357449945`
+- fresh Coin Pusher parity passed across two native and two Web runs with exact
+  payload SHA-256
+  `f3ab1247c8d11bb7ca0348cce258e7e101fb771b653f1389ac985daef2325e15`
+- allocation contract, seven-root allocation call audit, and 31-root Web UI
+  deferral contract passed
+- focused Roulette, Baccarat, Slot, Bar Dice, Crew Draw Poker, collection-meta,
+  and inventory/spatial checks passed during the continuation
+- the focused Pull Tabs game suite completed with zero failures; its wrapper is
+  red because the mandatory global content precheck reported 84 pre-existing
+  scenario-layout/inventory failures and exceeded the unchanged suite-time
+  budget, so the wrapper is not reported as a pass
+
+This continuation still does not close `perf06_1`; it improves code that is
+shared with the eventual placement candidate and leaves the binding
+qualification requirements unchanged.
