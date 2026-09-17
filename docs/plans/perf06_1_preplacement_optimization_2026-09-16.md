@@ -552,3 +552,20 @@ profiles and 83 delivery streams; the Slot surface suite, ordinary/Buffalo
 autoplay cadence, all six cabinet visual-QA cases, project validation, the
 focused hot-path state-integrity contract, and deterministic replay across 3
 seeds and 204 checkpoints with hash `1211704896` also passed.
+
+The exact fresh Chrome CPU4 export for source commit `fab14372` retained the
+same seven known findings and added no failure class. Slot idle whole-frame p95
+improved from 59.288 to 50.000 ms and draw p95 from 39.660 to 32.365 ms. Slot
+autoplay draw average/p95 improved from 20.817/24.655 to 19.984/22.685 ms,
+while whole-frame p95 was effectively flat at 123.547 versus 122.753 ms. Slot
+active draw average/p95 also improved from 21.170/25.855 to 20.795/25.690 ms.
+Blackjack active draw p95 improved from 45.455 to 33.075 ms; Baccarat idle draw
+p95 improved from 21.665 to 17.830 ms. Baccarat active remained noisy and red,
+with whole-frame p95 moving from 141.200 to 149.605 ms and its sparse 17-sample
+draw p95 moving from 28.285 to 48.030 ms. Roulette and Video Poker remained
+within their existing whole-frame budgets.
+
+The remaining Web failures are Slot autoplay against 100 ms, Baccarat active
+against 120 ms, Slot idle against 45 ms, and the same four Corner Store timing-
+schema diagnostics. No threshold changed. The result is recorded at
+`.tmp/perf_continue_20260917/web_l02_cpu4_after_surface_audio_hotpaths.json`.
