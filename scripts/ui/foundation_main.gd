@@ -1729,7 +1729,10 @@ func _sealed_action_host_auto_intent(surface_time_msec: int) -> Dictionary:
 		ledger = ActionAuthorityScript.stage_session_cow(ledger, next_session)
 		if bool(command.get("direct_resolve", false)) or bool(command.get("resolve", false)):
 			_sealed_action_host_store_ledger(candidate, ledger)
-			ledger = _sealed_action_host_ledger(candidate, true)
+			# The ledger was fully validated before staging and store_ledger writes
+			# that exact COW value synchronously. Revalidating its cached responses
+			# and journal here walked the complete replay window a second time on
+			# every Slot autoplay spin without crossing an external boundary.
 			var delivery_stake := int(command.get("set_stake", _current_selected_stake()))
 			var auto_action_id := str(command.get("action_id", ""))
 			var issued: Dictionary = ActionAuthorityScript.issue_delivery_cow(ledger, auto_action_id, _sealed_action_host_trusted_context(candidate, delivery_stake, auto_action_id), delivery_stake, recovery_session)
@@ -2328,7 +2331,9 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 		# Transfer the accepted machine as one owned value; the pending delivery was
 		# already durable and all account/result consequences remain host-owned below.
 		var accepted_table: Dictionary = current_game.call("_table_state_preview", trusted_proposed_candidate, trusted_proposed_candidate.current_environment)
-		accepted_table = accepted_table.duplicate(true)
+		# trusted_proposed_candidate is the isolated first execution and is never
+		# read again after this transfer. Its table can move into the live run without
+		# recursively cloning the reel, animation, and feature payload a fourth time.
 		accepted_table[ActionAuthorityScript.LEDGER_KEY] = expanded_ledger.duplicate(false)
 		current_game.call("_update_environment_table", run_state.current_environment, accepted_table)
 		proposed_candidate = run_state
@@ -11807,13 +11812,17 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 			_show_message("Blackjack replay failed closed because its action did not match the sealed delivery.")
 			_refresh()
 			return
-		var early_replay := _sealed_action_host_cached_replay(authority_delivery)
-		if not early_replay.is_empty():
-			if early_replay.has(resolved_action_authority_script.HOST_REPLAY_KEY) and _sealed_action_host_present_cached_replay(early_replay):
+		# A synchronous prepared handoff already owns the fully validated candidate,
+		# ledger, and delivery. The resolver verifies that exact trio before mutation,
+		# so walking the live ledger here is only needed for standalone replay claims.
+		if authority_prepared.is_empty():
+			var early_replay := _sealed_action_host_cached_replay(authority_delivery)
+			if not early_replay.is_empty():
+				if early_replay.has(resolved_action_authority_script.HOST_REPLAY_KEY) and _sealed_action_host_present_cached_replay(early_replay):
+					return
+				_show_message(str(early_replay.get("message", "Blackjack replay failed closed.")))
+				_refresh()
 				return
-			_show_message(str(early_replay.get("message", "Blackjack replay failed closed.")))
-			_refresh()
-			return
 	var debug_coin_pusher_host := bool(resolved_surface_ui_state.get("coin_pusher_debug_profile_stages", false))
 	var debug_host_started_usec := Time.get_ticks_usec() if debug_coin_pusher_host else 0
 	var debug_host_stage_started_usec := debug_host_started_usec

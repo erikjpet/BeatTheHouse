@@ -42,8 +42,18 @@ $args = @(
 )
 
 Write-Host "Running L0.2 desktop telemetry with: $godot"
-$output = & $godot @args 2>&1
-$exitCode = $LASTEXITCODE
+$oldErrorActionPreference = $ErrorActionPreference
+try {
+    # Godot can emit non-fatal shutdown diagnostics on stderr. Preserve those
+    # lines in the probe log, but let the native exit code decide whether the
+    # telemetry run itself failed.
+    $ErrorActionPreference = "Continue"
+    $output = & $godot @args 2>&1
+    $exitCode = $LASTEXITCODE
+}
+finally {
+    $ErrorActionPreference = $oldErrorActionPreference
+}
 $output | Set-Content -LiteralPath $logPath -Encoding utf8
 if ($exitCode -ne 0) {
     throw "Godot desktop telemetry exited with code $exitCode. Log: $logPath"

@@ -59,9 +59,21 @@ try {
         # emsdk's environment helper writes its normal "current shell only"
         # notice to stderr. Under this script's Stop policy PowerShell promotes
         # that informational line to a build failure, even though construct_env
-        # succeeded. Discard only the helper's diagnostic stream; its exit code
-        # and the compiler invocation below remain authoritative.
-        . (Join-Path $toolRoot "emsdk/emsdk_env.ps1") 2>$null | Out-Null
+        # succeeded. Temporarily allow the native diagnostic through while the
+        # helper installs its environment in this process, then restore the
+        # caller's strict policy. Its exit code and the compiler remain authoritative.
+        $emsdkErrorActionPreference = $ErrorActionPreference
+        try {
+            $ErrorActionPreference = "Continue"
+            . (Join-Path $toolRoot "emsdk/emsdk_env.ps1") 2>$null | Out-Null
+            $emsdkExitCode = $LASTEXITCODE
+        }
+        finally {
+            $ErrorActionPreference = $emsdkErrorActionPreference
+        }
+        if ($emsdkExitCode -ne 0) {
+            throw "Emscripten environment setup failed with exit $emsdkExitCode."
+        }
     }
     $arguments = @(
         "scons",

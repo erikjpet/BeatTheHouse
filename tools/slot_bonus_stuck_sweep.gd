@@ -587,11 +587,15 @@ func _drive_feature(game: GameModule, run_state: RunState, environment: Dictiona
 
 func _drive_watchdog(game: GameModule, run_state: RunState, environment: Dictionary, label: String) -> Dictionary:
 	var seed_time := 5000
-	var seed_command: Dictionary = game.surface_auto_action_command({"surface_time_msec": seed_time, "drunk_scaled_surface_time_msec": seed_time}, run_state, environment, {})
-	if not bool(seed_command.get("environment_changed", false)):
-		return _fail(label, "watchdog did not arm")
-	var due_time := seed_time + WATCHDOG_GRACE_MSEC + 200
-	var command: Dictionary = game.surface_auto_action_command({"surface_time_msec": due_time, "drunk_scaled_surface_time_msec": due_time}, run_state, environment, {})
+	var command: Dictionary = game.surface_auto_action_command({"surface_time_msec": seed_time, "drunk_scaled_surface_time_msec": seed_time}, run_state, environment, {})
+	# Pinball can prove that its final ball drained from the zero-copy live status
+	# and settles on this first host tick. Other stalled bonuses still arm the
+	# generic grace timer before they are eligible for watchdog recovery.
+	if str(command.get("action_id", "")) != "slot_bonus_watchdog":
+		if not bool(command.get("environment_changed", false)):
+			return _fail(label, "watchdog did not arm")
+		var due_time := seed_time + WATCHDOG_GRACE_MSEC + 200
+		command = game.surface_auto_action_command({"surface_time_msec": due_time, "drunk_scaled_surface_time_msec": due_time}, run_state, environment, {})
 	if str(command.get("action_id", "")) != "slot_bonus_watchdog":
 		return _fail(label, "watchdog did not route through bonus action")
 	var rng: RngStream = run_state.create_rng("watchdog")

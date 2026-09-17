@@ -330,3 +330,79 @@ No performance budget, simulation rule, RNG sequence, visual behavior, or
 native/Web gameplay path changed. Web retains its single-threaded staged loader;
 the request-order optimization is native-only because Web has no background
 resource worker.
+
+## Per-game and Slot continuation - 2026-09-17
+
+This reduced, non-binding continuation profiled the production Slot foreground
+autoplay boundary first, then rechecked every game resolver and renderer. No
+published budget, simulation/economy rule, RNG sequence, liveness floor, or
+visual contract changed.
+
+The Slot trace found that Pinball simulation and rendering were already below
+their locked limits. The avoidable cost was in the shared sealed-action host:
+the synchronous autoplay path validated the same copy-on-write ledger twice,
+the accepted isolated Slot table was recursively copied after ownership had
+already transferred, and the game-action entry point performed a live cached
+replay lookup even though its prepared handoff already contained the exact
+validated candidate, ledger, and delivery. The resolver still validates that
+prepared trio before mutation. Standalone replay claims still execute the full
+live-ledger lookup, and deterministic proposal double-execution remains intact.
+
+| Slot foreground autoplay | Before | After | Change |
+| --- | ---: | ---: | ---: |
+| Whole action average | 35.606 ms | 27.840 ms | -21.8% |
+| Preparation average | 7.971 ms | 4.615 ms | -42.1% |
+| Resolution average | 27.619 ms | 23.210 ms | -16.0% |
+| Next-frame average | 9.734 ms | 8.998 ms | -7.6% |
+
+The first ledger-validation removal alone moved preparation from 7.971 ms to
+4.634 ms. Ownership transfer then moved the whole action from 30.925 ms to
+30.641 ms. Skipping the redundant live replay lookup only for the synchronous
+prepared handoff moved it from 30.641 ms to 27.840 ms. All comparisons used the
+same 16-action foreground probe and unchanged limits.
+
+The complete native matrix passed 42 observations. Practice fixtures covered
+all 11 renderers/surfaces and all 10 resolver paths. Direct resolve p95 values
+were Blackjack 3.027 ms, Slot 3.026 ms, Scratch Tickets 2.979 ms, Crew Draw
+Poker 2.229 ms, Roulette 1.468 ms, Craps 1.269 ms, Video Poker 1.094 ms,
+Baccarat 1.058 ms, Pull Tabs 0.765 ms, and Bar Dice 0.621 ms. The largest idle
+draw p95 was Roulette at 3.787 ms; Slot was 2.075 ms. Every value remained
+inside its unchanged published budget.
+
+The reduced live interaction probe also improved the prior comparable rows:
+Slot autoplay 6.06 -> 5.56 ms p95, active Slot 8.25 -> 6.67 ms, Blackjack
+active 16.67 -> 6.84 ms, and Pinball feature 82.22 -> 71.94 ms. Pinball's
+production canvas draw p95 was 5.33 ms and its dedicated simulation probe
+averaged 54.87 microseconds per tick, so the remaining feature-session long
+frames are transition/driver timing rather than a Slot simulation or renderer
+hotspot. No speculative gameplay rewrite was retained.
+
+Validation passed:
+
+- Slot autoplay cadence and all generated Slot environment-entry variants;
+- Slot runtime/storage scaling at 1, 3, 6, and 12 cabinets;
+- 60,000 spins across all six Pinball/Buffalo format combinations, with every
+  locked RTP, hit, near-miss, and feature-frequency band green;
+- deterministic replay twice across 3 seeds and 214 checkpoints with matching
+  combined hash `3217654750`;
+- a 12-seed general stuck-state sweep covering 48 Slot scenarios and nine
+  cross-game wait-state families.
+
+The stuck-state probe was updated to recognize Pinball's shipped immediate
+zero-work settlement as well as the generic delayed watchdog path. The desktop
+telemetry wrapper was also corrected to retain non-fatal Godot stderr shutdown
+diagnostics while judging the run by its native exit code; the identical rerun
+then wrote its report successfully. The Web native-solver builder now applies
+the same exit-code rule while loading Emscripten's environment, preventing its
+normal stderr setup notice from aborting a successful locked build.
+
+The fresh Chrome CPU4 probe completed from a clean source tree and preserved
+the existing Web diagnosis. It remained red for the same four Corner Store
+timing-schema diagnostics, Slot autoplay at 121.270 ms against 100 ms, and
+Baccarat active at 150 ms against 120 ms. The preceding comparable run measured
+124.093 ms and 149.230 ms respectively, and also failed Slot idle at 50 ms;
+the current run measured Slot idle below budget. Slot active improved from
+61.28 ms to 55.36 ms p95, autoplay draw from 41.47 ms to 25.24 ms, and Pinball
+feature draw from 30.68 ms to 29.02 ms. These reduced samples show no new Web
+regression, but they do not turn the known low-end rows green or close the
+binding performance program.
