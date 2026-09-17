@@ -160,6 +160,16 @@ func _seeded_scenario_definition_for_node_readonly(node_id: String) -> Dictionar
 
 
 func register_rumor_fact(fact_class: String, fact_id: String, payload: Dictionary) -> bool:
+	return _register_rumor_fact(fact_class, fact_id, payload.duplicate(true))
+
+
+# Internal world-model handoff for freshly constructed payloads. The caller
+# transfers ownership, avoiding a second recursive copy on every turn refresh.
+func register_owned_rumor_fact(fact_class: String, fact_id: String, payload: Dictionary) -> bool:
+	return _register_rumor_fact(fact_class, fact_id, payload)
+
+
+func _register_rumor_fact(fact_class: String, fact_id: String, payload: Dictionary) -> bool:
 	var clean_class := fact_class.strip_edges().to_lower()
 	var clean_id := fact_id.strip_edges()
 	if clean_class.is_empty() or clean_id.is_empty() or not _rumor_fact_classes().has(clean_class):
@@ -170,7 +180,7 @@ func register_rumor_fact(fact_class: String, fact_id: String, payload: Dictionar
 		"class": clean_class,
 		"target_node_id": target_node_id,
 		"source_id": str(payload.get("source_id", clean_id)).strip_edges(),
-		"payload": payload.duplicate(true),
+		"payload": payload,
 		"registered_action": action_index,
 	}
 	rumor_registry[clean_id] = fact
@@ -184,6 +194,17 @@ func remove_rumor_facts(fact_class: String) -> void:
 		var fact := _dictionary(rumor_registry.get(fact_id, {}))
 		if str(fact.get("class", "")) == clean_class:
 			rumor_registry.erase(fact_id)
+
+
+func touch_rumor_facts(fact_class: String) -> void:
+	var clean_class := fact_class.strip_edges().to_lower()
+	for fact_id_value in rumor_registry.keys():
+		var fact_id := str(fact_id_value)
+		var fact := _dictionary(rumor_registry.get(fact_id, {}))
+		if str(fact.get("class", "")) != clean_class:
+			continue
+		fact["registered_action"] = action_index
+		rumor_registry[fact_id] = fact
 
 
 func rumor_fact(fact_id: String) -> Dictionary:

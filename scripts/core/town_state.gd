@@ -42,6 +42,7 @@ var _scenario_weight_by_id: Dictionary = {}
 var _travel_profile: Dictionary = {}
 var _music_modifier_profile: Dictionary = {}
 var _economic_modifier_profile: Dictionary = {}
+var _condition_rumor_signature: Array = []
 
 
 static func conditions() -> Dictionary:
@@ -69,6 +70,7 @@ func generate(p_seed_value: int, source_conditions: Dictionary = {}) -> void:
 	_generate_calendar(root_rng.fork("town_calendar"))
 	_generate_happenings(root_rng.fork("town_happenings"))
 	progressive_meters = {}
+	_condition_rumor_signature = []
 	living_world = TownNetworkScript.new()
 	living_world.generate(seed_value)
 	police_sweep = PoliceSweepModelScript.new()
@@ -91,6 +93,7 @@ func restore(source: Dictionary, p_seed_value: int, source_conditions: Dictionar
 	calendar_offset_actions = maxi(0, int(source.get("calendar_offset_actions", 0)))
 	happenings = _dictionary_array(source.get("happenings", []))
 	progressive_meters = _dictionary(source.get("progressive_meters", {})).duplicate(true) if source_schema >= 3 else {}
+	_condition_rumor_signature = []
 	living_world = TownNetworkScript.new()
 	var living_world_value: Variant = source.get("living_world", {})
 	if typeof(living_world_value) == TYPE_DICTIONARY and not (living_world_value as Dictionary).is_empty():
@@ -179,6 +182,7 @@ func configure_world(map_data: Dictionary, synchronize_rumor_facts: bool = true)
 		living_world = TownNetworkScript.new()
 		living_world.generate(seed_value)
 	living_world.configure_world(map_data)
+	_condition_rumor_signature = []
 	if police_sweep == null:
 		police_sweep = PoliceSweepModelScript.new()
 		police_sweep.reset(seed_value, _police_sweep_config())
@@ -545,8 +549,8 @@ func _refresh_current_profiles() -> void:
 func _sync_condition_rumor_facts() -> void:
 	if living_world == null or living_world.node_metadata.is_empty():
 		return
-	living_world.remove_rumor_facts(TownNetworkScript.RUMOR_CLASS_CONDITION)
 	var sources: Array = []
+	var source_signature: Array = []
 	for happening in happenings:
 		var start_action := maxi(0, int(happening.get("start_action", 0)))
 		var end_action := maxi(start_action + 1, int(happening.get("end_action", start_action + 1)))
@@ -555,14 +559,17 @@ func _sync_condition_rumor_facts() -> void:
 		var happening_id := str(happening.get("id", "")).strip_edges()
 		if happening_id.is_empty():
 			continue
+		var display_name := str(happening.get("display_name", happening_id.replace("_", " ").capitalize()))
+		var condition_line := "%s is moving through town." % display_name
 		sources.append({
 			"source_id": happening_id,
-			"display_name": str(happening.get("display_name", happening_id.replace("_", " ").capitalize())),
-			"condition_line": "%s is moving through town." % str(happening.get("display_name", happening_id.replace("_", " ").capitalize())),
+			"display_name": display_name,
+			"condition_line": condition_line,
 			"start_action": start_action,
 			"end_action": end_action,
 			"incoming_window_actions": 12,
 		})
+		source_signature.append([happening_id, display_name, condition_line, start_action, end_action])
 	for segment in weather_schedule:
 		var start_action := maxi(0, int(segment.get("start_action", 0)))
 		var end_action := maxi(start_action + 1, int(segment.get("end_action", start_action + 1)))
@@ -571,33 +578,53 @@ func _sync_condition_rumor_facts() -> void:
 		var weather_id := str(segment.get("id", "clear")).strip_edges()
 		if weather_id == "clear":
 			continue
+		var source_id := "weather:%s:%d" % [weather_id, start_action]
+		var display_name := _display_name(weather_id)
+		var condition_line := "%s is moving in." % display_name
 		sources.append({
-			"source_id": "weather:%s:%d" % [weather_id, start_action],
-			"display_name": _display_name(weather_id),
-			"condition_line": "%s is moving in." % _display_name(weather_id),
+			"source_id": source_id,
+			"display_name": display_name,
+			"condition_line": condition_line,
 			"start_action": start_action,
 			"end_action": end_action,
 			"incoming_window_actions": 12,
 		})
+		source_signature.append([source_id, display_name, condition_line, start_action, end_action])
 	var node_ids: Array = living_world.node_metadata.keys()
 	node_ids.sort()
+	var cass_modifiers: Dictionary = {}
+	var traveler_signature: Array = []
+	for node_id_value in node_ids:
+		var node_id := str(node_id_value)
+		var cass_modifier := living_world.departed_traveler_modifier(node_id, "cass_rival_counter")
+		if cass_modifier.is_empty():
+			continue
+		cass_modifiers[node_id] = cass_modifier
+		traveler_signature.append([node_id, int(cass_modifier.get("departed_action", action_index)), action_index + maxi(1, int(cass_modifier.get("remaining_actions", 1)))])
+	var silas_state := living_world.traveler_state("silas_snitch")
+	var silas_node := str(silas_state.get("node_id", ""))
+	traveler_signature.append([silas_node, int(silas_state.get("arrived_action", action_index)), int(silas_state.get("depart_action", action_index + 1))])
+	var next_signature := [node_ids, source_signature, traveler_signature]
+	if next_signature == _condition_rumor_signature:
+		living_world.touch_rumor_facts(TownNetworkScript.RUMOR_CLASS_CONDITION)
+		return
+	_condition_rumor_signature = next_signature
+	living_world.remove_rumor_facts(TownNetworkScript.RUMOR_CLASS_CONDITION)
 	for source in sources:
 		for node_id_value in node_ids:
 			var node_id := str(node_id_value)
 			var source_id := str(source.get("source_id", ""))
 			var payload: Dictionary = (source as Dictionary).duplicate(true)
 			payload["target_node_id"] = node_id
-			living_world.register_rumor_fact(
+			living_world.register_owned_rumor_fact(
 				TownNetworkScript.RUMOR_CLASS_CONDITION,
 				"condition:%s:%s" % [source_id.replace(":", "_"), node_id],
 				payload
 			)
-	for node_id_value in node_ids:
+	for node_id_value in cass_modifiers.keys():
 		var node_id := str(node_id_value)
-		var cass_modifier := living_world.departed_traveler_modifier(node_id, "cass_rival_counter")
-		if cass_modifier.is_empty():
-			continue
-		living_world.register_rumor_fact(TownNetworkScript.RUMOR_CLASS_CONDITION, "condition:cass_left:%s" % node_id, {
+		var cass_modifier: Dictionary = cass_modifiers[node_id]
+		living_world.register_owned_rumor_fact(TownNetworkScript.RUMOR_CLASS_CONDITION, "condition:cass_left:%s" % node_id, {
 			"target_node_id": node_id,
 			"source_id": "cass_rival_counter",
 			"display_name": "Cass Venn",
@@ -606,10 +633,8 @@ func _sync_condition_rumor_facts() -> void:
 			"end_action": action_index + maxi(1, int(cass_modifier.get("remaining_actions", 1))),
 			"incoming_window_actions": 0,
 		})
-	var silas_state := living_world.traveler_state("silas_snitch")
-	var silas_node := str(silas_state.get("node_id", ""))
 	if not silas_node.is_empty():
-		living_world.register_rumor_fact(TownNetworkScript.RUMOR_CLASS_CONDITION, "condition:silas_drinks:%s" % silas_node, {
+		living_world.register_owned_rumor_fact(TownNetworkScript.RUMOR_CLASS_CONDITION, "condition:silas_drinks:%s" % silas_node, {
 			"target_node_id": silas_node,
 			"source_id": "silas_snitch",
 			"display_name": "Silas Crow",
@@ -633,7 +658,7 @@ func _sync_sweep_rumor_facts() -> void:
 	var recent_node := previous_node if not previous_node.is_empty() else current_node
 	var age := maxi(0, action_index - int(sweep.get("arrived_action", action_index)))
 	var heading_name := _living_world_node_label(heading_node) if not heading_node.is_empty() else "out of town"
-	living_world.register_rumor_fact(TownNetworkScript.RUMOR_CLASS_SWEEP, "sweep:recent", {
+	living_world.register_owned_rumor_fact(TownNetworkScript.RUMOR_CLASS_SWEEP, "sweep:recent", {
 		"target_node_id": recent_node,
 		"source_id": "police_sweep",
 		"fact_detail": "there %d turns ago, headed toward %s" % [age, heading_name],
@@ -641,7 +666,7 @@ func _sync_sweep_rumor_facts() -> void:
 		"truth_node_id": current_node,
 	})
 	if not heading_node.is_empty():
-		living_world.register_rumor_fact(TownNetworkScript.RUMOR_CLASS_SWEEP, "sweep:heading", {
+		living_world.register_owned_rumor_fact(TownNetworkScript.RUMOR_CLASS_SWEEP, "sweep:heading", {
 			"target_node_id": heading_node,
 			"source_id": "police_sweep",
 			"fact_detail": "headed this way from %s" % _living_world_node_label(current_node),
@@ -665,7 +690,7 @@ func _sync_progressive_rumor_fact(meter_id: String) -> void:
 		return
 	var value := maxi(0, int(meter.get("value", 0)))
 	var detail := "fat at $%d" % value if value >= 240 else "building at $%d" % value if value >= 170 else "thin at $%d" % value
-	living_world.register_rumor_fact(VAULT_PROGRESSIVE_RUMOR_CLASS, "vault:%s" % str(meter.get("target_node_id", meter_id)), {
+	living_world.register_owned_rumor_fact(VAULT_PROGRESSIVE_RUMOR_CLASS, "vault:%s" % str(meter.get("target_node_id", meter_id)), {
 		"target_node_id": str(meter.get("target_node_id", "")),
 		"target_name": str(meter.get("target_name", meter.get("target_node_id", ""))),
 		"source_id": meter_id,

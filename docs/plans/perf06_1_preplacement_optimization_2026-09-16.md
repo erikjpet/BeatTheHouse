@@ -406,3 +406,38 @@ the current run measured Slot idle below budget. Slot active improved from
 feature draw from 30.68 ms to 29.02 ms. These reduced samples show no new Web
 regression, but they do not turn the known low-end rows green or close the
 binding performance program.
+
+### Shared turn-boundary follow-up
+
+The next Slot trace separated game work from the shared environment boundary.
+Two costs were independent of Slot rules: Crew play authorization serialized
+the complete current environment twice even when passed the authoritative
+dictionary itself, and TownState rebuilt every condition-rumor payload for
+every map node on every action. Crew authorization now takes an identity fast
+path while retaining value comparison for detached equivalent inputs.
+
+TownState now fingerprints the complete condition-rumor inputs: eligible
+weather and happenings, sorted target nodes, Cass's departed-traveler windows,
+and Silas's current itinerary segment. An unchanged fingerprint retains the
+existing payloads and only advances their registration action. Any source,
+window, itinerary segment, or target-node change still performs the original
+full rebuild. Freshly constructed internal rumor payloads also transfer
+ownership into TownNetwork instead of being recursively copied a second time;
+the public registration boundary remains defensive.
+
+| Slot foreground autoplay | Prior checkpoint | After | Change |
+| --- | ---: | ---: | ---: |
+| Whole action average | 27.840 ms | 26.407 ms | -5.1% |
+| Resolution average | 23.210 ms | 21.725 ms | -6.4% |
+| Next-frame average | 8.998 ms | 7.741 ms | -14.0% |
+
+The focused TownState foundation contract passed with zero failures.
+Deterministic replay passed twice across 3 seeds and 204 checkpoints with the
+same combined hash `2558357174`. The warm 46-observation all-games performance
+matrix then passed every unchanged budget. Direct resolve p95 was Blackjack
+3.182 ms, Slot 3.009 ms, Scratch Tickets 3.009 ms, Crew Draw Poker 2.014 ms,
+Roulette 1.461 ms, Craps 1.241 ms, Baccarat 1.119 ms, Video Poker 1.031 ms,
+Pull Tabs 0.781 ms, and Bar Dice 0.610 ms. A preceding cold/import-contended
+sample put Blackjack idle draw at 5.62 ms against 5.00 ms; the immediate warm
+rerun passed the complete matrix, so no budget or runtime behavior was changed
+to accommodate that isolated sample.

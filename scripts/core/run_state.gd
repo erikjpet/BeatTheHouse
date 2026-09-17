@@ -9098,7 +9098,8 @@ func crew_action_index() -> int:
 
 
 func crew_play_actions(game_id: String, environment: Dictionary = current_environment) -> Array:
-	if JSON.stringify(environment) != JSON.stringify(current_environment) or str(current_environment.get("active_game_id", "")) != game_id:
+	if (not is_same(environment, current_environment) and JSON.stringify(environment) != JSON.stringify(current_environment)) \
+		or str(current_environment.get("active_game_id", "")) != game_id:
 		return []
 	return CrewPlayModelScript.available_actions(self, current_environment, game_id)
 
@@ -9124,7 +9125,9 @@ func crew_play_activate(play_id: String, game_id: String, environment: Dictionar
 
 
 func crew_play_host_authorizes(host_capability: Variant, environment: Dictionary, game_id: String, require_active_game: bool = true) -> bool:
-	if host_capability == null or host_capability != _world1_host_capability or JSON.stringify(environment) != JSON.stringify(current_environment):
+	if host_capability == null or host_capability != _world1_host_capability:
+		return false
+	if not is_same(environment, current_environment) and JSON.stringify(environment) != JSON.stringify(current_environment):
 		return false
 	return not require_active_game or not game_id.is_empty() and str(current_environment.get("active_game_id", "")) == game_id
 
