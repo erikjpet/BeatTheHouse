@@ -102,6 +102,7 @@ func sealed_action_authority_contract() -> Dictionary:
 		# candidate because the accepted table must cross the normal publish path.
 		"trusted_candidate_resolve_method": &"_table_game_resolve_candidate",
 		"trusted_candidate_wager_method": &"_table_game_wager_cost_candidate",
+		"trusted_candidate_first_proposal_owns_transaction": true,
 		"host_auto_tick_method": &"_table_game_host_needs_auto_tick",
 		"surface_intent_key": "",
 		"surface_intent_index_key": "",

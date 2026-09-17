@@ -2164,6 +2164,9 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 			and current_game.has_method(candidate_resolve_method)
 	var uses_compact_authority_evidence := uses_trusted_candidate_provider \
 			and not _sealed_action_host_compact_evidence_method().is_empty()
+	var first_proposal_owns_transaction := uses_trusted_candidate_provider \
+			and not commits_in_place \
+			and bool(provider_contract.get("trusted_candidate_first_proposal_owns_transaction", false))
 	if wager_method.is_empty() or resolve_method.is_empty() \
 			or not current_game.has_method(wager_method) or not current_game.has_method(resolve_method):
 		return _sealed_action_host_rejection("invalid_intent", "Sealed action proposal methods are unavailable.", request_key)
@@ -2265,11 +2268,16 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 		# isolated full candidate. Build the cheap replay candidate before that first
 		# mutation so both executions begin at the exact same machine boundary.
 		var first_source: RunState = candidate.detached_host_resolution_candidate(_sealed_action_host_state_key()) if commits_in_place else candidate
-		var replay_source: RunState = candidate.detached_host_resolution_candidate(_sealed_action_host_state_key()) if uses_compact_authority_evidence else candidate
-		var first_bundle := _sealed_action_host_candidate_proposal(candidate_resolve_method, action_id, stake, first_source, compact_input_ledger, compact_proposal_input, compact_input_fingerprint, session, uses_compact_authority_evidence, uses_compact_authority_evidence)
+		# A detached transaction candidate is already private host-owned state. A
+		# provider may consume it as the accepted first execution when the replay
+		# clone is built before that mutation. This retains two independent full
+		# proposals while avoiding a third deep copy of the bound table.
+		var direct_full_candidate := uses_compact_authority_evidence or first_proposal_owns_transaction
+		var replay_source: RunState = candidate.detached_host_action_candidate(_sealed_action_host_state_key()) if first_proposal_owns_transaction else (candidate.detached_host_resolution_candidate(_sealed_action_host_state_key()) if uses_compact_authority_evidence else candidate)
+		var first_bundle := _sealed_action_host_candidate_proposal(candidate_resolve_method, action_id, stake, first_source, compact_input_ledger, compact_proposal_input, compact_input_fingerprint, session, direct_full_candidate, uses_compact_authority_evidence)
 		if has_runtime_checkpoint and not bool(current_game.call(runtime_restore_method, runtime_checkpoint)):
 			return _sealed_action_host_rejection("invalid_proposal", "Game runtime could not be restored for sealed replay.", request_key)
-		var replay_bundle := _sealed_action_host_candidate_proposal(candidate_resolve_method, action_id, stake, replay_source, compact_input_ledger, compact_proposal_input, compact_input_fingerprint, session, uses_compact_authority_evidence, uses_compact_authority_evidence)
+		var replay_bundle := _sealed_action_host_candidate_proposal(candidate_resolve_method, action_id, stake, replay_source, compact_input_ledger, compact_proposal_input, compact_input_fingerprint, session, direct_full_candidate, uses_compact_authority_evidence)
 		compact_proposal = first_bundle.get("proposal", {})
 		var replay_proposal: Dictionary = replay_bundle.get("proposal", {})
 		if not _sealed_action_host_candidate_proposals_match(compact_proposal, replay_proposal, compact_proposal_input):
