@@ -711,3 +711,36 @@ draw p95 1.785 ms and direct resolver p95 values of Pull Tabs 0.769 ms, Scratch
 Tickets 3.006 ms, Slot 3.144 ms, Bar Dice 0.653 ms, Craps 1.237 ms, Blackjack
 3.106 ms, Baccarat 1.139 ms, Roulette 1.481 ms, Crew Poker 2.085 ms, and Video
 Poker 1.192 ms.
+
+### Baccarat structural replay follow-up
+
+The compact-evidence trace still spent 6.783 ms cloning the independent replay
+candidate and 7.762/7.890 ms producing each proposal; Baccarat card resolution
+itself was only 0.382/0.423 ms. Of each proposal, roughly 5.5 ms was canonical
+output serialization. The accepted proposal must retain that digest for its
+receipt, but serializing the replay's identical payload a second time added no
+authority after the host had already executed both isolated candidates.
+
+Baccarat now opts into exact structural replay matching. The host still runs
+two independently isolated full candidates and compares their input identity,
+success state, result, run snapshot, RNG snapshot, and complete compact authority
+evidence recursively. Only the accepted proposal is hashed for the receipt. A
+focused contract proves that an independently owned exact replay is accepted
+and a one-card result change is rejected.
+
+| Production Baccarat deal | Compact evidence (`74ad74fc`) | Structural replay (`29f4b9a3`) | Incremental change |
+| --- | ---: | ---: | ---: |
+| Native sealed resolve | 111.086 ms | 100.903 ms | -9.2% |
+| Chrome CPU4 sealed resolve | 539.690 ms | 488.490 ms | -9.5% |
+| Chrome CPU4 active whole-frame p95 | 146.125 ms | 141.963 ms | still over 120 ms |
+
+Relative to the preceding full-candidate checkpoint, native resolve is down
+20.6% from 127.046 ms and Chrome CPU4 resolve is down 17.3% from 590.550 ms.
+The 400-hand audit again reported zero failures; its ten authoritative host
+commits improved from 41.614 to 37.124 ms average. Architecture validation, the
+Roulette/Baccarat depth contract, explicit replay-tamper rejection, and two
+independent determinism runs passed (3 seeds, 204 checkpoints, combined hash
+`2413346138`). The fresh exact Web export from `29f4b9a3` had no page, request,
+or response errors and preserved Baccarat result/turn/dealing/animation liveness.
+Its failures remained the four established Corner Store timing-schema checks
+and Baccarat active frame p95. No budget changed.
