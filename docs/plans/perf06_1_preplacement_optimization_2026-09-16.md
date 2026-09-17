@@ -613,3 +613,57 @@ surfaces and all 10 direct resolver paths. Direct resolve p95 was Pull Tabs
 Poker 2.053 ms, and Video Poker 1.040 ms. Project validation passed, and two
 deterministic runs matched across 3 seeds and 204 checkpoints with combined
 hash `1211704896`.
+
+### Baccarat sealed-transaction follow-up
+
+The remaining Baccarat hitch was outside the card resolver. Foundation's
+legacy sealed path serialized a complete run, parsed it back into a temporary
+RunState twice for deterministic replay, serialized both outputs, and restored
+the accepted snapshot again. The game now implements the host's trusted full-
+candidate seam. Both proposal executions still begin from independently
+isolated complete transaction candidates and retain the full proposal snapshot,
+fingerprint, replay, receipt, detached environment-turn, and publication
+checks. This deliberately does not use Slot's lightweight candidate: an
+earlier trial of that path reduced work but failed to publish the Baccarat
+table result and was removed.
+
+The accepted first proposal now consumes the already detached host transaction
+candidate directly. Its independent replay clone is created before the first
+mutation, so the second execution still proves the same full deterministic
+output without a third deep copy of the Baccarat table.
+
+| Production Baccarat deal | Before | Trusted full candidate | Final | Final change |
+| --- | ---: | ---: | ---: | ---: |
+| Native sealed resolve | 211.722 ms | 133.836 ms | 127.046 ms | -40.0% |
+| Chrome CPU4 sealed resolve | 1074.140 ms | 600.075 ms | 590.550 ms | -45.0% |
+| Chrome CPU4 active draw p95 | 25.915 ms | 22.260 ms | 23.035 ms | -11.1% |
+| Chrome CPU4 active whole-frame p95 | 139.468 ms | 139.185 ms | 141.318 ms | noise-bound, still over 120 ms |
+
+Every production trace advanced the environment from turn 0 to 1, appended the
+story result, entered the dealing phase, and started one Baccarat deal
+animation. The dedicated Roulette/Baccarat depth contract also passed exact
+money conservation, shoe ownership, committed receipt replay, hostile/stale
+delivery rejection, and pending retry/cancel behavior. The targeted Baccarat
+game check itself reported zero failures; its shared full-content prelude still
+reported unrelated randomized scenario-layout findings.
+
+The exact cold Chrome export was built from commit `c3c59649`, with no page,
+request, or response failures. Slot idle, active, and autoplay remained within
+their unchanged budgets. Baccarat's action time and draw cost improved, but its
+sparse 21-frame p95 remains red, as did the established four Corner Store
+timing-schema diagnostics. One unrelated Blackjack-idle sample measured 27.372
+ms against 25 ms after passing in the preceding exact export, so it remains a
+variance finding rather than a threshold or behavior change. No budget was
+changed.
+
+Deterministic replay passed twice across 3 seeds and 204 checkpoints with the
+unchanged combined hash `1211704896`. Three 61-observation native matrices kept
+all direct resolve paths inside their locked budgets. The first two had isolated
+idle-draw outliers at the 5 ms boundary: Craps 5.04 ms in the first, then Craps
+5.07 ms and Baccarat 5.21 ms in the second; the corresponding prior accepted
+measurements were 1.09 ms and 1.65 ms. Both red reports remain retained rather
+than hidden or accommodated by changing a budget. The final uncontended repeat
+passed all 61 observations. Its direct resolve p95 values were Pull Tabs 0.755
+ms, Scratch Tickets 2.983 ms, Slot 3.141 ms, Bar Dice 0.623 ms, Craps 1.319 ms,
+Blackjack 3.376 ms, Baccarat 1.062 ms, Roulette 1.449 ms, Crew Poker 1.977 ms,
+and Video Poker 1.045 ms.
