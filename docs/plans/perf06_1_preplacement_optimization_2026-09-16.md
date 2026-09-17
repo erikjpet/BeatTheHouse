@@ -490,3 +490,14 @@ without changing a budget. Direct resolve p95 was Blackjack 3.288 ms, Slot
 2.988 ms, Scratch Tickets 3.167 ms, Crew Draw Poker 2.018 ms, Roulette 1.435
 ms, Craps 1.276 ms, Baccarat 1.113 ms, Video Poker 1.046 ms, Pull Tabs 0.793
 ms, and Bar Dice 0.630 ms.
+
+The exact Chrome CPU4 export for source commit `737e0037` preserved the same
+known red rows and introduced no new failures. Slot autoplay whole-frame p95
+improved from 132.568 to 123.547 ms (-6.8%) and its production draw p95
+improved from 32.950 to 24.655 ms (-25.2%). Baccarat active moved from 143.527
+to 141.200 ms. Slot idle was noisier in the short sample, moving from 50.000 to
+59.288 ms whole-frame p95 and from 28.970 to 39.660 ms draw p95. The remaining
+Web failures are therefore still Slot autoplay against 100 ms, Baccarat active
+against 120 ms, Slot idle against 45 ms, and the same four Corner Store timing-
+schema diagnostics. No performance threshold was changed. The full result is
+recorded at `.tmp/perf_continue_20260917/web_l02_cpu4_after_slot_render.json`.
