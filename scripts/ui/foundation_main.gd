@@ -1948,7 +1948,7 @@ func _sealed_action_host_proposal_valid(proposal: Dictionary, proposal_input: Di
 	return canonical_output_fingerprint == provided_output_fingerprint
 
 
-func _sealed_action_host_candidate_proposal(resolve_method: StringName, action_id: String, stake: int, base_candidate: RunState, input_ledger: Dictionary, proposal_input: Dictionary, proposal_input_fingerprint: String, session: Dictionary, use_base_candidate: bool = false, compact_evidence: bool = false) -> Dictionary:
+func _sealed_action_host_candidate_proposal(resolve_method: StringName, action_id: String, stake: int, base_candidate: RunState, input_ledger: Dictionary, proposal_input: Dictionary, proposal_input_fingerprint: String, session: Dictionary, use_base_candidate: bool = false, compact_evidence: bool = false, fingerprint_output: bool = true) -> Dictionary:
 	if base_candidate == null or resolve_method.is_empty() or not current_game.has_method(resolve_method):
 		return {}
 	var proposal_candidate := base_candidate
@@ -1974,7 +1974,7 @@ func _sealed_action_host_candidate_proposal(resolve_method: StringName, action_i
 		"run_snapshot": {} if compact_evidence else proposal_candidate.to_save_snapshot(),
 		"rng_snapshot": proposal_rng.snapshot(),
 	}
-	if compact_evidence:
+	if compact_evidence and fingerprint_output:
 		proposal["output_fingerprint"] = GameRitualRuntimeScript.canonical_fingerprint({
 			"input_fingerprint": proposal_input_fingerprint,
 			"ok": bool(proposal.get("ok", false)),
@@ -1982,30 +1982,45 @@ func _sealed_action_host_candidate_proposal(resolve_method: StringName, action_i
 			"rng_snapshot": proposal.get("rng_snapshot", {}),
 			"authority_evidence": authority_evidence,
 		})
-	else:
+	elif not compact_evidence:
 		proposal["output_fingerprint"] = GameRitualRuntimeScript.canonical_fingerprint(proposal)
+	else:
+		# The accepted execution owns the receipt fingerprint. A provider that opts
+		# into exact structural replay can leave the second digest empty after the
+		# host compares every replay output and authority-evidence field below.
+		proposal["output_fingerprint"] = ""
 	return {"proposal": proposal, "candidate": proposal_candidate, "authority_evidence": authority_evidence}
 
 
-func _sealed_action_host_candidate_proposals_match(first: Dictionary, replay: Dictionary, proposal_input: Dictionary) -> bool:
+func _sealed_action_host_candidate_proposals_match(first: Dictionary, replay: Dictionary, proposal_input: Dictionary, first_authority_evidence: Dictionary = {}, replay_authority_evidence: Dictionary = {}) -> bool:
 	var expected_input_fingerprint := str(first.get("input_fingerprint", ""))
 	if expected_input_fingerprint.is_empty() or expected_input_fingerprint != str(replay.get("input_fingerprint", "")):
 		return false
 	var expected_keys := ["input_fingerprint", "ok", "output_fingerprint", "result", "rng_snapshot", "run_snapshot"]
 	expected_keys.sort()
-	for proposal in [first, replay]:
+	var structural_replay_match := bool(action_authority_contract.get("trusted_candidate_structural_replay_match", false)) \
+			and not first_authority_evidence.is_empty() and not replay_authority_evidence.is_empty()
+	for proposal_index in range(2):
+		var proposal: Dictionary = first if proposal_index == 0 else replay
 		if typeof(proposal) != TYPE_DICTIONARY:
 			return false
-		var keys := (proposal as Dictionary).keys()
+		var keys := proposal.keys()
 		keys.sort()
 		if keys != expected_keys \
-				or str((proposal as Dictionary).get("input_fingerprint", "")) != expected_input_fingerprint \
-				or typeof((proposal as Dictionary).get("result", null)) != TYPE_DICTIONARY \
-				or typeof((proposal as Dictionary).get("run_snapshot", null)) != TYPE_DICTIONARY \
-				or typeof((proposal as Dictionary).get("rng_snapshot", null)) != TYPE_DICTIONARY:
+				or str(proposal.get("input_fingerprint", "")) != expected_input_fingerprint \
+				or typeof(proposal.get("result", null)) != TYPE_DICTIONARY \
+				or typeof(proposal.get("run_snapshot", null)) != TYPE_DICTIONARY \
+				or typeof(proposal.get("rng_snapshot", null)) != TYPE_DICTIONARY:
 			return false
-		if str((proposal as Dictionary).get("output_fingerprint", "")).is_empty():
+		if str(proposal.get("output_fingerprint", "")).is_empty() and not (structural_replay_match and proposal_index == 1):
 			return false
+	if structural_replay_match:
+		return str(replay.get("output_fingerprint", "")).is_empty() \
+				and bool(first.get("ok", false)) == bool(replay.get("ok", false)) \
+				and (first.get("result", {}) as Dictionary).recursive_equal(replay.get("result", {}) as Dictionary, 64) \
+				and (first.get("run_snapshot", {}) as Dictionary).recursive_equal(replay.get("run_snapshot", {}) as Dictionary, 64) \
+				and (first.get("rng_snapshot", {}) as Dictionary).recursive_equal(replay.get("rng_snapshot", {}) as Dictionary, 64) \
+				and first_authority_evidence.recursive_equal(replay_authority_evidence, 64)
 	return str(first.get("output_fingerprint", "")) == str(replay.get("output_fingerprint", ""))
 
 
@@ -2273,19 +2288,22 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 		# clone is built before that mutation. This retains two independent full
 		# proposals while avoiding a third deep copy of the bound table.
 		var direct_full_candidate := uses_compact_authority_evidence or first_proposal_owns_transaction
+		var structural_replay_match := uses_compact_authority_evidence \
+				and bool(provider_contract.get("trusted_candidate_structural_replay_match", false))
 		var replay_source: RunState = candidate.detached_host_action_candidate(_sealed_action_host_state_key()) if first_proposal_owns_transaction else (candidate.detached_host_resolution_candidate(_sealed_action_host_state_key()) if uses_compact_authority_evidence else candidate)
 		var first_bundle := _sealed_action_host_candidate_proposal(candidate_resolve_method, action_id, stake, first_source, compact_input_ledger, compact_proposal_input, compact_input_fingerprint, session, direct_full_candidate, uses_compact_authority_evidence)
 		if has_runtime_checkpoint and not bool(current_game.call(runtime_restore_method, runtime_checkpoint)):
 			return _sealed_action_host_rejection("invalid_proposal", "Game runtime could not be restored for sealed replay.", request_key)
-		var replay_bundle := _sealed_action_host_candidate_proposal(candidate_resolve_method, action_id, stake, replay_source, compact_input_ledger, compact_proposal_input, compact_input_fingerprint, session, direct_full_candidate, uses_compact_authority_evidence)
+		var replay_bundle := _sealed_action_host_candidate_proposal(candidate_resolve_method, action_id, stake, replay_source, compact_input_ledger, compact_proposal_input, compact_input_fingerprint, session, direct_full_candidate, uses_compact_authority_evidence, not structural_replay_match)
 		compact_proposal = first_bundle.get("proposal", {})
 		var replay_proposal: Dictionary = replay_bundle.get("proposal", {})
-		if not _sealed_action_host_candidate_proposals_match(compact_proposal, replay_proposal, compact_proposal_input):
+		var replay_authority_evidence: Dictionary = replay_bundle.get("authority_evidence", {}) if typeof(replay_bundle.get("authority_evidence", {})) == TYPE_DICTIONARY else {}
+		compact_authority_evidence = first_bundle.get("authority_evidence", {}) if typeof(first_bundle.get("authority_evidence", {})) == TYPE_DICTIONARY else {}
+		if not _sealed_action_host_candidate_proposals_match(compact_proposal, replay_proposal, compact_proposal_input, compact_authority_evidence, replay_authority_evidence):
 			if has_runtime_checkpoint:
 				current_game.call(runtime_restore_method, runtime_checkpoint)
 			return _sealed_action_host_rejection("invalid_proposal", "Blackjack game proposal failed closed validation.", request_key)
 		trusted_proposed_candidate = first_bundle.get("candidate", null) as RunState
-		compact_authority_evidence = first_bundle.get("authority_evidence", {}) if typeof(first_bundle.get("authority_evidence", {})) == TYPE_DICTIONARY else {}
 		if has_runtime_checkpoint:
 			var replay_candidate: RunState = replay_bundle.get("candidate", null) as RunState
 			accepted_runtime_checkpoint = current_game.call(runtime_checkpoint_method, replay_candidate if replay_candidate != null else candidate)

@@ -404,10 +404,32 @@ func _check_authoritative_game(game_id: String, game, action_id: String, stake: 
 			or str(authority_contract.get("trusted_candidate_wager_method", "")) != "_table_game_wager_cost_candidate" \
 			or not bool(authority_contract.get("trusted_candidate_first_proposal_owns_transaction", false)) \
 			or str(authority_contract.get("compact_authority_evidence_method", "")) != "_table_game_authority_evidence" \
+			or not bool(authority_contract.get("trusted_candidate_structural_replay_match", false)) \
 			or bool(authority_contract.get("lightweight_resolution_candidate", false)) \
 			or bool(authority_contract.get("in_place_nonrejecting_commit", false))):
 		failures.append("Baccarat did not retain its full detached compact-evidence publication contract.")
 		return
+	if game_id == "baccarat":
+		var structural_host = FoundationMainScript.new()
+		structural_host.set("current_game", game)
+		var first_proposal := {
+			"input_fingerprint": RuntimeScript.canonical_fingerprint({"input": 1}),
+			"ok": true,
+			"output_fingerprint": RuntimeScript.canonical_fingerprint({"output": 1}),
+			"result": {"ok": true, "cards": [1, 2, 3]},
+			"rng_snapshot": {"state": 17},
+			"run_snapshot": {},
+		}
+		var replay_proposal: Dictionary = first_proposal.duplicate(true)
+		replay_proposal["output_fingerprint"] = ""
+		var authority_evidence := {"table": {"shoe": [1, 2, 3]}, "account": "sealed"}
+		if not bool(structural_host.call("_sealed_action_host_candidate_proposals_match", first_proposal, replay_proposal, {}, authority_evidence, authority_evidence.duplicate(true))):
+			failures.append("Baccarat structural replay rejected an exact independently owned proposal.")
+		var tampered_replay: Dictionary = replay_proposal.duplicate(true)
+		(tampered_replay.get("result", {}) as Dictionary)["cards"] = [1, 2, 4]
+		if bool(structural_host.call("_sealed_action_host_candidate_proposals_match", first_proposal, tampered_replay, {}, authority_evidence, authority_evidence.duplicate(true))):
+			failures.append("Baccarat structural replay accepted a changed proposal result.")
+		structural_host.free()
 	var run = RunStateScript.new()
 	run.start_new("GAME06-3-HOST-%s" % game_id.to_upper())
 	run.bankroll = 1000

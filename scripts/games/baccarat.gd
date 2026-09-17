@@ -104,6 +104,7 @@ func sealed_action_authority_contract() -> Dictionary:
 		"trusted_candidate_wager_method": &"_table_game_wager_cost_candidate",
 		"trusted_candidate_first_proposal_owns_transaction": true,
 		"compact_authority_evidence_method": &"_table_game_authority_evidence",
+		"trusted_candidate_structural_replay_match": true,
 		"host_auto_tick_method": &"_table_game_host_needs_auto_tick",
 		"surface_intent_key": "",
 		"surface_intent_index_key": "",
