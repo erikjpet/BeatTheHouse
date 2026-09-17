@@ -103,6 +103,7 @@ func sealed_action_authority_contract() -> Dictionary:
 		"trusted_candidate_resolve_method": &"_table_game_resolve_candidate",
 		"trusted_candidate_wager_method": &"_table_game_wager_cost_candidate",
 		"trusted_candidate_first_proposal_owns_transaction": true,
+		"compact_authority_evidence_method": &"_table_game_authority_evidence",
 		"host_auto_tick_method": &"_table_game_host_needs_auto_tick",
 		"surface_intent_key": "",
 		"surface_intent_index_key": "",
@@ -773,6 +774,54 @@ func _table_game_wager_cost_proposal(action_id: String, stake: int, run_snapshot
 
 func _table_game_wager_cost_candidate(action_id: String, stake: int, _candidate: RunState, ui_state: Dictionary = {}) -> int:
 	return maxi(0, _total_wager(_bet_dict(ui_state.get("baccarat_bets", {}))) if action_id == "deal_baccarat" else 0)
+
+
+func _table_game_authority_evidence(candidate: RunState, action_id: String, stake: int, ui_state: Dictionary = {}) -> Dictionary:
+	if candidate == null:
+		return {}
+	var environment := candidate.current_environment
+	var table := _table_state_preview(candidate, environment).duplicate(false)
+	# The replay ledger and pending apply receipt authenticate the transaction
+	# envelope independently. Excluding them prevents history growth from making
+	# each new Baccarat proposal progressively more expensive to fingerprint.
+	table.erase(ActionAuthorityScript.LEDGER_KEY)
+	table.erase(ActionAuthorityScript.PENDING_APPLY_RECEIPT_KEY)
+	var environment_evidence := environment.duplicate(false)
+	environment_evidence.erase("environment_runtime_revision")
+	# Other game tables cannot affect Baccarat resolution. Bind the complete room
+	# context plus only the active Baccarat table so deterministic replay remains
+	# exact without serializing every cabinet and retained run history.
+	environment_evidence["game_states"] = {get_id(): table}
+	return {
+		"version": 1,
+		"game_id": get_id(),
+		"action_id": action_id,
+		"stake": maxi(0, stake),
+		"account_checkpoint": candidate.action_authority_checkpoint_fingerprint(),
+		"bankroll": candidate.bankroll,
+		"grand_casino_chips": candidate.grand_casino_chips,
+		"rng_seed": candidate.rng_seed,
+		"rng_state": candidate.rng_state,
+		"simulation_msec": candidate.simulation_msec,
+		"game_clock_minutes": candidate.game_clock_minutes,
+		"seed_text": candidate.seed_text,
+		"seed_value": candidate.seed_value,
+		"challenge_config": candidate.challenge_config,
+		"inventory": candidate.inventory,
+		"active_item_id": candidate.active_item_id,
+		"suspicion": candidate.suspicion,
+		"baseline_luck": candidate.baseline_luck,
+		"drunk_level": candidate.drunk_level,
+		"alcoholic_level": candidate.alcoholic_level,
+		"narrative_flags": candidate.narrative_flags,
+		"grand_casino_staffing": candidate.grand_casino_staffing,
+		"rourke_current_room": candidate.rourke_current_room,
+		"rourke_current_spot": candidate.rourke_current_spot,
+		"rourke_facing": candidate.rourke_facing,
+		"rourke_off_floor_actions": candidate.rourke_off_floor_actions,
+		"environment": environment_evidence,
+		"ui_state": ui_state,
+	}
 
 
 func _resolve_baccarat_proposal_core(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
