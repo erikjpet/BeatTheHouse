@@ -569,3 +569,47 @@ The remaining Web failures are Slot autoplay against 100 ms, Baccarat active
 against 120 ms, Slot idle against 45 ms, and the same four Corner Store timing-
 schema diagnostics. No threshold changed. The result is recorded at
 `.tmp/perf_continue_20260917/web_l02_cpu4_after_surface_audio_hotpaths.json`.
+
+### Slot realtime redraw-scheduler follow-up
+
+Slot's 16 ms presentation refresh advanced only read-only clock and feature
+projection state, but every patch also requested a complete cabinet redraw.
+That bypassed the canvas scheduler: the constrained-Web idle scenario declared
+1 fps and scheduled two redraws, yet the patch path forced 51 draws in the same
+two-second window. Ordinary Slot patches and steady-state Pinball patches now
+defer redraw ownership to the existing scheduler. Active reel/feature channels
+retain their 60 fps cadence; the structural first Pinball takeover still draws
+immediately and atomically.
+
+| Fresh Chrome CPU4 scenario | Before (`fab14372`) | After (`1d1d2f2c`) | Result |
+| --- | ---: | ---: | --- |
+| Slot idle whole-frame p95 | 50.000 ms | 20.000 ms | now passes 45 ms |
+| Slot idle full draws / scheduled draws | 51 / 2 | 2 / 2 | redundant draws removed |
+| Slot active whole-frame p95 | 46.664 ms | 54.385 ms | passes 110 ms |
+| Slot active full draws / scheduled draws | 61 / 23 | 22 / 20 | patch redraws removed |
+| Slot autoplay whole-frame p95 | 122.753 ms | 21.165 ms | now passes 100 ms |
+| Slot autoplay full draws | 65 | 2 | pre-spin toggle no longer repaints every patch |
+
+The focused foreground-autoplay probe remained noise-bound: action average
+moved from 28.928 to 29.851 ms and next-frame p95 from 9.349 to 9.796 ms. It
+still advanced every spin exactly once, handed every unique animation to the
+canvas, used only incremental snapshot refreshes, and retained at most two
+sealed responses. Ordinary and Buffalo cadence, the complete Slot surface
+suite, all six cabinet visual-QA cases, and native idle liveness passed.
+
+The exact Web run removed both Slot failures without adding a failure class.
+Baccarat active remains red at 139.468 ms against 120 ms, and the same four
+Corner Store timing-schema diagnostics remain. A trial narrow-candidate
+Baccarat authority path reduced native deal time from 214.166 to 123.826 ms,
+but failed the required table-result/turn publication contract and was removed
+in full; none of that unsafe experiment is retained. No budget changed. The
+accepted Web result is
+`.tmp/perf_continue_20260917/web_l02_cpu4_after_slot_scheduler.json`.
+
+The unchanged-budget native matrix passed 61 observations across all 11 game
+surfaces and all 10 direct resolver paths. Direct resolve p95 was Pull Tabs
+0.887 ms, Scratch Tickets 3.105 ms, Slot 3.077 ms, Bar Dice 0.655 ms, Craps
+1.324 ms, Blackjack 3.231 ms, Baccarat 1.089 ms, Roulette 1.671 ms, Crew Draw
+Poker 2.053 ms, and Video Poker 1.040 ms. Project validation passed, and two
+deterministic runs matched across 3 seeds and 204 checkpoints with combined
+hash `1211704896`.
