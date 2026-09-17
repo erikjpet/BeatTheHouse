@@ -95,6 +95,13 @@ func sealed_action_authority_contract() -> Dictionary:
 	return {
 		"resolve_proposal_method": &"_table_game_resolve_proposal",
 		"wager_cost_proposal_method": &"_table_game_wager_cost_proposal",
+		# Foundation already owns an isolated full transaction candidate. Resolve
+		# both deterministic proposals against targeted clones of that candidate
+		# instead of serializing, parsing, and restoring the entire run twice.
+		# Unlike Slot's narrow replay view, Baccarat keeps the full detached
+		# candidate because the accepted table must cross the normal publish path.
+		"trusted_candidate_resolve_method": &"_table_game_resolve_candidate",
+		"trusted_candidate_wager_method": &"_table_game_wager_cost_candidate",
 		"host_auto_tick_method": &"_table_game_host_needs_auto_tick",
 		"surface_intent_key": "",
 		"surface_intent_index_key": "",
@@ -740,6 +747,19 @@ func _table_game_resolve_proposal(action_id: String, stake: int, run_snapshot: D
 	return proposal
 
 
+func _table_game_resolve_candidate(action_id: String, stake: int, candidate: RunState, proposal_rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
+	if candidate == null or proposal_rng == null:
+		return _empty_baccarat_result(action_id, stake, {}, "Baccarat resolution requires an isolated run and RNG candidate.")
+	return _resolve_baccarat_proposal_core(
+		action_id,
+		stake,
+		candidate,
+		candidate.current_environment,
+		proposal_rng,
+		ui_state.duplicate(true)
+	)
+
+
 func _table_game_wager_cost_proposal(action_id: String, stake: int, run_snapshot: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
 	# Baccarat's canonical wager cost depends only on its sealed UI bet map. Do
 	# not reconstruct a complete run merely to add those already-sealed chips.
@@ -748,6 +768,10 @@ func _table_game_wager_cost_proposal(action_id: String, stake: int, run_snapshot
 		"cost": maxi(0, cost),
 		"input_fingerprint": RuntimeScript.canonical_fingerprint({"action_id": action_id, "stake": stake, "run_snapshot": run_snapshot, "ui_state": ui_state}),
 	}
+
+
+func _table_game_wager_cost_candidate(action_id: String, stake: int, _candidate: RunState, ui_state: Dictionary = {}) -> int:
+	return maxi(0, _total_wager(_bet_dict(ui_state.get("baccarat_bets", {}))) if action_id == "deal_baccarat" else 0)
 
 
 func _resolve_baccarat_proposal_core(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:

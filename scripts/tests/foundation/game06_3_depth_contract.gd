@@ -399,6 +399,13 @@ func _check_authoritative_game(game_id: String, game, action_id: String, stake: 
 			or not bool(authority_contract.get("host_pointer_intent", false)):
 		failures.append("%s did not declare the closed generic sealed-authority provider contract." % game_id.capitalize())
 		return
+	if game_id == "baccarat" and (
+			str(authority_contract.get("trusted_candidate_resolve_method", "")) != "_table_game_resolve_candidate" \
+			or str(authority_contract.get("trusted_candidate_wager_method", "")) != "_table_game_wager_cost_candidate" \
+			or bool(authority_contract.get("lightweight_resolution_candidate", false)) \
+			or bool(authority_contract.get("in_place_nonrejecting_commit", false))):
+		failures.append("Baccarat did not retain its full detached trusted-candidate publication contract.")
+		return
 	var run = RunStateScript.new()
 	run.start_new("GAME06-3-HOST-%s" % game_id.to_upper())
 	run.bankroll = 1000
