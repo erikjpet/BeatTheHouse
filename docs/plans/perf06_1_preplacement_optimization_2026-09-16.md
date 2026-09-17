@@ -501,3 +501,54 @@ Web failures are therefore still Slot autoplay against 100 ms, Baccarat active
 against 120 ms, Slot idle against 45 ms, and the same four Corner Store timing-
 schema diagnostics. No performance threshold was changed. The full result is
 recorded at `.tmp/perf_continue_20260917/web_l02_cpu4_after_slot_render.json`.
+
+### Shared surface-audio and readability follow-up
+
+The next play trace found frame-local presentation allocation shared by Slot
+and the animated table games. `GameSurfaceCanvas` deep-copied the complete
+surface-audio contract every process frame, rebuilt a diagnostic redraw-demand
+dictionary for boolean scheduler checks, and repeatedly looked up each audio
+animation channel while calculating elapsed, active, and identity values.
+Slot audio additionally shallow-copied the complete surface snapshot just to
+attach transient timing, then rebuilt the same cabinet profile, normalized cue
+list, and reel-stop list during every active spin.
+
+All of those values are now borrowed from the immutable presentation snapshot.
+Transient timing travels beside the Slot state, the current cabinet audio
+profile is cached by its complete five-field identity, and already-normalized
+cue/stop arrays take a read-only fast path. Animation timing reads each channel
+once while preserving missing-channel, reduced-motion, pause-clock, and finite-
+duration behavior. The normal scheduler now queries its boolean directly; the
+dictionary form remains available for diagnostics.
+
+The canvas also stopped calculating and retaining text readability rectangles
+when the distortion overlay is not visible. Distorted play still records the
+same maximum 16 regions and uses the same shader projection; ordinary play had
+no consumer for those temporary rectangles.
+
+| Repeated native hot path | Before | After | Change |
+| --- | ---: | ---: | ---: |
+| Surface audio specification | 4.335 us | 0.567 us | -86.9% |
+| Three-channel audio timing | 22.521 us | 12.887 us | -42.8% |
+| Continuous-redraw predicate | 6.231 us | 3.773 us | -39.4% |
+| Slot cabinet audio profile | 5.969 us | 2.501 us | -58.1% |
+| Slot normalized cue list | 4.110 us | 2.114 us | -48.6% |
+| Slot normalized reel stops | 1.998 us | 1.444 us | -27.7% |
+| Forty inactive-overlay text registrations | 108.449 us | 46.011 us | -57.6% |
+
+The paired production desktop trace improved Slot active whole-frame p95 from
+8.522 to 7.031 ms, Slot autoplay from 8.333 to 7.407 ms, and Baccarat active
+from 16.219 to 14.797 ms. Slot autoplay draw average/p95 moved from
+2.993/3.108 to 2.818/2.892 ms. These are short trace comparisons; unrelated
+rows moved in both directions, so acceptance remained the repeated locked
+matrix rather than a favorable isolated sample.
+
+That unchanged-budget matrix passed 61 observations across all 11 game
+surfaces and all 10 direct resolver paths. Direct resolve p95 was Pull Tabs
+0.805 ms, Scratch Tickets 2.986 ms, Slot 3.030 ms, Bar Dice 0.638 ms, Craps
+1.297 ms, Blackjack 3.176 ms, Baccarat 1.155 ms, Roulette 1.492 ms, Crew Draw
+Poker 2.163 ms, and Video Poker 1.062 ms. The surface-audio audit passed all 13
+profiles and 83 delivery streams; the Slot surface suite, ordinary/Buffalo
+autoplay cadence, all six cabinet visual-QA cases, project validation, the
+focused hot-path state-integrity contract, and deterministic replay across 3
+seeds and 204 checkpoints with hash `1211704896` also passed.

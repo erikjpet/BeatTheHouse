@@ -685,10 +685,14 @@ func surface_presentation_time_msec() -> int:
 
 func surface_elapsed(channel_id: String) -> float:
 	var channel := _surface_animation_channel(channel_id)
+	return _surface_elapsed_for_channel(channel)
+
+
+func _surface_elapsed_for_channel(channel: Dictionary) -> float:
 	if channel.is_empty() or not bool(channel.get("active", false)):
 		return 999.0
 	if reduce_motion:
-		return surface_animation_duration(channel_id)
+		return _surface_animation_duration_for_channel(channel)
 	var started_msec := int(channel.get("started_msec", 0))
 	if started_msec <= 0:
 		return 999.0
@@ -711,6 +715,10 @@ func surface_elapsed(channel_id: String) -> float:
 
 func surface_animation_duration(channel_id: String) -> float:
 	var channel := _surface_animation_channel(channel_id)
+	return _surface_animation_duration_for_channel(channel)
+
+
+func _surface_animation_duration_for_channel(channel: Dictionary) -> float:
 	return float(maxi(0, int(channel.get("duration_msec", 0)))) / 1000.0
 
 
@@ -722,10 +730,10 @@ func surface_animation_active(channel_id: String) -> bool:
 		return false
 	if str(channel.get("active_id", "")).is_empty():
 		return false
-	var duration := surface_animation_duration(channel_id)
+	var duration := _surface_animation_duration_for_channel(channel)
 	if duration <= 0.0:
 		return true
-	return surface_elapsed(channel_id) < duration
+	return _surface_elapsed_for_channel(channel) < duration
 
 
 func surface_low_detail_idle() -> bool:
@@ -952,6 +960,10 @@ func _centered_label_fit_size(font: Font, text: String, rect: Rect2, font_size: 
 
 
 func _register_surface_text_rect(text: String, pos: Vector2, font_size: int) -> void:
+	if drunk_distortion_overlay == null or not drunk_distortion_overlay.visible:
+		return
+	if surface_text_protected_rects.size() >= DrunkDistortionOverlay.MAX_UI_PROTECTED_RECTS:
+		return
 	var clean := text.strip_edges()
 	if clean.is_empty():
 		return
@@ -960,6 +972,11 @@ func _register_surface_text_rect(text: String, pos: Vector2, font_size: int) -> 
 
 
 func _register_surface_text_panel_rect(rect: Rect2) -> void:
+	# Readability masks are consumed only by the visible distortion overlay.
+	# Ordinary play previously allocated and measured up to sixteen label rects
+	# per draw, then discarded them without a consumer.
+	if drunk_distortion_overlay == null or not drunk_distortion_overlay.visible:
+		return
 	if rect.size.x <= 0.0 or rect.size.y <= 0.0:
 		return
 	if surface_text_protected_rects.size() >= DrunkDistortionOverlay.MAX_UI_PROTECTED_RECTS:
@@ -1263,8 +1280,9 @@ func _process(delta: float) -> void:
 
 
 func _schedule_surface_animation_redraws(delta: float) -> void:
-	var redraw_demand := _surface_animation_redraw_demand()
-	var main_redraw := bool(redraw_demand.get("main", false))
+	# The scheduler needs only the main boolean. Building a two-field diagnostic
+	# dictionary here allocated once per visible frame on every animated surface.
+	var main_redraw := _surface_main_animation_redraw_active()
 	if main_redraw:
 		perf_surface_animation_scheduler_elapsed_sec += maxf(0.0, delta)
 		if _surface_animation_redraw_due(delta):
@@ -1442,7 +1460,8 @@ func _sync_surface_audio() -> void:
 		last_audio_profile_id = profile_id
 	if profile_id.is_empty():
 		return
-	var sync_spec := _copy_dict(audio.get("state_sync", {}))
+	var sync_value: Variant = audio.get("state_sync", {})
+	var sync_spec: Dictionary = sync_value as Dictionary if typeof(sync_value) == TYPE_DICTIONARY else {}
 	if sync_spec.is_empty():
 		return
 	_ensure_surface_sfx_player()
@@ -1453,27 +1472,34 @@ func _sync_surface_audio() -> void:
 
 func _surface_audio_timing(sync_spec: Dictionary) -> Dictionary:
 	var timing: Dictionary = {}
-	for raw_key in sync_spec.keys():
+	for raw_key in sync_spec:
 		var key := str(raw_key)
 		if key != "animation_channel" and not key.ends_with("_channel"):
 			continue
 		var channel_id := str(sync_spec.get(key, ""))
+		var channel := _surface_animation_channel(channel_id)
+		var duration := _surface_animation_duration_for_channel(channel)
+		var elapsed := _surface_elapsed_for_channel(channel)
+		var active := false
+		if not reduce_motion and not channel.is_empty() \
+				and bool(channel.get("active", false)) \
+				and not str(channel.get("active_id", "")).is_empty():
+			active = duration <= 0.0 or elapsed < duration
 		timing[key] = {
 			"channel_id": channel_id,
-			"elapsed": surface_elapsed(channel_id),
-			"active": surface_animation_active(channel_id),
-			"active_id": surface_animation_active_id(channel_id),
+			"elapsed": elapsed,
+			"active": active,
+			"active_id": str(channel.get("active_id", "")),
 		}
 	return timing
 
 
 func _needs_continuous_redraw() -> bool:
-	return bool(_surface_animation_redraw_demand().get("main", false))
+	return _surface_main_animation_redraw_active()
 
 
 func _surface_animation_liveness_active() -> bool:
-	var demand := _surface_animation_redraw_demand()
-	return bool(demand.get("main", false))
+	return _surface_main_animation_redraw_active()
 
 
 func _surface_animation_redraw_demand() -> Dictionary:
@@ -1873,19 +1899,17 @@ func _surface_action_block_reason(action: String) -> String:
 
 
 func _surface_audio_spec() -> Dictionary:
-	var audio := _copy_dict(state.get("surface_audio", {}))
-	if not audio.has("profile_id"):
-		audio["profile_id"] = ""
-	if not audio.has("action_cues"):
-		audio["action_cues"] = {}
-	if not audio.has("state_sync"):
-		audio["state_sync"] = {}
-	return audio
+	# Surface snapshots remain immutable between host patches. Callers only read
+	# this contract and already supply defaults, so a deep copy on every process
+	# frame did not protect an ownership boundary.
+	var audio_value: Variant = state.get("surface_audio", {})
+	return audio_value as Dictionary if typeof(audio_value) == TYPE_DICTIONARY else {}
 
 
 func _surface_action_audio_cue(action: String) -> String:
 	var audio := _surface_audio_spec()
-	var action_cues := _copy_dict(audio.get("action_cues", {}))
+	var action_cues_value: Variant = audio.get("action_cues", {})
+	var action_cues: Dictionary = action_cues_value as Dictionary if typeof(action_cues_value) == TYPE_DICTIONARY else {}
 	if not action_cues.has(action):
 		return ""
 	var cue_value: Variant = action_cues.get(action, "")

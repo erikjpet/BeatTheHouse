@@ -225,6 +225,8 @@ var _surface_cue_occurrences: Dictionary = {}
 var _surface_last_variation_step: Dictionary = {}
 var _surface_selection_trace: Array = []
 var _surface_voice_serial := 0
+var _slot_audio_profile_cache_key := ""
+var _slot_audio_profile_cache: Dictionary = {}
 var _surface_audio_authority: RefCounted
 var _surface_audio_authority_bound := false
 var _rejected_surface_authority_calls := 0
@@ -389,8 +391,7 @@ func sync_surface_state(surface_state: Dictionary, sync_spec: Dictionary, timing
 			var channel_id := str(sync_spec.get("animation_channel", ""))
 			var feature_channel_id := str(sync_spec.get("feature_animation_channel", "slot_feature"))
 			var nudge_chain_channel_id := str(sync_spec.get("nudge_chain_channel", "slot_nudge_chain"))
-			var slot_state := surface_state.duplicate(false)
-			slot_state["_surface_audio_timing"] = {
+			var slot_timing := {
 				"spin_elapsed": _timing_elapsed(timing, "animation_channel"),
 				"spin_active": _timing_active(timing, "animation_channel"),
 				"spin_active_id": _timing_active_id(timing, "animation_channel"),
@@ -409,7 +410,10 @@ func sync_surface_state(surface_state: Dictionary, sync_spec: Dictionary, timing
 			if bool(surface_state.get("slot_nudge_chain_active", false)):
 				slot_elapsed = _timing_elapsed(timing, "nudge_chain_channel")
 				slot_active = _timing_active(timing, "nudge_chain_channel")
-			sync_slot_state(slot_state, slot_elapsed, slot_active)
+			# Pass timing beside the immutable surface snapshot. The previous shallow
+			# duplicate copied the entire Slot surface solely to attach this transient
+			# dictionary on every active audio frame.
+			sync_slot_state(surface_state, slot_elapsed, slot_active, slot_timing)
 		"pull_tab_dispense_state":
 			sync_pull_tab_dispense(
 				surface_state,
@@ -735,10 +739,10 @@ func _emit_music_director_cue(cue_id: String, context: Dictionary = {}) -> bool:
 	return true
 
 
-func sync_slot_state(slot_state: Dictionary, elapsed: float, animation_active: bool) -> void:
+func sync_slot_state(slot_state: Dictionary, elapsed: float, animation_active: bool, audio_timing: Dictionary = {}) -> void:
 	if not audio_enabled or _running_headless():
 		return
-	var timing := _dict(slot_state.get("_surface_audio_timing", {}))
+	var timing := audio_timing if not audio_timing.is_empty() else _dict(slot_state.get("_surface_audio_timing", {}))
 	var feature_scene := _dict(slot_state.get("slot_feature_scene", {}))
 	var feature_active := bool(feature_scene.get("active", false))
 	var incoming_id := _active_slot_audio_id(slot_state, feature_scene, timing)
@@ -795,7 +799,7 @@ func sync_slot_state(slot_state: Dictionary, elapsed: float, animation_active: b
 
 	if feature_active:
 		_sync_feature_music(feature_scene, profile)
-		_sync_feature_scene_cues(slot_state, profile, elapsed)
+		_sync_feature_scene_cues(slot_state, profile, elapsed, timing)
 		return
 	if not _feature_music_id.is_empty():
 		_feature_music_id = ""
@@ -1282,11 +1286,19 @@ func _trigger_cue(active_id: String, cue: Dictionary, condition: bool, _profile:
 
 
 func _slot_audio_cues(slot_state: Dictionary) -> Array:
-	var result: Array = []
 	var raw: Variant = slot_state.get("slot_audio_cues", [])
 	if typeof(raw) != TYPE_ARRAY:
-		return result
-	for entry in raw:
+		return []
+	var source: Array = raw as Array
+	var normalization_required := false
+	for entry in source:
+		if typeof(entry) != TYPE_DICTIONARY:
+			normalization_required = true
+			break
+	if not normalization_required:
+		return source
+	var result: Array = []
+	for entry in source:
 		if typeof(entry) == TYPE_DICTIONARY:
 			result.append(entry)
 		elif typeof(entry) == TYPE_STRING:
@@ -1328,11 +1340,21 @@ func _cue_marker(active_id: String, cue: Dictionary) -> String:
 
 func _slot_reel_stop_times(slot_state: Dictionary) -> Array:
 	var raw: Variant = slot_state.get("slot_reel_stop_times", [])
+	var reel_count := maxi(1, int(slot_state.get("slot_reel_count", 3)))
+	if typeof(raw) == TYPE_ARRAY:
+		var source: Array = raw as Array
+		if source.size() == reel_count:
+			var normalized := true
+			for value in source:
+				if typeof(value) != TYPE_FLOAT and typeof(value) != TYPE_INT:
+					normalized = false
+					break
+			if normalized:
+				return source
 	var result: Array = []
 	if typeof(raw) == TYPE_ARRAY:
-		for value in raw:
+		for value in raw as Array:
 			result.append(float(value))
-	var reel_count := maxi(1, int(slot_state.get("slot_reel_count", 3)))
 	while result.size() < reel_count:
 		if result.is_empty():
 			result.append(float(SLOT_CLASSIC_REEL_STOP_TIMES[0]))
@@ -1349,6 +1371,9 @@ func _slot_audio_profile(slot_state: Dictionary) -> Dictionary:
 	var math_id := str(slot_state.get("slot_math_variant_id", "standard"))
 	var bonus_id := str(slot_state.get("slot_bonus_variant_id", "plain"))
 	var cabinet_id := str(slot_state.get("slot_cabinet_variant_id", ""))
+	var cache_key := "\u001f".join([format_id, type_id, math_id, bonus_id, cabinet_id])
+	if cache_key == _slot_audio_profile_cache_key and not _slot_audio_profile_cache.is_empty():
+		return _slot_audio_profile_cache
 	var pitch_bias := 0.0
 	match math_id:
 		"steady":
@@ -1448,7 +1473,9 @@ func _slot_audio_profile(slot_state: Dictionary) -> Dictionary:
 		profile["loop_pitch"] = float(profile.get("loop_pitch", 1.0)) * 0.97
 		profile["stop_pitch_step"] = float(profile.get("stop_pitch_step", -0.04)) - 0.010
 		profile["bonus_pitch"] = float(profile.get("bonus_pitch", 1.0)) + 0.03
-	return profile
+	_slot_audio_profile_cache_key = cache_key
+	_slot_audio_profile_cache = profile
+	return _slot_audio_profile_cache
 
 
 func _trigger(marker: String, condition: bool, event_id: String, volume_db: float = 0.0, pitch: float = 1.0, suppress_physical_playback: bool = false) -> void:
@@ -1499,7 +1526,7 @@ func _sync_feature_music(feature_scene: Dictionary, profile: Dictionary) -> void
 	})
 
 
-func _sync_feature_scene_cues(slot_state: Dictionary, profile: Dictionary, fallback_elapsed: float) -> void:
+func _sync_feature_scene_cues(slot_state: Dictionary, profile: Dictionary, fallback_elapsed: float, audio_timing: Dictionary = {}) -> void:
 	var scene := _dict(slot_state.get("slot_feature_scene", {}))
 	var scene_id := str(scene.get("scene_id", scene.get("mode", "")))
 	if scene_id.is_empty():
@@ -1507,7 +1534,7 @@ func _sync_feature_scene_cues(slot_state: Dictionary, profile: Dictionary, fallb
 	if scene_id != _feature_scene_audio_id:
 		_feature_scene_audio_id = scene_id
 		_clear_markers_with_prefix("feature_scene_")
-	var timing := _dict(slot_state.get("_surface_audio_timing", {}))
+	var timing := audio_timing if not audio_timing.is_empty() else _dict(slot_state.get("_surface_audio_timing", {}))
 	var elapsed := float(timing.get("feature_elapsed", fallback_elapsed))
 	var stages: Array = scene.get("stages", []) if typeof(scene.get("stages", [])) == TYPE_ARRAY else []
 	var start_times: Array = []
