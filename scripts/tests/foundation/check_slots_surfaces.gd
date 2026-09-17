@@ -55,6 +55,11 @@ func _check_slot_one_click_spin(definition: Dictionary, failures: Array) -> void
 		failures.append("Slot Spin button still required a second click before resolving.")
 	if JSON.stringify(run_state.to_dict()) != before:
 		failures.append("Slot Spin command mutated RunState before the host resolved the one-click action.")
+	var presentation = SlotPresentationScript.new()
+	var idle_surface: Dictionary = presentation.surface_state(machine, run_state, definition, {"surface_time_msec": 1000})
+	var idle_patch: Dictionary = presentation.realtime_state_patch(machine, run_state, {"surface_time_msec": 1016}, idle_surface)
+	if not bool(idle_patch.get("surface_defer_patch_redraw", false)):
+		failures.append("Slot idle realtime patch bypassed the canvas animation scheduler with a redundant redraw.")
 
 
 func _check_slot_runtime_storage_contract(definition: Dictionary, failures: Array) -> void:
@@ -908,6 +913,8 @@ func _check_slot_pinball_feature_visual_manifest(definition: Dictionary, failure
 		failures.append("Slot pinball realtime reveal did not activate the takeover.")
 	if not takeover_patch.has("surface_animation_channels") or not takeover_patch.has("slot_skin") or not takeover_patch.has("surface_audio") or not _slot_array(takeover_patch.get("slot_grid", ["stale"])).is_empty():
 		failures.append("Slot pinball realtime reveal returned a partial patch, leaving stale cabinet layout or controls on screen.")
+	if bool(takeover_patch.get("surface_defer_patch_redraw", false)):
+		failures.append("Slot pinball structural takeover deferred its required first redraw.")
 	var takeover_manifest: Dictionary = renderer.render_signature(takeover_patch, definition, 1000, "feature")
 	if not bool(takeover_manifest.get("pinball_takeover_active", false)) or not bool(takeover_manifest.get("pinball_launch_control_visible", false)):
 		failures.append("Slot pinball realtime reveal did not produce an interactive launch takeover.")
@@ -921,6 +928,8 @@ func _check_slot_pinball_feature_visual_manifest(definition: Dictionary, failure
 		failures.append("Slot pinball reveal handoff regressed to reels after its spin timing channel was removed.")
 	if latched_patch.has("slot_skin") or latched_patch.has("surface_animation_channels") or latched_patch.has("slot_grid"):
 		failures.append("Slot pinball steady-state refresh rebuilt static takeover fields instead of returning a compact live patch.")
+	if not bool(latched_patch.get("surface_defer_patch_redraw", false)):
+		failures.append("Slot pinball steady-state refresh bypassed its active animation scheduler with a duplicate redraw.")
 	var latched_surface := takeover_patch.duplicate(true)
 	latched_surface.merge(latched_patch, true)
 	var latched_manifest: Dictionary = renderer.render_signature(latched_surface, definition, 1100, "feature")
