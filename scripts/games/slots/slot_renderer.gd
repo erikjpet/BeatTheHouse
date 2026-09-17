@@ -189,7 +189,11 @@ func draw(surface, surface_state: Dictionary, definition: Dictionary) -> bool:
 	var nudge_chain_elapsed_msec := int(round(surface.surface_elapsed("slot_nudge_chain") * 1000.0))
 	if nudge_chain_elapsed_msec <= 0 or nudge_chain_elapsed_msec > 900000:
 		nudge_chain_elapsed_msec = int(surface_state.get("slot_nudge_chain_elapsed_msec", 0))
-	var signature: Dictionary = render_signature(surface_state, definition, elapsed_msec, "", false)
+	# The public signature includes the complete visual-audit manifest. Drawing
+	# needs only the fields below; rebuilding pinball geometry, Buffalo audit
+	# counters, nudge diagnostics, and unused reel arrays every frame was pure
+	# allocation on the live renderer path.
+	var signature: Dictionary = _draw_signature(surface_state, elapsed_msec)
 	var pinball_takeover := _pinball_takeover_active(surface_state)
 	var background_texture := _slot_background_texture(skin)
 	var has_background_art := background_texture != null
@@ -215,6 +219,37 @@ func draw(surface, surface_state: Dictionary, definition: Dictionary) -> bool:
 	_draw_controls(surface, surface_state, skin, accent, light, trim)
 	_draw_back_control(surface, accent, light)
 	return true
+
+
+func _draw_signature(surface_state: Dictionary, time_msec: int) -> Dictionary:
+	var active_bonus: Dictionary = _read_dict(surface_state.get("slot_active_bonus", {}))
+	var plan: Dictionary = _read_dict(surface_state.get("slot_animation_plan", {}))
+	var reel_motion: Array = []
+	for entry_value in _read_array(surface_state.get("slot_reel_timeline", [])):
+		reel_motion.append(_reel_motion(_read_dict(entry_value), time_msec))
+	var tier := str(surface_state.get("slot_celebration_tier", plan.get("celebration_tier", "none")))
+	var reveal_ready := _result_reveal_ready(surface_state, time_msec)
+	var win_cells: Array = _read_array(surface_state.get("slot_win_cells", []))
+	var buffalo_board_payload: Dictionary = {}
+	if str(active_bonus.get("family", surface_state.get("slot_type_id", ""))) == "buffalo" \
+			and not active_bonus.is_empty() \
+			and bool(surface_state.get("slot_active_bonus_active", false)):
+		buffalo_board_payload = _buffalo_main_board_payload(surface_state, time_msec)
+	return {
+		"time_bucket": posmod(time_msec / 180, 20),
+		"reel_motion": reel_motion,
+		"result_reveal_ready": reveal_ready,
+		"gold_tease_active": int(plan.get("tease_coin_count", 0)) > 0,
+		"win_line_drawn": win_cells.size() >= 2 and str(surface_state.get("slot_win_kind", "none")) == "line",
+		"buffalo_main_board_payload": buffalo_board_payload,
+		"tease_overlay_visible": reveal_ready and (bool(plan.get("tease_active", false)) or str(surface_state.get("slot_classification", "")) == "near_miss"),
+		"result_strip_payload": _result_strip_payload(surface_state, time_msec),
+		"celebration_tier": tier,
+		"celebration_overlay_visible": reveal_ready and tier != "none" and tier != "tease",
+		"particle_count": _particle_count_for_tier(tier, time_msec, plan),
+		"color_cycle_active": _color_cycle_active(tier, time_msec, plan),
+		"color_cycle_hue": _color_cycle_hue(tier, time_msec, plan),
+	}
 
 
 func _slot_background_texture(skin: Dictionary) -> Texture2D:

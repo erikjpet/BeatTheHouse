@@ -394,6 +394,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var animation_channels := _surface_animation_channels(animation)
 	return GameModule.surface_spec({
 		"surface_renderer": "crew_draw_poker",
+		"surface_renderer_opaque": true,
 		"surface_life": "crew_table",
 		"surface_cast": "crew",
 		"surface_controls_native": true,

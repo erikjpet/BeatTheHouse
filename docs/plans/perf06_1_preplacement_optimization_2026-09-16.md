@@ -451,3 +451,42 @@ and its environment-runtime p95 was only 1.380 ms, confirming that the shared
 Town refresh is no longer the dominant exported-frame cost. This reduced
 sample is noisier than the preceding 121.270 ms autoplay run, so the remaining
 work stays open and no limit was changed.
+
+### Slot live-render and shared overdraw follow-up
+
+The Slot renderer previously called its complete visual-audit manifest builder
+inside every live draw. That public manifest intentionally includes diagnostic
+reel arrays, Pinball geometry, Buffalo counters, nudge facts, and layout fields,
+but the painter consumes only motion, reveal, result-strip, Buffalo-board, and
+celebration values. Live drawing now builds that narrow projection directly;
+the complete `render_signature()` contract and all visual QA consumers remain
+unchanged.
+
+| Pinball feature draw, 240 frames | Before | After | Change |
+| --- | ---: | ---: | ---: |
+| EM bumper drop average | 0.886 ms | 0.707 ms | -20.2% |
+| Lane multiball average | 0.967 ms | 0.773 ms | -20.1% |
+| Video feature average | 1.072 ms | 0.840 ms | -21.6% |
+
+Every row retained the same maximum draw, label, and hit-target counts. The
+production desktop trace also reduced Slot active draw p95 from 3.834 to 3.689
+ms and autoplay draw p95 from 3.066 to 2.986 ms in the paired pre-overdraw run;
+idle average remained effectively flat at 3.046 versus 3.022 ms.
+
+Slot, Video Poker, and the full-board table renderers now declare the opaque
+background they already paint. This prevents GameSurfaceCanvas from drawing a
+hidden striped backdrop first. Paired production telemetry removed 70 render
+primitives from stable Slot and Video Poker frames and typically 56 from the
+table games; state-dependent paired rows removed 52 to 132. Native CPU timing
+was noise-bound, so this is recorded as a strict render-resource reduction, not
+as a claimed CPU speedup. No renderer draw order or visible primitive changed.
+
+Validation passed the complete Slot cabinet visual QA, both Slot foundation
+contracts, ordinary and Buffalo autoplay cadence, project architecture/content
+validation, and deterministic replay twice across 3 seeds and 204 checkpoints
+with matching combined hash `1211704896`. The locked native matrix passed all
+65 observations across all 11 game surfaces and all 10 direct resolver paths
+without changing a budget. Direct resolve p95 was Blackjack 3.288 ms, Slot
+2.988 ms, Scratch Tickets 3.167 ms, Crew Draw Poker 2.018 ms, Roulette 1.435
+ms, Craps 1.276 ms, Baccarat 1.113 ms, Video Poker 1.046 ms, Pull Tabs 0.793
+ms, and Bar Dice 0.630 ms.

@@ -727,6 +727,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var pending_delivery: Dictionary = authority_ledger.get("pending_delivery", {}) if typeof(authority_ledger.get("pending_delivery", {})) == TYPE_DICTIONARY else {}
 	var spec := GameModule.surface_spec({
 		"surface_renderer": "blackjack",
+		"surface_renderer_opaque": true,
 		"surface_time_msec": now_msec,
 		"surface_presentation_time_msec": presentation_msec,
 		"surface_life": "immersive_table",

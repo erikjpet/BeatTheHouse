@@ -581,6 +581,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 
 	var spec: Dictionary = GameModule.surface_spec({
 		"surface_renderer": "card_machine",
+		"surface_renderer_opaque": true,
 		"surface_life": "screen",
 		"surface_cast": "machine",
 		"surface_controls_native": true,

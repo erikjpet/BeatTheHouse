@@ -1102,6 +1102,9 @@ func _surface_machine_view(machine: Dictionary) -> Dictionary:
 func _slot_surface_spec(payload: Dictionary = {}) -> Dictionary:
 	var spec := payload.duplicate(false)
 	spec["surface_renderer"] = str(spec.get("surface_renderer", spec.get("renderer", "result")))
+	# SlotRenderer always paints the complete 960x540 design surface before any
+	# cabinet layer. Let the shared canvas skip its hidden striped backdrop.
+	spec["surface_renderer_opaque"] = bool(spec.get("surface_renderer_opaque", true))
 	spec["surface_life"] = str(spec.get("surface_life", spec.get("surface_renderer", "result")))
 	spec["surface_cast"] = str(spec.get("surface_cast", "none"))
 	spec["surface_controls_native"] = bool(spec.get("surface_controls_native", false))

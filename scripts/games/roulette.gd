@@ -308,6 +308,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var pending_delivery: Dictionary = authority_ledger.get("pending_delivery", {}) if typeof(authority_ledger.get("pending_delivery", {})) == TYPE_DICTIONARY else {}
 	var spec := GameModule.surface_spec({
 		"surface_renderer": "roulette",
+		"surface_renderer_opaque": true,
 		"surface_life": "immersive_table",
 		"surface_cast": "dealer_table",
 		"surface_controls_native": true,

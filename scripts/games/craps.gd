@@ -156,6 +156,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var working_page := clampi(int(ui_state.get("craps_working_page", 0)), 0, working_page_count - 1)
 	var spec := GameModule.surface_spec({
 		"surface_renderer": "craps",
+		"surface_renderer_opaque": true,
 		"surface_template": "shared_table_game_v1",
 		"surface_life": "street_circle" if street else "immersive_table",
 		"surface_cast": "circle_of_players" if street else "dealer_table",
