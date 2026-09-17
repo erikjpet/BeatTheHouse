@@ -441,3 +441,13 @@ Pull Tabs 0.781 ms, and Bar Dice 0.610 ms. A preceding cold/import-contended
 sample put Blackjack idle draw at 5.62 ms against 5.00 ms; the immediate warm
 rerun passed the complete matrix, so no budget or runtime behavior was changed
 to accommodate that isolated sample.
+
+The fresh Chrome CPU4 export for source commit `00bbbc32` retained the existing
+Web diagnosis rather than closing it. Slot autoplay measured 132.568 ms p95
+against 100 ms, Baccarat active measured 143.527 ms against 120 ms, and Slot
+idle measured 50.000 ms against 45 ms; the same four Corner Store timing-schema
+diagnostics also remained. Slot autoplay's production draw p95 was 32.950 ms
+and its environment-runtime p95 was only 1.380 ms, confirming that the shared
+Town refresh is no longer the dominant exported-frame cost. This reduced
+sample is noisier than the preceding 121.270 ms autoplay run, so the remaining
+work stays open and no limit was changed.
