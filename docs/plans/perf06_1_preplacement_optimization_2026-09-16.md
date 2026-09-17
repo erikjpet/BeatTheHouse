@@ -667,3 +667,47 @@ passed all 61 observations. Its direct resolve p95 values were Pull Tabs 0.755
 ms, Scratch Tickets 2.983 ms, Slot 3.141 ms, Bar Dice 0.623 ms, Craps 1.319 ms,
 Blackjack 3.376 ms, Baccarat 1.062 ms, Roulette 1.449 ms, Crew Poker 1.977 ms,
 and Video Poker 1.045 ms.
+
+### Baccarat compact authority-evidence follow-up
+
+A temporary native stage trace attributed 50.963 of 59.016 ms (86.4%) of the
+post-copy host transaction to dual proposal replay and whole-run fingerprinting.
+Baccarat now supplies the same compact-evidence seam already proven by Slot,
+while retaining its full detached transaction candidate and independently cloned
+full replay candidate. The evidence binds account/RNG checkpoints, the complete
+Baccarat table and room context, wager UI, challenges, inventory, heat, alcohol,
+staffing, and pit-boss state. Replay history and unrelated game tables remain
+covered by their own host ledger/context contracts and are no longer recursively
+serialized into both proposals.
+
+| Production Baccarat deal | Before (`c3c59649`) | Compact evidence (`74ad74fc`) | Change |
+| --- | ---: | ---: | ---: |
+| Native sealed resolve | 127.046 ms | 111.086 ms | -12.6% |
+| Chrome CPU4 sealed resolve | 590.550 ms | 539.690 ms | -8.6% |
+| Chrome CPU4 active whole-frame p95 | 141.318 ms | 146.125 ms | noise-bound, still over 120 ms |
+
+The exact cold Web export was built from `74ad74fc` with no page, request, or
+response failures. It retained the observed committed result, turn advance,
+dealing phase, and animation. Its remaining failures were the established four
+Corner Store timing-schema diagnostics plus Baccarat active frame p95; Blackjack
+idle passed in this repeat. Unrelated draw samples moved in both directions,
+including a large Slot-active regression despite no Slot code change, so draw
+variance is not claimed as an effect of this transaction-only optimization. No
+budget changed.
+
+Architecture validation and the direct Roulette/Baccarat depth contract passed.
+The 400-hand Baccarat audit reported zero rule/accounting failures and ten
+successful authoritative host commits. Two independent determinism processes
+matched across 3 seeds and 222 checkpoints with combined hash `548969563`. The
+focused Foundation Baccarat game check passed with zero failures in 279 ms; its
+shared content prelude still emitted the same 84 unrelated randomized layout
+failures, so the aggregate wrapper remained red rather than being reported as a
+clean suite pass.
+
+The first unchanged-budget 61-observation native matrix retained one unrelated
+red sample: Craps idle draw p95 was 5.11 ms against 5.00 ms. The report remains
+retained. The uncontended repeat passed all 61 observations, with Baccarat idle
+draw p95 1.785 ms and direct resolver p95 values of Pull Tabs 0.769 ms, Scratch
+Tickets 3.006 ms, Slot 3.144 ms, Bar Dice 0.653 ms, Craps 1.237 ms, Blackjack
+3.106 ms, Baccarat 1.139 ms, Roulette 1.481 ms, Crew Poker 2.085 ms, and Video
+Poker 1.192 ms.
