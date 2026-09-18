@@ -47,6 +47,7 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 	_check_pusher_v3_ridge_physical_contract(library, failures)
 	_check_pusher_v3_vault_physical_contract(library, failures)
 	_check_pusher_v3_live_loop_and_persistence(machine_definition, failures)
+	_check_pusher_v3_reentry_motor_liveness(machine_definition, failures)
 	_check_pusher_v3_production_rail_drag(library, failures)
 	_check_pusher_v3_all_variation_migrations(library, failures)
 	_check_pusher_v3_v2_production_migration(library, failures)
@@ -2012,6 +2013,49 @@ func _check_pusher_v3_input_trace_determinism(machine: Dictionary, failures: Arr
 	var reference_digest_json := JSON.stringify(CoinPusherSolverScript.canonical_digest(reference_state), "", true)
 	if native_digest_json != reference_digest_json:
 		failures.append("Coin Pusher V3 native and integer reference kernels diverged for the same tick-stamped trace.")
+
+
+func _check_pusher_v3_reentry_motor_liveness(machine: Dictionary, failures: Array) -> void:
+	var definitions := {
+		"quarter_falls": machine,
+		"jackpot_ridge": (machine.get("machines", {}) as Dictionary).get("jackpot_ridge", machine),
+		"vault_drop": (machine.get("machines", {}) as Dictionary).get("vault_drop", machine),
+	}
+	for variation_id_value in definitions:
+		var variation_id := str(variation_id_value)
+		var definition: Dictionary = definitions[variation_id] if typeof(definitions[variation_id]) == TYPE_DICTIONARY else machine
+		var reopened := {
+			"variation_id": variation_id,
+			"simulation": CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-V3-REENTRY-%s" % variation_id), definition, 24),
+			"variation_state": {},
+			"motor_started": true,
+			"locked_down": false,
+		}
+		var simulation: Dictionary = reopened["simulation"]
+		# A compact snapshot legitimately parks the absent cabinet at target zero.
+		# Opening it must reconcile that persisted target with its running state.
+		simulation["motor_rate_fp"] = 0
+		simulation["motor_target_rate_fp"] = 0
+		var phase_before := int(simulation.get("phase_fp", 0))
+		CoinPusherLiveSessionScript.begin(reopened, definition, 18800 + variation_id.length(), true)
+		CoinPusherLiveSessionScript.advance(reopened, 1000)
+		for now_msec in [1100, 1200, 1300, 1400]:
+			CoinPusherLiveSessionScript.advance(reopened, now_msec)
+		var run_rate := int(simulation.get("motor_run_rate_fp", CoinPusherSolverScript.FP))
+		if not bool(reopened.get("motor_started", false)) \
+				or int(simulation.get("motor_target_rate_fp", 0)) != run_rate \
+				or int(simulation.get("motor_rate_fp", 0)) <= 0 \
+				or int(simulation.get("phase_fp", 0)) == phase_before:
+			failures.append("Coin Pusher %s reopened with a running session but a parked motor: %s." % [variation_id, JSON.stringify(CoinPusherSolverScript.canonical_digest(simulation))])
+	var locked := {
+		"simulation": CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-V3-REENTRY-LOCKED"), machine, 0),
+		"variation_state": {},
+		"motor_started": true,
+		"locked_down": true,
+	}
+	CoinPusherLiveSessionScript.begin(locked, machine, 18899, true)
+	if bool(locked.get("motor_started", true)) or int((locked["simulation"] as Dictionary).get("motor_target_rate_fp", -1)) != 0:
+		failures.append("Coin Pusher locked cabinet incorrectly restarted its motor on re-entry.")
 
 
 func _check_pusher_v3_live_loop_and_persistence(machine: Dictionary, failures: Array) -> void:

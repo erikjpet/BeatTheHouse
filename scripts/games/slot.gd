@@ -253,6 +253,22 @@ func checkpoint_surface_ui_state(ui_state: Dictionary, _run_state: RunState, env
 	_write_machine(environment, machine, false)
 
 
+func checkpoint_surface_ui_state_for_save(ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> void:
+	checkpoint_surface_ui_state(ui_state, run_state, environment)
+	var machine: Dictionary = _read_machine(environment)
+	var active: Dictionary = machine.get("active_bonus", {}) if typeof(machine.get("active_bonus", {})) == TYPE_DICTIONARY else {}
+	if str(active.get("family", "")) != "pinball" or not bool(active.get("active", false)) or bool(active.get("complete", false)):
+		return
+	var durable := PinballFeatureScript.durable_runtime_checkpoint(active)
+	if durable.is_empty():
+		return
+	active = active.duplicate(false)
+	active[PinballFeatureScript.DURABLE_RUNTIME_KEY] = durable
+	machine = machine.duplicate(false)
+	machine["active_bonus"] = active
+	_write_machine(environment, machine, false)
+
+
 func _settle_completed_presentation(machine: Dictionary) -> void:
 	# Feature state, replay data, final grid, classification, and offers remain
 	# durable. Only the finite ordinary-spin timeline has reached end-of-life.

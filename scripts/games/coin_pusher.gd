@@ -1726,7 +1726,7 @@ func _ensure_live_machine(run_state: RunState, environment: Dictionary) -> Dicti
 	if _has_v3_simulation(machine) and str(settled.get("schema", "")) != CoinPusherLiveSessionScript.SNAPSHOT_SCHEMA:
 		machine["settled_state"] = CoinPusherLiveSessionScript.make_snapshot(_simulation(machine), machine)
 	var seed := _stable_hash("pusher_live:%s:%s" % [str(run_state.seed_text if run_state != null else "fallback"), _environment_node_id(run_state, environment)])
-	CoinPusherLiveSessionScript.begin(machine, _machine_definition(str(machine.get("variation_id", _variation_id()))), seed)
+	CoinPusherLiveSessionScript.begin(machine, _machine_definition(str(machine.get("variation_id", _variation_id()))), seed, true)
 	_assign_feature_items(machine, run_state, environment)
 	_sync_physical_features(machine)
 	_sync_variation_motor(machine)

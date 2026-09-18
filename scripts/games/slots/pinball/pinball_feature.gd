@@ -33,6 +33,8 @@ static var _board_templates: Dictionary = {}
 static var _sequencer_instance = null
 static var _session_order: Array[String] = []
 const MAX_RUNTIME_SESSIONS := 32
+const DURABLE_RUNTIME_KEY := "pinball_durable_runtime"
+const DURABLE_RUNTIME_SCHEMA := "pinball_runtime_v1"
 const MAX_BOARD_TEMPLATES := 24
 const EVENT_LOG_CAP := 192
 const TRAJECTORY_CAP := 120
@@ -285,6 +287,12 @@ static func surface_refresh(active: Dictionary, surface_time_msec: int) -> Dicti
 	var result := active.duplicate(false)
 	var runtime: RuntimeSession = _runtime_for_static(result)
 	var sim = runtime.sim if runtime != null else _session_for_static(result)
+	if sim == null and bool(result.get("active", false)):
+		var durable: Dictionary = result.get(DURABLE_RUNTIME_KEY, {}) if typeof(result.get(DURABLE_RUNTIME_KEY, {})) == TYPE_DICTIONARY else {}
+		if str(durable.get("schema", "")) == DURABLE_RUNTIME_SCHEMA:
+			_restore_durable_runtime_checkpoint(result, durable)
+		runtime = _runtime_for_static(result)
+		sim = runtime.sim if runtime != null else _session_for(result)
 	if sim != null and bool(result.get("active", false)):
 		var session_id := str(result.get("runtime_session_id", ""))
 		var ticks_to_run := 0
@@ -337,6 +345,10 @@ static func surface_refresh(active: Dictionary, surface_time_msec: int) -> Dicti
 		result["active_ball_count"] = 0
 		result["launch_in_progress"] = false
 		result["remaining_steps"] = balls_remaining
+	# The exact solver checkpoint belongs to persistence, not the render graph.
+	# Keeping it out of 60 Hz presentation patches avoids copying packed runtime
+	# arrays into the canvas while the durable machine retains the checkpoint.
+	result.erase(DURABLE_RUNTIME_KEY)
 	return result
 
 
@@ -368,6 +380,9 @@ static func live_status(active: Dictionary) -> Dictionary:
 
 
 func _refresh_active(active: Dictionary, sim, local_events: Array, local_trajectory: Array) -> void:
+	# Any accepted feature action makes a previously persisted solver checkpoint
+	# stale. Save preparation captures a fresh one from the live runtime.
+	active.erase(DURABLE_RUNTIME_KEY)
 	var snapshot: Dictionary = sim.compact_snapshot()
 	var total_steps := maxi(1, int(active.get("total_steps", 1)))
 	var launched := clampi(int(snapshot.get("balls_launched", 0)), 0, total_steps)
@@ -539,6 +554,7 @@ func _apply_momentum_step_bonus(step_result: Dictionary, hit_count: int, bonus: 
 
 
 func _finish(machine: Dictionary, active: Dictionary, sim, message: String) -> Dictionary:
+	active.erase(DURABLE_RUNTIME_KEY)
 	var finish_events: Array = []
 	var finish_source_events: Array = _array(active.get("display_event_log", []))
 	var before_hooks := _array(active.get("pinball_item_hooks", [])).size()
@@ -579,11 +595,11 @@ func _finish(machine: Dictionary, active: Dictionary, sim, message: String) -> D
 	return _bonus_step_result(true, award, "%s Total $%d." % [message, award], active)
 
 
-func _session_for(active: Dictionary):
+static func _session_for(active: Dictionary):
 	var session_id := str(active.get("runtime_session_id", ""))
 	if _sessions.has(session_id):
 		return _sessions[session_id]
-	var template := _board_template(str(active.get("mode", "")), _dict(active.get("pinball_item_effects", {})))
+	var template := _board_template(str(active.get("mode", "")), _dict_static(active.get("pinball_item_effects", {})))
 	var layout: Dictionary = template.get("layout", {})
 	var compiled: Dictionary = template.get("compiled", {})
 	var sim := SimScript.new()
@@ -696,6 +712,48 @@ static func runtime_transaction_checkpoint(active: Dictionary) -> Dictionary:
 		"cached_view": runtime.cached_view.duplicate(true) if runtime != null else {},
 		"surface_refresh_msec": int(_surface_refresh_msec.get(session_id, 0)),
 	}
+
+
+static func durable_runtime_checkpoint(active: Dictionary) -> Dictionary:
+	var checkpoint := runtime_transaction_checkpoint(active)
+	if not bool(checkpoint.get("present", false)) or typeof(checkpoint.get("sim", {})) != TYPE_DICTIONARY:
+		return {}
+	var payload := Marshalls.variant_to_base64(checkpoint.get("sim", {}), false)
+	if payload.is_empty():
+		return {}
+	return {
+		"schema": DURABLE_RUNTIME_SCHEMA,
+		# Packed solver arrays do not survive JSON as typed values. An object-free
+		# Variant payload is compact, JSON-safe, and restores those arrays exactly.
+		"payload": payload,
+	}
+
+
+static func _restore_durable_runtime_checkpoint(active: Dictionary, checkpoint: Dictionary) -> bool:
+	var payload := str(checkpoint.get("payload", ""))
+	if payload.is_empty():
+		return false
+	var decoded: Variant = Marshalls.base64_to_variant(payload, false)
+	if typeof(decoded) != TYPE_DICTIONARY:
+		return false
+	var restored := restore_runtime_transaction_checkpoint(active, {
+		"session_id": str(active.get("runtime_session_id", "")),
+		"present": true,
+		"sim": decoded,
+	})
+	if not restored:
+		return false
+	# Time.get_ticks_msec() restarts with the process. Transaction rollback keeps
+	# its clock, but a durable restore must establish a new presentation origin or
+	# every new timestamp compares lower and the ball remains frozen forever.
+	var runtime := _runtime_for_static(active)
+	if runtime != null:
+		runtime.last_surface_msec = 0
+		runtime.surface_tick_accumulator_msec = 0.0
+		runtime.cached_view_tick = -1
+		runtime.cached_view = {}
+	_surface_refresh_msec[str(active.get("runtime_session_id", ""))] = 0
+	return true
 
 
 static func restore_runtime_transaction_checkpoint(active: Dictionary, checkpoint: Dictionary) -> bool:

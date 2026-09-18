@@ -14,7 +14,7 @@ const WEB_INPUT_PRESENTATION_DELAY_MSEC := 96
 static var _native_cache_generation := 0
 
 
-static func begin(machine: Dictionary, machine_definition: Dictionary, seed: int) -> Dictionary:
+static func begin(machine: Dictionary, machine_definition: Dictionary, seed: int, start_motor_on_open: bool = false) -> Dictionary:
 	_native_cache_generation += 1
 	if typeof(machine.get("simulation", {})) != TYPE_DICTIONARY \
 			or str((machine.get("simulation", {}) as Dictionary).get("schema", "")) != CoinPusherSolverScript.SCHEMA:
@@ -48,6 +48,17 @@ static func begin(machine: Dictionary, machine_definition: Dictionary, seed: int
 		simulation["cup_consumed_value"] = 0
 	if not machine.has("motor_started"):
 		machine["motor_started"] = false
+	if start_motor_on_open:
+		# The cabinet is frozen only while absent. Re-entry always resumes its
+		# continuously stroking platform unless a hard alarm locked the machine.
+		machine["motor_started"] = not bool(machine.get("locked_down", false))
+		if bool(machine.get("motor_started", false)):
+			simulation["skill_stop_engaged"] = false
+	var run_rate := int(simulation.get("motor_run_rate_fp", CoinPusherSolverScript.FP))
+	var motor_should_run := bool(machine.get("motor_started", false)) \
+			and not bool(machine.get("locked_down", false)) \
+			and not bool(simulation.get("skill_stop_engaged", false))
+	simulation["motor_target_rate_fp"] = run_rate if motor_should_run else 0
 	if typeof(machine.get("drop_queue", [])) != TYPE_ARRAY:
 		machine["drop_queue"] = []
 	if not machine.has("selected_nozzle_id") or str(machine.get("selected_nozzle_id", "")).is_empty():

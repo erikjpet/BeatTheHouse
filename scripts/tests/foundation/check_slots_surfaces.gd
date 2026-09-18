@@ -1193,6 +1193,57 @@ func _check_slot_pinball_feature_visual_manifest(definition: Dictionary, failure
 			positions_a,
 			positions_b,
 		])
+	_check_slot_pinball_durable_liveness(definition, failures)
+
+
+func _check_slot_pinball_durable_liveness(definition: Dictionary, failures: Array) -> void:
+	var pinball = SlotFamilyPinballScript.new()
+	var run_state: RunState = _slot_run_state("SLOT-PINBALL-DURABLE-LIVENESS", 100000)
+	var environment: Dictionary = _slot_environment()
+	var machine: Dictionary = _slot_machine(definition, run_state, "pinball", "classic_3_reel", "standard", "plain")
+	var active: Dictionary = pinball.open_feature(machine, 10, run_state.create_rng("slot_pin_durable_open"), definition)
+	machine["active_bonus"] = active
+	var launch: Dictionary = pinball.step_bonus(machine, "slot_bonus_launch", run_state.create_rng("slot_pin_durable_launch"), definition, {"surface_time_msec": 1000})
+	active = _slot_dict(launch.get("active_bonus", {}))
+	machine["active_bonus"] = active
+	if int(active.get("active_ball_count", 0)) <= 0:
+		failures.append("Slot pinball durable liveness fixture failed to launch a live ball.")
+		return
+	_slot_store_machine(run_state, environment, machine)
+	var game = SlotGameScript.new()
+	game.setup(definition)
+	game.checkpoint_surface_ui_state_for_save({}, run_state, environment)
+	var save_service = SaveServiceScript.new()
+	var save_slot := "foundation_pinball_durable_liveness"
+	if save_service.save_run(run_state, save_slot) != OK:
+		failures.append("Slot pinball durable liveness fixture failed to write its JSON save.")
+		return
+	var loaded_value: Variant = save_service.load_run(save_slot)
+	save_service.clear_run(save_slot)
+	if not (loaded_value is RunState):
+		failures.append("Slot pinball durable liveness fixture failed to reload its JSON save.")
+		return
+	var loaded_run := loaded_value as RunState
+	var saved_machine: Dictionary = SlotMachineStateScript.peek_machine(loaded_run.current_environment, "slot")
+	var saved_active: Dictionary = _slot_dict(saved_machine.get("active_bonus", {}))
+	var durable: Dictionary = _slot_dict(saved_active.get(PinballFeatureScript.DURABLE_RUNTIME_KEY, {}))
+	if str(durable.get("schema", "")) != PinballFeatureScript.DURABLE_RUNTIME_SCHEMA:
+		failures.append("Slot pinball save checkpoint omitted its exact in-flight solver state.")
+		return
+	PinballFeatureScript.clear_runtime_session_cache()
+	var cold_first: Dictionary = PinballFeatureScript.surface_refresh(saved_active, 10)
+	var cold_first_status: Dictionary = PinballFeatureScript.live_status(cold_first)
+	var cold_second: Dictionary = PinballFeatureScript.surface_refresh(cold_first, 42)
+	var cold_second_status: Dictionary = PinballFeatureScript.live_status(cold_second)
+	var durable_tick_delta := int(cold_second_status.get("tick", 0)) - int(cold_first_status.get("tick", 0))
+	if int(cold_first_status.get("active_ball_count", 0)) <= 0 or durable_tick_delta <= 0:
+		failures.append("Slot pinball cold restore retained the bonus but froze its in-flight ball: first=%s second=%s." % [JSON.stringify(cold_first_status), JSON.stringify(cold_second_status)])
+	if cold_first.has(PinballFeatureScript.DURABLE_RUNTIME_KEY) or cold_second.has(PinballFeatureScript.DURABLE_RUNTIME_KEY):
+		failures.append("Slot pinball copied its durable solver payload into realtime presentation patches.")
+	print("SLOT_PINBALL_DURABLE_LIVENESS restored_tick_delta=%d active_balls=%d" % [
+		durable_tick_delta,
+		int(cold_second_status.get("active_ball_count", 0)),
+	])
 
 
 func _slot_pinball_visual_sample(definition: Dictionary, format_id: String, inputs: Array, seed: String) -> Dictionary:
