@@ -845,6 +845,15 @@ original isolated contract.
 | Feature-session duration | 8,886 ms | 7,792 ms | -12.3% |
 | Largest sampled frame | 149.202 ms | 144.458 ms | -3.2% |
 
+The matching exact 60/90-frame Chrome CPU4 export improved Pinball average frame
+time from 46.538 to 42.285 ms (-9.1%), p50 from 20.880 to 20.033 ms (-4.1%),
+and feature-session duration from 42,291 to 34,658 ms (-18.0%). Sparse p95 was
+effectively flat at 138.588 versus 139.625 ms and remained below the unchanged
+180 ms budget; draw p95 was unchanged. All scenarios completed with no page,
+request, or response errors. The retained red findings were a 20.354-second cold
+ready sample, the four Corner Store timing-schema checks, Slot autoplay, and
+Baccarat active. No threshold was adjusted.
+
 The full Slot surface suite and machine-authority contract passed with all
 Pinball physics, realtime, visual, multiball, recovery, economy, RNG, and
 autoplay checks intact. Architecture validation passed. Two independent
