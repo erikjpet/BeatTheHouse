@@ -3270,6 +3270,12 @@ func _restore_environment_active_game_state_keys(environment_data: Dictionary, a
 func _foreground_game_blocks_environment_runtime() -> bool:
 	if current_game == null:
 		return false
+	# A watched Slot spin is the most draw-heavy finite presentation in the room.
+	# Offscreen cabinets remain due in the scheduler, so holding them until the
+	# visible reels finish changes neither their order nor their RNG outcomes; it
+	# only prevents two extra settlement/turn spikes from landing inside one spin.
+	if current_game.foreground_blocks_environment_runtime_during_surface_presentation() and _game_surface_presentation_active():
+		return true
 	# The old generic cards gate built a full render/session snapshot every frame
 	# merely to inspect Blackjack's hand-complete bit. Let each module read its
 	# authoritative retained state; all games default to an allocation-free false.
@@ -6663,15 +6669,11 @@ func _game_surface_autosave_blocked() -> bool:
 		return false
 	if game_surface_canvas == null:
 		return false
-	var runtime_status: Dictionary = game_surface_canvas.surface_runtime_status()
-	var animations: Dictionary = runtime_status.get("surface_animations", {}) if typeof(runtime_status.get("surface_animations", {})) == TYPE_DICTIONARY else {}
-	for channel_value in animations.values():
-		if typeof(channel_value) != TYPE_DICTIONARY:
-			continue
-		var channel: Dictionary = channel_value
-		if bool(channel.get("active", false)):
-			return true
-	return false
+	# Autosave needs only the finite transition bit. Building the diagnostic
+	# runtime-status projection here copied geometry, effect state, every channel,
+	# and the drunk-overlay snapshot on every animated frame while a save was
+	# pending—the exact sustained Slot-autoplay path where it hurts most.
+	return game_surface_canvas.surface_transition_animation_active()
 
 
 # Loads the current foundation run.

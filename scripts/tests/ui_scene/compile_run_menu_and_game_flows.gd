@@ -2848,15 +2848,22 @@ func _check_multi_slot_background_autoplay_budget(app: Control) -> bool:
 	var after_first_slot_1 := int(SlotMachineStateScript.read_machine(run_state.current_environment, "slot").get("spin_count", 0))
 	var after_first_slot_2 := int(SlotMachineStateScript.read_machine(run_state.current_environment, "slot:2").get("spin_count", 0))
 	var after_first_slot_3 := int(SlotMachineStateScript.read_machine(run_state.current_environment, "slot:3").get("spin_count", 0))
-	if after_first_slot_1 != 11 or after_first_slot_2 != 20 or after_first_slot_3 != 30:
-		push_error("First multi-slot runtime tick should advance only background slot 1; got %d/%d/%d." % [after_first_slot_1, after_first_slot_2, after_first_slot_3])
+	if after_first_slot_1 != 10 or after_first_slot_2 != 20 or after_first_slot_3 != 30:
+		push_error("Background slots advanced during the foreground reel animation; got %d/%d/%d." % [after_first_slot_1, after_first_slot_2, after_first_slot_3])
 		return false
+	var surface_canvas: Control = app.get("game_surface_canvas") as Control
+	surface_canvas.set("surface_animation_channels", {})
+	surface_canvas.set("surface_animation_handoff_until_msec", 0)
+	app.call("_advance_environment_game_runtime")
+	# The scheduler deliberately leaves one quiet process pass between expensive
+	# offscreen settlements so two cabinets cannot create adjacent frame spikes.
+	app.call("_advance_environment_game_runtime")
 	app.call("_advance_environment_game_runtime")
 	var after_second_slot_1 := int(SlotMachineStateScript.read_machine(run_state.current_environment, "slot").get("spin_count", 0))
 	var after_second_slot_2 := int(SlotMachineStateScript.read_machine(run_state.current_environment, "slot:2").get("spin_count", 0))
 	var after_second_slot_3 := int(SlotMachineStateScript.read_machine(run_state.current_environment, "slot:3").get("spin_count", 0))
 	if after_second_slot_1 != 11 or after_second_slot_2 != 20 or after_second_slot_3 != 31:
-		push_error("Second multi-slot runtime tick should advance only background slot 3; got %d/%d/%d." % [after_second_slot_1, after_second_slot_2, after_second_slot_3])
+		push_error("Deferred multi-slot runtime did not drain both background cabinets after the foreground animation; got %d/%d/%d." % [after_second_slot_1, after_second_slot_2, after_second_slot_3])
 		return false
 	var active_keys_after_runtime := JSON.stringify(run_state.current_environment.get("active_game_state_keys", {}))
 	if active_keys_after_runtime != active_keys_before_open:
@@ -2865,6 +2872,9 @@ func _check_multi_slot_background_autoplay_budget(app: Control) -> bool:
 	if str(app.get("current_game_state_key")) != "slot:2":
 		push_error("Background multi-slot runtime did not restore the transient foreground slot fixture.")
 		return false
+	if not _arm_foreground_slot_checkpoint_collision(app, run_state, "slot:2", "slot", "post-deferred-runtime-animation"):
+		return false
+	app.call("_prepare_foundation_run_save")
 	if not _saved_foreground_slot_checkpoint_isolated(save_service, checkpoint_slot, run_state, "slot:2", ["slot", "slot:3"], "background autoplay tick"):
 		return false
 
@@ -2892,13 +2902,22 @@ func _check_multi_slot_background_autoplay_budget(app: Control) -> bool:
 		return false
 	app.call("_invalidate_environment_runtime_schedule", run_state.current_environment)
 	app.call("_advance_environment_game_runtime")
+	if not str(app.get("pending_wager_confirm_source_game_state_key")).is_empty():
+		push_error("Background all-in confirmation interrupted an active foreground Slot animation.")
+		return false
+	surface_canvas.set("surface_animation_channels", {})
+	surface_canvas.set("surface_animation_handoff_until_msec", 0)
+	app.call("_advance_environment_game_runtime")
 	if str(app.get("pending_wager_confirm_source_game_state_key")) != "slot:3":
-		push_error("Background slot 3 did not open its final-bankroll confirmation.")
+		push_error("Background slot 3 did not open its final-bankroll confirmation after the foreground animation.")
 		return false
 	app.call("confirm_pending_wager_action")
 	if str(app.get("current_game_state_key")) != "slot:2" or slot_game.transient_state_key_context() != "slot:2":
 		push_error("Confirmed background slot wager did not restore foreground slot 2 before save preparation.")
 		return false
+	if not _arm_foreground_slot_checkpoint_collision(app, run_state, "slot:2", "slot:3", "post-confirmation-animation"):
+		return false
+	app.call("_prepare_foundation_run_save")
 	if not _saved_foreground_slot_checkpoint_isolated(save_service, checkpoint_slot, run_state, "slot:2", ["slot", "slot:3"], "confirmed background wager"):
 		return false
 	app.call("return_to_main_menu")

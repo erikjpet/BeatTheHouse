@@ -936,3 +936,42 @@ all game resolve budgets; Slot resolve measured 1.285/1.419/1.419 ms
 average/p95/max, Blackjack 3.670/4.449/4.449 ms, and active Coin Pusher frame
 p95 remained 6.921 ms. No performance budget, travel rule, economy value,
 simulation behavior, or visual output changed.
+
+### Three-cabinet Grand Casino Slot follow-up
+
+The player-facing three-cabinet case was added to the sustained foreground
+autoplay probe: Slot 2 remains visible while Slots 1 and 3 are due for offscreen
+autoplay. Previously both background settlements landed during the visible reel
+animation on separate frames. Slot now declares that its finite foreground
+presentation owns that frame window. Due background entries remain queued in
+their original order and drain across the existing quiet-frame scheduler as
+soon as the visible reel animation completes.
+
+Repeated sealed Slot resolution also rebuilt the same 36 passive-item totals
+for proposal evidence and both deterministic executions. RunState now caches
+the stable item-effect bundle alongside its existing per-effect cache and clears
+both at the same inventory mutation boundary. Pending autosave checks now query
+the canvas's allocation-free transition predicate instead of constructing a
+complete diagnostic surface-status projection every animated frame.
+
+| Native three-cabinet production path | Before | After | Change |
+| --- | ---: | ---: | ---: |
+| Visible autoplay action average | 23.702 ms | 21.938 ms | -7.4% |
+| Visible autoplay action p95 | 29.682 ms | 25.338 ms | -14.6% |
+| Immediate next-frame p95 | 12.924 ms | 9.067 ms | -29.8% |
+| Background settlements during one visible reel animation | 2 | 0 | -100% |
+| Deferred background settlement p95 | n/a | 4.203 ms | bounded after presentation |
+| Three-cabinet offscreen runtime p95 | 2.693 ms | 2.445 ms | -9.2% |
+| Three-cabinet offscreen runtime max | 2.953 ms | 2.608 ms | -11.7% |
+
+The expanded foreground probe passed 16 measured visible spins with two due
+background cabinets per sample, unique animation identities, zero full-snapshot
+fallbacks, exact two-spin deferred drainage, and an unchanged one-entry replay
+cache. The 1/3/6/12-cabinet runtime/storage probe passed all timing, storage,
+async-save, and save/load semantic-parity gates. Slot cadence passed for ordinary
+and Buffalo autoplay. The full UI suite passed the revised multi-Slot section
+before reaching its unrelated ordinary-travel baseline hash failure, and the
+architecture validator passed. Two independent determinism processes matched
+across 3 seeds and 210 checkpoints with combined hash `2157878693`. No
+performance threshold, wager, outcome, RNG sequence, animation, or visual rule
+changed.

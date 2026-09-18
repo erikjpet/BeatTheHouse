@@ -392,6 +392,7 @@ var _item_effects_loaded: bool = false
 var _item_definitions_by_id: Dictionary = {}
 var _item_definitions_loaded: bool = false
 var _item_effect_total_cache: Dictionary = {}
+var _item_effect_bundle_cache: Dictionary = {}
 var _owned_item_lookup_cache: Dictionary = {}
 var _owned_item_lookup_cache_valid := false
 var _scenario_sequence_definition_cache: Dictionary = {}
@@ -433,13 +434,13 @@ const TURN_TRANSACTION_COLLECTION_FIELDS := [
 	"crew_contraband_stash", "crew_recruitment_encounters", "crew_play_state", "crew_heist_state",
 	"heat_history", "grand_casino_atm_interest_notifications",
 	"closing_time_state", "home_state", "_item_effects_by_id",
-	"_item_definitions_by_id", "_item_effect_total_cache",
+	"_item_definitions_by_id", "_item_effect_total_cache", "_item_effect_bundle_cache",
 	"_owned_item_lookup_cache", "_scenario_sequence_definition_cache",
 	"world_sequence_registrations", "_world_sequence_definition_cache",
 ]
 const TURN_TRANSACTION_SHALLOW_CACHE_FIELDS := [
 	"_item_effects_by_id", "_item_definitions_by_id", "_item_effect_total_cache",
-	"_owned_item_lookup_cache", "_scenario_sequence_definition_cache",
+	"_item_effect_bundle_cache", "_owned_item_lookup_cache", "_scenario_sequence_definition_cache",
 ]
 var world_sequence_registrations: Dictionary = {}
 var _world_sequence_definition_cache: Dictionary = {}
@@ -8566,6 +8567,31 @@ func item_effect_total(key: String, game_family: String = "", action_kind: Strin
 	return total
 
 
+# Returns a stable batch of passive item totals. Game resolvers and sealed replay
+# evidence often consume the same modifier set several times at one action
+# boundary; caching the bundle avoids rebuilding dozens of cache keys and result
+# dictionaries after the inventory-specific totals are already known.
+func item_effect_totals(keys: Array, game_family: String = "", action_kind: String = "") -> Dictionary:
+	var normalized_keys: Array[String] = []
+	for key_value in keys:
+		var effect_key := str(key_value).strip_edges()
+		if not effect_key.is_empty() and not normalized_keys.has(effect_key):
+			normalized_keys.append(effect_key)
+	normalized_keys.sort()
+	if normalized_keys.is_empty():
+		return {}
+	var family_key := game_family.strip_edges()
+	var action_key := action_kind.strip_edges()
+	var cache_key := "%s|%s|%s" % [family_key, action_key, ",".join(normalized_keys)]
+	if _item_effect_bundle_cache.has(cache_key):
+		return (_item_effect_bundle_cache.get(cache_key, {}) as Dictionary).duplicate(false)
+	var totals: Dictionary = {}
+	for effect_key in normalized_keys:
+		totals[effect_key] = item_effect_total(effect_key, family_key, action_key)
+	_item_effect_bundle_cache[cache_key] = totals
+	return totals.duplicate(false)
+
+
 func _inventory_entry_effect(entry: Variant) -> Dictionary:
 	if typeof(entry) != TYPE_DICTIONARY:
 		return {}
@@ -8588,6 +8614,7 @@ func _owned_item_lookup() -> Dictionary:
 
 func invalidate_inventory_effect_cache() -> void:
 	_item_effect_total_cache.clear()
+	_item_effect_bundle_cache.clear()
 	_owned_item_lookup_cache.clear()
 	_owned_item_lookup_cache_valid = false
 

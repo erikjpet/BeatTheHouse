@@ -348,6 +348,10 @@ func foreground_blocks_environment_runtime(_run_state: RunState, _environment: D
 	return false
 
 
+func foreground_blocks_environment_runtime_during_surface_presentation() -> bool:
+	return false
+
+
 func surface_auto_action_command(_ui_state: Dictionary, _run_state: RunState, _environment: Dictionary, _surface_status: Dictionary = {}) -> Dictionary:
 	return {"handled": false}
 

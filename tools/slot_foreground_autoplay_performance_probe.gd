@@ -25,6 +25,8 @@ var action_samples_usec: Array[float] = []
 var prepare_samples_usec: Array[float] = []
 var resolve_samples_usec: Array[float] = []
 var frame_samples_usec: Array[float] = []
+var background_frame_samples_usec: Array[float] = []
+var background_drain_frame_samples_usec: Array[float] = []
 var spin_ids: Array[String] = []
 
 
@@ -60,7 +62,7 @@ func _run() -> void:
 		})
 	app.call("_refresh_run_action_service")
 	app.call("_refresh")
-	if not bool(app.call("enter_game", "slot", "slot")):
+	if not bool(app.call("enter_game", "slot", "slot:2")):
 		_fail("Could not enter the foreground slot fixture.")
 		_finish()
 		return
@@ -73,8 +75,12 @@ func _run() -> void:
 	var initial_fallbacks := int(app.get("embedded_full_snapshot_fallback_count"))
 	var initial_incremental := int(app.get("embedded_incremental_snapshot_count"))
 	for sample_index in range(SAMPLE_COUNT + WARMUP_COUNT):
-		_arm_next_ordinary_autoplay_spin(run_state)
-		var before_machine := SlotState.peek_machine(run_state.current_environment, "slot")
+		_arm_next_ordinary_autoplay_spin(run_state, "slot:2")
+		_arm_background_ordinary_autoplay_spin(run_state, "slot")
+		_arm_background_ordinary_autoplay_spin(run_state, "slot:3")
+		app.call("_invalidate_environment_runtime_schedule", run_state.current_environment)
+		var background_spins_before := _background_spin_count(run_state)
+		var before_machine := SlotState.peek_machine(run_state.current_environment, "slot:2")
 		var before_count := int(before_machine.get("spin_count", 0))
 		var action_started_usec := Time.get_ticks_usec()
 		var surface_time_msec := int(app.call("_environment_simulation_time_msec"))
@@ -86,7 +92,7 @@ func _run() -> void:
 		app.call("_apply_game_surface_automation_command", authority_command, authority_ui_state)
 		var resolve_usec := Time.get_ticks_usec() - resolve_started_usec
 		var action_usec := Time.get_ticks_usec() - action_started_usec
-		var after_machine := SlotState.peek_machine(run_state.current_environment, "slot")
+		var after_machine := SlotState.peek_machine(run_state.current_environment, "slot:2")
 		var after_count := int(after_machine.get("spin_count", 0))
 		if after_count != before_count + 1:
 			_fail("Autoplay sample %d advanced spin count %d -> %d." % [sample_index, before_count, after_count])
@@ -98,14 +104,33 @@ func _run() -> void:
 		# Prevent the intentionally forced next-due timestamp from creating a second
 		# automatic action while the probe yields. The measured action above still
 		# crossed the exact production autoplay path with autoplay enabled.
-		var paused_machine := SlotState.read_machine(run_state.current_environment, "slot")
+		var paused_machine := SlotState.read_machine(run_state.current_environment, "slot:2")
 		paused_machine["slot_autoplay_active"] = false
 		paused_machine["slot_autoplay_next_msec"] = 0
-		SlotState.write_runtime_machine(run_state.current_environment, "slot", paused_machine)
+		SlotState.write_runtime_machine(run_state.current_environment, "slot:2", paused_machine)
 		var frame_started_usec := Time.get_ticks_usec()
 		await process_frame
 		var frame_usec := Time.get_ticks_usec() - frame_started_usec
-		await process_frame
+		var sample_background_frames: Array[float] = []
+		for _frame_index in range(5):
+			frame_started_usec = Time.get_ticks_usec()
+			await process_frame
+			sample_background_frames.append(float(Time.get_ticks_usec() - frame_started_usec))
+		var background_spins_after := _background_spin_count(run_state)
+		if background_spins_after != background_spins_before:
+			_fail("Autoplay sample %d advanced %d background spins during the visible reel animation." % [sample_index, background_spins_after - background_spins_before])
+			break
+		var sample_drain_frames: Array[float] = []
+		for _frame_index in range(3):
+			canvas.set("surface_animation_channels", {})
+			canvas.set("surface_animation_handoff_until_msec", 0)
+			frame_started_usec = Time.get_ticks_usec()
+			app.call("_advance_environment_game_runtime")
+			sample_drain_frames.append(float(Time.get_ticks_usec() - frame_started_usec))
+		background_spins_after = _background_spin_count(run_state)
+		if background_spins_after != background_spins_before + 2:
+			_fail("Autoplay sample %d did not drain both deferred background spins; got %d." % [sample_index, background_spins_after - background_spins_before])
+			break
 		var rendered: Dictionary = canvas.call("realtime_surface_state")
 		if str(rendered.get("slot_animation_id", "")) != animation_id:
 			_fail("Autoplay sample %d did not hand the resolved animation to the canvas." % sample_index)
@@ -115,8 +140,10 @@ func _run() -> void:
 			prepare_samples_usec.append(float(prepare_usec))
 			resolve_samples_usec.append(float(resolve_usec))
 			frame_samples_usec.append(float(frame_usec))
+			background_frame_samples_usec.append_array(sample_background_frames)
+			background_drain_frame_samples_usec.append_array(sample_drain_frames)
 			spin_ids.append(animation_id)
-	var machine := SlotState.peek_machine(run_state.current_environment, "slot")
+	var machine := SlotState.peek_machine(run_state.current_environment, "slot:2")
 	var ledger: Dictionary = machine.get("_blackjack_action_authority", {}) if typeof(machine.get("_blackjack_action_authority", {})) == TYPE_DICTIONARY else {}
 	var cache_count := (ledger.get("request_order", []) as Array).size() if typeof(ledger.get("request_order", [])) == TYPE_ARRAY else -1
 	var action_stats := _stats(action_samples_usec)
@@ -150,6 +177,8 @@ func _run() -> void:
 		"prepare": _stats(prepare_samples_usec),
 		"resolve": _stats(resolve_samples_usec),
 		"next_frame": frame_stats,
+		"background_frames": _stats(background_frame_samples_usec),
+		"background_drain_frames": _stats(background_drain_frame_samples_usec),
 		"head_avg_ms": head_avg,
 		"tail_avg_ms": tail_avg,
 		"tail_to_head_ratio": tail_ratio,
@@ -181,7 +210,7 @@ func _install_slot_room(run_state: RunState) -> void:
 		"travel_hooks": [],
 		"next_archetypes": [],
 		"object_fixtures": [],
-		"layout": {"game_fixture_counts": {"slot": 1}},
+		"layout": {"game_fixture_counts": {"slot": 3}},
 		"game_states": {},
 	}
 	environment["layout"] = EnvironmentInstance.ensure_generated_layout(environment)
@@ -189,13 +218,13 @@ func _install_slot_room(run_state: RunState) -> void:
 		run_state,
 		environment,
 		run_state.create_rng("slot_foreground_autoplay_fixture"),
-		1
+		3
 	)
 	run_state.set_environment(environment)
 
 
-func _arm_next_ordinary_autoplay_spin(run_state: RunState) -> void:
-	var machine := SlotState.read_machine(run_state.current_environment, "slot")
+func _arm_next_ordinary_autoplay_spin(run_state: RunState, state_key: String) -> void:
+	var machine := SlotState.read_machine(run_state.current_environment, state_key)
 	# A feature is valid gameplay but would turn this into a pinball/bonus timing
 	# probe. Keep the fixture on the ordinary reel path while retaining its sealed
 	# authority ledger and accumulated spin counters.
@@ -208,7 +237,16 @@ func _arm_next_ordinary_autoplay_spin(run_state: RunState) -> void:
 		machine.erase("slot_bonus_watchdog_since_msec")
 	machine["slot_autoplay_active"] = true
 	machine["slot_autoplay_next_msec"] = 1
-	SlotState.write_runtime_machine(run_state.current_environment, "slot", machine)
+	SlotState.write_runtime_machine(run_state.current_environment, state_key, machine)
+
+
+func _arm_background_ordinary_autoplay_spin(run_state: RunState, state_key: String) -> void:
+	_arm_next_ordinary_autoplay_spin(run_state, state_key)
+
+
+func _background_spin_count(run_state: RunState) -> int:
+	return int(SlotState.peek_machine(run_state.current_environment, "slot").get("spin_count", 0)) \
+		+ int(SlotState.peek_machine(run_state.current_environment, "slot:3").get("spin_count", 0))
 
 
 func _stats(samples_usec: Array[float]) -> Dictionary:

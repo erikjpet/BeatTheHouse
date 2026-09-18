@@ -30,6 +30,28 @@ const SLOT_RITUAL_CONTRACT := "game_ritual/1"
 const SLOT_RITUAL_ID := "slot.machine_session"
 const SLOT_HANDLE_PULL_GESTURE := "slot_handle_pull_gesture"
 const SLOT_HANDLE_MIN_PULL := 36.0
+const SLOT_CONTEXTUAL_ITEM_EFFECT_KEYS := [
+	"win_bonus", "payout_delta", "loss_reduction",
+	"slot_nudge_perfect_msec_bonus", "slot_nudge_close_msec_bonus",
+	"slot_cold_quarter_heat_reduction", "slot_split_reel_note_perfect_msec_bonus",
+	"slot_split_reel_note_close_msec_bonus",
+]
+const SLOT_LEGAL_ITEM_EFFECT_KEYS := [
+	"slot_three_reel_loss_refund_percent", "slot_gold_tooth_coin_upgrade_chance",
+	"slot_gold_tooth_coin_multiplier", "slot_first_bonus_bonus_percent",
+	"slot_first_bonus_bonus_cap", "slot_feature_weight_bonus_percent",
+	"slot_reel_win_weight_percent", "slot_pinball_drain_cleaner_uses",
+	"slot_pinball_drain_cleaner_floor_percent", "slot_pinball_drain_cleaner_award_percent",
+	"slot_pinball_jackpot_magnet_uses", "slot_pinball_jackpot_magnet_award_percent",
+	"slot_pinball_jackpot_magnet_progress_bonus", "slot_pinball_splitter_token_uses",
+	"slot_pinball_splitter_token_extra_balls", "slot_pinball_return_spring_uses",
+	"slot_pinball_return_spring_impulse", "slot_pinball_tilt_dampener_percent",
+	"slot_pinball_bumper_battery_hits", "slot_pinball_bumper_battery_award_percent",
+	"slot_pinball_bumper_battery_kick_percent", "slot_pinball_bumper_battery_up_impulse",
+	"slot_pinball_rubber_pegs", "slot_pinball_magnet_cup_radius_percent",
+	"slot_pinball_extra_ball_token", "slot_pinball_plunger_tuner_width_percent",
+	"slot_pinball_lock_jammer_uses",
+]
 
 var generator
 var resolver
@@ -361,6 +383,10 @@ func active_item_command(item_id: String, run_state: RunState, environment: Dict
 func surface_realtime_patch_preserves_host_state() -> bool:
 	# Realtime presentation may commit the one-time reels-to-pinball reveal, but
 	# it cannot change Foundation bankroll, pressure, intoxication, or selection.
+	return true
+
+
+func foreground_blocks_environment_runtime_during_surface_presentation() -> bool:
 	return true
 
 
@@ -1958,44 +1984,20 @@ func _slot_cross_game_item_effects(run_state: RunState, machine: Dictionary, is_
 	if run_state == null:
 		return {}
 	var item_state: Dictionary = _slot_copy_dict(machine.get("slot_item_state", {}))
-	return {
-		"win_bonus": _item_bonus("win_bonus", run_state, is_cheat),
-		"payout_delta": _item_bonus("payout_delta", run_state, is_cheat),
-		"loss_reduction": _item_bonus("loss_reduction", run_state, is_cheat),
-		"cheat_suspicion_delta": _item_bonus("cheat_suspicion_delta", run_state, true),
-		"slot_three_reel_loss_refund_percent": _item_bonus("slot_three_reel_loss_refund_percent", run_state, false),
-		"slot_nudge_perfect_msec_bonus": _item_bonus("slot_nudge_perfect_msec_bonus", run_state, is_cheat),
-		"slot_nudge_close_msec_bonus": _item_bonus("slot_nudge_close_msec_bonus", run_state, is_cheat),
-		"slot_gold_tooth_coin_upgrade_chance": _item_bonus("slot_gold_tooth_coin_upgrade_chance", run_state, false),
-		"slot_gold_tooth_coin_multiplier": _item_bonus("slot_gold_tooth_coin_multiplier", run_state, false),
-		"slot_first_bonus_bonus_percent": _item_bonus("slot_first_bonus_bonus_percent", run_state, false),
-		"slot_first_bonus_bonus_cap": _item_bonus("slot_first_bonus_bonus_cap", run_state, false),
-		"slot_feature_weight_bonus_percent": _item_bonus("slot_feature_weight_bonus_percent", run_state, false),
-		"slot_reel_win_weight_percent": _item_bonus("slot_reel_win_weight_percent", run_state, false),
-		"slot_pinball_drain_cleaner_uses": _item_bonus("slot_pinball_drain_cleaner_uses", run_state, false),
-		"slot_pinball_drain_cleaner_floor_percent": _item_bonus("slot_pinball_drain_cleaner_floor_percent", run_state, false),
-		"slot_pinball_drain_cleaner_award_percent": _item_bonus("slot_pinball_drain_cleaner_award_percent", run_state, false),
-		"slot_pinball_jackpot_magnet_uses": _item_bonus("slot_pinball_jackpot_magnet_uses", run_state, false),
-		"slot_pinball_jackpot_magnet_award_percent": _item_bonus("slot_pinball_jackpot_magnet_award_percent", run_state, false),
-		"slot_pinball_jackpot_magnet_progress_bonus": _item_bonus("slot_pinball_jackpot_magnet_progress_bonus", run_state, false),
-		"slot_pinball_splitter_token_uses": _item_bonus("slot_pinball_splitter_token_uses", run_state, false),
-		"slot_pinball_splitter_token_extra_balls": _item_bonus("slot_pinball_splitter_token_extra_balls", run_state, false),
-		"slot_pinball_return_spring_uses": _item_bonus("slot_pinball_return_spring_uses", run_state, false),
-		"slot_pinball_return_spring_impulse": _item_bonus("slot_pinball_return_spring_impulse", run_state, false),
-		"slot_pinball_tilt_dampener_percent": _item_bonus("slot_pinball_tilt_dampener_percent", run_state, false),
-		"slot_pinball_bumper_battery_hits": _item_bonus("slot_pinball_bumper_battery_hits", run_state, false),
-		"slot_pinball_bumper_battery_award_percent": _item_bonus("slot_pinball_bumper_battery_award_percent", run_state, false),
-		"slot_pinball_bumper_battery_kick_percent": _item_bonus("slot_pinball_bumper_battery_kick_percent", run_state, false),
-		"slot_pinball_bumper_battery_up_impulse": _item_bonus("slot_pinball_bumper_battery_up_impulse", run_state, false),
-		"slot_pinball_rubber_pegs": _item_bonus("slot_pinball_rubber_pegs", run_state, false),
-		"slot_pinball_magnet_cup_radius_percent": _item_bonus("slot_pinball_magnet_cup_radius_percent", run_state, false),
-		"slot_pinball_extra_ball_token": _item_bonus("slot_pinball_extra_ball_token", run_state, false),
-		"slot_pinball_plunger_tuner_width_percent": _item_bonus("slot_pinball_plunger_tuner_width_percent", run_state, false),
-		"slot_pinball_lock_jammer_uses": _item_bonus("slot_pinball_lock_jammer_uses", run_state, false),
-		"slot_cold_quarter_heat_reduction": int(item_state.get("cold_quarter_heat_reduction", _item_bonus("slot_cold_quarter_heat_reduction", run_state, is_cheat))),
-		"slot_split_reel_note_perfect_msec_bonus": int(item_state.get("split_reel_note_perfect_msec_bonus", _item_bonus("slot_split_reel_note_perfect_msec_bonus", run_state, is_cheat))),
-		"slot_split_reel_note_close_msec_bonus": int(item_state.get("split_reel_note_close_msec_bonus", _item_bonus("slot_split_reel_note_close_msec_bonus", run_state, is_cheat))),
-	}
+	var effects := run_state.item_effect_totals(SLOT_LEGAL_ITEM_EFFECT_KEYS, get_family(), "legal")
+	var contextual := run_state.item_effect_totals(SLOT_CONTEXTUAL_ITEM_EFFECT_KEYS, get_family(), "cheat" if is_cheat else "legal")
+	for key_value in contextual.keys():
+		effects[key_value] = contextual[key_value]
+	effects["cheat_suspicion_delta"] = run_state.item_effect_total("cheat_suspicion_delta", get_family(), "cheat")
+	for override_key in [
+		"slot_cold_quarter_heat_reduction",
+		"slot_split_reel_note_perfect_msec_bonus",
+		"slot_split_reel_note_close_msec_bonus",
+	]:
+		var state_key: String = override_key.trim_prefix("slot_")
+		if item_state.has(state_key):
+			effects[override_key] = int(item_state.get(state_key, 0))
+	return effects
 
 
 func _slot_copy_array(value: Variant) -> Array:
