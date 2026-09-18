@@ -828,3 +828,25 @@ The complete Slot surface suite, machine-authority contract, shared action-
 authority depth contract, and architecture validation passed. Two independent
 determinism processes matched across 3 seeds and 214 checkpoints with combined
 hash `3952418742`.
+
+### Owned Slot bonus resolution follow-up
+
+The sealed Slot candidate already owns a current-schema machine, but bonus
+resolution was still using the public isolation path and recursively copying and
+normalizing that full machine at both entry and exit. The spin path had already
+removed the same redundant copies. Slot now uses an explicit owned bonus entry
+point only for its private sealed candidate; direct resolver callers keep the
+original isolated contract.
+
+| Native Pinball production probe | Before | Owned bonus (`9cc4d79a`) | Change |
+| --- | ---: | ---: | ---: |
+| Feature-session whole-frame p95 | 70.663 ms | 59.298 ms | -16.1% |
+| Feature-session average frame | 17.644 ms | 15.767 ms | -10.6% |
+| Feature-session duration | 8,886 ms | 7,792 ms | -12.3% |
+| Largest sampled frame | 149.202 ms | 144.458 ms | -3.2% |
+
+The full Slot surface suite and machine-authority contract passed with all
+Pinball physics, realtime, visual, multiball, recovery, economy, RNG, and
+autoplay checks intact. Architecture validation passed. Two independent
+determinism processes matched across 3 seeds and 217 checkpoints with combined
+hash `28143646`. No performance budget or gameplay parameter changed.
