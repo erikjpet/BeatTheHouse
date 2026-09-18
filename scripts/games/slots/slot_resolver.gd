@@ -284,7 +284,18 @@ func _offscreen_spin_result(machine: Dictionary, entry: Dictionary, stake: int, 
 
 
 func resolve_bonus_action(machine: Dictionary, action_id: String, rng: RngStream, definition: Dictionary, environment: Dictionary = {}, run_state: RunState = null, item_effects: Dictionary = {}, ui_state: Dictionary = {}) -> Dictionary:
-	machine = StateScript.normalize(machine)
+	return _resolve_bonus_action(machine, action_id, rng, definition, environment, run_state, item_effects, ui_state, false)
+
+
+# SlotGame's sealed candidate owns the machine it passes into resolution. Keep
+# that ownership through the bonus step instead of deep-copying the complete
+# Pinball history at both resolver entry and exit.
+func resolve_bonus_action_owned(machine: Dictionary, action_id: String, rng: RngStream, definition: Dictionary, environment: Dictionary = {}, run_state: RunState = null, item_effects: Dictionary = {}, ui_state: Dictionary = {}) -> Dictionary:
+	return _resolve_bonus_action(machine, action_id, rng, definition, environment, run_state, item_effects, ui_state, true)
+
+
+func _resolve_bonus_action(machine: Dictionary, action_id: String, rng: RngStream, definition: Dictionary, environment: Dictionary, run_state: RunState, item_effects: Dictionary, ui_state: Dictionary, machine_is_owned: bool) -> Dictionary:
+	machine = StateScript.normalize_owned(machine) if machine_is_owned else StateScript.normalize(machine)
 	var normalized_action := _normalize_bonus_action(action_id)
 	var active_before: Dictionary = _copy_dict(machine.get("active_bonus", {}))
 	if active_before.is_empty() or not bool(active_before.get("active", false)):
@@ -442,7 +453,7 @@ func resolve_bonus_action(machine: Dictionary, action_id: String, rng: RngStream
 	result["slot_bonus_watchdog"] = normalized_action == BONUS_WATCHDOG_ACTION
 	if complete:
 		result.merge(_result_win_fields(machine), true)
-	return {"machine": StateScript.normalize(machine), "result": result}
+	return {"machine": StateScript.normalize_owned(machine) if machine_is_owned else StateScript.normalize(machine), "result": result}
 
 
 func _bonus_completion_award_from_step(step: Dictionary) -> int:

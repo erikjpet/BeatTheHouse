@@ -758,7 +758,9 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 	var machine: Dictionary = _ensure_machine_state(run_state, environment, rng)
 	var normalized_action := _normalize_action(action_id)
 	if normalized_action.begins_with("slot_bonus_"):
-		var bonus_resolved: Dictionary = resolver.resolve_bonus_action(machine, normalized_action, rng, definition, environment, run_state, _slot_cross_game_item_effects(run_state, machine, false), _ui_state)
+		# _ensure_machine_state returns a private, current-schema candidate. Preserve
+		# that ownership through bonus resolution just as the spin path below does.
+		var bonus_resolved: Dictionary = resolver.resolve_bonus_action_owned(machine, normalized_action, rng, definition, environment, run_state, _slot_cross_game_item_effects(run_state, machine, false), _ui_state)
 		var bonus_machine_value: Variant = bonus_resolved.get("machine", machine)
 		var bonus_machine: Dictionary = bonus_machine_value as Dictionary if typeof(bonus_machine_value) == TYPE_DICTIONARY else machine
 		if not StateScript.active_bonus_incomplete(bonus_machine):

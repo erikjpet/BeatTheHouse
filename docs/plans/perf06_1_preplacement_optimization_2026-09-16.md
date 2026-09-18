@@ -783,3 +783,48 @@ realtime lifecycle, multiball, item effects, bonus recovery, autoplay, RNG, and
 economy checks. The machine-authority contract and architecture validation also
 passed. Two independent determinism processes matched across 3 seeds and 210
 checkpoints with combined hash `3446654568`.
+
+### Sealed-ledger validation follow-up
+
+Pinball's remaining input spikes grew with the two retained replay responses.
+The manual surface path was validating that complete ledger, storing the exact
+copy-on-write value synchronously, then validating the unchanged value once or
+twice more before issuing the delivery. It now follows the already-proven Slot
+autoplay rule: validate hostile persisted content once at the external boundary,
+then carry that exact host-owned value through synchronous staging and issue.
+
+The cache validator also hashed each hostile response once for the cache entry
+and again for its embedded receipt. It now passes the first verified digest into
+the receipt's remaining closed-shape, identity, binding, and fingerprint checks.
+No hash or tamper check was removed; the same complete response is serialized
+once instead of twice.
+
+| Native Pinball production evidence | Before | After (`cf524b17`) | Change |
+| --- | ---: | ---: | ---: |
+| Whole-frame p95, two-run average | 63.193 ms | 58.512 ms | -7.4% |
+| Whole-frame average, two-run average | 16.090 ms | 15.608 ms | -3.0% |
+| Feature-session duration, two-run average | 9,025.5 ms | 7,917.5 ms | -12.3% |
+| Cache validation average (183 calls) | 4.207 ms | 2.099 ms | -50.1% |
+| Cache validation p95 (183 calls) | 18.796 ms | 9.704 ms | -48.4% |
+| Cache validation total (183 calls) | 769.821 ms | 384.093 ms | -50.1% |
+
+The paired whole-frame runs retained their individual samples rather than hiding
+variance: control p95 values were 56.147/70.238 ms and candidate values were
+65.060/51.963 ms. The scoped validator trace used the same 183 successful calls
+on both sides and timed only validation work; all temporary timing hooks were
+removed afterward.
+
+The matching 60/90-frame Chrome CPU4 run used the exact fresh Web export from
+`cf524b17`. Pinball p95 was effectively unchanged at 138.588 versus 138.713 ms
+and stayed below the unchanged 180 ms budget. Its p50/average moved from
+17.540/39.877 to 20.880/46.538 ms while the direct native validation trace showed
+the intended stage reduction, so no broader Web-frame improvement is claimed.
+All scenarios completed with no page, request, or response errors. This cold run
+retained the four Corner Store timing-schema findings and red samples for ready
+time, Slot autoplay, Pull Tabs idle, Baccarat active, Blackjack idle, and Bar
+Dice idle. No budget changed.
+
+The complete Slot surface suite, machine-authority contract, shared action-
+authority depth contract, and architecture validation passed. Two independent
+determinism processes matched across 3 seeds and 214 checkpoints with combined
+hash `3952418742`.
