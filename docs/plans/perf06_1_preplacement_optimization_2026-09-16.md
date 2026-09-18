@@ -744,3 +744,42 @@ independent determinism runs passed (3 seeds, 204 checkpoints, combined hash
 or response errors and preserved Baccarat result/turn/dealing/animation liveness.
 Its failures remained the four established Corner Store timing-schema checks
 and Baccarat active frame p95. No budget changed.
+
+### Slot structural replay follow-up
+
+The active Pinball feature remained the largest repeatable native gameplay
+hitch. A temporary per-action trace showed that its sealed action resolver was
+serializing the second deterministic proposal even after both independently
+isolated candidates had produced exact matching result, RNG, and compact Slot
+authority graphs. Slot now uses the same fail-closed structural replay matcher
+proven by Baccarat. The accepted proposal still owns the canonical receipt
+digest; any changed replay field still rejects the transaction.
+
+| Paired native Pinball trace | Before | After (`15e08a80`) | Change |
+| --- | ---: | ---: | ---: |
+| Sealed action outer average (43 inputs) | 105.583 ms | 89.284 ms | -15.4% |
+| Sealed module average (43 inputs) | 60.267 ms | 47.370 ms | -21.4% |
+| Feature-session whole-frame p95 | 69.750 ms | 58.313 ms | -16.4% |
+
+With all timing hooks removed, the production native matrix confirmed the same
+direction: Pinball whole-frame p95 improved from 65.410 to 56.147 ms (-14.2%),
+average frame time from 15.826 to 15.337 ms, and the largest snapshot/automation
+spike from 190.988 to 162.740 ms (-14.8%). All 43 attempted Pinball inputs still
+completed, the feature remained live, and draw p95 was effectively unchanged
+(5.725 versus 5.753 ms).
+
+The exact fresh Chrome CPU4 export from `15e08a80` retained all 43 inputs with
+no page, request, or response errors. Against the preceding exact Web reference,
+Pinball p50 improved from 19.993 to 17.540 ms, average frame time from 40.818 to
+39.877 ms, and draw p95 from 38.785 to 32.740 ms. Its sparse whole-frame p95 was
+noise-bound at 137.385 versus 138.713 ms and remained below the unchanged 180 ms
+budget. This run retained the four Corner Store timing-schema failures and the
+existing Baccarat active failure; Slot autoplay also produced a transient
+122.908 ms sample after passing at 51.542 ms in the prior exact export. No budget
+changed.
+
+The complete Slot surface suite passed, including deterministic Pinball physics,
+realtime lifecycle, multiball, item effects, bonus recovery, autoplay, RNG, and
+economy checks. The machine-authority contract and architecture validation also
+passed. Two independent determinism processes matched across 3 seeds and 210
+checkpoints with combined hash `3446654568`.
