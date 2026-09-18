@@ -538,8 +538,8 @@
         "choices": [
           {
             "id": "cage_claim_card",
-            "label": "Claim Ready Tier",
-            "text": "Ask Linda to issue the ready tier.",
+            "label": "Claim Players Card",
+            "text": "Ask Linda to issue the next ready Players Card.",
             "effects": {},
             "effects_hidden": true,
             "goto": "card"
@@ -1204,6 +1204,14 @@
         "text": "Linda sees to accounts, chips, and cashout at the Cage.",
         "choices": [{"id": "continue", "label": "Go to the Cage", "effects": {}, "end": true}]
       },
+      "cage_arrival": {
+        "text": "Linda sees to accounts, chips, and cashout. Talk to her at the counter.",
+        "choices": [{"id": "continue", "label": "Talk to Linda", "effects": {}, "end": true}]
+      },
+      "buy_chips": {
+        "text": "Buy a chip bundle from Linda. Grand Casino tables use chips instead of bankroll cash.",
+        "choices": [{"id": "continue", "label": "Buy chips", "effects": {}, "end": true}]
+      },
       "shop": {
         "text": "Those goods are stocked on the shelves like any other shop. Pick an item to read its details; the price comes from your chips, not your cash. Buying is optional.",
         "choices": [{"id": "continue", "label": "Inspect a shelf item", "effects": {}, "end": true}]
@@ -1215,6 +1223,10 @@
       "table_play": {
         "text": "That highlighted table is blackjack. Finish two hands with chips—wins or losses both count. Bronze becomes ready only after the second hand settles.",
         "choices": [{"id": "continue", "label": "Play two blackjack hands", "effects": {}, "end": true}]
+      },
+      "table_progress": {
+        "text": "Finish two blackjack hands with chips. Wins or losses both count toward Bronze.",
+        "choices": [{"id": "continue", "label": "Finish two hands", "effects": {}, "end": true}]
       },
       "return_linda": {
         "text": "Bronze is ready. Linda will hand it over at the Cage.",

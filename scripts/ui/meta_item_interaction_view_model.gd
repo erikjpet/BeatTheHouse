@@ -124,6 +124,17 @@ static func _owned_item_models(meta_service: Variant, resolver: Variant, owned: 
 			continue
 		var collection: Dictionary = _cached_collection_definition(resolver, collections_by_id, str(definition.get("collection_id", "")))
 		var item_class := str(definition.get("item_class", CollectionItemResolverScript.ITEM_CLASS_COLLECTION))
+		var presentation_definition := definition
+		var presentation_tier := str(definition.get("tier", ""))
+		var presentation_description := str(definition.get("flavor", ""))
+		if item_class == CollectionItemResolverScript.ITEM_CLASS_PLAYERS_CARD:
+			var instance_data: Dictionary = instance.get("instance_data", {}) if typeof(instance.get("instance_data", {})) == TYPE_DICTIONARY else {}
+			var earned_tier := str(instance_data.get("tier_reached", "")).strip_edges().to_lower()
+			if earned_tier in ["bronze", "silver", "gold"]:
+				presentation_tier = earned_tier
+				presentation_description = "Linda's %s card, stamped with the run that paid for it." % earned_tier.capitalize()
+				presentation_definition = definition.duplicate(false)
+				presentation_definition["tier"] = earned_tier
 		var quote: Dictionary = meta_service.sale_quote(MetaCollectionServiceScript.SALE_KIND_ITEM, instance_id) if mode == MODE_SALE and meta_service != null and meta_service.has_method("sale_quote") else {}
 		var packed := carried_lookup.has(instance_id)
 		var packable := bool(definition.get("loadout_eligible", true))
@@ -162,13 +173,13 @@ static func _owned_item_models(meta_service: Variant, resolver: Variant, owned: 
 			"itemdef_id": int(instance.get("itemdef_id", -1)),
 			"selection_key": selection_key,
 			"display_name": str(definition.get("display_name", "Collection Item")),
-			"description": str(definition.get("flavor", "")),
+			"description": presentation_description,
 			"collection_display_name": str(collection.get("display_name", "Grand Casino Rewards" if item_class != CollectionItemResolverScript.ITEM_CLASS_COLLECTION else "Collection")),
 			"collection_id": str(definition.get("collection_id", "")),
-			"tier": str(definition.get("tier", "")),
+			"tier": presentation_tier,
 			"group_label": "%s · %s · %s" % [
 				str(collection.get("display_name", "Collection")),
-				str(definition.get("tier", "")).capitalize(),
+				presentation_tier.capitalize(),
 				"Carried" if packed else "Stored",
 			],
 			"count": 1,
@@ -186,7 +197,7 @@ static func _owned_item_models(meta_service: Variant, resolver: Variant, owned: 
 				"resonance": clampf(float(instance.get("resonance", 0.0)), 0.0, 1.0),
 				"usage": clampf(float(instance.get("usage", 0.0)), 0.0, 1.0),
 			},
-			"attribute_badges": _cached_attribute_badges(definition, mode, int(instance.get("itemdef_id", -1)), item_class, int(quote.get("price", 0))),
+			"attribute_badges": _cached_attribute_badges(presentation_definition, mode, int(instance.get("itemdef_id", -1)), item_class, int(quote.get("price", 0))),
 			"sale_eligible": bool(quote.get("ok", false)),
 			"sale_price": int(quote.get("price", 0)),
 			"sale_breakdown": quote.duplicate(true),
@@ -363,7 +374,7 @@ static func _cached_attribute_badges(definition: Dictionary, mode: String, defin
 	# Sale badges include an instance-specific quote. Other modes share authored
 	# definition badges. Check that cache before creating a mutable badge context
 	# so a large stack does not clone the same definition thousands of times.
-	var cache_key := "%s|%d" % [mode, definition_key]
+	var cache_key := "%s|%d|%s" % [mode, definition_key, str(definition.get("tier", ""))]
 	if mode != MODE_SALE and _badge_cache.has(cache_key):
 		return _badge_cache.get(cache_key, [])
 	var context := definition.duplicate(true)

@@ -8,6 +8,7 @@ signal surface_action(action: String, index: int, confirm_requested: bool)
 signal surface_action_blocked(action: String, reason: String)
 signal surface_pointer_action(action: String, index: int, phase: String, board_position: Vector2)
 signal surface_music_cue(cue_id: String, context: Dictionary)
+signal view_geometry_changed
 
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.gd")
@@ -87,6 +88,8 @@ var small_screen_mode := false
 var drunk_time_scale := 1.0
 var last_mouse_press_msec: int = -100000
 var last_mouse_press_position := Vector2(-100000.0, -100000.0)
+var last_hit_region_geometry_signature := -1
+var hit_region_geometry_signal_scheduled := false
 var last_touch_press_msec: int = -100000
 var last_touch_press_position := Vector2(-100000.0, -100000.0)
 var surface_animation_redraw_accumulator := 0.0
@@ -1339,7 +1342,28 @@ func _draw() -> void:
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	_update_drunk_distortion_protected_rects()
 	_ensure_snapshot_proxy_hit_regions()
+	_notify_hit_region_geometry_changed()
 	_record_draw_performance(draw_started_usec)
+
+
+func _notify_hit_region_geometry_changed() -> void:
+	# Hit regions are rebuilt by draw code after the host's synchronous coach
+	# refresh. Notify only when their shape actually changes so guided highlights
+	# can follow controls such as Pull Tab's Peel -> File ticket transition without
+	# adding work to animated idle frames.
+	var signature := hash(hit_regions) ^ hash(size) ^ hash(get_global_transform())
+	if signature == last_hit_region_geometry_signature:
+		return
+	last_hit_region_geometry_signature = signature
+	if hit_region_geometry_signal_scheduled:
+		return
+	hit_region_geometry_signal_scheduled = true
+	call_deferred("_emit_view_geometry_changed")
+
+
+func _emit_view_geometry_changed() -> void:
+	hit_region_geometry_signal_scheduled = false
+	view_geometry_changed.emit()
 
 
 func _ensure_surface_sfx_player() -> void:

@@ -106,8 +106,8 @@ static func _check_bug07_tutorial_dialogue_input_ownership(failures: Array) -> v
 		room_press.button_index = MOUSE_BUTTON_LEFT
 		room_press.pressed = true
 		room_press.position = Vector2(700.0, 400.0)
-		if not bool(coach.call("_consume_blocked_pointer_input", room_press)):
-			failures.append("BUG-07 regression: registering TalkDock disables the tutorial shield over unrelated room controls.")
+		if bool(coach.call("_consume_blocked_pointer_input", room_press)):
+			failures.append("BUG-07 regression: advisory tutorial guidance swallowed an unrelated room control.")
 	# Skipping the phone pointer may mark that guidance seen, but it must not make
 	# the dependent debt lesson real before the authored debt/result predicates.
 	coach.set("lessons", [{

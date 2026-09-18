@@ -1552,9 +1552,11 @@ func _check_coach_overlay_component() -> bool:
 	var context := {
 		"viewport_rect": Rect2(Vector2.ZERO, parent.size),
 		"small_screen": true,
+		"screen": "ENVIRONMENT",
+		"run": {"tutorial": false},
 		"anchor_rects": {
 			"hud_elements": {"heat": Rect2(12, 12, 150, 48)},
-			"interactable_objects": {"fixture:door": Rect2(40, 220, 80, 120)},
+			"interactable_objects": {"fixture:door": Rect2(40, 220, 80, 120), "fixture:other": Rect2(240, 220, 80, 120)},
 		},
 	}
 	overlay.evaluate_at_boundary(context)
@@ -1580,13 +1582,18 @@ func _check_coach_overlay_component() -> bool:
 		push_error("Coach overlay did not advance its queue to the room-object anchor.")
 		return false
 	overlay.restore_seen({})
-	overlay.set_lessons([{"id": "coach_gate", "trigger": {"state_predicates": []}, "anchor": {"kind": "interactable_object", "id": "fixture:door"}, "copy": "Use this door.", "completion": {"type": "anchored_action"}, "gating": {"allowed_action_ids": ["fixture:door"]}}])
+	context["run"] = {"tutorial": true}
+	overlay.set_lessons([{"id": "coach_gate", "scope": "tutorial_run", "trigger": {"state_predicates": []}, "anchor": {"kind": "interactable_object", "id": "fixture:door"}, "copy": "Use either door.", "completion": {"type": "anchored_action"}, "gating": {"allowed_action_ids": ["fixture:door", "fixture:other"]}}])
 	overlay.evaluate_at_boundary(context)
 	await process_frame
 	var guidance_snapshot := overlay.current_snapshot()
 	if not overlay.input_allowed("wrong:door") or not overlay.input_allowed("fixture:door") or bool(guidance_snapshot.get("gating", true)) or not bool(guidance_snapshot.get("highlight_emphasis", false)):
 		parent.queue_free()
 		push_error("Coach overlay highlight blocked an unrelated player action.")
+		return false
+	if (guidance_snapshot.get("additional_anchor_rects", []) as Array).size() != 1:
+		parent.queue_free()
+		push_error("Coach overlay did not expose every allowed live action through its guided focus shield.")
 		return false
 	var stable_anchor := _snapshot_rect(guidance_snapshot.get("anchor_rect", {}))
 	var anchor_change_count := int(guidance_snapshot.get("live_anchor_change_count", -1))
@@ -1597,16 +1604,23 @@ func _check_coach_overlay_component() -> bool:
 		parent.queue_free()
 		push_error("Stable coach anchor refreshes changed or de-emphasized the highlight.")
 		return false
-	var shifted_anchor := Rect2(stable_anchor.position + Vector2(4.0, 3.0), stable_anchor.size)
+	var stable_bubble := _snapshot_rect(guidance_snapshot.get("bubble_rect", {}))
+	var shifted_anchor := Rect2(stable_bubble.position + Vector2(20.0, 20.0), Vector2(80.0, 40.0))
 	if not overlay.update_active_anchor_rect("interactable_object", "fixture:door", shifted_anchor):
 		parent.queue_free()
 		push_error("Coach overlay rejected one real geometry change.")
 		return false
 	for _refresh_index in range(24):
 		overlay.update_active_anchor_rect("interactable_object", "fixture:door", shifted_anchor)
-	if int(overlay.current_snapshot().get("live_anchor_change_count", -1)) != anchor_change_count + 1:
+	var shifted_guidance_snapshot := overlay.current_snapshot()
+	var shifted_bubble := _snapshot_rect(shifted_guidance_snapshot.get("bubble_rect", {}))
+	if int(shifted_guidance_snapshot.get("live_anchor_change_count", -1)) != anchor_change_count + 1:
 		parent.queue_free()
 		push_error("Coach overlay rebuilt an unchanged live anchor instead of updating once.")
+		return false
+	if shifted_bubble.intersects(shifted_anchor):
+		parent.queue_free()
+		push_error("Coach overlay left its guided bubble over a newly exposed live action: bubble=%s action=%s." % [str(shifted_bubble), str(shifted_anchor)])
 		return false
 	overlay.restore_seen({})
 	overlay.set_lessons([{

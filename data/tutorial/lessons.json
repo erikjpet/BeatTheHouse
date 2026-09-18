@@ -336,10 +336,10 @@
     "dialogue_id": "tutorial_pal_guidance",
     "dialogue_node": "blackjack_raise",
     "trigger": {"depends_on": ["tutorial_blackjack_clean_finish"], "screen": "GAME", "environment_archetype": "small_underground_casino", "game_id": "blackjack", "state_predicates": [{"path": "game.hands_played", "op": "gte", "value": 1}, {"path": "game.between_hands", "op": "equals", "value": true}]},
-    "anchor": {"kind": "surface_action", "id": "surface_stake_up"},
+    "anchor": {"kind": "surface_action", "id": "blackjack_wager_place_gesture"},
     "copy": "Raise the next bet with an on-felt chip control.",
-    "completion": {"type": "one_of_actions", "action_ids": ["surface_stake_up", "blackjack_chip"]},
-    "gating": {"allowed_action_ids": ["surface_stake_up", "blackjack_chip"]}
+    "completion": {"type": "one_of_actions", "action_ids": ["blackjack_wager_place_gesture", "surface_stake_up", "blackjack_chip"]},
+    "gating": {"allowed_action_ids": ["blackjack_wager_place_gesture", "blackjack_chip", "surface_stake_up"]}
   },
   {
     "id": "tutorial_blackjack_raised_deal",
@@ -382,11 +382,12 @@
     "delivery": "dialogue",
     "dialogue_id": "tutorial_pal_guidance",
     "dialogue_node": "blackjack_peek",
+    "resume_on_surface": true,
     "trigger": {"depends_on": ["tutorial_blackjack_lookaway"], "screen": "GAME", "environment_archetype": "small_underground_casino", "game_id": "blackjack", "state_predicates": [{"path": "game.hands_played", "op": "gte", "value": 1}, {"path": "game.hand_active", "op": "equals", "value": true}, {"path": "game.lookaway_started", "op": "equals", "value": true}]},
     "anchor": {"kind": "surface_action", "id": "blackjack_peek"},
-    "copy": "Peek only inside the dealer's real lookaway window.",
+    "copy": "Create a lookaway, then Peek. If the hand ends first, Deal again.",
     "completion": {"type": "anchored_action", "action_id": "blackjack_peek"},
-    "gating": {"allowed_action_ids": ["blackjack_peek"]}
+    "gating": {"allowed_action_ids": ["blackjack_peek", "blackjack_deal", "blackjack_distraction"]}
   },
   {
     "id": "tutorial_blackjack_peek_finish",
@@ -565,7 +566,7 @@
     "scope": "tutorial_run",
     "delivery": "dialogue",
     "dialogue_id": "tutorial_host_guidance",
-    "dialogue_node": "cage",
+    "dialogue_node": "cage_arrival",
     "trigger": {"depends_on": ["tutorial_enter_cage"], "screen": "ENVIRONMENT", "environment_archetype": "grand_casino_cage", "state_predicates": []},
     "anchor": {"kind": "interactable_object", "id": "casino_fixture:cage_counter"},
     "copy": "Talk to Linda about chips and the Players Card.",
@@ -577,7 +578,7 @@
     "scope": "tutorial_run",
     "delivery": "dialogue",
     "dialogue_id": "tutorial_host_guidance",
-    "dialogue_node": "cage",
+    "dialogue_node": "buy_chips",
     "trigger": {"depends_on": ["tutorial_open_linda"], "screen": "ENVIRONMENT", "environment_archetype": "grand_casino_cage", "state_predicates": []},
     "anchor": {"kind": "hud_element", "id": "chips"},
     "copy": "Use Linda's counter to buy chips.",
@@ -625,7 +626,7 @@
     "scope": "tutorial_run",
     "delivery": "dialogue",
     "dialogue_id": "tutorial_host_guidance",
-    "dialogue_node": "table_play",
+    "dialogue_node": "table_progress",
     "trigger": {"depends_on": ["tutorial_enter_grand_table"], "screen": "GAME", "environment_archetype": "grand_casino", "game_id": "blackjack", "state_predicates": []},
     "anchor": {"kind": "hud_element", "id": "objective"},
     "copy": "Finish two hands. Bronze unlocks after the second settles.",

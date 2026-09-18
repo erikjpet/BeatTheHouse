@@ -1103,7 +1103,7 @@ func _process(delta: float) -> void:
 		var snapped_camera_changed := absf(previous_zoom - camera_zoom) > CAMERA_ZOOM_SNAP_EPSILON or previous_offset.distance_squared_to(camera_offset) > CAMERA_OFFSET_SNAP_EPSILON * CAMERA_OFFSET_SNAP_EPSILON
 		if snapped_camera_changed or was_info_animating or person_transit_changed:
 			queue_redraw()
-		if snapped_camera_changed:
+		if snapped_camera_changed or person_transit_changed:
 			view_geometry_changed.emit()
 		return
 	var scaled_delta := maxf(0.0, delta) * drunk_time_scale
@@ -1124,7 +1124,10 @@ func _process(delta: float) -> void:
 	var camera_changed := absf(previous_zoom - camera_zoom) > CAMERA_ZOOM_SNAP_EPSILON or previous_offset.distance_squared_to(camera_offset) > CAMERA_OFFSET_SNAP_EPSILON * CAMERA_OFFSET_SNAP_EPSILON
 	if camera_changed or info_card_animating or was_info_animating or person_transit_changed or _scene_idle_animation_redraw_due(scaled_delta):
 		queue_redraw()
-	if camera_changed:
+	# Arrival/departure completion changes both the visible object rectangle and
+	# whether it can receive input. Guided interactions cache those live hit
+	# regions, so settling a person must publish geometry just like a camera move.
+	if camera_changed or person_transit_changed:
 		view_geometry_changed.emit()
 
 

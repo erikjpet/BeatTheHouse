@@ -107,6 +107,24 @@ static func build(lesson: Dictionary, context: Dictionary) -> Dictionary:
 		bubble_rect = _bubble_rect_avoiding_context(viewport_rect, bubble_rect, bubble_size, context)
 	var guidance := _dict(lesson.get("gating", {}))
 	var suggested_action_ids := _string_array(guidance.get("allowed_action_ids", []))
+	# A lesson that explicitly offers several controls must expose all of their
+	# live hit regions through the tutorial shield. Authored additional anchors
+	# remain useful for non-action emphasis, while allowed actions automatically
+	# become equivalent clickable focus targets when they share the anchor kind.
+	for suggested_action_id in suggested_action_ids:
+		if suggested_action_id == anchor_id:
+			continue
+		var suggested_rect := _anchor_rect(anchor_kind, suggested_action_id, context)
+		if not suggested_rect.has_area():
+			continue
+		suggested_rect = suggested_rect.intersection(viewport_rect)
+		var already_included := false
+		for existing_rect_value in additional_anchor_rects:
+			if _rect(existing_rect_value).is_equal_approx(suggested_rect):
+				already_included = true
+				break
+		if not already_included:
+			additional_anchor_rects.append(_rect_dict(suggested_rect))
 	var delivery := str(lesson.get("delivery", "coach")).strip_edges().to_lower()
 	if not ["coach", "dialogue"].has(delivery):
 		delivery = "coach"
@@ -267,6 +285,13 @@ static func _bubble_rect(viewport_rect: Rect2, anchor_rect: Rect2, bubble_size: 
 	position.x = clampf(position.x, viewport_rect.position.x + VIEWPORT_MARGIN, viewport_rect.end.x - bubble_size.x - VIEWPORT_MARGIN)
 	position.y = clampf(position.y, viewport_rect.position.y + VIEWPORT_MARGIN, viewport_rect.end.y - bubble_size.y - VIEWPORT_MARGIN)
 	return Rect2(position, bubble_size)
+
+
+# Live room selection can replace an object's broad hit area with its inline
+# action button after the lesson has already rendered. Keep the bubble tied to
+# that current target so the guidance never covers the control it names.
+static func bubble_rect_for_live_anchor(viewport_rect: Rect2, anchor_rect: Rect2, bubble_size: Vector2) -> Rect2:
+	return _bubble_rect(viewport_rect, anchor_rect, bubble_size)
 
 
 # Ambient advice keeps its one intentional pointer receiver (Skip tip) while

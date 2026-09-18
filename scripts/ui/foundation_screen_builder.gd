@@ -550,6 +550,7 @@ static func build_run_screen(host: Variant) -> void:
 	host.game_surface_canvas.surface_action_blocked.connect(host._on_game_surface_action_blocked)
 	host.game_surface_canvas.surface_pointer_action.connect(host._on_game_surface_pointer_action)
 	host.game_surface_canvas.surface_music_cue.connect(host._on_game_surface_music_cue)
+	host.game_surface_canvas.view_geometry_changed.connect(host._on_game_surface_view_geometry_changed)
 	visual_stack.add_child(host.game_surface_canvas)
 	host.cheat_dock = host.CheatDockScript.new()
 	host.cheat_dock.action_selected.connect(Callable(host, "select_game_action"))

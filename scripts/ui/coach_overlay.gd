@@ -70,6 +70,7 @@ var tips_enabled := true
 var reduce_motion := false
 var small_screen := false
 var focus_visual_enabled := true
+var panel_suppressed := false
 var object_property_list_scan_count := 0
 var _object_property_names_by_instance: Dictionary = {}
 
@@ -164,6 +165,17 @@ func set_focus_visual_enabled(enabled: bool) -> void:
 	focus_visual_enabled = enabled
 	if focus_layer != null:
 		focus_layer.visible = enabled
+
+
+# Natural conversations temporarily own the same screen region as tutorial
+# reminders. Keep the lesson and its focus alive, but remove the coach panel
+# from both drawing and GUI picking until that conversation closes.
+func set_panel_suppressed(suppressed: bool) -> void:
+	if panel_suppressed == suppressed:
+		return
+	panel_suppressed = suppressed
+	if not prepared_snapshot.is_empty():
+		_render_active(false)
 
 
 func evaluate_at_boundary(context: Dictionary) -> void:
@@ -426,6 +438,11 @@ func _input(event: InputEvent) -> void:
 func _consume_blocked_pointer_input(event: InputEvent) -> bool:
 	if not visible or active_lesson.is_empty() or str(active_lesson.get("scope", "")) != "tutorial_run":
 		return false
+	# Tutorial guidance is advisory. Only an explicitly gated snapshot may own
+	# pointer permission; ordinary highlights must never make a valid room or
+	# table control appear clickable while silently swallowing its press.
+	if not bool(prepared_snapshot.get("gating", false)):
+		return false
 	if not (event is InputEventMouseButton) or not (event as InputEventMouseButton).pressed:
 		return false
 	var point := (event as InputEventMouseButton).position
@@ -652,8 +669,16 @@ func _render_active(play_motion: bool) -> void:
 	panel.size = bubble_rect.size
 	focus_layer.set_snapshot(prepared_snapshot)
 	focus_layer.visible = focus_visual_enabled
-	var dialogue_delivery := str(prepared_snapshot.get("delivery", "coach")) == "dialogue" and not _dialogue_acknowledged_instruction()
-	panel.visible = not dialogue_delivery
+	# A resumed timed lesson may intentionally start with its primary control
+	# absent while exposing setup actions such as Deal and Lookaway. Keep the
+	# written guidance visible until the voiced target genuinely exists; otherwise
+	# both the dialogue and panel are hidden and the player receives no recovery
+	# instruction at all.
+	var primary_anchor_found := bool(prepared_snapshot.get("anchor_found", false))
+	var dialogue_delivery := str(prepared_snapshot.get("delivery", "coach")) == "dialogue" \
+		and not _dialogue_acknowledged_instruction() \
+		and primary_anchor_found
+	panel.visible = not dialogue_delivery and not panel_suppressed
 	visible = true
 	move_to_front()
 	_request_active_dialogue_once()
@@ -708,8 +733,22 @@ func active_anchor_rect() -> Rect2:
 	return CoachViewModelScript._rect(prepared_snapshot.get("anchor_rect", {}))
 
 
-# Moves only the active focus rectangle. Tutorial state, trigger evaluation,
-# and the prepared guidance model remain unchanged during camera motion.
+# Refreshes the live action map without re-evaluating lesson eligibility. Game
+# canvases discover their hit regions during draw, so the first boundary can
+# legitimately precede the buttons a resumed lesson needs for recovery.
+func update_active_anchor_context(anchor_rects: Dictionary, game_context: Dictionary = {}) -> bool:
+	if active_lesson.is_empty():
+		return false
+	active_context["anchor_rects"] = anchor_rects.duplicate(true)
+	if not game_context.is_empty():
+		active_context["game"] = game_context.duplicate(true)
+	_render_active(false)
+	return true
+
+
+# Moves the active focus rectangle without re-evaluating tutorial state. Guided
+# bubbles also follow the live target because room selection can replace an
+# object's hit area with its inline action button after the lesson rendered.
 func update_active_anchor_rect(anchor_kind: String, anchor_id: String, next_rect: Rect2) -> bool:
 	if active_lesson.is_empty() or anchor_kind != active_anchor_kind() or anchor_id != active_anchor_id():
 		return false
@@ -721,6 +760,15 @@ func update_active_anchor_rect(anchor_kind: String, anchor_id: String, next_rect
 	live_anchor_change_count += 1
 	if focus_layer != null:
 		focus_layer.set_live_anchor_rect(clipped_rect)
+	if str(active_lesson.get("scope", "")).strip_edges() == "tutorial_run" and panel != null:
+		var viewport_rect := CoachViewModelScript._rect(prepared_snapshot.get("viewport_rect", Rect2(Vector2.ZERO, size)))
+		var previous_bubble := CoachViewModelScript._rect(prepared_snapshot.get("bubble_rect", {}))
+		if viewport_rect.has_area() and previous_bubble.has_area():
+			var bubble_rect := CoachViewModelScript.bubble_rect_for_live_anchor(viewport_rect, clipped_rect, previous_bubble.size)
+			prepared_snapshot["bubble_rect"] = CoachViewModelScript._rect_dict(bubble_rect)
+			panel.position = bubble_rect.position
+			panel.custom_minimum_size = bubble_rect.size
+			panel.size = bubble_rect.size
 	_request_active_dialogue_once()
 	return true
 
@@ -787,8 +835,13 @@ func _queue_frontier_guardrail(context: Dictionary) -> void:
 		# A skipped pointer can satisfy dependency order without satisfying the
 		# gameplay outcome that unlocks the next lesson. While the player is
 		# already on that lesson's surface, wait for its authored predicates
-		# instead of fabricating the lesson (or a recovery step) early.
+		# instead of fabricating the lesson (or a recovery step) early. A small
+		# number of timed lessons author an explicit same-surface resume path:
+		# they can restore their own setup actions after a save, reload, or an
+		# early round ending and remain active until the real completion occurs.
 		if _trigger_surface_matches(lesson, context):
+			if bool(lesson.get("resume_on_surface", false)):
+				_queue_lesson(lesson, context)
 			return
 	var recovery := _recovery_lesson(frontier[0], context)
 	if not recovery.is_empty():

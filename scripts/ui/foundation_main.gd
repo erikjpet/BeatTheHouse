@@ -2640,6 +2640,14 @@ func _apply_game_surface_command(command: Dictionary, index: int = -1, confirm_r
 	var surface_patch_value: Variant = command.get("surface_state_patch", {})
 	if typeof(surface_patch_value) == TYPE_DICTIONARY and not (surface_patch_value as Dictionary).is_empty() and game_surface_canvas != null:
 		game_surface_canvas.apply_surface_state_patch(surface_patch_value as Dictionary)
+		# Lightweight table interactions (count markers, peek controls, scratch
+		# cells, and similar gestures) update the live surface without taking the
+		# full game-resolution path. Tutorial lessons may complete from that local
+		# state, so give them the same post-action boundary check instead of leaving
+		# the player trapped behind a guide that still expects an already-finished
+		# gesture.
+		if run_state != null and run_state.is_tutorial_run():
+			_defer_coach_boundary_refresh()
 		return true
 	if environment_changed:
 		_autosave_foundation_run("Autosaved.")
@@ -4821,6 +4829,7 @@ func _refresh_talk_dock() -> void:
 	talk_dock_avoid_sync_active = true
 	talk_dock.set_entry(entry, option, run_state.pending_talk_event_count())
 	talk_dock_avoid_sync_active = false
+	_sync_coach_panel_for_talk_dock()
 	_sync_talk_dock_coach_avoid_rect()
 	if item_found_popup != null and item_found_popup.is_open():
 		item_found_talk_dock_suspended = true
@@ -9561,6 +9570,16 @@ func _on_talk_dock_conversation_active_changed(active: bool) -> void:
 		environment_canvas.set_environment_activity_paused(should_pause)
 	if game_surface_canvas != null:
 		game_surface_canvas.set_environment_activity_paused(should_pause)
+	_sync_coach_panel_for_talk_dock()
+
+
+func _sync_coach_panel_for_talk_dock() -> void:
+	if coach_overlay == null:
+		return
+	var natural_conversation_active: bool = talk_dock != null \
+		and talk_dock.conversation_active \
+		and not _talk_entry_is_pal_tutorial_dialogue(talk_dock.entry)
+	coach_overlay.set_panel_suppressed(natural_conversation_active)
 
 
 func _talk_entry_is_pal_tutorial_dialogue(entry: Dictionary) -> bool:
@@ -14722,6 +14741,50 @@ func _on_environment_view_geometry_changed() -> void:
 	_sync_coach_environment_anchor_geometry()
 
 
+func _on_game_surface_view_geometry_changed() -> void:
+	_sync_coach_game_surface_anchor_geometry()
+
+
+func _sync_coach_game_surface_anchor_geometry() -> void:
+	if coach_overlay == null or game_surface_canvas == null or current_screen != SCREEN_GAME:
+		return
+	var anchor_kind: String = coach_overlay.active_anchor_kind()
+	if anchor_kind != "surface_action":
+		return
+	var anchor_id: String = coach_overlay.active_anchor_id()
+	if anchor_id.is_empty():
+		return
+	var game_coach_state: Dictionary = current_game.coach_state(run_state, run_state.current_environment, _current_game_surface_ui_state()) if current_game != null and run_state != null else {}
+	coach_overlay.update_active_anchor_context(_coach_anchor_rects(game_coach_state), game_coach_state)
+	var rendered_rect := _coach_live_game_surface_anchor_rect(anchor_id)
+	if not rendered_rect.has_area():
+		return
+	coach_overlay.update_active_anchor_rect(anchor_kind, anchor_id, rendered_rect)
+	_sync_coach_focus_visibility()
+	_sync_talk_dock_coach_avoid_rect()
+
+
+func _coach_live_game_surface_anchor_rect(anchor_id: String) -> Rect2:
+	var rendered_rect: Rect2 = game_surface_canvas.global_rect_for_surface_action(anchor_id)
+	if rendered_rect.has_area() or current_game == null or run_state == null:
+		return rendered_rect
+	# Some lessons name a semantic target (for example DRINK PASS) that is
+	# rendered by an indexed physical control. Resolve the same public aliases as
+	# the boundary model before moving the live highlight after a redraw.
+	var game_coach_state: Dictionary = current_game.coach_state(run_state, run_state.current_environment, _current_game_surface_ui_state())
+	for alias_value in game_coach_state.get("surface_action_anchors", []):
+		if typeof(alias_value) != TYPE_DICTIONARY:
+			continue
+		var alias: Dictionary = alias_value
+		if str(alias.get("id", "")).strip_edges() != anchor_id:
+			continue
+		return game_surface_canvas.global_rect_for_surface_action(
+			str(alias.get("action", "")).strip_edges(),
+			int(alias.get("index", -1))
+		)
+	return Rect2()
+
+
 func _sync_coach_environment_anchor_geometry() -> void:
 	if coach_overlay == null or environment_canvas == null:
 		return
@@ -19706,6 +19769,12 @@ func _refresh_coach_at_boundary(surface_transition_wait_satisfied: bool = false)
 	_focus_tutorial_meta_home_card_lesson()
 	_complete_preperformed_tutorial_actions()
 	_focus_tutorial_corner_store_purchase_lesson()
+	# A newly activated room lesson can share the exact same rendered snapshot as
+	# the lesson before it. In that case the canvas has no geometry-change signal
+	# to emit, while an older host projection may not yet contain the new target.
+	# Reconcile against the live room after every tutorial boundary so the input
+	# shield never turns a visible, highlighted object into an unclickable prop.
+	_sync_coach_environment_anchor_geometry()
 	_sync_coach_focus_visibility()
 	_sync_talk_dock_coach_avoid_rect()
 
@@ -19812,6 +19881,13 @@ func _record_tutorial_action_if_authored(action_id: String) -> void:
 	var performed: Dictionary = run_state.narrative_flags.get("tutorial_actions_performed", {}) if typeof(run_state.narrative_flags.get("tutorial_actions_performed", {})) == TYPE_DICTIONARY else {}
 	performed[clean_action_id] = true
 	run_state.narrative_flags["tutorial_actions_performed"] = performed
+	var contexts: Dictionary = run_state.narrative_flags.get("tutorial_action_contexts", {}) if typeof(run_state.narrative_flags.get("tutorial_action_contexts", {})) == TYPE_DICTIONARY else {}
+	contexts[clean_action_id] = {
+		"environment_archetype": str(run_state.current_environment.get("archetype_id", "")),
+		"screen": current_screen,
+		"game_id": current_game.get_id() if current_game != null else "",
+	}
+	run_state.narrative_flags["tutorial_action_contexts"] = contexts
 
 
 func _consume_recorded_tutorial_action(action_id: String) -> void:
@@ -19823,6 +19899,9 @@ func _consume_recorded_tutorial_action(action_id: String) -> void:
 		return
 	performed.erase(clean_action_id)
 	run_state.narrative_flags["tutorial_actions_performed"] = performed
+	var contexts: Dictionary = run_state.narrative_flags.get("tutorial_action_contexts", {}) if typeof(run_state.narrative_flags.get("tutorial_action_contexts", {})) == TYPE_DICTIONARY else {}
+	contexts.erase(clean_action_id)
+	run_state.narrative_flags["tutorial_action_contexts"] = contexts
 
 
 func _complete_preperformed_tutorial_actions() -> void:
@@ -19831,6 +19910,7 @@ func _complete_preperformed_tutorial_actions() -> void:
 	var performed: Dictionary = run_state.narrative_flags.get("tutorial_actions_performed", {}) if typeof(run_state.narrative_flags.get("tutorial_actions_performed", {})) == TYPE_DICTIONARY else {}
 	if performed.is_empty():
 		return
+	var performed_contexts: Dictionary = run_state.narrative_flags.get("tutorial_action_contexts", {}) if typeof(run_state.narrative_flags.get("tutorial_action_contexts", {})) == TYPE_DICTIONARY else {}
 	for _index in range(16):
 		var lesson_id: String = coach_overlay.active_lesson_id()
 		if lesson_id.is_empty():
@@ -19860,13 +19940,30 @@ func _complete_preperformed_tutorial_actions() -> void:
 		var matched_action := ""
 		for action_id_value in action_ids:
 			var candidate := str(action_id_value)
-			if bool(performed.get(candidate, false)):
+			if bool(performed.get(candidate, false)) and _recorded_tutorial_action_matches_lesson(candidate, lesson, performed_contexts):
 				matched_action = candidate
 				break
 		if matched_action.is_empty() or not coach_overlay.notify_action(matched_action):
 			return
 		_consume_recorded_tutorial_action(matched_action)
 		coach_overlay.evaluate_at_boundary(_coach_context_snapshot())
+
+
+func _recorded_tutorial_action_matches_lesson(action_id: String, lesson: Dictionary, contexts: Dictionary) -> bool:
+	# Machine/table ids are intentionally reused across venues. A Blackjack entry
+	# in the underground casino must not silently complete the later instruction
+	# to enter Blackjack on the Grand Casino floor. Other authored ids remain
+	# globally unique and retain the legacy pre-performance behavior.
+	if not action_id.begins_with("game:"):
+		return true
+	var trigger: Dictionary = lesson.get("trigger", {}) if typeof(lesson.get("trigger", {})) == TYPE_DICTIONARY else {}
+	var expected_environment := str(trigger.get("environment_archetype", "")).strip_edges()
+	if expected_environment.is_empty():
+		return true
+	var context_value: Variant = contexts.get(action_id, {})
+	if typeof(context_value) != TYPE_DICTIONARY:
+		return false
+	return str((context_value as Dictionary).get("environment_archetype", "")).strip_edges() == expected_environment
 
 
 func _sync_coach_focus_visibility() -> void:

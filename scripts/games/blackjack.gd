@@ -771,6 +771,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 				deal_duration_msec,
 				deal_started_msec,
 				{
+					"active": deal_animation_active,
 					"clock_source": "presentation",
 					"metadata": {"event_count": deal_events.size()},
 				}
@@ -794,7 +795,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 				payout_active_id,
 				PAYOUT_ANIMATION_DURATION_MSEC if not payout_active_id.is_empty() else 0,
 				payout_started_msec,
-				{"clock_source": "presentation"}
+				{"active": payout_animation_active, "clock_source": "presentation"}
 			),
 		],
 		"phase": "barred" if barred else "settling" if round_complete else "decision" if dealt else "betting",
@@ -4486,6 +4487,7 @@ func _start_initial_hand(session: Dictionary, table: Dictionary, stake: int = 1,
 	var hands: Array = _hand_array(initial.get("player_hands", []))
 	var dealer_cards: Array = _card_array(initial.get("dealer_cards", []))
 	var patron_hands: Array = _hand_array(initial.get("patron_hands", []))
+	_stabilize_tutorial_peek_opening(hands, dealer_cards, table, run_state)
 	session["player_hands"] = hands
 	session["dealer_cards"] = dealer_cards
 	session["patron_hands"] = patron_hands
@@ -4517,6 +4519,42 @@ func _start_initial_hand(session: Dictionary, table: Dictionary, stake: int = 1,
 	_mark_deal_animation(session, "initial", _initial_deal_animation_events(hands, dealer_cards, patron_hands), result_msec)
 	if bool(table.get("counting_enabled", false)):
 		_start_count_challenge(session, table, run_state)
+
+
+# The guided second hand teaches a timed interaction. A random opening natural
+# settles before the player can create the lookaway and leaves the lesson aimed
+# at a control that no longer exists. Preserve the same four cards and shoe
+# consumption, but pair them into the first deterministic non-natural layout.
+# Normal runs and every post-Peek tutorial hand retain the exact shoe order.
+func _stabilize_tutorial_peek_opening(hands: Array, dealer_cards: Array, table: Dictionary, run_state: RunState) -> void:
+	if run_state == null \
+			or not run_state.is_tutorial_run() \
+			or str(run_state.current_environment.get("archetype_id", "")) != "small_underground_casino" \
+			or int(table.get("hands_played", 0)) < 1:
+		return
+	var completed: Dictionary = run_state.narrative_flags.get("tutorial_lessons_completed", {}) if typeof(run_state.narrative_flags.get("tutorial_lessons_completed", {})) == TYPE_DICTIONARY else {}
+	if bool(completed.get("tutorial_blackjack_peek", false)) or hands.is_empty() or dealer_cards.size() < 2:
+		return
+	var player_hand: Dictionary = hands[0]
+	var player_cards: Array = _card_array(player_hand.get("cards", []))
+	if player_cards.size() < 2 or (not _is_natural_blackjack(player_hand) and not _dealer_has_blackjack(dealer_cards)):
+		return
+	var opening_cards: Array = [player_cards[0], player_cards[1], dealer_cards[0], dealer_cards[1]]
+	for first_index in range(opening_cards.size()):
+		for second_index in range(first_index + 1, opening_cards.size()):
+			var candidate_player := [opening_cards[first_index], opening_cards[second_index]]
+			var candidate_dealer: Array = []
+			for card_index in range(opening_cards.size()):
+				if card_index != first_index and card_index != second_index:
+					candidate_dealer.append(opening_cards[card_index])
+			var candidate_hand := player_hand.duplicate(true)
+			candidate_hand["cards"] = candidate_player
+			if _is_natural_blackjack(candidate_hand) or _dealer_has_blackjack(candidate_dealer):
+				continue
+			player_hand["cards"] = candidate_player
+			hands[0] = player_hand
+			dealer_cards.assign(candidate_dealer)
+			return
 
 
 func _draw_card_from_session(session: Dictionary, table: Dictionary) -> Dictionary:

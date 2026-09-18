@@ -357,10 +357,17 @@ func _capture_look(command_number: int) -> Dictionary:
 	var observable := Fidelity.observable_host_snapshot(app)
 	var room_canvas := app.get("environment_canvas") as Control
 	var game_canvas := app.get("game_surface_canvas") as Control
+	var coach := app.get("coach_overlay") as Control
+	var coach_snapshot: Dictionary = coach.call("current_snapshot") if coach != null and coach.has_method("current_snapshot") else {}
+	if room_canvas != null and room_canvas.has_method("global_rect_for_object"):
+		var coach_anchor_id := str(coach_snapshot.get("anchor_id", "")).strip_edges()
+		if not coach_anchor_id.is_empty():
+			coach_snapshot["live_room_anchor_rect"] = room_canvas.call("global_rect_for_object", coach_anchor_id)
 	return {
 		"png": image_path,
 		"png_error": error_string(image_error) if image_error != OK else "",
 		"observable": observable,
+		"coach": coach_snapshot,
 		"clickable": {
 			"buttons": _public_buttons(),
 			"text_fields": _visible_text_fields(),

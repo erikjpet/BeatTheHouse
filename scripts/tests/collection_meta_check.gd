@@ -115,6 +115,12 @@ func _test_players_card_schema_and_fragility(resolver: Variant) -> void:
 	_check(is_equal_approx(float(rolled.get("condition", 1.0)), float(normalized.get("condition", 0.0))), "Players Card roll boundary did not keep durability pinned.")
 	var run_item: Dictionary = resolver.resolve_run_item(normalized)
 	_check(str(_copy_dict(run_item.get("meta_collection", {})).get("condition_band", "")) == "critical", "Players Card did not resolve in the critical durability band.")
+	var bronze_item: Dictionary = resolver.resolve_run_item(resolver.normalize_instance_for_definition({
+		"itemdef_id": MetaCollectionServiceScript.PLAYERS_CARD_ITEMDEF_ID,
+		"instance_data": {"tier_reached": "bronze"},
+	}))
+	var bronze_meta := _copy_dict(bronze_item.get("meta_collection", {}))
+	_check(str(bronze_meta.get("tier", "")) == "bronze" and str(bronze_item.get("description", "")).contains("Bronze card"), "A minted Bronze Players Card presented itself as the Gold template rarity.")
 	var chip_definition: Dictionary = resolver.item_definition(MetaCollectionServiceScript.GRAND_CASINO_CHIPS_ITEMDEF_ID)
 	_check(str(chip_definition.get("item_class", "")) == CollectionItemResolverScript.ITEM_CLASS_CHIP_STACK and not bool(chip_definition.get("loadout_eligible", true)), "Grand Casino Chips are not a first-class meta-only chip stack.")
 	var chip_policy := _copy_dict(chip_definition.get("sale_policy", {}))

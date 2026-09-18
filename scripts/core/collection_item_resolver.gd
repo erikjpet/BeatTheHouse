@@ -254,9 +254,20 @@ func resolve_run_item(instance: Dictionary) -> Dictionary:
 	var instance_id := int(normalized.get("instance_id", 0))
 	var item_id := str(definition.get("id", "collection_item"))
 	var item_class := str(definition.get("item_class", ITEM_CLASS_COLLECTION))
+	var instance_data := _copy_dict(normalized.get("instance_data", {}))
+	var presentation_tier := str(definition.get("tier", ""))
+	var description := str(definition.get("flavor", ""))
 	var display_name := "%s (%s)" % [str(definition.get("display_name", "Collection Item")), str(band.get("display_name", "Unknown"))]
 	if item_class == ITEM_CLASS_CHIP_STACK:
 		display_name = "%s ×%d" % [str(definition.get("display_name", "Grand Casino Chips")), maxi(0, int(normalized.get("stack_amount", 0)))]
+	elif item_class == ITEM_CLASS_PLAYERS_CARD:
+		# The definition is the single collectible card template. The casino tier
+		# belongs to the minted instance, so Bronze must not present as template Gold.
+		var earned_tier := str(instance_data.get("tier_reached", "")).strip_edges().to_lower()
+		if earned_tier in ["bronze", "silver", "gold"]:
+			presentation_tier = earned_tier
+			description = "Linda's %s card, stamped with the run that paid for it." % earned_tier.capitalize()
+		display_name = str(definition.get("display_name", "Grand Casino Players Card"))
 	return {
 		"id": "meta_%s_%d" % [item_id, instance_id],
 		"display_name": display_name,
@@ -268,7 +279,7 @@ func resolve_run_item(instance: Dictionary) -> Dictionary:
 		"price_min": 0,
 		"price_max": 0,
 		"icon_key": str(definition.get("icon_key", "")),
-		"description": str(definition.get("flavor", "")),
+		"description": description,
 		"effect": effect,
 		"meta_collection": {
 			"schema_version": SCHEMA_VERSION,
@@ -276,7 +287,8 @@ func resolve_run_item(instance: Dictionary) -> Dictionary:
 			"collection_id": str(definition.get("collection_id", "")),
 			"itemdef_id": itemdef_id,
 			"instance_id": instance_id,
-			"tier": str(definition.get("tier", "")),
+			"tier": presentation_tier,
+			"players_card_tier": presentation_tier if item_class == ITEM_CLASS_PLAYERS_CARD else "",
 			"condition_band": str(band.get("id", "")),
 			"floats": {
 				"potency": float(normalized.get("potency", 0.0)),
@@ -284,7 +296,7 @@ func resolve_run_item(instance: Dictionary) -> Dictionary:
 				"resonance": float(normalized.get("resonance", 0.0)),
 				"usage": float(normalized.get("usage", 0.0)),
 			},
-			"instance_data": _copy_dict(normalized.get("instance_data", {})),
+			"instance_data": instance_data,
 			"stack_amount": maxi(0, int(normalized.get("stack_amount", 0))),
 			"face_value": maxi(0, int(normalized.get("face_value", 0))),
 			"loadout_eligible": bool(definition.get("loadout_eligible", true)),
