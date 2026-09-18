@@ -54,6 +54,10 @@ func sealed_action_authority_contract() -> Dictionary:
 		# against a narrow detached candidate and fingerprint the exact Slot inputs
 		# instead of serializing unrelated late-run story/world history six times.
 		"compact_authority_evidence_method": &"_machine_game_authority_evidence",
+		# Both isolated executions already compare their complete result, RNG, and
+		# compact authority graphs. The replay does not need to serialize that same
+		# large Slot/pinball payload into a second output digest.
+		"trusted_candidate_structural_replay_match": true,
 		"lightweight_resolution_candidate": true,
 		"in_place_nonrejecting_commit": true,
 		# One current response plus its immediate predecessor covers synchronous
