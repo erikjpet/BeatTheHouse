@@ -229,7 +229,7 @@ static func world_map_node_should_render(host: Variant, node: Dictionary, is_cur
 	return state == host.WorldMapScript.STATE_VISITED
 
 
-static func world_route_for_target(host: Variant, target_id: String) -> Dictionary:
+static func world_route_for_target(host: Variant, target_id: String, path_query: Dictionary = {}) -> Dictionary:
 	var cache_key = host._travel_base_cache_key()
 	if host.world_route_cache_key != cache_key:
 		host.world_route_cache_key = cache_key
@@ -239,7 +239,7 @@ static func world_route_for_target(host: Variant, target_id: String) -> Dictiona
 		return cached_route.duplicate(true)
 	var route = {}
 	if host.run_state != null and host.generator != null and host.run_state.has_world_map():
-		route = host.generator.world_route_for_target(host.run_state, target_id)
+		route = host.generator.world_route_for_target_prepared(host.run_state, target_id, path_query) if not path_query.is_empty() else host.generator.world_route_for_target(host.run_state, target_id)
 	else:
 		route = host.library.route(target_id) if host.library != null else {}
 	host.world_route_cache[target_id] = route.duplicate(true)
@@ -445,9 +445,12 @@ static func travel_target_ids(host: Variant) -> Array:
 	if host.travel_target_ids_cache_key == cache_key:
 		return host.travel_target_ids_cache.duplicate()
 	var result: Array = []
+	var option_bonus: int = host.run_state.travel_option_bonus()
+	var new_target_limit: int = host.WorldMapScript.TRAVEL_NEW_TARGET_LIMIT + option_bonus
+	var total_target_limit: int = host.WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT + option_bonus
 	if host.run_state.has_world_map():
 		var source_id = host.run_state.current_world_node_id()
-		result = host.WorldMapScript.travel_target_ids(host.run_state.world_map, source_id, host.WorldMapScript.TRAVEL_NEW_TARGET_LIMIT, host.WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT, host._enabled_world_route_ids(source_id))
+		result = host.WorldMapScript.travel_target_ids(host.run_state.world_map, source_id, new_target_limit, total_target_limit, host._enabled_world_route_ids(source_id))
 	else:
 		for source in [
 			host.run_state.current_environment.get("next_archetypes", []),
@@ -461,13 +464,13 @@ static func travel_target_ids(host: Variant) -> Array:
 		if not result.has(local_target_id):
 			result.append(local_target_id)
 	result = host.TutorialFlowScript.travel_target_ids(host.run_state, result)
-	result = _retain_delivery_next_hops(host, result)
+	result = _retain_delivery_next_hops(host, result, total_target_limit)
 	host.travel_target_ids_cache_key = cache_key
 	host.travel_target_ids_cache = result.duplicate()
 	return result
 
 
-static func _retain_delivery_next_hops(host: Variant, ordinary_target_ids: Array) -> Array:
+static func _retain_delivery_next_hops(host: Variant, ordinary_target_ids: Array, total_target_limit: int) -> Array:
 	# Delivery runs still use the ordinary map choices and route execution. The
 	# capped presentation list must not hide the first real edge toward every
 	# pending handoff, though, or an otherwise reachable job can appear stuck.
@@ -498,7 +501,7 @@ static func _retain_delivery_next_hops(host: Variant, ordinary_target_ids: Array
 		var next_hop := str(next_hop_value)
 		if result.has(next_hop):
 			continue
-		if result.size() < host.WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT:
+		if result.size() < total_target_limit:
 			result.append(next_hop)
 			continue
 		for replace_index in range(result.size() - 1, -1, -1):
@@ -587,11 +590,12 @@ static func enabled_world_route_ids(host: Variant, source_id: String) -> Array:
 	var clean_source_id = source_id.strip_edges()
 	if clean_source_id.is_empty():
 		clean_source_id = host.run_state.current_world_node_id()
+	var path_query: Dictionary = host.WorldMapScript.prepare_path_query(host.run_state.world_map, clean_source_id, true)
 	for target_id_value in host.WorldMapScript.visible_node_ids(host.run_state.world_map):
 		var target_id = str(target_id_value)
-		if target_id == clean_source_id or not host.WorldMapScript.has_path(host.run_state.world_map, clean_source_id, target_id, true):
+		if target_id == clean_source_id or not host.WorldMapScript.prepared_has_path(path_query, target_id):
 			continue
-		var route = host._world_route_for_target(target_id)
+		var route = host._world_route_for_target(target_id, path_query)
 		if route.is_empty():
 			continue
 		var archetype = host._environment_archetype(target_id)

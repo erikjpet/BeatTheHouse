@@ -396,8 +396,19 @@ func _notification(what: int) -> void:
 
 # Copies a foundation EnvironmentInstance view snapshot into canvas-local state.
 func render_environment_snapshot(snapshot: Dictionary) -> void:
+	_render_owned_environment_snapshot(snapshot.duplicate(true))
+
+
+# Internal ownership-transfer path for a freshly assembled presentation value.
+# The canvas treats foundation_snapshot as immutable; callers that retain or may
+# mutate their dictionary must continue using render_environment_snapshot().
+func render_owned_environment_snapshot(snapshot: Dictionary) -> void:
+	_render_owned_environment_snapshot(snapshot)
+
+
+func _render_owned_environment_snapshot(snapshot: Dictionary) -> void:
 	uses_foundation_snapshot = true
-	foundation_snapshot = snapshot.duplicate(true)
+	foundation_snapshot = snapshot
 	var archetype_id := str(foundation_snapshot.get("archetype_id", foundation_snapshot.get("id", environment_id)))
 	var visual_context: Dictionary = foundation_snapshot.get("visual_context", {}) if typeof(foundation_snapshot.get("visual_context", {})) == TYPE_DICTIONARY else {}
 	var art_key := str(visual_context.get("art_key", archetype_id)).strip_edges()
@@ -607,6 +618,19 @@ func select_object_at(index: int) -> void:
 func object_id_at_local_position(local_position: Vector2) -> String:
 	var object_ids := _object_ids_at_local_position(local_position)
 	return object_ids[0] if not object_ids.is_empty() else ""
+
+
+# Returns the already-rendered interaction record for an input callback. The
+# host treats this as read-only and avoids rebuilding or deep-copying the room
+# catalog for an object the canvas has just proven is current.
+func interactable_object_view(object_id: String) -> Dictionary:
+	for object_value in _array_view(foundation_snapshot.get("interactable_objects", [])):
+		if typeof(object_value) != TYPE_DICTIONARY:
+			continue
+		var object_data := object_value as Dictionary
+		if str(object_data.get("object_id", "")) == object_id:
+			return object_data
+	return {}
 
 
 # Returns every interactive object under a point from front to back. Developer

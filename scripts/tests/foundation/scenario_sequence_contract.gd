@@ -126,6 +126,7 @@ class LifecycleCallerProbe:
 	var capture_transaction_attention := false
 	var failed_talk_dock_attention_tween: Tween
 	var environment_hover_signal_log: Array[String] = []
+	var recovered_event_popup_choice_count := 0
 
 	func _init() -> void:
 		# These probes intentionally bypass FoundationMain._ready() and the staged
@@ -166,6 +167,10 @@ class LifecycleCallerProbe:
 
 	func _start_conclusion_animation(_result: Dictionary, _popup_rect: Rect2) -> void:
 		presentation_count += 1
+
+	func _record_recovered_event_popup_choice() -> void:
+		recovered_event_popup_choice_count += 1
+		_hide_event_choice_popup()
 
 	func _show_item_found_popups(_result: Dictionary, _inventory_before: Dictionary) -> void:
 		presentation_count += 1
@@ -265,6 +270,7 @@ static func check(library: ContentLibrary, failures: Array, scene_tree: SceneTre
 	_check_semantic_inventory(library, failures)
 	_check_base_semantic_producer(library, failures)
 	_check_lifecycle_finalization(library, failures)
+	_check_event_popup_button_release_recovery(failures, scene_tree)
 	_check_lifecycle_caller_failure_contract(library, failures, scene_tree)
 	_check_negative_fixtures(failures)
 	_check_lifecycle_commands(failures)
@@ -315,6 +321,37 @@ static func _check_delivery_day_world_map_route_install(library: ContentLibrary,
 	var exact := EnvironmentSemanticInventoryScript.exact_collections(semantic)
 	if not routes.has("bar") or not _array(exact.get("routes", [])).has("base::world:bar"):
 		failures.append("Delivery-day world-map install did not retain the declared bar route through semantic inventory sealing.")
+
+
+static func _check_event_popup_button_release_recovery(failures: Array, scene_tree: SceneTree) -> void:
+	if scene_tree == null or scene_tree.root == null:
+		failures.append("Event-popup release recovery requires an attached SceneTree.")
+		return
+	var probe := LifecycleCallerProbe.new()
+	scene_tree.root.add_child(probe)
+	probe._build_event_choice_popup_overlay()
+	var callback := Callable(probe, "_record_recovered_event_popup_choice")
+	for recover_canceled_release in [false, true]:
+		probe.pending_event_choice_popup_snapshot = {"visible": true, "popup_type": "interactable_event", "event_id": "side_door"}
+		probe.event_choice_popup_overlay.visible = true
+		probe._add_wager_confirmation_card("Follow the nod", "The door understands.", "", callback, true)
+		var card := probe.event_choice_popup_choices_list.get_child(0)
+		var stack := card.get_child(0) if card != null and card.get_child_count() > 0 else null
+		var button: Button = stack.get_child(stack.get_child_count() - 1) as Button if stack != null and stack.get_child_count() > 0 else null
+		if button == null:
+			failures.append("Punchline side-door response did not render a recoverable modal button.")
+			break
+		button.emit_signal("button_down")
+		if recover_canceled_release:
+			if not probe._finish_event_choice_popup_button_press():
+				failures.append("Punchline side-door response did not recover a highlighted button whose release was displaced by popup layout.")
+		else:
+			button.emit_signal("pressed")
+			if probe._finish_event_choice_popup_button_press():
+				failures.append("Event-popup release recovery repeated a response already delivered by Button.pressed.")
+	if probe.recovered_event_popup_choice_count != 2:
+		failures.append("Event-popup click delivery was not exactly once for normal and layout-displaced Punchline responses.")
+	probe.queue_free()
 
 
 static func _check_lifecycle_caller_failure_contract(library: ContentLibrary, failures: Array, scene_tree: SceneTree) -> void:

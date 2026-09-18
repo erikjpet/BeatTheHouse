@@ -788,7 +788,7 @@ func _runtime_validated_scenario_definition(definition: Dictionary) -> Dictionar
 
 
 func _runtime_scenario_definition_unvalidated(definition: Dictionary) -> Dictionary:
-	return ScenarioSequenceCatalogScript.apply_overlay(definition, scenario_sequence_catalog)
+	return ScenarioSequenceCatalogScript.apply_overlay_readonly(definition, scenario_sequence_catalog)
 
 
 # Finds one scenario definition without regenerating any environment state.
@@ -831,7 +831,7 @@ func _canonical_runtime_scenario_definition(definition: Dictionary) -> Dictionar
 		return _validated_scenario_definition_cache.get(scenario_id, {})
 	if not validation_complete and not scenario_id.is_empty() and _runtime_validated_scenario_definition_cache.has(scenario_id):
 		return _runtime_validated_scenario_definition_cache.get(scenario_id, {})
-	var result := ScenarioSequenceCatalogScript.apply_overlay(definition, scenario_sequence_catalog)
+	var result := ScenarioSequenceCatalogScript.apply_overlay_readonly(definition, scenario_sequence_catalog)
 	# Every scenario selected from this library has already been resolved against
 	# this exact loaded package catalog. Preserve that receipt for legacy scenarios
 	# with no sequence overlay too, so RunState does not lazily load and validate a

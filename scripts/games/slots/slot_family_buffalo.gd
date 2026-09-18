@@ -1757,10 +1757,18 @@ func _wild_multiplier(symbol: String) -> int:
 
 func _buffalo_symbol_lookup(config: Dictionary) -> Dictionary:
 	var result: Dictionary = {}
-	for symbol_value in _dictionary_array(config.get("symbols", [])):
-		var symbol: Dictionary = symbol_value
+	var symbols_value: Variant = config.get("symbols", [])
+	if typeof(symbols_value) != TYPE_ARRAY:
+		return result
+	# Definitions are immutable for the lifetime of a SlotGame. Reusing their
+	# read-only dictionaries avoids rebuilding the whole symbol table for every
+	# accidental-win check and payline evaluation.
+	for symbol_value in symbols_value as Array:
+		if typeof(symbol_value) != TYPE_DICTIONARY:
+			continue
+		var symbol: Dictionary = symbol_value as Dictionary
 		if int(symbol.get("pay3", 0)) > 0:
-			result[str(symbol.get("id", ""))] = symbol.duplicate(true)
+			result[str(symbol.get("id", ""))] = symbol
 	if result.is_empty():
 		result = {
 			"BUFFALO": {"id": "BUFFALO", "pay3": 1, "pay4": 3, "pay5": 8},
@@ -1778,7 +1786,8 @@ func _buffalo_symbol_lookup(config: Dictionary) -> Dictionary:
 
 
 func _buffalo_config(definition: Dictionary) -> Dictionary:
-	return _copy_dict(definition.get("slot_buffalo_config", {}))
+	var config_value: Variant = definition.get("slot_buffalo_config", {})
+	return config_value as Dictionary if typeof(config_value) == TYPE_DICTIONARY else {}
 
 
 func _variant_by_id(entries_value: Variant, variant_id: String) -> Dictionary:

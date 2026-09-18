@@ -381,6 +381,14 @@ func handle_holder_gui_input(event: InputEvent) -> bool:
 					clear_selection()
 					_reset_to_authored_map_view()
 				return true
+			elif not pressed_node_id.is_empty():
+				# A node can move out of view while the map camera settles between
+				# pointer-down and pointer-up. Godot then drops the moving Button's
+				# release signals, but the stationary holder still receives release.
+				# Defer just like button_up so the Button's normal pressed signal gets
+				# the first chance; the activation serial then prevents a duplicate.
+				call_deferred("_finish_pressed_node")
+				return true
 	if event is InputEventMouseMotion and _navigation_drag_in_progress():
 		var moved := bool(nodes_layer.call("update_navigation_drag", (event as InputEventMouseMotion).position))
 		if moved:
@@ -403,6 +411,9 @@ func handle_holder_gui_input(event: InputEvent) -> bool:
 			else:
 				clear_selection()
 				_reset_to_authored_map_view()
+			return true
+		elif not pressed_node_id.is_empty():
+			call_deferred("_finish_pressed_node")
 			return true
 	if event is InputEventScreenDrag and _navigation_drag_in_progress():
 		var touch_moved := bool(nodes_layer.call("update_navigation_drag", (event as InputEventScreenDrag).position))

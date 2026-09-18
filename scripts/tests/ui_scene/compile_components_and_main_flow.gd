@@ -8014,7 +8014,10 @@ func _run() -> void:
 		quit(1)
 		return
 	failure_fixture_run.add_suspicion("ui_failure_screen:police", 100, "behavior", true, {"environment_id": str(failure_fixture_run.current_environment.get("id", ""))})
-	app.call("_refresh")
+	# Background games and save-boundary checks can discover terminal state
+	# without entering the broad refresh path. The terminal route itself must
+	# atomically replace the live game in that case.
+	app.call("_evaluate_run_terminal_state")
 	await process_frame
 	var failure_screen_snapshot: Dictionary = app.call("current_screen_snapshot")
 	if str(failure_screen_snapshot.get("screen", "")) != "FAILURE":
@@ -8032,6 +8035,17 @@ func _run() -> void:
 		return
 	if (app.get("game_surface_canvas") as Control).visible:
 		push_error("Game surface remained visible over the failure summary.")
+		quit(1)
+		return
+	if (app.get("environment_canvas") as Control).visible or (app.get("environment_header") as Control).visible:
+		push_error("Live room presentation remained visible beside the failure summary.")
+		quit(1)
+		return
+	var terminal_visual_panel: Control = app.get("visual_panel_container")
+	var terminal_report_rect := failure_panel.get_global_rect()
+	var terminal_visual_rect := terminal_visual_panel.get_global_rect()
+	if terminal_report_rect.size.y < terminal_visual_rect.size.y * 0.9:
+		push_error("Failure summary did not own the full terminal play area: report=%s visual=%s." % [str(terminal_report_rect), str(terminal_visual_rect)])
 		quit(1)
 		return
 	if failure_fixture_run.pending_talk_event_count() != 0 or bool((app.call("current_talk_dock_snapshot") as Dictionary).get("visible", false)):

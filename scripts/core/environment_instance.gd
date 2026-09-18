@@ -13,7 +13,7 @@ const EnvironmentEventResolverScript := preload("res://scripts/core/environment_
 const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
 
 const ENVIRONMENT_BOARD_SIZE := Vector2(ArtContractsScript.ENVIRONMENT_BOARD_SIZE)
-const GENERATED_LAYOUT_VERSION := 11
+const GENERATED_LAYOUT_VERSION := 12
 const ENVIRONMENT_LAYER_SCHEMA_VERSION := 1
 const EMPTY_MUSIC_NOTE := -999
 const SALS_PAWN_COUNTER_ID := "sals_pawn_counter"
@@ -599,7 +599,6 @@ static func ensure_generated_layout(environment_data: Dictionary, library: Conte
 	var object_rects := _copy_dict(layout.get("object_rects", {}))
 	if int(layout.get("generated_object_rect_version", 0)) != GENERATED_LAYOUT_VERSION:
 		object_rects = {}
-	var include_route_travel_rects := not bool(environment_data.get("world_map_travel", false))
 	# Town/scenario modifiers can add events after the EnvironmentInstance was
 	# first built. Classify those late additions from the refreshed hints above,
 	# rather than the stale hints still held by the serialized input dictionary.
@@ -607,7 +606,7 @@ static func ensure_generated_layout(environment_data: Dictionary, library: Conte
 	placement_environment["layout"] = layout
 	var active_entries := _active_object_layout_entries(placement_environment)
 	var active_object_ids := _active_object_ids_from_entries(active_entries)
-	var grounding_signature := _grounding_signature(environment_data, layout, active_entries, include_route_travel_rects)
+	var grounding_signature := _grounding_signature(environment_data, layout, active_entries)
 	if int(layout.get("generated_object_rect_version", 0)) == GENERATED_LAYOUT_VERSION \
 			and str(layout.get("grounding_signature", "")) == grounding_signature \
 			and _copy_array(layout.get("placement_errors", [])).is_empty() \
@@ -635,24 +634,14 @@ static func ensure_generated_layout(environment_data: Dictionary, library: Conte
 	_assign_string_object_rects(object_rects, layout, "home_container", _home_container_ids(environment_data), "home_container_spots", active_object_ids)
 	if prioritize_services:
 		_assign_item_offer_rects(object_rects, layout, _copy_array(environment_data.get("item_offers", [])), active_object_ids)
-	var placement_entries := active_entries.duplicate(true)
-	if include_route_travel_rects:
-		var route_active_ids := active_object_ids.duplicate(true)
-		for target_id in _travel_target_ids(environment_data):
-			route_active_ids["travel:%s" % target_id] = true
-		_assign_string_object_rects(object_rects, layout, "travel", _travel_target_ids(environment_data), "travel_spots", route_active_ids)
-		var route_index := 0
-		for target_id in _travel_target_ids(environment_data):
-			placement_entries.append({"object_id": "travel:%s" % target_id, "object_type": "travel", "index": route_index, "spot_field": "travel_spots"})
-			route_index += 1
-	_ground_authored_object_rects(object_rects, layout, environment_data, placement_entries)
+	_ground_authored_object_rects(object_rects, layout, environment_data, active_entries)
 	layout["object_rects"] = object_rects
 	layout["generated_object_rect_version"] = GENERATED_LAYOUT_VERSION
 	layout["grounding_signature"] = grounding_signature
 	return layout
 
 
-static func _grounding_signature(environment_data: Dictionary, layout: Dictionary, active_entries: Array, include_route_travel_rects: bool) -> String:
+static func _grounding_signature(environment_data: Dictionary, layout: Dictionary, active_entries: Array) -> String:
 	var layout_source := layout.duplicate(true)
 	for generated_key in ["object_rects", "placement_classes", "placement_surfaces", "placement_errors", "placement_fallback_ids", "grounding_signature", "generated_object_rect_version"]:
 		layout_source.erase(generated_key)
@@ -663,7 +652,6 @@ static func _grounding_signature(environment_data: Dictionary, layout: Dictionar
 		"layer_id": str(environment_data.get("current_layer_id", environment_data.get("layer_id", ""))),
 		"surface_map": EnvironmentPlacementScript.surface_map(environment_data),
 		"active_entries": active_entries,
-		"travel_targets": _travel_target_ids(environment_data) if include_route_travel_rects else [],
 		"layout_source": layout_source,
 	}
 	return JSON.stringify(signature_source).sha256_text()
@@ -728,6 +716,11 @@ static func _ground_authored_object_rects(object_rects: Dictionary, layout: Dict
 					selected = candidate_rect
 					selected_surface = str(candidate.get("surface_id", selected_surface))
 					break
+		# Surface grounding may shift an authored hotspot near the right or bottom
+		# edge. Preserve its size while keeping the complete interactive rectangle
+		# on the environment board; semantic validation rejects clipped controls.
+		selected.position.x = clampf(selected.position.x, 0.0, maxf(0.0, ENVIRONMENT_BOARD_SIZE.x - selected.size.x))
+		selected.position.y = clampf(selected.position.y, 0.0, maxf(0.0, ENVIRONMENT_BOARD_SIZE.y - selected.size.y))
 		var normalized_selected := Rect2(selected.position / ENVIRONMENT_BOARD_SIZE, selected.size / ENVIRONMENT_BOARD_SIZE)
 		object_rects[object_id] = _rect_to_dict(normalized_selected)
 		placed[object_id] = _rect_to_dict(normalized_selected)

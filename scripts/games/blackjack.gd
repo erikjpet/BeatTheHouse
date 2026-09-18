@@ -142,6 +142,14 @@ func sealed_action_authority_contract() -> Dictionary:
 		"wager_cost_proposal_method": ActionAuthorityScript.WAGER_COST_PROPOSAL_METHOD,
 		"trusted_candidate_resolve_method": &"_blackjack_resolve_candidate",
 		"trusted_candidate_wager_method": &"_blackjack_wager_cost_candidate",
+		# Ordinary Blackjack resolution mutates only its bound table. Bind and replay
+		# that table plus the exact account/risk inputs instead of serializing a late
+		# run's world, travel history, and unrelated machines for every settlement.
+		# Rourke and Crew actions can mutate broader RunState roots and deliberately
+		# remain on the conservative full transaction path.
+		"compact_authority_evidence_method": &"_blackjack_authority_evidence",
+		"compact_authority_evidence_predicate_method": &"_blackjack_compact_authority_allowed",
+		"trusted_candidate_structural_replay_match": true,
 		"host_auto_tick_method": ActionAuthorityScript.HOST_AUTO_TICK_METHOD,
 		"surface_intent_key": ActionAuthorityScript.SURFACE_INTENT_KEY,
 		"surface_intent_index_key": ActionAuthorityScript.SURFACE_INTENT_INDEX_KEY,
@@ -151,10 +159,13 @@ func sealed_action_authority_contract() -> Dictionary:
 		"authoritative_result_marker": "",
 		"place_bet_action": ActionAuthorityScript.PLACE_BET_ACTION,
 		"host_pointer_intent": false,
-		# Count pulses are session-only observations. They never spend funds, advance
-		# the room, or issue a settlement delivery, so the host can stage them without
-		# cloning a late run's world graph for every mouse-over.
-		"in_place_session_intents": ["blackjack_count_icon"],
+		# Count pulses and non-terminal card decisions alter only the authenticated
+		# session. Terminal variants automatically fall back to the transaction path.
+		"in_place_session_intents": [
+			"blackjack_count_icon", "blackjack_hit", "blackjack_stand",
+			"blackjack_double", "blackjack_split", "blackjack_surrender",
+		],
+		"in_place_session_intent_predicate_method": &"_blackjack_in_place_session_intent_allowed",
 		"in_place_session_intent_method": &"_blackjack_in_place_session_intent_command",
 		"skip_environment_turn_actions": ["count_cards"],
 	}
@@ -1919,12 +1930,22 @@ func _blackjack_surface_action_command(surface_action: String, index: int, confi
 
 
 func _blackjack_in_place_session_intent_command(surface_action: String, index: int, _confirm_requested: bool, session: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
-	if surface_action != "blackjack_count_icon":
+	if surface_action == "blackjack_count_icon":
+		var table := _peek_table_state(environment)
+		if table.is_empty():
+			return _message_command(session, "The count pulse is no longer available.")
+		return _hit_count_icon(index, session, table, run_state)
+	if not surface_action in ["blackjack_hit", "blackjack_stand", "blackjack_double", "blackjack_split", "blackjack_surrender"]:
 		return {"handled": false}
-	var table := _peek_table_state(environment)
-	if table.is_empty():
-		return _message_command(session, "The count pulse is no longer available.")
-	return _hit_count_icon(index, session, table, run_state)
+	# The ordinary hand buttons first transform only the authenticated session.
+	# Foundation stages non-terminal results directly in that ledger. A card that
+	# completes the round returns a resolve command, which Foundation detects and
+	# reruns through the isolated wager/settlement transaction before publishing.
+	return _blackjack_surface_action_command(surface_action, index, false, session, run_state, environment)
+
+
+func _blackjack_in_place_session_intent_allowed(_surface_action: String, run_state: RunState, environment: Dictionary) -> bool:
+	return run_state != null and not _is_rourke_duel(run_state, environment)
 
 
 func _rourke_duel_surface_action_command(surface_action: String, index: int, confirm_requested: bool, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
@@ -2060,6 +2081,82 @@ func _blackjack_resolve_proposal(action_id: String, stake: int, run_snapshot: Di
 	}
 	proposal["output_fingerprint"] = RuntimeScript.canonical_fingerprint(proposal)
 	return proposal
+
+
+func _blackjack_compact_authority_allowed(candidate: RunState, action_id: String, _stake: int, _ui_state: Dictionary = {}) -> bool:
+	if candidate == null or action_id.begins_with("crew_play:"):
+		return false
+	return not _is_rourke_duel(candidate, candidate.current_environment)
+
+
+func _blackjack_authority_evidence(candidate: RunState, action_id: String, stake: int, ui_state: Dictionary = {}) -> Dictionary:
+	if not _blackjack_compact_authority_allowed(candidate, action_id, stake, ui_state):
+		return {}
+	var environment := candidate.current_environment
+	var table := _table_state_preview(candidate, environment).duplicate(false)
+	# Delivery, replay, and apply receipts authenticate themselves. Keeping that
+	# growing history in the gameplay proof would make every later hand slower
+	# even though no prior receipt can change the cards or settlement.
+	table.erase(ActionAuthorityScript.LEDGER_KEY)
+	table.erase(ActionAuthorityScript.PENDING_APPLY_RECEIPT_KEY)
+	var environment_evidence := {
+		"id": environment.get("id", ""),
+		"archetype_id": environment.get("archetype_id", ""),
+		"depth": environment.get("depth", 0),
+		"turns": environment.get("turns", 0),
+		"economic_profile": environment.get("economic_profile", {}),
+		"security_profile": environment.get("security_profile", {}),
+		"local_narrative_flags": environment.get("local_narrative_flags", {}),
+		"game_states": {get_id(): table},
+	}
+	# Staffing can fall back to the authored main-floor room when the current room
+	# has no rotation config. Preserve only that configuration context, never the
+	# unrelated machines retained inside those rooms.
+	var room_context: Dictionary = {}
+	for room_id_value in candidate.grand_casino_room_states.keys():
+		var room_value: Variant = candidate.grand_casino_room_states.get(room_id_value)
+		if typeof(room_value) != TYPE_DICTIONARY:
+			continue
+		var room := room_value as Dictionary
+		room_context[str(room_id_value)] = {
+			"id": room.get("id", ""),
+			"archetype_id": room.get("archetype_id", ""),
+			"local_narrative_flags": room.get("local_narrative_flags", {}),
+		}
+	return {
+		"version": 1,
+		"game_id": get_id(),
+		"action_id": action_id,
+		"stake": maxi(0, stake),
+		"account_checkpoint": candidate.action_authority_checkpoint_fingerprint(),
+		"bankroll": candidate.bankroll,
+		"grand_casino_chips": candidate.grand_casino_chips,
+		"rng_seed": candidate.rng_seed,
+		"rng_state": candidate.rng_state,
+		"simulation_msec": candidate.simulation_msec,
+		"game_clock_minutes": candidate.game_clock_minutes,
+		"seed_text": candidate.seed_text,
+		"seed_value": candidate.seed_value,
+		"run_status": candidate.run_status,
+		"economic_state": candidate.economic_state,
+		"challenge_config": candidate.challenge_config,
+		"inventory": candidate.inventory,
+		"active_item_id": candidate.active_item_id,
+		"suspicion": candidate.suspicion,
+		"baseline_luck": candidate.baseline_luck,
+		"drunk_level": candidate.drunk_level,
+		"alcoholic_level": candidate.alcoholic_level,
+		"narrative_flags": candidate.narrative_flags,
+		"crew_play_state": candidate.crew_play_state,
+		"grand_casino_staffing": candidate.grand_casino_staffing,
+		"grand_casino_room_context": room_context,
+		"rourke_current_room": candidate.rourke_current_room,
+		"rourke_current_spot": candidate.rourke_current_spot,
+		"rourke_facing": candidate.rourke_facing,
+		"rourke_off_floor_actions": candidate.rourke_off_floor_actions,
+		"environment": environment_evidence,
+		"ui_state": ui_state,
+	}
 
 
 func foreground_blocks_environment_runtime(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> bool:

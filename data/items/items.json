@@ -1571,6 +1571,7 @@
     "description": "Routes drawn by people who left.",
     "effect": {
       "win_bonus": 1,
+      "travel_option_bonus": 1,
       "travel_scouting_level": 1
     }
   },

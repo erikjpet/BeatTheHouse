@@ -12040,6 +12040,13 @@ func travel_scouting_level() -> int:
 	return maxi(item_level, service_level)
 
 
+# Returns the number of extra destinations passive travel items add to each
+# route-choice list. This stays separate from scouting: temporary route intel
+# can reveal details without granting the Roadside Map's additional choice.
+func travel_option_bonus() -> int:
+	return maxi(0, item_effect_total("travel_option_bonus", "travel"))
+
+
 # Builds player-facing preview metadata for a route destination.
 func travel_route_preview(route_data: Dictionary, destination_archetype: Dictionary, destination_environment: Dictionary = {}, full_preview: bool = false) -> Dictionary:
 	var archetype_id := str(destination_archetype.get("id", route_data.get("destination_archetype", ""))).strip_edges()
@@ -13561,7 +13568,7 @@ func detached_host_action_candidate(mutable_game_state_key: String = "") -> RunS
 # shell, game-state index, requested machine, and mutable lookup-cache shells
 # are detached. This is the cheap second execution used to prove deterministic
 # Slot outcomes without cloning a late run's entire story/world graph again.
-func detached_host_resolution_candidate(mutable_game_state_key: String) -> RunState:
+func detached_host_resolution_candidate(mutable_game_state_key: String, shallow_machine_detach: bool = false) -> RunState:
 	var candidate := get_script().new() as RunState
 	for field_name in TURN_TRANSACTION_SCALAR_FIELDS:
 		candidate.set(field_name, get(field_name))
@@ -13576,12 +13583,42 @@ func detached_host_resolution_candidate(mutable_game_state_key: String) -> RunSt
 	var detached_states := source_states.duplicate(false)
 	var state_key := mutable_game_state_key.strip_edges()
 	if not state_key.is_empty() and typeof(source_states.get(state_key, null)) == TYPE_DICTIONARY:
-		detached_states[state_key] = (source_states.get(state_key, {}) as Dictionary).duplicate(true)
+		# Providers may opt into a shallow machine fork only when their resolver
+		# replaces top-level fields and copy-on-writes every nested value it changes.
+		# The host still gives both executions distinct machine dictionaries; opaque
+		# retained presentation/feature graphs remain shared and read-only.
+		detached_states[state_key] = (source_states.get(state_key, {}) as Dictionary).duplicate(not shallow_machine_detach)
 	environment["game_states"] = detached_states
 	candidate.current_environment = environment
 	# Slot resolution never mutates these models, but its generic RunState helpers
 	# may inspect them. Retain the same read-only identities for proposal parity.
 	candidate.town_state = town_state
+	candidate.numbers_state = numbers_state
+	return candidate
+
+
+# Builds the read-mostly RunState view used to generate an exact destination
+# card. Unlike save restoration, this preserves already-normalized live values
+# and only detaches the collections that preview selection can write. Home-room
+# generation has broader initialization side effects and deliberately retains
+# the conservative snapshot path in RunGenerator.
+func detached_travel_preview_candidate() -> RunState:
+	var candidate := get_script().new() as RunState
+	for field_name in TURN_TRANSACTION_SCALAR_FIELDS:
+		candidate.set(field_name, get(field_name))
+	for field_name in TURN_TRANSACTION_COLLECTION_FIELDS:
+		var value: Variant = get(field_name)
+		if field_name in TURN_TRANSACTION_SHALLOW_CACHE_FIELDS and typeof(value) in [TYPE_DICTIONARY, TYPE_ARRAY]:
+			candidate.set(field_name, value.duplicate(false))
+		else:
+			candidate.set(field_name, value)
+	# Scenario selection records recent ids. Character-chain projection can seed
+	# anchors in these two flag tables. All three candidates therefore own their
+	# outer maps while retaining immutable values.
+	candidate.scenario_recent_by_archetype = scenario_recent_by_archetype.duplicate(false)
+	candidate.narrative_flags = narrative_flags.duplicate(false)
+	candidate.story_flags = story_flags.duplicate(false)
+	candidate.town_state = town_state.detached_travel_preview_candidate() if town_state != null else null
 	candidate.numbers_state = numbers_state
 	return candidate
 

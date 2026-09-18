@@ -115,7 +115,15 @@ func route_for_target(map_data: Dictionary, current_id: String, target_id: Strin
 	# node. A late run can retain several large machine states there, so deep
 	# copying the complete map for every candidate made a refresh scale with all
 	# previously visited rooms. Normalize topology only on this read path.
-	var normalized := normalize_topology(map_data)
+	return route_for_target_prepared(map_data, current_id, target_id, prepare_path_query(map_data, current_id, true))
+
+
+# Builds one route from a shared source-path query. The travel list asks about
+# every visible destination at once; reusing this query avoids normalizing the
+# same map and walking the same graph once per card.
+func route_for_target_prepared(map_data: Dictionary, current_id: String, target_id: String, path_query: Dictionary) -> Dictionary:
+	var normalized_value: Variant = path_query.get("normalized", {})
+	var normalized: Dictionary = normalized_value if typeof(normalized_value) == TYPE_DICTIONARY and not (normalized_value as Dictionary).is_empty() else normalize_topology(map_data)
 	var source_id := current_id.strip_edges()
 	var destination_id := target_id.strip_edges()
 	if source_id.is_empty() or destination_id.is_empty() or source_id == destination_id:
@@ -125,7 +133,7 @@ func route_for_target(map_data: Dictionary, current_id: String, target_id: Strin
 	var source_node := node_by_id(normalized, source_id)
 	var destination_node := node_by_id(normalized, destination_id)
 	var direct_revisit_path := false
-	var path := _path_between_normalized(normalized, source_id, destination_id, true)
+	var path := prepared_path(path_query, destination_id)
 	if path.size() < 2:
 		if source_node.is_empty() or destination_node.is_empty():
 			return {}
@@ -136,7 +144,8 @@ func route_for_target(map_data: Dictionary, current_id: String, target_id: Strin
 		path = [source_id, destination_id]
 		direct_revisit_path = true
 	var route := library.route(destination_id).duplicate(true) if library != null else {}
-	var edge_lookup := _edge_lookup(normalized)
+	var edge_lookup_value: Variant = path_query.get("edges_by_id", {})
+	var edge_lookup: Dictionary = edge_lookup_value if typeof(edge_lookup_value) == TYPE_DICTIONARY else _edge_lookup(normalized)
 	var distance_blocks := _path_distance_blocks_prepared(edge_lookup, path)
 	if direct_revisit_path:
 		var source_position: Dictionary = source_node.get("position", {"x": 0.5, "y": 0.5}) if typeof(source_node.get("position", {})) == TYPE_DICTIONARY else {"x": 0.5, "y": 0.5}
@@ -448,6 +457,7 @@ static func prepare_path_query(map_data: Dictionary, source_node_id: String, vis
 	var visible_lookup := _visible_node_lookup(normalized)
 	var previous_by_node_id: Dictionary = {}
 	var query := {
+		"normalized": normalized,
 		"source_node_id": source_id,
 		"visible_only": visible_only,
 		"previous_by_node_id": previous_by_node_id,

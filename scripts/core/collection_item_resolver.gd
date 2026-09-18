@@ -25,6 +25,7 @@ const KNOWN_EFFECT_KEYS := [
 	"legal_win_chance",
 	"loss_reduction",
 	"cheat_suspicion_delta",
+	"travel_option_bonus",
 	"travel_scouting_level",
 	"debt_grace_turns",
 	"debt_default_heat_delta",

@@ -859,3 +859,80 @@ Pinball physics, realtime, visual, multiball, recovery, economy, RNG, and
 autoplay checks intact. Architecture validation passed. Two independent
 determinism processes matched across 3 seeds and 217 checkpoints with combined
 hash `28143646`. No performance budget or gameplay parameter changed.
+
+### Room selection input-spike follow-up
+
+The player-facing room focus callback was rebuilding the complete interaction
+catalog after hover changed only a presentation flag. The catalog cache now
+excludes transient hover/focus/selection state and produces a shallow projected
+view with those three flags. Canvas-originated focus also reuses the exact
+read-only interaction record already rendered under the pointer; programmatic
+focus retains the validating lookup path.
+
+The performance probe now times hover plus the production canvas focus callback
+instead of bypassing it through the view-only helper. The exact same
+`INPUT-SPIKE-BEFORE-focus` seed exposed four objects in all three measurements:
+
+| Native room input callback | Original | Catalog split | Canvas record reuse |
+| --- | ---: | ---: | ---: |
+| Focus average | 62.045 ms | 6.131 ms | 4.143 ms |
+| Focus sampled range | 56.199-68.086 ms | 5.684-6.570 ms | 3.646-4.581 ms |
+| Hover average | 0.224 ms | 0.232 ms | 0.229 ms |
+| Focus-budget failures | 4 | 0 | 0 |
+
+The retained result is 93.3% below the original average and 32.4% below the
+catalog-split intermediate measurement. The unchanged fast performance probe
+passed every renderer, game-surface, resolve, and new-surface gate. The complete
+UI suite passed all eight stages, including room scene compilation and spatial
+integration. Two independent determinism runs matched across 3 seeds and 204
+checkpoints with combined hash `1211704896`. No performance budget, gameplay
+rule, simulation input, economy value, or visual behavior changed.
+
+An immediate playtest follow-up found a separate pointer-liveness edge case on
+the travel map: while its camera settled, a pooled location button could move or
+leave view after pointer-down, causing Godot to omit that moving button's release
+signals. The controller already retained the pressed node, but previously only
+the child button could finish it. The stationary map holder now defers the same
+serial-guarded completion on pointer/touch release, so normal clicks remain
+exactly once and canceled moving-node clicks no longer leave a highlighted but
+unselected destination. The preserved mid-0.6 accumulated Bar fixture selected
+and confirmed Back Alley successfully (`travel_ok=true`, arrived
+`back_alley`). The focused route-visibility check and all eight UI-suite stages
+passed with a permanent canceled-release regression case.
+
+### Late-run exact-scout and route-query follow-up
+
+The preserved pathological Continue fixture still exposed a direct input hitch
+when an unvisited destination was selected. Exact scouting round-tripped a
+nearly 590 KB run through the save codec, then rebuilt town topology a second
+time. The preview now creates a narrow detached candidate directly: normalized
+run values remain read-only aliases, while scenario recency, character-chain
+flags, living-world scenario seeds, and rumor indexes are isolated. Home
+initialization retains the conservative full snapshot path because it has wider
+run setup side effects.
+
+Opening the route list also normalized and traversed the same world graph once
+per visible destination. Route construction now consumes the existing prepared
+single-source path query, preserving its ordered paths, costs, and risk data
+while sharing one topology projection and breadth-first traversal.
+
+| Pathological late-run destination selection | Before | After | Change |
+| --- | ---: | ---: | ---: |
+| First selected route, full callback | 63.661 ms | 21.786 ms (3-run average) | -65.8% |
+| Selected-route four-call average | 16.021 ms | 5.543 ms (3-run average) | -65.4% |
+| Exact preview generator | 32.764 ms | 4.544 ms (3-run average) | -86.1% |
+| Warm selected-route lookup | 0.141 ms | 0.128 ms (3-run average) | -9.2% |
+| First all-visible route eligibility pass | 15.273 ms | 6.101 ms (2-run average) | -60.0% |
+| Warm full room refresh | 21.477 ms | 18.682 ms (3-run average) | -13.0% |
+
+The combined parity probe passed 73 archetype/scenario projections plus all 10
+available destinations in the pathological save, and proved that previewing
+them leaves the live save byte-identical. The route-visibility regression check
+passed. The room-refresh reduction comes from transferring its newly built,
+unretained presentation snapshot directly into the canvas; the public canvas
+API still deep-copies dictionaries retained by tests or other callers. The
+unchanged fast performance matrix passed all sampled observations and
+all game resolve budgets; Slot resolve measured 1.285/1.419/1.419 ms
+average/p95/max, Blackjack 3.670/4.449/4.449 ms, and active Coin Pusher frame
+p95 remained 6.921 ms. No performance budget, travel rule, economy value,
+simulation behavior, or visual output changed.

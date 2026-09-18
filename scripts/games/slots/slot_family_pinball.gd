@@ -403,14 +403,28 @@ func _first_pinball_win_violation(grid: Array, definition: Dictionary, protected
 	for line_index in range(MathScript.payline_count(row_count)):
 		var line_cells: Array = MathScript.payline_cells(reel_count, row_count, line_index)
 		for start_index in range(line_cells.size()):
-			for candidate_value in symbols.keys():
+			# Once the first non-wild symbol is known, no other candidate can
+			# possibly match this consecutive segment. The former full symbol-table
+			# scan repeated identical cell walks for every symbol and dominated
+			# multi-cabinet spins. An all-wild segment retains the original ordered
+			# candidate scan, so sanitization choices remain deterministic.
+			var first_non_wild := ""
+			for probe_index in range(start_index, line_cells.size()):
+				var probe_cell: Dictionary = line_cells[probe_index] as Dictionary
+				var probe_symbol := _cell_symbol(grid, int(probe_cell.get("reel", 0)), int(probe_cell.get("row", 0)))
+				if not _pinball_wild(probe_symbol):
+					first_non_wild = probe_symbol
+					break
+			var candidate_values: Array = symbols.keys() if first_non_wild.is_empty() else ([first_non_wild] if symbols.has(first_non_wild) else [])
+			for candidate_value in candidate_values:
 				var candidate := str(candidate_value)
-				var symbol_def: Dictionary = _copy_dict(symbols.get(candidate, {}))
+				var symbol_value: Variant = symbols.get(candidate, {})
+				var symbol_def: Dictionary = symbol_value as Dictionary if typeof(symbol_value) == TYPE_DICTIONARY else {}
 				if str(symbol_def.get("role", "")) == "bonus_scatter" or _pinball_wild(candidate):
 					continue
 				var cells: Array = []
 				for cell_index in range(start_index, line_cells.size()):
-					var cell: Dictionary = _copy_dict(line_cells[cell_index])
+					var cell: Dictionary = line_cells[cell_index] as Dictionary
 					var symbol := _cell_symbol(grid, int(cell.get("reel", 0)), int(cell.get("row", 0)))
 					if symbol == candidate or _pinball_wild(symbol):
 						cells.append(cell)
@@ -488,15 +502,20 @@ func _line_payout(line_symbols: Array, stake: int, stake_cost: int, symbols: Dic
 	if line_symbols.is_empty():
 		return 0
 	var candidates: Array = []
+	var seen_candidates: Dictionary = {}
 	for symbol_value in line_symbols:
 		var symbol := str(symbol_value)
 		if _pinball_wild(symbol):
 			continue
 		if not symbols.has(symbol):
 			continue
-		var symbol_def: Dictionary = _copy_dict(symbols.get(symbol, {}))
+		var symbol_definition_value: Variant = symbols.get(symbol, {})
+		var symbol_def: Dictionary = symbol_definition_value as Dictionary if typeof(symbol_definition_value) == TYPE_DICTIONARY else {}
 		if str(symbol_def.get("role", "")) == "bonus_scatter":
 			continue
+		if seen_candidates.has(symbol):
+			continue
+		seen_candidates[symbol] = true
 		candidates.append(symbol)
 	if candidates.is_empty():
 		candidates = ["BALL"]
@@ -517,7 +536,8 @@ func _line_payout(line_symbols: Array, stake: int, stake_cost: int, symbols: Dic
 		if candidate == "CHERRY" and consecutive == 3 and stake_cost > 1:
 			best = maxi(best, maxi(1, stake_cost - 1))
 			continue
-		var symbol_def: Dictionary = _copy_dict(symbols.get(candidate, {}))
+		var symbol_value: Variant = symbols.get(candidate, {})
+		var symbol_def: Dictionary = symbol_value as Dictionary if typeof(symbol_value) == TYPE_DICTIONARY else {}
 		var pay_key := "pay%d" % mini(consecutive, 6)
 		var pay := int(symbol_def.get(pay_key, symbol_def.get("triple", 0)))
 		best = maxi(best, stake * pay * multiplier)
@@ -536,9 +556,17 @@ func _pinball_multiplier(symbol: String) -> int:
 
 func _symbol_lookup(config: Dictionary) -> Dictionary:
 	var result: Dictionary = {}
-	for symbol_value in _dictionary_array(config.get("symbols", [])):
-		var symbol: Dictionary = symbol_value
-		result[str(symbol.get("id", ""))] = symbol.duplicate(true)
+	var symbols_value: Variant = config.get("symbols", [])
+	if typeof(symbols_value) != TYPE_ARRAY:
+		return result
+	# Symbol definitions are immutable game data. Keep read-only references here;
+	# cloning the full definition list in every payline/sanitizer pass dominated
+	# the synchronous cost of a visible spin and was repeated by sealed replay.
+	for symbol_value in symbols_value as Array:
+		if typeof(symbol_value) != TYPE_DICTIONARY:
+			continue
+		var symbol: Dictionary = symbol_value as Dictionary
+		result[str(symbol.get("id", ""))] = symbol
 	return result
 
 
@@ -558,7 +586,8 @@ func _grid_row_count(grid: Array) -> int:
 
 
 func _pinball_config(definition: Dictionary) -> Dictionary:
-	return _copy_dict(definition.get("slot_pinball_config", {}))
+	var config_value: Variant = definition.get("slot_pinball_config", {})
+	return config_value as Dictionary if typeof(config_value) == TYPE_DICTIONARY else {}
 
 
 func _variant_by_id(entries_value: Variant, variant_id: String) -> Dictionary:

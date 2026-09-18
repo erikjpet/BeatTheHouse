@@ -1945,6 +1945,30 @@ func _check_travel_route_foundation(library: ContentLibrary, failures: Array) ->
 			failures.append("Scouted route preview services did not match the generated destination.")
 		if int(full_preview.get("travel_locked_actions", 0)) != int(actual_environment.get("travel_locked_actions", 0)):
 			failures.append("Scouted route preview did not expose the generated travel lock.")
+		var actual_layout := _copy_dict(actual_environment.get("layout", {}))
+		for object_id_value in _copy_dict(actual_layout.get("object_rects", {})).keys():
+			var object_id := str(object_id_value)
+			if object_id.begins_with("travel:") and object_id != "travel:leave":
+				failures.append("Riverboat room layout retained the non-rendered destination hotspot %s." % object_id)
+
+		# Reproduce a late-run world-map arrival after accumulated travel history.
+		# Destination count may grow, but the room owns one map-exit hotspot and must
+		# still install atomically when its scenario presentation is sealed.
+		var late_run: RunState = RunStateScript.new()
+		late_run.start_new("TRAVEL-LATE-RIVERBOAT")
+		late_run.bankroll = 1000
+		late_run.add_item("roadside_map")
+		var late_generator: RunGenerator = RunGeneratorScript.new(library)
+		_harness_arrive(late_generator, late_run, failures, "late-run travel initial arrival")
+		for history_index in range(12):
+			late_run.environment_history.append({"id": "late_history_%02d" % history_index, "archetype_id": "bar" if history_index % 2 == 0 else "motel"})
+		var late_delta := _harness_arrive(late_generator, late_run, failures, "late-run Riverboat arrival", "delta_queen", true).to_dict()
+		if late_run.current_world_node_id() != "delta_queen":
+			failures.append("Late-run world-map travel did not install the Riverboat destination.")
+		for object_id_value in _copy_dict(_copy_dict(late_delta.get("layout", {})).get("object_rects", {})).keys():
+			var object_id := str(object_id_value)
+			if object_id.begins_with("travel:") and object_id != "travel:leave":
+				failures.append("Late-run Riverboat arrival retained the non-rendered destination hotspot %s." % object_id)
 	var beach_route := library.route("beach")
 	var beach_archetype := _archetype_by_id(library, "beach")
 	if beach_route.is_empty() or beach_archetype.is_empty():
@@ -1977,9 +2001,20 @@ func _check_travel_route_foundation(library: ContentLibrary, failures: Array) ->
 	scout_run.start_new("TRAVEL-SCOUTING")
 	if scout_run.travel_scouting_level() != 0:
 		failures.append("Fresh run should not start with route scouting.")
+	if scout_run.travel_option_bonus() != 0:
+		failures.append("Fresh run should not start with extra travel options.")
 	scout_run.add_item("roadside_map")
 	if scout_run.travel_scouting_level() <= 0:
 		failures.append("Roadside Map did not enable full route scouting previews.")
+	if scout_run.travel_option_bonus() != 1:
+		failures.append("Roadside Map did not add exactly one travel option.")
+	var restored_scout_run: RunState = RunStateScript.new()
+	restored_scout_run.from_dict(scout_run.to_dict())
+	if restored_scout_run.travel_option_bonus() != 1:
+		failures.append("Roadside Map travel-option bonus did not survive save/load restore.")
+	restored_scout_run.remove_item("roadside_map")
+	if restored_scout_run.travel_option_bonus() != 0:
+		failures.append("Selling or removing Roadside Map did not remove its travel-option bonus.")
 	var service_scout_run: RunState = RunStateScript.new()
 	service_scout_run.start_new("TRAVEL-SERVICE-SCOUT")
 	var scout_service := library.service("cashier_tip")
@@ -2125,6 +2160,23 @@ func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> vo
 		failures.append("World map exposed more than two new travel targets from the start node.")
 	if _string_array(run_a.current_environment.get("travel_hooks", [])) != travel_targets or _string_array(run_a.current_environment.get("next_archetypes", [])) != travel_targets:
 		failures.append("Current environment travel hooks should mirror capped world-map travel targets.")
+	var map_item_run: RunState = RunStateScript.new()
+	map_item_run.from_dict(run_a.to_dict())
+	var map_item_source_id := map_item_run.current_world_node_id()
+	var map_item_neighbors := WorldMapScript.neighbor_ids(map_item_run.world_map, map_item_source_id)
+	map_item_run.world_map = WorldMapScript.unlock_nodes(map_item_run.world_map, map_item_neighbors, WorldMapScript.DISCOVERY_SOURCE_EVENT)
+	var ordinary_map_targets: Array = generator.call("_world_travel_target_ids", map_item_run, map_item_run.world_map, map_item_source_id)
+	map_item_run.add_item("roadside_map")
+	var mapped_travel_targets: Array = generator.call("_world_travel_target_ids", map_item_run, map_item_run.world_map, map_item_source_id)
+	if mapped_travel_targets.size() != ordinary_map_targets.size() + 1:
+		failures.append("Roadside Map did not add one destination to the generated travel list: ordinary=%s mapped=%s." % [str(ordinary_map_targets), str(mapped_travel_targets)])
+	elif mapped_travel_targets.slice(0, ordinary_map_targets.size()) != ordinary_map_targets:
+		failures.append("Roadside Map changed the deterministic ordering of existing travel choices: ordinary=%s mapped=%s." % [str(ordinary_map_targets), str(mapped_travel_targets)])
+	var restored_map_item_run: RunState = RunStateScript.new()
+	restored_map_item_run.from_dict(map_item_run.to_dict())
+	var restored_mapped_targets: Array = generator.call("_world_travel_target_ids", restored_map_item_run, restored_map_item_run.world_map, map_item_source_id)
+	if restored_mapped_targets != mapped_travel_targets:
+		failures.append("Roadside Map travel choices changed across save/load: before=%s after=%s." % [str(mapped_travel_targets), str(restored_mapped_targets)])
 	_check_world_map_current_marker(snapshot, start_node_id, failures)
 	_check_world_map_payload_independent_read_paths(library, failures)
 	_check_closing_soon_world_travel(library, failures)

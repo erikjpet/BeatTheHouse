@@ -130,6 +130,17 @@ static func overlay_for(scenario_id: String, catalog: Dictionary = {}) -> Dictio
 	return _dict(_dict(source.get("overlays", {})).get(scenario_id.strip_edges(), {}))
 
 
+static func overlay_for_readonly(scenario_id: String, catalog: Dictionary = {}) -> Dictionary:
+	var source := _default_catalog() if catalog.is_empty() else catalog
+	if not bool(source.get("ok", false)):
+		return {}
+	var overlays_value: Variant = source.get("overlays", {})
+	if typeof(overlays_value) != TYPE_DICTIONARY:
+		return {}
+	var overlay_value: Variant = (overlays_value as Dictionary).get(scenario_id.strip_edges(), {})
+	return overlay_value as Dictionary if typeof(overlay_value) == TYPE_DICTIONARY else {}
+
+
 static func package_for_scenario(scenario_id: String, catalog: Dictionary = {}) -> Dictionary:
 	var wanted := scenario_id.strip_edges()
 	var source := _default_catalog() if catalog.is_empty() else catalog
@@ -179,6 +190,28 @@ static func apply_overlay(definition: Dictionary, catalog: Dictionary = {}) -> D
 	result["sequence_handler_pack"] = str(overlay.get("handler_pack", ""))
 	result["sequence_renderer_id"] = str(overlay.get("renderer_id", ""))
 	result["sequence_authoring"] = _dict(overlay.get("authoring", {}))
+	return result
+
+
+# Internal ContentLibrary fast path. It skips overlay_for()'s deep copy of the
+# complete package catalog, but still owns the selected definition and overlay.
+# Runtime scenario preparation can normalize nested records, so sharing those
+# records with the loaded catalog would let one preview affect later arrivals.
+static func apply_overlay_readonly(definition: Dictionary, catalog: Dictionary = {}) -> Dictionary:
+	if definition.is_empty():
+		return {}
+	var result := definition.duplicate(true)
+	var scenario_id := str(definition.get("id", definition.get("scenario_id", ""))).strip_edges()
+	var overlay := overlay_for_readonly(scenario_id, catalog)
+	if overlay.is_empty():
+		return result
+	var sequence_value: Variant = overlay.get("sequence", {})
+	result["sequence"] = (sequence_value as Dictionary).duplicate(true) if typeof(sequence_value) == TYPE_DICTIONARY else {}
+	result["sequence_package_id"] = str(overlay.get("package_id", ""))
+	result["sequence_handler_pack"] = str(overlay.get("handler_pack", ""))
+	result["sequence_renderer_id"] = str(overlay.get("renderer_id", ""))
+	var authoring_value: Variant = overlay.get("authoring", {})
+	result["sequence_authoring"] = (authoring_value as Dictionary).duplicate(true) if typeof(authoring_value) == TYPE_DICTIONARY else {}
 	return result
 
 

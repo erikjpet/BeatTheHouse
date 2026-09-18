@@ -274,8 +274,15 @@ func _probe_environment_focus(seed: String, run_index: int, environment_id: Stri
 		var object_id := str(object_data.get("object_id", ""))
 		if object_id.is_empty():
 			continue
+		var hover_call_start_usec := Time.get_ticks_usec()
+		var hover_result := bool(app.call("hover_interactable_object", object_id))
+		var hover_call_usec := Time.get_ticks_usec() - hover_call_start_usec
+		if not hover_result:
+			failures.append("Focus probe could not hover %s in seed %s." % [object_id, seed])
+			continue
 		var focus_call_start_usec := Time.get_ticks_usec()
-		var focus_result := bool(app.call("focus_interactable_object_from_view", object_data)) if app.has_method("focus_interactable_object_from_view") else bool(app.call("focus_interactable_object", object_id))
+		app.call("_on_environment_object_focused", object_id)
+		var focus_result := str(app.get("focus_target_id")) == object_id
 		var focus_call_usec := Time.get_ticks_usec() - focus_call_start_usec
 		if not focus_result:
 			failures.append("Focus probe could not focus %s in seed %s." % [object_id, seed])
@@ -306,6 +313,7 @@ func _probe_environment_focus(seed: String, run_index: int, environment_id: Stri
 			"object_type": str(object_data.get("object_type", "")),
 			"mode": "environment_focus",
 			"frames": FOCUS_PROBE_FRAMES,
+			"hover_call_ms": float(hover_call_usec) / 1000.0,
 			"focus_call_ms": float(focus_call_usec) / 1000.0,
 			"elapsed_ms": float(elapsed_usec) / 1000.0,
 			"avg_frame_ms": avg_ms,

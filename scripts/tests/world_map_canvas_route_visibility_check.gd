@@ -163,6 +163,21 @@ func _check_overlay_routes_navigation_events() -> void:
 		test_button.pressed.emit()
 		await process_frame
 		_check(click_events.size() == 1, "Travel-map button-up recovery duplicated a normally completed node click.")
+		# A camera/layout frame can hide a moving pooled button before BaseButton
+		# emits button_up. The stationary holder's release must still complete the
+		# captured location click instead of leaving travel selection inert.
+		controller.sync_node_buttons(map_snapshot)
+		click_events.clear()
+		test_button.button_down.emit()
+		test_button.visible = false
+		var canceled_release := InputEventMouseButton.new()
+		canceled_release.button_index = MOUSE_BUTTON_LEFT
+		canceled_release.pressed = false
+		canceled_release.position = Vector2(400.0, 215.0)
+		_check(controller.handle_holder_gui_input(canceled_release), "Travel-map holder did not recover a moving node whose release signal was canceled.")
+		await process_frame
+		_check(click_events.size() == 1, "Travel-map holder release recovery did not complete the canceled moving-node click exactly once.")
+		controller.sync_node_buttons(map_snapshot)
 	var before: Dictionary = canvas.current_view_snapshot().get("map_bounds", {})
 	var wheel := InputEventMouseButton.new()
 	wheel.button_index = MOUSE_BUTTON_WHEEL_UP

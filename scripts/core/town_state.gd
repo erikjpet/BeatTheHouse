@@ -419,6 +419,41 @@ func snapshot(deep_copy_seeded_definitions: bool = true) -> Dictionary:
 	}
 
 
+# Destination previews read the current town profiles and may seed one scenario
+# or character-chain rumor. Retain immutable schedules/profile indexes and fork
+# only the living-world tables that those operations can change.
+func detached_travel_preview_candidate() -> TownState:
+	var candidate := get_script().new() as TownState
+	candidate.seed_value = seed_value
+	candidate.action_index = action_index
+	candidate.turn_horizon = turn_horizon
+	candidate.weather_schedule = weather_schedule
+	candidate.calendar_cycle = calendar_cycle
+	candidate.calendar_offset_actions = calendar_offset_actions
+	candidate.happenings = happenings
+	candidate.living_world = living_world.detached_travel_preview_candidate() if living_world != null else null
+	candidate.police_sweep = police_sweep
+	candidate.progressive_meters = progressive_meters
+	candidate._conditions = _conditions
+	candidate._weather_by_action = _weather_by_action
+	candidate._weather_segment_by_action = _weather_segment_by_action
+	candidate._weather_definition_by_id = _weather_definition_by_id
+	candidate._happening_definition_by_id = _happening_definition_by_id
+	candidate._weather_id = _weather_id
+	candidate._day_type_id = _day_type_id
+	candidate._active_happening_ids = _active_happening_ids
+	candidate._active_happening_lookup = _active_happening_lookup
+	candidate._active_town_flags = _active_town_flags
+	candidate._scenario_weight_by_tag = _scenario_weight_by_tag
+	candidate._scenario_weight_by_archetype = _scenario_weight_by_archetype
+	candidate._scenario_weight_by_id = _scenario_weight_by_id
+	candidate._travel_profile = _travel_profile
+	candidate._music_modifier_profile = _music_modifier_profile
+	candidate._economic_modifier_profile = _economic_modifier_profile
+	candidate._condition_rumor_signature = _condition_rumor_signature
+	return candidate
+
+
 func public_snapshot() -> Dictionary:
 	var visible_happenings := active_happenings()
 	var visible_flags: Array = _active_town_flags.keys()

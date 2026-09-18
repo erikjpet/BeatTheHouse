@@ -16,6 +16,10 @@ var _last_world_environment_timing_usec: Dictionary = {}
 var _last_preview_environment_timing_usec: Dictionary = {}
 var _world_environment_build_stages_usec: Dictionary = {}
 var _world_environment_install_stages_usec: Dictionary = {}
+var _world_scenario_prime_stages_usec: Dictionary = {}
+var _world_scenario_select_stages_usec: Dictionary = {}
+var _game_module_script_cache: Dictionary = {}
+var _caller_owns_result_rollback := false
 
 
 func set_world_environment_timing_enabled(enabled: bool) -> void:
@@ -32,6 +36,11 @@ func preview_environment_timing_snapshot() -> Dictionary:
 	return _last_preview_environment_timing_usec.duplicate(true)
 
 
+func cache_game_module_script(module_path: String, module_script: Script) -> void:
+	if not module_path.is_empty() and module_script != null:
+		_game_module_script_cache[module_path] = module_script
+
+
 # Stores the content library used for generation.
 func _init(p_library: ContentLibrary) -> void:
 	library = p_library
@@ -43,7 +52,7 @@ func _install_environment(run_state: RunState, environment_data: Dictionary) -> 
 
 # Travel callers already hold the exact atomic rollback snapshot. Reuse it so
 # large visited-room machines are not copied a second time at every transition.
-func _install_environment_with_rollback(run_state: RunState, environment_data: Dictionary, rollback: Dictionary) -> Dictionary:
+func _install_environment_with_rollback(run_state: RunState, environment_data: Dictionary, rollback: Dictionary, restore_on_failure: bool = true) -> Dictionary:
 	var perf_stage_started_usec := Time.get_ticks_usec() if _world_environment_timing_enabled else 0
 	_world_environment_install_stages_usec = {}
 	var trusted := _trusted_scenario_install_data(run_state, environment_data)
@@ -51,7 +60,8 @@ func _install_environment_with_rollback(run_state: RunState, environment_data: D
 		_world_environment_install_stages_usec["trusted_data"] = Time.get_ticks_usec() - perf_stage_started_usec
 		perf_stage_started_usec = Time.get_ticks_usec()
 	if not bool(trusted.get("ok", false)):
-		_restore_travel_snapshot(run_state, rollback)
+		if restore_on_failure:
+			_restore_travel_snapshot(run_state, rollback)
 		return {"ok": false, "applied": false, "errors": _copy_array(trusted.get("errors", []))}
 	var trusted_definition_value: Variant = trusted.get("scenario_definition", {})
 	if typeof(trusted_definition_value) == TYPE_DICTIONARY:
@@ -74,7 +84,8 @@ func _install_environment_with_rollback(run_state: RunState, environment_data: D
 	if _world_environment_timing_enabled:
 		_world_environment_install_stages_usec["scenario_finalize"] = Time.get_ticks_usec() - perf_stage_started_usec
 	if not bool(finalized.get("ok", false)):
-		_restore_travel_snapshot(run_state, rollback)
+		if restore_on_failure:
+			_restore_travel_snapshot(run_state, rollback)
 		return {"ok": false, "applied": true, "errors": _copy_array(finalized.get("errors", []))}
 	return {"ok": true, "applied": true, "inactive": bool(finalized.get("inactive", false)), "errors": []}
 
@@ -122,31 +133,41 @@ func _trusted_scenario_install_data(run_state: RunState, environment_data: Dicti
 # Production travel facade. Legacy generation still returns EnvironmentInstance,
 # while this closed result lets callers distinguish a rejected departure from an
 # arrival at the unchanged source room.
+func travel_environment_result_with_caller_rollback(run_state: RunState, target_archetype_id: String, target_prevalidated: bool = false) -> Dictionary:
+	var previous_owner := _caller_owns_result_rollback
+	_caller_owns_result_rollback = true
+	var result := travel_environment_result(run_state, target_archetype_id, target_prevalidated)
+	_caller_owns_result_rollback = previous_owner
+	return result
+
+
 func travel_environment_result(run_state: RunState, target_archetype_id: String, target_prevalidated: bool = false) -> Dictionary:
 	if run_state == null:
 		return {"ok": false, "errors": ["Travel requires an active run."], "environment": {}}
+	var caller_owns_rollback := _caller_owns_result_rollback
 	var source_id := run_state.current_world_node_id()
 	var target_id := target_archetype_id.strip_edges()
 	var preflight := run_state.scenario_preflight_environment_change(source_id, target_id, "world")
 	if not bool(preflight.get("ok", false)):
 		return {"ok": false, "errors": _copy_array(preflight.get("errors", [])), "environment": run_state.current_environment.duplicate(true)}
-	var rollback := _travel_rollback_snapshot(run_state)
+	var rollback := {} if caller_owns_rollback else _travel_rollback_snapshot(run_state)
 	_last_environment_install_errors = []
 	# The facade already owns the exact rollback snapshot and has accepted this
 	# source/destination scenario boundary. Pass both facts into the private world
 	# path instead of copying the entire run and repeating the same preflight.
 	var environment: EnvironmentInstance
 	if run_state.has_world_map() or run_state.current_environment.is_empty():
-		environment = _next_world_environment(run_state, target_id, run_state.create_rng(), target_prevalidated, rollback, true)
+		environment = _next_world_environment(run_state, target_id, run_state.create_rng(), target_prevalidated, rollback, true, false)
 	else:
 		environment = next_environment(run_state, target_id, target_prevalidated)
 	var arrived_id := run_state.current_world_node_id()
 	if target_id.is_empty() or arrived_id != target_id:
-		_restore_travel_snapshot(run_state, rollback)
+		if not caller_owns_rollback:
+			_restore_travel_snapshot(run_state, rollback)
 		var errors := _last_environment_install_errors.duplicate(true)
 		if errors.is_empty():
 			errors = ["Travel destination was not installed."]
-		return {"ok": false, "errors": errors, "environment": _copy_dict(rollback.get("environment", {}))}
+		return {"ok": false, "errors": errors, "environment": _copy_dict(rollback.get("environment", run_state.current_environment))}
 	return {
 		"ok": true,
 		"errors": [],
@@ -160,17 +181,27 @@ func travel_environment_result(run_state: RunState, target_archetype_id: String,
 	}
 
 
+func enter_grand_casino_room_result_with_caller_rollback(run_state: RunState, target_archetype_id: String) -> Dictionary:
+	var previous_owner := _caller_owns_result_rollback
+	_caller_owns_result_rollback = true
+	var result := enter_grand_casino_room_result(run_state, target_archetype_id)
+	_caller_owns_result_rollback = previous_owner
+	return result
+
+
 func enter_grand_casino_room_result(run_state: RunState, target_archetype_id: String) -> Dictionary:
 	if run_state == null:
 		return {"ok": false, "errors": ["Casino room travel requires an active run."]}
+	var caller_owns_rollback := _caller_owns_result_rollback
 	var source_id := str(run_state.current_environment.get("archetype_id", "")).strip_edges()
 	var target_id := target_archetype_id.strip_edges()
 	var preflight := run_state.scenario_preflight_environment_change(source_id, target_id, "grand_room") if source_id != target_id else {"ok": true, "inactive": true, "errors": []}
 	if not bool(preflight.get("ok", false)):
 		return {"ok": false, "errors": _copy_array(preflight.get("errors", []))}
-	var rollback := _travel_rollback_snapshot(run_state)
-	if not _enter_grand_casino_room(run_state, target_id, rollback, true):
-		_restore_travel_snapshot(run_state, rollback)
+	var rollback := {} if caller_owns_rollback else _travel_rollback_snapshot(run_state)
+	if not _enter_grand_casino_room(run_state, target_id, rollback, true, false):
+		if not caller_owns_rollback:
+			_restore_travel_snapshot(run_state, rollback)
 		return {"ok": false, "errors": ["The interior casino room could not be installed."]}
 	return {"ok": true, "errors": [], "source_id": source_id, "target_id": target_id, "environment": run_state.current_environment.duplicate(true), "scenario_finalized": true}
 
@@ -237,19 +268,27 @@ func preview_environment(run_state: RunState, target_archetype_id: String = "", 
 	if _world_environment_timing_enabled:
 		perf_stages["stored_lookup"] = Time.get_ticks_usec() - perf_stage_started_usec
 		perf_stage_started_usec = Time.get_ticks_usec()
-	# Exact scouting only consumes the destination's public offers/hooks. Cloning
-	# the full run copied every portable ticket and every visited room for each
-	# route card. Build the deterministic preview from the same logical run fields
-	# with accumulated player-owned payloads and stored room bodies omitted.
-	var preview_state := RunState.new()
-	var preview_data := run_state.to_travel_preview_snapshot()
-	if _world_environment_timing_enabled:
-		perf_stages["snapshot"] = Time.get_ticks_usec() - perf_stage_started_usec
-		perf_stage_started_usec = Time.get_ticks_usec()
-	preview_state.from_dict(preview_data)
-	if _world_environment_timing_enabled:
-		perf_stages["restore"] = Time.get_ticks_usec() - perf_stage_started_usec
-		perf_stage_started_usec = Time.get_ticks_usec()
+	# Exact scouting reads most run state and mutates only preview-local scenario,
+	# rumor, and recent-selection indexes. Fork that narrow graph directly instead
+	# of round-tripping the run through its persistence codec on the UI thread.
+	# Home initialization intentionally keeps the conservative full candidate.
+	var target_archetype := _archetype_by_id(target_archetype_id.strip_edges())
+	var preview_state: RunState
+	if run_state.has_world_map() and str(target_archetype.get("kind", "")) != "home":
+		preview_state = run_state.detached_travel_preview_candidate()
+		if _world_environment_timing_enabled:
+			perf_stages["candidate"] = Time.get_ticks_usec() - perf_stage_started_usec
+			perf_stage_started_usec = Time.get_ticks_usec()
+	else:
+		preview_state = RunState.new()
+		var preview_data := run_state.to_travel_preview_snapshot()
+		if _world_environment_timing_enabled:
+			perf_stages["snapshot"] = Time.get_ticks_usec() - perf_stage_started_usec
+			perf_stage_started_usec = Time.get_ticks_usec()
+		preview_state.from_dict(preview_data)
+		if _world_environment_timing_enabled:
+			perf_stages["restore"] = Time.get_ticks_usec() - perf_stage_started_usec
+			perf_stage_started_usec = Time.get_ticks_usec()
 	var environment_data: Dictionary
 	if preview_state.has_world_map():
 		environment_data = _preview_world_environment_data(preview_state, target_archetype_id, target_prevalidated)
@@ -288,9 +327,12 @@ func _preview_world_environment_data(run_state: RunState, target_archetype_id: S
 	if _world_environment_timing_enabled:
 		_world_environment_build_stages_usec["target_lookup"] = Time.get_ticks_usec() - perf_stage_started_usec
 		perf_stage_started_usec = Time.get_ticks_usec()
-	run_state.configure_town_world(map_data)
+	# preview_environment() restores a travel-preview snapshot before reaching
+	# this path. RunState.from_dict() already configures the restored TownState
+	# against this exact map, so rebuilding its node/edge indexes and sweep graph
+	# here was duplicate work on the player's first destination click.
 	if _world_environment_timing_enabled:
-		_world_environment_build_stages_usec["town_configure"] = Time.get_ticks_usec() - perf_stage_started_usec
+		_world_environment_build_stages_usec["town_already_configured"] = Time.get_ticks_usec() - perf_stage_started_usec
 		perf_stage_started_usec = Time.get_ticks_usec()
 	if run_state.seeded_scenario_for_node(target_id).is_empty():
 		var scenario_seed_rng := run_state.create_rng("town_scenario_seed:%s" % target_id)
@@ -364,7 +406,7 @@ func enter_grand_casino_room(run_state: RunState, target_archetype_id: String) -
 	return _enter_grand_casino_room(run_state, target_archetype_id)
 
 
-func _enter_grand_casino_room(run_state: RunState, target_archetype_id: String, prepared_rollback: Dictionary = {}, source_preflight_complete: bool = false) -> bool:
+func _enter_grand_casino_room(run_state: RunState, target_archetype_id: String, prepared_rollback: Dictionary = {}, source_preflight_complete: bool = false, restore_on_failure: bool = true) -> bool:
 	if run_state == null or not run_state.is_grand_casino_environment(run_state.current_environment):
 		return false
 	var target_id := target_archetype_id.strip_edges()
@@ -377,17 +419,19 @@ func _enter_grand_casino_room(run_state: RunState, target_archetype_id: String, 
 	var source_room_id := str(run_state.current_environment.get("archetype_id", "")).strip_edges()
 	if source_room_id != target_id and not source_preflight_complete and not bool(run_state.scenario_preflight_environment_change(source_room_id, target_id, "grand_room").get("ok", false)):
 		return false
-	var rollback := prepared_rollback if not prepared_rollback.is_empty() else _travel_rollback_snapshot(run_state)
+	var rollback := prepared_rollback if not prepared_rollback.is_empty() else (_travel_rollback_snapshot(run_state) if restore_on_failure else {})
 	if source_room_id != target_id:
 		if not bool(_commit_travel_departure(run_state, source_room_id, target_id, "grand_room").get("ok", false)):
-			_restore_travel_snapshot(run_state, rollback)
+			if restore_on_failure:
+				_restore_travel_snapshot(run_state, rollback)
 			return false
 	run_state.store_grand_casino_room_environment(run_state.current_environment)
 	var environment_data := run_state.grand_casino_room_environment(target_id)
 	if environment_data.is_empty():
 		var archetype := _archetype_by_id(target_id)
 		if archetype.is_empty():
-			_restore_travel_snapshot(run_state, rollback)
+			if restore_on_failure:
+				_restore_travel_snapshot(run_state, rollback)
 			return false
 		var rng := run_state.create_rng()
 		var depth := maxi(0, int(run_state.current_environment.get("depth", run_state.environment_travel_count())))
@@ -405,9 +449,10 @@ func _enter_grand_casino_room(run_state: RunState, target_archetype_id: String, 
 	# rooms so itinerary rotation happens at the same revisit boundary as town.
 	CrewRecruitmentModelScript.apply_to_environment(run_state, environment_data)
 	environment_data["layout"] = EnvironmentInstance.ensure_generated_layout(environment_data, library)
-	var installed := _install_environment_with_rollback(run_state, environment_data, rollback)
+	var installed := _install_environment_with_rollback(run_state, environment_data, rollback, false)
 	if not bool(installed.get("ok", false)):
-		_restore_travel_snapshot(run_state, rollback)
+		if restore_on_failure:
+			_restore_travel_snapshot(run_state, rollback)
 		return false
 	if source_room_id != target_id:
 		run_state.scenario_publish_travel("travel_arrived", source_room_id, target_id, "grand_room")
@@ -554,17 +599,24 @@ func world_route_for_target(run_state: RunState, target_archetype_id: String) ->
 	return map.route_for_target(run_state.world_map, run_state.current_world_node_id(), target_archetype_id)
 
 
+func world_route_for_target_prepared(run_state: RunState, target_archetype_id: String, path_query: Dictionary) -> Dictionary:
+	if run_state == null or not run_state.has_world_map():
+		return library.route(target_archetype_id) if library != null else {}
+	var map := WorldMap.new(library)
+	return map.route_for_target_prepared(run_state.world_map, run_state.current_world_node_id(), target_archetype_id, path_query)
+
+
 func world_map_snapshot(run_state: RunState, selected_id: String = "") -> Dictionary:
 	if run_state == null:
 		return {}
 	return WorldMap.snapshot(run_state.world_map, selected_id)
 
 
-func _next_world_environment(run_state: RunState, target_archetype_id: String, rng: RngStream, target_prevalidated: bool = false, prepared_rollback: Dictionary = {}, source_preflight_complete: bool = false) -> EnvironmentInstance:
+func _next_world_environment(run_state: RunState, target_archetype_id: String, rng: RngStream, target_prevalidated: bool = false, prepared_rollback: Dictionary = {}, source_preflight_complete: bool = false, restore_on_failure: bool = true) -> EnvironmentInstance:
 	var perf_total_started_usec := Time.get_ticks_usec() if _world_environment_timing_enabled else 0
 	var perf_stage_started_usec := perf_total_started_usec
 	var perf_stages: Dictionary = {}
-	var rollback := prepared_rollback if not prepared_rollback.is_empty() else _travel_rollback_snapshot(run_state)
+	var rollback := prepared_rollback if not prepared_rollback.is_empty() else (_travel_rollback_snapshot(run_state) if restore_on_failure else {})
 	var had_source := not run_state.current_environment.is_empty()
 	var map := WorldMap.new(library)
 	var initialized_tutorial_map := false
@@ -574,39 +626,45 @@ func _next_world_environment(run_state: RunState, target_archetype_id: String, r
 		initialized_tutorial_map = run_state.is_tutorial_run()
 	var map_data := run_state.world_map
 	run_state.configure_town_world(map_data)
+	if _world_environment_timing_enabled:
+		perf_stages["map_configure"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stage_started_usec = Time.get_ticks_usec()
 	_prime_town_scenarios(run_state, map_data)
 	if _world_environment_timing_enabled:
-		perf_stages["map_setup_prime"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stages["scenario_prime"] = Time.get_ticks_usec() - perf_stage_started_usec
+		perf_stages["scenario_prime_nodes"] = _world_scenario_prime_stages_usec.duplicate(true)
 		perf_stage_started_usec = Time.get_ticks_usec()
 	var target_id := target_archetype_id.strip_edges()
 	var current_node_id := run_state.current_world_node_id()
 	if run_state.current_environment.is_empty() and target_id.is_empty():
 		target_id = WorldMap.current_node_id(map_data)
 	elif not target_id.is_empty() and not target_prevalidated and not _world_target_is_available(run_state, map_data, current_node_id, target_id):
-		if had_source: _restore_travel_snapshot(run_state, rollback)
+		if had_source and restore_on_failure: _restore_travel_snapshot(run_state, rollback)
 		return EnvironmentInstance.from_dict(run_state.current_environment)
 	elif target_id.is_empty():
 		target_id = _fallback_world_neighbor(run_state, map_data, current_node_id)
 	if target_id.is_empty():
-		if had_source: _restore_travel_snapshot(run_state, rollback)
+		if had_source and restore_on_failure: _restore_travel_snapshot(run_state, rollback)
 		return EnvironmentInstance.from_dict(run_state.current_environment) if not run_state.current_environment.is_empty() else _legacy_next_environment(run_state, target_archetype_id, rng)
 	var node := WorldMap.node_by_id(map_data, target_id)
 	if node.is_empty():
 		_last_environment_install_errors = ["Travel destination node %s is missing from the active map." % target_id]
-		if had_source: _restore_travel_snapshot(run_state, rollback)
+		if had_source and restore_on_failure: _restore_travel_snapshot(run_state, rollback)
 		return EnvironmentInstance.from_dict(run_state.current_environment) if not run_state.current_environment.is_empty() else _legacy_next_environment(run_state, target_archetype_id, rng)
 	if not run_state.current_environment.is_empty() and not source_preflight_complete:
 		var arrival_preflight := run_state.scenario_preflight_environment_change(current_node_id, target_id, "world")
 		if not bool(arrival_preflight.get("ok", false)):
 			_last_environment_install_errors = _copy_array(arrival_preflight.get("errors", []))
-			_restore_travel_snapshot(run_state, rollback)
+			if restore_on_failure:
+				_restore_travel_snapshot(run_state, rollback)
 			return EnvironmentInstance.from_dict(run_state.current_environment)
 	if run_state.has_world_map() and not run_state.current_environment.is_empty():
 		if current_node_id != target_id:
 			var departure := _commit_travel_departure(run_state, current_node_id, target_id, "world")
 			if not bool(departure.get("ok", false)):
 				_last_environment_install_errors = _copy_array(departure.get("errors", []))
-				_restore_travel_snapshot(run_state, rollback)
+				if restore_on_failure:
+					_restore_travel_snapshot(run_state, rollback)
 				return EnvironmentInstance.from_dict(run_state.current_environment)
 	if _world_environment_timing_enabled:
 		perf_stages["route_departure"] = Time.get_ticks_usec() - perf_stage_started_usec
@@ -615,10 +673,21 @@ func _next_world_environment(run_state: RunState, target_archetype_id: String, r
 	if _world_environment_timing_enabled:
 		perf_stages["environment_build"] = Time.get_ticks_usec() - perf_stage_started_usec
 		perf_stage_started_usec = Time.get_ticks_usec()
-	var installed := _install_environment_with_rollback(run_state, environment_data, rollback)
+	var installed := _install_environment_with_rollback(run_state, environment_data, rollback, false)
 	if not bool(installed.get("ok", false)):
 		_last_environment_install_errors = _copy_array(installed.get("errors", []))
-		_restore_travel_snapshot(run_state, rollback)
+		if _world_environment_timing_enabled:
+			perf_stages["environment_install"] = Time.get_ticks_usec() - perf_stage_started_usec
+			_last_world_environment_timing_usec = {
+				"target_id": target_id,
+				"failed": true,
+				"stages_usec": perf_stages,
+				"build_stages_usec": _world_environment_build_stages_usec.duplicate(true),
+				"install_stages_usec": _world_environment_install_stages_usec.duplicate(true),
+				"total_usec": Time.get_ticks_usec() - perf_total_started_usec,
+			}
+		if restore_on_failure:
+			_restore_travel_snapshot(run_state, rollback)
 		return EnvironmentInstance.from_dict(run_state.current_environment)
 	if _world_environment_timing_enabled:
 		perf_stages["environment_install"] = Time.get_ticks_usec() - perf_stage_started_usec
@@ -739,7 +808,7 @@ func _legacy_next_environment(run_state: RunState, target_archetype_id: String, 
 			_restore_travel_snapshot(run_state, rollback)
 			return EnvironmentInstance.from_dict(run_state.current_environment)
 	run_state.save_rng(rng)
-	var installed := _install_environment_with_rollback(run_state, environment_data, rollback)
+	var installed := _install_environment_with_rollback(run_state, environment_data, rollback, false)
 	if not bool(installed.get("ok", false)):
 		_last_environment_install_errors = _copy_array(installed.get("errors", []))
 		_restore_travel_snapshot(run_state, rollback)
@@ -764,6 +833,7 @@ func _world_environment_data_for_node(run_state: RunState, map_data: Dictionary,
 		_apply_scenario_sequence_travel_targets(restored, restored_definition)
 		ScenarioEngineScript.ensure_sequence_state(restored, restored_definition)
 		restored["layout"] = EnvironmentInstance.ensure_generated_layout(restored, library)
+		_align_world_map_scenario_layout_baseline(restored)
 		return restored
 	var depth := run_state.environment_travel_count()
 	if not run_state.current_environment.is_empty():
@@ -801,6 +871,7 @@ func _world_environment_data_for_node(run_state: RunState, map_data: Dictionary,
 	_apply_world_travel_targets(environment_data, run_state, map_data, node_id)
 	_apply_scenario_sequence_travel_targets(environment_data, scenario)
 	environment_data["layout"] = EnvironmentInstance.ensure_generated_layout(environment_data, library)
+	_align_world_map_scenario_layout_baseline(environment_data)
 	if _world_environment_timing_enabled:
 		_world_environment_build_stages_usec["targets_and_layout"] = Time.get_ticks_usec() - perf_stage_started_usec
 	return environment_data
@@ -851,6 +922,31 @@ func _grand_casino_local_target_ids(environment_data: Dictionary) -> Array:
 	return result
 
 
+# Sequence initialization captures the authored room before world-map travel
+# replaces its static per-destination doors with the single map exit. Keep that
+# immutable baseline for games/services/events, but reconcile its travel subset
+# to the final world-room layout so stale route hotspots cannot reject arrival.
+func _align_world_map_scenario_layout_baseline(environment_data: Dictionary) -> void:
+	if not bool(environment_data.get("world_map_travel", false)) or not environment_data.has("scenario_sequence_base_layout_object_rects"):
+		return
+	var baseline_rects := _copy_dict(environment_data.get("scenario_sequence_base_layout_object_rects", {}))
+	var final_rects := _copy_dict(_copy_dict(environment_data.get("layout", {})).get("object_rects", {}))
+	var allowed_travel_ids := {"travel:leave": true}
+	for target_id_value in _grand_casino_local_target_ids(environment_data):
+		allowed_travel_ids["travel:%s" % str(target_id_value)] = true
+	for object_id_value in baseline_rects.keys():
+		var object_id := str(object_id_value)
+		if object_id.begins_with("travel:") and not allowed_travel_ids.has(object_id):
+			baseline_rects.erase(object_id_value)
+	for object_id_value in allowed_travel_ids.keys():
+		var object_id := str(object_id_value)
+		if final_rects.has(object_id):
+			baseline_rects[object_id] = _copy_dict(final_rects.get(object_id, {}))
+		else:
+			baseline_rects.erase(object_id)
+	environment_data["scenario_sequence_base_layout_object_rects"] = baseline_rects
+
+
 func _fallback_world_neighbor(run_state: RunState, map_data: Dictionary, source_id: String) -> String:
 	var travel_targets := _available_world_travel_target_ids(run_state, map_data, source_id)
 	if not travel_targets.is_empty():
@@ -859,11 +955,13 @@ func _fallback_world_neighbor(run_state: RunState, map_data: Dictionary, source_
 
 
 func _world_travel_target_ids(run_state: RunState, map_data: Dictionary, source_id: String) -> Array:
-	return WorldMap.travel_target_ids(map_data, source_id, WorldMap.TRAVEL_NEW_TARGET_LIMIT, WorldMap.TRAVEL_TOTAL_TARGET_LIMIT, _enabled_world_route_ids(run_state, map_data, source_id))
+	var option_bonus := run_state.travel_option_bonus()
+	return WorldMap.travel_target_ids(map_data, source_id, WorldMap.TRAVEL_NEW_TARGET_LIMIT + option_bonus, WorldMap.TRAVEL_TOTAL_TARGET_LIMIT + option_bonus, _enabled_world_route_ids(run_state, map_data, source_id))
 
 
 func _available_world_travel_target_ids(run_state: RunState, map_data: Dictionary, source_id: String) -> Array:
-	return WorldMap.travel_target_ids(map_data, source_id, WorldMap.TRAVEL_NEW_TARGET_LIMIT, WorldMap.TRAVEL_TOTAL_TARGET_LIMIT, _available_world_route_ids(run_state, map_data, source_id))
+	var option_bonus := run_state.travel_option_bonus()
+	return WorldMap.travel_target_ids(map_data, source_id, WorldMap.TRAVEL_NEW_TARGET_LIMIT + option_bonus, WorldMap.TRAVEL_TOTAL_TARGET_LIMIT + option_bonus, _available_world_route_ids(run_state, map_data, source_id))
 
 
 func _world_target_is_available(run_state: RunState, map_data: Dictionary, source_id: String, target_id: String) -> bool:
@@ -1016,6 +1114,8 @@ func _archetype_by_id(id: String) -> Dictionary:
 
 
 func _prime_town_scenarios(run_state: RunState, map_data: Dictionary) -> void:
+	_world_scenario_prime_stages_usec = {}
+	_world_scenario_select_stages_usec = {}
 	if run_state == null or library == null:
 		return
 	var node_ids: Array = []
@@ -1033,16 +1133,32 @@ func _prime_town_scenarios(run_state: RunState, map_data: Dictionary) -> void:
 		var node_id := str(node_id_value)
 		if not run_state.seeded_scenario_for_node(node_id).is_empty():
 			continue
+		var perf_node_started_usec := Time.get_ticks_usec() if _world_environment_timing_enabled else 0
 		var scenario_rng := run_state.create_rng("town_scenario_seed:%s" % node_id)
+		var perf_rng_finished_usec := Time.get_ticks_usec() if _world_environment_timing_enabled else 0
 		var scenario := _select_scenario(run_state, node_id, scenario_rng, false)
+		var perf_select_finished_usec := Time.get_ticks_usec() if _world_environment_timing_enabled else 0
 		if not scenario.is_empty():
 			run_state.seed_scenario_for_node(node_id, scenario)
+		if _world_environment_timing_enabled:
+			_world_scenario_prime_stages_usec[node_id] = {
+				"rng": perf_rng_finished_usec - perf_node_started_usec,
+				"select": perf_select_finished_usec - perf_rng_finished_usec,
+				"seed": Time.get_ticks_usec() - perf_select_finished_usec,
+				"select_stages": _world_scenario_select_stages_usec.get(node_id, {}),
+			}
 
 
 func _select_scenario(run_state: RunState, archetype_id: String, rng: RngStream, validate_runtime: bool = true) -> Dictionary:
+	var perf_started_usec := Time.get_ticks_usec() if _world_environment_timing_enabled else 0
+	var perf_stage_usec := perf_started_usec
+	var perf_stages: Dictionary = {}
 	if run_state == null or library == null or rng == null:
 		return {}
 	var seeded_definition := run_state._seeded_scenario_definition_for_node_readonly(archetype_id)
+	if _world_environment_timing_enabled:
+		perf_stages["seeded_lookup"] = Time.get_ticks_usec() - perf_stage_usec
+		perf_stage_usec = Time.get_ticks_usec()
 	if not seeded_definition.is_empty():
 		if bool(seeded_definition.get(ScenarioEngineScript.SEQUENCE_SUPPRESSION_KEY, false)):
 			return _apply_scenario_pin_suppression(run_state, archetype_id, seeded_definition)
@@ -1054,10 +1170,18 @@ func _select_scenario(run_state: RunState, archetype_id: String, rng: RngStream,
 	# Tutorial overrides author the complete room. Unless the lesson explicitly
 	# pins a scenario, skip the sequence pool before any runtime validation work.
 	var tutorial_overrides := _copy_dict(modifiers.get("tutorial_environment_overrides", {}))
+	if _world_environment_timing_enabled:
+		perf_stages["modifiers"] = Time.get_ticks_usec() - perf_stage_usec
+		perf_stage_usec = Time.get_ticks_usec()
 	if tutorial_overrides.has(archetype_id) and pinned_id.is_empty():
 		return {}
 	var pool := library._scenarios_for_archetype_readonly(archetype_id)
+	if _world_environment_timing_enabled:
+		perf_stages["pool"] = Time.get_ticks_usec() - perf_stage_usec
+		perf_stage_usec = Time.get_ticks_usec()
 	if pool.is_empty():
+		if _world_environment_timing_enabled:
+			_world_scenario_select_stages_usec[archetype_id] = perf_stages
 		return {}
 	var seeded := run_state.seeded_scenario_for_node(archetype_id)
 	var seeded_id := str(seeded.get("id", "")).strip_edges()
@@ -1100,6 +1224,9 @@ func _select_scenario(run_state: RunState, archetype_id: String, rng: RngStream,
 	if candidates.is_empty():
 		return {}
 	var recent := run_state.recent_scenario_ids(archetype_id)
+	if _world_environment_timing_enabled:
+		perf_stages["candidates"] = Time.get_ticks_usec() - perf_stage_usec
+		perf_stage_usec = Time.get_ticks_usec()
 	var weighted: Array = []
 	var total_weight := 0
 	for definition_value in candidates:
@@ -1123,6 +1250,9 @@ func _select_scenario(run_state: RunState, archetype_id: String, rng: RngStream,
 		weighted.append({"definition": definition, "ceiling": total_weight})
 	if weighted.is_empty() or total_weight <= 0:
 		return {}
+	if _world_environment_timing_enabled:
+		perf_stages["weights"] = Time.get_ticks_usec() - perf_stage_usec
+		perf_stage_usec = Time.get_ticks_usec()
 	var roll := rng.randi_range(1, total_weight)
 	var selected: Dictionary = weighted[weighted.size() - 1].get("definition", {})
 	for entry_value in weighted:
@@ -1132,8 +1262,18 @@ func _select_scenario(run_state: RunState, archetype_id: String, rng: RngStream,
 			break
 	var selected_id := str(selected.get("id", ""))
 	run_state.remember_scenario_selection(archetype_id, selected_id)
+	if _world_environment_timing_enabled:
+		perf_stages["choose"] = Time.get_ticks_usec() - perf_stage_usec
+		perf_stage_usec = Time.get_ticks_usec()
 	var resolved_selected := library._runtime_validated_scenario_definition(selected) if validate_runtime else library._runtime_scenario_definition_unvalidated(selected)
-	return resolved_selected.duplicate(true)
+	if _world_environment_timing_enabled:
+		perf_stages["resolve"] = Time.get_ticks_usec() - perf_stage_usec
+		perf_stages["total"] = Time.get_ticks_usec() - perf_started_usec
+		_world_scenario_select_stages_usec[archetype_id] = perf_stages
+	# Both resolution paths return an owned or immutable canonical definition.
+	# Generation only reads it, and town seeding owns its outer record, so another
+	# recursive copy here doubled the largest first-travel scenario payloads.
+	return resolved_selected
 
 
 func _apply_scenario_pin_suppression(run_state: RunState, archetype_id: String, definition: Dictionary) -> Dictionary:
@@ -1362,7 +1502,11 @@ func _create_game_module(definition: Dictionary) -> GameModule:
 	var module_path := str(definition.get("module_path", ""))
 	if module_path.is_empty() or module_path.ends_with("_ui.gd") or module_path.begins_with("res://data/runtime/"):
 		return null
-	var module_script: Script = load(module_path)
+	var module_script: Script = _game_module_script_cache.get(module_path) as Script
+	if module_script == null:
+		module_script = load(module_path)
+		if module_script != null:
+			_game_module_script_cache[module_path] = module_script
 	if module_script == null:
 		return null
 	var module_instance = module_script.new()

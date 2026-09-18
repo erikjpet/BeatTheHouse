@@ -705,7 +705,16 @@ func _table_game_compatibility_simulation(action_id: String, stake: int, run_sta
 	# detached table and RNG state and must remain inside the resolve-time budget.
 	if run_state == null or rng == null:
 		return _empty_baccarat_result(action_id, stake, environment, "Baccarat simulation requires serialized run and RNG inputs.")
-	var simulation_environment := environment.duplicate(true)
+	# Detach only Baccarat's persisted table. A compatibility resolve never
+	# mutates the room layout, objects, or other game states, so deep-copying the
+	# complete environment made every deal scale with unrelated room content.
+	var simulation_environment := environment.duplicate(false)
+	var source_game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	var simulation_game_states := source_game_states.duplicate(false)
+	var table_key := get_id() if source_game_states.has(get_id()) else "baccarat" if source_game_states.has("baccarat") else ""
+	if not table_key.is_empty() and typeof(source_game_states.get(table_key, {})) == TYPE_DICTIONARY:
+		simulation_game_states[table_key] = _detached_table_for_simulation(source_game_states.get(table_key, {}) as Dictionary)
+	simulation_environment["game_states"] = simulation_game_states
 	var simulation_rng := RngStream.new()
 	simulation_rng.restore(rng.snapshot())
 	var run_rng_seed := run_state.rng_seed
@@ -721,6 +730,25 @@ func _table_game_compatibility_simulation(action_id: String, stake: int, run_sta
 	result["table_game_compatibility_simulation"] = true
 	result["table_game_authoritative"] = false
 	return result
+
+
+func _detached_table_for_simulation(source: Dictionary) -> Dictionary:
+	# The shoe can contain hundreds of immutable card dictionaries. Detach its
+	# array so draws cannot alter the live table, while sharing card values until
+	# _draw_one copies the handful actually dealt. Other histories only add/remove
+	# entries; patrons and edge-sort state are the nested values mutated in place.
+	var table := source.duplicate(false)
+	for key in ["shoe", "discard", "burn_cards", "hand_history", "shoe_history"]:
+		var value: Variant = source.get(key, [])
+		if typeof(value) == TYPE_ARRAY:
+			table[key] = (value as Array).duplicate(false)
+	for key in ["patrons", "edge_sort_challenge", "edge_sort_edge", "dealer_profile"]:
+		var value: Variant = source.get(key, null)
+		if typeof(value) == TYPE_ARRAY:
+			table[key] = (value as Array).duplicate(true)
+		elif typeof(value) == TYPE_DICTIONARY:
+			table[key] = (value as Dictionary).duplicate(true)
+	return table
 
 
 func _table_game_resolve_proposal(action_id: String, stake: int, run_snapshot: Dictionary, rng_snapshot: Dictionary, ui_state: Dictionary = {}) -> Dictionary:

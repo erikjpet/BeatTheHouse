@@ -2762,10 +2762,14 @@ func _draw_seats(surface, state: Dictionary) -> void:
 			"holding_card": active and not str(state.get("phase", "idle")) in ["idle", "showdown"],
 			"silhouette": str(model.get("silhouette", "coat")),
 		}, layout.get("character_foot", Vector2.ZERO), clampf(float(model.get("scale", 1.0)) * 0.72 * portrait_scale, 0.66, 0.84), surface.surface_flicker() + animation_offset)
-		var cards := _draw_array_view(seat.get("cards", []))
-		for card_index in range(mini(2, cards.size())):
-			if not _card_landing_waiting(surface, str(seat.get("member_id", "")), card_index):
-				PlayingCardRendererScript.draw_card(surface, cards[card_index], Rect2((layout.get("hole_card_origin", Vector2.ZERO) as Vector2) + Vector2(card_index * 27, 0), Vector2(24, 35)))
+		# Fold flights already carry both hidden cards into the dealer's muck. Do
+		# not redraw the authoritative saved hand at the seat after that animation
+		# finishes; inactive hands stay hidden for live play and restored saves.
+		if _resting_hole_cards_visible(state, str(seat.get("member_id", ""))):
+			var cards := _draw_array_view(seat.get("cards", []))
+			for card_index in range(mini(2, cards.size())):
+				if not _card_landing_waiting(surface, str(seat.get("member_id", "")), card_index):
+					PlayingCardRendererScript.draw_card(surface, cards[card_index], Rect2((layout.get("hole_card_origin", Vector2.ZERO) as Vector2) + Vector2(card_index * 27, 0), Vector2(24, 35)))
 		var action_text := str(seat.get("last_action", "")).replace("_", " ").capitalize()
 		if bool(seat.get("all_in", false)):
 			action_text = "ALL IN"
@@ -2905,14 +2909,25 @@ func _draw_player(surface, state: Dictionary) -> void:
 				surface.surface_label("KEEP" if held.has(legacy_index) else "DRAW", legacy_rect.position + Vector2(7, 88), 10, C_TEAL if held.has(legacy_index) else C_PINK)
 		return
 	var start := Vector2(385, 245)
-	for index in range(mini(2, cards.size())):
-		var rect := Rect2(start + Vector2(index * 68, 0), Vector2(58, 81))
-		if not _card_landing_waiting(surface, PLAYER_ID, index):
-			PlayingCardRendererScript.draw_card(surface, cards[index], rect)
+	if _resting_hole_cards_visible(state, PLAYER_ID):
+		for index in range(mini(2, cards.size())):
+			var rect := Rect2(start + Vector2(index * 68, 0), Vector2(58, 81))
+			if not _card_landing_waiting(surface, PLAYER_ID, index):
+				PlayingCardRendererScript.draw_card(surface, cards[index], rect)
 	if str(state.get("dealer_actor", "")) == PLAYER_ID:
 		_draw_button_marker(surface, Vector2(522, 292))
 	if bool(state.get("player_all_in", false)):
 		surface.surface_label("ALL IN", Vector2(535, 286), 11, C_YELLOW)
+
+
+func _resting_hole_cards_visible(state: Dictionary, actor: String) -> bool:
+	if actor == PLAYER_ID:
+		return bool(state.get("player_active", true))
+	var seat_index := _seat_index(state, actor)
+	if seat_index < 0:
+		return false
+	var seats := _dict_array(state.get("seats", []))
+	return seat_index < seats.size() and bool((seats[seat_index] as Dictionary).get("active", false))
 
 
 func _draw_card_flights(surface, _state: Dictionary) -> void:

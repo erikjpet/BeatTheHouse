@@ -1705,6 +1705,14 @@ func _check_crew_poker_dealer_and_animation_contract(game: GameModule, failures:
 			fold_count += 1
 	if fold_count != 2:
 		failures.append("Crew poker fold animation did not send both hidden cards to the muck.")
+	if not fold_seats.is_empty():
+		var folded_actor := str((fold_seats[0] as Dictionary).get("member_id", ""))
+		if bool(game.call("_resting_hole_cards_visible", fold_after, folded_actor)):
+			failures.append("Crew poker redrew a folded opponent's hidden cards after the dealer collected them.")
+	var player_fold_after := fold_before.duplicate(true)
+	player_fold_after["player_active"] = false
+	if bool(game.call("_resting_hole_cards_visible", player_fold_after, "player")):
+		failures.append("Crew poker redrew the player's hidden cards after folding them to the dealer.")
 	var showdown_before := street_after.duplicate(true)
 	showdown_before["phase"] = "river"
 	showdown_before["community_cards"] = [{"rank": 3, "suit": 0, "deck": 0}, {"rank": 7, "suit": 1, "deck": 0}, {"rank": 11, "suit": 2, "deck": 0}, {"rank": 12, "suit": 3, "deck": 0}, {"rank": 14, "suit": 0, "deck": 0}]

@@ -117,6 +117,28 @@ func snapshot(deep_copy_seeded_definitions: bool = true) -> Dictionary:
 	}
 
 
+# Builds the isolated slice used by destination scouting. Preview generation
+# only adds a scenario seed (and its rumor) to this candidate; the schedules,
+# topology, reputation, and heard-rumor records are read-only. Copying just the
+# mutable indexes avoids serializing and restoring the whole living town for a
+# UI hover/click while keeping every preview mutation off the live run.
+func detached_travel_preview_candidate() -> TownNetwork:
+	var candidate := get_script().new() as TownNetwork
+	candidate.seed_value = seed_value
+	candidate.action_index = action_index
+	candidate.node_metadata = node_metadata
+	candidate.edges = edges
+	candidate.itinerary_schedules = itinerary_schedules
+	candidate.rumor_registry = rumor_registry.duplicate(false)
+	candidate.heard_by_node = heard_by_node
+	candidate.seeded_scenarios_by_node = seeded_scenarios_by_node.duplicate(false)
+	candidate.seeded_scenario_definitions_by_node = seeded_scenario_definitions_by_node.duplicate(false)
+	candidate.reputation_incidents = reputation_incidents
+	candidate.reputation_type_registry = reputation_type_registry
+	candidate.reputation_sequence = reputation_sequence
+	return candidate
+
+
 func seed_scenario_for_node(node_id: String, scenario: Dictionary) -> bool:
 	var clean_node := node_id.strip_edges()
 	var scenario_id := str(scenario.get("id", "")).strip_edges()
@@ -132,6 +154,8 @@ func seed_scenario_for_node(node_id: String, scenario: Dictionary) -> bool:
 	# Cache the canonical selector output, not a later content-library lookup.
 	# Challenge pins can preserve identity while intentionally suppressing the
 	# authored mutation/phase payload for controlled tutorial rooms.
+	# Runtime scenario preparation can normalize nested authored records, so each
+	# town node must own its selected definition even though the library is cached.
 	var persistent_definition := scenario.duplicate(true)
 	# Catalog-resolution receipts are process-local cache authority, not authored
 	# scenario data. Keeping them in the living-world seed needlessly grows every

@@ -154,6 +154,8 @@ func _item_purpose_summary(item_definition: Dictionary) -> String:
 	var families := _copy_dict(effect.get("families", {}))
 	if not families.is_empty():
 		return "Helps %s." % _purpose_family_list(families.keys())
+	if int(effect.get("travel_option_bonus", 0)) > 0:
+		return "Adds another choice whenever you travel."
 	if int(effect.get("travel_scouting_level", 0)) > 0:
 		return "Reveals better route intel."
 	if effect.has("debt_grace_turns") or effect.has("debt_default_heat_delta"):
@@ -1296,6 +1298,8 @@ func effect_summary_label(key: String) -> String:
 			return "new routes"
 		"travel_changes":
 			return "travel shift"
+		"travel_option_bonus":
+			return "travel options"
 		"travel_scouting_level":
 			return "route scouting"
 		"item_hooks":

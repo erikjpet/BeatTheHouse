@@ -59,6 +59,11 @@ func sealed_action_authority_contract() -> Dictionary:
 		# large Slot/pinball payload into a second output digest.
 		"trusted_candidate_structural_replay_match": true,
 		"lightweight_resolution_candidate": true,
+		# Slot resolution replaces machine fields and takes an owned copy before
+		# changing any nested runtime model. The two replay candidates therefore
+		# need independent top-level tables, not recursive copies of retained
+		# animation/feature history that neither execution mutates in place.
+		"trusted_candidate_shallow_machine_detach": true,
 		"in_place_nonrejecting_commit": true,
 		# One current response plus its immediate predecessor covers synchronous
 		# retry/save recovery. Larger Blackjack hand history only made each later

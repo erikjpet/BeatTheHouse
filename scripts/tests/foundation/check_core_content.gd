@@ -3999,6 +3999,7 @@ func _t4_4_consumed_item_effect_keys() -> Dictionary:
 		"slot_split_reel_note_close_msec_bonus",
 		"slot_split_reel_note_perfect_msec_bonus",
 		"slot_three_reel_loss_refund_percent",
+		"travel_option_bonus",
 		"travel_scouting_level",
 		"video_poker_holdout_close_msec",
 		"video_poker_holdout_good_msec",

@@ -293,6 +293,8 @@ var camera_focus_point: Vector2 = Vector2(0.5, 0.5)
 var current_context_mode: String = CONTEXT_MODE_ROOM
 var game_surface_ui_state: Dictionary = {}
 var game_module_cache: Dictionary = {}
+var game_module_script_cache: Dictionary = {}
+var game_module_script_prewarm_requests: Dictionary = {}
 var triggered_event_module_cache: Dictionary = {}
 var triggered_event_module_cache_library: ContentLibrary = null
 var triggered_event_module_cache_generation := -1
@@ -357,9 +359,12 @@ var selected_run_inventory_item_source: String = ""
 var travel_transition_active := false
 var travel_transition_target_id: String = ""
 var travel_transition_target_label: String = ""
+var prepared_travel_lifecycle_rollback: Dictionary = {}
 var travel_transition_force_web_runtime_for_test := false
 var game_surface_auto_resolving := false
 var environment_game_runtime_scan_count := 0
+var foreground_game_action_runtime_quiet_pending := false
+var environment_runtime_quiet_frames := 0
 var environment_runtime_state_key_cache: Dictionary = {}
 var environment_runtime_active_keys_scratch: Dictionary = {}
 var environment_runtime_scheduler = EnvironmentRuntimeSchedulerScript.new()
@@ -501,6 +506,11 @@ var event_choice_popup_summary_label: Label
 var event_choice_popup_scroll: ScrollContainer
 var event_choice_popup_content_stack: VBoxContainer
 var event_choice_popup_choices_list: VBoxContainer
+var event_choice_popup_pressed_button: Button
+var event_choice_popup_pressed_callback := Callable()
+var event_choice_popup_press_position := Vector2.ZERO
+var event_choice_popup_press_activation_serial := 0
+var event_choice_popup_activation_serial := 0
 var numbers_surface_source_id: String = ""
 var numbers_digit_options: Array = []
 var numbers_stake_input: SpinBox
@@ -574,6 +584,9 @@ var action_panel_refresh_active_generation := 0
 var game_coach_refresh_scheduled := false
 var tutorial_guardrail_dialogue_reconcile_active := false
 var pending_action_panel_object: Dictionary = {}
+var interactable_object_catalog_cache: Array = []
+var interactable_object_catalog_cache_valid := false
+var interactable_object_catalog_cache_key := ""
 var interactable_object_view_cache: Array = []
 var interactable_object_view_cache_valid := false
 var interactable_object_view_cache_key := ""
@@ -667,6 +680,7 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	_poll_game_module_script_prewarm()
 	if perf_telemetry_overlay == null:
 		if run_layout_dirty:
 			_apply_run_screen_layout()
@@ -1401,9 +1415,16 @@ func _sealed_action_host_compact_evidence_method() -> StringName:
 	return method
 
 
+func _sealed_action_host_compact_evidence_allowed(candidate: RunState, action_id: String, stake: int, session: Dictionary) -> bool:
+	if candidate == null or _sealed_action_host_compact_evidence_method().is_empty():
+		return false
+	var predicate := StringName(action_authority_contract.get("compact_authority_evidence_predicate_method", &""))
+	return predicate.is_empty() or (current_game.has_method(predicate) and bool(current_game.call(predicate, candidate, action_id, stake, session)))
+
+
 func _sealed_action_host_compact_evidence(candidate: RunState, action_id: String, stake: int, session: Dictionary) -> Dictionary:
 	var method := _sealed_action_host_compact_evidence_method()
-	if candidate == null or method.is_empty():
+	if candidate == null or method.is_empty() or not _sealed_action_host_compact_evidence_allowed(candidate, action_id, stake, session):
 		return {}
 	var value: Variant = current_game.call(method, candidate, action_id, stake, session)
 	return value as Dictionary if typeof(value) == TYPE_DICTIONARY else {}
@@ -1412,7 +1433,15 @@ func _sealed_action_host_compact_evidence(candidate: RunState, action_id: String
 func _sealed_action_host_trusted_context(candidate: RunState, stake: int, action_id: String = "") -> Dictionary:
 	var environment := candidate.current_environment
 	var canonical_run_fingerprint := ""
-	var compact_evidence := _sealed_action_host_compact_evidence(candidate, action_id, stake, {})
+	var compact_evidence: Dictionary = {}
+	# The delivery already binds action_id independently. Keep the canonical table
+	# context action-neutral, matching the historical public helper and allowing a
+	# sealed delivery to be compared with the same live state before resolution.
+	if _sealed_action_host_compact_evidence_allowed(candidate, action_id, stake, {}):
+		var evidence_method := _sealed_action_host_compact_evidence_method()
+		var evidence_value: Variant = current_game.call(evidence_method, candidate, "", stake, {})
+		if typeof(evidence_value) == TYPE_DICTIONARY:
+			compact_evidence = evidence_value as Dictionary
 	if not compact_evidence.is_empty():
 		canonical_run_fingerprint = GameRitualRuntimeScript.canonical_fingerprint(compact_evidence)
 	else:
@@ -1480,11 +1509,26 @@ func _sealed_action_host_transaction_candidate() -> RunState:
 	return run_state if _sealed_action_host_can_commit_in_place() else _sealed_action_host_detached()
 
 
+func _sealed_action_host_delivery_stake(command: Dictionary, session: Dictionary) -> int:
+	if command.has("set_stake"):
+		return maxi(0, int(command.get("set_stake", 0)))
+	if session.has("locked_stake"):
+		return maxi(0, int(session.get("locked_stake", 0)))
+	if session.has("selected_stake"):
+		return maxi(0, int(session.get("selected_stake", 0)))
+	# The UI setter has already normalized this host-owned value. Avoid rebuilding
+	# every action and surface projection as an eager Dictionary.get fallback.
+	return maxi(0, selected_stake)
+
+
 func _sealed_action_host_in_place_session_intent_allowed(surface_action: String) -> bool:
 	if run_state == null or run_state.is_terminal() or surface_action.is_empty():
 		return false
 	var intents_value: Variant = action_authority_contract.get("in_place_session_intents", [])
-	return typeof(intents_value) == TYPE_ARRAY and (intents_value as Array).has(surface_action)
+	if typeof(intents_value) != TYPE_ARRAY or not (intents_value as Array).has(surface_action):
+		return false
+	var predicate := StringName(action_authority_contract.get("in_place_session_intent_predicate_method", &""))
+	return predicate.is_empty() or (current_game.has_method(predicate) and bool(current_game.call(predicate, surface_action, run_state, run_state.current_environment)))
 
 
 func _sealed_action_host_in_place_ledger() -> Dictionary:
@@ -1537,7 +1581,10 @@ func _sealed_action_host_in_place_session_intent(surface_action: String, index: 
 		return _sealed_action_host_rejection("invalid_intent", "Session-only Blackjack input returned an invalid command.")
 	var command := command_value as Dictionary
 	if bool(command.get("direct_resolve", false)) or bool(command.get("resolve", false)) or not str(command.get("action_id", "")).is_empty():
-		return _sealed_action_host_rejection("invalid_intent", "A session-only Blackjack input attempted to cross an economic boundary.")
+		# Some hand controls are session-only until the selected card completes the
+		# round. Let those terminal variants restart on the isolated transaction
+		# path instead of either mutating live economics or rejecting a valid click.
+		return {"_sealed_action_host_requires_transaction": true}
 	if bool(command.get("handled", false)):
 		var next_session: Dictionary = command.get("ui_state", session) if typeof(command.get("ui_state", session)) == TYPE_DICTIONARY else session
 		ledger = ActionAuthorityScript.stage_session_cow(ledger, next_session)
@@ -1595,7 +1642,9 @@ func _sealed_action_host_surface_intent(surface_action: String, index: int, conf
 	# no wager, RNG, environment-turn, or result authority, so cloning a late run's
 	# world/scenario graph here is both unnecessary and visibly expensive.
 	if _sealed_action_host_in_place_session_intent_allowed(surface_action):
-		return _sealed_action_host_in_place_session_intent(surface_action, index, confirm_requested, surface_time_msec)
+		var in_place_command := _sealed_action_host_in_place_session_intent(surface_action, index, confirm_requested, surface_time_msec)
+		if not bool(in_place_command.get("_sealed_action_host_requires_transaction", false)):
+			return in_place_command
 	var candidate := _sealed_action_host_transaction_candidate()
 	if candidate == null:
 		return _sealed_action_host_rejection("internal_fail_closed", "Sealed table semantics could not be rebuilt.")
@@ -1644,8 +1693,8 @@ func _sealed_action_host_surface_intent(surface_action: String, index: int, conf
 		# surface clock tuple together so games cannot observe a new raw timestamp
 		# alongside an older slowed/presentation timestamp.
 		session = _apply_game_surface_time_fields(session, surface_time_msec)
-	if current_game.has_method("_has_dealt_hand") and not current_game.call("_has_dealt_hand", session) and _current_selected_stake() > 0:
-		session["selected_stake"] = _current_selected_stake()
+	if current_game.has_method("_has_dealt_hand") and not current_game.call("_has_dealt_hand", session) and selected_stake > 0:
+		session["selected_stake"] = selected_stake
 	var command: Dictionary = current_game.surface_action_command(surface_action, index, confirm_requested, session, candidate, candidate.current_environment)
 	command.erase("_sealed_action_host_prepared")
 	if bool(command.get("handled", false)):
@@ -1657,8 +1706,9 @@ func _sealed_action_host_surface_intent(surface_action: String, index: int, conf
 			# trusted context. The COW ledger itself is already host-validated.
 			_sealed_action_host_store_ledger(candidate, ledger)
 			var action_id := str(command.get("action_id", ""))
-			var delivery_stake := int(command.get("set_stake", _current_selected_stake()))
-			var issued: Dictionary = ActionAuthorityScript.issue_delivery_cow(ledger, action_id, _sealed_action_host_trusted_context(candidate, delivery_stake, action_id), delivery_stake, recovery_session)
+			var delivery_stake := _sealed_action_host_delivery_stake(command, next_session)
+			var trusted_context := _sealed_action_host_trusted_context(candidate, delivery_stake, action_id)
+			var issued: Dictionary = ActionAuthorityScript.issue_delivery_cow(ledger, action_id, trusted_context, delivery_stake, recovery_session)
 			if not bool(issued.get("ok", false)):
 				return _sealed_action_host_rejection(str(issued.get("error_code", "receipt_content_conflict")), "Blackjack delivery conflicts with the pending action.")
 			ledger = issued.get("ledger", ledger)
@@ -1732,7 +1782,7 @@ func _sealed_action_host_auto_intent(surface_time_msec: int) -> Dictionary:
 			# that exact COW value synchronously. Revalidating its cached responses
 			# and journal here walked the complete replay window a second time on
 			# every Slot autoplay spin without crossing an external boundary.
-			var delivery_stake := int(command.get("set_stake", _current_selected_stake()))
+			var delivery_stake := _sealed_action_host_delivery_stake(command, next_session)
 			var auto_action_id := str(command.get("action_id", ""))
 			var issued: Dictionary = ActionAuthorityScript.issue_delivery_cow(ledger, auto_action_id, _sealed_action_host_trusted_context(candidate, delivery_stake, auto_action_id), delivery_stake, recovery_session)
 			if not bool(issued.get("ok", false)):
@@ -1953,7 +2003,10 @@ func _sealed_action_host_candidate_proposal(resolve_method: StringName, action_i
 	var proposal_candidate := base_candidate
 	if not use_base_candidate:
 		if bool(action_authority_contract.get("lightweight_resolution_candidate", false)):
-			proposal_candidate = base_candidate.detached_host_resolution_candidate(_sealed_action_host_state_key())
+			proposal_candidate = base_candidate.detached_host_resolution_candidate(
+				_sealed_action_host_state_key(),
+				bool(action_authority_contract.get("trusted_candidate_shallow_machine_detach", false))
+			)
 		else:
 			proposal_candidate = base_candidate.detached_host_action_candidate(_sealed_action_host_state_key())
 	_sealed_action_host_store_ledger(proposal_candidate, input_ledger)
@@ -1966,7 +2019,11 @@ func _sealed_action_host_candidate_proposal(resolve_method: StringName, action_i
 	var proposal := {
 		"ok": bool(result.get("ok", false)),
 		"input_fingerprint": proposal_input_fingerprint,
-		"result": result.duplicate(true),
+		# Trusted compact providers return a fresh, proposal-owned result. The host
+		# keeps that graph read-only through replay matching/fingerprinting and forks
+		# only its top level before adding receipt metadata. Legacy serialized
+		# providers retain the defensive deep copy at their hostile-data boundary.
+		"result": result if compact_evidence else result.duplicate(true),
 		# Compact providers retain the actual detached candidate in this private
 		# bundle. A serialized whole-run snapshot adds no validation after the host
 		# has independently replayed and matched exact evidence.
@@ -2177,7 +2234,7 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 			and current_game.has_method(candidate_wager_method) \
 			and current_game.has_method(candidate_resolve_method)
 	var uses_compact_authority_evidence := uses_trusted_candidate_provider \
-			and not _sealed_action_host_compact_evidence_method().is_empty()
+			and _sealed_action_host_compact_evidence_allowed(candidate, action_id, stake, session)
 	var first_proposal_owns_transaction := uses_trusted_candidate_provider \
 			and not commits_in_place \
 			and bool(provider_contract.get("trusted_candidate_first_proposal_owns_transaction", false))
@@ -2281,7 +2338,8 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 		# Compact providers execute the accepted proposal directly on the already
 		# isolated full candidate. Build the cheap replay candidate before that first
 		# mutation so both executions begin at the exact same machine boundary.
-		var first_source: RunState = candidate.detached_host_resolution_candidate(_sealed_action_host_state_key()) if commits_in_place else candidate
+		var shallow_machine_detach := bool(provider_contract.get("trusted_candidate_shallow_machine_detach", false))
+		var first_source: RunState = candidate.detached_host_resolution_candidate(_sealed_action_host_state_key(), shallow_machine_detach) if commits_in_place else candidate
 		# A detached transaction candidate is already private host-owned state. A
 		# provider may consume it as the accepted first execution when the replay
 		# clone is built before that mutation. This retains two independent full
@@ -2289,7 +2347,7 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 		var direct_full_candidate := uses_compact_authority_evidence or first_proposal_owns_transaction
 		var structural_replay_match := uses_compact_authority_evidence \
 				and bool(provider_contract.get("trusted_candidate_structural_replay_match", false))
-		var replay_source: RunState = candidate.detached_host_action_candidate(_sealed_action_host_state_key()) if first_proposal_owns_transaction else (candidate.detached_host_resolution_candidate(_sealed_action_host_state_key()) if uses_compact_authority_evidence else candidate)
+		var replay_source: RunState = candidate.detached_host_action_candidate(_sealed_action_host_state_key()) if first_proposal_owns_transaction else (candidate.detached_host_resolution_candidate(_sealed_action_host_state_key(), shallow_machine_detach) if uses_compact_authority_evidence else candidate)
 		var first_bundle := _sealed_action_host_candidate_proposal(candidate_resolve_method, action_id, stake, first_source, compact_input_ledger, compact_proposal_input, compact_input_fingerprint, session, direct_full_candidate, uses_compact_authority_evidence)
 		if has_runtime_checkpoint and not bool(current_game.call(runtime_restore_method, runtime_checkpoint)):
 			return _sealed_action_host_rejection("invalid_proposal", "Game runtime could not be restored for sealed replay.", request_key)
@@ -2542,7 +2600,7 @@ func _apply_game_surface_command(command: Dictionary, index: int = -1, confirm_r
 		var multiplied_stake := _current_selected_stake() * int(command.get("stake_multiplier", 1))
 		set_selected_stake(multiplied_stake, true)
 	if command.has("set_stake") and not direct_resolve:
-		set_selected_stake(int(command.get("set_stake", _current_selected_stake())), true)
+		set_selected_stake(int(command.get("set_stake", 0)), true)
 	_play_surface_command_audio(command, index)
 	var environment_changed := bool(command.get("environment_changed", false))
 	var action_id := str(command.get("action_id", ""))
@@ -2814,6 +2872,16 @@ func _game_surface_presentation_active() -> bool:
 
 
 func _advance_environment_game_runtime() -> void:
+	# Never stack an offscreen cabinet settlement onto a frame that has just
+	# resolved a watched action. Input callbacks can run immediately before this
+	# process pass, while foreground autoplay resolves inside it, so consume the
+	# marker here rather than resetting it at frame start.
+	if foreground_game_action_runtime_quiet_pending:
+		foreground_game_action_runtime_quiet_pending = false
+		return
+	if environment_runtime_quiet_frames > 0:
+		environment_runtime_quiet_frames -= 1
+		return
 	if game_surface_auto_resolving or run_state == null or library == null or run_state.is_terminal():
 		return
 	if (current_screen != SCREEN_ENVIRONMENT and current_screen != SCREEN_GAME) or meta_session_active:
@@ -2826,9 +2894,13 @@ func _advance_environment_game_runtime() -> void:
 	var scanned := _advance_environment_game_runtime_for_environment(run_state.current_environment, now_msec)
 	if run_state.is_terminal() or _simulation_progression_paused():
 		return
-	scanned = _advance_grand_casino_stored_main_floor_slot_runtime(now_msec) or scanned
+	# At most one due fixture resolves per process pass. A stored main-floor
+	# cabinet can wait one frame when the active room already performed work.
+	if not scanned:
+		scanned = _advance_grand_casino_stored_main_floor_slot_runtime(now_msec)
 	if scanned:
 		environment_game_runtime_scan_count += 1
+		environment_runtime_quiet_frames = 1
 
 
 func _advance_environment_game_runtime_for_environment(environment_data: Dictionary, now_msec: int, game_ids_override: Array = []) -> bool:
@@ -3500,8 +3572,8 @@ func select_travel_option(target_id: String) -> bool:
 
 
 # Confirms the selected travel destination through RunGenerator.
-func confirm_selected_travel(require_immediate_result: bool = false) -> bool:
-	var caller_rollback := _foundation_lifecycle_snapshot()
+func confirm_selected_travel(require_immediate_result: bool = false, prepared_lifecycle_rollback: Dictionary = {}) -> bool:
+	var caller_rollback := prepared_lifecycle_rollback if not prepared_lifecycle_rollback.is_empty() else _foundation_lifecycle_snapshot()
 	_protect_foundation_coach_attention(caller_rollback)
 	var travel_ok := _confirm_selected_travel_with_lifecycle_snapshot(require_immediate_result, caller_rollback)
 	_commit_foundation_coach_attention(caller_rollback)
@@ -3529,10 +3601,8 @@ func _confirm_selected_travel_with_lifecycle_snapshot(require_immediate_result: 
 		_show_message(str(choice.get("disabled_reason", "Route closed. Check hours or pick another stop.")))
 		_refresh()
 		return false
-	var travel_result: Variant = _travel_to(str(choice.get("id", "")), str(choice.get("label", choice.get("id", ""))), choice, require_immediate_result)
+	var travel_result: Variant = _travel_to_with_lifecycle_snapshot(str(choice.get("id", "")), str(choice.get("label", choice.get("id", ""))), choice, require_immediate_result, caller_rollback)
 	var travel_ok := bool((travel_result as Dictionary).get("ok", false)) if typeof(travel_result) == TYPE_DICTIONARY else true
-	if not travel_ok:
-		_restore_foundation_lifecycle_snapshot(caller_rollback)
 	return travel_ok
 
 
@@ -3675,10 +3745,8 @@ func confirm_world_map_travel() -> Dictionary:
 			# one-button acknowledgement first so the shared TalkDock queue cannot
 			# misclassify the requested action as abandoning Pal and add Heat.
 			_advance_completed_tutorial_action_dialogue(completed_lesson_id)
-	var travel_result := _travel_to(str(result.get("target_id", "")), str(result.get("label", result.get("target_id", ""))), result.get("choice", {}) as Dictionary, true)
-	if not bool(travel_result.get("ok", false)):
-		_restore_foundation_lifecycle_snapshot(caller_rollback)
-	else:
+	var travel_result := _travel_to_with_lifecycle_snapshot(str(result.get("target_id", "")), str(result.get("label", result.get("target_id", ""))), result.get("choice", {}) as Dictionary, true, caller_rollback)
+	if bool(travel_result.get("ok", false)):
 		_commit_foundation_coach_attention(caller_rollback)
 	return travel_result
 
@@ -4177,9 +4245,8 @@ func _apply_forced_environment_travel(_source: String) -> Dictionary:
 		if bool(choice.get("enabled", false)):
 			run_state.narrative_flags["health_inspector_forced_travel"] = true
 			_show_message("The Health Inspector shuts the room down. You have to move.")
-			var travel_result := _travel_to(str(choice.get("id", "")), str(choice.get("label", choice.get("id", ""))), choice, true)
+			var travel_result := _travel_to_with_lifecycle_snapshot(str(choice.get("id", "")), str(choice.get("label", choice.get("id", ""))), choice, true, rollback)
 			if not bool(travel_result.get("ok", false)):
-				_restore_foundation_lifecycle_snapshot(rollback)
 				var travel_errors := _copy_array(travel_result.get("errors", []))
 				var travel_error := str(travel_errors[0]) if not travel_errors.is_empty() else "Forced travel could not be completed safely."
 				_show_message(travel_error)
@@ -6775,11 +6842,6 @@ func _foundation_lifecycle_snapshot() -> Dictionary:
 	var snapshot := {
 		"run_state_ref": run_state,
 		"run_state_storage": _run_state_lifecycle_storage_snapshot(),
-		"run": run_state.to_dict() if run_state != null else {},
-		"environment": run_state.current_environment.duplicate(true) if run_state != null else {},
-		"world_map": run_state.world_map.duplicate(true) if run_state != null else {},
-		"room_states": run_state.grand_casino_room_states.duplicate(true) if run_state != null else {},
-		"home_state": run_state.home_state.duplicate(true) if run_state != null else {},
 		"fields": {},
 		"visibility": {},
 	}
@@ -7056,7 +7118,13 @@ func _protect_foundation_coach_attention(snapshot: Dictionary) -> void:
 	var coach_snapshot := _copy_dict(snapshot.get("coach", {}))
 	var restored_coach: Variant = coach_snapshot.get("ref", null)
 	if restored_coach is Control and coach_overlay == restored_coach:
-		coach_snapshot["attention"] = coach_overlay.protect_attention_tween_lifecycle_snapshot(_copy_dict(coach_snapshot.get("attention", {})))
+		var attention_snapshot := _copy_dict(coach_snapshot.get("attention", {}))
+		# A caller-owned lifecycle boundary can pass the same snapshot through
+		# several nested helpers. One checkpoint protects it for the full boundary;
+		# replacing its token would strand the earlier checkpoint and retain a tween.
+		if int(attention_snapshot.get("checkpoint_token", 0)) <= 0:
+			attention_snapshot = coach_overlay.protect_attention_tween_lifecycle_snapshot(attention_snapshot)
+		coach_snapshot["attention"] = attention_snapshot
 		snapshot["coach"] = coach_snapshot
 		snapshot["_coach_attention_rolled_back"] = false
 
@@ -7578,6 +7646,16 @@ func _install_lifecycle_environment(environment: Dictionary) -> Dictionary:
 	return run_state.set_environment(environment) if run_state != null else {"ok": false, "errors": ["Environment installation requires an active run."]}
 
 
+func _travel_to_with_lifecycle_snapshot(target_id: String, target_label: String, choice_data: Dictionary, require_immediate_result: bool, lifecycle_rollback: Dictionary) -> Dictionary:
+	var previous_rollback := prepared_travel_lifecycle_rollback
+	prepared_travel_lifecycle_rollback = lifecycle_rollback
+	var result := _travel_to(target_id, target_label, choice_data, require_immediate_result)
+	prepared_travel_lifecycle_rollback = previous_rollback
+	if not bool(result.get("ok", false)):
+		_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
+	return result
+
+
 func _travel_to(target_id: String, target_label: String, choice_data: Dictionary = {}, require_immediate_result: bool = false) -> Dictionary:
 	if run_state == null:
 		return {"ok": false, "errors": ["Travel requires an active run."]}
@@ -7590,7 +7668,8 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	var perf_corner_store_total_started_usec := Time.get_ticks_usec() if perf_corner_store_timing else 0
 	var perf_corner_store_stage_started_usec := perf_corner_store_total_started_usec
 	var perf_corner_store_stages := {}
-	var lifecycle_rollback := _foundation_lifecycle_snapshot()
+	var caller_owns_lifecycle_rollback := not prepared_travel_lifecycle_rollback.is_empty()
+	var lifecycle_rollback := prepared_travel_lifecycle_rollback if caller_owns_lifecycle_rollback else _foundation_lifecycle_snapshot()
 	_protect_foundation_coach_attention(lifecycle_rollback)
 	_clear_recent_result_feedback()
 	if perf_corner_store_timing:
@@ -7606,7 +7685,8 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		route = library.route(target_id) if library != null else {}
 	if not bool(choice_data.get("enabled", true)):
 		var disabled_reason := str(choice_data.get("disabled_reason", "Route closed. Check hours or pick another stop."))
-		_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
+		if not caller_owns_lifecycle_rollback:
+			_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
 		_show_message(disabled_reason)
 		_refresh_after_foundation_lifecycle_rollback(lifecycle_rollback)
 		return {"ok": false, "errors": [disabled_reason]}
@@ -7618,13 +7698,15 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 			return {"ok": true, "errors": []}
 		var meta_result := _enter_meta_location(meta_target_id)
 		if not bool(meta_result.get("ok", false)):
-			_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
+			if not caller_owns_lifecycle_rollback:
+				_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
 			return meta_result
 		_commit_foundation_coach_attention(lifecycle_rollback)
 		return meta_result
 	var local_casino_room_move := bool(choice_data.get("local_casino_room", false))
 	if local_casino_room_move and (not run_state.is_grand_casino_environment() or _environment_archetype(target_id).is_empty()):
-		_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
+		if not caller_owns_lifecycle_rollback:
+			_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
 		_show_message("That interior casino door is not available.")
 		_refresh_after_foundation_lifecycle_rollback(lifecycle_rollback)
 		return {"ok": false, "errors": ["That interior casino door is not available."]}
@@ -7634,7 +7716,8 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	if not bool(departure_preflight.get("ok", false)):
 		var departure_errors := _copy_array(departure_preflight.get("errors", []))
 		var departure_error := str(departure_errors[0]) if not departure_errors.is_empty() else "Travel could not begin safely."
-		_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
+		if not caller_owns_lifecycle_rollback:
+			_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
 		_show_message(departure_error)
 		_refresh_after_foundation_lifecycle_rollback(lifecycle_rollback)
 		return {"ok": false, "errors": [departure_error]}
@@ -7681,7 +7764,8 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	run_state.current_environment["departed_game_clock_minutes"] = departed_game_clock_minutes
 	var clock_result := run_state.advance_game_clock_minutes(travel_minutes)
 	if not bool(clock_result.get("ok", false)):
-		_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
+		if not caller_owns_lifecycle_rollback:
+			_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
 		var clock_errors := _copy_array(clock_result.get("errors", []))
 		var clock_error := str(clock_errors[0]) if not clock_errors.is_empty() else "Travel time could not advance safely."
 		_show_message(clock_error)
@@ -7693,9 +7777,10 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		perf_corner_store_stage_started_usec = Time.get_ticks_usec()
 	var install_result: Dictionary
 	if local_casino_room_move:
-		install_result = generator.enter_grand_casino_room_result(run_state, target_id)
+		install_result = generator.enter_grand_casino_room_result_with_caller_rollback(run_state, target_id)
 		if not bool(install_result.get("ok", false)):
-			_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
+			if not caller_owns_lifecycle_rollback:
+				_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
 			var room_errors := _copy_array(install_result.get("errors", []))
 			var room_error := str(room_errors[0]) if not room_errors.is_empty() else "The interior casino room could not be prepared."
 			_show_message(room_error)
@@ -7705,9 +7790,10 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 			run_state.narrative_flags["grand_casino_high_limit_access"] = true
 			run_state.narrative_flags["grand_casino_high_limit_access_method"] = "cash_buy_in"
 	else:
-		install_result = generator.travel_environment_result(run_state, target_id, true)
+		install_result = generator.travel_environment_result_with_caller_rollback(run_state, target_id, true)
 		if not bool(install_result.get("ok", false)):
-			_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
+			if not caller_owns_lifecycle_rollback:
+				_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
 			var install_errors := _copy_array(install_result.get("errors", []))
 			var install_error := str(install_errors[0]) if not install_errors.is_empty() else "Travel destination could not be installed."
 			_show_message(install_error)
@@ -7723,7 +7809,8 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 			_copy_dict(run_state.current_environment.get("scenario_layout_context", {}))
 		)
 	if not bool(destination_finalization.get("ok", false)):
-		_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
+		if not caller_owns_lifecycle_rollback:
+			_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
 		var finalization_errors := _copy_array(destination_finalization.get("errors", []))
 		var finalization_error := str(finalization_errors[0]) if not finalization_errors.is_empty() else "The arrived room could not be finalized safely."
 		_show_message(finalization_error)
@@ -7734,7 +7821,8 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		perf_corner_store_stage_started_usec = Time.get_ticks_usec()
 	var delivery_arrival := run_state.delivery_resolve_travel_arrival(route, route_risk) if run_state.delivery_has_active_run() else {}
 	if not delivery_arrival.is_empty() and not bool(delivery_arrival.get("ok", false)):
-		_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
+		if not caller_owns_lifecycle_rollback:
+			_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
 		var delivery_errors := _copy_array(delivery_arrival.get("errors", []))
 		var delivery_error := str(delivery_errors[0]) if not delivery_errors.is_empty() else str(delivery_arrival.get("message", "Delivery arrival could not be resolved safely."))
 		_show_message(delivery_error)
@@ -8200,6 +8288,7 @@ func _initialize_foundation() -> void:
 	_mark_boot_event("content_library_load_complete", library.load_timing_snapshot())
 	game_module_cache = {}
 	generator = RunGenerator.new(library)
+	_request_game_module_script_prewarm()
 	save_service = SaveService.new()
 	autosave_loadable_available = save_service.has_run(autosave_slot_id)
 	platform_services = PlatformServices.new()
@@ -8220,6 +8309,7 @@ func _ensure_full_content_library_loaded() -> void:
 	_surface_content_validation_errors(library, true)
 	game_module_cache = {}
 	generator = RunGenerator.new(library)
+	_request_game_module_script_prewarm()
 	_refresh_run_action_service()
 
 
@@ -8535,6 +8625,51 @@ func _request_run_ui_script_prewarm() -> void:
 		var request_error := ResourceLoader.load_threaded_request(script_path)
 		if request_error == OK:
 			run_ui_script_prewarm_requests[script_path] = true
+
+
+func _request_game_module_script_prewarm() -> void:
+	if OS.has_feature("web") or library == null:
+		return
+	for definition_value in library.games:
+		if typeof(definition_value) != TYPE_DICTIONARY:
+			continue
+		var module_path := str((definition_value as Dictionary).get("module_path", "")).strip_edges()
+		if module_path.is_empty() or module_path.ends_with("_ui.gd") or module_path.begins_with("res://data/runtime/"):
+			continue
+		if game_module_script_cache.has(module_path):
+			if generator != null:
+				generator.cache_game_module_script(module_path, game_module_script_cache.get(module_path) as Script)
+			continue
+		if game_module_script_prewarm_requests.has(module_path):
+			continue
+		if ResourceLoader.has_cached(module_path):
+			var cached_script := ResourceLoader.load(module_path) as Script
+			if cached_script != null:
+				_cache_game_module_script(module_path, cached_script)
+			continue
+		if ResourceLoader.load_threaded_request(module_path) == OK:
+			game_module_script_prewarm_requests[module_path] = true
+
+
+func _poll_game_module_script_prewarm() -> void:
+	if game_module_script_prewarm_requests.is_empty():
+		return
+	for module_path_value in game_module_script_prewarm_requests.keys():
+		var module_path := str(module_path_value)
+		var status := ResourceLoader.load_threaded_get_status(module_path)
+		if status == ResourceLoader.THREAD_LOAD_LOADED:
+			var loaded_script := ResourceLoader.load_threaded_get(module_path) as Script
+			game_module_script_prewarm_requests.erase(module_path)
+			if loaded_script != null:
+				_cache_game_module_script(module_path, loaded_script)
+		elif status in [ResourceLoader.THREAD_LOAD_FAILED, ResourceLoader.THREAD_LOAD_INVALID_RESOURCE]:
+			game_module_script_prewarm_requests.erase(module_path)
+
+
+func _cache_game_module_script(module_path: String, module_script: Script) -> void:
+	game_module_script_cache[module_path] = module_script
+	if generator != null:
+		generator.cache_game_module_script(module_path, module_script)
 
 func _run_ui_stage_scripts_ready(stage_index: int) -> bool:
 	var stage_fields: Array = RUN_UI_STAGE_SCRIPT_FIELDS.get(stage_index, [])
@@ -9315,6 +9450,7 @@ func _build_event_choice_popup_overlay() -> void:
 	event_choice_popup_overlay.visible = false
 	event_choice_popup_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 	event_choice_popup_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	event_choice_popup_overlay.gui_input.connect(Callable(self, "_on_event_choice_popup_overlay_gui_input"))
 	add_child(event_choice_popup_overlay)
 
 	event_choice_popup_panel = _panel_container(Color("#080817", 0.98), VisualStyle.AMBER)
@@ -9422,6 +9558,7 @@ func _apply_talk_dock_environment_reserve() -> void:
 	var reserved_rect := _current_talk_dock_environment_reserved_rect()
 	if environment_canvas != null:
 		if environment_canvas.set_reserved_overlay_rect(reserved_rect):
+			interactable_object_catalog_cache_valid = false
 			interactable_object_view_cache_valid = false
 	if world_map_overlay_controller != null:
 		if _world_map_overlay_is_visible():
@@ -10660,6 +10797,8 @@ func _world_object_summary_text(object_data: Dictionary) -> String:
 func _set_current_screen(screen_id: String) -> void:
 	var previous_screen := current_screen
 	current_screen = screen_id
+	if previous_screen != screen_id:
+		_invalidate_run_screen_layout()
 	if screen_id == SCREEN_START and previous_screen != SCREEN_START:
 		_refresh_menu_seed_text()
 		_reroll_main_menu_background()
@@ -11081,17 +11220,25 @@ func _apply_focus_layout() -> void:
 	var game_mode := _is_game_focus_mode()
 	var failure_mode := _is_failure_screen()
 	var victory_mode := _is_victory_screen()
+	var terminal_report := failure_mode or victory_mode
+	# The report is a terminal screen, not another panel in the room/game stack.
+	# Hide every piece of live play so death discovered by a background runtime or
+	# save checkpoint cannot split the viewport with the previously active surface.
+	if environment_header != null:
+		environment_header.visible = not terminal_report
 	if environment_canvas != null:
-		environment_canvas.visible = not game_mode and not failure_mode and not victory_mode
+		environment_canvas.visible = not game_mode and not terminal_report
 		environment_canvas.custom_minimum_size = ENVIRONMENT_CANVAS_MIN_SIZE
 		environment_canvas.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	if game_surface_canvas != null:
-		game_surface_canvas.visible = game_mode and not failure_mode and not victory_mode
+		game_surface_canvas.visible = game_mode and not terminal_report
 		game_surface_canvas.custom_minimum_size = GAME_SURFACE_FOCUSED_MIN_SIZE if game_mode else GAME_SURFACE_PREVIEW_MIN_SIZE
 		game_surface_canvas.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	if run_report_screen != null:
-		run_report_screen.visible = failure_mode or victory_mode
+		run_report_screen.visible = terminal_report
 		run_report_screen.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	if terminal_report and environment_result_panel != null:
+		environment_result_panel.visible = false
 
 
 func _apply_run_screen_layout() -> void:
@@ -11936,6 +12083,8 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 		else:
 			return
 	if bool(result.get("ok", false)):
+		foreground_game_action_runtime_quiet_pending = true
+	if bool(result.get("ok", false)):
 		var scratch_completion: Dictionary = _record_scratch_ticket_discovery(str(result.get("scratch_discovered_type_id", "")))
 		if not scratch_completion.is_empty():
 			var completion_message := str(scratch_completion.get("message", "")).strip_edges()
@@ -12706,15 +12855,79 @@ func _add_wager_confirmation_card(label: String, text: String, _impact: String, 
 	body.clip_text = true
 	stack.add_child(body)
 	_add_attribute_badge_row(stack, badges_value, 16)
-	var button := _button(label, callback)
+	var button := _button(label, Callable(self, "_activate_event_choice_popup_callback").bind(callback))
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	button.clip_text = true
+	button.button_down.connect(Callable(self, "_capture_event_choice_popup_button_press").bind(button, callback))
+	button.button_up.connect(Callable(self, "_defer_event_choice_popup_button_press_recovery"))
 	if primary:
 		_style_selected_button(button)
 	stack.add_child(button)
 	if _event_choice_popup_is_visible():
 		call_deferred("_position_event_choice_popup")
+
+
+func _activate_event_choice_popup_callback(callback: Callable) -> void:
+	# The ordinary Button path won the press. Advance the serial before invoking
+	# the callback because it may synchronously hide and rebuild this popup.
+	event_choice_popup_activation_serial += 1
+	_clear_event_choice_popup_button_press()
+	if callback.is_valid():
+		callback.call()
+
+
+func _capture_event_choice_popup_button_press(button: Button, callback: Callable) -> void:
+	if button == null or button.disabled or not callback.is_valid():
+		return
+	event_choice_popup_pressed_button = button
+	event_choice_popup_pressed_callback = callback
+	event_choice_popup_press_position = get_viewport().get_mouse_position() if get_viewport() != null else Vector2.ZERO
+	event_choice_popup_press_activation_serial = event_choice_popup_activation_serial
+
+
+func _defer_event_choice_popup_button_press_recovery() -> void:
+	call_deferred("_finish_event_choice_popup_button_press")
+
+
+func _on_event_choice_popup_overlay_gui_input(event: InputEvent) -> void:
+	# A settling popup can move the pressed Button before release. The stationary
+	# overlay still receives that release, just as the world-map holder does.
+	if event is InputEventMouseButton:
+		var mouse_event := event as InputEventMouseButton
+		if mouse_event.button_index == MOUSE_BUTTON_LEFT and not mouse_event.pressed:
+			_defer_event_choice_popup_button_press_recovery()
+	elif event is InputEventScreenTouch and not (event as InputEventScreenTouch).pressed:
+		_defer_event_choice_popup_button_press_recovery()
+
+
+func _finish_event_choice_popup_button_press() -> bool:
+	if event_choice_popup_pressed_button == null or not event_choice_popup_pressed_callback.is_valid():
+		return false
+	var button := event_choice_popup_pressed_button
+	var callback := event_choice_popup_pressed_callback
+	var press_position := event_choice_popup_press_position
+	var activation_serial := event_choice_popup_press_activation_serial
+	_clear_event_choice_popup_button_press()
+	if event_choice_popup_activation_serial != activation_serial:
+		return false
+	if not _event_choice_popup_is_visible() or not is_instance_valid(button) or button.disabled or not button.is_visible_in_tree():
+		return false
+	var release_position := get_viewport().get_mouse_position() if get_viewport() != null else press_position
+	# Preserve ScrollContainer gestures. Only recover a click whose pointer stayed
+	# within ordinary click jitter while layout moved underneath it.
+	if press_position.distance_to(release_position) > 10.0:
+		return false
+	event_choice_popup_activation_serial += 1
+	callback.call()
+	return true
+
+
+func _clear_event_choice_popup_button_press() -> void:
+	event_choice_popup_pressed_button = null
+	event_choice_popup_pressed_callback = Callable()
+	event_choice_popup_press_position = Vector2.ZERO
+	event_choice_popup_press_activation_serial = event_choice_popup_activation_serial
 
 
 func _clear_pending_wager_confirmation() -> void:
@@ -13298,9 +13511,7 @@ func _activate_interactable_object_with_lifecycle_snapshot(object_id: String, ca
 				_restore_foundation_lifecycle_snapshot(caller_rollback)
 				return false
 			focus_interactable_object(object_id)
-			var direct_exit_result := _travel_to(str(direct_room_exit.get("id", "")), str(direct_room_exit.get("label", "Lobby")), direct_room_exit, true)
-			if not bool(direct_exit_result.get("ok", false)):
-				_restore_foundation_lifecycle_snapshot(caller_rollback)
+			var direct_exit_result := _travel_to_with_lifecycle_snapshot(str(direct_room_exit.get("id", "")), str(direct_room_exit.get("label", "Lobby")), direct_room_exit, true, caller_rollback)
 			return bool(direct_exit_result.get("ok", false))
 		var leave_object := _interactable_object(object_id)
 		if leave_object.is_empty():
@@ -13404,18 +13615,14 @@ func _activate_interactable_object_with_lifecycle_snapshot(object_id: String, ca
 						_refresh()
 						_restore_foundation_lifecycle_snapshot(caller_rollback)
 						return false
-					var direct_exit_result := _travel_to(str(direct_room_exit.get("id", "")), str(direct_room_exit.get("label", "Lobby")), direct_room_exit, true)
-					if not bool(direct_exit_result.get("ok", false)):
-						_restore_foundation_lifecycle_snapshot(caller_rollback)
+					var direct_exit_result := _travel_to_with_lifecycle_snapshot(str(direct_room_exit.get("id", "")), str(direct_room_exit.get("label", "Lobby")), direct_room_exit, true, caller_rollback)
 					return bool(direct_exit_result.get("ok", false))
 				var map_opened := open_world_map()
 				if not map_opened:
 					_restore_foundation_lifecycle_snapshot(caller_rollback)
 				return map_opened
 			if select_travel_option(source_id):
-				var travel_ok := confirm_selected_travel(true)
-				if not travel_ok:
-					_restore_foundation_lifecycle_snapshot(caller_rollback)
+				var travel_ok := confirm_selected_travel(true, caller_rollback)
 				return travel_ok
 			_restore_foundation_lifecycle_snapshot(caller_rollback)
 			return false
@@ -13807,15 +14014,14 @@ func _inspect_casino_fixture(object_data: Dictionary) -> bool:
 				# Preserve the exact sealed choice selected on the main floor. The
 				# selection refresh may rebuild the generic travel view, but this local
 				# door must not re-query a different screen-scoped route contract.
-				var cage_travel := _travel_to(
+				var cage_travel := _travel_to_with_lifecycle_snapshot(
 					str(cage_choice.get("id", RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID)),
 					str(cage_choice.get("label", RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID)),
 					cage_choice,
-					true
+					true,
+					caller_rollback
 				)
 				var travel_ok := bool(cage_travel.get("ok", false))
-				if not travel_ok:
-					_restore_foundation_lifecycle_snapshot(caller_rollback)
 				return travel_ok
 			_restore_foundation_lifecycle_snapshot(caller_rollback)
 		return _start_linda_cage_services(object_data)
@@ -14463,7 +14669,9 @@ func _on_environment_object_focused(object_id: String) -> void:
 		pending_post_purchase_affinity_result = {}
 		if current_screen == SCREEN_RESULT:
 			_set_current_screen(SCREEN_ENVIRONMENT)
-	if not focus_interactable_object(object_id):
+	var rendered_object := environment_canvas.interactable_object_view(object_id) if environment_canvas != null else {}
+	var focused := focus_interactable_object_from_view(rendered_object) if not rendered_object.is_empty() else focus_interactable_object(object_id)
+	if not focused:
 		return
 	_sync_coach_environment_anchor_geometry()
 	if object_id == "travel:leave" and coach_overlay != null and coach_overlay.active_anchor_kind() == "interactable_object" and coach_overlay.active_anchor_id() == object_id:
@@ -14514,7 +14722,8 @@ func select_environment_view_object(index: int = 0) -> void:
 
 
 func _render_foundation_snapshots() -> void:
-	var environment_visible := current_screen != SCREEN_GAME or current_game == null
+	var terminal_report := _is_failure_screen() or _is_victory_screen()
+	var environment_visible := not terminal_report and (current_screen != SCREEN_GAME or current_game == null)
 	var game_visible := current_screen == SCREEN_GAME and current_game != null
 	var game_snapshot: Dictionary = _game_view_snapshot(true) if game_visible else {}
 	if environment_canvas != null and environment_visible:
@@ -14611,7 +14820,10 @@ func _render_environment_canvas_snapshot() -> void:
 	if environment_canvas == null:
 		return
 	environment_canvas.set_reserved_overlay_rect(_current_talk_dock_environment_reserved_rect())
-	environment_canvas.render_environment_snapshot(_environment_view_snapshot())
+	# _environment_view_snapshot() returns a new presentation root which no host
+	# code retains or mutates. Transfer it directly; the public canvas entry point
+	# keeps its defensive deep copy for shared/external dictionaries.
+	environment_canvas.render_owned_environment_snapshot(_environment_view_snapshot())
 	rendered_environment_snapshot_signature = _environment_snapshot_signature()
 
 
@@ -14675,28 +14887,40 @@ func _environment_view_snapshot() -> Dictionary:
 
 
 func _interactable_object_view_list() -> Array:
-	var cache_key := _interactable_object_cache_key()
-	if interactable_object_view_cache_valid and interactable_object_view_cache_key == cache_key:
+	var catalog_key := _interactable_object_cache_key()
+	if not interactable_object_catalog_cache_valid or interactable_object_catalog_cache_key != catalog_key:
+		interactable_object_catalog_cache = EnvironmentInteractionViewModelScript.deduplicated_scenario_instruction_records(
+			EnvironmentInteractionControllerScript.interactable_object_view_list(self)
+		)
+		interactable_object_catalog_cache_valid = true
+		interactable_object_catalog_cache_key = catalog_key
+		interactable_object_view_cache_valid = false
+	var view_key := "%s|%s|%s|%s" % [catalog_key, hover_target_id, focus_target_id, selected_object_id]
+	if interactable_object_view_cache_valid and interactable_object_view_cache_key == view_key:
 		return interactable_object_view_cache
-	interactable_object_view_cache = EnvironmentInteractionViewModelScript.deduplicated_scenario_instruction_records(
-		EnvironmentInteractionControllerScript.interactable_object_view_list(self)
-	)
+	interactable_object_view_cache = []
+	for object_value in interactable_object_catalog_cache:
+		if typeof(object_value) != TYPE_DICTIONARY:
+			continue
+		var object_data := (object_value as Dictionary).duplicate(false)
+		var object_id := str(object_data.get("object_id", ""))
+		object_data["hovered"] = object_id == hover_target_id
+		object_data["focused"] = object_id == focus_target_id
+		object_data["selected"] = object_id == selected_object_id
+		interactable_object_view_cache.append(object_data)
 	interactable_object_view_cache_valid = true
-	interactable_object_view_cache_key = cache_key
+	interactable_object_view_cache_key = view_key
 	return interactable_object_view_cache
 
 
 func _interactable_object_cache_key() -> String:
 	if run_state == null:
 		return "no-run"
-	return "%d|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s" % [
+	return "%d|%s|%s|%s|%s|%s|%s|%s" % [
 		run_state.get_instance_id(),
 		_interactable_environment_cache_token(run_state.current_environment),
 		JSON.stringify([run_state.delivery_physical_interactions(), run_state.delivery_arrival_interaction()]),
 		current_screen,
-		hover_target_id,
-		focus_target_id,
-		selected_object_id,
 		selected_event_id,
 		selected_event_choice_id,
 		selected_item_offer_id,
@@ -15793,6 +16017,8 @@ func _refresh_developer_authored_environment() -> Dictionary:
 	# Placement is interaction geometry. Discard the projection cached for the
 	# pre-save layout before rebuilding or the canvas receives its old rect until
 	# an unrelated run-state change invalidates the cache.
+	interactable_object_catalog_cache_valid = false
+	interactable_object_catalog_cache_key = ""
 	interactable_object_view_cache_valid = false
 	interactable_object_view_cache_key = ""
 	if run_state == null or run_state.current_environment.is_empty():
@@ -17415,6 +17641,7 @@ func _route_ended_run_if_needed(terminal_result: Dictionary = {}) -> bool:
 	_record_profile_run_result_once(terminal_result)
 	_clear_terminal_interaction_state()
 	_set_current_screen(SCREEN_VICTORY)
+	_present_terminal_run_screen()
 	_record_challenge_completion_if_needed()
 	var message := str(terminal_result.get("message", "")).strip_edges()
 	if message.is_empty():
@@ -17459,11 +17686,26 @@ func _route_failed_run_if_needed(terminal_result: Dictionary = {}) -> bool:
 	_record_profile_run_result_once(terminal_result)
 	_clear_terminal_interaction_state()
 	_set_current_screen(SCREEN_FAILURE)
+	_present_terminal_run_screen()
 	var message := run_state.run_failure_message
 	if message.strip_edges().is_empty():
 		message = str(terminal_result.get("message", "The run is over."))
 	_show_message(message)
 	return true
+
+
+func _present_terminal_run_screen() -> void:
+	# Terminal state can be discovered outside the broad refresh path (for
+	# example by an offscreen cabinet tick or autosave preparation). Apply the
+	# exclusive report immediately instead of depending on the caller to refresh.
+	if run_state == null or not run_state.is_terminal():
+		return
+	start_screen.visible = false
+	run_screen.visible = true
+	_invalidate_run_screen_layout()
+	_apply_focus_layout()
+	_refresh_environment_result_feedback()
+	_render_run_report()
 
 
 func _process_terminal_meta_bag_drops() -> void:
@@ -17709,7 +17951,11 @@ func _create_game_module(definition: Dictionary) -> GameModule:
 	var module_path := str(definition.get("module_path", ""))
 	if module_path.is_empty() or module_path.ends_with("_ui.gd") or module_path.begins_with("res://data/runtime/"):
 		return null
-	var module_script: Script = load(module_path)
+	var module_script: Script = game_module_script_cache.get(module_path) as Script
+	if module_script == null:
+		module_script = load(module_path)
+		if module_script != null:
+			_cache_game_module_script(module_path, module_script)
 	if module_script == null:
 		return null
 	var module_instance: Variant = module_script.new()
@@ -18414,6 +18660,7 @@ func _hide_event_choice_popup(clear_snapshot: bool = true) -> void:
 
 
 func _clear_event_choice_popup_choices() -> void:
+	_clear_event_choice_popup_button_press()
 	if event_choice_popup_choices_list != null:
 		# Detach immediately so a newly-built offer is never measured together
 		# with cards that are merely queued for deletion from the previous one.
@@ -19210,8 +19457,8 @@ func _world_map_node_should_render(node: Dictionary, is_current: bool, is_availa
 	return FoundationTravelViewModelScript.world_map_node_should_render(self, node, is_current, is_available_target)
 
 
-func _world_route_for_target(target_id: String) -> Dictionary:
-	return FoundationTravelViewModelScript.world_route_for_target(self, target_id)
+func _world_route_for_target(target_id: String, path_query: Dictionary = {}) -> Dictionary:
+	return FoundationTravelViewModelScript.world_route_for_target(self, target_id, path_query)
 
 
 func _travel_choice_view_list() -> Array:

@@ -343,6 +343,8 @@ static func _append_effect_badges(badges: Array, effect: Dictionary) -> void:
 	_add_delta_badge(badges, "suspicion", int(effect.get("cheat_suspicion_delta", 0)), "Cheat heat change")
 	if bool(effect.get("active_item", false)) or str(effect.get("active_mode", "")).strip_edges() != "":
 		_add_badge(badges, _badge("time_actions", "use", "neutral", "Active item"))
+	if int(effect.get("travel_option_bonus", 0)) > 0:
+		_add_badge(badges, _badge("class_route", "+%d" % int(effect.get("travel_option_bonus", 0)), "good", "Travel options"))
 	if int(effect.get("travel_scouting_level", 0)) > 0:
 		_add_badge(badges, _badge("distance", "scout", "good", "Travel scouting"))
 	var families := _copy_dict(effect.get("families", {}))

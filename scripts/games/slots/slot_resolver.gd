@@ -96,7 +96,6 @@ func resolve_spin(machine: Dictionary, action_id: String, selected_bet: Dictiona
 			nudge_event = _copy_dict(shifted_live.get("tease_event", {}))
 			entry = family.nudge_entry(machine, definition)
 			nudge_applied = true
-
 	var classification := str(entry.get("classification", "zero_loss"))
 	var side_effects: Dictionary = _derive_grid_side_effects(machine, grid, family_id, stake, entry, definition)
 	var side_grid: Variant = side_effects.get("grid", grid)
