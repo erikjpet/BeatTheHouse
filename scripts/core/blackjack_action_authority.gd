@@ -329,6 +329,10 @@ static func receipt_for(delivery: Dictionary, table_binding: String, result: Dic
 
 
 static func valid_receipt(receipt: Variant, pending: Variant, result: Dictionary, table_binding: String) -> bool:
+	return _valid_receipt(receipt, pending, table_binding, result_fingerprint(result))
+
+
+static func _valid_receipt(receipt: Variant, pending: Variant, table_binding: String, verified_result_fingerprint: String) -> bool:
 	if typeof(receipt) != TYPE_DICTIONARY or typeof(pending) != TYPE_DICTIONARY:
 		return false
 	var provided: Dictionary = receipt
@@ -343,7 +347,7 @@ static func valid_receipt(receipt: Variant, pending: Variant, result: Dictionary
 		and _fingerprint(provided.get("proposal_fingerprint")) \
 		and _fingerprint(provided.get("run_fingerprint")) \
 		and _fingerprint(provided.get("rng_fingerprint")) \
-		and str(provided.get("result_fingerprint", "")) == result_fingerprint(result)
+		and str(provided.get("result_fingerprint", "")) == verified_result_fingerprint
 
 
 static func commit_response(ledger: Dictionary, delivery: Dictionary, response: Dictionary, proposal_fingerprint: String, run_fingerprint: String, rng_fingerprint: String, checkpoint_fingerprint: String, active_replay_limit: int = ACTIVE_REPLAY_LIMIT) -> Dictionary:
@@ -441,7 +445,10 @@ static func _valid_cache_entry(value: Variant, request_key: String, table_bindin
 			or typeof(entry.get("response", null)) != TYPE_DICTIONARY:
 		return false
 	var response: Dictionary = entry.get("response", {})
-	if str(entry.get("result_fingerprint", "")) != result_fingerprint(response) \
+	# Hash the hostile cached response exactly once. The same digest validates both
+	# the cache entry and its embedded apply receipt below.
+	var response_result_fingerprint := result_fingerprint(response)
+	if str(entry.get("result_fingerprint", "")) != response_result_fingerprint \
 			or str(response.get("blackjack_host_request_key", "")) != request_key \
 			or str(response.get("blackjack_host_content_fingerprint", "")) != str(entry.get("result_fingerprint", "")):
 		return false
@@ -465,7 +472,7 @@ static func _valid_cache_entry(value: Variant, request_key: String, table_bindin
 	for receipt_key in ["boundary_ordinal", "intent_fingerprint", "proposal_fingerprint", "recovery_session_fingerprint", "request_key", "result_fingerprint", "rng_fingerprint", "run_fingerprint", "stake", "trusted_context_fingerprint"]:
 		if receipt.get(receipt_key) != entry.get(receipt_key):
 			return false
-	return valid_receipt(receipt, receipt, response, str(receipt.get("table_binding", "")))
+	return _valid_receipt(receipt, receipt, str(receipt.get("table_binding", "")), response_result_fingerprint)
 
 
 static func _binding_matches_response(table_binding: String, response: Dictionary) -> bool:

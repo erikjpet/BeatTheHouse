@@ -1602,10 +1602,11 @@ func _sealed_action_host_surface_intent(surface_action: String, index: int, conf
 	var ledger := _sealed_action_host_ledger(candidate, true)
 	# First entry can materialize and normalize the Blackjack table while the
 	# authority ledger is being created. Persist that deterministic, non-economic
-	# table shape on the detached candidate before sealing a delivery so the
-	# trusted run context is identical when the delivery is consumed.
+	# table shape on the detached candidate before sealing a delivery. The ledger
+	# was fully validated above and store_ledger writes that exact COW value
+	# synchronously, so walking every retained response a second time here adds no
+	# authority at this boundary (the auto-intent path follows the same rule).
 	_sealed_action_host_store_ledger(candidate, ledger)
-	ledger = _sealed_action_host_ledger(candidate, true)
 	var pending: Dictionary = ledger.get("pending_delivery", {})
 	if not pending.is_empty():
 		var retry_surface_actions: Array = action_authority_contract.get("retry_surface_actions", [])
@@ -1651,12 +1652,10 @@ func _sealed_action_host_surface_intent(surface_action: String, index: int, conf
 		var next_session: Dictionary = command.get("ui_state", session) if typeof(command.get("ui_state", session)) == TYPE_DICTIONARY else session
 		ledger = ActionAuthorityScript.stage_session_cow(ledger, next_session)
 		if bool(command.get("direct_resolve", false)) or bool(command.get("resolve", false)):
-			# Persist and reload the detached staged session before sealing. On a
-			# table's first action, storing the session may materialize canonical
-			# non-ledger defaults. The delivery must fingerprint that exact stable
-			# candidate, which is the one published below.
+			# Persist the detached staged session before sealing so any canonical
+			# non-ledger defaults materialized by the table update are present in the
+			# trusted context. The COW ledger itself is already host-validated.
 			_sealed_action_host_store_ledger(candidate, ledger)
-			ledger = _sealed_action_host_ledger(candidate, true)
 			var action_id := str(command.get("action_id", ""))
 			var delivery_stake := int(command.get("set_stake", _current_selected_stake()))
 			var issued: Dictionary = ActionAuthorityScript.issue_delivery_cow(ledger, action_id, _sealed_action_host_trusted_context(candidate, delivery_stake, action_id), delivery_stake, recovery_session)
