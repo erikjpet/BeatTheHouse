@@ -914,6 +914,20 @@ func _check_playtest_fixes01_regressions(library: ContentLibrary, failures: Arra
 		if not recovered or str(broken_run.current_environment.get("id", "")) != expected_environment_id or not bool(recovery_host.call("_environment_is_playable", broken_run)):
 			failures.append("BUG-01 regression: the broken-save fixture did not recover to the deterministic playable first room (recovered=%s expected=%s actual=%s node=%s)." % [recovered, expected_environment_id, str(broken_run.current_environment.get("id", "")), broken_run.current_world_node_id()])
 		recovery_host.free()
+		var start_failure_run: RunState = RunStateScript.new()
+		start_failure_run.start_new("RUN-20260918-137888-001", {"id": "standard", "mode": "standard", "modifiers": {"home_archetype_id": "back_alley"}})
+		start_failure_run.begin_act(1)
+		var start_failure_generator := RunGeneratorScript.new(library)
+		start_failure_generator.next_environment(start_failure_run)
+		var start_recovery_host = preload("res://scripts/ui/foundation_main.gd").new()
+		start_recovery_host.library = library
+		start_recovery_host.generator = start_failure_generator
+		start_recovery_host.run_state = start_failure_run
+		var start_recovered := bool(start_recovery_host.call("_recover_unplayable_environment"))
+		var recovered_modifiers: Dictionary = start_failure_run.challenge_config.get("modifiers", {})
+		if not start_recovered or not bool(start_recovery_host.call("_environment_is_playable", start_failure_run)) or bool(recovered_modifiers.get("scenario_pins_apply_mutations", true)):
+			failures.append("BUG-01 regression: an invalid Back Alley starter scenario still discarded the whole seeded run (recovered=%s environment=%s modifiers=%s)." % [start_recovered, str(start_failure_run.current_environment.get("id", "")), str(recovered_modifiers)])
+		start_recovery_host.free()
 	if not pusher_session_source.contains("exit_work_ticks") or not main_source.contains("Leaving..."):
 		failures.append("BUG-02 regression: Coin Pusher exit work is not absolutely bounded and visibly projected.")
 	if not pull_tabs_source.contains("\"environment_archetype_id\": str(environment.get(\"archetype_id\""):

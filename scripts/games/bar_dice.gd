@@ -69,8 +69,8 @@ const OPPONENT_DIE_SPACING := 29.0
 const MAX_VISIBLE_OPPONENT_ROWS := 3
 const OPPONENT_DICE_ORIGINS := [
 	Vector2(76, 150),
-	Vector2(76, 188),
-	Vector2(76, 226),
+	Vector2(76, 202),
+	Vector2(76, 254),
 ]
 const BAR_PATRON_POSITIONS := [
 	Vector2(94, 84),
@@ -3105,13 +3105,14 @@ func _draw_opponent_dice_rows(surface, state: Dictionary) -> void:
 		var row: Dictionary = rows[i]
 		var origin: Vector2 = OPPONENT_DICE_ORIGINS[i]
 		var accent := C_YELLOW if bool(row.get("winning", false)) else C_PINK_2
-		var panel := Rect2(origin + Vector2(-8, -16), Vector2(204, 34))
+		var panel := Rect2(origin + Vector2(-8, -14), Vector2(164, 48))
 		surface.draw_rect(panel, Color("#130c18"))
 		surface.draw_rect(panel, Color(accent.r, accent.g, accent.b, 0.18), false, 1)
 		surface.surface_label(str(row.get("name", "Rail")).to_upper().left(10), origin + Vector2(0, -5), 7, accent)
-		surface.surface_label(str(row.get("blurb", "Cup ready")).left(18), origin + Vector2(88, -5), 7, C_SOFT)
-		if not str(row.get("banter", "")).is_empty():
-			surface.surface_label(str(row.get("banter", "")).left(28), origin + Vector2(0, 34), 6, C_AMBER)
+		var detail := str(row.get("banter", "")).strip_edges()
+		if detail.is_empty():
+			detail = str(row.get("blurb", "Cup ready"))
+		surface.surface_label(detail.left(15), origin + Vector2(78, -5), 6, C_AMBER)
 		_draw_dice_row(surface, _draw_array_view(row.get("dice", [])), origin + Vector2(0, 7), [], [], _draw_array_view(row.get("scoring_indices", [])), false, OPPONENT_DIE_SIZE, OPPONENT_DIE_SPACING, [], false, true)
 
 

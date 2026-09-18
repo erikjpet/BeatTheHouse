@@ -11,6 +11,7 @@ const TutorialFlowScript := preload("res://scripts/core/tutorial_flow.gd")
 
 var library: ContentLibrary
 var _last_environment_install_errors: Array = []
+var _last_environment_install_failure: Dictionary = {}
 var _world_environment_timing_enabled := false
 var _last_world_environment_timing_usec: Dictionary = {}
 var _last_preview_environment_timing_usec: Dictionary = {}
@@ -34,6 +35,13 @@ func world_environment_timing_snapshot() -> Dictionary:
 
 func preview_environment_timing_snapshot() -> Dictionary:
 	return _last_preview_environment_timing_usec.duplicate(true)
+
+
+# Exposes only the deterministic identity needed by the run-start recovery
+# boundary. The failed environment itself can contain large machine state and
+# must not be retained after rollback.
+func environment_install_failure_snapshot() -> Dictionary:
+	return _last_environment_install_failure.duplicate(true)
 
 
 func cache_game_module_script(module_path: String, module_script: Script) -> void:
@@ -242,6 +250,7 @@ func _restore_travel_snapshot(run_state: RunState, rollback: Dictionary) -> void
 # Builds and assigns the next environment for a run. A prevalidated target is
 # reserved for the travel UI after it validates arrival hours, then advances the clock.
 func next_environment(run_state: RunState, target_archetype_id: String = "", target_prevalidated: bool = false) -> EnvironmentInstance:
+	_last_environment_install_failure = {}
 	# An explicit legacy destination is already authoritative at this boundary.
 	# Reserve departure plus expiry before RNG creation or room generation so a
 	# capacity rejection leaves even a save-loaded RunState byte-identical.
@@ -676,6 +685,12 @@ func _next_world_environment(run_state: RunState, target_archetype_id: String, r
 	var installed := _install_environment_with_rollback(run_state, environment_data, rollback, false)
 	if not bool(installed.get("ok", false)):
 		_last_environment_install_errors = _copy_array(installed.get("errors", []))
+		_last_environment_install_failure = {
+			"target_id": target_id,
+			"scenario_id": str(environment_data.get("scenario_id", "")).strip_edges(),
+			"had_source": had_source,
+			"errors": _last_environment_install_errors.duplicate(true),
+		}
 		if _world_environment_timing_enabled:
 			perf_stages["environment_install"] = Time.get_ticks_usec() - perf_stage_started_usec
 			_last_world_environment_timing_usec = {

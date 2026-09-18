@@ -1565,6 +1565,10 @@ func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 	if run_state == null or run_state.is_tutorial_run() or not bool(run_state.challenge_modifiers().get("grand_casino_prestige", false)) or not starter_card_in_run_inventory or str(coach_snapshot.get("lesson_id", "")).begins_with("tip_first_"):
 		push_error("First normal run after the tutorial did not carry the Players Card/prestige state or repeated an ambient tip: tutorial=%s prestige=%s card=%s coach=%s modifiers=%s inventory=%s." % [str(run_state.is_tutorial_run() if run_state != null else null), str(run_state.challenge_modifiers().get("grand_casino_prestige", false) if run_state != null else null), str(starter_card_in_run_inventory), str(coach_snapshot.get("lesson_id", "")), str(run_state.challenge_modifiers() if run_state != null else {}), str(run_state.inventory if run_state != null else [])])
 		return false
+	var projected_inventory: Array = app.call("_inventory_view_list")
+	if projected_inventory.size() != 1 or str(projected_inventory[0]) != "Grand Casino Players Card" or JSON.stringify(projected_inventory).length() > 80:
+		push_error("Structured meta items leaked raw dictionaries into player-facing inventory text: %s." % JSON.stringify(projected_inventory))
+		return false
 	run_state.current_environment = {"id": "normal_grand_host_ui", "archetype_id": RunState.GRAND_CASINO_ARCHETYPE_ID}
 	app.call("_queue_normal_grand_host_greeting", {"id": "normal_previous_room", "archetype_id": "bar"})
 	var host_greeting: Dictionary = run_state.pending_talk_event("dialogue:normal_grand_host_greeting")

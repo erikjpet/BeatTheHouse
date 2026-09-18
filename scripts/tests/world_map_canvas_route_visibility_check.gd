@@ -72,6 +72,9 @@ func _check_zoomed_route_geometry_survives() -> void:
 	await process_frame
 	var initial_view := canvas.current_view_snapshot()
 	_check(_array(initial_view.get("visible_route_segments", [])).size() >= 2, "Initial map did not expose travel route segments.")
+	for marker_value in _array(initial_view.get("icon_markers", [])):
+		var marker: Dictionary = marker_value
+		_check(not str(marker.get("label", "")).strip_edges().is_empty(), "Visible travel-map marker did not expose its readable destination label.")
 	var selected_snapshot := initial_view.duplicate(true)
 	selected_snapshot["selected_node_id"] = "north"
 	selected_snapshot["map_focus_node_ids"] = ["north"]

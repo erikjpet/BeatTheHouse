@@ -851,7 +851,7 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	run_state.begin_act(1)
 	dev_game_test_mode = false
 	generator.next_environment(run_state)
-	if not _environment_is_playable(run_state):
+	if not _environment_is_playable(run_state) and not _recover_unplayable_environment():
 		var failed_seed := resolved_seed
 		run_state = null
 		_set_current_screen(SCREEN_START)
@@ -1144,7 +1144,30 @@ func _environment_is_playable(candidate: RunState) -> bool:
 func _recover_unplayable_environment() -> bool:
 	if _environment_is_playable(run_state):
 		return true
-	if run_state == null or not run_state.has_world_map():
+	if run_state == null:
+		return false
+	# A normal run can legitimately use Back Alley as its starter housing. Some
+	# scenario overlays have stricter route geometry than that generated room.
+	# Keep the seed, map, base room, and all simulation state deterministic while
+	# suppressing only the overlay that the installer already proved invalid.
+	var failure: Dictionary = generator.environment_install_failure_snapshot() if generator != null and generator.has_method("environment_install_failure_snapshot") else {}
+	var failed_scenario_id := str(failure.get("scenario_id", "")).strip_edges()
+	var failed_target_id := str(failure.get("target_id", "")).strip_edges()
+	var standard_run := str(run_state.challenge_config.get("mode", "standard")).strip_edges().to_lower() == "standard" and not run_state.is_tutorial_run()
+	if standard_run and run_state.current_environment.is_empty() and not failed_scenario_id.is_empty() and not failed_target_id.is_empty():
+		var challenge := run_state.challenge_config.duplicate(true)
+		var modifiers: Dictionary = challenge.get("modifiers", {}) if typeof(challenge.get("modifiers", {})) == TYPE_DICTIONARY else {}
+		var pins: Dictionary = modifiers.get("scenario_pins", {}) if typeof(modifiers.get("scenario_pins", {})) == TYPE_DICTIONARY else {}
+		pins[failed_target_id] = failed_scenario_id
+		modifiers["scenario_pins"] = pins
+		modifiers["scenario_pins_apply_mutations"] = false
+		challenge["modifiers"] = modifiers
+		run_state.challenge_config = challenge
+		generator = RunGenerator.new(library)
+		generator.next_environment(run_state)
+		if _environment_is_playable(run_state):
+			return true
+	if not run_state.has_world_map():
 		return false
 	generator = RunGenerator.new(library)
 	var target_node_id := run_state.current_world_node_id()
@@ -15564,10 +15587,19 @@ func _security_cue_view_list() -> Array:
 
 func _inventory_view_list() -> Array:
 	var result: Array = []
-	for item_id in _string_array(run_state.inventory):
+	if run_state == null:
+		return result
+	for item_value in run_state.inventory:
+		var item_id := _inventory_value_id(item_value)
+		if item_id.is_empty():
+			continue
+		if typeof(item_value) == TYPE_DICTIONARY:
+			var runtime_label := str((item_value as Dictionary).get("display_name", "")).strip_edges()
+			result.append(runtime_label if not runtime_label.is_empty() else _inventory_item_label(item_id))
+			continue
 		var item_definition := library.item(item_id) if library != null else {}
 		if item_definition.is_empty():
-			result.append(_label_from_id(item_id))
+			result.append(_inventory_item_label(item_id))
 			continue
 		var label := str(item_definition.get("display_name", _label_from_id(item_id)))
 		result.append(label)
@@ -19037,7 +19069,8 @@ func _held_container_item_options() -> Array:
 	var result: Array = []
 	if run_state == null or library == null:
 		return result
-	for item_id in _string_array(run_state.inventory):
+	for item_value in run_state.inventory:
+		var item_id := _inventory_value_id(item_value)
 		var option := _container_item_option(item_id)
 		if not option.is_empty():
 			result.append(option)
@@ -19069,7 +19102,12 @@ func _storable_inventory_item_ids() -> Array:
 	var result: Array = []
 	if run_state == null:
 		return result
-	for item_id in _string_array(run_state.inventory):
+	for item_value in run_state.inventory:
+		# Meta-collection instances are already mirrored by the read-only loadout
+		# container and cannot be transferred through the string-id home API.
+		if typeof(item_value) == TYPE_DICTIONARY:
+			continue
+		var item_id := _inventory_value_id(item_value)
 		if _container_item_option(item_id).is_empty():
 			result.append(item_id)
 	return result
@@ -19775,6 +19813,7 @@ func _refresh_coach_at_boundary(surface_transition_wait_satisfied: bool = false)
 	# Reconcile against the live room after every tutorial boundary so the input
 	# shield never turns a visible, highlighted object into an unclickable prop.
 	_sync_coach_environment_anchor_geometry()
+	_sync_coach_game_surface_anchor_geometry()
 	_sync_coach_focus_visibility()
 	_sync_talk_dock_coach_avoid_rect()
 

@@ -21,6 +21,7 @@ const CURRENT_MARKER_CORE := Color("#5df2a2")
 const CURRENT_MARKER_LABEL_BG := Color("#05060a", 0.90)
 const CURRENT_MARKER_LABEL_TEXT := Color("#ffffff")
 const CURRENT_MARKER_LABEL_FONT_SIZE := 11
+const DESTINATION_LABEL_SIZE := Vector2(96.0, 18.0)
 
 var snapshot: Dictionary = {}
 var icon_texture_cache: Dictionary = {}
@@ -164,6 +165,7 @@ func current_view_snapshot() -> Dictionary:
 		var marker_rect := Rect2(center - ICON_SIZE * 0.5, ICON_SIZE)
 		markers.append({
 			"id": node_id,
+			"label": str(node.get("label", node.get("display_name", node_id.replace("_", " ").capitalize()))),
 			"position": _copy_dict(node.get("position", {})),
 			"screen_center": {"x": center.x, "y": center.y},
 			"screen_rect": {"x": marker_rect.position.x, "y": marker_rect.position.y, "w": marker_rect.size.x, "h": marker_rect.size.y},
@@ -567,6 +569,8 @@ func _draw_nodes() -> void:
 			draw_circle(pos, 7.0, color if is_current or travel_enabled else Color(color.r, color.g, color.b, alpha))
 		if is_current:
 			_draw_current_node_pin(pos, node)
+		elif travel_target or node_id == selected_id:
+			_draw_destination_node_label(pos, node, color)
 		if travel_target:
 			var status_color := Color("#5df2a2", alpha)
 			if bool(node.get("closing_soon", false)):
@@ -589,6 +593,20 @@ func _draw_current_node_ring(pos: Vector2, radius: float) -> void:
 	draw_circle(pos, radius + 9.0 + pulse * 3.0, Color(CURRENT_MARKER_RING, 0.18 + pulse * 0.12), false, 3.0)
 	draw_circle(pos, radius + 5.0, Color(CURRENT_MARKER_CORE, 0.72), false, 2.0)
 	draw_circle(pos, radius + 1.5, Color("#ffffff", 0.80), false, 1.5)
+
+
+func _draw_destination_node_label(pos: Vector2, node: Dictionary, color: Color) -> void:
+	var label := str(node.get("label", node.get("display_name", str(node.get("id", "")).replace("_", " ").capitalize()))).strip_edges().left(20)
+	if label.is_empty():
+		return
+	var label_pos := pos + Vector2(-DESTINATION_LABEL_SIZE.x * 0.5, MARKER_RADIUS + 7.0)
+	if label_pos.y + DESTINATION_LABEL_SIZE.y > size.y - 4.0:
+		label_pos.y = pos.y - MARKER_RADIUS - DESTINATION_LABEL_SIZE.y - 7.0
+	label_pos.x = clampf(label_pos.x, 4.0, maxf(4.0, size.x - DESTINATION_LABEL_SIZE.x - 4.0))
+	var rect := Rect2(label_pos, DESTINATION_LABEL_SIZE)
+	draw_rect(rect, Color("#05060a", 0.84))
+	draw_rect(rect, Color(color.r, color.g, color.b, 0.76), false, 1.0)
+	draw_string(ThemeDB.fallback_font, rect.position + Vector2(4.0, 12.0), label, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x - 8.0, 9, Color("#ffffff", 0.92))
 
 
 func _draw_current_node_pin(pos: Vector2, node: Dictionary) -> void:
