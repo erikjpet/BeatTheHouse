@@ -849,7 +849,7 @@ static func patrons_with_talk_focus(patrons: Array, focused_speaker_value: Varia
 
 
 # Applies structured module changes through RunState.
-static func apply_result(run_state: RunState, result: Dictionary, rng: RngStream = null) -> void:
+static func apply_result(run_state: RunState, result: Dictionary, rng: RngStream = null, trusted_result_fingerprint: String = "") -> void:
 	if run_state == null:
 		return
 	if not bool(result.get("ok", false)):
@@ -859,7 +859,7 @@ static func apply_result(run_state: RunState, result: Dictionary, rng: RngStream
 	if (result_game_id == "blackjack" \
 			or bool(result.get("table_game_authoritative", false)) \
 			or bool(result.get("sealed_action_authoritative", false))) \
-			and not run_state.consume_blackjack_authority_result_receipt(result):
+			and not run_state.consume_blackjack_authority_result_receipt(result, trusted_result_fingerprint):
 		return
 	normalize_skill_cheat_contract(result)
 	var deltas := _normalize_result_deltas(result.get("deltas", {}))

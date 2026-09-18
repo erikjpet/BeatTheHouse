@@ -4694,7 +4694,7 @@ func route_grand_casino_game_currency(result: Dictionary, deltas: Dictionary) ->
 	return routed
 
 
-func consume_blackjack_authority_result_receipt(result: Dictionary) -> bool:
+func consume_blackjack_authority_result_receipt(result: Dictionary, trusted_result_fingerprint: String = "") -> bool:
 	var game_id := str(result.get("game_id", result.get("source_id", "")))
 	if game_id.is_empty():
 		return false
@@ -4702,6 +4702,13 @@ func consume_blackjack_authority_result_receipt(result: Dictionary) -> bool:
 		return false
 	var receipt: Dictionary = result.get("blackjack_host_apply_receipt", {})
 	var game_states: Dictionary = current_environment.get("game_states", {}) if typeof(current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	# Receipt validation used to serialize and hash the same dense Slot result once
+	# per cabinet. Six active machines therefore made one foreground spin pay six
+	# identical hashes. Verify the result once, then retain the exact per-table
+	# binding and pending-receipt checks below.
+	var verified_result_fingerprint := trusted_result_fingerprint
+	if verified_result_fingerprint.is_empty():
+		verified_result_fingerprint = BlackjackActionAuthorityScript.result_fingerprint(result)
 	# A room can contain several fixtures backed by one game module. Locate the
 	# exact pending receipt among that game's state keys instead of always reading
 	# the default table, and require a unique cryptographic match before mutation.
@@ -4716,7 +4723,7 @@ func consume_blackjack_authority_result_receipt(result: Dictionary) -> bool:
 		var candidate_table: Dictionary = table_value
 		var pending: Variant = candidate_table.get("_blackjack_pending_apply_receipt", null)
 		var binding := action_authority_table_binding(state_key, current_environment)
-		if BlackjackActionAuthorityScript.valid_receipt(receipt, pending, result, binding):
+		if BlackjackActionAuthorityScript.valid_receipt_with_result_fingerprint(receipt, pending, binding, verified_result_fingerprint):
 			matching_state_keys.append(state_key)
 	if matching_state_keys.size() != 1:
 		return false

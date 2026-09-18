@@ -13,11 +13,15 @@ const ActionAuthority := preload("res://scripts/core/blackjack_action_authority.
 const SAVE_SLOT := "slot_foreground_autoplay_performance_probe"
 const SAMPLE_COUNT := 16
 const WARMUP_COUNT := 2
-const MAX_ACTION_P95_MS := 75.0
-const MAX_ACTION_MS := 100.0
-const MAX_NEXT_FRAME_P95_MS := 25.0
+const MAX_ACTION_P95_MS := 22.0
+const MAX_ACTION_MS := 30.0
+const MAX_NEXT_FRAME_P95_MS := 20.0
+const MAX_DRAW_P95_MS := 4.0
+const MAX_BACKGROUND_DRAIN_P95_MS := 8.0
 const MAX_TAIL_TO_HEAD_RATIO := 1.5
 const MAX_CACHED_RESPONSES := 2
+const FIXTURE_COUNT := 6
+const FOREGROUND_STATE_KEY := "slot:6"
 
 var app: Control
 var failures: Array = []
@@ -40,14 +44,23 @@ func _run() -> void:
 	app.set("autosave_slot_id", SAVE_SLOT)
 	root.add_child(app)
 	await _settle(3)
-	if not app.call("start_foundation_run", "SLOT-FOREGROUND-AUTOPLAY-PERF"):
-		_fail("Could not start the autoplay performance run.")
+	var practice_result: Dictionary = app.call("start_game_test_session", "slot")
+	if not bool(practice_result.get("ok", false)):
+		_fail("Could not start the six-cabinet Slot practice room.")
 		_finish()
 		return
 	await _settle(3)
 	var run_state: RunState = app.get("run_state")
 	run_state.bankroll = 1000000
-	_install_slot_room(run_state)
+	var fixture_identities := _fixture_identities(run_state)
+	var expected_identities := [
+		"pinball:classic_3_reel", "buffalo:line_5x3", "pinball:video_feature",
+		"buffalo:classic_3_reel", "pinball:line_5x3", "buffalo:video_feature",
+	]
+	if fixture_identities != expected_identities:
+		_fail("Six-cabinet fixture did not contain every authored Slot identity: %s." % JSON.stringify(fixture_identities))
+		_finish()
+		return
 	# Reproduce the late-run cost that was hidden by the short renderer probe.
 	for index in range(RunState.MAX_STORY_LOG_ENTRIES):
 		run_state.log_story({
@@ -57,12 +70,12 @@ func _run() -> void:
 			"slot_event": "slot_spin",
 			"classification": "zero_loss",
 			"stake_cost": 2,
-			"environment_id": "slot_foreground_autoplay_perf_room",
+			"environment_id": str(run_state.current_environment.get("id", "practice_slot")),
 			"sample": index,
 		})
 	app.call("_refresh_run_action_service")
 	app.call("_refresh")
-	if not bool(app.call("enter_game", "slot", "slot:2")):
+	if not bool(app.call("enter_game", "slot", FOREGROUND_STATE_KEY)):
 		_fail("Could not enter the foreground slot fixture.")
 		_finish()
 		return
@@ -74,13 +87,14 @@ func _run() -> void:
 		return
 	var initial_fallbacks := int(app.get("embedded_full_snapshot_fallback_count"))
 	var initial_incremental := int(app.get("embedded_incremental_snapshot_count"))
+	canvas.call("reset_performance_counters")
 	for sample_index in range(SAMPLE_COUNT + WARMUP_COUNT):
-		_arm_next_ordinary_autoplay_spin(run_state, "slot:2")
-		_arm_background_ordinary_autoplay_spin(run_state, "slot")
-		_arm_background_ordinary_autoplay_spin(run_state, "slot:3")
+		_arm_next_ordinary_autoplay_spin(run_state, FOREGROUND_STATE_KEY)
+		for state_key in _background_state_keys():
+			_arm_background_ordinary_autoplay_spin(run_state, state_key)
 		app.call("_invalidate_environment_runtime_schedule", run_state.current_environment)
 		var background_spins_before := _background_spin_count(run_state)
-		var before_machine := SlotState.peek_machine(run_state.current_environment, "slot:2")
+		var before_machine := SlotState.peek_machine(run_state.current_environment, FOREGROUND_STATE_KEY)
 		var before_count := int(before_machine.get("spin_count", 0))
 		var action_started_usec := Time.get_ticks_usec()
 		var surface_time_msec := int(app.call("_environment_simulation_time_msec"))
@@ -92,7 +106,7 @@ func _run() -> void:
 		app.call("_apply_game_surface_automation_command", authority_command, authority_ui_state)
 		var resolve_usec := Time.get_ticks_usec() - resolve_started_usec
 		var action_usec := Time.get_ticks_usec() - action_started_usec
-		var after_machine := SlotState.peek_machine(run_state.current_environment, "slot:2")
+		var after_machine := SlotState.peek_machine(run_state.current_environment, FOREGROUND_STATE_KEY)
 		var after_count := int(after_machine.get("spin_count", 0))
 		if after_count != before_count + 1:
 			_fail("Autoplay sample %d advanced spin count %d -> %d." % [sample_index, before_count, after_count])
@@ -104,10 +118,10 @@ func _run() -> void:
 		# Prevent the intentionally forced next-due timestamp from creating a second
 		# automatic action while the probe yields. The measured action above still
 		# crossed the exact production autoplay path with autoplay enabled.
-		var paused_machine := SlotState.read_machine(run_state.current_environment, "slot:2")
+		var paused_machine := SlotState.read_machine(run_state.current_environment, FOREGROUND_STATE_KEY)
 		paused_machine["slot_autoplay_active"] = false
 		paused_machine["slot_autoplay_next_msec"] = 0
-		SlotState.write_runtime_machine(run_state.current_environment, "slot:2", paused_machine)
+		SlotState.write_runtime_machine(run_state.current_environment, FOREGROUND_STATE_KEY, paused_machine)
 		var frame_started_usec := Time.get_ticks_usec()
 		await process_frame
 		var frame_usec := Time.get_ticks_usec() - frame_started_usec
@@ -121,15 +135,17 @@ func _run() -> void:
 			_fail("Autoplay sample %d advanced %d background spins during the visible reel animation." % [sample_index, background_spins_after - background_spins_before])
 			break
 		var sample_drain_frames: Array[float] = []
-		for _frame_index in range(3):
+		# The scheduler deliberately leaves one quiet frame between background
+		# settlements, so five overdue cabinets need at most ten service passes.
+		for _frame_index in range(FIXTURE_COUNT * 2):
 			canvas.set("surface_animation_channels", {})
 			canvas.set("surface_animation_handoff_until_msec", 0)
 			frame_started_usec = Time.get_ticks_usec()
 			app.call("_advance_environment_game_runtime")
 			sample_drain_frames.append(float(Time.get_ticks_usec() - frame_started_usec))
 		background_spins_after = _background_spin_count(run_state)
-		if background_spins_after != background_spins_before + 2:
-			_fail("Autoplay sample %d did not drain both deferred background spins; got %d." % [sample_index, background_spins_after - background_spins_before])
+		if background_spins_after != background_spins_before + FIXTURE_COUNT - 1:
+			_fail("Autoplay sample %d did not drain all five deferred background spins; got %d." % [sample_index, background_spins_after - background_spins_before])
 			break
 		var rendered: Dictionary = canvas.call("realtime_surface_state")
 		if str(rendered.get("slot_animation_id", "")) != animation_id:
@@ -143,7 +159,7 @@ func _run() -> void:
 			background_frame_samples_usec.append_array(sample_background_frames)
 			background_drain_frame_samples_usec.append_array(sample_drain_frames)
 			spin_ids.append(animation_id)
-	var machine := SlotState.peek_machine(run_state.current_environment, "slot:2")
+	var machine := SlotState.peek_machine(run_state.current_environment, FOREGROUND_STATE_KEY)
 	var ledger: Dictionary = machine.get("_blackjack_action_authority", {}) if typeof(machine.get("_blackjack_action_authority", {})) == TYPE_DICTIONARY else {}
 	var cache_count := (ledger.get("request_order", []) as Array).size() if typeof(ledger.get("request_order", [])) == TYPE_ARRAY else -1
 	var action_stats := _stats(action_samples_usec)
@@ -154,12 +170,18 @@ func _run() -> void:
 	var fallback_delta := int(app.get("embedded_full_snapshot_fallback_count")) - initial_fallbacks
 	var incremental_delta := int(app.get("embedded_incremental_snapshot_count")) - initial_incremental
 	var authority_profile := _authority_profile(run_state, machine, ledger)
+	var canvas_performance: Dictionary = canvas.call("performance_counters")
+	var background_drain_stats := _stats(background_drain_frame_samples_usec)
 	if float(action_stats.get("p95_ms", 999.0)) > MAX_ACTION_P95_MS:
 		_fail("Foreground autoplay action p95 %.3f ms exceeded %.3f ms." % [float(action_stats.get("p95_ms", 0.0)), MAX_ACTION_P95_MS])
 	if float(action_stats.get("max_ms", 999.0)) > MAX_ACTION_MS:
 		_fail("Foreground autoplay action max %.3f ms exceeded %.3f ms." % [float(action_stats.get("max_ms", 0.0)), MAX_ACTION_MS])
 	if float(frame_stats.get("p95_ms", 999.0)) > MAX_NEXT_FRAME_P95_MS:
 		_fail("Foreground autoplay next-frame p95 %.3f ms exceeded %.3f ms." % [float(frame_stats.get("p95_ms", 0.0)), MAX_NEXT_FRAME_P95_MS])
+	if float(canvas_performance.get("draw_p95_ms", 999.0)) > MAX_DRAW_P95_MS:
+		_fail("Six-type Slot draw p95 %.3f ms exceeded %.3f ms." % [float(canvas_performance.get("draw_p95_ms", 0.0)), MAX_DRAW_P95_MS])
+	if float(background_drain_stats.get("p95_ms", 999.0)) > MAX_BACKGROUND_DRAIN_P95_MS:
+		_fail("Five-cabinet drain p95 %.3f ms exceeded %.3f ms." % [float(background_drain_stats.get("p95_ms", 0.0)), MAX_BACKGROUND_DRAIN_P95_MS])
 	if tail_ratio > MAX_TAIL_TO_HEAD_RATIO:
 		_fail("Foreground autoplay tail/head ratio %.3fx exceeded %.3fx." % [tail_ratio, MAX_TAIL_TO_HEAD_RATIO])
 	if cache_count < 0 or cache_count > MAX_CACHED_RESPONSES:
@@ -178,7 +200,8 @@ func _run() -> void:
 		"resolve": _stats(resolve_samples_usec),
 		"next_frame": frame_stats,
 		"background_frames": _stats(background_frame_samples_usec),
-		"background_drain_frames": _stats(background_drain_frame_samples_usec),
+		"background_drain_frames": background_drain_stats,
+		"fixture_identities": fixture_identities,
 		"head_avg_ms": head_avg,
 		"tail_avg_ms": tail_avg,
 		"tail_to_head_ratio": tail_ratio,
@@ -188,39 +211,9 @@ func _run() -> void:
 		"unique_animation_ids": _unique_count(spin_ids),
 		"action_samples_ms": _milliseconds(action_samples_usec),
 		"authority_profile": authority_profile,
+		"canvas_performance": canvas_performance,
 	}, "\t"))
 	_finish()
-
-
-func _install_slot_room(run_state: RunState) -> void:
-	var slot_game: GameModule = app.call("_game_module_for_id", "slot")
-	var environment := {
-		"id": "slot_foreground_autoplay_perf_room",
-		"archetype_id": "grand_casino",
-		"display_name": "Foreground Slot Performance",
-		"kind": "casino",
-		"tier": 3,
-		"turns": 0,
-		"game_ids": ["slot"],
-		"event_ids": [],
-		"resolved_event_ids": [],
-		"item_offers": [],
-		"service_ids": [],
-		"lender_hooks": [],
-		"travel_hooks": [],
-		"next_archetypes": [],
-		"object_fixtures": [],
-		"layout": {"game_fixture_counts": {"slot": 3}},
-		"game_states": {},
-	}
-	environment["layout"] = EnvironmentInstance.ensure_generated_layout(environment)
-	environment["game_states"] = slot_game.generate_environment_fixture_states(
-		run_state,
-		environment,
-		run_state.create_rng("slot_foreground_autoplay_fixture"),
-		3
-	)
-	run_state.set_environment(environment)
 
 
 func _arm_next_ordinary_autoplay_spin(run_state: RunState, state_key: String) -> void:
@@ -245,8 +238,28 @@ func _arm_background_ordinary_autoplay_spin(run_state: RunState, state_key: Stri
 
 
 func _background_spin_count(run_state: RunState) -> int:
-	return int(SlotState.peek_machine(run_state.current_environment, "slot").get("spin_count", 0)) \
-		+ int(SlotState.peek_machine(run_state.current_environment, "slot:3").get("spin_count", 0))
+	var total := 0
+	for state_key in _background_state_keys():
+		total += int(SlotState.peek_machine(run_state.current_environment, state_key).get("spin_count", 0))
+	return total
+
+
+func _background_state_keys() -> Array[String]:
+	var keys: Array[String] = []
+	for fixture_index in range(FIXTURE_COUNT):
+		var state_key := "slot" if fixture_index == 0 else "slot:%d" % (fixture_index + 1)
+		if state_key != FOREGROUND_STATE_KEY:
+			keys.append(state_key)
+	return keys
+
+
+func _fixture_identities(run_state: RunState) -> Array:
+	var identities: Array = []
+	for fixture_index in range(FIXTURE_COUNT):
+		var state_key := "slot" if fixture_index == 0 else "slot:%d" % (fixture_index + 1)
+		var machine := SlotState.peek_machine(run_state.current_environment, state_key)
+		identities.append("%s:%s" % [str(machine.get("type_id", "")), str(machine.get("format_id", ""))])
+	return identities
 
 
 func _stats(samples_usec: Array[float]) -> Dictionary:
@@ -287,6 +300,9 @@ func _milliseconds(values: Array[float]) -> Array:
 func _authority_profile(run_state: RunState, machine: Dictionary, ledger: Dictionary) -> Dictionary:
 	var validation_samples: Array[float] = []
 	var response_fingerprint_samples: Array[float] = []
+	var candidate_detach_samples: Array[float] = []
+	var candidate_resolve_samples: Array[float] = []
+	var candidate_evidence_samples: Array[float] = []
 	var binding := RunState.action_authority_table_binding("slot", run_state.current_environment)
 	var order: Array = ledger.get("request_order", []) if typeof(ledger.get("request_order", [])) == TYPE_ARRAY else []
 	var cache: Dictionary = ledger.get("request_cache", {}) if typeof(ledger.get("request_cache", {})) == TYPE_DICTIONARY else {}
@@ -299,12 +315,25 @@ func _authority_profile(run_state: RunState, machine: Dictionary, ledger: Dictio
 		started = Time.get_ticks_usec()
 		ActionAuthority.result_fingerprint(response)
 		response_fingerprint_samples.append(float(Time.get_ticks_usec() - started))
+		started = Time.get_ticks_usec()
+		var candidate := run_state.detached_host_resolution_candidate(FOREGROUND_STATE_KEY, true)
+		candidate_detach_samples.append(float(Time.get_ticks_usec() - started))
+		var profile_rng := run_state.create_rng("slot_foreground_profile")
+		started = Time.get_ticks_usec()
+		app.get("current_game").call("_machine_game_resolve_candidate", "spin", 2, candidate, profile_rng, {})
+		candidate_resolve_samples.append(float(Time.get_ticks_usec() - started))
+		started = Time.get_ticks_usec()
+		app.get("current_game").call("_machine_game_authority_evidence", candidate, "spin", 2, {})
+		candidate_evidence_samples.append(float(Time.get_ticks_usec() - started))
 	return {
 		"machine_bytes": JSON.stringify(machine).length(),
 		"ledger_bytes": JSON.stringify(ledger).length(),
 		"latest_response_bytes": JSON.stringify(response).length(),
 		"ledger_validation_avg_ms": _average(validation_samples) / 1000.0,
 		"response_fingerprint_avg_ms": _average(response_fingerprint_samples) / 1000.0,
+		"candidate_detach_avg_ms": _average(candidate_detach_samples) / 1000.0,
+		"candidate_resolve_avg_ms": _average(candidate_resolve_samples) / 1000.0,
+		"candidate_evidence_avg_ms": _average(candidate_evidence_samples) / 1000.0,
 	}
 
 

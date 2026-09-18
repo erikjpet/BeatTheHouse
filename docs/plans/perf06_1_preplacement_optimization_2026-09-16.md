@@ -656,6 +656,43 @@ ms against 25 ms after passing in the preceding exact export, so it remains a
 variance finding rather than a threshold or behavior change. No budget was
 changed.
 
+### Six-cabinet Slot transaction follow-up
+
+The Slot practice environment now exposes all six authored family/format
+identities at once: Pinball and Buffalo versions of Classic 3-Reel, 5x3 Line,
+and Video Feature. The sustained probe enters that player-facing practice room,
+watches the sixth cabinet, keeps the other five due for autoplay, and verifies
+that no background settlement runs during the visible reel animation.
+
+Profiling found that receipt application serialized and hashed the same dense
+foreground result once for every Slot fixture in the room. Receipt validation
+now computes that content fingerprint once while retaining the exact unique
+pending-receipt and table-binding check for each cabinet. The host also reuses
+the fingerprints it has just verified when committing the same response, and
+unchanged non-expiring dialogue no longer rebuilds its dock projection after
+every game action.
+
+| Native six-cabinet player-facing practice path | Before | After | Change |
+| --- | ---: | ---: | ---: |
+| Foreground autoplay action average | 26.360 ms | 14.625 ms | -44.5% |
+| Foreground autoplay action p95 | 28.588 ms | 18.451 ms | -35.5% |
+| Immediate next-frame p95 | 12.160 ms | 10.896 ms | -10.4% |
+| Full Slot draw average | 2.210 ms | 2.269 ms | within measurement noise |
+| Full Slot draw p95 | 2.850 ms | 3.083 ms | within measurement noise |
+| Five-cabinet deferred settlement average | 1.430 ms | 0.800 ms | -44.1% |
+| Five-cabinet deferred settlement p95 | 4.360 ms | 2.599 ms | -40.4% |
+
+The tightened regression gate requires action p95 <= 22 ms, action max <= 30
+ms, next-frame p95 <= 20 ms, draw p95 <= 4 ms, and deferred-settlement p95 <=
+8 ms. It passed 16 measured foreground spins with 16 unique animation IDs,
+zero full-snapshot fallbacks, exact five-spin deferred drainage per sample, and
+a bounded one-response replay cache. Slot cadence, 1/3/6/12-cabinet runtime and
+storage, Grand Casino travel persistence, static validation, and the focused
+Slot suite passed. Two ten-seed determinism runs matched across 685 checkpoints
+with combined hash `3261772678`. No performance budget, simulation input,
+economy rule, outcome, RNG sequence, native/Web authority rule, or visual
+behavior changed.
+
 Deterministic replay passed twice across 3 seeds and 204 checkpoints with the
 unchanged combined hash `1211704896`. Three 61-observation native matrices kept
 all direct resolve paths inside their locked budgets. The first two had isolated

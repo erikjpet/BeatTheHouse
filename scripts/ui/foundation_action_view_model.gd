@@ -492,6 +492,19 @@ static func game_test_environment(host: Variant, game_id: String, game: GameModu
 	var environment_overrides = host._copy_dict(overrides.get("environment", {}))
 	if not environment_overrides.is_empty():
 		host._deep_merge_dict(environment, environment_overrides)
+	if game_id == "slot":
+		# The Slot practice room doubles as the production stress room: expose one
+		# fixture for every family/format identity so six cabinets can autoplay while
+		# the player watches any one of them.
+		var slot_layout: Dictionary = host._copy_dict(environment.get("layout", {}))
+		var fixture_counts: Dictionary = host._copy_dict(slot_layout.get("game_fixture_counts", {}))
+		fixture_counts[game_id] = 6
+		slot_layout["game_fixture_counts"] = fixture_counts
+		slot_layout["game_spots"] = [
+			[85, 150], [220, 150], [355, 150],
+			[525, 150], [675, 150], [825, 150],
+		]
+		environment["layout"] = slot_layout
 	var rng = host.run_state.create_rng("game_test_environment:%s" % game_id) if host.run_state != null else RngStream.new()
 	if rng.seed_value == 0:
 		rng.configure(1)
@@ -505,7 +518,21 @@ static func game_test_environment(host: Variant, game_id: String, game: GameModu
 		if game_id == "scratch_tickets":
 			_set_scratch_ticket_practice_stock(generated)
 		var states: Dictionary = environment.get("game_states", {})
-		states[game_id] = generated.duplicate(true)
+		var fixture_counts: Dictionary = host._copy_dict(host._copy_dict(environment.get("layout", {})).get("game_fixture_counts", {}))
+		var fixture_count := maxi(1, int(fixture_counts.get(game_id, 1)))
+		var fixture_states: Dictionary = {}
+		if fixture_count > 1 and game.has_method("generate_environment_fixture_states"):
+			var fixture_states_value: Variant = game.call("generate_environment_fixture_states", host.run_state, environment, rng.fork("fixture_states:%s" % game_id), fixture_count)
+			if typeof(fixture_states_value) == TYPE_DICTIONARY:
+				fixture_states = fixture_states_value as Dictionary
+		if fixture_states.is_empty():
+			states[game_id] = generated.duplicate(true)
+		else:
+			for fixture_key_value in fixture_states.keys():
+				var fixture_key := str(fixture_key_value)
+				var fixture_state_value: Variant = fixture_states.get(fixture_key_value)
+				if typeof(fixture_state_value) == TYPE_DICTIONARY and not (fixture_state_value as Dictionary).is_empty():
+					states[fixture_key] = (fixture_state_value as Dictionary).duplicate(true)
 		environment["game_states"] = states
 	environment["layout"] = EnvironmentInstance.ensure_generated_layout(environment)
 	return environment

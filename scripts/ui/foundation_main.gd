@@ -2030,13 +2030,21 @@ func _sealed_action_host_candidate_proposal(resolve_method: StringName, action_i
 		"run_snapshot": {} if compact_evidence else proposal_candidate.to_save_snapshot(),
 		"rng_snapshot": proposal_rng.snapshot(),
 	}
+	var compact_component_fingerprints: Dictionary = {}
 	if compact_evidence and fingerprint_output:
+		# Bind the authoritative output machine and RNG once, then seal their hashes
+		# together. Exact structural replay already compares the full result, and the
+		# apply/commit receipts bind that result separately; hashing the same dense
+		# presentation here a third time added no independent validation.
+		compact_component_fingerprints = {
+			"authority_fingerprint": GameRitualRuntimeScript.canonical_fingerprint(authority_evidence),
+			"rng_fingerprint": GameRitualRuntimeScript.canonical_fingerprint(proposal.get("rng_snapshot", {})),
+		}
 		proposal["output_fingerprint"] = GameRitualRuntimeScript.canonical_fingerprint({
 			"input_fingerprint": proposal_input_fingerprint,
 			"ok": bool(proposal.get("ok", false)),
-			"result": proposal.get("result", {}),
-			"rng_snapshot": proposal.get("rng_snapshot", {}),
-			"authority_evidence": authority_evidence,
+			"rng_fingerprint": compact_component_fingerprints.get("rng_fingerprint", ""),
+			"authority_fingerprint": compact_component_fingerprints.get("authority_fingerprint", ""),
 		})
 	elif not compact_evidence:
 		proposal["output_fingerprint"] = GameRitualRuntimeScript.canonical_fingerprint(proposal)
@@ -2045,7 +2053,7 @@ func _sealed_action_host_candidate_proposal(resolve_method: StringName, action_i
 		# into exact structural replay can leave the second digest empty after the
 		# host compares every replay output and authority-evidence field below.
 		proposal["output_fingerprint"] = ""
-	return {"proposal": proposal, "candidate": proposal_candidate, "authority_evidence": authority_evidence}
+	return {"proposal": proposal, "candidate": proposal_candidate, "authority_evidence": authority_evidence, "component_fingerprints": compact_component_fingerprints}
 
 
 func _sealed_action_host_candidate_proposals_match(first: Dictionary, replay: Dictionary, proposal_input: Dictionary, first_authority_evidence: Dictionary = {}, replay_authority_evidence: Dictionary = {}) -> bool:
@@ -2150,12 +2158,18 @@ func _sealed_action_host_public_run_snapshot(value: Variant) -> Dictionary:
 	return snapshot
 
 
-func _sealed_action_host_proposal_fingerprints(proposal: Dictionary, proposal_input: Dictionary, compact_authority_evidence: Dictionary = {}) -> Dictionary:
+func _sealed_action_host_proposal_fingerprints(proposal: Dictionary, proposal_input: Dictionary, compact_authority_evidence: Dictionary = {}, compact_component_fingerprints: Dictionary = {}) -> Dictionary:
 	if not compact_authority_evidence.is_empty():
+		var run_fingerprint := str(compact_component_fingerprints.get("authority_fingerprint", ""))
+		if run_fingerprint.is_empty():
+			run_fingerprint = GameRitualRuntimeScript.canonical_fingerprint(compact_authority_evidence)
+		var rng_fingerprint := str(compact_component_fingerprints.get("rng_fingerprint", ""))
+		if rng_fingerprint.is_empty():
+			rng_fingerprint = GameRitualRuntimeScript.canonical_fingerprint(proposal.get("rng_snapshot", {}))
 		return {
 			"proposal_fingerprint": str(proposal.get("output_fingerprint", "")),
-			"run_fingerprint": GameRitualRuntimeScript.canonical_fingerprint(compact_authority_evidence),
-			"rng_fingerprint": GameRitualRuntimeScript.canonical_fingerprint(proposal.get("rng_snapshot", {})),
+			"run_fingerprint": run_fingerprint,
+			"rng_fingerprint": rng_fingerprint,
 		}
 	var content := proposal.duplicate(false)
 	content.erase("output_fingerprint")
@@ -2309,6 +2323,7 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 	var compact_proposal: Dictionary
 	var trusted_proposed_candidate: RunState
 	var compact_authority_evidence: Dictionary = {}
+	var compact_component_fingerprints: Dictionary = {}
 	var runtime_restore_method: StringName = &""
 	var runtime_checkpoint: Dictionary = {}
 	var accepted_runtime_checkpoint: Dictionary = {}
@@ -2356,6 +2371,7 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 		var replay_proposal: Dictionary = replay_bundle.get("proposal", {})
 		var replay_authority_evidence: Dictionary = replay_bundle.get("authority_evidence", {}) if typeof(replay_bundle.get("authority_evidence", {})) == TYPE_DICTIONARY else {}
 		compact_authority_evidence = first_bundle.get("authority_evidence", {}) if typeof(first_bundle.get("authority_evidence", {})) == TYPE_DICTIONARY else {}
+		compact_component_fingerprints = first_bundle.get("component_fingerprints", {}) if typeof(first_bundle.get("component_fingerprints", {})) == TYPE_DICTIONARY else {}
 		if not _sealed_action_host_candidate_proposals_match(compact_proposal, replay_proposal, compact_proposal_input, compact_authority_evidence, replay_authority_evidence):
 			if has_runtime_checkpoint:
 				current_game.call(runtime_restore_method, runtime_checkpoint)
@@ -2394,7 +2410,7 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 			compact_proposal.get("run_snapshot", {}),
 			expanded_ledger
 		)
-	var proposal_fingerprints := _sealed_action_host_proposal_fingerprints(proposal, proposal_input, compact_authority_evidence)
+	var proposal_fingerprints := _sealed_action_host_proposal_fingerprints(proposal, proposal_input, compact_authority_evidence, compact_component_fingerprints)
 	# Proposal fingerprints are sealed above and the local proposal is never read
 	# again. Isolate the result's top-level host metadata without cloning nested
 	# game presentation/delta payloads that apply_result already owns defensively.
@@ -2469,7 +2485,7 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 		var table: Dictionary = current_game.call("_table_state", proposed_candidate, proposed_candidate.current_environment)
 		table[ActionAuthorityScript.PENDING_APPLY_RECEIPT_KEY] = receipt.duplicate(true)
 		current_game.call("_update_environment_table", proposed_candidate.current_environment, table)
-		GameModule.apply_result(proposed_candidate, result, proposed_rng)
+		GameModule.apply_result(proposed_candidate, result, proposed_rng, str(receipt.get("result_fingerprint", "")))
 		var applied_table: Dictionary = current_game.call("_table_state_preview", proposed_candidate, proposed_candidate.current_environment)
 		if applied_table.has(ActionAuthorityScript.PENDING_APPLY_RECEIPT_KEY):
 			return _sealed_action_host_rejection("apply_receipt_rejected", "Blackjack result apply did not consume its exact pending receipt.", request_key)
@@ -2514,7 +2530,7 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 	)
 	result[ActionAuthorityScript.HOST_APPLY_RECEIPT_KEY] = committed_receipt
 	result[ActionAuthorityScript.HOST_CONTENT_FINGERPRINT_KEY] = str(committed_receipt.get("result_fingerprint", ""))
-	proposed_ledger = ActionAuthorityScript.commit_response_cow(
+	proposed_ledger = ActionAuthorityScript.commit_response_cow_with_result_fingerprint(
 		proposed_ledger,
 		delivery,
 		result,
@@ -2522,6 +2538,7 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 		str(proposal_fingerprints.get("run_fingerprint", "")),
 		str(proposal_fingerprints.get("rng_fingerprint", "")),
 		proposed_candidate.action_authority_checkpoint_fingerprint(),
+		str(committed_receipt.get("result_fingerprint", "")),
 		int(provider_contract.get("active_replay_limit", ActionAuthorityScript.ACTIVE_REPLAY_LIMIT))
 	)
 	_sealed_action_host_store_ledger(proposed_candidate, proposed_ledger)
@@ -4199,8 +4216,17 @@ func _acknowledge_closing_time_talk(choice_id: String) -> void:
 func _advance_talk_event_action_boundary(_source: String) -> bool:
 	if run_state == null:
 		return false
+	# Most queued conversations do not expire. Their dock projection is unchanged
+	# by a game action, so rebuilding dialogue eligibility, character presentation,
+	# and controls after every autoplay spin only creates an input hitch. Keep the
+	# action-boundary visit itself synchronous; expiring conversations retain the
+	# exact decrement, redraw, and timeout behavior.
+	var focused_entry := run_state.next_pending_talk_event()
+	var focused_timing: Dictionary = focused_entry.get("timing", {}) if typeof(focused_entry.get("timing", {})) == TYPE_DICTIONARY else {}
 	var expired := run_state.advance_focused_talk_event_actions(1)
 	if expired.is_empty():
+		if focused_entry.is_empty() or not bool(focused_timing.get("expires", false)):
+			return false
 		_refresh_talk_dock()
 		return false
 	var timing: Dictionary = expired.get("timing", {}) if typeof(expired.get("timing", {})) == TYPE_DICTIONARY else {}

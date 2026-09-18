@@ -332,6 +332,15 @@ static func valid_receipt(receipt: Variant, pending: Variant, result: Dictionary
 	return _valid_receipt(receipt, pending, table_binding, result_fingerprint(result))
 
 
+static func valid_receipt_with_result_fingerprint(receipt: Variant, pending: Variant, table_binding: String, verified_result_fingerprint: String) -> bool:
+	# Multi-fixture rooms must inspect more than one table, but the authoritative
+	# result is identical for every candidate. Hash it once at the caller and keep
+	# the same closed-shape and exact pending-receipt checks for every table.
+	if not _fingerprint(verified_result_fingerprint):
+		return false
+	return _valid_receipt(receipt, pending, table_binding, verified_result_fingerprint)
+
+
 static func _valid_receipt(receipt: Variant, pending: Variant, table_binding: String, verified_result_fingerprint: String) -> bool:
 	if typeof(receipt) != TYPE_DICTIONARY or typeof(pending) != TYPE_DICTIONARY:
 		return false
@@ -358,12 +367,21 @@ static func commit_response_cow(ledger: Dictionary, delivery: Dictionary, respon
 	return _commit_response(ledger, delivery, response, proposal_fingerprint, run_fingerprint, rng_fingerprint, checkpoint_fingerprint, false, active_replay_limit)
 
 
-static func _commit_response(ledger: Dictionary, delivery: Dictionary, response: Dictionary, proposal_fingerprint: String, run_fingerprint: String, rng_fingerprint: String, checkpoint_fingerprint: String, isolate_nested_values: bool, active_replay_limit: int) -> Dictionary:
+static func commit_response_cow_with_result_fingerprint(ledger: Dictionary, delivery: Dictionary, response: Dictionary, proposal_fingerprint: String, run_fingerprint: String, rng_fingerprint: String, checkpoint_fingerprint: String, verified_result_fingerprint: String, active_replay_limit: int = ACTIVE_REPLAY_LIMIT) -> Dictionary:
+	# The host calls this immediately after receipt_for() fingerprints the same
+	# response. Receipt metadata is excluded from that digest, so committing can
+	# reuse the verified binding without serializing the dense presentation again.
+	if not _fingerprint(verified_result_fingerprint):
+		return {}
+	return _commit_response(ledger, delivery, response, proposal_fingerprint, run_fingerprint, rng_fingerprint, checkpoint_fingerprint, false, active_replay_limit, verified_result_fingerprint)
+
+
+static func _commit_response(ledger: Dictionary, delivery: Dictionary, response: Dictionary, proposal_fingerprint: String, run_fingerprint: String, rng_fingerprint: String, checkpoint_fingerprint: String, isolate_nested_values: bool, active_replay_limit: int, verified_result_fingerprint: String = "") -> Dictionary:
 	# Copy on write: prior cache entries and journal records are immutable. Clone
 	# only the containers changed by this commit and the new response payload.
 	var next := ledger.duplicate(isolate_nested_values)
 	var request_key := str(delivery.get("request_key", ""))
-	var result_hash := result_fingerprint(response)
+	var result_hash := verified_result_fingerprint if not verified_result_fingerprint.is_empty() else result_fingerprint(response)
 	var cache: Dictionary = next.get("request_cache", {}) if isolate_nested_values else (ledger.get("request_cache", {}) as Dictionary).duplicate(false)
 	var order: Array = next.get("request_order", []) if isolate_nested_values else (ledger.get("request_order", []) as Array).duplicate()
 	var replay_limit := clampi(active_replay_limit, 1, ACTIVE_REPLAY_LIMIT)

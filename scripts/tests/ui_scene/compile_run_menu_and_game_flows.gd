@@ -2247,6 +2247,21 @@ func _check_slot_autoplay_button_one_click(app: Control) -> bool:
 	if run_state == null or app.get("current_game") == null or canvas == null:
 		push_error("Slot autoplay one-click fixture could not start the slot surface.")
 		return false
+	var expected_slot_identities := [
+		"pinball:classic_3_reel", "buffalo:line_5x3", "pinball:video_feature",
+		"buffalo:classic_3_reel", "pinball:line_5x3", "buffalo:video_feature",
+	]
+	var actual_slot_identities: Array = []
+	for fixture_index in range(6):
+		var state_key := "slot" if fixture_index == 0 else "slot:%d" % (fixture_index + 1)
+		var fixture_machine := SlotMachineStateScript.peek_machine(run_state.current_environment, state_key)
+		if fixture_machine.is_empty():
+			push_error("Slot practice room did not expose all six machine fixtures; missing %s." % state_key)
+			return false
+		actual_slot_identities.append("%s:%s" % [str(fixture_machine.get("type_id", "")), str(fixture_machine.get("format_id", ""))])
+	if actual_slot_identities != expected_slot_identities:
+		push_error("Slot practice room did not expose the six authored family/format types: %s." % JSON.stringify(actual_slot_identities))
+		return false
 	run_state.bankroll = 100000
 	app.call("_refresh")
 	await process_frame

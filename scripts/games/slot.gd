@@ -309,7 +309,10 @@ func generate_environment_state(run_state: RunState, environment: Dictionary, rn
 
 
 func generate_environment_fixture_states(_run_state: RunState, environment: Dictionary, rng: RngStream, fixture_count: int) -> Dictionary:
-	if str(environment.get("archetype_id", "")) != RunState.GRAND_CASINO_ARCHETYPE_ID or fixture_count <= 0:
+	var local_flags: Dictionary = environment.get("local_narrative_flags", {}) if typeof(environment.get("local_narrative_flags", {})) == TYPE_DICTIONARY else {}
+	var supported_room := str(environment.get("archetype_id", "")) == RunState.GRAND_CASINO_ARCHETYPE_ID \
+			or bool(local_flags.get("practice_session", false))
+	if not supported_room or fixture_count <= 0:
 		return {}
 	var fixture_specs := [
 		{"format_id": "classic_3_reel", "type_id": "pinball", "math_variant_id": "steady", "cabinet_variant_id": "neon_magenta", "bonus_variant_id": "plain"},
@@ -324,6 +327,8 @@ func generate_environment_fixture_states(_run_state: RunState, environment: Dict
 		var key := get_id() if fixture_index == 0 else "%s:%d" % [get_id(), fixture_index + 1]
 		var spec: Dictionary = fixture_specs[fixture_index % fixture_specs.size()]
 		var machine: Dictionary = generator.build_machine_from_ids(definition, spec, rng.fork("grand_casino_slot_fixture:%d" % fixture_index))
+		var skin: Dictionary = catalog.skin_for_machine(machine, definition)
+		machine["environment_display_name"] = str(skin.get("cabinet_title", "Slot"))
 		# Build the immutable family/format view during room generation, outside
 		# active play, so the first autoplay spin for a newly unique cabinet cannot
 		# pay a one-time strip/cache construction cost.
@@ -1265,6 +1270,7 @@ func _slot_environment_object_state_for_machine(machine: Dictionary) -> Dictiona
 	var preview := _slot_environment_preview(machine)
 	var runtime := _slot_environment_runtime_state_for_machine(machine, preview)
 	return {
+		"display_name": str(machine.get("environment_display_name", "Slot")),
 		"status_summary": str(runtime.get("status_summary", "")),
 		"state_badge": str(runtime.get("status_label", "")),
 		"runtime_state": runtime,
