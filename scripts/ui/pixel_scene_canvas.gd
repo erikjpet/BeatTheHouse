@@ -144,6 +144,10 @@ var item_icon_texture_cache: Dictionary = {}
 var item_icon_texture_cache_scope_key: String = ""
 var icon_sprite_texture_cache: Dictionary = {}
 var scene_objects_by_id_cache: Dictionary = {}
+var active_scene_objects_cache: Array = []
+var scene_object_cache_valid := false
+var object_label_rect_cache: Dictionary = {}
+var object_label_layout_stats: Dictionary = {}
 var draw_text_width_cache: Dictionary = {}
 var fit_draw_text_cache: Dictionary = {}
 var object_animation_phase_cache: Dictionary = {}
@@ -483,6 +487,7 @@ func set_small_screen_mode(enabled: bool) -> void:
 	small_screen_mode = enabled
 	info_card_visual_rect = Rect2()
 	info_card_visual_object_id = ""
+	_rebuild_scene_object_cache()
 	_invalidate_camera_target()
 	queue_redraw()
 	view_geometry_changed.emit()
@@ -524,7 +529,10 @@ func debug_soak_snapshot() -> Dictionary:
 		"environment_id": environment_id,
 		"item_icon_texture_cache_scope_key": item_icon_texture_cache_scope_key,
 		"foundation_object_count": foundation_scene_objects.size(),
+		"active_scene_object_cache_size": active_scene_objects_cache.size(),
 		"scene_object_index_count": scene_objects_by_id_cache.size(),
+		"object_label_rect_cache_size": object_label_rect_cache.size(),
+		"object_label_layout": object_label_layout_stats.duplicate(true),
 		"item_icon_texture_cache_size": item_icon_texture_cache.size(),
 		"icon_sprite_texture_cache_size": icon_sprite_texture_cache.size(),
 		"draw_text_width_cache_size": draw_text_width_cache.size(),
@@ -2562,7 +2570,7 @@ func _draw_scene_objects() -> void:
 			_draw_hover_scene_mark(rect)
 		elif should_draw_hotspot_hint(object_data, low_detail):
 			_draw_hotspot_hint(rect, object_type)
-		_draw_object_label(rect, str(object_data.get("label", "")), object_type, disabled, selected or hovered)
+		_draw_object_label(rect, str(object_data.get("label", "")), object_type, disabled, selected or hovered, object_data)
 	if not developer_placement_mode:
 		_draw_selected_object_info()
 
@@ -2808,6 +2816,12 @@ func _has_scene_outcome_feedback() -> bool:
 
 
 func _active_scene_objects() -> Array:
+	if scene_object_cache_valid:
+		return active_scene_objects_cache
+	return _ordered_scene_objects()
+
+
+func _ordered_scene_objects() -> Array:
 	var active := foundation_scene_objects if uses_foundation_snapshot else scene_objects
 	var has_layout_authority := false
 	for value in active:
@@ -2828,8 +2842,11 @@ func _active_scene_objects() -> Array:
 
 
 func _rebuild_scene_object_cache() -> void:
+	active_scene_objects_cache = _ordered_scene_objects()
+	scene_object_cache_valid = true
+	_rebuild_object_label_rect_cache(active_scene_objects_cache)
 	scene_objects_by_id_cache = {}
-	for object_value in _active_scene_objects():
+	for object_value in active_scene_objects_cache:
 		if typeof(object_value) != TYPE_DICTIONARY:
 			continue
 		var object_data: Dictionary = object_value
@@ -3319,7 +3336,7 @@ func _scene_object_layout_snapshot(objects: Array) -> Dictionary:
 			"rect": _rect_to_snapshot(object_rect),
 			"footprint": _rect_to_snapshot(footprint),
 			"interaction_rect": _rect_to_snapshot(_interaction_rect_for_object(object_data)),
-			"label_rect": _rect_to_snapshot(_label_rect_for_object(object_rect, str(object_data.get("label", "")))),
+			"label_rect": _rect_to_snapshot(_resolved_label_rect_for_object(object_data, object_rect)),
 			"z_order": int(object_data.get("scenario_z_order", object_data.get("source_order", index))),
 			"layout_authority_identity": str(object_data.get("scenario_layout_authority_identity", "")),
 			"actor_route_stage": _copy_dictionary(object_data.get("actor_route_stage", {})),
@@ -3347,6 +3364,7 @@ func _scene_object_layout_snapshot(objects: Array) -> Dictionary:
 		"margin": OBJECT_LAYOUT_MARGIN,
 		"small_screen_mode": small_screen_mode,
 		"deterministic_z_order": true,
+		"label_layout": object_label_layout_stats.duplicate(true),
 	}
 
 
@@ -4766,7 +4784,7 @@ func _update_drunk_distortion_protected_rects() -> void:
 		if typeof(object_data) != TYPE_DICTIONARY:
 			continue
 		var object_rect := _board_rect_for_object(object_data)
-		var label_rect := _label_rect_for_object(object_rect, str((object_data as Dictionary).get("label", "")))
+		var label_rect := _resolved_label_rect_for_object(object_data, object_rect)
 		if label_rect.size.x > 0.0 and label_rect.size.y > 0.0:
 			protected_rects.append(_board_rect_to_local_rect(label_rect.grow(3.0)))
 	drunk_distortion_overlay.set_ui_protected_rects(protected_rects)
@@ -4944,6 +4962,128 @@ func _label_rect_for_object(rect: Rect2, label: String) -> Rect2:
 	return _clamp_board_rect(Rect2(Vector2(x, y), Vector2(width, OBJECT_LABEL_HEIGHT)))
 
 
+func _resolved_label_rect_for_object(object_data: Dictionary, object_rect: Rect2) -> Rect2:
+	var object_id := str(object_data.get("id", ""))
+	if not _object_label_moves_with_route(object_data) and object_label_rect_cache.has(object_id):
+		return object_label_rect_cache[object_id] as Rect2
+	return _label_rect_for_object(object_rect, str(object_data.get("label", "")))
+
+
+func _object_label_moves_with_route(object_data: Dictionary) -> bool:
+	return typeof(object_data.get("actor_route_stage", {})) == TYPE_DICTIONARY \
+		and not (object_data.get("actor_route_stage", {}) as Dictionary).is_empty() \
+		and typeof(object_data.get("actor_route_points", [])) == TYPE_ARRAY \
+		and (object_data.get("actor_route_points", []) as Array).size() >= 2
+
+
+func _rebuild_object_label_rect_cache(objects: Array) -> void:
+	object_label_rect_cache = {}
+	var object_rects: Array[Rect2] = []
+	var default_label_rects: Array[Rect2] = []
+	for value in objects:
+		var object_data: Dictionary = value if typeof(value) == TYPE_DICTIONARY else {}
+		var object_rect := _board_rect_for_object(object_data)
+		object_rects.append(object_rect)
+		default_label_rects.append(_label_rect_for_object(object_rect, str(object_data.get("label", ""))))
+	var resolved_label_rects: Array[Rect2] = []
+	var moved_count := 0
+	for index in range(objects.size()):
+		var object_data: Dictionary = objects[index] if typeof(objects[index]) == TYPE_DICTIONARY else {}
+		var object_id := str(object_data.get("id", ""))
+		var default_rect: Rect2 = default_label_rects[index]
+		if object_id.is_empty() or not default_rect.has_area():
+			resolved_label_rects.append(Rect2())
+			continue
+		var best_rect := default_rect
+		var best_score := INF
+		for candidate_value in _object_label_candidates(object_rects[index], default_rect.size):
+			var candidate: Rect2 = candidate_value
+			var label_overlap := _total_rect_overlap(candidate, resolved_label_rects)
+			var object_overlap := 0.0
+			for object_index in range(object_rects.size()):
+				if object_index != index:
+					object_overlap += _rect_overlap_area(candidate, object_rects[object_index])
+			var distance_cost := candidate.get_center().distance_squared_to(default_rect.get_center())
+			var score := label_overlap * 1000000.0 + object_overlap * 1000.0 + distance_cost
+			if score < best_score:
+				best_score = score
+				best_rect = candidate
+			if label_overlap <= 0.01 and object_overlap <= 0.01:
+				break
+		object_label_rect_cache[object_id] = best_rect
+		resolved_label_rects.append(best_rect)
+		if not best_rect.is_equal_approx(default_rect):
+			moved_count += 1
+	object_label_layout_stats = {
+		"label_count": object_label_rect_cache.size(),
+		"moved_count": moved_count,
+		"default_label_overlap_count": _rect_pair_overlap_count(default_label_rects),
+		"resolved_label_overlap_count": _rect_pair_overlap_count(resolved_label_rects),
+		"default_object_overlap_count": _label_object_overlap_count(default_label_rects, object_rects),
+		"resolved_object_overlap_count": _label_object_overlap_count(resolved_label_rects, object_rects),
+	}
+
+
+func _object_label_candidates(object_rect: Rect2, label_size: Vector2) -> Array[Rect2]:
+	var centered_x := object_rect.get_center().x - label_size.x * 0.5
+	var centered_y := object_rect.get_center().y - label_size.y * 0.5
+	var above_y := object_rect.position.y - label_size.y - OBJECT_LABEL_GAP
+	var below_y := object_rect.end.y + OBJECT_LABEL_GAP
+	var tier_gap := label_size.y + 2.0
+	var raw_positions := [
+		Vector2(centered_x, above_y),
+		Vector2(centered_x, below_y),
+		Vector2(centered_x, above_y - tier_gap),
+		Vector2(centered_x, below_y + tier_gap),
+		Vector2(object_rect.position.x - label_size.x - OBJECT_LABEL_GAP, centered_y),
+		Vector2(object_rect.end.x + OBJECT_LABEL_GAP, centered_y),
+		Vector2(centered_x - label_size.x * 0.55, above_y),
+		Vector2(centered_x + label_size.x * 0.55, above_y),
+		Vector2(centered_x - label_size.x * 0.55, below_y),
+		Vector2(centered_x + label_size.x * 0.55, below_y),
+	]
+	var candidates: Array[Rect2] = []
+	for position in raw_positions:
+		var candidate := _clamp_board_rect(Rect2(position, label_size))
+		var duplicate := false
+		for existing in candidates:
+			if existing.is_equal_approx(candidate):
+				duplicate = true
+				break
+		if not duplicate:
+			candidates.append(candidate)
+	return candidates
+
+
+func _total_rect_overlap(rect: Rect2, others: Array[Rect2]) -> float:
+	var total := 0.0
+	for other in others:
+		total += _rect_overlap_area(rect, other)
+	return total
+
+
+func _rect_pair_overlap_count(rects: Array[Rect2]) -> int:
+	var count := 0
+	for first_index in range(rects.size()):
+		if not rects[first_index].has_area():
+			continue
+		for second_index in range(first_index + 1, rects.size()):
+			if _rect_overlap_area(rects[first_index], rects[second_index]) > 0.01:
+				count += 1
+	return count
+
+
+func _label_object_overlap_count(labels: Array[Rect2], object_rects: Array[Rect2]) -> int:
+	var count := 0
+	for label_index in range(labels.size()):
+		if not labels[label_index].has_area():
+			continue
+		for object_index in range(object_rects.size()):
+			if label_index != object_index and _rect_overlap_area(labels[label_index], object_rects[object_index]) > 0.01:
+				count += 1
+	return count
+
+
 func _clamp_board_rect(rect: Rect2) -> Rect2:
 	var board_size := Vector2(BOARD_SIZE)
 	var position := Vector2(
@@ -5087,11 +5227,11 @@ func _draw_disabled_focus_mark(rect: Rect2, selected: bool) -> void:
 	_draw_prop_glints(rect, color, pulse * 0.55)
 
 
-func _draw_object_label(rect: Rect2, label: String, object_type: String, disabled: bool, active: bool) -> void:
+func _draw_object_label(rect: Rect2, label: String, object_type: String, disabled: bool, active: bool, object_data: Dictionary = {}) -> void:
 	var text := label.strip_edges()
 	if text.is_empty():
 		return
-	var label_rect := _label_rect_for_object(rect, text)
+	var label_rect := _resolved_label_rect_for_object(object_data, rect)
 	if label_rect.size.x <= 0.0 or label_rect.size.y <= 0.0:
 		return
 	var color := _color_for_object_type(object_type)

@@ -1153,16 +1153,7 @@ func _recover_unplayable_environment() -> bool:
 	var failure: Dictionary = generator.environment_install_failure_snapshot() if generator != null and generator.has_method("environment_install_failure_snapshot") else {}
 	var failed_scenario_id := str(failure.get("scenario_id", "")).strip_edges()
 	var failed_target_id := str(failure.get("target_id", "")).strip_edges()
-	var standard_run := str(run_state.challenge_config.get("mode", "standard")).strip_edges().to_lower() == "standard" and not run_state.is_tutorial_run()
-	if standard_run and run_state.current_environment.is_empty() and not failed_scenario_id.is_empty() and not failed_target_id.is_empty():
-		var challenge := run_state.challenge_config.duplicate(true)
-		var modifiers: Dictionary = challenge.get("modifiers", {}) if typeof(challenge.get("modifiers", {})) == TYPE_DICTIONARY else {}
-		var pins: Dictionary = modifiers.get("scenario_pins", {}) if typeof(modifiers.get("scenario_pins", {})) == TYPE_DICTIONARY else {}
-		pins[failed_target_id] = failed_scenario_id
-		modifiers["scenario_pins"] = pins
-		modifiers["scenario_pins_apply_mutations"] = false
-		challenge["modifiers"] = modifiers
-		run_state.challenge_config = challenge
+	if run_state.current_environment.is_empty() and not failed_scenario_id.is_empty() and not failed_target_id.is_empty() and _suppress_failed_standard_scenario(failure):
 		generator = RunGenerator.new(library)
 		generator.next_environment(run_state)
 		if _environment_is_playable(run_state):
@@ -1173,6 +1164,26 @@ func _recover_unplayable_environment() -> bool:
 	var target_node_id := run_state.current_world_node_id()
 	generator.next_environment(run_state, target_node_id, true)
 	return _environment_is_playable(run_state)
+
+
+func _suppress_failed_standard_scenario(failure: Dictionary, expected_target_id: String = "") -> bool:
+	if run_state == null or run_state.is_tutorial_run() or str(run_state.challenge_config.get("mode", "standard")).strip_edges().to_lower() != "standard":
+		return false
+	var failed_scenario_id := str(failure.get("scenario_id", "")).strip_edges()
+	var failed_target_id := str(failure.get("target_id", "")).strip_edges()
+	if failed_scenario_id.is_empty() or failed_target_id.is_empty() or (not expected_target_id.is_empty() and failed_target_id != expected_target_id):
+		return false
+	var challenge := run_state.challenge_config.duplicate(true)
+	var modifiers: Dictionary = challenge.get("modifiers", {}) if typeof(challenge.get("modifiers", {})) == TYPE_DICTIONARY else {}
+	var pins: Dictionary = modifiers.get("scenario_pins", {}) if typeof(modifiers.get("scenario_pins", {})) == TYPE_DICTIONARY else {}
+	if not bool(modifiers.get("scenario_pins_apply_mutations", true)) and str(pins.get(failed_target_id, "")) == failed_scenario_id:
+		return false
+	pins[failed_target_id] = failed_scenario_id
+	modifiers["scenario_pins"] = pins
+	modifiers["scenario_pins_apply_mutations"] = false
+	challenge["modifiers"] = modifiers
+	run_state.challenge_config = challenge
+	return true
 
 
 func _clear_recent_result_feedback() -> void:
@@ -3681,6 +3692,12 @@ func open_world_map(force_closing_allowed: bool = false) -> bool:
 		return false
 	if _guard_player_input_route(force_closing_allowed, "map"):
 		return false
+	# The map becomes the sole interaction surface. Leaving the room selection
+	# alive kept its info/action card visible beneath the modal map and made the
+	# travel screen look like two competing layers.
+	clear_interaction_focus(false, false)
+	if environment_canvas != null:
+		environment_canvas.set_selected_object("")
 	selected_action_category = ACTION_CATEGORY_TRAVEL
 	_set_current_screen(SCREEN_TRAVEL)
 	_clear_world_map_selection(false)
@@ -7852,6 +7869,9 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	else:
 		install_result = generator.travel_environment_result_with_caller_rollback(run_state, target_id, true)
 		if not bool(install_result.get("ok", false)):
+			var retry_result := _retry_travel_without_invalid_scenario(target_id, target_label, choice_data, require_immediate_result, lifecycle_rollback)
+			if not retry_result.is_empty():
+				return retry_result
 			if not caller_owns_lifecycle_rollback:
 				_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
 			var install_errors := _copy_array(install_result.get("errors", []))
@@ -8017,6 +8037,22 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		})
 	_commit_foundation_coach_attention(lifecycle_rollback)
 	return {"ok": true, "errors": [], "travel_result": travel_result.duplicate(true)}
+
+
+func _retry_travel_without_invalid_scenario(target_id: String, target_label: String, choice_data: Dictionary, require_immediate_result: bool, lifecycle_rollback: Dictionary) -> Dictionary:
+	if generator == null or not generator.has_method("environment_install_failure_snapshot"):
+		return {}
+	var failure: Dictionary = generator.environment_install_failure_snapshot()
+	if str(failure.get("target_id", "")).strip_edges() != target_id or str(failure.get("scenario_id", "")).strip_edges().is_empty():
+		return {}
+	# The failed caller-owned install can have advanced route/scenario state. Put
+	# the complete run and presentation back at the departure boundary, then run
+	# the ordinary transaction once more with only the rejected overlay muted.
+	_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
+	if not _suppress_failed_standard_scenario(failure, target_id):
+		return {}
+	generator = RunGenerator.new(library)
+	return _travel_to(target_id, target_label, choice_data, require_immediate_result)
 
 
 func _queue_normal_grand_host_greeting(previous_environment: Dictionary) -> void:

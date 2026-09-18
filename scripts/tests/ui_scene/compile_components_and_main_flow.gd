@@ -7600,6 +7600,12 @@ func _run() -> void:
 		push_error("Leave did not show the modal world map overlay.")
 		quit(1)
 		return
+	var map_spatial_snapshot: Dictionary = app.call("current_spatial_interaction_snapshot")
+	var room_canvas_at_map_open: Control = app.get("environment_canvas")
+	if not str(map_spatial_snapshot.get("selected_object_id", "")).is_empty() or (room_canvas_at_map_open != null and not str(room_canvas_at_map_open.get("selected_object_id")).is_empty()):
+		push_error("Opening the world map left the room object card selected beneath the modal travel surface.")
+		quit(1)
+		return
 	if not str(map_screen.get("selected_world_map_node_id", "")).is_empty() or bool(map_screen.get("world_map_detail_popup_visible", false)):
 		push_error("World map should open in browse mode without a selected detail popup.")
 		quit(1)
