@@ -129,6 +129,16 @@ func sealed_action_authority_contract() -> Dictionary:
 	return {
 		"resolve_proposal_method": &"_table_game_resolve_proposal",
 		"wager_cost_proposal_method": &"_table_game_wager_cost_proposal",
+		# Roulette mutates only its bound table until the host applies the accepted
+		# result. Replay that isolated candidate directly and fingerprint the exact
+		# account/table inputs instead of serializing an accumulated run twice. On a
+		# long run the old whole-run proposal path could consume the entire 5.6-second
+		# wheel presentation before the first post-click frame was drawn.
+		"trusted_candidate_resolve_method": &"_table_game_resolve_candidate",
+		"trusted_candidate_wager_method": &"_table_game_wager_cost_candidate",
+		"trusted_candidate_first_proposal_owns_transaction": true,
+		"compact_authority_evidence_method": &"_table_game_authority_evidence",
+		"trusted_candidate_structural_replay_match": true,
 		"host_auto_tick_method": &"_table_game_host_needs_auto_tick",
 		"surface_intent_key": "",
 		"surface_intent_index_key": "",
@@ -760,14 +770,14 @@ func _table_game_resolve_proposal(action_id: String, stake: int, run_snapshot: D
 		"ui_state": ui_state,
 	}
 	var candidate := RunState.new()
-	candidate.from_dict(run_snapshot.duplicate(true))
+	candidate.from_dict(run_snapshot)
 	var proposal_rng := RngStream.new()
-	proposal_rng.restore(rng_snapshot.duplicate(true))
+	proposal_rng.restore(rng_snapshot)
 	var result := _resolve_roulette_proposal_core(action_id, stake, candidate, candidate.current_environment, proposal_rng, ui_state.duplicate(true))
 	var proposal := {
 		"ok": bool(result.get("ok", false)),
 		"input_fingerprint": RuntimeScript.canonical_fingerprint(proposal_input),
-		"result": result.duplicate(true),
+		"result": result,
 		"run_snapshot": candidate.to_save_snapshot(),
 		"rng_snapshot": proposal_rng.snapshot(),
 	}
@@ -776,12 +786,90 @@ func _table_game_resolve_proposal(action_id: String, stake: int, run_snapshot: D
 
 
 func _table_game_wager_cost_proposal(action_id: String, stake: int, run_snapshot: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
-	var candidate := RunState.new()
-	candidate.from_dict(run_snapshot.duplicate(true))
-	var cost := wager_cost_for_context(action_id, stake, candidate, candidate.current_environment, ui_state.duplicate(true))
+	# The canonical spin cost is fully sealed in the staged bet layout. Avoid
+	# reconstructing a complete run merely to total those chips.
+	var environment: Dictionary = run_snapshot.get("current_environment", {}) if typeof(run_snapshot.get("current_environment", {})) == TYPE_DICTIONARY else {}
+	var states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	var table: Dictionary = states.get(get_id(), {}) if typeof(states.get(get_id(), {})) == TYPE_DICTIONARY else {}
+	var bets := _bet_array(ui_state.get("roulette_bets", []))
+	var sit_out := bool(ui_state.get("roulette_sit_out", false)) and bets.is_empty()
+	var cost := _total_wager(bets) if action_id == "spin_roulette" and not sit_out and not bool(table.get("table_barred", false)) else 0
 	return {
 		"cost": maxi(0, cost),
 		"input_fingerprint": RuntimeScript.canonical_fingerprint({"action_id": action_id, "stake": stake, "run_snapshot": run_snapshot, "ui_state": ui_state}),
+	}
+
+
+func _table_game_resolve_candidate(action_id: String, stake: int, candidate: RunState, proposal_rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
+	if candidate == null or proposal_rng == null:
+		return _empty_result(action_id, stake, {}, "Roulette resolution requires an isolated run and RNG candidate.")
+	return _resolve_roulette_proposal_core(
+		action_id,
+		stake,
+		candidate,
+		candidate.current_environment,
+		proposal_rng,
+		ui_state.duplicate(true)
+	)
+
+
+func _table_game_wager_cost_candidate(action_id: String, _stake: int, candidate: RunState, ui_state: Dictionary = {}) -> int:
+	if action_id != "spin_roulette" or candidate == null:
+		return 0
+	var table := _table_state_preview(candidate, candidate.current_environment)
+	if bool(table.get("table_barred", false)):
+		return 0
+	var bets := _bet_array(ui_state.get("roulette_bets", []))
+	if bool(ui_state.get("roulette_sit_out", false)) and bets.is_empty():
+		return 0
+	return maxi(0, _total_wager(bets))
+
+
+func _table_game_authority_evidence(candidate: RunState, action_id: String, stake: int, ui_state: Dictionary = {}) -> Dictionary:
+	if candidate == null:
+		return {}
+	var environment := candidate.current_environment
+	var table := _table_state_preview(candidate, environment).duplicate(false)
+	# Transaction receipts authenticate their own ledger. Excluding that growing
+	# replay history keeps later spins constant-cost without weakening the table,
+	# account, RNG, result, or accepted-candidate comparisons.
+	table.erase(ActionAuthorityScript.LEDGER_KEY)
+	table.erase(ActionAuthorityScript.PENDING_APPLY_RECEIPT_KEY)
+	var environment_evidence := environment.duplicate(false)
+	environment_evidence.erase("environment_runtime_revision")
+	environment_evidence["game_states"] = {get_id(): table}
+	return {
+		"version": 1,
+		"game_id": get_id(),
+		"action_id": action_id,
+		"stake": maxi(0, stake),
+		"account_checkpoint": candidate.action_authority_checkpoint_fingerprint(),
+		"bankroll": candidate.bankroll,
+		"grand_casino_chips": candidate.grand_casino_chips,
+		"rng_seed": candidate.rng_seed,
+		"rng_state": candidate.rng_state,
+		"simulation_msec": candidate.simulation_msec,
+		"game_clock_minutes": candidate.game_clock_minutes,
+		"seed_text": candidate.seed_text,
+		"seed_value": candidate.seed_value,
+		"run_status": candidate.run_status,
+		"economic_state": candidate.economic_state,
+		"challenge_config": candidate.challenge_config,
+		"inventory": candidate.inventory,
+		"active_item_id": candidate.active_item_id,
+		"suspicion": candidate.suspicion,
+		"baseline_luck": candidate.baseline_luck,
+		"drunk_level": candidate.drunk_level,
+		"alcoholic_level": candidate.alcoholic_level,
+		"narrative_flags": candidate.narrative_flags,
+		"crew_play_state": candidate.crew_play_state,
+		"grand_casino_staffing": candidate.grand_casino_staffing,
+		"rourke_current_room": candidate.rourke_current_room,
+		"rourke_current_spot": candidate.rourke_current_spot,
+		"rourke_facing": candidate.rourke_facing,
+		"rourke_off_floor_actions": candidate.rourke_off_floor_actions,
+		"environment": environment_evidence,
+		"ui_state": ui_state,
 	}
 
 

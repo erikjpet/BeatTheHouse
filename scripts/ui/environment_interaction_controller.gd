@@ -1216,7 +1216,10 @@ static func numbers_interactable_objects(host: Variant) -> Array:
 		# numbers_desk also exists in event_ids so generated object_rects carries an
 		# event-card position under the same presentation id. The production desk
 		# owns the layer's dedicated numbers_spots geometry and must win that alias.
-		var focus_rect: Rect2 = host.EnvironmentInteractionViewModelScript.authored_interaction_rect(host.CONTEXT_MODE_NUMBERS, 0, host._current_environment_layout())
+		# Only the Crew back-room desk needs to defeat the generic event alias with
+		# its dedicated Numbers spot. Ordinary books use the generated object rect,
+		# so placement grounding and the scenario canvas share one physical object.
+		var focus_rect: Rect2 = host.EnvironmentInteractionViewModelScript.authored_interaction_rect(host.CONTEXT_MODE_NUMBERS, 0, host._current_environment_layout()) if at_desk else host._interaction_rect_for_object(object_id, host.CONTEXT_MODE_NUMBERS, 0)
 		if focus_rect.size.x <= 0.0 or focus_rect.size.y <= 0.0:
 			focus_rect = host._interaction_rect_for_object(object_id, host.CONTEXT_MODE_NUMBERS, 0)
 		objects.append(host._make_interactable_object({

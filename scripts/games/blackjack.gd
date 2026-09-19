@@ -2087,6 +2087,13 @@ func _blackjack_resolve_proposal(action_id: String, stake: int, run_snapshot: Di
 func _blackjack_compact_authority_allowed(candidate: RunState, action_id: String, _stake: int, _ui_state: Dictionary = {}) -> bool:
 	if candidate == null or action_id.begins_with("crew_play:"):
 		return false
+	# Pal's protected tutorial Peek records its one-time warning on the run's
+	# narrative flags. The compact replay candidate deliberately aliases broad
+	# run collections, so this exceptional action must retain the full isolated
+	# transaction path instead of letting the first replay mark the second one.
+	if action_id == "peek_hole_card" \
+			and candidate.blackjack_tutorial_peek_reprieve_eligible(action_id, candidate.current_environment):
+		return false
 	return not _is_rourke_duel(candidate, candidate.current_environment)
 
 

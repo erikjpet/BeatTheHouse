@@ -1816,7 +1816,11 @@ func _sealed_action_host_auto_intent(surface_time_msec: int) -> Dictionary:
 			# that exact COW value synchronously. Revalidating its cached responses
 			# and journal here walked the complete replay window a second time on
 			# every Slot autoplay spin without crossing an external boundary.
-			var delivery_stake := _sealed_action_host_delivery_stake(command, next_session)
+			# Automatic sit-out hands publish a normalized session stake of one even
+			# though the host still resolves the prepared command with its selected
+			# table stake. Seal the same value the synchronous resolver will receive;
+			# machine commands that author an explicit set_stake keep that override.
+			var delivery_stake := int(command.get("set_stake", _current_selected_stake()))
 			var auto_action_id := str(command.get("action_id", ""))
 			var issued: Dictionary = ActionAuthorityScript.issue_delivery_cow(ledger, auto_action_id, _sealed_action_host_trusted_context(candidate, delivery_stake, auto_action_id), delivery_stake, recovery_session)
 			if not bool(issued.get("ok", false)):
