@@ -1680,7 +1680,11 @@ func set_environment(environment_data: Dictionary, debug_timing: Dictionary = {}
 	# Fresh generated rooms have no trusted semantic inventory yet; finalization
 	# initializes their sequence atomically below. Running legacy migration here
 	# only reloaded and revalidated the same package before returning `pending`.
-	if bool(current_environment.get("scenario_semantic_ready", false)) or current_environment.has("scenario_sequence_state") or current_environment.has("scenario_sequence_migration"):
+	var destination_scenario_state := ScenarioEngineScript.normalize_state(current_environment.get("scenario_state", {}))
+	var destination_scenario_targets_layer := destination_scenario_state.is_empty() or ScenarioEngineScript.state_targets_environment(destination_scenario_state, current_environment)
+	if not destination_scenario_targets_layer:
+		ScenarioEngineScript.deactivate_environment_sequence_projection(current_environment)
+	elif bool(current_environment.get("scenario_semantic_ready", false)) or current_environment.has("scenario_sequence_state") or current_environment.has("scenario_sequence_migration"):
 		ScenarioEngineScript.migrate_environment_sequence(
 			current_environment,
 			{},
@@ -1694,6 +1698,8 @@ func set_environment(environment_data: Dictionary, debug_timing: Dictionary = {}
 	# source cursor, so first entry reuses the accepted package receipt.
 	var destination_node_id := str(current_environment.get("world_node_id", current_environment.get("archetype_id", ""))).strip_edges()
 	var destination_definition := _seeded_scenario_definition_for_node_readonly(destination_node_id)
+	if not destination_scenario_targets_layer:
+		destination_definition = {}
 	if perf_timing_enabled:
 		debug_timing["sequence_definition_lookup"] = Time.get_ticks_usec() - perf_stage_started_usec
 		perf_stage_started_usec = Time.get_ticks_usec()
@@ -1948,6 +1954,8 @@ func _scenario_sequence_definition_readonly() -> Dictionary:
 		node_id = current_world_node_id()
 	var scenario_state_value: Variant = current_environment.get("scenario_state", {})
 	var scenario_state: Dictionary = scenario_state_value as Dictionary if typeof(scenario_state_value) == TYPE_DICTIONARY else {}
+	if not scenario_state.is_empty() and not ScenarioEngineScript.state_targets_environment(scenario_state, current_environment):
+		return {}
 	var scenario_id := str(scenario_state.get("id", current_environment.get("scenario_id", ""))).strip_edges()
 	var embedded_value: Variant = current_environment.get("scenario_sequence_definition", {})
 	var embedded_definition: Dictionary = embedded_value as Dictionary if typeof(embedded_value) == TYPE_DICTIONARY else {}
@@ -4051,13 +4059,19 @@ func install_environment_layer_state(layer_id: String, layer_state: Dictionary) 
 	if not scenario_state.is_empty():
 		ScenarioEngineScript.reconcile_environment(target, scenario_state)
 	current_environment = _normalize_environment(target)
-	ScenarioEngineScript.migrate_environment_sequence(
-		current_environment,
-		{},
-		"%d:layer:%s:%s" % [seed_value, str(current_environment.get("world_node_id", current_environment.get("archetype_id", ""))), target_id]
-	)
-	if ScenarioSequenceSchemaScript.is_sequence(_scenario_sequence_definition_readonly()):
-		current_environment["scenario_sequence_pending_visit_id"] = str(current_environment.get("environment_visit_id", ""))
+	if not scenario_state.is_empty() and not ScenarioEngineScript.state_targets_environment(scenario_state, current_environment):
+		# Old saves may contain a projection generated before layer scoping was
+		# enforced. Preserve the venue cursor, but restore the target floor's base
+		# arrays and discard those stale room-only visuals and semantic receipts.
+		ScenarioEngineScript.deactivate_environment_sequence_projection(current_environment)
+	else:
+		ScenarioEngineScript.migrate_environment_sequence(
+			current_environment,
+			{},
+			"%d:layer:%s:%s" % [seed_value, str(current_environment.get("world_node_id", current_environment.get("archetype_id", ""))), target_id]
+		)
+		if ScenarioSequenceSchemaScript.is_sequence(_scenario_sequence_definition_readonly()):
+			current_environment["scenario_sequence_pending_visit_id"] = str(current_environment.get("environment_visit_id", ""))
 	CharacterChainModelScript.apply_to_environment(self, current_environment)
 	return true
 

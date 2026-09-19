@@ -118,9 +118,35 @@ static func attach_to_environment(environment: Dictionary, state_value: Variant,
 	environment["scenario_id"] = str(state.get("id", ""))
 	environment["scenario_phase_index"] = int(state.get("phase_index", 0))
 	environment["scenario_phase_action_counter"] = int(state.get("phase_action_counter", 0))
-	environment["scenario_applied_phase_index"] = int(state.get("phase_index", 0)) if _state_targets_layer(state, environment) else -1
+	var targets_layer := _state_targets_layer(state, environment)
+	environment["scenario_applied_phase_index"] = int(state.get("phase_index", 0)) if targets_layer else -1
+	# A layered venue carries one scenario cursor so returning to its authored
+	# floor resumes deterministically. Its sequence projection is physical room
+	# state, however, and must never be installed on another floor.
+	if not targets_layer:
+		deactivate_environment_sequence_projection(environment)
+		return
 	_apply_exclusive_opportunity(environment)
 	migrate_environment_sequence(environment, definition, str(environment.get("id", "")))
+
+
+static func state_targets_environment(state_value: Variant, environment: Dictionary) -> bool:
+	var state := normalize_state(state_value)
+	return not state.is_empty() and _state_targets_layer(state, environment)
+
+
+static func deactivate_environment_sequence_projection(environment: Dictionary) -> void:
+	_clear_environment_sequence(environment)
+	for key in [
+		"scenario_base_interactions", "scenario_base_actors", "scenario_base_producer_context",
+		"scenario_semantic_action_digest", "scenario_semantic_inventory",
+		"scenario_semantic_inventory_version", "scenario_semantic_digest", "scenario_semantic_ready",
+		"scenario_event_choices", "scenario_restore_contract", "scenario_restore_pending_trusted_rebuild",
+		"scenario_sequence_pending_visit_id", "scenario_sequence_lifecycle_errors",
+		"scenario_sequence_migration_error",
+	]:
+		environment.erase(key)
+	environment["scenario_applied_phase_index"] = -1
 
 
 # Public sequence API. Producers publish through enqueue/flush and never mutate

@@ -93,6 +93,9 @@
     },
     {
       "id": "small_underground_casino:casino", "archetype_id": "small_underground_casino", "layer_id": "casino", "art_key": "underground",
+      "class_overrides": {"event:rowdy_regular": "seated_person", "punchline_high_stakes_night_task_0": "wall_mounted"},
+      "object_slot_positions": {"service:house_drink":[300,142]},
+      "scenario_object_slot_positions": {"punchline_high_stakes_night_protected_table":[772,148],"punchline_high_stakes_night_task_0":[0,0],"punchline_high_stakes_night_safe_exit":[800,300],"punchline_high_stakes_night_chair_stack":[16,220],"punchline_high_stakes_night_floor_service_runner":[380,200],"punchline_high_stakes_night_observer_rail":[690,278],"punchline_high_stakes_night_high_stakes_guard":[250,268]},
       "floor": {"bands": [[16, 245, 868, 133]], "contact_y": [252, 358]}, "counters": [{"id": "left_table", "x0": 100, "x1": 342, "top_y": 154, "front_y": 240}, {"id": "right_table", "x0": 438, "x1": 696, "top_y": 142, "front_y": 240}, {"id": "bar_cart", "x0": 40, "x1": 110, "top_y": 168, "front_y": 270}],
       "seats": [{"id": "left_card_seat", "point": [220, 246]}, {"id": "right_card_seat", "point": [566, 246]}], "wall": {"bounds": [0, 0, 900, 245], "exclusions": [{"id": "guard_door", "bounds": [744, 88, 108, 178]}]}, "ceiling": {"bounds": [0, 0, 900, 108]}, "doorways": [{"id": "guarded_exit", "bounds": [744, 88, 108, 178]}, {"id": "left_exit", "bounds": [0, 228, 72, 186]}], "void": []
     },

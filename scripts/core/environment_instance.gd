@@ -181,6 +181,11 @@ static func from_archetype(archetype: Dictionary, p_depth: int, rng: RngStream, 
 	if not selected_state.is_empty():
 		environment.scenario_state = selected_state
 		var scenario_environment := environment.to_dict()
+		# Layer metadata is finalized by _apply_layer_metadata after flat generation,
+		# but scenario attachment must know the physical floor before it decides
+		# whether to install room-local mutations and sequence visuals.
+		if archetype.has("current_layer_id"):
+			scenario_environment["current_layer_id"] = str(archetype.get("current_layer_id", "")).strip_edges()
 		ScenarioEngineScript.attach_to_environment(scenario_environment, selected_state, selected_scenario)
 		environment = from_dict(scenario_environment)
 	environment.layout = ensure_generated_layout(environment.to_dict())

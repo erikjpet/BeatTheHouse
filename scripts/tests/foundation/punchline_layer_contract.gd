@@ -27,6 +27,7 @@ static func check(library: ContentLibrary, failures: Array) -> void:
 	_check_public_identity(library, archetype, failures)
 	_check_l2_baseline(layers, failures)
 	_check_generation_and_tutorial(library, archetype, failures)
+	_check_layer_scoped_sequence_projection(library, archetype, failures)
 	_check_production_scenario_layer_entry(library, failures)
 	_check_discovery_and_save(library, archetype, failures)
 	_check_back_room_access(library, archetype, failures)
@@ -125,6 +126,57 @@ static func _check_generation_and_tutorial(library: ContentLibrary, archetype: D
 		failures.append("Tutorial compatibility override did not enter Punchline L2 with the shipped blackjack/invitation flow.")
 	if int(_dict(tutorial.get("economic_profile", {})).get("stake_floor", -1)) != 10 or int(_dict(tutorial.get("economic_profile", {})).get("game_stake_floor_overrides", {}).get("blackjack", -1)) != 5:
 		failures.append("Tutorial Punchline L2 lost the pre-rework underground stake contract.")
+
+
+static func _check_layer_scoped_sequence_projection(library: ContentLibrary, archetype: Dictionary, failures: Array) -> void:
+	var definition := library._runtime_validated_scenario_definition(library.scenario("punchline_open_mic_night"))
+	if definition.is_empty():
+		failures.append("Punchline Open Mic scenario definition is missing.")
+		return
+	var run_state := RunStateScript.new()
+	run_state.start_new("PUNCHLINE-SCOPED-SEQUENCE")
+	run_state.cache_runtime_scenario_definition(definition)
+	var generated := EnvironmentInstanceScript.from_archetype(archetype, 2, run_state.create_rng("punchline"), library, {}, definition).to_dict()
+	var stored_casino := _dict(_dict(generated.get("layer_states", {})).get("casino", {}))
+	if str(_dict(generated.get("scenario_state", {})).get("id", "")) != "punchline_open_mic_night" \
+			or str(_dict(stored_casino.get("scenario_state", {})).get("id", "")) != "punchline_open_mic_night" \
+			or stored_casino.has("scenario_sequence_state") \
+			or stored_casino.has("scenario_sequence_projection"):
+		failures.append("Club-scoped Open Mic sequence was not confined to Punchline L1 during layered generation.")
+		return
+	var installed := run_state.set_environment(generated)
+	var finalized := run_state.scenario_finalize_installed_environment(library)
+	# Simulate the prior-build save defect: a room-local L1 sequence projection
+	# was serialized into the unopened L2 body. Entry must discard those derived
+	# fields while retaining the venue's authoritative scenario cursor.
+	if bool(finalized.get("ok", false)):
+		var stale_states := _dict(run_state.current_environment.get("layer_states", {}))
+		var stale_casino := _dict(stale_states.get("casino", {}))
+		for stale_field in [
+			"scenario_sequence_state", "scenario_sequence_projection", "scenario_render_snapshot",
+			"scenario_sequence_migration", "scenario_semantic_inventory", "scenario_semantic_inventory_version",
+			"scenario_semantic_digest", "scenario_semantic_ready", "scenario_layout_authority",
+			"scenario_layout_audit", "scenario_layout_authority_digest",
+		]:
+			if run_state.current_environment.has(stale_field):
+				var stale_value: Variant = run_state.current_environment.get(stale_field)
+				stale_casino[stale_field] = stale_value.duplicate(true) if typeof(stale_value) in [TYPE_ARRAY, TYPE_DICTIONARY] else stale_value
+		stale_states["casino"] = stale_casino
+		run_state.current_environment["layer_states"] = stale_states
+	run_state.discover_environment_layer("casino", "password")
+	var generator := RunGeneratorScript.new(library)
+	var entered := generator.enter_environment_layer(run_state, "casino", false)
+	if not bool(installed.get("ok", false)) or not bool(finalized.get("ok", false)) or not bool(entered.get("ok", false)):
+		failures.append("Club-scoped Open Mic scenario blocked the Side Door layer boundary: %s." % JSON.stringify(entered))
+		return
+	if str(run_state.current_environment.get("current_layer_id", "")) != "casino" \
+			or str(_dict(run_state.current_environment.get("scenario_state", {})).get("id", "")) != "punchline_open_mic_night" \
+			or run_state.current_environment.has("scenario_sequence_state") \
+			or bool(run_state.current_environment.get("scenario_semantic_ready", false)):
+		failures.append("Punchline L2 did not preserve the venue scenario cursor while suppressing the L1-only projection.")
+	var returned := generator.enter_environment_layer(run_state, "club", false)
+	if not bool(returned.get("ok", false)) or not run_state.current_environment.has("scenario_sequence_state") or not bool(run_state.current_environment.get("scenario_semantic_ready", false)):
+		failures.append("Returning to Punchline L1 did not restore its scoped Open Mic sequence projection.")
 
 
 static func _check_discovery_and_save(library: ContentLibrary, archetype: Dictionary, failures: Array) -> void:
