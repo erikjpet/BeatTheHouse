@@ -12,7 +12,9 @@ static func build(profile_inventory: ProfileInventory) -> Dictionary:
 	var daily := _copy_dict(profile_inventory.daily_runs if profile_inventory != null else {})
 	var lifetime := _copy_dict(profile_inventory.lifetime_stats if profile_inventory != null else {})
 	var challenges := profile_inventory.completed_challenge_rows() if profile_inventory != null else []
-	var history := _copy_array(profile_inventory.run_history if profile_inventory != null else [])
+	# The screen renders eight compact rows. Ask the profile for exactly that
+	# projection instead of recursively copying all retained run records first.
+	var history := profile_inventory.recent_run_history(8) if profile_inventory != null else []
 	var victories := _copy_dict(lifetime.get("victories_per_route", {}))
 	var total_runs := int(lifetime.get("total_runs", 0))
 	var total_victories := 0

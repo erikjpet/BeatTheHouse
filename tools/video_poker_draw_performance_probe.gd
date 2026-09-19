@@ -5,6 +5,7 @@ extends SceneTree
 # previously made one cabinet click grow into a multi-second stall.
 
 const MainScene := preload("res://scenes/main.tscn")
+const ActionAuthorityScript := preload("res://scripts/core/blackjack_action_authority.gd")
 const SAVE_SLOT := "video_poker_draw_performance_probe"
 const MAX_DRAW_INPUT_MSEC := 350.0
 
@@ -72,11 +73,20 @@ func _run() -> void:
 		failures.append("Video Poker did not reach the hold phase before DRAW.")
 		_finish({})
 		return
+	# Reuse the host's opt-in debug timing envelope so this player-path probe can
+	# distinguish authority, result routing, save preparation, and presentation.
+	var ledger: Dictionary = app.call("_sealed_action_host_ledger", run_state, false)
+	var session: Dictionary = (ledger.get("session", {}) as Dictionary).duplicate(true) if typeof(ledger.get("session", {})) == TYPE_DICTIONARY else {}
+	session["coin_pusher_debug_profile_stages"] = true
+	ledger = ActionAuthorityScript.stage_session_cow(ledger, session)
+	app.call("_sealed_action_host_store_ledger", run_state, ledger)
 	var draw_started_usec := Time.get_ticks_usec()
 	canvas.emit_signal("surface_action", "video_poker_draw", 0, false)
 	var draw_input_msec := float(Time.get_ticks_usec() - draw_started_usec) / 1000.0
 	await _settle(4)
 	var settled_state := _surface_state(canvas)
+	var last_result: Dictionary = app.get("last_game_result")
+	var host_timing: Dictionary = last_result.get("coin_pusher_debug_host_timing_usec", {}) if typeof(last_result.get("coin_pusher_debug_host_timing_usec", {})) == TYPE_DICTIONARY else {}
 	if str(settled_state.get("phase", "")) != "settled":
 		failures.append("Video Poker DRAW did not settle and publish its payout.")
 	if draw_input_msec > MAX_DRAW_INPUT_MSEC:
@@ -89,6 +99,7 @@ func _run() -> void:
 		"environment_history_entries": run_state.environment_history.size(),
 		"phase": str(settled_state.get("phase", "")),
 		"hand_result_count": (settled_state.get("hand_results", []) as Array).size() if typeof(settled_state.get("hand_results", [])) == TYPE_ARRAY else 0,
+		"host_timing_usec": host_timing,
 		"double_up": double_up_evidence,
 	})
 
@@ -192,6 +203,6 @@ func _finish(evidence: Dictionary) -> void:
 		"evidence": evidence,
 	}, "\t"))
 	if app != null:
-		app.queue_free()
+		app.free()
 	await process_frame
 	quit(0 if failures.is_empty() else 1)

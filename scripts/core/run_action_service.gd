@@ -39,10 +39,15 @@ const SALS_PAWN_COUNTER_ID := "sals_pawn_counter"
 
 var library: ContentLibrary
 var run_state: RunState
+var _inventory_item_view_cache_key: String = ""
+var _inventory_item_view_cache: Array = []
 
 
 # Stores the current content library and run state used by resolver methods.
 func setup(p_library: ContentLibrary, p_run_state: RunState) -> void:
+	if library != p_library or run_state != p_run_state:
+		_inventory_item_view_cache_key = ""
+		_inventory_item_view_cache = []
 	library = p_library
 	run_state = p_run_state
 
@@ -387,13 +392,28 @@ func _mark_cage_gift_shop_offer_sold(item_id: String) -> void:
 func inventory_item_view_list() -> Array:
 	if not is_ready():
 		return []
+	var cache_key := "%d|%d|%d|%s" % [
+		run_state.get_instance_id(),
+		run_state.inventory_presentation_revision(),
+		run_state.inventory.size(),
+		str(run_state.active_item_id),
+	]
+	if cache_key == _inventory_item_view_cache_key:
+		return _inventory_item_view_cache.duplicate(false)
 	var result: Array = []
 	var selected_id := selected_active_item_id()
 	for item_value in run_state.inventory:
-		var detail := inventory_item_detail(_inventory_value_id(item_value), selected_id)
+		var item_id := _inventory_value_id(item_value)
+		# Runtime/meta items already carry their complete definition in inventory.
+		# Passing that read-only value through avoids rescanning and deep-copying the
+		# entire inventory once for every item during each room refresh.
+		var runtime_definition: Dictionary = item_value if typeof(item_value) == TYPE_DICTIONARY else {}
+		var detail := _inventory_item_detail(item_id, selected_id, runtime_definition)
 		if not detail.is_empty():
 			result.append(detail)
-	return result
+	_inventory_item_view_cache_key = cache_key
+	_inventory_item_view_cache = result
+	return _inventory_item_view_cache.duplicate(false)
 
 
 # Returns the equipped active item id, falling back to the only held active item
@@ -423,7 +443,7 @@ func set_active_item(item_id: String) -> Dictionary:
 	if not is_ready():
 		return _service_error("Inventory is not available.")
 	if item_id.is_empty():
-		run_state.active_item_id = ""
+		run_state.set_active_item("")
 		return _service_success({"ok": true, "type": "active_item_selection", "item_id": "", "message": "Active item cleared."})
 	if not run_state.inventory.has(item_id):
 		return _service_error("That item is not in your inventory.")
@@ -444,11 +464,15 @@ func set_active_item(item_id: String) -> Dictionary:
 
 # Returns display, type, effect, and sale data for one inventory item.
 func inventory_item_detail(item_id: String, selected_id_override: String = "__AUTO_SELECTED_ITEM__") -> Dictionary:
+	return _inventory_item_detail(item_id, selected_id_override, {})
+
+
+func _inventory_item_detail(item_id: String, selected_id_override: String, runtime_definition: Dictionary) -> Dictionary:
 	if item_id.is_empty() or library == null:
 		return {}
 	var definition := library.item(item_id)
 	if definition.is_empty():
-		definition = _runtime_item_definition(item_id)
+		definition = runtime_definition if str(runtime_definition.get("id", "")).strip_edges() == item_id else _runtime_item_definition(item_id)
 	if definition.is_empty():
 		return {}
 	var effect: Dictionary = definition.get("effect", {}) if typeof(definition.get("effect", {})) == TYPE_DICTIONARY else {}
@@ -458,7 +482,7 @@ func inventory_item_detail(item_id: String, selected_id_override: String = "__AU
 	var sale_breakdown := item_sale_price_breakdown(definition)
 	var is_active := _definition_is_active_item(definition)
 	var selected_id := selected_active_item_id() if selected_id_override == "__AUTO_SELECTED_ITEM__" and run_state != null else selected_id_override
-	var item_context := definition.duplicate(true)
+	var item_context := definition.duplicate(false)
 	item_context["item_class"] = item_class
 	item_context["sale_price"] = sale_price
 	var detail := {
@@ -1358,7 +1382,7 @@ func label_from_id(id: String) -> String:
 func _runtime_item_definition(item_id: String) -> Dictionary:
 	if run_state == null or item_id.is_empty():
 		return {}
-	for item_value in _copy_array(run_state.inventory):
+	for item_value in run_state.inventory:
 		if typeof(item_value) != TYPE_DICTIONARY:
 			continue
 		var item: Dictionary = item_value

@@ -33,11 +33,7 @@ static func glyph_ids() -> Array:
 
 
 static func glyph_definition(glyph_id: String) -> Dictionary:
-	var glyphs := _glyphs()
-	var value: Variant = glyphs.get(glyph_id, {})
-	if typeof(value) != TYPE_DICTIONARY:
-		return {}
-	return (value as Dictionary).duplicate(true)
+	return _glyph_definition_ref(glyph_id).duplicate(true)
 
 
 static func class_badge(kind: String, class_id: String) -> Dictionary:
@@ -172,7 +168,9 @@ static func for_world_map_detail(environment_kind: String, route: Dictionary = {
 
 
 static func for_item(item: Dictionary) -> Array:
-	var source := item.duplicate(true)
+	# Item definitions are only inspected while producing new badge values. Keep
+	# the caller's definition read-only instead of recursively cloning it here.
+	var source := item
 	var badges: Array = []
 	var item_class := str(source.get("item_class", source.get("class", source.get("item_type", "")))).strip_edges().to_lower()
 	badges.append(class_badge("item", item_class))
@@ -221,7 +219,8 @@ static func item_game_affinity_id(item: Dictionary) -> String:
 
 static func item_game_affinity_label(item: Dictionary) -> String:
 	var game_id := item_game_affinity_id(item)
-	var labels: Dictionary = _item_game_affinity_config().get("game_labels", {}) if typeof(_item_game_affinity_config().get("game_labels", {})) == TYPE_DICTIONARY else {}
+	var config := _item_game_affinity_config()
+	var labels: Dictionary = config.get("game_labels", {}) if typeof(config.get("game_labels", {})) == TYPE_DICTIONARY else {}
 	return str(labels.get(game_id, game_id.replace("_", " ").capitalize()))
 
 
@@ -372,7 +371,9 @@ static func _item_game_affinity_config() -> Dictionary:
 	var value: Variant = _registry.get("item_game_affinity", {})
 	if typeof(value) != TYPE_DICTIONARY:
 		return {}
-	return (value as Dictionary).duplicate(true)
+	# Private badge builders treat registry data as immutable. Returning the
+	# registry-owned branch avoids several whole-config copies for every item.
+	return value as Dictionary
 
 
 static func _alias_game_id(raw_id: String, aliases: Dictionary) -> String:
@@ -415,7 +416,7 @@ static func _definition_effect(definition: Dictionary) -> Dictionary:
 	for key in ["deltas", "result_delta", "result_deltas", "effect", "consequences"]:
 		var value: Variant = definition.get(key, {})
 		if typeof(value) == TYPE_DICTIONARY and not (value as Dictionary).is_empty():
-			return (value as Dictionary).duplicate(true)
+			return value as Dictionary
 	return {}
 
 
@@ -439,7 +440,7 @@ static func _filtered_badges(badges: Array) -> Array:
 			continue
 		var badge: Dictionary = badge_value
 		var glyph_id := str(badge.get("glyph_id", "")).strip_edges()
-		if glyph_id.is_empty() or glyph_definition(glyph_id).is_empty():
+		if glyph_id.is_empty() or _glyph_definition_ref(glyph_id).is_empty():
 			continue
 		var key := "%s|%s|%s" % [glyph_id, str(badge.get("value_text", "")), str(badge.get("polarity", ""))]
 		if seen.has(key):
@@ -451,7 +452,7 @@ static func _filtered_badges(badges: Array) -> Array:
 
 static func _badge(glyph_id: String, value_text: String, polarity: String, tooltip: String = "") -> Dictionary:
 	var clean_id := glyph_id.strip_edges()
-	if clean_id.is_empty() or glyph_definition(clean_id).is_empty():
+	if clean_id.is_empty() or _glyph_definition_ref(clean_id).is_empty():
 		return {}
 	return {
 		"glyph_id": clean_id,
@@ -464,7 +465,7 @@ static func _badge(glyph_id: String, value_text: String, polarity: String, toolt
 static func _badge_polarity(glyph_id: String, value: int) -> String:
 	if value == 0:
 		return "neutral"
-	var glyph := glyph_definition(glyph_id)
+	var glyph := _glyph_definition_ref(glyph_id)
 	var rule := str(glyph.get("polarity", "neutral"))
 	if rule == "positive_good":
 		return "good" if value > 0 else "bad"
@@ -476,7 +477,7 @@ static func _badge_polarity(glyph_id: String, value: int) -> String:
 
 
 static func _glyph_label(glyph_id: String) -> String:
-	var glyph := glyph_definition(glyph_id)
+	var glyph := _glyph_definition_ref(glyph_id)
 	return str(glyph.get("label", glyph_id))
 
 
@@ -615,6 +616,11 @@ static func _glyphs() -> Dictionary:
 	if typeof(value) != TYPE_DICTIONARY:
 		return {}
 	return value as Dictionary
+
+
+static func _glyph_definition_ref(glyph_id: String) -> Dictionary:
+	var value: Variant = _glyphs().get(glyph_id, {})
+	return value as Dictionary if typeof(value) == TYPE_DICTIONARY else {}
 
 
 static func _class_badges() -> Dictionary:

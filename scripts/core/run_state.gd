@@ -395,6 +395,7 @@ var _item_effect_total_cache: Dictionary = {}
 var _item_effect_bundle_cache: Dictionary = {}
 var _owned_item_lookup_cache: Dictionary = {}
 var _owned_item_lookup_cache_valid := false
+var _inventory_presentation_revision: int = 0
 var _scenario_sequence_definition_cache: Dictionary = {}
 # Fail-closed forced-rejection probe used by the retained-alias transaction contract.
 # It can only reject a turn; it cannot grant authority or alter a consequence.
@@ -442,6 +443,15 @@ const TURN_TRANSACTION_SHALLOW_CACHE_FIELDS := [
 	"_item_effects_by_id", "_item_definitions_by_id", "_item_effect_total_cache",
 	"_item_effect_bundle_cache", "_owned_item_lookup_cache", "_scenario_sequence_definition_cache",
 ]
+# These histories are append-only during live play: writers append a newly owned
+# Dictionary, replace/downsample the outer Array, or clear that Array. Existing
+# records are never edited. A transaction therefore needs its own outer list but
+# can safely retain the immutable historical records instead of recursively
+# copying hundreds of entries before and after every action.
+const TURN_TRANSACTION_APPEND_ONLY_HISTORY_FIELDS := [
+	"environment_history", "story_log", "heat_history",
+	"grand_casino_atm_interest_notifications",
+]
 var world_sequence_registrations: Dictionary = {}
 var _world_sequence_definition_cache: Dictionary = {}
 
@@ -461,6 +471,7 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	inventory = []
 	portable_ticket_piles = {}
 	active_item_id = ""
+	invalidate_inventory_effect_cache()
 	debt = []
 	sals_forfeited_item_ids = []
 	suspicion = {
@@ -8554,7 +8565,14 @@ func remove_item(item_id: String) -> void:
 # Sets the selected active item id. Validation belongs to the action service
 # because it owns item definitions.
 func set_active_item(item_id: String) -> void:
-	active_item_id = item_id if inventory.has(item_id) else ""
+	var next_active_item_id := item_id if inventory.has(item_id) else ""
+	if active_item_id != next_active_item_id:
+		active_item_id = next_active_item_id
+		_inventory_presentation_revision += 1
+
+
+func inventory_presentation_revision() -> int:
+	return _inventory_presentation_revision
 
 
 # Sums passive numeric item effects for owned run inventory.
@@ -8642,6 +8660,7 @@ func invalidate_inventory_effect_cache() -> void:
 	_item_effect_bundle_cache.clear()
 	_owned_item_lookup_cache.clear()
 	_owned_item_lookup_cache_valid = false
+	_inventory_presentation_revision += 1
 
 
 func _synergy_effect_total(effect: Dictionary, effect_key: String, family_key: String, action_key: String, owned_lookup: Dictionary) -> int:
@@ -13750,10 +13769,14 @@ func _environment_turn_snapshot() -> Dictionary:
 		transaction_rooms[room_id_value] = transaction_environment
 	var collection_graph: Dictionary = {}
 	var detached_shallow_caches: Dictionary = {}
+	var detached_history_lists: Dictionary = {}
 	for field_name in TURN_TRANSACTION_COLLECTION_FIELDS:
 		if field_name in TURN_TRANSACTION_SHALLOW_CACHE_FIELDS:
 			var cache_value: Variant = get(field_name)
 			detached_shallow_caches[field_name] = cache_value.duplicate(false) if typeof(cache_value) in [TYPE_DICTIONARY, TYPE_ARRAY] else cache_value
+		elif field_name in TURN_TRANSACTION_APPEND_ONLY_HISTORY_FIELDS:
+			var history_value: Variant = get(field_name)
+			detached_history_lists[field_name] = history_value.duplicate(false) if typeof(history_value) == TYPE_ARRAY else []
 		elif field_name == "current_environment":
 			collection_graph[field_name] = transaction_environment
 		elif field_name == "grand_casino_room_states":
@@ -13769,7 +13792,12 @@ func _environment_turn_snapshot() -> Dictionary:
 	for room_id_value in active_room_alias_ids:
 		detached_rooms[room_id_value] = detached_environment
 	for field_name in TURN_TRANSACTION_COLLECTION_FIELDS:
-		snapshot[field_name] = detached_shallow_caches.get(field_name) if field_name in TURN_TRANSACTION_SHALLOW_CACHE_FIELDS else detached_collection_graph.get(field_name)
+		if field_name in TURN_TRANSACTION_SHALLOW_CACHE_FIELDS:
+			snapshot[field_name] = detached_shallow_caches.get(field_name)
+		elif field_name in TURN_TRANSACTION_APPEND_ONLY_HISTORY_FIELDS:
+			snapshot[field_name] = detached_history_lists.get(field_name, [])
+		else:
+			snapshot[field_name] = detached_collection_graph.get(field_name)
 	snapshot["town_state_object"] = {
 		"present": town_state != null,
 		"state": town_state.snapshot() if town_state != null else {},
@@ -13797,6 +13825,12 @@ func _apply_environment_turn_snapshot(snapshot: Dictionary, preserve_live_aliase
 			# These private caches own detached outer containers but immutable
 			# definition/scalar values. An accepted candidate can transfer that
 			# outer cache directly; no external gameplay identity retains it.
+			set(field_name, incoming)
+			continue
+		if field_name in TURN_TRANSACTION_APPEND_ONLY_HISTORY_FIELDS:
+			# The candidate owns this Array and only shares immutable old records.
+			# Transfer it directly; recursively reconciling every prior record would
+			# reintroduce a history-sized pause on the accepted action boundary.
 			set(field_name, incoming)
 			continue
 		var current: Variant = get(field_name)
@@ -16009,6 +16043,9 @@ func _sync_portable_ticket_inventory_markers() -> void:
 			inventory.erase(item_id)
 			if active_item_id == item_id:
 				active_item_id = ""
+	# Ticket counts and winner values are part of the inventory card even when
+	# the marker item itself remains present.
+	invalidate_inventory_effect_cache()
 
 
 static func _environment_for_persistent_storage(environment: Dictionary, deep_copy: bool = true) -> Dictionary:

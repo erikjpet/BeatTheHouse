@@ -311,6 +311,14 @@ func sealed_action_authority_script() -> Script:
 	return ActionAuthorityScript
 
 
+func defers_embedded_action_presentation_refresh(run_state: RunState, _environment: Dictionary) -> bool:
+	# Resolution, bankroll, Heat, and replay publication remain synchronous. On a
+	# normal run, hand the complete machine/HUD projection to the guarded next
+	# frame so a Draw click does not also consume the visual rebuild in one pulse.
+	# Tutorial coach boundaries retain their synchronous presentation contract.
+	return run_state != null and not run_state.is_tutorial_run()
+
+
 func sealed_action_authority_contract() -> Dictionary:
 	return {
 		"resolve_proposal_method": &"_machine_game_resolve_proposal",
@@ -712,6 +720,18 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	spec["ritual_id"] = VIDEO_POKER_RITUAL_ID
 	spec["ritual_projection"] = _video_poker_live_ritual_projection(phase, spec, flip, pit_boss, hand_active, last_result)
 	return spec
+
+
+func embedded_action_view_patch(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
+	# Video Poker's surface state is already the complete post-action machine
+	# projection. Refresh only that embedded surface after Deal/Draw/Double instead
+	# of rebuilding the surrounding room, navigation, and HUD snapshots.
+	var patch := surface_state(run_state, environment, ui_state)
+	# The projection above already includes the new flip/draw animation channels
+	# and their authored timestamps. A second realtime projection at this same
+	# boundary duplicates the complete card/paytable build without advancing time.
+	patch["surface_action_realtime_refresh_required"] = false
+	return patch
 
 
 func _video_poker_live_ritual_projection(phase: String, spec: Dictionary, flip: Dictionary, pit_boss: Dictionary, hand_active: bool, last_result: Dictionary) -> Dictionary:

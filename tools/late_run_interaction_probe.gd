@@ -5,6 +5,7 @@ extends SceneTree
 # receipts, visited room payloads, or the complete map.
 
 const MainScene := preload("res://scenes/main.tscn")
+const EnvironmentInteractionViewModel := preload("res://scripts/ui/environment_interaction_view_model.gd")
 const FIXTURE_SLOT := "pathological_continue_save_probe_copy"
 const MAX_WARM_FULL_REFRESH_AVG_MS := 100.0
 const MAX_SELECTED_SCOUT_PREVIEW_AVG_MS := 40.0
@@ -19,6 +20,79 @@ func _average_ms(callable: Callable, iterations: int) -> float:
 	for _index in range(iterations):
 		callable.call()
 	return (float(Time.get_ticks_usec() - started) / 1000.0) / float(maxi(1, iterations))
+
+
+func _stage_ms(callable: Callable, iterations: int = 4) -> float:
+	return _average_ms(callable, iterations)
+
+
+func _refresh_stage_timings(host) -> Dictionary:
+	# Profile the stable read/presentation stages independently after the complete
+	# warm refresh. This keeps production refreshes free of diagnostic branches
+	# while making late-run regressions attributable instead of reporting one sum.
+	var environment_snapshot: Dictionary = host._environment_view_snapshot()
+	var recent_result: Dictionary = host._recent_result_snapshot()
+	var archetype: Dictionary = host._current_environment_archetype()
+	var snapshot_options := {
+		"recent_result": recent_result,
+		"drunk_effect_mode": host._drunk_effect_mode(),
+		"reduce_motion": host._reduce_motion_enabled(),
+		"high_contrast": host._high_contrast_enabled(),
+		"accessibility": host.current_accessibility_snapshot(),
+		"travel_choices": host._travel_choice_view_list(),
+		"selected_travel_target_id": host.selected_travel_target_id,
+		"selected_travel_label": host.selected_travel_label,
+		"venue_open_status": host._environment_open_status(archetype),
+		"venue_open_status_text": "",
+		"world_map_overlay_visible": false,
+		"world_map": {},
+		"event_options": host._eligible_event_option_view_list(),
+		"item_offers": host._item_offer_view_list(),
+		"inventory_items": host._inventory_item_view_list(),
+		"shopkeeper_available": host._shopkeeper_available(),
+		"service_options": host._service_hook_view_list(),
+		"lender_options": host._lender_hook_view_list(),
+		"interactable_objects": host._interactable_object_view_list(),
+		"outcome_object_id": host._outcome_object_id(recent_result),
+		"outcome_message": host._outcome_message(recent_result),
+	}
+	var timings := {
+		"resume_world_outcomes": _stage_ms(func(): host._resume_pending_world_sequence_outcomes()),
+		"terminal_state": _stage_ms(func(): host._evaluate_run_terminal_state()),
+		"scenario_transitions": _stage_ms(func(): host._consume_scenario_transitions()),
+		"environment_screen": _stage_ms(func(): host._render_environment_screen()),
+		"world_header": _stage_ms(func(): host._refresh_world_header()),
+		"hud_model": _stage_ms(func(): host._run_status_hud_model()),
+		"focus_layout": _stage_ms(func(): host._apply_focus_layout()),
+		"result_feedback": _stage_ms(func(): host._refresh_environment_result_feedback()),
+		"run_report": _stage_ms(func(): host._render_run_report()),
+		"result_panel": _stage_ms(func(): host._render_result_panel()),
+		"foundation_snapshots": _stage_ms(func(): host._render_foundation_snapshots()),
+		"environment_snapshot_model": _stage_ms(func(): host._environment_view_snapshot()),
+		"environment_snapshot_projection": _stage_ms(func(): EnvironmentInteractionViewModel.environment_snapshot(host.run_state, snapshot_options)),
+		"environment_snapshot_signature": _stage_ms(func(): host._environment_snapshot_signature()),
+		"recent_result": _stage_ms(func(): host._recent_result_snapshot()),
+		"travel_choices": _stage_ms(func(): host._travel_choice_view_list()),
+		"event_options": _stage_ms(func(): host._eligible_event_option_view_list()),
+		"item_offers": _stage_ms(func(): host._item_offer_view_list()),
+		"inventory_items": _stage_ms(func(): host._inventory_item_view_list()),
+		"service_options": _stage_ms(func(): host._service_hook_view_list()),
+		"lender_options": _stage_ms(func(): host._lender_hook_view_list()),
+		"interactable_objects": _stage_ms(func(): host._interactable_object_view_list()),
+		"talk_dock": _stage_ms(func(): host._refresh_talk_dock()),
+		"world_map": _stage_ms(func(): host._refresh_world_map_overlay()),
+		"music": _stage_ms(func(): host._update_procedural_music()),
+		"coach": _stage_ms(func(): host._refresh_coach_at_boundary()),
+	}
+	if host.environment_canvas != null:
+		timings["environment_canvas_apply"] = _stage_ms(func(): host.environment_canvas.render_owned_environment_snapshot(environment_snapshot))
+	if host.run_action_service != null:
+		var selected_item_id: String = host.run_action_service.selected_active_item_id()
+		for item_value in host.run_state.inventory:
+			var item_id: String = str(item_value.get("id", "")) if typeof(item_value) == TYPE_DICTIONARY else str(item_value)
+			if not item_id.is_empty():
+				timings["inventory_detail:%s" % item_id] = _stage_ms(func(): host.run_action_service.inventory_item_detail(item_id, selected_item_id))
+	return timings
 
 
 func _run() -> void:
@@ -37,6 +111,7 @@ func _run() -> void:
 	else:
 		host._refresh()
 		var warm_refresh_avg_ms := _average_ms(func(): host._refresh(), 8)
+		var refresh_stage_timings := _refresh_stage_timings(host)
 		var target_ids: Array = host._travel_target_ids()
 		var selected_scout_avg_ms := 0.0
 		var selected_scout_cold_ms := 0.0
@@ -67,6 +142,7 @@ func _run() -> void:
 			failures.size(),
 		])
 		print("LATE_RUN_INTERACTION_DETAIL target_count=%d preview_environment_timing=%s" % [target_ids.size(), JSON.stringify(preview_environment_timing)])
+		print("LATE_RUN_REFRESH_STAGE_DETAIL timings_ms=%s" % JSON.stringify(refresh_stage_timings))
 	host.queue_free()
 	await process_frame
 	await process_frame

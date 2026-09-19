@@ -5107,6 +5107,8 @@ func _check_profile_inventory_boundary(failures: Array) -> void:
 		failures.append("ProfileInventory did not surface completed challenge rows.")
 	if restored.run_history.size() != 6:
 		failures.append("ProfileInventory did not append one history entry for each terminal fixture.")
+	elif (restored.run_history[0] as Dictionary).has(ProfileInventoryScript.RELEASE_REPORTING_KEY):
+		failures.append("ProfileInventory retained reporting-only Crew/world detail after aggregating the terminal run.")
 	if int(restored.lifetime_stats.get("total_runs", 0)) != 6:
 		failures.append("ProfileInventory lifetime total_runs did not match terminal fixtures.")
 	var victories := _copy_dict(restored.lifetime_stats.get("victories_per_route", {}))

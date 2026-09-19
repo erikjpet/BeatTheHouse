@@ -10,6 +10,13 @@ const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 const SCHEMA_VERSION := 5
 const RUN_HISTORY_LIMIT := 20
 const RELEASE_REPORTING_KEY := "release_0_6"
+const PROFILE_STORAGE_KEYS := [
+	"schema_version", "act", "items", "challenge_completions",
+	"completed_challenge_flags", "run_history", "daily_runs",
+	"lifetime_stats", "act_seam", "scratch_ticket_types_discovered",
+	"scratch_ticket_collection_acknowledged", "tips_seen",
+	"tutorial_completed",
+]
 const CREW_STANDING_IDS := ["stranger", "marker", "associate", "made", "inner_circle"]
 const REFERENCE_CHIP_ID := "profile_poker_chip"
 const ACTIVE_SCRATCH_TICKET_IDS := ["two_fer", "lucky_7s", "tic_tac_gold", "crossword_corner", "bonus_bingo", "high_roller_holdem", "golden_vault"]
@@ -96,9 +103,10 @@ func to_dict() -> Dictionary:
 func from_dict(data: Dictionary) -> void:
 	loaded_schema_version = int(data.get("schema_version", 0))
 	tutorial_field_present = data.has("tutorial_completed")
-	_unknown_fields = data.duplicate(true)
-	for key in ["schema_version", "act", "items", "challenge_completions", "completed_challenge_flags", "run_history", "daily_runs", "lifetime_stats", "act_seam", "scratch_ticket_types_discovered", "scratch_ticket_collection_acknowledged", "tips_seen", "tutorial_completed"]:
-		_unknown_fields.erase(key)
+	# Copy only genuinely unknown forward-compatible fields. The old path first
+	# deep-copied the complete profile—including every retained run—and then erased
+	# all known fields, so startup paid for history once here and again below.
+	_unknown_fields = _copy_unknown_fields(data, PROFILE_STORAGE_KEYS)
 	items = []
 	challenge_completions = _normalize_challenge_completions(data.get("challenge_completions", data.get("completed_challenge_flags", {})))
 	run_history = _normalize_run_history(data.get("run_history", []))
@@ -249,15 +257,29 @@ func completed_challenge_rows() -> Array:
 
 
 func record_run_result(snapshot: Dictionary) -> Dictionary:
-	var entry := _normalize_run_history_entry(snapshot)
+	# Reporting detail is consumed once into lifetime aggregates. Retaining that
+	# same nested Crew/world ledger in every recent-run row made profile load/save
+	# scale with redundant historical payload that no screen reads.
+	var entry := _normalize_run_history_entry(snapshot, true)
 	if entry.is_empty():
 		return {"ok": false, "message": "Run result snapshot was not terminal."}
-	run_history.push_front(entry)
+	var summary := _run_history_summary(entry)
+	run_history.push_front(summary)
 	while run_history.size() > RUN_HISTORY_LIMIT:
 		run_history.pop_back()
 	_record_lifetime_stats(entry)
-	_record_daily_result(entry)
-	return {"ok": true, "entry": entry.duplicate(true)}
+	_record_daily_result(summary)
+	return {"ok": true, "entry": summary.duplicate(true)}
+
+
+func recent_run_history(limit: int = 8) -> Array:
+	var result: Array = []
+	var count := mini(run_history.size(), maxi(0, limit))
+	for index in range(count):
+		var value: Variant = run_history[index]
+		if typeof(value) == TYPE_DICTIONARY:
+			result.append((value as Dictionary).duplicate(true))
+	return result
 
 
 func record_act_seam(payload: Dictionary) -> Dictionary:
@@ -408,7 +430,7 @@ func _normalize_run_history(value: Variant) -> Array:
 	return result
 
 
-func _normalize_run_history_entry(value: Dictionary) -> Dictionary:
+func _normalize_run_history_entry(value: Dictionary, include_reporting: bool = false) -> Dictionary:
 	var outcome := str(value.get("outcome", "")).strip_edges()
 	if outcome.is_empty():
 		var status := str(value.get("run_status", "")).strip_edges()
@@ -424,8 +446,7 @@ func _normalize_run_history_entry(value: Dictionary) -> Dictionary:
 	var completed_date := str(value.get("completed_date", "")).strip_edges()
 	if completed_date.is_empty():
 		completed_date = _today_date_string()
-	var result := value.duplicate(true)
-	result.merge({
+	var result := {
 		"seed": str(value.get("seed", value.get("seed_text", ""))).strip_edges(),
 		"route": route,
 		"outcome": outcome,
@@ -444,20 +465,28 @@ func _normalize_run_history_entry(value: Dictionary) -> Dictionary:
 		"bankroll_lost": maxi(0, int(value.get("bankroll_lost", maxi(0, -int(value.get("bankroll_delta", 0)))))),
 		"biggest_single_win": maxi(0, int(value.get("biggest_single_win", 0))),
 		"games_played": _normalize_int_dictionary(value.get("games_played", {})),
-	}, true)
-	if value.has(RELEASE_REPORTING_KEY):
+	}
+	if include_reporting and value.has(RELEASE_REPORTING_KEY):
 		result[RELEASE_REPORTING_KEY] = _normalize_release_run_stats(value.get(RELEASE_REPORTING_KEY, {}))
 	return result
 
 
+func _run_history_summary(entry: Dictionary) -> Dictionary:
+	# Re-normalizing the already canonical scalar row is cheap and guarantees the
+	# retained history never inherits reporting-only or caller-owned containers.
+	return _normalize_run_history_entry(entry, false)
+
+
 func _normalize_daily_runs(value: Variant) -> Dictionary:
 	var source := _copy_dict(value)
+	var best_result_value: Variant = source.get("best_result", {})
+	var best_result := _normalize_run_history_entry(best_result_value as Dictionary) if typeof(best_result_value) == TYPE_DICTIONARY else {}
 	return {
 		"current_streak": maxi(0, int(source.get("current_streak", 0))),
 		"best_streak": maxi(0, int(source.get("best_streak", 0))),
 		"last_completed_date": str(source.get("last_completed_date", "")).strip_edges(),
 		"last_daily_id": str(source.get("last_daily_id", "")).strip_edges(),
-		"best_result": _copy_dict(source.get("best_result", {})),
+		"best_result": best_result,
 	}
 
 
@@ -716,6 +745,17 @@ static func _copy_dict(value: Variant) -> Dictionary:
 	if typeof(value) != TYPE_DICTIONARY:
 		return {}
 	return (value as Dictionary).duplicate(true)
+
+
+static func _copy_unknown_fields(source: Dictionary, known_keys: Array) -> Dictionary:
+	var result: Dictionary = {}
+	for key_value in source.keys():
+		var key := str(key_value)
+		if known_keys.has(key):
+			continue
+		var value: Variant = source.get(key_value)
+		result[key_value] = value.duplicate(true) if typeof(value) in [TYPE_DICTIONARY, TYPE_ARRAY] else value
+	return result
 
 
 static func _copy_array(value: Variant) -> Array:

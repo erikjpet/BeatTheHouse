@@ -301,6 +301,7 @@ func _check_item_build_interaction_foundation(library: ContentLibrary, failures:
 		failures.append("Item purchase did not apply item cost through result-delta bankroll.")
 	if JSON.parse_string(JSON.stringify(purchase_result)) == null:
 		failures.append("Item purchase result was not serializable.")
+	_check_inventory_view_cache_invalidation(library, failures)
 	_check_item_affinity_purchase_nudge(library, failures)
 
 	var baseline_game := GameModule.new()
@@ -345,6 +346,42 @@ func _check_item_build_interaction_foundation(library: ContentLibrary, failures:
 			failures.append("Item build bankroll did not survive SaveService load.")
 		elif loaded.story_log.size() != item_run.story_log.size():
 			failures.append("Item build story state did not survive SaveService load.")
+
+
+func _check_inventory_view_cache_invalidation(library: ContentLibrary, failures: Array) -> void:
+	var run_state := RunStateScript.new()
+	run_state.start_new("INVENTORY-VIEW-CACHE")
+	var resolver := RunActionServiceScript.new()
+	resolver.setup(library, run_state)
+	resolver.inventory_item_view_list()
+	run_state.add_item("thermos_black_coffee")
+	var added_view := resolver.inventory_item_view_list()
+	if _item_offer_by_id(added_view, "thermos_black_coffee").is_empty():
+		failures.append("Inventory view cache did not invalidate after adding an item.")
+	var selection := resolver.set_active_item("thermos_black_coffee")
+	var selected_detail := _item_offer_by_id(resolver.inventory_item_view_list(), "thermos_black_coffee")
+	if not bool(selection.get("ok", false)) or not bool(selected_detail.get("active_selected", false)):
+		failures.append("Inventory view cache did not invalidate after active-item selection.")
+	var ticket_environment := {
+		"id": "inventory_cache_ticket_room",
+		"world_node_id": "inventory_cache_ticket_room",
+		"archetype_id": "gas_station_casino",
+		"display_name": "Ticket Room",
+	}
+	run_state.remember_portable_ticket_state("scratch_tickets", ticket_environment, {
+		"pending_queue": [{"id": "cache_ticket_1"}],
+		"winner_pile": [],
+	})
+	var one_ticket := _item_offer_by_id(resolver.inventory_item_view_list(), "pile_of_scratch_tickets")
+	if int(one_ticket.get("ticket_count", 0)) != 1:
+		failures.append("Inventory view cache did not publish the first portable ticket state.")
+	run_state.remember_portable_ticket_state("scratch_tickets", ticket_environment, {
+		"pending_queue": [{"id": "cache_ticket_1"}, {"id": "cache_ticket_2"}],
+		"winner_pile": [],
+	})
+	var two_tickets := _item_offer_by_id(resolver.inventory_item_view_list(), "pile_of_scratch_tickets")
+	if int(two_tickets.get("ticket_count", 0)) != 2:
+		failures.append("Inventory view cache reused a stale portable-ticket count.")
 
 
 func _seed_for_first_roll_between(min_roll: int, max_roll: int) -> String:

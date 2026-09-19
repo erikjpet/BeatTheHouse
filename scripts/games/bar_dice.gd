@@ -175,6 +175,20 @@ func sealed_action_authority_contract() -> Dictionary:
 	return {
 		"resolve_proposal_method": &"_bar_dice_resolve_proposal",
 		"wager_cost_proposal_method": &"_bar_dice_wager_cost_proposal",
+		# Foundation already owns an isolated transaction candidate. Resolve and
+		# replay against that candidate directly so late-run history is neither
+		# serialized nor fingerprinted as part of every dice settlement.
+		"trusted_candidate_resolve_method": &"_bar_dice_resolve_candidate",
+		"trusted_candidate_wager_method": &"_bar_dice_wager_cost_candidate",
+		"trusted_candidate_first_proposal_owns_transaction": true,
+		"compact_authority_evidence_method": &"_bar_dice_authority_evidence",
+		"trusted_candidate_structural_replay_match": true,
+		# With no authored scenario or injected rollback fixture, the host's turn
+		# boundary cannot reject. Publish the replay-validated table directly instead
+		# of cloning and reconciling the complete run around every throw.
+		"in_place_nonrejecting_commit": true,
+		# Synchronous retry needs only the current response and its predecessor.
+		"active_replay_limit": 2,
 		"host_auto_tick_method": &"",
 		"surface_intent_key": BAR_DICE_SURFACE_INTENT_KEY,
 		"surface_intent_index_key": BAR_DICE_SURFACE_INTENT_INDEX_KEY,
@@ -265,6 +279,19 @@ func _bar_dice_wager_cost_proposal(action_id: String, stake: int, run_snapshot: 
 		"cost": maxi(0, cost),
 		"input_fingerprint": RuntimeScript.canonical_fingerprint(input),
 	}
+
+
+func _bar_dice_wager_cost_candidate(action_id: String, stake: int, candidate: RunState, ui_state: Dictionary = {}) -> int:
+	if candidate == null:
+		return 0
+	if action_id == "press":
+		var press_table := _dice_state_preview(candidate, candidate.current_environment)
+		var offer := _copy_dict(_copy_dict(press_table.get("last_result", {})).get("press_offer", {}))
+		return mini(maxi(1, int(offer.get("risk", stake))), maxi(0, candidate.wager_balance_for_game(get_id(), candidate.current_environment))) if bool(offer.get("available", false)) else 0
+	if action_id in ["roll", "loaded_toss", "palmed_swap"]:
+		var table := _dice_state_preview(candidate, candidate.current_environment)
+		return _sealed_bar_dice_stake(stake, table, ui_state, candidate, candidate.current_environment)
+	return 0
 
 
 func wager_activity_incomplete(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> bool:
@@ -784,6 +811,71 @@ func _bar_dice_resolve_proposal(action_id: String, stake: int, run_snapshot: Dic
 	}
 	proposal["output_fingerprint"] = RuntimeScript.canonical_fingerprint(proposal)
 	return proposal
+
+
+func _bar_dice_resolve_candidate(action_id: String, stake: int, candidate: RunState, proposal_rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
+	if candidate == null or proposal_rng == null:
+		return _empty_result(action_id, stake, {}, "Bar Dice resolution requires an isolated run and RNG candidate.")
+	var resolution_ui_state := ui_state.duplicate(true)
+	if not resolution_ui_state.has("surface_time_msec"):
+		resolution_ui_state["surface_time_msec"] = GameModule.deterministic_time_msec(candidate, {})
+	return _resolve_bar_dice_proposal_core(
+		action_id,
+		stake,
+		candidate,
+		candidate.current_environment,
+		proposal_rng,
+		resolution_ui_state
+	)
+
+
+func _bar_dice_authority_evidence(candidate: RunState, action_id: String, stake: int, ui_state: Dictionary = {}) -> Dictionary:
+	if candidate == null:
+		return {}
+	var environment := candidate.current_environment
+	var table := _table_state_preview(candidate, environment).duplicate(false)
+	# The host authenticates replay history and pending apply state separately.
+	# Excluding those growing receipt collections keeps this evidence constant-cost.
+	table.erase(ActionAuthorityScript.LEDGER_KEY)
+	table.erase(ActionAuthorityScript.PENDING_APPLY_RECEIPT_KEY)
+	var environment_evidence := environment.duplicate(false)
+	environment_evidence.erase("environment_runtime_revision")
+	# Only Bar Dice's table can affect its result. Other games and retained run
+	# histories remain outside this exact deterministic authority projection.
+	environment_evidence["game_states"] = {get_id(): table}
+	return {
+		"version": 1,
+		"game_id": get_id(),
+		"action_id": action_id,
+		"stake": maxi(0, stake),
+		"account_checkpoint": candidate.action_authority_checkpoint_fingerprint(),
+		"bankroll": candidate.bankroll,
+		"grand_casino_chips": candidate.grand_casino_chips,
+		"rng_seed": candidate.rng_seed,
+		"rng_state": candidate.rng_state,
+		"simulation_msec": candidate.simulation_msec,
+		"game_clock_minutes": candidate.game_clock_minutes,
+		"seed_text": candidate.seed_text,
+		"seed_value": candidate.seed_value,
+		"run_status": candidate.run_status,
+		"economic_state": candidate.economic_state,
+		"challenge_config": candidate.challenge_config,
+		"inventory": candidate.inventory,
+		"active_item_id": candidate.active_item_id,
+		"suspicion": candidate.suspicion,
+		"baseline_luck": candidate.baseline_luck,
+		"drunk_level": candidate.drunk_level,
+		"alcoholic_level": candidate.alcoholic_level,
+		"narrative_flags": candidate.narrative_flags,
+		"crew_play_state": candidate.crew_play_state,
+		"grand_casino_staffing": candidate.grand_casino_staffing,
+		"rourke_current_room": candidate.rourke_current_room,
+		"rourke_current_spot": candidate.rourke_current_spot,
+		"rourke_facing": candidate.rourke_facing,
+		"rourke_off_floor_actions": candidate.rourke_off_floor_actions,
+		"environment": environment_evidence,
+		"ui_state": ui_state,
+	}
 
 
 func _resolve_bar_dice_proposal_core(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
