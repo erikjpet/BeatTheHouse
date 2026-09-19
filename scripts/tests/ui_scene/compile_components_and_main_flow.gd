@@ -22,6 +22,7 @@ func _without_coin_pusher_game_states(value: Variant, parent_key: String = "") -
 # longer production playtest starts driving gameplay.
 
 const MainScene := preload("res://scenes/main.tscn")
+const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd")
 const GameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.gd")
@@ -2449,10 +2450,16 @@ func _check_crew_favor_conversation(app: Control) -> bool:
 		return false
 	var pickup_object_id := "delivery:pickup:%s" % run_state.current_world_node_id()
 	var pickup_visible := false
+	var pickup_object: Dictionary = {}
 	for object_value in app.call("_interactable_object_view_list"):
 		if typeof(object_value) == TYPE_DICTIONARY and str((object_value as Dictionary).get("object_id", "")) == pickup_object_id:
 			pickup_visible = true
+			pickup_object = object_value as Dictionary
 			break
+	if pickup_visible and (str(pickup_object.get("visual_type", "")) != "prop" or str(pickup_object.get("presence", "")) != "fixture" \
+			or EnvironmentPlacementScript.is_person_class(str(pickup_object.get("placement_class", "")))):
+		push_error("Crew-favor package pickup was projected as a departing person: %s" % JSON.stringify(pickup_object))
+		return false
 	if not pickup_visible or not bool(app.call("activate_interactable_object", pickup_object_id)) \
 			or not bool(run_state.delivery_snapshot().get("carrying_contraband", false)):
 		push_error("Crew-favor pickup did not stage as a physical in-room interaction.")

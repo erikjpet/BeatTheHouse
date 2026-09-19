@@ -1417,15 +1417,19 @@ func _check_scratch_scalper_restock_arrival(game: GameModule, failures: Array) -
 func _check_environment_person_transits(failures: Array) -> void:
 	var canvas: Control = ScratchPixelSceneCanvasScript.new()
 	var settled_person := _person_transit_record("dialogue:scratch_ticket_scalper", 0.46)
+	var settled_package := _non_person_transit_record("delivery:pickup:gas_station_casino", 0.62)
 	var room := _person_transit_room("person-transit-visit", [_person_transit_record("shopkeeper:clerk", 0.30)])
 	canvas.call("render_environment_snapshot", room)
 	var changed_room := room.duplicate(true)
-	changed_room["interactable_objects"] = [room["interactable_objects"][0], settled_person]
+	changed_room["interactable_objects"] = [room["interactable_objects"][0], settled_person, settled_package]
 	var sealed_input := JSON.stringify(changed_room.get("interactable_objects", []))
 	canvas.call("render_environment_snapshot", changed_room)
 	if JSON.stringify(changed_room.get("interactable_objects", [])) != sealed_input:
 		failures.append("Person arrival transit mutated the settled interaction geometry source.")
 	var arrival := _canvas_object(canvas, "dialogue:scratch_ticket_scalper")
+	var package := _canvas_object(canvas, "delivery:pickup:gas_station_casino")
+	if package.is_empty() or bool(package.get("person_transit_active", false)) or (canvas.get("person_transit_ids") as Array).has("delivery:pickup:gas_station_casino"):
+		failures.append("A non-person package inherited a person arrival transit from its placement class.")
 	if not bool(arrival.get("person_transit_active", false)) or str(arrival.get("person_transit_kind", "")) != "arrival":
 		failures.append("A person added mid-visit did not begin at the authored doorway transit.")
 	elif bool(arrival.get("interactive", true)) or (canvas.call("_interaction_rect_for_object", arrival) as Rect2).has_area():
@@ -1445,6 +1449,8 @@ func _check_environment_person_transits(failures: Array) -> void:
 		failures.append("An arriving person did not become interactive exactly after settling.")
 	canvas.call("render_environment_snapshot", room)
 	var departure := _canvas_object(canvas, "dialogue:scratch_ticket_scalper")
+	if not _canvas_object(canvas, "delivery:pickup:gas_station_casino").is_empty():
+		failures.append("A removed non-person package walked away instead of disappearing in place.")
 	if not bool(departure.get("person_transit_active", false)) or str(departure.get("person_transit_kind", "")) != "departure" or bool(departure.get("interactive", true)):
 		failures.append("A person removed mid-visit did not walk out as a non-interactive departure.")
 	canvas.set("actor_route_time", 40.0)
@@ -1502,6 +1508,25 @@ func _person_transit_record(object_id: String, center_x: float) -> Dictionary:
 		"visible": true,
 		"interactive": true,
 		"enabled": true,
+		"placement_class": "standing_person",
+		"scenario_layout_resolved": true,
+		"normalized_rect": {"x": center_x - 0.04, "y": 0.55, "w": 0.08, "h": 0.20},
+		"small_screen_rect": {"x": center_x - 0.05, "y": 0.53, "w": 0.10, "h": 0.24},
+	}
+
+
+func _non_person_transit_record(object_id: String, center_x: float) -> Dictionary:
+	return {
+		"object_id": object_id,
+		"object_type": "delivery",
+		"visual_type": "prop",
+		"label": "Take the package",
+		"short_description": "A package waiting for pickup.",
+		"visible": true,
+		"interactive": true,
+		"enabled": true,
+		# Deliberately hostile legacy metadata proves that placement alone cannot
+		# make a prop inherit a person's arrival/departure animation.
 		"placement_class": "standing_person",
 		"scenario_layout_resolved": true,
 		"normalized_rect": {"x": center_x - 0.04, "y": 0.55, "w": 0.08, "h": 0.20},

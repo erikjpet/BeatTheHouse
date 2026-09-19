@@ -1036,24 +1036,26 @@ static func delivery_interactable_objects(host: Variant, occupied_objects: Array
 	for physical_index in range(physical_interactions.size()):
 		var interaction: Dictionary = physical_interactions[physical_index]
 		var verb := str(interaction.get("verb", ""))
-		var delivery_class := EnvironmentPlacementScript.classify(interaction, "actor" if verb == "pickup" else "scene_object", str(interaction.get("object_id", "delivery:%s" % verb)), "patron_talk" if verb == "pickup" else "crate")
+		var package_action := verb in ["pickup", "stash", "retrieve", "ditch"]
+		var delivery_prop := "crate" if package_action else "street_sign"
+		var delivery_class := EnvironmentPlacementScript.classify(interaction, "scene_object", str(interaction.get("object_id", "delivery:%s" % verb)), delivery_prop)
 		var focus_rect := _delivery_available_rect(host, occupied_rects, physical_index, delivery_class)
 		occupied_rects.append(focus_rect)
 		result.append(host._make_interactable_object({
 			"object_id": str(interaction.get("object_id", "delivery:%s" % verb)),
 			"object_type": host.CONTEXT_MODE_DELIVERY,
-			"visual_type": "character" if verb == "pickup" else "prop",
+			"visual_type": "prop",
 			"source_id": verb,
 			"label": str(interaction.get("label", verb.replace("_", " ").capitalize())),
 			"short_description": str(interaction.get("message", "The route has a physical choice here.")),
-			"presence": "character" if verb == "pickup" else "fixture",
+			"presence": "fixture",
 			"interactive": true,
 			"enabled": true,
 			"action_summary": str(interaction.get("message", "Act here.")),
 			"status_summary": str(interaction.get("cargo_label", "Crew route")),
-			"visual_key": "character" if verb == "pickup" else "item" if verb in ["stash", "retrieve", "ditch"] else "travel",
-			"prop": "patron_talk" if verb == "pickup" else "crate" if verb in ["stash", "retrieve", "ditch"] else "street_sign",
-			"icon_key": "item" if verb in ["pickup", "stash", "retrieve", "ditch"] else "travel",
+			"visual_key": "item" if package_action else "travel",
+			"prop": delivery_prop,
+			"icon_key": "item" if package_action else "travel",
 			"available_actions": [{"id": "delivery_physical_action", "label": str(interaction.get("label", "Act"))}],
 			"confirm_action_id": "delivery_physical_action",
 			"focus_rect": focus_rect,

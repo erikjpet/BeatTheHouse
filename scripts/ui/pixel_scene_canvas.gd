@@ -75,6 +75,8 @@ const OBJECT_INFO_TYPE_GAP := 8.0
 const OBJECT_INFO_HEADER_Y := 13.0
 const OBJECT_INFO_HEADER_RULE_Y := 18.0
 const OBJECT_INFO_BODY_Y := 31.0
+const OBJECT_INFO_STATUS_ICON_SIZE := 12.0
+const OBJECT_INFO_STATUS_ICON_GAP := 5.0
 const OBJECT_INFO_BADGE_RAISE := 5.0
 const OBJECT_INFO_ACTION_HEIGHT := 16.0
 const OBJECT_INFO_ACTION_GAP := 5.0
@@ -624,7 +626,7 @@ func select_object_at(index: int) -> void:
 
 # Returns the rendered object id under a local canvas coordinate.
 func object_id_at_local_position(local_position: Vector2) -> String:
-	var object_ids := _object_ids_at_local_position(local_position)
+	var object_ids := _object_ids_at_local_position(local_position, false)
 	return object_ids[0] if not object_ids.is_empty() else ""
 
 
@@ -679,22 +681,29 @@ func apply_interactable_object_state_patch(object_id: String, object_state: Dict
 	return patched
 
 
-# Returns every interactive object under a point from front to back. Developer
-# placement intentionally permits overlap, so play input needs a way to reach
-# objects below the topmost rendered object.
-func _object_ids_at_local_position(local_position: Vector2) -> Array[String]:
+# Returns rendered objects under a point from front to back. Actionable objects
+# remain ahead of view-only scenery when their hit regions overlap so a passive
+# prop cannot conceal a usable interaction. Hover/focus may include passive
+# objects; activation and keyboard traversal retain the interactive-only path.
+func _object_ids_at_local_position(local_position: Vector2, interactive_only: bool = true) -> Array[String]:
 	var board_position := _local_to_board_position(local_position)
 	var objects := _active_scene_objects()
-	var object_ids: Array[String] = []
+	var interactive_ids: Array[String] = []
+	var passive_ids: Array[String] = []
 	for index in range(objects.size() - 1, -1, -1):
 		var object_data: Dictionary = objects[index]
-		if not bool(object_data.get("interactive", true)):
-			continue
 		if _interaction_rect_for_object(object_data).has_point(board_position):
 			var object_id := str(object_data.get("id", ""))
-			if not object_id.is_empty() and not object_ids.has(object_id):
-				object_ids.append(object_id)
-	return object_ids
+			if object_id.is_empty():
+				continue
+			if bool(object_data.get("interactive", true)):
+				if not interactive_ids.has(object_id):
+					interactive_ids.append(object_id)
+			elif not interactive_only and not passive_ids.has(object_id):
+				passive_ids.append(object_id)
+	if not interactive_only:
+		interactive_ids.append_array(passive_ids)
+	return interactive_ids
 
 
 # Returns canvas-owned view data only; this is not a simulation source.
@@ -2647,6 +2656,7 @@ func _draw_selected_object_info() -> void:
 	if info.is_empty():
 		return
 	var object_data: Dictionary = info.get("object", {})
+	var expanded := bool(info.get("expanded", false))
 	var object_type := str(object_data.get("type", "item"))
 	var interaction_type := str(object_data.get("interaction_type", object_type))
 	var card := _animated_info_card_rect(info)
@@ -2662,19 +2672,24 @@ func _draw_selected_object_info() -> void:
 	var type_text := _player_facing_object_type(interaction_type)
 	var title_text := title if not title.is_empty() else type_text
 	var type_width := _object_info_type_width(type_text, font)
-	var title_width := maxf(20.0, card.size.x - type_width - OBJECT_INFO_PADDING_X * 2.0 - OBJECT_INFO_TYPE_GAP)
+	var status_icon_rect := Rect2(
+		Vector2(card.end.x - OBJECT_INFO_PADDING_X - type_width - OBJECT_INFO_TYPE_GAP - OBJECT_INFO_STATUS_ICON_SIZE, card.position.y + 3.0),
+		Vector2(OBJECT_INFO_STATUS_ICON_SIZE, OBJECT_INFO_STATUS_ICON_SIZE)
+	)
+	var title_width := maxf(20.0, status_icon_rect.position.x - card.position.x - OBJECT_INFO_PADDING_X - OBJECT_INFO_STATUS_ICON_GAP)
 	draw_string(font, card.position + Vector2(OBJECT_INFO_PADDING_X, OBJECT_INFO_HEADER_Y), _fit_draw_text(title_text, font, 11, title_width), HORIZONTAL_ALIGNMENT_LEFT, title_width, 11, header_color)
+	_draw_object_interaction_status_icon(status_icon_rect, _object_info_is_actionable(object_data))
 	draw_string(font, card.position + Vector2(card.size.x - OBJECT_INFO_PADDING_X - type_width, OBJECT_INFO_HEADER_Y), _fit_draw_text(type_text, font, 8, type_width), HORIZONTAL_ALIGNMENT_RIGHT, type_width, 8, Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.82))
 	var y := card.position.y + OBJECT_INFO_BODY_Y
 	if lines.is_empty():
 		lines = [_fallback_object_description(object_data)]
 	var badges := _array_view(object_data.get("attribute_badges", []))
-	if not badges.is_empty():
+	if expanded and not badges.is_empty():
 		var badge_entries := _selected_info_badge_entries_for_rect(object_data, card, y)
 		var row_rect := AttributeBadgeRowScript.draw_canvas(self, badges, Vector2(card.position.x + OBJECT_INFO_PADDING_X, y - OBJECT_INFO_BADGE_RAISE), card.size.x - OBJECT_INFO_PADDING_X * 2.0, 16)
 		selected_info_badge_hit_entries = badge_entries
 		y += row_rect.size.y + 4.0
-	var action_area_height := _selected_info_action_area_height(object_data, card.size.x - OBJECT_INFO_PADDING_X * 2.0)
+	var action_area_height := _selected_info_action_area_height(object_data, card.size.x - OBJECT_INFO_PADDING_X * 2.0) if expanded else 0.0
 	var body_bottom := card.end.y - OBJECT_INFO_BOTTOM_PADDING
 	if action_area_height > 0.0:
 		body_bottom -= OBJECT_INFO_ACTION_GAP + action_area_height
@@ -2706,6 +2721,22 @@ func _draw_selected_object_info() -> void:
 			if not detail.is_empty() and detail_rect.size.x > 0.0 and detail_rect.size.y > 0.0:
 				draw_multiline_string(font, detail_rect.position + Vector2(0.0, 9.0), detail, HORIZONTAL_ALIGNMENT_CENTER, detail_rect.size.x, 8, OBJECT_INFO_INLINE_ACTION_DETAIL_MAX_LINES, Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.86), TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
 	_draw_selected_info_badge_hover_text(font)
+
+
+func _draw_object_interaction_status_icon(rect: Rect2, actionable: bool) -> void:
+	var color := C_TEAL if actionable else Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.66)
+	draw_rect(rect, Color(0.0, 0.0, 0.0, 0.52))
+	draw_rect(rect, color, false, 1.0)
+	if actionable:
+		var center := rect.get_center()
+		var left := Vector2(rect.position.x + 3.0, center.y)
+		var right := Vector2(rect.end.x - 3.0, center.y)
+		draw_line(left, right, color, 2.0)
+		draw_line(right, right + Vector2(-3.0, -3.0), color, 2.0)
+		draw_line(right, right + Vector2(-3.0, 3.0), color, 2.0)
+	else:
+		draw_line(rect.position + Vector2(3.0, 3.0), rect.end - Vector2(3.0, 3.0), color, 2.0)
+		draw_line(Vector2(rect.end.x - 3.0, rect.position.y + 3.0), Vector2(rect.position.x + 3.0, rect.end.y - 3.0), color, 2.0)
 
 
 func _draw_selected_info_badge_hover_text(font: Font) -> void:
@@ -3129,7 +3160,7 @@ func _settled_person_objects(objects: Array) -> Dictionary:
 			continue
 		var object_data := value as Dictionary
 		var object_id := str(object_data.get("id", "")).strip_edges()
-		if object_id.is_empty() or not EnvironmentPlacementScript.is_person_class(str(object_data.get("placement_class", ""))):
+		if object_id.is_empty() or not _scene_object_represents_person(object_data):
 			continue
 		var settled := object_data.duplicate(true)
 		settled.erase("person_transit_active")
@@ -3137,6 +3168,18 @@ func _settled_person_objects(objects: Array) -> Dictionary:
 		settled.erase("person_transit_settled_position")
 		result[object_id] = settled
 	return result
+
+
+static func _scene_object_represents_person(object_data: Dictionary) -> bool:
+	if not EnvironmentPlacementScript.is_person_class(str(object_data.get("placement_class", ""))):
+		return false
+	var visual_type := str(object_data.get("type", "")).strip_edges().to_lower()
+	if visual_type in ["actor", "character", "npc", "scenario_actor"]:
+		return true
+	if not str(object_data.get("actor_id", "")).strip_edges().is_empty():
+		return true
+	var actor_value: Variant = object_data.get("character_actor", {})
+	return typeof(actor_value) == TYPE_DICTIONARY and not (actor_value as Dictionary).is_empty()
 
 
 func _start_person_transit(object_id: String, settled_value: Variant, kind: String) -> void:
@@ -3611,6 +3654,7 @@ func _selected_object_info_snapshot() -> Dictionary:
 	if info.is_empty():
 		return {"visible": false}
 	var object_data: Dictionary = info.get("object", {})
+	var expanded := bool(info.get("expanded", false))
 	var action_entries := _selected_info_action_entries_from_info(info)
 	var action_button_rect := _selected_info_action_button_rect_from_entries(action_entries)
 	var visual_rect := _animated_info_card_rect(info)
@@ -3619,6 +3663,10 @@ func _selected_object_info_snapshot() -> Dictionary:
 		"object_id": str(info.get("object_id", "")),
 		"title": str(info.get("title", "")),
 		"lines": _copy_array(info.get("lines", [])),
+		"expanded": expanded,
+		"interaction_available": _object_info_is_actionable(object_data),
+		"interaction_status": _object_info_interaction_status(object_data),
+		"interaction_icon": "action" if _object_info_is_actionable(object_data) else "view_only",
 		"rect": _rect_to_snapshot(info.get("rect", Rect2())),
 		"visual_rect": _rect_to_snapshot(visual_rect),
 		"animating": info_card_animating,
@@ -3629,9 +3677,9 @@ func _selected_object_info_snapshot() -> Dictionary:
 		"action_label": _selected_info_action_label(object_data),
 		"action_button_rect": _rect_to_snapshot(action_button_rect),
 		"actions": _selected_info_action_snapshot_list(action_entries),
-		"attribute_badges": _copy_array(object_data.get("attribute_badges", [])),
-		"badge_hit_entries": _selected_info_badge_snapshot_list(_selected_info_badge_entries_for_rect(object_data, visual_rect, visual_rect.position.y + OBJECT_INFO_BODY_Y)),
-		"body_text_start_y": _selected_info_body_text_start_y(object_data, visual_rect),
+		"attribute_badges": _copy_array(object_data.get("attribute_badges", [])) if expanded else [],
+		"badge_hit_entries": _selected_info_badge_snapshot_list(_selected_info_badge_entries_for_rect(object_data, visual_rect, visual_rect.position.y + OBJECT_INFO_BODY_Y)) if expanded else [],
+		"body_text_start_y": _selected_info_body_text_start_y(object_data, visual_rect, expanded),
 	}
 
 
@@ -3645,7 +3693,8 @@ func _selected_object_info() -> Dictionary:
 	if object_data.is_empty():
 		return {}
 	var title := str(object_data.get("label", "")).strip_edges()
-	var lines := _object_info_lines(object_data)
+	var expanded := not selected_object_id.is_empty() and object_id == selected_object_id
+	var lines := _object_info_lines(object_data) if expanded else _hover_object_info_lines(object_data)
 	if title.is_empty() and lines.is_empty():
 		return {}
 	var object_rect := _board_rect_for_object(object_data)
@@ -3654,9 +3703,33 @@ func _selected_object_info() -> Dictionary:
 		"object_id": object_id,
 		"title": title,
 		"lines": lines,
-		"rect": _object_info_rect(object_rect, title, lines, str(object_data.get("type", "item")), object_data),
+		"expanded": expanded,
+		"rect": _object_info_rect(object_rect, title, lines, str(object_data.get("type", "item")), object_data, expanded),
 		"object_rect": object_rect,
 	}
+
+
+func _hover_object_info_lines(object_data: Dictionary) -> Array:
+	var full_lines := _object_info_lines(object_data)
+	var lines: Array = []
+	if not full_lines.is_empty():
+		lines.append(full_lines[0])
+	else:
+		var fallback := _fallback_object_description(object_data).strip_edges()
+		if not fallback.is_empty():
+			lines.append(fallback)
+	lines.append("Interactive — click for details." if _object_info_is_actionable(object_data) else "View only — click for details.")
+	return lines
+
+
+func _object_info_is_actionable(object_data: Dictionary) -> bool:
+	return not object_data.is_empty() \
+		and bool(object_data.get("interactive", true)) \
+		and not bool(object_data.get("disabled", false))
+
+
+func _object_info_interaction_status(object_data: Dictionary) -> String:
+	return "Interactive" if _object_info_is_actionable(object_data) else "View only"
 
 
 func _object_info_lines(object_data: Dictionary) -> Array:
@@ -4085,9 +4158,9 @@ func _selected_info_badge_snapshot_list(entries: Array) -> Array:
 	return snapshots
 
 
-func _selected_info_body_text_start_y(object_data: Dictionary, card: Rect2) -> float:
+func _selected_info_body_text_start_y(object_data: Dictionary, card: Rect2, include_badges: bool = true) -> float:
 	var y := card.position.y + OBJECT_INFO_BODY_Y
-	if not _array_view(object_data.get("attribute_badges", [])).is_empty():
+	if include_badges and not _array_view(object_data.get("attribute_badges", [])).is_empty():
 		var entries := _selected_info_badge_entries_for_rect(object_data, card, y)
 		if not entries.is_empty() and typeof(entries[0]) == TYPE_DICTIONARY:
 			var first_entry: Dictionary = entries[0]
@@ -4257,11 +4330,11 @@ func _compact_info_text(text: String) -> String:
 	return compact
 
 
-func _object_info_rect(object_rect: Rect2, title: String, lines: Array, object_type: String, object_data: Dictionary = {}) -> Rect2:
+func _object_info_rect(object_rect: Rect2, title: String, lines: Array, object_type: String, object_data: Dictionary = {}, include_details: bool = true) -> Rect2:
 	var visible_rect := _visible_board_rect().grow(-OBJECT_LAYOUT_MARGIN)
 	if visible_rect.size.x <= 0.0 or visible_rect.size.y <= 0.0:
 		visible_rect = Rect2(Vector2(OBJECT_LAYOUT_MARGIN, OBJECT_LAYOUT_MARGIN), Vector2(BOARD_SIZE) - Vector2(OBJECT_LAYOUT_MARGIN * 2.0, OBJECT_LAYOUT_MARGIN * 2.0))
-	var card_size := _object_info_size(title, lines, object_type, visible_rect, object_data)
+	var card_size := _object_info_size(title, lines, object_type, visible_rect, object_data, include_details)
 	return _object_info_rect_for_visible(object_rect, card_size, visible_rect)
 
 
@@ -4319,7 +4392,7 @@ func _append_unique_info_rect(candidates: Array, rect: Rect2) -> void:
 	candidates.append(rect)
 
 
-func _object_info_size(title: String, lines: Array, object_type: String, visible_rect: Rect2, object_data: Dictionary = {}) -> Vector2:
+func _object_info_size(title: String, lines: Array, object_type: String, visible_rect: Rect2, object_data: Dictionary = {}, include_details: bool = true) -> Vector2:
 	var max_width := minf(_object_info_width(object_type), visible_rect.size.x)
 	var min_width := minf(OBJECT_INFO_MIN_WIDTH, max_width)
 	var font := get_theme_default_font()
@@ -4330,16 +4403,17 @@ func _object_info_size(title: String, lines: Array, object_type: String, visible
 	var content_width := _object_info_header_width(title_text, type_text, font)
 	for line in lines:
 		content_width = maxf(content_width, _draw_text_width(str(line), font, 9) + OBJECT_INFO_PADDING_X * 2.0)
-	content_width = maxf(content_width, _object_info_action_content_width(object_data, font))
+	if include_details:
+		content_width = maxf(content_width, _object_info_action_content_width(object_data, font))
 	if lines.is_empty():
 		content_width = maxf(content_width, min_width)
-	var badge_height := _object_info_badge_height(object_data)
+	var badge_height := _object_info_badge_height(object_data) if include_details else 0.0
 	if badge_height > 0.0:
 		content_width = maxf(content_width, _object_info_badge_width(object_data))
 	var width := clampf(ceilf(content_width), min_width, max_width)
 	var line_count := maxi(1, lines.size())
 	var height := maxf(OBJECT_INFO_MIN_HEIGHT, OBJECT_INFO_BODY_Y + badge_height + float(line_count) * OBJECT_INFO_LINE_HEIGHT + OBJECT_INFO_BOTTOM_PADDING)
-	var action_area_height := _selected_info_action_area_height(object_data, width - OBJECT_INFO_PADDING_X * 2.0)
+	var action_area_height := _selected_info_action_area_height(object_data, width - OBJECT_INFO_PADDING_X * 2.0) if include_details else 0.0
 	if action_area_height > 0.0:
 		height += OBJECT_INFO_ACTION_GAP + action_area_height
 	height = minf(ceilf(height), visible_rect.size.y)
@@ -4375,7 +4449,12 @@ func _object_info_action_content_width(object_data: Dictionary, font: Font) -> f
 
 
 func _object_info_header_width(title: String, type_text: String, font: Font) -> float:
-	return _draw_text_width(title, font, 11) + _object_info_type_width(type_text, font) + OBJECT_INFO_PADDING_X * 2.0 + OBJECT_INFO_TYPE_GAP
+	return _draw_text_width(title, font, 11) \
+		+ _object_info_type_width(type_text, font) \
+		+ OBJECT_INFO_PADDING_X * 2.0 \
+		+ OBJECT_INFO_TYPE_GAP \
+		+ OBJECT_INFO_STATUS_ICON_SIZE \
+		+ OBJECT_INFO_STATUS_ICON_GAP
 
 
 func _object_info_type_width(type_text: String, font: Font) -> float:
@@ -4676,14 +4755,14 @@ func _set_hovered_object(object_id: String) -> void:
 		return
 	hovered_object_id = object_id
 	var hovered_object := _scene_object(object_id)
-	var enabled_hover := not hovered_object.is_empty() and not bool(hovered_object.get("disabled", false))
+	var enabled_hover := _object_info_is_actionable(hovered_object)
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if enabled_hover else Control.CURSOR_ARROW
 	object_hovered.emit(object_id)
 	queue_redraw()
 
 
 func _focus_object_at_local_position(local_position: Vector2) -> void:
-	var object_ids := _object_ids_at_local_position(local_position)
+	var object_ids := _object_ids_at_local_position(local_position, false)
 	var object_id := ""
 	if not object_ids.is_empty():
 		object_id = object_ids[0]
