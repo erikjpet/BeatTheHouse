@@ -136,6 +136,14 @@ func sealed_action_authority_script() -> Script:
 	return ActionAuthorityScript
 
 
+func defers_embedded_action_presentation_refresh(run_state: RunState, _environment: Dictionary) -> bool:
+	# Settlement publishes its authoritative result before returning. Building the
+	# complete Foundation/HUD presentation in that same input callback can consume
+	# an entire visible frame on a mature run, so hand the presentation to the
+	# guarded next-frame path. Tutorial boundaries stay synchronous for the coach.
+	return run_state != null and not run_state.is_tutorial_run()
+
+
 func sealed_action_authority_contract() -> Dictionary:
 	return {
 		"resolve_proposal_method": ActionAuthorityScript.RESOLVE_PROPOSAL_METHOD,
@@ -159,14 +167,16 @@ func sealed_action_authority_contract() -> Dictionary:
 		"authoritative_result_marker": "",
 		"place_bet_action": ActionAuthorityScript.PLACE_BET_ACTION,
 		"host_pointer_intent": false,
-		# Count pulses and non-terminal card decisions alter only the authenticated
-		# session. Terminal variants automatically fall back to the transaction path.
+		# Count pulses, non-terminal card decisions, and the count-reveal stage of
+		# settlement alter only the authenticated session. Economic/terminal variants
+		# automatically fall back to the transaction path.
 		"in_place_session_intents": [
-			"blackjack_count_icon", "blackjack_hit", "blackjack_stand",
+			"blackjack_count_icon", BLACKJACK_SETTLE_ACTION, "blackjack_hit", "blackjack_stand",
 			"blackjack_double", "blackjack_split", "blackjack_surrender",
 		],
 		"in_place_session_intent_predicate_method": &"_blackjack_in_place_session_intent_allowed",
 		"in_place_session_intent_method": &"_blackjack_in_place_session_intent_command",
+		"in_place_session_surface_patch_method": &"_blackjack_in_place_session_surface_patch",
 		"skip_environment_turn_actions": ["count_cards"],
 	}
 
@@ -1936,7 +1946,7 @@ func _blackjack_in_place_session_intent_command(surface_action: String, index: i
 		if table.is_empty():
 			return _message_command(session, "The count pulse is no longer available.")
 		return _hit_count_icon(index, session, table, run_state)
-	if not surface_action in ["blackjack_hit", "blackjack_stand", "blackjack_double", "blackjack_split", "blackjack_surrender"]:
+	if not surface_action in [BLACKJACK_SETTLE_ACTION, "blackjack_hit", "blackjack_stand", "blackjack_double", "blackjack_split", "blackjack_surrender"]:
 		return {"handled": false}
 	# The ordinary hand buttons first transform only the authenticated session.
 	# Foundation stages non-terminal results directly in that ledger. A card that
@@ -1945,8 +1955,128 @@ func _blackjack_in_place_session_intent_command(surface_action: String, index: i
 	return _blackjack_surface_action_command(surface_action, index, false, session, run_state, environment)
 
 
-func _blackjack_in_place_session_intent_allowed(_surface_action: String, run_state: RunState, environment: Dictionary) -> bool:
-	return run_state != null and not _is_rourke_duel(run_state, environment)
+func _blackjack_in_place_session_surface_patch(session: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
+	# Session-only decisions must become visible on the same input boundary. A
+	# complete Foundation refresh rebuilds the environment, HUD, dialogue and
+	# action panels before the canvas sees the new card, producing a player-visible
+	# hitch and consuming most of the short deal animation. Project only the fields
+	# that a live decision can change and let the host apply them atomically.
+	var table := _peek_table_state(environment)
+	if table.is_empty():
+		return {}
+	var now_msec := int(session.get("surface_time_msec", Time.get_ticks_msec()))
+	var presentation_msec := _blackjack_presentation_time_msec(session, now_msec)
+	var hands := _hand_array(session.get("player_hands", []))
+	var active_index := clampi(int(session.get("active_hand_index", 0)), 0, maxi(0, hands.size() - 1))
+	var active_hand: Dictionary = hands[active_index] if active_index < hands.size() else {}
+	var active_cards := _card_array(active_hand.get("cards", []))
+	var dealer_cards := _card_array(session.get("dealer_cards", []))
+	var deal_id := str(session.get("deal_animation_id", ""))
+	var deal_started_msec := int(session.get("deal_started_msec", 0))
+	var deal_events := _deal_animation_event_array(session.get("deal_animation_events", []))
+	var patron_hands := _hand_array(session.get("patron_hands", []))
+	var patron_action_events := _patron_action_event_array(session.get("patron_action_events", []))
+	var deal_duration_msec := maxi(_deal_animation_duration_msec(deal_events), _patron_action_animation_duration_msec(patron_action_events))
+	var deal_active := not deal_id.is_empty() and deal_started_msec > 0 \
+			and presentation_msec >= deal_started_msec \
+			and presentation_msec < deal_started_msec + deal_duration_msec
+	var challenge := _local_copy_dict(session.get("count_challenge", {}))
+	var count_active := not challenge.is_empty() and not bool(session.get("count_answered", false))
+	var dealt := _has_dealt_hand(session)
+	var barred := bool(table.get("barred", false))
+	var round_complete := dealt and _all_hands_complete(session)
+	var dealer_blackjack_pending := dealt and _dealer_has_blackjack(dealer_cards)
+	var attention_id := str(session.get("dealer_lookaway_id", ""))
+	var attention_started_msec := int(session.get("dealer_lookaway_started_msec", 0))
+	var attention_duration_msec := int(session.get("dealer_lookaway_duration_msec", 0))
+	var last_result := _local_copy_dict(table.get("last_result", {}))
+	var payout_id := str(last_result.get("payout_animation_id", ""))
+	var payout_started_msec := int(last_result.get("resolved_at_msec", last_result.get("timestamp_msec", 0)))
+	if not last_result.is_empty() and not deal_events.is_empty():
+		payout_started_msec += deal_duration_msec
+	var payout_active := not payout_id.is_empty() and payout_started_msec > 0 \
+			and presentation_msec >= payout_started_msec \
+			and presentation_msec < payout_started_msec + PAYOUT_ANIMATION_DURATION_MSEC
+	var total_info := _hand_total_info(active_cards)
+	var selected_stake := _effective_table_stake(_session_stake(int(session.get("selected_stake", 1)), session), session, run_state, environment)
+	return {
+		"surface_time_msec": now_msec,
+		"surface_presentation_time_msec": presentation_msec,
+		"surface_ui_protected_regions": _blackjack_ui_protected_regions(challenge),
+		"surface_animation_channels": [
+			GameModule.surface_animation_channel(DEAL_ANIMATION_CHANNEL, deal_id, deal_duration_msec, deal_started_msec, {
+				"active": deal_active,
+				"clock_source": "presentation",
+				"metadata": {"event_count": deal_events.size()},
+			}),
+			GameModule.surface_animation_channel(ATTENTION_ANIMATION_CHANNEL, attention_id, attention_duration_msec, attention_started_msec, {"clock_source": "surface"}),
+			GameModule.surface_animation_channel(COUNT_ANIMATION_CHANNEL, str(challenge.get("challenge_id", "")), 0 if count_active else 2600, int(challenge.get("started_msec", 0)), {"clock_source": "surface"}),
+			GameModule.surface_animation_channel(PAYOUT_ANIMATION_CHANNEL, payout_id, PAYOUT_ANIMATION_DURATION_MSEC if not payout_id.is_empty() else 0, payout_started_msec, {"active": payout_active, "clock_source": "presentation"}),
+		],
+		"phase": "barred" if barred else "settling" if round_complete else "decision" if dealt else "betting",
+		"table_barred": barred,
+		"barred_reason": str(table.get("barred_reason", "")),
+		"player_hands": hands,
+		"patron_hands": patron_hands,
+		"patron_action_events": patron_action_events,
+		"dealer": _dealer_view(dealer_cards, bool(session.get("dealer_hole_visible", false))),
+		"dealer_cards": dealer_cards,
+		"dealer_hole_visible": bool(session.get("dealer_hole_visible", false)),
+		"active_hand_index": active_index,
+		"blackjack_total": int(total_info.get("total", 0)),
+		"blackjack_soft": bool(total_info.get("soft", false)),
+		"deal_animation_id": deal_id,
+		"deal_started_msec": deal_started_msec,
+		"deal_animation_events": deal_events,
+		"deal_animation_duration_msec": deal_duration_msec,
+		"table_notice": _table_notice_for_session(session, table),
+		"active_hand_status": _active_hand_status_text(session),
+		"round_complete": round_complete,
+		"settle_available": round_complete or dealer_blackjack_pending,
+		"dealer_blackjack_pending": dealer_blackjack_pending,
+		"selected_stake": selected_stake,
+		"can_deal": not dealt and not barred,
+		"can_hit": _can_hit(session) and not barred,
+		"can_stand": _can_stand(session) and not barred,
+		"can_double": _can_double(session, table, selected_stake, run_state) and not barred,
+		"can_split": _can_split(session, table, selected_stake, run_state) and not barred,
+		"can_surrender": _can_surrender(session, table) and not barred,
+		"can_change_side_bets": _can_change_side_bets(session) and not barred,
+		"basic_strategy_advice": _basic_strategy_advice(session, table, run_state),
+		"count_hint": _count_hint(run_state, table, session),
+		"counting_enabled": bool(session.get("counting_enabled", table.get("counting_enabled", false))),
+		"count_challenge": challenge,
+		"count_answered": bool(session.get("count_answered", false)),
+		"count_correct": bool(session.get("count_correct", false)),
+		"count_perfect": bool(session.get("count_perfect", false)),
+		"count_delta": int(session.get("count_delta", 0)),
+		"count_hand_delta": int(session.get("count_delta", 0)),
+		"count_declared_delta": int(session.get("count_declared_delta", 0)),
+		"native_selected_surface_actions": _selected_surface_actions(session, session),
+	}
+
+
+func _blackjack_in_place_session_intent_allowed(surface_action: String, run_state: RunState, environment: Dictionary) -> bool:
+	if run_state == null or _is_rourke_duel(run_state, environment):
+		return false
+	if surface_action != BLACKJACK_SETTLE_ACTION:
+		return true
+	var table := _peek_table_state(environment)
+	var ledger_value: Variant = table.get(BLACKJACK_HOST_LEDGER_KEY, null)
+	if typeof(ledger_value) != TYPE_DICTIONARY:
+		return true
+	var session_value: Variant = (ledger_value as Dictionary).get("session", null)
+	if typeof(session_value) != TYPE_DICTIONARY:
+		return true
+	var session := session_value as Dictionary
+	# Only the non-economic reveal/wait variants use the cheap session path. Once
+	# the reveal exists, route the click directly to the sealed payout transaction
+	# instead of running the same command once as a preflight and then again there.
+	if not _has_dealt_hand(session) or (not _all_hands_complete(session) and not _dealer_has_blackjack(_card_array(session.get("dealer_cards", [])))):
+		return true
+	if bool(session.get("presentation_timing_enforced", false)) and _deal_presentation_active(session):
+		return true
+	return _count_settlement_preview_required(session)
 
 
 func _rourke_duel_surface_action_command(surface_action: String, index: int, confirm_requested: bool, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:

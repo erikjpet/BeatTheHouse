@@ -1653,6 +1653,12 @@ func _sealed_action_host_in_place_session_intent(surface_action: String, index: 
 		ledger = ActionAuthorityScript.stage_session_cow(ledger, next_session)
 		if not _sealed_action_host_store_in_place_ledger(ledger):
 			return _sealed_action_host_rejection("internal_fail_closed", "The live Blackjack session could not be staged.")
+		if not command.has("surface_state_patch"):
+			var patch_method := StringName(action_authority_contract.get("in_place_session_surface_patch_method", &""))
+			if not patch_method.is_empty() and current_game.has_method(patch_method):
+				var patch_value: Variant = current_game.call(patch_method, next_session, run_state, run_state.current_environment)
+				if typeof(patch_value) == TYPE_DICTIONARY and not (patch_value as Dictionary).is_empty():
+					command["surface_state_patch"] = patch_value
 	return command
 
 
@@ -12198,7 +12204,12 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 	if not rendered_action_state.is_empty() and rendered_action_state.has("surface_action_bindings"):
 		action_surface_ui_state = action_surface_ui_state.duplicate(false)
 		action_surface_ui_state["surface_action_bindings"] = rendered_action_state.get("surface_action_bindings", {})
-	var wager_cost := _wager_cost_for_action(action_id, stake, action_surface_ui_state)
+	# A sealed delivery with skip_stake_validation is already entering the
+	# authoritative resolver, which recomputes and enforces its exact wager cost.
+	# Previewing it here would build and validate a second detached Blackjack
+	# candidate solely for an all-in dialog that retries/settlement must not show.
+	var sealed_skip_preview := current_action_uses_authority and skip_stake_validation and not authority_delivery.is_empty()
+	var wager_cost := 0 if sealed_skip_preview else _wager_cost_for_action(action_id, stake, action_surface_ui_state)
 	if not wager_confirmed and _wager_needs_final_bankroll_confirmation(current_game, action_id, stake, wager_cost, action_surface_ui_state):
 		_pause_repeating_surface_action_for_wager_confirmation()
 		_show_wager_confirmation_popup(action_id, stake, wager_cost, skip_stake_validation, preserve_surface_ui_state)
