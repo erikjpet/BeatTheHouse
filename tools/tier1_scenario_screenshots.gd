@@ -109,12 +109,15 @@ func _capture(archetype_id: String, scenario_id: String, library: Variant, run_s
 	var canvas: Variant = app.get("environment_canvas")
 	var view: Dictionary = canvas.call("current_view_snapshot") if canvas != null else {}
 	var presentation: Dictionary = data.get("scenario_presentation", {}) if typeof(data.get("scenario_presentation", {})) == TYPE_DICTIONARY else {}
+	var header: Dictionary = app.call("current_environment_header_snapshot")
 	var object_layout: Dictionary = view.get("object_layout", {}) if typeof(view.get("object_layout", {})) == TYPE_DICTIONARY else {}
 	var overlap_count := int(object_layout.get("overlap_count", 0))
 	var capture_ok := save_error == OK \
 		and image.get_width() >= 1280 \
 		and image.get_height() >= 720 \
 		and str(view.get("scenario_signage", "")) == str(presentation.get("signage_line", "")) \
+		and str(header.get("situation", "")) == str(presentation.get("signage_line", "")) \
+		and bool(header.get("situation_visible", false)) \
 		and bool(view.get("scenario_palette_active", false)) \
 		and overlap_count == 0
 	if not capture_ok:
@@ -129,6 +132,7 @@ func _capture(archetype_id: String, scenario_id: String, library: Variant, run_s
 		"stake_floor": int((data.get("economic_profile", {}) as Dictionary).get("stake_floor", 0)),
 		"stake_ceiling": int((data.get("economic_profile", {}) as Dictionary).get("stake_ceiling", 0)),
 		"scenario_presentation": presentation,
+		"environment_header": header,
 		"canvas_scenario_presentation": view.get("scenario_presentation", {}),
 		"canvas_object_layout": object_layout,
 		"environment_object_rects": ((run_state.current_environment.get("layout", {}) as Dictionary).get("object_rects", {}) as Dictionary).duplicate(true),

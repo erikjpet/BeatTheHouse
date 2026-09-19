@@ -17,6 +17,7 @@ var app: Control
 var failures: Array[String] = []
 var evidence := {
 	"ordinary": {},
+	"offscreen_handoff": {},
 	"buffalo": {},
 }
 
@@ -47,6 +48,7 @@ func _run() -> void:
 		return
 	await _settle(4)
 	await _check_ordinary_autoplay(run_state)
+	await _check_offscreen_autoplay_handoff(run_state)
 	await _check_buffalo_bonus_autoplay(run_state)
 	print(JSON.stringify({
 		"tool": "slot_autoplay_cadence_probe",
@@ -122,6 +124,52 @@ func _check_ordinary_autoplay(run_state: RunState) -> void:
 		"first_animation_id": first_animation_id,
 		"second_animation_id": second_animation_id,
 	}
+
+
+func _check_offscreen_autoplay_handoff(run_state: RunState) -> void:
+	var game: GameModule = app.call("_game_module_for_id", "slot")
+	var machine := _build_machine(game, run_state, "pinball", "line_5x3", "offscreen_handoff")
+	_store_fresh_machine(run_state, machine)
+	app.call("_invalidate_environment_runtime_schedule", run_state.current_environment)
+	var canvas: Control = app.get("game_surface_canvas")
+	if canvas == null:
+		_fail("Offscreen autoplay handoff could not access the live Slot surface.")
+		return
+	canvas.emit_signal("surface_action", "slot_auto_toggle", 0, false)
+	await _settle(2)
+	var enabled_machine := SlotState.peek_machine(run_state.current_environment, "slot")
+	if not bool(enabled_machine.get("slot_autoplay_active", false)):
+		_fail("Offscreen autoplay handoff could not enable AUTO through the live surface.")
+		return
+	app.call("back_to_environment")
+	await _settle(2)
+	var offscreen_machine := SlotState.read_machine(run_state.current_environment, "slot")
+	var spin_count_before := int(offscreen_machine.get("spin_count", 0))
+	offscreen_machine["slot_autoplay_next_msec"] = 1
+	SlotState.write_machine(run_state.current_environment, "slot", offscreen_machine)
+	app.call("_invalidate_environment_runtime_schedule", run_state.current_environment)
+	app.call("_advance_environment_game_runtime")
+	await _settle(2)
+	var advanced_machine := SlotState.peek_machine(run_state.current_environment, "slot")
+	if int(advanced_machine.get("spin_count", 0)) != spin_count_before + 1:
+		_fail("Slot AUTO did not advance after leaving the machine interface.")
+	if not bool(advanced_machine.get("slot_autoplay_active", false)):
+		_fail("Slot AUTO was disabled by the offscreen runtime handoff.")
+	var rendered_runtime := _rendered_slot_runtime("game:slot")
+	if int(rendered_runtime.get("spin_count", -1)) != int(advanced_machine.get("spin_count", 0)) \
+			or not bool(rendered_runtime.get("slot_autoplay_active", false)):
+		_fail("The room view did not show the live offscreen Slot AUTO state.")
+	evidence["offscreen_handoff"] = {
+		"active_after_exit": bool(offscreen_machine.get("slot_autoplay_active", false)),
+		"spin_count_before": spin_count_before,
+		"spin_count_after": int(advanced_machine.get("spin_count", 0)),
+		"rendered_spin_count_after": int(rendered_runtime.get("spin_count", -1)),
+		"active_after_spin": bool(advanced_machine.get("slot_autoplay_active", false)),
+	}
+	if not bool(app.call("enter_game", "slot", "slot")):
+		_fail("Slot surface could not reopen after the offscreen autoplay handoff.")
+		return
+	await _settle(2)
 
 
 func _check_buffalo_bonus_autoplay(run_state: RunState) -> void:
@@ -255,6 +303,20 @@ func _timing_state(surface_time_msec: int) -> Dictionary:
 		"surface_time_msec": surface_time_msec,
 		"drunk_scaled_surface_time_msec": surface_time_msec,
 	}
+
+
+func _rendered_slot_runtime(object_id: String) -> Dictionary:
+	var canvas: Control = app.get("environment_canvas")
+	if canvas == null:
+		return {}
+	var view: Dictionary = canvas.call("current_view_snapshot")
+	for object_value in view.get("objects", []):
+		if typeof(object_value) != TYPE_DICTIONARY:
+			continue
+		var object_data := object_value as Dictionary
+		if str(object_data.get("id", "")) == object_id:
+			return object_data.get("runtime_state", {}) as Dictionary if typeof(object_data.get("runtime_state", {})) == TYPE_DICTIONARY else {}
+	return {}
 
 
 func _assert_command_clock(label: String, command: Dictionary, expected_msec: int) -> void:

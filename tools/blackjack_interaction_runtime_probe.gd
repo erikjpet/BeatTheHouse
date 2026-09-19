@@ -78,14 +78,16 @@ func _run() -> void:
 	# visible Settle control again through Foundation's production action path.
 	var challenge: Dictionary = preview_session.get("count_challenge", {})
 	var icons: Array = challenge.get("icons", [])
+	var settle_boundary_msec := Time.get_ticks_msec()
 	for icon_index in range(icons.size()):
 		var icon: Dictionary = icons[icon_index]
 		var click_msec := int(icon.get("spawn_msec", 0)) + 1
+		settle_boundary_msec = maxi(settle_boundary_msec, click_msec + 1)
 		app.call("_sealed_action_host_surface_intent", "blackjack_count_icon", icon_index, false, click_msec)
 	var settle_started := Time.get_ticks_usec()
 	var defer_enabled: bool = app.get("current_game").call("defers_embedded_action_presentation_refresh", app.get("run_state"), app.get("run_state").current_environment)
 	var deferred_before := int(app.get("deferred_embedded_refresh_schedule_count"))
-	var settle_command: Dictionary = app.call("_sealed_action_host_surface_intent", "blackjack_settle", 0, false, Time.get_ticks_msec())
+	var settle_command: Dictionary = app.call("_sealed_action_host_surface_intent", "blackjack_settle", 0, false, settle_boundary_msec)
 	var settle_intent_msec := float(Time.get_ticks_usec() - settle_started) / 1000.0
 	var settle_apply_started := Time.get_ticks_usec()
 	app.call("_apply_game_surface_command", settle_command, 0, false, true, true)

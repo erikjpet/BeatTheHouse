@@ -93,7 +93,7 @@ const BLACKJACK_WAVE_GESTURE := "blackjack_wave_gesture"
 const BLACKJACK_TAP_GESTURE := "blackjack_tap_gesture"
 const BLACKJACK_HOST_LEDGER_KEY := "_blackjack_action_authority"
 const BLACKJACK_HOST_TRANSIENT_UI_KEYS := [
-	"surface_time_msec", "drunk_scaled_surface_time_msec",
+	"surface_time_msec", "surface_presentation_time_msec", "drunk_scaled_surface_time_msec",
 	"selected_action_id", "selected_action_kind", "selected_index",
 	"blackjack_gesture_active", "blackjack_gesture_origin",
 	"blackjack_gesture_index", "blackjack_gesture_pointer",
@@ -708,11 +708,12 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	}
 	var table_notice := _table_notice_for_session(session, table)
 	var payout_active_id := str(last_result.get("payout_animation_id", ""))
-	var payout_started_msec := int(last_result.get("resolved_at_msec", last_result.get("timestamp_msec", 0)))
-	if not last_result.is_empty() and not deal_events.is_empty():
-		payout_started_msec += deal_duration_msec
-	var deal_animation_active := not deal_active_id.is_empty() and deal_started_msec > 0 and now_msec - deal_started_msec >= 0 and now_msec - deal_started_msec < deal_duration_msec
-	var payout_animation_active := not payout_active_id.is_empty() and payout_started_msec > 0 and now_msec - payout_started_msec >= 0 and now_msec - payout_started_msec < PAYOUT_ANIMATION_DURATION_MSEC
+	var payout_started_msec := _blackjack_payout_started_msec(last_result, deal_started_msec, deal_duration_msec)
+	# Deal and payout channels run on the presentation clock so their liveness
+	# must be decided against that same clock. Comparing them with the simulation
+	# clock could disable a payout before the canvas had presented its first frame.
+	var deal_animation_active := not deal_active_id.is_empty() and deal_started_msec > 0 and presentation_msec - deal_started_msec >= 0 and presentation_msec - deal_started_msec < deal_duration_msec
+	var payout_animation_active := not payout_active_id.is_empty() and payout_started_msec > 0 and presentation_msec - payout_started_msec >= 0 and presentation_msec - payout_started_msec < PAYOUT_ANIMATION_DURATION_MSEC
 	var timer_active := not dealt and not barred and not deal_animation_active and not payout_animation_active and (run_state == null or not run_state.is_tutorial_run())
 	var round_timer := GameModule.table_round_timer_status_peek(table, now_msec, "Next hand") if timer_active else {}
 	if timer_active and bool(round_timer.get("active", false)) and table_notice == "Slide chips, choose side bets, then press DEAL.":
@@ -1587,11 +1588,6 @@ func _tutorial_grand_casino_manual_settlement(run_state: RunState, environment: 
 
 func _blackjack_table_motion_active(table: Dictionary, now_msec: int) -> bool:
 	var last_result: Dictionary = _local_copy_dict(table.get("last_result", {}))
-	var payout_started := int(last_result.get("resolved_at_msec", last_result.get("timestamp_msec", 0)))
-	if not last_result.is_empty() and payout_started > 0:
-		var payout_elapsed := now_msec - payout_started
-		if payout_elapsed >= 0 and payout_elapsed < PAYOUT_ANIMATION_DURATION_MSEC:
-			return true
 	var deal_started := int(table.get("last_deal_started_msec", 0))
 	var deal_events: Array = _deal_animation_event_array(table.get("last_deal_animation_events", []))
 	var patron_action_events: Array = _patron_action_event_array(table.get("last_patron_action_events", []))
@@ -1599,6 +1595,11 @@ func _blackjack_table_motion_active(table: Dictionary, now_msec: int) -> bool:
 	if deal_started > 0:
 		var deal_elapsed := now_msec - deal_started
 		if deal_elapsed >= 0 and deal_elapsed < deal_duration:
+			return true
+	var payout_started := _blackjack_payout_started_msec(last_result, deal_started, deal_duration)
+	if payout_started > 0:
+		var payout_elapsed := now_msec - payout_started
+		if payout_elapsed >= 0 and payout_elapsed < PAYOUT_ANIMATION_DURATION_MSEC:
 			return true
 	return false
 
@@ -1991,9 +1992,7 @@ func _blackjack_in_place_session_surface_patch(session: Dictionary, run_state: R
 	var attention_duration_msec := int(session.get("dealer_lookaway_duration_msec", 0))
 	var last_result := _local_copy_dict(table.get("last_result", {}))
 	var payout_id := str(last_result.get("payout_animation_id", ""))
-	var payout_started_msec := int(last_result.get("resolved_at_msec", last_result.get("timestamp_msec", 0)))
-	if not last_result.is_empty() and not deal_events.is_empty():
-		payout_started_msec += deal_duration_msec
+	var payout_started_msec := _blackjack_payout_started_msec(last_result, deal_started_msec, deal_duration_msec)
 	var payout_active := not payout_id.is_empty() and payout_started_msec > 0 \
 			and presentation_msec >= payout_started_msec \
 			and presentation_msec < payout_started_msec + PAYOUT_ANIMATION_DURATION_MSEC
@@ -7436,12 +7435,28 @@ func _surface_time_for_count(ui_state: Dictionary, now_msec: int = -1) -> int:
 # automatic action continue to use surface_time_msec and therefore stay frozen.
 func _blackjack_presentation_time_msec(ui_state: Dictionary, fallback_msec: int = -1) -> int:
 	if ui_state.has("surface_presentation_time_msec"):
-		return maxi(1, int(ui_state.get("surface_presentation_time_msec", 0)))
+		# Saved Blackjack sessions from older builds can retain the presentation
+		# timestamp from the action that dealt the card. Never let that stale value
+		# move a later explicit boundary backwards and keep settlement waiting forever.
+		return maxi(1, maxi(int(ui_state.get("surface_presentation_time_msec", 0)), fallback_msec))
 	if fallback_msec >= 0:
 		return maxi(1, fallback_msec)
 	if ui_state.has("surface_time_msec"):
 		return maxi(1, int(ui_state.get("surface_time_msec", 0)))
 	return Time.get_ticks_msec()
+
+
+func _blackjack_payout_started_msec(last_result: Dictionary, deal_started_msec: int, deal_duration_msec: int) -> int:
+	if last_result.is_empty():
+		return 0
+	var resolved_msec := int(last_result.get("resolved_at_msec", last_result.get("timestamp_msec", 0)))
+	if deal_started_msec <= 0 or deal_duration_msec <= 0:
+		return resolved_msec
+	# The payout follows the actual final-card reveal. Basing it on resolution plus
+	# a duration assumes both clocks began together, which is not true after a
+	# restored hand or a delayed authority handoff and can consume the whole payout
+	# window while the reveal is still on screen.
+	return maxi(resolved_msec, deal_started_msec + deal_duration_msec)
 
 
 func _count_icon_card_key(card: Dictionary) -> String:

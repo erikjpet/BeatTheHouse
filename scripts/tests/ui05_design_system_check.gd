@@ -142,14 +142,23 @@ func _run() -> void:
 	var header: EnvironmentHeader = EnvironmentHeaderScript.new()
 	root.add_child(header)
 	await process_frame
-	header.render({"archetype_id": "grand_casino_cage", "display_name": "Grand Casino Cage"}, "Settle the marker.")
+	header.render(
+		{"archetype_id": "grand_casino_cage", "display_name": "Grand Casino Cage"},
+		"Settle the marker.",
+		"EVERY DRAWER GETS COUNTED."
+	)
 	var header_snapshot := header.current_snapshot()
 	_check(str(header_snapshot.get("archetype_id", "")) == "grand_casino_cage", "Environment header lost its archetype identity.")
+	_check(str(header_snapshot.get("situation", "")) == "EVERY DRAWER GETS COUNTED.", "Environment header did not project the current situation beneath the location blurb.")
+	_check(bool(header_snapshot.get("situation_visible", false)), "Environment header hid the current situation subline.")
 	_check(int(header_snapshot.get("configured_option_count", 0)) == 4, "Environment header lost its configured room-option data.")
 	_check(int(header_snapshot.get("option_count", -1)) == 0, "Environment header still renders instructional option copy.")
 	_check(not bool(header_snapshot.get("guidance_visible", true)), "Environment header still renders goal or tutorial guidance.")
 	_check(bool(header_snapshot.get("compact", false)), "Environment header did not use its compact presentation.")
 	_check(not str(header_snapshot.get("title_texture", "")).is_empty(), "Environment header did not load its title plate.")
+	header.render({"archetype_id": "grand_casino_cage", "display_name": "Grand Casino Cage"}, "Settle the marker.")
+	header_snapshot = header.current_snapshot()
+	_check(str(header_snapshot.get("situation", "")) == "" and not bool(header_snapshot.get("situation_visible", true)), "Environment header retained a stale situation after the scenario line cleared.")
 	header.queue_free()
 
 	var dock: CheatDock = CheatDockScript.new()

@@ -315,6 +315,17 @@ func sealed_action_authority_contract() -> Dictionary:
 	return {
 		"resolve_proposal_method": &"_machine_game_resolve_proposal",
 		"wager_cost_proposal_method": &"_machine_game_wager_cost_proposal",
+		# Video Poker resolution changes only its bound cabinet before the host
+		# applies the accepted bankroll/Heat result. Replay it against narrow trusted
+		# candidates instead of serializing the accumulated run twice per DRAW.
+		"trusted_candidate_resolve_method": &"_machine_game_resolve_candidate",
+		"trusted_candidate_wager_method": &"_machine_game_wager_cost_candidate",
+		"compact_authority_evidence_method": &"_machine_game_authority_evidence",
+		"trusted_candidate_structural_replay_match": true,
+		"lightweight_resolution_candidate": true,
+		"trusted_candidate_shallow_machine_detach": true,
+		"in_place_nonrejecting_commit": true,
+		"active_replay_limit": 2,
 		"host_auto_tick_method": &"_machine_game_host_needs_auto_tick",
 		"surface_intent_key": "",
 		"surface_intent_index_key": "",
@@ -972,6 +983,17 @@ func _machine_game_resolve_proposal(action_id: String, stake: int, run_snapshot:
 	return proposal
 
 
+func _machine_game_resolve_candidate(action_id: String, stake: int, candidate: RunState, proposal_rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
+	if candidate == null or proposal_rng == null:
+		return _empty_result(action_id, stake, {}, "Video Poker resolution requires an isolated run and RNG candidate.")
+	var proposal_ui := ui_state.duplicate(true)
+	proposal_ui["_sealed_action_defer_apply"] = true
+	var result := resolve_with_context(action_id, stake, candidate, candidate.current_environment, proposal_rng, proposal_ui)
+	if bool(result.get("ok", false)):
+		result["machine_game_proposal_requires_apply"] = true
+	return result
+
+
 func _machine_game_wager_cost_proposal(action_id: String, stake: int, run_snapshot: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
 	var candidate := RunState.new()
 	candidate.from_dict(run_snapshot.duplicate(true))
@@ -979,6 +1001,59 @@ func _machine_game_wager_cost_proposal(action_id: String, stake: int, run_snapsh
 	return {
 		"cost": maxi(0, cost),
 		"input_fingerprint": RuntimeScript.canonical_fingerprint({"action_id": action_id, "stake": stake, "run_snapshot": run_snapshot, "ui_state": ui_state}),
+	}
+
+
+func _machine_game_wager_cost_candidate(action_id: String, stake: int, candidate: RunState, ui_state: Dictionary = {}) -> int:
+	if candidate == null:
+		return 0
+	return maxi(0, wager_cost_for_context(action_id, stake, candidate, candidate.current_environment, ui_state))
+
+
+func _machine_game_authority_evidence(candidate: RunState, action_id: String, stake: int, ui_state: Dictionary = {}) -> Dictionary:
+	if candidate == null:
+		return {}
+	var environment := candidate.current_environment
+	var machine := _table_state_preview(candidate, environment).duplicate(false)
+	# Receipts authenticate the transaction envelope independently. Keeping replay
+	# history inside the game evidence made every later hand hash all earlier hands.
+	machine.erase(ActionAuthorityScript.LEDGER_KEY)
+	machine.erase(ActionAuthorityScript.PENDING_APPLY_RECEIPT_KEY)
+	var environment_evidence := environment.duplicate(false)
+	environment_evidence.erase("environment_runtime_revision")
+	environment_evidence["game_states"] = {get_id(): machine}
+	return {
+		"version": 1,
+		"game_id": get_id(),
+		"action_id": action_id,
+		"stake": maxi(0, stake),
+		"account_checkpoint": candidate.action_authority_checkpoint_fingerprint(),
+		"bankroll": candidate.bankroll,
+		"grand_casino_chips": candidate.grand_casino_chips,
+		"rng_seed": candidate.rng_seed,
+		"rng_state": candidate.rng_state,
+		"simulation_msec": candidate.simulation_msec,
+		"game_clock_minutes": candidate.game_clock_minutes,
+		"seed_text": candidate.seed_text,
+		"seed_value": candidate.seed_value,
+		"run_status": candidate.run_status,
+		"economic_state": candidate.economic_state,
+		"challenge_config": candidate.challenge_config,
+		"inventory": candidate.inventory,
+		"active_item_id": candidate.active_item_id,
+		"suspicion": candidate.suspicion,
+		"baseline_luck": candidate.baseline_luck,
+		"drunk_level": candidate.drunk_level,
+		"alcoholic_level": candidate.alcoholic_level,
+		"narrative_flags": candidate.narrative_flags,
+		"crew_play_state": candidate.crew_play_state,
+		"grand_casino_staffing": candidate.grand_casino_staffing,
+		"rourke_current_room": candidate.rourke_current_room,
+		"rourke_current_spot": candidate.rourke_current_spot,
+		"rourke_facing": candidate.rourke_facing,
+		"rourke_off_floor_actions": candidate.rourke_off_floor_actions,
+		"environment": environment_evidence,
+		"ui_state": ui_state,
 	}
 
 
@@ -3191,6 +3266,10 @@ func _immediate_action_command(action_id: String, action_kind: String, ui_state:
 		"action_id": action_id,
 		"action_kind": action_kind,
 		"direct_resolve": true,
+		# DOUBLE UP risks the already-awarded win and deliberately carries a zero
+		# new wager. It must not be rejected by the ordinary positive table-stake
+		# range before its sealed zero-cost action reaches the cabinet.
+		"skip_stake_validation": action_id == "double_up",
 		"preserve_surface_ui_state": false,
 		"set_stake": set_stake,
 		"selected_index": index,

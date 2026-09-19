@@ -641,6 +641,44 @@ func interactable_object_view(object_id: String) -> Dictionary:
 	return {}
 
 
+# Applies a simulation-owned state change to one already-rendered room object.
+# Background fixtures use this path so an AUTO spin can become visible without
+# rebuilding the complete room catalog, layout, text caches, and actor routes.
+func apply_interactable_object_state_patch(object_id: String, object_state: Dictionary) -> bool:
+	if not uses_foundation_snapshot or object_id.is_empty() or object_state.is_empty():
+		return false
+	var runtime_state := _copy_dictionary(object_state.get("runtime_state", {}))
+	var visual_state := _copy_dictionary(object_state.get("visual_state", {}))
+	var patched := false
+	for object_value in foundation_scene_objects:
+		if typeof(object_value) != TYPE_DICTIONARY:
+			continue
+		var object_data := object_value as Dictionary
+		if str(object_data.get("id", "")) != object_id:
+			continue
+		object_data["status_summary"] = str(object_state.get("status_summary", ""))
+		object_data["state_badge"] = str(object_state.get("state_badge", ""))
+		object_data["runtime_state"] = runtime_state
+		object_data["visual_state"] = visual_state
+		patched = true
+		break
+	for object_value in _array_view(foundation_snapshot.get("interactable_objects", [])):
+		if typeof(object_value) != TYPE_DICTIONARY:
+			continue
+		var interaction_record := object_value as Dictionary
+		if str(interaction_record.get("object_id", "")) != object_id:
+			continue
+		interaction_record["status_summary"] = str(object_state.get("status_summary", ""))
+		interaction_record["state_badge"] = str(object_state.get("state_badge", ""))
+		interaction_record["runtime_state"] = runtime_state.duplicate(true)
+		interaction_record["visual_state"] = visual_state.duplicate(true)
+		patched = true
+		break
+	if patched:
+		queue_redraw()
+	return patched
+
+
 # Returns every interactive object under a point from front to back. Developer
 # placement intentionally permits overlap, so play input needs a way to reach
 # objects below the topmost rendered object.
@@ -1228,7 +1266,6 @@ func _draw() -> void:
 	_draw_scenario_crowd()
 	_draw_scene_life()
 	_draw_familiar_characters()
-	_draw_scenario_signage()
 	_draw_focus_dim_overlay()
 	_draw_scene_objects()
 	_draw_scene_outcome_highlight()
@@ -1267,16 +1304,6 @@ func _draw_scenario_crowd() -> void:
 		var scale := 0.72 + float(index % 3) * 0.08
 		draw_circle(Vector2(point.x, point.y - 12.0 * scale), 6.0 * scale, SCENARIO_CROWD_COLOR)
 		draw_rect(Rect2(point.x - 7.0 * scale, point.y - 6.0 * scale, 14.0 * scale, 24.0 * scale), SCENARIO_CROWD_COLOR)
-
-
-func _draw_scenario_signage() -> void:
-	if scenario_signage.is_empty():
-		return
-	var font := ThemeDB.fallback_font
-	var rect := Rect2(190, 12, 520, 24)
-	draw_rect(rect, Color(0.02, 0.02, 0.05, 0.84))
-	draw_rect(rect, Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.72), false, 2.0)
-	draw_string(font, rect.position + Vector2(8, 16), _fit_draw_text(scenario_signage, font, 11, rect.size.x - 16.0), HORIZONTAL_ALIGNMENT_CENTER, rect.size.x - 16.0, 11, C_WHITE)
 
 
 func _cache_scenario_presentation() -> void:

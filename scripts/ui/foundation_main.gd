@@ -1805,7 +1805,7 @@ func _sealed_action_host_pointer_intent(surface_action: String, index: int, phas
 	if not (ledger.get("pending_delivery", {}) as Dictionary).is_empty():
 		return _sealed_action_host_rejection("pending_delivery", "Retry or cancel the pending table action before changing the ceremony.")
 	var session: Dictionary = (ledger.get("session", {}) as Dictionary).duplicate(true)
-	for transient_key in ["surface_time_msec", "drunk_scaled_surface_time_msec", "reduce_motion"]:
+	for transient_key in ["surface_time_msec", "surface_presentation_time_msec", "drunk_scaled_surface_time_msec", "reduce_motion"]:
 		if ui_state.has(transient_key):
 			session[transient_key] = ui_state[transient_key]
 	var command: Dictionary = current_game.surface_pointer_command(surface_action, index, phase, board_position, session, candidate, candidate.current_environment)
@@ -3112,6 +3112,7 @@ func _advance_environment_game_runtime_for_environment(environment_data: Diction
 			_show_message(str(result.get("message", "")))
 		elif bool(command.get("attention", false)) or bool(result.get("slot_pending_feature", false)):
 			_show_message(str(result.get("message", command.get("message", ""))))
+		_patch_environment_game_runtime_presentation(game, state_key)
 		# The background fixture is no longer the active presentation context once
 		# its result has been consumed. Restore the foreground selection before
 		# save preparation checkpoints the visible surface animation.
@@ -3133,6 +3134,43 @@ func _advance_environment_game_runtime_for_environment(environment_data: Diction
 	_restore_environment_runtime_active_key(environment_data, active_keys, game_id, had_active_key, previous_active_key, using_scratch_active_keys)
 	game.set_transient_state_key_context(previous_state_key_context)
 	return true
+
+
+func _patch_environment_game_runtime_presentation(game: GameModule, state_key: String) -> void:
+	if game == null or run_state == null or environment_canvas == null:
+		return
+	var state_value: Variant
+	if game.has_method("environment_object_state_for_state_key"):
+		state_value = game.call("environment_object_state_for_state_key", run_state, run_state.current_environment, state_key)
+	else:
+		state_value = game.environment_object_state(run_state, run_state.current_environment)
+	if typeof(state_value) != TYPE_DICTIONARY:
+		return
+	var object_state := state_value as Dictionary
+	if object_state.is_empty():
+		return
+	var object_id := "game:%s" % state_key
+	if interactable_object_catalog_cache_valid:
+		for object_value in interactable_object_catalog_cache:
+			if typeof(object_value) != TYPE_DICTIONARY:
+				continue
+			var object_record := object_value as Dictionary
+			if str(object_record.get("object_id", "")) != object_id:
+				continue
+			object_record["status_summary"] = str(object_state.get("status_summary", ""))
+			object_record["state_badge"] = str(object_state.get("state_badge", ""))
+			object_record["runtime_state"] = _copy_dict(object_state.get("runtime_state", {}))
+			object_record["visual_state"] = _copy_dict(object_state.get("visual_state", {}))
+			interactable_object_view_cache_valid = false
+			break
+	environment_canvas.apply_interactable_object_state_patch(object_id, object_state)
+	# Background play changes the wallet and clock, but neither requires rebuilding
+	# the room or the rest of the HUD projection.
+	if structured_hud != null:
+		var deltas: Dictionary = last_environment_runtime_result.get("deltas", {}) if typeof(last_environment_runtime_result.get("deltas", {})) == TYPE_DICTIONARY else {}
+		var bankroll_delta := int(last_environment_runtime_result.get("bankroll_delta", deltas.get("bankroll_delta", 0)))
+		structured_hud.render_bankroll(_presented_bankroll(), bankroll_delta)
+		structured_hud.render_clock(FoundationHudViewModelScript.clock_model(run_state))
 
 
 func _rebuild_environment_runtime_schedule(environment_data: Dictionary, game_ids: Array, now_msec: int, same_environment: bool) -> void:
@@ -10862,7 +10900,12 @@ func _render_environment_screen() -> void:
 		structured_hud.set_compact_mode(_compact_run_hud_enabled())
 		structured_hud.render(hud_model)
 	if environment_header != null:
-		environment_header.render(run_state.current_environment, str(hud_model.get("goal_text", "")))
+		var scenario_presentation := _copy_dict(run_state.current_environment.get("scenario_presentation", {}))
+		environment_header.render(
+			run_state.current_environment,
+			str(hud_model.get("goal_text", "")),
+			str(scenario_presentation.get("signage_line", ""))
+		)
 	_style_hud_for_recent_consequence()
 	if save_status_label != null:
 		save_status_label.text = str(hud_model.get("save_text", ""))

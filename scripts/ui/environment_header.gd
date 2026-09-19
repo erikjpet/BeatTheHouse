@@ -9,6 +9,7 @@ static var _config_cache: Dictionary = {}
 var title_art: TextureRect
 var accessible_title: Label
 var blurb_label: Label
+var situation_label: Label
 var goal_label: Label
 var options_row: HBoxContainer
 var current_archetype_id := ""
@@ -20,7 +21,7 @@ func _ready() -> void:
 	_build()
 
 
-func render(environment: Dictionary, goal_text: String) -> void:
+func render(environment: Dictionary, goal_text: String, situation_text: String = "") -> void:
 	if title_art == null:
 		return
 	var archetype_id := str(environment.get("archetype_id", environment.get("kind", ""))).strip_edges()
@@ -37,6 +38,9 @@ func render(environment: Dictionary, goal_text: String) -> void:
 	accessible_title.visible = text_title
 	accessible_title.tooltip_text = "%s title plate" % display_name
 	blurb_label.text = str(layer_blurbs.get(layer_id, config.get("blurb", display_name)))
+	var rendered_situation := situation_text.strip_edges()
+	situation_label.text = rendered_situation
+	situation_label.visible = not rendered_situation.is_empty()
 	var rendered_goal := goal_text.strip_edges()
 	if rendered_goal.is_empty():
 		rendered_goal = "Inspect the room and choose an available action."
@@ -60,6 +64,8 @@ func current_snapshot() -> Dictionary:
 		"title_texture": title_art.texture.resource_path if title_art != null and title_art.texture != null else "",
 		"accessible_title": accessible_title.text if accessible_title != null else "",
 		"blurb": blurb_label.text if blurb_label != null else "",
+		"situation": situation_label.text if situation_label != null else "",
+		"situation_visible": situation_label != null and situation_label.visible,
 		"goal": "",
 		"option_count": 0,
 		"configured_option_count": options_row.get_child_count() - 1 if options_row != null else 0,
@@ -104,6 +110,12 @@ func _build() -> void:
 	blurb_label.max_lines_visible = 1
 	blurb_label.clip_text = true
 	copy_stack.add_child(blurb_label)
+	situation_label = FoundationWidgets.muted_label("", VisualStyle.TYPE_CAPTION)
+	situation_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	situation_label.max_lines_visible = 1
+	situation_label.clip_text = true
+	situation_label.visible = false
+	copy_stack.add_child(situation_label)
 	goal_label = FoundationWidgets.label("", VisualStyle.TYPE_SMALL)
 	goal_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	goal_label.clip_text = true
