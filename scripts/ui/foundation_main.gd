@@ -4632,7 +4632,11 @@ func _enqueue_table_approach_talk_events(source: String) -> bool:
 	# before asking a dense game surface (notably Coin Pusher) to rebuild itself.
 	if not library.has_table_approach_talk_event_for_game(game_id):
 		return false
-	var surface_state := current_game.surface_state(run_state, run_state.current_environment, _current_game_surface_ui_state())
+	var surface_state: Variant
+	if current_game.has_method("table_approach_talk_snapshot"):
+		surface_state = current_game.call("table_approach_talk_snapshot", run_state, run_state.current_environment, _current_game_surface_ui_state())
+	else:
+		surface_state = current_game.surface_state(run_state, run_state.current_environment, _current_game_surface_ui_state())
 	if typeof(surface_state) != TYPE_DICTIONARY:
 		return false
 	var state: Dictionary = surface_state

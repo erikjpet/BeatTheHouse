@@ -17,33 +17,54 @@ static var _asset_path_cache: Dictionary = {}
 
 static func build(meta_service: Variant, mode: String, selected_key: String = "", trade_selected_ids: Array = []) -> Dictionary:
 	var resolver: Variant = CollectionItemResolverScript.new()
-	var snapshot: Dictionary = meta_service.snapshot() if meta_service != null and meta_service.has_method("snapshot") else {}
+	var snapshot: Dictionary = {}
+	if meta_service != null:
+		if meta_service.has_method("presentation_snapshot"):
+			snapshot = meta_service.presentation_snapshot()
+		elif meta_service.has_method("snapshot"):
+			snapshot = meta_service.snapshot()
 	var owned := _dictionary_array(snapshot.get("owned_instances", []))
 	var valid_trade_selected_ids := _valid_trade_selection(resolver, owned, trade_selected_ids)
 	var carried_ids: Array = meta_service.carried_instance_ids() if meta_service != null and meta_service.has_method("carried_instance_ids") else []
 	var item_models := _owned_item_models(meta_service, resolver, owned, carried_ids, mode, valid_trade_selected_ids)
 	var bag_models := _bag_models(meta_service, resolver, _dictionary_array(snapshot.get("unopened_bags", [])), mode)
-	var containers: Array = []
+	var container_key := "meta_collection_storage"
+	var container_label := "Home Storage"
+	var visible_items: Array = []
 	match mode:
 		MODE_BAGS:
-			containers = [_dynamic_container("meta_bags", "home_storage", "Unopened Bags", _sorted_meta_items(bag_models))]
+			container_key = "meta_bags"
+			container_label = "Unopened Bags"
+			visible_items = _sorted_meta_items(bag_models)
 		MODE_SALE:
 			var sale_items: Array = []
 			for item in item_models:
 				if bool((item as Dictionary).get("sale_eligible", false)):
 					sale_items.append(item)
 			sale_items.append_array(bag_models)
-			containers = [_dynamic_container("meta_sale", "home_storage", "Sale Items and Bags", _sorted_meta_items(sale_items))]
+			container_key = "meta_sale"
+			container_label = "Sale Items and Bags"
+			visible_items = _sorted_meta_items(sale_items)
 		MODE_TRADE:
 			var trade_items: Array = []
 			for item in item_models:
 				if bool((item as Dictionary).get("trade_visible", false)):
 					trade_items.append(item)
-			containers = [_dynamic_container("meta_trade", "home_storage", "Trade-Up Items", _sorted_meta_items(trade_items))]
+			container_key = "meta_trade"
+			container_label = "Trade-Up Items"
+			visible_items = _sorted_meta_items(trade_items)
 		_:
-			containers = [_dynamic_container("meta_collection_storage", "home_storage", "Home Storage", _sorted_meta_items(item_models))]
-	var all_items := _flatten_container_items(containers)
-	var resolved_key := selected_key if _contains_selection(containers, selected_key) else _first_selection(containers)
+			visible_items = _sorted_meta_items(item_models)
+	# Every mode exposes one container. Reusing the sorted projection as the flat
+	# item list avoids walking thousands of slots three more times merely to
+	# rediscover selection and the already-known container key.
+	var containers: Array = [_dynamic_container(container_key, "home_storage", container_label, visible_items)]
+	var selection_found := false
+	for item_value in visible_items:
+		if typeof(item_value) == TYPE_DICTIONARY and str((item_value as Dictionary).get("selection_key", "")) == selected_key:
+			selection_found = true
+			break
+	var resolved_key := selected_key if selection_found else str((visible_items[0] as Dictionary).get("selection_key", "")) if not visible_items.is_empty() else ""
 	var global_actions: Array = []
 	if mode == MODE_TRADE and valid_trade_selected_ids.size() == 5:
 		global_actions.append({
@@ -55,15 +76,15 @@ static func build(meta_service: Variant, mode: String, selected_key: String = ""
 	return {
 		"mode": mode,
 		"title": _title(mode),
-		"summary": _summary(mode, all_items.size(), valid_trade_selected_ids, int(snapshot.get("gold_balance", 0))),
+		"summary": _summary(mode, visible_items.size(), valid_trade_selected_ids, int(snapshot.get("gold_balance", 0))),
 		"containers": containers,
-		"items": all_items,
+		"items": visible_items,
 		"selected_key": resolved_key,
-		"active_container_key": _container_key_for_selection(containers, resolved_key),
+		"active_container_key": container_key,
 		"multi_selected_keys": _trade_selection_keys(valid_trade_selected_ids),
 		"global_actions": global_actions,
 		"trade_selected_ids": _int_array(valid_trade_selected_ids),
-		"trade_summary": _trade_summary(all_items, valid_trade_selected_ids),
+		"trade_summary": _trade_summary(visible_items, valid_trade_selected_ids),
 		"gold_balance": int(snapshot.get("gold_balance", 0)),
 		"empty_text": _empty_text(mode),
 		"layout": {"presentation": "grouped_card_grid", "stable_view": true, "grouping": "collection_tier_storage"},
@@ -306,22 +327,6 @@ static func _tier_rank(tier: String) -> int:
 	return 0
 
 
-static func _flatten_container_items(containers: Array) -> Array:
-	var result: Array = []
-	var seen: Dictionary = {}
-	for container_value in containers:
-		if typeof(container_value) != TYPE_DICTIONARY:
-			continue
-		for slot_value in _dictionary_array((container_value as Dictionary).get("slots", [])):
-			var key := str(slot_value.get("selection_key", ""))
-			if key.is_empty() or seen.has(key):
-				continue
-			seen[key] = true
-			if typeof(slot_value.get("item", {})) == TYPE_DICTIONARY:
-				result.append(slot_value.get("item"))
-	return result
-
-
 static func _summary(mode: String, item_count: int, trade_selected_ids: Array, gold_balance: int) -> String:
 	match mode:
 		MODE_BAGS:
@@ -414,40 +419,6 @@ static func _trade_summary(items: Array, ids: Array) -> Array:
 			})
 			break
 	return result
-
-
-static func _contains_selection(containers: Array, selection_key: String) -> bool:
-	if selection_key.is_empty():
-		return false
-	for container_value in containers:
-		if typeof(container_value) != TYPE_DICTIONARY:
-			continue
-		for slot_value in _dictionary_array((container_value as Dictionary).get("slots", [])):
-			if str(slot_value.get("selection_key", "")) == selection_key:
-				return true
-	return false
-
-
-static func _first_selection(containers: Array) -> String:
-	for container_value in containers:
-		if typeof(container_value) != TYPE_DICTIONARY:
-			continue
-		for slot_value in _dictionary_array((container_value as Dictionary).get("slots", [])):
-			var key := str(slot_value.get("selection_key", ""))
-			if not key.is_empty():
-				return key
-	return ""
-
-
-static func _container_key_for_selection(containers: Array, selection_key: String) -> String:
-	for container_value in containers:
-		if typeof(container_value) != TYPE_DICTIONARY:
-			continue
-		var container: Dictionary = container_value
-		for slot_value in _dictionary_array(container.get("slots", [])):
-			if str(slot_value.get("selection_key", "")) == selection_key:
-				return str(container.get("key", ""))
-	return str((containers[0] as Dictionary).get("key", "")) if not containers.is_empty() else ""
 
 
 static func _dictionary_array(value: Variant) -> Array:

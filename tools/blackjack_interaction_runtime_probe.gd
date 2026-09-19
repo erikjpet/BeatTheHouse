@@ -60,6 +60,10 @@ func _run() -> void:
 	session["counting_enabled"] = true
 	session["count_attempted"] = true
 	session["presentation_timing_enforced"] = true
+	# Reuse the host's explicitly gated action-stage profiler so this acceptance
+	# probe can attribute a settlement spike without adding production hot-path
+	# timing overhead.
+	session["coin_pusher_debug_profile_stages"] = true
 	session["deal_animation_id"] = ""
 	session["deal_animation_events"] = []
 	ledger = AuthorityScript.stage_session_cow(ledger, session)
@@ -94,6 +98,8 @@ func _run() -> void:
 	var settle_apply_msec := float(Time.get_ticks_usec() - settle_apply_started) / 1000.0
 	var settle_elapsed_msec := float(Time.get_ticks_usec() - settle_started) / 1000.0
 	var deferred_after := int(app.get("deferred_embedded_refresh_schedule_count"))
+	var result_snapshot: Dictionary = app.get("last_game_result")
+	var host_timing: Dictionary = result_snapshot.get("coin_pusher_debug_host_timing_usec", {}) if typeof(result_snapshot.get("coin_pusher_debug_host_timing_usec", {})) == TYPE_DICTIONARY else {}
 	await _settle(24)
 	var final_ledger: Dictionary = app.call("_sealed_action_host_in_place_ledger")
 	var final_session: Dictionary = final_ledger.get("session", {})
@@ -102,6 +108,7 @@ func _run() -> void:
 	_check(settle_elapsed_msec <= SETTLEMENT_BUDGET_MSEC, "Counted settlement blocked the player for %.2f ms." % settle_elapsed_msec)
 
 	print("BLACKJACK_INTERACTION_RUNTIME_METRICS hit_ms=%.2f preview_ms=%.2f settle_ms=%.2f intent_ms=%.2f apply_ms=%.2f defer=%s scheduled=%d" % [hit_elapsed_msec, preview_elapsed_msec, settle_elapsed_msec, settle_intent_msec, settle_apply_msec, str(defer_enabled), deferred_after - deferred_before])
+	print("BLACKJACK_INTERACTION_RUNTIME_STAGES %s" % JSON.stringify(host_timing))
 	await _finish()
 
 

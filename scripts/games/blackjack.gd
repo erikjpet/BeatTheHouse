@@ -144,6 +144,15 @@ func defers_embedded_action_presentation_refresh(run_state: RunState, _environme
 	return run_state != null and not run_state.is_tutorial_run()
 
 
+func embedded_action_view_patch(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
+	# The Blackjack surface projection is the complete post-action table view. Send
+	# it directly to the live canvas after a sealed action instead of rebuilding the
+	# surrounding Foundation snapshot, room context, and game-entry presentation.
+	var patch := surface_state(run_state, environment, ui_state)
+	patch["surface_action_realtime_refresh_required"] = false
+	return patch
+
+
 func sealed_action_authority_contract() -> Dictionary:
 	return {
 		"resolve_proposal_method": ActionAuthorityScript.RESOLVE_PROPOSAL_METHOD,
@@ -636,7 +645,7 @@ func _is_rourke_duel(run_state: RunState, environment: Dictionary) -> bool:
 
 
 func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
-	var table: Dictionary = _table_state_preview(run_state, environment)
+	var table: Dictionary = _surface_table_state(run_state, environment)
 	var session: Dictionary = _normalized_session(run_state, environment, ui_state, table)
 	var now_msec := int(ui_state.get("surface_time_msec", Time.get_ticks_msec()))
 	session["surface_time_msec"] = now_msec
@@ -1295,6 +1304,40 @@ func _rourke_duel_surface_state(spec: Dictionary, run_state: RunState, environme
 		spec["ritual_actors"] = [showdown_projection.get("rourke_actor", {})]
 		spec["ritual_scene_objects"] = _showdown_duel_scene_objects(showdown_projection)
 	return spec
+
+
+func _surface_table_state(run_state: RunState, environment: Dictionary) -> Dictionary:
+	# Rendering is read-only. Normal play stores a normalized table, so borrow it
+	# instead of cloning the full shoe/session/patron graph for every surface patch.
+	# Tutorial repair, migrated tables, and a newly rotated Grand Casino dealer
+	# retain the conservative preview normalization path.
+	var stored := _peek_table_state(environment)
+	if stored.is_empty() \
+			or str(stored.get("schema", "")) != "blackjack_table_state" \
+			or int(stored.get("version", 0)) < 2 \
+			or (run_state != null and run_state.is_tutorial_run()):
+		return _table_state_preview(run_state, environment)
+	if run_state != null and not _is_rourke_duel(run_state, environment):
+		var assignment := run_state.grand_casino_staff_member_for_game_preview(get_id(), environment)
+		var assignment_id := str(assignment.get("id", "")).strip_edges()
+		if not assignment_id.is_empty() and (
+				str(stored.get("staff_assignment_id", "")) != assignment_id
+				or int(stored.get("staff_assignment_day", 0)) != maxi(1, int(assignment.get("day", run_state.game_day())))
+		):
+			return _table_state_preview(run_state, environment)
+	return stored
+
+
+func table_approach_talk_snapshot(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
+	# Action-boundary dialogue needs only the visible patrons and completed-hand
+	# count. Avoid constructing cards, side bets, animation channels, count hints,
+	# audio, and controls solely to decide whether a patron may speak.
+	var table := _surface_table_state(run_state, environment)
+	var session := _normalized_session(run_state, environment, ui_state, table)
+	return {
+		"patrons": GameModule.patrons_with_talk_focus(_patrons_for_surface(table, session), ui_state.get("focused_talk_speaker", {})),
+		"hands_played": int(table.get("hands_played", 0)),
+	}
 
 
 func _showdown_duel_scene_objects(projection: Dictionary) -> Array:
@@ -2230,7 +2273,13 @@ func _blackjack_authority_evidence(candidate: RunState, action_id: String, stake
 	if not _blackjack_compact_authority_allowed(candidate, action_id, stake, ui_state):
 		return {}
 	var environment := candidate.current_environment
-	var table := _table_state_preview(candidate, environment).duplicate(false)
+	# The sealed host has already materialized and normalized the bound table before
+	# asking for compact evidence. Evidence is read-only and immediately
+	# canonicalized, so borrow its immutable nested values and detach only the root
+	# from which authority metadata is removed. Falling back to the preview keeps
+	# direct/headless callers with an unmaterialized table on the conservative path.
+	var stored_table := _peek_table_state(environment)
+	var table := stored_table.duplicate(false) if not stored_table.is_empty() else _table_state_preview(candidate, environment).duplicate(false)
 	# Delivery, replay, and apply receipts authenticate themselves. Keeping that
 	# growing history in the gameplay proof would make every later hand slower
 	# even though no prior receipt can change the cards or settlement.
@@ -2327,7 +2376,20 @@ func _blackjack_resolve_candidate(action_id: String, stake: int, candidate: RunS
 	var resolution_ui_state := ui_state.duplicate(true)
 	if not resolution_ui_state.has("surface_time_msec"):
 		resolution_ui_state["surface_time_msec"] = GameModule.deterministic_time_msec(candidate, {})
-	var result := _resolve_blackjack_proposal_core(action_id, stake, candidate, candidate.current_environment, rng, resolution_ui_state)
+	# The host gives each accepted/replay execution its own detached Blackjack
+	# table. Settlement can normalize and update that private table in place instead
+	# of deep-copying the shoe, patrons, session, and animation payload twice more.
+	# Other action families retain their existing defensive paths below.
+	var result := _resolve_blackjack_proposal_core(
+		action_id,
+		stake,
+		candidate,
+		candidate.current_environment,
+		rng,
+		resolution_ui_state,
+		false,
+		action_id == "play_basic"
+	)
 	if bool(result.get("ok", false)) and action_id.begins_with("crew_play:"):
 		_rebind_pending_authority_checkpoint(candidate)
 	return result
@@ -2353,7 +2415,7 @@ func _rebind_pending_authority_checkpoint(run_state: RunState) -> void:
 	_update_environment_table(environment, table)
 
 
-func _resolve_blackjack_proposal_core(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary = {}, read_only_run_state: bool = false) -> Dictionary:
+func _resolve_blackjack_proposal_core(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary = {}, read_only_run_state: bool = false, owns_table_state: bool = false) -> Dictionary:
 	if read_only_run_state and (not _blackjack_compatibility_read_only_core_allowed(action_id, run_state) or _is_rourke_duel(run_state, environment)):
 		return _empty_result(action_id, stake, environment, "That blackjack action requires a detached authoritative candidate.")
 	if action_id.begins_with("crew_play:"):
@@ -2368,7 +2430,7 @@ func _resolve_blackjack_proposal_core(action_id: String, stake: int, run_state: 
 		return _empty_result(action_id, stake, environment, "That blackjack action is not available.")
 	var result_msec := GameModule.deterministic_time_msec(run_state, ui_state)
 	var presentation_msec := _blackjack_presentation_time_msec(ui_state, result_msec)
-	var table: Dictionary = _table_state(run_state, environment, read_only_run_state)
+	var table: Dictionary = _table_state(run_state, environment, read_only_run_state, owns_table_state)
 	if bool(table.get("barred", false)):
 		return _empty_result(action_id, stake, environment, str(table.get("barred_reason", "The dealer refuses to let you play this blackjack table.")))
 	var session: Dictionary = _normalized_session(run_state, environment, ui_state, table)
@@ -2460,7 +2522,11 @@ func _resolve_blackjack_proposal_core(action_id: String, stake: int, run_state: 
 	(table["last_result"] as Dictionary)["main_stake"] = table_stake
 	(table["last_result"] as Dictionary)["side_bet_ids"] = _string_array(session.get("blackjack_side_bets", []))
 	(table["last_result"] as Dictionary)["total_wager"] = total_wager
-	_update_environment_table(environment, table)
+	# A sealed candidate already stores this exact private table dictionary. Its
+	# accepted result may remain in place; ordinary/live callers still cross the
+	# defensive storage-copy boundary.
+	if not owns_table_state:
+		_update_environment_table(environment, table)
 
 	var story_entry := {
 		"type": "game_action",
@@ -4151,7 +4217,7 @@ func _draw_count_pulse_icon(surface, center: Vector2, value: int, accent: Color,
 		surface.surface_label_centered("MISS", Rect2(center - Vector2(20, 22), Vector2(40, 10)), 7, C_ORANGE)
 
 
-func _table_state(run_state: RunState, environment: Dictionary, observational: bool = false) -> Dictionary:
+func _table_state(run_state: RunState, environment: Dictionary, observational: bool = false, owns_table_state: bool = false) -> Dictionary:
 	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
 	var table: Dictionary = game_states.get(get_id(), {}) if typeof(game_states.get(get_id(), {})) == TYPE_DICTIONARY else {}
 	if table.is_empty():
@@ -4159,7 +4225,7 @@ func _table_state(run_state: RunState, environment: Dictionary, observational: b
 		game_states[get_id()] = table
 		environment["game_states"] = game_states
 	_apply_grand_casino_dealer_assignment(table, run_state, environment, observational)
-	var normalized := _normalize_table_state(table)
+	var normalized := _normalize_table_state(table, owns_table_state)
 	# Peek is a mandatory guided-run lesson, so its real setup controls cannot be
 	# sampled out of the table. Repair both newly generated tables and resumed
 	# saves whose old random distraction roll omitted DRINK PASS. Keep this scoped
@@ -4414,8 +4480,11 @@ func _chip_denominations(table: Dictionary) -> Array:
 	return values
 
 
-func _normalize_table_state(table: Dictionary) -> Dictionary:
-	var normalized := _duplicate_table_with_immutable_authority(table)
+func _normalize_table_state(table: Dictionary, owns_table_state: bool = false) -> Dictionary:
+	# Sealed proposal candidates own their complete bound table graph. Reusing that
+	# graph is safe because neither candidate can escape until both executions have
+	# matched; all other callers keep the defensive deep copy.
+	var normalized := table if owns_table_state else _duplicate_table_with_immutable_authority(table)
 	normalized["schema"] = str(normalized.get("schema", "blackjack_table_state"))
 	normalized["version"] = maxi(2, int(normalized.get("version", 2)))
 	normalized["deck_count"] = clampi(int(normalized.get("deck_count", 6)), 1, 8)

@@ -176,9 +176,10 @@ static func _owned_count_for_collection(collection: Dictionary, owned_by_itemdef
 static func _service_snapshot(meta_service: Variant) -> Dictionary:
 	if meta_service == null:
 		return {}
-	# The service already returns an owned deep snapshot. Re-copying the entire
-	# collection here doubled large-home projection cost before any rows existed.
-	var value: Variant = meta_service.snapshot()
+	# This projection never mutates service data. Borrow the service's immutable
+	# presentation arrays so opening Home does not deep-copy every collection
+	# instance before immediately translating them into fresh rows.
+	var value: Variant = meta_service.presentation_snapshot() if meta_service.has_method("presentation_snapshot") else meta_service.snapshot()
 	return value as Dictionary if typeof(value) == TYPE_DICTIONARY else {}
 
 

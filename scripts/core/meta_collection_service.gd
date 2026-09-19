@@ -1157,6 +1157,16 @@ func snapshot() -> Dictionary:
 	return _store.duplicate(true)
 
 
+# Internal presentation boundary for read-only view-model projection. The
+# returned root is detached so callers cannot add/remove store fields, while
+# its potentially large instance arrays remain borrowed. Presentation code
+# must treat nested values as immutable; persistence and external callers keep
+# using snapshot() for a fully owned value.
+func presentation_snapshot() -> Dictionary:
+	_ensure_store_ready()
+	return _store.duplicate(false)
+
+
 # A constant-time invalidation token for UI caches. Persisted collection data
 # is intentionally not serialized merely to discover whether it changed.
 func state_revision() -> int:
