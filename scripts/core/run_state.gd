@@ -2578,14 +2578,19 @@ func _scenario_authoritative_environment_for_finalization(definition: Dictionary
 		result["resolved_event_ids"] = []
 	else:
 		# Persistent EnvironmentInstance snapshots intentionally retain only the
-		# inventory version/digest, not the large derived inventory body. Restore
-		# the immutable pre-consumption event source from the causal resolved-event
-		# journal before rebuilding and authenticating that inventory.
-		var restored_event_ids := _copy_array(result.get("event_ids", []))
-		for resolved_event_id_value in _copy_array(result.get("resolved_event_ids", [])):
-			var resolved_event_id := str(resolved_event_id_value).strip_edges()
-			if not resolved_event_id.is_empty() and not restored_event_ids.has(resolved_event_id):
-				restored_event_ids.append(resolved_event_id)
+		# inventory version/digest, not the large derived inventory body. Prefer the
+		# exact baseline identities already bound into the durable sequence state.
+		# A triggered event may be added and resolved after the room was sealed; the
+		# resolved-event journal alone cannot distinguish it from an original room
+		# event and would incorrectly rewrite the immutable inventory on refresh.
+		var persisted_event_source := _scenario_persisted_base_event_ids(result)
+		var restored_event_ids := _copy_array(persisted_event_source.get("event_ids", []))
+		if not bool(persisted_event_source.get("authenticated", false)):
+			restored_event_ids = _copy_array(result.get("event_ids", []))
+			for resolved_event_id_value in _copy_array(result.get("resolved_event_ids", [])):
+				var resolved_event_id := str(resolved_event_id_value).strip_edges()
+				if not resolved_event_id.is_empty() and not restored_event_ids.has(resolved_event_id):
+					restored_event_ids.append(resolved_event_id)
 		result["event_ids"] = restored_event_ids
 		result["resolved_event_ids"] = []
 	var baseline_fields := {
@@ -2614,6 +2619,39 @@ func _scenario_authoritative_environment_for_finalization(definition: Dictionary
 		canonical_layout["object_rects"] = canonical_rects_value
 		result["layout"] = canonical_layout
 	return result
+
+
+func _scenario_persisted_base_event_ids(environment: Dictionary) -> Dictionary:
+	var state := _copy_dict(environment.get("scenario_sequence_state", {}))
+	var semantic := _copy_dict(state.get("semantic_state", {}))
+	var expected_version := int(environment.get("scenario_semantic_inventory_version", 0))
+	var expected_digest := str(environment.get("scenario_semantic_digest", ""))
+	if expected_version <= 0 or expected_digest.is_empty() \
+			or int(semantic.get("inventory_schema_version", 0)) != expected_version \
+			or str(semantic.get("inventory_digest", "")) != expected_digest:
+		return {"authenticated": false, "event_ids": []}
+	var available: Dictionary = {}
+	for source in [_copy_array(environment.get("event_ids", [])), _copy_array(environment.get("resolved_event_ids", []))]:
+		for event_id_value in source:
+			var event_id := str(event_id_value).strip_edges()
+			if not event_id.is_empty():
+				available[event_id] = true
+	var baseline: Dictionary = {}
+	for event_id_value in _copy_dict(semantic.get("event_choices", {})).keys():
+		var event_id := str(event_id_value).strip_edges()
+		if available.has(event_id):
+			baseline[event_id] = true
+	var target_inventory := _copy_dict(semantic.get("target_inventory", {}))
+	for identity_value in _copy_array(target_inventory.get("scene_objects", [])):
+		var identity := str(identity_value).strip_edges()
+		if not identity.begins_with("event::event:"):
+			continue
+		var event_id := identity.trim_prefix("event::event:")
+		if available.has(event_id):
+			baseline[event_id] = true
+	var result := baseline.keys()
+	result.sort()
+	return {"authenticated": true, "event_ids": result}
 
 
 func _scenario_terminal_authoritative_environment(definition: Dictionary) -> Dictionary:

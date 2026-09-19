@@ -1714,6 +1714,26 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 		or saved.has("scenario_render_snapshot") \
 		or not RunStateScript.scenario_restore_equivalent(run_state.current_environment, saved):
 		failures.append("Save serialization did not preserve the named exact causal/authority restore contract while stripping only derived projection caches.")
+	# A triggered event can be added and resolved after this room's immutable
+	# baseline was sealed. Save recovery must rebuild from the event identities
+	# already authenticated by the durable sequence state, not widen that baseline
+	# with the later resolved-event journal and strand every subsequent turn.
+	var post_seal_event_restore := RunStateScript.new()
+	post_seal_event_restore.current_environment = run_state.current_environment.duplicate(true)
+	var post_seal_expected_digest := str(post_seal_event_restore.current_environment.get("scenario_semantic_digest", ""))
+	var resolved_ids := _array(post_seal_event_restore.current_environment.get("resolved_event_ids", []))
+	if not resolved_ids.has("crew_favor_delivery"):
+		resolved_ids.append("crew_favor_delivery")
+	post_seal_event_restore.current_environment["resolved_event_ids"] = resolved_ids
+	for key in ["scenario_semantic_ready", "scenario_semantic_inventory", "scenario_base_interactions", "scenario_base_actors", "scenario_base_producer_context", "scenario_semantic_action_digest", "scenario_event_choices", "scenario_layout_base_records", "scenario_layout_context", "scenario_layout_authority", "scenario_layout_audit", "scenario_layout_authority_digest", "scenario_render_snapshot", "scenario_sequence_projection"]:
+		post_seal_event_restore.current_environment.erase(key)
+	post_seal_event_restore.current_environment["scenario_restore_pending_trusted_rebuild"] = true
+	var post_seal_rebuild := post_seal_event_restore.scenario_finalize_base_semantics([presentation], library)
+	var post_seal_turn := post_seal_event_restore.advance_environment_turns(1, true) if bool(post_seal_rebuild.get("ok", false)) else {}
+	if not bool(post_seal_rebuild.get("ok", false)) \
+			or str(post_seal_event_restore.current_environment.get("scenario_semantic_digest", "")) != post_seal_expected_digest \
+			or not bool(post_seal_turn.get("ok", false)):
+		failures.append("A post-seal resolved event rewrote saved room authority or soft-locked the recovered environment turn: %s / %s" % [JSON.stringify(post_seal_rebuild.get("errors", [])), JSON.stringify(post_seal_turn.get("errors", []))])
 	var forged_live := RunStateScript.new()
 	forged_live.current_environment = run_state.current_environment.duplicate(true)
 	var forged_inventory: Dictionary = _dict(forged_live.current_environment.get("scenario_semantic_inventory", {}))

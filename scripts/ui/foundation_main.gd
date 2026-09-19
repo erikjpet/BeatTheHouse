@@ -1559,7 +1559,18 @@ func _sealed_action_host_transient_run_snapshot(candidate: RunState) -> Dictiona
 func _sealed_action_host_detached() -> RunState:
 	if run_state == null:
 		return null
-	return run_state.detached_host_action_candidate(_sealed_action_host_state_key())
+	var candidate := run_state.detached_host_action_candidate(_sealed_action_host_state_key())
+	if candidate == null or not candidate.scenario_sequence_present() or candidate._scenario_semantic_ready():
+		return candidate
+	# A loaded save intentionally marks renderer-derived scenario authority for
+	# trusted reconstruction. Game actions can arrive before a full room redraw,
+	# so repair the detached transaction itself instead of letting its environment
+	# turn fail and strand a durable pending delivery.
+	var finalized := candidate.scenario_finalize_installed_environment(
+		library,
+		_copy_dict(candidate.current_environment.get("scenario_layout_context", {}))
+	)
+	return candidate if bool(finalized.get("ok", false)) else null
 
 
 func _sealed_action_host_can_commit_in_place() -> bool:
