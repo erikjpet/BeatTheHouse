@@ -4071,6 +4071,10 @@ func install_environment_layer_state(layer_id: String, layer_state: Dictionary) 
 			"%d:layer:%s:%s" % [seed_value, str(current_environment.get("world_node_id", current_environment.get("archetype_id", ""))), target_id]
 		)
 		if ScenarioSequenceSchemaScript.is_sequence(_scenario_sequence_definition_readonly()):
+			# A freshly generated interior layer may inherit no visit id from an old
+			# parent-room snapshot. Finalization gives the pending id precedence, so
+			# never publish an empty one that would make the side-door entry fail.
+			_ensure_scenario_host_public_context()
 			current_environment["scenario_sequence_pending_visit_id"] = str(current_environment.get("environment_visit_id", ""))
 	CharacterChainModelScript.apply_to_environment(self, current_environment)
 	return true

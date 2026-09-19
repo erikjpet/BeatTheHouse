@@ -68,6 +68,8 @@ func _run() -> void:
 		])
 		print("LATE_RUN_INTERACTION_DETAIL target_count=%d preview_environment_timing=%s" % [target_ids.size(), JSON.stringify(preview_environment_timing)])
 	host.queue_free()
+	await process_frame
+	await process_frame
 	for failure in failures:
 		push_error(str(failure))
 	quit(1 if not failures.is_empty() else 0)

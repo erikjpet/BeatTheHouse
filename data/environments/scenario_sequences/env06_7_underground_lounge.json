@@ -5315,7 +5315,7 @@
                   },
                   "enabled": true,
                   "icon_key": "room_surface",
-                  "label": "Protected Table and Stacked Chairs",
+                  "label": "Protected table",
                   "role": "debris",
                   "state": "floor_remains_protected",
                   "visible": true,
@@ -6910,7 +6910,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "66418bf98536c3fc52c9884b8d8cfb3bce0163dace5d6a586945a08e86efd011"
+        "sequence_signature": "5d79411b982d21c48cb8c56bedf4bea22cf735b895ec79bbfd7bbe38e1ad1040"
       }
     },
     {

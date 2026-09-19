@@ -52,7 +52,9 @@ func _run() -> void:
 	var used_seeds := {}
 	for run_index in range(run_count):
 		var seed := exact_seed if not exact_seed.is_empty() else _unique_seed(seed_prefix, run_index, entropy, used_seeds)
+		print("ENVIRONMENT_GENERATION_AUDIT RUN %d/%d seed=%s" % [run_index + 1, run_count, seed])
 		_simulate_run(run_index, seed, visits_per_run)
+		print("ENVIRONMENT_GENERATION_AUDIT RUN_COMPLETE %d/%d" % [run_index + 1, run_count])
 
 	var aggregate := _build_aggregate(run_count, visits_per_run, seed_prefix)
 	var report := {

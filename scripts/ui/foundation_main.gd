@@ -195,6 +195,7 @@ const RUN_UI_STAGE_SCRIPT_FIELDS := {
 	10: ["WorldMapCanvasScript", "WorldMapOverlayControllerScript", "FoundationTravelViewModelScript"],
 	11: ["ItemFoundPopupScript"],
 	12: ["CoachOverlayScript", "CoachViewModelScript"],
+	14: ["CoinPusherGameScript"],
 }
 const RUN_UI_UNAVAILABLE_MESSAGE := "The run interface is unavailable. Restart the game and try again."
 
@@ -228,6 +229,7 @@ var MetaItemInteractionViewModelScript: Script
 var BagOpenReelViewModelScript: Script
 var RunJournalViewModelScript: Script
 var FoundationTravelViewModelScript: Script
+var CoinPusherGameScript: Script
 
 var ActionAuthorityScript: Script:
 	get:
@@ -582,6 +584,9 @@ var action_panel_refresh_scheduled := false
 var action_panel_refresh_generation_counter := 0
 var action_panel_refresh_active_generation := 0
 var game_coach_refresh_scheduled := false
+var game_coach_refresh_delay_frames := 0
+var game_coach_transition_wait_frames := 0
+var game_coach_refresh_phase := 0
 var tutorial_guardrail_dialogue_reconcile_active := false
 var pending_action_panel_object: Dictionary = {}
 var interactable_object_catalog_cache: Array = []
@@ -681,6 +686,7 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_poll_game_module_script_prewarm()
+	_advance_game_coach_refresh_after_draw()
 	if perf_telemetry_overlay == null:
 		if run_layout_dirty:
 			_apply_run_screen_layout()
@@ -782,6 +788,29 @@ func _notification(what: int) -> void:
 		# Exit action. A worker generation is joined and the newest state is
 		# written atomically before Godot accepts the close request.
 		_autosave_foundation_run("Saved before exit.", true)
+
+
+func _exit_tree() -> void:
+	_drain_script_prewarm_requests_for_shutdown()
+
+
+func _drain_script_prewarm_requests_for_shutdown() -> void:
+	# A player can close the app while native ResourceLoader workers are still
+	# compiling optional run/game scripts. Consume those requests before this
+	# host releases its caches so Godot does not retain scripts or worker-owned
+	# resources past SceneTree teardown.
+	for path_value in run_ui_script_prewarm_requests.keys():
+		var script_path := str(path_value)
+		var status := ResourceLoader.load_threaded_get_status(script_path)
+		if status in [ResourceLoader.THREAD_LOAD_IN_PROGRESS, ResourceLoader.THREAD_LOAD_LOADED]:
+			ResourceLoader.load_threaded_get(script_path)
+	run_ui_script_prewarm_requests.clear()
+	for path_value in game_module_script_prewarm_requests.keys():
+		var module_path := str(path_value)
+		var status := ResourceLoader.load_threaded_get_status(module_path)
+		if status in [ResourceLoader.THREAD_LOAD_IN_PROGRESS, ResourceLoader.THREAD_LOAD_LOADED]:
+			ResourceLoader.load_threaded_get(module_path)
+	game_module_script_prewarm_requests.clear()
 
 
 func _initialize_perf_telemetry() -> void:
@@ -8876,6 +8905,14 @@ func _build_next_run_ui_stage() -> bool:
 			_build_item_found_popup()
 		12:
 			_build_coach_overlay()
+		13:
+			# Keep the optional Coin Pusher dependency behind its own post-shell
+			# stage so every ordinary run-screen dependency can settle first.
+			pass
+		14:
+			# Loading is performed atomically by _ensure_run_ui_stage_scripts().
+			# This stage intentionally has no node construction of its own.
+			pass
 		_:
 			run_ui_built = true
 			run_ui_build_in_progress = false
@@ -10726,41 +10763,45 @@ func _schedule_game_coach_refresh_after_draw() -> void:
 	if game_coach_refresh_scheduled:
 		return
 	game_coach_refresh_scheduled = true
-	call_deferred("_refresh_game_coach_after_draw")
+	game_coach_refresh_delay_frames = 2
+	game_coach_transition_wait_frames = 0
+	game_coach_refresh_phase = 0
 
 
-func _refresh_game_coach_after_draw() -> void:
-	var tree := get_tree()
-	if tree != null:
-		# A deferred callback that awaits one process_frame resumes before that
-		# frame's draw pass. Wait through the following frame as well so dynamic
-		# surface actions (for example Peel -> File) have rebuilt their exact hit
-		# regions before the coach reads them.
-		await tree.process_frame
-		await tree.process_frame
-	if current_screen != SCREEN_GAME or current_game == null:
-		game_coach_refresh_scheduled = false
+func _advance_game_coach_refresh_after_draw() -> void:
+	if not game_coach_refresh_scheduled:
 		return
-	var transition_active: bool = tree != null and game_surface_canvas != null and game_surface_canvas.surface_transition_animation_active()
-	# A settled surface can present its next instruction immediately (entering a
-	# game and Buy are common examples). After a finite table animation, wait for
-	# the visible result to finish before Pal starts the next voiced beat.
-	if not transition_active:
-		_refresh_coach_at_boundary()
-		_refresh_talk_dock()
-	if transition_active:
-		# Some actions expose their next exact hit target only after a finite
-		# presentation completes. Wait for that transition, not for idle renderer
-		# liveness, and cap the wait so a malformed channel cannot strand coach
-		# evaluation. This loop performs no snapshot or collection copies.
-		var transition_wait_frames := 0
-		while game_surface_canvas != null \
+	# Count process frames instead of keeping an async member coroutine alive.
+	# The latter could resume after the host was freed during a scene/test exit.
+	if game_coach_refresh_delay_frames > 0:
+		game_coach_refresh_delay_frames -= 1
+		return
+	if current_screen != SCREEN_GAME or current_game == null:
+		_reset_game_coach_refresh_after_draw()
+		return
+	if game_coach_refresh_phase == 0:
+		var transition_active: bool = game_surface_canvas != null and game_surface_canvas.surface_transition_animation_active()
+		# A settled surface can present its next instruction immediately (entering a
+		# game and Buy are common examples). After a finite table animation, wait for
+		# the visible result to finish before Pal starts the next voiced beat.
+		if not transition_active:
+			_refresh_coach_at_boundary()
+			_refresh_talk_dock()
+		else:
+			game_coach_refresh_phase = 1
+			return
+	elif game_coach_refresh_phase == 1:
+		# Wait for a finite presentation, not for idle renderer liveness, with the
+		# same hard bound as the former coroutine.
+		if game_surface_canvas != null \
 				and game_surface_canvas.surface_transition_animation_active() \
-				and transition_wait_frames < 180:
-			transition_wait_frames += 1
-			await tree.process_frame
-		await tree.process_frame
-	game_coach_refresh_scheduled = false
+				and game_coach_transition_wait_frames < 180:
+			game_coach_transition_wait_frames += 1
+			return
+		game_coach_refresh_phase = 2
+		game_coach_refresh_delay_frames = 1
+		return
+	_reset_game_coach_refresh_after_draw()
 	if current_screen != SCREEN_GAME or current_game == null:
 		return
 	# GameSurfaceCanvas builds its exact pointer hit regions during drawing. The
@@ -10773,6 +10814,13 @@ func _refresh_game_coach_after_draw() -> void:
 	# completed Deal lesson's outline stranded over an in-hand control layout.
 	_refresh_coach_at_boundary(true)
 	_refresh_talk_dock()
+
+
+func _reset_game_coach_refresh_after_draw() -> void:
+	game_coach_refresh_scheduled = false
+	game_coach_refresh_delay_frames = 0
+	game_coach_transition_wait_frames = 0
+	game_coach_refresh_phase = 0
 
 
 func _render_start_screen() -> void:
@@ -12124,8 +12172,15 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 				and typeof(rendered_stake_value) == TYPE_DICTIONARY:
 			rendered_stake_view = rendered_stake_value
 	var current_stake_range := _stake_range(rendered_stake_view)
-	var stake := stake_override if stake_override > 0 else (_selected_stake_for_range(current_stake_range) if bool(current_stake_range.get("has_valid", false)) else selected_stake)
-	if stake <= 0:
+	var has_sealed_delivery_stake := current_action_uses_authority \
+			and not authority_delivery.is_empty() \
+			and authority_delivery.has("stake")
+	# Once the intent host has issued a delivery, its stake is part of the sealed
+	# action identity. Re-reading the mutable UI selection here can substitute a
+	# different value (for example Baccarat's locked table wager) and reject an
+	# otherwise valid synchronous click at the settlement boundary.
+	var stake := maxi(0, int(authority_delivery.get("stake", 0))) if has_sealed_delivery_stake else (stake_override if stake_override > 0 else (_selected_stake_for_range(current_stake_range) if bool(current_stake_range.get("has_valid", false)) else selected_stake))
+	if stake <= 0 and not has_sealed_delivery_stake:
 		stake = _default_stake()
 	var stake_is_valid := bool(current_stake_range.get("has_valid", false)) \
 			and stake >= int(current_stake_range.get("min", 1)) \

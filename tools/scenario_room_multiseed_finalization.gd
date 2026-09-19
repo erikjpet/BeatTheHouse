@@ -124,6 +124,17 @@ func _run() -> void:
 			var arrival: Dictionary = {}
 			if bool(initial.get("ok", false)) and not target_node.is_empty():
 				arrival = HarnessProductionFidelityScript.travel_and_finalize(generator, run_state, target_node, true, library, case_failures, "%s/%s scenario room" % [seed_family, scenario_id], LAYOUT_CONTEXT)
+				var target_layer_id := str(definition.get("layer_id", "")).strip_edges()
+				if bool(arrival.get("ok", false)) and not target_layer_id.is_empty() and str(run_state.current_environment.get("current_layer_id", "")) != target_layer_id:
+					# The permanent sweep must load layer-owned scenarios even when their
+					# normal story unlock has not occurred in this synthetic one-hop run.
+					run_state.discover_environment_layer(target_layer_id, "scenario_finalization_audit")
+					var layer_result := generator.enter_environment_layer(run_state, target_layer_id, false)
+					if not bool(layer_result.get("ok", false)):
+						case_failures.append("%s/%s could not enter authored layer %s: %s" % [seed_family, scenario_id, target_layer_id, str(layer_result.get("message", "unknown layer error"))])
+						arrival = {"ok": false}
+					else:
+						arrival = HarnessProductionFidelityScript.finalize_arrival(run_state, library, case_failures, "%s/%s authored layer" % [seed_family, scenario_id], LAYOUT_CONTEXT)
 			elif target_node.is_empty():
 				case_failures.append("%s/%s has no generated node for archetype %s." % [seed_family, scenario_id, archetype_id])
 			if bool(arrival.get("ok", false)):
@@ -133,7 +144,7 @@ func _run() -> void:
 				if str(run_state.current_environment.get("scenario_id", "")) != scenario_id:
 					case_failures.append("%s/%s arrived with scenario %s." % [seed_family, scenario_id, str(run_state.current_environment.get("scenario_id", ""))])
 				if not bool(run_state.current_environment.get("scenario_semantic_ready", false)):
-					case_failures.append("%s/%s arrived without scenario_semantic_ready." % [seed_family, scenario_id])
+					case_failures.append("%s/%s arrived without scenario_semantic_ready: lifecycle=%s migration=%s legacy=%s definition_keys=%s." % [seed_family, scenario_id, JSON.stringify(run_state.current_environment.get("scenario_sequence_lifecycle_errors", [])), str(run_state.current_environment.get("scenario_sequence_migration_error", "")), JSON.stringify(run_state.current_environment.get("scenario_state", {})), JSON.stringify(_dict(run_state.current_environment.get("scenario_sequence_definition", {})).keys())])
 				if bool(finalized.get("inactive", false)) or not bool(audit.get("valid", false)):
 					case_failures.append("%s/%s did not produce an active valid normal/small-screen layout audit: %s" % [seed_family, scenario_id, JSON.stringify(audit)])
 				_reachable_state_checks += _check_reachable_grounding_states(run_state, definition, seed_family, case_failures)

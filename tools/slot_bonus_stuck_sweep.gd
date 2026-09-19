@@ -754,13 +754,27 @@ func _apply_surface_command(context: Dictionary, command: Dictionary, label: Str
 			context["selected_action_id"] = action_id
 			context["selected_action_kind"] = action_kind
 		if bool(command.get("resolve", false)) or already_selected:
-			return _resolve_context_action(context, action_id, label, bool(command.get("preserve_surface_ui_state", false)), _dict(command.get("_sealed_action_host_delivery", {})))
+			return _resolve_context_action(
+				context,
+				action_id,
+				label,
+				bool(command.get("preserve_surface_ui_state", false)),
+				_dict(command.get("_sealed_action_host_delivery", {})),
+				_dict(command.get("_sealed_action_host_prepared", {}))
+			)
 	if direct_resolve:
-		return _resolve_context_action(context, action_id, label, bool(command.get("preserve_surface_ui_state", false)), _dict(command.get("_sealed_action_host_delivery", {})))
+		return _resolve_context_action(
+			context,
+			action_id,
+			label,
+			bool(command.get("preserve_surface_ui_state", false)),
+			_dict(command.get("_sealed_action_host_delivery", {})),
+			_dict(command.get("_sealed_action_host_prepared", {}))
+		)
 	return {"ok": true}
 
 
-func _resolve_context_action(context: Dictionary, action_id: String, label: String, preserve_surface_ui_state: bool, delivery_claim: Dictionary = {}) -> Dictionary:
+func _resolve_context_action(context: Dictionary, action_id: String, label: String, preserve_surface_ui_state: bool, delivery_claim: Dictionary = {}, prepared_claim: Dictionary = {}) -> Dictionary:
 	var game: GameModule = context.get("game", null) as GameModule
 	var run_state: RunState = context.get("run_state", null) as RunState
 	if game == null or run_state == null:
@@ -773,7 +787,8 @@ func _resolve_context_action(context: Dictionary, action_id: String, label: Stri
 		host.set("game_module_cache", {game.get_id(): game})
 		host.set("run_state", run_state)
 		host.set("selected_stake", maxi(0, int(context.get("stake", 10))))
-		var authoritative_result: Dictionary = host.call("_sealed_action_host_resolve_intent", action_id, maxi(0, int(context.get("stake", 10))), delivery_claim)
+		var resolve_stake := maxi(0, int(delivery_claim.get("stake", context.get("stake", 10))))
+		var authoritative_result: Dictionary = host.call("_sealed_action_host_resolve_intent", action_id, resolve_stake, delivery_claim, prepared_claim)
 		host.free()
 		if not bool(authoritative_result.get("ok", false)):
 			return {"ok": false, "failure": "%s resolve %s failed: %s" % [label, action_id, str(authoritative_result.get("message", "no message"))]}

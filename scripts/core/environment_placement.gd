@@ -174,8 +174,10 @@ static func surface_map(environment: Dictionary) -> Dictionary:
 	var base_map := _dict(_surface_maps.get(map_key, {}))
 	var scenario_state := _dict(environment.get("scenario_state", {}))
 	var scenario_id := str(scenario_state.get("id", environment.get("scenario_id", ""))).strip_edges()
-	var scenario_overrides := _dict(base_map.get("scenario_overrides", {}))
 	if scenario_id.is_empty():
+		scenario_id = str(_dict(environment.get("scenario_sequence_state", {})).get("scenario_id", "")).strip_edges()
+	var scenario_overrides := _dict(base_map.get("scenario_overrides", {}))
+	if scenario_id.is_empty() or not scenario_overrides.has(scenario_id):
 		var base_key := "%s::base" % map_key
 		if _effective_surface_maps.has(base_key):
 			return _with_developer_slots(environment, _dict(_effective_surface_maps.get(base_key, {})))
@@ -184,8 +186,6 @@ static func surface_map(environment: Dictionary) -> Dictionary:
 			unreserved_map.erase(str(field_value))
 		_effective_surface_maps[base_key] = unreserved_map
 		return _with_developer_slots(environment, unreserved_map)
-	if not scenario_overrides.has(scenario_id):
-		return _with_developer_slots(environment, base_map)
 	var effective_key := "%s::%s" % [map_key, scenario_id]
 	if _effective_surface_maps.has(effective_key):
 		return _with_developer_slots(environment, _dict(_effective_surface_maps.get(effective_key, {})))

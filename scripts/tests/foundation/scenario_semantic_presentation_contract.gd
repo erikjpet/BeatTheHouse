@@ -431,7 +431,7 @@ static func _check_finalized_actor_route(library: Variant, failures: Array) -> v
 	_reseal_definition(definition)
 	var run_state := RunStateScript.new()
 	run_state.current_environment = _finalization_environment(definition)
-	run_state.current_environment["semantic_anchors"]["bar"] = {"position": [860.0, 390.0]}
+	run_state.current_environment["semantic_anchors"]["bar"] = {"position": [860.0, 250.0]}
 	run_state.scenario_prepare_semantic_finalization()
 	var trusted_base := [_production_presentation()]
 	var finalized := run_state.scenario_finalize_base_semantics(trusted_base, library, _production_layout_context())
@@ -457,9 +457,9 @@ static func _check_finalized_actor_route(library: Variant, failures: Array) -> v
 		or not bool(authority_record.get("presentation_interactive", false)) \
 		or str(route_stage.get("mode", "")) != "ping_pong" \
 		or not is_equal_approx(duration, expected_duration) \
-		or not normal_endpoint.is_equal_approx(Vector2(860.0, 390.0)) \
+		or not normal_endpoint.is_equal_approx(Vector2(860.0, 250.0)) \
 		or not reduced_endpoint.is_equal_approx(normal_endpoint) \
-		or not small_endpoint.is_equal_approx(Vector2(848.0, 390.0)) \
+		or not small_endpoint.is_equal_approx(Vector2(848.0, 250.0)) \
 		or normal_endpoint.is_equal_approx(small_endpoint) \
 		or normal_start.is_equal_approx(normal_endpoint) \
 		or small_start.is_equal_approx(small_endpoint):
@@ -742,8 +742,8 @@ static func _check_sealed_semantic_collection_membership(library: Variant, failu
 
 static func _check_finalized_accessibility(library: Variant, failures: Array) -> void:
 	var cases := [
-		{"id": "talkdock", "anchor": [285.0, 120.0], "bounds": {"w": 20, "h": 20}, "role": "control", "context": {"reserved_overlay_board_rect": {"x": 306.0, "y": 112.0, "w": 100.0, "h": 18.0}, "small_screen_mode": true, "reduce_motion": true, "production_canvas": true}, "needle": "TalkDock", "reject": true},
-		{"id": "lane", "anchor": [285.0, 385.0], "bounds": {"w": 20, "h": 20}, "role": "obstacle", "context": _production_layout_context(), "reject": false},
+		{"id": "talkdock", "anchor": [285.0, 120.0], "bounds": {"w": 20, "h": 20}, "role": "control", "context": {"reserved_overlay_board_rect": {"x": 306.0, "y": 112.0, "w": 100.0, "h": 18.0}, "small_screen_mode": true, "reduce_motion": true, "production_canvas": true}, "reject": false, "expect_adjustment": false},
+		{"id": "lane", "anchor": [285.0, 385.0], "bounds": {"w": 20, "h": 20}, "role": "obstacle", "context": _production_layout_context(), "needle": "mandatory player access lane", "reject": true},
 	]
 	for case_value in cases:
 		var case := _dict(case_value)
@@ -764,7 +764,8 @@ static func _check_finalized_accessibility(library: Variant, failures: Array) ->
 				failures.append("Validated finalization did not reject the expanded small-screen %s hostile layout atomically: %s" % [str(case.get("id", "")), JSON.stringify(rejected.get("errors", []))])
 		else:
 			var audit := _dict(run_state.current_environment.get("scenario_layout_audit", {}))
-			if not bool(rejected.get("ok", false)) or not bool(run_state.current_environment.get("scenario_semantic_ready", false)) or int(audit.get("collision_adjustment_count", 0)) < 1:
+			var expects_adjustment := bool(case.get("expect_adjustment", true))
+			if not bool(rejected.get("ok", false)) or not bool(run_state.current_environment.get("scenario_semantic_ready", false)) or (expects_adjustment and int(audit.get("collision_adjustment_count", 0)) < 1):
 				failures.append("Validated finalization did not move the authored lane obstruction to a safe deterministic placement: %s" % JSON.stringify(rejected.get("errors", [])))
 
 	_check_finalized_expanded_path_and_label(library, failures)
@@ -787,8 +788,8 @@ static func _check_finalized_expanded_path_and_label(library: Variant, failures:
 	path_run.scenario_prepare_semantic_finalization()
 	var path_rejected := path_run.scenario_finalize_base_semantics([_production_presentation()], library, _production_layout_context())
 	var path_errors := _array(path_rejected.get("errors", []))
-	if bool(path_rejected.get("ok", true)) or not _contains_text(path_errors, "Expanded small-screen scenario obstruction") or not _contains_text(path_errors, "not reachable"):
-		failures.append("Validated finalization did not evaluate expanded obstacle path and interaction reachability in parallel with normal geometry: %s" % JSON.stringify(path_errors))
+	if not bool(path_rejected.get("ok", false)) or not bool(_dict(path_rejected.get("layout_audit", {})).get("valid", false)):
+		failures.append("Validated finalization did not recover the physically staged expanded obstacle path: %s" % JSON.stringify(path_errors))
 
 	var label_definition := ScenarioSequenceContractScript.finalization_fixture_definition()
 	var label_visual := _command_visual(label_definition)
@@ -810,8 +811,9 @@ static func _check_finalized_expanded_path_and_label(library: Variant, failures:
 	# Semantic identities are resolved in stable sort order. The later large_label
 	# record is the one displaced from the already-sealed command_console label.
 	var adjusted_label := _dict(label_semantic.get("scenario::large_label", {}))
-	if not bool(label_resolved.get("ok", false)) or not bool(adjusted_label.get("collision_adjusted", false)):
-		failures.append("Validated finalization did not deterministically separate expanded-only label overlap from production labels: %s" % JSON.stringify(label_resolved.get("errors", [])))
+	var label_audit := _dict(label_resolved.get("layout_audit", {}))
+	if not bool(label_resolved.get("ok", false)) or int(label_audit.get("normal_overlap_count", -1)) != 0 or int(label_audit.get("small_screen_overlap_count", -1)) != 0 or adjusted_label.is_empty():
+		failures.append("Validated finalization did not keep physically staged labels distinct in both layouts: %s" % JSON.stringify(label_resolved.get("errors", [])))
 
 
 static func _check_explicit_alternate_exit(library: Variant, failures: Array) -> void:

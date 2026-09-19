@@ -194,9 +194,12 @@ func _play_hand(app: Control, exercise_save: bool, exercise_raise: bool) -> Dict
 		await _settle(4)
 	var final_state := _game_state(app)
 	var complete := str(final_state.get("phase", "")) == "idle" and int(final_state.get("hand_number", 0)) > 0
-	if streets != ["preflop", "flop", "turn", "river"]:
-		failures.append("Production-host Hold'em hand missed streets: %s." % JSON.stringify(streets))
 	var all_history: Array = final_state.get("action_history", []) if typeof(final_state.get("action_history", [])) == TYPE_ARRAY else []
+	var all_in_runout := complete \
+		and (final_state.get("community_cards", []) as Array).size() == 5 \
+		and all_history.any(func(row_value): return typeof(row_value) == TYPE_DICTIONARY and str((row_value as Dictionary).get("action", "")) == "all_in")
+	if streets != ["preflop", "flop", "turn", "river"] and not all_in_runout:
+		failures.append("Production-host Hold'em hand missed streets: %s." % JSON.stringify(streets))
 	var history: Array = all_history.slice(history_start)
 	var running_pot := 3
 	var action_amounts: Array = []

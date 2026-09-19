@@ -513,7 +513,14 @@ func _play_tutorial_blackjack(run_state: RunState, route_failures: Array) -> Dic
 	var miss_final_state := _dict(miss_result.get("blackjack_surface_ui_state", miss_state))
 	var miss_final_challenge := _dict(miss_final_state.get("count_challenge", {}))
 	var miss_perfect := bool(miss_result.get("blackjack_count_perfect", miss_final_challenge.get("perfect", true)))
-	_check(not miss_perfect and int(miss_result.get("suspicion_delta", 0)) > 0, "Missing real count pulses did not add heat: %s" % JSON.stringify(miss_result), route_failures)
+	var miss_immediate_heat := int(miss_result.get("blackjack_host_action_suspicion_delta", miss_result.get("suspicion_delta", 0)))
+	_check(not miss_perfect and miss_immediate_heat == 0, "Recording missed count pulses charged Heat before surveillance assessed the completed hand: %s" % JSON.stringify(miss_result), route_failures)
+	var miss_stand := BlackjackAuthorityTestDriverScript.surface_intent(miss_game, "blackjack_stand", 4, miss_run, miss_run.current_environment, 0, true)
+	var miss_settlement: Dictionary = {}
+	if bool(miss_stand.get("resolve", false)):
+		miss_settlement = BlackjackAuthorityTestDriverScript.resolve_surface_command(miss_game, miss_stand, 4, miss_run, miss_run.current_environment)
+	var miss_settlement_heat := int(miss_settlement.get("suspicion_delta", 0))
+	_check(bool(miss_settlement.get("ok", false)) and miss_settlement_heat > 0, "Settling the missed-count hand did not apply its bounded surveillance Heat: %s" % JSON.stringify(miss_settlement), route_failures)
 	for icon_index in range(icons.size()):
 		var live_icon: Dictionary = icons[icon_index]
 		var icon_action_msec := int(live_icon.get("spawn_msec", now)) + 10
@@ -526,7 +533,7 @@ func _play_tutorial_blackjack(run_state: RunState, route_failures: Array) -> Dic
 	var stand := BlackjackAuthorityTestDriverScript.surface_intent(game, "blackjack_stand", 4, run_state, run_state.current_environment, 0, true)
 	if bool(stand.get("resolve", false)):
 		BlackjackAuthorityTestDriverScript.resolve_surface_command(game, stand, 4, run_state, run_state.current_environment)
-	return {"normal_hand_settled": bool(clean.get("settled", false)), "peek_hand_settled": bool(peek_finish_result.get("ok", false)), "raised_bet": 4, "lookaway_id": str(distracted_state.get("dealer_lookaway_id", "")), "peek_had_window": bool(peek_state.get("peek_had_window", false)), "count_icon_count": icons.size(), "count_all_selected": bool(coach_state.get("count_all_selected", false)), "count_miss_heat_delta": int(miss_result.get("suspicion_delta", 0)), "raised_deal_ok": bool(deal_result.get("ok", false)), "count_deal_ok": bool(count_deal_result.get("ok", false))}
+	return {"normal_hand_settled": bool(clean.get("settled", false)), "peek_hand_settled": bool(peek_finish_result.get("ok", false)), "raised_bet": 4, "lookaway_id": str(distracted_state.get("dealer_lookaway_id", "")), "peek_had_window": bool(peek_state.get("peek_had_window", false)), "count_icon_count": icons.size(), "count_all_selected": bool(coach_state.get("count_all_selected", false)), "count_miss_immediate_heat_delta": miss_immediate_heat, "count_miss_settlement_heat_delta": miss_settlement_heat, "raised_deal_ok": bool(deal_result.get("ok", false)), "count_deal_ok": bool(count_deal_result.get("ok", false))}
 
 
 func _deal_and_stand(game: GameModule, run_state: RunState, stake: int, _rng_label: String) -> Dictionary:

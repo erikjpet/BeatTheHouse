@@ -17,8 +17,8 @@ $generatorPreload = 'const CoinPusherGameScript := preload("res://scripts/games/
 if ($generatorSource.Contains($generatorPreload)) {
     throw "RunGenerator still eagerly parses the Coin Pusher module graph."
 }
-if (-not $generatorSource.Contains('var module_script: Script = load(module_path)')) {
-    throw "RunGenerator no longer uses the ordinary dynamic module loader."
+if (-not $generatorSource.Contains('module_script = load(module_path)')) {
+    throw "RunGenerator no longer falls back to the ordinary dynamic module loader after its retained cache lookup."
 }
 
 $foundationContracts = @(

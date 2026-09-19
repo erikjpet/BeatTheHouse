@@ -229,9 +229,14 @@ func _exercise_betting_ui(app: Control, canvas: Control, run_state: RunState) ->
 		failures.append("The raise chooser did not remain open after selection (ui=%s)." % JSON.stringify(app.get("game_surface_ui_state")))
 	var minimum_raise_to := int(chooser.get("minimum_raise_to", 0))
 	var maximum_raise_to := int(chooser.get("maximum_raise_to", 0))
-	for selector_action in ["poker_raise_min", "poker_raise_minus_five", "poker_raise_minus_one", "poker_raise_plus_one", "poker_raise_plus_five", "poker_raise_max", "poker_raise_confirm", "poker_raise_cancel"]:
+	# The chooser opens at the legal minimum. Decrement and MIN remain visibly
+	# disabled there and must not expose click targets; all usable controls do.
+	for selector_action in ["poker_raise_plus_one", "poker_raise_plus_five", "poker_raise_max", "poker_raise_confirm", "poker_raise_cancel"]:
 		if _surface_action_index(canvas, selector_action) == MISSING_ACTION_INDEX:
 			failures.append("The raise chooser is missing selectable control %s." % selector_action)
+	for selector_action in ["poker_raise_min", "poker_raise_minus_five", "poker_raise_minus_one"]:
+		if _surface_action_index(canvas, selector_action) != MISSING_ACTION_INDEX:
+			failures.append("The raise chooser exposed disabled control %s at the legal minimum." % selector_action)
 	if maximum_raise_to <= minimum_raise_to:
 		failures.append("A full-stack raise range was not available to the player.")
 	var cancel_index := _surface_action_index(canvas, "poker_raise_cancel")
