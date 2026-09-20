@@ -188,6 +188,7 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		host.run_state.current_environment.erase("scenario_sequence_lifecycle_errors")
 		host.run_state.current_environment.erase("scenario_layout_audit")
 		host.run_state.current_environment.erase("scenario_layout_authority_digest")
+	result = _attach_delivery_handoff_to_contact(host, result)
 	return _reflow_delivery_records(host, result)
 
 
@@ -1061,35 +1062,116 @@ static func delivery_interactable_objects(host: Variant, occupied_objects: Array
 			"focus_rect": focus_rect,
 			"placement_class": delivery_class,
 		}))
-	var handoff: Dictionary = host.run_state.delivery_arrival_interaction()
+	return result
+
+
+static func _attach_delivery_handoff_to_contact(host: Variant, records: Array) -> Array:
+	if host.run_state == null:
+		return records
+	var handoff := _dict(host.run_state.delivery_arrival_interaction())
 	if handoff.is_empty():
-		return result
+		return records
+	var handoff_index := -1
+	for index in range(records.size()):
+		var record := _dict(records[index])
+		if str(record.get("object_id", "")) == "crew::package_handoff" and not _array(record.get("scenario_sequence_actions", [])).is_empty():
+			handoff_index = index
+			break
 	var node_id := str(handoff.get("node_id", "")).strip_edges()
-	# A mounted owner projection is the sole player-facing handoff at this node.
-	# The old delivery record remains unchanged for legacy/unconverted runs.
-	if not host.run_state.world_sequence_mounted_owner_for_channel("delivery_handoff", node_id).is_empty():
+	var target := {}
+	for target_value in _array(host.run_state.delivery_snapshot().get("targets", [])):
+		var candidate_target := _dict(target_value)
+		if str(candidate_target.get("node_id", "")) == node_id and str(candidate_target.get("status", "pending")) == "pending":
+			target = candidate_target
+			break
+	var contact_label := str(target.get("contact_label", "the marked contact"))
+	var result := records.duplicate(true)
+	var contact_index := -1
+	for index in range(result.size()):
+		if index == handoff_index:
+			continue
+		var record := _dict(result[index])
+		var object_type := str(record.get("object_type", ""))
+		if str(record.get("visual_type", "")) == "character" or object_type in [host.CONTEXT_MODE_DIALOGUE, host.CONTEXT_MODE_SHOPKEEPER, "character", "scenario_actor"]:
+			contact_index = index
+			break
+	if handoff_index >= 0 and contact_index >= 0:
+		var authority_record := _dict(result[handoff_index])
+		var contact := _dict(result[contact_index])
+		var handoff_actions := _array(authority_record.get("scenario_sequence_actions", [])).duplicate(true)
+		for action_value in handoff_actions:
+			if typeof(action_value) == TYPE_DICTIONARY:
+				(action_value as Dictionary)["label"] = "Hand Over The Package"
+		contact["scenario_sequence_actions"] = handoff_actions
+		contact["delivery_contact_original_owner_namespace"] = str(contact.get("owner_namespace", ""))
+		contact["delivery_contact_original_stable_object_id"] = str(contact.get("stable_object_id", ""))
+		contact["owner_namespace"] = str(authority_record.get("owner_namespace", ""))
+		contact["stable_object_id"] = str(authority_record.get("stable_object_id", ""))
+		contact["world_sequence_owner_token"] = str(authority_record.get("world_sequence_owner_token", ""))
+		contact["delivery_contact"] = true
+		contact["delivery_contact_label"] = contact_label
+		contact["action_summary"] = "%s is expecting The Package." % contact_label.capitalize()
+		contact["status_summary"] = "Delivery contact"
+		result[contact_index] = contact
+		result.remove_at(handoff_index)
 		return result
-	var object_id := "delivery:handoff:%s" % node_id
-	var focus_rect := _delivery_available_rect(host, occupied_rects, physical_interactions.size(), "standing_person")
+	if handoff_index < 0 and contact_index >= 0:
+		# Legacy and non-world-sequence package jobs use the same NPC-facing flow,
+		# but their completion is owned directly by DeliveryRunModel.
+		var contact := _dict(result[contact_index])
+		contact["delivery_contact"] = true
+		contact["delivery_contact_label"] = contact_label
+		contact["delivery_handoff_direct"] = true
+		contact["delivery_handoff_node_id"] = node_id
+		contact["action_summary"] = "%s is expecting the delivery." % contact_label.capitalize()
+		contact["status_summary"] = "Delivery contact"
+		result[contact_index] = contact
+		return result
+	if handoff_index >= 0:
+		# Some generated rooms contain no ordinary character. Re-present the sealed
+		# authority as the named contact, never as a parcel or handoff marker.
+		var contact := _dict(result[handoff_index])
+		contact["object_id"] = "delivery_contact:%s" % node_id
+		contact["object_type"] = "character"
+		contact["visual_type"] = "character"
+		contact["label"] = contact_label.capitalize()
+		contact["short_description"] = "%s waits for The Package." % contact_label.capitalize()
+		contact["action_summary"] = "Speak to the contact and make the handoff."
+		contact["status_summary"] = "Delivery contact"
+		contact["prop"] = "patron_talk"
+		contact["icon_key"] = "dialogue"
+		contact["placement_class"] = "standing_person"
+		contact["delivery_contact"] = true
+		var handoff_actions := _array(contact.get("scenario_sequence_actions", [])).duplicate(true)
+		for action_value in handoff_actions:
+			if typeof(action_value) == TYPE_DICTIONARY:
+				(action_value as Dictionary)["label"] = "Hand Over The Package"
+		contact["scenario_sequence_actions"] = handoff_actions
+		result[handoff_index] = contact
+		return result
+	# A sparse generated venue may genuinely contain no ordinary person. Add the
+	# named contact as a person, never as a parcel, action marker, or handoff prop.
+	var contact_rect := _delivery_available_rect(host, _delivery_occupied_rects(host, result), 0, "standing_person")
 	result.append(host._make_interactable_object({
-		"object_id": object_id,
-		"object_type": host.CONTEXT_MODE_DELIVERY,
+		"object_id": "delivery_contact:%s" % node_id,
+		"object_type": "character",
 		"visual_type": "character",
-		"source_id": node_id,
-		"label": str(handoff.get("label", "Make the handoff")),
-		"short_description": str(handoff.get("message", "A quiet hand waits inside the room.")),
+		"source_id": str(target.get("contact_id", "delivery_contact_%s" % node_id)),
+		"label": contact_label.capitalize(),
+		"short_description": "%s waits for the delivery." % contact_label.capitalize(),
 		"presence": "character",
 		"interactive": true,
 		"enabled": true,
-		"action_summary": "Pass the contraband over.",
-		"status_summary": str(handoff.get("cargo_label", "Crew package")),
-		"risk_summary": "The room is still watching.",
+		"action_summary": "Speak to the contact and make the handoff.",
+		"status_summary": "Delivery contact",
 		"visual_key": "character",
 		"prop": "patron_talk",
 		"icon_key": "dialogue",
-		"available_actions": [{"id": "complete_delivery_handoff", "label": "Hand Over"}],
-		"confirm_action_id": "complete_delivery_handoff",
-		"focus_rect": focus_rect,
+		"delivery_contact": true,
+		"delivery_contact_label": contact_label,
+		"delivery_handoff_direct": true,
+		"delivery_handoff_node_id": node_id,
+		"focus_rect": contact_rect,
 		"placement_class": "standing_person",
 	}))
 	return result

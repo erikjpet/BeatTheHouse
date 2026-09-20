@@ -319,6 +319,7 @@ var drunk_distortion_suppression_turns: int = 0
 var current_environment: Dictionary = {}
 var world_map: Dictionary = {}
 var scenario_recent_by_archetype: Dictionary = {}
+var environment_situation_cycles_by_node: Dictionary = {}
 var grand_casino_room_states: Dictionary = {}
 var grand_casino_staffing: Dictionary = {}
 var rourke_current_room: String = ""
@@ -422,7 +423,7 @@ const TURN_TRANSACTION_SCALAR_FIELDS := [
 const TURN_TRANSACTION_COLLECTION_FIELDS := [
 	"challenge_config", "inventory", "portable_ticket_piles", "debt",
 	"sals_forfeited_item_ids", "suspicion", "pending_drunk_absorption",
-	"current_environment", "world_map", "scenario_recent_by_archetype",
+	"current_environment", "world_map", "scenario_recent_by_archetype", "environment_situation_cycles_by_node",
 	"grand_casino_room_states", "grand_casino_staffing", "linda_cage_state",
 	"grand_casino_room_heat_accumulators", "rival_cheaters",
 	"rourke_escort_state", "pending_triggered_events", "pending_bags",
@@ -487,6 +488,7 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	current_environment = {}
 	world_map = {}
 	scenario_recent_by_archetype = {}
+	environment_situation_cycles_by_node = {}
 	_scenario_sequence_definition_cache = {}
 	world_sequence_registrations = {}
 	_world_sequence_definition_cache = {}
@@ -798,21 +800,26 @@ func advance_game_clock_minutes(amount: int) -> Dictionary:
 	var previous_minutes := game_clock_minutes
 	var previous_day := game_day()
 	var next_minutes := maxi(0, game_clock_minutes + amount)
+	var clock_delivery_will_resolve := delivery_has_active_run() \
+		and str(active_delivery_run.get("deadline_kind", DeliveryRunModelScript.DEADLINE_ACTIONS)) == DeliveryRunModelScript.DEADLINE_CLOCK \
+		and int(active_delivery_run.get("deadline_game_clock_minutes", 0)) <= next_minutes
+	var rollback_run := to_dict() if clock_delivery_will_resolve else {}
 	var next_day := maxi(1, int(floor(float(next_minutes) / 1440.0)) + 1)
-	if next_day > previous_day and _scenario_sequence_uses_expiry_boundary("night_end"):
-		var rollback_environment := current_environment.duplicate(true)
-		var expiry_result := scenario_sequence_apply_expiry_boundary("night_end", next_day - previous_day)
-		if not bool(expiry_result.get("ok", false)):
-			current_environment = rollback_environment
-			return {"ok": false, "applied": false, "errors": _copy_array(expiry_result.get("errors", []))}
 	game_clock_minutes = next_minutes
+	var delivery_resolved := false
+	if delivery_has_active_run() and str(active_delivery_run.get("deadline_kind", DeliveryRunModelScript.DEADLINE_ACTIONS)) == DeliveryRunModelScript.DEADLINE_CLOCK:
+		active_delivery_run = DeliveryRunModelScript.advance_clock(active_delivery_run, game_clock_minutes)
+		if str(active_delivery_run.get("status", "")) == "resolved":
+			var delivery_result := _apply_delivery_resolution()
+			if not bool(delivery_result.get("ok", false)):
+				from_dict(rollback_run)
+				return {"ok": false, "applied": false, "errors": _copy_array(delivery_result.get("errors", []))}
+			delivery_resolved = true
 	_process_grand_casino_atm_interest_boundaries(previous_minutes, game_clock_minutes)
 	if next_day > previous_day:
-		for ended_day in range(previous_day, next_day):
-			scenario_apply_expiry("night_end", ended_day)
 		_advance_grand_casino_staff_day_rollovers(previous_day, next_day)
 		_advance_home_day_rollovers(previous_day, next_day)
-	return {"ok": true, "applied": true, "errors": []}
+	return {"ok": true, "applied": true, "delivery_resolved": delivery_resolved, "errors": []}
 
 
 # True only during the discovered solo race between a published handle and the
@@ -1576,57 +1583,11 @@ func _event_cadence_visit_key(environment_data: Dictionary) -> String:
 	return "%s#%d" % [environment_id, environment_travel_count()]
 
 
-# Read-only departure check used before callers publish facts, consume RNG, or
-# move a world-map cursor. The real boundary is committed by set_environment.
+# Leaving a room does not end its situation. Situation lifecycle is tied to the
+# venue's operating cycle and is replaced by RunGenerator only after a real
+# close/reopen boundary. This preflight remains as the stable travel API hook.
 func scenario_preflight_environment_change(source_id: String = "", target_id: String = "", travel_kind: String = "") -> Dictionary:
-	if current_environment.is_empty(): return {"ok": true, "inactive": true, "errors": []}
-	var candidate := current_environment.duplicate(true)
-	var definition := _scenario_sequence_definition_readonly()
-	var boundary := _scenario_environment_change_expiry_boundary()
-	if not travel_kind.is_empty() and ScenarioSequenceSchemaScript.is_sequence(definition):
-		if not _scenario_semantic_ready(): return {"ok": false, "errors": ["Dynamic room sequence semantic records are not finalized for departure; the arrived room was likely never finalized by its host or harness."]}
-		var state := ScenarioEngineScript.ensure_sequence_state(candidate, definition)
-		if state.is_empty(): return {"ok": false, "errors": ["Dynamic room sequence departure could not initialize its causal state."]}
-		var state_errors := _copy_array(state.get("errors", []))
-		if str(state.get("status", "")) == ScenarioSequenceRuntimeScript.STATUS_CLEANED and not state_errors.is_empty():
-			return {"ok": false, "errors": state_errors}
-		var required_causes := _scenario_environment_change_required_causes(state, boundary)
-		if ScenarioSequenceRuntimeScript._next_cause_ordinal(state) + _copy_array(state.get("fact_queue", [])).size() + required_causes > ScenarioSequenceRuntimeScript.MAX_RECEIPTS:
-			return {"ok": false, "errors": ["scenario causal journal lifetime limit reached"]}
-		if str(state.get("status", "")) == ScenarioSequenceRuntimeScript.STATUS_ACTIVE:
-			var serial := maxi(1, int(state.get("fact_serial_next", 1)))
-			var departure_fact := ScenarioSequenceRuntimeScript.fact(
-				"travel_departed",
-				"travel",
-				current_world_node_id(),
-				"travel:travel_departed:%d" % serial,
-				serial,
-				maxi(int(state.get("boundary_serial", 0)), _crew_action_index()),
-				{"source_id": source_id, "target_id": target_id, "travel_kind": travel_kind}
-			)
-			var enqueued := ScenarioEngineScript.enqueue_sequence_fact(candidate, definition, departure_fact)
-			if not bool(enqueued.get("ok", false)):
-				return {"ok": false, "errors": _copy_array(enqueued.get("errors", []))}
-			var flushed := ScenarioEngineScript.flush_sequence_facts(candidate, definition, _crew_action_index())
-			if not bool(flushed.get("ok", false)):
-				return {"ok": false, "errors": _copy_array(flushed.get("errors", []))}
-	if boundary.is_empty(): return {"ok": true, "inactive": true, "errors": []}
-	if not _scenario_semantic_ready(): return {"ok": false, "errors": ["Dynamic room sequence semantic records are not finalized for departure; the arrived room was likely never finalized by its host or harness."]}
-	var result := ScenarioEngineScript.sequence_apply_expiry_boundary(candidate, definition, boundary)
-	return {"ok": bool(result.get("ok", false)), "inactive": false, "errors": _copy_array(result.get("errors", []))}
-
-
-func _scenario_environment_change_required_causes(state: Dictionary, boundary: String) -> int:
-	var required := 1 if str(state.get("status", "")) == ScenarioSequenceRuntimeScript.STATUS_ACTIVE else 0
-	if not boundary.is_empty() and not bool(state.get("expired", false)):
-		required += 1
-	return required
-
-
-func _scenario_environment_change_expiry_boundary() -> String:
-	for boundary in ["leave", "visit_end"]:
-		if _scenario_sequence_uses_expiry_boundary(boundary): return boundary
-	return ""
+	return {"ok": true, "inactive": true, "errors": []}
 
 
 # Sets the current environment and records the previous one.
@@ -1648,16 +1609,9 @@ func set_environment(environment_data: Dictionary, debug_timing: Dictionary = {}
 		perf_stage_started_usec = Time.get_ticks_usec()
 	if not bool(departure_check.get("ok", false)):
 		return {"ok": false, "applied": false, "errors": _copy_array(departure_check.get("errors", []))}
-	var departure_boundary := _scenario_environment_change_expiry_boundary()
-	if not departure_boundary.is_empty():
-		var expiry_result := scenario_sequence_apply_expiry_boundary(departure_boundary)
-		if not bool(expiry_result.get("ok", false)):
-			return {"ok": false, "applied": false, "errors": _copy_array(expiry_result.get("errors", []))}
 	if not current_environment.is_empty():
-		scenario_apply_expiry("leave", _crew_action_index())
-		scenario_apply_expiry("visit_end", _crew_action_index())
-		# Lifecycle cleanup and its receipts are authoritative source-room state.
-		# Persist them before any caller can observe the destination as current.
+		# Situation progress is authoritative source-room state and remains live
+		# through same-cycle departures. Persist it before installing destination.
 		if is_layered_environment():
 			store_current_environment_layer_state()
 		if _is_grand_casino_environment(current_environment):
@@ -3993,6 +3947,23 @@ func remember_scenario_selection(archetype_id: String, scenario_id: String) -> v
 	while recent.size() > 3:
 		recent.pop_back()
 	scenario_recent_by_archetype[clean_archetype] = recent
+
+
+func environment_situation_cycle(node_id: String) -> Dictionary:
+	var clean_node := node_id.strip_edges()
+	var value: Variant = environment_situation_cycles_by_node.get(clean_node, {})
+	return (value as Dictionary).duplicate(false) if typeof(value) == TYPE_DICTIONARY else {}
+
+
+func remember_environment_situation_cycle(node_id: String, cycle_id: String, scenario_id: String) -> void:
+	var clean_node := node_id.strip_edges()
+	var clean_cycle := cycle_id.strip_edges()
+	if clean_node.is_empty() or clean_cycle.is_empty():
+		return
+	environment_situation_cycles_by_node[clean_node] = {
+		"cycle_id": clean_cycle,
+		"scenario_id": scenario_id.strip_edges(),
+	}
 
 
 func is_layered_environment(environment: Dictionary = {}) -> bool:
@@ -10987,15 +10958,29 @@ func resolve_crew_favor_delivery_job(choice_id: String, authored_consequences: D
 		"job_id": job_id,
 		"source_event_id": "crew_favor_delivery",
 		"attempt": int(offered.get("offered_action", 0)),
-		"deadline_actions": 18,
+		"deadline_kind": DeliveryRunModelScript.DEADLINE_CLOCK,
+		"deadline_minutes": 180,
+		"initial_cargo_state": DeliveryRunModelScript.CARGO_CARRIED,
 		"cargo_id": "crew_package",
-		"cargo_label": "Crew package",
+		"cargo_label": "The Package",
 		"cargo_heat_per_travel": 0,
 		"consumer_payload": _delivery_event_consumer_payload(authored_consequences),
 	})
 	if not bool(started.get("ok", false)):
 		job_resolve(job_id, "failed", _crew_job_host_capability)
+	else:
+		# Acceptance closes the offer immediately. Delivery resolution owns the
+		# eventual completed/failed flag, but the Crew must not keep re-offering the
+		# same choice while the package is already in the player's inventory.
+		narrative_flags["crew_favor_pending"] = false
 	return started
+
+
+func _crew_favor_delivery_is_active() -> bool:
+	return delivery_has_active_run() and (
+		str(active_delivery_run.get("run_id", "")) == "crew_favor_delivery"
+		or str(active_delivery_run.get("source_event_id", "")) == "crew_favor_delivery"
+	)
 
 
 func _delivery_event_consumer_payload(consequences: Dictionary) -> Dictionary:
@@ -11418,12 +11403,23 @@ func _delivery_begin(spec: Dictionary) -> Dictionary:
 	normalized["targets"] = _copy_array(resolved_targets.get("targets", []))
 	normalized["start_node_id"] = current_world_node_id()
 	normalized["current_node_id"] = current_world_node_id()
+	if str(normalized.get("deadline_kind", DeliveryRunModelScript.DEADLINE_ACTIONS)) == DeliveryRunModelScript.DEADLINE_CLOCK:
+		var deadline_minutes := maxi(1, int(normalized.get("deadline_minutes", 180)))
+		normalized["deadline_minutes"] = deadline_minutes
+		normalized["started_game_clock_minutes"] = game_clock_minutes
+		normalized["deadline_game_clock_minutes"] = game_clock_minutes + deadline_minutes
 	var state := DeliveryRunModelScript.begin(normalized, _crew_action_index())
 	if state.is_empty():
 		return {"ok": false, "message": "That route cannot be carried on this town map."}
 	world_map = _copy_dict(resolved_targets.get("world_map", world_map))
 	active_delivery_run = state
-	return {"ok": true, "snapshot": delivery_snapshot(), "message": "The route is marked. The room at the far end is real."}
+	if str(_copy_dict(delivery_snapshot().get("physical", {})).get("cargo_state", "")) == DeliveryRunModelScript.CARGO_CARRIED:
+		_delivery_add_inventory_cargo()
+	var target := _copy_dict(_copy_array(delivery_snapshot().get("targets", []))[0])
+	var message := "The route is marked. Find %s at %s." % [str(target.get("contact_label", "the marked contact")), str(target.get("label", "the destination"))]
+	if str(active_delivery_run.get("deadline_kind", DeliveryRunModelScript.DEADLINE_ACTIONS)) == DeliveryRunModelScript.DEADLINE_CLOCK:
+		message += " Make the handoff by %s." % _clock_display_for_absolute_minutes(int(active_delivery_run.get("deadline_game_clock_minutes", 0)))
+	return {"ok": true, "snapshot": delivery_snapshot(), "message": message}
 
 
 func delivery_has_active_run() -> bool:
@@ -11444,13 +11440,17 @@ func delivery_physical_interactions() -> Array:
 	var result: Array = []
 	for verb_value in _copy_array(physical.get("available_verbs", [])):
 		var verb := str(verb_value)
-		if verb == "move" or verb == "handoff":
+		# Only a package physically present in the room is a room object. Route
+		# choices live in the top action strip; handoff lives on the target person.
+		if verb not in ["pickup", "retrieve"]:
 			continue
 		var label := str({
 			"pickup": "Take the package", "wait": "Hold your sightline", "duck": "Duck into cover",
 			"stash": "Stash the package", "retrieve": "Retrieve the package", "ditch": "Ditch the package",
 			"signal": "Send the signal", "break_hold": "Break the hold",
 		}.get(verb, verb.replace("_", " ").capitalize()))
+		if verb == "retrieve":
+			label = "The Package"
 		result.append({
 			"object_id": "delivery:%s:%s" % [verb, node_id],
 			"node_id": node_id,
@@ -11459,6 +11459,25 @@ func delivery_physical_interactions() -> Array:
 			"cargo_label": str(active_delivery_run.get("cargo_label", "Crew package")),
 			"message": "This acts on the route here, at %s." % node_id.replace("_", " ").capitalize(),
 		})
+	return result
+
+
+func delivery_top_actions() -> Array:
+	if not delivery_has_active_run():
+		return []
+	var physical := _copy_dict(delivery_snapshot().get("physical", {}))
+	if current_world_node_id() != str(physical.get("position_node_id", "")):
+		return []
+	var labels := {
+		"wait": "Hold Sightline", "duck": "Duck Cover", "stash": "Stash Package",
+		"ditch": "Ditch Package", "signal": "Send Signal", "break_hold": "Break Hold",
+	}
+	var result: Array = []
+	for verb_value in _copy_array(physical.get("available_verbs", [])):
+		var verb := str(verb_value)
+		if not labels.has(verb):
+			continue
+		result.append({"id": verb, "label": str(labels.get(verb)), "message": _delivery_physical_action_message(verb)})
 	return result
 
 
@@ -11494,6 +11513,11 @@ func delivery_apply_physical_action(verb: String, idempotency_key: String) -> Di
 	if JSON.stringify(candidate) == before:
 		return {"ok": false, "message": "The route no longer accepts that action."}
 	active_delivery_run = candidate
+	var cargo_after := str(_copy_dict(delivery_snapshot().get("physical", {})).get("cargo_state", ""))
+	if action == "retrieve" and cargo_after == DeliveryRunModelScript.CARGO_CARRIED:
+		_delivery_add_inventory_cargo()
+	elif action in ["stash", "ditch"]:
+		_delivery_remove_inventory_cargo()
 	var applied := _apply_delivery_resolution()
 	if not bool(applied.get("ok", false)):
 		from_dict(rollback_run)
@@ -11558,6 +11582,7 @@ func delivery_complete_handoff(node_id: String = "") -> Dictionary:
 	active_delivery_run = DeliveryRunModelScript.apply_host_action(active_delivery_run, "handoff", receipt_key, _delivery_host_context(target_id, "", str(target.get("id", "")), "", "", "", "handoff"))
 	if JSON.stringify(delivery_snapshot()) == before:
 		return {"ok": false, "message": "This is not the marked handoff."}
+	_delivery_remove_inventory_cargo()
 	var applied := _apply_delivery_resolution()
 	if not bool(applied.get("ok", false)):
 		from_dict(rollback_run)
@@ -11748,6 +11773,8 @@ func _delivery_resolve_targets(spec: Dictionary) -> Dictionary:
 				continue
 			if str(node.get("archetype_id", "")).strip_edges().is_empty() or str(node.get("kind", "")).strip_edges().is_empty():
 				continue
+			if str(spec.get("mode", "")) in [DeliveryRunModelScript.MODE_PACKAGE, DeliveryRunModelScript.MODE_MULTI_STOP] and _delivery_target_is_home(node):
+				continue
 			if not WorldMap.prepared_has_path(offer_path_query, node_id) and node_id != origin_id:
 				continue
 			# Familiar places are the default: first rooms the player has entered,
@@ -11786,6 +11813,8 @@ func _delivery_resolve_targets(spec: Dictionary) -> Dictionary:
 			"id": "delivery_target_%s" % node_id,
 			"node_id": node_id,
 			"label": str(node.get("label", node_id.replace("_", " ").capitalize())),
+			"contact_id": "delivery_contact_%s" % node_id,
+			"contact_label": _delivery_contact_label(node),
 			"was_visited_at_offer": str(node.get("state", "hidden")) == WorldMap.STATE_VISITED,
 			"was_visible_at_offer": was_visible,
 			"revealed_by_job": not was_visible,
@@ -11798,6 +11827,46 @@ func _delivery_resolve_targets(spec: Dictionary) -> Dictionary:
 		if visible_path.is_empty() or not WorldMap.prepared_path_uses_real_edges(offered_path_query, visible_path):
 			return {"ok": false, "message": "The revealed courier route is incomplete."}
 	return {"ok": true, "targets": targets, "world_map": offered_map}
+
+
+func _delivery_target_is_home(node: Dictionary) -> bool:
+	var node_id := str(node.get("id", "")).strip_edges()
+	var archetype_id := str(node.get("archetype_id", "")).strip_edges()
+	return str(node.get("kind", "")).strip_edges() == "home" \
+		or node_id == str(home_state.get("home_node_id", "")).strip_edges() \
+		or archetype_id in ["apartment", "house", "motel_room"]
+
+
+func _delivery_contact_label(node: Dictionary) -> String:
+	var archetype_id := str(node.get("archetype_id", "")).strip_edges()
+	if archetype_id == "back_alley": return "the alley lookout"
+	if archetype_id == "corner_store": return "the counter clerk"
+	if archetype_id == "pawn_shop": return "the shop contact"
+	if archetype_id == "motel": return "the desk clerk"
+	if archetype_id in ["bar", "jazz_club"]: return "the bartender"
+	if str(node.get("kind", "")) in ["casino", "boss", "club"]: return "the floor contact"
+	return "the marked contact"
+
+
+func _clock_display_for_absolute_minutes(absolute_minutes: int) -> String:
+	var safe_minutes := maxi(0, absolute_minutes)
+	var day := int(floor(float(safe_minutes) / 1440.0)) + 1
+	var minute_of_day := safe_minutes % 1440
+	var hour_24 := int(floor(float(minute_of_day) / 60.0)) % 24
+	var minute := minute_of_day % 60
+	var hour_12 := hour_24 % 12
+	if hour_12 == 0: hour_12 = 12
+	return "Day %d, %d:%02d %s" % [day, hour_12, minute, "AM" if hour_24 < 12 else "PM"]
+
+
+func _delivery_add_inventory_cargo() -> void:
+	if str(active_delivery_run.get("cargo_id", "")) == "crew_package":
+		add_item("crew_package")
+
+
+func _delivery_remove_inventory_cargo() -> void:
+	if str(active_delivery_run.get("cargo_id", "")) == "crew_package":
+		remove_item("crew_package")
 
 
 func _delivery_scenario_law_pressure(node_ids: Array) -> int:
@@ -11852,6 +11921,7 @@ func _apply_delivery_resolution(expected_receipt: Dictionary = {}, materialize_a
 		if not bool(retried.get("ok", false)): return retried
 		return {"ok": true, "replayed": true, "public_result": _copy_dict(checkpoint.get("public_result", {})), "errors": []}
 	var resolution := _copy_dict(active_delivery_run.get("resolution", {}))
+	_delivery_remove_inventory_cargo()
 	var succeeded := str(resolution.get("outcome", "")) == "success"
 	var reason := str(resolution.get("reason", "failed"))
 	var job_id := str(active_delivery_run.get("job_id", ""))
@@ -12189,7 +12259,12 @@ func travel_route_preview(route_data: Dictionary, destination_archetype: Diction
 	preview["item_count_max"] = int(item_range[1])
 	preview["service_count"] = service_ids.size()
 	preview["lender_count"] = lender_ids.size()
-	preview["travel_locked_actions"] = maxi(0, int(destination_archetype.get("travel_locked_actions", destination_environment.get("travel_locked_actions", 0))))
+	# A full scout has the exact generated situation, whose travel lock may
+	# override the archetype baseline. Partial previews retain the baseline only.
+	preview["travel_locked_actions"] = maxi(0, int(
+		destination_environment.get("travel_locked_actions", destination_archetype.get("travel_locked_actions", 0))
+		if full_preview else destination_archetype.get("travel_locked_actions", 0)
+	))
 	var lines: Array = []
 	lines.append("Preview: tier %d %s." % [tier, kind])
 	var heard := heard_rumor_for_node(archetype_id)
@@ -12461,15 +12536,33 @@ func seed_scenario_for_node(node_id: String, scenario: Dictionary) -> bool:
 
 
 func seeded_scenario_for_node(node_id: String) -> Dictionary:
-	return town_state.seeded_scenario_for_node(node_id) if town_state != null else {}
+	if town_state == null:
+		return {}
+	var lifecycle := environment_situation_cycle(node_id)
+	var seeded := town_state.seeded_scenario_for_node(node_id)
+	if lifecycle.is_empty():
+		return seeded
+	return seeded if str(seeded.get("id", "")) == str(lifecycle.get("scenario_id", "")) else {}
 
 
 func seeded_scenario_definition_for_node(node_id: String) -> Dictionary:
-	return town_state.seeded_scenario_definition_for_node(node_id) if town_state != null else {}
+	if town_state == null:
+		return {}
+	var lifecycle := environment_situation_cycle(node_id)
+	var seeded := town_state.seeded_scenario_definition_for_node(node_id)
+	if lifecycle.is_empty():
+		return seeded
+	return seeded if str(seeded.get("id", "")) == str(lifecycle.get("scenario_id", "")) else {}
 
 
 func _seeded_scenario_definition_for_node_readonly(node_id: String) -> Dictionary:
-	return town_state._seeded_scenario_definition_for_node_readonly(node_id) if town_state != null else {}
+	if town_state == null:
+		return {}
+	var lifecycle := environment_situation_cycle(node_id)
+	var seeded := town_state._seeded_scenario_definition_for_node_readonly(node_id)
+	if lifecycle.is_empty():
+		return seeded
+	return seeded if str(seeded.get("id", "")) == str(lifecycle.get("scenario_id", "")) else {}
 
 
 func register_rumor_fact(fact_class: String, fact_id: String, payload: Dictionary) -> bool:
@@ -13725,6 +13818,7 @@ func detached_travel_preview_candidate() -> RunState:
 	# anchors in these two flag tables. All three candidates therefore own their
 	# outer maps while retaining immutable values.
 	candidate.scenario_recent_by_archetype = scenario_recent_by_archetype.duplicate(false)
+	candidate.environment_situation_cycles_by_node = environment_situation_cycles_by_node.duplicate(true)
 	candidate.narrative_flags = narrative_flags.duplicate(false)
 	candidate.story_flags = story_flags.duplicate(false)
 	candidate.town_state = town_state.detached_travel_preview_candidate() if town_state != null else null
@@ -14391,7 +14485,9 @@ func _carried_contraband_ids() -> Array:
 		if str(definition.get("class", "")).strip_edges().to_lower() == "contraband" or risk_flags.has("contraband"):
 			result.append(item_id)
 	if delivery_has_active_run() and bool(delivery_snapshot().get("carrying_contraband", false)):
-		result.append("delivery:%s" % str(active_delivery_run.get("cargo_id", "cargo")))
+		var delivery_cargo_id := str(active_delivery_run.get("cargo_id", "cargo"))
+		if not result.has(delivery_cargo_id):
+			result.append("delivery:%s" % delivery_cargo_id)
 	return result
 
 
@@ -14461,13 +14557,18 @@ func _tick_recurring_debt_pressure(index: int, debt_data: Dictionary, amount: in
 				"message": "Your brother-in-law calls again. The family version of interest compounds out loud.",
 			})
 		"crew_favor_due":
-			narrative_flags["crew_favor_pending"] = true
-			log_story({
-				"type": "debt_favor_due",
-				"debt_id": str(debt_data.get("id", "")),
-				"lender_id": str(debt_data.get("lender_id", "")),
-				"message": "The Crew's favor is still waiting on their clock.",
-			})
+			if _crew_favor_delivery_is_active():
+				# The debt remains open until delivery resolves, but its recurring
+				# pressure must not reopen the accepted offer over the live route.
+				narrative_flags["crew_favor_pending"] = false
+			else:
+				narrative_flags["crew_favor_pending"] = true
+				log_story({
+					"type": "debt_favor_due",
+					"debt_id": str(debt_data.get("id", "")),
+					"lender_id": str(debt_data.get("lender_id", "")),
+					"message": "The Crew's favor is still waiting on their clock.",
+				})
 		_:
 			log_story({
 				"type": "debt_default_pressure",
@@ -15452,6 +15553,7 @@ func to_dict() -> Dictionary:
 		"world_map": _compact_world_map_ticket_storage(WorldMap.normalize(world_map)),
 		"scenario_state_schema_version": ScenarioEngineScript.STATE_SCHEMA_VERSION,
 		"scenario_recent_by_archetype": scenario_recent_by_archetype.duplicate(true),
+		"environment_situation_cycles_by_node": environment_situation_cycles_by_node.duplicate(true),
 		"grand_casino_room_states": _grand_casino_room_states_for_save(),
 		"grand_casino_staffing": grand_casino_staffing.duplicate(true),
 		"rourke_current_room": rourke_current_room,
@@ -15621,6 +15723,7 @@ func _save_snapshot(deep_copy_seeded_scenario_definitions: bool, travel_preview:
 		"world_map": WorldMap.normalize_topology(world_map) if travel_preview else _world_map_for_save_snapshot(world_map),
 		"scenario_state_schema_version": ScenarioEngineScript.STATE_SCHEMA_VERSION,
 		"scenario_recent_by_archetype": scenario_recent_by_archetype.duplicate(false),
+		"environment_situation_cycles_by_node": environment_situation_cycles_by_node.duplicate(true),
 		"grand_casino_room_states": {} if travel_preview else _grand_casino_room_states_for_save(false),
 		"grand_casino_staffing": grand_casino_staffing.duplicate(false),
 		"rourke_current_room": rourke_current_room,
@@ -15732,6 +15835,7 @@ func from_dict(data: Dictionary) -> void:
 	# fresh world generation, never injected during a byte-identical restore.
 	configure_town_world(world_map, false)
 	scenario_recent_by_archetype = _normalize_scenario_recent(_copy_dict(data.get("scenario_recent_by_archetype", {})))
+	environment_situation_cycles_by_node = _normalize_environment_situation_cycles(_copy_dict(data.get("environment_situation_cycles_by_node", {})))
 	grand_casino_room_states = _normalize_grand_casino_room_states(_copy_dict(data.get("grand_casino_room_states", {})))
 	migrate_legacy_scenario_sequences()
 	grand_casino_staffing = _normalize_grand_casino_staffing(_copy_dict(data.get("grand_casino_staffing", {})))
@@ -15781,6 +15885,10 @@ func from_dict(data: Dictionary) -> void:
 	_sync_numbers_inventory_marker()
 	for story_flag_key in story_flags.keys():
 		narrative_flags[str(story_flag_key)] = story_flags[story_flag_key]
+	# Old or interrupted saves can contain both a live Crew route and the offer
+	# flag. The route is authoritative; suppress the obsolete popup on restore.
+	if _crew_favor_delivery_is_active():
+		narrative_flags["crew_favor_pending"] = false
 	# Repair saves made before Tier-2 casino spawning had an explicit progression
 	# milestone. The visited-node state is already authoritative.
 	_reconcile_tier_two_casino_spawn_eligibility()
@@ -17495,6 +17603,24 @@ static func _normalize_scenario_recent(value: Dictionary) -> Dictionary:
 			recent = recent.slice(0, 3)
 		if not recent.is_empty():
 			result[archetype_id] = recent
+	return result
+
+
+static func _normalize_environment_situation_cycles(value: Dictionary) -> Dictionary:
+	var result: Dictionary = {}
+	for node_value in value.keys():
+		var node_id := str(node_value).strip_edges()
+		var record_value: Variant = value.get(node_value, {})
+		if node_id.is_empty() or typeof(record_value) != TYPE_DICTIONARY:
+			continue
+		var record: Dictionary = record_value
+		var cycle_id := str(record.get("cycle_id", "")).strip_edges()
+		if cycle_id.is_empty():
+			continue
+		result[node_id] = {
+			"cycle_id": cycle_id,
+			"scenario_id": str(record.get("scenario_id", "")).strip_edges(),
+		}
 	return result
 
 

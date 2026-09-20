@@ -15,6 +15,8 @@ const MODE_MULTI_STOP := "multi_stop"
 const MODE_HOLD := "hold"
 const MODE_GETAWAY := "getaway"
 const MODES := [MODE_PACKAGE, MODE_MULTI_STOP, MODE_HOLD, MODE_GETAWAY]
+const DEADLINE_ACTIONS := "actions"
+const DEADLINE_CLOCK := "clock"
 const DEPTH_STATE_SCHEMA_VERSION := 1
 const MAX_DEPTH_COMMAND_RECEIPTS := 64
 const MAX_DEPTH_TEXT := 192
@@ -46,7 +48,12 @@ static func begin(spec: Dictionary, started_action: int) -> Dictionary:
 		return {}
 	if mode in [MODE_PACKAGE, MODE_HOLD, MODE_GETAWAY] and targets.size() != 1:
 		return {}
-	var deadline := maxi(1, int(spec.get("deadline_actions", 1)))
+	var deadline_kind := str(spec.get("deadline_kind", DEADLINE_ACTIONS)).strip_edges().to_lower()
+	if deadline_kind not in [DEADLINE_ACTIONS, DEADLINE_CLOCK]:
+		deadline_kind = DEADLINE_ACTIONS
+	var deadline := maxi(1, int(spec.get("deadline_minutes", 1))) if deadline_kind == DEADLINE_CLOCK else maxi(1, int(spec.get("deadline_actions", 1)))
+	var started_clock := maxi(0, int(spec.get("started_game_clock_minutes", 0)))
+	var deadline_clock := maxi(started_clock + 1, int(spec.get("deadline_game_clock_minutes", started_clock + deadline))) if deadline_kind == DEADLINE_CLOCK else 0
 	var assists := _string_array(spec.get("assists", []))
 	return normalize_state({
 		"schema_version": SCHEMA_VERSION,
@@ -59,6 +66,9 @@ static func begin(spec: Dictionary, started_action: int) -> Dictionary:
 		"last_boundary_action": maxi(0, started_action),
 		"deadline_total": deadline,
 		"deadline_remaining": deadline,
+		"deadline_kind": deadline_kind,
+		"started_game_clock_minutes": started_clock,
+		"deadline_game_clock_minutes": deadline_clock,
 		"targets": targets,
 		"cargo_id": str(spec.get("cargo_id", "crew_package")).strip_edges(),
 		"cargo_label": str(spec.get("cargo_label", "Crew package")).strip_edges(),
@@ -102,7 +112,10 @@ static func normalize_state(value: Variant) -> Dictionary:
 	var targets := _normalize_targets(source.get("targets", []))
 	if targets.is_empty():
 		return {}
-	var deadline_total := maxi(1, int(source.get("deadline_total", source.get("deadline_actions", 1))))
+	var deadline_kind := str(source.get("deadline_kind", DEADLINE_ACTIONS)).strip_edges().to_lower()
+	if deadline_kind not in [DEADLINE_ACTIONS, DEADLINE_CLOCK]:
+		deadline_kind = DEADLINE_ACTIONS
+	var deadline_total := maxi(1, int(source.get("deadline_total", source.get("deadline_minutes", source.get("deadline_actions", 1)))))
 	var status := str(source.get("status", "active")).strip_edges().to_lower()
 	if not ["active", "resolved"].has(status):
 		status = "resolved"
@@ -123,6 +136,9 @@ static func normalize_state(value: Variant) -> Dictionary:
 		"last_boundary_action": maxi(0, int(source.get("last_boundary_action", source.get("started_action", 0)))),
 		"deadline_total": deadline_total,
 		"deadline_remaining": clampi(int(source.get("deadline_remaining", deadline_total)), 0, deadline_total),
+		"deadline_kind": deadline_kind,
+		"started_game_clock_minutes": maxi(0, int(source.get("started_game_clock_minutes", 0))),
+		"deadline_game_clock_minutes": maxi(0, int(source.get("deadline_game_clock_minutes", 0))),
 		"targets": targets,
 		"cargo_id": str(source.get("cargo_id", "crew_package")).strip_edges(),
 		"cargo_label": str(source.get("cargo_label", "Crew package")).strip_edges(),
@@ -258,6 +274,9 @@ static func snapshot(state_value: Variant) -> Dictionary:
 		"job_id": str(state.get("job_id", "")),
 		"deadline_total": int(state.get("deadline_total", 1)),
 		"deadline_remaining": int(state.get("deadline_remaining", 0)),
+		"deadline_kind": str(state.get("deadline_kind", DEADLINE_ACTIONS)),
+		"started_game_clock_minutes": int(state.get("started_game_clock_minutes", 0)),
+		"deadline_game_clock_minutes": int(state.get("deadline_game_clock_minutes", 0)),
 		"targets": _copy_array(state.get("targets", [])),
 		"target_count": (state.get("targets", []) as Array).size(),
 		"delivered_count": delivered,
@@ -349,7 +368,8 @@ static func advance_boundaries(state_value: Variant, amount: int, current_node_i
 		if str(state.get("status", "")) != "active":
 			break
 		state["boundaries_elapsed"] = int(state.get("boundaries_elapsed", 0)) + 1
-		state["deadline_remaining"] = maxi(0, int(state.get("deadline_remaining", 0)) - 1)
+		if str(state.get("deadline_kind", DEADLINE_ACTIONS)) == DEADLINE_ACTIONS:
+			state["deadline_remaining"] = maxi(0, int(state.get("deadline_remaining", 0)) - 1)
 		state["last_boundary_action"] = maxi(int(state.get("last_boundary_action", 0)), action_index - amount + _boundary + 1)
 		if str(state.get("mode", "")) == MODE_HOLD:
 			var target_node_id := str(((state.get("targets", []) as Array)[0] as Dictionary).get("node_id", ""))
@@ -372,7 +392,7 @@ static func advance_boundaries(state_value: Variant, amount: int, current_node_i
 			if int(state.get("pursuit_pressure", 0)) >= int(state.get("pursuit_limit", 1)):
 				state = _resolve(state, "failed", "caught", false)
 				continue
-		if int(state.get("deadline_remaining", 0)) <= 0:
+		if str(state.get("deadline_kind", DEADLINE_ACTIONS)) == DEADLINE_ACTIONS and int(state.get("deadline_remaining", 0)) <= 0:
 			state = _resolve(state, "failed", "deadline", false)
 	if str(state.get("status", "")) == "resolved" and str(state.get("mode", "")) in [MODE_HOLD, MODE_GETAWAY]:
 		var depth := _copy_dict(state.get("depth_state", {}))
@@ -384,6 +404,19 @@ static func advance_boundaries(state_value: Variant, amount: int, current_node_i
 				"action_index": maxi(0, action_index),
 			}
 			state["depth_state"] = depth
+	return state
+
+
+static func advance_clock(state_value: Variant, current_game_clock_minutes: int) -> Dictionary:
+	var state := normalize_state(state_value)
+	if state.is_empty() or str(state.get("status", "")) != "active" or str(state.get("deadline_kind", DEADLINE_ACTIONS)) != DEADLINE_CLOCK:
+		return state
+	var deadline_clock := maxi(0, int(state.get("deadline_game_clock_minutes", 0)))
+	if deadline_clock <= 0:
+		return state
+	state["deadline_remaining"] = maxi(0, deadline_clock - maxi(0, current_game_clock_minutes))
+	if int(state.get("deadline_remaining", 0)) <= 0:
+		state = _resolve(state, "failed", "deadline", false)
 	return state
 
 
@@ -777,9 +810,9 @@ static func _append_depth_receipt(state_value: Dictionary, receipt_key: String, 
 
 static func _initial_depth_state(mode: String, spec: Dictionary) -> Dictionary:
 	var origin_node_id := str(spec.get("start_node_id", spec.get("current_node_id", ""))).strip_edges()
-	var cargo_status := CARGO_NONE if mode in [MODE_HOLD, MODE_GETAWAY] else CARGO_PICKUP_PENDING
-	var cargo_place_kind := "none" if cargo_status == CARGO_NONE else "pickup_contact"
-	var cargo_place_id := "" if cargo_status == CARGO_NONE else str(spec.get("pickup_object_id", "delivery_pickup")).strip_edges()
+	var cargo_status := CARGO_NONE if mode in [MODE_HOLD, MODE_GETAWAY] else CARGO_CARRIED if str(spec.get("initial_cargo_state", "pickup_pending")) == CARGO_CARRIED else CARGO_PICKUP_PENDING
+	var cargo_place_kind := "none" if cargo_status == CARGO_NONE else "player" if cargo_status == CARGO_CARRIED else "pickup_contact"
+	var cargo_place_id := "" if cargo_status == CARGO_NONE else "player" if cargo_status == CARGO_CARRIED else str(spec.get("pickup_object_id", "delivery_pickup")).strip_edges()
 	return {
 		"schema_version": DEPTH_STATE_SCHEMA_VERSION,
 		"origin": "current",
@@ -989,6 +1022,8 @@ static func _normalize_targets(value: Variant) -> Array:
 			"id": str(source.get("id", "delivery_target_%s" % node_id)).strip_edges(),
 			"node_id": node_id,
 			"label": str(source.get("label", node_id.replace("_", " ").capitalize())).strip_edges(),
+			"contact_id": str(source.get("contact_id", "delivery_contact_%s" % node_id)).strip_edges(),
+			"contact_label": str(source.get("contact_label", "the marked contact")).strip_edges(),
 			"status": status,
 			"was_visited_at_offer": bool(source.get("was_visited_at_offer", false)),
 			"was_visible_at_offer": bool(source.get("was_visible_at_offer", false)),

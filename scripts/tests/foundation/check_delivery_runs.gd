@@ -46,6 +46,7 @@ func _check_delivery_framework(library: ContentLibrary, failures: Array) -> void
 	_check_delivery_sweep_and_map_intel(failures)
 	_check_delivery_save_and_migration(failures)
 	_check_delivery_ordinary_travel_identity(failures)
+	_check_crew_package_player_flow(failures)
 
 
 func _check_delivery_target_properties(library: ContentLibrary, failures: Array) -> void:
@@ -395,6 +396,65 @@ func _check_delivery_ordinary_travel_identity(failures: Array) -> void:
 	if not ordinary.active_delivery_run.is_empty() or ordinary.delivery_has_active_run() or not ordinary.delivery_map_layer().is_empty() \
 		or not ordinary.delivery_arrival_interaction().is_empty() or JSON.stringify(ordinary.to_dict()) != before:
 		failures.append("Inactive delivery reads mutated or leaked into the ordinary core run.")
+
+
+func _check_crew_package_player_flow(failures: Array) -> void:
+	var run_state := _delivery_test_run("DELIVERY-CREW-PACKAGE-UX", failures)
+	run_state.narrative_flags["crew_favor_pending"] = true
+	var started := run_state.resolve_crew_favor_delivery_job("run_package", {
+		"success": {"bankroll_delta": 22, "suspicion_delta": 4, "flags": {"crew_favor_completed": true}},
+		"failure": {"suspicion_delta": 9, "flags": {"crew_favor_failed": true}},
+	})
+	var snapshot := run_state.delivery_snapshot()
+	var targets := snapshot.get("targets", []) as Array
+	var target := targets[0] as Dictionary if not targets.is_empty() else {}
+	var target_node := DeliveryWorldMapTestScript.node_metadata_by_id(run_state.world_map, str(target.get("node_id", "")))
+	var top_ids: Array = []
+	for action_value in run_state.delivery_top_actions():
+		top_ids.append(str((action_value as Dictionary).get("id", "")))
+	if not bool(started.get("ok", false)) or bool(run_state.narrative_flags.get("crew_favor_pending", true)) \
+			or not run_state.inventory.has("crew_package") or str((snapshot.get("physical", {}) as Dictionary).get("cargo_state", "")) != DeliveryRunModelTestScript.CARGO_CARRIED \
+			or str(snapshot.get("deadline_kind", "")) != DeliveryRunModelTestScript.DEADLINE_CLOCK or int(snapshot.get("deadline_remaining", 0)) != 180 \
+			or str(target.get("contact_label", "")).is_empty() or str(started.get("message", "")).find(str(target.get("contact_label", ""))) < 0 \
+			or str(target_node.get("kind", "")) == "home" or not run_state.delivery_physical_interactions().is_empty() \
+			or not top_ids.has("wait") or not top_ids.has("duck") or not top_ids.has("stash") or not top_ids.has("ditch"):
+		failures.append("Accepted Crew package did not become one carried contraband item with a named, timed, non-home route and top-screen actions: %s" % JSON.stringify(started))
+		return
+	var stale_popup_save := run_state.to_dict()
+	(stale_popup_save.get("narrative_flags", {}) as Dictionary)["crew_favor_pending"] = true
+	var restored: RunState = RunStateScript.new()
+	restored.from_dict(stale_popup_save)
+	if not restored.delivery_has_active_run() or bool(restored.narrative_flags.get("crew_favor_pending", false)):
+		failures.append("Restoring a live Crew package route did not suppress a stale accepted-offer popup flag.")
+	var deadline_before := int(snapshot.get("deadline_remaining", 0))
+	run_state.debt.append({
+		"id": "crew_favor_popup_regression",
+		"lender_id": "the_crew",
+		"debt_kind": "favor",
+		"status": "favor_due",
+		"default_consequence": "crew_favor_due",
+		"next_pressure_turns": 1,
+		"nag_interval_turns": 1,
+	})
+	run_state.advance_environment_turns(3)
+	if int(run_state.delivery_snapshot().get("deadline_remaining", 0)) != deadline_before \
+			or bool(run_state.narrative_flags.get("crew_favor_pending", false)):
+		failures.append("Clock-timed Crew package consumed turn deadlines or recurring debt pressure reopened its accepted offer.")
+	var stashed := run_state.delivery_apply_physical_action("stash", "test:crew-package:stash")
+	var stash_objects := run_state.delivery_physical_interactions()
+	if not bool(stashed.get("ok", false)) or run_state.inventory.has("crew_package") or stash_objects.size() != 1 \
+			or str((stash_objects[0] as Dictionary).get("verb", "")) != "retrieve":
+		failures.append("Stashing The Package did not move it from inventory into one retrievable room object.")
+		return
+	var retrieved := run_state.delivery_apply_physical_action("retrieve", "test:crew-package:retrieve")
+	if not bool(retrieved.get("ok", false)) or not run_state.inventory.has("crew_package") or not run_state.delivery_physical_interactions().is_empty():
+		failures.append("Retrieving The Package did not return it to inventory and clear the room object.")
+		return
+	var almost_expired := run_state.advance_game_clock_minutes(179)
+	var expired := run_state.advance_game_clock_minutes(1)
+	if not bool(almost_expired.get("ok", false)) or not bool(expired.get("delivery_resolved", false)) or run_state.delivery_has_active_run() \
+			or run_state.inventory.has("crew_package") or str((run_state.delivery_snapshot().get("resolution", {}) as Dictionary).get("reason", "")) != "deadline":
+		failures.append("Crew package did not expire exactly on its game-clock deadline and leave inventory clean.")
 
 
 func _delivery_test_run(seed: String, failures: Array) -> RunState:

@@ -1981,7 +1981,7 @@ func _check_travel_route_foundation(library: ContentLibrary, failures: Array) ->
 		if _string_array(full_preview.get("service_ids", [])) != _string_array(actual_environment.get("service_ids", [])):
 			failures.append("Scouted route preview services did not match the generated destination.")
 		if int(full_preview.get("travel_locked_actions", 0)) != int(actual_environment.get("travel_locked_actions", 0)):
-			failures.append("Scouted route preview did not expose the generated travel lock.")
+			failures.append("Scouted route preview did not expose the generated travel lock (preview=%d actual=%d)." % [int(full_preview.get("travel_locked_actions", 0)), int(actual_environment.get("travel_locked_actions", 0))])
 		var actual_layout := _copy_dict(actual_environment.get("layout", {}))
 		for object_id_value in _copy_dict(actual_layout.get("object_rects", {})).keys():
 			var object_id := str(object_id_value)
@@ -2710,6 +2710,13 @@ func _check_time_open_hours_foundation(library: ContentLibrary, failures: Array)
 		return
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("TIME-OPEN-HOURS")
+	var overnight_cycle := EnvironmentHoursScript.operating_cycle_id(bar_archetype, 23 * 60)
+	if overnight_cycle != EnvironmentHoursScript.operating_cycle_id(bar_archetype, EnvironmentHoursScript.MINUTES_PER_DAY + 2 * 60):
+		failures.append("An overnight venue changed operating cycles at midnight before it closed.")
+	if overnight_cycle == EnvironmentHoursScript.operating_cycle_id(bar_archetype, EnvironmentHoursScript.MINUTES_PER_DAY + 12 * 60):
+		failures.append("A venue close/reopen boundary did not advance its operating cycle.")
+	if EnvironmentHoursScript.operating_cycle_id({}, 60) == EnvironmentHoursScript.operating_cycle_id({}, EnvironmentHoursScript.MINUTES_PER_DAY + 60):
+		failures.append("An always-open environment did not refresh its situation on the next game day.")
 	var environment := EnvironmentInstance.from_archetype(bar_archetype, 1, run_state.create_rng("time_open_hours"), library)
 	run_state.set_environment(environment.to_dict())
 	run_state.game_clock_minutes = 0
@@ -4323,9 +4330,7 @@ func _check_crew_trust_core(library: ContentLibrary, failures: Array) -> void:
 	var failed_heat_before := failed_run.suspicion_level()
 	var failed_start := event_module.resolve(failed_run, failed_run.current_environment, "run_package")
 	failed_run.complete_talk_event_resolution("crew_favor_delivery")
-	if failed_run.delivery_has_active_run():
-		failed_run.active_delivery_run["deadline_remaining"] = 1
-	var failed_boundary := failed_run.advance_environment_turns(1)
+	var failed_boundary := failed_run.advance_game_clock_minutes(180)
 	var failed_resolution: Dictionary = failed_run.delivery_snapshot().get("resolution", {}) if typeof(failed_run.delivery_snapshot().get("resolution", {})) == TYPE_DICTIONARY else {}
 	var failed_heat_cue: Dictionary = {}
 	for cue_value in failed_run.suspicion.get("cues", []):

@@ -478,6 +478,8 @@ var top_menu_button: Button
 var top_settings_button: Button
 var top_inventory_button: Button
 var active_item_button: Button
+var delivery_action_strip: HFlowContainer
+var delivery_action_buttons: Dictionary = {}
 var run_menu_overlay: Control
 var run_menu_panel: PanelContainer
 var run_menu_status_label: Label
@@ -750,6 +752,11 @@ func _advance_run_game_clock(delta: float) -> void:
 	if not bool(clock_result.get("ok", false)):
 		return
 	environment_clock_fractional_minutes -= float(elapsed_minutes)
+	if bool(clock_result.get("delivery_resolved", false)):
+		_show_message("The delivery window closed before the handoff.")
+		_autosave_foundation_run("Delivery deadline saved.")
+		_refresh()
+		return
 	var boundary_changed := _apply_closing_time_clock_boundary()
 	if structured_hud != null:
 		structured_hud.render_clock(FoundationHudViewModelScript.clock_model(run_state))
@@ -11684,6 +11691,8 @@ func _add_context_object_actions(card: VBoxContainer, object_data: Dictionary) -
 			_add_card_button(card, "Inspect", Callable(self, "_inspect_casino_fixture").bind(object_data), false, true)
 		CONTEXT_MODE_NUMBERS:
 			_add_card_button(card, "Talk Business" if source_id == "silas" else "Work the Desk" if source_id == "desk" else "Open Book", Callable(self, "_open_numbers_surface").bind(source_id), false, true)
+		CONTEXT_MODE_DELIVERY:
+			_add_card_button(card, "Retrieve The Package" if source_id == "retrieve" else "Take The Package", Callable(self, "_activate_delivery_physical_action").bind(source_id), false, true)
 		CONTEXT_MODE_HOME_TENURE:
 			_add_card_button(card, str(object_data.get("label", "Pay")), Callable(self, "confirm_home_tenure_action"), false, true)
 		CONTEXT_MODE_HOME_SLEEP:
@@ -11724,6 +11733,11 @@ func _add_context_object_actions(card: VBoxContainer, object_data: Dictionary) -
 				card.add_child(_muted_label("Read-only room detail", 13))
 			else:
 				_add_context_scenario_sequence_actions(card, object_data)
+	if object_type not in [CONTEXT_MODE_SCENARIO_SEQUENCE, "scenario_scene_object", "scenario_actor", "character"] \
+			and not _copy_array(object_data.get("scenario_sequence_actions", [])).is_empty():
+		_add_context_scenario_sequence_actions(card, object_data)
+	if bool(object_data.get("delivery_handoff_direct", false)):
+		_add_card_button(card, "Hand Over The Package", Callable(self, "_complete_delivery_handoff").bind(str(object_data.get("delivery_handoff_node_id", ""))), false, true)
 	if not _copy_array(object_data.get("scenario_augmented_inline_actions", [])).is_empty():
 		_add_context_scenario_actions(card, {"inline_actions": object_data.get("scenario_augmented_inline_actions", [])})
 
@@ -17594,6 +17608,42 @@ func _apply_hud_mode_visibility() -> void:
 		top_inventory_button.visible = not meta_mode
 	if active_item_button != null:
 		active_item_button.visible = not meta_mode
+	_refresh_delivery_action_strip()
+
+
+func _refresh_delivery_action_strip() -> void:
+	if delivery_action_strip == null:
+		return
+	var actions: Array = []
+	if run_state != null and not _is_meta_session() and current_screen == SCREEN_ENVIRONMENT and current_game == null \
+			and run_state.has_method("delivery_top_actions"):
+		actions = _copy_array(run_state.delivery_top_actions())
+	var signature := JSON.stringify(actions)
+	if str(delivery_action_strip.get_meta("action_signature", "")) == signature:
+		delivery_action_strip.visible = not actions.is_empty()
+		return
+	delivery_action_strip.set_meta("action_signature", signature)
+	for child in delivery_action_strip.get_children():
+		delivery_action_strip.remove_child(child)
+		child.queue_free()
+	delivery_action_buttons.clear()
+	if actions.is_empty():
+		delivery_action_strip.visible = false
+		return
+	var heading := _muted_label("PACKAGE", 12)
+	heading.tooltip_text = "Actions for the delivery currently in your possession."
+	delivery_action_strip.add_child(heading)
+	for action_value in actions:
+		var action := _copy_dict(action_value)
+		var verb := str(action.get("id", ""))
+		if verb.is_empty():
+			continue
+		var button := _hud_nav_button(str(action.get("label", verb.replace("_", " ").capitalize())), Callable(self, "_activate_delivery_physical_action").bind(verb))
+		button.tooltip_text = str(action.get("message", "Act on the current delivery."))
+		button.custom_minimum_size.y = MIN_NATIVE_TOUCH_TARGET_HEIGHT
+		delivery_action_strip.add_child(button)
+		delivery_action_buttons[verb] = button
+	delivery_action_strip.visible = delivery_action_strip.get_child_count() > 1
 
 
 func _objective_goal_text(pressure: Dictionary, demo_objective: Dictionary = {}) -> String:

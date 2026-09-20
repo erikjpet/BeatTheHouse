@@ -8,6 +8,8 @@ const CrewRecruitmentModelScript := preload("res://scripts/core/crew_recruitment
 const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
 const ScenarioSequenceSchemaScript := preload("res://scripts/core/scenario_sequence_schema.gd")
 const TutorialFlowScript := preload("res://scripts/core/tutorial_flow.gd")
+const ENVIRONMENT_SITUATION_NONE_PERCENT := 25
+const ENVIRONMENT_SITUATION_CYCLE_KEY := "environment_situation_cycle_id"
 
 var library: ContentLibrary
 var _last_environment_install_errors: Array = []
@@ -214,16 +216,10 @@ func enter_grand_casino_room_result(run_state: RunState, target_archetype_id: St
 	return {"ok": true, "errors": [], "source_id": source_id, "target_id": target_id, "environment": run_state.current_environment.duplicate(true), "scenario_finalized": true}
 
 
-func _commit_travel_departure(run_state: RunState, source_id: String, target_id: String, travel_kind: String) -> Dictionary:
-	var departed := run_state.scenario_publish_travel("travel_departed", source_id, target_id, travel_kind)
-	if not bool(departed.get("ok", false)):
-		return departed
-	if bool(departed.get("inactive", false)):
-		return {"ok": true, "inactive": true, "errors": []}
-	var flushed := run_state.scenario_flush_facts()
-	if not bool(flushed.get("ok", false)):
-		return {"ok": false, "inactive": false, "errors": _copy_array(flushed.get("errors", []))}
-	return {"ok": true, "inactive": false, "errors": []}
+func _commit_travel_departure(_run_state: RunState, _source_id: String, _target_id: String, _travel_kind: String) -> Dictionary:
+	# Departure is not a situation outcome. The source snapshot is retained until
+	# its venue closes and a later opening creates a new operating cycle.
+	return {"ok": true, "inactive": true, "errors": []}
 
 
 func _travel_rollback_snapshot(run_state: RunState) -> Dictionary:
@@ -343,11 +339,10 @@ func _preview_world_environment_data(run_state: RunState, target_archetype_id: S
 	if _world_environment_timing_enabled:
 		_world_environment_build_stages_usec["town_already_configured"] = Time.get_ticks_usec() - perf_stage_started_usec
 		perf_stage_started_usec = Time.get_ticks_usec()
-	if run_state.seeded_scenario_for_node(target_id).is_empty():
-		var scenario_seed_rng := run_state.create_rng("town_scenario_seed:%s" % target_id)
-		var seeded_scenario := _select_scenario(run_state, target_id, scenario_seed_rng, false)
-		if not seeded_scenario.is_empty():
-			run_state.seed_scenario_for_node(target_id, seeded_scenario)
+	var scenario_seed_rng := run_state.create_rng("town_scenario_seed:%s" % target_id)
+	var seeded_scenario := _select_scenario(run_state, target_id, scenario_seed_rng, false)
+	if not seeded_scenario.is_empty():
+		run_state.seed_scenario_for_node(target_id, seeded_scenario)
 	if _world_environment_timing_enabled:
 		_world_environment_build_stages_usec["scenario_seed"] = Time.get_ticks_usec() - perf_stage_started_usec
 		perf_stage_started_usec = Time.get_ticks_usec()
@@ -389,7 +384,8 @@ func _stored_world_environment_preview(run_state: RunState, target_archetype_id:
 		if str(node.get("id", "")) != clean_target:
 			continue
 		var environment_value: Variant = node.get("environment", {})
-		if typeof(environment_value) == TYPE_DICTIONARY and not (environment_value as Dictionary).is_empty():
+		if typeof(environment_value) == TYPE_DICTIONARY and not (environment_value as Dictionary).is_empty() \
+				and _stored_environment_matches_situation_cycle(run_state, clean_target, environment_value as Dictionary):
 			return _travel_preview_environment_projection(environment_value as Dictionary)
 		return {}
 	return {}
@@ -838,8 +834,13 @@ func _world_environment_data_for_node(run_state: RunState, map_data: Dictionary,
 	_world_environment_build_stages_usec = {}
 	var node_id := str(node.get("id", "")).strip_edges()
 	var stored_environment: Dictionary = node.get("environment", {}) if typeof(node.get("environment", {})) == TYPE_DICTIONARY else {}
-	if not stored_environment.is_empty() and str(node.get("state", "")) == WorldMap.STATE_VISITED:
+	var restore_stored := not stored_environment.is_empty() \
+		and str(node.get("state", "")) == WorldMap.STATE_VISITED \
+		and _stored_environment_matches_situation_cycle(run_state, node_id, stored_environment)
+	if restore_stored:
 		var restored := stored_environment.duplicate(true)
+		if not restored.has(ENVIRONMENT_SITUATION_CYCLE_KEY):
+			restored[ENVIRONMENT_SITUATION_CYCLE_KEY] = _environment_situation_cycle_id(run_state, node_id)
 		run_state.apply_town_living_world_context(restored, rng.fork("town_reentry:%s" % node_id))
 		CrewRecruitmentModelScript.apply_to_environment(run_state, restored)
 		_apply_world_travel_targets(restored, run_state, map_data, node_id)
@@ -857,11 +858,14 @@ func _world_environment_data_for_node(run_state: RunState, map_data: Dictionary,
 	if archetype.is_empty():
 		archetype = _pick_archetype(run_state, depth, rng, node_id)
 	var scenario := _select_scenario(run_state, str(archetype.get("id", node_id)), rng)
+	if not scenario.is_empty():
+		run_state.seed_scenario_for_node(node_id, scenario)
 	if _world_environment_timing_enabled:
 		_world_environment_build_stages_usec["scenario_select"] = Time.get_ticks_usec() - perf_stage_started_usec
 		perf_stage_started_usec = Time.get_ticks_usec()
 	var environment := EnvironmentInstance.from_archetype(archetype, depth, rng, library, run_state.challenge_config, scenario)
 	var environment_data := environment.to_dict()
+	environment_data[ENVIRONMENT_SITUATION_CYCLE_KEY] = _environment_situation_cycle_id(run_state, str(archetype.get("id", node_id)))
 	if _world_environment_timing_enabled:
 		_world_environment_build_stages_usec["environment_from_archetype"] = Time.get_ticks_usec() - perf_stage_started_usec
 		perf_stage_started_usec = Time.get_ticks_usec()
@@ -878,6 +882,12 @@ func _world_environment_data_for_node(run_state: RunState, map_data: Dictionary,
 		_world_environment_build_stages_usec["crew"] = Time.get_ticks_usec() - perf_stage_started_usec
 		perf_stage_started_usec = Time.get_ticks_usec()
 	environment_data["game_states"] = _generated_game_states(run_state, environment_data, rng)
+	# Reopening refreshes a venue's situation, not its persistent machines.
+	if not stored_environment.is_empty() and typeof(stored_environment.get("game_states", {})) == TYPE_DICTIONARY:
+		var persistent_games: Dictionary = stored_environment.get("game_states", {})
+		for game_id_value in persistent_games.keys():
+			if environment_data["game_states"].has(game_id_value):
+				environment_data["game_states"][game_id_value] = _copy_dict(persistent_games.get(game_id_value, {}))
 	if _world_environment_timing_enabled:
 		_world_environment_build_stages_usec["games"] = Time.get_ticks_usec() - perf_stage_started_usec
 		perf_stage_started_usec = Time.get_ticks_usec()
@@ -890,6 +900,21 @@ func _world_environment_data_for_node(run_state: RunState, map_data: Dictionary,
 	if _world_environment_timing_enabled:
 		_world_environment_build_stages_usec["targets_and_layout"] = Time.get_ticks_usec() - perf_stage_started_usec
 	return environment_data
+
+
+func _environment_situation_cycle_id(run_state: RunState, archetype_id: String) -> String:
+	return EnvironmentHours.operating_cycle_id(_archetype_by_id(archetype_id), run_state.game_clock_minutes)
+
+
+func _stored_environment_matches_situation_cycle(run_state: RunState, archetype_id: String, environment: Dictionary) -> bool:
+	if library == null or library._scenarios_for_archetype_readonly(archetype_id).is_empty():
+		return true
+	var stored_cycle := str(environment.get(ENVIRONMENT_SITUATION_CYCLE_KEY, "")).strip_edges()
+	# Existing saves predate cycle metadata. Preserve their room once and stamp it
+	# on restoration instead of silently deleting in-progress player state.
+	if stored_cycle.is_empty():
+		return true
+	return stored_cycle == _environment_situation_cycle_id(run_state, archetype_id)
 
 
 func _apply_world_travel_targets(environment_data: Dictionary, run_state: RunState, map_data: Dictionary, node_id: String) -> void:
@@ -1146,8 +1171,6 @@ func _prime_town_scenarios(run_state: RunState, map_data: Dictionary) -> void:
 	node_ids.sort()
 	for node_id_value in node_ids:
 		var node_id := str(node_id_value)
-		if not run_state.seeded_scenario_for_node(node_id).is_empty():
-			continue
 		var perf_node_started_usec := Time.get_ticks_usec() if _world_environment_timing_enabled else 0
 		var scenario_rng := run_state.create_rng("town_scenario_seed:%s" % node_id)
 		var perf_rng_finished_usec := Time.get_ticks_usec() if _world_environment_timing_enabled else 0
@@ -1170,26 +1193,13 @@ func _select_scenario(run_state: RunState, archetype_id: String, rng: RngStream,
 	var perf_stages: Dictionary = {}
 	if run_state == null or library == null or rng == null:
 		return {}
-	var seeded_definition := run_state._seeded_scenario_definition_for_node_readonly(archetype_id)
-	if _world_environment_timing_enabled:
-		perf_stages["seeded_lookup"] = Time.get_ticks_usec() - perf_stage_usec
-		perf_stage_usec = Time.get_ticks_usec()
-	if not seeded_definition.is_empty():
-		if bool(seeded_definition.get(ScenarioEngineScript.SEQUENCE_SUPPRESSION_KEY, false)):
-			return _apply_scenario_pin_suppression(run_state, archetype_id, seeded_definition)
-		var resolved_seeded := library._runtime_validated_scenario_definition(seeded_definition) if validate_runtime else seeded_definition
-		return _apply_scenario_pin_suppression(run_state, archetype_id, resolved_seeded)
 	var modifiers := _copy_dict(run_state.challenge_config.get("modifiers", {}))
 	var pins := _copy_dict(modifiers.get("scenario_pins", {}))
 	var pinned_id := str(pins.get(archetype_id, "")).strip_edges()
-	# Tutorial overrides author the complete room. Unless the lesson explicitly
-	# pins a scenario, skip the sequence pool before any runtime validation work.
 	var tutorial_overrides := _copy_dict(modifiers.get("tutorial_environment_overrides", {}))
 	if _world_environment_timing_enabled:
 		perf_stages["modifiers"] = Time.get_ticks_usec() - perf_stage_usec
 		perf_stage_usec = Time.get_ticks_usec()
-	if tutorial_overrides.has(archetype_id) and pinned_id.is_empty():
-		return {}
 	var pool := library._scenarios_for_archetype_readonly(archetype_id)
 	if _world_environment_timing_enabled:
 		perf_stages["pool"] = Time.get_ticks_usec() - perf_stage_usec
@@ -1198,16 +1208,26 @@ func _select_scenario(run_state: RunState, archetype_id: String, rng: RngStream,
 		if _world_environment_timing_enabled:
 			_world_scenario_select_stages_usec[archetype_id] = perf_stages
 		return {}
-	var seeded := run_state.seeded_scenario_for_node(archetype_id)
-	var seeded_id := str(seeded.get("id", "")).strip_edges()
-	if not seeded_id.is_empty():
-		for definition_value in pool:
-			if typeof(definition_value) != TYPE_DICTIONARY:
-				continue
-			var definition: Dictionary = definition_value
-			if str(definition.get("id", "")) == seeded_id:
-				var resolved_definition := library._runtime_validated_scenario_definition(definition) if validate_runtime else library._runtime_scenario_definition_unvalidated(definition)
-				return _apply_scenario_pin_suppression(run_state, archetype_id, resolved_definition)
+	var cycle_id := _environment_situation_cycle_id(run_state, archetype_id)
+	var lifecycle := run_state.environment_situation_cycle(archetype_id)
+	if str(lifecycle.get("cycle_id", "")) == cycle_id:
+		var retained_id := str(lifecycle.get("scenario_id", "")).strip_edges()
+		if retained_id.is_empty():
+			return {}
+		return _scenario_definition_from_pool(run_state, archetype_id, retained_id, pool, validate_runtime)
+	# Saves made before cycle tracking retain their active situation once. New
+	# cycles below always roll independently, including the empty result.
+	if lifecycle.is_empty():
+		var legacy_seeded := run_state._seeded_scenario_definition_for_node_readonly(archetype_id)
+		var legacy_id := str(legacy_seeded.get("id", "")).strip_edges()
+		if not legacy_id.is_empty():
+			run_state.remember_environment_situation_cycle(archetype_id, cycle_id, legacy_id)
+			var resolved_legacy := library._runtime_validated_scenario_definition(legacy_seeded) if validate_runtime else legacy_seeded
+			return _apply_scenario_pin_suppression(run_state, archetype_id, resolved_legacy)
+	# Tutorial overrides author the complete room unless explicitly pinned.
+	if tutorial_overrides.has(archetype_id) and pinned_id.is_empty():
+		run_state.remember_environment_situation_cycle(archetype_id, cycle_id, "")
+		return {}
 	if not pinned_id.is_empty():
 		for definition_value in pool:
 			if typeof(definition_value) != TYPE_DICTIONARY:
@@ -1215,15 +1235,10 @@ func _select_scenario(run_state: RunState, archetype_id: String, rng: RngStream,
 			var pinned: Dictionary = definition_value
 			if str(pinned.get("id", "")) == pinned_id:
 				run_state.remember_scenario_selection(archetype_id, pinned_id)
+				run_state.remember_environment_situation_cycle(archetype_id, cycle_id, pinned_id)
 				var resolved_pinned := library._runtime_validated_scenario_definition(pinned) if validate_runtime else library._runtime_scenario_definition_unvalidated(pinned)
 				return _apply_scenario_pin_suppression(run_state, archetype_id, resolved_pinned)
-		return {}
-	# Tutorial environment overrides author the complete room contract. A normal
-	# scenario overlay can add games, events, and semantic actors after that
-	# contract is built, making the guided route nondeterministic or even
-	# impossible to seal. Explicit tutorial pins above remain available when the
-	# lesson needs a named, mutation-suppressed identity such as Delivery Day.
-	if tutorial_overrides.has(archetype_id):
+		run_state.remember_environment_situation_cycle(archetype_id, cycle_id, "")
 		return {}
 	var excludes := _copy_dict(modifiers.get("scenario_excludes", {}))
 	var excluded_ids := _string_array(excludes.get(archetype_id, []))
@@ -1237,6 +1252,15 @@ func _select_scenario(run_state: RunState, archetype_id: String, rng: RngStream,
 			continue
 		candidates.append(definition)
 	if candidates.is_empty():
+		run_state.remember_environment_situation_cycle(archetype_id, cycle_id, "")
+		return {}
+	# Situation identity belongs to the venue cycle, not to whichever unrelated
+	# RNG-consuming UI preview or travel-risk check happened immediately before it.
+	var situation_rng := RngStream.new()
+	situation_rng.configure(run_state.seed_value, run_state.seed_value)
+	situation_rng = situation_rng.fork("environment_situation:%s:%s" % [archetype_id, cycle_id])
+	if situation_rng.randi_range(1, 100) <= ENVIRONMENT_SITUATION_NONE_PERCENT:
+		run_state.remember_environment_situation_cycle(archetype_id, cycle_id, "")
 		return {}
 	var recent := run_state.recent_scenario_ids(archetype_id)
 	if _world_environment_timing_enabled:
@@ -1264,11 +1288,12 @@ func _select_scenario(run_state: RunState, archetype_id: String, rng: RngStream,
 		total_weight += scaled_weight
 		weighted.append({"definition": definition, "ceiling": total_weight})
 	if weighted.is_empty() or total_weight <= 0:
+		run_state.remember_environment_situation_cycle(archetype_id, cycle_id, "")
 		return {}
 	if _world_environment_timing_enabled:
 		perf_stages["weights"] = Time.get_ticks_usec() - perf_stage_usec
 		perf_stage_usec = Time.get_ticks_usec()
-	var roll := rng.randi_range(1, total_weight)
+	var roll := situation_rng.randi_range(1, total_weight)
 	var selected: Dictionary = weighted[weighted.size() - 1].get("definition", {})
 	for entry_value in weighted:
 		var entry: Dictionary = entry_value
@@ -1277,6 +1302,7 @@ func _select_scenario(run_state: RunState, archetype_id: String, rng: RngStream,
 			break
 	var selected_id := str(selected.get("id", ""))
 	run_state.remember_scenario_selection(archetype_id, selected_id)
+	run_state.remember_environment_situation_cycle(archetype_id, cycle_id, selected_id)
 	if _world_environment_timing_enabled:
 		perf_stages["choose"] = Time.get_ticks_usec() - perf_stage_usec
 		perf_stage_usec = Time.get_ticks_usec()
@@ -1289,6 +1315,18 @@ func _select_scenario(run_state: RunState, archetype_id: String, rng: RngStream,
 	# Generation only reads it, and town seeding owns its outer record, so another
 	# recursive copy here doubled the largest first-travel scenario payloads.
 	return resolved_selected
+
+
+func _scenario_definition_from_pool(run_state: RunState, archetype_id: String, scenario_id: String, pool: Array, validate_runtime: bool) -> Dictionary:
+	for definition_value in pool:
+		if typeof(definition_value) != TYPE_DICTIONARY:
+			continue
+		var definition: Dictionary = definition_value
+		if str(definition.get("id", "")) != scenario_id:
+			continue
+		var resolved := library._runtime_validated_scenario_definition(definition) if validate_runtime else library._runtime_scenario_definition_unvalidated(definition)
+		return _apply_scenario_pin_suppression(run_state, archetype_id, resolved)
+	return {}
 
 
 func _apply_scenario_pin_suppression(run_state: RunState, archetype_id: String, definition: Dictionary) -> Dictionary:

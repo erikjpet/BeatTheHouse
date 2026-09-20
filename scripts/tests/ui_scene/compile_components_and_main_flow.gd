@@ -2448,21 +2448,19 @@ func _check_crew_favor_conversation(app: Control) -> bool:
 	if not run_state.delivery_has_active_run() or bool((app.call("current_talk_dock_snapshot") as Dictionary).get("visible", false)):
 		push_error("Crew-favor conversation did not hand off to the real-map delivery state.")
 		return false
-	var pickup_object_id := "delivery:pickup:%s" % run_state.current_world_node_id()
-	var pickup_visible := false
-	var pickup_object: Dictionary = {}
+	var abstract_delivery_objects: Array = []
 	for object_value in app.call("_interactable_object_view_list"):
-		if typeof(object_value) == TYPE_DICTIONARY and str((object_value as Dictionary).get("object_id", "")) == pickup_object_id:
-			pickup_visible = true
-			pickup_object = object_value as Dictionary
-			break
-	if pickup_visible and (str(pickup_object.get("visual_type", "")) != "prop" or str(pickup_object.get("presence", "")) != "fixture" \
-			or EnvironmentPlacementScript.is_person_class(str(pickup_object.get("placement_class", "")))):
-		push_error("Crew-favor package pickup was projected as a departing person: %s" % JSON.stringify(pickup_object))
-		return false
-	if not pickup_visible or not bool(app.call("activate_interactable_object", pickup_object_id)) \
-			or not bool(run_state.delivery_snapshot().get("carrying_contraband", false)):
-		push_error("Crew-favor pickup did not stage as a physical in-room interaction.")
+		if typeof(object_value) == TYPE_DICTIONARY and str((object_value as Dictionary).get("object_id", "")).begins_with("delivery:"):
+			abstract_delivery_objects.append(object_value)
+	var delivery_action_ids: Array = []
+	for action_value in run_state.delivery_top_actions():
+		delivery_action_ids.append(str((action_value as Dictionary).get("id", "")))
+	if not abstract_delivery_objects.is_empty() or not run_state.inventory.has("crew_package") \
+			or bool(run_state.narrative_flags.get("crew_favor_pending", true)) \
+			or not bool(run_state.delivery_snapshot().get("carrying_contraband", false)) \
+			or not delivery_action_ids.has("wait") or not delivery_action_ids.has("duck") \
+			or not delivery_action_ids.has("stash") or not delivery_action_ids.has("ditch"):
+		push_error("Crew-favor acceptance did not grant The Package and replace abstract room props with top-screen actions: objects=%s actions=%s inventory=%s" % [JSON.stringify(abstract_delivery_objects), JSON.stringify(delivery_action_ids), JSON.stringify(run_state.inventory)])
 		return false
 	if not bool(app.call("open_world_map")):
 		push_error("Active delivery could not open the existing world map.")
@@ -2519,17 +2517,22 @@ func _check_crew_favor_conversation(app: Control) -> bool:
 		push_error("Crew favor did not use normal travel and RunGenerator for its marked destination: %s" % JSON.stringify(generated_environment))
 		return false
 	var mounted_handoff_owner := run_state.world_sequence_mounted_owner_for_channel("delivery_handoff", target_id)
-	var handoff_object_id := "crew::package_handoff"
-	var handoff_visible := false
+	var handoff_marker_visible := false
+	var delivery_contact: Dictionary = {}
 	for object_value in app.call("_interactable_object_view_list"):
-		if typeof(object_value) == TYPE_DICTIONARY \
-				and str((object_value as Dictionary).get("object_id", "")) == handoff_object_id \
-				and str((object_value as Dictionary).get("world_sequence_owner_token", "")) == mounted_handoff_owner:
-			handoff_visible = true
-			break
+		if typeof(object_value) != TYPE_DICTIONARY:
+			continue
+		var object_data := object_value as Dictionary
+		if str(object_data.get("object_id", "")) == "crew::package_handoff":
+			handoff_marker_visible = true
+		if bool(object_data.get("delivery_contact", false)) and str(object_data.get("world_sequence_owner_token", "")) == mounted_handoff_owner:
+			delivery_contact = object_data
 	var arrival_interaction := run_state.delivery_arrival_interaction()
-	if mounted_handoff_owner.is_empty() or str(arrival_interaction.get("node_id", "")) != target_id or not handoff_visible:
-		push_error("Delivery arrival did not expose the mounted owner-scoped physical handoff in the generated room: active=%s delivery=%s owner=%s interaction=%s objects=%s" % [str(run_state.delivery_has_active_run()), JSON.stringify(run_state.delivery_snapshot()), mounted_handoff_owner, JSON.stringify(arrival_interaction), JSON.stringify(app.call("_interactable_object_view_list"))])
+	var contact_actions: Array = delivery_contact.get("scenario_sequence_actions", []) if typeof(delivery_contact.get("scenario_sequence_actions", [])) == TYPE_ARRAY else []
+	if mounted_handoff_owner.is_empty() or str(arrival_interaction.get("node_id", "")) != target_id or handoff_marker_visible \
+			or delivery_contact.is_empty() or contact_actions.is_empty() \
+			or str((contact_actions[0] as Dictionary).get("label", "")) != "Hand Over The Package":
+		push_error("Delivery arrival did not attach its owner-scoped handoff dialogue option to a destination person: active=%s delivery=%s owner=%s interaction=%s contact=%s objects=%s" % [str(run_state.delivery_has_active_run()), JSON.stringify(run_state.delivery_snapshot()), mounted_handoff_owner, JSON.stringify(arrival_interaction), JSON.stringify(delivery_contact), JSON.stringify(app.call("_interactable_object_view_list"))])
 		return false
 	var bankroll_before_handoff := run_state.bankroll
 	var heat_before_handoff := run_state.suspicion_level()
@@ -2638,10 +2641,10 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 	const EXPECTED := {
 		"bankroll_delta": -4,
 		"clock_delta": 42,
-		"current_environment_sha256": "0f355a44a91c372ba75df052173969b09545b38c9e882537941868385dde1f43",
+		"current_environment_sha256": "d562a8192a012c1a7fe8b98a95f0a974d24c84e2760edadd0c2836cb17c101cf",
 		"current_world_node_id": "bar",
 		"heat_delta": 0,
-		"provenance_commit": "9cff9b2309d70c6c93ab34cc60cc18f79f56201b",
+		"provenance_commit": "7ddb7685efb21e45979ea10ab89e660d99c6e891",
 		"rng_state": 953559834,
 		"route_choice_sha256": "3fd96381385eb4ba8868bddac39f233b6c62d586e0cd4b249f45e050cb10657b",
 		"seed": "DELIVERY-ORDINARY-BASELINE",
@@ -2649,7 +2652,7 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 		"town_action_index": 0,
 		"travel_count_delta": 1,
 		"travel_story_sha256": "0257877551b37226fd62316ee2af5e047a27387fbb87d5acfa0273d1366a0e81",
-		"world_map_sha256": "5af3c7810f3f4b1c440e10193a4ed359d2d6b514411a1bd4257abd1dd3a0b57d",
+		"world_map_sha256": "9ffa0dd721762602607d6ee6ce6b713b3b229134628ccd80394067dbdee1a896",
 	}
 	app.call("start_foundation_run", "DELIVERY-ORDINARY-BASELINE", {}, false)
 	for _start_frame in range(3):
@@ -2690,7 +2693,7 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 		"current_environment_sha256": JSON.stringify(run_state.current_environment).sha256_text(),
 		"current_world_node_id": run_state.current_world_node_id(),
 		"heat_delta": run_state.suspicion_level() - heat_before,
-		"provenance_commit": "9cff9b2309d70c6c93ab34cc60cc18f79f56201b",
+		"provenance_commit": "7ddb7685efb21e45979ea10ab89e660d99c6e891",
 		"rng_state": run_state.rng_state,
 		"route_choice_sha256": JSON.stringify(choice).sha256_text(),
 		"seed": "DELIVERY-ORDINARY-BASELINE",

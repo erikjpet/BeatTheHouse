@@ -81,6 +81,26 @@ static func travel_status_text(archetype: Dictionary, minute_of_day: int) -> Str
 	return str(status.get("disabled_reason", "Closed."))
 
 
+# Identifies the venue opening whose active session contains this absolute game
+# minute. Same-session revisits share an id; crossing a real close/reopen boundary
+# changes it. Always-open environments rotate with the game day.
+static func operating_cycle_id(archetype: Dictionary, absolute_minutes: int) -> String:
+	var safe_minutes := maxi(0, absolute_minutes)
+	var day_index := int(floor(float(safe_minutes) / float(MINUTES_PER_DAY)))
+	var minute := _normalize_minute(safe_minutes)
+	var hours := _hours_dict(archetype.get("open_hours", null))
+	if hours.is_empty():
+		return "day:%d" % day_index
+	var open_minute := _normalize_minute(int(hours.get("open_minute", 0)))
+	var close_minute := _normalize_minute(int(hours.get("close_minute", open_minute)))
+	if open_minute == close_minute:
+		return "day:%d" % day_index
+	# An after-midnight portion of an overnight schedule belongs to the opening
+	# that began on the previous day.
+	var opening_day := day_index - 1 if close_minute < open_minute and minute < close_minute else day_index
+	return "open:%d:%d" % [opening_day, open_minute]
+
+
 static func _hours_dict(value: Variant) -> Dictionary:
 	if typeof(value) != TYPE_DICTIONARY:
 		return {}

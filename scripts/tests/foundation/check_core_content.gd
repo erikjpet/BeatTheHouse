@@ -1341,13 +1341,16 @@ func _check_scenario_engine_foundation(library: ContentLibrary, failures: Array)
 	var deterministic_b := _scenario_full_generation("SCENARIO-DETERMINISM", library, failures)
 	_assert_json_equal(deterministic_a, deterministic_b, "Same-seed scenario assignments or phase schedule diverged.", failures)
 	var revisit_run := RunStateScript.new()
-	revisit_run.start_new("SCENARIO-REVISIT")
+	revisit_run.start_new("SCENARIO-REVISIT", RunStateScript.custom_challenge("scenario_revisit", "SCENARIO-REVISIT", {"scenario_pins": {"bar": "bar_fight_night"}}))
 	var revisit_generator := RunGeneratorScript.new(library)
 	_harness_arrive(revisit_generator, revisit_run, failures, "scenario revisit initial arrival")
 	_harness_arrive(revisit_generator, revisit_run, failures, "scenario revisit Bar arrival", "bar", true)
 	var before_revisit := revisit_run.scenario_for_node("bar")
 	revisit_run.advance_environment_turns(2)
 	before_revisit = revisit_run.scenario_for_node("bar")
+	if str(before_revisit.get("id", "")) != "bar_fight_night" or int(before_revisit.get("phase_action_counter", 0)) != 2:
+		failures.append("Scenario revisit fixture did not establish two steps of situation progress.")
+	var first_cycle_id := str(revisit_run.current_environment.get("environment_situation_cycle_id", ""))
 	_harness_arrive(revisit_generator, revisit_run, failures, "scenario revisit away-room arrival", "motel", true)
 	var rng_before_read := revisit_run.rng_state
 	var stored_read := revisit_run.scenario_for_node("bar")
@@ -1356,6 +1359,16 @@ func _check_scenario_engine_foundation(library: ContentLibrary, failures: Array)
 	_harness_arrive(revisit_generator, revisit_run, failures, "scenario revisit return arrival", "bar", true)
 	if JSON.stringify(revisit_run.scenario_for_node("bar")) != JSON.stringify(before_revisit):
 		failures.append("World-node revisit did not restore the stored scenario unchanged.")
+	if str(revisit_run.current_environment.get("environment_situation_cycle_id", "")) != first_cycle_id:
+		failures.append("A same-operating-cycle revisit changed the environment situation cycle.")
+	_harness_arrive(revisit_generator, revisit_run, failures, "scenario next-cycle away-room arrival", "motel", true)
+	revisit_run.game_clock_minutes += EnvironmentHours.MINUTES_PER_DAY
+	_harness_arrive(revisit_generator, revisit_run, failures, "scenario next-cycle Bar arrival", "bar", true)
+	if str(revisit_run.current_environment.get("environment_situation_cycle_id", "")) == first_cycle_id:
+		failures.append("Closing and reopening the venue did not create a new environment situation cycle.")
+	var reopened_scenario := revisit_run.scenario_for_node("bar")
+	if not reopened_scenario.is_empty() and int(reopened_scenario.get("phase_action_counter", reopened_scenario.get("scenario_phase_action_counter", 0))) != 0:
+		failures.append("A reopened venue inherited progress from its prior-day situation.")
 
 	var repeat_library := ContentLibraryScript.new()
 	repeat_library.environment_scenarios = {"bar": library.scenarios_for_archetype("bar").duplicate(true)}
@@ -1368,15 +1381,31 @@ func _check_scenario_engine_foundation(library: ContentLibrary, failures: Array)
 	var repeat_run := RunStateScript.new()
 	repeat_run.start_new("SCENARIO-REPEAT")
 	var repeat_generator := RunGeneratorScript.new(repeat_library)
-	var repeat_rng := repeat_run.create_rng("forced_visits")
 	var previous_id := ""
-	for _visit in range(10):
-		var selected: Dictionary = repeat_generator.call("_select_scenario", repeat_run, "bar", repeat_rng)
+	var empty_cycle_count := 0
+	var populated_cycle_count := 0
+	for day in range(40):
+		repeat_run.game_clock_minutes = day * EnvironmentHours.MINUTES_PER_DAY + 18 * 60
+		var selected: Dictionary = repeat_generator.call("_select_scenario", repeat_run, "bar", repeat_run.create_rng("forced_visits"))
 		var selected_id := str(selected.get("id", ""))
-		if selected_id.is_empty() or selected_id == previous_id:
+		var same_cycle_selected: Dictionary = repeat_generator.call("_select_scenario", repeat_run, "bar", repeat_run.create_rng("forced_visits_again"))
+		if str(same_cycle_selected.get("id", "")) != selected_id:
+			failures.append("Repeated situation selection within one operating cycle was not stable.")
+			break
+		if selected_id.is_empty():
+			empty_cycle_count += 1
+			continue
+		populated_cycle_count += 1
+		if selected_id == previous_id:
 			failures.append("Scenario repeat protection allowed consecutive repeats in a three-scenario pool.")
 			break
 		previous_id = selected_id
+	if empty_cycle_count == 0 or populated_cycle_count == 0:
+		failures.append("Operating-cycle situation selection did not produce both empty and populated venue cycles.")
+	var repeat_restored := RunStateScript.new()
+	repeat_restored.from_dict(repeat_run.to_dict())
+	if JSON.stringify(repeat_restored.environment_situation_cycle("bar")) != JSON.stringify(repeat_run.environment_situation_cycle("bar")):
+		failures.append("Environment situation cycle selection did not survive save/load.")
 	var pinned_run := RunStateScript.new()
 	pinned_run.start_new("SCENARIO-PIN", RunStateScript.custom_challenge("scenario_pin", "SCENARIO-PIN", {"scenario_pins": {"bar": "bar_lock_in"}}))
 	var pinned: Dictionary = repeat_generator.call("_select_scenario", pinned_run, "bar", pinned_run.create_rng("pin"))

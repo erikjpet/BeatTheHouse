@@ -2911,10 +2911,10 @@ func _verify_numbers_surfaces() -> void:
 	app.call("_refresh")
 	await _settle()
 	canvas = app.get("environment_canvas") as Control
-	var handoff_id := "delivery:handoff:%s" % fix_target_id
-	var handoff_object := _canvas_object_by_id(canvas, handoff_id)
-	_require(bool(fix_arrival.get("handoff_ready", false)) and not handoff_object.is_empty(), "Numbers fix fixture arrival did not produce the physical handoff actor.")
-	_require(not (await _double_click_canvas_object_data(canvas, handoff_object, "delivery")).is_empty(), "Physical Numbers fix handoff could not be completed in the room.")
+	var handoff_object := _first_delivery_contact(canvas)
+	_require(bool(fix_arrival.get("handoff_ready", false)) and not handoff_object.is_empty(), "Numbers fix fixture arrival did not attach the handoff to a destination person.")
+	_require(not (await _double_click_canvas_object_data(canvas, handoff_object, "delivery_contact")).is_empty(), "Numbers fix contact could not be selected in the room.")
+	_require(not _click_button_exact("Hand Over The Package").is_empty(), "Numbers fix contact did not expose the handoff dialogue option.")
 	await _settle()
 	_require(str(run_state.numbers_desk_status().get("fix_stage", "")) == "camouflage", "Visible successful fix handoff did not reach camouflage.")
 	await _prepare_visual_qa_fixture_environment("small_underground_casino", "visual_numbers_fix_allocation", {"event_ids": ["numbers_desk"], "required_event_ids": ["numbers_desk"], "item_offers": [], "service_ids": [], "lender_hooks": []}, 200, "back_room")
@@ -3026,13 +3026,13 @@ func _verify_delivery_surface() -> void:
 	_require(str(generated_environment.get("world_node_id", "")) == target_id and str(generated_environment.get("archetype_id", "")) == str(target_node.get("archetype_id", "")), "Visual delivery did not enter its real target node.")
 	_require(not (generated_environment.get("layout", {}) as Dictionary).is_empty() and run_state.game_clock_minutes > clock_before, "Visual delivery bypassed normal time or RunGenerator room generation.")
 	var mounted_handoff_owner := run_state.world_sequence_mounted_owner_for_channel("delivery_handoff", target_id)
-	var handoff_id := "crew::package_handoff" if not mounted_handoff_owner.is_empty() else "delivery:handoff:%s" % target_id
-	var handoff_object := _canvas_object_by_id(canvas, handoff_id)
+	var handoff_object := _first_delivery_contact(canvas, mounted_handoff_owner)
 	var arrival_interaction: Dictionary = run_state.delivery_arrival_interaction()
-	_require(not handoff_object.is_empty() and str(arrival_interaction.get("node_id", "")) == target_id, "Production travel did not expose the physical delivery handoff in the generated room.")
+	_require(not handoff_object.is_empty() and str(arrival_interaction.get("node_id", "")) == target_id, "Production travel did not attach the delivery handoff to a destination person.")
 	_cover("delivery_in_venue_handoff")
-	_record_state("delivery_in_venue_handoff", "Normal map travel pays its route cost, advances time and risk, generates the real target room and exposes the package handoff as a physical character interaction.")
-	_require(not (await _double_click_canvas_object_data(canvas, handoff_object, "delivery")).is_empty(), "Physical delivery handoff could not be completed in the generated room.")
+	_record_state("delivery_in_venue_handoff", "Normal map travel pays its route cost, advances time and risk, generates the real target room and exposes the package handoff as dialogue on a destination person.")
+	_require(not (await _double_click_canvas_object_data(canvas, handoff_object, "delivery_contact")).is_empty(), "Delivery contact could not be selected in the generated room.")
+	_require(not _click_button_exact("Hand Over The Package").is_empty(), "Delivery contact did not expose the handoff dialogue option.")
 	await _settle()
 	_require(not run_state.delivery_has_active_run(), "Physical delivery handoff did not resolve the active run.")
 	var failure_started := run_state.delivery_begin_package({"run_id": "visual_qa_failure", "deadline_actions": 24, "cargo_id": "visual_qa_failure", "cargo_label": "Wrapped case"})
@@ -4279,6 +4279,20 @@ func _first_canvas_object_type(canvas: Control, object_type: String) -> Dictiona
 		var object_data: Dictionary = item
 		if _object_type_value(object_data) == object_type:
 			return object_data.duplicate(true)
+	return {}
+
+
+func _first_delivery_contact(canvas: Control, owner_token: String = "") -> Dictionary:
+	var snapshot: Dictionary = canvas.call("current_view_snapshot")
+	for item in snapshot.get("objects", []):
+		if typeof(item) != TYPE_DICTIONARY:
+			continue
+		var object_data := item as Dictionary
+		if not bool(object_data.get("delivery_contact", false)):
+			continue
+		if not owner_token.is_empty() and str(object_data.get("world_sequence_owner_token", "")) != owner_token:
+			continue
+		return object_data.duplicate(true)
 	return {}
 
 

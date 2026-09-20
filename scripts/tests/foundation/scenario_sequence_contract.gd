@@ -303,7 +303,7 @@ static func check(library: ContentLibrary, failures: Array, scene_tree: SceneTre
 
 static func _check_delivery_day_world_map_route_install(library: ContentLibrary, failures: Array) -> void:
 	var run_state: RunState = RunStateScript.new()
-	run_state.start_new("WAVE-B-COMPOSITION-08")
+	run_state.start_new("WAVE-B-COMPOSITION-08", RunStateScript.custom_challenge("delivery_day_route", "WAVE-B-COMPOSITION-08", {"scenario_pins": {"corner_store": DELIVERY_SCENARIO_ID}}))
 	var generator: RunGenerator = RunGeneratorScript.new(library)
 	var initial_arrival := HarnessProductionFidelityScript.generate_and_finalize(
 		generator, run_state, failures, "delivery-day world-map initial arrival"
@@ -1348,8 +1348,8 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 	var after_no_midnight := SequenceRuntimeScript.content_fingerprint(_dict(night_run.current_environment.get("scenario_sequence_state", {})).get("expiry_boundary_records", []))
 	var multi_midnight := night_run.advance_game_clock_minutes(1441)
 	var night_state := _dict(night_run.current_environment.get("scenario_sequence_state", {}))
-	if not bool(night_finalized.get("ok", false)) or not bool(first_midnight.get("ok", false)) or first_expiry_progress != 1 or not bool(no_midnight.get("ok", false)) or before_no_midnight != after_no_midnight or not bool(multi_midnight.get("ok", false)) or int(night_state.get("expiry_progress", -1)) != 3 or not bool(night_state.get("expired", false)):
-		failures.append("Game clock did not apply exact one/multi-midnight sequence expiry boundaries without false in-day progress.")
+	if not bool(night_finalized.get("ok", false)) or not bool(first_midnight.get("ok", false)) or first_expiry_progress != 0 or not bool(no_midnight.get("ok", false)) or before_no_midnight != after_no_midnight or not bool(multi_midnight.get("ok", false)) or int(night_state.get("expiry_progress", -1)) != 0 or bool(night_state.get("expired", false)):
+		failures.append("Midnight changed situation progress before the venue completed a close/reopen cycle.")
 	var failing_clock := RunStateScript.new()
 	failing_clock.current_environment = run_state.current_environment.duplicate(true)
 	var failing_clock_definition := definition.duplicate(true)
@@ -1358,22 +1358,20 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 	failing_clock_definition["sequence"]["sequence_signature"] = SequenceSchemaScript.calculated_signature_hash(failing_clock_definition)
 	failing_clock.current_environment["scenario_sequence_definition"] = failing_clock_definition
 	failing_clock.game_clock_minutes = 1439
-	var failing_clock_run_before := JSON.stringify(failing_clock.to_dict())
 	var failing_clock_environment_before := JSON.stringify(failing_clock.current_environment)
 	var failed_clock := failing_clock.advance_game_clock_minutes(1)
-	if bool(failed_clock.get("ok", true)) or failing_clock.game_clock_minutes != 1439 or JSON.stringify(failing_clock.to_dict()) != failing_clock_run_before or JSON.stringify(failing_clock.current_environment) != failing_clock_environment_before:
-		failures.append("Failed night-end cleanup did not restore the authoritative run and live environment byte-for-byte.")
+	if not bool(failed_clock.get("ok", false)) or failing_clock.game_clock_minutes != 1440 or JSON.stringify(failing_clock.current_environment) != failing_clock_environment_before:
+		failures.append("Midnight invoked obsolete situation cleanup instead of preserving the live venue state.")
 	var failing_travel := RunStateScript.new()
 	failing_travel.current_environment = run_state.current_environment.duplicate(true)
 	var failing_travel_definition := failing_clock_definition.duplicate(true)
 	failing_travel_definition["sequence"]["expiry"]["boundary"] = "leave"
 	failing_travel_definition["sequence"]["sequence_signature"] = SequenceSchemaScript.calculated_signature_hash(failing_travel_definition)
 	failing_travel.current_environment["scenario_sequence_definition"] = failing_travel_definition
-	var travel_state_before := SequenceRuntimeScript.content_fingerprint(failing_travel.current_environment)
 	var travel_preflight := failing_travel.scenario_preflight_environment_change()
 	var failed_install := failing_travel.set_environment({"id": "blocked_destination", "archetype_id": "motel", "world_node_id": "motel"})
-	if bool(travel_preflight.get("ok", true)) or bool(failed_install.get("ok", true)) or SequenceRuntimeScript.content_fingerprint(failing_travel.current_environment) != travel_state_before:
-		failures.append("Failed departure cleanup was not observable and atomic before environment replacement.")
+	if not bool(travel_preflight.get("ok", false)) or not bool(failed_install.get("ok", false)) or str(failing_travel.current_environment.get("id", "")) != "blocked_destination":
+		failures.append("A legacy leave-expiry policy still blocked ordinary departure after situations became operating-cycle persistent.")
 	var capacity_definition := definition.duplicate(true)
 	capacity_definition["sequence"]["expiry"] = {"boundary": "leave", "after": 2, "policy": "resume"}
 	capacity_definition["sequence"]["sequence_signature"] = SequenceSchemaScript.calculated_signature_hash(capacity_definition)
@@ -1397,57 +1395,11 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 			break
 		capacity_state = _dict(capacity_visit.get("state", {}))
 	capacity_run.current_environment["scenario_sequence_state"] = capacity_state
-	var layered_capacity_environment: Dictionary = {}
-	var layered_proof_run := RunStateScript.new()
-	layered_proof_run.current_environment = valid_authority_environment.duplicate(true)
-	for ephemeral_key in ["scenario_sequence_state", "scenario_sequence_projection", "scenario_semantic_ready", "scenario_semantic_inventory", "scenario_semantic_inventory_version", "scenario_semantic_digest", "scenario_semantic_action_digest", "scenario_base_interactions", "scenario_base_actors", "scenario_base_producer_context"]:
-		layered_proof_run.current_environment.erase(ephemeral_key)
-	layered_proof_run.current_environment["scenario_sequence_definition"] = capacity_definition
-	layered_proof_run.current_environment["scenario_sequence_pending_visit_id"] = "capacity_layer_visit"
-	layered_proof_run.current_environment["environment_layer_schema_version"] = 1
-	layered_proof_run.current_environment["current_layer_id"] = "main"
-	layered_proof_run.current_environment["default_layer_id"] = "main"
-	layered_proof_run.current_environment["layer_ids"] = ["main", "back_room"]
-	layered_proof_run.current_environment["layer_transitions"] = [{"target_layer_id": "back_room"}]
-	layered_proof_run.current_environment["layer_states"] = {"back_room": {"id": "bar_back_room", "archetype_id": "bar", "world_node_id": "bar_node"}}
-	var layered_finalized := layered_proof_run.scenario_finalize_base_semantics([presentation], library)
-	if not bool(layered_finalized.get("ok", false)):
-		failures.append("Production layer-entry capacity fixture could not seal its real layered source.")
-	else:
-		layered_capacity_environment = layered_proof_run.current_environment.duplicate(true)
-		layered_capacity_environment["scenario_sequence_state"] = capacity_state.duplicate(true)
-	for production_path_value in ["legacy_next_environment", "world_travel_result", "grand_room_result", "layer_entry"]:
-		var production_path := str(production_path_value)
-		var path_run := RunStateScript.new()
-		path_run.from_dict(capacity_run.to_dict())
-		path_run.current_environment = capacity_run.current_environment.duplicate(true)
-		path_run.world_map = capacity_run.world_map.duplicate(true)
-		path_run.grand_casino_room_states = capacity_run.grand_casino_room_states.duplicate(true)
-		if production_path == "legacy_next_environment":
-			path_run.world_map = {}
-		elif production_path == "grand_room_result":
-			path_run.current_environment["id"] = "grand_casino_capacity"
-			path_run.current_environment["archetype_id"] = RunStateScript.GRAND_CASINO_ARCHETYPE_ID
-			path_run.current_environment["world_node_id"] = "grand_casino"
-		elif production_path == "layer_entry" and not layered_capacity_environment.is_empty():
-			path_run.current_environment = layered_capacity_environment.duplicate(true)
-		var path_run_before := JSON.stringify(path_run.to_dict())
-		var path_environment_before := JSON.stringify(path_run.current_environment)
-		var path_world_map_before := JSON.stringify(path_run.world_map)
-		var path_room_states_before := JSON.stringify(path_run.grand_casino_room_states)
-		var path_reported_failure := true
-		var path_generator := RunGeneratorScript.new(library)
-		match production_path:
-			"legacy_next_environment":
-				path_generator.next_environment(path_run, "motel", true)
-			"world_travel_result":
-				path_reported_failure = not bool(path_generator.travel_environment_result(path_run, "motel", true).get("ok", true))
-			"grand_room_result":
-				path_reported_failure = not bool(path_generator.enter_grand_casino_room_result(path_run, RunStateScript.GRAND_CASINO_CAGE_ARCHETYPE_ID).get("ok", true))
-			"layer_entry":
-				path_reported_failure = not bool(path_generator.enter_environment_layer(path_run, "back_room", false).get("ok", true))
-		if not path_reported_failure or JSON.stringify(path_run.to_dict()) != path_run_before or JSON.stringify(path_run.current_environment) != path_environment_before or JSON.stringify(path_run.world_map) != path_world_map_before or JSON.stringify(path_run.grand_casino_room_states) != path_room_states_before:
-			failures.append("%s did not reserve combined departure-plus-expiry capacity and reject byte-identically." % production_path)
+	# Departures no longer append a travel-departed receipt or consume a leave
+	# expiry receipt. Capacity is therefore reserved only by actual situation
+	# actions and explicit facts, not by changing rooms.
+	if not bool(capacity_run.scenario_preflight_environment_change("bar_node", "motel", "world").get("ok", false)):
+		failures.append("A near-capacity situation still reserved obsolete departure/leave receipts.")
 	var final_visit := SequenceRuntimeScript.record_visit(capacity_state, capacity_definition, "departure_capacity_final")
 	if not bool(final_visit.get("ok", false)):
 		failures.append("Production world-boundary capacity fixture could not fill its final causal receipt.")

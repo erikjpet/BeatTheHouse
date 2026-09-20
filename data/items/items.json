@@ -2002,5 +2002,8 @@
   },
   {
     "id": "mags_shim_kit", "display_name": "Mags' Gutter Kit", "class": "contraband", "domain": "coin_pusher", "content_groups": ["crew_gear"], "sellable": true, "sale_price": 32, "price_min": 0, "price_max": 0, "asset_path": "res://assets/art/items/content06/mags_shim_kit.svg", "icon_key": "mags_shim_kit", "environment_prop": "coin", "surface": "folding_table", "description": "Filed teeth. One more gutter gives it back.", "effect": {"families": {"coin_pusher": {"coin_pusher_gutter_recovery_uses": 4}}, "cheat_suspicion_delta": 1}
+  },
+  {
+    "id": "crew_package", "display_name": "The Package", "class": "contraband", "domain": "travel", "content_groups": ["crew_gear"], "sellable": false, "sale_price": 0, "price_min": 0, "price_max": 0, "asset_path": "res://assets/art/items/content06/crew_package.svg", "icon_key": "crew_package", "environment_prop": "crate", "surface": "floor", "risk_flags": ["contraband", "sweep_sensitive"], "description": "Crew-sealed contraband for the named contact.", "effect": {}
   }
 ]

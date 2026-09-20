@@ -460,6 +460,15 @@ static func build_run_screen(host: Variant) -> void:
 	host.save_status_label.clip_text = true
 	host.save_status_label.custom_minimum_size = Vector2(VisualStyle.ENVIRONMENT_TITLE_COMPACT_SIZE.x, VisualStyle.FLEXIBLE_SIZE)
 	hud_row.add_child(host.save_status_label)
+	# Delivery choices are persistent run actions, not loose props in the room.
+	# Keep them in a dedicated top strip so accepting a package never fills the
+	# environment with abstract objects such as "hold sightline" or "ditch".
+	host.delivery_action_strip = HFlowContainer.new()
+	host.delivery_action_strip.add_theme_constant_override("h_separation", VisualStyle.SPACE_2)
+	host.delivery_action_strip.add_theme_constant_override("v_separation", VisualStyle.SPACE_1)
+	host.delivery_action_strip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	host.delivery_action_strip.visible = false
+	hud_stack.add_child(host.delivery_action_strip)
 
 	var title_row := HBoxContainer.new()
 	title_row.add_theme_constant_override("separation", VisualStyle.SPACE_4)
